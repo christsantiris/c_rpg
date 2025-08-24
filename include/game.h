@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <string.h>
 
 // Map dimensions
 #define MAP_WIDTH 40
@@ -14,6 +15,7 @@
 #define WALL '#'
 #define FLOOR '.'
 #define PLAYER 'C'
+#define ENEMY 'E'
 
 // Room generation constants
 #define MIN_ROOM_SIZE 4
@@ -37,12 +39,21 @@ typedef struct {
     char symbol;
 } Player;
 
+// Enemy structure
+typedef struct {
+    int x;
+    int y;
+    char symbol;
+    char name[32];
+} Enemy;
+
 // Game structure
 typedef struct {
     Player player;
     char map[MAP_HEIGHT][MAP_WIDTH];
     Rectangle rooms[MAX_ROOMS];
     int room_count;
+    Enemy enemy;
 } Game;
 
 // Function declarations
@@ -51,6 +62,7 @@ void init_ncurses(void);
 void cleanup_ncurses(void);
 void draw_map(Game *game);
 void draw_player(Game *game);
+void draw_enemy(Game *game);
 int handle_input(Game *game);
 int is_valid_move(Game *game, int new_x, int new_y);
 void move_player(Game *game, int dx, int dy);

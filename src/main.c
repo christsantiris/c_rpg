@@ -14,6 +14,7 @@ int main() {
         clear();
         draw_map(&game);
         draw_player(&game);
+        draw_enemy(&game);
         
         // Show instructions at the bottom
         mvprintw(MAP_HEIGHT + 2, 0, "Use arrow keys to move, 'q' to quit");
@@ -55,7 +56,10 @@ void init_game(Game *game) {
     
     // Initialize player
     game->player.symbol = PLAYER;
-    
+
+    // Initiaize enemy
+    game->enemy.symbol = ENEMY;
+
     // Initialize room count
     game->room_count = 0;
     
@@ -66,6 +70,12 @@ void init_game(Game *game) {
     if (game->room_count > 0) {
         game->player.x = game->rooms[0].x + game->rooms[0].width / 2;
         game->player.y = game->rooms[0].y + game->rooms[0].height / 2;
+
+        // Place enemy randomly in the first room
+        game->enemy.x = random_range(game->rooms[0].x + 1, game->rooms[0].x + game->rooms[0].width - 2);
+        game->enemy.y = random_range(game->rooms[0].y + 1, game->rooms[0].y + game->rooms[0].height - 2);
+        game->enemy.symbol = ENEMY;
+        strcpy(game->enemy.name, "Goblin");
     } else {
         // Fallback if no rooms generated
         game->player.x = MAP_WIDTH / 2;
@@ -85,6 +95,11 @@ void draw_map(Game *game) {
 void draw_player(Game *game) {
     // Draw player on top of the map
     mvaddch(game->player.y, game->player.x, game->player.symbol);
+}
+
+void draw_enemy(Game *game) {
+    // Draw player on top of the map
+    mvaddch(game->enemy.y, game->enemy.x, game->enemy.symbol);
 }
 
 int handle_input(Game *game) {
