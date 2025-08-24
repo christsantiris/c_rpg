@@ -74,4 +74,7 @@ void create_corridor(Game *game, int x1, int y1, int x2, int y2);
 int rooms_overlap(Rectangle r1, Rectangle r2);
 int random_range(int min, int max);
 
+// Enemy Moves
+void move_enemy_towards_player(Game *game);
+
 #endif

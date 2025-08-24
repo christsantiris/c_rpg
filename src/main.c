@@ -167,4 +167,42 @@ void move_player(Game *game, int dx, int dy) {
         game->player.y = new_y;
     }
     // If invalid move, just ignore it (player doesn't move)
+
+    // Move enemy towards player
+    move_enemy_towards_player(game);
+}
+
+// Move enemy
+void move_enemy_towards_player(Game *game) {
+    // if (!game->enemy.active) return;
+    
+    int enemy_x = game->enemy.x;
+    int enemy_y = game->enemy.y;
+    int player_x = game->player.x;
+    int player_y = game->player.y;
+    
+    int dx = 0, dy = 0;
+    
+    // Move horizontally towards player
+    if (enemy_x < player_x) {
+        dx = 1;  // Move right
+    } else if (enemy_x > player_x) {
+        dx = -1; // Move left
+    }
+    
+    // Move vertically towards player
+    if (enemy_y < player_y) {
+        dy = 1;  // Move down
+    } else if (enemy_y > player_y) {
+        dy = -1; // Move up
+    }
+    
+    // Try to move (check if new position is valid)
+    int new_x = enemy_x + dx;
+    int new_y = enemy_y + dy;
+    
+    if (is_valid_move(game, new_x, new_y)) {
+        game->enemy.x = new_x;
+        game->enemy.y = new_y;
+    }
 }
