@@ -16,14 +16,28 @@ int main() {
         draw_player(&game);
         draw_enemy(&game);
         
-        // Show instructions at the bottom
+        // Show instructions and game status at the bottom
         mvprintw(MAP_HEIGHT + 2, 0, "Use arrow keys to move, 'q' to quit");
+        if (!game.enemy.active) {
+            mvprintw(MAP_HEIGHT + 3, 0, "Victory! You defeated the %s!", game.enemy.name);
+        }
+        if (game.game_over) {
+            mvprintw(MAP_HEIGHT + 3, 0, "Game Over! The %s defeated you!", game.enemy.name);
+            mvprintw(MAP_HEIGHT + 4, 0, "Press any key to exit...");
+        }
         
         // Refresh screen to render changes
         refresh();
         
         // Handle player input
         running = handle_input(&game);
+        
+        // Check for game over
+        if (game.game_over) {
+            // Wait for any key press before exiting
+            getch();
+            running = 0;
+        }
     }
     
     // Clean up and exit
@@ -57,8 +71,12 @@ void init_game(Game *game) {
     // Initialize player
     game->player.symbol = PLAYER;
 
-    // Initiaize enemy
+    // Initialize enemy
     game->enemy.symbol = ENEMY;
+    game->enemy.active = 1;  // Enemy starts alive
+    
+    // Initialize game state
+    game->game_over = 0;  // Game starts running
 
     // Initialize room count
     game->room_count = 0;
@@ -101,8 +119,10 @@ void draw_player(Game *game) {
 }
 
 void draw_enemy(Game *game) {
-    // Draw player on top of the map
-    mvaddch(game->enemy.y, game->enemy.x, game->enemy.symbol);
+    // Only draw enemy if it's active (alive)
+    if (game->enemy.active) {
+        mvaddch(game->enemy.y, game->enemy.x, game->enemy.symbol);
+    }
 }
 
 int handle_input(Game *game) {
@@ -182,12 +202,9 @@ int is_valid_player_move(Game *game, int new_x, int new_y) {
         return 0;
     }
     
-    // Check if enemy is at the target position
-    if (new_x == game->enemy.x && new_y == game->enemy.y) {
-        return 0; // Cannot move to enemy position
-    }
-    
-    return 1; // Valid move
+    // If enemy is at the target position and enemy is active, this will trigger combat
+    // We allow the move so combat can be handled in move_player()
+    return 1; // Valid move (combat will be resolved if needed)
 }
 
 int is_valid_enemy_move(Game *game, int new_x, int new_y) {
@@ -196,31 +213,43 @@ int is_valid_enemy_move(Game *game, int new_x, int new_y) {
         return 0;
     }
     
-    // Check if player is at the target position
-    if (new_x == game->player.x && new_y == game->player.y) {
-        return 0; // Cannot move to player position
-    }
-    
-    return 1; // Valid move
+    // If player is at the target position, this will trigger combat
+    // We allow the move so combat can be handled in move_enemy()
+    return 1; // Valid move (combat will be resolved if needed)
 }
 
 void move_player(Game *game, int dx, int dy) {
     int new_x = game->player.x + dx;
     int new_y = game->player.y + dy;
     
-    // Only move if the new position is valid (including entity collision)
+    // Only move if the new position is valid (terrain-wise)
     if (is_valid_player_move(game, new_x, new_y)) {
-        game->player.x = new_x;
-        game->player.y = new_y;
+        // Check for combat with enemy
+        if (game->enemy.active && new_x == game->enemy.x && new_y == game->enemy.y) {
+            // Player attacks enemy - enemy is defeated
+            game->enemy.active = 0;
+            // Player moves to enemy's position
+            game->player.x = new_x;
+            game->player.y = new_y;
+        } else {
+            // Normal movement
+            game->player.x = new_x;
+            game->player.y = new_y;
+        }
     }
     // If invalid move, just ignore it (player doesn't move)
 
-    // Move enemy towards player
-    move_enemy(game);
+    // Move enemy towards player (only if enemy is still active)
+    if (game->enemy.active) {
+        move_enemy(game);
+    }
 }
 
 // Move enemy
 void move_enemy(Game *game) {
+    // Don't move if enemy is not active or game is over
+    if (!game->enemy.active || game->game_over) return;
+    
     int enemy_x = game->enemy.x;
     int enemy_y = game->enemy.y;
     int player_x = game->player.x;
@@ -242,12 +271,22 @@ void move_enemy(Game *game) {
         dy = -1; // Move up
     }
     
-    // Try to move (check if new position is valid, including entity collision)
+    // Try to move (check if new position is valid terrain-wise)
     int new_x = enemy_x + dx;
     int new_y = enemy_y + dy;
     
     if (is_valid_enemy_move(game, new_x, new_y)) {
-        game->enemy.x = new_x;
-        game->enemy.y = new_y;
+        // Check for combat with player
+        if (new_x == player_x && new_y == player_y) {
+            // Enemy attacks player - player is defeated, game over
+            game->game_over = 1;
+            // Enemy moves to player's position
+            game->enemy.x = new_x;
+            game->enemy.y = new_y;
+        } else {
+            // Normal movement
+            game->enemy.x = new_x;
+            game->enemy.y = new_y;
+        }
     }
 }

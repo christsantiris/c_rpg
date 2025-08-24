@@ -37,7 +37,6 @@ typedef struct {
     int x;
     int y;
     char symbol;
-    int active;
 } Player;
 
 // Enemy structure
@@ -46,7 +45,7 @@ typedef struct {
     int y;
     char symbol;
     char name[32];
-    int active;
+    int active;  // 0 = dead/removed, 1 = alive
 } Enemy;
 
 // Game structure
@@ -56,6 +55,7 @@ typedef struct {
     Rectangle rooms[MAX_ROOMS];
     int room_count;
     Enemy enemy;
+    int game_over;  // 0 = playing, 1 = game over
 } Game;
 
 // Function declarations
