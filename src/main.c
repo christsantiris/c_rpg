@@ -129,6 +129,22 @@ int handle_input(Game *game) {
         case 'D':
             move_player(game, 1, 0); // Move right (x increases)
             break;
+
+        case '1':  // Up-left diagonal
+            move_player(game, -1, -1);
+            break;
+
+        case '0':  // Up-right diagonal  
+            move_player(game, 1, -1);
+            break;
+
+        case 'z':  // Down-left diagonal
+            move_player(game, -1, 1);
+            break;
+
+        case 'm':  // Down-right diagonal
+            move_player(game, 1, 1);
+            break;
             
         case 'q':
         case 'Q':
