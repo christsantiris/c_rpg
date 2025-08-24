@@ -65,6 +65,8 @@ void draw_player(Game *game);
 void draw_enemy(Game *game);
 int handle_input(Game *game);
 int is_valid_move(Game *game, int new_x, int new_y);
+int is_valid_player_move(Game *game, int new_x, int new_y);
+int is_valid_enemy_move(Game *game, int new_x, int new_y);
 void move_player(Game *game, int dx, int dy);
 
 // Dungeon generation functions

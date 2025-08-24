@@ -71,9 +71,12 @@ void init_game(Game *game) {
         game->player.x = game->rooms[0].x + game->rooms[0].width / 2;
         game->player.y = game->rooms[0].y + game->rooms[0].height / 2;
 
-        // Place enemy randomly in the first room
-        game->enemy.x = random_range(game->rooms[0].x + 1, game->rooms[0].x + game->rooms[0].width - 2);
-        game->enemy.y = random_range(game->rooms[0].y + 1, game->rooms[0].y + game->rooms[0].height - 2);
+        // Place enemy randomly in the first room, but not on player
+        do {
+            game->enemy.x = random_range(game->rooms[0].x + 1, game->rooms[0].x + game->rooms[0].width - 2);
+            game->enemy.y = random_range(game->rooms[0].y + 1, game->rooms[0].y + game->rooms[0].height - 2);
+        } while (game->enemy.x == game->player.x && game->enemy.y == game->player.y);
+        
         game->enemy.symbol = ENEMY;
         strcpy(game->enemy.name, "Goblin");
     } else {
@@ -173,12 +176,40 @@ int is_valid_move(Game *game, int new_x, int new_y) {
     return 1; // Valid move
 }
 
+int is_valid_player_move(Game *game, int new_x, int new_y) {
+    // First check if it's a valid move (not wall, in bounds)
+    if (!is_valid_move(game, new_x, new_y)) {
+        return 0;
+    }
+    
+    // Check if enemy is at the target position
+    if (new_x == game->enemy.x && new_y == game->enemy.y) {
+        return 0; // Cannot move to enemy position
+    }
+    
+    return 1; // Valid move
+}
+
+int is_valid_enemy_move(Game *game, int new_x, int new_y) {
+    // First check if it's a valid move (not wall, in bounds)
+    if (!is_valid_move(game, new_x, new_y)) {
+        return 0;
+    }
+    
+    // Check if player is at the target position
+    if (new_x == game->player.x && new_y == game->player.y) {
+        return 0; // Cannot move to player position
+    }
+    
+    return 1; // Valid move
+}
+
 void move_player(Game *game, int dx, int dy) {
     int new_x = game->player.x + dx;
     int new_y = game->player.y + dy;
     
-    // Only move if the new position is valid
-    if (is_valid_move(game, new_x, new_y)) {
+    // Only move if the new position is valid (including entity collision)
+    if (is_valid_player_move(game, new_x, new_y)) {
         game->player.x = new_x;
         game->player.y = new_y;
     }
@@ -190,8 +221,6 @@ void move_player(Game *game, int dx, int dy) {
 
 // Move enemy
 void move_enemy(Game *game) {
-    // if (!game->enemy.active) return;
-    
     int enemy_x = game->enemy.x;
     int enemy_y = game->enemy.y;
     int player_x = game->player.x;
@@ -213,11 +242,11 @@ void move_enemy(Game *game) {
         dy = -1; // Move up
     }
     
-    // Try to move (check if new position is valid)
+    // Try to move (check if new position is valid, including entity collision)
     int new_x = enemy_x + dx;
     int new_y = enemy_y + dy;
     
-    if (is_valid_move(game, new_x, new_y)) {
+    if (is_valid_enemy_move(game, new_x, new_y)) {
         game->enemy.x = new_x;
         game->enemy.y = new_y;
     }
