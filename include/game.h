@@ -37,6 +37,7 @@ typedef struct {
     int x;
     int y;
     char symbol;
+    int active;
 } Player;
 
 // Enemy structure
@@ -45,6 +46,7 @@ typedef struct {
     int y;
     char symbol;
     char name[32];
+    int active;
 } Enemy;
 
 // Game structure
