@@ -75,6 +75,6 @@ int rooms_overlap(Rectangle r1, Rectangle r2);
 int random_range(int min, int max);
 
 // Enemy Moves
-void move_enemy_towards_player(Game *game);
+void move_enemy(Game *game);
 
 #endif

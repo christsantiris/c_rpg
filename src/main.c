@@ -185,11 +185,11 @@ void move_player(Game *game, int dx, int dy) {
     // If invalid move, just ignore it (player doesn't move)
 
     // Move enemy towards player
-    move_enemy_towards_player(game);
+    move_enemy(game);
 }
 
 // Move enemy
-void move_enemy_towards_player(Game *game) {
+void move_enemy(Game *game) {
     // if (!game->enemy.active) return;
     
     int enemy_x = game->enemy.x;
