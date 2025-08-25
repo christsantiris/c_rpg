@@ -10,6 +10,7 @@
 // Game states
 #define STATE_MENU 0
 #define STATE_PLAYING 1
+#define MAX_ENEMIES 10
 
 // Menu options
 #define MENU_NEW_GAME 0
@@ -69,13 +70,14 @@ typedef struct {
 // Game structure
 typedef struct {
     Player player;
-    char map[MAP_HEIGHT][MAP_WIDTH];
+    Enemy enemies[MAX_ENEMIES];
     Rectangle rooms[MAX_ROOMS];
+    char map[MAP_HEIGHT][MAP_WIDTH];
     int room_count;
-    Enemy enemy;
     int game_over;  // 0 = playing, 1 = game over
     int turn_count;     
     int enemies_killed; 
+    int enemy_count;
     int game_state;
     int selected_menu;
 } Game;
@@ -90,9 +92,11 @@ void start_new_game(Game *game);
 void init_game(Game *game);
 void init_ncurses(void);
 void cleanup_ncurses(void);
+
 void draw_map(Game *game);
 void draw_player(Game *game);
-void draw_enemy(Game *game);
+void draw_enemy(Game *game, int enemy_index);
+
 int handle_input(Game *game);
 int is_valid_move(Game *game, int new_x, int new_y);
 int is_valid_player_move(Game *game, int new_x, int new_y);
@@ -107,6 +111,6 @@ int rooms_overlap(Rectangle r1, Rectangle r2);
 int random_range(int min, int max);
 
 // Enemy Moves
-void move_enemy(Game *game);
+void move_enemy(Game *game, int enemy_index);
 
 #endif
