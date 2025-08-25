@@ -7,6 +7,16 @@
 #include <time.h>
 #include <string.h>
 
+// Game states
+#define STATE_MENU 0
+#define STATE_PLAYING 1
+
+// Menu options
+#define MENU_NEW_GAME 0
+#define MENU_LOAD_GAME 1
+#define MENU_QUIT 2
+#define MENU_OPTIONS 3
+
 // Map dimensions
 #define MAP_WIDTH 60
 #define MAP_HEIGHT 30
@@ -65,9 +75,17 @@ typedef struct {
     int game_over;  // 0 = playing, 1 = game over
     int turn_count;     
     int enemies_killed; 
+    int game_state;
+    int selected_menu;
 } Game;
 
 // Function declarations
+
+// Menu functions
+void draw_title_screen(Game *game);
+void handle_menu_input(Game *game);
+void start_new_game(Game *game);
+
 void init_game(Game *game);
 void init_ncurses(void);
 void cleanup_ncurses(void);

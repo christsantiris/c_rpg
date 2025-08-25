@@ -3,64 +3,66 @@
 int main() {
     Game game;
     
-    // Initialize game
+    // Initialize ncurses
     init_ncurses();
-    init_game(&game);
+    
+    // Initialize game to menu state
+    game.game_state = STATE_MENU;
+    game.selected_menu = MENU_NEW_GAME; // Start with "New Game" selected
+    game.game_over = 0;
     
     // Main game loop
     int running = 1;
-    while (running) {
-        // Clear screen and redraw world
-        clear();
-        draw_map(&game);
-        draw_player(&game);
-        draw_enemy(&game);
-
-        // Show instructions and game status at the bottom
-        if (!game.game_over) {
-            attron(COLOR_PAIR(COLOR_TEXT));
-            mvprintw(MAP_HEIGHT + 2, 0, "Use arrow keys to move, 'q' to quit");
-            mvprintw(MAP_HEIGHT + 3, 0, "Turn: %d | Enemies Killed: %d", 
-                    game.turn_count, game.enemies_killed);
+    while (running && !game.game_over) {
+        
+        if (game.game_state == STATE_MENU) {
+            // Show title screen
+            draw_title_screen(&game);
+            handle_menu_input(&game);
             
-            if (!game.enemy.active) {
-                attron(A_BOLD);
-                mvprintw(MAP_HEIGHT + 4, 0, "Victory! You killed the %s!", game.enemy.name);
-                attroff(A_BOLD);
-            }
-            attroff(COLOR_PAIR(COLOR_TEXT));
-        }
-        
-        // Refresh screen to render changes
-        refresh();
-        
-        // Handle player input
-        running = handle_input(&game);
-        
-        // Check for game over
-        if (game.game_over) {
-            // Clear screen and display ASCII GAME OVER
+        } else if (game.game_state == STATE_PLAYING) {
+            // Original game loop
             clear();
+            draw_map(&game);
+            draw_player(&game);
+            draw_enemy(&game);
             
-            // ASCII art for GAME OVER using standard ASCII characters
-            mvprintw(5, 15, "  ####    ###   #   #  ####       ####  #   #  ####  ####");
-            mvprintw(6, 15, " #       #   #  ## ##  #          #  #  #   #  #     #   #");
-            mvprintw(7, 15, " # ###   #####  # # #  ###        #  #  #   #  ###   ####");
-            mvprintw(8, 15, " #   #   #   #  #   #  #          #  #   # #   #     #  #");
-            mvprintw(9, 15, "  ####   #   #  #   #  ####       ####    #    ####  #   #");
-            
-            mvprintw(12, 25, "The %s has defeated you!", game.enemy.name);
-            mvprintw(14, 30, "Press any key to exit...");
+            if (!game.game_over) {
+                attron(COLOR_PAIR(COLOR_TEXT));
+                mvprintw(MAP_HEIGHT + 2, 0, "Use arrow keys to move, 'q' to quit");
+                mvprintw(MAP_HEIGHT + 3, 0, "Turn: %d | Enemies Killed: %d", 
+                         game.turn_count, game.enemies_killed);
+                
+                if (!game.enemy.active) {
+                    attron(A_BOLD);
+                    mvprintw(MAP_HEIGHT + 4, 0, "Victory! You killed the %s!", game.enemy.name);
+                    attroff(A_BOLD);
+                }
+                attroff(COLOR_PAIR(COLOR_TEXT));
+            }
             
             refresh();
+            running = handle_input(&game);
             
-            // Wait for any key press before exiting
-            getch();
-            running = 0;
+            if (game.game_over) {
+                // Your existing game over screen code
+                clear();
+                mvprintw(5, 15, "  ####    ###   #   #  ####       ####  #   #  ####  ####");
+                mvprintw(6, 15, " #       #   #  ## ##  #          #  #  #   #  #     #   #");
+                mvprintw(7, 15, " # ###   #####  # # #  ###        #  #  #   #  ###   ####");
+                mvprintw(8, 15, " #   #   #   #  #   #  #          #  #   # #   #     #  #");
+                mvprintw(9, 15, "  ####   #   #  #   #  ####       ####    #    ####  #   #");
+                
+                mvprintw(12, 25, "The %s has defeated you!", game.enemy.name);
+                mvprintw(14, 30, "Press any key to exit...");
+                
+                refresh();
+                getch();
+                running = 0;
+            }
         }
     }
     
-    // Clean up and exit
     cleanup_ncurses();
     printf("Thanks for playing!\n");
     return 0;
@@ -331,5 +333,149 @@ void move_enemy(Game *game) {
             game->enemy.x = new_x;
             game->enemy.y = new_y;
         }
+    }
+}
+
+void draw_title_screen(Game *game) {
+    clear();
+    
+    // ASCII Art Title - you can customize this!
+    attron(COLOR_PAIR(COLOR_PLAYER) | A_BOLD);
+    mvprintw(4, 20, "  ____   ___  _   _ ____  ");
+    mvprintw(5, 20, " / ___| / _ \\| \\ | |  _ \\ ");
+    mvprintw(6, 20, "| |    | | | |  \\| | |_) |");
+    mvprintw(7, 20, "| |___ | |_| | |\\  |  _ < ");
+    mvprintw(8, 20, " \\____| \\___/|_| \\_|_| \\_\\");
+    attroff(COLOR_PAIR(COLOR_PLAYER) | A_BOLD);
+    
+    // Subtitle
+    attron(COLOR_PAIR(COLOR_TEXT));
+    mvprintw(10, 18, "~ Castle of no Return ~");
+    attroff(COLOR_PAIR(COLOR_TEXT));
+    
+    // Menu options
+    int start_y = 13;
+    const char* menu_items[] = {
+        "New Game",
+        "Load Game", 
+        "Quit"
+    };
+    
+    for (int i = 0; i < 3; i++) {
+        if (i == game->selected_menu) {
+            // Highlight selected option
+            attron(COLOR_PAIR(COLOR_ENEMY) | A_BOLD);
+            mvprintw(start_y + i * 2, 30, "> %s <", menu_items[i]);
+            attroff(COLOR_PAIR(COLOR_ENEMY) | A_BOLD);
+        } else {
+            // Normal option
+            attron(COLOR_PAIR(COLOR_TEXT));
+            mvprintw(start_y + i * 2, 32, "%s", menu_items[i]);
+            attroff(COLOR_PAIR(COLOR_TEXT));
+        }
+    }
+    
+    // Instructions
+    attron(COLOR_PAIR(COLOR_FLOOR));
+    mvprintw(22, 20, "Use UP/DOWN arrows to navigate, ENTER to select");
+    attroff(COLOR_PAIR(COLOR_FLOOR));
+    
+    refresh();
+}
+
+void handle_menu_input(Game *game) {
+    int ch = getch();
+    
+    switch (ch) {
+        case KEY_UP:
+        case 'w':
+        case 'W':
+            // Move up in menu
+            game->selected_menu--;
+            if (game->selected_menu < 0) {
+                game->selected_menu = 2; // Wrap to bottom (Quit)
+            }
+            break;
+            
+        case KEY_DOWN:
+        case 's':
+        case 'S':
+            // Move down in menu
+            game->selected_menu++;
+            if (game->selected_menu > 2) {
+                game->selected_menu = 0; // Wrap to top (New Game)
+            }
+            break;
+            
+        case 10: // ENTER key
+        case 13: // Alternative ENTER
+        case ' ': // Spacebar as alternative
+            // Handle menu selection
+            switch (game->selected_menu) {
+                case MENU_NEW_GAME:
+                    start_new_game(game);
+                    break;
+                    
+                case MENU_LOAD_GAME:
+                    // Show "not implemented" message temporarily
+                    clear();
+                    attron(COLOR_PAIR(COLOR_TEXT));
+                    mvprintw(MAP_HEIGHT / 2, MAP_WIDTH / 2 - 10, "Load Game - Not Implemented Yet!");
+                    mvprintw(MAP_HEIGHT / 2 + 2, MAP_WIDTH / 2 - 8, "Press any key to continue...");
+                    attroff(COLOR_PAIR(COLOR_TEXT));
+                    refresh();
+                    getch(); // Wait for key press
+                    break;
+                    
+                case MENU_QUIT:
+                    // Set game to quit
+                    game->game_over = 1;
+                    break;
+            }
+            break;
+            
+        case 'q':
+        case 'Q':
+        case KEY_ESC:
+            // Quick quit
+            game->game_over = 1;
+            break;
+    }
+}
+
+void start_new_game(Game *game) {
+    // Initialize player
+    game->player.symbol = PLAYER;
+
+    // Initialize enemy
+    game->enemy.symbol = ENEMY;
+    game->enemy.active = 1;
+    
+    // Initialize game state
+    game->game_over = 0;
+    game->game_state = STATE_PLAYING; // Switch to playing state
+    game->turn_count = 0;
+    game->enemies_killed = 0;
+
+    // Initialize room count
+    game->room_count = 0;
+    
+    // Generate the dungeon
+    generate_dungeon(game);
+    
+    // Place player and enemy (your existing placement code)
+    if (game->room_count > 0) {
+        game->player.x = game->rooms[0].x + game->rooms[0].width / 2;
+        game->player.y = game->rooms[0].y + game->rooms[0].height / 2;
+
+        do {
+            game->enemy.x = random_range(game->rooms[0].x + 1, game->rooms[0].x + game->rooms[0].width - 2);
+            game->enemy.y = random_range(game->rooms[0].y + 1, game->rooms[0].y + game->rooms[0].height - 2);
+        } while (game->enemy.x == game->player.x && game->enemy.y == game->player.y);
+        
+        strcpy(game->enemy.name, "Goblin");
+    } else {
+        game->player.x = MAP_WIDTH / 2;
+        game->player.y = MAP_HEIGHT / 2;
     }
 }
