@@ -8,8 +8,8 @@
 #include <string.h>
 
 // Map dimensions
-#define MAP_WIDTH 40
-#define MAP_HEIGHT 20
+#define MAP_WIDTH 60
+#define MAP_HEIGHT 30
 
 // Symbols
 #define WALL '#'
@@ -20,7 +20,14 @@
 // Room generation constants
 #define MIN_ROOM_SIZE 4
 #define MAX_ROOM_SIZE 10
-#define MAX_ROOMS 6
+#define MAX_ROOMS 8
+
+// Colors
+#define COLOR_WALL 1
+#define COLOR_FLOOR 2
+#define COLOR_PLAYER 3
+#define COLOR_ENEMY 4
+#define COLOR_TEXT 5
 
 // Key codes
 #ifndef KEY_ESC
@@ -56,6 +63,8 @@ typedef struct {
     int room_count;
     Enemy enemy;
     int game_over;  // 0 = playing, 1 = game over
+    int turn_count;     
+    int enemies_killed; 
 } Game;
 
 // Function declarations

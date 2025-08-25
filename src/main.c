@@ -15,13 +15,20 @@ int main() {
         draw_map(&game);
         draw_player(&game);
         draw_enemy(&game);
-        
+
         // Show instructions and game status at the bottom
         if (!game.game_over) {
+            attron(COLOR_PAIR(COLOR_TEXT));
             mvprintw(MAP_HEIGHT + 2, 0, "Use arrow keys to move, 'q' to quit");
+            mvprintw(MAP_HEIGHT + 3, 0, "Turn: %d | Enemies Killed: %d", 
+                    game.turn_count, game.enemies_killed);
+            
             if (!game.enemy.active) {
-                mvprintw(MAP_HEIGHT + 3, 0, "You killed the %s!", game.enemy.name);
+                attron(A_BOLD);
+                mvprintw(MAP_HEIGHT + 4, 0, "Victory! You killed the %s!", game.enemy.name);
+                attroff(A_BOLD);
             }
+            attroff(COLOR_PAIR(COLOR_TEXT));
         }
         
         // Refresh screen to render changes
@@ -63,6 +70,16 @@ void init_ncurses() {
     // Initialize ncurses
     initscr();
     
+
+    // Initialize colors
+    if (has_colors()) {
+        start_color();
+        init_pair(COLOR_WALL, COLOR_WHITE, COLOR_BLACK);
+        init_pair(COLOR_FLOOR, COLOR_YELLOW, COLOR_BLACK);
+        init_pair(COLOR_PLAYER, COLOR_GREEN, COLOR_BLACK);
+        init_pair(COLOR_ENEMY, COLOR_RED, COLOR_BLACK);
+        init_pair(COLOR_TEXT, COLOR_CYAN, COLOR_BLACK);
+    }
     // Don't echo pressed keys to screen
     noecho();
     
@@ -88,6 +105,9 @@ void init_game(Game *game) {
     game->enemy.symbol = ENEMY;
     game->enemy.active = 1;  // Enemy starts alive
     
+    game->turn_count = 0;
+    game->enemies_killed = 0;
+
     // Initialize game state
     game->game_over = 0;  // Game starts running
 
@@ -120,24 +140,32 @@ void init_game(Game *game) {
 void draw_map(Game *game) {
     for (int y = 0; y < MAP_HEIGHT; y++) {
         for (int x = 0; x < MAP_WIDTH; x++) {
-            // mvaddch moves cursor to (y,x) and adds character
-            mvaddch(y, x, game->map[y][x]);
+            if (game->map[y][x] == WALL) {
+                attron(COLOR_PAIR(COLOR_WALL));
+                mvaddch(y, x, game->map[y][x]); // move cursor to x,y and places character
+                attroff(COLOR_PAIR(COLOR_WALL));
+            } else {
+                attron(COLOR_PAIR(COLOR_FLOOR));
+                mvaddch(y, x, game->map[y][x]);
+                attroff(COLOR_PAIR(COLOR_FLOOR));
+            }
         }
     }
 }
 
 void draw_player(Game *game) {
-    // Draw player on top of the map
-    mvaddch(game->player.y, game->player.x, game->player.symbol);
+    attron(COLOR_PAIR(COLOR_PLAYER));
+    mvaddch(game->player.y, game->player.x, game->player.symbol); // draw player on map
+    attroff(COLOR_PAIR(COLOR_PLAYER));
 }
 
 void draw_enemy(Game *game) {
-    // Only draw enemy if it's active (alive)
-    if (game->enemy.active) {
+    if (game->enemy.active) { // if enemy is inactive (dead) don't draw 
+        attron(COLOR_PAIR(COLOR_ENEMY));
         mvaddch(game->enemy.y, game->enemy.x, game->enemy.symbol);
+        attroff(COLOR_PAIR(COLOR_ENEMY));
     }
 }
-
 int handle_input(Game *game) {
     int ch = getch(); // Get a character from user
     
@@ -237,6 +265,8 @@ void move_player(Game *game, int dx, int dy) {
     
     // Only move if the new position is valid (terrain-wise)
     if (is_valid_player_move(game, new_x, new_y)) {
+        // Increment turn counter
+        game->turn_count++;
         // Check for combat with enemy
         if (game->enemy.active && new_x == game->enemy.x && new_y == game->enemy.y) {
             // Player attacks enemy - enemy is defeated
