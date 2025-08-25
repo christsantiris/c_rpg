@@ -10,6 +10,7 @@ int main() {
     game.game_state = STATE_MENU;
     game.selected_menu = MENU_NEW_GAME; // Start with "New Game" selected
     game.game_over = 0;
+    game.showMessage = 0;
     
     srand(time(NULL));
 
@@ -38,6 +39,10 @@ int main() {
                 mvprintw(MAP_HEIGHT + 2, 0, "Use arrow keys to move, 'q' to quit");
                 mvprintw(MAP_HEIGHT + 3, 0, "Turn: %d | Enemies Killed: %d", 
                          game.turn_count, game.enemies_killed);
+                if (game.showMessage) {
+                    mvprintw(MAP_HEIGHT + 4, 0, "You killed %s", 
+                         game.recentlyDefeated);
+                }
                 
                 // Check if all enemies are defeated
                 int active_enemies = 0;
@@ -147,7 +152,7 @@ void init_game(Game *game) {
             game->enemies[i].ID = next_id++;
             game->enemies[i].symbol = ENEMY;
             game->enemies[i].active = 1;  // Enemy starts alive
-            strcpy(game->enemies[i].name, "Goblin");
+            snprintf(game->enemies[i].name, sizeof(game->enemies[i].name), "Goblin %d", i + 1);
             
             // Place enemy randomly in any room, but not on player or other enemies
             int placement_attempts = 0;

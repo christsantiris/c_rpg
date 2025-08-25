@@ -80,6 +80,8 @@ typedef struct {
     int enemy_count;
     int game_state;
     int selected_menu;
+    char recentlyDefeated[15];
+    int showMessage;
 } Game;
 
 // Function declarations

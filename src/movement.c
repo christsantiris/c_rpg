@@ -23,11 +23,13 @@ void move_player(Game *game, int dx, int dy) {
         
         // Check for combat with any enemy
         int enemy_hit = -1;
+        char enemyName[15];
         for (int i = 0; i < game->enemy_count; i++) {
             if (game->enemies[i].active && 
                 new_x == game->enemies[i].x && 
                 new_y == game->enemies[i].y) {
                 enemy_hit = i;
+                strcpy(enemyName, game->enemies[i].name);
                 break;
             }
         }
@@ -38,6 +40,8 @@ void move_player(Game *game, int dx, int dy) {
             game->enemies_killed++;
             game->player.x = new_x;
             game->player.y = new_y;
+            strcpy(game->recentlyDefeated, enemyName);
+            game->showMessage = 1;
         } else {
             // Normal movement
             game->player.x = new_x;
