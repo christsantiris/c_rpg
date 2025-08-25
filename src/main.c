@@ -260,7 +260,19 @@ int handle_input(Game *game) {
         case 'q':
         case 'Q':
         case KEY_ESC:
-            return 0; // Quit game
+            // Display quit confirmation prompt
+            attron(COLOR_PAIR(COLOR_TEXT));
+            mvprintw(MAP_HEIGHT + 4, 0, "Are you sure? (Y/N)");
+            attroff(COLOR_PAIR(COLOR_TEXT));
+            refresh(); // Show prompt immediately
+            
+            // Get confirmation input
+            int confirm = getch();
+            if (confirm == 'y' || confirm == 'Y') {
+                return 0; // Quit game
+            }
+            // For 'n', 'N', or any other key, continue game
+            break;
             
         default:
             // Invalid key, do nothing
