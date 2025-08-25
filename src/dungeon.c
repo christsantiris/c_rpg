@@ -54,15 +54,6 @@ void generate_dungeon(Game *game) {
 }
 
 int random_range(int min, int max) {
-    if (min > max) {
-        // Swap if min > max
-        int temp = min;
-        min = max;
-        max = temp;
-    }
-    if (min == max) {
-        return min;
-    }
     return min + rand() % (max - min + 1);
 }
 

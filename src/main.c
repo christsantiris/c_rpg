@@ -11,6 +11,8 @@ int main() {
     game.selected_menu = MENU_NEW_GAME; // Start with "New Game" selected
     game.game_over = 0;
     
+    srand(time(NULL));
+    
     // Main game loop
     int running = 1;
     while (running && !game.game_over) {
