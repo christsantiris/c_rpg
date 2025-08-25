@@ -208,36 +208,6 @@ void init_game(Game *game) {
     }
 }
 
-void draw_map(Game *game) {
-    for (int y = 0; y < MAP_HEIGHT; y++) {
-        for (int x = 0; x < MAP_WIDTH; x++) {
-            if (game->map[y][x] == WALL) {
-                attron(COLOR_PAIR(COLOR_WALL));
-                mvaddch(y, x, game->map[y][x]); // move cursor to x,y and places character
-                attroff(COLOR_PAIR(COLOR_WALL));
-            } else {
-                attron(COLOR_PAIR(COLOR_FLOOR));
-                mvaddch(y, x, game->map[y][x]);
-                attroff(COLOR_PAIR(COLOR_FLOOR));
-            }
-        }
-    }
-}
-
-void draw_player(Game *game) {
-    attron(COLOR_PAIR(COLOR_PLAYER));
-    mvaddch(game->player.y, game->player.x, game->player.symbol); // draw player on map
-    attroff(COLOR_PAIR(COLOR_PLAYER));
-}
-
-void draw_enemy(Game *game, int enemy_index) {
-    if (game->enemies[enemy_index].active) { // if enemy is inactive (dead) don't draw 
-        attron(COLOR_PAIR(COLOR_ENEMY));
-        mvaddch(game->enemies[enemy_index].y, game->enemies[enemy_index].x, game->enemies[enemy_index].symbol);
-        attroff(COLOR_PAIR(COLOR_ENEMY));
-    }
-}
-
 int handle_input(Game *game) {
     int ch = getch(); // Get a character from user
     

@@ -1,5 +1,6 @@
 #include "../include/game.h"
 
+// Create the dungeon logic
 void generate_dungeon(Game *game) {
     // Fill entire map with walls
     for (int y = 0; y < MAP_HEIGHT; y++) {
