@@ -17,13 +17,11 @@ int main() {
         draw_enemy(&game);
         
         // Show instructions and game status at the bottom
-        mvprintw(MAP_HEIGHT + 2, 0, "Use arrow keys to move, 'q' to quit");
-        if (!game.enemy.active) {
-            mvprintw(MAP_HEIGHT + 3, 0, "Victory! You defeated the %s!", game.enemy.name);
-        }
-        if (game.game_over) {
-            mvprintw(MAP_HEIGHT + 3, 0, "Game Over! The %s defeated you!", game.enemy.name);
-            mvprintw(MAP_HEIGHT + 4, 0, "Press any key to exit...");
+        if (!game.game_over) {
+            mvprintw(MAP_HEIGHT + 2, 0, "Use arrow keys to move, 'q' to quit");
+            if (!game.enemy.active) {
+                mvprintw(MAP_HEIGHT + 3, 0, "Victory! You defeated the %s!", game.enemy.name);
+            }
         }
         
         // Refresh screen to render changes
@@ -34,6 +32,21 @@ int main() {
         
         // Check for game over
         if (game.game_over) {
+            // Clear screen and display ASCII GAME OVER
+            clear();
+            
+            // ASCII art for GAME OVER
+            mvprintw(5, 15, "  ####    ###   #   #  ####       ####  #   #  ####  ####");
+            mvprintw(6, 15, " #       #   #  ## ##  #          #  #  #   #  #     #   #");
+            mvprintw(7, 15, " # ###   #####  # # #  ###        #  #  #   #  ###   ####");
+            mvprintw(8, 15, " #   #   #   #  #   #  #          #  #   # #   #     #  #");
+            mvprintw(9, 15, "  ####   #   #  #   #  ####       ####    #    ####  #   #");
+            
+            mvprintw(12, 25, "The %s has defeated you!", game.enemy.name);
+            mvprintw(14, 30, "Press any key to exit...");
+            
+            refresh();
+            
             // Wait for any key press before exiting
             getch();
             running = 0;
