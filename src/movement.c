@@ -14,33 +14,11 @@ int is_valid_move(Game *game, int new_x, int new_y) {
     return 1; // Valid move
 }
 
-int is_valid_player_move(Game *game, int new_x, int new_y) {
-    // First check if it's a valid move (not wall, in bounds)
-    if (!is_valid_move(game, new_x, new_y)) {
-        return 0;
-    }
-    
-    // If enemy is at the target position and enemy is active, this will trigger combat
-    // We allow the move so combat can be handled in move_player()
-    return 1; // Valid move (combat will be resolved if needed)
-}
-
-int is_valid_enemy_move(Game *game, int new_x, int new_y) {
-    // First check if it's a valid move (not wall, in bounds)
-    if (!is_valid_move(game, new_x, new_y)) {
-        return 0;
-    }
-    
-    // If player is at the target position, this will trigger combat
-    // We allow the move so combat can be handled in move_enemy()
-    return 1; // Valid move (combat will be resolved if needed)
-}
-
 void move_player(Game *game, int dx, int dy) {
     int new_x = game->player.x + dx;
     int new_y = game->player.y + dy;
     
-    if (is_valid_player_move(game, new_x, new_y)) {
+    if (is_valid_move(game, new_x, new_y)) {
         game->turn_count++;
         
         // Check for combat with any enemy
@@ -96,7 +74,7 @@ void move_enemy(Game *game, int enemy_index) {
     int new_x = enemy_x + dx;
     int new_y = enemy_y + dy;
     
-    if (is_valid_enemy_move(game, new_x, new_y)) {
+    if (is_valid_move(game, new_x, new_y)) {
         // Check if another enemy is already there
         int blocked_by_enemy = 0;
         for (int i = 0; i < game->enemy_count; i++) {
