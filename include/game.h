@@ -58,6 +58,7 @@ typedef struct {
 
 // Enemy structure
 typedef struct {
+    int ID;
     int x;
     int y;
     char symbol;

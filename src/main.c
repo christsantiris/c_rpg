@@ -37,7 +37,7 @@ int main() {
                 
                 if (!game.enemy.active) {
                     attron(A_BOLD);
-                    mvprintw(MAP_HEIGHT + 4, 0, "Victory! You killed the %s!", game.enemy.name);
+                    mvprintw(MAP_HEIGHT + 4, 0, "Victory! You killed the %s! (ID: %d)", game.enemy.name, game.enemy.ID);
                     attroff(A_BOLD);
                 }
                 attroff(COLOR_PAIR(COLOR_TEXT));
@@ -101,11 +101,15 @@ void cleanup_ncurses() {
 void init_game(Game *game) {
     // Random number generator
     srand(time(NULL));
+
+    // Simple unique IDs for enemies
+    static int next_id = 1;
     
     // Initialize player
     game->player.symbol = PLAYER;
 
     // Initialize enemy
+    game->enemy.ID = next_id;
     game->enemy.symbol = ENEMY;
     game->enemy.active = 1;  // Enemy starts alive
     
