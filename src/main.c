@@ -20,7 +20,7 @@ int main() {
         if (!game.game_over) {
             mvprintw(MAP_HEIGHT + 2, 0, "Use arrow keys to move, 'q' to quit");
             if (!game.enemy.active) {
-                mvprintw(MAP_HEIGHT + 3, 0, "Victory! You defeated the %s!", game.enemy.name);
+                mvprintw(MAP_HEIGHT + 3, 0, "You killed the %s!", game.enemy.name);
             }
         }
         
@@ -35,7 +35,7 @@ int main() {
             // Clear screen and display ASCII GAME OVER
             clear();
             
-            // ASCII art for GAME OVER
+            // ASCII art for GAME OVER using standard ASCII characters
             mvprintw(5, 15, "  ####    ###   #   #  ####       ####  #   #  ####  ####");
             mvprintw(6, 15, " #       #   #  ## ##  #          #  #  #   #  #     #   #");
             mvprintw(7, 15, " # ###   #####  # # #  ###        #  #  #   #  ###   ####");
