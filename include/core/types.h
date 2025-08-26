@@ -1,7 +1,7 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-#include "config.h"
+#include "../utils/config.h"
 
 // Game states
 #define STATE_MENU 0

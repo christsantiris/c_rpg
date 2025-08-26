@@ -1,7 +1,7 @@
 #ifndef INPUT_H
 #define INPUT_H
 
-#include "types.h"
+#include "../core/types.h"
 
 // Input handling functions
 int handle_input(Game *game);

@@ -1,4 +1,4 @@
-#include "../include/dungeon.h"
+#include "../include/core/dungeon.h"
 #include <stdlib.h>
 
 // Create the dungeon logic

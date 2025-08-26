@@ -1,4 +1,4 @@
-#include "../include/renderer.h"
+#include "../include/systems/renderer.h"
 #include <ncurses.h>
 
 // Display the dungeon on screen
