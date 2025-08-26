@@ -8,9 +8,11 @@ SRCDIR = src
 INCDIR = include
 OBJDIR = obj
 
-# Source files
-SOURCES = $(wildcard $(SRCDIR)/*.c)
-OBJECTS = $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
+# Source files - find all .c files recursively
+SOURCES = $(shell find $(SRCDIR) -name '*.c')
+
+# Object files - this is the corrected version
+OBJECTS = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SOURCES))
 
 # Target executable
 TARGET = conr
@@ -26,8 +28,9 @@ $(OBJDIR):
 $(TARGET): $(OBJECTS)
 	$(CC) $(OBJECTS) -o $@ $(LIBS)
 
-# Compile source files to object files
+# Compile source files to object files - auto-create subdirectories
 $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR)
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -I$(INCDIR) -c $< -o $@
 
 # Clean up build files

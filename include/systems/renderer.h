@@ -1,7 +1,7 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-#include "types.h"
+#include "../core/types.h"
 
 // Rendering functions
 void draw_map(Game *game);

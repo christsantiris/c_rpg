@@ -9,12 +9,13 @@
 #include <string.h>
 
 // Project includes - include all headers
-#include "types.h"
-#include "core.h"
-#include "dungeon.h"
-#include "player.h"
-#include "enemy.h"
-#include "renderer.h"
-#include "input.h"
+#include "core/types.h"
+#include "core/core.h"
+#include "utils/config.h"
+#include "core/dungeon.h"
+#include "core/player.h"
+#include "core/enemy.h"
+#include "systems/renderer.h"
+#include "systems/input.h"
 
 #endif

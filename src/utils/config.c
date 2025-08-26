@@ -1,4 +1,4 @@
-#include "../include/config.h"
+#include "../include/utils/config.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -21,7 +21,6 @@ void config_load_from_file(GameConfig* config, const char* filename) {
     
     if (!file) {
         printf("Config file '%s' not found, using defaults.\n", filename);
-        config_load_defaults(config);
         return;
     }
     
@@ -71,7 +70,6 @@ void config_save_to_file(const GameConfig* config, const char* filename) {
     
     if (!file) {
         printf("Config file '%s' not found, creating default configuration.\n", filename);
-        config_load_defaults(config);
         
         // Save the defaults to create the file
         config_save_to_file(config, filename);

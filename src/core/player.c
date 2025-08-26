@@ -1,4 +1,4 @@
-#include "../include/player.h"
+#include "../include/core/player.h"
 #include <string.h>
 
 void move_player(Game *game, int dx, int dy) {
