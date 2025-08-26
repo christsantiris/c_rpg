@@ -1,7 +1,8 @@
-#include "../include/utils/config.h"
+#include "../../include/utils/config.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 
 void config_load_defaults(GameConfig* config) {
     // Set default values
@@ -20,7 +21,11 @@ void config_load_from_file(GameConfig* config, const char* filename) {
     FILE* file = fopen(filename, "r");
     
     if (!file) {
-        printf("Config file '%s' not found, using defaults.\n", filename);
+        printf("Config file '%s' not found, creating default configuration.\n", filename);
+        config_load_defaults(config);
+        
+        // Save the defaults to create the file
+        config_save_to_file(config, filename);
         return;
     }
     
@@ -66,13 +71,14 @@ void config_load_from_file(GameConfig* config, const char* filename) {
 }
 
 void config_save_to_file(const GameConfig* config, const char* filename) {
+    // Create assets directory if it doesn't exist
+    // This handles the case where assets/ directory doesn't exist yet
+    mkdir("assets", 0755);  // 0755 = read/write/execute for owner, read/execute for group/others
+    
     FILE* file = fopen(filename, "w");
     
     if (!file) {
-        printf("Config file '%s' not found, creating default configuration.\n", filename);
-        
-        // Save the defaults to create the file
-        config_save_to_file(config, filename);
+        printf("Error: Could not save config to '%s'.\n", filename);
         return;
     }
     
