@@ -1,6 +1,8 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#include "config.h"
+
 // Game states
 #define STATE_MENU 0
 #define STATE_PLAYING 1
@@ -76,6 +78,7 @@ typedef struct {
     int selected_menu;
     char recentlyDefeated[15];
     int showMessage;
+    GameConfig config;
 } Game;
 
 #endif

@@ -1,4 +1,5 @@
 #include "../include/renderer.h"
+#include <ncurses.h>
 
 // Display the dungeon on screen
 void draw_map(Game *game) {

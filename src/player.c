@@ -1,18 +1,5 @@
 #include "../include/player.h"
-
-int is_valid_move(Game *game, int new_x, int new_y) {
-    // Check bounds
-    if (new_x < 0 || new_x >= MAP_WIDTH || new_y < 0 || new_y >= MAP_HEIGHT) {
-        return 0;
-    }
-    
-    // Check if the tile is walkable (not a wall)
-    if (game->map[new_y][new_x] == WALL) {
-        return 0;
-    }
-    
-    return 1; // Valid move
-}
+#include <string.h>
 
 void move_player(Game *game, int dx, int dy) {
     int new_x = game->player.x + dx;
@@ -46,13 +33,6 @@ void move_player(Game *game, int dx, int dy) {
             // Normal movement
             game->player.x = new_x;
             game->player.y = new_y;
-        }
-    }
-
-    // Move all active enemies
-    for (int i = 0; i < game->enemy_count; i++) {
-        if (game->enemies[i].active) {
-            move_enemy(game, i);
         }
     }
 }
