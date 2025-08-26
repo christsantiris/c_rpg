@@ -5,16 +5,16 @@ void draw_title_screen(Game *game) {
     
     // ASCII Art Title - you can customize this!
     attron(COLOR_PAIR(COLOR_PLAYER) | A_BOLD);
-    mvprintw(4, 20, "  ____   ___  _   _ ____  ");
-    mvprintw(5, 20, " / ___| / _ \\| \\ | |  _ \\ ");
-    mvprintw(6, 20, "| |    | | | |  \\| | |_) |");
-    mvprintw(7, 20, "| |___ | |_| | |\\  |  _ < ");
-    mvprintw(8, 20, " \\____| \\___/|_| \\_|_| \\_\\");
+    mvprintw(4, 28, "  ____   ___  _   _ ____  ");
+    mvprintw(5, 28, " / ___| / _ \\| \\ | |  _ \\ ");
+    mvprintw(6, 28, "| |    | | | |  \\| | |_) |");
+    mvprintw(7, 28, "| |___ | |_| | |\\  |  _ < ");
+    mvprintw(8, 28, " \\____| \\___/|_| \\_|_| \\_\\");
     attroff(COLOR_PAIR(COLOR_PLAYER) | A_BOLD);
     
     // Subtitle
     attron(COLOR_PAIR(COLOR_TEXT));
-    mvprintw(10, 18, "~ Castle of no Return ~");
+    mvprintw(10, 30, "~ Castle of no Return ~");
     attroff(COLOR_PAIR(COLOR_TEXT));
     
     // Menu options
