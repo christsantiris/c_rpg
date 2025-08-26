@@ -37,9 +37,11 @@ int main() {
             if (!game.game_over) {
                 attron(COLOR_PAIR(COLOR_TEXT));
                 mvprintw(MAP_HEIGHT + 2, 0, "Use arrow keys to move, 'q' to quit");
-                mvprintw(MAP_HEIGHT + 3, 0, "HP: %d/%d | Turn: %d | Enemies Killed: %d", 
-                    game.player.current_hp, game.player.max_hp,
-                    game.turn_count, game.enemies_killed);
+                mvprintw(MAP_HEIGHT + 3, 0, "HP: %d/%d | Level: %d | Turn: %d | Killed: %d", 
+                        game.player.current_hp, game.player.max_hp,
+                        game.current_level,                   
+                        game.turn_count, game.enemies_killed);
+                
                 if (game.showMessage) {
                     mvprintw(MAP_HEIGHT + 4, 0, "You killed %s", 
                          game.recentlyDefeated);
@@ -53,9 +55,14 @@ int main() {
                     }
                 }
                 
-                if (active_enemies == 0) {
+                if (active_enemies == 0 && !game.waiting_for_stairs) {
+                    game.waiting_for_stairs = 1;  // Set flag to show stairs message
+                    place_stairs(&game);          // Place the stairs
+                }
+
+                if (game.waiting_for_stairs) {
                     attron(A_BOLD);
-                    mvprintw(MAP_HEIGHT + 4, 0, "Victory! You cleared the dungeon!");
+                    mvprintw(MAP_HEIGHT + 4, 0, "Level %d cleared! Find the stairs '>' to descend!", game.current_level);
                     attroff(A_BOLD);
                 }
                 attroff(COLOR_PAIR(COLOR_TEXT));

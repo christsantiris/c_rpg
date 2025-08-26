@@ -22,6 +22,7 @@
 #define WALL '#'
 #define FLOOR '.'
 #define PLAYER 'C'
+#define STAIRS_DOWN '>'
 
 // Room generation constants
 #define MIN_ROOM_SIZE 4
@@ -95,6 +96,8 @@ typedef struct {
     char recentlyDefeated[15];
     int showMessage;
     GameConfig config;
+    int current_level;
+    int waiting_for_stairs;  
 } Game;
 
 #endif

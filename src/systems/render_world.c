@@ -52,3 +52,33 @@ void draw_enemy(Game *game, int enemy_index) {
         attroff(COLOR_PAIR(color_pair));
     }
 }
+
+void place_stairs(Game *game) {
+    // Place stairs in the last room (farthest from player)
+    if (game->room_count > 0) {
+        Rectangle last_room = game->rooms[game->room_count - 1];
+        
+        // Put stairs in center of last room
+        int stairs_x = last_room.x + last_room.width / 2;
+        int stairs_y = last_room.y + last_room.height / 2;
+        
+        // Make sure stairs aren't on player or enemy
+        int position_free = 1;
+        if (stairs_x == game->player.x && stairs_y == game->player.y) {
+            position_free = 0;
+        }
+        
+        for (int i = 0; i < game->enemy_count; i++) {
+            if (game->enemies[i].active && 
+                game->enemies[i].x == stairs_x && 
+                game->enemies[i].y == stairs_y) {
+                position_free = 0;
+                break;
+            }
+        }
+        
+        if (position_free) {
+            game->map[stairs_y][stairs_x] = STAIRS_DOWN;
+        }
+    }
+}

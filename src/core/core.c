@@ -61,6 +61,9 @@ void init_game(Game *game) {
     config_load_from_file(&game->config, "assets/game.cfg");
     config_save_to_file(&game->config, "assets/game.cfg");
     
+    game->current_level = 1;        
+    game->waiting_for_stairs = 0;
+
     // Random number generator
     srand(time(NULL));
 
@@ -234,5 +237,95 @@ void setup_enemy_by_type(Enemy* enemy, EnemyType type) {
             enemy->attack = 4;
             enemy->defense = 1;
             break;
+    }
+}
+
+void create_level_enemies(Game *game) {
+    // Clear existing enemies
+    game->enemy_count = 0;
+    
+    // More enemies on deeper levels
+    int base_enemies = 3;
+    int bonus_enemies = (game->current_level - 1) / 2; // +1 enemy every 2 levels
+    int num_enemies = base_enemies + bonus_enemies;
+    
+    if (num_enemies > MAX_ENEMIES) {
+        num_enemies = MAX_ENEMIES;
+    }
+    
+    static int next_id = 100; // Different from initial enemies
+    
+    for (int i = 0; i < num_enemies; i++) {
+        game->enemies[i].ID = next_id++;
+        game->enemies[i].active = 1;
+        
+        // Higher level = stronger enemies more likely
+        EnemyType enemy_type;
+        int type_roll = rand() % 100;
+        
+        if (game->current_level == 1) {
+            // Level 1: Mostly goblins
+            if (type_roll < 70) enemy_type = ENEMY_GOBLIN;
+            else if (type_roll < 90) enemy_type = ENEMY_SKELETON;
+            else enemy_type = ENEMY_ORC;
+        } else if (game->current_level <= 3) {
+            // Levels 2-3: Mix of weak and medium
+            if (type_roll < 40) enemy_type = ENEMY_GOBLIN;
+            else if (type_roll < 70) enemy_type = ENEMY_SKELETON;
+            else if (type_roll < 95) enemy_type = ENEMY_ORC;
+            else enemy_type = ENEMY_TROLL;
+        } else {
+            // Level 4+: Mostly strong enemies
+            if (type_roll < 20) enemy_type = ENEMY_GOBLIN;
+            else if (type_roll < 40) enemy_type = ENEMY_SKELETON;
+            else if (type_roll < 70) enemy_type = ENEMY_ORC;
+            else enemy_type = ENEMY_TROLL;
+        }
+        
+        setup_enemy_by_type(&game->enemies[i], enemy_type);
+        
+        // Add level number to name
+        char temp_name[32];
+        strcpy(temp_name, game->enemies[i].name);
+        snprintf(game->enemies[i].name, sizeof(game->enemies[i].name), 
+                 "%s %d", temp_name, i + 1);
+        
+        // Place enemy in random room (same placement logic as before)
+        int placement_attempts = 0;
+        int placed = 0;
+        
+        while (!placed && placement_attempts < 50) {
+            int room_index = random_range(0, game->room_count - 1);
+            Rectangle room = game->rooms[room_index];
+            
+            int test_x = random_range(room.x + 1, room.x + room.width - 2);
+            int test_y = random_range(room.y + 1, room.y + room.height - 2);
+            
+            // Check if position is free
+            int position_free = 1;
+            
+            if (test_x == game->player.x && test_y == game->player.y) {
+                position_free = 0;
+            }
+            
+            for (int j = 0; j < i; j++) {
+                if (game->enemies[j].x == test_x && game->enemies[j].y == test_y) {
+                    position_free = 0;
+                    break;
+                }
+            }
+            
+            if (position_free) {
+                game->enemies[i].x = test_x;
+                game->enemies[i].y = test_y;
+                placed = 1;
+            }
+            
+            placement_attempts++;
+        }
+        
+        if (placed) {
+            game->enemy_count++;
+        }
     }
 }
