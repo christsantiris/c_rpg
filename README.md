@@ -22,7 +22,7 @@ Below is a screenshot of the game in action:
 <img width="625" height="516" alt="Screenshot 2025-08-26 at 4 32 11 PM" src="https://github.com/user-attachments/assets/d06b34b2-567d-4df4-aa82-a6188cc22da3" />
 
 ## Compile the game
-To compile the app run `make` in the root diretory. 
+To compile the app run `make` in the root directory. You may also have to `brew install ncurses`
 
 ## Running the game
 To run the game run `./conr` after you run make
