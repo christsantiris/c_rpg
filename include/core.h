@@ -9,4 +9,7 @@ void init_ncurses(void);
 void cleanup_ncurses(void);
 void start_new_game(Game *game);
 
+// Handle movement on map
+int is_valid_move(Game *game, int new_x, int new_y);
+
 #endif

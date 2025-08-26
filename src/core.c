@@ -25,6 +25,11 @@ void cleanup_ncurses(void) {
 }
 
 void init_game(Game *game) {
+    // Load any saved config
+    config_load_from_file(&game->config, "game.cfg");
+    
+    config_save_to_file(&game->config, "game.cfg");
+
     // Random number generator
     srand(time(NULL));
 
@@ -120,4 +125,19 @@ void init_game(Game *game) {
         strcpy(game->enemies[0].name, "Goblin");
         game->enemy_count = 1;
     }
+}
+
+// Handle movement on map
+int is_valid_move(Game *game, int new_x, int new_y) {
+    // Check bounds
+    if (new_x < 0 || new_x >= MAP_WIDTH || new_y < 0 || new_y >= MAP_HEIGHT) {
+        return 0;
+    }
+    
+    // Check if the tile is walkable (not a wall)
+    if (game->map[new_y][new_x] == WALL) {
+        return 0;
+    }
+    
+    return 1; // Valid move
 }

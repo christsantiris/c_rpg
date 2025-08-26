@@ -134,23 +134,42 @@ int handle_input(Game *game) {
         case 'q':
         case 'Q':
         case KEY_ESC:
-            // Display quit confirmation prompt
-            attron(COLOR_PAIR(COLOR_TEXT));
-            mvprintw(MAP_HEIGHT + 4, 0, "Are you sure? (Y/N)");
-            attroff(COLOR_PAIR(COLOR_TEXT));
-            refresh(); // Show prompt immediately
-            
-            // Get confirmation input
-            int confirm = getch();
-            if (confirm == 'y' || confirm == 'Y') {
-                return 0; // Quit game
+            // Check if custom quit key is configured
+            if (ch == game->config.quit_key || ch == 'q' || ch == 'Q' || ch == KEY_ESC) {
+                // Display quit confirmation prompt
+                attron(COLOR_PAIR(COLOR_TEXT));
+                mvprintw(MAP_HEIGHT + 4, 0, "Are you sure? (Y/N)");
+                attroff(COLOR_PAIR(COLOR_TEXT));
+                refresh(); // Show prompt immediately
+                
+                // Get confirmation input
+                int confirm = getch();
+                if (confirm == 'y' || confirm == 'Y') {
+                    return 0; // Quit game
+                }
+                // For 'n', 'N', or any other key, continue game
             }
-            // For 'n', 'N', or any other key, continue game
             break;
             
         default:
             // Invalid key, do nothing
             break;
+    }
+    
+    // Update all enemies after player moves (if player actually moved)
+    // This ensures enemies only move when the player moves (turn-based)
+    if (ch == KEY_UP || ch == 'w' || ch == 'W' ||
+        ch == KEY_DOWN || ch == 's' || ch == 'S' ||
+        ch == KEY_LEFT || ch == 'a' || ch == 'A' ||
+        ch == KEY_RIGHT || ch == 'd' || ch == 'D' ||
+        ch == '1' || ch == '0' || ch == 'z' || ch == 'm') {
+        
+        // Move all active enemies
+        for (int i = 0; i < game->enemy_count; i++) {
+            if (game->enemies[i].active) {
+                move_enemy(game, i);
+            }
+        }
     }
     
     return 1; // Continue game

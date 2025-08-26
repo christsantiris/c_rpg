@@ -1,4 +1,5 @@
 #include "../include/dungeon.h"
+#include <stdlib.h>
 
 // Create the dungeon logic
 void generate_dungeon(Game *game) {

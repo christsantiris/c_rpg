@@ -1,4 +1,5 @@
 #include "../include/enemy.h"
+#include "../include/core.h"
 
 // Move enemy
 void move_enemy(Game *game, int enemy_index) {
