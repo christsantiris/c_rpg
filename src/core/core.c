@@ -78,6 +78,9 @@ void init_game(Game *game) {
     game->player.current_hp = 100;
     game->player.attack = 10;
     game->player.defense = 2;
+    game->player.level = 1;                                       
+    game->player.experience = 0;                                
+    game->player.experience_to_next = calculate_experience_needed(1);
 
     // Initialize enemy array and count
     game->enemy_count = 0;
@@ -199,6 +202,7 @@ void setup_enemy_by_type(Enemy* enemy, EnemyType type) {
             enemy->current_hp = 15;
             enemy->attack = 4;
             enemy->defense = 1;
+            enemy->experience = 10;
             break;
             
         case ENEMY_ORC:
@@ -208,6 +212,7 @@ void setup_enemy_by_type(Enemy* enemy, EnemyType type) {
             enemy->current_hp = 25;
             enemy->attack = 7;
             enemy->defense = 2;
+            enemy->experience = 20;
             break;
             
         case ENEMY_SKELETON:
@@ -217,6 +222,7 @@ void setup_enemy_by_type(Enemy* enemy, EnemyType type) {
             enemy->current_hp = 20;
             enemy->attack = 6;
             enemy->defense = 0;  // No armor, but harder to hit
+            enemy->experience = 15;
             break;
             
         case ENEMY_TROLL:
@@ -226,6 +232,7 @@ void setup_enemy_by_type(Enemy* enemy, EnemyType type) {
             enemy->current_hp = 40;
             enemy->attack = 10;
             enemy->defense = 4;
+            enemy->experience = 10;
             break;
             
         default:

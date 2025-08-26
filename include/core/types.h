@@ -55,6 +55,9 @@ typedef struct {
     int current_hp;
     int attack;
     int defense;
+    int level;              
+    int experience;         
+    int experience_to_next;
 } Player;
 
 // Enemy Type Enum
@@ -78,6 +81,7 @@ typedef struct {
     int attack;
     int defense;
     EnemyType type; 
+    int experience;
 } Enemy;
 
 // Game structure
