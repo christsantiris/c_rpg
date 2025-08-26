@@ -83,3 +83,40 @@ void move_player(Game *game, int dx, int dy) {
         }
     }
 }
+
+int calculate_experience_needed(int level) {
+    // Formula: Level * 100 experience needed to reach next level
+    // Level 1->2: 100 XP, Level 2->3: 200 XP, etc.
+    return level * 100;
+}
+
+int check_level_up(Player* player) {
+    // Check if player has enough experience to level up
+    while (player->experience >= player->experience_to_next && player->level < 18) {
+        // Level up!
+        player->experience -= player->experience_to_next;  // Subtract used XP
+        player->level++;
+        
+        // Increase stats
+        player->attack += 1;
+        player->defense += 1;
+        player->max_hp += 1;
+        player->current_hp = player->max_hp;  // Full heal on level up
+        
+        // Calculate next level requirement
+        if (player->level < 18) {
+            player->experience_to_next = calculate_experience_needed(player->level);
+        } else {
+            player->experience_to_next = 0;  // Max level reached
+        }
+        
+        return 1;  // Leveled up
+    }
+    
+    return 0;  // No level up
+}
+
+void gain_experience(Player* player, int exp) {
+    player->experience += exp;
+    check_level_up(player);  // Automatically check for level up
+}

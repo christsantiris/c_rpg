@@ -37,9 +37,11 @@ int main() {
             if (!game.game_over) {
                 attron(COLOR_PAIR(COLOR_TEXT));
                 mvprintw(MAP_HEIGHT + 2, 0, "Use arrow keys to move, 'q' to quit");
-                mvprintw(MAP_HEIGHT + 3, 0, "HP: %d/%d | Level: %d | Turn: %d | Killed: %d", 
+                mvprintw(MAP_HEIGHT + 3, 0, "HP: %d/%d | Lv: %d | XP: %d/%d | Turn: %d | Killed: %d", 
                         game.player.current_hp, game.player.max_hp,
-                        game.current_level,                   
+                        game.player.level,             
+                        game.player.experience,                 
+                        game.player.experience_to_next,          
                         game.turn_count, game.enemies_killed);
                 
                 if (game.showMessage) {

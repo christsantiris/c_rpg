@@ -1,4 +1,5 @@
 #include "../../include/core/types.h"
+#include "../../include/core/core.h" 
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -29,6 +30,20 @@ int player_attack_enemy(Player* player, Enemy* enemy) {
     if (enemy->current_hp <= 0) {
         enemy->active = 0; // Enemy dies
         printf("%s is defeated!\n", enemy->name);
+        
+        // Get experience
+        gain_experience(player, enemy->experience);    
+        printf("You gain %d experience!\n", enemy->experience);
+        
+        // Check if we just leveled up (gain_experience handles the leveling)
+        static int last_level = 1;
+        if (player->level > last_level) {
+            printf("*** LEVEL UP! *** You are now level %d!\n", player->level);
+            printf("Attack: %d, Defense: %d, HP: %d/%d\n", 
+                player->attack, player->defense, player->current_hp, player->max_hp);
+            last_level = player->level;
+        }
+        
         return 1; // Enemy died
     } else {
         printf("%s has %d HP left.\n", enemy->name, enemy->current_hp);
