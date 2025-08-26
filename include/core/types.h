@@ -22,7 +22,6 @@
 #define WALL '#'
 #define FLOOR '.'
 #define PLAYER 'C'
-#define ENEMY 'E'
 
 // Room generation constants
 #define MIN_ROOM_SIZE 4
@@ -57,6 +56,14 @@ typedef struct {
     int defense;
 } Player;
 
+// Enemy Type Enum
+typedef enum {
+    ENEMY_GOBLIN = 0,
+    ENEMY_ORC,
+    ENEMY_SKELETON,
+    ENEMY_TROLL
+} EnemyType;
+
 // Enemy structure
 typedef struct {
     int ID;
@@ -69,6 +76,7 @@ typedef struct {
     int current_hp;
     int attack;
     int defense;
+    EnemyType type; 
 } Enemy;
 
 // Game structure

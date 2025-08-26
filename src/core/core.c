@@ -101,17 +101,18 @@ void init_game(Game *game) {
         int num_enemies = random_range(3, 5);
         for (int i = 0; i < num_enemies && i < MAX_ENEMIES; i++) {
             game->enemies[i].ID = next_id++;
-            game->enemies[i].symbol = ENEMY;
             game->enemies[i].active = 1;  // Enemy starts alive
-            snprintf(game->enemies[i].name, sizeof(game->enemies[i].name), "Goblin %d", i + 1);
             
-            // Initialize enemy combat stats
-            game->enemies[i].max_hp = 20;      // Enemies have less HP
-            game->enemies[i].current_hp = 20;
-            game->enemies[i].attack = 5;       // Enemies do less damage
-            game->enemies[i].defense = 1;
+            // NEW: Choose random enemy type
+            EnemyType enemy_type = (EnemyType)(rand() % 4); // 0-3 for our 4 types
+            setup_enemy_by_type(&game->enemies[i], enemy_type);
             
-            // Place enemy randomly in any room, but not on player or other enemies
+            // Add unique number to name
+            char temp_name[32];
+            strcpy(temp_name, game->enemies[i].name);
+            snprintf(game->enemies[i].name, sizeof(game->enemies[i].name), "%s %d", temp_name, i + 1);
+            
+            // Rest of placement code stays the same...
             int placement_attempts = 0;
             int placed = 0;
             
@@ -161,7 +162,6 @@ void init_game(Game *game) {
         
         // Still try to create at least one enemy near the player
         game->enemies[0].ID = next_id++;
-        game->enemies[0].symbol = ENEMY;
         game->enemies[0].active = 1;
         game->enemies[0].x = game->player.x + 2;
         game->enemies[0].y = game->player.y + 2;
@@ -183,4 +183,56 @@ void start_new_game(Game *game) {
     
     // Use existing initialization logic
     init_game(game);
+}
+
+void setup_enemy_by_type(Enemy* enemy, EnemyType type) {
+    enemy->type = type;
+    
+    switch (type) {
+        case ENEMY_GOBLIN:
+            enemy->symbol = 'G';
+            strcpy(enemy->name, "Goblin");
+            enemy->max_hp = 15;
+            enemy->current_hp = 15;
+            enemy->attack = 4;
+            enemy->defense = 1;
+            break;
+            
+        case ENEMY_ORC:
+            enemy->symbol = 'O';
+            strcpy(enemy->name, "Orc");
+            enemy->max_hp = 25;
+            enemy->current_hp = 25;
+            enemy->attack = 7;
+            enemy->defense = 2;
+            break;
+            
+        case ENEMY_SKELETON:
+            enemy->symbol = 'S';
+            strcpy(enemy->name, "Skeleton");
+            enemy->max_hp = 20;
+            enemy->current_hp = 20;
+            enemy->attack = 6;
+            enemy->defense = 0;  // No armor, but harder to hit
+            break;
+            
+        case ENEMY_TROLL:
+            enemy->symbol = 'T';
+            strcpy(enemy->name, "Troll");
+            enemy->max_hp = 40;
+            enemy->current_hp = 40;
+            enemy->attack = 10;
+            enemy->defense = 4;
+            break;
+            
+        default:
+            // Fallback to goblin
+            enemy->symbol = 'G';
+            strcpy(enemy->name, "Goblin");
+            enemy->max_hp = 15;
+            enemy->current_hp = 15;
+            enemy->attack = 4;
+            enemy->defense = 1;
+            break;
+    }
 }
