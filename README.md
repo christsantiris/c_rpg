@@ -19,7 +19,7 @@ A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explo
 ## Screenshot
 Below is a screenshot of the game in action:
 
-![Game Screenshot](https://github.com/user-attachments/assets/b9a14fab-838f-44b0-a579-6fc6820bdad9)
+<img width="426" height="488" alt="Screenshot 2025-08-26 at 4 30 49 PM" src="https://github.com/user-attachments/assets/273b3339-56d7-4f7b-9df9-7b4591ae21fa" />
 
 ## Compile the game
 To compile the app run `make` in the root diretory. 
