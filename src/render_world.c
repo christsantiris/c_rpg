@@ -1,4 +1,4 @@
-#include "../include/game.h"
+#include "../include/renderer.h"
 
 // Display the dungeon on screen
 void draw_map(Game *game) {

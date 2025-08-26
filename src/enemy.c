@@ -1,4 +1,5 @@
-#include "../include/game.h"
+#include "../include/enemy.h"
+
 // Move enemy
 void move_enemy(Game *game, int enemy_index) {
     if (!game->enemies[enemy_index].active || game->game_over) return;

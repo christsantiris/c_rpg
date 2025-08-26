@@ -1,4 +1,4 @@
-#include "../include/game.h"
+#include "../include/player.h"
 
 int is_valid_move(Game *game, int new_x, int new_y) {
     // Check bounds
