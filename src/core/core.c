@@ -1,8 +1,13 @@
-#include "../include/game.h"
+#include "../../include/core/core.h"
+#include "../../include/utils/config.h"
+#include "../../include/core/dungeon.h"
+#include <stdlib.h>
+#include <time.h>
+#include <string.h>
+#include <ncurses.h>
 
-// Move these functions from src/main.c:
 void init_ncurses(void) {
-    // Copy the entire function from main.c here
+    // Initialize ncurses
     initscr();
     
     if (has_colors()) {
@@ -20,16 +25,42 @@ void init_ncurses(void) {
 }
 
 void cleanup_ncurses(void) {
-    // Copy from main.c
     endwin();
 }
 
-void init_game(Game *game) {
-    // Load any saved config
-    config_load_from_file(&game->config, "game.cfg");
+int is_valid_move(Game *game, int new_x, int new_y) {
+    // Check bounds
+    if (new_x < 0 || new_x >= MAP_WIDTH || new_y < 0 || new_y >= MAP_HEIGHT) {
+        return 0;
+    }
     
-    config_save_to_file(&game->config, "game.cfg");
+    // Check if the tile is walkable (not a wall)
+    if (game->map[new_y][new_x] == WALL) {
+        return 0;
+    }
+    
+    // Check if player is at this position
+    if (game->player.x == new_x && game->player.y == new_y) {
+        return 0; // Can't move into player's space
+    }
+    
+    // Check if any active enemy is at this position
+    for (int i = 0; i < game->enemy_count; i++) {
+        if (game->enemies[i].active && 
+            game->enemies[i].x == new_x && 
+            game->enemies[i].y == new_y) {
+            return 0; // Can't move into enemy's space
+        }
+    }
+    
+    return 1; // Valid move
+}
 
+void init_game(Game *game) {
+    // Load configuration first
+    config_load_from_file(&game->config, "assets/game.cfg");
+    config_save_to_file(&game->config, "assets/game.cfg");
+    
     // Random number generator
     srand(time(NULL));
 
@@ -38,6 +69,12 @@ void init_game(Game *game) {
     
     // Initialize player
     game->player.symbol = PLAYER;
+    
+    // Initialize player combat stats
+    game->player.max_hp = 100;
+    game->player.current_hp = 100;
+    game->player.attack = 10;
+    game->player.defense = 2;
 
     // Initialize enemy array and count
     game->enemy_count = 0;
@@ -67,6 +104,12 @@ void init_game(Game *game) {
             game->enemies[i].symbol = ENEMY;
             game->enemies[i].active = 1;  // Enemy starts alive
             snprintf(game->enemies[i].name, sizeof(game->enemies[i].name), "Goblin %d", i + 1);
+            
+            // Initialize enemy combat stats
+            game->enemies[i].max_hp = 20;      // Enemies have less HP
+            game->enemies[i].current_hp = 20;
+            game->enemies[i].attack = 5;       // Enemies do less damage
+            game->enemies[i].defense = 1;
             
             // Place enemy randomly in any room, but not on player or other enemies
             int placement_attempts = 0;
@@ -123,21 +166,21 @@ void init_game(Game *game) {
         game->enemies[0].x = game->player.x + 2;
         game->enemies[0].y = game->player.y + 2;
         strcpy(game->enemies[0].name, "Goblin");
+        
+        // Initialize enemy combat stats
+        game->enemies[0].max_hp = 20;
+        game->enemies[0].current_hp = 20;
+        game->enemies[0].attack = 5;
+        game->enemies[0].defense = 1;
+        
         game->enemy_count = 1;
     }
 }
 
-// Handle movement on map
-int is_valid_move(Game *game, int new_x, int new_y) {
-    // Check bounds
-    if (new_x < 0 || new_x >= MAP_WIDTH || new_y < 0 || new_y >= MAP_HEIGHT) {
-        return 0;
-    }
+void start_new_game(Game *game) {
+    // Set game state first
+    game->game_state = STATE_PLAYING;
     
-    // Check if the tile is walkable (not a wall)
-    if (game->map[new_y][new_x] == WALL) {
-        return 0;
-    }
-    
-    return 1; // Valid move
+    // Use existing initialization logic
+    init_game(game);
 }

@@ -1,5 +1,10 @@
-#include "../include/core/enemy.h"
-#include "../include/core/core.h"
+#include "../../include/core/enemy.h"
+#include "../../include/core/core.h"
+#include "../../include/core/combat.h"
+
+int is_valid_enemy_move(Game *game, int new_x, int new_y) {
+    return is_valid_move(game, new_x, new_y);
+}
 
 // Move enemy
 void move_enemy(Game *game, int enemy_index) {
@@ -22,28 +27,19 @@ void move_enemy(Game *game, int enemy_index) {
     int new_x = enemy_x + dx;
     int new_y = enemy_y + dy;
     
+    // Check if target position is the player
+    if (new_x == player_x && new_y == player_y) {
+        // Attack player, but don't move into their space
+        int player_died = enemy_attack_player(&game->enemies[enemy_index], &game->player);
+        if (player_died) {
+            game->game_over = 1;
+        }
+        return; // Don't move, just attack
+    }
+    
+    // Normal movement - use is_valid_move for terrain and entity blocking
     if (is_valid_move(game, new_x, new_y)) {
-        // Check if another enemy is already there
-        int blocked_by_enemy = 0;
-        for (int i = 0; i < game->enemy_count; i++) {
-            if (i != enemy_index && game->enemies[i].active && 
-                game->enemies[i].x == new_x && game->enemies[i].y == new_y) {
-                blocked_by_enemy = 1;
-                break;
-            }
-        }
-        
-        if (!blocked_by_enemy) {
-            if (new_x == player_x && new_y == player_y) {
-                // Enemy attacks player - game over
-                game->game_over = 1;
-                game->enemies[enemy_index].x = new_x;
-                game->enemies[enemy_index].y = new_y;
-            } else {
-                // Normal movement
-                game->enemies[enemy_index].x = new_x;
-                game->enemies[enemy_index].y = new_y;
-            }
-        }
+        game->enemies[enemy_index].x = new_x;
+        game->enemies[enemy_index].y = new_y;
     }
 }

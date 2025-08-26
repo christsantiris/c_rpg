@@ -37,8 +37,9 @@ int main() {
             if (!game.game_over) {
                 attron(COLOR_PAIR(COLOR_TEXT));
                 mvprintw(MAP_HEIGHT + 2, 0, "Use arrow keys to move, 'q' to quit");
-                mvprintw(MAP_HEIGHT + 3, 0, "Turn: %d | Enemies Killed: %d", 
-                         game.turn_count, game.enemies_killed);
+                mvprintw(MAP_HEIGHT + 3, 0, "HP: %d/%d | Turn: %d | Enemies Killed: %d", 
+                    game.player.current_hp, game.player.max_hp,
+                    game.turn_count, game.enemies_killed);
                 if (game.showMessage) {
                     mvprintw(MAP_HEIGHT + 4, 0, "You killed %s", 
                          game.recentlyDefeated);

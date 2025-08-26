@@ -106,11 +106,3 @@ void handle_menu_input(Game *game) {
             break;
     }
 }
-
-void start_new_game(Game *game) {
-    // Set game state first
-    game->game_state = STATE_PLAYING;
-    
-    // Use existing initialization logic
-    init_game(game);
-}

@@ -51,6 +51,10 @@ typedef struct {
     int x;
     int y;
     char symbol;
+    int max_hp;
+    int current_hp;
+    int attack;
+    int defense;
 } Player;
 
 // Enemy structure
@@ -61,6 +65,10 @@ typedef struct {
     char symbol;
     char name[32];
     int active;  // 0 = dead/removed, 1 = alive
+    int max_hp;
+    int current_hp;
+    int attack;
+    int defense;
 } Enemy;
 
 // Game structure
