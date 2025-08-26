@@ -27,9 +27,28 @@ void draw_player(Game *game) {
 
 // Draw the enemies on the screen (this will happen in a loop on init)
 void draw_enemy(Game *game, int enemy_index) {
-    if (game->enemies[enemy_index].active) { // if enemy is inactive (dead) don't draw 
-        attron(COLOR_PAIR(COLOR_ENEMY));
-        mvaddch(game->enemies[enemy_index].y, game->enemies[enemy_index].x, game->enemies[enemy_index].symbol);
-        attroff(COLOR_PAIR(COLOR_ENEMY));
+    if (game->enemies[enemy_index].active) {
+        // Choose color based on enemy type
+        int color_pair = COLOR_ENEMY; // default red
+        
+        switch (game->enemies[enemy_index].type) {
+            case ENEMY_GOBLIN:
+                color_pair = COLOR_ENEMY;    // Red
+                break;
+            case ENEMY_ORC:
+                color_pair = COLOR_TEXT;     // Cyan  
+                break;
+            case ENEMY_SKELETON:
+                color_pair = COLOR_FLOOR;    // Yellow
+                break;
+            case ENEMY_TROLL:
+                color_pair = COLOR_WALL;     // White
+                break;
+        }
+        
+        attron(COLOR_PAIR(color_pair));
+        mvaddch(game->enemies[enemy_index].y, game->enemies[enemy_index].x, 
+                game->enemies[enemy_index].symbol);
+        attroff(COLOR_PAIR(color_pair));
     }
 }
