@@ -84,6 +84,15 @@ typedef struct {
     int experience;
 } Enemy;
 
+typedef struct {
+    int terminal_width;    // Current terminal dimensions
+    int terminal_height;
+    int viewport_x;        // Top-left corner of what we're showing (world coordinates)
+    int viewport_y;
+    int viewport_width;    // How much of the world we can show
+    int viewport_height;
+} ViewportInfo;
+
 // Game structure
 typedef struct {
     Player player;
@@ -102,6 +111,9 @@ typedef struct {
     GameConfig config;
     int current_level;
     int waiting_for_stairs;  
+    ViewportInfo viewport;
+    char levelMessage[64];     
+    int showLevelMessage;       
 } Game;
 
 #endif
