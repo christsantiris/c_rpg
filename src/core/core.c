@@ -6,6 +6,7 @@
 #include <string.h>
 #include <ncurses.h>
 
+// init_ncurses is deprecated for init_ncurses_with_viewport
 void init_ncurses(void) {
     // Initialize ncurses
     initscr();

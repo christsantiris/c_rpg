@@ -1,16 +1,19 @@
 #include "../include/game.h"
+#include "../include/systems/viewport.h" 
 
 int main() {
     Game game;
     
     // Initialize ncurses
-    init_ncurses();
+    init_ncurses_with_viewport(&game);
     
     // Initialize game to menu state
     game.game_state = STATE_MENU;
     game.selected_menu = MENU_NEW_GAME; // Start with "New Game" selected
     game.game_over = 0;
     game.showMessage = 0;
+    game.showLevelMessage = 0;     
+    strcpy(game.levelMessage, ""); 
     
     srand(time(NULL));
 
@@ -24,6 +27,7 @@ int main() {
             handle_menu_input(&game);
             
         } else if (game.game_state == STATE_PLAYING) {
+            center_viewport_on_player(&game);
             // Original game loop
             clear();
             draw_map(&game);
@@ -37,16 +41,25 @@ int main() {
             if (!game.game_over) {
                 attron(COLOR_PAIR(COLOR_TEXT));
                 mvprintw(MAP_HEIGHT + 2, 0, "Use arrow keys to move, 'q' to quit");
-                mvprintw(MAP_HEIGHT + 3, 0, "HP: %d/%d | Lv: %d | XP: %d/%d | Turn: %d | Killed: %d", 
+                mvprintw(game.viewport.viewport_height + 3, 0, "HP: %d/%d | Lv: %d | XP: %d/%d | Turn: %d | Killed: %d", 
                         game.player.current_hp, game.player.max_hp,
                         game.player.level,             
                         game.player.experience,                 
                         game.player.experience_to_next,          
                         game.turn_count, game.enemies_killed);
                 
-                if (game.showMessage) {
-                    mvprintw(MAP_HEIGHT + 4, 0, "You killed %s", 
-                         game.recentlyDefeated);
+                // Handle combat message
+                if (game.showMessage && strlen(game.recentlyDefeated) > 0) {
+                    mvprintw(game.viewport.viewport_height + 4, 0, "You killed %s", 
+                            game.recentlyDefeated);
+                }
+
+                // Handle level message (shows on line 5 if combat message is showing, otherwise line 4)
+                if (game.showLevelMessage) {
+                    int line = game.showMessage ? 5 : 4;
+                    attron(A_BOLD);
+                    mvprintw(game.viewport.viewport_height + line, 0, "%s", game.levelMessage);
+                    attroff(A_BOLD);
                 }
                 
                 // Check if all enemies are defeated
@@ -62,9 +75,10 @@ int main() {
                     place_stairs(&game);          // Place the stairs
                 }
 
+                // Level completion message (takes priority over level welcome message)
                 if (game.waiting_for_stairs) {
                     attron(A_BOLD);
-                    mvprintw(MAP_HEIGHT + 4, 0, "Level %d cleared! Find the stairs '>' to descend!", game.current_level);
+                    mvprintw(game.viewport.viewport_height + 4, 0, "Level %d cleared! Find the stairs '>' to descend!", game.current_level);
                     attroff(A_BOLD);
                 }
                 attroff(COLOR_PAIR(COLOR_TEXT));
