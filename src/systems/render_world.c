@@ -1,56 +1,140 @@
-#include "../include/systems/renderer.h"
+#include "../../include/systems/renderer.h"
 #include <ncurses.h>
+#include <stdarg.h>
 
-// Display the dungeon on screen
+// Helper function to get the window to draw to
+WINDOW* get_draw_window(Game *game) {
+    if (game->double_buffer.back_buffer) {
+        return game->double_buffer.back_buffer;
+    }
+    return stdscr;  // Fallback to direct screen drawing
+}
+
+// Display the dungeon on screen with viewport and double buffer support
 void draw_map(Game *game) {
-    for (int y = 0; y < MAP_HEIGHT; y++) {
-        for (int x = 0; x < MAP_WIDTH; x++) {
-            if (game->map[y][x] == WALL) {
-                attron(COLOR_PAIR(COLOR_WALL));
-                mvaddch(y, x, game->map[y][x]); // move cursor to x,y and places character
-                attroff(COLOR_PAIR(COLOR_WALL));
-            } else {
-                attron(COLOR_PAIR(COLOR_FLOOR));
-                mvaddch(y, x, game->map[y][x]);
-                attroff(COLOR_PAIR(COLOR_FLOOR));
+    WINDOW *win = get_draw_window(game);
+    
+    // If viewport is enabled, use viewport rendering
+    if (game->viewport.viewport_width > 0 && game->viewport.viewport_height > 0) {
+        for (int y = 0; y < game->viewport.viewport_height; y++) {
+            for (int x = 0; x < game->viewport.viewport_width; x++) {
+                int map_x = x + game->viewport.viewport_x;
+                int map_y = y + game->viewport.viewport_y;
+                
+                // Make sure we're within map bounds
+                if (map_x >= 0 && map_x < MAP_WIDTH && map_y >= 0 && map_y < MAP_HEIGHT) {
+                    if (game->map[map_y][map_x] == WALL) {
+                        wattron(win, COLOR_PAIR(COLOR_WALL));
+                        mvwaddch(win, y, x, game->map[map_y][map_x]);
+                        wattroff(win, COLOR_PAIR(COLOR_WALL));
+                    } else {
+                        wattron(win, COLOR_PAIR(COLOR_FLOOR));
+                        mvwaddch(win, y, x, game->map[map_y][map_x]);
+                        wattroff(win, COLOR_PAIR(COLOR_FLOOR));
+                    }
+                }
+            }
+        }
+    } else {
+        // Fallback to original full-map rendering
+        for (int y = 0; y < MAP_HEIGHT; y++) {
+            for (int x = 0; x < MAP_WIDTH; x++) {
+                if (game->map[y][x] == WALL) {
+                    wattron(win, COLOR_PAIR(COLOR_WALL));
+                    mvwaddch(win, y, x, game->map[y][x]);
+                    wattroff(win, COLOR_PAIR(COLOR_WALL));
+                } else {
+                    wattron(win, COLOR_PAIR(COLOR_FLOOR));
+                    mvwaddch(win, y, x, game->map[y][x]);
+                    wattroff(win, COLOR_PAIR(COLOR_FLOOR));
+                }
             }
         }
     }
 }
 
-// Draw the player on the screen
+// Draw the player on screen with double buffer support
 void draw_player(Game *game) {
-    attron(COLOR_PAIR(COLOR_PLAYER));
-    mvaddch(game->player.y, game->player.x, game->player.symbol); // draw player on map
-    attroff(COLOR_PAIR(COLOR_PLAYER));
+    WINDOW *win = get_draw_window(game);
+    int screen_x, screen_y;
+    
+    // If viewport is enabled, convert world coordinates to screen coordinates
+    if (game->viewport.viewport_width > 0 && game->viewport.viewport_height > 0) {
+        screen_x = game->player.x - game->viewport.viewport_x;
+        screen_y = game->player.y - game->viewport.viewport_y;
+        
+        // Only draw if player is visible in viewport
+        if (screen_x >= 0 && screen_x < game->viewport.viewport_width &&
+            screen_y >= 0 && screen_y < game->viewport.viewport_height) {
+            wattron(win, COLOR_PAIR(COLOR_PLAYER));
+            mvwaddch(win, screen_y, screen_x, game->player.symbol);
+            wattroff(win, COLOR_PAIR(COLOR_PLAYER));
+        }
+    } else {
+        // Fallback to original rendering
+        wattron(win, COLOR_PAIR(COLOR_PLAYER));
+        mvwaddch(win, game->player.y, game->player.x, game->player.symbol);
+        wattroff(win, COLOR_PAIR(COLOR_PLAYER));
+    }
 }
 
-// Draw the enemies on the screen (this will happen in a loop on init)
+// Draw enemies with double buffer support
 void draw_enemy(Game *game, int enemy_index) {
-    if (game->enemies[enemy_index].active) {
-        // Choose color based on enemy type
-        int color_pair = COLOR_ENEMY; // default red
+    if (!game->enemies[enemy_index].active) return;
+    
+    WINDOW *win = get_draw_window(game);
+    int screen_x, screen_y;
+    
+    // If viewport is enabled, convert world coordinates to screen coordinates
+    if (game->viewport.viewport_width > 0 && game->viewport.viewport_height > 0) {
+        screen_x = game->enemies[enemy_index].x - game->viewport.viewport_x;
+        screen_y = game->enemies[enemy_index].y - game->viewport.viewport_y;
         
-        switch (game->enemies[enemy_index].type) {
-            case ENEMY_GOBLIN:
-                color_pair = COLOR_ENEMY;    // Red
-                break;
-            case ENEMY_ORC:
-                color_pair = COLOR_TEXT;     // Cyan  
-                break;
-            case ENEMY_SKELETON:
-                color_pair = COLOR_FLOOR;    // Yellow
-                break;
-            case ENEMY_TROLL:
-                color_pair = COLOR_WALL;     // White
-                break;
+        // Only draw if enemy is visible in viewport
+        if (screen_x < 0 || screen_x >= game->viewport.viewport_width ||
+            screen_y < 0 || screen_y >= game->viewport.viewport_height) {
+            return; // Enemy not visible
         }
-        
-        attron(COLOR_PAIR(color_pair));
-        mvaddch(game->enemies[enemy_index].y, game->enemies[enemy_index].x, 
-                game->enemies[enemy_index].symbol);
-        attroff(COLOR_PAIR(color_pair));
+    } else {
+        // Fallback to original rendering
+        screen_x = game->enemies[enemy_index].x;
+        screen_y = game->enemies[enemy_index].y;
     }
+    
+    // Choose color based on enemy type
+    int color_pair = COLOR_ENEMY;
+    switch (game->enemies[enemy_index].type) {
+        case ENEMY_GOBLIN: color_pair = COLOR_ENEMY; break;
+        case ENEMY_ORC: color_pair = COLOR_TEXT; break;
+        case ENEMY_SKELETON: color_pair = COLOR_FLOOR; break;
+        case ENEMY_TROLL: color_pair = COLOR_WALL; break;
+    }
+    
+    wattron(win, COLOR_PAIR(color_pair));
+    mvwaddch(win, screen_y, screen_x, game->enemies[enemy_index].symbol);
+    wattroff(win, COLOR_PAIR(color_pair));
+}
+
+// Draw UI text with double buffer support
+void draw_ui_text(Game *game, int y, int x, const char *text) {
+    WINDOW *win = get_draw_window(game);
+    wattron(win, COLOR_PAIR(COLOR_TEXT));
+    mvwprintw(win, y, x, "%s", text);
+    wattroff(win, COLOR_PAIR(COLOR_TEXT));
+}
+
+// Draw formatted UI text with double buffer support
+void draw_ui_textf(Game *game, int y, int x, const char *format, ...) {
+    WINDOW *win = get_draw_window(game);
+    va_list args;
+    va_start(args, format);
+    
+    wattron(win, COLOR_PAIR(COLOR_TEXT));
+    wmove(win, y, x);
+    vw_printw(win, format, args);
+    wattroff(win, COLOR_PAIR(COLOR_TEXT));
+    
+    va_end(args);
 }
 
 void place_stairs(Game *game) {
