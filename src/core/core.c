@@ -110,8 +110,14 @@ void init_game(Game *game) {
             game->enemies[i].ID = next_id++;
             game->enemies[i].active = 1;  // Enemy starts alive
             
-            // NEW: Choose random enemy type
-            EnemyType enemy_type = (EnemyType)(rand() % 4); // 0-3 for our 4 types
+            // Level 1: Only weak enemies for level 1
+            EnemyType enemy_type;
+            int type_roll = rand() % 100;
+            if (type_roll < 80) {
+                enemy_type = ENEMY_GOBLIN;    // 80% goblins
+            } else {
+                enemy_type = ENEMY_SKELETON;  // 20% skeletons
+            }
             setup_enemy_by_type(&game->enemies[i], enemy_type);
             
             // Add unique number to name
@@ -233,7 +239,7 @@ void setup_enemy_by_type(Enemy* enemy, EnemyType type) {
             enemy->current_hp = 40;
             enemy->attack = 10;
             enemy->defense = 4;
-            enemy->experience = 10;
+            enemy->experience = 30;
             break;
             
         default:

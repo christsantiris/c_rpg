@@ -98,7 +98,7 @@ int main() {
                 if (game.waiting_for_stairs) {
                     char stairs_msg[128];
                     snprintf(stairs_msg, sizeof(stairs_msg), 
-                           "Level %d cleared! Find the stairs '>' to descend!", 
+                           "Dungeon Level %d cleared! Find the stairs '>' to descend!", 
                            game.current_level);
                     WINDOW *win = get_draw_window(&game);
                     wattron(win, COLOR_PAIR(COLOR_TEXT) | A_BOLD);
