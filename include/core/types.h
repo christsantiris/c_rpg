@@ -2,6 +2,7 @@
 #define TYPES_H
 
 #include "../utils/config.h"
+#include <panel.h>
 
 // Game states
 #define STATE_MENU 0
@@ -93,6 +94,14 @@ typedef struct {
     int viewport_height;
 } ViewportInfo;
 
+typedef struct {
+    WINDOW *back_buffer;    // Off-screen window we draw to
+    WINDOW *front_buffer;   // What the user sees (usually stdscr)
+    int buffer_width;
+    int buffer_height;
+    int needs_resize;
+} DoubleBuffer;
+
 // Game structure
 typedef struct {
     Player player;
@@ -112,6 +121,7 @@ typedef struct {
     int current_level;
     int waiting_for_stairs;  
     ViewportInfo viewport;
+    DoubleBuffer double_buffer;
     char levelMessage[64];     
     int showLevelMessage;       
 } Game;
