@@ -1,6 +1,7 @@
 #include "../../include/core/core.h"
 #include "../../include/utils/config.h"
 #include "../../include/core/dungeon.h"
+#include "../../include/core/item.h"
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
@@ -73,15 +74,23 @@ void init_game(Game *game) {
     
     // Initialize player
     game->player.symbol = PLAYER;
-    
-    // Initialize player combat stats
-    game->player.max_hp = 100;
-    game->player.current_hp = 100;
-    game->player.attack = 10;
-    game->player.defense = 2;
     game->player.level = 1;                                       
     game->player.experience = 0;                                
     game->player.experience_to_next = calculate_experience_needed(1);
+
+    // Set base stats
+    game->player.base_attack = 10;
+    game->player.base_defense = 2;
+    game->player.max_hp = 100;
+    game->player.current_hp = 100;
+
+    // Initialize calculated stats to base values first
+    game->player.attack = game->player.base_attack;   // Start with base attack
+    game->player.defense = game->player.base_defense; // Start with base defense
+
+    // Give player starting weapon and recalculate stats
+    Item starting_weapon = create_weapon("Rusty Sword", 2);
+    equip_weapon(&game->player, starting_weapon);
 
     // Initialize enemy array and count
     game->enemy_count = 0;

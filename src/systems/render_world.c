@@ -1,4 +1,5 @@
 #include "../../include/systems/renderer.h"
+#include "../../include/core/item.h"
 #include <ncurses.h>
 #include <stdarg.h>
 
@@ -165,4 +166,45 @@ void place_stairs(Game *game) {
             game->map[stairs_y][stairs_x] = STAIRS_DOWN;
         }
     }
+}
+
+void show_inventory(Game *game) {
+    clear();
+    
+    // Title
+    attron(COLOR_PAIR(COLOR_TEXT) | A_BOLD);
+    mvprintw(2, 2, "=== INVENTORY ===");
+    attroff(COLOR_PAIR(COLOR_TEXT) | A_BOLD);
+    
+    // Show equipped weapon
+    attron(COLOR_PAIR(COLOR_PLAYER));
+    mvprintw(4, 2, "Equipped Weapon:");
+    attroff(COLOR_PAIR(COLOR_PLAYER));
+    
+    if (has_weapon_equipped(&game->player)) {
+        mvprintw(5, 4, "[E] %s - Attack +%d", 
+                 game->player.weapon.name, 
+                 game->player.weapon.attack_bonus);
+    } else {
+        mvprintw(5, 4, "[E] None equipped");
+    }
+    
+    // Show total stats
+    attron(COLOR_PAIR(COLOR_TEXT));
+    mvprintw(7, 2, "Total Stats:");
+    mvprintw(8, 4, "Attack: %d (%d base + %d weapon)", 
+             game->player.attack, 
+             game->player.base_attack,
+             has_weapon_equipped(&game->player) ? game->player.weapon.attack_bonus : 0);
+    mvprintw(9, 4, "Defense: %d", game->player.defense);
+    mvprintw(10, 4, "HP: %d/%d", game->player.current_hp, game->player.max_hp);
+    
+    // Instructions
+    mvprintw(12, 2, "Press any key to return to game...");
+    attroff(COLOR_PAIR(COLOR_TEXT));
+    
+    refresh();
+    getch();  // Wait for key press
+    
+    // Return to game (screen will be redrawn automatically)
 }

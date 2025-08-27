@@ -18,5 +18,6 @@
 #include "systems/renderer.h"
 #include "systems/input.h"
 #include "core/combat.h"
+#include "core/item.h"
 
 #endif
