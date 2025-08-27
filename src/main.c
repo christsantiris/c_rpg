@@ -1,19 +1,24 @@
 #include "../include/game.h"
-#include "../include/systems/viewport.h" 
+#include "../include/systems/viewport.h"
+#include "../include/systems/renderer.h"
+#include "../include/systems/double_buffer.h"
 
 int main() {
     Game game;
     
-    // Initialize ncurses
+    // Initialize ncurses with viewport support
     init_ncurses_with_viewport(&game);
+    
+    // Initialize double buffer
+    init_double_buffer(&game.double_buffer);
     
     // Initialize game to menu state
     game.game_state = STATE_MENU;
     game.selected_menu = MENU_NEW_GAME; // Start with "New Game" selected
     game.game_over = 0;
     game.showMessage = 0;
-    game.showLevelMessage = 0;     
-    strcpy(game.levelMessage, ""); 
+    game.showLevelMessage = 0;     // Initialize new message field
+    strcpy(game.levelMessage, ""); // Initialize level message buffer
     
     srand(time(NULL));
 
@@ -22,14 +27,18 @@ int main() {
     while (running && !game.game_over) {
         
         if (game.game_state == STATE_MENU) {
-            // Show title screen
+            // Show title screen (not double buffered for simplicity)
             draw_title_screen(&game);
             handle_menu_input(&game);
             
         } else if (game.game_state == STATE_PLAYING) {
+            // START DOUBLE BUFFER FRAME
+            begin_draw(&game.double_buffer);
+            
+            // Update viewport if needed (only when player gets close to edges)
             center_viewport_on_player(&game);
-            // Original game loop
-            clear();
+            
+            // Draw everything to back buffer
             draw_map(&game);
             draw_player(&game);
             
@@ -39,27 +48,37 @@ int main() {
             }
             
             if (!game.game_over) {
-                attron(COLOR_PAIR(COLOR_TEXT));
-                mvprintw(MAP_HEIGHT + 2, 0, "Use arrow keys to move, 'q' to quit");
-                mvprintw(game.viewport.viewport_height + 3, 0, "HP: %d/%d | Lv: %d | XP: %d/%d | Turn: %d | Killed: %d", 
+                // Draw UI elements
+                draw_ui_text(&game, game.viewport.viewport_height + 2, 0, 
+                           "Use arrow keys to move, 'q' to quit");
+                
+                // Create status line string
+                char status_line[256];
+                snprintf(status_line, sizeof(status_line),
+                        "HP: %d/%d | Lv: %d | XP: %d/%d | Turn: %d | Killed: %d", 
                         game.player.current_hp, game.player.max_hp,
                         game.player.level,             
                         game.player.experience,                 
                         game.player.experience_to_next,          
                         game.turn_count, game.enemies_killed);
                 
+                draw_ui_text(&game, game.viewport.viewport_height + 3, 0, status_line);
+                
                 // Handle combat message
                 if (game.showMessage && strlen(game.recentlyDefeated) > 0) {
-                    mvprintw(game.viewport.viewport_height + 4, 0, "You killed %s", 
-                            game.recentlyDefeated);
+                    char combat_msg[64];
+                    snprintf(combat_msg, sizeof(combat_msg), "You killed %s", game.recentlyDefeated);
+                    draw_ui_text(&game, game.viewport.viewport_height + 4, 0, combat_msg);
                 }
-
+                
                 // Handle level message (shows on line 5 if combat message is showing, otherwise line 4)
                 if (game.showLevelMessage) {
                     int line = game.showMessage ? 5 : 4;
-                    attron(A_BOLD);
-                    mvprintw(game.viewport.viewport_height + line, 0, "%s", game.levelMessage);
-                    attroff(A_BOLD);
+                    // Use bold for level messages
+                    WINDOW *win = get_draw_window(&game);
+                    wattron(win, COLOR_PAIR(COLOR_TEXT) | A_BOLD);
+                    mvwprintw(win, game.viewport.viewport_height + line, 0, "%s", game.levelMessage);
+                    wattroff(win, COLOR_PAIR(COLOR_TEXT) | A_BOLD);
                 }
                 
                 // Check if all enemies are defeated
@@ -75,16 +94,22 @@ int main() {
                     place_stairs(&game);          // Place the stairs
                 }
 
-                // Level completion message (takes priority over level welcome message)
+                // Level completion message (takes priority over other messages)
                 if (game.waiting_for_stairs) {
-                    attron(A_BOLD);
-                    mvprintw(game.viewport.viewport_height + 4, 0, "Level %d cleared! Find the stairs '>' to descend!", game.current_level);
-                    attroff(A_BOLD);
+                    char stairs_msg[128];
+                    snprintf(stairs_msg, sizeof(stairs_msg), 
+                           "Level %d cleared! Find the stairs '>' to descend!", 
+                           game.current_level);
+                    WINDOW *win = get_draw_window(&game);
+                    wattron(win, COLOR_PAIR(COLOR_TEXT) | A_BOLD);
+                    mvwprintw(win, game.viewport.viewport_height + 4, 0, "%s", stairs_msg);
+                    wattroff(win, COLOR_PAIR(COLOR_TEXT) | A_BOLD);
                 }
-                attroff(COLOR_PAIR(COLOR_TEXT));
             }
             
-            refresh();
+            // PRESENT THE COMPLETE FRAME (no flicker!)
+            end_draw_and_present(&game.double_buffer);
+            
             running = handle_input(&game);
             
             if (game.game_over) {
@@ -106,6 +131,7 @@ int main() {
         }
     }
     
+    cleanup_double_buffer(&game.double_buffer);
     cleanup_ncurses();
     printf("Thanks for playing!\n");
     return 0;
@@ -162,7 +188,7 @@ int handle_input(Game *game) {
             if (ch == game->config.quit_key || ch == 'q' || ch == 'Q' || ch == KEY_ESC) {
                 // Display quit confirmation prompt
                 attron(COLOR_PAIR(COLOR_TEXT));
-                mvprintw(MAP_HEIGHT + 4, 0, "Are you sure? (Y/N)");
+                mvprintw(game->viewport.viewport_height + 4, 0, "Are you sure? (Y/N)");
                 attroff(COLOR_PAIR(COLOR_TEXT));
                 refresh(); // Show prompt immediately
                 

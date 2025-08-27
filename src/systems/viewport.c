@@ -1,4 +1,5 @@
 #include "../../include/systems/viewport.h"
+#include "../../include/systems/double_buffer.h"
 #include <ncurses.h>
 #include <signal.h>
 
@@ -8,12 +9,13 @@ static Game* global_game_ptr = NULL;
 // This function runs when the user resizes their terminal
 void handle_resize(int sig) {
     (void)sig;
-    endwin();    // End current ncurses session
-    refresh();   // Restart ncurses
-    clear();     // Clear the screen
+    
+    endwin();
+    refresh();
     
     if (global_game_ptr) {
-        update_viewport_info(global_game_ptr);  // Recalculate viewport
+        update_viewport_info(global_game_ptr);
+        mark_buffer_resize_needed(&global_game_ptr->double_buffer);  // Add this line
     }
 }
 
@@ -104,4 +106,35 @@ int is_in_viewport(Game *game, int world_x, int world_y) {
     
     return (screen_x >= 0 && screen_x < game->viewport.viewport_width &&
             screen_y >= 0 && screen_y < game->viewport.viewport_height);
+}
+
+// Check if player is getting close to viewport edges
+int needs_viewport_update(Game *game) {
+    int margin = 5; // How close to edge before we scroll
+    
+    int player_screen_x = game->player.x - game->viewport.viewport_x;
+    int player_screen_y = game->player.y - game->viewport.viewport_y;
+    
+    // Check if player is too close to edges
+    if (player_screen_x < margin || 
+        player_screen_x >= game->viewport.viewport_width - margin ||
+        player_screen_y < margin || 
+        player_screen_y >= game->viewport.viewport_height - margin) {
+        return 1;
+    }
+    
+    // Check if player is outside viewport (shouldn't happen but safety check)
+    if (player_screen_x < 0 || player_screen_x >= game->viewport.viewport_width ||
+        player_screen_y < 0 || player_screen_y >= game->viewport.viewport_height) {
+        return 1;
+    }
+    
+    return 0;
+}
+
+// Optimized centering that only updates when needed
+void center_viewport_on_player_if_needed(Game *game) {
+    if (needs_viewport_update(game)) {
+        center_viewport_on_player(game);
+    }
 }
