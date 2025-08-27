@@ -180,6 +180,11 @@ int handle_input(Game *game) {
         case 'm':  // Down-right diagonal
             move_player(game, 1, 1);
             break;
+
+        case 'v':
+        case 'V':
+            show_inventory(game);
+            break;
             
         case 'q':
         case 'Q':
