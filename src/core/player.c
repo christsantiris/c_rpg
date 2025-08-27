@@ -2,6 +2,7 @@
 #include "../../include/core/core.h"
 #include "../../include/core/combat.h"
 #include "../../include/core/dungeon.h"
+#include "../../include/systems/viewport.h"
 #include <string.h>
 #include <ncurses.h>
 
@@ -45,6 +46,7 @@ void move_player(Game *game, int dx, int dy) {
             game->enemies_killed++;
             strcpy(game->recentlyDefeated, enemyName);
             game->showMessage = 1;
+            game->showLevelMessage = 0;  // Clear level message when combat happens
             // Move into enemy's space since they're dead
             game->player.x = new_x;
             game->player.y = new_y;
@@ -54,7 +56,7 @@ void move_player(Game *game, int dx, int dy) {
         // Normal movement - no enemy at target position
         game->player.x = new_x;
         game->player.y = new_y;
-        // Reset message when moving without combat
+        // Reset combat message when moving without combat
         game->showMessage = 0;
         
         // Check if player stepped on stairs
@@ -75,13 +77,16 @@ void move_player(Game *game, int dx, int dy) {
             // Create new enemies (more enemies on deeper levels)
             create_level_enemies(game);
             
-            // Show level transition message
-            strcpy(game->recentlyDefeated, "");
-            snprintf(game->recentlyDefeated, sizeof(game->recentlyDefeated), 
+            // Show level transition message using separate message system
+            snprintf(game->levelMessage, sizeof(game->levelMessage), 
                      "Welcome to Level %d!", game->current_level);
-            game->showMessage = 1;
+            game->showLevelMessage = 1;
+            game->showMessage = 0;  // Clear combat message
         }
     }
+    
+    // Center viewport on player after movement
+    center_viewport_on_player(game);
 }
 
 int calculate_experience_needed(int level) {
