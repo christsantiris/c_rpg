@@ -80,7 +80,6 @@ void draw_player(Game *game) {
 }
 
 // Draw enemies with double buffer support
-// Complete draw_enemy function for src/systems/render_world.c
 void draw_enemy(Game *game, int enemy_index) {
     // Don't draw inactive (dead) enemies
     if (!game->enemies[enemy_index].active) return;
