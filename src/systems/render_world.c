@@ -79,7 +79,9 @@ void draw_player(Game *game) {
 }
 
 // Draw enemies with double buffer support
+// Complete draw_enemy function for src/systems/render_world.c
 void draw_enemy(Game *game, int enemy_index) {
+    // Don't draw inactive (dead) enemies
     if (!game->enemies[enemy_index].active) return;
     
     WINDOW *win = get_draw_window(game);
@@ -93,10 +95,10 @@ void draw_enemy(Game *game, int enemy_index) {
         // Only draw if enemy is visible in viewport
         if (screen_x < 0 || screen_x >= game->viewport.viewport_width ||
             screen_y < 0 || screen_y >= game->viewport.viewport_height) {
-            return; // Enemy not visible
+            return; // Enemy not visible, don't draw
         }
     } else {
-        // Fallback to original rendering
+        // Fallback to original rendering (no viewport)
         screen_x = game->enemies[enemy_index].x;
         screen_y = game->enemies[enemy_index].y;
     }
@@ -104,15 +106,45 @@ void draw_enemy(Game *game, int enemy_index) {
     // Choose color based on enemy type
     int color_pair = COLOR_ENEMY;
     switch (game->enemies[enemy_index].type) {
-        case ENEMY_GOBLIN: color_pair = COLOR_ENEMY; break;
-        case ENEMY_ORC: color_pair = COLOR_TEXT; break;
-        case ENEMY_SKELETON: color_pair = COLOR_FLOOR; break;
-        case ENEMY_TROLL: color_pair = COLOR_WALL; break;
+        case ENEMY_GOBLIN: 
+            color_pair = COLOR_ENEMY; 
+            break;
+        case ENEMY_ORC: 
+            color_pair = COLOR_TEXT; 
+            break;
+        case ENEMY_SKELETON: 
+            color_pair = COLOR_FLOOR; 
+            break;
+        case ENEMY_TROLL: 
+            color_pair = COLOR_WALL; 
+            break;
+        // Boss enemies get special bright green color to stand out
+        case ENEMY_DRAGON: 
+        case ENEMY_DEMON_LORD:
+        case ENEMY_LICH_KING:
+            color_pair = COLOR_PLAYER; // Bright green like player
+            break;
+        default:
+            color_pair = COLOR_ENEMY; // Fallback color
+            break;
     }
     
-    wattron(win, COLOR_PAIR(color_pair));
-    mvwaddch(win, screen_y, screen_x, game->enemies[enemy_index].symbol);
-    wattroff(win, COLOR_PAIR(color_pair));
+    // Check if this enemy is a boss
+    if (game->enemies[enemy_index].type == ENEMY_DRAGON ||
+        game->enemies[enemy_index].type == ENEMY_DEMON_LORD ||
+        game->enemies[enemy_index].type == ENEMY_LICH_KING) {
+        
+        // Bosses get BOLD styling to make them extra visible
+        wattron(win, COLOR_PAIR(color_pair) | A_BOLD);
+        mvwaddch(win, screen_y, screen_x, game->enemies[enemy_index].symbol);
+        wattroff(win, COLOR_PAIR(color_pair) | A_BOLD);
+        
+    } else {       
+       // Regular enemies get normal styling
+        wattron(win, COLOR_PAIR(color_pair));
+        mvwaddch(win, screen_y, screen_x, game->enemies[enemy_index].symbol);
+        wattroff(win, COLOR_PAIR(color_pair));
+    }
 }
 
 // Draw UI text with double buffer support

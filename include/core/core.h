@@ -20,4 +20,8 @@ int calculate_experience_needed(int level);
 int check_level_up(Player* player);           
 void gain_experience(Player* player, int exp);
 
+// Boss logic
+int is_boss_level(int level);
+void create_boss_level(Game *game);
+
 #endif

@@ -29,7 +29,14 @@ int player_attack_enemy(Player* player, Enemy* enemy) {
     
     if (enemy->current_hp <= 0) {
         enemy->active = 0; // Enemy dies
-        printf("%s is defeated!\n", enemy->name);
+
+        if (enemy->type == ENEMY_DRAGON || 
+            enemy->type == ENEMY_DEMON_LORD || 
+            enemy->type == ENEMY_LICH_KING) {
+            printf("*** BOSS DEFEATED! *** %s falls before your might!\n", enemy->name);
+        } else {
+            printf("%s is defeated!\n", enemy->name);
+        }
         
         // Get experience
         gain_experience(player, enemy->experience);    
