@@ -66,7 +66,12 @@ typedef enum {
     ENEMY_GOBLIN = 0,
     ENEMY_ORC,
     ENEMY_SKELETON,
-    ENEMY_TROLL
+    ENEMY_TROLL,
+
+    // Boss Types
+    ENEMY_DRAGON,
+    ENEMY_DEMON_LORD,
+    ENEMY_LICH_KING
 } EnemyType;
 
 // Enemy structure

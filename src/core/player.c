@@ -78,8 +78,14 @@ void move_player(Game *game, int dx, int dy) {
             create_level_enemies(game);
             
             // Show level transition message using separate message system
-            snprintf(game->levelMessage, sizeof(game->levelMessage), 
-                     "Welcome to Level %d!", game->current_level);
+            if (is_boss_level(game->current_level)) {
+                snprintf(game->levelMessage, sizeof(game->levelMessage), 
+                "BOSS LEVEL %d - Prepare for Battle!", game->current_level);
+            } else {
+                snprintf(game->levelMessage, sizeof(game->levelMessage), 
+                "Dungeon Level %d!", game->current_level);
+            }
+
             game->showLevelMessage = 1;
             game->showMessage = 0;  // Clear combat message
         }
@@ -103,9 +109,9 @@ int check_level_up(Player* player) {
         player->level++;
         
         // Increase stats
-        player->attack += 1;
+        player->attack += 2;
         player->defense += 1;
-        player->max_hp += 1;
+        player->max_hp += 10;
         player->current_hp = player->max_hp;  // Full heal on level up
         
         // Calculate next level requirement
