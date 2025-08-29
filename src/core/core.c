@@ -250,6 +250,36 @@ void setup_enemy_by_type(Enemy* enemy, EnemyType type) {
             enemy->defense = 4;
             enemy->experience = 30;
             break;
+
+        case ENEMY_DRAGON:
+            enemy->symbol = 'D';
+            strcpy(enemy->name, "Ancient Dragon");
+            enemy->max_hp = 120;
+            enemy->current_hp = 120;
+            enemy->attack = 18;
+            enemy->defense = 8;
+            enemy->experience = 200;
+            break;
+            
+        case ENEMY_DEMON_LORD:
+            enemy->symbol = 'L';
+            strcpy(enemy->name, "Demon Lord");
+            enemy->max_hp = 180;
+            enemy->current_hp = 180;
+            enemy->attack = 25;
+            enemy->defense = 12;
+            enemy->experience = 400;
+            break;
+            
+        case ENEMY_LICH_KING:
+            enemy->symbol = 'K';
+            strcpy(enemy->name, "Lich King");
+            enemy->max_hp = 250;
+            enemy->current_hp = 250;
+            enemy->attack = 35;
+            enemy->defense = 15;
+            enemy->experience = 600;
+            break;
             
         default:
             // Fallback to goblin
@@ -264,6 +294,12 @@ void setup_enemy_by_type(Enemy* enemy, EnemyType type) {
 }
 
 void create_level_enemies(Game *game) {
+
+    // If boss level don't create enemies and only create the boss
+    if (is_boss_level(game->current_level)) {
+        create_boss_level(game);
+        return; // Remove this return to give the boss minions
+    }
     // Clear existing enemies
     game->enemy_count = 0;
     
@@ -350,5 +386,61 @@ void create_level_enemies(Game *game) {
         if (placed) {
             game->enemy_count++;
         }
+    }
+}
+
+// Check if current level is a boss level (every 5th level)
+int is_boss_level(int level) {
+    return (level % 5 == 0);
+}
+
+// Create a special boss level with one powerful enemy
+void create_boss_level(Game *game) {
+    // Clear existing enemies
+    game->enemy_count = 0;
+    
+    static int next_id = 500; // Different ID range for bosses
+    
+    // Create exactly one boss enemy
+    game->enemies[0].ID = next_id++;
+    game->enemies[0].active = 1;
+    
+    // Determine boss type based on level
+    EnemyType boss_type;
+    if (game->current_level <= 10) {
+        boss_type = ENEMY_DRAGON;
+    } else if (game->current_level <= 20) {
+        boss_type = ENEMY_DEMON_LORD;
+    } else {
+        boss_type = ENEMY_LICH_KING;
+    }
+    
+    setup_enemy_by_type(&game->enemies[0], boss_type);
+    
+    // Add level indicator to name
+    char temp_name[32];
+    strcpy(temp_name, game->enemies[0].name);
+    snprintf(game->enemies[0].name, sizeof(game->enemies[0].name), 
+             "%s (Lv.%d Boss)", temp_name, game->current_level);
+    
+    // Place boss in the center of the largest room
+    if (game->room_count > 0) {
+        // Find the largest room
+        int largest_room = 0;
+        int max_area = game->rooms[0].width * game->rooms[0].height;
+        
+        for (int i = 1; i < game->room_count; i++) {
+            int area = game->rooms[i].width * game->rooms[i].height;
+            if (area > max_area) {
+                max_area = area;
+                largest_room = i;
+            }
+        }
+        
+        Rectangle boss_room = game->rooms[largest_room];
+        game->enemies[0].x = boss_room.x + boss_room.width / 2;
+        game->enemies[0].y = boss_room.y + boss_room.height / 2;
+        
+        game->enemy_count = 1;
     }
 }
