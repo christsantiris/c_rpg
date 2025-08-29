@@ -47,6 +47,22 @@ typedef struct Rectangle {
     int x, y, width, height;
 } Rectangle;
 
+// Item types
+typedef enum {
+    ITEM_TYPE_WEAPON,
+    ITEM_TYPE_ARMOR,
+    ITEM_TYPE_CONSUMABLE
+} ItemType;
+
+// Item type
+typedef struct {
+    char name[32];
+    ItemType type;
+    int attack_bonus;
+    int defense_bonus;
+    int equipped;  // 1 = equipped, 0 = in inventory
+} Item;
+
 // Player structure
 typedef struct {
     int x;
@@ -54,11 +70,14 @@ typedef struct {
     char symbol;
     int max_hp;
     int current_hp;
+    int base_attack;     
+    int base_defense;
     int attack;
     int defense;
     int level;              
     int experience;         
     int experience_to_next;
+    Item weapon;
 } Player;
 
 // Enemy Type Enum
