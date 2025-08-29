@@ -14,4 +14,7 @@ WINDOW* get_draw_window(Game *game);
 // Menu functions
 void draw_title_screen(Game *game);
 
+// Inventory view
+void show_inventory(Game *game);
+
 #endif
