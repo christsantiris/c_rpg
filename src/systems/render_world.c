@@ -11,6 +11,21 @@ WINDOW* get_draw_window(Game *game) {
     return stdscr;  // Fallback to direct screen drawing
 }
 
+// Helper function to get HP color based on health percentage
+int get_hp_color(int current_hp, int max_hp) {
+    if (max_hp <= 0) return COLOR_TEXT; // Safety check
+    
+    double hp_percentage = (double)current_hp / max_hp;
+    
+    if (hp_percentage > 0.75) {
+        return COLOR_PLAYER; // Green for healthy (>75%)
+    } else if (hp_percentage >= 0.25) {
+        return COLOR_FLOOR; // Yellow for wounded (25-75%)
+    } else {
+        return COLOR_ENEMY; // Red for critical (<25%)
+    }
+}
+
 // Display the dungeon on screen with viewport and double buffer support
 void draw_map(Game *game) {
     WINDOW *win = get_draw_window(game);
