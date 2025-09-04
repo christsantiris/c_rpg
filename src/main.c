@@ -56,14 +56,20 @@ int main() {
                 // Create status line string
                 char status_line[256];
                 snprintf(status_line, sizeof(status_line),
-                        "HP: %d/%d | Lv: %d | XP: %d/%d | Turn: %d | Killed: %d", 
-                        game.player.current_hp, game.player.max_hp,
-                        game.player.level,             
-                        game.player.experience,                 
-                        game.player.experience_to_next,          
-                        game.turn_count, game.enemies_killed);
-                
-                draw_ui_text(&game, game.viewport.viewport_height + 3, 0, status_line);
+                        "Lv: %d | XP: %d/%d | Turn: %d | Killed: %d", 
+                        game.player.level, game.player.experience, 
+                        game.player.experience_to_next, game.turn_count, game.enemies_killed);
+
+                // Draw colored HP first
+                WINDOW *win = get_draw_window(&game);
+                int hp_color = get_hp_color(game.player.current_hp, game.player.max_hp);
+                wattron(win, COLOR_PAIR(hp_color) | A_BOLD);
+                mvwprintw(win, game.viewport.viewport_height + 3, 0, "HP: %d/%d", 
+                        game.player.current_hp, game.player.max_hp);
+                wattroff(win, COLOR_PAIR(hp_color) | A_BOLD);
+
+                // Then draw rest with normal function
+                draw_ui_text(&game, game.viewport.viewport_height + 3, 15, status_line);
                 
                 // Handle combat message
                 if (game.showMessage && strlen(game.recentlyDefeated) > 0) {
