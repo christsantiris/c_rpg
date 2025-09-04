@@ -88,9 +88,16 @@ void init_game(Game *game) {
     game->player.attack = game->player.base_attack;   // Start with base attack
     game->player.defense = game->player.base_defense; // Start with base defense
 
+    // Initialize player inventory
+    init_inventory(&game->player.inventory);
+
     // Give player starting weapon and recalculate stats
     Item starting_weapon = create_weapon("Rusty Sword", 2);
     equip_weapon(&game->player, starting_weapon);
+
+    // Add starting healing potion to inventory
+    Item starting_potion = create_healing_potion("Health Potion", 30);
+    add_item_to_inventory(&game->player.inventory, starting_potion);
 
     // Initialize enemy array and count
     game->enemy_count = 0;
@@ -293,6 +300,62 @@ void setup_enemy_by_type(Enemy* enemy, EnemyType type) {
     }
 }
 
+// Check if current level is a boss level (every 5th level)
+int is_boss_level(int level) {
+    return (level % 5 == 0);
+}
+
+// Create a special boss level with one powerful enemy
+void create_boss_level(Game *game) {
+    // Clear existing enemies
+    game->enemy_count = 0;
+    
+    static int next_id = 500; // Different ID range for bosses
+    
+    // Create exactly one boss enemy
+    game->enemies[0].ID = next_id++;
+    game->enemies[0].active = 1;
+    
+    // Determine boss type based on level
+    EnemyType boss_type;
+    if (game->current_level <= 10) {
+        boss_type = ENEMY_DRAGON;
+    } else if (game->current_level <= 20) {
+        boss_type = ENEMY_DEMON_LORD;
+    } else {
+        boss_type = ENEMY_LICH_KING;
+    }
+    
+    setup_enemy_by_type(&game->enemies[0], boss_type);
+    
+    // Add level indicator to name
+    char temp_name[32];
+    strcpy(temp_name, game->enemies[0].name);
+    snprintf(game->enemies[0].name, sizeof(game->enemies[0].name), 
+             "%s (Lv.%d Boss)", temp_name, game->current_level);
+    
+    // Place boss in the center of the largest room
+    if (game->room_count > 0) {
+        // Find the largest room
+        int largest_room = 0;
+        int max_area = game->rooms[0].width * game->rooms[0].height;
+        
+        for (int i = 1; i < game->room_count; i++) {
+            int area = game->rooms[i].width * game->rooms[i].height;
+            if (area > max_area) {
+                max_area = area;
+                largest_room = i;
+            }
+        }
+        
+        Rectangle boss_room = game->rooms[largest_room];
+        game->enemies[0].x = boss_room.x + boss_room.width / 2;
+        game->enemies[0].y = boss_room.y + boss_room.height / 2;
+        
+        game->enemy_count = 1;
+    }
+}
+
 void create_level_enemies(Game *game) {
 
     // If boss level don't create enemies and only create the boss
@@ -389,58 +452,3 @@ void create_level_enemies(Game *game) {
     }
 }
 
-// Check if current level is a boss level (every 5th level)
-int is_boss_level(int level) {
-    return (level % 5 == 0);
-}
-
-// Create a special boss level with one powerful enemy
-void create_boss_level(Game *game) {
-    // Clear existing enemies
-    game->enemy_count = 0;
-    
-    static int next_id = 500; // Different ID range for bosses
-    
-    // Create exactly one boss enemy
-    game->enemies[0].ID = next_id++;
-    game->enemies[0].active = 1;
-    
-    // Determine boss type based on level
-    EnemyType boss_type;
-    if (game->current_level <= 10) {
-        boss_type = ENEMY_DRAGON;
-    } else if (game->current_level <= 20) {
-        boss_type = ENEMY_DEMON_LORD;
-    } else {
-        boss_type = ENEMY_LICH_KING;
-    }
-    
-    setup_enemy_by_type(&game->enemies[0], boss_type);
-    
-    // Add level indicator to name
-    char temp_name[32];
-    strcpy(temp_name, game->enemies[0].name);
-    snprintf(game->enemies[0].name, sizeof(game->enemies[0].name), 
-             "%s (Lv.%d Boss)", temp_name, game->current_level);
-    
-    // Place boss in the center of the largest room
-    if (game->room_count > 0) {
-        // Find the largest room
-        int largest_room = 0;
-        int max_area = game->rooms[0].width * game->rooms[0].height;
-        
-        for (int i = 1; i < game->room_count; i++) {
-            int area = game->rooms[i].width * game->rooms[i].height;
-            if (area > max_area) {
-                max_area = area;
-                largest_room = i;
-            }
-        }
-        
-        Rectangle boss_room = game->rooms[largest_room];
-        game->enemies[0].x = boss_room.x + boss_room.width / 2;
-        game->enemies[0].y = boss_room.y + boss_room.height / 2;
-        
-        game->enemy_count = 1;
-    }
-}

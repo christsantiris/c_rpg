@@ -47,38 +47,57 @@ typedef struct Rectangle {
     int x, y, width, height;
 } Rectangle;
 
-// Item types
+// Item types enum
 typedef enum {
     ITEM_TYPE_WEAPON,
     ITEM_TYPE_ARMOR,
     ITEM_TYPE_CONSUMABLE
 } ItemType;
 
-// Item type
-typedef struct {
+// Forward declarations
+typedef struct Item Item;
+typedef struct Player Player;
+
+// Function pointer for item usage
+typedef int (*ItemUseFunction)(Item* item, Player* player);
+
+// Item structure
+struct Item {
     char name[32];
+    char description[64];
     ItemType type;
+    
+    // Weapon/Armor properties
     int attack_bonus;
     int defense_bonus;
-    int equipped;  // 1 = equipped, 0 = in inventory
-} Item;
+    int equipped;
+    
+    // Consumable properties
+    int heal_amount;
+    
+    // Function pointer
+    ItemUseFunction use_function;
+    int item_id;
+};
 
-// Player structure
+// Inventory structure
+#define MAX_INVENTORY_SIZE 10
 typedef struct {
-    int x;
-    int y;
+    Item items[MAX_INVENTORY_SIZE];
+    int item_count;
+} Inventory;
+
+// Player structure  
+struct Player {
+    int x, y;
     char symbol;
-    int max_hp;
-    int current_hp;
-    int base_attack;     
-    int base_defense;
-    int attack;
-    int defense;
-    int level;              
-    int experience;         
-    int experience_to_next;
+    int max_hp, current_hp;
+    int base_attack, base_defense;
+    int attack, defense;
+    int level, experience, experience_to_next;
     Item weapon;
-} Player;
+    Inventory inventory;
+};
 
 // Enemy Type Enum
 typedef enum {

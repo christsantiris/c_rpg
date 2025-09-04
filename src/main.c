@@ -50,7 +50,7 @@ int main() {
             if (!game.game_over) {
                 // Draw UI elements
                 draw_ui_text(&game, game.viewport.viewport_height + 2, 0, 
-                           "Use arrow keys to move, 'q' to quit");
+                           "Arrow keys: move, 'V': inventory, 'U': use item, 'Q': quit");
                 
                 // Create status line string
                 char status_line[256];
@@ -184,6 +184,103 @@ int handle_input(Game *game) {
         case 'v':
         case 'V':
             show_inventory(game);
+            break;
+
+        case 'u':
+        case 'U':
+            // Use item from inventory
+            if (game->player.inventory.item_count > 0) {
+                // Show available consumable items
+                clear();
+                mvprintw(2, 2, "=== USE ITEM ===");
+                mvprintw(4, 2, "Select an item to use:");
+                
+                int consumable_count = 0;
+                int consumable_indices[MAX_INVENTORY_SIZE];
+                
+                // Show only consumable items
+                for (int i = 0; i < game->player.inventory.item_count; i++) {
+                    Item* item = &game->player.inventory.items[i];
+                    if (item->type == ITEM_TYPE_CONSUMABLE) {
+                        mvprintw(6 + consumable_count, 4, "%d. %s", 
+                                consumable_count + 1, item->name);
+                        consumable_indices[consumable_count] = i;
+                        consumable_count++;
+                    }
+                }
+                
+                if (consumable_count == 0) {
+                    mvprintw(6, 4, "No usable items in inventory.");
+                    mvprintw(8, 2, "Press any key to continue...");
+                    refresh();
+                    getch();
+                } else {
+                    mvprintw(6 + consumable_count + 1, 2, "Press 1-%d to use item, any other key to cancel", consumable_count);
+                    refresh();
+                    
+                    int item_choice = getch();
+                    int choice_num = item_choice - '1';  // Convert '1' to 0, '2' to 1, etc.
+                    
+                    if (choice_num >= 0 && choice_num < consumable_count) {
+                        int actual_index = consumable_indices[choice_num];
+                        Item* selected_item = &game->player.inventory.items[actual_index];
+                        
+                        // Clear screen and show result
+                        clear();
+                        mvprintw(2, 2, "=== ITEM USED ===");
+                        
+                        // Check if item can be used
+                        if (selected_item->type == ITEM_TYPE_CONSUMABLE && selected_item->use_function) {
+                            if (game->player.current_hp >= game->player.max_hp) {
+                                mvprintw(4, 2, "You are already at full health!");
+                            } else {
+                                // Apply healing
+                                int old_hp = game->player.current_hp;
+                                game->player.current_hp += selected_item->heal_amount;
+                                if (game->player.current_hp > game->player.max_hp) {
+                                    game->player.current_hp = game->player.max_hp;
+                                }
+                                
+                                int healed = game->player.current_hp - old_hp;
+                                
+                                // Show result with proper formatting
+                                mvprintw(4, 2, "You drink the %s and restore %d HP!", 
+                                        selected_item->name, healed);
+                                mvprintw(5, 2, "HP: %d/%d", 
+                                        game->player.current_hp, game->player.max_hp);
+                                mvprintw(6, 2, "The %s is consumed.", selected_item->name);
+                                
+                                // Remove item from inventory
+                                remove_item_from_inventory(&game->player.inventory, actual_index);
+                                
+                                // This counts as a turn - move all active enemies
+                                for (int i = 0; i < game->enemy_count; i++) {
+                                    if (game->enemies[i].active) {
+                                        move_enemy(game, i);
+                                    }
+                                }
+                                game->turn_count++;
+                            }
+                        } else {
+                            mvprintw(4, 2, "This item cannot be used.");
+                        }
+                        
+                        mvprintw(8, 2, "Press any key to continue...");
+                        refresh();
+                        getch();
+                    }
+                }
+                
+                // Clear messages when returning to game
+                game->showMessage = 0;
+            } else {
+                // No items in inventory
+                clear();
+                mvprintw(5, 15, "Your inventory is empty!");
+                mvprintw(7, 15, "Press any key to continue...");
+                refresh();
+                getch();
+            }
             break;
             
         case 'q':
