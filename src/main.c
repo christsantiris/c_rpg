@@ -142,7 +142,7 @@ int handle_input(Game *game) {
     int ch = getch(); // Get a character from user
     
     switch (ch) {
-        case 's': // Both lowercase and uppercase 's' for save - HANDLE FIRST!
+        case 's': // Both lowercase and uppercase 's' for save
         case 'S':
             // Save the game
             clear();
