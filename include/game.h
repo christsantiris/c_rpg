@@ -17,6 +17,7 @@
 #include "core/enemy.h"
 #include "systems/renderer.h"
 #include "systems/input.h"
+#include "systems/save_load.h"
 #include "core/combat.h"
 #include "core/item.h"
 
