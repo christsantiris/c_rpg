@@ -1,4 +1,5 @@
 #include "../include/game.h"
+#include "../include/systems/save_load.h"
 
 void draw_title_screen(Game *game) {
     clear();
@@ -17,11 +18,14 @@ void draw_title_screen(Game *game) {
     mvprintw(10, 30, "~ Castle of no Return ~");
     attroff(COLOR_PAIR(COLOR_TEXT));
     
+    // Check if save file exists
+    int has_save = save_file_exists(SAVE_FILENAME);
+    
     // Menu options
     int start_y = 13;
     const char* menu_items[] = {
         "New Game",
-        "Load Game", 
+        has_save ? "Load Game (save found)" : "Load Game (no save)", 
         "Quit"
     };
     
@@ -32,10 +36,15 @@ void draw_title_screen(Game *game) {
             mvprintw(start_y + i * 2, 30, "> %s <", menu_items[i]);
             attroff(COLOR_PAIR(COLOR_ENEMY) | A_BOLD);
         } else {
-            // Normal option
-            attron(COLOR_PAIR(COLOR_TEXT));
+            // Normal option - but dim the load option if no save exists
+            if (i == MENU_LOAD_GAME && !has_save) {
+                attron(COLOR_PAIR(COLOR_WALL)); // Dimmed color
+            } else {
+                attron(COLOR_PAIR(COLOR_TEXT));
+            }
             mvprintw(start_y + i * 2, 32, "%s", menu_items[i]);
             attroff(COLOR_PAIR(COLOR_TEXT));
+            attroff(COLOR_PAIR(COLOR_WALL));
         }
     }
     
@@ -52,8 +61,6 @@ void handle_menu_input(Game *game) {
     
     switch (ch) {
         case KEY_UP:
-        case 'w':
-        case 'W':
             // Move up in menu
             game->selected_menu--;
             if (game->selected_menu < 0) {
@@ -62,8 +69,6 @@ void handle_menu_input(Game *game) {
             break;
             
         case KEY_DOWN:
-        case 's':
-        case 'S':
             // Move down in menu
             game->selected_menu++;
             if (game->selected_menu > 2) {
@@ -81,14 +86,30 @@ void handle_menu_input(Game *game) {
                     break;
                     
                 case MENU_LOAD_GAME:
-                    // Show "not implemented" message temporarily
-                    clear();
-                    attron(COLOR_PAIR(COLOR_TEXT));
-                    mvprintw(MAP_HEIGHT / 2, MAP_WIDTH / 2 - 10, "Load Game - Not Implemented Yet!");
-                    mvprintw(MAP_HEIGHT / 2 + 2, MAP_WIDTH / 2 - 8, "Press any key to continue...");
-                    attroff(COLOR_PAIR(COLOR_TEXT));
-                    refresh();
-                    getch(); // Wait for key press
+                    if (save_file_exists(SAVE_FILENAME)) {
+                        if (load_game(game, SAVE_FILENAME)) {
+                            // Game loaded successfully
+                            // The load_game function sets game_state to STATE_PLAYING
+                        } else {
+                            // Show error message
+                            clear();
+                            attron(COLOR_PAIR(COLOR_TEXT));
+                            mvprintw(MAP_HEIGHT / 2, MAP_WIDTH / 2 - 15, "Error: Could not load saved game!");
+                            mvprintw(MAP_HEIGHT / 2 + 2, MAP_WIDTH / 2 - 8, "Press any key to continue...");
+                            attroff(COLOR_PAIR(COLOR_TEXT));
+                            refresh();
+                            getch();
+                        }
+                    } else {
+                        // No save file exists
+                        clear();
+                        attron(COLOR_PAIR(COLOR_TEXT));
+                        mvprintw(MAP_HEIGHT / 2, MAP_WIDTH / 2 - 10, "No saved game found!");
+                        mvprintw(MAP_HEIGHT / 2 + 2, MAP_WIDTH / 2 - 8, "Press any key to continue...");
+                        attroff(COLOR_PAIR(COLOR_TEXT));
+                        refresh();
+                        getch();
+                    }
                     break;
                     
                 case MENU_QUIT:
