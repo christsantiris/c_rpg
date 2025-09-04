@@ -78,8 +78,14 @@ void move_player(Game *game, int dx, int dy) {
             create_level_enemies(game);
             
             // Show level transition message using separate message system
-            snprintf(game->levelMessage, sizeof(game->levelMessage), 
-                     "Dungeon Level %d!", game->current_level);
+            if (is_boss_level(game->current_level)) {
+                snprintf(game->levelMessage, sizeof(game->levelMessage), 
+                "BOSS LEVEL %d - Prepare for Battle!", game->current_level);
+            } else {
+                snprintf(game->levelMessage, sizeof(game->levelMessage), 
+                "Dungeon Level %d!", game->current_level);
+            }
+
             game->showLevelMessage = 1;
             game->showMessage = 0;  // Clear combat message
         }
