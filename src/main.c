@@ -2,6 +2,7 @@
 #include "../include/systems/viewport.h"
 #include "../include/systems/renderer.h"
 #include "../include/systems/double_buffer.h"
+#include "../include/systems/save_load.h"
 
 int main() {
     Game game;
@@ -50,7 +51,7 @@ int main() {
             if (!game.game_over) {
                 // Draw UI elements
                 draw_ui_text(&game, game.viewport.viewport_height + 2, 0, 
-                           "Arrow keys: move, 'V': inventory, 'U': use item, 'Q': quit");
+                           "Arrow keys/WASD: move, 'V': inventory, 'U': use, 'S': save, 'L': load, 'Q': quit");
                 
                 // Create status line string
                 char status_line[256];
@@ -141,15 +142,38 @@ int handle_input(Game *game) {
     int ch = getch(); // Get a character from user
     
     switch (ch) {
+        case 's': // Both lowercase and uppercase 's' for save - HANDLE FIRST!
+        case 'S':
+            // Save the game
+            clear();
+            mvprintw(5, 15, "=== SAVE GAME ===");
+            mvprintw(7, 15, "Saving game to: %s", SAVE_FILENAME);
+            mvprintw(8, 15, "Creating saves directory...");
+            refresh();
+            
+            // Create directory first
+            create_save_directory();
+            
+            mvprintw(9, 15, "Attempting to save...");
+            refresh();
+            
+            if (save_game(game, SAVE_FILENAME)) {
+                mvprintw(11, 15, "Game saved successfully!");
+            } else {
+                mvprintw(11, 15, "Error: Could not save game!");
+            }
+            
+            mvprintw(13, 15, "Check the saves/ directory for savegame.dat");
+            mvprintw(15, 15, "Press any key to continue...");
+            refresh();
+            getch();
+            break;
+            
         case KEY_UP:
-        case 'w':
-        case 'W':
             move_player(game, 0, -1); // Move up (y decreases)
             break;
             
         case KEY_DOWN:
-        case 's':
-        case 'S':
             move_player(game, 0, 1); // Move down (y increases)
             break;
             
@@ -288,11 +312,12 @@ int handle_input(Game *game) {
         case KEY_ESC:
             // Check if custom quit key is configured
             if (ch == game->config.quit_key || ch == 'q' || ch == 'Q' || ch == KEY_ESC) {
-                // Display quit confirmation prompt
-                attron(COLOR_PAIR(COLOR_TEXT));
-                mvprintw(game->viewport.viewport_height + 4, 0, "Are you sure? (Y/N)");
-                attroff(COLOR_PAIR(COLOR_TEXT));
-                refresh(); // Show prompt immediately
+                // Clear screen and show quit confirmation
+                clear();
+                mvprintw(5, 15, "=== QUIT GAME ===");
+                mvprintw(7, 15, "Are you sure you want to quit?");
+                mvprintw(9, 15, "Press 'Y' to quit, any other key to continue");
+                refresh();
                 
                 // Get confirmation input
                 int confirm = getch();
@@ -300,6 +325,7 @@ int handle_input(Game *game) {
                     return 0; // Quit game
                 }
                 // For 'n', 'N', or any other key, continue game
+                // Screen will be redrawn automatically on next frame
             }
             break;
             
