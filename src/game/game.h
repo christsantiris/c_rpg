@@ -1,5 +1,7 @@
-#ifndef GAME_H
-#define GAME_H
+#ifndef GAME_HEADER_H
+#define GAME_HEADER_H
+
+#include "map.h"
 
 typedef struct {
     int x, y;
@@ -7,10 +9,13 @@ typedef struct {
 
 typedef struct {
     Player player;
-    int map_w, map_h;
+    Map    map;
+    int    level;
 } GameState;
 
-void game_init(GameState *g, int map_w, int map_h);
+void game_init(GameState *g);
 void game_move_player(GameState *g, int dx, int dy);
+void game_descend(GameState *g);
+void game_ascend(GameState *g);
 
 #endif
