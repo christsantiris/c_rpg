@@ -7,6 +7,7 @@ void test_movement(void);
 void test_map(void);
 void test_map_tiles(void);
 void test_viewport(void);
+void test_dungeon(void);
 
 int main(void) {
     printf("=== CONR Test Suite ===\n\n");
@@ -17,6 +18,8 @@ int main(void) {
     test_map_tiles();
     printf("\n");
     test_viewport();
+    printf("\n");
+    test_dungeon();
     printf("\n");
     REPORT();
 }

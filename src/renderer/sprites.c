@@ -41,3 +41,33 @@ void draw_player(Renderer *r, int tile_x, int tile_y) {
     // sword
     fill_rect(r, x + 17, y + 7,  2,  9,  sword);
 }
+
+void draw_stairs_up(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color base   = {18,  18,  35,  255};
+    SDL_Color step   = {180, 140, 60,  255};
+    SDL_Color edge   = {220, 180, 80,  255};
+    fill_rect(r, x,         y,         TILE_SIZE, TILE_SIZE, base);
+    fill_rect(r, x + 3,     y + 14,    18,        3,         step);
+    fill_rect(r, x + 6,     y + 10,    12,        3,         step);
+    fill_rect(r, x + 9,     y + 6,     6,         3,         step);
+    fill_rect(r, x + 3,     y + 14,    18,        1,         edge);
+    fill_rect(r, x + 6,     y + 10,    12,        1,         edge);
+    fill_rect(r, x + 9,     y + 6,     6,         1,         edge);
+}
+
+void draw_stairs_down(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color base   = {18,  18,  35,  255};
+    SDL_Color step   = {100, 80,  160, 255};
+    SDL_Color edge   = {140, 110, 200, 255};
+    fill_rect(r, x,         y,         TILE_SIZE, TILE_SIZE, base);
+    fill_rect(r, x + 3,     y + 4,     18,        3,         step);
+    fill_rect(r, x + 6,     y + 8,     12,        3,         step);
+    fill_rect(r, x + 9,     y + 12,    6,         3,         step);
+    fill_rect(r, x + 3,     y + 4,     18,        1,         edge);
+    fill_rect(r, x + 6,     y + 8,     12,        1,         edge);
+    fill_rect(r, x + 9,     y + 12,    6,         1,         edge);
+}
