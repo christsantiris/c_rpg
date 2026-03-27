@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "renderer/renderer.h"
 #include "renderer/sprites.h"
+#include "game/game.h"
 
 #define WINDOW_TITLE "Castle of No Return"
 #define WINDOW_W     1280
@@ -43,18 +44,33 @@ int main(void) {
     Renderer renderer;
     renderer_init(&renderer, sdl_renderer, WINDOW_W, WINDOW_H);
 
+    GameState game;
+    game_init(&game, renderer.tiles_x, renderer.tiles_y);
+
     int running = 1;
     SDL_Event event;
 
     while (running) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) running = 0;
-            if (event.type == SDL_KEYDOWN &&
-                event.key.keysym.sym == SDLK_ESCAPE) running = 0;
             if (event.type == SDL_WINDOWEVENT &&
                 event.window.event == SDL_WINDOWEVENT_RESIZED)
                 renderer_on_resize(&renderer,
                     event.window.data1, event.window.data2);
+            if (event.type == SDL_KEYDOWN) {
+                switch (event.key.keysym.sym) {
+                    case SDLK_ESCAPE: running = 0;        break;
+                    case SDLK_UP:
+                    case SDLK_w:     game_move_player(&game,  0, -1); break;
+                    case SDLK_DOWN:
+                    case SDLK_s:     game_move_player(&game,  0,  1); break;
+                    case SDLK_LEFT:
+                    case SDLK_a:     game_move_player(&game, -1,  0); break;
+                    case SDLK_RIGHT:
+                    case SDLK_d:     game_move_player(&game,  1,  0); break;
+                    default: break;
+                }
+            }
         }
 
         renderer_begin_frame(&renderer);
@@ -75,7 +91,7 @@ int main(void) {
         }
 
         // Player in the center
-        draw_player(&renderer, renderer.tiles_x / 2, renderer.tiles_y / 2);
+        draw_player(&renderer, game.player.x, game.player.y);
 
         renderer_end_frame(&renderer);
     }
