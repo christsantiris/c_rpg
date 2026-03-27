@@ -13,7 +13,8 @@ find_package(SDL2 REQUIRED)
 file(GLOB_RECURSE SOURCES ${CMAKE_SOURCE_DIR}/src/*.c)
 file(GLOB_RECURSE TEST_SOURCES
     ${CMAKE_SOURCE_DIR}/tests/*.c
-    ${CMAKE_SOURCE_DIR}/src/game/game.c
+    ${CMAKE_SOURCE_DIR}/src/game/*.c
+    ${CMAKE_SOURCE_DIR}/src/renderer/viewport.c
 )
 
 add_executable(conr ${SOURCES})

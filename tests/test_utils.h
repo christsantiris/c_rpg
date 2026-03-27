@@ -3,8 +3,8 @@
 
 #include <stdio.h>
 
-static int tests_run    = 0;
-static int tests_passed = 0;
+extern int tests_run;
+extern int tests_passed;
 
 #define ASSERT(msg, condition) do {         \
     tests_run++;                            \
