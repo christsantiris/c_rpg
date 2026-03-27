@@ -1,6 +1,7 @@
 #include <SDL2/SDL.h>
 #include <stdio.h>
 #include "renderer/renderer.h"
+#include "renderer/sprites.h"
 
 #define WINDOW_TITLE "Castle of No Return"
 #define WINDOW_W     1280
@@ -58,15 +59,23 @@ int main(void) {
 
         renderer_begin_frame(&renderer);
 
-        // Draw checkerboard to verify tile grid
-        for (int y = 0; y < renderer.tiles_y; y++) {
-            for (int x = 0; x < renderer.tiles_x; x++) {
-                SDL_Color color = (x + y) % 2 == 0
-                    ? (SDL_Color){20, 20, 40, 255}
-                    : (SDL_Color){30, 30, 55, 255};
-                renderer_draw_tile_bg(&renderer, x, y, color);
-            }
+        // Floor
+        for (int y = 0; y < renderer.tiles_y; y++)
+            for (int x = 0; x < renderer.tiles_x; x++)
+                draw_floor(&renderer, x, y);
+
+        // Wall border
+        for (int x = 0; x < renderer.tiles_x; x++) {
+            draw_wall(&renderer, x, 0);
+            draw_wall(&renderer, x, renderer.tiles_y - 1);
         }
+        for (int y = 0; y < renderer.tiles_y; y++) {
+            draw_wall(&renderer, 0, y);
+            draw_wall(&renderer, renderer.tiles_x - 1, y);
+        }
+
+        // Player in the center
+        draw_player(&renderer, renderer.tiles_x / 2, renderer.tiles_y / 2);
 
         renderer_end_frame(&renderer);
     }
