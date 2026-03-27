@@ -60,8 +60,10 @@ void map_generate(Map *m, int level) {
         Room r;
         r.w = random_range(MIN_ROOM_W, MAX_ROOM_W);
         r.h = random_range(MIN_ROOM_H, MAX_ROOM_H);
-        r.x = random_range(1, MAP_W - r.w - 2);
-        r.y = random_range(1, MAP_H - r.h - 2);
+        r.x = random_range(1, MAP_W / 2); // hallway size
+        r.y = random_range(1, MAP_H / 2); // hallway size
+        // r.x = random_range(1, MAP_W - r.w - 2);
+        // r.y = random_range(1, MAP_H - r.h - 2);
 
         // Check overlap with existing rooms
         int overlaps = 0;

@@ -6,10 +6,10 @@
 
 #define MIN_ROOMS 6
 #define MAX_ROOMS 10
-#define MIN_ROOM_W 5
-#define MAX_ROOM_W 15
-#define MIN_ROOM_H 5
-#define MAX_ROOM_H 10
+#define MIN_ROOM_W 8 // dungeon room size
+#define MAX_ROOM_W 20 // dungeon room size
+#define MIN_ROOM_H 8 // dungeon room size
+#define MAX_ROOM_H 14 // dungeon room size
 
 typedef enum {
     TILE_FLOOR = 0,
