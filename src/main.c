@@ -81,14 +81,14 @@ int main(void) {
                     break;
                 case SDL_KEYDOWN:
                     if (screen == SCREEN_LANDING) {
-                        LandingResult result = landing_handle_key(&landing, event.key.keysym.scancode);
+                        LandingResult result = landing.confirming_new_game
+                            ? landing_handle_confirm(&landing, event.key.keysym.scancode)
+                            : landing_handle_key(&landing, event.key.keysym.scancode);
                         if (result == LANDING_NEW_GAME) {
                             name_entry_init(&name_entry);
                             screen = SCREEN_NAME_ENTRY;
                         }
-                        if (result == LANDING_CONTINUE) {
-                            screen = SCREEN_PLAYING;
-                        }
+                        if (result == LANDING_CONTINUE) screen = SCREEN_PLAYING;
                         if (result == LANDING_QUIT) running = 0;
                         break;
                     }
