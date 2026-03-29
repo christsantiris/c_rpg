@@ -1,10 +1,12 @@
 #include "landing_renderer.h"
 #include "sprites.h"
+#include "../screens/landing.h"
 
-static const char *MENU_LABELS[3] = {
-    "NEW GAME",
-    "LOAD GAME",
-    "QUIT"
+static const char *MENU_LABELS_BASE[3] = {
+    "NEW GAME", "LOAD GAME", "QUIT"
+};
+static const char *MENU_LABELS_ACTIVE[4] = {
+    "NEW GAME", "CONTINUE", "LOAD GAME", "QUIT"
 };
 
 void landing_draw(Renderer *r, const LandingScreen *s) {
@@ -36,17 +38,19 @@ void landing_draw(Renderer *r, const LandingScreen *s) {
     renderer_draw_text(r, "CASTLE OF NO RETURN", title_x, title_y, gold, r->font_large);
 
     // Menu items
-    for (int i = 0; i < 3; i++) {
+    int count = landing_item_count(s);
+    const char **labels = s->has_active_game
+        ? MENU_LABELS_ACTIVE : MENU_LABELS_BASE;
+
+    for (int i = 0; i < count; i++) {
         int item_y = (r->screen_h / 2) - 20 + i * 36;
         int item_x = (r->screen_w / 2) - 80;
-
-        SDL_Color color = (i == 2) ? dimmed : green;
-
+        SDL_Color color = (i == count - 1) ? dimmed : green;
         if (s->selected == i) {
             renderer_draw_text(r, ">", item_x - 24, item_y, cursor, r->font_small);
-            renderer_draw_text(r, MENU_LABELS[i], item_x, item_y, gold, r->font_small);
+            renderer_draw_text(r, labels[i], item_x, item_y, gold, r->font_small);
         } else {
-            renderer_draw_text(r, MENU_LABELS[i], item_x, item_y, color, r->font_small);
+            renderer_draw_text(r, labels[i], item_x, item_y, color, r->font_small);
         }
     }
 
