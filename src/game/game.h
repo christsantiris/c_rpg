@@ -5,6 +5,7 @@
 
 typedef struct {
     int x, y;
+    char name[21];
 } Player;
 
 typedef struct {

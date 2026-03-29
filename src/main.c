@@ -9,6 +9,7 @@
 #include "screens/landing.h"
 #include "screens/name_entry.h"
 #include "renderer/landing_renderer.h"
+#include "renderer/info_panel.h"
 
 #define WINDOW_TITLE "Castle of No Return"
 #define WINDOW_W     1280
@@ -96,8 +97,9 @@ int main(void) {
                         const char *keyname = SDL_GetKeyName(event.key.keysym.sym);
                         NameEntryResult result = name_entry_handle_key(
                             &name_entry, event.key.keysym.scancode, keyname);
-                        if (result == NAME_ENTRY_CONFIRMED) {
-                            game_init(&game);
+                            if (result == NAME_ENTRY_CONFIRMED) {
+                                game_init(&game);
+                                SDL_strlcpy(game.player.name, name_entry.name,sizeof(game.player.name));
                             viewport_init(&viewport,
                                 renderer.tiles_x, renderer.tiles_y,
                                 MAP_W, MAP_H);
@@ -187,6 +189,7 @@ int main(void) {
             draw_player(&renderer,
                 viewport_to_screen_x(&viewport, game.player.x),
                 viewport_to_screen_y(&viewport, game.player.y));
+            info_panel_draw(&renderer, &game);
         }
 
         renderer_end_frame(&renderer);
