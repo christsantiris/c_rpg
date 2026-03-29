@@ -137,6 +137,20 @@ int main(void) {
                     viewport_center_on(&viewport,
                         game.player.x, game.player.y);
                     break;
+                case SDL_MOUSEBUTTONDOWN:
+                    if (screen == SCREEN_LANDING &&
+                        event.button.button == SDL_BUTTON_LEFT) {
+                        LandingResult result = landing_handle_click(
+                            &landing,
+                            event.button.x, event.button.y,
+                            renderer.screen_w, renderer.screen_h);
+                        if (result == LANDING_NEW_GAME) {
+                            name_entry_init(&name_entry);
+                            screen = SCREEN_NAME_ENTRY;
+                        }
+                        if (result == LANDING_QUIT) running = 0;
+                    }
+                    break;
                 default:
                     break;
             }

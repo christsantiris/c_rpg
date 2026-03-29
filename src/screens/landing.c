@@ -29,3 +29,26 @@ LandingResult landing_handle_key(LandingScreen *s, int scancode) {
     }
     return LANDING_NONE;
 }
+
+LandingResult landing_handle_click(LandingScreen *s, int mouse_x, int mouse_y,
+                                   int screen_w, int screen_h) {
+    int item_x     = screen_w / 2 - 80;
+    int item_x_end = screen_w / 2 + 80;
+    int base_y     = screen_h / 2 - 20;
+
+    for (int i = 0; i < 3; i++) {
+        int item_y     = base_y + i * 36;
+        int item_y_end = item_y + 24;
+
+        if (mouse_x >= item_x && mouse_x <= item_x_end &&
+            mouse_y >= item_y && mouse_y <= item_y_end) {
+            s->selected = i;
+            switch (i) {
+                case 0: return LANDING_NEW_GAME;
+                case 1: return LANDING_LOAD_GAME;
+                case 2: return LANDING_QUIT;
+            }
+        }
+    }
+    return LANDING_NONE;
+}
