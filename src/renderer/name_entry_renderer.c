@@ -1,9 +1,10 @@
 #include "name_entry_renderer.h"
 #include "sprites.h"
+#include <string.h>
 
 void name_entry_draw(Renderer *r, const NameEntry *n) {
-    int cx = r->tiles_x / 2;
-    int cy = r->tiles_y / 2;
+    int cx = r->screen_w / 2;
+    int cy = r->screen_h / 2;
 
     // Background and border
     for (int y = 0; y < r->tiles_y; y++)
@@ -19,30 +20,28 @@ void name_entry_draw(Renderer *r, const NameEntry *n) {
         draw_wall(r, r->tiles_x - 1, y);
     }
 
-    // Prompt bar
-    for (int x = cx - 10; x < cx + 10; x++)
-        draw_wall(r, x, cy - 3);
+    SDL_Color gold   = {220, 180,  60, 255};
+    SDL_Color green  = { 80, 160,  80, 255};
+    SDL_Color hint   = { 50,  70,  50, 255};
+    SDL_Color cursor = {220, 180,  60, 255};
 
-    // Name input box — one tile per character slot
-    for (int i = 0; i < MAX_NAME_LEN; i++) {
-        int tx = cx - MAX_NAME_LEN / 2 + i;
-        SDL_Rect slot = {
-            tx * TILE_SIZE + 1, cy * TILE_SIZE + 1,
-            TILE_SIZE - 2,      TILE_SIZE - 2
-        };
-        // Filled slot if character entered, outline if empty
-        if (i < n->length) {
-            SDL_SetRenderDrawColor(r->sdl, 80, 160, 80, 255);
-        } else if (i == n->length) {
-            // Cursor position
-            SDL_SetRenderDrawColor(r->sdl, 220, 180, 60, 255);
-        } else {
-            SDL_SetRenderDrawColor(r->sdl, 30, 40, 30, 255);
-        }
-        SDL_RenderFillRect(r->sdl, &slot);
-    }
+    // Prompt
+    renderer_draw_text(r, "ENTER YOUR NAME", cx - 120, cy - 60,
+                       gold, r->font_large);
 
-    // Confirm hint bar
-    for (int x = cx - 10; x < cx + 10; x++)
-        draw_wall(r, x, cy + 3);
+    // Name typed so far
+    if (n->length > 0)
+        renderer_draw_text(r, n->name, cx - 120, cy, green, r->font_large);
+
+    // Blinking cursor block
+    SDL_Rect cur = {
+        cx - 120 + n->length * 16, cy,
+        10, 18
+    };
+    SDL_SetRenderDrawColor(r->sdl, cursor.r, cursor.g, cursor.b, 255);
+    SDL_RenderFillRect(r->sdl, &cur);
+
+    // Hints
+    renderer_draw_text(r, "ENTER TO CONFIRM   ESC TO CANCEL",
+                       cx - 160, cy + 60, hint, r->font_small);
 }
