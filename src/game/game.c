@@ -6,6 +6,7 @@ void game_init(GameState *g) {
     srand((unsigned)time(NULL));
     g->level = 1;
     map_generate(&g->map, g->level);
+    g->player.name[0] = '\0';
     g->player.x = g->map.stairs_up_x;
     g->player.y = g->map.stairs_up_y;
 }
