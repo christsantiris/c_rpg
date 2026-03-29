@@ -9,6 +9,8 @@ set(CMAKE_C_FLAGS_Release "-O2")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 find_package(SDL2 REQUIRED)
+find_library(SDL2_TTF_LIB SDL2_ttf REQUIRED)
+find_path(SDL2_TTF_INCLUDE SDL2/SDL_ttf.h REQUIRED)
 
 file(GLOB_RECURSE SOURCES ${CMAKE_SOURCE_DIR}/src/*.c)
 file(GLOB_RECURSE TEST_SOURCES
@@ -18,8 +20,8 @@ file(GLOB_RECURSE TEST_SOURCES
 )
 
 add_executable(conr ${SOURCES})
-target_include_directories(conr PRIVATE src ${SDL2_INCLUDE_DIRS})
-target_link_libraries(conr PRIVATE ${SDL2_LIBRARIES})
+target_include_directories(conr PRIVATE src ${SDL2_INCLUDE_DIRS} ${SDL2_TTF_INCLUDE})
+target_link_libraries(conr PRIVATE ${SDL2_LIBRARIES} ${SDL2_TTF_LIB})
 
 add_executable(test_runner ${TEST_SOURCES})
 target_include_directories(test_runner PRIVATE src)

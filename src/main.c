@@ -170,6 +170,7 @@ int main(void) {
         renderer_end_frame(&renderer);
     }
 
+    renderer_free(&renderer);
     SDL_DestroyRenderer(sdl_renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
