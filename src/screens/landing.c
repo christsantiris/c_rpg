@@ -2,7 +2,12 @@
 #include <SDL2/SDL.h>
 
 void landing_init(LandingScreen *s) {
-    s->selected = 0;
+    s->selected        = 0;
+    s->has_active_game = 0;
+}
+
+int landing_item_count(const LandingScreen *s) {
+    return s->has_active_game ? 4 : 3;
 }
 
 LandingResult landing_handle_key(LandingScreen *s, int scancode) {
@@ -13,13 +18,22 @@ LandingResult landing_handle_key(LandingScreen *s, int scancode) {
             break;
         case SDL_SCANCODE_DOWN:
             s->selected++;
-            if (s->selected > 2) s->selected = 0;
+            if (s->selected >= landing_item_count(s)) s->selected = 0;
             break;
         case SDL_SCANCODE_RETURN:
-            switch (s->selected) {
-                case 0: return LANDING_NEW_GAME;
-                case 1: return LANDING_LOAD_GAME;
-                case 2: return LANDING_QUIT;
+            if (!s->has_active_game) {
+                switch (s->selected) {
+                    case 0: return LANDING_NEW_GAME;
+                    case 1: return LANDING_LOAD_GAME;
+                    case 2: return LANDING_QUIT;
+                }
+            } else {
+                switch (s->selected) {
+                    case 0: return LANDING_NEW_GAME;
+                    case 1: return LANDING_CONTINUE;
+                    case 2: return LANDING_LOAD_GAME;
+                    case 3: return LANDING_QUIT;
+                }
             }
             break;
         case SDL_SCANCODE_ESCAPE:

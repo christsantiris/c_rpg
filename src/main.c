@@ -81,11 +81,13 @@ int main(void) {
                     break;
                 case SDL_KEYDOWN:
                     if (screen == SCREEN_LANDING) {
-                        LandingResult result = landing_handle_key(
-                            &landing, event.key.keysym.scancode);
-                             if (result == LANDING_NEW_GAME) {
+                        LandingResult result = landing_handle_key(&landing, event.key.keysym.scancode);
+                        if (result == LANDING_NEW_GAME) {
                             name_entry_init(&name_entry);
                             screen = SCREEN_NAME_ENTRY;
+                        }
+                        if (result == LANDING_CONTINUE) {
+                            screen = SCREEN_PLAYING;
                         }
                         if (result == LANDING_QUIT) running = 0;
                         break;
@@ -107,7 +109,11 @@ int main(void) {
                         break;
                     }
                     switch (event.key.keysym.scancode) {
-                        case SDL_SCANCODE_ESCAPE: running = 0;                break;
+                        case SDL_SCANCODE_ESCAPE:
+                            landing.has_active_game = 1;
+                            landing.selected = 1;
+                            screen = SCREEN_LANDING;
+                            break;
                         case SDL_SCANCODE_UP:
                         case SDL_SCANCODE_W: game_move_player(&game,  0, -1); break;
                         case SDL_SCANCODE_DOWN:
