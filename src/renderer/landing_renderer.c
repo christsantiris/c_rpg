@@ -59,4 +59,13 @@ void landing_draw(Renderer *r, const LandingScreen *s) {
     int hint_x = (r->screen_w / 2) - 140;
     int hint_y = r->screen_h - 60;
     renderer_draw_text(r, "UP DOWN NAVIGATE   ENTER SELECT", hint_x, hint_y, hint, r->font_small);
+
+    // Confirm new game prompt
+    if (s->confirming_new_game) {
+        SDL_Color white = {200, 200, 200, 255};
+        renderer_draw_text(r, "START NEW GAME? (Y/N)",
+            (r->screen_w / 2) - 160,
+            (r->screen_h / 2) + 160,
+            white, r->font_small);
+    }
 }
