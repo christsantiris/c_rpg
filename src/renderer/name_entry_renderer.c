@@ -34,12 +34,14 @@ void name_entry_draw(Renderer *r, const NameEntry *n) {
         renderer_draw_text(r, n->name, cx - 120, cy, green, r->font_large);
 
     // Blinking cursor block
-    SDL_Rect cur = {
-        cx - 120 + n->length * 16, cy,
-        10, 18
-    };
-    SDL_SetRenderDrawColor(r->sdl, cursor.r, cursor.g, cursor.b, 255);
-    SDL_RenderFillRect(r->sdl, &cur);
+    if (n->cursor_visible) {
+        SDL_Rect cur = {
+            cx - 120 + n->length * 16, cy,
+            10, 18
+        };
+        SDL_SetRenderDrawColor(r->sdl, cursor.r, cursor.g, cursor.b, 255);
+        SDL_RenderFillRect(r->sdl, &cur);
+    }
 
     // Hints
     renderer_draw_text(r, "ENTER TO CONFIRM   ESC TO CANCEL",
