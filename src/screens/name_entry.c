@@ -22,13 +22,20 @@ NameEntryResult name_entry_handle_key(NameEntry *n, int scancode,
         return NAME_ENTRY_NONE;
     }
 
-    // Accept a-z, A-Z, space
+    // Accept a-z, A-Z
     if (n->length < MAX_NAME_LEN && keyname && keyname[1] == '\0') {
         char c = keyname[0];
-        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == ' ') {
+        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
             n->name[n->length++] = c;
             n->name[n->length]   = '\0';
         }
+    }
+
+    // Accept spacebar explicitly
+    if (scancode == SDL_SCANCODE_SPACE && n->length > 0 &&
+        n->length < MAX_NAME_LEN) {
+        n->name[n->length++] = ' ';
+        n->name[n->length]   = '\0';
     }
 
     return NAME_ENTRY_NONE;
