@@ -155,7 +155,9 @@ int main(void) {
                     break;
             }
         }
-
+        if (screen == SCREEN_NAME_ENTRY)
+            name_entry_update(&name_entry);
+            
         renderer_begin_frame(&renderer);
 
         if (screen == SCREEN_LANDING) {

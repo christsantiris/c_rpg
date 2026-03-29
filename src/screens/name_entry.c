@@ -4,7 +4,17 @@
 
 void name_entry_init(NameEntry *n) {
     memset(n->name, 0, sizeof(n->name));
-    n->length = 0;
+    n->length             = 0;
+    n->cursor_last_blink  = SDL_GetTicks();
+    n->cursor_visible     = 1;
+}
+
+void name_entry_update(NameEntry *n) {
+    Uint32 now = SDL_GetTicks();
+    if (now - n->cursor_last_blink >= 500) {
+        n->cursor_visible    = !n->cursor_visible;
+        n->cursor_last_blink = now;
+    }
 }
 
 NameEntryResult name_entry_handle_key(NameEntry *n, int scancode,
