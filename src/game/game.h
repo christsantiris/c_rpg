@@ -26,4 +26,7 @@ void game_move_player(GameState *g, int dx, int dy);
 void game_descend(GameState *g);
 void game_ascend(GameState *g);
 
+void action_resolve_player(GameState *g, Action a);
+void action_resolve_enemies(GameState *g);
+
 #endif

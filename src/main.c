@@ -111,40 +111,45 @@ int main(void) {
                         if (result == NAME_ENTRY_CANCELLED) screen = SCREEN_LANDING;
                         break;
                     }
-                    switch (event.key.keysym.scancode) {
-                        case SDL_SCANCODE_ESCAPE:
-                            landing.has_active_game = 1;
-                            landing.selected = 1;
-                            screen = SCREEN_LANDING;
-                            break;
-                        case SDL_SCANCODE_UP:
-                        case SDL_SCANCODE_W: game_move_player(&game,  0, -1); break;
-                        case SDL_SCANCODE_DOWN:
-                        case SDL_SCANCODE_S: game_move_player(&game,  0,  1); break;
-                        case SDL_SCANCODE_LEFT:
-                        case SDL_SCANCODE_A: game_move_player(&game, -1,  0); break;
-                        case SDL_SCANCODE_RIGHT:
-                        case SDL_SCANCODE_D: game_move_player(&game,  1,  0); break;
-                        case SDL_SCANCODE_PERIOD:
-                            if (game.map.tiles[game.player.y][game.player.x]
-                                == TILE_STAIRS_DOWN) {
-                                game_descend(&game);
-                                viewport_center_on(&viewport,
-                                    game.player.x, game.player.y);
-                            }
-                            break;
-                        case SDL_SCANCODE_COMMA:
-                            if (game.map.tiles[game.player.y][game.player.x]
-                                == TILE_STAIRS_UP) {
-                                game_ascend(&game);
-                                viewport_center_on(&viewport,
-                                    game.player.x, game.player.y);
-                            }
-                            break;
-                        default: break;
+                    {
+                        Action a = {ACTION_NONE, 0, 0};
+                        switch (event.key.keysym.scancode) {
+                            case SDL_SCANCODE_ESCAPE:
+                                landing.has_active_game = 1;
+                                landing.selected = 1;
+                                screen = SCREEN_LANDING;
+                                break;
+                            case SDL_SCANCODE_UP:
+                            case SDL_SCANCODE_W:
+                                a = (Action){ACTION_MOVE, game.player.x, game.player.y - 1};
+                                break;
+                            case SDL_SCANCODE_DOWN:
+                            case SDL_SCANCODE_S:
+                                a = (Action){ACTION_MOVE, game.player.x, game.player.y + 1};
+                                break;
+                            case SDL_SCANCODE_LEFT:
+                            case SDL_SCANCODE_A:
+                                a = (Action){ACTION_MOVE, game.player.x - 1, game.player.y};
+                                break;
+                            case SDL_SCANCODE_RIGHT:
+                            case SDL_SCANCODE_D:
+                                a = (Action){ACTION_MOVE, game.player.x + 1, game.player.y};
+                                break;
+                            case SDL_SCANCODE_PERIOD:
+                                a = (Action){ACTION_DESCEND, 0, 0};
+                                break;
+                            case SDL_SCANCODE_COMMA:
+                                a = (Action){ACTION_ASCEND, 0, 0};
+                                break;
+                            default: break;
+                        }
+                        if (a.type != ACTION_NONE) {
+                            action_resolve_player(&game, a);
+                            action_resolve_enemies(&game);
+                            viewport_center_on(&viewport,
+                                game.player.x, game.player.y);
+                        }
                     }
-                    viewport_center_on(&viewport,
-                        game.player.x, game.player.y);
                     break;
                 case SDL_MOUSEBUTTONDOWN:
                     if (screen == SCREEN_LANDING &&

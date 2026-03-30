@@ -41,6 +41,22 @@ static void spawn_enemy(Enemy *e, EnemyType type, int x, int y) {
     }
 }
 
+static void enemies_spawn(GameState *g) {
+    g->enemy_count = 0;
+    int num_enemies = 3 + g->level;
+    if (num_enemies > MAX_ENEMIES) num_enemies = MAX_ENEMIES;
+
+    for (int i = 0; i < num_enemies; i++) {
+        int room_idx = rand() % (g->map.room_count - 1) + 1;
+        Room *room   = &g->map.rooms[room_idx];
+        int ex = room->x + rand() % room->w;
+        int ey = room->y + rand() % room->h;
+        EnemyType type = (EnemyType)(rand() % 4);
+        spawn_enemy(&g->enemies[i], type, ex, ey);
+        g->enemy_count++;
+    }
+}
+
 void game_init(GameState *g) {
     srand((unsigned)time(NULL));
     g->level = 1;
@@ -57,19 +73,20 @@ void game_init(GameState *g) {
     g->player.experience_next = 100;
 
     // Spawn enemies in random rooms
-    g->enemy_count = 0;
-    int num_enemies = 3 + g->level;
-    if (num_enemies > MAX_ENEMIES) num_enemies = MAX_ENEMIES;
+    enemies_spawn(g);
+    // g->enemy_count = 0;
+    // int num_enemies = 3 + g->level;
+    // if (num_enemies > MAX_ENEMIES) num_enemies = MAX_ENEMIES;
 
-    for (int i = 0; i < num_enemies; i++) {
-        int room_idx = rand() % (g->map.room_count - 1) + 1;
-        Room *room   = &g->map.rooms[room_idx];
-        int ex = room->x + rand() % room->w;
-        int ey = room->y + rand() % room->h;
-        EnemyType type = (EnemyType)(rand() % 4);
-        spawn_enemy(&g->enemies[i], type, ex, ey);
-        g->enemy_count++;
-    }
+    // for (int i = 0; i < num_enemies; i++) {
+    //     int room_idx = rand() % (g->map.room_count - 1) + 1;
+    //     Room *room   = &g->map.rooms[room_idx];
+    //     int ex = room->x + rand() % room->w;
+    //     int ey = room->y + rand() % room->h;
+    //     EnemyType type = (EnemyType)(rand() % 4);
+    //     spawn_enemy(&g->enemies[i], type, ex, ey);
+    //     g->enemy_count++;
+    // }
 
     g->player.x = g->map.stairs_up_x;
     g->player.y = g->map.stairs_up_y;
@@ -86,6 +103,7 @@ void game_move_player(GameState *g, int dx, int dy) {
 void game_descend(GameState *g) {
     g->level++;
     map_generate(&g->map, g->level);
+    enemies_spawn(g);
     g->player.x = g->map.stairs_up_x;
     g->player.y = g->map.stairs_up_y;
 }
