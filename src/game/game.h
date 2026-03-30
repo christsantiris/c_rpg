@@ -4,8 +4,12 @@
 #include "map.h"
 
 typedef struct {
-    int x, y;
+    int  x, y;
     char name[21];
+    int  hp,     max_hp;
+    int  mp,     max_mp;
+    int  attack, defense;
+    int  level,  experience, experience_next;
 } Player;
 
 typedef struct {
