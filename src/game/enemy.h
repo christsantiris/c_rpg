@@ -1,3 +1,5 @@
+#include "actions.h"
+
 #ifndef ENEMY_HEADER_H
 #define ENEMY_HEADER_H
 
