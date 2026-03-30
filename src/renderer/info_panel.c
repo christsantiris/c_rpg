@@ -34,12 +34,16 @@ void info_panel_draw(Renderer *r, const GameState *g) {
 
     renderer_draw_text(r, "HP", x, y, label, r->font_small);
     y += lh;
-    renderer_draw_text(r, "-- / --", x, y, value, r->font_small);
+    char hp_str[16];
+    SDL_snprintf(hp_str, sizeof(hp_str), "%d / %d", g->player.hp, g->player.max_hp);
+    renderer_draw_text(r, hp_str, x, y, value, r->font_small);
     y += lh * 2;
 
     renderer_draw_text(r, "MP", x, y, label, r->font_small);
     y += lh;
-    renderer_draw_text(r, "-- / --", x, y, value, r->font_small);
+    char mp_str[16];
+    SDL_snprintf(mp_str, sizeof(mp_str), "%d / %d", g->player.mp, g->player.max_mp);
+    renderer_draw_text(r, mp_str, x, y, value, r->font_small);
 
     int hy = r->screen_h - 120;
     renderer_draw_text(r, "WASD  MOVE",    x, hy,        hint, r->font_small);
