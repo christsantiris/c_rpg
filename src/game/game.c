@@ -1,6 +1,45 @@
 #include "game.h"
+
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
+
+static void spawn_enemy(Enemy *e, EnemyType type, int x, int y) {
+    e->active  = 1;
+    e->type    = type;
+    e->x       = x;
+    e->y       = y;
+    switch (type) {
+        case ENEMY_GOBLIN:
+            strncpy(e->name, "Goblin", sizeof(e->name) - 1);
+            e->name[sizeof(e->name) - 1] = '\0';
+            e->max_hp = 15; e->hp = 15;
+            e->attack = 4;  e->defense = 1;
+            e->experience = 10;
+            break;
+        case ENEMY_SKELETON:
+            strncpy(e->name, "Skeleton", sizeof(e->name) - 1);
+            e->name[sizeof(e->name) - 1] = '\0';
+            e->max_hp = 20; e->hp = 20;
+            e->attack = 6;  e->defense = 0;
+            e->experience = 15;
+            break;
+        case ENEMY_ORC:
+            strncpy(e->name, "Orc", sizeof(e->name) - 1);
+            e->name[sizeof(e->name) - 1] = '\0';
+            e->max_hp = 25; e->hp = 25;
+            e->attack = 7;  e->defense = 2;
+            e->experience = 20;
+            break;
+        case ENEMY_TROLL:
+            strncpy(e->name, "Troll", sizeof(e->name) - 1);
+            e->name[sizeof(e->name) - 1] = '\0';
+            e->max_hp = 40; e->hp = 40;
+            e->attack = 10; e->defense = 4;
+            e->experience = 30;
+            break;
+    }
+}
 
 void game_init(GameState *g) {
     srand((unsigned)time(NULL));
@@ -16,6 +55,22 @@ void game_init(GameState *g) {
     g->player.level         = 1;
     g->player.experience    = 0;
     g->player.experience_next = 100;
+
+    // Spawn enemies in random rooms
+    g->enemy_count = 0;
+    int num_enemies = 3 + g->level;
+    if (num_enemies > MAX_ENEMIES) num_enemies = MAX_ENEMIES;
+
+    for (int i = 0; i < num_enemies; i++) {
+        int room_idx = rand() % (g->map.room_count - 1) + 1;
+        Room *room   = &g->map.rooms[room_idx];
+        int ex = room->x + rand() % room->w;
+        int ey = room->y + rand() % room->h;
+        EnemyType type = (EnemyType)(rand() % 4);
+        spawn_enemy(&g->enemies[i], type, ex, ey);
+        g->enemy_count++;
+    }
+
     g->player.x = g->map.stairs_up_x;
     g->player.y = g->map.stairs_up_y;
 }

@@ -71,3 +71,64 @@ void draw_stairs_down(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 6,     y + 8,     12,        1,         edge);
     fill_rect(r, x + 9,     y + 12,    6,         1,         edge);
 }
+
+void draw_goblin(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color body = { 40, 160,  40, 255};
+    SDL_Color eye  = {220, 220,   0, 255};
+    SDL_Color mouth= {180,  40,  40, 255};
+    fill_rect(r, x+6,  y+4,  12, 10, body);
+    fill_rect(r, x+5,  y+12, 14,  8, body);
+    fill_rect(r, x+7,  y+7,   2,  2, eye);
+    fill_rect(r, x+13, y+7,   2,  2, eye);
+    fill_rect(r, x+8,  y+11,  6,  1, mouth);
+}
+
+void draw_skeleton(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color bone  = {210, 210, 190, 255};
+    SDL_Color dark  = { 18,  18,  35, 255};
+    fill_rect(r, x+7,  y+3,  10,  9, bone);
+    fill_rect(r, x+6,  y+12, 12,  8, bone);
+    fill_rect(r, x+8,  y+6,   2,  2, dark);
+    fill_rect(r, x+13, y+6,   2,  2, dark);
+    fill_rect(r, x+9,  y+10,  5,  1, dark);
+}
+
+void draw_orc(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color body = { 80, 120,  40, 255};
+    SDL_Color eye  = {220,  20,  20, 255};
+    SDL_Color tusk = {220, 200, 160, 255};
+    fill_rect(r, x+5,  y+3,  14, 12, body);
+    fill_rect(r, x+4,  y+13, 16,  7, body);
+    fill_rect(r, x+7,  y+7,   2,  2, eye);
+    fill_rect(r, x+13, y+7,   2,  2, eye);
+    fill_rect(r, x+8,  y+13,  2,  3, tusk);
+    fill_rect(r, x+13, y+13,  2,  3, tusk);
+}
+
+void draw_troll(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color body = { 60,  90,  60, 255};
+    SDL_Color eye  = {255, 140,   0, 255};
+    SDL_Color club = {120,  80,  40, 255};
+    fill_rect(r, x+4,  y+2,  16, 14, body);
+    fill_rect(r, x+3,  y+14, 18,  6, body);
+    fill_rect(r, x+7,  y+6,   3,  3, eye);
+    fill_rect(r, x+13, y+6,   3,  3, eye);
+    fill_rect(r, x+18, y+8,   3,  10, club);
+}
+
+void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
+    switch (type) {
+        case ENEMY_GOBLIN:   draw_goblin(r, tile_x, tile_y);   break;
+        case ENEMY_SKELETON: draw_skeleton(r, tile_x, tile_y); break;
+        case ENEMY_ORC:      draw_orc(r, tile_x, tile_y);      break;
+        case ENEMY_TROLL:    draw_troll(r, tile_x, tile_y);    break;
+    }
+}

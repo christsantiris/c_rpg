@@ -2,6 +2,7 @@
 #define GAME_HEADER_H
 
 #include "map.h"
+#include "enemy.h"
 
 typedef struct {
     int  x, y;
@@ -16,6 +17,8 @@ typedef struct {
     Player player;
     Map    map;
     int    level;
+    Enemy  enemies[MAX_ENEMIES];
+    int    enemy_count;
 } GameState;
 
 void game_init(GameState *g);

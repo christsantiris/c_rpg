@@ -10,6 +10,7 @@
 #include "screens/name_entry.h"
 #include "renderer/landing_renderer.h"
 #include "renderer/info_panel.h"
+#include "game/enemy.h"
 
 #define WINDOW_TITLE "Castle of No Return"
 #define WINDOW_W     1280
@@ -185,6 +186,14 @@ int main(void) {
                         default:               draw_floor(&renderer, sx, sy);       break;
                     }
                 }
+            }
+            for (int i = 0; i < game.enemy_count; i++) {
+                Enemy *e = &game.enemies[i];
+                if (!e->active) continue;
+                if (!viewport_is_visible(&viewport, e->x, e->y)) continue;
+                int sx = viewport_to_screen_x(&viewport, e->x);
+                int sy = viewport_to_screen_y(&viewport, e->y);
+                draw_enemy(&renderer, sx, sy, e->type);
             }
             draw_player(&renderer,
                 viewport_to_screen_x(&viewport, game.player.x),
