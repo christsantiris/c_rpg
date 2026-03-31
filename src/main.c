@@ -90,24 +90,33 @@ int main(void) {
                             name_entry_init(&name_entry);
                             screen = SCREEN_NAME_ENTRY;
                         }
-                        if (result == LANDING_CONTINUE) screen = SCREEN_PLAYING;
-                        if (result == LANDING_QUIT) running = 0;
-                        break;
-                    }
-                    if (screen == SCREEN_NAME_ENTRY) {
-                        const char *keyname = SDL_GetKeyName(event.key.keysym.sym);
-                        NameEntryResult result = name_entry_handle_key(
-                            &name_entry, event.key.keysym.scancode, keyname);
-                            if (result == NAME_ENTRY_CONFIRMED) {
-                                game_init(&game);
-                                SDL_strlcpy(game.player.name, name_entry.name,sizeof(game.player.name));
+                        if (result == LANDING_CONTINUE) {
+                            int vp_tiles_x = (renderer.screen_w - INFO_PANEL_W) / TILE_SIZE;
                             viewport_init(&viewport,
-                                renderer.tiles_x, renderer.tiles_y,
+                                vp_tiles_x, renderer.tiles_y,
                                 MAP_W, MAP_H);
                             viewport_center_on(&viewport,
                                 game.player.x, game.player.y);
                             screen = SCREEN_PLAYING;
                         }
+                        if (result == LANDING_QUIT) running = 0;
+                        break;
+                    }
+                    if (screen == SCREEN_NAME_ENTRY) {
+                        const char *keyname = SDL_GetKeyName(event.key.keysym.sym);
+                        NameEntryResult result = name_entry_handle_key(&name_entry, event.key.keysym.scancode, keyname);
+                            if (result == NAME_ENTRY_CONFIRMED) {
+                                game_init(&game);
+                                SDL_strlcpy(game.player.name, name_entry.name,
+                                sizeof(game.player.name));
+                                int vp_tiles_x = (renderer.screen_w - INFO_PANEL_W) / TILE_SIZE;
+                                viewport_init(&viewport,
+                                vp_tiles_x, renderer.tiles_y,
+                                MAP_W, MAP_H);
+                                viewport_center_on(&viewport,
+                                game.player.x, game.player.y);
+                                screen = SCREEN_PLAYING;
+                            }
                         if (result == NAME_ENTRY_CANCELLED) screen = SCREEN_LANDING;
                         break;
                     }
