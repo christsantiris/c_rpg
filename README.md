@@ -17,11 +17,10 @@ A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explo
 *The Castle of No Return* is a text-based roguelike game built with C. The game features turn-based combat and a retro art style.
 
 ## Screenshot
-Below is a screenshot of the game in action:
+Below are screenshots of the game in action:
 
 <img width="2558" height="1426" alt="image" src="https://github.com/user-attachments/assets/c1717f84-ad7f-4930-a249-08f92212b9f1" />
-<img width="2558" height="1426" alt="image" src="https://github.com/user-attachments/assets/c1717f84-ad7f-4930-a249-08f92212b9f1" />
-
+<img width="2556" height="1432" alt="image" src="https://github.com/user-attachments/assets/d973f571-869a-4122-a75d-005194e552a2" />
 
 ## Compile the game
 To compile the app run `make run` in the root directory.
