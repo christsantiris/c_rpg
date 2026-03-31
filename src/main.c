@@ -4,12 +4,13 @@
 #include "renderer/sprites.h"
 #include "renderer/viewport.h"
 #include "renderer/landing_renderer.h"
+#include "renderer/game_over_renderer.h"
+#include "renderer/info_panel.h"
 #include "game/game.h"
 #include "game/map.h"
 #include "screens/landing.h"
 #include "screens/name_entry.h"
-#include "renderer/landing_renderer.h"
-#include "renderer/info_panel.h"
+
 #include "game/enemy.h"
 
 #define WINDOW_TITLE "Castle of No Return"
@@ -82,6 +83,13 @@ int main(void) {
                     }
                     break;
                 case SDL_KEYDOWN:
+                    if (screen == SCREEN_GAME_OVER) {
+                        if (event.key.keysym.scancode == SDL_SCANCODE_RETURN) {
+                            landing_init(&landing);
+                            screen = SCREEN_LANDING;
+                        }
+                        break;
+                    }
                     if (screen == SCREEN_LANDING) {
                         LandingResult result = landing.confirming_new_game
                             ? landing_handle_confirm(&landing, event.key.keysym.scancode)
@@ -155,6 +163,8 @@ int main(void) {
                         if (a.type != ACTION_NONE) {
                             action_resolve_player(&game, a);
                             action_resolve_enemies(&game);
+                            if (game.player.hp <= 0)
+                                screen = SCREEN_GAME_OVER;
                             viewport_center_on(&viewport,
                                 game.player.x, game.player.y);
                         }
@@ -213,8 +223,9 @@ int main(void) {
                 viewport_to_screen_x(&viewport, game.player.x),
                 viewport_to_screen_y(&viewport, game.player.y));
             info_panel_draw(&renderer, &game);
+        } else if (screen == SCREEN_GAME_OVER) {
+            game_over_draw(&renderer, &game);
         }
-
         renderer_end_frame(&renderer);
     }
 
