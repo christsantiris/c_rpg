@@ -5,7 +5,9 @@ typedef enum {
     SCREEN_LANDING,
     SCREEN_NAME_ENTRY,
     SCREEN_PLAYING,
-    SCREEN_GAME_OVER
+    SCREEN_GAME_OVER,
+    SCREEN_SAVE_SLOT,
+    SCREEN_LOAD_SLOT
 } GameScreen;
 
 typedef enum {
@@ -13,7 +15,8 @@ typedef enum {
     LANDING_NEW_GAME,
     LANDING_LOAD_GAME,
     LANDING_CONTINUE,
-    LANDING_QUIT
+    LANDING_QUIT,
+    LANDING_SAVE_GAME
 } LandingResult;
 
 typedef struct {

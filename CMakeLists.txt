@@ -12,7 +12,10 @@ find_package(SDL2 REQUIRED)
 find_library(SDL2_TTF_LIB SDL2_ttf REQUIRED)
 find_path(SDL2_TTF_INCLUDE SDL2/SDL_ttf.h REQUIRED)
 
-file(GLOB_RECURSE SOURCES ${CMAKE_SOURCE_DIR}/src/*.c)
+file(GLOB_RECURSE SOURCES 
+    ${CMAKE_SOURCE_DIR}/src/*.c
+    ${CMAKE_SOURCE_DIR}/external/*.c
+)
 file(GLOB_RECURSE TEST_SOURCES
     ${CMAKE_SOURCE_DIR}/tests/*.c
     ${CMAKE_SOURCE_DIR}/src/game/*.c
@@ -21,10 +24,11 @@ file(GLOB_RECURSE TEST_SOURCES
 
 add_executable(conr ${SOURCES})
 target_include_directories(conr PRIVATE src ${SDL2_INCLUDE_DIRS} ${SDL2_TTF_INCLUDE})
+target_include_directories(conr PRIVATE src ${SDL2_INCLUDE_DIRS} ${SDL2_TTF_INCLUDE} ${CMAKE_SOURCE_DIR}/external)
 target_link_libraries(conr PRIVATE ${SDL2_LIBRARIES} ${SDL2_TTF_LIB})
 
 add_executable(test_runner ${TEST_SOURCES})
-target_include_directories(test_runner PRIVATE src)
+target_include_directories(test_runner PRIVATE src ${CMAKE_SOURCE_DIR}/external)
 
 add_custom_target(run
     COMMAND ./conr

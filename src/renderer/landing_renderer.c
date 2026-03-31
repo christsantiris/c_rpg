@@ -5,8 +5,8 @@
 static const char *MENU_LABELS_BASE[3] = {
     "NEW GAME", "LOAD GAME", "QUIT"
 };
-static const char *MENU_LABELS_ACTIVE[4] = {
-    "NEW GAME", "CONTINUE", "LOAD GAME", "QUIT"
+static const char *MENU_LABELS_ACTIVE[5] = {
+    "NEW GAME", "CONTINUE", "SAVE GAME", "LOAD GAME", "QUIT"
 };
 
 void landing_draw(Renderer *r, const LandingScreen *s) {
