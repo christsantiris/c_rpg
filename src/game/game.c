@@ -9,7 +9,14 @@ static void spawn_enemy(Enemy *e, EnemyType type, int x, int y) {
     e->type    = type;
     e->x       = x;
     e->y       = y;
-    switch (type) {
+switch (type) {
+        case ENEMY_SKELETON:
+            strncpy(e->name, "Skeleton", sizeof(e->name) - 1);
+            e->name[sizeof(e->name) - 1] = '\0';
+            e->max_hp = 10; e->hp = 10;
+            e->attack = 3;  e->defense = 0;
+            e->experience = 8;
+            break;
         case ENEMY_GOBLIN:
             strncpy(e->name, "Goblin", sizeof(e->name) - 1);
             e->name[sizeof(e->name) - 1] = '\0';
@@ -17,12 +24,13 @@ static void spawn_enemy(Enemy *e, EnemyType type, int x, int y) {
             e->attack = 4;  e->defense = 1;
             e->experience = 10;
             break;
-        case ENEMY_SKELETON:
-            strncpy(e->name, "Skeleton", sizeof(e->name) - 1);
+        case ENEMY_ZOMBIE:
+            strncpy(e->name, "Zombie", sizeof(e->name) - 1);
             e->name[sizeof(e->name) - 1] = '\0';
-            e->max_hp = 20; e->hp = 20;
-            e->attack = 6;  e->defense = 0;
-            e->experience = 15;
+            e->max_hp = 22; e->hp = 22;
+            e->attack = 6;  e->defense = 1;
+            e->experience = 14;
+            e->move_timer = 0;
             break;
         case ENEMY_ORC:
             strncpy(e->name, "Orc", sizeof(e->name) - 1);
@@ -38,20 +46,58 @@ static void spawn_enemy(Enemy *e, EnemyType type, int x, int y) {
             e->attack = 10; e->defense = 4;
             e->experience = 30;
             break;
+        case ENEMY_GIANT:
+            strncpy(e->name, "Giant", sizeof(e->name) - 1);
+            e->name[sizeof(e->name) - 1] = '\0';
+            e->max_hp = 60; e->hp = 60;
+            e->attack = 14; e->defense = 6;
+            e->experience = 50;
+            break;
     }
 }
 
 static void enemies_spawn(GameState *g) {
     g->enemy_count = 0;
+    if (g->map.room_count == 0) return;
+
     int num_enemies = 3 + g->level;
     if (num_enemies > MAX_ENEMIES) num_enemies = MAX_ENEMIES;
 
     for (int i = 0; i < num_enemies; i++) {
         int room_idx = rand() % (g->map.room_count - 1) + 1;
-        Room *room   = &g->map.rooms[room_idx];
-        int ex = room->x + rand() % room->w;
-        int ey = room->y + rand() % room->h;
-        EnemyType type = (EnemyType)(rand() % 4);
+        if (room_idx >= g->map.room_count) room_idx = 0;
+        Room *room = &g->map.rooms[room_idx];
+        if (room->w < 3 || room->h < 3) continue;
+        int ex = room->x + 1 + rand() % (room->w - 2);
+        int ey = room->y + 1 + rand() % (room->h - 2);
+        if (!map_is_walkable(&g->map, ex, ey)) continue;
+
+        EnemyType type;
+        int roll = rand() % 100;
+        int level = g->level;
+
+        if (level <= 2) {
+            type = roll < 60 ? ENEMY_SKELETON : ENEMY_GOBLIN;
+        } else if (level <= 4) {
+            if (roll < 30)      type = ENEMY_SKELETON;
+            else if (roll < 70) type = ENEMY_GOBLIN;
+            else                type = ENEMY_ZOMBIE;
+        } else if (level <= 6) {
+            if (roll < 20)      type = ENEMY_GOBLIN;
+            else if (roll < 60) type = ENEMY_ZOMBIE;
+            else                type = ENEMY_ORC;
+        } else if (level <= 8) {
+            if (roll < 20)      type = ENEMY_ZOMBIE;
+            else if (roll < 60) type = ENEMY_ORC;
+            else                type = ENEMY_TROLL;
+        } else if (level <= 10) {
+            if (roll < 20)      type = ENEMY_ORC;
+            else if (roll < 60) type = ENEMY_TROLL;
+            else                type = ENEMY_GIANT;
+        } else {
+            type = roll < 50 ? ENEMY_TROLL : ENEMY_GIANT;
+        }
+
         spawn_enemy(&g->enemies[i], type, ex, ey);
         g->enemy_count++;
     }

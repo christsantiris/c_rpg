@@ -94,6 +94,11 @@ void action_resolve_enemies(GameState *g) {
         }
 
         // Move toward player
+        if (e->type == ENEMY_ZOMBIE) { // Zombies move every other turn
+            e->move_timer++;
+            if (e->move_timer % 2 != 0) continue;
+        }
+
         int mx = (dx > 0) ? 1 : (dx < 0) ? -1 : 0;
         int my = (dy > 0) ? 1 : (dy < 0) ? -1 : 0;
         int tx = e->x + mx;
