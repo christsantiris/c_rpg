@@ -15,19 +15,22 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
         fprintf(stderr, "TTF_Init error: %s\n", TTF_GetError());
         r->font_large = NULL;
         r->font_small = NULL;
+        r->font_tiny  = NULL;   
         return;
     }
 
     r->font_large = TTF_OpenFont(FONT_PATH, 16);
     r->font_small = TTF_OpenFont(FONT_PATH, 10);
+    r->font_tiny  = TTF_OpenFont(FONT_PATH, 8);
 
-    if (!r->font_large || !r->font_small)
+    if (!r->font_large || !r->font_small || !r->font_tiny)
         fprintf(stderr, "TTF_OpenFont error: %s\n", TTF_GetError());
 }
 
 void renderer_free(Renderer *r) {
     if (r->font_large) TTF_CloseFont(r->font_large);
     if (r->font_small) TTF_CloseFont(r->font_small);
+    if (r->font_tiny) TTF_CloseFont(r->font_tiny);
     TTF_Quit();
 }
 

@@ -1,8 +1,11 @@
+#include "map.h"
+#include "enemy.h"
+
 #ifndef GAME_HEADER_H
 #define GAME_HEADER_H
 
-#include "map.h"
-#include "enemy.h"
+#define MAX_MESSAGES 3
+#define MAX_MESSAGE_LEN 40
 
 typedef struct {
     int  x, y;
@@ -27,6 +30,8 @@ typedef struct {
     Enemy  enemies[MAX_ENEMIES];
     int    enemy_count;
     LevelCache level_cache[MAX_DEPTH];
+    char messages[MAX_MESSAGES][MAX_MESSAGE_LEN];
+    int  message_count;
 } GameState;
 
 void game_init(GameState *g);

@@ -45,6 +45,13 @@ void info_panel_draw(Renderer *r, const GameState *g) {
     SDL_snprintf(mp_str, sizeof(mp_str), "%d / %d", g->player.mp, g->player.max_mp);
     renderer_draw_text(r, mp_str, x, y, value, r->font_small);
 
+    // Message log
+    SDL_Color msg_color = {180, 160, 120, 255};
+    int msg_y = r->screen_h - 120 - (MAX_MESSAGES * lh) - lh;
+    for (int i = 0; i < g->message_count; i++) {
+        renderer_draw_text(r, g->messages[i], x, msg_y + i * lh, msg_color, r->font_tiny);
+    }
+
     int hy = r->screen_h - 120;
     renderer_draw_text(r, "WASD  MOVE",    x, hy,        hint, r->font_small);
     renderer_draw_text(r, ".     DESCEND", x, hy + lh,   hint, r->font_small);
