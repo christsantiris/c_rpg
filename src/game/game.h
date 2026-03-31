@@ -32,6 +32,7 @@ typedef struct {
     LevelCache level_cache[MAX_DEPTH];
     char messages[MAX_MESSAGES][MAX_MESSAGE_LEN];
     int  message_count;
+    int level_cleared;
 } GameState;
 
 void game_init(GameState *g);

@@ -109,6 +109,7 @@ void game_init(GameState *g) {
     for (int i = 0; i < MAX_DEPTH; i++)
         g->level_cache[i].valid = 0;
     g->message_count = 0;
+    g->level_cleared = 0;
     map_generate(&g->map, g->level);
     g->player.name[0]       = '\0';
     g->player.hp            = 100;
@@ -184,6 +185,7 @@ void game_ascend(GameState *g) {
     }
 
     g->level--;
+    g->level_cleared = 0;
 
     if (g->level_cache[g->level - 1].valid) {
         g->map         = g->level_cache[g->level - 1].map;
