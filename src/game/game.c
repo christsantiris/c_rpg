@@ -60,6 +60,8 @@ static void enemies_spawn(GameState *g) {
 void game_init(GameState *g) {
     srand((unsigned)time(NULL));
     g->level = 1;
+    for (int i = 0; i < MAX_DEPTH; i++)
+        g->level_cache[i].valid = 0;
     map_generate(&g->map, g->level);
     g->player.name[0]       = '\0';
     g->player.hp            = 100;
@@ -101,17 +103,48 @@ void game_move_player(GameState *g, int dx, int dy) {
 }
 
 void game_descend(GameState *g) {
+    if (g->level >= 1 && g->level <= MAX_DEPTH) {
+        g->level_cache[g->level - 1].map         = g->map;
+        g->level_cache[g->level - 1].enemy_count = g->enemy_count;
+        for (int i = 0; i < g->enemy_count; i++)
+            g->level_cache[g->level - 1].enemies[i] = g->enemies[i];
+        g->level_cache[g->level - 1].valid = 1;
+    }
+
     g->level++;
-    map_generate(&g->map, g->level);
-    enemies_spawn(g);
+    if (g->level <= MAX_DEPTH && g->level_cache[g->level - 1].valid) {
+        g->map         = g->level_cache[g->level - 1].map;
+        g->enemy_count = g->level_cache[g->level - 1].enemy_count;
+        for (int i = 0; i < g->enemy_count; i++)
+            g->enemies[i] = g->level_cache[g->level - 1].enemies[i];
+    } else {
+        map_generate(&g->map, g->level);
+        enemies_spawn(g);
+    }
     g->player.x = g->map.stairs_up_x;
     g->player.y = g->map.stairs_up_y;
 }
 
 void game_ascend(GameState *g) {
     if (g->level <= 1) return;
+
+    if (g->level <= MAX_DEPTH) {
+        g->level_cache[g->level - 1].map         = g->map;
+        g->level_cache[g->level - 1].enemy_count = g->enemy_count;
+        for (int i = 0; i < g->enemy_count; i++)
+            g->level_cache[g->level - 1].enemies[i] = g->enemies[i];
+        g->level_cache[g->level - 1].valid = 1;
+    }
+
     g->level--;
-    map_generate(&g->map, g->level);
+
+    if (g->level_cache[g->level - 1].valid) {
+        g->map         = g->level_cache[g->level - 1].map;
+        g->enemy_count = g->level_cache[g->level - 1].enemy_count;
+        for (int i = 0; i < g->enemy_count; i++)
+            g->enemies[i] = g->level_cache[g->level - 1].enemies[i];
+    }
+
     g->player.x = g->map.stairs_down_x;
     g->player.y = g->map.stairs_down_y;
 }

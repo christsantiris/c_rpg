@@ -14,11 +14,19 @@ typedef struct {
 } Player;
 
 typedef struct {
+    Map   map;
+    Enemy enemies[MAX_ENEMIES];
+    int   enemy_count;
+    int   valid;
+} LevelCache;
+
+typedef struct {
     Player player;
     Map    map;
     int    level;
     Enemy  enemies[MAX_ENEMIES];
     int    enemy_count;
+    LevelCache level_cache[MAX_DEPTH];
 } GameState;
 
 void game_init(GameState *g);
