@@ -1,360 +1,237 @@
-#include "../include/game.h"
-#include "../include/systems/viewport.h"
-#include "../include/systems/renderer.h"
-#include "../include/systems/double_buffer.h"
-#include "../include/systems/save_load.h"
+#include <SDL2/SDL.h>
+#include <stdio.h>
+#include "renderer/renderer.h"
+#include "renderer/sprites.h"
+#include "renderer/viewport.h"
+#include "renderer/landing_renderer.h"
+#include "renderer/game_over_renderer.h"
+#include "renderer/info_panel.h"
+#include "game/game.h"
+#include "game/map.h"
+#include "screens/landing.h"
+#include "screens/name_entry.h"
 
-int main() {
-    Game game;
-    
-    // Initialize ncurses with viewport support
-    init_ncurses_with_viewport(&game);
-    
-    // Initialize double buffer
-    init_double_buffer(&game.double_buffer);
-    
-    // Initialize game to menu state
-    game.game_state = STATE_MENU;
-    game.selected_menu = MENU_NEW_GAME; // Start with "New Game" selected
-    game.game_over = 0;
-    game.showMessage = 0;
-    game.showLevelMessage = 0;     // Initialize new message field
-    strcpy(game.levelMessage, ""); // Initialize level message buffer
-    
-    srand(time(NULL));
+#include "game/enemy.h"
 
-    // Main game loop
+#define WINDOW_TITLE "Castle of No Return"
+#define WINDOW_W     1280
+#define WINDOW_H     720
+
+int main(void) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
+        fprintf(stderr, "SDL_Init error: %s\n", SDL_GetError());
+        return 1;
+    }
+
+    SDL_Window *window = SDL_CreateWindow(
+        WINDOW_TITLE,
+        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        WINDOW_W, WINDOW_H,
+        SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
+    );
+    SDL_RaiseWindow(window);
+    if (!window) {
+        fprintf(stderr, "SDL_CreateWindow error: %s\n", SDL_GetError());
+        SDL_Quit();
+        return 1;
+    }
+
+    SDL_Renderer *sdl_renderer = SDL_CreateRenderer(
+        window, -1,
+        SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC
+    );
+    if (!sdl_renderer) {
+        fprintf(stderr, "SDL_CreateRenderer error: %s\n", SDL_GetError());
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }
+
+    Renderer renderer;
+    renderer_init(&renderer, sdl_renderer, WINDOW_W, WINDOW_H);
+
+    GameState game;
+    game_init(&game);
+
+    Viewport viewport;
+    viewport_init(&viewport, renderer.tiles_x, renderer.tiles_y, MAP_W, MAP_H);
+    viewport_center_on(&viewport, game.player.x, game.player.y);
+
+    LandingScreen landing;
+    landing_init(&landing);
+    NameEntry name_entry;
+    name_entry_init(&name_entry);
+    GameScreen screen = SCREEN_LANDING;
+
     int running = 1;
-    while (running && !game.game_over) {
-        
-        if (game.game_state == STATE_MENU) {
-            // Show title screen (not double buffered for simplicity)
-            draw_title_screen(&game);
-            handle_menu_input(&game);
-            
-        } else if (game.game_state == STATE_PLAYING) {
-            // START DOUBLE BUFFER FRAME
-            begin_draw(&game.double_buffer);
-            
-            // Update viewport if needed (only when player gets close to edges)
-            center_viewport_on_player(&game);
-            
-            // Draw everything to back buffer
-            draw_map(&game);
-            draw_player(&game);
-            
-            // Draw all enemies
-            for (int i = 0; i < game.enemy_count; i++) {
-                draw_enemy(&game, i);
-            }
-            
-            if (!game.game_over) {
-                // Draw UI elements
-                draw_ui_text(&game, game.viewport.viewport_height + 2, 0, 
-                           "Arrow keys/WASD: move, 'V': inventory, 'U': use, 'S': save, 'L': load, 'Q': quit");
-                
-                // Create status line string
-                char status_line[256];
-                snprintf(status_line, sizeof(status_line),
-                        "Lv: %d | XP: %d/%d | Turn: %d | Killed: %d", 
-                        game.player.level, game.player.experience, 
-                        game.player.experience_to_next, game.turn_count, game.enemies_killed);
+    SDL_Event event;
 
-                // Draw colored HP first
-                WINDOW *win = get_draw_window(&game);
-                int hp_color = get_hp_color(game.player.current_hp, game.player.max_hp);
-                wattron(win, COLOR_PAIR(hp_color) | A_BOLD);
-                mvwprintw(win, game.viewport.viewport_height + 3, 0, "HP: %d/%d", 
-                        game.player.current_hp, game.player.max_hp);
-                wattroff(win, COLOR_PAIR(hp_color) | A_BOLD);
-
-                // Then draw rest with normal function
-                draw_ui_text(&game, game.viewport.viewport_height + 3, 15, status_line);
-                
-                // Handle combat message
-                if (game.showMessage && strlen(game.recentlyDefeated) > 0) {
-                    char combat_msg[64];
-                    snprintf(combat_msg, sizeof(combat_msg), "You killed %s", game.recentlyDefeated);
-                    draw_ui_text(&game, game.viewport.viewport_height + 4, 0, combat_msg);
-                }
-                
-                // Handle level message (shows on line 5 if combat message is showing, otherwise line 4)
-                if (game.showLevelMessage) {
-                    int line = game.showMessage ? 5 : 4;
-                    // Use bold for level messages
-                    WINDOW *win = get_draw_window(&game);
-                    wattron(win, COLOR_PAIR(COLOR_TEXT) | A_BOLD);
-                    mvwprintw(win, game.viewport.viewport_height + line, 0, "%s", game.levelMessage);
-                    wattroff(win, COLOR_PAIR(COLOR_TEXT) | A_BOLD);
-                }
-                
-                // Check if all enemies are defeated
-                int active_enemies = 0;
-                for (int i = 0; i < game.enemy_count; i++) {
-                    if (game.enemies[i].active) {
-                        active_enemies++;
+    while (running) {
+        while (SDL_PollEvent(&event)) {
+            switch (event.type) {
+                case SDL_QUIT:
+                    running = 0;
+                    break;
+                case SDL_WINDOWEVENT:
+                    if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
+                        renderer_on_resize(&renderer,
+                            event.window.data1, event.window.data2);
+                        viewport_on_resize(&viewport,
+                            renderer.tiles_x, renderer.tiles_y);
+                        viewport_center_on(&viewport,
+                            game.player.x, game.player.y);
                     }
-                }
-                
-                if (active_enemies == 0 && !game.waiting_for_stairs) {
-                    game.waiting_for_stairs = 1;  // Set flag to show stairs message
-                    place_stairs(&game);          // Place the stairs
-                }
-
-                // Level completion message (takes priority over other messages)
-                if (game.waiting_for_stairs) {
-                    char stairs_msg[128];
-                    snprintf(stairs_msg, sizeof(stairs_msg), 
-                           "Dungeon Level %d cleared! Find the stairs '>' to descend!", 
-                           game.current_level);
-                    WINDOW *win = get_draw_window(&game);
-                    wattron(win, COLOR_PAIR(COLOR_TEXT) | A_BOLD);
-                    mvwprintw(win, game.viewport.viewport_height + 4, 0, "%s", stairs_msg);
-                    wattroff(win, COLOR_PAIR(COLOR_TEXT) | A_BOLD);
-                }
-            }
-            
-            // PRESENT THE COMPLETE FRAME (no flicker!)
-            end_draw_and_present(&game.double_buffer);
-            
-            running = handle_input(&game);
-            
-            if (game.game_over) {
-                // Game over screen
-                clear();
-                mvprintw(5, 15, "  ####    ###   #   #  ####       ####  #   #  ####  ####");
-                mvprintw(6, 15, " #       #   #  ## ##  #          #  #  #   #  #     #   #");
-                mvprintw(7, 15, " # ###   #####  # # #  ###        #  #  #   #  ###   ####");
-                mvprintw(8, 15, " #   #   #   #  #   #  #          #  #   # #   #     #  #");
-                mvprintw(9, 15, "  ####   #   #  #   #  ####       ####    #    ####  #   #");
-                
-                mvprintw(12, 25, "You have been defeated!");
-                mvprintw(14, 30, "Press any key to exit...");
-                
-                refresh();
-                getch();
-                running = 0;
-            }
-        }
-    }
-    
-    cleanup_double_buffer(&game.double_buffer);
-    cleanup_ncurses();
-    printf("Thanks for playing!\n");
-    return 0;
-}
-
-int handle_input(Game *game) {
-    int ch = getch(); // Get a character from user
-    
-    switch (ch) {
-        case 's': // Both lowercase and uppercase 's' for save
-        case 'S':
-            // Save the game
-            clear();
-            mvprintw(5, 15, "=== SAVE GAME ===");
-            mvprintw(7, 15, "Saving game to: %s", SAVE_FILENAME);
-            mvprintw(8, 15, "Creating saves directory...");
-            refresh();
-            
-            // Create directory first
-            create_save_directory();
-            
-            mvprintw(9, 15, "Attempting to save...");
-            refresh();
-            
-            if (save_game(game, SAVE_FILENAME)) {
-                mvprintw(11, 15, "Game saved successfully!");
-            } else {
-                mvprintw(11, 15, "Error: Could not save game!");
-            }
-            
-            mvprintw(13, 15, "Check the saves/ directory for savegame.dat");
-            mvprintw(15, 15, "Press any key to continue...");
-            refresh();
-            getch();
-            break;
-            
-        case KEY_UP:
-            move_player(game, 0, -1); // Move up (y decreases)
-            break;
-            
-        case KEY_DOWN:
-            move_player(game, 0, 1); // Move down (y increases)
-            break;
-            
-        case KEY_LEFT:
-        case 'a':
-        case 'A':
-            move_player(game, -1, 0); // Move left (x decreases)
-            break;
-            
-        case KEY_RIGHT:
-        case 'd':
-        case 'D':
-            move_player(game, 1, 0); // Move right (x increases)
-            break;
-
-        case '1':  // Up-left diagonal
-            move_player(game, -1, -1);
-            break;
-
-        case '0':  // Up-right diagonal  
-            move_player(game, 1, -1);
-            break;
-
-        case 'z':  // Down-left diagonal
-            move_player(game, -1, 1);
-            break;
-
-        case 'm':  // Down-right diagonal
-            move_player(game, 1, 1);
-            break;
-
-        case 'v':
-        case 'V':
-            show_inventory(game);
-            break;
-
-        case 'u':
-        case 'U':
-            // Use item from inventory
-            if (game->player.inventory.item_count > 0) {
-                // Show available consumable items
-                clear();
-                mvprintw(2, 2, "=== USE ITEM ===");
-                mvprintw(4, 2, "Select an item to use:");
-                
-                int consumable_count = 0;
-                int consumable_indices[MAX_INVENTORY_SIZE];
-                
-                // Show only consumable items
-                for (int i = 0; i < game->player.inventory.item_count; i++) {
-                    Item* item = &game->player.inventory.items[i];
-                    if (item->type == ITEM_TYPE_CONSUMABLE) {
-                        mvprintw(6 + consumable_count, 4, "%d. %s", 
-                                consumable_count + 1, item->name);
-                        consumable_indices[consumable_count] = i;
-                        consumable_count++;
-                    }
-                }
-                
-                if (consumable_count == 0) {
-                    mvprintw(6, 4, "No usable items in inventory.");
-                    mvprintw(8, 2, "Press any key to continue...");
-                    refresh();
-                    getch();
-                } else {
-                    mvprintw(6 + consumable_count + 1, 2, "Press 1-%d to use item, any other key to cancel", consumable_count);
-                    refresh();
-                    
-                    int item_choice = getch();
-                    int choice_num = item_choice - '1';  // Convert '1' to 0, '2' to 1, etc.
-                    
-                    if (choice_num >= 0 && choice_num < consumable_count) {
-                        int actual_index = consumable_indices[choice_num];
-                        Item* selected_item = &game->player.inventory.items[actual_index];
-                        
-                        // Clear screen and show result
-                        clear();
-                        mvprintw(2, 2, "=== ITEM USED ===");
-                        
-                        // Check if item can be used
-                        if (selected_item->type == ITEM_TYPE_CONSUMABLE && selected_item->use_function) {
-                            if (game->player.current_hp >= game->player.max_hp) {
-                                mvprintw(4, 2, "You are already at full health!");
-                            } else {
-                                // Apply healing
-                                int old_hp = game->player.current_hp;
-                                game->player.current_hp += selected_item->heal_amount;
-                                if (game->player.current_hp > game->player.max_hp) {
-                                    game->player.current_hp = game->player.max_hp;
-                                }
-                                
-                                int healed = game->player.current_hp - old_hp;
-                                
-                                // Show result with proper formatting
-                                mvprintw(4, 2, "You drink the %s and restore %d HP!", 
-                                        selected_item->name, healed);
-                                mvprintw(5, 2, "HP: %d/%d", 
-                                        game->player.current_hp, game->player.max_hp);
-                                mvprintw(6, 2, "The %s is consumed.", selected_item->name);
-                                
-                                // Remove item from inventory
-                                remove_item_from_inventory(&game->player.inventory, actual_index);
-                                
-                                // This counts as a turn - move all active enemies
-                                for (int i = 0; i < game->enemy_count; i++) {
-                                    if (game->enemies[i].active) {
-                                        move_enemy(game, i);
-                                    }
-                                }
-                                game->turn_count++;
-                            }
-                        } else {
-                            mvprintw(4, 2, "This item cannot be used.");
+                    break;
+                case SDL_KEYDOWN:
+                    if (screen == SCREEN_GAME_OVER) {
+                        if (event.key.keysym.scancode == SDL_SCANCODE_RETURN) {
+                            landing_init(&landing);
+                            screen = SCREEN_LANDING;
                         }
-                        
-                        mvprintw(8, 2, "Press any key to continue...");
-                        refresh();
-                        getch();
+                        break;
                     }
-                }
-                
-                // Clear messages when returning to game
-                game->showMessage = 0;
-            } else {
-                // No items in inventory
-                clear();
-                mvprintw(5, 15, "Your inventory is empty!");
-                mvprintw(7, 15, "Press any key to continue...");
-                refresh();
-                getch();
-            }
-            break;
-            
-        case 'q':
-        case 'Q':
-        case KEY_ESC:
-            // Check if custom quit key is configured
-            if (ch == game->config.quit_key || ch == 'q' || ch == 'Q' || ch == KEY_ESC) {
-                // Clear screen and show quit confirmation
-                clear();
-                mvprintw(5, 15, "=== QUIT GAME ===");
-                mvprintw(7, 15, "Are you sure you want to quit?");
-                mvprintw(9, 15, "Press 'Y' to quit, any other key to continue");
-                refresh();
-                
-                // Get confirmation input
-                int confirm = getch();
-                if (confirm == 'y' || confirm == 'Y') {
-                    return 0; // Quit game
-                }
-                // For 'n', 'N', or any other key, continue game
-                // Screen will be redrawn automatically on next frame
-            }
-            break;
-            
-        default:
-            // Invalid key, do nothing
-            break;
-    }
-    
-    // Update all enemies after player moves (if player actually moved)
-    // This ensures enemies only move when the player moves (turn-based)
-    if (ch == KEY_UP || ch == 'w' || ch == 'W' ||
-        ch == KEY_DOWN || ch == 's' || ch == 'S' ||
-        ch == KEY_LEFT || ch == 'a' || ch == 'A' ||
-        ch == KEY_RIGHT || ch == 'd' || ch == 'D' ||
-        ch == '1' || ch == '0' || ch == 'z' || ch == 'm') {
-        
-        // Move all active enemies
-        for (int i = 0; i < game->enemy_count; i++) {
-            if (game->enemies[i].active) {
-                move_enemy(game, i);
+                    if (screen == SCREEN_LANDING) {
+                        LandingResult result = landing.confirming_new_game
+                            ? landing_handle_confirm(&landing, event.key.keysym.scancode)
+                            : landing_handle_key(&landing, event.key.keysym.scancode);
+                        if (result == LANDING_NEW_GAME) {
+                            name_entry_init(&name_entry);
+                            screen = SCREEN_NAME_ENTRY;
+                        }
+                        if (result == LANDING_CONTINUE) {
+                            int vp_tiles_x = (renderer.screen_w - INFO_PANEL_W) / TILE_SIZE;
+                            viewport_init(&viewport,
+                                vp_tiles_x, renderer.tiles_y,
+                                MAP_W, MAP_H);
+                            viewport_center_on(&viewport,
+                                game.player.x, game.player.y);
+                            screen = SCREEN_PLAYING;
+                        }
+                        if (result == LANDING_QUIT) running = 0;
+                        break;
+                    }
+                    if (screen == SCREEN_NAME_ENTRY) {
+                        const char *keyname = SDL_GetKeyName(event.key.keysym.sym);
+                        NameEntryResult result = name_entry_handle_key(&name_entry, event.key.keysym.scancode, keyname);
+                            if (result == NAME_ENTRY_CONFIRMED) {
+                                game_init(&game);
+                                SDL_strlcpy(game.player.name, name_entry.name,
+                                sizeof(game.player.name));
+                                int vp_tiles_x = (renderer.screen_w - INFO_PANEL_W) / TILE_SIZE;
+                                viewport_init(&viewport,
+                                vp_tiles_x, renderer.tiles_y,
+                                MAP_W, MAP_H);
+                                viewport_center_on(&viewport,
+                                game.player.x, game.player.y);
+                                screen = SCREEN_PLAYING;
+                            }
+                        if (result == NAME_ENTRY_CANCELLED) screen = SCREEN_LANDING;
+                        break;
+                    }
+                    {
+                        Action a = {ACTION_NONE, 0, 0};
+                        switch (event.key.keysym.scancode) {
+                            case SDL_SCANCODE_ESCAPE:
+                                landing.has_active_game = 1;
+                                landing.selected = 1;
+                                screen = SCREEN_LANDING;
+                                break;
+                            case SDL_SCANCODE_UP:
+                            case SDL_SCANCODE_W:
+                                a = (Action){ACTION_MOVE, game.player.x, game.player.y - 1};
+                                break;
+                            case SDL_SCANCODE_DOWN:
+                            case SDL_SCANCODE_S:
+                                a = (Action){ACTION_MOVE, game.player.x, game.player.y + 1};
+                                break;
+                            case SDL_SCANCODE_LEFT:
+                            case SDL_SCANCODE_A:
+                                a = (Action){ACTION_MOVE, game.player.x - 1, game.player.y};
+                                break;
+                            case SDL_SCANCODE_RIGHT:
+                            case SDL_SCANCODE_D:
+                                a = (Action){ACTION_MOVE, game.player.x + 1, game.player.y};
+                                break;
+                            case SDL_SCANCODE_PERIOD:
+                                a = (Action){ACTION_DESCEND, 0, 0};
+                                break;
+                            case SDL_SCANCODE_COMMA:
+                                a = (Action){ACTION_ASCEND, 0, 0};
+                                break;
+                            default: break;
+                        }
+                        if (a.type != ACTION_NONE) {
+                            action_resolve_player(&game, a);
+                            action_resolve_enemies(&game);
+                            if (game.player.hp <= 0)
+                                screen = SCREEN_GAME_OVER;
+                            viewport_center_on(&viewport,
+                                game.player.x, game.player.y);
+                        }
+                    }
+                    break;
+                case SDL_MOUSEBUTTONDOWN:
+                    if (screen == SCREEN_LANDING &&
+                        event.button.button == SDL_BUTTON_LEFT) {
+                        LandingResult result = landing_handle_click(
+                            &landing,
+                            event.button.x, event.button.y,
+                            renderer.screen_w, renderer.screen_h);
+                        if (result == LANDING_NEW_GAME) {
+                            name_entry_init(&name_entry);
+                            screen = SCREEN_NAME_ENTRY;
+                        }
+                        if (result == LANDING_QUIT) running = 0;
+                    }
+                    break;
+                default:
+                    break;
             }
         }
+        if (screen == SCREEN_NAME_ENTRY)
+            name_entry_update(&name_entry);
+            
+        renderer_begin_frame(&renderer);
+
+        if (screen == SCREEN_LANDING) {
+            landing_draw(&renderer, &landing);
+        } else if (screen == SCREEN_NAME_ENTRY) {
+            name_entry_draw(&renderer, &name_entry);
+        } else if (screen == SCREEN_PLAYING) {
+            for (int y = 0; y < MAP_H; y++) {
+                for (int x = 0; x < MAP_W; x++) {
+                    if (!viewport_is_visible(&viewport, x, y)) continue;
+                    int sx = viewport_to_screen_x(&viewport, x);
+                    int sy = viewport_to_screen_y(&viewport, y);
+                    switch (game.map.tiles[y][x]) {
+                        case TILE_WALL:        draw_wall(&renderer, sx, sy);        break;
+                        case TILE_STAIRS_UP:   draw_stairs_up(&renderer, sx, sy);   break;
+                        case TILE_STAIRS_DOWN: draw_stairs_down(&renderer, sx, sy); break;
+                        default:               draw_floor(&renderer, sx, sy);       break;
+                    }
+                }
+            }
+            for (int i = 0; i < game.enemy_count; i++) {
+                Enemy *e = &game.enemies[i];
+                if (!e->active) continue;
+                if (!viewport_is_visible(&viewport, e->x, e->y)) continue;
+                int sx = viewport_to_screen_x(&viewport, e->x);
+                int sy = viewport_to_screen_y(&viewport, e->y);
+                draw_enemy(&renderer, sx, sy, e->type);
+            }
+            draw_player(&renderer,
+                viewport_to_screen_x(&viewport, game.player.x),
+                viewport_to_screen_y(&viewport, game.player.y));
+            info_panel_draw(&renderer, &game);
+        } else if (screen == SCREEN_GAME_OVER) {
+            game_over_draw(&renderer, &game);
+        }
+        renderer_end_frame(&renderer);
     }
-    
-    return 1; // Continue game
+
+    renderer_free(&renderer);
+    SDL_DestroyRenderer(sdl_renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+    return 0;
 }
