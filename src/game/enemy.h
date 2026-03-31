@@ -6,10 +6,12 @@
 #define MAX_ENEMIES 10
 
 typedef enum {
-    ENEMY_GOBLIN = 0,
-    ENEMY_SKELETON,
+    ENEMY_SKELETON = 0,
+    ENEMY_GOBLIN,
+    ENEMY_ZOMBIE,
     ENEMY_ORC,
-    ENEMY_TROLL
+    ENEMY_TROLL,
+    ENEMY_GIANT
 } EnemyType;
 
 typedef struct {
@@ -20,6 +22,7 @@ typedef struct {
     int       hp, max_hp;
     int       attack, defense;
     int       experience;
+    int move_timer;
 } Enemy;
 
 #endif

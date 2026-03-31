@@ -124,11 +124,46 @@ void draw_troll(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x+18, y+8,   3,  10, club);
 }
 
+void draw_zombie(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color body  = { 80, 110,  60, 255};
+    SDL_Color skin  = {140, 160, 100, 255};
+    SDL_Color eye   = {220,  20,  20, 255};
+    SDL_Color wound = {160,  30,  30, 255};
+    fill_rect(r, x+6,  y+11, 12, 10, body);
+    fill_rect(r, x+7,  y+4,  10,  7, skin);
+    fill_rect(r, x+8,  y+7,   2,  2, eye);
+    fill_rect(r, x+14, y+7,   2,  2, eye);
+    fill_rect(r, x+9,  y+10,  6,  1, wound);
+    fill_rect(r, x+4,  y+13,  3,  6, skin);
+    fill_rect(r, x+17, y+13,  3,  6, skin);
+}
+
+void draw_giant(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color body  = { 90,  70,  50, 255};
+    SDL_Color skin  = {160, 120,  80, 255};
+    SDL_Color eye   = {255, 160,   0, 255};
+    SDL_Color club  = {100,  60,  20, 255};
+    fill_rect(r, x+3,  y+2,  18, 16, body);
+    fill_rect(r, x+6,  y+4,  12,  8, skin);
+    fill_rect(r, x+7,  y+6,   3,  3, eye);
+    fill_rect(r, x+14, y+6,   3,  3, eye);
+    fill_rect(r, x+2,  y+10,  3, 10, body);
+    fill_rect(r, x+19, y+10,  3, 10, body);
+    fill_rect(r, x+20, y+6,   3, 14, club);
+    fill_rect(r, x+19, y+6,   4,  3, club);
+}
+
 void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
     switch (type) {
-        case ENEMY_GOBLIN:   draw_goblin(r, tile_x, tile_y);   break;
         case ENEMY_SKELETON: draw_skeleton(r, tile_x, tile_y); break;
+        case ENEMY_GOBLIN:   draw_goblin(r, tile_x, tile_y);   break;
+        case ENEMY_ZOMBIE:   draw_zombie(r, tile_x, tile_y);   break;
         case ENEMY_ORC:      draw_orc(r, tile_x, tile_y);      break;
         case ENEMY_TROLL:    draw_troll(r, tile_x, tile_y);    break;
+        case ENEMY_GIANT:    draw_giant(r, tile_x, tile_y);    break;
     }
 }
