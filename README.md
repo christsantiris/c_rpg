@@ -12,6 +12,7 @@ A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explo
 - [Dependencies](#dependencies)
 - [Contributing](#contributing)
 - [License](#license)
+- [Roadmap](#roadmap)
 
 ## Overview
 *The Castle of No Return* is a text-based roguelike game built with C. The game features turn-based combat and a retro art style.
@@ -39,3 +40,13 @@ I would gladly welcome any pull requests to help improve the game
 
 ## License
 MIT
+
+## Roadmap
+- Optimize loading speed
+- Add loading spinner
+- Add town area with shops
+- Add items that can be used like potions
+- Add ranged attacks
+- Add upgraded weapons
+- Add armor
+- Add bosses every n dungeon levels
