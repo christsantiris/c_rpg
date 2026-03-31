@@ -8,7 +8,7 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->sdl      = sdl;
     r->screen_w = screen_w;
     r->screen_h = screen_h;
-    r->tiles_x  = (screen_w - INFO_PANEL_W) / TILE_SIZE;
+    r->tiles_x  = screen_w / TILE_SIZE;
     r->tiles_y  = screen_h / TILE_SIZE;
 
     if (TTF_Init() != 0) {
@@ -52,7 +52,7 @@ void renderer_draw_tile_bg(Renderer *r, int tile_x, int tile_y, SDL_Color color)
 void renderer_on_resize(Renderer *r, int new_w, int new_h) {
     r->screen_w = new_w;
     r->screen_h = new_h;
-    r->tiles_x  = (new_w - INFO_PANEL_W) / TILE_SIZE;
+    r->tiles_x  = new_w / TILE_SIZE;
     r->tiles_y  = new_h / TILE_SIZE;
 }
 
