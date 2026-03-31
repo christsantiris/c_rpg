@@ -31,8 +31,13 @@ void action_resolve_player(GameState *g, Action a) {
     if (a.type == ACTION_NONE) return;
 
     if (a.type == ACTION_DESCEND) {
-        if (g->map.tiles[g->player.y][g->player.x] == TILE_STAIRS_DOWN)
-            game_descend(g);
+        if (g->map.tiles[g->player.y][g->player.x] == TILE_STAIRS_DOWN) {
+            if (g->level_cleared) {
+                game_descend(g);
+            } else {
+                push_message(g, "Clear the level first!");
+            }
+        }
         return;
     }
 
@@ -58,11 +63,19 @@ void action_resolve_player(GameState *g, Action a) {
                 char msg[MAX_MESSAGE_LEN];
                 if (e->hp <= 0) {
                     e->active = 0;
+                    int all_clear = 1;
+                    for (int j = 0; j < g->enemy_count; j++) {
+                        if (g->enemies[j].active) { all_clear = 0; break; }
+                    }
+                    if (all_clear) g->level_cleared = 1;
+                    char msg[MAX_MESSAGE_LEN];
                     snprintf(msg, sizeof(msg), "Killed %s!", e->name);
+                    push_message(g, msg);
                 } else {
+                    char msg[MAX_MESSAGE_LEN];
                     snprintf(msg, sizeof(msg), "Hit %s: %d dmg", e->name, dmg);
+                    push_message(g, msg);
                 }
-                push_message(g, msg);
                 return;
             }
         }
