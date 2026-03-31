@@ -14,24 +14,24 @@ A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explo
 - [License](#license)
 
 ## Overview
-*The Castle of No Return* is a text-based roguelike game built with C and the `ncurses` library. The game features turn-based combat and a retro ASCII art style.
+*The Castle of No Return* is a text-based roguelike game built with C. The game features turn-based combat and a retro art style.
 
 ## Screenshot
 Below is a screenshot of the game in action:
 
-<img width="625" height="516" alt="Screenshot 2025-08-26 at 4 32 11 PM" src="https://github.com/user-attachments/assets/d06b34b2-567d-4df4-aa82-a6188cc22da3" />
+
 
 ## Compile the game
-To compile the app run `make` in the root directory. You may also have to `brew install ncurses`
-
-## Running the game
-To run the game run `./conr` after you run make
+To compile the app run `make run` in the root directory.
 
 ## Clean the build
 Run `make clean` to destroy the compiled game and start over if you make your own changes
 
+## Clean the tests
+Run `make test` to run unit tests
+
 ## Dependencies
-ncurses library for terminal-based rendering
+SDL2 library for rendering
 
 ## Contributing
 I would gladly welcome any pull requests to help improve the game
