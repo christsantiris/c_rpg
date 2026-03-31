@@ -19,6 +19,66 @@
 #define WINDOW_W     1280
 #define WINDOW_H     720
 
+static void enter_playing(Renderer *renderer, Viewport *viewport, GameState *game) {
+    int vp_tiles_x = (renderer->screen_w - INFO_PANEL_W) / TILE_SIZE;
+    viewport_init(viewport, vp_tiles_x, renderer->tiles_y, MAP_W, MAP_H);
+    viewport_center_on(viewport, game->player.x, game->player.y);
+}
+
+static void handle_landing_result(LandingResult result, LandingScreen *landing,
+    GameScreen *screen, GameState *game, Renderer *renderer, Viewport *viewport,
+    NameEntry *name_entry, SlotSelect *slot_select, int *slot_is_save, int *running) {
+
+    switch (result) {
+        case LANDING_NEW_GAME:
+            name_entry_init(name_entry);
+            *screen = SCREEN_NAME_ENTRY;
+            break;
+        case LANDING_CONTINUE:
+            enter_playing(renderer, viewport, game);
+            *screen = SCREEN_PLAYING;
+            break;
+        case LANDING_SAVE_GAME:
+            slot_select_init(slot_select);
+            *slot_is_save = 1;
+            *screen = SCREEN_SAVE_SLOT;
+            break;
+        case LANDING_LOAD_GAME:
+            slot_select_init(slot_select);
+            *slot_is_save = 0;
+            *screen = SCREEN_LOAD_SLOT;
+            break;
+        case LANDING_QUIT:
+            *running = 0;
+            break;
+        default:
+            break;
+    }
+}
+
+static void handle_slot_result(SlotResult result, int slot, int slot_is_save,
+    GameScreen *screen, GameState *game, Renderer *renderer, Viewport *viewport,
+    LandingScreen *landing) {
+
+    if (result == SLOT_CANCELLED) {
+        *screen = SCREEN_LANDING;
+        return;
+    }
+    if (result == SLOT_SELECTED) {
+        if (slot_is_save) {
+            save_game(game, slot);
+            *screen = SCREEN_LANDING;
+        } else {
+            if (load_game(game, slot)) {
+                enter_playing(renderer, viewport, game);
+                landing->has_active_game = 1;
+                *screen = SCREEN_PLAYING;
+                SDL_FlushEvents(SDL_FIRSTEVENT, SDL_LASTEVENT);
+            }
+        }
+    }
+}
+
 int main(void) {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
         fprintf(stderr, "SDL_Init error: %s\n", SDL_GetError());
@@ -63,10 +123,10 @@ int main(void) {
     landing_init(&landing);
     NameEntry name_entry;
     name_entry_init(&name_entry);
-    GameScreen screen = SCREEN_LANDING;
     SlotSelect slot_select;
     slot_select_init(&slot_select);
     int slot_is_save = 0;
+    GameScreen screen = SCREEN_LANDING;
 
     int running = 1;
     SDL_Event event;
@@ -77,6 +137,7 @@ int main(void) {
                 case SDL_QUIT:
                     running = 0;
                     break;
+
                 case SDL_WINDOWEVENT:
                     if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
                         renderer_on_resize(&renderer,
@@ -87,100 +148,55 @@ int main(void) {
                             game.player.x, game.player.y);
                     }
                     break;
-                case SDL_KEYDOWN:
+
+                case SDL_KEYDOWN: {
+                    int sc = event.key.keysym.scancode;
+
                     if (screen == SCREEN_GAME_OVER) {
-                        if (event.key.keysym.scancode == SDL_SCANCODE_RETURN) {
+                        if (sc == SDL_SCANCODE_RETURN) {
                             landing_init(&landing);
                             screen = SCREEN_LANDING;
                         }
                         break;
                     }
+
                     if (screen == SCREEN_LANDING) {
                         LandingResult result = landing.confirming_new_game
-                            ? landing_handle_confirm(&landing, event.key.keysym.scancode)
-                            : landing_handle_key(&landing, event.key.keysym.scancode);
-                        if (result == LANDING_NEW_GAME) {
-                            name_entry_init(&name_entry);
-                            screen = SCREEN_NAME_ENTRY;
-                        }
-                        if (result == LANDING_SAVE_GAME) {
-                            slot_select_init(&slot_select);
-                            slot_is_save = 1;
-                            screen = SCREEN_SAVE_SLOT;
-                        }
-                        if (result == LANDING_LOAD_GAME) {
-                            slot_select_init(&slot_select);
-                            slot_is_save = 0;
-                            screen = SCREEN_LOAD_SLOT;
-                        }
-                        if (result == LANDING_CONTINUE) {
-                            int vp_tiles_x = (renderer.screen_w - INFO_PANEL_W) / TILE_SIZE;
-                            viewport_init(&viewport,
-                                vp_tiles_x, renderer.tiles_y,
-                                MAP_W, MAP_H);
-                            viewport_center_on(&viewport,
-                                game.player.x, game.player.y);
-                            screen = SCREEN_PLAYING;
-                        }
-                        // if (result == LANDING_LOAD_GAME) {
-                        //     if (load_game(&game, 1)) {
-                        //         int vp_tiles_x = (renderer.screen_w - INFO_PANEL_W) / TILE_SIZE;
-                        //         viewport_init(&viewport,
-                        //             vp_tiles_x, renderer.tiles_y,
-                        //             MAP_W, MAP_H);
-                        //         viewport_center_on(&viewport,
-                        //             game.player.x, game.player.y);
-                        //         screen = SCREEN_PLAYING;
-                        //     }
-                        // }
-                        if (result == LANDING_QUIT) running = 0;
+                            ? landing_handle_confirm(&landing, sc)
+                            : landing_handle_key(&landing, sc);
+                        handle_landing_result(result, &landing, &screen, &game,
+                            &renderer, &viewport, &name_entry, &slot_select,
+                            &slot_is_save, &running);
                         break;
                     }
+
                     if (screen == SCREEN_NAME_ENTRY) {
                         const char *keyname = SDL_GetKeyName(event.key.keysym.sym);
-                        NameEntryResult result = name_entry_handle_key(&name_entry, event.key.keysym.scancode, keyname);
-                            if (result == NAME_ENTRY_CONFIRMED) {
-                                game_init(&game);
-                                SDL_strlcpy(game.player.name, name_entry.name,
+                        NameEntryResult result = name_entry_handle_key(
+                            &name_entry, sc, keyname);
+                        if (result == NAME_ENTRY_CONFIRMED) {
+                            game_init(&game);
+                            SDL_strlcpy(game.player.name, name_entry.name,
                                 sizeof(game.player.name));
-                                int vp_tiles_x = (renderer.screen_w - INFO_PANEL_W) / TILE_SIZE;
-                                viewport_init(&viewport,
-                                vp_tiles_x, renderer.tiles_y,
-                                MAP_W, MAP_H);
-                                viewport_center_on(&viewport,
-                                game.player.x, game.player.y);
-                                screen = SCREEN_PLAYING;
-                            }
-                        if (result == NAME_ENTRY_CANCELLED) screen = SCREEN_LANDING;
-                        break;
-                    }
-                    if (screen == SCREEN_SAVE_SLOT || screen == SCREEN_LOAD_SLOT) {
-                        SlotResult result = slot_select_handle_key(
-                            &slot_select, event.key.keysym.scancode);
-                        if (result == SLOT_SELECTED) {
-                            int slot = slot_select.selected + 1;
-                            if (slot_is_save) {
-                                save_game(&game, slot);
-                                screen = SCREEN_LANDING;
-                            } else {
-                                if (load_game(&game, slot)) {
-                                    int vp_tiles_x = (renderer.screen_w - INFO_PANEL_W) / TILE_SIZE;
-                                    viewport_init(&viewport,
-                                        vp_tiles_x, renderer.tiles_y,
-                                        MAP_W, MAP_H);
-                                    viewport_center_on(&viewport,
-                                        game.player.x, game.player.y);
-                                    landing.has_active_game = 1;
-                                    screen = SCREEN_PLAYING;
-                                }
-                            }
+                            enter_playing(&renderer, &viewport, &game);
+                            screen = SCREEN_PLAYING;
                         }
-                        if (result == SLOT_CANCELLED) screen = SCREEN_LANDING;
+                        if (result == NAME_ENTRY_CANCELLED)
+                            screen = SCREEN_LANDING;
                         break;
                     }
-                    {
+
+                    if (screen == SCREEN_SAVE_SLOT || screen == SCREEN_LOAD_SLOT) {
+                        SlotResult result = slot_select_handle_key(&slot_select, sc);
+                        handle_slot_result(result, slot_select.selected + 1,
+                            slot_is_save, &screen, &game, &renderer, &viewport,
+                            &landing);
+                        break;
+                    }
+
+                    if (screen == SCREEN_PLAYING) {
                         Action a = {ACTION_NONE, 0, 0};
-                        switch (event.key.keysym.scancode) {
+                        switch (sc) {
                             case SDL_SCANCODE_ESCAPE:
                                 landing.has_active_game = 1;
                                 landing.selected = 1;
@@ -220,38 +236,55 @@ int main(void) {
                         }
                     }
                     break;
-                case SDL_MOUSEBUTTONDOWN:
-                    if (screen == SCREEN_LANDING &&
-                        event.button.button == SDL_BUTTON_LEFT) {
+                }
+
+                case SDL_MOUSEBUTTONDOWN: {
+                    if (event.button.button != SDL_BUTTON_LEFT) break;
+
+                    if (screen == SCREEN_LANDING) {
                         LandingResult result = landing_handle_click(
                             &landing,
                             event.button.x, event.button.y,
                             renderer.screen_w, renderer.screen_h);
-                        if (result == LANDING_NEW_GAME) {
-                            name_entry_init(&name_entry);
-                            screen = SCREEN_NAME_ENTRY;
+                        handle_landing_result(result, &landing, &screen, &game,
+                            &renderer, &viewport, &name_entry, &slot_select,
+                            &slot_is_save, &running);
+                    }
+
+                    if (screen == SCREEN_SAVE_SLOT || screen == SCREEN_LOAD_SLOT) {
+                        int base_y = renderer.screen_h / 2 - 20;
+                        for (int i = 0; i < 3; i++) {
+                            int item_y     = base_y + i * 40;
+                            int item_y_end = item_y + 24;
+                            if (event.button.y >= item_y &&
+                                event.button.y <= item_y_end) {
+                                slot_select.selected = i;
+                                handle_slot_result(SLOT_SELECTED, i + 1,
+                                    slot_is_save, &screen, &game, &renderer,
+                                    &viewport, &landing);
+                                break;
+                            }
                         }
-                        if (result == LANDING_LOAD_GAME) {
-                            slot_select_init(&slot_select);
-                            slot_is_save = 0;
-                            screen = SCREEN_LOAD_SLOT;
-                        }
-                        if (result == LANDING_QUIT) running = 0;
                     }
                     break;
+                }
+
                 default:
                     break;
             }
         }
+
         if (screen == SCREEN_NAME_ENTRY)
             name_entry_update(&name_entry);
-            
+
         renderer_begin_frame(&renderer);
 
         if (screen == SCREEN_LANDING) {
             landing_draw(&renderer, &landing);
         } else if (screen == SCREEN_NAME_ENTRY) {
             name_entry_draw(&renderer, &name_entry);
+        } else if (screen == SCREEN_SAVE_SLOT || screen == SCREEN_LOAD_SLOT) {
+            slot_draw(&renderer, &slot_select, slot_is_save);
         } else if (screen == SCREEN_PLAYING) {
             for (int y = 0; y < MAP_H; y++) {
                 for (int x = 0; x < MAP_W; x++) {
@@ -278,11 +311,10 @@ int main(void) {
                 viewport_to_screen_x(&viewport, game.player.x),
                 viewport_to_screen_y(&viewport, game.player.y));
             info_panel_draw(&renderer, &game);
-        } else if (screen == SCREEN_SAVE_SLOT || screen == SCREEN_LOAD_SLOT) {
-            slot_draw(&renderer, &slot_select, slot_is_save);
         } else if (screen == SCREEN_GAME_OVER) {
             game_over_draw(&renderer, &game);
         }
+
         renderer_end_frame(&renderer);
     }
 
