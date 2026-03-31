@@ -10,6 +10,7 @@ typedef struct {
     SDL_Renderer *sdl;
     TTF_Font     *font_large;
     TTF_Font     *font_small;
+    TTF_Font     *font_tiny;
     int           screen_w;
     int           screen_h;
     int           tiles_x;

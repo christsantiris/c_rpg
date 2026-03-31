@@ -1,6 +1,8 @@
 #include "actions.h"
 #include "game.h"
 #include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
 static int abs_int(int n) { return n < 0 ? -n : n; }
 
@@ -10,6 +12,19 @@ static Action make_move_or_attack(int tx, int ty) {
     a.target_y = ty;
     a.type     = ACTION_MOVE;
     return a;
+}
+
+static void push_message(GameState *g, const char *msg) {
+    if (g->message_count < MAX_MESSAGES) {
+        strncpy(g->messages[g->message_count], msg, MAX_MESSAGE_LEN - 1);
+        g->messages[g->message_count][MAX_MESSAGE_LEN - 1] = '\0';
+        g->message_count++;
+    } else {
+        for (int i = 0; i < MAX_MESSAGES - 1; i++)
+            strncpy(g->messages[i], g->messages[i + 1], MAX_MESSAGE_LEN);
+        strncpy(g->messages[MAX_MESSAGES - 1], msg, MAX_MESSAGE_LEN - 1);
+        g->messages[MAX_MESSAGES - 1][MAX_MESSAGE_LEN - 1] = '\0';
+    }
 }
 
 void action_resolve_player(GameState *g, Action a) {
@@ -40,7 +55,14 @@ void action_resolve_player(GameState *g, Action a) {
                 int dmg = g->player.attack - e->defense;
                 if (dmg < 1) dmg = 1;
                 e->hp -= dmg;
-                if (e->hp <= 0) e->active = 0;
+                char msg[MAX_MESSAGE_LEN];
+                if (e->hp <= 0) {
+                    e->active = 0;
+                    snprintf(msg, sizeof(msg), "Killed %s!", e->name);
+                } else {
+                    snprintf(msg, sizeof(msg), "Hit %s: %d dmg", e->name, dmg);
+                }
+                push_message(g, msg);
                 return;
             }
         }
@@ -62,10 +84,13 @@ void action_resolve_enemies(GameState *g) {
         // Adjacent to player — melee attack
         if (abs_int(dx) <= 1 && abs_int(dy) <= 1 &&
             !(dx == 0 && dy == 0)) {
-            int dmg = e->attack - g->player.defense;
-            if (dmg < 1) dmg = 1;
-            g->player.hp -= dmg;
-            continue;
+                int dmg = e->attack - g->player.defense;
+                if (dmg < 1) dmg = 1;
+                g->player.hp -= dmg;
+                char msg[MAX_MESSAGE_LEN];
+                snprintf(msg, sizeof(msg), "%s: %d dmg", e->name, dmg);
+                push_message(g, msg);
+                continue;
         }
 
         // Move toward player
