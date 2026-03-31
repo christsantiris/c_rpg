@@ -56,7 +56,7 @@ switch (type) {
     }
 }
 
-static void enemies_spawn(GameState *g) {
+void enemies_spawn(GameState *g) {
     g->enemy_count = 0;
     if (g->map.room_count == 0) return;
 
@@ -160,6 +160,7 @@ void game_descend(GameState *g) {
     }
 
     g->level++;
+    g->level_cleared = 0;
     if (g->level <= MAX_DEPTH && g->level_cache[g->level - 1].valid) {
         g->map         = g->level_cache[g->level - 1].map;
         g->enemy_count = g->level_cache[g->level - 1].enemy_count;

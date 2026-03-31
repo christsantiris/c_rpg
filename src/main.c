@@ -10,8 +10,10 @@
 #include "game/map.h"
 #include "screens/landing.h"
 #include "screens/name_entry.h"
-
+#include "systems/save_load.h"
 #include "game/enemy.h"
+#include "screens/slot_select.h"
+#include "renderer/slot_renderer.h"
 
 #define WINDOW_TITLE "Castle of No Return"
 #define WINDOW_W     1280
@@ -62,6 +64,9 @@ int main(void) {
     NameEntry name_entry;
     name_entry_init(&name_entry);
     GameScreen screen = SCREEN_LANDING;
+    SlotSelect slot_select;
+    slot_select_init(&slot_select);
+    int slot_is_save = 0;
 
     int running = 1;
     SDL_Event event;
@@ -98,6 +103,16 @@ int main(void) {
                             name_entry_init(&name_entry);
                             screen = SCREEN_NAME_ENTRY;
                         }
+                        if (result == LANDING_SAVE_GAME) {
+                            slot_select_init(&slot_select);
+                            slot_is_save = 1;
+                            screen = SCREEN_SAVE_SLOT;
+                        }
+                        if (result == LANDING_LOAD_GAME) {
+                            slot_select_init(&slot_select);
+                            slot_is_save = 0;
+                            screen = SCREEN_LOAD_SLOT;
+                        }
                         if (result == LANDING_CONTINUE) {
                             int vp_tiles_x = (renderer.screen_w - INFO_PANEL_W) / TILE_SIZE;
                             viewport_init(&viewport,
@@ -107,6 +122,17 @@ int main(void) {
                                 game.player.x, game.player.y);
                             screen = SCREEN_PLAYING;
                         }
+                        // if (result == LANDING_LOAD_GAME) {
+                        //     if (load_game(&game, 1)) {
+                        //         int vp_tiles_x = (renderer.screen_w - INFO_PANEL_W) / TILE_SIZE;
+                        //         viewport_init(&viewport,
+                        //             vp_tiles_x, renderer.tiles_y,
+                        //             MAP_W, MAP_H);
+                        //         viewport_center_on(&viewport,
+                        //             game.player.x, game.player.y);
+                        //         screen = SCREEN_PLAYING;
+                        //     }
+                        // }
                         if (result == LANDING_QUIT) running = 0;
                         break;
                     }
@@ -126,6 +152,30 @@ int main(void) {
                                 screen = SCREEN_PLAYING;
                             }
                         if (result == NAME_ENTRY_CANCELLED) screen = SCREEN_LANDING;
+                        break;
+                    }
+                    if (screen == SCREEN_SAVE_SLOT || screen == SCREEN_LOAD_SLOT) {
+                        SlotResult result = slot_select_handle_key(
+                            &slot_select, event.key.keysym.scancode);
+                        if (result == SLOT_SELECTED) {
+                            int slot = slot_select.selected + 1;
+                            if (slot_is_save) {
+                                save_game(&game, slot);
+                                screen = SCREEN_LANDING;
+                            } else {
+                                if (load_game(&game, slot)) {
+                                    int vp_tiles_x = (renderer.screen_w - INFO_PANEL_W) / TILE_SIZE;
+                                    viewport_init(&viewport,
+                                        vp_tiles_x, renderer.tiles_y,
+                                        MAP_W, MAP_H);
+                                    viewport_center_on(&viewport,
+                                        game.player.x, game.player.y);
+                                    landing.has_active_game = 1;
+                                    screen = SCREEN_PLAYING;
+                                }
+                            }
+                        }
+                        if (result == SLOT_CANCELLED) screen = SCREEN_LANDING;
                         break;
                     }
                     {
@@ -181,6 +231,11 @@ int main(void) {
                             name_entry_init(&name_entry);
                             screen = SCREEN_NAME_ENTRY;
                         }
+                        if (result == LANDING_LOAD_GAME) {
+                            slot_select_init(&slot_select);
+                            slot_is_save = 0;
+                            screen = SCREEN_LOAD_SLOT;
+                        }
                         if (result == LANDING_QUIT) running = 0;
                     }
                     break;
@@ -223,6 +278,8 @@ int main(void) {
                 viewport_to_screen_x(&viewport, game.player.x),
                 viewport_to_screen_y(&viewport, game.player.y));
             info_panel_draw(&renderer, &game);
+        } else if (screen == SCREEN_SAVE_SLOT || screen == SCREEN_LOAD_SLOT) {
+            slot_draw(&renderer, &slot_select, slot_is_save);
         } else if (screen == SCREEN_GAME_OVER) {
             game_over_draw(&renderer, &game);
         }

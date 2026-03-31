@@ -19,7 +19,7 @@ LandingResult landing_handle_confirm(LandingScreen *s, int scancode) {
 }
 
 int landing_item_count(const LandingScreen *s) {
-    return s->has_active_game ? 4 : 3;
+    return s->has_active_game ? 5 : 3;
 }
 
 LandingResult landing_handle_key(LandingScreen *s, int scancode) {
@@ -45,8 +45,9 @@ LandingResult landing_handle_key(LandingScreen *s, int scancode) {
                         s->confirming_new_game = 1;
                         return LANDING_NONE;
                     case 1: return LANDING_CONTINUE;
-                    case 2: return LANDING_LOAD_GAME;
-                    case 3: return LANDING_QUIT;
+                    case 2: return LANDING_SAVE_GAME;
+                    case 3: return LANDING_LOAD_GAME;
+                    case 4: return LANDING_QUIT;
                 }
             }
             break;
