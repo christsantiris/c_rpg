@@ -1,5 +1,7 @@
 #include "test_utils.h"
 #include "../src/game/map.h"
+#include "../src/game/game.h"
+#include "../src/game/actions.h"
 #include <stdlib.h>
 #include <time.h>
 
@@ -8,7 +10,6 @@ void test_dungeon(void) {
 
     srand((unsigned)time(NULL));
 
-    // Run generation multiple times to catch randomness bugs
     for (int run = 0; run < 5; run++) {
         Map m;
         map_generate(&m, 1);
@@ -16,18 +17,15 @@ void test_dungeon(void) {
         ASSERT("at least min rooms generated", m.room_count >= MIN_ROOMS);
         ASSERT("at most max rooms generated",  m.room_count <= MAX_ROOMS);
 
-        // Stairs exist
         ASSERT("stairs up tile is set",
             m.tiles[m.stairs_up_y][m.stairs_up_x] == TILE_STAIRS_UP);
         ASSERT("stairs down tile is set",
             m.tiles[m.stairs_down_y][m.stairs_down_x] == TILE_STAIRS_DOWN);
 
-        // Stairs are not on the same tile
         ASSERT("stairs up and down are not on same tile",
             !(m.stairs_up_x == m.stairs_down_x &&
               m.stairs_up_y == m.stairs_down_y));
 
-        // Stairs are within map bounds
         ASSERT("stairs up within bounds",
             m.stairs_up_x >= 0 && m.stairs_up_x < MAP_W &&
             m.stairs_up_y >= 0 && m.stairs_up_y < MAP_H);
@@ -35,4 +33,29 @@ void test_dungeon(void) {
             m.stairs_down_x >= 0 && m.stairs_down_x < MAP_W &&
             m.stairs_down_y >= 0 && m.stairs_down_y < MAP_H);
     }
+}
+
+void test_stairs_locked(void) {
+    printf("Stairs lock tests:\n");
+
+    GameState g;
+    game_init(&g);
+    game_descend(&g);
+
+    ASSERT("level not cleared on start", g.level_cleared == 0);
+
+    g.player.x = g.map.stairs_down_x;
+    g.player.y = g.map.stairs_down_y;
+    int level_before = g.level;
+
+    Action a = {ACTION_DESCEND, 0, 0};
+    action_resolve_player(&g, a);
+    ASSERT("cannot descend when level not cleared", g.level == level_before);
+
+    for (int i = 0; i < g.enemy_count; i++)
+        g.enemies[i].active = 0;
+    g.level_cleared = 1;
+
+    action_resolve_player(&g, a);
+    ASSERT("can descend when level cleared", g.level == level_before + 1);
 }
