@@ -4,7 +4,7 @@
 #include "renderer.h"
 #include "../game/game.h"
 
-#define INFO_PANEL_W 161
+#define INFO_PANEL_W 200
 
 void info_panel_draw(Renderer *r, const GameState *g);
 
