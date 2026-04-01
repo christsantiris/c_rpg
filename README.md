@@ -51,3 +51,4 @@ MIT
 - Add upgraded weapons
 - Add armor
 - Add bosses every n dungeon levels
+- mac and windows installers
