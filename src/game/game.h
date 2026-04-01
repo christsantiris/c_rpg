@@ -40,6 +40,7 @@ typedef struct {
     int        message_count;
     int        level_cleared;
     Location   location;
+    int max_level_reached;
 } GameState;
 
 void game_init(GameState *g);
