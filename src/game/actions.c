@@ -14,7 +14,7 @@ static Action make_move_or_attack(int tx, int ty) {
     return a;
 }
 
-static void push_message(GameState *g, const char *msg) {
+void push_message(GameState *g, const char *msg) {
     if (g->message_count < MAX_MESSAGES) {
         strncpy(g->messages[g->message_count], msg, MAX_MESSAGE_LEN - 1);
         g->messages[g->message_count][MAX_MESSAGE_LEN - 1] = '\0';
@@ -72,6 +72,7 @@ void action_resolve_player(GameState *g, Action a) {
                 char msg[MAX_MESSAGE_LEN];
                 if (e->hp <= 0) {
                     e->active = 0;
+                    player_gain_xp(g, e->experience);
                     int all_clear = 1;
                     for (int j = 0; j < g->enemy_count; j++) {
                         if (g->enemies[j].active) { all_clear = 0; break; }

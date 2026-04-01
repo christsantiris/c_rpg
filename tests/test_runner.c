@@ -12,6 +12,7 @@ void test_stairs_locked(void);
 void test_town_tiles(void);
 void test_town_map(void);
 void test_town_spawn(void);
+void test_leveling(void);
 
 int main(void) {
     printf("=== CONR Test Suite ===\n\n");
@@ -27,6 +28,7 @@ int main(void) {
     test_town_tiles();
     test_town_map();
     test_town_spawn();
+    test_leveling();
     printf("\n");
     REPORT();
 }
