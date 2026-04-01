@@ -42,8 +42,17 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_ASCEND) {
-        if (g->map.tiles[g->player.y][g->player.x] == TILE_STAIRS_UP)
-            game_ascend(g);
+        if (g->map.tiles[g->player.y][g->player.x] == TILE_STAIRS_UP) {
+            if (g->level == 1) {
+                g->location = LOCATION_TOWN;
+                int spawn_x, spawn_y;
+                map_generate_town(&g->map, &spawn_x, &spawn_y);
+                g->player.x = spawn_x;
+                g->player.y = spawn_y;
+            } else {
+                game_ascend(g);
+            }
+        }
         return;
     }
 
