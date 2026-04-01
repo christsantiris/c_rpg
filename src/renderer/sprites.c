@@ -235,3 +235,23 @@ void draw_shop_alchemist(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x+14, y+6,  4,         8,         potion);
     fill_rect(r, x+13, y+9,  6,         2,         potion);
 }
+
+void draw_floor_item(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color base = { 18,  18,  35, 255};
+    SDL_Color glow = {100, 180, 255, 255};
+    fill_rect(r, x,   y,   TILE_SIZE,   TILE_SIZE,   base);
+    fill_rect(r, x+8, y+6, 8,           10,          glow);
+    fill_rect(r, x+6, y+8, 12,          6,           glow);
+}
+
+void draw_floor_gold(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color base = { 18,  18,  35, 255};
+    SDL_Color gold = {220, 180,  40, 255};
+    fill_rect(r, x,   y,   TILE_SIZE, TILE_SIZE, base);
+    fill_rect(r, x+7, y+7, 10,        10,        gold);
+    fill_rect(r, x+9, y+9, 6,         6,         gold);
+}

@@ -67,8 +67,10 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type) {
     fi.item   = item;
     g->floor_items[g->floor_item_count++] = fi;
 
-    snprintf(msg, sizeof(msg), "%s dropped!", item.name);
-    push_message(g, msg);
+    g->map.tiles[y][x] = TILE_ITEM;
+    char item_msg[MAX_MESSAGE_LEN];
+    snprintf(item_msg, sizeof(item_msg), "%s dropped!", item.name);
+    push_message(g, item_msg);
 }
 
 void action_resolve_player(GameState *g, Action a) {
