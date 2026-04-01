@@ -15,6 +15,8 @@ void test_town_spawn(void);
 void test_leveling(void);
 
 int main(void) {
+    // ASSERT("sanity check true",  1 == 1);
+    // ASSERT("sanity check false", 1 == 0);
     printf("=== CONR Test Suite ===\n\n");
     test_movement();
     printf("\n");
@@ -25,6 +27,7 @@ int main(void) {
     test_viewport();
     printf("\n");
     test_dungeon();
+    test_stairs_locked();
     test_town_tiles();
     test_town_map();
     test_town_spawn();
