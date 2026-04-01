@@ -39,10 +39,14 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type) {
         case ENEMY_TROLL:    gold = 10 + rand() % 10; break;
         case ENEMY_GIANT:    gold = 15 + rand() % 15; break;
     }
-    g->gold += gold;
-    char msg[MAX_MESSAGE_LEN];
-    snprintf(msg, sizeof(msg), "Found %d gold!", gold);
-    push_message(g, msg);
+    
+    // 50% chance to drop gold
+    if (rand() % 100 < 50) {
+        g->gold += gold;
+        char msg[MAX_MESSAGE_LEN];
+        snprintf(msg, sizeof(msg), "Found %d gold!", gold);
+        push_message(g, msg);
+    }
 
     // Item drop — 25% chance
     if (rand() % 100 >= 25) return;
