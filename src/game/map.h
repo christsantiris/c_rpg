@@ -11,13 +11,21 @@
 #define MIN_ROOM_H 8 // dungeon room size
 #define MAX_ROOM_H 14 // dungeon room size
 
+#define TOWN_W 40 // town dimensions
+#define TOWN_H 25 // town dimensions
+
 #define MAX_DEPTH 20
 
 typedef enum {
     TILE_FLOOR = 0,
     TILE_WALL,
     TILE_STAIRS_UP,
-    TILE_STAIRS_DOWN
+    TILE_STAIRS_DOWN,
+    TILE_TOWN_FLOOR,
+    TILE_TOWN_PATH,
+    TILE_TOWN_EXIT,
+    TILE_SHOP_BLACKSMITH,
+    TILE_SHOP_ALCHEMIST
 } TileType;
 
 typedef struct {
@@ -35,5 +43,6 @@ typedef struct {
 void map_generate(Map *m, int level);
 int  map_is_walkable(const Map *m, int x, int y);
 void map_room_center(const Room *r, int *cx, int *cy);
+void map_generate_town(Map *m, int *spawn_x, int *spawn_y);
 
 #endif

@@ -24,6 +24,11 @@ typedef struct {
     int   valid;
 } LevelCache;
 
+typedef enum {
+    LOCATION_TOWN,
+    LOCATION_DUNGEON
+} Location;
+
 typedef struct {
     Player     player;
     Map        map;
@@ -34,6 +39,7 @@ typedef struct {
     char       messages[MAX_MESSAGES][MAX_MESSAGE_LEN];
     int        message_count;
     int        level_cleared;
+    Location   location;
 } GameState;
 
 void game_init(GameState *g);
@@ -41,6 +47,7 @@ void game_move_player(GameState *g, int dx, int dy);
 void game_descend(GameState *g);
 void game_ascend(GameState *g);
 void enemies_spawn(GameState *g);
+void game_enter_dungeon(GameState *g);
 
 void action_resolve_player(GameState *g, Action a);
 void action_resolve_enemies(GameState *g);

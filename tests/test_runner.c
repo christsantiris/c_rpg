@@ -9,6 +9,9 @@ void test_map_tiles(void);
 void test_viewport(void);
 void test_dungeon(void);
 void test_stairs_locked(void);
+void test_town_tiles(void);
+void test_town_map(void);
+void test_town_spawn(void);
 
 int main(void) {
     printf("=== CONR Test Suite ===\n\n");
@@ -21,7 +24,9 @@ int main(void) {
     test_viewport();
     printf("\n");
     test_dungeon();
-    test_stairs_locked();
+    test_town_tiles();
+    test_town_map();
+    test_town_spawn();
     printf("\n");
     REPORT();
 }
