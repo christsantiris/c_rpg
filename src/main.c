@@ -300,6 +300,7 @@ int main(void) {
                         case TILE_TOWN_EXIT:       draw_town_exit(&renderer, sx, sy);       break;
                         case TILE_SHOP_BLACKSMITH: draw_shop_blacksmith(&renderer, sx, sy); break;
                         case TILE_SHOP_ALCHEMIST:  draw_shop_alchemist(&renderer, sx, sy);  break;
+                        case TILE_ITEM: draw_floor_item(&renderer, sx, sy); break;
                         default:                   draw_floor(&renderer, sx, sy);           break;
                     }
                 }

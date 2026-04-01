@@ -26,4 +26,7 @@ void draw_town_exit(Renderer *r, int tile_x, int tile_y);
 void draw_shop_blacksmith(Renderer *r, int tile_x, int tile_y);
 void draw_shop_alchemist(Renderer *r, int tile_x, int tile_y);
 
+void draw_floor_item(Renderer *r, int tile_x, int tile_y);
+void draw_floor_gold(Renderer *r, int tile_x, int tile_y);
+
 #endif
