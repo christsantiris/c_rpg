@@ -14,6 +14,8 @@
 #include "game/enemy.h"
 #include "screens/slot_select.h"
 #include "renderer/slot_renderer.h"
+#include "screens/inventory.h"
+#include "renderer/inventory_renderer.h"
 
 #define WINDOW_TITLE "Castle of No Return"
 #define WINDOW_W     1280
@@ -125,6 +127,8 @@ int main(void) {
     name_entry_init(&name_entry);
     SlotSelect slot_select;
     slot_select_init(&slot_select);
+    InventoryScreen inventory_screen;
+    inventory_init(&inventory_screen);
     int slot_is_save = 0;
     GameScreen screen = SCREEN_LANDING;
 
@@ -134,10 +138,13 @@ int main(void) {
     while (running) {
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
+
+                // ── Quit ──────────────────────────────────────────────────
                 case SDL_QUIT:
                     running = 0;
                     break;
 
+                // ── Window resize ─────────────────────────────────────────
                 case SDL_WINDOWEVENT:
                     if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
                         renderer_on_resize(&renderer,
@@ -149,9 +156,11 @@ int main(void) {
                     }
                     break;
 
+                // ── Keyboard input ────────────────────────────────────────
                 case SDL_KEYDOWN: {
                     int sc = event.key.keysym.scancode;
 
+                    // Game over screen
                     if (screen == SCREEN_GAME_OVER) {
                         if (sc == SDL_SCANCODE_RETURN) {
                             landing_init(&landing);
@@ -160,6 +169,7 @@ int main(void) {
                         break;
                     }
 
+                    // Landing screen
                     if (screen == SCREEN_LANDING) {
                         LandingResult result = landing.confirming_new_game
                             ? landing_handle_confirm(&landing, sc)
@@ -170,6 +180,7 @@ int main(void) {
                         break;
                     }
 
+                    // Name entry screen
                     if (screen == SCREEN_NAME_ENTRY) {
                         const char *keyname = SDL_GetKeyName(event.key.keysym.sym);
                         NameEntryResult result = name_entry_handle_key(
@@ -186,6 +197,7 @@ int main(void) {
                         break;
                     }
 
+                    // Save / load slot screen
                     if (screen == SCREEN_SAVE_SLOT || screen == SCREEN_LOAD_SLOT) {
                         SlotResult result = slot_select_handle_key(&slot_select, sc);
                         handle_slot_result(result, slot_select.selected + 1,
@@ -194,6 +206,16 @@ int main(void) {
                         break;
                     }
 
+                    // Inventory screen
+                    if (screen == SCREEN_INVENTORY) {
+                        InventoryResult result = inventory_handle_key(
+                            &inventory_screen, sc);
+                        if (result == INVENTORY_CLOSED)
+                            screen = SCREEN_PLAYING;
+                        break;
+                    }
+
+                    // Playing screen
                     if (screen == SCREEN_PLAYING) {
                         Action a = {ACTION_NONE, 0, 0};
                         switch (sc) {
@@ -227,6 +249,10 @@ int main(void) {
                             case SDL_SCANCODE_P:
                                 a = (Action){ACTION_PICK_UP, 0, 0};
                                 break;
+                            case SDL_SCANCODE_I:
+                                inventory_init(&inventory_screen);
+                                screen = SCREEN_INVENTORY;
+                                break;
                             default: break;
                         }
                         if (a.type != ACTION_NONE) {
@@ -241,9 +267,11 @@ int main(void) {
                     break;
                 }
 
+                // ── Mouse input ───────────────────────────────────────────
                 case SDL_MOUSEBUTTONDOWN: {
                     if (event.button.button != SDL_BUTTON_LEFT) break;
 
+                    // Landing screen clicks
                     if (screen == SCREEN_LANDING) {
                         LandingResult result = landing_handle_click(
                             &landing,
@@ -254,6 +282,7 @@ int main(void) {
                             &slot_is_save, &running);
                     }
 
+                    // Save / load slot clicks
                     if (screen == SCREEN_SAVE_SLOT || screen == SCREEN_LOAD_SLOT) {
                         int base_y = renderer.screen_h / 2 - 20;
                         for (int i = 0; i < 3; i++) {
@@ -277,9 +306,11 @@ int main(void) {
             }
         }
 
+        // ── Per-frame updates ─────────────────────────────────────────────
         if (screen == SCREEN_NAME_ENTRY)
             name_entry_update(&name_entry);
 
+        // ── Rendering ─────────────────────────────────────────────────────
         renderer_begin_frame(&renderer);
 
         if (screen == SCREEN_LANDING) {
@@ -288,7 +319,10 @@ int main(void) {
             name_entry_draw(&renderer, &name_entry);
         } else if (screen == SCREEN_SAVE_SLOT || screen == SCREEN_LOAD_SLOT) {
             slot_draw(&renderer, &slot_select, slot_is_save);
+        } else if (screen == SCREEN_INVENTORY) {
+            inventory_draw(&renderer, &game, &inventory_screen);
         } else if (screen == SCREEN_PLAYING) {
+            // Draw map tiles
             for (int y = 0; y < MAP_H; y++) {
                 for (int x = 0; x < MAP_W; x++) {
                     if (!viewport_is_visible(&viewport, x, y)) continue;
@@ -303,11 +337,12 @@ int main(void) {
                         case TILE_TOWN_EXIT:       draw_town_exit(&renderer, sx, sy);       break;
                         case TILE_SHOP_BLACKSMITH: draw_shop_blacksmith(&renderer, sx, sy); break;
                         case TILE_SHOP_ALCHEMIST:  draw_shop_alchemist(&renderer, sx, sy);  break;
-                        case TILE_ITEM: draw_floor_item(&renderer, sx, sy); break;
+                        case TILE_ITEM:            draw_floor_item(&renderer, sx, sy);      break;
                         default:                   draw_floor(&renderer, sx, sy);           break;
                     }
                 }
             }
+            // Draw enemies
             for (int i = 0; i < game.enemy_count; i++) {
                 Enemy *e = &game.enemies[i];
                 if (!e->active) continue;
@@ -316,9 +351,11 @@ int main(void) {
                 int sy = viewport_to_screen_y(&viewport, e->y);
                 draw_enemy(&renderer, sx, sy, e->type);
             }
+            // Draw player
             draw_player(&renderer,
                 viewport_to_screen_x(&viewport, game.player.x),
                 viewport_to_screen_y(&viewport, game.player.y));
+            // Draw info panel
             info_panel_draw(&renderer, &game);
         } else if (screen == SCREEN_GAME_OVER) {
             game_over_draw(&renderer, &game);
@@ -327,6 +364,7 @@ int main(void) {
         renderer_end_frame(&renderer);
     }
 
+    // ── Cleanup ───────────────────────────────────────────────────────────
     renderer_free(&renderer);
     SDL_DestroyRenderer(sdl_renderer);
     SDL_DestroyWindow(window);
