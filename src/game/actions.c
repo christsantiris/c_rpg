@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include "item.h"
 
 static int abs_int(int n) { return n < 0 ? -n : n; }
 
@@ -25,6 +26,45 @@ void push_message(GameState *g, const char *msg) {
         strncpy(g->messages[MAX_MESSAGES - 1], msg, MAX_MESSAGE_LEN - 1);
         g->messages[MAX_MESSAGES - 1][MAX_MESSAGE_LEN - 1] = '\0';
     }
+}
+
+static void drop_loot(GameState *g, int x, int y, EnemyType type) {
+    // Gold drop
+    int gold = 0;
+    switch (type) {
+        case ENEMY_SKELETON: gold = 2 + rand() % 4;  break;
+        case ENEMY_GOBLIN:   gold = 3 + rand() % 5;  break;
+        case ENEMY_ZOMBIE:   gold = 4 + rand() % 6;  break;
+        case ENEMY_ORC:      gold = 6 + rand() % 8;  break;
+        case ENEMY_TROLL:    gold = 10 + rand() % 10; break;
+        case ENEMY_GIANT:    gold = 15 + rand() % 15; break;
+    }
+    g->gold += gold;
+    char msg[MAX_MESSAGE_LEN];
+    snprintf(msg, sizeof(msg), "Found %d gold!", gold);
+    push_message(g, msg);
+
+    // Item drop — 25% chance
+    if (rand() % 100 >= 25) return;
+    if (g->floor_item_count >= MAX_FLOOR_ITEMS) return;
+
+    Item item;
+    switch (rand() % 4) {
+        case 0: item = item_make_health_potion(); break;
+        case 1: item = item_make_mana_potion();   break;
+        case 2: item = item_make_weapon("Iron Sword", 3, 20); break;
+        default: item = item_make_armor("Leather Armor", 2, 15); break;
+    }
+
+    FloorItem fi = {0};
+    fi.active = 1;
+    fi.x      = x;
+    fi.y      = y;
+    fi.item   = item;
+    g->floor_items[g->floor_item_count++] = fi;
+
+    snprintf(msg, sizeof(msg), "%s dropped!", item.name);
+    push_message(g, msg);
 }
 
 void action_resolve_player(GameState *g, Action a) {
@@ -72,6 +112,7 @@ void action_resolve_player(GameState *g, Action a) {
                 char msg[MAX_MESSAGE_LEN];
                 if (e->hp <= 0) {
                     e->active = 0;
+                    drop_loot(g, e->x, e->y, e->type);
                     player_gain_xp(g, e->experience);
                     int all_clear = 1;
                     for (int j = 0; j < g->enemy_count; j++) {
