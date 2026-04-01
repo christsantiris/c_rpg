@@ -110,7 +110,11 @@ void game_init(GameState *g) {
         g->level_cache[i].valid = 0;
     g->message_count = 0;
     g->level_cleared = 0;
-    map_generate(&g->map, g->level);
+    g->location = LOCATION_TOWN;
+    int spawn_x, spawn_y;
+    map_generate_town(&g->map, &spawn_x, &spawn_y);
+    g->player.x = spawn_x;
+    g->player.y = spawn_y;
     g->player.name[0]       = '\0';
     g->player.hp            = 100;
     g->player.max_hp        = 100;
@@ -124,22 +128,6 @@ void game_init(GameState *g) {
 
     // Spawn enemies in random rooms
     enemies_spawn(g);
-    // g->enemy_count = 0;
-    // int num_enemies = 3 + g->level;
-    // if (num_enemies > MAX_ENEMIES) num_enemies = MAX_ENEMIES;
-
-    // for (int i = 0; i < num_enemies; i++) {
-    //     int room_idx = rand() % (g->map.room_count - 1) + 1;
-    //     Room *room   = &g->map.rooms[room_idx];
-    //     int ex = room->x + rand() % room->w;
-    //     int ey = room->y + rand() % room->h;
-    //     EnemyType type = (EnemyType)(rand() % 4);
-    //     spawn_enemy(&g->enemies[i], type, ex, ey);
-    //     g->enemy_count++;
-    // }
-
-    g->player.x = g->map.stairs_up_x;
-    g->player.y = g->map.stairs_up_y;
 }
 
 void game_move_player(GameState *g, int dx, int dy) {
@@ -197,4 +185,16 @@ void game_ascend(GameState *g) {
 
     g->player.x = g->map.stairs_down_x;
     g->player.y = g->map.stairs_down_y;
+}
+
+void game_enter_dungeon(GameState *g) {
+    g->location      = LOCATION_DUNGEON;
+    g->level         = 1;
+    g->level_cleared = 0;
+    for (int i = 0; i < MAX_DEPTH; i++)
+        g->level_cache[i].valid = 0;
+    map_generate(&g->map, g->level);
+    enemies_spawn(g);
+    g->player.x = g->map.stairs_up_x;
+    g->player.y = g->map.stairs_up_y;
 }

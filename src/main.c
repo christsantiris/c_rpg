@@ -292,10 +292,15 @@ int main(void) {
                     int sx = viewport_to_screen_x(&viewport, x);
                     int sy = viewport_to_screen_y(&viewport, y);
                     switch (game.map.tiles[y][x]) {
-                        case TILE_WALL:        draw_wall(&renderer, sx, sy);        break;
-                        case TILE_STAIRS_UP:   draw_stairs_up(&renderer, sx, sy);   break;
-                        case TILE_STAIRS_DOWN: draw_stairs_down(&renderer, sx, sy); break;
-                        default:               draw_floor(&renderer, sx, sy);       break;
+                        case TILE_WALL:            draw_wall(&renderer, sx, sy);            break;
+                        case TILE_STAIRS_UP:       draw_stairs_up(&renderer, sx, sy);       break;
+                        case TILE_STAIRS_DOWN:     draw_stairs_down(&renderer, sx, sy);     break;
+                        case TILE_TOWN_FLOOR:      draw_town_floor(&renderer, sx, sy);      break;
+                        case TILE_TOWN_PATH:       draw_town_path(&renderer, sx, sy);       break;
+                        case TILE_TOWN_EXIT:       draw_town_exit(&renderer, sx, sy);       break;
+                        case TILE_SHOP_BLACKSMITH: draw_shop_blacksmith(&renderer, sx, sy); break;
+                        case TILE_SHOP_ALCHEMIST:  draw_shop_alchemist(&renderer, sx, sy);  break;
+                        default:                   draw_floor(&renderer, sx, sy);           break;
                     }
                 }
             }

@@ -79,6 +79,12 @@ void action_resolve_player(GameState *g, Action a) {
                 return;
             }
         }
+        // Check for town exit
+        if (g->location == LOCATION_TOWN &&
+            g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
+            game_enter_dungeon(g);
+            return;
+        }
 
         // Move if walkable
         if (map_is_walkable(&g->map, tx, ty))

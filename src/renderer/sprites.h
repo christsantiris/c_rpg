@@ -19,4 +19,11 @@ void draw_troll(Renderer *r, int tile_x, int tile_y);
 void draw_giant(Renderer *r, int tile_x, int tile_y);
 void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type);
 
+// Town Draw functions
+void draw_town_floor(Renderer *r, int tile_x, int tile_y);
+void draw_town_path(Renderer *r, int tile_x, int tile_y);
+void draw_town_exit(Renderer *r, int tile_x, int tile_y);
+void draw_shop_blacksmith(Renderer *r, int tile_x, int tile_y);
+void draw_shop_alchemist(Renderer *r, int tile_x, int tile_y);
+
 #endif

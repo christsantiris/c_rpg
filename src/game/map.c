@@ -109,3 +109,43 @@ int map_is_walkable(const Map *m, int x, int y) {
     if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) return 0;
     return m->tiles[y][x] != TILE_WALL;
 }
+
+void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
+    m->room_count = 0;
+
+    // Fill with walls
+    for (int y = 0; y < MAP_H; y++)
+        for (int x = 0; x < MAP_W; x++)
+            m->tiles[y][x] = TILE_WALL;
+
+    // Town floor
+    for (int y = 1; y < TOWN_H - 1; y++)
+        for (int x = 1; x < TOWN_W - 1; x++)
+            m->tiles[y][x] = TILE_TOWN_FLOOR;
+
+    // Vertical path (center column)
+    for (int y = 1; y < TOWN_H - 1; y++)
+        m->tiles[y][20] = TILE_TOWN_PATH;
+
+    // Horizontal path (mid row)
+    for (int x = 1; x < TOWN_W - 1; x++)
+        m->tiles[12][x] = TILE_TOWN_PATH;
+
+    // Exit at north edge
+    for (int x = 18; x <= 22; x++)
+        m->tiles[0][x] = TILE_TOWN_EXIT;
+
+    // Blacksmith at (7, 7) — 5x4 tiles
+    for (int dy = 0; dy < 4; dy++)
+        for (int dx = 0; dx < 5; dx++)
+            m->tiles[7 + dy][7 + dx] = TILE_SHOP_BLACKSMITH;
+
+    // Alchemist at (28, 7) — 5x4 tiles
+    for (int dy = 0; dy < 4; dy++)
+        for (int dx = 0; dx < 5; dx++)
+            m->tiles[7 + dy][28 + dx] = TILE_SHOP_ALCHEMIST;
+
+    // Spawn at south end of vertical path
+    *spawn_x = 20;
+    *spawn_y = TOWN_H - 2;
+}

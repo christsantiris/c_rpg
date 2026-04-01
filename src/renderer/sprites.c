@@ -167,3 +167,71 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_GIANT:    draw_giant(r, tile_x, tile_y);    break;
     }
 }
+
+void draw_town_floor(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color base  = { 14, 26, 14, 255};
+    SDL_Color blade = { 20, 36, 20, 255};
+    SDL_Color dot   = { 26, 46, 26, 255};
+    fill_rect(r, x,    y,    TILE_SIZE,   TILE_SIZE,   base);
+    fill_rect(r, x+2,  y+2,  TILE_SIZE-4, TILE_SIZE-4, blade);
+    fill_rect(r, x+4,  y+8,  2,           2,           dot);
+    fill_rect(r, x+12, y+4,  2,           2,           dot);
+}
+
+void draw_town_path(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color base   = { 58,  46,  30, 255};
+    SDL_Color stone  = { 74,  58,  40, 255};
+    SDL_Color mortar = { 42,  30,  16, 255};
+    fill_rect(r, x,            y,            TILE_SIZE,     TILE_SIZE,     base);
+    fill_rect(r, x+1,          y+1,          TILE_SIZE/2-2, TILE_SIZE/2-2, stone);
+    fill_rect(r, x+TILE_SIZE/2+1, y+1,       TILE_SIZE/2-2, TILE_SIZE/2-2, stone);
+    fill_rect(r, x+1,          y+TILE_SIZE/2+1, TILE_SIZE/2-2, TILE_SIZE/2-2, stone);
+    fill_rect(r, x+TILE_SIZE/2+1, y+TILE_SIZE/2+1, TILE_SIZE/2-2, TILE_SIZE/2-2, stone);
+    fill_rect(r, x,            y+TILE_SIZE/2, TILE_SIZE,     1,             mortar);
+    fill_rect(r, x+TILE_SIZE/2, y,            1,             TILE_SIZE,     mortar);
+}
+
+void draw_town_exit(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color base = { 26, 48, 32, 255};
+    SDL_Color glow = { 48, 160, 96, 255};
+    fill_rect(r, x,   y,   TILE_SIZE,   TILE_SIZE,   base);
+    fill_rect(r, x+2, y+2, TILE_SIZE-4, TILE_SIZE-4, glow);
+}
+
+void draw_shop_blacksmith(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color wall   = { 58,  40,  16, 255};
+    SDL_Color roof   = { 80,  32,  16, 255};
+    SDL_Color door   = { 26,  14,   6, 255};
+    SDL_Color window = {255, 136,  32, 255};
+    SDL_Color anvil  = {136, 136, 136, 255};
+    fill_rect(r, x,    y,    TILE_SIZE, TILE_SIZE, wall);
+    fill_rect(r, x,    y,    TILE_SIZE, 3,         roof);
+    fill_rect(r, x+8,  y+14, 8,         10,        door);
+    fill_rect(r, x+2,  y+6,  5,         5,         window);
+    fill_rect(r, x+14, y+8,  6,         4,         anvil);
+    fill_rect(r, x+12, y+11, 10,        3,         anvil);
+}
+
+void draw_shop_alchemist(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color wall   = { 26,  42,  58, 255};
+    SDL_Color roof   = { 16,  32,  48, 255};
+    SDL_Color door   = { 10,  16,  24, 255};
+    SDL_Color window = { 96,  64, 192, 255};
+    SDL_Color potion = {160,  64, 192, 255};
+    fill_rect(r, x,    y,    TILE_SIZE, TILE_SIZE, wall);
+    fill_rect(r, x,    y,    TILE_SIZE, 3,         roof);
+    fill_rect(r, x+8,  y+14, 8,         10,        door);
+    fill_rect(r, x+2,  y+6,  5,         5,         window);
+    fill_rect(r, x+14, y+6,  4,         8,         potion);
+    fill_rect(r, x+13, y+9,  6,         2,         potion);
+}
