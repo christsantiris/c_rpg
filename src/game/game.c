@@ -110,6 +110,7 @@ void game_init(GameState *g) {
         g->level_cache[i].valid = 0;
     g->message_count = 0;
     g->level_cleared = 0;
+    g->max_level_reached = 1;
     g->location = LOCATION_TOWN;
     int spawn_x, spawn_y;
     map_generate_town(&g->map, &spawn_x, &spawn_y);
@@ -148,6 +149,8 @@ void game_descend(GameState *g) {
     }
 
     g->level++;
+    if (g->level > g->max_level_reached)
+        g->max_level_reached = g->level;
     g->level_cleared = 0;
     if (g->level <= MAX_DEPTH && g->level_cache[g->level - 1].valid) {
         g->map         = g->level_cache[g->level - 1].map;
@@ -188,13 +191,26 @@ void game_ascend(GameState *g) {
 }
 
 void game_enter_dungeon(GameState *g) {
-    g->location      = LOCATION_DUNGEON;
-    g->level         = 1;
-    g->level_cleared = 0;
-    for (int i = 0; i < MAX_DEPTH; i++)
-        g->level_cache[i].valid = 0;
-    map_generate(&g->map, g->level);
-    enemies_spawn(g);
-    g->player.x = g->map.stairs_up_x;
-    g->player.y = g->map.stairs_up_y;
+    g->location = LOCATION_DUNGEON;
+
+    if (g->max_level_reached > 1 &&
+        g->level_cache[g->max_level_reached - 1].valid) {
+        g->level = g->max_level_reached;
+        g->map         = g->level_cache[g->level - 1].map;
+        g->enemy_count = g->level_cache[g->level - 1].enemy_count;
+        for (int i = 0; i < g->enemy_count; i++)
+            g->enemies[i] = g->level_cache[g->level - 1].enemies[i];
+        g->level_cleared = 1;
+        g->player.x = g->map.stairs_up_x;
+        g->player.y = g->map.stairs_up_y;
+    } else {
+        g->level         = 1;
+        g->level_cleared = 0;
+        for (int i = 0; i < MAX_DEPTH; i++)
+            g->level_cache[i].valid = 0;
+        map_generate(&g->map, g->level);
+        enemies_spawn(g);
+        g->player.x = g->map.stairs_up_x;
+        g->player.y = g->map.stairs_up_y;
+    }
 }

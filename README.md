@@ -44,6 +44,7 @@ MIT
 ## Roadmap
 - Optimize loading speed
 - Add loading spinner
+- Level up
 - Add town area with shops
 - Add items that can be used like potions
 - Add ranged attacks

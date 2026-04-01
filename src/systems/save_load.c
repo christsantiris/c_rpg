@@ -133,6 +133,7 @@ int save_game(const GameState *g, int slot) {
     // Game state
     cJSON_AddNumberToObject(root, "level",         g->level);
     cJSON_AddNumberToObject(root, "level_cleared", g->level_cleared);
+    cJSON_AddNumberToObject(root, "max_level_reached", g->max_level_reached);
     cJSON_AddNumberToObject(root, "message_count", g->message_count);
 
     // Messages
@@ -211,6 +212,7 @@ int load_game(GameState *g, int slot) {
     // Game state
     g->level         = cJSON_GetObjectItem(root, "level")->valueint;
     g->level_cleared = cJSON_GetObjectItem(root, "level_cleared")->valueint;
+    g->max_level_reached = cJSON_GetObjectItem(root, "max_level_reached")->valueint;
     g->message_count = cJSON_GetObjectItem(root, "message_count")->valueint;
 
     // Messages
