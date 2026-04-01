@@ -3,6 +3,7 @@
 
 #include "map.h"
 #include "enemy.h"
+#include "item.h"
 #include "actions.h"
 #include <stdio.h>
 
@@ -42,6 +43,13 @@ typedef struct {
     int        level_cleared;
     Location   location;
     int max_level_reached;
+    Item      inventory[MAX_INVENTORY];
+    int       inventory_count;
+    int       equipped_weapon;
+    int       equipped_armor;
+    int       gold;
+    FloorItem floor_items[MAX_FLOOR_ITEMS];
+    int       floor_item_count;
 } GameState;
 
 void game_init(GameState *g);
