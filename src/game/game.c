@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include <stdio.h>
+#include "../game/actions.h"
 
 static void spawn_enemy(Enemy *e, EnemyType type, int x, int y) {
     e->active  = 1;
@@ -212,5 +214,29 @@ void game_enter_dungeon(GameState *g) {
         enemies_spawn(g);
         g->player.x = g->map.stairs_up_x;
         g->player.y = g->map.stairs_up_y;
+    }
+}
+
+void player_gain_xp(GameState *g, int xp) {
+    g->player.experience += xp;
+
+    while (g->player.experience >= g->player.experience_next &&
+           g->player.level < 50) {
+        g->player.experience    -= g->player.experience_next;
+        g->player.level++;
+        g->player.max_hp        += 10;
+        g->player.hp             = g->player.max_hp;
+        g->player.attack        += 2;
+
+        // Defense grows at half rate, capped at 50% of attack
+        int new_defense = g->player.defense + 1;
+        int defense_cap = g->player.attack / 2;
+        g->player.defense = new_defense > defense_cap ? defense_cap : new_defense;
+
+        g->player.experience_next = g->player.level * 100;
+
+        char msg[MAX_MESSAGE_LEN];
+        snprintf(msg, sizeof(msg), "Level up! Now level %d", g->player.level);
+        push_message(g, msg);
     }
 }

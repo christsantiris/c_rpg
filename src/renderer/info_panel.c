@@ -45,6 +45,21 @@ void info_panel_draw(Renderer *r, const GameState *g) {
     SDL_snprintf(mp_str, sizeof(mp_str), "%d / %d", g->player.mp, g->player.max_mp);
     renderer_draw_text(r, mp_str, x, y, value, r->font_small);
 
+    // Handle display XP
+    y += lh * 2;
+    renderer_draw_text(r, "LEVEL", x, y, label, r->font_small);
+    y += lh;
+    char lvl_str[16];
+    SDL_snprintf(lvl_str, sizeof(lvl_str), "%d", g->player.level);
+    renderer_draw_text(r, lvl_str, x, y, value, r->font_small);
+    y += lh * 2;
+    renderer_draw_text(r, "XP", x, y, label, r->font_small);
+    y += lh;
+    char xp_str[16];
+    SDL_snprintf(xp_str, sizeof(xp_str), "%d / %d",
+        g->player.experience, g->player.experience_next);
+    renderer_draw_text(r, xp_str, x, y, value, r->font_small);
+
     // Message log
     SDL_Color msg_color = {180, 160, 120, 255};
     int msg_y = r->screen_h - 120 - (MAX_MESSAGES * lh) - lh;

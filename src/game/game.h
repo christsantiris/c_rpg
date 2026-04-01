@@ -4,6 +4,7 @@
 #include "map.h"
 #include "enemy.h"
 #include "actions.h"
+#include <stdio.h>
 
 #define MAX_MESSAGES 3
 #define MAX_MESSAGE_LEN 40
@@ -52,5 +53,8 @@ void game_enter_dungeon(GameState *g);
 
 void action_resolve_player(GameState *g, Action a);
 void action_resolve_enemies(GameState *g);
+
+void player_gain_xp(GameState *g, int xp);
+void push_message(GameState *g, const char *msg);
 
 #endif
