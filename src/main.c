@@ -224,6 +224,9 @@ int main(void) {
                             case SDL_SCANCODE_COMMA:
                                 a = (Action){ACTION_ASCEND, 0, 0};
                                 break;
+                            case SDL_SCANCODE_P:
+                                a = (Action){ACTION_PICK_UP, 0, 0};
+                                break;
                             default: break;
                         }
                         if (a.type != ACTION_NONE) {
