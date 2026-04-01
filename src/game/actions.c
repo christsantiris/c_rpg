@@ -102,6 +102,27 @@ void action_resolve_player(GameState *g, Action a) {
         return;
     }
 
+    if (a.type == ACTION_PICK_UP) {
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *fi = &g->floor_items[i];
+            if (!fi->active) continue;
+            if (fi->x != g->player.x || fi->y != g->player.y) continue;
+            if (g->inventory_count >= MAX_INVENTORY) {
+                push_message(g, "Inventory full!");
+                return;
+            }
+            g->inventory[g->inventory_count++] = fi->item;
+            fi->active = 0;
+            g->map.tiles[fi->y][fi->x] = TILE_FLOOR;
+            char msg[MAX_MESSAGE_LEN];
+            snprintf(msg, sizeof(msg), "Picked up %s", fi->item.name);
+            push_message(g, msg);
+            return;
+        }
+        push_message(g, "Nothing to pick up");
+        return;
+    }
+
     if (a.type == ACTION_MOVE) {
         int tx = a.target_x;
         int ty = a.target_y;

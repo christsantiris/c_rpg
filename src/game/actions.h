@@ -6,7 +6,8 @@ typedef enum {
     ACTION_MOVE,
     ACTION_MELEE_ATTACK,
     ACTION_DESCEND,
-    ACTION_ASCEND
+    ACTION_ASCEND,
+    ACTION_PICK_UP
 } ActionType;
 
 typedef struct {
