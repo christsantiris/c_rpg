@@ -69,5 +69,5 @@ void inventory_draw(Renderer *r, const GameState *g, const InventoryScreen *s) {
         }
     }
 
-    renderer_draw_text(r, "U USE  E EQUIP  D DROP  ESC CLOSE", cx - 180, r->screen_h - 60, hint, r->font_small);
+    renderer_draw_text(r, "U USE  E EQUIP  D DROP  ESC CLOSE", cx - 180, (r->tiles_y - 2) * TILE_SIZE, hint, r->font_small);
 }
