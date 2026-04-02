@@ -209,9 +209,20 @@ int main(void) {
                     // Inventory screen
                     if (screen == SCREEN_INVENTORY) {
                         InventoryResult result = inventory_handle_key(
-                            &inventory_screen, sc);
-                        if (result == INVENTORY_CLOSED)
+                            &inventory_screen, sc, game.inventory_count);
+                        if (result == INVENTORY_CLOSED) {
                             screen = SCREEN_PLAYING;
+                        } else if (result == INVENTORY_USE) {
+                            Action a = {ACTION_USE_ITEM,
+                                inventory_screen.selected, 0};
+                            action_resolve_player(&game, a);
+                            if (game.inventory_count == 0)
+                                screen = SCREEN_PLAYING;
+                        } else if (result == INVENTORY_EQUIP) {
+                            Action a = {ACTION_EQUIP_ITEM,
+                                inventory_screen.selected, 0};
+                            action_resolve_player(&game, a);
+                        }
                         break;
                     }
 
