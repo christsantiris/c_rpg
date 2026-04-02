@@ -18,6 +18,8 @@
 #include "renderer/inventory_renderer.h"
 #include "renderer/message_bar.h"
 #include "game/actions.h"
+#include "screens/spellbook.h"
+#include "renderer/spellbook_renderer.h"
 
 #define WINDOW_TITLE "Castle of No Return"
 #define WINDOW_W     1280
@@ -131,6 +133,9 @@ int main(void) {
     slot_select_init(&slot_select);
     InventoryScreen inventory_screen;
     inventory_init(&inventory_screen);
+    SpellbookScreen spellbook_screen;
+    spellbook_init(&spellbook_screen);
+
     int slot_is_save = 0;
     GameScreen screen = SCREEN_LANDING;
 
@@ -236,6 +241,19 @@ int main(void) {
                         break;
                     }
 
+                    // Spellbook screen
+                    if (screen == SCREEN_SPELLBOOK) {
+                        SpellbookResult result = spellbook_handle_key(
+                            &spellbook_screen, sc,
+                            game.player.known_spell_count);
+                        if (result == SPELLBOOK_CLOSED)
+                            screen = SCREEN_PLAYING;
+                        if (result == SPELLBOOK_EQUIP)
+                            game.player.equipped_spell =
+                                spellbook_screen.selected;
+                        break;
+                    }
+
                     // Playing screen
                     if (screen == SCREEN_PLAYING) {
                         Action a = {ACTION_NONE, 0, 0};
@@ -273,6 +291,10 @@ int main(void) {
                             case SDL_SCANCODE_I:
                                 inventory_init(&inventory_screen);
                                 screen = SCREEN_INVENTORY;
+                                break;
+                            case SDL_SCANCODE_B:
+                                spellbook_init(&spellbook_screen);
+                                screen = SCREEN_SPELLBOOK;
                                 break;
                             default: break;
                         }
@@ -342,6 +364,8 @@ int main(void) {
             slot_draw(&renderer, &slot_select, slot_is_save);
         } else if (screen == SCREEN_INVENTORY) {
             inventory_draw(&renderer, &game, &inventory_screen);
+        } else if (screen == SCREEN_SPELLBOOK) {
+            spellbook_draw(&renderer, &game, &spellbook_screen);
         } else if (screen == SCREEN_PLAYING) {
             // Draw map tiles
             for (int y = 0; y < MAP_H; y++) {
