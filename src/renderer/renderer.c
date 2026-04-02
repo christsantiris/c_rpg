@@ -1,6 +1,7 @@
 #include "renderer.h"
 #include "info_panel.h"
 #include <stdio.h>
+#include "message_bar.h"
 
 #define FONT_PATH "assets/PressStart2P-Regular.ttf"
 
@@ -9,7 +10,7 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->screen_w = screen_w;
     r->screen_h = screen_h;
     r->tiles_x  = screen_w / TILE_SIZE;
-    r->tiles_y  = screen_h / TILE_SIZE;
+    r->tiles_y  = (screen_h - MESSAGE_BAR_H) / TILE_SIZE;
 
     if (TTF_Init() != 0) {
         fprintf(stderr, "TTF_Init error: %s\n", TTF_GetError());
@@ -56,7 +57,7 @@ void renderer_on_resize(Renderer *r, int new_w, int new_h) {
     r->screen_w = new_w;
     r->screen_h = new_h;
     r->tiles_x  = new_w / TILE_SIZE;
-    r->tiles_y  = new_h / TILE_SIZE;
+    r->tiles_y  = (new_h - MESSAGE_BAR_H) / TILE_SIZE;
 }
 
 void renderer_draw_text(Renderer *r, const char *text, int x, int y,

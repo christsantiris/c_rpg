@@ -16,6 +16,7 @@
 #include "renderer/slot_renderer.h"
 #include "screens/inventory.h"
 #include "renderer/inventory_renderer.h"
+#include "renderer/message_bar.h"
 
 #define WINDOW_TITLE "Castle of No Return"
 #define WINDOW_W     1280
@@ -368,6 +369,7 @@ int main(void) {
                 viewport_to_screen_y(&viewport, game.player.y));
             // Draw info panel
             info_panel_draw(&renderer, &game);
+            message_bar_draw(&renderer, &game);
         } else if (screen == SCREEN_GAME_OVER) {
             game_over_draw(&renderer, &game);
         }

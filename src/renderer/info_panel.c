@@ -14,6 +14,7 @@ void info_panel_draw(Renderer *r, const GameState *g) {
 
     SDL_Color label = { 74,  74, 122, 255};
     SDL_Color value = {200, 200, 232, 255};
+    SDL_Color dimmed = { 80,  80,  80, 255};
     SDL_Color hint  = { 50,  50,  80, 255};
 
     int x  = px + 10;
@@ -60,12 +61,36 @@ void info_panel_draw(Renderer *r, const GameState *g) {
         g->player.experience, g->player.experience_next);
     renderer_draw_text(r, xp_str, x, y, value, r->font_small);
 
-    // Message log
-    SDL_Color msg_color = {180, 160, 120, 255};
-    int msg_y = r->screen_h - 120 - (MAX_MESSAGES * lh) - lh;
-    for (int i = 0; i < g->message_count; i++) {
-        renderer_draw_text(r, g->messages[i], x, msg_y + i * lh, msg_color, r->font_tiny);
+    // Message log moved to bottom of map area to avoid info panel overlap
+    // SDL_Color msg_color = {180, 160, 120, 255};
+    // int msg_y = r->screen_h - 120 - (MAX_MESSAGES * lh) - lh;
+    // for (int i = 0; i < g->message_count; i++) {
+    //     renderer_draw_text(r, g->messages[i], x, msg_y + i * lh, msg_color, r->font_tiny);
+    // }
+
+    // Equipped items
+    y += lh;
+    renderer_draw_text(r, "WEAPON", x, y, label, r->font_small);
+    y += lh;
+    if (g->equipped_weapon >= 0 && g->equipped_weapon < g->inventory_count) {
+        char wpn[32];
+        SDL_snprintf(wpn, sizeof(wpn), "%s", g->inventory[g->equipped_weapon].name);
+        renderer_draw_text(r, wpn, x, y, value, r->font_small);
+    } else {
+        renderer_draw_text(r, "NONE", x, y, dimmed, r->font_small);
     }
+    y += lh * 2;
+
+    renderer_draw_text(r, "ARMOR", x, y, label, r->font_small);
+    y += lh;
+    if (g->equipped_armor >= 0 && g->equipped_armor < g->inventory_count) {
+        char arm[32];
+        SDL_snprintf(arm, sizeof(arm), "%s", g->inventory[g->equipped_armor].name);
+        renderer_draw_text(r, arm, x, y, value, r->font_small);
+    } else {
+        renderer_draw_text(r, "NONE", x, y, dimmed, r->font_small);
+    }
+    y += lh * 2;
 
     int hy = r->screen_h - 120;
     renderer_draw_text(r, "WASD  MOVE",    x, hy,        hint, r->font_small);
