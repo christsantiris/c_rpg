@@ -48,6 +48,8 @@ void test_movement(void) {
     // Wall collision - right border
     GameState g3;
     game_init(&g3);
+    printf("DEBUG after game_init: equipped_armor=%d defense=%d\n",
+        g3.equipped_armor, g3.player.defense);
     g3.player.x = MAP_W - 2;
     g3.player.y = MAP_H / 2;
     game_move_player(&g3, 1, 0);

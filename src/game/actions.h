@@ -9,7 +9,8 @@ typedef enum {
     ACTION_ASCEND,
     ACTION_PICK_UP,
     ACTION_USE_ITEM,
-    ACTION_EQUIP_ITEM
+    ACTION_EQUIP_ITEM,
+    ACTION_DROP_ITEM
 } ActionType;
 
 typedef struct {

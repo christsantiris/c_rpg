@@ -43,11 +43,9 @@ MIT
 ## Roadmap
 - Optimize loading speed
 - Add loading spinner
-- Level up
-- Add town area with shops
-- Add items that can be used like potions
+- Add interactive town shops
 - Add ranged attacks
 - Add upgraded weapons
-- Add armor
+- Add upgraded amor
 - Add bosses every n dungeon levels
 - mac and windows installers
