@@ -17,6 +17,7 @@
 #include "screens/inventory.h"
 #include "renderer/inventory_renderer.h"
 #include "renderer/message_bar.h"
+#include "game/actions.h"
 
 #define WINDOW_TITLE "Castle of No Return"
 #define WINDOW_W     1280
@@ -207,7 +208,7 @@ int main(void) {
                         break;
                     }
 
-                    // Inventory screen
+                        // Inventory screen
                     if (screen == SCREEN_INVENTORY) {
                         InventoryResult result = inventory_handle_key(
                             &inventory_screen, sc, game.inventory_count);
@@ -223,6 +224,14 @@ int main(void) {
                             Action a = {ACTION_EQUIP_ITEM,
                                 inventory_screen.selected, 0};
                             action_resolve_player(&game, a);
+                        } else if (result == INVENTORY_DROP) {
+                            Action a = {ACTION_DROP_ITEM,
+                                inventory_screen.selected, 0};
+                            action_resolve_player(&game, a);
+                            if (inventory_screen.selected >= game.inventory_count)
+                                inventory_screen.selected = game.inventory_count - 1;
+                            if (inventory_screen.selected < 0)
+                                inventory_screen.selected = 0;
                         }
                         break;
                     }
