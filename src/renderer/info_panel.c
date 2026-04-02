@@ -103,12 +103,12 @@ void info_panel_draw(Renderer *r, const GameState *g) {
     y = grid_y2 + ICON_SIZE + 16;
 
     // Key hints
-// Key hints
     renderer_draw_text(r, "WASD  MOVE",    x, y,        hint, r->font_tiny);
     renderer_draw_text(r, ".     DESCEND", x, y + lh,   hint, r->font_tiny);
     renderer_draw_text(r, ",     ASCEND",  x, y + lh*2, hint, r->font_tiny);
     renderer_draw_text(r, "I     INV",     x, y + lh*3, hint, r->font_tiny);
     renderer_draw_text(r, "B     SPELLS",  x, y + lh*4, hint, r->font_tiny);
     renderer_draw_text(r, "C     CAST",    x, y + lh*5, hint, r->font_tiny);
-    renderer_draw_text(r, "ESC   MENU",    x, y + lh*6, hint, r->font_tiny);
+    renderer_draw_text(r, "F     FIRE",    x, y + lh*6, hint, r->font_tiny);
+    renderer_draw_text(r, "ESC   MENU",    x, y + lh*7, hint, r->font_tiny);
 }

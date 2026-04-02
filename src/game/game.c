@@ -142,6 +142,12 @@ void game_init(GameState *g) {
     g->inventory[0]   = item_make_scroll_magic_arrow();
     g->inventory_count = 1;
     #endif
+    #ifdef DEBUG
+    g->inventory[g->inventory_count++] = item_make_scroll_magic_arrow();
+    g->inventory[g->inventory_count++] = item_make_bow();
+    #endif
+    // Starting weapon
+    g->inventory[g->inventory_count++] = item_make_rusty_sword();
 
     // Spawn enemies in random rooms
     enemies_spawn(g);

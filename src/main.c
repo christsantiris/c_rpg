@@ -299,6 +299,9 @@ int main(void) {
                             case SDL_SCANCODE_C:
                                 a = (Action){ACTION_CAST_SPELL, 0, 0};
                                 break;
+                            case SDL_SCANCODE_F:
+                                a = (Action){ACTION_RANGED_ATTACK, 0, 0};
+                                break;
                             default: break;
                         }
                         if (a.type != ACTION_NONE) {
