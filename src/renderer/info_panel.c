@@ -1,4 +1,6 @@
 #include "info_panel.h"
+#include "item_icons.h"
+#include <stdio.h>
 
 void info_panel_draw(Renderer *r, const GameState *g) {
     int px = r->screen_w - INFO_PANEL_W;
@@ -12,89 +14,98 @@ void info_panel_draw(Renderer *r, const GameState *g) {
     SDL_SetRenderDrawColor(r->sdl, 13, 13, 26, 255);
     SDL_RenderFillRect(r->sdl, &bg);
 
-    SDL_Color label = { 74,  74, 122, 255};
-    SDL_Color value = {200, 200, 232, 255};
+    SDL_Color label  = { 74,  74, 122, 255};
+    SDL_Color value  = {200, 200, 232, 255};
     SDL_Color dimmed = { 80,  80,  80, 255};
-    SDL_Color hint  = { 50,  50,  80, 255};
+    SDL_Color hint   = { 50,  50,  80, 255};
 
     int x  = px + 10;
-    int y  = 16;
-    int lh = 28;
+    int y  = 10;
+    int lh = 20;
 
-    renderer_draw_text(r, "CHARACTER", x, y, label, r->font_small);
+    // Character name
+    renderer_draw_text(r, "CHARACTER", x, y, label, r->font_tiny);
     y += lh;
     renderer_draw_text(r, g->player.name, x, y, value, r->font_small);
-    y += lh * 2;
+    y += lh + 6;
 
-    renderer_draw_text(r, "DUNGEON", x, y, label, r->font_small);
+    // Location
+    renderer_draw_text(r, "LOCATION", x, y, label, r->font_tiny);
     y += lh;
-    char lvl[16];
-    SDL_snprintf(lvl, sizeof(lvl), "LEVEL %d", g->level);
-    renderer_draw_text(r, lvl, x, y, value, r->font_small);
-    y += lh * 2;
+    char loc[24];
+    if (g->location == LOCATION_TOWN) {
+        SDL_snprintf(loc, sizeof(loc), "TOWN");
+    } else {
+        SDL_snprintf(loc, sizeof(loc), "DUNGEON %d", g->level);
+    }
+    renderer_draw_text(r, loc, x, y, value, r->font_tiny);
+    y += lh + 6;
 
-    renderer_draw_text(r, "HP", x, y, label, r->font_small);
+    // HP
+    renderer_draw_text(r, "HP", x, y, label, r->font_tiny);
     y += lh;
     char hp_str[16];
     SDL_snprintf(hp_str, sizeof(hp_str), "%d / %d", g->player.hp, g->player.max_hp);
-    renderer_draw_text(r, hp_str, x, y, value, r->font_small);
-    y += lh * 2;
+    renderer_draw_text(r, hp_str, x, y, value, r->font_tiny);
+    y += lh + 6;
 
-    renderer_draw_text(r, "MP", x, y, label, r->font_small);
+    // MP
+    renderer_draw_text(r, "MP", x, y, label, r->font_tiny);
     y += lh;
     char mp_str[16];
     SDL_snprintf(mp_str, sizeof(mp_str), "%d / %d", g->player.mp, g->player.max_mp);
-    renderer_draw_text(r, mp_str, x, y, value, r->font_small);
+    renderer_draw_text(r, mp_str, x, y, value, r->font_tiny);
+    y += lh + 6;
 
-    // Handle display XP
-    y += lh * 2;
-    renderer_draw_text(r, "LEVEL", x, y, label, r->font_small);
+    // Level and XP
+    renderer_draw_text(r, "LEVEL", x, y, label, r->font_tiny);
     y += lh;
-    char lvl_str[16];
-    SDL_snprintf(lvl_str, sizeof(lvl_str), "%d", g->player.level);
-    renderer_draw_text(r, lvl_str, x, y, value, r->font_small);
-    y += lh * 2;
-    renderer_draw_text(r, "XP", x, y, label, r->font_small);
-    y += lh;
-    char xp_str[16];
-    SDL_snprintf(xp_str, sizeof(xp_str), "%d / %d",
-        g->player.experience, g->player.experience_next);
-    renderer_draw_text(r, xp_str, x, y, value, r->font_small);
+    char lvl_str[24];
+    SDL_snprintf(lvl_str, sizeof(lvl_str), "%d  (%d/%d)",
+        g->player.level, g->player.experience, g->player.experience_next);
+    renderer_draw_text(r, lvl_str, x, y, value, r->font_tiny);
+    y += lh + 6;
 
-    // Message log moved to bottom of map area to avoid info panel overlap
-    // SDL_Color msg_color = {180, 160, 120, 255};
-    // int msg_y = r->screen_h - 120 - (MAX_MESSAGES * lh) - lh;
-    // for (int i = 0; i < g->message_count; i++) {
-    //     renderer_draw_text(r, g->messages[i], x, msg_y + i * lh, msg_color, r->font_tiny);
-    // }
-
-    // Equipped items
+    // Gold
+    renderer_draw_text(r, "GOLD", x, y, label, r->font_tiny);
     y += lh;
-    renderer_draw_text(r, "WEAPON", x, y, label, r->font_small);
-    y += lh;
-    if (g->equipped_weapon >= 0 && g->equipped_weapon < g->inventory_count) {
-        char wpn[32];
-        SDL_snprintf(wpn, sizeof(wpn), "%s", g->inventory[g->equipped_weapon].name);
-        renderer_draw_text(r, wpn, x, y, value, r->font_small);
-    } else {
-        renderer_draw_text(r, "NONE", x, y, dimmed, r->font_small);
-    }
-    y += lh * 2;
+    char gold_str[16];
+    SDL_snprintf(gold_str, sizeof(gold_str), "%d", g->gold);
+    SDL_Color gold_color = {220, 180, 60, 255};
+    renderer_draw_text(r, gold_str, x, y, gold_color, r->font_tiny);
+    y += lh + 10;
 
-    renderer_draw_text(r, "ARMOR", x, y, label, r->font_small);
+    // Equipment grid (2x2)
+    renderer_draw_text(r, "EQUIPPED", x, y, label, r->font_tiny);
     y += lh;
-    if (g->equipped_armor >= 0 && g->equipped_armor < g->inventory_count) {
-        char arm[32];
-        SDL_snprintf(arm, sizeof(arm), "%s", g->inventory[g->equipped_armor].name);
-        renderer_draw_text(r, arm, x, y, value, r->font_small);
-    } else {
-        renderer_draw_text(r, "NONE", x, y, dimmed, r->font_small);
-    }
-    y += lh * 2;
 
-    int hy = r->screen_h - 120;
-    renderer_draw_text(r, "WASD  MOVE",    x, hy,        hint, r->font_small);
-    renderer_draw_text(r, ".     DESCEND", x, hy + lh,   hint, r->font_small);
-    renderer_draw_text(r, ",     ASCEND",  x, hy + lh*2, hint, r->font_small);
-    renderer_draw_text(r, "ESC   MENU",    x, hy + lh*3, hint, r->font_small);
+    int grid_x1 = x;
+    int grid_x2 = x + ICON_SIZE + 6;
+    int grid_y1 = y;
+    int grid_y2 = y + ICON_SIZE + 6;
+
+    // Slot 1: Weapon (top-left)
+    draw_icon_empty_slot(r, grid_x1, grid_y1);
+    if (g->equipped_weapon >= 0 && g->equipped_weapon < g->inventory_count)
+        draw_icon_weapon(r, grid_x1, grid_y1);
+
+    // Slot 2: Off-hand (top-right)
+    draw_icon_empty_slot(r, grid_x2, grid_y1);
+
+    // Slot 3: Armor (bottom-left)
+    draw_icon_empty_slot(r, grid_x1, grid_y2);
+    if (g->equipped_armor >= 0 && g->equipped_armor < g->inventory_count)
+        draw_icon_armor(r, grid_x1, grid_y2);
+
+    // Slot 4: Helmet (bottom-right)
+    draw_icon_empty_slot(r, grid_x2, grid_y2);
+
+    y = grid_y2 + ICON_SIZE + 16;
+
+    // Key hints
+    renderer_draw_text(r, "WASD  MOVE",    x, y,        hint, r->font_tiny);
+    renderer_draw_text(r, ".     DESCEND", x, y + lh,   hint, r->font_tiny);
+    renderer_draw_text(r, ",     ASCEND",  x, y + lh*2, hint, r->font_tiny);
+    renderer_draw_text(r, "I     INV",     x, y + lh*3, hint, r->font_tiny);
+    renderer_draw_text(r, "ESC   MENU",    x, y + lh*4, hint, r->font_tiny);
 }
