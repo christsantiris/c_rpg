@@ -122,6 +122,65 @@ void action_resolve_player(GameState *g, Action a) {
         push_message(g, "Nothing to pick up");
         return;
     }
+    if (a.type == ACTION_USE_ITEM) {
+        int idx = a.target_x;
+        if (idx < 0 || idx >= g->inventory_count) return;
+        Item *item = &g->inventory[idx];
+        char msg[MAX_MESSAGE_LEN];
+
+        if (item->type == ITEM_POTION_HEALTH) {
+            int healed = item->heal_hp;
+            g->player.hp += healed;
+            if (g->player.hp > g->player.max_hp)
+                g->player.hp = g->player.max_hp;
+            snprintf(msg, sizeof(msg), "Drank %s +%d HP", item->name, healed);
+            push_message(g, msg);
+        } else if (item->type == ITEM_POTION_MANA) {
+            int restored = item->heal_mp;
+            g->player.mp += restored;
+            if (g->player.mp > g->player.max_mp)
+                g->player.mp = g->player.max_mp;
+            snprintf(msg, sizeof(msg), "Drank %s +%d MP", item->name, restored);
+            push_message(g, msg);
+        } else {
+            push_message(g, "Cannot use that item");
+            return;
+        }
+
+        // Remove item from inventory
+        for (int i = idx; i < g->inventory_count - 1; i++)
+            g->inventory[i] = g->inventory[i + 1];
+        g->inventory_count--;
+        return;
+    }
+
+    if (a.type == ACTION_EQUIP_ITEM) {
+        int idx = a.target_x;
+        if (idx < 0 || idx >= g->inventory_count) return;
+        Item *item = &g->inventory[idx];
+        char msg[MAX_MESSAGE_LEN];
+
+        if (item->type == ITEM_WEAPON) {
+            // Unequip old weapon bonus
+            if (g->equipped_weapon >= 0)
+                g->player.attack -= g->inventory[g->equipped_weapon].attack_bonus;
+            g->equipped_weapon = idx;
+            g->player.attack  += item->attack_bonus;
+            snprintf(msg, sizeof(msg), "Equipped %s", item->name);
+            push_message(g, msg);
+        } else if (item->type == ITEM_ARMOR) {
+            // Unequip old armor bonus
+            if (g->equipped_armor >= 0)
+                g->player.defense -= g->inventory[g->equipped_armor].defense_bonus;
+            g->equipped_armor  = idx;
+            g->player.defense += item->defense_bonus;
+            snprintf(msg, sizeof(msg), "Equipped %s", item->name);
+            push_message(g, msg);
+        } else {
+            push_message(g, "Cannot equip that item");
+        }
+        return;
+    }
 
     if (a.type == ACTION_MOVE) {
         int tx = a.target_x;
