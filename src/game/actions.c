@@ -74,6 +74,9 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type) {
 }
 
 void action_resolve_player(GameState *g, Action a) {
+    #ifdef DEBUG
+        printf("DEBUG action type: %d\n", a.type);
+    #endif
     if (a.type == ACTION_NONE) return;
 
     if (a.type == ACTION_DESCEND) {
@@ -156,29 +159,85 @@ void action_resolve_player(GameState *g, Action a) {
 
     if (a.type == ACTION_EQUIP_ITEM) {
         int idx = a.target_x;
+        #ifdef DEBUG
+        printf("DEBUG equip: idx=%d type=%d defense_bonus=%d\n",
+            idx, g->inventory[idx].type, g->inventory[idx].defense_bonus);
+        #endif
         if (idx < 0 || idx >= g->inventory_count) return;
+        #ifdef DEBUG
+        printf("DEBUG equip passed guard: inventory_count=%d\n", g->inventory_count);
+        #endif
         Item *item = &g->inventory[idx];
         char msg[MAX_MESSAGE_LEN];
 
         if (item->type == ITEM_WEAPON) {
-            // Unequip old weapon bonus
-            if (g->equipped_weapon >= 0)
+            if (g->equipped_weapon >= 0 &&
+                g->equipped_weapon < g->inventory_count)
                 g->player.attack -= g->inventory[g->equipped_weapon].attack_bonus;
             g->equipped_weapon = idx;
             g->player.attack  += item->attack_bonus;
             snprintf(msg, sizeof(msg), "Equipped %s", item->name);
             push_message(g, msg);
         } else if (item->type == ITEM_ARMOR) {
-            // Unequip old armor bonus
-            if (g->equipped_armor >= 0)
+            if (g->equipped_armor >= 0 &&
+                g->equipped_armor < g->inventory_count)
                 g->player.defense -= g->inventory[g->equipped_armor].defense_bonus;
             g->equipped_armor  = idx;
+            #ifdef DEBUG
+            printf("DEBUG about to add: defense=%d bonus=%d\n", 
+                g->player.defense, item->defense_bonus);
+            #endif
             g->player.defense += item->defense_bonus;
+            #ifdef DEBUG
+            printf("DEBUG defense set to: %d\n", g->player.defense);
+            #endif
             snprintf(msg, sizeof(msg), "Equipped %s", item->name);
             push_message(g, msg);
         } else {
             push_message(g, "Cannot equip that item");
         }
+        return;
+    }
+    if (a.type == ACTION_DROP_ITEM) {
+        int idx = a.target_x;
+        if (idx < 0 || idx >= g->inventory_count) return;
+        if (g->floor_item_count >= MAX_FLOOR_ITEMS) {
+            push_message(g, "No room to drop item!");
+            return;
+        }
+
+        Item *item = &g->inventory[idx];
+
+        // Unequip if equipped
+        if (g->equipped_weapon == idx) {
+            g->player.attack   -= item->attack_bonus;
+            g->equipped_weapon  = -1;
+        } else if (g->equipped_armor == idx) {
+            g->player.defense  -= item->defense_bonus;
+            g->equipped_armor   = -1;
+        }
+
+        // Adjust equipped indices if needed
+        if (g->equipped_weapon > idx) g->equipped_weapon--;
+        if (g->equipped_armor  > idx) g->equipped_armor--;
+
+        // Place on floor
+        FloorItem fi = {0};
+        fi.active = 1;
+        fi.x      = g->player.x;
+        fi.y      = g->player.y;
+        fi.item   = *item;
+        g->map.tiles[fi.y][fi.x] = TILE_ITEM;
+        g->floor_items[g->floor_item_count++] = fi;
+
+        // Remove from inventory
+        for (int i = idx; i < g->inventory_count - 1; i++)
+            g->inventory[i] = g->inventory[i + 1];
+        g->inventory_count--;
+
+        char msg[MAX_MESSAGE_LEN];
+        snprintf(msg, sizeof(msg), "Dropped %s", fi.item.name);
+        push_message(g, msg);
         return;
     }
 

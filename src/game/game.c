@@ -128,6 +128,15 @@ void game_init(GameState *g) {
     g->player.level         = 1;
     g->player.experience    = 0;
     g->player.experience_next = 100;
+    g->inventory_count  = 0;
+    g->equipped_weapon  = -1;
+    g->equipped_armor   = -1;
+    g->gold             = 0;
+    g->floor_item_count = 0;
+    for (int i = 0; i < MAX_INVENTORY; i++)
+        g->inventory[i].active = 0;
+    for (int i = 0; i < MAX_FLOOR_ITEMS; i++)
+        g->floor_items[i].active = 0;
 
     // Spawn enemies in random rooms
     enemies_spawn(g);
