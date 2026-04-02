@@ -296,6 +296,9 @@ int main(void) {
                                 spellbook_init(&spellbook_screen);
                                 screen = SCREEN_SPELLBOOK;
                                 break;
+                            case SDL_SCANCODE_C:
+                                a = (Action){ACTION_CAST_SPELL, 0, 0};
+                                break;
                             default: break;
                         }
                         if (a.type != ACTION_NONE) {

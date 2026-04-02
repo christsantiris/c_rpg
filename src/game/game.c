@@ -137,6 +137,11 @@ void game_init(GameState *g) {
         g->inventory[i].active = 0;
     for (int i = 0; i < MAX_FLOOR_ITEMS; i++)
         g->floor_items[i].active = 0;
+    // TEMP: give player a scroll for testing - remove before release
+    #ifdef DEBUG
+    g->inventory[0]   = item_make_scroll_magic_arrow();
+    g->inventory_count = 1;
+    #endif
 
     // Spawn enemies in random rooms
     enemies_spawn(g);
