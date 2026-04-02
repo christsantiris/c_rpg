@@ -144,6 +144,7 @@ void action_resolve_player(GameState *g, Action a) {
         push_message(g, "Nothing to pick up");
         return;
     }
+
     if (a.type == ACTION_USE_ITEM) {
         int idx = a.target_x;
         if (idx < 0 || idx >= g->inventory_count) return;
@@ -163,6 +164,27 @@ void action_resolve_player(GameState *g, Action a) {
             if (g->player.mp > g->player.max_mp)
                 g->player.mp = g->player.max_mp;
             snprintf(msg, sizeof(msg), "Drank %s +%d MP", item->name, restored);
+            push_message(g, msg);
+        } else if (item->type == ITEM_SCROLL) {
+            for (int i = 0; i < g->player.known_spell_count; i++) {
+                if (g->player.known_spells[i].id == item->spell_id) {
+                    push_message(g, "Already know that spell");
+                    return;
+                }
+            }
+            if (g->player.known_spell_count >= MAX_SPELLS) {
+                push_message(g, "Cannot learn more spells");
+                return;
+            }
+            Spell learned;
+            switch (item->spell_id) {
+                case SPELL_MAGIC_ARROW: learned = spell_make_magic_arrow(); break;
+                case SPELL_FIREBALL:    learned = spell_make_fireball();    break;
+                case SPELL_HEAL:        learned = spell_make_heal();        break;
+                default: return;
+            }
+            g->player.known_spells[g->player.known_spell_count++] = learned;
+            snprintf(msg, sizeof(msg), "Learned %s!", learned.name);
             push_message(g, msg);
         } else {
             push_message(g, "Cannot use that item");
@@ -243,6 +265,106 @@ void action_resolve_player(GameState *g, Action a) {
         char msg[MAX_MESSAGE_LEN];
         snprintf(msg, sizeof(msg), "Dropped %s", fi.item.name);
         push_message(g, msg);
+        return;
+    }
+
+    if (a.type == ACTION_CAST_SPELL) {
+        if (g->player.equipped_spell < 0 ||
+            g->player.equipped_spell >= g->player.known_spell_count) {
+            push_message(g, "No spell equipped!");
+            return;
+        }
+
+        Spell *sp = &g->player.known_spells[g->player.equipped_spell];
+
+        if (g->player.mp < sp->mp_cost) {
+            push_message(g, "Not enough MP!");
+            return;
+        }
+
+        if (g->player.last_dx == 0 && g->player.last_dy == 0) {
+            push_message(g, "Move first to aim!");
+            return;
+        }
+
+        g->player.mp -= sp->mp_cost;
+
+        if (sp->type == SPELL_TYPE_DAMAGE_RANGED) {
+            // Travel in last direction, hit first enemy
+            int cx = g->player.x;
+            int cy = g->player.y;
+            int hit = 0;
+            for (int step = 1; step <= sp->range && !hit; step++) {
+                cx = g->player.x + g->player.last_dx * step;
+                cy = g->player.y + g->player.last_dy * step;
+                if (!map_is_walkable(&g->map, cx, cy)) break;
+                for (int i = 0; i < g->enemy_count; i++) {
+                    Enemy *e = &g->enemies[i];
+                    if (!e->active) continue;
+                    if (e->x == cx && e->y == cy) {
+                        int dmg = sp->damage + g->player.level * 2;
+                        e->hp -= dmg;
+                        char msg[MAX_MESSAGE_LEN];
+                        if (e->hp <= 0) {
+                            e->active = 0;
+                            int all_clear = 1;
+                            for (int j = 0; j < g->enemy_count; j++)
+                                if (g->enemies[j].active) { all_clear = 0; break; }
+                            if (all_clear) g->level_cleared = 1;
+                            drop_loot(g, e->x, e->y, e->type);
+                            player_gain_xp(g, e->experience);
+                            snprintf(msg, sizeof(msg), "%s killed %s!",
+                                sp->name, e->name);
+                        } else {
+                            snprintf(msg, sizeof(msg), "%s hit %s: %d dmg",
+                                sp->name, e->name, dmg);
+                        }
+                        push_message(g, msg);
+                        hit = 1;
+                    }
+                }
+            }
+            if (!hit) push_message(g, "Spell missed!");
+
+        } else if (sp->type == SPELL_TYPE_HEAL) {
+            int healed = sp->heal_hp + g->player.level * 2;
+            g->player.hp += healed;
+            if (g->player.hp > g->player.max_hp)
+                g->player.hp = g->player.max_hp;
+            char msg[MAX_MESSAGE_LEN];
+            snprintf(msg, sizeof(msg), "Healed %d HP!", healed);
+            push_message(g, msg);
+
+        } else if (sp->type == SPELL_TYPE_DAMAGE_AREA) {
+            // Travel then explode in radius
+            int cx = g->player.x + g->player.last_dx * sp->range;
+            int cy = g->player.y + g->player.last_dy * sp->range;
+            int hits = 0;
+            for (int i = 0; i < g->enemy_count; i++) {
+                Enemy *e = &g->enemies[i];
+                if (!e->active) continue;
+                int dx = e->x - cx;
+                int dy = e->y - cy;
+                int dist = (dx < 0 ? -dx : dx) + (dy < 0 ? -dy : dy);
+                if (dist <= sp->radius) {
+                    int dmg = sp->damage + g->player.level * 2;
+                    e->hp -= dmg;
+                    if (e->hp <= 0) {
+                        e->active = 0;
+                        drop_loot(g, e->x, e->y, e->type);
+                        player_gain_xp(g, e->experience);
+                    }
+                    hits++;
+                }
+            }
+            int all_clear = 1;
+            for (int j = 0; j < g->enemy_count; j++)
+                if (g->enemies[j].active) { all_clear = 0; break; }
+            if (all_clear) g->level_cleared = 1;
+            char msg[MAX_MESSAGE_LEN];
+            snprintf(msg, sizeof(msg), "Fireball hit %d enemies!", hits);
+            push_message(g, msg);
+        }
         return;
     }
 

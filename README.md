@@ -51,3 +51,7 @@ MIT
 - Add upgraded amor
 - Add bosses every n dungeon levels
 - mac and windows installers
+- music loop and sound effects
+- Add other areas (mountains, forest, marsh)
+- Quests
+- NPCs
