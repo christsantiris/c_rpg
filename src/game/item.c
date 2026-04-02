@@ -1,5 +1,6 @@
 #include "item.h"
 #include <string.h>
+#include "spell.h"
 
 Item item_make_health_potion(void) {
     Item it = {0};
@@ -38,5 +39,35 @@ Item item_make_armor(const char *name, int defense_bonus, int value) {
     strncpy(it.name, name, sizeof(it.name) - 1);
     it.defense_bonus = defense_bonus;
     it.value         = value;
+    return it;
+}
+
+Item item_make_scroll_magic_arrow(void) {
+    Item it = {0};
+    it.active   = 1;
+    it.type     = ITEM_SCROLL;
+    strncpy(it.name, "Scroll: Magic Arrow", sizeof(it.name) - 1);
+    it.spell_id = SPELL_MAGIC_ARROW;
+    it.value    = 25;
+    return it;
+}
+
+Item item_make_scroll_fireball(void) {
+    Item it = {0};
+    it.active   = 1;
+    it.type     = ITEM_SCROLL;
+    strncpy(it.name, "Scroll: Fireball", sizeof(it.name) - 1);
+    it.spell_id = SPELL_FIREBALL;
+    it.value    = 40;
+    return it;
+}
+
+Item item_make_scroll_heal(void) {
+    Item it = {0};
+    it.active   = 1;
+    it.type     = ITEM_SCROLL;
+    strncpy(it.name, "Scroll: Heal", sizeof(it.name) - 1);
+    it.spell_id = SPELL_HEAL;
+    it.value    = 30;
     return it;
 }
