@@ -6,17 +6,22 @@
 #include "item.h"
 #include "actions.h"
 #include <stdio.h>
+#include "spell.h"
 
 #define MAX_MESSAGES 3
 #define MAX_MESSAGE_LEN 40
 
 typedef struct {
-    int  x, y;
-    char name[21];
-    int  hp,     max_hp;
-    int  mp,     max_mp;
-    int  attack, defense;
-    int  level,  experience, experience_next;
+    int   x, y;
+    char  name[21];
+    int   hp,     max_hp;
+    int   mp,     max_mp;
+    int   attack, defense;
+    int   level,  experience, experience_next;
+    Spell known_spells[MAX_SPELLS];
+    int   known_spell_count;
+    int   equipped_spell;
+    int   last_dx, last_dy;
 } Player;
 
 typedef struct {

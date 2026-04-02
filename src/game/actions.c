@@ -96,9 +96,6 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type) {
 }
 
 void action_resolve_player(GameState *g, Action a) {
-    #ifdef DEBUG
-        printf("DEBUG action type: %d\n", a.type);
-    #endif
     if (a.type == ACTION_NONE) return;
 
     if (a.type == ACTION_DESCEND) {
@@ -181,14 +178,7 @@ void action_resolve_player(GameState *g, Action a) {
 
     if (a.type == ACTION_EQUIP_ITEM) {
         int idx = a.target_x;
-        #ifdef DEBUG
-        printf("DEBUG equip: idx=%d type=%d defense_bonus=%d\n",
-            idx, g->inventory[idx].type, g->inventory[idx].defense_bonus);
-        #endif
         if (idx < 0 || idx >= g->inventory_count) return;
-        #ifdef DEBUG
-        printf("DEBUG equip passed guard: inventory_count=%d\n", g->inventory_count);
-        #endif
         Item *item = &g->inventory[idx];
         char msg[MAX_MESSAGE_LEN];
 
@@ -205,14 +195,7 @@ void action_resolve_player(GameState *g, Action a) {
                 g->equipped_armor < g->inventory_count)
                 g->player.defense -= g->inventory[g->equipped_armor].defense_bonus;
             g->equipped_armor  = idx;
-            #ifdef DEBUG
-            printf("DEBUG about to add: defense=%d bonus=%d\n", 
-                g->player.defense, item->defense_bonus);
-            #endif
             g->player.defense += item->defense_bonus;
-            #ifdef DEBUG
-            printf("DEBUG defense set to: %d\n", g->player.defense);
-            #endif
             snprintf(msg, sizeof(msg), "Equipped %s", item->name);
             push_message(g, msg);
         } else {
@@ -305,8 +288,12 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
         // Move if walkable
-        if (map_is_walkable(&g->map, tx, ty))
+        // Track last direction for ranged attacks
+        if (map_is_walkable(&g->map, tx, ty)) {
+            g->player.last_dx = tx - g->player.x;
+            g->player.last_dy = ty - g->player.y;
             game_move_player(g, tx - g->player.x, ty - g->player.y);
+        }
     }
 }
 
