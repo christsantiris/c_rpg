@@ -53,11 +53,33 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type) {
     if (g->floor_item_count >= MAX_FLOOR_ITEMS) return;
 
     Item item;
-    switch (rand() % 4) {
-        case 0: item = item_make_health_potion(); break;
-        case 1: item = item_make_mana_potion();   break;
-        case 2: item = item_make_weapon("Iron Sword", 3, 20); break;
-        default: item = item_make_armor("Leather Armor", 2, 15); break;
+    int roll = rand() % 100;
+    int level = g->level;
+
+    if (level <= 3) {
+        // Early levels: potions and magic arrow scrolls
+        if (roll < 40)      item = item_make_health_potion();
+        else if (roll < 70) item = item_make_mana_potion();
+        else if (roll < 90) item = item_make_scroll_magic_arrow();
+        else                item = item_make_scroll_heal();
+    } else if (level <= 6) {
+        // Mid levels: weapons, armor, heal scrolls
+        if (roll < 25)      item = item_make_health_potion();
+        else if (roll < 45) item = item_make_mana_potion();
+        else if (roll < 60) item = item_make_weapon("Iron Sword", 3, 20);
+        else if (roll < 75) item = item_make_armor("Leather Armor", 2, 15);
+        else if (roll < 88) item = item_make_scroll_magic_arrow();
+        else if (roll < 95) item = item_make_scroll_heal();
+        else                item = item_make_scroll_fireball();
+    } else {
+        // Deep levels: better drops, fireball scrolls
+        if (roll < 20)      item = item_make_health_potion();
+        else if (roll < 35) item = item_make_mana_potion();
+        else if (roll < 50) item = item_make_weapon("Iron Sword", 3, 20);
+        else if (roll < 65) item = item_make_armor("Leather Armor", 2, 15);
+        else if (roll < 75) item = item_make_scroll_magic_arrow();
+        else if (roll < 88) item = item_make_scroll_heal();
+        else                item = item_make_scroll_fireball();
     }
 
     FloorItem fi = {0};
