@@ -23,6 +23,9 @@ typedef struct {
     int      defense_bonus;
     int      value;
     int      spell_id;
+    int is_ranged;
+    int range;
+    int is_two_handed;
 } Item;
 
 typedef struct {
@@ -39,5 +42,12 @@ Item item_make_armor(const char *name, int defense_bonus, int value);
 Item item_make_scroll_magic_arrow(void);
 Item item_make_scroll_fireball(void);
 Item item_make_scroll_heal(void);
+
+Item item_make_rusty_sword(void);
+Item item_make_short_sword(void);
+Item item_make_long_sword(void);
+Item item_make_battle_axe(void);
+Item item_make_staff(void);
+Item item_make_bow(void);
 
 #endif

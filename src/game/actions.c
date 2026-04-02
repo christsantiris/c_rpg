@@ -368,6 +368,58 @@ void action_resolve_player(GameState *g, Action a) {
         return;
     }
 
+    if (a.type == ACTION_RANGED_ATTACK) {
+        if (g->equipped_weapon < 0 ||
+            g->equipped_weapon >= g->inventory_count) {
+            push_message(g, "No weapon equipped!");
+            return;
+        }
+
+        Item *wpn = &g->inventory[g->equipped_weapon];
+        if (!wpn->is_ranged) {
+            push_message(g, "No ranged weapon equipped!");
+            return;
+        }
+
+        if (g->player.last_dx == 0 && g->player.last_dy == 0) {
+            push_message(g, "Move first to aim!");
+            return;
+        }
+
+        int hit = 0;
+        for (int step = 1; step <= wpn->range && !hit; step++) {
+            int tx = g->player.x + g->player.last_dx * step;
+            int ty = g->player.y + g->player.last_dy * step;
+            if (!map_is_walkable(&g->map, tx, ty)) break;
+            for (int i = 0; i < g->enemy_count; i++) {
+                Enemy *e = &g->enemies[i];
+                if (!e->active) continue;
+                if (e->x != tx || e->y != ty) continue;
+                int dmg = g->player.attack - e->defense;
+                if (dmg < 1) dmg = 1;
+                e->hp -= dmg;
+                char msg[MAX_MESSAGE_LEN];
+                if (e->hp <= 0) {
+                    e->active = 0;
+                    int all_clear = 1;
+                    for (int j = 0; j < g->enemy_count; j++)
+                        if (g->enemies[j].active) { all_clear = 0; break; }
+                    if (all_clear) g->level_cleared = 1;
+                    drop_loot(g, e->x, e->y, e->type);
+                    player_gain_xp(g, e->experience);
+                    snprintf(msg, sizeof(msg), "Arrow killed %s!", e->name);
+                } else {
+                    snprintf(msg, sizeof(msg), "Arrow hit %s: %d dmg",
+                        e->name, dmg);
+                }
+                push_message(g, msg);
+                hit = 1;
+            }
+        }
+        if (!hit) push_message(g, "Arrow missed!");
+        return;
+    }
+
     if (a.type == ACTION_MOVE) {
         int tx = a.target_x;
         int ty = a.target_y;
