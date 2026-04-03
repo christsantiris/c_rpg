@@ -45,13 +45,12 @@ MIT
 ## Roadmap
 - Optimize loading speed
 - Add loading spinner
-- Add interactive town shops
-- Add ranged attacks
-- Add upgraded weapons
-- Add upgraded amor
 - Add bosses every n dungeon levels
 - mac and windows installers
 - music loop and sound effects
 - Add other areas (mountains, forest, marsh)
 - Quests
 - NPCs
+- Lower item and potion drop chances
+- Increase num enenmies per level
+- Add shop labels

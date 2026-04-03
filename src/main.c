@@ -276,6 +276,37 @@ int main(void) {
                                     item->name);
                                 push_message(&game, msg);
                             }
+                        } else if (result == SHOP_SELL) {
+                            if (game.inventory_count == 0) break;
+                            int idx = shop_screen.selected;
+                            if (idx >= game.inventory_count) break;
+                            Item *item = &game.inventory[idx];
+
+                            // Unequip if equipped
+                            if (game.equipped_weapon == idx) {
+                                game.player.attack -= item->attack_bonus;
+                                game.equipped_weapon = -1;
+                            } else if (game.equipped_armor == idx) {
+                                game.player.defense -= item->defense_bonus;
+                                game.equipped_armor = -1;
+                            }
+                            if (game.equipped_weapon > idx) game.equipped_weapon--;
+                            if (game.equipped_armor  > idx) game.equipped_armor--;
+
+                            int sell_price = item->value / 2;
+                            char msg[32];
+                            SDL_snprintf(msg, sizeof(msg), "Sold %s for %d gold",
+                                item->name, sell_price);
+                            game.gold += sell_price;
+
+                            for (int i = idx; i < game.inventory_count - 1; i++)
+                                game.inventory[i] = game.inventory[i + 1];
+                            game.inventory_count--;
+                            if (shop_screen.selected >= game.inventory_count)
+                                shop_screen.selected = game.inventory_count - 1;
+                            if (shop_screen.selected < 0)
+                                shop_screen.selected = 0;
+                            push_message(&game, msg);
                         }
                         break;
                     }
