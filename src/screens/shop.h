@@ -8,7 +8,8 @@
 typedef enum {
     SHOP_NONE = 0,
     SHOP_CLOSED,
-    SHOP_BUY
+    SHOP_BUY,
+    SHOP_SELL
 } ShopResult;
 
 typedef enum {
@@ -21,6 +22,7 @@ typedef struct {
     ShopType type;
     Item     items[MAX_SHOP_ITEMS];
     int      item_count;
+    int mode; // 0 = buy, 1 = sell
 } ShopScreen;
 
 void       shop_init(ShopScreen *s, ShopType type);

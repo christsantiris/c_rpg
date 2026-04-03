@@ -5,6 +5,7 @@ void shop_init(ShopScreen *s, ShopType type) {
     s->selected   = 0;
     s->type       = type;
     s->item_count = 0;
+    s->mode = 0;
 
     if (type == SHOP_TYPE_ALCHEMIST) {
         s->items[s->item_count++] = item_make_health_potion();
@@ -33,12 +34,18 @@ ShopResult shop_handle_key(ShopScreen *s, int scancode) {
             break;
         case SDL_SCANCODE_DOWN:
             s->selected++;
-            if (s->selected >= s->item_count)
-                s->selected = s->item_count - 1;
+            if (s->type == SHOP_TYPE_ALCHEMIST || s->mode == 0) {
+                if (s->selected >= s->item_count)
+                    s->selected = s->item_count - 1;
+            }
+            break;
+        case SDL_SCANCODE_TAB:
+            s->mode = s->mode == 0 ? 1 : 0;
+            s->selected = 0;
             break;
         case SDL_SCANCODE_RETURN:
-            if (s->item_count > 0) return SHOP_BUY;
-            break;
+            if (s->mode == 0) return SHOP_BUY;
+            else              return SHOP_SELL;
         case SDL_SCANCODE_ESCAPE:
             return SHOP_CLOSED;
         default:
