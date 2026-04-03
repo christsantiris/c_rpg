@@ -137,15 +137,19 @@ void game_init(GameState *g) {
         g->inventory[i].active = 0;
     for (int i = 0; i < MAX_FLOOR_ITEMS; i++)
         g->floor_items[i].active = 0;
-    // TEMP: give player a scroll for testing - remove before release
-    #ifdef DEBUG
-    g->inventory[0]   = item_make_scroll_magic_arrow();
-    g->inventory_count = 1;
-    #endif
+
+    g->player.known_spell_count = 0;
+    g->player.equipped_spell    = -1;
+    g->player.last_dx           = 0;
+    g->player.last_dy           = 0;
+    g->trail_count              = 0;
+    g->trail_frames             = 0;
+
     #ifdef DEBUG
     g->inventory[g->inventory_count++] = item_make_scroll_magic_arrow();
     g->inventory[g->inventory_count++] = item_make_bow();
     #endif
+
     // Starting weapon
     g->inventory[g->inventory_count++] = item_make_rusty_sword();
 
@@ -168,6 +172,7 @@ void game_descend(GameState *g) {
         for (int i = 0; i < g->enemy_count; i++)
             g->level_cache[g->level - 1].enemies[i] = g->enemies[i];
         g->level_cache[g->level - 1].valid = 1;
+        g->level_cache[g->level - 1].level_cleared = g->level_cleared;
     }
 
     g->level++;
@@ -179,7 +184,9 @@ void game_descend(GameState *g) {
         g->enemy_count = g->level_cache[g->level - 1].enemy_count;
         for (int i = 0; i < g->enemy_count; i++)
             g->enemies[i] = g->level_cache[g->level - 1].enemies[i];
+        g->level_cleared = g->level_cache[g->level - 1].level_cleared;
     } else {
+        g->level_cleared = 0;
         map_generate(&g->map, g->level);
         enemies_spawn(g);
     }
@@ -191,21 +198,24 @@ void game_ascend(GameState *g) {
     if (g->level <= 1) return;
 
     if (g->level <= MAX_DEPTH) {
-        g->level_cache[g->level - 1].map         = g->map;
-        g->level_cache[g->level - 1].enemy_count = g->enemy_count;
+        g->level_cache[g->level - 1].map           = g->map;
+        g->level_cache[g->level - 1].enemy_count   = g->enemy_count;
+        g->level_cache[g->level - 1].level_cleared = g->level_cleared;
         for (int i = 0; i < g->enemy_count; i++)
             g->level_cache[g->level - 1].enemies[i] = g->enemies[i];
         g->level_cache[g->level - 1].valid = 1;
     }
 
     g->level--;
-    g->level_cleared = 0;
 
     if (g->level_cache[g->level - 1].valid) {
         g->map         = g->level_cache[g->level - 1].map;
         g->enemy_count = g->level_cache[g->level - 1].enemy_count;
+        g->level_cleared = g->level_cache[g->level - 1].level_cleared;
         for (int i = 0; i < g->enemy_count; i++)
             g->enemies[i] = g->level_cache[g->level - 1].enemies[i];
+    } else {
+        g->level_cleared = 0;
     }
 
     g->player.x = g->map.stairs_down_x;

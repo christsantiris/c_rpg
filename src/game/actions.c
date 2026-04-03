@@ -114,6 +114,30 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type) {
     push_message(g, item_msg);
 }
 
+static void set_trail(GameState *g, int sx, int sy,
+                      int tx, int ty, int dx, int dy,
+                      int range, Uint8 r, Uint8 gr, Uint8 b) {
+    g->trail_count  = 0;
+    g->trail_frames = 4;
+    int cx = sx;
+    int cy = sy;
+    for (int step = 1; step <= range; step++) {
+        cx = sx + dx * step;
+        cy = sy + dy * step;
+        if (cx < 0 || cx >= MAP_W || cy < 0 || cy >= MAP_H) break;
+        if (!map_is_walkable(&g->map, cx, cy)) break;
+        if (g->trail_count >= MAX_TRAIL) break;
+        TrailTile *t      = &g->trail[g->trail_count++];
+        t->active         = 1;
+        t->x              = cx;
+        t->y              = cy;
+        t->r              = r;
+        t->g              = gr;
+        t->b              = b;
+        t->is_impact      = (cx == tx && cy == ty);
+    }
+}
+
 void action_resolve_player(GameState *g, Action a) {
     if (a.type == ACTION_NONE) return;
 
@@ -308,6 +332,35 @@ void action_resolve_player(GameState *g, Action a) {
 
         g->player.mp -= sp->mp_cost;
 
+        // Set trail based on spell type
+        if (sp->type == SPELL_TYPE_DAMAGE_RANGED) {
+            int ex = g->player.x + g->player.last_dx * sp->range;
+            int ey = g->player.y + g->player.last_dy * sp->range;
+            set_trail(g, g->player.x, g->player.y,
+                ex, ey,
+                g->player.last_dx, g->player.last_dy,
+                sp->range, 40, 120, 220);
+        } else if (sp->type == SPELL_TYPE_DAMAGE_AREA) {
+            int ex = g->player.x + g->player.last_dx * sp->range;
+            int ey = g->player.y + g->player.last_dy * sp->range;
+            set_trail(g, g->player.x, g->player.y,
+                ex, ey,
+                g->player.last_dx, g->player.last_dy,
+                sp->range, 220, 100, 20);
+        } else if (sp->type == SPELL_TYPE_HEAL) {
+            // Heal — green ring on player tile
+            g->trail_count  = 0;
+            g->trail_frames = 4;
+            TrailTile *t = &g->trail[g->trail_count++];
+            t->active    = 1;
+            t->x         = g->player.x;
+            t->y         = g->player.y;
+            t->r         = 40;
+            t->g         = 180;
+            t->b         = 80;
+            t->is_impact = 1;
+        }
+
         if (sp->type == SPELL_TYPE_DAMAGE_RANGED) {
             // Travel in last direction, hit first enemy
             int cx = g->player.x;
@@ -426,16 +479,23 @@ void action_resolve_player(GameState *g, Action a) {
                     if (all_clear) g->level_cleared = 1;
                     drop_loot(g, e->x, e->y, e->type);
                     player_gain_xp(g, e->experience);
-                    snprintf(msg, sizeof(msg), "Arrow killed %s!", e->name);
+                    snprintf(msg, sizeof(msg), "Attack killed %s!", e->name);
                 } else {
-                    snprintf(msg, sizeof(msg), "Arrow hit %s: %d dmg",
+                    snprintf(msg, sizeof(msg), "Attack hit %s: %d dmg",
                         e->name, dmg);
                 }
                 push_message(g, msg);
                 hit = 1;
             }
         }
-        if (!hit) push_message(g, "Arrow missed!");
+        // Gray trail for ranged weapon
+        int ex = g->player.x + g->player.last_dx * wpn->range;
+        int ey = g->player.y + g->player.last_dy * wpn->range;
+        set_trail(g, g->player.x, g->player.y,
+            ex, ey,
+            g->player.last_dx, g->player.last_dy,
+            wpn->range, 160, 160, 160);
+        if (!hit) push_message(g, "Attack missed!");
         return;
     }
 
