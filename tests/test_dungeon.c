@@ -59,3 +59,38 @@ void test_stairs_locked(void) {
     action_resolve_player(&g, a);
     ASSERT("can descend when level cleared", g.level == level_before + 1);
 }
+
+void test_level_cache_cleared(void) {
+    printf("Level cache cleared tests:\n");
+
+    GameState g;
+    game_init(&g);
+
+    // Set up dungeon
+    g.location = LOCATION_DUNGEON;
+    g.level    = 1;
+    map_generate(&g.map, g.level);
+    enemies_spawn(&g);
+    g.player.x = g.map.stairs_up_x;
+    g.player.y = g.map.stairs_up_y;
+
+    // Kill all enemies to clear level
+    for (int i = 0; i < g.enemy_count; i++)
+        g.enemies[i].active = 0;
+    g.level_cleared = 1;
+
+    // Descend to level 2 — level 1 should be cached as cleared
+    g.player.x = g.map.stairs_down_x;
+    g.player.y = g.map.stairs_down_y;
+    game_descend(&g);
+    ASSERT("level is now 2",                    g.level == 2);
+    ASSERT("level 1 cached as cleared",         g.level_cache[0].level_cleared == 1);
+    ASSERT("level 2 not cleared",               g.level_cleared == 0);
+
+    // Ascend back to level 1 — should restore cleared state
+    g.player.x = g.map.stairs_up_x;
+    g.player.y = g.map.stairs_up_y;
+    game_ascend(&g);
+    ASSERT("back on level 1",                   g.level == 1);
+    ASSERT("level 1 restored as cleared",       g.level_cleared == 1);
+}

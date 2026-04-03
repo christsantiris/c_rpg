@@ -54,3 +54,4 @@ MIT
 - Lower item and potion drop chances
 - Increase num enenmies per level
 - Add shop labels
+- Fix helper text overlap spellbook UI
