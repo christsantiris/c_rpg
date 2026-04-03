@@ -28,6 +28,25 @@ void push_message(GameState *g, const char *msg) {
     }
 }
 
+static Item random_weapon(int level) {
+    if (level <= 3) {
+        int r = rand() % 2;
+        if (r == 0) return item_make_rusty_sword();
+        return item_make_short_sword();
+    } else if (level <= 6) {
+        int r = rand() % 3;
+        if (r == 0) return item_make_short_sword();
+        if (r == 1) return item_make_long_sword();
+        return item_make_bow();
+    } else {
+        int r = rand() % 4;
+        if (r == 0) return item_make_long_sword();
+        if (r == 1) return item_make_battle_axe();
+        if (r == 2) return item_make_bow();
+        return item_make_staff();
+    }
+}
+
 static void drop_loot(GameState *g, int x, int y, EnemyType type) {
     // Gold drop
     int gold = 0;
@@ -66,7 +85,7 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type) {
         // Mid levels: weapons, armor, heal scrolls
         if (roll < 25)      item = item_make_health_potion();
         else if (roll < 45) item = item_make_mana_potion();
-        else if (roll < 60) item = item_make_weapon("Iron Sword", 3, 20);
+        else if (roll < 60) item = random_weapon(level);
         else if (roll < 75) item = item_make_armor("Leather Armor", 2, 15);
         else if (roll < 88) item = item_make_scroll_magic_arrow();
         else if (roll < 95) item = item_make_scroll_heal();
@@ -75,7 +94,7 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type) {
         // Deep levels: better drops, fireball scrolls
         if (roll < 20)      item = item_make_health_potion();
         else if (roll < 35) item = item_make_mana_potion();
-        else if (roll < 50) item = item_make_weapon("Iron Sword", 3, 20);
+        else if (roll < 60) item = random_weapon(level);
         else if (roll < 65) item = item_make_armor("Leather Armor", 2, 15);
         else if (roll < 75) item = item_make_scroll_magic_arrow();
         else if (roll < 88) item = item_make_scroll_heal();
