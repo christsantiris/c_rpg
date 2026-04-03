@@ -47,8 +47,7 @@ MIT
 - Add loading spinner
 - Add bosses every n dungeon levels
 - mac and windows installers
-- music loop and sound effects
+- sound effects
 - Add other areas (mountains, forest, marsh)
 - Quests
 - NPCs
-- Add shop labels

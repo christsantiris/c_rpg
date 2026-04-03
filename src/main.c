@@ -21,6 +21,7 @@
 #include "renderer/shop_renderer.h"
 #include "renderer/game_renderer.h"
 #include "renderer/info_panel.h"
+#include "audio/music.h"
 
 #define WINDOW_TITLE "Castle of No Return"
 #define WINDOW_W     1280
@@ -87,7 +88,7 @@ static void handle_slot_result(SlotResult result, int slot, int slot_is_save,
 }
 
 int main(void) {
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO) != 0) {
         fprintf(stderr, "SDL_Init error: %s\n", SDL_GetError());
         return 1;
     }
@@ -118,6 +119,7 @@ int main(void) {
 
     Renderer renderer;
     renderer_init(&renderer, sdl_renderer, WINDOW_W, WINDOW_H);
+    music_init();
 
     GameState game;
     game_init(&game);
@@ -443,6 +445,9 @@ int main(void) {
 
         // ── Rendering ─────────────────────────────────────────────────────
         renderer_begin_frame(&renderer);
+        // Update music based on screen and location
+        int is_town = (game.location == LOCATION_TOWN);
+        music_update(screen, is_town ? 0 : game.level);
 
         if (screen == SCREEN_LANDING) {
             landing_draw(&renderer, &landing);
@@ -466,6 +471,7 @@ int main(void) {
     }
 
     // ── Cleanup ───────────────────────────────────────────────────────────
+    music_free();
     renderer_free(&renderer);
     SDL_DestroyRenderer(sdl_renderer);
     SDL_DestroyWindow(window);
