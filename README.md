@@ -45,7 +45,6 @@ MIT
 ## Roadmap
 - Optimize loading speed
 - Add loading spinner
-- Add bosses every n dungeon levels
 - mac and windows installers
 - sound effects
 - Add other areas (mountains, forest, marsh)

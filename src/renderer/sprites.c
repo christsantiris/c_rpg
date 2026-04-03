@@ -157,6 +157,95 @@ void draw_giant(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x+19, y+6,   4,  3, club);
 }
 
+void draw_goblin_king(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color body  = { 60, 120,  40, 255};
+    SDL_Color crown = {220, 180,  40, 255};
+    SDL_Color eye   = {255,   0,   0, 255};
+    fill_rect(r, x+4,  y+8,  16, 14, body);
+    fill_rect(r, x+7,  y+4,  10, 8,  body);
+    fill_rect(r, x+6,  y+2,  12, 4,  crown);
+    fill_rect(r, x+8,  y,    3,  4,  crown);
+    fill_rect(r, x+13, y,    3,  4,  crown);
+    fill_rect(r, x+8,  y+7,  3,  3,  eye);
+    fill_rect(r, x+13, y+7,  3,  3,  eye);
+}
+
+void draw_lich_king(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color robe  = { 40,  20,  80, 255};
+    SDL_Color bone  = {200, 200, 180, 255};
+    SDL_Color crown = {140,  60, 200, 255};
+    SDL_Color glow  = {160,  80, 255, 255};
+    fill_rect(r, x+4,  y+8,  16, 14, robe);
+    fill_rect(r, x+7,  y+4,  10, 8,  bone);
+    fill_rect(r, x+6,  y+2,  12, 3,  crown);
+    fill_rect(r, x+8,  y+6,  3,  3,  glow);
+    fill_rect(r, x+13, y+6,  3,  3,  glow);
+    fill_rect(r, x+3,  y+10, 4,  2,  bone);
+    fill_rect(r, x+17, y+10, 4,  2,  bone);
+}
+
+void draw_demon_lord(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color body  = {140,  20,  20, 255};
+    SDL_Color horn  = {100,  10,  10, 255};
+    SDL_Color eye   = {255, 200,   0, 255};
+    SDL_Color wing  = { 80,  10,  10, 255};
+    fill_rect(r, x+4,  y+6,  16, 16, body);
+    fill_rect(r, x+7,  y+3,  10, 8,  body);
+    fill_rect(r, x+6,  y,    4,  6,  horn);
+    fill_rect(r, x+14, y,    4,  6,  horn);
+    fill_rect(r, x+8,  y+5,  3,  3,  eye);
+    fill_rect(r, x+13, y+5,  3,  3,  eye);
+    fill_rect(r, x,    y+8,  4,  8,  wing);
+    fill_rect(r, x+20, y+8,  4,  8,  wing);
+}
+
+void draw_red_dragon(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color body  = {180,  30,  10, 255};
+    SDL_Color scale = {140,  20,   5, 255};
+    SDL_Color eye   = {255, 220,   0, 255};
+    SDL_Color wing  = {120,  15,   5, 255};
+    SDL_Color flame = {255, 140,   0, 255};
+    fill_rect(r, x+3,  y+6,  18, 14, body);
+    fill_rect(r, x+6,  y+3,  12, 8,  body);
+    fill_rect(r, x+4,  y+8,  16, 2,  scale);
+    fill_rect(r, x+4,  y+12, 16, 2,  scale);
+    fill_rect(r, x+8,  y+5,  3,  3,  eye);
+    fill_rect(r, x+13, y+5,  3,  3,  eye);
+    fill_rect(r, x,    y+4,  4,  10, wing);
+    fill_rect(r, x+20, y+4,  4,  10, wing);
+    fill_rect(r, x+10, y+16, 4,  6,  flame);
+    fill_rect(r, x+9,  y+19, 6,  3,  flame);
+}
+
+void draw_tarrasque(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color body  = { 60,  40,  20, 255};
+    SDL_Color shell = { 80,  60,  30, 255};
+    SDL_Color eye   = {255,   0,   0, 255};
+    SDL_Color spike = { 40,  20,  10, 255};
+    SDL_Color claw  = {120, 100,  50, 255};
+    fill_rect(r, x+2,  y+4,  20, 18, body);
+    fill_rect(r, x+4,  y+2,  16, 18, shell);
+    fill_rect(r, x+6,  y,    4,  4,  spike);
+    fill_rect(r, x+14, y,    4,  4,  spike);
+    fill_rect(r, x+10, y+1,  4,  3,  spike);
+    fill_rect(r, x+7,  y+5,  4,  4,  eye);
+    fill_rect(r, x+13, y+5,  4,  4,  eye);
+    fill_rect(r, x,    y+12, 4,  6,  claw);
+    fill_rect(r, x+20, y+12, 4,  6,  claw);
+    fill_rect(r, x+4,  y+20, 4,  4,  claw);
+    fill_rect(r, x+16, y+20, 4,  4,  claw);
+}
+
 void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
     switch (type) {
         case ENEMY_SKELETON: draw_skeleton(r, tile_x, tile_y); break;
@@ -165,6 +254,11 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_ORC:      draw_orc(r, tile_x, tile_y);      break;
         case ENEMY_TROLL:    draw_troll(r, tile_x, tile_y);    break;
         case ENEMY_GIANT:    draw_giant(r, tile_x, tile_y);    break;
+        case ENEMY_GOBLIN_KING: draw_goblin_king(r, tile_x, tile_y); break;
+        case ENEMY_LICH_KING:   draw_lich_king(r, tile_x, tile_y);   break;
+        case ENEMY_DEMON_LORD:  draw_demon_lord(r, tile_x, tile_y);  break;
+        case ENEMY_RED_DRAGON:  draw_red_dragon(r, tile_x, tile_y);  break;
+        case ENEMY_TARRASQUE:   draw_tarrasque(r, tile_x, tile_y);   break;
     }
 }
 

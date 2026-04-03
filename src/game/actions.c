@@ -57,6 +57,11 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type) {
         case ENEMY_ORC:      gold = 6 + rand() % 8;  break;
         case ENEMY_TROLL:    gold = 10 + rand() % 10; break;
         case ENEMY_GIANT:    gold = 15 + rand() % 15; break;
+        case ENEMY_GOBLIN_KING: break;
+        case ENEMY_LICH_KING:  break;
+        case ENEMY_DEMON_LORD:  break;
+        case ENEMY_RED_DRAGON: break;
+        case ENEMY_TARRASQUE:  break;
     }
     
     // 50% chance to drop gold
@@ -65,6 +70,25 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type) {
         char msg[MAX_MESSAGE_LEN];
         snprintf(msg, sizeof(msg), "Found %d gold!", gold);
         push_message(g, msg);
+    }
+
+    // Boss guaranteed drop
+    if (g->enemies[0].is_boss) {
+        if (g->floor_item_count < MAX_FLOOR_ITEMS) {
+            Item boss_drop = rand() % 2 == 0
+                ? random_weapon(g->level)
+                : item_make_chain_mail();
+            FloorItem fi = {0};
+            fi.active = 1;
+            fi.x = x; fi.y = y;
+            fi.item = boss_drop;
+            g->map.tiles[y][x] = TILE_ITEM;
+            g->floor_items[g->floor_item_count++] = fi;
+            char msg[MAX_MESSAGE_LEN];
+            snprintf(msg, sizeof(msg), "%s dropped!", boss_drop.name);
+            push_message(g, msg);
+        }
+        return;
     }
 
     // Item drop — 25% chance

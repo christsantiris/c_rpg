@@ -55,7 +55,76 @@ switch (type) {
             e->attack = 14; e->defense = 6;
             e->experience = 50;
             break;
+        case ENEMY_GOBLIN_KING:
+            strncpy(e->name, "Goblin King", sizeof(e->name) - 1);
+            e->name[sizeof(e->name) - 1] = '\0';
+            e->max_hp = 100; e->hp = 100;
+            e->attack = 15;  e->defense = 5;
+            e->experience = 200;
+            e->is_boss = 1;
+            break;
+        case ENEMY_LICH_KING:
+            strncpy(e->name, "Lich King", sizeof(e->name) - 1);
+            e->name[sizeof(e->name) - 1] = '\0';
+            e->max_hp = 200; e->hp = 200;
+            e->attack = 25;  e->defense = 10;
+            e->experience = 400;
+            e->is_boss = 1;
+            break;
+        case ENEMY_DEMON_LORD:
+            strncpy(e->name, "Demon Lord", sizeof(e->name) - 1);
+            e->name[sizeof(e->name) - 1] = '\0';
+            e->max_hp = 350; e->hp = 350;
+            e->attack = 38;  e->defense = 15;
+            e->experience = 700;
+            e->is_boss = 1;
+            break;
+        case ENEMY_RED_DRAGON:
+            strncpy(e->name, "Red Dragon", sizeof(e->name) - 1);
+            e->name[sizeof(e->name) - 1] = '\0';
+            e->max_hp = 500; e->hp = 500;
+            e->attack = 55;  e->defense = 22;
+            e->experience = 1200;
+            e->is_boss = 1;
+            break;
+        case ENEMY_TARRASQUE:
+            strncpy(e->name, "Tarrasque", sizeof(e->name) - 1);
+            e->name[sizeof(e->name) - 1] = '\0';
+            e->max_hp = 800; e->hp = 800;
+            e->attack = 80;  e->defense = 35;
+            e->experience = 2000;
+            e->is_boss = 1;
+            break;
     }
+}
+
+static void spawn_boss(GameState *g) {
+    // Find largest room
+    int largest = 0;
+    for (int i = 1; i < g->map.room_count; i++) {
+        int area = g->map.rooms[i].w * g->map.rooms[i].h;
+        int best = g->map.rooms[largest].w * g->map.rooms[largest].h;
+        if (area > best) largest = i;
+    }
+
+    Room *room = &g->map.rooms[largest];
+    int bx = room->x + room->w / 2;
+    int by = room->y + room->h / 2;
+
+    EnemyType type;
+    switch (g->level) {
+        case 5:  type = ENEMY_GOBLIN_KING; break;
+        case 10: type = ENEMY_LICH_KING;   break;
+        case 15: type = ENEMY_DEMON_LORD;  break;
+        case 20: type = ENEMY_RED_DRAGON;  break;
+        case 25: type = ENEMY_TARRASQUE;   break;
+        default: return;
+    }
+
+    int idx = g->enemy_count;
+    if (idx >= MAX_ENEMIES) return;
+    spawn_enemy(&g->enemies[idx], type, bx, by);
+    g->enemy_count++;
 }
 
 void enemies_spawn(GameState *g) {
@@ -102,6 +171,11 @@ void enemies_spawn(GameState *g) {
 
         spawn_enemy(&g->enemies[i], type, ex, ey);
         g->enemy_count++;
+    }
+    // Spawn boss on boss levels
+    if (g->level == 5  || g->level == 10 || g->level == 15 ||
+        g->level == 20 || g->level == 25) {
+        spawn_boss(g);
     }
 }
 
