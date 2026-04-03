@@ -50,4 +50,7 @@ Item item_make_battle_axe(void);
 Item item_make_staff(void);
 Item item_make_bow(void);
 
+Item item_make_leather_armor(void);
+Item item_make_chain_mail(void);
+
 #endif
