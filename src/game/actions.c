@@ -47,8 +47,8 @@ static Item random_weapon(int level) {
     }
 }
 
-static void drop_loot(GameState *g, int x, int y, EnemyType type) {
-    // Gold drop
+static void drop_loot(GameState *g, int x, int y, EnemyType type, int is_boss) {
+    // Gold dropstatic void drop_loot(GameState *g, int x, int y, EnemyType type) {
     int gold = 0;
     switch (type) {
         case ENEMY_SKELETON: gold = 2 + rand() % 4;  break;
@@ -73,7 +73,7 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type) {
     }
 
     // Boss guaranteed drop
-    if (g->enemies[0].is_boss) {
+    if (is_boss) {
         if (g->floor_item_count < MAX_FLOOR_ITEMS) {
             Item boss_drop = rand() % 2 == 0
                 ? random_weapon(g->level)
@@ -407,7 +407,7 @@ void action_resolve_player(GameState *g, Action a) {
                             for (int j = 0; j < g->enemy_count; j++)
                                 if (g->enemies[j].active) { all_clear = 0; break; }
                             if (all_clear) g->level_cleared = 1;
-                            drop_loot(g, e->x, e->y, e->type);
+                            drop_loot(g, e->x, e->y, e->type, e->is_boss);
                             player_gain_xp(g, e->experience);
                             snprintf(msg, sizeof(msg), "%s killed %s!",
                                 sp->name, e->name);
@@ -447,7 +447,7 @@ void action_resolve_player(GameState *g, Action a) {
                     e->hp -= dmg;
                     if (e->hp <= 0) {
                         e->active = 0;
-                        drop_loot(g, e->x, e->y, e->type);
+                        drop_loot(g, e->x, e->y, e->type, e->is_boss);
                         player_gain_xp(g, e->experience);
                     }
                     hits++;
@@ -501,7 +501,7 @@ void action_resolve_player(GameState *g, Action a) {
                     for (int j = 0; j < g->enemy_count; j++)
                         if (g->enemies[j].active) { all_clear = 0; break; }
                     if (all_clear) g->level_cleared = 1;
-                    drop_loot(g, e->x, e->y, e->type);
+                    drop_loot(g, e->x, e->y, e->type, e->is_boss);
                     player_gain_xp(g, e->experience);
                     snprintf(msg, sizeof(msg), "Attack killed %s!", e->name);
                 } else {
@@ -539,7 +539,7 @@ void action_resolve_player(GameState *g, Action a) {
                 char msg[MAX_MESSAGE_LEN];
                 if (e->hp <= 0) {
                     e->active = 0;
-                    drop_loot(g, e->x, e->y, e->type);
+                    drop_loot(g, e->x, e->y, e->type, e->is_boss);
                     player_gain_xp(g, e->experience);
                     int all_clear = 1;
                     for (int j = 0; j < g->enemy_count; j++) {
