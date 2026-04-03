@@ -96,13 +96,33 @@ Item item_make_bow(void) {
     return it;
 }
 
-Item item_make_armor(const char *name, int defense_bonus, int value) {
+// Item item_make_armor(const char *name, int defense_bonus, int value) {
+//     Item it = {0};
+//     it.active        = 1;
+//     it.type          = ITEM_ARMOR;
+//     strncpy(it.name, name, sizeof(it.name) - 1);
+//     it.defense_bonus = defense_bonus;
+//     it.value         = value;
+//     return it;
+// }
+
+Item item_make_leather_armor(void) {
     Item it = {0};
     it.active        = 1;
     it.type          = ITEM_ARMOR;
-    strncpy(it.name, name, sizeof(it.name) - 1);
-    it.defense_bonus = defense_bonus;
-    it.value         = value;
+    strncpy(it.name, "Leather Armor", sizeof(it.name) - 1);
+    it.defense_bonus = 2;
+    it.value         = 15;
+    return it;
+}
+
+Item item_make_chain_mail(void) {
+    Item it = {0};
+    it.active        = 1;
+    it.type          = ITEM_ARMOR;
+    strncpy(it.name, "Chain Mail", sizeof(it.name) - 1);
+    it.defense_bonus = 5;
+    it.value         = 40;
     return it;
 }
 

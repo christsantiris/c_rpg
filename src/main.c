@@ -342,6 +342,12 @@ int main(void) {
                                             screen = SCREEN_SHOP;
                                             found = 1;
                                         }
+                                        if (t == TILE_SHOP_BLACKSMITH) {
+                                            shop_init(&shop_screen,
+                                                SHOP_TYPE_BLACKSMITH);
+                                            screen = SCREEN_SHOP;
+                                            found = 1;
+                                        }
                                     }
                                 }
                                 if (!found)

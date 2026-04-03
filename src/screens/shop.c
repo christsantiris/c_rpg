@@ -13,6 +13,16 @@ void shop_init(ShopScreen *s, ShopType type) {
         s->items[s->item_count++] = item_make_scroll_fireball();
         s->items[s->item_count++] = item_make_scroll_heal();
     }
+    if (type == SHOP_TYPE_BLACKSMITH) {
+        s->items[s->item_count++] = item_make_rusty_sword();
+        s->items[s->item_count++] = item_make_short_sword();
+        s->items[s->item_count++] = item_make_long_sword();
+        s->items[s->item_count++] = item_make_battle_axe();
+        s->items[s->item_count++] = item_make_staff();
+        s->items[s->item_count++] = item_make_bow();
+        s->items[s->item_count++] = item_make_leather_armor();
+        s->items[s->item_count++] = item_make_chain_mail();
+    }
 }
 
 ShopResult shop_handle_key(ShopScreen *s, int scancode) {

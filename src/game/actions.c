@@ -86,7 +86,7 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type) {
         if (roll < 25)      item = item_make_health_potion();
         else if (roll < 45) item = item_make_mana_potion();
         else if (roll < 60) item = random_weapon(level);
-        else if (roll < 75) item = item_make_armor("Leather Armor", 2, 15);
+        else if (roll < 75) item = item_make_leather_armor();
         else if (roll < 88) item = item_make_scroll_magic_arrow();
         else if (roll < 95) item = item_make_scroll_heal();
         else                item = item_make_scroll_fireball();
@@ -95,7 +95,7 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type) {
         if (roll < 20)      item = item_make_health_potion();
         else if (roll < 35) item = item_make_mana_potion();
         else if (roll < 60) item = random_weapon(level);
-        else if (roll < 65) item = item_make_armor("Leather Armor", 2, 15);
+        else if (roll < 65) item = item_make_leather_armor();
         else if (roll < 75) item = item_make_scroll_magic_arrow();
         else if (roll < 88) item = item_make_scroll_heal();
         else                item = item_make_scroll_fireball();
