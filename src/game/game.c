@@ -62,7 +62,7 @@ void enemies_spawn(GameState *g) {
     g->enemy_count = 0;
     if (g->map.room_count == 0) return;
 
-    int num_enemies = 3 + g->level;
+    int num_enemies = 5 + g->level;
     if (num_enemies > MAX_ENEMIES) num_enemies = MAX_ENEMIES;
 
     for (int i = 0; i < num_enemies; i++) {

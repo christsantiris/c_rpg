@@ -60,7 +60,7 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type) {
     }
     
     // 50% chance to drop gold
-    if (rand() % 100 < 50) {
+    if (rand() % 100 < 20) {
         g->gold += gold;
         char msg[MAX_MESSAGE_LEN];
         snprintf(msg, sizeof(msg), "Found %d gold!", gold);
@@ -68,7 +68,7 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type) {
     }
 
     // Item drop — 25% chance
-    if (rand() % 100 >= 25) return;
+    if (rand() % 100 >= 10) return;
     if (g->floor_item_count >= MAX_FLOOR_ITEMS) return;
 
     Item item;

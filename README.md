@@ -51,6 +51,4 @@ MIT
 - Add other areas (mountains, forest, marsh)
 - Quests
 - NPCs
-- Lower item and potion drop chances
-- Increase num enenmies per level
 - Add shop labels
