@@ -1,11 +1,9 @@
 #include <SDL2/SDL.h>
 #include <stdio.h>
 #include "renderer/renderer.h"
-#include "renderer/sprites.h"
 #include "renderer/viewport.h"
 #include "renderer/landing_renderer.h"
 #include "renderer/game_over_renderer.h"
-#include "renderer/info_panel.h"
 #include "game/game.h"
 #include "game/map.h"
 #include "screens/landing.h"
@@ -16,12 +14,13 @@
 #include "renderer/slot_renderer.h"
 #include "screens/inventory.h"
 #include "renderer/inventory_renderer.h"
-#include "renderer/message_bar.h"
 #include "game/actions.h"
 #include "screens/spellbook.h"
 #include "renderer/spellbook_renderer.h"
 #include "screens/shop.h"
 #include "renderer/shop_renderer.h"
+#include "renderer/game_renderer.h"
+#include "renderer/info_panel.h"
 
 #define WINDOW_TITLE "Castle of No Return"
 #define WINDOW_W     1280
@@ -458,42 +457,7 @@ int main(void) {
         } else if (screen == SCREEN_SHOP) {
             shop_draw(&renderer, &game, &shop_screen);
         } else if (screen == SCREEN_PLAYING) {
-            // Draw map tiles
-            for (int y = 0; y < MAP_H; y++) {
-                for (int x = 0; x < MAP_W; x++) {
-                    if (!viewport_is_visible(&viewport, x, y)) continue;
-                    int sx = viewport_to_screen_x(&viewport, x);
-                    int sy = viewport_to_screen_y(&viewport, y);
-                    switch (game.map.tiles[y][x]) {
-                        case TILE_WALL:            draw_wall(&renderer, sx, sy);            break;
-                        case TILE_STAIRS_UP:       draw_stairs_up(&renderer, sx, sy);       break;
-                        case TILE_STAIRS_DOWN:     draw_stairs_down(&renderer, sx, sy);     break;
-                        case TILE_TOWN_FLOOR:      draw_town_floor(&renderer, sx, sy);      break;
-                        case TILE_TOWN_PATH:       draw_town_path(&renderer, sx, sy);       break;
-                        case TILE_TOWN_EXIT:       draw_town_exit(&renderer, sx, sy);       break;
-                        case TILE_SHOP_BLACKSMITH: draw_shop_blacksmith(&renderer, sx, sy); break;
-                        case TILE_SHOP_ALCHEMIST:  draw_shop_alchemist(&renderer, sx, sy);  break;
-                        case TILE_ITEM:            draw_floor_item(&renderer, sx, sy);      break;
-                        default:                   draw_floor(&renderer, sx, sy);           break;
-                    }
-                }
-            }
-            // Draw enemies
-            for (int i = 0; i < game.enemy_count; i++) {
-                Enemy *e = &game.enemies[i];
-                if (!e->active) continue;
-                if (!viewport_is_visible(&viewport, e->x, e->y)) continue;
-                int sx = viewport_to_screen_x(&viewport, e->x);
-                int sy = viewport_to_screen_y(&viewport, e->y);
-                draw_enemy(&renderer, sx, sy, e->type);
-            }
-            // Draw player
-            draw_player(&renderer,
-                viewport_to_screen_x(&viewport, game.player.x),
-                viewport_to_screen_y(&viewport, game.player.y));
-            // Draw info panel
-            info_panel_draw(&renderer, &game);
-            message_bar_draw(&renderer, &game);
+        game_draw(&renderer, &game, &viewport);
         } else if (screen == SCREEN_GAME_OVER) {
             game_over_draw(&renderer, &game);
         }

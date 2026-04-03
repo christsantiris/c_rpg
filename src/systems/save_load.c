@@ -117,30 +117,105 @@ int save_game(const GameState *g, int slot) {
 
     // Player
     cJSON *player = cJSON_CreateObject();
-    cJSON_AddStringToObject(player, "name",       g->player.name);
-    cJSON_AddNumberToObject(player, "x",          g->player.x);
-    cJSON_AddNumberToObject(player, "y",          g->player.y);
-    cJSON_AddNumberToObject(player, "hp",         g->player.hp);
-    cJSON_AddNumberToObject(player, "max_hp",     g->player.max_hp);
-    cJSON_AddNumberToObject(player, "mp",         g->player.mp);
-    cJSON_AddNumberToObject(player, "max_mp",     g->player.max_mp);
-    cJSON_AddNumberToObject(player, "attack",     g->player.attack);
-    cJSON_AddNumberToObject(player, "defense",    g->player.defense);
-    cJSON_AddNumberToObject(player, "level",      g->player.level);
-    cJSON_AddNumberToObject(player, "experience", g->player.experience);
+    cJSON_AddStringToObject(player, "name",              g->player.name);
+    cJSON_AddNumberToObject(player, "x",                 g->player.x);
+    cJSON_AddNumberToObject(player, "y",                 g->player.y);
+    cJSON_AddNumberToObject(player, "hp",                g->player.hp);
+    cJSON_AddNumberToObject(player, "max_hp",            g->player.max_hp);
+    cJSON_AddNumberToObject(player, "mp",                g->player.mp);
+    cJSON_AddNumberToObject(player, "max_mp",            g->player.max_mp);
+    cJSON_AddNumberToObject(player, "attack",            g->player.attack);
+    cJSON_AddNumberToObject(player, "defense",           g->player.defense);
+    cJSON_AddNumberToObject(player, "level",             g->player.level);
+    cJSON_AddNumberToObject(player, "experience",        g->player.experience);
+    cJSON_AddNumberToObject(player, "experience_next",   g->player.experience_next);
+    cJSON_AddNumberToObject(player, "last_dx",           g->player.last_dx);
+    cJSON_AddNumberToObject(player, "last_dy",           g->player.last_dy);
+    cJSON_AddNumberToObject(player, "equipped_spell",    g->player.equipped_spell);
+    cJSON_AddNumberToObject(player, "known_spell_count", g->player.known_spell_count);
+
+    // Known spells
+    cJSON *spells = cJSON_CreateArray();
+    for (int i = 0; i < g->player.known_spell_count; i++) {
+        const Spell *sp = &g->player.known_spells[i];
+        cJSON *s = cJSON_CreateObject();
+        cJSON_AddStringToObject(s, "name",     sp->name);
+        cJSON_AddNumberToObject(s, "id",       sp->id);
+        cJSON_AddNumberToObject(s, "type",     sp->type);
+        cJSON_AddNumberToObject(s, "mp_cost",  sp->mp_cost);
+        cJSON_AddNumberToObject(s, "damage",   sp->damage);
+        cJSON_AddNumberToObject(s, "heal_hp",  sp->heal_hp);
+        cJSON_AddNumberToObject(s, "range",    sp->range);
+        cJSON_AddNumberToObject(s, "radius",   sp->radius);
+        cJSON_AddItemToArray(spells, s);
+    }
+    cJSON_AddItemToObject(player, "spells", spells);
     cJSON_AddItemToObject(root, "player", player);
 
     // Game state
-    cJSON_AddNumberToObject(root, "level",         g->level);
-    cJSON_AddNumberToObject(root, "level_cleared", g->level_cleared);
+    cJSON_AddNumberToObject(root, "level",             g->level);
+    cJSON_AddNumberToObject(root, "level_cleared",     g->level_cleared);
     cJSON_AddNumberToObject(root, "max_level_reached", g->max_level_reached);
-    cJSON_AddNumberToObject(root, "message_count", g->message_count);
+    cJSON_AddNumberToObject(root, "message_count",     g->message_count);
+    cJSON_AddNumberToObject(root, "gold",              g->gold);
+    cJSON_AddNumberToObject(root, "equipped_weapon",   g->equipped_weapon);
+    cJSON_AddNumberToObject(root, "equipped_armor",    g->equipped_armor);
+    cJSON_AddNumberToObject(root, "location",          g->location);
 
     // Messages
     cJSON *messages = cJSON_CreateArray();
     for (int i = 0; i < g->message_count; i++)
         cJSON_AddItemToArray(messages, cJSON_CreateString(g->messages[i]));
     cJSON_AddItemToObject(root, "messages", messages);
+
+    // Inventory
+    cJSON *inventory = cJSON_CreateArray();
+    for (int i = 0; i < g->inventory_count; i++) {
+        const Item *item = &g->inventory[i];
+        cJSON *it = cJSON_CreateObject();
+        cJSON_AddNumberToObject(it, "active",        item->active);
+        cJSON_AddNumberToObject(it, "type",          item->type);
+        cJSON_AddStringToObject(it, "name",          item->name);
+        cJSON_AddNumberToObject(it, "heal_hp",       item->heal_hp);
+        cJSON_AddNumberToObject(it, "heal_mp",       item->heal_mp);
+        cJSON_AddNumberToObject(it, "attack_bonus",  item->attack_bonus);
+        cJSON_AddNumberToObject(it, "defense_bonus", item->defense_bonus);
+        cJSON_AddNumberToObject(it, "value",         item->value);
+        cJSON_AddNumberToObject(it, "spell_id",      item->spell_id);
+        cJSON_AddNumberToObject(it, "is_ranged",     item->is_ranged);
+        cJSON_AddNumberToObject(it, "range",         item->range);
+        cJSON_AddNumberToObject(it, "is_two_handed", item->is_two_handed);
+        cJSON_AddItemToArray(inventory, it);
+    }
+    cJSON_AddItemToObject(root, "inventory", inventory);
+    cJSON_AddNumberToObject(root, "inventory_count", g->inventory_count);
+
+    // Floor items
+    cJSON *floor_items = cJSON_CreateArray();
+    for (int i = 0; i < g->floor_item_count; i++) {
+        const FloorItem *fi = &g->floor_items[i];
+        cJSON *f = cJSON_CreateObject();
+        cJSON_AddNumberToObject(f, "active", fi->active);
+        cJSON_AddNumberToObject(f, "x",      fi->x);
+        cJSON_AddNumberToObject(f, "y",      fi->y);
+        cJSON *it = cJSON_CreateObject();
+        cJSON_AddNumberToObject(it, "active",        fi->item.active);
+        cJSON_AddNumberToObject(it, "type",          fi->item.type);
+        cJSON_AddStringToObject(it, "name",          fi->item.name);
+        cJSON_AddNumberToObject(it, "heal_hp",       fi->item.heal_hp);
+        cJSON_AddNumberToObject(it, "heal_mp",       fi->item.heal_mp);
+        cJSON_AddNumberToObject(it, "attack_bonus",  fi->item.attack_bonus);
+        cJSON_AddNumberToObject(it, "defense_bonus", fi->item.defense_bonus);
+        cJSON_AddNumberToObject(it, "value",         fi->item.value);
+        cJSON_AddNumberToObject(it, "spell_id",      fi->item.spell_id);
+        cJSON_AddNumberToObject(it, "is_ranged",     fi->item.is_ranged);
+        cJSON_AddNumberToObject(it, "range",         fi->item.range);
+        cJSON_AddNumberToObject(it, "is_two_handed", fi->item.is_two_handed);
+        cJSON_AddItemToObject(f, "item", it);
+        cJSON_AddItemToArray(floor_items, f);
+    }
+    cJSON_AddItemToObject(root, "floor_items", floor_items);
+    cJSON_AddNumberToObject(root, "floor_item_count", g->floor_item_count);
 
     // Current map
     cJSON_AddItemToObject(root, "map", serialize_map(&g->map));
@@ -154,7 +229,8 @@ int save_game(const GameState *g, int slot) {
     cJSON *cache = cJSON_CreateArray();
     for (int i = 0; i < MAX_DEPTH; i++) {
         cJSON *entry = cJSON_CreateObject();
-        cJSON_AddNumberToObject(entry, "valid", g->level_cache[i].valid);
+        cJSON_AddNumberToObject(entry, "valid",         g->level_cache[i].valid);
+        cJSON_AddNumberToObject(entry, "level_cleared", g->level_cache[i].level_cleared);
         if (g->level_cache[i].valid) {
             cJSON_AddItemToObject(entry, "map",
                 serialize_map(&g->level_cache[i].map));
@@ -198,22 +274,47 @@ int load_game(GameState *g, int slot) {
     // Player
     cJSON *player = cJSON_GetObjectItem(root, "player");
     strncpy(g->player.name, cJSON_GetObjectItem(player, "name")->valuestring, 20);
-    g->player.x          = cJSON_GetObjectItem(player, "x")->valueint;
-    g->player.y          = cJSON_GetObjectItem(player, "y")->valueint;
-    g->player.hp         = cJSON_GetObjectItem(player, "hp")->valueint;
-    g->player.max_hp     = cJSON_GetObjectItem(player, "max_hp")->valueint;
-    g->player.mp         = cJSON_GetObjectItem(player, "mp")->valueint;
-    g->player.max_mp     = cJSON_GetObjectItem(player, "max_mp")->valueint;
-    g->player.attack     = cJSON_GetObjectItem(player, "attack")->valueint;
-    g->player.defense    = cJSON_GetObjectItem(player, "defense")->valueint;
-    g->player.level      = cJSON_GetObjectItem(player, "level")->valueint;
-    g->player.experience = cJSON_GetObjectItem(player, "experience")->valueint;
+    g->player.x                = cJSON_GetObjectItem(player, "x")->valueint;
+    g->player.y                = cJSON_GetObjectItem(player, "y")->valueint;
+    g->player.hp               = cJSON_GetObjectItem(player, "hp")->valueint;
+    g->player.max_hp           = cJSON_GetObjectItem(player, "max_hp")->valueint;
+    g->player.mp               = cJSON_GetObjectItem(player, "mp")->valueint;
+    g->player.max_mp           = cJSON_GetObjectItem(player, "max_mp")->valueint;
+    g->player.attack           = cJSON_GetObjectItem(player, "attack")->valueint;
+    g->player.defense          = cJSON_GetObjectItem(player, "defense")->valueint;
+    g->player.level            = cJSON_GetObjectItem(player, "level")->valueint;
+    g->player.experience       = cJSON_GetObjectItem(player, "experience")->valueint;
+    g->player.experience_next  = cJSON_GetObjectItem(player, "experience_next")->valueint;
+    g->player.last_dx          = cJSON_GetObjectItem(player, "last_dx")->valueint;
+    g->player.last_dy          = cJSON_GetObjectItem(player, "last_dy")->valueint;
+    g->player.equipped_spell   = cJSON_GetObjectItem(player, "equipped_spell")->valueint;
+    g->player.known_spell_count = cJSON_GetObjectItem(player, "known_spell_count")->valueint;
+
+    // Known spells
+    cJSON *spells = cJSON_GetObjectItem(player, "spells");
+    for (int i = 0; i < g->player.known_spell_count; i++) {
+        cJSON *s = cJSON_GetArrayItem(spells, i);
+        Spell *sp = &g->player.known_spells[i];
+        strncpy(sp->name, cJSON_GetObjectItem(s, "name")->valuestring,
+            sizeof(sp->name) - 1);
+        sp->id      = cJSON_GetObjectItem(s, "id")->valueint;
+        sp->type    = cJSON_GetObjectItem(s, "type")->valueint;
+        sp->mp_cost = cJSON_GetObjectItem(s, "mp_cost")->valueint;
+        sp->damage  = cJSON_GetObjectItem(s, "damage")->valueint;
+        sp->heal_hp = cJSON_GetObjectItem(s, "heal_hp")->valueint;
+        sp->range   = cJSON_GetObjectItem(s, "range")->valueint;
+        sp->radius  = cJSON_GetObjectItem(s, "radius")->valueint;
+    }
 
     // Game state
-    g->level         = cJSON_GetObjectItem(root, "level")->valueint;
-    g->level_cleared = cJSON_GetObjectItem(root, "level_cleared")->valueint;
+    g->level             = cJSON_GetObjectItem(root, "level")->valueint;
+    g->level_cleared     = cJSON_GetObjectItem(root, "level_cleared")->valueint;
     g->max_level_reached = cJSON_GetObjectItem(root, "max_level_reached")->valueint;
-    g->message_count = cJSON_GetObjectItem(root, "message_count")->valueint;
+    g->message_count     = cJSON_GetObjectItem(root, "message_count")->valueint;
+    g->gold              = cJSON_GetObjectItem(root, "gold")->valueint;
+    g->equipped_weapon   = cJSON_GetObjectItem(root, "equipped_weapon")->valueint;
+    g->equipped_armor    = cJSON_GetObjectItem(root, "equipped_armor")->valueint;
+    g->location          = cJSON_GetObjectItem(root, "location")->valueint;
 
     // Messages
     cJSON *messages = cJSON_GetObjectItem(root, "messages");
@@ -221,6 +322,52 @@ int load_game(GameState *g, int slot) {
         strncpy(g->messages[i],
             cJSON_GetArrayItem(messages, i)->valuestring,
             MAX_MESSAGE_LEN - 1);
+
+    // Inventory
+    g->inventory_count = cJSON_GetObjectItem(root, "inventory_count")->valueint;
+    cJSON *inventory = cJSON_GetObjectItem(root, "inventory");
+    for (int i = 0; i < g->inventory_count; i++) {
+        cJSON *it = cJSON_GetArrayItem(inventory, i);
+        Item *item = &g->inventory[i];
+        item->active        = cJSON_GetObjectItem(it, "active")->valueint;
+        item->type          = cJSON_GetObjectItem(it, "type")->valueint;
+        strncpy(item->name, cJSON_GetObjectItem(it, "name")->valuestring,
+            sizeof(item->name) - 1);
+        item->heal_hp       = cJSON_GetObjectItem(it, "heal_hp")->valueint;
+        item->heal_mp       = cJSON_GetObjectItem(it, "heal_mp")->valueint;
+        item->attack_bonus  = cJSON_GetObjectItem(it, "attack_bonus")->valueint;
+        item->defense_bonus = cJSON_GetObjectItem(it, "defense_bonus")->valueint;
+        item->value         = cJSON_GetObjectItem(it, "value")->valueint;
+        item->spell_id      = cJSON_GetObjectItem(it, "spell_id")->valueint;
+        item->is_ranged     = cJSON_GetObjectItem(it, "is_ranged")->valueint;
+        item->range         = cJSON_GetObjectItem(it, "range")->valueint;
+        item->is_two_handed = cJSON_GetObjectItem(it, "is_two_handed")->valueint;
+    }
+
+    // Floor items
+    g->floor_item_count = cJSON_GetObjectItem(root, "floor_item_count")->valueint;
+    cJSON *floor_items = cJSON_GetObjectItem(root, "floor_items");
+    for (int i = 0; i < g->floor_item_count; i++) {
+        cJSON *f = cJSON_GetArrayItem(floor_items, i);
+        FloorItem *fi = &g->floor_items[i];
+        fi->active = cJSON_GetObjectItem(f, "active")->valueint;
+        fi->x      = cJSON_GetObjectItem(f, "x")->valueint;
+        fi->y      = cJSON_GetObjectItem(f, "y")->valueint;
+        cJSON *it = cJSON_GetObjectItem(f, "item");
+        fi->item.active        = cJSON_GetObjectItem(it, "active")->valueint;
+        fi->item.type          = cJSON_GetObjectItem(it, "type")->valueint;
+        strncpy(fi->item.name, cJSON_GetObjectItem(it, "name")->valuestring,
+            sizeof(fi->item.name) - 1);
+        fi->item.heal_hp       = cJSON_GetObjectItem(it, "heal_hp")->valueint;
+        fi->item.heal_mp       = cJSON_GetObjectItem(it, "heal_mp")->valueint;
+        fi->item.attack_bonus  = cJSON_GetObjectItem(it, "attack_bonus")->valueint;
+        fi->item.defense_bonus = cJSON_GetObjectItem(it, "defense_bonus")->valueint;
+        fi->item.value         = cJSON_GetObjectItem(it, "value")->valueint;
+        fi->item.spell_id      = cJSON_GetObjectItem(it, "spell_id")->valueint;
+        fi->item.is_ranged     = cJSON_GetObjectItem(it, "is_ranged")->valueint;
+        fi->item.range         = cJSON_GetObjectItem(it, "range")->valueint;
+        fi->item.is_two_handed = cJSON_GetObjectItem(it, "is_two_handed")->valueint;
+    }
 
     // Current map
     deserialize_map(cJSON_GetObjectItem(root, "map"), &g->map);
@@ -233,7 +380,8 @@ int load_game(GameState *g, int slot) {
     cJSON *cache = cJSON_GetObjectItem(root, "level_cache");
     for (int i = 0; i < MAX_DEPTH; i++) {
         cJSON *entry = cJSON_GetArrayItem(cache, i);
-        g->level_cache[i].valid = cJSON_GetObjectItem(entry, "valid")->valueint;
+        g->level_cache[i].valid         = cJSON_GetObjectItem(entry, "valid")->valueint;
+        g->level_cache[i].level_cleared = cJSON_GetObjectItem(entry, "level_cleared")->valueint;
         if (g->level_cache[i].valid) {
             deserialize_map(cJSON_GetObjectItem(entry, "map"),
                             &g->level_cache[i].map);
