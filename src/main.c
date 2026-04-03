@@ -20,6 +20,8 @@
 #include "game/actions.h"
 #include "screens/spellbook.h"
 #include "renderer/spellbook_renderer.h"
+#include "screens/shop.h"
+#include "renderer/shop_renderer.h"
 
 #define WINDOW_TITLE "Castle of No Return"
 #define WINDOW_W     1280
@@ -135,6 +137,7 @@ int main(void) {
     inventory_init(&inventory_screen);
     SpellbookScreen spellbook_screen;
     spellbook_init(&spellbook_screen);
+    ShopScreen shop_screen;
 
     int slot_is_save = 0;
     GameScreen screen = SCREEN_LANDING;
@@ -254,6 +257,29 @@ int main(void) {
                         break;
                     }
 
+                    // Shop screen
+                    if (screen == SCREEN_SHOP) {
+                        ShopResult result = shop_handle_key(&shop_screen, sc);
+                        if (result == SHOP_CLOSED) {
+                            screen = SCREEN_PLAYING;
+                        } else if (result == SHOP_BUY) {
+                            Item *item = &shop_screen.items[shop_screen.selected];
+                            if (game.gold < item->value) {
+                                push_message(&game, "Not enough gold!");
+                            } else if (game.inventory_count >= MAX_INVENTORY) {
+                                push_message(&game, "Inventory full!");
+                            } else {
+                                game.gold -= item->value;
+                                game.inventory[game.inventory_count++] = *item;
+                                char msg[32];
+                                SDL_snprintf(msg, sizeof(msg), "Bought %s",
+                                    item->name);
+                                push_message(&game, msg);
+                            }
+                        }
+                        break;
+                    }
+
                     // Playing screen
                     if (screen == SCREEN_PLAYING) {
                         Action a = {ACTION_NONE, 0, 0};
@@ -302,6 +328,26 @@ int main(void) {
                             case SDL_SCANCODE_F:
                                 a = (Action){ACTION_RANGED_ATTACK, 0, 0};
                                 break;
+                            case SDL_SCANCODE_E: {
+                                // Check adjacent tiles for shops
+                                int px = game.player.x;
+                                int py = game.player.y;
+                                int found = 0;
+                                for (int dy = -1; dy <= 1 && !found; dy++) {
+                                    for (int dx = -1; dx <= 1 && !found; dx++) {
+                                        TileType t = game.map.tiles[py+dy][px+dx];
+                                        if (t == TILE_SHOP_ALCHEMIST) {
+                                            shop_init(&shop_screen,
+                                                SHOP_TYPE_ALCHEMIST);
+                                            screen = SCREEN_SHOP;
+                                            found = 1;
+                                        }
+                                    }
+                                }
+                                if (!found)
+                                    push_message(&game, "No shop nearby");
+                                break;
+                            }
                             default: break;
                         }
                         if (a.type != ACTION_NONE) {
@@ -372,6 +418,8 @@ int main(void) {
             inventory_draw(&renderer, &game, &inventory_screen);
         } else if (screen == SCREEN_SPELLBOOK) {
             spellbook_draw(&renderer, &game, &spellbook_screen);
+        } else if (screen == SCREEN_SHOP) {
+            shop_draw(&renderer, &game, &shop_screen);
         } else if (screen == SCREEN_PLAYING) {
             // Draw map tiles
             for (int y = 0; y < MAP_H; y++) {
