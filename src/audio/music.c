@@ -5,9 +5,9 @@
 #define TOWN_MUSIC    "assets/music/Woodland Fantasy.mp3"
 #define DUNGEON_MUSIC "assets/music/the_march_upon_the_red_mountain.mp3"
 
-static Mix_Music *town_track   = NULL;
+static Mix_Music *town_track    = NULL;
 static Mix_Music *dungeon_track = NULL;
-static GameScreen last_screen  = -1;
+static Mix_Music *current_track = NULL;
 
 void music_init(void) {
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
@@ -22,25 +22,25 @@ void music_init(void) {
         fprintf(stderr, "Failed to load dungeon music: %s\n", Mix_GetError());
 }
 
-void music_update(GameScreen screen, int dungeon_level) {
-    if (screen == last_screen) return;
-    last_screen = screen;
+static void play_track(Mix_Music *track) {
+    if (!track) return;
+    if (track == current_track) return;
+    current_track = track;
+    Mix_HaltMusic();
+    Mix_PlayMusic(track, -1);
+}
 
+void music_update(GameScreen screen, int in_town) {
     if (screen == SCREEN_PLAYING) {
-        Mix_Music *track = dungeon_track;
-        // Use town track when in town
-        if (dungeon_level == 0) track = town_track;
-        if (track) {
-            Mix_HaltMusic();
-            Mix_PlayMusic(track, -1);
-        }
+        if (in_town)
+            play_track(town_track);
+        else
+            play_track(dungeon_track);
     } else if (screen == SCREEN_LANDING ||
                screen == SCREEN_NAME_ENTRY) {
-        if (town_track) {
-            Mix_HaltMusic();
-            Mix_PlayMusic(town_track, -1);
-        }
+        play_track(town_track);
     }
+    // All other screens (shop, inventory, spellbook) keep current track
 }
 
 void music_free(void) {

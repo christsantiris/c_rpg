@@ -447,7 +447,7 @@ int main(void) {
         renderer_begin_frame(&renderer);
         // Update music based on screen and location
         int is_town = (game.location == LOCATION_TOWN);
-        music_update(screen, is_town ? 0 : game.level);
+        music_update(screen, is_town);
 
         if (screen == SCREEN_LANDING) {
             landing_draw(&renderer, &landing);
