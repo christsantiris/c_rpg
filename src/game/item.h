@@ -36,7 +36,7 @@ typedef struct {
 
 Item item_make_health_potion(void);
 Item item_make_mana_potion(void);
-Item item_make_weapon(const char *name, int attack_bonus, int value);
+// Item item_make_weapon(const char *name, int attack_bonus, int value);
 Item item_make_armor(const char *name, int defense_bonus, int value);
 
 Item item_make_scroll_magic_arrow(void);

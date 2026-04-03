@@ -16,9 +16,9 @@ void test_items(void) {
     ASSERT("mana potion type correct",      mp_potion.type    == ITEM_POTION_MANA);
     ASSERT("mana potion heal_mp set",       mp_potion.heal_mp == 20);
 
-    Item sword = item_make_weapon("Iron Sword", 5, 20);
+    Item sword = item_make_long_sword();
     ASSERT("weapon type correct",           sword.type         == ITEM_WEAPON);
-    ASSERT("weapon attack bonus set",       sword.attack_bonus == 5);
+    ASSERT("weapon attack bonus set",       sword.attack_bonus == 6);
 
     Item armor = item_make_armor("Leather Armor", 3, 15);
     ASSERT("armor type correct",            armor.type          == ITEM_ARMOR);
@@ -45,7 +45,7 @@ void test_items(void) {
     Action equip_wpn   = {ACTION_EQUIP_ITEM, 0, 0};
     action_resolve_player(&g2, equip_wpn);
     ASSERT("weapon equipped",               g2.equipped_weapon == 0);
-    ASSERT("attack increased after equip",  g2.player.attack == base_attack + 5);
+    ASSERT("attack increased after equip",  g2.player.attack == base_attack + 6);
 
     // --- Equip armor ---
     GameState g3;
@@ -56,7 +56,7 @@ void test_items(void) {
     int base_defense   = g3.player.defense;
     Action equip_arm   = {ACTION_EQUIP_ITEM, 0, 0};
     action_resolve_player(&g3, equip_arm);
-    printf("DEBUG after equip: defense=%d expected=%d\n",
+        printf("DEBUG after equip: defense=%d expected=%d\n",
         g3.player.defense, base_defense + 3);
     ASSERT("armor equipped",                g3.equipped_armor == 0);
     ASSERT("defense increased after equip", g3.player.defense == base_defense + 3);
