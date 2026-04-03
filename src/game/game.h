@@ -7,9 +7,19 @@
 #include "actions.h"
 #include <stdio.h>
 #include "spell.h"
+#include <SDL2/SDL.h>
 
 #define MAX_MESSAGES 3
 #define MAX_MESSAGE_LEN 40
+
+#define MAX_TRAIL 16
+
+typedef struct {
+    int active;
+    int x, y;
+    Uint8 r, g, b;
+    int is_impact;
+} TrailTile;
 
 typedef struct {
     int   x, y;
@@ -29,6 +39,7 @@ typedef struct {
     Enemy enemies[MAX_ENEMIES];
     int   enemy_count;
     int   valid;
+    int   level_cleared;
 } LevelCache;
 
 typedef enum {
@@ -55,6 +66,9 @@ typedef struct {
     int       gold;
     FloorItem floor_items[MAX_FLOOR_ITEMS];
     int       floor_item_count;
+    TrailTile trail[MAX_TRAIL];
+    int       trail_count;
+    int       trail_frames;
 } GameState;
 
 void game_init(GameState *g);
