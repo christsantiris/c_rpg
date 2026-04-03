@@ -14,7 +14,7 @@
 #define TOWN_W 40 // town dimensions
 #define TOWN_H 25 // town dimensions
 
-#define MAX_DEPTH 20
+#define MAX_DEPTH 25
 
 typedef enum {
     TILE_FLOOR = 0,
