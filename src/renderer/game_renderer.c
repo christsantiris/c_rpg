@@ -2,6 +2,7 @@
 #include "sprites.h"
 #include "info_panel.h"
 #include "message_bar.h"
+#include "renderer.h"
 
 void game_draw(Renderer *r, GameState *g, Viewport *v) {
     // Draw map tiles
@@ -33,6 +34,19 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int sx = viewport_to_screen_x(v, e->x);
         int sy = viewport_to_screen_y(v, e->y);
         draw_enemy(r, sx, sy, e->type);
+    }
+
+    // Draw shop labels
+    if (g->location == LOCATION_TOWN) {
+        SDL_Color label = {220, 180, 60, 255};
+        int bx = viewport_to_screen_x(v, 9)  * TILE_SIZE;
+        int by = viewport_to_screen_y(v, 6)  * TILE_SIZE;
+        int ax = viewport_to_screen_x(v, 30) * TILE_SIZE;
+        int ay = viewport_to_screen_y(v, 6)  * TILE_SIZE;
+        if (bx > 0 && by > 0)
+            renderer_draw_text(r, "BLACKSMITH", bx, by, label, r->font_tiny);
+        if (ax > 0 && ay > 0)
+            renderer_draw_text(r, "ALCHEMIST", ax, ay, label, r->font_tiny);
     }
 
     // Draw spell/projectile trail
