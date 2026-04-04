@@ -153,6 +153,18 @@ void enemies_spawn(GameState *g) {
         int ey = room->y + 1 + rand() % (room->h - 2);
         if (!map_is_walkable(&g->map, ex, ey)) continue;
 
+        // Check no other enemy already occupies this tile
+        int occupied = 0;
+        for (int j = 0; j < i; j++) {
+            if (g->enemies[j].active &&
+                g->enemies[j].x == ex &&
+                g->enemies[j].y == ey) {
+                occupied = 1;
+                break;
+            }
+        }
+        if (occupied) continue;
+
         EnemyType type;
         int roll = rand() % 100;
         int level = g->level;
