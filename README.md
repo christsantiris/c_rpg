@@ -46,7 +46,11 @@ MIT
 - Optimize loading speed
 - Add loading spinner
 - mac and windows installers
-- sound effects
+- sound effects (stairs unlock, attack, magic)
 - Add other areas (mountains, forest, marsh)
+- Booby traps
 - Quests
 - NPCs
+- Enemies occupying same tile bug
+- Score
+- Secret/Locked Rooms
