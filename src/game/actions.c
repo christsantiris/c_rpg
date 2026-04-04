@@ -91,8 +91,8 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type, int is_boss) {
         return;
     }
 
-    // Item drop — 25% chance
-    if (rand() % 100 >= 10) return;
+    // Item drop — 5% chance
+    if (rand() % 100 >= 5) return;
     if (g->floor_item_count >= MAX_FLOOR_ITEMS) return;
 
     Item item;

@@ -34,7 +34,7 @@ Run `make clean` to destroy the compiled game and start over if you make your ow
 Run `make test` to run unit tests
 
 ## Dependencies
-SDL2 library for rendering
+cmake sdl2 sdl2_ttf sdl2_mixer
 
 ## Contributing
 I would gladly welcome any pull requests to help improve the game
