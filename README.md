@@ -51,6 +51,4 @@ MIT
 - Booby traps
 - Quests
 - NPCs
-- Enemies occupying same tile bug
-- Score
 - Secret/Locked Rooms
