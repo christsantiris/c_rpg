@@ -254,6 +254,7 @@ void game_init(GameState *g) {
     g->equipped_weapon  = -1;
     g->equipped_armor   = -1;
     g->gold             = 0;
+    g->score = 0;
     g->floor_item_count = 0;
     for (int i = 0; i < MAX_INVENTORY; i++)
         g->inventory[i].active = 0;

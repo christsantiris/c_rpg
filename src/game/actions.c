@@ -47,6 +47,23 @@ static Item random_weapon(int level) {
     }
 }
 
+static int enemy_score(EnemyType type) {
+    switch (type) {
+        case ENEMY_SKELETON:    return 10;
+        case ENEMY_GOBLIN:      return 15;
+        case ENEMY_ZOMBIE:      return 20;
+        case ENEMY_ORC:         return 30;
+        case ENEMY_TROLL:       return 50;
+        case ENEMY_GIANT:       return 80;
+        case ENEMY_GOBLIN_KING: return 500;
+        case ENEMY_LICH_KING:   return 1000;
+        case ENEMY_DEMON_LORD:  return 2000;
+        case ENEMY_RED_DRAGON:  return 3500;
+        case ENEMY_TARRASQUE:   return 5000;
+        default:                return 0;
+    }
+}
+
 static void drop_loot(GameState *g, int x, int y, EnemyType type, int is_boss) {
     // Gold dropstatic void drop_loot(GameState *g, int x, int y, EnemyType type) {
     int gold = 0;
@@ -65,8 +82,9 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type, int is_boss) {
     }
     
     // 50% chance to drop gold
-    if (rand() % 100 < 20) {
+    if (is_boss || rand() % 100 < 20) {
         g->gold += gold;
+        g->score += gold;
         char msg[MAX_MESSAGE_LEN];
         snprintf(msg, sizeof(msg), "Found %d gold!", gold);
         push_message(g, msg);
@@ -169,6 +187,7 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->map.tiles[g->player.y][g->player.x] == TILE_STAIRS_DOWN) {
             if (g->level_cleared) {
                 game_descend(g);
+                g->score += g->level * 100;
             } else {
                 push_message(g, "Clear the level first!");
             }
@@ -409,6 +428,7 @@ void action_resolve_player(GameState *g, Action a) {
                             if (all_clear) g->level_cleared = 1;
                             drop_loot(g, e->x, e->y, e->type, e->is_boss);
                             player_gain_xp(g, e->experience);
+                            g->score += enemy_score(e->type);
                             snprintf(msg, sizeof(msg), "%s killed %s!",
                                 sp->name, e->name);
                         } else {

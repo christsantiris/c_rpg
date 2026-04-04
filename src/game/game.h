@@ -69,6 +69,7 @@ typedef struct {
     TrailTile trail[MAX_TRAIL];
     int       trail_count;
     int       trail_frames;
+    int score;
 } GameState;
 
 void game_init(GameState *g);
