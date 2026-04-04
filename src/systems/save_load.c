@@ -158,6 +158,7 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "max_level_reached", g->max_level_reached);
     cJSON_AddNumberToObject(root, "message_count",     g->message_count);
     cJSON_AddNumberToObject(root, "gold",              g->gold);
+    cJSON_AddNumberToObject(root, "score",             g->score);
     cJSON_AddNumberToObject(root, "equipped_weapon",   g->equipped_weapon);
     cJSON_AddNumberToObject(root, "equipped_armor",    g->equipped_armor);
     cJSON_AddNumberToObject(root, "location",          g->location);
@@ -312,6 +313,7 @@ int load_game(GameState *g, int slot) {
     g->max_level_reached = cJSON_GetObjectItem(root, "max_level_reached")->valueint;
     g->message_count     = cJSON_GetObjectItem(root, "message_count")->valueint;
     g->gold              = cJSON_GetObjectItem(root, "gold")->valueint;
+    g->score             = cJSON_GetObjectItem(root, "score")->valueint;
     g->equipped_weapon   = cJSON_GetObjectItem(root, "equipped_weapon")->valueint;
     g->equipped_armor    = cJSON_GetObjectItem(root, "equipped_armor")->valueint;
     g->location          = cJSON_GetObjectItem(root, "location")->valueint;

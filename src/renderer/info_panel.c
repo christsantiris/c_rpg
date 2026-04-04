@@ -72,9 +72,14 @@ void info_panel_draw(Renderer *r, const GameState *g) {
     char gold_str[16];
     SDL_snprintf(gold_str, sizeof(gold_str), "%d", g->gold);
     SDL_Color gold_color = {220, 180, 60, 255};
-    renderer_draw_text(r, gold_str, x, y, gold_color, r->font_tiny);
+    renderer_draw_text(r, "SCORE", x, y, label, r->font_tiny);
+    y += lh;
+    char score_str[16];
+    SDL_snprintf(score_str, sizeof(score_str), "%d", g->score);
+    SDL_Color score_color = {255, 255, 255, 255};
+    renderer_draw_text(r, score_str, x, y, score_color, r->font_tiny);
     y += lh + 10;
-
+    
     // Equipment grid (2x2)
     renderer_draw_text(r, "EQUIPPED", x, y, label, r->font_tiny);
     y += lh;
