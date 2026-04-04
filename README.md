@@ -12,6 +12,7 @@ A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explo
 - [Dependencies](#dependencies)
 - [Contributing](#contributing)
 - [License](#license)
+- [Installers](#installers)
 - [Roadmap](#roadmap)
 
 ## Overview
@@ -42,10 +43,14 @@ I would gladly welcome any pull requests to help improve the game
 ## License
 MIT
 
+## Installers
+For MacOS run `chmod +x package/macos/build_dmg.sh` then `make dmg`
+and drag the file into applications and double click!
+
 ## Roadmap
 - Optimize loading speed
 - Add loading spinner
-- mac and windows installers
+- windows installer
 - sound effects (stairs unlock, attack, magic)
 - Add other areas (mountains, forest, marsh)
 - Booby traps
