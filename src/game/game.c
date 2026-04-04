@@ -98,40 +98,50 @@ switch (type) {
     }
 }
 
-static void spawn_boss(GameState *g) {
-    // Find largest room
-    int largest = 0;
-    for (int i = 1; i < g->map.room_count; i++) {
-        int area = g->map.rooms[i].w * g->map.rooms[i].h;
-        int best = g->map.rooms[largest].w * g->map.rooms[largest].h;
-        if (area > best) largest = i;
-    }
+// static void spawn_boss(GameState *g) {
 
-    Room *room = &g->map.rooms[largest];
-    int bx = room->x + room->w / 2;
-    int by = room->y + room->h / 2;
+//     // Find room containing stairs down
+//     int stair_room = 0;
+//     for (int i = 0; i < g->map.room_count; i++) {
+//         Room *room = &g->map.rooms[i];
+//         if (g->map.stairs_down_x >= room->x &&
+//             g->map.stairs_down_x < room->x + room->w &&
+//             g->map.stairs_down_y >= room->y &&
+//             g->map.stairs_down_y < room->y + room->h) {
+//             stair_room = i;
+//             break;
+//         }
+//     }
+//     Room *room = &g->map.rooms[stair_room];
+//     int bx = room->x + room->w / 2;
+//     int by = room->y + room->h / 2;
 
-    EnemyType type;
-    switch (g->level) {
-        case 5:  type = ENEMY_GOBLIN_KING; break;
-        case 10: type = ENEMY_LICH_KING;   break;
-        case 15: type = ENEMY_DEMON_LORD;  break;
-        case 20: type = ENEMY_RED_DRAGON;  break;
-        case 25: type = ENEMY_TARRASQUE;   break;
-        default: return;
-    }
+//     EnemyType type;
+//     switch (g->level) {
+//         case 5:  type = ENEMY_GOBLIN_KING; break;
+//         case 10: type = ENEMY_LICH_KING;   break;
+//         case 15: type = ENEMY_DEMON_LORD;  break;
+//         case 20: type = ENEMY_RED_DRAGON;  break;
+//         case 25: type = ENEMY_TARRASQUE;   break;
+//         default: return;
+//     }
 
-    int idx = g->enemy_count;
-    if (idx >= MAX_ENEMIES) return;
-    spawn_enemy(&g->enemies[idx], type, bx, by);
-    g->enemy_count++;
-}
+//     #ifdef DEBUG
+//     printf("DEBUG spawn_boss: level=%d type=%d at (%d,%d)\n",
+//         g->level, type, bx, by);
+//     #endif
+
+//     int idx = g->enemy_count;
+//     if (idx >= MAX_ENEMIES) return;
+//     spawn_enemy(&g->enemies[idx], type, bx, by);
+//     g->enemy_count++;
+// }
 
 void enemies_spawn(GameState *g) {
     g->enemy_count = 0;
     if (g->map.room_count == 0) return;
 
-    int num_enemies = 5 + g->level;
+    int num_enemies = 10 + g->level;
     if (num_enemies > MAX_ENEMIES) num_enemies = MAX_ENEMIES;
 
     for (int i = 0; i < num_enemies; i++) {
@@ -172,10 +182,36 @@ void enemies_spawn(GameState *g) {
         spawn_enemy(&g->enemies[i], type, ex, ey);
         g->enemy_count++;
     }
-    // Spawn boss on boss levels
+    // Spawn boss on boss levels in a random walkable tile
     if (g->level == 5  || g->level == 10 || g->level == 15 ||
         g->level == 20 || g->level == 25) {
-        spawn_boss(g);
+        if (g->enemy_count < MAX_ENEMIES) {
+            EnemyType boss_type;
+            switch (g->level) {
+                case 5:  boss_type = ENEMY_GOBLIN_KING; break;
+                case 10: boss_type = ENEMY_LICH_KING;   break;
+                case 15: boss_type = ENEMY_DEMON_LORD;  break;
+                case 20: boss_type = ENEMY_RED_DRAGON;  break;
+                case 25: boss_type = ENEMY_TARRASQUE;   break;
+                default: boss_type = ENEMY_GOBLIN_KING; break;
+            }
+            // Try to place boss in a walkable tile in any room
+            for (int attempt = 0; attempt < 100; attempt++) {
+                int room_idx = rand() % g->map.room_count;
+                Room *room = &g->map.rooms[room_idx];
+                if (room->w < 3 || room->h < 3) continue;
+                int bx = room->x + 1 + rand() % (room->w - 2);
+                int by = room->y + 1 + rand() % (room->h - 2);
+                if (!map_is_walkable(&g->map, bx, by)) continue;
+                spawn_enemy(&g->enemies[g->enemy_count], boss_type, bx, by);
+                g->enemy_count++;
+                #ifdef DEBUG
+                printf("DEBUG boss spawned: type=%d at (%d,%d)\n",
+                    boss_type, bx, by);
+                #endif
+                break;
+            }
+        }
     }
 }
 
