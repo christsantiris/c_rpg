@@ -26,6 +26,9 @@ cp -r saves  "${APP_DIR}/Contents/Resources/saves" 2>/dev/null || mkdir -p "${AP
 echo "==> Copying Info.plist..."
 cp package/macos/Info.plist "${APP_DIR}/Contents/Info.plist"
 
+echo "==> Copying icon..."
+cp package/macos/AppIcon.icns "${APP_DIR}/Contents/Resources/AppIcon.icns"
+
 echo "==> Copying dylibs..."
 cp "${SDL2_LIB}"  "${APP_DIR}/Contents/Frameworks/libSDL2-2.0.0.dylib"
 cp "${TTF_LIB}"   "${APP_DIR}/Contents/Frameworks/libSDL2_ttf-2.0.0.dylib"
