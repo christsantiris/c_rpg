@@ -6,6 +6,59 @@
 #include <string.h>
 #include <sys/stat.h>
 
+static const char b64[] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+static char *tiles_to_base64(const TileType tiles[MAP_H][MAP_W]) {
+    int src_len = MAP_H * MAP_W * sizeof(TileType);
+    int dst_len = ((src_len + 2) / 3) * 4 + 1;
+    char *out = malloc(dst_len);
+    if (!out) return NULL;
+    const unsigned char *src = (const unsigned char *)tiles;
+    int i = 0, j = 0;
+    while (i < src_len) {
+        unsigned int a = i < src_len ? src[i++] : 0;
+        unsigned int b = i < src_len ? src[i++] : 0;
+        unsigned int c = i < src_len ? src[i++] : 0;
+        unsigned int t = (a << 16) | (b << 8) | c;
+        out[j++] = b64[(t >> 18) & 0x3f];
+        out[j++] = b64[(t >> 12) & 0x3f];
+        out[j++] = b64[(t >>  6) & 0x3f];
+        out[j++] = b64[(t >>  0) & 0x3f];
+    }
+    int pad = src_len % 3;
+    if (pad == 1) { out[j-1] = '='; out[j-2] = '='; }
+    if (pad == 2) { out[j-1] = '='; }
+    out[j] = '\0';
+    return out;
+}
+
+static void base64_to_tiles(const char *src, TileType tiles[MAP_H][MAP_W]) {
+    static const unsigned char dec[256] = {
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,62,0,0,0,63,
+        52,53,54,55,56,57,58,59,60,61,0,0,0,0,0,0,
+        0,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,
+        15,16,17,18,19,20,21,22,23,24,25,0,0,0,0,0,
+        0,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,
+        41,42,43,44,45,46,47,48,49,50,51,0,0,0,0,0
+    };
+    unsigned char *dst = (unsigned char *)tiles;
+    int len = strlen(src);
+    int j = 0;
+    for (int i = 0; i < len; i += 4) {
+        unsigned int a = dec[(unsigned char)src[i]];
+        unsigned int b = dec[(unsigned char)src[i+1]];
+        unsigned int c = src[i+2] == '=' ? 0 : dec[(unsigned char)src[i+2]];
+        unsigned int d = src[i+3] == '=' ? 0 : dec[(unsigned char)src[i+3]];
+        unsigned int t = (a << 18) | (b << 12) | (c << 6) | d;
+        dst[j++] = (t >> 16) & 0xff;
+        if (src[i+2] != '=') dst[j++] = (t >> 8) & 0xff;
+        if (src[i+3] != '=') dst[j++] = t & 0xff;
+    }
+}
+
 static const char *slot_path(int slot) {
     static char path[64];
     snprintf(path, sizeof(path), "saves/savegame_%d.json", slot);
@@ -38,12 +91,10 @@ static cJSON *serialize_map(const Map *m) {
     }
     cJSON_AddItemToObject(obj, "rooms", rooms);
 
-    // Tiles as flat array
-    cJSON *tiles = cJSON_CreateArray();
-    for (int y = 0; y < MAP_H; y++)
-        for (int x = 0; x < MAP_W; x++)
-            cJSON_AddItemToArray(tiles, cJSON_CreateNumber(m->tiles[y][x]));
-    cJSON_AddItemToObject(obj, "tiles", tiles);
+    // Tiles as base64 string
+    char *b64tiles = tiles_to_base64(m->tiles);
+    cJSON_AddStringToObject(obj, "tiles_b64", b64tiles);
+    free(b64tiles);
 
     return obj;
 }
@@ -64,11 +115,7 @@ static void deserialize_map(const cJSON *obj, Map *m) {
         m->rooms[i].h = cJSON_GetObjectItem(r, "h")->valueint;
     }
 
-    cJSON *tiles = cJSON_GetObjectItem(obj, "tiles");
-    int idx = 0;
-    for (int y = 0; y < MAP_H; y++)
-        for (int x = 0; x < MAP_W; x++)
-            m->tiles[y][x] = cJSON_GetArrayItem(tiles, idx++)->valueint;
+    base64_to_tiles(cJSON_GetObjectItem(obj, "tiles_b64")->valuestring, m->tiles);
 }
 
 static cJSON *serialize_enemies(const Enemy *enemies, int count) {
