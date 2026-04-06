@@ -48,8 +48,6 @@ For MacOS run `chmod +x package/macos/build_dmg.sh` then `make dmg`
 and drag the file into applications and double click!
 
 ## Roadmap
-- Optimize loading speed
-- Add loading spinner
 - windows installer
 - linux installer
 - sound effects (stairs unlock, attack, magic)
@@ -57,4 +55,5 @@ and drag the file into applications and double click!
 - Booby traps
 - Quests
 - NPCs
+- Fix mouse clicks on all views
 - Secret/Locked Rooms
