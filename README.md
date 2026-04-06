@@ -51,6 +51,7 @@ and drag the file into applications and double click!
 - Optimize loading speed
 - Add loading spinner
 - windows installer
+- linux installer
 - sound effects (stairs unlock, attack, magic)
 - Add other areas (mountains, forest, marsh)
 - Booby traps

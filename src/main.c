@@ -77,6 +77,16 @@ static void handle_slot_result(SlotResult result, int slot, int slot_is_save,
             save_game(game, slot);
             *screen = SCREEN_LANDING;
         } else {
+            // Show loading screen for one frame before blocking load
+            renderer_begin_frame(renderer);
+            SDL_Color white = {200, 200, 200, 255};
+            SDL_Color dim   = { 80,  80,  80, 255};
+            int cx = renderer->screen_w / 2;
+            int cy = renderer->screen_h / 2;
+            renderer_draw_text(renderer, "LOADING...", cx - 60, cy, white, renderer->font_large);
+            renderer_draw_text(renderer, "PLEASE WAIT", cx - 60, cy + 40, dim, renderer->font_small);
+            renderer_end_frame(renderer);
+
             if (load_game(game, slot)) {
                 enter_playing(renderer, viewport, game);
                 landing->has_active_game = 1;
