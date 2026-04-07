@@ -27,7 +27,11 @@ typedef enum {
     TILE_SHOP_BLACKSMITH,
     TILE_SHOP_ALCHEMIST,
     TILE_ITEM,
-    TILE_GOLD
+    TILE_GOLD,
+    TILE_TRAP_HIDDEN,
+    TILE_TRAP_SPIKE,
+    TILE_TRAP_FIRE,
+    TILE_TRAP_POISON
 } TileType;
 
 typedef struct {

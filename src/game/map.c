@@ -103,6 +103,18 @@ void map_generate(Map *m, int level) {
     m->stairs_down_x = dx;
     m->stairs_down_y = dy;
     m->tiles[dy][dx] = TILE_STAIRS_DOWN;
+
+    // Place traps in rooms (skip room 0 — player spawn)
+    int num_traps = 2 + level;
+    if (num_traps > 12) num_traps = 12;
+    for (int t = 0; t < num_traps; t++) {
+        int room_idx = 1 + rand() % (m->room_count - 1);
+        Room *room = &m->rooms[room_idx];
+        int tx = room->x + 1 + rand() % (room->w - 2);
+        int ty = room->y + 1 + rand() % (room->h - 2);
+        if (m->tiles[ty][tx] != TILE_FLOOR) continue;
+        m->tiles[ty][tx] = TILE_TRAP_HIDDEN;
+    }
 }
 
 int map_is_walkable(const Map *m, int x, int y) {

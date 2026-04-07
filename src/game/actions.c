@@ -591,6 +591,68 @@ void action_resolve_player(GameState *g, Action a) {
             g->player.last_dy = ty - g->player.y;
             game_move_player(g, tx - g->player.x, ty - g->player.y);
         }
+        // Check for trap on new tile
+        int px = g->player.x;
+        int py = g->player.y;
+        TileType tile = g->map.tiles[py][px];
+
+        if (tile == TILE_TRAP_HIDDEN) {
+            int roll = rand() % 3;
+            TileType trap_type;
+            if (roll == 0)      trap_type = TILE_TRAP_SPIKE;
+            else if (roll == 1) trap_type = TILE_TRAP_FIRE;
+            else                trap_type = TILE_TRAP_POISON;
+            g->map.tiles[py][px] = trap_type;
+
+            int dmg = 0;
+            char msg[MAX_MESSAGE_LEN];
+
+            if (trap_type == TILE_TRAP_SPIKE) {
+                dmg = 5 + rand() % 10;
+                g->player.hp -= dmg;
+                snprintf(msg, sizeof(msg), "Spike trap! -%d HP", dmg);
+                // Red flash
+                g->trail_count  = 0;
+                g->trail_frames = 4;
+                TrailTile *t = &g->trail[g->trail_count++];
+                t->active = 1; t->x = px; t->y = py;
+                t->r = 200; t->g = 20; t->b = 20;
+                t->is_impact = 1;
+            } else if (trap_type == TILE_TRAP_FIRE) {
+                dmg = 4 + rand() % 8;
+                g->player.hp -= dmg;
+                snprintf(msg, sizeof(msg), "Fire trap! -%d HP", dmg);
+                // Orange flash
+                g->trail_count  = 0;
+                g->trail_frames = 4;
+                TrailTile *t = &g->trail[g->trail_count++];
+                t->active = 1; t->x = px; t->y = py;
+                t->r = 220; t->g = 100; t->b = 20;
+                t->is_impact = 1;
+            } else if (trap_type == TILE_TRAP_POISON) {
+                g->player.poison_turns = 3;
+                snprintf(msg, sizeof(msg), "Poison trap! 3 turns");
+                // Green flash
+                g->trail_count  = 0;
+                g->trail_frames = 4;
+                TrailTile *t = &g->trail[g->trail_count++];
+                t->active = 1; t->x = px; t->y = py;
+                t->r = 40; t->g = 180; t->b = 40;
+                t->is_impact = 1;
+            }
+            push_message(g, msg);
+        }
+
+        // Apply poison damage each turn
+        if (g->player.poison_turns > 0) {
+            int dmg = 3;
+            g->player.hp -= dmg;
+            g->player.poison_turns--;
+            char msg[MAX_MESSAGE_LEN];
+            snprintf(msg, sizeof(msg), "Poison! -%d HP (%d left)",
+                dmg, g->player.poison_turns);
+            push_message(g, msg);
+        }
     }
 }
 
