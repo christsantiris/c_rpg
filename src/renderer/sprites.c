@@ -349,3 +349,40 @@ void draw_floor_gold(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x+7, y+7, 10,        10,        gold);
     fill_rect(r, x+9, y+9, 6,         6,         gold);
 }
+
+void draw_trap_spike(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color base  = { 18,  18,  35, 255};
+    SDL_Color metal = {160, 160, 180, 255};
+    SDL_Color dark  = { 80,  80, 100, 255};
+    fill_rect(r, x,    y,    TILE_SIZE, TILE_SIZE, base);
+    fill_rect(r, x+10, y+14, 4,         8,         metal);
+    fill_rect(r, x+4,  y+16, 4,         6,         metal);
+    fill_rect(r, x+16, y+16, 4,         6,         metal);
+    fill_rect(r, x+7,  y+18, 10,        4,         dark);
+}
+
+void draw_trap_fire(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color base   = { 18,  18,  35, 255};
+    SDL_Color flame  = {220,  80,  20, 255};
+    SDL_Color bright = {255, 160,  40, 255};
+    fill_rect(r, x,    y,    TILE_SIZE, TILE_SIZE, base);
+    fill_rect(r, x+8,  y+10, 8,         12,        flame);
+    fill_rect(r, x+10, y+6,  4,         8,         bright);
+    fill_rect(r, x+6,  y+14, 12,        4,         flame);
+}
+
+void draw_trap_poison(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color base   = { 18,  18,  35, 255};
+    SDL_Color green  = { 40, 160,  40, 255};
+    SDL_Color bright = { 80, 220,  80, 255};
+    fill_rect(r, x,    y,    TILE_SIZE, TILE_SIZE, base);
+    fill_rect(r, x+6,  y+8,  12,        12,        green);
+    fill_rect(r, x+9,  y+6,  6,         6,         bright);
+    fill_rect(r, x+8,  y+16, 8,         4,         green);
+}

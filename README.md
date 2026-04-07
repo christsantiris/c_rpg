@@ -52,7 +52,6 @@ and drag the file into applications and double click!
 - linux installer
 - sound effects (stairs unlock, attack, magic)
 - Add other areas (mountains, forest, marsh)
-- Booby traps
 - Quests
 - NPCs
 - Fix mouse clicks on all views
