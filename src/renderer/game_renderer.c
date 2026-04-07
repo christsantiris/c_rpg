@@ -21,6 +21,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_SHOP_BLACKSMITH: draw_shop_blacksmith(r, sx, sy); break;
                 case TILE_SHOP_ALCHEMIST:  draw_shop_alchemist(r, sx, sy);  break;
                 case TILE_ITEM:            draw_floor_item(r, sx, sy);      break;
+                case TILE_TRAP_HIDDEN:  draw_floor(r, sx, sy);       break;
+                case TILE_TRAP_SPIKE:   draw_trap_spike(r, sx, sy);  break;
+                case TILE_TRAP_FIRE:    draw_trap_fire(r, sx, sy);   break;
+                case TILE_TRAP_POISON:  draw_trap_poison(r, sx, sy); break;
                 default:                   draw_floor(r, sx, sy);           break;
             }
         }

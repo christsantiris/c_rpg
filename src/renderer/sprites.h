@@ -35,4 +35,8 @@ void draw_shop_alchemist(Renderer *r, int tile_x, int tile_y);
 void draw_floor_item(Renderer *r, int tile_x, int tile_y);
 void draw_floor_gold(Renderer *r, int tile_x, int tile_y);
 
+void draw_trap_spike(Renderer *r, int tile_x, int tile_y);
+void draw_trap_fire(Renderer *r, int tile_x, int tile_y);
+void draw_trap_poison(Renderer *r, int tile_x, int tile_y);
+
 #endif
