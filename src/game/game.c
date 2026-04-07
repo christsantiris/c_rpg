@@ -265,6 +265,7 @@ void game_init(GameState *g) {
     g->player.equipped_spell    = -1;
     g->player.last_dx           = 0;
     g->player.last_dy           = 0;
+    g->player.poison_turns = 0;
     g->trail_count              = 0;
     g->trail_frames             = 0;
 

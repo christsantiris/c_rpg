@@ -32,6 +32,7 @@ typedef struct {
     int   known_spell_count;
     int   equipped_spell;
     int   last_dx, last_dy;
+    int poison_turns;
 } Player;
 
 typedef struct {
