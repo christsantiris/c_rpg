@@ -272,6 +272,7 @@ void game_init(GameState *g) {
     #ifdef DEBUG
     g->inventory[g->inventory_count++] = item_make_scroll_magic_arrow();
     g->inventory[g->inventory_count++] = item_make_bow();
+    g->gold = 500;
     #endif
 
     // Starting weapon
