@@ -86,4 +86,6 @@ void action_resolve_enemies(GameState *g);
 void player_gain_xp(GameState *g, int xp);
 void push_message(GameState *g, const char *msg);
 
+void game_return_to_town(GameState *g);
+
 #endif

@@ -12,32 +12,34 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             int sx = viewport_to_screen_x(v, x);
             int sy = viewport_to_screen_y(v, y);
             switch (g->map.tiles[y][x]) {
-                case TILE_WALL:            draw_wall(r, sx, sy);            break;
-                case TILE_STAIRS_UP:       draw_stairs_up(r, sx, sy);       break;
-                case TILE_STAIRS_DOWN:     draw_stairs_down(r, sx, sy);     break;
-                case TILE_TOWN_FLOOR:      draw_town_floor(r, sx, sy);      break;
-                case TILE_TOWN_PATH:       draw_town_path(r, sx, sy);       break;
-                case TILE_TOWN_EXIT:       draw_town_exit(r, sx, sy);       break;
+                case TILE_WALL: draw_wall(r, sx, sy); break;
+                case TILE_STAIRS_UP: draw_stairs_up(r, sx, sy); break;
+                case TILE_STAIRS_DOWN: draw_stairs_down(r, sx, sy); break;
+                case TILE_TOWN_FLOOR: draw_town_floor(r, sx, sy); break;
+                case TILE_TOWN_PATH: draw_town_path(r, sx, sy); break;
+                case TILE_TOWN_EXIT: draw_town_exit(r, sx, sy); break;
                 case TILE_SHOP_BLACKSMITH: draw_shop_blacksmith(r, sx, sy); break;
                 case TILE_SHOP_ALCHEMIST:  draw_shop_alchemist(r, sx, sy);  break;
-                case TILE_ITEM:            draw_floor_item(r, sx, sy);      break;
-                case TILE_TRAP_HIDDEN:  draw_floor(r, sx, sy);       break;
-                case TILE_TRAP_SPIKE:   draw_trap_spike(r, sx, sy);  break;
-                case TILE_TRAP_FIRE:    draw_trap_fire(r, sx, sy);   break;
-                case TILE_TRAP_POISON:  draw_trap_poison(r, sx, sy); break;
-                default:                   draw_floor(r, sx, sy);           break;
+                case TILE_ITEM: draw_floor_item(r, sx, sy); break;
+                case TILE_TRAP_HIDDEN: draw_floor(r, sx, sy); break;
+                case TILE_TRAP_SPIKE: draw_trap_spike(r, sx, sy); break;
+                case TILE_TRAP_FIRE: draw_trap_fire(r, sx, sy); break;
+                case TILE_TRAP_POISON: draw_trap_poison(r, sx, sy); break;
+                default: draw_floor(r, sx, sy); break;
             }
         }
     }
 
     // Draw enemies
-    for (int i = 0; i < g->enemy_count; i++) {
-        Enemy *e = &g->enemies[i];
-        if (!e->active) continue;
-        if (!viewport_is_visible(v, e->x, e->y)) continue;
-        int sx = viewport_to_screen_x(v, e->x);
-        int sy = viewport_to_screen_y(v, e->y);
-        draw_enemy(r, sx, sy, e->type);
+    if (g->location == LOCATION_DUNGEON) {
+        for (int i = 0; i < g->enemy_count; i++) {
+            Enemy *e = &g->enemies[i];
+            if (!e->active) continue;
+            if (!viewport_is_visible(v, e->x, e->y)) continue;
+            int sx = viewport_to_screen_x(v, e->x);
+            int sy = viewport_to_screen_y(v, e->y);
+            draw_enemy(r, sx, sy, e->type);
+        }
     }
 
     // Draw shop labels

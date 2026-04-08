@@ -64,3 +64,39 @@ void test_town_spawn(void) {
         g.map.tiles[g.player.y][g.player.x] != TILE_SHOP_BLACKSMITH &&
         g.map.tiles[g.player.y][g.player.x] != TILE_SHOP_ALCHEMIST);
 }
+
+void test_return_to_town(void) {
+    printf("Return to town tests:\n");
+
+    GameState g;
+    game_init(&g);
+
+    // Set up dungeon state
+    g.location = LOCATION_DUNGEON;
+    g.level = 3;
+    map_generate(&g.map, g.level);
+    enemies_spawn(&g);
+    g.level_cleared = 1;
+    g.player.x = g.map.stairs_up_x;
+    g.player.y = g.map.stairs_up_y;
+
+    int enemies_before = g.enemy_count;
+    ASSERT("enemies exist before return", enemies_before > 0);
+
+    game_return_to_town(&g);
+
+    ASSERT("location is town after return",
+        g.location == LOCATION_TOWN);
+    ASSERT("enemy count is zero after return",
+        g.enemy_count == 0);
+    ASSERT("player spawn is walkable",
+        map_is_walkable(&g.map, g.player.x, g.player.y));
+    ASSERT("player not on wall tile",
+        g.map.tiles[g.player.y][g.player.x] != TILE_WALL);
+    ASSERT("level 3 cached after return",
+        g.level_cache[2].valid == 1);
+    ASSERT("level 3 cleared state cached",
+        g.level_cache[2].level_cleared == 1);
+    ASSERT("floor items cleared",
+        g.floor_item_count == 0);
+}
