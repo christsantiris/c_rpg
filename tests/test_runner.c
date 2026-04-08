@@ -15,6 +15,7 @@ void test_town_spawn(void);
 void test_leveling(void);
 void test_items(void);
 void test_level_cache_cleared(void);
+void test_return_to_town(void);
 
 int main(void) {
     // ASSERT("sanity check true",  1 == 1);
@@ -34,6 +35,7 @@ int main(void) {
     test_town_map();
     test_town_spawn();
     test_level_cache_cleared();
+    test_return_to_town();
     printf("\n");;
     REPORT();
 }

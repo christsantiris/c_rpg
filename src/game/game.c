@@ -371,6 +371,26 @@ void game_enter_dungeon(GameState *g) {
     }
 }
 
+void game_return_to_town(GameState *g) {
+    // Cache current level before leaving
+    if (g->level >= 1 && g->level <= MAX_DEPTH) {
+        g->level_cache[g->level - 1].map = g->map;
+        g->level_cache[g->level - 1].enemy_count   = g->enemy_count;
+        g->level_cache[g->level - 1].level_cleared = g->level_cleared;
+        for (int i = 0; i < g->enemy_count; i++)
+            g->level_cache[g->level - 1].enemies[i] = g->enemies[i];
+        g->level_cache[g->level - 1].valid = 1;
+    }
+
+    g->location = LOCATION_TOWN;
+    int spawn_x, spawn_y;
+    map_generate_town(&g->map, &spawn_x, &spawn_y);
+    g->player.x = spawn_x;
+    g->player.y = spawn_y;
+    g->floor_item_count = 0;
+    g->enemy_count = 0;
+}
+
 void player_gain_xp(GameState *g, int xp) {
     g->player.experience += xp;
 

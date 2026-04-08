@@ -56,3 +56,9 @@ and drag the file into applications and double click!
 - NPCs
 - Fix mouse clicks on all views
 - Secret/Locked Rooms
+- Return to town
+- Minimap
+- Enemy health bars
+- keyboard shortcut view
+- hall of game / high score board
+- character classes
