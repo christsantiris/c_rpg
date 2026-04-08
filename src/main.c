@@ -510,6 +510,83 @@ int main(void) {
                             }
                         }
                     }
+                    // Shop screen clicks
+                    if (screen == SCREEN_SHOP &&
+                        event.button.button == SDL_BUTTON_LEFT) {
+                        int cx = renderer.screen_w / 2;
+                        // Tab switching
+                        if (event.button.y >= 108 && event.button.y <= 132) {
+                            if (event.button.x >= cx - 60 && event.button.x <= cx) {
+                                shop_screen.mode = 0;
+                                shop_screen.selected = 0;
+                            }
+                            if (event.button.x >= cx && event.button.x <= cx + 60) {
+                                shop_screen.mode = 1;
+                                shop_screen.selected = 0;
+                            }
+                        }
+                        // Item selection and purchase
+                        int base_y = 140;
+                        int count = shop_screen.mode == 0
+                            ? shop_screen.item_count
+                            : game.inventory_count;
+                        for (int i = 0; i < count; i++) {
+                            int item_y = base_y + i * 36;
+                            int item_y_end = item_y + 28;
+                            if (event.button.y >= item_y &&
+                                event.button.y <= item_y_end) {
+                                if (shop_screen.selected == i) {
+                                    // Second click on same item — buy or sell
+                                    if (shop_screen.mode == 0) {
+                                        Item *item = &shop_screen.items[i];
+                                        if (game.gold >= item->value &&
+                                            game.inventory_count < MAX_INVENTORY) {
+                                            game.gold -= item->value;
+                                            game.inventory[game.inventory_count++] = *item;
+                                            char msg[32];
+                                            SDL_snprintf(msg, sizeof(msg), "Bought %s", item->name);
+                                            push_message(&game, msg);
+                                        } else if (game.gold < item->value) {
+                                            push_message(&game, "Not enough gold!");
+                                        } else {
+                                            push_message(&game, "Inventory full!");
+                                        }
+                                    } else {
+                                        if (game.inventory_count == 0) { break; }
+                                        Item *item = &game.inventory[i];
+                                        if (game.equipped_weapon == i) {
+                                            game.player.attack -= item->attack_bonus;
+                                            game.equipped_weapon = -1;
+                                        } else if (game.equipped_armor == i) {
+                                            game.player.defense -= item->defense_bonus;
+                                            game.equipped_armor = -1;
+                                        }
+                                        if (game.equipped_weapon > i) { game.equipped_weapon--; }
+                                        if (game.equipped_armor > i) { game.equipped_armor--; }
+                                        int sell_price = item->value / 2;
+                                        char msg[32];
+                                        SDL_snprintf(msg, sizeof(msg), "Sold %s for %d gold", item->name, sell_price);
+                                        game.gold += sell_price;
+                                        for (int j = i; j < game.inventory_count - 1; j++) {
+                                            game.inventory[j] = game.inventory[j + 1];
+                                        }
+                                        game.inventory_count--;
+                                        if (shop_screen.selected >= game.inventory_count) {
+                                            shop_screen.selected = game.inventory_count - 1;
+                                        }
+                                        if (shop_screen.selected < 0) {
+                                            shop_screen.selected = 0;
+                                        }
+                                        push_message(&game, msg);
+                                    }
+                                } else {
+                                    // First click — just select
+                                    shop_screen.selected = i;
+                                }
+                                break;
+                            }
+                        }
+                    }
                     break;
                 }
 
