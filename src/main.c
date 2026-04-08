@@ -496,6 +496,20 @@ int main(void) {
                             }
                         }
                     }
+                    // Spellbook screen clicks
+                    if (screen == SCREEN_SPELLBOOK &&
+                        event.button.button == SDL_BUTTON_LEFT) {
+                        int base_y = 130;
+                        for (int i = 0; i < game.player.known_spell_count; i++) {
+                            int item_y = base_y + i * 40;
+                            int item_y_end = item_y + 30;
+                            if (event.button.y >= item_y &&
+                                event.button.y <= item_y_end) {
+                                spellbook_screen.selected = i;
+                                game.player.equipped_spell = i;
+                            }
+                        }
+                    }
                     break;
                 }
 
