@@ -54,9 +54,7 @@ and drag the file into applications and double click!
 - Add other areas (mountains, forest, marsh)
 - Quests
 - NPCs
-- Fix mouse clicks on all views
 - Secret/Locked Rooms
-- Return to town
 - Minimap
 - Enemy health bars
 - keyboard shortcut view

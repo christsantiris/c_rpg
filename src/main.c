@@ -447,6 +447,55 @@ int main(void) {
                             }
                         }
                     }
+                    // Inventory screen clicks
+                    if (screen == SCREEN_INVENTORY &&
+                        event.button.button == SDL_BUTTON_LEFT) {
+                        int base_y = 130;
+                        for (int i = 0; i < game.inventory_count; i++) {
+                            int item_y = base_y + i * 36;
+                            int item_y_end = item_y + 24;
+                            if (event.button.y >= item_y &&
+                                event.button.y <= item_y_end) {
+                                inventory_screen.selected = i;
+                            }
+                        }
+                        // Check hint bar button regions
+                        int hint_y = (renderer.tiles_y - 2) * TILE_SIZE;
+                        int cx = renderer.screen_w / 2;
+                        // U - Use
+                        if (event.button.y >= hint_y &&
+                            event.button.y <= hint_y + 24 &&
+                            event.button.x >= cx - 180 &&
+                            event.button.x <= cx - 130) {
+                            Action a = {ACTION_USE_ITEM, inventory_screen.selected, 0};
+                            action_resolve_player(&game, a);
+                            if (game.inventory_count == 0) {
+                                screen = SCREEN_PLAYING;
+                            }
+                        }
+                        // E - Equip
+                        if (event.button.y >= hint_y &&
+                            event.button.y <= hint_y + 24 &&
+                            event.button.x >= cx - 120 &&
+                            event.button.x <= cx - 60) {
+                            Action a = {ACTION_EQUIP_ITEM, inventory_screen.selected, 0};
+                            action_resolve_player(&game, a);
+                        }
+                        // D - Drop
+                        if (event.button.y >= hint_y &&
+                            event.button.y <= hint_y + 24 &&
+                            event.button.x >= cx - 50 &&
+                            event.button.x <= cx + 20) {
+                            Action a = {ACTION_DROP_ITEM, inventory_screen.selected, 0};
+                            action_resolve_player(&game, a);
+                            if (inventory_screen.selected >= game.inventory_count) {
+                                inventory_screen.selected = game.inventory_count - 1;
+                            }
+                            if (inventory_screen.selected < 0) {
+                                inventory_screen.selected = 0;
+                            }
+                        }
+                    }
                     break;
                 }
 
