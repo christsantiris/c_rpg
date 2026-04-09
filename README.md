@@ -56,7 +56,4 @@ and drag the file into applications and double click!
 - NPCs
 - Secret/Locked Rooms
 - Minimap
-- Enemy health bars
-- keyboard shortcut view
-- hall of game / high score board
 - character classes
