@@ -39,6 +39,18 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             int sx = viewport_to_screen_x(v, e->x);
             int sy = viewport_to_screen_y(v, e->y);
             draw_enemy(r, sx, sy, e->type);
+            // Draw health bar above enemy
+            int bar_w = TILE_SIZE - 4;
+            int bar_h = 3;
+            int bar_x = sx * TILE_SIZE + 2;
+            int bar_y = sy * TILE_SIZE - 5;
+            int fill_w = (bar_w * e->hp) / e->max_hp;
+            SDL_Rect bg = {bar_x, bar_y, bar_w, bar_h};
+            SDL_Rect fill = {bar_x, bar_y, fill_w, bar_h};
+            SDL_SetRenderDrawColor(r->sdl, 60, 20, 20, 255);
+            SDL_RenderFillRect(r->sdl, &bg);
+            SDL_SetRenderDrawColor(r->sdl, 200, 60, 60, 255);
+            SDL_RenderFillRect(r->sdl, &fill);
         }
     }
 
