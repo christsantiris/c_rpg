@@ -1,10 +1,8 @@
 #ifndef MUSIC_HEADER_H
 #define MUSIC_HEADER_H
 
-#include "../screens/landing.h"
-
 void music_init(void);
-void music_update(GameScreen screen, int dungeon_level);
+void music_update(int screen, int in_town);
 void music_free(void);
 
 #endif
