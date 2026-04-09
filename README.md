@@ -1,6 +1,6 @@
 # The Castle of No Return
 
-A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explore dungeons, battle enemies, and survive the challenges of a mysterious castle!
+A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explore dungeons, battle enemies, and survive the challenge!
 
 ## Table of Contents
 - [Overview](#overview)
