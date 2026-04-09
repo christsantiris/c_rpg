@@ -10,7 +10,8 @@ typedef enum {
     SCREEN_LOAD_SLOT,
     SCREEN_INVENTORY,
     SCREEN_SPELLBOOK,
-    SCREEN_SHOP
+    SCREEN_SHOP,
+    SCREEN_HELP
 } GameScreen;
 
 typedef enum {
