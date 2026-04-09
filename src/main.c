@@ -22,6 +22,8 @@
 #include "renderer/game_renderer.h"
 #include "renderer/info_panel.h"
 #include "audio/music.h"
+#include "renderer/help_renderer.h"
+#include "screens/help.h"
 
 #define WINDOW_TITLE "Castle of No Return"
 #define WINDOW_W     1280
@@ -322,6 +324,15 @@ int main(void) {
                         break;
                     }
 
+                    // Help screen
+                    if (screen == SCREEN_HELP) {
+                        HelpResult result = help_handle_key(sc);
+                        if (result == HELP_CLOSED) {
+                            screen = SCREEN_PLAYING;
+                        }
+                        break;
+                    }
+
                     // Playing screen
                     if (screen == SCREEN_PLAYING) {
                         Action a = {ACTION_NONE, 0, 0};
@@ -375,6 +386,9 @@ int main(void) {
                                     game_return_to_town(&game);
                                     enter_playing(&renderer, &viewport, &game);
                                 }
+                                break;
+                            case SDL_SCANCODE_H:
+                                screen = SCREEN_HELP;
                                 break;
                             case SDL_SCANCODE_E: {
                                 // Check adjacent tiles for shops
@@ -511,8 +525,7 @@ int main(void) {
                         }
                     }
                     // Shop screen clicks
-                    if (screen == SCREEN_SHOP &&
-                        event.button.button == SDL_BUTTON_LEFT) {
+                    if (screen == SCREEN_SHOP && event.button.button == SDL_BUTTON_LEFT) {
                         int cx = renderer.screen_w / 2;
                         // Tab switching
                         if (event.button.y >= 108 && event.button.y <= 132) {
@@ -587,6 +600,11 @@ int main(void) {
                             }
                         }
                     }
+                    // Help screen clicks
+                    if (screen == SCREEN_HELP &&
+                        event.button.button == SDL_BUTTON_LEFT) {
+                        screen = SCREEN_PLAYING;
+                    }
                     break;
                 }
 
@@ -621,6 +639,8 @@ int main(void) {
         game_draw(&renderer, &game, &viewport);
         } else if (screen == SCREEN_GAME_OVER) {
             game_over_draw(&renderer, &game);
+        } else if (screen == SCREEN_HELP) {
+            help_draw(&renderer);
         }
 
         renderer_end_frame(&renderer);

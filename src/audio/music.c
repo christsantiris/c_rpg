@@ -1,6 +1,7 @@
 #include "music.h"
 #include <SDL2/SDL_mixer.h>
 #include <stdio.h>
+#include "../screens/landing.h"
 
 #define TOWN_MUSIC    "assets/music/Woodland Fantasy.mp3"
 #define DUNGEON_MUSIC "assets/music/the_march_upon_the_red_mountain.mp3"
@@ -30,7 +31,7 @@ static void play_track(Mix_Music *track) {
     Mix_PlayMusic(track, -1);
 }
 
-void music_update(GameScreen screen, int in_town) {
+void music_update(int screen, int in_town) {
     if (screen == SCREEN_PLAYING) {
         if (in_town)
             play_track(town_track);
