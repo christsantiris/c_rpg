@@ -24,6 +24,8 @@
 #include "audio/music.h"
 #include "renderer/help_renderer.h"
 #include "screens/help.h"
+#include "systems/highscore.h"
+#include "renderer/halloffame_renderer.h"
 
 #define WINDOW_TITLE "Castle of No Return"
 #define WINDOW_W     1280
@@ -151,6 +153,8 @@ int main(void) {
     SpellbookScreen spellbook_screen;
     spellbook_init(&spellbook_screen);
     ShopScreen shop_screen;
+    HighScoreTable highscore_table;
+    highscore_load(&highscore_table);
 
     int slot_is_save = 0;
     GameScreen screen = SCREEN_LANDING;
@@ -186,6 +190,19 @@ int main(void) {
                     // Game over screen
                     if (screen == SCREEN_GAME_OVER) {
                         if (sc == SDL_SCANCODE_RETURN) {
+                            if (highscore_qualifies(&highscore_table, game.score)) {
+                                highscore_insert(&highscore_table,
+                                    game.player.name, game.score, game.level);
+                                highscore_save(&highscore_table);
+                            }
+                            screen = SCREEN_HALL_OF_FAME;
+                        }
+                        break;
+                    }
+
+                    // Hall of fame screen
+                    if (screen == SCREEN_HALL_OF_FAME) {
+                        if (sc == SDL_SCANCODE_RETURN || sc == SDL_SCANCODE_ESCAPE) {
                             landing_init(&landing);
                             screen = SCREEN_LANDING;
                         }
@@ -601,9 +618,14 @@ int main(void) {
                         }
                     }
                     // Help screen clicks
-                    if (screen == SCREEN_HELP &&
-                        event.button.button == SDL_BUTTON_LEFT) {
+                    if (screen == SCREEN_HELP && event.button.button == SDL_BUTTON_LEFT) {
                         screen = SCREEN_PLAYING;
+                    }
+                    // Hall of fame clicks
+                    if (screen == SCREEN_HALL_OF_FAME &&
+                        event.button.button == SDL_BUTTON_LEFT) {
+                        landing_init(&landing);
+                        screen = SCREEN_LANDING;
                     }
                     break;
                 }
@@ -641,6 +663,8 @@ int main(void) {
             game_over_draw(&renderer, &game);
         } else if (screen == SCREEN_HELP) {
             help_draw(&renderer);
+        } else if (screen == SCREEN_HALL_OF_FAME) {
+            halloffame_draw(&renderer, &highscore_table);
         }
 
         renderer_end_frame(&renderer);
