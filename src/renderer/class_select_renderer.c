@@ -5,12 +5,12 @@
 static const char *class_names[3] = { "Warrior", "Mage", "Rogue" };
 static const char *class_descs[3] = {
     "HP:150  MP: 20  ATK:14  DEF:6",
-    "HP: 70  MP:100  ATK: 6  DEF:3",
+    "HP: 70  MP:100  ATK: 4  DEF:2",
     "HP:100  MP: 40  ATK:10  DEF:4"
 };
 static const char *class_items[3] = {
     "Starts with: Rusty Sword",
-    "Starts with: Magic Arrow Scroll",
+    "Starts with: Staff, Magic Arrow Scroll",
     "Starts with: Bow"
 };
 

@@ -276,8 +276,9 @@ void game_init(GameState *g) {
         case CLASS_MAGE:
             g->player.max_hp = 70;
             g->player.max_mp = 100;
-            g->player.attack = 6;
-            g->player.defense = 3;
+            g->player.attack = 4;
+            g->player.defense = 2;
+            g->inventory[g->inventory_count++] = item_make_staff();
             g->inventory[g->inventory_count++] = item_make_scroll_magic_arrow();
             break;
         case CLASS_ROGUE:
