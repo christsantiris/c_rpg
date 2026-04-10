@@ -4,6 +4,11 @@
 #include <string.h>
 #include <stdio.h>
 #include "item.h"
+// sfx.h is excluded from the test runner because it links SDL2_mixer,
+// which is not available in the test build. TEST_BUILD is defined in CMakeLists.txt.
+#ifndef TEST_BUILD
+#include "../audio/sfx.h"
+#endif
 
 static int abs_int(int n) { return n < 0 ? -n : n; }
 
@@ -556,6 +561,9 @@ void action_resolve_player(GameState *g, Action a) {
                 int dmg = g->player.attack - e->defense;
                 if (dmg < 1) dmg = 1;
                 e->hp -= dmg;
+                #ifndef TEST_BUILD
+                sfx_play_attack();
+                #endif
                 char msg[MAX_MESSAGE_LEN];
                 if (e->hp <= 0) {
                     e->active = 0;
