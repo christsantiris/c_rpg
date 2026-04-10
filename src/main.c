@@ -26,6 +26,8 @@
 #include "screens/help.h"
 #include "systems/highscore.h"
 #include "renderer/halloffame_renderer.h"
+#include "screens/class_select.h"
+#include "renderer/class_select_renderer.h"
 
 #define WINDOW_TITLE "Castle of No Return"
 #define WINDOW_W     1280
@@ -152,6 +154,8 @@ int main(void) {
     inventory_init(&inventory_screen);
     SpellbookScreen spellbook_screen;
     spellbook_init(&spellbook_screen);
+    ClassSelectScreen class_select_screen;
+    class_select_init(&class_select_screen);
     ShopScreen shop_screen;
     HighScoreTable highscore_table;
     highscore_load(&highscore_table);
@@ -226,14 +230,34 @@ int main(void) {
                         NameEntryResult result = name_entry_handle_key(
                             &name_entry, sc, keyname);
                         if (result == NAME_ENTRY_CONFIRMED) {
-                            game_init(&game);
-                            SDL_strlcpy(game.player.name, name_entry.name,
-                                sizeof(game.player.name));
-                            enter_playing(&renderer, &viewport, &game);
-                            screen = SCREEN_PLAYING;
+                            class_select_init(&class_select_screen);
+                            screen = SCREEN_CLASS_SELECT;
                         }
                         if (result == NAME_ENTRY_CANCELLED)
                             screen = SCREEN_LANDING;
+                        break;
+                    }
+
+                    // Class select screen
+                    if (screen == SCREEN_CLASS_SELECT) {
+                        ClassSelectResult result = class_select_handle_key(
+                            &class_select_screen, sc);
+                        if (result == CLASS_SELECT_CONFIRMED) {
+                            game.player.player_class = class_select_screen.selected;
+                            game_init(&game);
+                            SDL_strlcpy(game.player.name, name_entry.name,
+                                sizeof(game.player.name));
+                            #ifdef DEBUG
+                            game.inventory[game.inventory_count++] = item_make_scroll_magic_arrow();
+                            game.inventory[game.inventory_count++] = item_make_bow();
+                            game.gold = 500;
+                            #endif
+                            enter_playing(&renderer, &viewport, &game);
+                            screen = SCREEN_PLAYING;
+                        }
+                        if (result == CLASS_SELECT_CANCELLED) {
+                            screen = SCREEN_NAME_ENTRY;
+                        }
                         break;
                     }
 
@@ -649,6 +673,8 @@ int main(void) {
             landing_draw(&renderer, &landing);
         } else if (screen == SCREEN_NAME_ENTRY) {
             name_entry_draw(&renderer, &name_entry);
+        } else if (screen == SCREEN_CLASS_SELECT) {
+            class_select_draw(&renderer, &class_select_screen);
         } else if (screen == SCREEN_SAVE_SLOT || screen == SCREEN_LOAD_SLOT) {
             slot_draw(&renderer, &slot_select, slot_is_save);
         } else if (screen == SCREEN_INVENTORY) {

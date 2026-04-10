@@ -94,3 +94,13 @@ Prefer:
 Never:
 
 > Add this after the level cleared block.
+
+---
+
+## 7. All game state changes must be reflected in save/load
+
+Any new field added to `Player`, `GameState`, or any struct that is part of persistent game state must also be:
+- Serialized in `save_game()` in `src/systems/save_load.c`
+- Deserialized in `load_game()` in `src/systems/save_load.c`
+
+Omitting this causes data to silently reset to zero on load.
