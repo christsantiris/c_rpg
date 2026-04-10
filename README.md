@@ -56,4 +56,3 @@ and drag the file into applications and double click!
 - NPCs
 - Secret/Locked Rooms
 - Minimap
-- character classes

@@ -21,6 +21,12 @@ typedef struct {
     int is_impact;
 } TrailTile;
 
+typedef enum {
+    CLASS_WARRIOR = 0,
+    CLASS_MAGE,
+    CLASS_ROGUE
+} PlayerClass;
+
 typedef struct {
     int   x, y;
     char  name[21];
@@ -33,6 +39,7 @@ typedef struct {
     int   equipped_spell;
     int   last_dx, last_dy;
     int poison_turns;
+    PlayerClass player_class;
 } Player;
 
 typedef struct {
