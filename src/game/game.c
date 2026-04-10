@@ -292,12 +292,6 @@ void game_init(GameState *g) {
     g->player.hp = g->player.max_hp;
     g->player.mp = g->player.max_mp;
 
-    #ifdef DEBUG
-    g->inventory[g->inventory_count++] = item_make_scroll_magic_arrow();
-    g->inventory[g->inventory_count++] = item_make_bow();
-    g->gold = 500;
-    #endif
-
     // Spawn enemies in random rooms
     enemies_spawn(g);
 }

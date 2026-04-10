@@ -247,6 +247,11 @@ int main(void) {
                             game_init(&game);
                             SDL_strlcpy(game.player.name, name_entry.name,
                                 sizeof(game.player.name));
+                            #ifdef DEBUG
+                            game.inventory[game.inventory_count++] = item_make_scroll_magic_arrow();
+                            game.inventory[game.inventory_count++] = item_make_bow();
+                            game.gold = 500;
+                            #endif
                             enter_playing(&renderer, &viewport, &game);
                             screen = SCREEN_PLAYING;
                         }
