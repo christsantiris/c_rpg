@@ -31,6 +31,7 @@ target_link_libraries(conr PRIVATE ${SDL2_LIBRARIES} ${SDL2_TTF_LIB} ${SDL2_MIXE
 
 add_executable(test_runner ${TEST_SOURCES})
 target_include_directories(test_runner PRIVATE src ${CMAKE_SOURCE_DIR}/external)
+target_compile_definitions(test_runner PRIVATE TEST_BUILD)
 
 add_custom_target(run
     COMMAND ./conr
