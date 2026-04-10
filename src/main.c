@@ -22,6 +22,7 @@
 #include "renderer/game_renderer.h"
 #include "renderer/info_panel.h"
 #include "audio/music.h"
+#include "audio/sfx.h"
 #include "renderer/help_renderer.h"
 #include "screens/help.h"
 #include "systems/highscore.h"
@@ -136,6 +137,7 @@ int main(void) {
     Renderer renderer;
     renderer_init(&renderer, sdl_renderer, WINDOW_W, WINDOW_H);
     music_init();
+    sfx_init();
 
     GameState game;
     game_init(&game);
@@ -697,6 +699,7 @@ int main(void) {
     }
 
     // ── Cleanup ───────────────────────────────────────────────────────────
+    sfx_free();
     music_free();
     renderer_free(&renderer);
     SDL_DestroyRenderer(sdl_renderer);
