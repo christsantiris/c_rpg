@@ -240,43 +240,62 @@ void game_init(GameState *g) {
     map_generate_town(&g->map, &spawn_x, &spawn_y);
     g->player.x = spawn_x;
     g->player.y = spawn_y;
-    g->player.name[0]       = '\0';
-    g->player.hp            = 100;
-    g->player.max_hp        = 100;
-    g->player.mp            = 50;
-    g->player.max_mp        = 50;
-    g->player.attack        = 10;
-    g->player.defense       = 5;
-    g->player.level         = 1;
-    g->player.experience    = 0;
+    g->player.name[0] = '\0';
+    g->player.level = 1;
+    g->player.experience = 0;
     g->player.experience_next = 100;
-    g->inventory_count  = 0;
-    g->equipped_weapon  = -1;
-    g->equipped_armor   = -1;
-    g->gold             = 0;
+    g->inventory_count = 0;
+    g->equipped_weapon = -1;
+    g->equipped_armor = -1;
+    g->gold = 0;
     g->score = 0;
     g->floor_item_count = 0;
-    for (int i = 0; i < MAX_INVENTORY; i++)
+    for (int i = 0; i < MAX_INVENTORY; i++) {
         g->inventory[i].active = 0;
-    for (int i = 0; i < MAX_FLOOR_ITEMS; i++)
+    }
+    for (int i = 0; i < MAX_FLOOR_ITEMS; i++) {
         g->floor_items[i].active = 0;
+    }
 
     g->player.known_spell_count = 0;
-    g->player.equipped_spell    = -1;
-    g->player.last_dx           = 0;
-    g->player.last_dy           = 0;
+    g->player.equipped_spell = -1;
+    g->player.last_dx = 0;
+    g->player.last_dy = 0;
     g->player.poison_turns = 0;
-    g->trail_count              = 0;
-    g->trail_frames             = 0;
+    g->trail_count = 0;
+    g->trail_frames = 0;
+
+    switch (g->player.player_class) {
+        case CLASS_WARRIOR:
+            g->player.max_hp = 150;
+            g->player.max_mp = 20;
+            g->player.attack = 14;
+            g->player.defense = 6;
+            g->inventory[g->inventory_count++] = item_make_rusty_sword();
+            break;
+        case CLASS_MAGE:
+            g->player.max_hp = 70;
+            g->player.max_mp = 100;
+            g->player.attack = 6;
+            g->player.defense = 3;
+            g->inventory[g->inventory_count++] = item_make_scroll_magic_arrow();
+            break;
+        case CLASS_ROGUE:
+            g->player.max_hp = 100;
+            g->player.max_mp = 40;
+            g->player.attack = 10;
+            g->player.defense = 4;
+            g->inventory[g->inventory_count++] = item_make_bow();
+            break;
+    }
+    g->player.hp = g->player.max_hp;
+    g->player.mp = g->player.max_mp;
 
     #ifdef DEBUG
     g->inventory[g->inventory_count++] = item_make_scroll_magic_arrow();
     g->inventory[g->inventory_count++] = item_make_bow();
     g->gold = 500;
     #endif
-
-    // Starting weapon
-    g->inventory[g->inventory_count++] = item_make_rusty_sword();
 
     // Spawn enemies in random rooms
     enemies_spawn(g);

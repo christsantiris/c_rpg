@@ -243,10 +243,10 @@ int main(void) {
                         ClassSelectResult result = class_select_handle_key(
                             &class_select_screen, sc);
                         if (result == CLASS_SELECT_CONFIRMED) {
+                            game.player.player_class = class_select_screen.selected;
                             game_init(&game);
                             SDL_strlcpy(game.player.name, name_entry.name,
                                 sizeof(game.player.name));
-                            game.player.player_class = class_select_screen.selected;
                             enter_playing(&renderer, &viewport, &game);
                             screen = SCREEN_PLAYING;
                         }
