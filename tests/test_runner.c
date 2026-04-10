@@ -14,6 +14,7 @@ void test_town_map(void);
 void test_town_spawn(void);
 void test_leveling(void);
 void test_items(void);
+void test_classes(void);
 void test_level_cache_cleared(void);
 void test_return_to_town(void);
 
@@ -30,12 +31,24 @@ int main(void) {
     test_viewport();
     printf("\n");
     test_dungeon();
+    printf("\n");
     test_stairs_locked();
+    printf("\n");
     test_town_tiles();
+    printf("\n");
     test_town_map();
+    printf("\n");
     test_town_spawn();
+    printf("\n");
     test_level_cache_cleared();
+    printf("\n");
     test_return_to_town();
-    printf("\n");;
+    printf("\n");
+    test_leveling();
+    printf("\n");
+    test_items();
+    printf("\n");
+    test_classes();
+    printf("\n");
     REPORT();
 }

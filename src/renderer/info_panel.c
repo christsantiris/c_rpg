@@ -29,6 +29,13 @@ void info_panel_draw(Renderer *r, const GameState *g) {
     renderer_draw_text(r, g->player.name, x, y, value, r->font_small);
     y += lh + 6;
 
+    // Class
+    static const char *class_names[3] = { "Warrior", "Mage", "Rogue" };
+    renderer_draw_text(r, "CLASS", x, y, label, r->font_tiny);
+    y += lh;
+    renderer_draw_text(r, class_names[g->player.player_class], x, y, value, r->font_tiny);
+    y += lh + 6;
+
     // Location
     renderer_draw_text(r, "LOCATION", x, y, label, r->font_tiny);
     y += lh;
