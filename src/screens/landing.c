@@ -19,14 +19,14 @@ LandingResult landing_handle_confirm(LandingScreen *s, int scancode) {
 }
 
 int landing_item_count(const LandingScreen *s) {
-    return s->has_active_game ? 5 : 3;
+    return s->has_active_game ? 7 : 5;
 }
 
 LandingResult landing_handle_key(LandingScreen *s, int scancode) {
     switch (scancode) {
         case SDL_SCANCODE_UP:
             s->selected--;
-            if (s->selected < 0) s->selected = 2;
+            if (s->selected < 0) s->selected = landing_item_count(s) - 1;
             break;
         case SDL_SCANCODE_DOWN:
             s->selected++;
@@ -37,7 +37,9 @@ LandingResult landing_handle_key(LandingScreen *s, int scancode) {
                 switch (s->selected) {
                     case 0: return LANDING_NEW_GAME;
                     case 1: return LANDING_LOAD_GAME;
-                    case 2: return LANDING_QUIT;
+                    case 2: return LANDING_TOGGLE_MUSIC;
+                    case 3: return LANDING_TOGGLE_SFX;
+                    case 4: return LANDING_QUIT;
                 }
             } else {
                 switch (s->selected) {
@@ -47,7 +49,9 @@ LandingResult landing_handle_key(LandingScreen *s, int scancode) {
                     case 1: return LANDING_CONTINUE;
                     case 2: return LANDING_SAVE_GAME;
                     case 3: return LANDING_LOAD_GAME;
-                    case 4: return LANDING_QUIT;
+                    case 4: return LANDING_TOGGLE_MUSIC;
+                    case 5: return LANDING_TOGGLE_SFX;
+                    case 6: return LANDING_QUIT;
                 }
             }
             break;
@@ -77,7 +81,9 @@ LandingResult landing_handle_click(LandingScreen *s, int mouse_x, int mouse_y, i
                 switch (i) {
                     case 0: return LANDING_NEW_GAME;
                     case 1: return LANDING_LOAD_GAME;
-                    case 2: return LANDING_QUIT;
+                    case 2: return LANDING_TOGGLE_MUSIC;
+                    case 3: return LANDING_TOGGLE_SFX;
+                    case 4: return LANDING_QUIT;
                 }
             } else {
                 switch (i) {
@@ -87,7 +93,9 @@ LandingResult landing_handle_click(LandingScreen *s, int mouse_x, int mouse_y, i
                     case 1: return LANDING_CONTINUE;
                     case 2: return LANDING_SAVE_GAME;
                     case 3: return LANDING_LOAD_GAME;
-                    case 4: return LANDING_QUIT;
+                    case 4: return LANDING_TOGGLE_MUSIC;
+                    case 5: return LANDING_TOGGLE_SFX;
+                    case 6: return LANDING_QUIT;
                 }
             }
         }

@@ -22,7 +22,9 @@ typedef enum {
     LANDING_LOAD_GAME,
     LANDING_CONTINUE,
     LANDING_QUIT,
-    LANDING_SAVE_GAME
+    LANDING_SAVE_GAME,
+    LANDING_TOGGLE_MUSIC,
+    LANDING_TOGGLE_SFX
 } LandingResult;
 
 typedef struct {

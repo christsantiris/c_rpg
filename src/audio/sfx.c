@@ -5,6 +5,7 @@
 #define SFX_ATTACK "assets/sfx/knifeSlice2.ogg"
 
 static Mix_Chunk *sfx_attack = NULL;
+static int sfx_on = 1;
 
 void sfx_init(void) {
     sfx_attack = Mix_LoadWAV(SFX_ATTACK);
@@ -14,10 +15,18 @@ void sfx_init(void) {
 }
 
 void sfx_play_attack(void) {
-    if (!sfx_attack) {
+    if (!sfx_attack || !sfx_on) {
         return;
     }
     Mix_PlayChannel(-1, sfx_attack, 0);
+}
+
+void sfx_toggle(void) {
+    sfx_on = !sfx_on;
+}
+
+int sfx_enabled(void) {
+    return sfx_on;
 }
 
 void sfx_free(void) {

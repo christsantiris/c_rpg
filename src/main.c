@@ -53,6 +53,12 @@ static void handle_landing_result(LandingResult result, LandingScreen *landing,
             enter_playing(renderer, viewport, game);
             *screen = SCREEN_PLAYING;
             break;
+        case LANDING_TOGGLE_MUSIC:
+            music_toggle();
+            break;
+        case LANDING_TOGGLE_SFX:
+            sfx_toggle();
+            break;
         case LANDING_SAVE_GAME:
             slot_select_init(slot_select);
             *slot_is_save = 1;
