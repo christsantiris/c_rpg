@@ -4,5 +4,7 @@
 void music_init(void);
 void music_update(int screen, int in_town);
 void music_free(void);
+void music_toggle(void);
+int  music_enabled(void);
 
 #endif

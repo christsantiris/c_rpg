@@ -9,6 +9,7 @@
 static Mix_Music *town_track    = NULL;
 static Mix_Music *dungeon_track = NULL;
 static Mix_Music *current_track = NULL;
+static int music_on = 1;
 
 void music_init(void) {
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
@@ -24,11 +25,24 @@ void music_init(void) {
 }
 
 static void play_track(Mix_Music *track) {
-    if (!track) return;
+    if (!track || !music_on) return;
     if (track == current_track) return;
     current_track = track;
     Mix_HaltMusic();
     Mix_PlayMusic(track, -1);
+}
+
+void music_toggle(void) {
+    music_on = !music_on;
+    if (music_on) {
+        current_track = NULL;
+    } else {
+        Mix_HaltMusic();
+    }
+}
+
+int music_enabled(void) {
+    return music_on;
 }
 
 void music_update(int screen, int in_town) {
