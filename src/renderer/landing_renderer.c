@@ -1,13 +1,9 @@
 #include "landing_renderer.h"
 #include "sprites.h"
 #include "../screens/landing.h"
-
-static const char *MENU_LABELS_BASE[3] = {
-    "NEW GAME", "LOAD GAME", "QUIT"
-};
-static const char *MENU_LABELS_ACTIVE[5] = {
-    "NEW GAME", "CONTINUE", "SAVE GAME", "LOAD GAME", "QUIT"
-};
+#include "../audio/music.h"
+#include "../audio/sfx.h"
+#include <stdio.h>
 
 void landing_draw(Renderer *r, const LandingScreen *s) {
     int cx = r->tiles_x / 2;
@@ -37,10 +33,22 @@ void landing_draw(Renderer *r, const LandingScreen *s) {
     int title_y = (r->screen_h / 2) - 100;
     renderer_draw_text(r, "CASTLE OF NO RETURN", title_x, title_y, gold, r->font_large);
 
+    // Build dynamic labels
+    char music_label[16];
+    char sfx_label[16];
+    snprintf(music_label, sizeof(music_label), "MUSIC %s", music_enabled() ? "ON" : "OFF");
+    snprintf(sfx_label,   sizeof(sfx_label),   "SFX %s",   sfx_enabled()   ? "ON" : "OFF");
+
+    const char *labels_base[5] = {
+        "NEW GAME", "LOAD GAME", music_label, sfx_label, "QUIT"
+    };
+    const char *labels_active[7] = {
+        "NEW GAME", "CONTINUE", "SAVE GAME", "LOAD GAME", music_label, sfx_label, "QUIT"
+    };
+
     // Menu items
     int count = landing_item_count(s);
-    const char **labels = s->has_active_game
-        ? MENU_LABELS_ACTIVE : MENU_LABELS_BASE;
+    const char **labels = s->has_active_game ? labels_active : labels_base;
 
     for (int i = 0; i < count; i++) {
         int item_y = (r->screen_h / 2) - 20 + i * 36;
