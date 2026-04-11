@@ -25,7 +25,9 @@ void music_init(void) {
 }
 
 static void play_track(Mix_Music *track) {
-    if (!track || !music_on) return;
+    if (!track || !music_on) {
+        return;
+    }
     if (track == current_track) return;
     current_track = track;
     Mix_HaltMusic();

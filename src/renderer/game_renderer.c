@@ -2,6 +2,7 @@
 #include "sprites.h"
 #include "info_panel.h"
 #include "message_bar.h"
+#include "minimap_renderer.h"
 #include "renderer.h"
 
 void game_draw(Renderer *r, GameState *g, Viewport *v) {
@@ -110,4 +111,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     // Draw message bar
     message_bar_draw(r, g);
+
+    // Draw minimap overlay in top-left corner of the viewport
+    minimap_draw(r, g);
 }
