@@ -56,7 +56,10 @@ LandingResult landing_handle_key(LandingScreen *s, int scancode) {
             }
             break;
         case SDL_SCANCODE_ESCAPE:
-            return LANDING_QUIT;
+            if (s->has_active_game) {
+                return LANDING_CONTINUE;
+            }
+            break;
         default:
             break;
     }
