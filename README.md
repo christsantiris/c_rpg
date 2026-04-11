@@ -55,4 +55,3 @@ and drag the file into applications and double click!
 - Quests
 - NPCs
 - Secret/Locked Rooms
-- Minimap

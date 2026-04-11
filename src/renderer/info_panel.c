@@ -124,4 +124,5 @@ void info_panel_draw(Renderer *r, const GameState *g) {
     renderer_draw_text(r, "F     FIRE",    x, y + lh*6, hint, r->font_tiny);
     renderer_draw_text(r, "T     TOWN",    x, y + lh*7, hint, r->font_tiny);
     renderer_draw_text(r, "ESC   MENU",    x, y + lh*8, hint, r->font_tiny);
+
 }
