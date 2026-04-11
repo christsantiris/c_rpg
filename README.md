@@ -50,7 +50,7 @@ and drag the file into applications and double click!
 ## Roadmap
 - windows installer
 - linux installer
-- sound effects (stairs unlock, attack, magic)
+- expand sound effects (stairs unlock, attack, magic)
 - Add other areas (mountains, forest, marsh)
 - Quests
 - NPCs
