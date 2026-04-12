@@ -63,6 +63,10 @@ install_name_tool -id \
     "@executable_path/../Frameworks/libSDL2_mixer-2.0.0.dylib" \
     "${APP_DIR}/Contents/Frameworks/libSDL2_mixer-2.0.0.dylib"
 
+echo "==> Setting DMG volume icon..."
+cp package/macos/AppIcon.icns dist/.VolumeIcon.icns
+SetFile -a C dist
+
 echo "==> Creating DMG..."
 hdiutil create \
     -volname "${APP_NAME}" \
