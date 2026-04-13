@@ -12,7 +12,6 @@ dmg:
 	bash package/macos/build_dmg.sh
 
 linux:
-	cmake --build build --config Release
 	bash package/linux/build_linux.sh
 
 debug:
