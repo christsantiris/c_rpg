@@ -1,4 +1,4 @@
-.PHONY: all run clean debug test
+.PHONY: all run clean debug test linux
 
 all:
 	cmake -B build -DCMAKE_BUILD_TYPE=Release
@@ -10,6 +10,10 @@ run: all
 dmg:
 	cmake --build build --config Release
 	bash package/macos/build_dmg.sh
+
+linux:
+	cmake --build build --config Release
+	bash package/linux/build_linux.sh
 
 debug:
 	cmake -B build -DCMAKE_BUILD_TYPE=Debug
