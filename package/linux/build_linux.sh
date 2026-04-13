@@ -23,7 +23,7 @@ if [ "$(uname)" = "Darwin" ]; then
         ubuntu:22.04 bash -c "
             set -e
             apt-get update -qq
-            apt-get install -y -qq cmake gcc libsdl2-dev libsdl2-ttf-dev libsdl2-mixer-dev
+            apt-get install -y -qq cmake gcc pkg-config libsdl2-dev libsdl2-ttf-dev libsdl2-mixer-dev
             cmake -B build-linux -DCMAKE_BUILD_TYPE=Release
             cmake --build build-linux
             cp build-linux/conr dist/linux/conr
@@ -33,7 +33,7 @@ if [ "$(uname)" = "Darwin" ]; then
         "
 
     echo "==> Converting icon to PNG..."
-    sips -s format png "$ROOT/package/macos/AppIcon.icns" --out "$STAGE/AppIcon.png" --resampleWidth 256 >/dev/null
+    sips -s format png "$ROOT/package/AppIcon.icns" --out "$STAGE/AppIcon.png" --resampleWidth 256 >/dev/null
 else
     echo "==> Building binary..."
     cmake -B "$ROOT/build" -DCMAKE_BUILD_TYPE=Release
@@ -51,6 +51,13 @@ else
         fi
         cp "$SRC" "$STAGE/lib/$LIB"
     done
+
+    echo "==> Converting icon to PNG..."
+    if command -v convert &>/dev/null; then
+        convert "$ROOT/package/AppIcon.icns[0]" -resize 256x256 "$STAGE/AppIcon.png"
+    else
+        echo "WARNING: ImageMagick 'convert' not found — AppIcon.png will be missing" >&2
+    fi
 fi
 
 echo "==> Copying assets..."

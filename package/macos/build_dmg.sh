@@ -27,7 +27,7 @@ echo "==> Copying Info.plist..."
 cp package/macos/Info.plist "${APP_DIR}/Contents/Info.plist"
 
 echo "==> Copying icon..."
-cp package/macos/AppIcon.icns "${APP_DIR}/Contents/Resources/AppIcon.icns"
+cp package/AppIcon.icns "${APP_DIR}/Contents/Resources/AppIcon.icns"
 
 echo "==> Copying dylibs..."
 cp "${SDL2_LIB}"  "${APP_DIR}/Contents/Frameworks/libSDL2-2.0.0.dylib"
@@ -64,7 +64,7 @@ install_name_tool -id \
     "${APP_DIR}/Contents/Frameworks/libSDL2_mixer-2.0.0.dylib"
 
 echo "==> Setting DMG volume icon..."
-cp package/macos/AppIcon.icns dist/.VolumeIcon.icns
+cp package/AppIcon.icns dist/.VolumeIcon.icns
 SetFile -a C dist
 
 echo "==> Creating DMG..."

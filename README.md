@@ -35,7 +35,7 @@ Run `make clean` to destroy the compiled game and start over if you make your ow
 Run `make test` to run unit tests
 
 ## Dependencies
-cmake sdl2 sdl2_ttf sdl2_mixer
+cmake sdl2 sdl2_ttf sdl2_mixer pkg-config (if linux)
 
 ## Contributing
 I would gladly welcome any pull requests to help improve the game
@@ -49,7 +49,7 @@ and drag the file into applications and double click!
 
 For Linux run `chmod +x package/linux/build_linux.sh` then `make linux`.
 Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
-- Run directly: `./run.sh`
+- Run directly: `cd linux && ./run.sh`
 - Install as a desktop app: `./install.sh` — adds the game to your app launcher with a double-clickable icon
 
 ## Roadmap
