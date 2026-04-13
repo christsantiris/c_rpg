@@ -48,7 +48,9 @@ For MacOS run `chmod +x package/macos/build_dmg.sh` then `make dmg`
 and drag the file into applications and double click!
 
 For Linux run `chmod +x package/linux/build_linux.sh` then `make linux`.
-Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz` and run `./run.sh`.
+Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
+- Run directly: `./run.sh`
+- Install as a desktop app: `./install.sh` — adds the game to your app launcher with a double-clickable icon
 
 ## Roadmap
 - windows installer
