@@ -47,9 +47,11 @@ MIT
 For MacOS run `chmod +x package/macos/build_dmg.sh` then `make dmg`
 and drag the file into applications and double click!
 
+For Linux run `chmod +x package/linux/build_linux.sh` then `make linux`.
+Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz` and run `./run.sh`.
+
 ## Roadmap
 - windows installer
-- linux installer
 - expand sound effects (stairs unlock, attack, magic)
 - Add other areas (mountains, forest, marsh)
 - Quests
