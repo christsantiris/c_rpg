@@ -3,7 +3,6 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$SCRIPT_DIR/../.."
-BINARY="$ROOT/build/conr"
 STAGE="$ROOT/dist/linux"
 TARBALL="$ROOT/dist/CastleOfNoReturn-linux-x86_64.tar.gz"
 
@@ -11,24 +10,51 @@ echo "==> Cleaning staging directory..."
 rm -rf "$STAGE"
 mkdir -p "$STAGE/lib"
 
-echo "==> Copying binary..."
-cp "$BINARY" "$STAGE/conr"
+if [ "$(uname)" = "Darwin" ]; then
+    if ! command -v docker &>/dev/null; then
+        echo "ERROR: docker is required to build the Linux installer on macOS" >&2
+        exit 1
+    fi
+
+    echo "==> Building binary and copying SDL2 libs inside Docker..."
+    docker run --rm \
+        -v "$ROOT:/src" \
+        -w /src \
+        ubuntu:22.04 bash -c "
+            set -e
+            apt-get update -qq
+            apt-get install -y -qq cmake gcc libsdl2-dev libsdl2-ttf-dev libsdl2-mixer-dev
+            cmake -B build-linux -DCMAKE_BUILD_TYPE=Release
+            cmake --build build-linux
+            cp build-linux/conr dist/linux/conr
+            cp /usr/lib/x86_64-linux-gnu/libSDL2-2.0.so.0       dist/linux/lib/
+            cp /usr/lib/x86_64-linux-gnu/libSDL2_ttf-2.0.so.0   dist/linux/lib/
+            cp /usr/lib/x86_64-linux-gnu/libSDL2_mixer-2.0.so.0 dist/linux/lib/
+        "
+
+    echo "==> Converting icon to PNG..."
+    sips -s format png "$ROOT/package/macos/AppIcon.icns" --out "$STAGE/AppIcon.png" --resampleWidth 256 >/dev/null
+else
+    echo "==> Building binary..."
+    cmake -B "$ROOT/build" -DCMAKE_BUILD_TYPE=Release
+    cmake --build "$ROOT/build"
+
+    echo "==> Copying binary..."
+    cp "$ROOT/build/conr" "$STAGE/conr"
+
+    echo "==> Copying SDL2 shared libraries..."
+    for LIB in libSDL2-2.0.so.0 libSDL2_ttf-2.0.so.0 libSDL2_mixer-2.0.so.0; do
+        SRC="$(ldconfig -p | awk -v lib="$LIB" '$1 == lib { print $NF; exit }')"
+        if [ -z "$SRC" ]; then
+            echo "ERROR: could not locate $LIB via ldconfig" >&2
+            exit 1
+        fi
+        cp "$SRC" "$STAGE/lib/$LIB"
+    done
+fi
 
 echo "==> Copying assets..."
 cp -r "$ROOT/assets" "$STAGE/assets"
-
-echo "==> Copying SDL2 shared libraries..."
-for LIB in libSDL2-2.0.so.0 libSDL2_ttf-2.0.so.0 libSDL2_mixer-2.0.so.0; do
-    SRC="$(ldconfig -p | awk -v lib="$LIB" '$1 == lib { print $NF; exit }')"
-    if [ -z "$SRC" ]; then
-        echo "ERROR: could not locate $LIB via ldconfig" >&2
-        exit 1
-    fi
-    cp "$SRC" "$STAGE/lib/$LIB"
-done
-
-echo "==> Converting icon to PNG..."
-sips -s format png "$ROOT/package/macos/AppIcon.icns" --out "$STAGE/AppIcon.png" --resampleWidth 256 >/dev/null
 
 echo "==> Writing launcher script..."
 cat > "$STAGE/run.sh" <<'EOF'
