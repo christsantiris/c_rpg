@@ -54,8 +54,10 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 
 ## Roadmap
 - windows installer
+- fix linux installer icon not showing
 - expand sound effects (stairs unlock, attack, magic)
 - Add other areas (mountains, forest, marsh)
 - Quests
 - NPCs
 - Secret/Locked Rooms
+- Signing the app with codesign and submit to Apple with xcrun notarytool
