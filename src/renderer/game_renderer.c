@@ -47,6 +47,50 @@ static void draw_weapon_arrow(Renderer *r, int tile_x, int tile_y,
     }
 }
 
+static void draw_magic_arrow(Renderer *r, int tile_x, int tile_y,
+                             int dx, int dy, int impact, int frame) {
+    int cx = tile_x * TILE_SIZE + TILE_SIZE / 2;
+    int cy = tile_y * TILE_SIZE + TILE_SIZE / 2;
+    int px = -dy;
+    int py = dx;
+    int tail_x = cx - dx * 7;
+    int tail_y = cy - dy * 7;
+    int tip_x = cx + dx * 7;
+    int tip_y = cy + dy * 7;
+    int head_x = tip_x - dx * 4;
+    int head_y = tip_y - dy * 4;
+
+    SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(r->sdl, 30, 92, 230, 90);
+    SDL_RenderDrawLine(r->sdl, tail_x + px * 2, tail_y + py * 2,
+        tip_x + px * 2, tip_y + py * 2);
+    SDL_RenderDrawLine(r->sdl, tail_x - px * 2, tail_y - py * 2,
+        tip_x - px * 2, tip_y - py * 2);
+
+    SDL_SetRenderDrawColor(r->sdl, 54, 126, 255, 255);
+    SDL_RenderDrawLine(r->sdl, tail_x, tail_y, tip_x, tip_y);
+    SDL_SetRenderDrawColor(r->sdl, 176, 246, 255, 255);
+    SDL_RenderDrawPoint(r->sdl, cx, cy);
+    SDL_RenderDrawLine(r->sdl, tip_x, tip_y,
+        head_x + px * 3, head_y + py * 3);
+    SDL_RenderDrawLine(r->sdl, tip_x, tip_y,
+        head_x - px * 3, head_y - py * 3);
+
+    SDL_SetRenderDrawColor(r->sdl, 76, 178, 255, 210);
+    SDL_RenderDrawPoint(r->sdl,
+        tail_x - dx * 2 + px * (frame % 2 ? 2 : -2),
+        tail_y - dy * 2 + py * (frame % 2 ? 2 : -2));
+    SDL_RenderDrawPoint(r->sdl,
+        tail_x - dx * 4 - px * (frame % 2 ? 1 : -1),
+        tail_y - dy * 4 - py * (frame % 2 ? 1 : -1));
+
+    if (impact) {
+        SDL_SetRenderDrawColor(r->sdl, 198, 250, 255, 230);
+        SDL_RenderDrawLine(r->sdl, tip_x - px * 3, tip_y - py * 3,
+            tip_x + px * 3, tip_y + py * 3);
+    }
+}
+
 void game_draw(Renderer *r, GameState *g, Viewport *v) {
     // Draw map tiles
     for (int y = 0; y < MAP_H; y++) {
@@ -129,17 +173,26 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int weapon_trail = g->trail_count > 0 &&
             g->trail[0].r == 160 && g->trail[0].g == 160 &&
             g->trail[0].b == 160;
-        if (weapon_trail) {
+        int magic_arrow_trail = g->trail_count > 0 &&
+            g->trail[0].r == 40 && g->trail[0].g == 120 &&
+            g->trail[0].b == 220;
+        if (weapon_trail || magic_arrow_trail) {
             int progress = 4 - g->trail_frames;
             int lead = g->trail_count > 1
                 ? progress * (g->trail_count - 1) / 3 : 0;
             TrailTile *t = &g->trail[lead];
             if (t->active && viewport_is_visible(v, t->x, t->y)) {
-                draw_weapon_arrow(r,
-                    viewport_to_screen_x(v, t->x),
-                    viewport_to_screen_y(v, t->y),
-                    g->player.last_dx, g->player.last_dy,
-                    t->is_impact);
+                int sx = viewport_to_screen_x(v, t->x);
+                int sy = viewport_to_screen_y(v, t->y);
+                if (magic_arrow_trail) {
+                    draw_magic_arrow(r, sx, sy,
+                        g->player.last_dx, g->player.last_dy,
+                        t->is_impact, progress);
+                } else {
+                    draw_weapon_arrow(r, sx, sy,
+                        g->player.last_dx, g->player.last_dy,
+                        t->is_impact);
+                }
             }
         } else for (int i = 0; i < g->trail_count; i++) {
             TrailTile *t = &g->trail[i];
