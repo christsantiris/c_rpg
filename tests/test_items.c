@@ -20,6 +20,10 @@ void test_items(void) {
     ASSERT("weapon type correct",           sword.type         == ITEM_WEAPON);
     ASSERT("weapon attack bonus set",       sword.attack_bonus == 6);
 
+    Item bow = item_make_bow();
+    ASSERT("bow attack bonus is balanced", bow.attack_bonus == 3);
+    ASSERT("bow range is six tiles",        bow.range == 6);
+
     Item armor = item_make_leather_armor();
     ASSERT("armor type correct",            armor.type          == ITEM_ARMOR);
     ASSERT("armor defense bonus set",       armor.defense_bonus == 2);
@@ -65,4 +69,40 @@ void test_items(void) {
         g4.inventory[i] = item_make_health_potion();
     g4.inventory_count = MAX_INVENTORY;
     ASSERT("inventory is full",             g4.inventory_count == MAX_INVENTORY);
+
+    // --- Bow combat rules ---
+    GameState rogue = {0};
+    rogue.player.player_class = CLASS_ROGUE;
+    game_init(&rogue);
+    Action equip_bow = {ACTION_EQUIP_ITEM, 0, 0};
+    action_resolve_player(&rogue, equip_bow);
+    rogue.player.x = 10;
+    rogue.player.y = 10;
+    rogue.player.last_dx = 1;
+    rogue.player.last_dy = 0;
+    rogue.enemy_count = 1;
+    rogue.enemies[0] = (Enemy){0};
+    rogue.enemies[0].active = 1;
+    rogue.enemies[0].x = 11;
+    rogue.enemies[0].y = 10;
+    rogue.enemies[0].hp = 100;
+    rogue.enemies[0].max_hp = 100;
+    Action shoot = {ACTION_RANGED_ATTACK, 0, 0};
+    action_resolve_player(&rogue, shoot);
+    ASSERT("bow cannot fire beside an enemy", rogue.enemies[0].hp == 100);
+
+    int equipped_attack = rogue.player.attack;
+    Action bump = {ACTION_MOVE, 11, 10};
+    action_resolve_player(&rogue, bump);
+    ASSERT("bow bonus does not apply in melee",
+        rogue.enemies[0].hp == 100 -
+            (equipped_attack - bow.attack_bonus));
+
+    rogue.enemies[0].x = 12;
+    rogue.enemies[0].hp = 100;
+    action_resolve_player(&rogue, shoot);
+    int ranged_damage = 100 - rogue.enemies[0].hp;
+    ASSERT("bow shot uses normal or critical damage",
+        ranged_damage == equipped_attack ||
+        ranged_damage == equipped_attack * 3 / 2);
 }
