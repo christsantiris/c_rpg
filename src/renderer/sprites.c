@@ -532,36 +532,71 @@ void draw_floor_gold(Renderer *r, int tile_x, int tile_y) {
 void draw_trap_spike(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color base  = { 18,  18,  35, 255};
-    SDL_Color metal = {160, 160, 180, 255};
-    SDL_Color dark  = { 80,  80, 100, 255};
-    fill_rect(r, x,    y,    TILE_SIZE, TILE_SIZE, base);
-    fill_rect(r, x+10, y+14, 4,         8,         metal);
-    fill_rect(r, x+4,  y+16, 4,         6,         metal);
-    fill_rect(r, x+16, y+16, 4,         6,         metal);
-    fill_rect(r, x+7,  y+18, 10,        4,         dark);
+    SDL_Color floor = {18, 18, 35, 255};
+    SDL_Color rim = {64, 62, 82, 255};
+    SDL_Color recess = {28, 27, 42, 255};
+    SDL_Color steel = {152, 158, 170, 255};
+    SDL_Color shine = {214, 218, 220, 255};
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, floor);
+    fill_rect(r, x+3, y+4, 18, 17, rim);
+    fill_rect(r, x+5, y+6, 14, 13, recess);
+    fill_rect(r, x+4, y+19, 16, 2, (SDL_Color){38, 36, 54, 255});
+
+    fill_rect(r, x+6,  y+12, 3, 7, steel);
+    fill_rect(r, x+7,  y+8,  1, 4, shine);
+    fill_rect(r, x+11, y+9,  3, 10, steel);
+    fill_rect(r, x+12, y+5,  1, 4, shine);
+    fill_rect(r, x+16, y+12, 3, 7, steel);
+    fill_rect(r, x+17, y+8,  1, 4, shine);
+    fill_rect(r, x+7,  y+7,  1, 1, shine);
+    fill_rect(r, x+12, y+4,  1, 1, shine);
+    fill_rect(r, x+17, y+7,  1, 1, shine);
 }
 
 void draw_trap_fire(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color base   = { 18,  18,  35, 255};
-    SDL_Color flame  = {220,  80,  20, 255};
-    SDL_Color bright = {255, 160,  40, 255};
-    fill_rect(r, x,    y,    TILE_SIZE, TILE_SIZE, base);
-    fill_rect(r, x+8,  y+10, 8,         12,        flame);
-    fill_rect(r, x+10, y+6,  4,         8,         bright);
-    fill_rect(r, x+6,  y+14, 12,        4,         flame);
+    SDL_Color floor = {18, 18, 35, 255};
+    SDL_Color iron = {58, 54, 66, 255};
+    SDL_Color soot = {34, 25, 30, 255};
+    SDL_Color red = {174, 42, 20, 255};
+    SDL_Color orange = {244, 98, 20, 255};
+    SDL_Color yellow = {255, 204, 62, 255};
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, floor);
+    fill_rect(r, x+3, y+15, 18, 6, iron);
+    fill_rect(r, x+5, y+17, 14, 3, soot);
+    fill_rect(r, x+5, y+14, 14, 2, (SDL_Color){92, 76, 70, 255});
+    fill_rect(r, x+7, y+10, 11, 7, red);
+    fill_rect(r, x+9, y+6, 7, 11, orange);
+    fill_rect(r, x+12,y+3, 3, 8, orange);
+    fill_rect(r, x+7, y+8, 3, 7, red);
+    fill_rect(r, x+11,y+10,4, 7, yellow);
+    fill_rect(r, x+12,y+7, 2, 5, (SDL_Color){255, 238, 150, 255});
+    fill_rect(r, x+6, y+4, 2, 2, (SDL_Color){116, 52, 34, 255});
+    fill_rect(r, x+18,y+7, 2, 2, (SDL_Color){206, 70, 24, 255});
 }
 
 void draw_trap_poison(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color base   = { 18,  18,  35, 255};
-    SDL_Color green  = { 40, 160,  40, 255};
-    SDL_Color bright = { 80, 220,  80, 255};
-    fill_rect(r, x,    y,    TILE_SIZE, TILE_SIZE, base);
-    fill_rect(r, x+6,  y+8,  12,        12,        green);
-    fill_rect(r, x+9,  y+6,  6,         6,         bright);
-    fill_rect(r, x+8,  y+16, 8,         4,         green);
+    SDL_Color floor = {18, 18, 35, 255};
+    SDL_Color rim = {54, 62, 70, 255};
+    SDL_Color recess = {24, 34, 34, 255};
+    SDL_Color toxic = {54, 174, 70, 255};
+    SDL_Color glow = {122, 236, 92, 255};
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, floor);
+    fill_rect(r, x+3, y+4, 18, 17, rim);
+    fill_rect(r, x+5, y+6, 14, 13, recess);
+    fill_rect(r, x+6, y+7, 3, 3, toxic);
+    fill_rect(r, x+15,y+7, 3, 3, toxic);
+    fill_rect(r, x+8, y+9, 8, 7, toxic);
+    fill_rect(r, x+9, y+10,2, 2, glow);
+    fill_rect(r, x+14,y+10,2, 2, glow);
+    fill_rect(r, x+11,y+13,3, 2, recess);
+    fill_rect(r, x+8, y+16,3, 3, toxic);
+    fill_rect(r, x+12,y+16,2, 3, toxic);
+    fill_rect(r, x+15,y+16,3, 3, toxic);
+    fill_rect(r, x+4, y+2, 2, 2, glow);
+    fill_rect(r, x+18,y+1, 2, 2, toxic);
+    fill_rect(r, x+20,y+5, 1, 1, glow);
 }
