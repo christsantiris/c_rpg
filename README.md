@@ -2,6 +2,8 @@
 
 A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explore dungeons, battle enemies, and survive the challenge!
 
+**GitHub:** [https://github.com/christsantiris/c_rpg](https://github.com/christsantiris/c_rpg)
+
 ## Table of Contents
 - [Overview](#overview)
 - [Screenshot](#screenshot)

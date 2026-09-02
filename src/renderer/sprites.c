@@ -301,33 +301,131 @@ void draw_town_exit(Renderer *r, int tile_x, int tile_y) {
 void draw_shop_blacksmith(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color wall   = { 58,  40,  16, 255};
-    SDL_Color roof   = { 80,  32,  16, 255};
-    SDL_Color door   = { 26,  14,   6, 255};
-    SDL_Color window = {255, 136,  32, 255};
-    SDL_Color anvil  = {136, 136, 136, 255};
-    fill_rect(r, x,    y,    TILE_SIZE, TILE_SIZE, wall);
-    fill_rect(r, x,    y,    TILE_SIZE, 3,         roof);
-    fill_rect(r, x+8,  y+14, 8,         10,        door);
-    fill_rect(r, x+2,  y+6,  5,         5,         window);
-    fill_rect(r, x+14, y+8,  6,         4,         anvil);
-    fill_rect(r, x+12, y+11, 10,        3,         anvil);
+    SDL_Color outline = { 18,  14,  14, 255};
+    SDL_Color stone   = { 72,  70,  68, 255};
+    SDL_Color mortar  = { 42,  40,  40, 255};
+    SDL_Color timber  = { 82,  48,  28, 255};
+    SDL_Color wood_hi = {116,  70,  36, 255};
+    SDL_Color roof    = { 42,  42,  48, 255};
+    SDL_Color roof_hi = { 68,  66,  70, 255};
+    SDL_Color brick   = {104,  48,  34, 255};
+    SDL_Color ember   = {255, 112,  16, 255};
+    SDL_Color flame   = {255, 202,  54, 255};
+    SDL_Color iron    = {132, 138, 142, 255};
+
+    /* Foundation and timber facade. */
+    fill_rect(r, x+4, y+78, 112, 16, outline);
+    fill_rect(r, x+6, y+80, 108, 12, stone);
+    for (int sx = 8; sx < 112; sx += 18)
+        fill_rect(r, x+sx, y+86, 1, 6, mortar);
+    fill_rect(r, x+8, y+55, 104, 27, timber);
+    fill_rect(r, x+8, y+55, 104, 4, wood_hi);
+    fill_rect(r, x+12, y+56, 5, 26, outline);
+    fill_rect(r, x+103, y+56, 5, 26, outline);
+
+    /* Broad charcoal roof with staggered shingle highlights. */
+    fill_rect(r, x+5,  y+25, 110, 34, outline);
+    fill_rect(r, x+9,  y+22, 102, 35, roof);
+    fill_rect(r, x+13, y+18,  94,  7, roof_hi);
+    for (int row = 0; row < 3; row++) {
+        int sy = y + 28 + row * 9;
+        int offset = (row & 1) ? 8 : 0;
+        fill_rect(r, x+10, sy+6, 100, 2, outline);
+        for (int sx = 14 + offset; sx < 108; sx += 16)
+            fill_rect(r, x+sx, sy, 2, 7, outline);
+    }
+
+    /* Sooted brick chimney and live forge. */
+    fill_rect(r, x+10, y+4, 24, 31, outline);
+    fill_rect(r, x+13, y+7, 18, 27, brick);
+    fill_rect(r, x+13, y+15, 18, 2, outline);
+    fill_rect(r, x+20, y+7,  2, 27, outline);
+    fill_rect(r, x+7,  y+59, 39, 25, outline);
+    fill_rect(r, x+11, y+63, 31, 18, (SDL_Color){56, 24, 16, 255});
+    fill_rect(r, x+16, y+73, 21,  7, ember);
+    fill_rect(r, x+21, y+67, 11, 12, flame);
+
+    /* Workshop door, iron braces, woodpile, and anvil sign. */
+    fill_rect(r, x+52, y+60, 29, 33, outline);
+    fill_rect(r, x+56, y+64, 21, 29, (SDL_Color){58, 34, 22, 255});
+    fill_rect(r, x+59, y+69, 15, 2, wood_hi);
+    fill_rect(r, x+59, y+80, 15, 2, wood_hi);
+    fill_rect(r, x+62, y+65, 2, 26, iron);
+    fill_rect(r, x+72, y+77, 3, 3, iron);
+    fill_rect(r, x+87, y+70, 18, 4, iron);
+    fill_rect(r, x+91, y+74, 10, 3, iron);
+    fill_rect(r, x+94, y+77,  4, 4, outline);
+    for (int i = 0; i < 3; i++) {
+        fill_rect(r, x+85+i*9, y+84, 8, 7, (SDL_Color){92, 52, 26, 255});
+        fill_rect(r, x+87+i*9, y+84, 4, 2, wood_hi);
+    }
 }
 
 void draw_shop_alchemist(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color wall   = { 26,  42,  58, 255};
-    SDL_Color roof   = { 16,  32,  48, 255};
-    SDL_Color door   = { 10,  16,  24, 255};
-    SDL_Color window = { 96,  64, 192, 255};
-    SDL_Color potion = {160,  64, 192, 255};
-    fill_rect(r, x,    y,    TILE_SIZE, TILE_SIZE, wall);
-    fill_rect(r, x,    y,    TILE_SIZE, 3,         roof);
-    fill_rect(r, x+8,  y+14, 8,         10,        door);
-    fill_rect(r, x+2,  y+6,  5,         5,         window);
-    fill_rect(r, x+14, y+6,  4,         8,         potion);
-    fill_rect(r, x+13, y+9,  6,         2,         potion);
+    SDL_Color outline = { 14,  14,  24, 255};
+    SDL_Color stone   = { 66,  70,  76, 255};
+    SDL_Color wall    = { 48,  38,  66, 255};
+    SDL_Color timber  = { 28,  24,  42, 255};
+    SDL_Color roof    = { 24,  72,  70, 255};
+    SDL_Color roof_hi = { 42, 104,  94, 255};
+    SDL_Color purple  = {176,  68, 220, 255};
+    SDL_Color violet  = {108,  62, 188, 255};
+    SDL_Color green   = {112, 214,  92, 255};
+    SDL_Color glass   = {202, 228, 210, 255};
+    SDL_Color herb    = { 76, 116,  48, 255};
+
+    /* Stone base and crooked indigo timber facade. */
+    fill_rect(r, x+5, y+79, 110, 15, outline);
+    fill_rect(r, x+8, y+81, 104, 11, stone);
+    fill_rect(r, x+9, y+52, 102, 31, wall);
+    fill_rect(r, x+13, y+53, 5, 30, timber);
+    fill_rect(r, x+102,y+53, 5, 30, timber);
+    fill_rect(r, x+14, y+58, 92, 4, timber);
+
+    /* Steep teal roof and central gable. */
+    fill_rect(r, x+5,  y+27, 110, 31, outline);
+    fill_rect(r, x+9,  y+24, 102, 31, roof);
+    for (int row = 0; row < 3; row++) {
+        int sy = y + 28 + row * 8;
+        int offset = (row & 1) ? 7 : 0;
+        fill_rect(r, x+10, sy+6, 100, 2, outline);
+        for (int sx = 13 + offset; sx < 109; sx += 14)
+            fill_rect(r, x+sx, sy, 2, 7, roof_hi);
+    }
+    fill_rect(r, x+44, y+22, 32, 36, outline);
+    fill_rect(r, x+48, y+25, 24, 33, (SDL_Color){42, 32, 58, 255});
+    fill_rect(r, x+56, y+17,  8,  9, roof_hi);
+
+    /* Bottle-shaped glowing gable window. */
+    fill_rect(r, x+56, y+31, 8, 4, glass);
+    fill_rect(r, x+53, y+35,14,14, glass);
+    fill_rect(r, x+55, y+37,10,10, violet);
+    fill_rect(r, x+58, y+39, 6, 6, purple);
+    fill_rect(r, x+61, y+39, 2, 2, (SDL_Color){244, 184, 255, 255});
+
+    /* South door, luminous window, herbs, and potion display. */
+    fill_rect(r, x+48, y+59, 27, 34, outline);
+    fill_rect(r, x+52, y+63, 19, 30, (SDL_Color){54, 34, 30, 255});
+    fill_rect(r, x+55, y+70, 13, 2, (SDL_Color){102, 66, 42, 255});
+    fill_rect(r, x+55, y+81, 13, 2, (SDL_Color){102, 66, 42, 255});
+    fill_rect(r, x+66, y+77, 3, 3, glass);
+    fill_rect(r, x+18, y+63, 22, 18, outline);
+    fill_rect(r, x+21, y+66, 16, 12, green);
+    fill_rect(r, x+28, y+66, 2, 12, outline);
+    fill_rect(r, x+21, y+72, 16, 2, outline);
+    for (int i = 0; i < 3; i++) {
+        fill_rect(r, x+78+i*7, y+68, 4, 6, herb);
+        fill_rect(r, x+79+i*7, y+74, 2, 7, herb);
+    }
+    fill_rect(r, x+80, y+83, 27, 3, timber);
+    fill_rect(r, x+83, y+78, 5, 5, glass);
+    fill_rect(r, x+84, y+81, 3, 4, purple);
+    fill_rect(r, x+92, y+76, 5, 7, glass);
+    fill_rect(r, x+93, y+80, 3, 5, green);
+    fill_rect(r, x+101,y+79, 5, 6, glass);
+    fill_rect(r, x+102,y+82, 3, 3, violet);
 }
 
 void draw_floor_item(Renderer *r, int tile_x, int tile_y) {
