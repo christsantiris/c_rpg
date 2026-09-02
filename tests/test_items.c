@@ -105,4 +105,7 @@ void test_items(void) {
     ASSERT("bow shot uses normal or critical damage",
         ranged_damage == equipped_attack ||
         ranged_damage == equipped_attack * 3 / 2);
+    ASSERT("arrow trail stops on its target", rogue.trail_count == 2);
+    ASSERT("arrow target is marked as impact",
+        rogue.trail[rogue.trail_count - 1].is_impact == 1);
 }
