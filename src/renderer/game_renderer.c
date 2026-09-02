@@ -19,8 +19,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_TOWN_FLOOR: draw_town_floor(r, sx, sy); break;
                 case TILE_TOWN_PATH: draw_town_path(r, sx, sy); break;
                 case TILE_TOWN_EXIT: draw_town_exit(r, sx, sy); break;
-                case TILE_SHOP_BLACKSMITH: draw_shop_blacksmith(r, sx, sy); break;
-                case TILE_SHOP_ALCHEMIST:  draw_shop_alchemist(r, sx, sy);  break;
+                case TILE_SHOP_BLACKSMITH:
+                case TILE_SHOP_ALCHEMIST: draw_town_floor(r, sx, sy); break;
                 case TILE_ITEM: draw_floor_item(r, sx, sy); break;
                 case TILE_TRAP_HIDDEN: draw_floor(r, sx, sy); break;
                 case TILE_TRAP_SPIKE: draw_trap_spike(r, sx, sy); break;
@@ -29,6 +29,14 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 default: draw_floor(r, sx, sy); break;
             }
         }
+    }
+
+    // Shops are coordinated 5x4 sprites; draw each once over its town cells.
+    if (g->location == LOCATION_TOWN) {
+        draw_shop_blacksmith(r,
+            viewport_to_screen_x(v, 7), viewport_to_screen_y(v, 7));
+        draw_shop_alchemist(r,
+            viewport_to_screen_x(v, 28), viewport_to_screen_y(v, 7));
     }
 
     // Draw enemies
@@ -58,9 +66,15 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     // Draw shop labels
     if (g->location == LOCATION_TOWN) {
         SDL_Color label = {220, 180, 60, 255};
-        int bx = viewport_to_screen_x(v, 9)  * TILE_SIZE;
+        int blacksmith_w = 0;
+        int alchemist_w = 0;
+        TTF_SizeText(r->font_tiny, "BLACKSMITH", &blacksmith_w, NULL);
+        TTF_SizeText(r->font_tiny, "ALCHEMIST", &alchemist_w, NULL);
+        int bx = viewport_to_screen_x(v, 7) * TILE_SIZE
+            + (5 * TILE_SIZE - blacksmith_w) / 2;
         int by = viewport_to_screen_y(v, 6)  * TILE_SIZE;
-        int ax = viewport_to_screen_x(v, 30) * TILE_SIZE;
+        int ax = viewport_to_screen_x(v, 28) * TILE_SIZE
+            + (5 * TILE_SIZE - alchemist_w) / 2;
         int ay = viewport_to_screen_y(v, 6)  * TILE_SIZE;
         if (bx > 0 && by > 0)
             renderer_draw_text(r, "BLACKSMITH", bx, by, label, r->font_tiny);

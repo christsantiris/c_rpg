@@ -104,3 +104,8 @@ Any new field added to `Player`, `GameState`, or any struct that is part of pers
 - Deserialized in `load_game()` in `src/systems/save_load.c`
 
 Omitting this causes data to silently reset to zero on load.
+
+
+## 8. Code Review
+
+Codex will review your output once you are done. 
