@@ -89,9 +89,9 @@ Item item_make_bow(void) {
     it.active       = 1;
     it.type         = ITEM_WEAPON;
     strncpy(it.name, "Bow", sizeof(it.name) - 1);
-    it.attack_bonus = 5;
+    it.attack_bonus = 3;
     it.is_ranged    = 1;
-    it.range        = 8;
+    it.range        = 6;
     it.value        = 35;
     return it;
 }

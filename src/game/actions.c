@@ -507,6 +507,17 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
+        for (int i = 0; i < g->enemy_count; i++) {
+            Enemy *e = &g->enemies[i];
+            if (!e->active) continue;
+            int dx = abs_int(e->x - g->player.x);
+            int dy = abs_int(e->y - g->player.y);
+            if (dx <= 1 && dy <= 1) {
+                push_message(g, "Too close to use bow!");
+                return;
+            }
+        }
+
         int hit = 0;
         for (int step = 1; step <= wpn->range && !hit; step++) {
             int tx = g->player.x + g->player.last_dx * step;
@@ -516,8 +527,11 @@ void action_resolve_player(GameState *g, Action a) {
                 Enemy *e = &g->enemies[i];
                 if (!e->active) continue;
                 if (e->x != tx || e->y != ty) continue;
+                if (step < 2) continue;
                 int dmg = g->player.attack - e->defense;
                 if (dmg < 1) dmg = 1;
+                int critical = rand() % 100 < 15;
+                if (critical) dmg = dmg * 3 / 2;
                 e->hp -= dmg;
                 char msg[MAX_MESSAGE_LEN];
                 if (e->hp <= 0) {
@@ -529,6 +543,9 @@ void action_resolve_player(GameState *g, Action a) {
                     drop_loot(g, e->x, e->y, e->type, e->is_boss);
                     player_gain_xp(g, e->experience);
                     snprintf(msg, sizeof(msg), "Attack killed %s!", e->name);
+                } else if (critical) {
+                    snprintf(msg, sizeof(msg), "Critical hit %s: %d dmg",
+                        e->name, dmg);
                 } else {
                     snprintf(msg, sizeof(msg), "Attack hit %s: %d dmg",
                         e->name, dmg);
@@ -558,7 +575,14 @@ void action_resolve_player(GameState *g, Action a) {
             if (!e->active) continue;
             if (e->x == tx && e->y == ty) {
                 // Melee attack
-                int dmg = g->player.attack - e->defense;
+                int melee_attack = g->player.attack;
+                if (g->equipped_weapon >= 0 &&
+                    g->equipped_weapon < g->inventory_count) {
+                    Item *wpn = &g->inventory[g->equipped_weapon];
+                    if (wpn->is_ranged)
+                        melee_attack -= wpn->attack_bonus;
+                }
+                int dmg = melee_attack - e->defense;
                 if (dmg < 1) dmg = 1;
                 e->hp -= dmg;
                 #ifndef TEST_BUILD
