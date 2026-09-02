@@ -383,6 +383,9 @@ void action_resolve_player(GameState *g, Action a) {
 
         // Set trail based on spell type
         if (sp->type == SPELL_TYPE_DAMAGE_RANGED) {
+            #ifndef TEST_BUILD
+            if (sp->id == SPELL_MAGIC_ARROW) sfx_play_magic_arrow();
+            #endif
             int ex = g->player.x + g->player.last_dx * sp->range;
             int ey = g->player.y + g->player.last_dy * sp->range;
             set_trail(g, g->player.x, g->player.y,
