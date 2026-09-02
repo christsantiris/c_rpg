@@ -5,6 +5,48 @@
 #include "minimap_renderer.h"
 #include "renderer.h"
 
+static void draw_weapon_arrow(Renderer *r, int tile_x, int tile_y,
+                              int dx, int dy, int impact) {
+    int cx = tile_x * TILE_SIZE + TILE_SIZE / 2;
+    int cy = tile_y * TILE_SIZE + TILE_SIZE / 2;
+    int px = -dy;
+    int py = dx;
+    int tail_x = cx - dx * 7;
+    int tail_y = cy - dy * 7;
+    int tip_x = cx + dx * 7;
+    int tip_y = cy + dy * 7;
+    int head_x = tip_x - dx * 4;
+    int head_y = tip_y - dy * 4;
+
+    SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(r->sdl, 18, 16, 24, 220);
+    SDL_RenderDrawLine(r->sdl, tail_x + px, tail_y + py,
+        tip_x + px, tip_y + py);
+    SDL_RenderDrawLine(r->sdl, tail_x - px, tail_y - py,
+        tip_x - px, tip_y - py);
+
+    SDL_SetRenderDrawColor(r->sdl, 142, 92, 46, 255);
+    SDL_RenderDrawLine(r->sdl, tail_x, tail_y, tip_x, tip_y);
+
+    SDL_SetRenderDrawColor(r->sdl, 210, 216, 220, 255);
+    SDL_RenderDrawLine(r->sdl, tip_x, tip_y,
+        head_x + px * 3, head_y + py * 3);
+    SDL_RenderDrawLine(r->sdl, tip_x, tip_y,
+        head_x - px * 3, head_y - py * 3);
+
+    SDL_SetRenderDrawColor(r->sdl, 172, 54, 42, 255);
+    SDL_RenderDrawLine(r->sdl, tail_x + dx * 2, tail_y + dy * 2,
+        tail_x + px * 3, tail_y + py * 3);
+    SDL_RenderDrawLine(r->sdl, tail_x + dx * 2, tail_y + dy * 2,
+        tail_x - px * 3, tail_y - py * 3);
+
+    if (impact) {
+        SDL_SetRenderDrawColor(r->sdl, 232, 196, 112, 210);
+        SDL_RenderDrawPoint(r->sdl, tip_x + px * 3, tip_y + py * 3);
+        SDL_RenderDrawPoint(r->sdl, tip_x - px * 3, tip_y - py * 3);
+    }
+}
+
 void game_draw(Renderer *r, GameState *g, Viewport *v) {
     // Draw map tiles
     for (int y = 0; y < MAP_H; y++) {
@@ -84,7 +126,22 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     // Draw spell/projectile trail
     if (g->trail_frames > 0) {
-        for (int i = 0; i < g->trail_count; i++) {
+        int weapon_trail = g->trail_count > 0 &&
+            g->trail[0].r == 160 && g->trail[0].g == 160 &&
+            g->trail[0].b == 160;
+        if (weapon_trail) {
+            int progress = 4 - g->trail_frames;
+            int lead = g->trail_count > 1
+                ? progress * (g->trail_count - 1) / 3 : 0;
+            TrailTile *t = &g->trail[lead];
+            if (t->active && viewport_is_visible(v, t->x, t->y)) {
+                draw_weapon_arrow(r,
+                    viewport_to_screen_x(v, t->x),
+                    viewport_to_screen_y(v, t->y),
+                    g->player.last_dx, g->player.last_dy,
+                    t->is_impact);
+            }
+        } else for (int i = 0; i < g->trail_count; i++) {
             TrailTile *t = &g->trail[i];
             if (!t->active) continue;
             if (!viewport_is_visible(v, t->x, t->y)) continue;

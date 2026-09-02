@@ -182,6 +182,7 @@ static void set_trail(GameState *g, int sx, int sy,
         t->g              = gr;
         t->b              = b;
         t->is_impact      = (cx == tx && cy == ty);
+        if (t->is_impact) break;
     }
 }
 
@@ -518,7 +519,13 @@ void action_resolve_player(GameState *g, Action a) {
             }
         }
 
+        #ifndef TEST_BUILD
+        sfx_play_arrow();
+        #endif
+
         int hit = 0;
+        int impact_x = g->player.x + g->player.last_dx * wpn->range;
+        int impact_y = g->player.y + g->player.last_dy * wpn->range;
         for (int step = 1; step <= wpn->range && !hit; step++) {
             int tx = g->player.x + g->player.last_dx * step;
             int ty = g->player.y + g->player.last_dy * step;
@@ -551,14 +558,13 @@ void action_resolve_player(GameState *g, Action a) {
                         e->name, dmg);
                 }
                 push_message(g, msg);
+                impact_x = tx;
+                impact_y = ty;
                 hit = 1;
             }
         }
-        // Gray trail for ranged weapon
-        int ex = g->player.x + g->player.last_dx * wpn->range;
-        int ey = g->player.y + g->player.last_dy * wpn->range;
         set_trail(g, g->player.x, g->player.y,
-            ex, ey,
+            impact_x, impact_y,
             g->player.last_dx, g->player.last_dy,
             wpn->range, 160, 160, 160);
         if (!hit) push_message(g, "Attack missed!");

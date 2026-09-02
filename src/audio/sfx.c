@@ -3,8 +3,10 @@
 #include <stdio.h>
 
 #define SFX_ATTACK "assets/sfx/knifeSlice2.ogg"
+#define SFX_ARROW  "assets/sfx/arrow.mp3"
 
 static Mix_Chunk *sfx_attack = NULL;
+static Mix_Chunk *sfx_arrow = NULL;
 static int sfx_on = 1;
 
 void sfx_init(void) {
@@ -12,6 +14,17 @@ void sfx_init(void) {
     if (!sfx_attack) {
         fprintf(stderr, "Failed to load attack sfx: %s\n", Mix_GetError());
     }
+    sfx_arrow = Mix_LoadWAV(SFX_ARROW);
+    if (!sfx_arrow) {
+        fprintf(stderr, "Failed to load arrow sfx: %s\n", Mix_GetError());
+    }
+}
+
+void sfx_play_arrow(void) {
+    if (!sfx_arrow || !sfx_on) {
+        return;
+    }
+    Mix_PlayChannel(-1, sfx_arrow, 0);
 }
 
 void sfx_play_attack(void) {
@@ -33,5 +46,9 @@ void sfx_free(void) {
     if (sfx_attack) {
         Mix_FreeChunk(sfx_attack);
     }
+    if (sfx_arrow) {
+        Mix_FreeChunk(sfx_arrow);
+    }
     sfx_attack = NULL;
+    sfx_arrow = NULL;
 }
