@@ -27,19 +27,55 @@ void draw_wall(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 2, y + 8, TILE_SIZE - 4, 1,             seam);
 }
 
-void draw_player(Renderer *r, int tile_x, int tile_y) {
+void draw_player(Renderer *r, int tile_x, int tile_y, PlayerClass player_class) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color body  = {60,  100, 220, 255};
-    SDL_Color head  = {200, 160, 120, 255};
-    SDL_Color sword = {190, 190, 210, 255};
+    SDL_Color outline = {16, 18, 30, 255};
+    SDL_Color skin = {210, 158, 112, 255};
+    SDL_Color leather = {78, 48, 30, 255};
+    SDL_Color steel = {184, 194, 204, 255};
 
-    // body
-    fill_rect(r, x + 7,  y + 11, 10, 10, body);
-    // head
-    fill_rect(r, x + 8,  y + 4,  8,  7,  head);
-    // sword
-    fill_rect(r, x + 17, y + 7,  2,  9,  sword);
+    if (player_class == CLASS_MAGE) {
+        SDL_Color robe = {42, 74, 154, 255};
+        SDL_Color robe_hi = {72, 112, 220, 255};
+        SDL_Color magic = {62, 224, 232, 255};
+        fill_rect(r, x+7, y+3, 10, 3, outline);
+        fill_rect(r, x+5, y+6, 14, 7, robe);
+        fill_rect(r, x+8, y+6, 8, 6, skin);
+        fill_rect(r, x+6, y+12, 12, 9, robe);
+        fill_rect(r, x+9, y+13, 6, 7, robe_hi);
+        fill_rect(r, x+5, y+20, 5, 2, outline);
+        fill_rect(r, x+14,y+20, 5, 2, outline);
+        fill_rect(r, x+2, y+7, 2, 14, leather);
+        fill_rect(r, x+1, y+4, 4, 4, magic);
+        fill_rect(r, x+2, y+3, 2, 2, (SDL_Color){188, 255, 250, 255});
+    } else if (player_class == CLASS_ROGUE) {
+        SDL_Color hood = {48, 88, 56, 255};
+        SDL_Color cloth = {72, 104, 62, 255};
+        fill_rect(r, x+6, y+3, 12, 3, hood);
+        fill_rect(r, x+5, y+6, 14, 7, hood);
+        fill_rect(r, x+8, y+7, 8, 5, skin);
+        fill_rect(r, x+6, y+12, 12, 8, cloth);
+        fill_rect(r, x+9, y+12, 3, 8, leather);
+        fill_rect(r, x+5, y+20, 5, 2, outline);
+        fill_rect(r, x+14,y+20, 5, 2, outline);
+        fill_rect(r, x+19,y+6, 2, 13, leather);
+        fill_rect(r, x+17,y+5, 4, 2, leather);
+        fill_rect(r, x+17,y+18,4, 2, leather);
+        fill_rect(r, x+18,y+8, 1, 9, steel);
+    } else {
+        SDL_Color blue = {48, 86, 184, 255};
+        fill_rect(r, x+7, y+3, 10, 8, skin);
+        fill_rect(r, x+6, y+2, 12, 3, steel);
+        fill_rect(r, x+5, y+10, 14, 10, blue);
+        fill_rect(r, x+5, y+10, 4, 7, steel);
+        fill_rect(r, x+15,y+10, 4, 7, steel);
+        fill_rect(r, x+8, y+20, 4, 2, outline);
+        fill_rect(r, x+14,y+20, 4, 2, outline);
+        fill_rect(r, x+20,y+3, 2, 15, steel);
+        fill_rect(r, x+19,y+2, 4, 3, (SDL_Color){224, 230, 232, 255});
+        fill_rect(r, x+18,y+17,5, 2, leather);
+    }
 }
 
 void draw_stairs_up(Renderer *r, int tile_x, int tile_y) {
@@ -75,14 +111,19 @@ void draw_stairs_down(Renderer *r, int tile_x, int tile_y) {
 void draw_goblin(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color body = { 40, 160,  40, 255};
-    SDL_Color eye  = {220, 220,   0, 255};
-    SDL_Color mouth= {180,  40,  40, 255};
-    fill_rect(r, x+6,  y+4,  12, 10, body);
-    fill_rect(r, x+5,  y+12, 14,  8, body);
-    fill_rect(r, x+7,  y+7,   2,  2, eye);
-    fill_rect(r, x+13, y+7,   2,  2, eye);
-    fill_rect(r, x+8,  y+11,  6,  1, mouth);
+    SDL_Color skin = {78, 142, 38, 255};
+    SDL_Color dark = {28, 48, 26, 255};
+    SDL_Color cloth = {92, 58, 30, 255};
+    fill_rect(r, x+4, y+6, 16, 3, skin);
+    fill_rect(r, x+7, y+4, 10, 9, skin);
+    fill_rect(r, x+8, y+7, 2, 2, (SDL_Color){232, 186, 38, 255});
+    fill_rect(r, x+14,y+7, 2, 2, (SDL_Color){232, 186, 38, 255});
+    fill_rect(r, x+7, y+13, 10, 7, cloth);
+    fill_rect(r, x+4, y+14, 3, 5, skin);
+    fill_rect(r, x+17,y+13, 3, 6, skin);
+    fill_rect(r, x+7, y+20, 4, 2, dark);
+    fill_rect(r, x+14,y+20, 4, 2, dark);
+    fill_rect(r, x+19,y+10, 2, 8, (SDL_Color){174, 184, 188, 255});
 }
 
 void draw_skeleton(Renderer *r, int tile_x, int tile_y) {
@@ -90,160 +131,200 @@ void draw_skeleton(Renderer *r, int tile_x, int tile_y) {
     int y = tile_y * TILE_SIZE;
     SDL_Color bone  = {210, 210, 190, 255};
     SDL_Color dark  = { 18,  18,  35, 255};
-    fill_rect(r, x+7,  y+3,  10,  9, bone);
-    fill_rect(r, x+6,  y+12, 12,  8, bone);
-    fill_rect(r, x+8,  y+6,   2,  2, dark);
-    fill_rect(r, x+13, y+6,   2,  2, dark);
-    fill_rect(r, x+9,  y+10,  5,  1, dark);
+    fill_rect(r, x+7, y+3, 10, 9, bone);
+    fill_rect(r, x+8, y+6, 2, 2, dark);
+    fill_rect(r, x+14,y+6, 2, 2, dark);
+    fill_rect(r, x+10,y+10,4, 2, dark);
+    fill_rect(r, x+11,y+12,3, 8, bone);
+    fill_rect(r, x+7, y+14,10, 2, bone);
+    fill_rect(r, x+7, y+17,10, 2, bone);
+    fill_rect(r, x+7, y+19,3, 4, bone);
+    fill_rect(r, x+15,y+19,3, 4, bone);
+    fill_rect(r, x+2, y+9, 2, 12, (SDL_Color){174, 184, 192, 255});
+    fill_rect(r, x+1, y+8, 4, 3, (SDL_Color){212, 218, 220, 255});
+    fill_rect(r, x+18,y+12,5, 8, (SDL_Color){92, 62, 38, 255});
+    fill_rect(r, x+19,y+13,3, 6, (SDL_Color){132, 132, 132, 255});
 }
 
 void draw_orc(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color body = { 80, 120,  40, 255};
-    SDL_Color eye  = {220,  20,  20, 255};
-    SDL_Color tusk = {220, 200, 160, 255};
-    fill_rect(r, x+5,  y+3,  14, 12, body);
-    fill_rect(r, x+4,  y+13, 16,  7, body);
-    fill_rect(r, x+7,  y+7,   2,  2, eye);
-    fill_rect(r, x+13, y+7,   2,  2, eye);
-    fill_rect(r, x+8,  y+13,  2,  3, tusk);
-    fill_rect(r, x+13, y+13,  2,  3, tusk);
+    SDL_Color skin = {92, 116, 48, 255};
+    SDL_Color dark = {30, 38, 26, 255};
+    SDL_Color armor = {82, 82, 86, 255};
+    fill_rect(r, x+6, y+3, 12, 10, skin);
+    fill_rect(r, x+5, y+5, 2, 5, skin);
+    fill_rect(r, x+17,y+5, 2, 5, skin);
+    fill_rect(r, x+8, y+7, 2, 2, (SDL_Color){232, 166, 34, 255});
+    fill_rect(r, x+14,y+7, 2, 2, (SDL_Color){232, 166, 34, 255});
+    fill_rect(r, x+8, y+11,2, 3, (SDL_Color){224, 210, 170, 255});
+    fill_rect(r, x+15,y+11,2, 3, (SDL_Color){224, 210, 170, 255});
+    fill_rect(r, x+4, y+13,16, 7, armor);
+    fill_rect(r, x+8, y+14,8, 6, (SDL_Color){84, 48, 28, 255});
+    fill_rect(r, x+5, y+20,5, 3, dark);
+    fill_rect(r, x+15,y+20,5, 3, dark);
+    fill_rect(r, x+20,y+7, 3, 13, (SDL_Color){172, 180, 182, 255});
 }
 
 void draw_troll(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color body = { 60,  90,  60, 255};
-    SDL_Color eye  = {255, 140,   0, 255};
-    SDL_Color club = {120,  80,  40, 255};
-    fill_rect(r, x+4,  y+2,  16, 14, body);
-    fill_rect(r, x+3,  y+14, 18,  6, body);
-    fill_rect(r, x+7,  y+6,   3,  3, eye);
-    fill_rect(r, x+13, y+6,   3,  3, eye);
-    fill_rect(r, x+18, y+8,   3,  10, club);
+    SDL_Color skin = {72, 94, 58, 255};
+    SDL_Color shade = {42, 56, 40, 255};
+    fill_rect(r, x+5, y+3, 14, 10, skin);
+    fill_rect(r, x+7, y+6, 3, 2, (SDL_Color){224, 154, 36, 255});
+    fill_rect(r, x+14,y+6, 3, 2, (SDL_Color){224, 154, 36, 255});
+    fill_rect(r, x+3, y+12,18, 8, skin);
+    fill_rect(r, x+2, y+13,4, 8, skin);
+    fill_rect(r, x+18,y+12,4, 9, skin);
+    fill_rect(r, x+8, y+13,8, 7, (SDL_Color){90, 58, 32, 255});
+    fill_rect(r, x+4, y+20,6, 3, shade);
+    fill_rect(r, x+15,y+20,6, 3, shade);
+    fill_rect(r, x+20,y+5, 3, 15, (SDL_Color){104, 76, 48, 255});
+    fill_rect(r, x+19,y+4, 5, 6, (SDL_Color){126, 126, 116, 255});
 }
 
 void draw_zombie(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color body  = { 80, 110,  60, 255};
-    SDL_Color skin  = {140, 160, 100, 255};
-    SDL_Color eye   = {220,  20,  20, 255};
-    SDL_Color wound = {160,  30,  30, 255};
-    fill_rect(r, x+6,  y+11, 12, 10, body);
-    fill_rect(r, x+7,  y+4,  10,  7, skin);
-    fill_rect(r, x+8,  y+7,   2,  2, eye);
-    fill_rect(r, x+14, y+7,   2,  2, eye);
-    fill_rect(r, x+9,  y+10,  6,  1, wound);
-    fill_rect(r, x+4,  y+13,  3,  6, skin);
-    fill_rect(r, x+17, y+13,  3,  6, skin);
+    SDL_Color skin = {132, 146, 108, 255};
+    SDL_Color cloth = {100, 48, 54, 255};
+    SDL_Color dark = {42, 34, 42, 255};
+    fill_rect(r, x+8, y+3, 10, 9, skin);
+    fill_rect(r, x+7, y+5, 2, 6, skin);
+    fill_rect(r, x+10,y+6, 2, 2, (SDL_Color){214, 198, 90, 255});
+    fill_rect(r, x+15,y+7, 2, 2, dark);
+    fill_rect(r, x+7, y+12,12, 9, cloth);
+    fill_rect(r, x+3, y+11,4, 3, skin);
+    fill_rect(r, x+18,y+14,4, 3, skin);
+    fill_rect(r, x+8, y+20,4, 3, dark);
+    fill_rect(r, x+15,y+20,4, 3, dark);
+    fill_rect(r, x+11,y+14,6, 2, (SDL_Color){150, 48, 48, 255});
 }
 
 void draw_giant(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color body  = { 90,  70,  50, 255};
-    SDL_Color skin  = {160, 120,  80, 255};
-    SDL_Color eye   = {255, 160,   0, 255};
-    SDL_Color club  = {100,  60,  20, 255};
-    fill_rect(r, x+3,  y+2,  18, 16, body);
-    fill_rect(r, x+6,  y+4,  12,  8, skin);
-    fill_rect(r, x+7,  y+6,   3,  3, eye);
-    fill_rect(r, x+14, y+6,   3,  3, eye);
-    fill_rect(r, x+2,  y+10,  3, 10, body);
-    fill_rect(r, x+19, y+10,  3, 10, body);
-    fill_rect(r, x+20, y+6,   3, 14, club);
-    fill_rect(r, x+19, y+6,   4,  3, club);
+    SDL_Color skin = {166, 122, 82, 255};
+    SDL_Color shade = {104, 72, 50, 255};
+    fill_rect(r, x+5, y+2, 14, 10, skin);
+    fill_rect(r, x+8, y+5, 2, 2, (SDL_Color){34, 28, 28, 255});
+    fill_rect(r, x+15,y+5, 2, 2, (SDL_Color){34, 28, 28, 255});
+    fill_rect(r, x+3, y+11,18, 10, skin);
+    fill_rect(r, x+1, y+12,4, 9, skin);
+    fill_rect(r, x+19,y+11,4, 10, skin);
+    fill_rect(r, x+7, y+13,10, 8, (SDL_Color){92, 62, 38, 255});
+    fill_rect(r, x+4, y+20,6, 3, shade);
+    fill_rect(r, x+15,y+20,6, 3, shade);
+    fill_rect(r, x+20,y+3, 3, 17, (SDL_Color){92, 58, 30, 255});
+    fill_rect(r, x+19,y+2, 5, 6, (SDL_Color){116, 76, 40, 255});
 }
 
 void draw_goblin_king(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color body  = { 60, 120,  40, 255};
-    SDL_Color crown = {220, 180,  40, 255};
-    SDL_Color eye   = {255,   0,   0, 255};
-    fill_rect(r, x+4,  y+8,  16, 14, body);
-    fill_rect(r, x+7,  y+4,  10, 8,  body);
-    fill_rect(r, x+6,  y+2,  12, 4,  crown);
-    fill_rect(r, x+8,  y,    3,  4,  crown);
-    fill_rect(r, x+13, y,    3,  4,  crown);
-    fill_rect(r, x+8,  y+7,  3,  3,  eye);
-    fill_rect(r, x+13, y+7,  3,  3,  eye);
+    SDL_Color skin = {82, 128, 38, 255};
+    SDL_Color crown = {230, 184, 42, 255};
+    SDL_Color cloak = {132, 34, 42, 255};
+    fill_rect(r, x+5, y+1, 14, 4, crown);
+    fill_rect(r, x+6, y, 3, 3, crown);
+    fill_rect(r, x+11,y, 3, 3, crown);
+    fill_rect(r, x+16,y, 3, 3, crown);
+    fill_rect(r, x+4, y+7, 16, 3, skin);
+    fill_rect(r, x+7, y+4, 10, 9, skin);
+    fill_rect(r, x+8, y+7, 2, 2, (SDL_Color){250, 56, 36, 255});
+    fill_rect(r, x+14,y+7, 2, 2, (SDL_Color){250, 56, 36, 255});
+    fill_rect(r, x+3, y+12,18, 9, cloak);
+    fill_rect(r, x+7, y+13,10, 8, (SDL_Color){72, 50, 28, 255});
+    fill_rect(r, x+5, y+20,5, 3, (SDL_Color){26, 34, 24, 255});
+    fill_rect(r, x+15,y+20,5, 3, (SDL_Color){26, 34, 24, 255});
+    fill_rect(r, x+20,y+8, 2, 12, (SDL_Color){194, 202, 204, 255});
 }
 
 void draw_lich_king(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color robe  = { 40,  20,  80, 255};
-    SDL_Color bone  = {200, 200, 180, 255};
-    SDL_Color crown = {140,  60, 200, 255};
-    SDL_Color glow  = {160,  80, 255, 255};
-    fill_rect(r, x+4,  y+8,  16, 14, robe);
-    fill_rect(r, x+7,  y+4,  10, 8,  bone);
-    fill_rect(r, x+6,  y+2,  12, 3,  crown);
-    fill_rect(r, x+8,  y+6,  3,  3,  glow);
-    fill_rect(r, x+13, y+6,  3,  3,  glow);
-    fill_rect(r, x+3,  y+10, 4,  2,  bone);
-    fill_rect(r, x+17, y+10, 4,  2,  bone);
+    SDL_Color robe = {42, 24, 76, 255};
+    SDL_Color bone = {208, 204, 170, 255};
+    SDL_Color glow = {142, 80, 248, 255};
+    fill_rect(r, x+7, y+1, 10, 4, (SDL_Color){92, 76, 120, 255});
+    fill_rect(r, x+8, y, 2, 3, bone);
+    fill_rect(r, x+14,y, 2, 3, bone);
+    fill_rect(r, x+7, y+4, 10, 8, bone);
+    fill_rect(r, x+9, y+6, 2, 2, glow);
+    fill_rect(r, x+14,y+6, 2, 2, glow);
+    fill_rect(r, x+5, y+12,14, 9, robe);
+    fill_rect(r, x+3, y+14,4, 8, robe);
+    fill_rect(r, x+17,y+14,4, 8, robe);
+    fill_rect(r, x+4, y+21,5, 2, robe);
+    fill_rect(r, x+15,y+21,5, 2, robe);
+    fill_rect(r, x+2, y+7, 2, 14, bone);
+    fill_rect(r, x+1, y+3, 4, 5, glow);
+    fill_rect(r, x+2, y+1, 2, 3, (SDL_Color){206, 166, 255, 255});
 }
 
 void draw_demon_lord(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color body  = {140,  20,  20, 255};
-    SDL_Color horn  = {100,  10,  10, 255};
-    SDL_Color eye   = {255, 200,   0, 255};
-    SDL_Color wing  = { 80,  10,  10, 255};
-    fill_rect(r, x+4,  y+6,  16, 16, body);
-    fill_rect(r, x+7,  y+3,  10, 8,  body);
-    fill_rect(r, x+6,  y,    4,  6,  horn);
-    fill_rect(r, x+14, y,    4,  6,  horn);
-    fill_rect(r, x+8,  y+5,  3,  3,  eye);
-    fill_rect(r, x+13, y+5,  3,  3,  eye);
-    fill_rect(r, x,    y+8,  4,  8,  wing);
-    fill_rect(r, x+20, y+8,  4,  8,  wing);
+    SDL_Color body = {142, 38, 34, 255};
+    SDL_Color dark = {54, 20, 26, 255};
+    SDL_Color horn = {126, 116, 94, 255};
+    fill_rect(r, x, y+7, 5, 12, dark);
+    fill_rect(r, x+19,y+7,5, 12, dark);
+    fill_rect(r, x+5, y+2, 4, 6, horn);
+    fill_rect(r, x+15,y+2,4, 6, horn);
+    fill_rect(r, x+7, y, 2, 4, horn);
+    fill_rect(r, x+15,y, 2, 4, horn);
+    fill_rect(r, x+6, y+5,12, 9, body);
+    fill_rect(r, x+8, y+8,2, 2, (SDL_Color){248, 160, 28, 255});
+    fill_rect(r, x+14,y+8,2, 2, (SDL_Color){248, 160, 28, 255});
+    fill_rect(r, x+4, y+13,16, 8, body);
+    fill_rect(r, x+8, y+14,8, 6, dark);
+    fill_rect(r, x+4, y+20,6, 3, dark);
+    fill_rect(r, x+15,y+20,6, 3, dark);
 }
 
 void draw_red_dragon(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color body  = {180,  30,  10, 255};
-    SDL_Color scale = {140,  20,   5, 255};
-    SDL_Color eye   = {255, 220,   0, 255};
-    SDL_Color wing  = {120,  15,   5, 255};
-    SDL_Color flame = {255, 140,   0, 255};
-    fill_rect(r, x+3,  y+6,  18, 14, body);
-    fill_rect(r, x+6,  y+3,  12, 8,  body);
-    fill_rect(r, x+4,  y+8,  16, 2,  scale);
-    fill_rect(r, x+4,  y+12, 16, 2,  scale);
-    fill_rect(r, x+8,  y+5,  3,  3,  eye);
-    fill_rect(r, x+13, y+5,  3,  3,  eye);
-    fill_rect(r, x,    y+4,  4,  10, wing);
-    fill_rect(r, x+20, y+4,  4,  10, wing);
-    fill_rect(r, x+10, y+16, 4,  6,  flame);
-    fill_rect(r, x+9,  y+19, 6,  3,  flame);
+    SDL_Color body = {174, 42, 24, 255};
+    SDL_Color dark = {92, 24, 20, 255};
+    SDL_Color gold = {224, 154, 42, 255};
+    fill_rect(r, x, y+6, 5, 12, dark);
+    fill_rect(r, x+19,y+6,5, 12, dark);
+    fill_rect(r, x+6, y+3,12, 9, body);
+    fill_rect(r, x+7, y+1,3, 4, (SDL_Color){196, 174, 126, 255});
+    fill_rect(r, x+14,y+1,3, 4, (SDL_Color){196, 174, 126, 255});
+    fill_rect(r, x+8, y+6,2, 2, gold);
+    fill_rect(r, x+14,y+6,2, 2, gold);
+    fill_rect(r, x+5, y+11,14, 10, body);
+    fill_rect(r, x+9, y+12,6, 9, gold);
+    fill_rect(r, x+4, y+20,6, 3, dark);
+    fill_rect(r, x+15,y+20,6, 3, dark);
+    fill_rect(r, x+19,y+18,4, 2, body);
+    fill_rect(r, x+21,y+16,2, 3, body);
+    fill_rect(r, x+1, y+18,3, 3, (SDL_Color){255, 110, 16, 255});
+    fill_rect(r, x, y+20,2, 2, (SDL_Color){255, 210, 54, 255});
 }
 
 void draw_tarrasque(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color body  = { 60,  40,  20, 255};
-    SDL_Color shell = { 80,  60,  30, 255};
-    SDL_Color eye   = {255,   0,   0, 255};
-    SDL_Color spike = { 40,  20,  10, 255};
-    SDL_Color claw  = {120, 100,  50, 255};
-    fill_rect(r, x+2,  y+4,  20, 18, body);
-    fill_rect(r, x+4,  y+2,  16, 18, shell);
-    fill_rect(r, x+6,  y,    4,  4,  spike);
-    fill_rect(r, x+14, y,    4,  4,  spike);
-    fill_rect(r, x+10, y+1,  4,  3,  spike);
-    fill_rect(r, x+7,  y+5,  4,  4,  eye);
-    fill_rect(r, x+13, y+5,  4,  4,  eye);
-    fill_rect(r, x,    y+12, 4,  6,  claw);
-    fill_rect(r, x+20, y+12, 4,  6,  claw);
-    fill_rect(r, x+4,  y+20, 4,  4,  claw);
-    fill_rect(r, x+16, y+20, 4,  4,  claw);
+    SDL_Color body = {78, 58, 36, 255};
+    SDL_Color shell = {112, 88, 52, 255};
+    SDL_Color spike = {176, 156, 112, 255};
+    fill_rect(r, x+3, y+4, 18, 15, shell);
+    fill_rect(r, x+5, y+2, 4, 5, spike);
+    fill_rect(r, x+10,y, 4, 6, spike);
+    fill_rect(r, x+16,y+2,4, 5, spike);
+    fill_rect(r, x+5, y+9, 14, 11, body);
+    fill_rect(r, x+7, y+9, 3, 2, (SDL_Color){238, 48, 26, 255});
+    fill_rect(r, x+15,y+9, 3, 2, (SDL_Color){238, 48, 26, 255});
+    fill_rect(r, x+10,y+12,5, 5, (SDL_Color){48, 36, 28, 255});
+    fill_rect(r, x, y+14,6, 7, body);
+    fill_rect(r, x+18,y+14,6, 7, body);
+    fill_rect(r, x+1, y+20,7, 3, spike);
+    fill_rect(r, x+16,y+20,7, 3, spike);
 }
 
 void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
