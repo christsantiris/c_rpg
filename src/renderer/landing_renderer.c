@@ -71,9 +71,12 @@ void landing_draw(Renderer *r, const LandingScreen *s) {
     // Confirm new game prompt
     if (s->confirming_new_game) {
         SDL_Color white = {200, 200, 200, 255};
-        renderer_draw_text(r, "START NEW GAME? (Y/N)",
-            (r->screen_w / 2) - 160,
-            (r->screen_h / 2) + 160,
+        const char *prompt = "START NEW GAME? (Y/N)";
+        int prompt_w = 0;
+        TTF_SizeText(r->font_small, prompt, &prompt_w, NULL);
+        renderer_draw_text(r, prompt,
+            (r->screen_w - prompt_w) / 2,
+            (r->screen_h / 2) - 60,
             white, r->font_small);
     }
 }

@@ -118,7 +118,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     // Draw player
     draw_player(r,
         viewport_to_screen_x(v, g->player.x),
-        viewport_to_screen_y(v, g->player.y));
+        viewport_to_screen_y(v, g->player.y),
+        g->player.player_class);
 
     // Draw info panel
     info_panel_draw(r, g);
