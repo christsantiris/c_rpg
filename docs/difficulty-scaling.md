@@ -1,131 +1,135 @@
-# Difficulty Scaling
+# Dungeon Difficulty Scaling
 
-This document describes the current difficulty progression as implemented. The
-dungeon floor and the player's character level are separate values and scale
-different parts of the game.
+The castle dungeon is a short, self-contained undead region. Future regions
+such as the Haunted Forest maintain their own progression rather than extending
+dungeon depth.
 
-## Dungeon Floors
+## Dungeon Structure
 
-The dungeon contains 25 floors (`MAX_DEPTH`). Entering a new, uncached floor
-generates a new map and enemy roster. Previously visited floors are cached, so
-returning to one restores its map, enemies, and cleared state instead of
-generating a newly scaled version.
+The dungeon contains five floors (`MAX_DEPTH`). New floors generate a map and
+enemy roster. Previously visited floors are cached, preserving their map,
+enemies, and cleared state.
 
-The player must defeat every active enemy on the current floor before using the
-stairs down. Descending awards `floor * 100` score after advancing to the next
-floor.
+The player must defeat every active enemy before using an exit. Floors 1-4 use
+down stairs. Descending awards `new floor * 100` score.
+
+Floor 5 is the Lich King's finale. Clearing it changes the down stairs into a
+glowing return passage. Using that passage returns the player directly to the
+north road in town, preserves dungeon progress, awards completion score, and
+never creates a sixth dungeon floor.
+
+The Lich King begins inside a sealed, single-entrance chamber behind a locked
+door. No regular enemy can spawn in that room, and the Lich remains completely
+dormant until the player unlocks the door and enters the chamber. A golden key
+is always visible at the center of the penultimate room. Stand on the key and
+press `P` to collect it; walking into the locked door then consumes the key and
+opens the boss room. The player does not need to clear every regular enemy.
+
+Every new character starts with a Scroll: Return to Town. Learning and casting
+its zero-MP spell from the dungeon opens a portal in town and transports the
+player there. Entering that portal returns the player to the exact dungeon tile
+where the spell was cast, then closes the portal. This lets the player prepare
+for the boss without replaying the dungeon route.
 
 ## Enemy Count
-
-Each floor requests:
 
 ```text
 enemy count = min(10 + dungeon floor, MAX_ENEMIES)
 ```
 
-`MAX_ENEMIES` is currently 15, giving the following intended counts:
+`MAX_ENEMIES` is 15:
 
-| Floors | Regular enemies | Bosses | Total enemies |
+| Floor | Regular enemies | Bosses | Total enemies |
 | --- | ---: | ---: | ---: |
 | 1 | 11 | 0 | 11 |
 | 2 | 12 | 0 | 12 |
 | 3 | 13 | 0 | 13 |
 | 4 | 14 | 0 | 14 |
-| Non-boss floors 5-25 | 15 | 0 | 15 |
-| Boss floors 5, 10, 15, 20, 25 | 14 | 1 | 15 |
+| 5 | 14 | 1 | 15 |
 
-## Enemy Composition
+## Undead Composition
 
-Enemy stats do not receive a per-floor multiplier. Difficulty increases by
-replacing early creatures with stronger enemy types.
+Goblins and the Goblin King are reserved for a future mountain region.
 
-| Floors | Enemy distribution |
+| Floor | Enemy distribution |
 | --- | --- |
-| 1-2 | 60% Skeleton, 40% Goblin |
-| 3-4 | 30% Skeleton, 40% Goblin, 30% Zombie |
-| 5-6 | 20% Goblin, 40% Zombie, 40% Orc |
-| 7-8 | 20% Zombie, 40% Orc, 40% Troll |
-| 9-10 | 20% Orc, 40% Troll, 40% Giant |
-| 11-25 | 50% Troll, 50% Giant |
-
-Regular enemy base stats are fixed:
+| 1 | 100% Skeleton |
+| 2 | 50% Skeleton, 30% Zombie, 20% Crypt Bat |
+| 3 | 30% Skeleton, 35% Zombie, 20% Crypt Bat, 15% Wraith |
+| 4 | 20% Skeleton, 35% Zombie, 15% Crypt Bat, 20% Wraith, 10% Necromancer |
+| 5 | 15% Skeleton, 30% Zombie, 15% Crypt Bat, 20% Wraith, 20% Necromancer, plus the Lich King |
 
 | Enemy | HP | Attack | Defense | XP |
 | --- | ---: | ---: | ---: | ---: |
 | Skeleton | 10 | 3 | 0 | 8 |
-| Goblin | 15 | 4 | 1 | 10 |
 | Zombie | 22 | 6 | 1 | 14 |
-| Orc | 25 | 7 | 2 | 20 |
-| Troll | 40 | 10 | 4 | 30 |
-| Giant | 60 | 14 | 6 | 50 |
+| Crypt Bat | 7 | 4 | 0 | 10 |
+| Wraith | 18 | 7 | 2 | 22 |
+| Necromancer | 24 | 7 | 1 | 35 |
 
-Zombies move every other enemy turn. Other regular enemies move every turn.
-All enemies attack when adjacent to the player, including diagonally. Damage is
-`attack - defense`, with a minimum of 1.
+Enemy roles:
 
-## Boss Floors
+- Skeletons are predictable melee pursuers.
+- Zombies move every other enemy turn but are more durable.
+- Crypt Bats move up to two tiles per turn but do not attack after their second
+  movement step.
+- Wraiths obey normal wall collision. Their melee attack ignores half of player
+  defense and drains up to 3 MP.
+- Necromancers fire a defense-piercing bolt along a clear orthogonal line every
+  second turn. Every fourth turn they first attempt to revive a fallen Skeleton
+  in an open tile beside them.
 
-Bosses are intended to spawn every five floors:
+All enemies use adjacent melee attacks, including diagonally. Ordinary damage
+is `attack - defense`, with a minimum of 1.
+
+## Final Boss
 
 | Floor | Boss | HP | Attack | Defense | XP |
 | --- | --- | ---: | ---: | ---: | ---: |
-| 5 | Goblin King | 100 | 15 | 5 | 200 |
-| 10 | Lich King | 200 | 25 | 10 | 400 |
-| 15 | Demon Lord | 350 | 38 | 15 | 700 |
-| 20 | Red Dragon | 500 | 55 | 22 | 1,200 |
-| 25 | Tarrasque | 800 | 80 | 35 | 2,000 |
+| 5 | Lich King | 140 | 18 | 6 | 400 |
 
-Bosses guarantee an equipment drop. The drop is either a level-appropriate
-weapon or chain mail.
+The Lich King is spawned before regular enemies, reserving its place under the
+enemy cap. Once engaged, it holds position in the chamber and launches a
+necrotic bolt every other turn, with a visible warning on its recovery turn.
+It guarantees either a level-appropriate weapon or Chain Mail.
 
-Bosses are spawned before regular enemies, reserving their place in the floor's
-enemy capacity. Regular enemies then fill the remaining slots up to
-`MAX_ENEMIES`, so every boss floor contains its scheduled boss.
-
-## Traps and Map Generation
-
-Each newly generated floor requests:
+## Traps and Maps
 
 ```text
-trap count = min(2 + dungeon floor, 12)
+trap count = 2 + dungeon floor
 ```
 
-This ranges from three traps on floor 1 to the maximum of 12 from floor 10
-onward. Placement can yield fewer traps if a chosen tile is unsuitable.
+This gives three traps on floor 1 and seven on floor 5. Placement can yield
+fewer traps when a selected tile is unsuitable.
 
-The dungeon layout currently does not scale by floor. `map_generate()` accepts
-the floor number but only uses it for trap count. Every floor otherwise uses
-the same ranges of 6-10 rooms, room dimensions, and map dimensions.
+Layouts use 6-10 rooms with fixed room-size ranges. Floor number affects traps
+and encounters, but not room geometry.
 
 ## Player Progression
 
-Enemies award fixed XP based on type. On gaining a character level:
+On gaining a character level:
 
-- Maximum HP increases by 10.
-- HP is completely restored.
+- Maximum HP increases by 10 and HP is restored.
 - Attack increases by 2.
-- Defense increases by 1, capped at half of the player's attack.
+- Defense increases by 1, capped at half the player's attack.
 - The next XP requirement becomes `player level * 100`.
 
 Damage and healing spells add `player level * 2` to their base effect. Player
-level is capped at 50.
+progress persists across future regions.
 
 ## Loot Progression
 
 Non-boss enemies have a 20% gold-drop chance and a separate 5% item-drop
-chance. Item tables change at floors 4 and 7:
+chance:
 
 - Floors 1-3 emphasize potions and basic scrolls.
-- Floors 4-6 introduce weapons, leather armor, healing, and rare fireballs.
-- Floors 7-25 increase weapon and fireball availability.
-
-Weapon selection similarly advances from basic swords on floors 1-3, expands
-on floors 4-6, and uses the full weapon pool from floor 7 onward.
+- Floors 4-5 introduce weapons, Leather Armor, healing, and rare Fireballs.
+- The weapon pool expands to Short Swords, Long Swords, and Bows on floors 4-5.
 
 ## Current Curve Summary
 
-Difficulty climbs most strongly through floor 10 due to rising enemy count,
-stronger enemy composition, and additional traps. From floor 11 onward, the
-regular encounter curve plateaus at 15 Trolls/Giants and 12 traps. Boss floors
-are intended to provide the remaining major difficulty spikes, subject to the
-known enemy-cap issue above.
+Difficulty rises over five floors through increasing enemy count, new tactical
+roles, and additional traps. Bats add speed, Wraiths undermine heavy armor and
+mana reserves, and Necromancers create ranged pressure and target priority. Floor
+5 combines the complete roster with the Lich King before returning the player
+to town.

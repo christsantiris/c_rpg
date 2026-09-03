@@ -42,6 +42,7 @@ Item item_make_armor(const char *name, int defense_bonus, int value);
 Item item_make_scroll_magic_arrow(void);
 Item item_make_scroll_fireball(void);
 Item item_make_scroll_heal(void);
+Item item_make_scroll_return_to_town(void);
 
 Item item_make_rusty_sword(void);
 Item item_make_short_sword(void);

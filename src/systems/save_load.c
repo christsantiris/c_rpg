@@ -134,6 +134,7 @@ static cJSON *serialize_enemies(const Enemy *enemies, int count) {
         cJSON_AddNumberToObject(obj, "defense",    e->defense);
         cJSON_AddNumberToObject(obj, "experience", e->experience);
         cJSON_AddNumberToObject(obj, "move_timer", e->move_timer);
+        cJSON_AddNumberToObject(obj, "is_boss",    e->is_boss);
         cJSON_AddItemToArray(arr, obj);
     }
     return arr;
@@ -155,12 +156,18 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count) {
         e->defense    = cJSON_GetObjectItem(obj, "defense")->valueint;
         e->experience = cJSON_GetObjectItem(obj, "experience")->valueint;
         e->move_timer = cJSON_GetObjectItem(obj, "move_timer")->valueint;
+        cJSON *boss = cJSON_GetObjectItem(obj, "is_boss");
+        e->is_boss = boss ? boss->valueint :
+            (e->type == ENEMY_GOBLIN_KING || e->type == ENEMY_LICH_KING ||
+             e->type == ENEMY_DEMON_LORD || e->type == ENEMY_RED_DRAGON ||
+             e->type == ENEMY_TARRASQUE);
     }
 }
 
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
+    cJSON_AddNumberToObject(root, "save_version", 4);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -210,6 +217,12 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "equipped_weapon",   g->equipped_weapon);
     cJSON_AddNumberToObject(root, "equipped_armor",    g->equipped_armor);
     cJSON_AddNumberToObject(root, "location",          g->location);
+    cJSON_AddNumberToObject(root, "dungeon_key_found", g->dungeon_key_found);
+    cJSON_AddNumberToObject(root, "portal_active",     g->portal_active);
+    cJSON_AddNumberToObject(root, "portal_level",      g->portal_level);
+    cJSON_AddNumberToObject(root, "portal_x",          g->portal_x);
+    cJSON_AddNumberToObject(root, "portal_y",          g->portal_y);
+    cJSON_AddNumberToObject(root, "portal_origin_tile", g->portal_origin_tile);
 
     // Messages
     cJSON *messages = cJSON_CreateArray();
@@ -320,6 +333,9 @@ int load_game(GameState *g, int slot) {
     free(buf);
     if (!root) return 0;
 
+    cJSON *version_item = cJSON_GetObjectItem(root, "save_version");
+    int save_version = version_item ? version_item->valueint : 1;
+
     // Player
     cJSON *player = cJSON_GetObjectItem(root, "player");
     strncpy(g->player.name, cJSON_GetObjectItem(player, "name")->valuestring, 20);
@@ -366,6 +382,19 @@ int load_game(GameState *g, int slot) {
     g->equipped_weapon   = cJSON_GetObjectItem(root, "equipped_weapon")->valueint;
     g->equipped_armor    = cJSON_GetObjectItem(root, "equipped_armor")->valueint;
     g->location          = cJSON_GetObjectItem(root, "location")->valueint;
+    cJSON *key_found = cJSON_GetObjectItem(root, "dungeon_key_found");
+    cJSON *portal_active = cJSON_GetObjectItem(root, "portal_active");
+    cJSON *portal_level = cJSON_GetObjectItem(root, "portal_level");
+    cJSON *portal_x = cJSON_GetObjectItem(root, "portal_x");
+    cJSON *portal_y = cJSON_GetObjectItem(root, "portal_y");
+    cJSON *portal_origin_tile = cJSON_GetObjectItem(root, "portal_origin_tile");
+    g->dungeon_key_found = key_found ? key_found->valueint : 0;
+    g->portal_active = portal_active ? portal_active->valueint : 0;
+    g->portal_level = portal_level ? portal_level->valueint : 0;
+    g->portal_x = portal_x ? portal_x->valueint : 0;
+    g->portal_y = portal_y ? portal_y->valueint : 0;
+    g->portal_origin_tile = portal_origin_tile
+        ? portal_origin_tile->valueint : TILE_FLOOR;
 
     // Messages
     cJSON *messages = cJSON_GetObjectItem(root, "messages");
@@ -440,6 +469,95 @@ int load_game(GameState *g, int slot) {
                                 g->level_cache[i].enemies,
                                 &g->level_cache[i].enemy_count);
         }
+    }
+
+    // Fold saves from the former 25-floor dungeon into the five-floor arc.
+    if (g->level > MAX_DEPTH) {
+        g->level = MAX_DEPTH;
+        g->floor_item_count = 0;
+        g->level_cache[MAX_DEPTH - 1].valid = 0;
+        map_generate(&g->map, g->level);
+        enemies_spawn(g);
+        g->level_cleared = 0;
+        g->player.x = g->map.stairs_up_x;
+        g->player.y = g->map.stairs_up_y;
+    }
+    if (g->max_level_reached > MAX_DEPTH)
+        g->max_level_reached = MAX_DEPTH;
+
+    if (save_version < 2) {
+        g->level_cache[MAX_DEPTH - 1].valid = 0;
+        if (g->location == LOCATION_DUNGEON && g->level == MAX_DEPTH) {
+            g->floor_item_count = 0;
+            map_generate(&g->map, g->level);
+            enemies_spawn(g);
+            g->level_cleared = 0;
+            g->player.x = g->map.stairs_up_x;
+            g->player.y = g->map.stairs_up_y;
+        }
+    }
+
+    if (save_version < 3) {
+        g->level_cache[MAX_DEPTH - 1].valid = 0;
+        g->dungeon_key_found = 0;
+        g->portal_active = 0;
+        if (g->location == LOCATION_DUNGEON && g->level == MAX_DEPTH) {
+            g->floor_item_count = 0;
+            map_generate(&g->map, g->level);
+            enemies_spawn(g);
+            g->level_cleared = 0;
+            g->player.x = g->map.stairs_up_x;
+            g->player.y = g->map.stairs_up_y;
+        }
+
+        int has_return = 0;
+        for (int i = 0; i < g->player.known_spell_count; i++)
+            if (g->player.known_spells[i].id == SPELL_RETURN_TO_TOWN)
+                has_return = 1;
+        for (int i = 0; i < g->inventory_count; i++)
+            if (g->inventory[i].type == ITEM_SCROLL &&
+                g->inventory[i].spell_id == SPELL_RETURN_TO_TOWN)
+                has_return = 1;
+        if (!has_return && g->inventory_count < MAX_INVENTORY) {
+            g->inventory[g->inventory_count++] =
+                item_make_scroll_return_to_town();
+        } else if (!has_return &&
+            g->player.known_spell_count < MAX_SPELLS) {
+            g->player.known_spells[g->player.known_spell_count++] =
+                spell_make_return_to_town();
+        }
+    }
+
+    // Version 4 replaces the porous random boss room with a sealed arena,
+    // guarantees a visible key, and gives the Lich dedicated encounter AI.
+    if (save_version < 4) {
+        g->level_cache[MAX_DEPTH - 1].valid = 0;
+        g->dungeon_key_found = 0;
+        if (g->location == LOCATION_DUNGEON && g->level == MAX_DEPTH) {
+            g->floor_item_count = 0;
+            map_generate(&g->map, g->level);
+            enemies_spawn(g);
+            g->level_cleared = 0;
+            g->player.x = g->map.stairs_up_x;
+            g->player.y = g->map.stairs_up_y;
+        }
+    }
+
+    // Floor five used to contain the Goblin King. Regenerate that legacy
+    // floor so old saves receive the new undead finale.
+    int legacy_finale = 0;
+    if (g->location == LOCATION_DUNGEON && g->level == MAX_DEPTH) {
+        for (int i = 0; i < g->enemy_count; i++)
+            if (g->enemies[i].type == ENEMY_GOBLIN_KING) legacy_finale = 1;
+    }
+    if (legacy_finale) {
+        g->level_cache[MAX_DEPTH - 1].valid = 0;
+        g->floor_item_count = 0;
+        map_generate(&g->map, g->level);
+        enemies_spawn(g);
+        g->level_cleared = 0;
+        g->player.x = g->map.stairs_up_x;
+        g->player.y = g->map.stairs_up_y;
     }
 
     cJSON_Delete(root);

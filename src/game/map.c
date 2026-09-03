@@ -104,6 +104,39 @@ void map_generate(Map *m, int level) {
     m->stairs_down_y = dy;
     m->tiles[dy][dx] = TILE_STAIRS_DOWN;
 
+    // Turn the final room into a real, sealed boss chamber. Rebuilding the
+    // perimeter closes any incidental corridors that crossed the randomly
+    // generated room, leaving exactly one entrance from the intended path.
+    if (level == MAX_DEPTH && m->room_count > 1) {
+        Room *boss_room = &m->rooms[m->room_count - 1];
+        int previous_x, previous_y;
+        map_room_center(&m->rooms[m->room_count - 2], &previous_x, &previous_y);
+        int door_x = dx;
+        int door_y = dy;
+        if (previous_y < boss_room->y) {
+            door_y = boss_room->y;
+        } else if (previous_y >= boss_room->y + boss_room->h) {
+            door_y = boss_room->y + boss_room->h - 1;
+        } else if (previous_x < boss_room->x) {
+            door_x = boss_room->x;
+            door_y = previous_y;
+        } else {
+            door_x = boss_room->x + boss_room->w - 1;
+            door_y = previous_y;
+        }
+        for (int y = boss_room->y; y < boss_room->y + boss_room->h; y++) {
+            for (int x = boss_room->x; x < boss_room->x + boss_room->w; x++) {
+                int perimeter = x == boss_room->x ||
+                    x == boss_room->x + boss_room->w - 1 ||
+                    y == boss_room->y ||
+                    y == boss_room->y + boss_room->h - 1;
+                m->tiles[y][x] = perimeter ? TILE_WALL : TILE_FLOOR;
+            }
+        }
+        m->tiles[dy][dx] = TILE_STAIRS_DOWN;
+        m->tiles[door_y][door_x] = TILE_LOCKED_DOOR;
+    }
+
     // Place traps in rooms (skip room 0 — player spawn)
     int num_traps = 2 + level;
     if (num_traps > 12) num_traps = 12;
@@ -115,11 +148,40 @@ void map_generate(Map *m, int level) {
         if (m->tiles[ty][tx] != TILE_FLOOR) continue;
         m->tiles[ty][tx] = TILE_TRAP_HIDDEN;
     }
+
+    if (level == MAX_DEPTH && m->room_count > 2) {
+        // Put the key at the center of the penultimate room. This makes it a
+        // guaranteed landmark on the critical path instead of a tiny object
+        // hidden at a random coordinate in a large floor.
+        Room *key_room = &m->rooms[m->room_count - 2];
+        int key_x, key_y;
+        int key_placed = 0;
+        map_room_center(key_room, &key_x, &key_y);
+        // The key takes precedence over a randomly placed hidden trap.
+        m->tiles[key_y][key_x] = TILE_DUNGEON_KEY;
+        key_placed = 1;
+        for (int room_idx = 1; !key_placed &&
+            room_idx < m->room_count - 1; room_idx++) {
+            Room *room = &m->rooms[room_idx];
+            for (int key_y = room->y + 1; !key_placed &&
+                key_y < room->y + room->h - 1; key_y++) {
+                for (int key_x = room->x + 1;
+                    key_x < room->x + room->w - 1; key_x++) {
+                    if (m->tiles[key_y][key_x] == TILE_FLOOR) {
+                        m->tiles[key_y][key_x] = TILE_DUNGEON_KEY;
+                        key_placed = 1;
+                        break;
+                    }
+                }
+            }
+        }
+    }
 }
 
 int map_is_walkable(const Map *m, int x, int y) {
     if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) return 0;
-    return m->tiles[y][x] != TILE_WALL;
+    return m->tiles[y][x] != TILE_WALL &&
+        m->tiles[y][x] != TILE_LOCKED_DOOR;
 }
 
 void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {

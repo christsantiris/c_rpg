@@ -14,7 +14,7 @@
 #define TOWN_W 40 // town dimensions
 #define TOWN_H 25 // town dimensions
 
-#define MAX_DEPTH 25
+#define MAX_DEPTH 5
 
 typedef enum {
     TILE_FLOOR = 0,
@@ -31,7 +31,11 @@ typedef enum {
     TILE_TRAP_HIDDEN,
     TILE_TRAP_SPIKE,
     TILE_TRAP_FIRE,
-    TILE_TRAP_POISON
+    TILE_TRAP_POISON,
+    TILE_RETURN_EXIT,
+    TILE_LOCKED_DOOR,
+    TILE_DUNGEON_KEY,
+    TILE_PORTAL
 } TileType;
 
 typedef struct {

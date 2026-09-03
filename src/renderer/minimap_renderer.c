@@ -40,9 +40,11 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         continue;
                     }
                     TileType tile = g->map.tiles[sy][sx];
-                    if (tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN) {
+                    if (tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN ||
+                        tile == TILE_RETURN_EXIT || tile == TILE_DUNGEON_KEY ||
+                        tile == TILE_PORTAL) {
                         has_stair = 1;
-                    } else if (tile != TILE_WALL) {
+                    } else if (tile != TILE_WALL && tile != TILE_LOCKED_DOOR) {
                         has_floor = 1;
                     }
                 }

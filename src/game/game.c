@@ -36,6 +36,27 @@ static void spawn_enemy(Enemy *e, EnemyType type, int x, int y) {
             e->experience = 14;
             e->move_timer = 0;
             break;
+        case ENEMY_CRYPT_BAT:
+            strncpy(e->name, "Crypt Bat", sizeof(e->name) - 1);
+            e->name[sizeof(e->name) - 1] = '\0';
+            e->max_hp = 7; e->hp = 7;
+            e->attack = 4; e->defense = 0;
+            e->experience = 10;
+            break;
+        case ENEMY_WRAITH:
+            strncpy(e->name, "Wraith", sizeof(e->name) - 1);
+            e->name[sizeof(e->name) - 1] = '\0';
+            e->max_hp = 18; e->hp = 18;
+            e->attack = 7; e->defense = 2;
+            e->experience = 22;
+            break;
+        case ENEMY_NECROMANCER:
+            strncpy(e->name, "Necromancer", sizeof(e->name) - 1);
+            e->name[sizeof(e->name) - 1] = '\0';
+            e->max_hp = 24; e->hp = 24;
+            e->attack = 7; e->defense = 1;
+            e->experience = 35;
+            break;
         case ENEMY_ORC:
             strncpy(e->name, "Orc", sizeof(e->name) - 1);
             e->name[sizeof(e->name) - 1] = '\0';
@@ -68,8 +89,8 @@ static void spawn_enemy(Enemy *e, EnemyType type, int x, int y) {
         case ENEMY_LICH_KING:
             strncpy(e->name, "Lich King", sizeof(e->name) - 1);
             e->name[sizeof(e->name) - 1] = '\0';
-            e->max_hp = 200; e->hp = 200;
-            e->attack = 25;  e->defense = 10;
+            e->max_hp = 140; e->hp = 140;
+            e->attack = 18;  e->defense = 6;
             e->experience = 400;
             e->is_boss = 1;
             break;
@@ -102,17 +123,15 @@ static void spawn_enemy(Enemy *e, EnemyType type, int x, int y) {
 
 static int boss_for_level(int level, EnemyType *type) {
     switch (level) {
-        case 5:  *type = ENEMY_GOBLIN_KING; return 1;
-        case 10: *type = ENEMY_LICH_KING;   return 1;
-        case 15: *type = ENEMY_DEMON_LORD;  return 1;
-        case 20: *type = ENEMY_RED_DRAGON;  return 1;
-        case 25: *type = ENEMY_TARRASQUE;   return 1;
+        case MAX_DEPTH: *type = ENEMY_LICH_KING; return 1;
         default: return 0;
     }
 }
 
 static int enemy_tile_open(const GameState *g, int x, int y) {
-    if (!map_is_walkable(&g->map, x, y)) {
+    // Keep keys, stairs, traps, and portals visible and unobstructed.
+    if (!map_is_walkable(&g->map, x, y) ||
+        g->map.tiles[y][x] != TILE_FLOOR) {
         return 0;
     }
     for (int i = 0; i < g->enemy_count; i++) {
@@ -124,9 +143,9 @@ static int enemy_tile_open(const GameState *g, int x, int y) {
     return 1;
 }
 
-static int find_enemy_tile(GameState *g, int *x, int *y) {
+static int find_enemy_tile(GameState *g, int *x, int *y, int room_limit) {
     for (int attempt = 0; attempt < 100; attempt++) {
-        int room_idx = rand() % g->map.room_count;
+        int room_idx = rand() % room_limit;
         Room *room = &g->map.rooms[room_idx];
         if (room->w < 3 || room->h < 3) {
             continue;
@@ -140,7 +159,7 @@ static int find_enemy_tile(GameState *g, int *x, int *y) {
         }
     }
 
-    for (int i = 0; i < g->map.room_count; i++) {
+    for (int i = 0; i < room_limit; i++) {
         Room *room = &g->map.rooms[i];
         for (int ty = room->y + 1; ty < room->y + room->h - 1; ty++) {
             for (int tx = room->x + 1; tx < room->x + room->w - 1; tx++) {
@@ -155,13 +174,13 @@ static int find_enemy_tile(GameState *g, int *x, int *y) {
     return 0;
 }
 
-static int spawn_into_open_tile(GameState *g, EnemyType type) {
+static int spawn_into_open_tile(GameState *g, EnemyType type, int room_limit) {
     if (g->enemy_count >= MAX_ENEMIES) {
         return 0;
     }
     int x;
     int y;
-    if (!find_enemy_tile(g, &x, &y)) {
+    if (!find_enemy_tile(g, &x, &y, room_limit)) {
         return 0;
     }
     spawn_enemy(&g->enemies[g->enemy_count], type, x, y);
@@ -182,36 +201,44 @@ void enemies_spawn(GameState *g) {
 
     EnemyType boss_type;
     if (boss_for_level(g->level, &boss_type)) {
-        spawn_into_open_tile(g, boss_type);
+        int boss_x = g->map.stairs_down_x + 1;
+        int boss_y = g->map.stairs_down_y;
+        spawn_enemy(&g->enemies[g->enemy_count++], boss_type,
+            boss_x, boss_y);
     }
 
+    int regular_room_limit = g->level == MAX_DEPTH
+        ? g->map.room_count - 1 : g->map.room_count;
     while (g->enemy_count < num_enemies) {
         EnemyType type;
         int roll = rand() % 100;
         int level = g->level;
 
-        if (level <= 2) {
-            type = roll < 60 ? ENEMY_SKELETON : ENEMY_GOBLIN;
-        } else if (level <= 4) {
-            if (roll < 30)      type = ENEMY_SKELETON;
-            else if (roll < 70) type = ENEMY_GOBLIN;
-            else                type = ENEMY_ZOMBIE;
-        } else if (level <= 6) {
-            if (roll < 20)      type = ENEMY_GOBLIN;
-            else if (roll < 60) type = ENEMY_ZOMBIE;
-            else                type = ENEMY_ORC;
-        } else if (level <= 8) {
-            if (roll < 20)      type = ENEMY_ZOMBIE;
-            else if (roll < 60) type = ENEMY_ORC;
-            else                type = ENEMY_TROLL;
-        } else if (level <= 10) {
-            if (roll < 20)      type = ENEMY_ORC;
-            else if (roll < 60) type = ENEMY_TROLL;
-            else                type = ENEMY_GIANT;
+        if (level == 1) {
+            type = ENEMY_SKELETON;
+        } else if (level == 2) {
+            if (roll < 50) type = ENEMY_SKELETON;
+            else if (roll < 80) type = ENEMY_ZOMBIE;
+            else type = ENEMY_CRYPT_BAT;
+        } else if (level == 3) {
+            if (roll < 30) type = ENEMY_SKELETON;
+            else if (roll < 65) type = ENEMY_ZOMBIE;
+            else if (roll < 85) type = ENEMY_CRYPT_BAT;
+            else type = ENEMY_WRAITH;
+        } else if (level == 4) {
+            if (roll < 20) type = ENEMY_SKELETON;
+            else if (roll < 55) type = ENEMY_ZOMBIE;
+            else if (roll < 70) type = ENEMY_CRYPT_BAT;
+            else if (roll < 90) type = ENEMY_WRAITH;
+            else type = ENEMY_NECROMANCER;
         } else {
-            type = roll < 50 ? ENEMY_TROLL : ENEMY_GIANT;
+            if (roll < 15) type = ENEMY_SKELETON;
+            else if (roll < 45) type = ENEMY_ZOMBIE;
+            else if (roll < 60) type = ENEMY_CRYPT_BAT;
+            else if (roll < 80) type = ENEMY_WRAITH;
+            else type = ENEMY_NECROMANCER;
         }
-        if (!spawn_into_open_tile(g, type)) {
+        if (!spawn_into_open_tile(g, type, regular_room_limit)) {
             break;
         }
     }
@@ -239,6 +266,12 @@ void game_init(GameState *g) {
     g->equipped_armor = -1;
     g->gold = 0;
     g->score = 0;
+    g->dungeon_key_found = 0;
+    g->portal_active = 0;
+    g->portal_level = 0;
+    g->portal_x = 0;
+    g->portal_y = 0;
+    g->portal_origin_tile = TILE_FLOOR;
     g->floor_item_count = 0;
     for (int i = 0; i < MAX_INVENTORY; i++) {
         g->inventory[i].active = 0;
@@ -281,6 +314,7 @@ void game_init(GameState *g) {
             g->inventory[g->inventory_count++] = item_make_bow();
             break;
     }
+    g->inventory[g->inventory_count++] = item_make_scroll_return_to_town();
     g->player.hp = g->player.max_hp;
     g->player.mp = g->player.max_mp;
 
@@ -297,6 +331,8 @@ void game_move_player(GameState *g, int dx, int dy) {
 }
 
 void game_descend(GameState *g) {
+    if (g->level >= MAX_DEPTH) return;
+
     if (g->level >= 1 && g->level <= MAX_DEPTH) {
         g->level_cache[g->level - 1].map         = g->map;
         g->level_cache[g->level - 1].enemy_count = g->enemy_count;
@@ -392,10 +428,62 @@ void game_return_to_town(GameState *g) {
     g->location = LOCATION_TOWN;
     int spawn_x, spawn_y;
     map_generate_town(&g->map, &spawn_x, &spawn_y);
-    g->player.x = spawn_x;
-    g->player.y = spawn_y;
+    g->player.x = 20;
+    g->player.y = 1;
     g->floor_item_count = 0;
     g->enemy_count = 0;
+}
+
+void game_open_town_portal(GameState *g) {
+    if (g->location != LOCATION_DUNGEON) return;
+    g->portal_active = 1;
+    g->portal_level = g->level;
+    g->portal_x = g->player.x;
+    g->portal_y = g->player.y;
+    g->portal_origin_tile = g->map.tiles[g->player.y][g->player.x];
+    g->map.tiles[g->player.y][g->player.x] = TILE_PORTAL;
+    game_return_to_town(g);
+    g->map.tiles[2][20] = TILE_PORTAL;
+    push_message(g, "A return portal remains open.");
+}
+
+void game_use_town_portal(GameState *g) {
+    if (!g->portal_active || g->portal_level < 1 ||
+        g->portal_level > MAX_DEPTH) return;
+    int level = g->portal_level;
+    if (!g->level_cache[level - 1].valid) return;
+
+    g->location = LOCATION_DUNGEON;
+    g->level = level;
+    g->map = g->level_cache[level - 1].map;
+    g->enemy_count = g->level_cache[level - 1].enemy_count;
+    g->level_cleared = g->level_cache[level - 1].level_cleared;
+    for (int i = 0; i < g->enemy_count; i++)
+        g->enemies[i] = g->level_cache[level - 1].enemies[i];
+    g->player.x = g->portal_x;
+    g->player.y = g->portal_y;
+    g->map.tiles[g->portal_y][g->portal_x] = g->portal_origin_tile;
+    g->portal_active = 0;
+    push_message(g, "Returned through the portal.");
+}
+
+void game_mark_level_cleared(GameState *g) {
+    g->level_cleared = 1;
+    if (g->location == LOCATION_DUNGEON && g->level == MAX_DEPTH) {
+        g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] =
+            TILE_RETURN_EXIT;
+        push_message(g, "A passage to town opens!");
+    }
+}
+
+void game_update_level_progress(GameState *g) {
+    int active_enemies = 0;
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (!g->enemies[i].active) continue;
+        active_enemies++;
+    }
+
+    if (active_enemies == 0) game_mark_level_cleared(g);
 }
 
 void player_gain_xp(GameState *g, int xp) {
