@@ -59,7 +59,14 @@ static int enemy_score(EnemyType type) {
         case ENEMY_ZOMBIE:      return 20;
         case ENEMY_CRYPT_BAT:   return 18;
         case ENEMY_WRAITH:      return 40;
-        case ENEMY_NECROMANCER: return 65;
+        case ENEMY_CRYPT_CONJURER: return 65;
+        case ENEMY_PIXIE: return 15;
+        case ENEMY_BLIGHTED_WOLF: return 22;
+        case ENEMY_GIANT_SPIDER: return 32;
+        case ENEMY_DARK_ELF: return 48;
+        case ENEMY_GIANT_WURM: return 70;
+        case ENEMY_FOREST_TROLL: return 80;
+        case ENEMY_FOREST_NECROMANCER: return 1100;
         case ENEMY_ORC:         return 30;
         case ENEMY_TROLL:       return 50;
         case ENEMY_GIANT:       return 80;
@@ -81,7 +88,14 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type, int is_boss) {
         case ENEMY_ZOMBIE:   gold = 4 + rand() % 6;  break;
         case ENEMY_CRYPT_BAT: gold = 2 + rand() % 4; break;
         case ENEMY_WRAITH: gold = 7 + rand() % 7; break;
-        case ENEMY_NECROMANCER: gold = 10 + rand() % 9; break;
+        case ENEMY_CRYPT_CONJURER: gold = 10 + rand() % 9; break;
+        case ENEMY_PIXIE: gold = 2 + rand() % 4; break;
+        case ENEMY_BLIGHTED_WOLF: gold = 3 + rand() % 5; break;
+        case ENEMY_GIANT_SPIDER: gold = 4 + rand() % 6; break;
+        case ENEMY_DARK_ELF: gold = 7 + rand() % 8; break;
+        case ENEMY_GIANT_WURM: gold = 10 + rand() % 10; break;
+        case ENEMY_FOREST_TROLL: gold = 12 + rand() % 12; break;
+        case ENEMY_FOREST_NECROMANCER: gold = 50; break;
         case ENEMY_ORC:      gold = 6 + rand() % 8;  break;
         case ENEMY_TROLL:    gold = 10 + rand() % 10; break;
         case ENEMY_GIANT:    gold = 15 + rand() % 15; break;
@@ -110,6 +124,7 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type, int is_boss) {
             FloorItem fi = {0};
             fi.active = 1;
             fi.x = x; fi.y = y;
+            fi.underlying_tile = g->map.tiles[y][x];
             fi.item = boss_drop;
             g->map.tiles[y][x] = TILE_ITEM;
             g->floor_items[g->floor_item_count++] = fi;
@@ -158,6 +173,7 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type, int is_boss) {
     fi.active = 1;
     fi.x      = x;
     fi.y      = y;
+    fi.underlying_tile = g->map.tiles[y][x];
     fi.item   = item;
     g->floor_items[g->floor_item_count++] = fi;
 
@@ -205,9 +221,11 @@ void action_resolve_player(GameState *g, Action a) {
     if (a.type == ACTION_DESCEND) {
         TileType tile = g->map.tiles[g->player.y][g->player.x];
         if (tile == TILE_RETURN_EXIT && g->level_cleared) {
+            int forest = g->location == LOCATION_FOREST;
             g->score += g->level * 100;
             game_return_to_town(g);
-            push_message(g, "The Lich is defeated!");
+            push_message(g, forest ? "The forest is freed!" :
+                "The Lich is defeated!");
         } else if (tile == TILE_STAIRS_DOWN) {
             if (g->level_cleared) {
                 if (g->level < MAX_DEPTH) {
@@ -224,11 +242,12 @@ void action_resolve_player(GameState *g, Action a) {
     if (a.type == ACTION_ASCEND) {
         if (g->map.tiles[g->player.y][g->player.x] == TILE_STAIRS_UP) {
             if (g->level == 1) {
+                Location leaving = g->location;
                 g->location = LOCATION_TOWN;
                 int spawn_x, spawn_y;
                 map_generate_town(&g->map, &spawn_x, &spawn_y);
-                g->player.x = spawn_x;
-                g->player.y = spawn_y;
+                g->player.x = leaving == LOCATION_FOREST ? 1 : spawn_x;
+                g->player.y = leaving == LOCATION_FOREST ? 12 : spawn_y;
             } else {
                 game_ascend(g);
             }
@@ -253,7 +272,7 @@ void action_resolve_player(GameState *g, Action a) {
             }
             g->inventory[g->inventory_count++] = fi->item;
             fi->active = 0;
-            g->map.tiles[fi->y][fi->x] = TILE_FLOOR;
+            g->map.tiles[fi->y][fi->x] = (TileType)fi->underlying_tile;
             char msg[MAX_MESSAGE_LEN];
             snprintf(msg, sizeof(msg), "Picked up %s", fi->item.name);
             push_message(g, msg);
@@ -374,6 +393,7 @@ void action_resolve_player(GameState *g, Action a) {
         fi.active = 1;
         fi.x      = g->player.x;
         fi.y      = g->player.y;
+        fi.underlying_tile = g->map.tiles[fi.y][fi.x];
         fi.item   = *item;
         g->map.tiles[fi.y][fi.x] = TILE_ITEM;
         g->floor_items[g->floor_item_count++] = fi;
@@ -404,7 +424,7 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
         if (sp->type == SPELL_TYPE_UTILITY) {
-            if (g->location != LOCATION_DUNGEON) {
+            if (g->location == LOCATION_TOWN) {
                 push_message(g, "Already in town!");
                 return;
             }
@@ -659,7 +679,39 @@ void action_resolve_player(GameState *g, Action a) {
 
         if (g->location == LOCATION_TOWN &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
-            game_enter_dungeon(g);
+            if (tx == 0) game_enter_forest(g);
+            else game_enter_dungeon(g);
+            return;
+        }
+
+        if (g->location == LOCATION_FOREST &&
+            g->map.tiles[ty][tx] == TILE_FOREST_ENTRANCE) {
+            if (g->level == 1) game_return_to_town(g);
+            else game_ascend(g);
+            return;
+        }
+
+        if (g->location == LOCATION_FOREST &&
+            g->map.tiles[ty][tx] == TILE_FOREST_EXIT) {
+            if (g->level < MAX_DEPTH) {
+                game_descend(g);
+                g->score += g->level * 100;
+            } else {
+                int boss_alive = 0;
+                for (int i = 0; i < g->enemy_count; i++)
+                    if (g->enemies[i].active &&
+                        g->enemies[i].type == ENEMY_FOREST_NECROMANCER) {
+                        boss_alive = 1;
+                        break;
+                    }
+                if (boss_alive) {
+                    push_message(g, "The Necromancer seals the path!");
+                    return;
+                }
+                g->score += g->level * 100;
+                game_return_to_town(g);
+                push_message(g, "The forest is freed!");
+            }
             return;
         }
 
@@ -809,7 +861,35 @@ static int necromancer_revive(GameState *g, int necromancer_index) {
                 dead->y = y;
                 dead->active = 1;
                 dead->hp = dead->max_hp;
-                push_message(g, "Necromancer raises a Skeleton!");
+                push_message(g, "Crypt Conjurer raises a Skeleton!");
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+static int forest_necromancer_raise(GameState *g, int caster_index) {
+    Enemy *caster = &g->enemies[caster_index];
+    for (int i = 0; i < g->enemy_count; i++) {
+        Enemy *dead = &g->enemies[i];
+        if (dead->active || dead->is_boss ||
+            dead->type < ENEMY_PIXIE ||
+            dead->type > ENEMY_FOREST_TROLL) continue;
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (dx == 0 && dy == 0) continue;
+                int x = caster->x + dx;
+                int y = caster->y + dy;
+                if (!map_is_walkable(&g->map, x, y) ||
+                    enemy_position_occupied(g, i, x, y) ||
+                    (x == g->player.x && y == g->player.y)) continue;
+                dead->x = x;
+                dead->y = y;
+                dead->active = 1;
+                dead->hp = dead->max_hp / 2;
+                if (dead->hp < 1) dead->hp = 1;
+                push_message(g, "Necromancer recalls a fallen servant!");
                 return 1;
             }
         }
@@ -844,6 +924,15 @@ void action_resolve_enemies(GameState *g) {
             // The encounter begins only when the player crosses the threshold.
             if (!player_in_chamber && e->move_timer == 0) continue;
         }
+        if (e->type == ENEMY_FOREST_NECROMANCER) {
+            Room *grove = &g->map.rooms[g->map.room_count - 1];
+            int player_in_grove =
+                g->player.x >= grove->x &&
+                g->player.x < grove->x + grove->w &&
+                g->player.y >= grove->y &&
+                g->player.y < grove->y + grove->h;
+            if (!player_in_grove && e->move_timer == 0) continue;
+        }
 
         int dx = g->player.x - e->x;
         int dy = g->player.y - e->y;
@@ -856,6 +945,10 @@ void action_resolve_enemies(GameState *g) {
                 int dmg = e->attack - defense;
                 if (dmg < 1) dmg = 1;
                 g->player.hp -= dmg;
+                if (e->type == ENEMY_GIANT_SPIDER) {
+                    g->player.poison_turns = 3;
+                    push_message(g, "Giant Spider venom poisons you!");
+                }
                 if (e->type == ENEMY_WRAITH && g->player.mp > 0) {
                     int drained = g->player.mp < 3 ? g->player.mp : 3;
                     g->player.mp -= drained;
@@ -888,20 +981,48 @@ void action_resolve_enemies(GameState *g) {
             continue;
         }
 
-        if (e->type == ENEMY_NECROMANCER) {
+        if (e->type == ENEMY_FOREST_NECROMANCER) {
+            if (e->move_timer % 4 == 0 &&
+                forest_necromancer_raise(g, i)) continue;
+            if (e->move_timer % 2 == 0) {
+                int dmg = e->attack - g->player.defense / 2;
+                if (dmg < 3) dmg = 3;
+                g->player.hp -= dmg;
+                char msg[MAX_MESSAGE_LEN];
+                snprintf(msg, sizeof(msg), "Necromancer spirit bolt: %d dmg", dmg);
+                push_message(g, msg);
+            } else {
+                push_message(g, "The Necromancer invokes the forest...");
+            }
+            continue;
+        }
+
+        if (e->type == ENEMY_DARK_ELF && e->move_timer % 2 == 0 &&
+            clear_orthogonal_path(g, e)) {
+            int dmg = e->attack - g->player.defense / 2;
+            if (dmg < 1) dmg = 1;
+            g->player.hp -= dmg;
+            char msg[MAX_MESSAGE_LEN];
+            snprintf(msg, sizeof(msg), "Dark Elf arrow: %d dmg", dmg);
+            push_message(g, msg);
+            continue;
+        }
+
+        if (e->type == ENEMY_CRYPT_CONJURER) {
             if (e->move_timer % 4 == 0 && necromancer_revive(g, i)) continue;
             if (e->move_timer % 2 == 0 && clear_orthogonal_path(g, e)) {
                 int dmg = e->attack - g->player.defense / 2;
                 if (dmg < 1) dmg = 1;
                 g->player.hp -= dmg;
                 char msg[MAX_MESSAGE_LEN];
-                snprintf(msg, sizeof(msg), "Necromancer bolt: %d dmg", dmg);
+                snprintf(msg, sizeof(msg), "Conjurer bolt: %d dmg", dmg);
                 push_message(g, msg);
                 continue;
             }
         }
 
-        if (e->type == ENEMY_ZOMBIE) { // Zombies move every other turn
+        if (e->type == ENEMY_ZOMBIE || e->type == ENEMY_GIANT_WURM ||
+            e->type == ENEMY_FOREST_TROLL) { // Heavy enemies move slowly
             if (e->move_timer % 2 != 0) continue;
         }
 
@@ -910,5 +1031,7 @@ void action_resolve_enemies(GameState *g) {
             // Bats close distance quickly, but never attack on their second move.
             enemy_move_toward(g, i);
         }
+        if ((e->type == ENEMY_PIXIE || e->type == ENEMY_BLIGHTED_WOLF) && moved)
+            enemy_move_toward(g, i);
     }
 }

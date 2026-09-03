@@ -56,8 +56,8 @@ Goblins and the Goblin King are reserved for a future mountain region.
 | 1 | 100% Skeleton |
 | 2 | 50% Skeleton, 30% Zombie, 20% Crypt Bat |
 | 3 | 30% Skeleton, 35% Zombie, 20% Crypt Bat, 15% Wraith |
-| 4 | 20% Skeleton, 35% Zombie, 15% Crypt Bat, 20% Wraith, 10% Necromancer |
-| 5 | 15% Skeleton, 30% Zombie, 15% Crypt Bat, 20% Wraith, 20% Necromancer, plus the Lich King |
+| 4 | 20% Skeleton, 35% Zombie, 15% Crypt Bat, 20% Wraith, 10% Crypt Conjurer |
+| 5 | 15% Skeleton, 30% Zombie, 15% Crypt Bat, 20% Wraith, 20% Crypt Conjurer, plus the Lich King |
 
 | Enemy | HP | Attack | Defense | XP |
 | --- | ---: | ---: | ---: | ---: |
@@ -65,7 +65,7 @@ Goblins and the Goblin King are reserved for a future mountain region.
 | Zombie | 22 | 6 | 1 | 14 |
 | Crypt Bat | 7 | 4 | 0 | 10 |
 | Wraith | 18 | 7 | 2 | 22 |
-| Necromancer | 24 | 7 | 1 | 35 |
+| Crypt Conjurer | 24 | 7 | 1 | 35 |
 
 Enemy roles:
 
@@ -75,7 +75,7 @@ Enemy roles:
   movement step.
 - Wraiths obey normal wall collision. Their melee attack ignores half of player
   defense and drains up to 3 MP.
-- Necromancers fire a defense-piercing bolt along a clear orthogonal line every
+- Crypt Conjurers fire a defense-piercing bolt along a clear orthogonal line every
   second turn. Every fourth turn they first attempt to revive a fallen Skeleton
   in an open tile beside them.
 
@@ -130,6 +130,6 @@ chance:
 
 Difficulty rises over five floors through increasing enemy count, new tactical
 roles, and additional traps. Bats add speed, Wraiths undermine heavy armor and
-mana reserves, and Necromancers create ranged pressure and target priority. Floor
+mana reserves, and Crypt Conjurers create ranged pressure and target priority. Floor
 5 combines the complete roster with the Lich King before returning the player
 to town.
