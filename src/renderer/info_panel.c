@@ -79,6 +79,10 @@ void info_panel_draw(Renderer *r, const GameState *g) {
     char gold_str[16];
     SDL_snprintf(gold_str, sizeof(gold_str), "%d", g->gold);
     SDL_Color gold_color = {220, 180, 60, 255};
+    renderer_draw_text(r, gold_str, x, y, gold_color, r->font_tiny);
+    y += lh + 6;
+
+    // Score
     renderer_draw_text(r, "SCORE", x, y, label, r->font_tiny);
     y += lh;
     char score_str[16];
