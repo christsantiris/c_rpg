@@ -11,7 +11,9 @@ static void spawn_enemy(Enemy *e, EnemyType type, int x, int y) {
     e->type    = type;
     e->x       = x;
     e->y       = y;
-switch (type) {
+    e->is_boss = 0;
+    e->move_timer = 0;
+    switch (type) {
         case ENEMY_SKELETON:
             strncpy(e->name, "Skeleton", sizeof(e->name) - 1);
             e->name[sizeof(e->name) - 1] = '\0';
@@ -98,73 +100,92 @@ switch (type) {
     }
 }
 
-// static void spawn_boss(GameState *g) {
+static int boss_for_level(int level, EnemyType *type) {
+    switch (level) {
+        case 5:  *type = ENEMY_GOBLIN_KING; return 1;
+        case 10: *type = ENEMY_LICH_KING;   return 1;
+        case 15: *type = ENEMY_DEMON_LORD;  return 1;
+        case 20: *type = ENEMY_RED_DRAGON;  return 1;
+        case 25: *type = ENEMY_TARRASQUE;   return 1;
+        default: return 0;
+    }
+}
 
-//     // Find room containing stairs down
-//     int stair_room = 0;
-//     for (int i = 0; i < g->map.room_count; i++) {
-//         Room *room = &g->map.rooms[i];
-//         if (g->map.stairs_down_x >= room->x &&
-//             g->map.stairs_down_x < room->x + room->w &&
-//             g->map.stairs_down_y >= room->y &&
-//             g->map.stairs_down_y < room->y + room->h) {
-//             stair_room = i;
-//             break;
-//         }
-//     }
-//     Room *room = &g->map.rooms[stair_room];
-//     int bx = room->x + room->w / 2;
-//     int by = room->y + room->h / 2;
+static int enemy_tile_open(const GameState *g, int x, int y) {
+    if (!map_is_walkable(&g->map, x, y)) {
+        return 0;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (g->enemies[i].active &&
+            g->enemies[i].x == x && g->enemies[i].y == y) {
+            return 0;
+        }
+    }
+    return 1;
+}
 
-//     EnemyType type;
-//     switch (g->level) {
-//         case 5:  type = ENEMY_GOBLIN_KING; break;
-//         case 10: type = ENEMY_LICH_KING;   break;
-//         case 15: type = ENEMY_DEMON_LORD;  break;
-//         case 20: type = ENEMY_RED_DRAGON;  break;
-//         case 25: type = ENEMY_TARRASQUE;   break;
-//         default: return;
-//     }
+static int find_enemy_tile(GameState *g, int *x, int *y) {
+    for (int attempt = 0; attempt < 100; attempt++) {
+        int room_idx = rand() % g->map.room_count;
+        Room *room = &g->map.rooms[room_idx];
+        if (room->w < 3 || room->h < 3) {
+            continue;
+        }
+        int tx = room->x + 1 + rand() % (room->w - 2);
+        int ty = room->y + 1 + rand() % (room->h - 2);
+        if (enemy_tile_open(g, tx, ty)) {
+            *x = tx;
+            *y = ty;
+            return 1;
+        }
+    }
 
-//     #ifdef DEBUG
-//     printf("DEBUG spawn_boss: level=%d type=%d at (%d,%d)\n",
-//         g->level, type, bx, by);
-//     #endif
+    for (int i = 0; i < g->map.room_count; i++) {
+        Room *room = &g->map.rooms[i];
+        for (int ty = room->y + 1; ty < room->y + room->h - 1; ty++) {
+            for (int tx = room->x + 1; tx < room->x + room->w - 1; tx++) {
+                if (enemy_tile_open(g, tx, ty)) {
+                    *x = tx;
+                    *y = ty;
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
 
-//     int idx = g->enemy_count;
-//     if (idx >= MAX_ENEMIES) return;
-//     spawn_enemy(&g->enemies[idx], type, bx, by);
-//     g->enemy_count++;
-// }
+static int spawn_into_open_tile(GameState *g, EnemyType type) {
+    if (g->enemy_count >= MAX_ENEMIES) {
+        return 0;
+    }
+    int x;
+    int y;
+    if (!find_enemy_tile(g, &x, &y)) {
+        return 0;
+    }
+    spawn_enemy(&g->enemies[g->enemy_count], type, x, y);
+    g->enemy_count++;
+    return 1;
+}
 
 void enemies_spawn(GameState *g) {
     g->enemy_count = 0;
-    if (g->map.room_count == 0) return;
+    if (g->map.room_count == 0) {
+        return;
+    }
 
     int num_enemies = 10 + g->level;
-    if (num_enemies > MAX_ENEMIES) num_enemies = MAX_ENEMIES;
+    if (num_enemies > MAX_ENEMIES) {
+        num_enemies = MAX_ENEMIES;
+    }
 
-    for (int i = 0; i < num_enemies; i++) {
-        int room_idx = rand() % (g->map.room_count - 1) + 1;
-        if (room_idx >= g->map.room_count) room_idx = 0;
-        Room *room = &g->map.rooms[room_idx];
-        if (room->w < 3 || room->h < 3) continue;
-        int ex = room->x + 1 + rand() % (room->w - 2);
-        int ey = room->y + 1 + rand() % (room->h - 2);
-        if (!map_is_walkable(&g->map, ex, ey)) continue;
+    EnemyType boss_type;
+    if (boss_for_level(g->level, &boss_type)) {
+        spawn_into_open_tile(g, boss_type);
+    }
 
-        // Check no other enemy already occupies this tile
-        int occupied = 0;
-        for (int j = 0; j < i; j++) {
-            if (g->enemies[j].active &&
-                g->enemies[j].x == ex &&
-                g->enemies[j].y == ey) {
-                occupied = 1;
-                break;
-            }
-        }
-        if (occupied) continue;
-
+    while (g->enemy_count < num_enemies) {
         EnemyType type;
         int roll = rand() % 100;
         int level = g->level;
@@ -190,39 +211,8 @@ void enemies_spawn(GameState *g) {
         } else {
             type = roll < 50 ? ENEMY_TROLL : ENEMY_GIANT;
         }
-
-        spawn_enemy(&g->enemies[i], type, ex, ey);
-        g->enemy_count++;
-    }
-    // Spawn boss on boss levels in a random walkable tile
-    if (g->level == 5  || g->level == 10 || g->level == 15 ||
-        g->level == 20 || g->level == 25) {
-        if (g->enemy_count < MAX_ENEMIES) {
-            EnemyType boss_type;
-            switch (g->level) {
-                case 5:  boss_type = ENEMY_GOBLIN_KING; break;
-                case 10: boss_type = ENEMY_LICH_KING;   break;
-                case 15: boss_type = ENEMY_DEMON_LORD;  break;
-                case 20: boss_type = ENEMY_RED_DRAGON;  break;
-                case 25: boss_type = ENEMY_TARRASQUE;   break;
-                default: boss_type = ENEMY_GOBLIN_KING; break;
-            }
-            // Try to place boss in a walkable tile in any room
-            for (int attempt = 0; attempt < 100; attempt++) {
-                int room_idx = rand() % g->map.room_count;
-                Room *room = &g->map.rooms[room_idx];
-                if (room->w < 3 || room->h < 3) continue;
-                int bx = room->x + 1 + rand() % (room->w - 2);
-                int by = room->y + 1 + rand() % (room->h - 2);
-                if (!map_is_walkable(&g->map, bx, by)) continue;
-                spawn_enemy(&g->enemies[g->enemy_count], boss_type, bx, by);
-                g->enemy_count++;
-                #ifdef DEBUG
-                printf("DEBUG boss spawned: type=%d at (%d,%d)\n",
-                    boss_type, bx, by);
-                #endif
-                break;
-            }
+        if (!spawn_into_open_tile(g, type)) {
+            break;
         }
     }
 }

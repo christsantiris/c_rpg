@@ -25,16 +25,14 @@ enemy count = min(10 + dungeon floor, MAX_ENEMIES)
 
 `MAX_ENEMIES` is currently 15, giving the following intended counts:
 
-| Floors | Regular enemies requested |
-| --- | ---: |
-| 1 | 11 |
-| 2 | 12 |
-| 3 | 13 |
-| 4 | 14 |
-| 5-25 | 15 |
-
-Placement can produce fewer enemies when a selected tile is invalid or already
-occupied.
+| Floors | Regular enemies | Bosses | Total enemies |
+| --- | ---: | ---: | ---: |
+| 1 | 11 | 0 | 11 |
+| 2 | 12 | 0 | 12 |
+| 3 | 13 | 0 | 13 |
+| 4 | 14 | 0 | 14 |
+| Non-boss floors 5-25 | 15 | 0 | 15 |
+| Boss floors 5, 10, 15, 20, 25 | 14 | 1 | 15 |
 
 ## Enemy Composition
 
@@ -80,15 +78,9 @@ Bosses are intended to spawn every five floors:
 Bosses guarantee an equipment drop. The drop is either a level-appropriate
 weapon or chain mail.
 
-### Known Boss-Cap Issue
-
-The regular roster reaches `MAX_ENEMIES` on floor 5. Boss creation only runs
-when `enemy_count < MAX_ENEMIES`, so a boss can fail to spawn when all 15
-regular enemies were placed successfully. A failed regular placement may leave
-space for the boss, making the current result dependent on random placement.
-
-If this is corrected, reserve one enemy slot on boss floors or increase the
-capacity before generating the regular roster.
+Bosses are spawned before regular enemies, reserving their place in the floor's
+enemy capacity. Regular enemies then fill the remaining slots up to
+`MAX_ENEMIES`, so every boss floor contains its scheduled boss.
 
 ## Traps and Map Generation
 

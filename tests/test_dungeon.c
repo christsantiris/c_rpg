@@ -33,6 +33,31 @@ void test_dungeon(void) {
             m.stairs_down_x >= 0 && m.stairs_down_x < MAP_W &&
             m.stairs_down_y >= 0 && m.stairs_down_y < MAP_H);
     }
+
+    const int boss_levels[] = {5, 10, 15, 20, 25};
+    const EnemyType boss_types[] = {
+        ENEMY_GOBLIN_KING,
+        ENEMY_LICH_KING,
+        ENEMY_DEMON_LORD,
+        ENEMY_RED_DRAGON,
+        ENEMY_TARRASQUE
+    };
+    GameState g = {0};
+    for (int i = 0; i < 5; i++) {
+        g.level = boss_levels[i];
+        map_generate(&g.map, g.level);
+        enemies_spawn(&g);
+
+        int matching_bosses = 0;
+        for (int j = 0; j < g.enemy_count; j++) {
+            if (g.enemies[j].is_boss &&
+                g.enemies[j].type == boss_types[i]) {
+                matching_bosses++;
+            }
+        }
+        ASSERT("boss floor always contains its boss", matching_bosses == 1);
+        ASSERT("boss floor respects enemy capacity", g.enemy_count <= MAX_ENEMIES);
+    }
 }
 
 void test_stairs_locked(void) {
