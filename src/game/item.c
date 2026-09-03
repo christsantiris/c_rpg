@@ -155,3 +155,13 @@ Item item_make_scroll_heal(void) {
     it.value    = 30;
     return it;
 }
+
+Item item_make_scroll_return_to_town(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_SCROLL;
+    strncpy(it.name, "Scroll: Return to Town", sizeof(it.name) - 1);
+    it.spell_id = SPELL_RETURN_TO_TOWN;
+    it.value = 0;
+    return it;
+}

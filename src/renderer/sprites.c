@@ -72,9 +72,13 @@ void draw_player(Renderer *r, int tile_x, int tile_y, PlayerClass player_class) 
         fill_rect(r, x+15,y+10, 4, 7, steel);
         fill_rect(r, x+8, y+20, 4, 2, outline);
         fill_rect(r, x+14,y+20, 4, 2, outline);
-        fill_rect(r, x+20,y+3, 2, 15, steel);
-        fill_rect(r, x+19,y+2, 4, 3, (SDL_Color){224, 230, 232, 255});
-        fill_rect(r, x+18,y+17,5, 2, leather);
+        // Raised sword: pointed blade, crossguard, grip, and pommel.
+        fill_rect(r, x+20,y,   1,  2, (SDL_Color){232, 238, 242, 255});
+        fill_rect(r, x+19,y+2, 3, 14, steel);
+        fill_rect(r, x+20,y+2, 1, 13, (SDL_Color){224, 230, 232, 255});
+        fill_rect(r, x+17,y+16,7,  2, (SDL_Color){202, 158, 62, 255});
+        fill_rect(r, x+19,y+18,3,  4, leather);
+        fill_rect(r, x+18,y+22,5,  2, (SDL_Color){202, 158, 62, 255});
     }
 }
 
@@ -106,6 +110,60 @@ void draw_stairs_down(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 3,     y + 4,     18,        1,         edge);
     fill_rect(r, x + 6,     y + 8,     12,        1,         edge);
     fill_rect(r, x + 9,     y + 12,    6,         1,         edge);
+}
+
+void draw_return_exit(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color base = {12, 14, 28, 255};
+    SDL_Color glow = {96, 210, 190, 255};
+    SDL_Color core = {190, 255, 232, 255};
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, base);
+    fill_rect(r, x + 3, y + 3, 18, 18, glow);
+    fill_rect(r, x + 6, y + 5, 12, 16, base);
+    fill_rect(r, x + 9, y + 7, 6, 12, core);
+}
+
+void draw_locked_door(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color stone = {50, 45, 80, 255};
+    SDL_Color wood = {66, 38, 54, 255};
+    SDL_Color edge = {116, 72, 94, 255};
+    SDL_Color iron = {146, 142, 164, 255};
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, stone);
+    fill_rect(r, x+3, y+2, 18, 22, edge);
+    fill_rect(r, x+5, y+4, 14, 20, wood);
+    fill_rect(r, x+7, y+4, 2, 20, edge);
+    fill_rect(r, x+15, y+4, 2, 20, edge);
+    fill_rect(r, x+10, y+11, 5, 6, iron);
+    fill_rect(r, x+11, y+9, 3, 4, iron);
+}
+
+void draw_dungeon_key(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color gold = {226, 184, 54, 255};
+    SDL_Color shine = {255, 232, 126, 255};
+    draw_town_path(r, tile_x, tile_y);
+    fill_rect(r, x+4, y+7, 8, 8, gold);
+    fill_rect(r, x+6, y+9, 4, 4, (SDL_Color){18, 18, 35, 255});
+    fill_rect(r, x+11, y+10, 10, 3, gold);
+    fill_rect(r, x+17, y+13, 3, 4, gold);
+    fill_rect(r, x+5, y+7, 3, 2, shine);
+}
+
+void draw_portal(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color outer = {68, 72, 218, 255};
+    SDL_Color glow = {86, 214, 244, 255};
+    SDL_Color core = {188, 252, 255, 255};
+    draw_floor(r, tile_x, tile_y);
+    fill_rect(r, x+3, y+9, 18, 7, outer);
+    fill_rect(r, x+6, y+7, 12, 10, glow);
+    fill_rect(r, x+9, y+9, 6, 6, core);
+    fill_rect(r, x+7, y+11, 10, 3, (SDL_Color){24, 30, 82, 255});
 }
 
 void draw_goblin(Renderer *r, int tile_x, int tile_y) {
@@ -200,6 +258,66 @@ void draw_zombie(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x+8, y+20,4, 3, dark);
     fill_rect(r, x+15,y+20,4, 3, dark);
     fill_rect(r, x+11,y+14,6, 2, (SDL_Color){150, 48, 48, 255});
+}
+
+void draw_crypt_bat(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color wing = {92, 42, 126, 255};
+    SDL_Color edge = {46, 22, 70, 255};
+    SDL_Color body = {54, 32, 72, 255};
+    SDL_Color eye = {244, 48, 62, 255};
+    fill_rect(r, x+1, y+7, 7, 3, edge);
+    fill_rect(r, x+3, y+5, 6, 8, wing);
+    fill_rect(r, x+15, y+5, 6, 8, wing);
+    fill_rect(r, x+16, y+7, 7, 3, edge);
+    fill_rect(r, x+7, y+8, 10, 9, body);
+    fill_rect(r, x+8, y+6, 3, 3, edge);
+    fill_rect(r, x+14, y+6, 3, 3, edge);
+    fill_rect(r, x+9, y+11, 2, 2, eye);
+    fill_rect(r, x+14, y+11, 2, 2, eye);
+    fill_rect(r, x+11, y+17, 3, 3, edge);
+}
+
+void draw_wraith(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color glow = {112, 224, 232, 255};
+    SDL_Color pale = {176, 242, 238, 255};
+    SDL_Color shade = {54, 112, 132, 255};
+    SDL_Color voidc = {12, 20, 38, 255};
+    fill_rect(r, x+7, y+2, 10, 4, pale);
+    fill_rect(r, x+5, y+6, 14, 8, glow);
+    fill_rect(r, x+8, y+6, 8, 6, voidc);
+    fill_rect(r, x+9, y+8, 2, 2, pale);
+    fill_rect(r, x+14, y+8, 2, 2, pale);
+    fill_rect(r, x+4, y+13, 16, 5, shade);
+    fill_rect(r, x+6, y+18, 4, 3, glow);
+    fill_rect(r, x+12, y+17, 4, 5, glow);
+    fill_rect(r, x+17, y+18, 3, 2, glow);
+    fill_rect(r, x+1, y+13, 4, 3, pale);
+    fill_rect(r, x+19, y+12, 4, 3, pale);
+}
+
+void draw_necromancer(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color robe = {62, 28, 92, 255};
+    SDL_Color trim = {116, 54, 148, 255};
+    SDL_Color skin = {172, 166, 134, 255};
+    SDL_Color magic = {78, 232, 76, 255};
+    SDL_Color bone = {210, 204, 170, 255};
+    fill_rect(r, x+7, y+2, 10, 4, trim);
+    fill_rect(r, x+5, y+5, 14, 8, robe);
+    fill_rect(r, x+8, y+7, 8, 5, skin);
+    fill_rect(r, x+9, y+8, 2, 2, magic);
+    fill_rect(r, x+14, y+8, 2, 2, magic);
+    fill_rect(r, x+5, y+13, 14, 9, robe);
+    fill_rect(r, x+9, y+14, 6, 7, trim);
+    fill_rect(r, x+2, y+6, 2, 16, bone);
+    fill_rect(r, x+1, y+3, 4, 4, bone);
+    fill_rect(r, x+2, y+2, 2, 2, magic);
+    fill_rect(r, x+19, y+13, 4, 4, magic);
 }
 
 void draw_giant(Renderer *r, int tile_x, int tile_y) {
@@ -332,6 +450,9 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_SKELETON: draw_skeleton(r, tile_x, tile_y); break;
         case ENEMY_GOBLIN:   draw_goblin(r, tile_x, tile_y);   break;
         case ENEMY_ZOMBIE:   draw_zombie(r, tile_x, tile_y);   break;
+        case ENEMY_CRYPT_BAT: draw_crypt_bat(r, tile_x, tile_y); break;
+        case ENEMY_WRAITH: draw_wraith(r, tile_x, tile_y); break;
+        case ENEMY_NECROMANCER: draw_necromancer(r, tile_x, tile_y); break;
         case ENEMY_ORC:      draw_orc(r, tile_x, tile_y);      break;
         case ENEMY_TROLL:    draw_troll(r, tile_x, tile_y);    break;
         case ENEMY_GIANT:    draw_giant(r, tile_x, tile_y);    break;

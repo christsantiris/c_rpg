@@ -1,8 +1,8 @@
 # Spells
 
-The game currently provides three learnable spells: Magic Arrow, Fireball, and
-Heal. Spells consume MP and become stronger as the player's character level
-increases.
+The game currently provides four learnable spells: Magic Arrow, Fireball, Heal,
+and Return to Town. Combat spells consume MP and become stronger as the
+player's character level increases.
 
 ## Spell Summary
 
@@ -11,6 +11,7 @@ increases.
 | Magic Arrow | Ranged damage | 10 | 15 damage | 6 | - |
 | Fireball | Area damage | 20 | 25 damage | 4 | 2 |
 | Heal | Self healing | 15 | 40 HP | - | - |
+| Return to Town | Utility portal | 0 | Town travel | - | - |
 
 Damage and healing use the following scaling formula:
 
@@ -76,6 +77,7 @@ inventory:
 - Scroll: Magic Arrow
 - Scroll: Fireball
 - Scroll: Heal
+- Scroll: Return to Town
 
 Using a new scroll adds its spell to the player's spellbook and consumes the
 scroll. Using a scroll for an already-known spell displays a message and does
@@ -84,6 +86,17 @@ not consume it. A player can know up to 10 spells.
 The Mage begins with a Magic Arrow scroll, but must use that scroll from the
 inventory before the spell becomes known. Other classes can learn the same
 spells when they find or purchase the relevant scrolls.
+
+Every class currently begins with a Return to Town scroll. This temporary
+starting arrangement will later be replaced by an NPC gift.
+
+## Return to Town
+
+Return to Town costs 0 MP and does not require an aim direction. Casting it in
+the dungeon records the player's floor and position, creates a portal on the
+town's north road, and immediately transports the player to town. Stepping onto
+the town portal returns the player to the recorded dungeon position and closes
+the portal. Casting it while already in town has no effect.
 
 Scrolls are sold by the Alchemist and can also appear as enemy drops. Early
 floors emphasize Magic Arrow and Heal; Fireball begins appearing in the loot

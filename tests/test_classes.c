@@ -17,8 +17,10 @@ void test_classes(void) {
     ASSERT("warrior: mp starts full",          gw.player.mp == 20);
     ASSERT("warrior: attack is 14",            gw.player.attack == 14);
     ASSERT("warrior: defense is 6",            gw.player.defense == 6);
-    ASSERT("warrior: starts with 1 item",      gw.inventory_count == 1);
+    ASSERT("warrior: starts with 2 items",      gw.inventory_count == 2);
     ASSERT("warrior: starts with rusty sword", gw.inventory[0].type == ITEM_WEAPON);
+    ASSERT("warrior: starts with return scroll",
+        gw.inventory[1].spell_id == SPELL_RETURN_TO_TOWN);
 
     // --- Mage ---
     GameState gm;
@@ -32,9 +34,11 @@ void test_classes(void) {
     ASSERT("mage: mp starts full",                 gm.player.mp == 100);
     ASSERT("mage: attack is 4",                    gm.player.attack == 4);
     ASSERT("mage: defense is 2",                   gm.player.defense == 2);
-    ASSERT("mage: starts with 2 items",            gm.inventory_count == 2);
+    ASSERT("mage: starts with 3 items",            gm.inventory_count == 3);
     ASSERT("mage: first item is staff",            gm.inventory[0].type == ITEM_WEAPON);
     ASSERT("mage: second item is scroll",          gm.inventory[1].type == ITEM_SCROLL);
+    ASSERT("mage: starts with return scroll",
+        gm.inventory[2].spell_id == SPELL_RETURN_TO_TOWN);
 
     // --- Rogue ---
     GameState gr;
@@ -48,6 +52,8 @@ void test_classes(void) {
     ASSERT("rogue: mp starts full",         gr.player.mp == 40);
     ASSERT("rogue: attack is 10",           gr.player.attack == 10);
     ASSERT("rogue: defense is 4",           gr.player.defense == 4);
-    ASSERT("rogue: starts with 1 item",     gr.inventory_count == 1);
+    ASSERT("rogue: starts with 2 items",     gr.inventory_count == 2);
     ASSERT("rogue: starts with bow",        gr.inventory[0].is_ranged == 1);
+    ASSERT("rogue: starts with return scroll",
+        gr.inventory[1].spell_id == SPELL_RETURN_TO_TOWN);
 }
