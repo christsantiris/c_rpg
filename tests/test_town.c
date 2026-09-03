@@ -61,6 +61,8 @@ void test_town_map(void) {
         m.tiles[0][20] == TILE_TOWN_EXIT);
     ASSERT("forest exit at west crossroad",
         m.tiles[12][0] == TILE_TOWN_EXIT);
+    ASSERT("mountain exit at east crossroad",
+        m.tiles[12][TOWN_W - 1] == TILE_TOWN_EXIT);
 
     // Shop tiles in correct positions
     ASSERT("blacksmith at (7,7)",
@@ -234,6 +236,71 @@ void test_town_spawn(void) {
     ASSERT("player not on shop tile",
         g.map.tiles[g.player.y][g.player.x] != TILE_SHOP_BLACKSMITH &&
         g.map.tiles[g.player.y][g.player.x] != TILE_SHOP_ALCHEMIST);
+}
+
+void test_mountains(void) {
+    printf("Goblin Mountains tests:\n");
+    GameState g;
+    g.player.player_class = CLASS_WARRIOR;
+    game_init(&g);
+    g.player.x = TOWN_W - 2;
+    g.player.y = 12;
+    Action enter = {ACTION_MOVE, TOWN_W - 1, 12};
+    action_resolve_player(&g, enter);
+    ASSERT("east town exit enters mountains", g.location == LOCATION_MOUNTAINS);
+    ASSERT("mountains begin on level one", g.level == 1);
+    ASSERT("mountains use red-black terrain",
+        g.map.tiles[g.player.y][g.player.x] == TILE_MOUNTAIN_FLOOR);
+
+    for (int level = 1; level <= MAX_DEPTH; level++) {
+        g.level = level;
+        map_generate_mountains(&g.map, level);
+        enemies_spawn(&g);
+        int bosses = 0, invalid = 0;
+        for (int i = 0; i < g.enemy_count; i++) {
+            EnemyType type = g.enemies[i].type;
+            if (g.enemies[i].is_boss) bosses++;
+            if (type < ENEMY_GOBLIN_SCOUT ||
+                type > ENEMY_MOUNTAIN_GOBLIN_KING) invalid = 1;
+        }
+        ASSERT("mountains use only mountain enemy roster", !invalid);
+        if (level < MAX_DEPTH)
+            ASSERT("mountain levels 1-4 have no boss", bosses == 0);
+        else
+            ASSERT("mountain level 5 has Goblin King",
+                bosses == 1 &&
+                g.enemies[0].type == ENEMY_MOUNTAIN_GOBLIN_KING);
+    }
+
+    g.level = 1;
+    map_generate_mountains(&g.map, 1);
+    enemies_spawn(&g);
+    g.player.x = MAP_W - 2;
+    g.player.y = g.map.stairs_down_y;
+    Action east = {ACTION_MOVE, MAP_W - 1, g.player.y};
+    action_resolve_player(&g, east);
+    ASSERT("mountain stage advances without full clear", g.level == 2);
+    ASSERT("mountain progress uses independent cache",
+        g.mountain_cache[0].valid && !g.level_cache[0].valid &&
+        !g.forest_cache[0].valid);
+
+    g.level = MAX_DEPTH;
+    map_generate_mountains(&g.map, g.level);
+    enemies_spawn(&g);
+    g.player.x = MAP_W - 2;
+    g.player.y = g.map.stairs_down_y;
+    east = (Action){ACTION_MOVE, MAP_W - 1, g.player.y};
+    action_resolve_player(&g, east);
+    ASSERT("Goblin King blocks final mountain exit",
+        g.location == LOCATION_MOUNTAINS);
+    for (int i = 0; i < g.enemy_count; i++)
+        if (g.enemies[i].type == ENEMY_MOUNTAIN_GOBLIN_KING)
+            g.enemies[i].active = 0;
+    action_resolve_player(&g, east);
+    ASSERT("defeating Goblin King returns to town",
+        g.location == LOCATION_TOWN);
+    ASSERT("mountain completion returns at east town road",
+        g.player.x == TOWN_W - 2 && g.player.y == 12);
 }
 
 void test_return_to_town(void) {

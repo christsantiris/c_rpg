@@ -161,14 +161,15 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count) {
             (e->type == ENEMY_GOBLIN_KING || e->type == ENEMY_LICH_KING ||
              e->type == ENEMY_DEMON_LORD || e->type == ENEMY_RED_DRAGON ||
              e->type == ENEMY_TARRASQUE ||
-             e->type == ENEMY_FOREST_NECROMANCER);
+             e->type == ENEMY_FOREST_NECROMANCER ||
+             e->type == ENEMY_MOUNTAIN_GOBLIN_KING);
     }
 }
 
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 8);
+    cJSON_AddNumberToObject(root, "save_version", 9);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -214,6 +215,8 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "max_level_reached", g->max_level_reached);
     cJSON_AddNumberToObject(root, "max_forest_level_reached",
         g->max_forest_level_reached);
+    cJSON_AddNumberToObject(root, "max_mountain_level_reached",
+        g->max_mountain_level_reached);
     cJSON_AddNumberToObject(root, "message_count",     g->message_count);
     cJSON_AddNumberToObject(root, "gold",              g->gold);
     cJSON_AddNumberToObject(root, "score",             g->score);
@@ -330,6 +333,25 @@ int save_game(const GameState *g, int slot) {
     }
     cJSON_AddItemToObject(root, "forest_cache", forest_cache);
 
+    cJSON *mountain_cache = cJSON_CreateArray();
+    for (int i = 0; i < MAX_DEPTH; i++) {
+        cJSON *entry = cJSON_CreateObject();
+        cJSON_AddNumberToObject(entry, "valid", g->mountain_cache[i].valid);
+        cJSON_AddNumberToObject(entry, "level_cleared",
+            g->mountain_cache[i].level_cleared);
+        if (g->mountain_cache[i].valid) {
+            cJSON_AddItemToObject(entry, "map",
+                serialize_map(&g->mountain_cache[i].map));
+            cJSON_AddItemToObject(entry, "enemies",
+                serialize_enemies(g->mountain_cache[i].enemies,
+                    g->mountain_cache[i].enemy_count));
+            cJSON_AddNumberToObject(entry, "enemy_count",
+                g->mountain_cache[i].enemy_count);
+        }
+        cJSON_AddItemToArray(mountain_cache, entry);
+    }
+    cJSON_AddItemToObject(root, "mountain_cache", mountain_cache);
+
     char *json = cJSON_Print(root);
     cJSON_Delete(root);
 
@@ -402,6 +424,8 @@ int load_game(GameState *g, int slot) {
     g->max_level_reached = cJSON_GetObjectItem(root, "max_level_reached")->valueint;
     cJSON *max_forest = cJSON_GetObjectItem(root, "max_forest_level_reached");
     g->max_forest_level_reached = max_forest ? max_forest->valueint : 1;
+    cJSON *max_mountain = cJSON_GetObjectItem(root, "max_mountain_level_reached");
+    g->max_mountain_level_reached = max_mountain ? max_mountain->valueint : 1;
     g->message_count     = cJSON_GetObjectItem(root, "message_count")->valueint;
     g->gold              = cJSON_GetObjectItem(root, "gold")->valueint;
     g->score             = cJSON_GetObjectItem(root, "score")->valueint;
@@ -464,7 +488,8 @@ int load_game(GameState *g, int slot) {
         fi->y      = cJSON_GetObjectItem(f, "y")->valueint;
         cJSON *underlying = cJSON_GetObjectItem(f, "underlying_tile");
         fi->underlying_tile = underlying ? underlying->valueint :
-            (g->location == LOCATION_FOREST ? TILE_FOREST_FLOOR : TILE_FLOOR);
+            (g->location == LOCATION_FOREST ? TILE_FOREST_FLOOR :
+            (g->location == LOCATION_MOUNTAINS ? TILE_MOUNTAIN_FLOOR : TILE_FLOOR));
         cJSON *it = cJSON_GetObjectItem(f, "item");
         fi->item.active        = cJSON_GetObjectItem(it, "active")->valueint;
         fi->item.type          = cJSON_GetObjectItem(it, "type")->valueint;
@@ -520,6 +545,26 @@ int load_game(GameState *g, int slot) {
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
                 g->forest_cache[i].enemies,
                 &g->forest_cache[i].enemy_count);
+        }
+    }
+
+    cJSON *mountain_cache = cJSON_GetObjectItem(root, "mountain_cache");
+    for (int i = 0; i < MAX_DEPTH; i++) {
+        g->mountain_cache[i].valid = 0;
+        g->mountain_cache[i].level_cleared = 0;
+        if (!mountain_cache) continue;
+        cJSON *entry = cJSON_GetArrayItem(mountain_cache, i);
+        if (!entry) continue;
+        cJSON *valid = cJSON_GetObjectItem(entry, "valid");
+        cJSON *cleared = cJSON_GetObjectItem(entry, "level_cleared");
+        g->mountain_cache[i].valid = valid ? valid->valueint : 0;
+        g->mountain_cache[i].level_cleared = cleared ? cleared->valueint : 0;
+        if (g->mountain_cache[i].valid) {
+            deserialize_map(cJSON_GetObjectItem(entry, "map"),
+                &g->mountain_cache[i].map);
+            deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
+                g->mountain_cache[i].enemies,
+                &g->mountain_cache[i].enemy_count);
         }
     }
 
@@ -636,6 +681,14 @@ int load_game(GameState *g, int slot) {
             g->player.x = g->map.stairs_up_x;
             g->player.y = g->map.stairs_up_y;
         }
+    }
+
+    if (save_version < 9) {
+        g->max_mountain_level_reached = 1;
+        for (int i = 0; i < MAX_DEPTH; i++)
+            g->mountain_cache[i].valid = 0;
+        if (g->portal_location == LOCATION_MOUNTAINS)
+            g->portal_active = 0;
     }
 
     // Floor five used to contain the Goblin King. Regenerate that legacy
