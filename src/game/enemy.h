@@ -14,7 +14,10 @@ typedef enum {
     ENEMY_LICH_KING,
     ENEMY_DEMON_LORD,
     ENEMY_RED_DRAGON,
-    ENEMY_TARRASQUE
+    ENEMY_TARRASQUE,
+    ENEMY_CRYPT_BAT,
+    ENEMY_WRAITH,
+    ENEMY_NECROMANCER
 } EnemyType;
 
 typedef struct {

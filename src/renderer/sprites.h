@@ -10,11 +10,18 @@ void draw_wall(Renderer *r, int tile_x, int tile_y);
 void draw_player(Renderer *r, int tile_x, int tile_y, PlayerClass player_class);
 void draw_stairs_up(Renderer *r, int tile_x, int tile_y);
 void draw_stairs_down(Renderer *r, int tile_x, int tile_y);
+void draw_return_exit(Renderer *r, int tile_x, int tile_y);
+void draw_locked_door(Renderer *r, int tile_x, int tile_y);
+void draw_dungeon_key(Renderer *r, int tile_x, int tile_y);
+void draw_portal(Renderer *r, int tile_x, int tile_y);
 
 // Enemey draw functions
 void draw_skeleton(Renderer *r, int tile_x, int tile_y);
 void draw_goblin(Renderer *r, int tile_x, int tile_y);
 void draw_zombie(Renderer *r, int tile_x, int tile_y);
+void draw_crypt_bat(Renderer *r, int tile_x, int tile_y);
+void draw_wraith(Renderer *r, int tile_x, int tile_y);
+void draw_necromancer(Renderer *r, int tile_x, int tile_y);
 void draw_orc(Renderer *r, int tile_x, int tile_y);
 void draw_troll(Renderer *r, int tile_x, int tile_y);
 void draw_giant(Renderer *r, int tile_x, int tile_y);

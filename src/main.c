@@ -587,12 +587,6 @@ int main(int argc, char **argv) {
                             case SDL_SCANCODE_F:
                                 a = (Action){ACTION_RANGED_ATTACK, 0, 0};
                                 break;
-                            case SDL_SCANCODE_T:
-                                if (game.location == LOCATION_DUNGEON) {
-                                    game_return_to_town(&game);
-                                    enter_playing(&renderer, &viewport, &game);
-                                }
-                                break;
                             case SDL_SCANCODE_H:
                                 screen = SCREEN_HELP;
                                 break;

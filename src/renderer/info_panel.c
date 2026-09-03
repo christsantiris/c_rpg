@@ -90,6 +90,16 @@ void info_panel_draw(Renderer *r, const GameState *g) {
     SDL_Color score_color = {255, 255, 255, 255};
     renderer_draw_text(r, score_str, x, y, score_color, r->font_tiny);
     y += lh + 10;
+
+    if (g->location == LOCATION_DUNGEON && g->level == MAX_DEPTH) {
+        renderer_draw_text(r, "BOSS KEY", x, y, label, r->font_tiny);
+        y += lh;
+        renderer_draw_text(r,
+            g->dungeon_key_found ? "FOUND" : "SEARCH FLOOR",
+            x, y, g->dungeon_key_found ? gold_color : dimmed,
+            r->font_tiny);
+        y += lh + 6;
+    }
     
     // Equipment grid (2x2)
     renderer_draw_text(r, "EQUIPPED", x, y, label, r->font_tiny);
@@ -120,13 +130,13 @@ void info_panel_draw(Renderer *r, const GameState *g) {
 
     // Key hints
     renderer_draw_text(r, "WASD  MOVE",    x, y,        hint, r->font_tiny);
-    renderer_draw_text(r, ".     DESCEND", x, y + lh,   hint, r->font_tiny);
+    renderer_draw_text(r, ".     STAIRS/EXIT", x, y + lh, hint, r->font_tiny);
     renderer_draw_text(r, ",     ASCEND",  x, y + lh*2, hint, r->font_tiny);
     renderer_draw_text(r, "I     INV",     x, y + lh*3, hint, r->font_tiny);
-    renderer_draw_text(r, "B     SPELLS",  x, y + lh*4, hint, r->font_tiny);
-    renderer_draw_text(r, "C     CAST",    x, y + lh*5, hint, r->font_tiny);
-    renderer_draw_text(r, "F     FIRE",    x, y + lh*6, hint, r->font_tiny);
-    renderer_draw_text(r, "T     TOWN",    x, y + lh*7, hint, r->font_tiny);
+    renderer_draw_text(r, "P     PICK UP", x, y + lh*4, hint, r->font_tiny);
+    renderer_draw_text(r, "B     SPELLS",  x, y + lh*5, hint, r->font_tiny);
+    renderer_draw_text(r, "C     CAST",    x, y + lh*6, hint, r->font_tiny);
+    renderer_draw_text(r, "F     FIRE",    x, y + lh*7, hint, r->font_tiny);
     renderer_draw_text(r, "ESC   MENU",    x, y + lh*8, hint, r->font_tiny);
 
 }
