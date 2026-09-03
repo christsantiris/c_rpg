@@ -169,6 +169,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_forest_edge(r, sx, sy, 0); break;
                 case TILE_FOREST_EXIT:
                     draw_forest_edge(r, sx, sy, 1); break;
+                case TILE_MOUNTAIN_FLOOR: draw_mountain_floor(r, sx, sy); break;
+                case TILE_MOUNTAIN_WALL: draw_mountain_wall(r, sx, sy); break;
+                case TILE_MOUNTAIN_ENTRANCE:
+                    draw_mountain_edge(r, sx, sy, 0); break;
+                case TILE_MOUNTAIN_EXIT:
+                    draw_mountain_edge(r, sx, sy, 1); break;
                 case TILE_STAIRS_UP: draw_stairs_up(r, sx, sy); break;
                 case TILE_STAIRS_DOWN: draw_stairs_down(r, sx, sy); break;
                 case TILE_RETURN_EXIT: draw_return_exit(r, sx, sy); break;
@@ -184,6 +190,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_TRAP_HIDDEN:
                     if (g->location == LOCATION_FOREST)
                         draw_forest_floor(r, sx, sy);
+                    else if (g->location == LOCATION_MOUNTAINS)
+                        draw_mountain_floor(r, sx, sy);
                     else
                         draw_floor(r, sx, sy);
                     break;
@@ -205,7 +213,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     // Draw enemies
     if (g->location == LOCATION_DUNGEON ||
-        g->location == LOCATION_FOREST) {
+        g->location == LOCATION_FOREST ||
+        g->location == LOCATION_MOUNTAINS) {
         for (int i = 0; i < g->enemy_count; i++) {
             Enemy *e = &g->enemies[i];
             if (!e->active) continue;
@@ -253,6 +262,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, 21) * TILE_SIZE,
             viewport_to_screen_y(v, 1) * TILE_SIZE,
             label, r->font_tiny);
+        renderer_draw_text(r, "MOUNTAINS",
+            viewport_to_screen_x(v, 35) * TILE_SIZE,
+            viewport_to_screen_y(v, 10) * TILE_SIZE,
+            (SDL_Color){220, 72, 42, 255}, r->font_tiny);
     }
 
     // Draw spell/projectile trail

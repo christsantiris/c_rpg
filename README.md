@@ -18,7 +18,10 @@ A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explo
 - [Roadmap](#roadmap)
 
 ## Overview
-*The Castle of No Return* is a text-based roguelike game built with C. The game features turn-based combat and a retro art style.
+*The Castle of No Return* is a C/SDL roguelike with turn-based combat and a
+retro pixel-art style. The central town connects to a five-floor undead
+dungeon, a five-stage Haunted Forest, and the five-stage Goblin Mountains.
+Each adventure keeps its own generated maps and progression.
 
 ## Screenshot
 Below are screenshots of the game in action:
@@ -100,11 +103,9 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 - Install as a desktop app: `./install.sh` — adds the game to your app launcher with a double-clickable icon
 
 ## Roadmap
-- windows installer
-- fix linux installer icon not showing
-- expand sound effects (stairs unlock, attack, magic)
-- Add other areas (mountains, forest, marsh)
+- Difficulty scaling
 - Quests
 - NPCs
-- Secret/Locked Rooms
 - Signing the app with codesign and submit to Apple with xcrun notarytool
+- windows installer
+- fix linux installer icon not showing
