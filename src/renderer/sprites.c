@@ -59,6 +59,33 @@ void draw_forest_edge(Renderer *r, int tile_x, int tile_y, int forward) {
     fill_rect(r, x+8, y+11, 8, 3, glow);
 }
 
+void draw_mountain_floor(Renderer *r, int tile_x, int tile_y) {
+    int x=tile_x*TILE_SIZE, y=tile_y*TILE_SIZE;
+    fill_rect(r,x,y,TILE_SIZE,TILE_SIZE,(SDL_Color){20,12,15,255});
+    fill_rect(r,x+2,y+4,9,2,(SDL_Color){48,25,28,255});
+    fill_rect(r,x+13,y+15,8,2,(SDL_Color){72,28,25,255});
+    fill_rect(r,x+5,y+21,3,2,(SDL_Color){126,39,22,255});
+}
+
+void draw_mountain_wall(Renderer *r, int tile_x, int tile_y) {
+    int x=tile_x*TILE_SIZE, y=tile_y*TILE_SIZE;
+    fill_rect(r,x,y,TILE_SIZE,TILE_SIZE,(SDL_Color){13,10,13,255});
+    fill_rect(r,x+1,y+2,22,7,(SDL_Color){42,31,35,255});
+    fill_rect(r,x+4,y+10,18,11,(SDL_Color){31,23,27,255});
+    fill_rect(r,x,y+8,TILE_SIZE,2,(SDL_Color){86,28,27,255});
+    fill_rect(r,x+14,y+11,2,9,(SDL_Color){104,31,23,255});
+}
+
+void draw_mountain_edge(Renderer *r, int tile_x, int tile_y, int forward) {
+    int x=tile_x*TILE_SIZE, y=tile_y*TILE_SIZE;
+    draw_mountain_floor(r,tile_x,tile_y);
+    fill_rect(r,x+2,y+1,5,22,(SDL_Color){40,31,32,255});
+    fill_rect(r,x+18,y+1,5,22,(SDL_Color){40,31,32,255});
+    fill_rect(r,x+2,y+1,21,4,(SDL_Color){91,32,28,255});
+    fill_rect(r,x+10,y+8,5,9,forward ?
+        (SDL_Color){239,65,25,255} : (SDL_Color){145,47,32,255});
+}
+
 void draw_player(Renderer *r, int tile_x, int tile_y, PlayerClass player_class) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
@@ -520,6 +547,44 @@ static void draw_forest_enemy(Renderer *r, int tx, int ty, EnemyType type) {
     }
 }
 
+static void draw_mountain_enemy(Renderer *r, int tx, int ty, EnemyType type) {
+    int x=tx*TILE_SIZE, y=ty*TILE_SIZE;
+    SDL_Color skin={91,121,45,255}, dark={23,17,19,255};
+    SDL_Color rust={128,48,30,255}, iron={103,91,88,255};
+    SDL_Color ember={244,67,20,255};
+    if (type == ENEMY_TUNNEL_SPIDER) {
+        fill_rect(r,x+7,y+7,11,12,iron); fill_rect(r,x+9,y+9,7,7,dark);
+        for(int i=0;i<4;i++){fill_rect(r,x+1,y+4+i*5,7,2,rust);fill_rect(r,x+17,y+4+i*5,7,2,rust);}
+        fill_rect(r,x+10,y+10,2,2,ember); fill_rect(r,x+14,y+10,2,2,ember);
+        return;
+    }
+    if (type == ENEMY_CAVE_TROLL) {
+        fill_rect(r,x+4,y+5,16,17,iron); fill_rect(r,x+7,y+8,3,2,ember);
+        fill_rect(r,x+15,y+8,3,2,ember); fill_rect(r,x+1,y+10,5,12,dark);
+        fill_rect(r,x+19,y+2,4,21,(SDL_Color){85,62,45,255}); return;
+    }
+    fill_rect(r,x+6,y+5,13,8,skin); fill_rect(r,x+4,y+7,4,3,skin);
+    fill_rect(r,x+17,y+7,4,3,skin); fill_rect(r,x+8,y+8,2,2,ember);
+    fill_rect(r,x+15,y+8,2,2,ember); fill_rect(r,x+6,y+13,13,9,rust);
+    if (type == ENEMY_GOBLIN_ARCHER) {
+        fill_rect(r,x+20,y+4,2,18,(SDL_Color){101,67,34,255});
+        fill_rect(r,x+18,y+4,5,2,iron); fill_rect(r,x+18,y+20,5,2,iron);
+    } else if (type == ENEMY_GOBLIN_BOMBER) {
+        fill_rect(r,x+18,y+2,6,6,dark); fill_rect(r,x+20,y,2,3,ember);
+    } else if (type == ENEMY_HOBGOBLIN_GUARD) {
+        fill_rect(r,x+1,y+8,7,14,iron); fill_rect(r,x+20,y+1,2,22,iron);
+    } else if (type == ENEMY_GOBLIN_SHAMAN) {
+        fill_rect(r,x+20,y+2,3,21,(SDL_Color){86,51,27,255});
+        fill_rect(r,x+18,y,7,6,ember); fill_rect(r,x+5,y+3,15,3,dark);
+    } else if (type == ENEMY_MOUNTAIN_GOBLIN_KING) {
+        fill_rect(r,x+4,y+12,17,11,dark); fill_rect(r,x+6,y+1,13,5,iron);
+        fill_rect(r,x+7,y,3,4,ember); fill_rect(r,x+15,y,3,4,ember);
+        fill_rect(r,x+20,y+5,4,18,(SDL_Color){92,58,32,255});
+    } else {
+        fill_rect(r,x+20,y+5,3,17,iron); fill_rect(r,x+19,y+3,5,5,iron);
+    }
+}
+
 void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
     switch (type) {
         case ENEMY_SKELETON: draw_skeleton(r, tile_x, tile_y); break;
@@ -536,6 +601,15 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_FOREST_TROLL:
         case ENEMY_FOREST_NECROMANCER:
             draw_forest_enemy(r, tile_x, tile_y, type); break;
+        case ENEMY_GOBLIN_SCOUT:
+        case ENEMY_GOBLIN_ARCHER:
+        case ENEMY_GOBLIN_BOMBER:
+        case ENEMY_TUNNEL_SPIDER:
+        case ENEMY_CAVE_TROLL:
+        case ENEMY_HOBGOBLIN_GUARD:
+        case ENEMY_GOBLIN_SHAMAN:
+        case ENEMY_MOUNTAIN_GOBLIN_KING:
+            draw_mountain_enemy(r, tile_x, tile_y, type); break;
         case ENEMY_ORC:      draw_orc(r, tile_x, tile_y);      break;
         case ENEMY_TROLL:    draw_troll(r, tile_x, tile_y);    break;
         case ENEMY_GIANT:    draw_giant(r, tile_x, tile_y);    break;

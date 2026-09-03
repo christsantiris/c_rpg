@@ -1,0 +1,35 @@
+# Goblin Mountains
+
+The Goblin Mountains are entered from the east town road and use an independent
+five-level cache. Their black basalt, iron-red rock and ember-orange accents
+separate the region visually from the dungeon and Haunted Forest.
+
+Wild Boars are deliberately excluded. The area is about an organized goblin
+war host, its siege craft, guarded mines and enslaved cave creatures.
+
+| Level | Region | Layout identity | Enemy roster |
+| --- | --- | --- | --- |
+| 1 | Blackrock Foothills | Open switchbacks and scout camps | Goblin Scouts |
+| 2 | Raider Pass | Overlapping firing lanes | Scouts and Goblin Archers |
+| 3 | Cinder Mines | Braided mine routes and ambush chambers | Scouts, Archers, Bombers and Tunnel Spiders |
+| 4 | Iron Ascent | Fortified hubs and guarded choke points | Archers, Bombers, Spiders, Cave Trolls and Hobgoblin Guards |
+| 5 | Crown Peak | Twin approaches into the summit fortress | Full roster, Goblin Shamans and the Goblin King |
+
+Levels 1-4 do not require a full clear. Reaching the eastern mountain gate is
+enough to advance. On level 5, only the Goblin King must be defeated.
+
+## Combat Roles
+
+- **Goblin Scout:** basic melee pursuer.
+- **Goblin Archer:** fires along clear rows and columns.
+- **Goblin Bomber:** launches high-damage explosives along clear firing lines.
+- **Tunnel Spider:** armored ambusher whose bite applies poison.
+- **Cave Troll:** slow, high-health bruiser.
+- **Hobgoblin Guard:** heavily armored frontline defender.
+- **Goblin Shaman:** periodically heals a nearby wounded ally.
+- **Goblin King:** remains at Crown Peak until confronted, then alternates a
+  telegraphed wind-up with powerful thrown-axe attacks.
+
+The route geometry varies by level and on regeneration. Future refinement can
+push the ascent identity further with bespoke cliff ledges, mine supports,
+fortress gates and falling-rock hazards without changing progression rules.

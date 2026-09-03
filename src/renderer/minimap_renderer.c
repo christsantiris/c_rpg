@@ -10,7 +10,8 @@
 
 void minimap_draw(Renderer *r, const GameState *g) {
     if (g->location != LOCATION_DUNGEON &&
-        g->location != LOCATION_FOREST) {
+        g->location != LOCATION_FOREST &&
+        g->location != LOCATION_MOUNTAINS) {
         return;
     }
 
@@ -44,10 +45,12 @@ void minimap_draw(Renderer *r, const GameState *g) {
                     if (tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN ||
                         tile == TILE_RETURN_EXIT || tile == TILE_DUNGEON_KEY ||
                         tile == TILE_PORTAL || tile == TILE_FOREST_ENTRANCE ||
-                        tile == TILE_FOREST_EXIT) {
+                        tile == TILE_FOREST_EXIT || tile == TILE_MOUNTAIN_ENTRANCE ||
+                        tile == TILE_MOUNTAIN_EXIT) {
                         has_stair = 1;
                     } else if (tile != TILE_WALL &&
                         tile != TILE_FOREST_WALL &&
+                        tile != TILE_MOUNTAIN_WALL &&
                         tile != TILE_LOCKED_DOOR) {
                         has_floor = 1;
                     }
@@ -60,6 +63,8 @@ void minimap_draw(Renderer *r, const GameState *g) {
             } else if (has_floor) {
                 if (g->location == LOCATION_FOREST)
                     SDL_SetRenderDrawColor(r->sdl, 45, 95, 55, 255);
+                else if (g->location == LOCATION_MOUNTAINS)
+                    SDL_SetRenderDrawColor(r->sdl, 125, 42, 32, 255);
                 else
                     SDL_SetRenderDrawColor(r->sdl, 70, 70, 100, 255);
                 SDL_RenderDrawPoint(r->sdl, draw_x, draw_y);

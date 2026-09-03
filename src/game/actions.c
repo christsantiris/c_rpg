@@ -67,6 +67,14 @@ static int enemy_score(EnemyType type) {
         case ENEMY_GIANT_WURM: return 70;
         case ENEMY_FOREST_TROLL: return 80;
         case ENEMY_FOREST_NECROMANCER: return 1100;
+        case ENEMY_GOBLIN_SCOUT: return 18;
+        case ENEMY_GOBLIN_ARCHER: return 28;
+        case ENEMY_GOBLIN_BOMBER: return 36;
+        case ENEMY_TUNNEL_SPIDER: return 34;
+        case ENEMY_CAVE_TROLL: return 85;
+        case ENEMY_HOBGOBLIN_GUARD: return 70;
+        case ENEMY_GOBLIN_SHAMAN: return 76;
+        case ENEMY_MOUNTAIN_GOBLIN_KING: return 1300;
         case ENEMY_ORC:         return 30;
         case ENEMY_TROLL:       return 50;
         case ENEMY_GIANT:       return 80;
@@ -96,6 +104,14 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type, int is_boss) {
         case ENEMY_GIANT_WURM: gold = 10 + rand() % 10; break;
         case ENEMY_FOREST_TROLL: gold = 12 + rand() % 12; break;
         case ENEMY_FOREST_NECROMANCER: gold = 50; break;
+        case ENEMY_GOBLIN_SCOUT: gold = 3 + rand() % 5; break;
+        case ENEMY_GOBLIN_ARCHER: gold = 5 + rand() % 7; break;
+        case ENEMY_GOBLIN_BOMBER: gold = 6 + rand() % 8; break;
+        case ENEMY_TUNNEL_SPIDER: gold = 4 + rand() % 6; break;
+        case ENEMY_CAVE_TROLL: gold = 12 + rand() % 12; break;
+        case ENEMY_HOBGOBLIN_GUARD: gold = 10 + rand() % 10; break;
+        case ENEMY_GOBLIN_SHAMAN: gold = 11 + rand() % 11; break;
+        case ENEMY_MOUNTAIN_GOBLIN_KING: gold = 60; break;
         case ENEMY_ORC:      gold = 6 + rand() % 8;  break;
         case ENEMY_TROLL:    gold = 10 + rand() % 10; break;
         case ENEMY_GIANT:    gold = 15 + rand() % 15; break;
@@ -680,6 +696,7 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->location == LOCATION_TOWN &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
             if (tx == 0) game_enter_forest(g);
+            else if (tx == TOWN_W - 1) game_enter_mountains(g);
             else game_enter_dungeon(g);
             return;
         }
@@ -688,6 +705,37 @@ void action_resolve_player(GameState *g, Action a) {
             g->map.tiles[ty][tx] == TILE_FOREST_ENTRANCE) {
             if (g->level == 1) game_return_to_town(g);
             else game_ascend(g);
+            return;
+        }
+
+        if (g->location == LOCATION_MOUNTAINS &&
+            g->map.tiles[ty][tx] == TILE_MOUNTAIN_ENTRANCE) {
+            if (g->level == 1) game_return_to_town(g);
+            else game_ascend(g);
+            return;
+        }
+
+        if (g->location == LOCATION_MOUNTAINS &&
+            g->map.tiles[ty][tx] == TILE_MOUNTAIN_EXIT) {
+            if (g->level < MAX_DEPTH) {
+                game_descend(g);
+                g->score += g->level * 100;
+            } else {
+                int king_alive = 0;
+                for (int i = 0; i < g->enemy_count; i++)
+                    if (g->enemies[i].active &&
+                        g->enemies[i].type == ENEMY_MOUNTAIN_GOBLIN_KING) {
+                        king_alive = 1;
+                        break;
+                    }
+                if (king_alive) {
+                    push_message(g, "The Goblin King bars the pass!");
+                    return;
+                }
+                g->score += g->level * 100;
+                game_return_to_town(g);
+                push_message(g, "The mountain pass is liberated!");
+            }
             return;
         }
 
@@ -933,6 +981,15 @@ void action_resolve_enemies(GameState *g) {
                 g->player.y < grove->y + grove->h;
             if (!player_in_grove && e->move_timer == 0) continue;
         }
+        if (e->type == ENEMY_MOUNTAIN_GOBLIN_KING) {
+            Room *fortress = &g->map.rooms[g->map.room_count - 1];
+            int player_in_fortress =
+                g->player.x >= fortress->x &&
+                g->player.x < fortress->x + fortress->w &&
+                g->player.y >= fortress->y &&
+                g->player.y < fortress->y + fortress->h;
+            if (!player_in_fortress && e->move_timer == 0) continue;
+        }
 
         int dx = g->player.x - e->x;
         int dy = g->player.y - e->y;
@@ -945,7 +1002,8 @@ void action_resolve_enemies(GameState *g) {
                 int dmg = e->attack - defense;
                 if (dmg < 1) dmg = 1;
                 g->player.hp -= dmg;
-                if (e->type == ENEMY_GIANT_SPIDER) {
+                if (e->type == ENEMY_GIANT_SPIDER ||
+                    e->type == ENEMY_TUNNEL_SPIDER) {
                     g->player.poison_turns = 3;
                     push_message(g, "Giant Spider venom poisons you!");
                 }
@@ -997,6 +1055,48 @@ void action_resolve_enemies(GameState *g) {
             continue;
         }
 
+        if (e->type == ENEMY_MOUNTAIN_GOBLIN_KING) {
+            if (e->move_timer % 2 == 0) {
+                int dmg = e->attack - g->player.defense / 2;
+                if (dmg < 4) dmg = 4;
+                g->player.hp -= dmg;
+                char msg[MAX_MESSAGE_LEN];
+                snprintf(msg, sizeof(msg), "Goblin King axe: %d dmg", dmg);
+                push_message(g, msg);
+            } else push_message(g, "The Goblin King raises his axe...");
+            continue;
+        }
+
+        if ((e->type == ENEMY_GOBLIN_ARCHER ||
+            e->type == ENEMY_GOBLIN_BOMBER) &&
+            e->move_timer % 2 == 0 && clear_orthogonal_path(g, e)) {
+            int dmg = e->attack - g->player.defense / 2;
+            if (dmg < 1) dmg = 1;
+            g->player.hp -= dmg;
+            char msg[MAX_MESSAGE_LEN];
+            snprintf(msg, sizeof(msg), e->type == ENEMY_GOBLIN_BOMBER
+                ? "Goblin bomb: %d dmg" : "Goblin arrow: %d dmg", dmg);
+            push_message(g, msg);
+            continue;
+        }
+
+        if (e->type == ENEMY_GOBLIN_SHAMAN && e->move_timer % 3 == 0) {
+            int healed = 0;
+            for (int j = 0; j < g->enemy_count; j++) {
+                Enemy *ally = &g->enemies[j];
+                if (ally->active && ally->hp < ally->max_hp &&
+                    abs_int(ally->x - e->x) <= 4 &&
+                    abs_int(ally->y - e->y) <= 4) {
+                    ally->hp += 6;
+                    if (ally->hp > ally->max_hp) ally->hp = ally->max_hp;
+                    healed = 1;
+                    push_message(g, "Goblin Shaman heals an ally!");
+                    break;
+                }
+            }
+            if (healed) continue;
+        }
+
         if (e->type == ENEMY_DARK_ELF && e->move_timer % 2 == 0 &&
             clear_orthogonal_path(g, e)) {
             int dmg = e->attack - g->player.defense / 2;
@@ -1022,7 +1122,7 @@ void action_resolve_enemies(GameState *g) {
         }
 
         if (e->type == ENEMY_ZOMBIE || e->type == ENEMY_GIANT_WURM ||
-            e->type == ENEMY_FOREST_TROLL) { // Heavy enemies move slowly
+            e->type == ENEMY_FOREST_TROLL || e->type == ENEMY_CAVE_TROLL) {
             if (e->move_timer % 2 != 0) continue;
         }
 
