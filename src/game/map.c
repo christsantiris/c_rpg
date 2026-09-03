@@ -182,6 +182,7 @@ int map_is_walkable(const Map *m, int x, int y) {
     if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) return 0;
     return m->tiles[y][x] != TILE_WALL &&
         m->tiles[y][x] != TILE_FOREST_WALL &&
+        m->tiles[y][x] != TILE_MOUNTAIN_WALL &&
         m->tiles[y][x] != TILE_LOCKED_DOOR;
 }
 
@@ -261,6 +262,24 @@ void map_generate_forest(Map *m, int level) {
     }
 }
 
+void map_generate_mountains(Map *m, int level) {
+    // Reuse the five proven branching route graphs, then reinterpret their
+    // clearings as exposed basalt passes and mine chambers.
+    map_generate_forest(m, level);
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (m->tiles[y][x] == TILE_FOREST_FLOOR)
+                m->tiles[y][x] = TILE_MOUNTAIN_FLOOR;
+            else if (m->tiles[y][x] == TILE_FOREST_WALL)
+                m->tiles[y][x] = TILE_MOUNTAIN_WALL;
+            else if (m->tiles[y][x] == TILE_FOREST_ENTRANCE)
+                m->tiles[y][x] = TILE_MOUNTAIN_ENTRANCE;
+            else if (m->tiles[y][x] == TILE_FOREST_EXIT)
+                m->tiles[y][x] = TILE_MOUNTAIN_EXIT;
+        }
+    }
+}
+
 void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     m->room_count = 0;
 
@@ -290,6 +309,10 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     // available for future regions.
     for (int y = 10; y <= 14; y++)
         m->tiles[y][0] = TILE_TOWN_EXIT;
+
+    // Goblin Mountains exit at the east end of the crossroad.
+    for (int y = 10; y <= 14; y++)
+        m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
 
     // Blacksmith at (7, 7) — 5x4 tiles
     for (int dy = 0; dy < 4; dy++)
