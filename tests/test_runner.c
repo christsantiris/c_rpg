@@ -21,6 +21,7 @@ void test_items(void);
 void test_classes(void);
 void test_level_cache_cleared(void);
 void test_return_to_town(void);
+void test_forest(void);
 
 int main(void) {
     // ASSERT("sanity check true",  1 == 1);
@@ -51,6 +52,8 @@ int main(void) {
     test_town_map();
     printf("\n");
     test_town_spawn();
+    printf("\n");
+    test_forest();
     printf("\n");
     test_level_cache_cleared();
     printf("\n");

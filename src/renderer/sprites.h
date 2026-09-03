@@ -7,6 +7,9 @@
 // Map draw functions
 void draw_floor(Renderer *r, int tile_x, int tile_y);
 void draw_wall(Renderer *r, int tile_x, int tile_y);
+void draw_forest_floor(Renderer *r, int tile_x, int tile_y);
+void draw_forest_wall(Renderer *r, int tile_x, int tile_y);
+void draw_forest_edge(Renderer *r, int tile_x, int tile_y, int forward);
 void draw_player(Renderer *r, int tile_x, int tile_y, PlayerClass player_class);
 void draw_stairs_up(Renderer *r, int tile_x, int tile_y);
 void draw_stairs_down(Renderer *r, int tile_x, int tile_y);

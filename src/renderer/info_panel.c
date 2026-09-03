@@ -42,6 +42,8 @@ void info_panel_draw(Renderer *r, const GameState *g) {
     char loc[24];
     if (g->location == LOCATION_TOWN) {
         SDL_snprintf(loc, sizeof(loc), "TOWN");
+    } else if (g->location == LOCATION_FOREST) {
+        SDL_snprintf(loc, sizeof(loc), "FOREST %d", g->level);
     } else {
         SDL_snprintf(loc, sizeof(loc), "DUNGEON %d", g->level);
     }

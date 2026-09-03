@@ -163,6 +163,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             int sy = viewport_to_screen_y(v, y);
             switch (g->map.tiles[y][x]) {
                 case TILE_WALL: draw_wall(r, sx, sy); break;
+                case TILE_FOREST_WALL: draw_forest_wall(r, sx, sy); break;
+                case TILE_FOREST_FLOOR: draw_forest_floor(r, sx, sy); break;
+                case TILE_FOREST_ENTRANCE:
+                    draw_forest_edge(r, sx, sy, 0); break;
+                case TILE_FOREST_EXIT:
+                    draw_forest_edge(r, sx, sy, 1); break;
                 case TILE_STAIRS_UP: draw_stairs_up(r, sx, sy); break;
                 case TILE_STAIRS_DOWN: draw_stairs_down(r, sx, sy); break;
                 case TILE_RETURN_EXIT: draw_return_exit(r, sx, sy); break;
@@ -175,7 +181,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_SHOP_BLACKSMITH:
                 case TILE_SHOP_ALCHEMIST: draw_town_floor(r, sx, sy); break;
                 case TILE_ITEM: draw_floor_item(r, sx, sy); break;
-                case TILE_TRAP_HIDDEN: draw_floor(r, sx, sy); break;
+                case TILE_TRAP_HIDDEN:
+                    if (g->location == LOCATION_FOREST)
+                        draw_forest_floor(r, sx, sy);
+                    else
+                        draw_floor(r, sx, sy);
+                    break;
                 case TILE_TRAP_SPIKE: draw_trap_spike(r, sx, sy); break;
                 case TILE_TRAP_FIRE: draw_trap_fire(r, sx, sy); break;
                 case TILE_TRAP_POISON: draw_trap_poison(r, sx, sy); break;
@@ -193,7 +204,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     // Draw enemies
-    if (g->location == LOCATION_DUNGEON) {
+    if (g->location == LOCATION_DUNGEON ||
+        g->location == LOCATION_FOREST) {
         for (int i = 0; i < g->enemy_count; i++) {
             Enemy *e = &g->enemies[i];
             if (!e->active) continue;
@@ -233,6 +245,14 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             renderer_draw_text(r, "BLACKSMITH", bx, by, label, r->font_tiny);
         if (ax > 0 && ay > 0)
             renderer_draw_text(r, "ALCHEMIST", ax, ay, label, r->font_tiny);
+        renderer_draw_text(r, "FOREST",
+            viewport_to_screen_x(v, 1) * TILE_SIZE,
+            viewport_to_screen_y(v, 10) * TILE_SIZE,
+            (SDL_Color){90, 190, 105, 255}, r->font_tiny);
+        renderer_draw_text(r, "DUNGEON",
+            viewport_to_screen_x(v, 21) * TILE_SIZE,
+            viewport_to_screen_y(v, 1) * TILE_SIZE,
+            label, r->font_tiny);
     }
 
     // Draw spell/projectile trail
