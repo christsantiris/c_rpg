@@ -5,6 +5,8 @@ void sfx_init(void);
 void sfx_play_attack(void);
 void sfx_play_arrow(void);
 void sfx_play_magic_arrow(void);
+void sfx_play_fireball(void);
+void sfx_play_heal(void);
 void sfx_free(void);
 void sfx_toggle(void);
 int  sfx_enabled(void);

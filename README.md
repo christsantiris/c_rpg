@@ -30,6 +30,51 @@ Below are screenshots of the game in action:
 ## Compile the game
 To compile the app run `make run` in the root directory.
 
+### Debug interface
+
+The `debug` target builds the game with debug support and accepts optional
+Make variables for configuring the next new character:
+
+```bash
+make debug WEAPON=bow GOLD=500 SCROLLS=magic-arrow,fireball,heal
+```
+
+| Make variable | Executable option | Accepted values | Behavior when omitted |
+| --- | --- | --- | --- |
+| `WEAPON` | `--weapon NAME` | `rusty-sword`, `short-sword`, `long-sword`, `battle-axe`, `staff`, `bow`, `none` | Keep the selected class's normal starting weapon |
+| `GOLD` | `--gold N` | Any whole number from `0` through `999999` | Keep the normal starting gold |
+| `SCROLLS` | `--scrolls LIST` | Up to three comma-separated values chosen from `magic-arrow`, `fireball`, and `heal`, or `none` | Keep the selected class's normal starting scrolls |
+
+Providing `WEAPON` or `SCROLLS` replaces the normal class starting items in
+that category. Use `WEAPON=none` or `SCROLLS=none` to begin without that item
+category. Scroll names must be comma-separated without spaces. These settings
+are applied after class selection when a new game is created; they do not
+modify a loaded save.
+
+Examples:
+
+```bash
+# Override every supported starting value.
+make debug WEAPON=bow GOLD=500 SCROLLS=magic-arrow,fireball,heal
+
+# Test an empty weapon and scroll loadout while retaining normal starting gold.
+make debug WEAPON=none SCROLLS=none
+
+# Override only gold and retain the selected class's normal equipment.
+make debug GOLD=10000
+```
+
+After building a debug executable, the corresponding command-line options can
+also be passed directly:
+
+```bash
+./build/conr --weapon bow --gold 500 --scrolls magic-arrow,heal
+```
+
+Unknown options, unsupported item names, lists longer than three scrolls, and
+gold values outside the accepted range cause the program to print usage
+information and exit before starting the game.
+
 ## Clean the build
 Run `make clean` to destroy the compiled game and start over if you make your own changes
 

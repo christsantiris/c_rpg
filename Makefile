@@ -17,7 +17,7 @@ linux:
 debug:
 	cmake -B build -DCMAKE_BUILD_TYPE=Debug
 	cmake --build build
-	./build/conr
+	./build/conr $(if $(WEAPON),--weapon "$(WEAPON)") $(if $(GOLD),--gold "$(GOLD)") $(if $(SCROLLS),--scrolls "$(SCROLLS)")
 
 test:
 	cmake -B build -DCMAKE_BUILD_TYPE=Debug

@@ -22,6 +22,13 @@ typedef struct {
 } TrailTile;
 
 typedef enum {
+    TRAIL_EFFECT_GENERIC = 0,
+    TRAIL_EFFECT_WEAPON_ARROW,
+    TRAIL_EFFECT_MAGIC_ARROW,
+    TRAIL_EFFECT_FIREBALL
+} TrailEffect;
+
+typedef enum {
     CLASS_WARRIOR = 0,
     CLASS_MAGE,
     CLASS_ROGUE
@@ -77,6 +84,8 @@ typedef struct {
     TrailTile trail[MAX_TRAIL];
     int       trail_count;
     int       trail_frames;
+    TrailEffect trail_effect;
+    Uint32    trail_started_at;
     int score;
 } GameState;
 
