@@ -163,9 +163,16 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type, int is_boss) {
 
 static void set_trail(GameState *g, int sx, int sy,
                       int tx, int ty, int dx, int dy,
-                      int range, Uint8 r, Uint8 gr, Uint8 b) {
+                      int range, Uint8 r, Uint8 gr, Uint8 b,
+                      TrailEffect effect) {
     g->trail_count  = 0;
     g->trail_frames = 4;
+    g->trail_effect = effect;
+    #ifndef TEST_BUILD
+    g->trail_started_at = SDL_GetTicks();
+    #else
+    g->trail_started_at = 0;
+    #endif
     int cx = sx;
     int cy = sy;
     for (int step = 1; step <= range; step++) {
@@ -391,18 +398,25 @@ void action_resolve_player(GameState *g, Action a) {
             set_trail(g, g->player.x, g->player.y,
                 ex, ey,
                 g->player.last_dx, g->player.last_dy,
-                sp->range, 40, 120, 220);
+                sp->range, 40, 120, 220, TRAIL_EFFECT_MAGIC_ARROW);
         } else if (sp->type == SPELL_TYPE_DAMAGE_AREA) {
+            #ifndef TEST_BUILD
+            sfx_play_fireball();
+            #endif
             int ex = g->player.x + g->player.last_dx * sp->range;
             int ey = g->player.y + g->player.last_dy * sp->range;
             set_trail(g, g->player.x, g->player.y,
                 ex, ey,
                 g->player.last_dx, g->player.last_dy,
-                sp->range, 220, 100, 20);
+                sp->range, 220, 100, 20, TRAIL_EFFECT_FIREBALL);
         } else if (sp->type == SPELL_TYPE_HEAL) {
+            #ifndef TEST_BUILD
+            sfx_play_heal();
+            #endif
             // Heal — green ring on player tile
             g->trail_count  = 0;
             g->trail_frames = 4;
+            g->trail_effect = TRAIL_EFFECT_GENERIC;
             TrailTile *t = &g->trail[g->trail_count++];
             t->active    = 1;
             t->x         = g->player.x;
@@ -569,7 +583,7 @@ void action_resolve_player(GameState *g, Action a) {
         set_trail(g, g->player.x, g->player.y,
             impact_x, impact_y,
             g->player.last_dx, g->player.last_dy,
-            wpn->range, 160, 160, 160);
+            wpn->range, 160, 160, 160, TRAIL_EFFECT_WEAPON_ARROW);
         if (!hit) push_message(g, "Attack missed!");
         return;
     }
@@ -655,6 +669,7 @@ void action_resolve_player(GameState *g, Action a) {
                 // Red flash
                 g->trail_count  = 0;
                 g->trail_frames = 4;
+                g->trail_effect = TRAIL_EFFECT_GENERIC;
                 TrailTile *t = &g->trail[g->trail_count++];
                 t->active = 1; t->x = px; t->y = py;
                 t->r = 200; t->g = 20; t->b = 20;
@@ -666,6 +681,7 @@ void action_resolve_player(GameState *g, Action a) {
                 // Orange flash
                 g->trail_count  = 0;
                 g->trail_frames = 4;
+                g->trail_effect = TRAIL_EFFECT_GENERIC;
                 TrailTile *t = &g->trail[g->trail_count++];
                 t->active = 1; t->x = px; t->y = py;
                 t->r = 220; t->g = 100; t->b = 20;
@@ -676,6 +692,7 @@ void action_resolve_player(GameState *g, Action a) {
                 // Green flash
                 g->trail_count  = 0;
                 g->trail_frames = 4;
+                g->trail_effect = TRAIL_EFFECT_GENERIC;
                 TrailTile *t = &g->trail[g->trail_count++];
                 t->active = 1; t->x = px; t->y = py;
                 t->r = 40; t->g = 180; t->b = 40;

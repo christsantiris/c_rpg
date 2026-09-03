@@ -264,6 +264,8 @@ void game_init(GameState *g) {
     g->player.poison_turns = 0;
     g->trail_count = 0;
     g->trail_frames = 0;
+    g->trail_effect = TRAIL_EFFECT_GENERIC;
+    g->trail_started_at = 0;
 
     switch (g->player.player_class) {
         case CLASS_WARRIOR:

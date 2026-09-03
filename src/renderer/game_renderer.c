@@ -91,6 +91,69 @@ static void draw_magic_arrow(Renderer *r, int tile_x, int tile_y,
     }
 }
 
+static void draw_fireball(Renderer *r, int tile_x, int tile_y,
+                          int dx, int dy, int frame) {
+    int cx = tile_x * TILE_SIZE + TILE_SIZE / 2;
+    int cy = tile_y * TILE_SIZE + TILE_SIZE / 2;
+    int flicker = frame % 2;
+    SDL_Rect glow = {cx - 7, cy - 7, 14, 14};
+    SDL_Rect flame = {cx - 5, cy - 5, 10, 10};
+    SDL_Rect hot = {cx - 3, cy - 3, 6, 6};
+    SDL_Rect core = {cx - 1, cy - 1, 3, 3};
+
+    SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(r->sdl, 194, 48, 18, 70);
+    SDL_RenderFillRect(r->sdl, &glow);
+    SDL_SetRenderDrawColor(r->sdl, 190, 44, 16, 255);
+    SDL_RenderFillRect(r->sdl, &flame);
+    SDL_SetRenderDrawColor(r->sdl, 250, 116, 18, 255);
+    SDL_RenderFillRect(r->sdl, &hot);
+    SDL_SetRenderDrawColor(r->sdl, 255, 238, 132, 255);
+    SDL_RenderFillRect(r->sdl, &core);
+
+    SDL_SetRenderDrawColor(r->sdl, 238, 78, 14, 220);
+    for (int i = 1; i <= 3; i++) {
+        int size = 5 - i;
+        SDL_Rect ember = {
+            cx - dx * (5 + i * 3) - size / 2 + (-dy) * (flicker ? i : -i),
+            cy - dy * (5 + i * 3) - size / 2 + dx * (flicker ? i : -i),
+            size, size
+        };
+        SDL_RenderFillRect(r->sdl, &ember);
+    }
+}
+
+static void draw_fireball_impact(Renderer *r, int tile_x, int tile_y,
+                                 Uint32 elapsed) {
+    int cx = tile_x * TILE_SIZE + TILE_SIZE / 2;
+    int cy = tile_y * TILE_SIZE + TILE_SIZE / 2;
+    int radius = 5 + (int)(elapsed * (TILE_SIZE + 8) / 220);
+    if (radius > TILE_SIZE + 8) {
+        radius = TILE_SIZE + 8;
+    }
+    SDL_Rect ring = {cx - radius, cy - radius, radius * 2, radius * 2};
+    SDL_Rect center = {cx - 5, cy - 5, 10, 10};
+    Uint8 alpha = (Uint8)(220 - elapsed * 180 / 220);
+
+    SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(r->sdl, 224, 58, 12, alpha);
+    SDL_RenderDrawRect(r->sdl, &ring);
+    ring.x += 2;
+    ring.y += 2;
+    ring.w -= 4;
+    ring.h -= 4;
+    SDL_SetRenderDrawColor(r->sdl, 255, 136, 18, alpha);
+    SDL_RenderDrawRect(r->sdl, &ring);
+    SDL_SetRenderDrawColor(r->sdl, 255, 224, 112, alpha);
+    SDL_RenderFillRect(r->sdl, &center);
+
+    SDL_SetRenderDrawColor(r->sdl, 250, 92, 12, alpha);
+    SDL_RenderDrawPoint(r->sdl, cx + radius + 3, cy);
+    SDL_RenderDrawPoint(r->sdl, cx - radius - 3, cy);
+    SDL_RenderDrawPoint(r->sdl, cx, cy + radius + 3);
+    SDL_RenderDrawPoint(r->sdl, cx, cy - radius - 3);
+}
+
 void game_draw(Renderer *r, GameState *g, Viewport *v) {
     // Draw map tiles
     for (int y = 0; y < MAP_H; y++) {
@@ -170,13 +233,32 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     // Draw spell/projectile trail
     if (g->trail_frames > 0) {
-        int weapon_trail = g->trail_count > 0 &&
-            g->trail[0].r == 160 && g->trail[0].g == 160 &&
-            g->trail[0].b == 160;
-        int magic_arrow_trail = g->trail_count > 0 &&
-            g->trail[0].r == 40 && g->trail[0].g == 120 &&
-            g->trail[0].b == 220;
-        if (weapon_trail || magic_arrow_trail) {
+        int timed_fireball = g->trail_effect == TRAIL_EFFECT_FIREBALL &&
+            g->trail_count > 0;
+        if (timed_fireball) {
+            Uint32 elapsed = SDL_GetTicks() - g->trail_started_at;
+            if (elapsed < 240) {
+                int lead = (int)(elapsed * g->trail_count / 240);
+                if (lead >= g->trail_count) {
+                    lead = g->trail_count - 1;
+                }
+                TrailTile *t = &g->trail[lead];
+                if (viewport_is_visible(v, t->x, t->y)) {
+                    draw_fireball(r, viewport_to_screen_x(v, t->x),
+                        viewport_to_screen_y(v, t->y), g->player.last_dx,
+                        g->player.last_dy, (int)(elapsed / 60));
+                }
+            } else if (elapsed < 460) {
+                TrailTile *t = &g->trail[g->trail_count - 1];
+                if (viewport_is_visible(v, t->x, t->y)) {
+                    draw_fireball_impact(r, viewport_to_screen_x(v, t->x),
+                        viewport_to_screen_y(v, t->y), elapsed - 240);
+                }
+            } else {
+                g->trail_frames = 0;
+            }
+        } else if (g->trail_effect == TRAIL_EFFECT_WEAPON_ARROW ||
+                   g->trail_effect == TRAIL_EFFECT_MAGIC_ARROW) {
             int progress = 4 - g->trail_frames;
             int lead = g->trail_count > 1
                 ? progress * (g->trail_count - 1) / 3 : 0;
@@ -184,7 +266,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             if (t->active && viewport_is_visible(v, t->x, t->y)) {
                 int sx = viewport_to_screen_x(v, t->x);
                 int sy = viewport_to_screen_y(v, t->y);
-                if (magic_arrow_trail) {
+                if (g->trail_effect == TRAIL_EFFECT_MAGIC_ARROW) {
                     draw_magic_arrow(r, sx, sy,
                         g->player.last_dx, g->player.last_dy,
                         t->is_impact, progress);
@@ -222,7 +304,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     sy * TILE_SIZE + TILE_SIZE / 2);
             }
         }
-        g->trail_frames--;
+        if (!timed_fireball) {
+            g->trail_frames--;
+        }
     }
 
     // Draw player

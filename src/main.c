@@ -1,5 +1,7 @@
 #include <SDL2/SDL.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "renderer/renderer.h"
 #include "renderer/viewport.h"
 #include "renderer/landing_renderer.h"
@@ -33,6 +35,151 @@
 #define WINDOW_TITLE "Castle of No Return"
 #define WINDOW_W     1280
 #define WINDOW_H     720
+
+#ifdef DEBUG
+typedef struct {
+    int weapon_set;
+    int weapon_none;
+    Item weapon;
+    int gold_set;
+    int gold;
+    int scrolls_set;
+    int scrolls[3];
+    int scroll_count;
+} DebugConfig;
+
+static int debug_weapon(const char *name, Item *weapon, int *none) {
+    *none = 0;
+    if (strcmp(name, "rusty-sword") == 0) {
+        *weapon = item_make_rusty_sword();
+    } else if (strcmp(name, "short-sword") == 0) {
+        *weapon = item_make_short_sword();
+    } else if (strcmp(name, "long-sword") == 0) {
+        *weapon = item_make_long_sword();
+    } else if (strcmp(name, "battle-axe") == 0) {
+        *weapon = item_make_battle_axe();
+    } else if (strcmp(name, "staff") == 0) {
+        *weapon = item_make_staff();
+    } else if (strcmp(name, "bow") == 0) {
+        *weapon = item_make_bow();
+    } else if (strcmp(name, "none") == 0) {
+        *none = 1;
+    } else {
+        return 0;
+    }
+    return 1;
+}
+
+static int debug_scroll_id(const char *name, size_t len) {
+    if (len == 11 && strncmp(name, "magic-arrow", len) == 0) {
+        return SPELL_MAGIC_ARROW;
+    }
+    if (len == 8 && strncmp(name, "fireball", len) == 0) {
+        return SPELL_FIREBALL;
+    }
+    if (len == 4 && strncmp(name, "heal", len) == 0) {
+        return SPELL_HEAL;
+    }
+    return -1;
+}
+
+static int debug_parse_scrolls(DebugConfig *config, const char *list) {
+    config->scroll_count = 0;
+    if (strcmp(list, "none") == 0) {
+        return 1;
+    }
+    const char *start = list;
+    while (*start != '\0') {
+        const char *end = strchr(start, ',');
+        size_t len = end ? (size_t)(end - start) : strlen(start);
+        int id = debug_scroll_id(start, len);
+        if (id < 0 || config->scroll_count >= 3) {
+            return 0;
+        }
+        config->scrolls[config->scroll_count++] = id;
+        if (!end) {
+            break;
+        }
+        start = end + 1;
+    }
+    return 1;
+}
+
+static int debug_parse_args(DebugConfig *config, int argc, char **argv) {
+    *config = (DebugConfig){0};
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--weapon") == 0 && i + 1 < argc) {
+            config->weapon_set = 1;
+            if (!debug_weapon(argv[++i], &config->weapon,
+                    &config->weapon_none)) {
+                fprintf(stderr, "Unknown debug weapon: %s\n", argv[i]);
+                return 0;
+            }
+        } else if (strcmp(argv[i], "--gold") == 0 && i + 1 < argc) {
+            char *end = NULL;
+            long gold = strtol(argv[++i], &end, 10);
+            if (*argv[i] == '\0' || *end != '\0' || gold < 0 || gold > 999999) {
+                fprintf(stderr, "Invalid debug gold amount: %s\n", argv[i]);
+                return 0;
+            }
+            config->gold_set = 1;
+            config->gold = (int)gold;
+        } else if (strcmp(argv[i], "--scrolls") == 0 && i + 1 < argc) {
+            config->scrolls_set = 1;
+            if (!debug_parse_scrolls(config, argv[++i])) {
+                fprintf(stderr, "Invalid debug scroll list: %s\n", argv[i]);
+                return 0;
+            }
+        } else {
+            fprintf(stderr, "Unknown or incomplete debug option: %s\n", argv[i]);
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static Item debug_scroll(int id) {
+    if (id == SPELL_FIREBALL) {
+        return item_make_scroll_fireball();
+    }
+    if (id == SPELL_HEAL) {
+        return item_make_scroll_heal();
+    }
+    return item_make_scroll_magic_arrow();
+}
+
+static void debug_apply_loadout(GameState *game, const DebugConfig *config) {
+    if (config->weapon_set || config->scrolls_set) {
+        int write = 0;
+        for (int i = 0; i < game->inventory_count; i++) {
+            Item *item = &game->inventory[i];
+            if (config->weapon_set && item->type == ITEM_WEAPON) {
+                continue;
+            }
+            if (config->scrolls_set && item->type == ITEM_SCROLL) {
+                continue;
+            }
+            game->inventory[write++] = *item;
+        }
+        game->inventory_count = write;
+        game->equipped_weapon = -1;
+    }
+    if (config->weapon_set && !config->weapon_none &&
+        game->inventory_count < MAX_INVENTORY) {
+        game->inventory[game->inventory_count++] = config->weapon;
+    }
+    if (config->scrolls_set) {
+        for (int i = 0; i < config->scroll_count &&
+            game->inventory_count < MAX_INVENTORY; i++) {
+            game->inventory[game->inventory_count++] =
+                debug_scroll(config->scrolls[i]);
+        }
+    }
+    if (config->gold_set) {
+        game->gold = config->gold;
+    }
+}
+#endif
 
 static void enter_playing(Renderer *renderer, Viewport *viewport, GameState *game) {
     int vp_tiles_x = (renderer->screen_w - INFO_PANEL_W) / TILE_SIZE;
@@ -110,7 +257,19 @@ static void handle_slot_result(SlotResult result, int slot, int slot_is_save,
     }
 }
 
-int main(void) {
+int main(int argc, char **argv) {
+#ifdef DEBUG
+    DebugConfig debug_config;
+    if (!debug_parse_args(&debug_config, argc, argv)) {
+        fprintf(stderr, "Usage: %s [--weapon NAME] [--gold N] "
+            "[--scrolls LIST]\n", argv[0]);
+        return 2;
+    }
+#else
+    (void)argc;
+    (void)argv;
+#endif
+
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO) != 0) {
         fprintf(stderr, "SDL_Init error: %s\n", SDL_GetError());
         return 1;
@@ -256,9 +415,7 @@ int main(void) {
                             SDL_strlcpy(game.player.name, name_entry.name,
                                 sizeof(game.player.name));
                             #ifdef DEBUG
-                            game.inventory[game.inventory_count++] = item_make_scroll_magic_arrow();
-                            game.inventory[game.inventory_count++] = item_make_bow();
-                            game.gold = 500;
+                            debug_apply_loadout(&game, &debug_config);
                             #endif
                             enter_playing(&renderer, &viewport, &game);
                             screen = SCREEN_PLAYING;
