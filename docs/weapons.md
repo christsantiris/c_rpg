@@ -109,13 +109,12 @@ Random weapon pools change with dungeon depth:
 | Floors | Random weapon pool |
 | --- | --- |
 | 1-3 | Rusty Sword, Short Sword |
-| 4-6 | Short Sword, Long Sword, Bow |
-| 7-25 | Long Sword, Battle Axe, Bow, Staff |
+| 4-5 | Short Sword, Long Sword, Bow |
 
 Normal enemies have a 5% chance to drop an item. Only some results from that
-item table become weapons. Bosses guarantee an equipment drop when floor-item
-capacity is available, with an equal choice between a random weapon and Chain
-Mail.
+item table become weapons. The floor-five Lich King guarantees an equipment
+drop when floor-item capacity is available, with an equal choice between a
+random weapon and Chain Mail.
 
 ## Current Behavior Notes
 

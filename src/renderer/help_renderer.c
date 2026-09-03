@@ -37,13 +37,12 @@ void help_draw(Renderer *r) {
     renderer_draw_text(r, "WASD / ARROWS  Move",     col1, y, white, r->font_tiny);
     renderer_draw_text(r, "Bump enemy     Melee attack", col2, y, white, r->font_tiny);
     y += lh;
-    renderer_draw_text(r, ".              Descend stairs", col1, y, white, r->font_tiny);
+    renderer_draw_text(r, ".              Stairs / exit", col1, y, white, r->font_tiny);
     renderer_draw_text(r, "C              Cast spell",    col2, y, white, r->font_tiny);
     y += lh;
     renderer_draw_text(r, ",              Ascend stairs", col1, y, white, r->font_tiny);
     renderer_draw_text(r, "F              Fire ranged",   col2, y, white, r->font_tiny);
     y += lh;
-    renderer_draw_text(r, "T              Return to town", col1, y, white, r->font_tiny);
     y += lh + 10;
 
     renderer_draw_text(r, "INVENTORY",      col1, y, gold,  r->font_small);

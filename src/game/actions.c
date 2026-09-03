@@ -57,6 +57,9 @@ static int enemy_score(EnemyType type) {
         case ENEMY_SKELETON:    return 10;
         case ENEMY_GOBLIN:      return 15;
         case ENEMY_ZOMBIE:      return 20;
+        case ENEMY_CRYPT_BAT:   return 18;
+        case ENEMY_WRAITH:      return 40;
+        case ENEMY_NECROMANCER: return 65;
         case ENEMY_ORC:         return 30;
         case ENEMY_TROLL:       return 50;
         case ENEMY_GIANT:       return 80;
@@ -76,6 +79,9 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type, int is_boss) {
         case ENEMY_SKELETON: gold = 2 + rand() % 4;  break;
         case ENEMY_GOBLIN:   gold = 3 + rand() % 5;  break;
         case ENEMY_ZOMBIE:   gold = 4 + rand() % 6;  break;
+        case ENEMY_CRYPT_BAT: gold = 2 + rand() % 4; break;
+        case ENEMY_WRAITH: gold = 7 + rand() % 7; break;
+        case ENEMY_NECROMANCER: gold = 10 + rand() % 9; break;
         case ENEMY_ORC:      gold = 6 + rand() % 8;  break;
         case ENEMY_TROLL:    gold = 10 + rand() % 10; break;
         case ENEMY_GIANT:    gold = 15 + rand() % 15; break;
@@ -197,10 +203,17 @@ void action_resolve_player(GameState *g, Action a) {
     if (a.type == ACTION_NONE) return;
 
     if (a.type == ACTION_DESCEND) {
-        if (g->map.tiles[g->player.y][g->player.x] == TILE_STAIRS_DOWN) {
+        TileType tile = g->map.tiles[g->player.y][g->player.x];
+        if (tile == TILE_RETURN_EXIT && g->level_cleared) {
+            g->score += g->level * 100;
+            game_return_to_town(g);
+            push_message(g, "The Lich is defeated!");
+        } else if (tile == TILE_STAIRS_DOWN) {
             if (g->level_cleared) {
-                game_descend(g);
-                g->score += g->level * 100;
+                if (g->level < MAX_DEPTH) {
+                    game_descend(g);
+                    g->score += g->level * 100;
+                }
             } else {
                 push_message(g, "Clear the level first!");
             }
@@ -224,6 +237,12 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_PICK_UP) {
+        if (g->map.tiles[g->player.y][g->player.x] == TILE_DUNGEON_KEY) {
+            g->dungeon_key_found = 1;
+            g->map.tiles[g->player.y][g->player.x] = TILE_FLOOR;
+            push_message(g, "Picked up the Lich King's door key!");
+            return;
+        }
         for (int i = 0; i < g->floor_item_count; i++) {
             FloorItem *fi = &g->floor_items[i];
             if (!fi->active) continue;
@@ -280,6 +299,9 @@ void action_resolve_player(GameState *g, Action a) {
                 case SPELL_MAGIC_ARROW: learned = spell_make_magic_arrow(); break;
                 case SPELL_FIREBALL:    learned = spell_make_fireball();    break;
                 case SPELL_HEAL:        learned = spell_make_heal();        break;
+                case SPELL_RETURN_TO_TOWN:
+                    learned = spell_make_return_to_town();
+                    break;
                 default: return;
             }
             g->player.known_spells[g->player.known_spell_count++] = learned;
@@ -381,6 +403,15 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
+        if (sp->type == SPELL_TYPE_UTILITY) {
+            if (g->location != LOCATION_DUNGEON) {
+                push_message(g, "Already in town!");
+                return;
+            }
+            game_open_town_portal(g);
+            return;
+        }
+
         if (g->player.last_dx == 0 && g->player.last_dy == 0) {
             push_message(g, "Move first to aim!");
             return;
@@ -445,10 +476,7 @@ void action_resolve_player(GameState *g, Action a) {
                         char msg[MAX_MESSAGE_LEN];
                         if (e->hp <= 0) {
                             e->active = 0;
-                            int all_clear = 1;
-                            for (int j = 0; j < g->enemy_count; j++)
-                                if (g->enemies[j].active) { all_clear = 0; break; }
-                            if (all_clear) g->level_cleared = 1;
+                            game_update_level_progress(g);
                             drop_loot(g, e->x, e->y, e->type, e->is_boss);
                             player_gain_xp(g, e->experience);
                             g->score += enemy_score(e->type);
@@ -496,10 +524,7 @@ void action_resolve_player(GameState *g, Action a) {
                     hits++;
                 }
             }
-            int all_clear = 1;
-            for (int j = 0; j < g->enemy_count; j++)
-                if (g->enemies[j].active) { all_clear = 0; break; }
-            if (all_clear) g->level_cleared = 1;
+            game_update_level_progress(g);
             char msg[MAX_MESSAGE_LEN];
             snprintf(msg, sizeof(msg), "Fireball hit %d enemies!", hits);
             push_message(g, msg);
@@ -560,10 +585,7 @@ void action_resolve_player(GameState *g, Action a) {
                 char msg[MAX_MESSAGE_LEN];
                 if (e->hp <= 0) {
                     e->active = 0;
-                    int all_clear = 1;
-                    for (int j = 0; j < g->enemy_count; j++)
-                        if (g->enemies[j].active) { all_clear = 0; break; }
-                    if (all_clear) g->level_cleared = 1;
+                    game_update_level_progress(g);
                     drop_loot(g, e->x, e->y, e->type, e->is_boss);
                     player_gain_xp(g, e->experience);
                     snprintf(msg, sizeof(msg), "Attack killed %s!", e->name);
@@ -616,11 +638,7 @@ void action_resolve_player(GameState *g, Action a) {
                     e->active = 0;
                     drop_loot(g, e->x, e->y, e->type, e->is_boss);
                     player_gain_xp(g, e->experience);
-                    int all_clear = 1;
-                    for (int j = 0; j < g->enemy_count; j++) {
-                        if (g->enemies[j].active) { all_clear = 0; break; }
-                    }
-                    if (all_clear) g->level_cleared = 1;
+                    game_update_level_progress(g);
                     char msg[MAX_MESSAGE_LEN];
                     snprintf(msg, sizeof(msg), "Killed %s!", e->name);
                     push_message(g, msg);
@@ -634,9 +652,25 @@ void action_resolve_player(GameState *g, Action a) {
         }
         // Check for town exit
         if (g->location == LOCATION_TOWN &&
+            g->map.tiles[ty][tx] == TILE_PORTAL && g->portal_active) {
+            game_use_town_portal(g);
+            return;
+        }
+
+        if (g->location == LOCATION_TOWN &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
             game_enter_dungeon(g);
             return;
+        }
+
+        if (g->map.tiles[ty][tx] == TILE_LOCKED_DOOR) {
+            if (!g->dungeon_key_found) {
+                push_message(g, "The Lich King's door is locked.");
+                return;
+            }
+            g->dungeon_key_found = 0;
+            g->map.tiles[ty][tx] = TILE_FLOOR;
+            push_message(g, "The dungeon key unlocks the door!");
         }
 
         // Move if walkable
@@ -714,10 +748,102 @@ void action_resolve_player(GameState *g, Action a) {
     }
 }
 
+static int enemy_position_occupied(const GameState *g, int skip, int x, int y) {
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (i == skip || !g->enemies[i].active) continue;
+        if (g->enemies[i].x == x && g->enemies[i].y == y) return 1;
+    }
+    return 0;
+}
+
+static int enemy_move_toward(GameState *g, int index) {
+    Enemy *e = &g->enemies[index];
+    int dx = g->player.x - e->x;
+    int dy = g->player.y - e->y;
+    int mx = (dx > 0) ? 1 : (dx < 0) ? -1 : 0;
+    int my = (dy > 0) ? 1 : (dy < 0) ? -1 : 0;
+    int tx = e->x + mx;
+    int ty = e->y + my;
+    int in_bounds = tx >= 0 && tx < MAP_W && ty >= 0 && ty < MAP_H;
+
+    if (in_bounds && map_is_walkable(&g->map, tx, ty) &&
+        !enemy_position_occupied(g, index, tx, ty) &&
+        !(tx == g->player.x && ty == g->player.y)) {
+        e->x = tx;
+        e->y = ty;
+        return 1;
+    }
+    return 0;
+}
+
+static int clear_orthogonal_path(const GameState *g, const Enemy *e) {
+    int dx = g->player.x - e->x;
+    int dy = g->player.y - e->y;
+    if (dx != 0 && dy != 0) return 0;
+    int distance = abs_int(dx) + abs_int(dy);
+    if (distance < 2 || distance > 6) return 0;
+    int sx = (dx > 0) ? 1 : (dx < 0) ? -1 : 0;
+    int sy = (dy > 0) ? 1 : (dy < 0) ? -1 : 0;
+    for (int step = 1; step < distance; step++) {
+        int x = e->x + sx * step;
+        int y = e->y + sy * step;
+        if (!map_is_walkable(&g->map, x, y)) return 0;
+    }
+    return 1;
+}
+
+static int necromancer_revive(GameState *g, int necromancer_index) {
+    Enemy *caster = &g->enemies[necromancer_index];
+    for (int i = 0; i < g->enemy_count; i++) {
+        Enemy *dead = &g->enemies[i];
+        if (dead->active || dead->type != ENEMY_SKELETON) continue;
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (dx == 0 && dy == 0) continue;
+                int x = caster->x + dx;
+                int y = caster->y + dy;
+                if (!map_is_walkable(&g->map, x, y) ||
+                    enemy_position_occupied(g, i, x, y) ||
+                    (x == g->player.x && y == g->player.y)) continue;
+                dead->x = x;
+                dead->y = y;
+                dead->active = 1;
+                dead->hp = dead->max_hp;
+                push_message(g, "Necromancer raises a Skeleton!");
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 void action_resolve_enemies(GameState *g) {
+    int boss_locked = 0;
+    if (g->location == LOCATION_DUNGEON && g->level == MAX_DEPTH) {
+        for (int y = 0; y < MAP_H && !boss_locked; y++)
+            for (int x = 0; x < MAP_W; x++)
+                if (g->map.tiles[y][x] == TILE_LOCKED_DOOR) {
+                    boss_locked = 1;
+                    break;
+                }
+    }
+
     for (int i = 0; i < g->enemy_count; i++) {
         Enemy *e = &g->enemies[i];
         if (!e->active) continue;
+        if (e->is_boss && boss_locked) continue;
+
+        if (e->type == ENEMY_LICH_KING) {
+            Room *chamber = &g->map.rooms[g->map.room_count - 1];
+            int player_in_chamber =
+                g->player.x > chamber->x &&
+                g->player.x < chamber->x + chamber->w - 1 &&
+                g->player.y > chamber->y &&
+                g->player.y < chamber->y + chamber->h - 1;
+            // Unlocking the door does not pull the boss into the corridor.
+            // The encounter begins only when the player crosses the threshold.
+            if (!player_in_chamber && e->move_timer == 0) continue;
+        }
 
         int dx = g->player.x - e->x;
         int dy = g->player.y - e->y;
@@ -725,30 +851,64 @@ void action_resolve_enemies(GameState *g) {
         // Adjacent to player — melee attack
         if (abs_int(dx) <= 1 && abs_int(dy) <= 1 &&
             !(dx == 0 && dy == 0)) {
-                int dmg = e->attack - g->player.defense;
+                int defense = g->player.defense;
+                if (e->type == ENEMY_WRAITH) defense /= 2;
+                int dmg = e->attack - defense;
                 if (dmg < 1) dmg = 1;
                 g->player.hp -= dmg;
+                if (e->type == ENEMY_WRAITH && g->player.mp > 0) {
+                    int drained = g->player.mp < 3 ? g->player.mp : 3;
+                    g->player.mp -= drained;
+                }
                 char msg[MAX_MESSAGE_LEN];
-                snprintf(msg, sizeof(msg), "%s: %d dmg", e->name, dmg);
+                if (e->type == ENEMY_WRAITH)
+                    snprintf(msg, sizeof(msg), "Wraith: %d dmg, drains MP", dmg);
+                else
+                    snprintf(msg, sizeof(msg), "%s: %d dmg", e->name, dmg);
                 push_message(g, msg);
                 continue;
         }
 
-        // Move toward player
+        e->move_timer++;
+
+        if (e->type == ENEMY_LICH_KING) {
+            // The Lich holds the center of his chamber and alternates a ranged
+            // necrotic attack with a telegraphed recovery turn. This prevents
+            // ordinary pathfinding from walking him out of his own arena.
+            if (e->move_timer % 2 == 0) {
+                int dmg = e->attack - g->player.defense / 2;
+                if (dmg < 4) dmg = 4;
+                g->player.hp -= dmg;
+                char msg[MAX_MESSAGE_LEN];
+                snprintf(msg, sizeof(msg), "Lich necrotic bolt: %d dmg", dmg);
+                push_message(g, msg);
+            } else {
+                push_message(g, "The Lich gathers dark power...");
+            }
+            continue;
+        }
+
+        if (e->type == ENEMY_NECROMANCER) {
+            if (e->move_timer % 4 == 0 && necromancer_revive(g, i)) continue;
+            if (e->move_timer % 2 == 0 && clear_orthogonal_path(g, e)) {
+                int dmg = e->attack - g->player.defense / 2;
+                if (dmg < 1) dmg = 1;
+                g->player.hp -= dmg;
+                char msg[MAX_MESSAGE_LEN];
+                snprintf(msg, sizeof(msg), "Necromancer bolt: %d dmg", dmg);
+                push_message(g, msg);
+                continue;
+            }
+        }
+
         if (e->type == ENEMY_ZOMBIE) { // Zombies move every other turn
-            e->move_timer++;
             if (e->move_timer % 2 != 0) continue;
         }
 
-        int mx = (dx > 0) ? 1 : (dx < 0) ? -1 : 0;
-        int my = (dy > 0) ? 1 : (dy < 0) ? -1 : 0;
-        int tx = e->x + mx;
-        int ty = e->y + my;
-
-        if (map_is_walkable(&g->map, tx, ty) &&
-            !(tx == g->player.x && ty == g->player.y)) {
-            e->x = tx;
-            e->y = ty;
+        int moved = enemy_move_toward(g, i);
+        if (e->type == ENEMY_CRYPT_BAT && moved) {
+            // Bats close distance quickly, but never attack on their second move.
+            enemy_move_toward(g, i);
         }
     }
 }

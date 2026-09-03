@@ -39,3 +39,12 @@ Spell spell_make_heal(void) {
     s.heal_hp = 40;
     return s;
 }
+
+Spell spell_make_return_to_town(void) {
+    Spell s = {0};
+    strncpy(s.name, "Return to Town", sizeof(s.name) - 1);
+    s.id = SPELL_RETURN_TO_TOWN;
+    s.type = SPELL_TYPE_UTILITY;
+    s.mp_cost = 0;
+    return s;
+}

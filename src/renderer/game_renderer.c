@@ -165,6 +165,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_WALL: draw_wall(r, sx, sy); break;
                 case TILE_STAIRS_UP: draw_stairs_up(r, sx, sy); break;
                 case TILE_STAIRS_DOWN: draw_stairs_down(r, sx, sy); break;
+                case TILE_RETURN_EXIT: draw_return_exit(r, sx, sy); break;
+                case TILE_LOCKED_DOOR: draw_locked_door(r, sx, sy); break;
+                case TILE_DUNGEON_KEY: draw_dungeon_key(r, sx, sy); break;
+                case TILE_PORTAL: draw_portal(r, sx, sy); break;
                 case TILE_TOWN_FLOOR: draw_town_floor(r, sx, sy); break;
                 case TILE_TOWN_PATH: draw_town_path(r, sx, sy); break;
                 case TILE_TOWN_EXIT: draw_town_exit(r, sx, sy); break;
