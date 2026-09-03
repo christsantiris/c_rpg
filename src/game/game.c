@@ -50,12 +50,48 @@ static void spawn_enemy(Enemy *e, EnemyType type, int x, int y) {
             e->attack = 7; e->defense = 2;
             e->experience = 22;
             break;
-        case ENEMY_NECROMANCER:
-            strncpy(e->name, "Necromancer", sizeof(e->name) - 1);
+        case ENEMY_CRYPT_CONJURER:
+            strncpy(e->name, "Crypt Conjurer", sizeof(e->name) - 1);
             e->name[sizeof(e->name) - 1] = '\0';
             e->max_hp = 24; e->hp = 24;
             e->attack = 7; e->defense = 1;
             e->experience = 35;
+            break;
+        case ENEMY_PIXIE:
+            strncpy(e->name, "Pixie", sizeof(e->name) - 1);
+            e->max_hp = 7; e->hp = 7; e->attack = 4; e->defense = 0;
+            e->experience = 9;
+            break;
+        case ENEMY_BLIGHTED_WOLF:
+            strncpy(e->name, "Blighted Wolf", sizeof(e->name) - 1);
+            e->max_hp = 14; e->hp = 14; e->attack = 6; e->defense = 1;
+            e->experience = 14;
+            break;
+        case ENEMY_GIANT_SPIDER:
+            strncpy(e->name, "Giant Spider", sizeof(e->name) - 1);
+            e->max_hp = 18; e->hp = 18; e->attack = 7; e->defense = 2;
+            e->experience = 20;
+            break;
+        case ENEMY_DARK_ELF:
+            strncpy(e->name, "Dark Elf", sizeof(e->name) - 1);
+            e->max_hp = 22; e->hp = 22; e->attack = 9; e->defense = 3;
+            e->experience = 28;
+            break;
+        case ENEMY_GIANT_WURM:
+            strncpy(e->name, "Giant Wurm", sizeof(e->name) - 1);
+            e->max_hp = 38; e->hp = 38; e->attack = 12; e->defense = 5;
+            e->experience = 42;
+            break;
+        case ENEMY_FOREST_TROLL:
+            strncpy(e->name, "Forest Troll", sizeof(e->name) - 1);
+            e->max_hp = 48; e->hp = 48; e->attack = 13; e->defense = 5;
+            e->experience = 48;
+            break;
+        case ENEMY_FOREST_NECROMANCER:
+            strncpy(e->name, "Necromancer", sizeof(e->name) - 1);
+            e->max_hp = 165; e->hp = 165; e->attack = 18; e->defense = 6;
+            e->experience = 450;
+            e->is_boss = 1;
             break;
         case ENEMY_ORC:
             strncpy(e->name, "Orc", sizeof(e->name) - 1);
@@ -121,9 +157,13 @@ static void spawn_enemy(Enemy *e, EnemyType type, int x, int y) {
     }
 }
 
-static int boss_for_level(int level, EnemyType *type) {
+static int boss_for_level(const GameState *g, EnemyType *type) {
+    int level = g->level;
     switch (level) {
-        case MAX_DEPTH: *type = ENEMY_LICH_KING; return 1;
+        case MAX_DEPTH:
+            *type = g->location == LOCATION_FOREST
+                ? ENEMY_FOREST_NECROMANCER : ENEMY_LICH_KING;
+            return 1;
         default: return 0;
     }
 }
@@ -131,7 +171,8 @@ static int boss_for_level(int level, EnemyType *type) {
 static int enemy_tile_open(const GameState *g, int x, int y) {
     // Keep keys, stairs, traps, and portals visible and unobstructed.
     if (!map_is_walkable(&g->map, x, y) ||
-        g->map.tiles[y][x] != TILE_FLOOR) {
+        g->map.tiles[y][x] != TILE_FLOOR &&
+        g->map.tiles[y][x] != TILE_FOREST_FLOOR) {
         return 0;
     }
     for (int i = 0; i < g->enemy_count; i++) {
@@ -200,9 +241,12 @@ void enemies_spawn(GameState *g) {
     }
 
     EnemyType boss_type;
-    if (boss_for_level(g->level, &boss_type)) {
+    if (boss_for_level(g, &boss_type)) {
         int boss_x = g->map.stairs_down_x + 1;
         int boss_y = g->map.stairs_down_y;
+        if (g->location == LOCATION_FOREST)
+            map_room_center(&g->map.rooms[g->map.room_count - 1],
+                &boss_x, &boss_y);
         spawn_enemy(&g->enemies[g->enemy_count++], boss_type,
             boss_x, boss_y);
     }
@@ -214,7 +258,27 @@ void enemies_spawn(GameState *g) {
         int roll = rand() % 100;
         int level = g->level;
 
-        if (level == 1) {
+        if (g->location == LOCATION_FOREST) {
+            if (level == 1)
+                type = roll < 55 ? ENEMY_PIXIE : ENEMY_BLIGHTED_WOLF;
+            else if (level == 2)
+                type = roll < 30 ? ENEMY_PIXIE :
+                    (roll < 65 ? ENEMY_BLIGHTED_WOLF : ENEMY_GIANT_SPIDER);
+            else if (level == 3)
+                type = roll < 20 ? ENEMY_PIXIE :
+                    (roll < 45 ? ENEMY_BLIGHTED_WOLF :
+                    (roll < 70 ? ENEMY_GIANT_SPIDER : ENEMY_DARK_ELF));
+            else if (level == 4)
+                type = roll < 20 ? ENEMY_GIANT_SPIDER :
+                    (roll < 45 ? ENEMY_DARK_ELF :
+                    (roll < 70 ? ENEMY_GIANT_WURM : ENEMY_FOREST_TROLL));
+            else
+                type = roll < 15 ? ENEMY_PIXIE :
+                    (roll < 30 ? ENEMY_BLIGHTED_WOLF :
+                    (roll < 45 ? ENEMY_GIANT_SPIDER :
+                    (roll < 65 ? ENEMY_DARK_ELF :
+                    (roll < 82 ? ENEMY_GIANT_WURM : ENEMY_FOREST_TROLL))));
+        } else if (level == 1) {
             type = ENEMY_SKELETON;
         } else if (level == 2) {
             if (roll < 50) type = ENEMY_SKELETON;
@@ -230,13 +294,13 @@ void enemies_spawn(GameState *g) {
             else if (roll < 55) type = ENEMY_ZOMBIE;
             else if (roll < 70) type = ENEMY_CRYPT_BAT;
             else if (roll < 90) type = ENEMY_WRAITH;
-            else type = ENEMY_NECROMANCER;
+            else type = ENEMY_CRYPT_CONJURER;
         } else {
             if (roll < 15) type = ENEMY_SKELETON;
             else if (roll < 45) type = ENEMY_ZOMBIE;
             else if (roll < 60) type = ENEMY_CRYPT_BAT;
             else if (roll < 80) type = ENEMY_WRAITH;
-            else type = ENEMY_NECROMANCER;
+            else type = ENEMY_CRYPT_CONJURER;
         }
         if (!spawn_into_open_tile(g, type, regular_room_limit)) {
             break;
@@ -247,11 +311,14 @@ void enemies_spawn(GameState *g) {
 void game_init(GameState *g) {
     srand((unsigned)time(NULL));
     g->level = 1;
-    for (int i = 0; i < MAX_DEPTH; i++)
+    for (int i = 0; i < MAX_DEPTH; i++) {
         g->level_cache[i].valid = 0;
+        g->forest_cache[i].valid = 0;
+    }
     g->message_count = 0;
     g->level_cleared = 0;
     g->max_level_reached = 1;
+    g->max_forest_level_reached = 1;
     g->location = LOCATION_TOWN;
     int spawn_x, spawn_y;
     map_generate_town(&g->map, &spawn_x, &spawn_y);
@@ -269,6 +336,7 @@ void game_init(GameState *g) {
     g->dungeon_key_found = 0;
     g->portal_active = 0;
     g->portal_level = 0;
+    g->portal_location = LOCATION_DUNGEON;
     g->portal_x = 0;
     g->portal_y = 0;
     g->portal_origin_tile = TILE_FLOOR;
@@ -330,32 +398,51 @@ void game_move_player(GameState *g, int dx, int dy) {
     g->player.y = ny;
 }
 
+static LevelCache *active_cache(GameState *g) {
+    return g->location == LOCATION_FOREST ? g->forest_cache : g->level_cache;
+}
+
+static int *active_max_level(GameState *g) {
+    return g->location == LOCATION_FOREST
+        ? &g->max_forest_level_reached : &g->max_level_reached;
+}
+
+static void generate_active_level(GameState *g) {
+    if (g->location == LOCATION_FOREST)
+        map_generate_forest(&g->map, g->level);
+    else
+        map_generate(&g->map, g->level);
+    enemies_spawn(g);
+}
+
 void game_descend(GameState *g) {
     if (g->level >= MAX_DEPTH) return;
 
+    LevelCache *cache = active_cache(g);
+    int *max_level = active_max_level(g);
+
     if (g->level >= 1 && g->level <= MAX_DEPTH) {
-        g->level_cache[g->level - 1].map         = g->map;
-        g->level_cache[g->level - 1].enemy_count = g->enemy_count;
+        cache[g->level - 1].map         = g->map;
+        cache[g->level - 1].enemy_count = g->enemy_count;
         for (int i = 0; i < g->enemy_count; i++)
-            g->level_cache[g->level - 1].enemies[i] = g->enemies[i];
-        g->level_cache[g->level - 1].valid = 1;
-        g->level_cache[g->level - 1].level_cleared = g->level_cleared;
+            cache[g->level - 1].enemies[i] = g->enemies[i];
+        cache[g->level - 1].valid = 1;
+        cache[g->level - 1].level_cleared = g->level_cleared;
     }
 
     g->level++;
-    if (g->level > g->max_level_reached)
-        g->max_level_reached = g->level;
+    if (g->level > *max_level)
+        *max_level = g->level;
     g->level_cleared = 0;
-    if (g->level <= MAX_DEPTH && g->level_cache[g->level - 1].valid) {
-        g->map         = g->level_cache[g->level - 1].map;
-        g->enemy_count = g->level_cache[g->level - 1].enemy_count;
+    if (g->level <= MAX_DEPTH && cache[g->level - 1].valid) {
+        g->map         = cache[g->level - 1].map;
+        g->enemy_count = cache[g->level - 1].enemy_count;
         for (int i = 0; i < g->enemy_count; i++)
-            g->enemies[i] = g->level_cache[g->level - 1].enemies[i];
-        g->level_cleared = g->level_cache[g->level - 1].level_cleared;
+            g->enemies[i] = cache[g->level - 1].enemies[i];
+        g->level_cleared = cache[g->level - 1].level_cleared;
     } else {
         g->level_cleared = 0;
-        map_generate(&g->map, g->level);
-        enemies_spawn(g);
+        generate_active_level(g);
     }
     g->player.x = g->map.stairs_up_x;
     g->player.y = g->map.stairs_up_y;
@@ -364,23 +451,25 @@ void game_descend(GameState *g) {
 void game_ascend(GameState *g) {
     if (g->level <= 1) return;
 
+    LevelCache *cache = active_cache(g);
+
     if (g->level <= MAX_DEPTH) {
-        g->level_cache[g->level - 1].map           = g->map;
-        g->level_cache[g->level - 1].enemy_count   = g->enemy_count;
-        g->level_cache[g->level - 1].level_cleared = g->level_cleared;
+        cache[g->level - 1].map           = g->map;
+        cache[g->level - 1].enemy_count   = g->enemy_count;
+        cache[g->level - 1].level_cleared = g->level_cleared;
         for (int i = 0; i < g->enemy_count; i++)
-            g->level_cache[g->level - 1].enemies[i] = g->enemies[i];
-        g->level_cache[g->level - 1].valid = 1;
+            cache[g->level - 1].enemies[i] = g->enemies[i];
+        cache[g->level - 1].valid = 1;
     }
 
     g->level--;
 
-    if (g->level_cache[g->level - 1].valid) {
-        g->map         = g->level_cache[g->level - 1].map;
-        g->enemy_count = g->level_cache[g->level - 1].enemy_count;
-        g->level_cleared = g->level_cache[g->level - 1].level_cleared;
+    if (cache[g->level - 1].valid) {
+        g->map         = cache[g->level - 1].map;
+        g->enemy_count = cache[g->level - 1].enemy_count;
+        g->level_cleared = cache[g->level - 1].level_cleared;
         for (int i = 0; i < g->enemy_count; i++)
-            g->enemies[i] = g->level_cache[g->level - 1].enemies[i];
+            g->enemies[i] = cache[g->level - 1].enemies[i];
     } else {
         g->level_cleared = 0;
     }
@@ -389,55 +478,67 @@ void game_ascend(GameState *g) {
     g->player.y = g->map.stairs_down_y;
 }
 
-void game_enter_dungeon(GameState *g) {
-    g->location = LOCATION_DUNGEON;
+static void enter_adventure(GameState *g, Location location) {
+    g->location = location;
+    LevelCache *cache = active_cache(g);
+    int *max_level = active_max_level(g);
 
-    if (g->max_level_reached > 1 &&
-        g->level_cache[g->max_level_reached - 1].valid) {
-        g->level = g->max_level_reached;
-        g->map         = g->level_cache[g->level - 1].map;
-        g->enemy_count = g->level_cache[g->level - 1].enemy_count;
+    if (*max_level > 1 && cache[*max_level - 1].valid) {
+        g->level = *max_level;
+        g->map         = cache[g->level - 1].map;
+        g->enemy_count = cache[g->level - 1].enemy_count;
         for (int i = 0; i < g->enemy_count; i++)
-            g->enemies[i] = g->level_cache[g->level - 1].enemies[i];
-        g->level_cleared = 1;
+            g->enemies[i] = cache[g->level - 1].enemies[i];
+        g->level_cleared = cache[g->level - 1].level_cleared;
         g->player.x = g->map.stairs_up_x;
         g->player.y = g->map.stairs_up_y;
     } else {
         g->level         = 1;
         g->level_cleared = 0;
         for (int i = 0; i < MAX_DEPTH; i++)
-            g->level_cache[i].valid = 0;
-        map_generate(&g->map, g->level);
-        enemies_spawn(g);
+            cache[i].valid = 0;
+        generate_active_level(g);
         g->player.x = g->map.stairs_up_x;
         g->player.y = g->map.stairs_up_y;
     }
 }
 
+void game_enter_dungeon(GameState *g) {
+    enter_adventure(g, LOCATION_DUNGEON);
+}
+
+void game_enter_forest(GameState *g) {
+    enter_adventure(g, LOCATION_FOREST);
+}
+
 void game_return_to_town(GameState *g) {
+    LevelCache *cache = active_cache(g);
+    Location returning_from = g->location;
     // Cache current level before leaving
     if (g->level >= 1 && g->level <= MAX_DEPTH) {
-        g->level_cache[g->level - 1].map = g->map;
-        g->level_cache[g->level - 1].enemy_count   = g->enemy_count;
-        g->level_cache[g->level - 1].level_cleared = g->level_cleared;
+        cache[g->level - 1].map = g->map;
+        cache[g->level - 1].enemy_count   = g->enemy_count;
+        cache[g->level - 1].level_cleared = g->level_cleared;
         for (int i = 0; i < g->enemy_count; i++)
-            g->level_cache[g->level - 1].enemies[i] = g->enemies[i];
-        g->level_cache[g->level - 1].valid = 1;
+            cache[g->level - 1].enemies[i] = g->enemies[i];
+        cache[g->level - 1].valid = 1;
     }
 
     g->location = LOCATION_TOWN;
     int spawn_x, spawn_y;
     map_generate_town(&g->map, &spawn_x, &spawn_y);
-    g->player.x = 20;
-    g->player.y = 1;
+    g->player.x = returning_from == LOCATION_FOREST ? 1 : 20;
+    g->player.y = returning_from == LOCATION_FOREST ? 12 : 1;
     g->floor_item_count = 0;
     g->enemy_count = 0;
 }
 
 void game_open_town_portal(GameState *g) {
-    if (g->location != LOCATION_DUNGEON) return;
+    if (g->location != LOCATION_DUNGEON &&
+        g->location != LOCATION_FOREST) return;
     g->portal_active = 1;
     g->portal_level = g->level;
+    g->portal_location = g->location;
     g->portal_x = g->player.x;
     g->portal_y = g->player.y;
     g->portal_origin_tile = g->map.tiles[g->player.y][g->player.x];
@@ -451,15 +552,17 @@ void game_use_town_portal(GameState *g) {
     if (!g->portal_active || g->portal_level < 1 ||
         g->portal_level > MAX_DEPTH) return;
     int level = g->portal_level;
-    if (!g->level_cache[level - 1].valid) return;
+    LevelCache *cache = g->portal_location == LOCATION_FOREST
+        ? g->forest_cache : g->level_cache;
+    if (!cache[level - 1].valid) return;
 
-    g->location = LOCATION_DUNGEON;
+    g->location = g->portal_location;
     g->level = level;
-    g->map = g->level_cache[level - 1].map;
-    g->enemy_count = g->level_cache[level - 1].enemy_count;
-    g->level_cleared = g->level_cache[level - 1].level_cleared;
+    g->map = cache[level - 1].map;
+    g->enemy_count = cache[level - 1].enemy_count;
+    g->level_cleared = cache[level - 1].level_cleared;
     for (int i = 0; i < g->enemy_count; i++)
-        g->enemies[i] = g->level_cache[level - 1].enemies[i];
+        g->enemies[i] = cache[level - 1].enemies[i];
     g->player.x = g->portal_x;
     g->player.y = g->portal_y;
     g->map.tiles[g->portal_y][g->portal_x] = g->portal_origin_tile;

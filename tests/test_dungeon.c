@@ -264,7 +264,7 @@ void test_new_dungeon_enemies(void) {
 
     g.player.defense = 2;
     g.enemies[0] = (Enemy){
-        .x = 10, .y = 7, .active = 1, .type = ENEMY_NECROMANCER,
+        .x = 10, .y = 7, .active = 1, .type = ENEMY_CRYPT_CONJURER,
         .attack = 7, .move_timer = 1
     };
     int hp_before = g.player.hp;
@@ -273,7 +273,7 @@ void test_new_dungeon_enemies(void) {
 
     g.enemy_count = 2;
     g.enemies[0] = (Enemy){
-        .x = 6, .y = 6, .active = 1, .type = ENEMY_NECROMANCER,
+        .x = 6, .y = 6, .active = 1, .type = ENEMY_CRYPT_CONJURER,
         .attack = 7, .move_timer = 3
     };
     g.enemies[1] = (Enemy){

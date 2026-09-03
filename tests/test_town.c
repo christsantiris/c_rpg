@@ -2,6 +2,34 @@
 #include "../src/game/map.h"
 #include "../src/game/game.h"
 
+static int forest_path_exists_around(const Map *m, int blocked_room) {
+    unsigned char visited[MAP_H][MAP_W] = {{0}};
+    int qx[MAP_W * MAP_H];
+    int qy[MAP_W * MAP_H];
+    int head = 0, tail = 0;
+    qx[tail] = m->stairs_up_x;
+    qy[tail++] = m->stairs_up_y;
+    visited[m->stairs_up_y][m->stairs_up_x] = 1;
+    static const int dx[4] = {1, -1, 0, 0};
+    static const int dy[4] = {0, 0, 1, -1};
+    const Room *blocked = &m->rooms[blocked_room];
+    while (head < tail) {
+        int x = qx[head], y = qy[head++];
+        if (x == m->stairs_down_x && y == m->stairs_down_y) return 1;
+        for (int i = 0; i < 4; i++) {
+            int nx = x + dx[i], ny = y + dy[i];
+            if (nx < 0 || nx >= MAP_W || ny < 0 || ny >= MAP_H ||
+                visited[ny][nx] || !map_is_walkable(m, nx, ny)) continue;
+            if (nx >= blocked->x && nx < blocked->x + blocked->w &&
+                ny >= blocked->y && ny < blocked->y + blocked->h) continue;
+            visited[ny][nx] = 1;
+            qx[tail] = nx;
+            qy[tail++] = ny;
+        }
+    }
+    return 0;
+}
+
 void test_town_tiles(void) {
     printf("Town tile tests:\n");
 
@@ -31,6 +59,8 @@ void test_town_map(void) {
     // Exit tiles at north edge
     ASSERT("exit tile at north center",
         m.tiles[0][20] == TILE_TOWN_EXIT);
+    ASSERT("forest exit at west crossroad",
+        m.tiles[12][0] == TILE_TOWN_EXIT);
 
     // Shop tiles in correct positions
     ASSERT("blacksmith at (7,7)",
@@ -47,6 +77,147 @@ void test_town_map(void) {
     // Border is wall
     ASSERT("south border is wall",
         m.tiles[TOWN_H-1][20] == TILE_WALL);
+}
+
+void test_forest(void) {
+    printf("Forest adventure tests:\n");
+    GameState g;
+    g.player.player_class = CLASS_WARRIOR;
+    game_init(&g);
+
+    g.player.x = 1;
+    g.player.y = 12;
+    Action west = {ACTION_MOVE, 0, 12};
+    action_resolve_player(&g, west);
+    ASSERT("west town exit enters forest", g.location == LOCATION_FOREST);
+    ASSERT("forest begins on level one", g.level == 1);
+    ASSERT("forest begins just inside west edge", g.player.x == 1);
+    ASSERT("forest has west entrance",
+        g.map.tiles[g.map.stairs_up_y][0] == TILE_FOREST_ENTRANCE);
+    ASSERT("forest has east stage exit",
+        g.map.tiles[g.map.stairs_down_y][MAP_W - 1] == TILE_FOREST_EXIT);
+    ASSERT("forest generation includes branching clearings",
+        g.map.room_count == 7);
+    ASSERT("lower route reaches exit when upper route is blocked",
+        forest_path_exists_around(&g.map, 3));
+    ASSERT("upper route reaches exit when lower route is blocked",
+        forest_path_exists_around(&g.map, 4));
+    int forest_terrain = 0;
+    for (int y = 0; y < MAP_H && !forest_terrain; y++)
+        for (int x = 0; x < MAP_W; x++)
+            if (g.map.tiles[y][x] == TILE_FOREST_FLOOR) {
+                forest_terrain = 1;
+                break;
+            }
+    ASSERT("forest contains forest floor tiles", forest_terrain);
+
+    int pickup_x = g.player.x;
+    int pickup_y = g.player.y;
+    g.floor_item_count = 1;
+    g.floor_items[0] = (FloorItem){
+        .active = 1,
+        .x = pickup_x,
+        .y = pickup_y,
+        .underlying_tile = TILE_FOREST_FLOOR,
+        .item = item_make_health_potion()
+    };
+    g.map.tiles[pickup_y][pickup_x] = TILE_ITEM;
+    Action pickup = {ACTION_PICK_UP, 0, 0};
+    action_resolve_player(&g, pickup);
+    ASSERT("forest pickup restores forest floor",
+        g.map.tiles[pickup_y][pickup_x] == TILE_FOREST_FLOOR);
+
+    g.player.x = MAP_W - 2;
+    g.player.y = g.map.stairs_down_y;
+    Action east = {ACTION_MOVE, MAP_W - 1, g.player.y};
+    action_resolve_player(&g, east);
+    ASSERT("forest exit advances without clearing enemies", g.level == 2);
+    ASSERT("next forest stage starts at west edge", g.player.x == 1);
+    Action back_west = {ACTION_MOVE, 0, g.player.y};
+    action_resolve_player(&g, back_west);
+    ASSERT("west entrance returns to previous stage", g.level == 1);
+    ASSERT("backtracking arrives inside east edge", g.player.x == MAP_W - 2);
+
+    for (int level = 1; level <= MAX_DEPTH; level++) {
+        g.location = LOCATION_FOREST;
+        g.level = level;
+        map_generate_forest(&g.map, level);
+        enemies_spawn(&g);
+        int bosses = 0;
+        int invalid_enemy = 0;
+        for (int i = 0; i < g.enemy_count; i++) {
+            EnemyType type = g.enemies[i].type;
+            if (g.enemies[i].is_boss) bosses++;
+            if (type < ENEMY_PIXIE || type > ENEMY_FOREST_NECROMANCER)
+                invalid_enemy = 1;
+        }
+        ASSERT("forest floors use only forest roster", !invalid_enemy);
+        if (level < MAX_DEPTH)
+            ASSERT("forest floors 1-4 have no boss", bosses == 0);
+        else
+            ASSERT("forest floor 5 has Necromancer boss",
+                bosses == 1 && g.enemies[0].type == ENEMY_FOREST_NECROMANCER);
+    }
+
+    static const int expected_rooms[MAX_DEPTH] = {7, 8, 9, 8, 9};
+    for (int level = 1; level <= MAX_DEPTH; level++) {
+        map_generate_forest(&g.map, level);
+        ASSERT("forest level uses its distinct topology size",
+            g.map.room_count == expected_rooms[level - 1]);
+    }
+    map_generate_forest(&g.map, 2);
+    int l2y3, l2y4, l2y5, unused;
+    map_room_center(&g.map.rooms[3], &unused, &l2y3);
+    map_room_center(&g.map.rooms[4], &unused, &l2y4);
+    map_room_center(&g.map.rooms[5], &unused, &l2y5);
+    ASSERT("forest level 2 has three vertically distinct routes",
+        l2y3 < l2y4 && l2y4 < l2y5);
+    map_generate_forest(&g.map, 4);
+    int hub_y, upper_y, lower_y;
+    map_room_center(&g.map.rooms[1], &unused, &hub_y);
+    map_room_center(&g.map.rooms[2], &unused, &upper_y);
+    map_room_center(&g.map.rooms[4], &unused, &lower_y);
+    ASSERT("forest level 4 uses a central branching hub",
+        upper_y < hub_y && hub_y < lower_y);
+
+    g.location = LOCATION_FOREST;
+    g.level = 1;
+    map_generate_forest(&g.map, 1);
+    enemies_spawn(&g);
+    g.level_cleared = 1;
+    game_descend(&g);
+    ASSERT("forest progress uses forest cache", g.forest_cache[0].valid);
+    ASSERT("forest progress does not overwrite dungeon cache",
+        !g.level_cache[0].valid);
+
+    int portal_x = g.player.x;
+    int portal_y = g.player.y;
+    game_open_town_portal(&g);
+    ASSERT("return spell works from forest", g.location == LOCATION_TOWN);
+    ASSERT("portal remembers forest location",
+        g.portal_location == LOCATION_FOREST);
+    game_use_town_portal(&g);
+    ASSERT("town portal returns to forest", g.location == LOCATION_FOREST);
+    ASSERT("forest portal restores exact tile",
+        g.player.x == portal_x && g.player.y == portal_y);
+
+    g.level = MAX_DEPTH;
+    map_generate_forest(&g.map, g.level);
+    enemies_spawn(&g);
+    g.player.x = MAP_W - 2;
+    g.player.y = g.map.stairs_down_y;
+    east = (Action){ACTION_MOVE, MAP_W - 1, g.player.y};
+    action_resolve_player(&g, east);
+    ASSERT("living Necromancer blocks final forest exit",
+        g.location == LOCATION_FOREST);
+    for (int i = 0; i < g.enemy_count; i++)
+        if (g.enemies[i].type == ENEMY_FOREST_NECROMANCER)
+            g.enemies[i].active = 0;
+    action_resolve_player(&g, east);
+    ASSERT("final east forest exit returns to town",
+        g.location == LOCATION_TOWN);
+    ASSERT("forest completion returns at west town road",
+        g.player.x == 1 && g.player.y == 12);
 }
 
 void test_town_spawn(void) {
