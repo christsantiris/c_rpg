@@ -181,7 +181,84 @@ void map_generate(Map *m, int level) {
 int map_is_walkable(const Map *m, int x, int y) {
     if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) return 0;
     return m->tiles[y][x] != TILE_WALL &&
+        m->tiles[y][x] != TILE_FOREST_WALL &&
         m->tiles[y][x] != TILE_LOCKED_DOOR;
+}
+
+typedef struct {
+    int room_count;
+    int x[MAX_ROOMS];
+    int y[MAX_ROOMS];
+    int edge_count;
+    int edges[16][2];
+} ForestTemplate;
+
+static const ForestTemplate forest_templates[MAX_DEPTH] = {
+    {7, {5,42,42,92,92,132,166}, {42,14,68,12,66,40,42}, 8,
+        {{0,1},{0,2},{1,3},{2,4},{3,4},{3,5},{4,5},{5,6}}},
+    {8, {5,38,38,78,78,78,125,166}, {42,20,65,10,42,74,42,42}, 10,
+        {{0,1},{0,2},{1,3},{1,4},{2,4},{2,5},{3,6},{4,6},{5,6},{6,7}}},
+    {9, {5,40,40,40,94,94,94,136,166}, {42,12,42,72,12,42,72,42,42}, 12,
+        {{0,1},{0,2},{0,3},{1,4},{2,5},{3,6},{1,5},{3,5},{4,7},{5,7},{6,7},{7,8}}},
+    {8, {5,45,86,91,86,132,132,166}, {42,42,12,42,72,24,61,42}, 10,
+        {{0,1},{1,2},{1,3},{1,4},{2,5},{3,5},{3,6},{4,6},{5,7},{6,7}}},
+    {9, {5,38,38,82,82,122,122,148,176}, {42,16,68,10,72,18,66,42,42}, 10,
+        {{0,1},{0,2},{1,3},{2,4},{3,5},{4,6},{5,7},{6,7},{3,4},{7,8}}}
+};
+
+void map_generate_forest(Map *m, int level) {
+    for (int y = 0; y < MAP_H; y++)
+        for (int x = 0; x < MAP_W; x++)
+            m->tiles[y][x] = TILE_FOREST_WALL;
+
+    int template_index = level - 1;
+    if (template_index < 0) template_index = 0;
+    if (template_index >= MAX_DEPTH) template_index = MAX_DEPTH - 1;
+    const ForestTemplate *layout = &forest_templates[template_index];
+    m->room_count = layout->room_count;
+    for (int i = 0; i < m->room_count; i++) {
+        Room r;
+        r.w = random_range(10, 17);
+        r.h = random_range(8, 13);
+        r.x = layout->x[i] + random_range(-3, 3);
+        r.y = layout->y[i] + random_range(-3, 3);
+        fill_rect(m, r.x, r.y, r.w, r.h, TILE_FOREST_FLOOR);
+        m->rooms[i] = r;
+    }
+
+    for (int i = 0; i < layout->edge_count; i++) {
+        int ax, ay, bx, by;
+        map_room_center(&m->rooms[layout->edges[i][0]], &ax, &ay);
+        map_room_center(&m->rooms[layout->edges[i][1]], &bx, &by);
+        carve_corridor(m, ax, ay, bx, by);
+    }
+    for (int y = 0; y < MAP_H; y++)
+        for (int x = 0; x < MAP_W; x++)
+            if (m->tiles[y][x] == TILE_FLOOR)
+                m->tiles[y][x] = TILE_FOREST_FLOOR;
+
+    int first_x, first_y, last_x, last_y;
+    map_room_center(&m->rooms[0], &first_x, &first_y);
+    map_room_center(&m->rooms[m->room_count - 1], &last_x, &last_y);
+    for (int x = 0; x <= first_x; x++)
+        m->tiles[first_y][x] = TILE_FOREST_FLOOR;
+    for (int x = last_x; x < MAP_W; x++)
+        m->tiles[last_y][x] = TILE_FOREST_FLOOR;
+    m->tiles[first_y][0] = TILE_FOREST_ENTRANCE;
+    m->tiles[last_y][MAP_W - 1] = TILE_FOREST_EXIT;
+    m->stairs_up_x = 1;
+    m->stairs_up_y = first_y;
+    m->stairs_down_x = MAP_W - 2;
+    m->stairs_down_y = last_y;
+
+    int num_traps = 2 + level;
+    for (int i = 0; i < num_traps; i++) {
+        Room *room = &m->rooms[1 + rand() % (m->room_count - 1)];
+        int x = room->x + 1 + rand() % (room->w - 2);
+        int y = room->y + 1 + rand() % (room->h - 2);
+        if (m->tiles[y][x] == TILE_FOREST_FLOOR)
+            m->tiles[y][x] = TILE_TRAP_HIDDEN;
+    }
 }
 
 void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
@@ -208,6 +285,11 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     // Exit at north edge
     for (int x = 18; x <= 22; x++)
         m->tiles[0][x] = TILE_TOWN_EXIT;
+
+    // Forest exit at the west end of the crossroad. East and south remain
+    // available for future regions.
+    for (int y = 10; y <= 14; y++)
+        m->tiles[y][0] = TILE_TOWN_EXIT;
 
     // Blacksmith at (7, 7) — 5x4 tiles
     for (int dy = 0; dy < 4; dy++)

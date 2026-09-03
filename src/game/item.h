@@ -31,6 +31,7 @@ typedef struct {
 typedef struct {
     int  active;
     int  x, y;
+    int  underlying_tile;
     Item item;
 } FloorItem;
 

@@ -160,14 +160,15 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count) {
         e->is_boss = boss ? boss->valueint :
             (e->type == ENEMY_GOBLIN_KING || e->type == ENEMY_LICH_KING ||
              e->type == ENEMY_DEMON_LORD || e->type == ENEMY_RED_DRAGON ||
-             e->type == ENEMY_TARRASQUE);
+             e->type == ENEMY_TARRASQUE ||
+             e->type == ENEMY_FOREST_NECROMANCER);
     }
 }
 
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 4);
+    cJSON_AddNumberToObject(root, "save_version", 8);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -211,6 +212,8 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "level",             g->level);
     cJSON_AddNumberToObject(root, "level_cleared",     g->level_cleared);
     cJSON_AddNumberToObject(root, "max_level_reached", g->max_level_reached);
+    cJSON_AddNumberToObject(root, "max_forest_level_reached",
+        g->max_forest_level_reached);
     cJSON_AddNumberToObject(root, "message_count",     g->message_count);
     cJSON_AddNumberToObject(root, "gold",              g->gold);
     cJSON_AddNumberToObject(root, "score",             g->score);
@@ -220,6 +223,7 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "dungeon_key_found", g->dungeon_key_found);
     cJSON_AddNumberToObject(root, "portal_active",     g->portal_active);
     cJSON_AddNumberToObject(root, "portal_level",      g->portal_level);
+    cJSON_AddNumberToObject(root, "portal_location",   g->portal_location);
     cJSON_AddNumberToObject(root, "portal_x",          g->portal_x);
     cJSON_AddNumberToObject(root, "portal_y",          g->portal_y);
     cJSON_AddNumberToObject(root, "portal_origin_tile", g->portal_origin_tile);
@@ -260,6 +264,7 @@ int save_game(const GameState *g, int slot) {
         cJSON_AddNumberToObject(f, "active", fi->active);
         cJSON_AddNumberToObject(f, "x",      fi->x);
         cJSON_AddNumberToObject(f, "y",      fi->y);
+        cJSON_AddNumberToObject(f, "underlying_tile", fi->underlying_tile);
         cJSON *it = cJSON_CreateObject();
         cJSON_AddNumberToObject(it, "active",        fi->item.active);
         cJSON_AddNumberToObject(it, "type",          fi->item.type);
@@ -305,6 +310,25 @@ int save_game(const GameState *g, int slot) {
         cJSON_AddItemToArray(cache, entry);
     }
     cJSON_AddItemToObject(root, "level_cache", cache);
+
+    cJSON *forest_cache = cJSON_CreateArray();
+    for (int i = 0; i < MAX_DEPTH; i++) {
+        cJSON *entry = cJSON_CreateObject();
+        cJSON_AddNumberToObject(entry, "valid", g->forest_cache[i].valid);
+        cJSON_AddNumberToObject(entry, "level_cleared",
+            g->forest_cache[i].level_cleared);
+        if (g->forest_cache[i].valid) {
+            cJSON_AddItemToObject(entry, "map",
+                serialize_map(&g->forest_cache[i].map));
+            cJSON_AddItemToObject(entry, "enemies",
+                serialize_enemies(g->forest_cache[i].enemies,
+                    g->forest_cache[i].enemy_count));
+            cJSON_AddNumberToObject(entry, "enemy_count",
+                g->forest_cache[i].enemy_count);
+        }
+        cJSON_AddItemToArray(forest_cache, entry);
+    }
+    cJSON_AddItemToObject(root, "forest_cache", forest_cache);
 
     char *json = cJSON_Print(root);
     cJSON_Delete(root);
@@ -376,6 +400,8 @@ int load_game(GameState *g, int slot) {
     g->level             = cJSON_GetObjectItem(root, "level")->valueint;
     g->level_cleared     = cJSON_GetObjectItem(root, "level_cleared")->valueint;
     g->max_level_reached = cJSON_GetObjectItem(root, "max_level_reached")->valueint;
+    cJSON *max_forest = cJSON_GetObjectItem(root, "max_forest_level_reached");
+    g->max_forest_level_reached = max_forest ? max_forest->valueint : 1;
     g->message_count     = cJSON_GetObjectItem(root, "message_count")->valueint;
     g->gold              = cJSON_GetObjectItem(root, "gold")->valueint;
     g->score             = cJSON_GetObjectItem(root, "score")->valueint;
@@ -385,12 +411,15 @@ int load_game(GameState *g, int slot) {
     cJSON *key_found = cJSON_GetObjectItem(root, "dungeon_key_found");
     cJSON *portal_active = cJSON_GetObjectItem(root, "portal_active");
     cJSON *portal_level = cJSON_GetObjectItem(root, "portal_level");
+    cJSON *portal_location = cJSON_GetObjectItem(root, "portal_location");
     cJSON *portal_x = cJSON_GetObjectItem(root, "portal_x");
     cJSON *portal_y = cJSON_GetObjectItem(root, "portal_y");
     cJSON *portal_origin_tile = cJSON_GetObjectItem(root, "portal_origin_tile");
     g->dungeon_key_found = key_found ? key_found->valueint : 0;
     g->portal_active = portal_active ? portal_active->valueint : 0;
     g->portal_level = portal_level ? portal_level->valueint : 0;
+    g->portal_location = portal_location ? portal_location->valueint :
+        LOCATION_DUNGEON;
     g->portal_x = portal_x ? portal_x->valueint : 0;
     g->portal_y = portal_y ? portal_y->valueint : 0;
     g->portal_origin_tile = portal_origin_tile
@@ -433,6 +462,9 @@ int load_game(GameState *g, int slot) {
         fi->active = cJSON_GetObjectItem(f, "active")->valueint;
         fi->x      = cJSON_GetObjectItem(f, "x")->valueint;
         fi->y      = cJSON_GetObjectItem(f, "y")->valueint;
+        cJSON *underlying = cJSON_GetObjectItem(f, "underlying_tile");
+        fi->underlying_tile = underlying ? underlying->valueint :
+            (g->location == LOCATION_FOREST ? TILE_FOREST_FLOOR : TILE_FLOOR);
         cJSON *it = cJSON_GetObjectItem(f, "item");
         fi->item.active        = cJSON_GetObjectItem(it, "active")->valueint;
         fi->item.type          = cJSON_GetObjectItem(it, "type")->valueint;
@@ -468,6 +500,26 @@ int load_game(GameState *g, int slot) {
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
                                 g->level_cache[i].enemies,
                                 &g->level_cache[i].enemy_count);
+        }
+    }
+
+    cJSON *forest_cache = cJSON_GetObjectItem(root, "forest_cache");
+    for (int i = 0; i < MAX_DEPTH; i++) {
+        g->forest_cache[i].valid = 0;
+        g->forest_cache[i].level_cleared = 0;
+        if (!forest_cache) continue;
+        cJSON *entry = cJSON_GetArrayItem(forest_cache, i);
+        if (!entry) continue;
+        cJSON *valid = cJSON_GetObjectItem(entry, "valid");
+        cJSON *cleared = cJSON_GetObjectItem(entry, "level_cleared");
+        g->forest_cache[i].valid = valid ? valid->valueint : 0;
+        g->forest_cache[i].level_cleared = cleared ? cleared->valueint : 0;
+        if (g->forest_cache[i].valid) {
+            deserialize_map(cJSON_GetObjectItem(entry, "map"),
+                &g->forest_cache[i].map);
+            deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
+                g->forest_cache[i].enemies,
+                &g->forest_cache[i].enemy_count);
         }
     }
 
@@ -538,6 +590,49 @@ int load_game(GameState *g, int slot) {
             map_generate(&g->map, g->level);
             enemies_spawn(g);
             g->level_cleared = 0;
+            g->player.x = g->map.stairs_up_x;
+            g->player.y = g->map.stairs_up_y;
+        }
+    }
+
+    if (save_version < 5) {
+        g->max_forest_level_reached = 1;
+        for (int i = 0; i < MAX_DEPTH; i++)
+            g->forest_cache[i].valid = 0;
+        g->portal_location = LOCATION_DUNGEON;
+    }
+
+    // Version 6 replaces forest stairs with a west-to-east stage route.
+    if (save_version < 6) {
+        g->max_forest_level_reached = 1;
+        for (int i = 0; i < MAX_DEPTH; i++)
+            g->forest_cache[i].valid = 0;
+        if (g->portal_location == LOCATION_FOREST)
+            g->portal_active = 0;
+        if (g->location == LOCATION_FOREST) {
+            g->level = 1;
+            g->level_cleared = 0;
+            g->floor_item_count = 0;
+            map_generate_forest(&g->map, g->level);
+            enemies_spawn(g);
+            g->player.x = g->map.stairs_up_x;
+            g->player.y = g->map.stairs_up_y;
+        }
+    }
+
+    // Version 8 gives each forest level its own branching topology.
+    if (save_version < 8) {
+        g->max_forest_level_reached = 1;
+        for (int i = 0; i < MAX_DEPTH; i++)
+            g->forest_cache[i].valid = 0;
+        if (g->portal_location == LOCATION_FOREST)
+            g->portal_active = 0;
+        if (g->location == LOCATION_FOREST) {
+            g->level = 1;
+            g->level_cleared = 0;
+            g->floor_item_count = 0;
+            map_generate_forest(&g->map, g->level);
+            enemies_spawn(g);
             g->player.x = g->map.stairs_up_x;
             g->player.y = g->map.stairs_up_y;
         }
