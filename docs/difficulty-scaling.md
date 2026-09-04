@@ -10,8 +10,8 @@ The dungeon contains eight floors (`DUNGEON_DEPTH`). New floors generate a map a
 enemy roster. Previously visited floors are cached, preserving their map,
 enemies, and cleared state.
 
-The player must defeat every active enemy before using an exit. Floors 1-7 use
-down stairs. Descending awards `new floor * 100` score.
+Floors 1-7 use down stairs and do not require every enemy to be defeated.
+Descending awards `new floor * 100` score.
 
 Floor 8 is the Lich King's finale. Clearing it changes the down stairs into a
 glowing return passage. Using that passage returns the player directly to the

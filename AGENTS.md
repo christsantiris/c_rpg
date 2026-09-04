@@ -107,4 +107,9 @@ Omitting this causes data to silently reset to zero on load.
 
 ## 8. Code Review
 
-Claude will review your output once you are done. 
+Claude will review your output once you are done.
+
+## 9. Completion Commit Message
+
+After each change set is complete, provide a suggested Git commit message in
+the final response. This signals that the work is finished and ready to commit.

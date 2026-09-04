@@ -42,6 +42,18 @@ static Action outdoor_exit_action(const Map *m) {
     return action;
 }
 
+static Action outdoor_entrance_action(const Map *m) {
+    Action action = {ACTION_MOVE, m->stairs_up_x, m->stairs_up_y};
+    if (m->stairs_up_x == 1) {
+        action.target_x--;
+    } else if (m->stairs_up_y == 1) {
+        action.target_y--;
+    } else {
+        action.target_y++;
+    }
+    return action;
+}
+
 static int outdoor_exit_is_on_side(const Map *m, TileType exit_tile, int side) {
     if (side == 0) {
         return m->tiles[m->stairs_down_y][MAP_W - 1] == exit_tile;
@@ -50,6 +62,16 @@ static int outdoor_exit_is_on_side(const Map *m, TileType exit_tile, int side) {
         return m->tiles[0][m->stairs_down_x] == exit_tile;
     }
     return m->tiles[MAP_H - 1][m->stairs_down_x] == exit_tile;
+}
+
+static int outdoor_entrance_is_on_side(const Map *m, TileType entrance_tile, int side) {
+    if (side == 0) {
+        return m->tiles[m->stairs_up_y][0] == entrance_tile;
+    }
+    if (side == 1) {
+        return m->tiles[0][m->stairs_up_x] == entrance_tile;
+    }
+    return m->tiles[MAP_H - 1][m->stairs_up_x] == entrance_tile;
 }
 
 void test_town_tiles(void) {
@@ -156,10 +178,11 @@ void test_forest(void) {
     Action east = {ACTION_MOVE, MAP_W - 1, g.player.y};
     action_resolve_player(&g, east);
     ASSERT("forest exit advances without clearing enemies", g.level == 2);
-    ASSERT("next forest stage starts at west edge", g.player.x == 1);
-    Action back_west = {ACTION_MOVE, 0, g.player.y};
-    action_resolve_player(&g, back_west);
-    ASSERT("west entrance returns to previous stage", g.level == 1);
+    ASSERT("next forest stage starts at south edge",
+        g.player.y == MAP_H - 2);
+    Action back = outdoor_entrance_action(&g.map);
+    action_resolve_player(&g, back);
+    ASSERT("forest entrance returns to previous stage", g.level == 1);
     ASSERT("backtracking arrives inside east edge", g.player.x == MAP_W - 2);
 
     for (int level = 1; level <= FOREST_DEPTH; level++) {
@@ -184,11 +207,15 @@ void test_forest(void) {
     }
 
     static const int expected_rooms[FOREST_DEPTH] = {7, 8, 9, 8, 9, 10, 10, 10};
+    static const int expected_entrances[FOREST_DEPTH] = {0, 2, 1, 2, 0, 1, 2, 0};
     static const int expected_exits[FOREST_DEPTH] = {0, 1, 2, 1, 0, 2, 1, 0};
     for (int level = 1; level <= FOREST_DEPTH; level++) {
         map_generate_forest(&g.map, level);
         ASSERT("forest level uses its distinct topology size",
             g.map.room_count == expected_rooms[level - 1]);
+        ASSERT("forest levels vary their entrance edge",
+            outdoor_entrance_is_on_side(&g.map, TILE_FOREST_ENTRANCE,
+                expected_entrances[level - 1]));
         ASSERT("forest levels vary their exit edge",
             outdoor_exit_is_on_side(&g.map, TILE_FOREST_EXIT,
                 expected_exits[level - 1]));
@@ -266,6 +293,7 @@ void test_town_spawn(void) {
 
 void test_mountains(void) {
     printf("Goblin Mountains tests:\n");
+    static const int expected_entrances[MOUNTAIN_DEPTH] = {0, 2, 1, 2, 0, 1, 2, 0};
     static const int expected_exits[MOUNTAIN_DEPTH] = {1, 0, 2, 1, 2, 0, 1, 2};
     GameState g;
     g.player.player_class = CLASS_WARRIOR;
@@ -282,6 +310,9 @@ void test_mountains(void) {
     for (int level = 1; level <= MOUNTAIN_DEPTH; level++) {
         g.level = level;
         map_generate_mountains(&g.map, level);
+        ASSERT("mountain levels vary their entrance edge",
+            outdoor_entrance_is_on_side(&g.map, TILE_MOUNTAIN_ENTRANCE,
+                expected_entrances[level - 1]));
         ASSERT("mountain levels vary their exit edge",
             outdoor_exit_is_on_side(&g.map, TILE_MOUNTAIN_EXIT,
                 expected_exits[level - 1]));
