@@ -86,6 +86,36 @@ void draw_mountain_edge(Renderer *r, int tile_x, int tile_y, int forward) {
         (SDL_Color){239,65,25,255} : (SDL_Color){145,47,32,255});
 }
 
+void draw_coast_floor(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){8, 31, 43, 255});
+    fill_rect(r, x + 2, y + 5, 10, 2, (SDL_Color){18, 67, 78, 255});
+    fill_rect(r, x + 13, y + 16, 8, 2, (SDL_Color){34, 103, 109, 255});
+    fill_rect(r, x + 6, y + 21, 4, 2, (SDL_Color){157, 132, 82, 255});
+}
+
+void draw_coast_wall(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){7, 20, 30, 255});
+    fill_rect(r, x + 1, y + 2, 22, 8, (SDL_Color){25, 68, 73, 255});
+    fill_rect(r, x + 4, y + 12, 18, 9, (SDL_Color){20, 51, 61, 255});
+    fill_rect(r, x, y + 10, TILE_SIZE, 2, (SDL_Color){74, 121, 112, 255});
+    fill_rect(r, x + 15, y + 13, 2, 8, (SDL_Color){125, 103, 66, 255});
+}
+
+void draw_coast_edge(Renderer *r, int tile_x, int tile_y, int forward) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_coast_floor(r, tile_x, tile_y);
+    fill_rect(r, x + 2, y + 2, 5, 21, (SDL_Color){42, 84, 82, 255});
+    fill_rect(r, x + 18, y + 2, 5, 21, (SDL_Color){42, 84, 82, 255});
+    fill_rect(r, x + 2, y + 2, 21, 4, (SDL_Color){93, 139, 117, 255});
+    fill_rect(r, x + 9, y + 8, 7, 9, forward ?
+        (SDL_Color){62, 220, 216, 255} : (SDL_Color){47, 130, 145, 255});
+}
+
 void draw_player(Renderer *r, int tile_x, int tile_y, PlayerClass player_class) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
@@ -585,6 +615,63 @@ static void draw_mountain_enemy(Renderer *r, int tx, int ty, EnemyType type) {
     }
 }
 
+static void draw_coast_enemy(Renderer *r, int tx, int ty, EnemyType type) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    SDL_Color deep = {10, 33, 48, 255};
+    SDL_Color aqua = {55, 192, 187, 255};
+    SDL_Color pale = {139, 231, 213, 255};
+    SDL_Color coral = {214, 78, 70, 255};
+    SDL_Color stone = {75, 125, 116, 255};
+    if (type == ENEMY_ILLUSION) {
+        fill_rect(r, x + 8, y + 4, 9, 7, pale);
+        fill_rect(r, x + 6, y + 11, 13, 9, (SDL_Color){91, 81, 181, 255});
+        fill_rect(r, x + 4, y + 20, 17, 2, aqua);
+    } else if (type == ENEMY_MERFOLK) {
+        fill_rect(r, x + 7, y + 4, 11, 9, aqua);
+        fill_rect(r, x + 8, y + 13, 9, 7, stone);
+        fill_rect(r, x + 4, y + 20, 7, 3, aqua);
+        fill_rect(r, x + 15, y + 20, 7, 3, aqua);
+        fill_rect(r, x + 20, y + 2, 2, 21, pale);
+    } else if (type == ENEMY_SIREN) {
+        fill_rect(r, x + 7, y + 4, 11, 8, pale);
+        fill_rect(r, x + 5, y + 2, 15, 5, deep);
+        fill_rect(r, x + 7, y + 12, 11, 10, (SDL_Color){36, 107, 145, 255});
+        fill_rect(r, x + 20, y + 5, 3, 3, aqua);
+        fill_rect(r, x + 21, y + 11, 2, 2, aqua);
+    } else if (type == ENEMY_GIANT_CRAB) {
+        fill_rect(r, x + 5, y + 8, 15, 11, coral);
+        fill_rect(r, x, y + 5, 7, 6, coral);
+        fill_rect(r, x + 18, y + 5, 6, 6, coral);
+        fill_rect(r, x + 2, y + 19, 6, 3, pale);
+        fill_rect(r, x + 16, y + 19, 6, 3, pale);
+    } else if (type == ENEMY_ANIMATED_STATUE) {
+        fill_rect(r, x + 7, y + 3, 11, 8, stone);
+        fill_rect(r, x + 5, y + 11, 15, 11, stone);
+        fill_rect(r, x + 9, y + 7, 2, 2, pale);
+        fill_rect(r, x + 15, y + 7, 2, 2, pale);
+        fill_rect(r, x + 12, y + 11, 2, 8, deep);
+    } else if (type == ENEMY_WATER_ELEMENTAL) {
+        fill_rect(r, x + 8, y + 3, 9, 7, pale);
+        fill_rect(r, x + 5, y + 10, 15, 10, aqua);
+        fill_rect(r, x + 2, y + 18, 20, 4, (SDL_Color){38, 121, 169, 255});
+        fill_rect(r, x + 10, y + 6, 2, 2, deep);
+        fill_rect(r, x + 15, y + 6, 2, 2, deep);
+    } else if (type == ENEMY_SEA_SERPENT) {
+        fill_rect(r, x + 5, y + 15, 17, 7, aqua);
+        fill_rect(r, x + 13, y + 5, 8, 13, aqua);
+        fill_rect(r, x + 16, y + 3, 7, 7, pale);
+        fill_rect(r, x + 20, y + 5, 2, 2, coral);
+    } else {
+        fill_rect(r, x + 5, y + 9, 15, 13, (SDL_Color){27, 91, 112, 255});
+        fill_rect(r, x + 7, y + 4, 11, 8, pale);
+        fill_rect(r, x + 6, y + 1, 3, 5, coral);
+        fill_rect(r, x + 11, y, 3, 5, coral);
+        fill_rect(r, x + 16, y + 1, 3, 5, coral);
+        fill_rect(r, x + 21, y + 3, 2, 20, stone);
+    }
+}
+
 void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
     switch (type) {
         case ENEMY_SKELETON: draw_skeleton(r, tile_x, tile_y); break;
@@ -610,6 +697,15 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_GOBLIN_SHAMAN:
         case ENEMY_MOUNTAIN_GOBLIN_KING:
             draw_mountain_enemy(r, tile_x, tile_y, type); break;
+        case ENEMY_ILLUSION:
+        case ENEMY_MERFOLK:
+        case ENEMY_SIREN:
+        case ENEMY_GIANT_CRAB:
+        case ENEMY_ANIMATED_STATUE:
+        case ENEMY_WATER_ELEMENTAL:
+        case ENEMY_SEA_SERPENT:
+        case ENEMY_DROWNED_QUEEN:
+            draw_coast_enemy(r, tile_x, tile_y, type); break;
         case ENEMY_ORC:      draw_orc(r, tile_x, tile_y);      break;
         case ENEMY_TROLL:    draw_troll(r, tile_x, tile_y);    break;
         case ENEMY_GIANT:    draw_giant(r, tile_x, tile_y);    break;
@@ -651,6 +747,16 @@ void draw_town_path(Renderer *r, int tile_x, int tile_y) {
 void draw_town_exit(Renderer *r, int tile_x, int tile_y, TownExitStyle style, int segment) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
+    if (style == TOWN_EXIT_COAST) {
+        draw_coast_floor(r, tile_x, tile_y);
+        fill_rect(r, x, y, TILE_SIZE, 6, (SDL_Color){38, 89, 91, 255});
+        fill_rect(r, x + 4, y + 6, 16, 18, (SDL_Color){9, 42, 56, 255});
+        if (segment == 0 || segment == 4) {
+            fill_rect(r, x, y, 5, TILE_SIZE, (SDL_Color){93, 139, 117, 255});
+            fill_rect(r, x + 19, y, 5, TILE_SIZE, (SDL_Color){93, 139, 117, 255});
+        }
+        return;
+    }
     if (style == TOWN_EXIT_FOREST) {
         draw_forest_floor(r, tile_x, tile_y);
         SDL_Color trunk = {72, 48, 25, 255};

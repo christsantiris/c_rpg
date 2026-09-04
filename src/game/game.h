@@ -61,7 +61,8 @@ typedef enum {
     LOCATION_TOWN,
     LOCATION_DUNGEON,
     LOCATION_FOREST,
-    LOCATION_MOUNTAINS
+    LOCATION_MOUNTAINS,
+    LOCATION_COAST
 } Location;
 
 typedef struct {
@@ -73,6 +74,7 @@ typedef struct {
     LevelCache level_cache[MAX_REGION_DEPTH];
     LevelCache forest_cache[MAX_REGION_DEPTH];
     LevelCache mountain_cache[MAX_REGION_DEPTH];
+    LevelCache coast_cache[MAX_REGION_DEPTH];
     char       messages[MAX_MESSAGES][MAX_MESSAGE_LEN];
     int        message_count;
     int        level_cleared;
@@ -80,6 +82,7 @@ typedef struct {
     int max_level_reached;
     int max_forest_level_reached;
     int max_mountain_level_reached;
+    int max_coast_level_reached;
     Item      inventory[MAX_INVENTORY];
     int       inventory_count;
     int       equipped_weapon;
@@ -109,6 +112,7 @@ void enemies_spawn(GameState *g);
 void game_enter_dungeon(GameState *g);
 void game_enter_forest(GameState *g);
 void game_enter_mountains(GameState *g);
+void game_enter_coast(GameState *g);
 
 void action_resolve_player(GameState *g, Action a);
 void action_resolve_enemies(GameState *g);

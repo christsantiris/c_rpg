@@ -183,6 +183,7 @@ int map_is_walkable(const Map *m, int x, int y) {
     return m->tiles[y][x] != TILE_WALL &&
         m->tiles[y][x] != TILE_FOREST_WALL &&
         m->tiles[y][x] != TILE_MOUNTAIN_WALL &&
+        m->tiles[y][x] != TILE_COAST_WALL &&
         m->tiles[y][x] != TILE_TAVERN &&
         m->tiles[y][x] != TILE_LOCKED_DOOR;
 }
@@ -269,6 +270,13 @@ static void map_generate_outdoor(Map *m, int level, OutdoorSide entrance_side, O
         m->tiles[MAP_H - 1][first_x] = TILE_FOREST_ENTRANCE;
         m->stairs_up_x = first_x;
         m->stairs_up_y = MAP_H - 2;
+    } else if (entrance_side == OUTDOOR_SIDE_EAST) {
+        for (int x = first_x; x < MAP_W; x++) {
+            m->tiles[first_y][x] = TILE_FOREST_FLOOR;
+        }
+        m->tiles[first_y][MAP_W - 1] = TILE_FOREST_ENTRANCE;
+        m->stairs_up_x = MAP_W - 2;
+        m->stairs_up_y = first_y;
     } else {
         for (int x = 0; x <= first_x; x++) {
             m->tiles[first_y][x] = TILE_FOREST_FLOOR;
@@ -291,6 +299,13 @@ static void map_generate_outdoor(Map *m, int level, OutdoorSide entrance_side, O
         m->tiles[MAP_H - 1][last_x] = TILE_FOREST_EXIT;
         m->stairs_down_x = last_x;
         m->stairs_down_y = MAP_H - 2;
+    } else if (exit_side == OUTDOOR_SIDE_WEST) {
+        for (int x = 0; x <= last_x; x++) {
+            m->tiles[last_y][x] = TILE_FOREST_FLOOR;
+        }
+        m->tiles[last_y][0] = TILE_FOREST_EXIT;
+        m->stairs_down_x = 1;
+        m->stairs_down_y = last_y;
     } else {
         for (int x = last_x; x < MAP_W; x++) {
             m->tiles[last_y][x] = TILE_FOREST_FLOOR;
@@ -386,6 +401,40 @@ void map_generate_mountains(Map *m, int level) {
     }
 }
 
+void map_generate_coast(Map *m, int level) {
+    static const OutdoorSide entrances[COAST_DEPTH] = {
+        OUTDOOR_SIDE_NORTH, OUTDOOR_SIDE_WEST, OUTDOOR_SIDE_SOUTH,
+        OUTDOOR_SIDE_EAST, OUTDOOR_SIDE_NORTH, OUTDOOR_SIDE_EAST,
+        OUTDOOR_SIDE_WEST, OUTDOOR_SIDE_SOUTH
+    };
+    static const OutdoorSide exits[COAST_DEPTH] = {
+        OUTDOOR_SIDE_EAST, OUTDOOR_SIDE_SOUTH, OUTDOOR_SIDE_WEST,
+        OUTDOOR_SIDE_NORTH, OUTDOOR_SIDE_WEST, OUTDOOR_SIDE_SOUTH,
+        OUTDOOR_SIDE_NORTH, OUTDOOR_SIDE_EAST
+    };
+    int index = level - 1;
+    if (index < 0) {
+        index = 0;
+    }
+    if (index >= COAST_DEPTH) {
+        index = COAST_DEPTH - 1;
+    }
+    map_generate_outdoor(m, level, entrances[index], exits[index]);
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (m->tiles[y][x] == TILE_FOREST_FLOOR) {
+                m->tiles[y][x] = TILE_COAST_FLOOR;
+            } else if (m->tiles[y][x] == TILE_FOREST_WALL) {
+                m->tiles[y][x] = TILE_COAST_WALL;
+            } else if (m->tiles[y][x] == TILE_FOREST_ENTRANCE) {
+                m->tiles[y][x] = TILE_COAST_ENTRANCE;
+            } else if (m->tiles[y][x] == TILE_FOREST_EXIT) {
+                m->tiles[y][x] = TILE_COAST_EXIT;
+            }
+        }
+    }
+}
+
 void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     m->room_count = 0;
 
@@ -419,6 +468,10 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     // Goblin Mountains exit at the east end of the crossroad.
     for (int y = 10; y <= 14; y++)
         m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
+
+    // Sunken Coast exit at the south end of the crossroad.
+    for (int x = 18; x <= 22; x++)
+        m->tiles[TOWN_H - 1][x] = TILE_TOWN_EXIT;
 
     // Blacksmith at (7, 7) — 5x4 tiles
     for (int dy = 0; dy < 4; dy++)

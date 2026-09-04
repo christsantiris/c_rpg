@@ -162,14 +162,15 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count) {
              e->type == ENEMY_DEMON_LORD || e->type == ENEMY_RED_DRAGON ||
              e->type == ENEMY_TARRASQUE ||
              e->type == ENEMY_FOREST_NECROMANCER ||
-             e->type == ENEMY_MOUNTAIN_GOBLIN_KING);
+             e->type == ENEMY_MOUNTAIN_GOBLIN_KING ||
+             e->type == ENEMY_DROWNED_QUEEN);
     }
 }
 
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 13);
+    cJSON_AddNumberToObject(root, "save_version", 14);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -217,6 +218,8 @@ int save_game(const GameState *g, int slot) {
         g->max_forest_level_reached);
     cJSON_AddNumberToObject(root, "max_mountain_level_reached",
         g->max_mountain_level_reached);
+    cJSON_AddNumberToObject(root, "max_coast_level_reached",
+        g->max_coast_level_reached);
     cJSON_AddNumberToObject(root, "message_count",     g->message_count);
     cJSON_AddNumberToObject(root, "gold",              g->gold);
     cJSON_AddNumberToObject(root, "score",             g->score);
@@ -352,6 +355,25 @@ int save_game(const GameState *g, int slot) {
     }
     cJSON_AddItemToObject(root, "mountain_cache", mountain_cache);
 
+    cJSON *coast_cache = cJSON_CreateArray();
+    for (int i = 0; i < MAX_REGION_DEPTH; i++) {
+        cJSON *entry = cJSON_CreateObject();
+        cJSON_AddNumberToObject(entry, "valid", g->coast_cache[i].valid);
+        cJSON_AddNumberToObject(entry, "level_cleared",
+            g->coast_cache[i].level_cleared);
+        if (g->coast_cache[i].valid) {
+            cJSON_AddItemToObject(entry, "map",
+                serialize_map(&g->coast_cache[i].map));
+            cJSON_AddItemToObject(entry, "enemies",
+                serialize_enemies(g->coast_cache[i].enemies,
+                    g->coast_cache[i].enemy_count));
+            cJSON_AddNumberToObject(entry, "enemy_count",
+                g->coast_cache[i].enemy_count);
+        }
+        cJSON_AddItemToArray(coast_cache, entry);
+    }
+    cJSON_AddItemToObject(root, "coast_cache", coast_cache);
+
     char *json = cJSON_Print(root);
     cJSON_Delete(root);
 
@@ -426,6 +448,8 @@ int load_game(GameState *g, int slot) {
     g->max_forest_level_reached = max_forest ? max_forest->valueint : 1;
     cJSON *max_mountain = cJSON_GetObjectItem(root, "max_mountain_level_reached");
     g->max_mountain_level_reached = max_mountain ? max_mountain->valueint : 1;
+    cJSON *max_coast = cJSON_GetObjectItem(root, "max_coast_level_reached");
+    g->max_coast_level_reached = max_coast ? max_coast->valueint : 1;
     g->message_count     = cJSON_GetObjectItem(root, "message_count")->valueint;
     g->gold              = cJSON_GetObjectItem(root, "gold")->valueint;
     g->score             = cJSON_GetObjectItem(root, "score")->valueint;
@@ -489,7 +513,8 @@ int load_game(GameState *g, int slot) {
         cJSON *underlying = cJSON_GetObjectItem(f, "underlying_tile");
         fi->underlying_tile = underlying ? underlying->valueint :
             (g->location == LOCATION_FOREST ? TILE_FOREST_FLOOR :
-            (g->location == LOCATION_MOUNTAINS ? TILE_MOUNTAIN_FLOOR : TILE_FLOOR));
+            (g->location == LOCATION_MOUNTAINS ? TILE_MOUNTAIN_FLOOR :
+            (g->location == LOCATION_COAST ? TILE_COAST_FLOOR : TILE_FLOOR)));
         cJSON *it = cJSON_GetObjectItem(f, "item");
         fi->item.active        = cJSON_GetObjectItem(it, "active")->valueint;
         fi->item.type          = cJSON_GetObjectItem(it, "type")->valueint;
@@ -570,6 +595,30 @@ int load_game(GameState *g, int slot) {
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
                 g->mountain_cache[i].enemies,
                 &g->mountain_cache[i].enemy_count);
+        }
+    }
+
+    cJSON *coast_cache = cJSON_GetObjectItem(root, "coast_cache");
+    for (int i = 0; i < MAX_REGION_DEPTH; i++) {
+        g->coast_cache[i].valid = 0;
+        g->coast_cache[i].level_cleared = 0;
+        if (!coast_cache) {
+            continue;
+        }
+        cJSON *entry = cJSON_GetArrayItem(coast_cache, i);
+        if (!entry) {
+            continue;
+        }
+        cJSON *valid = cJSON_GetObjectItem(entry, "valid");
+        cJSON *cleared = cJSON_GetObjectItem(entry, "level_cleared");
+        g->coast_cache[i].valid = valid ? valid->valueint : 0;
+        g->coast_cache[i].level_cleared = cleared ? cleared->valueint : 0;
+        if (g->coast_cache[i].valid) {
+            deserialize_map(cJSON_GetObjectItem(entry, "map"),
+                &g->coast_cache[i].map);
+            deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
+                g->coast_cache[i].enemies,
+                &g->coast_cache[i].enemy_count);
         }
     }
 
@@ -800,6 +849,31 @@ int load_game(GameState *g, int slot) {
         }
         if (g->portal_active) {
             g->map.tiles[2][20] = TILE_PORTAL;
+        }
+    }
+
+    // Version 14 adds the south gate and the Sunken Coast adventure.
+    if (save_version < 14) {
+        g->max_coast_level_reached = 1;
+        for (int i = 0; i < MAX_REGION_DEPTH; i++) {
+            g->coast_cache[i].valid = 0;
+        }
+        if (g->location == LOCATION_TOWN) {
+            int player_x = g->player.x;
+            int player_y = g->player.y;
+            int spawn_x;
+            int spawn_y;
+            map_generate_town(&g->map, &spawn_x, &spawn_y);
+            if (map_is_walkable(&g->map, player_x, player_y)) {
+                g->player.x = player_x;
+                g->player.y = player_y;
+            } else {
+                g->player.x = spawn_x;
+                g->player.y = spawn_y;
+            }
+            if (g->portal_active) {
+                g->map.tiles[2][20] = TILE_PORTAL;
+            }
         }
     }
 

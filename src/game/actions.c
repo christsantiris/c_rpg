@@ -75,6 +75,14 @@ static int enemy_score(EnemyType type) {
         case ENEMY_HOBGOBLIN_GUARD: return 70;
         case ENEMY_GOBLIN_SHAMAN: return 76;
         case ENEMY_MOUNTAIN_GOBLIN_KING: return 1300;
+        case ENEMY_ILLUSION: return 30;
+        case ENEMY_MERFOLK: return 55;
+        case ENEMY_SIREN: return 80;
+        case ENEMY_GIANT_CRAB: return 100;
+        case ENEMY_ANIMATED_STATUE: return 145;
+        case ENEMY_WATER_ELEMENTAL: return 135;
+        case ENEMY_SEA_SERPENT: return 180;
+        case ENEMY_DROWNED_QUEEN: return 1600;
         case ENEMY_ORC:         return 30;
         case ENEMY_TROLL:       return 50;
         case ENEMY_GIANT:       return 80;
@@ -112,6 +120,14 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type, int is_boss) {
         case ENEMY_HOBGOBLIN_GUARD: gold = 10 + rand() % 10; break;
         case ENEMY_GOBLIN_SHAMAN: gold = 11 + rand() % 11; break;
         case ENEMY_MOUNTAIN_GOBLIN_KING: gold = 60; break;
+        case ENEMY_ILLUSION: gold = 2; break;
+        case ENEMY_MERFOLK: gold = 5; break;
+        case ENEMY_SIREN: gold = 8; break;
+        case ENEMY_GIANT_CRAB: gold = 7; break;
+        case ENEMY_ANIMATED_STATUE: gold = 12; break;
+        case ENEMY_WATER_ELEMENTAL: gold = 10; break;
+        case ENEMY_SEA_SERPENT: gold = 15; break;
+        case ENEMY_DROWNED_QUEEN: gold = 75; break;
         case ENEMY_ORC:      gold = 6 + rand() % 8;  break;
         case ENEMY_TROLL:    gold = 10 + rand() % 10; break;
         case ENEMY_GIANT:    gold = 15 + rand() % 15; break;
@@ -691,9 +707,50 @@ void action_resolve_player(GameState *g, Action a) {
 
         if (g->location == LOCATION_TOWN &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
-            if (tx == 0) game_enter_forest(g);
-            else if (tx == TOWN_W - 1) game_enter_mountains(g);
-            else game_enter_dungeon(g);
+            if (tx == 0) {
+                game_enter_forest(g);
+            } else if (tx == TOWN_W - 1) {
+                game_enter_mountains(g);
+            } else if (ty == TOWN_H - 1) {
+                game_enter_coast(g);
+            } else {
+                game_enter_dungeon(g);
+            }
+            return;
+        }
+
+        if (g->location == LOCATION_COAST &&
+            g->map.tiles[ty][tx] == TILE_COAST_ENTRANCE) {
+            if (g->level == 1) {
+                game_return_to_town(g);
+            } else {
+                game_ascend(g);
+            }
+            return;
+        }
+
+        if (g->location == LOCATION_COAST &&
+            g->map.tiles[ty][tx] == TILE_COAST_EXIT) {
+            if (g->level < COAST_DEPTH) {
+                game_descend(g);
+                g->score += g->level * 100;
+            } else {
+                int queen_alive = 0;
+                for (int i = 0; i < g->enemy_count; i++) {
+                    if (g->enemies[i].active &&
+                        g->enemies[i].type == ENEMY_DROWNED_QUEEN) {
+                        queen_alive = 1;
+                        break;
+                    }
+                }
+                if (queen_alive) {
+                    push_message(g, "The Drowned Queen commands the tide!");
+                    return;
+                }
+                g->score += g->level * 100;
+                game_return_to_town(g);
+                push_message(g, "The Sunken Coast is reclaimed!");
+            }
             return;
         }
 
@@ -986,6 +1043,17 @@ void action_resolve_enemies(GameState *g) {
                 g->player.y < fortress->y + fortress->h;
             if (!player_in_fortress && e->move_timer == 0) continue;
         }
+        if (e->type == ENEMY_DROWNED_QUEEN) {
+            Room *throne = &g->map.rooms[g->map.room_count - 1];
+            int player_in_throne =
+                g->player.x >= throne->x &&
+                g->player.x < throne->x + throne->w &&
+                g->player.y >= throne->y &&
+                g->player.y < throne->y + throne->h;
+            if (!player_in_throne && e->move_timer == 0) {
+                continue;
+            }
+        }
 
         int dx = g->player.x - e->x;
         int dy = g->player.y - e->y;
@@ -1063,6 +1131,37 @@ void action_resolve_enemies(GameState *g) {
             continue;
         }
 
+        if (e->type == ENEMY_DROWNED_QUEEN) {
+            if (e->move_timer % 3 == 0) {
+                int dmg = e->attack - g->player.defense / 2;
+                if (dmg < 5) {
+                    dmg = 5;
+                }
+                g->player.hp -= dmg;
+                char msg[MAX_MESSAGE_LEN];
+                snprintf(msg, sizeof(msg), "Queen's tidal wave: %d dmg", dmg);
+                push_message(g, msg);
+            } else {
+                push_message(g, "The Drowned Queen summons the tide...");
+            }
+            continue;
+        }
+
+        if ((e->type == ENEMY_SIREN ||
+            e->type == ENEMY_WATER_ELEMENTAL) &&
+            e->move_timer % 2 == 0 && clear_orthogonal_path(g, e)) {
+            int dmg = e->attack - g->player.defense / 2;
+            if (dmg < 1) {
+                dmg = 1;
+            }
+            g->player.hp -= dmg;
+            char msg[MAX_MESSAGE_LEN];
+            snprintf(msg, sizeof(msg), e->type == ENEMY_SIREN
+                ? "Siren song: %d dmg" : "Water surge: %d dmg", dmg);
+            push_message(g, msg);
+            continue;
+        }
+
         if ((e->type == ENEMY_GOBLIN_ARCHER ||
             e->type == ENEMY_GOBLIN_BOMBER) &&
             e->move_timer % 2 == 0 && clear_orthogonal_path(g, e)) {
@@ -1118,7 +1217,9 @@ void action_resolve_enemies(GameState *g) {
         }
 
         if (e->type == ENEMY_ZOMBIE || e->type == ENEMY_GIANT_WURM ||
-            e->type == ENEMY_FOREST_TROLL || e->type == ENEMY_CAVE_TROLL) {
+            e->type == ENEMY_FOREST_TROLL || e->type == ENEMY_CAVE_TROLL ||
+            e->type == ENEMY_GIANT_CRAB ||
+            e->type == ENEMY_ANIMATED_STATUE) {
             if (e->move_timer % 2 != 0) continue;
         }
 
