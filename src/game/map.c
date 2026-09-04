@@ -222,6 +222,25 @@ static const ForestTemplate forest_templates[FOREST_DEPTH] = {
         {{0,1},{0,2},{1,3},{2,4},{3,5},{4,6},{3,4},{5,7},{6,8},{7,9},{8,9}}}
 };
 
+static const ForestTemplate mountain_templates[MOUNTAIN_DEPTH] = {
+    {7, {8,34,61,88,116,145,172}, {70,52,70,43,58,31,12}, 6,
+        {{0,1},{1,2},{2,3},{3,4},{4,5},{5,6}}},
+    {8, {18,42,42,78,78,112,145,172}, {76,20,58,20,58,40,40,40}, 9,
+        {{0,1},{0,2},{1,3},{2,4},{3,5},{4,5},{3,4},{5,6},{6,7}}},
+    {8, {20,48,38,75,82,112,140,158}, {8,24,56,17,53,68,38,76}, 8,
+        {{0,1},{0,2},{1,3},{2,4},{3,4},{4,5},{5,6},{6,7}}},
+    {9, {20,48,48,82,82,116,116,150,100}, {76,18,62,18,62,18,62,40,8}, 11,
+        {{0,1},{0,2},{1,3},{2,4},{3,5},{4,6},{3,4},{5,7},{6,7},{7,8},{5,6}}},
+    {9, {8,38,38,72,72,108,108,144,170}, {40,14,66,14,66,14,66,40,76}, 10,
+        {{0,1},{0,2},{1,3},{2,4},{3,5},{4,6},{3,4},{5,7},{6,7},{7,8}}},
+    {10, {170,143,143,110,110,78,78,46,46,12}, {18,18,65,30,76,16,61,30,78,46}, 10,
+        {{0,1},{1,2},{1,3},{2,4},{3,5},{4,6},{5,7},{6,8},{7,8},{8,9}}},
+    {10, {18,43,43,76,76,108,108,140,140,172}, {78,25,68,12,52,25,72,12,52,8}, 11,
+        {{0,1},{0,2},{1,3},{1,4},{2,4},{3,5},{4,6},{5,7},{6,8},{7,9},{8,9}}},
+    {10, {8,38,38,72,72,108,108,142,142,174}, {42,12,72,12,72,12,72,25,60,76}, 12,
+        {{0,1},{0,2},{1,3},{2,4},{3,5},{4,6},{3,4},{5,7},{6,8},{7,8},{7,9},{8,9}}}
+};
+
 static void carve_forest_trail(Map *m, int x, int y, int target_x, int target_y) {
     int horizontal = rand() % 2;
     while (x != target_x || y != target_y) {
@@ -258,15 +277,11 @@ static void carve_forest_clearing(Map *m, Room *room) {
     }
 }
 
-static void map_generate_outdoor(Map *m, int level, OutdoorSide entrance_side, OutdoorSide exit_side, int organic) {
+static void map_generate_outdoor(Map *m, int level, OutdoorSide entrance_side, OutdoorSide exit_side, int organic, const ForestTemplate *layout) {
     for (int y = 0; y < MAP_H; y++)
         for (int x = 0; x < MAP_W; x++)
             m->tiles[y][x] = TILE_FOREST_WALL;
 
-    int template_index = level - 1;
-    if (template_index < 0) template_index = 0;
-    if (template_index >= FOREST_DEPTH) template_index = FOREST_DEPTH - 1;
-    const ForestTemplate *layout = &forest_templates[template_index];
     m->room_count = layout->room_count;
     for (int i = 0; i < m->room_count; i++) {
         Room r;
@@ -397,7 +412,8 @@ void map_generate_forest(Map *m, int level) {
     if (index >= FOREST_DEPTH) {
         index = FOREST_DEPTH - 1;
     }
-    map_generate_outdoor(m, level, entrances[index], exits[index], 1);
+    map_generate_outdoor(m, level, entrances[index], exits[index], 1,
+        &forest_templates[index]);
     int landmark_room = level == FOREST_DEPTH ? m->room_count - 2 :
         m->room_count - 1;
     int landmark_x;
@@ -415,9 +431,18 @@ void map_generate_forest(Map *m, int level) {
     }
 }
 
+static int mountain_tile_in_room(const Map *m, int x, int y) {
+    for (int i = 0; i < m->room_count; i++) {
+        const Room *room = &m->rooms[i];
+        if (x >= room->x && x < room->x + room->w &&
+            y >= room->y && y < room->y + room->h) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void map_generate_mountains(Map *m, int level) {
-    // Reuse the branching route graphs, then reinterpret their
-    // clearings as exposed basalt passes and mine chambers.
     static const OutdoorSide entrances[MOUNTAIN_DEPTH] = {
         OUTDOOR_SIDE_WEST,
         OUTDOOR_SIDE_SOUTH,
@@ -445,7 +470,8 @@ void map_generate_mountains(Map *m, int level) {
     if (index >= MOUNTAIN_DEPTH) {
         index = MOUNTAIN_DEPTH - 1;
     }
-    map_generate_outdoor(m, level, entrances[index], exits[index], 0);
+    map_generate_outdoor(m, level, entrances[index], exits[index], 0,
+        &mountain_templates[index]);
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
             if (m->tiles[y][x] == TILE_FOREST_FLOOR)
@@ -456,6 +482,23 @@ void map_generate_mountains(Map *m, int level) {
                 m->tiles[y][x] = TILE_MOUNTAIN_ENTRANCE;
             else if (m->tiles[y][x] == TILE_FOREST_EXIT)
                 m->tiles[y][x] = TILE_MOUNTAIN_EXIT;
+        }
+    }
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (m->tiles[y][x] != TILE_MOUNTAIN_FLOOR) {
+                continue;
+            }
+            int in_room = mountain_tile_in_room(m, x, y);
+            if ((level == 2 || level == 7) && !in_room) {
+                m->tiles[y][x] = TILE_MOUNTAIN_BRIDGE;
+            } else if (level == 3 || level == 6) {
+                m->tiles[y][x] = TILE_MOUNTAIN_CAVE_FLOOR;
+            } else if (level == 4 || level == 5 || level == 8) {
+                if (in_room) {
+                    m->tiles[y][x] = TILE_MOUNTAIN_FORTRESS_FLOOR;
+                }
+            }
         }
     }
 }
@@ -478,7 +521,8 @@ void map_generate_coast(Map *m, int level) {
     if (index >= COAST_DEPTH) {
         index = COAST_DEPTH - 1;
     }
-    map_generate_outdoor(m, level, entrances[index], exits[index], 0);
+    map_generate_outdoor(m, level, entrances[index], exits[index], 0,
+        &forest_templates[index]);
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
             if (m->tiles[y][x] == TILE_FOREST_FLOOR) {
