@@ -46,7 +46,8 @@ typedef enum {
     TILE_MOUNTAIN_FLOOR,
     TILE_MOUNTAIN_WALL,
     TILE_MOUNTAIN_ENTRANCE,
-    TILE_MOUNTAIN_EXIT
+    TILE_MOUNTAIN_EXIT,
+    TILE_TAVERN
 } TileType;
 
 typedef struct {

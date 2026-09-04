@@ -40,11 +40,18 @@ void draw_red_dragon(Renderer *r, int tile_x, int tile_y);
 void draw_tarrasque(Renderer *r, int tile_x, int tile_y);
 
 // Town Draw functions
+typedef enum {
+    TOWN_EXIT_DUNGEON,
+    TOWN_EXIT_FOREST,
+    TOWN_EXIT_MOUNTAINS
+} TownExitStyle;
+
 void draw_town_floor(Renderer *r, int tile_x, int tile_y);
 void draw_town_path(Renderer *r, int tile_x, int tile_y);
-void draw_town_exit(Renderer *r, int tile_x, int tile_y);
+void draw_town_exit(Renderer *r, int tile_x, int tile_y, TownExitStyle style, int segment);
 void draw_shop_blacksmith(Renderer *r, int tile_x, int tile_y);
 void draw_shop_alchemist(Renderer *r, int tile_x, int tile_y);
+void draw_tavern(Renderer *r, int tile_x, int tile_y);
 
 void draw_floor_item(Renderer *r, int tile_x, int tile_y);
 void draw_floor_gold(Renderer *r, int tile_x, int tile_y);

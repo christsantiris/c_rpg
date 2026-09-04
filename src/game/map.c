@@ -183,6 +183,7 @@ int map_is_walkable(const Map *m, int x, int y) {
     return m->tiles[y][x] != TILE_WALL &&
         m->tiles[y][x] != TILE_FOREST_WALL &&
         m->tiles[y][x] != TILE_MOUNTAIN_WALL &&
+        m->tiles[y][x] != TILE_TAVERN &&
         m->tiles[y][x] != TILE_LOCKED_DOOR;
 }
 
@@ -429,7 +430,16 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
         for (int dx = 0; dx < 5; dx++)
             m->tiles[7 + dy][28 + dx] = TILE_SHOP_ALCHEMIST;
 
-    // Spawn at south end of vertical path
+    // Tavern at (5, 16) — 7x5 tiles. It remains decorative until quests and
+    // NPC interaction are added.
+    for (int dy = 0; dy < 5; dy++) {
+        for (int dx = 0; dx < 7; dx++) {
+            m->tiles[16 + dy][5 + dx] = TILE_TAVERN;
+        }
+    }
+
+    // Spawn at the central crossroads so the south road remains unobstructed
+    // for a future region.
     *spawn_x = 20;
-    *spawn_y = TOWN_H - 2;
+    *spawn_y = 12;
 }

@@ -169,7 +169,7 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 12);
+    cJSON_AddNumberToObject(root, "save_version", 13);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -781,6 +781,25 @@ int load_game(GameState *g, int slot) {
             enemies_spawn(g);
             g->player.x = g->map.stairs_up_x;
             g->player.y = g->map.stairs_up_y;
+        }
+    }
+
+    // Version 13 adds the decorative tavern to the town map.
+    if (save_version < 13 && g->location == LOCATION_TOWN) {
+        int player_x = g->player.x;
+        int player_y = g->player.y;
+        int spawn_x;
+        int spawn_y;
+        map_generate_town(&g->map, &spawn_x, &spawn_y);
+        if (map_is_walkable(&g->map, player_x, player_y)) {
+            g->player.x = player_x;
+            g->player.y = player_y;
+        } else {
+            g->player.x = spawn_x;
+            g->player.y = spawn_y;
+        }
+        if (g->portal_active) {
+            g->map.tiles[2][20] = TILE_PORTAL;
         }
     }
 

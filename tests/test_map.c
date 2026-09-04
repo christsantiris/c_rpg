@@ -15,6 +15,7 @@ void test_map(void) {
     // Walk all the way left
     GameState g2;
     game_init(&g2);
+    g2.player.y = 5;
     for (int i = 0; i < MAP_W; i++) game_move_player(&g2, -1, 0);
     ASSERT("player cannot reach x=0", g2.player.x >= 1);
 

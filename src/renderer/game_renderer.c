@@ -183,9 +183,16 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_PORTAL: draw_portal(r, sx, sy); break;
                 case TILE_TOWN_FLOOR: draw_town_floor(r, sx, sy); break;
                 case TILE_TOWN_PATH: draw_town_path(r, sx, sy); break;
-                case TILE_TOWN_EXIT: draw_town_exit(r, sx, sy); break;
+                case TILE_TOWN_EXIT: {
+                    TownExitStyle style = y == 0 ? TOWN_EXIT_DUNGEON :
+                        (x == 0 ? TOWN_EXIT_FOREST : TOWN_EXIT_MOUNTAINS);
+                    int segment = y == 0 ? x - 18 : y - 10;
+                    draw_town_exit(r, sx, sy, style, segment);
+                    break;
+                }
                 case TILE_SHOP_BLACKSMITH:
-                case TILE_SHOP_ALCHEMIST: draw_town_floor(r, sx, sy); break;
+                case TILE_SHOP_ALCHEMIST:
+                case TILE_TAVERN: draw_town_floor(r, sx, sy); break;
                 case TILE_ITEM: draw_floor_item(r, sx, sy); break;
                 case TILE_TRAP_HIDDEN:
                     if (g->location == LOCATION_FOREST)
@@ -209,6 +216,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, 7), viewport_to_screen_y(v, 7));
         draw_shop_alchemist(r,
             viewport_to_screen_x(v, 28), viewport_to_screen_y(v, 7));
+        draw_tavern(r,
+            viewport_to_screen_x(v, 5), viewport_to_screen_y(v, 16));
     }
 
     // Draw enemies
@@ -242,29 +251,53 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         SDL_Color label = {220, 180, 60, 255};
         int blacksmith_w = 0;
         int alchemist_w = 0;
+        int forest_w = 0;
+        int forest_h = 0;
+        int dungeon_w = 0;
+        int dungeon_h = 0;
+        int mountains_w = 0;
+        int mountains_h = 0;
+        int tavern_w = 0;
         TTF_SizeText(r->font_tiny, "BLACKSMITH", &blacksmith_w, NULL);
         TTF_SizeText(r->font_tiny, "ALCHEMIST", &alchemist_w, NULL);
+        TTF_SizeText(r->font_tiny, "FOREST", &forest_w, &forest_h);
+        TTF_SizeText(r->font_tiny, "DUNGEON", &dungeon_w, &dungeon_h);
+        TTF_SizeText(r->font_tiny, "MOUNTAINS", &mountains_w, &mountains_h);
+        TTF_SizeText(r->font_tiny, "TAVERN", &tavern_w, NULL);
         int bx = viewport_to_screen_x(v, 7) * TILE_SIZE
             + (5 * TILE_SIZE - blacksmith_w) / 2;
         int by = viewport_to_screen_y(v, 6)  * TILE_SIZE;
         int ax = viewport_to_screen_x(v, 28) * TILE_SIZE
             + (5 * TILE_SIZE - alchemist_w) / 2;
         int ay = viewport_to_screen_y(v, 6)  * TILE_SIZE;
-        if (bx > 0 && by > 0)
+        int tavern_x = viewport_to_screen_x(v, 5) * TILE_SIZE
+            + (7 * TILE_SIZE - tavern_w) / 2;
+        int tavern_y = viewport_to_screen_y(v, 15) * TILE_SIZE;
+        if (bx > 0 && by > 0) {
             renderer_draw_text(r, "BLACKSMITH", bx, by, label, r->font_tiny);
-        if (ax > 0 && ay > 0)
+        }
+        if (ax > 0 && ay > 0) {
             renderer_draw_text(r, "ALCHEMIST", ax, ay, label, r->font_tiny);
-        renderer_draw_text(r, "FOREST",
-            viewport_to_screen_x(v, 1) * TILE_SIZE,
-            viewport_to_screen_y(v, 10) * TILE_SIZE,
+        }
+        if (tavern_x > 0 && tavern_y > 0) {
+            renderer_draw_text(r, "TAVERN", tavern_x, tavern_y, label,
+                r->font_tiny);
+        }
+        int gate_top = viewport_to_screen_y(v, 10) * TILE_SIZE;
+        int forest_x = viewport_to_screen_x(v, 1) * TILE_SIZE + 8;
+        int forest_y = gate_top + (5 * TILE_SIZE - forest_h) / 2;
+        int dungeon_x = viewport_to_screen_x(v, 18) * TILE_SIZE
+            + (5 * TILE_SIZE - dungeon_w) / 2;
+        int dungeon_y = viewport_to_screen_y(v, 1) * TILE_SIZE
+            + (TILE_SIZE - dungeon_h) / 2;
+        int mountains_x = viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE
+            - mountains_w - 8;
+        int mountains_y = gate_top + (5 * TILE_SIZE - mountains_h) / 2;
+        renderer_draw_text(r, "FOREST", forest_x, forest_y,
             (SDL_Color){90, 190, 105, 255}, r->font_tiny);
-        renderer_draw_text(r, "DUNGEON",
-            viewport_to_screen_x(v, 21) * TILE_SIZE,
-            viewport_to_screen_y(v, 1) * TILE_SIZE,
-            label, r->font_tiny);
-        renderer_draw_text(r, "MOUNTAINS",
-            viewport_to_screen_x(v, 35) * TILE_SIZE,
-            viewport_to_screen_y(v, 10) * TILE_SIZE,
+        renderer_draw_text(r, "DUNGEON", dungeon_x, dungeon_y, label,
+            r->font_tiny);
+        renderer_draw_text(r, "MOUNTAINS", mountains_x, mountains_y,
             (SDL_Color){220, 72, 42, 255}, r->font_tiny);
     }
 
