@@ -127,10 +127,24 @@ void info_panel_draw(Renderer *r, const GameState *g) {
     if (g->equipped_armor >= 0 && g->equipped_armor < g->inventory_count)
         draw_icon_armor(r, grid_x1, grid_y2);
 
-    // Slot 4: Helmet (bottom-right)
+    // Slot 4: Equipped spell (bottom-right)
     draw_icon_empty_slot(r, grid_x2, grid_y2);
+    int spell_index = g->player.equipped_spell;
+    if (spell_index >= 0 && spell_index < g->player.known_spell_count) {
+        const Spell *spell = &g->player.known_spells[spell_index];
+        draw_icon_spell(r, grid_x2, grid_y2, spell->id);
+    }
 
-    y = grid_y2 + ICON_SIZE + 16;
+    y = grid_y2 + ICON_SIZE + 5;
+    if (spell_index >= 0 && spell_index < g->player.known_spell_count) {
+        char spell_name[40];
+        SDL_snprintf(spell_name, sizeof(spell_name), "SPELL: %s",
+            g->player.known_spells[spell_index].name);
+        renderer_draw_text(r, spell_name, x, y, value, r->font_tiny);
+    } else {
+        renderer_draw_text(r, "SPELL: NONE", x, y, dimmed, r->font_tiny);
+    }
+    y += lh + 7;
 
     // Key hints
     renderer_draw_text(r, "WASD  MOVE",    x, y,        hint, r->font_tiny);

@@ -243,13 +243,9 @@ void action_resolve_player(GameState *g, Action a) {
             push_message(g, forest ? "The forest is freed!" :
                 "The Lich is defeated!");
         } else if (tile == TILE_STAIRS_DOWN) {
-            if (g->level_cleared) {
-                if (g->level < DUNGEON_DEPTH) {
-                    game_descend(g);
-                    g->score += g->level * 100;
-                }
-            } else {
-                push_message(g, "Clear the level first!");
+            if (g->level < DUNGEON_DEPTH) {
+                game_descend(g);
+                g->score += g->level * 100;
             }
         }
         return;

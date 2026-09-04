@@ -8,9 +8,10 @@ Unlike the dungeon, the forest has no stairs. The player enters through the
 opening on the left edge, then the entrance clearing splits into upper and
 lower woodland routes. Cross-connections allow route changes before both paths
 rejoin near the destination grove. Stage exits move between the east, north and
-south map edges so that every route is not a west-to-east crossing. Levels 1-4
-do not require every enemy to be defeated. The west opening supports
-backtracking and returns to town from level 1.
+south map edges so that every route is not a west-to-east crossing. Later
+stages can also begin at the north or south edge, changing the direction from
+which their branch structure is read. Stages 1-7 do not require every enemy to
+be defeated. The opening on stage 1 supports returning to town.
 
 | Level | Region | Layout | Roster |
 | --- | --- | --- | --- |

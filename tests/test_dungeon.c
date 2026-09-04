@@ -287,11 +287,11 @@ void test_new_dungeon_enemies(void) {
 }
 
 void test_stairs_locked(void) {
-    printf("Stairs lock tests:\n");
+    printf("Dungeon stairs progression tests:\n");
 
     GameState g;
     game_init(&g);
-    game_descend(&g);
+    game_enter_dungeon(&g);
 
     ASSERT("level not cleared on start", g.level_cleared == 0);
 
@@ -301,14 +301,8 @@ void test_stairs_locked(void) {
 
     Action a = {ACTION_DESCEND, 0, 0};
     action_resolve_player(&g, a);
-    ASSERT("cannot descend when level not cleared", g.level == level_before);
-
-    for (int i = 0; i < g.enemy_count; i++)
-        g.enemies[i].active = 0;
-    g.level_cleared = 1;
-
-    action_resolve_player(&g, a);
-    ASSERT("can descend when level cleared", g.level == level_before + 1);
+    ASSERT("can descend without clearing the floor",
+        g.level == level_before + 1);
 }
 
 void test_level_cache_cleared(void) {

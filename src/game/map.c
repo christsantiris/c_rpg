@@ -195,10 +195,11 @@ typedef struct {
 } ForestTemplate;
 
 typedef enum {
-    OUTDOOR_EXIT_EAST,
-    OUTDOOR_EXIT_NORTH,
-    OUTDOOR_EXIT_SOUTH
-} OutdoorExitSide;
+    OUTDOOR_SIDE_WEST,
+    OUTDOOR_SIDE_EAST,
+    OUTDOOR_SIDE_NORTH,
+    OUTDOOR_SIDE_SOUTH
+} OutdoorSide;
 
 static const ForestTemplate forest_templates[FOREST_DEPTH] = {
     {7, {5,42,42,92,92,132,166}, {42,14,68,12,66,40,42}, 8,
@@ -212,14 +213,14 @@ static const ForestTemplate forest_templates[FOREST_DEPTH] = {
     {9, {5,38,38,82,82,122,122,148,176}, {42,16,68,10,72,18,66,42,42}, 10,
         {{0,1},{0,2},{1,3},{2,4},{3,5},{4,6},{5,7},{6,7},{3,4},{7,8}}},
     {10, {5,34,34,70,70,105,105,140,140,176}, {42,16,68,12,48,18,74,28,68,42}, 10,
-        {{0,1},{0,2},{1,3},{2,4},{3,5},{4,6},{5,7},{6,8},{7,9},{3,4}}},
+        {{0,1},{0,2},{1,3},{2,4},{3,4},{3,5},{4,6},{6,8},{4,7},{7,9}}},
     {10, {5,38,38,76,76,112,112,146,146,176}, {42,12,42,72,25,15,68,28,76,42}, 10,
         {{0,1},{0,2},{0,3},{1,4},{2,4},{3,6},{4,5},{4,7},{6,8},{7,9}}},
     {10, {5,36,36,72,72,108,108,142,142,176}, {42,14,70,18,66,10,76,24,66,42}, 11,
         {{0,1},{0,2},{1,3},{2,4},{3,5},{4,6},{3,4},{5,7},{6,8},{7,9},{8,9}}}
 };
 
-static void map_generate_outdoor(Map *m, int level, OutdoorExitSide exit_side) {
+static void map_generate_outdoor(Map *m, int level, OutdoorSide entrance_side, OutdoorSide exit_side) {
     for (int y = 0; y < MAP_H; y++)
         for (int x = 0; x < MAP_W; x++)
             m->tiles[y][x] = TILE_FOREST_WALL;
@@ -253,19 +254,36 @@ static void map_generate_outdoor(Map *m, int level, OutdoorExitSide exit_side) {
     int first_x, first_y, last_x, last_y;
     map_room_center(&m->rooms[0], &first_x, &first_y);
     map_room_center(&m->rooms[m->room_count - 1], &last_x, &last_y);
-    for (int x = 0; x <= first_x; x++)
-        m->tiles[first_y][x] = TILE_FOREST_FLOOR;
-    m->tiles[first_y][0] = TILE_FOREST_ENTRANCE;
-    m->stairs_up_x = 1;
-    m->stairs_up_y = first_y;
-    if (exit_side == OUTDOOR_EXIT_NORTH) {
+    if (entrance_side == OUTDOOR_SIDE_NORTH) {
+        for (int y = first_y; y >= 0; y--) {
+            m->tiles[y][first_x] = TILE_FOREST_FLOOR;
+        }
+        m->tiles[0][first_x] = TILE_FOREST_ENTRANCE;
+        m->stairs_up_x = first_x;
+        m->stairs_up_y = 1;
+    } else if (entrance_side == OUTDOOR_SIDE_SOUTH) {
+        for (int y = first_y; y < MAP_H; y++) {
+            m->tiles[y][first_x] = TILE_FOREST_FLOOR;
+        }
+        m->tiles[MAP_H - 1][first_x] = TILE_FOREST_ENTRANCE;
+        m->stairs_up_x = first_x;
+        m->stairs_up_y = MAP_H - 2;
+    } else {
+        for (int x = 0; x <= first_x; x++) {
+            m->tiles[first_y][x] = TILE_FOREST_FLOOR;
+        }
+        m->tiles[first_y][0] = TILE_FOREST_ENTRANCE;
+        m->stairs_up_x = 1;
+        m->stairs_up_y = first_y;
+    }
+    if (exit_side == OUTDOOR_SIDE_NORTH) {
         for (int y = last_y; y >= 0; y--) {
             m->tiles[y][last_x] = TILE_FOREST_FLOOR;
         }
         m->tiles[0][last_x] = TILE_FOREST_EXIT;
         m->stairs_down_x = last_x;
         m->stairs_down_y = 1;
-    } else if (exit_side == OUTDOOR_EXIT_SOUTH) {
+    } else if (exit_side == OUTDOOR_SIDE_SOUTH) {
         for (int y = last_y; y < MAP_H; y++) {
             m->tiles[y][last_x] = TILE_FOREST_FLOOR;
         }
@@ -292,15 +310,25 @@ static void map_generate_outdoor(Map *m, int level, OutdoorExitSide exit_side) {
 }
 
 void map_generate_forest(Map *m, int level) {
-    static const OutdoorExitSide exits[FOREST_DEPTH] = {
-        OUTDOOR_EXIT_EAST,
-        OUTDOOR_EXIT_NORTH,
-        OUTDOOR_EXIT_SOUTH,
-        OUTDOOR_EXIT_NORTH,
-        OUTDOOR_EXIT_EAST,
-        OUTDOOR_EXIT_SOUTH,
-        OUTDOOR_EXIT_NORTH,
-        OUTDOOR_EXIT_EAST
+    static const OutdoorSide entrances[FOREST_DEPTH] = {
+        OUTDOOR_SIDE_WEST,
+        OUTDOOR_SIDE_SOUTH,
+        OUTDOOR_SIDE_NORTH,
+        OUTDOOR_SIDE_SOUTH,
+        OUTDOOR_SIDE_WEST,
+        OUTDOOR_SIDE_NORTH,
+        OUTDOOR_SIDE_SOUTH,
+        OUTDOOR_SIDE_WEST
+    };
+    static const OutdoorSide exits[FOREST_DEPTH] = {
+        OUTDOOR_SIDE_EAST,
+        OUTDOOR_SIDE_NORTH,
+        OUTDOOR_SIDE_SOUTH,
+        OUTDOOR_SIDE_NORTH,
+        OUTDOOR_SIDE_EAST,
+        OUTDOOR_SIDE_SOUTH,
+        OUTDOOR_SIDE_NORTH,
+        OUTDOOR_SIDE_EAST
     };
     int index = level - 1;
     if (index < 0) {
@@ -309,21 +337,31 @@ void map_generate_forest(Map *m, int level) {
     if (index >= FOREST_DEPTH) {
         index = FOREST_DEPTH - 1;
     }
-    map_generate_outdoor(m, level, exits[index]);
+    map_generate_outdoor(m, level, entrances[index], exits[index]);
 }
 
 void map_generate_mountains(Map *m, int level) {
     // Reuse the branching route graphs, then reinterpret their
     // clearings as exposed basalt passes and mine chambers.
-    static const OutdoorExitSide exits[MOUNTAIN_DEPTH] = {
-        OUTDOOR_EXIT_NORTH,
-        OUTDOOR_EXIT_EAST,
-        OUTDOOR_EXIT_SOUTH,
-        OUTDOOR_EXIT_NORTH,
-        OUTDOOR_EXIT_SOUTH,
-        OUTDOOR_EXIT_EAST,
-        OUTDOOR_EXIT_NORTH,
-        OUTDOOR_EXIT_SOUTH
+    static const OutdoorSide entrances[MOUNTAIN_DEPTH] = {
+        OUTDOOR_SIDE_WEST,
+        OUTDOOR_SIDE_SOUTH,
+        OUTDOOR_SIDE_NORTH,
+        OUTDOOR_SIDE_SOUTH,
+        OUTDOOR_SIDE_WEST,
+        OUTDOOR_SIDE_NORTH,
+        OUTDOOR_SIDE_SOUTH,
+        OUTDOOR_SIDE_WEST
+    };
+    static const OutdoorSide exits[MOUNTAIN_DEPTH] = {
+        OUTDOOR_SIDE_NORTH,
+        OUTDOOR_SIDE_EAST,
+        OUTDOOR_SIDE_SOUTH,
+        OUTDOOR_SIDE_NORTH,
+        OUTDOOR_SIDE_SOUTH,
+        OUTDOOR_SIDE_EAST,
+        OUTDOOR_SIDE_NORTH,
+        OUTDOOR_SIDE_SOUTH
     };
     int index = level - 1;
     if (index < 0) {
@@ -332,7 +370,7 @@ void map_generate_mountains(Map *m, int level) {
     if (index >= MOUNTAIN_DEPTH) {
         index = MOUNTAIN_DEPTH - 1;
     }
-    map_generate_outdoor(m, level, exits[index]);
+    map_generate_outdoor(m, level, entrances[index], exits[index]);
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
             if (m->tiles[y][x] == TILE_FOREST_FLOOR)
