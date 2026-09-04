@@ -244,7 +244,7 @@ void action_resolve_player(GameState *g, Action a) {
                 "The Lich is defeated!");
         } else if (tile == TILE_STAIRS_DOWN) {
             if (g->level_cleared) {
-                if (g->level < MAX_DEPTH) {
+                if (g->level < DUNGEON_DEPTH) {
                     game_descend(g);
                     g->score += g->level * 100;
                 }
@@ -717,7 +717,7 @@ void action_resolve_player(GameState *g, Action a) {
 
         if (g->location == LOCATION_MOUNTAINS &&
             g->map.tiles[ty][tx] == TILE_MOUNTAIN_EXIT) {
-            if (g->level < MAX_DEPTH) {
+            if (g->level < MOUNTAIN_DEPTH) {
                 game_descend(g);
                 g->score += g->level * 100;
             } else {
@@ -741,7 +741,7 @@ void action_resolve_player(GameState *g, Action a) {
 
         if (g->location == LOCATION_FOREST &&
             g->map.tiles[ty][tx] == TILE_FOREST_EXIT) {
-            if (g->level < MAX_DEPTH) {
+            if (g->level < FOREST_DEPTH) {
                 game_descend(g);
                 g->score += g->level * 100;
             } else {
@@ -947,7 +947,7 @@ static int forest_necromancer_raise(GameState *g, int caster_index) {
 
 void action_resolve_enemies(GameState *g) {
     int boss_locked = 0;
-    if (g->location == LOCATION_DUNGEON && g->level == MAX_DEPTH) {
+    if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH) {
         for (int y = 0; y < MAP_H && !boss_locked; y++)
             for (int x = 0; x < MAP_W; x++)
                 if (g->map.tiles[y][x] == TILE_LOCKED_DOOR) {

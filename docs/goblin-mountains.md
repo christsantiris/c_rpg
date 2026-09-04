@@ -1,7 +1,7 @@
 # Goblin Mountains
 
 The Goblin Mountains are entered from the east town road and use an independent
-five-level cache. Their black basalt, iron-red rock and ember-orange accents
+eight-level cache. Their black basalt, iron-red rock and ember-orange accents
 separate the region visually from the dungeon and Haunted Forest.
 
 Wild Boars are deliberately excluded. The area is about an organized goblin
@@ -13,10 +13,13 @@ war host, its siege craft, guarded mines and enslaved cave creatures.
 | 2 | Raider Pass | Overlapping firing lanes leading east | Scouts and Goblin Archers |
 | 3 | Cinder Mines | Braided mine routes descending to a south exit | Scouts, Archers, Bombers and Tunnel Spiders |
 | 4 | Iron Ascent | Fortified hubs and guarded choke points climbing north | Archers, Bombers, Spiders, Cave Trolls and Hobgoblin Guards |
-| 5 | Crown Peak | Twin approaches into a summit fortress with a southern escape pass | Full roster, Goblin Shamans and the Goblin King |
+| 5 | Siege Camp | Split approaches through entrenched positions; south exit | Full regular roster |
+| 6 | Collapsed Tunnels | Broken routes and side chambers leading east | Full regular roster |
+| 7 | Crown Approach | Multiple guarded climbs toward a north pass | Full regular roster |
+| 8 | Crown Peak | Twin approaches into a summit fortress with a southern escape pass | Full roster, Goblin Shamans and the Goblin King |
 
-Levels 1-4 do not require a full clear. Reaching the marked boundary pass is
-enough to advance, whether it lies east, north or south. On level 5, only the
+Stages 1-7 do not require a full clear. Reaching the marked boundary pass is
+enough to advance, whether it lies east, north or south. On stage 8, only the
 Goblin King must be defeated.
 
 ## Combat Roles

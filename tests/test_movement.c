@@ -38,36 +38,32 @@ void test_movement(void) {
     ASSERT("move up decreases y by 1", g.player.y == start_y);
 
     // Wall collision - left border
-    GameState g2;
-    game_init(&g2);
-    g2.player.x = 1;
-    g2.player.y = MAP_H / 2;
-    game_move_player(&g2, -1, 0);
-    ASSERT("player cannot move into left border", g2.player.x == 1);
+    game_init(&g);
+    g.player.x = 1;
+    g.player.y = MAP_H / 2;
+    game_move_player(&g, -1, 0);
+    ASSERT("player cannot move into left border", g.player.x == 1);
 
     // Wall collision - right border
-    GameState g3;
-    game_init(&g3);
+    game_init(&g);
     printf("DEBUG after game_init: equipped_armor=%d defense=%d\n",
-        g3.equipped_armor, g3.player.defense);
-    g3.player.x = MAP_W - 2;
-    g3.player.y = MAP_H / 2;
-    game_move_player(&g3, 1, 0);
-    ASSERT("player cannot move into right border", g3.player.x == MAP_W - 2);
+        g.equipped_armor, g.player.defense);
+    g.player.x = MAP_W - 2;
+    g.player.y = MAP_H / 2;
+    game_move_player(&g, 1, 0);
+    ASSERT("player cannot move into right border", g.player.x == MAP_W - 2);
 
     // Wall collision - top border
-    GameState g4;
-    game_init(&g4);
-    g4.player.x = MAP_W / 2;
-    g4.player.y = 1;
-    game_move_player(&g4, 0, -1);
-    ASSERT("player cannot move into top border", g4.player.y == 1);
+    game_init(&g);
+    g.player.x = MAP_W / 2;
+    g.player.y = 1;
+    game_move_player(&g, 0, -1);
+    ASSERT("player cannot move into top border", g.player.y == 1);
 
     // Wall collision - bottom border
-    GameState g5;
-    game_init(&g5);
-    g5.player.x = MAP_W / 2;
-    g5.player.y = MAP_H - 2;
-    game_move_player(&g5, 0, 1);
-    ASSERT("player cannot move into bottom border", g5.player.y == MAP_H - 2);
+    game_init(&g);
+    g.player.x = MAP_W / 2;
+    g.player.y = MAP_H - 2;
+    game_move_player(&g, 0, 1);
+    ASSERT("player cannot move into bottom border", g.player.y == MAP_H - 2);
 }

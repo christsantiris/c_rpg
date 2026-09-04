@@ -14,7 +14,10 @@
 #define TOWN_W 40 // town dimensions
 #define TOWN_H 25 // town dimensions
 
-#define MAX_DEPTH 5
+#define DUNGEON_DEPTH 8
+#define FOREST_DEPTH 8
+#define MOUNTAIN_DEPTH 8
+#define MAX_REGION_DEPTH 8
 
 typedef enum {
     TILE_FLOOR = 0,

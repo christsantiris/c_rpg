@@ -70,9 +70,9 @@ typedef struct {
     int        level;
     Enemy      enemies[MAX_ENEMIES];
     int        enemy_count;
-    LevelCache level_cache[MAX_DEPTH];
-    LevelCache forest_cache[MAX_DEPTH];
-    LevelCache mountain_cache[MAX_DEPTH];
+    LevelCache level_cache[MAX_REGION_DEPTH];
+    LevelCache forest_cache[MAX_REGION_DEPTH];
+    LevelCache mountain_cache[MAX_REGION_DEPTH];
     char       messages[MAX_MESSAGES][MAX_MESSAGE_LEN];
     int        message_count;
     int        level_cleared;

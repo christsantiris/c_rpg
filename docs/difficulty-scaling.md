@@ -6,17 +6,17 @@ dungeon depth.
 
 ## Dungeon Structure
 
-The dungeon contains five floors (`MAX_DEPTH`). New floors generate a map and
+The dungeon contains eight floors (`DUNGEON_DEPTH`). New floors generate a map and
 enemy roster. Previously visited floors are cached, preserving their map,
 enemies, and cleared state.
 
-The player must defeat every active enemy before using an exit. Floors 1-4 use
+The player must defeat every active enemy before using an exit. Floors 1-7 use
 down stairs. Descending awards `new floor * 100` score.
 
-Floor 5 is the Lich King's finale. Clearing it changes the down stairs into a
+Floor 8 is the Lich King's finale. Clearing it changes the down stairs into a
 glowing return passage. Using that passage returns the player directly to the
 north road in town, preserves dungeon progress, awards completion score, and
-never creates a sixth dungeon floor.
+never creates a ninth dungeon floor.
 
 The Lich King begins inside a sealed, single-entrance chamber behind a locked
 door. No regular enemy can spawn in that room, and the Lich remains completely
@@ -45,7 +45,10 @@ enemy count = min(10 + dungeon floor, MAX_ENEMIES)
 | 2 | 12 | 0 | 12 |
 | 3 | 13 | 0 | 13 |
 | 4 | 14 | 0 | 14 |
-| 5 | 14 | 1 | 15 |
+| 5 | 15 | 0 | 15 |
+| 6 | 15 | 0 | 15 |
+| 7 | 15 | 0 | 15 |
+| 8 | 14 | 1 | 15 |
 
 ## Undead Composition
 
@@ -57,7 +60,8 @@ Goblins and the Goblin King are reserved for a future mountain region.
 | 2 | 50% Skeleton, 30% Zombie, 20% Crypt Bat |
 | 3 | 30% Skeleton, 35% Zombie, 20% Crypt Bat, 15% Wraith |
 | 4 | 20% Skeleton, 35% Zombie, 15% Crypt Bat, 20% Wraith, 10% Crypt Conjurer |
-| 5 | 15% Skeleton, 30% Zombie, 15% Crypt Bat, 20% Wraith, 20% Crypt Conjurer, plus the Lich King |
+| 5–7 | 15% Skeleton, 30% Zombie, 15% Crypt Bat, 20% Wraith, 20% Crypt Conjurer |
+| 8 | 15% Skeleton, 30% Zombie, 15% Crypt Bat, 20% Wraith, 20% Crypt Conjurer, plus the Lich King |
 
 | Enemy | HP | Attack | Defense | XP |
 | --- | ---: | ---: | ---: | ---: |
@@ -86,7 +90,7 @@ is `attack - defense`, with a minimum of 1.
 
 | Floor | Boss | HP | Attack | Defense | XP |
 | --- | --- | ---: | ---: | ---: | ---: |
-| 5 | Lich King | 140 | 18 | 6 | 400 |
+| 8 | Lich King | 140 | 18 | 6 | 400 |
 
 The Lich King is spawned before regular enemies, reserving its place under the
 enemy cap. Once engaged, it holds position in the chamber and launches a
@@ -99,7 +103,7 @@ It guarantees either a level-appropriate weapon or Chain Mail.
 trap count = 2 + dungeon floor
 ```
 
-This gives three traps on floor 1 and seven on floor 5. Placement can yield
+This gives three traps on floor 1 and ten on floor 8. Placement can yield
 fewer traps when a selected tile is unsuitable.
 
 Layouts use 6-10 rooms with fixed room-size ranges. Floor number affects traps
@@ -123,13 +127,13 @@ Non-boss enemies have a 20% gold-drop chance and a separate 5% item-drop
 chance:
 
 - Floors 1-3 emphasize potions and basic scrolls.
-- Floors 4-5 introduce weapons, Leather Armor, healing, and rare Fireballs.
-- The weapon pool expands to Short Swords, Long Swords, and Bows on floors 4-5.
+- Floors 4-8 introduce weapons, Leather Armor, healing, and rare Fireballs.
+- The weapon pool expands to Short Swords, Long Swords, and Bows on floors 4-8.
 
 ## Current Curve Summary
 
-Difficulty rises over five floors through increasing enemy count, new tactical
+Difficulty rises over eight floors through increasing enemy count, new tactical
 roles, and additional traps. Bats add speed, Wraiths undermine heavy armor and
 mana reserves, and Crypt Conjurers create ranged pressure and target priority. Floor
-5 combines the complete roster with the Lich King before returning the player
+8 combines the complete roster with the Lich King before returning the player
 to town.
