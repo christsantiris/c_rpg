@@ -96,7 +96,6 @@ static int enemy_score(EnemyType type) {
 }
 
 static void drop_loot(GameState *g, int x, int y, EnemyType type, int is_boss) {
-    // Gold dropstatic void drop_loot(GameState *g, int x, int y, EnemyType type) {
     int gold = 0;
     switch (type) {
         case ENEMY_SKELETON: gold = 2 + rand() % 4;  break;
@@ -138,8 +137,9 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type, int is_boss) {
         case ENEMY_TARRASQUE:  break;
     }
     
-    // 50% chance to drop gold
-    if (is_boss || rand() % 100 < 20) {
+    // Frequent coin drops make returning to town and shopping part of the
+    // normal adventure loop instead of a rare windfall.
+    if (is_boss || rand() % 100 < 25) {
         g->gold += gold;
         g->score += gold;
         char msg[MAX_MESSAGE_LEN];
@@ -837,6 +837,24 @@ void action_resolve_player(GameState *g, Action a) {
         int px = g->player.x;
         int py = g->player.y;
         TileType tile = g->map.tiles[py][px];
+
+        if (g->location == LOCATION_FOREST &&
+            tile == TILE_FOREST_LANDMARK) {
+            g->map.tiles[py][px] = TILE_FOREST_FLOOR;
+            if (g->map.stairs_down_x == 1) {
+                g->map.tiles[g->map.stairs_down_y][0] = TILE_FOREST_EXIT;
+            } else if (g->map.stairs_down_x == MAP_W - 2) {
+                g->map.tiles[g->map.stairs_down_y][MAP_W - 1] =
+                    TILE_FOREST_EXIT;
+            } else if (g->map.stairs_down_y == 1) {
+                g->map.tiles[0][g->map.stairs_down_x] = TILE_FOREST_EXIT;
+            } else {
+                g->map.tiles[MAP_H - 1][g->map.stairs_down_x] =
+                    TILE_FOREST_EXIT;
+            }
+            push_message(g, "The ancient landmark reveals the onward trail!");
+            tile = TILE_FOREST_FLOOR;
+        }
 
         if (tile == TILE_TRAP_HIDDEN) {
             int roll = rand() % 3;

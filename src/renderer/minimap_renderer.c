@@ -50,6 +50,8 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_MOUNTAIN_EXIT || tile == TILE_COAST_ENTRANCE ||
                         tile == TILE_COAST_EXIT) {
                         has_stair = 1;
+                    } else if (tile == TILE_FOREST_LANDMARK) {
+                        has_stair = 1;
                     } else if (tile != TILE_WALL &&
                         tile != TILE_FOREST_WALL &&
                         tile != TILE_MOUNTAIN_WALL &&

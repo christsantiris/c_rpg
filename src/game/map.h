@@ -52,7 +52,8 @@ typedef enum {
     TILE_COAST_FLOOR,
     TILE_COAST_WALL,
     TILE_COAST_ENTRANCE,
-    TILE_COAST_EXIT
+    TILE_COAST_EXIT,
+    TILE_FOREST_LANDMARK
 } TileType;
 
 typedef struct {

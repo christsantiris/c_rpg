@@ -170,7 +170,7 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 14);
+    cJSON_AddNumberToObject(root, "save_version", 15);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -874,6 +874,27 @@ int load_game(GameState *g, int slot) {
             if (g->portal_active) {
                 g->map.tiles[2][20] = TILE_PORTAL;
             }
+        }
+    }
+
+    // Version 15 replaces rectangular forest rooms with organic trails and
+    // landmark-revealed exits. Old cached forests cannot support that flow.
+    if (save_version < 15) {
+        g->max_forest_level_reached = 1;
+        for (int i = 0; i < MAX_REGION_DEPTH; i++) {
+            g->forest_cache[i].valid = 0;
+        }
+        if (g->portal_location == LOCATION_FOREST) {
+            g->portal_active = 0;
+        }
+        if (g->location == LOCATION_FOREST) {
+            g->level = 1;
+            g->level_cleared = 0;
+            g->floor_item_count = 0;
+            map_generate_forest(&g->map, g->level);
+            enemies_spawn(g);
+            g->player.x = g->map.stairs_up_x;
+            g->player.y = g->map.stairs_up_y;
         }
     }
 

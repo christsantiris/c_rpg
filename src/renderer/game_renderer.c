@@ -169,6 +169,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_forest_edge(r, sx, sy, 0); break;
                 case TILE_FOREST_EXIT:
                     draw_forest_edge(r, sx, sy, 1); break;
+                case TILE_FOREST_LANDMARK:
+                    draw_forest_landmark(r, sx, sy); break;
                 case TILE_MOUNTAIN_FLOOR: draw_mountain_floor(r, sx, sy); break;
                 case TILE_MOUNTAIN_WALL: draw_mountain_wall(r, sx, sy); break;
                 case TILE_MOUNTAIN_ENTRANCE:
