@@ -83,6 +83,7 @@ void test_town_tiles(void) {
     ASSERT("TILE_TOWN_EXIT is distinct",     TILE_TOWN_EXIT     != TILE_TOWN_PATH);
     ASSERT("TILE_SHOP_BLACKSMITH distinct",  TILE_SHOP_BLACKSMITH != TILE_TOWN_EXIT);
     ASSERT("TILE_SHOP_ALCHEMIST distinct",   TILE_SHOP_ALCHEMIST  != TILE_SHOP_BLACKSMITH);
+    ASSERT("TILE_TAVERN is distinct", TILE_TAVERN != TILE_SHOP_ALCHEMIST);
 
     // Constants are defined
     ASSERT("TOWN_W is 40", TOWN_W == 40);
@@ -99,6 +100,8 @@ void test_town_map(void) {
     // Spawn is walkable
     ASSERT("spawn tile is walkable",
         map_is_walkable(&m, spawn_x, spawn_y));
+    ASSERT("town spawn is at the central crossroads",
+        spawn_x == 20 && spawn_y == 12);
 
     // Exit tiles at north edge
     ASSERT("exit tile at north center",
@@ -113,6 +116,10 @@ void test_town_map(void) {
         m.tiles[7][7] == TILE_SHOP_BLACKSMITH);
     ASSERT("alchemist at (28,7)",
         m.tiles[7][28] == TILE_SHOP_ALCHEMIST);
+    ASSERT("tavern occupies southwest town lot",
+        m.tiles[16][5] == TILE_TAVERN && m.tiles[20][11] == TILE_TAVERN);
+    ASSERT("tavern is not walkable before interiors are implemented",
+        !map_is_walkable(&m, 5, 16));
 
     // Path tiles exist
     ASSERT("vertical path at center",

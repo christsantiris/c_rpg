@@ -648,13 +648,58 @@ void draw_town_path(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x+TILE_SIZE/2, y,            1,             TILE_SIZE,     mortar);
 }
 
-void draw_town_exit(Renderer *r, int tile_x, int tile_y) {
+void draw_town_exit(Renderer *r, int tile_x, int tile_y, TownExitStyle style, int segment) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color base = { 26, 48, 32, 255};
-    SDL_Color glow = { 48, 160, 96, 255};
-    fill_rect(r, x,   y,   TILE_SIZE,   TILE_SIZE,   base);
-    fill_rect(r, x+2, y+2, TILE_SIZE-4, TILE_SIZE-4, glow);
+    if (style == TOWN_EXIT_FOREST) {
+        draw_forest_floor(r, tile_x, tile_y);
+        SDL_Color trunk = {72, 48, 25, 255};
+        SDL_Color leaf = {28, 78, 38, 255};
+        SDL_Color dark = {7, 24, 15, 255};
+        fill_rect(r, x + 7, y, 17, TILE_SIZE, dark);
+        fill_rect(r, x, y, 5, TILE_SIZE, trunk);
+        fill_rect(r, x + 3, y, 5, TILE_SIZE, leaf);
+        if (segment == 0 || segment == 4) {
+            fill_rect(r, x, y, TILE_SIZE, 6, leaf);
+            fill_rect(r, x, y + 18, TILE_SIZE, 6, leaf);
+        } else {
+            fill_rect(r, x + 18, y + 5, 3, 5, (SDL_Color){58, 132, 62, 255});
+        }
+        return;
+    }
+    if (style == TOWN_EXIT_MOUNTAINS) {
+        draw_mountain_floor(r, tile_x, tile_y);
+        SDL_Color basalt = {43, 32, 38, 255};
+        SDL_Color ridge = {82, 39, 39, 255};
+        SDL_Color ember = {218, 61, 26, 255};
+        fill_rect(r, x, y, 7, TILE_SIZE, basalt);
+        fill_rect(r, x + 7, y + 4, 17, 20, (SDL_Color){18, 13, 17, 255});
+        fill_rect(r, x + 5, y, 3, TILE_SIZE, ridge);
+        if (segment == 0 || segment == 4) {
+            fill_rect(r, x, y, TILE_SIZE, 6, basalt);
+            fill_rect(r, x, y + 18, TILE_SIZE, 6, basalt);
+        } else {
+            fill_rect(r, x + 10, y + 18, 7, 2, ember);
+        }
+        return;
+    }
+
+    SDL_Color stone = {69, 66, 91, 255};
+    SDL_Color highlight = {99, 94, 125, 255};
+    SDL_Color shadow = {18, 17, 32, 255};
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, shadow);
+    fill_rect(r, x, y, TILE_SIZE, 5, stone);
+    fill_rect(r, x, y, 3, TILE_SIZE, stone);
+    fill_rect(r, x + 21, y, 3, TILE_SIZE, stone);
+    if (segment == 0 || segment == 4) {
+        fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, stone);
+        fill_rect(r, x + 4, y + 3, 16, 4, highlight);
+    } else {
+        fill_rect(r, x + 2, y + 3, 20, 3, highlight);
+        if (segment == 2) {
+            fill_rect(r, x + 9, y + 5, 7, 5, (SDL_Color){188, 151, 54, 255});
+        }
+    }
 }
 
 void draw_shop_blacksmith(Renderer *r, int tile_x, int tile_y) {
@@ -785,6 +830,75 @@ void draw_shop_alchemist(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x+93, y+80, 3, 5, green);
     fill_rect(r, x+101,y+79, 5, 6, glass);
     fill_rect(r, x+102,y+82, 3, 3, violet);
+}
+
+void draw_tavern(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color outline = {24, 16, 14, 255};
+    SDL_Color plaster = {128, 91, 58, 255};
+    SDL_Color plaster_hi = {158, 112, 67, 255};
+    SDL_Color timber = {66, 38, 24, 255};
+    SDL_Color timber_hi = {103, 58, 30, 255};
+    SDL_Color roof = {52, 33, 35, 255};
+    SDL_Color roof_hi = {82, 48, 43, 255};
+    SDL_Color window = {255, 177, 54, 255};
+    SDL_Color glow = {255, 220, 105, 255};
+    SDL_Color stone = {76, 70, 67, 255};
+
+    // Stone foundation and broad half-timbered facade.
+    fill_rect(r, x + 4, y + 101, 160, 15, outline);
+    fill_rect(r, x + 7, y + 104, 154, 10, stone);
+    fill_rect(r, x + 9, y + 55, 150, 51, outline);
+    fill_rect(r, x + 13, y + 59, 142, 43, plaster);
+    fill_rect(r, x + 13, y + 59, 142, 5, plaster_hi);
+    fill_rect(r, x + 13, y + 78, 142, 5, timber);
+    for (int beam_x = 16; beam_x < 154; beam_x += 28) {
+        fill_rect(r, x + beam_x, y + 59, 5, 45, timber);
+    }
+
+    // Deep shingled roof and off-center chimney.
+    fill_rect(r, x + 2, y + 29, 164, 34, outline);
+    fill_rect(r, x + 7, y + 25, 154, 34, roof);
+    fill_rect(r, x + 14, y + 20, 140, 8, roof_hi);
+    for (int row = 0; row < 3; row++) {
+        int roof_y = y + 31 + row * 9;
+        int offset = row % 2 == 0 ? 0 : 10;
+        fill_rect(r, x + 9, roof_y + 6, 150, 2, outline);
+        for (int shingle_x = 14 + offset; shingle_x < 156;
+            shingle_x += 20) {
+            fill_rect(r, x + shingle_x, roof_y, 2, 7, outline);
+        }
+    }
+    fill_rect(r, x + 29, y + 5, 22, 31, outline);
+    fill_rect(r, x + 33, y + 8, 14, 27, (SDL_Color){91, 55, 43, 255});
+    fill_rect(r, x + 30, y + 4, 20, 6, stone);
+
+    // Warm leaded windows.
+    for (int window_x = 28; window_x <= 124; window_x += 96) {
+        fill_rect(r, x + window_x - 4, y + 68, 30, 25, outline);
+        fill_rect(r, x + window_x, y + 72, 22, 17, window);
+        fill_rect(r, x + window_x + 10, y + 72, 3, 17, timber);
+        fill_rect(r, x + window_x, y + 79, 22, 3, timber);
+        fill_rect(r, x + window_x + 3, y + 74, 5, 4, glow);
+    }
+
+    // Central oak door with an iron handle and lit transom.
+    fill_rect(r, x + 68, y + 65, 34, 49, outline);
+    fill_rect(r, x + 73, y + 70, 24, 44, timber);
+    fill_rect(r, x + 77, y + 74, 16, 8, window);
+    fill_rect(r, x + 77, y + 85, 16, 3, timber_hi);
+    fill_rect(r, x + 77, y + 96, 16, 3, timber_hi);
+    fill_rect(r, x + 91, y + 91, 3, 3, glow);
+
+    // Hanging tavern sign with a simple golden mug emblem.
+    fill_rect(r, x + 135, y + 45, 4, 24, timber);
+    fill_rect(r, x + 126, y + 46, 13, 4, timber);
+    fill_rect(r, x + 114, y + 49, 24, 20, outline);
+    fill_rect(r, x + 117, y + 52, 18, 14, timber_hi);
+    fill_rect(r, x + 121, y + 55, 8, 8, glow);
+    fill_rect(r, x + 129, y + 56, 4, 6, glow);
+    fill_rect(r, x + 123, y + 53, 4, 3, window);
 }
 
 void draw_floor_item(Renderer *r, int tile_x, int tile_y) {
