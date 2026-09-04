@@ -9,14 +9,15 @@ war host, its siege craft, guarded mines and enslaved cave creatures.
 
 | Level | Region | Layout identity | Enemy roster |
 | --- | --- | --- | --- |
-| 1 | Blackrock Foothills | Open switchbacks and scout camps | Goblin Scouts |
-| 2 | Raider Pass | Overlapping firing lanes | Scouts and Goblin Archers |
-| 3 | Cinder Mines | Braided mine routes and ambush chambers | Scouts, Archers, Bombers and Tunnel Spiders |
-| 4 | Iron Ascent | Fortified hubs and guarded choke points | Archers, Bombers, Spiders, Cave Trolls and Hobgoblin Guards |
-| 5 | Crown Peak | Twin approaches into the summit fortress | Full roster, Goblin Shamans and the Goblin King |
+| 1 | Blackrock Foothills | Open switchbacks and scout camps climbing to a north exit | Goblin Scouts |
+| 2 | Raider Pass | Overlapping firing lanes leading east | Scouts and Goblin Archers |
+| 3 | Cinder Mines | Braided mine routes descending to a south exit | Scouts, Archers, Bombers and Tunnel Spiders |
+| 4 | Iron Ascent | Fortified hubs and guarded choke points climbing north | Archers, Bombers, Spiders, Cave Trolls and Hobgoblin Guards |
+| 5 | Crown Peak | Twin approaches into a summit fortress with a southern escape pass | Full roster, Goblin Shamans and the Goblin King |
 
-Levels 1-4 do not require a full clear. Reaching the eastern mountain gate is
-enough to advance. On level 5, only the Goblin King must be defeated.
+Levels 1-4 do not require a full clear. Reaching the marked boundary pass is
+enough to advance, whether it lies east, north or south. On level 5, only the
+Goblin King must be defeated.
 
 ## Combat Roles
 

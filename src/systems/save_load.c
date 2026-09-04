@@ -169,7 +169,7 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 9);
+    cJSON_AddNumberToObject(root, "save_version", 10);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -689,6 +689,35 @@ int load_game(GameState *g, int slot) {
             g->mountain_cache[i].valid = 0;
         if (g->portal_location == LOCATION_MOUNTAINS)
             g->portal_active = 0;
+    }
+
+    // Version 10 gives outdoor stages north and south exits. Cached maps from
+    // earlier versions must be regenerated because they contain east exits.
+    if (save_version < 10) {
+        g->max_forest_level_reached = 1;
+        g->max_mountain_level_reached = 1;
+        for (int i = 0; i < MAX_DEPTH; i++) {
+            g->forest_cache[i].valid = 0;
+            g->mountain_cache[i].valid = 0;
+        }
+        if (g->portal_location == LOCATION_FOREST ||
+            g->portal_location == LOCATION_MOUNTAINS) {
+            g->portal_active = 0;
+        }
+        if (g->location == LOCATION_FOREST ||
+            g->location == LOCATION_MOUNTAINS) {
+            g->level = 1;
+            g->level_cleared = 0;
+            g->floor_item_count = 0;
+            if (g->location == LOCATION_FOREST) {
+                map_generate_forest(&g->map, g->level);
+            } else {
+                map_generate_mountains(&g->map, g->level);
+            }
+            enemies_spawn(g);
+            g->player.x = g->map.stairs_up_x;
+            g->player.y = g->map.stairs_up_y;
+        }
     }
 
     // Floor five used to contain the Goblin King. Regenerate that legacy

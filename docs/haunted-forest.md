@@ -7,18 +7,18 @@ the dungeon, so changing regions never erases progress in the other adventure.
 Unlike the dungeon, the forest has no stairs. The player enters through the
 opening on the left edge, then the entrance clearing splits into upper and
 lower woodland routes. Cross-connections allow route changes before both paths
-rejoin near the eastern grove. Walking straight through the opening on the
-right edge advances to the next stage; levels 1-4 do not require every enemy to
-be defeated. The west opening supports backtracking and returns to town from
-level 1.
+rejoin near the destination grove. Stage exits move between the east, north and
+south map edges so that every route is not a west-to-east crossing. Levels 1-4
+do not require every enemy to be defeated. The west opening supports
+backtracking and returns to town from level 1.
 
 | Level | Region | Layout | Roster |
 | --- | --- | --- | --- |
-| 1 | Gloomwood Border | Two-route fork with a middle crossover | Pixies and Blighted Wolves |
-| 2 | Spiderweb Thicket | Three pockets wrapped around a central trail | Pixies, Wolves and Giant Spiders |
-| 3 | Dark Elf Territory | Three braided lanes with diagonal shortcuts | Pixies, Wolves, Spiders and Dark Elves |
-| 4 | Buried Wilds | Central hub splitting into three dangerous branches | Spiders, Dark Elves, Giant Wurms and Forest Trolls |
-| 5 | Necromancer's Grove | Twin approaches narrowing into an antechamber and boss grove | Complete roster plus the Necromancer |
+| 1 | Gloomwood Border | Two-route fork with a middle crossover; east exit | Pixies and Blighted Wolves |
+| 2 | Spiderweb Thicket | Three pockets wrapped around a central trail; north exit | Pixies, Wolves and Giant Spiders |
+| 3 | Dark Elf Territory | Three braided lanes with diagonal shortcuts; south exit | Pixies, Wolves, Spiders and Dark Elves |
+| 4 | Buried Wilds | Central hub splitting into three dangerous branches; north exit | Spiders, Dark Elves, Giant Wurms and Forest Trolls |
+| 5 | Necromancer's Grove | Twin approaches narrowing into an antechamber and eastern boss grove | Complete roster plus the Necromancer |
 
 Clearing dimensions and positions receive additional random variation every
 time a new stage is generated, while each level retains its recognizable macro
