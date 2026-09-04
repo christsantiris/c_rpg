@@ -56,6 +56,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile != TILE_FOREST_WALL &&
                         tile != TILE_MOUNTAIN_WALL &&
                         tile != TILE_COAST_WALL &&
+                        tile != TILE_COAST_DEEP_WATER &&
                         tile != TILE_LOCKED_DOOR) {
                         has_floor = 1;
                     }

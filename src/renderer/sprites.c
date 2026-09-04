@@ -157,6 +157,34 @@ void draw_coast_edge(Renderer *r, int tile_x, int tile_y, int forward) {
         (SDL_Color){62, 220, 216, 255} : (SDL_Color){47, 130, 145, 255});
 }
 
+void draw_coast_shallow_water(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){18, 73, 88, 255});
+    fill_rect(r, x + 1, y + 5, 10, 2, (SDL_Color){51, 145, 151, 255});
+    fill_rect(r, x + 12, y + 14, 11, 2, (SDL_Color){70, 174, 166, 255});
+    fill_rect(r, x + 5, y + 21, 8, 1, (SDL_Color){122, 181, 156, 255});
+}
+
+void draw_coast_deep_water(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){3, 18, 42, 255});
+    fill_rect(r, x, y + 4, 13, 2, (SDL_Color){14, 58, 91, 255});
+    fill_rect(r, x + 9, y + 13, 15, 2, (SDL_Color){20, 75, 105, 255});
+    fill_rect(r, x + 2, y + 21, 9, 1, (SDL_Color){29, 95, 116, 255});
+}
+
+void draw_coast_tide_control(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_coast_floor(r, tile_x, tile_y);
+    fill_rect(r, x + 5, y + 15, 14, 7, (SDL_Color){43, 91, 89, 255});
+    fill_rect(r, x + 8, y + 7, 8, 10, (SDL_Color){91, 151, 132, 255});
+    fill_rect(r, x + 10, y + 3, 4, 8, (SDL_Color){196, 158, 69, 255});
+    fill_rect(r, x + 12, y + 2, 7, 3, (SDL_Color){90, 231, 207, 255});
+}
+
 void draw_player(Renderer *r, int tile_x, int tile_y, PlayerClass player_class) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;

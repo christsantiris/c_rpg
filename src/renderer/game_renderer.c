@@ -189,6 +189,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_coast_edge(r, sx, sy, 0); break;
                 case TILE_COAST_EXIT:
                     draw_coast_edge(r, sx, sy, 1); break;
+                case TILE_COAST_SHALLOW_WATER:
+                    draw_coast_shallow_water(r, sx, sy); break;
+                case TILE_COAST_DEEP_WATER:
+                    draw_coast_deep_water(r, sx, sy); break;
+                case TILE_COAST_TIDE_CONTROL:
+                    draw_coast_tide_control(r, sx, sy); break;
                 case TILE_STAIRS_UP: draw_stairs_up(r, sx, sy); break;
                 case TILE_STAIRS_DOWN: draw_stairs_down(r, sx, sy); break;
                 case TILE_RETURN_EXIT: draw_return_exit(r, sx, sy); break;
