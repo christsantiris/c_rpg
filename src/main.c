@@ -618,6 +618,19 @@ int main(int argc, char **argv) {
                             }
                             default: break;
                         }
+                        if (event.key.repeat && a.type == ACTION_MOVE &&
+                            a.target_x >= 0 && a.target_x < MAP_W &&
+                            a.target_y >= 0 && a.target_y < MAP_H) {
+                            TileType target = game.map.tiles[a.target_y][a.target_x];
+                            if (target == TILE_TOWN_EXIT ||
+                                target == TILE_FOREST_ENTRANCE ||
+                                target == TILE_FOREST_EXIT ||
+                                target == TILE_MOUNTAIN_ENTRANCE ||
+                                target == TILE_MOUNTAIN_EXIT ||
+                                target == TILE_RETURN_EXIT) {
+                                a.type = ACTION_NONE;
+                            }
+                        }
                         if (a.type != ACTION_NONE) {
                             action_resolve_player(&game, a);
                             action_resolve_enemies(&game);

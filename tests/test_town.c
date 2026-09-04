@@ -30,6 +30,28 @@ static int forest_path_exists_around(const Map *m, int blocked_room) {
     return 0;
 }
 
+static Action outdoor_exit_action(const Map *m) {
+    Action action = {ACTION_MOVE, m->stairs_down_x, m->stairs_down_y};
+    if (m->stairs_down_x == MAP_W - 2) {
+        action.target_x++;
+    } else if (m->stairs_down_y == 1) {
+        action.target_y--;
+    } else {
+        action.target_y++;
+    }
+    return action;
+}
+
+static int outdoor_exit_is_on_side(const Map *m, TileType exit_tile, int side) {
+    if (side == 0) {
+        return m->tiles[m->stairs_down_y][MAP_W - 1] == exit_tile;
+    }
+    if (side == 1) {
+        return m->tiles[0][m->stairs_down_x] == exit_tile;
+    }
+    return m->tiles[MAP_H - 1][m->stairs_down_x] == exit_tile;
+}
+
 void test_town_tiles(void) {
     printf("Town tile tests:\n");
 
@@ -162,10 +184,14 @@ void test_forest(void) {
     }
 
     static const int expected_rooms[MAX_DEPTH] = {7, 8, 9, 8, 9};
+    static const int expected_exits[MAX_DEPTH] = {0, 1, 2, 1, 0};
     for (int level = 1; level <= MAX_DEPTH; level++) {
         map_generate_forest(&g.map, level);
         ASSERT("forest level uses its distinct topology size",
             g.map.room_count == expected_rooms[level - 1]);
+        ASSERT("forest levels vary their exit edge",
+            outdoor_exit_is_on_side(&g.map, TILE_FOREST_EXIT,
+                expected_exits[level - 1]));
     }
     map_generate_forest(&g.map, 2);
     int l2y3, l2y4, l2y5, unused;
@@ -240,6 +266,7 @@ void test_town_spawn(void) {
 
 void test_mountains(void) {
     printf("Goblin Mountains tests:\n");
+    static const int expected_exits[MAX_DEPTH] = {1, 0, 2, 1, 2};
     GameState g;
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
@@ -255,6 +282,9 @@ void test_mountains(void) {
     for (int level = 1; level <= MAX_DEPTH; level++) {
         g.level = level;
         map_generate_mountains(&g.map, level);
+        ASSERT("mountain levels vary their exit edge",
+            outdoor_exit_is_on_side(&g.map, TILE_MOUNTAIN_EXIT,
+                expected_exits[level - 1]));
         enemies_spawn(&g);
         int bosses = 0, invalid = 0;
         for (int i = 0; i < g.enemy_count; i++) {
@@ -275,10 +305,10 @@ void test_mountains(void) {
     g.level = 1;
     map_generate_mountains(&g.map, 1);
     enemies_spawn(&g);
-    g.player.x = MAP_W - 2;
+    g.player.x = g.map.stairs_down_x;
     g.player.y = g.map.stairs_down_y;
-    Action east = {ACTION_MOVE, MAP_W - 1, g.player.y};
-    action_resolve_player(&g, east);
+    Action exit = outdoor_exit_action(&g.map);
+    action_resolve_player(&g, exit);
     ASSERT("mountain stage advances without full clear", g.level == 2);
     ASSERT("mountain progress uses independent cache",
         g.mountain_cache[0].valid && !g.level_cache[0].valid &&
@@ -287,16 +317,16 @@ void test_mountains(void) {
     g.level = MAX_DEPTH;
     map_generate_mountains(&g.map, g.level);
     enemies_spawn(&g);
-    g.player.x = MAP_W - 2;
+    g.player.x = g.map.stairs_down_x;
     g.player.y = g.map.stairs_down_y;
-    east = (Action){ACTION_MOVE, MAP_W - 1, g.player.y};
-    action_resolve_player(&g, east);
+    exit = outdoor_exit_action(&g.map);
+    action_resolve_player(&g, exit);
     ASSERT("Goblin King blocks final mountain exit",
         g.location == LOCATION_MOUNTAINS);
     for (int i = 0; i < g.enemy_count; i++)
         if (g.enemies[i].type == ENEMY_MOUNTAIN_GOBLIN_KING)
             g.enemies[i].active = 0;
-    action_resolve_player(&g, east);
+    action_resolve_player(&g, exit);
     ASSERT("defeating Goblin King returns to town",
         g.location == LOCATION_TOWN);
     ASSERT("mountain completion returns at east town road",
