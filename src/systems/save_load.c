@@ -170,7 +170,7 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 16);
+    cJSON_AddNumberToObject(root, "save_version", 17);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -913,6 +913,27 @@ int load_game(GameState *g, int slot) {
             g->level_cleared = 0;
             g->floor_item_count = 0;
             map_generate_mountains(&g->map, g->level);
+            enemies_spawn(g);
+            g->player.x = g->map.stairs_up_x;
+            g->player.y = g->map.stairs_up_y;
+        }
+    }
+
+    // Version 17 adds persistent coast tides and control mechanisms. Cached
+    // coast maps from earlier versions lack the water-state progression.
+    if (save_version < 17) {
+        g->max_coast_level_reached = 1;
+        for (int i = 0; i < MAX_REGION_DEPTH; i++) {
+            g->coast_cache[i].valid = 0;
+        }
+        if (g->portal_location == LOCATION_COAST) {
+            g->portal_active = 0;
+        }
+        if (g->location == LOCATION_COAST) {
+            g->level = 1;
+            g->level_cleared = 0;
+            g->floor_item_count = 0;
+            map_generate_coast(&g->map, g->level);
             enemies_spawn(g);
             g->player.x = g->map.stairs_up_x;
             g->player.y = g->map.stairs_up_y;

@@ -184,6 +184,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_FOREST_WALL &&
         m->tiles[y][x] != TILE_MOUNTAIN_WALL &&
         m->tiles[y][x] != TILE_COAST_WALL &&
+        m->tiles[y][x] != TILE_COAST_DEEP_WATER &&
         m->tiles[y][x] != TILE_TAVERN &&
         m->tiles[y][x] != TILE_LOCKED_DOOR;
 }
@@ -536,6 +537,33 @@ void map_generate_coast(Map *m, int level) {
             }
         }
     }
+    int control_room = m->room_count / 2;
+    for (int room_index = 1; room_index < m->room_count - 1; room_index += 2) {
+        if (room_index == control_room) {
+            continue;
+        }
+        int center_x;
+        int center_y;
+        map_room_center(&m->rooms[room_index], &center_x, &center_y);
+        for (int y = center_y - 3; y <= center_y + 3; y++) {
+            for (int x = center_x - 4; x <= center_x + 4; x++) {
+                if (m->tiles[y][x] != TILE_COAST_FLOOR) {
+                    continue;
+                }
+                if (x >= center_x - 1 && x <= center_x + 1 &&
+                    y >= center_y - 1 && y <= center_y + 1) {
+                    m->tiles[y][x] = TILE_COAST_DEEP_WATER;
+                } else {
+                    m->tiles[y][x] = TILE_COAST_SHALLOW_WATER;
+                }
+            }
+        }
+    }
+    int control_x;
+    int control_y;
+    map_room_center(&m->rooms[control_room], &control_x, &control_y);
+    m->tiles[control_y][control_x] = TILE_COAST_TIDE_CONTROL;
+    m->tiles[m->stairs_down_y][m->stairs_down_x] = TILE_COAST_DEEP_WATER;
 }
 
 void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {

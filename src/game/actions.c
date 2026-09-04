@@ -731,6 +731,10 @@ void action_resolve_player(GameState *g, Action a) {
 
         if (g->location == LOCATION_COAST &&
             g->map.tiles[ty][tx] == TILE_COAST_EXIT) {
+            if (g->player.x != g->map.stairs_down_x ||
+                g->player.y != g->map.stairs_down_y) {
+                return;
+            }
             if (g->level < COAST_DEPTH) {
                 game_descend(g);
                 g->score += g->level * 100;
@@ -854,6 +858,20 @@ void action_resolve_player(GameState *g, Action a) {
             }
             push_message(g, "The ancient landmark reveals the onward trail!");
             tile = TILE_FOREST_FLOOR;
+        }
+
+        if (g->location == LOCATION_COAST &&
+            tile == TILE_COAST_TIDE_CONTROL) {
+            for (int y = 0; y < MAP_H; y++) {
+                for (int x = 0; x < MAP_W; x++) {
+                    if (g->map.tiles[y][x] == TILE_COAST_DEEP_WATER) {
+                        g->map.tiles[y][x] = TILE_COAST_SHALLOW_WATER;
+                    }
+                }
+            }
+            g->map.tiles[py][px] = TILE_COAST_FLOOR;
+            push_message(g, "The tide recedes and reveals the drowned road!");
+            tile = TILE_COAST_FLOOR;
         }
 
         if (tile == TILE_TRAP_HIDDEN) {

@@ -265,7 +265,8 @@ static int enemy_tile_open(const GameState *g, int x, int y) {
         g->map.tiles[y][x] != TILE_MOUNTAIN_BRIDGE &&
         g->map.tiles[y][x] != TILE_MOUNTAIN_CAVE_FLOOR &&
         g->map.tiles[y][x] != TILE_MOUNTAIN_FORTRESS_FLOOR &&
-        g->map.tiles[y][x] != TILE_COAST_FLOOR)) {
+        g->map.tiles[y][x] != TILE_COAST_FLOOR &&
+        g->map.tiles[y][x] != TILE_COAST_SHALLOW_WATER)) {
         return 0;
     }
     for (int i = 0; i < g->enemy_count; i++) {
