@@ -177,6 +177,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_mountain_edge(r, sx, sy, 0); break;
                 case TILE_MOUNTAIN_EXIT:
                     draw_mountain_edge(r, sx, sy, 1); break;
+                case TILE_MOUNTAIN_BRIDGE:
+                    draw_mountain_bridge(r, sx, sy); break;
+                case TILE_MOUNTAIN_CAVE_FLOOR:
+                    draw_mountain_cave_floor(r, sx, sy); break;
+                case TILE_MOUNTAIN_FORTRESS_FLOOR:
+                    draw_mountain_fortress_floor(r, sx, sy); break;
                 case TILE_COAST_FLOOR: draw_coast_floor(r, sx, sy); break;
                 case TILE_COAST_WALL: draw_coast_wall(r, sx, sy); break;
                 case TILE_COAST_ENTRANCE:

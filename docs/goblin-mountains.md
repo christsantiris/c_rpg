@@ -2,7 +2,8 @@
 
 The Goblin Mountains are entered from the east town road and use an independent
 eight-level cache. Their black basalt, iron-red rock and ember-orange accents
-separate the region visually from the dungeon and Haunted Forest.
+separate the region visually from the dungeon and Haunted Forest. The Mountains
+use eight authored route graphs rather than the Forest's clearing templates.
 
 Wild Boars are deliberately excluded. The area is about an organized goblin
 war host, its siege craft, guarded mines and enslaved cave creatures.
@@ -34,6 +35,8 @@ Goblin King must be defeated.
 - **Goblin King:** remains at Crown Peak until confronted, then alternates a
   telegraphed wind-up with powerful thrown-axe attacks.
 
-The route geometry varies by level and on regeneration. Future refinement can
-push the ascent identity further with bespoke cliff ledges, mine supports,
-fortress gates and falling-rock hazards without changing progression rules.
+The route geometry and ground treatment vary by level. Foothill and ascent
+stages use exposed basalt switchbacks. Raider Pass and Crown Approach contain
+narrow timber bridge crossings. Cinder Mines and Collapsed Tunnels use dark
+underground chambers, while Iron Ascent, Siege Camp, and Crown Peak use paved
+fortress courtyards and linked defensive positions.

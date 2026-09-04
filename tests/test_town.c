@@ -318,6 +318,7 @@ void test_town_spawn(void) {
 
 void test_mountains(void) {
     printf("Goblin Mountains tests:\n");
+    static const int expected_rooms[MOUNTAIN_DEPTH] = {7, 8, 8, 9, 9, 10, 10, 10};
     static const int expected_entrances[MOUNTAIN_DEPTH] = {0, 2, 1, 2, 0, 1, 2, 0};
     static const int expected_exits[MOUNTAIN_DEPTH] = {1, 0, 2, 1, 2, 0, 1, 2};
     GameState g;
@@ -335,12 +336,36 @@ void test_mountains(void) {
     for (int level = 1; level <= MOUNTAIN_DEPTH; level++) {
         g.level = level;
         map_generate_mountains(&g.map, level);
+        ASSERT("mountain stage uses its authored template size",
+            g.map.room_count == expected_rooms[level - 1]);
         ASSERT("mountain levels vary their entrance edge",
             outdoor_entrance_is_on_side(&g.map, TILE_MOUNTAIN_ENTRANCE,
                 expected_entrances[level - 1]));
         ASSERT("mountain levels vary their exit edge",
             outdoor_exit_is_on_side(&g.map, TILE_MOUNTAIN_EXIT,
                 expected_exits[level - 1]));
+        int bridges = 0;
+        int caves = 0;
+        int fortress = 0;
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                bridges += g.map.tiles[y][x] == TILE_MOUNTAIN_BRIDGE;
+                caves += g.map.tiles[y][x] == TILE_MOUNTAIN_CAVE_FLOOR;
+                fortress +=
+                    g.map.tiles[y][x] == TILE_MOUNTAIN_FORTRESS_FLOOR;
+            }
+        }
+        if (level == 2 || level == 7) {
+            ASSERT("bridge template contains timber crossings", bridges > 0);
+        } else if (level == 3 || level == 6) {
+            ASSERT("cave template contains underground terrain", caves > 0);
+        } else if (level == 4 || level == 5 || level == 8) {
+            ASSERT("fortress template contains paved strongholds",
+                fortress > 0);
+        } else {
+            ASSERT("pass template remains exposed basalt",
+                bridges == 0 && caves == 0 && fortress == 0);
+        }
         enemies_spawn(&g);
         int bosses = 0, invalid = 0;
         for (int i = 0; i < g.enemy_count; i++) {

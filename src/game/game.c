@@ -262,6 +262,9 @@ static int enemy_tile_open(const GameState *g, int x, int y) {
         (g->map.tiles[y][x] != TILE_FLOOR &&
         g->map.tiles[y][x] != TILE_FOREST_FLOOR &&
         g->map.tiles[y][x] != TILE_MOUNTAIN_FLOOR &&
+        g->map.tiles[y][x] != TILE_MOUNTAIN_BRIDGE &&
+        g->map.tiles[y][x] != TILE_MOUNTAIN_CAVE_FLOOR &&
+        g->map.tiles[y][x] != TILE_MOUNTAIN_FORTRESS_FLOOR &&
         g->map.tiles[y][x] != TILE_COAST_FLOOR)) {
         return 0;
     }
