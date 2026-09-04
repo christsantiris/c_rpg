@@ -127,9 +127,8 @@ void test_town_map(void) {
     ASSERT("horizontal path at mid row",
         m.tiles[12][10] == TILE_TOWN_PATH);
 
-    // Border is wall
-    ASSERT("south border is wall",
-        m.tiles[TOWN_H-1][20] == TILE_WALL);
+    ASSERT("coast exit at south crossroad",
+        m.tiles[TOWN_H - 1][20] == TILE_TOWN_EXIT);
 }
 
 void test_forest(void) {

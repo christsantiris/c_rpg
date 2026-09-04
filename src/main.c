@@ -627,6 +627,8 @@ int main(int argc, char **argv) {
                                 target == TILE_FOREST_EXIT ||
                                 target == TILE_MOUNTAIN_ENTRANCE ||
                                 target == TILE_MOUNTAIN_EXIT ||
+                                target == TILE_COAST_ENTRANCE ||
+                                target == TILE_COAST_EXIT ||
                                 target == TILE_RETURN_EXIT) {
                                 a.type = ACTION_NONE;
                             }

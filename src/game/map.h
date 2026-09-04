@@ -17,6 +17,7 @@
 #define DUNGEON_DEPTH 8
 #define FOREST_DEPTH 8
 #define MOUNTAIN_DEPTH 8
+#define COAST_DEPTH 8
 #define MAX_REGION_DEPTH 8
 
 typedef enum {
@@ -47,7 +48,11 @@ typedef enum {
     TILE_MOUNTAIN_WALL,
     TILE_MOUNTAIN_ENTRANCE,
     TILE_MOUNTAIN_EXIT,
-    TILE_TAVERN
+    TILE_TAVERN,
+    TILE_COAST_FLOOR,
+    TILE_COAST_WALL,
+    TILE_COAST_ENTRANCE,
+    TILE_COAST_EXIT
 } TileType;
 
 typedef struct {
@@ -68,5 +73,6 @@ void map_room_center(const Room *r, int *cx, int *cy);
 void map_generate_town(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_forest(Map *m, int level);
 void map_generate_mountains(Map *m, int level);
+void map_generate_coast(Map *m, int level);
 
 #endif

@@ -13,6 +13,9 @@ void draw_forest_edge(Renderer *r, int tile_x, int tile_y, int forward);
 void draw_mountain_floor(Renderer *r, int tile_x, int tile_y);
 void draw_mountain_wall(Renderer *r, int tile_x, int tile_y);
 void draw_mountain_edge(Renderer *r, int tile_x, int tile_y, int forward);
+void draw_coast_floor(Renderer *r, int tile_x, int tile_y);
+void draw_coast_wall(Renderer *r, int tile_x, int tile_y);
+void draw_coast_edge(Renderer *r, int tile_x, int tile_y, int forward);
 void draw_player(Renderer *r, int tile_x, int tile_y, PlayerClass player_class);
 void draw_stairs_up(Renderer *r, int tile_x, int tile_y);
 void draw_stairs_down(Renderer *r, int tile_x, int tile_y);
@@ -43,7 +46,8 @@ void draw_tarrasque(Renderer *r, int tile_x, int tile_y);
 typedef enum {
     TOWN_EXIT_DUNGEON,
     TOWN_EXIT_FOREST,
-    TOWN_EXIT_MOUNTAINS
+    TOWN_EXIT_MOUNTAINS,
+    TOWN_EXIT_COAST
 } TownExitStyle;
 
 void draw_town_floor(Renderer *r, int tile_x, int tile_y);

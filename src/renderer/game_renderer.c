@@ -175,6 +175,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_mountain_edge(r, sx, sy, 0); break;
                 case TILE_MOUNTAIN_EXIT:
                     draw_mountain_edge(r, sx, sy, 1); break;
+                case TILE_COAST_FLOOR: draw_coast_floor(r, sx, sy); break;
+                case TILE_COAST_WALL: draw_coast_wall(r, sx, sy); break;
+                case TILE_COAST_ENTRANCE:
+                    draw_coast_edge(r, sx, sy, 0); break;
+                case TILE_COAST_EXIT:
+                    draw_coast_edge(r, sx, sy, 1); break;
                 case TILE_STAIRS_UP: draw_stairs_up(r, sx, sy); break;
                 case TILE_STAIRS_DOWN: draw_stairs_down(r, sx, sy); break;
                 case TILE_RETURN_EXIT: draw_return_exit(r, sx, sy); break;
@@ -184,9 +190,21 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_TOWN_FLOOR: draw_town_floor(r, sx, sy); break;
                 case TILE_TOWN_PATH: draw_town_path(r, sx, sy); break;
                 case TILE_TOWN_EXIT: {
-                    TownExitStyle style = y == 0 ? TOWN_EXIT_DUNGEON :
-                        (x == 0 ? TOWN_EXIT_FOREST : TOWN_EXIT_MOUNTAINS);
-                    int segment = y == 0 ? x - 18 : y - 10;
+                    TownExitStyle style;
+                    int segment;
+                    if (y == 0) {
+                        style = TOWN_EXIT_DUNGEON;
+                        segment = x - 18;
+                    } else if (y == TOWN_H - 1) {
+                        style = TOWN_EXIT_COAST;
+                        segment = x - 18;
+                    } else if (x == 0) {
+                        style = TOWN_EXIT_FOREST;
+                        segment = y - 10;
+                    } else {
+                        style = TOWN_EXIT_MOUNTAINS;
+                        segment = y - 10;
+                    }
                     draw_town_exit(r, sx, sy, style, segment);
                     break;
                 }
@@ -199,6 +217,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                         draw_forest_floor(r, sx, sy);
                     else if (g->location == LOCATION_MOUNTAINS)
                         draw_mountain_floor(r, sx, sy);
+                    else if (g->location == LOCATION_COAST)
+                        draw_coast_floor(r, sx, sy);
                     else
                         draw_floor(r, sx, sy);
                     break;
@@ -223,7 +243,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     // Draw enemies
     if (g->location == LOCATION_DUNGEON ||
         g->location == LOCATION_FOREST ||
-        g->location == LOCATION_MOUNTAINS) {
+        g->location == LOCATION_MOUNTAINS ||
+        g->location == LOCATION_COAST) {
         for (int i = 0; i < g->enemy_count; i++) {
             Enemy *e = &g->enemies[i];
             if (!e->active) continue;
@@ -258,12 +279,15 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int mountains_w = 0;
         int mountains_h = 0;
         int tavern_w = 0;
+        int coast_w = 0;
+        int coast_h = 0;
         TTF_SizeText(r->font_tiny, "BLACKSMITH", &blacksmith_w, NULL);
         TTF_SizeText(r->font_tiny, "ALCHEMIST", &alchemist_w, NULL);
         TTF_SizeText(r->font_tiny, "FOREST", &forest_w, &forest_h);
         TTF_SizeText(r->font_tiny, "DUNGEON", &dungeon_w, &dungeon_h);
         TTF_SizeText(r->font_tiny, "MOUNTAINS", &mountains_w, &mountains_h);
         TTF_SizeText(r->font_tiny, "TAVERN", &tavern_w, NULL);
+        TTF_SizeText(r->font_tiny, "SUNKEN COAST", &coast_w, &coast_h);
         int bx = viewport_to_screen_x(v, 7) * TILE_SIZE
             + (5 * TILE_SIZE - blacksmith_w) / 2;
         int by = viewport_to_screen_y(v, 6)  * TILE_SIZE;
@@ -299,6 +323,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             r->font_tiny);
         renderer_draw_text(r, "MOUNTAINS", mountains_x, mountains_y,
             (SDL_Color){220, 72, 42, 255}, r->font_tiny);
+        int coast_x = viewport_to_screen_x(v, 18) * TILE_SIZE
+            + (5 * TILE_SIZE - coast_w) / 2;
+        int coast_y = viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE
+            + (TILE_SIZE - coast_h) / 2;
+        renderer_draw_text(r, "SUNKEN COAST", coast_x, coast_y,
+            (SDL_Color){62, 210, 205, 255}, r->font_tiny);
     }
 
     // Draw spell/projectile trail

@@ -126,6 +126,47 @@ static void spawn_enemy(Enemy *e, EnemyType type, int x, int y) {
             e->max_hp=180; e->hp=180; e->attack=20; e->defense=8; e->experience=500;
             e->is_boss=1;
             break;
+        case ENEMY_ILLUSION:
+            strncpy(e->name, "Illusion", 15);
+            e->max_hp = 1; e->hp = 1; e->attack = 7; e->defense = 0;
+            e->experience = 12;
+            break;
+        case ENEMY_MERFOLK:
+            strncpy(e->name, "Merfolk", 15);
+            e->max_hp = 20; e->hp = 20; e->attack = 8; e->defense = 2;
+            e->experience = 22;
+            break;
+        case ENEMY_SIREN:
+            strncpy(e->name, "Siren", 15);
+            e->max_hp = 18; e->hp = 18; e->attack = 9; e->defense = 1;
+            e->experience = 30;
+            break;
+        case ENEMY_GIANT_CRAB:
+            strncpy(e->name, "Giant Crab", 15);
+            e->max_hp = 42; e->hp = 42; e->attack = 11; e->defense = 6;
+            e->experience = 38;
+            break;
+        case ENEMY_ANIMATED_STATUE:
+            strncpy(e->name, "Animated Statue", 15);
+            e->max_hp = 58; e->hp = 58; e->attack = 14; e->defense = 8;
+            e->experience = 56;
+            break;
+        case ENEMY_WATER_ELEMENTAL:
+            strncpy(e->name, "Water Elemental", 15);
+            e->max_hp = 34; e->hp = 34; e->attack = 13; e->defense = 3;
+            e->experience = 48;
+            break;
+        case ENEMY_SEA_SERPENT:
+            strncpy(e->name, "Sea Serpent", 15);
+            e->max_hp = 40; e->hp = 40; e->attack = 15; e->defense = 4;
+            e->experience = 62;
+            break;
+        case ENEMY_DROWNED_QUEEN:
+            strncpy(e->name, "Drowned Queen", 15);
+            e->max_hp = 220; e->hp = 220; e->attack = 22; e->defense = 8;
+            e->experience = 650;
+            e->is_boss = 1;
+            break;
         case ENEMY_ORC:
             strncpy(e->name, "Orc", sizeof(e->name) - 1);
             e->name[sizeof(e->name) - 1] = '\0';
@@ -197,23 +238,31 @@ static int boss_for_level(const GameState *g, EnemyType *type) {
         boss_level = FOREST_DEPTH;
     } else if (g->location == LOCATION_MOUNTAINS) {
         boss_level = MOUNTAIN_DEPTH;
+    } else if (g->location == LOCATION_COAST) {
+        boss_level = COAST_DEPTH;
     }
     if (g->level != boss_level) {
         return 0;
     }
-    *type = g->location == LOCATION_FOREST
-        ? ENEMY_FOREST_NECROMANCER :
-        (g->location == LOCATION_MOUNTAINS
-            ? ENEMY_MOUNTAIN_GOBLIN_KING : ENEMY_LICH_KING);
+    if (g->location == LOCATION_FOREST) {
+        *type = ENEMY_FOREST_NECROMANCER;
+    } else if (g->location == LOCATION_MOUNTAINS) {
+        *type = ENEMY_MOUNTAIN_GOBLIN_KING;
+    } else if (g->location == LOCATION_COAST) {
+        *type = ENEMY_DROWNED_QUEEN;
+    } else {
+        *type = ENEMY_LICH_KING;
+    }
     return 1;
 }
 
 static int enemy_tile_open(const GameState *g, int x, int y) {
     // Keep keys, stairs, traps, and portals visible and unobstructed.
     if (!map_is_walkable(&g->map, x, y) ||
-        g->map.tiles[y][x] != TILE_FLOOR &&
+        (g->map.tiles[y][x] != TILE_FLOOR &&
         g->map.tiles[y][x] != TILE_FOREST_FLOOR &&
-        g->map.tiles[y][x] != TILE_MOUNTAIN_FLOOR) {
+        g->map.tiles[y][x] != TILE_MOUNTAIN_FLOOR &&
+        g->map.tiles[y][x] != TILE_COAST_FLOOR)) {
         return 0;
     }
     for (int i = 0; i < g->enemy_count; i++) {
@@ -286,15 +335,18 @@ void enemies_spawn(GameState *g) {
         int boss_x = g->map.stairs_down_x + 1;
         int boss_y = g->map.stairs_down_y;
         if (g->location == LOCATION_FOREST ||
-            g->location == LOCATION_MOUNTAINS)
+            g->location == LOCATION_MOUNTAINS ||
+            g->location == LOCATION_COAST) {
             map_room_center(&g->map.rooms[g->map.room_count - 1],
                 &boss_x, &boss_y);
+        }
         spawn_enemy(&g->enemies[g->enemy_count++], boss_type,
             boss_x, boss_y);
     }
 
     int boss_level = g->location == LOCATION_FOREST ? FOREST_DEPTH :
-        (g->location == LOCATION_MOUNTAINS ? MOUNTAIN_DEPTH : DUNGEON_DEPTH);
+        (g->location == LOCATION_MOUNTAINS ? MOUNTAIN_DEPTH :
+        (g->location == LOCATION_COAST ? COAST_DEPTH : DUNGEON_DEPTH));
     int regular_room_limit = g->level == boss_level
         ? g->map.room_count - 1 : g->map.room_count;
     while (g->enemy_count < num_enemies) {
@@ -302,7 +354,32 @@ void enemies_spawn(GameState *g) {
         int roll = rand() % 100;
         int level = g->level;
 
-        if (g->location == LOCATION_MOUNTAINS) {
+        if (g->location == LOCATION_COAST) {
+            if (level == 1) {
+                type = roll < 55 ? ENEMY_ILLUSION : ENEMY_MERFOLK;
+            } else if (level == 2) {
+                type = roll < 30 ? ENEMY_ILLUSION :
+                    (roll < 70 ? ENEMY_MERFOLK : ENEMY_GIANT_CRAB);
+            } else if (level == 3) {
+                type = roll < 25 ? ENEMY_MERFOLK :
+                    (roll < 55 ? ENEMY_SIREN :
+                    (roll < 80 ? ENEMY_GIANT_CRAB : ENEMY_ILLUSION));
+            } else if (level == 4) {
+                type = roll < 25 ? ENEMY_SIREN :
+                    (roll < 50 ? ENEMY_GIANT_CRAB :
+                    (roll < 75 ? ENEMY_ANIMATED_STATUE : ENEMY_MERFOLK));
+            } else if (level == 5) {
+                type = roll < 25 ? ENEMY_GIANT_CRAB :
+                    (roll < 50 ? ENEMY_ANIMATED_STATUE :
+                    (roll < 75 ? ENEMY_WATER_ELEMENTAL : ENEMY_SIREN));
+            } else {
+                type = roll < 15 ? ENEMY_MERFOLK :
+                    (roll < 30 ? ENEMY_SIREN :
+                    (roll < 45 ? ENEMY_GIANT_CRAB :
+                    (roll < 62 ? ENEMY_ANIMATED_STATUE :
+                    (roll < 82 ? ENEMY_WATER_ELEMENTAL : ENEMY_SEA_SERPENT))));
+            }
+        } else if (g->location == LOCATION_MOUNTAINS) {
             if (level == 1)
                 type = ENEMY_GOBLIN_SCOUT;
             else if (level == 2)
@@ -379,12 +456,14 @@ void game_init(GameState *g) {
         g->level_cache[i].valid = 0;
         g->forest_cache[i].valid = 0;
         g->mountain_cache[i].valid = 0;
+        g->coast_cache[i].valid = 0;
     }
     g->message_count = 0;
     g->level_cleared = 0;
     g->max_level_reached = 1;
     g->max_forest_level_reached = 1;
     g->max_mountain_level_reached = 1;
+    g->max_coast_level_reached = 1;
     g->location = LOCATION_TOWN;
     int spawn_x, spawn_y;
     map_generate_town(&g->map, &spawn_x, &spawn_y);
@@ -465,8 +544,15 @@ void game_move_player(GameState *g, int dx, int dy) {
 }
 
 static LevelCache *active_cache(GameState *g) {
-    if (g->location == LOCATION_FOREST) return g->forest_cache;
-    if (g->location == LOCATION_MOUNTAINS) return g->mountain_cache;
+    if (g->location == LOCATION_FOREST) {
+        return g->forest_cache;
+    }
+    if (g->location == LOCATION_MOUNTAINS) {
+        return g->mountain_cache;
+    }
+    if (g->location == LOCATION_COAST) {
+        return g->coast_cache;
+    }
     return g->level_cache;
 }
 
@@ -474,6 +560,9 @@ static int *active_max_level(GameState *g) {
     if (g->location == LOCATION_FOREST) return &g->max_forest_level_reached;
     if (g->location == LOCATION_MOUNTAINS)
         return &g->max_mountain_level_reached;
+    if (g->location == LOCATION_COAST) {
+        return &g->max_coast_level_reached;
+    }
     return &g->max_level_reached;
 }
 
@@ -484,16 +573,22 @@ static int active_depth(const GameState *g) {
     if (g->location == LOCATION_MOUNTAINS) {
         return MOUNTAIN_DEPTH;
     }
+    if (g->location == LOCATION_COAST) {
+        return COAST_DEPTH;
+    }
     return DUNGEON_DEPTH;
 }
 
 static void generate_active_level(GameState *g) {
-    if (g->location == LOCATION_FOREST)
+    if (g->location == LOCATION_FOREST) {
         map_generate_forest(&g->map, g->level);
-    else if (g->location == LOCATION_MOUNTAINS)
+    } else if (g->location == LOCATION_MOUNTAINS) {
         map_generate_mountains(&g->map, g->level);
-    else
+    } else if (g->location == LOCATION_COAST) {
+        map_generate_coast(&g->map, g->level);
+    } else {
         map_generate(&g->map, g->level);
+    }
     enemies_spawn(g);
 }
 
@@ -598,6 +693,10 @@ void game_enter_mountains(GameState *g) {
     enter_adventure(g, LOCATION_MOUNTAINS);
 }
 
+void game_enter_coast(GameState *g) {
+    enter_adventure(g, LOCATION_COAST);
+}
+
 void game_return_to_town(GameState *g) {
     LevelCache *cache = active_cache(g);
     Location returning_from = g->location;
@@ -618,6 +717,8 @@ void game_return_to_town(GameState *g) {
         g->player.x = 1; g->player.y = 12;
     } else if (returning_from == LOCATION_MOUNTAINS) {
         g->player.x = TOWN_W - 2; g->player.y = 12;
+    } else if (returning_from == LOCATION_COAST) {
+        g->player.x = 20; g->player.y = TOWN_H - 2;
     } else {
         g->player.x = 20; g->player.y = 1;
     }
@@ -628,7 +729,10 @@ void game_return_to_town(GameState *g) {
 void game_open_town_portal(GameState *g) {
     if (g->location != LOCATION_DUNGEON &&
         g->location != LOCATION_FOREST &&
-        g->location != LOCATION_MOUNTAINS) return;
+        g->location != LOCATION_MOUNTAINS &&
+        g->location != LOCATION_COAST) {
+        return;
+    }
     g->portal_active = 1;
     g->portal_level = g->level;
     g->portal_location = g->location;
@@ -645,10 +749,14 @@ void game_use_town_portal(GameState *g) {
     if (!g->portal_active || g->portal_level < 1 ||
         g->portal_level > MAX_REGION_DEPTH) return;
     int level = g->portal_level;
-    LevelCache *cache = g->portal_location == LOCATION_FOREST
-        ? g->forest_cache :
-        (g->portal_location == LOCATION_MOUNTAINS
-            ? g->mountain_cache : g->level_cache);
+    LevelCache *cache = g->level_cache;
+    if (g->portal_location == LOCATION_FOREST) {
+        cache = g->forest_cache;
+    } else if (g->portal_location == LOCATION_MOUNTAINS) {
+        cache = g->mountain_cache;
+    } else if (g->portal_location == LOCATION_COAST) {
+        cache = g->coast_cache;
+    }
     if (!cache[level - 1].valid) return;
 
     g->location = g->portal_location;
