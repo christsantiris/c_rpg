@@ -1,6 +1,6 @@
 # Haunted Forest
 
-The Haunted Forest is a five-level adventure entered from the west end of the
+The Haunted Forest is an eight-level adventure entered from the west end of the
 town crossroad. Its progress and generated floors are cached independently from
 the dungeon, so changing regions never erases progress in the other adventure.
 
@@ -18,11 +18,16 @@ backtracking and returns to town from level 1.
 | 2 | Spiderweb Thicket | Three pockets wrapped around a central trail; north exit | Pixies, Wolves and Giant Spiders |
 | 3 | Dark Elf Territory | Three braided lanes with diagonal shortcuts; south exit | Pixies, Wolves, Spiders and Dark Elves |
 | 4 | Buried Wilds | Central hub splitting into three dangerous branches; north exit | Spiders, Dark Elves, Giant Wurms and Forest Trolls |
-| 5 | Necromancer's Grove | Twin approaches narrowing into an antechamber and eastern boss grove | Complete roster plus the Necromancer |
+| 5 | Sunken Grove | Twin approaches around corrupted clearings; east exit | Complete regular roster |
+| 6 | Wurmwood | Interlocking trails with a long false southern branch | Complete regular roster |
+| 7 | The Lost Wood | Multiple false trails and isolated dead-end groves; north exit | Complete regular roster |
+| 8 | Necromancer's Grove | Twin approaches narrowing into an eastern boss grove | Complete roster plus the Necromancer |
 
 Clearing dimensions and positions receive additional random variation every
 time a new stage is generated, while each level retains its recognizable macro
-structure.
+structure. Later stages include false branches that end in isolated groves.
+These rooms remain part of enemy and trap placement, making exploration risky
+without placing the required exit at the end of every trail.
 
 ## Enemy Roles
 
@@ -35,12 +40,12 @@ structure.
 
 ## Final Encounter
 
-The Necromancer waits in the final grove and remains dormant until the player
+The Necromancer waits in the stage-eight final grove and remains dormant until the player
 enters it. He alternates a telegraphed invocation with a spirit bolt. Every
 fourth action, he can return one defeated forest servant at half health. The
 number of enemies remains bounded by the floor's original roster.
 
-After defeating the Necromancer on level 5, the eastern passage sends the
+After defeating the Necromancer on stage 8, the eastern passage sends the
 player to the west town road. Other surviving enemies do not block it. Return
 to Town also works inside the forest;
 its portal preserves the exact forest level and casting position.

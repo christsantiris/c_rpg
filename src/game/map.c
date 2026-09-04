@@ -107,7 +107,7 @@ void map_generate(Map *m, int level) {
     // Turn the final room into a real, sealed boss chamber. Rebuilding the
     // perimeter closes any incidental corridors that crossed the randomly
     // generated room, leaving exactly one entrance from the intended path.
-    if (level == MAX_DEPTH && m->room_count > 1) {
+    if (level == DUNGEON_DEPTH && m->room_count > 1) {
         Room *boss_room = &m->rooms[m->room_count - 1];
         int previous_x, previous_y;
         map_room_center(&m->rooms[m->room_count - 2], &previous_x, &previous_y);
@@ -149,7 +149,7 @@ void map_generate(Map *m, int level) {
         m->tiles[ty][tx] = TILE_TRAP_HIDDEN;
     }
 
-    if (level == MAX_DEPTH && m->room_count > 2) {
+    if (level == DUNGEON_DEPTH && m->room_count > 2) {
         // Put the key at the center of the penultimate room. This makes it a
         // guaranteed landmark on the critical path instead of a tiny object
         // hidden at a random coordinate in a large floor.
@@ -200,7 +200,7 @@ typedef enum {
     OUTDOOR_EXIT_SOUTH
 } OutdoorExitSide;
 
-static const ForestTemplate forest_templates[MAX_DEPTH] = {
+static const ForestTemplate forest_templates[FOREST_DEPTH] = {
     {7, {5,42,42,92,92,132,166}, {42,14,68,12,66,40,42}, 8,
         {{0,1},{0,2},{1,3},{2,4},{3,4},{3,5},{4,5},{5,6}}},
     {8, {5,38,38,78,78,78,125,166}, {42,20,65,10,42,74,42,42}, 10,
@@ -210,7 +210,13 @@ static const ForestTemplate forest_templates[MAX_DEPTH] = {
     {8, {5,45,86,91,86,132,132,166}, {42,42,12,42,72,24,61,42}, 10,
         {{0,1},{1,2},{1,3},{1,4},{2,5},{3,5},{3,6},{4,6},{5,7},{6,7}}},
     {9, {5,38,38,82,82,122,122,148,176}, {42,16,68,10,72,18,66,42,42}, 10,
-        {{0,1},{0,2},{1,3},{2,4},{3,5},{4,6},{5,7},{6,7},{3,4},{7,8}}}
+        {{0,1},{0,2},{1,3},{2,4},{3,5},{4,6},{5,7},{6,7},{3,4},{7,8}}},
+    {10, {5,34,34,70,70,105,105,140,140,176}, {42,16,68,12,48,18,74,28,68,42}, 10,
+        {{0,1},{0,2},{1,3},{2,4},{3,5},{4,6},{5,7},{6,8},{7,9},{3,4}}},
+    {10, {5,38,38,76,76,112,112,146,146,176}, {42,12,42,72,25,15,68,28,76,42}, 10,
+        {{0,1},{0,2},{0,3},{1,4},{2,4},{3,6},{4,5},{4,7},{6,8},{7,9}}},
+    {10, {5,36,36,72,72,108,108,142,142,176}, {42,14,70,18,66,10,76,24,66,42}, 11,
+        {{0,1},{0,2},{1,3},{2,4},{3,5},{4,6},{3,4},{5,7},{6,8},{7,9},{8,9}}}
 };
 
 static void map_generate_outdoor(Map *m, int level, OutdoorExitSide exit_side) {
@@ -220,7 +226,7 @@ static void map_generate_outdoor(Map *m, int level, OutdoorExitSide exit_side) {
 
     int template_index = level - 1;
     if (template_index < 0) template_index = 0;
-    if (template_index >= MAX_DEPTH) template_index = MAX_DEPTH - 1;
+    if (template_index >= FOREST_DEPTH) template_index = FOREST_DEPTH - 1;
     const ForestTemplate *layout = &forest_templates[template_index];
     m->room_count = layout->room_count;
     for (int i = 0; i < m->room_count; i++) {
@@ -286,9 +292,12 @@ static void map_generate_outdoor(Map *m, int level, OutdoorExitSide exit_side) {
 }
 
 void map_generate_forest(Map *m, int level) {
-    static const OutdoorExitSide exits[MAX_DEPTH] = {
+    static const OutdoorExitSide exits[FOREST_DEPTH] = {
         OUTDOOR_EXIT_EAST,
         OUTDOOR_EXIT_NORTH,
+        OUTDOOR_EXIT_SOUTH,
+        OUTDOOR_EXIT_NORTH,
+        OUTDOOR_EXIT_EAST,
         OUTDOOR_EXIT_SOUTH,
         OUTDOOR_EXIT_NORTH,
         OUTDOOR_EXIT_EAST
@@ -297,19 +306,22 @@ void map_generate_forest(Map *m, int level) {
     if (index < 0) {
         index = 0;
     }
-    if (index >= MAX_DEPTH) {
-        index = MAX_DEPTH - 1;
+    if (index >= FOREST_DEPTH) {
+        index = FOREST_DEPTH - 1;
     }
     map_generate_outdoor(m, level, exits[index]);
 }
 
 void map_generate_mountains(Map *m, int level) {
-    // Reuse the five proven branching route graphs, then reinterpret their
+    // Reuse the branching route graphs, then reinterpret their
     // clearings as exposed basalt passes and mine chambers.
-    static const OutdoorExitSide exits[MAX_DEPTH] = {
+    static const OutdoorExitSide exits[MOUNTAIN_DEPTH] = {
         OUTDOOR_EXIT_NORTH,
         OUTDOOR_EXIT_EAST,
         OUTDOOR_EXIT_SOUTH,
+        OUTDOOR_EXIT_NORTH,
+        OUTDOOR_EXIT_SOUTH,
+        OUTDOOR_EXIT_EAST,
         OUTDOOR_EXIT_NORTH,
         OUTDOOR_EXIT_SOUTH
     };
@@ -317,8 +329,8 @@ void map_generate_mountains(Map *m, int level) {
     if (index < 0) {
         index = 0;
     }
-    if (index >= MAX_DEPTH) {
-        index = MAX_DEPTH - 1;
+    if (index >= MOUNTAIN_DEPTH) {
+        index = MOUNTAIN_DEPTH - 1;
     }
     map_generate_outdoor(m, level, exits[index]);
     for (int y = 0; y < MAP_H; y++) {

@@ -192,16 +192,20 @@ static void spawn_enemy(Enemy *e, EnemyType type, int x, int y) {
 }
 
 static int boss_for_level(const GameState *g, EnemyType *type) {
-    int level = g->level;
-    switch (level) {
-        case MAX_DEPTH:
-            *type = g->location == LOCATION_FOREST
-                ? ENEMY_FOREST_NECROMANCER :
-                (g->location == LOCATION_MOUNTAINS
-                    ? ENEMY_MOUNTAIN_GOBLIN_KING : ENEMY_LICH_KING);
-            return 1;
-        default: return 0;
+    int boss_level = DUNGEON_DEPTH;
+    if (g->location == LOCATION_FOREST) {
+        boss_level = FOREST_DEPTH;
+    } else if (g->location == LOCATION_MOUNTAINS) {
+        boss_level = MOUNTAIN_DEPTH;
     }
+    if (g->level != boss_level) {
+        return 0;
+    }
+    *type = g->location == LOCATION_FOREST
+        ? ENEMY_FOREST_NECROMANCER :
+        (g->location == LOCATION_MOUNTAINS
+            ? ENEMY_MOUNTAIN_GOBLIN_KING : ENEMY_LICH_KING);
+    return 1;
 }
 
 static int enemy_tile_open(const GameState *g, int x, int y) {
@@ -289,7 +293,9 @@ void enemies_spawn(GameState *g) {
             boss_x, boss_y);
     }
 
-    int regular_room_limit = g->level == MAX_DEPTH
+    int boss_level = g->location == LOCATION_FOREST ? FOREST_DEPTH :
+        (g->location == LOCATION_MOUNTAINS ? MOUNTAIN_DEPTH : DUNGEON_DEPTH);
+    int regular_room_limit = g->level == boss_level
         ? g->map.room_count - 1 : g->map.room_count;
     while (g->enemy_count < num_enemies) {
         EnemyType type;
@@ -369,7 +375,7 @@ void enemies_spawn(GameState *g) {
 void game_init(GameState *g) {
     srand((unsigned)time(NULL));
     g->level = 1;
-    for (int i = 0; i < MAX_DEPTH; i++) {
+    for (int i = 0; i < MAX_REGION_DEPTH; i++) {
         g->level_cache[i].valid = 0;
         g->forest_cache[i].valid = 0;
         g->mountain_cache[i].valid = 0;
@@ -471,6 +477,16 @@ static int *active_max_level(GameState *g) {
     return &g->max_level_reached;
 }
 
+static int active_depth(const GameState *g) {
+    if (g->location == LOCATION_FOREST) {
+        return FOREST_DEPTH;
+    }
+    if (g->location == LOCATION_MOUNTAINS) {
+        return MOUNTAIN_DEPTH;
+    }
+    return DUNGEON_DEPTH;
+}
+
 static void generate_active_level(GameState *g) {
     if (g->location == LOCATION_FOREST)
         map_generate_forest(&g->map, g->level);
@@ -482,12 +498,13 @@ static void generate_active_level(GameState *g) {
 }
 
 void game_descend(GameState *g) {
-    if (g->level >= MAX_DEPTH) return;
+    int depth = active_depth(g);
+    if (g->level >= depth) return;
 
     LevelCache *cache = active_cache(g);
     int *max_level = active_max_level(g);
 
-    if (g->level >= 1 && g->level <= MAX_DEPTH) {
+    if (g->level >= 1 && g->level <= depth) {
         cache[g->level - 1].map         = g->map;
         cache[g->level - 1].enemy_count = g->enemy_count;
         for (int i = 0; i < g->enemy_count; i++)
@@ -500,7 +517,7 @@ void game_descend(GameState *g) {
     if (g->level > *max_level)
         *max_level = g->level;
     g->level_cleared = 0;
-    if (g->level <= MAX_DEPTH && cache[g->level - 1].valid) {
+    if (g->level <= depth && cache[g->level - 1].valid) {
         g->map         = cache[g->level - 1].map;
         g->enemy_count = cache[g->level - 1].enemy_count;
         for (int i = 0; i < g->enemy_count; i++)
@@ -519,7 +536,7 @@ void game_ascend(GameState *g) {
 
     LevelCache *cache = active_cache(g);
 
-    if (g->level <= MAX_DEPTH) {
+    if (g->level <= active_depth(g)) {
         cache[g->level - 1].map           = g->map;
         cache[g->level - 1].enemy_count   = g->enemy_count;
         cache[g->level - 1].level_cleared = g->level_cleared;
@@ -561,7 +578,7 @@ static void enter_adventure(GameState *g, Location location) {
     } else {
         g->level         = 1;
         g->level_cleared = 0;
-        for (int i = 0; i < MAX_DEPTH; i++)
+        for (int i = 0; i < active_depth(g); i++)
             cache[i].valid = 0;
         generate_active_level(g);
         g->player.x = g->map.stairs_up_x;
@@ -585,7 +602,7 @@ void game_return_to_town(GameState *g) {
     LevelCache *cache = active_cache(g);
     Location returning_from = g->location;
     // Cache current level before leaving
-    if (g->level >= 1 && g->level <= MAX_DEPTH) {
+    if (g->level >= 1 && g->level <= active_depth(g)) {
         cache[g->level - 1].map = g->map;
         cache[g->level - 1].enemy_count   = g->enemy_count;
         cache[g->level - 1].level_cleared = g->level_cleared;
@@ -626,7 +643,7 @@ void game_open_town_portal(GameState *g) {
 
 void game_use_town_portal(GameState *g) {
     if (!g->portal_active || g->portal_level < 1 ||
-        g->portal_level > MAX_DEPTH) return;
+        g->portal_level > MAX_REGION_DEPTH) return;
     int level = g->portal_level;
     LevelCache *cache = g->portal_location == LOCATION_FOREST
         ? g->forest_cache :
@@ -650,7 +667,7 @@ void game_use_town_portal(GameState *g) {
 
 void game_mark_level_cleared(GameState *g) {
     g->level_cleared = 1;
-    if (g->location == LOCATION_DUNGEON && g->level == MAX_DEPTH) {
+    if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH) {
         g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] =
             TILE_RETURN_EXIT;
         push_message(g, "A passage to town opens!");

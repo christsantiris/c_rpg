@@ -36,7 +36,7 @@ void test_dungeon(void) {
 
     GameState g = {0};
     g.location = LOCATION_DUNGEON;
-    g.level = MAX_DEPTH;
+    g.level = DUNGEON_DEPTH;
     map_generate(&g.map, g.level);
     enemies_spawn(&g);
     int matching_bosses = 0;
@@ -144,7 +144,7 @@ void test_dungeon(void) {
         g.enemies[boss_index].x == boss_x &&
         g.enemies[boss_index].y == boss_y);
 
-    for (int level = 1; level < MAX_DEPTH; level++) {
+    for (int level = 1; level < DUNGEON_DEPTH; level++) {
         g.level = level;
         map_generate(&g.map, level);
         enemies_spawn(&g);
@@ -191,8 +191,8 @@ void test_final_dungeon_exit(void) {
     GameState g;
     game_init(&g);
     g.location = LOCATION_DUNGEON;
-    g.level = MAX_DEPTH;
-    g.max_level_reached = MAX_DEPTH;
+    g.level = DUNGEON_DEPTH;
+    g.max_level_reached = DUNGEON_DEPTH;
     map_generate(&g.map, g.level);
     enemies_spawn(&g);
 
@@ -206,7 +206,8 @@ void test_final_dungeon_exit(void) {
     action_resolve_player(&g, a);
     ASSERT("final exit returns player to town", g.location == LOCATION_TOWN);
     ASSERT("final exit returns at north town road", g.player.x == 20 && g.player.y == 1);
-    ASSERT("final exit does not create a sixth floor", g.level == MAX_DEPTH);
+    ASSERT("final exit does not create a ninth floor",
+        g.level == DUNGEON_DEPTH);
 }
 
 void test_enemy_movement_collision(void) {

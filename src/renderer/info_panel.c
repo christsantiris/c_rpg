@@ -95,7 +95,7 @@ void info_panel_draw(Renderer *r, const GameState *g) {
     renderer_draw_text(r, score_str, x, y, score_color, r->font_tiny);
     y += lh + 10;
 
-    if (g->location == LOCATION_DUNGEON && g->level == MAX_DEPTH) {
+    if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH) {
         renderer_draw_text(r, "BOSS KEY", x, y, label, r->font_tiny);
         y += lh;
         renderer_draw_text(r,

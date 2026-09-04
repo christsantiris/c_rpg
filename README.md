@@ -19,8 +19,8 @@ A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explo
 
 ## Overview
 *The Castle of No Return* is a C/SDL roguelike with turn-based combat and a
-retro pixel-art style. The central town connects to a five-floor undead
-dungeon, a five-stage Haunted Forest, and the five-stage Goblin Mountains.
+retro pixel-art style. The central town connects to an eight-floor undead
+dungeon, an eight-stage Haunted Forest, and the eight-stage Goblin Mountains.
 Each adventure keeps its own generated maps and progression.
 
 ## Screenshot

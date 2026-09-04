@@ -162,7 +162,7 @@ void test_forest(void) {
     ASSERT("west entrance returns to previous stage", g.level == 1);
     ASSERT("backtracking arrives inside east edge", g.player.x == MAP_W - 2);
 
-    for (int level = 1; level <= MAX_DEPTH; level++) {
+    for (int level = 1; level <= FOREST_DEPTH; level++) {
         g.location = LOCATION_FOREST;
         g.level = level;
         map_generate_forest(&g.map, level);
@@ -176,16 +176,16 @@ void test_forest(void) {
                 invalid_enemy = 1;
         }
         ASSERT("forest floors use only forest roster", !invalid_enemy);
-        if (level < MAX_DEPTH)
-            ASSERT("forest floors 1-4 have no boss", bosses == 0);
+        if (level < FOREST_DEPTH)
+            ASSERT("forest stages 1-7 have no boss", bosses == 0);
         else
-            ASSERT("forest floor 5 has Necromancer boss",
+            ASSERT("forest stage 8 has Necromancer boss",
                 bosses == 1 && g.enemies[0].type == ENEMY_FOREST_NECROMANCER);
     }
 
-    static const int expected_rooms[MAX_DEPTH] = {7, 8, 9, 8, 9};
-    static const int expected_exits[MAX_DEPTH] = {0, 1, 2, 1, 0};
-    for (int level = 1; level <= MAX_DEPTH; level++) {
+    static const int expected_rooms[FOREST_DEPTH] = {7, 8, 9, 8, 9, 10, 10, 10};
+    static const int expected_exits[FOREST_DEPTH] = {0, 1, 2, 1, 0, 2, 1, 0};
+    for (int level = 1; level <= FOREST_DEPTH; level++) {
         map_generate_forest(&g.map, level);
         ASSERT("forest level uses its distinct topology size",
             g.map.room_count == expected_rooms[level - 1]);
@@ -229,7 +229,7 @@ void test_forest(void) {
     ASSERT("forest portal restores exact tile",
         g.player.x == portal_x && g.player.y == portal_y);
 
-    g.level = MAX_DEPTH;
+    g.level = FOREST_DEPTH;
     map_generate_forest(&g.map, g.level);
     enemies_spawn(&g);
     g.player.x = MAP_W - 2;
@@ -266,7 +266,7 @@ void test_town_spawn(void) {
 
 void test_mountains(void) {
     printf("Goblin Mountains tests:\n");
-    static const int expected_exits[MAX_DEPTH] = {1, 0, 2, 1, 2};
+    static const int expected_exits[MOUNTAIN_DEPTH] = {1, 0, 2, 1, 2, 0, 1, 2};
     GameState g;
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
@@ -279,7 +279,7 @@ void test_mountains(void) {
     ASSERT("mountains use red-black terrain",
         g.map.tiles[g.player.y][g.player.x] == TILE_MOUNTAIN_FLOOR);
 
-    for (int level = 1; level <= MAX_DEPTH; level++) {
+    for (int level = 1; level <= MOUNTAIN_DEPTH; level++) {
         g.level = level;
         map_generate_mountains(&g.map, level);
         ASSERT("mountain levels vary their exit edge",
@@ -294,10 +294,10 @@ void test_mountains(void) {
                 type > ENEMY_MOUNTAIN_GOBLIN_KING) invalid = 1;
         }
         ASSERT("mountains use only mountain enemy roster", !invalid);
-        if (level < MAX_DEPTH)
-            ASSERT("mountain levels 1-4 have no boss", bosses == 0);
+        if (level < MOUNTAIN_DEPTH)
+            ASSERT("mountain stages 1-7 have no boss", bosses == 0);
         else
-            ASSERT("mountain level 5 has Goblin King",
+            ASSERT("mountain stage 8 has Goblin King",
                 bosses == 1 &&
                 g.enemies[0].type == ENEMY_MOUNTAIN_GOBLIN_KING);
     }
@@ -314,7 +314,7 @@ void test_mountains(void) {
         g.mountain_cache[0].valid && !g.level_cache[0].valid &&
         !g.forest_cache[0].valid);
 
-    g.level = MAX_DEPTH;
+    g.level = MOUNTAIN_DEPTH;
     map_generate_mountains(&g.map, g.level);
     enemies_spawn(&g);
     g.player.x = g.map.stairs_down_x;

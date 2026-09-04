@@ -169,7 +169,7 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 10);
+    cJSON_AddNumberToObject(root, "save_version", 11);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -297,7 +297,7 @@ int save_game(const GameState *g, int slot) {
 
     // Level cache
     cJSON *cache = cJSON_CreateArray();
-    for (int i = 0; i < MAX_DEPTH; i++) {
+    for (int i = 0; i < MAX_REGION_DEPTH; i++) {
         cJSON *entry = cJSON_CreateObject();
         cJSON_AddNumberToObject(entry, "valid",         g->level_cache[i].valid);
         cJSON_AddNumberToObject(entry, "level_cleared", g->level_cache[i].level_cleared);
@@ -315,7 +315,7 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddItemToObject(root, "level_cache", cache);
 
     cJSON *forest_cache = cJSON_CreateArray();
-    for (int i = 0; i < MAX_DEPTH; i++) {
+    for (int i = 0; i < MAX_REGION_DEPTH; i++) {
         cJSON *entry = cJSON_CreateObject();
         cJSON_AddNumberToObject(entry, "valid", g->forest_cache[i].valid);
         cJSON_AddNumberToObject(entry, "level_cleared",
@@ -334,7 +334,7 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddItemToObject(root, "forest_cache", forest_cache);
 
     cJSON *mountain_cache = cJSON_CreateArray();
-    for (int i = 0; i < MAX_DEPTH; i++) {
+    for (int i = 0; i < MAX_REGION_DEPTH; i++) {
         cJSON *entry = cJSON_CreateObject();
         cJSON_AddNumberToObject(entry, "valid", g->mountain_cache[i].valid);
         cJSON_AddNumberToObject(entry, "level_cleared",
@@ -515,8 +515,13 @@ int load_game(GameState *g, int slot) {
 
     // Level cache
     cJSON *cache = cJSON_GetObjectItem(root, "level_cache");
-    for (int i = 0; i < MAX_DEPTH; i++) {
+    for (int i = 0; i < MAX_REGION_DEPTH; i++) {
         cJSON *entry = cJSON_GetArrayItem(cache, i);
+        g->level_cache[i].valid = 0;
+        g->level_cache[i].level_cleared = 0;
+        if (!entry) {
+            continue;
+        }
         g->level_cache[i].valid         = cJSON_GetObjectItem(entry, "valid")->valueint;
         g->level_cache[i].level_cleared = cJSON_GetObjectItem(entry, "level_cleared")->valueint;
         if (g->level_cache[i].valid) {
@@ -529,7 +534,7 @@ int load_game(GameState *g, int slot) {
     }
 
     cJSON *forest_cache = cJSON_GetObjectItem(root, "forest_cache");
-    for (int i = 0; i < MAX_DEPTH; i++) {
+    for (int i = 0; i < MAX_REGION_DEPTH; i++) {
         g->forest_cache[i].valid = 0;
         g->forest_cache[i].level_cleared = 0;
         if (!forest_cache) continue;
@@ -549,7 +554,7 @@ int load_game(GameState *g, int slot) {
     }
 
     cJSON *mountain_cache = cJSON_GetObjectItem(root, "mountain_cache");
-    for (int i = 0; i < MAX_DEPTH; i++) {
+    for (int i = 0; i < MAX_REGION_DEPTH; i++) {
         g->mountain_cache[i].valid = 0;
         g->mountain_cache[i].level_cleared = 0;
         if (!mountain_cache) continue;
@@ -568,23 +573,23 @@ int load_game(GameState *g, int slot) {
         }
     }
 
-    // Fold saves from the former 25-floor dungeon into the five-floor arc.
-    if (g->level > MAX_DEPTH) {
-        g->level = MAX_DEPTH;
+    // Clamp saves from the former 25-floor dungeon to the current dungeon arc.
+    if (g->level > DUNGEON_DEPTH) {
+        g->level = DUNGEON_DEPTH;
         g->floor_item_count = 0;
-        g->level_cache[MAX_DEPTH - 1].valid = 0;
+        g->level_cache[DUNGEON_DEPTH - 1].valid = 0;
         map_generate(&g->map, g->level);
         enemies_spawn(g);
         g->level_cleared = 0;
         g->player.x = g->map.stairs_up_x;
         g->player.y = g->map.stairs_up_y;
     }
-    if (g->max_level_reached > MAX_DEPTH)
-        g->max_level_reached = MAX_DEPTH;
+    if (g->max_level_reached > DUNGEON_DEPTH)
+        g->max_level_reached = DUNGEON_DEPTH;
 
     if (save_version < 2) {
-        g->level_cache[MAX_DEPTH - 1].valid = 0;
-        if (g->location == LOCATION_DUNGEON && g->level == MAX_DEPTH) {
+        g->level_cache[DUNGEON_DEPTH - 1].valid = 0;
+        if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH) {
             g->floor_item_count = 0;
             map_generate(&g->map, g->level);
             enemies_spawn(g);
@@ -595,10 +600,10 @@ int load_game(GameState *g, int slot) {
     }
 
     if (save_version < 3) {
-        g->level_cache[MAX_DEPTH - 1].valid = 0;
+        g->level_cache[DUNGEON_DEPTH - 1].valid = 0;
         g->dungeon_key_found = 0;
         g->portal_active = 0;
-        if (g->location == LOCATION_DUNGEON && g->level == MAX_DEPTH) {
+        if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH) {
             g->floor_item_count = 0;
             map_generate(&g->map, g->level);
             enemies_spawn(g);
@@ -628,9 +633,9 @@ int load_game(GameState *g, int slot) {
     // Version 4 replaces the porous random boss room with a sealed arena,
     // guarantees a visible key, and gives the Lich dedicated encounter AI.
     if (save_version < 4) {
-        g->level_cache[MAX_DEPTH - 1].valid = 0;
+        g->level_cache[DUNGEON_DEPTH - 1].valid = 0;
         g->dungeon_key_found = 0;
-        if (g->location == LOCATION_DUNGEON && g->level == MAX_DEPTH) {
+        if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH) {
             g->floor_item_count = 0;
             map_generate(&g->map, g->level);
             enemies_spawn(g);
@@ -642,7 +647,7 @@ int load_game(GameState *g, int slot) {
 
     if (save_version < 5) {
         g->max_forest_level_reached = 1;
-        for (int i = 0; i < MAX_DEPTH; i++)
+        for (int i = 0; i < MAX_REGION_DEPTH; i++)
             g->forest_cache[i].valid = 0;
         g->portal_location = LOCATION_DUNGEON;
     }
@@ -650,7 +655,7 @@ int load_game(GameState *g, int slot) {
     // Version 6 replaces forest stairs with a west-to-east stage route.
     if (save_version < 6) {
         g->max_forest_level_reached = 1;
-        for (int i = 0; i < MAX_DEPTH; i++)
+        for (int i = 0; i < MAX_REGION_DEPTH; i++)
             g->forest_cache[i].valid = 0;
         if (g->portal_location == LOCATION_FOREST)
             g->portal_active = 0;
@@ -668,7 +673,7 @@ int load_game(GameState *g, int slot) {
     // Version 8 gives each forest level its own branching topology.
     if (save_version < 8) {
         g->max_forest_level_reached = 1;
-        for (int i = 0; i < MAX_DEPTH; i++)
+        for (int i = 0; i < MAX_REGION_DEPTH; i++)
             g->forest_cache[i].valid = 0;
         if (g->portal_location == LOCATION_FOREST)
             g->portal_active = 0;
@@ -685,7 +690,7 @@ int load_game(GameState *g, int slot) {
 
     if (save_version < 9) {
         g->max_mountain_level_reached = 1;
-        for (int i = 0; i < MAX_DEPTH; i++)
+        for (int i = 0; i < MAX_REGION_DEPTH; i++)
             g->mountain_cache[i].valid = 0;
         if (g->portal_location == LOCATION_MOUNTAINS)
             g->portal_active = 0;
@@ -696,7 +701,7 @@ int load_game(GameState *g, int slot) {
     if (save_version < 10) {
         g->max_forest_level_reached = 1;
         g->max_mountain_level_reached = 1;
-        for (int i = 0; i < MAX_DEPTH; i++) {
+        for (int i = 0; i < MAX_REGION_DEPTH; i++) {
             g->forest_cache[i].valid = 0;
             g->mountain_cache[i].valid = 0;
         }
@@ -720,15 +725,46 @@ int load_game(GameState *g, int slot) {
         }
     }
 
+    // Version 11 expands every current region from five to eight stages.
+    // Regenerate regional progress so former stage-five boss maps cannot be
+    // mistaken for the new finales. Character progression remains intact.
+    if (save_version < 11) {
+        g->max_level_reached = 1;
+        g->max_forest_level_reached = 1;
+        g->max_mountain_level_reached = 1;
+        for (int i = 0; i < MAX_REGION_DEPTH; i++) {
+            g->level_cache[i].valid = 0;
+            g->forest_cache[i].valid = 0;
+            g->mountain_cache[i].valid = 0;
+        }
+        g->portal_active = 0;
+        g->dungeon_key_found = 0;
+        if (g->location != LOCATION_TOWN) {
+            g->level = 1;
+            g->level_cleared = 0;
+            g->floor_item_count = 0;
+            if (g->location == LOCATION_FOREST) {
+                map_generate_forest(&g->map, g->level);
+            } else if (g->location == LOCATION_MOUNTAINS) {
+                map_generate_mountains(&g->map, g->level);
+            } else {
+                map_generate(&g->map, g->level);
+            }
+            enemies_spawn(g);
+            g->player.x = g->map.stairs_up_x;
+            g->player.y = g->map.stairs_up_y;
+        }
+    }
+
     // Floor five used to contain the Goblin King. Regenerate that legacy
     // floor so old saves receive the new undead finale.
     int legacy_finale = 0;
-    if (g->location == LOCATION_DUNGEON && g->level == MAX_DEPTH) {
+    if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH) {
         for (int i = 0; i < g->enemy_count; i++)
             if (g->enemies[i].type == ENEMY_GOBLIN_KING) legacy_finale = 1;
     }
     if (legacy_finale) {
-        g->level_cache[MAX_DEPTH - 1].valid = 0;
+        g->level_cache[DUNGEON_DEPTH - 1].valid = 0;
         g->floor_item_count = 0;
         map_generate(&g->map, g->level);
         enemies_spawn(g);
