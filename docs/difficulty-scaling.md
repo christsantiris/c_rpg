@@ -123,7 +123,7 @@ progress persists across future regions.
 
 ## Loot Progression
 
-Non-boss enemies have a 20% gold-drop chance and a separate 5% item-drop
+Non-boss enemies have a 25% gold-drop chance and a separate 5% item-drop
 chance:
 
 - Floors 1-3 emphasize potions and basic scrolls.

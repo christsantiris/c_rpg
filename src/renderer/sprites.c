@@ -59,6 +59,17 @@ void draw_forest_edge(Renderer *r, int tile_x, int tile_y, int forward) {
     fill_rect(r, x+8, y+11, 8, 3, glow);
 }
 
+void draw_forest_landmark(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_forest_floor(r, tile_x, tile_y);
+    fill_rect(r, x + 5, y + 17, 15, 5, (SDL_Color){45, 58, 48, 255});
+    fill_rect(r, x + 8, y + 5, 9, 14, (SDL_Color){84, 103, 91, 255});
+    fill_rect(r, x + 10, y + 2, 5, 5, (SDL_Color){109, 132, 113, 255});
+    fill_rect(r, x + 11, y + 8, 3, 7, (SDL_Color){94, 224, 126, 255});
+    fill_rect(r, x + 9, y + 10, 7, 3, (SDL_Color){94, 224, 126, 255});
+}
+
 void draw_mountain_floor(Renderer *r, int tile_x, int tile_y) {
     int x=tile_x*TILE_SIZE, y=tile_y*TILE_SIZE;
     fill_rect(r,x,y,TILE_SIZE,TILE_SIZE,(SDL_Color){20,12,15,255});

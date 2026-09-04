@@ -6,7 +6,7 @@ A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explo
 
 ## Table of Contents
 - [Overview](#overview)
-- [Screenshot](#screenshot)
+- [Screenshots](#screenshots)
 - [Building and Running](#building-and-running)
   - [Compile the Game](#compile-the-game)
   - [Run the Game](#run-the-game)
@@ -24,7 +24,7 @@ dungeon, an eight-stage Haunted Forest, the eight-stage Goblin Mountains, and
 the eight-stage Sunken Coast. Each adventure keeps its own generated maps and
 progression.
 
-## Screenshot
+## Screenshots
 Below are screenshots of the game in action:
 
 <img width="2542" height="1474" alt="image" src="https://github.com/user-attachments/assets/e0f3e8e4-159b-48c1-a1f7-e4f0c0903baa" />

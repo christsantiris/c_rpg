@@ -3,6 +3,8 @@
 The Haunted Forest is an eight-level adventure entered from the west end of the
 town crossroad. Its progress and generated floors are cached independently from
 the dungeon, so changing regions never erases progress in the other adventure.
+Unlike the rectangular dungeon, forest maps use rounded clearings connected by
+wide, wandering trails with loops and false branches.
 
 Unlike the dungeon, the forest has no stairs. The player enters through the
 opening on the left edge, then the entrance clearing splits into upper and
@@ -11,7 +13,9 @@ rejoin near the destination grove. Stage exits move between the east, north and
 south map edges so that every route is not a west-to-east crossing. Later
 stages can also begin at the north or south edge, changing the direction from
 which their branch structure is read. Stages 1-7 do not require every enemy to
-be defeated. The opening on stage 1 supports returning to town.
+be defeated. The opening on stage 1 supports returning to town. The onward exit
+begins concealed on every stage. Reaching the glowing ancient landmark reveals
+the exit; defeating every regular enemy is not required.
 
 | Level | Region | Layout | Roster |
 | --- | --- | --- | --- |

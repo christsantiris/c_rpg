@@ -222,7 +222,43 @@ static const ForestTemplate forest_templates[FOREST_DEPTH] = {
         {{0,1},{0,2},{1,3},{2,4},{3,5},{4,6},{3,4},{5,7},{6,8},{7,9},{8,9}}}
 };
 
-static void map_generate_outdoor(Map *m, int level, OutdoorSide entrance_side, OutdoorSide exit_side) {
+static void carve_forest_trail(Map *m, int x, int y, int target_x, int target_y) {
+    int horizontal = rand() % 2;
+    while (x != target_x || y != target_y) {
+        fill_rect(m, x - 1, y - 1, 3, 3, TILE_FOREST_FLOOR);
+        if ((horizontal && x != target_x) || y == target_y) {
+            x += target_x > x ? 1 : -1;
+        } else {
+            y += target_y > y ? 1 : -1;
+        }
+        if (rand() % 5 == 0) {
+            horizontal = !horizontal;
+        }
+    }
+    fill_rect(m, x - 1, y - 1, 3, 3, TILE_FOREST_FLOOR);
+}
+
+static void carve_forest_clearing(Map *m, Room *room) {
+    int center_x;
+    int center_y;
+    map_room_center(room, &center_x, &center_y);
+    int radius_x = room->w / 2;
+    int radius_y = room->h / 2;
+    for (int y = room->y; y < room->y + room->h; y++) {
+        for (int x = room->x; x < room->x + room->w; x++) {
+            int dx = x - center_x;
+            int dy = y - center_y;
+            int inside = dx * dx * radius_y * radius_y +
+                dy * dy * radius_x * radius_x <=
+                radius_x * radius_x * radius_y * radius_y;
+            if (inside) {
+                m->tiles[y][x] = TILE_FOREST_FLOOR;
+            }
+        }
+    }
+}
+
+static void map_generate_outdoor(Map *m, int level, OutdoorSide entrance_side, OutdoorSide exit_side, int organic) {
     for (int y = 0; y < MAP_H; y++)
         for (int x = 0; x < MAP_W; x++)
             m->tiles[y][x] = TILE_FOREST_WALL;
@@ -238,7 +274,11 @@ static void map_generate_outdoor(Map *m, int level, OutdoorSide entrance_side, O
         r.h = random_range(8, 13);
         r.x = layout->x[i] + random_range(-3, 3);
         r.y = layout->y[i] + random_range(-3, 3);
-        fill_rect(m, r.x, r.y, r.w, r.h, TILE_FOREST_FLOOR);
+        if (organic) {
+            carve_forest_clearing(m, &r);
+        } else {
+            fill_rect(m, r.x, r.y, r.w, r.h, TILE_FOREST_FLOOR);
+        }
         m->rooms[i] = r;
     }
 
@@ -246,7 +286,11 @@ static void map_generate_outdoor(Map *m, int level, OutdoorSide entrance_side, O
         int ax, ay, bx, by;
         map_room_center(&m->rooms[layout->edges[i][0]], &ax, &ay);
         map_room_center(&m->rooms[layout->edges[i][1]], &bx, &by);
-        carve_corridor(m, ax, ay, bx, by);
+        if (organic) {
+            carve_forest_trail(m, ax, ay, bx, by);
+        } else {
+            carve_corridor(m, ax, ay, bx, by);
+        }
     }
     for (int y = 0; y < MAP_H; y++)
         for (int x = 0; x < MAP_W; x++)
@@ -353,7 +397,22 @@ void map_generate_forest(Map *m, int level) {
     if (index >= FOREST_DEPTH) {
         index = FOREST_DEPTH - 1;
     }
-    map_generate_outdoor(m, level, entrances[index], exits[index]);
+    map_generate_outdoor(m, level, entrances[index], exits[index], 1);
+    int landmark_room = level == FOREST_DEPTH ? m->room_count - 2 :
+        m->room_count - 1;
+    int landmark_x;
+    int landmark_y;
+    map_room_center(&m->rooms[landmark_room], &landmark_x, &landmark_y);
+    m->tiles[landmark_y][landmark_x] = TILE_FOREST_LANDMARK;
+    if (m->stairs_down_x == 1) {
+        m->tiles[m->stairs_down_y][0] = TILE_FOREST_WALL;
+    } else if (m->stairs_down_x == MAP_W - 2) {
+        m->tiles[m->stairs_down_y][MAP_W - 1] = TILE_FOREST_WALL;
+    } else if (m->stairs_down_y == 1) {
+        m->tiles[0][m->stairs_down_x] = TILE_FOREST_WALL;
+    } else {
+        m->tiles[MAP_H - 1][m->stairs_down_x] = TILE_FOREST_WALL;
+    }
 }
 
 void map_generate_mountains(Map *m, int level) {
@@ -386,7 +445,7 @@ void map_generate_mountains(Map *m, int level) {
     if (index >= MOUNTAIN_DEPTH) {
         index = MOUNTAIN_DEPTH - 1;
     }
-    map_generate_outdoor(m, level, entrances[index], exits[index]);
+    map_generate_outdoor(m, level, entrances[index], exits[index], 0);
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
             if (m->tiles[y][x] == TILE_FOREST_FLOOR)
@@ -419,7 +478,7 @@ void map_generate_coast(Map *m, int level) {
     if (index >= COAST_DEPTH) {
         index = COAST_DEPTH - 1;
     }
-    map_generate_outdoor(m, level, entrances[index], exits[index]);
+    map_generate_outdoor(m, level, entrances[index], exits[index], 0);
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
             if (m->tiles[y][x] == TILE_FOREST_FLOOR) {

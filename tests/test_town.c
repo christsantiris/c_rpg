@@ -74,6 +74,20 @@ static int outdoor_entrance_is_on_side(const Map *m, TileType entrance_tile, int
     return m->tiles[MAP_H - 1][m->stairs_up_x] == entrance_tile;
 }
 
+static void reveal_forest_exit(GameState *g) {
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (g->map.tiles[y][x] == TILE_FOREST_LANDMARK) {
+                g->player.x = x;
+                g->player.y = y;
+                Action discover = {ACTION_MOVE, x, y};
+                action_resolve_player(g, discover);
+                return;
+            }
+        }
+    }
+}
+
 void test_town_tiles(void) {
     printf("Town tile tests:\n");
 
@@ -146,8 +160,8 @@ void test_forest(void) {
     ASSERT("forest begins just inside west edge", g.player.x == 1);
     ASSERT("forest has west entrance",
         g.map.tiles[g.map.stairs_up_y][0] == TILE_FOREST_ENTRANCE);
-    ASSERT("forest has east stage exit",
-        g.map.tiles[g.map.stairs_down_y][MAP_W - 1] == TILE_FOREST_EXIT);
+    ASSERT("forest exit begins hidden",
+        g.map.tiles[g.map.stairs_down_y][MAP_W - 1] == TILE_FOREST_WALL);
     ASSERT("forest generation includes branching clearings",
         g.map.room_count == 7);
     ASSERT("lower route reaches exit when upper route is blocked",
@@ -162,6 +176,9 @@ void test_forest(void) {
                 break;
             }
     ASSERT("forest contains forest floor tiles", forest_terrain);
+    reveal_forest_exit(&g);
+    ASSERT("forest landmark reveals east stage exit",
+        g.map.tiles[g.map.stairs_down_y][MAP_W - 1] == TILE_FOREST_EXIT);
 
     int pickup_x = g.player.x;
     int pickup_y = g.player.y;
@@ -222,6 +239,7 @@ void test_forest(void) {
         ASSERT("forest levels vary their entrance edge",
             outdoor_entrance_is_on_side(&g.map, TILE_FOREST_ENTRANCE,
                 expected_entrances[level - 1]));
+        reveal_forest_exit(&g);
         ASSERT("forest levels vary their exit edge",
             outdoor_exit_is_on_side(&g.map, TILE_FOREST_EXIT,
                 expected_exits[level - 1]));
@@ -265,6 +283,7 @@ void test_forest(void) {
     g.level = FOREST_DEPTH;
     map_generate_forest(&g.map, g.level);
     enemies_spawn(&g);
+    reveal_forest_exit(&g);
     g.player.x = MAP_W - 2;
     g.player.y = g.map.stairs_down_y;
     east = (Action){ACTION_MOVE, MAP_W - 1, g.player.y};
