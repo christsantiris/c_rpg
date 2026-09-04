@@ -26,7 +26,7 @@ Each adventure keeps its own generated maps and progression.
 ## Screenshot
 Below are screenshots of the game in action:
 
-<img width="2566" height="1420" alt="image" src="https://github.com/user-attachments/assets/4e30e7fe-69da-4e80-8fdc-885a43638691" />
+<img width="2542" height="1474" alt="image" src="https://github.com/user-attachments/assets/e0f3e8e4-159b-48c1-a1f7-e4f0c0903baa" />
 
 <img width="2566" height="1420" alt="image" src="https://github.com/user-attachments/assets/a557eecb-4453-466d-ab67-c78083a3fbd1" />
 
