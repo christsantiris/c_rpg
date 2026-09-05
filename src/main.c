@@ -597,7 +597,13 @@ int main(int argc, char **argv) {
                                 int found = 0;
                                 for (int dy = -1; dy <= 1 && !found; dy++) {
                                     for (int dx = -1; dx <= 1 && !found; dx++) {
-                                        TileType t = game.map.tiles[py+dy][px+dx];
+                                        int tx = px + dx;
+                                        int ty = py + dy;
+                                        if (tx < 0 || tx >= MAP_W ||
+                                            ty < 0 || ty >= MAP_H) {
+                                            continue;
+                                        }
+                                        TileType t = game.map.tiles[ty][tx];
                                         if (t == TILE_SHOP_ALCHEMIST) {
                                             shop_init(&shop_screen,
                                                 SHOP_TYPE_ALCHEMIST);
@@ -612,8 +618,34 @@ int main(int argc, char **argv) {
                                         }
                                     }
                                 }
-                                if (!found)
-                                    push_message(&game, "No shop nearby");
+                                if (!found) {
+                                    push_message(&game, "No shop nearby.");
+                                }
+                                break;
+                            }
+                            case SDL_SCANCODE_T: {
+                                int px = game.player.x;
+                                int py = game.player.y;
+                                int found = 0;
+                                for (int dy = -1; dy <= 1 && !found; dy++) {
+                                    for (int dx = -1; dx <= 1 && !found; dx++) {
+                                        int tx = px + dx;
+                                        int ty = py + dy;
+                                        if (tx < 0 || tx >= MAP_W ||
+                                            ty < 0 || ty >= MAP_H) {
+                                            continue;
+                                        }
+                                        if (game.map.tiles[ty][tx] ==
+                                            TILE_NPC_ELOWEN) {
+                                            game_talk_to_elowen(&game);
+                                            found = 1;
+                                        }
+                                    }
+                                }
+                                if (!found) {
+                                    push_message(&game,
+                                        "No one to speak with nearby.");
+                                }
                                 break;
                             }
                             default: break;
@@ -629,6 +661,8 @@ int main(int argc, char **argv) {
                                 target == TILE_MOUNTAIN_EXIT ||
                                 target == TILE_COAST_ENTRANCE ||
                                 target == TILE_COAST_EXIT ||
+                                target == TILE_TAVERN_DOOR ||
+                                target == TILE_TAVERN_EXIT ||
                                 target == TILE_RETURN_EXIT) {
                                 a.type = ACTION_NONE;
                             }
@@ -840,7 +874,8 @@ int main(int argc, char **argv) {
         // ── Rendering ─────────────────────────────────────────────────────
         renderer_begin_frame(&renderer);
         // Update music based on screen and location
-        int is_town = (game.location == LOCATION_TOWN);
+        int is_town = game.location == LOCATION_TOWN ||
+            game.location == LOCATION_TAVERN;
         music_update(screen, is_town);
 
         if (screen == SCREEN_LANDING) {

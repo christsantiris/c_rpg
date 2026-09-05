@@ -50,6 +50,25 @@ void test_items(void) {
     ASSERT("weapon equipped",               g.equipped_weapon == 0);
     ASSERT("attack increased after equip",  g.player.attack == base_attack + 6);
 
+    // --- Switching one-handed weapons ---
+    game_init(&g);
+    base_attack = g.player.attack;
+    g.inventory[g.inventory_count++] = item_make_short_sword();
+    Action equip_starting_rusty = {ACTION_EQUIP_ITEM, 0, 0};
+    action_resolve_player(&g, equip_starting_rusty);
+    Action equip_short = {ACTION_EQUIP_ITEM, g.inventory_count - 1, 0};
+    action_resolve_player(&g, equip_short);
+    ASSERT("short sword replaces rusty sword in the weapon slot",
+        g.equipped_weapon == g.inventory_count - 1);
+    ASSERT("switching weapons applies only the short sword bonus",
+        g.player.attack == base_attack + 3);
+    Action equip_rusty = {ACTION_EQUIP_ITEM, 0, 0};
+    action_resolve_player(&g, equip_rusty);
+    ASSERT("rusty sword replaces short sword in the weapon slot",
+        g.equipped_weapon == 0);
+    ASSERT("switching back applies only the rusty sword bonus",
+        g.player.attack == base_attack + 1);
+
     // --- Equip armor ---
     game_init(&g);
     g.inventory[0] = armor;
@@ -59,6 +78,47 @@ void test_items(void) {
     action_resolve_player(&g, equip_arm);
     ASSERT("armor equipped",                g.equipped_armor == 0);
     ASSERT("defense increased after equip", g.player.defense == base_defense + 2);
+
+    // --- Equipped indices survive consumption ---
+    game_init(&g);
+    g.inventory[0] = hp_potion;
+    g.inventory[1] = item_make_rusty_sword();
+    g.inventory[2] = armor;
+    g.inventory_count = 3;
+    g.equipped_weapon = -1;
+    g.equipped_armor = -1;
+    Action equip_shift_weapon = {ACTION_EQUIP_ITEM, 1, 0};
+    Action equip_shift_armor = {ACTION_EQUIP_ITEM, 2, 0};
+    action_resolve_player(&g, equip_shift_weapon);
+    action_resolve_player(&g, equip_shift_armor);
+    g.player.hp--;
+    Action consume_first = {ACTION_USE_ITEM, 0, 0};
+    action_resolve_player(&g, consume_first);
+    ASSERT("consuming an earlier item shifts equipped weapon index",
+        g.equipped_weapon == 0 &&
+        g.inventory[g.equipped_weapon].type == ITEM_WEAPON);
+    ASSERT("consuming an earlier item shifts equipped armor index",
+        g.equipped_armor == 1 &&
+        g.inventory[g.equipped_armor].type == ITEM_ARMOR);
+
+    // --- Pickup cannot occupy a stale equipment index ---
+    game_init(&g);
+    Action equip_initial_weapon = {ACTION_EQUIP_ITEM, 0, 0};
+    action_resolve_player(&g, equip_initial_weapon);
+    g.equipped_weapon = g.inventory_count;
+    g.floor_item_count = 1;
+    g.floor_items[0] = (FloorItem){0};
+    g.floor_items[0].active = 1;
+    g.floor_items[0].x = g.player.x;
+    g.floor_items[0].y = g.player.y;
+    g.floor_items[0].underlying_tile = TILE_TOWN_FLOOR;
+    g.floor_items[0].item = item_make_short_sword();
+    g.map.tiles[g.player.y][g.player.x] = TILE_ITEM;
+    Action pick_up_sword = {ACTION_PICK_UP, 0, 0};
+    action_resolve_player(&g, pick_up_sword);
+    ASSERT("picking up a sword does not auto-equip it",
+        g.equipped_weapon == 0 &&
+        g.inventory[g.inventory_count - 1].type == ITEM_WEAPON);
 
     // --- Inventory full ---
     game_init(&g);

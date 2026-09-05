@@ -282,6 +282,31 @@ void draw_return_exit(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 9, y + 7, 6, 12, core);
 }
 
+void draw_broken_burial_seal(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_floor(r, tile_x, tile_y);
+    fill_rect(r, x + 3, y + 3, 18, 18, (SDL_Color){42, 38, 52, 255});
+    fill_rect(r, x + 5, y + 5, 14, 14, (SDL_Color){91, 83, 99, 255});
+    fill_rect(r, x + 8, y + 8, 8, 8, (SDL_Color){54, 46, 67, 255});
+    fill_rect(r, x + 11, y + 5, 2, 6, (SDL_Color){185, 55, 192, 255});
+    fill_rect(r, x + 8, y + 10, 5, 2, (SDL_Color){185, 55, 192, 255});
+    fill_rect(r, x + 12, y + 11, 2, 8, (SDL_Color){28, 24, 36, 255});
+    fill_rect(r, x + 14, y + 14, 5, 2, (SDL_Color){28, 24, 36, 255});
+}
+
+void draw_restored_burial_seal(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_floor(r, tile_x, tile_y);
+    fill_rect(r, x + 3, y + 3, 18, 18, (SDL_Color){63, 59, 66, 255});
+    fill_rect(r, x + 5, y + 5, 14, 14, (SDL_Color){118, 111, 112, 255});
+    fill_rect(r, x + 8, y + 8, 8, 8, (SDL_Color){72, 67, 72, 255});
+    fill_rect(r, x + 11, y + 6, 2, 12, (SDL_Color){226, 191, 82, 255});
+    fill_rect(r, x + 7, y + 11, 10, 2, (SDL_Color){246, 220, 126, 255});
+    fill_rect(r, x + 10, y + 10, 4, 4, (SDL_Color){255, 236, 158, 255});
+}
+
 void draw_locked_door(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
@@ -798,6 +823,68 @@ void draw_town_floor(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x+12, y+4,  2,           2,           dot);
 }
 
+void draw_tavern_floor(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color oak = {77, 45, 27, 255};
+    SDL_Color plank = {102, 59, 31, 255};
+    SDL_Color seam = {44, 27, 20, 255};
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, oak);
+    fill_rect(r, x, y + 2, TILE_SIZE, 9, plank);
+    fill_rect(r, x, y + 13, TILE_SIZE, 9, plank);
+    fill_rect(r, x, y + 11, TILE_SIZE, 2, seam);
+    fill_rect(r, x + 7, y + 2, 2, 9, seam);
+    fill_rect(r, x + 17, y + 13, 2, 9, seam);
+}
+
+void draw_tavern_wall(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color timber = {50, 29, 22, 255};
+    SDL_Color plaster = {122, 84, 52, 255};
+    SDL_Color highlight = {152, 105, 62, 255};
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, timber);
+    fill_rect(r, x + 3, y + 3, 18, 18, plaster);
+    fill_rect(r, x + 3, y + 3, 18, 3, highlight);
+    fill_rect(r, x + 10, y + 3, 4, 18, timber);
+}
+
+void draw_tavern_exit(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_tavern_floor(r, tile_x, tile_y);
+    fill_rect(r, x + 3, y, 18, 5, (SDL_Color){38, 23, 18, 255});
+    fill_rect(r, x + 5, y + 5, 14, 15, (SDL_Color){92, 50, 27, 255});
+    fill_rect(r, x + 8, y + 18, 8, 4, (SDL_Color){151, 46, 34, 255});
+    fill_rect(r, x + 16, y + 11, 2, 2, (SDL_Color){235, 186, 70, 255});
+}
+
+void draw_tavern_table(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_tavern_floor(r, tile_x, tile_y);
+    fill_rect(r, x + 2, y + 5, 20, 14, (SDL_Color){48, 27, 18, 255});
+    fill_rect(r, x + 3, y + 3, 18, 13, (SDL_Color){119, 67, 32, 255});
+    fill_rect(r, x + 4, y + 4, 16, 3, (SDL_Color){157, 91, 42, 255});
+    fill_rect(r, x + 7, y + 16, 3, 6, (SDL_Color){59, 34, 22, 255});
+    fill_rect(r, x + 15, y + 16, 3, 6, (SDL_Color){59, 34, 22, 255});
+}
+
+void draw_elowen(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_tavern_floor(r, tile_x, tile_y);
+    fill_rect(r, x + 6, y + 3, 12, 7, (SDL_Color){225, 216, 190, 255});
+    fill_rect(r, x + 8, y + 7, 8, 6, (SDL_Color){202, 154, 119, 255});
+    fill_rect(r, x + 6, y + 12, 12, 10, (SDL_Color){48, 76, 132, 255});
+    fill_rect(r, x + 4, y + 13, 3, 8, (SDL_Color){67, 101, 165, 255});
+    fill_rect(r, x + 17, y + 13, 3, 8, (SDL_Color){67, 101, 165, 255});
+    fill_rect(r, x + 10, y + 9, 2, 2, (SDL_Color){44, 37, 51, 255});
+    fill_rect(r, x + 14, y + 9, 2, 2, (SDL_Color){44, 37, 51, 255});
+    fill_rect(r, x + 20, y + 4, 2, 18, (SDL_Color){94, 61, 38, 255});
+    fill_rect(r, x + 18, y + 3, 6, 3, (SDL_Color){112, 194, 210, 255});
+}
+
 void draw_town_path(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
@@ -1057,6 +1144,13 @@ void draw_tavern(Renderer *r, int tile_x, int tile_y) {
         fill_rect(r, x + window_x, y + 79, 22, 3, timber);
         fill_rect(r, x + window_x + 3, y + 74, 5, 4, glow);
     }
+
+    // Elowen waits inside the left window in a pale hood and blue robes.
+    fill_rect(r, x + 32, y + 72, 12, 5, (SDL_Color){224, 216, 190, 255});
+    fill_rect(r, x + 34, y + 76, 8, 5, (SDL_Color){201, 154, 119, 255});
+    fill_rect(r, x + 31, y + 81, 14, 8, (SDL_Color){52, 81, 135, 255});
+    fill_rect(r, x + 36, y + 78, 2, 2, (SDL_Color){45, 38, 55, 255});
+    fill_rect(r, x + 40, y + 78, 2, 2, (SDL_Color){45, 38, 55, 255});
 
     // Central oak door with an iron handle and lit transom.
     fill_rect(r, x + 68, y + 65, 34, 49, outline);

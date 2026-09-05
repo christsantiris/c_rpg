@@ -42,6 +42,8 @@ void info_panel_draw(Renderer *r, const GameState *g) {
     char loc[24];
     if (g->location == LOCATION_TOWN) {
         SDL_snprintf(loc, sizeof(loc), "TOWN");
+    } else if (g->location == LOCATION_TAVERN) {
+        SDL_snprintf(loc, sizeof(loc), "TAVERN");
     } else if (g->location == LOCATION_FOREST) {
         SDL_snprintf(loc, sizeof(loc), "FOREST %d", g->level);
     } else if (g->location == LOCATION_MOUNTAINS) {
@@ -157,6 +159,7 @@ void info_panel_draw(Renderer *r, const GameState *g) {
     renderer_draw_text(r, "B     SPELLS",  x, y + lh*5, hint, r->font_tiny);
     renderer_draw_text(r, "C     CAST",    x, y + lh*6, hint, r->font_tiny);
     renderer_draw_text(r, "F     FIRE",    x, y + lh*7, hint, r->font_tiny);
-    renderer_draw_text(r, "ESC   MENU",    x, y + lh*8, hint, r->font_tiny);
+    renderer_draw_text(r, "T     TALK",    x, y + lh*8, hint, r->font_tiny);
+    renderer_draw_text(r, "ESC   MENU",    x, y + lh*9, hint, r->font_tiny);
 
 }

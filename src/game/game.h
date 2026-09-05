@@ -11,6 +11,8 @@
 
 #define MAX_MESSAGES 3
 #define MAX_MESSAGE_LEN 40
+#define MAX_DIALOGUE_LEN 192
+#define MAX_SPEAKER_LEN 24
 
 #define MAX_TRAIL 16
 
@@ -62,7 +64,8 @@ typedef enum {
     LOCATION_DUNGEON,
     LOCATION_FOREST,
     LOCATION_MOUNTAINS,
-    LOCATION_COAST
+    LOCATION_COAST,
+    LOCATION_TAVERN
 } Location;
 
 typedef struct {
@@ -102,6 +105,12 @@ typedef struct {
     Location portal_location;
     int portal_x, portal_y;
     TileType portal_origin_tile;
+    int defeated_bosses;
+    int elowen_quest_state;
+    int elowen_seals_restored;
+    int dialogue_active;
+    char dialogue_speaker[MAX_SPEAKER_LEN];
+    char dialogue_text[MAX_DIALOGUE_LEN];
 } GameState;
 
 void game_init(GameState *g);
@@ -113,6 +122,8 @@ void game_enter_dungeon(GameState *g);
 void game_enter_forest(GameState *g);
 void game_enter_mountains(GameState *g);
 void game_enter_coast(GameState *g);
+void game_enter_tavern(GameState *g);
+void game_leave_tavern(GameState *g);
 
 void action_resolve_player(GameState *g, Action a);
 void action_resolve_enemies(GameState *g);
@@ -125,5 +136,7 @@ void game_update_level_progress(GameState *g);
 void game_return_to_town(GameState *g);
 void game_open_town_portal(GameState *g);
 void game_use_town_portal(GameState *g);
+void game_talk_to_elowen(GameState *g);
+void game_repair_equipment_indices(GameState *g);
 
 #endif

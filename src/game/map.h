@@ -59,7 +59,15 @@ typedef enum {
     TILE_MOUNTAIN_FORTRESS_FLOOR,
     TILE_COAST_SHALLOW_WATER,
     TILE_COAST_DEEP_WATER,
-    TILE_COAST_TIDE_CONTROL
+    TILE_COAST_TIDE_CONTROL,
+    TILE_BROKEN_BURIAL_SEAL,
+    TILE_RESTORED_BURIAL_SEAL,
+    TILE_TAVERN_DOOR,
+    TILE_TAVERN_FLOOR,
+    TILE_TAVERN_WALL,
+    TILE_TAVERN_EXIT,
+    TILE_TAVERN_TABLE,
+    TILE_NPC_ELOWEN
 } TileType;
 
 typedef struct {
@@ -78,6 +86,7 @@ void map_generate(Map *m, int level);
 int  map_is_walkable(const Map *m, int x, int y);
 void map_room_center(const Room *r, int *cx, int *cy);
 void map_generate_town(Map *m, int *spawn_x, int *spawn_y);
+void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_forest(Map *m, int level);
 void map_generate_mountains(Map *m, int level);
 void map_generate_coast(Map *m, int level);
