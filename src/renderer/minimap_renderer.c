@@ -12,7 +12,8 @@ void minimap_draw(Renderer *r, const GameState *g) {
     if (g->location != LOCATION_DUNGEON &&
         g->location != LOCATION_FOREST &&
         g->location != LOCATION_MOUNTAINS &&
-        g->location != LOCATION_COAST) {
+        g->location != LOCATION_COAST &&
+        g->location != LOCATION_TAVERN) {
         return;
     }
 
@@ -48,15 +49,20 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_PORTAL || tile == TILE_FOREST_ENTRANCE ||
                         tile == TILE_FOREST_EXIT || tile == TILE_MOUNTAIN_ENTRANCE ||
                         tile == TILE_MOUNTAIN_EXIT || tile == TILE_COAST_ENTRANCE ||
-                        tile == TILE_COAST_EXIT) {
+                        tile == TILE_COAST_EXIT || tile == TILE_TAVERN_EXIT ||
+                        tile == TILE_NPC_ELOWEN) {
                         has_stair = 1;
                     } else if (tile == TILE_FOREST_LANDMARK) {
+                        has_stair = 1;
+                    } else if (tile == TILE_BROKEN_BURIAL_SEAL) {
                         has_stair = 1;
                     } else if (tile != TILE_WALL &&
                         tile != TILE_FOREST_WALL &&
                         tile != TILE_MOUNTAIN_WALL &&
                         tile != TILE_COAST_WALL &&
                         tile != TILE_COAST_DEEP_WATER &&
+                        tile != TILE_TAVERN_WALL &&
+                        tile != TILE_TAVERN_TABLE &&
                         tile != TILE_LOCKED_DOOR) {
                         has_floor = 1;
                     }
@@ -73,6 +79,8 @@ void minimap_draw(Renderer *r, const GameState *g) {
                     SDL_SetRenderDrawColor(r->sdl, 125, 42, 32, 255);
                 else if (g->location == LOCATION_COAST)
                     SDL_SetRenderDrawColor(r->sdl, 35, 125, 145, 255);
+                else if (g->location == LOCATION_TAVERN)
+                    SDL_SetRenderDrawColor(r->sdl, 135, 78, 39, 255);
                 else
                     SDL_SetRenderDrawColor(r->sdl, 70, 70, 100, 255);
                 SDL_RenderDrawPoint(r->sdl, draw_x, draw_y);

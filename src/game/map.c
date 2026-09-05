@@ -179,13 +179,18 @@ void map_generate(Map *m, int level) {
 }
 
 int map_is_walkable(const Map *m, int x, int y) {
-    if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) return 0;
+    if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
+        return 0;
+    }
     return m->tiles[y][x] != TILE_WALL &&
         m->tiles[y][x] != TILE_FOREST_WALL &&
         m->tiles[y][x] != TILE_MOUNTAIN_WALL &&
         m->tiles[y][x] != TILE_COAST_WALL &&
         m->tiles[y][x] != TILE_COAST_DEEP_WATER &&
         m->tiles[y][x] != TILE_TAVERN &&
+        m->tiles[y][x] != TILE_TAVERN_WALL &&
+        m->tiles[y][x] != TILE_TAVERN_TABLE &&
+        m->tiles[y][x] != TILE_NPC_ELOWEN &&
         m->tiles[y][x] != TILE_LOCKED_DOOR;
 }
 
@@ -614,16 +619,59 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
         for (int dx = 0; dx < 5; dx++)
             m->tiles[7 + dy][28 + dx] = TILE_SHOP_ALCHEMIST;
 
-    // Tavern at (5, 16) — 7x5 tiles. It remains decorative until quests and
-    // NPC interaction are added.
+    // Tavern at (5, 16) — 7x5 tiles.
     for (int dy = 0; dy < 5; dy++) {
         for (int dx = 0; dx < 7; dx++) {
             m->tiles[16 + dy][5 + dx] = TILE_TAVERN;
         }
     }
+    m->tiles[20][8] = TILE_TAVERN_DOOR;
 
     // Spawn at the central crossroads so the south road remains unobstructed
     // for a future region.
     *spawn_x = 20;
     *spawn_y = 12;
+}
+
+void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y) {
+    m->room_count = 0;
+
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            m->tiles[y][x] = TILE_WALL;
+        }
+    }
+
+    for (int y = 2; y <= 22; y++) {
+        for (int x = 4; x <= 35; x++) {
+            int boundary = x == 4 || x == 35 || y == 2 || y == 22;
+            m->tiles[y][x] = boundary ? TILE_TAVERN_WALL : TILE_TAVERN_FLOOR;
+        }
+    }
+
+    // Bar and dining furniture create navigable pockets without blocking the
+    // route between Elowen and the exit.
+    for (int x = 25; x <= 32; x++) {
+        m->tiles[7][x] = TILE_TAVERN_TABLE;
+    }
+    for (int y = 11; y <= 13; y += 2) {
+        for (int x = 9; x <= 11; x++) {
+            m->tiles[y][x] = TILE_TAVERN_TABLE;
+        }
+        for (int x = 17; x <= 19; x++) {
+            m->tiles[y][x] = TILE_TAVERN_TABLE;
+        }
+        for (int x = 27; x <= 29; x++) {
+            m->tiles[y][x] = TILE_TAVERN_TABLE;
+        }
+    }
+
+    m->tiles[7][10] = TILE_NPC_ELOWEN;
+    m->tiles[22][20] = TILE_TAVERN_EXIT;
+    *spawn_x = 20;
+    *spawn_y = 21;
+    m->stairs_up_x = *spawn_x;
+    m->stairs_up_y = *spawn_y;
+    m->stairs_down_x = 20;
+    m->stairs_down_y = 22;
 }

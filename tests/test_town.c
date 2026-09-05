@@ -131,9 +131,13 @@ void test_town_map(void) {
     ASSERT("alchemist at (28,7)",
         m.tiles[7][28] == TILE_SHOP_ALCHEMIST);
     ASSERT("tavern occupies southwest town lot",
-        m.tiles[16][5] == TILE_TAVERN && m.tiles[20][11] == TILE_TAVERN);
-    ASSERT("tavern is not walkable before interiors are implemented",
+        m.tiles[16][5] == TILE_TAVERN &&
+        m.tiles[20][8] == TILE_TAVERN_DOOR &&
+        m.tiles[20][11] == TILE_TAVERN);
+    ASSERT("tavern facade remains solid away from its door",
         !map_is_walkable(&m, 5, 16));
+    ASSERT("tavern doorway is walkable",
+        map_is_walkable(&m, 8, 20));
 
     // Path tiles exist
     ASSERT("vertical path at center",

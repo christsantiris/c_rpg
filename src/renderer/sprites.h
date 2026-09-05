@@ -30,6 +30,8 @@ void draw_return_exit(Renderer *r, int tile_x, int tile_y);
 void draw_locked_door(Renderer *r, int tile_x, int tile_y);
 void draw_dungeon_key(Renderer *r, int tile_x, int tile_y);
 void draw_portal(Renderer *r, int tile_x, int tile_y);
+void draw_broken_burial_seal(Renderer *r, int tile_x, int tile_y);
+void draw_restored_burial_seal(Renderer *r, int tile_x, int tile_y);
 
 // Enemey draw functions
 void draw_skeleton(Renderer *r, int tile_x, int tile_y);
@@ -63,6 +65,11 @@ void draw_town_exit(Renderer *r, int tile_x, int tile_y, TownExitStyle style, in
 void draw_shop_blacksmith(Renderer *r, int tile_x, int tile_y);
 void draw_shop_alchemist(Renderer *r, int tile_x, int tile_y);
 void draw_tavern(Renderer *r, int tile_x, int tile_y);
+void draw_tavern_floor(Renderer *r, int tile_x, int tile_y);
+void draw_tavern_wall(Renderer *r, int tile_x, int tile_y);
+void draw_tavern_exit(Renderer *r, int tile_x, int tile_y);
+void draw_tavern_table(Renderer *r, int tile_x, int tile_y);
+void draw_elowen(Renderer *r, int tile_x, int tile_y);
 
 void draw_floor_item(Renderer *r, int tile_x, int tile_y);
 void draw_floor_gold(Renderer *r, int tile_x, int tile_y);

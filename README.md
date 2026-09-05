@@ -112,9 +112,9 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 - Install as a desktop app: `./install.sh` — adds the game to your app launcher with a double-clickable icon
 
 ## Roadmap
-- Difficulty scaling
 - Quests
 - NPCs
 - Signing the app with codesign and submit to Apple with xcrun notarytool
 - windows installer
 - fix linux installer icon not showing
+- Only display explored terrain on the minimap.
