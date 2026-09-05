@@ -96,6 +96,9 @@ static int enemy_score(EnemyType type) {
 }
 
 static void drop_loot(GameState *g, int x, int y, EnemyType type, int is_boss) {
+    if (is_boss) {
+        g->defeated_bosses |= 1 << g->location;
+    }
     int gold = 0;
     switch (type) {
         case ENEMY_SKELETON: gold = 2 + rand() % 4;  break;
@@ -248,7 +251,10 @@ static void set_trail(GameState *g, int sx, int sy,
 }
 
 void action_resolve_player(GameState *g, Action a) {
-    if (a.type == ACTION_NONE) return;
+    game_repair_equipment_indices(g);
+    if (a.type == ACTION_NONE) {
+        return;
+    }
 
     if (a.type == ACTION_DESCEND) {
         TileType tile = g->map.tiles[g->player.y][g->player.x];
@@ -284,6 +290,23 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_PICK_UP) {
+        if (g->map.tiles[g->player.y][g->player.x] ==
+            TILE_BROKEN_BURIAL_SEAL) {
+            if (g->elowen_quest_state != 1) {
+                push_message(g, "A shattered burial seal lies here.");
+                return;
+            }
+            int seal_index = g->level == 2 ? 0 : (g->level == 4 ? 1 : 2);
+            g->elowen_seals_restored |= 1 << seal_index;
+            g->map.tiles[g->player.y][g->player.x] =
+                TILE_RESTORED_BURIAL_SEAL;
+            push_message(g, "Burial seal restored.");
+            if ((g->elowen_seals_restored & 7) == 7) {
+                g->elowen_quest_state = 2;
+                push_message(g, "All seals restored. Return to Elowen.");
+            }
+            return;
+        }
         if (g->map.tiles[g->player.y][g->player.x] == TILE_DUNGEON_KEY) {
             g->dungeon_key_found = 1;
             g->map.tiles[g->player.y][g->player.x] = TILE_FLOOR;
@@ -360,9 +383,16 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
         // Remove item from inventory
-        for (int i = idx; i < g->inventory_count - 1; i++)
+        for (int i = idx; i < g->inventory_count - 1; i++) {
             g->inventory[i] = g->inventory[i + 1];
+        }
         g->inventory_count--;
+        if (g->equipped_weapon > idx) {
+            g->equipped_weapon--;
+        }
+        if (g->equipped_armor > idx) {
+            g->equipped_armor--;
+        }
         return;
     }
 
@@ -373,17 +403,25 @@ void action_resolve_player(GameState *g, Action a) {
         char msg[MAX_MESSAGE_LEN];
 
         if (item->type == ITEM_WEAPON) {
+            if (g->equipped_armor == idx) {
+                g->equipped_armor = -1;
+            }
             if (g->equipped_weapon >= 0 &&
-                g->equipped_weapon < g->inventory_count)
+                g->equipped_weapon < g->inventory_count) {
                 g->player.attack -= g->inventory[g->equipped_weapon].attack_bonus;
+            }
             g->equipped_weapon = idx;
             g->player.attack  += item->attack_bonus;
             snprintf(msg, sizeof(msg), "Equipped %s", item->name);
             push_message(g, msg);
         } else if (item->type == ITEM_ARMOR) {
+            if (g->equipped_weapon == idx) {
+                g->equipped_weapon = -1;
+            }
             if (g->equipped_armor >= 0 &&
-                g->equipped_armor < g->inventory_count)
+                g->equipped_armor < g->inventory_count) {
                 g->player.defense -= g->inventory[g->equipped_armor].defense_bonus;
+            }
             g->equipped_armor  = idx;
             g->player.defense += item->defense_bonus;
             snprintf(msg, sizeof(msg), "Equipped %s", item->name);
@@ -702,6 +740,18 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->location == LOCATION_TOWN &&
             g->map.tiles[ty][tx] == TILE_PORTAL && g->portal_active) {
             game_use_town_portal(g);
+            return;
+        }
+
+        if (g->location == LOCATION_TOWN &&
+            g->map.tiles[ty][tx] == TILE_TAVERN_DOOR) {
+            game_enter_tavern(g);
+            return;
+        }
+
+        if (g->location == LOCATION_TAVERN &&
+            g->map.tiles[ty][tx] == TILE_TAVERN_EXIT) {
+            game_leave_tavern(g);
             return;
         }
 

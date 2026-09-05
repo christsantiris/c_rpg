@@ -4,6 +4,119 @@
 #include "message_bar.h"
 #include "minimap_renderer.h"
 #include "renderer.h"
+#include <string.h>
+
+static void draw_dialogue_text(Renderer *r, const char *text, int x, int y, int max_chars, SDL_Color color) {
+    char line[64];
+    int line_len = 0;
+    const char *cursor = text;
+
+    while (*cursor) {
+        while (*cursor == ' ') {
+            cursor++;
+        }
+        const char *word = cursor;
+        int word_len = 0;
+        while (cursor[word_len] && cursor[word_len] != ' ') {
+            word_len++;
+        }
+        if (word_len == 0) {
+            break;
+        }
+        if (line_len > 0 && line_len + word_len + 1 > max_chars) {
+            line[line_len] = '\0';
+            renderer_draw_text(r, line, x, y, color, r->font_tiny);
+            y += 16;
+            line_len = 0;
+        }
+        if (line_len > 0) {
+            line[line_len++] = ' ';
+        }
+        if (word_len > (int)sizeof(line) - line_len - 1) {
+            word_len = (int)sizeof(line) - line_len - 1;
+        }
+        memcpy(line + line_len, word, word_len);
+        line_len += word_len;
+        cursor += word_len;
+    }
+    if (line_len > 0) {
+        line[line_len] = '\0';
+        renderer_draw_text(r, line, x, y, color, r->font_tiny);
+    }
+}
+
+static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport *v) {
+    if (!g->dialogue_active || g->location != LOCATION_TAVERN) {
+        return;
+    }
+    int npc_x = -1;
+    int npc_y = -1;
+    for (int y = 0; y < MAP_H && npc_x < 0; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (g->map.tiles[y][x] == TILE_NPC_ELOWEN) {
+                npc_x = x;
+                npc_y = y;
+                break;
+            }
+        }
+    }
+    if (npc_x < 0 || !viewport_is_visible(v, npc_x, npc_y)) {
+        return;
+    }
+
+    int viewport_w = r->screen_w - INFO_PANEL_W;
+    int bubble_w = viewport_w < 460 ? viewport_w - 16 : 440;
+    int bubble_h = 98;
+    int npc_screen_x = viewport_to_screen_x(v, npc_x) * TILE_SIZE +
+        TILE_SIZE / 2;
+    int npc_screen_y = viewport_to_screen_y(v, npc_y) * TILE_SIZE;
+    int bubble_x = npc_screen_x - bubble_w / 2;
+    int bubble_y = npc_screen_y - bubble_h - 22;
+    if (bubble_x < 8) {
+        bubble_x = 8;
+    }
+    if (bubble_x + bubble_w > viewport_w - 8) {
+        bubble_x = viewport_w - bubble_w - 8;
+    }
+    if (bubble_y < 8) {
+        bubble_y = 8;
+    }
+
+    SDL_Rect border = {bubble_x, bubble_y, bubble_w, bubble_h};
+    SDL_Rect panel = {bubble_x + 3, bubble_y + 3, bubble_w - 6,
+        bubble_h - 6};
+    SDL_SetRenderDrawColor(r->sdl, 25, 20, 27, 255);
+    SDL_RenderFillRect(r->sdl, &border);
+    SDL_SetRenderDrawColor(r->sdl, 236, 224, 190, 255);
+    SDL_RenderFillRect(r->sdl, &panel);
+
+    int tail_x = npc_screen_x;
+    if (tail_x < bubble_x + 18) {
+        tail_x = bubble_x + 18;
+    }
+    if (tail_x > bubble_x + bubble_w - 18) {
+        tail_x = bubble_x + bubble_w - 18;
+    }
+    for (int row = 0; row < 15; row++) {
+        int half_width = (15 - row) / 2;
+        SDL_Rect tail = {tail_x - half_width, bubble_y + bubble_h + row,
+            half_width * 2 + 1, 1};
+        SDL_SetRenderDrawColor(r->sdl, 25, 20, 27, 255);
+        SDL_RenderFillRect(r->sdl, &tail);
+    }
+    for (int row = 0; row < 11; row++) {
+        int half_width = (11 - row) / 2;
+        SDL_Rect tail = {tail_x - half_width, bubble_y + bubble_h + row,
+            half_width * 2 + 1, 1};
+        SDL_SetRenderDrawColor(r->sdl, 236, 224, 190, 255);
+        SDL_RenderFillRect(r->sdl, &tail);
+    }
+
+    renderer_draw_text(r, g->dialogue_speaker, bubble_x + 14,
+        bubble_y + 12, (SDL_Color){71, 82, 138, 255}, r->font_small);
+    draw_dialogue_text(r, g->dialogue_text, bubble_x + 14, bubble_y + 36,
+        (bubble_w - 28) / 8, (SDL_Color){42, 32, 30, 255});
+}
 
 static void draw_weapon_arrow(Renderer *r, int tile_x, int tile_y,
                               int dx, int dy, int impact) {
@@ -201,8 +314,18 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_LOCKED_DOOR: draw_locked_door(r, sx, sy); break;
                 case TILE_DUNGEON_KEY: draw_dungeon_key(r, sx, sy); break;
                 case TILE_PORTAL: draw_portal(r, sx, sy); break;
+                case TILE_BROKEN_BURIAL_SEAL:
+                    draw_broken_burial_seal(r, sx, sy); break;
+                case TILE_RESTORED_BURIAL_SEAL:
+                    draw_restored_burial_seal(r, sx, sy); break;
                 case TILE_TOWN_FLOOR: draw_town_floor(r, sx, sy); break;
                 case TILE_TOWN_PATH: draw_town_path(r, sx, sy); break;
+                case TILE_TAVERN_DOOR: draw_town_floor(r, sx, sy); break;
+                case TILE_TAVERN_FLOOR: draw_tavern_floor(r, sx, sy); break;
+                case TILE_TAVERN_WALL: draw_tavern_wall(r, sx, sy); break;
+                case TILE_TAVERN_EXIT: draw_tavern_exit(r, sx, sy); break;
+                case TILE_TAVERN_TABLE: draw_tavern_table(r, sx, sy); break;
+                case TILE_NPC_ELOWEN: draw_elowen(r, sx, sy); break;
                 case TILE_TOWN_EXIT: {
                     TownExitStyle style;
                     int segment;
@@ -345,6 +468,16 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             (SDL_Color){62, 210, 205, 255}, r->font_tiny);
     }
 
+    if (g->location == LOCATION_TAVERN) {
+        SDL_Color name = {182, 214, 232, 255};
+        int name_w = 0;
+        TTF_SizeText(r->font_tiny, "ELOWEN", &name_w, NULL);
+        int name_x = viewport_to_screen_x(v, 10) * TILE_SIZE +
+            (TILE_SIZE - name_w) / 2;
+        int name_y = viewport_to_screen_y(v, 6) * TILE_SIZE;
+        renderer_draw_text(r, "ELOWEN", name_x, name_y, name, r->font_tiny);
+    }
+
     // Draw spell/projectile trail
     if (g->trail_frames > 0) {
         int timed_fireball = g->trail_effect == TRAIL_EFFECT_FIREBALL &&
@@ -428,6 +561,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         viewport_to_screen_x(v, g->player.x),
         viewport_to_screen_y(v, g->player.y),
         g->player.player_class);
+
+    draw_dialogue_bubble(r, g, v);
 
     // Draw info panel
     info_panel_draw(r, g);
