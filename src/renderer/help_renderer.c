@@ -55,6 +55,7 @@ void help_draw(Renderer *r) {
     renderer_draw_text(r, "ESC            Main menu",      col2, y, white, r->font_tiny);
     y += lh;
     renderer_draw_text(r, "U              Use item",       col1, y, white, r->font_tiny);
+    renderer_draw_text(r, "T              Talk to NPC",    col2, y, white, r->font_tiny);
     y += lh;
     renderer_draw_text(r, "E              Equip item",     col1, y, white, r->font_tiny);
     y += lh;

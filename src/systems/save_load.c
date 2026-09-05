@@ -170,7 +170,7 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 17);
+    cJSON_AddNumberToObject(root, "save_version", 22);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -233,6 +233,14 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "portal_x",          g->portal_x);
     cJSON_AddNumberToObject(root, "portal_y",          g->portal_y);
     cJSON_AddNumberToObject(root, "portal_origin_tile", g->portal_origin_tile);
+    cJSON_AddNumberToObject(root, "defeated_bosses", g->defeated_bosses);
+    cJSON_AddNumberToObject(root, "elowen_quest_state",
+        g->elowen_quest_state);
+    cJSON_AddNumberToObject(root, "elowen_seals_restored",
+        g->elowen_seals_restored);
+    cJSON_AddNumberToObject(root, "dialogue_active", g->dialogue_active);
+    cJSON_AddStringToObject(root, "dialogue_speaker", g->dialogue_speaker);
+    cJSON_AddStringToObject(root, "dialogue_text", g->dialogue_text);
 
     // Messages
     cJSON *messages = cJSON_CreateArray();
@@ -463,6 +471,15 @@ int load_game(GameState *g, int slot) {
     cJSON *portal_x = cJSON_GetObjectItem(root, "portal_x");
     cJSON *portal_y = cJSON_GetObjectItem(root, "portal_y");
     cJSON *portal_origin_tile = cJSON_GetObjectItem(root, "portal_origin_tile");
+    cJSON *defeated_bosses = cJSON_GetObjectItem(root, "defeated_bosses");
+    cJSON *elowen_quest = cJSON_GetObjectItem(root, "elowen_quest_state");
+    cJSON *elowen_seals = cJSON_GetObjectItem(root,
+        "elowen_seals_restored");
+    cJSON *legacy_altars = cJSON_GetObjectItem(root,
+        "elowen_altars_cleansed");
+    cJSON *dialogue_active = cJSON_GetObjectItem(root, "dialogue_active");
+    cJSON *dialogue_speaker = cJSON_GetObjectItem(root, "dialogue_speaker");
+    cJSON *dialogue_text = cJSON_GetObjectItem(root, "dialogue_text");
     g->dungeon_key_found = key_found ? key_found->valueint : 0;
     g->portal_active = portal_active ? portal_active->valueint : 0;
     g->portal_level = portal_level ? portal_level->valueint : 0;
@@ -472,6 +489,19 @@ int load_game(GameState *g, int slot) {
     g->portal_y = portal_y ? portal_y->valueint : 0;
     g->portal_origin_tile = portal_origin_tile
         ? portal_origin_tile->valueint : TILE_FLOOR;
+    g->defeated_bosses = defeated_bosses ? defeated_bosses->valueint : 0;
+    g->elowen_quest_state = elowen_quest ? elowen_quest->valueint : 0;
+    g->elowen_seals_restored = elowen_seals ? elowen_seals->valueint :
+        (legacy_altars ? legacy_altars->valueint : 0);
+    g->dialogue_active = dialogue_active ? dialogue_active->valueint : 0;
+    strncpy(g->dialogue_speaker,
+        dialogue_speaker ? dialogue_speaker->valuestring : "",
+        MAX_SPEAKER_LEN - 1);
+    g->dialogue_speaker[MAX_SPEAKER_LEN - 1] = '\0';
+    strncpy(g->dialogue_text,
+        dialogue_text ? dialogue_text->valuestring : "",
+        MAX_DIALOGUE_LEN - 1);
+    g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
 
     // Messages
     cJSON *messages = cJSON_GetObjectItem(root, "messages");
@@ -500,6 +530,7 @@ int load_game(GameState *g, int slot) {
         item->range         = cJSON_GetObjectItem(it, "range")->valueint;
         item->is_two_handed = cJSON_GetObjectItem(it, "is_two_handed")->valueint;
     }
+    game_repair_equipment_indices(g);
 
     // Floor items
     g->floor_item_count = cJSON_GetObjectItem(root, "floor_item_count")->valueint;
@@ -937,6 +968,59 @@ int load_game(GameState *g, int slot) {
             enemies_spawn(g);
             g->player.x = g->map.stairs_up_x;
             g->player.y = g->map.stairs_up_y;
+        }
+    }
+
+    // Version 18 adds permanent boss completion and Elowen's persistent
+    // quest. Previously defeated cached bosses remain defeated.
+    if (save_version < 18) {
+        LevelCache *boss_caches[4] = {
+            g->level_cache, g->forest_cache, g->mountain_cache, g->coast_cache
+        };
+        EnemyType boss_types[4] = {
+            ENEMY_LICH_KING, ENEMY_FOREST_NECROMANCER,
+            ENEMY_MOUNTAIN_GOBLIN_KING, ENEMY_DROWNED_QUEEN
+        };
+        Location boss_locations[4] = {
+            LOCATION_DUNGEON, LOCATION_FOREST,
+            LOCATION_MOUNTAINS, LOCATION_COAST
+        };
+        int boss_depths[4] = {
+            DUNGEON_DEPTH, FOREST_DEPTH, MOUNTAIN_DEPTH, COAST_DEPTH
+        };
+        for (int region = 0; region < 4; region++) {
+            LevelCache *finale = &boss_caches[region][boss_depths[region] - 1];
+            if (!finale->valid) {
+                continue;
+            }
+            for (int i = 0; i < finale->enemy_count; i++) {
+                if (finale->enemies[i].type == boss_types[region] &&
+                    !finale->enemies[i].active) {
+                    g->defeated_bosses |= 1 << boss_locations[region];
+                }
+            }
+        }
+        g->elowen_quest_state = 0;
+        g->elowen_seals_restored = 0;
+    }
+
+    // Version 19 makes the Tavern door enterable. Rebuild legacy town maps
+    // so their decorative facade receives the doorway tile.
+    if (save_version < 19 && g->location == LOCATION_TOWN) {
+        int player_x = g->player.x;
+        int player_y = g->player.y;
+        int spawn_x;
+        int spawn_y;
+        map_generate_town(&g->map, &spawn_x, &spawn_y);
+        if (map_is_walkable(&g->map, player_x, player_y)) {
+            g->player.x = player_x;
+            g->player.y = player_y;
+        } else {
+            g->player.x = spawn_x;
+            g->player.y = spawn_y;
+        }
+        if (g->portal_active) {
+            g->map.tiles[2][20] = TILE_PORTAL;
         }
     }
 

@@ -244,6 +244,9 @@ static int boss_for_level(const GameState *g, EnemyType *type) {
     if (g->level != boss_level) {
         return 0;
     }
+    if (g->defeated_bosses & (1 << g->location)) {
+        return 0;
+    }
     if (g->location == LOCATION_FOREST) {
         *type = ENEMY_FOREST_NECROMANCER;
     } else if (g->location == LOCATION_MOUNTAINS) {
@@ -489,6 +492,12 @@ void game_init(GameState *g) {
     g->portal_x = 0;
     g->portal_y = 0;
     g->portal_origin_tile = TILE_FLOOR;
+    g->defeated_bosses = 0;
+    g->elowen_quest_state = 0;
+    g->elowen_seals_restored = 0;
+    g->dialogue_active = 0;
+    g->dialogue_speaker[0] = '\0';
+    g->dialogue_text[0] = '\0';
     g->floor_item_count = 0;
     for (int i = 0; i < MAX_INVENTORY; i++) {
         g->inventory[i].active = 0;
@@ -542,9 +551,45 @@ void game_init(GameState *g) {
 void game_move_player(GameState *g, int dx, int dy) {
     int nx = g->player.x + dx;
     int ny = g->player.y + dy;
-    if (!map_is_walkable(&g->map, nx, ny)) return;
+    if (!map_is_walkable(&g->map, nx, ny)) {
+        return;
+    }
     g->player.x = nx;
     g->player.y = ny;
+    g->dialogue_active = 0;
+}
+
+static int repaired_equipment_index(const GameState *g, int index, ItemType type) {
+    if (index < 0) {
+        return -1;
+    }
+    int start = index < g->inventory_count ? index : g->inventory_count - 1;
+    for (int i = start; i >= 0; i--) {
+        if (g->inventory[i].type == type) {
+            return i;
+        }
+    }
+    for (int i = start + 1; i < g->inventory_count; i++) {
+        if (g->inventory[i].type == type) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void game_repair_equipment_indices(GameState *g) {
+    if (g->equipped_weapon >= g->inventory_count ||
+        (g->equipped_weapon >= 0 &&
+        g->inventory[g->equipped_weapon].type != ITEM_WEAPON)) {
+        g->equipped_weapon = repaired_equipment_index(g,
+            g->equipped_weapon, ITEM_WEAPON);
+    }
+    if (g->equipped_armor >= g->inventory_count ||
+        (g->equipped_armor >= 0 &&
+        g->inventory[g->equipped_armor].type != ITEM_ARMOR)) {
+        g->equipped_armor = repaired_equipment_index(g,
+            g->equipped_armor, ITEM_ARMOR);
+    }
 }
 
 static LevelCache *active_cache(GameState *g) {
@@ -583,6 +628,30 @@ static int active_depth(const GameState *g) {
     return DUNGEON_DEPTH;
 }
 
+static void place_elowen_seal(GameState *g) {
+    if (g->location != LOCATION_DUNGEON || g->elowen_quest_state != 1) {
+        return;
+    }
+    int seal_index = -1;
+    if (g->level == 2) {
+        seal_index = 0;
+    } else if (g->level == 4) {
+        seal_index = 1;
+    } else if (g->level == 6) {
+        seal_index = 2;
+    }
+    if (seal_index < 0 || g->map.room_count < 2) {
+        return;
+    }
+    Room *room = &g->map.rooms[g->map.room_count / 2];
+    int x;
+    int y;
+    map_room_center(room, &x, &y);
+    g->map.tiles[y][x] =
+        (g->elowen_seals_restored & (1 << seal_index))
+        ? TILE_RESTORED_BURIAL_SEAL : TILE_BROKEN_BURIAL_SEAL;
+}
+
 static void generate_active_level(GameState *g) {
     if (g->location == LOCATION_FOREST) {
         map_generate_forest(&g->map, g->level);
@@ -593,7 +662,14 @@ static void generate_active_level(GameState *g) {
     } else {
         map_generate(&g->map, g->level);
     }
+    place_elowen_seal(g);
     enemies_spawn(g);
+    if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH &&
+        (g->defeated_bosses & (1 << LOCATION_DUNGEON))) {
+        g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] =
+            TILE_RETURN_EXIT;
+        g->level_cleared = 1;
+    }
 }
 
 void game_descend(GameState *g) {
@@ -665,24 +741,15 @@ static void enter_adventure(GameState *g, Location location) {
     LevelCache *cache = active_cache(g);
     int *max_level = active_max_level(g);
 
-    if (*max_level > 1 && cache[*max_level - 1].valid) {
-        g->level = *max_level;
-        g->map         = cache[g->level - 1].map;
-        g->enemy_count = cache[g->level - 1].enemy_count;
-        for (int i = 0; i < g->enemy_count; i++)
-            g->enemies[i] = cache[g->level - 1].enemies[i];
-        g->level_cleared = cache[g->level - 1].level_cleared;
-        g->player.x = g->map.stairs_up_x;
-        g->player.y = g->map.stairs_up_y;
-    } else {
-        g->level         = 1;
-        g->level_cleared = 0;
-        for (int i = 0; i < active_depth(g); i++)
-            cache[i].valid = 0;
-        generate_active_level(g);
-        g->player.x = g->map.stairs_up_x;
-        g->player.y = g->map.stairs_up_y;
+    g->level = 1;
+    g->level_cleared = 0;
+    *max_level = 1;
+    for (int i = 0; i < active_depth(g); i++) {
+        cache[i].valid = 0;
     }
+    generate_active_level(g);
+    g->player.x = g->map.stairs_up_x;
+    g->player.y = g->map.stairs_up_y;
 }
 
 void game_enter_dungeon(GameState *g) {
@@ -699,6 +766,35 @@ void game_enter_mountains(GameState *g) {
 
 void game_enter_coast(GameState *g) {
     enter_adventure(g, LOCATION_COAST);
+}
+
+void game_enter_tavern(GameState *g) {
+    int spawn_x;
+    int spawn_y;
+    g->location = LOCATION_TAVERN;
+    map_generate_tavern(&g->map, &spawn_x, &spawn_y);
+    g->player.x = spawn_x;
+    g->player.y = spawn_y;
+    g->enemy_count = 0;
+    g->floor_item_count = 0;
+    g->dialogue_active = 0;
+    push_message(g, "You enter the Lantern & Cask.");
+}
+
+void game_leave_tavern(GameState *g) {
+    int spawn_x;
+    int spawn_y;
+    g->location = LOCATION_TOWN;
+    map_generate_town(&g->map, &spawn_x, &spawn_y);
+    g->player.x = 8;
+    g->player.y = 21;
+    g->enemy_count = 0;
+    g->floor_item_count = 0;
+    g->dialogue_active = 0;
+    if (g->portal_active) {
+        g->map.tiles[2][20] = TILE_PORTAL;
+    }
+    push_message(g, "You step back into town.");
 }
 
 void game_return_to_town(GameState *g) {
@@ -766,6 +862,7 @@ void game_use_town_portal(GameState *g) {
     g->location = g->portal_location;
     g->level = level;
     g->map = cache[level - 1].map;
+    place_elowen_seal(g);
     g->enemy_count = cache[level - 1].enemy_count;
     g->level_cleared = cache[level - 1].level_cleared;
     for (int i = 0; i < g->enemy_count; i++)
@@ -775,6 +872,53 @@ void game_use_town_portal(GameState *g) {
     g->map.tiles[g->portal_y][g->portal_x] = g->portal_origin_tile;
     g->portal_active = 0;
     push_message(g, "Returned through the portal.");
+}
+
+void game_talk_to_elowen(GameState *g) {
+    g->dialogue_active = 1;
+    strncpy(g->dialogue_speaker, "Elowen", MAX_SPEAKER_LEN - 1);
+    g->dialogue_speaker[MAX_SPEAKER_LEN - 1] = '\0';
+    if (g->elowen_quest_state == 0) {
+        g->elowen_quest_state = 1;
+        g->elowen_seals_restored = 0;
+        strncpy(g->dialogue_text,
+            "Three shattered burial seals let the dead rise. Restore the seals on floors 2, 4, and 6.",
+            MAX_DIALOGUE_LEN - 1);
+        g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
+        push_message(g, "Quest assigned: The Broken Seals.");
+        return;
+    }
+    if (g->elowen_quest_state == 1) {
+        int restored = 0;
+        for (int i = 0; i < 3; i++) {
+            if (g->elowen_seals_restored & (1 << i)) {
+                restored++;
+            }
+        }
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "You have restored %d of 3 burial seals. Return when all three are whole.",
+            restored);
+        char status[MAX_MESSAGE_LEN];
+        snprintf(status, sizeof(status), "Quest progress: %d/3 seals.",
+            restored);
+        push_message(g, status);
+        return;
+    }
+    if (g->elowen_quest_state == 2) {
+        g->elowen_quest_state = 3;
+        g->gold += 100;
+        g->score += 300;
+        strncpy(g->dialogue_text,
+            "The crypt is bound once more. Its dead may finally sleep. Take this gold with my gratitude.",
+            MAX_DIALOGUE_LEN - 1);
+        g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
+        push_message(g, "Quest complete: The Broken Seals.");
+        return;
+    }
+    strncpy(g->dialogue_text, "You have my gratitude, adventurer.",
+        MAX_DIALOGUE_LEN - 1);
+    g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
+    push_message(g, "Elowen's quest is already complete.");
 }
 
 void game_mark_level_cleared(GameState *g) {

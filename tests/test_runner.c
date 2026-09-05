@@ -24,6 +24,8 @@ void test_return_to_town(void);
 void test_forest(void);
 void test_mountains(void);
 void test_coast(void);
+void test_elowen_quest(void);
+void test_tavern_interior(void);
 
 int main(void) {
     // ASSERT("sanity check true",  1 == 1);
@@ -60,6 +62,10 @@ int main(void) {
     test_mountains();
     printf("\n");
     test_coast();
+    printf("\n");
+    test_elowen_quest();
+    printf("\n");
+    test_tavern_interior();
     printf("\n");
     test_level_cache_cleared();
     printf("\n");
