@@ -901,6 +901,45 @@ void draw_dain(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x, y + 3, 7, 4, (SDL_Color){151, 157, 164, 255});
 }
 
+void draw_alder(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_tavern_floor(r, tile_x, tile_y);
+    SDL_Color cloak = {48, 91, 55, 255};
+    SDL_Color cloak_light = {76, 126, 69, 255};
+    SDL_Color leather = {91, 57, 32, 255};
+    SDL_Color skin = {191, 142, 101, 255};
+    fill_rect(r, x + 7, y + 3, 10, 8, cloak);
+    fill_rect(r, x + 9, y + 6, 7, 6, skin);
+    fill_rect(r, x + 6, y + 11, 13, 11, cloak);
+    fill_rect(r, x + 4, y + 13, 4, 8, cloak_light);
+    fill_rect(r, x + 17, y + 13, 4, 8, cloak_light);
+    fill_rect(r, x + 8, y + 16, 10, 3, leather);
+    fill_rect(r, x + 10, y + 8, 2, 2, (SDL_Color){30, 39, 27, 255});
+    fill_rect(r, x + 15, y + 8, 2, 2, (SDL_Color){30, 39, 27, 255});
+    fill_rect(r, x + 21, y + 3, 2, 19, leather);
+    fill_rect(r, x + 19, y + 2, 5, 2, (SDL_Color){154, 177, 118, 255});
+}
+
+void draw_forest_warden(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_forest_floor(r, tile_x, tile_y);
+    SDL_Color cloak = {41, 84, 49, 255};
+    SDL_Color skin = {199, 151, 108, 255};
+    SDL_Color binding = {157, 174, 132, 255};
+    SDL_Color root = {80, 57, 31, 255};
+    fill_rect(r, x + 7, y + 3, 10, 8, cloak);
+    fill_rect(r, x + 9, y + 6, 7, 5, skin);
+    fill_rect(r, x + 6, y + 11, 13, 11, cloak);
+    fill_rect(r, x + 3, y + 12, 19, 3, binding);
+    fill_rect(r, x + 4, y + 17, 17, 3, binding);
+    fill_rect(r, x + 2, y + 7, 3, 15, root);
+    fill_rect(r, x + 20, y + 5, 3, 17, root);
+    fill_rect(r, x + 9, y + 8, 2, 2, (SDL_Color){210, 226, 174, 255});
+    fill_rect(r, x + 15, y + 8, 2, 2, (SDL_Color){210, 226, 174, 255});
+}
+
 void draw_town_path(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;

@@ -69,7 +69,9 @@ typedef enum {
     TILE_TAVERN_EXIT,
     TILE_TAVERN_TABLE,
     TILE_NPC_ELOWEN,
-    TILE_NPC_DAIN
+    TILE_NPC_DAIN,
+    TILE_NPC_ALDER,
+    TILE_FOREST_WARDEN
 } TileType;
 
 typedef struct {

@@ -643,6 +643,15 @@ int main(int argc, char **argv) {
                                             TILE_NPC_DAIN) {
                                             game_talk_to_dain(&game);
                                             found = 1;
+                                        } else if (game.map.tiles[ty][tx] ==
+                                            TILE_NPC_ALDER) {
+                                            game_talk_to_alder(&game);
+                                            found = 1;
+                                        } else if (game.map.tiles[ty][tx] ==
+                                            TILE_FOREST_WARDEN) {
+                                            game_rescue_forest_warden(&game,
+                                                tx, ty);
+                                            found = 1;
                                         }
                                     }
                                 }
