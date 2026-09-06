@@ -185,6 +185,22 @@ void draw_coast_tide_control(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 12, y + 2, 7, 3, (SDL_Color){90, 231, 207, 255});
 }
 
+void draw_coast_beacon(Renderer *r, int tile_x, int tile_y, int lit) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_coast_shallow_water(r, tile_x, tile_y);
+    fill_rect(r, x + 5, y + 17, 14, 5, (SDL_Color){34, 65, 67, 255});
+    fill_rect(r, x + 8, y + 9, 8, 9, (SDL_Color){67, 104, 97, 255});
+    fill_rect(r, x + 6, y + 7, 12, 4, (SDL_Color){116, 126, 98, 255});
+    if (lit) {
+        fill_rect(r, x + 9, y + 3, 7, 6, (SDL_Color){47, 221, 212, 255});
+        fill_rect(r, x + 11, y, 4, 7, (SDL_Color){255, 211, 77, 255});
+        fill_rect(r, x + 12, y + 2, 3, 4, (SDL_Color){255, 244, 156, 255});
+    } else {
+        fill_rect(r, x + 9, y + 5, 7, 3, (SDL_Color){34, 42, 45, 255});
+    }
+}
+
 void draw_player(Renderer *r, int tile_x, int tile_y, PlayerClass player_class) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
@@ -919,6 +935,24 @@ void draw_alder(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 15, y + 8, 2, 2, (SDL_Color){30, 39, 27, 255});
     fill_rect(r, x + 21, y + 3, 2, 19, leather);
     fill_rect(r, x + 19, y + 2, 5, 2, (SDL_Color){154, 177, 118, 255});
+}
+
+void draw_mara(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_tavern_floor(r, tile_x, tile_y);
+    SDL_Color coat = {29, 91, 111, 255};
+    SDL_Color coat_light = {47, 137, 147, 255};
+    SDL_Color skin = {188, 137, 101, 255};
+    SDL_Color brass = {207, 164, 63, 255};
+    fill_rect(r, x + 6, y + 4, 13, 5, (SDL_Color){30, 54, 66, 255});
+    fill_rect(r, x + 8, y + 7, 9, 6, skin);
+    fill_rect(r, x + 6, y + 12, 13, 10, coat);
+    fill_rect(r, x + 9, y + 13, 3, 8, coat_light);
+    fill_rect(r, x + 10, y + 9, 2, 2, (SDL_Color){25, 35, 42, 255});
+    fill_rect(r, x + 15, y + 9, 2, 2, (SDL_Color){25, 35, 42, 255});
+    fill_rect(r, x + 20, y + 12, 3, 10, brass);
+    fill_rect(r, x + 18, y + 15, 6, 6, (SDL_Color){69, 207, 196, 255});
 }
 
 void draw_forest_warden(Renderer *r, int tile_x, int tile_y) {

@@ -11,8 +11,10 @@ stage never uses the same edge for both, preventing the player from immediately
 walking back into the stage they just completed. Deep water initially blocks
 the final approach. Exploring the ruins and stepping onto the brass tide
 control drains the deep water into walkable shallows and exposes the route.
-Stages 1–7 can then be exited without clearing every enemy. The stage 8 exit
-also requires the Drowned Queen to be defeated before returning to town.
+The control remains in place and reverses the tide each time the player walks
+over it. Stages 1–7 can be exited without clearing enemies; only a raised tide
+blocks their exits. The stage 8 exit also requires the Drowned Queen to be
+defeated before returning to town.
 
 The region moves from storm-lashed beaches into increasingly submerged ruins:
 
@@ -46,7 +48,7 @@ debris. Walls resemble algae-covered drowned masonry. Entrances and exits are
 framed as glowing ruin arches, and the town gate repeats the same teal stone
 language so its destination is clear before the player enters.
 
-Shallow water is rendered in bright teal and remains walkable. Dark navy deep
-water is impassable to the player and enemies. Activating the tide control
-changes the actual map tiles, so drained routes remain drained when the player
-backtracks, returns through a portal, or reloads a save.
+Shallow and drained water are rendered in bright teal and remain walkable.
+Dark navy deep water is impassable to the player and enemies. Activating the
+tide control changes the actual map tiles, so the current tide remains intact
+when the player backtracks, returns through a portal, or reloads a save.

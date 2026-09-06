@@ -1,6 +1,19 @@
 #include "test_utils.h"
 #include "../src/game/game.h"
 
+static int find_tile(const Map *map, TileType type, int *found_x, int *found_y) {
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (map->tiles[y][x] == type) {
+                *found_x = x;
+                *found_y = y;
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 static Action coast_edge_action(const Map *m, int entrance) {
     int x = entrance ? m->stairs_up_x : m->stairs_down_x;
     int y = entrance ? m->stairs_up_y : m->stairs_down_y;
@@ -102,9 +115,19 @@ void test_coast(void) {
     activate_tide_control(&g);
     ASSERT("tide control drains the exit approach",
         g.map.tiles[g.map.stairs_down_y][g.map.stairs_down_x] ==
-            TILE_COAST_SHALLOW_WATER);
+            TILE_COAST_DRAINED_WATER);
+    int control_x = 0;
+    int control_y = 0;
+    ASSERT("tide control remains after activation",
+        find_tile(&g.map, TILE_COAST_TIDE_CONTROL, &control_x, &control_y));
+    activate_tide_control(&g);
+    ASSERT("tide control raises the water again",
+        g.map.tiles[g.map.stairs_down_y][g.map.stairs_down_x] ==
+            TILE_COAST_DEEP_WATER);
+    activate_tide_control(&g);
     g.player.x = g.map.stairs_down_x;
     g.player.y = g.map.stairs_down_y;
+    g.level_cleared = 0;
     action_resolve_player(&g, exit);
     ASSERT("coast advances without clearing enemies", g.level == 2);
 

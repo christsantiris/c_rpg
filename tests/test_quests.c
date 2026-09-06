@@ -25,6 +25,50 @@ static int count_enemy_type(const GameState *g, EnemyType type) {
     return count;
 }
 
+static void lower_coast_tide(GameState *g) {
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (g->map.tiles[y][x] == TILE_COAST_TIDE_CONTROL) {
+                g->player.x = x;
+                g->player.y = y;
+                Action activate = {ACTION_MOVE, x, y};
+                action_resolve_player(g, activate);
+                return;
+            }
+        }
+    }
+}
+
+void test_quest_activation_gating(void) {
+    printf("Quest activation gating tests:\n");
+    GameState g;
+    g.player.player_class = CLASS_WARRIOR;
+    game_init(&g);
+
+    game_enter_dungeon(&g);
+    game_descend(&g);
+    int object_x = 0;
+    int object_y = 0;
+    ASSERT("Elowen's seals require quest activation",
+        !find_tile(&g.map, TILE_BROKEN_BURIAL_SEAL, &object_x, &object_y));
+
+    game_return_to_town(&g);
+    game_enter_forest(&g);
+    game_descend(&g);
+    ASSERT("Alder's wardens require quest activation",
+        !find_tile(&g.map, TILE_FOREST_WARDEN, &object_x, &object_y));
+
+    game_return_to_town(&g);
+    game_enter_coast(&g);
+    ASSERT("Mara's beacons require quest activation",
+        !find_tile(&g.map, TILE_COAST_BEACON_UNLIT, &object_x, &object_y));
+
+    g.location = LOCATION_MOUNTAINS;
+    game_record_dain_kill(&g, ENEMY_GOBLIN_ARCHER);
+    ASSERT("Dain's fragments require quest activation",
+        g.dain_map_fragments == 0);
+}
+
 void test_elowen_quest(void) {
     printf("Elowen quest tests:\n");
     GameState g;
@@ -128,6 +172,12 @@ void test_tavern_interior(void) {
         find_tile(&g.map, TILE_NPC_ALDER, &alder_x, &alder_y));
     ASSERT("player cannot overlap Alder",
         !map_is_walkable(&g.map, alder_x, alder_y));
+    int mara_x = 0;
+    int mara_y = 0;
+    ASSERT("Mara has an in-world Tavern tile",
+        find_tile(&g.map, TILE_NPC_MARA, &mara_x, &mara_y));
+    ASSERT("player cannot overlap Mara",
+        !map_is_walkable(&g.map, mara_x, mara_y));
     g.player.x = elowen_x;
     g.player.y = elowen_y + 1;
     game_talk_to_elowen(&g);
@@ -245,4 +295,67 @@ void test_alder_quest(void) {
     int warden_y = 0;
     ASSERT("rescued wardens do not respawn",
         !find_tile(&g.map, TILE_FOREST_WARDEN, &warden_x, &warden_y));
+}
+
+void test_mara_quest(void) {
+    printf("Mara quest tests:\n");
+    GameState g;
+    g.player.player_class = CLASS_WARRIOR;
+    game_init(&g);
+
+    game_talk_to_mara(&g);
+    ASSERT("Mara assigns Relight the Drowned Beacons",
+        g.mara_quest_state == 1);
+    ASSERT("new Mara quest begins with no lit beacons",
+        g.mara_beacons_lit == 0);
+    ASSERT("Mara speaks through dialogue state", g.dialogue_active &&
+        strcmp(g.dialogue_speaker, "Mara") == 0);
+
+    int target_levels[3] = {1, 3, 6};
+    EnemyType guardian_types[2] = {
+        ENEMY_ANIMATED_STATUE, ENEMY_SEA_SERPENT
+    };
+    game_enter_coast(&g);
+    for (int target = 0; target < 3; target++) {
+        while (g.level < target_levels[target]) {
+            game_descend(&g);
+        }
+        int beacon_x = 0;
+        int beacon_y = 0;
+        ASSERT("unlit beacon appears on its assigned coast stage",
+            find_tile(&g.map, TILE_COAST_BEACON_UNLIT, &beacon_x,
+                &beacon_y));
+        if (target > 0) {
+            ASSERT("beacon stage has its planned guardian",
+                count_enemy_type(&g, guardian_types[target - 1]) > 0);
+        }
+        g.player.x = beacon_x;
+        g.player.y = beacon_y;
+        Action light = {ACTION_PICK_UP, 0, 0};
+        action_resolve_player(&g, light);
+        ASSERT("high tide prevents lighting the beacon",
+            g.map.tiles[beacon_y][beacon_x] == TILE_COAST_BEACON_UNLIT);
+        lower_coast_tide(&g);
+        g.player.x = beacon_x;
+        g.player.y = beacon_y;
+        action_resolve_player(&g, light);
+        ASSERT("P lights the beacon after the tide recedes",
+            g.map.tiles[beacon_y][beacon_x] == TILE_COAST_BEACON_LIT);
+    }
+    ASSERT("three lit beacons make Mara's quest ready",
+        g.mara_quest_state == 2 && g.mara_beacons_lit == 7);
+
+    game_return_to_town(&g);
+    int gold_before = g.gold;
+    int score_before = g.score;
+    game_talk_to_mara(&g);
+    ASSERT("Mara completes the coast quest", g.mara_quest_state == 3);
+    ASSERT("Mara awards 200 gold", g.gold == gold_before + 200);
+    ASSERT("Mara awards 600 score", g.score == score_before + 600);
+
+    game_enter_coast(&g);
+    int beacon_x = 0;
+    int beacon_y = 0;
+    ASSERT("lit beacons remain lit on later expeditions",
+        find_tile(&g.map, TILE_COAST_BEACON_LIT, &beacon_x, &beacon_y));
 }

@@ -54,7 +54,9 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_MOUNTAIN_EXIT || tile == TILE_COAST_ENTRANCE ||
                         tile == TILE_COAST_EXIT || tile == TILE_TAVERN_EXIT ||
                         tile == TILE_NPC_ELOWEN || tile == TILE_NPC_DAIN ||
-                        tile == TILE_NPC_ALDER ||
+                        tile == TILE_NPC_ALDER || tile == TILE_NPC_MARA ||
+                        tile == TILE_COAST_BEACON_UNLIT ||
+                        tile == TILE_COAST_BEACON_LIT ||
                         tile == TILE_FOREST_WARDEN) {
                         has_stair = 1;
                     } else if (tile == TILE_FOREST_LANDMARK) {

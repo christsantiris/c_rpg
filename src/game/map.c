@@ -210,11 +210,14 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_COAST_WALL &&
         m->tiles[y][x] != TILE_COAST_DEEP_WATER &&
         m->tiles[y][x] != TILE_TAVERN &&
+        m->tiles[y][x] != TILE_SHOP_BLACKSMITH &&
+        m->tiles[y][x] != TILE_SHOP_ALCHEMIST &&
         m->tiles[y][x] != TILE_TAVERN_WALL &&
         m->tiles[y][x] != TILE_TAVERN_TABLE &&
         m->tiles[y][x] != TILE_NPC_ELOWEN &&
         m->tiles[y][x] != TILE_NPC_DAIN &&
         m->tiles[y][x] != TILE_NPC_ALDER &&
+        m->tiles[y][x] != TILE_NPC_MARA &&
         m->tiles[y][x] != TILE_FOREST_WARDEN &&
         m->tiles[y][x] != TILE_LOCKED_DOOR;
 }
@@ -640,11 +643,13 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     for (int dy = 0; dy < 4; dy++)
         for (int dx = 0; dx < 5; dx++)
             m->tiles[7 + dy][7 + dx] = TILE_SHOP_BLACKSMITH;
+    m->tiles[10][9] = TILE_BLACKSMITH_DOOR;
 
     // Alchemist at (28, 7) — 5x4 tiles
     for (int dy = 0; dy < 4; dy++)
         for (int dx = 0; dx < 5; dx++)
             m->tiles[7 + dy][28 + dx] = TILE_SHOP_ALCHEMIST;
+    m->tiles[10][30] = TILE_ALCHEMIST_DOOR;
 
     // Tavern at (5, 16) — 7x5 tiles.
     for (int dy = 0; dy < 5; dy++) {
@@ -697,6 +702,7 @@ void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y) {
     m->tiles[7][10] = TILE_NPC_ELOWEN;
     m->tiles[7][18] = TILE_NPC_DAIN;
     m->tiles[7][28] = TILE_NPC_ALDER;
+    m->tiles[18][31] = TILE_NPC_MARA;
     m->tiles[22][20] = TILE_TAVERN_EXIT;
     *spawn_x = 20;
     *spawn_y = 21;

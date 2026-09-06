@@ -132,15 +132,15 @@ void test_items(void) {
     game_init(&g);
     Action equip_bow = {ACTION_EQUIP_ITEM, 0, 0};
     action_resolve_player(&g, equip_bow);
-    g.player.x = 10;
-    g.player.y = 10;
+    g.player.x = 20;
+    g.player.y = 12;
     g.player.last_dx = 1;
     g.player.last_dy = 0;
     g.enemy_count = 1;
     g.enemies[0] = (Enemy){0};
     g.enemies[0].active = 1;
-    g.enemies[0].x = 11;
-    g.enemies[0].y = 10;
+    g.enemies[0].x = 21;
+    g.enemies[0].y = 12;
     g.enemies[0].hp = 100;
     g.enemies[0].max_hp = 100;
     Action shoot = {ACTION_RANGED_ATTACK, 0, 0};
@@ -148,13 +148,13 @@ void test_items(void) {
     ASSERT("bow cannot fire beside an enemy", g.enemies[0].hp == 100);
 
     int equipped_attack = g.player.attack;
-    Action bump = {ACTION_MOVE, 11, 10};
+    Action bump = {ACTION_MOVE, 21, 12};
     action_resolve_player(&g, bump);
     ASSERT("bow bonus does not apply in melee",
         g.enemies[0].hp == 100 -
             (equipped_attack - bow.attack_bonus));
 
-    g.enemies[0].x = 12;
+    g.enemies[0].x = 22;
     g.enemies[0].hp = 100;
     action_resolve_player(&g, shoot);
     int ranged_damage = 100 - g.enemies[0].hp;
