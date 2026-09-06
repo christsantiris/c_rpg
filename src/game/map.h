@@ -3,6 +3,7 @@
 
 #define MAP_W 200
 #define MAP_H 100
+#define MAP_EXPLORED_BYTES ((MAP_W * MAP_H + 7) / 8)
 
 #define MIN_ROOMS 6
 #define MAX_ROOMS 10
@@ -67,7 +68,8 @@ typedef enum {
     TILE_TAVERN_WALL,
     TILE_TAVERN_EXIT,
     TILE_TAVERN_TABLE,
-    TILE_NPC_ELOWEN
+    TILE_NPC_ELOWEN,
+    TILE_NPC_DAIN
 } TileType;
 
 typedef struct {
@@ -76,6 +78,7 @@ typedef struct {
 
 typedef struct {
     TileType tiles[MAP_H][MAP_W];
+    unsigned char explored[MAP_EXPLORED_BYTES];
     Room     rooms[MAX_ROOMS];
     int      room_count;
     int      stairs_up_x,   stairs_up_y;
@@ -90,5 +93,8 @@ void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_forest(Map *m, int level);
 void map_generate_mountains(Map *m, int level);
 void map_generate_coast(Map *m, int level);
+void map_clear_exploration(Map *m);
+void map_mark_explored(Map *m, int x, int y);
+int map_is_explored(const Map *m, int x, int y);
 
 #endif

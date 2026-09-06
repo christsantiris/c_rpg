@@ -43,6 +43,9 @@ void minimap_draw(Renderer *r, const GameState *g) {
                     if (sx >= MAP_W || sy >= MAP_H) {
                         continue;
                     }
+                    if (!map_is_explored(&g->map, sx, sy)) {
+                        continue;
+                    }
                     TileType tile = g->map.tiles[sy][sx];
                     if (tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN ||
                         tile == TILE_RETURN_EXIT || tile == TILE_DUNGEON_KEY ||
@@ -50,7 +53,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_FOREST_EXIT || tile == TILE_MOUNTAIN_ENTRANCE ||
                         tile == TILE_MOUNTAIN_EXIT || tile == TILE_COAST_ENTRANCE ||
                         tile == TILE_COAST_EXIT || tile == TILE_TAVERN_EXIT ||
-                        tile == TILE_NPC_ELOWEN) {
+                        tile == TILE_NPC_ELOWEN || tile == TILE_NPC_DAIN) {
                         has_stair = 1;
                     } else if (tile == TILE_FOREST_LANDMARK) {
                         has_stair = 1;

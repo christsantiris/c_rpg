@@ -885,6 +885,22 @@ void draw_elowen(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 18, y + 3, 6, 3, (SDL_Color){112, 194, 210, 255});
 }
 
+void draw_dain(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_tavern_floor(r, tile_x, tile_y);
+    fill_rect(r, x + 5, y + 4, 14, 5, (SDL_Color){72, 67, 62, 255});
+    fill_rect(r, x + 7, y + 7, 10, 7, (SDL_Color){189, 132, 91, 255});
+    fill_rect(r, x + 6, y + 11, 12, 8, (SDL_Color){116, 67, 35, 255});
+    fill_rect(r, x + 8, y + 12, 2, 7, (SDL_Color){173, 105, 50, 255});
+    fill_rect(r, x + 14, y + 12, 2, 7, (SDL_Color){173, 105, 50, 255});
+    fill_rect(r, x + 5, y + 17, 14, 5, (SDL_Color){65, 77, 91, 255});
+    fill_rect(r, x + 9, y + 9, 2, 2, (SDL_Color){35, 29, 27, 255});
+    fill_rect(r, x + 14, y + 9, 2, 2, (SDL_Color){35, 29, 27, 255});
+    fill_rect(r, x + 2, y + 5, 3, 17, (SDL_Color){87, 55, 34, 255});
+    fill_rect(r, x, y + 3, 7, 4, (SDL_Color){151, 157, 164, 255});
+}
+
 void draw_town_path(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
@@ -1173,9 +1189,7 @@ void draw_tavern(Renderer *r, int tile_x, int tile_y) {
 void draw_floor_item(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color base = { 18,  18,  35, 255};
     SDL_Color glow = {100, 180, 255, 255};
-    fill_rect(r, x,   y,   TILE_SIZE,   TILE_SIZE,   base);
     fill_rect(r, x+8, y+6, 8,           10,          glow);
     fill_rect(r, x+6, y+8, 12,          6,           glow);
 }

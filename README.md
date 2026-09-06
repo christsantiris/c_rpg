@@ -117,4 +117,3 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 - Signing the app with codesign and submit to Apple with xcrun notarytool
 - windows installer
 - fix linux installer icon not showing
-- Only display explored terrain on the minimap.

@@ -639,6 +639,10 @@ int main(int argc, char **argv) {
                                             TILE_NPC_ELOWEN) {
                                             game_talk_to_elowen(&game);
                                             found = 1;
+                                        } else if (game.map.tiles[ty][tx] ==
+                                            TILE_NPC_DAIN) {
+                                            game_talk_to_dain(&game);
+                                            found = 1;
                                         }
                                     }
                                 }

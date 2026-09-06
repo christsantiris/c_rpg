@@ -96,6 +96,7 @@ static int enemy_score(EnemyType type) {
 }
 
 static void drop_loot(GameState *g, int x, int y, EnemyType type, int is_boss) {
+    game_record_dain_kill(g, type);
     if (is_boss) {
         g->defeated_bosses |= 1 << g->location;
     }
