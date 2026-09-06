@@ -46,7 +46,9 @@ static void draw_dialogue_text(Renderer *r, const char *text, int x, int y, int 
 }
 
 static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport *v) {
-    if (!g->dialogue_active || g->location != LOCATION_TAVERN) {
+    if (!g->dialogue_active ||
+        (g->location != LOCATION_TAVERN &&
+        g->location != LOCATION_FOREST)) {
         return;
     }
     int npc_x = g->dialogue_x;
@@ -374,6 +376,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_TAVERN_TABLE: draw_tavern_table(r, sx, sy); break;
                 case TILE_NPC_ELOWEN: draw_elowen(r, sx, sy); break;
                 case TILE_NPC_DAIN: draw_dain(r, sx, sy); break;
+                case TILE_NPC_ALDER: draw_alder(r, sx, sy); break;
+                case TILE_FOREST_WARDEN:
+                    draw_forest_warden(r, sx, sy); break;
                 case TILE_TOWN_EXIT: {
                     TownExitStyle style;
                     int segment;
@@ -530,6 +535,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             (TILE_SIZE - name_w) / 2;
         renderer_draw_text(r, "DAIN", name_x, name_y,
             (SDL_Color){218, 164, 84, 255}, r->font_tiny);
+        TTF_SizeText(r->font_tiny, "ALDER", &name_w, NULL);
+        name_x = viewport_to_screen_x(v, 28) * TILE_SIZE +
+            (TILE_SIZE - name_w) / 2;
+        renderer_draw_text(r, "ALDER", name_x, name_y,
+            (SDL_Color){126, 190, 112, 255}, r->font_tiny);
     }
 
     // Draw spell/projectile trail

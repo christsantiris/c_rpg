@@ -907,7 +907,7 @@ void action_resolve_player(GameState *g, Action a) {
                 g->map.tiles[MAP_H - 1][g->map.stairs_down_x] =
                     TILE_FOREST_EXIT;
             }
-            push_message(g, "The ancient landmark reveals the onward trail!");
+        push_message(g, "The rune reveals the path!");
             tile = TILE_FOREST_FLOOR;
         }
 

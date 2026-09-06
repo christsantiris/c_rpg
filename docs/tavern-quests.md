@@ -32,6 +32,21 @@ losing progress. Returning all three fragments allows Dain to reconstruct the
 map and locate its hidden dwarven hoard. He awards the player 150 gold and 400
 score.
 
+## Alder: The Lost Wardens
+
+Alder is an aging forest ranger searching for three wardens lost while
+investigating the Necromancer's influence. The wardens appear in dead-end
+groves on Forest stages 2, 5, and 7. Approach a trapped warden and press `T` to
+free them. Rescuing a warden does not require clearing the entire stage.
+
+Each captive has a thematic guardian nearby: a Giant Spider on stage 2, a Dark
+Elf on stage 5, and a Forest Troll on stage 7. Missing wardens are guaranteed
+to appear on later expeditions, while rescued wardens never respawn. Quest
+acceptance and rescue progress persist through backtracking and save/load.
+
+After rescuing all three wardens, return to Alder to receive 175 gold and 500
+score.
+
 ## Repeat expeditions
 
 Entering an adventure from town begins a new expedition at its first stage.
