@@ -1259,6 +1259,64 @@ void draw_tavern(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 123, y + 53, 4, 3, window);
 }
 
+void draw_watchtower(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color outline = {18, 18, 24, 255};
+    SDL_Color stone = {78, 82, 88, 255};
+    SDL_Color stone_hi = {112, 116, 118, 255};
+    SDL_Color stone_dark = {50, 53, 60, 255};
+    SDL_Color roof = {47, 43, 55, 255};
+    SDL_Color wood = {76, 47, 29, 255};
+    SDL_Color wood_hi = {116, 72, 38, 255};
+    SDL_Color iron = {134, 139, 143, 255};
+    SDL_Color window = {246, 183, 65, 255};
+
+    // Broad foundation beneath the narrower tower shaft.
+    fill_rect(r, x + 8, y + 129, 104, 11, outline);
+    fill_rect(r, x + 12, y + 131, 96, 7, stone_dark);
+    fill_rect(r, x + 23, y + 48, 74, 83, outline);
+    fill_rect(r, x + 27, y + 51, 66, 78, stone);
+
+    // Uneven masonry courses make the tower feel old but maintained.
+    for (int row = 0; row < 5; row++) {
+        int course_y = y + 59 + row * 14;
+        int offset = row % 2 == 0 ? 0 : 11;
+        fill_rect(r, x + 27, course_y, 66, 2, stone_dark);
+        for (int joint_x = 32 + offset; joint_x < 91; joint_x += 22) {
+            fill_rect(r, x + joint_x, course_y - 8, 2, 8, stone_dark);
+        }
+    }
+
+    // Crenellated lookout platform and overhanging timber roof.
+    fill_rect(r, x + 13, y + 36, 94, 18, outline);
+    fill_rect(r, x + 17, y + 39, 86, 12, stone_dark);
+    fill_rect(r, x + 18, y + 27, 16, 14, outline);
+    fill_rect(r, x + 20, y + 29, 12, 12, stone);
+    fill_rect(r, x + 52, y + 27, 16, 14, outline);
+    fill_rect(r, x + 54, y + 29, 12, 12, stone);
+    fill_rect(r, x + 86, y + 27, 16, 14, outline);
+    fill_rect(r, x + 88, y + 29, 12, 12, stone);
+    fill_rect(r, x + 23, y + 15, 74, 15, outline);
+    fill_rect(r, x + 28, y + 11, 64, 16, roof);
+    fill_rect(r, x + 36, y + 7, 48, 6, stone_hi);
+
+    // Lit arrow slits show that the tower is occupied, though still closed.
+    fill_rect(r, x + 55, y + 65, 10, 20, outline);
+    fill_rect(r, x + 58, y + 69, 4, 12, window);
+    fill_rect(r, x + 36, y + 91, 8, 15, outline);
+    fill_rect(r, x + 39, y + 94, 2, 9, window);
+    fill_rect(r, x + 76, y + 91, 8, 15, outline);
+    fill_rect(r, x + 79, y + 94, 2, 9, window);
+
+    // Reinforced door is deliberately shut until the interior is designed.
+    fill_rect(r, x + 48, y + 105, 25, 26, outline);
+    fill_rect(r, x + 52, y + 109, 17, 22, wood);
+    fill_rect(r, x + 54, y + 114, 13, 3, wood_hi);
+    fill_rect(r, x + 54, y + 122, 13, 3, iron);
+    fill_rect(r, x + 64, y + 118, 3, 3, iron);
+}
+
 void draw_floor_item(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
