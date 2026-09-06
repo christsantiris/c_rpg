@@ -9,12 +9,12 @@
 static const char b64[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-static char *tiles_to_base64(const TileType tiles[MAP_H][MAP_W]) {
-    int src_len = MAP_H * MAP_W * sizeof(TileType);
+static char *bytes_to_base64(const unsigned char *src, int src_len) {
     int dst_len = ((src_len + 2) / 3) * 4 + 1;
     char *out = malloc(dst_len);
-    if (!out) return NULL;
-    const unsigned char *src = (const unsigned char *)tiles;
+    if (!out) {
+        return NULL;
+    }
     int i = 0, j = 0;
     while (i < src_len) {
         unsigned int a = i < src_len ? src[i++] : 0;
@@ -27,13 +27,23 @@ static char *tiles_to_base64(const TileType tiles[MAP_H][MAP_W]) {
         out[j++] = b64[(t >>  0) & 0x3f];
     }
     int pad = src_len % 3;
-    if (pad == 1) { out[j-1] = '='; out[j-2] = '='; }
-    if (pad == 2) { out[j-1] = '='; }
+    if (pad == 1) {
+        out[j - 1] = '=';
+        out[j - 2] = '=';
+    }
+    if (pad == 2) {
+        out[j - 1] = '=';
+    }
     out[j] = '\0';
     return out;
 }
 
-static void base64_to_tiles(const char *src, TileType tiles[MAP_H][MAP_W]) {
+static char *tiles_to_base64(const TileType tiles[MAP_H][MAP_W]) {
+    return bytes_to_base64((const unsigned char *)tiles,
+        MAP_H * MAP_W * sizeof(TileType));
+}
+
+static void base64_to_bytes(const char *src, unsigned char *dst, int dst_len) {
     static const unsigned char dec[256] = {
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -44,19 +54,27 @@ static void base64_to_tiles(const char *src, TileType tiles[MAP_H][MAP_W]) {
         0,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,
         41,42,43,44,45,46,47,48,49,50,51,0,0,0,0,0
     };
-    unsigned char *dst = (unsigned char *)tiles;
     int len = strlen(src);
     int j = 0;
-    for (int i = 0; i < len; i += 4) {
+    for (int i = 0; i < len && j < dst_len; i += 4) {
         unsigned int a = dec[(unsigned char)src[i]];
         unsigned int b = dec[(unsigned char)src[i+1]];
         unsigned int c = src[i+2] == '=' ? 0 : dec[(unsigned char)src[i+2]];
         unsigned int d = src[i+3] == '=' ? 0 : dec[(unsigned char)src[i+3]];
         unsigned int t = (a << 18) | (b << 12) | (c << 6) | d;
         dst[j++] = (t >> 16) & 0xff;
-        if (src[i+2] != '=') dst[j++] = (t >> 8) & 0xff;
-        if (src[i+3] != '=') dst[j++] = t & 0xff;
+        if (src[i+2] != '=' && j < dst_len) {
+            dst[j++] = (t >> 8) & 0xff;
+        }
+        if (src[i+3] != '=' && j < dst_len) {
+            dst[j++] = t & 0xff;
+        }
     }
+}
+
+static void base64_to_tiles(const char *src, TileType tiles[MAP_H][MAP_W]) {
+    base64_to_bytes(src, (unsigned char *)tiles,
+        MAP_H * MAP_W * sizeof(TileType));
 }
 
 static const char *slot_path(int slot) {
@@ -96,6 +114,11 @@ static cJSON *serialize_map(const Map *m) {
     cJSON_AddStringToObject(obj, "tiles_b64", b64tiles);
     free(b64tiles);
 
+    char *b64explored = bytes_to_base64(m->explored,
+        MAP_EXPLORED_BYTES);
+    cJSON_AddStringToObject(obj, "explored_b64", b64explored);
+    free(b64explored);
+
     return obj;
 }
 
@@ -116,6 +139,12 @@ static void deserialize_map(const cJSON *obj, Map *m) {
     }
 
     base64_to_tiles(cJSON_GetObjectItem(obj, "tiles_b64")->valuestring, m->tiles);
+    map_clear_exploration(m);
+    cJSON *explored = cJSON_GetObjectItem(obj, "explored_b64");
+    if (explored && cJSON_IsString(explored)) {
+        base64_to_bytes(explored->valuestring, m->explored,
+            MAP_EXPLORED_BYTES);
+    }
 }
 
 static cJSON *serialize_enemies(const Enemy *enemies, int count) {
@@ -170,7 +199,7 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 22);
+    cJSON_AddNumberToObject(root, "save_version", 25);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -238,9 +267,14 @@ int save_game(const GameState *g, int slot) {
         g->elowen_quest_state);
     cJSON_AddNumberToObject(root, "elowen_seals_restored",
         g->elowen_seals_restored);
+    cJSON_AddNumberToObject(root, "dain_quest_state", g->dain_quest_state);
+    cJSON_AddNumberToObject(root, "dain_map_fragments",
+        g->dain_map_fragments);
     cJSON_AddNumberToObject(root, "dialogue_active", g->dialogue_active);
     cJSON_AddStringToObject(root, "dialogue_speaker", g->dialogue_speaker);
     cJSON_AddStringToObject(root, "dialogue_text", g->dialogue_text);
+    cJSON_AddNumberToObject(root, "dialogue_x", g->dialogue_x);
+    cJSON_AddNumberToObject(root, "dialogue_y", g->dialogue_y);
 
     // Messages
     cJSON *messages = cJSON_CreateArray();
@@ -477,9 +511,16 @@ int load_game(GameState *g, int slot) {
         "elowen_seals_restored");
     cJSON *legacy_altars = cJSON_GetObjectItem(root,
         "elowen_altars_cleansed");
+    cJSON *dain_quest = cJSON_GetObjectItem(root, "dain_quest_state");
+    cJSON *dain_fragments = cJSON_GetObjectItem(root,
+        "dain_map_fragments");
+    cJSON *legacy_dain_targets = cJSON_GetObjectItem(root,
+        "dain_targets_defeated");
     cJSON *dialogue_active = cJSON_GetObjectItem(root, "dialogue_active");
     cJSON *dialogue_speaker = cJSON_GetObjectItem(root, "dialogue_speaker");
     cJSON *dialogue_text = cJSON_GetObjectItem(root, "dialogue_text");
+    cJSON *dialogue_x = cJSON_GetObjectItem(root, "dialogue_x");
+    cJSON *dialogue_y = cJSON_GetObjectItem(root, "dialogue_y");
     g->dungeon_key_found = key_found ? key_found->valueint : 0;
     g->portal_active = portal_active ? portal_active->valueint : 0;
     g->portal_level = portal_level ? portal_level->valueint : 0;
@@ -493,6 +534,9 @@ int load_game(GameState *g, int slot) {
     g->elowen_quest_state = elowen_quest ? elowen_quest->valueint : 0;
     g->elowen_seals_restored = elowen_seals ? elowen_seals->valueint :
         (legacy_altars ? legacy_altars->valueint : 0);
+    g->dain_quest_state = dain_quest ? dain_quest->valueint : 0;
+    g->dain_map_fragments = dain_fragments ? dain_fragments->valueint :
+        (legacy_dain_targets ? legacy_dain_targets->valueint : 0);
     g->dialogue_active = dialogue_active ? dialogue_active->valueint : 0;
     strncpy(g->dialogue_speaker,
         dialogue_speaker ? dialogue_speaker->valuestring : "",
@@ -502,6 +546,8 @@ int load_game(GameState *g, int slot) {
         dialogue_text ? dialogue_text->valuestring : "",
         MAX_DIALOGUE_LEN - 1);
     g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
+    g->dialogue_x = dialogue_x ? dialogue_x->valueint : 10;
+    g->dialogue_y = dialogue_y ? dialogue_y->valueint : 7;
 
     // Messages
     cJSON *messages = cJSON_GetObjectItem(root, "messages");
@@ -1022,6 +1068,15 @@ int load_game(GameState *g, int slot) {
         if (g->portal_active) {
             g->map.tiles[2][20] = TILE_PORTAL;
         }
+    }
+
+    // Version 23 adds Dain and his mountain quest. Existing Tavern saves gain
+    // his NPC tile without discarding the rest of the interior state.
+    if (save_version < 23 && g->location == LOCATION_TAVERN) {
+        if (g->player.x == 18 && g->player.y == 7) {
+            g->player.y = 8;
+        }
+        g->map.tiles[7][18] = TILE_NPC_DAIN;
     }
 
     // Floor five used to contain the Goblin King. Regenerate that legacy

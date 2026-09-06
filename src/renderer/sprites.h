@@ -70,6 +70,7 @@ void draw_tavern_wall(Renderer *r, int tile_x, int tile_y);
 void draw_tavern_exit(Renderer *r, int tile_x, int tile_y);
 void draw_tavern_table(Renderer *r, int tile_x, int tile_y);
 void draw_elowen(Renderer *r, int tile_x, int tile_y);
+void draw_dain(Renderer *r, int tile_x, int tile_y);
 
 void draw_floor_item(Renderer *r, int tile_x, int tile_y);
 void draw_floor_gold(Renderer *r, int tile_x, int tile_y);

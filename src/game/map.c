@@ -1,5 +1,26 @@
 #include "map.h"
 #include <stdlib.h>
+#include <string.h>
+
+void map_clear_exploration(Map *m) {
+    memset(m->explored, 0, sizeof(m->explored));
+}
+
+void map_mark_explored(Map *m, int x, int y) {
+    if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
+        return;
+    }
+    int index = y * MAP_W + x;
+    m->explored[index / 8] |= (unsigned char)(1u << (index % 8));
+}
+
+int map_is_explored(const Map *m, int x, int y) {
+    if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
+        return 0;
+    }
+    int index = y * MAP_W + x;
+    return (m->explored[index / 8] & (1u << (index % 8))) != 0;
+}
 
 static void fill_rect(Map *m, int x, int y, int w, int h, TileType t) {
     for (int ry = y; ry < y + h; ry++)
@@ -43,6 +64,7 @@ void map_room_center(const Room *r, int *cx, int *cy) {
 
 void map_generate(Map *m, int level) {
     (void)level;
+    map_clear_exploration(m);
 
     // Fill with walls
     for (int y = 0; y < MAP_H; y++)
@@ -191,6 +213,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_TAVERN_WALL &&
         m->tiles[y][x] != TILE_TAVERN_TABLE &&
         m->tiles[y][x] != TILE_NPC_ELOWEN &&
+        m->tiles[y][x] != TILE_NPC_DAIN &&
         m->tiles[y][x] != TILE_LOCKED_DOOR;
 }
 
@@ -284,6 +307,7 @@ static void carve_forest_clearing(Map *m, Room *room) {
 }
 
 static void map_generate_outdoor(Map *m, int level, OutdoorSide entrance_side, OutdoorSide exit_side, int organic, const ForestTemplate *layout) {
+    map_clear_exploration(m);
     for (int y = 0; y < MAP_H; y++)
         for (int x = 0; x < MAP_W; x++)
             m->tiles[y][x] = TILE_FOREST_WALL;
@@ -572,6 +596,7 @@ void map_generate_coast(Map *m, int level) {
 }
 
 void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
+    map_clear_exploration(m);
     m->room_count = 0;
 
     // Fill with walls
@@ -634,6 +659,7 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
 }
 
 void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y) {
+    map_clear_exploration(m);
     m->room_count = 0;
 
     for (int y = 0; y < MAP_H; y++) {
@@ -667,6 +693,7 @@ void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y) {
     }
 
     m->tiles[7][10] = TILE_NPC_ELOWEN;
+    m->tiles[7][18] = TILE_NPC_DAIN;
     m->tiles[22][20] = TILE_TAVERN_EXIT;
     *spawn_x = 20;
     *spawn_y = 21;

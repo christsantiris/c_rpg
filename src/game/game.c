@@ -356,6 +356,23 @@ void enemies_spawn(GameState *g) {
         (g->location == LOCATION_COAST ? COAST_DEPTH : DUNGEON_DEPTH));
     int regular_room_limit = g->level == boss_level
         ? g->map.room_count - 1 : g->map.room_count;
+    if (g->location == LOCATION_MOUNTAINS && g->dain_quest_state == 1) {
+        EnemyType quest_target = ENEMY_GOBLIN_SCOUT;
+        int target_bit = 0;
+        if (g->level == 2) {
+            quest_target = ENEMY_GOBLIN_ARCHER;
+            target_bit = DAIN_FRAGMENT_ARCHER;
+        } else if (g->level == 3) {
+            quest_target = ENEMY_GOBLIN_BOMBER;
+            target_bit = DAIN_FRAGMENT_BOMBER;
+        } else if (g->level == 5) {
+            quest_target = ENEMY_GOBLIN_SHAMAN;
+            target_bit = DAIN_FRAGMENT_SHAMAN;
+        }
+        if (target_bit && !(g->dain_map_fragments & target_bit)) {
+            spawn_into_open_tile(g, quest_target, regular_room_limit);
+        }
+    }
     while (g->enemy_count < num_enemies) {
         EnemyType type;
         int roll = rand() % 100;
@@ -495,9 +512,13 @@ void game_init(GameState *g) {
     g->defeated_bosses = 0;
     g->elowen_quest_state = 0;
     g->elowen_seals_restored = 0;
+    g->dain_quest_state = 0;
+    g->dain_map_fragments = 0;
     g->dialogue_active = 0;
     g->dialogue_speaker[0] = '\0';
     g->dialogue_text[0] = '\0';
+    g->dialogue_x = 0;
+    g->dialogue_y = 0;
     g->floor_item_count = 0;
     for (int i = 0; i < MAX_INVENTORY; i++) {
         g->inventory[i].active = 0;
@@ -878,6 +899,8 @@ void game_talk_to_elowen(GameState *g) {
     g->dialogue_active = 1;
     strncpy(g->dialogue_speaker, "Elowen", MAX_SPEAKER_LEN - 1);
     g->dialogue_speaker[MAX_SPEAKER_LEN - 1] = '\0';
+    g->dialogue_x = 10;
+    g->dialogue_y = 7;
     if (g->elowen_quest_state == 0) {
         g->elowen_quest_state = 1;
         g->elowen_seals_restored = 0;
@@ -919,6 +942,83 @@ void game_talk_to_elowen(GameState *g) {
         MAX_DIALOGUE_LEN - 1);
     g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
     push_message(g, "Elowen's quest is already complete.");
+}
+
+void game_talk_to_dain(GameState *g) {
+    g->dialogue_active = 1;
+    strncpy(g->dialogue_speaker, "Dain", MAX_SPEAKER_LEN - 1);
+    g->dialogue_speaker[MAX_SPEAKER_LEN - 1] = '\0';
+    g->dialogue_x = 18;
+    g->dialogue_y = 7;
+    if (g->dain_quest_state == 0) {
+        g->dain_quest_state = 1;
+        g->dain_map_fragments = 0;
+        strncpy(g->dialogue_text,
+            "Goblins tore an old dwarven treasure map into three pieces. An Archer, a Bomber, and a Shaman carry the fragments. Recover them.",
+            MAX_DIALOGUE_LEN - 1);
+        g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
+        push_message(g, "Assigned: Recover the Treasure Map.");
+        return;
+    }
+    if (g->dain_quest_state == 1) {
+        int defeated = 0;
+        for (int bit = 0; bit < 3; bit++) {
+            if (g->dain_map_fragments & (1 << bit)) {
+                defeated++;
+            }
+        }
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "You have recovered %d of 3 map fragments. The remaining pieces are still carried through the mountains.",
+            defeated);
+        char status[MAX_MESSAGE_LEN];
+        snprintf(status, sizeof(status),
+            "Quest progress: %d/3 map fragments.", defeated);
+        push_message(g, status);
+        return;
+    }
+    if (g->dain_quest_state == 2) {
+        g->dain_quest_state = 3;
+        g->gold += 150;
+        g->score += 400;
+        strncpy(g->dialogue_text,
+            "The treasure map is whole again. It reveals a dwarven hoard the goblins never learned how to find.",
+            MAX_DIALOGUE_LEN - 1);
+        g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
+        push_message(g, "Completed: Recover the Treasure Map.");
+        return;
+    }
+    strncpy(g->dialogue_text,
+        "The restored map still points toward riches hidden beneath the mountains.",
+        MAX_DIALOGUE_LEN - 1);
+    g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
+    push_message(g, "Dain's quest is already complete.");
+}
+
+void game_record_dain_kill(GameState *g, EnemyType type) {
+    if (g->location != LOCATION_MOUNTAINS || g->dain_quest_state != 1) {
+        return;
+    }
+    int target = 0;
+    const char *status = NULL;
+    if (type == ENEMY_GOBLIN_ARCHER) {
+        target = DAIN_FRAGMENT_ARCHER;
+        status = "Map fragment recovered from Archer.";
+    } else if (type == ENEMY_GOBLIN_BOMBER) {
+        target = DAIN_FRAGMENT_BOMBER;
+        status = "Map fragment recovered from Bomber.";
+    } else if (type == ENEMY_GOBLIN_SHAMAN) {
+        target = DAIN_FRAGMENT_SHAMAN;
+        status = "Map fragment recovered from Shaman.";
+    }
+    if (!target || (g->dain_map_fragments & target)) {
+        return;
+    }
+    g->dain_map_fragments |= target;
+    push_message(g, status);
+    if ((g->dain_map_fragments & 7) == 7) {
+        g->dain_quest_state = 2;
+        push_message(g, "Treasure map complete. Return to Dain.");
+    }
 }
 
 void game_mark_level_cleared(GameState *g) {

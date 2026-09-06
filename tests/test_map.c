@@ -7,10 +7,23 @@ void test_map(void) {
     GameState g;
     game_init(&g);
 
+    ASSERT("new map begins unexplored",
+        !map_is_explored(&g.map, g.player.x, g.player.y));
+    map_mark_explored(&g.map, g.player.x, g.player.y);
+    ASSERT("seen map tile remains explored",
+        map_is_explored(&g.map, g.player.x, g.player.y));
+
     ASSERT("player does not start on top border",    g.player.y != 0);
     ASSERT("player does not start on bottom border", g.player.y != MAP_H - 1);
     ASSERT("player does not start on left border",   g.player.x != 0);
     ASSERT("player does not start on right border",  g.player.x != MAP_W - 1);
+
+    int explored_x = g.player.x;
+    int explored_y = g.player.y;
+    game_descend(&g);
+    game_ascend(&g);
+    ASSERT("exploration follows a cached dungeon floor",
+        map_is_explored(&g.map, explored_x, explored_y));
 
     // Walk all the way left
     GameState g2;

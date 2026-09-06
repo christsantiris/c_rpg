@@ -15,6 +15,16 @@ static int find_tile(const Map *map, TileType type, int *found_x, int *found_y) 
     return 0;
 }
 
+static int count_enemy_type(const GameState *g, EnemyType type) {
+    int count = 0;
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (g->enemies[i].active && g->enemies[i].type == type) {
+            count++;
+        }
+    }
+    return count;
+}
+
 void test_elowen_quest(void) {
     printf("Elowen quest tests:\n");
     GameState g;
@@ -106,6 +116,12 @@ void test_tavern_interior(void) {
         find_tile(&g.map, TILE_NPC_ELOWEN, &elowen_x, &elowen_y));
     ASSERT("player cannot overlap Elowen",
         !map_is_walkable(&g.map, elowen_x, elowen_y));
+    int dain_x = 0;
+    int dain_y = 0;
+    ASSERT("Dain has an in-world Tavern tile",
+        find_tile(&g.map, TILE_NPC_DAIN, &dain_x, &dain_y));
+    ASSERT("player cannot overlap Dain",
+        !map_is_walkable(&g.map, dain_x, dain_y));
     g.player.x = elowen_x;
     g.player.y = elowen_y + 1;
     game_talk_to_elowen(&g);
@@ -129,4 +145,47 @@ void test_tavern_interior(void) {
         g.player.x == 8 && g.player.y == 21);
     ASSERT("Tavern transition preserves Elowen quest state",
         g.elowen_quest_state == 1);
+}
+
+void test_dain_quest(void) {
+    printf("Dain quest tests:\n");
+    GameState g;
+    g.player.player_class = CLASS_WARRIOR;
+    game_init(&g);
+
+    game_talk_to_dain(&g);
+    ASSERT("Dain assigns Recover the Treasure Map", g.dain_quest_state == 1);
+    ASSERT("new Dain quest begins with no map fragments",
+        g.dain_map_fragments == 0);
+    ASSERT("Dain speaks through the dialogue bubble", g.dialogue_active &&
+        strcmp(g.dialogue_speaker, "Dain") == 0);
+
+    int target_levels[3] = {2, 3, 5};
+    EnemyType target_types[3] = {
+        ENEMY_GOBLIN_ARCHER, ENEMY_GOBLIN_BOMBER, ENEMY_GOBLIN_SHAMAN
+    };
+    g.location = LOCATION_MOUNTAINS;
+    for (int target = 0; target < 3; target++) {
+        g.level = target_levels[target];
+        map_generate_mountains(&g.map, g.level);
+        enemies_spawn(&g);
+        ASSERT("needed mountain specialist has a guaranteed encounter",
+            count_enemy_type(&g, target_types[target]) > 0);
+    }
+
+    game_record_dain_kill(&g, ENEMY_GOBLIN_ARCHER);
+    ASSERT("Archer defeat recovers its map fragment",
+        g.dain_map_fragments == DAIN_FRAGMENT_ARCHER);
+    game_record_dain_kill(&g, ENEMY_GOBLIN_BOMBER);
+    ASSERT("Bomber defeat recovers its map fragment",
+        g.dain_map_fragments ==
+            (DAIN_FRAGMENT_ARCHER | DAIN_FRAGMENT_BOMBER));
+    game_record_dain_kill(&g, ENEMY_GOBLIN_SHAMAN);
+    ASSERT("three map fragments make Dain's quest ready",
+        g.dain_quest_state == 2 && g.dain_map_fragments == 7);
+
+    int gold_before = g.gold;
+    game_talk_to_dain(&g);
+    ASSERT("Dain completes the mountain quest", g.dain_quest_state == 3);
+    ASSERT("Dain awards 150 gold", g.gold == gold_before + 150);
 }

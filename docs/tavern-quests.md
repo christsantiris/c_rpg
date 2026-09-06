@@ -17,6 +17,21 @@ Elowen after repairing all three to receive 100 gold and 300 score.
 
 Quest acceptance, seal progress, completion, and rewards persist in saves.
 
+## Dain: Recover the Treasure Map
+
+Dain is a retired dwarven caravan warden who tracks the organized goblin raids
+through the mountains. Goblins tore an old dwarven treasure map into three
+pieces. A Goblin Archer, Goblin Bomber, and Goblin Shaman each carry one
+fragment. Defeating them recovers their fragments automatically without using
+normal inventory space.
+
+While the quest is active and a map fragment is still needed, an Archer is
+guaranteed on Mountains stage 2, a Bomber on stage 3, and a Shaman on stage 5.
+The player may continue forward, backtrack, or begin another expedition without
+losing progress. Returning all three fragments allows Dain to reconstruct the
+map and locate its hidden dwarven hoard. He awards the player 150 gold and 400
+score.
+
 ## Repeat expeditions
 
 Entering an adventure from town begins a new expedition at its first stage.

@@ -14,6 +14,10 @@
 #define MAX_DIALOGUE_LEN 192
 #define MAX_SPEAKER_LEN 24
 
+#define DAIN_FRAGMENT_ARCHER 1
+#define DAIN_FRAGMENT_BOMBER 2
+#define DAIN_FRAGMENT_SHAMAN 4
+
 #define MAX_TRAIL 16
 
 typedef struct {
@@ -108,9 +112,13 @@ typedef struct {
     int defeated_bosses;
     int elowen_quest_state;
     int elowen_seals_restored;
+    int dain_quest_state;
+    int dain_map_fragments;
     int dialogue_active;
     char dialogue_speaker[MAX_SPEAKER_LEN];
     char dialogue_text[MAX_DIALOGUE_LEN];
+    int dialogue_x;
+    int dialogue_y;
 } GameState;
 
 void game_init(GameState *g);
@@ -137,6 +145,8 @@ void game_return_to_town(GameState *g);
 void game_open_town_portal(GameState *g);
 void game_use_town_portal(GameState *g);
 void game_talk_to_elowen(GameState *g);
+void game_talk_to_dain(GameState *g);
+void game_record_dain_kill(GameState *g, EnemyType type);
 void game_repair_equipment_indices(GameState *g);
 
 #endif

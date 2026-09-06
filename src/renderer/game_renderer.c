@@ -49,18 +49,9 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     if (!g->dialogue_active || g->location != LOCATION_TAVERN) {
         return;
     }
-    int npc_x = -1;
-    int npc_y = -1;
-    for (int y = 0; y < MAP_H && npc_x < 0; y++) {
-        for (int x = 0; x < MAP_W; x++) {
-            if (g->map.tiles[y][x] == TILE_NPC_ELOWEN) {
-                npc_x = x;
-                npc_y = y;
-                break;
-            }
-        }
-    }
-    if (npc_x < 0 || !viewport_is_visible(v, npc_x, npc_y)) {
+    int npc_x = g->dialogue_x;
+    int npc_y = g->dialogue_y;
+    if (!viewport_is_visible(v, npc_x, npc_y)) {
         return;
     }
 
@@ -267,11 +258,67 @@ static void draw_fireball_impact(Renderer *r, int tile_x, int tile_y,
     SDL_RenderDrawPoint(r->sdl, cx, cy - radius - 3);
 }
 
+static TileType floor_item_underlay(const GameState *g, int x, int y) {
+    for (int i = 0; i < g->floor_item_count; i++) {
+        const FloorItem *item = &g->floor_items[i];
+        if (item->active && item->x == x && item->y == y) {
+            return (TileType)item->underlying_tile;
+        }
+    }
+    if (g->location == LOCATION_FOREST) {
+        return TILE_FOREST_FLOOR;
+    }
+    if (g->location == LOCATION_MOUNTAINS) {
+        return TILE_MOUNTAIN_FLOOR;
+    }
+    if (g->location == LOCATION_COAST) {
+        return TILE_COAST_FLOOR;
+    }
+    return TILE_FLOOR;
+}
+
+static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int map_x, int map_y, int screen_x, int screen_y) {
+    TileType underlay = floor_item_underlay(g, map_x, map_y);
+    if (underlay == TILE_TRAP_HIDDEN && g->location == LOCATION_FOREST) {
+        draw_forest_floor(r, screen_x, screen_y);
+    } else if (underlay == TILE_TRAP_HIDDEN &&
+        g->location == LOCATION_MOUNTAINS) {
+        draw_mountain_floor(r, screen_x, screen_y);
+    } else if (underlay == TILE_TRAP_HIDDEN &&
+        g->location == LOCATION_COAST) {
+        draw_coast_floor(r, screen_x, screen_y);
+    } else if (underlay == TILE_FOREST_FLOOR) {
+        draw_forest_floor(r, screen_x, screen_y);
+    } else if (underlay == TILE_MOUNTAIN_BRIDGE) {
+        draw_mountain_bridge(r, screen_x, screen_y);
+    } else if (underlay == TILE_MOUNTAIN_CAVE_FLOOR) {
+        draw_mountain_cave_floor(r, screen_x, screen_y);
+    } else if (underlay == TILE_MOUNTAIN_FORTRESS_FLOOR) {
+        draw_mountain_fortress_floor(r, screen_x, screen_y);
+    } else if (underlay == TILE_MOUNTAIN_FLOOR) {
+        draw_mountain_floor(r, screen_x, screen_y);
+    } else if (underlay == TILE_COAST_SHALLOW_WATER) {
+        draw_coast_shallow_water(r, screen_x, screen_y);
+    } else if (underlay == TILE_COAST_FLOOR) {
+        draw_coast_floor(r, screen_x, screen_y);
+    } else if (underlay == TILE_TOWN_FLOOR) {
+        draw_town_floor(r, screen_x, screen_y);
+    } else if (underlay == TILE_TOWN_PATH) {
+        draw_town_path(r, screen_x, screen_y);
+    } else if (underlay == TILE_TAVERN_FLOOR) {
+        draw_tavern_floor(r, screen_x, screen_y);
+    } else {
+        draw_floor(r, screen_x, screen_y);
+    }
+    draw_floor_item(r, screen_x, screen_y);
+}
+
 void game_draw(Renderer *r, GameState *g, Viewport *v) {
     // Draw map tiles
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
             if (!viewport_is_visible(v, x, y)) continue;
+            map_mark_explored(&g->map, x, y);
             int sx = viewport_to_screen_x(v, x);
             int sy = viewport_to_screen_y(v, y);
             switch (g->map.tiles[y][x]) {
@@ -326,6 +373,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_TAVERN_EXIT: draw_tavern_exit(r, sx, sy); break;
                 case TILE_TAVERN_TABLE: draw_tavern_table(r, sx, sy); break;
                 case TILE_NPC_ELOWEN: draw_elowen(r, sx, sy); break;
+                case TILE_NPC_DAIN: draw_dain(r, sx, sy); break;
                 case TILE_TOWN_EXIT: {
                     TownExitStyle style;
                     int segment;
@@ -348,7 +396,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_SHOP_BLACKSMITH:
                 case TILE_SHOP_ALCHEMIST:
                 case TILE_TAVERN: draw_town_floor(r, sx, sy); break;
-                case TILE_ITEM: draw_floor_item(r, sx, sy); break;
+                case TILE_ITEM:
+                    draw_floor_item_with_underlay(r, g, x, y, sx, sy); break;
                 case TILE_TRAP_HIDDEN:
                     if (g->location == LOCATION_FOREST)
                         draw_forest_floor(r, sx, sy);
@@ -476,6 +525,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             (TILE_SIZE - name_w) / 2;
         int name_y = viewport_to_screen_y(v, 6) * TILE_SIZE;
         renderer_draw_text(r, "ELOWEN", name_x, name_y, name, r->font_tiny);
+        TTF_SizeText(r->font_tiny, "DAIN", &name_w, NULL);
+        name_x = viewport_to_screen_x(v, 18) * TILE_SIZE +
+            (TILE_SIZE - name_w) / 2;
+        renderer_draw_text(r, "DAIN", name_x, name_y,
+            (SDL_Color){218, 164, 84, 255}, r->font_tiny);
     }
 
     // Draw spell/projectile trail
