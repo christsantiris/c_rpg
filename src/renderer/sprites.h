@@ -66,6 +66,7 @@ void draw_town_exit(Renderer *r, int tile_x, int tile_y, TownExitStyle style, in
 void draw_shop_blacksmith(Renderer *r, int tile_x, int tile_y);
 void draw_shop_alchemist(Renderer *r, int tile_x, int tile_y);
 void draw_tavern(Renderer *r, int tile_x, int tile_y);
+void draw_watchtower(Renderer *r, int tile_x, int tile_y);
 void draw_tavern_floor(Renderer *r, int tile_x, int tile_y);
 void draw_tavern_wall(Renderer *r, int tile_x, int tile_y);
 void draw_tavern_exit(Renderer *r, int tile_x, int tile_y);

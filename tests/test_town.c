@@ -98,6 +98,7 @@ void test_town_tiles(void) {
     ASSERT("TILE_SHOP_BLACKSMITH distinct",  TILE_SHOP_BLACKSMITH != TILE_TOWN_EXIT);
     ASSERT("TILE_SHOP_ALCHEMIST distinct",   TILE_SHOP_ALCHEMIST  != TILE_SHOP_BLACKSMITH);
     ASSERT("TILE_TAVERN is distinct", TILE_TAVERN != TILE_SHOP_ALCHEMIST);
+    ASSERT("TILE_WATCHTOWER is distinct", TILE_WATCHTOWER != TILE_TAVERN);
 
     // Constants are defined
     ASSERT("TOWN_W is 40", TOWN_W == 40);
@@ -146,6 +147,11 @@ void test_town_map(void) {
         !map_is_walkable(&m, 5, 16));
     ASSERT("tavern doorway is walkable",
         map_is_walkable(&m, 8, 20));
+    ASSERT("watchtower occupies southeast town lot",
+        m.tiles[16][28] == TILE_WATCHTOWER &&
+        m.tiles[21][32] == TILE_WATCHTOWER);
+    ASSERT("watchtower remains closed and solid",
+        !map_is_walkable(&m, 30, 21));
 
     // Path tiles exist
     ASSERT("vertical path at center",

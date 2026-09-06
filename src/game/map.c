@@ -212,6 +212,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_TAVERN &&
         m->tiles[y][x] != TILE_SHOP_BLACKSMITH &&
         m->tiles[y][x] != TILE_SHOP_ALCHEMIST &&
+        m->tiles[y][x] != TILE_WATCHTOWER &&
         m->tiles[y][x] != TILE_TAVERN_WALL &&
         m->tiles[y][x] != TILE_TAVERN_TABLE &&
         m->tiles[y][x] != TILE_NPC_ELOWEN &&
@@ -658,6 +659,13 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
         }
     }
     m->tiles[20][8] = TILE_TAVERN_DOOR;
+
+    // Watchtower at (28, 16) — 5x6 tiles. It remains closed for now.
+    for (int dy = 0; dy < 6; dy++) {
+        for (int dx = 0; dx < 5; dx++) {
+            m->tiles[16 + dy][28 + dx] = TILE_WATCHTOWER;
+        }
+    }
 
     // Spawn at the central crossroads so the south road remains unobstructed
     // for a future region.

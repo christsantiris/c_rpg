@@ -199,7 +199,7 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 29);
+    cJSON_AddNumberToObject(root, "save_version", 30);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -1138,6 +1138,25 @@ int load_game(GameState *g, int slot) {
     // Version 29 gives each town shop a walk-in door and makes the remaining
     // facade solid. Rebuild legacy town maps to receive the entrance tiles.
     if (save_version < 29 && g->location == LOCATION_TOWN) {
+        int player_x = g->player.x;
+        int player_y = g->player.y;
+        int spawn_x;
+        int spawn_y;
+        map_generate_town(&g->map, &spawn_x, &spawn_y);
+        if (map_is_walkable(&g->map, player_x, player_y)) {
+            g->player.x = player_x;
+            g->player.y = player_y;
+        } else {
+            g->player.x = spawn_x;
+            g->player.y = spawn_y;
+        }
+        if (g->portal_active) {
+            g->map.tiles[2][20] = TILE_PORTAL;
+        }
+    }
+
+    // Version 30 adds the closed watchtower to the southeast town lot.
+    if (save_version < 30 && g->location == LOCATION_TOWN) {
         int player_x = g->player.x;
         int player_y = g->player.y;
         int spawn_x;
