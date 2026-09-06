@@ -49,7 +49,7 @@ void help_draw(Renderer *r) {
     renderer_draw_text(r, "WORLD",          col2, y, gold,  r->font_small);
     y += lh;
     renderer_draw_text(r, "I              Open inventory", col1, y, white, r->font_tiny);
-    renderer_draw_text(r, "E              Enter shop",     col2, y, white, r->font_tiny);
+    renderer_draw_text(r, "Bump shop door Enter shop",      col2, y, white, r->font_tiny);
     y += lh;
     renderer_draw_text(r, "P              Pick up item",   col1, y, white, r->font_tiny);
     renderer_draw_text(r, "ESC            Main menu",      col2, y, white, r->font_tiny);

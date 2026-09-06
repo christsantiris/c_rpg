@@ -23,6 +23,7 @@ void draw_coast_edge(Renderer *r, int tile_x, int tile_y, int forward);
 void draw_coast_shallow_water(Renderer *r, int tile_x, int tile_y);
 void draw_coast_deep_water(Renderer *r, int tile_x, int tile_y);
 void draw_coast_tide_control(Renderer *r, int tile_x, int tile_y);
+void draw_coast_beacon(Renderer *r, int tile_x, int tile_y, int lit);
 void draw_player(Renderer *r, int tile_x, int tile_y, PlayerClass player_class);
 void draw_stairs_up(Renderer *r, int tile_x, int tile_y);
 void draw_stairs_down(Renderer *r, int tile_x, int tile_y);
@@ -72,6 +73,7 @@ void draw_tavern_table(Renderer *r, int tile_x, int tile_y);
 void draw_elowen(Renderer *r, int tile_x, int tile_y);
 void draw_dain(Renderer *r, int tile_x, int tile_y);
 void draw_alder(Renderer *r, int tile_x, int tile_y);
+void draw_mara(Renderer *r, int tile_x, int tile_y);
 void draw_forest_warden(Renderer *r, int tile_x, int tile_y);
 
 void draw_floor_item(Renderer *r, int tile_x, int tile_y);

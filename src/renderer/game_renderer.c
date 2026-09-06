@@ -299,7 +299,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         draw_mountain_fortress_floor(r, screen_x, screen_y);
     } else if (underlay == TILE_MOUNTAIN_FLOOR) {
         draw_mountain_floor(r, screen_x, screen_y);
-    } else if (underlay == TILE_COAST_SHALLOW_WATER) {
+    } else if (underlay == TILE_COAST_SHALLOW_WATER ||
+        underlay == TILE_COAST_DRAINED_WATER) {
         draw_coast_shallow_water(r, screen_x, screen_y);
     } else if (underlay == TILE_COAST_FLOOR) {
         draw_coast_floor(r, screen_x, screen_y);
@@ -353,10 +354,16 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_coast_edge(r, sx, sy, 1); break;
                 case TILE_COAST_SHALLOW_WATER:
                     draw_coast_shallow_water(r, sx, sy); break;
+                case TILE_COAST_DRAINED_WATER:
+                    draw_coast_shallow_water(r, sx, sy); break;
                 case TILE_COAST_DEEP_WATER:
                     draw_coast_deep_water(r, sx, sy); break;
                 case TILE_COAST_TIDE_CONTROL:
                     draw_coast_tide_control(r, sx, sy); break;
+                case TILE_COAST_BEACON_UNLIT:
+                    draw_coast_beacon(r, sx, sy, 0); break;
+                case TILE_COAST_BEACON_LIT:
+                    draw_coast_beacon(r, sx, sy, 1); break;
                 case TILE_STAIRS_UP: draw_stairs_up(r, sx, sy); break;
                 case TILE_STAIRS_DOWN: draw_stairs_down(r, sx, sy); break;
                 case TILE_RETURN_EXIT: draw_return_exit(r, sx, sy); break;
@@ -377,6 +384,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_NPC_ELOWEN: draw_elowen(r, sx, sy); break;
                 case TILE_NPC_DAIN: draw_dain(r, sx, sy); break;
                 case TILE_NPC_ALDER: draw_alder(r, sx, sy); break;
+                case TILE_NPC_MARA: draw_mara(r, sx, sy); break;
                 case TILE_FOREST_WARDEN:
                     draw_forest_warden(r, sx, sy); break;
                 case TILE_TOWN_EXIT: {
@@ -400,6 +408,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 }
                 case TILE_SHOP_BLACKSMITH:
                 case TILE_SHOP_ALCHEMIST:
+                case TILE_BLACKSMITH_DOOR:
+                case TILE_ALCHEMIST_DOOR:
                 case TILE_TAVERN: draw_town_floor(r, sx, sy); break;
                 case TILE_ITEM:
                     draw_floor_item_with_underlay(r, g, x, y, sx, sy); break;
@@ -540,6 +550,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             (TILE_SIZE - name_w) / 2;
         renderer_draw_text(r, "ALDER", name_x, name_y,
             (SDL_Color){126, 190, 112, 255}, r->font_tiny);
+        TTF_SizeText(r->font_tiny, "MARA", &name_w, NULL);
+        name_x = viewport_to_screen_x(v, 31) * TILE_SIZE +
+            (TILE_SIZE - name_w) / 2;
+        name_y = viewport_to_screen_y(v, 17) * TILE_SIZE;
+        renderer_draw_text(r, "MARA", name_x, name_y,
+            (SDL_Color){75, 196, 201, 255}, r->font_tiny);
     }
 
     // Draw spell/projectile trail

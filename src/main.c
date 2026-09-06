@@ -187,6 +187,24 @@ static void enter_playing(Renderer *renderer, Viewport *viewport, GameState *gam
     viewport_center_on(viewport, game->player.x, game->player.y);
 }
 
+static int open_shop_on_move(const GameState *game, const Action *action, ShopScreen *shop, GameScreen *screen) {
+    if (action->type != ACTION_MOVE || game->location != LOCATION_TOWN ||
+        action->target_x < 0 || action->target_x >= MAP_W ||
+        action->target_y < 0 || action->target_y >= MAP_H) {
+        return 0;
+    }
+    TileType tile = game->map.tiles[action->target_y][action->target_x];
+    if (tile == TILE_BLACKSMITH_DOOR) {
+        shop_init(shop, SHOP_TYPE_BLACKSMITH);
+    } else if (tile == TILE_ALCHEMIST_DOOR) {
+        shop_init(shop, SHOP_TYPE_ALCHEMIST);
+    } else {
+        return 0;
+    }
+    *screen = SCREEN_SHOP;
+    return 1;
+}
+
 static void handle_landing_result(LandingResult result, LandingScreen *landing,
     GameScreen *screen, GameState *game, Renderer *renderer, Viewport *viewport,
     NameEntry *name_entry, SlotSelect *slot_select, int *slot_is_save, int *running) {
@@ -590,39 +608,6 @@ int main(int argc, char **argv) {
                             case SDL_SCANCODE_H:
                                 screen = SCREEN_HELP;
                                 break;
-                            case SDL_SCANCODE_E: {
-                                // Check adjacent tiles for shops
-                                int px = game.player.x;
-                                int py = game.player.y;
-                                int found = 0;
-                                for (int dy = -1; dy <= 1 && !found; dy++) {
-                                    for (int dx = -1; dx <= 1 && !found; dx++) {
-                                        int tx = px + dx;
-                                        int ty = py + dy;
-                                        if (tx < 0 || tx >= MAP_W ||
-                                            ty < 0 || ty >= MAP_H) {
-                                            continue;
-                                        }
-                                        TileType t = game.map.tiles[ty][tx];
-                                        if (t == TILE_SHOP_ALCHEMIST) {
-                                            shop_init(&shop_screen,
-                                                SHOP_TYPE_ALCHEMIST);
-                                            screen = SCREEN_SHOP;
-                                            found = 1;
-                                        }
-                                        if (t == TILE_SHOP_BLACKSMITH) {
-                                            shop_init(&shop_screen,
-                                                SHOP_TYPE_BLACKSMITH);
-                                            screen = SCREEN_SHOP;
-                                            found = 1;
-                                        }
-                                    }
-                                }
-                                if (!found) {
-                                    push_message(&game, "No shop nearby.");
-                                }
-                                break;
-                            }
                             case SDL_SCANCODE_T: {
                                 int px = game.player.x;
                                 int py = game.player.y;
@@ -648,6 +633,10 @@ int main(int argc, char **argv) {
                                             game_talk_to_alder(&game);
                                             found = 1;
                                         } else if (game.map.tiles[ty][tx] ==
+                                            TILE_NPC_MARA) {
+                                            game_talk_to_mara(&game);
+                                            found = 1;
+                                        } else if (game.map.tiles[ty][tx] ==
                                             TILE_FOREST_WARDEN) {
                                             game_rescue_forest_warden(&game,
                                                 tx, ty);
@@ -662,6 +651,10 @@ int main(int argc, char **argv) {
                                 break;
                             }
                             default: break;
+                        }
+                        if (open_shop_on_move(&game, &a, &shop_screen,
+                            &screen)) {
+                            a.type = ACTION_NONE;
                         }
                         if (event.key.repeat && a.type == ACTION_MOVE &&
                             a.target_x >= 0 && a.target_x < MAP_W &&

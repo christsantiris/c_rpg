@@ -28,6 +28,8 @@ void test_elowen_quest(void);
 void test_tavern_interior(void);
 void test_dain_quest(void);
 void test_alder_quest(void);
+void test_mara_quest(void);
+void test_quest_activation_gating(void);
 
 int main(void) {
     // ASSERT("sanity check true",  1 == 1);
@@ -65,6 +67,8 @@ int main(void) {
     printf("\n");
     test_coast();
     printf("\n");
+    test_quest_activation_gating();
+    printf("\n");
     test_elowen_quest();
     printf("\n");
     test_tavern_interior();
@@ -72,6 +76,8 @@ int main(void) {
     test_dain_quest();
     printf("\n");
     test_alder_quest();
+    printf("\n");
+    test_mara_quest();
     printf("\n");
     test_level_cache_cleared();
     printf("\n");

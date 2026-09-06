@@ -47,6 +47,20 @@ acceptance and rescue progress persist through backtracking and save/load.
 After rescuing all three wardens, return to Alder to receive 175 gold and 500
 score.
 
+## Mara: Relight the Drowned Beacons
+
+Mara is a retired tidekeeper who carries a sheltered ember from the old coast
+lights. She asks the player to relight drowned beacons on Coast stages 1, 3,
+and 6. Each beacon stands inside a flooded side room and cannot be reached or
+lit until the stage's tide control drains the surrounding deep water. Stand on
+the exposed beacon and press `P` to light it.
+
+The first beacon introduces the objective, the stage 3 beacon is guarded by an
+Animated Statue, and the stage 6 beacon is guarded by a Sea Serpent. Stages do
+not need to be cleared, and the Drowned Queen is not part of the objective.
+Lit beacons remain lit through backtracking, repeat expeditions, and save/load.
+Return to Mara after lighting all three to receive 200 gold and 600 score.
+
 ## Repeat expeditions
 
 Entering an adventure from town begins a new expedition at its first stage.

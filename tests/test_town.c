@@ -130,6 +130,14 @@ void test_town_map(void) {
         m.tiles[7][7] == TILE_SHOP_BLACKSMITH);
     ASSERT("alchemist at (28,7)",
         m.tiles[7][28] == TILE_SHOP_ALCHEMIST);
+    ASSERT("blacksmith has a walk-in doorway",
+        m.tiles[10][9] == TILE_BLACKSMITH_DOOR &&
+        map_is_walkable(&m, 9, 10));
+    ASSERT("alchemist has a walk-in doorway",
+        m.tiles[10][30] == TILE_ALCHEMIST_DOOR &&
+        map_is_walkable(&m, 30, 10));
+    ASSERT("shop facades remain solid away from their doors",
+        !map_is_walkable(&m, 7, 7) && !map_is_walkable(&m, 28, 7));
     ASSERT("tavern occupies southwest town lot",
         m.tiles[16][5] == TILE_TAVERN &&
         m.tiles[20][8] == TILE_TAVERN_DOOR &&

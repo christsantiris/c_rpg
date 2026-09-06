@@ -292,6 +292,11 @@ void action_resolve_player(GameState *g, Action a) {
 
     if (a.type == ACTION_PICK_UP) {
         if (g->map.tiles[g->player.y][g->player.x] ==
+            TILE_COAST_BEACON_UNLIT) {
+            game_light_coast_beacon(g, g->player.x, g->player.y);
+            return;
+        }
+        if (g->map.tiles[g->player.y][g->player.x] ==
             TILE_BROKEN_BURIAL_SEAL) {
             if (g->elowen_quest_state != 1) {
                 push_message(g, "A shattered burial seal lies here.");
@@ -881,6 +886,13 @@ void action_resolve_player(GameState *g, Action a) {
             push_message(g, "The dungeon key unlocks the door!");
         }
 
+        if (g->location == LOCATION_COAST &&
+            tx == g->map.stairs_down_x && ty == g->map.stairs_down_y &&
+            g->map.tiles[ty][tx] == TILE_COAST_DEEP_WATER) {
+            push_message(g, "Lower the tide to reach the exit.");
+            return;
+        }
+
         // Move if walkable
         // Track last direction for ranged attacks
         if (map_is_walkable(&g->map, tx, ty)) {
@@ -913,16 +925,32 @@ void action_resolve_player(GameState *g, Action a) {
 
         if (g->location == LOCATION_COAST &&
             tile == TILE_COAST_TIDE_CONTROL) {
+            int tide_is_high = 0;
             for (int y = 0; y < MAP_H; y++) {
                 for (int x = 0; x < MAP_W; x++) {
                     if (g->map.tiles[y][x] == TILE_COAST_DEEP_WATER) {
-                        g->map.tiles[y][x] = TILE_COAST_SHALLOW_WATER;
+                        tide_is_high = 1;
+                        break;
+                    }
+                }
+                if (tide_is_high) {
+                    break;
+                }
+            }
+            for (int y = 0; y < MAP_H; y++) {
+                for (int x = 0; x < MAP_W; x++) {
+                    if (tide_is_high &&
+                        g->map.tiles[y][x] == TILE_COAST_DEEP_WATER) {
+                        g->map.tiles[y][x] = TILE_COAST_DRAINED_WATER;
+                    } else if (!tide_is_high && g->map.tiles[y][x] ==
+                        TILE_COAST_DRAINED_WATER) {
+                        g->map.tiles[y][x] = TILE_COAST_DEEP_WATER;
                     }
                 }
             }
-            g->map.tiles[py][px] = TILE_COAST_FLOOR;
-            push_message(g, "The tide recedes and reveals the drowned road!");
-            tile = TILE_COAST_FLOOR;
+            push_message(g, tide_is_high ?
+                "The tide recedes, revealing the path." :
+                "The tide rises across the ruins.");
         }
 
         if (tile == TILE_TRAP_HIDDEN) {

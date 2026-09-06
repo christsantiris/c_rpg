@@ -199,7 +199,7 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 26);
+    cJSON_AddNumberToObject(root, "save_version", 29);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -274,6 +274,8 @@ int save_game(const GameState *g, int slot) {
         g->alder_quest_state);
     cJSON_AddNumberToObject(root, "alder_wardens_rescued",
         g->alder_wardens_rescued);
+    cJSON_AddNumberToObject(root, "mara_quest_state", g->mara_quest_state);
+    cJSON_AddNumberToObject(root, "mara_beacons_lit", g->mara_beacons_lit);
     cJSON_AddNumberToObject(root, "dialogue_active", g->dialogue_active);
     cJSON_AddStringToObject(root, "dialogue_speaker", g->dialogue_speaker);
     cJSON_AddStringToObject(root, "dialogue_text", g->dialogue_text);
@@ -523,6 +525,8 @@ int load_game(GameState *g, int slot) {
     cJSON *alder_quest = cJSON_GetObjectItem(root, "alder_quest_state");
     cJSON *alder_wardens = cJSON_GetObjectItem(root,
         "alder_wardens_rescued");
+    cJSON *mara_quest = cJSON_GetObjectItem(root, "mara_quest_state");
+    cJSON *mara_beacons = cJSON_GetObjectItem(root, "mara_beacons_lit");
     cJSON *dialogue_active = cJSON_GetObjectItem(root, "dialogue_active");
     cJSON *dialogue_speaker = cJSON_GetObjectItem(root, "dialogue_speaker");
     cJSON *dialogue_text = cJSON_GetObjectItem(root, "dialogue_text");
@@ -546,6 +550,8 @@ int load_game(GameState *g, int slot) {
         (legacy_dain_targets ? legacy_dain_targets->valueint : 0);
     g->alder_quest_state = alder_quest ? alder_quest->valueint : 0;
     g->alder_wardens_rescued = alder_wardens ? alder_wardens->valueint : 0;
+    g->mara_quest_state = mara_quest ? mara_quest->valueint : 0;
+    g->mara_beacons_lit = mara_beacons ? mara_beacons->valueint : 0;
     g->dialogue_active = dialogue_active ? dialogue_active->valueint : 0;
     strncpy(g->dialogue_speaker,
         dialogue_speaker ? dialogue_speaker->valuestring : "",
@@ -1098,6 +1104,54 @@ int load_game(GameState *g, int slot) {
                 g->player.y = 8;
             }
             g->map.tiles[7][28] = TILE_NPC_ALDER;
+        }
+    }
+
+    // Version 27 adds Mara and Relight the Drowned Beacons. Existing Tavern
+    // saves gain her NPC tile while older characters start without the quest.
+    if (save_version < 27) {
+        g->mara_quest_state = 0;
+        g->mara_beacons_lit = 0;
+        if (g->location == LOCATION_TAVERN) {
+            if (g->player.x == 31 && g->player.y == 18) {
+                g->player.y = 19;
+            }
+            g->map.tiles[18][31] = TILE_NPC_MARA;
+        }
+    }
+
+    // Version 28 makes Coast tide controls persistent and reversible. Restart
+    // legacy Coast expeditions so every stage uses the new water-state tiles.
+    if (save_version < 28) {
+        for (int i = 0; i < MAX_REGION_DEPTH; i++) {
+            g->coast_cache[i].valid = 0;
+        }
+        if (g->portal_location == LOCATION_COAST) {
+            g->portal_active = 0;
+        }
+        if (g->location == LOCATION_COAST) {
+            g->floor_item_count = 0;
+            game_enter_coast(g);
+        }
+    }
+
+    // Version 29 gives each town shop a walk-in door and makes the remaining
+    // facade solid. Rebuild legacy town maps to receive the entrance tiles.
+    if (save_version < 29 && g->location == LOCATION_TOWN) {
+        int player_x = g->player.x;
+        int player_y = g->player.y;
+        int spawn_x;
+        int spawn_y;
+        map_generate_town(&g->map, &spawn_x, &spawn_y);
+        if (map_is_walkable(&g->map, player_x, player_y)) {
+            g->player.x = player_x;
+            g->player.y = player_y;
+        } else {
+            g->player.x = spawn_x;
+            g->player.y = spawn_y;
+        }
+        if (g->portal_active) {
+            g->map.tiles[2][20] = TILE_PORTAL;
         }
     }
 
