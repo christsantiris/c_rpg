@@ -233,7 +233,7 @@ void test_forest(void) {
                 bosses == 1 && g.enemies[0].type == ENEMY_FOREST_NECROMANCER);
     }
 
-    static const int expected_rooms[FOREST_DEPTH] = {7, 8, 9, 8, 9, 10, 10, 10};
+    static const int expected_rooms[FOREST_DEPTH] = {7, 9, 9, 8, 10, 10, 10, 10};
     static const int expected_entrances[FOREST_DEPTH] = {0, 2, 1, 2, 0, 1, 2, 0};
     static const int expected_exits[FOREST_DEPTH] = {0, 1, 2, 1, 0, 2, 1, 0};
     for (int level = 1; level <= FOREST_DEPTH; level++) {

@@ -122,6 +122,12 @@ void test_tavern_interior(void) {
         find_tile(&g.map, TILE_NPC_DAIN, &dain_x, &dain_y));
     ASSERT("player cannot overlap Dain",
         !map_is_walkable(&g.map, dain_x, dain_y));
+    int alder_x = 0;
+    int alder_y = 0;
+    ASSERT("Alder has an in-world Tavern tile",
+        find_tile(&g.map, TILE_NPC_ALDER, &alder_x, &alder_y));
+    ASSERT("player cannot overlap Alder",
+        !map_is_walkable(&g.map, alder_x, alder_y));
     g.player.x = elowen_x;
     g.player.y = elowen_y + 1;
     game_talk_to_elowen(&g);
@@ -188,4 +194,55 @@ void test_dain_quest(void) {
     game_talk_to_dain(&g);
     ASSERT("Dain completes the mountain quest", g.dain_quest_state == 3);
     ASSERT("Dain awards 150 gold", g.gold == gold_before + 150);
+}
+
+void test_alder_quest(void) {
+    printf("Alder quest tests:\n");
+    GameState g;
+    g.player.player_class = CLASS_WARRIOR;
+    game_init(&g);
+
+    game_talk_to_alder(&g);
+    ASSERT("Alder assigns The Lost Wardens", g.alder_quest_state == 1);
+    ASSERT("new Alder quest begins with no rescues",
+        g.alder_wardens_rescued == 0);
+    ASSERT("Alder speaks through dialogue state", g.dialogue_active &&
+        strcmp(g.dialogue_speaker, "Alder") == 0);
+
+    int target_levels[3] = {2, 5, 7};
+    EnemyType guardian_types[3] = {
+        ENEMY_GIANT_SPIDER, ENEMY_DARK_ELF, ENEMY_FOREST_TROLL
+    };
+    game_enter_forest(&g);
+    for (int target = 0; target < 3; target++) {
+        while (g.level < target_levels[target]) {
+            game_descend(&g);
+        }
+        int warden_x = 0;
+        int warden_y = 0;
+        ASSERT("missing warden appears in the assigned forest stage",
+            find_tile(&g.map, TILE_FOREST_WARDEN, &warden_x, &warden_y));
+        ASSERT("forest warden has a thematic guardian",
+            count_enemy_type(&g, guardian_types[target]) > 0);
+        game_rescue_forest_warden(&g, warden_x, warden_y);
+        ASSERT("rescued warden leaves forest floor behind",
+            g.map.tiles[warden_y][warden_x] == TILE_FOREST_FLOOR);
+    }
+    ASSERT("three rescues make Alder's quest ready",
+        g.alder_quest_state == 2 && g.alder_wardens_rescued == 7);
+
+    game_return_to_town(&g);
+    int gold_before = g.gold;
+    int score_before = g.score;
+    game_talk_to_alder(&g);
+    ASSERT("Alder completes the forest quest", g.alder_quest_state == 3);
+    ASSERT("Alder awards 175 gold", g.gold == gold_before + 175);
+    ASSERT("Alder awards 500 score", g.score == score_before + 500);
+
+    game_enter_forest(&g);
+    game_descend(&g);
+    int warden_x = 0;
+    int warden_y = 0;
+    ASSERT("rescued wardens do not respawn",
+        !find_tile(&g.map, TILE_FOREST_WARDEN, &warden_x, &warden_y));
 }
