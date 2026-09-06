@@ -199,7 +199,7 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 25);
+    cJSON_AddNumberToObject(root, "save_version", 26);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -270,6 +270,10 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "dain_quest_state", g->dain_quest_state);
     cJSON_AddNumberToObject(root, "dain_map_fragments",
         g->dain_map_fragments);
+    cJSON_AddNumberToObject(root, "alder_quest_state",
+        g->alder_quest_state);
+    cJSON_AddNumberToObject(root, "alder_wardens_rescued",
+        g->alder_wardens_rescued);
     cJSON_AddNumberToObject(root, "dialogue_active", g->dialogue_active);
     cJSON_AddStringToObject(root, "dialogue_speaker", g->dialogue_speaker);
     cJSON_AddStringToObject(root, "dialogue_text", g->dialogue_text);
@@ -516,6 +520,9 @@ int load_game(GameState *g, int slot) {
         "dain_map_fragments");
     cJSON *legacy_dain_targets = cJSON_GetObjectItem(root,
         "dain_targets_defeated");
+    cJSON *alder_quest = cJSON_GetObjectItem(root, "alder_quest_state");
+    cJSON *alder_wardens = cJSON_GetObjectItem(root,
+        "alder_wardens_rescued");
     cJSON *dialogue_active = cJSON_GetObjectItem(root, "dialogue_active");
     cJSON *dialogue_speaker = cJSON_GetObjectItem(root, "dialogue_speaker");
     cJSON *dialogue_text = cJSON_GetObjectItem(root, "dialogue_text");
@@ -537,6 +544,8 @@ int load_game(GameState *g, int slot) {
     g->dain_quest_state = dain_quest ? dain_quest->valueint : 0;
     g->dain_map_fragments = dain_fragments ? dain_fragments->valueint :
         (legacy_dain_targets ? legacy_dain_targets->valueint : 0);
+    g->alder_quest_state = alder_quest ? alder_quest->valueint : 0;
+    g->alder_wardens_rescued = alder_wardens ? alder_wardens->valueint : 0;
     g->dialogue_active = dialogue_active ? dialogue_active->valueint : 0;
     strncpy(g->dialogue_speaker,
         dialogue_speaker ? dialogue_speaker->valuestring : "",
@@ -1077,6 +1086,19 @@ int load_game(GameState *g, int slot) {
             g->player.y = 8;
         }
         g->map.tiles[7][18] = TILE_NPC_DAIN;
+    }
+
+    // Version 26 adds Alder and The Lost Wardens. Existing Tavern saves gain
+    // his NPC tile while older characters begin with the quest unassigned.
+    if (save_version < 26) {
+        g->alder_quest_state = 0;
+        g->alder_wardens_rescued = 0;
+        if (g->location == LOCATION_TAVERN) {
+            if (g->player.x == 28 && g->player.y == 7) {
+                g->player.y = 8;
+            }
+            g->map.tiles[7][28] = TILE_NPC_ALDER;
+        }
     }
 
     // Floor five used to contain the Goblin King. Regenerate that legacy

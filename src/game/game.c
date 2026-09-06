@@ -514,6 +514,8 @@ void game_init(GameState *g) {
     g->elowen_seals_restored = 0;
     g->dain_quest_state = 0;
     g->dain_map_fragments = 0;
+    g->alder_quest_state = 0;
+    g->alder_wardens_rescued = 0;
     g->dialogue_active = 0;
     g->dialogue_speaker[0] = '\0';
     g->dialogue_text[0] = '\0';
@@ -673,6 +675,100 @@ static void place_elowen_seal(GameState *g) {
         ? TILE_RESTORED_BURIAL_SEAL : TILE_BROKEN_BURIAL_SEAL;
 }
 
+static int alder_warden_bit(int level) {
+    if (level == 2) {
+        return ALDER_WARDEN_STAGE_2;
+    }
+    if (level == 5) {
+        return ALDER_WARDEN_STAGE_5;
+    }
+    if (level == 7) {
+        return ALDER_WARDEN_STAGE_7;
+    }
+    return 0;
+}
+
+static int place_alder_warden(GameState *g) {
+    if (g->location != LOCATION_FOREST || g->alder_quest_state != 1) {
+        return 0;
+    }
+    int bit = alder_warden_bit(g->level);
+    if (!bit || (g->alder_wardens_rescued & bit)) {
+        return 0;
+    }
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (g->map.tiles[y][x] == TILE_FOREST_WARDEN) {
+                return 0;
+            }
+        }
+    }
+    int room_index = g->level == 2 ? 7 : (g->level == 5 ? 8 : 5);
+    if (room_index >= g->map.room_count) {
+        return 0;
+    }
+    int x;
+    int y;
+    Room *room = &g->map.rooms[room_index];
+    map_room_center(room, &x, &y);
+    if (!enemy_tile_open(g, x, y)) {
+        int found = 0;
+        for (int candidate_y = room->y + 1;
+            candidate_y < room->y + room->h - 1 && !found; candidate_y++) {
+            for (int candidate_x = room->x + 1;
+                candidate_x < room->x + room->w - 1; candidate_x++) {
+                if (enemy_tile_open(g, candidate_x, candidate_y)) {
+                    x = candidate_x;
+                    y = candidate_y;
+                    found = 1;
+                    break;
+                }
+            }
+        }
+        if (!found) {
+            return 0;
+        }
+    }
+    g->map.tiles[y][x] = TILE_FOREST_WARDEN;
+    return 1;
+}
+
+static void spawn_alder_guardian(GameState *g) {
+    if (g->location != LOCATION_FOREST || g->enemy_count >= MAX_ENEMIES) {
+        return;
+    }
+    EnemyType type;
+    if (g->level == 2) {
+        type = ENEMY_GIANT_SPIDER;
+    } else if (g->level == 5) {
+        type = ENEMY_DARK_ELF;
+    } else if (g->level == 7) {
+        type = ENEMY_FOREST_TROLL;
+    } else {
+        return;
+    }
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (g->map.tiles[y][x] != TILE_FOREST_WARDEN) {
+                continue;
+            }
+            for (int dy = -2; dy <= 2; dy++) {
+                for (int dx = -2; dx <= 2; dx++) {
+                    int guardian_x = x + dx;
+                    int guardian_y = y + dy;
+                    if ((dx == 0 && dy == 0) ||
+                        !enemy_tile_open(g, guardian_x, guardian_y)) {
+                        continue;
+                    }
+                    spawn_enemy(&g->enemies[g->enemy_count++], type,
+                        guardian_x, guardian_y);
+                    return;
+                }
+            }
+        }
+    }
+}
+
 static void generate_active_level(GameState *g) {
     if (g->location == LOCATION_FOREST) {
         map_generate_forest(&g->map, g->level);
@@ -683,8 +779,13 @@ static void generate_active_level(GameState *g) {
     } else {
         map_generate(&g->map, g->level);
     }
+    g->enemy_count = 0;
     place_elowen_seal(g);
+    int warden_placed = place_alder_warden(g);
     enemies_spawn(g);
+    if (warden_placed) {
+        spawn_alder_guardian(g);
+    }
     if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH &&
         (g->defeated_bosses & (1 << LOCATION_DUNGEON))) {
         g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] =
@@ -719,6 +820,9 @@ void game_descend(GameState *g) {
         for (int i = 0; i < g->enemy_count; i++)
             g->enemies[i] = cache[g->level - 1].enemies[i];
         g->level_cleared = cache[g->level - 1].level_cleared;
+        if (place_alder_warden(g)) {
+            spawn_alder_guardian(g);
+        }
     } else {
         g->level_cleared = 0;
         generate_active_level(g);
@@ -749,6 +853,9 @@ void game_ascend(GameState *g) {
         g->level_cleared = cache[g->level - 1].level_cleared;
         for (int i = 0; i < g->enemy_count; i++)
             g->enemies[i] = cache[g->level - 1].enemies[i];
+        if (place_alder_warden(g)) {
+            spawn_alder_guardian(g);
+        }
     } else {
         g->level_cleared = 0;
     }
@@ -888,6 +995,9 @@ void game_use_town_portal(GameState *g) {
     g->level_cleared = cache[level - 1].level_cleared;
     for (int i = 0; i < g->enemy_count; i++)
         g->enemies[i] = cache[level - 1].enemies[i];
+    if (place_alder_warden(g)) {
+        spawn_alder_guardian(g);
+    }
     g->player.x = g->portal_x;
     g->player.y = g->portal_y;
     g->map.tiles[g->portal_y][g->portal_x] = g->portal_origin_tile;
@@ -1018,6 +1128,102 @@ void game_record_dain_kill(GameState *g, EnemyType type) {
     if ((g->dain_map_fragments & 7) == 7) {
         g->dain_quest_state = 2;
         push_message(g, "Treasure map complete. Return to Dain.");
+    }
+}
+
+void game_talk_to_alder(GameState *g) {
+    g->dialogue_active = 1;
+    strncpy(g->dialogue_speaker, "Alder", MAX_SPEAKER_LEN - 1);
+    g->dialogue_speaker[MAX_SPEAKER_LEN - 1] = '\0';
+    g->dialogue_x = 28;
+    g->dialogue_y = 7;
+    if (g->alder_quest_state == 0) {
+        g->alder_quest_state = 1;
+        g->alder_wardens_rescued = 0;
+        strncpy(g->dialogue_text,
+            "Three of my wardens followed the dead paths beneath the trees. Find them on stages 2, 5, and 7 before the forest claims them.",
+            MAX_DIALOGUE_LEN - 1);
+        g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
+        push_message(g, "Assigned: The Lost Wardens.");
+        return;
+    }
+    if (g->alder_quest_state == 1) {
+        int rescued = 0;
+        for (int bit = 0; bit < 3; bit++) {
+            if (g->alder_wardens_rescued & (1 << bit)) {
+                rescued++;
+            }
+        }
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "You have rescued %d of my 3 wardens. Search the secluded groves on forest stages 2, 5, and 7.",
+            rescued);
+        char status[MAX_MESSAGE_LEN];
+        snprintf(status, sizeof(status), "Quest progress: %d/3 wardens.",
+            rescued);
+        push_message(g, status);
+        return;
+    }
+    if (g->alder_quest_state == 2) {
+        g->alder_quest_state = 3;
+        g->gold += 175;
+        g->score += 500;
+        strncpy(g->dialogue_text,
+            "All three returned safely. The forest has taken enough from us. Accept this reward with an old ranger's gratitude.",
+            MAX_DIALOGUE_LEN - 1);
+        g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
+        push_message(g, "Completed: The Lost Wardens.");
+        return;
+    }
+    strncpy(g->dialogue_text,
+        "My wardens are home, and the paths feel less lonely for it.",
+        MAX_DIALOGUE_LEN - 1);
+    g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
+    push_message(g, "Alder's quest is already complete.");
+}
+
+void game_rescue_forest_warden(GameState *g, int x, int y) {
+    if (g->location != LOCATION_FOREST || g->alder_quest_state != 1 ||
+        x < 0 || x >= MAP_W || y < 0 || y >= MAP_H ||
+        g->map.tiles[y][x] != TILE_FOREST_WARDEN) {
+        return;
+    }
+    int bit = alder_warden_bit(g->level);
+    if (!bit || (g->alder_wardens_rescued & bit)) {
+        return;
+    }
+    g->alder_wardens_rescued |= bit;
+    g->map.tiles[y][x] = TILE_FOREST_FLOOR;
+    g->dialogue_active = 1;
+    strncpy(g->dialogue_speaker, "Forest Warden", MAX_SPEAKER_LEN - 1);
+    g->dialogue_speaker[MAX_SPEAKER_LEN - 1] = '\0';
+    g->dialogue_x = x;
+    g->dialogue_y = y;
+    if (g->level == 2) {
+        strncpy(g->dialogue_text,
+            "You cut through the spider silk binding me. I can follow your trail home from here.",
+            MAX_DIALOGUE_LEN - 1);
+    } else if (g->level == 5) {
+        strncpy(g->dialogue_text,
+            "The Dark Elves thought this grove would be my prison. I will make my way back to Alder.",
+            MAX_DIALOGUE_LEN - 1);
+    } else {
+        strncpy(g->dialogue_text,
+            "Those cursed roots were pulling me beneath the earth. You reached me just in time.",
+            MAX_DIALOGUE_LEN - 1);
+    }
+    g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
+    int rescued = 0;
+    for (int index = 0; index < 3; index++) {
+        if (g->alder_wardens_rescued & (1 << index)) {
+            rescued++;
+        }
+    }
+    char status[MAX_MESSAGE_LEN];
+    snprintf(status, sizeof(status), "Warden rescued: %d/3.", rescued);
+    push_message(g, status);
+    if ((g->alder_wardens_rescued & 7) == 7) {
+        g->alder_quest_state = 2;
+        push_message(g, "All wardens rescued. Return to Alder.");
     }
 }
 

@@ -18,6 +18,10 @@
 #define DAIN_FRAGMENT_BOMBER 2
 #define DAIN_FRAGMENT_SHAMAN 4
 
+#define ALDER_WARDEN_STAGE_2 1
+#define ALDER_WARDEN_STAGE_5 2
+#define ALDER_WARDEN_STAGE_7 4
+
 #define MAX_TRAIL 16
 
 typedef struct {
@@ -114,6 +118,8 @@ typedef struct {
     int elowen_seals_restored;
     int dain_quest_state;
     int dain_map_fragments;
+    int alder_quest_state;
+    int alder_wardens_rescued;
     int dialogue_active;
     char dialogue_speaker[MAX_SPEAKER_LEN];
     char dialogue_text[MAX_DIALOGUE_LEN];
@@ -147,6 +153,8 @@ void game_use_town_portal(GameState *g);
 void game_talk_to_elowen(GameState *g);
 void game_talk_to_dain(GameState *g);
 void game_record_dain_kill(GameState *g, EnemyType type);
+void game_talk_to_alder(GameState *g);
+void game_rescue_forest_warden(GameState *g, int x, int y);
 void game_repair_equipment_indices(GameState *g);
 
 #endif
