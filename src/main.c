@@ -162,7 +162,8 @@ static void debug_apply_loadout(GameState *game, const DebugConfig *config) {
             game->inventory[write++] = *item;
         }
         game->inventory_count = write;
-        game->equipped_weapon = -1;
+        game->equipped_main_hand = -1;
+        game->equipped_off_hand = -1;
     }
     if (config->weapon_set && !config->weapon_none &&
         game->inventory_count < MAX_INVENTORY) {
@@ -322,7 +323,7 @@ int main(int argc, char **argv) {
     music_init();
     sfx_init();
 
-    GameState game;
+    GameState game = {0};
     game_init(&game);
 
     Viewport viewport;
@@ -520,15 +521,25 @@ int main(int argc, char **argv) {
                             Item *item = &game.inventory[idx];
 
                             // Unequip if equipped
-                            if (game.equipped_weapon == idx) {
+                            if (game.equipped_main_hand == idx) {
                                 game.player.attack -= item->attack_bonus;
-                                game.equipped_weapon = -1;
+                                game.equipped_main_hand = -1;
+                            } else if (game.equipped_off_hand == idx) {
+                                game.player.attack -= item->attack_bonus;
+                                game.equipped_off_hand = -1;
                             } else if (game.equipped_armor == idx) {
                                 game.player.defense -= item->defense_bonus;
                                 game.equipped_armor = -1;
                             }
-                            if (game.equipped_weapon > idx) game.equipped_weapon--;
-                            if (game.equipped_armor  > idx) game.equipped_armor--;
+                            if (game.equipped_main_hand > idx) {
+                                game.equipped_main_hand--;
+                            }
+                            if (game.equipped_off_hand > idx) {
+                                game.equipped_off_hand--;
+                            }
+                            if (game.equipped_armor > idx) {
+                                game.equipped_armor--;
+                            }
 
                             int sell_price = item->value / 2;
                             char msg[32];
@@ -822,15 +833,25 @@ int main(int argc, char **argv) {
                                     } else {
                                         if (game.inventory_count == 0) { break; }
                                         Item *item = &game.inventory[i];
-                                        if (game.equipped_weapon == i) {
+                                        if (game.equipped_main_hand == i) {
                                             game.player.attack -= item->attack_bonus;
-                                            game.equipped_weapon = -1;
+                                            game.equipped_main_hand = -1;
+                                        } else if (game.equipped_off_hand == i) {
+                                            game.player.attack -= item->attack_bonus;
+                                            game.equipped_off_hand = -1;
                                         } else if (game.equipped_armor == i) {
                                             game.player.defense -= item->defense_bonus;
                                             game.equipped_armor = -1;
                                         }
-                                        if (game.equipped_weapon > i) { game.equipped_weapon--; }
-                                        if (game.equipped_armor > i) { game.equipped_armor--; }
+                                        if (game.equipped_main_hand > i) {
+                                            game.equipped_main_hand--;
+                                        }
+                                        if (game.equipped_off_hand > i) {
+                                            game.equipped_off_hand--;
+                                        }
+                                        if (game.equipped_armor > i) {
+                                            game.equipped_armor--;
+                                        }
                                         int sell_price = item->value / 2;
                                         char msg[32];
                                         SDL_snprintf(msg, sizeof(msg), "Sold %s for %d gold", item->name, sell_price);

@@ -499,7 +499,8 @@ void game_init(GameState *g) {
     g->player.experience = 0;
     g->player.experience_next = 100;
     g->inventory_count = 0;
-    g->equipped_weapon = -1;
+    g->equipped_main_hand = -1;
+    g->equipped_off_hand = -1;
     g->equipped_armor = -1;
     g->gold = 0;
     g->score = 0;
@@ -604,11 +605,20 @@ static int repaired_equipment_index(const GameState *g, int index, ItemType type
 }
 
 void game_repair_equipment_indices(GameState *g) {
-    if (g->equipped_weapon >= g->inventory_count ||
-        (g->equipped_weapon >= 0 &&
-        g->inventory[g->equipped_weapon].type != ITEM_WEAPON)) {
-        g->equipped_weapon = repaired_equipment_index(g,
-            g->equipped_weapon, ITEM_WEAPON);
+    if (g->equipped_main_hand >= g->inventory_count ||
+        (g->equipped_main_hand >= 0 &&
+        g->inventory[g->equipped_main_hand].type != ITEM_WEAPON)) {
+        g->equipped_main_hand = repaired_equipment_index(g,
+            g->equipped_main_hand, ITEM_WEAPON);
+    }
+    if (g->equipped_off_hand >= g->inventory_count ||
+        (g->equipped_off_hand >= 0 &&
+        g->inventory[g->equipped_off_hand].type != ITEM_WEAPON)) {
+        g->equipped_off_hand = repaired_equipment_index(g,
+            g->equipped_off_hand, ITEM_WEAPON);
+    }
+    if (g->equipped_off_hand == g->equipped_main_hand) {
+        g->equipped_off_hand = -1;
     }
     if (g->equipped_armor >= g->inventory_count ||
         (g->equipped_armor >= 0 &&
