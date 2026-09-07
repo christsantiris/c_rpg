@@ -249,7 +249,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 37);
+    cJSON_AddNumberToObject(root, "save_version", 38);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -1276,6 +1276,33 @@ int load_game(GameState *g, int slot) {
         g->level_cleared = 0;
         g->player.x = g->map.stairs_up_x;
         g->player.y = g->map.stairs_up_y;
+    }
+
+    // Version 38 rebalances named weapons. Update legacy inventory and floor
+    // items, then preserve the correct equipped attack total.
+    if (save_version < 38) {
+        int old_attack_bonus = 0;
+        if (g->equipped_main_hand >= 0 &&
+            g->equipped_main_hand < g->inventory_count) {
+            old_attack_bonus =
+                g->inventory[g->equipped_main_hand].attack_bonus;
+        }
+        for (int i = 0; i < g->inventory_count; i++) {
+            if (g->inventory[i].type == ITEM_WEAPON) {
+                item_apply_legacy_metadata(&g->inventory[i]);
+            }
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            if (g->floor_items[i].item.type == ITEM_WEAPON) {
+                item_apply_legacy_metadata(&g->floor_items[i].item);
+            }
+        }
+        if (g->equipped_main_hand >= 0 &&
+            g->equipped_main_hand < g->inventory_count) {
+            int new_attack_bonus =
+                g->inventory[g->equipped_main_hand].attack_bonus;
+            g->player.attack += new_attack_bonus - old_attack_bonus;
+        }
     }
 
     cJSON_Delete(root);

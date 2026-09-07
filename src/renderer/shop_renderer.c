@@ -84,6 +84,17 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
     SDL_snprintf(gold_str, sizeof(gold_str), "YOUR GOLD: %d", g->gold);
     renderer_draw_text(r, gold_str, cx - 60, 80, gold, r->font_small);
 
+    if (s->type == SHOP_TYPE_BLACKSMITH) {
+        char tier[32];
+        SDL_snprintf(tier, sizeof(tier), "STOCK TIER %d/4", s->stock_tier);
+        renderer_draw_text(r, tier, cx + 100, 80, gold, r->font_tiny);
+        const char *unlock = s->stock_tier < 4
+            ? "NEXT TIER: DEFEAT AN AREA BOSS"
+            : "ALL WEAPON TIERS UNLOCKED";
+        renderer_draw_text(r, unlock, cx + 100, 96, dimmed,
+            r->font_tiny);
+    }
+
     // Tab headers
     SDL_Color buy_color  = s->mode == 0 ? gold : dimmed;
     SDL_Color sell_color = s->mode == 1 ? gold : dimmed;
