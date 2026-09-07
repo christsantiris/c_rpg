@@ -28,6 +28,10 @@ void test_items(void) {
         sword.class_mask == ITEM_CLASS_WARRIOR);
     ASSERT("long sword has its own visual identity",
         sword.visual_id == ITEM_VISUAL_LONG_SWORD);
+    ASSERT("long sword class access is enforced by metadata",
+        item_class_allowed(&sword, CLASS_WARRIOR) &&
+        !item_class_allowed(&sword, CLASS_MAGE) &&
+        !item_class_allowed(&sword, CLASS_ROGUE));
 
     Item bow = item_make_bow();
     ASSERT("bow attack bonus is balanced", bow.attack_bonus == 3);
@@ -90,6 +94,20 @@ void test_items(void) {
     ASSERT("weapon equipped in main hand", g.equipped_main_hand == 0);
     ASSERT("off hand remains empty", g.equipped_off_hand == -1);
     ASSERT("attack increased after equip",  g.player.attack == base_attack + 6);
+
+    // --- Class-restricted weapon equip ---
+    GameState mage = {0};
+    mage.player.player_class = CLASS_MAGE;
+    game_init(&mage);
+    int mage_base_attack = mage.player.attack;
+    mage.inventory[mage.inventory_count++] = sword;
+    Action equip_restricted = {ACTION_EQUIP_ITEM,
+        mage.inventory_count - 1, 0};
+    action_resolve_player(&mage, equip_restricted);
+    ASSERT("Mage cannot equip a Warrior long sword",
+        mage.equipped_main_hand == -1);
+    ASSERT("failed class equip does not change attack",
+        mage.player.attack == mage_base_attack);
 
     // --- Switching one-handed weapons ---
     game_init(&g);

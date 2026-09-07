@@ -81,6 +81,23 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
         }
     }
 
+    int detail_count = s->mode == 0 ? s->item_count : g->inventory_count;
+    if (s->selected >= 0 && s->selected < detail_count) {
+        const Item *selected = s->mode == 0
+            ? &s->items[s->selected] : &g->inventory[s->selected];
+        if (selected->type == ITEM_WEAPON) {
+            int allowed = item_class_allowed(selected,
+                g->player.player_class);
+            char details[96];
+            SDL_snprintf(details, sizeof(details), "%s | %s | %s%s",
+                item_rarity_label(selected), item_class_label(selected),
+                item_hands_label(selected), allowed ? "" : " | CLASS LOCKED");
+            renderer_draw_text(r, details, cx - 180,
+                (r->tiles_y - 4) * TILE_SIZE,
+                allowed ? green : red, r->font_tiny);
+        }
+    }
+
     renderer_draw_text(r, "TAB BUY/SELL   ENTER SELECT   ESC CLOSE",
         cx - 200, (r->tiles_y - 2) * TILE_SIZE, hint, r->font_small);
 }

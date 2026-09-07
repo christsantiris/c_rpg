@@ -143,6 +143,55 @@ void item_apply_legacy_metadata(Item *item) {
     item->visual_id = definition.visual_id;
 }
 
+int item_class_allowed(const Item *item, int player_class) {
+    if (item->class_mask == 0 || item->class_mask == ITEM_CLASS_ALL) {
+        return 1;
+    }
+    if (player_class < 0 || player_class > 2) {
+        return 0;
+    }
+    return (item->class_mask & (1 << player_class)) != 0;
+}
+
+const char *item_class_label(const Item *item) {
+    switch (item->class_mask) {
+        case ITEM_CLASS_WARRIOR:
+            return "WARRIOR";
+        case ITEM_CLASS_MAGE:
+            return "MAGE";
+        case ITEM_CLASS_ROGUE:
+            return "ROGUE";
+        case ITEM_CLASS_WARRIOR | ITEM_CLASS_MAGE:
+            return "WARRIOR/MAGE";
+        case ITEM_CLASS_WARRIOR | ITEM_CLASS_ROGUE:
+            return "WARRIOR/ROGUE";
+        case ITEM_CLASS_MAGE | ITEM_CLASS_ROGUE:
+            return "MAGE/ROGUE";
+        default:
+            return "ALL CLASSES";
+    }
+}
+
+const char *item_hands_label(const Item *item) {
+    if (item->weapon_hands == WEAPON_HANDS_TWO) {
+        return "TWO-HANDED";
+    }
+    if (item->weapon_hands == WEAPON_HANDS_ONE) {
+        return "ONE-HANDED";
+    }
+    return "";
+}
+
+const char *item_rarity_label(const Item *item) {
+    if (item->rarity == ITEM_RARITY_RARE) {
+        return "RARE";
+    }
+    if (item->rarity == ITEM_RARITY_UNCOMMON) {
+        return "UNCOMMON";
+    }
+    return "COMMON";
+}
+
 // Item item_make_armor(const char *name, int defense_bonus, int value) {
 //     Item it = {0};
 //     it.active        = 1;
