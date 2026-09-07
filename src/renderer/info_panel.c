@@ -122,14 +122,16 @@ void info_panel_draw(Renderer *r, const GameState *g) {
     draw_icon_empty_slot(r, grid_x1, grid_y1);
     if (g->equipped_main_hand >= 0 &&
         g->equipped_main_hand < g->inventory_count) {
-        draw_icon_weapon(r, grid_x1, grid_y1);
+        draw_icon_weapon(r, grid_x1, grid_y1,
+            &g->inventory[g->equipped_main_hand]);
     }
 
     // Slot 2: Off-hand (top-right)
     draw_icon_empty_slot(r, grid_x2, grid_y1);
     if (g->equipped_off_hand >= 0 &&
         g->equipped_off_hand < g->inventory_count) {
-        draw_icon_weapon(r, grid_x2, grid_y1);
+        draw_icon_weapon(r, grid_x2, grid_y1,
+            &g->inventory[g->equipped_off_hand]);
     }
 
     // Slot 3: Armor (bottom-left)
