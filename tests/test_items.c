@@ -33,6 +33,19 @@ void test_items(void) {
         !item_class_allowed(&sword, CLASS_MAGE) &&
         !item_class_allowed(&sword, CLASS_ROGUE));
 
+    Item magic_long_sword = item_make_magic_long_sword();
+    ASSERT("magic long sword is a rare one-handed Warrior sword",
+        magic_long_sword.weapon_family == WEAPON_FAMILY_SWORD &&
+        magic_long_sword.weapon_hands == WEAPON_HANDS_ONE &&
+        magic_long_sword.rarity == ITEM_RARITY_RARE &&
+        magic_long_sword.class_mask == ITEM_CLASS_WARRIOR);
+    ASSERT("magic long sword combines attack with critical chance",
+        magic_long_sword.attack_bonus == 10 &&
+        magic_long_sword.critical_chance_bonus == 20);
+    ASSERT("magic long sword has a premium price and distinct visual",
+        magic_long_sword.value == 450 &&
+        magic_long_sword.visual_id == ITEM_VISUAL_MAGIC_LONG_SWORD);
+
     Item bow = item_make_bow();
     ASSERT("bow attack bonus is balanced", bow.attack_bonus == 3);
     ASSERT("bow range is six tiles",        bow.range == 6);
@@ -41,17 +54,126 @@ void test_items(void) {
         bow.weapon_hands == WEAPON_HANDS_TWO &&
         bow.class_mask == ITEM_CLASS_ROGUE);
 
+    Item longbow = item_make_longbow();
+    ASSERT("longbow is an uncommon two-handed Rogue bow",
+        longbow.weapon_family == WEAPON_FAMILY_BOW &&
+        longbow.weapon_hands == WEAPON_HANDS_TWO &&
+        longbow.rarity == ITEM_RARITY_UNCOMMON &&
+        longbow.class_mask == ITEM_CLASS_ROGUE);
+    ASSERT("longbow improves the basic bow's power and reach",
+        longbow.attack_bonus == 7 && longbow.range == 9 &&
+        longbow.attack_bonus > bow.attack_bonus &&
+        longbow.range > bow.range);
+    ASSERT("longbow has an advanced price and distinct visual",
+        longbow.value == 200 && longbow.value > bow.value &&
+        longbow.visual_id == ITEM_VISUAL_LONGBOW);
+
+    Item magic_longbow = item_make_magic_longbow();
+    ASSERT("magic longbow is the rare two-handed Rogue bow",
+        magic_longbow.weapon_family == WEAPON_FAMILY_BOW &&
+        magic_longbow.weapon_hands == WEAPON_HANDS_TWO &&
+        magic_longbow.rarity == ITEM_RARITY_RARE &&
+        magic_longbow.class_mask == ITEM_CLASS_ROGUE);
+    ASSERT("magic longbow is the Rogue's strongest ranged weapon",
+        magic_longbow.attack_bonus == 13 && magic_longbow.range == 12 &&
+        magic_longbow.attack_bonus > longbow.attack_bonus &&
+        magic_longbow.range > longbow.range &&
+        magic_longbow.pierces_targets);
+    ASSERT("magic longbow has an endgame price and distinct visual",
+        magic_longbow.value == 900 &&
+        magic_longbow.visual_id == ITEM_VISUAL_MAGIC_LONGBOW);
+
+    Item dagger = item_make_dagger();
+    ASSERT("dagger is a one-handed Rogue weapon",
+        dagger.weapon_family == WEAPON_FAMILY_DAGGER &&
+        dagger.weapon_hands == WEAPON_HANDS_ONE &&
+        dagger.class_mask == ITEM_CLASS_ROGUE);
+    ASSERT("dagger trades attack for melee critical chance",
+        dagger.attack_bonus == 2 && dagger.critical_chance_bonus == 25);
+    ASSERT("dagger has a unique visual and specialist price",
+        dagger.visual_id == ITEM_VISUAL_DAGGER && dagger.value == 80);
+
+    Item magic_dagger = item_make_magic_dagger();
+    ASSERT("magic dagger is a rare one-handed Rogue weapon",
+        magic_dagger.weapon_family == WEAPON_FAMILY_DAGGER &&
+        magic_dagger.weapon_hands == WEAPON_HANDS_ONE &&
+        magic_dagger.rarity == ITEM_RARITY_RARE &&
+        magic_dagger.class_mask == ITEM_CLASS_ROGUE);
+    ASSERT("magic dagger improves attack and critical chance",
+        magic_dagger.attack_bonus == 6 &&
+        magic_dagger.critical_chance_bonus == 40 &&
+        magic_dagger.attack_bonus > dagger.attack_bonus &&
+        magic_dagger.critical_chance_bonus > dagger.critical_chance_bonus);
+    ASSERT("magic dagger has a premium price and distinct visual",
+        magic_dagger.value == 400 &&
+        magic_dagger.visual_id == ITEM_VISUAL_MAGIC_DAGGER);
+
     Item axe = item_make_battle_axe();
     ASSERT("battle axe is a two-handed Warrior weapon",
         axe.weapon_family == WEAPON_FAMILY_AXE &&
         axe.weapon_hands == WEAPON_HANDS_TWO &&
         axe.class_mask == ITEM_CLASS_WARRIOR);
 
+    Item magic_axe = item_make_magic_battle_axe();
+    ASSERT("magic battle axe is a rare two-handed Warrior axe",
+        magic_axe.weapon_family == WEAPON_FAMILY_AXE &&
+        magic_axe.weapon_hands == WEAPON_HANDS_TWO &&
+        magic_axe.rarity == ITEM_RARITY_RARE &&
+        magic_axe.class_mask == ITEM_CLASS_WARRIOR);
+    ASSERT("magic battle axe specializes against enemy armor",
+        magic_axe.attack_bonus == 13 &&
+        magic_axe.armor_penetration_percent == 50);
+    ASSERT("magic battle axe has a premium price and distinct visual",
+        magic_axe.value == 650 &&
+        magic_axe.visual_id == ITEM_VISUAL_MAGIC_BATTLE_AXE);
+
+    Item greatsword = item_make_greatsword();
+    ASSERT("greatsword is a two-handed uncommon Warrior sword",
+        greatsword.weapon_family == WEAPON_FAMILY_SWORD &&
+        greatsword.weapon_hands == WEAPON_HANDS_TWO &&
+        greatsword.rarity == ITEM_RARITY_UNCOMMON &&
+        greatsword.class_mask == ITEM_CLASS_WARRIOR);
+    ASSERT("greatsword trades a high price for attack and cleave",
+        greatsword.attack_bonus == 12 &&
+        greatsword.cleave_percent == 50 &&
+        greatsword.value == 350);
+    ASSERT("greatsword has a distinct visual identity",
+        greatsword.visual_id == ITEM_VISUAL_GREATSWORD);
+
+    Item magic_greatsword = item_make_magic_greatsword();
+    ASSERT("magic greatsword is the rare two-handed Warrior sword",
+        magic_greatsword.weapon_family == WEAPON_FAMILY_SWORD &&
+        magic_greatsword.weapon_hands == WEAPON_HANDS_TWO &&
+        magic_greatsword.rarity == ITEM_RARITY_RARE &&
+        magic_greatsword.class_mask == ITEM_CLASS_WARRIOR);
+    ASSERT("magic greatsword is stronger than the mundane greatsword",
+        magic_greatsword.attack_bonus == 18 &&
+        magic_greatsword.cleave_percent == 75 &&
+        magic_greatsword.attack_bonus > greatsword.attack_bonus &&
+        magic_greatsword.cleave_percent > greatsword.cleave_percent);
+    ASSERT("magic greatsword has the highest price and its own visual",
+        magic_greatsword.value == 800 &&
+        magic_greatsword.value > greatsword.value &&
+        magic_greatsword.visual_id == ITEM_VISUAL_MAGIC_GREATSWORD);
+
     Item staff = item_make_staff();
     ASSERT("staff is a two-handed Mage weapon",
         staff.weapon_family == WEAPON_FAMILY_STAFF &&
         staff.weapon_hands == WEAPON_HANDS_TWO &&
         staff.class_mask == ITEM_CLASS_MAGE);
+
+    Item magic_staff = item_make_magic_staff();
+    ASSERT("magic staff is a rare two-handed Mage weapon",
+        magic_staff.weapon_family == WEAPON_FAMILY_STAFF &&
+        magic_staff.weapon_hands == WEAPON_HANDS_TWO &&
+        magic_staff.rarity == ITEM_RARITY_RARE &&
+        magic_staff.class_mask == ITEM_CLASS_MAGE);
+    ASSERT("magic staff favors spell power over melee power",
+        magic_staff.attack_bonus == 9 &&
+        magic_staff.spell_power_bonus == 8);
+    ASSERT("magic staff has an endgame price and distinct visual",
+        magic_staff.value == 850 &&
+        magic_staff.visual_id == ITEM_VISUAL_MAGIC_STAFF);
 
     Item legacy_bow = {0};
     legacy_bow.type = ITEM_WEAPON;
@@ -108,6 +230,64 @@ void test_items(void) {
         mage.equipped_main_hand == -1);
     ASSERT("failed class equip does not change attack",
         mage.player.attack == mage_base_attack);
+
+    // --- Dagger critical strike ---
+    GameState rogue = {0};
+    rogue.player.player_class = CLASS_ROGUE;
+    game_init(&rogue);
+    Item guaranteed_critical = dagger;
+    guaranteed_critical.critical_chance_bonus = 100;
+    int dagger_index = rogue.inventory_count;
+    rogue.inventory[rogue.inventory_count++] = guaranteed_critical;
+    Action equip_dagger = {ACTION_EQUIP_ITEM, dagger_index, 0};
+    action_resolve_player(&rogue, equip_dagger);
+    rogue.player.x = 20;
+    rogue.player.y = 12;
+    rogue.enemy_count = 1;
+    rogue.enemies[0] = (Enemy){0};
+    rogue.enemies[0].active = 1;
+    rogue.enemies[0].x = 21;
+    rogue.enemies[0].y = 12;
+    rogue.enemies[0].hp = 100;
+    rogue.enemies[0].max_hp = 100;
+    strncpy(rogue.enemies[0].name, "Target",
+        sizeof(rogue.enemies[0].name) - 1);
+    Action dagger_strike = {ACTION_MOVE, 21, 12};
+    action_resolve_player(&rogue, dagger_strike);
+    ASSERT("dagger critical deals one-and-a-half melee damage",
+        rogue.enemies[0].hp == 82);
+
+    // --- Greatsword cleave ---
+    game_init(&g);
+    int greatsword_index = g.inventory_count;
+    g.inventory[g.inventory_count++] = greatsword;
+    Action equip_greatsword = {ACTION_EQUIP_ITEM, greatsword_index, 0};
+    action_resolve_player(&g, equip_greatsword);
+    g.player.x = 20;
+    g.player.y = 12;
+    g.enemy_count = 3;
+    for (int i = 0; i < g.enemy_count; i++) {
+        g.enemies[i] = (Enemy){0};
+        g.enemies[i].active = 1;
+        g.enemies[i].hp = 100;
+        g.enemies[i].max_hp = 100;
+        strncpy(g.enemies[i].name, "Target",
+            sizeof(g.enemies[i].name) - 1);
+    }
+    g.enemies[0].x = 21;
+    g.enemies[0].y = 12;
+    g.enemies[1].x = 21;
+    g.enemies[1].y = 13;
+    g.enemies[2].x = 23;
+    g.enemies[2].y = 12;
+    Action greatsword_strike = {ACTION_MOVE, 21, 12};
+    action_resolve_player(&g, greatsword_strike);
+    ASSERT("greatsword deals its full damage to the primary target",
+        g.enemies[0].hp == 74);
+    ASSERT("greatsword cleaves enemies adjacent to the primary target",
+        g.enemies[1].hp == 87);
+    ASSERT("greatsword does not cleave enemies beyond the target",
+        g.enemies[2].hp == 100);
 
     // --- Switching one-handed weapons ---
     game_init(&g);
@@ -226,4 +406,89 @@ void test_items(void) {
     ASSERT("arrow trail stops on its target", g.trail_count == 2);
     ASSERT("arrow target is marked as impact",
         g.trail[g.trail_count - 1].is_impact == 1);
+
+    // --- Magic Longbow piercing ---
+    game_init(&g);
+    int magic_longbow_index = g.inventory_count;
+    g.inventory[g.inventory_count++] = magic_longbow;
+    Action equip_magic_longbow = {ACTION_EQUIP_ITEM,
+        magic_longbow_index, 0};
+    action_resolve_player(&g, equip_magic_longbow);
+    g.player.x = 20;
+    g.player.y = 12;
+    g.player.last_dx = 1;
+    g.player.last_dy = 0;
+    g.enemy_count = 2;
+    for (int i = 0; i < g.enemy_count; i++) {
+        g.enemies[i] = (Enemy){0};
+        g.enemies[i].active = 1;
+        g.enemies[i].hp = 100;
+        g.enemies[i].max_hp = 100;
+        g.enemies[i].x = 22 + i * 2;
+        g.enemies[i].y = 12;
+        strncpy(g.enemies[i].name, "Target",
+            sizeof(g.enemies[i].name) - 1);
+    }
+    action_resolve_player(&g, shoot);
+    ASSERT("magic longbow arrow damages the first target",
+        g.enemies[0].hp < 100);
+    ASSERT("magic longbow arrow pierces into the second target",
+        g.enemies[1].hp < 100);
+
+    // --- Magic Staff spell power ---
+    g.player.player_class = CLASS_MAGE;
+    game_init(&g);
+    int magic_staff_index = g.inventory_count;
+    g.inventory[g.inventory_count++] = magic_staff;
+    Action equip_magic_staff = {ACTION_EQUIP_ITEM, magic_staff_index, 0};
+    action_resolve_player(&g, equip_magic_staff);
+    g.player.x = 20;
+    g.player.y = 12;
+    g.player.last_dx = 1;
+    g.player.last_dy = 0;
+    g.player.known_spell_count = 1;
+    g.player.known_spells[0] = spell_make_magic_arrow();
+    g.player.equipped_spell = 0;
+    g.enemy_count = 1;
+    g.enemies[0] = (Enemy){0};
+    g.enemies[0].active = 1;
+    g.enemies[0].x = 22;
+    g.enemies[0].y = 12;
+    g.enemies[0].hp = 100;
+    g.enemies[0].max_hp = 100;
+    strncpy(g.enemies[0].name, "Target",
+        sizeof(g.enemies[0].name) - 1);
+    Action cast = {ACTION_CAST_SPELL, 0, 0};
+    action_resolve_player(&g, cast);
+    ASSERT("magic staff adds spell power to ranged spell damage",
+        g.enemies[0].hp == 75);
+    g.player.known_spells[0] = spell_make_heal();
+    g.player.hp = 1;
+    action_resolve_player(&g, cast);
+    ASSERT("magic staff adds spell power to healing",
+        g.player.hp == 51);
+
+    // --- Magic Battle Axe armor penetration ---
+    g.player.player_class = CLASS_WARRIOR;
+    game_init(&g);
+    int magic_axe_index = g.inventory_count;
+    g.inventory[g.inventory_count++] = magic_axe;
+    Action equip_magic_axe = {ACTION_EQUIP_ITEM, magic_axe_index, 0};
+    action_resolve_player(&g, equip_magic_axe);
+    g.player.x = 20;
+    g.player.y = 12;
+    g.enemy_count = 1;
+    g.enemies[0] = (Enemy){0};
+    g.enemies[0].active = 1;
+    g.enemies[0].x = 21;
+    g.enemies[0].y = 12;
+    g.enemies[0].hp = 100;
+    g.enemies[0].max_hp = 100;
+    g.enemies[0].defense = 10;
+    strncpy(g.enemies[0].name, "Armored Target",
+        sizeof(g.enemies[0].name) - 1);
+    Action axe_strike = {ACTION_MOVE, 21, 12};
+    action_resolve_player(&g, axe_strike);
+    ASSERT("magic battle axe ignores half of enemy defense",
+        g.enemies[0].hp == 78);
 }

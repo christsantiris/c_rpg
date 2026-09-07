@@ -44,7 +44,7 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
         // Buy mode
         for (int i = 0; i < s->item_count; i++) {
             const Item *item = &s->items[i];
-            int item_y = 140 + i * 36;
+            int item_y = 140 + i * 24;
             char label[64];
             SDL_snprintf(label, sizeof(label), "%-20s  %d gold",
                 item->name, item->value);
@@ -95,6 +95,37 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
             renderer_draw_text(r, details, cx - 180,
                 (r->tiles_y - 4) * TILE_SIZE,
                 allowed ? green : red, r->font_tiny);
+            if (selected->critical_chance_bonus > 0) {
+                char trait[64];
+                SDL_snprintf(trait, sizeof(trait),
+                    "+%d%% MELEE CRITICAL CHANCE",
+                    selected->critical_chance_bonus);
+                renderer_draw_text(r, trait, cx - 180,
+                    (r->tiles_y - 3) * TILE_SIZE, green, r->font_tiny);
+            } else if (selected->cleave_percent > 0) {
+                char trait[64];
+                SDL_snprintf(trait, sizeof(trait),
+                    "%d%% DAMAGE TO NEARBY ENEMIES",
+                    selected->cleave_percent);
+                renderer_draw_text(r, trait, cx - 180,
+                    (r->tiles_y - 3) * TILE_SIZE, green, r->font_tiny);
+            } else if (selected->pierces_targets) {
+                renderer_draw_text(r, "ARROWS PIERCE ALL TARGETS", cx - 180,
+                    (r->tiles_y - 3) * TILE_SIZE, green, r->font_tiny);
+            } else if (selected->spell_power_bonus > 0) {
+                char trait[64];
+                SDL_snprintf(trait, sizeof(trait), "+%d SPELL POWER",
+                    selected->spell_power_bonus);
+                renderer_draw_text(r, trait, cx - 180,
+                    (r->tiles_y - 3) * TILE_SIZE, green, r->font_tiny);
+            } else if (selected->armor_penetration_percent > 0) {
+                char trait[64];
+                SDL_snprintf(trait, sizeof(trait),
+                    "IGNORES %d%% ENEMY DEFENSE",
+                    selected->armor_penetration_percent);
+                renderer_draw_text(r, trait, cx - 180,
+                    (r->tiles_y - 3) * TILE_SIZE, green, r->font_tiny);
+            }
         }
     }
 

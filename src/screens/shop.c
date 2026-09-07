@@ -18,9 +18,18 @@ void shop_init(ShopScreen *s, ShopType type) {
         s->items[s->item_count++] = item_make_rusty_sword();
         s->items[s->item_count++] = item_make_short_sword();
         s->items[s->item_count++] = item_make_long_sword();
+        s->items[s->item_count++] = item_make_magic_long_sword();
         s->items[s->item_count++] = item_make_battle_axe();
+        s->items[s->item_count++] = item_make_magic_battle_axe();
+        s->items[s->item_count++] = item_make_greatsword();
+        s->items[s->item_count++] = item_make_magic_greatsword();
         s->items[s->item_count++] = item_make_staff();
+        s->items[s->item_count++] = item_make_magic_staff();
         s->items[s->item_count++] = item_make_bow();
+        s->items[s->item_count++] = item_make_longbow();
+        s->items[s->item_count++] = item_make_magic_longbow();
+        s->items[s->item_count++] = item_make_dagger();
+        s->items[s->item_count++] = item_make_magic_dagger();
         s->items[s->item_count++] = item_make_leather_armor();
         s->items[s->item_count++] = item_make_chain_mail();
     }

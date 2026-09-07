@@ -219,6 +219,52 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type, int is_boss) {
     push_message(g, item_msg);
 }
 
+static int apply_melee_cleave(GameState *g, Enemy *target, int attack, int percent) {
+    int hits = 0;
+    int defeated = 0;
+
+    if (percent <= 0) {
+        return 0;
+    }
+
+    for (int i = 0; i < g->enemy_count; i++) {
+        Enemy *enemy = &g->enemies[i];
+        if (!enemy->active || enemy == target) {
+            continue;
+        }
+        if (abs(enemy->x - target->x) > 1 ||
+            abs(enemy->y - target->y) > 1) {
+            continue;
+        }
+
+        int damage = attack * percent / 100 - enemy->defense;
+        if (damage < 1) {
+            damage = 1;
+        }
+        enemy->hp -= damage;
+        hits++;
+        if (enemy->hp <= 0) {
+            enemy->active = 0;
+            drop_loot(g, enemy->x, enemy->y, enemy->type, enemy->is_boss);
+            player_gain_xp(g, enemy->experience);
+            defeated = 1;
+        }
+    }
+
+    if (defeated) {
+        game_update_level_progress(g);
+    }
+    return hits;
+}
+
+static int equipped_spell_power(const GameState *g) {
+    if (g->equipped_main_hand < 0 ||
+        g->equipped_main_hand >= g->inventory_count) {
+        return 0;
+    }
+    return g->inventory[g->equipped_main_hand].spell_power_bonus;
+}
+
 static void set_trail(GameState *g, int sx, int sy,
                       int tx, int ty, int dx, int dy,
                       int range, Uint8 r, Uint8 gr, Uint8 b,
@@ -512,6 +558,7 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
         Spell *sp = &g->player.known_spells[g->player.equipped_spell];
+        int spell_power = equipped_spell_power(g);
 
         if (g->player.mp < sp->mp_cost) {
             push_message(g, "Not enough MP!");
@@ -586,7 +633,8 @@ void action_resolve_player(GameState *g, Action a) {
                     Enemy *e = &g->enemies[i];
                     if (!e->active) continue;
                     if (e->x == cx && e->y == cy) {
-                        int dmg = sp->damage + g->player.level * 2;
+                        int dmg = sp->damage + g->player.level * 2 +
+                            spell_power;
                         e->hp -= dmg;
                         char msg[MAX_MESSAGE_LEN];
                         if (e->hp <= 0) {
@@ -609,7 +657,7 @@ void action_resolve_player(GameState *g, Action a) {
             if (!hit) push_message(g, "Spell missed!");
 
         } else if (sp->type == SPELL_TYPE_HEAL) {
-            int healed = sp->heal_hp + g->player.level * 2;
+            int healed = sp->heal_hp + g->player.level * 2 + spell_power;
             g->player.hp += healed;
             if (g->player.hp > g->player.max_hp)
                 g->player.hp = g->player.max_hp;
@@ -629,7 +677,7 @@ void action_resolve_player(GameState *g, Action a) {
                 int dy = e->y - cy;
                 int dist = (dx < 0 ? -dx : dx) + (dy < 0 ? -dy : dy);
                 if (dist <= sp->radius) {
-                    int dmg = sp->damage + g->player.level * 2;
+                    int dmg = sp->damage + g->player.level * 2 + spell_power;
                     e->hp -= dmg;
                     if (e->hp <= 0) {
                         e->active = 0;
@@ -683,7 +731,8 @@ void action_resolve_player(GameState *g, Action a) {
         int hit = 0;
         int impact_x = g->player.x + g->player.last_dx * wpn->range;
         int impact_y = g->player.y + g->player.last_dy * wpn->range;
-        for (int step = 1; step <= wpn->range && !hit; step++) {
+        for (int step = 1;
+            step <= wpn->range && (!hit || wpn->pierces_targets); step++) {
             int tx = g->player.x + g->player.last_dx * step;
             int ty = g->player.y + g->player.last_dy * step;
             if (!map_is_walkable(&g->map, tx, ty)) break;
@@ -712,8 +761,10 @@ void action_resolve_player(GameState *g, Action a) {
                         e->name, dmg);
                 }
                 push_message(g, msg);
-                impact_x = tx;
-                impact_y = ty;
+                if (!wpn->pierces_targets) {
+                    impact_x = tx;
+                    impact_y = ty;
+                }
                 hit = 1;
             }
         }
@@ -736,30 +787,58 @@ void action_resolve_player(GameState *g, Action a) {
             if (e->x == tx && e->y == ty) {
                 // Melee attack
                 int melee_attack = g->player.attack;
+                Item *melee_weapon = NULL;
                 if (g->equipped_main_hand >= 0 &&
                     g->equipped_main_hand < g->inventory_count) {
-                    Item *wpn = &g->inventory[g->equipped_main_hand];
-                    if (wpn->is_ranged)
-                        melee_attack -= wpn->attack_bonus;
+                    melee_weapon = &g->inventory[g->equipped_main_hand];
+                    if (melee_weapon->is_ranged) {
+                        melee_attack -= melee_weapon->attack_bonus;
+                    }
                 }
-                int dmg = melee_attack - e->defense;
-                if (dmg < 1) dmg = 1;
+                int effective_defense = e->defense;
+                if (melee_weapon &&
+                    melee_weapon->armor_penetration_percent > 0) {
+                    effective_defense = effective_defense *
+                        (100 - melee_weapon->armor_penetration_percent) / 100;
+                }
+                int dmg = melee_attack - effective_defense;
+                if (dmg < 1) {
+                    dmg = 1;
+                }
+                int critical = melee_weapon && !melee_weapon->is_ranged &&
+                    melee_weapon->critical_chance_bonus > 0 &&
+                    rand() % 100 < melee_weapon->critical_chance_bonus;
+                if (critical) {
+                    dmg = (dmg * 3 + 1) / 2;
+                }
                 e->hp -= dmg;
+                int cleave_hits = melee_weapon
+                    ? apply_melee_cleave(g, e, melee_attack,
+                        melee_weapon->cleave_percent)
+                    : 0;
                 #ifndef TEST_BUILD
                 sfx_play_attack();
                 #endif
-                char msg[MAX_MESSAGE_LEN];
                 if (e->hp <= 0) {
                     e->active = 0;
                     drop_loot(g, e->x, e->y, e->type, e->is_boss);
                     player_gain_xp(g, e->experience);
                     game_update_level_progress(g);
                     char msg[MAX_MESSAGE_LEN];
-                    snprintf(msg, sizeof(msg), "Killed %s!", e->name);
+                    snprintf(msg, sizeof(msg), critical ?
+                        "Critical killed %s!" : "Killed %s!", e->name);
                     push_message(g, msg);
                 } else {
                     char msg[MAX_MESSAGE_LEN];
-                    snprintf(msg, sizeof(msg), "Hit %s: %d dmg", e->name, dmg);
+                    snprintf(msg, sizeof(msg), critical ?
+                        "Critical hit %s: %d dmg" : "Hit %s: %d dmg",
+                        e->name, dmg);
+                    push_message(g, msg);
+                }
+                if (cleave_hits > 0) {
+                    char msg[MAX_MESSAGE_LEN];
+                    snprintf(msg, sizeof(msg), "Cleave struck %d nearby!",
+                        cleave_hits);
                     push_message(g, msg);
                 }
                 return;

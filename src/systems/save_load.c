@@ -198,12 +198,34 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count) {
 
 static void deserialize_item_metadata(const cJSON *obj, Item *item) {
     cJSON *family = cJSON_GetObjectItem(obj, "weapon_family");
+    cJSON *critical = cJSON_GetObjectItem(obj, "critical_chance_bonus");
+    cJSON *cleave = cJSON_GetObjectItem(obj, "cleave_percent");
+    cJSON *piercing = cJSON_GetObjectItem(obj, "pierces_targets");
+    cJSON *spell_power = cJSON_GetObjectItem(obj, "spell_power_bonus");
+    cJSON *armor_penetration = cJSON_GetObjectItem(obj,
+        "armor_penetration_percent");
     if (!family && item->type == ITEM_WEAPON) {
         item_apply_legacy_metadata(item);
         cJSON *legacy_two_handed = cJSON_GetObjectItem(obj,
             "is_two_handed");
         if (legacy_two_handed && legacy_two_handed->valueint) {
             item->weapon_hands = WEAPON_HANDS_TWO;
+        }
+        if (critical) {
+            item->critical_chance_bonus = critical->valueint;
+        }
+        if (cleave) {
+            item->cleave_percent = cleave->valueint;
+        }
+        if (piercing) {
+            item->pierces_targets = piercing->valueint;
+        }
+        if (spell_power) {
+            item->spell_power_bonus = spell_power->valueint;
+        }
+        if (armor_penetration) {
+            item->armor_penetration_percent =
+                armor_penetration->valueint;
         }
         return;
     }
@@ -216,12 +238,18 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
     item->rarity = rarity ? rarity->valueint : ITEM_RARITY_COMMON;
     item->class_mask = class_mask ? class_mask->valueint : 0;
     item->visual_id = visual_id ? visual_id->valueint : ITEM_VISUAL_NONE;
+    item->critical_chance_bonus = critical ? critical->valueint : 0;
+    item->cleave_percent = cleave ? cleave->valueint : 0;
+    item->pierces_targets = piercing ? piercing->valueint : 0;
+    item->spell_power_bonus = spell_power ? spell_power->valueint : 0;
+    item->armor_penetration_percent = armor_penetration
+        ? armor_penetration->valueint : 0;
 }
 
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 32);
+    cJSON_AddNumberToObject(root, "save_version", 37);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -334,6 +362,15 @@ int save_game(const GameState *g, int slot) {
         cJSON_AddNumberToObject(it, "rarity",        item->rarity);
         cJSON_AddNumberToObject(it, "class_mask",    item->class_mask);
         cJSON_AddNumberToObject(it, "visual_id",     item->visual_id);
+        cJSON_AddNumberToObject(it, "critical_chance_bonus",
+            item->critical_chance_bonus);
+        cJSON_AddNumberToObject(it, "cleave_percent", item->cleave_percent);
+        cJSON_AddNumberToObject(it, "pierces_targets",
+            item->pierces_targets);
+        cJSON_AddNumberToObject(it, "spell_power_bonus",
+            item->spell_power_bonus);
+        cJSON_AddNumberToObject(it, "armor_penetration_percent",
+            item->armor_penetration_percent);
         cJSON_AddItemToArray(inventory, it);
     }
     cJSON_AddItemToObject(root, "inventory", inventory);
@@ -366,6 +403,16 @@ int save_game(const GameState *g, int slot) {
         cJSON_AddNumberToObject(it, "rarity", fi->item.rarity);
         cJSON_AddNumberToObject(it, "class_mask", fi->item.class_mask);
         cJSON_AddNumberToObject(it, "visual_id", fi->item.visual_id);
+        cJSON_AddNumberToObject(it, "critical_chance_bonus",
+            fi->item.critical_chance_bonus);
+        cJSON_AddNumberToObject(it, "cleave_percent",
+            fi->item.cleave_percent);
+        cJSON_AddNumberToObject(it, "pierces_targets",
+            fi->item.pierces_targets);
+        cJSON_AddNumberToObject(it, "spell_power_bonus",
+            fi->item.spell_power_bonus);
+        cJSON_AddNumberToObject(it, "armor_penetration_percent",
+            fi->item.armor_penetration_percent);
         cJSON_AddItemToObject(f, "item", it);
         cJSON_AddItemToArray(floor_items, f);
     }
