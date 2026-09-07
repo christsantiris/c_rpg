@@ -49,7 +49,16 @@ typedef enum {
     ITEM_VISUAL_LONG_SWORD,
     ITEM_VISUAL_BATTLE_AXE,
     ITEM_VISUAL_STAFF,
-    ITEM_VISUAL_BOW
+    ITEM_VISUAL_BOW,
+    ITEM_VISUAL_DAGGER,
+    ITEM_VISUAL_GREATSWORD,
+    ITEM_VISUAL_MAGIC_GREATSWORD,
+    ITEM_VISUAL_LONGBOW,
+    ITEM_VISUAL_MAGIC_LONGBOW,
+    ITEM_VISUAL_MAGIC_STAFF,
+    ITEM_VISUAL_MAGIC_LONG_SWORD,
+    ITEM_VISUAL_MAGIC_DAGGER,
+    ITEM_VISUAL_MAGIC_BATTLE_AXE
 } ItemVisualId;
 
 typedef struct {
@@ -69,6 +78,11 @@ typedef struct {
     ItemRarity rarity;
     int class_mask;
     ItemVisualId visual_id;
+    int critical_chance_bonus;
+    int cleave_percent;
+    int pierces_targets;
+    int spell_power_bonus;
+    int armor_penetration_percent;
 } Item;
 
 typedef struct {
@@ -91,9 +105,18 @@ Item item_make_scroll_return_to_town(void);
 Item item_make_rusty_sword(void);
 Item item_make_short_sword(void);
 Item item_make_long_sword(void);
+Item item_make_magic_long_sword(void);
 Item item_make_battle_axe(void);
+Item item_make_magic_battle_axe(void);
 Item item_make_staff(void);
+Item item_make_magic_staff(void);
 Item item_make_bow(void);
+Item item_make_longbow(void);
+Item item_make_magic_longbow(void);
+Item item_make_dagger(void);
+Item item_make_magic_dagger(void);
+Item item_make_greatsword(void);
+Item item_make_magic_greatsword(void);
 
 Item item_make_leather_armor(void);
 Item item_make_chain_mail(void);
