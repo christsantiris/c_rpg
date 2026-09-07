@@ -196,9 +196,9 @@ static int open_shop_on_move(const GameState *game, const Action *action, ShopSc
     }
     TileType tile = game->map.tiles[action->target_y][action->target_x];
     if (tile == TILE_BLACKSMITH_DOOR) {
-        shop_init(shop, SHOP_TYPE_BLACKSMITH);
+        shop_init(shop, SHOP_TYPE_BLACKSMITH, game->defeated_bosses);
     } else if (tile == TILE_ALCHEMIST_DOOR) {
-        shop_init(shop, SHOP_TYPE_ALCHEMIST);
+        shop_init(shop, SHOP_TYPE_ALCHEMIST, game->defeated_bosses);
     } else {
         return 0;
     }

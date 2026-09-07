@@ -46,7 +46,7 @@ Item item_make_rusty_sword(void) {
     it.type = ITEM_WEAPON;
     strncpy(it.name, "Rusty Sword", sizeof(it.name) - 1);
     it.attack_bonus = 1;
-    it.value = 5;
+    it.value = 10;
     set_weapon_metadata(&it, WEAPON_FAMILY_SWORD, WEAPON_HANDS_ONE,
         ITEM_RARITY_COMMON, ITEM_CLASS_WARRIOR, ITEM_VISUAL_RUSTY_SWORD);
     return it;
@@ -58,7 +58,7 @@ Item item_make_short_sword(void) {
     it.type = ITEM_WEAPON;
     strncpy(it.name, "Short Sword", sizeof(it.name) - 1);
     it.attack_bonus = 3;
-    it.value = 15;
+    it.value = 40;
     set_weapon_metadata(&it, WEAPON_FAMILY_SWORD, WEAPON_HANDS_ONE,
         ITEM_RARITY_COMMON, ITEM_CLASS_WARRIOR | ITEM_CLASS_ROGUE,
         ITEM_VISUAL_SHORT_SWORD);
@@ -71,7 +71,7 @@ Item item_make_long_sword(void) {
     it.type = ITEM_WEAPON;
     strncpy(it.name, "Long Sword", sizeof(it.name) - 1);
     it.attack_bonus = 6;
-    it.value = 30;
+    it.value = 180;
     set_weapon_metadata(&it, WEAPON_FAMILY_SWORD, WEAPON_HANDS_ONE,
         ITEM_RARITY_UNCOMMON, ITEM_CLASS_WARRIOR,
         ITEM_VISUAL_LONG_SWORD);
@@ -84,7 +84,7 @@ Item item_make_magic_long_sword(void) {
     it.type = ITEM_WEAPON;
     strncpy(it.name, "Magic Long Sword", sizeof(it.name) - 1);
     it.attack_bonus = 10;
-    it.value = 450;
+    it.value = 550;
     it.critical_chance_bonus = 20;
     set_weapon_metadata(&it, WEAPON_FAMILY_SWORD, WEAPON_HANDS_ONE,
         ITEM_RARITY_RARE, ITEM_CLASS_WARRIOR,
@@ -98,7 +98,8 @@ Item item_make_battle_axe(void) {
     it.type = ITEM_WEAPON;
     strncpy(it.name, "Battle Axe", sizeof(it.name) - 1);
     it.attack_bonus = 10;
-    it.value = 50;
+    it.value = 275;
+    it.armor_penetration_percent = 25;
     set_weapon_metadata(&it, WEAPON_FAMILY_AXE, WEAPON_HANDS_TWO,
         ITEM_RARITY_UNCOMMON, ITEM_CLASS_WARRIOR,
         ITEM_VISUAL_BATTLE_AXE);
@@ -111,7 +112,7 @@ Item item_make_magic_battle_axe(void) {
     it.type = ITEM_WEAPON;
     strncpy(it.name, "Magic Battle Axe", sizeof(it.name) - 1);
     it.attack_bonus = 13;
-    it.value = 650;
+    it.value = 700;
     it.armor_penetration_percent = 50;
     set_weapon_metadata(&it, WEAPON_FAMILY_AXE, WEAPON_HANDS_TWO,
         ITEM_RARITY_RARE, ITEM_CLASS_WARRIOR,
@@ -125,7 +126,8 @@ Item item_make_staff(void) {
     it.type = ITEM_WEAPON;
     strncpy(it.name, "Staff", sizeof(it.name) - 1);
     it.attack_bonus = 4;
-    it.value = 25;
+    it.value = 60;
+    it.spell_power_bonus = 2;
     set_weapon_metadata(&it, WEAPON_FAMILY_STAFF, WEAPON_HANDS_TWO,
         ITEM_RARITY_COMMON, ITEM_CLASS_MAGE, ITEM_VISUAL_STAFF);
     return it;
@@ -137,7 +139,7 @@ Item item_make_magic_staff(void) {
     it.type = ITEM_WEAPON;
     strncpy(it.name, "Magic Staff", sizeof(it.name) - 1);
     it.attack_bonus = 9;
-    it.value = 850;
+    it.value = 1000;
     it.spell_power_bonus = 8;
     set_weapon_metadata(&it, WEAPON_FAMILY_STAFF, WEAPON_HANDS_TWO,
         ITEM_RARITY_RARE, ITEM_CLASS_MAGE, ITEM_VISUAL_MAGIC_STAFF);
@@ -152,7 +154,7 @@ Item item_make_bow(void) {
     it.attack_bonus = 3;
     it.is_ranged = 1;
     it.range = 6;
-    it.value = 35;
+    it.value = 60;
     set_weapon_metadata(&it, WEAPON_FAMILY_BOW, WEAPON_HANDS_TWO,
         ITEM_RARITY_COMMON, ITEM_CLASS_ROGUE, ITEM_VISUAL_BOW);
     return it;
@@ -166,7 +168,7 @@ Item item_make_longbow(void) {
     it.attack_bonus = 7;
     it.is_ranged = 1;
     it.range = 9;
-    it.value = 200;
+    it.value = 250;
     set_weapon_metadata(&it, WEAPON_FAMILY_BOW, WEAPON_HANDS_TWO,
         ITEM_RARITY_UNCOMMON, ITEM_CLASS_ROGUE, ITEM_VISUAL_LONGBOW);
     return it;
@@ -180,7 +182,7 @@ Item item_make_magic_longbow(void) {
     it.attack_bonus = 13;
     it.is_ranged = 1;
     it.range = 12;
-    it.value = 900;
+    it.value = 1200;
     it.pierces_targets = 1;
     set_weapon_metadata(&it, WEAPON_FAMILY_BOW, WEAPON_HANDS_TWO,
         ITEM_RARITY_RARE, ITEM_CLASS_ROGUE, ITEM_VISUAL_MAGIC_LONGBOW);
@@ -193,7 +195,7 @@ Item item_make_dagger(void) {
     it.type = ITEM_WEAPON;
     strncpy(it.name, "Dagger", sizeof(it.name) - 1);
     it.attack_bonus = 2;
-    it.value = 80;
+    it.value = 90;
     it.critical_chance_bonus = 25;
     set_weapon_metadata(&it, WEAPON_FAMILY_DAGGER, WEAPON_HANDS_ONE,
         ITEM_RARITY_COMMON, ITEM_CLASS_ROGUE, ITEM_VISUAL_DAGGER);
@@ -206,7 +208,7 @@ Item item_make_magic_dagger(void) {
     it.type = ITEM_WEAPON;
     strncpy(it.name, "Magic Dagger", sizeof(it.name) - 1);
     it.attack_bonus = 6;
-    it.value = 400;
+    it.value = 500;
     it.critical_chance_bonus = 40;
     set_weapon_metadata(&it, WEAPON_FAMILY_DAGGER, WEAPON_HANDS_ONE,
         ITEM_RARITY_RARE, ITEM_CLASS_ROGUE, ITEM_VISUAL_MAGIC_DAGGER);
@@ -219,7 +221,7 @@ Item item_make_greatsword(void) {
     it.type = ITEM_WEAPON;
     strncpy(it.name, "Greatsword", sizeof(it.name) - 1);
     it.attack_bonus = 12;
-    it.value = 350;
+    it.value = 400;
     it.cleave_percent = 50;
     set_weapon_metadata(&it, WEAPON_FAMILY_SWORD, WEAPON_HANDS_TWO,
         ITEM_RARITY_UNCOMMON, ITEM_CLASS_WARRIOR,
@@ -233,7 +235,7 @@ Item item_make_magic_greatsword(void) {
     it.type = ITEM_WEAPON;
     strncpy(it.name, "Magic Greatsword", sizeof(it.name) - 1);
     it.attack_bonus = 18;
-    it.value = 800;
+    it.value = 1100;
     it.cleave_percent = 75;
     set_weapon_metadata(&it, WEAPON_FAMILY_SWORD, WEAPON_HANDS_TWO,
         ITEM_RARITY_RARE, ITEM_CLASS_WARRIOR,
@@ -284,6 +286,10 @@ void item_apply_legacy_metadata(Item *item) {
         return;
     }
     item->weapon_family = definition.weapon_family;
+    item->attack_bonus = definition.attack_bonus;
+    item->value = definition.value;
+    item->is_ranged = definition.is_ranged;
+    item->range = definition.range;
     item->weapon_hands = definition.weapon_hands;
     item->rarity = definition.rarity;
     item->class_mask = definition.class_mask;

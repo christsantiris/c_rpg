@@ -2,7 +2,17 @@
 #include "../src/game/game.h"
 #include "../src/game/actions.h"
 #include "../src/game/item.h"
+#include "../src/screens/shop.h"
 #include <string.h>
+
+static int shop_has_item(const ShopScreen *shop, const char *name) {
+    for (int i = 0; i < shop->item_count; i++) {
+        if (strcmp(shop->items[i].name, name) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
 void test_items(void) {
     printf("Item tests:\n");
@@ -43,7 +53,7 @@ void test_items(void) {
         magic_long_sword.attack_bonus == 10 &&
         magic_long_sword.critical_chance_bonus == 20);
     ASSERT("magic long sword has a premium price and distinct visual",
-        magic_long_sword.value == 450 &&
+        magic_long_sword.value == 550 &&
         magic_long_sword.visual_id == ITEM_VISUAL_MAGIC_LONG_SWORD);
 
     Item bow = item_make_bow();
@@ -65,7 +75,7 @@ void test_items(void) {
         longbow.attack_bonus > bow.attack_bonus &&
         longbow.range > bow.range);
     ASSERT("longbow has an advanced price and distinct visual",
-        longbow.value == 200 && longbow.value > bow.value &&
+        longbow.value == 250 && longbow.value > bow.value &&
         longbow.visual_id == ITEM_VISUAL_LONGBOW);
 
     Item magic_longbow = item_make_magic_longbow();
@@ -80,7 +90,7 @@ void test_items(void) {
         magic_longbow.range > longbow.range &&
         magic_longbow.pierces_targets);
     ASSERT("magic longbow has an endgame price and distinct visual",
-        magic_longbow.value == 900 &&
+        magic_longbow.value == 1200 &&
         magic_longbow.visual_id == ITEM_VISUAL_MAGIC_LONGBOW);
 
     Item dagger = item_make_dagger();
@@ -91,7 +101,7 @@ void test_items(void) {
     ASSERT("dagger trades attack for melee critical chance",
         dagger.attack_bonus == 2 && dagger.critical_chance_bonus == 25);
     ASSERT("dagger has a unique visual and specialist price",
-        dagger.visual_id == ITEM_VISUAL_DAGGER && dagger.value == 80);
+        dagger.visual_id == ITEM_VISUAL_DAGGER && dagger.value == 90);
 
     Item magic_dagger = item_make_magic_dagger();
     ASSERT("magic dagger is a rare one-handed Rogue weapon",
@@ -105,7 +115,7 @@ void test_items(void) {
         magic_dagger.attack_bonus > dagger.attack_bonus &&
         magic_dagger.critical_chance_bonus > dagger.critical_chance_bonus);
     ASSERT("magic dagger has a premium price and distinct visual",
-        magic_dagger.value == 400 &&
+        magic_dagger.value == 500 &&
         magic_dagger.visual_id == ITEM_VISUAL_MAGIC_DAGGER);
 
     Item axe = item_make_battle_axe();
@@ -113,6 +123,8 @@ void test_items(void) {
         axe.weapon_family == WEAPON_FAMILY_AXE &&
         axe.weapon_hands == WEAPON_HANDS_TWO &&
         axe.class_mask == ITEM_CLASS_WARRIOR);
+    ASSERT("battle axe has uncommon armor penetration",
+        axe.armor_penetration_percent == 25 && axe.value == 275);
 
     Item magic_axe = item_make_magic_battle_axe();
     ASSERT("magic battle axe is a rare two-handed Warrior axe",
@@ -124,7 +136,7 @@ void test_items(void) {
         magic_axe.attack_bonus == 13 &&
         magic_axe.armor_penetration_percent == 50);
     ASSERT("magic battle axe has a premium price and distinct visual",
-        magic_axe.value == 650 &&
+        magic_axe.value == 700 &&
         magic_axe.visual_id == ITEM_VISUAL_MAGIC_BATTLE_AXE);
 
     Item greatsword = item_make_greatsword();
@@ -136,7 +148,7 @@ void test_items(void) {
     ASSERT("greatsword trades a high price for attack and cleave",
         greatsword.attack_bonus == 12 &&
         greatsword.cleave_percent == 50 &&
-        greatsword.value == 350);
+        greatsword.value == 400);
     ASSERT("greatsword has a distinct visual identity",
         greatsword.visual_id == ITEM_VISUAL_GREATSWORD);
 
@@ -152,7 +164,7 @@ void test_items(void) {
         magic_greatsword.attack_bonus > greatsword.attack_bonus &&
         magic_greatsword.cleave_percent > greatsword.cleave_percent);
     ASSERT("magic greatsword has the highest price and its own visual",
-        magic_greatsword.value == 800 &&
+        magic_greatsword.value == 1100 &&
         magic_greatsword.value > greatsword.value &&
         magic_greatsword.visual_id == ITEM_VISUAL_MAGIC_GREATSWORD);
 
@@ -161,6 +173,8 @@ void test_items(void) {
         staff.weapon_family == WEAPON_FAMILY_STAFF &&
         staff.weapon_hands == WEAPON_HANDS_TWO &&
         staff.class_mask == ITEM_CLASS_MAGE);
+    ASSERT("staff provides entry-level spell power",
+        staff.spell_power_bonus == 2 && staff.value == 60);
 
     Item magic_staff = item_make_magic_staff();
     ASSERT("magic staff is a rare two-handed Mage weapon",
@@ -172,7 +186,7 @@ void test_items(void) {
         magic_staff.attack_bonus == 9 &&
         magic_staff.spell_power_bonus == 8);
     ASSERT("magic staff has an endgame price and distinct visual",
-        magic_staff.value == 850 &&
+        magic_staff.value == 1000 &&
         magic_staff.visual_id == ITEM_VISUAL_MAGIC_STAFF);
 
     Item legacy_bow = {0};
@@ -189,6 +203,32 @@ void test_items(void) {
     ASSERT("stronger existing weapons cost more",
         rusty.value < short_sword.value &&
         short_sword.value < sword.value && sword.value < axe.value);
+
+    // --- Blacksmith stock progression ---
+    ShopScreen shop;
+    shop_init(&shop, SHOP_TYPE_BLACKSMITH, 0);
+    ASSERT("new characters see only tier-one blacksmith stock",
+        shop.stock_tier == 1 && shop.item_count == 7 &&
+        !shop_has_item(&shop, "Long Sword"));
+    shop_init(&shop, SHOP_TYPE_BLACKSMITH, 1 << LOCATION_DUNGEON);
+    ASSERT("one defeated boss unlocks uncommon weapons",
+        shop.stock_tier == 2 && shop.item_count == 11 &&
+        shop_has_item(&shop, "Greatsword") &&
+        !shop_has_item(&shop, "Magic Dagger"));
+    shop_init(&shop, SHOP_TYPE_BLACKSMITH,
+        (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST));
+    ASSERT("two defeated bosses unlock rare specialist weapons",
+        shop.stock_tier == 3 && shop.item_count == 14 &&
+        shop_has_item(&shop, "Magic Battle Axe") &&
+        !shop_has_item(&shop, "Magic Greatsword"));
+    shop_init(&shop, SHOP_TYPE_BLACKSMITH,
+        (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) |
+        (1 << LOCATION_MOUNTAINS));
+    ASSERT("three defeated bosses unlock capstone weapons",
+        shop.stock_tier == 4 && shop.item_count == 17 &&
+        shop_has_item(&shop, "Magic Greatsword") &&
+        shop_has_item(&shop, "Magic Staff") &&
+        shop_has_item(&shop, "Magic Longbow"));
 
     Item armor = item_make_leather_armor();
     ASSERT("armor type correct",            armor.type          == ITEM_ARMOR);
