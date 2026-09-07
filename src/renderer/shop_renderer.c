@@ -1,6 +1,56 @@
 #include "shop_renderer.h"
 #include "sprites.h"
 
+static int shop_visible_rows(const Renderer *r) {
+    int list_top = 140;
+    int detail_top = (r->tiles_y - 4) * TILE_SIZE;
+    int rows = (detail_top - list_top - 16) / 32;
+    if (rows < 1) {
+        return 1;
+    }
+    return rows;
+}
+
+static int shop_list_start(int selected, int count, int visible_rows) {
+    int start = selected - visible_rows + 1;
+    if (start < 0) {
+        start = 0;
+    }
+    int max_start = count - visible_rows;
+    if (max_start < 0) {
+        max_start = 0;
+    }
+    if (start > max_start) {
+        start = max_start;
+    }
+    return start;
+}
+
+static void draw_shop_scrollbar(Renderer *r, int x, int y, int height, int start, int count, int visible_rows) {
+    if (count <= visible_rows) {
+        return;
+    }
+
+    SDL_Color track_color = {38, 38, 55, 255};
+    SDL_Color thumb_color = {155, 126, 48, 255};
+    SDL_Rect track = {x, y, 6, height};
+    SDL_SetRenderDrawColor(r->sdl, track_color.r, track_color.g,
+        track_color.b, track_color.a);
+    SDL_RenderFillRect(r->sdl, &track);
+
+    int thumb_height = height * visible_rows / count;
+    if (thumb_height < 16) {
+        thumb_height = 16;
+    }
+    int travel = height - thumb_height;
+    int max_start = count - visible_rows;
+    int thumb_y = y + travel * start / max_start;
+    SDL_Rect thumb = {x, thumb_y, 6, thumb_height};
+    SDL_SetRenderDrawColor(r->sdl, thumb_color.r, thumb_color.g,
+        thumb_color.b, thumb_color.a);
+    SDL_RenderFillRect(r->sdl, &thumb);
+}
+
 void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
     int full_tiles_x = r->screen_w / TILE_SIZE;
 
@@ -40,11 +90,25 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
     renderer_draw_text(r, "BUY",  cx - 60, 108, buy_color,  r->font_small);
     renderer_draw_text(r, "SELL", cx,       108, sell_color, r->font_small);
 
+    int list_count = s->mode == 0 ? s->item_count : g->inventory_count;
+    int visible_rows = shop_visible_rows(r);
+    int list_start = shop_list_start(s->selected, list_count, visible_rows);
+    int list_end = list_start + visible_rows;
+    if (list_end > list_count) {
+        list_end = list_count;
+    }
+    if (list_count > 0) {
+        char range[32];
+        SDL_snprintf(range, sizeof(range), "%d-%d OF %d",
+            list_start + 1, list_end, list_count);
+        renderer_draw_text(r, range, cx + 90, 108, dimmed, r->font_tiny);
+    }
+
     if (s->mode == 0) {
         // Buy mode
-        for (int i = 0; i < s->item_count; i++) {
+        for (int i = list_start; i < list_end; i++) {
             const Item *item = &s->items[i];
-            int item_y = 140 + i * 24;
+            int item_y = 140 + (i - list_start) * 32;
             char label[64];
             SDL_snprintf(label, sizeof(label), "%-20s  %d gold",
                 item->name, item->value);
@@ -64,9 +128,9 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
             renderer_draw_text(r, "NOTHING TO SELL",
                 cx - 90, 200, dimmed, r->font_small);
         } else {
-            for (int i = 0; i < g->inventory_count; i++) {
+            for (int i = list_start; i < list_end; i++) {
                 const Item *item = &g->inventory[i];
-                int item_y = 140 + i * 36;
+                int item_y = 140 + (i - list_start) * 32;
                 int sell_price = item->value / 2;
                 char label[64];
                 SDL_snprintf(label, sizeof(label), "%-20s  %d gold",
@@ -80,6 +144,9 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
             }
         }
     }
+
+    draw_shop_scrollbar(r, cx + 225, 140, visible_rows * 32 - 8,
+        list_start, list_count, visible_rows);
 
     int detail_count = s->mode == 0 ? s->item_count : g->inventory_count;
     if (s->selected >= 0 && s->selected < detail_count) {
