@@ -407,11 +407,17 @@ void action_resolve_player(GameState *g, Action a) {
 
     if (a.type == ACTION_EQUIP_ITEM) {
         int idx = a.target_x;
-        if (idx < 0 || idx >= g->inventory_count) return;
+        if (idx < 0 || idx >= g->inventory_count) {
+            return;
+        }
         Item *item = &g->inventory[idx];
         char msg[MAX_MESSAGE_LEN];
 
         if (item->type == ITEM_WEAPON) {
+            if (!item_class_allowed(item, g->player.player_class)) {
+                push_message(g, "Your class cannot equip that");
+                return;
+            }
             if (g->equipped_armor == idx) {
                 g->equipped_armor = -1;
             }

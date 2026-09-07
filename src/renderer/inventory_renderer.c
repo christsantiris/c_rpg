@@ -73,5 +73,21 @@ void inventory_draw(Renderer *r, const GameState *g, const InventoryScreen *s) {
         }
     }
 
+    if (s->selected >= 0 && s->selected < g->inventory_count) {
+        const Item *selected = &g->inventory[s->selected];
+        if (selected->type == ITEM_WEAPON) {
+            int allowed = item_class_allowed(selected,
+                g->player.player_class);
+            char details[96];
+            SDL_snprintf(details, sizeof(details), "%s | %s | %s%s",
+                item_rarity_label(selected), item_class_label(selected),
+                item_hands_label(selected), allowed ? "" : " | CLASS LOCKED");
+            renderer_draw_text(r, details, cx - 180,
+                (r->tiles_y - 4) * TILE_SIZE,
+                allowed ? green : (SDL_Color){200, 60, 60, 255},
+                r->font_tiny);
+        }
+    }
+
     renderer_draw_text(r, "U USE  E EQUIP  D DROP  ESC CLOSE", cx - 180, (r->tiles_y - 2) * TILE_SIZE, hint, r->font_small);
 }

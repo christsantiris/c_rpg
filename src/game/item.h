@@ -98,5 +98,9 @@ Item item_make_bow(void);
 Item item_make_leather_armor(void);
 Item item_make_chain_mail(void);
 void item_apply_legacy_metadata(Item *item);
+int item_class_allowed(const Item *item, int player_class);
+const char *item_class_label(const Item *item);
+const char *item_hands_label(const Item *item);
+const char *item_rarity_label(const Item *item);
 
 #endif
