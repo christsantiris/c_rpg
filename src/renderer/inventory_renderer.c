@@ -54,7 +54,9 @@ void inventory_draw(Renderer *r, const GameState *g, const InventoryScreen *s) {
 
             // Equipped indicator
             int is_equipped =
-                (item->type == ITEM_WEAPON && g->equipped_weapon == i) ||
+                (item->type == ITEM_WEAPON &&
+                    (g->equipped_main_hand == i ||
+                    g->equipped_off_hand == i)) ||
                 (item->type == ITEM_ARMOR && g->equipped_armor == i);
             SDL_Color color = is_equipped ? gold : white;
 

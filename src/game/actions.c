@@ -393,8 +393,11 @@ void action_resolve_player(GameState *g, Action a) {
             g->inventory[i] = g->inventory[i + 1];
         }
         g->inventory_count--;
-        if (g->equipped_weapon > idx) {
-            g->equipped_weapon--;
+        if (g->equipped_main_hand > idx) {
+            g->equipped_main_hand--;
+        }
+        if (g->equipped_off_hand > idx) {
+            g->equipped_off_hand--;
         }
         if (g->equipped_armor > idx) {
             g->equipped_armor--;
@@ -412,17 +415,21 @@ void action_resolve_player(GameState *g, Action a) {
             if (g->equipped_armor == idx) {
                 g->equipped_armor = -1;
             }
-            if (g->equipped_weapon >= 0 &&
-                g->equipped_weapon < g->inventory_count) {
-                g->player.attack -= g->inventory[g->equipped_weapon].attack_bonus;
+            if (g->equipped_main_hand >= 0 &&
+                g->equipped_main_hand < g->inventory_count) {
+                g->player.attack -=
+                    g->inventory[g->equipped_main_hand].attack_bonus;
             }
-            g->equipped_weapon = idx;
+            g->equipped_main_hand = idx;
             g->player.attack  += item->attack_bonus;
             snprintf(msg, sizeof(msg), "Equipped %s", item->name);
             push_message(g, msg);
         } else if (item->type == ITEM_ARMOR) {
-            if (g->equipped_weapon == idx) {
-                g->equipped_weapon = -1;
+            if (g->equipped_main_hand == idx) {
+                g->equipped_main_hand = -1;
+            }
+            if (g->equipped_off_hand == idx) {
+                g->equipped_off_hand = -1;
             }
             if (g->equipped_armor >= 0 &&
                 g->equipped_armor < g->inventory_count) {
@@ -448,17 +455,27 @@ void action_resolve_player(GameState *g, Action a) {
         Item *item = &g->inventory[idx];
 
         // Unequip if equipped
-        if (g->equipped_weapon == idx) {
+        if (g->equipped_main_hand == idx) {
             g->player.attack   -= item->attack_bonus;
-            g->equipped_weapon  = -1;
+            g->equipped_main_hand = -1;
+        } else if (g->equipped_off_hand == idx) {
+            g->player.attack -= item->attack_bonus;
+            g->equipped_off_hand = -1;
         } else if (g->equipped_armor == idx) {
             g->player.defense  -= item->defense_bonus;
             g->equipped_armor   = -1;
         }
 
         // Adjust equipped indices if needed
-        if (g->equipped_weapon > idx) g->equipped_weapon--;
-        if (g->equipped_armor  > idx) g->equipped_armor--;
+        if (g->equipped_main_hand > idx) {
+            g->equipped_main_hand--;
+        }
+        if (g->equipped_off_hand > idx) {
+            g->equipped_off_hand--;
+        }
+        if (g->equipped_armor > idx) {
+            g->equipped_armor--;
+        }
 
         // Place on floor
         FloorItem fi = {0};
@@ -625,13 +642,13 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_RANGED_ATTACK) {
-        if (g->equipped_weapon < 0 ||
-            g->equipped_weapon >= g->inventory_count) {
+        if (g->equipped_main_hand < 0 ||
+            g->equipped_main_hand >= g->inventory_count) {
             push_message(g, "No weapon equipped!");
             return;
         }
 
-        Item *wpn = &g->inventory[g->equipped_weapon];
+        Item *wpn = &g->inventory[g->equipped_main_hand];
         if (!wpn->is_ranged) {
             push_message(g, "No ranged weapon equipped!");
             return;
@@ -713,9 +730,9 @@ void action_resolve_player(GameState *g, Action a) {
             if (e->x == tx && e->y == ty) {
                 // Melee attack
                 int melee_attack = g->player.attack;
-                if (g->equipped_weapon >= 0 &&
-                    g->equipped_weapon < g->inventory_count) {
-                    Item *wpn = &g->inventory[g->equipped_weapon];
+                if (g->equipped_main_hand >= 0 &&
+                    g->equipped_main_hand < g->inventory_count) {
+                    Item *wpn = &g->inventory[g->equipped_main_hand];
                     if (wpn->is_ranged)
                         melee_attack -= wpn->attack_bonus;
                 }
