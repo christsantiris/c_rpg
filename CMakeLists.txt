@@ -30,6 +30,8 @@ file(GLOB_RECURSE TEST_SOURCES
     ${CMAKE_SOURCE_DIR}/src/renderer/viewport.c
 )
 list(APPEND TEST_SOURCES ${CMAKE_SOURCE_DIR}/src/screens/shop.c)
+list(APPEND TEST_SOURCES ${CMAKE_SOURCE_DIR}/src/systems/save_load.c)
+list(APPEND TEST_SOURCES ${CMAKE_SOURCE_DIR}/external/cJSON.c)
 
 add_executable(conr ${SOURCES})
 target_include_directories(conr PRIVATE src ${SDL2_INCLUDE_DIRS} ${SDL2_TTF_INCLUDE_DIRS} ${SDL2_MIXER_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/external)
