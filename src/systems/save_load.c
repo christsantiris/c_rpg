@@ -164,6 +164,7 @@ static cJSON *serialize_enemies(const Enemy *enemies, int count) {
         cJSON_AddNumberToObject(obj, "experience", e->experience);
         cJSON_AddNumberToObject(obj, "move_timer", e->move_timer);
         cJSON_AddNumberToObject(obj, "is_boss",    e->is_boss);
+        cJSON_AddNumberToObject(obj, "dain_fragment", e->dain_fragment);
         cJSON_AddItemToArray(arr, obj);
     }
     return arr;
@@ -193,6 +194,8 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count) {
              e->type == ENEMY_FOREST_NECROMANCER ||
              e->type == ENEMY_MOUNTAIN_GOBLIN_KING ||
              e->type == ENEMY_DROWNED_QUEEN);
+        cJSON *dain_fragment = cJSON_GetObjectItem(obj, "dain_fragment");
+        e->dain_fragment = dain_fragment ? dain_fragment->valueint : 0;
     }
 }
 
@@ -272,7 +275,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 40);
+    cJSON_AddNumberToObject(root, "save_version", 41);
 
     // Player
     cJSON *player = cJSON_CreateObject();

@@ -227,6 +227,15 @@ void test_dain_quest(void) {
         enemies_spawn(&g);
         ASSERT("needed mountain specialist has a guaranteed encounter",
             count_enemy_type(&g, target_types[target]) > 0);
+        int marked_target = 0;
+        for (int i = 0; i < g.enemy_count; i++) {
+            if (g.enemies[i].type == target_types[target] &&
+                g.enemies[i].dain_fragment != 0) {
+                marked_target = 1;
+            }
+        }
+        ASSERT("map bearer is distinct from ordinary enemies",
+            marked_target);
     }
 
     game_record_dain_kill(&g, ENEMY_GOBLIN_ARCHER);

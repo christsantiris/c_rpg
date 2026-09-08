@@ -136,8 +136,14 @@ static int enemy_score(EnemyType type) {
     }
 }
 
-static void drop_loot(GameState *g, int x, int y, EnemyType type, int is_boss) {
-    game_record_dain_kill(g, type);
+static void drop_loot(GameState *g, Enemy *enemy) {
+    int x = enemy->x;
+    int y = enemy->y;
+    EnemyType type = enemy->type;
+    int is_boss = enemy->is_boss;
+    if (enemy->dain_fragment) {
+        game_record_dain_kill(g, type);
+    }
     if (is_boss) {
         g->defeated_bosses |= 1 << g->location;
     }
@@ -270,7 +276,7 @@ static int apply_melee_cleave(GameState *g, Enemy *target, int attack, int perce
         hits++;
         if (enemy->hp <= 0) {
             enemy->active = 0;
-            drop_loot(g, enemy->x, enemy->y, enemy->type, enemy->is_boss);
+            drop_loot(g, enemy);
             player_gain_xp(g, enemy->experience);
             defeated = 1;
         }
@@ -682,7 +688,7 @@ void action_resolve_player(GameState *g, Action a) {
                         if (e->hp <= 0) {
                             e->active = 0;
                             game_update_level_progress(g);
-                            drop_loot(g, e->x, e->y, e->type, e->is_boss);
+                            drop_loot(g, e);
                             player_gain_xp(g, e->experience);
                             g->score += enemy_score(e->type);
                             snprintf(msg, sizeof(msg), "%s killed %s!",
@@ -723,7 +729,7 @@ void action_resolve_player(GameState *g, Action a) {
                     e->hp -= dmg;
                     if (e->hp <= 0) {
                         e->active = 0;
-                        drop_loot(g, e->x, e->y, e->type, e->is_boss);
+                        drop_loot(g, e);
                         player_gain_xp(g, e->experience);
                     }
                     hits++;
@@ -792,7 +798,7 @@ void action_resolve_player(GameState *g, Action a) {
                 if (e->hp <= 0) {
                     e->active = 0;
                     game_update_level_progress(g);
-                    drop_loot(g, e->x, e->y, e->type, e->is_boss);
+                    drop_loot(g, e);
                     player_gain_xp(g, e->experience);
                     snprintf(msg, sizeof(msg), "Attack killed %s!", e->name);
                 } else if (critical) {
@@ -871,7 +877,7 @@ void action_resolve_player(GameState *g, Action a) {
                 #endif
                 if (e->hp <= 0) {
                     e->active = 0;
-                    drop_loot(g, e->x, e->y, e->type, e->is_boss);
+                    drop_loot(g, e);
                     player_gain_xp(g, e->experience);
                     game_update_level_progress(g);
                     char msg[MAX_MESSAGE_LEN];

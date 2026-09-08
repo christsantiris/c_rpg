@@ -53,6 +53,7 @@ typedef struct {
     int       experience;
     int       move_timer;
     int       is_boss;
+    int       dain_fragment;
 } Enemy;
 
 #endif

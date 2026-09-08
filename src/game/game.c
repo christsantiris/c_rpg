@@ -12,6 +12,7 @@ static void spawn_enemy(Enemy *e, EnemyType type, int x, int y) {
     e->x       = x;
     e->y       = y;
     e->is_boss = 0;
+    e->dain_fragment = 0;
     e->move_timer = 0;
     switch (type) {
         case ENEMY_SKELETON:
@@ -371,7 +372,17 @@ void enemies_spawn(GameState *g) {
             target_bit = DAIN_FRAGMENT_SHAMAN;
         }
         if (target_bit && !(g->dain_map_fragments & target_bit)) {
-            spawn_into_open_tile(g, quest_target, regular_room_limit);
+            int target_index = g->enemy_count;
+            if (spawn_into_open_tile(g, quest_target, regular_room_limit)) {
+                Enemy *target = &g->enemies[target_index];
+                target->dain_fragment = target_bit;
+                target->max_hp = target->max_hp * 3 / 2;
+                target->hp = target->max_hp;
+                target->attack += 2;
+                strncpy(target->name, "Map Bearer",
+                    sizeof(target->name) - 1);
+                target->name[sizeof(target->name) - 1] = '\0';
+            }
         }
     }
     while (g->enemy_count < num_enemies) {
