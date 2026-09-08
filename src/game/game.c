@@ -604,6 +604,12 @@ static int repaired_equipment_index(const GameState *g, int index, ItemType type
     return -1;
 }
 
+static int valid_off_hand_item(const Item *item) {
+    return item->type == ITEM_SHIELD ||
+        (item->type == ITEM_WEAPON &&
+        item->weapon_hands == WEAPON_HANDS_ONE);
+}
+
 void game_repair_equipment_indices(GameState *g) {
     if (g->equipped_main_hand >= g->inventory_count ||
         (g->equipped_main_hand >= 0 &&
@@ -613,9 +619,8 @@ void game_repair_equipment_indices(GameState *g) {
     }
     if (g->equipped_off_hand >= g->inventory_count ||
         (g->equipped_off_hand >= 0 &&
-        g->inventory[g->equipped_off_hand].type != ITEM_WEAPON)) {
-        g->equipped_off_hand = repaired_equipment_index(g,
-            g->equipped_off_hand, ITEM_WEAPON);
+        !valid_off_hand_item(&g->inventory[g->equipped_off_hand]))) {
+        g->equipped_off_hand = -1;
     }
     if (g->equipped_off_hand == g->equipped_main_hand) {
         g->equipped_off_hand = -1;
@@ -623,7 +628,7 @@ void game_repair_equipment_indices(GameState *g) {
     if (g->equipped_off_hand >= 0 &&
         (g->equipped_main_hand < 0 ||
         g->inventory[g->equipped_main_hand].weapon_hands == WEAPON_HANDS_TWO ||
-        g->inventory[g->equipped_off_hand].weapon_hands != WEAPON_HANDS_ONE)) {
+        !valid_off_hand_item(&g->inventory[g->equipped_off_hand]))) {
         g->equipped_off_hand = -1;
     }
     if (g->equipped_armor >= g->inventory_count ||
@@ -655,8 +660,12 @@ void game_unequip_off_hand(GameState *g) {
         g->equipped_off_hand = -1;
         return;
     }
-    g->player.attack -= game_off_hand_attack_bonus(
-        &g->inventory[g->equipped_off_hand]);
+    Item *item = &g->inventory[g->equipped_off_hand];
+    if (item->type == ITEM_WEAPON) {
+        g->player.attack -= game_off_hand_attack_bonus(item);
+    } else if (item->type == ITEM_SHIELD) {
+        g->player.defense -= item->defense_bonus;
+    }
     g->equipped_off_hand = -1;
 }
 
@@ -678,6 +687,25 @@ int game_equip_off_hand(GameState *g, int index) {
     game_unequip_off_hand(g);
     g->equipped_off_hand = index;
     g->player.attack += game_off_hand_attack_bonus(weapon);
+    return 1;
+}
+
+int game_equip_shield(GameState *g, int index) {
+    if (index < 0 || index >= g->inventory_count ||
+        g->equipped_main_hand < 0 ||
+        g->equipped_main_hand >= g->inventory_count) {
+        return 0;
+    }
+    Item *main_hand = &g->inventory[g->equipped_main_hand];
+    Item *shield = &g->inventory[index];
+    if (main_hand->weapon_hands != WEAPON_HANDS_ONE ||
+        shield->type != ITEM_SHIELD ||
+        !item_class_allowed(shield, g->player.player_class)) {
+        return 0;
+    }
+    game_unequip_off_hand(g);
+    g->equipped_off_hand = index;
+    g->player.defense += shield->defense_bonus;
     return 1;
 }
 
@@ -705,8 +733,10 @@ void game_remove_inventory_item(GameState *g, int index) {
         return;
     }
     Item *item = &g->inventory[index];
-    int promote_off_hand = g->equipped_main_hand == index &&
-        g->equipped_off_hand >= 0;
+    int removing_main_hand = g->equipped_main_hand == index;
+    int promote_off_hand = removing_main_hand &&
+        g->equipped_off_hand >= 0 &&
+        g->inventory[g->equipped_off_hand].type == ITEM_WEAPON;
     if (g->equipped_main_hand == index) {
         game_unequip_main_hand(g);
     }
@@ -715,6 +745,8 @@ void game_remove_inventory_item(GameState *g, int index) {
         game_unequip_off_hand(g);
         g->equipped_main_hand = promoted;
         g->player.attack += g->inventory[promoted].attack_bonus;
+    } else if (removing_main_hand && g->equipped_off_hand >= 0) {
+        game_unequip_off_hand(g);
     } else if (g->equipped_off_hand == index) {
         game_unequip_off_hand(g);
     }

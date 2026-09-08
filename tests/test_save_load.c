@@ -55,6 +55,16 @@ static int armor_fields_match(const Item *a, const Item *b) {
             b->spell_cost_reduction_percent;
 }
 
+static int shield_fields_match(const Item *a, const Item *b) {
+    return a->type == ITEM_SHIELD && b->type == ITEM_SHIELD &&
+        strcmp(a->name, b->name) == 0 &&
+        a->defense_bonus == b->defense_bonus &&
+        a->value == b->value && a->rarity == b->rarity &&
+        a->class_mask == b->class_mask && a->visual_id == b->visual_id &&
+        a->block_chance == b->block_chance &&
+        a->block_reduction_percent == b->block_reduction_percent;
+}
+
 static int rewrite_save_version(int slot, int version) {
     char path[64];
     format_save_path(slot, path, sizeof(path));
@@ -111,7 +121,7 @@ static void test_current_weapon_round_trip(void) {
     original.player.player_class = CLASS_WARRIOR;
     game_init(&original);
 
-    original.inventory_count = 9;
+    original.inventory_count = 10;
     original.inventory[0] = item_make_magic_long_sword();
     original.inventory[1] = item_make_magic_dagger();
     original.inventory[2] = item_make_magic_greatsword();
@@ -121,8 +131,20 @@ static void test_current_weapon_round_trip(void) {
     original.inventory[6] = item_make_magic_plate();
     original.inventory[7] = item_make_shadow_armor();
     original.inventory[8] = item_make_archmage_robes();
+    original.inventory[9] = (Item){0};
+    original.inventory[9].active = 1;
+    original.inventory[9].type = ITEM_SHIELD;
+    strncpy(original.inventory[9].name, "Test Shield",
+        sizeof(original.inventory[9].name) - 1);
+    original.inventory[9].defense_bonus = 2;
+    original.inventory[9].value = 75;
+    original.inventory[9].rarity = ITEM_RARITY_COMMON;
+    original.inventory[9].class_mask = ITEM_CLASS_WARRIOR;
+    original.inventory[9].visual_id = ITEM_VISUAL_SHIELD_GENERIC;
+    original.inventory[9].block_chance = 10;
+    original.inventory[9].block_reduction_percent = 50;
     original.equipped_main_hand = 0;
-    original.equipped_off_hand = 1;
+    original.equipped_off_hand = 9;
     original.equipped_armor = 6;
 
     remove_test_save(ROUND_TRIP_SLOT);
@@ -153,6 +175,8 @@ static void test_current_weapon_round_trip(void) {
     }
     ASSERT("all armor traits and metadata survive save/load",
         armor_fields_survive);
+    ASSERT("shield traits survive save/load",
+        shield_fields_match(&loaded.inventory[9], &original.inventory[9]));
     remove_test_save(ROUND_TRIP_SLOT);
 }
 
