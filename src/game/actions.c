@@ -115,6 +115,64 @@ Item random_weapon(int level) {
     return random_capstone_magic_weapon();
 }
 
+static Item random_armor_tier(int tier) {
+    int roll = rand() % 3;
+    if (tier == 1) {
+        if (roll == 0) {
+            return item_make_chain_mail();
+        }
+        if (roll == 1) {
+            return item_make_leather_armor();
+        }
+        return item_make_apprentice_robes();
+    }
+    if (tier == 2) {
+        if (roll == 0) {
+            return item_make_scale_mail();
+        }
+        if (roll == 1) {
+            return item_make_studded_leather();
+        }
+        return item_make_runed_robes();
+    }
+    if (tier == 3) {
+        if (roll == 0) {
+            return item_make_plate_armor();
+        }
+        if (roll == 1) {
+            return item_make_ranger_cloak();
+        }
+        return item_make_enchanter_robes();
+    }
+    if (roll == 0) {
+        return item_make_magic_plate();
+    }
+    if (roll == 1) {
+        return item_make_shadow_armor();
+    }
+    return item_make_archmage_robes();
+}
+
+Item random_armor(int level) {
+    if (level <= 2) {
+        return random_armor_tier(1);
+    }
+    int roll = rand() % 100;
+    if (level <= 5) {
+        return random_armor_tier(roll < 70 ? 1 : 2);
+    }
+    if (level <= 7) {
+        return random_armor_tier(roll < 55 ? 2 : 3);
+    }
+    if (roll < 40) {
+        return random_armor_tier(2);
+    }
+    if (roll < 75) {
+        return random_armor_tier(3);
+    }
+    return random_armor_tier(4);
+}
+
 static int enemy_score(EnemyType type) {
     switch (type) {
         case ENEMY_SKELETON:    return 10;
@@ -219,7 +277,7 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type, int is_boss) {
         if (g->floor_item_count < MAX_FLOOR_ITEMS) {
             Item boss_drop = rand() % 2 == 0
                 ? random_weapon(g->level)
-                : item_make_chain_mail();
+                : random_armor(g->level);
             FloorItem fi = {0};
             fi.active = 1;
             fi.x = x; fi.y = y;
@@ -253,7 +311,7 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type, int is_boss) {
         if (roll < 25)      item = item_make_health_potion();
         else if (roll < 45) item = item_make_mana_potion();
         else if (roll < 60) item = random_weapon(level);
-        else if (roll < 75) item = item_make_leather_armor();
+        else if (roll < 75) item = random_armor(level);
         else if (roll < 88) item = item_make_scroll_magic_arrow();
         else if (roll < 95) item = item_make_scroll_heal();
         else                item = item_make_scroll_fireball();
@@ -262,7 +320,7 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type, int is_boss) {
         if (roll < 20)      item = item_make_health_potion();
         else if (roll < 35) item = item_make_mana_potion();
         else if (roll < 60) item = random_weapon(level);
-        else if (roll < 65) item = item_make_leather_armor();
+        else if (roll < 70) item = random_armor(level);
         else if (roll < 75) item = item_make_scroll_magic_arrow();
         else if (roll < 88) item = item_make_scroll_heal();
         else                item = item_make_scroll_fireball();
