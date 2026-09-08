@@ -249,6 +249,35 @@ void test_items(void) {
     Item armor = item_make_leather_armor();
     ASSERT("armor type correct",            armor.type          == ITEM_ARMOR);
     ASSERT("armor defense bonus set",       armor.defense_bonus == 2);
+    Item armor_catalog[12] = {
+        item_make_chain_mail(), item_make_scale_mail(),
+        item_make_plate_armor(), item_make_magic_plate(),
+        item_make_leather_armor(), item_make_studded_leather(),
+        item_make_ranger_cloak(), item_make_shadow_armor(),
+        item_make_apprentice_robes(), item_make_runed_robes(),
+        item_make_enchanter_robes(), item_make_archmage_robes()
+    };
+    int armor_metadata_complete = 1;
+    for (int i = 0; i < 12; i++) {
+        if (armor_catalog[i].type != ITEM_ARMOR ||
+            armor_catalog[i].armor_family == ARMOR_FAMILY_NONE ||
+            armor_catalog[i].class_mask == 0 ||
+            armor_catalog[i].visual_id == ITEM_VISUAL_NONE ||
+            armor_catalog[i].value <= 0) {
+            armor_metadata_complete = 0;
+        }
+    }
+    ASSERT("all twelve armors have class and visual metadata",
+        armor_metadata_complete);
+    ASSERT("warrior armor culminates in Magic Plate",
+        armor_catalog[3].defense_bonus == 11 &&
+        armor_catalog[3].max_hp_bonus == 50);
+    ASSERT("rogue armor culminates in Shadow Armor",
+        armor_catalog[7].defense_bonus == 7 &&
+        armor_catalog[7].evasion_chance == 15);
+    ASSERT("mage armor culminates in Archmage Robes",
+        armor_catalog[11].max_mp_bonus == 60 &&
+        armor_catalog[11].spell_cost_reduction_percent == 20);
 
     // --- Class-agnostic weapon drops ---
     srand(7);
@@ -410,19 +439,21 @@ void test_items(void) {
 
     // --- Equip armor ---
     game_init(&g);
-    g.inventory[0] = armor;
+    Item warrior_armor = item_make_chain_mail();
+    g.inventory[0] = warrior_armor;
     g.inventory_count = 1;
     int base_defense = g.player.defense;
     Action equip_arm   = {ACTION_EQUIP_ITEM, 0, 0};
     action_resolve_player(&g, equip_arm);
     ASSERT("armor equipped",                g.equipped_armor == 0);
-    ASSERT("defense increased after equip", g.player.defense == base_defense + 2);
+    ASSERT("defense increased after equip",
+        g.player.defense == base_defense + warrior_armor.defense_bonus);
 
     // --- Equipped indices survive consumption ---
     game_init(&g);
     g.inventory[0] = hp_potion;
     g.inventory[1] = item_make_rusty_sword();
-    g.inventory[2] = armor;
+    g.inventory[2] = warrior_armor;
     g.inventory_count = 3;
     g.equipped_main_hand = -1;
     g.equipped_off_hand = -1;
