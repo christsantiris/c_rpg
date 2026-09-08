@@ -1,9 +1,10 @@
 #include "shop_renderer.h"
+#include "equipment_compare_renderer.h"
 #include "sprites.h"
 
 static int shop_visible_rows(const Renderer *r) {
     int list_top = 140;
-    int detail_top = (r->tiles_y - 4) * TILE_SIZE;
+    int detail_top = (r->tiles_y - 7) * TILE_SIZE;
     int rows = (detail_top - list_top - 16) / 32;
     if (rows < 1) {
         return 1;
@@ -164,46 +165,13 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
         const Item *selected = s->mode == 0
             ? &s->items[s->selected] : &g->inventory[s->selected];
         if (selected->type == ITEM_WEAPON) {
-            int allowed = item_class_allowed(selected,
-                g->player.player_class);
-            char details[96];
-            SDL_snprintf(details, sizeof(details), "%s | %s | %s%s",
-                item_rarity_label(selected), item_class_label(selected),
-                item_hands_label(selected), allowed ? "" : " | CLASS LOCKED");
-            renderer_draw_text(r, details, cx - 180,
-                (r->tiles_y - 4) * TILE_SIZE,
-                allowed ? green : red, r->font_tiny);
-            if (selected->critical_chance_bonus > 0) {
-                char trait[64];
-                SDL_snprintf(trait, sizeof(trait),
-                    "+%d%% MELEE CRITICAL CHANCE",
-                    selected->critical_chance_bonus);
-                renderer_draw_text(r, trait, cx - 180,
-                    (r->tiles_y - 3) * TILE_SIZE, green, r->font_tiny);
-            } else if (selected->cleave_percent > 0) {
-                char trait[64];
-                SDL_snprintf(trait, sizeof(trait),
-                    "%d%% DAMAGE TO NEARBY ENEMIES",
-                    selected->cleave_percent);
-                renderer_draw_text(r, trait, cx - 180,
-                    (r->tiles_y - 3) * TILE_SIZE, green, r->font_tiny);
-            } else if (selected->pierces_targets) {
-                renderer_draw_text(r, "ARROWS PIERCE ALL TARGETS", cx - 180,
-                    (r->tiles_y - 3) * TILE_SIZE, green, r->font_tiny);
-            } else if (selected->spell_power_bonus > 0) {
-                char trait[64];
-                SDL_snprintf(trait, sizeof(trait), "+%d SPELL POWER",
-                    selected->spell_power_bonus);
-                renderer_draw_text(r, trait, cx - 180,
-                    (r->tiles_y - 3) * TILE_SIZE, green, r->font_tiny);
-            } else if (selected->armor_penetration_percent > 0) {
-                char trait[64];
-                SDL_snprintf(trait, sizeof(trait),
-                    "IGNORES %d%% ENEMY DEFENSE",
-                    selected->armor_penetration_percent);
-                renderer_draw_text(r, trait, cx - 180,
-                    (r->tiles_y - 3) * TILE_SIZE, green, r->font_tiny);
+            const Item *equipped = NULL;
+            if (g->equipped_main_hand >= 0 &&
+                g->equipped_main_hand < g->inventory_count) {
+                equipped = &g->inventory[g->equipped_main_hand];
             }
+            draw_weapon_comparison(r, g, selected, equipped,
+                (r->tiles_y - 7) * TILE_SIZE);
         }
     }
 
