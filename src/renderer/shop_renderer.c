@@ -172,6 +172,14 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
             }
             draw_weapon_comparison(r, g, selected, equipped,
                 (r->tiles_y - 9) * TILE_SIZE);
+        } else if (selected->type == ITEM_ARMOR) {
+            const Item *equipped = NULL;
+            if (g->equipped_armor >= 0 &&
+                g->equipped_armor < g->inventory_count) {
+                equipped = &g->inventory[g->equipped_armor];
+            }
+            draw_armor_comparison(r, g, selected, equipped,
+                (r->tiles_y - 9) * TILE_SIZE);
         }
     }
 
