@@ -80,17 +80,19 @@ void inventory_draw(Renderer *r, const GameState *g, const InventoryScreen *s) {
             const Item *item = &g->inventory[i];
             int item_y = 130 + (i - list_start) * 36;
 
-            char label[64];
-            if (item->type == ITEM_POTION_HEALTH)
-                SDL_snprintf(label, sizeof(label), "%s  +%d HP", item->name, item->heal_hp);
-            else if (item->type == ITEM_POTION_MANA)
-                SDL_snprintf(label, sizeof(label), "%s  +%d MP", item->name, item->heal_mp);
-            else if (item->type == ITEM_WEAPON)
-                SDL_snprintf(label, sizeof(label), "%s  +%d ATK", item->name, item->attack_bonus);
-            else if (item->type == ITEM_ARMOR || item->type == ITEM_SHIELD)
-                SDL_snprintf(label, sizeof(label), "%s  +%d DEF", item->name, item->defense_bonus);
-            else
-                SDL_snprintf(label, sizeof(label), "%s", item->name);
+            char detail[32] = "";
+            if (item->type == ITEM_POTION_HEALTH) {
+                SDL_snprintf(detail, sizeof(detail), "+%d HP", item->heal_hp);
+            } else if (item->type == ITEM_POTION_MANA) {
+                SDL_snprintf(detail, sizeof(detail), "+%d MP", item->heal_mp);
+            } else if (item->type == ITEM_WEAPON) {
+                SDL_snprintf(detail, sizeof(detail), "+%d ATK",
+                    item->attack_bonus);
+            } else if (item->type == ITEM_ARMOR ||
+                item->type == ITEM_SHIELD) {
+                SDL_snprintf(detail, sizeof(detail), "+%d DEF",
+                    item->defense_bonus);
+            }
 
             // Equipped indicator
             int is_equipped =
@@ -100,16 +102,28 @@ void inventory_draw(Renderer *r, const GameState *g, const InventoryScreen *s) {
                 (item->type == ITEM_ARMOR && g->equipped_armor == i) ||
                 (item->type == ITEM_SHIELD && g->equipped_off_hand == i);
             SDL_Color color = is_equipped ? gold : white;
+            const char *slot = "";
+            if (g->equipped_main_hand == i) {
+                slot = "[M]";
+            } else if (g->equipped_off_hand == i) {
+                slot = "[O]";
+            } else if (g->equipped_armor == i) {
+                slot = "[A]";
+            }
 
             if (s->selected == i) {
-                renderer_draw_text(r, ">", cx - 200, item_y, gold, r->font_small);
-                renderer_draw_text(r, label, cx - 180, item_y, color, r->font_small);
-                if (is_equipped)
-                    renderer_draw_text(r, "[E]", cx + 120, item_y, gold, r->font_small);
-            } else {
-                renderer_draw_text(r, label, cx - 180, item_y, color, r->font_small);
-                if (is_equipped)
-                    renderer_draw_text(r, "[E]", cx + 120, item_y, gold, r->font_small);
+                renderer_draw_text(r, ">", cx - 280, item_y, gold,
+                    r->font_small);
+            }
+            renderer_draw_text(r, item->name, cx - 260, item_y, color,
+                r->font_small);
+            if (detail[0] != '\0') {
+                renderer_draw_text(r, detail, cx + 80, item_y, color,
+                    r->font_small);
+            }
+            if (is_equipped) {
+                renderer_draw_text(r, slot, cx + 190, item_y, gold,
+                    r->font_small);
             }
         }
     }
