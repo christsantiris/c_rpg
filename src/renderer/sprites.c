@@ -290,16 +290,19 @@ static void draw_player_axe(Renderer *r, const Item *weapon, int bx, int by, int
 
 static void draw_player_staff(Renderer *r, const Item *weapon, int bx, int by, int dx, int dy) {
     int magic = weapon_is_magic(weapon);
-    SDL_Color wood = magic ? (SDL_Color){99, 53, 122, 255}
+    int runed = weapon->visual_id == ITEM_VISUAL_RUNED_STAFF;
+    SDL_Color wood = magic ? (SDL_Color){99, 53, 122, 255} : runed
+        ? (SDL_Color){127, 108, 53, 255}
         : (SDL_Color){119, 72, 38, 255};
-    SDL_Color gem = magic ? (SDL_Color){77, 223, 242, 255}
+    SDL_Color gem = magic ? (SDL_Color){77, 223, 242, 255} : runed
+        ? (SDL_Color){104, 219, 132, 255}
         : (SDL_Color){105, 181, 214, 255};
     SDL_Color core = {219, 252, 255, 255};
     draw_weapon_line(r, bx, by, dx, dy, -5, 0, 8, 0, wood);
     draw_weapon_line(r, bx, by, dx, dy, 8, -2, 11, 0, gem);
     draw_weapon_line(r, bx, by, dx, dy, 8, 2, 11, 0, gem);
     draw_weapon_line(r, bx, by, dx, dy, 9, -1, 9, 1,
-        magic ? core : gem);
+        magic || runed ? core : gem);
 }
 
 static void draw_player_bow(Renderer *r, const Item *weapon, int bx, int by, int dx, int dy) {

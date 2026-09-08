@@ -177,6 +177,20 @@ void test_items(void) {
     ASSERT("staff provides entry-level spell power",
         staff.spell_power_bonus == 2 && staff.value == 60);
 
+    Item runed_staff = item_make_runed_staff();
+    ASSERT("runed staff is an uncommon two-handed Mage weapon",
+        runed_staff.weapon_family == WEAPON_FAMILY_STAFF &&
+        runed_staff.weapon_hands == WEAPON_HANDS_TWO &&
+        runed_staff.rarity == ITEM_RARITY_UNCOMMON &&
+        runed_staff.class_mask == ITEM_CLASS_MAGE);
+    ASSERT("runed staff bridges basic and capstone spell power",
+        runed_staff.attack_bonus == 6 &&
+        runed_staff.spell_power_bonus == 4 &&
+        runed_staff.spell_power_bonus > staff.spell_power_bonus);
+    ASSERT("runed staff has a tier-two price and distinct visual",
+        runed_staff.value == 300 &&
+        runed_staff.visual_id == ITEM_VISUAL_RUNED_STAFF);
+
     Item magic_staff = item_make_magic_staff();
     ASSERT("magic staff is a rare two-handed Mage weapon",
         magic_staff.weapon_family == WEAPON_FAMILY_STAFF &&
@@ -213,20 +227,21 @@ void test_items(void) {
         !shop_has_item(&shop, "Long Sword"));
     shop_init(&shop, SHOP_TYPE_BLACKSMITH, 1 << LOCATION_DUNGEON);
     ASSERT("one defeated boss unlocks uncommon weapons",
-        shop.stock_tier == 2 && shop.item_count == 11 &&
+        shop.stock_tier == 2 && shop.item_count == 12 &&
         shop_has_item(&shop, "Greatsword") &&
+        shop_has_item(&shop, "Runed Staff") &&
         !shop_has_item(&shop, "Magic Dagger"));
     shop_init(&shop, SHOP_TYPE_BLACKSMITH,
         (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST));
     ASSERT("two defeated bosses unlock rare specialist weapons",
-        shop.stock_tier == 3 && shop.item_count == 14 &&
+        shop.stock_tier == 3 && shop.item_count == 15 &&
         shop_has_item(&shop, "Magic Battle Axe") &&
         !shop_has_item(&shop, "Magic Greatsword"));
     shop_init(&shop, SHOP_TYPE_BLACKSMITH,
         (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) |
         (1 << LOCATION_MOUNTAINS));
     ASSERT("three defeated bosses unlock capstone weapons",
-        shop.stock_tier == 4 && shop.item_count == 17 &&
+        shop.stock_tier == 4 && shop.item_count == 18 &&
         shop_has_item(&shop, "Magic Greatsword") &&
         shop_has_item(&shop, "Magic Staff") &&
         shop_has_item(&shop, "Magic Longbow"));

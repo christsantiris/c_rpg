@@ -44,6 +44,7 @@ void shop_init(ShopScreen *s, ShopType type, int defeated_bosses) {
             s->items[s->item_count++] = item_make_battle_axe();
             s->items[s->item_count++] = item_make_greatsword();
             s->items[s->item_count++] = item_make_longbow();
+            s->items[s->item_count++] = item_make_runed_staff();
         }
         if (s->stock_tier >= 3) {
             s->items[s->item_count++] = item_make_magic_long_sword();

@@ -49,15 +49,17 @@ static Item random_common_weapon(void) {
 }
 
 static Item random_uncommon_weapon(void) {
-    switch (rand() % 4) {
+    switch (rand() % 5) {
         case 0:
             return item_make_long_sword();
         case 1:
             return item_make_battle_axe();
         case 2:
             return item_make_greatsword();
-        default:
+        case 3:
             return item_make_longbow();
+        default:
+            return item_make_runed_staff();
     }
 }
 
