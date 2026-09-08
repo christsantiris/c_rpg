@@ -204,6 +204,12 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
     cJSON *spell_power = cJSON_GetObjectItem(obj, "spell_power_bonus");
     cJSON *armor_penetration = cJSON_GetObjectItem(obj,
         "armor_penetration_percent");
+    cJSON *armor_family = cJSON_GetObjectItem(obj, "armor_family");
+    cJSON *max_hp_bonus = cJSON_GetObjectItem(obj, "max_hp_bonus");
+    cJSON *max_mp_bonus = cJSON_GetObjectItem(obj, "max_mp_bonus");
+    cJSON *evasion = cJSON_GetObjectItem(obj, "evasion_chance");
+    cJSON *spell_cost_reduction = cJSON_GetObjectItem(obj,
+        "spell_cost_reduction_percent");
     if (!family && item->type == ITEM_WEAPON) {
         item_apply_legacy_metadata(item);
         cJSON *legacy_two_handed = cJSON_GetObjectItem(obj,
@@ -244,6 +250,13 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
     item->spell_power_bonus = spell_power ? spell_power->valueint : 0;
     item->armor_penetration_percent = armor_penetration
         ? armor_penetration->valueint : 0;
+    item->armor_family = armor_family
+        ? armor_family->valueint : ARMOR_FAMILY_NONE;
+    item->max_hp_bonus = max_hp_bonus ? max_hp_bonus->valueint : 0;
+    item->max_mp_bonus = max_mp_bonus ? max_mp_bonus->valueint : 0;
+    item->evasion_chance = evasion ? evasion->valueint : 0;
+    item->spell_cost_reduction_percent = spell_cost_reduction
+        ? spell_cost_reduction->valueint : 0;
 }
 
 int save_game(const GameState *g, int slot) {
@@ -371,6 +384,12 @@ int save_game(const GameState *g, int slot) {
             item->spell_power_bonus);
         cJSON_AddNumberToObject(it, "armor_penetration_percent",
             item->armor_penetration_percent);
+        cJSON_AddNumberToObject(it, "armor_family", item->armor_family);
+        cJSON_AddNumberToObject(it, "max_hp_bonus", item->max_hp_bonus);
+        cJSON_AddNumberToObject(it, "max_mp_bonus", item->max_mp_bonus);
+        cJSON_AddNumberToObject(it, "evasion_chance", item->evasion_chance);
+        cJSON_AddNumberToObject(it, "spell_cost_reduction_percent",
+            item->spell_cost_reduction_percent);
         cJSON_AddItemToArray(inventory, it);
     }
     cJSON_AddItemToObject(root, "inventory", inventory);
@@ -413,6 +432,13 @@ int save_game(const GameState *g, int slot) {
             fi->item.spell_power_bonus);
         cJSON_AddNumberToObject(it, "armor_penetration_percent",
             fi->item.armor_penetration_percent);
+        cJSON_AddNumberToObject(it, "armor_family", fi->item.armor_family);
+        cJSON_AddNumberToObject(it, "max_hp_bonus", fi->item.max_hp_bonus);
+        cJSON_AddNumberToObject(it, "max_mp_bonus", fi->item.max_mp_bonus);
+        cJSON_AddNumberToObject(it, "evasion_chance",
+            fi->item.evasion_chance);
+        cJSON_AddNumberToObject(it, "spell_cost_reduction_percent",
+            fi->item.spell_cost_reduction_percent);
         cJSON_AddItemToObject(f, "item", it);
         cJSON_AddItemToArray(floor_items, f);
     }
