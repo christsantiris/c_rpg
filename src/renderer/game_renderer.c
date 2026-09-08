@@ -316,6 +316,41 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
     draw_floor_item(r, screen_x, screen_y);
 }
 
+static void draw_trap_underlay(Renderer *r, const GameState *g, int map_x, int map_y, int screen_x, int screen_y) {
+    int cave_neighbors = 0;
+    int fortress_neighbors = 0;
+    int bridge_neighbors = 0;
+    for (int y = map_y - 1; y <= map_y + 1; y++) {
+        for (int x = map_x - 1; x <= map_x + 1; x++) {
+            if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
+                continue;
+            }
+            TileType tile = g->map.tiles[y][x];
+            cave_neighbors += tile == TILE_MOUNTAIN_CAVE_FLOOR;
+            fortress_neighbors += tile == TILE_MOUNTAIN_FORTRESS_FLOOR;
+            bridge_neighbors += tile == TILE_MOUNTAIN_BRIDGE;
+        }
+    }
+    if (g->location == LOCATION_FOREST) {
+        draw_forest_floor(r, screen_x, screen_y);
+    } else if (g->location == LOCATION_COAST) {
+        draw_coast_floor(r, screen_x, screen_y);
+    } else if (g->location == LOCATION_MOUNTAINS &&
+        cave_neighbors >= fortress_neighbors &&
+        cave_neighbors >= bridge_neighbors && cave_neighbors > 0) {
+        draw_mountain_cave_floor(r, screen_x, screen_y);
+    } else if (g->location == LOCATION_MOUNTAINS &&
+        fortress_neighbors >= bridge_neighbors && fortress_neighbors > 0) {
+        draw_mountain_fortress_floor(r, screen_x, screen_y);
+    } else if (g->location == LOCATION_MOUNTAINS && bridge_neighbors > 0) {
+        draw_mountain_bridge(r, screen_x, screen_y);
+    } else if (g->location == LOCATION_MOUNTAINS) {
+        draw_mountain_floor(r, screen_x, screen_y);
+    } else {
+        draw_floor(r, screen_x, screen_y);
+    }
+}
+
 void game_draw(Renderer *r, GameState *g, Viewport *v) {
     // Draw map tiles
     for (int y = 0; y < MAP_H; y++) {
@@ -415,18 +450,20 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_ITEM:
                     draw_floor_item_with_underlay(r, g, x, y, sx, sy); break;
                 case TILE_TRAP_HIDDEN:
-                    if (g->location == LOCATION_FOREST)
-                        draw_forest_floor(r, sx, sy);
-                    else if (g->location == LOCATION_MOUNTAINS)
-                        draw_mountain_floor(r, sx, sy);
-                    else if (g->location == LOCATION_COAST)
-                        draw_coast_floor(r, sx, sy);
-                    else
-                        draw_floor(r, sx, sy);
+                    draw_trap_underlay(r, g, x, y, sx, sy);
                     break;
-                case TILE_TRAP_SPIKE: draw_trap_spike(r, sx, sy); break;
-                case TILE_TRAP_FIRE: draw_trap_fire(r, sx, sy); break;
-                case TILE_TRAP_POISON: draw_trap_poison(r, sx, sy); break;
+                case TILE_TRAP_SPIKE:
+                    draw_trap_underlay(r, g, x, y, sx, sy);
+                    draw_trap_spike(r, sx, sy);
+                    break;
+                case TILE_TRAP_FIRE:
+                    draw_trap_underlay(r, g, x, y, sx, sy);
+                    draw_trap_fire(r, sx, sy);
+                    break;
+                case TILE_TRAP_POISON:
+                    draw_trap_underlay(r, g, x, y, sx, sy);
+                    draw_trap_poison(r, sx, sy);
+                    break;
                 default: draw_floor(r, sx, sy); break;
             }
         }

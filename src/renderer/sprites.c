@@ -1556,12 +1556,10 @@ void draw_floor_gold(Renderer *r, int tile_x, int tile_y) {
 void draw_trap_spike(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color floor = {18, 18, 35, 255};
     SDL_Color rim = {64, 62, 82, 255};
     SDL_Color recess = {28, 27, 42, 255};
     SDL_Color steel = {152, 158, 170, 255};
     SDL_Color shine = {214, 218, 220, 255};
-    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, floor);
     fill_rect(r, x+3, y+4, 18, 17, rim);
     fill_rect(r, x+5, y+6, 14, 13, recess);
     fill_rect(r, x+4, y+19, 16, 2, (SDL_Color){38, 36, 54, 255});
@@ -1580,13 +1578,11 @@ void draw_trap_spike(Renderer *r, int tile_x, int tile_y) {
 void draw_trap_fire(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color floor = {18, 18, 35, 255};
     SDL_Color iron = {58, 54, 66, 255};
     SDL_Color soot = {34, 25, 30, 255};
     SDL_Color red = {174, 42, 20, 255};
     SDL_Color orange = {244, 98, 20, 255};
     SDL_Color yellow = {255, 204, 62, 255};
-    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, floor);
     fill_rect(r, x+3, y+15, 18, 6, iron);
     fill_rect(r, x+5, y+17, 14, 3, soot);
     fill_rect(r, x+5, y+14, 14, 2, (SDL_Color){92, 76, 70, 255});
@@ -1603,12 +1599,10 @@ void draw_trap_fire(Renderer *r, int tile_x, int tile_y) {
 void draw_trap_poison(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color floor = {18, 18, 35, 255};
     SDL_Color rim = {54, 62, 70, 255};
     SDL_Color recess = {24, 34, 34, 255};
     SDL_Color toxic = {54, 174, 70, 255};
     SDL_Color glow = {122, 236, 92, 255};
-    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, floor);
     fill_rect(r, x+3, y+4, 18, 17, rim);
     fill_rect(r, x+5, y+6, 14, 13, recess);
     fill_rect(r, x+6, y+7, 3, 3, toxic);
