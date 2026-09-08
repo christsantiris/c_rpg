@@ -3,7 +3,7 @@
 
 #include "../game/item.h"
 
-#define MAX_SHOP_ITEMS 17
+#define MAX_SHOP_ITEMS 18
 
 typedef enum {
     SHOP_NONE = 0,

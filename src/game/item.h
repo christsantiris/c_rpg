@@ -58,7 +58,8 @@ typedef enum {
     ITEM_VISUAL_MAGIC_STAFF,
     ITEM_VISUAL_MAGIC_LONG_SWORD,
     ITEM_VISUAL_MAGIC_DAGGER,
-    ITEM_VISUAL_MAGIC_BATTLE_AXE
+    ITEM_VISUAL_MAGIC_BATTLE_AXE,
+    ITEM_VISUAL_RUNED_STAFF
 } ItemVisualId;
 
 typedef struct {
@@ -109,6 +110,7 @@ Item item_make_magic_long_sword(void);
 Item item_make_battle_axe(void);
 Item item_make_magic_battle_axe(void);
 Item item_make_staff(void);
+Item item_make_runed_staff(void);
 Item item_make_magic_staff(void);
 Item item_make_bow(void);
 Item item_make_longbow(void);

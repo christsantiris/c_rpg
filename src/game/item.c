@@ -133,6 +133,19 @@ Item item_make_staff(void) {
     return it;
 }
 
+Item item_make_runed_staff(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_WEAPON;
+    strncpy(it.name, "Runed Staff", sizeof(it.name) - 1);
+    it.attack_bonus = 6;
+    it.value = 300;
+    it.spell_power_bonus = 4;
+    set_weapon_metadata(&it, WEAPON_FAMILY_STAFF, WEAPON_HANDS_TWO,
+        ITEM_RARITY_UNCOMMON, ITEM_CLASS_MAGE, ITEM_VISUAL_RUNED_STAFF);
+    return it;
+}
+
 Item item_make_magic_staff(void) {
     Item it = {0};
     it.active = 1;
@@ -264,6 +277,8 @@ void item_apply_legacy_metadata(Item *item) {
         definition = item_make_magic_battle_axe();
     } else if (strcmp(item->name, "Staff") == 0) {
         definition = item_make_staff();
+    } else if (strcmp(item->name, "Runed Staff") == 0) {
+        definition = item_make_runed_staff();
     } else if (strcmp(item->name, "Magic Staff") == 0) {
         definition = item_make_magic_staff();
     } else if (strcmp(item->name, "Bow") == 0) {
