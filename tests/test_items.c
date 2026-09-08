@@ -3,6 +3,7 @@
 #include "../src/game/actions.h"
 #include "../src/game/item.h"
 #include "../src/screens/shop.h"
+#include <stdlib.h>
 #include <string.h>
 
 static int shop_has_item(const ShopScreen *shop, const char *name) {
@@ -233,6 +234,50 @@ void test_items(void) {
     Item armor = item_make_leather_armor();
     ASSERT("armor type correct",            armor.type          == ITEM_ARMOR);
     ASSERT("armor defense bonus set",       armor.defense_bonus == 2);
+
+    // --- Class-agnostic weapon drops ---
+    srand(7);
+    int early_common_only = 1;
+    int early_classes = 0;
+    for (int i = 0; i < 500; i++) {
+        Item drop = random_weapon(2);
+        early_common_only &= drop.rarity == ITEM_RARITY_COMMON;
+        early_classes |= drop.class_mask;
+    }
+    ASSERT("early weapon drops contain only common equipment",
+        early_common_only);
+    ASSERT("early weapon drops are not filtered to one class",
+        early_classes == ITEM_CLASS_ALL);
+
+    int mid_has_uncommon = 0;
+    int mid_has_rare = 0;
+    for (int i = 0; i < 500; i++) {
+        Item drop = random_weapon(5);
+        mid_has_uncommon |= drop.rarity == ITEM_RARITY_UNCOMMON;
+        mid_has_rare |= drop.rarity == ITEM_RARITY_RARE;
+    }
+    ASSERT("middle stages introduce uncommon weapon drops",
+        mid_has_uncommon && !mid_has_rare);
+
+    int deep_classes = 0;
+    int deep_has_specialist_magic = 0;
+    int deep_has_capstone_magic = 0;
+    for (int i = 0; i < 1000; i++) {
+        Item drop = random_weapon(8);
+        deep_classes |= drop.class_mask;
+        deep_has_specialist_magic |=
+            strcmp(drop.name, "Magic Long Sword") == 0 ||
+            strcmp(drop.name, "Magic Battle Axe") == 0 ||
+            strcmp(drop.name, "Magic Dagger") == 0;
+        deep_has_capstone_magic |=
+            strcmp(drop.name, "Magic Greatsword") == 0 ||
+            strcmp(drop.name, "Magic Staff") == 0 ||
+            strcmp(drop.name, "Magic Longbow") == 0;
+    }
+    ASSERT("deep drops include specialist and capstone magic weapons",
+        deep_has_specialist_magic && deep_has_capstone_magic);
+    ASSERT("deep weapon drops remain class agnostic",
+        deep_classes == ITEM_CLASS_ALL);
 
     // --- Use health potion ---
     GameState g = {0};

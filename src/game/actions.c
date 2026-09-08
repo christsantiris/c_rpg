@@ -33,23 +33,84 @@ void push_message(GameState *g, const char *msg) {
     }
 }
 
-static Item random_weapon(int level) {
-    if (level <= 3) {
-        int r = rand() % 2;
-        if (r == 0) return item_make_rusty_sword();
-        return item_make_short_sword();
-    } else if (level <= 6) {
-        int r = rand() % 3;
-        if (r == 0) return item_make_short_sword();
-        if (r == 1) return item_make_long_sword();
-        return item_make_bow();
-    } else {
-        int r = rand() % 4;
-        if (r == 0) return item_make_long_sword();
-        if (r == 1) return item_make_battle_axe();
-        if (r == 2) return item_make_bow();
-        return item_make_staff();
+static Item random_common_weapon(void) {
+    switch (rand() % 5) {
+        case 0:
+            return item_make_rusty_sword();
+        case 1:
+            return item_make_short_sword();
+        case 2:
+            return item_make_staff();
+        case 3:
+            return item_make_bow();
+        default:
+            return item_make_dagger();
     }
+}
+
+static Item random_uncommon_weapon(void) {
+    switch (rand() % 4) {
+        case 0:
+            return item_make_long_sword();
+        case 1:
+            return item_make_battle_axe();
+        case 2:
+            return item_make_greatsword();
+        default:
+            return item_make_longbow();
+    }
+}
+
+static Item random_specialist_magic_weapon(void) {
+    switch (rand() % 3) {
+        case 0:
+            return item_make_magic_long_sword();
+        case 1:
+            return item_make_magic_battle_axe();
+        default:
+            return item_make_magic_dagger();
+    }
+}
+
+static Item random_capstone_magic_weapon(void) {
+    switch (rand() % 3) {
+        case 0:
+            return item_make_magic_greatsword();
+        case 1:
+            return item_make_magic_staff();
+        default:
+            return item_make_magic_longbow();
+    }
+}
+
+Item random_weapon(int level) {
+    if (level <= 2) {
+        return random_common_weapon();
+    }
+
+    int roll = rand() % 100;
+    if (level <= 5) {
+        if (roll < 70) {
+            return random_common_weapon();
+        }
+        return random_uncommon_weapon();
+    }
+    if (level <= 7) {
+        if (roll < 55) {
+            return random_uncommon_weapon();
+        }
+        if (roll < 90) {
+            return random_specialist_magic_weapon();
+        }
+        return random_capstone_magic_weapon();
+    }
+    if (roll < 35) {
+        return random_uncommon_weapon();
+    }
+    if (roll < 75) {
+        return random_specialist_magic_weapon();
+    }
+    return random_capstone_magic_weapon();
 }
 
 static int enemy_score(EnemyType type) {
