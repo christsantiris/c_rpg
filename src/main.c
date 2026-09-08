@@ -470,6 +470,10 @@ int main(int argc, char **argv) {
                             Action a = {ACTION_EQUIP_ITEM,
                                 inventory_screen.selected, 0};
                             action_resolve_player(&game, a);
+                        } else if (result == INVENTORY_EQUIP_OFF_HAND) {
+                            Action a = {ACTION_EQUIP_OFF_HAND,
+                                inventory_screen.selected, 0};
+                            action_resolve_player(&game, a);
                         } else if (result == INVENTORY_DROP) {
                             Action a = {ACTION_DROP_ITEM,
                                 inventory_screen.selected, 0};
