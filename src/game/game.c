@@ -628,6 +628,38 @@ void game_repair_equipment_indices(GameState *g) {
     }
 }
 
+void game_remove_inventory_item(GameState *g, int index) {
+    if (index < 0 || index >= g->inventory_count) {
+        return;
+    }
+    Item *item = &g->inventory[index];
+    if (g->equipped_main_hand == index) {
+        g->player.attack -= item->attack_bonus;
+        g->equipped_main_hand = -1;
+    }
+    if (g->equipped_off_hand == index) {
+        g->player.attack -= item->attack_bonus;
+        g->equipped_off_hand = -1;
+    }
+    if (g->equipped_armor == index) {
+        game_remove_armor_bonuses(g, item);
+        g->equipped_armor = -1;
+    }
+    for (int i = index; i < g->inventory_count - 1; i++) {
+        g->inventory[i] = g->inventory[i + 1];
+    }
+    g->inventory_count--;
+    if (g->equipped_main_hand > index) {
+        g->equipped_main_hand--;
+    }
+    if (g->equipped_off_hand > index) {
+        g->equipped_off_hand--;
+    }
+    if (g->equipped_armor > index) {
+        g->equipped_armor--;
+    }
+}
+
 void game_apply_armor_bonuses(GameState *g, const Item *armor) {
     g->player.defense += armor->defense_bonus;
     g->player.max_hp += armor->max_hp_bonus;

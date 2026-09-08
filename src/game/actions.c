@@ -487,20 +487,7 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
-        // Remove item from inventory
-        for (int i = idx; i < g->inventory_count - 1; i++) {
-            g->inventory[i] = g->inventory[i + 1];
-        }
-        g->inventory_count--;
-        if (g->equipped_main_hand > idx) {
-            g->equipped_main_hand--;
-        }
-        if (g->equipped_off_hand > idx) {
-            g->equipped_off_hand--;
-        }
-        if (g->equipped_armor > idx) {
-            g->equipped_armor--;
-        }
+        game_remove_inventory_item(g, idx);
         return;
     }
 
@@ -562,30 +549,7 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
-        Item *item = &g->inventory[idx];
-
-        // Unequip if equipped
-        if (g->equipped_main_hand == idx) {
-            g->player.attack   -= item->attack_bonus;
-            g->equipped_main_hand = -1;
-        } else if (g->equipped_off_hand == idx) {
-            g->player.attack -= item->attack_bonus;
-            g->equipped_off_hand = -1;
-        } else if (g->equipped_armor == idx) {
-            game_remove_armor_bonuses(g, item);
-            g->equipped_armor   = -1;
-        }
-
-        // Adjust equipped indices if needed
-        if (g->equipped_main_hand > idx) {
-            g->equipped_main_hand--;
-        }
-        if (g->equipped_off_hand > idx) {
-            g->equipped_off_hand--;
-        }
-        if (g->equipped_armor > idx) {
-            g->equipped_armor--;
-        }
+        Item item = g->inventory[idx];
 
         // Place on floor
         FloorItem fi = {0};
@@ -593,14 +557,11 @@ void action_resolve_player(GameState *g, Action a) {
         fi.x      = g->player.x;
         fi.y      = g->player.y;
         fi.underlying_tile = g->map.tiles[fi.y][fi.x];
-        fi.item   = *item;
+        fi.item   = item;
         g->map.tiles[fi.y][fi.x] = TILE_ITEM;
         g->floor_items[g->floor_item_count++] = fi;
 
-        // Remove from inventory
-        for (int i = idx; i < g->inventory_count - 1; i++)
-            g->inventory[i] = g->inventory[i + 1];
-        g->inventory_count--;
+        game_remove_inventory_item(g, idx);
 
         char msg[MAX_MESSAGE_LEN];
         snprintf(msg, sizeof(msg), "Dropped %s", fi.item.name);
