@@ -464,7 +464,25 @@ void test_items(void) {
     ASSERT("switching back applies only the rusty sword bonus",
         g.player.attack == base_attack + 1);
 
+    g.player.player_class = CLASS_ROGUE;
+    game_init(&g);
+    int short_index = g.inventory_count;
+    g.inventory[g.inventory_count++] = item_make_short_sword();
+    int dagger_off_index = g.inventory_count;
+    g.inventory[g.inventory_count++] = item_make_dagger();
+    Action equip_short_main = {ACTION_EQUIP_ITEM, short_index, 0};
+    action_resolve_player(&g, equip_short_main);
+    g.equipped_off_hand = dagger_off_index;
+    g.player.attack += g.inventory[dagger_off_index].attack_bonus;
+    Action equip_two_handed_bow = {ACTION_EQUIP_ITEM, 0, 0};
+    action_resolve_player(&g, equip_two_handed_bow);
+    ASSERT("two-handed weapon clears the off-hand slot",
+        g.equipped_main_hand == 0 && g.equipped_off_hand == -1);
+    ASSERT("clearing off-hand removes its attack bonus",
+        g.player.attack == 10 + bow.attack_bonus);
+
     // --- Equip armor ---
+    g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
     Item warrior_armor = item_make_chain_mail();
     g.inventory[0] = warrior_armor;
