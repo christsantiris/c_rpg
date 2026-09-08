@@ -262,7 +262,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 38);
+    cJSON_AddNumberToObject(root, "save_version", 39);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -1328,6 +1328,43 @@ int load_game(GameState *g, int slot) {
             int new_attack_bonus =
                 g->inventory[g->equipped_main_hand].attack_bonus;
             g->player.attack += new_attack_bonus - old_attack_bonus;
+        }
+    }
+
+    // Version 39 introduces class-specific armor traits and rebalances the
+    // existing Leather Armor and Chain Mail definitions.
+    if (save_version < 39) {
+        int old_defense_bonus = 0;
+        int old_hp_bonus = 0;
+        int old_mp_bonus = 0;
+        if (g->equipped_armor >= 0 &&
+            g->equipped_armor < g->inventory_count) {
+            Item *old_armor = &g->inventory[g->equipped_armor];
+            old_defense_bonus = old_armor->defense_bonus;
+            old_hp_bonus = old_armor->max_hp_bonus;
+            old_mp_bonus = old_armor->max_mp_bonus;
+        }
+        for (int i = 0; i < g->inventory_count; i++) {
+            if (g->inventory[i].type == ITEM_ARMOR) {
+                item_apply_legacy_armor_metadata(&g->inventory[i]);
+            }
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            if (g->floor_items[i].item.type == ITEM_ARMOR) {
+                item_apply_legacy_armor_metadata(&g->floor_items[i].item);
+            }
+        }
+        if (g->equipped_armor >= 0 &&
+            g->equipped_armor < g->inventory_count) {
+            Item *new_armor = &g->inventory[g->equipped_armor];
+            g->player.defense +=
+                new_armor->defense_bonus - old_defense_bonus;
+            int hp_difference = new_armor->max_hp_bonus - old_hp_bonus;
+            int mp_difference = new_armor->max_mp_bonus - old_mp_bonus;
+            g->player.max_hp += hp_difference;
+            g->player.hp += hp_difference;
+            g->player.max_mp += mp_difference;
+            g->player.mp += mp_difference;
         }
     }
 

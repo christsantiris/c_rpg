@@ -324,6 +324,38 @@ void item_apply_legacy_metadata(Item *item) {
         definition.armor_penetration_percent;
 }
 
+void item_apply_legacy_armor_metadata(Item *item) {
+    Item definition = {0};
+    if (strcmp(item->name, "Leather Armor") == 0) {
+        definition = item_make_leather_armor();
+    } else if (strcmp(item->name, "Chain Mail") == 0) {
+        definition = item_make_chain_mail();
+    } else if (strcmp(item->name, "Scale Mail") == 0) {
+        definition = item_make_scale_mail();
+    } else if (strcmp(item->name, "Plate Armor") == 0) {
+        definition = item_make_plate_armor();
+    } else if (strcmp(item->name, "Magic Plate") == 0) {
+        definition = item_make_magic_plate();
+    } else if (strcmp(item->name, "Studded Leather") == 0) {
+        definition = item_make_studded_leather();
+    } else if (strcmp(item->name, "Ranger Cloak") == 0) {
+        definition = item_make_ranger_cloak();
+    } else if (strcmp(item->name, "Shadow Armor") == 0) {
+        definition = item_make_shadow_armor();
+    } else if (strcmp(item->name, "Apprentice Robes") == 0) {
+        definition = item_make_apprentice_robes();
+    } else if (strcmp(item->name, "Runed Robes") == 0) {
+        definition = item_make_runed_robes();
+    } else if (strcmp(item->name, "Enchanter Robes") == 0) {
+        definition = item_make_enchanter_robes();
+    } else if (strcmp(item->name, "Archmage Robes") == 0) {
+        definition = item_make_archmage_robes();
+    } else {
+        return;
+    }
+    *item = definition;
+}
+
 int item_class_allowed(const Item *item, int player_class) {
     if (item->class_mask == 0 || item->class_mask == ITEM_CLASS_ALL) {
         return 1;
