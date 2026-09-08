@@ -29,6 +29,13 @@ typedef enum {
 } WeaponHands;
 
 typedef enum {
+    ARMOR_FAMILY_NONE = 0,
+    ARMOR_FAMILY_HEAVY,
+    ARMOR_FAMILY_LIGHT,
+    ARMOR_FAMILY_ROBE
+} ArmorFamily;
+
+typedef enum {
     ITEM_RARITY_COMMON = 0,
     ITEM_RARITY_UNCOMMON,
     ITEM_RARITY_RARE
@@ -84,6 +91,11 @@ typedef struct {
     int pierces_targets;
     int spell_power_bonus;
     int armor_penetration_percent;
+    ArmorFamily armor_family;
+    int max_hp_bonus;
+    int max_mp_bonus;
+    int evasion_chance;
+    int spell_cost_reduction_percent;
 } Item;
 
 typedef struct {
