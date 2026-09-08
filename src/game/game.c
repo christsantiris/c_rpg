@@ -628,6 +628,26 @@ void game_repair_equipment_indices(GameState *g) {
     }
 }
 
+void game_apply_armor_bonuses(GameState *g, const Item *armor) {
+    g->player.defense += armor->defense_bonus;
+    g->player.max_hp += armor->max_hp_bonus;
+    g->player.hp += armor->max_hp_bonus;
+    g->player.max_mp += armor->max_mp_bonus;
+    g->player.mp += armor->max_mp_bonus;
+}
+
+void game_remove_armor_bonuses(GameState *g, const Item *armor) {
+    g->player.defense -= armor->defense_bonus;
+    g->player.max_hp -= armor->max_hp_bonus;
+    if (g->player.hp > g->player.max_hp) {
+        g->player.hp = g->player.max_hp;
+    }
+    g->player.max_mp -= armor->max_mp_bonus;
+    if (g->player.mp > g->player.max_mp) {
+        g->player.mp = g->player.max_mp;
+    }
+}
+
 static LevelCache *active_cache(GameState *g) {
     if (g->location == LOCATION_FOREST) {
         return g->forest_cache;

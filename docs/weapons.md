@@ -101,20 +101,32 @@ selling an equipped weapon also removes its bonus.
 
 ## Acquiring Weapons
 
-Every weapon is available from the town Blacksmith. Weapons can also appear as
-enemy or boss drops.
+The Blacksmith is the primary source of weapons and armor. Regular enemies do
+not drop equipment; their item rolls contain only health potions, mana potions,
+and spell scrolls. Existing gold-drop chances and amounts are unchanged.
 
-Random weapon pools change with dungeon depth:
+Blacksmith inventory expands according to the number of regional bosses the
+player has defeated:
 
-| Floors | Random weapon pool |
+| Bosses defeated | Blacksmith stock |
+| ---: | --- |
+| 0 | Basic weapons and armor |
+| 1 | Uncommon weapons and armor |
+| 2 | Rare equipment and the Magic Greatsword, Magic Staff, and Magic Longbow |
+| 3-4 | Capstone armor |
+
+Each regional boss instead guarantees one fixed thematic equipment reward:
+
+| Boss | Reward |
 | --- | --- |
-| 1-3 | Rusty Sword, Short Sword |
-| 4-5 | Short Sword, Long Sword, Bow |
+| Lich King | Cryptblade |
+| Forest Necromancer | Necromancer's Cloak |
+| Goblin King | Goblin King's Greatsword |
+| Drowned Queen | Tidecaller Robes |
 
-Normal enemies have a 5% chance to drop an item. Only some results from that
-item table become weapons. The final-floor Lich King guarantees an equipment
-drop when floor-item capacity is available, with an equal choice between a
-random weapon and Chain Mail.
+Boss equipment is valuable but remains below the class capstone weapons. A
+hero who cannot equip a boss reward can sell it to fund a Blacksmith purchase.
+Treasure rooms and chests are planned as a later source of exploration rewards.
 
 ## Current Behavior Notes
 
@@ -123,7 +135,7 @@ random weapon and Chain Mail.
 - Weapons do not have durability requirements.
 - The Bow has unlimited ammunition; its balance comes from lower damage,
   limited range, minimum distance, and the adjacent-enemy firing restriction.
-- Weapon eligibility is not restricted by class. Any class can equip any
-  weapon it obtains.
+- Weapon eligibility is class-restricted. Equipment for another class can be
+  retained and sold at the Blacksmith.
 - Weapon attack bonuses affect the shared player attack statistic and continue
   to scale alongside attack gained from character levels.

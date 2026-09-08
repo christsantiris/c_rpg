@@ -123,12 +123,15 @@ progress persists across future regions.
 
 ## Loot Progression
 
-Non-boss enemies have a 25% gold-drop chance and a separate 5% item-drop
-chance:
+Non-boss enemies retain their existing 25% gold-drop chance and separate 5%
+item-drop chance. Item drops contain only health potions, mana potions, and
+spell scrolls; regular enemies never drop weapons or armor. Deeper stages shift
+the scroll mix toward Heal and Fireball.
 
-- Floors 1-3 emphasize potions and basic scrolls.
-- Floors 4-8 introduce weapons, Leather Armor, healing, and rare Fireballs.
-- The weapon pool expands to Short Swords, Long Swords, and Bows on floors 4-8.
+Regional bosses guarantee fixed thematic equipment rewards. Boss victories
+also expand the Blacksmith's inventory. Uncommon stock unlocks after one boss,
+the strongest class weapons unlock after two bosses, and capstone armor unlocks
+after three bosses. Quest and enemy gold rewards are unchanged.
 
 ## Current Curve Summary
 
