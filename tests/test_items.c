@@ -262,6 +262,8 @@ void test_items(void) {
     Item armor = item_make_leather_armor();
     ASSERT("armor type correct",            armor.type          == ITEM_ARMOR);
     ASSERT("armor defense bonus set",       armor.defense_bonus == 2);
+    ASSERT("basic Leather Armor is usable by every class",
+        armor.class_mask == ITEM_CLASS_ALL);
     Item armor_catalog[12] = {
         item_make_chain_mail(), item_make_scale_mail(),
         item_make_plate_armor(), item_make_magic_plate(),

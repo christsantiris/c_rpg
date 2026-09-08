@@ -275,7 +275,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 41);
+    cJSON_AddNumberToObject(root, "save_version", 42);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -1392,6 +1392,20 @@ int load_game(GameState *g, int slot) {
     // could contain a stale value there, but never applied an off-hand bonus.
     if (save_version < 40) {
         g->equipped_off_hand = -1;
+    }
+
+    // Version 42 makes entry-level Leather Armor usable by every class.
+    if (save_version < 42) {
+        for (int i = 0; i < g->inventory_count; i++) {
+            if (strcmp(g->inventory[i].name, "Leather Armor") == 0) {
+                g->inventory[i].class_mask = ITEM_CLASS_ALL;
+            }
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            if (strcmp(g->floor_items[i].item.name, "Leather Armor") == 0) {
+                g->floor_items[i].item.class_mask = ITEM_CLASS_ALL;
+            }
+        }
     }
 
     cJSON_Delete(root);
