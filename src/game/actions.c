@@ -33,144 +33,64 @@ void push_message(GameState *g, const char *msg) {
     }
 }
 
-static Item random_common_weapon(void) {
-    switch (rand() % 5) {
-        case 0:
-            return item_make_rusty_sword();
-        case 1:
-            return item_make_short_sword();
-        case 2:
-            return item_make_staff();
-        case 3:
-            return item_make_bow();
-        default:
-            return item_make_dagger();
-    }
-}
-
-static Item random_uncommon_weapon(void) {
-    switch (rand() % 5) {
-        case 0:
-            return item_make_long_sword();
-        case 1:
-            return item_make_battle_axe();
-        case 2:
-            return item_make_greatsword();
-        case 3:
-            return item_make_longbow();
-        default:
-            return item_make_runed_staff();
-    }
-}
-
-static Item random_specialist_magic_weapon(void) {
-    switch (rand() % 3) {
-        case 0:
-            return item_make_magic_long_sword();
-        case 1:
-            return item_make_magic_battle_axe();
-        default:
-            return item_make_magic_dagger();
-    }
-}
-
-static Item random_capstone_magic_weapon(void) {
-    switch (rand() % 3) {
-        case 0:
-            return item_make_magic_greatsword();
-        case 1:
-            return item_make_magic_staff();
-        default:
-            return item_make_magic_longbow();
-    }
-}
-
-Item random_weapon(int level) {
-    if (level <= 2) {
-        return random_common_weapon();
-    }
-
+Item random_enemy_item(int level) {
     int roll = rand() % 100;
-    if (level <= 5) {
-        if (roll < 70) {
-            return random_common_weapon();
+    if (level <= 3) {
+        if (roll < 40) {
+            return item_make_health_potion();
         }
-        return random_uncommon_weapon();
-    }
-    if (level <= 7) {
-        if (roll < 55) {
-            return random_uncommon_weapon();
+        if (roll < 70) {
+            return item_make_mana_potion();
         }
         if (roll < 90) {
-            return random_specialist_magic_weapon();
+            return item_make_scroll_magic_arrow();
         }
-        return random_capstone_magic_weapon();
+        return item_make_scroll_heal();
     }
-    if (roll < 35) {
-        return random_uncommon_weapon();
+    if (level <= 6) {
+        if (roll < 35) {
+            return item_make_health_potion();
+        }
+        if (roll < 65) {
+            return item_make_mana_potion();
+        }
+        if (roll < 82) {
+            return item_make_scroll_magic_arrow();
+        }
+        if (roll < 93) {
+            return item_make_scroll_heal();
+        }
+        return item_make_scroll_fireball();
     }
-    if (roll < 75) {
-        return random_specialist_magic_weapon();
+    if (roll < 30) {
+        return item_make_health_potion();
     }
-    return random_capstone_magic_weapon();
+    if (roll < 55) {
+        return item_make_mana_potion();
+    }
+    if (roll < 63) {
+        return item_make_scroll_magic_arrow();
+    }
+    if (roll < 82) {
+        return item_make_scroll_heal();
+    }
+    return item_make_scroll_fireball();
 }
 
-static Item random_armor_tier(int tier) {
-    int roll = rand() % 3;
-    if (tier == 1) {
-        if (roll == 0) {
-            return item_make_chain_mail();
-        }
-        if (roll == 1) {
-            return item_make_leather_armor();
-        }
-        return item_make_apprentice_robes();
+Item boss_equipment_reward(EnemyType type) {
+    switch (type) {
+        case ENEMY_LICH_KING:
+            return item_make_cryptblade();
+        case ENEMY_FOREST_NECROMANCER:
+            return item_make_necromancer_cloak();
+        case ENEMY_MOUNTAIN_GOBLIN_KING:
+        case ENEMY_GOBLIN_KING:
+            return item_make_goblin_king_greatsword();
+        case ENEMY_DROWNED_QUEEN:
+            return item_make_tidecaller_robes();
+        default:
+            return item_make_cryptblade();
     }
-    if (tier == 2) {
-        if (roll == 0) {
-            return item_make_scale_mail();
-        }
-        if (roll == 1) {
-            return item_make_studded_leather();
-        }
-        return item_make_runed_robes();
-    }
-    if (tier == 3) {
-        if (roll == 0) {
-            return item_make_plate_armor();
-        }
-        if (roll == 1) {
-            return item_make_ranger_cloak();
-        }
-        return item_make_enchanter_robes();
-    }
-    if (roll == 0) {
-        return item_make_magic_plate();
-    }
-    if (roll == 1) {
-        return item_make_shadow_armor();
-    }
-    return item_make_archmage_robes();
-}
-
-Item random_armor(int level) {
-    if (level <= 2) {
-        return random_armor_tier(1);
-    }
-    int roll = rand() % 100;
-    if (level <= 5) {
-        return random_armor_tier(roll < 70 ? 1 : 2);
-    }
-    if (level <= 7) {
-        return random_armor_tier(roll < 55 ? 2 : 3);
-    }
-    if (roll < 40) {
-        return random_armor_tier(2);
-    }
-    if (roll < 75) {
-        return random_armor_tier(3);
-    }
-    return random_armor_tier(4);
 }
 
 static int enemy_score(EnemyType type) {
@@ -262,8 +182,8 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type, int is_boss) {
         case ENEMY_TARRASQUE:  break;
     }
     
-    // Frequent coin drops make returning to town and shopping part of the
-    // normal adventure loop instead of a rare windfall.
+    // Preserve the existing coin chance and values alongside the new loot
+    // table; quest rewards remain the larger source of purchasing power.
     if (is_boss || rand() % 100 < 25) {
         g->gold += gold;
         g->score += gold;
@@ -272,15 +192,23 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type, int is_boss) {
         push_message(g, msg);
     }
 
-    // Boss guaranteed drop
+    // Each boss leaves a fixed regional reward instead of rolling ordinary
+    // equipment, so capstone weapons remain Blacksmith progression.
     if (is_boss) {
+        if (g->floor_item_count >= MAX_FLOOR_ITEMS) {
+            FloorItem *discarded = &g->floor_items[MAX_FLOOR_ITEMS - 1];
+            if (g->map.tiles[discarded->y][discarded->x] == TILE_ITEM) {
+                g->map.tiles[discarded->y][discarded->x] =
+                    discarded->underlying_tile;
+            }
+            g->floor_item_count--;
+        }
         if (g->floor_item_count < MAX_FLOOR_ITEMS) {
-            Item boss_drop = rand() % 2 == 0
-                ? random_weapon(g->level)
-                : random_armor(g->level);
+            Item boss_drop = boss_equipment_reward(type);
             FloorItem fi = {0};
             fi.active = 1;
-            fi.x = x; fi.y = y;
+            fi.x = x;
+            fi.y = y;
             fi.underlying_tile = g->map.tiles[y][x];
             fi.item = boss_drop;
             g->map.tiles[y][x] = TILE_ITEM;
@@ -293,45 +221,21 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type, int is_boss) {
     }
 
     // Item drop — 5% chance
-    if (rand() % 100 >= 5) return;
-    if (g->floor_item_count >= MAX_FLOOR_ITEMS) return;
-
-    Item item;
-    int roll = rand() % 100;
-    int level = g->level;
-
-    if (level <= 3) {
-        // Early levels: potions and magic arrow scrolls
-        if (roll < 40)      item = item_make_health_potion();
-        else if (roll < 70) item = item_make_mana_potion();
-        else if (roll < 90) item = item_make_scroll_magic_arrow();
-        else                item = item_make_scroll_heal();
-    } else if (level <= 6) {
-        // Mid levels: weapons, armor, heal scrolls
-        if (roll < 25)      item = item_make_health_potion();
-        else if (roll < 45) item = item_make_mana_potion();
-        else if (roll < 60) item = random_weapon(level);
-        else if (roll < 75) item = random_armor(level);
-        else if (roll < 88) item = item_make_scroll_magic_arrow();
-        else if (roll < 95) item = item_make_scroll_heal();
-        else                item = item_make_scroll_fireball();
-    } else {
-        // Deep levels: better drops, fireball scrolls
-        if (roll < 20)      item = item_make_health_potion();
-        else if (roll < 35) item = item_make_mana_potion();
-        else if (roll < 60) item = random_weapon(level);
-        else if (roll < 70) item = random_armor(level);
-        else if (roll < 75) item = item_make_scroll_magic_arrow();
-        else if (roll < 88) item = item_make_scroll_heal();
-        else                item = item_make_scroll_fireball();
+    if (rand() % 100 >= 5) {
+        return;
     }
+    if (g->floor_item_count >= MAX_FLOOR_ITEMS) {
+        return;
+    }
+
+    Item item = random_enemy_item(g->level);
 
     FloorItem fi = {0};
     fi.active = 1;
-    fi.x      = x;
-    fi.y      = y;
+    fi.x = x;
+    fi.y = y;
     fi.underlying_tile = g->map.tiles[y][x];
-    fi.item   = item;
+    fi.item = item;
     g->floor_items[g->floor_item_count++] = fi;
 
     g->map.tiles[y][x] = TILE_ITEM;
