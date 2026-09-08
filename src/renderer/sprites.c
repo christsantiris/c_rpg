@@ -353,6 +353,38 @@ static void draw_equipped_player_weapon(Renderer *r, const Item *weapon, int x, 
     }
 }
 
+static void draw_equipped_player_shield(Renderer *r, const Item *shield, int x, int y, int dx, int dy) {
+    if (!shield || shield->type != ITEM_SHIELD) {
+        return;
+    }
+    if (dx == 0 && dy == 0) {
+        dy = -1;
+    }
+    int px = -dy;
+    int py = dx;
+    int bx = x + TILE_SIZE / 2 - px * 7;
+    int by = y + TILE_SIZE / 2 + 1 - py * 7;
+    SDL_Color rim = {181, 188, 194, 255};
+    SDL_Color face = {83, 91, 104, 255};
+    SDL_Color mark = {199, 151, 48, 255};
+    if (shield->visual_id == ITEM_VISUAL_BUCKLER) {
+        face = (SDL_Color){126, 83, 45, 255};
+    } else if (shield->visual_id == ITEM_VISUAL_KITE_SHIELD) {
+        face = (SDL_Color){57, 82, 143, 255};
+    } else if (shield->visual_id == ITEM_VISUAL_TOWER_SHIELD) {
+        face = (SDL_Color){119, 124, 130, 255};
+        mark = (SDL_Color){190, 61, 47, 255};
+    } else if (shield->visual_id == ITEM_VISUAL_MAGIC_SHIELD) {
+        rim = (SDL_Color){88, 230, 247, 255};
+        face = (SDL_Color){79, 65, 153, 255};
+        mark = (SDL_Color){221, 250, 255, 255};
+    }
+    fill_rect(r, bx - 5, by - 6, 10, 12, rim);
+    fill_rect(r, bx - 3, by - 4, 6, 9, face);
+    fill_rect(r, bx - 1, by - 4, 2, 8, mark);
+    fill_rect(r, bx - 3, by - 1, 6, 2, mark);
+}
+
 void draw_player(Renderer *r, int tile_x, int tile_y, PlayerClass player_class, const Item *main_hand, const Item *off_hand, const Item *armor, int facing_dx, int facing_dy) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
@@ -433,7 +465,13 @@ void draw_player(Renderer *r, int tile_x, int tile_y, PlayerClass player_class, 
         fill_rect(r, x + 8, y + 16, 8, 2, rune);
     }
     draw_equipped_player_weapon(r, main_hand, x, y, facing_dx, facing_dy, 1);
-    draw_equipped_player_weapon(r, off_hand, x, y, facing_dx, facing_dy, -1);
+    if (off_hand && off_hand->type == ITEM_SHIELD) {
+        draw_equipped_player_shield(r, off_hand, x, y, facing_dx,
+            facing_dy);
+    } else {
+        draw_equipped_player_weapon(r, off_hand, x, y, facing_dx,
+            facing_dy, -1);
+    }
 }
 
 void draw_stairs_up(Renderer *r, int tile_x, int tile_y) {
