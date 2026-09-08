@@ -204,6 +204,12 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
     cJSON *spell_power = cJSON_GetObjectItem(obj, "spell_power_bonus");
     cJSON *armor_penetration = cJSON_GetObjectItem(obj,
         "armor_penetration_percent");
+    cJSON *armor_family = cJSON_GetObjectItem(obj, "armor_family");
+    cJSON *max_hp_bonus = cJSON_GetObjectItem(obj, "max_hp_bonus");
+    cJSON *max_mp_bonus = cJSON_GetObjectItem(obj, "max_mp_bonus");
+    cJSON *evasion = cJSON_GetObjectItem(obj, "evasion_chance");
+    cJSON *spell_cost_reduction = cJSON_GetObjectItem(obj,
+        "spell_cost_reduction_percent");
     if (!family && item->type == ITEM_WEAPON) {
         item_apply_legacy_metadata(item);
         cJSON *legacy_two_handed = cJSON_GetObjectItem(obj,
@@ -244,12 +250,19 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
     item->spell_power_bonus = spell_power ? spell_power->valueint : 0;
     item->armor_penetration_percent = armor_penetration
         ? armor_penetration->valueint : 0;
+    item->armor_family = armor_family
+        ? armor_family->valueint : ARMOR_FAMILY_NONE;
+    item->max_hp_bonus = max_hp_bonus ? max_hp_bonus->valueint : 0;
+    item->max_mp_bonus = max_mp_bonus ? max_mp_bonus->valueint : 0;
+    item->evasion_chance = evasion ? evasion->valueint : 0;
+    item->spell_cost_reduction_percent = spell_cost_reduction
+        ? spell_cost_reduction->valueint : 0;
 }
 
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 38);
+    cJSON_AddNumberToObject(root, "save_version", 39);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -371,6 +384,12 @@ int save_game(const GameState *g, int slot) {
             item->spell_power_bonus);
         cJSON_AddNumberToObject(it, "armor_penetration_percent",
             item->armor_penetration_percent);
+        cJSON_AddNumberToObject(it, "armor_family", item->armor_family);
+        cJSON_AddNumberToObject(it, "max_hp_bonus", item->max_hp_bonus);
+        cJSON_AddNumberToObject(it, "max_mp_bonus", item->max_mp_bonus);
+        cJSON_AddNumberToObject(it, "evasion_chance", item->evasion_chance);
+        cJSON_AddNumberToObject(it, "spell_cost_reduction_percent",
+            item->spell_cost_reduction_percent);
         cJSON_AddItemToArray(inventory, it);
     }
     cJSON_AddItemToObject(root, "inventory", inventory);
@@ -413,6 +432,13 @@ int save_game(const GameState *g, int slot) {
             fi->item.spell_power_bonus);
         cJSON_AddNumberToObject(it, "armor_penetration_percent",
             fi->item.armor_penetration_percent);
+        cJSON_AddNumberToObject(it, "armor_family", fi->item.armor_family);
+        cJSON_AddNumberToObject(it, "max_hp_bonus", fi->item.max_hp_bonus);
+        cJSON_AddNumberToObject(it, "max_mp_bonus", fi->item.max_mp_bonus);
+        cJSON_AddNumberToObject(it, "evasion_chance",
+            fi->item.evasion_chance);
+        cJSON_AddNumberToObject(it, "spell_cost_reduction_percent",
+            fi->item.spell_cost_reduction_percent);
         cJSON_AddItemToObject(f, "item", it);
         cJSON_AddItemToArray(floor_items, f);
     }
@@ -1302,6 +1328,43 @@ int load_game(GameState *g, int slot) {
             int new_attack_bonus =
                 g->inventory[g->equipped_main_hand].attack_bonus;
             g->player.attack += new_attack_bonus - old_attack_bonus;
+        }
+    }
+
+    // Version 39 introduces class-specific armor traits and rebalances the
+    // existing Leather Armor and Chain Mail definitions.
+    if (save_version < 39) {
+        int old_defense_bonus = 0;
+        int old_hp_bonus = 0;
+        int old_mp_bonus = 0;
+        if (g->equipped_armor >= 0 &&
+            g->equipped_armor < g->inventory_count) {
+            Item *old_armor = &g->inventory[g->equipped_armor];
+            old_defense_bonus = old_armor->defense_bonus;
+            old_hp_bonus = old_armor->max_hp_bonus;
+            old_mp_bonus = old_armor->max_mp_bonus;
+        }
+        for (int i = 0; i < g->inventory_count; i++) {
+            if (g->inventory[i].type == ITEM_ARMOR) {
+                item_apply_legacy_armor_metadata(&g->inventory[i]);
+            }
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            if (g->floor_items[i].item.type == ITEM_ARMOR) {
+                item_apply_legacy_armor_metadata(&g->floor_items[i].item);
+            }
+        }
+        if (g->equipped_armor >= 0 &&
+            g->equipped_armor < g->inventory_count) {
+            Item *new_armor = &g->inventory[g->equipped_armor];
+            g->player.defense +=
+                new_armor->defense_bonus - old_defense_bonus;
+            int hp_difference = new_armor->max_hp_bonus - old_hp_bonus;
+            int mp_difference = new_armor->max_mp_bonus - old_mp_bonus;
+            g->player.max_hp += hp_difference;
+            g->player.hp += hp_difference;
+            g->player.max_mp += mp_difference;
+            g->player.mp += mp_difference;
         }
     }
 

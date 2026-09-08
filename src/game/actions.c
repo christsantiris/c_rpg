@@ -33,86 +33,64 @@ void push_message(GameState *g, const char *msg) {
     }
 }
 
-static Item random_common_weapon(void) {
-    switch (rand() % 5) {
-        case 0:
-            return item_make_rusty_sword();
-        case 1:
-            return item_make_short_sword();
-        case 2:
-            return item_make_staff();
-        case 3:
-            return item_make_bow();
-        default:
-            return item_make_dagger();
-    }
-}
-
-static Item random_uncommon_weapon(void) {
-    switch (rand() % 5) {
-        case 0:
-            return item_make_long_sword();
-        case 1:
-            return item_make_battle_axe();
-        case 2:
-            return item_make_greatsword();
-        case 3:
-            return item_make_longbow();
-        default:
-            return item_make_runed_staff();
-    }
-}
-
-static Item random_specialist_magic_weapon(void) {
-    switch (rand() % 3) {
-        case 0:
-            return item_make_magic_long_sword();
-        case 1:
-            return item_make_magic_battle_axe();
-        default:
-            return item_make_magic_dagger();
-    }
-}
-
-static Item random_capstone_magic_weapon(void) {
-    switch (rand() % 3) {
-        case 0:
-            return item_make_magic_greatsword();
-        case 1:
-            return item_make_magic_staff();
-        default:
-            return item_make_magic_longbow();
-    }
-}
-
-Item random_weapon(int level) {
-    if (level <= 2) {
-        return random_common_weapon();
-    }
-
+Item random_enemy_item(int level) {
     int roll = rand() % 100;
-    if (level <= 5) {
-        if (roll < 70) {
-            return random_common_weapon();
+    if (level <= 3) {
+        if (roll < 40) {
+            return item_make_health_potion();
         }
-        return random_uncommon_weapon();
-    }
-    if (level <= 7) {
-        if (roll < 55) {
-            return random_uncommon_weapon();
+        if (roll < 70) {
+            return item_make_mana_potion();
         }
         if (roll < 90) {
-            return random_specialist_magic_weapon();
+            return item_make_scroll_magic_arrow();
         }
-        return random_capstone_magic_weapon();
+        return item_make_scroll_heal();
     }
-    if (roll < 35) {
-        return random_uncommon_weapon();
+    if (level <= 6) {
+        if (roll < 35) {
+            return item_make_health_potion();
+        }
+        if (roll < 65) {
+            return item_make_mana_potion();
+        }
+        if (roll < 82) {
+            return item_make_scroll_magic_arrow();
+        }
+        if (roll < 93) {
+            return item_make_scroll_heal();
+        }
+        return item_make_scroll_fireball();
     }
-    if (roll < 75) {
-        return random_specialist_magic_weapon();
+    if (roll < 30) {
+        return item_make_health_potion();
     }
-    return random_capstone_magic_weapon();
+    if (roll < 55) {
+        return item_make_mana_potion();
+    }
+    if (roll < 63) {
+        return item_make_scroll_magic_arrow();
+    }
+    if (roll < 82) {
+        return item_make_scroll_heal();
+    }
+    return item_make_scroll_fireball();
+}
+
+Item boss_equipment_reward(EnemyType type) {
+    switch (type) {
+        case ENEMY_LICH_KING:
+            return item_make_cryptblade();
+        case ENEMY_FOREST_NECROMANCER:
+            return item_make_necromancer_cloak();
+        case ENEMY_MOUNTAIN_GOBLIN_KING:
+        case ENEMY_GOBLIN_KING:
+            return item_make_goblin_king_greatsword();
+        case ENEMY_DROWNED_QUEEN:
+            return item_make_tidecaller_robes();
+        default:
+            return item_make_cryptblade();
+    }
 }
 
 static int enemy_score(EnemyType type) {
@@ -204,8 +182,8 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type, int is_boss) {
         case ENEMY_TARRASQUE:  break;
     }
     
-    // Frequent coin drops make returning to town and shopping part of the
-    // normal adventure loop instead of a rare windfall.
+    // Preserve the existing coin chance and values alongside the new loot
+    // table; quest rewards remain the larger source of purchasing power.
     if (is_boss || rand() % 100 < 25) {
         g->gold += gold;
         g->score += gold;
@@ -214,15 +192,23 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type, int is_boss) {
         push_message(g, msg);
     }
 
-    // Boss guaranteed drop
+    // Each boss leaves a fixed regional reward instead of rolling ordinary
+    // equipment, so capstone weapons remain Blacksmith progression.
     if (is_boss) {
+        if (g->floor_item_count >= MAX_FLOOR_ITEMS) {
+            FloorItem *discarded = &g->floor_items[MAX_FLOOR_ITEMS - 1];
+            if (g->map.tiles[discarded->y][discarded->x] == TILE_ITEM) {
+                g->map.tiles[discarded->y][discarded->x] =
+                    discarded->underlying_tile;
+            }
+            g->floor_item_count--;
+        }
         if (g->floor_item_count < MAX_FLOOR_ITEMS) {
-            Item boss_drop = rand() % 2 == 0
-                ? random_weapon(g->level)
-                : item_make_chain_mail();
+            Item boss_drop = boss_equipment_reward(type);
             FloorItem fi = {0};
             fi.active = 1;
-            fi.x = x; fi.y = y;
+            fi.x = x;
+            fi.y = y;
             fi.underlying_tile = g->map.tiles[y][x];
             fi.item = boss_drop;
             g->map.tiles[y][x] = TILE_ITEM;
@@ -235,45 +221,21 @@ static void drop_loot(GameState *g, int x, int y, EnemyType type, int is_boss) {
     }
 
     // Item drop — 5% chance
-    if (rand() % 100 >= 5) return;
-    if (g->floor_item_count >= MAX_FLOOR_ITEMS) return;
-
-    Item item;
-    int roll = rand() % 100;
-    int level = g->level;
-
-    if (level <= 3) {
-        // Early levels: potions and magic arrow scrolls
-        if (roll < 40)      item = item_make_health_potion();
-        else if (roll < 70) item = item_make_mana_potion();
-        else if (roll < 90) item = item_make_scroll_magic_arrow();
-        else                item = item_make_scroll_heal();
-    } else if (level <= 6) {
-        // Mid levels: weapons, armor, heal scrolls
-        if (roll < 25)      item = item_make_health_potion();
-        else if (roll < 45) item = item_make_mana_potion();
-        else if (roll < 60) item = random_weapon(level);
-        else if (roll < 75) item = item_make_leather_armor();
-        else if (roll < 88) item = item_make_scroll_magic_arrow();
-        else if (roll < 95) item = item_make_scroll_heal();
-        else                item = item_make_scroll_fireball();
-    } else {
-        // Deep levels: better drops, fireball scrolls
-        if (roll < 20)      item = item_make_health_potion();
-        else if (roll < 35) item = item_make_mana_potion();
-        else if (roll < 60) item = random_weapon(level);
-        else if (roll < 65) item = item_make_leather_armor();
-        else if (roll < 75) item = item_make_scroll_magic_arrow();
-        else if (roll < 88) item = item_make_scroll_heal();
-        else                item = item_make_scroll_fireball();
+    if (rand() % 100 >= 5) {
+        return;
     }
+    if (g->floor_item_count >= MAX_FLOOR_ITEMS) {
+        return;
+    }
+
+    Item item = random_enemy_item(g->level);
 
     FloorItem fi = {0};
     fi.active = 1;
-    fi.x      = x;
-    fi.y      = y;
+    fi.x = x;
+    fi.y = y;
     fi.underlying_tile = g->map.tiles[y][x];
-    fi.item   = item;
+    fi.item = item;
     g->floor_items[g->floor_item_count++] = fi;
 
     g->map.tiles[y][x] = TILE_ITEM;
@@ -326,6 +288,34 @@ static int equipped_spell_power(const GameState *g) {
         return 0;
     }
     return g->inventory[g->equipped_main_hand].spell_power_bonus;
+}
+
+static const Item *equipped_armor(const GameState *g) {
+    if (g->equipped_armor < 0 ||
+        g->equipped_armor >= g->inventory_count) {
+        return NULL;
+    }
+    return &g->inventory[g->equipped_armor];
+}
+
+static int equipped_spell_cost(const GameState *g, const Spell *spell) {
+    const Item *armor = equipped_armor(g);
+    if (spell->mp_cost == 0 || !armor) {
+        return spell->mp_cost;
+    }
+    return spell->mp_cost *
+        (100 - armor->spell_cost_reduction_percent) / 100;
+}
+
+static int apply_enemy_damage(GameState *g, int damage) {
+    const Item *armor = equipped_armor(g);
+    if (armor && armor->evasion_chance > 0 &&
+        rand() % 100 < armor->evasion_chance) {
+        push_message(g, "Dodged!");
+        return 0;
+    }
+    g->player.hp -= damage;
+    return damage;
 }
 
 static void set_trail(GameState *g, int sx, int sy,
@@ -540,6 +530,10 @@ void action_resolve_player(GameState *g, Action a) {
             snprintf(msg, sizeof(msg), "Equipped %s", item->name);
             push_message(g, msg);
         } else if (item->type == ITEM_ARMOR) {
+            if (!item_class_allowed(item, g->player.player_class)) {
+                push_message(g, "Your class cannot equip that");
+                return;
+            }
             if (g->equipped_main_hand == idx) {
                 g->equipped_main_hand = -1;
             }
@@ -548,10 +542,11 @@ void action_resolve_player(GameState *g, Action a) {
             }
             if (g->equipped_armor >= 0 &&
                 g->equipped_armor < g->inventory_count) {
-                g->player.defense -= g->inventory[g->equipped_armor].defense_bonus;
+                game_remove_armor_bonuses(g,
+                    &g->inventory[g->equipped_armor]);
             }
             g->equipped_armor  = idx;
-            g->player.defense += item->defense_bonus;
+            game_apply_armor_bonuses(g, item);
             snprintf(msg, sizeof(msg), "Equipped %s", item->name);
             push_message(g, msg);
         } else {
@@ -577,7 +572,7 @@ void action_resolve_player(GameState *g, Action a) {
             g->player.attack -= item->attack_bonus;
             g->equipped_off_hand = -1;
         } else if (g->equipped_armor == idx) {
-            g->player.defense  -= item->defense_bonus;
+            game_remove_armor_bonuses(g, item);
             g->equipped_armor   = -1;
         }
 
@@ -622,8 +617,9 @@ void action_resolve_player(GameState *g, Action a) {
 
         Spell *sp = &g->player.known_spells[g->player.equipped_spell];
         int spell_power = equipped_spell_power(g);
+        int mana_cost = equipped_spell_cost(g, sp);
 
-        if (g->player.mp < sp->mp_cost) {
+        if (g->player.mp < mana_cost) {
             push_message(g, "Not enough MP!");
             return;
         }
@@ -642,7 +638,7 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
-        g->player.mp -= sp->mp_cost;
+        g->player.mp -= mana_cost;
 
         // Set trail based on spell type
         if (sp->type == SPELL_TYPE_DAMAGE_RANGED) {
@@ -1345,7 +1341,10 @@ void action_resolve_enemies(GameState *g) {
                 if (e->type == ENEMY_WRAITH) defense /= 2;
                 int dmg = e->attack - defense;
                 if (dmg < 1) dmg = 1;
-                g->player.hp -= dmg;
+                dmg = apply_enemy_damage(g, dmg);
+                if (dmg == 0) {
+                    continue;
+                }
                 if (e->type == ENEMY_GIANT_SPIDER ||
                     e->type == ENEMY_TUNNEL_SPIDER) {
                     g->player.poison_turns = 3;
@@ -1373,7 +1372,10 @@ void action_resolve_enemies(GameState *g) {
             if (e->move_timer % 2 == 0) {
                 int dmg = e->attack - g->player.defense / 2;
                 if (dmg < 4) dmg = 4;
-                g->player.hp -= dmg;
+                dmg = apply_enemy_damage(g, dmg);
+                if (dmg == 0) {
+                    continue;
+                }
                 char msg[MAX_MESSAGE_LEN];
                 snprintf(msg, sizeof(msg), "Lich necrotic bolt: %d dmg", dmg);
                 push_message(g, msg);
@@ -1389,7 +1391,10 @@ void action_resolve_enemies(GameState *g) {
             if (e->move_timer % 2 == 0) {
                 int dmg = e->attack - g->player.defense / 2;
                 if (dmg < 3) dmg = 3;
-                g->player.hp -= dmg;
+                dmg = apply_enemy_damage(g, dmg);
+                if (dmg == 0) {
+                    continue;
+                }
                 char msg[MAX_MESSAGE_LEN];
                 snprintf(msg, sizeof(msg), "Necromancer spirit bolt: %d dmg", dmg);
                 push_message(g, msg);
@@ -1403,7 +1408,10 @@ void action_resolve_enemies(GameState *g) {
             if (e->move_timer % 2 == 0) {
                 int dmg = e->attack - g->player.defense / 2;
                 if (dmg < 4) dmg = 4;
-                g->player.hp -= dmg;
+                dmg = apply_enemy_damage(g, dmg);
+                if (dmg == 0) {
+                    continue;
+                }
                 char msg[MAX_MESSAGE_LEN];
                 snprintf(msg, sizeof(msg), "Goblin King axe: %d dmg", dmg);
                 push_message(g, msg);
@@ -1417,7 +1425,10 @@ void action_resolve_enemies(GameState *g) {
                 if (dmg < 5) {
                     dmg = 5;
                 }
-                g->player.hp -= dmg;
+                dmg = apply_enemy_damage(g, dmg);
+                if (dmg == 0) {
+                    continue;
+                }
                 char msg[MAX_MESSAGE_LEN];
                 snprintf(msg, sizeof(msg), "Queen's tidal wave: %d dmg", dmg);
                 push_message(g, msg);
@@ -1434,7 +1445,10 @@ void action_resolve_enemies(GameState *g) {
             if (dmg < 1) {
                 dmg = 1;
             }
-            g->player.hp -= dmg;
+            dmg = apply_enemy_damage(g, dmg);
+            if (dmg == 0) {
+                continue;
+            }
             char msg[MAX_MESSAGE_LEN];
             snprintf(msg, sizeof(msg), e->type == ENEMY_SIREN
                 ? "Siren song: %d dmg" : "Water surge: %d dmg", dmg);
@@ -1447,7 +1461,10 @@ void action_resolve_enemies(GameState *g) {
             e->move_timer % 2 == 0 && clear_orthogonal_path(g, e)) {
             int dmg = e->attack - g->player.defense / 2;
             if (dmg < 1) dmg = 1;
-            g->player.hp -= dmg;
+            dmg = apply_enemy_damage(g, dmg);
+            if (dmg == 0) {
+                continue;
+            }
             char msg[MAX_MESSAGE_LEN];
             snprintf(msg, sizeof(msg), e->type == ENEMY_GOBLIN_BOMBER
                 ? "Goblin bomb: %d dmg" : "Goblin arrow: %d dmg", dmg);
@@ -1476,7 +1493,10 @@ void action_resolve_enemies(GameState *g) {
             clear_orthogonal_path(g, e)) {
             int dmg = e->attack - g->player.defense / 2;
             if (dmg < 1) dmg = 1;
-            g->player.hp -= dmg;
+            dmg = apply_enemy_damage(g, dmg);
+            if (dmg == 0) {
+                continue;
+            }
             char msg[MAX_MESSAGE_LEN];
             snprintf(msg, sizeof(msg), "Dark Elf arrow: %d dmg", dmg);
             push_message(g, msg);
@@ -1488,7 +1508,10 @@ void action_resolve_enemies(GameState *g) {
             if (e->move_timer % 2 == 0 && clear_orthogonal_path(g, e)) {
                 int dmg = e->attack - g->player.defense / 2;
                 if (dmg < 1) dmg = 1;
-                g->player.hp -= dmg;
+                dmg = apply_enemy_damage(g, dmg);
+                if (dmg == 0) {
+                    continue;
+                }
                 char msg[MAX_MESSAGE_LEN];
                 snprintf(msg, sizeof(msg), "Conjurer bolt: %d dmg", dmg);
                 push_message(g, msg);

@@ -10,6 +10,13 @@ static void set_weapon_metadata(Item *it, WeaponFamily family, WeaponHands hands
     it->visual_id = visual_id;
 }
 
+static void set_armor_metadata(Item *it, ArmorFamily family, ItemRarity rarity, int class_mask, ItemVisualId visual_id) {
+    it->armor_family = family;
+    it->rarity = rarity;
+    it->class_mask = class_mask;
+    it->visual_id = visual_id;
+}
+
 Item item_make_health_potion(void) {
     Item it = {0};
     it.active  = 1;
@@ -256,6 +263,34 @@ Item item_make_magic_greatsword(void) {
     return it;
 }
 
+Item item_make_cryptblade(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_WEAPON;
+    strncpy(it.name, "Cryptblade", sizeof(it.name) - 1);
+    it.attack_bonus = 8;
+    it.value = 350;
+    it.critical_chance_bonus = 10;
+    set_weapon_metadata(&it, WEAPON_FAMILY_SWORD, WEAPON_HANDS_ONE,
+        ITEM_RARITY_UNCOMMON, ITEM_CLASS_WARRIOR,
+        ITEM_VISUAL_MAGIC_LONG_SWORD);
+    return it;
+}
+
+Item item_make_goblin_king_greatsword(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_WEAPON;
+    strncpy(it.name, "Goblin King's Greatsword", sizeof(it.name) - 1);
+    it.attack_bonus = 13;
+    it.value = 500;
+    it.cleave_percent = 55;
+    set_weapon_metadata(&it, WEAPON_FAMILY_SWORD, WEAPON_HANDS_TWO,
+        ITEM_RARITY_RARE, ITEM_CLASS_WARRIOR,
+        ITEM_VISUAL_GREATSWORD);
+    return it;
+}
+
 void item_apply_legacy_metadata(Item *item) {
     Item definition = {0};
     item->critical_chance_bonus = 0;
@@ -295,6 +330,10 @@ void item_apply_legacy_metadata(Item *item) {
         definition = item_make_greatsword();
     } else if (strcmp(item->name, "Magic Greatsword") == 0) {
         definition = item_make_magic_greatsword();
+    } else if (strcmp(item->name, "Cryptblade") == 0) {
+        definition = item_make_cryptblade();
+    } else if (strcmp(item->name, "Goblin King's Greatsword") == 0) {
+        definition = item_make_goblin_king_greatsword();
     } else {
         set_weapon_metadata(item, WEAPON_FAMILY_NONE, WEAPON_HANDS_ONE,
             ITEM_RARITY_COMMON, ITEM_CLASS_ALL, ITEM_VISUAL_WEAPON_GENERIC);
@@ -315,6 +354,42 @@ void item_apply_legacy_metadata(Item *item) {
     item->spell_power_bonus = definition.spell_power_bonus;
     item->armor_penetration_percent =
         definition.armor_penetration_percent;
+}
+
+void item_apply_legacy_armor_metadata(Item *item) {
+    Item definition = {0};
+    if (strcmp(item->name, "Leather Armor") == 0) {
+        definition = item_make_leather_armor();
+    } else if (strcmp(item->name, "Chain Mail") == 0) {
+        definition = item_make_chain_mail();
+    } else if (strcmp(item->name, "Scale Mail") == 0) {
+        definition = item_make_scale_mail();
+    } else if (strcmp(item->name, "Plate Armor") == 0) {
+        definition = item_make_plate_armor();
+    } else if (strcmp(item->name, "Magic Plate") == 0) {
+        definition = item_make_magic_plate();
+    } else if (strcmp(item->name, "Studded Leather") == 0) {
+        definition = item_make_studded_leather();
+    } else if (strcmp(item->name, "Ranger Cloak") == 0) {
+        definition = item_make_ranger_cloak();
+    } else if (strcmp(item->name, "Shadow Armor") == 0) {
+        definition = item_make_shadow_armor();
+    } else if (strcmp(item->name, "Apprentice Robes") == 0) {
+        definition = item_make_apprentice_robes();
+    } else if (strcmp(item->name, "Runed Robes") == 0) {
+        definition = item_make_runed_robes();
+    } else if (strcmp(item->name, "Enchanter Robes") == 0) {
+        definition = item_make_enchanter_robes();
+    } else if (strcmp(item->name, "Archmage Robes") == 0) {
+        definition = item_make_archmage_robes();
+    } else if (strcmp(item->name, "Necromancer's Cloak") == 0) {
+        definition = item_make_necromancer_cloak();
+    } else if (strcmp(item->name, "Tidecaller Robes") == 0) {
+        definition = item_make_tidecaller_robes();
+    } else {
+        return;
+    }
+    *item = definition;
 }
 
 int item_class_allowed(const Item *item, int player_class) {
@@ -382,7 +457,9 @@ Item item_make_leather_armor(void) {
     it.type          = ITEM_ARMOR;
     strncpy(it.name, "Leather Armor", sizeof(it.name) - 1);
     it.defense_bonus = 2;
-    it.value         = 15;
+    it.value         = 60;
+    set_armor_metadata(&it, ARMOR_FAMILY_LIGHT, ITEM_RARITY_COMMON,
+        ITEM_CLASS_ROGUE, ITEM_VISUAL_LEATHER_ARMOR);
     return it;
 }
 
@@ -391,8 +468,169 @@ Item item_make_chain_mail(void) {
     it.active        = 1;
     it.type          = ITEM_ARMOR;
     strncpy(it.name, "Chain Mail", sizeof(it.name) - 1);
+    it.defense_bonus = 3;
+    it.value         = 80;
+    set_armor_metadata(&it, ARMOR_FAMILY_HEAVY, ITEM_RARITY_COMMON,
+        ITEM_CLASS_WARRIOR, ITEM_VISUAL_CHAIN_MAIL);
+    return it;
+}
+
+Item item_make_scale_mail(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_ARMOR;
+    strncpy(it.name, "Scale Mail", sizeof(it.name) - 1);
     it.defense_bonus = 5;
-    it.value         = 40;
+    it.max_hp_bonus = 10;
+    it.value = 275;
+    set_armor_metadata(&it, ARMOR_FAMILY_HEAVY, ITEM_RARITY_UNCOMMON,
+        ITEM_CLASS_WARRIOR, ITEM_VISUAL_SCALE_MAIL);
+    return it;
+}
+
+Item item_make_plate_armor(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_ARMOR;
+    strncpy(it.name, "Plate Armor", sizeof(it.name) - 1);
+    it.defense_bonus = 8;
+    it.max_hp_bonus = 25;
+    it.value = 650;
+    set_armor_metadata(&it, ARMOR_FAMILY_HEAVY, ITEM_RARITY_RARE,
+        ITEM_CLASS_WARRIOR, ITEM_VISUAL_PLATE_ARMOR);
+    return it;
+}
+
+Item item_make_magic_plate(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_ARMOR;
+    strncpy(it.name, "Magic Plate", sizeof(it.name) - 1);
+    it.defense_bonus = 11;
+    it.max_hp_bonus = 50;
+    it.value = 1200;
+    set_armor_metadata(&it, ARMOR_FAMILY_HEAVY, ITEM_RARITY_RARE,
+        ITEM_CLASS_WARRIOR, ITEM_VISUAL_MAGIC_PLATE);
+    return it;
+}
+
+Item item_make_studded_leather(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_ARMOR;
+    strncpy(it.name, "Studded Leather", sizeof(it.name) - 1);
+    it.defense_bonus = 4;
+    it.evasion_chance = 5;
+    it.value = 250;
+    set_armor_metadata(&it, ARMOR_FAMILY_LIGHT, ITEM_RARITY_UNCOMMON,
+        ITEM_CLASS_ROGUE, ITEM_VISUAL_STUDDED_LEATHER);
+    return it;
+}
+
+Item item_make_ranger_cloak(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_ARMOR;
+    strncpy(it.name, "Ranger Cloak", sizeof(it.name) - 1);
+    it.defense_bonus = 5;
+    it.evasion_chance = 10;
+    it.value = 600;
+    set_armor_metadata(&it, ARMOR_FAMILY_LIGHT, ITEM_RARITY_RARE,
+        ITEM_CLASS_ROGUE, ITEM_VISUAL_RANGER_CLOAK);
+    return it;
+}
+
+Item item_make_shadow_armor(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_ARMOR;
+    strncpy(it.name, "Shadow Armor", sizeof(it.name) - 1);
+    it.defense_bonus = 7;
+    it.evasion_chance = 15;
+    it.value = 1100;
+    set_armor_metadata(&it, ARMOR_FAMILY_LIGHT, ITEM_RARITY_RARE,
+        ITEM_CLASS_ROGUE, ITEM_VISUAL_SHADOW_ARMOR);
+    return it;
+}
+
+Item item_make_apprentice_robes(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_ARMOR;
+    strncpy(it.name, "Apprentice Robes", sizeof(it.name) - 1);
+    it.defense_bonus = 1;
+    it.max_mp_bonus = 10;
+    it.value = 60;
+    set_armor_metadata(&it, ARMOR_FAMILY_ROBE, ITEM_RARITY_COMMON,
+        ITEM_CLASS_MAGE, ITEM_VISUAL_APPRENTICE_ROBES);
+    return it;
+}
+
+Item item_make_runed_robes(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_ARMOR;
+    strncpy(it.name, "Runed Robes", sizeof(it.name) - 1);
+    it.defense_bonus = 2;
+    it.max_mp_bonus = 25;
+    it.value = 275;
+    set_armor_metadata(&it, ARMOR_FAMILY_ROBE, ITEM_RARITY_UNCOMMON,
+        ITEM_CLASS_MAGE, ITEM_VISUAL_RUNED_ROBES);
+    return it;
+}
+
+Item item_make_enchanter_robes(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_ARMOR;
+    strncpy(it.name, "Enchanter Robes", sizeof(it.name) - 1);
+    it.defense_bonus = 3;
+    it.max_mp_bonus = 40;
+    it.spell_cost_reduction_percent = 10;
+    it.value = 675;
+    set_armor_metadata(&it, ARMOR_FAMILY_ROBE, ITEM_RARITY_RARE,
+        ITEM_CLASS_MAGE, ITEM_VISUAL_ENCHANTER_ROBES);
+    return it;
+}
+
+Item item_make_archmage_robes(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_ARMOR;
+    strncpy(it.name, "Archmage Robes", sizeof(it.name) - 1);
+    it.defense_bonus = 4;
+    it.max_mp_bonus = 60;
+    it.spell_cost_reduction_percent = 20;
+    it.value = 1250;
+    set_armor_metadata(&it, ARMOR_FAMILY_ROBE, ITEM_RARITY_RARE,
+        ITEM_CLASS_MAGE, ITEM_VISUAL_ARCHMAGE_ROBES);
+    return it;
+}
+
+Item item_make_necromancer_cloak(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_ARMOR;
+    strncpy(it.name, "Necromancer's Cloak", sizeof(it.name) - 1);
+    it.defense_bonus = 5;
+    it.evasion_chance = 8;
+    it.value = 450;
+    set_armor_metadata(&it, ARMOR_FAMILY_LIGHT, ITEM_RARITY_RARE,
+        ITEM_CLASS_ROGUE, ITEM_VISUAL_RANGER_CLOAK);
+    return it;
+}
+
+Item item_make_tidecaller_robes(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_ARMOR;
+    strncpy(it.name, "Tidecaller Robes", sizeof(it.name) - 1);
+    it.defense_bonus = 3;
+    it.max_mp_bonus = 30;
+    it.spell_cost_reduction_percent = 8;
+    it.value = 500;
+    set_armor_metadata(&it, ARMOR_FAMILY_ROBE, ITEM_RARITY_RARE,
+        ITEM_CLASS_MAGE, ITEM_VISUAL_ENCHANTER_ROBES);
     return it;
 }
 

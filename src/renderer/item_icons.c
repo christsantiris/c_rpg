@@ -316,17 +316,63 @@ void draw_icon_weapon(Renderer *r, int px, int py, const Item *item) {
     }
 }
 
-void draw_icon_armor(Renderer *r, int px, int py) {
-    SDL_Color metal  = {100, 120, 140, 255};
-    SDL_Color dark   = { 60,  80, 100, 255};
-    // Chest plate
-    fill_rect_px(r, px+4,  py+4,  16, 14, metal);
-    fill_rect_px(r, px+6,  py+6,  12, 10, dark);
-    // Shoulders
-    fill_rect_px(r, px+2,  py+4,  4,  8, metal);
-    fill_rect_px(r, px+18, py+4,  4,  8, metal);
-    // Center line
-    fill_rect_px(r, px+11, py+4,  2, 14, dark);
+void draw_icon_armor(Renderer *r, int px, int py, const Item *item) {
+    SDL_Color primary = {100, 120, 140, 255};
+    SDL_Color accent = {60, 80, 100, 255};
+    if (item->armor_family == ARMOR_FAMILY_LIGHT) {
+        if (item->visual_id == ITEM_VISUAL_SHADOW_ARMOR) {
+            primary = (SDL_Color){68, 45, 92, 255};
+            accent = (SDL_Color){169, 91, 211, 255};
+        } else if (item->visual_id == ITEM_VISUAL_RANGER_CLOAK) {
+            primary = (SDL_Color){58, 102, 53, 255};
+            accent = (SDL_Color){139, 184, 79, 255};
+        } else if (item->visual_id == ITEM_VISUAL_STUDDED_LEATHER) {
+            primary = (SDL_Color){105, 72, 43, 255};
+            accent = (SDL_Color){174, 154, 106, 255};
+        } else {
+            primary = (SDL_Color){91, 57, 35, 255};
+            accent = (SDL_Color){139, 91, 52, 255};
+        }
+        fill_rect_px(r, px + 7, py + 2, 10, 4, primary);
+        fill_rect_px(r, px + 5, py + 6, 14, 10, primary);
+        fill_rect_px(r, px + 3, py + 16, 18, 3, primary);
+        fill_rect_px(r, px + 9, py + 7, 6, 10, accent);
+    } else if (item->armor_family == ARMOR_FAMILY_ROBE) {
+        if (item->visual_id == ITEM_VISUAL_ARCHMAGE_ROBES) {
+            primary = (SDL_Color){112, 68, 178, 255};
+            accent = (SDL_Color){225, 153, 255, 255};
+        } else if (item->visual_id == ITEM_VISUAL_ENCHANTER_ROBES) {
+            primary = (SDL_Color){78, 66, 163, 255};
+            accent = (SDL_Color){112, 231, 237, 255};
+        } else if (item->visual_id == ITEM_VISUAL_RUNED_ROBES) {
+            primary = (SDL_Color){38, 112, 133, 255};
+            accent = (SDL_Color){83, 224, 221, 255};
+        } else {
+            primary = (SDL_Color){48, 89, 164, 255};
+            accent = (SDL_Color){94, 133, 198, 255};
+        }
+        fill_rect_px(r, px + 7, py + 3, 10, 5, primary);
+        fill_rect_px(r, px + 5, py + 8, 14, 7, primary);
+        fill_rect_px(r, px + 3, py + 15, 18, 5, primary);
+        fill_rect_px(r, px + 11, py + 8, 2, 10, accent);
+        fill_rect_px(r, px + 8, py + 12, 8, 2, accent);
+    } else {
+        if (item->visual_id == ITEM_VISUAL_MAGIC_PLATE) {
+            primary = (SDL_Color){100, 151, 193, 255};
+            accent = (SDL_Color){93, 235, 255, 255};
+        } else if (item->visual_id == ITEM_VISUAL_PLATE_ARMOR) {
+            primary = (SDL_Color){158, 169, 178, 255};
+            accent = (SDL_Color){82, 91, 102, 255};
+        } else if (item->visual_id == ITEM_VISUAL_SCALE_MAIL) {
+            primary = (SDL_Color){145, 111, 67, 255};
+            accent = (SDL_Color){207, 169, 92, 255};
+        }
+        fill_rect_px(r, px + 4, py + 4, 16, 14, primary);
+        fill_rect_px(r, px + 6, py + 6, 12, 10, accent);
+        fill_rect_px(r, px + 2, py + 4, 4, 8, primary);
+        fill_rect_px(r, px + 18, py + 4, 4, 8, primary);
+        fill_rect_px(r, px + 11, py + 4, 2, 14, primary);
+    }
 }
 
 void draw_icon_spell(Renderer *r, int px, int py, SpellID spell_id) {

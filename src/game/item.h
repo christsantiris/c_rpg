@@ -29,6 +29,13 @@ typedef enum {
 } WeaponHands;
 
 typedef enum {
+    ARMOR_FAMILY_NONE = 0,
+    ARMOR_FAMILY_HEAVY,
+    ARMOR_FAMILY_LIGHT,
+    ARMOR_FAMILY_ROBE
+} ArmorFamily;
+
+typedef enum {
     ITEM_RARITY_COMMON = 0,
     ITEM_RARITY_UNCOMMON,
     ITEM_RARITY_RARE
@@ -59,7 +66,19 @@ typedef enum {
     ITEM_VISUAL_MAGIC_LONG_SWORD,
     ITEM_VISUAL_MAGIC_DAGGER,
     ITEM_VISUAL_MAGIC_BATTLE_AXE,
-    ITEM_VISUAL_RUNED_STAFF
+    ITEM_VISUAL_RUNED_STAFF,
+    ITEM_VISUAL_CHAIN_MAIL,
+    ITEM_VISUAL_SCALE_MAIL,
+    ITEM_VISUAL_PLATE_ARMOR,
+    ITEM_VISUAL_MAGIC_PLATE,
+    ITEM_VISUAL_LEATHER_ARMOR,
+    ITEM_VISUAL_STUDDED_LEATHER,
+    ITEM_VISUAL_RANGER_CLOAK,
+    ITEM_VISUAL_SHADOW_ARMOR,
+    ITEM_VISUAL_APPRENTICE_ROBES,
+    ITEM_VISUAL_RUNED_ROBES,
+    ITEM_VISUAL_ENCHANTER_ROBES,
+    ITEM_VISUAL_ARCHMAGE_ROBES
 } ItemVisualId;
 
 typedef struct {
@@ -84,6 +103,11 @@ typedef struct {
     int pierces_targets;
     int spell_power_bonus;
     int armor_penetration_percent;
+    ArmorFamily armor_family;
+    int max_hp_bonus;
+    int max_mp_bonus;
+    int evasion_chance;
+    int spell_cost_reduction_percent;
 } Item;
 
 typedef struct {
@@ -119,10 +143,25 @@ Item item_make_dagger(void);
 Item item_make_magic_dagger(void);
 Item item_make_greatsword(void);
 Item item_make_magic_greatsword(void);
+Item item_make_cryptblade(void);
+Item item_make_goblin_king_greatsword(void);
 
 Item item_make_leather_armor(void);
 Item item_make_chain_mail(void);
+Item item_make_scale_mail(void);
+Item item_make_plate_armor(void);
+Item item_make_magic_plate(void);
+Item item_make_studded_leather(void);
+Item item_make_ranger_cloak(void);
+Item item_make_shadow_armor(void);
+Item item_make_apprentice_robes(void);
+Item item_make_runed_robes(void);
+Item item_make_enchanter_robes(void);
+Item item_make_archmage_robes(void);
+Item item_make_necromancer_cloak(void);
+Item item_make_tidecaller_robes(void);
 void item_apply_legacy_metadata(Item *item);
+void item_apply_legacy_armor_metadata(Item *item);
 int item_class_allowed(const Item *item, int player_class);
 const char *item_class_label(const Item *item);
 const char *item_hands_label(const Item *item);
