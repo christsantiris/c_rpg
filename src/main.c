@@ -528,7 +528,7 @@ int main(int argc, char **argv) {
                                 game.player.attack -= item->attack_bonus;
                                 game.equipped_off_hand = -1;
                             } else if (game.equipped_armor == idx) {
-                                game.player.defense -= item->defense_bonus;
+                                game_remove_armor_bonuses(&game, item);
                                 game.equipped_armor = -1;
                             }
                             if (game.equipped_main_hand > idx) {
@@ -840,7 +840,8 @@ int main(int argc, char **argv) {
                                             game.player.attack -= item->attack_bonus;
                                             game.equipped_off_hand = -1;
                                         } else if (game.equipped_armor == i) {
-                                            game.player.defense -= item->defense_bonus;
+                                            game_remove_armor_bonuses(&game,
+                                                item);
                                             game.equipped_armor = -1;
                                         }
                                         if (game.equipped_main_hand > i) {

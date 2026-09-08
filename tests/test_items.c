@@ -591,4 +591,71 @@ void test_items(void) {
     action_resolve_player(&g, axe_strike);
     ASSERT("magic battle axe ignores half of enemy defense",
         g.enemies[0].hp == 78);
+
+    // --- Armor trait mechanics ---
+    game_init(&g);
+    Item trait_armor = item_make_chain_mail();
+    trait_armor.class_mask = ITEM_CLASS_WARRIOR;
+    trait_armor.max_hp_bonus = 20;
+    trait_armor.max_mp_bonus = 10;
+    int trait_armor_index = g.inventory_count;
+    g.inventory[g.inventory_count++] = trait_armor;
+    int base_hp = g.player.max_hp;
+    int base_mp = g.player.max_mp;
+    int armor_base_defense = g.player.defense;
+    Action equip_trait_armor = {ACTION_EQUIP_ITEM, trait_armor_index, 0};
+    action_resolve_player(&g, equip_trait_armor);
+    ASSERT("armor equip applies defense and resource bonuses",
+        g.player.defense == armor_base_defense +
+            trait_armor.defense_bonus &&
+        g.player.max_hp == base_hp + 20 && g.player.max_mp == base_mp + 10);
+    Action drop_trait_armor = {ACTION_DROP_ITEM, trait_armor_index, 0};
+    action_resolve_player(&g, drop_trait_armor);
+    ASSERT("removing armor restores base defense and resource caps",
+        g.player.defense == armor_base_defense &&
+        g.player.max_hp == base_hp &&
+        g.player.max_mp == base_mp);
+
+    g.player.player_class = CLASS_MAGE;
+    game_init(&g);
+    Item efficient_robe = item_make_leather_armor();
+    efficient_robe.class_mask = ITEM_CLASS_MAGE;
+    efficient_robe.spell_cost_reduction_percent = 50;
+    int robe_index = g.inventory_count;
+    g.inventory[g.inventory_count++] = efficient_robe;
+    Action equip_robe = {ACTION_EQUIP_ITEM, robe_index, 0};
+    action_resolve_player(&g, equip_robe);
+    g.player.known_spell_count = 1;
+    g.player.known_spells[0] = spell_make_heal();
+    g.player.equipped_spell = 0;
+    g.player.last_dx = 1;
+    g.player.last_dy = 0;
+    int mp_before_cast = g.player.mp;
+    action_resolve_player(&g, cast);
+    ASSERT("mage armor reduces spell mana cost",
+        g.player.mp == mp_before_cast -
+            g.player.known_spells[0].mp_cost / 2);
+
+    g.player.player_class = CLASS_ROGUE;
+    game_init(&g);
+    Item evasive_armor = item_make_leather_armor();
+    evasive_armor.class_mask = ITEM_CLASS_ROGUE;
+    evasive_armor.evasion_chance = 100;
+    int evasive_index = g.inventory_count;
+    g.inventory[g.inventory_count++] = evasive_armor;
+    Action equip_evasive = {ACTION_EQUIP_ITEM, evasive_index, 0};
+    action_resolve_player(&g, equip_evasive);
+    g.enemy_count = 1;
+    g.enemies[0] = (Enemy){0};
+    g.enemies[0].active = 1;
+    g.enemies[0].type = ENEMY_SKELETON;
+    g.enemies[0].x = g.player.x + 1;
+    g.enemies[0].y = g.player.y;
+    g.enemies[0].attack = 100;
+    strncpy(g.enemies[0].name, "Skeleton",
+        sizeof(g.enemies[0].name) - 1);
+    int hp_before_attack = g.player.hp;
+    action_resolve_enemies(&g);
+    ASSERT("rogue armor evasion can avoid enemy attacks",
+        g.player.hp == hp_before_attack);
 }
