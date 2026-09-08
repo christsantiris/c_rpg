@@ -10,7 +10,8 @@ typedef enum {
     ITEM_POTION_MANA,
     ITEM_WEAPON,
     ITEM_ARMOR,
-    ITEM_SCROLL
+    ITEM_SCROLL,
+    ITEM_SHIELD
 } ItemType;
 
 typedef enum {
@@ -78,7 +79,8 @@ typedef enum {
     ITEM_VISUAL_APPRENTICE_ROBES,
     ITEM_VISUAL_RUNED_ROBES,
     ITEM_VISUAL_ENCHANTER_ROBES,
-    ITEM_VISUAL_ARCHMAGE_ROBES
+    ITEM_VISUAL_ARCHMAGE_ROBES,
+    ITEM_VISUAL_SHIELD_GENERIC
 } ItemVisualId;
 
 typedef struct {
@@ -108,6 +110,8 @@ typedef struct {
     int max_mp_bonus;
     int evasion_chance;
     int spell_cost_reduction_percent;
+    int block_chance;
+    int block_reduction_percent;
 } Item;
 
 typedef struct {

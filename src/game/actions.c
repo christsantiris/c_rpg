@@ -314,6 +314,19 @@ static int apply_enemy_damage(GameState *g, int damage) {
         push_message(g, "Dodged!");
         return 0;
     }
+    if (g->equipped_off_hand >= 0 &&
+        g->equipped_off_hand < g->inventory_count) {
+        const Item *shield = &g->inventory[g->equipped_off_hand];
+        if (shield->type == ITEM_SHIELD && shield->block_chance > 0 &&
+            rand() % 100 < shield->block_chance) {
+            damage = (damage * (100 - shield->block_reduction_percent) + 99)
+                / 100;
+            if (damage < 1) {
+                damage = 1;
+            }
+            push_message(g, "Blocked!");
+        }
+    }
     g->player.hp -= damage;
     return damage;
 }
@@ -525,6 +538,13 @@ void action_resolve_player(GameState *g, Action a) {
             g->equipped_armor  = idx;
             game_apply_armor_bonuses(g, item);
             snprintf(msg, sizeof(msg), "Equipped %s", item->name);
+            push_message(g, msg);
+        } else if (item->type == ITEM_SHIELD) {
+            if (!game_equip_shield(g, idx)) {
+                push_message(g, "Shield requires one-handed weapon");
+                return;
+            }
+            snprintf(msg, sizeof(msg), "Off-hand: %s", item->name);
             push_message(g, msg);
         } else {
             push_message(g, "Cannot equip that item");

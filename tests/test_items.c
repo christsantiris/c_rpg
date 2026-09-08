@@ -519,8 +519,47 @@ void test_items(void) {
     ASSERT("promoted off-hand contributes full attack",
         g.player.attack == 10 + off_hand_dagger.attack_bonus);
 
-    // --- Equip armor ---
     g.player.player_class = CLASS_WARRIOR;
+    game_init(&g);
+    Item test_shield = {0};
+    test_shield.active = 1;
+    test_shield.type = ITEM_SHIELD;
+    strncpy(test_shield.name, "Test Shield",
+        sizeof(test_shield.name) - 1);
+    test_shield.defense_bonus = 2;
+    test_shield.block_chance = 100;
+    test_shield.block_reduction_percent = 50;
+    test_shield.class_mask = ITEM_CLASS_WARRIOR;
+    int test_shield_index = g.inventory_count;
+    g.inventory[g.inventory_count++] = test_shield;
+    action_resolve_player(&g, (Action){ACTION_EQUIP_ITEM, 0, 0});
+    action_resolve_player(&g,
+        (Action){ACTION_EQUIP_ITEM, test_shield_index, 0});
+    ASSERT("shield equips beside a one-handed main weapon",
+        g.equipped_main_hand == 0 &&
+        g.equipped_off_hand == test_shield_index);
+    ASSERT("equipped shield applies defense",
+        g.player.defense == 8);
+    g.player.x = 10;
+    g.player.y = 10;
+    g.enemy_count = 1;
+    g.enemies[0] = (Enemy){0};
+    g.enemies[0].active = 1;
+    g.enemies[0].x = 11;
+    g.enemies[0].y = 10;
+    g.enemies[0].attack = 20;
+    strncpy(g.enemies[0].name, "Attacker",
+        sizeof(g.enemies[0].name) - 1);
+    int hp_before_block = g.player.hp;
+    action_resolve_enemies(&g);
+    ASSERT("shield block halves post-defense enemy damage",
+        g.player.hp == hp_before_block - 6);
+    game_remove_inventory_item(&g, 0);
+    ASSERT("removing main weapon also unequips shield",
+        g.equipped_main_hand == -1 && g.equipped_off_hand == -1 &&
+        g.player.defense == 6);
+
+    // --- Equip armor ---
     game_init(&g);
     Item warrior_armor = item_make_chain_mail();
     g.inventory[0] = warrior_armor;

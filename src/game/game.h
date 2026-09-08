@@ -167,6 +167,7 @@ void game_light_coast_beacon(GameState *g, int x, int y);
 void game_repair_equipment_indices(GameState *g);
 int game_equip_main_hand(GameState *g, int index);
 int game_equip_off_hand(GameState *g, int index);
+int game_equip_shield(GameState *g, int index);
 int game_off_hand_attack_bonus(const Item *weapon);
 void game_unequip_main_hand(GameState *g);
 void game_unequip_off_hand(GameState *g);

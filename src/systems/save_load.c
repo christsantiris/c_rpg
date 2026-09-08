@@ -210,6 +210,9 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
     cJSON *evasion = cJSON_GetObjectItem(obj, "evasion_chance");
     cJSON *spell_cost_reduction = cJSON_GetObjectItem(obj,
         "spell_cost_reduction_percent");
+    cJSON *block_chance = cJSON_GetObjectItem(obj, "block_chance");
+    cJSON *block_reduction = cJSON_GetObjectItem(obj,
+        "block_reduction_percent");
     if (!family && item->type == ITEM_WEAPON) {
         item_apply_legacy_metadata(item);
         cJSON *legacy_two_handed = cJSON_GetObjectItem(obj,
@@ -257,12 +260,15 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
     item->evasion_chance = evasion ? evasion->valueint : 0;
     item->spell_cost_reduction_percent = spell_cost_reduction
         ? spell_cost_reduction->valueint : 0;
+    item->block_chance = block_chance ? block_chance->valueint : 0;
+    item->block_reduction_percent = block_reduction
+        ? block_reduction->valueint : 0;
 }
 
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 39);
+    cJSON_AddNumberToObject(root, "save_version", 40);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -390,6 +396,9 @@ int save_game(const GameState *g, int slot) {
         cJSON_AddNumberToObject(it, "evasion_chance", item->evasion_chance);
         cJSON_AddNumberToObject(it, "spell_cost_reduction_percent",
             item->spell_cost_reduction_percent);
+        cJSON_AddNumberToObject(it, "block_chance", item->block_chance);
+        cJSON_AddNumberToObject(it, "block_reduction_percent",
+            item->block_reduction_percent);
         cJSON_AddItemToArray(inventory, it);
     }
     cJSON_AddItemToObject(root, "inventory", inventory);
@@ -439,6 +448,10 @@ int save_game(const GameState *g, int slot) {
             fi->item.evasion_chance);
         cJSON_AddNumberToObject(it, "spell_cost_reduction_percent",
             fi->item.spell_cost_reduction_percent);
+        cJSON_AddNumberToObject(it, "block_chance",
+            fi->item.block_chance);
+        cJSON_AddNumberToObject(it, "block_reduction_percent",
+            fi->item.block_reduction_percent);
         cJSON_AddItemToObject(f, "item", it);
         cJSON_AddItemToArray(floor_items, f);
     }
