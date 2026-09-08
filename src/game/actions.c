@@ -328,6 +328,34 @@ static int equipped_spell_power(const GameState *g) {
     return g->inventory[g->equipped_main_hand].spell_power_bonus;
 }
 
+static const Item *equipped_armor(const GameState *g) {
+    if (g->equipped_armor < 0 ||
+        g->equipped_armor >= g->inventory_count) {
+        return NULL;
+    }
+    return &g->inventory[g->equipped_armor];
+}
+
+static int equipped_spell_cost(const GameState *g, const Spell *spell) {
+    const Item *armor = equipped_armor(g);
+    if (spell->mp_cost == 0 || !armor) {
+        return spell->mp_cost;
+    }
+    return spell->mp_cost *
+        (100 - armor->spell_cost_reduction_percent) / 100;
+}
+
+static int apply_enemy_damage(GameState *g, int damage) {
+    const Item *armor = equipped_armor(g);
+    if (armor && armor->evasion_chance > 0 &&
+        rand() % 100 < armor->evasion_chance) {
+        push_message(g, "Dodged!");
+        return 0;
+    }
+    g->player.hp -= damage;
+    return damage;
+}
+
 static void set_trail(GameState *g, int sx, int sy,
                       int tx, int ty, int dx, int dy,
                       int range, Uint8 r, Uint8 gr, Uint8 b,
@@ -540,6 +568,10 @@ void action_resolve_player(GameState *g, Action a) {
             snprintf(msg, sizeof(msg), "Equipped %s", item->name);
             push_message(g, msg);
         } else if (item->type == ITEM_ARMOR) {
+            if (!item_class_allowed(item, g->player.player_class)) {
+                push_message(g, "Your class cannot equip that");
+                return;
+            }
             if (g->equipped_main_hand == idx) {
                 g->equipped_main_hand = -1;
             }
@@ -548,10 +580,11 @@ void action_resolve_player(GameState *g, Action a) {
             }
             if (g->equipped_armor >= 0 &&
                 g->equipped_armor < g->inventory_count) {
-                g->player.defense -= g->inventory[g->equipped_armor].defense_bonus;
+                game_remove_armor_bonuses(g,
+                    &g->inventory[g->equipped_armor]);
             }
             g->equipped_armor  = idx;
-            g->player.defense += item->defense_bonus;
+            game_apply_armor_bonuses(g, item);
             snprintf(msg, sizeof(msg), "Equipped %s", item->name);
             push_message(g, msg);
         } else {
@@ -577,7 +610,7 @@ void action_resolve_player(GameState *g, Action a) {
             g->player.attack -= item->attack_bonus;
             g->equipped_off_hand = -1;
         } else if (g->equipped_armor == idx) {
-            g->player.defense  -= item->defense_bonus;
+            game_remove_armor_bonuses(g, item);
             g->equipped_armor   = -1;
         }
 
@@ -622,8 +655,9 @@ void action_resolve_player(GameState *g, Action a) {
 
         Spell *sp = &g->player.known_spells[g->player.equipped_spell];
         int spell_power = equipped_spell_power(g);
+        int mana_cost = equipped_spell_cost(g, sp);
 
-        if (g->player.mp < sp->mp_cost) {
+        if (g->player.mp < mana_cost) {
             push_message(g, "Not enough MP!");
             return;
         }
@@ -642,7 +676,7 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
-        g->player.mp -= sp->mp_cost;
+        g->player.mp -= mana_cost;
 
         // Set trail based on spell type
         if (sp->type == SPELL_TYPE_DAMAGE_RANGED) {
@@ -1345,7 +1379,10 @@ void action_resolve_enemies(GameState *g) {
                 if (e->type == ENEMY_WRAITH) defense /= 2;
                 int dmg = e->attack - defense;
                 if (dmg < 1) dmg = 1;
-                g->player.hp -= dmg;
+                dmg = apply_enemy_damage(g, dmg);
+                if (dmg == 0) {
+                    continue;
+                }
                 if (e->type == ENEMY_GIANT_SPIDER ||
                     e->type == ENEMY_TUNNEL_SPIDER) {
                     g->player.poison_turns = 3;
@@ -1373,7 +1410,10 @@ void action_resolve_enemies(GameState *g) {
             if (e->move_timer % 2 == 0) {
                 int dmg = e->attack - g->player.defense / 2;
                 if (dmg < 4) dmg = 4;
-                g->player.hp -= dmg;
+                dmg = apply_enemy_damage(g, dmg);
+                if (dmg == 0) {
+                    continue;
+                }
                 char msg[MAX_MESSAGE_LEN];
                 snprintf(msg, sizeof(msg), "Lich necrotic bolt: %d dmg", dmg);
                 push_message(g, msg);
@@ -1389,7 +1429,10 @@ void action_resolve_enemies(GameState *g) {
             if (e->move_timer % 2 == 0) {
                 int dmg = e->attack - g->player.defense / 2;
                 if (dmg < 3) dmg = 3;
-                g->player.hp -= dmg;
+                dmg = apply_enemy_damage(g, dmg);
+                if (dmg == 0) {
+                    continue;
+                }
                 char msg[MAX_MESSAGE_LEN];
                 snprintf(msg, sizeof(msg), "Necromancer spirit bolt: %d dmg", dmg);
                 push_message(g, msg);
@@ -1403,7 +1446,10 @@ void action_resolve_enemies(GameState *g) {
             if (e->move_timer % 2 == 0) {
                 int dmg = e->attack - g->player.defense / 2;
                 if (dmg < 4) dmg = 4;
-                g->player.hp -= dmg;
+                dmg = apply_enemy_damage(g, dmg);
+                if (dmg == 0) {
+                    continue;
+                }
                 char msg[MAX_MESSAGE_LEN];
                 snprintf(msg, sizeof(msg), "Goblin King axe: %d dmg", dmg);
                 push_message(g, msg);
@@ -1417,7 +1463,10 @@ void action_resolve_enemies(GameState *g) {
                 if (dmg < 5) {
                     dmg = 5;
                 }
-                g->player.hp -= dmg;
+                dmg = apply_enemy_damage(g, dmg);
+                if (dmg == 0) {
+                    continue;
+                }
                 char msg[MAX_MESSAGE_LEN];
                 snprintf(msg, sizeof(msg), "Queen's tidal wave: %d dmg", dmg);
                 push_message(g, msg);
@@ -1434,7 +1483,10 @@ void action_resolve_enemies(GameState *g) {
             if (dmg < 1) {
                 dmg = 1;
             }
-            g->player.hp -= dmg;
+            dmg = apply_enemy_damage(g, dmg);
+            if (dmg == 0) {
+                continue;
+            }
             char msg[MAX_MESSAGE_LEN];
             snprintf(msg, sizeof(msg), e->type == ENEMY_SIREN
                 ? "Siren song: %d dmg" : "Water surge: %d dmg", dmg);
@@ -1447,7 +1499,10 @@ void action_resolve_enemies(GameState *g) {
             e->move_timer % 2 == 0 && clear_orthogonal_path(g, e)) {
             int dmg = e->attack - g->player.defense / 2;
             if (dmg < 1) dmg = 1;
-            g->player.hp -= dmg;
+            dmg = apply_enemy_damage(g, dmg);
+            if (dmg == 0) {
+                continue;
+            }
             char msg[MAX_MESSAGE_LEN];
             snprintf(msg, sizeof(msg), e->type == ENEMY_GOBLIN_BOMBER
                 ? "Goblin bomb: %d dmg" : "Goblin arrow: %d dmg", dmg);
@@ -1476,7 +1531,10 @@ void action_resolve_enemies(GameState *g) {
             clear_orthogonal_path(g, e)) {
             int dmg = e->attack - g->player.defense / 2;
             if (dmg < 1) dmg = 1;
-            g->player.hp -= dmg;
+            dmg = apply_enemy_damage(g, dmg);
+            if (dmg == 0) {
+                continue;
+            }
             char msg[MAX_MESSAGE_LEN];
             snprintf(msg, sizeof(msg), "Dark Elf arrow: %d dmg", dmg);
             push_message(g, msg);
@@ -1488,7 +1546,10 @@ void action_resolve_enemies(GameState *g) {
             if (e->move_timer % 2 == 0 && clear_orthogonal_path(g, e)) {
                 int dmg = e->attack - g->player.defense / 2;
                 if (dmg < 1) dmg = 1;
-                g->player.hp -= dmg;
+                dmg = apply_enemy_damage(g, dmg);
+                if (dmg == 0) {
+                    continue;
+                }
                 char msg[MAX_MESSAGE_LEN];
                 snprintf(msg, sizeof(msg), "Conjurer bolt: %d dmg", dmg);
                 push_message(g, msg);
