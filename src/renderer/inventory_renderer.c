@@ -4,7 +4,7 @@
 
 static int inventory_visible_rows(const Renderer *r) {
     int list_top = 130;
-    int comparison_top = (r->tiles_y - 7) * TILE_SIZE;
+    int comparison_top = (r->tiles_y - 9) * TILE_SIZE;
     int rows = (comparison_top - list_top - 12) / 36;
     if (rows < 1) {
         return 1;
@@ -122,7 +122,7 @@ void inventory_draw(Renderer *r, const GameState *g, const InventoryScreen *s) {
                 equipped = &g->inventory[g->equipped_main_hand];
             }
             draw_weapon_comparison(r, g, selected, equipped,
-                (r->tiles_y - 7) * TILE_SIZE);
+                (r->tiles_y - 9) * TILE_SIZE);
         }
     }
 

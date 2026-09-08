@@ -4,7 +4,7 @@
 
 static int shop_visible_rows(const Renderer *r) {
     int list_top = 140;
-    int detail_top = (r->tiles_y - 7) * TILE_SIZE;
+    int detail_top = (r->tiles_y - 9) * TILE_SIZE;
     int rows = (detail_top - list_top - 16) / 32;
     if (rows < 1) {
         return 1;
@@ -171,7 +171,7 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
                 equipped = &g->inventory[g->equipped_main_hand];
             }
             draw_weapon_comparison(r, g, selected, equipped,
-                (r->tiles_y - 7) * TILE_SIZE);
+                (r->tiles_y - 9) * TILE_SIZE);
         }
     }
 
