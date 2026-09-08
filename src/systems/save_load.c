@@ -213,6 +213,10 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
     cJSON *block_chance = cJSON_GetObjectItem(obj, "block_chance");
     cJSON *block_reduction = cJSON_GetObjectItem(obj,
         "block_reduction_percent");
+    if (!block_reduction && item->type == ITEM_SHIELD) {
+        item_apply_legacy_shield_metadata(item);
+        return;
+    }
     if (!family && item->type == ITEM_WEAPON) {
         item_apply_legacy_metadata(item);
         cJSON *legacy_two_handed = cJSON_GetObjectItem(obj,
