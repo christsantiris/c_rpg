@@ -620,6 +620,10 @@ void game_repair_equipment_indices(GameState *g) {
     if (g->equipped_off_hand == g->equipped_main_hand) {
         g->equipped_off_hand = -1;
     }
+    if (g->equipped_main_hand >= 0 && g->equipped_off_hand >= 0 &&
+        g->inventory[g->equipped_main_hand].weapon_hands == WEAPON_HANDS_TWO) {
+        g->equipped_off_hand = -1;
+    }
     if (g->equipped_armor >= g->inventory_count ||
         (g->equipped_armor >= 0 &&
         g->inventory[g->equipped_armor].type != ITEM_ARMOR)) {
@@ -628,18 +632,57 @@ void game_repair_equipment_indices(GameState *g) {
     }
 }
 
+void game_unequip_main_hand(GameState *g) {
+    if (g->equipped_main_hand < 0 ||
+        g->equipped_main_hand >= g->inventory_count) {
+        g->equipped_main_hand = -1;
+        return;
+    }
+    g->player.attack -=
+        g->inventory[g->equipped_main_hand].attack_bonus;
+    g->equipped_main_hand = -1;
+}
+
+void game_unequip_off_hand(GameState *g) {
+    if (g->equipped_off_hand < 0 ||
+        g->equipped_off_hand >= g->inventory_count) {
+        g->equipped_off_hand = -1;
+        return;
+    }
+    g->player.attack -=
+        g->inventory[g->equipped_off_hand].attack_bonus;
+    g->equipped_off_hand = -1;
+}
+
+int game_equip_main_hand(GameState *g, int index) {
+    if (index < 0 || index >= g->inventory_count) {
+        return 0;
+    }
+    Item *weapon = &g->inventory[index];
+    if (weapon->type != ITEM_WEAPON ||
+        !item_class_allowed(weapon, g->player.player_class)) {
+        return 0;
+    }
+    if (g->equipped_off_hand == index ||
+        weapon->weapon_hands == WEAPON_HANDS_TWO) {
+        game_unequip_off_hand(g);
+    }
+    game_unequip_main_hand(g);
+    g->equipped_main_hand = index;
+    g->player.attack += weapon->attack_bonus;
+    return 1;
+}
+
 void game_remove_inventory_item(GameState *g, int index) {
     if (index < 0 || index >= g->inventory_count) {
         return;
     }
     Item *item = &g->inventory[index];
     if (g->equipped_main_hand == index) {
-        g->player.attack -= item->attack_bonus;
-        g->equipped_main_hand = -1;
+        game_unequip_main_hand(g);
     }
     if (g->equipped_off_hand == index) {
-        g->player.attack -= item->attack_bonus;
-        g->equipped_off_hand = -1;
+        game_unequip_off_hand(g);
     }
     if (g->equipped_armor == index) {
         game_remove_armor_bonuses(g, item);

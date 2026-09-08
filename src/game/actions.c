@@ -500,20 +500,10 @@ void action_resolve_player(GameState *g, Action a) {
         char msg[MAX_MESSAGE_LEN];
 
         if (item->type == ITEM_WEAPON) {
-            if (!item_class_allowed(item, g->player.player_class)) {
+            if (!game_equip_main_hand(g, idx)) {
                 push_message(g, "Your class cannot equip that");
                 return;
             }
-            if (g->equipped_armor == idx) {
-                g->equipped_armor = -1;
-            }
-            if (g->equipped_main_hand >= 0 &&
-                g->equipped_main_hand < g->inventory_count) {
-                g->player.attack -=
-                    g->inventory[g->equipped_main_hand].attack_bonus;
-            }
-            g->equipped_main_hand = idx;
-            g->player.attack  += item->attack_bonus;
             snprintf(msg, sizeof(msg), "Equipped %s", item->name);
             push_message(g, msg);
         } else if (item->type == ITEM_ARMOR) {
