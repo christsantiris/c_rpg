@@ -38,6 +38,7 @@ void shop_init(ShopScreen *s, ShopType type, int defeated_bosses) {
         s->items[s->item_count++] = item_make_dagger();
         s->items[s->item_count++] = item_make_leather_armor();
         s->items[s->item_count++] = item_make_chain_mail();
+        s->items[s->item_count++] = item_make_apprentice_robes();
 
         if (s->stock_tier >= 2) {
             s->items[s->item_count++] = item_make_long_sword();
@@ -45,16 +46,25 @@ void shop_init(ShopScreen *s, ShopType type, int defeated_bosses) {
             s->items[s->item_count++] = item_make_greatsword();
             s->items[s->item_count++] = item_make_longbow();
             s->items[s->item_count++] = item_make_runed_staff();
+            s->items[s->item_count++] = item_make_scale_mail();
+            s->items[s->item_count++] = item_make_studded_leather();
+            s->items[s->item_count++] = item_make_runed_robes();
         }
         if (s->stock_tier >= 3) {
             s->items[s->item_count++] = item_make_magic_long_sword();
             s->items[s->item_count++] = item_make_magic_battle_axe();
             s->items[s->item_count++] = item_make_magic_dagger();
+            s->items[s->item_count++] = item_make_plate_armor();
+            s->items[s->item_count++] = item_make_ranger_cloak();
+            s->items[s->item_count++] = item_make_enchanter_robes();
         }
         if (s->stock_tier >= 4) {
             s->items[s->item_count++] = item_make_magic_greatsword();
             s->items[s->item_count++] = item_make_magic_staff();
             s->items[s->item_count++] = item_make_magic_longbow();
+            s->items[s->item_count++] = item_make_magic_plate();
+            s->items[s->item_count++] = item_make_shadow_armor();
+            s->items[s->item_count++] = item_make_archmage_robes();
         }
     }
 }
