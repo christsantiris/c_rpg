@@ -30,6 +30,7 @@ void test_dain_quest(void);
 void test_alder_quest(void);
 void test_mara_quest(void);
 void test_quest_activation_gating(void);
+void test_save_load(void);
 
 int main(void) {
     // ASSERT("sanity check true",  1 == 1);
@@ -86,6 +87,8 @@ int main(void) {
     test_leveling();
     printf("\n");
     test_items();
+    printf("\n");
+    test_save_load();
     printf("\n");
     test_classes();
     printf("\n");

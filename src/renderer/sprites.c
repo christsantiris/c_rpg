@@ -201,7 +201,159 @@ void draw_coast_beacon(Renderer *r, int tile_x, int tile_y, int lit) {
     }
 }
 
-void draw_player(Renderer *r, int tile_x, int tile_y, PlayerClass player_class) {
+static void draw_weapon_line(Renderer *r, int bx, int by, int dx, int dy, int f1, int s1, int f2, int s2, SDL_Color color) {
+    int px = -dy;
+    int py = dx;
+    SDL_SetRenderDrawColor(r->sdl, color.r, color.g, color.b, color.a);
+    SDL_RenderDrawLine(r->sdl,
+        bx + dx * f1 + px * s1, by + dy * f1 + py * s1,
+        bx + dx * f2 + px * s2, by + dy * f2 + py * s2);
+}
+
+static int weapon_is_magic(const Item *weapon) {
+    switch (weapon->visual_id) {
+        case ITEM_VISUAL_MAGIC_LONG_SWORD:
+        case ITEM_VISUAL_MAGIC_BATTLE_AXE:
+        case ITEM_VISUAL_MAGIC_STAFF:
+        case ITEM_VISUAL_MAGIC_LONGBOW:
+        case ITEM_VISUAL_MAGIC_DAGGER:
+        case ITEM_VISUAL_MAGIC_GREATSWORD:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+static void draw_player_sword(Renderer *r, const Item *weapon, int bx, int by, int dx, int dy) {
+    int length = 10;
+    int width = 1;
+    if (weapon->visual_id == ITEM_VISUAL_SHORT_SWORD) {
+        length = 8;
+    } else if (weapon->weapon_family == WEAPON_FAMILY_DAGGER) {
+        length = 6;
+    } else if (weapon->visual_id == ITEM_VISUAL_GREATSWORD ||
+        weapon->visual_id == ITEM_VISUAL_MAGIC_GREATSWORD) {
+        length = 11;
+        width = 2;
+    }
+
+    int magic = weapon_is_magic(weapon);
+    SDL_Color glow = {78, 222, 244, 255};
+    SDL_Color blade = magic ? (SDL_Color){124, 151, 224, 255}
+        : (SDL_Color){181, 194, 204, 255};
+    SDL_Color edge = magic ? (SDL_Color){221, 250, 255, 255}
+        : (SDL_Color){235, 239, 241, 255};
+    SDL_Color guard = magic ? (SDL_Color){171, 91, 211, 255}
+        : (SDL_Color){205, 160, 60, 255};
+    SDL_Color grip = {78, 46, 31, 255};
+    if (weapon->visual_id == ITEM_VISUAL_RUSTY_SWORD) {
+        blade = (SDL_Color){151, 77, 45, 255};
+        edge = (SDL_Color){190, 105, 59, 255};
+    }
+
+    if (magic) {
+        draw_weapon_line(r, bx, by, dx, dy, 1, -width - 1,
+            length, -width - 1, glow);
+        draw_weapon_line(r, bx, by, dx, dy, 1, width + 1,
+            length, width + 1, glow);
+    }
+    for (int side = -width; side <= width; side++) {
+        draw_weapon_line(r, bx, by, dx, dy, 1, side, length, side,
+            side == -width ? edge : blade);
+    }
+    draw_weapon_line(r, bx, by, dx, dy, -4, 0, 0, 0, grip);
+    draw_weapon_line(r, bx, by, dx, dy, 0, -3, 0, 3, guard);
+    draw_weapon_line(r, bx, by, dx, dy, length, -width,
+        length + 1, 0, edge);
+    draw_weapon_line(r, bx, by, dx, dy, length, width,
+        length + 1, 0, edge);
+}
+
+static void draw_player_axe(Renderer *r, const Item *weapon, int bx, int by, int dx, int dy) {
+    int magic = weapon_is_magic(weapon);
+    SDL_Color glow = {78, 226, 246, 255};
+    SDL_Color handle = magic ? (SDL_Color){91, 48, 111, 255}
+        : (SDL_Color){115, 68, 36, 255};
+    SDL_Color head = magic ? (SDL_Color){113, 132, 207, 255}
+        : (SDL_Color){157, 169, 177, 255};
+    SDL_Color edge = magic ? (SDL_Color){217, 249, 255, 255}
+        : (SDL_Color){225, 231, 233, 255};
+    draw_weapon_line(r, bx, by, dx, dy, -4, 0, 9, 0, handle);
+    if (magic) {
+        draw_weapon_line(r, bx, by, dx, dy, 7, -5, 10, -3, glow);
+        draw_weapon_line(r, bx, by, dx, dy, 7, 5, 10, 3, glow);
+    }
+    draw_weapon_line(r, bx, by, dx, dy, 7, -4, 10, -2, head);
+    draw_weapon_line(r, bx, by, dx, dy, 7, 4, 10, 2, head);
+    draw_weapon_line(r, bx, by, dx, dy, 10, -2, 10, 2, edge);
+}
+
+static void draw_player_staff(Renderer *r, const Item *weapon, int bx, int by, int dx, int dy) {
+    int magic = weapon_is_magic(weapon);
+    int runed = weapon->visual_id == ITEM_VISUAL_RUNED_STAFF;
+    SDL_Color wood = magic ? (SDL_Color){99, 53, 122, 255} : runed
+        ? (SDL_Color){127, 108, 53, 255}
+        : (SDL_Color){119, 72, 38, 255};
+    SDL_Color gem = magic ? (SDL_Color){77, 223, 242, 255} : runed
+        ? (SDL_Color){104, 219, 132, 255}
+        : (SDL_Color){105, 181, 214, 255};
+    SDL_Color core = {219, 252, 255, 255};
+    draw_weapon_line(r, bx, by, dx, dy, -5, 0, 8, 0, wood);
+    draw_weapon_line(r, bx, by, dx, dy, 8, -2, 11, 0, gem);
+    draw_weapon_line(r, bx, by, dx, dy, 8, 2, 11, 0, gem);
+    draw_weapon_line(r, bx, by, dx, dy, 9, -1, 9, 1,
+        magic || runed ? core : gem);
+}
+
+static void draw_player_bow(Renderer *r, const Item *weapon, int bx, int by, int dx, int dy) {
+    int magic = weapon_is_magic(weapon);
+    int length = weapon->visual_id == ITEM_VISUAL_BOW ? 8 : 10;
+    SDL_Color wood = magic ? (SDL_Color){151, 101, 215, 255}
+        : (SDL_Color){151, 100, 48, 255};
+    SDL_Color string = magic ? (SDL_Color){208, 248, 255, 255}
+        : (SDL_Color){217, 214, 191, 255};
+    SDL_Color arrow = magic ? (SDL_Color){80, 228, 245, 255}
+        : (SDL_Color){190, 201, 204, 255};
+    draw_weapon_line(r, bx, by, dx, dy, -length / 2, 3, 0, -1, wood);
+    draw_weapon_line(r, bx, by, dx, dy, 0, -1, length / 2, 3, wood);
+    draw_weapon_line(r, bx, by, dx, dy, -length / 2, 3,
+        length / 2, 3, string);
+    draw_weapon_line(r, bx, by, dx, dy, -4, 0, length, 0, arrow);
+    draw_weapon_line(r, bx, by, dx, dy, length - 2, -2,
+        length, 0, arrow);
+    draw_weapon_line(r, bx, by, dx, dy, length - 2, 2,
+        length, 0, arrow);
+}
+
+static void draw_equipped_player_weapon(Renderer *r, const Item *weapon, int x, int y, int dx, int dy, int hand_side) {
+    if (!weapon || weapon->type != ITEM_WEAPON) {
+        return;
+    }
+    if (dx == 0 && dy == 0) {
+        dy = -1;
+    } else if (dx != 0) {
+        dx = dx < 0 ? -1 : 1;
+        dy = 0;
+    } else {
+        dy = dy < 0 ? -1 : 1;
+    }
+
+    int px = -dy;
+    int py = dx;
+    int bx = x + TILE_SIZE / 2 + px * 6 * hand_side;
+    int by = y + TILE_SIZE / 2 + 1 + py * 6 * hand_side;
+    if (weapon->weapon_family == WEAPON_FAMILY_AXE) {
+        draw_player_axe(r, weapon, bx, by, dx, dy);
+    } else if (weapon->weapon_family == WEAPON_FAMILY_STAFF) {
+        draw_player_staff(r, weapon, bx, by, dx, dy);
+    } else if (weapon->weapon_family == WEAPON_FAMILY_BOW) {
+        draw_player_bow(r, weapon, bx, by, dx, dy);
+    } else {
+        draw_player_sword(r, weapon, bx, by, dx, dy);
+    }
+}
+
+void draw_player(Renderer *r, int tile_x, int tile_y, PlayerClass player_class, const Item *main_hand, const Item *off_hand, int facing_dx, int facing_dy) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
     SDL_Color outline = {16, 18, 30, 255};
@@ -212,7 +364,6 @@ void draw_player(Renderer *r, int tile_x, int tile_y, PlayerClass player_class) 
     if (player_class == CLASS_MAGE) {
         SDL_Color robe = {42, 74, 154, 255};
         SDL_Color robe_hi = {72, 112, 220, 255};
-        SDL_Color magic = {62, 224, 232, 255};
         fill_rect(r, x+7, y+3, 10, 3, outline);
         fill_rect(r, x+5, y+6, 14, 7, robe);
         fill_rect(r, x+8, y+6, 8, 6, skin);
@@ -220,9 +371,6 @@ void draw_player(Renderer *r, int tile_x, int tile_y, PlayerClass player_class) 
         fill_rect(r, x+9, y+13, 6, 7, robe_hi);
         fill_rect(r, x+5, y+20, 5, 2, outline);
         fill_rect(r, x+14,y+20, 5, 2, outline);
-        fill_rect(r, x+2, y+7, 2, 14, leather);
-        fill_rect(r, x+1, y+4, 4, 4, magic);
-        fill_rect(r, x+2, y+3, 2, 2, (SDL_Color){188, 255, 250, 255});
     } else if (player_class == CLASS_ROGUE) {
         SDL_Color hood = {48, 88, 56, 255};
         SDL_Color cloth = {72, 104, 62, 255};
@@ -233,10 +381,6 @@ void draw_player(Renderer *r, int tile_x, int tile_y, PlayerClass player_class) 
         fill_rect(r, x+9, y+12, 3, 8, leather);
         fill_rect(r, x+5, y+20, 5, 2, outline);
         fill_rect(r, x+14,y+20, 5, 2, outline);
-        fill_rect(r, x+19,y+6, 2, 13, leather);
-        fill_rect(r, x+17,y+5, 4, 2, leather);
-        fill_rect(r, x+17,y+18,4, 2, leather);
-        fill_rect(r, x+18,y+8, 1, 9, steel);
     } else {
         SDL_Color blue = {48, 86, 184, 255};
         fill_rect(r, x+7, y+3, 10, 8, skin);
@@ -246,14 +390,9 @@ void draw_player(Renderer *r, int tile_x, int tile_y, PlayerClass player_class) 
         fill_rect(r, x+15,y+10, 4, 7, steel);
         fill_rect(r, x+8, y+20, 4, 2, outline);
         fill_rect(r, x+14,y+20, 4, 2, outline);
-        // Raised sword: pointed blade, crossguard, grip, and pommel.
-        fill_rect(r, x+20,y,   1,  2, (SDL_Color){232, 238, 242, 255});
-        fill_rect(r, x+19,y+2, 3, 14, steel);
-        fill_rect(r, x+20,y+2, 1, 13, (SDL_Color){224, 230, 232, 255});
-        fill_rect(r, x+17,y+16,7,  2, (SDL_Color){202, 158, 62, 255});
-        fill_rect(r, x+19,y+18,3,  4, leather);
-        fill_rect(r, x+18,y+22,5,  2, (SDL_Color){202, 158, 62, 255});
     }
+    draw_equipped_player_weapon(r, main_hand, x, y, facing_dx, facing_dy, 1);
+    draw_equipped_player_weapon(r, off_hand, x, y, facing_dx, facing_dy, -1);
 }
 
 void draw_stairs_up(Renderer *r, int tile_x, int tile_y) {

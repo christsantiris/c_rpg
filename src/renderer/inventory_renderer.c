@@ -1,5 +1,31 @@
 #include "inventory_renderer.h"
+#include "equipment_compare_renderer.h"
 #include "sprites.h"
+
+static int inventory_visible_rows(const Renderer *r) {
+    int list_top = 130;
+    int comparison_top = (r->tiles_y - 9) * TILE_SIZE;
+    int rows = (comparison_top - list_top - 12) / 36;
+    if (rows < 1) {
+        return 1;
+    }
+    return rows;
+}
+
+static int inventory_list_start(int selected, int count, int visible_rows) {
+    int start = selected - visible_rows + 1;
+    if (start < 0) {
+        start = 0;
+    }
+    int max_start = count - visible_rows;
+    if (max_start < 0) {
+        max_start = 0;
+    }
+    if (start > max_start) {
+        start = max_start;
+    }
+    return start;
+}
 
 void inventory_draw(Renderer *r, const GameState *g, const InventoryScreen *s) {
     int full_tiles_x = r->screen_w / TILE_SIZE;
@@ -18,7 +44,6 @@ void inventory_draw(Renderer *r, const GameState *g, const InventoryScreen *s) {
     }
 
     SDL_Color gold   = {220, 180,  60, 255};
-    SDL_Color green  = { 80, 160,  80, 255};
     SDL_Color dimmed = { 80,  80,  80, 255};
     SDL_Color hint   = { 50,  70,  50, 255};
     SDL_Color white  = {200, 200, 200, 255};
@@ -36,9 +61,24 @@ void inventory_draw(Renderer *r, const GameState *g, const InventoryScreen *s) {
     if (g->inventory_count == 0) {
         renderer_draw_text(r, "EMPTY", cx - 30, cy, dimmed, r->font_small);
     } else {
-        for (int i = 0; i < g->inventory_count; i++) {
+        int visible_rows = inventory_visible_rows(r);
+        int list_start = inventory_list_start(s->selected,
+            g->inventory_count, visible_rows);
+        int list_end = list_start + visible_rows;
+        if (list_end > g->inventory_count) {
+            list_end = g->inventory_count;
+        }
+        if (g->inventory_count > visible_rows) {
+            char range[32];
+            SDL_snprintf(range, sizeof(range), "%d-%d OF %d",
+                list_start + 1, list_end, g->inventory_count);
+            renderer_draw_text(r, range, cx + 90, 90, dimmed,
+                r->font_tiny);
+        }
+
+        for (int i = list_start; i < list_end; i++) {
             const Item *item = &g->inventory[i];
-            int item_y = 130 + i * 36;
+            int item_y = 130 + (i - list_start) * 36;
 
             char label[64];
             if (item->type == ITEM_POTION_HEALTH)
@@ -54,7 +94,9 @@ void inventory_draw(Renderer *r, const GameState *g, const InventoryScreen *s) {
 
             // Equipped indicator
             int is_equipped =
-                (item->type == ITEM_WEAPON && g->equipped_weapon == i) ||
+                (item->type == ITEM_WEAPON &&
+                    (g->equipped_main_hand == i ||
+                    g->equipped_off_hand == i)) ||
                 (item->type == ITEM_ARMOR && g->equipped_armor == i);
             SDL_Color color = is_equipped ? gold : white;
 
@@ -68,6 +110,19 @@ void inventory_draw(Renderer *r, const GameState *g, const InventoryScreen *s) {
                 if (is_equipped)
                     renderer_draw_text(r, "[E]", cx + 120, item_y, gold, r->font_small);
             }
+        }
+    }
+
+    if (s->selected >= 0 && s->selected < g->inventory_count) {
+        const Item *selected = &g->inventory[s->selected];
+        if (selected->type == ITEM_WEAPON) {
+            const Item *equipped = NULL;
+            if (g->equipped_main_hand >= 0 &&
+                g->equipped_main_hand < g->inventory_count) {
+                equipped = &g->inventory[g->equipped_main_hand];
+            }
+            draw_weapon_comparison(r, g, selected, equipped,
+                (r->tiles_y - 9) * TILE_SIZE);
         }
     }
 
