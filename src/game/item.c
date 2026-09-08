@@ -466,7 +466,7 @@ Item item_make_leather_armor(void) {
     it.defense_bonus = 2;
     it.value         = 60;
     set_armor_metadata(&it, ARMOR_FAMILY_LIGHT, ITEM_RARITY_COMMON,
-        ITEM_CLASS_ROGUE, ITEM_VISUAL_LEATHER_ARMOR);
+        ITEM_CLASS_ALL, ITEM_VISUAL_LEATHER_ARMOR);
     return it;
 }
 
