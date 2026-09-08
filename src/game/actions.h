@@ -1,6 +1,8 @@
 #ifndef ACTION_HEADER_H
 #define ACTION_HEADER_H
 
+#include "item.h"
+
 typedef enum {
     ACTION_NONE,
     ACTION_MOVE,
@@ -19,5 +21,7 @@ typedef struct {
     ActionType type;
     int        target_x, target_y;
 } Action;
+
+Item random_weapon(int level);
 
 #endif
