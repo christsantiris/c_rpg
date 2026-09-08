@@ -1,11 +1,21 @@
 #include "shop.h"
 #include <SDL2/SDL.h>
 
-void shop_init(ShopScreen *s, ShopType type) {
-    s->selected   = 0;
-    s->type       = type;
+static int defeated_boss_count(int defeated_bosses) {
+    int count = 0;
+    while (defeated_bosses) {
+        count += defeated_bosses & 1;
+        defeated_bosses >>= 1;
+    }
+    return count;
+}
+
+void shop_init(ShopScreen *s, ShopType type, int defeated_bosses) {
+    s->selected = 0;
+    s->type = type;
     s->item_count = 0;
     s->mode = 0;
+    s->stock_tier = 0;
 
     if (type == SHOP_TYPE_ALCHEMIST) {
         s->items[s->item_count++] = item_make_health_potion();
@@ -15,14 +25,37 @@ void shop_init(ShopScreen *s, ShopType type) {
         s->items[s->item_count++] = item_make_scroll_heal();
     }
     if (type == SHOP_TYPE_BLACKSMITH) {
+        int boss_count = defeated_boss_count(defeated_bosses);
+        s->stock_tier = boss_count + 1;
+        if (s->stock_tier > 4) {
+            s->stock_tier = 4;
+        }
+
         s->items[s->item_count++] = item_make_rusty_sword();
         s->items[s->item_count++] = item_make_short_sword();
-        s->items[s->item_count++] = item_make_long_sword();
-        s->items[s->item_count++] = item_make_battle_axe();
         s->items[s->item_count++] = item_make_staff();
         s->items[s->item_count++] = item_make_bow();
+        s->items[s->item_count++] = item_make_dagger();
         s->items[s->item_count++] = item_make_leather_armor();
         s->items[s->item_count++] = item_make_chain_mail();
+
+        if (s->stock_tier >= 2) {
+            s->items[s->item_count++] = item_make_long_sword();
+            s->items[s->item_count++] = item_make_battle_axe();
+            s->items[s->item_count++] = item_make_greatsword();
+            s->items[s->item_count++] = item_make_longbow();
+            s->items[s->item_count++] = item_make_runed_staff();
+        }
+        if (s->stock_tier >= 3) {
+            s->items[s->item_count++] = item_make_magic_long_sword();
+            s->items[s->item_count++] = item_make_magic_battle_axe();
+            s->items[s->item_count++] = item_make_magic_dagger();
+        }
+        if (s->stock_tier >= 4) {
+            s->items[s->item_count++] = item_make_magic_greatsword();
+            s->items[s->item_count++] = item_make_magic_staff();
+            s->items[s->item_count++] = item_make_magic_longbow();
+        }
     }
 }
 

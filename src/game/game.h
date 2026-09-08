@@ -100,7 +100,8 @@ typedef struct {
     int max_coast_level_reached;
     Item      inventory[MAX_INVENTORY];
     int       inventory_count;
-    int       equipped_weapon;
+    int       equipped_main_hand;
+    int       equipped_off_hand;
     int       equipped_armor;
     int       gold;
     FloorItem floor_items[MAX_FLOOR_ITEMS];

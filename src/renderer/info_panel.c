@@ -118,13 +118,21 @@ void info_panel_draw(Renderer *r, const GameState *g) {
     int grid_y1 = y;
     int grid_y2 = y + ICON_SIZE + 6;
 
-    // Slot 1: Weapon (top-left)
+    // Slot 1: Main hand (top-left)
     draw_icon_empty_slot(r, grid_x1, grid_y1);
-    if (g->equipped_weapon >= 0 && g->equipped_weapon < g->inventory_count)
-        draw_icon_weapon(r, grid_x1, grid_y1);
+    if (g->equipped_main_hand >= 0 &&
+        g->equipped_main_hand < g->inventory_count) {
+        draw_icon_weapon(r, grid_x1, grid_y1,
+            &g->inventory[g->equipped_main_hand]);
+    }
 
     // Slot 2: Off-hand (top-right)
     draw_icon_empty_slot(r, grid_x2, grid_y1);
+    if (g->equipped_off_hand >= 0 &&
+        g->equipped_off_hand < g->inventory_count) {
+        draw_icon_weapon(r, grid_x2, grid_y1,
+            &g->inventory[g->equipped_off_hand]);
+    }
 
     // Slot 3: Armor (bottom-left)
     draw_icon_empty_slot(r, grid_x1, grid_y2);

@@ -24,7 +24,7 @@ void draw_coast_shallow_water(Renderer *r, int tile_x, int tile_y);
 void draw_coast_deep_water(Renderer *r, int tile_x, int tile_y);
 void draw_coast_tide_control(Renderer *r, int tile_x, int tile_y);
 void draw_coast_beacon(Renderer *r, int tile_x, int tile_y, int lit);
-void draw_player(Renderer *r, int tile_x, int tile_y, PlayerClass player_class);
+void draw_player(Renderer *r, int tile_x, int tile_y, PlayerClass player_class, const Item *main_hand, const Item *off_hand, int facing_dx, int facing_dy);
 void draw_stairs_up(Renderer *r, int tile_x, int tile_y);
 void draw_stairs_down(Renderer *r, int tile_x, int tile_y);
 void draw_return_exit(Renderer *r, int tile_x, int tile_y);

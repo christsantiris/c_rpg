@@ -13,6 +13,55 @@ typedef enum {
     ITEM_SCROLL
 } ItemType;
 
+typedef enum {
+    WEAPON_FAMILY_NONE = 0,
+    WEAPON_FAMILY_SWORD,
+    WEAPON_FAMILY_AXE,
+    WEAPON_FAMILY_BOW,
+    WEAPON_FAMILY_STAFF,
+    WEAPON_FAMILY_DAGGER
+} WeaponFamily;
+
+typedef enum {
+    WEAPON_HANDS_NONE = 0,
+    WEAPON_HANDS_ONE,
+    WEAPON_HANDS_TWO
+} WeaponHands;
+
+typedef enum {
+    ITEM_RARITY_COMMON = 0,
+    ITEM_RARITY_UNCOMMON,
+    ITEM_RARITY_RARE
+} ItemRarity;
+
+typedef enum {
+    ITEM_CLASS_WARRIOR = 1 << 0,
+    ITEM_CLASS_MAGE = 1 << 1,
+    ITEM_CLASS_ROGUE = 1 << 2,
+    ITEM_CLASS_ALL = ITEM_CLASS_WARRIOR | ITEM_CLASS_MAGE | ITEM_CLASS_ROGUE
+} ItemClassMask;
+
+typedef enum {
+    ITEM_VISUAL_NONE = 0,
+    ITEM_VISUAL_WEAPON_GENERIC,
+    ITEM_VISUAL_RUSTY_SWORD,
+    ITEM_VISUAL_SHORT_SWORD,
+    ITEM_VISUAL_LONG_SWORD,
+    ITEM_VISUAL_BATTLE_AXE,
+    ITEM_VISUAL_STAFF,
+    ITEM_VISUAL_BOW,
+    ITEM_VISUAL_DAGGER,
+    ITEM_VISUAL_GREATSWORD,
+    ITEM_VISUAL_MAGIC_GREATSWORD,
+    ITEM_VISUAL_LONGBOW,
+    ITEM_VISUAL_MAGIC_LONGBOW,
+    ITEM_VISUAL_MAGIC_STAFF,
+    ITEM_VISUAL_MAGIC_LONG_SWORD,
+    ITEM_VISUAL_MAGIC_DAGGER,
+    ITEM_VISUAL_MAGIC_BATTLE_AXE,
+    ITEM_VISUAL_RUNED_STAFF
+} ItemVisualId;
+
 typedef struct {
     int      active;
     ItemType type;
@@ -25,7 +74,16 @@ typedef struct {
     int      spell_id;
     int is_ranged;
     int range;
-    int is_two_handed;
+    WeaponFamily weapon_family;
+    WeaponHands weapon_hands;
+    ItemRarity rarity;
+    int class_mask;
+    ItemVisualId visual_id;
+    int critical_chance_bonus;
+    int cleave_percent;
+    int pierces_targets;
+    int spell_power_bonus;
+    int armor_penetration_percent;
 } Item;
 
 typedef struct {
@@ -48,11 +106,26 @@ Item item_make_scroll_return_to_town(void);
 Item item_make_rusty_sword(void);
 Item item_make_short_sword(void);
 Item item_make_long_sword(void);
+Item item_make_magic_long_sword(void);
 Item item_make_battle_axe(void);
+Item item_make_magic_battle_axe(void);
 Item item_make_staff(void);
+Item item_make_runed_staff(void);
+Item item_make_magic_staff(void);
 Item item_make_bow(void);
+Item item_make_longbow(void);
+Item item_make_magic_longbow(void);
+Item item_make_dagger(void);
+Item item_make_magic_dagger(void);
+Item item_make_greatsword(void);
+Item item_make_magic_greatsword(void);
 
 Item item_make_leather_armor(void);
 Item item_make_chain_mail(void);
+void item_apply_legacy_metadata(Item *item);
+int item_class_allowed(const Item *item, int player_class);
+const char *item_class_label(const Item *item);
+const char *item_hands_label(const Item *item);
+const char *item_rarity_label(const Item *item);
 
 #endif

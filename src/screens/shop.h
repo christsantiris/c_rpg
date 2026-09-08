@@ -3,7 +3,7 @@
 
 #include "../game/item.h"
 
-#define MAX_SHOP_ITEMS 8
+#define MAX_SHOP_ITEMS 18
 
 typedef enum {
     SHOP_NONE = 0,
@@ -18,14 +18,15 @@ typedef enum {
 } ShopType;
 
 typedef struct {
-    int      selected;
+    int selected;
     ShopType type;
-    Item     items[MAX_SHOP_ITEMS];
-    int      item_count;
+    Item items[MAX_SHOP_ITEMS];
+    int item_count;
     int mode; // 0 = buy, 1 = sell
+    int stock_tier;
 } ShopScreen;
 
-void       shop_init(ShopScreen *s, ShopType type);
+void shop_init(ShopScreen *s, ShopType type, int defeated_bosses);
 ShopResult shop_handle_key(ShopScreen *s, int scancode);
 
 #endif

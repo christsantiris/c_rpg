@@ -196,10 +196,60 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count) {
     }
 }
 
+static void deserialize_item_metadata(const cJSON *obj, Item *item) {
+    cJSON *family = cJSON_GetObjectItem(obj, "weapon_family");
+    cJSON *critical = cJSON_GetObjectItem(obj, "critical_chance_bonus");
+    cJSON *cleave = cJSON_GetObjectItem(obj, "cleave_percent");
+    cJSON *piercing = cJSON_GetObjectItem(obj, "pierces_targets");
+    cJSON *spell_power = cJSON_GetObjectItem(obj, "spell_power_bonus");
+    cJSON *armor_penetration = cJSON_GetObjectItem(obj,
+        "armor_penetration_percent");
+    if (!family && item->type == ITEM_WEAPON) {
+        item_apply_legacy_metadata(item);
+        cJSON *legacy_two_handed = cJSON_GetObjectItem(obj,
+            "is_two_handed");
+        if (legacy_two_handed && legacy_two_handed->valueint) {
+            item->weapon_hands = WEAPON_HANDS_TWO;
+        }
+        if (critical) {
+            item->critical_chance_bonus = critical->valueint;
+        }
+        if (cleave) {
+            item->cleave_percent = cleave->valueint;
+        }
+        if (piercing) {
+            item->pierces_targets = piercing->valueint;
+        }
+        if (spell_power) {
+            item->spell_power_bonus = spell_power->valueint;
+        }
+        if (armor_penetration) {
+            item->armor_penetration_percent =
+                armor_penetration->valueint;
+        }
+        return;
+    }
+    cJSON *hands = cJSON_GetObjectItem(obj, "weapon_hands");
+    cJSON *rarity = cJSON_GetObjectItem(obj, "rarity");
+    cJSON *class_mask = cJSON_GetObjectItem(obj, "class_mask");
+    cJSON *visual_id = cJSON_GetObjectItem(obj, "visual_id");
+    item->weapon_family = family ? family->valueint : WEAPON_FAMILY_NONE;
+    item->weapon_hands = hands ? hands->valueint : WEAPON_HANDS_NONE;
+    item->rarity = rarity ? rarity->valueint : ITEM_RARITY_COMMON;
+    item->class_mask = class_mask ? class_mask->valueint : 0;
+    item->visual_id = visual_id ? visual_id->valueint : ITEM_VISUAL_NONE;
+    item->critical_chance_bonus = critical ? critical->valueint : 0;
+    item->cleave_percent = cleave ? cleave->valueint : 0;
+    item->pierces_targets = piercing ? piercing->valueint : 0;
+    item->spell_power_bonus = spell_power ? spell_power->valueint : 0;
+    item->armor_penetration_percent = armor_penetration
+        ? armor_penetration->valueint : 0;
+}
+
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 30);
+    cJSON_AddNumberToObject(root, "save_version", 38);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -252,7 +302,10 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "message_count",     g->message_count);
     cJSON_AddNumberToObject(root, "gold",              g->gold);
     cJSON_AddNumberToObject(root, "score",             g->score);
-    cJSON_AddNumberToObject(root, "equipped_weapon",   g->equipped_weapon);
+    cJSON_AddNumberToObject(root, "equipped_main_hand",
+        g->equipped_main_hand);
+    cJSON_AddNumberToObject(root, "equipped_off_hand",
+        g->equipped_off_hand);
     cJSON_AddNumberToObject(root, "equipped_armor",    g->equipped_armor);
     cJSON_AddNumberToObject(root, "location",          g->location);
     cJSON_AddNumberToObject(root, "dungeon_key_found", g->dungeon_key_found);
@@ -304,7 +357,20 @@ int save_game(const GameState *g, int slot) {
         cJSON_AddNumberToObject(it, "spell_id",      item->spell_id);
         cJSON_AddNumberToObject(it, "is_ranged",     item->is_ranged);
         cJSON_AddNumberToObject(it, "range",         item->range);
-        cJSON_AddNumberToObject(it, "is_two_handed", item->is_two_handed);
+        cJSON_AddNumberToObject(it, "weapon_family", item->weapon_family);
+        cJSON_AddNumberToObject(it, "weapon_hands",  item->weapon_hands);
+        cJSON_AddNumberToObject(it, "rarity",        item->rarity);
+        cJSON_AddNumberToObject(it, "class_mask",    item->class_mask);
+        cJSON_AddNumberToObject(it, "visual_id",     item->visual_id);
+        cJSON_AddNumberToObject(it, "critical_chance_bonus",
+            item->critical_chance_bonus);
+        cJSON_AddNumberToObject(it, "cleave_percent", item->cleave_percent);
+        cJSON_AddNumberToObject(it, "pierces_targets",
+            item->pierces_targets);
+        cJSON_AddNumberToObject(it, "spell_power_bonus",
+            item->spell_power_bonus);
+        cJSON_AddNumberToObject(it, "armor_penetration_percent",
+            item->armor_penetration_percent);
         cJSON_AddItemToArray(inventory, it);
     }
     cJSON_AddItemToObject(root, "inventory", inventory);
@@ -331,7 +397,22 @@ int save_game(const GameState *g, int slot) {
         cJSON_AddNumberToObject(it, "spell_id",      fi->item.spell_id);
         cJSON_AddNumberToObject(it, "is_ranged",     fi->item.is_ranged);
         cJSON_AddNumberToObject(it, "range",         fi->item.range);
-        cJSON_AddNumberToObject(it, "is_two_handed", fi->item.is_two_handed);
+        cJSON_AddNumberToObject(it, "weapon_family",
+            fi->item.weapon_family);
+        cJSON_AddNumberToObject(it, "weapon_hands", fi->item.weapon_hands);
+        cJSON_AddNumberToObject(it, "rarity", fi->item.rarity);
+        cJSON_AddNumberToObject(it, "class_mask", fi->item.class_mask);
+        cJSON_AddNumberToObject(it, "visual_id", fi->item.visual_id);
+        cJSON_AddNumberToObject(it, "critical_chance_bonus",
+            fi->item.critical_chance_bonus);
+        cJSON_AddNumberToObject(it, "cleave_percent",
+            fi->item.cleave_percent);
+        cJSON_AddNumberToObject(it, "pierces_targets",
+            fi->item.pierces_targets);
+        cJSON_AddNumberToObject(it, "spell_power_bonus",
+            fi->item.spell_power_bonus);
+        cJSON_AddNumberToObject(it, "armor_penetration_percent",
+            fi->item.armor_penetration_percent);
         cJSON_AddItemToObject(f, "item", it);
         cJSON_AddItemToArray(floor_items, f);
     }
@@ -501,7 +582,13 @@ int load_game(GameState *g, int slot) {
     g->message_count     = cJSON_GetObjectItem(root, "message_count")->valueint;
     g->gold              = cJSON_GetObjectItem(root, "gold")->valueint;
     g->score             = cJSON_GetObjectItem(root, "score")->valueint;
-    g->equipped_weapon   = cJSON_GetObjectItem(root, "equipped_weapon")->valueint;
+    cJSON *main_hand = cJSON_GetObjectItem(root, "equipped_main_hand");
+    cJSON *off_hand = cJSON_GetObjectItem(root, "equipped_off_hand");
+    // Saves before version 31 stored the main-hand index as equipped_weapon.
+    cJSON *legacy_weapon = cJSON_GetObjectItem(root, "equipped_weapon");
+    g->equipped_main_hand = main_hand ? main_hand->valueint :
+        (legacy_weapon ? legacy_weapon->valueint : -1);
+    g->equipped_off_hand = off_hand ? off_hand->valueint : -1;
     g->equipped_armor    = cJSON_GetObjectItem(root, "equipped_armor")->valueint;
     g->location          = cJSON_GetObjectItem(root, "location")->valueint;
     cJSON *key_found = cJSON_GetObjectItem(root, "dungeon_key_found");
@@ -589,7 +676,7 @@ int load_game(GameState *g, int slot) {
         item->spell_id      = cJSON_GetObjectItem(it, "spell_id")->valueint;
         item->is_ranged     = cJSON_GetObjectItem(it, "is_ranged")->valueint;
         item->range         = cJSON_GetObjectItem(it, "range")->valueint;
-        item->is_two_handed = cJSON_GetObjectItem(it, "is_two_handed")->valueint;
+        deserialize_item_metadata(it, item);
     }
     game_repair_equipment_indices(g);
 
@@ -620,7 +707,7 @@ int load_game(GameState *g, int slot) {
         fi->item.spell_id      = cJSON_GetObjectItem(it, "spell_id")->valueint;
         fi->item.is_ranged     = cJSON_GetObjectItem(it, "is_ranged")->valueint;
         fi->item.range         = cJSON_GetObjectItem(it, "range")->valueint;
-        fi->item.is_two_handed = cJSON_GetObjectItem(it, "is_two_handed")->valueint;
+        deserialize_item_metadata(it, &fi->item);
     }
 
     // Current map
@@ -1189,6 +1276,33 @@ int load_game(GameState *g, int slot) {
         g->level_cleared = 0;
         g->player.x = g->map.stairs_up_x;
         g->player.y = g->map.stairs_up_y;
+    }
+
+    // Version 38 rebalances named weapons. Update legacy inventory and floor
+    // items, then preserve the correct equipped attack total.
+    if (save_version < 38) {
+        int old_attack_bonus = 0;
+        if (g->equipped_main_hand >= 0 &&
+            g->equipped_main_hand < g->inventory_count) {
+            old_attack_bonus =
+                g->inventory[g->equipped_main_hand].attack_bonus;
+        }
+        for (int i = 0; i < g->inventory_count; i++) {
+            if (g->inventory[i].type == ITEM_WEAPON) {
+                item_apply_legacy_metadata(&g->inventory[i]);
+            }
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            if (g->floor_items[i].item.type == ITEM_WEAPON) {
+                item_apply_legacy_metadata(&g->floor_items[i].item);
+            }
+        }
+        if (g->equipped_main_hand >= 0 &&
+            g->equipped_main_hand < g->inventory_count) {
+            int new_attack_bonus =
+                g->inventory[g->equipped_main_hand].attack_bonus;
+            g->player.attack += new_attack_bonus - old_attack_bonus;
+        }
     }
 
     cJSON_Delete(root);
