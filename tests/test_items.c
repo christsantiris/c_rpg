@@ -223,31 +223,35 @@ void test_items(void) {
     ShopScreen shop;
     shop_init(&shop, SHOP_TYPE_BLACKSMITH, 0);
     ASSERT("new characters see only tier-one blacksmith stock",
-        shop.stock_tier == 1 && shop.item_count == 8 &&
+        shop.stock_tier == 1 && shop.item_count == 9 &&
         shop_has_item(&shop, "Apprentice Robes") &&
+        shop_has_item(&shop, "Buckler") &&
         !shop_has_item(&shop, "Long Sword"));
     shop_init(&shop, SHOP_TYPE_BLACKSMITH, 1 << LOCATION_DUNGEON);
     ASSERT("one defeated boss unlocks uncommon weapons",
-        shop.stock_tier == 2 && shop.item_count == 16 &&
+        shop.stock_tier == 2 && shop.item_count == 18 &&
         shop_has_item(&shop, "Greatsword") &&
         shop_has_item(&shop, "Runed Staff") &&
         shop_has_item(&shop, "Studded Leather") &&
+        shop_has_item(&shop, "Kite Shield") &&
         !shop_has_item(&shop, "Magic Dagger"));
     shop_init(&shop, SHOP_TYPE_BLACKSMITH,
         (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST));
     ASSERT("two defeated bosses unlock all magical weapons",
-        shop.stock_tier == 3 && shop.item_count == 25 &&
+        shop.stock_tier == 3 && shop.item_count == 29 &&
         shop_has_item(&shop, "Magic Battle Axe") &&
         shop_has_item(&shop, "Enchanter Robes") &&
         shop_has_item(&shop, "Magic Greatsword") &&
         shop_has_item(&shop, "Magic Staff") &&
         shop_has_item(&shop, "Magic Longbow") &&
+        shop_has_item(&shop, "Tower Shield") &&
+        shop_has_item(&shop, "Magic Shield") &&
         !shop_has_item(&shop, "Magic Plate"));
     shop_init(&shop, SHOP_TYPE_BLACKSMITH,
         (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) |
         (1 << LOCATION_MOUNTAINS));
     ASSERT("three defeated bosses unlock capstone armor",
-        shop.stock_tier == 4 && shop.item_count == 28 &&
+        shop.stock_tier == 4 && shop.item_count == 32 &&
         shop_has_item(&shop, "Magic Greatsword") &&
         shop_has_item(&shop, "Magic Staff") &&
         shop_has_item(&shop, "Magic Longbow") &&
@@ -287,6 +291,27 @@ void test_items(void) {
     ASSERT("mage armor culminates in Archmage Robes",
         armor_catalog[11].max_mp_bonus == 60 &&
         armor_catalog[11].spell_cost_reduction_percent == 20);
+
+    Item shield_catalog[4] = {
+        item_make_buckler(), item_make_kite_shield(),
+        item_make_tower_shield(), item_make_magic_shield()
+    };
+    ASSERT("Buckler supports Warrior and Rogue builds",
+        shield_catalog[0].type == ITEM_SHIELD &&
+        shield_catalog[0].class_mask ==
+            (ITEM_CLASS_WARRIOR | ITEM_CLASS_ROGUE));
+    ASSERT("shield tiers increase defense and block chance",
+        shield_catalog[0].defense_bonus < shield_catalog[1].defense_bonus &&
+        shield_catalog[1].defense_bonus < shield_catalog[2].defense_bonus &&
+        shield_catalog[2].defense_bonus < shield_catalog[3].defense_bonus &&
+        shield_catalog[0].block_chance < shield_catalog[1].block_chance &&
+        shield_catalog[1].block_chance < shield_catalog[2].block_chance &&
+        shield_catalog[2].block_chance < shield_catalog[3].block_chance);
+    ASSERT("all shields block half of post-defense damage",
+        shield_catalog[0].block_reduction_percent == 50 &&
+        shield_catalog[1].block_reduction_percent == 50 &&
+        shield_catalog[2].block_reduction_percent == 50 &&
+        shield_catalog[3].block_reduction_percent == 50);
 
     // --- Regular enemy and boss drops ---
     srand(7);

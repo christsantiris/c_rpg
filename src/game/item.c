@@ -17,6 +17,13 @@ static void set_armor_metadata(Item *it, ArmorFamily family, ItemRarity rarity, 
     it->visual_id = visual_id;
 }
 
+static void set_shield_metadata(Item *it, ItemRarity rarity, int class_mask, ItemVisualId visual_id) {
+    it->rarity = rarity;
+    it->class_mask = class_mask;
+    it->visual_id = visual_id;
+    it->block_reduction_percent = 50;
+}
+
 Item item_make_health_potion(void) {
     Item it = {0};
     it.active  = 1;
@@ -632,6 +639,74 @@ Item item_make_tidecaller_robes(void) {
     set_armor_metadata(&it, ARMOR_FAMILY_ROBE, ITEM_RARITY_RARE,
         ITEM_CLASS_MAGE, ITEM_VISUAL_ENCHANTER_ROBES);
     return it;
+}
+
+Item item_make_buckler(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_SHIELD;
+    strncpy(it.name, "Buckler", sizeof(it.name) - 1);
+    it.defense_bonus = 2;
+    it.block_chance = 10;
+    it.value = 75;
+    set_shield_metadata(&it, ITEM_RARITY_COMMON,
+        ITEM_CLASS_WARRIOR | ITEM_CLASS_ROGUE, ITEM_VISUAL_BUCKLER);
+    return it;
+}
+
+Item item_make_kite_shield(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_SHIELD;
+    strncpy(it.name, "Kite Shield", sizeof(it.name) - 1);
+    it.defense_bonus = 4;
+    it.block_chance = 15;
+    it.value = 300;
+    set_shield_metadata(&it, ITEM_RARITY_UNCOMMON, ITEM_CLASS_WARRIOR,
+        ITEM_VISUAL_KITE_SHIELD);
+    return it;
+}
+
+Item item_make_tower_shield(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_SHIELD;
+    strncpy(it.name, "Tower Shield", sizeof(it.name) - 1);
+    it.defense_bonus = 7;
+    it.block_chance = 20;
+    it.value = 700;
+    set_shield_metadata(&it, ITEM_RARITY_RARE, ITEM_CLASS_WARRIOR,
+        ITEM_VISUAL_TOWER_SHIELD);
+    return it;
+}
+
+Item item_make_magic_shield(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_SHIELD;
+    strncpy(it.name, "Magic Shield", sizeof(it.name) - 1);
+    it.defense_bonus = 9;
+    it.block_chance = 25;
+    it.value = 1250;
+    set_shield_metadata(&it, ITEM_RARITY_RARE, ITEM_CLASS_WARRIOR,
+        ITEM_VISUAL_MAGIC_SHIELD);
+    return it;
+}
+
+void item_apply_legacy_shield_metadata(Item *item) {
+    Item definition = {0};
+    if (strcmp(item->name, "Buckler") == 0) {
+        definition = item_make_buckler();
+    } else if (strcmp(item->name, "Kite Shield") == 0) {
+        definition = item_make_kite_shield();
+    } else if (strcmp(item->name, "Tower Shield") == 0) {
+        definition = item_make_tower_shield();
+    } else if (strcmp(item->name, "Magic Shield") == 0) {
+        definition = item_make_magic_shield();
+    } else {
+        return;
+    }
+    *item = definition;
 }
 
 Item item_make_scroll_magic_arrow(void) {

@@ -80,7 +80,11 @@ typedef enum {
     ITEM_VISUAL_RUNED_ROBES,
     ITEM_VISUAL_ENCHANTER_ROBES,
     ITEM_VISUAL_ARCHMAGE_ROBES,
-    ITEM_VISUAL_SHIELD_GENERIC
+    ITEM_VISUAL_SHIELD_GENERIC,
+    ITEM_VISUAL_BUCKLER,
+    ITEM_VISUAL_KITE_SHIELD,
+    ITEM_VISUAL_TOWER_SHIELD,
+    ITEM_VISUAL_MAGIC_SHIELD
 } ItemVisualId;
 
 typedef struct {
@@ -164,8 +168,13 @@ Item item_make_enchanter_robes(void);
 Item item_make_archmage_robes(void);
 Item item_make_necromancer_cloak(void);
 Item item_make_tidecaller_robes(void);
+Item item_make_buckler(void);
+Item item_make_kite_shield(void);
+Item item_make_tower_shield(void);
+Item item_make_magic_shield(void);
 void item_apply_legacy_metadata(Item *item);
 void item_apply_legacy_armor_metadata(Item *item);
+void item_apply_legacy_shield_metadata(Item *item);
 int item_class_allowed(const Item *item, int player_class);
 const char *item_class_label(const Item *item);
 const char *item_hands_label(const Item *item);
