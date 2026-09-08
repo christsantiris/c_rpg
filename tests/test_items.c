@@ -235,15 +235,18 @@ void test_items(void) {
         !shop_has_item(&shop, "Magic Dagger"));
     shop_init(&shop, SHOP_TYPE_BLACKSMITH,
         (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST));
-    ASSERT("two defeated bosses unlock rare specialist weapons",
-        shop.stock_tier == 3 && shop.item_count == 22 &&
+    ASSERT("two defeated bosses unlock all magical weapons",
+        shop.stock_tier == 3 && shop.item_count == 25 &&
         shop_has_item(&shop, "Magic Battle Axe") &&
         shop_has_item(&shop, "Enchanter Robes") &&
-        !shop_has_item(&shop, "Magic Greatsword"));
+        shop_has_item(&shop, "Magic Greatsword") &&
+        shop_has_item(&shop, "Magic Staff") &&
+        shop_has_item(&shop, "Magic Longbow") &&
+        !shop_has_item(&shop, "Magic Plate"));
     shop_init(&shop, SHOP_TYPE_BLACKSMITH,
         (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) |
         (1 << LOCATION_MOUNTAINS));
-    ASSERT("three defeated bosses unlock capstone weapons",
+    ASSERT("three defeated bosses unlock capstone armor",
         shop.stock_tier == 4 && shop.item_count == 28 &&
         shop_has_item(&shop, "Magic Greatsword") &&
         shop_has_item(&shop, "Magic Staff") &&
@@ -285,65 +288,70 @@ void test_items(void) {
         armor_catalog[11].max_mp_bonus == 60 &&
         armor_catalog[11].spell_cost_reduction_percent == 20);
 
-    // --- Class-agnostic weapon drops ---
+    // --- Regular enemy and boss drops ---
     srand(7);
-    int early_common_only = 1;
-    int early_classes = 0;
-    for (int i = 0; i < 500; i++) {
-        Item drop = random_weapon(2);
-        early_common_only &= drop.rarity == ITEM_RARITY_COMMON;
-        early_classes |= drop.class_mask;
+    int regular_drops_are_consumables = 1;
+    int regular_drops_include_potions = 0;
+    int regular_drops_include_scrolls = 0;
+    for (int level = 1; level <= 8; level++) {
+        for (int i = 0; i < 500; i++) {
+            Item drop = random_enemy_item(level);
+            regular_drops_are_consumables &=
+                drop.type == ITEM_POTION_HEALTH ||
+                drop.type == ITEM_POTION_MANA ||
+                drop.type == ITEM_SCROLL;
+            regular_drops_include_potions |=
+                drop.type == ITEM_POTION_HEALTH ||
+                drop.type == ITEM_POTION_MANA;
+            regular_drops_include_scrolls |= drop.type == ITEM_SCROLL;
+        }
     }
-    ASSERT("early weapon drops contain only common equipment",
-        early_common_only);
-    ASSERT("early weapon drops are not filtered to one class",
-        early_classes == ITEM_CLASS_ALL);
+    ASSERT("regular enemies cannot drop weapons or armor",
+        regular_drops_are_consumables);
+    ASSERT("regular enemies retain potion drops",
+        regular_drops_include_potions);
+    ASSERT("regular enemies retain scroll drops",
+        regular_drops_include_scrolls);
 
-    int mid_has_uncommon = 0;
-    int mid_has_rare = 0;
-    for (int i = 0; i < 500; i++) {
-        Item drop = random_weapon(5);
-        mid_has_uncommon |= drop.rarity == ITEM_RARITY_UNCOMMON;
-        mid_has_rare |= drop.rarity == ITEM_RARITY_RARE;
-    }
-    ASSERT("middle stages introduce uncommon weapon drops",
-        mid_has_uncommon && !mid_has_rare);
-
-    int deep_classes = 0;
-    int deep_has_specialist_magic = 0;
-    int deep_has_capstone_magic = 0;
-    for (int i = 0; i < 1000; i++) {
-        Item drop = random_weapon(8);
-        deep_classes |= drop.class_mask;
-        deep_has_specialist_magic |=
-            strcmp(drop.name, "Magic Long Sword") == 0 ||
-            strcmp(drop.name, "Magic Battle Axe") == 0 ||
-            strcmp(drop.name, "Magic Dagger") == 0;
-        deep_has_capstone_magic |=
-            strcmp(drop.name, "Magic Greatsword") == 0 ||
-            strcmp(drop.name, "Magic Staff") == 0 ||
-            strcmp(drop.name, "Magic Longbow") == 0;
-    }
-    ASSERT("deep drops include specialist and capstone magic weapons",
-        deep_has_specialist_magic && deep_has_capstone_magic);
-    ASSERT("deep weapon drops remain class agnostic",
-        deep_classes == ITEM_CLASS_ALL);
-
-    int armor_classes = 0;
-    int armor_has_capstone = 0;
-    for (int i = 0; i < 500; i++) {
-        Item drop = random_armor(8);
-        armor_classes |= drop.class_mask;
-        armor_has_capstone |= strcmp(drop.name, "Magic Plate") == 0 ||
-            strcmp(drop.name, "Shadow Armor") == 0 ||
-            strcmp(drop.name, "Archmage Robes") == 0;
-    }
-    ASSERT("deep armor drops remain class agnostic",
-        armor_classes == ITEM_CLASS_ALL);
-    ASSERT("deep armor drops include capstone armor", armor_has_capstone);
+    Item lich_reward = boss_equipment_reward(ENEMY_LICH_KING);
+    Item forest_reward = boss_equipment_reward(ENEMY_FOREST_NECROMANCER);
+    Item mountain_reward = boss_equipment_reward(
+        ENEMY_MOUNTAIN_GOBLIN_KING);
+    Item coast_reward = boss_equipment_reward(ENEMY_DROWNED_QUEEN);
+    ASSERT("Lich King guarantees the Cryptblade",
+        strcmp(lich_reward.name, "Cryptblade") == 0);
+    ASSERT("forest Necromancer guarantees its cloak",
+        strcmp(forest_reward.name, "Necromancer's Cloak") == 0);
+    ASSERT("Goblin King guarantees his greatsword",
+        strcmp(mountain_reward.name, "Goblin King's Greatsword") == 0);
+    ASSERT("Drowned Queen guarantees Tidecaller Robes",
+        strcmp(coast_reward.name, "Tidecaller Robes") == 0);
 
     // --- Use health potion ---
     GameState g = {0};
+    game_init(&g);
+    g.location = LOCATION_DUNGEON;
+    g.level = 1;
+    g.player.x = 10;
+    g.player.y = 10;
+    g.map.tiles[10][10] = TILE_FLOOR;
+    g.map.tiles[10][11] = TILE_FLOOR;
+    g.enemy_count = 1;
+    g.enemies[0] = (Enemy){0};
+    g.enemies[0].active = 1;
+    g.enemies[0].is_boss = 1;
+    g.enemies[0].type = ENEMY_LICH_KING;
+    g.enemies[0].x = 11;
+    g.enemies[0].y = 10;
+    g.enemies[0].hp = 1;
+    strncpy(g.enemies[0].name, "Lich King",
+        sizeof(g.enemies[0].name) - 1);
+    Action defeat_boss = {ACTION_MOVE, 11, 10};
+    action_resolve_player(&g, defeat_boss);
+    ASSERT("defeated boss places its guaranteed equipment reward",
+        g.floor_item_count == 1 &&
+        strcmp(g.floor_items[0].item.name, "Cryptblade") == 0);
+
     game_init(&g);
     g.player.hp     = 50;
     g.player.max_hp = 100;
@@ -468,7 +476,18 @@ void test_items(void) {
     ASSERT("defense increased after equip",
         g.player.defense == base_defense + warrior_armor.defense_bonus);
 
+    g.player.player_class = CLASS_ROGUE;
+    game_init(&g);
+    Item studded_leather = item_make_studded_leather();
+    g.inventory[0] = studded_leather;
+    g.inventory_count = 1;
+    Action equip_studded_leather = {ACTION_EQUIP_ITEM, 0, 0};
+    action_resolve_player(&g, equip_studded_leather);
+    ASSERT("Rogue can equip Studded Leather",
+        g.equipped_armor == 0);
+
     // --- Equipped indices survive consumption ---
+    g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
     g.inventory[0] = hp_potion;
     g.inventory[1] = item_make_rusty_sword();

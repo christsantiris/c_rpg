@@ -80,9 +80,13 @@ static void draw_compare_column(Renderer *r, const GameState *g, const Item *ite
     SDL_snprintf(line, sizeof(line), "PRICE: %d GOLD", item->value);
     renderer_draw_text(r, line, x + 10, y + 111, white, r->font_tiny);
 
-    SDL_snprintf(line, sizeof(line), "%s | %s%s",
-        item_rarity_label(item), item_class_label(item),
-        allowed || !selected_column ? "" : " | LOCKED");
+    if (selected_column && !allowed) {
+        SDL_snprintf(line, sizeof(line), "%s | REQUIRES %s",
+            item_rarity_label(item), item_class_label(item));
+    } else {
+        SDL_snprintf(line, sizeof(line), "%s | %s",
+            item_rarity_label(item), item_class_label(item));
+    }
     renderer_draw_text(r, line, x + 10, y + 127,
         allowed || !selected_column ? dimmed : red, r->font_tiny);
 }
@@ -151,9 +155,13 @@ static void draw_armor_column(Renderer *r, const GameState *g, const Item *item,
     renderer_draw_text(r, line, x + 10, y + 95, white, r->font_tiny);
     SDL_snprintf(line, sizeof(line), "PRICE: %d GOLD", item->value);
     renderer_draw_text(r, line, x + 10, y + 111, white, r->font_tiny);
-    SDL_snprintf(line, sizeof(line), "%s | %s%s",
-        item_rarity_label(item), item_class_label(item),
-        allowed || !selected_column ? "" : " | LOCKED");
+    if (selected_column && !allowed) {
+        SDL_snprintf(line, sizeof(line), "%s | REQUIRES %s",
+            item_rarity_label(item), item_class_label(item));
+    } else {
+        SDL_snprintf(line, sizeof(line), "%s | %s",
+            item_rarity_label(item), item_class_label(item));
+    }
     renderer_draw_text(r, line, x + 10, y + 127,
         allowed || !selected_column ? dimmed : red, r->font_tiny);
 }
