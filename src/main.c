@@ -724,8 +724,8 @@ int main(int argc, char **argv) {
                         // U - Use
                         if (event.button.y >= hint_y &&
                             event.button.y <= hint_y + 24 &&
-                            event.button.x >= cx - 180 &&
-                            event.button.x <= cx - 130) {
+                            event.button.x >= cx - 245 &&
+                            event.button.x <= cx - 190) {
                             Action a = {ACTION_USE_ITEM, inventory_screen.selected, 0};
                             action_resolve_player(&game, a);
                             if (game.inventory_count == 0) {
@@ -735,16 +735,24 @@ int main(int argc, char **argv) {
                         // E - Equip
                         if (event.button.y >= hint_y &&
                             event.button.y <= hint_y + 24 &&
-                            event.button.x >= cx - 120 &&
-                            event.button.x <= cx - 60) {
+                            event.button.x >= cx - 180 &&
+                            event.button.x <= cx - 100) {
                             Action a = {ACTION_EQUIP_ITEM, inventory_screen.selected, 0};
+                            action_resolve_player(&game, a);
+                        }
+                        // O - Equip off-hand
+                        if (event.button.y >= hint_y &&
+                            event.button.y <= hint_y + 24 &&
+                            event.button.x >= cx - 95 &&
+                            event.button.x <= cx + 20) {
+                            Action a = {ACTION_EQUIP_OFF_HAND, inventory_screen.selected, 0};
                             action_resolve_player(&game, a);
                         }
                         // D - Drop
                         if (event.button.y >= hint_y &&
                             event.button.y <= hint_y + 24 &&
-                            event.button.x >= cx - 50 &&
-                            event.button.x <= cx + 20) {
+                            event.button.x >= cx + 25 &&
+                            event.button.x <= cx + 90) {
                             Action a = {ACTION_DROP_ITEM, inventory_screen.selected, 0};
                             action_resolve_player(&game, a);
                             if (inventory_screen.selected >= game.inventory_count) {

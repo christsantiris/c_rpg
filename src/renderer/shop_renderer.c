@@ -180,6 +180,15 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
             }
             draw_armor_comparison(r, g, selected, equipped,
                 (r->tiles_y - 9) * TILE_SIZE);
+        } else if (selected->type == ITEM_SHIELD) {
+            const Item *equipped = NULL;
+            if (g->equipped_off_hand >= 0 &&
+                g->equipped_off_hand < g->inventory_count &&
+                g->inventory[g->equipped_off_hand].type == ITEM_SHIELD) {
+                equipped = &g->inventory[g->equipped_off_hand];
+            }
+            draw_shield_comparison(r, g, selected, equipped,
+                (r->tiles_y - 9) * TILE_SIZE);
         }
     }
 

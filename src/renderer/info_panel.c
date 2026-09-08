@@ -130,8 +130,12 @@ void info_panel_draw(Renderer *r, const GameState *g) {
     draw_icon_empty_slot(r, grid_x2, grid_y1);
     if (g->equipped_off_hand >= 0 &&
         g->equipped_off_hand < g->inventory_count) {
-        draw_icon_weapon(r, grid_x2, grid_y1,
-            &g->inventory[g->equipped_off_hand]);
+        const Item *off_hand = &g->inventory[g->equipped_off_hand];
+        if (off_hand->type == ITEM_SHIELD) {
+            draw_icon_shield(r, grid_x2, grid_y1, off_hand);
+        } else {
+            draw_icon_weapon(r, grid_x2, grid_y1, off_hand);
+        }
     }
 
     // Slot 3: Armor (bottom-left)

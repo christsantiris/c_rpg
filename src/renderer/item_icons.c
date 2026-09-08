@@ -375,6 +375,39 @@ void draw_icon_armor(Renderer *r, int px, int py, const Item *item) {
     }
 }
 
+void draw_icon_shield(Renderer *r, int px, int py, const Item *item) {
+    SDL_Color rim = {166, 174, 181, 255};
+    SDL_Color face = {92, 101, 111, 255};
+    SDL_Color mark = {195, 151, 52, 255};
+    int left = 4;
+    int right = 20;
+
+    if (item->visual_id == ITEM_VISUAL_BUCKLER) {
+        left = 6;
+        right = 18;
+        face = (SDL_Color){119, 82, 48, 255};
+    } else if (item->visual_id == ITEM_VISUAL_KITE_SHIELD) {
+        face = (SDL_Color){61, 87, 145, 255};
+    } else if (item->visual_id == ITEM_VISUAL_TOWER_SHIELD) {
+        left = 3;
+        right = 21;
+        face = (SDL_Color){113, 119, 125, 255};
+        mark = (SDL_Color){184, 61, 48, 255};
+    } else if (item->visual_id == ITEM_VISUAL_MAGIC_SHIELD) {
+        rim = (SDL_Color){94, 233, 250, 255};
+        face = (SDL_Color){82, 69, 156, 255};
+        mark = (SDL_Color){220, 247, 255, 255};
+    }
+
+    fill_rect_px(r, px + left, py + 3, right - left, 2, rim);
+    fill_rect_px(r, px + left - 1, py + 5, right - left + 2, 10, rim);
+    fill_rect_px(r, px + left + 1, py + 5, right - left - 2, 11, face);
+    fill_rect_px(r, px + left + 1, py + 15, right - left - 2, 3, rim);
+    fill_rect_px(r, px + 9, py + 18, 6, 3, rim);
+    fill_rect_px(r, px + 11, py + 6, 2, 10, mark);
+    fill_rect_px(r, px + 8, py + 9, 8, 2, mark);
+}
+
 void draw_icon_spell(Renderer *r, int px, int py, SpellID spell_id) {
     if (spell_id == SPELL_MAGIC_ARROW) {
         SDL_Color glow = {80, 220, 255, 255};

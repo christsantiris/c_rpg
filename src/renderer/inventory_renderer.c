@@ -87,7 +87,7 @@ void inventory_draw(Renderer *r, const GameState *g, const InventoryScreen *s) {
                 SDL_snprintf(label, sizeof(label), "%s  +%d MP", item->name, item->heal_mp);
             else if (item->type == ITEM_WEAPON)
                 SDL_snprintf(label, sizeof(label), "%s  +%d ATK", item->name, item->attack_bonus);
-            else if (item->type == ITEM_ARMOR)
+            else if (item->type == ITEM_ARMOR || item->type == ITEM_SHIELD)
                 SDL_snprintf(label, sizeof(label), "%s  +%d DEF", item->name, item->defense_bonus);
             else
                 SDL_snprintf(label, sizeof(label), "%s", item->name);
@@ -97,7 +97,8 @@ void inventory_draw(Renderer *r, const GameState *g, const InventoryScreen *s) {
                 (item->type == ITEM_WEAPON &&
                     (g->equipped_main_hand == i ||
                     g->equipped_off_hand == i)) ||
-                (item->type == ITEM_ARMOR && g->equipped_armor == i);
+                (item->type == ITEM_ARMOR && g->equipped_armor == i) ||
+                (item->type == ITEM_SHIELD && g->equipped_off_hand == i);
             SDL_Color color = is_equipped ? gold : white;
 
             if (s->selected == i) {
@@ -130,6 +131,15 @@ void inventory_draw(Renderer *r, const GameState *g, const InventoryScreen *s) {
                 equipped = &g->inventory[g->equipped_armor];
             }
             draw_armor_comparison(r, g, selected, equipped,
+                (r->tiles_y - 9) * TILE_SIZE);
+        } else if (selected->type == ITEM_SHIELD) {
+            const Item *equipped = NULL;
+            if (g->equipped_off_hand >= 0 &&
+                g->equipped_off_hand < g->inventory_count &&
+                g->inventory[g->equipped_off_hand].type == ITEM_SHIELD) {
+                equipped = &g->inventory[g->equipped_off_hand];
+            }
+            draw_shield_comparison(r, g, selected, equipped,
                 (r->tiles_y - 9) * TILE_SIZE);
         }
     }
