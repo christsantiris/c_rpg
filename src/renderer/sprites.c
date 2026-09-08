@@ -353,7 +353,7 @@ static void draw_equipped_player_weapon(Renderer *r, const Item *weapon, int x, 
     }
 }
 
-void draw_player(Renderer *r, int tile_x, int tile_y, PlayerClass player_class, const Item *main_hand, const Item *off_hand, int facing_dx, int facing_dy) {
+void draw_player(Renderer *r, int tile_x, int tile_y, PlayerClass player_class, const Item *main_hand, const Item *off_hand, const Item *armor, int facing_dx, int facing_dy) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
     SDL_Color outline = {16, 18, 30, 255};
@@ -390,6 +390,47 @@ void draw_player(Renderer *r, int tile_x, int tile_y, PlayerClass player_class, 
         fill_rect(r, x+15,y+10, 4, 7, steel);
         fill_rect(r, x+8, y+20, 4, 2, outline);
         fill_rect(r, x+14,y+20, 4, 2, outline);
+    }
+    if (armor && armor->armor_family == ARMOR_FAMILY_HEAVY) {
+        SDL_Color plate = {139, 150, 162, 255};
+        if (armor->visual_id == ITEM_VISUAL_MAGIC_PLATE) {
+            plate = (SDL_Color){92, 190, 218, 255};
+        } else if (armor->visual_id == ITEM_VISUAL_SCALE_MAIL) {
+            plate = (SDL_Color){165, 125, 70, 255};
+        } else if (armor->visual_id == ITEM_VISUAL_PLATE_ARMOR) {
+            plate = (SDL_Color){190, 197, 205, 255};
+        }
+        fill_rect(r, x + 4, y + 10, 16, 3, plate);
+        fill_rect(r, x + 6, y + 13, 12, 6, plate);
+        fill_rect(r, x + 3, y + 10, 3, 6, plate);
+        fill_rect(r, x + 18, y + 10, 3, 6, plate);
+    } else if (armor && armor->armor_family == ARMOR_FAMILY_LIGHT) {
+        SDL_Color cloak = {102, 66, 39, 255};
+        if (armor->visual_id == ITEM_VISUAL_SHADOW_ARMOR) {
+            cloak = (SDL_Color){67, 39, 88, 255};
+        } else if (armor->visual_id == ITEM_VISUAL_RANGER_CLOAK) {
+            cloak = (SDL_Color){58, 112, 55, 255};
+        } else if (armor->visual_id == ITEM_VISUAL_STUDDED_LEATHER) {
+            cloak = (SDL_Color){128, 88, 48, 255};
+        }
+        fill_rect(r, x + 5, y + 5, 14, 3, cloak);
+        fill_rect(r, x + 5, y + 12, 14, 7, cloak);
+        fill_rect(r, x + 8, y + 13, 2, 6, leather);
+    } else if (armor && armor->armor_family == ARMOR_FAMILY_ROBE) {
+        SDL_Color robe = {46, 88, 168, 255};
+        if (armor->visual_id == ITEM_VISUAL_ARCHMAGE_ROBES) {
+            robe = (SDL_Color){112, 68, 178, 255};
+        } else if (armor->visual_id == ITEM_VISUAL_ENCHANTER_ROBES) {
+            robe = (SDL_Color){78, 66, 163, 255};
+        } else if (armor->visual_id == ITEM_VISUAL_RUNED_ROBES) {
+            robe = (SDL_Color){38, 112, 133, 255};
+        }
+        SDL_Color rune = armor->rarity == ITEM_RARITY_COMMON
+            ? (SDL_Color){91, 132, 201, 255}
+            : (SDL_Color){91, 231, 225, 255};
+        fill_rect(r, x + 5, y + 12, 14, 8, robe);
+        fill_rect(r, x + 11, y + 13, 2, 6, rune);
+        fill_rect(r, x + 8, y + 16, 8, 2, rune);
     }
     draw_equipped_player_weapon(r, main_hand, x, y, facing_dx, facing_dy, 1);
     draw_equipped_player_weapon(r, off_hand, x, y, facing_dx, facing_dy, -1);

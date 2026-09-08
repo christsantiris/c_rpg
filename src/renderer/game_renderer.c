@@ -659,10 +659,16 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->equipped_off_hand < g->inventory_count) {
         off_hand_weapon = &g->inventory[g->equipped_off_hand];
     }
+    const Item *equipped_armor = NULL;
+    if (g->equipped_armor >= 0 &&
+        g->equipped_armor < g->inventory_count) {
+        equipped_armor = &g->inventory[g->equipped_armor];
+    }
     draw_player(r,
         viewport_to_screen_x(v, g->player.x),
         viewport_to_screen_y(v, g->player.y),
         g->player.player_class, equipped_weapon, off_hand_weapon,
+        equipped_armor,
         g->player.last_dx, g->player.last_dy);
 
     draw_dialogue_bubble(r, g, v);

@@ -136,8 +136,10 @@ void info_panel_draw(Renderer *r, const GameState *g) {
 
     // Slot 3: Armor (bottom-left)
     draw_icon_empty_slot(r, grid_x1, grid_y2);
-    if (g->equipped_armor >= 0 && g->equipped_armor < g->inventory_count)
-        draw_icon_armor(r, grid_x1, grid_y2);
+    if (g->equipped_armor >= 0 && g->equipped_armor < g->inventory_count) {
+        draw_icon_armor(r, grid_x1, grid_y2,
+            &g->inventory[g->equipped_armor]);
+    }
 
     // Slot 4: Equipped spell (bottom-right)
     draw_icon_empty_slot(r, grid_x2, grid_y2);
