@@ -1385,6 +1385,12 @@ int load_game(GameState *g, int slot) {
         }
     }
 
+    // Version 40 makes the reserved off-hand index playable. Older saves
+    // could contain a stale value there, but never applied an off-hand bonus.
+    if (save_version < 40) {
+        g->equipped_off_hand = -1;
+    }
+
     cJSON_Delete(root);
     return 1;
 }

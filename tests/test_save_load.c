@@ -12,6 +12,8 @@
 #define MIGRATED_SLOT 99003
 #define LEGACY_ARMOR_SLOT 99004
 #define MIGRATED_ARMOR_SLOT 99005
+#define DUAL_WIELD_SLOT 99006
+#define LEGACY_OFF_HAND_SLOT 99007
 
 static void format_save_path(int slot, char *path, int size) {
     snprintf(path, size, "saves/savegame_%d.json", slot);
@@ -131,18 +133,7 @@ static void test_current_weapon_round_trip(void) {
     original.inventory[6] = item_make_magic_plate();
     original.inventory[7] = item_make_shadow_armor();
     original.inventory[8] = item_make_archmage_robes();
-    original.inventory[9] = (Item){0};
-    original.inventory[9].active = 1;
-    original.inventory[9].type = ITEM_SHIELD;
-    strncpy(original.inventory[9].name, "Test Shield",
-        sizeof(original.inventory[9].name) - 1);
-    original.inventory[9].defense_bonus = 2;
-    original.inventory[9].value = 75;
-    original.inventory[9].rarity = ITEM_RARITY_COMMON;
-    original.inventory[9].class_mask = ITEM_CLASS_WARRIOR;
-    original.inventory[9].visual_id = ITEM_VISUAL_SHIELD_GENERIC;
-    original.inventory[9].block_chance = 10;
-    original.inventory[9].block_reduction_percent = 50;
+    original.inventory[9] = item_make_magic_shield();
     original.equipped_main_hand = 0;
     original.equipped_off_hand = 9;
     original.equipped_armor = 6;
@@ -178,6 +169,66 @@ static void test_current_weapon_round_trip(void) {
     ASSERT("shield traits survive save/load",
         shield_fields_match(&loaded.inventory[9], &original.inventory[9]));
     remove_test_save(ROUND_TRIP_SLOT);
+}
+
+static void test_dual_wield_round_trip(void) {
+    static GameState original;
+    static GameState loaded;
+    memset(&original, 0, sizeof(original));
+    memset(&loaded, 0, sizeof(loaded));
+    original.player.player_class = CLASS_WARRIOR;
+    game_init(&original);
+    game_unequip_main_hand(&original);
+    original.inventory_count = 2;
+    original.inventory[0] = item_make_long_sword();
+    original.inventory[1] = item_make_short_sword();
+    game_equip_main_hand(&original, 0);
+    game_equip_off_hand(&original, 1);
+    int equipped_attack = original.player.attack;
+
+    remove_test_save(DUAL_WIELD_SLOT);
+    int saved = save_game(&original, DUAL_WIELD_SLOT);
+    int loaded_ok = saved && load_game(&loaded, DUAL_WIELD_SLOT);
+    ASSERT("dual-wield save can be loaded", loaded_ok);
+    if (loaded_ok) {
+        ASSERT("dual-wield indices survive save/load",
+            loaded.equipped_main_hand == 0 &&
+            loaded.equipped_off_hand == 1);
+        ASSERT("off-hand attack total survives save/load",
+            loaded.player.attack == equipped_attack);
+    }
+    remove_test_save(DUAL_WIELD_SLOT);
+}
+
+static void test_legacy_off_hand_migration(void) {
+    static GameState legacy;
+    static GameState migrated;
+    memset(&legacy, 0, sizeof(legacy));
+    memset(&migrated, 0, sizeof(migrated));
+    legacy.player.player_class = CLASS_WARRIOR;
+    game_init(&legacy);
+    game_unequip_main_hand(&legacy);
+    legacy.inventory_count = 2;
+    legacy.inventory[0] = item_make_long_sword();
+    legacy.inventory[1] = item_make_short_sword();
+    game_equip_main_hand(&legacy, 0);
+    legacy.equipped_off_hand = 1;
+    int legacy_attack = legacy.player.attack;
+
+    remove_test_save(LEGACY_OFF_HAND_SLOT);
+    int saved = save_game(&legacy, LEGACY_OFF_HAND_SLOT);
+    int version_changed = saved &&
+        rewrite_save_version(LEGACY_OFF_HAND_SLOT, 39);
+    int loaded_ok = version_changed &&
+        load_game(&migrated, LEGACY_OFF_HAND_SLOT);
+    ASSERT("version 39 off-hand save migrates", loaded_ok);
+    if (loaded_ok) {
+        ASSERT("legacy stale off-hand index is cleared",
+            migrated.equipped_off_hand == -1);
+        ASSERT("legacy main-hand attack remains unchanged",
+            migrated.player.attack == legacy_attack);
+    }
+    remove_test_save(LEGACY_OFF_HAND_SLOT);
 }
 
 static void test_migrated_armor_round_trip(void) {
@@ -319,6 +370,8 @@ static void test_migrated_weapon_round_trip(void) {
 void test_save_load(void) {
     printf("Save/load tests:\n");
     test_current_weapon_round_trip();
+    test_dual_wield_round_trip();
+    test_legacy_off_hand_migration();
     test_migrated_weapon_round_trip();
     test_migrated_armor_round_trip();
 }
