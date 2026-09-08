@@ -329,6 +329,19 @@ void test_items(void) {
     ASSERT("deep weapon drops remain class agnostic",
         deep_classes == ITEM_CLASS_ALL);
 
+    int armor_classes = 0;
+    int armor_has_capstone = 0;
+    for (int i = 0; i < 500; i++) {
+        Item drop = random_armor(8);
+        armor_classes |= drop.class_mask;
+        armor_has_capstone |= strcmp(drop.name, "Magic Plate") == 0 ||
+            strcmp(drop.name, "Shadow Armor") == 0 ||
+            strcmp(drop.name, "Archmage Robes") == 0;
+    }
+    ASSERT("deep armor drops remain class agnostic",
+        armor_classes == ITEM_CLASS_ALL);
+    ASSERT("deep armor drops include capstone armor", armor_has_capstone);
+
     // --- Use health potion ---
     GameState g = {0};
     game_init(&g);

@@ -23,5 +23,6 @@ typedef struct {
 } Action;
 
 Item random_weapon(int level);
+Item random_armor(int level);
 
 #endif
