@@ -473,13 +473,51 @@ void test_items(void) {
     Action equip_short_main = {ACTION_EQUIP_ITEM, short_index, 0};
     action_resolve_player(&g, equip_short_main);
     g.equipped_off_hand = dagger_off_index;
-    g.player.attack += g.inventory[dagger_off_index].attack_bonus;
+    g.player.attack += game_off_hand_attack_bonus(
+        &g.inventory[dagger_off_index]);
     Action equip_two_handed_bow = {ACTION_EQUIP_ITEM, 0, 0};
     action_resolve_player(&g, equip_two_handed_bow);
     ASSERT("two-handed weapon clears the off-hand slot",
         g.equipped_main_hand == 0 && g.equipped_off_hand == -1);
     ASSERT("clearing off-hand removes its attack bonus",
         g.player.attack == 10 + bow.attack_bonus);
+
+    game_init(&g);
+    short_index = g.inventory_count;
+    g.inventory[g.inventory_count++] = item_make_short_sword();
+    dagger_off_index = g.inventory_count;
+    Item off_hand_dagger = item_make_dagger();
+    off_hand_dagger.critical_chance_bonus = 200;
+    g.inventory[g.inventory_count++] = off_hand_dagger;
+    action_resolve_player(&g,
+        (Action){ACTION_EQUIP_ITEM, short_index, 0});
+    action_resolve_player(&g,
+        (Action){ACTION_EQUIP_OFF_HAND, dagger_off_index, 0});
+    ASSERT("one-handed weapon equips in the off-hand",
+        g.equipped_main_hand == short_index &&
+        g.equipped_off_hand == dagger_off_index);
+    ASSERT("off-hand contributes half attack rounded up",
+        g.player.attack == 10 + 3 + 1);
+    g.player.x = 20;
+    g.player.y = 12;
+    g.enemy_count = 1;
+    g.enemies[0] = (Enemy){0};
+    g.enemies[0].active = 1;
+    g.enemies[0].x = 21;
+    g.enemies[0].y = 12;
+    g.enemies[0].hp = 100;
+    strncpy(g.enemies[0].name, "Target",
+        sizeof(g.enemies[0].name) - 1);
+    action_resolve_player(&g, (Action){ACTION_MOVE, 21, 12});
+    ASSERT("off-hand contributes half its critical chance",
+        g.enemies[0].hp == 79);
+
+    game_remove_inventory_item(&g, short_index);
+    ASSERT("removing main hand promotes off-hand weapon",
+        g.equipped_main_hand == short_index && g.equipped_off_hand == -1 &&
+        strcmp(g.inventory[g.equipped_main_hand].name, "Dagger") == 0);
+    ASSERT("promoted off-hand contributes full attack",
+        g.player.attack == 10 + off_hand_dagger.attack_bonus);
 
     // --- Equip armor ---
     g.player.player_class = CLASS_WARRIOR;

@@ -6,6 +6,7 @@ typedef enum {
     INVENTORY_CLOSED,
     INVENTORY_USE,
     INVENTORY_EQUIP,
+    INVENTORY_EQUIP_OFF_HAND,
     INVENTORY_DROP
 } InventoryResult;
 

@@ -531,6 +531,18 @@ void action_resolve_player(GameState *g, Action a) {
         }
         return;
     }
+    if (a.type == ACTION_EQUIP_OFF_HAND) {
+        int idx = a.target_x;
+        if (game_equip_off_hand(g, idx)) {
+            char msg[MAX_MESSAGE_LEN];
+            snprintf(msg, sizeof(msg), "Off-hand: %s",
+                g->inventory[idx].name);
+            push_message(g, msg);
+        } else {
+            push_message(g, "Requires two one-handed weapons");
+        }
+        return;
+    }
     if (a.type == ACTION_DROP_ITEM) {
         int idx = a.target_x;
         if (idx < 0 || idx >= g->inventory_count) return;
@@ -815,9 +827,17 @@ void action_resolve_player(GameState *g, Action a) {
                 if (dmg < 1) {
                     dmg = 1;
                 }
-                int critical = melee_weapon && !melee_weapon->is_ranged &&
-                    melee_weapon->critical_chance_bonus > 0 &&
-                    rand() % 100 < melee_weapon->critical_chance_bonus;
+                int critical_chance = melee_weapon &&
+                    !melee_weapon->is_ranged
+                    ? melee_weapon->critical_chance_bonus : 0;
+                if (g->equipped_off_hand >= 0 &&
+                    g->equipped_off_hand < g->inventory_count) {
+                    critical_chance +=
+                        g->inventory[g->equipped_off_hand]
+                            .critical_chance_bonus / 2;
+                }
+                int critical = critical_chance > 0 &&
+                    rand() % 100 < critical_chance;
                 if (critical) {
                     dmg = (dmg * 3 + 1) / 2;
                 }
