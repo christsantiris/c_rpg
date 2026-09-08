@@ -493,6 +493,15 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             int sx = viewport_to_screen_x(v, e->x);
             int sy = viewport_to_screen_y(v, e->y);
             draw_enemy(r, sx, sy, e->type);
+            if (e->dain_fragment) {
+                int px = sx * TILE_SIZE;
+                int py = sy * TILE_SIZE;
+                SDL_SetRenderDrawColor(r->sdl, 242, 190, 55, 255);
+                SDL_Rect marker = {px + 2, py + 2, TILE_SIZE - 4,
+                    TILE_SIZE - 4};
+                SDL_RenderDrawRect(r->sdl, &marker);
+                SDL_RenderDrawRect(r->sdl, &marker);
+            }
             // Draw health bar above enemy
             int bar_w = TILE_SIZE - 4;
             int bar_h = 3;
