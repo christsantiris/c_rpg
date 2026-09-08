@@ -223,28 +223,34 @@ void test_items(void) {
     ShopScreen shop;
     shop_init(&shop, SHOP_TYPE_BLACKSMITH, 0);
     ASSERT("new characters see only tier-one blacksmith stock",
-        shop.stock_tier == 1 && shop.item_count == 7 &&
+        shop.stock_tier == 1 && shop.item_count == 8 &&
+        shop_has_item(&shop, "Apprentice Robes") &&
         !shop_has_item(&shop, "Long Sword"));
     shop_init(&shop, SHOP_TYPE_BLACKSMITH, 1 << LOCATION_DUNGEON);
     ASSERT("one defeated boss unlocks uncommon weapons",
-        shop.stock_tier == 2 && shop.item_count == 12 &&
+        shop.stock_tier == 2 && shop.item_count == 16 &&
         shop_has_item(&shop, "Greatsword") &&
         shop_has_item(&shop, "Runed Staff") &&
+        shop_has_item(&shop, "Studded Leather") &&
         !shop_has_item(&shop, "Magic Dagger"));
     shop_init(&shop, SHOP_TYPE_BLACKSMITH,
         (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST));
     ASSERT("two defeated bosses unlock rare specialist weapons",
-        shop.stock_tier == 3 && shop.item_count == 15 &&
+        shop.stock_tier == 3 && shop.item_count == 22 &&
         shop_has_item(&shop, "Magic Battle Axe") &&
+        shop_has_item(&shop, "Enchanter Robes") &&
         !shop_has_item(&shop, "Magic Greatsword"));
     shop_init(&shop, SHOP_TYPE_BLACKSMITH,
         (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) |
         (1 << LOCATION_MOUNTAINS));
     ASSERT("three defeated bosses unlock capstone weapons",
-        shop.stock_tier == 4 && shop.item_count == 18 &&
+        shop.stock_tier == 4 && shop.item_count == 28 &&
         shop_has_item(&shop, "Magic Greatsword") &&
         shop_has_item(&shop, "Magic Staff") &&
-        shop_has_item(&shop, "Magic Longbow"));
+        shop_has_item(&shop, "Magic Longbow") &&
+        shop_has_item(&shop, "Magic Plate") &&
+        shop_has_item(&shop, "Shadow Armor") &&
+        shop_has_item(&shop, "Archmage Robes"));
 
     Item armor = item_make_leather_armor();
     ASSERT("armor type correct",            armor.type          == ITEM_ARMOR);
