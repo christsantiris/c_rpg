@@ -518,38 +518,13 @@ int main(int argc, char **argv) {
                             if (game.inventory_count == 0) break;
                             int idx = shop_screen.selected;
                             if (idx >= game.inventory_count) break;
-                            Item *item = &game.inventory[idx];
-
-                            // Unequip if equipped
-                            if (game.equipped_main_hand == idx) {
-                                game.player.attack -= item->attack_bonus;
-                                game.equipped_main_hand = -1;
-                            } else if (game.equipped_off_hand == idx) {
-                                game.player.attack -= item->attack_bonus;
-                                game.equipped_off_hand = -1;
-                            } else if (game.equipped_armor == idx) {
-                                game_remove_armor_bonuses(&game, item);
-                                game.equipped_armor = -1;
-                            }
-                            if (game.equipped_main_hand > idx) {
-                                game.equipped_main_hand--;
-                            }
-                            if (game.equipped_off_hand > idx) {
-                                game.equipped_off_hand--;
-                            }
-                            if (game.equipped_armor > idx) {
-                                game.equipped_armor--;
-                            }
-
-                            int sell_price = item->value / 2;
+                            Item item = game.inventory[idx];
+                            int sell_price = item.value / 2;
                             char msg[32];
                             SDL_snprintf(msg, sizeof(msg), "Sold %s for %d gold",
-                                item->name, sell_price);
+                                item.name, sell_price);
                             game.gold += sell_price;
-
-                            for (int i = idx; i < game.inventory_count - 1; i++)
-                                game.inventory[i] = game.inventory[i + 1];
-                            game.inventory_count--;
+                            game_remove_inventory_item(&game, idx);
                             if (shop_screen.selected >= game.inventory_count)
                                 shop_screen.selected = game.inventory_count - 1;
                             if (shop_screen.selected < 0)
@@ -832,35 +807,12 @@ int main(int argc, char **argv) {
                                         }
                                     } else {
                                         if (game.inventory_count == 0) { break; }
-                                        Item *item = &game.inventory[i];
-                                        if (game.equipped_main_hand == i) {
-                                            game.player.attack -= item->attack_bonus;
-                                            game.equipped_main_hand = -1;
-                                        } else if (game.equipped_off_hand == i) {
-                                            game.player.attack -= item->attack_bonus;
-                                            game.equipped_off_hand = -1;
-                                        } else if (game.equipped_armor == i) {
-                                            game_remove_armor_bonuses(&game,
-                                                item);
-                                            game.equipped_armor = -1;
-                                        }
-                                        if (game.equipped_main_hand > i) {
-                                            game.equipped_main_hand--;
-                                        }
-                                        if (game.equipped_off_hand > i) {
-                                            game.equipped_off_hand--;
-                                        }
-                                        if (game.equipped_armor > i) {
-                                            game.equipped_armor--;
-                                        }
-                                        int sell_price = item->value / 2;
+                                        Item item = game.inventory[i];
+                                        int sell_price = item.value / 2;
                                         char msg[32];
-                                        SDL_snprintf(msg, sizeof(msg), "Sold %s for %d gold", item->name, sell_price);
+                                        SDL_snprintf(msg, sizeof(msg), "Sold %s for %d gold", item.name, sell_price);
                                         game.gold += sell_price;
-                                        for (int j = i; j < game.inventory_count - 1; j++) {
-                                            game.inventory[j] = game.inventory[j + 1];
-                                        }
-                                        game.inventory_count--;
+                                        game_remove_inventory_item(&game, i);
                                         if (shop_screen.selected >= game.inventory_count) {
                                             shop_screen.selected = game.inventory_count - 1;
                                         }

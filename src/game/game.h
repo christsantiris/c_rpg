@@ -165,6 +165,7 @@ void game_rescue_forest_warden(GameState *g, int x, int y);
 void game_talk_to_mara(GameState *g);
 void game_light_coast_beacon(GameState *g, int x, int y);
 void game_repair_equipment_indices(GameState *g);
+void game_remove_inventory_item(GameState *g, int index);
 void game_apply_armor_bonuses(GameState *g, const Item *armor);
 void game_remove_armor_bonuses(GameState *g, const Item *armor);
 
