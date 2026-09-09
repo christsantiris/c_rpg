@@ -385,8 +385,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_COAST_WALL: draw_coast_wall(r, sx, sy); break;
                 case TILE_COAST_ENTRANCE:
                     draw_coast_edge(r, sx, sy, 0); break;
-                case TILE_COAST_EXIT:
-                    draw_coast_edge(r, sx, sy, 1); break;
+                case TILE_COAST_EXIT: {
+                    int open = g->map.tiles[g->map.stairs_down_y]
+                        [g->map.stairs_down_x] != TILE_COAST_DEEP_WATER;
+                    draw_coast_edge(r, sx, sy, open ? 1 : 2);
+                    break;
+                }
                 case TILE_COAST_SHALLOW_WATER:
                     draw_coast_shallow_water(r, sx, sy); break;
                 case TILE_COAST_DRAINED_WATER:

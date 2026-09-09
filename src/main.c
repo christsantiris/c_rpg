@@ -565,9 +565,20 @@ int main(int argc, char **argv) {
                                 a = (Action){ACTION_MOVE, game.player.x, game.player.y + 1};
                                 break;
                             case SDL_SCANCODE_LEFT:
-                            case SDL_SCANCODE_A:
                                 a = (Action){ACTION_MOVE, game.player.x - 1, game.player.y};
                                 break;
+                            case SDL_SCANCODE_A: {
+                                TileType tile = game.map.tiles[game.player.y]
+                                    [game.player.x];
+                                if (tile == TILE_COAST_TIDE_CONTROL ||
+                                    tile == TILE_COAST_BEACON_UNLIT) {
+                                    a = (Action){ACTION_INTERACT, 0, 0};
+                                } else {
+                                    a = (Action){ACTION_MOVE,
+                                        game.player.x - 1, game.player.y};
+                                }
+                                break;
+                            }
                             case SDL_SCANCODE_RIGHT:
                             case SDL_SCANCODE_D:
                                 a = (Action){ACTION_MOVE, game.player.x + 1, game.player.y};
