@@ -37,7 +37,8 @@ after normal defense. Their progression is:
 - Axes are two-handed and ignore part of enemy defense.
 - Bows are two-handed ranged weapons. The Magic Longbow is the Rogue's
   strongest weapon and pierces targets.
-- Staves are two-handed Mage weapons that improve spell power.
+- Staves are two-handed Mage weapons that improve spell power, maximum mana,
+  and casting efficiency as their tier increases.
 - Daggers trade base attack for stronger melee critical chances and work well
   as Rogue off-hand weapons.
 - Greatswords are two-handed Warrior weapons with cleave. The Magic

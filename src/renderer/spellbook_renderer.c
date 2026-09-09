@@ -39,8 +39,8 @@ void spellbook_draw(Renderer *r, const GameState *g, const SpellbookScreen *s) {
             int item_y = 130 + i * 40;
 
             char label[64];
-            SDL_snprintf(label, sizeof(label), "%-16s  %d MP",
-                sp->name, sp->mp_cost);
+            SDL_snprintf(label, sizeof(label), "%-16s R%d  %d MP",
+                sp->name, sp->rank, sp->mp_cost);
 
             int is_equipped = (g->player.equipped_spell == i);
             SDL_Color color = is_equipped ? gold : white;

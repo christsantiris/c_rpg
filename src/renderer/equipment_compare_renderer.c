@@ -17,8 +17,9 @@ static void format_weapon_trait(const Item *item, char *text, int size) {
     } else if (item->pierces_targets) {
         SDL_snprintf(text, size, "PIERCES ALL TARGETS");
     } else if (item->spell_power_bonus > 0) {
-        SDL_snprintf(text, size, "+%d SPELL POWER",
-            item->spell_power_bonus);
+        SDL_snprintf(text, size, "SP +%d | MP +%d | COST -%d%%",
+            item->spell_power_bonus, item->max_mp_bonus,
+            item->spell_cost_reduction_percent);
     } else if (item->armor_penetration_percent > 0) {
         SDL_snprintf(text, size, "IGNORES %d%% DEFENSE",
             item->armor_penetration_percent);

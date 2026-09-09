@@ -1,8 +1,8 @@
 # Spells
 
-The game currently provides four learnable spells: Magic Arrow, Fireball, Heal,
-and Return to Town. Combat spells consume MP and become stronger as the
-player's character level increases.
+The game provides Magic Arrow, Fireball, Heal, Frost Bolt, Teleport, and Return
+to Town. Combat spells consume MP, scale with character level, and support up
+to three ranks where upgrades are available.
 
 ## Spell Summary
 
@@ -12,6 +12,8 @@ player's character level increases.
 | Fireball | Area damage | 20 | 25 damage | 4 | 2 |
 | Heal | Self healing | 15 | 40 HP | - | - |
 | Return to Town | Utility portal | 0 | Town travel | - | - |
+| Frost Bolt | Ranged control | 14 | 18 damage, freeze | 5 | - |
+| Teleport | Utility movement | 12 | Move up to 4 tiles | 4 | - |
 
 Damage and healing use the following scaling formula:
 
@@ -82,6 +84,12 @@ inventory:
 Using a new scroll adds its spell to the player's spellbook and consumes the
 scroll. Using a scroll for an already-known spell displays a message and does
 not consume it. A player can know up to 10 spells.
+
+After boss victories, the Alchemist sells Mage-only upgrade tomes and spells:
+
+- One boss: Magic Arrow II and Frost Bolt
+- Two bosses: Fireball II and Teleport
+- Three bosses: Heal II
 
 The Mage begins with a Magic Arrow scroll, but must use that scroll from the
 inventory before the spell becomes known. Other classes can learn the same

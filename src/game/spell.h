@@ -7,7 +7,9 @@ typedef enum {
     SPELL_MAGIC_ARROW = 0,
     SPELL_FIREBALL,
     SPELL_HEAL,
-    SPELL_RETURN_TO_TOWN
+    SPELL_RETURN_TO_TOWN,
+    SPELL_FROST_BOLT,
+    SPELL_TELEPORT
 } SpellID;
 
 typedef enum {
@@ -26,11 +28,15 @@ typedef struct {
     int       heal_hp;
     int       range;
     int       radius;
+    int       rank;
 } Spell;
 
 Spell spell_make_magic_arrow(void);
 Spell spell_make_fireball(void);
 Spell spell_make_heal(void);
 Spell spell_make_return_to_town(void);
+Spell spell_make_frost_bolt(void);
+Spell spell_make_teleport(void);
+int spell_upgrade(Spell *spell);
 
 #endif
