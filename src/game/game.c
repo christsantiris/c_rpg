@@ -1158,9 +1158,11 @@ static void enter_adventure(GameState *g, Location location) {
 
     g->level = 1;
     g->level_cleared = 0;
-    *max_level = 1;
-    for (int i = 0; i < active_depth(g); i++) {
-        cache[i].valid = 0;
+    if (!g->portal_active || g->portal_location != location) {
+        *max_level = 1;
+        for (int i = 0; i < active_depth(g); i++) {
+            cache[i].valid = 0;
+        }
     }
     generate_active_level(g);
     g->player.x = g->map.stairs_up_x;
@@ -1239,6 +1241,9 @@ void game_return_to_town(GameState *g) {
     }
     g->floor_item_count = 0;
     g->enemy_count = 0;
+    if (g->portal_active) {
+        g->map.tiles[2][20] = TILE_PORTAL;
+    }
 }
 
 void game_open_town_portal(GameState *g) {

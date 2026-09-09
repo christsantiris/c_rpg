@@ -58,6 +58,7 @@ void help_draw(Renderer *r) {
     renderer_draw_text(r, "T              Talk to NPC",    col2, y, white, r->font_tiny);
     y += lh;
     renderer_draw_text(r, "E              Equip item",     col1, y, white, r->font_tiny);
+    renderer_draw_text(r, "A              Interact",       col2, y, white, r->font_tiny);
     y += lh;
     renderer_draw_text(r, "D              Drop item",      col1, y, white, r->font_tiny);
     y += lh + 10;

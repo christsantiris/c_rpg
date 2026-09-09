@@ -401,6 +401,9 @@ void action_resolve_player(GameState *g, Action a) {
                 map_generate_town(&g->map, &spawn_x, &spawn_y);
                 g->player.x = leaving == LOCATION_FOREST ? 1 : spawn_x;
                 g->player.y = leaving == LOCATION_FOREST ? 12 : spawn_y;
+                if (g->portal_active) {
+                    g->map.tiles[2][20] = TILE_PORTAL;
+                }
             } else {
                 game_ascend(g);
             }
@@ -408,12 +411,56 @@ void action_resolve_player(GameState *g, Action a) {
         return;
     }
 
-    if (a.type == ACTION_PICK_UP) {
-        if (g->map.tiles[g->player.y][g->player.x] ==
-            TILE_COAST_BEACON_UNLIT) {
+    if (a.type == ACTION_INTERACT) {
+        TileType tile = g->map.tiles[g->player.y][g->player.x];
+        if (tile == TILE_COAST_BEACON_UNLIT) {
             game_light_coast_beacon(g, g->player.x, g->player.y);
             return;
         }
+        if (tile == TILE_COAST_TIDE_CONTROL) {
+            int tide_is_high = 0;
+            for (int y = 0; y < MAP_H; y++) {
+                for (int x = 0; x < MAP_W; x++) {
+                    if (g->map.tiles[y][x] == TILE_COAST_DEEP_WATER) {
+                        tide_is_high = 1;
+                        break;
+                    }
+                }
+                if (tide_is_high) {
+                    break;
+                }
+            }
+            for (int y = 0; y < MAP_H; y++) {
+                for (int x = 0; x < MAP_W; x++) {
+                    if (tide_is_high &&
+                        g->map.tiles[y][x] == TILE_COAST_DEEP_WATER) {
+                        g->map.tiles[y][x] = TILE_COAST_DRAINED_WATER;
+                    } else if (!tide_is_high && g->map.tiles[y][x] ==
+                        TILE_COAST_DRAINED_WATER) {
+                        g->map.tiles[y][x] = TILE_COAST_DEEP_WATER;
+                    }
+                }
+            }
+            for (int i = 0; i < g->floor_item_count; i++) {
+                FloorItem *item = &g->floor_items[i];
+                if (tide_is_high && item->underlying_tile ==
+                    TILE_COAST_DEEP_WATER) {
+                    item->underlying_tile = TILE_COAST_DRAINED_WATER;
+                } else if (!tide_is_high && item->underlying_tile ==
+                    TILE_COAST_DRAINED_WATER) {
+                    item->underlying_tile = TILE_COAST_DEEP_WATER;
+                }
+            }
+            push_message(g, tide_is_high ?
+                "The tide recedes, revealing the path." :
+                "The tide rises across the ruins.");
+            return;
+        }
+        push_message(g, "There is nothing to interact with here.");
+        return;
+    }
+
+    if (a.type == ACTION_PICK_UP) {
         if (g->map.tiles[g->player.y][g->player.x] ==
             TILE_BROKEN_BURIAL_SEAL) {
             if (g->elowen_quest_state != 1) {
@@ -1079,36 +1126,6 @@ void action_resolve_player(GameState *g, Action a) {
             }
         push_message(g, "The rune reveals the path!");
             tile = TILE_FOREST_FLOOR;
-        }
-
-        if (g->location == LOCATION_COAST &&
-            tile == TILE_COAST_TIDE_CONTROL) {
-            int tide_is_high = 0;
-            for (int y = 0; y < MAP_H; y++) {
-                for (int x = 0; x < MAP_W; x++) {
-                    if (g->map.tiles[y][x] == TILE_COAST_DEEP_WATER) {
-                        tide_is_high = 1;
-                        break;
-                    }
-                }
-                if (tide_is_high) {
-                    break;
-                }
-            }
-            for (int y = 0; y < MAP_H; y++) {
-                for (int x = 0; x < MAP_W; x++) {
-                    if (tide_is_high &&
-                        g->map.tiles[y][x] == TILE_COAST_DEEP_WATER) {
-                        g->map.tiles[y][x] = TILE_COAST_DRAINED_WATER;
-                    } else if (!tide_is_high && g->map.tiles[y][x] ==
-                        TILE_COAST_DRAINED_WATER) {
-                        g->map.tiles[y][x] = TILE_COAST_DEEP_WATER;
-                    }
-                }
-            }
-            push_message(g, tide_is_high ?
-                "The tide recedes, revealing the path." :
-                "The tide rises across the ruins.");
         }
 
         if (tile == TILE_TRAP_HIDDEN) {
