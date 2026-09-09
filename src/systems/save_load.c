@@ -275,7 +275,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 42);
+    cJSON_AddNumberToObject(root, "save_version", 43);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -1404,6 +1404,30 @@ int load_game(GameState *g, int slot) {
         for (int i = 0; i < g->floor_item_count; i++) {
             if (strcmp(g->floor_items[i].item.name, "Leather Armor") == 0) {
                 g->floor_items[i].item.class_mask = ITEM_CLASS_ALL;
+            }
+        }
+    }
+
+    // Version 43 replaces the progression-breaking Goblin King weapon with
+    // a defensive trophy. Equipped copies are safely unequipped first.
+    if (save_version < 43) {
+        for (int i = 0; i < g->inventory_count; i++) {
+            if (strcmp(g->inventory[i].name,
+                "Goblin King's Greatsword") != 0) {
+                continue;
+            }
+            if (g->equipped_main_hand == i) {
+                game_unequip_main_hand(g);
+            }
+            if (g->equipped_off_hand == i) {
+                game_unequip_off_hand(g);
+            }
+            g->inventory[i] = item_make_goblin_king_shield();
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            if (strcmp(g->floor_items[i].item.name,
+                "Goblin King's Greatsword") == 0) {
+                g->floor_items[i].item = item_make_goblin_king_shield();
             }
         }
     }

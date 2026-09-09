@@ -349,8 +349,11 @@ void test_items(void) {
         strcmp(lich_reward.name, "Cryptblade") == 0);
     ASSERT("forest Necromancer guarantees its cloak",
         strcmp(forest_reward.name, "Necromancer's Cloak") == 0);
-    ASSERT("Goblin King guarantees his greatsword",
-        strcmp(mountain_reward.name, "Goblin King's Greatsword") == 0);
+    ASSERT("Goblin King guarantees a mid-tier shield",
+        strcmp(mountain_reward.name, "Goblin King's Shield") == 0 &&
+        mountain_reward.type == ITEM_SHIELD &&
+        mountain_reward.defense_bonus == 5 &&
+        mountain_reward.block_chance == 15);
     ASSERT("Drowned Queen guarantees Tidecaller Robes",
         strcmp(coast_reward.name, "Tidecaller Robes") == 0);
 
