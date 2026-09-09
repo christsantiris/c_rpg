@@ -40,7 +40,7 @@ static void activate_tide_control(GameState *g) {
             if (g->map.tiles[y][x] == TILE_COAST_TIDE_CONTROL) {
                 g->player.x = x;
                 g->player.y = y;
-                Action activate = {ACTION_MOVE, x, y};
+                Action activate = {ACTION_INTERACT, 0, 0};
                 action_resolve_player(g, activate);
                 return;
             }
@@ -112,10 +112,16 @@ void test_coast(void) {
     Action exit = coast_edge_action(&g.map, 0);
     action_resolve_player(&g, exit);
     ASSERT("high tide blocks the stage exit", g.level == 1);
+    ASSERT("high tide leaves the exit approach visibly blocked",
+        g.map.tiles[g.map.stairs_down_y][g.map.stairs_down_x] ==
+            TILE_COAST_DEEP_WATER);
     activate_tide_control(&g);
     ASSERT("tide control drains the exit approach",
         g.map.tiles[g.map.stairs_down_y][g.map.stairs_down_x] ==
             TILE_COAST_DRAINED_WATER);
+    g.floor_item_count = 1;
+    g.floor_items[0].active = 1;
+    g.floor_items[0].underlying_tile = TILE_COAST_DRAINED_WATER;
     int control_x = 0;
     int control_y = 0;
     ASSERT("tide control remains after activation",
@@ -124,6 +130,8 @@ void test_coast(void) {
     ASSERT("tide control raises the water again",
         g.map.tiles[g.map.stairs_down_y][g.map.stairs_down_x] ==
             TILE_COAST_DEEP_WATER);
+    ASSERT("tide updates item underlays without tile artifacts",
+        g.floor_items[0].underlying_tile == TILE_COAST_DEEP_WATER);
     activate_tide_control(&g);
     g.player.x = g.map.stairs_down_x;
     g.player.y = g.map.stairs_down_y;

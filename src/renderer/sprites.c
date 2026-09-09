@@ -153,8 +153,18 @@ void draw_coast_edge(Renderer *r, int tile_x, int tile_y, int forward) {
     fill_rect(r, x + 2, y + 2, 5, 21, (SDL_Color){42, 84, 82, 255});
     fill_rect(r, x + 18, y + 2, 5, 21, (SDL_Color){42, 84, 82, 255});
     fill_rect(r, x + 2, y + 2, 21, 4, (SDL_Color){93, 139, 117, 255});
-    fill_rect(r, x + 9, y + 8, 7, 9, forward ?
-        (SDL_Color){62, 220, 216, 255} : (SDL_Color){47, 130, 145, 255});
+    if (forward == 2) {
+        fill_rect(r, x + 7, y + 7, 11, 13,
+            (SDL_Color){5, 28, 48, 255});
+        fill_rect(r, x + 8, y + 9, 2, 11,
+            (SDL_Color){93, 139, 117, 255});
+        fill_rect(r, x + 14, y + 9, 2, 11,
+            (SDL_Color){93, 139, 117, 255});
+    } else {
+        fill_rect(r, x + 9, y + 8, 7, 9, forward ?
+            (SDL_Color){62, 220, 216, 255} :
+            (SDL_Color){47, 130, 145, 255});
+    }
 }
 
 void draw_coast_shallow_water(Renderer *r, int tile_x, int tile_y) {
@@ -169,10 +179,12 @@ void draw_coast_shallow_water(Renderer *r, int tile_x, int tile_y) {
 void draw_coast_deep_water(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){3, 18, 42, 255});
-    fill_rect(r, x, y + 4, 13, 2, (SDL_Color){14, 58, 91, 255});
-    fill_rect(r, x + 9, y + 13, 15, 2, (SDL_Color){20, 75, 105, 255});
-    fill_rect(r, x + 2, y + 21, 9, 1, (SDL_Color){29, 95, 116, 255});
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){5, 35, 58, 255});
+    fill_rect(r, x + 1, y + 5, 10, 2, (SDL_Color){19, 78, 108, 255});
+    fill_rect(r, x + 12, y + 14, 11, 2,
+        (SDL_Color){28, 101, 126, 255});
+    fill_rect(r, x + 5, y + 21, 8, 1,
+        (SDL_Color){42, 119, 133, 255});
 }
 
 void draw_coast_tide_control(Renderer *r, int tile_x, int tile_y) {

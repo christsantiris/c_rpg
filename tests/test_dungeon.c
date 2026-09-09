@@ -184,6 +184,21 @@ void test_return_to_town_spell(void) {
     ASSERT("dungeon portal closes behind player",
         g.map.tiles[origin_y][origin_x] != TILE_PORTAL);
     ASSERT("portal closes after return trip", g.portal_active == 0);
+
+    game_enter_coast(&g);
+    for (int level = 1; level < 6; level++) {
+        game_descend(&g);
+    }
+    game_open_town_portal(&g);
+    ASSERT("coast portal remembers stage six",
+        g.portal_active && g.portal_level == 6);
+    game_enter_coast(&g);
+    game_return_to_town(&g);
+    ASSERT("coast portal survives another expedition",
+        g.map.tiles[2][20] == TILE_PORTAL);
+    game_use_town_portal(&g);
+    ASSERT("coast portal returns to stage six",
+        g.location == LOCATION_COAST && g.level == 6);
 }
 
 void test_final_dungeon_exit(void) {
