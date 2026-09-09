@@ -30,6 +30,7 @@ file(GLOB_RECURSE TEST_SOURCES
     ${CMAKE_SOURCE_DIR}/src/renderer/viewport.c
 )
 list(APPEND TEST_SOURCES ${CMAKE_SOURCE_DIR}/src/screens/shop.c)
+list(APPEND TEST_SOURCES ${CMAKE_SOURCE_DIR}/src/screens/quest_journal.c)
 list(APPEND TEST_SOURCES ${CMAKE_SOURCE_DIR}/src/systems/save_load.c)
 list(APPEND TEST_SOURCES ${CMAKE_SOURCE_DIR}/external/cJSON.c)
 

@@ -61,6 +61,7 @@ void help_draw(Renderer *r) {
     renderer_draw_text(r, "A              Interact",       col2, y, white, r->font_tiny);
     y += lh;
     renderer_draw_text(r, "D              Drop item",      col1, y, white, r->font_tiny);
+    renderer_draw_text(r, "Q              Quest journal",  col2, y, white, r->font_tiny);
     y += lh + 10;
 
     renderer_draw_text(r, "MAGIC",          col1, y, gold,  r->font_small);

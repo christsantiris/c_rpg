@@ -30,6 +30,7 @@ void test_dain_quest(void);
 void test_alder_quest(void);
 void test_mara_quest(void);
 void test_quest_activation_gating(void);
+void test_quest_journal(void);
 void test_save_load(void);
 
 int main(void) {
@@ -79,6 +80,8 @@ int main(void) {
     test_alder_quest();
     printf("\n");
     test_mara_quest();
+    printf("\n");
+    test_quest_journal();
     printf("\n");
     test_level_cache_cleared();
     printf("\n");
