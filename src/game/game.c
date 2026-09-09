@@ -13,6 +13,7 @@ static void spawn_enemy(Enemy *e, EnemyType type, int x, int y) {
     e->y       = y;
     e->is_boss = 0;
     e->dain_fragment = 0;
+    e->frozen_turns = 0;
     e->move_timer = 0;
     switch (type) {
         case ENEMY_SKELETON:
@@ -660,8 +661,12 @@ void game_unequip_main_hand(GameState *g) {
         g->equipped_main_hand = -1;
         return;
     }
-    g->player.attack -=
-        g->inventory[g->equipped_main_hand].attack_bonus;
+    Item *weapon = &g->inventory[g->equipped_main_hand];
+    g->player.attack -= weapon->attack_bonus;
+    g->player.max_mp -= weapon->max_mp_bonus;
+    if (g->player.mp > g->player.max_mp) {
+        g->player.mp = g->player.max_mp;
+    }
     g->equipped_main_hand = -1;
 }
 
@@ -736,6 +741,7 @@ int game_equip_main_hand(GameState *g, int index) {
     game_unequip_main_hand(g);
     g->equipped_main_hand = index;
     g->player.attack += weapon->attack_bonus;
+    g->player.max_mp += weapon->max_mp_bonus;
     return 1;
 }
 

@@ -92,6 +92,8 @@ void inventory_draw(Renderer *r, const GameState *g, const InventoryScreen *s) {
                 item->type == ITEM_SHIELD) {
                 SDL_snprintf(detail, sizeof(detail), "+%d DEF",
                     item->defense_bonus);
+            } else if (item->type == ITEM_SPELL_TOME) {
+                SDL_snprintf(detail, sizeof(detail), "MAGE UPGRADE");
             }
 
             // Equipped indicator

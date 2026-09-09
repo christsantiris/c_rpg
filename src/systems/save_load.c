@@ -165,6 +165,7 @@ static cJSON *serialize_enemies(const Enemy *enemies, int count) {
         cJSON_AddNumberToObject(obj, "move_timer", e->move_timer);
         cJSON_AddNumberToObject(obj, "is_boss",    e->is_boss);
         cJSON_AddNumberToObject(obj, "dain_fragment", e->dain_fragment);
+        cJSON_AddNumberToObject(obj, "frozen_turns", e->frozen_turns);
         cJSON_AddItemToArray(arr, obj);
     }
     return arr;
@@ -196,6 +197,7 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count) {
              e->type == ENEMY_DROWNED_QUEEN);
         cJSON *dain_fragment = cJSON_GetObjectItem(obj, "dain_fragment");
         e->dain_fragment = dain_fragment ? dain_fragment->valueint : 0;
+        e->frozen_turns = cJSON_GetObjectItem(obj, "frozen_turns")->valueint;
     }
 }
 
@@ -275,7 +277,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 43);
+    cJSON_AddNumberToObject(root, "save_version", 45);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -310,6 +312,7 @@ int save_game(const GameState *g, int slot) {
         cJSON_AddNumberToObject(s, "heal_hp",  sp->heal_hp);
         cJSON_AddNumberToObject(s, "range",    sp->range);
         cJSON_AddNumberToObject(s, "radius",   sp->radius);
+        cJSON_AddNumberToObject(s, "rank",     sp->rank);
         cJSON_AddItemToArray(spells, s);
     }
     cJSON_AddItemToObject(player, "spells", spells);
@@ -613,6 +616,7 @@ int load_game(GameState *g, int slot) {
         sp->heal_hp = cJSON_GetObjectItem(s, "heal_hp")->valueint;
         sp->range   = cJSON_GetObjectItem(s, "range")->valueint;
         sp->radius  = cJSON_GetObjectItem(s, "radius")->valueint;
+        sp->rank    = cJSON_GetObjectItem(s, "rank")->valueint;
     }
 
     // Game state

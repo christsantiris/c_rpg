@@ -42,6 +42,9 @@ static int weapon_fields_match(const Item *a, const Item *b) {
         a->cleave_percent == b->cleave_percent &&
         a->pierces_targets == b->pierces_targets &&
         a->spell_power_bonus == b->spell_power_bonus &&
+        a->max_mp_bonus == b->max_mp_bonus &&
+        a->spell_cost_reduction_percent ==
+            b->spell_cost_reduction_percent &&
         a->armor_penetration_percent == b->armor_penetration_percent;
 }
 
@@ -138,6 +141,12 @@ static void test_current_weapon_round_trip(void) {
     original.equipped_main_hand = 0;
     original.equipped_off_hand = 9;
     original.equipped_armor = 6;
+    original.player.known_spell_count = 1;
+    original.player.known_spells[0] = spell_make_magic_arrow();
+    spell_upgrade(&original.player.known_spells[0]);
+    original.enemy_count = 1;
+    original.enemies[0].active = 1;
+    original.enemies[0].frozen_turns = 2;
 
     remove_test_save(ROUND_TRIP_SLOT);
     int saved = save_game(&original, ROUND_TRIP_SLOT);
@@ -169,6 +178,11 @@ static void test_current_weapon_round_trip(void) {
         armor_fields_survive);
     ASSERT("shield traits survive save/load",
         shield_fields_match(&loaded.inventory[9], &original.inventory[9]));
+    ASSERT("spell rank survives save/load",
+        loaded.player.known_spells[0].rank == 2 &&
+        loaded.player.known_spells[0].damage == 25);
+    ASSERT("freeze duration survives save/load",
+        loaded.enemies[0].frozen_turns == 2);
     remove_test_save(ROUND_TRIP_SLOT);
 }
 

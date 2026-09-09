@@ -54,6 +54,7 @@ typedef struct {
     int       move_timer;
     int       is_boss;
     int       dain_fragment;
+    int       frozen_turns;
 } Enemy;
 
 #endif

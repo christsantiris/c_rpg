@@ -142,6 +142,7 @@ Item item_make_staff(void) {
     it.attack_bonus = 4;
     it.value = 60;
     it.spell_power_bonus = 2;
+    it.max_mp_bonus = 10;
     set_weapon_metadata(&it, WEAPON_FAMILY_STAFF, WEAPON_HANDS_TWO,
         ITEM_RARITY_COMMON, ITEM_CLASS_MAGE, ITEM_VISUAL_STAFF);
     return it;
@@ -155,6 +156,8 @@ Item item_make_runed_staff(void) {
     it.attack_bonus = 6;
     it.value = 300;
     it.spell_power_bonus = 4;
+    it.max_mp_bonus = 20;
+    it.spell_cost_reduction_percent = 5;
     set_weapon_metadata(&it, WEAPON_FAMILY_STAFF, WEAPON_HANDS_TWO,
         ITEM_RARITY_UNCOMMON, ITEM_CLASS_MAGE, ITEM_VISUAL_RUNED_STAFF);
     return it;
@@ -168,6 +171,8 @@ Item item_make_magic_staff(void) {
     it.attack_bonus = 9;
     it.value = 1000;
     it.spell_power_bonus = 8;
+    it.max_mp_bonus = 35;
+    it.spell_cost_reduction_percent = 10;
     set_weapon_metadata(&it, WEAPON_FAMILY_STAFF, WEAPON_HANDS_TWO,
         ITEM_RARITY_RARE, ITEM_CLASS_MAGE, ITEM_VISUAL_MAGIC_STAFF);
     return it;
@@ -761,5 +766,65 @@ Item item_make_scroll_return_to_town(void) {
     strncpy(it.name, "Scroll: Return to Town", sizeof(it.name) - 1);
     it.spell_id = SPELL_RETURN_TO_TOWN;
     it.value = 0;
+    return it;
+}
+
+Item item_make_magic_arrow_tome(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_SPELL_TOME;
+    strncpy(it.name, "Tome: Magic Arrow II", sizeof(it.name) - 1);
+    it.spell_id = SPELL_MAGIC_ARROW;
+    it.value = 180;
+    it.class_mask = ITEM_CLASS_MAGE;
+    it.rarity = ITEM_RARITY_UNCOMMON;
+    return it;
+}
+
+Item item_make_fireball_tome(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_SPELL_TOME;
+    strncpy(it.name, "Tome: Fireball II", sizeof(it.name) - 1);
+    it.spell_id = SPELL_FIREBALL;
+    it.value = 350;
+    it.class_mask = ITEM_CLASS_MAGE;
+    it.rarity = ITEM_RARITY_RARE;
+    return it;
+}
+
+Item item_make_heal_tome(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_SPELL_TOME;
+    strncpy(it.name, "Tome: Heal II", sizeof(it.name) - 1);
+    it.spell_id = SPELL_HEAL;
+    it.value = 500;
+    it.class_mask = ITEM_CLASS_MAGE;
+    it.rarity = ITEM_RARITY_RARE;
+    return it;
+}
+
+Item item_make_scroll_frost_bolt(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_SCROLL;
+    strncpy(it.name, "Scroll: Frost Bolt", sizeof(it.name) - 1);
+    it.spell_id = SPELL_FROST_BOLT;
+    it.value = 140;
+    it.class_mask = ITEM_CLASS_MAGE;
+    it.rarity = ITEM_RARITY_UNCOMMON;
+    return it;
+}
+
+Item item_make_scroll_teleport(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_SCROLL;
+    strncpy(it.name, "Scroll: Teleport", sizeof(it.name) - 1);
+    it.spell_id = SPELL_TELEPORT;
+    it.value = 260;
+    it.class_mask = ITEM_CLASS_MAGE;
+    it.rarity = ITEM_RARITY_RARE;
     return it;
 }

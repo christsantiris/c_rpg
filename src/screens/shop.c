@@ -18,11 +18,24 @@ void shop_init(ShopScreen *s, ShopType type, int defeated_bosses) {
     s->stock_tier = 0;
 
     if (type == SHOP_TYPE_ALCHEMIST) {
+        int boss_count = defeated_boss_count(defeated_bosses);
+        s->stock_tier = boss_count + 1;
         s->items[s->item_count++] = item_make_health_potion();
         s->items[s->item_count++] = item_make_mana_potion();
         s->items[s->item_count++] = item_make_scroll_magic_arrow();
         s->items[s->item_count++] = item_make_scroll_fireball();
         s->items[s->item_count++] = item_make_scroll_heal();
+        if (s->stock_tier >= 2) {
+            s->items[s->item_count++] = item_make_magic_arrow_tome();
+            s->items[s->item_count++] = item_make_scroll_frost_bolt();
+        }
+        if (s->stock_tier >= 3) {
+            s->items[s->item_count++] = item_make_fireball_tome();
+            s->items[s->item_count++] = item_make_scroll_teleport();
+        }
+        if (s->stock_tier >= 4) {
+            s->items[s->item_count++] = item_make_heal_tome();
+        }
     }
     if (type == SHOP_TYPE_BLACKSMITH) {
         int boss_count = defeated_boss_count(defeated_bosses);

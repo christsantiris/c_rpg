@@ -175,7 +175,8 @@ void test_items(void) {
         staff.weapon_hands == WEAPON_HANDS_TWO &&
         staff.class_mask == ITEM_CLASS_MAGE);
     ASSERT("staff provides entry-level spell power",
-        staff.spell_power_bonus == 2 && staff.value == 60);
+        staff.spell_power_bonus == 2 && staff.max_mp_bonus == 10 &&
+        staff.value == 60);
 
     Item runed_staff = item_make_runed_staff();
     ASSERT("runed staff is an uncommon two-handed Mage weapon",
@@ -186,6 +187,8 @@ void test_items(void) {
     ASSERT("runed staff bridges basic and capstone spell power",
         runed_staff.attack_bonus == 6 &&
         runed_staff.spell_power_bonus == 4 &&
+        runed_staff.max_mp_bonus == 20 &&
+        runed_staff.spell_cost_reduction_percent == 5 &&
         runed_staff.spell_power_bonus > staff.spell_power_bonus);
     ASSERT("runed staff has a tier-two price and distinct visual",
         runed_staff.value == 300 &&
@@ -199,7 +202,9 @@ void test_items(void) {
         magic_staff.class_mask == ITEM_CLASS_MAGE);
     ASSERT("magic staff favors spell power over melee power",
         magic_staff.attack_bonus == 9 &&
-        magic_staff.spell_power_bonus == 8);
+        magic_staff.spell_power_bonus == 8 &&
+        magic_staff.max_mp_bonus == 35 &&
+        magic_staff.spell_cost_reduction_percent == 10);
     ASSERT("magic staff has an endgame price and distinct visual",
         magic_staff.value == 1000 &&
         magic_staff.visual_id == ITEM_VISUAL_MAGIC_STAFF);
@@ -258,6 +263,24 @@ void test_items(void) {
         shop_has_item(&shop, "Magic Plate") &&
         shop_has_item(&shop, "Shadow Armor") &&
         shop_has_item(&shop, "Archmage Robes"));
+
+    shop_init(&shop, SHOP_TYPE_ALCHEMIST, 0);
+    ASSERT("Alchemist begins without advanced Mage stock",
+        !shop_has_item(&shop, "Tome: Magic Arrow II"));
+    shop_init(&shop, SHOP_TYPE_ALCHEMIST, 1 << LOCATION_DUNGEON);
+    ASSERT("one boss unlocks Magic Arrow II and Frost Bolt",
+        shop_has_item(&shop, "Tome: Magic Arrow II") &&
+        shop_has_item(&shop, "Scroll: Frost Bolt"));
+    shop_init(&shop, SHOP_TYPE_ALCHEMIST,
+        (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST));
+    ASSERT("two bosses unlock Fireball II and Teleport",
+        shop_has_item(&shop, "Tome: Fireball II") &&
+        shop_has_item(&shop, "Scroll: Teleport"));
+    shop_init(&shop, SHOP_TYPE_ALCHEMIST,
+        (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) |
+        (1 << LOCATION_MOUNTAINS));
+    ASSERT("three bosses unlock Heal II",
+        shop_has_item(&shop, "Tome: Heal II"));
 
     Item armor = item_make_leather_armor();
     ASSERT("armor type correct",            armor.type          == ITEM_ARMOR);
@@ -732,10 +755,15 @@ void test_items(void) {
     // --- Magic Staff spell power ---
     g.player.player_class = CLASS_MAGE;
     game_init(&g);
+    int base_mage_mp = g.player.max_mp;
+    int current_mage_mp = g.player.mp;
     int magic_staff_index = g.inventory_count;
     g.inventory[g.inventory_count++] = magic_staff;
     Action equip_magic_staff = {ACTION_EQUIP_ITEM, magic_staff_index, 0};
     action_resolve_player(&g, equip_magic_staff);
+    ASSERT("magic staff increases maximum mana without refilling mana",
+        g.player.max_mp == base_mage_mp + 35 &&
+        g.player.mp == current_mage_mp);
     g.player.x = 20;
     g.player.y = 12;
     g.player.last_dx = 1;
@@ -753,14 +781,71 @@ void test_items(void) {
     strncpy(g.enemies[0].name, "Target",
         sizeof(g.enemies[0].name) - 1);
     Action cast = {ACTION_CAST_SPELL, 0, 0};
+    int mp_before_staff_cast = g.player.mp;
     action_resolve_player(&g, cast);
     ASSERT("magic staff adds spell power to ranged spell damage",
         g.enemies[0].hp == 75);
+    ASSERT("magic staff reduces spell mana cost",
+        g.player.mp == mp_before_staff_cast - 9);
     g.player.known_spells[0] = spell_make_heal();
     g.player.hp = 1;
     action_resolve_player(&g, cast);
     ASSERT("magic staff adds spell power to healing",
         g.player.hp == 51);
+
+    g.player.known_spells[0] = spell_make_magic_arrow();
+    int tome_index = g.inventory_count;
+    g.inventory[g.inventory_count++] = item_make_magic_arrow_tome();
+    action_resolve_player(&g,
+        (Action){ACTION_USE_ITEM, tome_index, 0});
+    ASSERT("Mage tome upgrades a known spell",
+        g.player.known_spells[0].rank == 2 &&
+        g.player.known_spells[0].damage == 25 &&
+        g.player.known_spells[0].range == 7);
+    Spell upgraded_fireball = spell_make_fireball();
+    Spell upgraded_heal = spell_make_heal();
+    spell_upgrade(&upgraded_fireball);
+    spell_upgrade(&upgraded_heal);
+    ASSERT("Fireball and Heal upgrades apply their rank-two effects",
+        upgraded_fireball.rank == 2 && upgraded_fireball.damage == 37 &&
+        upgraded_fireball.mp_cost == 23 && upgraded_heal.rank == 2 &&
+        upgraded_heal.heal_hp == 60 && upgraded_heal.mp_cost == 17);
+
+    g.player.known_spells[0] = spell_make_frost_bolt();
+    g.player.mp = g.player.max_mp;
+    g.player.x = 20;
+    g.player.y = 12;
+    g.player.last_dx = 1;
+    g.player.last_dy = 0;
+    g.map.tiles[12][21] = TILE_FLOOR;
+    g.map.tiles[12][22] = TILE_FLOOR;
+    g.enemy_count = 1;
+    g.enemies[0] = (Enemy){0};
+    g.enemies[0].active = 1;
+    g.enemies[0].x = 22;
+    g.enemies[0].y = 12;
+    g.enemies[0].hp = 100;
+    action_resolve_player(&g, cast);
+    ASSERT("Frost Bolt damages and freezes its target",
+        g.enemies[0].hp == 72 && g.enemies[0].frozen_turns == 2);
+    int hp_before_freeze = g.player.hp;
+    action_resolve_enemies(&g);
+    action_resolve_enemies(&g);
+    ASSERT("Frost Bolt removes two enemy turns",
+        g.enemies[0].frozen_turns == 0 && g.player.hp == hp_before_freeze);
+
+    g.player.known_spells[0] = spell_make_teleport();
+    g.player.mp = g.player.max_mp;
+    g.enemy_count = 0;
+    g.player.x = 20;
+    g.map.tiles[12][23] = TILE_WALL;
+    action_resolve_player(&g, cast);
+    ASSERT("Teleport stops at the last open tile",
+        g.player.x == 22 && g.player.y == 12);
+    int mp_after_teleport = g.player.mp;
+    action_resolve_player(&g, cast);
+    ASSERT("blocked Teleport consumes no mana",
+        g.player.x == 22 && g.player.mp == mp_after_teleport);
 
     // --- Magic Battle Axe armor penetration ---
     g.player.player_class = CLASS_WARRIOR;

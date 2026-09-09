@@ -306,11 +306,20 @@ static const Item *equipped_armor(const GameState *g) {
 
 static int equipped_spell_cost(const GameState *g, const Spell *spell) {
     const Item *armor = equipped_armor(g);
-    if (spell->mp_cost == 0 || !armor) {
+    if (spell->mp_cost == 0) {
         return spell->mp_cost;
     }
-    return spell->mp_cost *
-        (100 - armor->spell_cost_reduction_percent) / 100;
+    int reduction = armor ? armor->spell_cost_reduction_percent : 0;
+    if (g->equipped_main_hand >= 0 &&
+        g->equipped_main_hand < g->inventory_count) {
+        reduction += g->inventory[g->equipped_main_hand]
+            .spell_cost_reduction_percent;
+    }
+    if (reduction > 50) {
+        reduction = 50;
+    }
+    int cost = spell->mp_cost * (100 - reduction) / 100;
+    return cost < 1 ? 1 : cost;
 }
 
 static int apply_enemy_damage(GameState *g, int damage) {
@@ -524,7 +533,34 @@ void action_resolve_player(GameState *g, Action a) {
                 g->player.mp = g->player.max_mp;
             snprintf(msg, sizeof(msg), "Drank %s +%d MP", item->name, restored);
             push_message(g, msg);
+        } else if (item->type == ITEM_SPELL_TOME) {
+            if (!item_class_allowed(item, g->player.player_class)) {
+                push_message(g, "Only a Mage can study that tome");
+                return;
+            }
+            Spell *known = NULL;
+            for (int i = 0; i < g->player.known_spell_count; i++) {
+                if (g->player.known_spells[i].id == item->spell_id) {
+                    known = &g->player.known_spells[i];
+                    break;
+                }
+            }
+            if (!known) {
+                push_message(g, "Learn the spell before upgrading it");
+                return;
+            }
+            if (!spell_upgrade(known)) {
+                push_message(g, "That spell cannot be upgraded further");
+                return;
+            }
+            snprintf(msg, sizeof(msg), "%s reached rank %d!", known->name,
+                known->rank);
+            push_message(g, msg);
         } else if (item->type == ITEM_SCROLL) {
+            if (!item_class_allowed(item, g->player.player_class)) {
+                push_message(g, "Your class cannot learn that spell");
+                return;
+            }
             for (int i = 0; i < g->player.known_spell_count; i++) {
                 if (g->player.known_spells[i].id == item->spell_id) {
                     push_message(g, "Already know that spell");
@@ -540,6 +576,10 @@ void action_resolve_player(GameState *g, Action a) {
                 case SPELL_MAGIC_ARROW: learned = spell_make_magic_arrow(); break;
                 case SPELL_FIREBALL:    learned = spell_make_fireball();    break;
                 case SPELL_HEAL:        learned = spell_make_heal();        break;
+                case SPELL_FROST_BOLT:
+                    learned = spell_make_frost_bolt();
+                    break;
+                case SPELL_TELEPORT: learned = spell_make_teleport(); break;
                 case SPELL_RETURN_TO_TOWN:
                     learned = spell_make_return_to_town();
                     break;
@@ -660,12 +700,53 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
-        if (sp->type == SPELL_TYPE_UTILITY) {
+        if (sp->id == SPELL_RETURN_TO_TOWN) {
             if (g->location == LOCATION_TOWN) {
                 push_message(g, "Already in town!");
                 return;
             }
             game_open_town_portal(g);
+            return;
+        }
+
+        if (sp->id == SPELL_TELEPORT) {
+            int start_x = g->player.x;
+            int start_y = g->player.y;
+            int destination_x = start_x;
+            int destination_y = start_y;
+            for (int step = 1; step <= sp->range; step++) {
+                int x = start_x + g->player.last_dx * step;
+                int y = start_y + g->player.last_dy * step;
+                if (!map_is_walkable(&g->map, x, y)) {
+                    break;
+                }
+                int occupied = 0;
+                for (int i = 0; i < g->enemy_count; i++) {
+                    if (g->enemies[i].active && g->enemies[i].x == x &&
+                        g->enemies[i].y == y) {
+                        occupied = 1;
+                        break;
+                    }
+                }
+                if (occupied) {
+                    break;
+                }
+                destination_x = x;
+                destination_y = y;
+            }
+            if (destination_x == start_x && destination_y == start_y) {
+                push_message(g, "Teleport path is blocked");
+                return;
+            }
+            g->player.mp -= mana_cost;
+            int distance = abs_int(destination_x - start_x) +
+                abs_int(destination_y - start_y);
+            set_trail(g, start_x, start_y, destination_x, destination_y,
+                g->player.last_dx, g->player.last_dy, distance,
+                155, 90, 235, TRAIL_EFFECT_GENERIC);
+            g->player.x = destination_x;
+            g->player.y = destination_y;
+            push_message(g, "Teleported!");
             return;
         }
 
@@ -683,10 +764,15 @@ void action_resolve_player(GameState *g, Action a) {
             #endif
             int ex = g->player.x + g->player.last_dx * sp->range;
             int ey = g->player.y + g->player.last_dy * sp->range;
-            set_trail(g, g->player.x, g->player.y,
-                ex, ey,
-                g->player.last_dx, g->player.last_dy,
-                sp->range, 40, 120, 220, TRAIL_EFFECT_MAGIC_ARROW);
+            if (sp->id == SPELL_FROST_BOLT) {
+                set_trail(g, g->player.x, g->player.y, ex, ey,
+                    g->player.last_dx, g->player.last_dy,
+                    sp->range, 120, 225, 255, TRAIL_EFFECT_MAGIC_ARROW);
+            } else {
+                set_trail(g, g->player.x, g->player.y, ex, ey,
+                    g->player.last_dx, g->player.last_dy,
+                    sp->range, 40, 120, 220, TRAIL_EFFECT_MAGIC_ARROW);
+            }
         } else if (sp->type == SPELL_TYPE_DAMAGE_AREA) {
             #ifndef TEST_BUILD
             sfx_play_fireball();
@@ -740,6 +826,11 @@ void action_resolve_player(GameState *g, Action a) {
                             g->score += enemy_score(e->type);
                             snprintf(msg, sizeof(msg), "%s killed %s!",
                                 sp->name, e->name);
+                        } else if (sp->id == SPELL_FROST_BOLT) {
+                            e->frozen_turns = 2;
+                            snprintf(msg, sizeof(msg),
+                                "Frost Bolt froze %s: %d dmg", e->name,
+                                dmg);
                         } else {
                             snprintf(msg, sizeof(msg), "%s hit %s: %d dmg",
                                 sp->name, e->name, dmg);
@@ -1303,6 +1394,10 @@ void action_resolve_enemies(GameState *g) {
         Enemy *e = &g->enemies[i];
         if (!e->active) continue;
         if (e->is_boss && boss_locked) continue;
+        if (e->frozen_turns > 0) {
+            e->frozen_turns--;
+            continue;
+        }
 
         if (e->type == ENEMY_LICH_KING) {
             Room *chamber = &g->map.rooms[g->map.room_count - 1];

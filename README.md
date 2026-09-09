@@ -123,37 +123,25 @@ Production Releases
 Highest priority
 1. Difficulty scaling across area order
    Players can complete the four regions in any order, so later regions must remain challenging. Scale primarily from bosses defeated and completed regions, with player level as a smaller modifier. Avoid directly matching every enemy to the player because that makes leveling feel pointless.
-3. Finish the hand-slot system
-   Activate the existing off-hand foundation:
-   - Shields
-   - Dual-wielding one-handed weapons
-   - Mage focuses or spellbooks
-   - Two-handed weapons blocking the off-hand slot
-4. Mage and Alchemist progression
-   Make spellcasting the Mage’s primary strength:
-   - Upgrade existing spells
-   - Sell or unlock stronger spell variants
-   - Add elemental and utility spell paths
-   - Let staves improve spell power, maximum mana, or mana efficiency
 High priority
-5. Quest journal
+2. Quest journal
    Players need a dedicated view showing active quests, objectives, target stages, progress, rewards, and completed quests.
-6. Stronger regional mechanics
+3. Stronger regional mechanics
    Expand each region’s identity beyond its terrain:
    - Dungeon: keys, traps, locked crypts, switches
    - Forest: hidden trails, landmarks, misleading paths
    - Mountains: bridges, collapses, caves, fortifications
    - Coast: tides, flooded chambers, movable water routes
-7. More tactical enemy behavior
+4. More tactical enemy behavior
    Add recognizable combat roles such as protectors, ambushers, healers, summoners, ranged attackers, and enemies that retreat or flank.
-8. Boss encounter improvements
+5. Boss encounter improvements
    Give every boss multiple phases, telegraphed signature attacks, an arena mechanic, and a guaranteed thematic reward.
-9. Economy and loot balancing
+6. Economy and loot balancing
    Review gold income, shop prices, sell values, drop rates, and upgrade pacing now that high-tier weapons exist. Rare equipment should feel attainable without making shops irrelevant.
 Medium priority
-10. Region replay tiers
+7. Region replay tiers
    After defeating a regional boss, unlock a harder expedition version with stronger enemies, altered layouts, improved rewards, and possibly a remixed boss. This is better as an endgame layer after normal-order difficulty scaling works.
-11. More quest varieties
+8. More quest varieties
    Move beyond three-stage interaction quests:
 - Rescue and escort
 - Hunt a named enemy
@@ -161,16 +149,16 @@ Medium priority
 - Defend a location
 - Solve a switch or environmental puzzle
 - Choose between competing outcomes
-12. Town progression
+9. Town progression
    Let the town change as bosses and quests are completed. Shops can visually improve, NPC dialogue can react, and new services can open.
-13. Watchtower functionality
+10. Watchtower functionality
    The watchtower could provide regional scouting, reveal unexplored entrances, display boss status, preview danger level, or launch higher-tier expeditions.
-14. Loot affixes
+11. Loot affixes
    Introduce carefully limited modifiers such as Vampiric, Swift, Reinforced, Mana-Bound, or Venomous. Keep named magical weapons stronger and more distinctive than generic affixed drops.
 Polish priority
-15. Combat feedback
+12. Combat feedback
    Add clearer hit effects, critical indicators, blocked-damage feedback, status icons, and distinct weapon sounds.
-16. Accessibility and controls
+13. Accessibility and controls
    Add remappable controls, text scaling, colorblind-safe indicators, adjustable message duration, and clearer interaction prompts.
-17. Documentation refresh
+14. Documentation refresh
    docs/weapons.md and parts of the README still describe the older weapon catalogue and should be updated.

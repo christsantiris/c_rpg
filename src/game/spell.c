@@ -11,6 +11,7 @@ Spell spell_make_magic_arrow(void) {
     s.range   = 6;
     s.radius  = 0;
     s.heal_hp = 0;
+    s.rank = 1;
     return s;
 }
 
@@ -24,6 +25,7 @@ Spell spell_make_fireball(void) {
     s.range   = 4;
     s.radius  = 2;
     s.heal_hp = 0;
+    s.rank = 1;
     return s;
 }
 
@@ -37,6 +39,7 @@ Spell spell_make_heal(void) {
     s.range   = 0;
     s.radius  = 0;
     s.heal_hp = 40;
+    s.rank = 1;
     return s;
 }
 
@@ -46,5 +49,50 @@ Spell spell_make_return_to_town(void) {
     s.id = SPELL_RETURN_TO_TOWN;
     s.type = SPELL_TYPE_UTILITY;
     s.mp_cost = 0;
+    s.rank = 1;
     return s;
+}
+
+Spell spell_make_frost_bolt(void) {
+    Spell s = {0};
+    strncpy(s.name, "Frost Bolt", sizeof(s.name) - 1);
+    s.id = SPELL_FROST_BOLT;
+    s.type = SPELL_TYPE_DAMAGE_RANGED;
+    s.mp_cost = 14;
+    s.damage = 18;
+    s.range = 5;
+    s.rank = 1;
+    return s;
+}
+
+Spell spell_make_teleport(void) {
+    Spell s = {0};
+    strncpy(s.name, "Teleport", sizeof(s.name) - 1);
+    s.id = SPELL_TELEPORT;
+    s.type = SPELL_TYPE_UTILITY;
+    s.mp_cost = 12;
+    s.range = 4;
+    s.rank = 1;
+    return s;
+}
+
+int spell_upgrade(Spell *spell) {
+    if (!spell || spell->rank >= 3 ||
+        spell->id == SPELL_RETURN_TO_TOWN ||
+        spell->id == SPELL_FROST_BOLT || spell->id == SPELL_TELEPORT) {
+        return 0;
+    }
+    spell->rank++;
+    if (spell->id == SPELL_MAGIC_ARROW) {
+        spell->damage += 10;
+        spell->range++;
+        spell->mp_cost += 2;
+    } else if (spell->id == SPELL_FIREBALL) {
+        spell->damage += 12;
+        spell->mp_cost += 3;
+    } else if (spell->id == SPELL_HEAL) {
+        spell->heal_hp += 20;
+        spell->mp_cost += 2;
+    }
+    return 1;
 }

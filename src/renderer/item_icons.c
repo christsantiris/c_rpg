@@ -434,6 +434,24 @@ void draw_icon_spell(Renderer *r, int px, int py, SpellID spell_id) {
         fill_rect_px(r, px + 4, py + 8, 17, 8, glow);
         fill_rect_px(r, px + 11, py + 5, 3, 14, core);
         fill_rect_px(r, px + 6, py + 10, 13, 3, core);
+    } else if (spell_id == SPELL_FROST_BOLT) {
+        SDL_Color ice = {104, 219, 246, 255};
+        SDL_Color core = {224, 252, 255, 255};
+        fill_rect_px(r, px + 10, py + 2, 4, 20, ice);
+        fill_rect_px(r, px + 2, py + 10, 20, 4, ice);
+        fill_rect_px(r, px + 5, py + 5, 4, 4, ice);
+        fill_rect_px(r, px + 15, py + 5, 4, 4, ice);
+        fill_rect_px(r, px + 5, py + 15, 4, 4, ice);
+        fill_rect_px(r, px + 15, py + 15, 4, 4, ice);
+        fill_rect_px(r, px + 11, py + 8, 2, 8, core);
+    } else if (spell_id == SPELL_TELEPORT) {
+        SDL_Color outer = {140, 76, 224, 255};
+        SDL_Color core = {225, 190, 255, 255};
+        fill_rect_px(r, px + 3, py + 5, 5, 14, outer);
+        fill_rect_px(r, px + 9, py + 7, 5, 10, core);
+        fill_rect_px(r, px + 15, py + 5, 6, 14, outer);
+        fill_rect_px(r, px + 6, py + 3, 3, 3, core);
+        fill_rect_px(r, px + 15, py + 18, 3, 3, core);
     } else {
         SDL_Color outer = {140, 75, 230, 255};
         SDL_Color inner = {80, 220, 235, 255};
