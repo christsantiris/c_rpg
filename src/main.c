@@ -19,6 +19,8 @@
 #include "game/actions.h"
 #include "screens/spellbook.h"
 #include "renderer/spellbook_renderer.h"
+#include "screens/quest_journal.h"
+#include "renderer/quest_journal_renderer.h"
 #include "screens/shop.h"
 #include "renderer/shop_renderer.h"
 #include "renderer/game_renderer.h"
@@ -340,6 +342,8 @@ int main(int argc, char **argv) {
     inventory_init(&inventory_screen);
     SpellbookScreen spellbook_screen;
     spellbook_init(&spellbook_screen);
+    QuestJournalScreen quest_journal_screen;
+    quest_journal_init(&quest_journal_screen);
     ClassSelectScreen class_select_screen;
     class_select_init(&class_select_screen);
     ShopScreen shop_screen;
@@ -499,6 +503,17 @@ int main(int argc, char **argv) {
                         break;
                     }
 
+                    if (screen == SCREEN_QUEST_JOURNAL) {
+                        int quest_count = quest_journal_count(&game,
+                            quest_journal_screen.tab);
+                        QuestJournalResult result = quest_journal_handle_key(
+                            &quest_journal_screen, sc, quest_count);
+                        if (result == QUEST_JOURNAL_CLOSED) {
+                            screen = SCREEN_PLAYING;
+                        }
+                        break;
+                    }
+
                     // Shop screen
                     if (screen == SCREEN_SHOP) {
                         ShopResult result = shop_handle_key(&shop_screen, sc);
@@ -599,6 +614,10 @@ int main(int argc, char **argv) {
                             case SDL_SCANCODE_B:
                                 spellbook_init(&spellbook_screen);
                                 screen = SCREEN_SPELLBOOK;
+                                break;
+                            case SDL_SCANCODE_Q:
+                                quest_journal_init(&quest_journal_screen);
+                                screen = SCREEN_QUEST_JOURNAL;
                                 break;
                             case SDL_SCANCODE_C:
                                 a = (Action){ACTION_CAST_SPELL, 0, 0};
@@ -893,6 +912,8 @@ int main(int argc, char **argv) {
             inventory_draw(&renderer, &game, &inventory_screen);
         } else if (screen == SCREEN_SPELLBOOK) {
             spellbook_draw(&renderer, &game, &spellbook_screen);
+        } else if (screen == SCREEN_QUEST_JOURNAL) {
+            quest_journal_draw(&renderer, &game, &quest_journal_screen);
         } else if (screen == SCREEN_SHOP) {
             shop_draw(&renderer, &game, &shop_screen);
         } else if (screen == SCREEN_PLAYING) {
