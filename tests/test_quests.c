@@ -31,7 +31,7 @@ static void lower_coast_tide(GameState *g) {
             if (g->map.tiles[y][x] == TILE_COAST_TIDE_CONTROL) {
                 g->player.x = x;
                 g->player.y = y;
-                Action activate = {ACTION_MOVE, x, y};
+                Action activate = {ACTION_INTERACT, 0, 0};
                 action_resolve_player(g, activate);
                 return;
             }
@@ -340,7 +340,7 @@ void test_mara_quest(void) {
         }
         g.player.x = beacon_x;
         g.player.y = beacon_y;
-        Action light = {ACTION_PICK_UP, 0, 0};
+        Action light = {ACTION_INTERACT, 0, 0};
         action_resolve_player(&g, light);
         ASSERT("high tide prevents lighting the beacon",
             g.map.tiles[beacon_y][beacon_x] == TILE_COAST_BEACON_UNLIT);
@@ -348,7 +348,7 @@ void test_mara_quest(void) {
         g.player.x = beacon_x;
         g.player.y = beacon_y;
         action_resolve_player(&g, light);
-        ASSERT("P lights the beacon after the tide recedes",
+        ASSERT("action lights the beacon after the tide recedes",
             g.map.tiles[beacon_y][beacon_x] == TILE_COAST_BEACON_LIT);
     }
     ASSERT("three lit beacons make Mara's quest ready",
