@@ -14,6 +14,7 @@
 #define MIGRATED_ARMOR_SLOT 99005
 #define DUAL_WIELD_SLOT 99006
 #define LEGACY_OFF_HAND_SLOT 99007
+#define LEGACY_GOBLIN_REWARD_SLOT 99008
 
 static void format_save_path(int slot, char *path, int size) {
     snprintf(path, size, "saves/savegame_%d.json", slot);
@@ -231,6 +232,38 @@ static void test_legacy_off_hand_migration(void) {
     remove_test_save(LEGACY_OFF_HAND_SLOT);
 }
 
+static void test_legacy_goblin_reward_migration(void) {
+    static GameState legacy;
+    static GameState migrated;
+    memset(&legacy, 0, sizeof(legacy));
+    memset(&migrated, 0, sizeof(migrated));
+    legacy.player.player_class = CLASS_WARRIOR;
+    game_init(&legacy);
+    game_unequip_main_hand(&legacy);
+    int base_attack = legacy.player.attack;
+    legacy.inventory_count = 1;
+    legacy.inventory[0] = item_make_goblin_king_greatsword();
+    game_equip_main_hand(&legacy, 0);
+
+    remove_test_save(LEGACY_GOBLIN_REWARD_SLOT);
+    int saved = save_game(&legacy, LEGACY_GOBLIN_REWARD_SLOT);
+    int version_changed = saved &&
+        rewrite_save_version(LEGACY_GOBLIN_REWARD_SLOT, 42);
+    int loaded_ok = version_changed &&
+        load_game(&migrated, LEGACY_GOBLIN_REWARD_SLOT);
+    ASSERT("legacy Goblin King reward save migrates", loaded_ok);
+    if (loaded_ok) {
+        ASSERT("legacy Goblin King greatsword becomes shield",
+            strcmp(migrated.inventory[0].name,
+                "Goblin King's Shield") == 0 &&
+            migrated.inventory[0].type == ITEM_SHIELD);
+        ASSERT("replaced Goblin King weapon is safely unequipped",
+            migrated.equipped_main_hand == -1 &&
+            migrated.player.attack == base_attack);
+    }
+    remove_test_save(LEGACY_GOBLIN_REWARD_SLOT);
+}
+
 static void test_migrated_armor_round_trip(void) {
     static GameState legacy;
     static GameState migrated;
@@ -372,6 +405,7 @@ void test_save_load(void) {
     test_current_weapon_round_trip();
     test_dual_wield_round_trip();
     test_legacy_off_hand_migration();
+    test_legacy_goblin_reward_migration();
     test_migrated_weapon_round_trip();
     test_migrated_armor_round_trip();
 }

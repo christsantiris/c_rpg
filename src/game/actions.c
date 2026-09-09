@@ -85,7 +85,7 @@ Item boss_equipment_reward(EnemyType type) {
             return item_make_necromancer_cloak();
         case ENEMY_MOUNTAIN_GOBLIN_KING:
         case ENEMY_GOBLIN_KING:
-            return item_make_goblin_king_greatsword();
+            return item_make_goblin_king_shield();
         case ENEMY_DROWNED_QUEEN:
             return item_make_tidecaller_robes();
         default:

@@ -693,6 +693,19 @@ Item item_make_magic_shield(void) {
     return it;
 }
 
+Item item_make_goblin_king_shield(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_SHIELD;
+    strncpy(it.name, "Goblin King's Shield", sizeof(it.name) - 1);
+    it.defense_bonus = 5;
+    it.block_chance = 15;
+    it.value = 500;
+    set_shield_metadata(&it, ITEM_RARITY_UNCOMMON,
+        ITEM_CLASS_WARRIOR | ITEM_CLASS_ROGUE, ITEM_VISUAL_KITE_SHIELD);
+    return it;
+}
+
 void item_apply_legacy_shield_metadata(Item *item) {
     Item definition = {0};
     if (strcmp(item->name, "Buckler") == 0) {
@@ -703,6 +716,8 @@ void item_apply_legacy_shield_metadata(Item *item) {
         definition = item_make_tower_shield();
     } else if (strcmp(item->name, "Magic Shield") == 0) {
         definition = item_make_magic_shield();
+    } else if (strcmp(item->name, "Goblin King's Shield") == 0) {
+        definition = item_make_goblin_king_shield();
     } else {
         return;
     }
