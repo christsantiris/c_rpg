@@ -378,6 +378,28 @@ static void set_trail(GameState *g, int sx, int sy,
     }
 }
 
+static int reveal_adjacent_dungeon_traps(GameState *g) {
+    if (g->location != LOCATION_DUNGEON) {
+        return 0;
+    }
+    int revealed = 0;
+    for (int y = g->player.y - 1; y <= g->player.y + 1; y++) {
+        for (int x = g->player.x - 1; x <= g->player.x + 1; x++) {
+            if (x == g->player.x && y == g->player.y) {
+                continue;
+            }
+            if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
+                continue;
+            }
+            if (g->map.tiles[y][x] == TILE_TRAP_HIDDEN) {
+                g->map.tiles[y][x] = TILE_TRAP_REVEALED;
+                revealed++;
+            }
+        }
+    }
+    return revealed;
+}
+
 void action_resolve_player(GameState *g, Action a) {
     game_repair_equipment_indices(g);
     if (a.type == ACTION_NONE) {
@@ -1235,6 +1257,9 @@ void action_resolve_player(GameState *g, Action a) {
             g->player.last_dy = ty - g->player.y;
             game_move_player(g, tx - g->player.x, ty - g->player.y);
         }
+        if (reveal_adjacent_dungeon_traps(g) > 0) {
+            push_message(g, "You notice a suspicious pressure plate.");
+        }
         // Check for trap on new tile
         int px = g->player.x;
         int py = g->player.y;
@@ -1258,7 +1283,7 @@ void action_resolve_player(GameState *g, Action a) {
             tile = TILE_FOREST_FLOOR;
         }
 
-        if (tile == TILE_TRAP_HIDDEN) {
+        if (tile == TILE_TRAP_HIDDEN || tile == TILE_TRAP_REVEALED) {
             int roll = rand() % 3;
             TileType trap_type;
             if (roll == 0)      trap_type = TILE_TRAP_SPIKE;

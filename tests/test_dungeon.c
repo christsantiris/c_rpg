@@ -280,6 +280,30 @@ void test_enemy_movement_collision(void) {
         ASSERT("spawned enemies are never inside walls",
             enemies_on_open_tiles);
     }
+
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            g.map.tiles[y][x] = TILE_FLOOR;
+        }
+    }
+    g.location = LOCATION_DUNGEON;
+    g.enemy_count = 0;
+    g.player.x = 5;
+    g.player.y = 5;
+    g.player.hp = 100;
+    g.map.tiles[5][7] = TILE_TRAP_HIDDEN;
+    Action approach_trap = {ACTION_MOVE, 6, 5};
+    action_resolve_player(&g, approach_trap);
+    ASSERT("approaching a dungeon trap reveals its pressure plate",
+        g.map.tiles[5][7] == TILE_TRAP_REVEALED);
+
+    Action step_on_trap = {ACTION_MOVE, 7, 5};
+    action_resolve_player(&g, step_on_trap);
+    TileType sprung_trap = g.map.tiles[5][7];
+    ASSERT("stepping on a revealed pressure plate triggers its trap",
+        sprung_trap == TILE_TRAP_SPIKE ||
+        sprung_trap == TILE_TRAP_FIRE ||
+        sprung_trap == TILE_TRAP_POISON);
 }
 
 void test_new_dungeon_enemies(void) {
