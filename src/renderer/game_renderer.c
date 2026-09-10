@@ -464,6 +464,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_TRAP_HIDDEN:
                     draw_trap_underlay(r, g, x, y, sx, sy);
                     break;
+                case TILE_TRAP_REVEALED:
+                    draw_trap_underlay(r, g, x, y, sx, sy);
+                    draw_trap_warning(r, sx, sy);
+                    break;
                 case TILE_TRAP_SPIKE:
                     draw_trap_underlay(r, g, x, y, sx, sy);
                     draw_trap_spike(r, sx, sy);

@@ -1623,6 +1623,19 @@ void draw_floor_gold(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x+9, y+9, 6,         6,         gold);
 }
 
+void draw_trap_warning(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color edge = {116, 108, 132, 255};
+    SDL_Color rune = {190, 152, 72, 255};
+    fill_rect(r, x+4, y+4, 16, 2, edge);
+    fill_rect(r, x+4, y+18, 16, 2, edge);
+    fill_rect(r, x+4, y+6, 2, 12, edge);
+    fill_rect(r, x+18, y+6, 2, 12, edge);
+    fill_rect(r, x+11, y+8, 2, 7, rune);
+    fill_rect(r, x+11, y+17, 2, 2, rune);
+}
+
 void draw_trap_spike(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
