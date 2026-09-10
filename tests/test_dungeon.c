@@ -171,12 +171,13 @@ void test_return_to_town_spell(void) {
     Action cast = {ACTION_CAST_SPELL, 0, 0};
     action_resolve_player(&g, cast);
     ASSERT("zero-mana return spell reaches town", g.location == LOCATION_TOWN);
-    ASSERT("return spell leaves a town portal", g.map.tiles[2][20] == TILE_PORTAL);
+    ASSERT("return spell leaves a portal at the town crossroads",
+        g.map.tiles[12][20] == TILE_PORTAL);
     ASSERT("return portal remains active", g.portal_active == 1);
     ASSERT("dungeon end of portal remains in cached floor",
         g.level_cache[0].map.tiles[origin_y][origin_x] == TILE_PORTAL);
 
-    Action enter = {ACTION_MOVE, 20, 2};
+    Action enter = {ACTION_MOVE, 20, 12};
     action_resolve_player(&g, enter);
     ASSERT("town portal returns to dungeon", g.location == LOCATION_DUNGEON);
     ASSERT("portal returns to casting position",
@@ -195,7 +196,7 @@ void test_return_to_town_spell(void) {
     game_enter_coast(&g);
     game_return_to_town(&g);
     ASSERT("coast portal survives another expedition",
-        g.map.tiles[2][20] == TILE_PORTAL);
+        g.map.tiles[12][20] == TILE_PORTAL);
     game_use_town_portal(&g);
     ASSERT("coast portal returns to stage six",
         g.location == LOCATION_COAST && g.level == 6);
@@ -249,6 +250,36 @@ void test_enemy_movement_collision(void) {
           g.enemies[0].y == g.enemies[1].y));
     ASSERT("blocked enemy remains in place",
         g.enemies[0].x == 8 && g.enemies[0].y == 10);
+
+    Location locations[4] = {
+        LOCATION_DUNGEON,
+        LOCATION_FOREST,
+        LOCATION_MOUNTAINS,
+        LOCATION_COAST
+    };
+    for (int region = 0; region < 4; region++) {
+        g.location = locations[region];
+        g.level = 8;
+        if (g.location == LOCATION_DUNGEON) {
+            map_generate(&g.map, g.level);
+        } else if (g.location == LOCATION_FOREST) {
+            map_generate_forest(&g.map, g.level);
+        } else if (g.location == LOCATION_MOUNTAINS) {
+            map_generate_mountains(&g.map, g.level);
+        } else {
+            map_generate_coast(&g.map, g.level);
+        }
+        enemies_spawn(&g);
+        int enemies_on_open_tiles = 1;
+        for (int i = 0; i < g.enemy_count; i++) {
+            if (g.enemies[i].active && !map_is_walkable(&g.map,
+                g.enemies[i].x, g.enemies[i].y)) {
+                enemies_on_open_tiles = 0;
+            }
+        }
+        ASSERT("spawned enemies are never inside walls",
+            enemies_on_open_tiles);
+    }
 }
 
 void test_new_dungeon_enemies(void) {

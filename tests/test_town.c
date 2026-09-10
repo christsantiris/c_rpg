@@ -293,7 +293,10 @@ void test_forest(void) {
     ASSERT("return spell works from forest", g.location == LOCATION_TOWN);
     ASSERT("portal remembers forest location",
         g.portal_location == LOCATION_FOREST);
-    game_use_town_portal(&g);
+    ASSERT("forest portal appears at the town crossroads",
+        g.map.tiles[12][20] == TILE_PORTAL);
+    Action use_portal = {ACTION_MOVE, 20, 12};
+    action_resolve_player(&g, use_portal);
     ASSERT("town portal returns to forest", g.location == LOCATION_FOREST);
     ASSERT("forest portal restores exact tile",
         g.player.x == portal_x && g.player.y == portal_y);

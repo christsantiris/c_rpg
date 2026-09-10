@@ -698,6 +698,14 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         }
     }
 
+    if (g->dialogue_active && g->location == LOCATION_FOREST &&
+        strcmp(g->dialogue_speaker, "Forest Warden") == 0 &&
+        viewport_is_visible(v, g->dialogue_x, g->dialogue_y)) {
+        draw_forest_warden(r,
+            viewport_to_screen_x(v, g->dialogue_x),
+            viewport_to_screen_y(v, g->dialogue_y));
+    }
+
     // Draw player
     const Item *equipped_weapon = NULL;
     if (g->equipped_main_hand >= 0 &&

@@ -101,10 +101,10 @@ starting arrangement will later be replaced by an NPC gift.
 ## Return to Town
 
 Return to Town costs 0 MP and does not require an aim direction. Casting it in
-the dungeon records the player's floor and position, creates a portal on the
-town's north road, and immediately transports the player to town. Stepping onto
-the town portal returns the player to the recorded dungeon position and closes
-the portal. Casting it while already in town has no effect.
+an adventure area records the player's stage and position, creates a portal at
+the town crossroads, and immediately transports the player to town. Stepping
+onto the town portal returns the player to the recorded position and closes the
+portal. Casting it while already in town has no effect.
 
 Scrolls are sold by the Alchemist and can also appear as enemy drops. Early
 floors emphasize Magic Arrow and Heal; Fireball begins appearing in the loot

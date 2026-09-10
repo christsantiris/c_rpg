@@ -586,7 +586,8 @@ int main(int argc, char **argv) {
                                 TileType tile = game.map.tiles[game.player.y]
                                     [game.player.x];
                                 if (tile == TILE_COAST_TIDE_CONTROL ||
-                                    tile == TILE_COAST_BEACON_UNLIT) {
+                                    tile == TILE_COAST_BEACON_UNLIT ||
+                                    tile == TILE_BROKEN_BURIAL_SEAL) {
                                     a = (Action){ACTION_INTERACT, 0, 0};
                                 } else {
                                     a = (Action){ACTION_MOVE,

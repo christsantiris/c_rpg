@@ -404,15 +404,7 @@ void action_resolve_player(GameState *g, Action a) {
     if (a.type == ACTION_ASCEND) {
         if (g->map.tiles[g->player.y][g->player.x] == TILE_STAIRS_UP) {
             if (g->level == 1) {
-                Location leaving = g->location;
-                g->location = LOCATION_TOWN;
-                int spawn_x, spawn_y;
-                map_generate_town(&g->map, &spawn_x, &spawn_y);
-                g->player.x = leaving == LOCATION_FOREST ? 1 : spawn_x;
-                g->player.y = leaving == LOCATION_FOREST ? 12 : spawn_y;
-                if (g->portal_active) {
-                    g->map.tiles[2][20] = TILE_PORTAL;
-                }
+                game_return_to_town(g);
             } else {
                 game_ascend(g);
             }
@@ -422,6 +414,22 @@ void action_resolve_player(GameState *g, Action a) {
 
     if (a.type == ACTION_INTERACT) {
         TileType tile = g->map.tiles[g->player.y][g->player.x];
+        if (tile == TILE_BROKEN_BURIAL_SEAL) {
+            if (g->elowen_quest_state != 1) {
+                push_message(g, "A shattered burial seal lies here.");
+                return;
+            }
+            int seal_index = g->level == 2 ? 0 : (g->level == 4 ? 1 : 2);
+            g->elowen_seals_restored |= 1 << seal_index;
+            g->map.tiles[g->player.y][g->player.x] =
+                TILE_RESTORED_BURIAL_SEAL;
+            push_message(g, "Burial seal restored.");
+            if ((g->elowen_seals_restored & 7) == 7) {
+                g->elowen_quest_state = 2;
+                push_message(g, "All seals restored. Return to Elowen.");
+            }
+            return;
+        }
         if (tile == TILE_COAST_BEACON_UNLIT) {
             game_light_coast_beacon(g, g->player.x, g->player.y);
             return;
@@ -470,23 +478,6 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_PICK_UP) {
-        if (g->map.tiles[g->player.y][g->player.x] ==
-            TILE_BROKEN_BURIAL_SEAL) {
-            if (g->elowen_quest_state != 1) {
-                push_message(g, "A shattered burial seal lies here.");
-                return;
-            }
-            int seal_index = g->level == 2 ? 0 : (g->level == 4 ? 1 : 2);
-            g->elowen_seals_restored |= 1 << seal_index;
-            g->map.tiles[g->player.y][g->player.x] =
-                TILE_RESTORED_BURIAL_SEAL;
-            push_message(g, "Burial seal restored.");
-            if ((g->elowen_seals_restored & 7) == 7) {
-                g->elowen_quest_state = 2;
-                push_message(g, "All seals restored. Return to Elowen.");
-            }
-            return;
-        }
         if (g->map.tiles[g->player.y][g->player.x] == TILE_DUNGEON_KEY) {
             g->dungeon_key_found = 1;
             g->map.tiles[g->player.y][g->player.x] = TILE_FLOOR;
