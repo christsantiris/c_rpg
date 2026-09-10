@@ -89,7 +89,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                 else if (g->location == LOCATION_TAVERN)
                     SDL_SetRenderDrawColor(r->sdl, 135, 78, 39, 255);
                 else
-                    SDL_SetRenderDrawColor(r->sdl, 70, 70, 100, 255);
+                    SDL_SetRenderDrawColor(r->sdl, 145, 140, 195, 255);
                 SDL_RenderDrawPoint(r->sdl, draw_x, draw_y);
             }
         }

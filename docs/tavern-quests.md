@@ -12,7 +12,7 @@ progress, and completion. Moving dismisses the current dialogue bubble.
 
 Elowen asks the player to repair shattered burial seals on dungeon floors 2,
 4, and 6. With the quest active, each floor contains one cracked stone seal
-leaking spectral energy. Stand on a seal and press `P` to restore it. Return to
+leaking spectral energy. Stand on a seal and press `A` to restore it. Return to
 Elowen after repairing all three to receive 100 gold and 300 score.
 
 Quest acceptance, seal progress, completion, and rewards persist in saves.
@@ -53,7 +53,7 @@ Mara is a retired tidekeeper who carries a sheltered ember from the old coast
 lights. She asks the player to relight drowned beacons on Coast stages 1, 3,
 and 6. Each beacon stands inside a flooded side room and cannot be reached or
 lit until the stage's tide control drains the surrounding deep water. Stand on
-the exposed beacon and press `P` to light it.
+the exposed beacon and press `A` to light it.
 
 The first beacon introduces the objective, the stage 3 beacon is guarded by an
 Animated Statue, and the stage 6 beacon is guarded by a Sea Serpent. Stages do

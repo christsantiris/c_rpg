@@ -98,9 +98,9 @@ void test_elowen_quest(void) {
             find_tile(&g.map, TILE_BROKEN_BURIAL_SEAL, &seal_x, &seal_y));
         g.player.x = seal_x;
         g.player.y = seal_y;
-        Action restore = {ACTION_PICK_UP, 0, 0};
+        Action restore = {ACTION_INTERACT, 0, 0};
         action_resolve_player(&g, restore);
-        ASSERT("P restores the burial seal",
+        ASSERT("A restores the burial seal",
             g.map.tiles[seal_y][seal_x] == TILE_RESTORED_BURIAL_SEAL);
     }
     ASSERT("three restored seals make the quest ready",

@@ -261,8 +261,7 @@ static int boss_for_level(const GameState *g, EnemyType *type) {
     return 1;
 }
 
-static int enemy_tile_open(const GameState *g, int x, int y) {
-    // Keep keys, stairs, traps, and portals visible and unobstructed.
+static int enemy_terrain_open(const GameState *g, int x, int y) {
     if (!map_is_walkable(&g->map, x, y) ||
         (g->map.tiles[y][x] != TILE_FLOOR &&
         g->map.tiles[y][x] != TILE_FOREST_FLOOR &&
@@ -275,6 +274,14 @@ static int enemy_tile_open(const GameState *g, int x, int y) {
         g->map.tiles[y][x] != TILE_COAST_DRAINED_WATER)) {
         return 0;
     }
+    return 1;
+}
+
+static int enemy_tile_open(const GameState *g, int x, int y) {
+    // Keep keys, stairs, traps, and portals visible and unobstructed.
+    if (!enemy_terrain_open(g, x, y)) {
+        return 0;
+    }
     for (int i = 0; i < g->enemy_count; i++) {
         if (g->enemies[i].active &&
             g->enemies[i].x == x && g->enemies[i].y == y) {
@@ -282,6 +289,20 @@ static int enemy_tile_open(const GameState *g, int x, int y) {
         }
     }
     return 1;
+}
+
+static int find_enemy_tile_in_room(GameState *g, int room_index, int *x, int *y) {
+    Room *room = &g->map.rooms[room_index];
+    for (int ty = room->y + 1; ty < room->y + room->h - 1; ty++) {
+        for (int tx = room->x + 1; tx < room->x + room->w - 1; tx++) {
+            if (enemy_tile_open(g, tx, ty)) {
+                *x = tx;
+                *y = ty;
+                return 1;
+            }
+        }
+    }
+    return 0;
 }
 
 static int find_enemy_tile(GameState *g, int *x, int *y, int room_limit) {
@@ -350,8 +371,14 @@ void enemies_spawn(GameState *g) {
             map_room_center(&g->map.rooms[g->map.room_count - 1],
                 &boss_x, &boss_y);
         }
-        spawn_enemy(&g->enemies[g->enemy_count++], boss_type,
-            boss_x, boss_y);
+        if (!enemy_tile_open(g, boss_x, boss_y)) {
+            find_enemy_tile_in_room(g, g->map.room_count - 1,
+                &boss_x, &boss_y);
+        }
+        if (enemy_tile_open(g, boss_x, boss_y)) {
+            spawn_enemy(&g->enemies[g->enemy_count++], boss_type,
+                boss_x, boss_y);
+        }
     }
 
     int boss_level = g->location == LOCATION_FOREST ? FOREST_DEPTH :
@@ -1191,6 +1218,13 @@ void game_enter_coast(GameState *g) {
     enter_adventure(g, LOCATION_COAST);
 }
 
+static void place_town_portal(GameState *g) {
+    if (!g->portal_active || g->location != LOCATION_TOWN) {
+        return;
+    }
+    g->map.tiles[12][20] = TILE_PORTAL;
+}
+
 void game_enter_tavern(GameState *g) {
     int spawn_x;
     int spawn_y;
@@ -1214,9 +1248,7 @@ void game_leave_tavern(GameState *g) {
     g->enemy_count = 0;
     g->floor_item_count = 0;
     g->dialogue_active = 0;
-    if (g->portal_active) {
-        g->map.tiles[2][20] = TILE_PORTAL;
-    }
+    place_town_portal(g);
     push_message(g, "You step back into town.");
 }
 
@@ -1247,9 +1279,7 @@ void game_return_to_town(GameState *g) {
     }
     g->floor_item_count = 0;
     g->enemy_count = 0;
-    if (g->portal_active) {
-        g->map.tiles[2][20] = TILE_PORTAL;
-    }
+    place_town_portal(g);
 }
 
 void game_open_town_portal(GameState *g) {
@@ -1267,7 +1297,6 @@ void game_open_town_portal(GameState *g) {
     g->portal_origin_tile = g->map.tiles[g->player.y][g->player.x];
     g->map.tiles[g->player.y][g->player.x] = TILE_PORTAL;
     game_return_to_town(g);
-    g->map.tiles[2][20] = TILE_PORTAL;
     push_message(g, "A return portal remains open.");
 }
 
