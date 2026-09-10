@@ -113,6 +113,7 @@ typedef struct {
     Uint32    trail_started_at;
     int score;
     int dungeon_key_found;
+    int dungeon_crypt_keys;
     int portal_active;
     int portal_level;
     Location portal_location;

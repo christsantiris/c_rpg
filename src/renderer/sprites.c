@@ -574,12 +574,43 @@ void draw_dungeon_key(Renderer *r, int tile_x, int tile_y) {
     int y = tile_y * TILE_SIZE;
     SDL_Color gold = {226, 184, 54, 255};
     SDL_Color shine = {255, 232, 126, 255};
-    draw_town_path(r, tile_x, tile_y);
+    draw_floor(r, tile_x, tile_y);
     fill_rect(r, x+4, y+7, 8, 8, gold);
     fill_rect(r, x+6, y+9, 4, 4, (SDL_Color){18, 18, 35, 255});
     fill_rect(r, x+11, y+10, 10, 3, gold);
     fill_rect(r, x+17, y+13, 3, 4, gold);
     fill_rect(r, x+5, y+7, 3, 2, shine);
+}
+
+void draw_crypt_door(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_locked_door(r, tile_x, tile_y);
+    fill_rect(r, x+10, y+11, 5, 6, (SDL_Color){202, 164, 58, 255});
+    fill_rect(r, x+11, y+9, 3, 4, (SDL_Color){242, 214, 112, 255});
+}
+
+void draw_crypt_key(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color iron = {146, 166, 184, 255};
+    SDL_Color shine = {220, 234, 240, 255};
+    draw_floor(r, tile_x, tile_y);
+    fill_rect(r, x+4, y+7, 8, 8, iron);
+    fill_rect(r, x+6, y+9, 4, 4, (SDL_Color){18, 18, 35, 255});
+    fill_rect(r, x+11, y+10, 10, 3, iron);
+    fill_rect(r, x+17, y+13, 3, 4, iron);
+    fill_rect(r, x+5, y+7, 3, 2, shine);
+}
+
+void draw_crypt_cache(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_floor(r, tile_x, tile_y);
+    fill_rect(r, x+3, y+9, 18, 12, (SDL_Color){74, 42, 28, 255});
+    fill_rect(r, x+4, y+6, 16, 6, (SDL_Color){112, 66, 34, 255});
+    fill_rect(r, x+5, y+7, 14, 2, (SDL_Color){166, 102, 42, 255});
+    fill_rect(r, x+10, y+11, 5, 6, (SDL_Color){226, 184, 54, 255});
 }
 
 void draw_portal(Renderer *r, int tile_x, int tile_y) {

@@ -49,6 +49,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                     TileType tile = g->map.tiles[sy][sx];
                     if (tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN ||
                         tile == TILE_RETURN_EXIT || tile == TILE_DUNGEON_KEY ||
+                        tile == TILE_CRYPT_KEY || tile == TILE_CRYPT_CACHE ||
                         tile == TILE_PORTAL || tile == TILE_FOREST_ENTRANCE ||
                         tile == TILE_FOREST_EXIT || tile == TILE_MOUNTAIN_ENTRANCE ||
                         tile == TILE_MOUNTAIN_EXIT || tile == TILE_COAST_ENTRANCE ||
@@ -70,7 +71,8 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile != TILE_COAST_DEEP_WATER &&
                         tile != TILE_TAVERN_WALL &&
                         tile != TILE_TAVERN_TABLE &&
-                        tile != TILE_LOCKED_DOOR) {
+                        tile != TILE_LOCKED_DOOR &&
+                        tile != TILE_CRYPT_DOOR) {
                         has_floor = 1;
                     }
                 }
