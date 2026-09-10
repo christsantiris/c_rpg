@@ -1266,6 +1266,13 @@ void action_resolve_player(GameState *g, Action a) {
         TileType tile = g->map.tiles[py][px];
 
         if (g->location == LOCATION_FOREST &&
+            tile == TILE_FOREST_FALSE_MARKER) {
+            g->map.tiles[py][px] = TILE_FOREST_FLOOR;
+            push_message(g, "The broken marker points to a dead trail.");
+            tile = TILE_FOREST_FLOOR;
+        }
+
+        if (g->location == LOCATION_FOREST &&
             tile == TILE_FOREST_LANDMARK) {
             g->map.tiles[py][px] = TILE_FOREST_FLOOR;
             for (int y = 0; y < MAP_H; y++) {
