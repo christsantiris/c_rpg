@@ -11,6 +11,7 @@ void draw_forest_floor(Renderer *r, int tile_x, int tile_y);
 void draw_forest_wall(Renderer *r, int tile_x, int tile_y);
 void draw_forest_edge(Renderer *r, int tile_x, int tile_y, int forward);
 void draw_forest_landmark(Renderer *r, int tile_x, int tile_y);
+void draw_forest_false_marker(Renderer *r, int tile_x, int tile_y);
 void draw_mountain_floor(Renderer *r, int tile_x, int tile_y);
 void draw_mountain_wall(Renderer *r, int tile_x, int tile_y);
 void draw_mountain_edge(Renderer *r, int tile_x, int tile_y, int forward);

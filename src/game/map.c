@@ -573,6 +573,12 @@ void map_generate_forest(Map *m, int level) {
     int landmark_y;
     map_room_center(&m->rooms[landmark_room], &landmark_x, &landmark_y);
     m->tiles[landmark_y][landmark_x] = TILE_FOREST_LANDMARK;
+    if (level > 1 && level < FOREST_DEPTH) {
+        int false_x;
+        int false_y;
+        map_room_center(&m->rooms[m->room_count / 2], &false_x, &false_y);
+        m->tiles[false_y][false_x] = TILE_FOREST_FALSE_MARKER;
+    }
     if (m->stairs_down_x == 1) {
         m->tiles[m->stairs_down_y][0] = TILE_FOREST_WALL;
     } else if (m->stairs_down_x == MAP_W - 2) {
