@@ -105,6 +105,36 @@ static int place_locked_crypt(Map *m) {
     return 0;
 }
 
+static void place_dungeon_switch_route(Map *m) {
+    int start_x;
+    int start_y;
+    int end_x;
+    int end_y;
+    map_room_center(&m->rooms[1], &start_x, &start_y);
+    map_room_center(&m->rooms[3], &end_x, &end_y);
+    carve_corridor(m, start_x, start_y, end_x, end_y);
+
+    int gate_x = start_x + (end_x - start_x) / 2;
+    int gate_y = start_y;
+    if (gate_x == start_x || gate_x == end_x) {
+        gate_x = end_x;
+        gate_y = start_y + (end_y - start_y) / 2;
+    }
+    m->tiles[gate_y][gate_x] = TILE_DUNGEON_GATE;
+
+    Room *switch_room = &m->rooms[2];
+    for (int y = switch_room->y + 1;
+        y < switch_room->y + switch_room->h - 1; y++) {
+        for (int x = switch_room->x + 1;
+            x < switch_room->x + switch_room->w - 1; x++) {
+            if (m->tiles[y][x] == TILE_FLOOR) {
+                m->tiles[y][x] = TILE_DUNGEON_SWITCH_OFF;
+                return;
+            }
+        }
+    }
+}
+
 void map_generate(Map *m, int level) {
     (void)level;
     map_clear_exploration(m);
@@ -202,6 +232,13 @@ void map_generate(Map *m, int level) {
         m->tiles[door_y][door_x] = TILE_LOCKED_DOOR;
     }
 
+    if (level >= 3 && level < DUNGEON_DEPTH && level % 2 == 1 &&
+        m->room_count >= 4) {
+        place_dungeon_switch_route(m);
+        m->tiles[uy][ux] = TILE_STAIRS_UP;
+        m->tiles[dy][dx] = TILE_STAIRS_DOWN;
+    }
+
     // Place traps in rooms (skip room 0 — player spawn)
     int num_traps = 2 + level;
     if (num_traps > 12) num_traps = 12;
@@ -268,7 +305,8 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_NPC_MARA &&
         m->tiles[y][x] != TILE_FOREST_WARDEN &&
         m->tiles[y][x] != TILE_LOCKED_DOOR &&
-        m->tiles[y][x] != TILE_CRYPT_DOOR;
+        m->tiles[y][x] != TILE_CRYPT_DOOR &&
+        m->tiles[y][x] != TILE_DUNGEON_GATE;
 }
 
 typedef struct {

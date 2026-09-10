@@ -406,6 +406,41 @@ void test_stairs_locked(void) {
     ASSERT("A loots the crypt cache once",
         g.gold > gold_before &&
         g.map.tiles[cache_y][cache_x] == TILE_FLOOR);
+
+    g.level = 3;
+    map_generate(&g.map, g.level);
+    int switch_x = -1;
+    int switch_y = -1;
+    int gate_x = -1;
+    int gate_y = -1;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (g.map.tiles[y][x] == TILE_DUNGEON_SWITCH_OFF) {
+                switch_x = x;
+                switch_y = y;
+            } else if (g.map.tiles[y][x] == TILE_DUNGEON_GATE) {
+                gate_x = x;
+                gate_y = y;
+            }
+        }
+    }
+    ASSERT("dungeon floor three contains a switch and portcullis",
+        switch_x >= 0 && gate_x >= 0);
+    if (switch_x < 0 || gate_x < 0) {
+        return;
+    }
+    ASSERT("closed portcullis blocks movement",
+        !map_is_walkable(&g.map, gate_x, gate_y));
+
+    g.player.x = switch_x;
+    g.player.y = switch_y;
+    Action activate_switch = {ACTION_INTERACT, 0, 0};
+    action_resolve_player(&g, activate_switch);
+    ASSERT("A activates the dungeon switch",
+        g.map.tiles[switch_y][switch_x] == TILE_DUNGEON_SWITCH_ON);
+    ASSERT("activated switch opens the portcullis shortcut",
+        g.map.tiles[gate_y][gate_x] == TILE_FLOOR &&
+        map_is_walkable(&g.map, gate_x, gate_y));
 }
 
 void test_level_cache_cleared(void) {
