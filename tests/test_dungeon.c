@@ -171,13 +171,13 @@ void test_return_to_town_spell(void) {
     Action cast = {ACTION_CAST_SPELL, 0, 0};
     action_resolve_player(&g, cast);
     ASSERT("zero-mana return spell reaches town", g.location == LOCATION_TOWN);
-    ASSERT("return spell leaves a portal at the town crossroads",
-        g.map.tiles[12][20] == TILE_PORTAL);
+    ASSERT("return spell leaves a portal beside the dungeon entrance",
+        g.map.tiles[2][21] == TILE_PORTAL);
     ASSERT("return portal remains active", g.portal_active == 1);
     ASSERT("dungeon end of portal remains in cached floor",
         g.level_cache[0].map.tiles[origin_y][origin_x] == TILE_PORTAL);
 
-    Action enter = {ACTION_MOVE, 20, 12};
+    Action enter = {ACTION_MOVE, 21, 2};
     action_resolve_player(&g, enter);
     ASSERT("town portal returns to dungeon", g.location == LOCATION_DUNGEON);
     ASSERT("portal returns to casting position",
@@ -196,7 +196,7 @@ void test_return_to_town_spell(void) {
     game_enter_coast(&g);
     game_return_to_town(&g);
     ASSERT("coast portal survives another expedition",
-        g.map.tiles[12][20] == TILE_PORTAL);
+        g.map.tiles[TOWN_H - 3][21] == TILE_PORTAL);
     game_use_town_portal(&g);
     ASSERT("coast portal returns to stage six",
         g.location == LOCATION_COAST && g.level == 6);

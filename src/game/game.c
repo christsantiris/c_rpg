@@ -1222,7 +1222,19 @@ static void place_town_portal(GameState *g) {
     if (!g->portal_active || g->location != LOCATION_TOWN) {
         return;
     }
-    g->map.tiles[12][20] = TILE_PORTAL;
+    int x = 21;
+    int y = 2;
+    if (g->portal_location == LOCATION_FOREST) {
+        x = 2;
+        y = 13;
+    } else if (g->portal_location == LOCATION_MOUNTAINS) {
+        x = TOWN_W - 3;
+        y = 13;
+    } else if (g->portal_location == LOCATION_COAST) {
+        x = 21;
+        y = TOWN_H - 3;
+    }
+    g->map.tiles[y][x] = TILE_PORTAL;
 }
 
 void game_enter_tavern(GameState *g) {
