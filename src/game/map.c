@@ -290,6 +290,7 @@ int map_is_walkable(const Map *m, int x, int y) {
     }
     return m->tiles[y][x] != TILE_WALL &&
         m->tiles[y][x] != TILE_FOREST_WALL &&
+        m->tiles[y][x] != TILE_FOREST_HIDDEN_TRAIL &&
         m->tiles[y][x] != TILE_MOUNTAIN_WALL &&
         m->tiles[y][x] != TILE_COAST_WALL &&
         m->tiles[y][x] != TILE_COAST_DEEP_WATER &&
@@ -376,6 +377,27 @@ static void carve_forest_trail(Map *m, int x, int y, int target_x, int target_y)
         }
     }
     fill_rect(m, x - 1, y - 1, 3, 3, TILE_FOREST_FLOOR);
+}
+
+static void mark_hidden_forest_trail(Map *m, int x, int y, int target_x, int target_y) {
+    int horizontal = 1;
+    while (x != target_x || y != target_y) {
+        for (int trail_y = y - 1; trail_y <= y + 1; trail_y++) {
+            for (int trail_x = x - 1; trail_x <= x + 1; trail_x++) {
+                if (m->tiles[trail_y][trail_x] == TILE_FOREST_WALL) {
+                    m->tiles[trail_y][trail_x] = TILE_FOREST_HIDDEN_TRAIL;
+                }
+            }
+        }
+        if ((horizontal && x != target_x) || y == target_y) {
+            x += target_x > x ? 1 : -1;
+        } else {
+            y += target_y > y ? 1 : -1;
+        }
+        if (rand() % 5 == 0) {
+            horizontal = !horizontal;
+        }
+    }
 }
 
 static void carve_forest_clearing(Map *m, Room *room) {
@@ -536,6 +558,15 @@ void map_generate_forest(Map *m, int level) {
     }
     map_generate_outdoor(m, level, entrances[index], exits[index], 1,
         &forest_templates[index]);
+    int hidden_start_x;
+    int hidden_start_y;
+    int hidden_end_x;
+    int hidden_end_y;
+    map_room_center(&m->rooms[1], &hidden_start_x, &hidden_start_y);
+    map_room_center(&m->rooms[m->room_count - 2],
+        &hidden_end_x, &hidden_end_y);
+    mark_hidden_forest_trail(m, hidden_start_x, hidden_start_y,
+        hidden_end_x, hidden_end_y);
     int landmark_room = level == FOREST_DEPTH ? m->room_count - 2 :
         m->room_count - 1;
     int landmark_x;

@@ -194,9 +194,34 @@ void test_forest(void) {
                 break;
             }
     ASSERT("forest contains forest floor tiles", forest_terrain);
+    int hidden_trails = 0;
+    int hidden_x = -1;
+    int hidden_y = -1;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (g.map.tiles[y][x] == TILE_FOREST_HIDDEN_TRAIL) {
+                hidden_trails++;
+                hidden_x = x;
+                hidden_y = y;
+            }
+        }
+    }
+    ASSERT("forest contains a concealed shortcut", hidden_trails > 0);
+    ASSERT("concealed shortcut initially behaves like dense woods",
+        hidden_x >= 0 && !map_is_walkable(&g.map, hidden_x, hidden_y));
     reveal_forest_exit(&g);
     ASSERT("forest landmark reveals east stage exit",
         g.map.tiles[g.map.stairs_down_y][MAP_W - 1] == TILE_FOREST_EXIT);
+    int concealed_after_landmark = 0;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            concealed_after_landmark +=
+                g.map.tiles[y][x] == TILE_FOREST_HIDDEN_TRAIL;
+        }
+    }
+    ASSERT("forest landmark reveals the concealed shortcut",
+        hidden_x >= 0 && hidden_y >= 0 && concealed_after_landmark == 0 &&
+        g.map.tiles[hidden_y][hidden_x] == TILE_FOREST_FLOOR);
 
     int pickup_x = g.player.x;
     int pickup_y = g.player.y;

@@ -75,7 +75,8 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile != TILE_TAVERN_TABLE &&
                         tile != TILE_LOCKED_DOOR &&
                         tile != TILE_CRYPT_DOOR &&
-                        tile != TILE_DUNGEON_GATE) {
+                        tile != TILE_DUNGEON_GATE &&
+                        tile != TILE_FOREST_HIDDEN_TRAIL) {
                         has_floor = 1;
                     }
                 }

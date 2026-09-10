@@ -1268,6 +1268,13 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->location == LOCATION_FOREST &&
             tile == TILE_FOREST_LANDMARK) {
             g->map.tiles[py][px] = TILE_FOREST_FLOOR;
+            for (int y = 0; y < MAP_H; y++) {
+                for (int x = 0; x < MAP_W; x++) {
+                    if (g->map.tiles[y][x] == TILE_FOREST_HIDDEN_TRAIL) {
+                        g->map.tiles[y][x] = TILE_FOREST_FLOOR;
+                    }
+                }
+            }
             if (g->map.stairs_down_x == 1) {
                 g->map.tiles[g->map.stairs_down_y][0] = TILE_FOREST_EXIT;
             } else if (g->map.stairs_down_x == MAP_W - 2) {
@@ -1279,7 +1286,7 @@ void action_resolve_player(GameState *g, Action a) {
                 g->map.tiles[MAP_H - 1][g->map.stairs_down_x] =
                     TILE_FOREST_EXIT;
             }
-        push_message(g, "The rune reveals the path!");
+        push_message(g, "The landmark reveals hidden trails!");
             tile = TILE_FOREST_FLOOR;
         }
 
