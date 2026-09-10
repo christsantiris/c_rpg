@@ -414,6 +414,27 @@ void action_resolve_player(GameState *g, Action a) {
 
     if (a.type == ACTION_INTERACT) {
         TileType tile = g->map.tiles[g->player.y][g->player.x];
+        if (tile == TILE_DUNGEON_SWITCH_OFF) {
+            int opened = 0;
+            for (int y = 0; y < MAP_H; y++) {
+                for (int x = 0; x < MAP_W; x++) {
+                    if (g->map.tiles[y][x] == TILE_DUNGEON_GATE) {
+                        g->map.tiles[y][x] = TILE_FLOOR;
+                        opened++;
+                    }
+                }
+            }
+            g->map.tiles[g->player.y][g->player.x] =
+                TILE_DUNGEON_SWITCH_ON;
+            push_message(g, opened > 0 ?
+                "The portcullis opens a shortcut!" :
+                "The switch grinds into place.");
+            return;
+        }
+        if (tile == TILE_DUNGEON_SWITCH_ON) {
+            push_message(g, "The switch has already been activated.");
+            return;
+        }
         if (tile == TILE_CRYPT_CACHE) {
             int gold = 20 + g->level * 5;
             g->gold += gold;

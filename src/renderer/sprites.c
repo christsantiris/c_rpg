@@ -613,6 +613,33 @@ void draw_crypt_cache(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x+10, y+11, 5, 6, (SDL_Color){226, 184, 54, 255});
 }
 
+void draw_dungeon_gate(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_floor(r, tile_x, tile_y);
+    SDL_Color iron = {102, 106, 132, 255};
+    SDL_Color shine = {174, 180, 204, 255};
+    fill_rect(r, x+2, y+3, 20, 3, iron);
+    fill_rect(r, x+2, y+18, 20, 3, iron);
+    for (int bar = 4; bar <= 19; bar += 5) {
+        fill_rect(r, x+bar, y+2, 3, 21, iron);
+        fill_rect(r, x+bar, y+2, 1, 19, shine);
+    }
+}
+
+void draw_dungeon_switch(Renderer *r, int tile_x, int tile_y, int active) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_floor(r, tile_x, tile_y);
+    fill_rect(r, x+5, y+6, 14, 13, (SDL_Color){50, 48, 68, 255});
+    fill_rect(r, x+7, y+8, 10, 9, (SDL_Color){90, 86, 108, 255});
+    SDL_Color rune = active ?
+        (SDL_Color){80, 220, 150, 255} :
+        (SDL_Color){220, 92, 62, 255};
+    fill_rect(r, x+10, y+10, 4, 5, rune);
+    fill_rect(r, x+8, y+12, 8, 2, rune);
+}
+
 void draw_portal(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;

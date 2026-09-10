@@ -33,6 +33,8 @@ void draw_dungeon_key(Renderer *r, int tile_x, int tile_y);
 void draw_crypt_door(Renderer *r, int tile_x, int tile_y);
 void draw_crypt_key(Renderer *r, int tile_x, int tile_y);
 void draw_crypt_cache(Renderer *r, int tile_x, int tile_y);
+void draw_dungeon_gate(Renderer *r, int tile_x, int tile_y);
+void draw_dungeon_switch(Renderer *r, int tile_x, int tile_y, int active);
 void draw_portal(Renderer *r, int tile_x, int tile_y);
 void draw_broken_burial_seal(Renderer *r, int tile_x, int tile_y);
 void draw_restored_burial_seal(Renderer *r, int tile_x, int tile_y);
