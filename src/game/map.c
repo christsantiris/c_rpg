@@ -62,6 +62,49 @@ void map_room_center(const Room *r, int *cx, int *cy) {
     *cy = r->y + r->h / 2;
 }
 
+static int crypt_space_is_clear(const Map *m, int x, int y, int w, int h) {
+    if (x < 1 || y < 1 || x + w >= MAP_W || y + h >= MAP_H) {
+        return 0;
+    }
+    for (int cy = y; cy < y + h; cy++) {
+        for (int cx = x; cx < x + w; cx++) {
+            if (m->tiles[cy][cx] != TILE_WALL) {
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
+static int place_locked_crypt(Map *m) {
+    for (int room_index = 1; room_index < m->room_count - 1; room_index++) {
+        Room *room = &m->rooms[room_index];
+        for (int door_y = room->y + 2;
+            door_y < room->y + room->h - 2; door_y++) {
+            int door_x = room->x + room->w;
+            int crypt_x = door_x + 1;
+            int crypt_y = door_y - 2;
+            if (!crypt_space_is_clear(m, door_x, crypt_y - 1, 7, 7)) {
+                continue;
+            }
+            fill_rect(m, crypt_x, crypt_y, 5, 5, TILE_FLOOR);
+            m->tiles[door_y][door_x] = TILE_CRYPT_DOOR;
+            m->tiles[crypt_y + 2][crypt_x + 2] = TILE_CRYPT_CACHE;
+            for (int key_y = room->y + 1;
+                key_y < room->y + room->h - 1; key_y++) {
+                for (int key_x = room->x + 1;
+                    key_x < room->x + room->w - 1; key_x++) {
+                    if (m->tiles[key_y][key_x] == TILE_FLOOR) {
+                        m->tiles[key_y][key_x] = TILE_CRYPT_KEY;
+                        return 1;
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 void map_generate(Map *m, int level) {
     (void)level;
     map_clear_exploration(m);
@@ -198,6 +241,10 @@ void map_generate(Map *m, int level) {
             }
         }
     }
+
+    if (level >= 2 && level < DUNGEON_DEPTH && level % 2 == 0) {
+        place_locked_crypt(m);
+    }
 }
 
 int map_is_walkable(const Map *m, int x, int y) {
@@ -220,7 +267,8 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_NPC_ALDER &&
         m->tiles[y][x] != TILE_NPC_MARA &&
         m->tiles[y][x] != TILE_FOREST_WARDEN &&
-        m->tiles[y][x] != TILE_LOCKED_DOOR;
+        m->tiles[y][x] != TILE_LOCKED_DOOR &&
+        m->tiles[y][x] != TILE_CRYPT_DOOR;
 }
 
 typedef struct {

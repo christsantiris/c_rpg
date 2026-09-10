@@ -408,6 +408,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_RETURN_EXIT: draw_return_exit(r, sx, sy); break;
                 case TILE_LOCKED_DOOR: draw_locked_door(r, sx, sy); break;
                 case TILE_DUNGEON_KEY: draw_dungeon_key(r, sx, sy); break;
+                case TILE_CRYPT_DOOR: draw_crypt_door(r, sx, sy); break;
+                case TILE_CRYPT_KEY: draw_crypt_key(r, sx, sy); break;
+                case TILE_CRYPT_CACHE: draw_crypt_cache(r, sx, sy); break;
                 case TILE_PORTAL: draw_portal(r, sx, sy); break;
                 case TILE_BROKEN_BURIAL_SEAL:
                     draw_broken_burial_seal(r, sx, sy); break;

@@ -414,6 +414,17 @@ void action_resolve_player(GameState *g, Action a) {
 
     if (a.type == ACTION_INTERACT) {
         TileType tile = g->map.tiles[g->player.y][g->player.x];
+        if (tile == TILE_CRYPT_CACHE) {
+            int gold = 20 + g->level * 5;
+            g->gold += gold;
+            g->score += gold;
+            g->map.tiles[g->player.y][g->player.x] = TILE_FLOOR;
+            char message[MAX_MESSAGE_LEN];
+            snprintf(message, sizeof(message),
+                "The crypt cache holds %d gold!", gold);
+            push_message(g, message);
+            return;
+        }
         if (tile == TILE_BROKEN_BURIAL_SEAL) {
             if (g->elowen_quest_state != 1) {
                 push_message(g, "A shattered burial seal lies here.");
@@ -478,6 +489,12 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_PICK_UP) {
+        if (g->map.tiles[g->player.y][g->player.x] == TILE_CRYPT_KEY) {
+            g->dungeon_crypt_keys++;
+            g->map.tiles[g->player.y][g->player.x] = TILE_FLOOR;
+            push_message(g, "Picked up a crypt key.");
+            return;
+        }
         if (g->map.tiles[g->player.y][g->player.x] == TILE_DUNGEON_KEY) {
             g->dungeon_key_found = 1;
             g->map.tiles[g->player.y][g->player.x] = TILE_FLOOR;
@@ -1171,6 +1188,16 @@ void action_resolve_player(GameState *g, Action a) {
             g->dungeon_key_found = 0;
             g->map.tiles[ty][tx] = TILE_FLOOR;
             push_message(g, "The dungeon key unlocks the door!");
+        }
+
+        if (g->map.tiles[ty][tx] == TILE_CRYPT_DOOR) {
+            if (g->dungeon_crypt_keys < 1) {
+                push_message(g, "The crypt is locked. Find its key.");
+                return;
+            }
+            g->dungeon_crypt_keys--;
+            g->map.tiles[ty][tx] = TILE_FLOOR;
+            push_message(g, "The crypt key unlocks the door!");
         }
 
         if (g->location == LOCATION_COAST &&

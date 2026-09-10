@@ -544,6 +544,7 @@ void game_init(GameState *g) {
     g->gold = 0;
     g->score = 0;
     g->dungeon_key_found = 0;
+    g->dungeon_crypt_keys = 0;
     g->portal_active = 0;
     g->portal_level = 0;
     g->portal_location = LOCATION_DUNGEON;
