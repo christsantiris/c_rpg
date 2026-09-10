@@ -362,6 +362,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             switch (g->map.tiles[y][x]) {
                 case TILE_WALL: draw_wall(r, sx, sy); break;
                 case TILE_FOREST_WALL: draw_forest_wall(r, sx, sy); break;
+                case TILE_FOREST_HIDDEN_TRAIL:
+                    draw_forest_wall(r, sx, sy); break;
                 case TILE_FOREST_FLOOR: draw_forest_floor(r, sx, sy); break;
                 case TILE_FOREST_ENTRANCE:
                     draw_forest_edge(r, sx, sy, 0); break;
