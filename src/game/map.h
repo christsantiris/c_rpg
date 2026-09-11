@@ -87,7 +87,14 @@ typedef enum {
     TILE_COAST_DRAINED_WATER,
     TILE_BLACKSMITH_DOOR,
     TILE_ALCHEMIST_DOOR,
-    TILE_WATCHTOWER
+    TILE_WATCHTOWER,
+    // Append terrain IDs: existing saves store these numeric values.
+    TILE_MOUNTAIN_WEAK_BRIDGE,
+    TILE_MOUNTAIN_CHASM,
+    TILE_MOUNTAIN_GATE,
+    TILE_MOUNTAIN_ROCKFALL,
+    TILE_MOUNTAIN_HIDDEN_CAVE,
+    TILE_MOUNTAIN_CACHE
 } TileType;
 
 typedef struct {

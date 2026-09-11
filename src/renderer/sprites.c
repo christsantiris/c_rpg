@@ -119,6 +119,26 @@ void draw_mountain_bridge(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 17, y + 3, 2, 18, (SDL_Color){35, 25, 24, 255});
 }
 
+void draw_mountain_rockfall(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_mountain_wall(r, tile_x, tile_y);
+    fill_rect(r, x + 3, y + 14, 8, 7, (SDL_Color){142, 91, 64, 255});
+    fill_rect(r, x + 13, y + 12, 9, 9, (SDL_Color){105, 72, 60, 255});
+    fill_rect(r, x + 8, y + 7, 8, 8, (SDL_Color){176, 117, 70, 255});
+    fill_rect(r, x + 10, y + 3, 3, 5, (SDL_Color){236, 181, 78, 255});
+}
+
+void draw_mountain_chasm(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){5, 3, 8, 255});
+    fill_rect(r, x, y + 4, 5, 15, (SDL_Color){81, 48, 31, 255});
+    fill_rect(r, x + 20, y + 4, 5, 15, (SDL_Color){81, 48, 31, 255});
+    fill_rect(r, x + 4, y + 6, 4, 3, (SDL_Color){136, 76, 39, 255});
+    fill_rect(r, x + 17, y + 15, 4, 3, (SDL_Color){136, 76, 39, 255});
+}
+
 void draw_mountain_cave_floor(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;

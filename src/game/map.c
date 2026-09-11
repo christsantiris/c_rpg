@@ -292,6 +292,10 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_FOREST_WALL &&
         m->tiles[y][x] != TILE_FOREST_HIDDEN_TRAIL &&
         m->tiles[y][x] != TILE_MOUNTAIN_WALL &&
+        m->tiles[y][x] != TILE_MOUNTAIN_CHASM &&
+        m->tiles[y][x] != TILE_MOUNTAIN_GATE &&
+        m->tiles[y][x] != TILE_MOUNTAIN_ROCKFALL &&
+        m->tiles[y][x] != TILE_MOUNTAIN_HIDDEN_CAVE &&
         m->tiles[y][x] != TILE_COAST_WALL &&
         m->tiles[y][x] != TILE_COAST_DEEP_WATER &&
         m->tiles[y][x] != TILE_TAVERN &&
@@ -601,6 +605,32 @@ static int mountain_tile_in_room(const Map *m, int x, int y) {
     return 0;
 }
 
+static void place_mountain_fort(Map *m) {
+    Room *room = &m->rooms[1];
+    int cx;
+    int cy;
+    map_room_center(room, &cx, &cy);
+    // Divide the stronghold, retaining an operable gate from either side.
+    for (int y = room->y; y < room->y + room->h; y++) {
+        if ((y == room->y && map_is_walkable(m, cx, y - 1)) ||
+            (y == room->y + room->h - 1 && map_is_walkable(m, cx, y + 1))) {
+            // Keep corridor mouths connected to both halves of the room.
+            continue;
+        }
+        m->tiles[y][cx] = TILE_MOUNTAIN_WALL;
+    }
+    m->tiles[cy][cx] = TILE_MOUNTAIN_GATE;
+    m->tiles[cy][cx + 1] = TILE_TRAP_REVEALED;
+    m->tiles[cy][cx + 2] = TILE_MOUNTAIN_FORTRESS_FLOOR;
+    m->tiles[cy + 1][cx + 2] = TILE_MOUNTAIN_FORTRESS_FLOOR;
+    // A buried passage bypasses the defended gate; either end can be cleared.
+    for (int x = cx - 2; x <= cx + 2; x++) {
+        m->tiles[cy + 2][x] = TILE_MOUNTAIN_HIDDEN_CAVE;
+    }
+    m->tiles[cy + 2][cx - 3] = TILE_MOUNTAIN_ROCKFALL;
+    m->tiles[cy + 2][cx + 3] = TILE_MOUNTAIN_ROCKFALL;
+}
+
 void map_generate_mountains(Map *m, int level) {
     static const OutdoorSide entrances[MOUNTAIN_DEPTH] = {
         OUTDOOR_SIDE_WEST,
@@ -659,6 +689,32 @@ void map_generate_mountains(Map *m, int level) {
                 }
             }
         }
+    }
+    if (level == 2 || level == 7) {
+        int placed_weak_bridge = 0;
+        for (int y = 3; y < MAP_H - 3 && !placed_weak_bridge; y++) {
+            for (int x = 1; x < MAP_W - 1; x++) {
+                if (m->tiles[y][x] != TILE_MOUNTAIN_BRIDGE) {
+                    continue;
+                }
+                int horizontal = m->tiles[y][x - 1] == TILE_MOUNTAIN_BRIDGE &&
+                    m->tiles[y][x + 1] == TILE_MOUNTAIN_BRIDGE &&
+                    m->tiles[y - 1][x] == TILE_MOUNTAIN_WALL &&
+                    m->tiles[y + 1][x] == TILE_MOUNTAIN_WALL;
+                int vertical = m->tiles[y - 1][x] == TILE_MOUNTAIN_BRIDGE &&
+                    m->tiles[y + 1][x] == TILE_MOUNTAIN_BRIDGE &&
+                    m->tiles[y][x - 1] == TILE_MOUNTAIN_WALL &&
+                    m->tiles[y][x + 1] == TILE_MOUNTAIN_WALL;
+                if ((horizontal || vertical) && x > 2 && x < MAP_W - 3) {
+                    m->tiles[y][x] = TILE_MOUNTAIN_WEAK_BRIDGE;
+                    placed_weak_bridge = 1;
+                    break;
+                }
+            }
+        }
+    }
+    if (level == 3 || level == 4 || level == 5 || level == 6 || level == 8) {
+        place_mountain_fort(m);
     }
 }
 

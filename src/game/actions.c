@@ -77,6 +77,13 @@ Item random_enemy_item(int level) {
     return item_make_scroll_fireball();
 }
 
+static void mark_item_tile(GameState *g, int x, int y) {
+    TileType tile = g->map.tiles[y][x];
+    if (tile != TILE_MOUNTAIN_WEAK_BRIDGE && tile != TILE_MOUNTAIN_CACHE) {
+        g->map.tiles[y][x] = TILE_ITEM;
+    }
+}
+
 Item boss_equipment_reward(EnemyType type) {
     switch (type) {
         case ENEMY_LICH_KING:
@@ -217,7 +224,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
             fi.y = y;
             fi.underlying_tile = g->map.tiles[y][x];
             fi.item = boss_drop;
-            g->map.tiles[y][x] = TILE_ITEM;
+            mark_item_tile(g, x, y);
             g->floor_items[g->floor_item_count++] = fi;
             char msg[MAX_MESSAGE_LEN];
             snprintf(msg, sizeof(msg), "%s dropped!", boss_drop.name);
@@ -244,7 +251,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
     fi.item = item;
     g->floor_items[g->floor_item_count++] = fi;
 
-    g->map.tiles[y][x] = TILE_ITEM;
+    mark_item_tile(g, x, y);
     char item_msg[MAX_MESSAGE_LEN];
     snprintf(item_msg, sizeof(item_msg), "%s dropped!", item.name);
     push_message(g, item_msg);
@@ -400,6 +407,98 @@ static int reveal_adjacent_dungeon_traps(GameState *g) {
     return revealed;
 }
 
+static void change_mountain_tile(GameState *g, int x, int y, TileType tile) {
+    g->map.tiles[y][x] = tile;
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && item->x == x && item->y == y) {
+            item->underlying_tile = tile;
+        }
+    }
+    map_mark_explored(&g->map, x, y);
+}
+
+static int mountain_obstacle(TileType tile) {
+    return tile == TILE_MOUNTAIN_GATE || tile == TILE_MOUNTAIN_ROCKFALL ||
+        tile == TILE_MOUNTAIN_CHASM;
+}
+
+int game_has_regional_interaction(const GameState *g) {
+    if (g->location != LOCATION_MOUNTAINS) {
+        return 0;
+    }
+    if (g->map.tiles[g->player.y][g->player.x] == TILE_MOUNTAIN_CACHE) {
+        return 1;
+    }
+    static const int offsets[4][2] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
+    for (int i = 0; i < 4; i++) {
+        int x = g->player.x + offsets[i][0];
+        int y = g->player.y + offsets[i][1];
+        if (x >= 0 && x < MAP_W && y >= 0 && y < MAP_H &&
+            mountain_obstacle(g->map.tiles[y][x])) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int interact_mountain(GameState *g) {
+    if (g->location != LOCATION_MOUNTAINS) {
+        return 0;
+    }
+    int px = g->player.x;
+    int py = g->player.y;
+    if (g->map.tiles[py][px] == TILE_MOUNTAIN_CACHE) {
+        int gold = 40 + g->level * 10;
+        g->gold += gold;
+        g->score += gold;
+        change_mountain_tile(g, px, py, TILE_MOUNTAIN_CAVE_FLOOR);
+        push_message(g, "You recover the buried goblin hoard!");
+        return 1;
+    }
+    static const int offsets[4][2] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
+    for (int i = 0; i < 4; i++) {
+        int x = px + offsets[i][0];
+        int y = py + offsets[i][1];
+        if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
+            continue;
+        }
+        TileType tile = g->map.tiles[y][x];
+        if (!mountain_obstacle(tile)) {
+            continue;
+        }
+        if (tile == TILE_MOUNTAIN_GATE) {
+            change_mountain_tile(g, x, y, TILE_MOUNTAIN_FORTRESS_FLOOR);
+            push_message(g, "The goblin gate opens. Watch for traps!");
+        } else if (tile == TILE_MOUNTAIN_CHASM) {
+            change_mountain_tile(g, x, y, TILE_MOUNTAIN_BRIDGE);
+            push_message(g, "You lash a new crossing into place.");
+        } else {
+            // Each generated fort has a straight buried tunnel with two ends.
+            int left = x;
+            int right = x;
+            while (left > 0 && (g->map.tiles[y][left - 1] == TILE_MOUNTAIN_HIDDEN_CAVE ||
+                g->map.tiles[y][left - 1] == TILE_MOUNTAIN_ROCKFALL)) {
+                left--;
+            }
+            while (right < MAP_W - 1 && (g->map.tiles[y][right + 1] == TILE_MOUNTAIN_HIDDEN_CAVE ||
+                g->map.tiles[y][right + 1] == TILE_MOUNTAIN_ROCKFALL)) {
+                right++;
+            }
+            for (int cx = left; cx <= right; cx++) {
+                g->map.tiles[y][cx] = TILE_MOUNTAIN_CAVE_FLOOR;
+                map_mark_explored(&g->map, cx, y);
+            }
+            g->map.tiles[y][(left + right) / 2] = TILE_MOUNTAIN_CACHE;
+            g->player.hp -= 4 + g->level;
+            push_message(g, "Falling rocks hurt! A cave is exposed.");
+        }
+        map_mark_explored(&g->map, x, y);
+        return 1;
+    }
+    return 0;
+}
+
 void action_resolve_player(GameState *g, Action a) {
     game_repair_equipment_indices(g);
     if (a.type == ACTION_NONE) {
@@ -435,6 +534,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (interact_mountain(g)) {
+            return;
+        }
         TileType tile = g->map.tiles[g->player.y][g->player.x];
         if (tile == TILE_DUNGEON_SWITCH_OFF) {
             int opened = 0;
@@ -724,7 +826,7 @@ void action_resolve_player(GameState *g, Action a) {
         fi.y      = g->player.y;
         fi.underlying_tile = g->map.tiles[fi.y][fi.x];
         fi.item   = item;
-        g->map.tiles[fi.y][fi.x] = TILE_ITEM;
+        mark_item_tile(g, fi.x, fi.y);
         g->floor_items[g->floor_item_count++] = fi;
 
         game_remove_inventory_item(g, idx);
@@ -1255,7 +1357,17 @@ void action_resolve_player(GameState *g, Action a) {
         if (map_is_walkable(&g->map, tx, ty)) {
             g->player.last_dx = tx - g->player.x;
             g->player.last_dy = ty - g->player.y;
+            int old_x = g->player.x;
+            int old_y = g->player.y;
             game_move_player(g, tx - g->player.x, ty - g->player.y);
+            if ((old_x != g->player.x || old_y != g->player.y) &&
+                g->map.tiles[old_y][old_x] == TILE_MOUNTAIN_WEAK_BRIDGE) {
+                change_mountain_tile(g, old_x, old_y, TILE_MOUNTAIN_CHASM);
+                push_message(g, "Bridge collapsed! Press A to repair.");
+            }
+            if (g->map.tiles[g->player.y][g->player.x] == TILE_MOUNTAIN_WEAK_BRIDGE) {
+                push_message(g, "The bridge creaks beneath your feet!");
+            }
         }
         if (reveal_adjacent_dungeon_traps(g) > 0) {
             push_message(g, "You notice a suspicious pressure plate.");
