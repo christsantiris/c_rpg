@@ -40,6 +40,25 @@ cached revisits and saving/loading. Existing saved maps retain their layouts;
 the new fortifications appear on newly generated stages. Arrow keys always move;
 `A` interacts when beside a mountain obstacle or standing on its cache.
 
+### Sunken Coast water routes
+
+Each new Coast stage has two linked controls. Stand on either control and press
+`A` to transfer water between the blue and amber channels. Every activation
+reverses the flow: one basin drains while the other floods. Colored corner
+markers identify the channels; drained channels show exposed stone.
+
+The sluice room has alternate crossings, and two guarded treasure chambers are
+accessible at opposite tide levels. Each chamber cache grants `50 + 10 × stage`
+gold once; stand on it and press `A` to collect it. Drain the blue basin to reach
+and light Mara's beacons. Both controls and the exit remain reachable in either
+tide state, with the Drowned Queen still guarding the final exit.
+
+Operating a control reveals its connected channels on the minimap. Rising water
+carries enemies to an open bank and submerges dropped items until the channel
+is drained again. Water states, claimed caches, and discoveries persist through
+cached revisits and save/load. Existing saved Coast maps keep their layouts;
+the linked channels and treasure chambers appear on newly generated stages.
+
 ## Screenshots
 Below are screenshots of the game in action:
 

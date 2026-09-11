@@ -79,7 +79,8 @@ Item random_enemy_item(int level) {
 
 static void mark_item_tile(GameState *g, int x, int y) {
     TileType tile = g->map.tiles[y][x];
-    if (tile != TILE_MOUNTAIN_WEAK_BRIDGE && tile != TILE_MOUNTAIN_CACHE) {
+    if (tile != TILE_MOUNTAIN_WEAK_BRIDGE && tile != TILE_MOUNTAIN_CACHE &&
+        !map_is_coast_tidal_tile(tile) && !map_is_coast_object(tile)) {
         g->map.tiles[y][x] = TILE_ITEM;
     }
 }
@@ -424,6 +425,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (g->location == LOCATION_COAST) {
+        return map_is_coast_object(g->map.tiles[g->player.y][g->player.x]);
+    }
     if (g->location != LOCATION_MOUNTAINS) {
         return 0;
     }
@@ -497,6 +501,89 @@ static int interact_mountain(GameState *g) {
         return 1;
     }
     return 0;
+}
+
+static void coast_find_bank(GameState *g, Enemy *enemy) {
+    // A rising channel carries its occupants to the nearest unoccupied bank.
+    unsigned char seen[MAP_H][MAP_W] = {{0}};
+    int queue[MAP_W * MAP_H];
+    int head = 0;
+    int tail = 0;
+    queue[tail++] = enemy->y * MAP_W + enemy->x;
+    seen[enemy->y][enemy->x] = 1;
+    static const int offsets[4][2] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
+    while (head < tail) {
+        int cell = queue[head++];
+        int x = cell % MAP_W;
+        int y = cell / MAP_W;
+        int occupied = g->player.x == x && g->player.y == y;
+        for (int i = 0; i < g->enemy_count && !occupied; i++) {
+            Enemy *other = &g->enemies[i];
+            occupied = other->active && other != enemy && other->x == x && other->y == y;
+        }
+        if (map_is_walkable(&g->map, x, y) && !occupied) {
+            enemy->x = x;
+            enemy->y = y;
+            return;
+        }
+        for (int i = 0; i < 4; i++) {
+            int nx = x + offsets[i][0];
+            int ny = y + offsets[i][1];
+            if (nx < 0 || nx >= MAP_W || ny < 0 || ny >= MAP_H || seen[ny][nx]) {
+                continue;
+            }
+            if (!map_is_walkable(&g->map, nx, ny) && !map_is_coast_tidal_tile(g->map.tiles[ny][nx])) {
+                continue;
+            }
+            seen[ny][nx] = 1;
+            queue[tail++] = ny * MAP_W + nx;
+        }
+    }
+}
+
+static void coast_toggle_tide(GameState *g) {
+    // Restore water covered by loot in older saves before swapping the basins.
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && item->x >= 0 && item->x < MAP_W && item->y >= 0 &&
+            item->y < MAP_H && g->map.tiles[item->y][item->x] == TILE_ITEM &&
+            map_is_coast_tidal_tile(item->underlying_tile)) {
+            g->map.tiles[item->y][item->x] = item->underlying_tile;
+        }
+    }
+    int blue_drained = 0;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            TileType tile = g->map.tiles[y][x];
+            TileType next = map_coast_swapped_tile(tile);
+            if (next == tile) {
+                continue;
+            }
+            g->map.tiles[y][x] = next;
+            blue_drained |= next == TILE_COAST_DRAINED_WATER;
+            // Operating the sluice reveals its connected channels and banks.
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    map_mark_explored(&g->map, x + dx, y + dy);
+                }
+            }
+        }
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active) {
+            item->underlying_tile = map_coast_swapped_tile(item->underlying_tile);
+        }
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        Enemy *enemy = &g->enemies[i];
+        if (enemy->active && map_is_coast_tidal_tile(g->map.tiles[enemy->y][enemy->x]) &&
+            !map_is_walkable(&g->map, enemy->x, enemy->y)) {
+            coast_find_bank(g, enemy);
+        }
+    }
+    push_message(g, blue_drained ? "Blue channels drain; amber channels rise." :
+        "Blue channels rise; amber channels drain.");
 }
 
 void action_resolve_player(GameState *g, Action a) {
@@ -590,43 +677,27 @@ void action_resolve_player(GameState *g, Action a) {
             game_light_coast_beacon(g, g->player.x, g->player.y);
             return;
         }
-        if (tile == TILE_COAST_TIDE_CONTROL) {
-            int tide_is_high = 0;
-            for (int y = 0; y < MAP_H; y++) {
-                for (int x = 0; x < MAP_W; x++) {
-                    if (g->map.tiles[y][x] == TILE_COAST_DEEP_WATER) {
-                        tide_is_high = 1;
-                        break;
-                    }
-                }
-                if (tide_is_high) {
-                    break;
-                }
-            }
-            for (int y = 0; y < MAP_H; y++) {
-                for (int x = 0; x < MAP_W; x++) {
-                    if (tide_is_high &&
-                        g->map.tiles[y][x] == TILE_COAST_DEEP_WATER) {
-                        g->map.tiles[y][x] = TILE_COAST_DRAINED_WATER;
-                    } else if (!tide_is_high && g->map.tiles[y][x] ==
-                        TILE_COAST_DRAINED_WATER) {
-                        g->map.tiles[y][x] = TILE_COAST_DEEP_WATER;
-                    }
-                }
-            }
+        if (tile == TILE_COAST_BEACON_LIT) {
+            push_message(g, "The beacon already burns brightly.");
+            return;
+        }
+        if (tile == TILE_COAST_TIDE_CONTROL || tile == TILE_COAST_SLUICE_CONTROL) {
+            coast_toggle_tide(g);
+            return;
+        }
+        if (tile == TILE_COAST_CACHE) {
+            int gold = 50 + g->level * 10;
+            g->gold += gold;
+            g->score += gold;
+            g->map.tiles[g->player.y][g->player.x] = TILE_COAST_FLOOR;
             for (int i = 0; i < g->floor_item_count; i++) {
                 FloorItem *item = &g->floor_items[i];
-                if (tide_is_high && item->underlying_tile ==
-                    TILE_COAST_DEEP_WATER) {
-                    item->underlying_tile = TILE_COAST_DRAINED_WATER;
-                } else if (!tide_is_high && item->underlying_tile ==
-                    TILE_COAST_DRAINED_WATER) {
-                    item->underlying_tile = TILE_COAST_DEEP_WATER;
+                if (item->active && item->x == g->player.x && item->y == g->player.y) {
+                    item->underlying_tile = TILE_COAST_FLOOR;
+                    mark_item_tile(g, item->x, item->y);
                 }
             }
-            push_message(g, tide_is_high ?
-                "The tide recedes, revealing the path." :
-                "The tide rises across the ruins.");
+            push_message(g, "You recover the sunken chamber's hoard!");
             return;
         }
         push_message(g, "There is nothing to interact with here.");

@@ -62,6 +62,9 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_COAST_BEACON_LIT ||
                         tile == TILE_FOREST_WARDEN) {
                         has_stair = 1;
+                    } else if (tile == TILE_COAST_TIDE_CONTROL ||
+                        tile == TILE_COAST_SLUICE_CONTROL || tile == TILE_COAST_CACHE) {
+                        has_stair = 1;
                     } else if (tile == TILE_MOUNTAIN_ROCKFALL ||
                         tile == TILE_MOUNTAIN_GATE || tile == TILE_MOUNTAIN_CACHE ||
                         tile == TILE_MOUNTAIN_WEAK_BRIDGE) {
@@ -77,6 +80,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile != TILE_MOUNTAIN_HIDDEN_CAVE &&
                         tile != TILE_COAST_WALL &&
                         tile != TILE_COAST_DEEP_WATER &&
+                        tile != TILE_COAST_CHANNEL_WATER &&
                         tile != TILE_TAVERN_WALL &&
                         tile != TILE_TAVERN_TABLE &&
                         tile != TILE_LOCKED_DOOR &&
