@@ -70,6 +70,17 @@ void draw_forest_landmark(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 9, y + 10, 7, 3, (SDL_Color){94, 224, 126, 255});
 }
 
+void draw_forest_false_marker(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_forest_floor(r, tile_x, tile_y);
+    fill_rect(r, x + 5, y + 17, 15, 5, (SDL_Color){45, 58, 48, 255});
+    fill_rect(r, x + 8, y + 6, 8, 13, (SDL_Color){75, 88, 79, 255});
+    fill_rect(r, x + 10, y + 3, 5, 5, (SDL_Color){96, 109, 98, 255});
+    fill_rect(r, x + 10, y + 9, 3, 3, (SDL_Color){64, 124, 76, 255});
+    fill_rect(r, x + 13, y + 12, 3, 2, (SDL_Color){64, 124, 76, 255});
+}
+
 void draw_mountain_floor(Renderer *r, int tile_x, int tile_y) {
     int x=tile_x*TILE_SIZE, y=tile_y*TILE_SIZE;
     fill_rect(r,x,y,TILE_SIZE,TILE_SIZE,(SDL_Color){20,12,15,255});
@@ -106,6 +117,26 @@ void draw_mountain_bridge(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x, y + 17, TILE_SIZE, 2, (SDL_Color){48, 29, 24, 255});
     fill_rect(r, x + 4, y + 3, 2, 18, (SDL_Color){35, 25, 24, 255});
     fill_rect(r, x + 17, y + 3, 2, 18, (SDL_Color){35, 25, 24, 255});
+}
+
+void draw_mountain_rockfall(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_mountain_wall(r, tile_x, tile_y);
+    fill_rect(r, x + 3, y + 14, 8, 7, (SDL_Color){142, 91, 64, 255});
+    fill_rect(r, x + 13, y + 12, 9, 9, (SDL_Color){105, 72, 60, 255});
+    fill_rect(r, x + 8, y + 7, 8, 8, (SDL_Color){176, 117, 70, 255});
+    fill_rect(r, x + 10, y + 3, 3, 5, (SDL_Color){236, 181, 78, 255});
+}
+
+void draw_mountain_chasm(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){5, 3, 8, 255});
+    fill_rect(r, x, y + 4, 5, 15, (SDL_Color){81, 48, 31, 255});
+    fill_rect(r, x + 20, y + 4, 5, 15, (SDL_Color){81, 48, 31, 255});
+    fill_rect(r, x + 4, y + 6, 4, 3, (SDL_Color){136, 76, 39, 255});
+    fill_rect(r, x + 17, y + 15, 4, 3, (SDL_Color){136, 76, 39, 255});
 }
 
 void draw_mountain_cave_floor(Renderer *r, int tile_x, int tile_y) {
@@ -185,6 +216,37 @@ void draw_coast_deep_water(Renderer *r, int tile_x, int tile_y) {
         (SDL_Color){28, 101, 126, 255});
     fill_rect(r, x + 5, y + 21, 8, 1,
         (SDL_Color){42, 119, 133, 255});
+}
+
+void draw_coast_channel(Renderer *r, int tile_x, int tile_y, int amber, int flooded) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    if (flooded) {
+        draw_coast_deep_water(r, tile_x, tile_y);
+    } else {
+        draw_coast_floor(r, tile_x, tile_y);
+    }
+    SDL_Color rim = amber ? (SDL_Color){183, 127, 51, 255} : (SDL_Color){48, 157, 179, 255};
+    fill_rect(r, x, y, 3, 3, rim);
+    fill_rect(r, x + TILE_SIZE - 3, y + TILE_SIZE - 3, 3, 3, rim);
+}
+
+void draw_coast_sluice(Renderer *r, int tile_x, int tile_y) {
+    draw_coast_tide_control(r, tile_x, tile_y);
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    fill_rect(r, x + 4, y + 21, 16, 2, (SDL_Color){213, 157, 61, 255});
+    fill_rect(r, x + 10, y + 6, 5, 5, (SDL_Color){213, 157, 61, 255});
+}
+
+void draw_coast_cache(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_coast_floor(r, tile_x, tile_y);
+    fill_rect(r, x + 4, y + 8, 17, 12, (SDL_Color){102, 83, 46, 255});
+    fill_rect(r, x + 4, y + 8, 17, 3, (SDL_Color){191, 157, 66, 255});
+    fill_rect(r, x + 11, y + 11, 3, 5, (SDL_Color){243, 201, 91, 255});
+    fill_rect(r, x + 3, y + 19, 7, 2, (SDL_Color){42, 136, 119, 255});
 }
 
 void draw_coast_tide_control(Renderer *r, int tile_x, int tile_y) {
@@ -574,12 +636,70 @@ void draw_dungeon_key(Renderer *r, int tile_x, int tile_y) {
     int y = tile_y * TILE_SIZE;
     SDL_Color gold = {226, 184, 54, 255};
     SDL_Color shine = {255, 232, 126, 255};
-    draw_town_path(r, tile_x, tile_y);
+    draw_floor(r, tile_x, tile_y);
     fill_rect(r, x+4, y+7, 8, 8, gold);
     fill_rect(r, x+6, y+9, 4, 4, (SDL_Color){18, 18, 35, 255});
     fill_rect(r, x+11, y+10, 10, 3, gold);
     fill_rect(r, x+17, y+13, 3, 4, gold);
     fill_rect(r, x+5, y+7, 3, 2, shine);
+}
+
+void draw_crypt_door(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_locked_door(r, tile_x, tile_y);
+    fill_rect(r, x+10, y+11, 5, 6, (SDL_Color){202, 164, 58, 255});
+    fill_rect(r, x+11, y+9, 3, 4, (SDL_Color){242, 214, 112, 255});
+}
+
+void draw_crypt_key(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color iron = {146, 166, 184, 255};
+    SDL_Color shine = {220, 234, 240, 255};
+    draw_floor(r, tile_x, tile_y);
+    fill_rect(r, x+4, y+7, 8, 8, iron);
+    fill_rect(r, x+6, y+9, 4, 4, (SDL_Color){18, 18, 35, 255});
+    fill_rect(r, x+11, y+10, 10, 3, iron);
+    fill_rect(r, x+17, y+13, 3, 4, iron);
+    fill_rect(r, x+5, y+7, 3, 2, shine);
+}
+
+void draw_crypt_cache(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_floor(r, tile_x, tile_y);
+    fill_rect(r, x+3, y+9, 18, 12, (SDL_Color){74, 42, 28, 255});
+    fill_rect(r, x+4, y+6, 16, 6, (SDL_Color){112, 66, 34, 255});
+    fill_rect(r, x+5, y+7, 14, 2, (SDL_Color){166, 102, 42, 255});
+    fill_rect(r, x+10, y+11, 5, 6, (SDL_Color){226, 184, 54, 255});
+}
+
+void draw_dungeon_gate(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_floor(r, tile_x, tile_y);
+    SDL_Color iron = {102, 106, 132, 255};
+    SDL_Color shine = {174, 180, 204, 255};
+    fill_rect(r, x+2, y+3, 20, 3, iron);
+    fill_rect(r, x+2, y+18, 20, 3, iron);
+    for (int bar = 4; bar <= 19; bar += 5) {
+        fill_rect(r, x+bar, y+2, 3, 21, iron);
+        fill_rect(r, x+bar, y+2, 1, 19, shine);
+    }
+}
+
+void draw_dungeon_switch(Renderer *r, int tile_x, int tile_y, int active) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_floor(r, tile_x, tile_y);
+    fill_rect(r, x+5, y+6, 14, 13, (SDL_Color){50, 48, 68, 255});
+    fill_rect(r, x+7, y+8, 10, 9, (SDL_Color){90, 86, 108, 255});
+    SDL_Color rune = active ?
+        (SDL_Color){80, 220, 150, 255} :
+        (SDL_Color){220, 92, 62, 255};
+    fill_rect(r, x+10, y+10, 4, 5, rune);
+    fill_rect(r, x+8, y+12, 8, 2, rune);
 }
 
 void draw_portal(Renderer *r, int tile_x, int tile_y) {
@@ -1563,6 +1683,19 @@ void draw_floor_gold(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x,   y,   TILE_SIZE, TILE_SIZE, base);
     fill_rect(r, x+7, y+7, 10,        10,        gold);
     fill_rect(r, x+9, y+9, 6,         6,         gold);
+}
+
+void draw_trap_warning(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color edge = {116, 108, 132, 255};
+    SDL_Color rune = {190, 152, 72, 255};
+    fill_rect(r, x+4, y+4, 16, 2, edge);
+    fill_rect(r, x+4, y+18, 16, 2, edge);
+    fill_rect(r, x+4, y+6, 2, 12, edge);
+    fill_rect(r, x+18, y+6, 2, 12, edge);
+    fill_rect(r, x+11, y+8, 2, 7, rune);
+    fill_rect(r, x+11, y+17, 2, 2, rune);
 }
 
 void draw_trap_spike(Renderer *r, int tile_x, int tile_y) {
