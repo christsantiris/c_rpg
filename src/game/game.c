@@ -271,7 +271,8 @@ static int enemy_terrain_open(const GameState *g, int x, int y) {
         g->map.tiles[y][x] != TILE_MOUNTAIN_FORTRESS_FLOOR &&
         g->map.tiles[y][x] != TILE_COAST_FLOOR &&
         g->map.tiles[y][x] != TILE_COAST_SHALLOW_WATER &&
-        g->map.tiles[y][x] != TILE_COAST_DRAINED_WATER)) {
+        g->map.tiles[y][x] != TILE_COAST_DRAINED_WATER &&
+        g->map.tiles[y][x] != TILE_COAST_CHANNEL_DRY)) {
         return 0;
     }
     return 1;
@@ -386,6 +387,23 @@ void enemies_spawn(GameState *g) {
         (g->location == LOCATION_COAST ? COAST_DEPTH : DUNGEON_DEPTH));
     int regular_room_limit = g->level == boss_level
         ? g->map.room_count - 1 : g->map.room_count;
+    if (g->location == LOCATION_MOUNTAINS) {
+        for (int y = 1; y < MAP_H - 1; y++) {
+            for (int x = 1; x < MAP_W - 3; x++) {
+                if (g->map.tiles[y][x] != TILE_MOUNTAIN_GATE) {
+                    continue;
+                }
+                for (int offset = 0; offset <= 1; offset++) {
+                    int gx = x + 2;
+                    int gy = y + offset;
+                    if (g->enemy_count < num_enemies && enemy_tile_open(g, gx, gy)) {
+                        spawn_enemy(&g->enemies[g->enemy_count++],
+                            offset ? ENEMY_HOBGOBLIN_GUARD : ENEMY_GOBLIN_ARCHER, gx, gy);
+                    }
+                }
+            }
+        }
+    }
     if (g->location == LOCATION_MOUNTAINS && g->dain_quest_state == 1) {
         EnemyType quest_target = ENEMY_GOBLIN_SCOUT;
         int target_bit = 0;
@@ -410,6 +428,18 @@ void enemies_spawn(GameState *g) {
                 strncpy(target->name, "Map Bearer",
                     sizeof(target->name) - 1);
                 target->name[sizeof(target->name) - 1] = '\0';
+            }
+        }
+    }
+    if (g->location == LOCATION_COAST) {
+        for (int y = 1; y < MAP_H - 1; y++) {
+            for (int x = 2; x < MAP_W - 1; x++) {
+                if (g->map.tiles[y][x] == TILE_COAST_CACHE &&
+                    g->enemy_count < num_enemies && enemy_tile_open(g, x - 2, y)) {
+                    EnemyType guard = g->level >= 6 ? ENEMY_SEA_SERPENT :
+                        (g->level >= 3 ? ENEMY_ANIMATED_STATUE : ENEMY_GIANT_CRAB);
+                    spawn_enemy(&g->enemies[g->enemy_count++], guard, x - 2, y);
+                }
             }
         }
     }
@@ -544,6 +574,7 @@ void game_init(GameState *g) {
     g->gold = 0;
     g->score = 0;
     g->dungeon_key_found = 0;
+    g->dungeon_crypt_keys = 0;
     g->portal_active = 0;
     g->portal_level = 0;
     g->portal_location = LOCATION_DUNGEON;

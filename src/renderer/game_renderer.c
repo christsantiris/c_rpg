@@ -362,6 +362,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             switch (g->map.tiles[y][x]) {
                 case TILE_WALL: draw_wall(r, sx, sy); break;
                 case TILE_FOREST_WALL: draw_forest_wall(r, sx, sy); break;
+                case TILE_FOREST_HIDDEN_TRAIL:
+                    draw_forest_wall(r, sx, sy); break;
                 case TILE_FOREST_FLOOR: draw_forest_floor(r, sx, sy); break;
                 case TILE_FOREST_ENTRANCE:
                     draw_forest_edge(r, sx, sy, 0); break;
@@ -369,12 +371,27 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_forest_edge(r, sx, sy, 1); break;
                 case TILE_FOREST_LANDMARK:
                     draw_forest_landmark(r, sx, sy); break;
+                case TILE_FOREST_FALSE_MARKER:
+                    draw_forest_false_marker(r, sx, sy); break;
                 case TILE_MOUNTAIN_FLOOR: draw_mountain_floor(r, sx, sy); break;
                 case TILE_MOUNTAIN_WALL: draw_mountain_wall(r, sx, sy); break;
                 case TILE_MOUNTAIN_ENTRANCE:
                     draw_mountain_edge(r, sx, sy, 0); break;
                 case TILE_MOUNTAIN_EXIT:
                     draw_mountain_edge(r, sx, sy, 1); break;
+                case TILE_MOUNTAIN_HIDDEN_CAVE:
+                    draw_mountain_wall(r, sx, sy); break;
+                case TILE_MOUNTAIN_ROCKFALL:
+                    draw_mountain_rockfall(r, sx, sy); break;
+                case TILE_MOUNTAIN_CHASM:
+                    draw_mountain_chasm(r, sx, sy); break;
+                case TILE_MOUNTAIN_GATE:
+                    draw_dungeon_gate(r, sx, sy); break;
+                case TILE_MOUNTAIN_CACHE:
+                    draw_crypt_cache(r, sx, sy); break;
+                case TILE_MOUNTAIN_WEAK_BRIDGE:
+                    draw_mountain_bridge(r, sx, sy);
+                    draw_trap_warning(r, sx, sy); break;
                 case TILE_MOUNTAIN_BRIDGE:
                     draw_mountain_bridge(r, sx, sy); break;
                 case TILE_MOUNTAIN_CAVE_FLOOR:
@@ -394,9 +411,17 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_COAST_SHALLOW_WATER:
                     draw_coast_shallow_water(r, sx, sy); break;
                 case TILE_COAST_DRAINED_WATER:
-                    draw_coast_shallow_water(r, sx, sy); break;
+                    draw_coast_channel(r, sx, sy, 0, 0); break;
                 case TILE_COAST_DEEP_WATER:
-                    draw_coast_deep_water(r, sx, sy); break;
+                    draw_coast_channel(r, sx, sy, 0, 1); break;
+                case TILE_COAST_CHANNEL_DRY:
+                    draw_coast_channel(r, sx, sy, 1, 0); break;
+                case TILE_COAST_CHANNEL_WATER:
+                    draw_coast_channel(r, sx, sy, 1, 1); break;
+                case TILE_COAST_SLUICE_CONTROL:
+                    draw_coast_sluice(r, sx, sy); break;
+                case TILE_COAST_CACHE:
+                    draw_coast_cache(r, sx, sy); break;
                 case TILE_COAST_TIDE_CONTROL:
                     draw_coast_tide_control(r, sx, sy); break;
                 case TILE_COAST_BEACON_UNLIT:
@@ -408,6 +433,14 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_RETURN_EXIT: draw_return_exit(r, sx, sy); break;
                 case TILE_LOCKED_DOOR: draw_locked_door(r, sx, sy); break;
                 case TILE_DUNGEON_KEY: draw_dungeon_key(r, sx, sy); break;
+                case TILE_CRYPT_DOOR: draw_crypt_door(r, sx, sy); break;
+                case TILE_CRYPT_KEY: draw_crypt_key(r, sx, sy); break;
+                case TILE_CRYPT_CACHE: draw_crypt_cache(r, sx, sy); break;
+                case TILE_DUNGEON_GATE: draw_dungeon_gate(r, sx, sy); break;
+                case TILE_DUNGEON_SWITCH_OFF:
+                    draw_dungeon_switch(r, sx, sy, 0); break;
+                case TILE_DUNGEON_SWITCH_ON:
+                    draw_dungeon_switch(r, sx, sy, 1); break;
                 case TILE_PORTAL: draw_portal(r, sx, sy); break;
                 case TILE_BROKEN_BURIAL_SEAL:
                     draw_broken_burial_seal(r, sx, sy); break;
@@ -456,6 +489,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_TRAP_HIDDEN:
                     draw_trap_underlay(r, g, x, y, sx, sy);
                     break;
+                case TILE_TRAP_REVEALED:
+                    draw_trap_underlay(r, g, x, y, sx, sy);
+                    draw_trap_warning(r, sx, sy);
+                    break;
                 case TILE_TRAP_SPIKE:
                     draw_trap_underlay(r, g, x, y, sx, sy);
                     draw_trap_spike(r, sx, sy);
@@ -470,6 +507,22 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     break;
                 default: draw_floor(r, sx, sy); break;
             }
+        }
+    }
+
+    // Regional mechanisms retain their terrain IDs even when holding loot.
+    for (int i = 0; i < g->floor_item_count; i++) {
+        const FloorItem *item = &g->floor_items[i];
+        if (!item->active || !viewport_is_visible(v, item->x, item->y)) {
+            continue;
+        }
+        TileType tile = g->map.tiles[item->y][item->x];
+        if (tile == TILE_MOUNTAIN_WEAK_BRIDGE || tile == TILE_MOUNTAIN_CACHE ||
+            tile == TILE_MOUNTAIN_BRIDGE || tile == TILE_MOUNTAIN_CAVE_FLOOR ||
+            tile == TILE_COAST_DRAINED_WATER || tile == TILE_COAST_CHANNEL_DRY ||
+            map_is_coast_object(tile)) {
+            draw_floor_item(r, viewport_to_screen_x(v, item->x),
+                viewport_to_screen_y(v, item->y));
         }
     }
 

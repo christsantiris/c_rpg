@@ -147,6 +147,7 @@ static void test_current_weapon_round_trip(void) {
     original.enemy_count = 1;
     original.enemies[0].active = 1;
     original.enemies[0].frozen_turns = 2;
+    original.dungeon_crypt_keys = 2;
 
     remove_test_save(ROUND_TRIP_SLOT);
     int saved = save_game(&original, ROUND_TRIP_SLOT);
@@ -183,6 +184,7 @@ static void test_current_weapon_round_trip(void) {
         loaded.player.known_spells[0].damage == 25);
     ASSERT("freeze duration survives save/load",
         loaded.enemies[0].frozen_turns == 2);
+    ASSERT("crypt keys survive save/load", loaded.dungeon_crypt_keys == 2);
     remove_test_save(ROUND_TRIP_SLOT);
 }
 

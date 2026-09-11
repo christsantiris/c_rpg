@@ -91,19 +91,23 @@ void test_coast(void) {
         int shallow = 0;
         int deep = 0;
         int controls = 0;
+        int sluices = 0;
         for (int y = 0; y < MAP_H; y++) {
             for (int x = 0; x < MAP_W; x++) {
                 shallow += g.map.tiles[y][x] == TILE_COAST_SHALLOW_WATER;
                 deep += g.map.tiles[y][x] == TILE_COAST_DEEP_WATER;
                 controls += g.map.tiles[y][x] == TILE_COAST_TIDE_CONTROL;
+                sluices += g.map.tiles[y][x] == TILE_COAST_SLUICE_CONTROL;
             }
         }
         ASSERT("coast stage contains shallow water", shallow > 0);
         ASSERT("coast stage contains blocking deep water", deep > 0);
-        ASSERT("coast stage contains one tide control", controls == 1);
+        ASSERT("coast stage contains two connected tide controls", controls == 1 && sluices == 1);
+        int water_x = 0;
+        int water_y = 0;
         ASSERT("deep water blocks movement",
-            !map_is_walkable(&g.map, g.map.stairs_down_x,
-                g.map.stairs_down_y));
+            find_tile(&g.map, TILE_COAST_DEEP_WATER, &water_x, &water_y) &&
+            !map_is_walkable(&g.map, water_x, water_y));
     }
 
     g.level = 1;
@@ -111,25 +115,28 @@ void test_coast(void) {
     enemies_spawn(&g);
     Action exit = coast_edge_action(&g.map, 0);
     action_resolve_player(&g, exit);
-    ASSERT("high tide blocks the stage exit", g.level == 1);
-    ASSERT("high tide leaves the exit approach visibly blocked",
-        g.map.tiles[g.map.stairs_down_y][g.map.stairs_down_x] ==
-            TILE_COAST_DEEP_WATER);
+    ASSERT("exit requires standing on its approach", g.level == 1);
+    ASSERT("exit approach stays dry at high tide",
+        g.map.tiles[g.map.stairs_down_y][g.map.stairs_down_x] == TILE_COAST_FLOOR);
+    int water_x = 0;
+    int water_y = 0;
+    find_tile(&g.map, TILE_COAST_DEEP_WATER, &water_x, &water_y);
     activate_tide_control(&g);
-    ASSERT("tide control drains the exit approach",
-        g.map.tiles[g.map.stairs_down_y][g.map.stairs_down_x] ==
-            TILE_COAST_DRAINED_WATER);
+    ASSERT("tide control drains blue channels",
+        g.map.tiles[water_y][water_x] == TILE_COAST_DRAINED_WATER);
     g.floor_item_count = 1;
     g.floor_items[0].active = 1;
     g.floor_items[0].underlying_tile = TILE_COAST_DRAINED_WATER;
+    g.floor_items[0].x = water_x;
+    g.floor_items[0].y = water_y;
+    g.map.tiles[water_y][water_x] = TILE_ITEM;
     int control_x = 0;
     int control_y = 0;
     ASSERT("tide control remains after activation",
         find_tile(&g.map, TILE_COAST_TIDE_CONTROL, &control_x, &control_y));
     activate_tide_control(&g);
     ASSERT("tide control raises the water again",
-        g.map.tiles[g.map.stairs_down_y][g.map.stairs_down_x] ==
-            TILE_COAST_DEEP_WATER);
+        g.map.tiles[water_y][water_x] == TILE_COAST_DEEP_WATER);
     ASSERT("tide updates item underlays without tile artifacts",
         g.floor_items[0].underlying_tile == TILE_COAST_DEEP_WATER);
     activate_tide_control(&g);
