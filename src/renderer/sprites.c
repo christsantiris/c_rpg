@@ -218,6 +218,37 @@ void draw_coast_deep_water(Renderer *r, int tile_x, int tile_y) {
         (SDL_Color){42, 119, 133, 255});
 }
 
+void draw_coast_channel(Renderer *r, int tile_x, int tile_y, int amber, int flooded) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    if (flooded) {
+        draw_coast_deep_water(r, tile_x, tile_y);
+    } else {
+        draw_coast_floor(r, tile_x, tile_y);
+    }
+    SDL_Color rim = amber ? (SDL_Color){183, 127, 51, 255} : (SDL_Color){48, 157, 179, 255};
+    fill_rect(r, x, y, 3, 3, rim);
+    fill_rect(r, x + TILE_SIZE - 3, y + TILE_SIZE - 3, 3, 3, rim);
+}
+
+void draw_coast_sluice(Renderer *r, int tile_x, int tile_y) {
+    draw_coast_tide_control(r, tile_x, tile_y);
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    fill_rect(r, x + 4, y + 21, 16, 2, (SDL_Color){213, 157, 61, 255});
+    fill_rect(r, x + 10, y + 6, 5, 5, (SDL_Color){213, 157, 61, 255});
+}
+
+void draw_coast_cache(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_coast_floor(r, tile_x, tile_y);
+    fill_rect(r, x + 4, y + 8, 17, 12, (SDL_Color){102, 83, 46, 255});
+    fill_rect(r, x + 4, y + 8, 17, 3, (SDL_Color){191, 157, 66, 255});
+    fill_rect(r, x + 11, y + 11, 3, 5, (SDL_Color){243, 201, 91, 255});
+    fill_rect(r, x + 3, y + 19, 7, 2, (SDL_Color){42, 136, 119, 255});
+}
+
 void draw_coast_tide_control(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;

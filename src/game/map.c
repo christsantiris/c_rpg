@@ -298,6 +298,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_MOUNTAIN_HIDDEN_CAVE &&
         m->tiles[y][x] != TILE_COAST_WALL &&
         m->tiles[y][x] != TILE_COAST_DEEP_WATER &&
+        m->tiles[y][x] != TILE_COAST_CHANNEL_WATER &&
         m->tiles[y][x] != TILE_TAVERN &&
         m->tiles[y][x] != TILE_SHOP_BLACKSMITH &&
         m->tiles[y][x] != TILE_SHOP_ALCHEMIST &&
@@ -718,6 +719,62 @@ void map_generate_mountains(Map *m, int level) {
     }
 }
 
+int map_is_coast_tidal_tile(TileType tile) {
+    return tile == TILE_COAST_DEEP_WATER || tile == TILE_COAST_DRAINED_WATER ||
+        tile == TILE_COAST_CHANNEL_WATER || tile == TILE_COAST_CHANNEL_DRY;
+}
+
+int map_is_coast_object(TileType tile) {
+    return tile == TILE_COAST_TIDE_CONTROL || tile == TILE_COAST_SLUICE_CONTROL ||
+        tile == TILE_COAST_CACHE || tile == TILE_COAST_BEACON_UNLIT ||
+        tile == TILE_COAST_BEACON_LIT;
+}
+
+TileType map_coast_swapped_tile(TileType tile) {
+    switch (tile) {
+        case TILE_COAST_DEEP_WATER: return TILE_COAST_DRAINED_WATER;
+        case TILE_COAST_DRAINED_WATER: return TILE_COAST_DEEP_WATER;
+        case TILE_COAST_CHANNEL_WATER: return TILE_COAST_CHANNEL_DRY;
+        case TILE_COAST_CHANNEL_DRY: return TILE_COAST_CHANNEL_WATER;
+        default: return tile;
+    }
+}
+
+static void place_coast_chamber(Map *m, int room_index, TileType water) {
+    int cx;
+    int cy;
+    map_room_center(&m->rooms[room_index], &cx, &cy);
+    // Dry treasure chambers are enclosed by a tidal moat in either basin.
+    for (int y = cy - 2; y <= cy + 2; y++) {
+        for (int x = cx - 3; x <= cx + 3; x++) {
+            int edge = x == cx - 3 || x == cx + 3 || y == cy - 2 || y == cy + 2;
+            m->tiles[y][x] = edge ? water : TILE_COAST_FLOOR;
+        }
+    }
+    // Leave the center available for Mara's beacon on stage one.
+    m->tiles[cy][cx + 1] = TILE_COAST_CACHE;
+}
+
+static void place_coast_sluices(Map *m, int room_index) {
+    Room *room = &m->rooms[room_index];
+    int cx;
+    int cy;
+    map_room_center(room, &cx, &cy);
+    for (int y = room->y; y < room->y + room->h; y++) {
+        if ((y == room->y && map_is_walkable(m, cx, y - 1)) ||
+            (y == room->y + room->h - 1 && map_is_walkable(m, cx, y + 1))) {
+            continue;
+        }
+        m->tiles[y][cx] = TILE_COAST_WALL;
+    }
+    // Opposite channels guarantee a crossing in either tide state.
+    m->tiles[cy - 2][cx] = TILE_COAST_DEEP_WATER;
+    m->tiles[cy + 2][cx] = TILE_COAST_CHANNEL_DRY;
+    m->tiles[cy][cx + 2] = TILE_COAST_SLUICE_CONTROL;
+    map_room_center(&m->rooms[0], &cx, &cy);
+    m->tiles[cy][cx] = TILE_COAST_TIDE_CONTROL;
+}
+
 void map_generate_coast(Map *m, int level) {
     static const OutdoorSide entrances[COAST_DEPTH] = {
         OUTDOOR_SIDE_NORTH, OUTDOOR_SIDE_WEST, OUTDOOR_SIDE_SOUTH,
@@ -773,11 +830,9 @@ void map_generate_coast(Map *m, int level) {
             }
         }
     }
-    int control_x;
-    int control_y;
-    map_room_center(&m->rooms[control_room], &control_x, &control_y);
-    m->tiles[control_y][control_x] = TILE_COAST_TIDE_CONTROL;
-    m->tiles[m->stairs_down_y][m->stairs_down_x] = TILE_COAST_DEEP_WATER;
+    place_coast_chamber(m, 1, TILE_COAST_DEEP_WATER);
+    place_coast_chamber(m, 2, TILE_COAST_CHANNEL_DRY);
+    place_coast_sluices(m, control_room);
 }
 
 void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {

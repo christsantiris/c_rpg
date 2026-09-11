@@ -94,7 +94,11 @@ typedef enum {
     TILE_MOUNTAIN_GATE,
     TILE_MOUNTAIN_ROCKFALL,
     TILE_MOUNTAIN_HIDDEN_CAVE,
-    TILE_MOUNTAIN_CACHE
+    TILE_MOUNTAIN_CACHE,
+    TILE_COAST_CHANNEL_WATER,
+    TILE_COAST_CHANNEL_DRY,
+    TILE_COAST_SLUICE_CONTROL,
+    TILE_COAST_CACHE
 } TileType;
 
 typedef struct {
@@ -118,6 +122,9 @@ void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_forest(Map *m, int level);
 void map_generate_mountains(Map *m, int level);
 void map_generate_coast(Map *m, int level);
+int map_is_coast_tidal_tile(TileType tile);
+int map_is_coast_object(TileType tile);
+TileType map_coast_swapped_tile(TileType tile);
 void map_clear_exploration(Map *m);
 void map_mark_explored(Map *m, int x, int y);
 int map_is_explored(const Map *m, int x, int y);

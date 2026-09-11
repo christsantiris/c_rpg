@@ -271,7 +271,8 @@ static int enemy_terrain_open(const GameState *g, int x, int y) {
         g->map.tiles[y][x] != TILE_MOUNTAIN_FORTRESS_FLOOR &&
         g->map.tiles[y][x] != TILE_COAST_FLOOR &&
         g->map.tiles[y][x] != TILE_COAST_SHALLOW_WATER &&
-        g->map.tiles[y][x] != TILE_COAST_DRAINED_WATER)) {
+        g->map.tiles[y][x] != TILE_COAST_DRAINED_WATER &&
+        g->map.tiles[y][x] != TILE_COAST_CHANNEL_DRY)) {
         return 0;
     }
     return 1;
@@ -427,6 +428,18 @@ void enemies_spawn(GameState *g) {
                 strncpy(target->name, "Map Bearer",
                     sizeof(target->name) - 1);
                 target->name[sizeof(target->name) - 1] = '\0';
+            }
+        }
+    }
+    if (g->location == LOCATION_COAST) {
+        for (int y = 1; y < MAP_H - 1; y++) {
+            for (int x = 2; x < MAP_W - 1; x++) {
+                if (g->map.tiles[y][x] == TILE_COAST_CACHE &&
+                    g->enemy_count < num_enemies && enemy_tile_open(g, x - 2, y)) {
+                    EnemyType guard = g->level >= 6 ? ENEMY_SEA_SERPENT :
+                        (g->level >= 3 ? ENEMY_ANIMATED_STATUE : ENEMY_GIANT_CRAB);
+                    spawn_enemy(&g->enemies[g->enemy_count++], guard, x - 2, y);
+                }
             }
         }
     }

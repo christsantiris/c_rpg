@@ -411,9 +411,17 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_COAST_SHALLOW_WATER:
                     draw_coast_shallow_water(r, sx, sy); break;
                 case TILE_COAST_DRAINED_WATER:
-                    draw_coast_shallow_water(r, sx, sy); break;
+                    draw_coast_channel(r, sx, sy, 0, 0); break;
                 case TILE_COAST_DEEP_WATER:
-                    draw_coast_deep_water(r, sx, sy); break;
+                    draw_coast_channel(r, sx, sy, 0, 1); break;
+                case TILE_COAST_CHANNEL_DRY:
+                    draw_coast_channel(r, sx, sy, 1, 0); break;
+                case TILE_COAST_CHANNEL_WATER:
+                    draw_coast_channel(r, sx, sy, 1, 1); break;
+                case TILE_COAST_SLUICE_CONTROL:
+                    draw_coast_sluice(r, sx, sy); break;
+                case TILE_COAST_CACHE:
+                    draw_coast_cache(r, sx, sy); break;
                 case TILE_COAST_TIDE_CONTROL:
                     draw_coast_tide_control(r, sx, sy); break;
                 case TILE_COAST_BEACON_UNLIT:
@@ -502,7 +510,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         }
     }
 
-    // These mountain tiles retain their terrain IDs even when holding loot.
+    // Regional mechanisms retain their terrain IDs even when holding loot.
     for (int i = 0; i < g->floor_item_count; i++) {
         const FloorItem *item = &g->floor_items[i];
         if (!item->active || !viewport_is_visible(v, item->x, item->y)) {
@@ -510,7 +518,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         }
         TileType tile = g->map.tiles[item->y][item->x];
         if (tile == TILE_MOUNTAIN_WEAK_BRIDGE || tile == TILE_MOUNTAIN_CACHE ||
-            tile == TILE_MOUNTAIN_BRIDGE || tile == TILE_MOUNTAIN_CAVE_FLOOR) {
+            tile == TILE_MOUNTAIN_BRIDGE || tile == TILE_MOUNTAIN_CAVE_FLOOR ||
+            tile == TILE_COAST_DRAINED_WATER || tile == TILE_COAST_CHANNEL_DRY ||
+            map_is_coast_object(tile)) {
             draw_floor_item(r, viewport_to_screen_x(v, item->x),
                 viewport_to_screen_y(v, item->y));
         }
