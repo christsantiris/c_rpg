@@ -386,6 +386,23 @@ void enemies_spawn(GameState *g) {
         (g->location == LOCATION_COAST ? COAST_DEPTH : DUNGEON_DEPTH));
     int regular_room_limit = g->level == boss_level
         ? g->map.room_count - 1 : g->map.room_count;
+    if (g->location == LOCATION_MOUNTAINS) {
+        for (int y = 1; y < MAP_H - 1; y++) {
+            for (int x = 1; x < MAP_W - 3; x++) {
+                if (g->map.tiles[y][x] != TILE_MOUNTAIN_GATE) {
+                    continue;
+                }
+                for (int offset = 0; offset <= 1; offset++) {
+                    int gx = x + 2;
+                    int gy = y + offset;
+                    if (g->enemy_count < num_enemies && enemy_tile_open(g, gx, gy)) {
+                        spawn_enemy(&g->enemies[g->enemy_count++],
+                            offset ? ENEMY_HOBGOBLIN_GUARD : ENEMY_GOBLIN_ARCHER, gx, gy);
+                    }
+                }
+            }
+        }
+    }
     if (g->location == LOCATION_MOUNTAINS && g->dain_quest_state == 1) {
         EnemyType quest_target = ENEMY_GOBLIN_SCOUT;
         int target_bit = 0;

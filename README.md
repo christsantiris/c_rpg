@@ -24,6 +24,22 @@ dungeon, an eight-stage Haunted Forest, the eight-stage Goblin Mountains, and
 the eight-stage Sunken Coast. Each adventure keeps its own generated maps and
 progression.
 
+### Goblin Mountains terrain
+
+Stages 2 and 7 funnel combat onto narrow bridges. A marked weak span collapses
+behind you after crossing; press `A` beside the gap to rebuild it from either
+side. On stages 3–6 and 8, goblin gates divide fortified rooms. Press `A` beside
+a gate to open it, then watch for the trap and the archer and guard beyond it.
+
+Amber rockfalls mark buried cave passages around the defended gates. Press `A`
+beside either end to expose the passage: falling rocks cost `4 + stage` HP, but
+the cave holds a one-time cache worth `40 + 10 × stage` gold. Stand on the cache
+and press `A` to collect it. Newly revealed passages appear on the minimap;
+opened gates, exposed caves, claimed caches, and repaired bridges survive
+cached revisits and saving/loading. Existing saved maps retain their layouts;
+the new fortifications appear on newly generated stages. Arrow keys always move;
+`A` interacts when beside a mountain obstacle or standing on its cache.
+
 ## Screenshots
 Below are screenshots of the game in action:
 

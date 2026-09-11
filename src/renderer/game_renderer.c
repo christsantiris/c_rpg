@@ -379,6 +379,19 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_mountain_edge(r, sx, sy, 0); break;
                 case TILE_MOUNTAIN_EXIT:
                     draw_mountain_edge(r, sx, sy, 1); break;
+                case TILE_MOUNTAIN_HIDDEN_CAVE:
+                    draw_mountain_wall(r, sx, sy); break;
+                case TILE_MOUNTAIN_ROCKFALL:
+                    draw_mountain_rockfall(r, sx, sy); break;
+                case TILE_MOUNTAIN_CHASM:
+                    draw_mountain_chasm(r, sx, sy); break;
+                case TILE_MOUNTAIN_GATE:
+                    draw_dungeon_gate(r, sx, sy); break;
+                case TILE_MOUNTAIN_CACHE:
+                    draw_crypt_cache(r, sx, sy); break;
+                case TILE_MOUNTAIN_WEAK_BRIDGE:
+                    draw_mountain_bridge(r, sx, sy);
+                    draw_trap_warning(r, sx, sy); break;
                 case TILE_MOUNTAIN_BRIDGE:
                     draw_mountain_bridge(r, sx, sy); break;
                 case TILE_MOUNTAIN_CAVE_FLOOR:
@@ -486,6 +499,20 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     break;
                 default: draw_floor(r, sx, sy); break;
             }
+        }
+    }
+
+    // These mountain tiles retain their terrain IDs even when holding loot.
+    for (int i = 0; i < g->floor_item_count; i++) {
+        const FloorItem *item = &g->floor_items[i];
+        if (!item->active || !viewport_is_visible(v, item->x, item->y)) {
+            continue;
+        }
+        TileType tile = g->map.tiles[item->y][item->x];
+        if (tile == TILE_MOUNTAIN_WEAK_BRIDGE || tile == TILE_MOUNTAIN_CACHE ||
+            tile == TILE_MOUNTAIN_BRIDGE || tile == TILE_MOUNTAIN_CAVE_FLOOR) {
+            draw_floor_item(r, viewport_to_screen_x(v, item->x),
+                viewport_to_screen_y(v, item->y));
         }
     }
 
