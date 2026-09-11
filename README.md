@@ -27,7 +27,7 @@ progression.
 ## Screenshots
 Below are screenshots of the game in action:
 
-<img width="2542" height="1474" alt="image" src="https://github.com/user-attachments/assets/e0f3e8e4-159b-48c1-a1f7-e4f0c0903baa" />
+<img width="2544" height="1488" alt="image" src="https://github.com/user-attachments/assets/b1f1f35b-c86f-4dfe-beab-08ea6c290305" />
 
 <img width="2542" height="1474" alt="image" src="https://github.com/user-attachments/assets/f71af623-4d6b-4efc-bc8c-3189dc3e8dde" />
 
