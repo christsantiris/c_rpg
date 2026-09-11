@@ -805,6 +805,11 @@ void action_resolve_player(GameState *g, Action a) {
                     Enemy *e = &g->enemies[i];
                     if (!e->active) continue;
                     if (e->x == cx && e->y == cy) {
+                        // Stop the projectile at the enemy it actually hits.
+                        if (step <= g->trail_count) {
+                            g->trail_count = step;
+                            g->trail[step - 1].is_impact = 1;
+                        }
                         int dmg = sp->damage + g->player.level * 2 +
                             spell_power;
                         e->hp -= dmg;
