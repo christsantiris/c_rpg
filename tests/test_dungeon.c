@@ -294,13 +294,21 @@ void test_enemy_movement_collision(void) {
     g.map.tiles[5][7] = TILE_TRAP_HIDDEN;
     Action approach_trap = {ACTION_MOVE, 6, 5};
     action_resolve_player(&g, approach_trap);
-    ASSERT("approaching a dungeon trap reveals its pressure plate",
-        g.map.tiles[5][7] == TILE_TRAP_REVEALED);
+    ASSERT("approaching a dungeon trap leaves it hidden",
+        g.map.tiles[5][7] == TILE_TRAP_HIDDEN);
 
     Action step_on_trap = {ACTION_MOVE, 7, 5};
     action_resolve_player(&g, step_on_trap);
     TileType sprung_trap = g.map.tiles[5][7];
-    ASSERT("stepping on a revealed pressure plate triggers its trap",
+    ASSERT("stepping on a hidden trap reveals and triggers it",
+        sprung_trap == TILE_TRAP_SPIKE ||
+        sprung_trap == TILE_TRAP_FIRE ||
+        sprung_trap == TILE_TRAP_POISON);
+
+    g.map.tiles[5][8] = TILE_TRAP_REVEALED;
+    action_resolve_player(&g, (Action){ACTION_MOVE, 8, 5});
+    sprung_trap = g.map.tiles[5][8];
+    ASSERT("deliberately visible pressure plates still trigger",
         sprung_trap == TILE_TRAP_SPIKE ||
         sprung_trap == TILE_TRAP_FIRE ||
         sprung_trap == TILE_TRAP_POISON);

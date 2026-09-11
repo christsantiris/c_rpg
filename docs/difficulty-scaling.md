@@ -106,6 +106,10 @@ trap count = 2 + dungeon floor
 This gives three traps on floor 1 and ten on floor 8. Placement can yield
 fewer traps when a selected tile is unsuitable.
 
+Ordinary traps stay hidden until stepped on. Visible plates are reserved for
+reward or route choices, such as the mountain fort gate with its alternate
+buried passage. Previously revealed traps in saved games remain visible.
+
 Layouts use 6-10 rooms with fixed room-size ranges. Floor number affects traps
 and encounters, but not room geometry.
 
