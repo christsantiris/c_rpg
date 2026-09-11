@@ -386,28 +386,6 @@ static void set_trail(GameState *g, int sx, int sy,
     }
 }
 
-static int reveal_adjacent_dungeon_traps(GameState *g) {
-    if (g->location != LOCATION_DUNGEON) {
-        return 0;
-    }
-    int revealed = 0;
-    for (int y = g->player.y - 1; y <= g->player.y + 1; y++) {
-        for (int x = g->player.x - 1; x <= g->player.x + 1; x++) {
-            if (x == g->player.x && y == g->player.y) {
-                continue;
-            }
-            if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
-                continue;
-            }
-            if (g->map.tiles[y][x] == TILE_TRAP_HIDDEN) {
-                g->map.tiles[y][x] = TILE_TRAP_REVEALED;
-                revealed++;
-            }
-        }
-    }
-    return revealed;
-}
-
 static void change_mountain_tile(GameState *g, int x, int y, TileType tile) {
     g->map.tiles[y][x] = tile;
     for (int i = 0; i < g->floor_item_count; i++) {
@@ -1444,9 +1422,6 @@ void action_resolve_player(GameState *g, Action a) {
             if (g->map.tiles[g->player.y][g->player.x] == TILE_MOUNTAIN_WEAK_BRIDGE) {
                 push_message(g, "The bridge creaks beneath your feet!");
             }
-        }
-        if (reveal_adjacent_dungeon_traps(g) > 0) {
-            push_message(g, "You notice a suspicious pressure plate.");
         }
         // Check for trap on new tile
         int px = g->player.x;
