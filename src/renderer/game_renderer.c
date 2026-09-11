@@ -626,8 +626,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             g->trail_count > 0;
         if (timed_fireball) {
             Uint32 elapsed = SDL_GetTicks() - g->trail_started_at;
-            if (elapsed < 240) {
-                int lead = (int)(elapsed * g->trail_count / 240);
+            if (elapsed < SPELL_TRAVEL_MS) {
+                int lead = (int)(elapsed * g->trail_count / SPELL_TRAVEL_MS);
                 if (lead >= g->trail_count) {
                     lead = g->trail_count - 1;
                 }
@@ -637,17 +637,33 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                         viewport_to_screen_y(v, t->y), g->player.last_dx,
                         g->player.last_dy, (int)(elapsed / 60));
                 }
-            } else if (elapsed < 460) {
+            } else if (elapsed < SPELL_FIREBALL_MS) {
                 TrailTile *t = &g->trail[g->trail_count - 1];
                 if (viewport_is_visible(v, t->x, t->y)) {
                     draw_fireball_impact(r, viewport_to_screen_x(v, t->x),
-                        viewport_to_screen_y(v, t->y), elapsed - 240);
+                        viewport_to_screen_y(v, t->y), elapsed - SPELL_TRAVEL_MS);
                 }
             } else {
                 g->trail_frames = 0;
             }
-        } else if (g->trail_effect == TRAIL_EFFECT_WEAPON_ARROW ||
-                   g->trail_effect == TRAIL_EFFECT_MAGIC_ARROW) {
+        } else if (g->trail_effect == TRAIL_EFFECT_MAGIC_ARROW &&
+            g->trail_count > 0) {
+            Uint32 elapsed = SDL_GetTicks() - g->trail_started_at;
+            if (elapsed < SPELL_ARROW_MS) {
+                int impact = elapsed >= SPELL_TRAVEL_MS;
+                int lead = impact ? g->trail_count - 1
+                    : (int)(elapsed * g->trail_count / SPELL_TRAVEL_MS);
+                TrailTile *t = &g->trail[lead];
+                if (t->active && viewport_is_visible(v, t->x, t->y)) {
+                    draw_magic_arrow(r, viewport_to_screen_x(v, t->x),
+                        viewport_to_screen_y(v, t->y), g->player.last_dx,
+                        g->player.last_dy, impact && t->is_impact,
+                        (int)(elapsed / 60));
+                }
+            } else {
+                g->trail_frames = 0;
+            }
+        } else if (g->trail_effect == TRAIL_EFFECT_WEAPON_ARROW) {
             int progress = 4 - g->trail_frames;
             int lead = g->trail_count > 1
                 ? progress * (g->trail_count - 1) / 3 : 0;
@@ -655,15 +671,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             if (t->active && viewport_is_visible(v, t->x, t->y)) {
                 int sx = viewport_to_screen_x(v, t->x);
                 int sy = viewport_to_screen_y(v, t->y);
-                if (g->trail_effect == TRAIL_EFFECT_MAGIC_ARROW) {
-                    draw_magic_arrow(r, sx, sy,
-                        g->player.last_dx, g->player.last_dy,
-                        t->is_impact, progress);
-                } else {
-                    draw_weapon_arrow(r, sx, sy,
-                        g->player.last_dx, g->player.last_dy,
-                        t->is_impact);
-                }
+                draw_weapon_arrow(r, sx, sy,
+                    g->player.last_dx, g->player.last_dy,
+                    t->is_impact);
             }
         } else for (int i = 0; i < g->trail_count; i++) {
             TrailTile *t = &g->trail[i];
@@ -693,7 +703,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     sy * TILE_SIZE + TILE_SIZE / 2);
             }
         }
-        if (!timed_fireball) {
+        if (!timed_fireball && g->trail_effect != TRAIL_EFFECT_MAGIC_ARROW) {
             g->trail_frames--;
         }
     }

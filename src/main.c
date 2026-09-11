@@ -327,6 +327,9 @@ int main(int argc, char **argv) {
 
     GameState game = {0};
     game_init(&game);
+    // Presentation-only snapshot; persistent results remain in game.
+    static GameState spell_view;
+    int spell_animating = 0;
 
     Viewport viewport;
     viewport_init(&viewport, renderer.tiles_x, renderer.tiles_y, MAP_W, MAP_H);
@@ -379,6 +382,9 @@ int main(int argc, char **argv) {
 
                 // ── Keyboard input ────────────────────────────────────────
                 case SDL_KEYDOWN: {
+                    if (spell_animating) {
+                        break;
+                    }
                     int sc = event.key.keysym.scancode;
 
                     // Game over screen
@@ -695,8 +701,26 @@ int main(int argc, char **argv) {
                             }
                         }
                         if (a.type != ACTION_NONE) {
+                            if (a.type == ACTION_CAST_SPELL) {
+                                spell_view = game;
+                            }
                             action_resolve_player(&game, a);
-                            action_resolve_enemies(&game);
+                            if (a.type == ACTION_CAST_SPELL &&
+                                game.player.mp < spell_view.player.mp &&
+                                game.trail_count > 0 && game.trail_frames > 0 &&
+                                (game.trail_effect == TRAIL_EFFECT_MAGIC_ARROW ||
+                                game.trail_effect == TRAIL_EFFECT_FIREBALL)) {
+                                memcpy(spell_view.trail, game.trail,
+                                    sizeof(game.trail));
+                                spell_view.trail_count = game.trail_count;
+                                spell_view.trail_frames = game.trail_frames;
+                                spell_view.trail_effect = game.trail_effect;
+                                spell_view.trail_started_at = game.trail_started_at;
+                                spell_view.player.mp = game.player.mp;
+                                spell_animating = 1;
+                            } else {
+                                action_resolve_enemies(&game);
+                            }
                             if (game.player.hp <= 0)
                                 screen = SCREEN_GAME_OVER;
                             viewport_center_on(&viewport,
@@ -891,6 +915,18 @@ int main(int argc, char **argv) {
         }
 
         // ── Per-frame updates ─────────────────────────────────────────────
+        if (spell_animating) {
+            Uint32 duration = game.trail_effect == TRAIL_EFFECT_FIREBALL
+                ? SPELL_FIREBALL_MS : SPELL_ARROW_MS;
+            if (SDL_GetTicks() - game.trail_started_at >= duration) {
+                spell_animating = 0;
+                game.trail_frames = 0;
+                action_resolve_enemies(&game);
+                if (game.player.hp <= 0) {
+                    screen = SCREEN_GAME_OVER;
+                }
+            }
+        }
         if (screen == SCREEN_NAME_ENTRY)
             name_entry_update(&name_entry);
 
@@ -918,7 +954,10 @@ int main(int argc, char **argv) {
         } else if (screen == SCREEN_SHOP) {
             shop_draw(&renderer, &game, &shop_screen);
         } else if (screen == SCREEN_PLAYING) {
-        game_draw(&renderer, &game, &viewport);
+            GameState *view = spell_animating &&
+                SDL_GetTicks() - game.trail_started_at < SPELL_TRAVEL_MS
+                ? &spell_view : &game;
+            game_draw(&renderer, view, &viewport);
         } else if (screen == SCREEN_GAME_OVER) {
             game_over_draw(&renderer, &game);
         } else if (screen == SCREEN_HELP) {

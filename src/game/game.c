@@ -1542,7 +1542,7 @@ void game_rescue_forest_warden(GameState *g, int x, int y) {
     g->dialogue_y = y;
     if (g->level == 2) {
         strncpy(g->dialogue_text,
-            "You cut through the spider silk binding me. I can follow your trail home from here.",
+            "You cut through the spider web binding me. I can follow your trail home from here.",
             MAX_DIALOGUE_LEN - 1);
     } else if (g->level == 5) {
         strncpy(g->dialogue_text,

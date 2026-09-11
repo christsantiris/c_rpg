@@ -787,6 +787,9 @@ void test_items(void) {
         g.enemies[0].hp == 75);
     ASSERT("magic staff reduces spell mana cost",
         g.player.mp == mp_before_staff_cast - 9);
+    ASSERT("magic arrow impact lands on the enemy it hit",
+        g.trail_count == 2 && g.trail[1].x == g.enemies[0].x &&
+        g.trail[1].y == g.enemies[0].y && g.trail[1].is_impact);
     g.player.known_spells[0] = spell_make_heal();
     g.player.hp = 1;
     action_resolve_player(&g, cast);
