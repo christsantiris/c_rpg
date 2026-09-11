@@ -280,6 +280,30 @@ void test_enemy_movement_collision(void) {
         ASSERT("spawned enemies are never inside walls",
             enemies_on_open_tiles);
     }
+
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            g.map.tiles[y][x] = TILE_FLOOR;
+        }
+    }
+    g.location = LOCATION_DUNGEON;
+    g.enemy_count = 0;
+    g.player.x = 5;
+    g.player.y = 5;
+    g.player.hp = 100;
+    g.map.tiles[5][7] = TILE_TRAP_HIDDEN;
+    Action approach_trap = {ACTION_MOVE, 6, 5};
+    action_resolve_player(&g, approach_trap);
+    ASSERT("approaching a dungeon trap reveals its pressure plate",
+        g.map.tiles[5][7] == TILE_TRAP_REVEALED);
+
+    Action step_on_trap = {ACTION_MOVE, 7, 5};
+    action_resolve_player(&g, step_on_trap);
+    TileType sprung_trap = g.map.tiles[5][7];
+    ASSERT("stepping on a revealed pressure plate triggers its trap",
+        sprung_trap == TILE_TRAP_SPIKE ||
+        sprung_trap == TILE_TRAP_FIRE ||
+        sprung_trap == TILE_TRAP_POISON);
 }
 
 void test_new_dungeon_enemies(void) {
@@ -349,6 +373,98 @@ void test_stairs_locked(void) {
     action_resolve_player(&g, a);
     ASSERT("can descend without clearing the floor",
         g.level == level_before + 1);
+
+    g.level = 2;
+    map_generate(&g.map, g.level);
+    int key_x = -1;
+    int key_y = -1;
+    int door_x = -1;
+    int door_y = -1;
+    int cache_x = -1;
+    int cache_y = -1;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (g.map.tiles[y][x] == TILE_CRYPT_KEY) {
+                key_x = x;
+                key_y = y;
+            } else if (g.map.tiles[y][x] == TILE_CRYPT_DOOR) {
+                door_x = x;
+                door_y = y;
+            } else if (g.map.tiles[y][x] == TILE_CRYPT_CACHE) {
+                cache_x = x;
+                cache_y = y;
+            }
+        }
+    }
+    ASSERT("dungeon floor two contains an optional locked crypt",
+        key_x >= 0 && door_x >= 0 && cache_x >= 0);
+    if (key_x < 0 || door_x < 0 || cache_x < 0) {
+        return;
+    }
+
+    g.player.x = door_x - 1;
+    g.player.y = door_y;
+    Action enter_crypt = {ACTION_MOVE, door_x, door_y};
+    action_resolve_player(&g, enter_crypt);
+    ASSERT("crypt door remains locked without its key",
+        g.map.tiles[door_y][door_x] == TILE_CRYPT_DOOR);
+
+    g.player.x = key_x;
+    g.player.y = key_y;
+    Action collect_key = {ACTION_PICK_UP, 0, 0};
+    action_resolve_player(&g, collect_key);
+    ASSERT("P collects the crypt key", g.dungeon_crypt_keys == 1);
+
+    g.player.x = door_x - 1;
+    g.player.y = door_y;
+    action_resolve_player(&g, enter_crypt);
+    ASSERT("crypt key opens and is consumed by the door",
+        g.map.tiles[door_y][door_x] == TILE_FLOOR &&
+        g.dungeon_crypt_keys == 0);
+
+    int gold_before = g.gold;
+    g.player.x = cache_x;
+    g.player.y = cache_y;
+    Action loot_cache = {ACTION_INTERACT, 0, 0};
+    action_resolve_player(&g, loot_cache);
+    ASSERT("A loots the crypt cache once",
+        g.gold > gold_before &&
+        g.map.tiles[cache_y][cache_x] == TILE_FLOOR);
+
+    g.level = 3;
+    map_generate(&g.map, g.level);
+    int switch_x = -1;
+    int switch_y = -1;
+    int gate_x = -1;
+    int gate_y = -1;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (g.map.tiles[y][x] == TILE_DUNGEON_SWITCH_OFF) {
+                switch_x = x;
+                switch_y = y;
+            } else if (g.map.tiles[y][x] == TILE_DUNGEON_GATE) {
+                gate_x = x;
+                gate_y = y;
+            }
+        }
+    }
+    ASSERT("dungeon floor three contains a switch and portcullis",
+        switch_x >= 0 && gate_x >= 0);
+    if (switch_x < 0 || gate_x < 0) {
+        return;
+    }
+    ASSERT("closed portcullis blocks movement",
+        !map_is_walkable(&g.map, gate_x, gate_y));
+
+    g.player.x = switch_x;
+    g.player.y = switch_y;
+    Action activate_switch = {ACTION_INTERACT, 0, 0};
+    action_resolve_player(&g, activate_switch);
+    ASSERT("A activates the dungeon switch",
+        g.map.tiles[switch_y][switch_x] == TILE_DUNGEON_SWITCH_ON);
+    ASSERT("activated switch opens the portcullis shortcut",
+        g.map.tiles[gate_y][gate_x] == TILE_FLOOR &&
+        map_is_walkable(&g.map, gate_x, gate_y));
 }
 
 void test_level_cache_cleared(void) {

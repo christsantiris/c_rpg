@@ -338,6 +338,8 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "equipped_armor",    g->equipped_armor);
     cJSON_AddNumberToObject(root, "location",          g->location);
     cJSON_AddNumberToObject(root, "dungeon_key_found", g->dungeon_key_found);
+    cJSON_AddNumberToObject(root, "dungeon_crypt_keys",
+        g->dungeon_crypt_keys);
     cJSON_AddNumberToObject(root, "portal_active",     g->portal_active);
     cJSON_AddNumberToObject(root, "portal_level",      g->portal_level);
     cJSON_AddNumberToObject(root, "portal_location",   g->portal_location);
@@ -642,6 +644,7 @@ int load_game(GameState *g, int slot) {
     g->equipped_armor    = cJSON_GetObjectItem(root, "equipped_armor")->valueint;
     g->location          = cJSON_GetObjectItem(root, "location")->valueint;
     cJSON *key_found = cJSON_GetObjectItem(root, "dungeon_key_found");
+    cJSON *crypt_keys = cJSON_GetObjectItem(root, "dungeon_crypt_keys");
     cJSON *portal_active = cJSON_GetObjectItem(root, "portal_active");
     cJSON *portal_level = cJSON_GetObjectItem(root, "portal_level");
     cJSON *portal_location = cJSON_GetObjectItem(root, "portal_location");
@@ -670,6 +673,7 @@ int load_game(GameState *g, int slot) {
     cJSON *dialogue_x = cJSON_GetObjectItem(root, "dialogue_x");
     cJSON *dialogue_y = cJSON_GetObjectItem(root, "dialogue_y");
     g->dungeon_key_found = key_found ? key_found->valueint : 0;
+    g->dungeon_crypt_keys = crypt_keys ? crypt_keys->valueint : 0;
     g->portal_active = portal_active ? portal_active->valueint : 0;
     g->portal_level = portal_level ? portal_level->valueint : 0;
     g->portal_location = portal_location ? portal_location->valueint :

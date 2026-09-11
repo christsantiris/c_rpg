@@ -113,6 +113,7 @@ typedef struct {
     Uint32    trail_started_at;
     int score;
     int dungeon_key_found;
+    int dungeon_crypt_keys;
     int portal_active;
     int portal_level;
     Location portal_location;
@@ -135,6 +136,7 @@ typedef struct {
 } GameState;
 
 void game_init(GameState *g);
+int game_has_regional_interaction(const GameState *g);
 void game_move_player(GameState *g, int dx, int dy);
 void game_descend(GameState *g);
 void game_ascend(GameState *g);

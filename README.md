@@ -24,24 +24,67 @@ dungeon, an eight-stage Haunted Forest, the eight-stage Goblin Mountains, and
 the eight-stage Sunken Coast. Each adventure keeps its own generated maps and
 progression.
 
+### Goblin Mountains terrain
+
+Stages 2 and 7 funnel combat onto narrow bridges. A marked weak span collapses
+behind you after crossing; press `A` beside the gap to rebuild it from either
+side. On stages 3–6 and 8, goblin gates divide fortified rooms. Press `A` beside
+a gate to open it, then watch for the trap and the archer and guard beyond it.
+
+Amber rockfalls mark buried cave passages around the defended gates. Press `A`
+beside either end to expose the passage: falling rocks cost `4 + stage` HP, but
+the cave holds a one-time cache worth `40 + 10 × stage` gold. Stand on the cache
+and press `A` to collect it. Newly revealed passages appear on the minimap;
+opened gates, exposed caves, claimed caches, and repaired bridges survive
+cached revisits and saving/loading. Existing saved maps retain their layouts;
+the new fortifications appear on newly generated stages. Arrow keys always move;
+`A` interacts when beside a mountain obstacle or standing on its cache.
+
+### Sunken Coast water routes
+
+Each new Coast stage has two linked controls. Stand on either control and press
+`A` to transfer water between the blue and amber channels. Every activation
+reverses the flow: one basin drains while the other floods. Colored corner
+markers identify the channels; drained channels show exposed stone.
+
+The sluice room has alternate crossings, and two guarded treasure chambers are
+accessible at opposite tide levels. Each chamber cache grants `50 + 10 × stage`
+gold once; stand on it and press `A` to collect it. Drain the blue basin to reach
+and light Mara's beacons. Both controls and the exit remain reachable in either
+tide state, with the Drowned Queen still guarding the final exit.
+
+Operating a control reveals its connected channels on the minimap. Rising water
+carries enemies to an open bank and submerges dropped items until the channel
+is drained again. Water states, claimed caches, and discoveries persist through
+cached revisits and save/load. Existing saved Coast maps keep their layouts;
+the linked channels and treasure chambers appear on newly generated stages.
+
 ## Screenshots
 Below are screenshots of the game in action:
 
-<img width="2542" height="1474" alt="image" src="https://github.com/user-attachments/assets/e0f3e8e4-159b-48c1-a1f7-e4f0c0903baa" />
+<img width="2544" height="1488" alt="image" src="https://github.com/user-attachments/assets/b1f1f35b-c86f-4dfe-beab-08ea6c290305" />
 
-<img width="2542" height="1474" alt="image" src="https://github.com/user-attachments/assets/f71af623-4d6b-4efc-bc8c-3189dc3e8dde" />
+<img width="2542" height="1480" alt="image" src="https://github.com/user-attachments/assets/b1036cd3-446b-4016-b1e1-25a832b7c0bf" />
 
-<img width="2546" height="1420" alt="image" src="https://github.com/user-attachments/assets/fcd38796-6c77-42bc-949f-d0ab2c969ba4" />
+<img width="2546" height="1484" alt="image" src="https://github.com/user-attachments/assets/a3dbb1ff-28cc-4bcc-924c-6821ce30df64" />
 
-<img width="2546" height="1420" alt="image" src="https://github.com/user-attachments/assets/6e8c3429-21e6-4831-b10a-aab72305ca6e" />
+<img width="3664" height="2132" alt="image" src="https://github.com/user-attachments/assets/c011e7e0-4218-4d49-9253-2752eb42decd" />
 
-<img width="2546" height="1420" alt="image" src="https://github.com/user-attachments/assets/4892f5c5-f7c1-4863-bd5f-3056ee5b08be" />
+<img width="2532" height="1474" alt="image" src="https://github.com/user-attachments/assets/43803900-2a68-424c-ab6c-b51b21612d2a" />
 
-<img width="2546" height="1420" alt="image" src="https://github.com/user-attachments/assets/f3e57182-cfa5-4780-92d8-6bfb725e9e19" />
+<img width="2544" height="1484" alt="image" src="https://github.com/user-attachments/assets/c6063044-6df7-4d6c-8541-14965a03ef24" />
 
-<img width="2546" height="1420" alt="image" src="https://github.com/user-attachments/assets/6de113c3-ad31-474b-9531-4cf32c1e9841" />
+<img width="2552" height="1476" alt="image" src="https://github.com/user-attachments/assets/d1982af0-2ec9-433d-85f1-9a0b26bddfb0" />
 
-<img width="2542" height="1484" alt="image" src="https://github.com/user-attachments/assets/ea6c2dd5-4412-42fe-b2fd-3642430b704e" />
+<img width="2548" height="1484" alt="image" src="https://github.com/user-attachments/assets/ac612c80-defb-4289-afd8-fb248fc07edc" />
+
+<img width="2542" height="1484" alt="image" src="https://github.com/user-attachments/assets/b9e35f85-42e7-4ee6-8cf5-c1fed16368d3" />
+
+<img width="2556" height="1480" alt="image" src="https://github.com/user-attachments/assets/fd151a8c-7543-4e26-9649-eb27db71ebb2" />
+
+<img width="2542" height="1486" alt="image" src="https://github.com/user-attachments/assets/088a7000-a073-4f31-90e4-e86d6ac98247" />
+
+<img width="2552" height="1484" alt="image" src="https://github.com/user-attachments/assets/f05bc7ba-220a-4d10-85d8-33a1537b65e0" />
 
 ## Compile the game
 To compile the app run `make run` in the root directory.

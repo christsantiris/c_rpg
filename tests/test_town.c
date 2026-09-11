@@ -194,9 +194,34 @@ void test_forest(void) {
                 break;
             }
     ASSERT("forest contains forest floor tiles", forest_terrain);
+    int hidden_trails = 0;
+    int hidden_x = -1;
+    int hidden_y = -1;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (g.map.tiles[y][x] == TILE_FOREST_HIDDEN_TRAIL) {
+                hidden_trails++;
+                hidden_x = x;
+                hidden_y = y;
+            }
+        }
+    }
+    ASSERT("forest contains a concealed shortcut", hidden_trails > 0);
+    ASSERT("concealed shortcut initially behaves like dense woods",
+        hidden_x >= 0 && !map_is_walkable(&g.map, hidden_x, hidden_y));
     reveal_forest_exit(&g);
     ASSERT("forest landmark reveals east stage exit",
         g.map.tiles[g.map.stairs_down_y][MAP_W - 1] == TILE_FOREST_EXIT);
+    int concealed_after_landmark = 0;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            concealed_after_landmark +=
+                g.map.tiles[y][x] == TILE_FOREST_HIDDEN_TRAIL;
+        }
+    }
+    ASSERT("forest landmark reveals the concealed shortcut",
+        hidden_x >= 0 && hidden_y >= 0 && concealed_after_landmark == 0 &&
+        g.map.tiles[hidden_y][hidden_x] == TILE_FOREST_FLOOR);
 
     int pickup_x = g.player.x;
     int pickup_y = g.player.y;
@@ -263,6 +288,47 @@ void test_forest(void) {
                 expected_exits[level - 1]));
     }
     map_generate_forest(&g.map, 2);
+    g.location = LOCATION_FOREST;
+    g.enemy_count = 0;
+    int false_marker_x = -1;
+    int false_marker_y = -1;
+    int hidden_before_false_marker = 0;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (g.map.tiles[y][x] == TILE_FOREST_FALSE_MARKER) {
+                false_marker_x = x;
+                false_marker_y = y;
+            } else if (g.map.tiles[y][x] == TILE_FOREST_HIDDEN_TRAIL) {
+                hidden_before_false_marker++;
+            }
+        }
+    }
+    ASSERT("later forest stages contain a misleading trail marker",
+        false_marker_x >= 0 && false_marker_y >= 0);
+    if (false_marker_x < 0 || false_marker_y < 0) {
+        return;
+    }
+    g.player.x = false_marker_x;
+    g.player.y = false_marker_y;
+    Action inspect_false_marker = {
+        ACTION_MOVE, false_marker_x, false_marker_y
+    };
+    action_resolve_player(&g, inspect_false_marker);
+    int hidden_after_false_marker = 0;
+    int revealed_exit = 0;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            hidden_after_false_marker +=
+                g.map.tiles[y][x] == TILE_FOREST_HIDDEN_TRAIL;
+            revealed_exit += g.map.tiles[y][x] == TILE_FOREST_EXIT;
+        }
+    }
+    ASSERT("misleading marker becomes ordinary forest floor",
+        g.map.tiles[false_marker_y][false_marker_x] == TILE_FOREST_FLOOR);
+    ASSERT("misleading marker reveals neither shortcut nor exit",
+        hidden_after_false_marker == hidden_before_false_marker &&
+        revealed_exit == 0);
+
     int l2y3, l2y4, l2y5, unused;
     map_room_center(&g.map.rooms[3], &unused, &l2y3);
     map_room_center(&g.map.rooms[4], &unused, &l2y4);
