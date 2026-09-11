@@ -62,6 +62,79 @@ void map_room_center(const Room *r, int *cx, int *cy) {
     *cy = r->y + r->h / 2;
 }
 
+static int crypt_space_is_clear(const Map *m, int x, int y, int w, int h) {
+    if (x < 1 || y < 1 || x + w >= MAP_W || y + h >= MAP_H) {
+        return 0;
+    }
+    for (int cy = y; cy < y + h; cy++) {
+        for (int cx = x; cx < x + w; cx++) {
+            if (m->tiles[cy][cx] != TILE_WALL) {
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
+static int place_locked_crypt(Map *m) {
+    for (int room_index = 1; room_index < m->room_count - 1; room_index++) {
+        Room *room = &m->rooms[room_index];
+        for (int door_y = room->y + 2;
+            door_y < room->y + room->h - 2; door_y++) {
+            int door_x = room->x + room->w;
+            int crypt_x = door_x + 1;
+            int crypt_y = door_y - 2;
+            if (!crypt_space_is_clear(m, door_x, crypt_y - 1, 7, 7)) {
+                continue;
+            }
+            fill_rect(m, crypt_x, crypt_y, 5, 5, TILE_FLOOR);
+            m->tiles[door_y][door_x] = TILE_CRYPT_DOOR;
+            m->tiles[crypt_y + 2][crypt_x + 2] = TILE_CRYPT_CACHE;
+            for (int key_y = room->y + 1;
+                key_y < room->y + room->h - 1; key_y++) {
+                for (int key_x = room->x + 1;
+                    key_x < room->x + room->w - 1; key_x++) {
+                    if (m->tiles[key_y][key_x] == TILE_FLOOR) {
+                        m->tiles[key_y][key_x] = TILE_CRYPT_KEY;
+                        return 1;
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+static void place_dungeon_switch_route(Map *m) {
+    int start_x;
+    int start_y;
+    int end_x;
+    int end_y;
+    map_room_center(&m->rooms[1], &start_x, &start_y);
+    map_room_center(&m->rooms[3], &end_x, &end_y);
+    carve_corridor(m, start_x, start_y, end_x, end_y);
+
+    int gate_x = start_x + (end_x - start_x) / 2;
+    int gate_y = start_y;
+    if (gate_x == start_x || gate_x == end_x) {
+        gate_x = end_x;
+        gate_y = start_y + (end_y - start_y) / 2;
+    }
+    m->tiles[gate_y][gate_x] = TILE_DUNGEON_GATE;
+
+    Room *switch_room = &m->rooms[2];
+    for (int y = switch_room->y + 1;
+        y < switch_room->y + switch_room->h - 1; y++) {
+        for (int x = switch_room->x + 1;
+            x < switch_room->x + switch_room->w - 1; x++) {
+            if (m->tiles[y][x] == TILE_FLOOR) {
+                m->tiles[y][x] = TILE_DUNGEON_SWITCH_OFF;
+                return;
+            }
+        }
+    }
+}
+
 void map_generate(Map *m, int level) {
     (void)level;
     map_clear_exploration(m);
@@ -159,6 +232,13 @@ void map_generate(Map *m, int level) {
         m->tiles[door_y][door_x] = TILE_LOCKED_DOOR;
     }
 
+    if (level >= 3 && level < DUNGEON_DEPTH && level % 2 == 1 &&
+        m->room_count >= 4) {
+        place_dungeon_switch_route(m);
+        m->tiles[uy][ux] = TILE_STAIRS_UP;
+        m->tiles[dy][dx] = TILE_STAIRS_DOWN;
+    }
+
     // Place traps in rooms (skip room 0 — player spawn)
     int num_traps = 2 + level;
     if (num_traps > 12) num_traps = 12;
@@ -198,6 +278,10 @@ void map_generate(Map *m, int level) {
             }
         }
     }
+
+    if (level >= 2 && level < DUNGEON_DEPTH && level % 2 == 0) {
+        place_locked_crypt(m);
+    }
 }
 
 int map_is_walkable(const Map *m, int x, int y) {
@@ -206,9 +290,15 @@ int map_is_walkable(const Map *m, int x, int y) {
     }
     return m->tiles[y][x] != TILE_WALL &&
         m->tiles[y][x] != TILE_FOREST_WALL &&
+        m->tiles[y][x] != TILE_FOREST_HIDDEN_TRAIL &&
         m->tiles[y][x] != TILE_MOUNTAIN_WALL &&
+        m->tiles[y][x] != TILE_MOUNTAIN_CHASM &&
+        m->tiles[y][x] != TILE_MOUNTAIN_GATE &&
+        m->tiles[y][x] != TILE_MOUNTAIN_ROCKFALL &&
+        m->tiles[y][x] != TILE_MOUNTAIN_HIDDEN_CAVE &&
         m->tiles[y][x] != TILE_COAST_WALL &&
         m->tiles[y][x] != TILE_COAST_DEEP_WATER &&
+        m->tiles[y][x] != TILE_COAST_CHANNEL_WATER &&
         m->tiles[y][x] != TILE_TAVERN &&
         m->tiles[y][x] != TILE_SHOP_BLACKSMITH &&
         m->tiles[y][x] != TILE_SHOP_ALCHEMIST &&
@@ -220,7 +310,9 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_NPC_ALDER &&
         m->tiles[y][x] != TILE_NPC_MARA &&
         m->tiles[y][x] != TILE_FOREST_WARDEN &&
-        m->tiles[y][x] != TILE_LOCKED_DOOR;
+        m->tiles[y][x] != TILE_LOCKED_DOOR &&
+        m->tiles[y][x] != TILE_CRYPT_DOOR &&
+        m->tiles[y][x] != TILE_DUNGEON_GATE;
 }
 
 typedef struct {
@@ -290,6 +382,27 @@ static void carve_forest_trail(Map *m, int x, int y, int target_x, int target_y)
         }
     }
     fill_rect(m, x - 1, y - 1, 3, 3, TILE_FOREST_FLOOR);
+}
+
+static void mark_hidden_forest_trail(Map *m, int x, int y, int target_x, int target_y) {
+    int horizontal = 1;
+    while (x != target_x || y != target_y) {
+        for (int trail_y = y - 1; trail_y <= y + 1; trail_y++) {
+            for (int trail_x = x - 1; trail_x <= x + 1; trail_x++) {
+                if (m->tiles[trail_y][trail_x] == TILE_FOREST_WALL) {
+                    m->tiles[trail_y][trail_x] = TILE_FOREST_HIDDEN_TRAIL;
+                }
+            }
+        }
+        if ((horizontal && x != target_x) || y == target_y) {
+            x += target_x > x ? 1 : -1;
+        } else {
+            y += target_y > y ? 1 : -1;
+        }
+        if (rand() % 5 == 0) {
+            horizontal = !horizontal;
+        }
+    }
 }
 
 static void carve_forest_clearing(Map *m, Room *room) {
@@ -450,12 +563,27 @@ void map_generate_forest(Map *m, int level) {
     }
     map_generate_outdoor(m, level, entrances[index], exits[index], 1,
         &forest_templates[index]);
+    int hidden_start_x;
+    int hidden_start_y;
+    int hidden_end_x;
+    int hidden_end_y;
+    map_room_center(&m->rooms[1], &hidden_start_x, &hidden_start_y);
+    map_room_center(&m->rooms[m->room_count - 2],
+        &hidden_end_x, &hidden_end_y);
+    mark_hidden_forest_trail(m, hidden_start_x, hidden_start_y,
+        hidden_end_x, hidden_end_y);
     int landmark_room = level == FOREST_DEPTH ? m->room_count - 2 :
         m->room_count - 1;
     int landmark_x;
     int landmark_y;
     map_room_center(&m->rooms[landmark_room], &landmark_x, &landmark_y);
     m->tiles[landmark_y][landmark_x] = TILE_FOREST_LANDMARK;
+    if (level > 1 && level < FOREST_DEPTH) {
+        int false_x;
+        int false_y;
+        map_room_center(&m->rooms[m->room_count / 2], &false_x, &false_y);
+        m->tiles[false_y][false_x] = TILE_FOREST_FALSE_MARKER;
+    }
     if (m->stairs_down_x == 1) {
         m->tiles[m->stairs_down_y][0] = TILE_FOREST_WALL;
     } else if (m->stairs_down_x == MAP_W - 2) {
@@ -476,6 +604,32 @@ static int mountain_tile_in_room(const Map *m, int x, int y) {
         }
     }
     return 0;
+}
+
+static void place_mountain_fort(Map *m) {
+    Room *room = &m->rooms[1];
+    int cx;
+    int cy;
+    map_room_center(room, &cx, &cy);
+    // Divide the stronghold, retaining an operable gate from either side.
+    for (int y = room->y; y < room->y + room->h; y++) {
+        if ((y == room->y && map_is_walkable(m, cx, y - 1)) ||
+            (y == room->y + room->h - 1 && map_is_walkable(m, cx, y + 1))) {
+            // Keep corridor mouths connected to both halves of the room.
+            continue;
+        }
+        m->tiles[y][cx] = TILE_MOUNTAIN_WALL;
+    }
+    m->tiles[cy][cx] = TILE_MOUNTAIN_GATE;
+    m->tiles[cy][cx + 1] = TILE_TRAP_REVEALED;
+    m->tiles[cy][cx + 2] = TILE_MOUNTAIN_FORTRESS_FLOOR;
+    m->tiles[cy + 1][cx + 2] = TILE_MOUNTAIN_FORTRESS_FLOOR;
+    // A buried passage bypasses the defended gate; either end can be cleared.
+    for (int x = cx - 2; x <= cx + 2; x++) {
+        m->tiles[cy + 2][x] = TILE_MOUNTAIN_HIDDEN_CAVE;
+    }
+    m->tiles[cy + 2][cx - 3] = TILE_MOUNTAIN_ROCKFALL;
+    m->tiles[cy + 2][cx + 3] = TILE_MOUNTAIN_ROCKFALL;
 }
 
 void map_generate_mountains(Map *m, int level) {
@@ -537,6 +691,88 @@ void map_generate_mountains(Map *m, int level) {
             }
         }
     }
+    if (level == 2 || level == 7) {
+        int placed_weak_bridge = 0;
+        for (int y = 3; y < MAP_H - 3 && !placed_weak_bridge; y++) {
+            for (int x = 1; x < MAP_W - 1; x++) {
+                if (m->tiles[y][x] != TILE_MOUNTAIN_BRIDGE) {
+                    continue;
+                }
+                int horizontal = m->tiles[y][x - 1] == TILE_MOUNTAIN_BRIDGE &&
+                    m->tiles[y][x + 1] == TILE_MOUNTAIN_BRIDGE &&
+                    m->tiles[y - 1][x] == TILE_MOUNTAIN_WALL &&
+                    m->tiles[y + 1][x] == TILE_MOUNTAIN_WALL;
+                int vertical = m->tiles[y - 1][x] == TILE_MOUNTAIN_BRIDGE &&
+                    m->tiles[y + 1][x] == TILE_MOUNTAIN_BRIDGE &&
+                    m->tiles[y][x - 1] == TILE_MOUNTAIN_WALL &&
+                    m->tiles[y][x + 1] == TILE_MOUNTAIN_WALL;
+                if ((horizontal || vertical) && x > 2 && x < MAP_W - 3) {
+                    m->tiles[y][x] = TILE_MOUNTAIN_WEAK_BRIDGE;
+                    placed_weak_bridge = 1;
+                    break;
+                }
+            }
+        }
+    }
+    if (level == 3 || level == 4 || level == 5 || level == 6 || level == 8) {
+        place_mountain_fort(m);
+    }
+}
+
+int map_is_coast_tidal_tile(TileType tile) {
+    return tile == TILE_COAST_DEEP_WATER || tile == TILE_COAST_DRAINED_WATER ||
+        tile == TILE_COAST_CHANNEL_WATER || tile == TILE_COAST_CHANNEL_DRY;
+}
+
+int map_is_coast_object(TileType tile) {
+    return tile == TILE_COAST_TIDE_CONTROL || tile == TILE_COAST_SLUICE_CONTROL ||
+        tile == TILE_COAST_CACHE || tile == TILE_COAST_BEACON_UNLIT ||
+        tile == TILE_COAST_BEACON_LIT;
+}
+
+TileType map_coast_swapped_tile(TileType tile) {
+    switch (tile) {
+        case TILE_COAST_DEEP_WATER: return TILE_COAST_DRAINED_WATER;
+        case TILE_COAST_DRAINED_WATER: return TILE_COAST_DEEP_WATER;
+        case TILE_COAST_CHANNEL_WATER: return TILE_COAST_CHANNEL_DRY;
+        case TILE_COAST_CHANNEL_DRY: return TILE_COAST_CHANNEL_WATER;
+        default: return tile;
+    }
+}
+
+static void place_coast_chamber(Map *m, int room_index, TileType water) {
+    int cx;
+    int cy;
+    map_room_center(&m->rooms[room_index], &cx, &cy);
+    // Dry treasure chambers are enclosed by a tidal moat in either basin.
+    for (int y = cy - 2; y <= cy + 2; y++) {
+        for (int x = cx - 3; x <= cx + 3; x++) {
+            int edge = x == cx - 3 || x == cx + 3 || y == cy - 2 || y == cy + 2;
+            m->tiles[y][x] = edge ? water : TILE_COAST_FLOOR;
+        }
+    }
+    // Leave the center available for Mara's beacon on stage one.
+    m->tiles[cy][cx + 1] = TILE_COAST_CACHE;
+}
+
+static void place_coast_sluices(Map *m, int room_index) {
+    Room *room = &m->rooms[room_index];
+    int cx;
+    int cy;
+    map_room_center(room, &cx, &cy);
+    for (int y = room->y; y < room->y + room->h; y++) {
+        if ((y == room->y && map_is_walkable(m, cx, y - 1)) ||
+            (y == room->y + room->h - 1 && map_is_walkable(m, cx, y + 1))) {
+            continue;
+        }
+        m->tiles[y][cx] = TILE_COAST_WALL;
+    }
+    // Opposite channels guarantee a crossing in either tide state.
+    m->tiles[cy - 2][cx] = TILE_COAST_DEEP_WATER;
+    m->tiles[cy + 2][cx] = TILE_COAST_CHANNEL_DRY;
+    m->tiles[cy][cx + 2] = TILE_COAST_SLUICE_CONTROL;
+    map_room_center(&m->rooms[0], &cx, &cy);
+    m->tiles[cy][cx] = TILE_COAST_TIDE_CONTROL;
 }
 
 void map_generate_coast(Map *m, int level) {
@@ -594,11 +830,9 @@ void map_generate_coast(Map *m, int level) {
             }
         }
     }
-    int control_x;
-    int control_y;
-    map_room_center(&m->rooms[control_room], &control_x, &control_y);
-    m->tiles[control_y][control_x] = TILE_COAST_TIDE_CONTROL;
-    m->tiles[m->stairs_down_y][m->stairs_down_x] = TILE_COAST_DEEP_WATER;
+    place_coast_chamber(m, 1, TILE_COAST_DEEP_WATER);
+    place_coast_chamber(m, 2, TILE_COAST_CHANNEL_DRY);
+    place_coast_sluices(m, control_room);
 }
 
 void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {

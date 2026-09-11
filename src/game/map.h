@@ -34,17 +34,26 @@ typedef enum {
     TILE_ITEM,
     TILE_GOLD,
     TILE_TRAP_HIDDEN,
+    TILE_TRAP_REVEALED,
     TILE_TRAP_SPIKE,
     TILE_TRAP_FIRE,
     TILE_TRAP_POISON,
     TILE_RETURN_EXIT,
     TILE_LOCKED_DOOR,
     TILE_DUNGEON_KEY,
+    TILE_CRYPT_DOOR,
+    TILE_CRYPT_KEY,
+    TILE_CRYPT_CACHE,
+    TILE_DUNGEON_GATE,
+    TILE_DUNGEON_SWITCH_OFF,
+    TILE_DUNGEON_SWITCH_ON,
     TILE_PORTAL,
     TILE_FOREST_FLOOR,
     TILE_FOREST_WALL,
+    TILE_FOREST_HIDDEN_TRAIL,
     TILE_FOREST_ENTRANCE,
     TILE_FOREST_EXIT,
+    TILE_FOREST_FALSE_MARKER,
     TILE_MOUNTAIN_FLOOR,
     TILE_MOUNTAIN_WALL,
     TILE_MOUNTAIN_ENTRANCE,
@@ -78,7 +87,18 @@ typedef enum {
     TILE_COAST_DRAINED_WATER,
     TILE_BLACKSMITH_DOOR,
     TILE_ALCHEMIST_DOOR,
-    TILE_WATCHTOWER
+    TILE_WATCHTOWER,
+    // Append terrain IDs: existing saves store these numeric values.
+    TILE_MOUNTAIN_WEAK_BRIDGE,
+    TILE_MOUNTAIN_CHASM,
+    TILE_MOUNTAIN_GATE,
+    TILE_MOUNTAIN_ROCKFALL,
+    TILE_MOUNTAIN_HIDDEN_CAVE,
+    TILE_MOUNTAIN_CACHE,
+    TILE_COAST_CHANNEL_WATER,
+    TILE_COAST_CHANNEL_DRY,
+    TILE_COAST_SLUICE_CONTROL,
+    TILE_COAST_CACHE
 } TileType;
 
 typedef struct {
@@ -102,6 +122,9 @@ void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_forest(Map *m, int level);
 void map_generate_mountains(Map *m, int level);
 void map_generate_coast(Map *m, int level);
+int map_is_coast_tidal_tile(TileType tile);
+int map_is_coast_object(TileType tile);
+TileType map_coast_swapped_tile(TileType tile);
 void map_clear_exploration(Map *m);
 void map_mark_explored(Map *m, int x, int y);
 int map_is_explored(const Map *m, int x, int y);

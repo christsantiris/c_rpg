@@ -49,6 +49,9 @@ void minimap_draw(Renderer *r, const GameState *g) {
                     TileType tile = g->map.tiles[sy][sx];
                     if (tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN ||
                         tile == TILE_RETURN_EXIT || tile == TILE_DUNGEON_KEY ||
+                        tile == TILE_CRYPT_KEY || tile == TILE_CRYPT_CACHE ||
+                        tile == TILE_DUNGEON_SWITCH_OFF ||
+                        tile == TILE_DUNGEON_SWITCH_ON ||
                         tile == TILE_PORTAL || tile == TILE_FOREST_ENTRANCE ||
                         tile == TILE_FOREST_EXIT || tile == TILE_MOUNTAIN_ENTRANCE ||
                         tile == TILE_MOUNTAIN_EXIT || tile == TILE_COAST_ENTRANCE ||
@@ -59,6 +62,13 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_COAST_BEACON_LIT ||
                         tile == TILE_FOREST_WARDEN) {
                         has_stair = 1;
+                    } else if (tile == TILE_COAST_TIDE_CONTROL ||
+                        tile == TILE_COAST_SLUICE_CONTROL || tile == TILE_COAST_CACHE) {
+                        has_stair = 1;
+                    } else if (tile == TILE_MOUNTAIN_ROCKFALL ||
+                        tile == TILE_MOUNTAIN_GATE || tile == TILE_MOUNTAIN_CACHE ||
+                        tile == TILE_MOUNTAIN_WEAK_BRIDGE) {
+                        has_stair = 1;
                     } else if (tile == TILE_FOREST_LANDMARK) {
                         has_stair = 1;
                     } else if (tile == TILE_BROKEN_BURIAL_SEAL) {
@@ -66,11 +76,17 @@ void minimap_draw(Renderer *r, const GameState *g) {
                     } else if (tile != TILE_WALL &&
                         tile != TILE_FOREST_WALL &&
                         tile != TILE_MOUNTAIN_WALL &&
+                        tile != TILE_MOUNTAIN_CHASM &&
+                        tile != TILE_MOUNTAIN_HIDDEN_CAVE &&
                         tile != TILE_COAST_WALL &&
                         tile != TILE_COAST_DEEP_WATER &&
+                        tile != TILE_COAST_CHANNEL_WATER &&
                         tile != TILE_TAVERN_WALL &&
                         tile != TILE_TAVERN_TABLE &&
-                        tile != TILE_LOCKED_DOOR) {
+                        tile != TILE_LOCKED_DOOR &&
+                        tile != TILE_CRYPT_DOOR &&
+                        tile != TILE_DUNGEON_GATE &&
+                        tile != TILE_FOREST_HIDDEN_TRAIL) {
                         has_floor = 1;
                     }
                 }
