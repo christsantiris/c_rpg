@@ -151,10 +151,16 @@ static void test_coast_water_items(void) {
     g.inventory[0] = item_make_health_potion();
     action_resolve_player(&g, (Action){ACTION_DROP_ITEM, 0, 0});
     int gold = g.gold;
-    ASSERT("A recognizes the flooded-chamber cache", game_has_regional_interaction(&g));
+    ASSERT("A does not treat the flooded-chamber cache as a mechanism", !game_has_regional_interaction(&g));
     action_resolve_player(&g, (Action){ACTION_INTERACT, 0, 0});
+    ASSERT("interacting does not claim the chamber reward",
+        g.gold == gold && g.map.tiles[cy][cx + 1] == TILE_COAST_CACHE);
     action_resolve_player(&g, (Action){ACTION_PICK_UP, 0, 0});
-    action_resolve_player(&g, (Action){ACTION_INTERACT, 0, 0});
+    ASSERT("P claims the chamber reward before loose loot",
+        g.gold == gold + 70 && g.inventory_count == 0);
+    action_resolve_player(&g, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("P still retrieves loot dropped on the claimed cache", g.inventory_count == 1);
+    action_resolve_player(&g, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("a guarded cache grants its larger reward only once",
         g.gold == gold + 70 && g.map.tiles[cy][cx + 1] == TILE_COAST_FLOOR);
 }
@@ -174,7 +180,7 @@ static void test_coast_persistence(void) {
     map_room_center(&g.map.rooms[1], &x, &y);
     g.player.x = x + 1;
     g.player.y = y;
-    action_resolve_player(&g, (Action){ACTION_INTERACT, 0, 0});
+    action_resolve_player(&g, (Action){ACTION_PICK_UP, 0, 0});
     expected = g.map;
     game_descend(&g);
     game_ascend(&g);
