@@ -404,7 +404,8 @@ static int mountain_obstacle(TileType tile) {
 
 int game_has_regional_interaction(const GameState *g) {
     if (g->location == LOCATION_COAST) {
-        return map_is_coast_object(g->map.tiles[g->player.y][g->player.x]);
+        TileType tile = g->map.tiles[g->player.y][g->player.x];
+        return map_is_coast_object(tile) && tile != TILE_COAST_CACHE;
     }
     if (g->location != LOCATION_MOUNTAINS) {
         return 0;
@@ -663,7 +664,12 @@ void action_resolve_player(GameState *g, Action a) {
             coast_toggle_tide(g);
             return;
         }
-        if (tile == TILE_COAST_CACHE) {
+        push_message(g, "There is nothing to interact with here.");
+        return;
+    }
+
+    if (a.type == ACTION_PICK_UP) {
+        if (g->map.tiles[g->player.y][g->player.x] == TILE_COAST_CACHE) {
             int gold = 50 + g->level * 10;
             g->gold += gold;
             g->score += gold;
@@ -678,11 +684,6 @@ void action_resolve_player(GameState *g, Action a) {
             push_message(g, "You recover the sunken chamber's hoard!");
             return;
         }
-        push_message(g, "There is nothing to interact with here.");
-        return;
-    }
-
-    if (a.type == ACTION_PICK_UP) {
         if (g->map.tiles[g->player.y][g->player.x] == TILE_CRYPT_KEY) {
             g->dungeon_crypt_keys++;
             g->map.tiles[g->player.y][g->player.x] = TILE_FLOOR;

@@ -49,7 +49,7 @@ markers identify the channels; drained channels show exposed stone.
 
 The sluice room has alternate crossings, and two guarded treasure chambers are
 accessible at opposite tide levels. Each chamber cache grants `50 + 10 × stage`
-gold once; stand on it and press `A` to collect it. Drain the blue basin to reach
+gold once; stand on it and press `P` to collect it. Drain the blue basin to reach
 and light Mara's beacons. Both controls and the exit remain reachable in either
 tide state, with the Drowned Queen still guarding the final exit.
 
