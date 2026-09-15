@@ -147,11 +147,13 @@ void test_town_map(void) {
         !map_is_walkable(&m, 5, 16));
     ASSERT("tavern doorway is walkable",
         map_is_walkable(&m, 8, 20));
-    ASSERT("watchtower occupies southeast town lot",
-        m.tiles[16][28] == TILE_WATCHTOWER &&
-        m.tiles[21][32] == TILE_WATCHTOWER);
-    ASSERT("watchtower remains closed and solid",
-        !map_is_walkable(&m, 30, 21));
+    ASSERT("harbor reaches the southeast corner of the town green",
+        m.tiles[20][34] == TILE_WATCHTOWER &&
+        m.tiles[TOWN_H - 2][TOWN_W - 2] == TILE_WATCHTOWER);
+    ASSERT("harbor remains closed and solid",
+        !map_is_walkable(&m, 34, 20));
+    ASSERT("former watchtower lot is walkable green",
+        m.tiles[16][28] == TILE_TOWN_FLOOR && map_is_walkable(&m, 32, 21));
 
     // Path tiles exist
     ASSERT("vertical path at center",

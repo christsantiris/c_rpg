@@ -12,6 +12,19 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->tiles_x  = screen_w / TILE_SIZE;
     r->tiles_y  = (screen_h - MESSAGE_BAR_H) / TILE_SIZE;
 
+    r->harbor_texture = NULL;
+    SDL_Surface *harbor = SDL_LoadBMP("assets/harbor.bmp");
+    if (harbor) {
+        r->harbor_texture = SDL_CreateTextureFromSurface(sdl, harbor);
+        SDL_FreeSurface(harbor);
+    }
+    if (r->harbor_texture) {
+        SDL_SetTextureBlendMode(r->harbor_texture, SDL_BLENDMODE_BLEND);
+        SDL_SetTextureScaleMode(r->harbor_texture, SDL_ScaleModeNearest);
+    } else {
+        fprintf(stderr, "Harbor texture error: %s\n", SDL_GetError());
+    }
+
     if (TTF_Init() != 0) {
         fprintf(stderr, "TTF_Init error: %s\n", TTF_GetError());
         r->font_large = NULL;
@@ -29,6 +42,10 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
 }
 
 void renderer_free(Renderer *r) {
+    if (r->harbor_texture) {
+        SDL_DestroyTexture(r->harbor_texture);
+        r->harbor_texture = NULL;
+    }
     if (r->font_large) TTF_CloseFont(r->font_large);
     if (r->font_small) TTF_CloseFont(r->font_small);
     if (r->font_tiny) TTF_CloseFont(r->font_tiny);

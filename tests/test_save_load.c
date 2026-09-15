@@ -416,6 +416,54 @@ static void test_migrated_weapon_round_trip(void) {
     remove_test_save(MIGRATED_SLOT);
 }
 
+static void test_harbor_relocation(void) {
+    static GameState original;
+    static GameState loaded;
+    memset(&original, 0, sizeof(original));
+    game_init(&original);
+    for (int y = 20; y <= 23; y++) {
+        for (int x = 34; x <= 38; x++) {
+            original.map.tiles[y][x] = TILE_TOWN_FLOOR;
+        }
+    }
+    for (int y = 16; y <= 21; y++) {
+        for (int x = 28; x <= 32; x++) {
+            original.map.tiles[y][x] = TILE_WATCHTOWER;
+        }
+    }
+    original.player.x = 34;
+    original.player.y = 20;
+    original.floor_item_count = 1;
+    original.floor_items[0] = (FloorItem){
+        .active = 1, .x = 38, .y = 23,
+        .underlying_tile = TILE_TOWN_FLOOR,
+        .item = item_make_health_potion()
+    };
+    original.map.tiles[23][38] = TILE_ITEM;
+    int loaded_ok = save_game(&original, LEGACY_SLOT) &&
+        rewrite_save_version(LEGACY_SLOT, 45) && load_game(&loaded, LEGACY_SLOT);
+    ASSERT("legacy town harbor layout can be loaded", loaded_ok);
+    if (loaded_ok) {
+        ASSERT("loading moves the harbor and clears its former lot",
+            loaded.map.tiles[20][34] == TILE_WATCHTOWER &&
+            loaded.map.tiles[23][38] == TILE_WATCHTOWER &&
+            loaded.map.tiles[16][28] == TILE_TOWN_FLOOR);
+        ASSERT("harbor relocation keeps the player on accessible ground",
+            loaded.player.x == 28 && loaded.player.y == 16 &&
+            map_is_walkable(&loaded.map, loaded.player.x, loaded.player.y));
+        ASSERT("harbor relocation preserves covered loot in the former lot",
+            loaded.floor_items[0].active && loaded.floor_items[0].x == 32 &&
+            loaded.floor_items[0].y == 19 && loaded.map.tiles[19][32] == TILE_ITEM &&
+            loaded.floor_items[0].underlying_tile == TILE_TOWN_FLOOR);
+        ASSERT("relocated harbor and loot survive another save/load",
+            save_game(&loaded, MIGRATED_SLOT) && load_game(&original, MIGRATED_SLOT) &&
+            original.map.tiles[23][38] == TILE_WATCHTOWER &&
+            original.floor_items[0].x == 32 && original.floor_items[0].y == 19);
+    }
+    remove_test_save(LEGACY_SLOT);
+    remove_test_save(MIGRATED_SLOT);
+}
+
 void test_save_load(void) {
     printf("Save/load tests:\n");
     test_current_weapon_round_trip();
@@ -424,4 +472,5 @@ void test_save_load(void) {
     test_legacy_goblin_reward_migration();
     test_migrated_weapon_round_trip();
     test_migrated_armor_round_trip();
+    test_harbor_relocation();
 }
