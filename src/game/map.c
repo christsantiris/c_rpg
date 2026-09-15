@@ -835,6 +835,22 @@ void map_generate_coast(Map *m, int level) {
     place_coast_sluices(m, control_room);
 }
 
+void map_place_town_harbor(Map *m) {
+    for (int y = 1; y < TOWN_H - 1; y++) {
+        for (int x = 1; x < TOWN_W - 1; x++) {
+            if (m->tiles[y][x] == TILE_WATCHTOWER) {
+                m->tiles[y][x] = TILE_TOWN_FLOOR;
+            }
+        }
+    }
+    // Retain the serialized tile ID for the closed harbor footprint.
+    for (int y = TOWN_HARBOR_Y; y < TOWN_H - 1; y++) {
+        for (int x = TOWN_HARBOR_X; x < TOWN_W - 1; x++) {
+            m->tiles[y][x] = TILE_WATCHTOWER;
+        }
+    }
+}
+
 void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     map_clear_exploration(m);
     m->room_count = 0;
@@ -894,12 +910,7 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     }
     m->tiles[20][8] = TILE_TAVERN_DOOR;
 
-    // Watchtower at (28, 16) — 5x6 tiles. It remains closed for now.
-    for (int dy = 0; dy < 6; dy++) {
-        for (int dx = 0; dx < 5; dx++) {
-            m->tiles[16 + dy][28 + dx] = TILE_WATCHTOWER;
-        }
-    }
+    map_place_town_harbor(m);
 
     // Spawn at the central crossroads so the south road remains unobstructed
     // for a future region.

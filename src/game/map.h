@@ -14,6 +14,10 @@
 
 #define TOWN_W 40 // town dimensions
 #define TOWN_H 25 // town dimensions
+#define TOWN_HARBOR_W 5
+#define TOWN_HARBOR_H 4
+#define TOWN_HARBOR_X (TOWN_W - 1 - TOWN_HARBOR_W)
+#define TOWN_HARBOR_Y (TOWN_H - 1 - TOWN_HARBOR_H)
 
 #define DUNGEON_DEPTH 8
 #define FOREST_DEPTH 8
@@ -118,6 +122,7 @@ void map_generate(Map *m, int level);
 int  map_is_walkable(const Map *m, int x, int y);
 void map_room_center(const Room *r, int *cx, int *cy);
 void map_generate_town(Map *m, int *spawn_x, int *spawn_y);
+void map_place_town_harbor(Map *m);
 void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_forest(Map *m, int level);
 void map_generate_mountains(Map *m, int level);

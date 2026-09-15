@@ -277,7 +277,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 45);
+    cJSON_AddNumberToObject(root, "save_version", 46);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -1437,6 +1437,28 @@ int load_game(GameState *g, int slot) {
                 "Goblin King's Greatsword") == 0) {
                 g->floor_items[i].item = item_make_goblin_king_shield();
             }
+        }
+    }
+
+    // Version 46 moves the harbor to the southeast edge of the town green.
+    if (save_version < 46 && g->location == LOCATION_TOWN) {
+        map_place_town_harbor(&g->map);
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->active && item->x >= TOWN_HARBOR_X &&
+                item->x < TOWN_W - 1 && item->y >= TOWN_HARBOR_Y &&
+                item->y < TOWN_H - 1) {
+                // Move covered loot to the cleared former building lot.
+                item->x = 28 + item->x - TOWN_HARBOR_X;
+                item->y = 16 + item->y - TOWN_HARBOR_Y;
+                item->underlying_tile = TILE_TOWN_FLOOR;
+                g->map.tiles[item->y][item->x] = TILE_ITEM;
+            }
+        }
+        if (g->player.x >= TOWN_HARBOR_X && g->player.x < TOWN_W - 1 &&
+            g->player.y >= TOWN_HARBOR_Y && g->player.y < TOWN_H - 1) {
+            g->player.x = 28 + g->player.x - TOWN_HARBOR_X;
+            g->player.y = 16 + g->player.y - TOWN_HARBOR_Y;
         }
     }
 

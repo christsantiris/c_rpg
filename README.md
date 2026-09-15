@@ -167,12 +167,6 @@ Highest priority
 1. Difficulty scaling across area order
    Players can complete the four regions in any order, so later regions must remain challenging. Scale primarily from bosses defeated and completed regions, with player level as a smaller modifier. Avoid directly matching every enemy to the player because that makes leveling feel pointless.
 High priority
-2. Stronger regional mechanics
-   Expand each region’s identity beyond its terrain:
-   - Dungeon: keys, traps, locked crypts, switches
-   - Forest: hidden trails, landmarks, misleading paths
-   - Mountains: bridges, collapses, caves, fortifications
-   - Coast: tides, flooded chambers, movable water routes
 3. More tactical enemy behavior
    Add recognizable combat roles such as protectors, ambushers, healers, summoners, ranged attackers, and enemies that retreat or flank.
 4. Boss encounter improvements
@@ -182,18 +176,6 @@ High priority
 Medium priority
 6. Region replay tiers
    After defeating a regional boss, unlock a harder expedition version with stronger enemies, altered layouts, improved rewards, and possibly a remixed boss. This is better as an endgame layer after normal-order difficulty scaling works.
-7. More quest varieties
-   Move beyond three-stage interaction quests:
-- Rescue and escort
-- Hunt a named enemy
-- Recover a carried item
-- Defend a location
-- Solve a switch or environmental puzzle
-- Choose between competing outcomes
-8. Town progression
-   Let the town change as bosses and quests are completed. Shops can visually improve, NPC dialogue can react, and new services can open.
-9. Watchtower functionality
-   The watchtower could provide regional scouting, reveal unexplored entrances, display boss status, preview danger level, or launch higher-tier expeditions.
 10. Loot affixes
    Introduce carefully limited modifiers such as Vampiric, Swift, Reinforced, Mana-Bound, or Venomous. Keep named magical weapons stronger and more distinctive than generic affixed drops.
 Polish priority

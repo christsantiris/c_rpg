@@ -534,8 +534,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, 28), viewport_to_screen_y(v, 7));
         draw_tavern(r,
             viewport_to_screen_x(v, 5), viewport_to_screen_y(v, 16));
-        draw_watchtower(r,
-            viewport_to_screen_x(v, 28), viewport_to_screen_y(v, 16));
+        draw_harbor(r,
+            viewport_to_screen_x(v, TOWN_HARBOR_X),
+            viewport_to_screen_y(v, TOWN_HARBOR_Y));
     }
 
     // Draw enemies
@@ -586,7 +587,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int mountains_w = 0;
         int mountains_h = 0;
         int tavern_w = 0;
-        int watchtower_w = 0;
+        int harbor_w = 0;
         int coast_w = 0;
         int coast_h = 0;
         TTF_SizeText(r->font_tiny, "BLACKSMITH", &blacksmith_w, NULL);
@@ -595,7 +596,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         TTF_SizeText(r->font_tiny, "DUNGEON", &dungeon_w, &dungeon_h);
         TTF_SizeText(r->font_tiny, "MOUNTAINS", &mountains_w, &mountains_h);
         TTF_SizeText(r->font_tiny, "TAVERN", &tavern_w, NULL);
-        TTF_SizeText(r->font_tiny, "WATCHTOWER", &watchtower_w, NULL);
+        TTF_SizeText(r->font_tiny, "HARBOR", &harbor_w, NULL);
         TTF_SizeText(r->font_tiny, "SUNKEN COAST", &coast_w, &coast_h);
         int bx = viewport_to_screen_x(v, 7) * TILE_SIZE
             + (5 * TILE_SIZE - blacksmith_w) / 2;
@@ -606,9 +607,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int tavern_x = viewport_to_screen_x(v, 5) * TILE_SIZE
             + (7 * TILE_SIZE - tavern_w) / 2;
         int tavern_y = viewport_to_screen_y(v, 15) * TILE_SIZE;
-        int watchtower_x = viewport_to_screen_x(v, 28) * TILE_SIZE
-            + (5 * TILE_SIZE - watchtower_w) / 2;
-        int watchtower_y = viewport_to_screen_y(v, 15) * TILE_SIZE;
+        int harbor_x = viewport_to_screen_x(v, TOWN_HARBOR_X) * TILE_SIZE
+            + (TOWN_HARBOR_W * TILE_SIZE - harbor_w) / 2;
+        int harbor_y = viewport_to_screen_y(v, TOWN_HARBOR_Y - 1) * TILE_SIZE;
         if (bx > 0 && by > 0) {
             renderer_draw_text(r, "BLACKSMITH", bx, by, label, r->font_tiny);
         }
@@ -619,8 +620,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             renderer_draw_text(r, "TAVERN", tavern_x, tavern_y, label,
                 r->font_tiny);
         }
-        if (watchtower_x > 0 && watchtower_y > 0) {
-            renderer_draw_text(r, "WATCHTOWER", watchtower_x, watchtower_y,
+        if (harbor_x > 0 && harbor_y > 0) {
+            renderer_draw_text(r, "HARBOR", harbor_x, harbor_y,
                 label, r->font_tiny);
         }
         int gate_top = viewport_to_screen_y(v, 10) * TILE_SIZE;
