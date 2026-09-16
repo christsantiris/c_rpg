@@ -282,7 +282,7 @@ static TileType floor_item_underlay(const GameState *g, int x, int y) {
 static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int map_x, int map_y, int screen_x, int screen_y) {
     TileType underlay = floor_item_underlay(g, map_x, map_y);
     if (underlay == TILE_TRAP_HIDDEN && g->location == LOCATION_FOREST) {
-        draw_forest_floor(r, screen_x, screen_y);
+        draw_forest_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_TRAP_HIDDEN &&
         g->location == LOCATION_MOUNTAINS) {
         draw_mountain_floor(r, screen_x, screen_y);
@@ -290,7 +290,7 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         g->location == LOCATION_COAST) {
         draw_coast_floor(r, screen_x, screen_y);
     } else if (underlay == TILE_FOREST_FLOOR) {
-        draw_forest_floor(r, screen_x, screen_y);
+        draw_forest_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_MOUNTAIN_BRIDGE) {
         draw_mountain_bridge(r, screen_x, screen_y);
     } else if (underlay == TILE_MOUNTAIN_CAVE_FLOOR) {
@@ -334,7 +334,7 @@ static void draw_trap_underlay(Renderer *r, const GameState *g, int map_x, int m
         }
     }
     if (g->location == LOCATION_FOREST) {
-        draw_forest_floor(r, screen_x, screen_y);
+        draw_forest_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_COAST) {
         draw_coast_floor(r, screen_x, screen_y);
     } else if (g->location == LOCATION_MOUNTAINS &&
@@ -378,18 +378,20 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                         draw_wall(r, sx, sy);
                     }
                     break;
-                case TILE_FOREST_WALL: draw_forest_wall(r, sx, sy); break;
+                case TILE_FOREST_WALL:
+                    draw_forest_wall(r, sx, sy, x, y); break;
                 case TILE_FOREST_HIDDEN_TRAIL:
-                    draw_forest_wall(r, sx, sy); break;
-                case TILE_FOREST_FLOOR: draw_forest_floor(r, sx, sy); break;
+                    draw_forest_wall(r, sx, sy, x, y); break;
+                case TILE_FOREST_FLOOR:
+                    draw_forest_floor(r, sx, sy, x, y); break;
                 case TILE_FOREST_ENTRANCE:
-                    draw_forest_edge(r, sx, sy, 0); break;
+                    draw_forest_edge(r, sx, sy, x, y, 0); break;
                 case TILE_FOREST_EXIT:
-                    draw_forest_edge(r, sx, sy, 1); break;
+                    draw_forest_edge(r, sx, sy, x, y, 1); break;
                 case TILE_FOREST_LANDMARK:
-                    draw_forest_landmark(r, sx, sy); break;
+                    draw_forest_landmark(r, sx, sy, x, y); break;
                 case TILE_FOREST_FALSE_MARKER:
-                    draw_forest_false_marker(r, sx, sy); break;
+                    draw_forest_false_marker(r, sx, sy, x, y); break;
                 case TILE_MOUNTAIN_FLOOR: draw_mountain_floor(r, sx, sy); break;
                 case TILE_MOUNTAIN_WALL: draw_mountain_wall(r, sx, sy); break;
                 case TILE_MOUNTAIN_ENTRANCE:
@@ -478,7 +480,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_NPC_ALDER: draw_alder(r, sx, sy); break;
                 case TILE_NPC_MARA: draw_mara(r, sx, sy); break;
                 case TILE_FOREST_WARDEN:
-                    draw_forest_warden(r, sx, sy); break;
+                    draw_forest_warden(r, sx, sy, x, y); break;
                 case TILE_TOWN_EXIT: {
                     TownExitStyle style;
                     int segment;
@@ -785,7 +787,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         viewport_is_visible(v, g->dialogue_x, g->dialogue_y)) {
         draw_forest_warden(r,
             viewport_to_screen_x(v, g->dialogue_x),
-            viewport_to_screen_y(v, g->dialogue_y));
+            viewport_to_screen_y(v, g->dialogue_y),
+            g->dialogue_x, g->dialogue_y);
     }
 
     // Draw player
