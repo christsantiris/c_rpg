@@ -24,6 +24,7 @@
 #include "screens/shop.h"
 #include "renderer/shop_renderer.h"
 #include "renderer/game_renderer.h"
+#include "renderer/sprites.h"
 #include "renderer/info_panel.h"
 #include "audio/music.h"
 #include "audio/sfx.h"
@@ -37,6 +38,41 @@
 #define WINDOW_TITLE "Castle of No Return"
 #define WINDOW_W     1280
 #define WINDOW_H     720
+#define DUNGEON_GATE_CLOSE_MS 240u
+#define DUNGEON_GATE_HOLD_MS 100u
+#define DUNGEON_GATE_OPEN_MS 260u
+#define DUNGEON_GATE_TOTAL_MS (DUNGEON_GATE_CLOSE_MS + DUNGEON_GATE_HOLD_MS + DUNGEON_GATE_OPEN_MS)
+
+typedef struct {
+    int active;
+    int switched;
+    Uint32 started_at;
+    Action pending_action;
+} DungeonGateTransition;
+
+static int is_town_dungeon_exit(const GameState *g, Action action) {
+    if (g->location != LOCATION_TOWN || action.type != ACTION_MOVE ||
+        action.target_x < 0 || action.target_x >= MAP_W ||
+        action.target_y != 0) {
+        return 0;
+    }
+    return g->map.tiles[action.target_y][action.target_x] == TILE_TOWN_EXIT;
+}
+
+static int dungeon_gate_width(Uint32 elapsed, int screen_width) {
+    int max_width = (screen_width + 1) / 2;
+    if (elapsed < DUNGEON_GATE_CLOSE_MS) {
+        return (int)((Uint64)max_width * elapsed / DUNGEON_GATE_CLOSE_MS);
+    }
+    if (elapsed < DUNGEON_GATE_CLOSE_MS + DUNGEON_GATE_HOLD_MS) {
+        return max_width;
+    }
+    if (elapsed < DUNGEON_GATE_TOTAL_MS) {
+        return (int)((Uint64)max_width *
+            (DUNGEON_GATE_TOTAL_MS - elapsed) / DUNGEON_GATE_OPEN_MS);
+    }
+    return 0;
+}
 
 #ifdef DEBUG
 typedef struct {
@@ -330,6 +366,7 @@ int main(int argc, char **argv) {
     // Presentation-only snapshot; persistent results remain in game.
     static GameState spell_view;
     int spell_animating = 0;
+    DungeonGateTransition dungeon_gate = {0};
 
     Viewport viewport;
     viewport_init(&viewport, renderer.tiles_x, renderer.tiles_y, MAP_W, MAP_H);
@@ -382,7 +419,7 @@ int main(int argc, char **argv) {
 
                 // ── Keyboard input ────────────────────────────────────────
                 case SDL_KEYDOWN: {
-                    if (spell_animating) {
+                    if (spell_animating || dungeon_gate.active) {
                         break;
                     }
                     int sc = event.key.keysym.scancode;
@@ -704,6 +741,13 @@ int main(int argc, char **argv) {
                                 a.type = ACTION_NONE;
                             }
                         }
+                        if (is_town_dungeon_exit(&game, a)) {
+                            dungeon_gate.active = 1;
+                            dungeon_gate.switched = 0;
+                            dungeon_gate.started_at = SDL_GetTicks();
+                            dungeon_gate.pending_action = a;
+                            a.type = ACTION_NONE;
+                        }
                         if (a.type != ACTION_NONE) {
                             if (a.type == ACTION_CAST_SPELL) {
                                 spell_view = game;
@@ -736,6 +780,9 @@ int main(int argc, char **argv) {
 
                 // ── Mouse input ───────────────────────────────────────────
                 case SDL_MOUSEBUTTONDOWN: {
+                    if (dungeon_gate.active) {
+                        break;
+                    }
                     if (event.button.button != SDL_BUTTON_LEFT) break;
 
                     // Landing screen clicks
@@ -931,6 +978,21 @@ int main(int argc, char **argv) {
                 }
             }
         }
+        if (dungeon_gate.active) {
+            Uint32 elapsed = SDL_GetTicks() - dungeon_gate.started_at;
+            if (!dungeon_gate.switched && elapsed >= DUNGEON_GATE_CLOSE_MS) {
+                action_resolve_player(&game, dungeon_gate.pending_action);
+                action_resolve_enemies(&game);
+                viewport_center_on(&viewport, game.player.x, game.player.y);
+                dungeon_gate.switched = 1;
+                if (game.player.hp <= 0) {
+                    screen = SCREEN_GAME_OVER;
+                }
+            }
+            if (elapsed >= DUNGEON_GATE_TOTAL_MS) {
+                dungeon_gate.active = 0;
+            }
+        }
         if (screen == SCREEN_NAME_ENTRY)
             name_entry_update(&name_entry);
 
@@ -968,6 +1030,12 @@ int main(int argc, char **argv) {
             help_draw(&renderer);
         } else if (screen == SCREEN_HALL_OF_FAME) {
             halloffame_draw(&renderer, &highscore_table);
+        }
+
+        if (dungeon_gate.active) {
+            Uint32 elapsed = SDL_GetTicks() - dungeon_gate.started_at;
+            draw_dungeon_transition(&renderer,
+                dungeon_gate_width(elapsed, renderer.screen_w));
         }
 
         renderer_end_frame(&renderer);
