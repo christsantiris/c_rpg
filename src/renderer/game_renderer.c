@@ -285,7 +285,7 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         draw_forest_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_TRAP_HIDDEN &&
         g->location == LOCATION_MOUNTAINS) {
-        draw_mountain_floor(r, screen_x, screen_y);
+        draw_mountain_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_TRAP_HIDDEN &&
         g->location == LOCATION_COAST) {
         draw_coast_floor(r, screen_x, screen_y);
@@ -294,11 +294,11 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
     } else if (underlay == TILE_MOUNTAIN_BRIDGE) {
         draw_mountain_bridge(r, screen_x, screen_y);
     } else if (underlay == TILE_MOUNTAIN_CAVE_FLOOR) {
-        draw_mountain_cave_floor(r, screen_x, screen_y);
+        draw_mountain_cave_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_MOUNTAIN_FORTRESS_FLOOR) {
-        draw_mountain_fortress_floor(r, screen_x, screen_y);
+        draw_mountain_fortress_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_MOUNTAIN_FLOOR) {
-        draw_mountain_floor(r, screen_x, screen_y);
+        draw_mountain_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_COAST_SHALLOW_WATER ||
         underlay == TILE_COAST_DRAINED_WATER) {
         draw_coast_shallow_water(r, screen_x, screen_y);
@@ -340,14 +340,14 @@ static void draw_trap_underlay(Renderer *r, const GameState *g, int map_x, int m
     } else if (g->location == LOCATION_MOUNTAINS &&
         cave_neighbors >= fortress_neighbors &&
         cave_neighbors >= bridge_neighbors && cave_neighbors > 0) {
-        draw_mountain_cave_floor(r, screen_x, screen_y);
+        draw_mountain_cave_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_MOUNTAINS &&
         fortress_neighbors >= bridge_neighbors && fortress_neighbors > 0) {
-        draw_mountain_fortress_floor(r, screen_x, screen_y);
+        draw_mountain_fortress_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_MOUNTAINS && bridge_neighbors > 0) {
         draw_mountain_bridge(r, screen_x, screen_y);
     } else if (g->location == LOCATION_MOUNTAINS) {
-        draw_mountain_floor(r, screen_x, screen_y);
+        draw_mountain_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_DUNGEON) {
         draw_dungeon_floor(r, screen_x, screen_y, map_x, map_y);
     } else {
@@ -392,16 +392,18 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_forest_landmark(r, sx, sy, x, y); break;
                 case TILE_FOREST_FALSE_MARKER:
                     draw_forest_false_marker(r, sx, sy, x, y); break;
-                case TILE_MOUNTAIN_FLOOR: draw_mountain_floor(r, sx, sy); break;
-                case TILE_MOUNTAIN_WALL: draw_mountain_wall(r, sx, sy); break;
+                case TILE_MOUNTAIN_FLOOR:
+                    draw_mountain_floor(r, sx, sy, x, y); break;
+                case TILE_MOUNTAIN_WALL:
+                    draw_mountain_wall(r, sx, sy, x, y); break;
                 case TILE_MOUNTAIN_ENTRANCE:
-                    draw_mountain_edge(r, sx, sy, 0); break;
+                    draw_mountain_edge(r, sx, sy, x, y, 0); break;
                 case TILE_MOUNTAIN_EXIT:
-                    draw_mountain_edge(r, sx, sy, 1); break;
+                    draw_mountain_edge(r, sx, sy, x, y, 1); break;
                 case TILE_MOUNTAIN_HIDDEN_CAVE:
-                    draw_mountain_wall(r, sx, sy); break;
+                    draw_mountain_wall(r, sx, sy, x, y); break;
                 case TILE_MOUNTAIN_ROCKFALL:
-                    draw_mountain_rockfall(r, sx, sy); break;
+                    draw_mountain_rockfall(r, sx, sy, x, y); break;
                 case TILE_MOUNTAIN_CHASM:
                     draw_mountain_chasm(r, sx, sy); break;
                 case TILE_MOUNTAIN_GATE:
@@ -414,9 +416,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_MOUNTAIN_BRIDGE:
                     draw_mountain_bridge(r, sx, sy); break;
                 case TILE_MOUNTAIN_CAVE_FLOOR:
-                    draw_mountain_cave_floor(r, sx, sy); break;
+                    draw_mountain_cave_floor(r, sx, sy, x, y); break;
                 case TILE_MOUNTAIN_FORTRESS_FLOOR:
-                    draw_mountain_fortress_floor(r, sx, sy); break;
+                    draw_mountain_fortress_floor(r, sx, sy, x, y); break;
                 case TILE_COAST_FLOOR: draw_coast_floor(r, sx, sy); break;
                 case TILE_COAST_WALL: draw_coast_wall(r, sx, sy); break;
                 case TILE_COAST_ENTRANCE:
