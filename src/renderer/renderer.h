@@ -8,6 +8,9 @@
 
 typedef struct {
     SDL_Renderer *sdl;
+    SDL_Texture *blacksmith_texture;
+    SDL_Texture *alchemist_texture;
+    SDL_Texture *tavern_texture;
     SDL_Texture *harbor_texture;
     TTF_Font     *font_large;
     TTF_Font     *font_small;
