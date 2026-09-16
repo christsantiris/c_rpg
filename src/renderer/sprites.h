@@ -27,6 +27,7 @@ enum {
 void draw_forest_tree_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, unsigned int edges);
 void draw_forest_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int forward);
 void draw_forest_landmark(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
+void draw_forest_ruin(Renderer *r, int tile_x, int tile_y, int offset_x, int offset_y);
 void draw_forest_false_marker(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_mountain_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_mountain_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
