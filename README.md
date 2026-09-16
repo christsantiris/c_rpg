@@ -166,22 +166,27 @@ Production Releases
 Highest priority
 1. Difficulty scaling across area order
    Players can complete the four regions in any order, so later regions must remain challenging. Scale primarily from bosses defeated and completed regions, with player level as a smaller modifier. Avoid directly matching every enemy to the player because that makes leveling feel pointless.
+2. Local tile boundaries. Start with Coast water against stone, then mountain chasm and bridge edges, forest floor against trees, and dungeon floor against walls. This addresses the most widespread remaining tiled look. 
+3. Multi-tile area features. Give each region one visual anchor: a Coast beacon or sluice, mountain gate, forest ruin, and crypt entrance. Keep their existing interaction and collision tiles.
+E4. nemy silhouettes. Start with the mountain goblin family, where the shared body makes archer, bomber, guard, and shaman easiest to confuse. 
+4. Sparse environmental props. The floors already include deterministic small details; add only larger accents where rooms still feel empty, while keeping combat lanes clear.
+5. Ambient animation. Projectiles, impacts, and area entry already animate. Water movement, beacon or torch flicker, and enemy idle motion remain the next small-animation pass. 
 High priority
-3. More tactical enemy behavior
+1. More tactical enemy behavior
    Add recognizable combat roles such as protectors, ambushers, healers, summoners, ranged attackers, and enemies that retreat or flank.
-4. Boss encounter improvements
+2. Boss encounter improvements
    Give every boss multiple phases, telegraphed signature attacks, an arena mechanic, and a guaranteed thematic reward.
-5. Economy and loot balancing
+3. Economy and loot balancing
    Review gold income, shop prices, sell values, drop rates, and upgrade pacing now that high-tier weapons exist. Rare equipment should feel attainable without making shops irrelevant.
 Medium priority
-6. Region replay tiers
+1. Region replay tiers
    After defeating a regional boss, unlock a harder expedition version with stronger enemies, altered layouts, improved rewards, and possibly a remixed boss. This is better as an endgame layer after normal-order difficulty scaling works.
-10. Loot affixes
+2. Loot affixes
    Introduce carefully limited modifiers such as Vampiric, Swift, Reinforced, Mana-Bound, or Venomous. Keep named magical weapons stronger and more distinctive than generic affixed drops.
 Polish priority
-11. Combat feedback
+1. Combat feedback
    Add clearer hit effects, critical indicators, blocked-damage feedback, status icons, and distinct weapon sounds.
-12. Accessibility and controls
+2. Accessibility and controls
    Add remappable controls, text scaling, colorblind-safe indicators, adjustable message duration, and clearer interaction prompts.
-13. Documentation refresh
+3. Documentation refresh
    docs/weapons.md and parts of the README still describe the older weapon catalogue and should be updated.

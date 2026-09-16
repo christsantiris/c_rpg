@@ -608,6 +608,44 @@ void draw_coast_deep_water(Renderer *r, int tile_x, int tile_y, int map_x, int m
     draw_coast_water(r, tile_x, tile_y, map_x, map_y, 1);
 }
 
+void draw_coast_shore(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, unsigned int edges, TileType water) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    int shift = (int)((coast_tile_seed(map_x, map_y) >> 7) % 4u);
+    int deep = water == TILE_COAST_DEEP_WATER ||
+        water == TILE_COAST_CHANNEL_WATER;
+    int channel = water == TILE_COAST_CHANNEL_WATER;
+    SDL_Color wash = deep ? (SDL_Color){18, 62, 80, 255} :
+        (SDL_Color){32, 94, 104, 255};
+    SDL_Color foam = deep ? (SDL_Color){57, 125, 137, 255} :
+        (SDL_Color){104, 173, 166, 255};
+
+    if (edges & COAST_SHORE_NORTH) {
+        fill_rect(r, x + (channel ? 3 : 0), y,
+            TILE_SIZE - (channel ? 3 : 0), 2, wash);
+        fill_rect(r, x + 4 + shift, y + 1, 8, 1, foam);
+        fill_rect(r, x + 15, y, 5, 1, foam);
+    }
+    if (edges & COAST_SHORE_EAST) {
+        fill_rect(r, x + TILE_SIZE - 2, y, 2,
+            TILE_SIZE - (channel ? 3 : 0), wash);
+        fill_rect(r, x + TILE_SIZE - 2, y + 2 + shift, 1, 8, foam);
+        fill_rect(r, x + TILE_SIZE - 1, y + 16, 1, 5, foam);
+    }
+    if (edges & COAST_SHORE_SOUTH) {
+        fill_rect(r, x, y + TILE_SIZE - 2,
+            TILE_SIZE - (channel ? 3 : 0), 2, wash);
+        fill_rect(r, x + 3 + shift, y + TILE_SIZE - 2, 8, 1, foam);
+        fill_rect(r, x + 15, y + TILE_SIZE - 1, 5, 1, foam);
+    }
+    if (edges & COAST_SHORE_WEST) {
+        fill_rect(r, x, y + (channel ? 3 : 0), 2,
+            TILE_SIZE - (channel ? 3 : 0), wash);
+        fill_rect(r, x + 1, y + 3 + shift, 1, 8, foam);
+        fill_rect(r, x, y + 16, 1, 5, foam);
+    }
+}
+
 void draw_coast_channel(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int amber, int flooded) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
