@@ -621,7 +621,7 @@ static void place_mountain_fort(Map *m) {
         m->tiles[y][cx] = TILE_MOUNTAIN_WALL;
     }
     m->tiles[cy][cx] = TILE_MOUNTAIN_GATE;
-    m->tiles[cy][cx + 1] = TILE_TRAP_REVEALED;
+    m->tiles[cy][cx + 1] = TILE_TRAP_HIDDEN;
     m->tiles[cy][cx + 2] = TILE_MOUNTAIN_FORTRESS_FLOOR;
     m->tiles[cy + 1][cx + 2] = TILE_MOUNTAIN_FORTRESS_FLOOR;
     // A buried passage bypasses the defended gate; either end can be cleared.

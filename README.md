@@ -29,7 +29,7 @@ progression.
 Stages 2 and 7 funnel combat onto narrow bridges. A marked weak span collapses
 behind you after crossing; press `A` beside the gap to rebuild it from either
 side. On stages 3–6 and 8, goblin gates divide fortified rooms. Press `A` beside
-a gate to open it, then watch for the trap and the archer and guard beyond it.
+a gate to open it, then beware the hidden trap and the archer and guard beyond it.
 
 Amber rockfalls mark buried cave passages around the defended gates. Press `A`
 beside either end to expose the passage: falling rocks cost `4 + stage` HP, but

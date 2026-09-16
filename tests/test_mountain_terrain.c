@@ -98,7 +98,7 @@ static void test_mountain_generation(void) {
                     archer |= e->type == ENEMY_GOBLIN_ARCHER && e->x == x + 2 && e->y == y;
                     guard |= e->type == ENEMY_HOBGOBLIN_GUARD && e->x == x + 2 && e->y == y + 1;
                 }
-                guarded &= archer && guard && g.map.tiles[y][x + 1] == TILE_TRAP_REVEALED;
+                guarded &= archer && guard && g.map.tiles[y][x + 1] == TILE_TRAP_HIDDEN;
             }
         }
     }
@@ -259,6 +259,15 @@ static void test_mountain_persistence(void) {
         ASSERT("cached claimed cave and open gate survive save/load",
             memcmp(&loaded.mountain_cache[3].map, &expected, sizeof(Map)) == 0);
     }
+    int gate_x;
+    int gate_y;
+    map_room_center(&g.map.rooms[1], &gate_x, &gate_y);
+    g.map.tiles[gate_y][gate_x + 1] = TILE_TRAP_REVEALED;
+    g.mountain_cache[3].map.tiles[gate_y][gate_x + 1] = TILE_TRAP_REVEALED;
+    restored = save_game(&g, slot) && load_game(&loaded, slot);
+    ASSERT("legacy visible fort plates load as hidden in active and cached maps",
+        restored && loaded.map.tiles[gate_y][gate_x + 1] == TILE_TRAP_HIDDEN &&
+        loaded.mountain_cache[3].map.tiles[gate_y][gate_x + 1] == TILE_TRAP_HIDDEN);
     remove("saves/savegame_99009.json");
 }
 
