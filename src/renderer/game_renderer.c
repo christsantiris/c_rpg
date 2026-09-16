@@ -288,7 +288,7 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         draw_mountain_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_TRAP_HIDDEN &&
         g->location == LOCATION_COAST) {
-        draw_coast_floor(r, screen_x, screen_y);
+        draw_coast_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_FOREST_FLOOR) {
         draw_forest_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_MOUNTAIN_BRIDGE) {
@@ -299,11 +299,12 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         draw_mountain_fortress_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_MOUNTAIN_FLOOR) {
         draw_mountain_floor(r, screen_x, screen_y, map_x, map_y);
-    } else if (underlay == TILE_COAST_SHALLOW_WATER ||
-        underlay == TILE_COAST_DRAINED_WATER) {
-        draw_coast_shallow_water(r, screen_x, screen_y);
+    } else if (underlay == TILE_COAST_SHALLOW_WATER) {
+        draw_coast_shallow_water(r, screen_x, screen_y, map_x, map_y);
+    } else if (underlay == TILE_COAST_DRAINED_WATER) {
+        draw_coast_channel(r, screen_x, screen_y, map_x, map_y, 0, 0);
     } else if (underlay == TILE_COAST_FLOOR) {
-        draw_coast_floor(r, screen_x, screen_y);
+        draw_coast_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_TOWN_FLOOR) {
         draw_town_floor(r, screen_x, screen_y);
     } else if (underlay == TILE_TOWN_PATH) {
@@ -336,7 +337,7 @@ static void draw_trap_underlay(Renderer *r, const GameState *g, int map_x, int m
     if (g->location == LOCATION_FOREST) {
         draw_forest_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_COAST) {
-        draw_coast_floor(r, screen_x, screen_y);
+        draw_coast_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_MOUNTAINS &&
         cave_neighbors >= fortress_neighbors &&
         cave_neighbors >= bridge_neighbors && cave_neighbors > 0) {
@@ -419,36 +420,38 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_mountain_cave_floor(r, sx, sy, x, y); break;
                 case TILE_MOUNTAIN_FORTRESS_FLOOR:
                     draw_mountain_fortress_floor(r, sx, sy, x, y); break;
-                case TILE_COAST_FLOOR: draw_coast_floor(r, sx, sy); break;
-                case TILE_COAST_WALL: draw_coast_wall(r, sx, sy); break;
+                case TILE_COAST_FLOOR:
+                    draw_coast_floor(r, sx, sy, x, y); break;
+                case TILE_COAST_WALL:
+                    draw_coast_wall(r, sx, sy, x, y); break;
                 case TILE_COAST_ENTRANCE:
-                    draw_coast_edge(r, sx, sy, 0); break;
+                    draw_coast_edge(r, sx, sy, x, y, 0); break;
                 case TILE_COAST_EXIT: {
                     int open = g->map.tiles[g->map.stairs_down_y]
                         [g->map.stairs_down_x] != TILE_COAST_DEEP_WATER;
-                    draw_coast_edge(r, sx, sy, open ? 1 : 2);
+                    draw_coast_edge(r, sx, sy, x, y, open ? 1 : 2);
                     break;
                 }
                 case TILE_COAST_SHALLOW_WATER:
-                    draw_coast_shallow_water(r, sx, sy); break;
+                    draw_coast_shallow_water(r, sx, sy, x, y); break;
                 case TILE_COAST_DRAINED_WATER:
-                    draw_coast_channel(r, sx, sy, 0, 0); break;
+                    draw_coast_channel(r, sx, sy, x, y, 0, 0); break;
                 case TILE_COAST_DEEP_WATER:
-                    draw_coast_channel(r, sx, sy, 0, 1); break;
+                    draw_coast_channel(r, sx, sy, x, y, 0, 1); break;
                 case TILE_COAST_CHANNEL_DRY:
-                    draw_coast_channel(r, sx, sy, 1, 0); break;
+                    draw_coast_channel(r, sx, sy, x, y, 1, 0); break;
                 case TILE_COAST_CHANNEL_WATER:
-                    draw_coast_channel(r, sx, sy, 1, 1); break;
+                    draw_coast_channel(r, sx, sy, x, y, 1, 1); break;
                 case TILE_COAST_SLUICE_CONTROL:
-                    draw_coast_sluice(r, sx, sy); break;
+                    draw_coast_sluice(r, sx, sy, x, y); break;
                 case TILE_COAST_CACHE:
-                    draw_coast_cache(r, sx, sy); break;
+                    draw_coast_cache(r, sx, sy, x, y); break;
                 case TILE_COAST_TIDE_CONTROL:
-                    draw_coast_tide_control(r, sx, sy); break;
+                    draw_coast_tide_control(r, sx, sy, x, y); break;
                 case TILE_COAST_BEACON_UNLIT:
-                    draw_coast_beacon(r, sx, sy, 0); break;
+                    draw_coast_beacon(r, sx, sy, x, y, 0); break;
                 case TILE_COAST_BEACON_LIT:
-                    draw_coast_beacon(r, sx, sy, 1); break;
+                    draw_coast_beacon(r, sx, sy, x, y, 1); break;
                 case TILE_STAIRS_UP: draw_stairs_up(r, sx, sy); break;
                 case TILE_STAIRS_DOWN: draw_stairs_down(r, sx, sy); break;
                 case TILE_RETURN_EXIT: draw_return_exit(r, sx, sy); break;
