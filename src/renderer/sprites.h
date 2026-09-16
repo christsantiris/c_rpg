@@ -59,6 +59,8 @@ enum {
 void draw_coast_shore(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, unsigned int edges, TileType water);
 void draw_coast_channel(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int amber, int flooded);
 void draw_coast_sluice(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
+void draw_coast_sluice_intake(Renderer *r, int tile_x, int tile_y);
+void draw_coast_sluice_conduit(Renderer *r, int tile_x, int tile_y);
 void draw_coast_cache(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_coast_tide_control(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_coast_beacon(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int lit);

@@ -540,9 +540,19 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_MOUNTAIN_FORTRESS_FLOOR:
                     draw_mountain_fortress_floor(r, sx, sy, x, y); break;
                 case TILE_COAST_FLOOR:
-                    draw_coast_floor(r, sx, sy, x, y); break;
+                    draw_coast_floor(r, sx, sy, x, y);
+                    if (x + 1 < MAP_W &&
+                        g->map.tiles[y][x + 1] == TILE_COAST_SLUICE_CONTROL) {
+                        draw_coast_sluice_conduit(r, sx, sy);
+                    }
+                    break;
                 case TILE_COAST_WALL:
-                    draw_coast_wall(r, sx, sy, x, y); break;
+                    draw_coast_wall(r, sx, sy, x, y);
+                    if (x + 2 < MAP_W &&
+                        g->map.tiles[y][x + 2] == TILE_COAST_SLUICE_CONTROL) {
+                        draw_coast_sluice_intake(r, sx, sy);
+                    }
+                    break;
                 case TILE_COAST_ENTRANCE:
                     draw_coast_edge(r, sx, sy, x, y, 0); break;
                 case TILE_COAST_EXIT: {

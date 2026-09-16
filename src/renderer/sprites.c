@@ -893,11 +893,49 @@ void draw_coast_channel(Renderer *r, int tile_x, int tile_y, int map_x, int map_
 }
 
 void draw_coast_sluice(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
-    draw_coast_tide_control(r, tile_x, tile_y, map_x, map_y);
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    fill_rect(r, x + 4, y + 21, 16, 2, (SDL_Color){213, 157, 61, 255});
-    fill_rect(r, x + 10, y + 6, 5, 5, (SDL_Color){213, 157, 61, 255});
+    SDL_Color stone = {43, 91, 89, 255};
+    SDL_Color rim = {91, 151, 132, 255};
+    SDL_Color brass = {213, 157, 61, 255};
+
+    draw_coast_floor(r, tile_x, tile_y, map_x, map_y);
+    fill_rect(r, x, y + 12, 5, 5, stone);
+    fill_rect(r, x + 4, y + 11, 16, 12, stone);
+    fill_rect(r, x + 5, y + 11, 14, 2, rim);
+    fill_rect(r, x + 7, y + 4, 10, 12, (SDL_Color){14, 45, 52, 255});
+    fill_rect(r, x + 8, y + 5, 8, 10, rim);
+    fill_rect(r, x + 10, y + 7, 4, 6, (SDL_Color){14, 45, 52, 255});
+    fill_rect(r, x + 11, y + 2, 2, 5, brass);
+    fill_rect(r, x + 9, y + 1, 6, 2, brass);
+    fill_rect(r, x + 8, y + 18, 8, 2, brass);
+}
+
+void draw_coast_sluice_intake(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color rim = {91, 151, 132, 255};
+    SDL_Color iron = {78, 91, 88, 255};
+
+    fill_rect(r, x + 2, y + 6, 20, 13, (SDL_Color){9, 33, 44, 255});
+    fill_rect(r, x + 2, y + 6, 20, 2, rim);
+    fill_rect(r, x + 2, y + 18, 20, 2, rim);
+    fill_rect(r, x + 5, y + 8, 2, 10, iron);
+    fill_rect(r, x + 11, y + 8, 2, 10, iron);
+    fill_rect(r, x + 17, y + 8, 2, 10, iron);
+    fill_rect(r, x + 21, y + 11, 3, 5, (SDL_Color){213, 157, 61, 255});
+}
+
+void draw_coast_sluice_conduit(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+
+    fill_rect(r, x, y + 9, TILE_SIZE, 9, (SDL_Color){9, 33, 44, 255});
+    fill_rect(r, x, y + 9, TILE_SIZE, 2, (SDL_Color){91, 151, 132, 255});
+    fill_rect(r, x, y + 16, TILE_SIZE, 2, (SDL_Color){43, 91, 89, 255});
+    fill_rect(r, x, y + 12, TILE_SIZE, 3, (SDL_Color){154, 116, 59, 255});
+    fill_rect(r, x + 3, y + 12, 5, 1, (SDL_Color){213, 157, 61, 255});
+    fill_rect(r, x + 17, y + 12, 4, 1, (SDL_Color){213, 157, 61, 255});
 }
 
 void draw_coast_cache(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
