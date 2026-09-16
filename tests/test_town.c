@@ -137,6 +137,9 @@ void test_town_map(void) {
     ASSERT("alchemist has a walk-in doorway",
         m.tiles[10][30] == TILE_ALCHEMIST_DOOR &&
         map_is_walkable(&m, 30, 10));
+    ASSERT("cobblestone paths reach both shop doors",
+        m.tiles[11][9] == TILE_TOWN_PATH &&
+        m.tiles[11][30] == TILE_TOWN_PATH);
     ASSERT("shop facades remain solid away from their doors",
         !map_is_walkable(&m, 7, 7) && !map_is_walkable(&m, 28, 7));
     ASSERT("tavern occupies southwest town lot",
@@ -147,6 +150,10 @@ void test_town_map(void) {
         !map_is_walkable(&m, 5, 16));
     ASSERT("tavern doorway is walkable",
         map_is_walkable(&m, 8, 20));
+    ASSERT("cobblestone lane reaches the south-facing tavern door",
+        m.tiles[13][12] == TILE_TOWN_PATH &&
+        m.tiles[21][12] == TILE_TOWN_PATH &&
+        m.tiles[21][8] == TILE_TOWN_PATH);
     ASSERT("harbor reaches the southeast corner of the town green",
         m.tiles[20][34] == TILE_WATCHTOWER &&
         m.tiles[TOWN_H - 2][TOWN_W - 2] == TILE_WATCHTOWER);

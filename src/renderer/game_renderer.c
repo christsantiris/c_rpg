@@ -448,7 +448,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_restored_burial_seal(r, sx, sy); break;
                 case TILE_TOWN_FLOOR: draw_town_floor(r, sx, sy); break;
                 case TILE_TOWN_PATH: draw_town_path(r, sx, sy); break;
-                case TILE_TAVERN_DOOR: draw_town_floor(r, sx, sy); break;
+                case TILE_BLACKSMITH_DOOR:
+                case TILE_ALCHEMIST_DOOR:
+                case TILE_TAVERN_DOOR:
+                    draw_town_path(r, sx, sy); break;
                 case TILE_TAVERN_FLOOR: draw_tavern_floor(r, sx, sy); break;
                 case TILE_TAVERN_WALL: draw_tavern_wall(r, sx, sy); break;
                 case TILE_TAVERN_EXIT: draw_tavern_exit(r, sx, sy); break;
@@ -480,8 +483,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 }
                 case TILE_SHOP_BLACKSMITH:
                 case TILE_SHOP_ALCHEMIST:
-                case TILE_BLACKSMITH_DOOR:
-                case TILE_ALCHEMIST_DOOR:
                 case TILE_WATCHTOWER:
                 case TILE_TAVERN: draw_town_floor(r, sx, sy); break;
                 case TILE_ITEM:
