@@ -2122,6 +2122,41 @@ void draw_mountain_transition(Renderer *r, int covered_width) {
         covered_width, 1);
 }
 
+void draw_coast_transition(Renderer *r, int covered_width) {
+    if (covered_width <= 0) {
+        return;
+    }
+    int max_width = (r->screen_w + 1) / 2;
+    if (covered_width > max_width) {
+        covered_width = max_width;
+    }
+    int height = (int)((Uint64)r->screen_h * covered_width / max_width);
+    int water_y = r->screen_h - height;
+    SDL_Color deep = {6, 38, 60, 255};
+    SDL_Color swell = {14, 65, 82, 255};
+    SDL_Color ripple = {37, 108, 125, 255};
+    SDL_Color glint = {83, 165, 161, 255};
+    SDL_Color foam = {135, 201, 188, 255};
+    fill_rect(r, 0, water_y, r->screen_w, height, deep);
+    for (int row = 0; row * 42 < height; row++) {
+        int wave_y = water_y + row * 42;
+        int offset = row % 2 == 0 ? 0 : 38;
+        for (int x = -offset; x < r->screen_w; x += 76) {
+            fill_rect(r, x + 3, wave_y + 18, 49, 7, swell);
+            fill_rect(r, x + 10, wave_y + 15, 33, 3, ripple);
+            fill_rect(r, x + 17, wave_y + 13, 18, 2, glint);
+            fill_rect(r, x + 45, wave_y + 30, 21, 2, ripple);
+        }
+    }
+
+    fill_rect(r, 0, water_y, r->screen_w, 5, glint);
+    for (int x = 0; x < r->screen_w; x += 48) {
+        int crest = 3 + ((x / 48) * 7) % 7;
+        fill_rect(r, x + 5, water_y - crest, 28, crest + 4, foam);
+        fill_rect(r, x + 11, water_y + 4, 30, 3, ripple);
+    }
+}
+
 static void draw_shop_blacksmith_fallback(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
