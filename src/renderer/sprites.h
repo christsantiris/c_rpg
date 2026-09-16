@@ -27,6 +27,13 @@ void draw_coast_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_coast_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int forward);
 void draw_coast_shallow_water(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_coast_deep_water(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
+enum {
+    COAST_SHORE_NORTH = 1,
+    COAST_SHORE_EAST = 2,
+    COAST_SHORE_SOUTH = 4,
+    COAST_SHORE_WEST = 8
+};
+void draw_coast_shore(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, unsigned int edges, TileType water);
 void draw_coast_channel(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int amber, int flooded);
 void draw_coast_sluice(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_coast_cache(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);

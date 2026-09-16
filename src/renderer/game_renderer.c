@@ -279,6 +279,19 @@ static TileType floor_item_underlay(const GameState *g, int x, int y) {
     return TILE_FLOOR;
 }
 
+static TileType coast_visible_tile(const GameState *g, int x, int y) {
+    TileType tile = g->map.tiles[y][x];
+    return tile == TILE_ITEM ? floor_item_underlay(g, x, y) : tile;
+}
+
+static int coast_is_water_surface(TileType tile) {
+    return tile == TILE_COAST_SHALLOW_WATER ||
+        tile == TILE_COAST_DEEP_WATER ||
+        tile == TILE_COAST_CHANNEL_WATER ||
+        tile == TILE_COAST_BEACON_UNLIT ||
+        tile == TILE_COAST_BEACON_LIT;
+}
+
 static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int map_x, int map_y, int screen_x, int screen_y) {
     TileType underlay = floor_item_underlay(g, map_x, map_y);
     if (underlay == TILE_TRAP_HIDDEN && g->location == LOCATION_FOREST) {
@@ -513,6 +526,27 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_trap_poison(r, sx, sy);
                     break;
                 default: draw_floor(r, sx, sy); break;
+            }
+            if (g->location == LOCATION_COAST) {
+                TileType tile = coast_visible_tile(g, x, y);
+                if (coast_is_water_surface(tile)) {
+                    unsigned int edges = 0;
+                    if (y > 0 && !coast_is_water_surface(coast_visible_tile(g, x, y - 1))) {
+                        edges |= COAST_SHORE_NORTH;
+                    }
+                    if (x < MAP_W - 1 && !coast_is_water_surface(coast_visible_tile(g, x + 1, y))) {
+                        edges |= COAST_SHORE_EAST;
+                    }
+                    if (y < MAP_H - 1 && !coast_is_water_surface(coast_visible_tile(g, x, y + 1))) {
+                        edges |= COAST_SHORE_SOUTH;
+                    }
+                    if (x > 0 && !coast_is_water_surface(coast_visible_tile(g, x - 1, y))) {
+                        edges |= COAST_SHORE_WEST;
+                    }
+                    if (edges != 0) {
+                        draw_coast_shore(r, sx, sy, x, y, edges, tile);
+                    }
+                }
             }
         }
     }
