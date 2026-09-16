@@ -434,6 +434,14 @@ static void draw_trap_underlay(Renderer *r, const GameState *g, int map_x, int m
 }
 
 void game_draw(Renderer *r, GameState *g, Viewport *v) {
+    int landmark_x = -1;
+    int landmark_y = -1;
+    if (g->location == LOCATION_FOREST && g->map.room_count > 1) {
+        int room = g->level == FOREST_DEPTH ? g->map.room_count - 2 :
+            g->map.room_count - 1;
+        map_room_center(&g->map.rooms[room], &landmark_x, &landmark_y);
+    }
+
     // Draw map tiles
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
@@ -648,6 +656,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 if (edges != 0) {
                     draw_forest_tree_edge(r, sx, sy, x, y, edges);
                 }
+            }
+            if (g->location == LOCATION_FOREST &&
+                x >= landmark_x - 1 && x <= landmark_x + 1 &&
+                y >= landmark_y - 1 && y <= landmark_y + 1 &&
+                g->map.tiles[y][x] == TILE_FOREST_FLOOR) {
+                draw_forest_ruin(r, sx, sy, x - landmark_x, y - landmark_y);
             }
             if (g->location == LOCATION_COAST) {
                 TileType tile = coast_visible_tile(g, x, y);

@@ -321,6 +321,66 @@ void draw_forest_landmark(Renderer *r, int tile_x, int tile_y, int map_x, int ma
     fill_rect(r, x + 9, y + 10, 7, 3, (SDL_Color){94, 224, 126, 255});
 }
 
+void draw_forest_ruin(Renderer *r, int tile_x, int tile_y, int offset_x, int offset_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color stone = {76, 95, 82, 255};
+    SDL_Color edge = {109, 132, 113, 255};
+    SDL_Color shadow = {42, 58, 47, 255};
+    SDL_Color moss = {35, 77, 39, 255};
+
+    if (offset_y == -1 && offset_x == -1) {
+        fill_rect(r, x + 15, y + 15, 9, 6, shadow);
+        fill_rect(r, x + 16, y + 13, 8, 5, stone);
+        fill_rect(r, x + 19, y + 13, 5, 1, edge);
+        fill_rect(r, x + 15, y + 18, 4, 3, moss);
+    } else if (offset_y == -1 && offset_x == 0) {
+        fill_rect(r, x, y + 15, 10, 6, stone);
+        fill_rect(r, x + 14, y + 15, 10, 6, stone);
+        fill_rect(r, x, y + 14, 8, 2, edge);
+        fill_rect(r, x + 16, y + 14, 8, 2, edge);
+        fill_rect(r, x + 8, y + 18, 3, 3, shadow);
+        fill_rect(r, x + 13, y + 18, 3, 3, shadow);
+        fill_rect(r, x + 2, y + 15, 4, 2, moss);
+    } else if (offset_y == -1 && offset_x == 1) {
+        fill_rect(r, x, y + 15, 9, 6, shadow);
+        fill_rect(r, x, y + 13, 8, 5, stone);
+        fill_rect(r, x, y + 13, 5, 1, edge);
+        fill_rect(r, x + 5, y + 18, 4, 3, moss);
+    } else if (offset_y == 0 && offset_x == -1) {
+        fill_rect(r, x + 15, y + 5, 8, 18, shadow);
+        fill_rect(r, x + 17, y + 3, 6, 17, stone);
+        fill_rect(r, x + 16, y + 3, 8, 2, edge);
+        fill_rect(r, x + 18, y + 8, 3, 8, moss);
+        fill_rect(r, x + 15, y + 20, 9, 2, edge);
+    } else if (offset_y == 0 && offset_x == 0) {
+        fill_rect(r, x + 5, y + 17, 15, 5, shadow);
+        fill_rect(r, x + 8, y + 5, 9, 14, stone);
+        fill_rect(r, x + 10, y + 2, 5, 5, edge);
+        fill_rect(r, x + 11, y + 8, 3, 7, moss);
+        fill_rect(r, x + 9, y + 10, 7, 3, moss);
+    } else if (offset_y == 0 && offset_x == 1) {
+        fill_rect(r, x + 1, y + 5, 8, 18, shadow);
+        fill_rect(r, x + 1, y + 3, 6, 17, stone);
+        fill_rect(r, x, y + 3, 8, 2, edge);
+        fill_rect(r, x + 3, y + 8, 3, 8, moss);
+        fill_rect(r, x, y + 20, 9, 2, edge);
+    } else if (offset_y == 1 && offset_x == -1) {
+        fill_rect(r, x + 16, y + 2, 8, 5, shadow);
+        fill_rect(r, x + 18, y + 1, 6, 3, stone);
+        fill_rect(r, x + 20, y + 1, 4, 1, edge);
+    } else if (offset_y == 1 && offset_x == 0) {
+        fill_rect(r, x + 4, y + 1, 16, 6, shadow);
+        fill_rect(r, x + 6, y + 1, 12, 3, stone);
+        fill_rect(r, x + 8, y + 1, 8, 1, edge);
+        fill_rect(r, x + 4, y + 5, 5, 2, moss);
+    } else if (offset_y == 1 && offset_x == 1) {
+        fill_rect(r, x, y + 2, 8, 5, shadow);
+        fill_rect(r, x, y + 1, 6, 3, stone);
+        fill_rect(r, x, y + 1, 4, 1, edge);
+    }
+}
+
 void draw_forest_false_marker(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
