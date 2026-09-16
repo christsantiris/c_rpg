@@ -1327,16 +1327,38 @@ void draw_forest_warden(Renderer *r, int tile_x, int tile_y) {
 void draw_town_path(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color base   = { 58,  46,  30, 255};
-    SDL_Color stone  = { 74,  58,  40, 255};
-    SDL_Color mortar = { 42,  30,  16, 255};
-    fill_rect(r, x,            y,            TILE_SIZE,     TILE_SIZE,     base);
-    fill_rect(r, x+1,          y+1,          TILE_SIZE/2-2, TILE_SIZE/2-2, stone);
-    fill_rect(r, x+TILE_SIZE/2+1, y+1,       TILE_SIZE/2-2, TILE_SIZE/2-2, stone);
-    fill_rect(r, x+1,          y+TILE_SIZE/2+1, TILE_SIZE/2-2, TILE_SIZE/2-2, stone);
-    fill_rect(r, x+TILE_SIZE/2+1, y+TILE_SIZE/2+1, TILE_SIZE/2-2, TILE_SIZE/2-2, stone);
-    fill_rect(r, x,            y+TILE_SIZE/2, TILE_SIZE,     1,             mortar);
-    fill_rect(r, x+TILE_SIZE/2, y,            1,             TILE_SIZE,     mortar);
+    SDL_Color mortar = {43, 39, 36, 255};
+    SDL_Color stones[3] = {
+        {91, 91, 82, 255},
+        {105, 101, 88, 255},
+        {76, 79, 75, 255}
+    };
+    SDL_Color highlight = {126, 121, 103, 255};
+    SDL_Color shadow = {58, 57, 54, 255};
+    int narrow_x[3] = {1, 8, 18};
+    int narrow_w[3] = {6, 9, 5};
+    int wide_x[3] = {1, 10, 17};
+    int wide_w[3] = {8, 6, 6};
+
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, mortar);
+    for (int row = 0; row < 3; row++) {
+        int *stone_x = ((tile_x + tile_y + row) % 2 == 0)
+            ? narrow_x : wide_x;
+        int *stone_w = ((tile_x + tile_y + row) % 2 == 0)
+            ? narrow_w : wide_w;
+        int stone_y = 1 + row * 8;
+        for (int column = 0; column < 3; column++) {
+            int color = (tile_x * 3 + tile_y * 5 + row + column) % 3;
+            int stone_height = row == 2 ? 6 : 7;
+            fill_rect(r, x + stone_x[column], y + stone_y,
+                stone_w[column], stone_height, stones[color]);
+            fill_rect(r, x + stone_x[column] + 1, y + stone_y,
+                stone_w[column] - 2, 1, highlight);
+            fill_rect(r, x + stone_x[column] + 1,
+                y + stone_y + stone_height - 1,
+                stone_w[column] - 1, 1, shadow);
+        }
+    }
 }
 
 void draw_town_exit(Renderer *r, int tile_x, int tile_y, TownExitStyle style, int segment) {
