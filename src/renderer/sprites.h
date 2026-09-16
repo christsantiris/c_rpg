@@ -9,6 +9,13 @@ void draw_floor(Renderer *r, int tile_x, int tile_y);
 void draw_wall(Renderer *r, int tile_x, int tile_y);
 void draw_dungeon_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_dungeon_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
+enum {
+    DUNGEON_EDGE_NORTH = 1,
+    DUNGEON_EDGE_EAST = 2,
+    DUNGEON_EDGE_SOUTH = 4,
+    DUNGEON_EDGE_WEST = 8
+};
+void draw_dungeon_wall_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, unsigned int edges);
 void draw_forest_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_forest_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 enum {
