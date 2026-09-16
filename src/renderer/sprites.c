@@ -2045,6 +2045,83 @@ void draw_forest_transition(Renderer *r, int covered_width) {
         covered_width, 1);
 }
 
+static void draw_mountain_cliff_panel(Renderer *r, int x, int width, int right) {
+    SDL_Rect previous_clip;
+    SDL_bool had_clip = SDL_RenderIsClipEnabled(r->sdl);
+    if (had_clip) {
+        SDL_RenderGetClipRect(r->sdl, &previous_clip);
+    }
+    SDL_Rect clip = {x, 0, width, r->screen_h};
+    SDL_RenderSetClipRect(r->sdl, &clip);
+    fill_rect(r, x, 0, width, r->screen_h,
+        (SDL_Color){27, 25, 32, 255});
+
+    SDL_Color rock[3] = {
+        {52, 46, 50, 255},
+        {64, 51, 50, 255},
+        {45, 42, 49, 255}
+    };
+    SDL_Color ridge = {93, 75, 69, 255};
+    SDL_Color shadow = {20, 19, 26, 255};
+    for (int row = 0; row * 40 < r->screen_h; row++) {
+        int y = row * 40;
+        int offset = row % 2 == 0 ? 0 : 22;
+        for (int column = -offset; column < width; column += 44) {
+            int piece = (column + offset) / 44;
+            int shift = (row * 17 + piece * 11) % 13;
+            int rock_x = x + column + shift - 6;
+            int index = (row * 7 + piece) % 3;
+            fill_rect(r, rock_x, y + 2, 48, 40, rock[index]);
+            fill_rect(r, rock_x + 7, y + 1, 28, 8, rock[index]);
+            fill_rect(r, rock_x + 8, y + 5, 23, 2, ridge);
+            fill_rect(r, rock_x + 4, y + 10, 2, 17,
+                (SDL_Color){74, 62, 62, 255});
+            fill_rect(r, rock_x + 33, y + 25, 14, 10,
+                (SDL_Color){38, 35, 41, 255});
+            if ((row + piece) % 3 == 0) {
+                fill_rect(r, rock_x + 22, y + 16, 2, 13, shadow);
+                fill_rect(r, rock_x + 17, y + 27, 7, 2, shadow);
+            }
+            if ((row + piece) % 5 == 1) {
+                fill_rect(r, rock_x + 31, y + 11, 8, 2,
+                    (SDL_Color){111, 87, 74, 255});
+            }
+        }
+    }
+
+    int edge_x = right ? x : x + width - 9;
+    fill_rect(r, edge_x, 0, 9, r->screen_h, shadow);
+    fill_rect(r, edge_x + (right ? 6 : 1), 0, 2, r->screen_h, ridge);
+    for (int y = 12; y < r->screen_h; y += 58) {
+        fill_rect(r, edge_x + 3, y, 3, 12,
+            (SDL_Color){112, 62, 49, 255});
+        fill_rect(r, edge_x + 3, y + 3, 2, 5,
+            (SDL_Color){185, 92, 57, 255});
+    }
+    SDL_RenderSetClipRect(r->sdl, had_clip ? &previous_clip : NULL);
+    for (int y = 4; y < r->screen_h; y += 32) {
+        int ledge = 5 + ((y / 32) * 7) % 10;
+        int ledge_x = right ? x - ledge : x + width;
+        fill_rect(r, ledge_x, y + 5, ledge, 12,
+            rock[(y / 32) % 3]);
+        fill_rect(r, ledge_x + (right ? 3 : 0), y + 2, ledge - 3, 3,
+            ridge);
+    }
+}
+
+void draw_mountain_transition(Renderer *r, int covered_width) {
+    if (covered_width <= 0) {
+        return;
+    }
+    int max_width = (r->screen_w + 1) / 2;
+    if (covered_width > max_width) {
+        covered_width = max_width;
+    }
+    draw_mountain_cliff_panel(r, 0, covered_width, 0);
+    draw_mountain_cliff_panel(r, r->screen_w - covered_width,
+        covered_width, 1);
+}
+
 static void draw_shop_blacksmith_fallback(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
