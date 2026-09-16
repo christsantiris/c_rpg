@@ -279,6 +279,22 @@ static TileType floor_item_underlay(const GameState *g, int x, int y) {
     return TILE_FLOOR;
 }
 
+static int forest_is_tree(TileType tile) {
+    return tile == TILE_FOREST_WALL || tile == TILE_FOREST_HIDDEN_TRAIL;
+}
+
+static int forest_is_floor(const GameState *g, int x, int y) {
+    TileType tile = g->map.tiles[y][x];
+    if (tile == TILE_ITEM) {
+        tile = floor_item_underlay(g, x, y);
+    }
+    return tile == TILE_FOREST_FLOOR || tile == TILE_FOREST_LANDMARK ||
+        tile == TILE_FOREST_FALSE_MARKER || tile == TILE_FOREST_WARDEN ||
+        tile == TILE_TRAP_HIDDEN || tile == TILE_TRAP_REVEALED ||
+        tile == TILE_TRAP_SPIKE || tile == TILE_TRAP_FIRE ||
+        tile == TILE_TRAP_POISON;
+}
+
 static TileType coast_visible_tile(const GameState *g, int x, int y) {
     TileType tile = g->map.tiles[y][x];
     return tile == TILE_ITEM ? floor_item_underlay(g, x, y) : tile;
@@ -560,6 +576,24 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_trap_poison(r, sx, sy);
                     break;
                 default: draw_floor(r, sx, sy); break;
+            }
+            if (g->location == LOCATION_FOREST && forest_is_floor(g, x, y)) {
+                unsigned int edges = 0;
+                if (y > 0 && forest_is_tree(g->map.tiles[y - 1][x])) {
+                    edges |= FOREST_EDGE_NORTH;
+                }
+                if (x < MAP_W - 1 && forest_is_tree(g->map.tiles[y][x + 1])) {
+                    edges |= FOREST_EDGE_EAST;
+                }
+                if (y < MAP_H - 1 && forest_is_tree(g->map.tiles[y + 1][x])) {
+                    edges |= FOREST_EDGE_SOUTH;
+                }
+                if (x > 0 && forest_is_tree(g->map.tiles[y][x - 1])) {
+                    edges |= FOREST_EDGE_WEST;
+                }
+                if (edges != 0) {
+                    draw_forest_tree_edge(r, sx, sy, x, y, edges);
+                }
             }
             if (g->location == LOCATION_COAST) {
                 TileType tile = coast_visible_tile(g, x, y);

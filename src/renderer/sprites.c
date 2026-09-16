@@ -229,6 +229,37 @@ void draw_forest_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y)
     }
 }
 
+void draw_forest_tree_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, unsigned int edges) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    unsigned int seed = forest_tile_seed(map_x, map_y);
+    int offset = 4 + (int)((seed >> 7) % 8u);
+    SDL_Color shade = {8, 25, 16, 255};
+    SDL_Color moss = {25, 55, 29, 255};
+    SDL_Color root = {62, 51, 32, 255};
+
+    if (edges & FOREST_EDGE_NORTH) {
+        fill_rect(r, x, y, TILE_SIZE, 1, shade);
+        fill_rect(r, x + offset, y + 1, 7, 2, moss);
+        fill_rect(r, x + offset + 2, y + 3, 2, 2, root);
+    }
+    if (edges & FOREST_EDGE_EAST) {
+        fill_rect(r, x + TILE_SIZE - 1, y, 1, TILE_SIZE, shade);
+        fill_rect(r, x + TILE_SIZE - 3, y + offset, 2, 7, moss);
+        fill_rect(r, x + TILE_SIZE - 5, y + offset + 2, 2, 2, root);
+    }
+    if (edges & FOREST_EDGE_SOUTH) {
+        fill_rect(r, x, y + TILE_SIZE - 1, TILE_SIZE, 1, shade);
+        fill_rect(r, x + offset, y + TILE_SIZE - 3, 7, 2, moss);
+        fill_rect(r, x + offset + 2, y + TILE_SIZE - 5, 2, 2, root);
+    }
+    if (edges & FOREST_EDGE_WEST) {
+        fill_rect(r, x, y, 1, TILE_SIZE, shade);
+        fill_rect(r, x + 1, y + offset, 2, 7, moss);
+        fill_rect(r, x + 3, y + offset + 2, 2, 2, root);
+    }
+}
+
 void draw_forest_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int forward) {
     int x = tile_x * TILE_SIZE, y = tile_y * TILE_SIZE;
     draw_forest_floor(r, tile_x, tile_y, map_x, map_y);
