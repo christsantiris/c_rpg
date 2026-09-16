@@ -279,6 +279,23 @@ static TileType floor_item_underlay(const GameState *g, int x, int y) {
     return TILE_FLOOR;
 }
 
+static int dungeon_is_floor(const GameState *g, int x, int y) {
+    TileType tile = g->map.tiles[y][x];
+    if (tile == TILE_ITEM) {
+        tile = floor_item_underlay(g, x, y);
+    }
+    return tile == TILE_FLOOR || tile == TILE_STAIRS_UP ||
+        tile == TILE_STAIRS_DOWN || tile == TILE_RETURN_EXIT ||
+        tile == TILE_DUNGEON_KEY || tile == TILE_CRYPT_KEY ||
+        tile == TILE_CRYPT_CACHE || tile == TILE_DUNGEON_SWITCH_OFF ||
+        tile == TILE_DUNGEON_SWITCH_ON || tile == TILE_PORTAL ||
+        tile == TILE_BROKEN_BURIAL_SEAL ||
+        tile == TILE_RESTORED_BURIAL_SEAL ||
+        tile == TILE_TRAP_HIDDEN || tile == TILE_TRAP_REVEALED ||
+        tile == TILE_TRAP_SPIKE || tile == TILE_TRAP_FIRE ||
+        tile == TILE_TRAP_POISON;
+}
+
 static int forest_is_tree(TileType tile) {
     return tile == TILE_FOREST_WALL || tile == TILE_FOREST_HIDDEN_TRAIL;
 }
@@ -576,6 +593,24 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_trap_poison(r, sx, sy);
                     break;
                 default: draw_floor(r, sx, sy); break;
+            }
+            if (g->location == LOCATION_DUNGEON && dungeon_is_floor(g, x, y)) {
+                unsigned int edges = 0;
+                if (y > 0 && g->map.tiles[y - 1][x] == TILE_WALL) {
+                    edges |= DUNGEON_EDGE_NORTH;
+                }
+                if (x < MAP_W - 1 && g->map.tiles[y][x + 1] == TILE_WALL) {
+                    edges |= DUNGEON_EDGE_EAST;
+                }
+                if (y < MAP_H - 1 && g->map.tiles[y + 1][x] == TILE_WALL) {
+                    edges |= DUNGEON_EDGE_SOUTH;
+                }
+                if (x > 0 && g->map.tiles[y][x - 1] == TILE_WALL) {
+                    edges |= DUNGEON_EDGE_WEST;
+                }
+                if (edges != 0) {
+                    draw_dungeon_wall_edge(r, sx, sy, x, y, edges);
+                }
             }
             if (g->location == LOCATION_FOREST && forest_is_floor(g, x, y)) {
                 unsigned int edges = 0;

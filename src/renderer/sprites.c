@@ -119,6 +119,42 @@ void draw_dungeon_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y
     }
 }
 
+void draw_dungeon_wall_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, unsigned int edges) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    unsigned int seed = (unsigned int)map_x * 2246822519u ^
+        (unsigned int)map_y * 3266489917u;
+    int chip = 4 + (int)((seed >> 9) % 12u);
+    SDL_Color stone = {48, 44, 65, 255};
+    SDL_Color shadow = {11, 12, 22, 255};
+    SDL_Color highlight = {70, 63, 85, 255};
+
+    if (edges & DUNGEON_EDGE_NORTH) {
+        fill_rect(r, x, y, TILE_SIZE, 1, stone);
+        fill_rect(r, x, y + 1, TILE_SIZE, 2, shadow);
+        fill_rect(r, x + chip, y, 4, 1, highlight);
+        fill_rect(r, x + chip + 1, y + 2, 2, 2, stone);
+    }
+    if (edges & DUNGEON_EDGE_EAST) {
+        fill_rect(r, x + TILE_SIZE - 1, y, 1, TILE_SIZE, stone);
+        fill_rect(r, x + TILE_SIZE - 3, y, 2, TILE_SIZE, shadow);
+        fill_rect(r, x + TILE_SIZE - 1, y + chip, 1, 4, highlight);
+        fill_rect(r, x + TILE_SIZE - 4, y + chip + 1, 2, 2, stone);
+    }
+    if (edges & DUNGEON_EDGE_SOUTH) {
+        fill_rect(r, x, y + TILE_SIZE - 1, TILE_SIZE, 1, stone);
+        fill_rect(r, x, y + TILE_SIZE - 3, TILE_SIZE, 2, shadow);
+        fill_rect(r, x + chip, y + TILE_SIZE - 1, 4, 1, highlight);
+        fill_rect(r, x + chip + 1, y + TILE_SIZE - 4, 2, 2, stone);
+    }
+    if (edges & DUNGEON_EDGE_WEST) {
+        fill_rect(r, x, y, 1, TILE_SIZE, stone);
+        fill_rect(r, x + 1, y, 2, TILE_SIZE, shadow);
+        fill_rect(r, x, y + chip, 1, 4, highlight);
+        fill_rect(r, x + 2, y + chip + 1, 2, 2, stone);
+    }
+}
+
 static unsigned int forest_tile_seed(int map_x, int map_y) {
     unsigned int seed = (unsigned int)map_x * 73856093u ^
         (unsigned int)map_y * 19349663u;
