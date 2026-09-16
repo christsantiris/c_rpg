@@ -1976,6 +1976,75 @@ void draw_dungeon_transition(Renderer *r, int covered_width) {
         covered_width, 1);
 }
 
+static void draw_forest_canopy_panel(Renderer *r, int x, int width, int right) {
+    SDL_Rect previous_clip;
+    SDL_bool had_clip = SDL_RenderIsClipEnabled(r->sdl);
+    if (had_clip) {
+        SDL_RenderGetClipRect(r->sdl, &previous_clip);
+    }
+    SDL_Rect clip = {x, 0, width, r->screen_h};
+    SDL_RenderSetClipRect(r->sdl, &clip);
+    fill_rect(r, x, 0, width, r->screen_h,
+        (SDL_Color){9, 29, 21, 255});
+
+    for (int trunk = 44; trunk < width + 60; trunk += 128) {
+        fill_rect(r, x + trunk, 0, 13, r->screen_h,
+            (SDL_Color){37, 38, 27, 255});
+        fill_rect(r, x + trunk + 3, 0, 3, r->screen_h,
+            (SDL_Color){72, 63, 39, 255});
+        for (int y = 32; y < r->screen_h; y += 96) {
+            fill_rect(r, x + trunk - 23, y, 28, 5,
+                (SDL_Color){52, 51, 31, 255});
+            fill_rect(r, x + trunk + 9, y + 44, 34, 5,
+                (SDL_Color){52, 51, 31, 255});
+        }
+    }
+
+    SDL_Color leaves[3] = {
+        {24, 66, 37, 255},
+        {30, 81, 42, 255},
+        {39, 96, 49, 255}
+    };
+    for (int row = 0; row * 22 < r->screen_h; row++) {
+        int y = row * 22;
+        int offset = row % 2 == 0 ? 0 : 14;
+        for (int column = -offset; column < width; column += 28) {
+            int index = (row * 7 + (column + offset) / 28) % 3;
+            int leaf_x = x + column;
+            fill_rect(r, leaf_x + 3, y + 4, 22, 15, leaves[index]);
+            fill_rect(r, leaf_x + 7, y + 1, 14, 21, leaves[index]);
+            fill_rect(r, leaf_x + 9, y + 5, 8, 2,
+                (SDL_Color){65, 119, 59, 255});
+            fill_rect(r, leaf_x + 5, y + 16, 5, 2,
+                (SDL_Color){16, 48, 29, 255});
+        }
+    }
+
+    int edge_x = right ? x : x + width - 7;
+    fill_rect(r, edge_x, 0, 7, r->screen_h,
+        (SDL_Color){16, 46, 29, 255});
+    for (int y = 8; y < r->screen_h; y += 34) {
+        fill_rect(r, edge_x + 1, y, 6, 11,
+            (SDL_Color){40, 94, 47, 255});
+        fill_rect(r, edge_x + 3, y + 3, 3, 3,
+            (SDL_Color){79, 132, 66, 255});
+    }
+    SDL_RenderSetClipRect(r->sdl, had_clip ? &previous_clip : NULL);
+}
+
+void draw_forest_transition(Renderer *r, int covered_width) {
+    if (covered_width <= 0) {
+        return;
+    }
+    int max_width = (r->screen_w + 1) / 2;
+    if (covered_width > max_width) {
+        covered_width = max_width;
+    }
+    draw_forest_canopy_panel(r, 0, covered_width, 0);
+    draw_forest_canopy_panel(r, r->screen_w - covered_width,
+        covered_width, 1);
+}
+
 static void draw_shop_blacksmith_fallback(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;

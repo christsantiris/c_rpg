@@ -38,38 +38,48 @@
 #define WINDOW_TITLE "Castle of No Return"
 #define WINDOW_W     1280
 #define WINDOW_H     720
-#define DUNGEON_GATE_CLOSE_MS 240u
-#define DUNGEON_GATE_HOLD_MS 100u
-#define DUNGEON_GATE_OPEN_MS 260u
-#define DUNGEON_GATE_TOTAL_MS (DUNGEON_GATE_CLOSE_MS + DUNGEON_GATE_HOLD_MS + DUNGEON_GATE_OPEN_MS)
+#define ENTRY_GATE_CLOSE_MS 240u
+#define ENTRY_GATE_HOLD_MS 100u
+#define ENTRY_GATE_OPEN_MS 260u
+#define ENTRY_GATE_TOTAL_MS (ENTRY_GATE_CLOSE_MS + ENTRY_GATE_HOLD_MS + ENTRY_GATE_OPEN_MS)
 
 typedef struct {
     int active;
     int switched;
     Uint32 started_at;
     Action pending_action;
-} DungeonGateTransition;
+    TownExitStyle style;
+} TownEntryTransition;
 
-static int is_town_dungeon_exit(const GameState *g, Action action) {
+static int town_entry_style(const GameState *g, Action action, TownExitStyle *style) {
     if (g->location != LOCATION_TOWN || action.type != ACTION_MOVE ||
         action.target_x < 0 || action.target_x >= MAP_W ||
-        action.target_y != 0) {
+        action.target_y < 0 || action.target_y >= MAP_H ||
+        g->map.tiles[action.target_y][action.target_x] != TILE_TOWN_EXIT) {
         return 0;
     }
-    return g->map.tiles[action.target_y][action.target_x] == TILE_TOWN_EXIT;
+    if (action.target_y == 0) {
+        *style = TOWN_EXIT_DUNGEON;
+        return 1;
+    }
+    if (action.target_x == 0) {
+        *style = TOWN_EXIT_FOREST;
+        return 1;
+    }
+    return 0;
 }
 
-static int dungeon_gate_width(Uint32 elapsed, int screen_width) {
+static int entry_gate_width(Uint32 elapsed, int screen_width) {
     int max_width = (screen_width + 1) / 2;
-    if (elapsed < DUNGEON_GATE_CLOSE_MS) {
-        return (int)((Uint64)max_width * elapsed / DUNGEON_GATE_CLOSE_MS);
+    if (elapsed < ENTRY_GATE_CLOSE_MS) {
+        return (int)((Uint64)max_width * elapsed / ENTRY_GATE_CLOSE_MS);
     }
-    if (elapsed < DUNGEON_GATE_CLOSE_MS + DUNGEON_GATE_HOLD_MS) {
+    if (elapsed < ENTRY_GATE_CLOSE_MS + ENTRY_GATE_HOLD_MS) {
         return max_width;
     }
-    if (elapsed < DUNGEON_GATE_TOTAL_MS) {
+    if (elapsed < ENTRY_GATE_TOTAL_MS) {
         return (int)((Uint64)max_width *
-            (DUNGEON_GATE_TOTAL_MS - elapsed) / DUNGEON_GATE_OPEN_MS);
+            (ENTRY_GATE_TOTAL_MS - elapsed) / ENTRY_GATE_OPEN_MS);
     }
     return 0;
 }
@@ -366,7 +376,7 @@ int main(int argc, char **argv) {
     // Presentation-only snapshot; persistent results remain in game.
     static GameState spell_view;
     int spell_animating = 0;
-    DungeonGateTransition dungeon_gate = {0};
+    TownEntryTransition entry_gate = {0};
 
     Viewport viewport;
     viewport_init(&viewport, renderer.tiles_x, renderer.tiles_y, MAP_W, MAP_H);
@@ -419,7 +429,7 @@ int main(int argc, char **argv) {
 
                 // ── Keyboard input ────────────────────────────────────────
                 case SDL_KEYDOWN: {
-                    if (spell_animating || dungeon_gate.active) {
+                    if (spell_animating || entry_gate.active) {
                         break;
                     }
                     int sc = event.key.keysym.scancode;
@@ -741,11 +751,13 @@ int main(int argc, char **argv) {
                                 a.type = ACTION_NONE;
                             }
                         }
-                        if (is_town_dungeon_exit(&game, a)) {
-                            dungeon_gate.active = 1;
-                            dungeon_gate.switched = 0;
-                            dungeon_gate.started_at = SDL_GetTicks();
-                            dungeon_gate.pending_action = a;
+                        TownExitStyle entry_style;
+                        if (town_entry_style(&game, a, &entry_style)) {
+                            entry_gate.active = 1;
+                            entry_gate.switched = 0;
+                            entry_gate.started_at = SDL_GetTicks();
+                            entry_gate.pending_action = a;
+                            entry_gate.style = entry_style;
                             a.type = ACTION_NONE;
                         }
                         if (a.type != ACTION_NONE) {
@@ -780,7 +792,7 @@ int main(int argc, char **argv) {
 
                 // ── Mouse input ───────────────────────────────────────────
                 case SDL_MOUSEBUTTONDOWN: {
-                    if (dungeon_gate.active) {
+                    if (entry_gate.active) {
                         break;
                     }
                     if (event.button.button != SDL_BUTTON_LEFT) break;
@@ -978,19 +990,19 @@ int main(int argc, char **argv) {
                 }
             }
         }
-        if (dungeon_gate.active) {
-            Uint32 elapsed = SDL_GetTicks() - dungeon_gate.started_at;
-            if (!dungeon_gate.switched && elapsed >= DUNGEON_GATE_CLOSE_MS) {
-                action_resolve_player(&game, dungeon_gate.pending_action);
+        if (entry_gate.active) {
+            Uint32 elapsed = SDL_GetTicks() - entry_gate.started_at;
+            if (!entry_gate.switched && elapsed >= ENTRY_GATE_CLOSE_MS) {
+                action_resolve_player(&game, entry_gate.pending_action);
                 action_resolve_enemies(&game);
                 viewport_center_on(&viewport, game.player.x, game.player.y);
-                dungeon_gate.switched = 1;
+                entry_gate.switched = 1;
                 if (game.player.hp <= 0) {
                     screen = SCREEN_GAME_OVER;
                 }
             }
-            if (elapsed >= DUNGEON_GATE_TOTAL_MS) {
-                dungeon_gate.active = 0;
+            if (elapsed >= ENTRY_GATE_TOTAL_MS) {
+                entry_gate.active = 0;
             }
         }
         if (screen == SCREEN_NAME_ENTRY)
@@ -1032,10 +1044,14 @@ int main(int argc, char **argv) {
             halloffame_draw(&renderer, &highscore_table);
         }
 
-        if (dungeon_gate.active) {
-            Uint32 elapsed = SDL_GetTicks() - dungeon_gate.started_at;
-            draw_dungeon_transition(&renderer,
-                dungeon_gate_width(elapsed, renderer.screen_w));
+        if (entry_gate.active) {
+            Uint32 elapsed = SDL_GetTicks() - entry_gate.started_at;
+            int covered_width = entry_gate_width(elapsed, renderer.screen_w);
+            if (entry_gate.style == TOWN_EXIT_FOREST) {
+                draw_forest_transition(&renderer, covered_width);
+            } else {
+                draw_dungeon_transition(&renderer, covered_width);
+            }
         }
 
         renderer_end_frame(&renderer);
