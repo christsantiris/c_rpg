@@ -119,27 +119,119 @@ void draw_dungeon_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y
     }
 }
 
-void draw_forest_floor(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE, y = tile_y * TILE_SIZE;
-    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){10, 28, 18, 255});
-    fill_rect(r, x+3, y+5, 3, 2, (SDL_Color){25, 58, 31, 255});
-    fill_rect(r, x+16, y+15, 2, 4, (SDL_Color){34, 74, 40, 255});
-    fill_rect(r, x+8, y+20, 6, 1, (SDL_Color){18, 48, 27, 255});
+static unsigned int forest_tile_seed(int map_x, int map_y) {
+    unsigned int seed = (unsigned int)map_x * 73856093u ^
+        (unsigned int)map_y * 19349663u;
+    seed ^= seed >> 16;
+    seed *= 2246822519u;
+    return seed ^ (seed >> 13);
 }
 
-void draw_forest_wall(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE, y = tile_y * TILE_SIZE;
-    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){7, 20, 12, 255});
-    fill_rect(r, x+2, y, 7, TILE_SIZE, (SDL_Color){25, 48, 25, 255});
-    fill_rect(r, x+4, y, 3, TILE_SIZE, (SDL_Color){49, 66, 35, 255});
-    fill_rect(r, x+14, y+2, 8, TILE_SIZE-2, (SDL_Color){18, 42, 22, 255});
-    fill_rect(r, x+16, y+2, 3, TILE_SIZE-2, (SDL_Color){42, 62, 31, 255});
-    fill_rect(r, x, y+2, TILE_SIZE, 4, (SDL_Color){22, 65, 30, 255});
+void draw_forest_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    unsigned int seed = forest_tile_seed(map_x, map_y);
+    SDL_Color soil[3] = {
+        {15, 32, 22, 255},
+        {18, 36, 23, 255},
+        {20, 34, 23, 255}
+    };
+    SDL_Color moss = {29, 58, 32, 255};
+    SDL_Color moss_light = {42, 76, 39, 255};
+    SDL_Color leaf = {70, 65, 34, 255};
+
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, soil[seed % 3u]);
+    int patch_x = 2 + (int)((seed >> 4) % 11u);
+    int patch_y = 2 + (int)((seed >> 9) % 10u);
+    fill_rect(r, x + patch_x, y + patch_y, 9, 6, moss);
+    fill_rect(r, x + patch_x + 2, y + patch_y - 1, 5, 2, moss);
+    fill_rect(r, x + patch_x + 3, y + patch_y + 2, 3, 1, moss_light);
+    fill_rect(r, x + (int)((seed >> 18) % 19u),
+        y + 17 + (int)((seed >> 23) % 4u), 4, 2, leaf);
+    fill_rect(r, x + (int)((seed >> 12) % 19u), y + 3, 3, 1,
+        (SDL_Color){41, 54, 29, 255});
+
+    int detail = (int)((seed >> 25) % 19u);
+    if (detail < 3) {
+        int root_x = 5 + (int)((seed >> 6) % 8u);
+        fill_rect(r, x + root_x, y + 15, 1, 7,
+            (SDL_Color){62, 51, 32, 255});
+        fill_rect(r, x + root_x + 1, y + 19, 5, 1,
+            (SDL_Color){62, 51, 32, 255});
+    } else if (detail < 6) {
+        int grass_x = 4 + (int)((seed >> 7) % 13u);
+        fill_rect(r, x + grass_x, y + 12, 1, 5, moss_light);
+        fill_rect(r, x + grass_x - 2, y + 14, 1, 3, moss_light);
+        fill_rect(r, x + grass_x + 2, y + 13, 1, 4, moss_light);
+    } else if (detail == 11) {
+        fill_rect(r, x + 18, y + 9, 1, 5, moss_light);
+        fill_rect(r, x + 17, y + 8, 3, 2,
+            (SDL_Color){149, 143, 77, 255});
+    } else if (detail == 17) {
+        fill_rect(r, x + 5, y + 14, 2, 3,
+            (SDL_Color){148, 127, 91, 255});
+        fill_rect(r, x + 3, y + 12, 6, 2,
+            (SDL_Color){131, 63, 50, 255});
+    }
 }
 
-void draw_forest_edge(Renderer *r, int tile_x, int tile_y, int forward) {
+void draw_forest_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    unsigned int seed = forest_tile_seed(map_x, map_y);
+    int trunk_x = 7 + (int)((seed >> 4) % 7u);
+    SDL_Color shadow = {6, 21, 13, 255};
+    SDL_Color foliage = {22, 51, 28, 255};
+    SDL_Color foliage_light = {37, 75, 37, 255};
+    SDL_Color bark = {64, 54, 35, 255};
+
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, shadow);
+    fill_rect(r, x + 1, y + 5, 9, 10, foliage);
+    fill_rect(r, x + 14, y + 9, 9, 10, foliage);
+    fill_rect(r, x + 3, y + 15, 7, 5, foliage_light);
+    fill_rect(r, x + 17, y + 4, 5, 4, foliage_light);
+    int shape = (int)((seed >> 11) % 4u);
+    if (shape == 0) {
+        fill_rect(r, x + 2, y + 7, 20, 13, foliage);
+        fill_rect(r, x + 4, y + 4, 11, 9,
+            (SDL_Color){29, 66, 33, 255});
+        fill_rect(r, x + 12, y + 11, 10, 10,
+            (SDL_Color){30, 61, 31, 255});
+        fill_rect(r, x + 6, y + 6, 6, 2, foliage_light);
+        fill_rect(r, x + 15, y + 13, 5, 2, foliage_light);
+    } else {
+        fill_rect(r, x + trunk_x - 1, y + 5, 8, 19,
+            (SDL_Color){35, 35, 23, 255});
+        fill_rect(r, x + trunk_x, y + 5, 6, 19, bark);
+        fill_rect(r, x + trunk_x + 1, y + 7, 2, 14,
+            (SDL_Color){91, 76, 44, 255});
+        fill_rect(r, x + trunk_x + 4, y + 10, 1, 8,
+            (SDL_Color){43, 39, 27, 255});
+        fill_rect(r, x + trunk_x - 3, y + 21, 5, 2, bark);
+        fill_rect(r, x + trunk_x + 5, y + 20, 5, 2, bark);
+        if (shape == 1) {
+            fill_rect(r, x + trunk_x - 5, y + 10, 6, 2, bark);
+        } else if (shape == 2) {
+            fill_rect(r, x + trunk_x + 5, y + 13, 7, 2, bark);
+        }
+        fill_rect(r, x + trunk_x - 4, y + 1, 14, 7, foliage);
+        fill_rect(r, x + trunk_x - 2, y, 11, 5,
+            (SDL_Color){29, 66, 33, 255});
+        fill_rect(r, x + trunk_x + 1, y + 2, 5, 2, foliage_light);
+    }
+
+    if ((seed >> 20) % 5u == 0u) {
+        fill_rect(r, x + 2, y + 8, 4, 3,
+            (SDL_Color){49, 91, 42, 255});
+    } else if ((seed >> 20) % 5u == 1u) {
+        fill_rect(r, x + 18, y + 15, 3, 3,
+            (SDL_Color){48, 84, 39, 255});
+    }
+}
+
+void draw_forest_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int forward) {
     int x = tile_x * TILE_SIZE, y = tile_y * TILE_SIZE;
-    draw_forest_floor(r, tile_x, tile_y);
+    draw_forest_floor(r, tile_x, tile_y, map_x, map_y);
     SDL_Color trunk = {60, 43, 25, 255};
     SDL_Color leaf = {25, 80, 38, 255};
     SDL_Color glow = forward ? (SDL_Color){112, 224, 92, 255} :
@@ -151,10 +243,10 @@ void draw_forest_edge(Renderer *r, int tile_x, int tile_y, int forward) {
     fill_rect(r, x+8, y+11, 8, 3, glow);
 }
 
-void draw_forest_landmark(Renderer *r, int tile_x, int tile_y) {
+void draw_forest_landmark(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    draw_forest_floor(r, tile_x, tile_y);
+    draw_forest_floor(r, tile_x, tile_y, map_x, map_y);
     fill_rect(r, x + 5, y + 17, 15, 5, (SDL_Color){45, 58, 48, 255});
     fill_rect(r, x + 8, y + 5, 9, 14, (SDL_Color){84, 103, 91, 255});
     fill_rect(r, x + 10, y + 2, 5, 5, (SDL_Color){109, 132, 113, 255});
@@ -162,10 +254,10 @@ void draw_forest_landmark(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 9, y + 10, 7, 3, (SDL_Color){94, 224, 126, 255});
 }
 
-void draw_forest_false_marker(Renderer *r, int tile_x, int tile_y) {
+void draw_forest_false_marker(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    draw_forest_floor(r, tile_x, tile_y);
+    draw_forest_floor(r, tile_x, tile_y, map_x, map_y);
     fill_rect(r, x + 5, y + 17, 15, 5, (SDL_Color){45, 58, 48, 255});
     fill_rect(r, x + 8, y + 6, 8, 13, (SDL_Color){75, 88, 79, 255});
     fill_rect(r, x + 10, y + 3, 5, 5, (SDL_Color){96, 109, 98, 255});
@@ -1441,10 +1533,10 @@ void draw_mara(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 18, y + 15, 6, 6, (SDL_Color){69, 207, 196, 255});
 }
 
-void draw_forest_warden(Renderer *r, int tile_x, int tile_y) {
+void draw_forest_warden(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    draw_forest_floor(r, tile_x, tile_y);
+    draw_forest_floor(r, tile_x, tile_y, map_x, map_y);
     SDL_Color cloak = {41, 84, 49, 255};
     SDL_Color skin = {199, 151, 108, 255};
     SDL_Color binding = {157, 174, 132, 255};
@@ -1511,7 +1603,7 @@ void draw_town_exit(Renderer *r, int tile_x, int tile_y, TownExitStyle style, in
         return;
     }
     if (style == TOWN_EXIT_FOREST) {
-        draw_forest_floor(r, tile_x, tile_y);
+        draw_forest_floor(r, tile_x, tile_y, tile_x, tile_y);
         SDL_Color trunk = {72, 48, 25, 255};
         SDL_Color leaf = {28, 78, 38, 255};
         SDL_Color dark = {7, 24, 15, 255};
