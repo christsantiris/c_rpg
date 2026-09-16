@@ -277,7 +277,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 46);
+    cJSON_AddNumberToObject(root, "save_version", 47);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -1459,6 +1459,51 @@ int load_game(GameState *g, int slot) {
             g->player.y >= TOWN_HARBOR_Y && g->player.y < TOWN_H - 1) {
             g->player.x = 28 + g->player.x - TOWN_HARBOR_X;
             g->player.y = 16 + g->player.y - TOWN_HARBOR_Y;
+        }
+    }
+
+    // Version 47 extends cobblestone lanes to the town entrances.
+    if (save_version < 47 && g->location == LOCATION_TOWN) {
+        int path_x[2] = {9, 30};
+        for (int path = 0; path < 2; path++) {
+            int occupied = 0;
+            for (int i = 0; i < g->floor_item_count; i++) {
+                FloorItem *item = &g->floor_items[i];
+                if (item->active && item->x == path_x[path] &&
+                    item->y == 11) {
+                    item->underlying_tile = TILE_TOWN_PATH;
+                    occupied = 1;
+                }
+            }
+            if (!occupied) {
+                g->map.tiles[11][path_x[path]] = TILE_TOWN_PATH;
+            }
+        }
+        for (int y = 13; y <= 21; y++) {
+            int occupied = 0;
+            for (int i = 0; i < g->floor_item_count; i++) {
+                FloorItem *item = &g->floor_items[i];
+                if (item->active && item->x == 12 && item->y == y) {
+                    item->underlying_tile = TILE_TOWN_PATH;
+                    occupied = 1;
+                }
+            }
+            if (!occupied) {
+                g->map.tiles[y][12] = TILE_TOWN_PATH;
+            }
+        }
+        for (int x = 8; x < 12; x++) {
+            int occupied = 0;
+            for (int i = 0; i < g->floor_item_count; i++) {
+                FloorItem *item = &g->floor_items[i];
+                if (item->active && item->x == x && item->y == 21) {
+                    item->underlying_tile = TILE_TOWN_PATH;
+                    occupied = 1;
+                }
+            }
+            if (!occupied) {
+                g->map.tiles[21][x] = TILE_TOWN_PATH;
+            }
         }
     }
 

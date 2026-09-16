@@ -895,12 +895,14 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
         for (int dx = 0; dx < 5; dx++)
             m->tiles[7 + dy][7 + dx] = TILE_SHOP_BLACKSMITH;
     m->tiles[10][9] = TILE_BLACKSMITH_DOOR;
+    m->tiles[11][9] = TILE_TOWN_PATH;
 
     // Alchemist at (28, 7) — 5x4 tiles
     for (int dy = 0; dy < 4; dy++)
         for (int dx = 0; dx < 5; dx++)
             m->tiles[7 + dy][28 + dx] = TILE_SHOP_ALCHEMIST;
     m->tiles[10][30] = TILE_ALCHEMIST_DOOR;
+    m->tiles[11][30] = TILE_TOWN_PATH;
 
     // Tavern at (5, 16) — 7x5 tiles.
     for (int dy = 0; dy < 5; dy++) {
@@ -909,6 +911,13 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
         }
     }
     m->tiles[20][8] = TILE_TAVERN_DOOR;
+    // The entrance faces south, so route the lane around the east wall.
+    for (int y = 13; y <= 21; y++) {
+        m->tiles[y][12] = TILE_TOWN_PATH;
+    }
+    for (int x = 8; x < 12; x++) {
+        m->tiles[21][x] = TILE_TOWN_PATH;
+    }
 
     map_place_town_harbor(m);
 
