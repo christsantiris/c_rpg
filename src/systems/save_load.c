@@ -147,6 +147,21 @@ static void deserialize_map(const cJSON *obj, Map *m) {
     }
 }
 
+static void hide_legacy_fort_plate(Map *m) {
+    if (m->room_count < 2) {
+        return;
+    }
+    int cx;
+    int cy;
+    map_room_center(&m->rooms[1], &cx, &cy);
+    if (cx < 0 || cx + 1 >= MAP_W || cy < 0 || cy >= MAP_H) {
+        return;
+    }
+    if (m->tiles[cy][cx + 1] == TILE_TRAP_REVEALED) {
+        m->tiles[cy][cx + 1] = TILE_TRAP_HIDDEN;
+    }
+}
+
 static cJSON *serialize_enemies(const Enemy *enemies, int count) {
     cJSON *arr = cJSON_CreateArray();
     for (int i = 0; i < count; i++) {
@@ -1504,6 +1519,15 @@ int load_game(GameState *g, int slot) {
             if (!occupied) {
                 g->map.tiles[21][x] = TILE_TOWN_PATH;
             }
+        }
+    }
+
+    if (g->location == LOCATION_MOUNTAINS) {
+        hide_legacy_fort_plate(&g->map);
+    }
+    for (int i = 0; i < MAX_REGION_DEPTH; i++) {
+        if (g->mountain_cache[i].valid) {
+            hide_legacy_fort_plate(&g->mountain_cache[i].map);
         }
     }
 
