@@ -449,13 +449,32 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                         draw_floor(r, sx, sy);
                     }
                     break;
-                case TILE_WALL:
+                case TILE_WALL: {
                     if (g->location == LOCATION_DUNGEON) {
                         draw_dungeon_wall(r, sx, sy, x, y);
+                        const int dx[4] = {0, 1, 0, -1};
+                        const int dy[4] = {-1, 0, 1, 0};
+                        const unsigned int side[4] = {
+                            DUNGEON_EDGE_NORTH, DUNGEON_EDGE_EAST,
+                            DUNGEON_EDGE_SOUTH, DUNGEON_EDGE_WEST
+                        };
+                        for (int i = 0; i < 4; i++) {
+                            int nx = x + dx[i];
+                            int ny = y + dy[i];
+                            if (nx < 0 || nx >= MAP_W || ny < 0 || ny >= MAP_H) {
+                                continue;
+                            }
+                            TileType neighbor = g->map.tiles[ny][nx];
+                            if (neighbor == TILE_LOCKED_DOOR || neighbor == TILE_CRYPT_DOOR) {
+                                draw_dungeon_door_support(r, sx, sy, side[i],
+                                    neighbor == TILE_CRYPT_DOOR);
+                            }
+                        }
                     } else {
                         draw_wall(r, sx, sy);
                     }
                     break;
+                }
                 case TILE_FOREST_WALL:
                     draw_forest_wall(r, sx, sy, x, y); break;
                 case TILE_FOREST_HIDDEN_TRAIL:
