@@ -310,6 +310,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         draw_town_path(r, screen_x, screen_y);
     } else if (underlay == TILE_TAVERN_FLOOR) {
         draw_tavern_floor(r, screen_x, screen_y);
+    } else if (g->location == LOCATION_DUNGEON) {
+        draw_dungeon_floor(r, screen_x, screen_y, map_x, map_y);
     } else {
         draw_floor(r, screen_x, screen_y);
     }
@@ -346,6 +348,8 @@ static void draw_trap_underlay(Renderer *r, const GameState *g, int map_x, int m
         draw_mountain_bridge(r, screen_x, screen_y);
     } else if (g->location == LOCATION_MOUNTAINS) {
         draw_mountain_floor(r, screen_x, screen_y);
+    } else if (g->location == LOCATION_DUNGEON) {
+        draw_dungeon_floor(r, screen_x, screen_y, map_x, map_y);
     } else {
         draw_floor(r, screen_x, screen_y);
     }
@@ -360,7 +364,20 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             int sx = viewport_to_screen_x(v, x);
             int sy = viewport_to_screen_y(v, y);
             switch (g->map.tiles[y][x]) {
-                case TILE_WALL: draw_wall(r, sx, sy); break;
+                case TILE_FLOOR:
+                    if (g->location == LOCATION_DUNGEON) {
+                        draw_dungeon_floor(r, sx, sy, x, y);
+                    } else {
+                        draw_floor(r, sx, sy);
+                    }
+                    break;
+                case TILE_WALL:
+                    if (g->location == LOCATION_DUNGEON) {
+                        draw_dungeon_wall(r, sx, sy, x, y);
+                    } else {
+                        draw_wall(r, sx, sy);
+                    }
+                    break;
                 case TILE_FOREST_WALL: draw_forest_wall(r, sx, sy); break;
                 case TILE_FOREST_HIDDEN_TRAIL:
                     draw_forest_wall(r, sx, sy); break;
