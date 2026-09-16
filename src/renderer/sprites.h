@@ -18,8 +18,14 @@ void draw_mountain_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map
 void draw_mountain_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_mountain_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int forward);
 void draw_mountain_rockfall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
-void draw_mountain_chasm(Renderer *r, int tile_x, int tile_y);
-void draw_mountain_bridge(Renderer *r, int tile_x, int tile_y);
+enum {
+    MOUNTAIN_EDGE_NORTH = 1,
+    MOUNTAIN_EDGE_EAST = 2,
+    MOUNTAIN_EDGE_SOUTH = 4,
+    MOUNTAIN_EDGE_WEST = 8
+};
+void draw_mountain_chasm(Renderer *r, int tile_x, int tile_y, unsigned int bridges);
+void draw_mountain_bridge(Renderer *r, int tile_x, int tile_y, unsigned int paths);
 void draw_mountain_cave_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_mountain_fortress_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_coast_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);

@@ -292,6 +292,35 @@ static int coast_is_water_surface(TileType tile) {
         tile == TILE_COAST_BEACON_LIT;
 }
 
+static int mountain_crossing_neighbor(const Map *m, int x, int y, int chasm) {
+    if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
+        return 0;
+    }
+    TileType tile = m->tiles[y][x];
+    if (chasm) {
+        return tile == TILE_MOUNTAIN_BRIDGE ||
+            tile == TILE_MOUNTAIN_WEAK_BRIDGE;
+    }
+    return tile == TILE_MOUNTAIN_CHASM || map_is_walkable(m, x, y);
+}
+
+static unsigned int mountain_crossing_neighbors(const Map *m, int x, int y, int chasm) {
+    unsigned int edges = 0;
+    if (mountain_crossing_neighbor(m, x, y - 1, chasm)) {
+        edges |= MOUNTAIN_EDGE_NORTH;
+    }
+    if (mountain_crossing_neighbor(m, x + 1, y, chasm)) {
+        edges |= MOUNTAIN_EDGE_EAST;
+    }
+    if (mountain_crossing_neighbor(m, x, y + 1, chasm)) {
+        edges |= MOUNTAIN_EDGE_SOUTH;
+    }
+    if (mountain_crossing_neighbor(m, x - 1, y, chasm)) {
+        edges |= MOUNTAIN_EDGE_WEST;
+    }
+    return edges;
+}
+
 static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int map_x, int map_y, int screen_x, int screen_y) {
     TileType underlay = floor_item_underlay(g, map_x, map_y);
     if (underlay == TILE_TRAP_HIDDEN && g->location == LOCATION_FOREST) {
@@ -305,7 +334,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
     } else if (underlay == TILE_FOREST_FLOOR) {
         draw_forest_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_MOUNTAIN_BRIDGE) {
-        draw_mountain_bridge(r, screen_x, screen_y);
+        draw_mountain_bridge(r, screen_x, screen_y,
+            mountain_crossing_neighbors(&g->map, map_x, map_y, 0));
     } else if (underlay == TILE_MOUNTAIN_CAVE_FLOOR) {
         draw_mountain_cave_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_MOUNTAIN_FORTRESS_FLOOR) {
@@ -359,7 +389,8 @@ static void draw_trap_underlay(Renderer *r, const GameState *g, int map_x, int m
         fortress_neighbors >= bridge_neighbors && fortress_neighbors > 0) {
         draw_mountain_fortress_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_MOUNTAINS && bridge_neighbors > 0) {
-        draw_mountain_bridge(r, screen_x, screen_y);
+        draw_mountain_bridge(r, screen_x, screen_y,
+            mountain_crossing_neighbors(&g->map, map_x, map_y, 0));
     } else if (g->location == LOCATION_MOUNTAINS) {
         draw_mountain_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_DUNGEON) {
@@ -419,16 +450,19 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_MOUNTAIN_ROCKFALL:
                     draw_mountain_rockfall(r, sx, sy, x, y); break;
                 case TILE_MOUNTAIN_CHASM:
-                    draw_mountain_chasm(r, sx, sy); break;
+                    draw_mountain_chasm(r, sx, sy,
+                        mountain_crossing_neighbors(&g->map, x, y, 1)); break;
                 case TILE_MOUNTAIN_GATE:
                     draw_dungeon_gate(r, sx, sy); break;
                 case TILE_MOUNTAIN_CACHE:
                     draw_crypt_cache(r, sx, sy); break;
                 case TILE_MOUNTAIN_WEAK_BRIDGE:
-                    draw_mountain_bridge(r, sx, sy);
+                    draw_mountain_bridge(r, sx, sy,
+                        mountain_crossing_neighbors(&g->map, x, y, 0));
                     draw_trap_warning(r, sx, sy); break;
                 case TILE_MOUNTAIN_BRIDGE:
-                    draw_mountain_bridge(r, sx, sy); break;
+                    draw_mountain_bridge(r, sx, sy,
+                        mountain_crossing_neighbors(&g->map, x, y, 0)); break;
                 case TILE_MOUNTAIN_CAVE_FLOOR:
                     draw_mountain_cave_floor(r, sx, sy, x, y); break;
                 case TILE_MOUNTAIN_FORTRESS_FLOOR:

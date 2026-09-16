@@ -388,15 +388,46 @@ void draw_mountain_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_
         (SDL_Color){239,65,25,255} : (SDL_Color){145,47,32,255});
 }
 
-void draw_mountain_bridge(Renderer *r, int tile_x, int tile_y) {
+void draw_mountain_bridge(Renderer *r, int tile_x, int tile_y, unsigned int paths) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
     fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){12, 8, 11, 255});
-    fill_rect(r, x, y + 3, TILE_SIZE, 18, (SDL_Color){81, 48, 31, 255});
-    fill_rect(r, x, y + 5, TILE_SIZE, 2, (SDL_Color){136, 76, 39, 255});
-    fill_rect(r, x, y + 17, TILE_SIZE, 2, (SDL_Color){48, 29, 24, 255});
-    fill_rect(r, x + 4, y + 3, 2, 18, (SDL_Color){35, 25, 24, 255});
-    fill_rect(r, x + 17, y + 3, 2, 18, (SDL_Color){35, 25, 24, 255});
+    SDL_Color deck = {81, 48, 31, 255};
+    SDL_Color rim = {136, 76, 39, 255};
+    SDL_Color shade = {48, 29, 24, 255};
+    SDL_Color joint = {35, 25, 24, 255};
+    fill_rect(r, x + 3, y + 3, 18, 18, deck);
+    if (paths & MOUNTAIN_EDGE_NORTH) {
+        fill_rect(r, x + 3, y, 18, 3, deck);
+    } else {
+        fill_rect(r, x + 3, y + 3, 18, 2, rim);
+    }
+    if (paths & MOUNTAIN_EDGE_EAST) {
+        fill_rect(r, x + 21, y + 3, 3, 18, deck);
+    } else {
+        fill_rect(r, x + 19, y + 3, 2, 18, shade);
+    }
+    if (paths & MOUNTAIN_EDGE_SOUTH) {
+        fill_rect(r, x + 3, y + 21, 18, 3, deck);
+    } else {
+        fill_rect(r, x + 3, y + 19, 18, 2, shade);
+    }
+    if (paths & MOUNTAIN_EDGE_WEST) {
+        fill_rect(r, x, y + 3, 3, 18, deck);
+    } else {
+        fill_rect(r, x + 3, y + 3, 2, 18, rim);
+    }
+    int horizontal = (paths & MOUNTAIN_EDGE_EAST) != 0;
+    horizontal += (paths & MOUNTAIN_EDGE_WEST) != 0;
+    int vertical = (paths & MOUNTAIN_EDGE_NORTH) != 0;
+    vertical += (paths & MOUNTAIN_EDGE_SOUTH) != 0;
+    if (vertical > horizontal) {
+        fill_rect(r, x + 5, y + 8, 14, 2, joint);
+        fill_rect(r, x + 5, y + 16, 14, 2, joint);
+    } else {
+        fill_rect(r, x + 8, y + 5, 2, 14, joint);
+        fill_rect(r, x + 16, y + 5, 2, 14, joint);
+    }
 }
 
 void draw_mountain_rockfall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
@@ -409,14 +440,42 @@ void draw_mountain_rockfall(Renderer *r, int tile_x, int tile_y, int map_x, int 
     fill_rect(r, x + 10, y + 3, 3, 5, (SDL_Color){236, 181, 78, 255});
 }
 
-void draw_mountain_chasm(Renderer *r, int tile_x, int tile_y) {
+void draw_mountain_chasm(Renderer *r, int tile_x, int tile_y, unsigned int bridges) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
     fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){5, 3, 8, 255});
-    fill_rect(r, x, y + 4, 5, 15, (SDL_Color){81, 48, 31, 255});
-    fill_rect(r, x + 20, y + 4, 5, 15, (SDL_Color){81, 48, 31, 255});
-    fill_rect(r, x + 4, y + 6, 4, 3, (SDL_Color){136, 76, 39, 255});
-    fill_rect(r, x + 17, y + 15, 4, 3, (SDL_Color){136, 76, 39, 255});
+    SDL_Color rock = {53, 45, 50, 255};
+    SDL_Color rim = {99, 69, 65, 255};
+    SDL_Color wood = {81, 48, 31, 255};
+    SDL_Color splinter = {136, 76, 39, 255};
+    if (bridges & MOUNTAIN_EDGE_NORTH) {
+        fill_rect(r, x + 5, y, 14, 6, wood);
+        fill_rect(r, x + 7, y + 5, 4, 3, splinter);
+    } else {
+        fill_rect(r, x, y, TILE_SIZE, 4, rock);
+        fill_rect(r, x + 2, y + 3, 20, 1, rim);
+    }
+    if (bridges & MOUNTAIN_EDGE_EAST) {
+        fill_rect(r, x + 18, y + 5, 6, 14, wood);
+        fill_rect(r, x + 16, y + 14, 3, 4, splinter);
+    } else {
+        fill_rect(r, x + 20, y, 4, TILE_SIZE, rock);
+        fill_rect(r, x + 20, y + 2, 1, 20, rim);
+    }
+    if (bridges & MOUNTAIN_EDGE_SOUTH) {
+        fill_rect(r, x + 5, y + 18, 14, 6, wood);
+        fill_rect(r, x + 14, y + 16, 4, 3, splinter);
+    } else {
+        fill_rect(r, x, y + 20, TILE_SIZE, 4, rock);
+        fill_rect(r, x + 2, y + 20, 20, 1, rim);
+    }
+    if (bridges & MOUNTAIN_EDGE_WEST) {
+        fill_rect(r, x, y + 5, 6, 14, wood);
+        fill_rect(r, x + 5, y + 7, 3, 4, splinter);
+    } else {
+        fill_rect(r, x, y, 4, TILE_SIZE, rock);
+        fill_rect(r, x + 3, y + 2, 1, 20, rim);
+    }
 }
 
 void draw_mountain_cave_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
