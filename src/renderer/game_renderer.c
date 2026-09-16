@@ -486,25 +486,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_NPC_MARA: draw_mara(r, sx, sy); break;
                 case TILE_FOREST_WARDEN:
                     draw_forest_warden(r, sx, sy, x, y); break;
-                case TILE_TOWN_EXIT: {
-                    TownExitStyle style;
-                    int segment;
-                    if (y == 0) {
-                        style = TOWN_EXIT_DUNGEON;
-                        segment = x - 18;
-                    } else if (y == TOWN_H - 1) {
-                        style = TOWN_EXIT_COAST;
-                        segment = x - 18;
-                    } else if (x == 0) {
-                        style = TOWN_EXIT_FOREST;
-                        segment = y - 10;
-                    } else {
-                        style = TOWN_EXIT_MOUNTAINS;
-                        segment = y - 10;
-                    }
-                    draw_town_exit(r, sx, sy, style, segment);
-                    break;
-                }
+                case TILE_TOWN_EXIT: draw_town_path(r, sx, sy); break;
                 case TILE_SHOP_BLACKSMITH:
                 case TILE_SHOP_ALCHEMIST:
                 case TILE_WATCHTOWER:
@@ -551,8 +533,20 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         }
     }
 
-    // Shops are coordinated 5x4 sprites; draw each once over its town cells.
+    // Gates and buildings span several town cells; draw them over the map.
     if (g->location == LOCATION_TOWN) {
+        draw_town_gate(r,
+            viewport_to_screen_x(v, 18), viewport_to_screen_y(v, 0),
+            TOWN_EXIT_DUNGEON);
+        draw_town_gate(r,
+            viewport_to_screen_x(v, 0), viewport_to_screen_y(v, 10),
+            TOWN_EXIT_FOREST);
+        draw_town_gate(r,
+            viewport_to_screen_x(v, TOWN_W - 3), viewport_to_screen_y(v, 10),
+            TOWN_EXIT_MOUNTAINS);
+        draw_town_gate(r,
+            viewport_to_screen_x(v, 18),
+            viewport_to_screen_y(v, TOWN_H - 2), TOWN_EXIT_COAST);
         draw_shop_blacksmith(r,
             viewport_to_screen_x(v, 7), viewport_to_screen_y(v, 7));
         draw_shop_alchemist(r,

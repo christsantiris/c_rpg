@@ -1799,68 +1799,181 @@ void draw_town_path(Renderer *r, int tile_x, int tile_y) {
     }
 }
 
-void draw_town_exit(Renderer *r, int tile_x, int tile_y, TownExitStyle style, int segment) {
+void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    if (style == TOWN_EXIT_COAST) {
-        draw_coast_floor(r, tile_x, tile_y, tile_x, tile_y);
-        fill_rect(r, x, y, TILE_SIZE, 6, (SDL_Color){38, 89, 91, 255});
-        fill_rect(r, x + 4, y + 6, 16, 18, (SDL_Color){9, 42, 56, 255});
-        if (segment == 0 || segment == 4) {
-            fill_rect(r, x, y, 5, TILE_SIZE, (SDL_Color){93, 139, 117, 255});
-            fill_rect(r, x + 19, y, 5, TILE_SIZE, (SDL_Color){93, 139, 117, 255});
+    if (style == TOWN_EXIT_DUNGEON) {
+        SDL_Color stone = {70, 66, 88, 255};
+        SDL_Color rim = {111, 102, 132, 255};
+        SDL_Color seam = {28, 27, 44, 255};
+        fill_rect(r, x, y, 120, 15, stone);
+        fill_rect(r, x, y, 120, 3, rim);
+        fill_rect(r, x, y + 13, 120, 3, seam);
+        for (int block = 1; block < 6; block++) {
+            fill_rect(r, x + block * 20, y + 3, 2, 10, seam);
         }
+        fill_rect(r, x, y, 17, 48, stone);
+        fill_rect(r, x + 103, y, 17, 48, stone);
+        fill_rect(r, x + 2, y + 2, 3, 43, rim);
+        fill_rect(r, x + 105, y + 2, 3, 43, rim);
+        fill_rect(r, x + 17, y + 15, 15, 9, stone);
+        fill_rect(r, x + 88, y + 15, 15, 9, stone);
+        fill_rect(r, x + 50, y + 8, 20, 14, rim);
+        fill_rect(r, x + 56, y + 11, 8, 8,
+            (SDL_Color){191, 152, 64, 255});
+        fill_rect(r, x + 59, y + 12, 2, 6, seam);
+        fill_rect(r, x + 55, y + 15, 10, 2, seam);
         return;
     }
     if (style == TOWN_EXIT_FOREST) {
-        draw_forest_floor(r, tile_x, tile_y, tile_x, tile_y);
-        SDL_Color trunk = {72, 48, 25, 255};
-        SDL_Color leaf = {28, 78, 38, 255};
-        SDL_Color dark = {7, 24, 15, 255};
-        fill_rect(r, x + 7, y, 17, TILE_SIZE, dark);
-        fill_rect(r, x, y, 5, TILE_SIZE, trunk);
-        fill_rect(r, x + 3, y, 5, TILE_SIZE, leaf);
-        if (segment == 0 || segment == 4) {
-            fill_rect(r, x, y, TILE_SIZE, 6, leaf);
-            fill_rect(r, x, y + 18, TILE_SIZE, 6, leaf);
-        } else {
-            fill_rect(r, x + 18, y + 5, 3, 5, (SDL_Color){58, 132, 62, 255});
+        SDL_Color trunk = {83, 57, 33, 255};
+        SDL_Color bark = {121, 82, 43, 255};
+        SDL_Color leaf = {31, 83, 40, 255};
+        fill_rect(r, x + 1, y, 13, 120, trunk);
+        fill_rect(r, x + 4, y + 3, 3, 114, bark);
+        fill_rect(r, x + 10, y + 1, 28, 11, leaf);
+        fill_rect(r, x + 18, y + 7, 30, 11, leaf);
+        fill_rect(r, x + 10, y + 108, 28, 11, leaf);
+        fill_rect(r, x + 18, y + 102, 30, 11, leaf);
+        fill_rect(r, x + 24, y + 3, 13, 3,
+            (SDL_Color){53, 113, 51, 255});
+        fill_rect(r, x + 33, y + 104, 10, 3,
+            (SDL_Color){53, 113, 51, 255});
+        fill_rect(r, x + 27, y + 16, 3, 12,
+            (SDL_Color){24, 67, 34, 255});
+        fill_rect(r, x + 38, y + 97, 2, 9,
+            (SDL_Color){24, 67, 34, 255});
+        fill_rect(r, x + 13, y + 17, 8, 8,
+            (SDL_Color){22, 62, 32, 255});
+        fill_rect(r, x + 14, y + 95, 9, 8,
+            (SDL_Color){22, 62, 32, 255});
+        fill_rect(r, x + 10, y + 30, 6, 4, leaf);
+        fill_rect(r, x + 9, y + 77, 7, 5, leaf);
+        for (int mark = 0; mark < 4; mark++) {
+            fill_rect(r, x + 9, y + 18 + mark * 23, 3, 2,
+                (SDL_Color){50, 38, 28, 255});
         }
+        fill_rect(r, x + 12, y + 57, 5, 3,
+            (SDL_Color){77, 151, 69, 255});
         return;
     }
     if (style == TOWN_EXIT_MOUNTAINS) {
-        draw_mountain_floor(r, tile_x, tile_y, tile_x, tile_y);
-        SDL_Color basalt = {43, 32, 38, 255};
-        SDL_Color ridge = {82, 39, 39, 255};
-        SDL_Color ember = {218, 61, 26, 255};
-        fill_rect(r, x, y, 7, TILE_SIZE, basalt);
-        fill_rect(r, x + 7, y + 4, 17, 20, (SDL_Color){18, 13, 17, 255});
-        fill_rect(r, x + 5, y, 3, TILE_SIZE, ridge);
-        if (segment == 0 || segment == 4) {
-            fill_rect(r, x, y, TILE_SIZE, 6, basalt);
-            fill_rect(r, x, y + 18, TILE_SIZE, 6, basalt);
-        } else {
-            fill_rect(r, x + 10, y + 18, 7, 2, ember);
+        SDL_Color basalt = {53, 45, 50, 255};
+        SDL_Color ridge = {99, 69, 65, 255};
+        SDL_Color shadow = {29, 26, 33, 255};
+        fill_rect(r, x + 55, y, 17, 120, basalt);
+        fill_rect(r, x + 56, y + 2, 3, 116, ridge);
+        fill_rect(r, x + 10, y, 48, 12, basalt);
+        fill_rect(r, x + 27, y + 11, 31, 9, basalt);
+        fill_rect(r, x + 44, y + 19, 14, 7, basalt);
+        fill_rect(r, x + 10, y + 108, 48, 12, basalt);
+        fill_rect(r, x + 27, y + 100, 31, 9, basalt);
+        fill_rect(r, x + 44, y + 94, 14, 7, basalt);
+        fill_rect(r, x + 12, y + 1, 44, 3, ridge);
+        fill_rect(r, x + 12, y + 109, 44, 3, ridge);
+        fill_rect(r, x + 44, y + 16, 14, 10, basalt);
+        fill_rect(r, x + 44, y + 94, 14, 10, basalt);
+        for (int layer = 0; layer < 5; layer++) {
+            int layer_y = y + layer * 24;
+            fill_rect(r, x + 59, layer_y + 3, 11, 9,
+                layer % 2 == 0 ? (SDL_Color){69, 54, 56, 255} :
+                (SDL_Color){62, 50, 53, 255});
+            fill_rect(r, x + 60, layer_y + 3, 8, 2, ridge);
+            fill_rect(r, x + 58, layer_y + 21, 12, 2, shadow);
         }
+        fill_rect(r, x + 59, y + 56, 5, 8,
+            (SDL_Color){213, 86, 46, 255});
         return;
     }
 
-    SDL_Color stone = {69, 66, 91, 255};
-    SDL_Color highlight = {99, 94, 125, 255};
-    SDL_Color shadow = {18, 17, 32, 255};
-    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, shadow);
-    fill_rect(r, x, y, TILE_SIZE, 5, stone);
-    fill_rect(r, x, y, 3, TILE_SIZE, stone);
-    fill_rect(r, x + 21, y, 3, TILE_SIZE, stone);
-    if (segment == 0 || segment == 4) {
-        fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, stone);
-        fill_rect(r, x + 4, y + 3, 16, 4, highlight);
-    } else {
-        fill_rect(r, x + 2, y + 3, 20, 3, highlight);
-        if (segment == 2) {
-            fill_rect(r, x + 9, y + 5, 7, 5, (SDL_Color){188, 151, 54, 255});
+    SDL_Color stone = {43, 84, 83, 255};
+    SDL_Color rim = {97, 144, 124, 255};
+    fill_rect(r, x, y, 120, 14, stone);
+    fill_rect(r, x, y, 120, 3, rim);
+    for (int block = 1; block < 6; block++) {
+        fill_rect(r, x + block * 20, y + 3, 2, 10,
+            (SDL_Color){24, 59, 67, 255});
+    }
+    fill_rect(r, x, y, 17, 48, stone);
+    fill_rect(r, x + 103, y, 17, 48, stone);
+    fill_rect(r, x + 2, y + 2, 3, 43, rim);
+    fill_rect(r, x + 105, y + 2, 3, 43, rim);
+    for (int row = 1; row < 4; row++) {
+        fill_rect(r, x + 4, y + row * 11, 11, 2,
+            (SDL_Color){23, 58, 64, 255});
+        fill_rect(r, x + 105, y + row * 11, 11, 2,
+            (SDL_Color){23, 58, 64, 255});
+    }
+    fill_rect(r, x + 17, y + 12, 14, 10, stone);
+    fill_rect(r, x + 89, y + 12, 14, 10, stone);
+    fill_rect(r, x + 25, y + 30, 70, 5,
+        (SDL_Color){81, 79, 66, 255});
+    fill_rect(r, x + 25, y + 30, 70, 2, rim);
+    fill_rect(r, x + 37, y + 35, 7, 4,
+        (SDL_Color){21, 91, 91, 255});
+    fill_rect(r, x + 77, y + 35, 8, 4,
+        (SDL_Color){21, 91, 91, 255});
+    fill_rect(r, x + 56, y + 5, 8, 6,
+        (SDL_Color){178, 146, 73, 255});
+}
+
+static void draw_dungeon_door_panel(Renderer *r, int x, int width, int right) {
+    SDL_Rect previous_clip;
+    SDL_bool had_clip = SDL_RenderIsClipEnabled(r->sdl);
+    if (had_clip) {
+        SDL_RenderGetClipRect(r->sdl, &previous_clip);
+    }
+    SDL_Rect clip = {x, 0, width, r->screen_h};
+    SDL_RenderSetClipRect(r->sdl, &clip);
+    fill_rect(r, x, 0, width, r->screen_h,
+        (SDL_Color){21, 20, 34, 255});
+    for (int row = 0; row * 24 < r->screen_h; row++) {
+        int y = row * 24;
+        int offset = row % 2 == 0 ? 0 : 24;
+        for (int column = -offset; column < width; column += 48) {
+            SDL_Color stone = ((column / 48 + row) & 1) == 0 ?
+                (SDL_Color){53, 49, 68, 255} :
+                (SDL_Color){61, 55, 76, 255};
+            fill_rect(r, x + column + 1, y + 2, 46, 20, stone);
+            fill_rect(r, x + column + 3, y + 3, 42, 2,
+                (SDL_Color){81, 73, 98, 255});
+            fill_rect(r, x + column + 3, y + 20, 42, 2,
+                (SDL_Color){34, 31, 49, 255});
         }
     }
+    int band_x = right ? x : x + width - 8;
+    fill_rect(r, band_x, 0, 8, r->screen_h,
+        (SDL_Color){24, 27, 39, 255});
+    fill_rect(r, band_x + 2, 0, 2, r->screen_h,
+        (SDL_Color){75, 78, 87, 255});
+    for (int y = 18; y < r->screen_h; y += 48) {
+        fill_rect(r, band_x + 3, y, 3, 4,
+            (SDL_Color){155, 124, 65, 255});
+    }
+    int plate_x = right ? x + 8 : x + width - 24;
+    int plate_y = r->screen_h / 2 - 18;
+    fill_rect(r, plate_x, plate_y, 16, 36,
+        (SDL_Color){28, 30, 43, 255});
+    fill_rect(r, plate_x + 2, plate_y + 2, 12, 32,
+        (SDL_Color){79, 80, 89, 255});
+    fill_rect(r, plate_x + 5, plate_y + 11, 6, 14,
+        (SDL_Color){159, 127, 66, 255});
+    fill_rect(r, plate_x + 7, plate_y + 14, 2, 8,
+        (SDL_Color){50, 43, 45, 255});
+    SDL_RenderSetClipRect(r->sdl, had_clip ? &previous_clip : NULL);
+}
+
+void draw_dungeon_transition(Renderer *r, int covered_width) {
+    if (covered_width <= 0) {
+        return;
+    }
+    int max_width = (r->screen_w + 1) / 2;
+    if (covered_width > max_width) {
+        covered_width = max_width;
+    }
+    draw_dungeon_door_panel(r, 0, covered_width, 0);
+    draw_dungeon_door_panel(r, r->screen_w - covered_width,
+        covered_width, 1);
 }
 
 static void draw_shop_blacksmith_fallback(Renderer *r, int tile_x, int tile_y) {
