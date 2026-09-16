@@ -166,8 +166,7 @@ Production Releases
 Highest priority
 1. Difficulty scaling across area order
    Players can complete the four regions in any order, so later regions must remain challenging. Scale primarily from bosses defeated and completed regions, with player level as a smaller modifier. Avoid directly matching every enemy to the player because that makes leveling feel pointless.
-2. Local tile boundaries. Mountain chasm and bridge edges, forest floor against trees, and dungeon floor against walls. This addresses the most widespread remaining tiled look. 
-3. Multi-tile area features. Give each region one visual anchor: a Coast beacon or sluice, mountain gate, forest ruin, and crypt entrance. Keep their existing interaction and collision tiles.
+2. Multi-tile area features. Give each region one visual anchor: a Coast beacon or sluice, mountain gate, forest ruin, and crypt entrance. Keep their existing interaction and collision tiles.
 E4. nemy silhouettes. Start with the mountain goblin family, where the shared body makes archer, bomber, guard, and shaman easiest to confuse. 
 4. Sparse environmental props. The floors already include deterministic small details; add only larger accents where rooms still feel empty, while keeping combat lanes clear.
 5. Ambient animation. Projectiles, impacts, and area entry already animate. Water movement, beacon or torch flicker, and enemy idle motion remain the next small-animation pass. 

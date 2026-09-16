@@ -11,6 +11,13 @@ void draw_dungeon_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_
 void draw_dungeon_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_forest_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_forest_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
+enum {
+    FOREST_EDGE_NORTH = 1,
+    FOREST_EDGE_EAST = 2,
+    FOREST_EDGE_SOUTH = 4,
+    FOREST_EDGE_WEST = 8
+};
+void draw_forest_tree_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, unsigned int edges);
 void draw_forest_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int forward);
 void draw_forest_landmark(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_forest_false_marker(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
