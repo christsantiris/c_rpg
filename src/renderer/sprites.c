@@ -1403,7 +1403,7 @@ void draw_town_exit(Renderer *r, int tile_x, int tile_y, TownExitStyle style, in
     }
 }
 
-void draw_shop_blacksmith(Renderer *r, int tile_x, int tile_y) {
+static void draw_shop_blacksmith_fallback(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
     SDL_Color outline = { 18,  14,  14, 255};
@@ -1466,7 +1466,19 @@ void draw_shop_blacksmith(Renderer *r, int tile_x, int tile_y) {
     }
 }
 
-void draw_shop_alchemist(Renderer *r, int tile_x, int tile_y) {
+void draw_shop_blacksmith(Renderer *r, int tile_x, int tile_y) {
+    if (!r->blacksmith_texture) {
+        draw_shop_blacksmith_fallback(r, tile_x, tile_y);
+        return;
+    }
+    SDL_Rect destination = {
+        tile_x * TILE_SIZE, tile_y * TILE_SIZE,
+        5 * TILE_SIZE, 4 * TILE_SIZE
+    };
+    SDL_RenderCopy(r->sdl, r->blacksmith_texture, NULL, &destination);
+}
+
+static void draw_shop_alchemist_fallback(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
     SDL_Color outline = { 14,  14,  24, 255};
@@ -1533,7 +1545,19 @@ void draw_shop_alchemist(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x+102,y+82, 3, 3, violet);
 }
 
-void draw_tavern(Renderer *r, int tile_x, int tile_y) {
+void draw_shop_alchemist(Renderer *r, int tile_x, int tile_y) {
+    if (!r->alchemist_texture) {
+        draw_shop_alchemist_fallback(r, tile_x, tile_y);
+        return;
+    }
+    SDL_Rect destination = {
+        tile_x * TILE_SIZE, tile_y * TILE_SIZE,
+        5 * TILE_SIZE, 4 * TILE_SIZE
+    };
+    SDL_RenderCopy(r->sdl, r->alchemist_texture, NULL, &destination);
+}
+
+static void draw_tavern_fallback(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
     SDL_Color outline = {24, 16, 14, 255};
@@ -1607,6 +1631,18 @@ void draw_tavern(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 121, y + 55, 8, 8, glow);
     fill_rect(r, x + 129, y + 56, 4, 6, glow);
     fill_rect(r, x + 123, y + 53, 4, 3, window);
+}
+
+void draw_tavern(Renderer *r, int tile_x, int tile_y) {
+    if (!r->tavern_texture) {
+        draw_tavern_fallback(r, tile_x, tile_y);
+        return;
+    }
+    SDL_Rect destination = {
+        tile_x * TILE_SIZE, tile_y * TILE_SIZE,
+        7 * TILE_SIZE, 5 * TILE_SIZE
+    };
+    SDL_RenderCopy(r->sdl, r->tavern_texture, NULL, &destination);
 }
 
 void draw_harbor(Renderer *r, int tile_x, int tile_y) {

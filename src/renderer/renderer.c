@@ -5,6 +5,25 @@
 
 #define FONT_PATH "assets/PressStart2P-Regular.ttf"
 
+static SDL_Texture *load_sprite_texture(SDL_Renderer *sdl, const char *path) {
+    SDL_Surface *surface = SDL_LoadBMP(path);
+    if (!surface) {
+        fprintf(stderr, "Sprite texture error for %s: %s\n", path,
+            SDL_GetError());
+        return NULL;
+    }
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(sdl, surface);
+    SDL_FreeSurface(surface);
+    if (!texture) {
+        fprintf(stderr, "Sprite texture error for %s: %s\n", path,
+            SDL_GetError());
+        return NULL;
+    }
+    SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+    SDL_SetTextureScaleMode(texture, SDL_ScaleModeNearest);
+    return texture;
+}
+
 void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->sdl      = sdl;
     r->screen_w = screen_w;
@@ -12,18 +31,10 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->tiles_x  = screen_w / TILE_SIZE;
     r->tiles_y  = (screen_h - MESSAGE_BAR_H) / TILE_SIZE;
 
-    r->harbor_texture = NULL;
-    SDL_Surface *harbor = SDL_LoadBMP("assets/harbor.bmp");
-    if (harbor) {
-        r->harbor_texture = SDL_CreateTextureFromSurface(sdl, harbor);
-        SDL_FreeSurface(harbor);
-    }
-    if (r->harbor_texture) {
-        SDL_SetTextureBlendMode(r->harbor_texture, SDL_BLENDMODE_BLEND);
-        SDL_SetTextureScaleMode(r->harbor_texture, SDL_ScaleModeNearest);
-    } else {
-        fprintf(stderr, "Harbor texture error: %s\n", SDL_GetError());
-    }
+    r->blacksmith_texture = load_sprite_texture(sdl, "assets/blacksmith.bmp");
+    r->alchemist_texture = load_sprite_texture(sdl, "assets/alchemist.bmp");
+    r->tavern_texture = load_sprite_texture(sdl, "assets/tavern.bmp");
+    r->harbor_texture = load_sprite_texture(sdl, "assets/harbor.bmp");
 
     if (TTF_Init() != 0) {
         fprintf(stderr, "TTF_Init error: %s\n", TTF_GetError());
@@ -42,6 +53,18 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
 }
 
 void renderer_free(Renderer *r) {
+    if (r->blacksmith_texture) {
+        SDL_DestroyTexture(r->blacksmith_texture);
+        r->blacksmith_texture = NULL;
+    }
+    if (r->alchemist_texture) {
+        SDL_DestroyTexture(r->alchemist_texture);
+        r->alchemist_texture = NULL;
+    }
+    if (r->tavern_texture) {
+        SDL_DestroyTexture(r->tavern_texture);
+        r->tavern_texture = NULL;
+    }
     if (r->harbor_texture) {
         SDL_DestroyTexture(r->harbor_texture);
         r->harbor_texture = NULL;
