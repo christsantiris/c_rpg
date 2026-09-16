@@ -66,6 +66,10 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
         *style = TOWN_EXIT_FOREST;
         return 1;
     }
+    if (action.target_x == TOWN_W - 1) {
+        *style = TOWN_EXIT_MOUNTAINS;
+        return 1;
+    }
     return 0;
 }
 
@@ -1049,6 +1053,8 @@ int main(int argc, char **argv) {
             int covered_width = entry_gate_width(elapsed, renderer.screen_w);
             if (entry_gate.style == TOWN_EXIT_FOREST) {
                 draw_forest_transition(&renderer, covered_width);
+            } else if (entry_gate.style == TOWN_EXIT_MOUNTAINS) {
+                draw_mountain_transition(&renderer, covered_width);
             } else {
                 draw_dungeon_transition(&renderer, covered_width);
             }
