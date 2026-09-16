@@ -1189,6 +1189,40 @@ void draw_locked_door(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x+11, y+9, 3, 4, iron);
 }
 
+void draw_dungeon_door_support(Renderer *r, int tile_x, int tile_y, unsigned int side, int crypt) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color stone = {88, 79, 110, 255};
+    SDL_Color edge = {134, 119, 153, 255};
+    SDL_Color shadow = {33, 29, 49, 255};
+    SDL_Color accent = crypt ? (SDL_Color){202, 164, 58, 255} :
+        (SDL_Color){151, 76, 99, 255};
+
+    if (side == DUNGEON_EDGE_NORTH) {
+        fill_rect(r, x + 2, y, 20, 10, stone);
+        fill_rect(r, x + 1, y + 8, 22, 2, edge);
+        fill_rect(r, x + 4, y + 10, 16, 1, shadow);
+        fill_rect(r, x + 9, y + 4, 6, 2, accent);
+    } else if (side == DUNGEON_EDGE_EAST) {
+        fill_rect(r, x + 14, y + 3, 10, 18, stone);
+        fill_rect(r, x + 12, y + 1, 12, 3, edge);
+        fill_rect(r, x + 12, y + 20, 12, 3, edge);
+        fill_rect(r, x + 13, y + 4, 1, 16, shadow);
+        fill_rect(r, x + 21, y + 9, 2, 6, accent);
+    } else if (side == DUNGEON_EDGE_SOUTH) {
+        fill_rect(r, x + 2, y + 14, 20, 10, stone);
+        fill_rect(r, x + 1, y + 14, 22, 2, edge);
+        fill_rect(r, x + 4, y + 13, 16, 1, shadow);
+        fill_rect(r, x + 9, y + 18, 6, 2, accent);
+    } else if (side == DUNGEON_EDGE_WEST) {
+        fill_rect(r, x, y + 3, 10, 18, stone);
+        fill_rect(r, x, y + 1, 12, 3, edge);
+        fill_rect(r, x, y + 20, 12, 3, edge);
+        fill_rect(r, x + 10, y + 4, 1, 16, shadow);
+        fill_rect(r, x + 1, y + 9, 2, 6, accent);
+    }
+}
+
 void draw_dungeon_key(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
