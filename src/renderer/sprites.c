@@ -505,6 +505,49 @@ void draw_mountain_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_
     }
 }
 
+void draw_mountain_gate(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color stone = {87, 71, 64, 255};
+    SDL_Color rim = {139, 103, 72, 255};
+    SDL_Color timber = {85, 48, 32, 255};
+    SDL_Color iron = {105, 101, 103, 255};
+
+    draw_mountain_wall(r, tile_x, tile_y, map_x, map_y);
+    fill_rect(r, x + 3, y + 1, 18, 23, (SDL_Color){16, 14, 19, 255});
+    fill_rect(r, x + 5, y + 3, 14, 21, timber);
+    fill_rect(r, x + 11, y + 3, 2, 21, (SDL_Color){45, 28, 25, 255});
+    fill_rect(r, x + 1, y + 2, 4, 22, stone);
+    fill_rect(r, x + 19, y + 2, 4, 22, stone);
+    fill_rect(r, x + 1, y + 2, 22, 3, rim);
+    fill_rect(r, x + 5, y + 7, 14, 2, iron);
+    fill_rect(r, x + 5, y + 17, 14, 2, iron);
+    fill_rect(r, x + 10, y + 10, 4, 5, (SDL_Color){167, 60, 35, 255});
+    fill_rect(r, x + 11, y + 11, 2, 3, (SDL_Color){231, 139, 61, 255});
+}
+
+void draw_mountain_gate_support(Renderer *r, int tile_x, int tile_y, int above) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color stone = {87, 71, 64, 255};
+    SDL_Color rim = {139, 103, 72, 255};
+    SDL_Color shadow = {34, 29, 33, 255};
+
+    if (above) {
+        fill_rect(r, x + 2, y + 13, 20, 11, shadow);
+        fill_rect(r, x + 3, y + 13, 18, 9, stone);
+        fill_rect(r, x + 2, y + 13, 20, 2, rim);
+        fill_rect(r, x + 9, y + 16, 6, 7, (SDL_Color){148, 50, 32, 255});
+        fill_rect(r, x + 11, y + 16, 2, 5, (SDL_Color){218, 114, 52, 255});
+    } else {
+        fill_rect(r, x + 2, y, 20, 9, shadow);
+        fill_rect(r, x + 3, y, 18, 7, stone);
+        fill_rect(r, x + 2, y, 20, 2, rim);
+        fill_rect(r, x + 6, y + 4, 3, 2, (SDL_Color){115, 111, 108, 255});
+        fill_rect(r, x + 15, y + 4, 3, 2, (SDL_Color){115, 111, 108, 255});
+    }
+}
+
 void draw_mountain_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int forward) {
     int x=tile_x*TILE_SIZE, y=tile_y*TILE_SIZE;
     draw_mountain_floor(r, tile_x, tile_y, map_x, map_y);

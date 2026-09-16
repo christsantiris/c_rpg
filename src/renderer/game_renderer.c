@@ -436,10 +436,16 @@ static void draw_trap_underlay(Renderer *r, const GameState *g, int map_x, int m
 void game_draw(Renderer *r, GameState *g, Viewport *v) {
     int landmark_x = -1;
     int landmark_y = -1;
+    int fort_gate_x = -1;
+    int fort_gate_y = -1;
     if (g->location == LOCATION_FOREST && g->map.room_count > 1) {
         int room = g->level == FOREST_DEPTH ? g->map.room_count - 2 :
             g->map.room_count - 1;
         map_room_center(&g->map.rooms[room], &landmark_x, &landmark_y);
+    }
+    if (g->location == LOCATION_MOUNTAINS && g->map.room_count > 1 &&
+        g->level >= 3 && g->level <= MOUNTAIN_DEPTH && g->level != 7) {
+        map_room_center(&g->map.rooms[1], &fort_gate_x, &fort_gate_y);
     }
 
     // Draw map tiles
@@ -500,7 +506,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_MOUNTAIN_FLOOR:
                     draw_mountain_floor(r, sx, sy, x, y); break;
                 case TILE_MOUNTAIN_WALL:
-                    draw_mountain_wall(r, sx, sy, x, y); break;
+                    draw_mountain_wall(r, sx, sy, x, y);
+                    if (x == fort_gate_x && y == fort_gate_y - 1) {
+                        draw_mountain_gate_support(r, sx, sy, 1);
+                    } else if (x == fort_gate_x && y == fort_gate_y + 1) {
+                        draw_mountain_gate_support(r, sx, sy, 0);
+                    }
+                    break;
                 case TILE_MOUNTAIN_ENTRANCE:
                     draw_mountain_edge(r, sx, sy, x, y, 0); break;
                 case TILE_MOUNTAIN_EXIT:
@@ -513,7 +525,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_mountain_chasm(r, sx, sy,
                         mountain_crossing_neighbors(&g->map, x, y, 1)); break;
                 case TILE_MOUNTAIN_GATE:
-                    draw_dungeon_gate(r, sx, sy); break;
+                    draw_mountain_gate(r, sx, sy, x, y); break;
                 case TILE_MOUNTAIN_CACHE:
                     draw_crypt_cache(r, sx, sy); break;
                 case TILE_MOUNTAIN_WEAK_BRIDGE:
