@@ -27,6 +27,98 @@ void draw_wall(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 2, y + 8, TILE_SIZE - 4, 1,             seam);
 }
 
+void draw_dungeon_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color mortar = {13, 14, 25, 255};
+    SDL_Color slabs[3] = {
+        {29, 29, 45, 255},
+        {34, 33, 50, 255},
+        {25, 27, 42, 255}
+    };
+    SDL_Color edge = {47, 44, 62, 255};
+    SDL_Color shadow = {19, 19, 32, 255};
+    unsigned int seed = (unsigned int)map_x * 1103515245u +
+        (unsigned int)map_y * 2654435761u +
+        (unsigned int)(map_x * map_y) * 2246822519u;
+
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, mortar);
+    for (int row = 0; row < 3; row++) {
+        int slab_y = 1 + row * 8;
+        int joint = ((map_x + map_y + row) & 1) == 0 ? 10 : 14;
+        int color = (int)((seed >> (row * 3)) % 3u);
+        fill_rect(r, x + 1, y + slab_y, joint - 2, 7, slabs[color]);
+        fill_rect(r, x + joint, y + slab_y, 23 - joint, 7,
+            slabs[(color + 1) % 3]);
+        fill_rect(r, x + 2, y + slab_y, joint - 3, 1, edge);
+        fill_rect(r, x + joint + 1, y + slab_y, 21 - joint, 1, edge);
+        fill_rect(r, x + 2, y + slab_y + 6, joint - 3, 1, shadow);
+        fill_rect(r, x + joint + 1, y + slab_y + 6, 21 - joint, 1, shadow);
+    }
+
+    int detail = (int)((seed >> 17) % 23u);
+    if (detail == 2 || detail == 15) {
+        int crack_x = 6 + (int)((seed >> 6) % 10u);
+        fill_rect(r, x + crack_x, y + 5, 1, 5, shadow);
+        fill_rect(r, x + crack_x - 2, y + 9, 3, 1, shadow);
+        fill_rect(r, x + crack_x - 2, y + 9, 1, 4, shadow);
+    } else if (detail == 7) {
+        fill_rect(r, x + 3, y + 17, 8, 4,
+            (SDL_Color){18, 31, 38, 255});
+        fill_rect(r, x + 6, y + 16, 8, 4,
+            (SDL_Color){21, 38, 43, 255});
+        fill_rect(r, x + 7, y + 17, 4, 1,
+            (SDL_Color){34, 54, 55, 255});
+    } else if (detail == 20) {
+        fill_rect(r, x + 16, y + 15, 4, 3,
+            (SDL_Color){57, 53, 61, 255});
+        fill_rect(r, x + 18, y + 13, 3, 2,
+            (SDL_Color){43, 41, 51, 255});
+    }
+}
+
+void draw_dungeon_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color mortar = {24, 21, 38, 255};
+    SDL_Color stones[3] = {
+        {55, 51, 75, 255},
+        {63, 57, 84, 255},
+        {47, 45, 68, 255}
+    };
+    SDL_Color edge = {79, 70, 98, 255};
+    SDL_Color shadow = {34, 30, 51, 255};
+    unsigned int seed = (unsigned int)map_x * 2246822519u +
+        (unsigned int)map_y * 3266489917u +
+        (unsigned int)(map_x * map_y) * 668265263u;
+
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, mortar);
+    for (int row = 0; row < 3; row++) {
+        int stone_y = row * 8;
+        int joint = ((map_x + map_y + row) & 1) == 0 ? 9 : 15;
+        int color = (int)((seed >> (row * 4)) % 3u);
+        fill_rect(r, x, y + stone_y, joint - 1, 7, stones[color]);
+        fill_rect(r, x + joint, y + stone_y, 24 - joint, 7,
+            stones[(color + 1) % 3]);
+        fill_rect(r, x + 1, y + stone_y, joint - 2, 2, edge);
+        fill_rect(r, x + joint + 1, y + stone_y, 22 - joint, 2, edge);
+        fill_rect(r, x + 1, y + stone_y + 6, joint - 2, 1, shadow);
+        fill_rect(r, x + joint + 1, y + stone_y + 6, 22 - joint, 1, shadow);
+    }
+
+    int detail = (int)((seed >> 18) % 19u);
+    if (detail == 3) {
+        fill_rect(r, x + 5, y + 2, 2, 4,
+            (SDL_Color){38, 55, 47, 255});
+        fill_rect(r, x + 6, y + 5, 3, 5,
+            (SDL_Color){32, 48, 42, 255});
+    } else if (detail == 11) {
+        fill_rect(r, x + 16, y + 4, 1, 6, shadow);
+        fill_rect(r, x + 13, y + 9, 4, 1, shadow);
+        fill_rect(r, x + 13, y + 9, 1, 5, shadow);
+    }
+}
+
 void draw_forest_floor(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE, y = tile_y * TILE_SIZE;
     fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){10, 28, 18, 255});
