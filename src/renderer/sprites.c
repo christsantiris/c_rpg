@@ -1180,13 +1180,57 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
 void draw_town_floor(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color base  = { 14, 26, 14, 255};
-    SDL_Color blade = { 20, 36, 20, 255};
-    SDL_Color dot   = { 26, 46, 26, 255};
-    fill_rect(r, x,    y,    TILE_SIZE,   TILE_SIZE,   base);
-    fill_rect(r, x+2,  y+2,  TILE_SIZE-4, TILE_SIZE-4, blade);
-    fill_rect(r, x+4,  y+8,  2,           2,           dot);
-    fill_rect(r, x+12, y+4,  2,           2,           dot);
+    SDL_Color grass[4] = {
+        {15, 35, 21, 255},
+        {17, 39, 23, 255},
+        {13, 32, 19, 255},
+        {18, 37, 20, 255}
+    };
+    SDL_Color dark = {10, 27, 16, 255};
+    SDL_Color blade = {29, 56, 29, 255};
+    SDL_Color blade_light = {39, 69, 35, 255};
+    SDL_Color soil = {51, 43, 28, 255};
+    SDL_Color soil_light = {72, 57, 34, 255};
+    unsigned int seed = (unsigned int)tile_x * 1103515245u +
+        (unsigned int)tile_y * 2654435761u +
+        (unsigned int)(tile_x * tile_y) * 2246822519u;
+    int pattern = (int)((seed >> 8) & 3u);
+    int detail = (int)((seed >> 16) % 31u);
+
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, grass[pattern]);
+    if (pattern == 0) {
+        fill_rect(r, x + 2, y + 15, 8, 5, dark);
+        fill_rect(r, x + 5, y + 13, 7, 6, grass[2]);
+    } else if (pattern == 1) {
+        fill_rect(r, x + 14, y + 3, 8, 7, dark);
+        fill_rect(r, x + 12, y + 5, 8, 6, grass[0]);
+    } else if (pattern == 2) {
+        fill_rect(r, x + 1, y + 2, 9, 5, grass[1]);
+        fill_rect(r, x + 16, y + 17, 7, 5, dark);
+    } else {
+        fill_rect(r, x + 7, y + 8, 11, 7, grass[2]);
+    }
+
+    int tuft_x = 3 + (int)((seed >> 3) % 16u);
+    int tuft_y = 5 + (int)((seed >> 11) % 13u);
+    fill_rect(r, x + tuft_x, y + tuft_y, 2, 4, blade);
+    fill_rect(r, x + tuft_x - 2, y + tuft_y + 2, 2, 2, blade);
+    fill_rect(r, x + tuft_x + 2, y + tuft_y + 1, 2, 3, blade_light);
+
+    if (detail == 0 || detail == 17) {
+        fill_rect(r, x + 4, y + 17, 9, 4, soil);
+        fill_rect(r, x + 7, y + 16, 8, 3, soil);
+        fill_rect(r, x + 7, y + 17, 4, 1, soil_light);
+    } else if (detail == 7) {
+        fill_rect(r, x + 17, y + 7, 2, 2,
+            (SDL_Color){204, 181, 76, 255});
+        fill_rect(r, x + 16, y + 9, 1, 3, blade_light);
+    } else if (detail == 23) {
+        fill_rect(r, x + 5, y + 6, 3, 2,
+            (SDL_Color){83, 88, 82, 255});
+        fill_rect(r, x + 6, y + 5, 2, 1,
+            (SDL_Color){115, 118, 106, 255});
+    }
 }
 
 void draw_tavern_floor(Renderer *r, int tile_x, int tile_y) {
