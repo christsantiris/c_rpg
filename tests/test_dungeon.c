@@ -200,6 +200,18 @@ void test_return_to_town_spell(void) {
     game_use_town_portal(&g);
     ASSERT("coast portal returns to stage six",
         g.location == LOCATION_COAST && g.level == 6);
+
+    map_room_center(&g.map.rooms[0], &g.player.x, &g.player.y);
+    int blocked_x = g.player.x;
+    int blocked_y = g.player.y;
+    game_open_town_portal(&g);
+    g.coast_cache[5].map.tiles[blocked_y][blocked_x] = TILE_COAST_WALL;
+    game_use_town_portal(&g);
+    ASSERT("portal avoids a blocked destination in the cached map",
+        g.location == LOCATION_COAST && g.level == 6 &&
+        (g.player.x != blocked_x || g.player.y != blocked_y) &&
+        map_is_walkable(&g.map, g.player.x, g.player.y) &&
+        g.map.tiles[blocked_y][blocked_x] == TILE_COAST_WALL);
 }
 
 void test_final_dungeon_exit(void) {
