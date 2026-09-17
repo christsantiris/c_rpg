@@ -26,7 +26,7 @@ progression.
 
 ### Goblin Mountains terrain
 
-Stages 2 and 7 funnel combat onto narrow bridges. A marked weak span collapses
+Stages 2 and 7 funnel combat onto narrow bridges. An unmarked weak span collapses
 behind you after crossing; press `A` beside the gap to rebuild it from either
 side. On stages 3–6 and 8, goblin gates divide fortified rooms. Press `A` beside
 a gate to open it, then beware the hidden trap and the archer and guard beyond it.
@@ -163,12 +163,8 @@ Production Releases
 - Signed apple dmg
 - windows installer
 - fix linux installer
-Highest priority
-1. Difficulty scaling across area order
-   Players can complete the four regions in any order, so later regions must remain challenging. Scale primarily from bosses defeated and completed regions, with player level as a smaller modifier. Avoid directly matching every enemy to the player because that makes leveling feel pointless.
-E4. nemy silhouettes. Start with the mountain goblin family, where the shared body makes archer, bomber, guard, and shaman easiest to confuse. 
-4. Sparse environmental props. The floors already include deterministic small details; add only larger accents where rooms still feel empty, while keeping combat lanes clear.
-5. Ambient animation. Projectiles, impacts, and area entry already animate. Water movement, beacon or torch flicker, and enemy idle motion remain the next small-animation pass. 
+Highest priorityr.
+1. Ambient animation. Projectiles, impacts, and area entry already animate. Water movement, beacon or torch flicker, and enemy idle motion remain the next small-animation pass. 
 High priority
 1. More tactical enemy behavior
    Add recognizable combat roles such as protectors, ambushers, healers, summoners, ranged attackers, and enemies that retreat or flank.
