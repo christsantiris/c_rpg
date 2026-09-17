@@ -4,7 +4,7 @@
 #include "renderer.h"
 #include "../game/game.h"
 
-#define MESSAGE_BAR_H 36
+#define MESSAGE_BAR_H 72
 
 void message_bar_draw(Renderer *r, const GameState *g);
 

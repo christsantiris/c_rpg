@@ -186,6 +186,7 @@ static void test_coast_persistence(void) {
     game_ascend(&g);
     ASSERT("tides, looted chambers and discoveries survive cached revisits",
         memcmp(&g.map, &expected, sizeof(Map)) == 0);
+    push_message(&g, "Blue channels drain; amber channels rise.");
     const int slot = 99010;
     if (save_exists(slot)) {
         ASSERT("coast test save slot must be unused", 0);
@@ -195,6 +196,9 @@ static void test_coast_persistence(void) {
     int restored = saved && load_game(&loaded, slot);
     ASSERT("coast mechanics save and load", restored);
     if (restored) {
+        ASSERT("full tide status survives save/load",
+            strcmp(loaded.messages[loaded.message_count - 1],
+                "Blue channels drain; amber channels rise.") == 0);
         ASSERT("active tide, loot and minimap state round trip",
             memcmp(&loaded.map, &expected, sizeof(Map)) == 0);
         ASSERT("cached tide, loot and minimap state round trip",
