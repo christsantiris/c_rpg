@@ -362,6 +362,7 @@ int main(int argc, char **argv) {
         SDL_Quit();
         return 1;
     }
+    SDL_SetWindowMinimumSize(window, 600, 240);
 
     SDL_Renderer *sdl_renderer = SDL_CreateRenderer(
         window, -1,

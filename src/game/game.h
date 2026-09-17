@@ -10,7 +10,7 @@
 #include <SDL2/SDL.h>
 
 #define MAX_MESSAGES 3
-#define MAX_MESSAGE_LEN 40
+#define MAX_MESSAGE_LEN 128
 #define MAX_DIALOGUE_LEN 192
 #define MAX_SPEAKER_LEN 24
 

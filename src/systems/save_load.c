@@ -722,10 +722,12 @@ int load_game(GameState *g, int slot) {
 
     // Messages
     cJSON *messages = cJSON_GetObjectItem(root, "messages");
-    for (int i = 0; i < g->message_count && i < MAX_MESSAGES; i++)
+    for (int i = 0; i < g->message_count && i < MAX_MESSAGES; i++) {
         strncpy(g->messages[i],
             cJSON_GetArrayItem(messages, i)->valuestring,
             MAX_MESSAGE_LEN - 1);
+        g->messages[i][MAX_MESSAGE_LEN - 1] = '\0';
+    }
 
     // Inventory
     g->inventory_count = cJSON_GetObjectItem(root, "inventory_count")->valueint;

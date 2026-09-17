@@ -1,5 +1,6 @@
 #include "test_utils.h"
 #include "../src/game/game.h"
+#include <string.h>
 
 static int find_tile(const Map *map, TileType type, int *found_x, int *found_y) {
     for (int y = 0; y < MAP_H; y++) {
@@ -124,6 +125,9 @@ void test_coast(void) {
     activate_tide_control(&g);
     ASSERT("tide control drains blue channels",
         g.map.tiles[water_y][water_x] == TILE_COAST_DRAINED_WATER);
+    ASSERT("tide status keeps its full message",
+        strcmp(g.messages[g.message_count - 1],
+            "Blue channels drain; amber channels rise.") == 0);
     g.floor_item_count = 1;
     g.floor_items[0].active = 1;
     g.floor_items[0].underlying_tile = TILE_COAST_DRAINED_WATER;
