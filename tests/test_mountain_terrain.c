@@ -206,6 +206,16 @@ static void test_mountain_interactions(void) {
     action_resolve_player(&g, (Action){ACTION_MOVE, x, y});
     action_resolve_player(&g, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("loot pickup preserves the repaired span", g.map.tiles[y][x] == TILE_MOUNTAIN_BRIDGE);
+
+    g.level = 2;
+    map_generate_mountains(&g.map, g.level);
+    int exit_y = g.map.stairs_down_y;
+    int exit_present = g.map.tiles[exit_y][MAP_W - 1] == TILE_MOUNTAIN_EXIT;
+    g.player.x = g.map.stairs_down_x;
+    g.player.y = exit_y;
+    action_resolve_player(&g, (Action){ACTION_MOVE, MAP_W - 1, exit_y});
+    ASSERT("mountain stage 2 east exit advances to stage 3",
+        exit_present && g.level == 3);
 }
 
 static void test_mountain_persistence(void) {

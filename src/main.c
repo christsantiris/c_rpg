@@ -429,7 +429,8 @@ int main(int argc, char **argv) {
                         renderer_on_resize(&renderer,
                             event.window.data1, event.window.data2);
                         viewport_on_resize(&viewport,
-                            renderer.tiles_x, renderer.tiles_y);
+                            (renderer.screen_w - INFO_PANEL_W) / TILE_SIZE,
+                            renderer.tiles_y);
                         viewport_center_on(&viewport,
                             game.player.x, game.player.y);
                     }
