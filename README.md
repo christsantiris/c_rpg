@@ -1,4 +1,4 @@
-# The Castle of No Return
+<img width="3804" height="2272" alt="image" src="https://github.com/user-attachments/assets/6f8d5379-65df-4125-b373-31b159cd66ac" /># The Castle of No Return
 
 A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explore dungeons, battle enemies, and survive the challenge!
 
@@ -62,8 +62,7 @@ the linked channels and treasure chambers appear on newly generated stages.
 ## Screenshots
 Below are screenshots of the game in action:
 
-![Uploading image.png…]()
-
+<img width="3806" height="2270" alt="image" src="https://github.com/user-attachments/assets/3202fc6c-1c54-4f2f-9f06-1ca426340715" />
 
 ## Compile the game
 To compile the app run `make run` in the root directory.
