@@ -1394,6 +1394,26 @@ void game_open_town_portal(GameState *g) {
     push_message(g, "A return portal remains open.");
 }
 
+static int portal_landing_open(const GameState *g, int x, int y) {
+    if (!map_is_walkable(&g->map, x, y)) {
+        return 0;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (g->enemies[i].active && g->enemies[i].x == x &&
+            g->enemies[i].y == y) {
+            return 0;
+        }
+    }
+    const int dx[4] = {0, 1, 0, -1};
+    const int dy[4] = {-1, 0, 1, 0};
+    for (int i = 0; i < 4; i++) {
+        if (map_is_walkable(&g->map, x + dx[i], y + dy[i])) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void game_use_town_portal(GameState *g) {
     if (!g->portal_active || g->portal_level < 1 ||
         g->portal_level > MAX_REGION_DEPTH) return;
@@ -1422,11 +1442,29 @@ void game_use_town_portal(GameState *g) {
     if (place_mara_beacon(g)) {
         spawn_mara_guardian(g);
     }
-    g->player.x = g->portal_x;
-    g->player.y = g->portal_y;
-    g->map.tiles[g->portal_y][g->portal_x] = g->portal_origin_tile;
+    int landing_x = g->portal_x;
+    int landing_y = g->portal_y;
+    if (landing_x >= 0 && landing_x < MAP_W &&
+        landing_y >= 0 && landing_y < MAP_H &&
+        g->map.tiles[landing_y][landing_x] == TILE_PORTAL) {
+        g->map.tiles[landing_y][landing_x] = g->portal_origin_tile;
+    }
+    if (!portal_landing_open(g, landing_x, landing_y)) {
+        landing_x = g->map.stairs_up_x;
+        landing_y = g->map.stairs_up_y;
+        if (!portal_landing_open(g, landing_x, landing_y)) {
+            g->portal_active = 0;
+            game_return_to_town(g);
+            push_message(g, "No safe ground beyond the portal.");
+            return;
+        }
+        push_message(g, "The portal returns you at the entrance.");
+    } else {
+        push_message(g, "Returned through the portal.");
+    }
+    g->player.x = landing_x;
+    g->player.y = landing_y;
     g->portal_active = 0;
-    push_message(g, "Returned through the portal.");
 }
 
 void game_talk_to_elowen(GameState *g) {
