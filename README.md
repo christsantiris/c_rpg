@@ -62,29 +62,8 @@ the linked channels and treasure chambers appear on newly generated stages.
 ## Screenshots
 Below are screenshots of the game in action:
 
-<img width="2544" height="1488" alt="image" src="https://github.com/user-attachments/assets/b1f1f35b-c86f-4dfe-beab-08ea6c290305" />
+![Uploading image.png…]()
 
-<img width="2542" height="1480" alt="image" src="https://github.com/user-attachments/assets/b1036cd3-446b-4016-b1e1-25a832b7c0bf" />
-
-<img width="2546" height="1484" alt="image" src="https://github.com/user-attachments/assets/a3dbb1ff-28cc-4bcc-924c-6821ce30df64" />
-
-<img width="3664" height="2132" alt="image" src="https://github.com/user-attachments/assets/c011e7e0-4218-4d49-9253-2752eb42decd" />
-
-<img width="2532" height="1474" alt="image" src="https://github.com/user-attachments/assets/43803900-2a68-424c-ab6c-b51b21612d2a" />
-
-<img width="2544" height="1484" alt="image" src="https://github.com/user-attachments/assets/c6063044-6df7-4d6c-8541-14965a03ef24" />
-
-<img width="2552" height="1476" alt="image" src="https://github.com/user-attachments/assets/d1982af0-2ec9-433d-85f1-9a0b26bddfb0" />
-
-<img width="2548" height="1484" alt="image" src="https://github.com/user-attachments/assets/ac612c80-defb-4289-afd8-fb248fc07edc" />
-
-<img width="2542" height="1484" alt="image" src="https://github.com/user-attachments/assets/b9e35f85-42e7-4ee6-8cf5-c1fed16368d3" />
-
-<img width="2556" height="1480" alt="image" src="https://github.com/user-attachments/assets/fd151a8c-7543-4e26-9649-eb27db71ebb2" />
-
-<img width="2542" height="1486" alt="image" src="https://github.com/user-attachments/assets/088a7000-a073-4f31-90e4-e86d6ac98247" />
-
-<img width="2552" height="1484" alt="image" src="https://github.com/user-attachments/assets/f05bc7ba-220a-4d10-85d8-33a1537b65e0" />
 
 ## Compile the game
 To compile the app run `make run` in the root directory.
