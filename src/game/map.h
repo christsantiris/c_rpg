@@ -127,6 +127,7 @@ void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_forest(Map *m, int level);
 void map_generate_mountains(Map *m, int level);
 void map_generate_coast(Map *m, int level);
+TileType map_coast_trap_underlay(const Map *m, int x, int y);
 int map_is_coast_tidal_tile(TileType tile);
 int map_is_coast_object(TileType tile);
 TileType map_coast_swapped_tile(TileType tile);
