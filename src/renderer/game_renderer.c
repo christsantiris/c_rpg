@@ -314,7 +314,15 @@ static int forest_is_floor(const GameState *g, int x, int y) {
 
 static TileType coast_visible_tile(const GameState *g, int x, int y) {
     TileType tile = g->map.tiles[y][x];
-    return tile == TILE_ITEM ? floor_item_underlay(g, x, y) : tile;
+    if (tile == TILE_ITEM) {
+        tile = floor_item_underlay(g, x, y);
+    }
+    if (tile == TILE_TRAP_HIDDEN || tile == TILE_TRAP_REVEALED ||
+        tile == TILE_TRAP_SPIKE || tile == TILE_TRAP_FIRE ||
+        tile == TILE_TRAP_POISON) {
+        return map_coast_trap_underlay(&g->map, x, y);
+    }
+    return tile;
 }
 
 static int coast_is_water_surface(TileType tile) {
@@ -354,6 +362,19 @@ static unsigned int mountain_crossing_neighbors(const Map *m, int x, int y, int 
     return edges;
 }
 
+static void draw_coast_trap_underlay(Renderer *r, const GameState *g, int map_x, int map_y, int screen_x, int screen_y) {
+    TileType tile = map_coast_trap_underlay(&g->map, map_x, map_y);
+    if (tile == TILE_COAST_SHALLOW_WATER) {
+        draw_coast_shallow_water(r, screen_x, screen_y, map_x, map_y);
+    } else if (tile == TILE_COAST_DEEP_WATER ||
+        tile == TILE_COAST_DRAINED_WATER) {
+        draw_coast_channel(r, screen_x, screen_y, map_x, map_y, 0,
+            tile == TILE_COAST_DEEP_WATER);
+    } else {
+        draw_coast_floor(r, screen_x, screen_y, map_x, map_y);
+    }
+}
+
 static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int map_x, int map_y, int screen_x, int screen_y) {
     TileType underlay = floor_item_underlay(g, map_x, map_y);
     if (underlay == TILE_TRAP_HIDDEN && g->location == LOCATION_FOREST) {
@@ -363,7 +384,7 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         draw_mountain_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_TRAP_HIDDEN &&
         g->location == LOCATION_COAST) {
-        draw_coast_floor(r, screen_x, screen_y, map_x, map_y);
+        draw_coast_trap_underlay(r, g, map_x, map_y, screen_x, screen_y);
     } else if (underlay == TILE_FOREST_FLOOR) {
         draw_forest_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_MOUNTAIN_BRIDGE) {
@@ -413,7 +434,7 @@ static void draw_trap_underlay(Renderer *r, const GameState *g, int map_x, int m
     if (g->location == LOCATION_FOREST) {
         draw_forest_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_COAST) {
-        draw_coast_floor(r, screen_x, screen_y, map_x, map_y);
+        draw_coast_trap_underlay(r, g, map_x, map_y, screen_x, screen_y);
     } else if (g->location == LOCATION_MOUNTAINS &&
         cave_neighbors >= fortress_neighbors &&
         cave_neighbors >= bridge_neighbors && cave_neighbors > 0) {

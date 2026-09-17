@@ -775,6 +775,62 @@ static void place_coast_sluices(Map *m, int room_index) {
     m->tiles[cy][cx] = TILE_COAST_TIDE_CONTROL;
 }
 
+TileType map_coast_trap_underlay(const Map *m, int x, int y) {
+    // Match flooded-room traps to the terrain left around them by structures.
+    int control_room = m->room_count / 2;
+    TileType underlay = TILE_COAST_FLOOR;
+    for (int room = 1; room < m->room_count - 1; room += 2) {
+        if (room == control_room) {
+            continue;
+        }
+        int cx;
+        int cy;
+        map_room_center(&m->rooms[room], &cx, &cy);
+        if (x < cx - 4 || x > cx + 4 || y < cy - 3 || y > cy + 3) {
+            continue;
+        }
+        if (x < cx - 1 || x > cx + 1 || y < cy - 1 || y > cy + 1) {
+            underlay = TILE_COAST_SHALLOW_WATER;
+        } else {
+            underlay = TILE_COAST_DEEP_WATER;
+            for (int ny = cy - 1; ny <= cy + 1; ny++) {
+                for (int nx = cx - 1; nx <= cx + 1; nx++) {
+                    if (m->tiles[ny][nx] == TILE_COAST_DRAINED_WATER) {
+                        underlay = TILE_COAST_DRAINED_WATER;
+                    }
+                }
+            }
+        }
+        break;
+    }
+    if (underlay == TILE_COAST_FLOOR) {
+        return underlay;
+    }
+    static const int neighbors[4][2] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
+    int water = 0;
+    int stone = 0;
+    for (int i = 0; i < 4; i++) {
+        int nx = x + neighbors[i][0];
+        int ny = y + neighbors[i][1];
+        if (nx < 0 || nx >= MAP_W || ny < 0 || ny >= MAP_H) {
+            continue;
+        }
+        TileType tile = m->tiles[ny][nx];
+        if (tile == TILE_COAST_SHALLOW_WATER || tile == TILE_COAST_DEEP_WATER ||
+            tile == TILE_COAST_CHANNEL_WATER) {
+            water++;
+        } else if (tile == TILE_COAST_FLOOR || tile == TILE_COAST_WALL ||
+            tile == TILE_COAST_DRAINED_WATER ||
+            tile == TILE_COAST_CHANNEL_DRY) {
+            stone++;
+        }
+    }
+    if (stone > water) {
+        return TILE_COAST_FLOOR;
+    }
+    return underlay;
+}
+
 void map_generate_coast(Map *m, int level) {
     static const OutdoorSide entrances[COAST_DEPTH] = {
         OUTDOOR_SIDE_NORTH, OUTDOOR_SIDE_WEST, OUTDOOR_SIDE_SOUTH,
@@ -818,13 +874,15 @@ void map_generate_coast(Map *m, int level) {
         map_room_center(&m->rooms[room_index], &center_x, &center_y);
         for (int y = center_y - 3; y <= center_y + 3; y++) {
             for (int x = center_x - 4; x <= center_x + 4; x++) {
-                if (m->tiles[y][x] != TILE_COAST_FLOOR) {
+                TileType tile = m->tiles[y][x];
+                if (tile != TILE_COAST_FLOOR && tile != TILE_TRAP_HIDDEN) {
                     continue;
                 }
                 if (x >= center_x - 1 && x <= center_x + 1 &&
                     y >= center_y - 1 && y <= center_y + 1) {
+                    // Deep water is impassable, so a trap cannot remain here.
                     m->tiles[y][x] = TILE_COAST_DEEP_WATER;
-                } else {
+                } else if (tile == TILE_COAST_FLOOR) {
                     m->tiles[y][x] = TILE_COAST_SHALLOW_WATER;
                 }
             }

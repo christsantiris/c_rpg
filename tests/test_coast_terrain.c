@@ -92,6 +92,42 @@ static void test_coast_routes(void) {
     ASSERT("each optional coast treasure chamber has a guardian", guarded);
 }
 
+static void test_coast_trap_underlays(void) {
+    static Map map;
+    srand(42);
+    map_generate_coast(&map, 4);
+    int room = 3;
+    if (room == map.room_count / 2) {
+        room += 2;
+    }
+    int cx;
+    int cy;
+    map_room_center(&map.rooms[room], &cx, &cy);
+    map.tiles[cy][cx + 2] = TILE_TRAP_HIDDEN;
+    ASSERT("hidden traps in flooded rooms use shallow-water terrain",
+        map_coast_trap_underlay(&map, cx + 2, cy) == TILE_COAST_SHALLOW_WATER);
+    ASSERT("flooded traps remain armed before being stepped on",
+        map.tiles[cy][cx + 2] == TILE_TRAP_HIDDEN);
+    ASSERT("traps on dry coast ground keep their stone underlay",
+        map_coast_trap_underlay(&map, cx + 5, cy) == TILE_COAST_FLOOR);
+    int no_deep_traps = 1;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (map.tiles[y][x] == TILE_TRAP_HIDDEN &&
+                map_coast_trap_underlay(&map, x, y) == TILE_COAST_DEEP_WATER) {
+                no_deep_traps = 0;
+            }
+        }
+    }
+    ASSERT("new coast maps do not hide walkable traps in deep water", no_deep_traps);
+    map.tiles[cy - 1][cx + 2] = TILE_COAST_FLOOR;
+    map.tiles[cy][cx + 1] = TILE_COAST_FLOOR;
+    map.tiles[cy + 1][cx + 2] = TILE_COAST_FLOOR;
+    map.tiles[cy][cx + 3] = TILE_COAST_FLOOR;
+    ASSERT("a trap surrounded by stone does not appear as isolated water",
+        map_coast_trap_underlay(&map, cx + 2, cy) == TILE_COAST_FLOOR);
+}
+
 static void test_coast_water_items(void) {
     static GameState g;
     memset(&g, 0, sizeof(g));
@@ -214,6 +250,7 @@ static void test_coast_persistence(void) {
 void test_coast_terrain(void) {
     printf("Coast terrain tests:\n");
     test_coast_routes();
+    test_coast_trap_underlays();
     test_coast_water_items();
     test_coast_persistence();
 }
