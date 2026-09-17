@@ -1,8 +1,33 @@
 # Dungeon Difficulty Scaling
 
-The castle dungeon is a short, self-contained undead region. Future regions
-such as the Haunted Forest maintain their own progression rather than extending
-dungeon depth.
+The castle dungeon is a short, self-contained undead region. The Haunted Forest,
+Goblin Mountains, and Sunken Coast maintain their own progression rather than
+extending dungeon depth.
+
+## Region Order Scaling
+
+New enemies scale from the number of **other** regional bosses defeated. This
+order tier ranges from 0 for the first region to 3 for the fourth. Each region
+keeps its own eight-stage progression and encounter count; the tier changes
+enemy strength when a floor is generated, not on every player level-up.
+
+| Prior bosses | Regular enemy HP | Regular attack | Boss HP | Boss attack | Enemy XP |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | Base | Base | Base | Base | Base |
+| 1 | +20% | +2 | +25% | +3 | +10% |
+| 2 | +40% | +4 | +50% | +6 | +20% |
+| 3 | +60% | +6 | +75% | +9 | +30% |
+
+At tiers 2 and 3, enemies also gain 1 defense. The one-HP Illusion remains at
+one HP. Player level adds a smaller step at levels 9 and 17, capped there: each
+step adds 5% HP and 1 attack. On stages 1 and 2 of the third region, one regular
+enemy is replaced with a tougher regional role; the fourth region replaces two.
+Encounter counts, gold drops, equipment rewards, and traps are unchanged in
+this first pass.
+
+The scaled stats are stored on each spawned enemy. Cached floors and saved
+enemies retain their stats when revisited or loaded; generating a fresh floor
+uses the boss victories and player level at that time.
 
 ## Dungeon Structure
 
