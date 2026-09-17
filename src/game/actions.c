@@ -1677,7 +1677,11 @@ void action_resolve_enemies(GameState *g) {
                 g->player.x < throne->x + throne->w &&
                 g->player.y >= throne->y &&
                 g->player.y < throne->y + throne->h;
-            if (!player_in_throne && e->move_timer == 0) {
+            int distance = abs_int(g->player.x - e->x) +
+                abs_int(g->player.y - e->y);
+            if (!player_in_throne &&
+                ((e->move_timer == 0 && e->hp == e->max_hp) ||
+                distance > 12)) {
                 continue;
             }
         }

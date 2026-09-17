@@ -39,7 +39,7 @@ The region moves from storm-lashed beaches into increasingly submerged ruins:
   lanes.
 - **Sea Serpent:** a late-region predator with high attack and mobility.
 - **Drowned Queen:** the stage 8 boss. She remains dormant in her throne
-  clearing until the player enters, then uses telegraphed tidal waves.
+  clearing until the player enters or attacks her, then uses telegraphed tidal waves.
 
 ## Visual identity
 
