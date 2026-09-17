@@ -64,15 +64,15 @@ Below are screenshots of the game in action:
 
 <img width="3806" height="2270" alt="image" src="https://github.com/user-attachments/assets/3202fc6c-1c54-4f2f-9f06-1ca426340715" />
 
-<img width="3806" height="2270" alt="image" src="https://github.com/user-attachments/assets/e561926d-098c-4600-8324-6fd10bd0a2a7" />
+<img width="3806" height="2270" alt="image" src="https://github.com/user-attachments/assets/5c88227b-6a30-471a-ae08-2fa39a6d6c8f" />
 
-<img width="3684" height="2156" alt="image" src="https://github.com/user-attachments/assets/1c562a4f-5699-4340-97c2-668320e7bddd" />
+<img width="3806" height="2270" alt="image" src="https://github.com/user-attachments/assets/1c562a4f-5699-4340-97c2-668320e7bddd" />
 
-<img width="2550" height="1488" alt="image" src="https://github.com/user-attachments/assets/bb12b5f8-953a-4e8d-ba6f-bb306812f376" />
+<img width="3806" height="2270" alt="image" src="https://github.com/user-attachments/assets/bb12b5f8-953a-4e8d-ba6f-bb306812f376" />
 
-<img width="2522" height="1486" alt="image" src="https://github.com/user-attachments/assets/39ead8cc-96e1-4c6f-bf59-5e33b808e9df" />
+<img width="3806" height="2270" alt="image" src="https://github.com/user-attachments/assets/39ead8cc-96e1-4c6f-bf59-5e33b808e9df" />
 
-<img width="2548" height="1476" alt="image" src="https://github.com/user-attachments/assets/bdb2210e-1f54-4611-80e0-fb5a35c77d4f" />
+<img width="3806" height="2270" alt="image" src="https://github.com/user-attachments/assets/bdb2210e-1f54-4611-80e0-fb5a35c77d4f" />
 
 ## Compile the game
 To compile the app run `make run` in the root directory.
