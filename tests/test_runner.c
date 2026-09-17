@@ -17,6 +17,7 @@ void test_town_tiles(void);
 void test_town_map(void);
 void test_town_spawn(void);
 void test_leveling(void);
+void test_region_difficulty_scaling(void);
 void test_items(void);
 void test_classes(void);
 void test_level_cache_cleared(void);
@@ -94,6 +95,8 @@ int main(void) {
     test_return_to_town();
     printf("\n");
     test_leveling();
+    printf("\n");
+    test_region_difficulty_scaling();
     printf("\n");
     test_items();
     printf("\n");

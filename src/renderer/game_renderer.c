@@ -434,6 +434,24 @@ static void draw_trap_underlay(Renderer *r, const GameState *g, int map_x, int m
 }
 
 void game_draw(Renderer *r, GameState *g, Viewport *v) {
+    Viewport town_view;
+    int town_scaled = g->location == LOCATION_TOWN;
+    if (town_scaled) {
+        // Keep the entire fixed town map inside the play area at any window size.
+        viewport_init(&town_view, TOWN_W, TOWN_H, TOWN_W, TOWN_H);
+        v = &town_view;
+        int play_w = r->screen_w - INFO_PANEL_W;
+        int play_h = r->tiles_y * TILE_SIZE;
+        if (play_w < 1) {
+            play_w = 1;
+        }
+        if (play_h < 1) {
+            play_h = 1;
+        }
+        SDL_RenderSetScale(r->sdl,
+            (float)play_w / (TOWN_W * TILE_SIZE),
+            (float)play_h / (TOWN_H * TILE_SIZE));
+    }
     int landmark_x = -1;
     int landmark_y = -1;
     int fort_gate_x = -1;
@@ -529,9 +547,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_MOUNTAIN_CACHE:
                     draw_crypt_cache(r, sx, sy); break;
                 case TILE_MOUNTAIN_WEAK_BRIDGE:
-                    draw_mountain_bridge(r, sx, sy,
-                        mountain_crossing_neighbors(&g->map, x, y, 0));
-                    draw_trap_warning(r, sx, sy); break;
                 case TILE_MOUNTAIN_BRIDGE:
                     draw_mountain_bridge(r, sx, sy,
                         mountain_crossing_neighbors(&g->map, x, y, 0)); break;
@@ -1006,6 +1021,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->player.last_dx, g->player.last_dy);
 
     draw_dialogue_bubble(r, g, v);
+
+    if (town_scaled) {
+        SDL_RenderSetScale(r->sdl, 1.0f, 1.0f);
+    }
 
     // Draw info panel
     info_panel_draw(r, g);

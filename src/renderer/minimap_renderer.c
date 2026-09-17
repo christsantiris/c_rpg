@@ -66,8 +66,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_COAST_SLUICE_CONTROL || tile == TILE_COAST_CACHE) {
                         has_stair = 1;
                     } else if (tile == TILE_MOUNTAIN_ROCKFALL ||
-                        tile == TILE_MOUNTAIN_GATE || tile == TILE_MOUNTAIN_CACHE ||
-                        tile == TILE_MOUNTAIN_WEAK_BRIDGE) {
+                        tile == TILE_MOUNTAIN_GATE || tile == TILE_MOUNTAIN_CACHE) {
                         has_stair = 1;
                     } else if (tile == TILE_FOREST_LANDMARK) {
                         has_stair = 1;

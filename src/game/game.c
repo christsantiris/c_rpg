@@ -6,7 +6,42 @@
 #include <stdio.h>
 #include "../game/actions.h"
 
-static void spawn_enemy(Enemy *e, EnemyType type, int x, int y) {
+static int region_order_tier(const GameState *g) {
+    const Location regions[4] = {
+        LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST
+    };
+    int tier = 0;
+    for (int i = 0; i < 4; i++) {
+        if (regions[i] != g->location &&
+            (g->defeated_bosses & (1 << regions[i]))) {
+            tier++;
+        }
+    }
+    return tier > 3 ? 3 : tier;
+}
+
+static void scale_spawned_enemy(const GameState *g, Enemy *e) {
+    int tier = region_order_tier(g);
+    int level_steps = (g->player.level - 1) / 8;
+    if (level_steps < 0) {
+        level_steps = 0;
+    }
+    if (level_steps > 2) {
+        level_steps = 2;
+    }
+    int hp_percent = 100 + (e->is_boss ? 25 : 20) * tier + 5 * level_steps;
+    if (e->type != ENEMY_ILLUSION) {
+        e->max_hp = (e->max_hp * hp_percent + 50) / 100;
+        e->hp = e->max_hp;
+    }
+    e->attack += (e->is_boss ? 3 : 2) * tier + level_steps;
+    if (tier >= 2) {
+        e->defense++;
+    }
+    e->experience = (e->experience * (100 + 10 * tier) + 50) / 100;
+}
+
+static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
     e->active  = 1;
     e->type    = type;
     e->x       = x;
@@ -232,6 +267,7 @@ static void spawn_enemy(Enemy *e, EnemyType type, int x, int y) {
             break;
     }
     e->name[sizeof(e->name) - 1] = '\0';
+    scale_spawned_enemy(g, e);
 }
 
 static int boss_for_level(const GameState *g, EnemyType *type) {
@@ -346,7 +382,7 @@ static int spawn_into_open_tile(GameState *g, EnemyType type, int room_limit) {
     if (!find_enemy_tile(g, &x, &y, room_limit)) {
         return 0;
     }
-    spawn_enemy(&g->enemies[g->enemy_count], type, x, y);
+    spawn_enemy(g, &g->enemies[g->enemy_count], type, x, y);
     g->enemy_count++;
     return 1;
 }
@@ -357,6 +393,7 @@ void enemies_spawn(GameState *g) {
         return;
     }
 
+    int order_tier = region_order_tier(g);
     int num_enemies = 10 + g->level;
     if (num_enemies > MAX_ENEMIES) {
         num_enemies = MAX_ENEMIES;
@@ -377,7 +414,7 @@ void enemies_spawn(GameState *g) {
                 &boss_x, &boss_y);
         }
         if (enemy_tile_open(g, boss_x, boss_y)) {
-            spawn_enemy(&g->enemies[g->enemy_count++], boss_type,
+            spawn_enemy(g, &g->enemies[g->enemy_count++], boss_type,
                 boss_x, boss_y);
         }
     }
@@ -397,7 +434,7 @@ void enemies_spawn(GameState *g) {
                     int gx = x + 2;
                     int gy = y + offset;
                     if (g->enemy_count < num_enemies && enemy_tile_open(g, gx, gy)) {
-                        spawn_enemy(&g->enemies[g->enemy_count++],
+                        spawn_enemy(g, &g->enemies[g->enemy_count++],
                             offset ? ENEMY_HOBGOBLIN_GUARD : ENEMY_GOBLIN_ARCHER, gx, gy);
                     }
                 }
@@ -438,11 +475,12 @@ void enemies_spawn(GameState *g) {
                     g->enemy_count < num_enemies && enemy_tile_open(g, x - 2, y)) {
                     EnemyType guard = g->level >= 6 ? ENEMY_SEA_SERPENT :
                         (g->level >= 3 ? ENEMY_ANIMATED_STATUE : ENEMY_GIANT_CRAB);
-                    spawn_enemy(&g->enemies[g->enemy_count++], guard, x - 2, y);
+                    spawn_enemy(g, &g->enemies[g->enemy_count++], guard, x - 2, y);
                 }
             }
         }
     }
+    int regular_spawned = 0;
     while (g->enemy_count < num_enemies) {
         EnemyType type;
         int roll = rand() % 100;
@@ -537,9 +575,22 @@ void enemies_spawn(GameState *g) {
             else if (roll < 80) type = ENEMY_WRAITH;
             else type = ENEMY_CRYPT_CONJURER;
         }
+        if (g->level <= 2 && order_tier >= 2 &&
+            regular_spawned < order_tier - 1) {
+            if (g->location == LOCATION_FOREST) {
+                type = regular_spawned == 0 ? ENEMY_GIANT_SPIDER : ENEMY_DARK_ELF;
+            } else if (g->location == LOCATION_MOUNTAINS) {
+                type = regular_spawned == 0 ? ENEMY_GOBLIN_ARCHER : ENEMY_GOBLIN_BOMBER;
+            } else if (g->location == LOCATION_COAST) {
+                type = regular_spawned == 0 ? ENEMY_SIREN : ENEMY_GIANT_CRAB;
+            } else {
+                type = regular_spawned == 0 ? ENEMY_ZOMBIE : ENEMY_CRYPT_BAT;
+            }
+        }
         if (!spawn_into_open_tile(g, type, regular_room_limit)) {
             break;
         }
+        regular_spawned++;
     }
 }
 
@@ -1009,7 +1060,7 @@ static void spawn_alder_guardian(GameState *g) {
                         !enemy_tile_open(g, guardian_x, guardian_y)) {
                         continue;
                     }
-                    spawn_enemy(&g->enemies[g->enemy_count++], type,
+                    spawn_enemy(g, &g->enemies[g->enemy_count++], type,
                         guardian_x, guardian_y);
                     return;
                 }
@@ -1103,7 +1154,7 @@ static void spawn_mara_guardian(GameState *g) {
     for (int y = room->y + 1; y < room->y + room->h - 1; y++) {
         for (int x = room->x + 1; x < room->x + room->w - 1; x++) {
             if (enemy_tile_open(g, x, y)) {
-                spawn_enemy(&g->enemies[g->enemy_count++], type, x, y);
+                spawn_enemy(g, &g->enemies[g->enemy_count++], type, x, y);
                 return;
             }
         }
