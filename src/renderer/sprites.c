@@ -1786,46 +1786,196 @@ void draw_tarrasque(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x+16,y+20,7, 3, spike);
 }
 
+static void draw_forest_pixie(Renderer *r, int x, int y) {
+    SDL_Color outline = {19, 28, 34, 255};
+    SDL_Color wing = {127, 181, 177, 255};
+    SDL_Color light = {213, 238, 203, 255};
+    SDL_Color robe = {100, 72, 133, 255};
+    SDL_Color gold = {238, 189, 84, 255};
+    fill_rect(r, x + 1, y + 6, 8, 12, outline);
+    fill_rect(r, x + 15, y + 6, 8, 12, outline);
+    fill_rect(r, x + 2, y + 7, 6, 8, wing);
+    fill_rect(r, x + 4, y + 5, 4, 4, light);
+    fill_rect(r, x + 3, y + 15, 4, 4, wing);
+    fill_rect(r, x + 16, y + 7, 6, 8, wing);
+    fill_rect(r, x + 16, y + 5, 4, 4, light);
+    fill_rect(r, x + 17, y + 15, 4, 4, wing);
+    fill_rect(r, x + 9, y + 3, 6, 16, outline);
+    fill_rect(r, x + 10, y + 4, 4, 5, gold);
+    fill_rect(r, x + 10, y + 10, 4, 8, robe);
+    fill_rect(r, x + 11, y + 6, 1, 2, outline);
+    fill_rect(r, x + 13, y + 6, 1, 2, outline);
+    fill_rect(r, x + 8, y + 17, 2, 3, gold);
+    fill_rect(r, x + 14, y + 17, 2, 3, gold);
+    fill_rect(r, x + 5, y + 21, 2, 2, light);
+    fill_rect(r, x + 18, y + 21, 2, 2, light);
+}
+
+static void draw_forest_wolf(Renderer *r, int x, int y) {
+    SDL_Color outline = {18, 22, 30, 255};
+    SDL_Color fur = {83, 87, 108, 255};
+    SDL_Color light = {133, 139, 153, 255};
+    SDL_Color blight = {125, 210, 102, 255};
+    fill_rect(r, x + 1, y + 7, 5, 4, outline);
+    fill_rect(r, x + 2, y + 8, 5, 3, fur);
+    fill_rect(r, x + 4, y + 9, 14, 10, outline);
+    fill_rect(r, x + 6, y + 10, 11, 7, fur);
+    fill_rect(r, x + 7, y + 10, 8, 2, light);
+    fill_rect(r, x + 16, y + 6, 7, 10, outline);
+    fill_rect(r, x + 17, y + 7, 5, 7, fur);
+    fill_rect(r, x + 16, y + 3, 3, 5, outline);
+    fill_rect(r, x + 20, y + 4, 3, 5, outline);
+    fill_rect(r, x + 18, y + 7, 2, 3, light);
+    fill_rect(r, x + 20, y + 10, 4, 4, light);
+    fill_rect(r, x + 21, y + 13, 3, 2, outline);
+    fill_rect(r, x + 20, y + 8, 2, 2, blight);
+    fill_rect(r, x + 8, y + 13, 4, 2, blight);
+    fill_rect(r, x + 5, y + 17, 4, 6, outline);
+    fill_rect(r, x + 6, y + 18, 2, 4, fur);
+    fill_rect(r, x + 15, y + 17, 4, 6, outline);
+    fill_rect(r, x + 16, y + 18, 2, 4, fur);
+}
+
+static void draw_forest_spider(Renderer *r, int x, int y) {
+    SDL_Color outline = {19, 18, 30, 255};
+    SDL_Color shell = {106, 64, 103, 255};
+    SDL_Color light = {171, 105, 146, 255};
+    SDL_Color venom = {239, 117, 88, 255};
+    for (int side = 0; side < 2; side++) {
+        int lx = side == 0 ? 1 : 17;
+        int joint = side == 0 ? 5 : 16;
+        fill_rect(r, x + lx, y + 4, 6, 2, outline);
+        fill_rect(r, x + lx, y + 6, 2, 5, outline);
+        fill_rect(r, x + joint, y + 9, 4, 2, outline);
+        fill_rect(r, x + lx, y + 11, 7, 2, outline);
+        fill_rect(r, x + lx, y + 13, 2, 5, outline);
+        fill_rect(r, x + joint, y + 14, 4, 2, outline);
+        fill_rect(r, x + lx, y + 18, 7, 2, outline);
+        fill_rect(r, x + lx, y + 19, 2, 4, outline);
+        fill_rect(r, x + lx + 2, y + 5, 4, 1, light);
+        fill_rect(r, x + lx + 2, y + 12, 4, 1, shell);
+        fill_rect(r, x + lx + 2, y + 19, 4, 1, shell);
+    }
+    fill_rect(r, x + 7, y + 9, 11, 10, outline);
+    fill_rect(r, x + 8, y + 10, 9, 7, shell);
+    fill_rect(r, x + 10, y + 10, 5, 3, light);
+    fill_rect(r, x + 9, y + 5, 7, 7, outline);
+    fill_rect(r, x + 10, y + 6, 5, 4, shell);
+    fill_rect(r, x + 10, y + 8, 2, 2, venom);
+    fill_rect(r, x + 14, y + 8, 2, 2, venom);
+    fill_rect(r, x + 11, y + 12, 3, 2, venom);
+}
+
+static void draw_forest_elf(Renderer *r, int x, int y) {
+    SDL_Color outline = {20, 19, 32, 255};
+    SDL_Color cloak = {83, 63, 109, 255};
+    SDL_Color light = {139, 112, 153, 255};
+    SDL_Color face = {185, 166, 178, 255};
+    SDL_Color bow = {190, 139, 70, 255};
+    fill_rect(r, x + 1, y + 4, 3, 16, bow);
+    fill_rect(r, x + 3, y + 2, 3, 3, bow);
+    fill_rect(r, x + 3, y + 19, 3, 3, bow);
+    fill_rect(r, x + 4, y + 11, 7, 1, face);
+    fill_rect(r, x + 9, y + 10, 10, 2, bow);
+    fill_rect(r, x + 17, y + 9, 4, 1, face);
+    fill_rect(r, x + 6, y + 3, 12, 18, outline);
+    fill_rect(r, x + 8, y + 4, 9, 7, cloak);
+    fill_rect(r, x + 10, y + 6, 6, 6, face);
+    fill_rect(r, x + 6, y + 7, 4, 3, outline);
+    fill_rect(r, x + 16, y + 7, 4, 3, outline);
+    fill_rect(r, x + 11, y + 8, 2, 2, (SDL_Color){219, 111, 95, 255});
+    fill_rect(r, x + 8, y + 13, 9, 7, cloak);
+    fill_rect(r, x + 9, y + 13, 3, 6, light);
+    fill_rect(r, x + 7, y + 20, 4, 3, outline);
+    fill_rect(r, x + 15, y + 20, 4, 3, outline);
+}
+
+static void draw_forest_wurm(Renderer *r, int x, int y) {
+    SDL_Color outline = {29, 29, 25, 255};
+    SDL_Color hide = {127, 103, 65, 255};
+    SDL_Color plate = {182, 151, 90, 255};
+    SDL_Color mouth = {74, 30, 41, 255};
+    fill_rect(r, x + 1, y + 16, 17, 7, outline);
+    fill_rect(r, x + 3, y + 17, 13, 5, hide);
+    fill_rect(r, x + 5, y + 12, 13, 9, outline);
+    fill_rect(r, x + 6, y + 13, 10, 7, hide);
+    fill_rect(r, x + 12, y + 5, 9, 11, outline);
+    fill_rect(r, x + 13, y + 6, 7, 8, hide);
+    fill_rect(r, x + 16, y + 3, 6, 5, plate);
+    fill_rect(r, x + 19, y + 8, 5, 6, outline);
+    fill_rect(r, x + 20, y + 9, 4, 3, mouth);
+    fill_rect(r, x + 21, y + 12, 3, 2, plate);
+    fill_rect(r, x + 17, y + 7, 2, 2, (SDL_Color){238, 98, 75, 255});
+    fill_rect(r, x + 13, y + 9, 2, 5, plate);
+    fill_rect(r, x + 9, y + 14, 2, 6, plate);
+    fill_rect(r, x + 5, y + 18, 2, 4, plate);
+    fill_rect(r, x + 1, y + 19, 3, 3, plate);
+}
+
+static void draw_forest_troll(Renderer *r, int x, int y) {
+    SDL_Color outline = {22, 27, 28, 255};
+    SDL_Color skin = {92, 111, 98, 255};
+    SDL_Color light = {143, 158, 125, 255};
+    SDL_Color bark = {105, 73, 47, 255};
+    fill_rect(r, x + 3, y + 7, 17, 14, outline);
+    fill_rect(r, x + 5, y + 8, 14, 11, skin);
+    fill_rect(r, x + 7, y + 4, 10, 9, outline);
+    fill_rect(r, x + 8, y + 5, 8, 7, skin);
+    fill_rect(r, x + 9, y + 7, 2, 2, (SDL_Color){239, 175, 74, 255});
+    fill_rect(r, x + 14, y + 7, 2, 2, (SDL_Color){239, 175, 74, 255});
+    fill_rect(r, x + 10, y + 11, 5, 2, outline);
+    fill_rect(r, x + 10, y + 12, 2, 2, light);
+    fill_rect(r, x + 14, y + 12, 2, 2, light);
+    fill_rect(r, x + 3, y + 11, 4, 10, skin);
+    fill_rect(r, x + 17, y + 10, 4, 11, skin);
+    fill_rect(r, x + 7, y + 14, 10, 4, bark);
+    fill_rect(r, x + 6, y + 19, 5, 4, outline);
+    fill_rect(r, x + 15, y + 19, 5, 4, outline);
+    fill_rect(r, x + 21, y + 2, 2, 20, bark);
+    fill_rect(r, x + 19, y + 2, 5, 6, outline);
+    fill_rect(r, x + 20, y + 3, 4, 4, bark);
+    fill_rect(r, x + 8, y + 5, 5, 2, light);
+}
+
+static void draw_forest_necromancer(Renderer *r, int x, int y) {
+    SDL_Color outline = {20, 19, 32, 255};
+    SDL_Color robe = {69, 53, 94, 255};
+    SDL_Color trim = {132, 103, 145, 255};
+    SDL_Color bone = {208, 195, 163, 255};
+    SDL_Color magic = {151, 235, 110, 255};
+    fill_rect(r, x + 3, y + 2, 3, 9, bone);
+    fill_rect(r, x + 18, y + 2, 3, 9, bone);
+    fill_rect(r, x + 5, y + 1, 3, 4, bone);
+    fill_rect(r, x + 16, y + 1, 3, 4, bone);
+    fill_rect(r, x + 5, y + 4, 14, 18, outline);
+    fill_rect(r, x + 7, y + 5, 10, 8, robe);
+    fill_rect(r, x + 8, y + 8, 8, 6, bone);
+    fill_rect(r, x + 9, y + 9, 2, 2, magic);
+    fill_rect(r, x + 14, y + 9, 2, 2, magic);
+    fill_rect(r, x + 11, y + 12, 3, 2, outline);
+    fill_rect(r, x + 6, y + 14, 12, 7, robe);
+    fill_rect(r, x + 8, y + 15, 7, 2, trim);
+    fill_rect(r, x + 4, y + 19, 5, 4, outline);
+    fill_rect(r, x + 16, y + 19, 5, 4, outline);
+    fill_rect(r, x + 21, y + 6, 2, 17, bone);
+    fill_rect(r, x + 19, y + 2, 5, 5, magic);
+    fill_rect(r, x + 20, y + 1, 3, 2, bone);
+}
+
 static void draw_forest_enemy(Renderer *r, int tx, int ty, EnemyType type) {
-    int x = tx * TILE_SIZE, y = ty * TILE_SIZE;
-    SDL_Color dark = {12, 24, 18, 255};
-    SDL_Color moss = {52, 92, 42, 255};
-    SDL_Color glow = {92, 238, 126, 255};
-    SDL_Color pale = {154, 210, 176, 255};
-    if (type == ENEMY_PIXIE) {
-        fill_rect(r, x+3,y+7,7,9,pale); fill_rect(r,x+14,y+7,7,9,pale);
-        fill_rect(r,x+9,y+6,6,13,moss); fill_rect(r,x+10,y+4,4,4,glow);
-        fill_rect(r,x+7,y+20,3,2,glow); fill_rect(r,x+15,y+20,3,2,glow);
-    } else if (type == ENEMY_BLIGHTED_WOLF) {
-        fill_rect(r,x+3,y+10,17,9,dark); fill_rect(r,x+16,y+7,7,9,moss);
-        fill_rect(r,x+17,y+5,3,4,dark); fill_rect(r,x+22,y+5,2,4,dark);
-        fill_rect(r,x+18,y+10,2,2,glow); fill_rect(r,x+3,y+18,3,5,moss);
-        fill_rect(r,x+15,y+18,3,5,moss); fill_rect(r,x,y+8,5,3,moss);
-    } else if (type == ENEMY_GIANT_SPIDER) {
-        fill_rect(r,x+8,y+6,9,13,dark); fill_rect(r,x+10,y+4,5,5,glow);
-        for (int i=0;i<4;i++) { fill_rect(r,x+2,y+5+i*5,7,2,moss); fill_rect(r,x+16,y+5+i*5,7,2,moss); }
-        fill_rect(r,x+11,y+8,2,2,pale); fill_rect(r,x+14,y+8,2,2,pale);
-    } else if (type == ENEMY_DARK_ELF) {
-        fill_rect(r,x+7,y+4,11,8,dark); fill_rect(r,x+9,y+7,7,4,(SDL_Color){118,98,138,255});
-        fill_rect(r,x+7,y+12,11,10,moss); fill_rect(r,x+3,y+5,2,17,(SDL_Color){91,58,34,255});
-        fill_rect(r,x+1,y+7,5,2,glow); fill_rect(r,x+10,y+8,2,1,glow);
-    } else if (type == ENEMY_GIANT_WURM) {
-        fill_rect(r,x+6,y+3,13,19,(SDL_Color){73,76,46,255});
-        fill_rect(r,x+4,y+4,17,5,moss); fill_rect(r,x+7,y+6,11,8,dark);
-        fill_rect(r,x+9,y+8,2,4,pale); fill_rect(r,x+14,y+8,2,4,pale);
-        fill_rect(r,x+4,y+17,17,3,(SDL_Color){101,86,48,255});
-    } else if (type == ENEMY_FOREST_TROLL) {
-        fill_rect(r,x+5,y+6,14,15,(SDL_Color){70,86,65,255});
-        fill_rect(r,x+3,y+11,4,11,moss); fill_rect(r,x+18,y+10,4,12,moss);
-        fill_rect(r,x+8,y+8,3,2,glow); fill_rect(r,x+14,y+8,3,2,glow);
-        fill_rect(r,x+20,y+2,3,20,(SDL_Color){94,59,30,255});
-    } else if (type == ENEMY_FOREST_NECROMANCER) {
-        fill_rect(r,x+4,y+6,16,16,dark); fill_rect(r,x+7,y+4,10,8,(SDL_Color){29,54,36,255});
-        fill_rect(r,x+9,y+8,2,2,glow); fill_rect(r,x+14,y+8,2,2,glow);
-        fill_rect(r,x+3,y+2,3,8,(SDL_Color){104,91,63,255});
-        fill_rect(r,x+18,y+1,3,9,(SDL_Color){104,91,63,255});
-        fill_rect(r,x+21,y+3,2,19,(SDL_Color){76,51,27,255});
-        fill_rect(r,x+19,y+1,6,6,glow); fill_rect(r,x+8,y+15,8,5,(SDL_Color){45,83,49,255});
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    switch (type) {
+        case ENEMY_PIXIE: draw_forest_pixie(r, x, y); break;
+        case ENEMY_BLIGHTED_WOLF: draw_forest_wolf(r, x, y); break;
+        case ENEMY_GIANT_SPIDER: draw_forest_spider(r, x, y); break;
+        case ENEMY_DARK_ELF: draw_forest_elf(r, x, y); break;
+        case ENEMY_GIANT_WURM: draw_forest_wurm(r, x, y); break;
+        case ENEMY_FOREST_TROLL: draw_forest_troll(r, x, y); break;
+        case ENEMY_FOREST_NECROMANCER:
+            draw_forest_necromancer(r, x, y);
+            break;
+        default: break;
     }
 }
 

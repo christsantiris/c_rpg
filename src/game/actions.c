@@ -1538,16 +1538,28 @@ static int enemy_move_toward(GameState *g, int index) {
     int dy = g->player.y - e->y;
     int mx = (dx > 0) ? 1 : (dx < 0) ? -1 : 0;
     int my = (dy > 0) ? 1 : (dy < 0) ? -1 : 0;
-    int tx = e->x + mx;
-    int ty = e->y + my;
-    int in_bounds = tx >= 0 && tx < MAP_W && ty >= 0 && ty < MAP_H;
-
-    if (in_bounds && map_is_walkable(&g->map, tx, ty) &&
-        !enemy_position_occupied(g, index, tx, ty) &&
-        !(tx == g->player.x && ty == g->player.y)) {
-        e->x = tx;
-        e->y = ty;
-        return 1;
+    int steps[3][2] = {{mx, my}, {mx, 0}, {0, my}};
+    int step_count = g->location == LOCATION_FOREST ? 3 : 1;
+    for (int i = 0; i < step_count; i++) {
+        int step_x = steps[i][0];
+        int step_y = steps[i][1];
+        if (step_x == 0 && step_y == 0) {
+            continue;
+        }
+        if (step_x != 0 && step_y != 0 &&
+            (!map_is_walkable(&g->map, e->x + step_x, e->y) ||
+            !map_is_walkable(&g->map, e->x, e->y + step_y))) {
+            continue;
+        }
+        int tx = e->x + step_x;
+        int ty = e->y + step_y;
+        if (map_is_walkable(&g->map, tx, ty) &&
+            !enemy_position_occupied(g, index, tx, ty) &&
+            !(tx == g->player.x && ty == g->player.y)) {
+            e->x = tx;
+            e->y = ty;
+            return 1;
+        }
     }
     return 0;
 }

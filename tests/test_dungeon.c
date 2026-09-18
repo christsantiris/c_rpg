@@ -283,6 +283,31 @@ void test_enemy_movement_collision(void) {
     ASSERT("blocked enemy remains in place",
         g.enemies[0].x == 8 && g.enemies[0].y == 10);
 
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            g.map.tiles[y][x] = TILE_FOREST_WALL;
+        }
+    }
+    g.location = LOCATION_FOREST;
+    g.level = 2;
+    g.map.tiles[5][5] = TILE_FOREST_FLOOR;
+    g.map.tiles[6][6] = TILE_FOREST_FLOOR;
+    g.map.tiles[7][7] = TILE_FOREST_FLOOR;
+    g.player.x = 7;
+    g.player.y = 7;
+    g.enemy_count = 1;
+    g.enemies[0] = (Enemy){
+        .x = 5, .y = 5, .active = 1, .type = ENEMY_GIANT_SPIDER,
+        .hp = 10, .max_hp = 10, .attack = 1
+    };
+    action_resolve_enemies(&g);
+    ASSERT("forest enemy cannot cut diagonally through trees",
+        g.enemies[0].x == 5 && g.enemies[0].y == 5);
+    g.map.tiles[5][6] = TILE_FOREST_FLOOR;
+    action_resolve_enemies(&g);
+    ASSERT("forest enemy follows an open path around the trees",
+        g.enemies[0].x == 6 && g.enemies[0].y == 5);
+
     Location locations[4] = {
         LOCATION_DUNGEON,
         LOCATION_FOREST,
@@ -311,6 +336,29 @@ void test_enemy_movement_collision(void) {
         }
         ASSERT("spawned enemies are never inside walls",
             enemies_on_open_tiles);
+        if (g.location == LOCATION_FOREST) {
+            int clear_of_trees = 1;
+            for (int i = 0; i < g.enemy_count; i++) {
+                Enemy *enemy = &g.enemies[i];
+                if (!enemy->active) {
+                    continue;
+                }
+                for (int dy = -1; dy <= 1; dy++) {
+                    for (int dx = -1; dx <= 1; dx++) {
+                        if (abs(dx) + abs(dy) != 1) {
+                            continue;
+                        }
+                        TileType tile = g.map.tiles[enemy->y + dy]
+                            [enemy->x + dx];
+                        if (tile == TILE_FOREST_WALL ||
+                            tile == TILE_FOREST_HIDDEN_TRAIL) {
+                            clear_of_trees = 0;
+                        }
+                    }
+                }
+            }
+            ASSERT("forest enemies spawn clear of tree tiles", clear_of_trees);
+        }
     }
 
     for (int y = 0; y < MAP_H; y++) {
