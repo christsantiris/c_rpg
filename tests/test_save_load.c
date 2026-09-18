@@ -148,9 +148,18 @@ static void test_current_weapon_round_trip(void) {
     original.enemies[0].active = 1;
     original.enemies[0].frozen_turns = 2;
     original.dungeon_crypt_keys = 2;
+    original.player.level = 9;
+    original.level = 3;
 
     remove_test_save(ROUND_TRIP_SLOT);
     int saved = save_game(&original, ROUND_TRIP_SLOT);
+    char preview_name[21];
+    int preview_level = 0;
+    int preview_ok = saved && get_save_preview(ROUND_TRIP_SLOT,
+        preview_name, &preview_level);
+    ASSERT("save preview shows character level rather than floor depth",
+        preview_ok && preview_level == 9 &&
+        strcmp(preview_name, original.player.name) == 0);
     int loaded_ok = saved && load_game(&loaded, ROUND_TRIP_SLOT);
     ASSERT("weapon save can be loaded", loaded_ok);
     if (!loaded_ok) {
@@ -464,6 +473,60 @@ static void test_harbor_relocation(void) {
     remove_test_save(MIGRATED_SLOT);
 }
 
+static void test_legacy_coast_sluice_removal(void) {
+    static GameState original;
+    static GameState loaded;
+    memset(&original, 0, sizeof(original));
+    game_init(&original);
+    original.location = LOCATION_COAST;
+    original.level = 2;
+    map_generate_coast(&original.map, original.level);
+    Room *room = &original.map.rooms[original.map.room_count / 2];
+    int cx;
+    int cy;
+    map_room_center(room, &cx, &cy);
+    for (int y = room->y; y < room->y + room->h; y++) {
+        original.map.tiles[y][cx] = TILE_COAST_WALL;
+    }
+    original.map.tiles[cy - 2][cx] = TILE_COAST_DEEP_WATER;
+    original.map.tiles[cy + 2][cx] = TILE_COAST_CHANNEL_DRY;
+    original.map.tiles[cy][cx + 2] = TILE_COAST_SLUICE_CONTROL;
+    original.player.x = cx + 2;
+    original.player.y = cy;
+    original.floor_item_count = 1;
+    original.floor_items[0] = (FloorItem){
+        .active = 1, .x = cx + 2, .y = cy,
+        .underlying_tile = TILE_COAST_SLUICE_CONTROL,
+        .item = item_make_health_potion()
+    };
+    original.coast_cache[1].valid = 1;
+    original.coast_cache[1].map = original.map;
+    int loaded_ok = save_game(&original, LEGACY_SLOT) &&
+        rewrite_save_version(LEGACY_SLOT, 47) && load_game(&loaded, LEGACY_SLOT);
+    ASSERT("legacy Coast save with a sluice loads", loaded_ok);
+    if (loaded_ok) {
+        int open = 1;
+        for (int y = room->y; y < room->y + room->h; y++) {
+            open &= loaded.map.tiles[y][cx] == TILE_COAST_FLOOR;
+        }
+        ASSERT("loading clears the active sluice wall and switch",
+            open && loaded.map.tiles[cy][cx + 2] == TILE_ITEM);
+        ASSERT("loading clears the cached sluice wall and switch",
+            loaded.coast_cache[1].map.tiles[cy][cx] == TILE_COAST_FLOOR &&
+            loaded.coast_cache[1].map.tiles[cy][cx + 2] == TILE_COAST_FLOOR);
+        ASSERT("sluice migration preserves nearby loot and its floor",
+            loaded.floor_items[0].active &&
+            loaded.floor_items[0].underlying_tile == TILE_COAST_FLOOR &&
+            loaded.map.tiles[cy][cx + 2] == TILE_ITEM);
+        int control_x;
+        int control_y;
+        map_room_center(&loaded.map.rooms[0], &control_x, &control_y);
+        ASSERT("sluice migration retains the main tide control",
+            loaded.map.tiles[control_y][control_x] == TILE_COAST_TIDE_CONTROL);
+    }
+    remove_test_save(LEGACY_SLOT);
+}
+
 void test_save_load(void) {
     printf("Save/load tests:\n");
     test_current_weapon_round_trip();
@@ -473,4 +536,5 @@ void test_save_load(void) {
     test_migrated_weapon_round_trip();
     test_migrated_armor_round_trip();
     test_harbor_relocation();
+    test_legacy_coast_sluice_removal();
 }

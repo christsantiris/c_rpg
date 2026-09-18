@@ -151,7 +151,8 @@ void test_coast(void) {
         }
         ASSERT("coast stage contains shallow water", shallow > 0);
         ASSERT("coast stage contains blocking deep water", deep > 0);
-        ASSERT("coast stage contains two connected tide controls", controls == 1 && sluices == 1);
+        ASSERT("coast stage has one tide control and no sluice switch",
+            controls == 1 && sluices == 0);
         int water_x = 0;
         int water_y = 0;
         ASSERT("deep water blocks movement",

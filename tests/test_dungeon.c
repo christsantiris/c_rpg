@@ -155,6 +155,26 @@ void test_dungeon(void) {
     }
 }
 
+void test_dungeon_exit_distance(void) {
+    printf("Dungeon exit distance tests:\n");
+    int exits_separated = 1;
+    for (int seed = 1; seed <= 256 && exits_separated; seed++) {
+        srand(seed);
+        for (int level = 1; level <= DUNGEON_DEPTH; level++) {
+            Map m;
+            map_generate(&m, level);
+            int distance = abs(m.stairs_down_x - m.stairs_up_x) +
+                abs(m.stairs_down_y - m.stairs_up_y);
+            if (distance < 45 || m.room_count < MIN_ROOMS) {
+                exits_separated = 0;
+                break;
+            }
+        }
+    }
+    ASSERT("dungeon exits stay away from entrances across generated floors",
+        exits_separated);
+}
+
 void test_return_to_town_spell(void) {
     printf("Return to Town spell tests:\n");
     GameState g;

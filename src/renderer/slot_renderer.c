@@ -33,22 +33,28 @@ void slot_draw(Renderer *r, const SlotSelect *s, int is_save) {
     for (int i = 0; i < 3; i++) {
         int item_y = cy - 20 + i * 40;
         char label[48];
+        char level_label[16];
         char name[21];
-        int  level;
+        int level;
+        int occupied = get_save_preview(i + 1, name, &level);
 
-        if (get_save_preview(i + 1, name, &level)) {
-            snprintf(label, sizeof(label), "SLOT %d - %s  LVL %d", i+1, name, level);
+        if (occupied) {
+            snprintf(label, sizeof(label), "SLOT %d - %s", i + 1, name);
+            snprintf(level_label, sizeof(level_label), "LVL %d", level);
         } else {
-            snprintf(label, sizeof(label), "SLOT %d - EMPTY", i+1);
+            snprintf(label, sizeof(label), "SLOT %d - EMPTY", i + 1);
         }
 
-        SDL_Color color = get_save_preview(i + 1, name, &level) ? green : dimmed;
+        SDL_Color color = occupied ? green : dimmed;
 
         if (s->selected == i) {
-            renderer_draw_text(r, ">", cx - 180, item_y, gold, r->font_small);
-            renderer_draw_text(r, label, cx - 160, item_y, gold, r->font_small);
-        } else {
-            renderer_draw_text(r, label, cx - 160, item_y, color, r->font_small);
+            color = gold;
+            renderer_draw_text(r, ">", cx - 240, item_y, gold, r->font_small);
+        }
+        renderer_draw_text(r, label, cx - 220, item_y, color, r->font_small);
+        if (occupied) {
+            renderer_draw_text(r, level_label, cx + 130, item_y, color,
+                r->font_small);
         }
     }
 

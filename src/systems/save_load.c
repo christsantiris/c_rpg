@@ -292,7 +292,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 47);
+    cJSON_AddNumberToObject(root, "save_version", 48);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -1524,6 +1524,32 @@ int load_game(GameState *g, int slot) {
         }
     }
 
+    // Version 48 removes the redundant Coast sluice wall and nearby switch.
+    if (save_version < 48) {
+        if (g->location == LOCATION_COAST &&
+            map_remove_coast_sluice(&g->map)) {
+            Room *room = &g->map.rooms[g->map.room_count / 2];
+            int cx;
+            int cy;
+            map_room_center(room, &cx, &cy);
+            for (int i = 0; i < g->floor_item_count; i++) {
+                FloorItem *item = &g->floor_items[i];
+                if (item->active &&
+                    ((item->x == cx && item->y >= room->y &&
+                    item->y < room->y + room->h) ||
+                    (item->x == cx + 2 && item->y == cy))) {
+                    item->underlying_tile = TILE_COAST_FLOOR;
+                    g->map.tiles[item->y][item->x] = TILE_ITEM;
+                }
+            }
+        }
+        for (int i = 0; i < MAX_REGION_DEPTH; i++) {
+            if (g->coast_cache[i].valid) {
+                map_remove_coast_sluice(&g->coast_cache[i].map);
+            }
+        }
+    }
+
     if (g->location == LOCATION_MOUNTAINS) {
         hide_legacy_fort_plate(&g->map);
     }
@@ -1554,8 +1580,15 @@ int get_save_preview(int slot, char *name_out, int *level_out) {
     if (!root) return 0;
 
     cJSON *player = cJSON_GetObjectItem(root, "player");
-    strncpy(name_out, cJSON_GetObjectItem(player, "name")->valuestring, 20);
-    *level_out = cJSON_GetObjectItem(root, "level")->valueint;
+    cJSON *name = cJSON_GetObjectItem(player, "name");
+    cJSON *level = cJSON_GetObjectItem(player, "level");
+    if (!cJSON_IsString(name) || !cJSON_IsNumber(level)) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    strncpy(name_out, name->valuestring, 20);
+    name_out[20] = '\0';
+    *level_out = level->valueint;
 
     cJSON_Delete(root);
     return 1;

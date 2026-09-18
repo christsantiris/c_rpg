@@ -9,10 +9,10 @@ another region does not reset explored coast stages.
 Stages alternate among north, south, east, and west entrances and exits. A
 stage never uses the same edge for both, preventing the player from immediately
 walking back into the stage they just completed. Deep water initially blocks
-the final approach. Exploring the ruins and stepping onto the brass tide
+the final approach. Exploring the ruins and pressing `A` at the brass tide
 control drains the deep water into walkable shallows and exposes the route.
-The control remains in place and reverses the tide each time the player walks
-over it. Stages 1–7 can be exited without clearing enemies; only a raised tide
+The control reverses the tide each time it is used. Stages 1–7 can be exited
+without clearing enemies; only a raised tide
 blocks their exits. The stage 8 exit also requires the Drowned Queen to be
 defeated before returning to town.
 

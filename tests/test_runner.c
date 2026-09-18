@@ -8,6 +8,7 @@ void test_map(void);
 void test_map_tiles(void);
 void test_viewport(void);
 void test_dungeon(void);
+void test_dungeon_exit_distance(void);
 void test_stairs_locked(void);
 void test_final_dungeon_exit(void);
 void test_enemy_movement_collision(void);
@@ -103,6 +104,8 @@ int main(void) {
     test_save_load();
     printf("\n");
     test_classes();
+    printf("\n");
+    test_dungeon_exit_distance();
     printf("\n");
     REPORT();
 }

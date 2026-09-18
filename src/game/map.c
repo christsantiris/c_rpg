@@ -149,7 +149,7 @@ void map_generate(Map *m, int level) {
     int target_rooms = random_range(MIN_ROOMS, MAX_ROOMS);
     int attempts = 0;
 
-    while (m->room_count < target_rooms && attempts < 200) {
+    while (m->room_count < target_rooms && attempts < 400) {
         attempts++;
 
         Room r;
@@ -169,6 +169,16 @@ void map_generate(Map *m, int level) {
             }
         }
         if (overlaps) continue;
+
+        // The last room holds the exit (and, on the final floor, the boss).
+        if (m->room_count == target_rooms - 1) {
+            int start_x, start_y, exit_x, exit_y;
+            map_room_center(&m->rooms[0], &start_x, &start_y);
+            map_room_center(&r, &exit_x, &exit_y);
+            if (abs(exit_x - start_x) + abs(exit_y - start_y) < 45) {
+                continue;
+            }
+        }
 
         // Carve room
         fill_rect(m, r.x, r.y, r.w, r.h, TILE_FLOOR);
@@ -755,24 +765,22 @@ static void place_coast_chamber(Map *m, int room_index, TileType water) {
     m->tiles[cy][cx + 1] = TILE_COAST_CACHE;
 }
 
-static void place_coast_sluices(Map *m, int room_index) {
-    Room *room = &m->rooms[room_index];
+int map_remove_coast_sluice(Map *m) {
+    if (m->room_count < 3) {
+        return 0;
+    }
+    Room *room = &m->rooms[m->room_count / 2];
     int cx;
     int cy;
     map_room_center(room, &cx, &cy);
-    for (int y = room->y; y < room->y + room->h; y++) {
-        if ((y == room->y && map_is_walkable(m, cx, y - 1)) ||
-            (y == room->y + room->h - 1 && map_is_walkable(m, cx, y + 1))) {
-            continue;
-        }
-        m->tiles[y][cx] = TILE_COAST_WALL;
+    if (m->tiles[cy][cx + 2] != TILE_COAST_SLUICE_CONTROL) {
+        return 0;
     }
-    // Opposite channels guarantee a crossing in either tide state.
-    m->tiles[cy - 2][cx] = TILE_COAST_DEEP_WATER;
-    m->tiles[cy + 2][cx] = TILE_COAST_CHANNEL_DRY;
-    m->tiles[cy][cx + 2] = TILE_COAST_SLUICE_CONTROL;
-    map_room_center(&m->rooms[0], &cx, &cy);
-    m->tiles[cy][cx] = TILE_COAST_TIDE_CONTROL;
+    for (int y = room->y; y < room->y + room->h; y++) {
+        m->tiles[y][cx] = TILE_COAST_FLOOR;
+    }
+    m->tiles[cy][cx + 2] = TILE_COAST_FLOOR;
+    return 1;
 }
 
 TileType map_coast_trap_underlay(const Map *m, int x, int y) {
@@ -890,7 +898,10 @@ void map_generate_coast(Map *m, int level) {
     }
     place_coast_chamber(m, 1, TILE_COAST_DEEP_WATER);
     place_coast_chamber(m, 2, TILE_COAST_CHANNEL_DRY);
-    place_coast_sluices(m, control_room);
+    int control_x;
+    int control_y;
+    map_room_center(&m->rooms[0], &control_x, &control_y);
+    m->tiles[control_y][control_x] = TILE_COAST_TIDE_CONTROL;
 }
 
 void map_place_town_harbor(Map *m) {
