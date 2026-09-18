@@ -314,10 +314,119 @@ static int enemy_terrain_open(const GameState *g, int x, int y) {
     return 1;
 }
 
+void game_repair_forest_enemy_positions(Map *m, Enemy *actors, int count, int px, int py) {
+    unsigned char reachable[MAP_H][MAP_W] = {{0}};
+    int queue[MAP_W * MAP_H];
+    int head = 0;
+    int tail = 0;
+    int start_x = m->stairs_up_x;
+    int start_y = m->stairs_up_y;
+    if (!map_is_walkable(m, start_x, start_y)) {
+        return;
+    }
+    reachable[start_y][start_x] = 1;
+    queue[tail++] = start_y * MAP_W + start_x;
+    static const int dx[4] = {0, 1, 0, -1};
+    static const int dy[4] = {-1, 0, 1, 0};
+    while (head < tail) {
+        int cell = queue[head++];
+        int x = cell % MAP_W;
+        int y = cell / MAP_W;
+        for (int side = 0; side < 4; side++) {
+            int nx = x + dx[side];
+            int ny = y + dy[side];
+            if (nx < 0 || nx >= MAP_W || ny < 0 || ny >= MAP_H ||
+                reachable[ny][nx] || !map_is_walkable(m, nx, ny)) {
+                continue;
+            }
+            reachable[ny][nx] = 1;
+            queue[tail++] = ny * MAP_W + nx;
+        }
+    }
+
+    for (int i = 0; i < count; i++) {
+        Enemy *enemy = &actors[i];
+        if (!enemy->active) {
+            continue;
+        }
+        int overlaps_earlier = 0;
+        for (int other = 0; other < i; other++) {
+            if (actors[other].active && actors[other].x == enemy->x &&
+                actors[other].y == enemy->y) {
+                overlaps_earlier = 1;
+                break;
+            }
+        }
+        if (enemy->x >= 0 && enemy->x < MAP_W && enemy->y >= 0 &&
+            enemy->y < MAP_H && reachable[enemy->y][enemy->x] &&
+            !(enemy->x == start_x && enemy->y == start_y) &&
+            !(enemy->x == px && enemy->y == py) && !overlaps_earlier) {
+            continue;
+        }
+        int best_distance = 2 * (MAP_W + MAP_H) + 1;
+        int best_x = -1;
+        int best_y = -1;
+        for (int y = 1; y < MAP_H - 1; y++) {
+            for (int x = 1; x < MAP_W - 1; x++) {
+                if (!reachable[y][x] || m->tiles[y][x] != TILE_FOREST_FLOOR ||
+                    (x == start_x && y == start_y) ||
+                    (x == px && y == py)) {
+                    continue;
+                }
+                int occupied = 0;
+                for (int other = 0; other < count; other++) {
+                    if (other != i && actors[other].active &&
+                        actors[other].x == x && actors[other].y == y) {
+                        occupied = 1;
+                        break;
+                    }
+                }
+                int distance = abs(x - enemy->x) + abs(y - enemy->y);
+                for (int side = 0; side < 4; side++) {
+                    TileType neighbor = m->tiles[y + dy[side]][x + dx[side]];
+                    if (neighbor == TILE_FOREST_WALL ||
+                        neighbor == TILE_FOREST_HIDDEN_TRAIL) {
+                        distance += MAP_W + MAP_H;
+                        break;
+                    }
+                }
+                if (!occupied && distance < best_distance) {
+                    best_distance = distance;
+                    best_x = x;
+                    best_y = y;
+                }
+            }
+        }
+        if (best_x >= 0) {
+            enemy->x = best_x;
+            enemy->y = best_y;
+        }
+    }
+}
+
 static int enemy_tile_open(const GameState *g, int x, int y) {
     // Keep keys, stairs, traps, and portals visible and unobstructed.
     if (!enemy_terrain_open(g, x, y)) {
         return 0;
+    }
+    if (x == g->map.stairs_up_x && y == g->map.stairs_up_y) {
+        return 0;
+    }
+    if (g->location == LOCATION_FOREST) {
+        static const int dx[4] = {0, 1, 0, -1};
+        static const int dy[4] = {-1, 0, 1, 0};
+        for (int side = 0; side < 4; side++) {
+            int nx = x + dx[side];
+            int ny = y + dy[side];
+            if (nx < 0 || nx >= MAP_W || ny < 0 || ny >= MAP_H) {
+                return 0;
+            }
+            TileType neighbor = g->map.tiles[ny][nx];
+            if (neighbor == TILE_FOREST_WALL ||
+                neighbor == TILE_FOREST_HIDDEN_TRAIL) {
+                return 0;
+            }
+        }
     }
     for (int i = 0; i < g->enemy_count; i++) {
         if (g->enemies[i].active &&
@@ -591,6 +700,10 @@ void enemies_spawn(GameState *g) {
             break;
         }
         regular_spawned++;
+    }
+    if (g->location == LOCATION_FOREST) {
+        game_repair_forest_enemy_positions(&g->map, g->enemies,
+            g->enemy_count, g->map.stairs_up_x, g->map.stairs_up_y);
     }
 }
 

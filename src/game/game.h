@@ -141,6 +141,7 @@ void game_move_player(GameState *g, int dx, int dy);
 void game_descend(GameState *g);
 void game_ascend(GameState *g);
 void enemies_spawn(GameState *g);
+void game_repair_forest_enemy_positions(Map *m, Enemy *actors, int count, int px, int py);
 void game_enter_dungeon(GameState *g);
 void game_enter_forest(GameState *g);
 void game_enter_mountains(GameState *g);

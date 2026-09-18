@@ -1559,6 +1559,18 @@ int load_game(GameState *g, int slot) {
         }
     }
 
+    if (g->location == LOCATION_FOREST) {
+        game_repair_forest_enemy_positions(&g->map, g->enemies,
+            g->enemy_count, g->player.x, g->player.y);
+    }
+    for (int i = 0; i < MAX_REGION_DEPTH; i++) {
+        if (g->forest_cache[i].valid) {
+            game_repair_forest_enemy_positions(&g->forest_cache[i].map,
+                g->forest_cache[i].enemies, g->forest_cache[i].enemy_count,
+                -1, -1);
+        }
+    }
+
     cJSON_Delete(root);
     return 1;
 }

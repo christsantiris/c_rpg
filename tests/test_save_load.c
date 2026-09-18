@@ -527,6 +527,91 @@ static void test_legacy_coast_sluice_removal(void) {
     remove_test_save(LEGACY_SLOT);
 }
 
+static void test_forest_enemy_repair(void) {
+    static GameState original;
+    static GameState loaded;
+    memset(&original, 0, sizeof(original));
+    memset(&loaded, 0, sizeof(loaded));
+    game_init(&original);
+    original.location = LOCATION_FOREST;
+    original.level = 2;
+    map_generate_forest(&original.map, original.level);
+    original.player.x = original.map.stairs_up_x;
+    original.player.y = original.map.stairs_up_y;
+    int wall_x = -1;
+    int wall_y = -1;
+    for (int y = 1; y < MAP_H - 1 && wall_x < 0; y++) {
+        for (int x = 1; x < MAP_W - 1; x++) {
+            if (original.map.tiles[y][x] == TILE_FOREST_WALL &&
+                map_is_walkable(&original.map, x - 1, y)) {
+                wall_x = x;
+                wall_y = y;
+                break;
+            }
+        }
+    }
+    ASSERT("forest test finds a tree beside a path", wall_x >= 0);
+    if (wall_x < 0) {
+        return;
+    }
+    int pocket_x = -1;
+    int pocket_y = -1;
+    for (int y = 1; y < MAP_H - 1 && pocket_x < 0; y++) {
+        for (int x = 1; x < MAP_W - 1; x++) {
+            if (original.map.tiles[y][x] == TILE_FOREST_WALL &&
+                original.map.tiles[y - 1][x] == TILE_FOREST_WALL &&
+                original.map.tiles[y + 1][x] == TILE_FOREST_WALL &&
+                original.map.tiles[y][x - 1] == TILE_FOREST_WALL &&
+                original.map.tiles[y][x + 1] == TILE_FOREST_WALL) {
+                pocket_x = x;
+                pocket_y = y;
+                break;
+            }
+        }
+    }
+    ASSERT("forest test finds an isolated tree pocket", pocket_x >= 0);
+    if (pocket_x < 0) {
+        return;
+    }
+    original.map.tiles[pocket_y][pocket_x] = TILE_FOREST_FLOOR;
+    original.enemy_count = 3;
+    for (int i = 0; i < original.enemy_count; i++) {
+        original.enemies[i].active = 1;
+        original.enemies[i].type = ENEMY_PIXIE;
+        original.enemies[i].x = i == 2 ? pocket_x : wall_x;
+        original.enemies[i].y = i == 2 ? pocket_y : wall_y;
+        original.enemies[i].hp = 7;
+        original.enemies[i].max_hp = 7;
+    }
+    original.forest_cache[1].valid = 1;
+    original.forest_cache[1].map = original.map;
+    original.forest_cache[1].enemy_count = original.enemy_count;
+    memcpy(original.forest_cache[1].enemies, original.enemies,
+        sizeof(Enemy) * original.enemy_count);
+
+    int loaded_ok = save_game(&original, LEGACY_SLOT) &&
+        load_game(&loaded, LEGACY_SLOT);
+    ASSERT("forest save with stranded enemies loads", loaded_ok);
+    if (loaded_ok) {
+        ASSERT("loaded forest enemies move onto separate path tiles",
+            loaded.enemies[0].active && loaded.enemies[1].active &&
+            loaded.map.tiles[loaded.enemies[0].y][loaded.enemies[0].x] == TILE_FOREST_FLOOR &&
+            loaded.map.tiles[loaded.enemies[1].y][loaded.enemies[1].x] == TILE_FOREST_FLOOR &&
+            !(loaded.enemies[0].x == loaded.enemies[1].x &&
+            loaded.enemies[0].y == loaded.enemies[1].y));
+        ASSERT("enemy in an isolated floor pocket moves onto the path",
+            loaded.enemies[2].active &&
+            !(loaded.enemies[2].x == pocket_x && loaded.enemies[2].y == pocket_y) &&
+            loaded.map.tiles[loaded.enemies[2].y][loaded.enemies[2].x] == TILE_FOREST_FLOOR);
+        ASSERT("cached forest enemies are repaired for revisits",
+            loaded.forest_cache[1].valid &&
+            loaded.forest_cache[1].map.tiles
+                [loaded.forest_cache[1].enemies[0].y]
+                [loaded.forest_cache[1].enemies[0].x] == TILE_FOREST_FLOOR);
+    }
+    remove_test_save(LEGACY_SLOT);
+}
+
 void test_save_load(void) {
     printf("Save/load tests:\n");
     test_current_weapon_round_trip();
@@ -537,4 +622,5 @@ void test_save_load(void) {
     test_migrated_armor_round_trip();
     test_harbor_relocation();
     test_legacy_coast_sluice_removal();
+    test_forest_enemy_repair();
 }

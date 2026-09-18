@@ -161,8 +161,6 @@ High priority
    Add recognizable combat roles such as protectors, ambushers, healers, summoners, ranged attackers, and enemies that retreat or flank.
 2. Boss encounter improvements
    Give every boss multiple phases, telegraphed signature attacks, an arena mechanic, and a guaranteed thematic reward.
-3. Economy and loot balancing
-   Review gold income, shop prices, sell values, drop rates, and upgrade pacing now that high-tier weapons exist. Rare equipment should feel attainable without making shops irrelevant.
 Medium priority
 1. Region replay tiers
    After defeating a regional boss, unlock a harder expedition version with stronger enemies, altered layouts, improved rewards, and possibly a remixed boss. This is better as an endgame layer after normal-order difficulty scaling works.
