@@ -58,6 +58,20 @@ void slot_draw(Renderer *r, const SlotSelect *s, int is_save) {
         }
     }
 
-    renderer_draw_text(r, "UP DOWN NAVIGATE   ENTER SELECT   ESC CANCEL",
-        cx - 220, cy + 120, hint, r->font_small);
+    if (is_save && s->confirming_save) {
+        SDL_Color white = {200, 200, 200, 255};
+        char prompt[48];
+        snprintf(prompt, sizeof(prompt), s->overwriting_save
+            ? "OVERWRITE SLOT %d? (Y/N)" : "SAVE TO SLOT %d? (Y/N)",
+            s->selected + 1);
+        int prompt_w = 0;
+        TTF_SizeText(r->font_small, prompt, &prompt_w, NULL);
+        renderer_draw_text(r, prompt, (r->screen_w - prompt_w) / 2,
+            cy - 60, white, r->font_small);
+        renderer_draw_text(r, "Y CONFIRM   N OR ESC CANCEL",
+            cx - 160, cy + 120, hint, r->font_small);
+    } else {
+        renderer_draw_text(r, "UP DOWN NAVIGATE   ENTER SELECT   ESC CANCEL",
+            cx - 220, cy + 120, hint, r->font_small);
+    }
 }

@@ -299,18 +299,22 @@ static void handle_landing_result(LandingResult result, LandingScreen *landing,
     }
 }
 
-static void handle_slot_result(SlotResult result, int slot, int slot_is_save,
-    GameScreen *screen, GameState *game, Renderer *renderer, Viewport *viewport,
-    LandingScreen *landing) {
+static void handle_slot_result(SlotResult result, SlotSelect *slots, int saving, GameScreen *screen, GameState *game, Renderer *renderer, Viewport *viewport, LandingScreen *landing) {
+    int slot = slots->selected + 1;
 
     if (result == SLOT_CANCELLED) {
         *screen = SCREEN_LANDING;
         return;
     }
-    if (result == SLOT_SELECTED) {
-        if (slot_is_save) {
-            save_game(game, slot);
+    if (result == SLOT_SAVE_CONFIRMED && saving) {
+        if (save_game(game, slot)) {
             *screen = SCREEN_LANDING;
+        }
+        return;
+    }
+    if (result == SLOT_SELECTED) {
+        if (saving) {
+            slot_select_begin_save(slots, save_exists(slot));
         } else {
             // Show loading screen for one frame before blocking load
             renderer_begin_frame(renderer);
@@ -515,9 +519,8 @@ int main(int argc, char **argv) {
                     // Save / load slot screen
                     if (screen == SCREEN_SAVE_SLOT || screen == SCREEN_LOAD_SLOT) {
                         SlotResult result = slot_select_handle_key(&slot_select, sc);
-                        handle_slot_result(result, slot_select.selected + 1,
-                            slot_is_save, &screen, &game, &renderer, &viewport,
-                            &landing);
+                        handle_slot_result(result, &slot_select, slot_is_save,
+                            &screen, &game, &renderer, &viewport, &landing);
                         break;
                     }
 
@@ -820,7 +823,8 @@ int main(int argc, char **argv) {
                     }
 
                     // Save / load slot clicks
-                    if (screen == SCREEN_SAVE_SLOT || screen == SCREEN_LOAD_SLOT) {
+                    else if ((screen == SCREEN_SAVE_SLOT || screen == SCREEN_LOAD_SLOT) &&
+                        !slot_select.confirming_save) {
                         int base_y = renderer.screen_h / 2 - 20;
                         for (int i = 0; i < 3; i++) {
                             int item_y     = base_y + i * 40;
@@ -828,7 +832,7 @@ int main(int argc, char **argv) {
                             if (event.button.y >= item_y &&
                                 event.button.y <= item_y_end) {
                                 slot_select.selected = i;
-                                handle_slot_result(SLOT_SELECTED, i + 1,
+                                handle_slot_result(SLOT_SELECTED, &slot_select,
                                     slot_is_save, &screen, &game, &renderer,
                                     &viewport, &landing);
                                 break;
