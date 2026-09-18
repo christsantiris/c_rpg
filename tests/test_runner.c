@@ -36,6 +36,7 @@ void test_mara_quest(void);
 void test_quest_activation_gating(void);
 void test_quest_journal(void);
 void test_save_load(void);
+void test_save_confirmation(void);
 
 int main(void) {
     // ASSERT("sanity check true",  1 == 1);
@@ -102,6 +103,7 @@ int main(void) {
     test_items();
     printf("\n");
     test_save_load();
+    test_save_confirmation();
     printf("\n");
     test_classes();
     printf("\n");

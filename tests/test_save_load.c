@@ -1,7 +1,9 @@
 #include "test_utils.h"
 #include "../src/game/game.h"
 #include "../src/systems/save_load.h"
+#include "../src/screens/slot_select.h"
 #include "../external/cJSON.h"
+#include <SDL2/SDL.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,6 +17,41 @@
 #define DUAL_WIELD_SLOT 99006
 #define LEGACY_OFF_HAND_SLOT 99007
 #define LEGACY_GOBLIN_REWARD_SLOT 99008
+
+void test_save_confirmation(void) {
+    printf("Save confirmation tests:\n");
+    SlotSelect slots;
+    slot_select_init(&slots);
+    ASSERT("slot selection starts without a pending save",
+        !slots.confirming_save && slot_select_handle_key(&slots,
+            SDL_SCANCODE_RETURN) == SLOT_SELECTED);
+
+    slot_select_begin_save(&slots, 1);
+    ASSERT("occupied save slot requires overwrite confirmation",
+        slots.confirming_save && slots.overwriting_save);
+    ASSERT("navigation and Enter cannot confirm an overwrite",
+        slot_select_handle_key(&slots, SDL_SCANCODE_DOWN) == SLOT_NONE &&
+        slots.selected == 0 &&
+        slot_select_handle_key(&slots, SDL_SCANCODE_RETURN) == SLOT_NONE &&
+        slots.confirming_save);
+    ASSERT("N cancels the overwrite and returns to slot selection",
+        slot_select_handle_key(&slots, SDL_SCANCODE_N) == SLOT_NONE &&
+        !slots.confirming_save &&
+        slot_select_handle_key(&slots, SDL_SCANCODE_RETURN) == SLOT_SELECTED);
+
+    slot_select_begin_save(&slots, 0);
+    ASSERT("empty save slots also ask for confirmation",
+        slots.confirming_save && !slots.overwriting_save);
+    ASSERT("Escape cancels without confirming a save",
+        slot_select_handle_key(&slots, SDL_SCANCODE_ESCAPE) == SLOT_NONE &&
+        !slots.confirming_save);
+
+    slot_select_begin_save(&slots, 1);
+    ASSERT("only Y confirms the selected save slot",
+        slot_select_handle_key(&slots, SDL_SCANCODE_Y) ==
+            SLOT_SAVE_CONFIRMED && !slots.confirming_save &&
+            slots.selected == 0);
+}
 
 static void format_save_path(int slot, char *path, int size) {
     snprintf(path, size, "saves/savegame_%d.json", slot);
