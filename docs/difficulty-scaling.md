@@ -1,4 +1,4 @@
-# Dungeon Difficulty Scaling
+# Regional Difficulty Scaling
 
 The castle dungeon is a short, self-contained undead region. The Haunted Forest,
 Goblin Mountains, and Sunken Coast maintain their own progression rather than
@@ -14,16 +14,15 @@ enemy strength when a floor is generated, not on every player level-up.
 | Prior bosses | Regular enemy HP | Regular attack | Boss HP | Boss attack | Enemy XP |
 | ---: | ---: | ---: | ---: | ---: | ---: |
 | 0 | Base | Base | Base | Base | Base |
-| 1 | +20% | +2 | +25% | +3 | +10% |
-| 2 | +40% | +4 | +50% | +6 | +20% |
-| 3 | +60% | +6 | +75% | +9 | +30% |
+| 1 | +45% | +7 | +30% | +6 | +10% |
+| 2 | +90% | +14 | +60% | +12 | +20% |
+| 3 | +135% | +21 | +90% | +18 | +30% |
 
-At tiers 2 and 3, enemies also gain 1 defense. The one-HP Illusion remains at
-one HP. Player level adds a smaller step at levels 9 and 17, capped there: each
-step adds 5% HP and 1 attack. On stages 1 and 2 of the third region, one regular
-enemy is replaced with a tougher regional role; the fourth region replaces two.
-Encounter counts, gold drops, equipment rewards, and traps are unchanged in
-this first pass.
+Each tier also adds 1 defense. The one-HP Illusion remains at one HP. Player
+level adds a smaller step at levels 9 and 17, capped there: each step adds 10%
+HP and 2 attack. Every region draws its regular enemy mix from three stages
+deeper per prior boss, without changing the actual map stage or encounter count.
+Gold drops, equipment rewards, and traps are unchanged.
 
 The scaled stats are stored on each spawned enemy. Cached floors and saved
 enemies retain their stats when revisited or loaded; generating a fresh floor
@@ -156,6 +155,11 @@ Non-boss enemies retain their existing 25% gold-drop chance and separate 5%
 item-drop chance. Item drops contain only health potions, mana potions, and
 spell scrolls; regular enemies never drop weapons or armor. Deeper stages shift
 the scroll mix toward Heal and Fireball.
+
+Shop purchase prices are 150% of an item's base value, rounded up. Shops pay
+50% of base value when buying an item from the player. These prices apply to
+both Blacksmith and Alchemist stock; existing item values in saved games stay
+unchanged.
 
 Regional bosses guarantee fixed thematic equipment rewards. Boss victories
 also expand the Blacksmith's inventory. Uncommon stock unlocks after one boss,

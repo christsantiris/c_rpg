@@ -1,6 +1,14 @@
 #include "shop.h"
 #include <SDL2/SDL.h>
 
+int shop_buy_price(const Item *item) {
+    return (item->value * 3 + 1) / 2;
+}
+
+int shop_sell_price(const Item *item) {
+    return item->value / 2;
+}
+
 static int defeated_boss_count(int defeated_bosses) {
     int count = 0;
     while (defeated_bosses) {
