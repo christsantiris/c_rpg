@@ -355,6 +355,18 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+#ifdef __APPLE__
+    // Prefer OpenGL for stable native fullscreen presentation on macOS.
+    const char *render_driver = SDL_getenv(SDL_HINT_RENDER_DRIVER);
+    if (!render_driver || !*render_driver) {
+        SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
+    }
+    const char *render_batching = SDL_getenv(SDL_HINT_RENDER_BATCHING);
+    if (!render_batching || !*render_batching) {
+        SDL_SetHint(SDL_HINT_RENDER_BATCHING, "1");
+    }
+#endif
+
     SDL_Window *window = SDL_CreateWindow(
         WINDOW_TITLE,
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
