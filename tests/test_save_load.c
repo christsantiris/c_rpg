@@ -17,6 +17,7 @@
 #define DUAL_WIELD_SLOT 99006
 #define LEGACY_OFF_HAND_SLOT 99007
 #define LEGACY_GOBLIN_REWARD_SLOT 99008
+#define BLOCKED_DUNGEON_SLOT 99009
 
 void test_save_confirmation(void) {
     printf("Save confirmation tests:\n");
@@ -649,6 +650,59 @@ static void test_forest_enemy_repair(void) {
     remove_test_save(LEGACY_SLOT);
 }
 
+static void test_blocked_dungeon_gate_repair(void) {
+    static GameState original;
+    static GameState loaded;
+    memset(&original, 0, sizeof(original));
+    memset(&loaded, 0, sizeof(loaded));
+    game_init(&original);
+    original.location = LOCATION_DUNGEON;
+    original.level = 2;
+    original.player.x = 2;
+    original.player.y = 5;
+    Map *m = &original.map;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            m->tiles[y][x] = TILE_WALL;
+        }
+    }
+    for (int x = 2; x <= 8; x++) {
+        m->tiles[5][x] = TILE_FLOOR;
+    }
+    m->stairs_up_x = 2;
+    m->stairs_up_y = 5;
+    m->stairs_down_x = 8;
+    m->stairs_down_y = 5;
+    m->tiles[5][2] = TILE_STAIRS_UP;
+    m->tiles[5][5] = TILE_DUNGEON_GATE;
+    m->tiles[5][7] = TILE_DUNGEON_SWITCH_OFF;
+    m->tiles[5][8] = TILE_STAIRS_DOWN;
+    original.level_cache[1].valid = 1;
+    original.level_cache[1].map = *m;
+
+    remove_test_save(BLOCKED_DUNGEON_SLOT);
+    int loaded_ok = save_game(&original, BLOCKED_DUNGEON_SLOT) &&
+        load_game(&loaded, BLOCKED_DUNGEON_SLOT);
+    ASSERT("blocked dungeon gate save can be loaded", loaded_ok);
+    if (loaded_ok) {
+        ASSERT("loading opens a gate with no accessible switch",
+            loaded.map.tiles[5][5] == TILE_FLOOR &&
+            loaded.map.tiles[5][7] == TILE_FLOOR &&
+            map_is_walkable(&loaded.map, 5, 5));
+        ASSERT("loading repairs the cached blocked dungeon floor",
+            loaded.level_cache[1].valid &&
+            loaded.level_cache[1].map.tiles[5][5] == TILE_FLOOR &&
+            loaded.level_cache[1].map.tiles[5][7] == TILE_FLOOR);
+    }
+    remove_test_save(BLOCKED_DUNGEON_SLOT);
+
+    m->tiles[5][7] = TILE_FLOOR;
+    m->tiles[5][3] = TILE_DUNGEON_SWITCH_OFF;
+    ASSERT("gate remains when its switch is reachable before the exit",
+        map_repair_dungeon_routes(m) == 0 &&
+        m->tiles[5][5] == TILE_DUNGEON_GATE);
+}
+
 void test_save_load(void) {
     printf("Save/load tests:\n");
     test_current_weapon_round_trip();
@@ -660,4 +714,5 @@ void test_save_load(void) {
     test_harbor_relocation();
     test_legacy_coast_sluice_removal();
     test_forest_enemy_repair();
+    test_blocked_dungeon_gate_repair();
 }

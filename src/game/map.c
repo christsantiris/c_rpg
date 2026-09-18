@@ -292,6 +292,9 @@ void map_generate(Map *m, int level) {
     if (level >= 2 && level < DUNGEON_DEPTH && level % 2 == 0) {
         place_locked_crypt(m);
     }
+    if (level < DUNGEON_DEPTH) {
+        map_repair_dungeon_routes(m);
+    }
 }
 
 int map_is_walkable(const Map *m, int x, int y) {
@@ -323,6 +326,75 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_LOCKED_DOOR &&
         m->tiles[y][x] != TILE_CRYPT_DOOR &&
         m->tiles[y][x] != TILE_DUNGEON_GATE;
+}
+
+static int dungeon_route_reaches(const Map *m, int target_x, int target_y, int gates_open) {
+    unsigned char seen[MAP_H][MAP_W] = {{0}};
+    int queue[MAP_W * MAP_H];
+    int head = 0;
+    int tail = 0;
+    int start_x = m->stairs_up_x;
+    int start_y = m->stairs_up_y;
+    if (map_is_walkable(m, start_x, start_y)) {
+        seen[start_y][start_x] = 1;
+        queue[tail++] = start_y * MAP_W + start_x;
+    }
+    const int dx[4] = {0, 1, 0, -1};
+    const int dy[4] = {-1, 0, 1, 0};
+    while (head < tail) {
+        int cell = queue[head++];
+        int x = cell % MAP_W;
+        int y = cell / MAP_W;
+        if (x == target_x && y == target_y) {
+            return 1;
+        }
+        for (int side = 0; side < 4; side++) {
+            int nx = x + dx[side];
+            int ny = y + dy[side];
+            if (nx < 0 || nx >= MAP_W || ny < 0 || ny >= MAP_H ||
+                seen[ny][nx] || (!map_is_walkable(m, nx, ny) &&
+                !(gates_open && m->tiles[ny][nx] == TILE_DUNGEON_GATE))) {
+                continue;
+            }
+            seen[ny][nx] = 1;
+            queue[tail++] = ny * MAP_W + nx;
+        }
+    }
+    return 0;
+}
+
+int map_repair_dungeon_routes(Map *m) {
+    int gates = 0;
+    int reachable_switch = 0;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (m->tiles[y][x] == TILE_DUNGEON_GATE) {
+                gates++;
+            } else if (m->tiles[y][x] == TILE_DUNGEON_SWITCH_OFF &&
+                dungeon_route_reaches(m, x, y, 0)) {
+                reachable_switch = 1;
+            }
+        }
+    }
+    if (gates == 0) {
+        return 0;
+    }
+    // The switch must be reachable before opening the gate, then the exit.
+    if (reachable_switch && dungeon_route_reaches(m, m->stairs_down_x,
+        m->stairs_down_y, 1)) {
+        return 0;
+    }
+
+    // Remove stranded mechanisms from generated maps and older saves.
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (m->tiles[y][x] == TILE_DUNGEON_GATE ||
+                m->tiles[y][x] == TILE_DUNGEON_SWITCH_OFF) {
+                m->tiles[y][x] = TILE_FLOOR;
+            }
+        }
+    }
+    return gates;
 }
 
 typedef struct {

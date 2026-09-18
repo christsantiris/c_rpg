@@ -119,6 +119,7 @@ typedef struct {
 } Map;
 
 void map_generate(Map *m, int level);
+int map_repair_dungeon_routes(Map *m);
 int  map_is_walkable(const Map *m, int x, int y);
 void map_room_center(const Room *r, int *cx, int *cy);
 void map_generate_town(Map *m, int *spawn_x, int *spawn_y);
