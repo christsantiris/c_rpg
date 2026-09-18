@@ -282,6 +282,24 @@ void test_items(void) {
     ASSERT("three bosses unlock Heal II",
         shop_has_item(&shop, "Tome: Heal II"));
 
+    int fair_shop_prices = 1;
+    ShopType shop_types[2] = {SHOP_TYPE_BLACKSMITH, SHOP_TYPE_ALCHEMIST};
+    for (int type = 0; type < 2; type++) {
+        shop_init(&shop, shop_types[type],
+            (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) |
+            (1 << LOCATION_MOUNTAINS));
+        for (int i = 0; i < shop.item_count; i++) {
+            Item *item = &shop.items[i];
+            fair_shop_prices &= shop_buy_price(item) ==
+                (item->value * 3 + 1) / 2;
+            fair_shop_prices &= shop_buy_price(item) > item->value;
+            fair_shop_prices &= shop_sell_price(item) == item->value / 2;
+            fair_shop_prices &= shop_sell_price(item) < shop_buy_price(item);
+        }
+    }
+    ASSERT("all shop stock has a higher buy price than sell price",
+        fair_shop_prices);
+
     Item armor = item_make_leather_armor();
     ASSERT("armor type correct",            armor.type          == ITEM_ARMOR);
     ASSERT("armor defense bonus set",       armor.defense_bonus == 2);

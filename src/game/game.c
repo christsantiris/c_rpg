@@ -29,15 +29,13 @@ static void scale_spawned_enemy(const GameState *g, Enemy *e) {
     if (level_steps > 2) {
         level_steps = 2;
     }
-    int hp_percent = 100 + (e->is_boss ? 25 : 20) * tier + 5 * level_steps;
+    int hp_percent = 100 + (e->is_boss ? 30 : 45) * tier + 10 * level_steps;
     if (e->type != ENEMY_ILLUSION) {
         e->max_hp = (e->max_hp * hp_percent + 50) / 100;
         e->hp = e->max_hp;
     }
-    e->attack += (e->is_boss ? 3 : 2) * tier + level_steps;
-    if (tier >= 2) {
-        e->defense++;
-    }
+    e->attack += (e->is_boss ? 6 : 7) * tier + 2 * level_steps;
+    e->defense += tier;
     e->experience = (e->experience * (100 + 10 * tier) + 50) / 100;
 }
 
@@ -589,11 +587,11 @@ void enemies_spawn(GameState *g) {
             }
         }
     }
-    int regular_spawned = 0;
     while (g->enemy_count < num_enemies) {
         EnemyType type;
         int roll = rand() % 100;
-        int level = g->level;
+        // Completed regions advance enemy roles without skipping map stages.
+        int level = g->level + 3 * order_tier;
 
         if (g->location == LOCATION_COAST) {
             if (level == 1) {
@@ -684,22 +682,9 @@ void enemies_spawn(GameState *g) {
             else if (roll < 80) type = ENEMY_WRAITH;
             else type = ENEMY_CRYPT_CONJURER;
         }
-        if (g->level <= 2 && order_tier >= 2 &&
-            regular_spawned < order_tier - 1) {
-            if (g->location == LOCATION_FOREST) {
-                type = regular_spawned == 0 ? ENEMY_GIANT_SPIDER : ENEMY_DARK_ELF;
-            } else if (g->location == LOCATION_MOUNTAINS) {
-                type = regular_spawned == 0 ? ENEMY_GOBLIN_ARCHER : ENEMY_GOBLIN_BOMBER;
-            } else if (g->location == LOCATION_COAST) {
-                type = regular_spawned == 0 ? ENEMY_SIREN : ENEMY_GIANT_CRAB;
-            } else {
-                type = regular_spawned == 0 ? ENEMY_ZOMBIE : ENEMY_CRYPT_BAT;
-            }
-        }
         if (!spawn_into_open_tile(g, type, regular_room_limit)) {
             break;
         }
-        regular_spawned++;
     }
     if (g->location == LOCATION_FOREST) {
         game_repair_forest_enemy_positions(&g->map, g->enemies,

@@ -120,8 +120,8 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
             int item_y = 140 + (i - list_start) * 32;
             char label[64];
             SDL_snprintf(label, sizeof(label), "%-20s  %d gold",
-                item->name, item->value);
-            int can_afford = g->gold >= item->value;
+                item->name, shop_buy_price(item));
+            int can_afford = g->gold >= shop_buy_price(item);
             if (s->selected == i) {
                 renderer_draw_text(r, ">", cx - 200, item_y, gold, r->font_small);
                 renderer_draw_text(r, label, cx - 180, item_y,
@@ -140,7 +140,7 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
             for (int i = list_start; i < list_end; i++) {
                 const Item *item = &g->inventory[i];
                 int item_y = 140 + (i - list_start) * 32;
-                int sell_price = item->value / 2;
+                int sell_price = shop_sell_price(item);
                 char label[64];
                 SDL_snprintf(label, sizeof(label), "%-20s  %d gold",
                     item->name, sell_price);
@@ -161,6 +161,10 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
     if (s->selected >= 0 && s->selected < detail_count) {
         const Item *selected = s->mode == 0
             ? &s->items[s->selected] : &g->inventory[s->selected];
+        Item priced_selected = *selected;
+        priced_selected.value = s->mode == 0
+            ? shop_buy_price(selected) : shop_sell_price(selected);
+        selected = &priced_selected;
         if (selected->type == ITEM_WEAPON) {
             const Item *equipped = NULL;
             if (g->equipped_main_hand >= 0 &&

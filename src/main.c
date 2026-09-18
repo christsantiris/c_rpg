@@ -584,12 +584,13 @@ int main(int argc, char **argv) {
                             screen = SCREEN_PLAYING;
                         } else if (result == SHOP_BUY) {
                             Item *item = &shop_screen.items[shop_screen.selected];
-                            if (game.gold < item->value) {
+                            int price = shop_buy_price(item);
+                            if (game.gold < price) {
                                 push_message(&game, "Not enough gold!");
                             } else if (game.inventory_count >= MAX_INVENTORY) {
                                 push_message(&game, "Inventory full!");
                             } else {
-                                game.gold -= item->value;
+                                game.gold -= price;
                                 game.inventory[game.inventory_count++] = *item;
                                 char msg[32];
                                 SDL_snprintf(msg, sizeof(msg), "Bought %s",
@@ -601,7 +602,7 @@ int main(int argc, char **argv) {
                             int idx = shop_screen.selected;
                             if (idx >= game.inventory_count) break;
                             Item item = game.inventory[idx];
-                            int sell_price = item.value / 2;
+                            int sell_price = shop_sell_price(&item);
                             char msg[32];
                             SDL_snprintf(msg, sizeof(msg), "Sold %s for %d gold",
                                 item.name, sell_price);
@@ -933,14 +934,15 @@ int main(int argc, char **argv) {
                                     // Second click on same item — buy or sell
                                     if (shop_screen.mode == 0) {
                                         Item *item = &shop_screen.items[i];
-                                        if (game.gold >= item->value &&
+                                        int price = shop_buy_price(item);
+                                        if (game.gold >= price &&
                                             game.inventory_count < MAX_INVENTORY) {
-                                            game.gold -= item->value;
+                                            game.gold -= price;
                                             game.inventory[game.inventory_count++] = *item;
                                             char msg[32];
                                             SDL_snprintf(msg, sizeof(msg), "Bought %s", item->name);
                                             push_message(&game, msg);
-                                        } else if (game.gold < item->value) {
+                                        } else if (game.gold < price) {
                                             push_message(&game, "Not enough gold!");
                                         } else {
                                             push_message(&game, "Inventory full!");
@@ -948,7 +950,7 @@ int main(int argc, char **argv) {
                                     } else {
                                         if (game.inventory_count == 0) { break; }
                                         Item item = game.inventory[i];
-                                        int sell_price = item.value / 2;
+                                        int sell_price = shop_sell_price(&item);
                                         char msg[32];
                                         SDL_snprintf(msg, sizeof(msg), "Sold %s for %d gold", item.name, sell_price);
                                         game.gold += sell_price;

@@ -58,14 +58,14 @@ void test_region_difficulty_scaling(void) {
     int scaled_skeleton = 0;
     for (int i = 0; i < g.enemy_count; i++) {
         Enemy *e = &g.enemies[i];
-        if (e->type == ENEMY_SKELETON && e->max_hp == 14 &&
-            e->attack == 7 && e->defense == 1 && e->experience == 10) {
+        if (e->type == ENEMY_SKELETON && e->max_hp == 19 &&
+            e->attack == 17 && e->defense == 2 && e->experience == 10) {
             scaled_skeleton = 1;
         }
     }
     ASSERT("two prior bosses strengthen dungeon enemies", scaled_skeleton);
-    ASSERT("late-order dungeon starts with a tougher regional role",
-        g.enemies[0].type == ENEMY_ZOMBIE);
+    ASSERT("later regions draw from the advanced encounter mix",
+        g.enemies[0].type != ENEMY_SKELETON);
 
     g.defeated_bosses = 1 << LOCATION_DUNGEON;
     enemies_spawn(&g);
@@ -79,7 +79,7 @@ void test_region_difficulty_scaling(void) {
     scaled_skeleton = 0;
     for (int i = 0; i < g.enemy_count; i++) {
         Enemy *e = &g.enemies[i];
-        if (e->type == ENEMY_SKELETON && e->max_hp == 15 && e->attack == 8) {
+        if (e->type == ENEMY_SKELETON && e->max_hp == 20 && e->attack == 19) {
             scaled_skeleton = 1;
         }
     }
@@ -90,7 +90,7 @@ void test_region_difficulty_scaling(void) {
     scaled_skeleton = 0;
     for (int i = 0; i < g.enemy_count; i++) {
         Enemy *e = &g.enemies[i];
-        if (e->type == ENEMY_SKELETON && e->max_hp == 15 && e->attack == 9) {
+        if (e->type == ENEMY_SKELETON && e->max_hp == 21 && e->attack == 21) {
             scaled_skeleton = 1;
         }
     }
@@ -103,8 +103,8 @@ void test_region_difficulty_scaling(void) {
     int scaled_boss = 0;
     for (int i = 0; i < g.enemy_count; i++) {
         Enemy *e = &g.enemies[i];
-        if (e->type == ENEMY_LICH_KING && e->max_hp == 210 &&
-            e->attack == 24 && e->defense == 7 && e->experience == 480) {
+        if (e->type == ENEMY_LICH_KING && e->max_hp == 224 &&
+            e->attack == 30 && e->defense == 8 && e->experience == 480) {
             scaled_boss = 1;
         }
     }
@@ -137,20 +137,79 @@ void test_region_difficulty_scaling(void) {
     g.location = LOCATION_FOREST;
     map_generate_forest(&g.map, g.level);
     enemies_spawn(&g);
-    int forest_roles = g.enemies[0].type == ENEMY_GIANT_SPIDER &&
-        g.enemies[1].type == ENEMY_DARK_ELF;
+    int forest_roles = 0;
+    for (int i = 0; i < g.enemy_count; i++) {
+        forest_roles |= g.enemies[i].type == ENEMY_GIANT_WURM ||
+            g.enemies[i].type == ENEMY_FOREST_TROLL;
+    }
     g.location = LOCATION_MOUNTAINS;
     map_generate_mountains(&g.map, g.level);
     enemies_spawn(&g);
-    int mountain_roles = g.enemies[0].type == ENEMY_GOBLIN_ARCHER &&
-        g.enemies[1].type == ENEMY_GOBLIN_BOMBER;
+    int mountain_roles = 0;
+    for (int i = 0; i < g.enemy_count; i++) {
+        mountain_roles |= g.enemies[i].type == ENEMY_CAVE_TROLL ||
+            g.enemies[i].type == ENEMY_HOBGOBLIN_GUARD ||
+            g.enemies[i].type == ENEMY_GOBLIN_SHAMAN;
+    }
     g.location = LOCATION_COAST;
     map_generate_coast(&g.map, g.level);
     enemies_spawn(&g);
     int coast_roles = 0;
     for (int i = 0; i < g.enemy_count; i++) {
-        coast_roles |= g.enemies[i].type == ENEMY_SIREN;
+        coast_roles |= g.enemies[i].type == ENEMY_WATER_ELEMENTAL ||
+            g.enemies[i].type == ENEMY_SEA_SERPENT;
     }
     ASSERT("late-order opening stages add tougher roles in every region",
         forest_roles && mountain_roles && coast_roles);
+
+    g.player.level = 11;
+    g.level = 1;
+    g.defeated_bosses = 1 << LOCATION_COAST;
+    g.location = LOCATION_FOREST;
+    map_generate_forest(&g.map, g.level);
+    enemies_spawn(&g);
+    int forest_after_coast = g.enemy_count > 0;
+    for (int i = 0; i < g.enemy_count; i++) {
+        Enemy *e = &g.enemies[i];
+        forest_after_coast &= e->type == ENEMY_GIANT_SPIDER ||
+            e->type == ENEMY_DARK_ELF || e->type == ENEMY_GIANT_WURM ||
+            e->type == ENEMY_FOREST_TROLL;
+        forest_after_coast &= e->max_hp >= 28 && e->attack >= 16;
+    }
+    ASSERT("level eleven forest after Coast starts with tougher enemies",
+        forest_after_coast);
+
+    g.location = LOCATION_MOUNTAINS;
+    map_generate_mountains(&g.map, g.level);
+    enemies_spawn(&g);
+    int mountain_after_coast = g.enemy_count > 0;
+    for (int i = 0; i < g.enemy_count; i++) {
+        mountain_after_coast &= g.enemies[i].type != ENEMY_GOBLIN_SCOUT &&
+            g.enemies[i].attack >= 16;
+    }
+    ASSERT("mountains also advance their opening encounter mix",
+        mountain_after_coast);
+
+    g.location = LOCATION_DUNGEON;
+    map_generate(&g.map, g.level);
+    enemies_spawn(&g);
+    int dungeon_after_coast = 0;
+    for (int i = 0; i < g.enemy_count; i++) {
+        dungeon_after_coast |= g.enemies[i].type == ENEMY_WRAITH ||
+            g.enemies[i].type == ENEMY_CRYPT_CONJURER;
+    }
+    ASSERT("dungeon also advances its opening encounter mix",
+        dungeon_after_coast);
+
+    g.defeated_bosses = 1 << LOCATION_DUNGEON;
+    g.location = LOCATION_COAST;
+    map_generate_coast(&g.map, g.level);
+    enemies_spawn(&g);
+    int coast_after_dungeon = g.enemy_count > 0;
+    for (int i = 0; i < g.enemy_count; i++) {
+        coast_after_dungeon &= g.enemies[i].type != ENEMY_ILLUSION &&
+            g.enemies[i].attack >= 17;
+    }
+    ASSERT("Coast also advances its opening encounter mix",
+        coast_after_dungeon);
 }
