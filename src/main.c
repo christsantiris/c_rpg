@@ -26,6 +26,7 @@
 #include "renderer/game_renderer.h"
 #include "renderer/sprites.h"
 #include "renderer/info_panel.h"
+#include "renderer/message_bar.h"
 #include "audio/music.h"
 #include "audio/sfx.h"
 #include "renderer/help_renderer.h"
@@ -417,10 +418,24 @@ int main(int argc, char **argv) {
     GameScreen screen = SCREEN_LANDING;
 
     int running = 1;
+    int needs_redraw = 1;
     SDL_Event event;
 
     while (running) {
-        while (SDL_PollEvent(&event)) {
+        int animating = spell_animating || entry_gate.active ||
+            (screen == SCREEN_PLAYING && game.trail_frames > 0);
+        int has_event = SDL_PollEvent(&event);
+        // Static scenes need no new present until input, exposure, or cursor blink.
+        if (!has_event && !needs_redraw && !animating) {
+            if (screen == SCREEN_NAME_ENTRY) {
+                Uint32 elapsed = SDL_GetTicks() - name_entry.cursor_last_blink;
+                int timeout = elapsed >= 500 ? 0 : (int)(500 - elapsed);
+                has_event = SDL_WaitEventTimeout(&event, timeout);
+            } else {
+                has_event = SDL_WaitEvent(&event);
+            }
+        }
+        while (has_event) {
             switch (event.type) {
 
                 // ── Quit ──────────────────────────────────────────────────
@@ -430,19 +445,27 @@ int main(int argc, char **argv) {
 
                 // ── Window resize ─────────────────────────────────────────
                 case SDL_WINDOWEVENT:
-                    if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
-                        renderer_on_resize(&renderer,
-                            event.window.data1, event.window.data2);
-                        viewport_on_resize(&viewport,
-                            (renderer.screen_w - INFO_PANEL_W) / TILE_SIZE,
-                            renderer.tiles_y);
-                        viewport_center_on(&viewport,
-                            game.player.x, game.player.y);
+                    needs_redraw = 1;
+                    if (event.window.event == SDL_WINDOWEVENT_RESIZED ||
+                        event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED ||
+                        event.window.event == SDL_WINDOWEVENT_DISPLAY_CHANGED) {
+                        int window_w;
+                        int window_h;
+                        SDL_GetWindowSize(window, &window_w, &window_h);
+                        if (window_w > INFO_PANEL_W && window_h > MESSAGE_BAR_H) {
+                            renderer_on_resize(&renderer, window_w, window_h);
+                            viewport_on_resize(&viewport,
+                                (renderer.screen_w - INFO_PANEL_W) / TILE_SIZE,
+                                renderer.tiles_y);
+                            viewport_center_on(&viewport,
+                                game.player.x, game.player.y);
+                        }
                     }
                     break;
 
                 // ── Keyboard input ────────────────────────────────────────
                 case SDL_KEYDOWN: {
+                    needs_redraw = 1;
                     if (spell_animating || entry_gate.active) {
                         break;
                     }
@@ -806,6 +829,7 @@ int main(int argc, char **argv) {
 
                 // ── Mouse input ───────────────────────────────────────────
                 case SDL_MOUSEBUTTONDOWN: {
+                    needs_redraw = 1;
                     if (entry_gate.active) {
                         break;
                     }
@@ -991,6 +1015,14 @@ int main(int argc, char **argv) {
                 default:
                     break;
             }
+            has_event = SDL_PollEvent(&event);
+        }
+
+        if (!running) {
+            break;
+        }
+        if (animating) {
+            needs_redraw = 1;
         }
 
         // ── Per-frame updates ─────────────────────────────────────────────
@@ -1021,15 +1053,25 @@ int main(int argc, char **argv) {
                 entry_gate.active = 0;
             }
         }
-        if (screen == SCREEN_NAME_ENTRY)
+        if (screen == SCREEN_NAME_ENTRY) {
+            int cursor_visible = name_entry.cursor_visible;
             name_entry_update(&name_entry);
+            if (name_entry.cursor_visible != cursor_visible) {
+                needs_redraw = 1;
+            }
+        }
 
-        // ── Rendering ─────────────────────────────────────────────────────
-        renderer_begin_frame(&renderer);
         // Update music based on screen and location
         int is_town = game.location == LOCATION_TOWN ||
             game.location == LOCATION_TAVERN;
         music_update(screen, is_town);
+
+        if (!needs_redraw) {
+            continue;
+        }
+
+        // ── Rendering ─────────────────────────────────────────────────────
+        renderer_begin_frame(&renderer);
 
         if (screen == SCREEN_LANDING) {
             landing_draw(&renderer, &landing);
@@ -1075,6 +1117,7 @@ int main(int argc, char **argv) {
         }
 
         renderer_end_frame(&renderer);
+        needs_redraw = 0;
     }
 
     // ── Cleanup ───────────────────────────────────────────────────────────

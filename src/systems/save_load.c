@@ -1571,6 +1571,15 @@ int load_game(GameState *g, int slot) {
         }
     }
 
+    if (g->location == LOCATION_DUNGEON && g->level < DUNGEON_DEPTH) {
+        map_repair_dungeon_routes(&g->map);
+    }
+    for (int i = 0; i < DUNGEON_DEPTH - 1; i++) {
+        if (g->level_cache[i].valid) {
+            map_repair_dungeon_routes(&g->level_cache[i].map);
+        }
+    }
+
     cJSON_Delete(root);
     return 1;
 }
