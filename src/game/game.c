@@ -739,6 +739,7 @@ void game_init(GameState *g) {
     g->alder_wardens_rescued = 0;
     g->mara_quest_state = 0;
     g->mara_beacons_lit = 0;
+    g->cain_scroll_given = 0;
     g->dialogue_active = 0;
     g->dialogue_speaker[0] = '\0';
     g->dialogue_text[0] = '\0';
@@ -786,7 +787,6 @@ void game_init(GameState *g) {
             g->inventory[g->inventory_count++] = item_make_bow();
             break;
     }
-    g->inventory[g->inventory_count++] = item_make_scroll_return_to_town();
     g->player.hp = g->player.max_hp;
     g->player.mp = g->player.max_mp;
 
@@ -1563,6 +1563,27 @@ void game_use_town_portal(GameState *g) {
     g->player.x = landing_x;
     g->player.y = landing_y;
     g->portal_active = 0;
+}
+
+void game_talk_to_cain(GameState *g) {
+    g->dialogue_active = 1;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Cain");
+    g->dialogue_x = TOWN_CAIN_X;
+    g->dialogue_y = TOWN_CAIN_Y;
+    const char *warning = "Undead lurk north, beasts west, goblins east, and sea horrors south.";
+    if (g->cain_scroll_given) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "%s Read your scroll to learn Return to Town. Use it when danger grows!", warning);
+    } else if (g->inventory_count >= MAX_INVENTORY) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "%s Make room in your pack, then speak to me for a Return to Town scroll.", warning);
+    } else {
+        g->inventory[g->inventory_count++] = item_make_scroll_return_to_town();
+        g->cain_scroll_given = 1;
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "%s Take this Return to Town scroll for your adventure. Read it to learn a way home!", warning);
+        push_message(g, "Cain gives you a Scroll of Return to Town.");
+    }
 }
 
 void game_talk_to_elowen(GameState *g) {

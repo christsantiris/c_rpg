@@ -128,6 +128,7 @@ typedef struct {
     int alder_wardens_rescued;
     int mara_quest_state;
     int mara_beacons_lit;
+    int cain_scroll_given;
     int dialogue_active;
     char dialogue_speaker[MAX_SPEAKER_LEN];
     char dialogue_text[MAX_DIALOGUE_LEN];
@@ -166,6 +167,7 @@ void game_record_dain_kill(GameState *g, EnemyType type);
 void game_talk_to_alder(GameState *g);
 void game_rescue_forest_warden(GameState *g, int x, int y);
 void game_talk_to_mara(GameState *g);
+void game_talk_to_cain(GameState *g);
 void game_light_coast_beacon(GameState *g, int x, int y);
 void game_repair_equipment_indices(GameState *g);
 int game_equip_main_hand(GameState *g, int index);

@@ -105,6 +105,9 @@ Any new field added to `Player`, `GameState`, or any struct that is part of pers
 
 Omitting this causes data to silently reset to zero on load.
 
+The game is in development, so breaking old saves is acceptable. Do not add
+old-save migrations or backward compatibility work for game changes.
+
 ## 8. Code Review
 
 Claude will review your output once you are done.

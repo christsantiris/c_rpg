@@ -292,7 +292,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 48);
+    cJSON_AddNumberToObject(root, "save_version", 49);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -375,6 +375,7 @@ int save_game(const GameState *g, int slot) {
         g->alder_wardens_rescued);
     cJSON_AddNumberToObject(root, "mara_quest_state", g->mara_quest_state);
     cJSON_AddNumberToObject(root, "mara_beacons_lit", g->mara_beacons_lit);
+    cJSON_AddNumberToObject(root, "cain_scroll_given", g->cain_scroll_given);
     cJSON_AddNumberToObject(root, "dialogue_active", g->dialogue_active);
     cJSON_AddStringToObject(root, "dialogue_speaker", g->dialogue_speaker);
     cJSON_AddStringToObject(root, "dialogue_text", g->dialogue_text);
@@ -682,6 +683,7 @@ int load_game(GameState *g, int slot) {
         "alder_wardens_rescued");
     cJSON *mara_quest = cJSON_GetObjectItem(root, "mara_quest_state");
     cJSON *mara_beacons = cJSON_GetObjectItem(root, "mara_beacons_lit");
+    cJSON *cain_scroll = cJSON_GetObjectItem(root, "cain_scroll_given");
     cJSON *dialogue_active = cJSON_GetObjectItem(root, "dialogue_active");
     cJSON *dialogue_speaker = cJSON_GetObjectItem(root, "dialogue_speaker");
     cJSON *dialogue_text = cJSON_GetObjectItem(root, "dialogue_text");
@@ -708,6 +710,7 @@ int load_game(GameState *g, int slot) {
     g->alder_wardens_rescued = alder_wardens ? alder_wardens->valueint : 0;
     g->mara_quest_state = mara_quest ? mara_quest->valueint : 0;
     g->mara_beacons_lit = mara_beacons ? mara_beacons->valueint : 0;
+    g->cain_scroll_given = cain_scroll ? cain_scroll->valueint : 0;
     g->dialogue_active = dialogue_active ? dialogue_active->valueint : 0;
     strncpy(g->dialogue_speaker,
         dialogue_speaker ? dialogue_speaker->valuestring : "",

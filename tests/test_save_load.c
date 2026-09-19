@@ -703,7 +703,32 @@ static void test_blocked_dungeon_gate_repair(void) {
         m->tiles[5][5] == TILE_DUNGEON_GATE);
 }
 
+static void test_cain_save_load(void) {
+    static GameState g;
+    static GameState loaded;
+    g.player.player_class = CLASS_WARRIOR;
+    game_init(&g);
+    ASSERT("save before Cain's gift succeeds", save_game(&g, ROUND_TRIP_SLOT));
+    loaded.cain_scroll_given = 1;
+    ASSERT("load preserves the unclaimed gift",
+        load_game(&loaded, ROUND_TRIP_SLOT) && !loaded.cain_scroll_given);
+    game_talk_to_cain(&loaded);
+    int count = loaded.inventory_count;
+    ASSERT("save after Cain's gift succeeds", save_game(&loaded, ROUND_TRIP_SLOT));
+    ASSERT("load preserves the claimed gift and Cain's dialogue",
+        load_game(&g, ROUND_TRIP_SLOT) && g.cain_scroll_given &&
+        g.inventory_count == count && g.dialogue_active &&
+        strcmp(g.dialogue_speaker, "Cain") == 0 &&
+        strcmp(g.dialogue_text, loaded.dialogue_text) == 0 &&
+        g.dialogue_x == TOWN_CAIN_X && g.dialogue_y == TOWN_CAIN_Y);
+    game_talk_to_cain(&g);
+    ASSERT("reloading cannot duplicate Cain's gift", g.inventory_count == count);
+
+    remove_test_save(ROUND_TRIP_SLOT);
+}
+
 void test_save_load(void) {
+    test_cain_save_load();
     printf("Save/load tests:\n");
     test_current_weapon_round_trip();
     test_dual_wield_round_trip();

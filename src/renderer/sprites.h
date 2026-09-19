@@ -128,6 +128,7 @@ void draw_elowen(Renderer *r, int tile_x, int tile_y);
 void draw_dain(Renderer *r, int tile_x, int tile_y);
 void draw_alder(Renderer *r, int tile_x, int tile_y);
 void draw_mara(Renderer *r, int tile_x, int tile_y);
+void draw_cain(Renderer *r, int tile_x, int tile_y);
 void draw_forest_warden(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 
 void draw_floor_item(Renderer *r, int tile_x, int tile_y);
