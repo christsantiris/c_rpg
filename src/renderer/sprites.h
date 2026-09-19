@@ -4,6 +4,8 @@
 #include "../game/game.h"
 #include "renderer.h"
 
+#define COAST_WATER_FRAME_MS 350u
+
 // Map draw functions
 void draw_floor(Renderer *r, int tile_x, int tile_y);
 void draw_wall(Renderer *r, int tile_x, int tile_y);

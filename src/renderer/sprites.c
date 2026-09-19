@@ -799,6 +799,8 @@ static void draw_coast_water(Renderer *r, int tile_x, int tile_y, int map_x, int
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
     unsigned int seed = coast_tile_seed(map_x, map_y);
+    unsigned int frame = (SDL_GetTicks() / COAST_WATER_FRAME_MS +
+        ((seed >> 20) & 1u)) & 1u;
     SDL_Color shallow[3] = {
         {19, 75, 90, 255}, {23, 81, 94, 255}, {17, 70, 87, 255}
     };
@@ -814,7 +816,7 @@ static void draw_coast_water(Renderer *r, int tile_x, int tile_y, int map_x, int
         deep ? deep_water[seed % 3u] : shallow[seed % 3u]);
     for (int wave = 0; wave < 2; wave++) {
         unsigned int bits = seed >> (wave * 9);
-        int wave_x = 1 + (int)(bits % 12u);
+        int wave_x = 1 + (int)(bits % 11u) + (int)frame;
         int wave_y = 4 + wave * 10 + (int)((bits >> 5) % 4u);
         int width = 7 + (int)((bits >> 11) % 6u);
         fill_rect(r, x + wave_x, y + wave_y, width, 1, ripple);
@@ -822,9 +824,9 @@ static void draw_coast_water(Renderer *r, int tile_x, int tile_y, int map_x, int
             glint);
     }
     if (!deep && (seed >> 24) % 7u == 2u) {
-        fill_rect(r, x + 3, y + 20, 8, 1,
+        fill_rect(r, x + 3 + (int)frame, y + 20, 8, 1,
             (SDL_Color){153, 206, 189, 255});
-        fill_rect(r, x + 5, y + 19, 3, 1,
+        fill_rect(r, x + 5 + (int)frame, y + 19, 3, 1,
             (SDL_Color){196, 220, 203, 255});
     }
 }
