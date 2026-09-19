@@ -396,6 +396,62 @@ void test_forest(void) {
         g.player.x == 1 && g.player.y == 12);
 }
 
+void test_cain_gift(void) {
+    printf("Cain gift tests:\n");
+    GameState g;
+    g.player.player_class = CLASS_WARRIOR;
+    game_init(&g);
+    ASSERT("Cain stands beside the crossroads within talking range of spawn",
+        g.map.tiles[TOWN_CAIN_Y][TOWN_CAIN_X] == TILE_NPC_CAIN &&
+        abs(g.player.x - TOWN_CAIN_X) <= 1 &&
+        abs(g.player.y - TOWN_CAIN_Y) <= 1);
+    ASSERT("Cain is solid and leaves both roads open",
+        !map_is_walkable(&g.map, TOWN_CAIN_X, TOWN_CAIN_Y) &&
+        g.map.tiles[12][19] == TILE_TOWN_PATH &&
+        g.map.tiles[11][20] == TILE_TOWN_PATH);
+    ASSERT("Cain's gift starts unclaimed", !g.cain_scroll_given);
+
+    int count = g.inventory_count;
+    game_talk_to_cain(&g);
+    ASSERT("Cain warns about dangers outside town in his dialogue bubble",
+        g.dialogue_active && strcmp(g.dialogue_speaker, "Cain") == 0 &&
+        strstr(g.dialogue_text, "Undead") &&
+        strstr(g.dialogue_text, "goblins") &&
+        g.dialogue_x == TOWN_CAIN_X && g.dialogue_y == TOWN_CAIN_Y);
+    ASSERT("Cain gives one Return to Town scroll",
+        g.cain_scroll_given && g.inventory_count == count + 1 &&
+        g.inventory[count].type == ITEM_SCROLL &&
+        g.inventory[count].spell_id == SPELL_RETURN_TO_TOWN);
+    game_talk_to_cain(&g);
+    ASSERT("talking again does not duplicate the gift",
+        g.inventory_count == count + 1);
+    Action read = {ACTION_USE_ITEM, count, 0};
+    action_resolve_player(&g, read);
+    ASSERT("Cain's scroll teaches Return to Town",
+        g.inventory_count == count && g.player.known_spell_count == 1 &&
+        g.player.known_spells[0].id == SPELL_RETURN_TO_TOWN);
+    game_enter_tavern(&g);
+    game_leave_tavern(&g);
+    game_talk_to_cain(&g);
+    ASSERT("returning to town after reading the scroll does not renew the gift",
+        g.inventory_count == count && g.cain_scroll_given &&
+        g.map.tiles[TOWN_CAIN_Y][TOWN_CAIN_X] == TILE_NPC_CAIN);
+
+    game_init(&g);
+    while (g.inventory_count < MAX_INVENTORY) {
+        g.inventory[g.inventory_count++] = item_make_health_potion();
+    }
+    game_talk_to_cain(&g);
+    ASSERT("a full pack leaves the gift available for later",
+        g.inventory_count == MAX_INVENTORY && !g.cain_scroll_given &&
+        strstr(g.dialogue_text, "Make room"));
+    game_remove_inventory_item(&g, MAX_INVENTORY - 1);
+    game_talk_to_cain(&g);
+    ASSERT("Cain gives the scroll after the player makes room",
+        g.inventory_count == MAX_INVENTORY && g.cain_scroll_given &&
+        g.inventory[MAX_INVENTORY - 1].spell_id == SPELL_RETURN_TO_TOWN);
+}
+
 void test_town_spawn(void) {
     printf("Town spawn tests:\n");
 

@@ -48,6 +48,7 @@ static void draw_dialogue_text(Renderer *r, const char *text, int x, int y, int 
 static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport *v) {
     if (!g->dialogue_active ||
         (g->location != LOCATION_TAVERN &&
+        g->location != LOCATION_TOWN &&
         g->location != LOCATION_FOREST)) {
         return;
     }
@@ -58,6 +59,9 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     }
 
     int viewport_w = r->screen_w - INFO_PANEL_W;
+    if (g->location == LOCATION_TOWN) {
+        viewport_w = TOWN_W * TILE_SIZE;
+    }
     int bubble_w = viewport_w < 460 ? viewport_w - 16 : 440;
     int bubble_h = 98;
     int npc_screen_x = viewport_to_screen_x(v, npc_x) * TILE_SIZE +
@@ -661,6 +665,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_NPC_DAIN: draw_dain(r, sx, sy); break;
                 case TILE_NPC_ALDER: draw_alder(r, sx, sy); break;
                 case TILE_NPC_MARA: draw_mara(r, sx, sy); break;
+                case TILE_NPC_CAIN: draw_cain(r, sx, sy); break;
                 case TILE_FOREST_WARDEN:
                     draw_forest_warden(r, sx, sy, x, y); break;
                 case TILE_TOWN_EXIT: draw_town_path(r, sx, sy); break;

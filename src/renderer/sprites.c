@@ -2289,6 +2289,23 @@ void draw_tavern_table(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 15, y + 16, 3, 6, (SDL_Color){59, 34, 22, 255});
 }
 
+void draw_cain(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_town_floor(r, tile_x, tile_y);
+    SDL_Color robe = {112, 78, 47, 255};
+    SDL_Color hair = {223, 218, 200, 255};
+    fill_rect(r, x + 6, y + 3, 12, 7, hair);
+    fill_rect(r, x + 8, y + 6, 8, 7, (SDL_Color){198, 151, 113, 255});
+    fill_rect(r, x + 5, y + 12, 14, 10, robe);
+    fill_rect(r, x + 8, y + 11, 8, 5, hair);
+    fill_rect(r, x + 10, y + 16, 4, 2, hair);
+    fill_rect(r, x + 9, y + 8, 2, 2, (SDL_Color){41, 32, 27, 255});
+    fill_rect(r, x + 14, y + 8, 2, 2, (SDL_Color){41, 32, 27, 255});
+    fill_rect(r, x + 20, y + 5, 2, 18, (SDL_Color){80, 52, 30, 255});
+    fill_rect(r, x + 3, y + 15, 5, 6, (SDL_Color){238, 218, 162, 255});
+}
+
 void draw_elowen(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;

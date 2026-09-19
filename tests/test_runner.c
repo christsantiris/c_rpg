@@ -18,6 +18,7 @@ void test_return_to_town_spell(void);
 void test_town_tiles(void);
 void test_town_map(void);
 void test_town_spawn(void);
+void test_cain_gift(void);
 void test_leveling(void);
 void test_region_difficulty_scaling(void);
 void test_items(void);
@@ -68,6 +69,8 @@ int main(void) {
     test_town_map();
     printf("\n");
     test_town_spawn();
+    printf("\n");
+    test_cain_gift();
     printf("\n");
     test_forest();
     printf("\n");

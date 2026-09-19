@@ -14,6 +14,8 @@
 
 #define TOWN_W 40 // town dimensions
 #define TOWN_H 25 // town dimensions
+#define TOWN_CAIN_X 19
+#define TOWN_CAIN_Y 11
 #define TOWN_HARBOR_W 5
 #define TOWN_HARBOR_H 4
 #define TOWN_HARBOR_X (TOWN_W - 1 - TOWN_HARBOR_W)
@@ -102,7 +104,8 @@ typedef enum {
     TILE_COAST_CHANNEL_WATER,
     TILE_COAST_CHANNEL_DRY,
     TILE_COAST_SLUICE_CONTROL,
-    TILE_COAST_CACHE
+    TILE_COAST_CACHE,
+    TILE_NPC_CAIN
 } TileType;
 
 typedef struct {

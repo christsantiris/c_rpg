@@ -322,6 +322,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_NPC_DAIN &&
         m->tiles[y][x] != TILE_NPC_ALDER &&
         m->tiles[y][x] != TILE_NPC_MARA &&
+        m->tiles[y][x] != TILE_NPC_CAIN &&
         m->tiles[y][x] != TILE_FOREST_WARDEN &&
         m->tiles[y][x] != TILE_LOCKED_DOOR &&
         m->tiles[y][x] != TILE_CRYPT_DOOR &&
@@ -1061,6 +1062,7 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     }
 
     map_place_town_harbor(m);
+    m->tiles[TOWN_CAIN_Y][TOWN_CAIN_X] = TILE_NPC_CAIN;
 
     // Spawn at the central crossroads so the south road remains unobstructed
     // for a future region.
