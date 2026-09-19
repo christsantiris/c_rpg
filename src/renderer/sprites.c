@@ -968,9 +968,23 @@ void draw_coast_beacon(Renderer *r, int tile_x, int tile_y, int map_x, int map_y
     fill_rect(r, x + 8, y + 9, 8, 9, (SDL_Color){67, 104, 97, 255});
     fill_rect(r, x + 6, y + 7, 12, 4, (SDL_Color){116, 126, 98, 255});
     if (lit) {
-        fill_rect(r, x + 9, y + 3, 7, 6, (SDL_Color){47, 221, 212, 255});
-        fill_rect(r, x + 11, y, 4, 7, (SDL_Color){255, 211, 77, 255});
-        fill_rect(r, x + 12, y + 2, 3, 4, (SDL_Color){255, 244, 156, 255});
+        unsigned int frame = (SDL_GetTicks() / COAST_WATER_FRAME_MS +
+            ((coast_tile_seed(map_x, map_y) >> 20) & 1u)) & 1u;
+        if (frame == 0u) {
+            fill_rect(r, x + 9, y + 3, 7, 6,
+                (SDL_Color){47, 221, 212, 255});
+            fill_rect(r, x + 11, y, 4, 7,
+                (SDL_Color){255, 211, 77, 255});
+            fill_rect(r, x + 12, y + 2, 3, 4,
+                (SDL_Color){255, 244, 156, 255});
+        } else {
+            fill_rect(r, x + 9, y + 4, 7, 5,
+                (SDL_Color){47, 221, 212, 255});
+            fill_rect(r, x + 10, y + 1, 5, 7,
+                (SDL_Color){255, 211, 77, 255});
+            fill_rect(r, x + 11, y + 3, 3, 3,
+                (SDL_Color){255, 244, 156, 255});
+        }
     } else {
         fill_rect(r, x + 9, y + 5, 7, 3, (SDL_Color){34, 42, 45, 255});
     }
