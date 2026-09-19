@@ -4,13 +4,14 @@
 #include "../game/game.h"
 #include "renderer.h"
 
-#define COAST_WATER_FRAME_MS 350u
+#define AMBIENT_FRAME_MS 350u
 
 // Map draw functions
 void draw_floor(Renderer *r, int tile_x, int tile_y);
 void draw_wall(Renderer *r, int tile_x, int tile_y);
 void draw_dungeon_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_dungeon_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
+void draw_dungeon_torch(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 enum {
     DUNGEON_EDGE_NORTH = 1,
     DUNGEON_EDGE_EAST = 2,
