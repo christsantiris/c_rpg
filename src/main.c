@@ -438,6 +438,7 @@ int main(int argc, char **argv) {
             (screen == SCREEN_PLAYING && game.trail_frames > 0);
         int ambient_animating = screen == SCREEN_PLAYING &&
             (game.location == LOCATION_DUNGEON ||
+            game.location == LOCATION_FOREST ||
             game.location == LOCATION_COAST);
         int has_event = SDL_PollEvent(&event);
         // Static scenes need no new present until input, exposure, or cursor blink.

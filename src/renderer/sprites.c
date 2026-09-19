@@ -241,6 +241,9 @@ void draw_forest_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y)
     int y = tile_y * TILE_SIZE;
     unsigned int seed = forest_tile_seed(map_x, map_y);
     int trunk_x = 7 + (int)((seed >> 4) % 7u);
+    unsigned int frame = (SDL_GetTicks() / AMBIENT_FRAME_MS +
+        ((seed >> 16) & 1u)) & 1u;
+    int canopy_shift = (seed >> 20) % 3u == 0u ? (int)frame : 0;
     SDL_Color shadow = {6, 21, 13, 255};
     SDL_Color foliage = {22, 51, 28, 255};
     SDL_Color foliage_light = {37, 75, 37, 255};
@@ -249,8 +252,8 @@ void draw_forest_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y)
     fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, shadow);
     fill_rect(r, x + 1, y + 5, 9, 10, foliage);
     fill_rect(r, x + 14, y + 9, 9, 10, foliage);
-    fill_rect(r, x + 3, y + 15, 7, 5, foliage_light);
-    fill_rect(r, x + 17, y + 4, 5, 4, foliage_light);
+    fill_rect(r, x + 3 + canopy_shift, y + 15, 7, 5, foliage_light);
+    fill_rect(r, x + 17 + canopy_shift, y + 4, 5, 4, foliage_light);
     int shape = (int)((seed >> 11) % 4u);
     if (shape == 0) {
         fill_rect(r, x + 2, y + 7, 20, 13, foliage);
@@ -258,8 +261,10 @@ void draw_forest_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y)
             (SDL_Color){29, 66, 33, 255});
         fill_rect(r, x + 12, y + 11, 10, 10,
             (SDL_Color){30, 61, 31, 255});
-        fill_rect(r, x + 6, y + 6, 6, 2, foliage_light);
-        fill_rect(r, x + 15, y + 13, 5, 2, foliage_light);
+        fill_rect(r, x + 6 + canopy_shift, y + 6, 6, 2,
+            foliage_light);
+        fill_rect(r, x + 15 + canopy_shift, y + 13, 5, 2,
+            foliage_light);
     } else {
         fill_rect(r, x + trunk_x - 1, y + 5, 8, 19,
             (SDL_Color){35, 35, 23, 255});
@@ -278,7 +283,8 @@ void draw_forest_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y)
         fill_rect(r, x + trunk_x - 4, y + 1, 14, 7, foliage);
         fill_rect(r, x + trunk_x - 2, y, 11, 5,
             (SDL_Color){29, 66, 33, 255});
-        fill_rect(r, x + trunk_x + 1, y + 2, 5, 2, foliage_light);
+        fill_rect(r, x + trunk_x + 1 + canopy_shift, y + 2, 5, 2,
+            foliage_light);
     }
 
     if ((seed >> 20) % 5u == 0u) {
