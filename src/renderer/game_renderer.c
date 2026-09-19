@@ -296,6 +296,15 @@ static int dungeon_is_floor(const GameState *g, int x, int y) {
         tile == TILE_TRAP_POISON;
 }
 
+static int dungeon_wall_has_torch(const GameState *g, int x, int y) {
+    if (y + 1 >= MAP_H || !dungeon_is_floor(g, x, y + 1)) {
+        return 0;
+    }
+    unsigned int seed = (unsigned int)x * 2246822519u ^
+        (unsigned int)y * 3266489917u;
+    return seed % 11u == 0u;
+}
+
 static int forest_is_tree(TileType tile) {
     return tile == TILE_FOREST_WALL || tile == TILE_FOREST_HIDDEN_TRAIL;
 }
@@ -522,6 +531,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                                 draw_dungeon_door_support(r, sx, sy, side[i],
                                     neighbor == TILE_CRYPT_DOOR);
                             }
+                        }
+                        if (dungeon_wall_has_torch(g, x, y)) {
+                            draw_dungeon_torch(r, sx, sy, x, y);
                         }
                     } else {
                         draw_wall(r, sx, sy);
