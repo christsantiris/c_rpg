@@ -431,6 +431,24 @@ static unsigned int mountain_tile_seed(int map_x, int map_y) {
     return seed ^ (seed >> 15);
 }
 
+static void draw_mountain_particle(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int cave) {
+    unsigned int seed = mountain_tile_seed(map_x, map_y);
+    if ((seed >> 20) % 3u != 0u) {
+        return;
+    }
+    unsigned int frame = (SDL_GetTicks() / AMBIENT_FRAME_MS +
+        ((seed >> 17) & 1u)) & 1u;
+    int x = tile_x * TILE_SIZE + 3 + (int)((seed >> 5) % 16u);
+    int y = tile_y * TILE_SIZE + 6 + (int)((seed >> 11) % 12u);
+    int ember = ((seed >> 23) & 1u) == 0u;
+    SDL_Color color = ember ? (SDL_Color){224, 83, 31, 255} :
+        (cave ? (SDL_Color){105, 96, 91, 255} :
+        (SDL_Color){139, 119, 105, 255});
+
+    fill_rect(r, x + (int)frame, y - (int)frame, ember ? 2 : 1, 1,
+        color);
+}
+
 static void draw_mountain_ground(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int cave) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
@@ -480,6 +498,7 @@ static void draw_mountain_ground(Renderer *r, int tile_x, int tile_y, int map_x,
         fill_rect(r, x + 7, y + 19, 3, 2,
             (SDL_Color){142, 58, 32, 255});
     }
+    draw_mountain_particle(r, tile_x, tile_y, map_x, map_y, cave);
 }
 
 void draw_mountain_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
@@ -708,6 +727,7 @@ void draw_mountain_fortress_floor(Renderer *r, int tile_x, int tile_y, int map_x
         fill_rect(r, x + 15, y + 17, 5, 2,
             (SDL_Color){30, 27, 30, 255});
     }
+    draw_mountain_particle(r, tile_x, tile_y, map_x, map_y, 0);
 }
 
 static unsigned int coast_tile_seed(int map_x, int map_y) {
