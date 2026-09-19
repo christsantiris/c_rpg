@@ -119,6 +119,31 @@ void draw_dungeon_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y
     }
 }
 
+void draw_dungeon_torch(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    unsigned int seed = (unsigned int)map_x * 2246822519u ^
+        (unsigned int)map_y * 3266489917u;
+    unsigned int frame = (SDL_GetTicks() / AMBIENT_FRAME_MS +
+        ((seed >> 12) & 1u)) & 1u;
+    SDL_Color iron = {91, 78, 72, 255};
+    SDL_Color ember = {229, 77, 21, 255};
+    SDL_Color flame = {255, 157, 35, 255};
+    SDL_Color highlight = {255, 224, 104, 255};
+
+    fill_rect(r, x + 8, y + 11, 9, 3, iron);
+    fill_rect(r, x + 11, y + 13, 3, 6, iron);
+    if (frame == 0u) {
+        fill_rect(r, x + 9, y + 5, 7, 7, ember);
+        fill_rect(r, x + 11, y + 2, 4, 8, flame);
+        fill_rect(r, x + 12, y + 5, 2, 4, highlight);
+    } else {
+        fill_rect(r, x + 10, y + 4, 6, 8, ember);
+        fill_rect(r, x + 10, y + 3, 4, 7, flame);
+        fill_rect(r, x + 11, y + 5, 2, 3, highlight);
+    }
+}
+
 void draw_dungeon_wall_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, unsigned int edges) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
@@ -216,6 +241,9 @@ void draw_forest_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y)
     int y = tile_y * TILE_SIZE;
     unsigned int seed = forest_tile_seed(map_x, map_y);
     int trunk_x = 7 + (int)((seed >> 4) % 7u);
+    unsigned int frame = (SDL_GetTicks() / AMBIENT_FRAME_MS +
+        ((seed >> 16) & 1u)) & 1u;
+    int canopy_shift = (seed >> 20) % 3u == 0u ? (int)frame : 0;
     SDL_Color shadow = {6, 21, 13, 255};
     SDL_Color foliage = {22, 51, 28, 255};
     SDL_Color foliage_light = {37, 75, 37, 255};
@@ -224,8 +252,8 @@ void draw_forest_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y)
     fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, shadow);
     fill_rect(r, x + 1, y + 5, 9, 10, foliage);
     fill_rect(r, x + 14, y + 9, 9, 10, foliage);
-    fill_rect(r, x + 3, y + 15, 7, 5, foliage_light);
-    fill_rect(r, x + 17, y + 4, 5, 4, foliage_light);
+    fill_rect(r, x + 3 + canopy_shift, y + 15, 7, 5, foliage_light);
+    fill_rect(r, x + 17 + canopy_shift, y + 4, 5, 4, foliage_light);
     int shape = (int)((seed >> 11) % 4u);
     if (shape == 0) {
         fill_rect(r, x + 2, y + 7, 20, 13, foliage);
@@ -233,8 +261,10 @@ void draw_forest_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y)
             (SDL_Color){29, 66, 33, 255});
         fill_rect(r, x + 12, y + 11, 10, 10,
             (SDL_Color){30, 61, 31, 255});
-        fill_rect(r, x + 6, y + 6, 6, 2, foliage_light);
-        fill_rect(r, x + 15, y + 13, 5, 2, foliage_light);
+        fill_rect(r, x + 6 + canopy_shift, y + 6, 6, 2,
+            foliage_light);
+        fill_rect(r, x + 15 + canopy_shift, y + 13, 5, 2,
+            foliage_light);
     } else {
         fill_rect(r, x + trunk_x - 1, y + 5, 8, 19,
             (SDL_Color){35, 35, 23, 255});
@@ -253,7 +283,8 @@ void draw_forest_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y)
         fill_rect(r, x + trunk_x - 4, y + 1, 14, 7, foliage);
         fill_rect(r, x + trunk_x - 2, y, 11, 5,
             (SDL_Color){29, 66, 33, 255});
-        fill_rect(r, x + trunk_x + 1, y + 2, 5, 2, foliage_light);
+        fill_rect(r, x + trunk_x + 1 + canopy_shift, y + 2, 5, 2,
+            foliage_light);
     }
 
     if ((seed >> 20) % 5u == 0u) {
@@ -400,6 +431,24 @@ static unsigned int mountain_tile_seed(int map_x, int map_y) {
     return seed ^ (seed >> 15);
 }
 
+static void draw_mountain_particle(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int cave) {
+    unsigned int seed = mountain_tile_seed(map_x, map_y);
+    if ((seed >> 20) % 3u != 0u) {
+        return;
+    }
+    unsigned int frame = (SDL_GetTicks() / AMBIENT_FRAME_MS +
+        ((seed >> 17) & 1u)) & 1u;
+    int x = tile_x * TILE_SIZE + 3 + (int)((seed >> 5) % 16u);
+    int y = tile_y * TILE_SIZE + 6 + (int)((seed >> 11) % 12u);
+    int ember = ((seed >> 23) & 1u) == 0u;
+    SDL_Color color = ember ? (SDL_Color){224, 83, 31, 255} :
+        (cave ? (SDL_Color){105, 96, 91, 255} :
+        (SDL_Color){139, 119, 105, 255});
+
+    fill_rect(r, x + (int)frame, y - (int)frame, ember ? 2 : 1, 1,
+        color);
+}
+
 static void draw_mountain_ground(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int cave) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
@@ -449,6 +498,7 @@ static void draw_mountain_ground(Renderer *r, int tile_x, int tile_y, int map_x,
         fill_rect(r, x + 7, y + 19, 3, 2,
             (SDL_Color){142, 58, 32, 255});
     }
+    draw_mountain_particle(r, tile_x, tile_y, map_x, map_y, cave);
 }
 
 void draw_mountain_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
@@ -677,6 +727,7 @@ void draw_mountain_fortress_floor(Renderer *r, int tile_x, int tile_y, int map_x
         fill_rect(r, x + 15, y + 17, 5, 2,
             (SDL_Color){30, 27, 30, 255});
     }
+    draw_mountain_particle(r, tile_x, tile_y, map_x, map_y, 0);
 }
 
 static unsigned int coast_tile_seed(int map_x, int map_y) {
@@ -799,6 +850,8 @@ static void draw_coast_water(Renderer *r, int tile_x, int tile_y, int map_x, int
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
     unsigned int seed = coast_tile_seed(map_x, map_y);
+    unsigned int frame = (SDL_GetTicks() / AMBIENT_FRAME_MS +
+        ((seed >> 20) & 1u)) & 1u;
     SDL_Color shallow[3] = {
         {19, 75, 90, 255}, {23, 81, 94, 255}, {17, 70, 87, 255}
     };
@@ -814,7 +867,7 @@ static void draw_coast_water(Renderer *r, int tile_x, int tile_y, int map_x, int
         deep ? deep_water[seed % 3u] : shallow[seed % 3u]);
     for (int wave = 0; wave < 2; wave++) {
         unsigned int bits = seed >> (wave * 9);
-        int wave_x = 1 + (int)(bits % 12u);
+        int wave_x = 1 + (int)(bits % 11u) + (int)frame;
         int wave_y = 4 + wave * 10 + (int)((bits >> 5) % 4u);
         int width = 7 + (int)((bits >> 11) % 6u);
         fill_rect(r, x + wave_x, y + wave_y, width, 1, ripple);
@@ -822,9 +875,9 @@ static void draw_coast_water(Renderer *r, int tile_x, int tile_y, int map_x, int
             glint);
     }
     if (!deep && (seed >> 24) % 7u == 2u) {
-        fill_rect(r, x + 3, y + 20, 8, 1,
+        fill_rect(r, x + 3 + (int)frame, y + 20, 8, 1,
             (SDL_Color){153, 206, 189, 255});
-        fill_rect(r, x + 5, y + 19, 3, 1,
+        fill_rect(r, x + 5 + (int)frame, y + 19, 3, 1,
             (SDL_Color){196, 220, 203, 255});
     }
 }
@@ -966,9 +1019,23 @@ void draw_coast_beacon(Renderer *r, int tile_x, int tile_y, int map_x, int map_y
     fill_rect(r, x + 8, y + 9, 8, 9, (SDL_Color){67, 104, 97, 255});
     fill_rect(r, x + 6, y + 7, 12, 4, (SDL_Color){116, 126, 98, 255});
     if (lit) {
-        fill_rect(r, x + 9, y + 3, 7, 6, (SDL_Color){47, 221, 212, 255});
-        fill_rect(r, x + 11, y, 4, 7, (SDL_Color){255, 211, 77, 255});
-        fill_rect(r, x + 12, y + 2, 3, 4, (SDL_Color){255, 244, 156, 255});
+        unsigned int frame = (SDL_GetTicks() / AMBIENT_FRAME_MS +
+            ((coast_tile_seed(map_x, map_y) >> 20) & 1u)) & 1u;
+        if (frame == 0u) {
+            fill_rect(r, x + 9, y + 3, 7, 6,
+                (SDL_Color){47, 221, 212, 255});
+            fill_rect(r, x + 11, y, 4, 7,
+                (SDL_Color){255, 211, 77, 255});
+            fill_rect(r, x + 12, y + 2, 3, 4,
+                (SDL_Color){255, 244, 156, 255});
+        } else {
+            fill_rect(r, x + 9, y + 4, 7, 5,
+                (SDL_Color){47, 221, 212, 255});
+            fill_rect(r, x + 10, y + 1, 5, 7,
+                (SDL_Color){255, 211, 77, 255});
+            fill_rect(r, x + 11, y + 3, 3, 3,
+                (SDL_Color){255, 244, 156, 255});
+        }
     } else {
         fill_rect(r, x + 9, y + 5, 7, 3, (SDL_Color){34, 42, 45, 255});
     }

@@ -436,6 +436,11 @@ int main(int argc, char **argv) {
     while (running) {
         int animating = spell_animating || entry_gate.active ||
             (screen == SCREEN_PLAYING && game.trail_frames > 0);
+        int ambient_animating = screen == SCREEN_PLAYING &&
+            (game.location == LOCATION_DUNGEON ||
+            game.location == LOCATION_FOREST ||
+            game.location == LOCATION_MOUNTAINS ||
+            game.location == LOCATION_COAST);
         int has_event = SDL_PollEvent(&event);
         // Static scenes need no new present until input, exposure, or cursor blink.
         if (!has_event && !needs_redraw && !animating) {
@@ -443,6 +448,12 @@ int main(int argc, char **argv) {
                 Uint32 elapsed = SDL_GetTicks() - name_entry.cursor_last_blink;
                 int timeout = elapsed >= 500 ? 0 : (int)(500 - elapsed);
                 has_event = SDL_WaitEventTimeout(&event, timeout);
+            } else if (ambient_animating) {
+                has_event = SDL_WaitEventTimeout(&event,
+                    (int)AMBIENT_FRAME_MS);
+                if (!has_event) {
+                    needs_redraw = 1;
+                }
             } else {
                 has_event = SDL_WaitEvent(&event);
             }
