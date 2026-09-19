@@ -119,6 +119,31 @@ void draw_dungeon_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y
     }
 }
 
+void draw_dungeon_torch(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    unsigned int seed = (unsigned int)map_x * 2246822519u ^
+        (unsigned int)map_y * 3266489917u;
+    unsigned int frame = (SDL_GetTicks() / AMBIENT_FRAME_MS +
+        ((seed >> 12) & 1u)) & 1u;
+    SDL_Color iron = {91, 78, 72, 255};
+    SDL_Color ember = {229, 77, 21, 255};
+    SDL_Color flame = {255, 157, 35, 255};
+    SDL_Color highlight = {255, 224, 104, 255};
+
+    fill_rect(r, x + 8, y + 11, 9, 3, iron);
+    fill_rect(r, x + 11, y + 13, 3, 6, iron);
+    if (frame == 0u) {
+        fill_rect(r, x + 9, y + 5, 7, 7, ember);
+        fill_rect(r, x + 11, y + 2, 4, 8, flame);
+        fill_rect(r, x + 12, y + 5, 2, 4, highlight);
+    } else {
+        fill_rect(r, x + 10, y + 4, 6, 8, ember);
+        fill_rect(r, x + 10, y + 3, 4, 7, flame);
+        fill_rect(r, x + 11, y + 5, 2, 3, highlight);
+    }
+}
+
 void draw_dungeon_wall_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, unsigned int edges) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
@@ -799,7 +824,7 @@ static void draw_coast_water(Renderer *r, int tile_x, int tile_y, int map_x, int
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
     unsigned int seed = coast_tile_seed(map_x, map_y);
-    unsigned int frame = (SDL_GetTicks() / COAST_WATER_FRAME_MS +
+    unsigned int frame = (SDL_GetTicks() / AMBIENT_FRAME_MS +
         ((seed >> 20) & 1u)) & 1u;
     SDL_Color shallow[3] = {
         {19, 75, 90, 255}, {23, 81, 94, 255}, {17, 70, 87, 255}
@@ -968,7 +993,7 @@ void draw_coast_beacon(Renderer *r, int tile_x, int tile_y, int map_x, int map_y
     fill_rect(r, x + 8, y + 9, 8, 9, (SDL_Color){67, 104, 97, 255});
     fill_rect(r, x + 6, y + 7, 12, 4, (SDL_Color){116, 126, 98, 255});
     if (lit) {
-        unsigned int frame = (SDL_GetTicks() / COAST_WATER_FRAME_MS +
+        unsigned int frame = (SDL_GetTicks() / AMBIENT_FRAME_MS +
             ((coast_tile_seed(map_x, map_y) >> 20) & 1u)) & 1u;
         if (frame == 0u) {
             fill_rect(r, x + 9, y + 3, 7, 6,
