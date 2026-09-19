@@ -158,8 +158,6 @@ Production Releases
 - Signed apple dmg
 - windows installer
 - fix linux installer
-Highest priorityr.
-1. Ambient animation. Projectiles, impacts, and area entry already animate. Water movement, beacon or torch flicker, and enemy idle motion remain the next small-animation pass. 
 High priority
 1. More tactical enemy behavior
    Add recognizable combat roles such as protectors, ambushers, healers, summoners, ranged attackers, and enemies that retreat or flank.
@@ -168,12 +166,10 @@ High priority
 Medium priority
 1. Region replay tiers
    After defeating a regional boss, unlock a harder expedition version with stronger enemies, altered layouts, improved rewards, and possibly a remixed boss. This is better as an endgame layer after normal-order difficulty scaling works.
-2. Loot affixes
-   Introduce carefully limited modifiers such as Vampiric, Swift, Reinforced, Mana-Bound, or Venomous. Keep named magical weapons stronger and more distinctive than generic affixed drops.
-Polish priority
-1. Combat feedback
+2. Combat feedback
    Add clearer hit effects, critical indicators, blocked-damage feedback, status icons, and distinct weapon sounds.
-2. Accessibility and controls
+Polish priority
+1. Accessibility and controls
    Add remappable controls, text scaling, colorblind-safe indicators, adjustable message duration, and clearer interaction prompts.
-3. Documentation refresh
+2. Documentation refresh
    docs/weapons.md and parts of the README still describe the older weapon catalogue and should be updated.
