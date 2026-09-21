@@ -722,6 +722,10 @@ void action_resolve_player(GameState *g, Action a) {
         Item *item = &g->inventory[idx];
         char msg[MAX_MESSAGE_LEN];
 
+        if (item->type == ITEM_TREASURE_MAP) {
+            push_message(g, "The map charts a sea route to an island and marks treasure beneath a ruined temple.");
+            return;
+        }
         if (item->type == ITEM_POTION_HEALTH) {
             int healed = item->heal_hp;
             g->player.hp += healed;
@@ -862,6 +866,10 @@ void action_resolve_player(GameState *g, Action a) {
     if (a.type == ACTION_DROP_ITEM) {
         int idx = a.target_x;
         if (idx < 0 || idx >= g->inventory_count) return;
+        if (g->inventory[idx].type == ITEM_TREASURE_MAP) {
+            push_message(g, "Keep the treasure map for your island voyage.");
+            return;
+        }
         if (g->floor_item_count >= MAX_FLOOR_ITEMS) {
             push_message(g, "No room to drop item!");
             return;

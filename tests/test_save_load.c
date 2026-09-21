@@ -746,10 +746,26 @@ static void test_harbor_road_save_load(void) {
         ok && game_harbor_unlocked(&loaded) &&
         loaded.map.tiles[TOWN_HARBOR_Y + 1][TOWN_HARBOR_X - 1] == TILE_TOWN_PATH);
     if (ok) {
+        ASSERT("saving before the gift leaves the map unclaimed", !game_has_treasure_map(&loaded));
+        game_talk_to_rowan(&loaded);
+        int count = loaded.inventory_count;
+        ASSERT("the newly gifted map can be saved",
+            game_has_treasure_map(&loaded) && save_game(&loaded, ROUND_TRIP_SLOT));
+        int map_loaded = load_game(&g, ROUND_TRIP_SLOT);
+        ASSERT("loading preserves the treasure map item",
+            map_loaded && game_has_treasure_map(&g) && g.inventory_count == count &&
+            strcmp(g.inventory[count - 1].name, "Island Treasure Map") == 0);
+        if (map_loaded) {
+            game_talk_to_rowan(&g);
+            ASSERT("reloading cannot duplicate Rowan's gift", g.inventory_count == count);
+        }
         game_enter_tavern(&loaded);
         game_leave_tavern(&loaded);
         ASSERT("saved progress rebuilds the road on later town visits",
             loaded.map.tiles[TOWN_HARBOR_Y + 1][21] == TILE_TOWN_PATH);
+        game_talk_to_rowan(&loaded);
+        ASSERT("returning to town keeps the map without repeating the gift",
+            game_has_treasure_map(&loaded) && loaded.inventory_count == count);
     }
     remove_test_save(ROUND_TRIP_SLOT);
 }

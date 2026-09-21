@@ -144,6 +144,9 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
                 char label[64];
                 SDL_snprintf(label, sizeof(label), "%-20s  %d gold",
                     item->name, sell_price);
+                if (item->type == ITEM_TREASURE_MAP) {
+                    SDL_snprintf(label, sizeof(label), "%s  NOT FOR SALE", item->name);
+                }
                 if (s->selected == i) {
                     renderer_draw_text(r, ">", cx - 200, item_y, gold, r->font_small);
                     renderer_draw_text(r, label, cx - 180, item_y, green, r->font_small);

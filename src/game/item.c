@@ -769,6 +769,15 @@ Item item_make_scroll_return_to_town(void) {
     return it;
 }
 
+Item item_make_treasure_map(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_TREASURE_MAP;
+    strncpy(it.name, "Island Treasure Map", sizeof(it.name) - 1);
+    it.class_mask = ITEM_CLASS_ALL;
+    return it;
+}
+
 Item item_make_magic_arrow_tome(void) {
     Item it = {0};
     it.active = 1;
