@@ -5,8 +5,17 @@
 
 typedef enum {
     QUEST_TAB_ACTIVE = 0,
-    QUEST_TAB_COMPLETED
+    QUEST_TAB_COMPLETED,
+    QUEST_TAB_BOSSES
 } QuestJournalTab;
+
+#define JOURNAL_BOSS_COUNT 4
+
+typedef struct {
+    const char *name;
+    const char *area;
+    int defeated;
+} BossJournalEntry;
 
 typedef enum {
     QUEST_JOURNAL_NONE = 0,
@@ -35,6 +44,7 @@ typedef struct {
 
 void quest_journal_init(QuestJournalScreen *screen);
 int quest_journal_count(const GameState *g, QuestJournalTab tab);
+int quest_journal_get_boss(const GameState *g, int index, BossJournalEntry *entry);
 int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, QuestJournalEntry *entry);
 QuestJournalResult quest_journal_handle_key(QuestJournalScreen *screen, int scancode, int entry_count);
 

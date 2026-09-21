@@ -169,7 +169,7 @@ void info_panel_draw(Renderer *r, const GameState *g) {
     renderer_draw_text(r, ".     STAIRS/EXIT", x, y + lh, hint, r->font_tiny);
     renderer_draw_text(r, ",     ASCEND",  x, y + lh*2, hint, r->font_tiny);
     renderer_draw_text(r, "I     INV",     x, y + lh*3, hint, r->font_tiny);
-    renderer_draw_text(r, "Q     QUESTS",  x, y + lh*4, hint, r->font_tiny);
+    renderer_draw_text(r, "Q     QUESTS/BOSSES", x, y + lh*4, hint, r->font_tiny);
     renderer_draw_text(r, "P     PICK UP", x, y + lh*5, hint, r->font_tiny);
     renderer_draw_text(r, "A     ACTION",  x, y + lh*6, hint, r->font_tiny);
     renderer_draw_text(r, "B     SPELLS",  x, y + lh*7, hint, r->font_tiny);

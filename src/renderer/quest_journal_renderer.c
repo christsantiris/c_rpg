@@ -9,6 +9,37 @@ static void draw_panel(Renderer *r, SDL_Rect rect) {
     SDL_RenderFillRect(r->sdl, &inner);
 }
 
+static void draw_boss_progress(Renderer *r, const GameState *g) {
+    SDL_Color gold = {220, 180, 60, 255};
+    SDL_Color white = {200, 200, 200, 255};
+    SDL_Color green = {80, 170, 90, 255};
+    SDL_Color dimmed = {105, 105, 120, 255};
+    int top = r->screen_h < 320 ? 100 : 110;
+    int gap = r->screen_h < 400 ? 18 : 42;
+    int y = top + 8;
+    int defeated = 0;
+    draw_panel(r, (SDL_Rect){50, top, r->screen_w - 100,
+        JOURNAL_BOSS_COUNT * gap + 42});
+    for (int i = 0; i < JOURNAL_BOSS_COUNT; i++) {
+        BossJournalEntry boss;
+        quest_journal_get_boss(g, i, &boss);
+        defeated += boss.defeated;
+        SDL_Color color = boss.defeated ? green : white;
+        char name[48];
+        SDL_snprintf(name, sizeof(name), "[%c] %s", boss.defeated ? 'X' : ' ', boss.name);
+        renderer_draw_text(r, name, 65, y, color, r->font_tiny);
+        renderer_draw_text(r, boss.area, r->screen_w / 2 - 30, y, dimmed, r->font_tiny);
+        renderer_draw_text(r, boss.defeated ? "DEFEATED" : "UNDEFEATED",
+            r->screen_w - 145, y, color, r->font_tiny);
+        y += gap;
+    }
+    char progress[48];
+    SDL_snprintf(progress, sizeof(progress), "BOSSES DEFEATED: %d / %d", defeated, JOURNAL_BOSS_COUNT);
+    renderer_draw_text(r, progress, 65, y + 8, gold, r->font_tiny);
+    renderer_draw_text(r, "TAB/LEFT/RIGHT CHANGE TAB   Q/ESC CLOSE",
+        r->screen_w / 2 - 148, r->screen_h - 18, dimmed, r->font_tiny);
+}
+
 void quest_journal_draw(Renderer *r, const GameState *g, const QuestJournalScreen *screen) {
     int full_tiles_x = r->screen_w / TILE_SIZE;
     for (int y = 0; y < r->tiles_y; y++) {
@@ -36,6 +67,12 @@ void quest_journal_draw(Renderer *r, const GameState *g, const QuestJournalScree
     renderer_draw_text(r, "ACTIVE", margin, 82, active_tab, r->font_small);
     renderer_draw_text(r, "COMPLETED", margin + 120, 82, completed_tab,
         r->font_small);
+    renderer_draw_text(r, "BOSSES", margin + 260, 82,
+        screen->tab == QUEST_TAB_BOSSES ? gold : dimmed, r->font_small);
+    if (screen->tab == QUEST_TAB_BOSSES) {
+        draw_boss_progress(r, g);
+        return;
+    }
 
     draw_panel(r, (SDL_Rect){margin, top, list_width, height});
     draw_panel(r, (SDL_Rect){detail_x, top, detail_width, height});

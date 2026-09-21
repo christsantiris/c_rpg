@@ -86,6 +86,9 @@ void quest_journal_init(QuestJournalScreen *screen) {
 }
 
 int quest_journal_count(const GameState *g, QuestJournalTab tab) {
+    if (tab == QUEST_TAB_BOSSES) {
+        return JOURNAL_BOSS_COUNT;
+    }
     int count = 0;
     for (int quest = 0; quest < 4; quest++) {
         if (quest_in_tab(quest_state(g, quest), tab)) {
@@ -95,7 +98,29 @@ int quest_journal_count(const GameState *g, QuestJournalTab tab) {
     return count;
 }
 
+int quest_journal_get_boss(const GameState *g, int index, BossJournalEntry *entry) {
+    static const char *names[JOURNAL_BOSS_COUNT] = {
+        "Lich King", "Necromancer", "Goblin King", "Drowned Queen"
+    };
+    static const char *areas[JOURNAL_BOSS_COUNT] = {
+        "Dungeon", "Forest", "Goblin Mountains", "Sunken Coast"
+    };
+    static const Location regions[JOURNAL_BOSS_COUNT] = {
+        LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST
+    };
+    if (index < 0 || index >= JOURNAL_BOSS_COUNT) {
+        return 0;
+    }
+    entry->name = names[index];
+    entry->area = areas[index];
+    entry->defeated = (g->defeated_bosses & (1 << regions[index])) != 0;
+    return 1;
+}
+
 int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, QuestJournalEntry *entry) {
+    if (tab == QUEST_TAB_BOSSES) {
+        return 0;
+    }
     int visible_index = 0;
     for (int quest = 0; quest < 4; quest++) {
         int state = quest_state(g, quest);
@@ -141,10 +166,12 @@ QuestJournalResult quest_journal_handle_key(QuestJournalScreen *screen, int scan
             }
             break;
         case SDL_SCANCODE_LEFT:
+            screen->tab = (screen->tab + 2) % 3;
+            screen->selected = 0;
+            break;
         case SDL_SCANCODE_RIGHT:
         case SDL_SCANCODE_TAB:
-            screen->tab = screen->tab == QUEST_TAB_ACTIVE
-                ? QUEST_TAB_COMPLETED : QUEST_TAB_ACTIVE;
+            screen->tab = (screen->tab + 1) % 3;
             screen->selected = 0;
             break;
         case SDL_SCANCODE_ESCAPE:
