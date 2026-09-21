@@ -1398,6 +1398,24 @@ void game_enter_coast(GameState *g) {
     enter_adventure(g, LOCATION_COAST);
 }
 
+int game_harbor_unlocked(const GameState *g) {
+    int bosses = (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) |
+        (1 << LOCATION_MOUNTAINS) | (1 << LOCATION_COAST);
+    return (g->defeated_bosses & bosses) == bosses &&
+        g->elowen_quest_state == 3 && g->dain_quest_state == 3 &&
+        g->alder_quest_state == 3 && g->mara_quest_state == 3;
+}
+
+static void place_harbor_road(GameState *g) {
+    if (!game_harbor_unlocked(g)) {
+        return;
+    }
+    // Branch from the south road to the harbor's west edge, below Rowan.
+    for (int x = 21; x < TOWN_HARBOR_X; x++) {
+        g->map.tiles[TOWN_HARBOR_Y + 1][x] = TILE_TOWN_PATH;
+    }
+}
+
 static void place_town_portal(GameState *g) {
     if (!g->portal_active || g->location != LOCATION_TOWN) {
         return;
@@ -1435,6 +1453,7 @@ void game_leave_tavern(GameState *g) {
     int spawn_y;
     g->location = LOCATION_TOWN;
     map_generate_town(&g->map, &spawn_x, &spawn_y);
+    place_harbor_road(g);
     g->player.x = 8;
     g->player.y = 21;
     g->enemy_count = 0;
@@ -1460,6 +1479,7 @@ void game_return_to_town(GameState *g) {
     g->location = LOCATION_TOWN;
     int spawn_x, spawn_y;
     map_generate_town(&g->map, &spawn_x, &spawn_y);
+    place_harbor_road(g);
     if (returning_from == LOCATION_FOREST) {
         g->player.x = 1; g->player.y = 12;
     } else if (returning_from == LOCATION_MOUNTAINS) {
@@ -1591,6 +1611,12 @@ void game_talk_to_rowan(GameState *g) {
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Captain Rowan");
     g->dialogue_x = TOWN_ROWAN_X;
     g->dialogue_y = TOWN_ROWAN_Y;
+    if (game_harbor_unlocked(g)) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "You've defeated the four great foes and helped our neighbors. "
+            "The road now reaches the harbor. Across the sea, the island's ruined temple awaits.");
+        return;
+    }
     snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
         "Beyond these shores lies an island, reachable only by ship. "
         "Sailors whisper of a ruined temple and treasure buried beneath it. "

@@ -169,6 +169,7 @@ void game_rescue_forest_warden(GameState *g, int x, int y);
 void game_talk_to_mara(GameState *g);
 void game_talk_to_cain(GameState *g);
 void game_talk_to_rowan(GameState *g);
+int game_harbor_unlocked(const GameState *g);
 void game_light_coast_beacon(GameState *g, int x, int y);
 void game_repair_equipment_indices(GameState *g);
 int game_equip_main_hand(GameState *g, int index);
