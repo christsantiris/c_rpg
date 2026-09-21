@@ -727,7 +727,35 @@ static void test_cain_save_load(void) {
     remove_test_save(ROUND_TRIP_SLOT);
 }
 
+static void test_harbor_road_save_load(void) {
+    static GameState g;
+    static GameState loaded;
+    g.player.player_class = CLASS_WARRIOR;
+    game_init(&g);
+    g.defeated_bosses = (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) |
+        (1 << LOCATION_MOUNTAINS) | (1 << LOCATION_COAST);
+    g.elowen_quest_state = 3;
+    g.dain_quest_state = 3;
+    g.alder_quest_state = 3;
+    g.mara_quest_state = 3;
+    game_enter_tavern(&g);
+    game_leave_tavern(&g);
+    ASSERT("unlocked harbor road can be saved", save_game(&g, ROUND_TRIP_SLOT));
+    int ok = load_game(&loaded, ROUND_TRIP_SLOT);
+    ASSERT("loading preserves harbor eligibility and the road",
+        ok && game_harbor_unlocked(&loaded) &&
+        loaded.map.tiles[TOWN_HARBOR_Y + 1][TOWN_HARBOR_X - 1] == TILE_TOWN_PATH);
+    if (ok) {
+        game_enter_tavern(&loaded);
+        game_leave_tavern(&loaded);
+        ASSERT("saved progress rebuilds the road on later town visits",
+            loaded.map.tiles[TOWN_HARBOR_Y + 1][21] == TILE_TOWN_PATH);
+    }
+    remove_test_save(ROUND_TRIP_SLOT);
+}
+
 void test_save_load(void) {
+    test_harbor_road_save_load();
     test_cain_save_load();
     printf("Save/load tests:\n");
     test_current_weapon_round_trip();

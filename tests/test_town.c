@@ -452,6 +452,71 @@ void test_cain_gift(void) {
         g.inventory[MAX_INVENTORY - 1].spell_id == SPELL_RETURN_TO_TOWN);
 }
 
+void test_harbor_road(void) {
+    printf("Harbor road tests:\n");
+    GameState g;
+    g.player.player_class = CLASS_WARRIOR;
+    game_init(&g);
+    int road_y = TOWN_HARBOR_Y + 1;
+    ASSERT("new games have no harbor road",
+        !game_harbor_unlocked(&g) && g.map.tiles[road_y][21] == TILE_TOWN_FLOOR);
+
+    int bosses = (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) |
+        (1 << LOCATION_MOUNTAINS) | (1 << LOCATION_COAST);
+    g.elowen_quest_state = 3;
+    g.dain_quest_state = 3;
+    g.alder_quest_state = 3;
+    g.mara_quest_state = 3;
+    const Location regions[] = {
+        LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST
+    };
+    for (int i = 0; i < 4; i++) {
+        g.defeated_bosses = bosses & ~(1 << regions[i]);
+        game_enter_tavern(&g);
+        game_leave_tavern(&g);
+        ASSERT("each regional boss is required to unlock the road",
+            !game_harbor_unlocked(&g) && g.map.tiles[road_y][21] == TILE_TOWN_FLOOR);
+    }
+    g.defeated_bosses = bosses;
+    int *quests[] = {
+        &g.elowen_quest_state, &g.dain_quest_state,
+        &g.alder_quest_state, &g.mara_quest_state
+    };
+    for (int i = 0; i < 4; i++) {
+        for (int state = 0; state < 3; state++) {
+            *quests[i] = state;
+            game_enter_tavern(&g);
+            game_leave_tavern(&g);
+            ASSERT("every quest must be turned in before the road appears",
+                !game_harbor_unlocked(&g) && g.map.tiles[road_y][21] == TILE_TOWN_FLOOR);
+        }
+        *quests[i] = 3;
+    }
+
+    g.mara_quest_state = 2;
+    game_enter_tavern(&g);
+    game_talk_to_mara(&g);
+    game_leave_tavern(&g);
+    for (int x = 20; x < TOWN_HARBOR_X; x++) {
+        ASSERT("last quest turn-in connects the south road to the harbor",
+            g.map.tiles[road_y][x] == TILE_TOWN_PATH &&
+            map_is_walkable(&g.map, x, road_y));
+    }
+    ASSERT("road leaves Rowan beside the route",
+        g.map.tiles[TOWN_ROWAN_Y][TOWN_ROWAN_X] == TILE_NPC_ROWAN);
+    int inventory_count = g.inventory_count;
+    game_talk_to_rowan(&g);
+    ASSERT("Rowan acknowledges the road without awarding an item yet",
+        strstr(g.dialogue_text, "road now reaches the harbor") &&
+        g.inventory_count == inventory_count);
+
+    game_enter_coast(&g);
+    game_open_town_portal(&g);
+    ASSERT("returning from an expedition keeps the road and Coast portal",
+        g.map.tiles[road_y][TOWN_HARBOR_X - 1] == TILE_TOWN_PATH &&
+        g.map.tiles[TOWN_H - 3][21] == TILE_PORTAL);
+}
+
 void test_town_spawn(void) {
     printf("Town spawn tests:\n");
 
