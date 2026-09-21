@@ -651,6 +651,10 @@ int main(int argc, char **argv) {
                             int idx = shop_screen.selected;
                             if (idx >= game.inventory_count) break;
                             Item item = game.inventory[idx];
+                            if (item.type == ITEM_TREASURE_MAP) {
+                                push_message(&game, "The treasure map is not for sale.");
+                                break;
+                            }
                             int sell_price = shop_sell_price(&item);
                             char msg[32];
                             SDL_snprintf(msg, sizeof(msg), "Sold %s for %d gold",
@@ -1009,6 +1013,10 @@ int main(int argc, char **argv) {
                                     } else {
                                         if (game.inventory_count == 0) { break; }
                                         Item item = game.inventory[i];
+                                        if (item.type == ITEM_TREASURE_MAP) {
+                                            push_message(&game, "The treasure map is not for sale.");
+                                            break;
+                                        }
                                         int sell_price = shop_sell_price(&item);
                                         char msg[32];
                                         SDL_snprintf(msg, sizeof(msg), "Sold %s for %d gold", item.name, sell_price);

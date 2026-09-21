@@ -460,6 +460,12 @@ void test_harbor_road(void) {
     int road_y = TOWN_HARBOR_Y + 1;
     ASSERT("new games have no harbor road",
         !game_harbor_unlocked(&g) && g.map.tiles[road_y][21] == TILE_TOWN_FLOOR);
+    int inventory_count = g.inventory_count;
+    game_talk_to_rowan(&g);
+    ASSERT("Rowan initially gives neither an item nor a quest",
+        g.inventory_count == inventory_count && !game_has_treasure_map(&g) &&
+        g.elowen_quest_state == 0 && g.dain_quest_state == 0 &&
+        g.alder_quest_state == 0 && g.mara_quest_state == 0);
 
     int bosses = (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) |
         (1 << LOCATION_MOUNTAINS) | (1 << LOCATION_COAST);
@@ -476,6 +482,8 @@ void test_harbor_road(void) {
         game_leave_tavern(&g);
         ASSERT("each regional boss is required to unlock the road",
             !game_harbor_unlocked(&g) && g.map.tiles[road_y][21] == TILE_TOWN_FLOOR);
+        game_talk_to_rowan(&g);
+        ASSERT("a missing boss prevents the treasure map gift", !game_has_treasure_map(&g));
     }
     g.defeated_bosses = bosses;
     int *quests[] = {
@@ -489,6 +497,8 @@ void test_harbor_road(void) {
             game_leave_tavern(&g);
             ASSERT("every quest must be turned in before the road appears",
                 !game_harbor_unlocked(&g) && g.map.tiles[road_y][21] == TILE_TOWN_FLOOR);
+            game_talk_to_rowan(&g);
+            ASSERT("an unfinished quest prevents the treasure map gift", !game_has_treasure_map(&g));
         }
         *quests[i] = 3;
     }
@@ -504,11 +514,32 @@ void test_harbor_road(void) {
     }
     ASSERT("road leaves Rowan beside the route",
         g.map.tiles[TOWN_ROWAN_Y][TOWN_ROWAN_X] == TILE_NPC_ROWAN);
-    int inventory_count = g.inventory_count;
+    while (g.inventory_count < MAX_INVENTORY) {
+        g.inventory[g.inventory_count++] = item_make_health_potion();
+    }
     game_talk_to_rowan(&g);
-    ASSERT("Rowan acknowledges the road without awarding an item yet",
-        strstr(g.dialogue_text, "road now reaches the harbor") &&
-        g.inventory_count == inventory_count);
+    ASSERT("a full pack leaves the map available for later",
+        !game_has_treasure_map(&g) && g.inventory_count == MAX_INVENTORY &&
+        strstr(g.dialogue_text, "Make room"));
+    game_remove_inventory_item(&g, MAX_INVENTORY - 1);
+    game_talk_to_rowan(&g);
+    ASSERT("Rowan gives the treasure map when space is available",
+        game_has_treasure_map(&g) && g.inventory_count == MAX_INVENTORY &&
+        g.inventory[MAX_INVENTORY - 1].type == ITEM_TREASURE_MAP);
+    Action read_map = {ACTION_USE_ITEM, MAX_INVENTORY - 1, 0};
+    action_resolve_player(&g, read_map);
+    ASSERT("reading the map describes the island without consuming it",
+        game_has_treasure_map(&g) && g.inventory_count == MAX_INVENTORY &&
+        strstr(g.messages[g.message_count - 1], "ruined temple"));
+    Action drop_map = {ACTION_DROP_ITEM, MAX_INVENTORY - 1, 0};
+    action_resolve_player(&g, drop_map);
+    ASSERT("the map cannot be dropped and lost",
+        game_has_treasure_map(&g) && g.inventory_count == MAX_INVENTORY &&
+        g.floor_item_count == 0);
+    game_remove_inventory_item(&g, MAX_INVENTORY - 2);
+    game_talk_to_rowan(&g);
+    ASSERT("talking again with room in the pack does not duplicate the gift",
+        g.inventory_count == MAX_INVENTORY - 1 && game_has_treasure_map(&g));
 
     game_enter_coast(&g);
     game_open_town_portal(&g);

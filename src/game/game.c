@@ -1606,15 +1606,36 @@ void game_talk_to_cain(GameState *g) {
     }
 }
 
+int game_has_treasure_map(const GameState *g) {
+    for (int i = 0; i < g->inventory_count; i++) {
+        if (g->inventory[i].type == ITEM_TREASURE_MAP) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void game_talk_to_rowan(GameState *g) {
     g->dialogue_active = 1;
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Captain Rowan");
     g->dialogue_x = TOWN_ROWAN_X;
     g->dialogue_y = TOWN_ROWAN_Y;
     if (game_harbor_unlocked(g)) {
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "You've defeated the four great foes and helped our neighbors. "
-            "The road now reaches the harbor. Across the sea, the island's ruined temple awaits.");
+        if (game_has_treasure_map(g)) {
+            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+                "Keep that map safe. It charts the sea route to the island "
+                "and marks buried treasure beneath the ruined temple.");
+        } else if (g->inventory_count >= MAX_INVENTORY) {
+            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+                "The road now reaches the harbor. I have a treasure map for you. "
+                "Make room in your pack, then speak to me again.");
+        } else {
+            g->inventory[g->inventory_count++] = item_make_treasure_map();
+            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+                "The road now reaches the harbor. Take this treasure map: "
+                "it charts a sea route to the island and marks treasure beneath its ruined temple.");
+            push_message(g, "Rowan gives you an Island Treasure Map.");
+        }
         return;
     }
     snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,

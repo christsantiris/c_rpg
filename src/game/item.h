@@ -12,7 +12,8 @@ typedef enum {
     ITEM_ARMOR,
     ITEM_SCROLL,
     ITEM_SHIELD,
-    ITEM_SPELL_TOME
+    ITEM_SPELL_TOME,
+    ITEM_TREASURE_MAP
 } ItemType;
 
 typedef enum {
@@ -135,6 +136,7 @@ Item item_make_scroll_magic_arrow(void);
 Item item_make_scroll_fireball(void);
 Item item_make_scroll_heal(void);
 Item item_make_scroll_return_to_town(void);
+Item item_make_treasure_map(void);
 Item item_make_magic_arrow_tome(void);
 Item item_make_fireball_tome(void);
 Item item_make_heal_tome(void);
