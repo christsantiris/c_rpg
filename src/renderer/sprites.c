@@ -2535,6 +2535,36 @@ void draw_cain(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 3, y + 15, 5, 6, (SDL_Color){238, 218, 162, 255});
 }
 
+void draw_rowan(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color outline = {22, 28, 39, 255};
+    SDL_Color coat = {43, 66, 101, 255};
+    SDL_Color trim = {208, 167, 85, 255};
+    SDL_Color skin = {195, 148, 109, 255};
+    SDL_Color hair = {206, 205, 191, 255};
+    draw_town_floor(r, tile_x, tile_y);
+    fill_rect(r, x + 7, y + 2, 10, 5, outline);
+    fill_rect(r, x + 8, y + 3, 8, 3, coat);
+    fill_rect(r, x + 4, y + 6, 16, 2, outline);
+    fill_rect(r, x + 8, y + 5, 8, 1, trim);
+    fill_rect(r, x + 7, y + 8, 10, 5, hair);
+    fill_rect(r, x + 8, y + 8, 8, 4, skin);
+    fill_rect(r, x + 9, y + 9, 2, 1, outline);
+    fill_rect(r, x + 14, y + 9, 2, 1, outline);
+    fill_rect(r, x + 10, y + 11, 4, 2, hair);
+    fill_rect(r, x + 4, y + 13, 16, 8, outline);
+    fill_rect(r, x + 5, y + 14, 14, 6, coat);
+    fill_rect(r, x + 5, y + 13, 4, 2, trim);
+    fill_rect(r, x + 15, y + 13, 4, 2, trim);
+    fill_rect(r, x + 11, y + 14, 2, 4, hair);
+    fill_rect(r, x + 5, y + 18, 2, 2, skin);
+    fill_rect(r, x + 17, y + 18, 2, 2, skin);
+    fill_rect(r, x + 8, y + 19, 8, 1, trim);
+    fill_rect(r, x + 7, y + 21, 4, 2, outline);
+    fill_rect(r, x + 14, y + 21, 4, 2, outline);
+}
+
 void draw_elowen(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;

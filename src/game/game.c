@@ -1586,6 +1586,17 @@ void game_talk_to_cain(GameState *g) {
     }
 }
 
+void game_talk_to_rowan(GameState *g) {
+    g->dialogue_active = 1;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Captain Rowan");
+    g->dialogue_x = TOWN_ROWAN_X;
+    g->dialogue_y = TOWN_ROWAN_Y;
+    snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+        "Beyond these shores lies an island, reachable only by ship. "
+        "Sailors whisper of a ruined temple and treasure buried beneath it. "
+        "For now, the harbor is closed.");
+}
+
 void game_talk_to_elowen(GameState *g) {
     g->dialogue_active = 1;
     strncpy(g->dialogue_speaker, "Elowen", MAX_SPEAKER_LEN - 1);
