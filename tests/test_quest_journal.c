@@ -41,6 +41,36 @@ void test_quest_journal(void) {
     quest_journal_handle_key(&screen, SDL_SCANCODE_TAB, 2);
     ASSERT("journal changes tabs and resets selection",
         screen.tab == QUEST_TAB_COMPLETED && screen.selected == 0);
+    quest_journal_handle_key(&screen, SDL_SCANCODE_TAB, 1);
+    ASSERT("boss progress is reachable after completed quests",
+        screen.tab == QUEST_TAB_BOSSES &&
+        quest_journal_count(&g, screen.tab) == JOURNAL_BOSS_COUNT);
+    quest_journal_handle_key(&screen, SDL_SCANCODE_RIGHT, JOURNAL_BOSS_COUNT);
+    ASSERT("right wraps from bosses to active quests", screen.tab == QUEST_TAB_ACTIVE);
+    quest_journal_handle_key(&screen, SDL_SCANCODE_LEFT, 2);
+    ASSERT("left wraps from active quests to bosses", screen.tab == QUEST_TAB_BOSSES);
+    const Location regions[JOURNAL_BOSS_COUNT] = {
+        LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST
+    };
+    const char *names[JOURNAL_BOSS_COUNT] = {
+        "Lich King", "Necromancer", "Goblin King", "Drowned Queen"
+    };
+    for (int defeated = 0; defeated < JOURNAL_BOSS_COUNT; defeated++) {
+        g.defeated_bosses = 1 << regions[defeated];
+        for (int i = 0; i < JOURNAL_BOSS_COUNT; i++) {
+            BossJournalEntry boss;
+            ASSERT("journal maps each regional defeat to the correct boss",
+                quest_journal_get_boss(&g, i, &boss) &&
+                strcmp(boss.name, names[i]) == 0 &&
+                boss.defeated == (i == defeated));
+        }
+    }
+    BossJournalEntry boss;
+    ASSERT("boss journal rejects invalid rows",
+        !quest_journal_get_boss(&g, -1, &boss) &&
+        !quest_journal_get_boss(&g, JOURNAL_BOSS_COUNT, &boss));
+    ASSERT("boss rows are not presented as quests",
+        !quest_journal_get_entry(&g, QUEST_TAB_BOSSES, 0, &entry));
     ASSERT("Q closes the quest journal",
         quest_journal_handle_key(&screen, SDL_SCANCODE_Q, 1) ==
             QUEST_JOURNAL_CLOSED);
