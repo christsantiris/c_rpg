@@ -666,6 +666,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_NPC_ALDER: draw_alder(r, sx, sy); break;
                 case TILE_NPC_MARA: draw_mara(r, sx, sy); break;
                 case TILE_NPC_CAIN: draw_cain(r, sx, sy); break;
+                case TILE_NPC_ROWAN: draw_rowan(r, sx, sy); break;
                 case TILE_FOREST_WARDEN:
                     draw_forest_warden(r, sx, sy, x, y); break;
                 case TILE_TOWN_EXIT: draw_town_path(r, sx, sy); break;

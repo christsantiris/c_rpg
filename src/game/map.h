@@ -20,6 +20,8 @@
 #define TOWN_HARBOR_H 4
 #define TOWN_HARBOR_X (TOWN_W - 1 - TOWN_HARBOR_W)
 #define TOWN_HARBOR_Y (TOWN_H - 1 - TOWN_HARBOR_H)
+#define TOWN_ROWAN_X (TOWN_HARBOR_X - 2)
+#define TOWN_ROWAN_Y TOWN_HARBOR_Y
 
 #define DUNGEON_DEPTH 8
 #define FOREST_DEPTH 8
@@ -105,7 +107,8 @@ typedef enum {
     TILE_COAST_CHANNEL_DRY,
     TILE_COAST_SLUICE_CONTROL,
     TILE_COAST_CACHE,
-    TILE_NPC_CAIN
+    TILE_NPC_CAIN,
+    TILE_NPC_ROWAN
 } TileType;
 
 typedef struct {

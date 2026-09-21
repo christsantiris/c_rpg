@@ -779,6 +779,10 @@ int main(int argc, char **argv) {
                                             game_talk_to_cain(&game);
                                             found = 1;
                                         } else if (game.map.tiles[ty][tx] ==
+                                            TILE_NPC_ROWAN) {
+                                            game_talk_to_rowan(&game);
+                                            found = 1;
+                                        } else if (game.map.tiles[ty][tx] ==
                                             TILE_FOREST_WARDEN) {
                                             game_rescue_forest_warden(&game,
                                                 tx, ty);

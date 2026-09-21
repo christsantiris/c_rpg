@@ -59,6 +59,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_NPC_ELOWEN || tile == TILE_NPC_DAIN ||
                         tile == TILE_NPC_ALDER || tile == TILE_NPC_MARA ||
                         tile == TILE_NPC_CAIN ||
+                        tile == TILE_NPC_ROWAN ||
                         tile == TILE_COAST_BEACON_UNLIT ||
                         tile == TILE_COAST_BEACON_LIT ||
                         tile == TILE_FOREST_WARDEN) {
