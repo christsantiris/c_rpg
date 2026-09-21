@@ -159,9 +159,10 @@ Production Releases
 - windows installer
 - fix linux installer
 High priority
-1. More tactical enemy behavior
+1. Build out harbor functionality.
+2. More tactical enemy behavior
    Add recognizable combat roles such as protectors, ambushers, healers, summoners, ranged attackers, and enemies that retreat or flank.
-2. Boss encounter improvements
+3. Boss encounter improvements
    Give every boss multiple phases, telegraphed signature attacks, an arena mechanic, and a guaranteed thematic reward.
 Medium priority
 1. Region replay tiers
