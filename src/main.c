@@ -23,6 +23,8 @@
 #include "renderer/quest_journal_renderer.h"
 #include "screens/shop.h"
 #include "renderer/shop_renderer.h"
+#include "screens/harbor.h"
+#include "renderer/harbor_renderer.h"
 #include "renderer/game_renderer.h"
 #include "renderer/sprites.h"
 #include "renderer/info_panel.h"
@@ -266,6 +268,17 @@ static int open_shop_on_move(const GameState *game, const Action *action, ShopSc
     return 1;
 }
 
+static void handle_harbor_result(HarborResult result, GameState *game, GameScreen *screen) {
+    if (result == HARBOR_CLOSED) {
+        *screen = SCREEN_PLAYING;
+        push_message(game, "You return to town.");
+    } else if (result == HARBOR_MAP_REQUIRED) {
+        push_message(game, "The captain needs a sea chart. Speak with Rowan.");
+    } else if (result == HARBOR_BOARD) {
+        push_message(game, "The ship is ready to sail to the Ruined Isle.");
+    }
+}
+
 static void handle_landing_result(LandingResult result, LandingScreen *landing,
     GameScreen *screen, GameState *game, Renderer *renderer, Viewport *viewport,
     NameEntry *name_entry, SlotSelect *slot_select, int *slot_is_save, int *running) {
@@ -428,6 +441,8 @@ int main(int argc, char **argv) {
     ClassSelectScreen class_select_screen;
     class_select_init(&class_select_screen);
     ShopScreen shop_screen;
+    HarborScreen harbor_screen;
+    harbor_init(&harbor_screen);
     HighScoreTable highscore_table;
     highscore_load(&highscore_table);
 
@@ -687,6 +702,14 @@ int main(int argc, char **argv) {
                         break;
                     }
 
+                    // Harbor screen
+                    if (screen == SCREEN_HARBOR) {
+                        HarborResult result = harbor_handle_key(&harbor_screen,
+                            sc, game_has_treasure_map(&game));
+                        handle_harbor_result(result, &game, &screen);
+                        break;
+                    }
+
                     // Help screen
                     if (screen == SCREEN_HELP) {
                         HelpResult result = help_handle_key(sc);
@@ -850,10 +873,23 @@ int main(int argc, char **argv) {
                             a.type = ACTION_NONE;
                         }
                         if (a.type != ACTION_NONE) {
+                            int was_at_harbor_entrance = game.location == LOCATION_TOWN &&
+                                game.player.x == TOWN_HARBOR_ENTRANCE_X &&
+                                game.player.y == TOWN_HARBOR_ENTRANCE_Y;
                             if (a.type == ACTION_CAST_SPELL) {
                                 spell_view = game;
                             }
                             action_resolve_player(&game, a);
+                            if (a.type == ACTION_MOVE &&
+                                !was_at_harbor_entrance &&
+                                game.location == LOCATION_TOWN &&
+                                game_harbor_unlocked(&game) &&
+                                game.player.x == TOWN_HARBOR_ENTRANCE_X &&
+                                game.player.y == TOWN_HARBOR_ENTRANCE_Y) {
+                                harbor_init(&harbor_screen);
+                                screen = SCREEN_HARBOR;
+                                push_message(&game, "You enter the harbor dock.");
+                            }
                             if (a.type == ACTION_CAST_SPELL &&
                                 game.player.mp < spell_view.player.mp &&
                                 game.trail_count > 0 && game.trail_frames > 0 &&
@@ -1076,6 +1112,21 @@ int main(int argc, char **argv) {
                             }
                         }
                     }
+                    // Harbor screen clicks
+                    if (screen == SCREEN_HARBOR && event.button.button == SDL_BUTTON_LEFT) {
+                        SDL_Point point = {event.button.x, event.button.y};
+                        for (int option = 0; option < 2; option++) {
+                            SDL_Rect button = harbor_button_rect(&renderer, option);
+                            if (SDL_PointInRect(&point, &button)) {
+                                harbor_screen.selected = option;
+                                HarborResult result = harbor_activate(&harbor_screen,
+                                    game_has_treasure_map(&game));
+                                handle_harbor_result(result, &game, &screen);
+                                break;
+                            }
+                        }
+                        break;
+                    }
                     // Help screen clicks
                     if (screen == SCREEN_HELP && event.button.button == SDL_BUTTON_LEFT) {
                         screen = SCREEN_PLAYING;
@@ -1176,6 +1227,8 @@ int main(int argc, char **argv) {
             quest_journal_draw(&renderer, &game, &quest_journal_screen);
         } else if (screen == SCREEN_SHOP) {
             shop_draw(&renderer, &game, &shop_screen);
+        } else if (screen == SCREEN_HARBOR) {
+            harbor_draw(&renderer, &game, &harbor_screen);
         } else if (screen == SCREEN_PLAYING) {
             GameState *view = spell_animating &&
                 SDL_GetTicks() - game.trail_started_at < SPELL_TRAVEL_MS
