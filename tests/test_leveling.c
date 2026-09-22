@@ -37,8 +37,81 @@ void test_leveling(void) {
     ASSERT("minimum damage is always 1", dmg == 1);
 }
 
+static void test_region_order_consistency(void) {
+    static GameState g;
+    const Location regions[] = {LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST};
+    for (int region = 0; region < 4; region++) {
+        memset(&g, 0, sizeof(g));
+        game_init(&g);
+        g.location = regions[region];
+        g.level = MAX_REGION_DEPTH;
+        g.player.level = 17;
+        srand(31);
+        if (g.location == LOCATION_FOREST) {
+            map_generate_forest(&g.map, g.level);
+        } else if (g.location == LOCATION_MOUNTAINS) {
+            map_generate_mountains(&g.map, g.level);
+        } else if (g.location == LOCATION_COAST) {
+            map_generate_coast(&g.map, g.level);
+        } else {
+            map_generate(&g.map, g.level);
+        }
+        Enemy reference[4][MAX_ENEMIES] = {0};
+        int counts[4] = {0};
+        int consistent = 1;
+        for (int mask = 0; mask < 16; mask++) {
+            if (mask & (1 << region)) {
+                continue;
+            }
+            int tier = 0;
+            g.defeated_bosses = 0;
+            for (int prior = 0; prior < 4; prior++) {
+                if (mask & (1 << prior)) {
+                    g.defeated_bosses |= 1 << regions[prior];
+                    tier++;
+                }
+            }
+            srand(7);
+            enemies_spawn(&g);
+            if (counts[tier] == 0) {
+                counts[tier] = g.enemy_count;
+                memcpy(reference[tier], g.enemies, sizeof(g.enemies));
+            } else {
+                consistent &= counts[tier] == g.enemy_count;
+                for (int i = 0; i < g.enemy_count; i++) {
+                    Enemy *expected = &reference[tier][i];
+                    Enemy *actual = &g.enemies[i];
+                    consistent &= actual->type == expected->type &&
+                        actual->max_hp == expected->max_hp && actual->attack == expected->attack &&
+                        actual->defense == expected->defense;
+                }
+            }
+        }
+        ASSERT("each region's difficulty is independent of which earlier bosses were defeated", consistent);
+        int smooth = counts[2] > 0 && counts[2] == counts[3];
+        for (int i = 0; i < counts[3]; i++) {
+            Enemy *third = &reference[2][i];
+            Enemy *fourth = &reference[3][i];
+            smooth &= third->type == fourth->type && fourth->max_hp >= third->max_hp &&
+                fourth->max_hp <= (third->max_hp * 112 + 99) / 100 &&
+                fourth->attack - third->attack <= 3;
+        }
+        ASSERT("the fourth region adds at most twelve percent HP and three attack over the third", smooth);
+        g.player.level = 16;
+        srand(7);
+        enemies_spawn(&g);
+        int gradual = g.enemy_count == counts[3];
+        for (int i = 0; i < g.enemy_count; i++) {
+            gradual &= reference[3][i].attack - g.enemies[i].attack <= 1 &&
+                reference[3][i].max_hp <= (g.enemies[i].max_hp * 102 + 99) / 100;
+        }
+        ASSERT("reaching level seventeen adds no sudden attack or HP spike", gradual);
+    }
+}
+
 void test_region_difficulty_scaling(void) {
     printf("Region difficulty scaling tests:\n");
+    test_region_order_consistency();
     static GameState g;
     static GameState loaded;
     memset(&g, 0, sizeof(g));
@@ -58,8 +131,8 @@ void test_region_difficulty_scaling(void) {
     int scaled_skeleton = 0;
     for (int i = 0; i < g.enemy_count; i++) {
         Enemy *e = &g.enemies[i];
-        if (e->type == ENEMY_SKELETON && e->max_hp == 19 &&
-            e->attack == 17 && e->defense == 2 && e->experience == 10) {
+        if (e->type == ENEMY_SKELETON && e->max_hp == 18 &&
+            e->attack == 15 && e->defense == 2 && e->experience == 10) {
             scaled_skeleton = 1;
         }
     }
@@ -79,18 +152,18 @@ void test_region_difficulty_scaling(void) {
     scaled_skeleton = 0;
     for (int i = 0; i < g.enemy_count; i++) {
         Enemy *e = &g.enemies[i];
-        if (e->type == ENEMY_SKELETON && e->max_hp == 20 && e->attack == 19) {
+        if (e->type == ENEMY_SKELETON && e->max_hp == 19 && e->attack == 17) {
             scaled_skeleton = 1;
         }
     }
-    ASSERT("player level adds one small step after level eight", scaled_skeleton);
+    ASSERT("player level adds a modest adjustment by level nine", scaled_skeleton);
 
     g.player.level = 50;
     enemies_spawn(&g);
     scaled_skeleton = 0;
     for (int i = 0; i < g.enemy_count; i++) {
         Enemy *e = &g.enemies[i];
-        if (e->type == ENEMY_SKELETON && e->max_hp == 21 && e->attack == 21) {
+        if (e->type == ENEMY_SKELETON && e->max_hp == 20 && e->attack == 19) {
             scaled_skeleton = 1;
         }
     }
@@ -103,8 +176,8 @@ void test_region_difficulty_scaling(void) {
     int scaled_boss = 0;
     for (int i = 0; i < g.enemy_count; i++) {
         Enemy *e = &g.enemies[i];
-        if (e->type == ENEMY_LICH_KING && e->max_hp == 224 &&
-            e->attack == 30 && e->defense == 8 && e->experience == 480) {
+        if (e->type == ENEMY_LICH_KING && e->max_hp == 217 &&
+            e->attack == 28 && e->defense == 8 && e->experience == 480) {
             scaled_boss = 1;
         }
     }
