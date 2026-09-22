@@ -9,6 +9,18 @@ int shop_sell_price(const Item *item) {
     return item->value / 4;
 }
 
+int shop_accepts_item(ShopType type, const Item *item) {
+    if (type == SHOP_TYPE_BLACKSMITH) {
+        return item->type == ITEM_WEAPON || item->type == ITEM_ARMOR ||
+            item->type == ITEM_SHIELD;
+    }
+    if (type == SHOP_TYPE_ALCHEMIST) {
+        return item->type == ITEM_POTION_HEALTH || item->type == ITEM_POTION_MANA ||
+            item->type == ITEM_SCROLL || item->type == ITEM_SPELL_TOME;
+    }
+    return 0;
+}
+
 static int defeated_boss_count(int defeated_bosses) {
     int count = 0;
     while (defeated_bosses) {
@@ -102,9 +114,10 @@ ShopResult shop_handle_key(ShopScreen *s, int scancode) {
             break;
         case SDL_SCANCODE_DOWN:
             s->selected++;
-            if (s->type == SHOP_TYPE_ALCHEMIST || s->mode == 0) {
-                if (s->selected >= s->item_count)
+            if (s->mode == 0) {
+                if (s->selected >= s->item_count) {
                     s->selected = s->item_count - 1;
+                }
             }
             break;
         case SDL_SCANCODE_TAB:

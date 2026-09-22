@@ -629,6 +629,9 @@ int main(int argc, char **argv) {
                     // Shop screen
                     if (screen == SCREEN_SHOP) {
                         ShopResult result = shop_handle_key(&shop_screen, sc);
+                        if (shop_screen.mode == 1 && shop_screen.selected >= game.inventory_count) {
+                            shop_screen.selected = game.inventory_count > 0 ? game.inventory_count - 1 : 0;
+                        }
                         if (result == SHOP_CLOSED) {
                             screen = SCREEN_PLAYING;
                         } else if (result == SHOP_BUY) {
@@ -653,6 +656,12 @@ int main(int argc, char **argv) {
                             Item item = game.inventory[idx];
                             if (item.type == ITEM_TREASURE_MAP) {
                                 push_message(&game, "The treasure map is not for sale.");
+                                break;
+                            }
+                            if (!shop_accepts_item(shop_screen.type, &item)) {
+                                push_message(&game, shop_screen.type == SHOP_TYPE_ALCHEMIST
+                                    ? "Take weapons and equipment to the blacksmith."
+                                    : "Take potions, scrolls and tomes to the alchemist.");
                                 break;
                             }
                             int sell_price = shop_sell_price(&item);
@@ -1015,6 +1024,12 @@ int main(int argc, char **argv) {
                                         Item item = game.inventory[i];
                                         if (item.type == ITEM_TREASURE_MAP) {
                                             push_message(&game, "The treasure map is not for sale.");
+                                            break;
+                                        }
+                                        if (!shop_accepts_item(shop_screen.type, &item)) {
+                                            push_message(&game, shop_screen.type == SHOP_TYPE_ALCHEMIST
+                                                ? "Take weapons and equipment to the blacksmith."
+                                                : "Take potions, scrolls and tomes to the alchemist.");
                                             break;
                                         }
                                         int sell_price = shop_sell_price(&item);
