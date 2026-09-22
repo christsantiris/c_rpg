@@ -15,12 +15,15 @@ enemy strength when a floor is generated, not on every player level-up.
 | ---: | ---: | ---: | ---: | ---: | ---: |
 | 0 | Base | Base | Base | Base | Base |
 | 1 | +45% | +7 | +30% | +6 | +10% |
-| 2 | +90% | +14 | +60% | +12 | +20% |
-| 3 | +135% | +21 | +90% | +18 | +30% |
+| 2 | +80% | +12 | +55% | +10 | +20% |
+| 3 | +100% | +15 | +70% | +13 | +30% |
 
 Each tier also adds 1 defense. The one-HP Illusion remains at one HP. Player
-level adds a smaller step at levels 9 and 17, capped there: each step adds 10%
-HP and 2 attack. Every region draws its regular enemy mix from three stages
+level adds HP gradually from level 1 to 17, capped at +20% of base HP, and
+adds 1 attack every four levels, capped at +4. The third-to-fourth region
+increase is limited to +20% of base HP for regular enemies, +15% for bosses,
+and +3 attack for both. These bonuses use the same curve in every region;
+which bosses were defeated does not affect the bonus. Every region draws its regular enemy mix from three stages
 deeper per prior boss, without changing the actual map stage or encounter count.
 Gold drops, equipment rewards, and traps are unchanged.
 

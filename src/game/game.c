@@ -21,20 +21,27 @@ static int region_order_tier(const GameState *g) {
 }
 
 static void scale_spawned_enemy(const GameState *g, Enemy *e) {
+    static const int regular_hp[4] = {100, 145, 180, 200};
+    static const int regular_attack[4] = {0, 7, 12, 15};
+    static const int boss_hp[4] = {100, 130, 155, 170};
+    static const int boss_attack[4] = {0, 6, 10, 13};
     int tier = region_order_tier(g);
-    int level_steps = (g->player.level - 1) / 8;
-    if (level_steps < 0) {
-        level_steps = 0;
+    int level_progress = g->player.level - 1;
+    if (level_progress < 0) {
+        level_progress = 0;
     }
-    if (level_steps > 2) {
-        level_steps = 2;
+    if (level_progress > 16) {
+        level_progress = 16;
     }
-    int hp_percent = 100 + (e->is_boss ? 30 : 45) * tier + 10 * level_steps;
+    // Later victories add smaller increments; leveling never adds a two-point attack jump.
+    int hp_percent = (e->is_boss ? boss_hp[tier] : regular_hp[tier]) +
+        20 * level_progress / 16;
     if (e->type != ENEMY_ILLUSION) {
         e->max_hp = (e->max_hp * hp_percent + 50) / 100;
         e->hp = e->max_hp;
     }
-    e->attack += (e->is_boss ? 6 : 7) * tier + 2 * level_steps;
+    e->attack += (e->is_boss ? boss_attack[tier] : regular_attack[tier]) +
+        level_progress / 4;
     e->defense += tier;
     e->experience = (e->experience * (100 + 10 * tier) + 50) / 100;
 }
