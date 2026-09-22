@@ -69,6 +69,14 @@ Below are screenshots of the game in action:
 
 <img width="2554" height="1428" alt="image" src="https://github.com/user-attachments/assets/5dcf54c0-0f35-4a1d-b0db-e788f0214a62" />
 
+<img width="2548" height="1428" alt="image" src="https://github.com/user-attachments/assets/b789ff2d-a9d1-4138-97a8-c8fd152c06c9" />
+
+<img width="2554" height="1434" alt="image" src="https://github.com/user-attachments/assets/2ee519e4-2a53-4cb3-9596-242298ddbba0" />
+
+<img width="2540" height="1430" alt="image" src="https://github.com/user-attachments/assets/91bace4f-aba3-4d22-8126-7df2f74020ae" />
+
+<img width="3834" height="2138" alt="image" src="https://github.com/user-attachments/assets/59a939ed-29a8-4ea2-aa6c-dffabce33bae" />
+
 ## Compile the game
 To compile the app run `make run` in the root directory.
 
