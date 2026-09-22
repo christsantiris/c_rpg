@@ -1702,7 +1702,14 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 g->player.x < fortress->x + fortress->w &&
                 g->player.y >= fortress->y &&
                 g->player.y < fortress->y + fortress->h;
-            if (!player_in_fortress && e->move_timer == 0) continue;
+            int range_x = abs_int(g->player.x - e->x);
+            int range_y = abs_int(g->player.y - e->y);
+            // Hits outside the fortress start the fight, including diagonal bow shots.
+            if (!player_in_fortress &&
+                ((e->move_timer == 0 && e->hp == e->max_hp) ||
+                range_x > 12 || range_y > 12)) {
+                continue;
+            }
         }
         if (e->type == ENEMY_DROWNED_QUEEN) {
             Room *throne = &g->map.rooms[g->map.room_count - 1];
