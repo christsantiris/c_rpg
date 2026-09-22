@@ -62,6 +62,8 @@ sluice wall and switch while retaining their tide state and treasure chambers.
 ## Screenshots
 Below are screenshots of the game in action:
 
+<img width="2554" height="1428" alt="image" src="https://github.com/user-attachments/assets/2608e154-f4db-48a3-afa9-59fc8775f54f" />
+
 <img width="3806" height="2270" alt="image" src="https://github.com/user-attachments/assets/bdb2210e-1f54-4611-80e0-fb5a35c77d4f" />
 
 ## Compile the game
