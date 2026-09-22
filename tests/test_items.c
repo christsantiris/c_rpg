@@ -328,6 +328,7 @@ void test_items(void) {
         shop_has_item(&shop, "Tome: Heal II"));
 
     int fair_shop_prices = 1;
+    int correct_shop_sales = 1;
     ShopType shop_types[2] = {SHOP_TYPE_BLACKSMITH, SHOP_TYPE_ALCHEMIST};
     for (int type = 0; type < 2; type++) {
         shop_init(&shop, shop_types[type],
@@ -340,10 +341,22 @@ void test_items(void) {
             fair_shop_prices &= shop_buy_price(item) > item->value;
             fair_shop_prices &= shop_sell_price(item) == item->value / 4;
             fair_shop_prices &= shop_sell_price(item) < shop_buy_price(item);
+            correct_shop_sales &= shop_accepts_item(shop_types[type], item);
+            correct_shop_sales &= !shop_accepts_item(shop_types[1 - type], item);
         }
     }
     ASSERT("all shop stock has a higher buy price than sell price",
         fair_shop_prices);
+    ASSERT("each store buys its stock categories and the other store rejects them",
+        correct_shop_sales);
+    Item return_scroll = item_make_scroll_return_to_town();
+    ASSERT("the gifted return scroll can only be sold to the alchemist",
+        shop_accepts_item(SHOP_TYPE_ALCHEMIST, &return_scroll) &&
+        !shop_accepts_item(SHOP_TYPE_BLACKSMITH, &return_scroll));
+    Item treasure_map = item_make_treasure_map();
+    ASSERT("neither store accepts the island treasure map",
+        !shop_accepts_item(SHOP_TYPE_ALCHEMIST, &treasure_map) &&
+        !shop_accepts_item(SHOP_TYPE_BLACKSMITH, &treasure_map));
 
     Item armor = item_make_leather_armor();
     ASSERT("armor type correct",            armor.type          == ITEM_ARMOR);

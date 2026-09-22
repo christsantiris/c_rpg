@@ -141,17 +141,23 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
                 const Item *item = &g->inventory[i];
                 int item_y = 140 + (i - list_start) * 32;
                 int sell_price = shop_sell_price(item);
+                int accepted = shop_accepts_item(s->type, item);
                 char label[64];
                 SDL_snprintf(label, sizeof(label), "%-20s  %d gold",
                     item->name, sell_price);
                 if (item->type == ITEM_TREASURE_MAP) {
                     SDL_snprintf(label, sizeof(label), "%s  NOT FOR SALE", item->name);
+                } else if (!accepted) {
+                    SDL_snprintf(label, sizeof(label), "%s  %s ONLY", item->name,
+                        s->type == SHOP_TYPE_ALCHEMIST ? "BLACKSMITH" : "ALCHEMIST");
                 }
                 if (s->selected == i) {
                     renderer_draw_text(r, ">", cx - 200, item_y, gold, r->font_small);
-                    renderer_draw_text(r, label, cx - 180, item_y, green, r->font_small);
+                    renderer_draw_text(r, label, cx - 180, item_y,
+                        accepted ? green : red, r->font_small);
                 } else {
-                    renderer_draw_text(r, label, cx - 180, item_y, white, r->font_small);
+                    renderer_draw_text(r, label, cx - 180, item_y,
+                        accepted ? white : dimmed, r->font_small);
                 }
             }
         }
@@ -166,7 +172,8 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
             ? &s->items[s->selected] : &g->inventory[s->selected];
         Item priced_selected = *selected;
         priced_selected.value = s->mode == 0
-            ? shop_buy_price(selected) : shop_sell_price(selected);
+            ? shop_buy_price(selected)
+            : (shop_accepts_item(s->type, selected) ? shop_sell_price(selected) : 0);
         selected = &priced_selected;
         if (selected->type == ITEM_WEAPON) {
             const Item *equipped = NULL;
