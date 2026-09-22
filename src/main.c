@@ -43,6 +43,7 @@
 #define ENTRY_GATE_HOLD_MS 100u
 #define ENTRY_GATE_OPEN_MS 260u
 #define ENTRY_GATE_TOTAL_MS (ENTRY_GATE_CLOSE_MS + ENTRY_GATE_HOLD_MS + ENTRY_GATE_OPEN_MS)
+#define IDLE_EVENT_WAIT_MS 100
 
 typedef struct {
     int active;
@@ -459,7 +460,8 @@ int main(int argc, char **argv) {
                     needs_redraw = 1;
                 }
             } else {
-                has_event = SDL_WaitEvent(&event);
+                // SDL delivers signal-generated quit events at the next poll.
+                has_event = SDL_WaitEventTimeout(&event, IDLE_EVENT_WAIT_MS);
             }
         }
         while (has_event) {

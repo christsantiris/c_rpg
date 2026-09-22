@@ -744,7 +744,9 @@ static void test_harbor_road_save_load(void) {
     int ok = load_game(&loaded, ROUND_TRIP_SLOT);
     ASSERT("loading preserves harbor eligibility and the road",
         ok && game_harbor_unlocked(&loaded) &&
-        loaded.map.tiles[TOWN_HARBOR_Y + 1][TOWN_HARBOR_X - 1] == TILE_TOWN_PATH);
+        loaded.map.tiles[TOWN_HARBOR_Y + 1][TOWN_HARBOR_X - 1] == TILE_TOWN_PATH &&
+        loaded.map.tiles[TOWN_HARBOR_ENTRANCE_Y]
+            [TOWN_HARBOR_ENTRANCE_X] == TILE_TOWN_PATH);
     if (ok) {
         ASSERT("saving before the gift leaves the map unclaimed", !game_has_treasure_map(&loaded));
         game_talk_to_rowan(&loaded);
