@@ -152,6 +152,7 @@ void game_leave_tavern(GameState *g);
 
 void action_resolve_player(GameState *g, Action a);
 void action_resolve_enemies(GameState *g);
+void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *shots);
 
 void player_gain_xp(GameState *g, int xp);
 void push_message(GameState *g, const char *msg);

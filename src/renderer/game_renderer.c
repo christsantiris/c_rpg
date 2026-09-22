@@ -5,6 +5,7 @@
 #include "minimap_renderer.h"
 #include "renderer.h"
 #include <string.h>
+#include <stdlib.h>
 
 static void draw_dialogue_text(Renderer *r, const char *text, int x, int y, int max_chars, SDL_Color color) {
     char line[64];
@@ -117,10 +118,7 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
         (bubble_w - 28) / 8, (SDL_Color){42, 32, 30, 255});
 }
 
-static void draw_weapon_arrow(Renderer *r, int tile_x, int tile_y,
-                              int dx, int dy, int impact) {
-    int cx = tile_x * TILE_SIZE + TILE_SIZE / 2;
-    int cy = tile_y * TILE_SIZE + TILE_SIZE / 2;
+static void draw_weapon_arrow_at(Renderer *r, int cx, int cy, int dx, int dy, int impact) {
     int px = -dy;
     int py = dx;
     int tail_x = cx - dx * 7;
@@ -157,6 +155,87 @@ static void draw_weapon_arrow(Renderer *r, int tile_x, int tile_y,
         SDL_RenderDrawPoint(r->sdl, tip_x + px * 3, tip_y + py * 3);
         SDL_RenderDrawPoint(r->sdl, tip_x - px * 3, tip_y - py * 3);
     }
+}
+
+static void draw_weapon_arrow(Renderer *r, int tile_x, int tile_y, int dx, int dy, int impact) {
+    draw_weapon_arrow_at(r, tile_x * TILE_SIZE + TILE_SIZE / 2,
+        tile_y * TILE_SIZE + TILE_SIZE / 2, dx, dy, impact);
+}
+
+void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, const Viewport *v, Uint32 elapsed) {
+    if (elapsed >= ENEMY_PROJECTILE_TOTAL_MS || shots->count == 0) {
+        return;
+    }
+    SDL_Rect old_clip;
+    SDL_bool clipped = SDL_RenderIsClipEnabled(r->sdl);
+    SDL_RenderGetClipRect(r->sdl, &old_clip);
+    SDL_BlendMode old_blend;
+    SDL_GetRenderDrawBlendMode(r->sdl, &old_blend);
+    SDL_Rect play_area = {0, 0, r->screen_w - INFO_PANEL_W, r->tiles_y * TILE_SIZE};
+    SDL_RenderSetClipRect(r->sdl, &play_area);
+    SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_BLEND);
+    int impact = elapsed >= ENEMY_PROJECTILE_TRAVEL_MS;
+    float progress = impact ? 1.0f : (float)elapsed / ENEMY_PROJECTILE_TRAVEL_MS;
+    for (int i = 0; i < shots->count; i++) {
+        const EnemyProjectile *shot = &shots->shots[i];
+        int dx = shot->target_x - shot->start_x;
+        int dy = shot->target_y - shot->start_y;
+        int length = abs(dx) > abs(dy) ? abs(dx) : abs(dy);
+        if (length == 0) {
+            continue;
+        }
+        float vx = (float)dx / length;
+        float vy = (float)dy / length;
+        int cx = (int)((shot->start_x - v->cam_x + dx * progress) * TILE_SIZE) + TILE_SIZE / 2;
+        int cy = (int)((shot->start_y - v->cam_y + dy * progress) * TILE_SIZE) + TILE_SIZE / 2;
+        SDL_Color color = {184, 100, 255, 255};
+        if (shot->type == ENEMY_FOREST_NECROMANCER) {
+            color = (SDL_Color){100, 240, 130, 255};
+        } else if (shot->type == ENEMY_WATER_ELEMENTAL || shot->type == ENEMY_DROWNED_QUEEN) {
+            color = (SDL_Color){80, 210, 255, 255};
+        } else if (shot->type == ENEMY_SIREN) {
+            color = (SDL_Color){240, 130, 220, 255};
+        } else if (shot->type == ENEMY_GOBLIN_BOMBER) {
+            color = (SDL_Color){255, 160, 55, 255};
+        }
+        if (impact) {
+            int radius = 4 + (int)(elapsed - ENEMY_PROJECTILE_TRAVEL_MS) / 15;
+            SDL_SetRenderDrawColor(r->sdl, color.r, color.g, color.b, 220);
+            SDL_RenderDrawLine(r->sdl, cx - radius, cy, cx + radius, cy);
+            SDL_RenderDrawLine(r->sdl, cx, cy - radius, cx, cy + radius);
+            SDL_Rect burst = {cx - radius / 2, cy - radius / 2, radius, radius};
+            SDL_RenderDrawRect(r->sdl, &burst);
+        } else if (shot->type == ENEMY_GOBLIN_ARCHER || shot->type == ENEMY_DARK_ELF) {
+            draw_weapon_arrow_at(r, cx, cy, (dx > 0) - (dx < 0), (dy > 0) - (dy < 0), 0);
+        } else if (shot->type == ENEMY_GOBLIN_BOMBER) {
+            SDL_Rect bomb = {cx - 5, cy - 5, 10, 10};
+            SDL_SetRenderDrawColor(r->sdl, 36, 32, 40, 255);
+            SDL_RenderFillRect(r->sdl, &bomb);
+            SDL_SetRenderDrawColor(r->sdl, color.r, color.g, color.b, 255);
+            SDL_RenderDrawRect(r->sdl, &bomb);
+            SDL_RenderDrawLine(r->sdl, cx, cy - 5, cx + 4, cy - 9);
+            SDL_RenderDrawPoint(r->sdl, cx + 5, cy - 10);
+        } else if (shot->type == ENEMY_MOUNTAIN_GOBLIN_KING) {
+            SDL_SetRenderDrawColor(r->sdl, 160, 105, 55, 255);
+            SDL_RenderDrawLine(r->sdl, cx - (int)(vx * 8), cy - (int)(vy * 8), cx + (int)(vx * 5), cy + (int)(vy * 5));
+            SDL_Rect blade = {cx + (int)(vx * 4) - 5, cy + (int)(vy * 4) - 5, 10, 10};
+            SDL_SetRenderDrawColor(r->sdl, 210, 220, 225, 255);
+            SDL_RenderFillRect(r->sdl, &blade);
+        } else {
+            SDL_SetRenderDrawColor(r->sdl, color.r, color.g, color.b, 150);
+            for (int offset = -2; offset <= 2; offset++) {
+                SDL_RenderDrawLine(r->sdl, cx - (int)(vx * 14) - (int)(vy * offset),
+                    cy - (int)(vy * 14) + (int)(vx * offset), cx, cy);
+            }
+            SDL_Rect core = {cx - 3, cy - 3, 6, 6};
+            SDL_SetRenderDrawColor(r->sdl, color.r, color.g, color.b, 255);
+            SDL_RenderFillRect(r->sdl, &core);
+            SDL_SetRenderDrawColor(r->sdl, 240, 250, 255, 255);
+            SDL_RenderDrawPoint(r->sdl, cx, cy);
+        }
+    }
+    SDL_RenderSetClipRect(r->sdl, clipped ? &old_clip : NULL);
+    SDL_SetRenderDrawBlendMode(r->sdl, old_blend);
 }
 
 static void draw_magic_arrow(Renderer *r, int tile_x, int tile_y,

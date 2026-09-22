@@ -25,6 +25,18 @@ typedef struct {
     int        target_x, target_y;
 } Action;
 
+// Transient presentation events for one enemy turn, kept outside saved game state.
+typedef struct {
+    EnemyType type;
+    int start_x, start_y;
+    int target_x, target_y;
+} EnemyProjectile;
+
+typedef struct {
+    EnemyProjectile shots[MAX_ENEMIES];
+    int count;
+} EnemyProjectiles;
+
 Item random_enemy_item(int level);
 Item boss_equipment_reward(EnemyType type);
 

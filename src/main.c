@@ -402,6 +402,8 @@ int main(int argc, char **argv) {
     // Presentation-only snapshot; persistent results remain in game.
     static GameState spell_view;
     int spell_animating = 0;
+    EnemyProjectiles enemy_shots = {0};
+    Uint32 enemy_shots_started_at = 0;
     TownEntryTransition entry_gate = {0};
 
     Viewport viewport;
@@ -434,7 +436,7 @@ int main(int argc, char **argv) {
     SDL_Event event;
 
     while (running) {
-        int animating = spell_animating || entry_gate.active ||
+        int animating = spell_animating || entry_gate.active || enemy_shots.count > 0 ||
             (screen == SCREEN_PLAYING && game.trail_frames > 0);
         int ambient_animating = screen == SCREEN_PLAYING &&
             (game.location == LOCATION_DUNGEON ||
@@ -489,7 +491,7 @@ int main(int argc, char **argv) {
                 // ── Keyboard input ────────────────────────────────────────
                 case SDL_KEYDOWN: {
                     needs_redraw = 1;
-                    if (spell_animating || entry_gate.active) {
+                    if (spell_animating || entry_gate.active || enemy_shots.count > 0) {
                         break;
                     }
                     int sc = event.key.keysym.scancode;
@@ -860,10 +862,12 @@ int main(int argc, char **argv) {
                                 spell_view.player.mp = game.player.mp;
                                 spell_animating = 1;
                             } else {
-                                action_resolve_enemies(&game);
+                                action_resolve_enemies_with_projectiles(&game, &enemy_shots);
+                                enemy_shots_started_at = SDL_GetTicks();
                             }
-                            if (game.player.hp <= 0)
+                            if (game.player.hp <= 0 && enemy_shots.count == 0) {
                                 screen = SCREEN_GAME_OVER;
+                            }
                             viewport_center_on(&viewport,
                                 game.player.x, game.player.y);
                         }
@@ -874,7 +878,7 @@ int main(int argc, char **argv) {
                 // ── Mouse input ───────────────────────────────────────────
                 case SDL_MOUSEBUTTONDOWN: {
                     needs_redraw = 1;
-                    if (entry_gate.active) {
+                    if (entry_gate.active || spell_animating || enemy_shots.count > 0) {
                         break;
                     }
                     if (event.button.button != SDL_BUTTON_LEFT) break;
@@ -1086,8 +1090,9 @@ int main(int argc, char **argv) {
             if (SDL_GetTicks() - game.trail_started_at >= duration) {
                 spell_animating = 0;
                 game.trail_frames = 0;
-                action_resolve_enemies(&game);
-                if (game.player.hp <= 0) {
+                action_resolve_enemies_with_projectiles(&game, &enemy_shots);
+                enemy_shots_started_at = SDL_GetTicks();
+                if (game.player.hp <= 0 && enemy_shots.count == 0) {
                     screen = SCREEN_GAME_OVER;
                 }
             }
@@ -1096,15 +1101,24 @@ int main(int argc, char **argv) {
             Uint32 elapsed = SDL_GetTicks() - entry_gate.started_at;
             if (!entry_gate.switched && elapsed >= ENTRY_GATE_CLOSE_MS) {
                 action_resolve_player(&game, entry_gate.pending_action);
-                action_resolve_enemies(&game);
+                action_resolve_enemies_with_projectiles(&game, &enemy_shots);
+                enemy_shots_started_at = SDL_GetTicks();
                 viewport_center_on(&viewport, game.player.x, game.player.y);
                 entry_gate.switched = 1;
-                if (game.player.hp <= 0) {
+                if (game.player.hp <= 0 && enemy_shots.count == 0) {
                     screen = SCREEN_GAME_OVER;
                 }
             }
             if (elapsed >= ENTRY_GATE_TOTAL_MS) {
                 entry_gate.active = 0;
+            }
+        }
+        if (enemy_shots.count > 0 &&
+            SDL_GetTicks() - enemy_shots_started_at >= ENEMY_PROJECTILE_TOTAL_MS) {
+            enemy_shots.count = 0;
+            needs_redraw = 1;
+            if (game.player.hp <= 0) {
+                screen = SCREEN_GAME_OVER;
             }
         }
         if (screen == SCREEN_NAME_ENTRY) {
@@ -1148,6 +1162,8 @@ int main(int argc, char **argv) {
                 SDL_GetTicks() - game.trail_started_at < SPELL_TRAVEL_MS
                 ? &spell_view : &game;
             game_draw(&renderer, view, &viewport);
+            game_draw_enemy_projectiles(&renderer, &enemy_shots, &viewport,
+                SDL_GetTicks() - enemy_shots_started_at);
         } else if (screen == SCREEN_GAME_OVER) {
             game_over_draw(&renderer, &game);
         } else if (screen == SCREEN_HELP) {

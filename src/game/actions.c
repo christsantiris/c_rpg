@@ -1632,7 +1632,23 @@ static int forest_necromancer_raise(GameState *g, int caster_index) {
     return 0;
 }
 
+static int apply_enemy_ranged_damage(GameState *g, const Enemy *e, int damage, EnemyProjectiles *shots) {
+    if (shots && shots->count < MAX_ENEMIES) {
+        shots->shots[shots->count++] = (EnemyProjectile){
+            e->type, e->x, e->y, g->player.x, g->player.y
+        };
+    }
+    return apply_enemy_damage(g, damage);
+}
+
 void action_resolve_enemies(GameState *g) {
+    action_resolve_enemies_with_projectiles(g, NULL);
+}
+
+void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *shots) {
+    if (shots) {
+        shots->count = 0;
+    }
     int boss_locked = 0;
     if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH) {
         for (int y = 0; y < MAP_H && !boss_locked; y++)
@@ -1745,7 +1761,7 @@ void action_resolve_enemies(GameState *g) {
             if (e->move_timer % 2 == 0) {
                 int dmg = e->attack - g->player.defense / 2;
                 if (dmg < 4) dmg = 4;
-                dmg = apply_enemy_damage(g, dmg);
+                dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
                 if (dmg == 0) {
                     continue;
                 }
@@ -1764,7 +1780,7 @@ void action_resolve_enemies(GameState *g) {
             if (e->move_timer % 2 == 0) {
                 int dmg = e->attack - g->player.defense / 2;
                 if (dmg < 3) dmg = 3;
-                dmg = apply_enemy_damage(g, dmg);
+                dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
                 if (dmg == 0) {
                     continue;
                 }
@@ -1781,7 +1797,7 @@ void action_resolve_enemies(GameState *g) {
             if (e->move_timer % 2 == 0) {
                 int dmg = e->attack - g->player.defense / 2;
                 if (dmg < 4) dmg = 4;
-                dmg = apply_enemy_damage(g, dmg);
+                dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
                 if (dmg == 0) {
                     continue;
                 }
@@ -1798,7 +1814,7 @@ void action_resolve_enemies(GameState *g) {
                 if (dmg < 5) {
                     dmg = 5;
                 }
-                dmg = apply_enemy_damage(g, dmg);
+                dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
                 if (dmg == 0) {
                     continue;
                 }
@@ -1818,7 +1834,7 @@ void action_resolve_enemies(GameState *g) {
             if (dmg < 1) {
                 dmg = 1;
             }
-            dmg = apply_enemy_damage(g, dmg);
+            dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
             if (dmg == 0) {
                 continue;
             }
@@ -1834,7 +1850,7 @@ void action_resolve_enemies(GameState *g) {
             e->move_timer % 2 == 0 && clear_orthogonal_path(g, e)) {
             int dmg = e->attack - g->player.defense / 2;
             if (dmg < 1) dmg = 1;
-            dmg = apply_enemy_damage(g, dmg);
+            dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
             if (dmg == 0) {
                 continue;
             }
@@ -1866,7 +1882,7 @@ void action_resolve_enemies(GameState *g) {
             clear_orthogonal_path(g, e)) {
             int dmg = e->attack - g->player.defense / 2;
             if (dmg < 1) dmg = 1;
-            dmg = apply_enemy_damage(g, dmg);
+            dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
             if (dmg == 0) {
                 continue;
             }
@@ -1881,7 +1897,7 @@ void action_resolve_enemies(GameState *g) {
             if (e->move_timer % 2 == 0 && clear_orthogonal_path(g, e)) {
                 int dmg = e->attack - g->player.defense / 2;
                 if (dmg < 1) dmg = 1;
-                dmg = apply_enemy_damage(g, dmg);
+                dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
                 if (dmg == 0) {
                     continue;
                 }
