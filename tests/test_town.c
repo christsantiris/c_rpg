@@ -689,7 +689,79 @@ void test_town_spawn(void) {
         g.map.tiles[g.player.y][g.player.x] != TILE_SHOP_ALCHEMIST);
 }
 
+static void test_goblin_king_retaliation(void) {
+    static GameState g;
+    Item bows[] = {item_make_bow(), item_make_longbow(), item_make_magic_longbow()};
+    for (int scenario = 0; scenario < 5; scenario++) {
+        g.player.player_class = CLASS_ROGUE;
+        game_init(&g);
+        g.location = LOCATION_MOUNTAINS;
+        g.level = MOUNTAIN_DEPTH;
+        map_generate_mountains(&g.map, g.level);
+        enemies_spawn(&g);
+        ASSERT("Goblin King is available for retaliation test",
+            g.enemy_count > 0 && g.enemies[0].type == ENEMY_MOUNTAIN_GOBLIN_KING);
+        if (g.enemy_count == 0 || g.enemies[0].type != ENEMY_MOUNTAIN_GOBLIN_KING) {
+            return;
+        }
+        g.enemy_count = 1;
+        Enemy *boss = &g.enemies[0];
+        // A fixed arena keeps every shot outside its boundary and inside map bounds.
+        g.map.rooms[g.map.room_count - 1] = (Room){30, 30, 12, 12};
+        boss->x = 32;
+        boss->y = 35;
+        g.inventory_count = 1;
+        g.inventory[0] = bows[scenario < 3 ? scenario : 2];
+        g.equipped_main_hand = 0;
+        g.player.known_spell_count = 1;
+        g.player.known_spells[0] = spell_make_magic_arrow();
+        g.player.equipped_spell = 0;
+        g.player.mp = 100;
+        g.player.hp = 300;
+        g.player.max_hp = 300;
+        int range = scenario == 4 ? g.player.known_spells[0].range : g.inventory[0].range;
+        int diagonal = scenario == 3;
+        g.player.x = boss->x - range;
+        g.player.y = boss->y - (diagonal ? range : 0);
+        g.player.last_dx = 1;
+        g.player.last_dy = diagonal;
+        int start_x = g.player.x;
+        int start_y = g.player.y;
+        for (int step = 0; step <= range; step++) {
+            g.map.tiles[start_y + step * diagonal][start_x + step] = TILE_MOUNTAIN_FLOOR;
+        }
+        EnemyProjectiles shots = {0};
+        action_resolve_enemies_with_projectiles(&g, &shots);
+        ASSERT("unprovoked Goblin King waits inside his fortress",
+            boss->move_timer == 0 && shots.count == 0 && g.player.hp == 300);
+        Action attack = {scenario == 4 ? ACTION_CAST_SPELL : ACTION_RANGED_ATTACK, 0, 0};
+        action_resolve_player(&g, attack);
+        ASSERT("bows and magic can provoke the Goblin King outside his fortress",
+            boss->hp < boss->max_hp && boss->active);
+        action_resolve_enemies_with_projectiles(&g, &shots);
+        ASSERT("a ranged hit triggers the Goblin King's axe warning",
+            boss->move_timer == 1 && shots.count == 0 &&
+            strstr(g.messages[g.message_count - 1], "raises his axe"));
+        action_resolve_enemies_with_projectiles(&g, &shots);
+        ASSERT("Goblin King retaliates with damage and a visible axe projectile",
+            boss->move_timer == 2 && g.player.hp < 300 && shots.count == 1 &&
+            shots.shots[0].type == ENEMY_MOUNTAIN_GOBLIN_KING &&
+            shots.shots[0].target_x == start_x && shots.shots[0].target_y == start_y);
+        int hp = g.player.hp;
+        g.player.x = boss->x - 13;
+        action_resolve_enemies_with_projectiles(&g, &shots);
+        ASSERT("Goblin King stops attacking a distant retreating player",
+            boss->move_timer == 2 && g.player.hp == hp && shots.count == 0);
+        g.player.x = start_x;
+        action_resolve_enemies_with_projectiles(&g, &shots);
+        action_resolve_enemies_with_projectiles(&g, &shots);
+        ASSERT("Goblin King resumes retaliation when the player returns",
+            boss->move_timer == 4 && g.player.hp < hp && shots.count == 1);
+    }
+}
+
 void test_mountains(void) {
+    test_goblin_king_retaliation();
     printf("Goblin Mountains tests:\n");
     static const int expected_rooms[MOUNTAIN_DEPTH] = {7, 8, 8, 9, 9, 10, 10, 10};
     static const int expected_entrances[MOUNTAIN_DEPTH] = {0, 2, 1, 2, 0, 1, 2, 0};
