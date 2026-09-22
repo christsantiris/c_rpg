@@ -7,5 +7,6 @@
 #define INFO_PANEL_W 200
 
 void info_panel_draw(Renderer *r, const GameState *g);
+void info_panel_draw_harbor(Renderer *r, const GameState *g);
 
 #endif
