@@ -231,6 +231,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
             snprintf(msg, sizeof(msg), "%s dropped!", boss_drop.name);
             push_message(g, msg);
         }
+        game_update_level_progress(g);
         return;
     }
 
@@ -573,7 +574,7 @@ void action_resolve_player(GameState *g, Action a) {
 
     if (a.type == ACTION_DESCEND) {
         TileType tile = g->map.tiles[g->player.y][g->player.x];
-        if (tile == TILE_RETURN_EXIT && g->level_cleared) {
+        if (tile == TILE_RETURN_EXIT && (g->defeated_bosses & (1 << g->location))) {
             int forest = g->location == LOCATION_FOREST;
             g->score += g->level * 100;
             game_return_to_town(g);
@@ -1454,18 +1455,8 @@ void action_resolve_player(GameState *g, Action a) {
                     }
                 }
             }
-            if (g->map.stairs_down_x == 1) {
-                g->map.tiles[g->map.stairs_down_y][0] = TILE_FOREST_EXIT;
-            } else if (g->map.stairs_down_x == MAP_W - 2) {
-                g->map.tiles[g->map.stairs_down_y][MAP_W - 1] =
-                    TILE_FOREST_EXIT;
-            } else if (g->map.stairs_down_y == 1) {
-                g->map.tiles[0][g->map.stairs_down_x] = TILE_FOREST_EXIT;
-            } else {
-                g->map.tiles[MAP_H - 1][g->map.stairs_down_x] =
-                    TILE_FOREST_EXIT;
-            }
-        push_message(g, "The landmark reveals hidden trails!");
+            map_reveal_forest_exit(&g->map);
+            push_message(g, "The landmark reveals hidden trails!");
             tile = TILE_FOREST_FLOOR;
         }
 

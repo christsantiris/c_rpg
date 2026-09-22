@@ -679,6 +679,18 @@ void map_generate_forest(Map *m, int level) {
     }
 }
 
+void map_reveal_forest_exit(Map *m) {
+    if (m->stairs_down_x == 1) {
+        m->tiles[m->stairs_down_y][0] = TILE_FOREST_EXIT;
+    } else if (m->stairs_down_x == MAP_W - 2) {
+        m->tiles[m->stairs_down_y][MAP_W - 1] = TILE_FOREST_EXIT;
+    } else if (m->stairs_down_y == 1) {
+        m->tiles[0][m->stairs_down_x] = TILE_FOREST_EXIT;
+    } else {
+        m->tiles[MAP_H - 1][m->stairs_down_x] = TILE_FOREST_EXIT;
+    }
+}
+
 static int mountain_tile_in_room(const Map *m, int x, int y) {
     for (int i = 0; i < m->room_count; i++) {
         const Room *room = &m->rooms[i];

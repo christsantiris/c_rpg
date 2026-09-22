@@ -1280,12 +1280,7 @@ static void generate_active_level(GameState *g) {
     if (beacon_placed) {
         spawn_mara_guardian(g);
     }
-    if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH &&
-        (g->defeated_bosses & (1 << LOCATION_DUNGEON))) {
-        g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] =
-            TILE_RETURN_EXIT;
-        g->level_cleared = 1;
-    }
+    game_update_level_progress(g);
 }
 
 void game_descend(GameState *g) {
@@ -1955,21 +1950,36 @@ void game_light_coast_beacon(GameState *g, int x, int y) {
 
 void game_mark_level_cleared(GameState *g) {
     g->level_cleared = 1;
-    if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH) {
-        g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] =
-            TILE_RETURN_EXIT;
-        push_message(g, "A passage to town opens!");
-    }
 }
 
 void game_update_level_progress(GameState *g) {
-    int active_enemies = 0;
-    for (int i = 0; i < g->enemy_count; i++) {
-        if (!g->enemies[i].active) continue;
-        active_enemies++;
+    if (g->defeated_bosses & (1 << g->location)) {
+        if (g->location == LOCATION_FOREST && g->level == FOREST_DEPTH) {
+            map_reveal_forest_exit(&g->map);
+        } else if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH &&
+            g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] != TILE_RETURN_EXIT) {
+            g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] = TILE_RETURN_EXIT;
+            for (int i = 0; i < g->floor_item_count; i++) {
+                FloorItem *item = &g->floor_items[i];
+                if (item->active && item->x == g->map.stairs_down_x &&
+                    item->y == g->map.stairs_down_y) {
+                    item->underlying_tile = TILE_RETURN_EXIT;
+                }
+            }
+            push_message(g, "A passage to town opens!");
+        }
     }
 
-    if (active_enemies == 0) game_mark_level_cleared(g);
+    int active_enemies = 0;
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (g->enemies[i].active) {
+            active_enemies++;
+        }
+    }
+
+    if (active_enemies == 0) {
+        game_mark_level_cleared(g);
+    }
 }
 
 void player_gain_xp(GameState *g, int xp) {
