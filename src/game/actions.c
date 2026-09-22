@@ -1679,7 +1679,14 @@ void action_resolve_enemies(GameState *g) {
                 g->player.x < grove->x + grove->w &&
                 g->player.y >= grove->y &&
                 g->player.y < grove->y + grove->h;
-            if (!player_in_grove && e->move_timer == 0) continue;
+            int distance = abs_int(g->player.x - e->x) +
+                abs_int(g->player.y - e->y);
+            // Ranged hits can start the fight before the player enters the grove.
+            if (!player_in_grove &&
+                ((e->move_timer == 0 && e->hp == e->max_hp) ||
+                distance > 12)) {
+                continue;
+            }
         }
         if (e->type == ENEMY_MOUNTAIN_GOBLIN_KING) {
             Room *fortress = &g->map.rooms[g->map.room_count - 1];
