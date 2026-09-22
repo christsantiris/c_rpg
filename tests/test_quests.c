@@ -110,7 +110,7 @@ void test_elowen_quest(void) {
     int gold_before = g.gold;
     game_talk_to_elowen(&g);
     ASSERT("Elowen completes the quest", g.elowen_quest_state == 3);
-    ASSERT("Elowen awards 100 gold", g.gold == gold_before + 100);
+    ASSERT("Elowen awards 40 gold", g.gold == gold_before + 40);
 
     game_enter_dungeon(&g);
     ASSERT("replayed dungeon begins again on floor one", g.level == 1);
@@ -252,7 +252,7 @@ void test_dain_quest(void) {
     int gold_before = g.gold;
     game_talk_to_dain(&g);
     ASSERT("Dain completes the mountain quest", g.dain_quest_state == 3);
-    ASSERT("Dain awards 150 gold", g.gold == gold_before + 150);
+    ASSERT("Dain awards 60 gold", g.gold == gold_before + 60);
 }
 
 void test_alder_quest(void) {
@@ -295,7 +295,7 @@ void test_alder_quest(void) {
     int score_before = g.score;
     game_talk_to_alder(&g);
     ASSERT("Alder completes the forest quest", g.alder_quest_state == 3);
-    ASSERT("Alder awards 175 gold", g.gold == gold_before + 175);
+    ASSERT("Alder awards 70 gold", g.gold == gold_before + 70);
     ASSERT("Alder awards 500 score", g.score == score_before + 500);
 
     game_enter_forest(&g);
@@ -359,7 +359,7 @@ void test_mara_quest(void) {
     int score_before = g.score;
     game_talk_to_mara(&g);
     ASSERT("Mara completes the coast quest", g.mara_quest_state == 3);
-    ASSERT("Mara awards 200 gold", g.gold == gold_before + 200);
+    ASSERT("Mara awards 80 gold", g.gold == gold_before + 80);
     ASSERT("Mara awards 600 score", g.score == score_before + 600);
 
     game_enter_coast(&g);

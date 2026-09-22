@@ -15,6 +15,51 @@ static int shop_has_item(const ShopScreen *shop, const char *name) {
     return 0;
 }
 
+static void test_gold_drop_scarcity(void) {
+    static GameState g;
+    g.player.player_class = CLASS_WARRIOR;
+    game_init(&g);
+    g.location = LOCATION_DUNGEON;
+    g.enemy_count = 1;
+    int x = g.player.x + 1;
+    int y = g.player.y;
+    Action attack = {ACTION_MOVE, x, y};
+    int drops = 0;
+    int small_purses = 1;
+    srand(424242);
+    for (int i = 0; i < 2000; i++) {
+        g.floor_item_count = 0;
+        g.map.tiles[y][x] = TILE_FLOOR;
+        g.enemies[0] = (Enemy){
+            .active = 1, .type = ENEMY_SKELETON, .hp = 1,
+            .x = x, .y = y
+        };
+        int gold_before = g.gold;
+        action_resolve_player(&g, attack);
+        int coins = g.gold - gold_before;
+        if (coins > 0) {
+            drops++;
+            small_purses &= coins <= 2;
+        }
+    }
+    ASSERT("ordinary kills usually yield no gold", drops >= 120 && drops <= 280);
+    ASSERT("early enemy purses contain only one or two gold", small_purses);
+
+    g.location = LOCATION_FOREST;
+    g.floor_item_count = 0;
+    g.map.tiles[y][x] = TILE_FOREST_FLOOR;
+    g.enemies[0] = (Enemy){
+        .active = 1, .type = ENEMY_FOREST_NECROMANCER, .hp = 1,
+        .x = x, .y = y, .is_boss = 1
+    };
+    int gold_before = g.gold;
+    action_resolve_player(&g, attack);
+    ASSERT("bosses keep a guaranteed smaller purse and equipment reward",
+        g.gold == gold_before + 25 && g.floor_item_count == 1 &&
+        g.floor_items[0].item.type == ITEM_ARMOR &&
+        (g.defeated_bosses & (1 << LOCATION_FOREST)));
+}
+
 void test_items(void) {
     printf("Item tests:\n");
 
@@ -291,9 +336,9 @@ void test_items(void) {
         for (int i = 0; i < shop.item_count; i++) {
             Item *item = &shop.items[i];
             fair_shop_prices &= shop_buy_price(item) ==
-                (item->value * 3 + 1) / 2;
+                item->value * 2;
             fair_shop_prices &= shop_buy_price(item) > item->value;
-            fair_shop_prices &= shop_sell_price(item) == item->value / 2;
+            fair_shop_prices &= shop_sell_price(item) == item->value / 4;
             fair_shop_prices &= shop_sell_price(item) < shop_buy_price(item);
         }
     }
@@ -958,4 +1003,5 @@ void test_items(void) {
     action_resolve_enemies(&g);
     ASSERT("rogue armor evasion can avoid enemy attacks",
         g.player.hp == hp_before_attack);
+    test_gold_drop_scarcity();
 }

@@ -23,7 +23,7 @@ void test_quest_journal(void) {
         quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 0, &entry) &&
         strcmp(entry.title, "The Broken Seals") == 0 &&
         strcmp(entry.giver, "Elowen") == 0 &&
-        entry.reward_gold == 100 && entry.reward_score == 300);
+        entry.reward_gold == 40 && entry.reward_score == 300);
     ASSERT("journal translates objective progress bits",
         entry.objective_complete[0] && !entry.objective_complete[1] &&
         entry.objective_complete[2]);
