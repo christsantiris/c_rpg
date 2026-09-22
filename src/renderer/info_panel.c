@@ -2,7 +2,7 @@
 #include "item_icons.h"
 #include <stdio.h>
 
-void info_panel_draw(Renderer *r, const GameState *g) {
+static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor) {
     int px = r->screen_w - INFO_PANEL_W;
 
     // Separator line
@@ -40,7 +40,9 @@ void info_panel_draw(Renderer *r, const GameState *g) {
     renderer_draw_text(r, "LOCATION", x, y, label, r->font_tiny);
     y += lh;
     char loc[24];
-    if (g->location == LOCATION_TOWN) {
+    if (harbor) {
+        SDL_snprintf(loc, sizeof(loc), "HARBOR");
+    } else if (g->location == LOCATION_TOWN) {
         SDL_snprintf(loc, sizeof(loc), "TOWN");
     } else if (g->location == LOCATION_TAVERN) {
         SDL_snprintf(loc, sizeof(loc), "TAVERN");
@@ -165,17 +167,31 @@ void info_panel_draw(Renderer *r, const GameState *g) {
     y += lh + 7;
 
     // Key hints
-    renderer_draw_text(r, "WASD  MOVE",    x, y,        hint, r->font_tiny);
-    renderer_draw_text(r, ".     STAIRS/EXIT", x, y + lh, hint, r->font_tiny);
-    renderer_draw_text(r, ",     ASCEND",  x, y + lh*2, hint, r->font_tiny);
-    renderer_draw_text(r, "I     INV",     x, y + lh*3, hint, r->font_tiny);
-    renderer_draw_text(r, "Q     QUESTS/BOSSES", x, y + lh*4, hint, r->font_tiny);
-    renderer_draw_text(r, "P     PICK UP", x, y + lh*5, hint, r->font_tiny);
-    renderer_draw_text(r, "A     ACTION",  x, y + lh*6, hint, r->font_tiny);
-    renderer_draw_text(r, "B     SPELLS",  x, y + lh*7, hint, r->font_tiny);
-    renderer_draw_text(r, "C     CAST",    x, y + lh*8, hint, r->font_tiny);
-    renderer_draw_text(r, "F     FIRE",    x, y + lh*9, hint, r->font_tiny);
-    renderer_draw_text(r, "T     TALK",    x, y + lh*10, hint, r->font_tiny);
-    renderer_draw_text(r, "ESC   MENU",    x, y + lh*11, hint, r->font_tiny);
+    if (harbor) {
+        renderer_draw_text(r, "UP/DOWN  SELECT", x, y, hint, r->font_tiny);
+        renderer_draw_text(r, "ENTER    CONFIRM", x, y + lh, hint, r->font_tiny);
+        renderer_draw_text(r, "ESC      RETURN", x, y + lh * 2, hint, r->font_tiny);
+    } else {
+        renderer_draw_text(r, "WASD  MOVE", x, y, hint, r->font_tiny);
+        renderer_draw_text(r, ".     STAIRS/EXIT", x, y + lh, hint, r->font_tiny);
+        renderer_draw_text(r, ",     ASCEND", x, y + lh * 2, hint, r->font_tiny);
+        renderer_draw_text(r, "I     INV", x, y + lh * 3, hint, r->font_tiny);
+        renderer_draw_text(r, "Q     QUESTS/BOSSES", x, y + lh * 4, hint, r->font_tiny);
+        renderer_draw_text(r, "P     PICK UP", x, y + lh * 5, hint, r->font_tiny);
+        renderer_draw_text(r, "A     ACTION", x, y + lh * 6, hint, r->font_tiny);
+        renderer_draw_text(r, "B     SPELLS", x, y + lh * 7, hint, r->font_tiny);
+        renderer_draw_text(r, "C     CAST", x, y + lh * 8, hint, r->font_tiny);
+        renderer_draw_text(r, "F     FIRE", x, y + lh * 9, hint, r->font_tiny);
+        renderer_draw_text(r, "T     TALK", x, y + lh * 10, hint, r->font_tiny);
+        renderer_draw_text(r, "ESC   MENU", x, y + lh * 11, hint, r->font_tiny);
+    }
 
+}
+
+void info_panel_draw(Renderer *r, const GameState *g) {
+    info_panel_draw_context(r, g, 0);
+}
+
+void info_panel_draw_harbor(Renderer *r, const GameState *g) {
+    info_panel_draw_context(r, g, 1);
 }

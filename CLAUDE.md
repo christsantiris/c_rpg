@@ -108,4 +108,11 @@ Omitting this causes data to silently reset to zero on load.
 
 ## 8. Code Review
 
-Codex will review your output once you are done. 
+Codex will review your output once you are done.
+
+## 9. Avoid unnecessary status messages
+
+- Do not narrate routine progress, tool calls, builds, tests, or visual checks.
+- Work silently unless user input is required, an approval is needed, or a blocker or material decision must be reported.
+- Keep the final response concise and report only the completed changes, validation results, and material limitations.
+- Avoid spending output tokens on commentary that does not help the user make a decision.
