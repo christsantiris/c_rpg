@@ -62,24 +62,7 @@ sluice wall and switch while retaining their tide state and treasure chambers.
 ## Screenshots
 Below are screenshots of the game in action:
 
-<img width="3806" height="2270" alt="image" src="https://github.com/user-attachments/assets/3202fc6c-1c54-4f2f-9f06-1ca426340715" />
-
-<img width="3806" height="2270" alt="image" src="https://github.com/user-attachments/assets/5c88227b-6a30-471a-ae08-2fa39a6d6c8f" />
-
-<img width="3806" height="2270" alt="image" src="https://github.com/user-attachments/assets/1c562a4f-5699-4340-97c2-668320e7bddd" />
-
-<img width="3806" height="2270" alt="image" src="https://github.com/user-attachments/assets/bb12b5f8-953a-4e8d-ba6f-bb306812f376" />
-
-<img width="3806" height="2270" alt="image" src="https://github.com/user-attachments/assets/39ead8cc-96e1-4c6f-bf59-5e33b808e9df" />
-
 <img width="3806" height="2270" alt="image" src="https://github.com/user-attachments/assets/bdb2210e-1f54-4611-80e0-fb5a35c77d4f" />
-
-<img width="3806" height="2270" alt="image" src="https://github.com/user-attachments/assets/2d8268a3-1f6a-48a5-b02b-109f2732e497" />
-
-<img width="3806" height="2270" alt="image" src="https://github.com/user-attachments/assets/139d2114-e6cc-4511-a6c1-7138a7314f2b" />
-
-<img width="3806" height="2270" alt="image" src="https://github.com/user-attachments/assets/4bd1ec9e-9dcf-4cbf-a970-ed61e78abfe0" />
-
 
 ## Compile the game
 To compile the app run `make run` in the root directory.
