@@ -749,6 +749,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_TOWN_PATH: draw_town_path(r, sx, sy); break;
                 case TILE_BLACKSMITH_DOOR:
                 case TILE_ALCHEMIST_DOOR:
+                case TILE_HEALER_DOOR:
                 case TILE_TAVERN_DOOR:
                     draw_town_path(r, sx, sy); break;
                 case TILE_TAVERN_FLOOR: draw_tavern_floor(r, sx, sy); break;
@@ -766,6 +767,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_TOWN_EXIT: draw_town_path(r, sx, sy); break;
                 case TILE_SHOP_BLACKSMITH:
                 case TILE_SHOP_ALCHEMIST:
+                case TILE_HEALER:
                 case TILE_WATCHTOWER:
                 case TILE_TAVERN: draw_town_floor(r, sx, sy); break;
                 case TILE_ITEM:
@@ -888,11 +890,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, 18),
             viewport_to_screen_y(v, TOWN_H - 2), TOWN_EXIT_COAST);
         draw_shop_blacksmith(r,
-            viewport_to_screen_x(v, 7), viewport_to_screen_y(v, 7));
+            viewport_to_screen_x(v, TOWN_BLACKSMITH_X), viewport_to_screen_y(v, TOWN_BLACKSMITH_Y));
         draw_shop_alchemist(r,
             viewport_to_screen_x(v, 28), viewport_to_screen_y(v, 7));
         draw_tavern(r,
             viewport_to_screen_x(v, 5), viewport_to_screen_y(v, 16));
+        draw_healer_house(r, viewport_to_screen_x(v, TOWN_HEALER_X),
+            viewport_to_screen_y(v, TOWN_HEALER_Y));
         draw_harbor(r,
             viewport_to_screen_x(v, TOWN_HARBOR_X),
             viewport_to_screen_y(v, TOWN_HARBOR_Y));
@@ -956,10 +960,17 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         TTF_SizeText(r->font_tiny, "MOUNTAINS", &mountains_w, &mountains_h);
         TTF_SizeText(r->font_tiny, "TAVERN", &tavern_w, NULL);
         TTF_SizeText(r->font_tiny, "HARBOR", &harbor_w, NULL);
+        int healer_w = 0;
+        TTF_SizeText(r->font_tiny, "HEALER", &healer_w, NULL);
+        renderer_draw_text(r, "HEALER",
+            viewport_to_screen_x(v, TOWN_HEALER_X) * TILE_SIZE +
+                (TOWN_HEALER_W * TILE_SIZE - healer_w) / 2,
+            viewport_to_screen_y(v, TOWN_HEALER_Y - 1) * TILE_SIZE,
+            label, r->font_tiny);
         TTF_SizeText(r->font_tiny, "SUNKEN COAST", &coast_w, &coast_h);
-        int bx = viewport_to_screen_x(v, 7) * TILE_SIZE
+        int bx = viewport_to_screen_x(v, TOWN_BLACKSMITH_X) * TILE_SIZE
             + (5 * TILE_SIZE - blacksmith_w) / 2;
-        int by = viewport_to_screen_y(v, 6)  * TILE_SIZE;
+        int by = viewport_to_screen_y(v, TOWN_BLACKSMITH_Y - 1) * TILE_SIZE;
         int ax = viewport_to_screen_x(v, 28) * TILE_SIZE
             + (5 * TILE_SIZE - alchemist_w) / 2;
         int ay = viewport_to_screen_y(v, 6)  * TILE_SIZE;

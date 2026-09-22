@@ -29,6 +29,14 @@ defeating the region's boss, but surviving regular enemies do not block leaving.
 Defeating the Necromancer also reveals the final forest exit if its landmark
 has not been found.
 
+### Town healer
+
+The **HEALER** building is west of the blacksmith, north of the east-west road.
+Follow its short entrance path from that road to meet Lysa.
+She restores all missing HP for **1 gold per 3 HP, rounded up**. The price is
+shown before payment; press Enter or click the treatment button to accept,
+or Escape to leave. Full health costs nothing. Healing does not restore MP.
+
 ### Goblin Mountains terrain
 
 Stages 2 and 7 funnel combat onto narrow bridges. An unmarked weak span collapses

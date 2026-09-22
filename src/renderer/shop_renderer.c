@@ -2,6 +2,110 @@
 #include "equipment_compare_renderer.h"
 #include "sprites.h"
 
+static void draw_shop_room(Renderer *r) {
+    int tiles_x = (r->screen_w + TILE_SIZE - 1) / TILE_SIZE;
+    int tiles_y = (r->screen_h + TILE_SIZE - 1) / TILE_SIZE;
+    for (int y = 0; y < tiles_y; y++) {
+        for (int x = 0; x < tiles_x; x++) {
+            draw_floor(r, x, y);
+        }
+    }
+    for (int x = 0; x < tiles_x; x++) {
+        draw_wall(r, x, 0);
+        draw_wall(r, x, tiles_y - 1);
+    }
+    for (int y = 0; y < tiles_y; y++) {
+        draw_wall(r, 0, y);
+        draw_wall(r, tiles_x - 1, y);
+    }
+}
+
+static int healer_option_y(const Renderer *r, int option) {
+    int first = r->screen_h < 440 ? 116 : 300;
+    int spacing = r->screen_h < 440 ? 36 : 40;
+    return first + option * spacing;
+}
+
+SDL_Rect shop_healer_button_rect(const Renderer *r, int option) {
+    int width = r->screen_w < 520 ? r->screen_w - 64 : 440;
+    return (SDL_Rect){(r->screen_w - width) / 2,
+        healer_option_y(r, option) - 7, width, 30};
+}
+
+static void draw_healer_option(Renderer *r, int option, int selected, int available, const char *label) {
+    SDL_Color gold = {220, 180, 60, 255};
+    SDL_Color white = {200, 200, 200, 255};
+    SDL_Color dimmed = {80, 80, 80, 255};
+    SDL_Color red = {200, 60, 60, 255};
+    SDL_Rect row = shop_healer_button_rect(r, option);
+    if (selected) {
+        SDL_SetRenderDrawColor(r->sdl, 36, 58, 48, 255);
+        SDL_RenderFillRect(r->sdl, &row);
+        renderer_draw_text(r, ">", row.x + 12, healer_option_y(r, option),
+            gold, r->font_small);
+    }
+    SDL_Color color = selected ? (available ? gold : red)
+        : (available ? white : dimmed);
+    renderer_draw_text(r, label, row.x + 36, healer_option_y(r, option),
+        color, r->font_small);
+}
+
+static void draw_healer_visit(Renderer *r, const GameState *g, const ShopScreen *s) {
+    draw_shop_room(r);
+    SDL_Color gold = {220, 180, 60, 255};
+    SDL_Color white = {200, 200, 200, 255};
+    SDL_Color red = {200, 60, 60, 255};
+    SDL_Color green = {80, 160, 80, 255};
+    SDL_Color hint = {110, 130, 115, 255};
+    int cx = r->screen_w / 2;
+    int compact = r->screen_h < 440;
+    int title_y = compact ? 18 : 40;
+    int stats_y = compact ? 48 : 80;
+    renderer_draw_text(r, "HEALER", cx - 48, title_y, gold, r->font_large);
+    int price = game_healer_price(g);
+    int missing = g->player.max_hp - g->player.hp;
+    char text[96];
+    SDL_snprintf(text, sizeof(text), "YOUR GOLD: %d", g->gold);
+    renderer_draw_text(r, text, cx - 205, stats_y, gold, r->font_small);
+    SDL_snprintf(text, sizeof(text), "HP: %d / %d", g->player.hp, g->player.max_hp);
+    renderer_draw_text(r, text, cx + 70, stats_y, white, r->font_small);
+
+    if (compact) {
+        renderer_draw_text(r, "LYSA CAN RESTORE ALL MISSING HP.", cx - 205, 72,
+            white, r->font_tiny);
+        renderer_draw_text(r, "RATE: 1 GOLD PER 3 HP, ROUNDED UP.", cx - 205, 88,
+            hint, r->font_tiny);
+    } else {
+        draw_healer_portrait(r, cx - 245, 124, 3);
+        renderer_draw_text(r, "LYSA", cx - 105, 132, gold, r->font_small);
+        renderer_draw_text(r, "WELCOME, TRAVELER.", cx - 105, 160,
+            white, r->font_small);
+        renderer_draw_text(r, "I CAN RESTORE ALL MISSING HP.", cx - 105, 184,
+            white, r->font_small);
+        renderer_draw_text(r, "RATE: 1 GOLD PER 3 HP, ROUNDED UP.", cx - 105, 218,
+            hint, r->font_tiny);
+        const char *status = price == 0 ? "YOU ARE ALREADY AT FULL HEALTH."
+            : (g->gold < price ? "YOU CANNOT AFFORD THIS TREATMENT."
+                : "TREATMENT IS AVAILABLE.");
+        renderer_draw_text(r, status, cx - 105, 244,
+            price == 0 || g->gold >= price ? green : red, r->font_tiny);
+    }
+
+    char heal_label[96];
+    if (price == 0) {
+        SDL_snprintf(heal_label, sizeof(heal_label),
+            "FULL HEALTH - NO TREATMENT NEEDED");
+    } else {
+        SDL_snprintf(heal_label, sizeof(heal_label),
+            "RESTORE %d HP    %d GOLD", missing, price);
+    }
+    draw_healer_option(r, 0, s->selected == 0,
+        price == 0 || g->gold >= price, heal_label);
+    draw_healer_option(r, 1, s->selected == 1, 1, "RETURN TO TOWN");
+    renderer_draw_text(r, "UP/DOWN OR W/S SELECT   ENTER CONFIRM   ESC CLOSE",
+        cx - 220, r->screen_h - 48, hint, r->font_tiny);
+}
+
 static int shop_visible_rows(const Renderer *r) {
     int list_top = 140;
     int detail_top = (r->tiles_y - 9) * TILE_SIZE;
@@ -53,11 +157,17 @@ static void draw_shop_scrollbar(Renderer *r, int x, int y, int height, int start
 }
 
 void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
+    if (s->type == SHOP_TYPE_HEALER) {
+        draw_healer_visit(r, g, s);
+        return;
+    }
     int full_tiles_x = r->screen_w / TILE_SIZE;
 
-    for (int y = 0; y < r->tiles_y; y++)
-        for (int x = 0; x < full_tiles_x; x++)
+    for (int y = 0; y < r->tiles_y; y++) {
+        for (int x = 0; x < full_tiles_x; x++) {
             draw_floor(r, x, y);
+        }
+    }
 
     for (int x = 0; x < full_tiles_x; x++) {
         draw_wall(r, x, 0);
@@ -68,12 +178,12 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
         draw_wall(r, full_tiles_x - 1, y);
     }
 
-    SDL_Color gold   = {220, 180,  60, 255};
-    SDL_Color dimmed = { 80,  80,  80, 255};
-    SDL_Color hint   = { 50,  70,  50, 255};
-    SDL_Color white  = {200, 200, 200, 255};
-    SDL_Color red    = {200,  60,  60, 255};
-    SDL_Color green  = { 80, 160,  80, 255};
+    SDL_Color gold = {220, 180, 60, 255};
+    SDL_Color dimmed = {80, 80, 80, 255};
+    SDL_Color hint = {50, 70, 50, 255};
+    SDL_Color white = {200, 200, 200, 255};
+    SDL_Color red = {200, 60, 60, 255};
+    SDL_Color green = {80, 160, 80, 255};
 
     int cx = r->screen_w / 2;
 

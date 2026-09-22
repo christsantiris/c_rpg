@@ -256,6 +256,8 @@ static int open_shop_on_move(const GameState *game, const Action *action, ShopSc
         shop_init(shop, SHOP_TYPE_BLACKSMITH, game->defeated_bosses);
     } else if (tile == TILE_ALCHEMIST_DOOR) {
         shop_init(shop, SHOP_TYPE_ALCHEMIST, game->defeated_bosses);
+    } else if (tile == TILE_HEALER_DOOR) {
+        shop_init(shop, SHOP_TYPE_HEALER, game->defeated_bosses);
     } else {
         return 0;
     }
@@ -636,6 +638,8 @@ int main(int argc, char **argv) {
                         }
                         if (result == SHOP_CLOSED) {
                             screen = SCREEN_PLAYING;
+                        } else if (result == SHOP_HEAL) {
+                            game_visit_healer(&game);
                         } else if (result == SHOP_BUY) {
                             Item *item = &shop_screen.items[shop_screen.selected];
                             int price = shop_buy_price(item);
@@ -984,6 +988,19 @@ int main(int argc, char **argv) {
                     }
                     // Shop screen clicks
                     if (screen == SCREEN_SHOP && event.button.button == SDL_BUTTON_LEFT) {
+                        if (shop_screen.type == SHOP_TYPE_HEALER) {
+                            SDL_Point point = {event.button.x, event.button.y};
+                            SDL_Rect heal = shop_healer_button_rect(&renderer, 0);
+                            SDL_Rect leave = shop_healer_button_rect(&renderer, 1);
+                            if (SDL_PointInRect(&point, &heal)) {
+                                shop_screen.selected = 0;
+                                game_visit_healer(&game);
+                            } else if (SDL_PointInRect(&point, &leave)) {
+                                shop_screen.selected = 1;
+                                screen = SCREEN_PLAYING;
+                            }
+                            break;
+                        }
                         int cx = renderer.screen_w / 2;
                         // Tab switching
                         if (event.button.y >= 108 && event.button.y <= 132) {
