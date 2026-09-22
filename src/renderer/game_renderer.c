@@ -61,6 +61,8 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     int viewport_w = r->screen_w - INFO_PANEL_W;
     if (g->location == LOCATION_TOWN) {
         viewport_w = TOWN_W * TILE_SIZE;
+    } else if (g->location == LOCATION_TAVERN) {
+        viewport_w = TAVERN_W * TILE_SIZE;
     }
     int bubble_w = viewport_w < 460 ? viewport_w - 16 : 440;
     int bubble_h = 98;
@@ -470,6 +472,7 @@ static void draw_trap_underlay(Renderer *r, const GameState *g, int map_x, int m
 void game_draw(Renderer *r, GameState *g, Viewport *v) {
     Viewport town_view;
     int town_scaled = g->location == LOCATION_TOWN;
+    int tavern_scaled = g->location == LOCATION_TAVERN;
     if (town_scaled) {
         // Keep the entire fixed town map inside the play area at any window size.
         viewport_init(&town_view, TOWN_W, TOWN_H, TOWN_W, TOWN_H);
@@ -485,6 +488,29 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         SDL_RenderSetScale(r->sdl,
             (float)play_w / (TOWN_W * TILE_SIZE),
             (float)play_h / (TOWN_H * TILE_SIZE));
+    } else if (tavern_scaled) {
+        // Fit the entire room without stretching sprites or showing unused map tiles.
+        viewport_init(&town_view, TAVERN_W, TAVERN_H, MAP_W, MAP_H);
+        town_view.cam_x = TAVERN_X;
+        town_view.cam_y = TAVERN_Y;
+        v = &town_view;
+        int play_w = r->screen_w - INFO_PANEL_W;
+        int play_h = r->tiles_y * TILE_SIZE;
+        if (play_w < 1) {
+            play_w = 1;
+        }
+        if (play_h < 1) {
+            play_h = 1;
+        }
+        float scale_x = (float)play_w / (TAVERN_W * TILE_SIZE);
+        float scale_y = (float)play_h / (TAVERN_H * TILE_SIZE);
+        float scale = scale_x < scale_y ? scale_x : scale_y;
+        int room_w = (int)(TAVERN_W * TILE_SIZE * scale);
+        int room_h = (int)(TAVERN_H * TILE_SIZE * scale);
+        SDL_Rect room_view = {(play_w - room_w) / 2, (play_h - room_h) / 2,
+            room_w, room_h};
+        SDL_RenderSetViewport(r->sdl, &room_view);
+        SDL_RenderSetScale(r->sdl, scale, scale);
     }
     int landmark_x = -1;
     int landmark_y = -1;
@@ -1061,8 +1087,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     draw_dialogue_bubble(r, g, v);
 
-    if (town_scaled) {
+    if (town_scaled || tavern_scaled) {
         SDL_RenderSetScale(r->sdl, 1.0f, 1.0f);
+    }
+    if (tavern_scaled) {
+        SDL_RenderSetViewport(r->sdl, NULL);
     }
 
     // Draw info panel

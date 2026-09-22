@@ -14,6 +14,10 @@
 
 #define TOWN_W 40 // town dimensions
 #define TOWN_H 25 // town dimensions
+#define TAVERN_X 4
+#define TAVERN_Y 2
+#define TAVERN_W 32
+#define TAVERN_H 21
 #define TOWN_CAIN_X 19
 #define TOWN_CAIN_Y 11
 #define TOWN_HARBOR_W 5
