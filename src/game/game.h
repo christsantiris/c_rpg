@@ -160,6 +160,8 @@ void game_mark_level_cleared(GameState *g);
 void game_update_level_progress(GameState *g);
 
 void game_return_to_town(GameState *g);
+int game_healer_price(const GameState *g);
+void game_visit_healer(GameState *g);
 void game_open_town_portal(GameState *g);
 void game_use_town_portal(GameState *g);
 void game_talk_to_elowen(GameState *g);

@@ -12,6 +12,7 @@ typedef struct {
     SDL_Texture *alchemist_texture;
     SDL_Texture *tavern_texture;
     SDL_Texture *harbor_texture;
+    SDL_Texture *healer_texture;
     TTF_Font     *font_large;
     TTF_Font     *font_small;
     TTF_Font     *font_tiny;

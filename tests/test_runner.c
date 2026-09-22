@@ -17,6 +17,7 @@ void test_enemy_movement_collision(void);
 void test_new_dungeon_enemies(void);
 void test_return_to_town_spell(void);
 void test_town_tiles(void);
+void test_town_healer(void);
 void test_town_map(void);
 void test_town_spawn(void);
 void test_cain_gift(void);
@@ -68,6 +69,7 @@ int main(void) {
     test_return_to_town_spell();
     printf("\n");
     test_town_tiles();
+    test_town_healer();
     printf("\n");
     test_town_map();
     printf("\n");

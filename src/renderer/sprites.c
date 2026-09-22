@@ -2521,7 +2521,7 @@ void draw_tavern_table(Renderer *r, int tile_x, int tile_y) {
 void draw_cain(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    draw_town_floor(r, tile_x, tile_y);
+    draw_town_path(r, tile_x, tile_y);
     SDL_Color robe = {112, 78, 47, 255};
     SDL_Color hair = {223, 218, 200, 255};
     fill_rect(r, x + 6, y + 3, 12, 7, hair);
@@ -2563,6 +2563,163 @@ void draw_rowan(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 8, y + 19, 8, 1, trim);
     fill_rect(r, x + 7, y + 21, 4, 2, outline);
     fill_rect(r, x + 14, y + 21, 4, 2, outline);
+}
+
+void draw_healer_house(Renderer *r, int tile_x, int tile_y) {
+    if (r->healer_texture) {
+        SDL_Rect destination = {tile_x * TILE_SIZE, tile_y * TILE_SIZE,
+            TOWN_HEALER_W * TILE_SIZE, TOWN_HEALER_H * TILE_SIZE};
+        SDL_RenderCopy(r->sdl, r->healer_texture, NULL, &destination);
+        return;
+    }
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    int w = TOWN_HEALER_W * TILE_SIZE;
+    int h = TOWN_HEALER_H * TILE_SIZE;
+    SDL_Color timber = {70, 46, 34, 255};
+    SDL_Color plaster = {207, 193, 155, 255};
+    SDL_Color teal = {45, 102, 88, 255};
+    fill_rect(r, x + 4, y + 26, w - 8, h - 26, timber);
+    fill_rect(r, x + 9, y + 30, w - 18, h - 35, plaster);
+    for (int bx = 10; bx < w - 10; bx += 12) {
+        fill_rect(r, x + bx, y + h - 8, 10, 6, (SDL_Color){113, 109, 96, 255});
+        fill_rect(r, x + bx, y + h - 8, 10, 1, (SDL_Color){161, 151, 127, 255});
+    }
+    for (int beam = 0; beam < 4; beam++) {
+        fill_rect(r, x + 9 + beam * 33, y + 30, 4, h - 38, timber);
+    }
+    fill_rect(r, x + 9, y + 72, w - 18, 3, timber);
+    for (int row = 0; row < 30; row++) {
+        int inset = (29 - row) / 2;
+        fill_rect(r, x + inset, y + row, w - inset * 2, 1,
+            row % 6 == 0 ? timber : teal);
+        if (row % 6 != 0) {
+            for (int seam = inset + (row / 6 % 2) * 6; seam < w - inset; seam += 12) {
+                fill_rect(r, x + seam, y + row, 1, 1, (SDL_Color){31, 74, 63, 255});
+            }
+        }
+    }
+    fill_rect(r, x + 52, y + 61, 16, h - 61, timber);
+    fill_rect(r, x + 56, y + 65, 9, h - 66, (SDL_Color){38, 29, 30, 255});
+    for (int side = 0; side < 2; side++) {
+        int wx = x + 18 + side * 66;
+        fill_rect(r, wx, y + 47, 18, 22, timber);
+        fill_rect(r, wx + 3, y + 50, 12, 16, (SDL_Color){239, 198, 109, 255});
+        fill_rect(r, wx + 8, y + 49, 2, 18, timber);
+        fill_rect(r, wx - 2, y + 73, 22, 7, teal);
+    }
+    fill_rect(r, x + 50, y + 32, 20, 22, teal);
+    fill_rect(r, x + 58, y + 35, 4, 16, plaster);
+    fill_rect(r, x + 53, y + 41, 14, 4, plaster);
+}
+
+static void healer_rect(Renderer *r, int x, int y, int scale, int px, int py, int pw, int ph, SDL_Color color) {
+    fill_rect(r, x + px * scale, y + py * scale, pw * scale, ph * scale, color);
+}
+
+void draw_healer_portrait(Renderer *r, int x, int y, int scale) {
+    SDL_Color outline = {35, 27, 29, 255};
+    SDL_Color hair_dark = {77, 40, 30, 255};
+    SDL_Color hair = {126, 70, 41, 255};
+    SDL_Color hair_light = {177, 105, 55, 255};
+    SDL_Color skin_shadow = {180, 118, 88, 255};
+    SDL_Color skin = {224, 166, 124, 255};
+    SDL_Color skin_light = {241, 197, 154, 255};
+    SDL_Color robe_dark = {31, 79, 69, 255};
+    SDL_Color robe = {52, 126, 103, 255};
+    SDL_Color robe_light = {82, 162, 128, 255};
+    SDL_Color cream_shadow = {180, 170, 137, 255};
+    SDL_Color cream = {226, 218, 181, 255};
+    SDL_Color ivory = {244, 235, 198, 255};
+    SDL_Color leather = {86, 52, 35, 255};
+    SDL_Color leather_light = {143, 86, 45, 255};
+    SDL_Color bottle = {76, 180, 164, 255};
+    SDL_Color tonic = {229, 183, 66, 255};
+
+    healer_rect(r, x, y, scale, 9, 1, 14, 2, outline);
+    healer_rect(r, x, y, scale, 6, 3, 20, 3, outline);
+    healer_rect(r, x, y, scale, 4, 6, 24, 9, outline);
+    healer_rect(r, x, y, scale, 5, 14, 5, 9, outline);
+    healer_rect(r, x, y, scale, 22, 14, 5, 9, outline);
+    healer_rect(r, x, y, scale, 10, 2, 12, 2, hair);
+    healer_rect(r, x, y, scale, 7, 4, 18, 4, hair);
+    healer_rect(r, x, y, scale, 5, 7, 22, 7, hair_dark);
+    healer_rect(r, x, y, scale, 6, 7, 5, 8, hair);
+    healer_rect(r, x, y, scale, 21, 7, 5, 8, hair);
+    healer_rect(r, x, y, scale, 9, 4, 9, 2, hair_light);
+    healer_rect(r, x, y, scale, 7, 6, 4, 2, hair_light);
+
+    healer_rect(r, x, y, scale, 9, 6, 14, 11, outline);
+    healer_rect(r, x, y, scale, 10, 7, 12, 9, skin);
+    healer_rect(r, x, y, scale, 10, 13, 12, 3, skin_shadow);
+    healer_rect(r, x, y, scale, 11, 7, 9, 2, skin_light);
+    healer_rect(r, x, y, scale, 9, 5, 6, 3, hair);
+    healer_rect(r, x, y, scale, 14, 5, 8, 2, hair_light);
+    healer_rect(r, x, y, scale, 19, 6, 4, 3, hair);
+    healer_rect(r, x, y, scale, 12, 10, 2, 2, outline);
+    healer_rect(r, x, y, scale, 19, 10, 2, 2, outline);
+    healer_rect(r, x, y, scale, 13, 10, 1, 1, ivory);
+    healer_rect(r, x, y, scale, 18, 10, 1, 1, ivory);
+    healer_rect(r, x, y, scale, 16, 11, 1, 3, skin_shadow);
+    healer_rect(r, x, y, scale, 14, 14, 5, 1, hair_dark);
+    healer_rect(r, x, y, scale, 15, 14, 3, 1, skin_light);
+    healer_rect(r, x, y, scale, 13, 16, 7, 4, outline);
+    healer_rect(r, x, y, scale, 14, 16, 5, 3, skin);
+
+    healer_rect(r, x, y, scale, 5, 14, 4, 3, hair_light);
+    healer_rect(r, x, y, scale, 6, 17, 4, 3, hair);
+    healer_rect(r, x, y, scale, 5, 20, 4, 3, hair_light);
+    healer_rect(r, x, y, scale, 23, 14, 3, 3, hair_light);
+    healer_rect(r, x, y, scale, 22, 17, 4, 3, hair);
+    healer_rect(r, x, y, scale, 23, 20, 4, 3, hair_light);
+
+    healer_rect(r, x, y, scale, 5, 18, 22, 4, outline);
+    healer_rect(r, x, y, scale, 3, 21, 26, 12, outline);
+    healer_rect(r, x, y, scale, 6, 32, 20, 7, outline);
+    healer_rect(r, x, y, scale, 6, 19, 20, 4, robe_dark);
+    healer_rect(r, x, y, scale, 4, 22, 24, 10, robe);
+    healer_rect(r, x, y, scale, 7, 31, 18, 7, robe_dark);
+    healer_rect(r, x, y, scale, 5, 23, 4, 8, robe_light);
+    healer_rect(r, x, y, scale, 24, 23, 3, 8, robe_dark);
+    healer_rect(r, x, y, scale, 8, 32, 4, 5, robe);
+    healer_rect(r, x, y, scale, 20, 32, 3, 5, robe_light);
+
+    healer_rect(r, x, y, scale, 10, 19, 12, 3, cream_shadow);
+    healer_rect(r, x, y, scale, 11, 20, 10, 3, cream);
+    healer_rect(r, x, y, scale, 11, 22, 10, 14, cream_shadow);
+    healer_rect(r, x, y, scale, 12, 22, 8, 13, cream);
+    healer_rect(r, x, y, scale, 13, 23, 6, 2, ivory);
+    healer_rect(r, x, y, scale, 15, 23, 2, 6, robe_dark);
+    healer_rect(r, x, y, scale, 13, 25, 6, 2, robe_dark);
+    healer_rect(r, x, y, scale, 13, 30, 1, 4, ivory);
+    healer_rect(r, x, y, scale, 18, 29, 1, 5, cream_shadow);
+    healer_rect(r, x, y, scale, 4, 30, 24, 2, leather);
+    healer_rect(r, x, y, scale, 12, 30, 9, 2, leather_light);
+
+    healer_rect(r, x, y, scale, 1, 23, 5, 3, outline);
+    healer_rect(r, x, y, scale, 1, 25, 5, 7, robe_dark);
+    healer_rect(r, x, y, scale, 2, 25, 4, 6, robe_light);
+    healer_rect(r, x, y, scale, 2, 31, 4, 4, outline);
+    healer_rect(r, x, y, scale, 2, 31, 3, 3, skin);
+    healer_rect(r, x, y, scale, 27, 23, 4, 3, outline);
+    healer_rect(r, x, y, scale, 27, 25, 4, 7, robe_dark);
+    healer_rect(r, x, y, scale, 27, 31, 4, 4, outline);
+    healer_rect(r, x, y, scale, 28, 31, 3, 3, skin);
+
+    healer_rect(r, x, y, scale, 23, 28, 8, 8, outline);
+    healer_rect(r, x, y, scale, 24, 29, 6, 6, leather);
+    healer_rect(r, x, y, scale, 25, 29, 4, 2, leather_light);
+    healer_rect(r, x, y, scale, 26, 32, 2, 2, tonic);
+    healer_rect(r, x, y, scale, 2, 26, 3, 2, outline);
+    healer_rect(r, x, y, scale, 1, 28, 5, 7, outline);
+    healer_rect(r, x, y, scale, 2, 28, 3, 2, bottle);
+    healer_rect(r, x, y, scale, 2, 30, 3, 4, tonic);
+    healer_rect(r, x, y, scale, 3, 30, 1, 3, ivory);
+
+    healer_rect(r, x, y, scale, 7, 38, 7, 2, outline);
+    healer_rect(r, x, y, scale, 19, 38, 7, 2, outline);
+    healer_rect(r, x, y, scale, 8, 38, 5, 1, leather_light);
+    healer_rect(r, x, y, scale, 20, 38, 5, 1, leather_light);
 }
 
 void draw_elowen(Renderer *r, int tile_x, int tile_y) {

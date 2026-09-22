@@ -315,6 +315,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_TAVERN &&
         m->tiles[y][x] != TILE_SHOP_BLACKSMITH &&
         m->tiles[y][x] != TILE_SHOP_ALCHEMIST &&
+        m->tiles[y][x] != TILE_HEALER &&
         m->tiles[y][x] != TILE_WATCHTOWER &&
         m->tiles[y][x] != TILE_TAVERN_WALL &&
         m->tiles[y][x] != TILE_TAVERN_TABLE &&
@@ -1032,12 +1033,14 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     for (int x = 18; x <= 22; x++)
         m->tiles[TOWN_H - 1][x] = TILE_TOWN_EXIT;
 
-    // Blacksmith at (7, 7) — 5x4 tiles
-    for (int dy = 0; dy < 4; dy++)
-        for (int dx = 0; dx < 5; dx++)
-            m->tiles[7 + dy][7 + dx] = TILE_SHOP_BLACKSMITH;
-    m->tiles[10][9] = TILE_BLACKSMITH_DOOR;
-    m->tiles[11][9] = TILE_TOWN_PATH;
+    // Blacksmith and healer face the east-west road.
+    for (int dy = 0; dy < 4; dy++) {
+        for (int dx = 0; dx < 5; dx++) {
+            m->tiles[TOWN_BLACKSMITH_Y + dy][TOWN_BLACKSMITH_X + dx] = TILE_SHOP_BLACKSMITH;
+        }
+    }
+    m->tiles[TOWN_BLACKSMITH_Y + 3][TOWN_BLACKSMITH_X + 2] = TILE_BLACKSMITH_DOOR;
+    m->tiles[TOWN_BLACKSMITH_Y + 4][TOWN_BLACKSMITH_X + 2] = TILE_TOWN_PATH;
 
     // Alchemist at (28, 7) — 5x4 tiles
     for (int dy = 0; dy < 4; dy++)
@@ -1059,6 +1062,17 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     }
     for (int x = 8; x < 12; x++) {
         m->tiles[21][x] = TILE_TOWN_PATH;
+    }
+
+    for (int y = TOWN_HEALER_Y; y < TOWN_HEALER_Y + TOWN_HEALER_H; y++) {
+        for (int x = TOWN_HEALER_X; x < TOWN_HEALER_X + TOWN_HEALER_W; x++) {
+            m->tiles[y][x] = TILE_HEALER;
+        }
+    }
+    m->tiles[TOWN_HEALER_DOOR_Y][TOWN_HEALER_DOOR_X] = TILE_HEALER_DOOR;
+    // Form a two-tile cobblestone plaza from the healer to the alchemist.
+    for (int x = TOWN_HEALER_DOOR_X; x <= 30; x++) {
+        m->tiles[TOWN_HEALER_DOOR_Y + 1][x] = TILE_TOWN_PATH;
     }
 
     map_place_town_harbor(m);

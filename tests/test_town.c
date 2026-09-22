@@ -1,6 +1,90 @@
 #include "test_utils.h"
 #include "../src/game/map.h"
 #include "../src/game/game.h"
+#include "../src/screens/shop.h"
+#include "../src/systems/save_load.h"
+
+void test_town_healer(void) {
+    printf("Town healer tests:\n");
+    static GameState g;
+    static GameState loaded;
+    g.player.player_class = CLASS_WARRIOR;
+    game_init(&g);
+    int dx = TOWN_HEALER_DOOR_X;
+    int dy = TOWN_HEALER_DOOR_Y;
+    ASSERT("healer stands west of the blacksmith along the east-west road",
+        TOWN_HEALER_X + TOWN_HEALER_W < TOWN_BLACKSMITH_X &&
+        TOWN_HEALER_Y == TOWN_BLACKSMITH_Y &&
+        g.map.tiles[dy][dx] == TILE_HEALER_DOOR);
+    ASSERT("healer building is solid with a walkable entrance",
+        !map_is_walkable(&g.map, TOWN_HEALER_X, TOWN_HEALER_Y) &&
+        map_is_walkable(&g.map, dx, dy));
+    int plaza = 1;
+    for (int x = dx; x <= 30; x++) {
+        TileType upper = g.map.tiles[dy + 1][x];
+        plaza &= upper == TILE_TOWN_PATH ||
+            (x == TOWN_CAIN_X && upper == TILE_NPC_CAIN);
+        plaza &= g.map.tiles[dy + 2][x] == TILE_TOWN_PATH;
+    }
+    ASSERT("two-tile cobblestone plaza reaches every north shop door", plaza &&
+        g.map.tiles[TOWN_BLACKSMITH_Y + 4][TOWN_BLACKSMITH_X + 2] == TILE_TOWN_PATH &&
+        g.map.tiles[11][30] == TILE_TOWN_PATH);
+    ASSERT("former healer lot and lane return to grass",
+        g.map.tiles[16][26] == TILE_TOWN_FLOOR && g.map.tiles[20][28] == TILE_TOWN_FLOOR);
+    ASSERT("healer lane leaves the harbor road locked",
+        !game_harbor_unlocked(&g) &&
+        g.map.tiles[TOWN_HARBOR_Y + 1][21] == TILE_TOWN_FLOOR &&
+        g.map.tiles[TOWN_ROWAN_Y][TOWN_ROWAN_X] == TILE_NPC_ROWAN);
+
+    ShopScreen shop;
+    shop_init(&shop, SHOP_TYPE_HEALER, 0);
+    int starts_on_heal = shop.selected == 0 &&
+        shop_handle_key(&shop, SDL_SCANCODE_RETURN) == SHOP_HEAL;
+    shop_handle_key(&shop, SDL_SCANCODE_DOWN);
+    int selects_exit = shop.selected == 1 &&
+        shop_handle_key(&shop, SDL_SCANCODE_KP_ENTER) == SHOP_CLOSED;
+    shop_handle_key(&shop, SDL_SCANCODE_W);
+    ASSERT("healer has selectable treatment and exit options",
+        shop.item_count == 0 && starts_on_heal && selects_exit &&
+        shop.selected == 0 && shop_handle_key(&shop, SDL_SCANCODE_TAB) == SHOP_NONE &&
+        shop.mode == 0 && shop_handle_key(&shop, SDL_SCANCODE_ESCAPE) == SHOP_CLOSED);
+    g.player.hp = g.player.max_hp - 30;
+    g.gold = 9;
+    ASSERT("healing thirty HP costs ten gold", game_healer_price(&g) == 10);
+    game_visit_healer(&g);
+    ASSERT("insufficient funds leave both gold and HP unchanged",
+        g.gold == 9 && g.player.hp == g.player.max_hp - 30);
+    g.gold = 10;
+    int mp = g.player.mp;
+    int items = g.inventory_count;
+    game_visit_healer(&g);
+    ASSERT("exact payment restores full HP without changing MP or inventory",
+        g.gold == 0 && g.player.hp == g.player.max_hp &&
+        g.player.mp == mp && g.inventory_count == items);
+    g.gold = 100;
+    game_visit_healer(&g);
+    ASSERT("full health and repeat purchases are free",
+        game_healer_price(&g) == 0 && g.gold == 100 && g.player.hp == g.player.max_hp);
+    g.player.hp -= 31;
+    ASSERT("larger wounds cost more with rounded-up pricing", game_healer_price(&g) == 11);
+    game_visit_healer(&g);
+    g.player.hp--;
+    ASSERT("even a one-HP wound costs one gold", game_healer_price(&g) == 1);
+    game_visit_healer(&g);
+    ASSERT("separate treatments charge their current cost", g.gold == 88);
+
+    const int slot = 99012;
+    if (save_exists(slot)) {
+        ASSERT("healer test save slot must be unused", 0);
+        return;
+    }
+    int saved = save_game(&g, slot);
+    int restored = saved && load_game(&loaded, slot);
+    ASSERT("healing payment, restored HP and healer building survive save/load",
+        restored && loaded.gold == 88 && loaded.player.hp == loaded.player.max_hp &&
+        loaded.map.tiles[dy][dx] == TILE_HEALER_DOOR);
+    remove("saves/savegame_99012.json");
+}
 
 static int forest_path_exists_around(const Map *m, int blocked_room) {
     unsigned char visited[MAP_H][MAP_W] = {{0}};
@@ -127,21 +211,26 @@ void test_town_map(void) {
         m.tiles[12][TOWN_W - 1] == TILE_TOWN_EXIT);
 
     // Shop tiles in correct positions
-    ASSERT("blacksmith at (7,7)",
-        m.tiles[7][7] == TILE_SHOP_BLACKSMITH);
+    ASSERT("blacksmith moves east to make room for the healer",
+        TOWN_BLACKSMITH_X > 7 &&
+        m.tiles[TOWN_BLACKSMITH_Y][TOWN_BLACKSMITH_X] == TILE_SHOP_BLACKSMITH);
     ASSERT("alchemist at (28,7)",
         m.tiles[7][28] == TILE_SHOP_ALCHEMIST);
     ASSERT("blacksmith has a walk-in doorway",
-        m.tiles[10][9] == TILE_BLACKSMITH_DOOR &&
-        map_is_walkable(&m, 9, 10));
+        m.tiles[TOWN_BLACKSMITH_Y + 3][TOWN_BLACKSMITH_X + 2] == TILE_BLACKSMITH_DOOR &&
+        map_is_walkable(&m, TOWN_BLACKSMITH_X + 2, TOWN_BLACKSMITH_Y + 3));
     ASSERT("alchemist has a walk-in doorway",
         m.tiles[10][30] == TILE_ALCHEMIST_DOOR &&
         map_is_walkable(&m, 30, 10));
-    ASSERT("cobblestone paths reach both shop doors",
-        m.tiles[11][9] == TILE_TOWN_PATH &&
+    ASSERT("cobblestone plaza reaches all three shop doors",
+        m.tiles[TOWN_HEALER_DOOR_Y + 1][TOWN_HEALER_DOOR_X] == TILE_TOWN_PATH &&
+        m.tiles[TOWN_HEALER_DOOR_Y + 1][9] == TILE_TOWN_PATH &&
+        m.tiles[TOWN_BLACKSMITH_Y + 4][TOWN_BLACKSMITH_X + 2] == TILE_TOWN_PATH &&
+        m.tiles[11][24] == TILE_TOWN_PATH &&
         m.tiles[11][30] == TILE_TOWN_PATH);
     ASSERT("shop facades remain solid away from their doors",
-        !map_is_walkable(&m, 7, 7) && !map_is_walkable(&m, 28, 7));
+        !map_is_walkable(&m, TOWN_BLACKSMITH_X, TOWN_BLACKSMITH_Y) &&
+        !map_is_walkable(&m, 28, 7));
     ASSERT("tavern occupies southwest town lot",
         m.tiles[16][5] == TILE_TAVERN &&
         m.tiles[20][8] == TILE_TAVERN_DOOR &&

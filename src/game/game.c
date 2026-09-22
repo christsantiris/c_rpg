@@ -1391,6 +1391,31 @@ int game_harbor_unlocked(const GameState *g) {
         g->alder_quest_state == 3 && g->mara_quest_state == 3;
 }
 
+int game_healer_price(const GameState *g) {
+    int missing = g->player.max_hp - g->player.hp;
+    return missing > 0 ? (missing + 2) / 3 : 0;
+}
+
+void game_visit_healer(GameState *g) {
+    if (g->location != LOCATION_TOWN || g->player.hp <= 0) {
+        return;
+    }
+    int price = game_healer_price(g);
+    if (price == 0) {
+        push_message(g, "Lysa: You are already in good health.");
+        return;
+    }
+    if (g->gold < price) {
+        push_message(g, "Lysa: You do not have enough gold for treatment.");
+        return;
+    }
+    g->gold -= price;
+    g->player.hp = g->player.max_hp;
+    char message[MAX_MESSAGE_LEN];
+    snprintf(message, sizeof(message), "Lysa restores your HP to full for %d gold.", price);
+    push_message(g, message);
+}
+
 static void place_harbor_road(GameState *g) {
     if (!game_harbor_unlocked(g)) {
         return;

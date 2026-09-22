@@ -9,12 +9,14 @@ typedef enum {
     SHOP_NONE = 0,
     SHOP_CLOSED,
     SHOP_BUY,
-    SHOP_SELL
+    SHOP_SELL,
+    SHOP_HEAL
 } ShopResult;
 
 typedef enum {
     SHOP_TYPE_ALCHEMIST,
-    SHOP_TYPE_BLACKSMITH
+    SHOP_TYPE_BLACKSMITH,
+    SHOP_TYPE_HEALER
 } ShopType;
 
 typedef struct {

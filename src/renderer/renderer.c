@@ -35,6 +35,7 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->alchemist_texture = load_sprite_texture(sdl, "assets/alchemist.bmp");
     r->tavern_texture = load_sprite_texture(sdl, "assets/tavern.bmp");
     r->harbor_texture = load_sprite_texture(sdl, "assets/harbor.bmp");
+    r->healer_texture = load_sprite_texture(sdl, "assets/healer.bmp");
 
     if (TTF_Init() != 0) {
         fprintf(stderr, "TTF_Init error: %s\n", TTF_GetError());
@@ -53,6 +54,10 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
 }
 
 void renderer_free(Renderer *r) {
+    if (r->healer_texture) {
+        SDL_DestroyTexture(r->healer_texture);
+        r->healer_texture = NULL;
+    }
     if (r->blacksmith_texture) {
         SDL_DestroyTexture(r->blacksmith_texture);
         r->blacksmith_texture = NULL;
