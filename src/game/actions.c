@@ -458,7 +458,7 @@ static int interact_mountain(GameState *g) {
             change_mountain_tile(g, x, y, TILE_MOUNTAIN_BRIDGE);
             push_message(g, "You lash a new crossing into place.");
         } else {
-            // Each generated fort has a straight buried tunnel with two ends.
+            // Each buried treasure passage has two ends.
             int left = x;
             int right = x;
             while (left > 0 && (g->map.tiles[y][left - 1] == TILE_MOUNTAIN_HIDDEN_CAVE ||

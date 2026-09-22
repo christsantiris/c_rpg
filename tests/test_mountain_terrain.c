@@ -33,10 +33,9 @@ static int required_route_is_solvable(const Map *m) {
             if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H || seen[y][x]) {
                 continue;
             }
-            // Gates and broken spans are operable from any adjacent floor.
+            // Broken spans are repairable from any adjacent floor.
             // Optional rockfalls stay closed: no required route can depend on HP.
-            if (!map_is_walkable(m, x, y) && m->tiles[y][x] != TILE_MOUNTAIN_GATE &&
-                m->tiles[y][x] != TILE_MOUNTAIN_CHASM) {
+            if (!map_is_walkable(m, x, y) && m->tiles[y][x] != TILE_MOUNTAIN_CHASM) {
                 continue;
             }
             seen[y][x] = 1;
@@ -61,7 +60,7 @@ static void test_mountain_generation(void) {
     static GameState g;
     int solvable = 1;
     int bridges = 1;
-    int guarded = 1;
+    int open_rooms = 1;
     for (int seed = 0; seed < 256; seed++) {
         srand(seed);
         for (int level = 1; level <= MOUNTAIN_DEPTH; level++) {
@@ -89,22 +88,19 @@ static void test_mountain_generation(void) {
                     solvable &= required_route_is_solvable(&g.map);
                 }
             }
-            if (find_mountain_tile(&g.map, TILE_MOUNTAIN_GATE, &x, &y)) {
-                enemies_spawn(&g);
-                int archer = 0;
-                int guard = 0;
-                for (int i = 0; i < g.enemy_count; i++) {
-                    Enemy *e = &g.enemies[i];
-                    archer |= e->type == ENEMY_GOBLIN_ARCHER && e->x == x + 2 && e->y == y;
-                    guard |= e->type == ENEMY_HOBGOBLIN_GUARD && e->x == x + 2 && e->y == y + 1;
-                }
-                guarded &= archer && guard && g.map.tiles[y][x + 1] == TILE_TRAP_HIDDEN;
+            open_rooms &= !find_mountain_tile(&g.map, TILE_MOUNTAIN_GATE, &x, &y);
+            if (level == 3 || level == 4 || level == 5 || level == 6 || level == 8) {
+                map_room_center(&g.map.rooms[1], &x, &y);
+                open_rooms &= map_is_walkable(&g.map, x, y - 1) &&
+                    map_is_walkable(&g.map, x, y) &&
+                    map_is_walkable(&g.map, x, y + 1) &&
+                    map_is_walkable(&g.map, x + 1, y);
             }
         }
     }
     ASSERT("2048 generated mountain stages remain solvable without risky caves", solvable);
     ASSERT("weak bridges always form a one-tile combat bottleneck", bridges);
-    ASSERT("fort gates always have a trap, archer and shortcut guard", guarded);
+    ASSERT("mountain rooms have open routes without gate dividers", open_rooms);
     ASSERT("new terrain preserves existing serialized tile IDs",
         TILE_MOUNTAIN_CAVE_FLOOR == 43 && TILE_COAST_FLOOR == 37 && TILE_WATCHTOWER == 65);
 }
@@ -119,27 +115,10 @@ static void test_mountain_interactions(void) {
     g.enemy_count = 0;
     int x = 0;
     int y = 0;
-    int found = find_mountain_tile(&g.map, TILE_MOUNTAIN_GATE, &x, &y);
-    ASSERT("fort contains an operable gate", found);
-    if (!found) {
-        return;
-    }
     Action interact = {ACTION_INTERACT, 0, 0};
     for (int side = -1; side <= 1; side += 2) {
-        g.map.tiles[y][x] = TILE_MOUNTAIN_GATE;
-        g.player.x = x + side;
-        g.player.y = y;
-        ASSERT("A recognizes the gate from either side", game_has_regional_interaction(&g));
-        Action move = {ACTION_MOVE, x, y};
-        action_resolve_player(&g, move);
-        ASSERT("bumping a gate does not open it", g.map.tiles[y][x] == TILE_MOUNTAIN_GATE);
-        action_resolve_player(&g, interact);
-        ASSERT("A opens the gate without moving the player",
-            map_is_walkable(&g.map, x, y) && g.player.x == x + side);
-    }
-    for (int side = -1; side <= 1; side += 2) {
         map_generate_mountains(&g.map, g.level);
-        find_mountain_tile(&g.map, TILE_MOUNTAIN_GATE, &x, &y);
+        map_room_center(&g.map.rooms[1], &x, &y);
         g.player.x = x + side * 3;
         g.player.y = y + 1;
         int hp = g.player.hp;
@@ -155,8 +134,8 @@ static void test_mountain_interactions(void) {
             Action move = {ACTION_MOVE, cx, y + 2};
             action_resolve_player(&g, move);
         }
-        ASSERT("cave crosses the fort with its gate still closed",
-            g.player.x == x + 3 && g.map.tiles[y][x] == TILE_MOUNTAIN_GATE);
+        ASSERT("optional cave can still be explored and crossed",
+            g.player.x == x + 3 && map_is_walkable(&g.map, x, y));
         g.player.x = x;
         g.inventory_count = 1;
         g.inventory[0] = item_make_health_potion();
@@ -174,7 +153,7 @@ static void test_mountain_interactions(void) {
     }
     g.level = 2;
     map_generate_mountains(&g.map, g.level);
-    found = find_mountain_tile(&g.map, TILE_MOUNTAIN_WEAK_BRIDGE, &x, &y);
+    int found = find_mountain_tile(&g.map, TILE_MOUNTAIN_WEAK_BRIDGE, &x, &y);
     ASSERT("bridge stage contains a weak span", found);
     if (!found) {
         return;
@@ -229,7 +208,7 @@ static void test_mountain_persistence(void) {
     map_generate_mountains(&g.map, g.level);
     int x = 0;
     int y = 0;
-    find_mountain_tile(&g.map, TILE_MOUNTAIN_GATE, &x, &y);
+    map_room_center(&g.map.rooms[1], &x, &y);
     g.player.x = x - 3;
     g.player.y = y + 1;
     action_resolve_player(&g, (Action){ACTION_INTERACT, 0, 0});
@@ -241,13 +220,10 @@ static void test_mountain_persistence(void) {
     g.player.x = x;
     g.player.y = y + 2;
     action_resolve_player(&g, (Action){ACTION_INTERACT, 0, 0});
-    g.player.x = x - 1;
-    g.player.y = y;
-    action_resolve_player(&g, (Action){ACTION_INTERACT, 0, 0});
     expected = g.map;
     game_descend(&g);
     game_ascend(&g);
-    ASSERT("opened gate and looted cave survive a cached revisit",
+    ASSERT("open room and looted cave survive a cached revisit",
         memcmp(&g.map, &expected, sizeof(Map)) == 0);
     map_generate_mountains(&g.mountain_cache[1].map, 2);
     g.mountain_cache[1].valid = 1;
@@ -266,18 +242,9 @@ static void test_mountain_persistence(void) {
             memcmp(&loaded.map, &expected, sizeof(Map)) == 0);
         ASSERT("cached collapse survives save/load",
             loaded.mountain_cache[1].map.tiles[y][x] == TILE_MOUNTAIN_CHASM);
-        ASSERT("cached claimed cave and open gate survive save/load",
+        ASSERT("cached claimed cave and open room survive save/load",
             memcmp(&loaded.mountain_cache[3].map, &expected, sizeof(Map)) == 0);
     }
-    int gate_x;
-    int gate_y;
-    map_room_center(&g.map.rooms[1], &gate_x, &gate_y);
-    g.map.tiles[gate_y][gate_x + 1] = TILE_TRAP_REVEALED;
-    g.mountain_cache[3].map.tiles[gate_y][gate_x + 1] = TILE_TRAP_REVEALED;
-    restored = save_game(&g, slot) && load_game(&loaded, slot);
-    ASSERT("legacy visible fort plates load as hidden in active and cached maps",
-        restored && loaded.map.tiles[gate_y][gate_x + 1] == TILE_TRAP_HIDDEN &&
-        loaded.mountain_cache[3].map.tiles[gate_y][gate_x + 1] == TILE_TRAP_HIDDEN);
     remove("saves/savegame_99009.json");
 }
 

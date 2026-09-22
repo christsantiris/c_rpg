@@ -702,25 +702,12 @@ static int mountain_tile_in_room(const Map *m, int x, int y) {
     return 0;
 }
 
-static void place_mountain_fort(Map *m) {
+static void place_mountain_cache_passage(Map *m) {
     Room *room = &m->rooms[1];
     int cx;
     int cy;
     map_room_center(room, &cx, &cy);
-    // Divide the stronghold, retaining an operable gate from either side.
-    for (int y = room->y; y < room->y + room->h; y++) {
-        if ((y == room->y && map_is_walkable(m, cx, y - 1)) ||
-            (y == room->y + room->h - 1 && map_is_walkable(m, cx, y + 1))) {
-            // Keep corridor mouths connected to both halves of the room.
-            continue;
-        }
-        m->tiles[y][cx] = TILE_MOUNTAIN_WALL;
-    }
-    m->tiles[cy][cx] = TILE_MOUNTAIN_GATE;
-    m->tiles[cy][cx + 1] = TILE_TRAP_HIDDEN;
-    m->tiles[cy][cx + 2] = TILE_MOUNTAIN_FORTRESS_FLOOR;
-    m->tiles[cy + 1][cx + 2] = TILE_MOUNTAIN_FORTRESS_FLOOR;
-    // A buried passage bypasses the defended gate; either end can be cleared.
+    // Optional buried treasure can be uncovered from either end.
     for (int x = cx - 2; x <= cx + 2; x++) {
         m->tiles[cy + 2][x] = TILE_MOUNTAIN_HIDDEN_CAVE;
     }
@@ -811,7 +798,7 @@ void map_generate_mountains(Map *m, int level) {
         }
     }
     if (level == 3 || level == 4 || level == 5 || level == 6 || level == 8) {
-        place_mountain_fort(m);
+        place_mountain_cache_passage(m);
     }
 }
 
