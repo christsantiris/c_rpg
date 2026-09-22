@@ -172,8 +172,67 @@ void test_town_map(void) {
         m.tiles[TOWN_H - 1][20] == TILE_TOWN_EXIT);
 }
 
+static void test_necromancer_retaliates_to_arrows(void) {
+    static GameState g;
+    Item bows[] = {item_make_bow(), item_make_longbow(), item_make_magic_longbow()};
+    for (int i = 0; i < 3; i++) {
+        g.player.player_class = CLASS_ROGUE;
+        game_init(&g);
+        g.location = LOCATION_FOREST;
+        g.level = FOREST_DEPTH;
+        map_generate_forest(&g.map, g.level);
+        enemies_spawn(&g);
+        ASSERT("Necromancer is available for ranged encounter",
+            g.enemy_count > 0 && g.enemies[0].type == ENEMY_FOREST_NECROMANCER);
+        if (g.enemy_count == 0 || g.enemies[0].type != ENEMY_FOREST_NECROMANCER) {
+            return;
+        }
+        g.enemy_count = 1;
+        Room *grove = &g.map.rooms[g.map.room_count - 1];
+        Enemy *boss = &g.enemies[0];
+        boss->x = grove->x + 4;
+        boss->y = grove->y + grove->h / 2;
+        g.player.x = boss->x - bows[i].range;
+        g.player.y = boss->y;
+        g.player.last_dx = 1;
+        g.player.last_dy = 0;
+        g.player.hp = 300;
+        g.player.max_hp = 300;
+        g.inventory_count = 1;
+        g.inventory[0] = bows[i];
+        g.equipped_main_hand = 0;
+        for (int x = g.player.x; x <= boss->x; x++) {
+            g.map.tiles[g.player.y][x] = TILE_FOREST_FLOOR;
+        }
+        action_resolve_enemies(&g);
+        ASSERT("unprovoked Necromancer remains dormant outside the grove",
+            boss->move_timer == 0 && g.player.hp == 300);
+        action_resolve_player(&g, (Action){ACTION_RANGED_ATTACK, 0, 0});
+        ASSERT("each bow can hit the Necromancer from outside the grove",
+            boss->hp < boss->max_hp);
+        action_resolve_enemies(&g);
+        ASSERT("a ranged hit triggers the Necromancer's warning turn",
+            boss->move_timer == 1 && g.player.hp == 300 &&
+            strstr(g.messages[g.message_count - 1], "invokes the forest"));
+        action_resolve_enemies(&g);
+        ASSERT("Necromancer retaliates at every bow's maximum range",
+            boss->move_timer == 2 && g.player.hp < 300);
+        int hp = g.player.hp;
+        g.player.x = boss->x - 13;
+        action_resolve_enemies(&g);
+        ASSERT("Necromancer does not attack a distant retreating player",
+            boss->move_timer == 2 && g.player.hp == hp);
+        g.player.x = boss->x - bows[i].range;
+        action_resolve_enemies(&g);
+        action_resolve_enemies(&g);
+        ASSERT("Necromancer resumes fighting when the player returns",
+            boss->move_timer == 4 && g.player.hp < hp);
+    }
+}
+
 void test_forest(void) {
     printf("Forest adventure tests:\n");
+    test_necromancer_retaliates_to_arrows();
     GameState g;
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
