@@ -166,7 +166,7 @@ static void test_mountain_interactions(void) {
         int gold = g.gold;
         action_resolve_player(&g, interact);
         action_resolve_player(&g, interact);
-        ASSERT("risky cache gives its larger reward only once", g.gold == gold + 80);
+        ASSERT("risky cache gives its reward only once", g.gold == gold + 31);
         Action pickup = {ACTION_PICK_UP, 0, 0};
         action_resolve_player(&g, pickup);
         ASSERT("picking up loot cannot restore a claimed cache",

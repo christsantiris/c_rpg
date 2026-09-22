@@ -151,20 +151,23 @@ progress persists across future regions.
 
 ## Loot Progression
 
-Non-boss enemies retain their existing 25% gold-drop chance and separate 5%
+Non-boss enemies have a 10% gold-drop chance and a separate 5%
 item-drop chance. Item drops contain only health potions, mana potions, and
 spell scrolls; regular enemies never drop weapons or armor. Deeper stages shift
 the scroll mix toward Heal and Fireball.
 
-Shop purchase prices are 150% of an item's base value, rounded up. Shops pay
-50% of base value when buying an item from the player. These prices apply to
+Shop purchase prices are 200% of an item's base value. Shops pay
+25% of base value, rounded down, when buying an item from the player. These prices apply to
 both Blacksmith and Alchemist stock; existing item values in saved games stay
 unchanged.
 
 Regional bosses guarantee fixed thematic equipment rewards. Boss victories
 also expand the Blacksmith's inventory. Uncommon stock unlocks after one boss,
 the strongest class weapons unlock after two bosses, and capstone armor unlocks
-after three bosses. Quest and enemy gold rewards are unchanged.
+after three bosses. Enemy coin amounts, including boss purses, are halved and
+rounded down. The four quests award 40, 60, 70, and 80 gold respectively.
+Crypt caches grant `10 + 2 × floor` gold, mountain caches grant
+`15 + 4 × stage`, and Coast caches grant `20 + 4 × stage`.
 
 ## Current Curve Summary
 

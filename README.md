@@ -33,7 +33,7 @@ a gate to open it, then beware the hidden trap and the archer and guard beyond i
 
 Amber rockfalls mark buried cave passages around the defended gates. Press `A`
 beside either end to expose the passage: falling rocks cost `4 + stage` HP, but
-the cave holds a one-time cache worth `40 + 10 × stage` gold. Stand on the cache
+the cave holds a one-time cache worth `15 + 4 × stage` gold. Stand on the cache
 and press `A` to collect it. Newly revealed passages appear on the minimap;
 opened gates, exposed caves, claimed caches, and repaired bridges survive
 cached revisits and saving/loading. Existing saved maps retain their layouts;
@@ -48,7 +48,7 @@ reverses the flow: one basin drains while the other floods. Colored corner
 markers identify the channels; drained channels show exposed stone.
 
 Two guarded treasure chambers are accessible at opposite tide levels. Each
-chamber cache grants `50 + 10 × stage`
+chamber cache grants `20 + 4 × stage`
 gold once; stand on it and press `P` to collect it. Drain the blue basin to reach
 and light Mara's beacons. The control and exit remain reachable in either
 tide state, with the Drowned Queen still guarding the final exit.

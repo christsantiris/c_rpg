@@ -196,9 +196,9 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         case ENEMY_TARRASQUE:  break;
     }
     
-    // Preserve the existing coin chance and values alongside the new loot
-    // table; quest rewards remain the larger source of purchasing power.
-    if (is_boss || rand() % 100 < 25) {
+    // Smaller purses and fewer coin drops keep routine combat income modest.
+    gold /= 2;
+    if (gold > 0 && (is_boss || rand() % 100 < 10)) {
         g->gold += gold;
         g->score += gold;
         char msg[MAX_MESSAGE_LEN];
@@ -432,7 +432,7 @@ static int interact_mountain(GameState *g) {
     int px = g->player.x;
     int py = g->player.y;
     if (g->map.tiles[py][px] == TILE_MOUNTAIN_CACHE) {
-        int gold = 40 + g->level * 10;
+        int gold = 15 + g->level * 4;
         g->gold += gold;
         g->score += gold;
         change_mountain_tile(g, px, py, TILE_MOUNTAIN_CAVE_FLOOR);
@@ -626,7 +626,7 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
         if (tile == TILE_CRYPT_CACHE) {
-            int gold = 20 + g->level * 5;
+            int gold = 10 + g->level * 2;
             g->gold += gold;
             g->score += gold;
             g->map.tiles[g->player.y][g->player.x] = TILE_FLOOR;
@@ -670,7 +670,7 @@ void action_resolve_player(GameState *g, Action a) {
 
     if (a.type == ACTION_PICK_UP) {
         if (g->map.tiles[g->player.y][g->player.x] == TILE_COAST_CACHE) {
-            int gold = 50 + g->level * 10;
+            int gold = 20 + g->level * 4;
             g->gold += gold;
             g->score += gold;
             g->map.tiles[g->player.y][g->player.x] = TILE_COAST_FLOOR;

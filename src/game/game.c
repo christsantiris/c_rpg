@@ -1678,7 +1678,7 @@ void game_talk_to_elowen(GameState *g) {
     }
     if (g->elowen_quest_state == 2) {
         g->elowen_quest_state = 3;
-        g->gold += 100;
+        g->gold += 40;
         g->score += 300;
         strncpy(g->dialogue_text,
             "The crypt is bound once more. Its dead may finally sleep. Take this gold with my gratitude.",
@@ -1727,7 +1727,7 @@ void game_talk_to_dain(GameState *g) {
     }
     if (g->dain_quest_state == 2) {
         g->dain_quest_state = 3;
-        g->gold += 150;
+        g->gold += 60;
         g->score += 400;
         strncpy(g->dialogue_text,
             "The treasure map is whole again. It reveals a dwarven hoard the goblins never learned how to find.",
@@ -1804,7 +1804,7 @@ void game_talk_to_alder(GameState *g) {
     }
     if (g->alder_quest_state == 2) {
         g->alder_quest_state = 3;
-        g->gold += 175;
+        g->gold += 70;
         g->score += 500;
         strncpy(g->dialogue_text,
             "All three returned safely. The forest has taken enough from us. Accept this reward with an old ranger's gratitude.",
@@ -1899,7 +1899,7 @@ void game_talk_to_mara(GameState *g) {
     }
     if (g->mara_quest_state == 2) {
         g->mara_quest_state = 3;
-        g->gold += 200;
+        g->gold += 80;
         g->score += 600;
         strncpy(g->dialogue_text,
             "All three flames shine across the drowned road. Sailors can find safe water again. Take this with my thanks.",

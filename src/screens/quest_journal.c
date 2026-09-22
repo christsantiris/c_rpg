@@ -19,7 +19,7 @@ static const QuestDefinition quest_definitions[4] = {
         "Repair the shattered burial seals before their",
         "necrotic power spreads through the crypt.",
         {"Repair burial seal", "Repair burial seal", "Repair burial seal"},
-        "Dungeon", {2, 4, 6}, 100, 300
+        "Dungeon", {2, 4, 6}, 40, 300
     },
     {
         "Recover the Treasure Map", "Dain",
@@ -27,7 +27,7 @@ static const QuestDefinition quest_definitions[4] = {
         "by the Goblin Map Bearers.",
         {"Defeat Archer Map Bearer", "Defeat Bomber Map Bearer",
             "Defeat Shaman Map Bearer"},
-        "Mountains", {2, 3, 5}, 150, 400
+        "Mountains", {2, 3, 5}, 60, 400
     },
     {
         "The Lost Wardens", "Alder",
@@ -35,7 +35,7 @@ static const QuestDefinition quest_definitions[4] = {
         "dead-end groves and help them escape.",
         {"Rescue forest warden", "Rescue forest warden",
             "Rescue forest warden"},
-        "Forest", {2, 5, 7}, 175, 500
+        "Forest", {2, 5, 7}, 70, 500
     },
     {
         "Relight the Drowned Beacons", "Mara",
@@ -43,7 +43,7 @@ static const QuestDefinition quest_definitions[4] = {
         "that once guided travelers along the coast.",
         {"Light drowned beacon", "Light drowned beacon",
             "Light drowned beacon"},
-        "Coast", {1, 3, 6}, 200, 600
+        "Coast", {1, 3, 6}, 80, 600
     }
 };
 

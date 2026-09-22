@@ -2,11 +2,11 @@
 #include <SDL2/SDL.h>
 
 int shop_buy_price(const Item *item) {
-    return (item->value * 3 + 1) / 2;
+    return item->value * 2;
 }
 
 int shop_sell_price(const Item *item) {
-    return item->value / 2;
+    return item->value / 4;
 }
 
 static int defeated_boss_count(int defeated_bosses) {

@@ -219,12 +219,12 @@ static void test_coast_water_items(void) {
         g.gold == gold && g.map.tiles[cy][cx + 1] == TILE_COAST_CACHE);
     action_resolve_player(&g, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("P claims the chamber reward before loose loot",
-        g.gold == gold + 70 && g.inventory_count == 0);
+        g.gold == gold + 28 && g.inventory_count == 0);
     action_resolve_player(&g, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("P still retrieves loot dropped on the claimed cache", g.inventory_count == 1);
     action_resolve_player(&g, (Action){ACTION_PICK_UP, 0, 0});
-    ASSERT("a guarded cache grants its larger reward only once",
-        g.gold == gold + 70 && g.map.tiles[cy][cx + 1] == TILE_COAST_FLOOR);
+    ASSERT("a guarded cache grants its reward only once",
+        g.gold == gold + 28 && g.map.tiles[cy][cx + 1] == TILE_COAST_FLOOR);
 }
 
 static void test_coast_persistence(void) {
