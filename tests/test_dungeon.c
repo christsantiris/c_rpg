@@ -316,18 +316,53 @@ void test_final_dungeon_exit(void) {
     map_generate(&g.map, g.level);
     enemies_spawn(&g);
 
-    game_mark_level_cleared(&g);
-    ASSERT("final stairs become a return exit",
+    g.player.x = g.map.stairs_down_x;
+    g.player.y = g.map.stairs_down_y;
+    Action a = {ACTION_DESCEND, 0, 0};
+    action_resolve_player(&g, a);
+    ASSERT("living Lich King blocks the final dungeon exit",
+        g.location == LOCATION_DUNGEON);
+
+    g.enemy_count = 2;
+    g.enemies[0] = (Enemy){
+        .x = 12, .y = 10, .active = 1, .hp = 1, .max_hp = 1,
+        .type = ENEMY_LICH_KING, .is_boss = 1
+    };
+    g.enemies[1] = (Enemy){
+        .x = 20, .y = 20, .active = 1, .hp = 10,
+        .type = ENEMY_SKELETON
+    };
+    g.player.x = 10;
+    g.player.y = 10;
+    g.player.last_dx = 1;
+    g.player.last_dy = 0;
+    g.inventory_count = 1;
+    g.inventory[0] = item_make_bow();
+    g.equipped_main_hand = 0;
+    for (int x = 10; x <= 12; x++) {
+        g.map.tiles[10][x] = TILE_FLOOR;
+    }
+    g.map.stairs_down_x = 12;
+    g.map.stairs_down_y = 10;
+    g.map.tiles[10][12] = TILE_STAIRS_DOWN;
+    action_resolve_player(&g, (Action){ACTION_RANGED_ATTACK, 0, 0});
+    ASSERT("defeating the Lich opens the return exit with regular enemies alive",
+        !g.enemies[0].active && g.enemies[1].active && !g.level_cleared &&
         g.map.tiles[g.map.stairs_down_y][g.map.stairs_down_x] == TILE_RETURN_EXIT);
 
     g.player.x = g.map.stairs_down_x;
     g.player.y = g.map.stairs_down_y;
-    Action a = {ACTION_DESCEND, 0, 0};
+    action_resolve_player(&g, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("picking up boss loot on the stairs preserves the unlocked exit",
+        g.inventory_count == 2 && g.map.tiles[10][12] == TILE_RETURN_EXIT);
     action_resolve_player(&g, a);
     ASSERT("final exit returns player to town", g.location == LOCATION_TOWN);
     ASSERT("final exit returns at north town road", g.player.x == 20 && g.player.y == 1);
     ASSERT("final exit does not create a ninth floor",
         g.level == DUNGEON_DEPTH);
+    ASSERT("leaving the dungeon preserves surviving enemies and uncleared status",
+        g.level_cache[DUNGEON_DEPTH - 1].enemies[1].active &&
+        !g.level_cache[DUNGEON_DEPTH - 1].level_cleared);
 }
 
 void test_enemy_movement_collision(void) {

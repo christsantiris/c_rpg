@@ -230,9 +230,74 @@ static void test_necromancer_retaliates_to_arrows(void) {
     }
 }
 
+static void test_necromancer_opens_exit(void) {
+    Action attacks[] = {
+        {ACTION_MOVE, 12, 10},
+        {ACTION_RANGED_ATTACK, 0, 0},
+        {ACTION_CAST_SPELL, 0, 0}
+    };
+    for (int i = 0; i < 3; i++) {
+        GameState g;
+        g.player.player_class = CLASS_WARRIOR;
+        game_init(&g);
+        g.location = LOCATION_FOREST;
+        g.level = FOREST_DEPTH;
+        map_generate_forest(&g.map, g.level);
+        g.enemy_count = 2;
+        g.enemies[0] = (Enemy){
+            .x = 12, .y = 10, .active = 1, .hp = 1, .max_hp = 1,
+            .type = ENEMY_FOREST_NECROMANCER, .is_boss = 1
+        };
+        g.enemies[1] = (Enemy){
+            .x = 20, .y = 20, .active = 1, .hp = 10,
+            .type = ENEMY_DARK_ELF
+        };
+        g.player.x = i == 0 ? 11 : 10;
+        g.player.y = 10;
+        g.player.last_dx = 1;
+        g.player.last_dy = 0;
+        g.inventory_count = 1;
+        g.inventory[0] = i == 0 ? item_make_dagger() : item_make_bow();
+        g.equipped_main_hand = 0;
+        g.player.known_spell_count = 1;
+        g.player.known_spells[0] = spell_make_magic_arrow();
+        g.player.equipped_spell = 0;
+        g.player.mp = 100;
+        for (int x = 10; x <= 12; x++) {
+            g.map.tiles[10][x] = TILE_FOREST_FLOOR;
+        }
+        Action exit = outdoor_exit_action(&g.map);
+        ASSERT("final forest exit starts hidden without finding the landmark",
+            g.map.tiles[exit.target_y][exit.target_x] == TILE_FOREST_WALL);
+        action_resolve_player(&g, attacks[i]);
+        ASSERT("melee, arrows and spells record the Necromancer defeat",
+            !g.enemies[0].active && (g.defeated_bosses & (1 << LOCATION_FOREST)));
+        ASSERT("boss defeat reveals the exit without clearing regular enemies",
+            g.map.tiles[exit.target_y][exit.target_x] == TILE_FOREST_EXIT &&
+            g.enemies[1].active && !g.level_cleared);
+        g.player.x = g.map.stairs_down_x;
+        g.player.y = g.map.stairs_down_y;
+        action_resolve_player(&g, exit);
+        ASSERT("player leaves the final forest with a living enemy behind",
+            g.location == LOCATION_TOWN &&
+            g.forest_cache[FOREST_DEPTH - 1].enemies[1].active &&
+            !g.forest_cache[FOREST_DEPTH - 1].level_cleared);
+
+        g.location = LOCATION_FOREST;
+        g.level = FOREST_DEPTH - 1;
+        g.forest_cache[FOREST_DEPTH - 1].valid = 0;
+        game_descend(&g);
+        exit = outdoor_exit_action(&g.map);
+        ASSERT("regenerated final forest keeps the defeated boss's exit open",
+            g.map.tiles[exit.target_y][exit.target_x] == TILE_FOREST_EXIT &&
+            g.enemy_count > 0 && !g.level_cleared);
+    }
+}
+
 void test_forest(void) {
     printf("Forest adventure tests:\n");
     test_necromancer_retaliates_to_arrows();
+    test_necromancer_opens_exit();
     GameState g;
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
@@ -436,6 +501,7 @@ void test_forest(void) {
         g.player.x == portal_x && g.player.y == portal_y);
 
     g.level = FOREST_DEPTH;
+    g.level_cleared = 0;
     map_generate_forest(&g.map, g.level);
     enemies_spawn(&g);
     reveal_forest_exit(&g);

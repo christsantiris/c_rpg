@@ -24,6 +24,11 @@ dungeon, an eight-stage Haunted Forest, the eight-stage Goblin Mountains, and
 the eight-stage Sunken Coast. Each adventure keeps its own generated maps and
 progression.
 
+Advancing never requires clearing every enemy. Final regional exits require
+defeating the region's boss, but surviving regular enemies do not block leaving.
+Defeating the Necromancer also reveals the final forest exit if its landmark
+has not been found.
+
 ### Goblin Mountains terrain
 
 Stages 2 and 7 funnel combat onto narrow bridges. An unmarked weak span collapses

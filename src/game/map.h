@@ -132,6 +132,7 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y);
 void map_place_town_harbor(Map *m);
 void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_forest(Map *m, int level);
+void map_reveal_forest_exit(Map *m);
 void map_generate_mountains(Map *m, int level);
 void map_generate_coast(Map *m, int level);
 int map_remove_coast_sluice(Map *m);
