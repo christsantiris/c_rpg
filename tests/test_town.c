@@ -247,7 +247,9 @@ void test_town_map(void) {
         m.tiles[20][34] == TILE_WATCHTOWER &&
         m.tiles[TOWN_H - 2][TOWN_W - 2] == TILE_WATCHTOWER);
     ASSERT("harbor remains closed and solid",
-        !map_is_walkable(&m, 34, 20));
+        !map_is_walkable(&m, 34, 20) &&
+        !map_is_walkable(&m, TOWN_HARBOR_ENTRANCE_X,
+            TOWN_HARBOR_ENTRANCE_Y));
     ASSERT("former watchtower lot is walkable green",
         m.tiles[16][28] == TILE_TOWN_FLOOR && map_is_walkable(&m, 32, 21));
 
@@ -726,6 +728,19 @@ void test_harbor_road(void) {
             g.map.tiles[road_y][x] == TILE_TOWN_PATH &&
             map_is_walkable(&g.map, x, road_y));
     }
+    ASSERT("harbor road bends through a landing onto the dock",
+        g.map.tiles[TOWN_HARBOR_ENTRANCE_Y][TOWN_HARBOR_X - 1] == TILE_TOWN_PATH &&
+        g.map.tiles[TOWN_HARBOR_ENTRANCE_Y][TOWN_HARBOR_X] == TILE_TOWN_PATH &&
+        g.map.tiles[TOWN_HARBOR_ENTRANCE_Y][TOWN_HARBOR_ENTRANCE_X] == TILE_TOWN_PATH);
+    g.player.x = TOWN_HARBOR_X - 1;
+    g.player.y = road_y;
+    game_move_player(&g, 0, 1);
+    game_move_player(&g, 1, 0);
+    game_move_player(&g, 1, 0);
+    game_move_player(&g, 1, 0);
+    ASSERT("player can walk from the road into the harbor dock",
+        g.player.x == TOWN_HARBOR_ENTRANCE_X &&
+        g.player.y == TOWN_HARBOR_ENTRANCE_Y);
     ASSERT("road leaves Rowan beside the route",
         g.map.tiles[TOWN_ROWAN_Y][TOWN_ROWAN_X] == TILE_NPC_ROWAN);
     while (g.inventory_count < MAX_INVENTORY) {

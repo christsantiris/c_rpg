@@ -163,16 +163,17 @@ Production Releases
 - windows installer
 - fix linux installer
 High priority
-1. Build out harbor functionality.
-2. More tactical enemy behavior
+1. More tactical enemy behavior
    Add recognizable combat roles such as protectors, ambushers, healers, summoners, ranged attackers, and enemies that retreat or flank.
-3. Boss encounter improvements
+2. Boss encounter improvements
    Give every boss multiple phases, telegraphed signature attacks, an arena mechanic, and a guaranteed thematic reward.
 Medium priority
 1. Region replay tiers
    After defeating a regional boss, unlock a harder expedition version with stronger enemies, altered layouts, improved rewards, and possibly a remixed boss. This is better as an endgame layer after normal-order difficulty scaling works.
 2. Combat feedback
    Add clearer hit effects, critical indicators, blocked-damage feedback, status icons, and distinct weapon sounds.
+3. More weapon variation
+4. Rebalance mage class against warrior and rogue
 Polish priority
 1. Accessibility and controls
    Add remappable controls, text scaling, colorblind-safe indicators, adjustable message duration, and clearer interaction prompts.

@@ -1420,9 +1420,15 @@ static void place_harbor_road(GameState *g) {
     if (!game_harbor_unlocked(g)) {
         return;
     }
-    // Branch from the south road to the harbor's west edge, below Rowan.
+    // Branch below Rowan, then bend through a landing onto the dock.
     for (int x = 21; x < TOWN_HARBOR_X; x++) {
         g->map.tiles[TOWN_HARBOR_Y + 1][x] = TILE_TOWN_PATH;
+    }
+    for (int y = TOWN_HARBOR_Y + 1; y <= TOWN_HARBOR_ENTRANCE_Y; y++) {
+        g->map.tiles[y][TOWN_HARBOR_X - 1] = TILE_TOWN_PATH;
+    }
+    for (int x = TOWN_HARBOR_X; x <= TOWN_HARBOR_ENTRANCE_X; x++) {
+        g->map.tiles[TOWN_HARBOR_ENTRANCE_Y][x] = TILE_TOWN_PATH;
     }
 }
 
