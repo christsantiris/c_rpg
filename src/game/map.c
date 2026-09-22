@@ -1094,9 +1094,10 @@ void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y) {
         }
     }
 
-    for (int y = 2; y <= 22; y++) {
-        for (int x = 4; x <= 35; x++) {
-            int boundary = x == 4 || x == 35 || y == 2 || y == 22;
+    for (int y = TAVERN_Y; y < TAVERN_Y + TAVERN_H; y++) {
+        for (int x = TAVERN_X; x < TAVERN_X + TAVERN_W; x++) {
+            int boundary = x == TAVERN_X || x == TAVERN_X + TAVERN_W - 1 ||
+                y == TAVERN_Y || y == TAVERN_Y + TAVERN_H - 1;
             m->tiles[y][x] = boundary ? TILE_TAVERN_WALL : TILE_TAVERN_FLOOR;
         }
     }

@@ -12,8 +12,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
     if (g->location != LOCATION_DUNGEON &&
         g->location != LOCATION_FOREST &&
         g->location != LOCATION_MOUNTAINS &&
-        g->location != LOCATION_COAST &&
-        g->location != LOCATION_TAVERN) {
+        g->location != LOCATION_COAST) {
         return;
     }
 
