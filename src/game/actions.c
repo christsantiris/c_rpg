@@ -404,6 +404,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (g->location == LOCATION_ISLAND) {
+        return game_has_island_interaction(g);
+    }
     if (g->location == LOCATION_COAST) {
         TileType tile = g->map.tiles[g->player.y][g->player.x];
         return map_is_coast_object(tile) && tile != TILE_COAST_CACHE;
@@ -601,6 +604,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (game_interact_island(g)) {
+            return;
+        }
         if (interact_mountain(g)) {
             return;
         }
@@ -917,6 +923,10 @@ void action_resolve_player(GameState *g, Action a) {
                 push_message(g, "Already in town!");
                 return;
             }
+            if (g->location == LOCATION_ISLAND) {
+                game_leave_island(g);
+                return;
+            }
             game_open_town_portal(g);
             return;
         }
@@ -1182,6 +1192,13 @@ void action_resolve_player(GameState *g, Action a) {
     if (a.type == ACTION_MOVE) {
         int tx = a.target_x;
         int ty = a.target_y;
+
+        if (g->location == LOCATION_ISLAND && tx >= 0 && tx < MAP_W &&
+            ty >= 0 && ty < MAP_H &&
+            g->map.tiles[ty][tx] == TILE_ISLAND_TEMPLE_GATE) {
+            push_message(g, "The treasure trail continues inside the ruined temple.");
+            return;
+        }
 
         // Check for enemy at target
         for (int i = 0; i < g->enemy_count; i++) {

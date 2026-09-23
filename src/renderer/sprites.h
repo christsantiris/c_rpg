@@ -134,6 +134,20 @@ void draw_cain(Renderer *r, int tile_x, int tile_y);
 void draw_rowan(Renderer *r, int tile_x, int tile_y);
 void draw_forest_warden(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 
+// Ruined Isle draw functions
+void draw_island_water(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
+void draw_island_sand(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
+void draw_island_grass(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
+void draw_island_jungle(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
+void draw_island_path(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
+void draw_island_temple(Renderer *r, int tile_x, int tile_y);
+void draw_island_camp(Renderer *r, int tile_x, int tile_y);
+void draw_island_marker(Renderer *r, int tile_x, int tile_y);
+void draw_island_statue(Renderer *r, int tile_x, int tile_y);
+void draw_island_lagoon(Renderer *r, int tile_x, int tile_y);
+void draw_island_dock(Renderer *r, int tile_x, int tile_y);
+void draw_island_ship(Renderer *r, int tile_x, int tile_y);
+
 void draw_floor_item(Renderer *r, int tile_x, int tile_y);
 void draw_floor_gold(Renderer *r, int tile_x, int tile_y);
 
