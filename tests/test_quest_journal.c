@@ -50,10 +50,12 @@ void test_quest_journal(void) {
     quest_journal_handle_key(&screen, SDL_SCANCODE_LEFT, 2);
     ASSERT("left wraps from active quests to bosses", screen.tab == QUEST_TAB_BOSSES);
     const Location regions[JOURNAL_BOSS_COUNT] = {
-        LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST
+        LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST,
+        LOCATION_TEMPLE
     };
     const char *names[JOURNAL_BOSS_COUNT] = {
-        "Lich King", "Necromancer", "Goblin King", "Drowned Queen"
+        "Lich King", "Necromancer", "Goblin King", "Drowned Queen",
+        "Fallen Sun Guardian"
     };
     for (int defeated = 0; defeated < JOURNAL_BOSS_COUNT; defeated++) {
         g.defeated_bosses = 1 << regions[defeated];

@@ -37,6 +37,8 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->harbor_texture = load_sprite_texture(sdl, "assets/harbor.bmp");
     r->healer_texture = load_sprite_texture(sdl, "assets/healer.bmp");
     r->island_texture = load_sprite_texture(sdl, "assets/island-sprites.bmp");
+    r->temple_enemy_texture = load_sprite_texture(sdl,
+        "assets/temple-enemies.bmp");
 
     if (TTF_Init() != 0) {
         fprintf(stderr, "TTF_Init error: %s\n", TTF_GetError());
@@ -55,6 +57,10 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
 }
 
 void renderer_free(Renderer *r) {
+    if (r->temple_enemy_texture) {
+        SDL_DestroyTexture(r->temple_enemy_texture);
+        r->temple_enemy_texture = NULL;
+    }
     if (r->island_texture) {
         SDL_DestroyTexture(r->island_texture);
         r->island_texture = NULL;

@@ -468,7 +468,8 @@ int main(int argc, char **argv) {
             game.location == LOCATION_FOREST ||
             game.location == LOCATION_MOUNTAINS ||
             game.location == LOCATION_COAST ||
-            game.location == LOCATION_ISLAND);
+            game.location == LOCATION_ISLAND ||
+            game.location == LOCATION_TEMPLE);
         int has_event = SDL_PollEvent(&event);
         // Static scenes need no new present until input, exposure, or cursor blink.
         if (!has_event && !needs_redraw && !animating) {

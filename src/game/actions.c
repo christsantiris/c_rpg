@@ -132,6 +132,16 @@ static int enemy_score(EnemyType type) {
         case ENEMY_WATER_ELEMENTAL: return 135;
         case ENEMY_SEA_SERPENT: return 180;
         case ENEMY_DROWNED_QUEEN: return 1600;
+        case ENEMY_RELIC_SCARABS: return 85;
+        case ENEMY_TEMPLE_STALKER: return 130;
+        case ENEMY_BLOWDART_HUNTER: return 125;
+        case ENEMY_VINEBOUND_GUARDIAN: return 180;
+        case ENEMY_SUN_PRIEST: return 170;
+        case ENEMY_SERPENT_SPIRIT: return 185;
+        case ENEMY_TREASURE_WRAITH: return 210;
+        case ENEMY_LUNAR_EFFIGY: return 220;
+        case ENEMY_MOONBOUND_SENTINEL: return 300;
+        case ENEMY_FALLEN_SUN_GUARDIAN: return 2200;
         case ENEMY_ORC:         return 30;
         case ENEMY_TROLL:       return 50;
         case ENEMY_GIANT:       return 80;
@@ -154,6 +164,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
     }
     if (is_boss) {
         g->defeated_bosses |= 1 << g->location;
+        game_record_temple_enemy_defeated(g, type);
     }
     int gold = 0;
     switch (type) {
@@ -186,6 +197,16 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         case ENEMY_WATER_ELEMENTAL: gold = 10; break;
         case ENEMY_SEA_SERPENT: gold = 15; break;
         case ENEMY_DROWNED_QUEEN: gold = 75; break;
+        case ENEMY_RELIC_SCARABS: gold = 5; break;
+        case ENEMY_TEMPLE_STALKER: gold = 7; break;
+        case ENEMY_BLOWDART_HUNTER: gold = 8; break;
+        case ENEMY_VINEBOUND_GUARDIAN: gold = 10; break;
+        case ENEMY_SUN_PRIEST: gold = 12; break;
+        case ENEMY_SERPENT_SPIRIT: gold = 9; break;
+        case ENEMY_TREASURE_WRAITH: gold = 16; break;
+        case ENEMY_LUNAR_EFFIGY: gold = 12; break;
+        case ENEMY_MOONBOUND_SENTINEL: gold = 14; break;
+        case ENEMY_FALLEN_SUN_GUARDIAN: gold = 0; break;
         case ENEMY_ORC:      gold = 6 + rand() % 8;  break;
         case ENEMY_TROLL:    gold = 10 + rand() % 10; break;
         case ENEMY_GIANT:    gold = 15 + rand() % 15; break;
@@ -209,6 +230,10 @@ static void drop_loot(GameState *g, Enemy *enemy) {
     // Each boss leaves a fixed regional reward instead of rolling ordinary
     // equipment, so capstone weapons remain Blacksmith progression.
     if (is_boss) {
+        if (type == ENEMY_FALLEN_SUN_GUARDIAN) {
+            game_update_level_progress(g);
+            return;
+        }
         if (g->floor_item_count >= MAX_FLOOR_ITEMS) {
             FloorItem *discarded = &g->floor_items[MAX_FLOOR_ITEMS - 1];
             if (g->map.tiles[discarded->y][discarded->x] == TILE_ITEM) {
@@ -232,6 +257,10 @@ static void drop_loot(GameState *g, Enemy *enemy) {
             push_message(g, msg);
         }
         game_update_level_progress(g);
+        return;
+    }
+
+    if (g->location == LOCATION_TEMPLE) {
         return;
     }
 
@@ -404,6 +433,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (g->location == LOCATION_TEMPLE) {
+        return game_has_temple_interaction(g);
+    }
     if (g->location == LOCATION_ISLAND) {
         return game_has_island_interaction(g);
     }
@@ -604,6 +636,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (game_interact_temple(g)) {
+            return;
+        }
         if (game_interact_island(g)) {
             return;
         }
@@ -1196,7 +1231,14 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->location == LOCATION_ISLAND && tx >= 0 && tx < MAP_W &&
             ty >= 0 && ty < MAP_H &&
             g->map.tiles[ty][tx] == TILE_ISLAND_TEMPLE_GATE) {
-            push_message(g, "The treasure trail continues inside the ruined temple.");
+            game_enter_temple(g);
+            return;
+        }
+
+        if (g->location == LOCATION_TEMPLE && tx >= 0 && tx < MAP_W &&
+            ty >= 0 && ty < MAP_H &&
+            g->map.tiles[ty][tx] == TILE_TEMPLE_ENTRANCE) {
+            game_leave_temple(g);
             return;
         }
 
@@ -1460,6 +1502,15 @@ void action_resolve_player(GameState *g, Action a) {
             g->map.tiles[py][px] = TILE_FOREST_FLOOR;
             push_message(g, "The broken marker points to a dead trail.");
             tile = TILE_FOREST_FLOOR;
+        }
+
+        if (g->location == LOCATION_TEMPLE &&
+            tile == TILE_TEMPLE_SOLAR_TRAP && !g->temple_alignment) {
+            int dmg = 8 + rand() % 7;
+            g->player.hp -= dmg;
+            char msg[MAX_MESSAGE_LEN];
+            snprintf(msg, sizeof(msg), "Solar flame erupts! -%d HP", dmg);
+            push_message(g, msg);
         }
 
         if (g->location == LOCATION_FOREST &&
@@ -1743,6 +1794,16 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 continue;
             }
         }
+        if (e->type == ENEMY_FALLEN_SUN_GUARDIAN) {
+            int distance = abs_int(g->player.x - e->x) +
+                abs_int(g->player.y - e->y);
+            if (e->hp == e->max_hp && g->player.y > 12) {
+                continue;
+            }
+            if (distance > 16) {
+                continue;
+            }
+        }
 
         int dx = g->player.x - e->x;
         int dy = g->player.y - e->y;
@@ -1851,6 +1912,70 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
 
+        if (e->type == ENEMY_FALLEN_SUN_GUARDIAN) {
+            if (e->move_timer % 2 == 0) {
+                int phase_bonus = e->hp <= e->max_hp / 2 ? 5 : 0;
+                int dmg = e->attack + phase_bonus - g->player.defense / 2;
+                if (dmg < 6) {
+                    dmg = 6;
+                }
+                dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
+                if (dmg > 0) {
+                    char msg[MAX_MESSAGE_LEN];
+                    snprintf(msg, sizeof(msg), "Guardian sunburst: %d dmg", dmg);
+                    push_message(g, msg);
+                }
+            } else {
+                push_message(g, e->hp <= e->max_hp / 2
+                    ? "The broken guardian's core flares wildly!"
+                    : "The Fallen Sun Guardian gathers light...");
+            }
+            continue;
+        }
+
+        if (e->type == ENEMY_SUN_PRIEST && e->move_timer % 3 == 0) {
+            int healed = 0;
+            for (int j = 0; j < g->enemy_count; j++) {
+                Enemy *ally = &g->enemies[j];
+                if (ally->active && ally != e && ally->hp < ally->max_hp &&
+                    abs_int(ally->x - e->x) <= 4 &&
+                    abs_int(ally->y - e->y) <= 4) {
+                    ally->hp += 8;
+                    if (ally->hp > ally->max_hp) {
+                        ally->hp = ally->max_hp;
+                    }
+                    push_message(g, "Sun Priest restores a guardian!");
+                    healed = 1;
+                    break;
+                }
+            }
+            if (healed) {
+                continue;
+            }
+        }
+
+        if ((e->type == ENEMY_BLOWDART_HUNTER ||
+            e->type == ENEMY_SUN_PRIEST ||
+            e->type == ENEMY_SERPENT_SPIRIT ||
+            e->type == ENEMY_MOONBOUND_SENTINEL) &&
+            e->move_timer % 2 == 0 && clear_orthogonal_path(g, e)) {
+            int dmg = e->attack - g->player.defense / 2;
+            if (dmg < 2) {
+                dmg = 2;
+            }
+            dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
+            if (dmg > 0) {
+                if (e->type == ENEMY_BLOWDART_HUNTER) {
+                    g->player.poison_turns = 3;
+                }
+                char msg[MAX_MESSAGE_LEN];
+                snprintf(msg, sizeof(msg), "%s ranged strike: %d dmg",
+                    e->name, dmg);
+                push_message(g, msg);
+            }
+            continue;
+        }
+
         if ((e->type == ENEMY_SIREN ||
             e->type == ENEMY_WATER_ELEMENTAL) &&
             e->move_timer % 2 == 0 && clear_orthogonal_path(g, e)) {
@@ -1935,7 +2060,10 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         if (e->type == ENEMY_ZOMBIE || e->type == ENEMY_GIANT_WURM ||
             e->type == ENEMY_FOREST_TROLL || e->type == ENEMY_CAVE_TROLL ||
             e->type == ENEMY_GIANT_CRAB ||
-            e->type == ENEMY_ANIMATED_STATUE) {
+            e->type == ENEMY_ANIMATED_STATUE ||
+            e->type == ENEMY_VINEBOUND_GUARDIAN ||
+            e->type == ENEMY_LUNAR_EFFIGY ||
+            e->type == ENEMY_MOONBOUND_SENTINEL) {
             if (e->move_timer % 2 != 0) continue;
         }
 
@@ -1946,5 +2074,8 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         }
         if ((e->type == ENEMY_PIXIE || e->type == ENEMY_BLIGHTED_WOLF) && moved)
             enemy_move_toward(g, i);
+        if (e->type == ENEMY_TEMPLE_STALKER && moved) {
+            enemy_move_toward(g, i);
+        }
     }
 }
