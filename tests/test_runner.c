@@ -23,6 +23,7 @@ void test_town_spawn(void);
 void test_cain_gift(void);
 void test_harbor_road(void);
 void test_island(void);
+void test_temple(void);
 void test_leveling(void);
 void test_region_difficulty_scaling(void);
 void test_items(void);
@@ -81,6 +82,8 @@ int main(void) {
     test_harbor_road();
     printf("\n");
     test_island();
+    printf("\n");
+    test_temple();
     printf("\n");
     test_forest();
     printf("\n");

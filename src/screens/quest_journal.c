@@ -13,7 +13,7 @@ typedef struct {
     int reward_score;
 } QuestDefinition;
 
-static const QuestDefinition quest_definitions[4] = {
+static const QuestDefinition quest_definitions[5] = {
     {
         "The Broken Seals", "Elowen",
         "Repair the shattered burial seals before their",
@@ -44,6 +44,13 @@ static const QuestDefinition quest_definitions[4] = {
         {"Light drowned beacon", "Light drowned beacon",
             "Light drowned beacon"},
         "Coast", {1, 3, 6}, 80, 600
+    },
+    {
+        "The Buried Sun", "Treasure Map",
+        "Defeat the temple guardian and recover the",
+        "treasure buried beneath the solar vault.",
+        {"Recover the buried treasure", "", ""},
+        "Ruined Temple", {1, 0, 0}, 150, 2500
     }
 };
 
@@ -57,7 +64,10 @@ static int quest_state(const GameState *g, int quest) {
     if (quest == 2) {
         return g->alder_quest_state;
     }
-    return g->mara_quest_state;
+    if (quest == 3) {
+        return g->mara_quest_state;
+    }
+    return g->temple_treasure_state;
 }
 
 static int quest_progress(const GameState *g, int quest) {
@@ -70,7 +80,10 @@ static int quest_progress(const GameState *g, int quest) {
     if (quest == 2) {
         return g->alder_wardens_rescued;
     }
-    return g->mara_beacons_lit;
+    if (quest == 3) {
+        return g->mara_beacons_lit;
+    }
+    return g->temple_treasure_state == 3 ? 1 : 0;
 }
 
 static int quest_in_tab(int state, QuestJournalTab tab) {
@@ -90,7 +103,7 @@ int quest_journal_count(const GameState *g, QuestJournalTab tab) {
         return JOURNAL_BOSS_COUNT;
     }
     int count = 0;
-    for (int quest = 0; quest < 4; quest++) {
+    for (int quest = 0; quest < 5; quest++) {
         if (quest_in_tab(quest_state(g, quest), tab)) {
             count++;
         }
@@ -100,13 +113,16 @@ int quest_journal_count(const GameState *g, QuestJournalTab tab) {
 
 int quest_journal_get_boss(const GameState *g, int index, BossJournalEntry *entry) {
     static const char *names[JOURNAL_BOSS_COUNT] = {
-        "Lich King", "Necromancer", "Goblin King", "Drowned Queen"
+        "Lich King", "Necromancer", "Goblin King", "Drowned Queen",
+        "Fallen Sun Guardian"
     };
     static const char *areas[JOURNAL_BOSS_COUNT] = {
-        "Dungeon", "Forest", "Goblin Mountains", "Sunken Coast"
+        "Dungeon", "Forest", "Goblin Mountains", "Sunken Coast",
+        "Ruined Temple"
     };
     static const Location regions[JOURNAL_BOSS_COUNT] = {
-        LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST
+        LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST,
+        LOCATION_TEMPLE
     };
     if (index < 0 || index >= JOURNAL_BOSS_COUNT) {
         return 0;
@@ -122,7 +138,7 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
         return 0;
     }
     int visible_index = 0;
-    for (int quest = 0; quest < 4; quest++) {
+    for (int quest = 0; quest < 5; quest++) {
         int state = quest_state(g, quest);
         if (!quest_in_tab(state, tab)) {
             continue;
@@ -137,7 +153,7 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
         entry->summary_line_1 = definition->summary_line_1;
         entry->summary_line_2 = definition->summary_line_2;
         entry->area = definition->area;
-        entry->objective_count = 3;
+        entry->objective_count = quest == 4 ? 1 : 3;
         entry->reward_gold = definition->reward_gold;
         entry->reward_score = definition->reward_score;
         entry->state = state;

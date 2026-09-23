@@ -56,6 +56,13 @@
 #define ISLAND_SPAWN_X 20
 #define ISLAND_SPAWN_Y 21
 
+#define TEMPLE_W 64
+#define TEMPLE_H 36
+#define TEMPLE_ENTRANCE_X 32
+#define TEMPLE_ENTRANCE_Y 34
+#define TEMPLE_TREASURE_X 32
+#define TEMPLE_TREASURE_Y 3
+
 #define DUNGEON_DEPTH 8
 #define FOREST_DEPTH 8
 #define MOUNTAIN_DEPTH 8
@@ -157,7 +164,20 @@ typedef enum {
     TILE_ISLAND_STATUE,
     TILE_ISLAND_LAGOON,
     TILE_ISLAND_TEMPLE_GATE,
-    TILE_NPC_ISLAND_CAPTAIN
+    TILE_NPC_ISLAND_CAPTAIN,
+    // Append temple IDs: saved maps store these numeric values.
+    TILE_TEMPLE_FLOOR,
+    TILE_TEMPLE_WALL,
+    TILE_TEMPLE_ENTRANCE,
+    TILE_TEMPLE_ALTAR,
+    TILE_TEMPLE_MOON_DOOR_CLOSED,
+    TILE_TEMPLE_MOON_DOOR_OPEN,
+    TILE_TEMPLE_SOLAR_TRAP,
+    TILE_TEMPLE_DORMANT_SENTINEL,
+    TILE_TEMPLE_VAULT_DOOR,
+    TILE_TEMPLE_TREASURE,
+    TILE_TEMPLE_WATER,
+    TILE_TEMPLE_RUBBLE
 } TileType;
 
 typedef struct {
@@ -181,6 +201,7 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y);
 void map_place_town_harbor(Map *m);
 void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_island(Map *m, int *spawn_x, int *spawn_y);
+void map_generate_temple(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_forest(Map *m, int level);
 void map_reveal_forest_exit(Map *m);
 void map_generate_mountains(Map *m, int level);
