@@ -77,7 +77,8 @@ typedef enum {
     LOCATION_FOREST,
     LOCATION_MOUNTAINS,
     LOCATION_COAST,
-    LOCATION_TAVERN
+    LOCATION_TAVERN,
+    LOCATION_ISLAND
 } Location;
 
 typedef struct {
@@ -149,6 +150,10 @@ void game_enter_mountains(GameState *g);
 void game_enter_coast(GameState *g);
 void game_enter_tavern(GameState *g);
 void game_leave_tavern(GameState *g);
+void game_enter_island(GameState *g);
+void game_leave_island(GameState *g);
+int game_has_island_interaction(const GameState *g);
+int game_interact_island(GameState *g);
 
 void action_resolve_player(GameState *g, Action a);
 void action_resolve_enemies(GameState *g);

@@ -5,14 +5,17 @@ void harbor_init(HarborScreen *s) {
     s->selected = 0;
 }
 
-HarborResult harbor_activate(const HarborScreen *s, int has_map) {
+HarborResult harbor_activate(const HarborScreen *s, int has_map, int on_island) {
     if (s->selected == 1) {
         return HARBOR_CLOSED;
+    }
+    if (on_island) {
+        return HARBOR_SAIL_TOWN;
     }
     return has_map ? HARBOR_BOARD : HARBOR_MAP_REQUIRED;
 }
 
-HarborResult harbor_handle_key(HarborScreen *s, int scancode, int has_map) {
+HarborResult harbor_handle_key(HarborScreen *s, int scancode, int has_map, int on_island) {
     switch (scancode) {
         case SDL_SCANCODE_UP:
         case SDL_SCANCODE_W:
@@ -24,7 +27,7 @@ HarborResult harbor_handle_key(HarborScreen *s, int scancode, int has_map) {
             break;
         case SDL_SCANCODE_RETURN:
         case SDL_SCANCODE_KP_ENTER:
-            return harbor_activate(s, has_map);
+            return harbor_activate(s, has_map, on_island);
         case SDL_SCANCODE_ESCAPE:
             return HARBOR_CLOSED;
         default:

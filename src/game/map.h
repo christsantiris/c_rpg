@@ -37,6 +37,25 @@
 #define TOWN_HEALER_DOOR_X (TOWN_HEALER_X + 2)
 #define TOWN_HEALER_DOOR_Y (TOWN_HEALER_Y + TOWN_HEALER_H - 1)
 
+#define ISLAND_W 40
+#define ISLAND_H 25
+#define ISLAND_GATE_X 19
+#define ISLAND_GATE_Y 7
+#define ISLAND_CAMP_X 12
+#define ISLAND_CAMP_Y 16
+#define ISLAND_MARKER_X 10
+#define ISLAND_MARKER_Y 10
+#define ISLAND_STATUE_X 29
+#define ISLAND_STATUE_Y 10
+#define ISLAND_LAGOON_X 29
+#define ISLAND_LAGOON_Y 15
+#define ISLAND_SHIP_X 25
+#define ISLAND_SHIP_Y 22
+#define ISLAND_CAPTAIN_X 18
+#define ISLAND_CAPTAIN_Y 21
+#define ISLAND_SPAWN_X 20
+#define ISLAND_SPAWN_Y 21
+
 #define DUNGEON_DEPTH 8
 #define FOREST_DEPTH 8
 #define MOUNTAIN_DEPTH 8
@@ -124,7 +143,21 @@ typedef enum {
     TILE_NPC_CAIN,
     TILE_NPC_ROWAN,
     TILE_HEALER,
-    TILE_HEALER_DOOR
+    TILE_HEALER_DOOR,
+    // Append island IDs: saved maps store these numeric values.
+    TILE_ISLAND_WATER,
+    TILE_ISLAND_SAND,
+    TILE_ISLAND_GRASS,
+    TILE_ISLAND_JUNGLE,
+    TILE_ISLAND_PATH,
+    TILE_ISLAND_DOCK,
+    TILE_ISLAND_SHIP,
+    TILE_ISLAND_CAMP,
+    TILE_ISLAND_MARKER,
+    TILE_ISLAND_STATUE,
+    TILE_ISLAND_LAGOON,
+    TILE_ISLAND_TEMPLE_GATE,
+    TILE_NPC_ISLAND_CAPTAIN
 } TileType;
 
 typedef struct {
@@ -147,6 +180,7 @@ void map_room_center(const Room *r, int *cx, int *cy);
 void map_generate_town(Map *m, int *spawn_x, int *spawn_y);
 void map_place_town_harbor(Map *m);
 void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y);
+void map_generate_island(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_forest(Map *m, int level);
 void map_reveal_forest_exit(Map *m);
 void map_generate_mountains(Map *m, int level);

@@ -1479,6 +1479,37 @@ void game_leave_tavern(GameState *g) {
     push_message(g, "You step back into town.");
 }
 
+void game_enter_island(GameState *g) {
+    int spawn_x;
+    int spawn_y;
+    g->location = LOCATION_ISLAND;
+    g->level = 1;
+    g->level_cleared = 0;
+    map_generate_island(&g->map, &spawn_x, &spawn_y);
+    g->player.x = spawn_x;
+    g->player.y = spawn_y;
+    g->enemy_count = 0;
+    g->floor_item_count = 0;
+    g->dialogue_active = 0;
+    push_message(g, "You make landfall on the Ruined Isle.");
+    push_message(g, "The treasure map points beyond the temple gate.");
+}
+
+void game_leave_island(GameState *g) {
+    int spawn_x;
+    int spawn_y;
+    g->location = LOCATION_TOWN;
+    map_generate_town(&g->map, &spawn_x, &spawn_y);
+    place_harbor_road(g);
+    g->player.x = TOWN_HARBOR_ENTRANCE_X;
+    g->player.y = TOWN_HARBOR_ENTRANCE_Y;
+    g->enemy_count = 0;
+    g->floor_item_count = 0;
+    g->dialogue_active = 0;
+    place_town_portal(g);
+    push_message(g, "The ship returns you to town.");
+}
+
 void game_return_to_town(GameState *g) {
     LevelCache *cache = active_cache(g);
     Location returning_from = g->location;
@@ -1625,6 +1656,68 @@ void game_talk_to_cain(GameState *g) {
 int game_has_treasure_map(const GameState *g) {
     for (int i = 0; i < g->inventory_count; i++) {
         if (g->inventory[i].type == ITEM_TREASURE_MAP) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int island_interaction_tile(TileType tile) {
+    return tile == TILE_ISLAND_CAMP || tile == TILE_ISLAND_MARKER ||
+        tile == TILE_ISLAND_STATUE || tile == TILE_ISLAND_LAGOON ||
+        tile == TILE_ISLAND_TEMPLE_GATE;
+}
+
+int game_has_island_interaction(const GameState *g) {
+    if (g->location != LOCATION_ISLAND) {
+        return 0;
+    }
+    static const int offsets[5][2] = {
+        {0, 0}, {0, -1}, {1, 0}, {0, 1}, {-1, 0}
+    };
+    for (int i = 0; i < 5; i++) {
+        int x = g->player.x + offsets[i][0];
+        int y = g->player.y + offsets[i][1];
+        if (x >= 0 && x < MAP_W && y >= 0 && y < MAP_H &&
+            island_interaction_tile(g->map.tiles[y][x])) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int game_interact_island(GameState *g) {
+    if (g->location != LOCATION_ISLAND) {
+        return 0;
+    }
+    static const int offsets[5][2] = {
+        {0, 0}, {0, -1}, {1, 0}, {0, 1}, {-1, 0}
+    };
+    for (int i = 0; i < 5; i++) {
+        int x = g->player.x + offsets[i][0];
+        int y = g->player.y + offsets[i][1];
+        if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
+            continue;
+        }
+        TileType tile = g->map.tiles[y][x];
+        if (tile == TILE_ISLAND_CAMP) {
+            push_message(g, "A waterlogged journal warns that the temple guardians still stir.");
+            return 1;
+        }
+        if (tile == TILE_ISLAND_MARKER) {
+            push_message(g, "The carved sun matches the symbol on your treasure map.");
+            return 1;
+        }
+        if (tile == TILE_ISLAND_STATUE) {
+            push_message(g, "The broken guardian faces the ruined temple gate.");
+            return 1;
+        }
+        if (tile == TILE_ISLAND_LAGOON) {
+            push_message(g, "Fresh water spills from beneath the ancient stonework.");
+            return 1;
+        }
+        if (tile == TILE_ISLAND_TEMPLE_GATE) {
+            push_message(g, "The treasure trail continues inside the ruined temple.");
             return 1;
         }
     }

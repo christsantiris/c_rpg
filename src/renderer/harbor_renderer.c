@@ -72,6 +72,7 @@ void harbor_draw(Renderer *r, const GameState *g, const HarborScreen *s) {
     int play_w = r->screen_w - INFO_PANEL_W;
     int play_h = r->tiles_y * TILE_SIZE;
     int has_map = game_has_treasure_map(g);
+    int on_island = g->location == LOCATION_ISLAND;
     draw_harbor_background(r, play_w, play_h);
 
     if (r->harbor_texture) {
@@ -97,16 +98,22 @@ void harbor_draw(Renderer *r, const GameState *g, const HarborScreen *s) {
     SDL_Color gold = {220, 180, 60, 255};
     SDL_Color ready = {132, 204, 160, 255};
     SDL_Color locked = {220, 118, 92, 255};
-    draw_centered_text(r, "HARBOR DOCK", play_w / 2, 34, gold, r->font_large);
-    draw_centered_text(r, has_map
+    draw_centered_text(r, on_island ? "CAPTAIN ROWAN" : "HARBOR DOCK",
+        play_w / 2, 34, gold, r->font_large);
+    draw_centered_text(r, on_island
+        ? "RETURN TO TOWN WHEN YOU ARE READY."
+        : has_map
         ? "THE TREASURE MAP CHARTS A COURSE TO THE RUINED ISLE."
         : "A SEA CHART IS REQUIRED. SPEAK WITH CAPTAIN ROWAN.",
-        play_w / 2, 70, has_map ? ready : locked, r->font_tiny);
+        play_w / 2, 70, on_island || has_map ? ready : locked, r->font_tiny);
 
-    draw_harbor_option(r, s, 0, has_map, has_map
+    draw_harbor_option(r, s, 0, on_island || has_map, on_island
+        ? "RETURN TO TOWN"
+        : has_map
         ? "BOARD SHIP - SAIL TO THE RUINED ISLE"
         : "BOARD SHIP - TREASURE MAP REQUIRED");
-    draw_harbor_option(r, s, 1, 1, "RETURN TO TOWN");
+    draw_harbor_option(r, s, 1, 1, on_island
+        ? "STAY ON THE RUINED ISLE" : "RETURN TO TOWN");
 
     info_panel_draw_harbor(r, g);
     message_bar_draw(r, g);

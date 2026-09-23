@@ -3460,6 +3460,120 @@ void draw_harbor(Renderer *r, int tile_x, int tile_y) {
     SDL_RenderCopy(r->sdl, r->harbor_texture, &source, &destination);
 }
 
+static void draw_island_crop(Renderer *r, SDL_Rect source, SDL_Rect destination) {
+    if (!r->island_texture) {
+        return;
+    }
+    SDL_RenderCopy(r->sdl, r->island_texture, &source, &destination);
+}
+
+static void draw_island_tile(Renderer *r, int tile_x, int tile_y, SDL_Color base, SDL_Rect source) {
+    SDL_Rect destination = {
+        tile_x * TILE_SIZE, tile_y * TILE_SIZE, TILE_SIZE + 1, TILE_SIZE + 1
+    };
+    SDL_SetRenderDrawColor(r->sdl, base.r, base.g, base.b, base.a);
+    SDL_RenderFillRect(r->sdl, &destination);
+    draw_island_crop(r, source, destination);
+}
+
+void draw_island_water(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int frame = ((int)(SDL_GetTicks() / 500) + map_x + map_y) % 3;
+    static const SDL_Rect sources[3] = {
+        {18, 18, 110, 110}, {24, 22, 104, 104}, {16, 28, 112, 100}
+    };
+    draw_island_tile(r, tile_x, tile_y, (SDL_Color){8, 91, 113, 255},
+        sources[frame]);
+}
+
+void draw_island_sand(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    SDL_Rect source = (map_x + map_y) % 3 == 0
+        ? (SDL_Rect){635, 155, 85, 62}
+        : (SDL_Rect){520, 155, 90, 62};
+    draw_island_tile(r, tile_x, tile_y, (SDL_Color){221, 190, 122, 255}, source);
+}
+
+void draw_island_grass(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    static const SDL_Rect sources[3] = {
+        {20, 238, 105, 90}, {150, 238, 105, 90}, {285, 238, 105, 90}
+    };
+    draw_island_tile(r, tile_x, tile_y, (SDL_Color){37, 94, 43, 255},
+        sources[(map_x * 3 + map_y) % 3]);
+}
+
+void draw_island_jungle(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    static const SDL_Rect sources[3] = {
+        {720, 345, 135, 130}, {860, 345, 135, 130}, {1000, 345, 125, 130}
+    };
+    draw_island_tile(r, tile_x, tile_y, (SDL_Color){18, 65, 31, 255},
+        sources[(map_x + map_y * 2) % 3]);
+}
+
+void draw_island_path(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    SDL_Rect source = (map_x + map_y) % 2 == 0
+        ? (SDL_Rect){745, 238, 105, 90}
+        : (SDL_Rect){880, 238, 105, 90};
+    draw_island_tile(r, tile_x, tile_y, (SDL_Color){74, 91, 58, 255}, source);
+}
+
+void draw_island_temple(Renderer *r, int tile_x, int tile_y) {
+    SDL_Rect source = {230, 920, 740, 375};
+    SDL_Rect destination = {
+        tile_x * TILE_SIZE, tile_y * TILE_SIZE, 20 * TILE_SIZE, 9 * TILE_SIZE
+    };
+    draw_island_crop(r, source, destination);
+}
+
+void draw_island_camp(Renderer *r, int tile_x, int tile_y) {
+    SDL_Rect source = {360, 730, 380, 230};
+    SDL_Rect destination = {
+        tile_x * TILE_SIZE, tile_y * TILE_SIZE, 12 * TILE_SIZE, 7 * TILE_SIZE
+    };
+    draw_island_crop(r, source, destination);
+}
+
+void draw_island_marker(Renderer *r, int tile_x, int tile_y) {
+    SDL_Rect source = {730, 775, 150, 185};
+    SDL_Rect destination = {
+        tile_x * TILE_SIZE, tile_y * TILE_SIZE, 5 * TILE_SIZE, 5 * TILE_SIZE
+    };
+    draw_island_crop(r, source, destination);
+}
+
+void draw_island_statue(Renderer *r, int tile_x, int tile_y) {
+    SDL_Rect source = {860, 765, 160, 195};
+    SDL_Rect destination = {
+        tile_x * TILE_SIZE, tile_y * TILE_SIZE, 5 * TILE_SIZE, 6 * TILE_SIZE
+    };
+    draw_island_crop(r, source, destination);
+}
+
+void draw_island_lagoon(Renderer *r, int tile_x, int tile_y) {
+    SDL_Rect source = {710, 585, 504, 220};
+    SDL_Rect destination = {
+        tile_x * TILE_SIZE, tile_y * TILE_SIZE, 13 * TILE_SIZE, 7 * TILE_SIZE
+    };
+    draw_island_crop(r, source, destination);
+}
+
+void draw_island_dock(Renderer *r, int tile_x, int tile_y) {
+    SDL_Rect source = {0, 735, 365, 230};
+    SDL_Rect destination = {
+        tile_x * TILE_SIZE, tile_y * TILE_SIZE, 12 * TILE_SIZE, 7 * TILE_SIZE
+    };
+    draw_island_crop(r, source, destination);
+}
+
+void draw_island_ship(Renderer *r, int tile_x, int tile_y) {
+    if (!r->harbor_texture) {
+        return;
+    }
+    SDL_Rect source = {850, 290, 430, 690};
+    SDL_Rect destination = {
+        tile_x * TILE_SIZE, tile_y * TILE_SIZE, 14 * TILE_SIZE, 8 * TILE_SIZE
+    };
+    SDL_RenderCopy(r->sdl, r->harbor_texture, &source, &destination);
+}
+
 void draw_floor_item(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;

@@ -328,7 +328,16 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_FOREST_WARDEN &&
         m->tiles[y][x] != TILE_LOCKED_DOOR &&
         m->tiles[y][x] != TILE_CRYPT_DOOR &&
-        m->tiles[y][x] != TILE_DUNGEON_GATE;
+        m->tiles[y][x] != TILE_DUNGEON_GATE &&
+        m->tiles[y][x] != TILE_ISLAND_WATER &&
+        m->tiles[y][x] != TILE_ISLAND_JUNGLE &&
+        m->tiles[y][x] != TILE_ISLAND_SHIP &&
+        m->tiles[y][x] != TILE_ISLAND_CAMP &&
+        m->tiles[y][x] != TILE_ISLAND_MARKER &&
+        m->tiles[y][x] != TILE_ISLAND_STATUE &&
+        m->tiles[y][x] != TILE_ISLAND_LAGOON &&
+        m->tiles[y][x] != TILE_ISLAND_TEMPLE_GATE &&
+        m->tiles[y][x] != TILE_NPC_ISLAND_CAPTAIN;
 }
 
 static int dungeon_route_reaches(const Map *m, int target_x, int target_y, int gates_open) {
@@ -1131,4 +1140,86 @@ void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y) {
     m->stairs_up_y = *spawn_y;
     m->stairs_down_x = 20;
     m->stairs_down_y = 22;
+}
+
+void map_generate_island(Map *m, int *spawn_x, int *spawn_y) {
+    static const int shore_left[21] = {
+        16, 12, 9, 6, 4, 3, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 3, 4, 6, 8, 11, 15
+    };
+    static const int shore_right[21] = {
+        23, 27, 30, 33, 35, 36, 37, 37, 37, 37, 37,
+        37, 37, 37, 37, 36, 35, 33, 31, 28, 24
+    };
+    map_clear_exploration(m);
+    m->room_count = 0;
+
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            m->tiles[y][x] = TILE_ISLAND_WATER;
+        }
+    }
+
+    for (int y = 2; y <= 22; y++) {
+        int index = y - 2;
+        for (int x = shore_left[index]; x <= shore_right[index]; x++) {
+            m->tiles[y][x] = TILE_ISLAND_SAND;
+        }
+    }
+
+    for (int y = 4; y <= 19; y++) {
+        int shore_index = y - 2;
+        int left = shore_left[shore_index] + 2;
+        int right = shore_right[shore_index] - 2;
+        for (int x = left; x <= right; x++) {
+            m->tiles[y][x] = TILE_ISLAND_GRASS;
+        }
+    }
+
+    for (int x = 6; x <= 15; x++) {
+        m->tiles[6][x] = TILE_ISLAND_JUNGLE;
+    }
+    for (int x = 23; x <= 33; x++) {
+        m->tiles[6][x] = TILE_ISLAND_JUNGLE;
+    }
+    for (int y = 7; y <= 18; y++) {
+        m->tiles[y][4] = TILE_ISLAND_JUNGLE;
+        m->tiles[y][5] = TILE_ISLAND_JUNGLE;
+        m->tiles[y][34] = TILE_ISLAND_JUNGLE;
+        m->tiles[y][35] = TILE_ISLAND_JUNGLE;
+    }
+    fill_rect(m, 6, 7, 3, 4, TILE_ISLAND_JUNGLE);
+    fill_rect(m, 6, 17, 4, 2, TILE_ISLAND_JUNGLE);
+    fill_rect(m, 31, 7, 3, 4, TILE_ISLAND_JUNGLE);
+    fill_rect(m, 31, 17, 3, 2, TILE_ISLAND_JUNGLE);
+
+    for (int y = 7; y <= 22; y++) {
+        m->tiles[y][19] = TILE_ISLAND_PATH;
+        m->tiles[y][20] = TILE_ISLAND_PATH;
+    }
+    fill_rect(m, 15, 12, 10, 5, TILE_ISLAND_PATH);
+    for (int x = ISLAND_MARKER_X; x <= ISLAND_STATUE_X; x++) {
+        m->tiles[10][x] = TILE_ISLAND_PATH;
+    }
+    for (int x = ISLAND_CAMP_X; x <= ISLAND_LAGOON_X; x++) {
+        m->tiles[15][x] = TILE_ISLAND_PATH;
+    }
+    m->tiles[16][ISLAND_CAMP_X] = TILE_ISLAND_PATH;
+
+    fill_rect(m, 16, 20, 9, 4, TILE_ISLAND_DOCK);
+    m->tiles[ISLAND_GATE_Y][ISLAND_GATE_X] = TILE_ISLAND_TEMPLE_GATE;
+    m->tiles[ISLAND_GATE_Y][ISLAND_GATE_X + 1] = TILE_ISLAND_TEMPLE_GATE;
+    m->tiles[ISLAND_CAMP_Y][ISLAND_CAMP_X] = TILE_ISLAND_CAMP;
+    m->tiles[ISLAND_MARKER_Y][ISLAND_MARKER_X] = TILE_ISLAND_MARKER;
+    m->tiles[ISLAND_STATUE_Y][ISLAND_STATUE_X] = TILE_ISLAND_STATUE;
+    m->tiles[ISLAND_LAGOON_Y][ISLAND_LAGOON_X] = TILE_ISLAND_LAGOON;
+    m->tiles[ISLAND_SHIP_Y][ISLAND_SHIP_X] = TILE_ISLAND_SHIP;
+    m->tiles[ISLAND_CAPTAIN_Y][ISLAND_CAPTAIN_X] = TILE_NPC_ISLAND_CAPTAIN;
+
+    *spawn_x = ISLAND_SPAWN_X;
+    *spawn_y = ISLAND_SPAWN_Y;
+    m->stairs_up_x = *spawn_x;
+    m->stairs_up_y = *spawn_y;
+    m->stairs_down_x = ISLAND_GATE_X;
+    m->stairs_down_y = ISLAND_GATE_Y;
 }
