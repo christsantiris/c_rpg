@@ -268,14 +268,21 @@ static int open_shop_on_move(const GameState *game, const Action *action, ShopSc
     return 1;
 }
 
-static void handle_harbor_result(HarborResult result, GameState *game, GameScreen *screen) {
+static void handle_harbor_result(HarborResult result, GameState *game, GameScreen *screen, Renderer *renderer, Viewport *viewport) {
     if (result == HARBOR_CLOSED) {
         *screen = SCREEN_PLAYING;
-        push_message(game, "You return to town.");
+        push_message(game, game->location == LOCATION_ISLAND
+            ? "You remain on the island." : "You return to town.");
     } else if (result == HARBOR_MAP_REQUIRED) {
         push_message(game, "The captain needs a sea chart. Speak with Rowan.");
     } else if (result == HARBOR_BOARD) {
-        push_message(game, "The ship is ready to sail to the Ruined Isle.");
+        game_enter_island(game);
+        enter_playing(renderer, viewport, game);
+        *screen = SCREEN_PLAYING;
+    } else if (result == HARBOR_SAIL_TOWN) {
+        game_leave_island(game);
+        enter_playing(renderer, viewport, game);
+        *screen = SCREEN_PLAYING;
     }
 }
 
@@ -460,7 +467,8 @@ int main(int argc, char **argv) {
             (game.location == LOCATION_DUNGEON ||
             game.location == LOCATION_FOREST ||
             game.location == LOCATION_MOUNTAINS ||
-            game.location == LOCATION_COAST);
+            game.location == LOCATION_COAST ||
+            game.location == LOCATION_ISLAND);
         int has_event = SDL_PollEvent(&event);
         // Static scenes need no new present until input, exposure, or cursor blink.
         if (!has_event && !needs_redraw && !animating) {
@@ -705,8 +713,10 @@ int main(int argc, char **argv) {
                     // Harbor screen
                     if (screen == SCREEN_HARBOR) {
                         HarborResult result = harbor_handle_key(&harbor_screen,
-                            sc, game_has_treasure_map(&game));
-                        handle_harbor_result(result, &game, &screen);
+                            sc, game_has_treasure_map(&game),
+                            game.location == LOCATION_ISLAND);
+                        handle_harbor_result(result, &game, &screen,
+                            &renderer, &viewport);
                         break;
                     }
 
@@ -825,6 +835,13 @@ int main(int argc, char **argv) {
                                         } else if (game.map.tiles[ty][tx] ==
                                             TILE_NPC_ROWAN) {
                                             game_talk_to_rowan(&game);
+                                            found = 1;
+                                        } else if (game.map.tiles[ty][tx] ==
+                                            TILE_NPC_ISLAND_CAPTAIN) {
+                                            harbor_init(&harbor_screen);
+                                            screen = SCREEN_HARBOR;
+                                            push_message(&game,
+                                                "Captain Rowan offers passage back to town.");
                                             found = 1;
                                         } else if (game.map.tiles[ty][tx] ==
                                             TILE_FOREST_WARDEN) {
@@ -1120,8 +1137,10 @@ int main(int argc, char **argv) {
                             if (SDL_PointInRect(&point, &button)) {
                                 harbor_screen.selected = option;
                                 HarborResult result = harbor_activate(&harbor_screen,
-                                    game_has_treasure_map(&game));
-                                handle_harbor_result(result, &game, &screen);
+                                    game_has_treasure_map(&game),
+                                    game.location == LOCATION_ISLAND);
+                                handle_harbor_result(result, &game, &screen,
+                                    &renderer, &viewport);
                                 break;
                             }
                         }
@@ -1201,7 +1220,8 @@ int main(int argc, char **argv) {
 
         // Update music based on screen and location
         int is_town = game.location == LOCATION_TOWN ||
-            game.location == LOCATION_TAVERN;
+            game.location == LOCATION_TAVERN ||
+            game.location == LOCATION_ISLAND;
         music_update(screen, is_town);
 
         if (!needs_redraw) {

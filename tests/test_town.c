@@ -746,12 +746,12 @@ void test_harbor_road(void) {
     harbor_init(&harbor);
     ASSERT("dock scene blocks boarding without Rowan's treasure map",
         harbor.selected == 0 &&
-        harbor_handle_key(&harbor, SDL_SCANCODE_RETURN, 0) == HARBOR_MAP_REQUIRED);
-    harbor_handle_key(&harbor, SDL_SCANCODE_DOWN, 0);
+        harbor_handle_key(&harbor, SDL_SCANCODE_RETURN, 0, 0) == HARBOR_MAP_REQUIRED);
+    harbor_handle_key(&harbor, SDL_SCANCODE_DOWN, 0, 0);
     ASSERT("dock scene can return to town by keyboard",
         harbor.selected == 1 &&
-        harbor_handle_key(&harbor, SDL_SCANCODE_KP_ENTER, 0) == HARBOR_CLOSED &&
-        harbor_handle_key(&harbor, SDL_SCANCODE_ESCAPE, 0) == HARBOR_CLOSED);
+        harbor_handle_key(&harbor, SDL_SCANCODE_KP_ENTER, 0, 0) == HARBOR_CLOSED &&
+        harbor_handle_key(&harbor, SDL_SCANCODE_ESCAPE, 0, 0) == HARBOR_CLOSED);
     ASSERT("road leaves Rowan beside the route",
         g.map.tiles[TOWN_ROWAN_Y][TOWN_ROWAN_X] == TILE_NPC_ROWAN);
     while (g.inventory_count < MAX_INVENTORY) {
@@ -769,7 +769,7 @@ void test_harbor_road(void) {
     harbor_init(&harbor);
     ASSERT("treasure map enables the dock's boarding option",
         harbor_handle_key(&harbor, SDL_SCANCODE_RETURN,
-            game_has_treasure_map(&g)) == HARBOR_BOARD);
+            game_has_treasure_map(&g), 0) == HARBOR_BOARD);
     Action read_map = {ACTION_USE_ITEM, MAX_INVENTORY - 1, 0};
     action_resolve_player(&g, read_map);
     ASSERT("reading the map describes the island without consuming it",

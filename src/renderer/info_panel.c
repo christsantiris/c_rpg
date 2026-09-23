@@ -41,7 +41,8 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor)
     y += lh;
     char loc[24];
     if (harbor) {
-        SDL_snprintf(loc, sizeof(loc), "HARBOR");
+        SDL_snprintf(loc, sizeof(loc), g->location == LOCATION_ISLAND
+            ? "ISLAND DOCK" : "HARBOR");
     } else if (g->location == LOCATION_TOWN) {
         SDL_snprintf(loc, sizeof(loc), "TOWN");
     } else if (g->location == LOCATION_TAVERN) {
@@ -52,6 +53,8 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor)
         SDL_snprintf(loc, sizeof(loc), "MOUNTAINS %d", g->level);
     } else if (g->location == LOCATION_COAST) {
         SDL_snprintf(loc, sizeof(loc), "COAST %d", g->level);
+    } else if (g->location == LOCATION_ISLAND) {
+        SDL_snprintf(loc, sizeof(loc), "RUINED ISLE");
     } else {
         SDL_snprintf(loc, sizeof(loc), "DUNGEON %d", g->level);
     }
