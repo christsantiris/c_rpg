@@ -1163,10 +1163,12 @@ void action_resolve_player(GameState *g, Action a) {
 
         for (int i = 0; i < g->enemy_count; i++) {
             Enemy *e = &g->enemies[i];
-            if (!e->active) continue;
-            int dx = abs_int(e->x - g->player.x);
-            int dy = abs_int(e->y - g->player.y);
-            if (dx <= 1 && dy <= 1) {
+            if (!e->active) {
+                continue;
+            }
+            int target_x = g->player.x + g->player.last_dx;
+            int target_y = g->player.y + g->player.last_dy;
+            if (e->x == target_x && e->y == target_y) {
                 push_message(g, "Too close to use bow!");
                 return;
             }

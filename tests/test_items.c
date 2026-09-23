@@ -771,14 +771,32 @@ void test_items(void) {
     g.player.y = 12;
     g.player.last_dx = 1;
     g.player.last_dy = 0;
-    g.enemy_count = 1;
+    g.enemy_count = 2;
     g.enemies[0] = (Enemy){0};
     g.enemies[0].active = 1;
+    g.enemies[0].x = 19;
+    g.enemies[0].y = 11;
+    g.enemies[0].hp = 100;
+    g.enemies[0].max_hp = 100;
+    g.enemies[1] = (Enemy){0};
+    g.enemies[1].active = 1;
+    g.enemies[1].x = 24;
+    g.enemies[1].y = 12;
+    g.enemies[1].hp = 100;
+    g.enemies[1].max_hp = 100;
+    for (int x = 21; x <= 24; x++) {
+        g.map.tiles[12][x] = TILE_FLOOR;
+    }
+    Action shoot = {ACTION_RANGED_ATTACK, 0, 0};
+    action_resolve_player(&g, shoot);
+    ASSERT("an adjacent enemy outside the arrow path does not block a shot",
+        g.enemies[1].hp < 100);
+
+    g.enemy_count = 1;
     g.enemies[0].x = 21;
     g.enemies[0].y = 12;
     g.enemies[0].hp = 100;
     g.enemies[0].max_hp = 100;
-    Action shoot = {ACTION_RANGED_ATTACK, 0, 0};
     action_resolve_player(&g, shoot);
     ASSERT("bow cannot fire beside an enemy", g.enemies[0].hp == 100);
 
