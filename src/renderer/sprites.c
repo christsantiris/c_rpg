@@ -3726,14 +3726,14 @@ void draw_island_dock(Renderer *r, int tile_x, int tile_y) {
 }
 
 void draw_island_ship(Renderer *r, int tile_x, int tile_y) {
-    if (!r->harbor_texture) {
+    if (!r->island_ship_texture) {
         return;
     }
-    SDL_Rect source = {850, 290, 430, 690};
+    SDL_Rect source = {330, 30, 800, 1230};
     SDL_Rect destination = {
         tile_x * TILE_SIZE, tile_y * TILE_SIZE, 14 * TILE_SIZE, 8 * TILE_SIZE
     };
-    SDL_RenderCopy(r->sdl, r->harbor_texture, &source, &destination);
+    SDL_RenderCopy(r->sdl, r->island_ship_texture, &source, &destination);
 }
 
 void draw_floor_item(Renderer *r, int tile_x, int tile_y) {

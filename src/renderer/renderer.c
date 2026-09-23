@@ -37,6 +37,8 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->harbor_texture = load_sprite_texture(sdl, "assets/harbor.bmp");
     r->healer_texture = load_sprite_texture(sdl, "assets/healer.bmp");
     r->island_texture = load_sprite_texture(sdl, "assets/island-sprites.bmp");
+    r->island_ship_texture = load_sprite_texture(sdl,
+        "assets/island-ship.bmp");
     r->temple_enemy_texture = load_sprite_texture(sdl,
         "assets/temple-enemies.bmp");
 
@@ -57,6 +59,10 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
 }
 
 void renderer_free(Renderer *r) {
+    if (r->island_ship_texture) {
+        SDL_DestroyTexture(r->island_ship_texture);
+        r->island_ship_texture = NULL;
+    }
     if (r->temple_enemy_texture) {
         SDL_DestroyTexture(r->temple_enemy_texture);
         r->temple_enemy_texture = NULL;
