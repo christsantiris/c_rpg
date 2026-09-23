@@ -25,7 +25,8 @@ static void scale_spawned_enemy(const GameState *g, Enemy *e) {
     static const int regular_attack[4] = {0, 7, 12, 15};
     static const int boss_hp[4] = {100, 130, 155, 170};
     static const int boss_attack[4] = {0, 6, 10, 13};
-    int tier = region_order_tier(g);
+    // Temple base stats already assume the four regional bosses are defeated.
+    int tier = g->location == LOCATION_TEMPLE ? 0 : region_order_tier(g);
     int level_progress = g->player.level - 1;
     if (level_progress < 0) {
         level_progress = 0;

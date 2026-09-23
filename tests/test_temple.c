@@ -14,6 +14,15 @@ static int count_temple_enemies(const GameState *g, EnemyType type) {
     return count;
 }
 
+static const Enemy *find_temple_enemy(const GameState *g, EnemyType type) {
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (g->enemies[i].active && g->enemies[i].type == type) {
+            return &g->enemies[i];
+        }
+    }
+    return NULL;
+}
+
 void test_temple(void) {
     printf("Ruined Temple tests:\n");
     static GameState g;
@@ -35,6 +44,23 @@ void test_temple(void) {
         g.temple_alignment == 0 &&
         g.map.tiles[27][22] == TILE_TEMPLE_DORMANT_SENTINEL &&
         count_temple_enemies(&g, ENEMY_MOONBOUND_SENTINEL) == 0);
+
+    static GameState balanced;
+    balanced.player.player_class = CLASS_ROGUE;
+    game_init(&balanced);
+    balanced.player.level = 18;
+    balanced.defeated_bosses = (1 << LOCATION_DUNGEON) |
+        (1 << LOCATION_FOREST) | (1 << LOCATION_MOUNTAINS) |
+        (1 << LOCATION_COAST);
+    game_enter_temple(&balanced);
+    const Enemy *stalker = find_temple_enemy(&balanced,
+        ENEMY_TEMPLE_STALKER);
+    const Enemy *guardian = find_temple_enemy(&balanced,
+        ENEMY_FALLEN_SUN_GUARDIAN);
+    ASSERT("level 18 temple enemies avoid duplicate region-order scaling",
+        stalker && stalker->max_hp == 58 && stalker->attack == 21 &&
+        stalker->defense == 5 && guardian && guardian->max_hp == 408 &&
+        guardian->attack == 31 && guardian->defense == 12);
 
     g.player.x = 32;
     g.player.y = 29;
