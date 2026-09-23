@@ -292,7 +292,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 49);
+    cJSON_AddNumberToObject(root, "save_version", 50);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -376,6 +376,11 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "mara_quest_state", g->mara_quest_state);
     cJSON_AddNumberToObject(root, "mara_beacons_lit", g->mara_beacons_lit);
     cJSON_AddNumberToObject(root, "cain_scroll_given", g->cain_scroll_given);
+    cJSON_AddNumberToObject(root, "temple_alignment", g->temple_alignment);
+    cJSON_AddNumberToObject(root, "temple_sentinels_awakened",
+        g->temple_sentinels_awakened);
+    cJSON_AddNumberToObject(root, "temple_treasure_state",
+        g->temple_treasure_state);
     cJSON_AddNumberToObject(root, "dialogue_active", g->dialogue_active);
     cJSON_AddStringToObject(root, "dialogue_speaker", g->dialogue_speaker);
     cJSON_AddStringToObject(root, "dialogue_text", g->dialogue_text);
@@ -570,6 +575,22 @@ int save_game(const GameState *g, int slot) {
     }
     cJSON_AddItemToObject(root, "coast_cache", coast_cache);
 
+    cJSON *temple_cache = cJSON_CreateObject();
+    cJSON_AddNumberToObject(temple_cache, "valid", g->temple_cache.valid);
+    cJSON_AddNumberToObject(temple_cache, "level_cleared",
+        g->temple_cache.level_cleared);
+    if (g->temple_cache.valid) {
+        char *temple_explored = bytes_to_base64(g->temple_cache.explored,
+            sizeof(g->temple_cache.explored));
+        cJSON_AddStringToObject(temple_cache, "explored_b64",
+            temple_explored);
+        free(temple_explored);
+        cJSON_AddItemToObject(temple_cache, "enemies",
+            serialize_enemies(g->temple_cache.enemies,
+                g->temple_cache.enemy_count));
+    }
+    cJSON_AddItemToObject(root, "temple_cache", temple_cache);
+
     char *json = cJSON_Print(root);
     cJSON_Delete(root);
 
@@ -684,6 +705,11 @@ int load_game(GameState *g, int slot) {
     cJSON *mara_quest = cJSON_GetObjectItem(root, "mara_quest_state");
     cJSON *mara_beacons = cJSON_GetObjectItem(root, "mara_beacons_lit");
     cJSON *cain_scroll = cJSON_GetObjectItem(root, "cain_scroll_given");
+    cJSON *temple_alignment = cJSON_GetObjectItem(root, "temple_alignment");
+    cJSON *temple_sentinels = cJSON_GetObjectItem(root,
+        "temple_sentinels_awakened");
+    cJSON *temple_treasure = cJSON_GetObjectItem(root,
+        "temple_treasure_state");
     cJSON *dialogue_active = cJSON_GetObjectItem(root, "dialogue_active");
     cJSON *dialogue_speaker = cJSON_GetObjectItem(root, "dialogue_speaker");
     cJSON *dialogue_text = cJSON_GetObjectItem(root, "dialogue_text");
@@ -711,6 +737,11 @@ int load_game(GameState *g, int slot) {
     g->mara_quest_state = mara_quest ? mara_quest->valueint : 0;
     g->mara_beacons_lit = mara_beacons ? mara_beacons->valueint : 0;
     g->cain_scroll_given = cain_scroll ? cain_scroll->valueint : 0;
+    g->temple_alignment = temple_alignment ? temple_alignment->valueint : 0;
+    g->temple_sentinels_awakened = temple_sentinels
+        ? temple_sentinels->valueint : 0;
+    g->temple_treasure_state = temple_treasure
+        ? temple_treasure->valueint : 0;
     g->dialogue_active = dialogue_active ? dialogue_active->valueint : 0;
     strncpy(g->dialogue_speaker,
         dialogue_speaker ? dialogue_speaker->valuestring : "",
@@ -872,6 +903,31 @@ int load_game(GameState *g, int slot) {
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
                 g->coast_cache[i].enemies,
                 &g->coast_cache[i].enemy_count);
+        }
+    }
+
+    cJSON *temple_cache = cJSON_GetObjectItem(root, "temple_cache");
+    g->temple_cache.valid = 0;
+    g->temple_cache.level_cleared = 0;
+    if (temple_cache) {
+        cJSON *valid = cJSON_GetObjectItem(temple_cache, "valid");
+        cJSON *cleared = cJSON_GetObjectItem(temple_cache,
+            "level_cleared");
+        g->temple_cache.valid = valid ? valid->valueint : 0;
+        g->temple_cache.level_cleared = cleared ? cleared->valueint : 0;
+        if (g->temple_cache.valid) {
+            cJSON *explored = cJSON_GetObjectItem(temple_cache,
+                "explored_b64");
+            if (explored) {
+                base64_to_bytes(explored->valuestring,
+                    g->temple_cache.explored,
+                    sizeof(g->temple_cache.explored));
+            } else {
+                memset(g->temple_cache.explored, 0,
+                    sizeof(g->temple_cache.explored));
+            }
+            deserialize_enemies(cJSON_GetObjectItem(temple_cache, "enemies"),
+                g->temple_cache.enemies, &g->temple_cache.enemy_count);
         }
     }
 

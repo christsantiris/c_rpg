@@ -209,6 +209,57 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             e->experience = 650;
             e->is_boss = 1;
             break;
+        case ENEMY_RELIC_SCARABS:
+            strncpy(e->name, "Relic Scarabs", 15);
+            e->max_hp = 32; e->hp = 32; e->attack = 13; e->defense = 3;
+            e->experience = 55;
+            break;
+        case ENEMY_TEMPLE_STALKER:
+            strncpy(e->name, "Temple Stalker", 15);
+            e->max_hp = 48; e->hp = 48; e->attack = 17; e->defense = 5;
+            e->experience = 85;
+            break;
+        case ENEMY_BLOWDART_HUNTER:
+            strncpy(e->name, "Dart Hunter", 15);
+            e->max_hp = 38; e->hp = 38; e->attack = 16; e->defense = 3;
+            e->experience = 80;
+            break;
+        case ENEMY_VINEBOUND_GUARDIAN:
+            strncpy(e->name, "Vine Guardian", 15);
+            e->max_hp = 82; e->hp = 82; e->attack = 19; e->defense = 9;
+            e->experience = 115;
+            break;
+        case ENEMY_SUN_PRIEST:
+            strncpy(e->name, "Sun Priest", 15);
+            e->max_hp = 52; e->hp = 52; e->attack = 18; e->defense = 4;
+            e->experience = 105;
+            break;
+        case ENEMY_SERPENT_SPIRIT:
+            strncpy(e->name, "Serpent Spirit", 15);
+            e->max_hp = 58; e->hp = 58; e->attack = 19; e->defense = 5;
+            e->experience = 115;
+            break;
+        case ENEMY_TREASURE_WRAITH:
+            strncpy(e->name, "Treasure Wraith", 15);
+            e->max_hp = 62; e->hp = 62; e->attack = 20; e->defense = 6;
+            e->experience = 130;
+            break;
+        case ENEMY_LUNAR_EFFIGY:
+            strncpy(e->name, "Lunar Effigy", 15);
+            e->max_hp = 70; e->hp = 70; e->attack = 19; e->defense = 8;
+            e->experience = 135;
+            break;
+        case ENEMY_MOONBOUND_SENTINEL:
+            strncpy(e->name, "Moon Sentinel", 15);
+            e->max_hp = 95; e->hp = 95; e->attack = 22; e->defense = 10;
+            e->experience = 180;
+            break;
+        case ENEMY_FALLEN_SUN_GUARDIAN:
+            strncpy(e->name, "Sun Guardian", 15);
+            e->max_hp = 340; e->hp = 340; e->attack = 27; e->defense = 12;
+            e->experience = 1000;
+            e->is_boss = 1;
+            break;
         case ENEMY_ORC:
             strncpy(e->name, "Orc", sizeof(e->name) - 1);
             e->name[sizeof(e->name) - 1] = '\0';
@@ -730,6 +781,10 @@ void game_init(GameState *g) {
     g->mara_quest_state = 0;
     g->mara_beacons_lit = 0;
     g->cain_scroll_given = 0;
+    g->temple_cache.valid = 0;
+    g->temple_alignment = 0;
+    g->temple_sentinels_awakened = 0;
+    g->temple_treasure_state = 0;
     g->dialogue_active = 0;
     g->dialogue_speaker[0] = '\0';
     g->dialogue_text[0] = '\0';
@@ -1447,6 +1502,9 @@ static void place_town_portal(GameState *g) {
     } else if (g->portal_location == LOCATION_COAST) {
         x = 21;
         y = TOWN_H - 3;
+    } else if (g->portal_location == LOCATION_TEMPLE) {
+        x = TOWN_HARBOR_X - 1;
+        y = TOWN_HARBOR_ENTRANCE_Y;
     }
     g->map.tiles[y][x] = TILE_PORTAL;
 }
@@ -1510,11 +1568,224 @@ void game_leave_island(GameState *g) {
     push_message(g, "The ship returns you to town.");
 }
 
+static void cache_temple(GameState *g) {
+    memcpy(g->temple_cache.explored, g->map.explored,
+        sizeof(g->temple_cache.explored));
+    g->temple_cache.enemy_count = g->enemy_count;
+    g->temple_cache.level_cleared = g->level_cleared;
+    for (int i = 0; i < g->enemy_count; i++) {
+        g->temple_cache.enemies[i] = g->enemies[i];
+    }
+    g->temple_cache.valid = 1;
+}
+
+static void apply_temple_map_state(GameState *g) {
+    for (int y = 0; y < TEMPLE_H; y++) {
+        for (int x = 0; x < TEMPLE_W; x++) {
+            TileType tile = g->map.tiles[y][x];
+            if (g->temple_alignment &&
+                tile == TILE_TEMPLE_MOON_DOOR_CLOSED) {
+                g->map.tiles[y][x] = TILE_TEMPLE_MOON_DOOR_OPEN;
+            } else if (g->temple_sentinels_awakened &&
+                tile == TILE_TEMPLE_DORMANT_SENTINEL) {
+                g->map.tiles[y][x] = TILE_TEMPLE_FLOOR;
+            } else if ((g->defeated_bosses & (1 << LOCATION_TEMPLE)) &&
+                tile == TILE_TEMPLE_VAULT_DOOR) {
+                g->map.tiles[y][x] = TILE_TEMPLE_FLOOR;
+            } else if (g->temple_treasure_state == 3 &&
+                tile == TILE_TEMPLE_TREASURE) {
+                g->map.tiles[y][x] = TILE_TEMPLE_RUBBLE;
+            }
+        }
+    }
+}
+
+static void spawn_temple_enemies(GameState *g) {
+    static const EnemyType types[] = {
+        ENEMY_RELIC_SCARABS, ENEMY_TEMPLE_STALKER,
+        ENEMY_BLOWDART_HUNTER, ENEMY_VINEBOUND_GUARDIAN,
+        ENEMY_SUN_PRIEST, ENEMY_SERPENT_SPIRIT,
+        ENEMY_TREASURE_WRAITH, ENEMY_LUNAR_EFFIGY,
+        ENEMY_TEMPLE_STALKER, ENEMY_BLOWDART_HUNTER,
+        ENEMY_FALLEN_SUN_GUARDIAN
+    };
+    static const int positions[][2] = {
+        {14, 26}, {10, 29}, {19, 24}, {7, 24},
+        {53, 24}, {48, 29}, {56, 29}, {41, 19},
+        {37, 16}, {28, 9}, {32, 9}
+    };
+    g->enemy_count = 0;
+    int count = (int)(sizeof(types) / sizeof(types[0]));
+    for (int i = 0; i < count; i++) {
+        if (types[i] == ENEMY_FALLEN_SUN_GUARDIAN &&
+            (g->defeated_bosses & (1 << LOCATION_TEMPLE))) {
+            continue;
+        }
+        spawn_enemy(g, &g->enemies[g->enemy_count++], types[i],
+            positions[i][0], positions[i][1]);
+    }
+}
+
+void game_enter_temple(GameState *g) {
+    g->location = LOCATION_TEMPLE;
+    g->level = 1;
+    g->floor_item_count = 0;
+    g->dialogue_active = 0;
+    if (g->temple_cache.valid) {
+        int spawn_x;
+        int spawn_y;
+        map_generate_temple(&g->map, &spawn_x, &spawn_y);
+        apply_temple_map_state(g);
+        memcpy(g->map.explored, g->temple_cache.explored,
+            sizeof(g->map.explored));
+        g->enemy_count = g->temple_cache.enemy_count;
+        g->level_cleared = g->temple_cache.level_cleared;
+        for (int i = 0; i < g->enemy_count; i++) {
+            g->enemies[i] = g->temple_cache.enemies[i];
+        }
+    } else {
+        int spawn_x;
+        int spawn_y;
+        map_generate_temple(&g->map, &spawn_x, &spawn_y);
+        g->player.x = spawn_x;
+        g->player.y = spawn_y;
+        g->level_cleared = 0;
+        g->temple_alignment = 0;
+        g->temple_sentinels_awakened = 0;
+        spawn_temple_enemies(g);
+    }
+    if (g->temple_treasure_state == 0) {
+        g->temple_treasure_state = 1;
+    }
+    g->player.x = TEMPLE_ENTRANCE_X;
+    g->player.y = TEMPLE_ENTRANCE_Y;
+    push_message(g, "You enter the Ruined Temple. The sun seal burns.");
+}
+
+void game_leave_temple(GameState *g) {
+    cache_temple(g);
+    int spawn_x;
+    int spawn_y;
+    g->location = LOCATION_ISLAND;
+    map_generate_island(&g->map, &spawn_x, &spawn_y);
+    g->player.x = ISLAND_GATE_X;
+    g->player.y = ISLAND_GATE_Y + 1;
+    g->enemy_count = 0;
+    g->floor_item_count = 0;
+    push_message(g, "You step back onto the island.");
+}
+
+static int temple_interaction_tile(TileType tile) {
+    return tile == TILE_TEMPLE_ALTAR || tile == TILE_TEMPLE_TREASURE;
+}
+
+int game_has_temple_interaction(const GameState *g) {
+    if (g->location != LOCATION_TEMPLE) {
+        return 0;
+    }
+    static const int offsets[5][2] = {
+        {0, 0}, {0, -1}, {1, 0}, {0, 1}, {-1, 0}
+    };
+    for (int i = 0; i < 5; i++) {
+        int x = g->player.x + offsets[i][0];
+        int y = g->player.y + offsets[i][1];
+        if (x >= 0 && x < MAP_W && y >= 0 && y < MAP_H &&
+            temple_interaction_tile(g->map.tiles[y][x])) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void toggle_temple_alignment(GameState *g) {
+    g->temple_alignment = !g->temple_alignment;
+    if (g->temple_alignment) {
+        g->temple_sentinels_awakened = 1;
+    }
+    for (int y = 0; y < TEMPLE_H; y++) {
+        for (int x = 0; x < TEMPLE_W; x++) {
+            TileType tile = g->map.tiles[y][x];
+            if (g->temple_alignment && tile == TILE_TEMPLE_MOON_DOOR_CLOSED) {
+                g->map.tiles[y][x] = TILE_TEMPLE_MOON_DOOR_OPEN;
+            } else if (!g->temple_alignment &&
+                tile == TILE_TEMPLE_MOON_DOOR_OPEN) {
+                g->map.tiles[y][x] = TILE_TEMPLE_MOON_DOOR_CLOSED;
+            } else if (g->temple_alignment &&
+                tile == TILE_TEMPLE_DORMANT_SENTINEL) {
+                g->map.tiles[y][x] = TILE_TEMPLE_FLOOR;
+                if (g->enemy_count < MAX_ENEMIES) {
+                    spawn_enemy(g, &g->enemies[g->enemy_count++],
+                        ENEMY_MOONBOUND_SENTINEL, x, y);
+                }
+            }
+        }
+    }
+    push_message(g, g->temple_alignment
+        ? "Moon rises: lunar doors open and sentinels awaken!"
+        : "Sun rises: lunar doors close and solar traps ignite!");
+}
+
+int game_interact_temple(GameState *g) {
+    if (g->location != LOCATION_TEMPLE) {
+        return 0;
+    }
+    static const int offsets[5][2] = {
+        {0, 0}, {0, -1}, {1, 0}, {0, 1}, {-1, 0}
+    };
+    for (int i = 0; i < 5; i++) {
+        int x = g->player.x + offsets[i][0];
+        int y = g->player.y + offsets[i][1];
+        if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
+            continue;
+        }
+        TileType tile = g->map.tiles[y][x];
+        if (tile == TILE_TEMPLE_ALTAR) {
+            toggle_temple_alignment(g);
+            return 1;
+        }
+        if (tile == TILE_TEMPLE_TREASURE) {
+            if (!(g->defeated_bosses & (1 << LOCATION_TEMPLE))) {
+                push_message(g, "The Fallen Sun Guardian seals the treasure vault.");
+                return 1;
+            }
+            if (g->temple_treasure_state != 3) {
+                g->temple_treasure_state = 3;
+                g->gold += 150;
+                g->score += 2500;
+                g->map.tiles[y][x] = TILE_TEMPLE_RUBBLE;
+                push_message(g, "Buried treasure recovered: 150 gold!");
+            }
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void game_record_temple_enemy_defeated(GameState *g, EnemyType type) {
+    if (g->location != LOCATION_TEMPLE ||
+        type != ENEMY_FALLEN_SUN_GUARDIAN) {
+        return;
+    }
+    g->defeated_bosses |= 1 << LOCATION_TEMPLE;
+    for (int y = 0; y < TEMPLE_H; y++) {
+        for (int x = 0; x < TEMPLE_W; x++) {
+            if (g->map.tiles[y][x] == TILE_TEMPLE_VAULT_DOOR) {
+                g->map.tiles[y][x] = TILE_TEMPLE_FLOOR;
+            }
+        }
+    }
+    push_message(g, "The guardian falls. The buried vault opens!");
+}
+
 void game_return_to_town(GameState *g) {
-    LevelCache *cache = active_cache(g);
     Location returning_from = g->location;
+    if (returning_from == LOCATION_TEMPLE) {
+        cache_temple(g);
+    }
+    LevelCache *cache = active_cache(g);
     // Cache current level before leaving
-    if (g->level >= 1 && g->level <= active_depth(g)) {
+    if (returning_from != LOCATION_TEMPLE && g->level >= 1 &&
+        g->level <= active_depth(g)) {
         cache[g->level - 1].map = g->map;
         cache[g->level - 1].enemy_count   = g->enemy_count;
         cache[g->level - 1].level_cleared = g->level_cleared;
@@ -1533,6 +1804,9 @@ void game_return_to_town(GameState *g) {
         g->player.x = TOWN_W - 2; g->player.y = 12;
     } else if (returning_from == LOCATION_COAST) {
         g->player.x = 20; g->player.y = TOWN_H - 2;
+    } else if (returning_from == LOCATION_TEMPLE) {
+        g->player.x = TOWN_HARBOR_X - 1;
+        g->player.y = TOWN_HARBOR_ENTRANCE_Y;
     } else {
         g->player.x = 20; g->player.y = 1;
     }
@@ -1545,7 +1819,8 @@ void game_open_town_portal(GameState *g) {
     if (g->location != LOCATION_DUNGEON &&
         g->location != LOCATION_FOREST &&
         g->location != LOCATION_MOUNTAINS &&
-        g->location != LOCATION_COAST) {
+        g->location != LOCATION_COAST &&
+        g->location != LOCATION_TEMPLE) {
         return;
     }
     g->portal_active = 1;
@@ -1583,6 +1858,42 @@ void game_use_town_portal(GameState *g) {
     if (!g->portal_active || g->portal_level < 1 ||
         g->portal_level > MAX_REGION_DEPTH) return;
     int level = g->portal_level;
+    if (g->portal_location == LOCATION_TEMPLE) {
+        if (!g->temple_cache.valid) {
+            return;
+        }
+        g->location = LOCATION_TEMPLE;
+        g->level = 1;
+        int spawn_x;
+        int spawn_y;
+        map_generate_temple(&g->map, &spawn_x, &spawn_y);
+        apply_temple_map_state(g);
+        memcpy(g->map.explored, g->temple_cache.explored,
+            sizeof(g->map.explored));
+        g->enemy_count = g->temple_cache.enemy_count;
+        g->level_cleared = g->temple_cache.level_cleared;
+        for (int i = 0; i < g->enemy_count; i++) {
+            g->enemies[i] = g->temple_cache.enemies[i];
+        }
+        int landing_x = g->portal_x;
+        int landing_y = g->portal_y;
+        if (landing_x >= 0 && landing_x < MAP_W &&
+            landing_y >= 0 && landing_y < MAP_H &&
+            g->map.tiles[landing_y][landing_x] == TILE_PORTAL) {
+            g->map.tiles[landing_y][landing_x] = g->portal_origin_tile;
+        }
+        if (!portal_landing_open(g, landing_x, landing_y)) {
+            landing_x = TEMPLE_ENTRANCE_X;
+            landing_y = TEMPLE_ENTRANCE_Y;
+            push_message(g, "The portal returns you at the temple entrance.");
+        } else {
+            push_message(g, "Returned through the portal.");
+        }
+        g->player.x = landing_x;
+        g->player.y = landing_y;
+        g->portal_active = 0;
+        return;
+    }
     LevelCache *cache = g->level_cache;
     if (g->portal_location == LOCATION_FOREST) {
         cache = g->forest_cache;

@@ -94,6 +94,7 @@ void draw_orc(Renderer *r, int tile_x, int tile_y);
 void draw_troll(Renderer *r, int tile_x, int tile_y);
 void draw_giant(Renderer *r, int tile_x, int tile_y);
 void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type);
+void draw_fallen_sun_guardian_broken(Renderer *r, int tile_x, int tile_y);
 
 void draw_goblin_king(Renderer *r, int tile_x, int tile_y);
 void draw_lich_king(Renderer *r, int tile_x, int tile_y);
@@ -147,6 +148,17 @@ void draw_island_statue(Renderer *r, int tile_x, int tile_y);
 void draw_island_lagoon(Renderer *r, int tile_x, int tile_y);
 void draw_island_dock(Renderer *r, int tile_x, int tile_y);
 void draw_island_ship(Renderer *r, int tile_x, int tile_y);
+void draw_temple_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
+void draw_temple_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
+void draw_temple_entrance(Renderer *r, int tile_x, int tile_y);
+void draw_temple_altar(Renderer *r, int tile_x, int tile_y, int moon);
+void draw_temple_moon_door(Renderer *r, int tile_x, int tile_y, int open);
+void draw_temple_solar_trap(Renderer *r, int tile_x, int tile_y, int active);
+void draw_temple_dormant_sentinel(Renderer *r, int tile_x, int tile_y);
+void draw_temple_vault_door(Renderer *r, int tile_x, int tile_y);
+void draw_temple_treasure(Renderer *r, int tile_x, int tile_y);
+void draw_temple_water(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
+void draw_temple_rubble(Renderer *r, int tile_x, int tile_y);
 
 void draw_floor_item(Renderer *r, int tile_x, int tile_y);
 void draw_floor_gold(Renderer *r, int tile_x, int tile_y);

@@ -337,7 +337,11 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_ISLAND_STATUE &&
         m->tiles[y][x] != TILE_ISLAND_LAGOON &&
         m->tiles[y][x] != TILE_ISLAND_TEMPLE_GATE &&
-        m->tiles[y][x] != TILE_NPC_ISLAND_CAPTAIN;
+        m->tiles[y][x] != TILE_NPC_ISLAND_CAPTAIN &&
+        m->tiles[y][x] != TILE_TEMPLE_WALL &&
+        m->tiles[y][x] != TILE_TEMPLE_MOON_DOOR_CLOSED &&
+        m->tiles[y][x] != TILE_TEMPLE_DORMANT_SENTINEL &&
+        m->tiles[y][x] != TILE_TEMPLE_VAULT_DOOR;
 }
 
 static int dungeon_route_reaches(const Map *m, int target_x, int target_y, int gates_open) {
@@ -1222,4 +1226,59 @@ void map_generate_island(Map *m, int *spawn_x, int *spawn_y) {
     m->stairs_up_y = *spawn_y;
     m->stairs_down_x = ISLAND_GATE_X;
     m->stairs_down_y = ISLAND_GATE_Y;
+}
+
+void map_generate_temple(Map *m, int *spawn_x, int *spawn_y) {
+    map_clear_exploration(m);
+    m->room_count = 5;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            m->tiles[y][x] = TILE_TEMPLE_WALL;
+        }
+    }
+
+    fill_rect(m, 26, 28, 13, 7, TILE_TEMPLE_FLOOR);
+    fill_rect(m, 4, 22, 21, 10, TILE_TEMPLE_FLOOR);
+    fill_rect(m, 39, 22, 21, 10, TILE_TEMPLE_FLOOR);
+    fill_rect(m, 20, 13, 25, 10, TILE_TEMPLE_FLOOR);
+    fill_rect(m, 22, 2, 21, 10, TILE_TEMPLE_FLOOR);
+    fill_rect(m, 30, 10, 5, 19, TILE_TEMPLE_FLOOR);
+    fill_rect(m, 24, 27, 3, 1, TILE_TEMPLE_FLOOR);
+    fill_rect(m, 38, 27, 3, 1, TILE_TEMPLE_FLOOR);
+
+    m->rooms[0] = (Room){26, 28, 13, 7};
+    m->rooms[1] = (Room){4, 22, 21, 10};
+    m->rooms[2] = (Room){39, 22, 21, 10};
+    m->rooms[3] = (Room){20, 13, 25, 10};
+    m->rooms[4] = (Room){22, 2, 21, 10};
+
+    m->tiles[35][TEMPLE_ENTRANCE_X] = TILE_TEMPLE_ENTRANCE;
+    m->tiles[30][32] = TILE_TEMPLE_ALTAR;
+    m->tiles[27][25] = TILE_TEMPLE_MOON_DOOR_CLOSED;
+    m->tiles[27][39] = TILE_TEMPLE_MOON_DOOR_CLOSED;
+    m->tiles[12][32] = TILE_TEMPLE_MOON_DOOR_CLOSED;
+    m->tiles[27][22] = TILE_TEMPLE_DORMANT_SENTINEL;
+    m->tiles[27][42] = TILE_TEMPLE_DORMANT_SENTINEL;
+    m->tiles[16][23] = TILE_TEMPLE_DORMANT_SENTINEL;
+    m->tiles[16][41] = TILE_TEMPLE_DORMANT_SENTINEL;
+    m->tiles[26][29] = TILE_TEMPLE_SOLAR_TRAP;
+    m->tiles[26][35] = TILE_TEMPLE_SOLAR_TRAP;
+    m->tiles[18][28] = TILE_TEMPLE_SOLAR_TRAP;
+    m->tiles[18][36] = TILE_TEMPLE_SOLAR_TRAP;
+    fill_rect(m, 46, 24, 10, 5, TILE_TEMPLE_WATER);
+    m->tiles[25][50] = TILE_TEMPLE_FLOOR;
+    m->tiles[26][52] = TILE_TEMPLE_ALTAR;
+    m->tiles[17][32] = TILE_TEMPLE_ALTAR;
+    for (int x = 22; x <= 42; x++) {
+        m->tiles[6][x] = TILE_TEMPLE_WALL;
+    }
+    m->tiles[6][32] = TILE_TEMPLE_VAULT_DOOR;
+    m->tiles[TEMPLE_TREASURE_Y][TEMPLE_TREASURE_X] = TILE_TEMPLE_TREASURE;
+
+    *spawn_x = TEMPLE_ENTRANCE_X;
+    *spawn_y = TEMPLE_ENTRANCE_Y;
+    m->stairs_up_x = *spawn_x;
+    m->stairs_up_y = *spawn_y;
+    m->stairs_down_x = TEMPLE_TREASURE_X;
+    m->stairs_down_y = TEMPLE_TREASURE_Y;
 }

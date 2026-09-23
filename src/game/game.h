@@ -71,6 +71,14 @@ typedef struct {
     int   level_cleared;
 } LevelCache;
 
+typedef struct {
+    unsigned char explored[MAP_EXPLORED_BYTES];
+    Enemy enemies[MAX_ENEMIES];
+    int enemy_count;
+    int valid;
+    int level_cleared;
+} TempleCache;
+
 typedef enum {
     LOCATION_TOWN,
     LOCATION_DUNGEON,
@@ -78,7 +86,8 @@ typedef enum {
     LOCATION_MOUNTAINS,
     LOCATION_COAST,
     LOCATION_TAVERN,
-    LOCATION_ISLAND
+    LOCATION_ISLAND,
+    LOCATION_TEMPLE
 } Location;
 
 typedef struct {
@@ -91,6 +100,7 @@ typedef struct {
     LevelCache forest_cache[MAX_REGION_DEPTH];
     LevelCache mountain_cache[MAX_REGION_DEPTH];
     LevelCache coast_cache[MAX_REGION_DEPTH];
+    TempleCache temple_cache;
     char       messages[MAX_MESSAGES][MAX_MESSAGE_LEN];
     int        message_count;
     int        level_cleared;
@@ -130,6 +140,9 @@ typedef struct {
     int mara_quest_state;
     int mara_beacons_lit;
     int cain_scroll_given;
+    int temple_alignment;
+    int temple_sentinels_awakened;
+    int temple_treasure_state;
     int dialogue_active;
     char dialogue_speaker[MAX_SPEAKER_LEN];
     char dialogue_text[MAX_DIALOGUE_LEN];
@@ -152,6 +165,11 @@ void game_enter_tavern(GameState *g);
 void game_leave_tavern(GameState *g);
 void game_enter_island(GameState *g);
 void game_leave_island(GameState *g);
+void game_enter_temple(GameState *g);
+void game_leave_temple(GameState *g);
+int game_has_temple_interaction(const GameState *g);
+int game_interact_temple(GameState *g);
+void game_record_temple_enemy_defeated(GameState *g, EnemyType type);
 int game_has_island_interaction(const GameState *g);
 int game_interact_island(GameState *g);
 

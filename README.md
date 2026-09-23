@@ -70,6 +70,20 @@ is drained again. Water states, claimed caches, and discoveries persist through
 cached revisits and save/load. Existing saved Coast maps lose the redundant
 sluice wall and switch while retaining their tide state and treasure chambers.
 
+### Ruined Temple
+
+Walk through the gate on the Ruined Isle to enter the temple. Stand on or next
+to a solar altar and press `A` to switch between Sun and Moon. Sun closes lunar
+doors and activates orange floor traps. Moon opens those doors and permanently
+awakens dormant Moonbound Sentinels; switching back does not petrify them.
+
+The Fallen Sun Guardian waits beyond the northern sanctuary and retaliates when
+attacked at range. Its armor breaks below half health, increasing the power of
+its sunburst. Defeating it opens the buried vault. Press `A` beside the treasure
+to complete **The Buried Sun**. Return to Town works inside the temple and leaves
+a portal near the harbor that restores the exact temple position and encounter
+state. Walk through the southern entrance to return to the island surface.
+
 ## Screenshots
 Below are screenshots of the game in action:
 

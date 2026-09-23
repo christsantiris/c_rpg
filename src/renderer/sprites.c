@@ -2404,6 +2404,41 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_SEA_SERPENT:
         case ENEMY_DROWNED_QUEEN:
             draw_coast_enemy(r, tile_x, tile_y, type); break;
+        case ENEMY_RELIC_SCARABS:
+        case ENEMY_TEMPLE_STALKER:
+        case ENEMY_BLOWDART_HUNTER:
+        case ENEMY_VINEBOUND_GUARDIAN:
+        case ENEMY_SUN_PRIEST:
+        case ENEMY_SERPENT_SPIRIT:
+        case ENEMY_TREASURE_WRAITH:
+        case ENEMY_LUNAR_EFFIGY:
+        case ENEMY_MOONBOUND_SENTINEL:
+        case ENEMY_FALLEN_SUN_GUARDIAN: {
+            if (!r->temple_enemy_texture) {
+                break;
+            }
+            SDL_Rect source = {0, 20, 290, 280};
+            switch (type) {
+                case ENEMY_TEMPLE_STALKER: source = (SDL_Rect){280, 0, 320, 310}; break;
+                case ENEMY_BLOWDART_HUNTER: source = (SDL_Rect){580, 0, 300, 320}; break;
+                case ENEMY_VINEBOUND_GUARDIAN: source = (SDL_Rect){875, 0, 340, 330}; break;
+                case ENEMY_SUN_PRIEST: source = (SDL_Rect){0, 315, 300, 340}; break;
+                case ENEMY_SERPENT_SPIRIT: source = (SDL_Rect){300, 325, 305, 370}; break;
+                case ENEMY_TREASURE_WRAITH: source = (SDL_Rect){600, 320, 315, 355}; break;
+                case ENEMY_LUNAR_EFFIGY: source = (SDL_Rect){900, 350, 300, 320}; break;
+                case ENEMY_MOONBOUND_SENTINEL: source = (SDL_Rect){280, 650, 310, 440}; break;
+                case ENEMY_FALLEN_SUN_GUARDIAN: source = (SDL_Rect){490, 650, 500, 645}; break;
+                default: break;
+            }
+            int size = type == ENEMY_FALLEN_SUN_GUARDIAN ? 40 : 28;
+            SDL_Rect destination = {
+                tile_x * TILE_SIZE + (TILE_SIZE - size) / 2,
+                tile_y * TILE_SIZE + TILE_SIZE - size, size, size
+            };
+            SDL_RenderCopy(r->sdl, r->temple_enemy_texture, &source,
+                &destination);
+            break;
+        }
         case ENEMY_ORC:      draw_orc(r, tile_x, tile_y);      break;
         case ENEMY_TROLL:    draw_troll(r, tile_x, tile_y);    break;
         case ENEMY_GIANT:    draw_giant(r, tile_x, tile_y);    break;
@@ -2413,6 +2448,133 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_RED_DRAGON:  draw_red_dragon(r, tile_x, tile_y);  break;
         case ENEMY_TARRASQUE:   draw_tarrasque(r, tile_x, tile_y);   break;
     }
+}
+
+void draw_fallen_sun_guardian_broken(Renderer *r, int tile_x, int tile_y) {
+    if (!r->temple_enemy_texture) {
+        return;
+    }
+    SDL_Rect source = {930, 720, 285, 575};
+    SDL_Rect destination = {
+        tile_x * TILE_SIZE - 8,
+        tile_y * TILE_SIZE - 16, 40, 40
+    };
+    SDL_RenderCopy(r->sdl, r->temple_enemy_texture, &source, &destination);
+}
+
+void draw_temple_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color stone = ((map_x + map_y) & 1)
+        ? (SDL_Color){49, 57, 47, 255} : (SDL_Color){55, 64, 52, 255};
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, stone);
+    fill_rect(r, x, y, TILE_SIZE, 2, (SDL_Color){76, 83, 65, 255});
+    fill_rect(r, x, y, 2, TILE_SIZE, (SDL_Color){38, 43, 37, 255});
+    if ((map_x * 7 + map_y * 11) % 9 == 0) {
+        fill_rect(r, x + 4, y + 16, 9, 2, (SDL_Color){29, 70, 40, 255});
+        fill_rect(r, x + 8, y + 13, 2, 5, (SDL_Color){43, 101, 49, 255});
+    }
+}
+
+void draw_temple_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){25, 31, 28, 255});
+    fill_rect(r, x + 1, y + 2, 22, 8, (SDL_Color){63, 68, 57, 255});
+    fill_rect(r, x + 1, y + 12, 22, 9, (SDL_Color){54, 61, 52, 255});
+    fill_rect(r, x, y + 10, TILE_SIZE, 2, (SDL_Color){24, 30, 27, 255});
+    int seam = ((map_x + map_y) & 1) ? 7 : 15;
+    fill_rect(r, x + seam, y + 2, 2, 8, (SDL_Color){37, 42, 37, 255});
+    fill_rect(r, x + (22 - seam), y + 12, 2, 9, (SDL_Color){35, 41, 36, 255});
+    if ((map_x * 5 + map_y) % 7 == 0) {
+        fill_rect(r, x + 2, y + 3, 3, 15, (SDL_Color){31, 91, 43, 255});
+    }
+}
+
+void draw_temple_entrance(Renderer *r, int tile_x, int tile_y) {
+    draw_temple_floor(r, tile_x, tile_y, tile_x, tile_y);
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    fill_rect(r, x + 2, y + 14, 20, 8, (SDL_Color){91, 67, 40, 255});
+    fill_rect(r, x + 6, y + 10, 12, 5, (SDL_Color){151, 119, 66, 255});
+}
+
+void draw_temple_altar(Renderer *r, int tile_x, int tile_y, int moon) {
+    draw_temple_floor(r, tile_x, tile_y, tile_x, tile_y);
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    fill_rect(r, x + 3, y + 4, 18, 17, (SDL_Color){80, 76, 59, 255});
+    SDL_Color glow = moon ? (SDL_Color){85, 218, 240, 255}
+        : (SDL_Color){255, 190, 49, 255};
+    fill_rect(r, x + 8, y + 8, 8, 8, glow);
+    fill_rect(r, x + 10, y + 6, 4, 12, glow);
+}
+
+void draw_temple_moon_door(Renderer *r, int tile_x, int tile_y, int open) {
+    draw_temple_floor(r, tile_x, tile_y, tile_x, tile_y);
+    if (open) {
+        return;
+    }
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    fill_rect(r, x + 2, y, 20, TILE_SIZE, (SDL_Color){35, 54, 62, 255});
+    fill_rect(r, x + 6, y + 3, 12, 18, (SDL_Color){64, 95, 101, 255});
+    fill_rect(r, x + 9, y + 6, 6, 9, (SDL_Color){111, 224, 233, 255});
+    fill_rect(r, x + 12, y + 6, 4, 6, (SDL_Color){64, 95, 101, 255});
+}
+
+void draw_temple_solar_trap(Renderer *r, int tile_x, int tile_y, int active) {
+    draw_temple_floor(r, tile_x, tile_y, tile_x, tile_y);
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color color = active ? (SDL_Color){244, 138, 27, 255}
+        : (SDL_Color){101, 82, 48, 255};
+    fill_rect(r, x + 9, y + 4, 6, 16, color);
+    fill_rect(r, x + 4, y + 9, 16, 6, color);
+    fill_rect(r, x + 7, y + 7, 10, 10, color);
+}
+
+void draw_temple_dormant_sentinel(Renderer *r, int tile_x, int tile_y) {
+    draw_temple_floor(r, tile_x, tile_y, tile_x, tile_y);
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    fill_rect(r, x + 6, y + 3, 12, 18, (SDL_Color){69, 79, 66, 255});
+    fill_rect(r, x + 8, y + 1, 8, 7, (SDL_Color){84, 95, 78, 255});
+    fill_rect(r, x + 11, y + 8, 2, 8, (SDL_Color){42, 60, 53, 255});
+}
+
+void draw_temple_vault_door(Renderer *r, int tile_x, int tile_y) {
+    draw_temple_moon_door(r, tile_x, tile_y, 0);
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    fill_rect(r, x + 8, y + 8, 8, 8, (SDL_Color){247, 165, 39, 255});
+}
+
+void draw_temple_treasure(Renderer *r, int tile_x, int tile_y) {
+    draw_temple_floor(r, tile_x, tile_y, tile_x, tile_y);
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    fill_rect(r, x + 3, y + 10, 18, 11, (SDL_Color){105, 57, 25, 255});
+    fill_rect(r, x + 5, y + 6, 14, 7, (SDL_Color){145, 82, 31, 255});
+    fill_rect(r, x + 10, y + 10, 4, 7, (SDL_Color){244, 190, 52, 255});
+}
+
+void draw_temple_water(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){18, 83, 88, 255});
+    int wave = (map_x * 5 + map_y * 3) % 11;
+    fill_rect(r, x + wave, y + 7, 10, 2, (SDL_Color){54, 151, 146, 255});
+    fill_rect(r, x + (wave + 7) % 13, y + 17, 9, 2,
+        (SDL_Color){35, 125, 126, 255});
+}
+
+void draw_temple_rubble(Renderer *r, int tile_x, int tile_y) {
+    draw_temple_floor(r, tile_x, tile_y, tile_x, tile_y);
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    fill_rect(r, x + 3, y + 15, 8, 6, (SDL_Color){82, 77, 60, 255});
+    fill_rect(r, x + 12, y + 11, 9, 10, (SDL_Color){68, 67, 56, 255});
 }
 
 void draw_town_floor(Renderer *r, int tile_x, int tile_y) {
