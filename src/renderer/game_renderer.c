@@ -502,6 +502,15 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         draw_town_path(r, screen_x, screen_y);
     } else if (underlay == TILE_TAVERN_FLOOR) {
         draw_tavern_floor(r, screen_x, screen_y);
+    } else if (underlay == TILE_ISLAND_WATER ||
+        underlay == TILE_ISLAND_DOCK) {
+        draw_island_water(r, screen_x, screen_y, map_x, map_y);
+    } else if (underlay == TILE_ISLAND_SAND) {
+        draw_island_sand(r, screen_x, screen_y, map_x, map_y);
+    } else if (underlay == TILE_ISLAND_GRASS) {
+        draw_island_grass(r, screen_x, screen_y, map_x, map_y);
+    } else if (underlay == TILE_ISLAND_PATH) {
+        draw_island_path(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_DUNGEON) {
         draw_dungeon_floor(r, screen_x, screen_y, map_x, map_y);
     } else {
@@ -552,9 +561,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     Viewport town_view;
     int town_scaled = g->location == LOCATION_TOWN;
     int tavern_scaled = g->location == LOCATION_TAVERN;
-    if (town_scaled) {
-        // Keep the entire fixed town map inside the play area at any window size.
-        viewport_init(&town_view, TOWN_W, TOWN_H, TOWN_W, TOWN_H);
+    int island_scaled = g->location == LOCATION_ISLAND;
+    if (town_scaled || island_scaled) {
+        // Keep the entire fixed town or island map inside the play area.
+        int map_w = town_scaled ? TOWN_W : ISLAND_W;
+        int map_h = town_scaled ? TOWN_H : ISLAND_H;
+        viewport_init(&town_view, map_w, map_h, map_w, map_h);
         v = &town_view;
         int play_w = r->screen_w - INFO_PANEL_W;
         int play_h = r->tiles_y * TILE_SIZE;
@@ -565,8 +577,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             play_h = 1;
         }
         SDL_RenderSetScale(r->sdl,
-            (float)play_w / (TOWN_W * TILE_SIZE),
-            (float)play_h / (TOWN_H * TILE_SIZE));
+            (float)play_w / (map_w * TILE_SIZE),
+            (float)play_h / (map_h * TILE_SIZE));
     } else if (tavern_scaled) {
         // Fit the entire room without stretching sprites or showing unused map tiles.
         viewport_init(&town_view, TAVERN_W, TAVERN_H, MAP_W, MAP_H);
@@ -764,6 +776,27 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_NPC_ROWAN: draw_rowan(r, sx, sy); break;
                 case TILE_FOREST_WARDEN:
                     draw_forest_warden(r, sx, sy, x, y); break;
+                case TILE_ISLAND_WATER:
+                    draw_island_water(r, sx, sy, x, y); break;
+                case TILE_ISLAND_SAND:
+                    draw_island_sand(r, sx, sy, x, y); break;
+                case TILE_ISLAND_GRASS:
+                    draw_island_grass(r, sx, sy, x, y); break;
+                case TILE_ISLAND_JUNGLE:
+                    draw_island_jungle(r, sx, sy, x, y); break;
+                case TILE_ISLAND_PATH:
+                    draw_island_path(r, sx, sy, x, y); break;
+                case TILE_ISLAND_DOCK:
+                case TILE_ISLAND_SHIP:
+                case TILE_NPC_ISLAND_CAPTAIN:
+                    draw_island_water(r, sx, sy, x, y); break;
+                case TILE_ISLAND_CAMP:
+                case TILE_ISLAND_LAGOON:
+                    draw_island_grass(r, sx, sy, x, y); break;
+                case TILE_ISLAND_MARKER:
+                case TILE_ISLAND_STATUE:
+                case TILE_ISLAND_TEMPLE_GATE:
+                    draw_island_path(r, sx, sy, x, y); break;
                 case TILE_TOWN_EXIT: draw_town_path(r, sx, sy); break;
                 case TILE_SHOP_BLACKSMITH:
                 case TILE_SHOP_ALCHEMIST:
@@ -900,6 +933,32 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         draw_harbor(r,
             viewport_to_screen_x(v, TOWN_HARBOR_X),
             viewport_to_screen_y(v, TOWN_HARBOR_Y));
+    }
+
+    if (g->location == LOCATION_ISLAND) {
+        draw_island_temple(r, viewport_to_screen_x(v, 10),
+            viewport_to_screen_y(v, 0));
+        draw_island_camp(r, viewport_to_screen_x(v, 4),
+            viewport_to_screen_y(v, 12));
+        draw_island_marker(r, viewport_to_screen_x(v, 8),
+            viewport_to_screen_y(v, 7));
+        draw_island_statue(r, viewport_to_screen_x(v, 27),
+            viewport_to_screen_y(v, 7));
+        draw_island_lagoon(r, viewport_to_screen_x(v, 26),
+            viewport_to_screen_y(v, 11));
+        draw_island_dock(r, viewport_to_screen_x(v, 14),
+            viewport_to_screen_y(v, 18));
+        draw_island_ship(r, viewport_to_screen_x(v, 25),
+            viewport_to_screen_y(v, 17));
+        draw_rowan(r, viewport_to_screen_x(v, ISLAND_CAPTAIN_X),
+            viewport_to_screen_y(v, ISLAND_CAPTAIN_Y));
+        for (int i = 0; i < g->floor_item_count; i++) {
+            const FloorItem *item = &g->floor_items[i];
+            if (item->active && viewport_is_visible(v, item->x, item->y)) {
+                draw_floor_item(r, viewport_to_screen_x(v, item->x),
+                    viewport_to_screen_y(v, item->y));
+            }
+        }
     }
 
     // Draw enemies
@@ -1044,6 +1103,21 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             (SDL_Color){75, 196, 201, 255}, r->font_tiny);
     }
 
+    if (g->location == LOCATION_ISLAND) {
+        SDL_Color label = {235, 201, 92, 255};
+        int width = 0;
+        TTF_SizeText(r->font_tiny, "RUINED TEMPLE", &width, NULL);
+        renderer_draw_text(r, "RUINED TEMPLE",
+            viewport_to_screen_x(v, 20) * TILE_SIZE - width / 2,
+            viewport_to_screen_y(v, 1) * TILE_SIZE, label, r->font_tiny);
+        TTF_SizeText(r->font_tiny, "CAPTAIN ROWAN", &width, NULL);
+        renderer_draw_text(r, "CAPTAIN ROWAN",
+            viewport_to_screen_x(v, ISLAND_CAPTAIN_X) * TILE_SIZE +
+                (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, ISLAND_CAPTAIN_Y - 1) * TILE_SIZE,
+            (SDL_Color){182, 214, 232, 255}, r->font_tiny);
+    }
+
     // Draw spell/projectile trail
     if (g->trail_frames > 0) {
         int timed_fireball = g->trail_effect == TRAIL_EFFECT_FIREBALL &&
@@ -1166,7 +1240,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     draw_dialogue_bubble(r, g, v);
 
-    if (town_scaled || tavern_scaled) {
+    if (town_scaled || tavern_scaled || island_scaled) {
         SDL_RenderSetScale(r->sdl, 1.0f, 1.0f);
     }
     if (tavern_scaled) {
