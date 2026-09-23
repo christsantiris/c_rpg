@@ -81,7 +81,7 @@ Below are screenshots of the game in action:
 
 <img width="2554" height="1434" alt="image" src="https://github.com/user-attachments/assets/2ee519e4-2a53-4cb3-9596-242298ddbba0" />
 
-<img width="2540" height="1430" alt="image" src="https://github.com/user-attachments/assets/91bace4f-aba3-4d22-8126-7df2f74020ae" />
+<img width="2550" height="1434" alt="image" src="https://github.com/user-attachments/assets/6e198c44-2add-4212-b7c7-7aadf8ba9180" />
 
 <img width="3834" height="2138" alt="image" src="https://github.com/user-attachments/assets/59a939ed-29a8-4ea2-aa6c-dffabce33bae" />
 
