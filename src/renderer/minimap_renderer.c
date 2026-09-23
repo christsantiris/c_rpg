@@ -12,7 +12,8 @@ void minimap_draw(Renderer *r, const GameState *g) {
     if (g->location != LOCATION_DUNGEON &&
         g->location != LOCATION_FOREST &&
         g->location != LOCATION_MOUNTAINS &&
-        g->location != LOCATION_COAST) {
+        g->location != LOCATION_COAST &&
+        g->location != LOCATION_TEMPLE) {
         return;
     }
 
@@ -61,7 +62,10 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_NPC_ROWAN ||
                         tile == TILE_COAST_BEACON_UNLIT ||
                         tile == TILE_COAST_BEACON_LIT ||
-                        tile == TILE_FOREST_WARDEN) {
+                        tile == TILE_FOREST_WARDEN ||
+                        tile == TILE_TEMPLE_ENTRANCE ||
+                        tile == TILE_TEMPLE_ALTAR ||
+                        tile == TILE_TEMPLE_TREASURE) {
                         has_stair = 1;
                     } else if (tile == TILE_COAST_TIDE_CONTROL ||
                         tile == TILE_COAST_SLUICE_CONTROL || tile == TILE_COAST_CACHE) {
@@ -86,7 +90,11 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile != TILE_LOCKED_DOOR &&
                         tile != TILE_CRYPT_DOOR &&
                         tile != TILE_DUNGEON_GATE &&
-                        tile != TILE_FOREST_HIDDEN_TRAIL) {
+                        tile != TILE_FOREST_HIDDEN_TRAIL &&
+                        tile != TILE_TEMPLE_WALL &&
+                        tile != TILE_TEMPLE_MOON_DOOR_CLOSED &&
+                        tile != TILE_TEMPLE_DORMANT_SENTINEL &&
+                        tile != TILE_TEMPLE_VAULT_DOOR) {
                         has_floor = 1;
                     }
                 }
@@ -96,16 +104,19 @@ void minimap_draw(Renderer *r, const GameState *g) {
                 SDL_SetRenderDrawColor(r->sdl, 220, 180, 60, 255);
                 SDL_RenderDrawPoint(r->sdl, draw_x, draw_y);
             } else if (has_floor) {
-                if (g->location == LOCATION_FOREST)
+                if (g->location == LOCATION_FOREST) {
                     SDL_SetRenderDrawColor(r->sdl, 45, 95, 55, 255);
-                else if (g->location == LOCATION_MOUNTAINS)
+                } else if (g->location == LOCATION_MOUNTAINS) {
                     SDL_SetRenderDrawColor(r->sdl, 125, 42, 32, 255);
-                else if (g->location == LOCATION_COAST)
+                } else if (g->location == LOCATION_COAST) {
                     SDL_SetRenderDrawColor(r->sdl, 35, 125, 145, 255);
-                else if (g->location == LOCATION_TAVERN)
+                } else if (g->location == LOCATION_TEMPLE) {
+                    SDL_SetRenderDrawColor(r->sdl, 65, 105, 75, 255);
+                } else if (g->location == LOCATION_TAVERN) {
                     SDL_SetRenderDrawColor(r->sdl, 135, 78, 39, 255);
-                else
+                } else {
                     SDL_SetRenderDrawColor(r->sdl, 145, 140, 195, 255);
+                }
                 SDL_RenderDrawPoint(r->sdl, draw_x, draw_y);
             }
         }

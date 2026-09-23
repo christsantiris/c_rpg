@@ -197,6 +197,12 @@ void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, con
             color = (SDL_Color){240, 130, 220, 255};
         } else if (shot->type == ENEMY_GOBLIN_BOMBER) {
             color = (SDL_Color){255, 160, 55, 255};
+        } else if (shot->type == ENEMY_SUN_PRIEST ||
+            shot->type == ENEMY_FALLEN_SUN_GUARDIAN) {
+            color = (SDL_Color){255, 188, 45, 255};
+        } else if (shot->type == ENEMY_SERPENT_SPIRIT ||
+            shot->type == ENEMY_MOONBOUND_SENTINEL) {
+            color = (SDL_Color){75, 224, 232, 255};
         }
         if (impact) {
             int radius = 4 + (int)(elapsed - ENEMY_PROJECTILE_TRAVEL_MS) / 15;
@@ -205,7 +211,9 @@ void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, con
             SDL_RenderDrawLine(r->sdl, cx, cy - radius, cx, cy + radius);
             SDL_Rect burst = {cx - radius / 2, cy - radius / 2, radius, radius};
             SDL_RenderDrawRect(r->sdl, &burst);
-        } else if (shot->type == ENEMY_GOBLIN_ARCHER || shot->type == ENEMY_DARK_ELF) {
+        } else if (shot->type == ENEMY_GOBLIN_ARCHER ||
+            shot->type == ENEMY_DARK_ELF ||
+            shot->type == ENEMY_BLOWDART_HUNTER) {
             draw_weapon_arrow_at(r, cx, cy, (dx > 0) - (dx < 0), (dy > 0) - (dy < 0), 0);
         } else if (shot->type == ENEMY_GOBLIN_BOMBER) {
             SDL_Rect bomb = {cx - 5, cy - 5, 10, 10};
@@ -511,6 +519,9 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         draw_island_grass(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_ISLAND_PATH) {
         draw_island_path(r, screen_x, screen_y, map_x, map_y);
+    } else if (underlay == TILE_TEMPLE_FLOOR ||
+        g->location == LOCATION_TEMPLE) {
+        draw_temple_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_DUNGEON) {
         draw_dungeon_floor(r, screen_x, screen_y, map_x, map_y);
     } else {
@@ -797,6 +808,31 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_ISLAND_STATUE:
                 case TILE_ISLAND_TEMPLE_GATE:
                     draw_island_path(r, sx, sy, x, y); break;
+                case TILE_TEMPLE_FLOOR:
+                    draw_temple_floor(r, sx, sy, x, y); break;
+                case TILE_TEMPLE_WALL:
+                    draw_temple_wall(r, sx, sy, x, y); break;
+                case TILE_TEMPLE_ENTRANCE:
+                    draw_temple_entrance(r, sx, sy); break;
+                case TILE_TEMPLE_ALTAR:
+                    draw_temple_altar(r, sx, sy, g->temple_alignment); break;
+                case TILE_TEMPLE_MOON_DOOR_CLOSED:
+                    draw_temple_moon_door(r, sx, sy, 0); break;
+                case TILE_TEMPLE_MOON_DOOR_OPEN:
+                    draw_temple_moon_door(r, sx, sy, 1); break;
+                case TILE_TEMPLE_SOLAR_TRAP:
+                    draw_temple_solar_trap(r, sx, sy,
+                        !g->temple_alignment); break;
+                case TILE_TEMPLE_DORMANT_SENTINEL:
+                    draw_temple_dormant_sentinel(r, sx, sy); break;
+                case TILE_TEMPLE_VAULT_DOOR:
+                    draw_temple_vault_door(r, sx, sy); break;
+                case TILE_TEMPLE_TREASURE:
+                    draw_temple_treasure(r, sx, sy); break;
+                case TILE_TEMPLE_WATER:
+                    draw_temple_water(r, sx, sy, x, y); break;
+                case TILE_TEMPLE_RUBBLE:
+                    draw_temple_rubble(r, sx, sy); break;
                 case TILE_TOWN_EXIT: draw_town_path(r, sx, sy); break;
                 case TILE_SHOP_BLACKSMITH:
                 case TILE_SHOP_ALCHEMIST:
@@ -965,14 +1001,20 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (g->location == LOCATION_DUNGEON ||
         g->location == LOCATION_FOREST ||
         g->location == LOCATION_MOUNTAINS ||
-        g->location == LOCATION_COAST) {
+        g->location == LOCATION_COAST ||
+        g->location == LOCATION_TEMPLE) {
         for (int i = 0; i < g->enemy_count; i++) {
             Enemy *e = &g->enemies[i];
             if (!e->active) continue;
             if (!viewport_is_visible(v, e->x, e->y)) continue;
             int sx = viewport_to_screen_x(v, e->x);
             int sy = viewport_to_screen_y(v, e->y);
-            draw_enemy(r, sx, sy, e->type);
+            if (e->type == ENEMY_FALLEN_SUN_GUARDIAN &&
+                e->hp <= e->max_hp / 2) {
+                draw_fallen_sun_guardian_broken(r, sx, sy);
+            } else {
+                draw_enemy(r, sx, sy, e->type);
+            }
             if (e->dain_fragment) {
                 int px = sx * TILE_SIZE;
                 int py = sy * TILE_SIZE;
