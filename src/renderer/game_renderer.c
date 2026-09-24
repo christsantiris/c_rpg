@@ -157,11 +157,6 @@ static void draw_weapon_arrow_at(Renderer *r, int cx, int cy, int dx, int dy, in
     }
 }
 
-static void draw_weapon_arrow(Renderer *r, int tile_x, int tile_y, int dx, int dy, int impact) {
-    draw_weapon_arrow_at(r, tile_x * TILE_SIZE + TILE_SIZE / 2,
-        tile_y * TILE_SIZE + TILE_SIZE / 2, dx, dy, impact);
-}
-
 void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, const Viewport *v, Uint32 elapsed) {
     if (elapsed >= ENEMY_PROJECTILE_TOTAL_MS || shots->count == 0) {
         return;
@@ -801,6 +796,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_ISLAND_SHIP:
                 case TILE_NPC_ISLAND_CAPTAIN:
                     draw_island_water(r, sx, sy, x, y); break;
+                case TILE_NPC_ISLAND_NAHLA:
+                    draw_island_path(r, sx, sy, x, y);
+                    draw_nahla(r, sx, sy); break;
                 case TILE_ISLAND_CAMP:
                 case TILE_ISLAND_LAGOON:
                     draw_island_grass(r, sx, sy, x, y); break;
@@ -1204,16 +1202,27 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 g->trail_frames = 0;
             }
         } else if (g->trail_effect == TRAIL_EFFECT_WEAPON_ARROW) {
-            int progress = 4 - g->trail_frames;
-            int lead = g->trail_count > 1
-                ? progress * (g->trail_count - 1) / 3 : 0;
-            TrailTile *t = &g->trail[lead];
-            if (t->active && viewport_is_visible(v, t->x, t->y)) {
-                int sx = viewport_to_screen_x(v, t->x);
-                int sy = viewport_to_screen_y(v, t->y);
-                draw_weapon_arrow(r, sx, sy,
+            Uint32 elapsed = SDL_GetTicks() - g->trail_started_at;
+            if (elapsed < SPELL_ARROW_MS && g->trail_count > 0) {
+                int impact = elapsed >= SPELL_TRAVEL_MS;
+                float progress = impact ? 1.0f
+                    : (float)elapsed / SPELL_TRAVEL_MS;
+                TrailTile *target = &g->trail[g->trail_count - 1];
+                int start_x = viewport_to_screen_x(v, g->player.x) *
+                    TILE_SIZE + TILE_SIZE / 2;
+                int start_y = viewport_to_screen_y(v, g->player.y) *
+                    TILE_SIZE + TILE_SIZE / 2;
+                int target_x = viewport_to_screen_x(v, target->x) *
+                    TILE_SIZE + TILE_SIZE / 2;
+                int target_y = viewport_to_screen_y(v, target->y) *
+                    TILE_SIZE + TILE_SIZE / 2;
+                int arrow_x = start_x + (int)((target_x - start_x) * progress);
+                int arrow_y = start_y + (int)((target_y - start_y) * progress);
+                draw_weapon_arrow_at(r, arrow_x, arrow_y,
                     g->player.last_dx, g->player.last_dy,
-                    t->is_impact);
+                    impact && target->is_impact);
+            } else {
+                g->trail_frames = 0;
             }
         } else for (int i = 0; i < g->trail_count; i++) {
             TrailTile *t = &g->trail[i];
@@ -1243,7 +1252,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     sy * TILE_SIZE + TILE_SIZE / 2);
             }
         }
-        if (!timed_fireball && g->trail_effect != TRAIL_EFFECT_MAGIC_ARROW) {
+        if (!timed_fireball &&
+            g->trail_effect != TRAIL_EFFECT_MAGIC_ARROW &&
+            g->trail_effect != TRAIL_EFFECT_WEAPON_ARROW) {
             g->trail_frames--;
         }
     }
