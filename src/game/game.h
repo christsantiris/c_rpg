@@ -177,6 +177,7 @@ void game_update_level_progress(GameState *g);
 
 void game_return_to_town(GameState *g);
 int game_healer_price(const GameState *g);
+int game_healer_emergency_available(const GameState *g);
 void game_visit_healer(GameState *g);
 int game_witch_price(const GameState *g);
 void game_visit_witch(GameState *g);
