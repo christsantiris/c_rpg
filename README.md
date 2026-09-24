@@ -72,17 +72,23 @@ sluice wall and switch while retaining their tide state and treasure chambers.
 
 ### Ruined Temple
 
-Walk through the gate on the Ruined Isle to enter the temple. Stand on or next
-to a solar altar and press `A` to switch between Sun and Moon. Sun closes lunar
-doors and activates orange floor traps. Moon opens those doors and permanently
-awakens dormant Moonbound Sentinels; switching back does not petrify them.
+Talk to Nahla on the Ruined Isle to begin **The Buried Sun**, then walk through
+the temple gate. The temple is a four-tier stepped pyramid. Use the upward
+stairs on each tier to climb toward the summit and the downward stairs to return
+to the tier below. The Fallen Sun Guardian and buried vault appear only on the
+summit.
 
-The Fallen Sun Guardian waits beyond the northern sanctuary and retaliates when
-attacked at range. Its armor breaks below half health, increasing the power of
-its sunburst. Defeating it opens the buried vault. Press `A` beside the treasure
-to complete **The Buried Sun**. Return to Town works inside the temple and leaves
-a portal near the harbor that restores the exact temple position and encounter
-state. Walk through the southern entrance to return to the island surface.
+Stand on or next to a solar altar and press `A` to switch between Sun and Moon.
+Sun closes lunar doors and activates orange floor traps. Moon opens those doors
+and permanently awakens dormant Moonbound Sentinels; switching back does not
+petrify them. Walls and closed doors block all ranged attacks.
+
+The Fallen Sun Guardian retaliates when attacked at range. Its armor breaks
+below half health, increasing the power of its sunburst. Defeat it, recover the
+buried treasure, and return to Nahla for the quest reward. Return to Town works
+inside the temple and leaves a portal near the harbor that restores the exact
+temple tier, position, and encounter state. Descend from the first tier through
+the southern entrance to return to the island surface.
 
 ## Screenshots
 Below are screenshots of the game in action:
@@ -181,13 +187,10 @@ High priority
    Add recognizable combat roles such as protectors, ambushers, healers, summoners, ranged attackers, and enemies that retreat or flank.
 2. Boss encounter improvements
    Give every boss multiple phases, telegraphed signature attacks, an arena mechanic, and a guaranteed thematic reward.
-Medium priority
-1. Region replay tiers
-   After defeating a regional boss, unlock a harder expedition version with stronger enemies, altered layouts, improved rewards, and possibly a remixed boss. This is better as an endgame layer after normal-order difficulty scaling works.
-2. Combat feedback
+3. Combat feedback
    Add clearer hit effects, critical indicators, blocked-damage feedback, status icons, and distinct weapon sounds.
-3. More weapon variation
-4. Rebalance mage class against warrior and rogue
+4. More weapon variation
+5. Rebalance mage class against warrior and rogue
 Polish priority
 1. Accessibility and controls
    Add remappable controls, text scaling, colorblind-safe indicators, adjustable message duration, and clearer interaction prompts.

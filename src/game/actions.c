@@ -609,6 +609,12 @@ void action_resolve_player(GameState *g, Action a) {
 
     if (a.type == ACTION_DESCEND) {
         TileType tile = g->map.tiles[g->player.y][g->player.x];
+        if (g->location == LOCATION_TEMPLE && tile == TILE_STAIRS_DOWN) {
+            if (g->level > 1) {
+                game_ascend(g);
+            }
+            return;
+        }
         if (tile == TILE_RETURN_EXIT && (g->defeated_bosses & (1 << g->location))) {
             int forest = g->location == LOCATION_FOREST;
             g->score += g->level * 100;
@@ -625,7 +631,15 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_ASCEND) {
-        if (g->map.tiles[g->player.y][g->player.x] == TILE_STAIRS_UP) {
+        TileType tile = g->map.tiles[g->player.y][g->player.x];
+        if (g->location == LOCATION_TEMPLE && tile == TILE_STAIRS_UP) {
+            if (g->level < TEMPLE_DEPTH) {
+                game_descend(g);
+                g->score += g->level * 100;
+            }
+            return;
+        }
+        if (tile == TILE_STAIRS_UP) {
             if (g->level == 1) {
                 game_return_to_town(g);
             } else {
@@ -1702,7 +1716,46 @@ static int forest_necromancer_raise(GameState *g, int caster_index) {
     return 0;
 }
 
+static int clear_projectile_path(const GameState *g, const Enemy *e) {
+    int x = e->x;
+    int y = e->y;
+    int dx = abs_int(g->player.x - x);
+    int dy = abs_int(g->player.y - y);
+    int step_x = x < g->player.x ? 1 : -1;
+    int step_y = y < g->player.y ? 1 : -1;
+    int error = dx - dy;
+
+    while (x != g->player.x || y != g->player.y) {
+        int old_x = x;
+        int old_y = y;
+        int twice_error = error * 2;
+        if (twice_error > -dy) {
+            error -= dy;
+            x += step_x;
+        }
+        if (twice_error < dx) {
+            error += dx;
+            y += step_y;
+        }
+        if (x == g->player.x && y == g->player.y) {
+            return 1;
+        }
+        if (!map_is_walkable(&g->map, x, y)) {
+            return 0;
+        }
+        if (x != old_x && y != old_y &&
+            (!map_is_walkable(&g->map, x, old_y) ||
+            !map_is_walkable(&g->map, old_x, y))) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static int apply_enemy_ranged_damage(GameState *g, const Enemy *e, int damage, EnemyProjectiles *shots) {
+    if (!clear_projectile_path(g, e)) {
+        return 0;
+    }
     if (shots && shots->count < MAX_ENEMIES) {
         shots->shots[shots->count++] = (EnemyProjectile){
             e->type, e->x, e->y, g->player.x, g->player.y
