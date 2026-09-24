@@ -2727,6 +2727,29 @@ void draw_rowan(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 14, y + 21, 4, 2, outline);
 }
 
+void draw_nahla(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color outline = {31, 24, 24, 255};
+    SDL_Color hat = {181, 132, 64, 255};
+    SDL_Color shirt = {47, 112, 104, 255};
+    SDL_Color skin = {173, 112, 72, 255};
+    fill_rect(r, x + 5, y + 2, 14, 3, outline);
+    fill_rect(r, x + 7, y, 10, 5, hat);
+    fill_rect(r, x + 8, y + 5, 8, 7, skin);
+    fill_rect(r, x + 7, y + 5, 2, 6, (SDL_Color){54, 35, 29, 255});
+    fill_rect(r, x + 15, y + 5, 2, 6, (SDL_Color){54, 35, 29, 255});
+    fill_rect(r, x + 9, y + 7, 2, 2, outline);
+    fill_rect(r, x + 13, y + 7, 2, 2, outline);
+    fill_rect(r, x + 5, y + 12, 14, 9, outline);
+    fill_rect(r, x + 6, y + 13, 12, 7, shirt);
+    fill_rect(r, x + 9, y + 13, 6, 5, (SDL_Color){214, 190, 127, 255});
+    fill_rect(r, x + 4, y + 14, 3, 6, skin);
+    fill_rect(r, x + 17, y + 14, 3, 6, skin);
+    fill_rect(r, x + 7, y + 20, 4, 3, outline);
+    fill_rect(r, x + 14, y + 20, 4, 3, outline);
+}
+
 void draw_healer_house(Renderer *r, int tile_x, int tile_y) {
     if (r->healer_texture) {
         SDL_Rect destination = {tile_x * TILE_SIZE, tile_y * TILE_SIZE,

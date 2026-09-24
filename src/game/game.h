@@ -71,14 +71,6 @@ typedef struct {
     int   level_cleared;
 } LevelCache;
 
-typedef struct {
-    unsigned char explored[MAP_EXPLORED_BYTES];
-    Enemy enemies[MAX_ENEMIES];
-    int enemy_count;
-    int valid;
-    int level_cleared;
-} TempleCache;
-
 typedef enum {
     LOCATION_TOWN,
     LOCATION_DUNGEON,
@@ -100,7 +92,7 @@ typedef struct {
     LevelCache forest_cache[MAX_REGION_DEPTH];
     LevelCache mountain_cache[MAX_REGION_DEPTH];
     LevelCache coast_cache[MAX_REGION_DEPTH];
-    TempleCache temple_cache;
+    LevelCache temple_cache[TEMPLE_DEPTH];
     char       messages[MAX_MESSAGES][MAX_MESSAGE_LEN];
     int        message_count;
     int        level_cleared;
@@ -109,6 +101,7 @@ typedef struct {
     int max_forest_level_reached;
     int max_mountain_level_reached;
     int max_coast_level_reached;
+    int max_temple_level_reached;
     Item      inventory[MAX_INVENTORY];
     int       inventory_count;
     int       equipped_main_hand;
@@ -195,6 +188,7 @@ void game_rescue_forest_warden(GameState *g, int x, int y);
 void game_talk_to_mara(GameState *g);
 void game_talk_to_cain(GameState *g);
 void game_talk_to_rowan(GameState *g);
+void game_talk_to_nahla(GameState *g);
 int game_harbor_unlocked(const GameState *g);
 int game_has_treasure_map(const GameState *g);
 void game_light_coast_beacon(GameState *g, int x, int y);

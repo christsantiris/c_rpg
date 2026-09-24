@@ -847,7 +847,13 @@ static void test_goblin_king_retaliation(void) {
         int start_x = g.player.x;
         int start_y = g.player.y;
         for (int step = 0; step <= range; step++) {
-            g.map.tiles[start_y + step * diagonal][start_x + step] = TILE_MOUNTAIN_FLOOR;
+            int path_x = start_x + step;
+            int path_y = start_y + step * diagonal;
+            g.map.tiles[path_y][path_x] = TILE_MOUNTAIN_FLOOR;
+            if (diagonal && step > 0) {
+                g.map.tiles[path_y - 1][path_x] = TILE_MOUNTAIN_FLOOR;
+                g.map.tiles[path_y][path_x - 1] = TILE_MOUNTAIN_FLOOR;
+            }
         }
         EnemyProjectiles shots = {0};
         action_resolve_enemies_with_projectiles(&g, &shots);
