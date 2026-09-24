@@ -1527,6 +1527,9 @@ void action_resolve_player(GameState *g, Action a) {
             char msg[MAX_MESSAGE_LEN];
             snprintf(msg, sizeof(msg), "Solar flame erupts! -%d HP", dmg);
             push_message(g, msg);
+            if (g->player.hp <= 0) {
+                return;
+            }
         }
 
         if (g->location == LOCATION_FOREST &&
@@ -1592,6 +1595,9 @@ void action_resolve_player(GameState *g, Action a) {
                 t->is_impact = 1;
             }
             push_message(g, msg);
+            if (g->player.hp <= 0) {
+                return;
+            }
         }
 
         // Apply poison damage each turn
@@ -1772,6 +1778,9 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
     if (shots) {
         shots->count = 0;
     }
+    if (g->player.hp <= 0) {
+        return;
+    }
     int boss_locked = 0;
     if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH) {
         for (int y = 0; y < MAP_H && !boss_locked; y++)
@@ -1783,6 +1792,9 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
     }
 
     for (int i = 0; i < g->enemy_count; i++) {
+        if (g->player.hp <= 0) {
+            return;
+        }
         Enemy *e = &g->enemies[i];
         if (!e->active) continue;
         if (e->is_boss && boss_locked) continue;

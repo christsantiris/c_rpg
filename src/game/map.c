@@ -316,6 +316,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_SHOP_BLACKSMITH &&
         m->tiles[y][x] != TILE_SHOP_ALCHEMIST &&
         m->tiles[y][x] != TILE_HEALER &&
+        m->tiles[y][x] != TILE_WITCH &&
         m->tiles[y][x] != TILE_WATCHTOWER &&
         m->tiles[y][x] != TILE_TAVERN_WALL &&
         m->tiles[y][x] != TILE_TAVERN_TABLE &&
@@ -1056,12 +1057,25 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     m->tiles[TOWN_BLACKSMITH_Y + 3][TOWN_BLACKSMITH_X + 2] = TILE_BLACKSMITH_DOOR;
     m->tiles[TOWN_BLACKSMITH_Y + 4][TOWN_BLACKSMITH_X + 2] = TILE_TOWN_PATH;
 
-    // Alchemist at (28, 7) — 5x4 tiles
-    for (int dy = 0; dy < 4; dy++)
-        for (int dx = 0; dx < 5; dx++)
-            m->tiles[7 + dy][28 + dx] = TILE_SHOP_ALCHEMIST;
-    m->tiles[10][30] = TILE_ALCHEMIST_DOOR;
-    m->tiles[11][30] = TILE_TOWN_PATH;
+    // Move the alchemist east and place the witch before the mountain gate.
+    for (int dy = 0; dy < 4; dy++) {
+        for (int dx = 0; dx < 5; dx++) {
+            m->tiles[TOWN_ALCHEMIST_Y + dy][TOWN_ALCHEMIST_X + dx] =
+                TILE_SHOP_ALCHEMIST;
+        }
+    }
+    m->tiles[TOWN_ALCHEMIST_Y + 3][TOWN_ALCHEMIST_X + 2] =
+        TILE_ALCHEMIST_DOOR;
+    m->tiles[TOWN_ALCHEMIST_Y + 4][TOWN_ALCHEMIST_X + 2] =
+        TILE_TOWN_PATH;
+
+    for (int dy = 0; dy < TOWN_WITCH_H; dy++) {
+        for (int dx = 0; dx < TOWN_WITCH_W; dx++) {
+            m->tiles[TOWN_WITCH_Y + dy][TOWN_WITCH_X + dx] = TILE_WITCH;
+        }
+    }
+    m->tiles[TOWN_WITCH_DOOR_Y][TOWN_WITCH_DOOR_X] = TILE_WITCH_DOOR;
+    m->tiles[TOWN_WITCH_DOOR_Y + 1][TOWN_WITCH_DOOR_X] = TILE_TOWN_PATH;
 
     // Tavern at (5, 16) — 7x5 tiles.
     for (int dy = 0; dy < 5; dy++) {
@@ -1085,7 +1099,8 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     }
     m->tiles[TOWN_HEALER_DOOR_Y][TOWN_HEALER_DOOR_X] = TILE_HEALER_DOOR;
     // Form a three-tile cobblestone plaza from the healer to the alchemist.
-    for (int x = TOWN_HEALER_DOOR_X; x <= 30; x++) {
+    for (int x = TOWN_HEALER_DOOR_X;
+        x <= TOWN_ALCHEMIST_X + 2; x++) {
         for (int y = TOWN_HEALER_DOOR_Y + 1;
             y <= TOWN_HEALER_DOOR_Y + 3; y++) {
             m->tiles[y][x] = TILE_TOWN_PATH;

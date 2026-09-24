@@ -36,6 +36,7 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->tavern_texture = load_sprite_texture(sdl, "assets/tavern.bmp");
     r->harbor_texture = load_sprite_texture(sdl, "assets/harbor.bmp");
     r->healer_texture = load_sprite_texture(sdl, "assets/healer.bmp");
+    r->witch_texture = load_sprite_texture(sdl, "assets/witch-hut.bmp");
     r->island_texture = load_sprite_texture(sdl, "assets/island-sprites.bmp");
     r->island_ship_texture = load_sprite_texture(sdl,
         "assets/island-ship.bmp");
@@ -74,6 +75,10 @@ void renderer_free(Renderer *r) {
     if (r->healer_texture) {
         SDL_DestroyTexture(r->healer_texture);
         r->healer_texture = NULL;
+    }
+    if (r->witch_texture) {
+        SDL_DestroyTexture(r->witch_texture);
+        r->witch_texture = NULL;
     }
     if (r->blacksmith_texture) {
         SDL_DestroyTexture(r->blacksmith_texture);
