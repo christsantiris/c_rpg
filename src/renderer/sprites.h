@@ -127,6 +127,8 @@ void draw_tavern_exit(Renderer *r, int tile_x, int tile_y);
 void draw_tavern_table(Renderer *r, int tile_x, int tile_y);
 void draw_elowen(Renderer *r, int tile_x, int tile_y);
 void draw_healer_house(Renderer *r, int tile_x, int tile_y);
+void draw_witch_hut(Renderer *r, int tile_x, int tile_y);
+void draw_witch_portrait(Renderer *r, int x, int y, int scale);
 void draw_healer_portrait(Renderer *r, int x, int y, int scale);
 void draw_dain(Renderer *r, int tile_x, int tile_y);
 void draw_alder(Renderer *r, int tile_x, int tile_y);

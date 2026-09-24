@@ -261,6 +261,8 @@ static int open_shop_on_move(const GameState *game, const Action *action, ShopSc
         shop_init(shop, SHOP_TYPE_ALCHEMIST, game->defeated_bosses);
     } else if (tile == TILE_HEALER_DOOR) {
         shop_init(shop, SHOP_TYPE_HEALER, game->defeated_bosses);
+    } else if (tile == TILE_WITCH_DOOR) {
+        shop_init(shop, SHOP_TYPE_WITCH, game->defeated_bosses);
     } else {
         return 0;
     }
@@ -667,7 +669,7 @@ int main(int argc, char **argv) {
                         } else if (result == SHOP_HEAL) {
                             game_visit_healer(&game);
                         } else if (result == SHOP_RESTORE_MANA) {
-                            game_visit_healer_mana(&game);
+                            game_visit_witch(&game);
                         } else if (result == SHOP_BUY) {
                             Item *item = &shop_screen.items[shop_screen.selected];
                             int price = shop_buy_price(item);
@@ -1060,19 +1062,20 @@ int main(int argc, char **argv) {
                     }
                     // Shop screen clicks
                     if (screen == SCREEN_SHOP && event.button.button == SDL_BUTTON_LEFT) {
-                        if (shop_screen.type == SHOP_TYPE_HEALER) {
+                        if (shop_screen.type == SHOP_TYPE_HEALER ||
+                            shop_screen.type == SHOP_TYPE_WITCH) {
                             SDL_Point point = {event.button.x, event.button.y};
                             SDL_Rect heal = shop_healer_button_rect(&renderer, 0);
-                            SDL_Rect mana = shop_healer_button_rect(&renderer, 1);
-                            SDL_Rect leave = shop_healer_button_rect(&renderer, 2);
+                            SDL_Rect leave = shop_healer_button_rect(&renderer, 1);
                             if (SDL_PointInRect(&point, &heal)) {
                                 shop_screen.selected = 0;
-                                game_visit_healer(&game);
-                            } else if (SDL_PointInRect(&point, &mana)) {
-                                shop_screen.selected = 1;
-                                game_visit_healer_mana(&game);
+                                if (shop_screen.type == SHOP_TYPE_WITCH) {
+                                    game_visit_witch(&game);
+                                } else {
+                                    game_visit_healer(&game);
+                                }
                             } else if (SDL_PointInRect(&point, &leave)) {
-                                shop_screen.selected = 2;
+                                shop_screen.selected = 1;
                                 screen = SCREEN_PLAYING;
                             }
                             break;

@@ -3,6 +3,7 @@
 #include "../src/game/game.h"
 #include "../src/game/actions.h"
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 void test_dungeon(void) {
@@ -499,6 +500,38 @@ void test_enemy_movement_collision(void) {
         sprung_trap == TILE_TRAP_SPIKE ||
         sprung_trap == TILE_TRAP_FIRE ||
         sprung_trap == TILE_TRAP_POISON);
+
+    g.message_count = 0;
+    g.location = LOCATION_TEMPLE;
+    g.temple_alignment = 0;
+    g.player.x = 5;
+    g.player.y = 5;
+    g.player.hp = 1;
+    g.player.poison_turns = 0;
+    g.map.tiles[5][5] = TILE_TEMPLE_FLOOR;
+    g.map.tiles[5][6] = TILE_TEMPLE_SOLAR_TRAP;
+    action_resolve_player(&g, (Action){ACTION_MOVE, 6, 5});
+    ASSERT("fatal solar trap records its cause",
+        g.player.hp <= 0 && g.message_count > 0 &&
+        strstr(g.messages[g.message_count - 1], "Solar flame") != NULL);
+    int death_messages = g.message_count;
+    action_resolve_enemies(&g);
+    ASSERT("enemy turns do not overwrite a recorded death cause",
+        g.message_count == death_messages &&
+        strstr(g.messages[g.message_count - 1], "Solar flame") != NULL);
+
+    g.message_count = 0;
+    g.location = LOCATION_DUNGEON;
+    g.player.x = 5;
+    g.player.y = 5;
+    g.player.hp = 3;
+    g.player.poison_turns = 1;
+    g.map.tiles[5][5] = TILE_FLOOR;
+    g.map.tiles[5][6] = TILE_FLOOR;
+    action_resolve_player(&g, (Action){ACTION_MOVE, 6, 5});
+    ASSERT("fatal poison records its cause",
+        g.player.hp == 0 && g.message_count > 0 &&
+        strstr(g.messages[g.message_count - 1], "Poison!") != NULL);
 }
 
 void test_new_dungeon_enemies(void) {
