@@ -33,10 +33,16 @@ has not been found.
 
 The **HEALER** building is west of the blacksmith, north of the east-west road.
 Follow its short entrance path from that road to meet Lysa.
-She can separately restore all missing HP or MP for **1 gold per 3 points,
-rounded up**. Each price is shown before payment; select a treatment and press
-Enter or click its button to accept, or press Escape to leave. A resource that
-is already full costs nothing.
+She restores all missing HP for **1 gold per 3 HP, rounded up**. The price is
+shown before payment; press Enter or click the treatment button to accept,
+or Escape to leave. Full health costs nothing. Healing does not restore MP.
+
+### Town witch
+
+The **WITCH** hut stands east of the alchemist on the road to the Goblin
+Mountains. Morwen restores all missing MP for **1 gold per 3 MP, rounded up**.
+The price is shown before payment; press Enter or click the restoration button
+to accept, or Escape to leave. Full mana costs nothing.
 
 ### Goblin Mountains terrain
 
@@ -195,7 +201,6 @@ High priority
 3. Combat feedback
    Add clearer hit effects, critical indicators, blocked-damage feedback, status icons, and distinct weapon sounds.
 4. More weapon variation
-5. Rebalance mage class against warrior and rogue
 Polish priority
 1. Accessibility and controls
    Add remappable controls, text scaling, colorblind-safe indicators, adjustable message duration, and clearer interaction prompts.

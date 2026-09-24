@@ -12,7 +12,7 @@
 #define MIN_ROOM_H 8 // dungeon room size
 #define MAX_ROOM_H 14 // dungeon room size
 
-#define TOWN_W 40 // town dimensions
+#define TOWN_W 44 // town dimensions
 #define TOWN_H 25 // town dimensions
 #define TAVERN_X 4
 #define TAVERN_Y 2
@@ -36,6 +36,14 @@
 #define TOWN_HEALER_H 4
 #define TOWN_HEALER_DOOR_X (TOWN_HEALER_X + 2)
 #define TOWN_HEALER_DOOR_Y (TOWN_HEALER_Y + TOWN_HEALER_H - 1)
+#define TOWN_ALCHEMIST_X 29
+#define TOWN_ALCHEMIST_Y 7
+#define TOWN_WITCH_X 35
+#define TOWN_WITCH_Y 7
+#define TOWN_WITCH_W 5
+#define TOWN_WITCH_H 4
+#define TOWN_WITCH_DOOR_X (TOWN_WITCH_X + 2)
+#define TOWN_WITCH_DOOR_Y (TOWN_WITCH_Y + TOWN_WITCH_H - 1)
 
 #define ISLAND_W 40
 #define ISLAND_H 25
@@ -181,7 +189,9 @@ typedef enum {
     TILE_TEMPLE_TREASURE,
     TILE_TEMPLE_WATER,
     TILE_TEMPLE_RUBBLE,
-    TILE_NPC_ISLAND_NAHLA
+    TILE_NPC_ISLAND_NAHLA,
+    TILE_WITCH,
+    TILE_WITCH_DOOR
 } TileType;
 
 typedef struct {

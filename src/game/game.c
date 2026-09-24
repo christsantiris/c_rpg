@@ -1527,29 +1527,29 @@ void game_visit_healer(GameState *g) {
     push_message(g, message);
 }
 
-int game_healer_mana_price(const GameState *g) {
+int game_witch_price(const GameState *g) {
     int missing = g->player.max_mp - g->player.mp;
     return missing > 0 ? (missing + 2) / 3 : 0;
 }
 
-void game_visit_healer_mana(GameState *g) {
+void game_visit_witch(GameState *g) {
     if (g->location != LOCATION_TOWN || g->player.hp <= 0) {
         return;
     }
-    int price = game_healer_mana_price(g);
+    int price = game_witch_price(g);
     if (price == 0) {
-        push_message(g, "Lysa: Your mana is already fully restored.");
+        push_message(g, "Morwen: Your spirit is already full.");
         return;
     }
     if (g->gold < price) {
-        push_message(g, "Lysa: You do not have enough gold for restoration.");
+        push_message(g, "Morwen: You lack the gold for this ritual.");
         return;
     }
     g->gold -= price;
     g->player.mp = g->player.max_mp;
     char message[MAX_MESSAGE_LEN];
     snprintf(message, sizeof(message),
-        "Lysa restores your MP to full for %d gold.", price);
+        "Morwen restores your MP to full for %d gold.", price);
     push_message(g, message);
 }
 
