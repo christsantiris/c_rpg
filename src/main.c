@@ -668,6 +668,8 @@ int main(int argc, char **argv) {
                             screen = SCREEN_PLAYING;
                         } else if (result == SHOP_HEAL) {
                             game_visit_healer(&game);
+                        } else if (result == SHOP_EMERGENCY_HEAL) {
+                            game_visit_healer_emergency(&game);
                         } else if (result == SHOP_RESTORE_MANA) {
                             game_visit_witch(&game);
                         } else if (result == SHOP_BUY) {
@@ -1066,7 +1068,9 @@ int main(int argc, char **argv) {
                             shop_screen.type == SHOP_TYPE_WITCH) {
                             SDL_Point point = {event.button.x, event.button.y};
                             SDL_Rect heal = shop_healer_button_rect(&renderer, 0);
-                            SDL_Rect leave = shop_healer_button_rect(&renderer, 1);
+                            SDL_Rect emergency = shop_healer_button_rect(&renderer, 1);
+                            int leave_option = shop_screen.type == SHOP_TYPE_HEALER ? 2 : 1;
+                            SDL_Rect leave = shop_healer_button_rect(&renderer, leave_option);
                             if (SDL_PointInRect(&point, &heal)) {
                                 shop_screen.selected = 0;
                                 if (shop_screen.type == SHOP_TYPE_WITCH) {
@@ -1074,8 +1078,12 @@ int main(int argc, char **argv) {
                                 } else {
                                     game_visit_healer(&game);
                                 }
-                            } else if (SDL_PointInRect(&point, &leave)) {
+                            } else if (shop_screen.type == SHOP_TYPE_HEALER &&
+                                SDL_PointInRect(&point, &emergency)) {
                                 shop_screen.selected = 1;
+                                game_visit_healer_emergency(&game);
+                            } else if (SDL_PointInRect(&point, &leave)) {
+                                shop_screen.selected = leave_option;
                                 screen = SCREEN_PLAYING;
                             }
                             break;

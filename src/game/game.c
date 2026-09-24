@@ -555,6 +555,125 @@ static int spawn_into_open_tile(GameState *g, EnemyType type, int room_limit) {
     return 1;
 }
 
+static Enemy *spawn_quest_enemy_at(GameState *g, EnemyType type, int x, int y) {
+    int slot = -1;
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (!g->enemies[i].active) {
+            slot = i;
+            break;
+        }
+    }
+    if (slot < 0) {
+        if (g->enemy_count >= MAX_ENEMIES) {
+            return NULL;
+        }
+        slot = g->enemy_count++;
+    }
+    spawn_enemy(g, &g->enemies[slot], type, x, y);
+    return &g->enemies[slot];
+}
+
+static Enemy *spawn_quest_enemy_open(GameState *g, EnemyType type, int room_limit) {
+    int x;
+    int y;
+    if (!find_enemy_tile(g, &x, &y, room_limit)) {
+        return NULL;
+    }
+    return spawn_quest_enemy_at(g, type, x, y);
+}
+
+static void spawn_quest_enemy_near(GameState *g, EnemyType type, int center_x, int center_y) {
+    for (int radius = 1; radius <= 4; radius++) {
+        for (int y = center_y - radius; y <= center_y + radius; y++) {
+            for (int x = center_x - radius; x <= center_x + radius; x++) {
+                if ((x != center_x - radius && x != center_x + radius &&
+                    y != center_y - radius && y != center_y + radius) ||
+                    !enemy_tile_open(g, x, y)) {
+                    continue;
+                }
+                spawn_quest_enemy_at(g, type, x, y);
+                return;
+            }
+        }
+    }
+}
+
+static int place_dain_map_bearer(GameState *g) {
+    if (g->location != LOCATION_MOUNTAINS || g->dain_quest_state != 1) {
+        return 0;
+    }
+    EnemyType target_type;
+    int target_bit;
+    if (g->level == 2) {
+        target_type = ENEMY_GOBLIN_ARCHER;
+        target_bit = DAIN_FRAGMENT_ARCHER;
+    } else if (g->level == 3) {
+        target_type = ENEMY_GOBLIN_BOMBER;
+        target_bit = DAIN_FRAGMENT_BOMBER;
+    } else if (g->level == 5) {
+        target_type = ENEMY_GOBLIN_SHAMAN;
+        target_bit = DAIN_FRAGMENT_SHAMAN;
+    } else {
+        return 0;
+    }
+    if (g->dain_map_fragments & target_bit) {
+        return 0;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (g->enemies[i].active &&
+            g->enemies[i].dain_fragment == target_bit) {
+            return 0;
+        }
+    }
+    int room_limit = g->level == MOUNTAIN_DEPTH
+        ? g->map.room_count - 1 : g->map.room_count;
+    Enemy *target = spawn_quest_enemy_open(g, target_type, room_limit);
+    if (!target) {
+        return 0;
+    }
+    target->dain_fragment = target_bit;
+    target->max_hp = target->max_hp * 3 / 2;
+    target->hp = target->max_hp;
+    target->attack += 2;
+    strncpy(target->name, "Map Bearer", sizeof(target->name) - 1);
+    target->name[sizeof(target->name) - 1] = '\0';
+    EnemyType guard = g->level == 2 ? ENEMY_GOBLIN_SCOUT :
+        (g->level == 3 ? ENEMY_TUNNEL_SPIDER : ENEMY_HOBGOBLIN_GUARD);
+    spawn_quest_enemy_near(g, guard, target->x, target->y);
+    spawn_quest_enemy_near(g, guard, target->x, target->y);
+    return 1;
+}
+
+static int quest_group_pending(const GameState *g) {
+    if (g->location == LOCATION_DUNGEON && g->elowen_quest_state == 1) {
+        int bit = g->level == 2 ? 1 : (g->level == 4 ? 2 :
+            (g->level == 6 ? 4 : 0));
+        if (!bit) {
+            return 0;
+        }
+        return !(g->elowen_seals_restored & bit);
+    }
+    if (g->location == LOCATION_FOREST && g->alder_quest_state == 1) {
+        int bit = g->level == 2 ? ALDER_WARDEN_STAGE_2 :
+            (g->level == 5 ? ALDER_WARDEN_STAGE_5 :
+            (g->level == 7 ? ALDER_WARDEN_STAGE_7 : 0));
+        if (!bit) {
+            return 0;
+        }
+        return !(g->alder_wardens_rescued & bit);
+    }
+    if (g->location == LOCATION_COAST && g->mara_quest_state == 1) {
+        int bit = g->level == 1 ? MARA_BEACON_STAGE_1 :
+            (g->level == 3 ? MARA_BEACON_STAGE_3 :
+            (g->level == 6 ? MARA_BEACON_STAGE_6 : 0));
+        if (!bit) {
+            return 0;
+        }
+        return !(g->mara_beacons_lit & bit);
+    }
+    return 0;
+}
+
 void enemies_spawn(GameState *g) {
     g->enemy_count = 0;
     if (g->map.room_count == 0) {
@@ -563,6 +682,9 @@ void enemies_spawn(GameState *g) {
 
     int order_tier = region_order_tier(g);
     int num_enemies = 10 + g->level;
+    if (quest_group_pending(g)) {
+        num_enemies -= 3;
+    }
     if (num_enemies > MAX_ENEMIES) {
         num_enemies = MAX_ENEMIES;
     }
@@ -592,33 +714,7 @@ void enemies_spawn(GameState *g) {
         (g->location == LOCATION_COAST ? COAST_DEPTH : DUNGEON_DEPTH));
     int regular_room_limit = g->level == boss_level
         ? g->map.room_count - 1 : g->map.room_count;
-    if (g->location == LOCATION_MOUNTAINS && g->dain_quest_state == 1) {
-        EnemyType quest_target = ENEMY_GOBLIN_SCOUT;
-        int target_bit = 0;
-        if (g->level == 2) {
-            quest_target = ENEMY_GOBLIN_ARCHER;
-            target_bit = DAIN_FRAGMENT_ARCHER;
-        } else if (g->level == 3) {
-            quest_target = ENEMY_GOBLIN_BOMBER;
-            target_bit = DAIN_FRAGMENT_BOMBER;
-        } else if (g->level == 5) {
-            quest_target = ENEMY_GOBLIN_SHAMAN;
-            target_bit = DAIN_FRAGMENT_SHAMAN;
-        }
-        if (target_bit && !(g->dain_map_fragments & target_bit)) {
-            int target_index = g->enemy_count;
-            if (spawn_into_open_tile(g, quest_target, regular_room_limit)) {
-                Enemy *target = &g->enemies[target_index];
-                target->dain_fragment = target_bit;
-                target->max_hp = target->max_hp * 3 / 2;
-                target->hp = target->max_hp;
-                target->attack += 2;
-                strncpy(target->name, "Map Bearer",
-                    sizeof(target->name) - 1);
-                target->name[sizeof(target->name) - 1] = '\0';
-            }
-        }
-    }
+    place_dain_map_bearer(g);
     if (g->location == LOCATION_COAST) {
         for (int y = 1; y < MAP_H - 1; y++) {
             for (int x = 2; x < MAP_W - 1; x++) {
@@ -1109,9 +1205,9 @@ static int active_depth(const GameState *g) {
     return DUNGEON_DEPTH;
 }
 
-static void place_elowen_seal(GameState *g) {
+static int place_elowen_seal(GameState *g) {
     if (g->location != LOCATION_DUNGEON || g->elowen_quest_state != 1) {
-        return;
+        return 0;
     }
     int seal_index = -1;
     if (g->level == 2) {
@@ -1122,7 +1218,15 @@ static void place_elowen_seal(GameState *g) {
         seal_index = 2;
     }
     if (seal_index < 0 || g->map.room_count < 2) {
-        return;
+        return 0;
+    }
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (g->map.tiles[y][x] == TILE_BROKEN_BURIAL_SEAL ||
+                g->map.tiles[y][x] == TILE_RESTORED_BURIAL_SEAL) {
+                return 0;
+            }
+        }
     }
     Room *room = &g->map.rooms[g->map.room_count / 2];
     int x;
@@ -1131,16 +1235,33 @@ static void place_elowen_seal(GameState *g) {
     g->map.tiles[y][x] =
         (g->elowen_seals_restored & (1 << seal_index))
         ? TILE_RESTORED_BURIAL_SEAL : TILE_BROKEN_BURIAL_SEAL;
+    return !(g->elowen_seals_restored & (1 << seal_index));
+}
+
+static void spawn_elowen_guardians(GameState *g) {
+    EnemyType primary = g->level == 2 ? ENEMY_SKELETON :
+        (g->level == 4 ? ENEMY_WRAITH : ENEMY_CRYPT_CONJURER);
+    EnemyType support = g->level == 2 ? ENEMY_CRYPT_BAT :
+        (g->level == 4 ? ENEMY_SKELETON : ENEMY_WRAITH);
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (g->map.tiles[y][x] != TILE_BROKEN_BURIAL_SEAL) {
+                continue;
+            }
+            spawn_quest_enemy_near(g, primary, x, y);
+            spawn_quest_enemy_near(g, support, x, y);
+            spawn_quest_enemy_near(g, support, x, y);
+            return;
+        }
+    }
 }
 
 static int alder_warden_bit(int level) {
     if (level == 2) {
         return ALDER_WARDEN_STAGE_2;
-    }
-    if (level == 5) {
+    } else if (level == 5) {
         return ALDER_WARDEN_STAGE_5;
-    }
-    if (level == 7) {
+    } else if (level == 7) {
         return ALDER_WARDEN_STAGE_7;
     }
     return 0;
@@ -1192,16 +1313,20 @@ static int place_alder_warden(GameState *g) {
 }
 
 static void spawn_alder_guardian(GameState *g) {
-    if (g->location != LOCATION_FOREST || g->enemy_count >= MAX_ENEMIES) {
+    if (g->location != LOCATION_FOREST) {
         return;
     }
-    EnemyType type;
+    EnemyType primary;
+    EnemyType support;
     if (g->level == 2) {
-        type = ENEMY_GIANT_SPIDER;
+        primary = ENEMY_GIANT_SPIDER;
+        support = ENEMY_BLIGHTED_WOLF;
     } else if (g->level == 5) {
-        type = ENEMY_DARK_ELF;
+        primary = ENEMY_DARK_ELF;
+        support = ENEMY_PIXIE;
     } else if (g->level == 7) {
-        type = ENEMY_FOREST_TROLL;
+        primary = ENEMY_FOREST_TROLL;
+        support = ENEMY_BLIGHTED_WOLF;
     } else {
         return;
     }
@@ -1210,19 +1335,10 @@ static void spawn_alder_guardian(GameState *g) {
             if (g->map.tiles[y][x] != TILE_FOREST_WARDEN) {
                 continue;
             }
-            for (int dy = -2; dy <= 2; dy++) {
-                for (int dx = -2; dx <= 2; dx++) {
-                    int guardian_x = x + dx;
-                    int guardian_y = y + dy;
-                    if ((dx == 0 && dy == 0) ||
-                        !enemy_tile_open(g, guardian_x, guardian_y)) {
-                        continue;
-                    }
-                    spawn_enemy(g, &g->enemies[g->enemy_count++], type,
-                        guardian_x, guardian_y);
-                    return;
-                }
-            }
+            spawn_quest_enemy_near(g, primary, x, y);
+            spawn_quest_enemy_near(g, support, x, y);
+            spawn_quest_enemy_near(g, support, x, y);
+            return;
         }
     }
 }
@@ -1230,11 +1346,9 @@ static void spawn_alder_guardian(GameState *g) {
 static int mara_beacon_bit(int level) {
     if (level == 1) {
         return MARA_BEACON_STAGE_1;
-    }
-    if (level == 3) {
+    } else if (level == 3) {
         return MARA_BEACON_STAGE_3;
-    }
-    if (level == 6) {
+    } else if (level == 6) {
         return MARA_BEACON_STAGE_6;
     }
     return 0;
@@ -1293,29 +1407,49 @@ static int place_mara_beacon(GameState *g) {
 }
 
 static void spawn_mara_guardian(GameState *g) {
-    if (g->location != LOCATION_COAST || g->enemy_count >= MAX_ENEMIES) {
+    if (g->location != LOCATION_COAST) {
         return;
     }
-    EnemyType type;
-    if (g->level == 3) {
-        type = ENEMY_ANIMATED_STATUE;
+    EnemyType primary;
+    EnemyType support;
+    if (g->level == 1) {
+        primary = ENEMY_GIANT_CRAB;
+        support = ENEMY_MERFOLK;
+    } else if (g->level == 3) {
+        primary = ENEMY_ANIMATED_STATUE;
+        support = ENEMY_GIANT_CRAB;
     } else if (g->level == 6) {
-        type = ENEMY_SEA_SERPENT;
+        primary = ENEMY_SEA_SERPENT;
+        support = ENEMY_WATER_ELEMENTAL;
     } else {
         return;
     }
-    int room_index = g->level == 3 ? 3 : 8;
-    if (room_index >= g->map.room_count) {
-        return;
-    }
-    Room *room = &g->map.rooms[room_index];
-    for (int y = room->y + 1; y < room->y + room->h - 1; y++) {
-        for (int x = room->x + 1; x < room->x + room->w - 1; x++) {
-            if (enemy_tile_open(g, x, y)) {
-                spawn_enemy(g, &g->enemies[g->enemy_count++], type, x, y);
-                return;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (g->map.tiles[y][x] != TILE_COAST_BEACON_UNLIT) {
+                continue;
             }
+            spawn_quest_enemy_near(g, primary, x, y);
+            spawn_quest_enemy_near(g, support, x, y);
+            spawn_quest_enemy_near(g, support, x, y);
+            return;
         }
+    }
+}
+
+void game_refresh_quest_encounters(GameState *g) {
+    int seal_placed = place_elowen_seal(g);
+    int warden_placed = place_alder_warden(g);
+    int beacon_placed = place_mara_beacon(g);
+    place_dain_map_bearer(g);
+    if (seal_placed) {
+        spawn_elowen_guardians(g);
+    }
+    if (warden_placed) {
+        spawn_alder_guardian(g);
+    }
+    if (beacon_placed) {
+        spawn_mara_guardian(g);
     }
 }
 
@@ -1341,10 +1475,13 @@ static void generate_active_level(GameState *g) {
         game_update_level_progress(g);
         return;
     }
-    place_elowen_seal(g);
+    int seal_placed = place_elowen_seal(g);
     int warden_placed = place_alder_warden(g);
     int beacon_placed = place_mara_beacon(g);
     enemies_spawn(g);
+    if (seal_placed) {
+        spawn_elowen_guardians(g);
+    }
     if (warden_placed) {
         spawn_alder_guardian(g);
     }
@@ -1408,12 +1545,7 @@ void game_descend(GameState *g) {
         for (int i = 0; i < g->enemy_count; i++)
             g->enemies[i] = cache[g->level - 1].enemies[i];
         g->level_cleared = cache[g->level - 1].level_cleared;
-        if (place_alder_warden(g)) {
-            spawn_alder_guardian(g);
-        }
-        if (place_mara_beacon(g)) {
-            spawn_mara_guardian(g);
-        }
+        game_refresh_quest_encounters(g);
     } else {
         g->level_cleared = 0;
         generate_active_level(g);
@@ -1445,12 +1577,7 @@ void game_ascend(GameState *g) {
         g->level_cleared = cache[g->level - 1].level_cleared;
         for (int i = 0; i < g->enemy_count; i++)
             g->enemies[i] = cache[g->level - 1].enemies[i];
-        if (place_alder_warden(g)) {
-            spawn_alder_guardian(g);
-        }
-        if (place_mara_beacon(g)) {
-            spawn_mara_guardian(g);
-        }
+        game_refresh_quest_encounters(g);
     } else {
         g->level_cleared = 0;
     }
@@ -1522,11 +1649,6 @@ void game_visit_healer(GameState *g) {
         push_message(g, "Lysa: You are already in good health.");
         return;
     }
-    if (game_healer_emergency_available(g)) {
-        g->player.hp = (g->player.max_hp + 1) / 2;
-        push_message(g, "Lysa provides emergency care, restoring you to half health.");
-        return;
-    }
     if (g->gold < price) {
         push_message(g, "Lysa: You do not have enough gold for treatment.");
         return;
@@ -1536,6 +1658,18 @@ void game_visit_healer(GameState *g) {
     char message[MAX_MESSAGE_LEN];
     snprintf(message, sizeof(message), "Lysa restores your HP to full for %d gold.", price);
     push_message(g, message);
+}
+
+void game_visit_healer_emergency(GameState *g) {
+    if (g->location != LOCATION_TOWN || g->player.hp <= 0) {
+        return;
+    }
+    if (!game_healer_emergency_available(g)) {
+        push_message(g, "Lysa: Emergency care is reserved for critical need.");
+        return;
+    }
+    g->player.hp = (g->player.max_hp + 1) / 2;
+    push_message(g, "Lysa provides emergency care, restoring you to half health.");
 }
 
 int game_witch_price(const GameState *g) {
@@ -1948,18 +2082,12 @@ void game_use_town_portal(GameState *g) {
     g->location = g->portal_location;
     g->level = level;
     g->map = cache[level - 1].map;
-    place_elowen_seal(g);
     g->enemy_count = cache[level - 1].enemy_count;
     g->level_cleared = cache[level - 1].level_cleared;
     for (int i = 0; i < g->enemy_count; i++)
         g->enemies[i] = cache[level - 1].enemies[i];
+    game_refresh_quest_encounters(g);
     sync_temple_floor_state(g);
-    if (place_alder_warden(g)) {
-        spawn_alder_guardian(g);
-    }
-    if (place_mara_beacon(g)) {
-        spawn_mara_guardian(g);
-    }
     int landing_x = g->portal_x;
     int landing_y = g->portal_y;
     if (landing_x >= 0 && landing_x < MAP_W &&
@@ -2140,6 +2268,32 @@ void game_talk_to_rowan(GameState *g) {
         "For now, the harbor is closed.");
 }
 
+static void prepare_quest_expedition(GameState *g, Location location) {
+    LevelCache *cache;
+    int *max_level;
+    if (location == LOCATION_DUNGEON) {
+        cache = g->level_cache;
+        max_level = &g->max_level_reached;
+    } else if (location == LOCATION_FOREST) {
+        cache = g->forest_cache;
+        max_level = &g->max_forest_level_reached;
+    } else if (location == LOCATION_MOUNTAINS) {
+        cache = g->mountain_cache;
+        max_level = &g->max_mountain_level_reached;
+    } else {
+        cache = g->coast_cache;
+        max_level = &g->max_coast_level_reached;
+    }
+    for (int i = 0; i < MAX_REGION_DEPTH; i++) {
+        cache[i].valid = 0;
+        cache[i].level_cleared = 0;
+    }
+    *max_level = 1;
+    if (g->portal_active && g->portal_location == location) {
+        g->portal_active = 0;
+    }
+}
+
 void game_talk_to_elowen(GameState *g) {
     g->dialogue_active = 1;
     strncpy(g->dialogue_speaker, "Elowen", MAX_SPEAKER_LEN - 1);
@@ -2149,8 +2303,9 @@ void game_talk_to_elowen(GameState *g) {
     if (g->elowen_quest_state == 0) {
         g->elowen_quest_state = 1;
         g->elowen_seals_restored = 0;
+        prepare_quest_expedition(g, LOCATION_DUNGEON);
         strncpy(g->dialogue_text,
-            "Three shattered burial seals let the dead rise. Restore the seals on floors 2, 4, and 6.",
+            "The dead have gathered around shattered burial seals on dungeon floors 2, 4, and 6. Break through them and restore each seal.",
             MAX_DIALOGUE_LEN - 1);
         g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
         push_message(g, "Quest assigned: The Broken Seals.");
@@ -2198,8 +2353,9 @@ void game_talk_to_dain(GameState *g) {
     if (g->dain_quest_state == 0) {
         g->dain_quest_state = 1;
         g->dain_map_fragments = 0;
+        prepare_quest_expedition(g, LOCATION_MOUNTAINS);
         strncpy(g->dialogue_text,
-            "Goblins tore an old dwarven treasure map into three pieces. An Archer, a Bomber, and a Shaman carry the fragments. Recover them.",
+            "Three goblin warbands carry pieces of an old dwarven map. Hunt their leaders on mountain stages 2, 3, and 5.",
             MAX_DIALOGUE_LEN - 1);
         g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
         push_message(g, "Assigned: Recover the Treasure Map.");
@@ -2275,8 +2431,9 @@ void game_talk_to_alder(GameState *g) {
     if (g->alder_quest_state == 0) {
         g->alder_quest_state = 1;
         g->alder_wardens_rescued = 0;
+        prepare_quest_expedition(g, LOCATION_FOREST);
         strncpy(g->dialogue_text,
-            "Three of my wardens followed the dead paths beneath the trees. Find them on stages 2, 5, and 7 before the forest claims them.",
+            "Three of my wardens are trapped behind enemy hunting parties on forest stages 2, 5, and 7. Defeat their captors and bring them home.",
             MAX_DIALOGUE_LEN - 1);
         g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
         push_message(g, "Assigned: The Lost Wardens.");
@@ -2290,7 +2447,7 @@ void game_talk_to_alder(GameState *g) {
             }
         }
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "You have rescued %d of my 3 wardens. Search the secluded groves on forest stages 2, 5, and 7.",
+            "You have rescued %d of my 3 wardens. Search the guarded groves on forest stages 2, 5, and 7.",
             rescued);
         char status[MAX_MESSAGE_LEN];
         snprintf(status, sizeof(status), "Quest progress: %d/3 wardens.",
@@ -2371,8 +2528,9 @@ void game_talk_to_mara(GameState *g) {
     if (g->mara_quest_state == 0) {
         g->mara_quest_state = 1;
         g->mara_beacons_lit = 0;
+        prepare_quest_expedition(g, LOCATION_COAST);
         strncpy(g->dialogue_text,
-            "Take this sheltered ember to the drowned beacons on coast stages 1, 3, and 6. Lower the tide, then relight each flame.",
+            "Drowned guardians surround beacons on coast stages 1, 3, and 6. Lower the tide, defeat them, and relight each flame.",
             MAX_DIALOGUE_LEN - 1);
         g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
         push_message(g, "Assigned: Relight the Drowned Beacons.");

@@ -1644,6 +1644,7 @@ int load_game(GameState *g, int slot) {
         }
     }
 
+    game_refresh_quest_encounters(g);
     cJSON_Delete(root);
     return 1;
 }
