@@ -26,8 +26,9 @@ void test_town_healer(void) {
         plaza &= upper == TILE_TOWN_PATH ||
             (x == TOWN_CAIN_X && upper == TILE_NPC_CAIN);
         plaza &= g.map.tiles[dy + 2][x] == TILE_TOWN_PATH;
+        plaza &= g.map.tiles[dy + 3][x] == TILE_TOWN_PATH;
     }
-    ASSERT("two-tile cobblestone plaza reaches every north shop door", plaza &&
+    ASSERT("three-tile cobblestone plaza reaches every north shop door", plaza &&
         g.map.tiles[TOWN_BLACKSMITH_Y + 4][TOWN_BLACKSMITH_X + 2] == TILE_TOWN_PATH &&
         g.map.tiles[11][30] == TILE_TOWN_PATH);
     ASSERT("former healer lot and lane return to grass",
@@ -42,12 +43,15 @@ void test_town_healer(void) {
     int starts_on_heal = shop.selected == 0 &&
         shop_handle_key(&shop, SDL_SCANCODE_RETURN) == SHOP_HEAL;
     shop_handle_key(&shop, SDL_SCANCODE_DOWN);
-    int selects_exit = shop.selected == 1 &&
+    int selects_mana = shop.selected == 1 &&
+        shop_handle_key(&shop, SDL_SCANCODE_RETURN) == SHOP_RESTORE_MANA;
+    shop_handle_key(&shop, SDL_SCANCODE_S);
+    int selects_exit = shop.selected == 2 &&
         shop_handle_key(&shop, SDL_SCANCODE_KP_ENTER) == SHOP_CLOSED;
     shop_handle_key(&shop, SDL_SCANCODE_W);
-    ASSERT("healer has selectable treatment and exit options",
-        shop.item_count == 0 && starts_on_heal && selects_exit &&
-        shop.selected == 0 && shop_handle_key(&shop, SDL_SCANCODE_TAB) == SHOP_NONE &&
+    ASSERT("healer has selectable HP, MP and exit options",
+        shop.item_count == 0 && starts_on_heal && selects_mana && selects_exit &&
+        shop.selected == 1 && shop_handle_key(&shop, SDL_SCANCODE_TAB) == SHOP_NONE &&
         shop.mode == 0 && shop_handle_key(&shop, SDL_SCANCODE_ESCAPE) == SHOP_CLOSED);
     g.player.hp = g.player.max_hp - 30;
     g.gold = 9;
@@ -74,6 +78,33 @@ void test_town_healer(void) {
     game_visit_healer(&g);
     ASSERT("separate treatments charge their current cost", g.gold == 88);
 
+    g.player.mp = g.player.max_mp - 30;
+    g.gold = 9;
+    ASSERT("restoring thirty MP costs ten gold",
+        game_healer_mana_price(&g) == 10);
+    game_visit_healer_mana(&g);
+    ASSERT("insufficient funds leave both gold and MP unchanged",
+        g.gold == 9 && g.player.mp == g.player.max_mp - 30);
+    g.gold = 10;
+    int hp = g.player.hp;
+    game_visit_healer_mana(&g);
+    ASSERT("exact payment restores full MP without changing HP",
+        g.gold == 0 && g.player.mp == g.player.max_mp && g.player.hp == hp);
+    g.gold = 100;
+    game_visit_healer_mana(&g);
+    ASSERT("full mana does not charge the player",
+        game_healer_mana_price(&g) == 0 && g.gold == 100);
+    g.player.mp -= 31;
+    ASSERT("larger mana deficits cost more with rounded-up pricing",
+        game_healer_mana_price(&g) == 11);
+    game_visit_healer_mana(&g);
+    g.player.mp--;
+    ASSERT("one missing MP costs one gold",
+        game_healer_mana_price(&g) == 1);
+    game_visit_healer_mana(&g);
+    ASSERT("separate mana restorations charge their current cost",
+        g.gold == 88 && g.player.mp == g.player.max_mp);
+
     const int slot = 99012;
     if (save_exists(slot)) {
         ASSERT("healer test save slot must be unused", 0);
@@ -81,8 +112,9 @@ void test_town_healer(void) {
     }
     int saved = save_game(&g, slot);
     int restored = saved && load_game(&loaded, slot);
-    ASSERT("healing payment, restored HP and healer building survive save/load",
+    ASSERT("restored HP, MP, payment and healer building survive save/load",
         restored && loaded.gold == 88 && loaded.player.hp == loaded.player.max_hp &&
+        loaded.player.mp == loaded.player.max_mp &&
         loaded.map.tiles[dy][dx] == TILE_HEALER_DOOR);
     remove("saves/savegame_99012.json");
 }
@@ -226,6 +258,7 @@ void test_town_map(void) {
     ASSERT("cobblestone plaza reaches all three shop doors",
         m.tiles[TOWN_HEALER_DOOR_Y + 1][TOWN_HEALER_DOOR_X] == TILE_TOWN_PATH &&
         m.tiles[TOWN_HEALER_DOOR_Y + 1][9] == TILE_TOWN_PATH &&
+        m.tiles[TOWN_HEALER_DOOR_Y + 3][9] == TILE_TOWN_PATH &&
         m.tiles[TOWN_BLACKSMITH_Y + 4][TOWN_BLACKSMITH_X + 2] == TILE_TOWN_PATH &&
         m.tiles[11][24] == TILE_TOWN_PATH &&
         m.tiles[11][30] == TILE_TOWN_PATH);

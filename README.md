@@ -33,9 +33,10 @@ has not been found.
 
 The **HEALER** building is west of the blacksmith, north of the east-west road.
 Follow its short entrance path from that road to meet Lysa.
-She restores all missing HP for **1 gold per 3 HP, rounded up**. The price is
-shown before payment; press Enter or click the treatment button to accept,
-or Escape to leave. Full health costs nothing. Healing does not restore MP.
+She can separately restore all missing HP or MP for **1 gold per 3 points,
+rounded up**. Each price is shown before payment; select a treatment and press
+Enter or click its button to accept, or press Escape to leave. A resource that
+is already full costs nothing.
 
 ### Goblin Mountains terrain
 

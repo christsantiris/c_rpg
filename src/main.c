@@ -666,6 +666,8 @@ int main(int argc, char **argv) {
                             screen = SCREEN_PLAYING;
                         } else if (result == SHOP_HEAL) {
                             game_visit_healer(&game);
+                        } else if (result == SHOP_RESTORE_MANA) {
+                            game_visit_healer_mana(&game);
                         } else if (result == SHOP_BUY) {
                             Item *item = &shop_screen.items[shop_screen.selected];
                             int price = shop_buy_price(item);
@@ -1061,12 +1063,16 @@ int main(int argc, char **argv) {
                         if (shop_screen.type == SHOP_TYPE_HEALER) {
                             SDL_Point point = {event.button.x, event.button.y};
                             SDL_Rect heal = shop_healer_button_rect(&renderer, 0);
-                            SDL_Rect leave = shop_healer_button_rect(&renderer, 1);
+                            SDL_Rect mana = shop_healer_button_rect(&renderer, 1);
+                            SDL_Rect leave = shop_healer_button_rect(&renderer, 2);
                             if (SDL_PointInRect(&point, &heal)) {
                                 shop_screen.selected = 0;
                                 game_visit_healer(&game);
-                            } else if (SDL_PointInRect(&point, &leave)) {
+                            } else if (SDL_PointInRect(&point, &mana)) {
                                 shop_screen.selected = 1;
+                                game_visit_healer_mana(&game);
+                            } else if (SDL_PointInRect(&point, &leave)) {
+                                shop_screen.selected = 2;
                                 screen = SCREEN_PLAYING;
                             }
                             break;

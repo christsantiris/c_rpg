@@ -10,7 +10,8 @@ typedef enum {
     SHOP_CLOSED,
     SHOP_BUY,
     SHOP_SELL,
-    SHOP_HEAL
+    SHOP_HEAL,
+    SHOP_RESTORE_MANA
 } ShopResult;
 
 typedef enum {

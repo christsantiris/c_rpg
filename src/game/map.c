@@ -1084,9 +1084,12 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
         }
     }
     m->tiles[TOWN_HEALER_DOOR_Y][TOWN_HEALER_DOOR_X] = TILE_HEALER_DOOR;
-    // Form a two-tile cobblestone plaza from the healer to the alchemist.
+    // Form a three-tile cobblestone plaza from the healer to the alchemist.
     for (int x = TOWN_HEALER_DOOR_X; x <= 30; x++) {
-        m->tiles[TOWN_HEALER_DOOR_Y + 1][x] = TILE_TOWN_PATH;
+        for (int y = TOWN_HEALER_DOOR_Y + 1;
+            y <= TOWN_HEALER_DOOR_Y + 3; y++) {
+            m->tiles[y][x] = TILE_TOWN_PATH;
+        }
     }
 
     map_place_town_harbor(m);
