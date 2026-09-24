@@ -338,6 +338,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_ISLAND_LAGOON &&
         m->tiles[y][x] != TILE_ISLAND_TEMPLE_GATE &&
         m->tiles[y][x] != TILE_NPC_ISLAND_CAPTAIN &&
+        m->tiles[y][x] != TILE_NPC_ISLAND_NAHLA &&
         m->tiles[y][x] != TILE_TEMPLE_WALL &&
         m->tiles[y][x] != TILE_TEMPLE_MOON_DOOR_CLOSED &&
         m->tiles[y][x] != TILE_TEMPLE_DORMANT_SENTINEL &&
@@ -1083,9 +1084,12 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
         }
     }
     m->tiles[TOWN_HEALER_DOOR_Y][TOWN_HEALER_DOOR_X] = TILE_HEALER_DOOR;
-    // Form a two-tile cobblestone plaza from the healer to the alchemist.
+    // Form a three-tile cobblestone plaza from the healer to the alchemist.
     for (int x = TOWN_HEALER_DOOR_X; x <= 30; x++) {
-        m->tiles[TOWN_HEALER_DOOR_Y + 1][x] = TILE_TOWN_PATH;
+        for (int y = TOWN_HEALER_DOOR_Y + 1;
+            y <= TOWN_HEALER_DOOR_Y + 3; y++) {
+            m->tiles[y][x] = TILE_TOWN_PATH;
+        }
     }
 
     map_place_town_harbor(m);
@@ -1219,6 +1223,7 @@ void map_generate_island(Map *m, int *spawn_x, int *spawn_y) {
     m->tiles[ISLAND_LAGOON_Y][ISLAND_LAGOON_X] = TILE_ISLAND_LAGOON;
     m->tiles[ISLAND_SHIP_Y][ISLAND_SHIP_X] = TILE_ISLAND_SHIP;
     m->tiles[ISLAND_CAPTAIN_Y][ISLAND_CAPTAIN_X] = TILE_NPC_ISLAND_CAPTAIN;
+    m->tiles[ISLAND_NAHLA_Y][ISLAND_NAHLA_X] = TILE_NPC_ISLAND_NAHLA;
 
     *spawn_x = ISLAND_SPAWN_X;
     *spawn_y = ISLAND_SPAWN_Y;
@@ -1228,57 +1233,121 @@ void map_generate_island(Map *m, int *spawn_x, int *spawn_y) {
     m->stairs_down_y = ISLAND_GATE_Y;
 }
 
-void map_generate_temple(Map *m, int *spawn_x, int *spawn_y) {
+void map_generate_temple(Map *m, int level, int *spawn_x, int *spawn_y) {
     map_clear_exploration(m);
-    m->room_count = 5;
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
             m->tiles[y][x] = TILE_TEMPLE_WALL;
         }
     }
 
-    fill_rect(m, 26, 28, 13, 7, TILE_TEMPLE_FLOOR);
-    fill_rect(m, 4, 22, 21, 10, TILE_TEMPLE_FLOOR);
-    fill_rect(m, 39, 22, 21, 10, TILE_TEMPLE_FLOOR);
-    fill_rect(m, 20, 13, 25, 10, TILE_TEMPLE_FLOOR);
-    fill_rect(m, 22, 2, 21, 10, TILE_TEMPLE_FLOOR);
-    fill_rect(m, 30, 10, 5, 19, TILE_TEMPLE_FLOOR);
-    fill_rect(m, 24, 27, 3, 1, TILE_TEMPLE_FLOOR);
-    fill_rect(m, 38, 27, 3, 1, TILE_TEMPLE_FLOOR);
-
-    m->rooms[0] = (Room){26, 28, 13, 7};
-    m->rooms[1] = (Room){4, 22, 21, 10};
-    m->rooms[2] = (Room){39, 22, 21, 10};
-    m->rooms[3] = (Room){20, 13, 25, 10};
-    m->rooms[4] = (Room){22, 2, 21, 10};
-
-    m->tiles[35][TEMPLE_ENTRANCE_X] = TILE_TEMPLE_ENTRANCE;
-    m->tiles[30][32] = TILE_TEMPLE_ALTAR;
-    m->tiles[27][25] = TILE_TEMPLE_MOON_DOOR_CLOSED;
-    m->tiles[27][39] = TILE_TEMPLE_MOON_DOOR_CLOSED;
-    m->tiles[12][32] = TILE_TEMPLE_MOON_DOOR_CLOSED;
-    m->tiles[27][22] = TILE_TEMPLE_DORMANT_SENTINEL;
-    m->tiles[27][42] = TILE_TEMPLE_DORMANT_SENTINEL;
-    m->tiles[16][23] = TILE_TEMPLE_DORMANT_SENTINEL;
-    m->tiles[16][41] = TILE_TEMPLE_DORMANT_SENTINEL;
-    m->tiles[26][29] = TILE_TEMPLE_SOLAR_TRAP;
-    m->tiles[26][35] = TILE_TEMPLE_SOLAR_TRAP;
-    m->tiles[18][28] = TILE_TEMPLE_SOLAR_TRAP;
-    m->tiles[18][36] = TILE_TEMPLE_SOLAR_TRAP;
-    fill_rect(m, 46, 24, 10, 5, TILE_TEMPLE_WATER);
-    m->tiles[25][50] = TILE_TEMPLE_FLOOR;
-    m->tiles[26][52] = TILE_TEMPLE_ALTAR;
-    m->tiles[17][32] = TILE_TEMPLE_ALTAR;
-    for (int x = 22; x <= 42; x++) {
-        m->tiles[6][x] = TILE_TEMPLE_WALL;
+    if (level == 2) {
+        m->room_count = 6;
+        fill_rect(m, 24, 28, 17, 7, TILE_TEMPLE_FLOOR);
+        fill_rect(m, 5, 21, 20, 9, TILE_TEMPLE_FLOOR);
+        fill_rect(m, 39, 21, 20, 9, TILE_TEMPLE_FLOOR);
+        fill_rect(m, 22, 12, 21, 10, TILE_TEMPLE_FLOOR);
+        fill_rect(m, 5, 3, 20, 8, TILE_TEMPLE_FLOOR);
+        fill_rect(m, 39, 3, 20, 8, TILE_TEMPLE_FLOOR);
+        fill_rect(m, 30, 3, 5, 7, TILE_TEMPLE_FLOOR);
+        fill_rect(m, 30, 8, 5, 21, TILE_TEMPLE_FLOOR);
+        fill_rect(m, 23, 25, 18, 2, TILE_TEMPLE_FLOOR);
+        fill_rect(m, 23, 8, 18, 2, TILE_TEMPLE_FLOOR);
+        m->rooms[0] = (Room){24, 28, 17, 7};
+        m->rooms[1] = (Room){5, 21, 20, 9};
+        m->rooms[2] = (Room){39, 21, 20, 9};
+        m->rooms[3] = (Room){22, 12, 21, 10};
+        m->rooms[4] = (Room){5, 3, 20, 8};
+        m->rooms[5] = (Room){39, 3, 20, 8};
+        m->tiles[25][23] = TILE_TEMPLE_MOON_DOOR_CLOSED;
+        m->tiles[25][40] = TILE_TEMPLE_MOON_DOOR_CLOSED;
+        m->tiles[16][32] = TILE_TEMPLE_ALTAR;
+        m->tiles[23][20] = TILE_TEMPLE_DORMANT_SENTINEL;
+        m->tiles[23][44] = TILE_TEMPLE_DORMANT_SENTINEL;
+        m->tiles[18][27] = TILE_TEMPLE_SOLAR_TRAP;
+        m->tiles[18][37] = TILE_TEMPLE_SOLAR_TRAP;
+    } else if (level == 3) {
+        m->room_count = 6;
+        fill_rect(m, 27, 29, 11, 6, TILE_TEMPLE_FLOOR);
+        fill_rect(m, 4, 22, 22, 8, TILE_TEMPLE_FLOOR);
+        fill_rect(m, 38, 22, 22, 8, TILE_TEMPLE_FLOOR);
+        fill_rect(m, 17, 13, 30, 8, TILE_TEMPLE_FLOOR);
+        fill_rect(m, 5, 3, 20, 8, TILE_TEMPLE_FLOOR);
+        fill_rect(m, 39, 3, 20, 8, TILE_TEMPLE_FLOOR);
+        fill_rect(m, 30, 3, 5, 7, TILE_TEMPLE_FLOOR);
+        fill_rect(m, 30, 8, 5, 22, TILE_TEMPLE_FLOOR);
+        fill_rect(m, 24, 25, 17, 2, TILE_TEMPLE_FLOOR);
+        fill_rect(m, 23, 8, 18, 2, TILE_TEMPLE_FLOOR);
+        m->rooms[0] = (Room){27, 29, 11, 6};
+        m->rooms[1] = (Room){4, 22, 22, 8};
+        m->rooms[2] = (Room){38, 22, 22, 8};
+        m->rooms[3] = (Room){17, 13, 30, 8};
+        m->rooms[4] = (Room){5, 3, 20, 8};
+        m->rooms[5] = (Room){39, 3, 20, 8};
+        m->tiles[25][24] = TILE_TEMPLE_MOON_DOOR_CLOSED;
+        m->tiles[25][40] = TILE_TEMPLE_MOON_DOOR_CLOSED;
+        m->tiles[12][32] = TILE_TEMPLE_MOON_DOOR_CLOSED;
+        m->tiles[17][32] = TILE_TEMPLE_ALTAR;
+        m->tiles[24][20] = TILE_TEMPLE_DORMANT_SENTINEL;
+        m->tiles[24][44] = TILE_TEMPLE_DORMANT_SENTINEL;
+        m->tiles[16][22] = TILE_TEMPLE_DORMANT_SENTINEL;
+        m->tiles[16][42] = TILE_TEMPLE_DORMANT_SENTINEL;
+        fill_rect(m, 18, 15, 5, 4, TILE_TEMPLE_WATER);
+        fill_rect(m, 42, 15, 4, 4, TILE_TEMPLE_WATER);
+    } else {
+        m->room_count = 5;
+        fill_rect(m, 26, 28, 13, 7, TILE_TEMPLE_FLOOR);
+        fill_rect(m, 4, 22, 21, 10, TILE_TEMPLE_FLOOR);
+        fill_rect(m, 39, 22, 21, 10, TILE_TEMPLE_FLOOR);
+        fill_rect(m, 20, 13, 25, 10, TILE_TEMPLE_FLOOR);
+        fill_rect(m, 22, 2, 21, 10, TILE_TEMPLE_FLOOR);
+        fill_rect(m, 30, 10, 5, 19, TILE_TEMPLE_FLOOR);
+        fill_rect(m, 24, 27, 3, 1, TILE_TEMPLE_FLOOR);
+        fill_rect(m, 38, 27, 3, 1, TILE_TEMPLE_FLOOR);
+        m->rooms[0] = (Room){26, 28, 13, 7};
+        m->rooms[1] = (Room){4, 22, 21, 10};
+        m->rooms[2] = (Room){39, 22, 21, 10};
+        m->rooms[3] = (Room){20, 13, 25, 10};
+        m->rooms[4] = (Room){22, 2, 21, 10};
+        m->tiles[30][32] = TILE_TEMPLE_ALTAR;
+        m->tiles[27][25] = TILE_TEMPLE_MOON_DOOR_CLOSED;
+        m->tiles[27][39] = TILE_TEMPLE_MOON_DOOR_CLOSED;
+        m->tiles[12][32] = TILE_TEMPLE_MOON_DOOR_CLOSED;
+        m->tiles[27][22] = TILE_TEMPLE_DORMANT_SENTINEL;
+        m->tiles[27][42] = TILE_TEMPLE_DORMANT_SENTINEL;
+        m->tiles[16][23] = TILE_TEMPLE_DORMANT_SENTINEL;
+        m->tiles[16][41] = TILE_TEMPLE_DORMANT_SENTINEL;
+        m->tiles[26][29] = TILE_TEMPLE_SOLAR_TRAP;
+        m->tiles[26][35] = TILE_TEMPLE_SOLAR_TRAP;
+        m->tiles[18][28] = TILE_TEMPLE_SOLAR_TRAP;
+        m->tiles[18][36] = TILE_TEMPLE_SOLAR_TRAP;
+        fill_rect(m, 46, 24, 10, 5, TILE_TEMPLE_WATER);
+        m->tiles[25][50] = TILE_TEMPLE_FLOOR;
+        m->tiles[26][52] = TILE_TEMPLE_ALTAR;
+        m->tiles[17][32] = TILE_TEMPLE_ALTAR;
     }
-    m->tiles[6][32] = TILE_TEMPLE_VAULT_DOOR;
-    m->tiles[TEMPLE_TREASURE_Y][TEMPLE_TREASURE_X] = TILE_TEMPLE_TREASURE;
 
     *spawn_x = TEMPLE_ENTRANCE_X;
     *spawn_y = TEMPLE_ENTRANCE_Y;
+    if (level == 1) {
+        m->tiles[35][TEMPLE_ENTRANCE_X] = TILE_TEMPLE_ENTRANCE;
+    } else {
+        m->tiles[*spawn_y][*spawn_x] = TILE_STAIRS_DOWN;
+    }
+    if (level < TEMPLE_DEPTH) {
+        m->stairs_down_x = 32;
+        m->stairs_down_y = 4;
+        m->tiles[m->stairs_down_y][m->stairs_down_x] = TILE_STAIRS_UP;
+    } else {
+        for (int x = 22; x <= 42; x++) {
+            m->tiles[6][x] = TILE_TEMPLE_WALL;
+        }
+        m->tiles[6][32] = TILE_TEMPLE_VAULT_DOOR;
+        m->tiles[TEMPLE_TREASURE_Y][TEMPLE_TREASURE_X] =
+            TILE_TEMPLE_TREASURE;
+        m->stairs_down_x = TEMPLE_TREASURE_X;
+        m->stairs_down_y = TEMPLE_TREASURE_Y;
+    }
     m->stairs_up_x = *spawn_x;
     m->stairs_up_y = *spawn_y;
-    m->stairs_down_x = TEMPLE_TREASURE_X;
-    m->stairs_down_y = TEMPLE_TREASURE_Y;
 }

@@ -57,7 +57,7 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor)
         SDL_snprintf(loc, sizeof(loc), "RUINED ISLE");
     } else if (g->location == LOCATION_TEMPLE) {
         SDL_snprintf(loc, sizeof(loc), g->temple_alignment
-            ? "TEMPLE: MOON" : "TEMPLE: SUN");
+            ? "TEMPLE %d: MOON" : "TEMPLE %d: SUN", g->level);
     } else {
         SDL_snprintf(loc, sizeof(loc), "DUNGEON %d", g->level);
     }

@@ -46,11 +46,11 @@ static const QuestDefinition quest_definitions[5] = {
         "Coast", {1, 3, 6}, 80, 600
     },
     {
-        "The Buried Sun", "Treasure Map",
+        "The Buried Sun", "Nahla",
         "Defeat the temple guardian and recover the",
         "treasure buried beneath the solar vault.",
         {"Recover the buried treasure", "", ""},
-        "Ruined Temple", {1, 0, 0}, 150, 2500
+        "Ruined Temple", {4, 0, 0}, 150, 2500
     }
 };
 
@@ -83,7 +83,7 @@ static int quest_progress(const GameState *g, int quest) {
     if (quest == 3) {
         return g->mara_beacons_lit;
     }
-    return g->temple_treasure_state == 3 ? 1 : 0;
+    return g->temple_treasure_state >= 2 ? 1 : 0;
 }
 
 static int quest_in_tab(int state, QuestJournalTab tab) {

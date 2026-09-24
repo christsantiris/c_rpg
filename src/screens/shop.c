@@ -111,15 +111,27 @@ ShopResult shop_handle_key(ShopScreen *s, int scancode) {
         switch (scancode) {
             case SDL_SCANCODE_UP:
             case SDL_SCANCODE_W:
-                s->selected = 0;
+                s->selected--;
+                if (s->selected < 0) {
+                    s->selected = 0;
+                }
                 break;
             case SDL_SCANCODE_DOWN:
             case SDL_SCANCODE_S:
-                s->selected = 1;
+                s->selected++;
+                if (s->selected > 2) {
+                    s->selected = 2;
+                }
                 break;
             case SDL_SCANCODE_RETURN:
             case SDL_SCANCODE_KP_ENTER:
-                return s->selected == 0 ? SHOP_HEAL : SHOP_CLOSED;
+                if (s->selected == 0) {
+                    return SHOP_HEAL;
+                }
+                if (s->selected == 1) {
+                    return SHOP_RESTORE_MANA;
+                }
+                return SHOP_CLOSED;
             case SDL_SCANCODE_ESCAPE:
                 return SHOP_CLOSED;
             default:

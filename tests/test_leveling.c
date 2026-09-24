@@ -16,6 +16,8 @@ void test_leveling(void) {
     g.player.defense         = 5;
     g.player.max_hp          = 100;
     g.player.hp              = 100;
+    g.player.max_mp          = 40;
+    g.player.mp              = 1;
 
     int old_attack  = g.player.attack;
     int old_defense = g.player.defense;
@@ -28,6 +30,7 @@ void test_leveling(void) {
     ASSERT("attack increased",          g.player.attack  == old_attack + 2);
     ASSERT("max_hp increased",          g.player.max_hp  == old_max_hp + 10);
     ASSERT("hp restored on level up",   g.player.hp      == g.player.max_hp);
+    ASSERT("mp restored on level up",   g.player.mp      == g.player.max_mp);
     ASSERT("defense capped at 50pct",   g.player.defense <= g.player.attack / 2);
     ASSERT("xp resets after level up",  g.player.experience < g.player.experience_next);
 

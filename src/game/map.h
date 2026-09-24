@@ -53,6 +53,8 @@
 #define ISLAND_SHIP_Y 22
 #define ISLAND_CAPTAIN_X 18
 #define ISLAND_CAPTAIN_Y 21
+#define ISLAND_NAHLA_X 15
+#define ISLAND_NAHLA_Y 14
 #define ISLAND_SPAWN_X 20
 #define ISLAND_SPAWN_Y 21
 
@@ -62,6 +64,7 @@
 #define TEMPLE_ENTRANCE_Y 34
 #define TEMPLE_TREASURE_X 32
 #define TEMPLE_TREASURE_Y 3
+#define TEMPLE_DEPTH 4
 
 #define DUNGEON_DEPTH 8
 #define FOREST_DEPTH 8
@@ -177,7 +180,8 @@ typedef enum {
     TILE_TEMPLE_VAULT_DOOR,
     TILE_TEMPLE_TREASURE,
     TILE_TEMPLE_WATER,
-    TILE_TEMPLE_RUBBLE
+    TILE_TEMPLE_RUBBLE,
+    TILE_NPC_ISLAND_NAHLA
 } TileType;
 
 typedef struct {
@@ -201,7 +205,7 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y);
 void map_place_town_harbor(Map *m);
 void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_island(Map *m, int *spawn_x, int *spawn_y);
-void map_generate_temple(Map *m, int *spawn_x, int *spawn_y);
+void map_generate_temple(Map *m, int level, int *spawn_x, int *spawn_y);
 void map_generate_forest(Map *m, int level);
 void map_reveal_forest_exit(Map *m);
 void map_generate_mountains(Map *m, int level);

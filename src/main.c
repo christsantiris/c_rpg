@@ -423,8 +423,8 @@ int main(int argc, char **argv) {
     GameState game = {0};
     game_init(&game);
     // Presentation-only snapshot; persistent results remain in game.
-    static GameState spell_view;
-    int spell_animating = 0;
+    static GameState projectile_view;
+    int player_projectile_animating = 0;
     EnemyProjectiles enemy_shots = {0};
     Uint32 enemy_shots_started_at = 0;
     TownEntryTransition entry_gate = {0};
@@ -461,7 +461,7 @@ int main(int argc, char **argv) {
     SDL_Event event;
 
     while (running) {
-        int animating = spell_animating || entry_gate.active || enemy_shots.count > 0 ||
+        int animating = player_projectile_animating || entry_gate.active || enemy_shots.count > 0 ||
             (screen == SCREEN_PLAYING && game.trail_frames > 0);
         int ambient_animating = screen == SCREEN_PLAYING &&
             (game.location == LOCATION_DUNGEON ||
@@ -519,7 +519,7 @@ int main(int argc, char **argv) {
                 // ── Keyboard input ────────────────────────────────────────
                 case SDL_KEYDOWN: {
                     needs_redraw = 1;
-                    if (spell_animating || entry_gate.active || enemy_shots.count > 0) {
+                    if (player_projectile_animating || entry_gate.active || enemy_shots.count > 0) {
                         break;
                     }
                     int sc = event.key.keysym.scancode;
@@ -666,6 +666,8 @@ int main(int argc, char **argv) {
                             screen = SCREEN_PLAYING;
                         } else if (result == SHOP_HEAL) {
                             game_visit_healer(&game);
+                        } else if (result == SHOP_RESTORE_MANA) {
+                            game_visit_healer_mana(&game);
                         } else if (result == SHOP_BUY) {
                             Item *item = &shop_screen.items[shop_screen.selected];
                             int price = shop_buy_price(item);
@@ -845,6 +847,10 @@ int main(int argc, char **argv) {
                                                 "Captain Rowan offers passage back to town.");
                                             found = 1;
                                         } else if (game.map.tiles[ty][tx] ==
+                                            TILE_NPC_ISLAND_NAHLA) {
+                                            game_talk_to_nahla(&game);
+                                            found = 1;
+                                        } else if (game.map.tiles[ty][tx] ==
                                             TILE_FOREST_WARDEN) {
                                             game_rescue_forest_warden(&game,
                                                 tx, ty);
@@ -894,8 +900,13 @@ int main(int argc, char **argv) {
                             int was_at_harbor_entrance = game.location == LOCATION_TOWN &&
                                 game.player.x == TOWN_HARBOR_ENTRANCE_X &&
                                 game.player.y == TOWN_HARBOR_ENTRANCE_Y;
-                            if (a.type == ACTION_CAST_SPELL) {
-                                spell_view = game;
+                            if (a.type == ACTION_CAST_SPELL ||
+                                a.type == ACTION_RANGED_ATTACK) {
+                                projectile_view = game;
+                            }
+                            if (a.type == ACTION_RANGED_ATTACK) {
+                                game.trail_count = 0;
+                                game.trail_frames = 0;
                             }
                             action_resolve_player(&game, a);
                             if (a.type == ACTION_MOVE &&
@@ -908,19 +919,24 @@ int main(int argc, char **argv) {
                                 screen = SCREEN_HARBOR;
                                 push_message(&game, "You enter the harbor dock.");
                             }
-                            if (a.type == ACTION_CAST_SPELL &&
-                                game.player.mp < spell_view.player.mp &&
-                                game.trail_count > 0 && game.trail_frames > 0 &&
+                            int projectile_started =
+                                ((a.type == ACTION_CAST_SPELL &&
+                                game.player.mp < projectile_view.player.mp &&
                                 (game.trail_effect == TRAIL_EFFECT_MAGIC_ARROW ||
-                                game.trail_effect == TRAIL_EFFECT_FIREBALL)) {
-                                memcpy(spell_view.trail, game.trail,
+                                game.trail_effect == TRAIL_EFFECT_FIREBALL)) ||
+                                (a.type == ACTION_RANGED_ATTACK &&
+                                game.trail_effect == TRAIL_EFFECT_WEAPON_ARROW)) &&
+                                game.trail_count > 0 && game.trail_frames > 0;
+                            if (projectile_started) {
+                                memcpy(projectile_view.trail, game.trail,
                                     sizeof(game.trail));
-                                spell_view.trail_count = game.trail_count;
-                                spell_view.trail_frames = game.trail_frames;
-                                spell_view.trail_effect = game.trail_effect;
-                                spell_view.trail_started_at = game.trail_started_at;
-                                spell_view.player.mp = game.player.mp;
-                                spell_animating = 1;
+                                projectile_view.trail_count = game.trail_count;
+                                projectile_view.trail_frames = game.trail_frames;
+                                projectile_view.trail_effect = game.trail_effect;
+                                projectile_view.trail_started_at =
+                                    game.trail_started_at;
+                                projectile_view.player.mp = game.player.mp;
+                                player_projectile_animating = 1;
                             } else {
                                 action_resolve_enemies_with_projectiles(&game, &enemy_shots);
                                 enemy_shots_started_at = SDL_GetTicks();
@@ -938,7 +954,7 @@ int main(int argc, char **argv) {
                 // ── Mouse input ───────────────────────────────────────────
                 case SDL_MOUSEBUTTONDOWN: {
                     needs_redraw = 1;
-                    if (entry_gate.active || spell_animating || enemy_shots.count > 0) {
+                    if (entry_gate.active || player_projectile_animating || enemy_shots.count > 0) {
                         break;
                     }
                     if (event.button.button != SDL_BUTTON_LEFT) break;
@@ -1047,12 +1063,16 @@ int main(int argc, char **argv) {
                         if (shop_screen.type == SHOP_TYPE_HEALER) {
                             SDL_Point point = {event.button.x, event.button.y};
                             SDL_Rect heal = shop_healer_button_rect(&renderer, 0);
-                            SDL_Rect leave = shop_healer_button_rect(&renderer, 1);
+                            SDL_Rect mana = shop_healer_button_rect(&renderer, 1);
+                            SDL_Rect leave = shop_healer_button_rect(&renderer, 2);
                             if (SDL_PointInRect(&point, &heal)) {
                                 shop_screen.selected = 0;
                                 game_visit_healer(&game);
-                            } else if (SDL_PointInRect(&point, &leave)) {
+                            } else if (SDL_PointInRect(&point, &mana)) {
                                 shop_screen.selected = 1;
+                                game_visit_healer_mana(&game);
+                            } else if (SDL_PointInRect(&point, &leave)) {
+                                shop_screen.selected = 2;
                                 screen = SCREEN_PLAYING;
                             }
                             break;
@@ -1174,11 +1194,11 @@ int main(int argc, char **argv) {
         }
 
         // ── Per-frame updates ─────────────────────────────────────────────
-        if (spell_animating) {
+        if (player_projectile_animating) {
             Uint32 duration = game.trail_effect == TRAIL_EFFECT_FIREBALL
                 ? SPELL_FIREBALL_MS : SPELL_ARROW_MS;
             if (SDL_GetTicks() - game.trail_started_at >= duration) {
-                spell_animating = 0;
+                player_projectile_animating = 0;
                 game.trail_frames = 0;
                 action_resolve_enemies_with_projectiles(&game, &enemy_shots);
                 enemy_shots_started_at = SDL_GetTicks();
@@ -1251,9 +1271,9 @@ int main(int argc, char **argv) {
         } else if (screen == SCREEN_HARBOR) {
             harbor_draw(&renderer, &game, &harbor_screen);
         } else if (screen == SCREEN_PLAYING) {
-            GameState *view = spell_animating &&
+            GameState *view = player_projectile_animating &&
                 SDL_GetTicks() - game.trail_started_at < SPELL_TRAVEL_MS
-                ? &spell_view : &game;
+                ? &projectile_view : &game;
             game_draw(&renderer, view, &viewport);
             game_draw_enemy_projectiles(&renderer, &enemy_shots, &viewport,
                 SDL_GetTicks() - enemy_shots_started_at);

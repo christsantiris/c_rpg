@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include "../game/actions.h"
 
+static void spawn_temple_enemies(GameState *g);
+
 static int region_order_tier(const GameState *g) {
     const Location regions[4] = {
         LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST
@@ -749,6 +751,7 @@ void game_init(GameState *g) {
     g->max_forest_level_reached = 1;
     g->max_mountain_level_reached = 1;
     g->max_coast_level_reached = 1;
+    g->max_temple_level_reached = 1;
     g->location = LOCATION_TOWN;
     int spawn_x, spawn_y;
     map_generate_town(&g->map, &spawn_x, &spawn_y);
@@ -782,7 +785,9 @@ void game_init(GameState *g) {
     g->mara_quest_state = 0;
     g->mara_beacons_lit = 0;
     g->cain_scroll_given = 0;
-    g->temple_cache.valid = 0;
+    for (int i = 0; i < TEMPLE_DEPTH; i++) {
+        g->temple_cache[i].valid = 0;
+    }
     g->temple_alignment = 0;
     g->temple_sentinels_awakened = 0;
     g->temple_treasure_state = 0;
@@ -1069,6 +1074,9 @@ static LevelCache *active_cache(GameState *g) {
     if (g->location == LOCATION_COAST) {
         return g->coast_cache;
     }
+    if (g->location == LOCATION_TEMPLE) {
+        return g->temple_cache;
+    }
     return g->level_cache;
 }
 
@@ -1078,6 +1086,9 @@ static int *active_max_level(GameState *g) {
         return &g->max_mountain_level_reached;
     if (g->location == LOCATION_COAST) {
         return &g->max_coast_level_reached;
+    }
+    if (g->location == LOCATION_TEMPLE) {
+        return &g->max_temple_level_reached;
     }
     return &g->max_level_reached;
 }
@@ -1091,6 +1102,9 @@ static int active_depth(const GameState *g) {
     }
     if (g->location == LOCATION_COAST) {
         return COAST_DEPTH;
+    }
+    if (g->location == LOCATION_TEMPLE) {
+        return TEMPLE_DEPTH;
     }
     return DUNGEON_DEPTH;
 }
@@ -1312,10 +1326,21 @@ static void generate_active_level(GameState *g) {
         map_generate_mountains(&g->map, g->level);
     } else if (g->location == LOCATION_COAST) {
         map_generate_coast(&g->map, g->level);
+    } else if (g->location == LOCATION_TEMPLE) {
+        int spawn_x;
+        int spawn_y;
+        map_generate_temple(&g->map, g->level, &spawn_x, &spawn_y);
     } else {
         map_generate(&g->map, g->level);
     }
     g->enemy_count = 0;
+    if (g->location == LOCATION_TEMPLE) {
+        g->temple_alignment = 0;
+        g->temple_sentinels_awakened = 0;
+        spawn_temple_enemies(g);
+        game_update_level_progress(g);
+        return;
+    }
     place_elowen_seal(g);
     int warden_placed = place_alder_warden(g);
     int beacon_placed = place_mara_beacon(g);
@@ -1327,6 +1352,34 @@ static void generate_active_level(GameState *g) {
         spawn_mara_guardian(g);
     }
     game_update_level_progress(g);
+}
+
+static void sync_temple_floor_state(GameState *g) {
+    if (g->location != LOCATION_TEMPLE) {
+        return;
+    }
+    int guardian_defeated =
+        g->defeated_bosses & (1 << LOCATION_TEMPLE);
+    g->temple_alignment = 0;
+    g->temple_sentinels_awakened = 1;
+    for (int y = 0; y < TEMPLE_H; y++) {
+        for (int x = 0; x < TEMPLE_W; x++) {
+            if (g->map.tiles[y][x] == TILE_TEMPLE_MOON_DOOR_OPEN) {
+                g->temple_alignment = 1;
+            }
+            if (g->map.tiles[y][x] == TILE_TEMPLE_DORMANT_SENTINEL) {
+                g->temple_sentinels_awakened = 0;
+            }
+            if (guardian_defeated &&
+                g->map.tiles[y][x] == TILE_TEMPLE_VAULT_DOOR) {
+                g->map.tiles[y][x] = TILE_TEMPLE_FLOOR;
+            }
+            if (g->temple_treasure_state >= 2 &&
+                g->map.tiles[y][x] == TILE_TEMPLE_TREASURE) {
+                g->map.tiles[y][x] = TILE_TEMPLE_RUBBLE;
+            }
+        }
+    }
 }
 
 void game_descend(GameState *g) {
@@ -1367,6 +1420,7 @@ void game_descend(GameState *g) {
     }
     g->player.x = g->map.stairs_up_x;
     g->player.y = g->map.stairs_up_y;
+    sync_temple_floor_state(g);
 }
 
 void game_ascend(GameState *g) {
@@ -1403,6 +1457,7 @@ void game_ascend(GameState *g) {
 
     g->player.x = g->map.stairs_down_x;
     g->player.y = g->map.stairs_down_y;
+    sync_temple_floor_state(g);
 }
 
 static void enter_adventure(GameState *g, Location location) {
@@ -1469,6 +1524,32 @@ void game_visit_healer(GameState *g) {
     g->player.hp = g->player.max_hp;
     char message[MAX_MESSAGE_LEN];
     snprintf(message, sizeof(message), "Lysa restores your HP to full for %d gold.", price);
+    push_message(g, message);
+}
+
+int game_healer_mana_price(const GameState *g) {
+    int missing = g->player.max_mp - g->player.mp;
+    return missing > 0 ? (missing + 2) / 3 : 0;
+}
+
+void game_visit_healer_mana(GameState *g) {
+    if (g->location != LOCATION_TOWN || g->player.hp <= 0) {
+        return;
+    }
+    int price = game_healer_mana_price(g);
+    if (price == 0) {
+        push_message(g, "Lysa: Your mana is already fully restored.");
+        return;
+    }
+    if (g->gold < price) {
+        push_message(g, "Lysa: You do not have enough gold for restoration.");
+        return;
+    }
+    g->gold -= price;
+    g->player.mp = g->player.max_mp;
+    char message[MAX_MESSAGE_LEN];
+    snprintf(message, sizeof(message),
+        "Lysa restores your MP to full for %d gold.", price);
     push_message(g, message);
 }
 
@@ -1569,61 +1650,56 @@ void game_leave_island(GameState *g) {
     push_message(g, "The ship returns you to town.");
 }
 
-static void cache_temple(GameState *g) {
-    memcpy(g->temple_cache.explored, g->map.explored,
-        sizeof(g->temple_cache.explored));
-    g->temple_cache.enemy_count = g->enemy_count;
-    g->temple_cache.level_cleared = g->level_cleared;
+static void cache_temple_level(GameState *g) {
+    LevelCache *cache = &g->temple_cache[g->level - 1];
+    cache->map = g->map;
+    cache->enemy_count = g->enemy_count;
+    cache->level_cleared = g->level_cleared;
     for (int i = 0; i < g->enemy_count; i++) {
-        g->temple_cache.enemies[i] = g->enemies[i];
+        cache->enemies[i] = g->enemies[i];
     }
-    g->temple_cache.valid = 1;
-}
-
-static void apply_temple_map_state(GameState *g) {
-    for (int y = 0; y < TEMPLE_H; y++) {
-        for (int x = 0; x < TEMPLE_W; x++) {
-            TileType tile = g->map.tiles[y][x];
-            if (g->temple_alignment &&
-                tile == TILE_TEMPLE_MOON_DOOR_CLOSED) {
-                g->map.tiles[y][x] = TILE_TEMPLE_MOON_DOOR_OPEN;
-            } else if (g->temple_sentinels_awakened &&
-                tile == TILE_TEMPLE_DORMANT_SENTINEL) {
-                g->map.tiles[y][x] = TILE_TEMPLE_FLOOR;
-            } else if ((g->defeated_bosses & (1 << LOCATION_TEMPLE)) &&
-                tile == TILE_TEMPLE_VAULT_DOOR) {
-                g->map.tiles[y][x] = TILE_TEMPLE_FLOOR;
-            } else if (g->temple_treasure_state == 3 &&
-                tile == TILE_TEMPLE_TREASURE) {
-                g->map.tiles[y][x] = TILE_TEMPLE_RUBBLE;
-            }
-        }
-    }
+    cache->valid = 1;
 }
 
 static void spawn_temple_enemies(GameState *g) {
-    static const EnemyType types[] = {
-        ENEMY_RELIC_SCARABS, ENEMY_TEMPLE_STALKER,
-        ENEMY_BLOWDART_HUNTER, ENEMY_VINEBOUND_GUARDIAN,
-        ENEMY_SUN_PRIEST, ENEMY_SERPENT_SPIRIT,
-        ENEMY_TREASURE_WRAITH, ENEMY_LUNAR_EFFIGY,
-        ENEMY_TEMPLE_STALKER, ENEMY_BLOWDART_HUNTER,
-        ENEMY_FALLEN_SUN_GUARDIAN
+    static const int counts[TEMPLE_DEPTH] = {6, 7, 8, 7};
+    static const EnemyType types[TEMPLE_DEPTH][8] = {
+        {ENEMY_RELIC_SCARABS, ENEMY_TEMPLE_STALKER,
+            ENEMY_BLOWDART_HUNTER, ENEMY_VINEBOUND_GUARDIAN,
+            ENEMY_SUN_PRIEST, ENEMY_SERPENT_SPIRIT},
+        {ENEMY_RELIC_SCARABS, ENEMY_BLOWDART_HUNTER,
+            ENEMY_VINEBOUND_GUARDIAN, ENEMY_SUN_PRIEST,
+            ENEMY_SERPENT_SPIRIT, ENEMY_TEMPLE_STALKER,
+            ENEMY_LUNAR_EFFIGY},
+        {ENEMY_TEMPLE_STALKER, ENEMY_BLOWDART_HUNTER,
+            ENEMY_VINEBOUND_GUARDIAN, ENEMY_SUN_PRIEST,
+            ENEMY_SERPENT_SPIRIT, ENEMY_TREASURE_WRAITH,
+            ENEMY_LUNAR_EFFIGY, ENEMY_RELIC_SCARABS},
+        {ENEMY_RELIC_SCARABS, ENEMY_TEMPLE_STALKER,
+            ENEMY_BLOWDART_HUNTER, ENEMY_SUN_PRIEST,
+            ENEMY_SERPENT_SPIRIT, ENEMY_TREASURE_WRAITH,
+            ENEMY_FALLEN_SUN_GUARDIAN}
     };
-    static const int positions[][2] = {
-        {14, 26}, {10, 29}, {19, 24}, {7, 24},
-        {53, 24}, {48, 29}, {56, 29}, {41, 19},
-        {37, 16}, {28, 9}, {32, 9}
+    static const int positions[TEMPLE_DEPTH][8][2] = {
+        {{14, 26}, {10, 29}, {19, 24}, {7, 24},
+            {53, 24}, {48, 29}},
+        {{10, 25}, {18, 23}, {48, 24}, {55, 27},
+            {26, 17}, {39, 17}, {42, 6}},
+        {{10, 25}, {18, 24}, {48, 25}, {55, 27},
+            {24, 17}, {40, 17}, {12, 6}, {50, 6}},
+        {{14, 26}, {10, 29}, {19, 24}, {53, 24},
+            {48, 29}, {41, 19}, {32, 9}}
     };
     g->enemy_count = 0;
-    int count = (int)(sizeof(types) / sizeof(types[0]));
-    for (int i = 0; i < count; i++) {
-        if (types[i] == ENEMY_FALLEN_SUN_GUARDIAN &&
+    int floor = g->level - 1;
+    for (int i = 0; i < counts[floor]; i++) {
+        EnemyType type = types[floor][i];
+        if (type == ENEMY_FALLEN_SUN_GUARDIAN &&
             (g->defeated_bosses & (1 << LOCATION_TEMPLE))) {
             continue;
         }
-        spawn_enemy(g, &g->enemies[g->enemy_count++], types[i],
-            positions[i][0], positions[i][1]);
+        spawn_enemy(g, &g->enemies[g->enemy_count++], type,
+            positions[floor][i][0], positions[floor][i][1]);
     }
 }
 
@@ -1632,22 +1708,17 @@ void game_enter_temple(GameState *g) {
     g->level = 1;
     g->floor_item_count = 0;
     g->dialogue_active = 0;
-    if (g->temple_cache.valid) {
-        int spawn_x;
-        int spawn_y;
-        map_generate_temple(&g->map, &spawn_x, &spawn_y);
-        apply_temple_map_state(g);
-        memcpy(g->map.explored, g->temple_cache.explored,
-            sizeof(g->map.explored));
-        g->enemy_count = g->temple_cache.enemy_count;
-        g->level_cleared = g->temple_cache.level_cleared;
+    if (g->temple_cache[0].valid) {
+        g->map = g->temple_cache[0].map;
+        g->enemy_count = g->temple_cache[0].enemy_count;
+        g->level_cleared = g->temple_cache[0].level_cleared;
         for (int i = 0; i < g->enemy_count; i++) {
-            g->enemies[i] = g->temple_cache.enemies[i];
+            g->enemies[i] = g->temple_cache[0].enemies[i];
         }
     } else {
         int spawn_x;
         int spawn_y;
-        map_generate_temple(&g->map, &spawn_x, &spawn_y);
+        map_generate_temple(&g->map, 1, &spawn_x, &spawn_y);
         g->player.x = spawn_x;
         g->player.y = spawn_y;
         g->level_cleared = 0;
@@ -1655,16 +1726,14 @@ void game_enter_temple(GameState *g) {
         g->temple_sentinels_awakened = 0;
         spawn_temple_enemies(g);
     }
-    if (g->temple_treasure_state == 0) {
-        g->temple_treasure_state = 1;
-    }
+    sync_temple_floor_state(g);
     g->player.x = TEMPLE_ENTRANCE_X;
     g->player.y = TEMPLE_ENTRANCE_Y;
     push_message(g, "You enter the Ruined Temple. The sun seal burns.");
 }
 
 void game_leave_temple(GameState *g) {
-    cache_temple(g);
+    cache_temple_level(g);
     int spawn_x;
     int spawn_y;
     g->location = LOCATION_ISLAND;
@@ -1749,12 +1818,10 @@ int game_interact_temple(GameState *g) {
                 push_message(g, "The Fallen Sun Guardian seals the treasure vault.");
                 return 1;
             }
-            if (g->temple_treasure_state != 3) {
-                g->temple_treasure_state = 3;
-                g->gold += 150;
-                g->score += 2500;
+            if (g->temple_treasure_state < 2) {
+                g->temple_treasure_state = 2;
                 g->map.tiles[y][x] = TILE_TEMPLE_RUBBLE;
-                push_message(g, "Buried treasure recovered: 150 gold!");
+                push_message(g, "The Buried Sun is recovered. Return it to Nahla.");
             }
             return 1;
         }
@@ -1780,13 +1847,9 @@ void game_record_temple_enemy_defeated(GameState *g, EnemyType type) {
 
 void game_return_to_town(GameState *g) {
     Location returning_from = g->location;
-    if (returning_from == LOCATION_TEMPLE) {
-        cache_temple(g);
-    }
     LevelCache *cache = active_cache(g);
     // Cache current level before leaving
-    if (returning_from != LOCATION_TEMPLE && g->level >= 1 &&
-        g->level <= active_depth(g)) {
+    if (g->level >= 1 && g->level <= active_depth(g)) {
         cache[g->level - 1].map = g->map;
         cache[g->level - 1].enemy_count   = g->enemy_count;
         cache[g->level - 1].level_cleared = g->level_cleared;
@@ -1859,42 +1922,6 @@ void game_use_town_portal(GameState *g) {
     if (!g->portal_active || g->portal_level < 1 ||
         g->portal_level > MAX_REGION_DEPTH) return;
     int level = g->portal_level;
-    if (g->portal_location == LOCATION_TEMPLE) {
-        if (!g->temple_cache.valid) {
-            return;
-        }
-        g->location = LOCATION_TEMPLE;
-        g->level = 1;
-        int spawn_x;
-        int spawn_y;
-        map_generate_temple(&g->map, &spawn_x, &spawn_y);
-        apply_temple_map_state(g);
-        memcpy(g->map.explored, g->temple_cache.explored,
-            sizeof(g->map.explored));
-        g->enemy_count = g->temple_cache.enemy_count;
-        g->level_cleared = g->temple_cache.level_cleared;
-        for (int i = 0; i < g->enemy_count; i++) {
-            g->enemies[i] = g->temple_cache.enemies[i];
-        }
-        int landing_x = g->portal_x;
-        int landing_y = g->portal_y;
-        if (landing_x >= 0 && landing_x < MAP_W &&
-            landing_y >= 0 && landing_y < MAP_H &&
-            g->map.tiles[landing_y][landing_x] == TILE_PORTAL) {
-            g->map.tiles[landing_y][landing_x] = g->portal_origin_tile;
-        }
-        if (!portal_landing_open(g, landing_x, landing_y)) {
-            landing_x = TEMPLE_ENTRANCE_X;
-            landing_y = TEMPLE_ENTRANCE_Y;
-            push_message(g, "The portal returns you at the temple entrance.");
-        } else {
-            push_message(g, "Returned through the portal.");
-        }
-        g->player.x = landing_x;
-        g->player.y = landing_y;
-        g->portal_active = 0;
-        return;
-    }
     LevelCache *cache = g->level_cache;
     if (g->portal_location == LOCATION_FOREST) {
         cache = g->forest_cache;
@@ -1902,6 +1929,8 @@ void game_use_town_portal(GameState *g) {
         cache = g->mountain_cache;
     } else if (g->portal_location == LOCATION_COAST) {
         cache = g->coast_cache;
+    } else if (g->portal_location == LOCATION_TEMPLE) {
+        cache = g->temple_cache;
     }
     if (!cache[level - 1].valid) return;
 
@@ -1913,6 +1942,7 @@ void game_use_town_portal(GameState *g) {
     g->level_cleared = cache[level - 1].level_cleared;
     for (int i = 0; i < g->enemy_count; i++)
         g->enemies[i] = cache[level - 1].enemies[i];
+    sync_temple_floor_state(g);
     if (place_alder_warden(g)) {
         spawn_alder_guardian(g);
     }
@@ -2034,6 +2064,40 @@ int game_interact_island(GameState *g) {
         }
     }
     return 0;
+}
+
+void game_talk_to_nahla(GameState *g) {
+    g->dialogue_active = 1;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Nahla");
+    g->dialogue_x = ISLAND_NAHLA_X;
+    g->dialogue_y = ISLAND_NAHLA_Y;
+    if (g->temple_treasure_state == 0) {
+        g->temple_treasure_state = 1;
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "The temple is a stepped pyramid. Climb its four tiers, defeat "
+            "the Fallen Sun Guardian, and recover the Buried Sun from the summit vault.");
+        push_message(g, "Quest assigned: The Buried Sun.");
+        return;
+    }
+    if (g->temple_treasure_state == 1) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "The Guardian waits at the pyramid summit. The sun and moon altars "
+            "change which passages are safe as you climb.");
+        push_message(g, "Quest active: The Buried Sun.");
+        return;
+    }
+    if (g->temple_treasure_state == 2) {
+        g->temple_treasure_state = 3;
+        g->gold += 150;
+        g->score += 2500;
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "You found it. The Buried Sun belongs to history again. "
+            "Take this reward for surviving the pyramid.");
+        push_message(g, "Quest complete: The Buried Sun. 150 gold awarded.");
+        return;
+    }
+    snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+        "The summit is quiet now. The island will remember what you recovered.");
 }
 
 void game_talk_to_rowan(GameState *g) {
@@ -2417,6 +2481,7 @@ void player_gain_xp(GameState *g, int xp) {
         g->player.level++;
         g->player.max_hp        += 10;
         g->player.hp             = g->player.max_hp;
+        g->player.mp             = g->player.max_mp;
         g->player.attack        += 2;
 
         // Defense grows at half rate, capped at 50% of attack
