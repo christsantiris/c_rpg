@@ -57,6 +57,17 @@ void test_town_healer(void) {
     game_visit_healer(&g);
     ASSERT("insufficient funds leave both gold and HP unchanged",
         g.gold == 9 && g.player.hp == g.player.max_hp - 30);
+    g.player.hp = g.player.max_hp / 4 - 1;
+    g.gold = 0;
+    int emergency_mp = g.player.mp;
+    int emergency_items = g.inventory_count;
+    ASSERT("free emergency care is offered below one-quarter health",
+        game_healer_emergency_available(&g));
+    game_visit_healer(&g);
+    ASSERT("emergency care restores half health without changing other resources",
+        g.player.hp == (g.player.max_hp + 1) / 2 && g.gold == 0 &&
+        g.player.mp == emergency_mp && g.inventory_count == emergency_items);
+    g.player.hp = g.player.max_hp - 30;
     g.gold = 10;
     int mp = g.player.mp;
     int items = g.inventory_count;

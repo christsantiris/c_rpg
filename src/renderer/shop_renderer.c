@@ -65,6 +65,7 @@ static void draw_restoration_visit(Renderer *r, const GameState *g, const ShopSc
     renderer_draw_text(r, witch ? "WITCH" : "HEALER", cx - 48, title_y,
         gold, r->font_large);
     int price = witch ? game_witch_price(g) : game_healer_price(g);
+    int emergency = !witch && game_healer_emergency_available(g);
     int current = witch ? g->player.mp : g->player.hp;
     int maximum = witch ? g->player.max_mp : g->player.max_hp;
     int missing = maximum - current;
@@ -100,17 +101,22 @@ static void draw_restoration_visit(Renderer *r, const GameState *g, const ShopSc
         SDL_snprintf(text, sizeof(text),
             "RATE: 1 GOLD PER 3 %s, ROUNDED UP.", resource);
         renderer_draw_text(r, text, cx - 105, 218, hint, r->font_tiny);
-        const char *status = price == 0 ? (witch
+        const char *status = emergency ? "FREE EMERGENCY CARE IS AVAILABLE."
+            : price == 0 ? (witch
                 ? "YOUR SPIRIT IS ALREADY FULL."
                 : "YOU ARE ALREADY AT FULL HEALTH.")
             : (g->gold < price ? "YOU CANNOT AFFORD THIS TREATMENT."
                 : "TREATMENT IS AVAILABLE.");
         renderer_draw_text(r, status, cx - 105, 244,
-            price == 0 || g->gold >= price ? green : red, r->font_tiny);
+            emergency || price == 0 || g->gold >= price ? green : red,
+            r->font_tiny);
     }
 
     char restore_label[96];
-    if (price == 0) {
+    if (emergency) {
+        SDL_snprintf(restore_label, sizeof(restore_label),
+            "EMERGENCY CARE TO 50%% HP    FREE");
+    } else if (price == 0) {
         SDL_snprintf(restore_label, sizeof(restore_label),
             "FULL %s - NO RESTORATION NEEDED", witch ? "MANA" : "HEALTH");
     } else {
@@ -118,7 +124,7 @@ static void draw_restoration_visit(Renderer *r, const GameState *g, const ShopSc
             "RESTORE %d %s    %d GOLD", missing, resource, price);
     }
     draw_healer_option(r, 0, s->selected == 0,
-        price == 0 || g->gold >= price, restore_label);
+        emergency || price == 0 || g->gold >= price, restore_label);
     draw_healer_option(r, 1, s->selected == 1, 1, "RETURN TO TOWN");
     renderer_draw_text(r, "UP/DOWN OR W/S SELECT   ENTER CONFIRM   ESC CLOSE",
         cx - 220, r->screen_h - 48, hint, r->font_tiny);
