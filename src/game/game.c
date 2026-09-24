@@ -1507,6 +1507,12 @@ int game_healer_price(const GameState *g) {
     return missing > 0 ? (missing + 2) / 3 : 0;
 }
 
+int game_healer_emergency_available(const GameState *g) {
+    return g->player.hp > 0 &&
+        g->player.hp * 4 < g->player.max_hp &&
+        g->gold < game_healer_price(g);
+}
+
 void game_visit_healer(GameState *g) {
     if (g->location != LOCATION_TOWN || g->player.hp <= 0) {
         return;
@@ -1514,6 +1520,11 @@ void game_visit_healer(GameState *g) {
     int price = game_healer_price(g);
     if (price == 0) {
         push_message(g, "Lysa: You are already in good health.");
+        return;
+    }
+    if (game_healer_emergency_available(g)) {
+        g->player.hp = (g->player.max_hp + 1) / 2;
+        push_message(g, "Lysa provides emergency care, restoring you to half health.");
         return;
     }
     if (g->gold < price) {
