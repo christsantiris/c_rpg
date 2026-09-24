@@ -35,7 +35,9 @@ The **HEALER** building is west of the blacksmith, north of the east-west road.
 Follow its short entrance path from that road to meet Lysa.
 She restores all missing HP for **1 gold per 3 HP, rounded up**. The price is
 shown before payment; press Enter or click the treatment button to accept,
-or Escape to leave. Full health costs nothing. Healing does not restore MP.
+or Escape to leave. If HP falls below 25% and full treatment is unaffordable,
+Lysa provides free emergency care up to 50% HP. Full health costs nothing.
+Healing does not restore MP.
 
 ### Town witch
 
