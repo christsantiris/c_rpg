@@ -21,8 +21,8 @@ static void draw_shop_room(Renderer *r) {
 }
 
 static int healer_option_y(const Renderer *r, int option) {
-    int first = r->screen_h < 440 ? 110 : 300;
-    int spacing = r->screen_h < 440 ? 32 : 40;
+    int first = r->screen_h < 440 ? 116 : 300;
+    int spacing = r->screen_h < 440 ? 36 : 40;
     return first + option * spacing;
 }
 
@@ -50,7 +50,7 @@ static void draw_healer_option(Renderer *r, int option, int selected, int availa
         color, r->font_small);
 }
 
-static void draw_healer_visit(Renderer *r, const GameState *g, const ShopScreen *s) {
+static void draw_restoration_visit(Renderer *r, const GameState *g, const ShopScreen *s) {
     draw_shop_room(r);
     SDL_Color gold = {220, 180, 60, 255};
     SDL_Color white = {200, 200, 200, 255};
@@ -59,66 +59,69 @@ static void draw_healer_visit(Renderer *r, const GameState *g, const ShopScreen 
     SDL_Color hint = {110, 130, 115, 255};
     int cx = r->screen_w / 2;
     int compact = r->screen_h < 440;
+    int witch = s->type == SHOP_TYPE_WITCH;
     int title_y = compact ? 18 : 40;
     int stats_y = compact ? 48 : 80;
-    renderer_draw_text(r, "HEALER", cx - 48, title_y, gold, r->font_large);
-    int hp_price = game_healer_price(g);
-    int mp_price = game_healer_mana_price(g);
-    int missing_hp = g->player.max_hp - g->player.hp;
-    int missing_mp = g->player.max_mp - g->player.mp;
+    renderer_draw_text(r, witch ? "WITCH" : "HEALER", cx - 48, title_y,
+        gold, r->font_large);
+    int price = witch ? game_witch_price(g) : game_healer_price(g);
+    int current = witch ? g->player.mp : g->player.hp;
+    int maximum = witch ? g->player.max_mp : g->player.max_hp;
+    int missing = maximum - current;
+    const char *resource = witch ? "MP" : "HP";
     char text[96];
     SDL_snprintf(text, sizeof(text), "YOUR GOLD: %d", g->gold);
     renderer_draw_text(r, text, cx - 205, stats_y, gold, r->font_small);
-    SDL_snprintf(text, sizeof(text), "HP: %d / %d", g->player.hp, g->player.max_hp);
+    SDL_snprintf(text, sizeof(text), "%s: %d / %d", resource, current,
+        maximum);
     renderer_draw_text(r, text, cx + 70, stats_y, white, r->font_small);
-    SDL_snprintf(text, sizeof(text), "MP: %d / %d", g->player.mp, g->player.max_mp);
-    renderer_draw_text(r, text, cx + 70, stats_y + 22, white, r->font_small);
 
     if (compact) {
-        renderer_draw_text(r, "RESTORE HP OR MP: 1 GOLD PER 3 POINTS.", cx - 205, 86,
-            white, r->font_tiny);
+        renderer_draw_text(r, witch ? "MORWEN CAN RESTORE ALL MISSING MP."
+            : "LYSA CAN RESTORE ALL MISSING HP.", cx - 205, 72, white,
+            r->font_tiny);
+        SDL_snprintf(text, sizeof(text),
+            "RATE: 1 GOLD PER 3 %s, ROUNDED UP.", resource);
+        renderer_draw_text(r, text, cx - 205, 88, hint, r->font_tiny);
     } else {
-        draw_healer_portrait(r, cx - 245, 124, 3);
-        renderer_draw_text(r, "LYSA", cx - 105, 132, gold, r->font_small);
-        renderer_draw_text(r, "WELCOME, TRAVELER.", cx - 105, 160,
+        if (witch) {
+            draw_witch_portrait(r, cx - 245, 124, 3);
+        } else {
+            draw_healer_portrait(r, cx - 245, 124, 3);
+        }
+        renderer_draw_text(r, witch ? "MORWEN" : "LYSA", cx - 105, 132,
+            gold, r->font_small);
+        renderer_draw_text(r, witch ? "THE OLD MAGIC STILL ANSWERS."
+            : "WELCOME, TRAVELER.", cx - 105, 160,
             white, r->font_small);
-        renderer_draw_text(r, "I CAN RESTORE ALL MISSING HP OR MP.", cx - 105, 184,
-            white, r->font_small);
-        renderer_draw_text(r, "RATE: 1 GOLD PER 3 POINTS, ROUNDED UP.", cx - 105, 218,
-            hint, r->font_tiny);
-        const char *hp_status = hp_price == 0 ? "HP: ALREADY FULL"
-            : (g->gold < hp_price ? "HP: CANNOT AFFORD" : "HP: AVAILABLE");
-        const char *mp_status = mp_price == 0 ? "MP: ALREADY FULL"
-            : (g->gold < mp_price ? "MP: CANNOT AFFORD" : "MP: AVAILABLE");
-        renderer_draw_text(r, hp_status, cx - 105, 244,
-            hp_price == 0 || g->gold >= hp_price ? green : red, r->font_tiny);
-        renderer_draw_text(r, mp_status, cx + 45, 244,
-            mp_price == 0 || g->gold >= mp_price ? green : red, r->font_tiny);
+        SDL_snprintf(text, sizeof(text), "I CAN RESTORE ALL MISSING %s.",
+            resource);
+        renderer_draw_text(r, text, cx - 105, 184, white, r->font_small);
+        SDL_snprintf(text, sizeof(text),
+            "RATE: 1 GOLD PER 3 %s, ROUNDED UP.", resource);
+        renderer_draw_text(r, text, cx - 105, 218, hint, r->font_tiny);
+        const char *status = price == 0 ? (witch
+                ? "YOUR SPIRIT IS ALREADY FULL."
+                : "YOU ARE ALREADY AT FULL HEALTH.")
+            : (g->gold < price ? "YOU CANNOT AFFORD THIS TREATMENT."
+                : "TREATMENT IS AVAILABLE.");
+        renderer_draw_text(r, status, cx - 105, 244,
+            price == 0 || g->gold >= price ? green : red, r->font_tiny);
     }
 
-    char heal_label[96];
-    if (hp_price == 0) {
-        SDL_snprintf(heal_label, sizeof(heal_label),
-            "FULL HEALTH - NO TREATMENT NEEDED");
+    char restore_label[96];
+    if (price == 0) {
+        SDL_snprintf(restore_label, sizeof(restore_label),
+            "FULL %s - NO RESTORATION NEEDED", witch ? "MANA" : "HEALTH");
     } else {
-        SDL_snprintf(heal_label, sizeof(heal_label),
-            "RESTORE %d HP    %d GOLD", missing_hp, hp_price);
+        SDL_snprintf(restore_label, sizeof(restore_label),
+            "RESTORE %d %s    %d GOLD", missing, resource, price);
     }
     draw_healer_option(r, 0, s->selected == 0,
-        hp_price == 0 || g->gold >= hp_price, heal_label);
-    char mana_label[96];
-    if (mp_price == 0) {
-        SDL_snprintf(mana_label, sizeof(mana_label),
-            "FULL MANA - NO RESTORATION NEEDED");
-    } else {
-        SDL_snprintf(mana_label, sizeof(mana_label),
-            "RESTORE %d MP    %d GOLD", missing_mp, mp_price);
-    }
-    draw_healer_option(r, 1, s->selected == 1,
-        mp_price == 0 || g->gold >= mp_price, mana_label);
-    draw_healer_option(r, 2, s->selected == 2, 1, "RETURN TO TOWN");
+        price == 0 || g->gold >= price, restore_label);
+    draw_healer_option(r, 1, s->selected == 1, 1, "RETURN TO TOWN");
     renderer_draw_text(r, "UP/DOWN OR W/S SELECT   ENTER CONFIRM   ESC CLOSE",
-        cx - 220, r->screen_h - (compact ? 20 : 48), hint, r->font_tiny);
+        cx - 220, r->screen_h - 48, hint, r->font_tiny);
 }
 
 static int shop_visible_rows(const Renderer *r) {
@@ -172,8 +175,8 @@ static void draw_shop_scrollbar(Renderer *r, int x, int y, int height, int start
 }
 
 void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
-    if (s->type == SHOP_TYPE_HEALER) {
-        draw_healer_visit(r, g, s);
+    if (s->type == SHOP_TYPE_HEALER || s->type == SHOP_TYPE_WITCH) {
+        draw_restoration_visit(r, g, s);
         return;
     }
     int full_tiles_x = r->screen_w / TILE_SIZE;

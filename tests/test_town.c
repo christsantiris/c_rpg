@@ -21,7 +21,7 @@ void test_town_healer(void) {
         !map_is_walkable(&g.map, TOWN_HEALER_X, TOWN_HEALER_Y) &&
         map_is_walkable(&g.map, dx, dy));
     int plaza = 1;
-    for (int x = dx; x <= 30; x++) {
+    for (int x = dx; x <= TOWN_ALCHEMIST_X + 2; x++) {
         TileType upper = g.map.tiles[dy + 1][x];
         plaza &= upper == TILE_TOWN_PATH ||
             (x == TOWN_CAIN_X && upper == TILE_NPC_CAIN);
@@ -30,7 +30,8 @@ void test_town_healer(void) {
     }
     ASSERT("three-tile cobblestone plaza reaches every north shop door", plaza &&
         g.map.tiles[TOWN_BLACKSMITH_Y + 4][TOWN_BLACKSMITH_X + 2] == TILE_TOWN_PATH &&
-        g.map.tiles[11][30] == TILE_TOWN_PATH);
+        g.map.tiles[TOWN_ALCHEMIST_Y + 4][TOWN_ALCHEMIST_X + 2] ==
+            TILE_TOWN_PATH);
     ASSERT("former healer lot and lane return to grass",
         g.map.tiles[16][26] == TILE_TOWN_FLOOR && g.map.tiles[20][28] == TILE_TOWN_FLOOR);
     ASSERT("healer lane leaves the harbor road locked",
@@ -43,15 +44,12 @@ void test_town_healer(void) {
     int starts_on_heal = shop.selected == 0 &&
         shop_handle_key(&shop, SDL_SCANCODE_RETURN) == SHOP_HEAL;
     shop_handle_key(&shop, SDL_SCANCODE_DOWN);
-    int selects_mana = shop.selected == 1 &&
-        shop_handle_key(&shop, SDL_SCANCODE_RETURN) == SHOP_RESTORE_MANA;
-    shop_handle_key(&shop, SDL_SCANCODE_S);
-    int selects_exit = shop.selected == 2 &&
+    int selects_exit = shop.selected == 1 &&
         shop_handle_key(&shop, SDL_SCANCODE_KP_ENTER) == SHOP_CLOSED;
     shop_handle_key(&shop, SDL_SCANCODE_W);
-    ASSERT("healer has selectable HP, MP and exit options",
-        shop.item_count == 0 && starts_on_heal && selects_mana && selects_exit &&
-        shop.selected == 1 && shop_handle_key(&shop, SDL_SCANCODE_TAB) == SHOP_NONE &&
+    ASSERT("healer has selectable treatment and exit options",
+        shop.item_count == 0 && starts_on_heal && selects_exit &&
+        shop.selected == 0 && shop_handle_key(&shop, SDL_SCANCODE_TAB) == SHOP_NONE &&
         shop.mode == 0 && shop_handle_key(&shop, SDL_SCANCODE_ESCAPE) == SHOP_CLOSED);
     g.player.hp = g.player.max_hp - 30;
     g.gold = 9;
@@ -78,32 +76,35 @@ void test_town_healer(void) {
     game_visit_healer(&g);
     ASSERT("separate treatments charge their current cost", g.gold == 88);
 
+    ASSERT("witch stands between the alchemist and mountain entrance",
+        TOWN_ALCHEMIST_X + 5 < TOWN_WITCH_X &&
+        TOWN_WITCH_X + TOWN_WITCH_W < TOWN_W - 1 &&
+        g.map.tiles[TOWN_WITCH_DOOR_Y][TOWN_WITCH_DOOR_X] ==
+            TILE_WITCH_DOOR);
+    ASSERT("witch hut is solid with a walkable entrance",
+        !map_is_walkable(&g.map, TOWN_WITCH_X, TOWN_WITCH_Y) &&
+        map_is_walkable(&g.map, TOWN_WITCH_DOOR_X, TOWN_WITCH_DOOR_Y) &&
+        g.map.tiles[TOWN_WITCH_DOOR_Y + 1][TOWN_WITCH_DOOR_X] ==
+            TILE_TOWN_PATH);
+    shop_init(&shop, SHOP_TYPE_WITCH, 0);
+    int starts_on_restore = shop.selected == 0 &&
+        shop_handle_key(&shop, SDL_SCANCODE_RETURN) == SHOP_RESTORE_MANA;
+    shop_handle_key(&shop, SDL_SCANCODE_DOWN);
+    int witch_exit = shop.selected == 1 &&
+        shop_handle_key(&shop, SDL_SCANCODE_RETURN) == SHOP_CLOSED;
+    ASSERT("witch has selectable mana restoration and exit options",
+        starts_on_restore && witch_exit);
     g.player.mp = g.player.max_mp - 30;
     g.gold = 9;
-    ASSERT("restoring thirty MP costs ten gold",
-        game_healer_mana_price(&g) == 10);
-    game_visit_healer_mana(&g);
-    ASSERT("insufficient funds leave both gold and MP unchanged",
+    ASSERT("restoring thirty MP costs ten gold", game_witch_price(&g) == 10);
+    game_visit_witch(&g);
+    ASSERT("witch refuses restoration the player cannot afford",
         g.gold == 9 && g.player.mp == g.player.max_mp - 30);
     g.gold = 10;
     int hp = g.player.hp;
-    game_visit_healer_mana(&g);
-    ASSERT("exact payment restores full MP without changing HP",
+    game_visit_witch(&g);
+    ASSERT("witch restores MP without changing HP",
         g.gold == 0 && g.player.mp == g.player.max_mp && g.player.hp == hp);
-    g.gold = 100;
-    game_visit_healer_mana(&g);
-    ASSERT("full mana does not charge the player",
-        game_healer_mana_price(&g) == 0 && g.gold == 100);
-    g.player.mp -= 31;
-    ASSERT("larger mana deficits cost more with rounded-up pricing",
-        game_healer_mana_price(&g) == 11);
-    game_visit_healer_mana(&g);
-    g.player.mp--;
-    ASSERT("one missing MP costs one gold",
-        game_healer_mana_price(&g) == 1);
-    game_visit_healer_mana(&g);
-    ASSERT("separate mana restorations charge their current cost",
-        g.gold == 88 && g.player.mp == g.player.max_mp);
 
     const int slot = 99012;
     if (save_exists(slot)) {
@@ -112,10 +113,12 @@ void test_town_healer(void) {
     }
     int saved = save_game(&g, slot);
     int restored = saved && load_game(&loaded, slot);
-    ASSERT("restored HP, MP, payment and healer building survive save/load",
-        restored && loaded.gold == 88 && loaded.player.hp == loaded.player.max_hp &&
+    ASSERT("town restoration services survive save/load",
+        restored && loaded.gold == 0 && loaded.player.hp == loaded.player.max_hp &&
         loaded.player.mp == loaded.player.max_mp &&
-        loaded.map.tiles[dy][dx] == TILE_HEALER_DOOR);
+        loaded.map.tiles[dy][dx] == TILE_HEALER_DOOR &&
+        loaded.map.tiles[TOWN_WITCH_DOOR_Y][TOWN_WITCH_DOOR_X] ==
+            TILE_WITCH_DOOR);
     remove("saves/savegame_99012.json");
 }
 
@@ -218,7 +221,7 @@ void test_town_tiles(void) {
     ASSERT("TILE_WATCHTOWER is distinct", TILE_WATCHTOWER != TILE_TAVERN);
 
     // Constants are defined
-    ASSERT("TOWN_W is 40", TOWN_W == 40);
+    ASSERT("TOWN_W is 44", TOWN_W == 44);
     ASSERT("TOWN_H is 25", TOWN_H == 25);
 }
 
@@ -247,24 +250,29 @@ void test_town_map(void) {
     ASSERT("blacksmith moves east to make room for the healer",
         TOWN_BLACKSMITH_X > 7 &&
         m.tiles[TOWN_BLACKSMITH_Y][TOWN_BLACKSMITH_X] == TILE_SHOP_BLACKSMITH);
-    ASSERT("alchemist at (28,7)",
-        m.tiles[7][28] == TILE_SHOP_ALCHEMIST);
+    ASSERT("alchemist shifts east",
+        m.tiles[TOWN_ALCHEMIST_Y][TOWN_ALCHEMIST_X] ==
+            TILE_SHOP_ALCHEMIST);
     ASSERT("blacksmith has a walk-in doorway",
         m.tiles[TOWN_BLACKSMITH_Y + 3][TOWN_BLACKSMITH_X + 2] == TILE_BLACKSMITH_DOOR &&
         map_is_walkable(&m, TOWN_BLACKSMITH_X + 2, TOWN_BLACKSMITH_Y + 3));
     ASSERT("alchemist has a walk-in doorway",
-        m.tiles[10][30] == TILE_ALCHEMIST_DOOR &&
-        map_is_walkable(&m, 30, 10));
-    ASSERT("cobblestone plaza reaches all three shop doors",
+        m.tiles[TOWN_ALCHEMIST_Y + 3][TOWN_ALCHEMIST_X + 2] ==
+            TILE_ALCHEMIST_DOOR &&
+        map_is_walkable(&m, TOWN_ALCHEMIST_X + 2,
+            TOWN_ALCHEMIST_Y + 3));
+    ASSERT("cobblestone plaza reaches the original shop doors",
         m.tiles[TOWN_HEALER_DOOR_Y + 1][TOWN_HEALER_DOOR_X] == TILE_TOWN_PATH &&
         m.tiles[TOWN_HEALER_DOOR_Y + 1][9] == TILE_TOWN_PATH &&
         m.tiles[TOWN_HEALER_DOOR_Y + 3][9] == TILE_TOWN_PATH &&
         m.tiles[TOWN_BLACKSMITH_Y + 4][TOWN_BLACKSMITH_X + 2] == TILE_TOWN_PATH &&
         m.tiles[11][24] == TILE_TOWN_PATH &&
-        m.tiles[11][30] == TILE_TOWN_PATH);
+        m.tiles[TOWN_ALCHEMIST_Y + 4][TOWN_ALCHEMIST_X + 2] ==
+            TILE_TOWN_PATH);
     ASSERT("shop facades remain solid away from their doors",
         !map_is_walkable(&m, TOWN_BLACKSMITH_X, TOWN_BLACKSMITH_Y) &&
-        !map_is_walkable(&m, 28, 7));
+        !map_is_walkable(&m, TOWN_ALCHEMIST_X, TOWN_ALCHEMIST_Y) &&
+        !map_is_walkable(&m, TOWN_WITCH_X, TOWN_WITCH_Y));
     ASSERT("tavern occupies southwest town lot",
         m.tiles[16][5] == TILE_TAVERN &&
         m.tiles[20][8] == TILE_TAVERN_DOOR &&
@@ -278,10 +286,10 @@ void test_town_map(void) {
         m.tiles[21][12] == TILE_TOWN_PATH &&
         m.tiles[21][8] == TILE_TOWN_PATH);
     ASSERT("harbor reaches the southeast corner of the town green",
-        m.tiles[20][34] == TILE_WATCHTOWER &&
+        m.tiles[TOWN_HARBOR_Y][TOWN_HARBOR_X] == TILE_WATCHTOWER &&
         m.tiles[TOWN_H - 2][TOWN_W - 2] == TILE_WATCHTOWER);
     ASSERT("harbor remains closed and solid",
-        !map_is_walkable(&m, 34, 20) &&
+        !map_is_walkable(&m, TOWN_HARBOR_X, TOWN_HARBOR_Y) &&
         !map_is_walkable(&m, TOWN_HARBOR_ENTRANCE_X,
             TOWN_HARBOR_ENTRANCE_Y));
     ASSERT("former watchtower lot is walkable green",

@@ -768,6 +768,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_BLACKSMITH_DOOR:
                 case TILE_ALCHEMIST_DOOR:
                 case TILE_HEALER_DOOR:
+                case TILE_WITCH_DOOR:
                 case TILE_TAVERN_DOOR:
                     draw_town_path(r, sx, sy); break;
                 case TILE_TAVERN_FLOOR: draw_tavern_floor(r, sx, sy); break;
@@ -835,6 +836,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_SHOP_BLACKSMITH:
                 case TILE_SHOP_ALCHEMIST:
                 case TILE_HEALER:
+                case TILE_WITCH:
                 case TILE_WATCHTOWER:
                 case TILE_TAVERN: draw_town_floor(r, sx, sy); break;
                 case TILE_ITEM:
@@ -959,7 +961,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         draw_shop_blacksmith(r,
             viewport_to_screen_x(v, TOWN_BLACKSMITH_X), viewport_to_screen_y(v, TOWN_BLACKSMITH_Y));
         draw_shop_alchemist(r,
-            viewport_to_screen_x(v, 28), viewport_to_screen_y(v, 7));
+            viewport_to_screen_x(v, TOWN_ALCHEMIST_X),
+            viewport_to_screen_y(v, TOWN_ALCHEMIST_Y));
+        draw_witch_hut(r,
+            viewport_to_screen_x(v, TOWN_WITCH_X),
+            viewport_to_screen_y(v, TOWN_WITCH_Y));
         draw_tavern(r,
             viewport_to_screen_x(v, 5), viewport_to_screen_y(v, 16));
         draw_healer_house(r, viewport_to_screen_x(v, TOWN_HEALER_X),
@@ -1042,6 +1048,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         SDL_Color label = {220, 180, 60, 255};
         int blacksmith_w = 0;
         int alchemist_w = 0;
+        int witch_w = 0;
         int forest_w = 0;
         int forest_h = 0;
         int dungeon_w = 0;
@@ -1054,6 +1061,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int coast_h = 0;
         TTF_SizeText(r->font_tiny, "BLACKSMITH", &blacksmith_w, NULL);
         TTF_SizeText(r->font_tiny, "ALCHEMIST", &alchemist_w, NULL);
+        TTF_SizeText(r->font_tiny, "WITCH", &witch_w, NULL);
         TTF_SizeText(r->font_tiny, "FOREST", &forest_w, &forest_h);
         TTF_SizeText(r->font_tiny, "DUNGEON", &dungeon_w, &dungeon_h);
         TTF_SizeText(r->font_tiny, "MOUNTAINS", &mountains_w, &mountains_h);
@@ -1070,9 +1078,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int bx = viewport_to_screen_x(v, TOWN_BLACKSMITH_X) * TILE_SIZE
             + (5 * TILE_SIZE - blacksmith_w) / 2;
         int by = viewport_to_screen_y(v, TOWN_BLACKSMITH_Y - 1) * TILE_SIZE;
-        int ax = viewport_to_screen_x(v, 28) * TILE_SIZE
+        int ax = viewport_to_screen_x(v, TOWN_ALCHEMIST_X) * TILE_SIZE
             + (5 * TILE_SIZE - alchemist_w) / 2;
-        int ay = viewport_to_screen_y(v, 6)  * TILE_SIZE;
+        int ay = viewport_to_screen_y(v, TOWN_ALCHEMIST_Y - 1) * TILE_SIZE;
+        int witch_x = viewport_to_screen_x(v, TOWN_WITCH_X) * TILE_SIZE
+            + (TOWN_WITCH_W * TILE_SIZE - witch_w) / 2;
+        int witch_y = viewport_to_screen_y(v, TOWN_WITCH_Y - 1) * TILE_SIZE;
         int tavern_x = viewport_to_screen_x(v, 5) * TILE_SIZE
             + (7 * TILE_SIZE - tavern_w) / 2;
         int tavern_y = viewport_to_screen_y(v, 15) * TILE_SIZE;
@@ -1084,6 +1095,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         }
         if (ax > 0 && ay > 0) {
             renderer_draw_text(r, "ALCHEMIST", ax, ay, label, r->font_tiny);
+        }
+        if (witch_x > 0 && witch_y > 0) {
+            renderer_draw_text(r, "WITCH", witch_x, witch_y, label,
+                r->font_tiny);
         }
         if (tavern_x > 0 && tavern_y > 0) {
             renderer_draw_text(r, "TAVERN", tavern_x, tavern_y, label,

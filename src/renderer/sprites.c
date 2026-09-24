@@ -2798,6 +2798,18 @@ void draw_healer_house(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 53, y + 41, 14, 4, plaster);
 }
 
+void draw_witch_hut(Renderer *r, int tile_x, int tile_y) {
+    if (!r->witch_texture) {
+        draw_healer_house(r, tile_x, tile_y);
+        return;
+    }
+    SDL_Rect destination = {
+        tile_x * TILE_SIZE, tile_y * TILE_SIZE,
+        TOWN_WITCH_W * TILE_SIZE, TOWN_WITCH_H * TILE_SIZE
+    };
+    SDL_RenderCopy(r->sdl, r->witch_texture, NULL, &destination);
+}
+
 static void healer_rect(Renderer *r, int x, int y, int scale, int px, int py, int pw, int ph, SDL_Color color) {
     fill_rect(r, x + px * scale, y + py * scale, pw * scale, ph * scale, color);
 }
@@ -2905,6 +2917,51 @@ void draw_healer_portrait(Renderer *r, int x, int y, int scale) {
     healer_rect(r, x, y, scale, 19, 38, 7, 2, outline);
     healer_rect(r, x, y, scale, 8, 38, 5, 1, leather_light);
     healer_rect(r, x, y, scale, 20, 38, 5, 1, leather_light);
+}
+
+void draw_witch_portrait(Renderer *r, int x, int y, int scale) {
+    SDL_Color outline = {28, 20, 35, 255};
+    SDL_Color hat_dark = {49, 33, 67, 255};
+    SDL_Color hat = {78, 50, 101, 255};
+    SDL_Color hat_light = {112, 72, 137, 255};
+    SDL_Color hair = {181, 162, 130, 255};
+    SDL_Color skin = {193, 139, 105, 255};
+    SDL_Color skin_light = {225, 176, 132, 255};
+    SDL_Color robe_dark = {32, 66, 59, 255};
+    SDL_Color robe = {48, 105, 82, 255};
+    SDL_Color robe_light = {72, 139, 101, 255};
+    SDL_Color moon = {232, 197, 91, 255};
+    SDL_Color potion = {120, 205, 177, 255};
+
+    healer_rect(r, x, y, scale, 13, 0, 8, 4, outline);
+    healer_rect(r, x, y, scale, 11, 3, 12, 5, outline);
+    healer_rect(r, x, y, scale, 8, 7, 18, 6, outline);
+    healer_rect(r, x, y, scale, 2, 12, 29, 4, outline);
+    healer_rect(r, x, y, scale, 14, 1, 6, 4, hat_light);
+    healer_rect(r, x, y, scale, 12, 4, 10, 5, hat);
+    healer_rect(r, x, y, scale, 9, 8, 16, 5, hat_dark);
+    healer_rect(r, x, y, scale, 4, 13, 25, 2, hat);
+    healer_rect(r, x, y, scale, 18, 4, 2, 3, moon);
+
+    healer_rect(r, x, y, scale, 8, 15, 17, 15, outline);
+    healer_rect(r, x, y, scale, 10, 16, 13, 12, skin);
+    healer_rect(r, x, y, scale, 11, 17, 10, 3, skin_light);
+    healer_rect(r, x, y, scale, 8, 16, 4, 13, hair);
+    healer_rect(r, x, y, scale, 22, 16, 3, 13, hair);
+    healer_rect(r, x, y, scale, 12, 21, 2, 2, outline);
+    healer_rect(r, x, y, scale, 19, 21, 2, 2, outline);
+    healer_rect(r, x, y, scale, 15, 26, 5, 1, outline);
+
+    healer_rect(r, x, y, scale, 5, 29, 23, 4, outline);
+    healer_rect(r, x, y, scale, 3, 32, 27, 8, outline);
+    healer_rect(r, x, y, scale, 6, 30, 21, 4, robe_dark);
+    healer_rect(r, x, y, scale, 5, 33, 23, 7, robe);
+    healer_rect(r, x, y, scale, 7, 34, 4, 6, robe_light);
+    healer_rect(r, x, y, scale, 15, 31, 4, 7, outline);
+    healer_rect(r, x, y, scale, 16, 32, 2, 5, moon);
+    healer_rect(r, x, y, scale, 27, 31, 5, 8, outline);
+    healer_rect(r, x, y, scale, 28, 32, 3, 6, potion);
+    healer_rect(r, x, y, scale, 29, 33, 1, 2, skin_light);
 }
 
 void draw_elowen(Renderer *r, int tile_x, int tile_y) {
