@@ -25,6 +25,14 @@ static int count_enemy_type(const GameState *g, EnemyType type) {
     return count;
 }
 
+static int count_active_enemies(const GameState *g) {
+    int count = 0;
+    for (int i = 0; i < g->enemy_count; i++) {
+        count += g->enemies[i].active;
+    }
+    return count;
+}
+
 static void lower_coast_tide(GameState *g) {
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
@@ -75,6 +83,9 @@ void test_elowen_quest(void) {
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
 
+    g.level_cache[3].valid = 1;
+    g.portal_active = 1;
+    g.portal_location = LOCATION_DUNGEON;
     game_talk_to_elowen(&g);
     ASSERT("Elowen offers The Broken Seals", g.elowen_quest_state == 1);
     ASSERT("Elowen speaks through dialogue state", g.dialogue_active &&
@@ -84,6 +95,19 @@ void test_elowen_quest(void) {
             "Quest assigned: The Broken Seals.") == 0);
     ASSERT("new quest begins with no restored seals",
         g.elowen_seals_restored == 0);
+    ASSERT("accepting Elowen's quest starts a fresh dungeon expedition",
+        !g.level_cache[3].valid && !g.portal_active);
+
+    g.location = LOCATION_DUNGEON;
+    g.level = 2;
+    map_generate(&g.map, g.level);
+    g.enemy_count = 0;
+    game_refresh_quest_encounters(&g);
+    int encounter_x = 0;
+    int encounter_y = 0;
+    ASSERT("a cleared dungeon floor receives a guarded seal encounter",
+        find_tile(&g.map, TILE_BROKEN_BURIAL_SEAL, &encounter_x,
+            &encounter_y) && count_active_enemies(&g) >= 3);
 
     game_enter_dungeon(&g);
     ASSERT("new dungeon expedition starts on floor one", g.level == 1);
@@ -209,12 +233,17 @@ void test_dain_quest(void) {
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
 
+    g.mountain_cache[3].valid = 1;
+    g.portal_active = 1;
+    g.portal_location = LOCATION_MOUNTAINS;
     game_talk_to_dain(&g);
     ASSERT("Dain assigns Recover the Treasure Map", g.dain_quest_state == 1);
     ASSERT("new Dain quest begins with no map fragments",
         g.dain_map_fragments == 0);
     ASSERT("Dain speaks through the dialogue bubble", g.dialogue_active &&
         strcmp(g.dialogue_speaker, "Dain") == 0);
+    ASSERT("accepting Dain's quest starts a fresh mountain expedition",
+        !g.mountain_cache[3].valid && !g.portal_active);
 
     int target_levels[3] = {2, 3, 5};
     EnemyType target_types[3] = {
@@ -237,6 +266,37 @@ void test_dain_quest(void) {
         ASSERT("map bearer is distinct from ordinary enemies",
             marked_target);
     }
+
+    g.level = 1;
+    map_generate_mountains(&g.map, g.level);
+    g.enemy_count = 0;
+    LevelCache *cached = &g.mountain_cache[1];
+    map_generate_mountains(&cached->map, 2);
+    cached->enemy_count = 0;
+    cached->level_cleared = 1;
+    cached->valid = 1;
+    game_descend(&g);
+    int cached_bearers = 0;
+    int cached_enemies = 0;
+    for (int i = 0; i < g.enemy_count; i++) {
+        if (g.enemies[i].active &&
+            g.enemies[i].dain_fragment == DAIN_FRAGMENT_ARCHER) {
+            cached_bearers++;
+        }
+        cached_enemies += g.enemies[i].active;
+    }
+    ASSERT("backtracking adds a guarded bearer to a cleared cached stage",
+        g.level == 2 && cached_bearers == 1 && cached_enemies >= 3);
+    game_refresh_quest_encounters(&g);
+    int refreshed_bearers = 0;
+    for (int i = 0; i < g.enemy_count; i++) {
+        if (g.enemies[i].active &&
+            g.enemies[i].dain_fragment == DAIN_FRAGMENT_ARCHER) {
+            refreshed_bearers++;
+        }
+    }
+    ASSERT("refreshing a cached stage does not duplicate its bearer",
+        refreshed_bearers == 1);
 
     game_record_dain_kill(&g, ENEMY_GOBLIN_ARCHER);
     ASSERT("Archer defeat recovers its map fragment",
@@ -261,12 +321,17 @@ void test_alder_quest(void) {
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
 
+    g.forest_cache[3].valid = 1;
+    g.portal_active = 1;
+    g.portal_location = LOCATION_FOREST;
     game_talk_to_alder(&g);
     ASSERT("Alder assigns The Lost Wardens", g.alder_quest_state == 1);
     ASSERT("new Alder quest begins with no rescues",
         g.alder_wardens_rescued == 0);
     ASSERT("Alder speaks through dialogue state", g.dialogue_active &&
         strcmp(g.dialogue_speaker, "Alder") == 0);
+    ASSERT("accepting Alder's quest starts a fresh forest expedition",
+        !g.forest_cache[3].valid && !g.portal_active);
 
     int target_levels[3] = {2, 5, 7};
     EnemyType guardian_types[3] = {
@@ -312,6 +377,9 @@ void test_mara_quest(void) {
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
 
+    g.coast_cache[3].valid = 1;
+    g.portal_active = 1;
+    g.portal_location = LOCATION_COAST;
     game_talk_to_mara(&g);
     ASSERT("Mara assigns Relight the Drowned Beacons",
         g.mara_quest_state == 1);
@@ -319,10 +387,12 @@ void test_mara_quest(void) {
         g.mara_beacons_lit == 0);
     ASSERT("Mara speaks through dialogue state", g.dialogue_active &&
         strcmp(g.dialogue_speaker, "Mara") == 0);
+    ASSERT("accepting Mara's quest starts a fresh coast expedition",
+        !g.coast_cache[3].valid && !g.portal_active);
 
     int target_levels[3] = {1, 3, 6};
-    EnemyType guardian_types[2] = {
-        ENEMY_ANIMATED_STATUE, ENEMY_SEA_SERPENT
+    EnemyType guardian_types[3] = {
+        ENEMY_GIANT_CRAB, ENEMY_ANIMATED_STATUE, ENEMY_SEA_SERPENT
     };
     game_enter_coast(&g);
     for (int target = 0; target < 3; target++) {
@@ -334,10 +404,8 @@ void test_mara_quest(void) {
         ASSERT("unlit beacon appears on its assigned coast stage",
             find_tile(&g.map, TILE_COAST_BEACON_UNLIT, &beacon_x,
                 &beacon_y));
-        if (target > 0) {
-            ASSERT("beacon stage has its planned guardian",
-                count_enemy_type(&g, guardian_types[target - 1]) > 0);
-        }
+        ASSERT("beacon stage has its planned guardian",
+            count_enemy_type(&g, guardian_types[target]) > 0);
         g.player.x = beacon_x;
         g.player.y = beacon_y;
         Action light = {ACTION_INTERACT, 0, 0};

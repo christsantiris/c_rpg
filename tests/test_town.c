@@ -44,12 +44,16 @@ void test_town_healer(void) {
     int starts_on_heal = shop.selected == 0 &&
         shop_handle_key(&shop, SDL_SCANCODE_RETURN) == SHOP_HEAL;
     shop_handle_key(&shop, SDL_SCANCODE_DOWN);
-    int selects_exit = shop.selected == 1 &&
+    int selects_emergency = shop.selected == 1 &&
+        shop_handle_key(&shop, SDL_SCANCODE_RETURN) == SHOP_EMERGENCY_HEAL;
+    shop_handle_key(&shop, SDL_SCANCODE_DOWN);
+    int selects_exit = shop.selected == 2 &&
         shop_handle_key(&shop, SDL_SCANCODE_KP_ENTER) == SHOP_CLOSED;
     shop_handle_key(&shop, SDL_SCANCODE_W);
-    ASSERT("healer has selectable treatment and exit options",
-        shop.item_count == 0 && starts_on_heal && selects_exit &&
-        shop.selected == 0 && shop_handle_key(&shop, SDL_SCANCODE_TAB) == SHOP_NONE &&
+    ASSERT("healer has separate paid, emergency and exit options",
+        shop.item_count == 0 && starts_on_heal && selects_emergency &&
+        selects_exit && shop.selected == 1 &&
+        shop_handle_key(&shop, SDL_SCANCODE_TAB) == SHOP_NONE &&
         shop.mode == 0 && shop_handle_key(&shop, SDL_SCANCODE_ESCAPE) == SHOP_CLOSED);
     g.player.hp = g.player.max_hp - 30;
     g.gold = 9;
@@ -64,6 +68,9 @@ void test_town_healer(void) {
     ASSERT("free emergency care is offered below one-quarter health",
         game_healer_emergency_available(&g));
     game_visit_healer(&g);
+    ASSERT("paid care remains separate when emergency care is available",
+        g.player.hp == g.player.max_hp / 4 - 1 && g.gold == 0);
+    game_visit_healer_emergency(&g);
     ASSERT("emergency care restores half health without changing other resources",
         g.player.hp == (g.player.max_hp + 1) / 2 && g.gold == 0 &&
         g.player.mp == emergency_mp && g.inventory_count == emergency_items);

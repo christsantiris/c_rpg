@@ -16,8 +16,8 @@ typedef struct {
 static const QuestDefinition quest_definitions[5] = {
     {
         "The Broken Seals", "Elowen",
-        "Repair the shattered burial seals before their",
-        "necrotic power spreads through the crypt.",
+        "Break through the undead guarding three shattered",
+        "burial seals, then restore each seal.",
         {"Repair burial seal", "Repair burial seal", "Repair burial seal"},
         "Dungeon", {2, 4, 6}, 40, 300
     },
@@ -31,16 +31,16 @@ static const QuestDefinition quest_definitions[5] = {
     },
     {
         "The Lost Wardens", "Alder",
-        "Find the wardens trapped in the forest's",
-        "dead-end groves and help them escape.",
+        "Defeat the hunting parties guarding three lost",
+        "wardens, then help each warden escape.",
         {"Rescue forest warden", "Rescue forest warden",
             "Rescue forest warden"},
         "Forest", {2, 5, 7}, 70, 500
     },
     {
         "Relight the Drowned Beacons", "Mara",
-        "Lower the tides and relight the old beacons",
-        "that once guided travelers along the coast.",
+        "Lower the tides, fight through drowned guardians,",
+        "and relight the three old coast beacons.",
         {"Light drowned beacon", "Light drowned beacon",
             "Light drowned beacon"},
         "Coast", {1, 3, 6}, 80, 600

@@ -113,10 +113,7 @@ static void draw_restoration_visit(Renderer *r, const GameState *g, const ShopSc
     }
 
     char restore_label[96];
-    if (emergency) {
-        SDL_snprintf(restore_label, sizeof(restore_label),
-            "EMERGENCY CARE TO 50%% HP    FREE");
-    } else if (price == 0) {
+    if (price == 0) {
         SDL_snprintf(restore_label, sizeof(restore_label),
             "FULL %s - NO RESTORATION NEEDED", witch ? "MANA" : "HEALTH");
     } else {
@@ -124,8 +121,15 @@ static void draw_restoration_visit(Renderer *r, const GameState *g, const ShopSc
             "RESTORE %d %s    %d GOLD", missing, resource, price);
     }
     draw_healer_option(r, 0, s->selected == 0,
-        emergency || price == 0 || g->gold >= price, restore_label);
-    draw_healer_option(r, 1, s->selected == 1, 1, "RETURN TO TOWN");
+        price == 0 || g->gold >= price, restore_label);
+    int leave_option = 1;
+    if (!witch) {
+        draw_healer_option(r, 1, s->selected == 1, emergency,
+            "EMERGENCY CARE TO 50% HP    FREE");
+        leave_option = 2;
+    }
+    draw_healer_option(r, leave_option, s->selected == leave_option, 1,
+        "RETURN TO TOWN");
     renderer_draw_text(r, "UP/DOWN OR W/S SELECT   ENTER CONFIRM   ESC CLOSE",
         cx - 220, r->screen_h - 48, hint, r->font_tiny);
 }

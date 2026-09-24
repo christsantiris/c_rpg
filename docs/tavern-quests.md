@@ -11,9 +11,9 @@ progress, and completion. Moving dismisses the current dialogue bubble.
 ## Elowen: The Broken Seals
 
 Elowen asks the player to repair shattered burial seals on dungeon floors 2,
-4, and 6. With the quest active, each floor contains one cracked stone seal
-leaking spectral energy. Stand on a seal and press `A` to restore it. Return to
-Elowen after repairing all three to receive 40 gold and 300 score.
+4, and 6. Each seal is protected by an escalating undead group. Stand
+on a seal and press `A` to restore it, then return to Elowen after repairing
+all three to receive 40 gold and 300 score.
 
 Quest acceptance, seal progress, completion, and rewards persist in saves.
 
@@ -25,24 +25,24 @@ pieces. A Goblin Archer, Goblin Bomber, and Goblin Shaman each carry one
 fragment. Defeating them recovers their fragments automatically without using
 normal inventory space.
 
-While the quest is active and a map fragment is still needed, an Archer is
-guaranteed on Mountains stage 2, a Bomber on stage 3, and a Shaman on stage 5.
-The player may continue forward, backtrack, or begin another expedition without
-losing progress. Returning all three fragments allows Dain to reconstruct the
-map and locate its hidden dwarven hoard. He awards the player 60 gold and 400
-score.
+Mountain stages 2, 3, and 5 contain an Archer, Bomber, and Shaman Map Bearer.
+Each leader travels with a themed warband, turning every fragment into a
+distinct combat encounter. Returning all three fragments allows Dain to
+reconstruct the map and locate its hidden dwarven hoard. He awards the player
+60 gold and 400 score.
 
 ## Alder: The Lost Wardens
 
 Alder is an aging forest ranger searching for three wardens lost while
-investigating the Necromancer's influence. The wardens appear in dead-end
-groves on Forest stages 2, 5, and 7. Approach a trapped warden and press `T` to
-free them. Rescuing a warden does not require clearing the entire stage.
+investigating the Necromancer's influence. The wardens appear in guarded
+groves on Forest stages 2, 5, and 7. Approach a trapped warden and
+press `T` to free them. Rescuing a warden does not require clearing the entire
+stage.
 
-Each captive has a thematic guardian nearby: a Giant Spider on stage 2, a Dark
-Elf on stage 5, and a Forest Troll on stage 7. Missing wardens are guaranteed
-to appear on later expeditions, while rescued wardens never respawn. Quest
-acceptance and rescue progress persist through backtracking and save/load.
+Each captive has a thematic hunting party led by a Giant Spider, Dark Elf, or
+Forest Troll. Missing wardens are guaranteed to appear on later expeditions,
+while rescued wardens never respawn. Quest acceptance and rescue progress
+persist through backtracking and save/load.
 
 After rescuing all three wardens, return to Alder to receive 70 gold and 500
 score.
@@ -55,11 +55,19 @@ and 6. Each beacon stands inside a flooded side room and cannot be reached or
 lit until the stage's tide control drains the surrounding deep water. Stand on
 the exposed beacon and press `A` to light it.
 
-The first beacon introduces the objective, the stage 3 beacon is guarded by an
-Animated Statue, and the stage 6 beacon is guarded by a Sea Serpent. Stages do
-not need to be cleared, and the Drowned Queen is not part of the objective.
-Lit beacons remain lit through backtracking, repeat expeditions, and save/load.
-Return to Mara after lighting all three to receive 80 gold and 600 score.
+The beacons are defended by groups led by a Giant Crab, Animated Statue, and
+Sea Serpent. Stages do not need to be cleared, and the Drowned Queen is not
+part of the objective. Lit beacons remain lit through backtracking, repeat
+expeditions, and save/load. Return to Mara after lighting all three to receive
+80 gold and 600 score.
+
+## Quest expeditions
+
+Accepting a regional quest closes any portal into that region and starts a
+fresh expedition from its entrance. Its maps and regular enemies are generated
+again, while defeated bosses remain defeated. Objectives are spread through
+each region so the quest remains a substantial expedition without becoming an
+empty walk through previously cleared maps.
 
 ## Repeat expeditions
 
