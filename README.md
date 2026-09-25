@@ -41,8 +41,8 @@ Speaking with him explains the dangers beyond town and grants one Scroll of
 Return to Town when inventory space is available. Use the scroll from the
 inventory to learn the permanent spell.
 
-The Tavern houses Elowen, Dain, Alder, and Mara. Their quests add guarded
-objectives throughout the four regions. Accepting a regional quest begins a
+The Tavern houses Elowen, Dain, Alder, Mara, and Rook. The four regional
+quests add guarded objectives throughout the four regions. Accepting one begins a
 fresh expedition through that region so completed maps never turn the quest
 into an empty walk. Regular enemies and maps regenerate, while defeated bosses
 remain defeated.
@@ -60,7 +60,7 @@ She restores all missing HP for **1 gold per 3 HP, rounded up**. The price is
 shown before payment; press Enter or click the treatment button to accept,
 or Escape to leave. If HP falls below 25% and full treatment is unaffordable,
 Lysa offers a separate free emergency-care option that restores HP to 50%.
-Emergency care may be used three times during a game. Paid full treatment
+Emergency care may be used once during a game. Paid full treatment
 remains available. Full health costs nothing. Healing does not restore MP.
 
 ### Town witch
@@ -70,8 +70,17 @@ Mountains. Morwen restores all missing MP for **1 gold per 3 MP, rounded up**.
 The price is shown before payment; press Enter or click the restoration button
 to accept, or Escape to leave. If MP falls below 25% and full restoration is
 unaffordable, Morwen offers a separate free emergency ritual that restores MP
-to 50%. The emergency ritual may be used three times during a game. Paid full
+to 50%. The emergency ritual may be used once during a game. Paid full
 restoration remains available. Full mana costs nothing.
+
+### Rook's labyrinth
+
+Rook can finance guaranteed full HP and MP recovery when the player cannot
+afford it. Recovery credit becomes debt. At the 200-gold debt limit, Rook opens
+an overgrown labyrinth gate beside the Tavern and asks the player to recover
+his stolen ivory rook. The labyrinth has no enemies or traps: activate its
+three runes, retrieve the relic, and return to Rook. He clears the debt and
+pays 40 gold. The quest can repeat whenever a later debt reaches the limit.
 
 ### Harbor and Ruined Isle
 
@@ -292,6 +301,5 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 2. Combat feedback
    Add clearer hit effects, critical indicators, blocked-damage feedback, status icons, and distinct weapon sounds.
 3. More weapon variation
-4. Mini quests to get more gold
-5. Accessibility and controls
+4. Accessibility and controls
    Add remappable controls, text scaling, colorblind-safe indicators, adjustable message duration, and clearer interaction prompts.

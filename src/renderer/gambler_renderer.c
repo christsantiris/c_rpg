@@ -91,7 +91,13 @@ void gambler_draw(Renderer *r, const GameState *g, GamblerScreen *s) {
         SDL_Color status_color;
         int recovery_cost = game_gambler_recovery_cost(g);
         int loan = game_gambler_loan_amount(g);
-        if (loan > 0) {
+        if (g->rook_quest_state == 1) {
+            status = "ROOK'S LABYRINTH IS OPEN BESIDE THE TAVERN.";
+            status_color = gold;
+        } else if (g->rook_quest_state == 2) {
+            status = "YOU FOUND THE IVORY ROOK. RETURN IT TO ROOK.";
+            status_color = gold;
+        } else if (loan > 0) {
             int payment = g->gold < recovery_cost ? g->gold : recovery_cost;
             SDL_snprintf(text, sizeof(text),
                 "FULL RECOVERY: PAY %d NOW, ADD %d TO DEBT.",

@@ -568,10 +568,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     int town_scaled = g->location == LOCATION_TOWN;
     int tavern_scaled = g->location == LOCATION_TAVERN;
     int island_scaled = g->location == LOCATION_ISLAND;
-    if (town_scaled || island_scaled) {
+    int labyrinth_scaled = g->location == LOCATION_LABYRINTH;
+    if (town_scaled || island_scaled || labyrinth_scaled) {
         // Keep the entire fixed town or island map inside the play area.
-        int map_w = town_scaled ? TOWN_W : ISLAND_W;
-        int map_h = town_scaled ? TOWN_H : ISLAND_H;
+        int map_w = town_scaled ? TOWN_W :
+            (island_scaled ? ISLAND_W : LABYRINTH_W);
+        int map_h = town_scaled ? TOWN_H :
+            (island_scaled ? ISLAND_H : LABYRINTH_H);
         viewport_init(&town_view, map_w, map_h, map_w, map_h);
         v = &town_view;
         int play_w = r->screen_w - INFO_PANEL_W;
@@ -765,6 +768,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_restored_burial_seal(r, sx, sy); break;
                 case TILE_TOWN_FLOOR: draw_town_floor(r, sx, sy); break;
                 case TILE_TOWN_PATH: draw_town_path(r, sx, sy); break;
+                case TILE_LABYRINTH_ENTRANCE:
+                    draw_town_floor(r, sx, sy); break;
                 case TILE_BLACKSMITH_DOOR:
                 case TILE_ALCHEMIST_DOOR:
                 case TILE_HEALER_DOOR:
@@ -833,6 +838,20 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_temple_water(r, sx, sy, x, y); break;
                 case TILE_TEMPLE_RUBBLE:
                     draw_temple_rubble(r, sx, sy); break;
+                case TILE_LABYRINTH_FLOOR:
+                    draw_labyrinth_floor(r, sx, sy, x, y); break;
+                case TILE_LABYRINTH_WALL:
+                    draw_labyrinth_wall(r, sx, sy, x, y); break;
+                case TILE_LABYRINTH_EXIT:
+                    draw_labyrinth_exit(r, sx, sy); break;
+                case TILE_LABYRINTH_SWITCH_OFF:
+                    draw_labyrinth_switch(r, sx, sy, 0); break;
+                case TILE_LABYRINTH_SWITCH_ON:
+                    draw_labyrinth_switch(r, sx, sy, 1); break;
+                case TILE_LABYRINTH_GATE:
+                    draw_labyrinth_gate(r, sx, sy); break;
+                case TILE_LABYRINTH_RELIC:
+                    draw_labyrinth_relic(r, sx, sy); break;
                 case TILE_TOWN_EXIT: draw_town_path(r, sx, sy); break;
                 case TILE_SHOP_BLACKSMITH:
                 case TILE_SHOP_ALCHEMIST:
@@ -974,6 +993,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         draw_harbor(r,
             viewport_to_screen_x(v, TOWN_HARBOR_X),
             viewport_to_screen_y(v, TOWN_HARBOR_Y));
+        draw_labyrinth_entrance(r,
+            viewport_to_screen_x(v, TOWN_LABYRINTH_X),
+            viewport_to_screen_y(v, TOWN_LABYRINTH_Y),
+            g->rook_quest_state == 1 || g->rook_quest_state == 2);
     }
 
     if (g->location == LOCATION_ISLAND) {
@@ -1058,6 +1081,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int mountains_h = 0;
         int tavern_w = 0;
         int harbor_w = 0;
+        int labyrinth_w = 0;
         int coast_w = 0;
         int coast_h = 0;
         TTF_SizeText(r->font_tiny, "BLACKSMITH", &blacksmith_w, NULL);
@@ -1068,6 +1092,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         TTF_SizeText(r->font_tiny, "MOUNTAINS", &mountains_w, &mountains_h);
         TTF_SizeText(r->font_tiny, "TAVERN", &tavern_w, NULL);
         TTF_SizeText(r->font_tiny, "HARBOR", &harbor_w, NULL);
+        TTF_SizeText(r->font_tiny, "LABYRINTH", &labyrinth_w, NULL);
         int healer_w = 0;
         TTF_SizeText(r->font_tiny, "HEALER", &healer_w, NULL);
         renderer_draw_text(r, "HEALER",
@@ -1109,6 +1134,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             renderer_draw_text(r, "HARBOR", harbor_x, harbor_y,
                 label, r->font_tiny);
         }
+        renderer_draw_text(r, "LABYRINTH",
+            viewport_to_screen_x(v, TOWN_LABYRINTH_X) * TILE_SIZE +
+                (TILE_SIZE - labyrinth_w) / 2,
+            viewport_to_screen_y(v, TOWN_LABYRINTH_Y - 3) * TILE_SIZE,
+            g->rook_quest_state == 1 || g->rook_quest_state == 2 ?
+                label : (SDL_Color){105, 105, 90, 255}, r->font_tiny);
         int gate_top = viewport_to_screen_y(v, 10) * TILE_SIZE;
         int forest_x = viewport_to_screen_x(v, 1) * TILE_SIZE + 8;
         int forest_y = gate_top + (5 * TILE_SIZE - forest_h) / 2;
@@ -1309,7 +1340,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     draw_dialogue_bubble(r, g, v);
 
-    if (town_scaled || tavern_scaled || island_scaled) {
+    if (town_scaled || tavern_scaled || island_scaled || labyrinth_scaled) {
         SDL_RenderSetScale(r->sdl, 1.0f, 1.0f);
     }
     if (tavern_scaled) {

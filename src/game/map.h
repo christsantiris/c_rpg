@@ -44,6 +44,12 @@
 #define TOWN_WITCH_H 4
 #define TOWN_WITCH_DOOR_X (TOWN_WITCH_X + 2)
 #define TOWN_WITCH_DOOR_Y (TOWN_WITCH_Y + TOWN_WITCH_H - 1)
+#define TOWN_LABYRINTH_X 15
+#define TOWN_LABYRINTH_Y 18
+
+#define LABYRINTH_W 43
+#define LABYRINTH_H 25
+#define LABYRINTH_SWITCH_COUNT 3
 
 #define ISLAND_W 40
 #define ISLAND_H 25
@@ -192,7 +198,15 @@ typedef enum {
     TILE_NPC_ISLAND_NAHLA,
     TILE_WITCH,
     TILE_WITCH_DOOR,
-    TILE_NPC_GAMBLER
+    TILE_NPC_GAMBLER,
+    TILE_LABYRINTH_ENTRANCE,
+    TILE_LABYRINTH_FLOOR,
+    TILE_LABYRINTH_WALL,
+    TILE_LABYRINTH_EXIT,
+    TILE_LABYRINTH_SWITCH_OFF,
+    TILE_LABYRINTH_SWITCH_ON,
+    TILE_LABYRINTH_GATE,
+    TILE_LABYRINTH_RELIC
 } TileType;
 
 typedef struct {
@@ -213,10 +227,12 @@ int map_repair_dungeon_routes(Map *m);
 int  map_is_walkable(const Map *m, int x, int y);
 void map_room_center(const Room *r, int *cx, int *cy);
 void map_generate_town(Map *m, int *spawn_x, int *spawn_y);
+void map_place_town_labyrinth(Map *m);
 void map_place_town_harbor(Map *m);
 void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_island(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_temple(Map *m, int level, int *spawn_x, int *spawn_y);
+void map_generate_labyrinth(Map *m, int switches, int *spawn_x, int *spawn_y);
 void map_generate_forest(Map *m, int level);
 void map_reveal_forest_exit(Map *m);
 void map_generate_mountains(Map *m, int level);

@@ -3898,6 +3898,118 @@ void draw_floor_item(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x+6, y+8, 12,          6,           glow);
 }
 
+void draw_labyrinth_entrance(Renderer *r, int tile_x, int tile_y, int open) {
+    int x = (tile_x - 1) * TILE_SIZE;
+    int y = (tile_y - 2) * TILE_SIZE;
+    SDL_Color shadow = {22, 27, 24, 255};
+    SDL_Color stone = {82, 88, 74, 255};
+    SDL_Color light_stone = {126, 130, 102, 255};
+    SDL_Color moss = {45, 94, 47, 255};
+    SDL_Color iron = {40, 43, 42, 255};
+    SDL_Color flame = {242, 164, 45, 255};
+    fill_rect(r, x + 4, y + 18, 64, 54, shadow);
+    fill_rect(r, x + 2, y + 24, 14, 48, stone);
+    fill_rect(r, x + 56, y + 24, 14, 48, stone);
+    fill_rect(r, x + 12, y + 12, 48, 14, stone);
+    fill_rect(r, x + 18, y + 6, 36, 8, light_stone);
+    fill_rect(r, x + 8, y + 28, 5, 7, light_stone);
+    fill_rect(r, x + 59, y + 40, 7, 5, light_stone);
+    fill_rect(r, x + 16, y + 14, 16, 4, moss);
+    fill_rect(r, x + 5, y + 35, 5, 18, moss);
+    fill_rect(r, x + 52, y + 10, 8, 6, moss);
+    fill_rect(r, x + 25, y + 1, 22, 7, (SDL_Color){55, 49, 37, 255});
+    fill_rect(r, x + 29, y + 3, 14, 3, (SDL_Color){198, 166, 73, 255});
+    if (open) {
+        fill_rect(r, x + 22, y + 29, 28, 43, (SDL_Color){10, 13, 13, 255});
+        fill_rect(r, x + 18, y + 46, 3, 10, flame);
+        fill_rect(r, x + 51, y + 46, 3, 10, flame);
+        fill_rect(r, x + 27, y + 66, 18, 6, (SDL_Color){47, 52, 47, 255});
+    } else {
+        fill_rect(r, x + 21, y + 28, 30, 44, iron);
+        for (int bar = 0; bar < 5; bar++) {
+            fill_rect(r, x + 24 + bar * 6, y + 28, 2, 44,
+                light_stone);
+        }
+        fill_rect(r, x + 21, y + 42, 30, 3, light_stone);
+        fill_rect(r, x + 21, y + 60, 30, 3, light_stone);
+    }
+}
+
+void draw_labyrinth_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color floor = {(Uint8)(44 + (map_x + map_y) % 3 * 3), 48, 42, 255};
+    SDL_Color seam = {31, 35, 31, 255};
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, floor);
+    fill_rect(r, x, y + 11, TILE_SIZE, 2, seam);
+    fill_rect(r, x + ((map_y & 1) ? 6 : 16), y, 2, 11, seam);
+    fill_rect(r, x + ((map_y & 1) ? 17 : 7), y + 13, 2, 11, seam);
+    if ((map_x * 7 + map_y * 3) % 9 == 0) {
+        fill_rect(r, x + 4, y + 5, 5, 2, (SDL_Color){44, 83, 44, 255});
+    }
+}
+
+void draw_labyrinth_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color dark = {27, 33, 29, 255};
+    SDL_Color stone = {59, 68, 58, 255};
+    SDL_Color edge = {80, 88, 72, 255};
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, dark);
+    fill_rect(r, x + 2, y + 2, 20, 20, stone);
+    fill_rect(r, x + 2, y + 2, 20, 2, edge);
+    fill_rect(r, x + 2, y + 11, 20, 2, dark);
+    fill_rect(r, x + ((map_y & 1) ? 7 : 14), y + 3, 2, 8, dark);
+    fill_rect(r, x + ((map_y & 1) ? 15 : 8), y + 13, 2, 9, dark);
+    if ((map_x + map_y * 2) % 7 == 0) {
+        fill_rect(r, x + 3, y + 3, 4, 10, (SDL_Color){39, 91, 43, 255});
+    }
+}
+
+void draw_labyrinth_exit(Renderer *r, int tile_x, int tile_y) {
+    draw_labyrinth_floor(r, tile_x, tile_y, tile_x, tile_y);
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    fill_rect(r, x + 1, y + 3, 8, 18, (SDL_Color){95, 101, 82, 255});
+    fill_rect(r, x + 9, y + 6, 12, 15, (SDL_Color){14, 18, 16, 255});
+    fill_rect(r, x + 11, y + 9, 8, 3, (SDL_Color){208, 170, 62, 255});
+}
+
+void draw_labyrinth_switch(Renderer *r, int tile_x, int tile_y, int active) {
+    draw_labyrinth_floor(r, tile_x, tile_y, tile_x, tile_y);
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color rim = {112, 105, 84, 255};
+    SDL_Color rune = active ? (SDL_Color){72, 224, 192, 255} :
+        (SDL_Color){62, 70, 66, 255};
+    fill_rect(r, x + 4, y + 4, 16, 16, rim);
+    fill_rect(r, x + 7, y + 7, 10, 10, (SDL_Color){24, 29, 27, 255});
+    fill_rect(r, x + 11, y + 7, 3, 10, rune);
+    fill_rect(r, x + 8, y + 10, 9, 3, rune);
+}
+
+void draw_labyrinth_gate(Renderer *r, int tile_x, int tile_y) {
+    draw_labyrinth_floor(r, tile_x, tile_y, tile_x, tile_y);
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    for (int bar = 0; bar < 4; bar++) {
+        fill_rect(r, x + 3 + bar * 6, y, 3, TILE_SIZE,
+            (SDL_Color){116, 102, 75, 255});
+    }
+    fill_rect(r, x, y + 8, TILE_SIZE, 3, (SDL_Color){72, 63, 50, 255});
+}
+
+void draw_labyrinth_relic(Renderer *r, int tile_x, int tile_y) {
+    draw_labyrinth_floor(r, tile_x, tile_y, tile_x, tile_y);
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    fill_rect(r, x + 5, y + 17, 14, 5, (SDL_Color){91, 82, 68, 255});
+    fill_rect(r, x + 8, y + 6, 8, 11, (SDL_Color){228, 220, 181, 255});
+    fill_rect(r, x + 6, y + 4, 12, 5, (SDL_Color){243, 235, 199, 255});
+    fill_rect(r, x + 10, y + 1, 4, 5, (SDL_Color){243, 235, 199, 255});
+    fill_rect(r, x + 9, y + 9, 6, 2, (SDL_Color){157, 143, 111, 255});
+}
+
 void draw_floor_gold(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;

@@ -433,6 +433,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (g->location == LOCATION_LABYRINTH) {
+        return game_has_labyrinth_interaction(g);
+    }
     if (g->location == LOCATION_TEMPLE) {
         return game_has_temple_interaction(g);
     }
@@ -605,7 +608,8 @@ void action_resolve_player(GameState *g, Action a) {
     game_repair_equipment_indices(g);
     if (g->location == LOCATION_TOWN ||
         g->location == LOCATION_TAVERN ||
-        g->location == LOCATION_ISLAND) {
+        g->location == LOCATION_ISLAND ||
+        g->location == LOCATION_LABYRINTH) {
         g->player.poison_turns = 0;
     }
     if (a.type == ACTION_NONE) {
@@ -655,6 +659,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (game_interact_labyrinth(g)) {
+            return;
+        }
         if (game_interact_temple(g)) {
             return;
         }
@@ -1345,6 +1352,22 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->location == LOCATION_TOWN &&
             g->map.tiles[ty][tx] == TILE_TAVERN_DOOR) {
             game_enter_tavern(g);
+            return;
+        }
+
+        if (g->location == LOCATION_TOWN &&
+            g->map.tiles[ty][tx] == TILE_LABYRINTH_ENTRANCE) {
+            if (g->rook_quest_state == 1 || g->rook_quest_state == 2) {
+                game_enter_labyrinth(g);
+            } else {
+                push_message(g, "The old labyrinth gate is sealed.");
+            }
+            return;
+        }
+
+        if (g->location == LOCATION_LABYRINTH &&
+            g->map.tiles[ty][tx] == TILE_LABYRINTH_EXIT) {
+            game_leave_labyrinth(g);
             return;
         }
 

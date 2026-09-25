@@ -13,7 +13,7 @@ typedef struct {
     int reward_score;
 } QuestDefinition;
 
-static const QuestDefinition quest_definitions[5] = {
+static const QuestDefinition quest_definitions[6] = {
     {
         "The Broken Seals", "Elowen",
         "Break through the undead guarding three shattered",
@@ -51,6 +51,13 @@ static const QuestDefinition quest_definitions[5] = {
         "treasure buried beneath the solar vault.",
         {"Recover the buried treasure", "", ""},
         "Ruined Temple", {4, 0, 0}, 150, 2500
+    },
+    {
+        "Rook's Marker", "Rook",
+        "Navigate the enemy-free labyrinth, light three",
+        "runes, and recover Rook's stolen ivory rook.",
+        {"Recover the ivory rook", "", ""},
+        "Town Labyrinth", {1, 0, 0}, ROOK_QUEST_REWARD, 500
     }
 };
 
@@ -67,7 +74,10 @@ static int quest_state(const GameState *g, int quest) {
     if (quest == 3) {
         return g->mara_quest_state;
     }
-    return g->temple_treasure_state;
+    if (quest == 4) {
+        return g->temple_treasure_state;
+    }
+    return g->rook_quest_state;
 }
 
 static int quest_progress(const GameState *g, int quest) {
@@ -83,7 +93,10 @@ static int quest_progress(const GameState *g, int quest) {
     if (quest == 3) {
         return g->mara_beacons_lit;
     }
-    return g->temple_treasure_state >= 2 ? 1 : 0;
+    if (quest == 4) {
+        return g->temple_treasure_state >= 2 ? 1 : 0;
+    }
+    return g->rook_quest_state >= 2 ? 1 : 0;
 }
 
 static int quest_in_tab(int state, QuestJournalTab tab) {
@@ -103,7 +116,7 @@ int quest_journal_count(const GameState *g, QuestJournalTab tab) {
         return JOURNAL_BOSS_COUNT;
     }
     int count = 0;
-    for (int quest = 0; quest < 5; quest++) {
+    for (int quest = 0; quest < 6; quest++) {
         if (quest_in_tab(quest_state(g, quest), tab)) {
             count++;
         }
@@ -138,7 +151,7 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
         return 0;
     }
     int visible_index = 0;
-    for (int quest = 0; quest < 5; quest++) {
+    for (int quest = 0; quest < 6; quest++) {
         int state = quest_state(g, quest);
         if (!quest_in_tab(state, tab)) {
             continue;
@@ -153,7 +166,7 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
         entry->summary_line_1 = definition->summary_line_1;
         entry->summary_line_2 = definition->summary_line_2;
         entry->area = definition->area;
-        entry->objective_count = quest == 4 ? 1 : 3;
+        entry->objective_count = quest >= 4 ? 1 : 3;
         entry->reward_gold = definition->reward_gold;
         entry->reward_score = definition->reward_score;
         entry->state = state;

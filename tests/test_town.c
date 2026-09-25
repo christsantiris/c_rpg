@@ -92,7 +92,7 @@ void test_town_healer(void) {
     g.player.hp = g.player.max_hp / 4 - 1;
     int exhausted_hp = g.player.hp;
     game_visit_healer_emergency(&g);
-    ASSERT("emergency care is limited to three uses per game",
+    ASSERT("emergency care is limited to one use per game",
         g.healer_emergency_uses == EMERGENCY_RESTORATION_LIMIT &&
         g.player.hp == exhausted_hp &&
         !game_healer_emergency_available(&g));
@@ -172,7 +172,7 @@ void test_town_healer(void) {
     g.player.mp = g.player.max_mp / 4 - 1;
     int exhausted_mp = g.player.mp;
     game_visit_witch_emergency(&g);
-    ASSERT("emergency mana is limited to three uses per game",
+    ASSERT("emergency mana is limited to one use per game",
         g.witch_emergency_uses == EMERGENCY_RESTORATION_LIMIT &&
         g.player.mp == exhausted_mp &&
         !game_witch_emergency_available(&g));
@@ -303,6 +303,105 @@ void test_tavern_gambler(void) {
         restored && loaded.gambler_debt == 17 &&
         loaded.map.tiles[18][10] == TILE_NPC_GAMBLER);
     remove("saves/savegame_99013.json");
+}
+
+void test_rook_labyrinth(void) {
+    printf("Rook labyrinth tests:\n");
+    static GameState g;
+    static GameState loaded;
+    g.player.player_class = CLASS_MAGE;
+    game_init(&g);
+    ASSERT("town displays a labyrinth entrance connected to the tavern lane",
+        g.map.tiles[TOWN_LABYRINTH_Y][TOWN_LABYRINTH_X] ==
+            TILE_LABYRINTH_ENTRANCE &&
+        g.map.tiles[TOWN_LABYRINTH_Y][TOWN_LABYRINTH_X - 1] ==
+            TILE_TOWN_PATH);
+
+    game_enter_tavern(&g);
+    g.gambler_debt = GAMBLER_DEBT_LIMIT;
+    game_talk_to_gambler(&g);
+    ASSERT("Rook assigns the safe retrieval quest at the debt limit",
+        g.rook_quest_state == 1 && g.rook_labyrinth_switches == 0);
+    game_leave_tavern(&g);
+    g.player.x = TOWN_LABYRINTH_X - 1;
+    g.player.y = TOWN_LABYRINTH_Y;
+    action_resolve_player(&g, (Action){ACTION_MOVE,
+        TOWN_LABYRINTH_X, TOWN_LABYRINTH_Y});
+    ASSERT("walking through the open town entrance enters the labyrinth",
+        g.location == LOCATION_LABYRINTH && g.enemy_count == 0 &&
+        g.floor_item_count == 0);
+
+    int switches = 0;
+    int gates = 0;
+    int traps = 0;
+    for (int y = 0; y < LABYRINTH_H; y++) {
+        for (int x = 0; x < LABYRINTH_W; x++) {
+            TileType tile = g.map.tiles[y][x];
+            if (tile == TILE_LABYRINTH_SWITCH_OFF) {
+                switches++;
+            }
+            if (tile == TILE_LABYRINTH_GATE) {
+                gates++;
+            }
+            if (tile == TILE_TRAP_HIDDEN || tile == TILE_TRAP_REVEALED ||
+                tile == TILE_TRAP_SPIKE || tile == TILE_TRAP_FIRE ||
+                tile == TILE_TRAP_POISON) {
+                traps++;
+            }
+        }
+    }
+    ASSERT("the labyrinth is a safe puzzle with three runes and one vault",
+        switches == LABYRINTH_SWITCH_COUNT && gates == 1 && traps == 0);
+
+    for (int y = 0; y < LABYRINTH_H; y++) {
+        for (int x = 0; x < LABYRINTH_W; x++) {
+            if (g.map.tiles[y][x] == TILE_LABYRINTH_SWITCH_OFF) {
+                g.player.x = x;
+                g.player.y = y;
+                game_interact_labyrinth(&g);
+            }
+        }
+    }
+    gates = 0;
+    for (int y = 0; y < LABYRINTH_H; y++) {
+        for (int x = 0; x < LABYRINTH_W; x++) {
+            gates += g.map.tiles[y][x] == TILE_LABYRINTH_GATE;
+            if (g.map.tiles[y][x] == TILE_LABYRINTH_RELIC) {
+                g.player.x = x;
+                g.player.y = y;
+            }
+        }
+    }
+    ASSERT("lighting all three runes opens the relic vault",
+        g.rook_labyrinth_switches == LABYRINTH_SWITCH_COUNT && gates == 0);
+    game_interact_labyrinth(&g);
+    ASSERT("the player can recover Rook's ivory rook without combat",
+        g.rook_quest_state == 2);
+
+    g.player.x = 2;
+    g.player.y = LABYRINTH_H - 3;
+    action_resolve_player(&g, (Action){ACTION_MOVE, 1,
+        LABYRINTH_H - 3});
+    ASSERT("the labyrinth exit returns beside its town entrance",
+        g.location == LOCATION_TOWN &&
+        g.player.x == TOWN_LABYRINTH_X &&
+        g.player.y == TOWN_LABYRINTH_Y + 1);
+    game_enter_tavern(&g);
+    int gold_before = g.gold;
+    game_talk_to_gambler(&g);
+    ASSERT("returning the relic clears debt and pays Rook's reward",
+        g.rook_quest_state == 3 && g.gambler_debt == 0 &&
+        g.gold == gold_before + ROOK_QUEST_REWARD &&
+        g.rook_quest_completions == 1);
+
+    const int slot = 99014;
+    int saved = save_game(&g, slot);
+    int restored = saved && load_game(&loaded, slot);
+    ASSERT("Rook quest progress survives save and load",
+        restored && loaded.rook_quest_state == 3 &&
+        loaded.rook_labyrinth_switches == LABYRINTH_SWITCH_COUNT &&
+        loaded.rook_quest_completions == 1);
+    remove("saves/savegame_99014.json");
 }
 
 static int forest_path_exists_around(const Map *m, int blocked_room) {
