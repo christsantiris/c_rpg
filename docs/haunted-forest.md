@@ -45,8 +45,9 @@ without placing the required exit at the end of every trail.
 
 ## Final Encounter
 
-The Necromancer waits in the stage-eight final grove and remains dormant until the player
-enters it. He alternates a telegraphed invocation with a spirit bolt. Every
+The Necromancer waits in the stage-eight final grove and remains dormant until
+the player enters it or attacks him from range. He alternates a telegraphed
+invocation with a spirit bolt. Every
 fourth action, he can return one defeated forest servant at half health. The
 number of enemies remains bounded by the floor's original roster.
 
@@ -54,3 +55,12 @@ After defeating the Necromancer on stage 8, the eastern passage sends the
 player to the west town road. Other surviving enemies do not block it. Return
 to Town also works inside the forest;
 its portal preserves the exact forest level and casting position.
+
+## Forest Quest
+
+Alder's **The Lost Wardens** quest places captives in guarded groves on stages
+2, 5, and 7. Their hunting parties are led by a Giant Spider, Dark Elf, and
+Forest Troll. Defeat or evade the guards, then stand beside a warden and press
+`T` to rescue them. A full stage clear is never required. Accepting the quest
+starts a fresh forest expedition, while a previously defeated Necromancer
+remains dead.

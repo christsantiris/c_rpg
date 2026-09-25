@@ -61,13 +61,30 @@ part of the objective. Lit beacons remain lit through backtracking, repeat
 expeditions, and save/load. Return to Mara after lighting all three to receive
 80 gold and 600 score.
 
+## Harbor Unlock
+
+The harbor road appears after all four regional bosses have been defeated and
+all four Tavern quest rewards have been collected. Objectives that are ready
+to turn in do not count until the player returns to their quest giver. Captain
+Rowan then gives the Island Treasure Map, which enables ship travel from the
+dock.
+
+## Nahla: The Buried Sun
+
+Nahla waits on the Ruined Isle rather than in the Tavern. She asks the player
+to climb the four-tier Ruined Temple, defeat the Fallen Sun Guardian, and
+recover the buried treasure from the summit vault. Return to Nahla with the
+treasure for 150 gold and 2,500 score. This quest also appears in the Quest
+Journal and gives the game one boss and one quest for every adventure area.
+
 ## Quest expeditions
 
-Accepting a regional quest closes any portal into that region and starts a
-fresh expedition from its entrance. Its maps and regular enemies are generated
-again, while defeated bosses remain defeated. Objectives are spread through
-each region so the quest remains a substantial expedition without becoming an
-empty walk through previously cleared maps.
+Accepting a Tavern regional quest closes any portal into that region and
+starts a fresh expedition from its entrance. Its maps and regular enemies are
+generated again, while defeated bosses remain defeated. Each objective is
+protected by a themed enemy group. Objectives are spread into later stages so
+the quest remains a substantial expedition without becoming an empty walk
+through previously cleared maps.
 
 ## Repeat expeditions
 

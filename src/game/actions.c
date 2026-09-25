@@ -1615,40 +1615,317 @@ void action_resolve_player(GameState *g, Action a) {
 
 static int enemy_position_occupied(const GameState *g, int skip, int x, int y) {
     for (int i = 0; i < g->enemy_count; i++) {
-        if (i == skip || !g->enemies[i].active) continue;
-        if (g->enemies[i].x == x && g->enemies[i].y == y) return 1;
+        if (i == skip || !g->enemies[i].active) {
+            continue;
+        }
+        if (g->enemies[i].x == x && g->enemies[i].y == y) {
+            return 1;
+        }
     }
     return 0;
 }
 
-static int enemy_move_toward(GameState *g, int index) {
-    Enemy *e = &g->enemies[index];
-    int dx = g->player.x - e->x;
-    int dy = g->player.y - e->y;
-    int mx = (dx > 0) ? 1 : (dx < 0) ? -1 : 0;
-    int my = (dy > 0) ? 1 : (dy < 0) ? -1 : 0;
-    int steps[3][2] = {{mx, my}, {mx, 0}, {0, my}};
-    int step_count = g->location == LOCATION_FOREST ? 3 : 1;
-    for (int i = 0; i < step_count; i++) {
-        int step_x = steps[i][0];
-        int step_y = steps[i][1];
-        if (step_x == 0 && step_y == 0) {
+static int enemy_distances[MAP_H][MAP_W];
+static int enemy_path_queue[MAP_H * MAP_W];
+
+#define ENEMY_NOTICE_DISTANCE 10
+#define ENEMY_PROVOKED_DISTANCE 16
+#define ENEMY_PURSUER_LIMIT 3
+
+static void build_enemy_distance_map(const GameState *g) {
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            enemy_distances[y][x] = -1;
+        }
+    }
+
+    if (!map_is_walkable(&g->map, g->player.x, g->player.y)) {
+        return;
+    }
+
+    int head = 0;
+    int tail = 0;
+    enemy_distances[g->player.y][g->player.x] = 0;
+    enemy_path_queue[tail++] = g->player.y * MAP_W + g->player.x;
+    static const int dx[4] = {0, 1, 0, -1};
+    static const int dy[4] = {-1, 0, 1, 0};
+
+    while (head < tail) {
+        int cell = enemy_path_queue[head++];
+        int x = cell % MAP_W;
+        int y = cell / MAP_W;
+        for (int direction = 0; direction < 4; direction++) {
+            int nx = x + dx[direction];
+            int ny = y + dy[direction];
+            if (!map_is_walkable(&g->map, nx, ny) ||
+                enemy_distances[ny][nx] >= 0) {
+                continue;
+            }
+            enemy_distances[ny][nx] = enemy_distances[y][x] + 1;
+            enemy_path_queue[tail++] = ny * MAP_W + nx;
+        }
+    }
+}
+
+static int enemy_is_major_boss(const Enemy *e) {
+    return e->is_boss ||
+        e->type == ENEMY_LICH_KING ||
+        e->type == ENEMY_FOREST_NECROMANCER ||
+        e->type == ENEMY_MOUNTAIN_GOBLIN_KING ||
+        e->type == ENEMY_DROWNED_QUEEN ||
+        e->type == ENEMY_FALLEN_SUN_GUARDIAN;
+}
+
+static int enemy_prefers_range(const Enemy *e);
+
+static int enemy_is_support(const Enemy *e) {
+    return e->type == ENEMY_CRYPT_CONJURER ||
+        e->type == ENEMY_GOBLIN_SHAMAN ||
+        e->type == ENEMY_SUN_PRIEST;
+}
+
+static int enemy_is_protector(const Enemy *e) {
+    return e->type == ENEMY_HOBGOBLIN_GUARD ||
+        e->type == ENEMY_ANIMATED_STATUE ||
+        e->type == ENEMY_VINEBOUND_GUARDIAN ||
+        e->type == ENEMY_LUNAR_EFFIGY;
+}
+
+static int enemy_has_backline_ally(const GameState *g, int index, int range) {
+    const Enemy *e = &g->enemies[index];
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *ally = &g->enemies[i];
+        if (i == index || !ally->active ||
+            (!enemy_prefers_range(ally) && !enemy_is_support(ally))) {
             continue;
         }
-        if (step_x != 0 && step_y != 0 &&
-            (!map_is_walkable(&g->map, e->x + step_x, e->y) ||
-            !map_is_walkable(&g->map, e->x, e->y + step_y))) {
-            continue;
-        }
-        int tx = e->x + step_x;
-        int ty = e->y + step_y;
-        if (map_is_walkable(&g->map, tx, ty) &&
-            !enemy_position_occupied(g, index, tx, ty) &&
-            !(tx == g->player.x && ty == g->player.y)) {
-            e->x = tx;
-            e->y = ty;
+        int distance = abs_int(ally->x - e->x) + abs_int(ally->y - e->y);
+        if (distance <= range) {
             return 1;
         }
+    }
+    return 0;
+}
+
+static int enemy_has_nearby_ally(const GameState *g, int index, int range) {
+    const Enemy *e = &g->enemies[index];
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *ally = &g->enemies[i];
+        if (i == index || !ally->active) {
+            continue;
+        }
+        int distance = abs_int(ally->x - e->x) + abs_int(ally->y - e->y);
+        if (distance <= range) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void select_enemy_pursuers(const GameState *g, int pursuers[MAX_ENEMIES]) {
+    for (int i = 0; i < MAX_ENEMIES; i++) {
+        pursuers[i] = 0;
+    }
+
+    for (int slot = 0; slot < ENEMY_PURSUER_LIMIT; slot++) {
+        int best = -1;
+        int best_distance = MAP_W * MAP_H;
+        int best_provoked = 0;
+        int best_role_priority = 0;
+        for (int i = 0; i < g->enemy_count; i++) {
+            const Enemy *e = &g->enemies[i];
+            if (!e->active || pursuers[i] || enemy_is_major_boss(e)) {
+                continue;
+            }
+            int distance = enemy_distances[e->y][e->x];
+            if (distance <= 1) {
+                continue;
+            }
+            int provoked = e->hp < e->max_hp;
+            int role_priority = 0;
+            if (slot == 0 && enemy_is_protector(e) &&
+                enemy_has_backline_ally(g, i, 6)) {
+                role_priority = 2;
+            } else if (slot == 1 &&
+                (enemy_prefers_range(e) || enemy_is_support(e))) {
+                role_priority = 1;
+            }
+            int limit = provoked ? ENEMY_PROVOKED_DISTANCE :
+                ENEMY_NOTICE_DISTANCE;
+            if (distance < 0 || distance > limit) {
+                continue;
+            }
+            if (best < 0 || provoked > best_provoked ||
+                (provoked == best_provoked &&
+                role_priority > best_role_priority) ||
+                (provoked == best_provoked &&
+                role_priority == best_role_priority &&
+                distance < best_distance)) {
+                best = i;
+                best_distance = distance;
+                best_provoked = provoked;
+                best_role_priority = role_priority;
+            }
+        }
+        if (best < 0) {
+            break;
+        }
+        pursuers[best] = 1;
+    }
+}
+
+static int enemy_prefers_range(const Enemy *e) {
+    return e->type == ENEMY_CRYPT_CONJURER ||
+        e->type == ENEMY_DARK_ELF ||
+        e->type == ENEMY_GOBLIN_ARCHER ||
+        e->type == ENEMY_GOBLIN_BOMBER ||
+        e->type == ENEMY_SIREN ||
+        e->type == ENEMY_WATER_ELEMENTAL ||
+        e->type == ENEMY_BLOWDART_HUNTER ||
+        e->type == ENEMY_SUN_PRIEST ||
+        e->type == ENEMY_SERPENT_SPIRIT ||
+        e->type == ENEMY_MOONBOUND_SENTINEL;
+}
+
+static int enemy_prefers_flank(const Enemy *e) {
+    return e->type == ENEMY_CRYPT_BAT ||
+        e->type == ENEMY_PIXIE ||
+        e->type == ENEMY_BLIGHTED_WOLF ||
+        e->type == ENEMY_GIANT_SPIDER ||
+        e->type == ENEMY_GOBLIN_SCOUT ||
+        e->type == ENEMY_TUNNEL_SPIDER ||
+        e->type == ENEMY_RELIC_SCARABS ||
+        e->type == ENEMY_TEMPLE_STALKER;
+}
+
+static int clear_orthogonal_path(const GameState *g, const Enemy *e);
+
+static int enemy_move_toward(GameState *g, int index) {
+    Enemy *e = &g->enemies[index];
+    int current_distance = enemy_distances[e->y][e->x];
+    if (current_distance <= 0) {
+        return 0;
+    }
+
+    static const int dx[4] = {0, 1, 0, -1};
+    static const int dy[4] = {-1, 0, 1, 0};
+    int best_x = e->x;
+    int best_y = e->y;
+    int best_distance = current_distance;
+    int best_has_firing_lane = 0;
+    for (int direction = 0; direction < 4; direction++) {
+        int tx = e->x + dx[direction];
+        int ty = e->y + dy[direction];
+        if (!map_is_walkable(&g->map, tx, ty) ||
+            enemy_position_occupied(g, index, tx, ty) ||
+            (tx == g->player.x && ty == g->player.y)) {
+            continue;
+        }
+        int distance = enemy_distances[ty][tx];
+        Enemy candidate = *e;
+        candidate.x = tx;
+        candidate.y = ty;
+        int has_firing_lane = enemy_prefers_range(e) &&
+            clear_orthogonal_path(g, &candidate);
+        if (distance >= 0 &&
+            (distance < best_distance ||
+            (distance == best_distance &&
+            has_firing_lane > best_has_firing_lane))) {
+            best_x = tx;
+            best_y = ty;
+            best_distance = distance;
+            best_has_firing_lane = has_firing_lane;
+        }
+    }
+    if (best_x == e->x && best_y == e->y) {
+        return 0;
+    }
+    e->x = best_x;
+    e->y = best_y;
+    return 1;
+}
+
+static int enemy_move_away(GameState *g, int index) {
+    Enemy *e = &g->enemies[index];
+    int current_distance = enemy_distances[e->y][e->x];
+    int current_separation = abs_int(g->player.x - e->x);
+    int vertical_separation = abs_int(g->player.y - e->y);
+    if (vertical_separation > current_separation) {
+        current_separation = vertical_separation;
+    }
+
+    static const int dx[4] = {0, 1, 0, -1};
+    static const int dy[4] = {-1, 0, 1, 0};
+    int best_x = e->x;
+    int best_y = e->y;
+    int best_distance = current_distance;
+    int best_separation = current_separation;
+    for (int direction = 0; direction < 4; direction++) {
+        int tx = e->x + dx[direction];
+        int ty = e->y + dy[direction];
+        if (!map_is_walkable(&g->map, tx, ty) ||
+            enemy_position_occupied(g, index, tx, ty) ||
+            (tx == g->player.x && ty == g->player.y)) {
+            continue;
+        }
+        int distance = enemy_distances[ty][tx];
+        if (distance < 0) {
+            continue;
+        }
+        int separation = abs_int(g->player.x - tx);
+        int vertical = abs_int(g->player.y - ty);
+        if (vertical > separation) {
+            separation = vertical;
+        }
+        if (distance > best_distance ||
+            (distance == best_distance && separation > best_separation)) {
+            best_x = tx;
+            best_y = ty;
+            best_distance = distance;
+            best_separation = separation;
+        }
+    }
+    if (best_x == e->x && best_y == e->y) {
+        return 0;
+    }
+    e->x = best_x;
+    e->y = best_y;
+    return 1;
+}
+
+static int enemy_move_to_flank(GameState *g, int index) {
+    Enemy *e = &g->enemies[index];
+    int current_distance = enemy_distances[e->y][e->x];
+    if (current_distance <= 2) {
+        return 0;
+    }
+
+    int step_x = 0;
+    int step_y = 0;
+    if (e->x == g->player.x) {
+        step_x = index % 2 == 0 ? -1 : 1;
+    } else if (e->y == g->player.y) {
+        step_y = index % 2 == 0 ? -1 : 1;
+    } else {
+        return 0;
+    }
+
+    for (int side = 0; side < 2; side++) {
+        int direction = side == 0 ? 1 : -1;
+        int tx = e->x + step_x * direction;
+        int ty = e->y + step_y * direction;
+        if (!map_is_walkable(&g->map, tx, ty) ||
+            enemy_position_occupied(g, index, tx, ty) ||
+            (tx == g->player.x && ty == g->player.y)) {
+            continue;
+        }
+        int distance = enemy_distances[ty][tx];
+        if (distance < 0 || distance > current_distance + 1) {
+            continue;
+        }
+        e->x = tx;
+        e->y = ty;
+        return 1;
     }
     return 0;
 }
@@ -1781,6 +2058,9 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
     if (g->player.hp <= 0) {
         return;
     }
+    build_enemy_distance_map(g);
+    int pursuers[MAX_ENEMIES];
+    select_enemy_pursuers(g, pursuers);
     int boss_locked = 0;
     if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH) {
         for (int y = 0; y < MAP_H && !boss_locked; y++)
@@ -1800,6 +2080,14 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         if (e->is_boss && boss_locked) continue;
         if (e->frozen_turns > 0) {
             e->frozen_turns--;
+            continue;
+        }
+
+        int dx = g->player.x - e->x;
+        int dy = g->player.y - e->y;
+        int adjacent = abs_int(dx) <= 1 && abs_int(dy) <= 1 &&
+            !(dx == 0 && dy == 0);
+        if (!enemy_is_major_boss(e) && !adjacent && !pursuers[i]) {
             continue;
         }
 
@@ -1872,12 +2160,16 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             }
         }
 
-        int dx = g->player.x - e->x;
-        int dy = g->player.y - e->y;
+        int path_distance = enemy_distances[e->y][e->x];
+        if ((enemy_prefers_range(e) || enemy_is_support(e)) &&
+            path_distance > 0 &&
+            path_distance < 3 && enemy_move_away(g, i)) {
+            e->move_timer++;
+            continue;
+        }
 
         // Adjacent to player — melee attack
-        if (abs_int(dx) <= 1 && abs_int(dy) <= 1 &&
-            !(dx == 0 && dy == 0)) {
+        if (adjacent) {
                 int defense = g->player.defense;
                 if (e->type == ENEMY_WRAITH) defense /= 2;
                 int dmg = e->attack - defense;
@@ -2124,6 +2416,14 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             }
         }
 
+        if (enemy_is_support(e) && enemy_has_nearby_ally(g, i, 4)) {
+            continue;
+        }
+
+        if (enemy_prefers_range(e) && clear_orthogonal_path(g, e)) {
+            continue;
+        }
+
         if (e->type == ENEMY_ZOMBIE || e->type == ENEMY_GIANT_WURM ||
             e->type == ENEMY_FOREST_TROLL || e->type == ENEMY_CAVE_TROLL ||
             e->type == ENEMY_GIANT_CRAB ||
@@ -2134,7 +2434,10 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             if (e->move_timer % 2 != 0) continue;
         }
 
-        int moved = enemy_move_toward(g, i);
+        int moved = enemy_prefers_flank(e) && enemy_move_to_flank(g, i);
+        if (!moved) {
+            moved = enemy_move_toward(g, i);
+        }
         if (e->type == ENEMY_CRYPT_BAT && moved) {
             // Bats close distance quickly, but never attack on their second move.
             enemy_move_toward(g, i);
