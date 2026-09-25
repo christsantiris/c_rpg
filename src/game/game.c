@@ -864,6 +864,7 @@ void game_init(GameState *g) {
     g->gold = 0;
     g->healer_emergency_uses = 0;
     g->witch_emergency_uses = 0;
+    g->gambler_debt = 0;
     g->score = 0;
     g->dungeon_key_found = 0;
     g->dungeon_crypt_keys = 0;
@@ -1722,6 +1723,82 @@ void game_visit_witch_emergency(GameState *g) {
     push_message(g, "Morwen restores your spirit to half mana without charge.");
 }
 
+int game_gamble(GameState *g, int wager) {
+    if (g->location != LOCATION_TAVERN || g->player.hp <= 0 ||
+        g->gambler_debt >= GAMBLER_DEBT_LIMIT) {
+        push_message(g, "Rook refuses to take the wager.");
+        return -1;
+    }
+    if (wager <= 0 || wager > g->gold) {
+        push_message(g, "You cannot cover that wager.");
+        return -1;
+    }
+    g->gold -= wager;
+
+    if (rand() % 2 == 0) {
+        g->gold += wager * 2;
+        char message[MAX_MESSAGE_LEN];
+        snprintf(message, sizeof(message),
+            "Rook pays you %d gold!", wager * 2);
+        push_message(g, message);
+        return 1;
+    }
+
+    char message[MAX_MESSAGE_LEN];
+    snprintf(message, sizeof(message), "Rook wins the %d gold wager.", wager);
+    push_message(g, message);
+    return 0;
+}
+
+int game_gambler_recovery_cost(const GameState *g) {
+    return game_healer_price(g) + game_witch_price(g);
+}
+
+int game_gambler_loan_amount(const GameState *g) {
+    int shortfall = game_gambler_recovery_cost(g) - g->gold;
+    int available_credit = GAMBLER_DEBT_LIMIT - g->gambler_debt;
+    if (shortfall <= 0 || shortfall > available_credit) {
+        return 0;
+    }
+    return shortfall;
+}
+
+void game_take_gambler_loan(GameState *g) {
+    if (g->location != LOCATION_TAVERN || g->player.hp <= 0) {
+        return;
+    }
+    int amount = game_gambler_loan_amount(g);
+    if (amount <= 0) {
+        push_message(g, "Rook cannot extend any more recovery credit.");
+        return;
+    }
+    int cost = game_gambler_recovery_cost(g);
+    int payment = g->gold < cost ? g->gold : cost;
+    g->gold -= payment;
+    g->gambler_debt += amount;
+    g->player.hp = g->player.max_hp;
+    g->player.mp = g->player.max_mp;
+    char message[MAX_MESSAGE_LEN];
+    snprintf(message, sizeof(message),
+        "Rook funds your recovery: %d gold paid, %d added to debt.",
+        payment, amount);
+    push_message(g, message);
+}
+
+void game_repay_gambler(GameState *g) {
+    if (g->location != LOCATION_TAVERN || g->gambler_debt <= 0 ||
+        g->gold <= 0) {
+        push_message(g, "You have no gold to put toward Rook's marker.");
+        return;
+    }
+    int payment = g->gold < g->gambler_debt ? g->gold : g->gambler_debt;
+    g->gold -= payment;
+    g->gambler_debt -= payment;
+    char message[MAX_MESSAGE_LEN];
+    snprintf(message, sizeof(message), "You repay %d gold of your debt to Rook.", payment);
+    push_message(g, message);
+}
+
 static void place_harbor_road(GameState *g) {
     if (!game_harbor_unlocked(g)) {
         return;
@@ -1784,6 +1861,7 @@ void game_leave_tavern(GameState *g) {
     g->enemy_count = 0;
     g->floor_item_count = 0;
     g->dialogue_active = 0;
+    g->player.poison_turns = 0;
     place_town_portal(g);
     push_message(g, "You step back into town.");
 }
@@ -1815,6 +1893,7 @@ void game_leave_island(GameState *g) {
     g->enemy_count = 0;
     g->floor_item_count = 0;
     g->dialogue_active = 0;
+    g->player.poison_turns = 0;
     place_town_portal(g);
     push_message(g, "The ship returns you to town.");
 }
@@ -1911,6 +1990,7 @@ void game_leave_temple(GameState *g) {
     g->player.y = ISLAND_GATE_Y + 1;
     g->enemy_count = 0;
     g->floor_item_count = 0;
+    g->player.poison_turns = 0;
     push_message(g, "You step back onto the island.");
 }
 
@@ -2045,6 +2125,7 @@ void game_return_to_town(GameState *g) {
     }
     g->floor_item_count = 0;
     g->enemy_count = 0;
+    g->player.poison_turns = 0;
     place_town_portal(g);
 }
 
@@ -2621,6 +2702,16 @@ void game_talk_to_mara(GameState *g) {
         MAX_DIALOGUE_LEN - 1);
     g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
     push_message(g, "Mara's quest is already complete.");
+}
+
+void game_talk_to_gambler(GameState *g) {
+    if (g->gambler_debt >= GAMBLER_DEBT_LIMIT) {
+        push_message(g, "Rook: Settle your marker before we play again.");
+    } else if (game_gambler_loan_amount(g) > 0) {
+        push_message(g, "Rook: I can cover what you need to recover.");
+    } else {
+        push_message(g, "Rook: High card wins. Care to test your luck?");
+    }
 }
 
 void game_light_coast_beacon(GameState *g, int x, int y) {

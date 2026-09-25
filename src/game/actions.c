@@ -603,6 +603,11 @@ static void coast_toggle_tide(GameState *g) {
 
 void action_resolve_player(GameState *g, Action a) {
     game_repair_equipment_indices(g);
+    if (g->location == LOCATION_TOWN ||
+        g->location == LOCATION_TAVERN ||
+        g->location == LOCATION_ISLAND) {
+        g->player.poison_turns = 0;
+    }
     if (a.type == ACTION_NONE) {
         return;
     }

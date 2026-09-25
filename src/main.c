@@ -25,6 +25,8 @@
 #include "renderer/shop_renderer.h"
 #include "screens/harbor.h"
 #include "renderer/harbor_renderer.h"
+#include "screens/gambler.h"
+#include "renderer/gambler_renderer.h"
 #include "renderer/game_renderer.h"
 #include "renderer/sprites.h"
 #include "renderer/info_panel.h"
@@ -288,6 +290,18 @@ static void handle_harbor_result(HarborResult result, GameState *game, GameScree
     }
 }
 
+static void handle_gambler_result(GamblerResult result, int wager, GameState *game, GameScreen *screen) {
+    if (result == GAMBLER_CLOSED) {
+        *screen = SCREEN_PLAYING;
+    } else if (result == GAMBLER_BET) {
+        game_gamble(game, wager);
+    } else if (result == GAMBLER_LOAN) {
+        game_take_gambler_loan(game);
+    } else if (result == GAMBLER_REPAY) {
+        game_repay_gambler(game);
+    }
+}
+
 static void handle_landing_result(LandingResult result, LandingScreen *landing,
     GameScreen *screen, GameState *game, Renderer *renderer, Viewport *viewport,
     NameEntry *name_entry, SlotSelect *slot_select, int *slot_is_save, int *running) {
@@ -452,6 +466,8 @@ int main(int argc, char **argv) {
     ShopScreen shop_screen;
     HarborScreen harbor_screen;
     harbor_init(&harbor_screen);
+    GamblerScreen gambler_screen;
+    gambler_init(&gambler_screen);
     HighScoreTable highscore_table;
     highscore_load(&highscore_table);
 
@@ -724,6 +740,14 @@ int main(int argc, char **argv) {
                         break;
                     }
 
+                    if (screen == SCREEN_GAMBLER) {
+                        int wager = 0;
+                        GamblerResult result = gambler_handle_key(
+                            &gambler_screen, sc, &game, &wager);
+                        handle_gambler_result(result, wager, &game, &screen);
+                        break;
+                    }
+
                     // Harbor screen
                     if (screen == SCREEN_HARBOR) {
                         HarborResult result = harbor_handle_key(&harbor_screen,
@@ -841,6 +865,12 @@ int main(int argc, char **argv) {
                                         } else if (game.map.tiles[ty][tx] ==
                                             TILE_NPC_MARA) {
                                             game_talk_to_mara(&game);
+                                            found = 1;
+                                        } else if (game.map.tiles[ty][tx] ==
+                                            TILE_NPC_GAMBLER) {
+                                            game_talk_to_gambler(&game);
+                                            gambler_init(&gambler_screen);
+                                            screen = SCREEN_GAMBLER;
                                             found = 1;
                                         } else if (game.map.tiles[ty][tx] ==
                                             TILE_NPC_CAIN) {
@@ -1069,6 +1099,27 @@ int main(int argc, char **argv) {
                             }
                         }
                     }
+                    // Gambler screen clicks
+                    if (screen == SCREEN_GAMBLER &&
+                        event.button.button == SDL_BUTTON_LEFT) {
+                        SDL_Point point = {event.button.x, event.button.y};
+                        GamblerOption options[MAX_GAMBLER_OPTIONS];
+                        int count = gambler_build_options(&game, options);
+                        for (int i = 0; i < count; i++) {
+                            SDL_Rect row = gambler_button_rect(&renderer, i);
+                            if (SDL_PointInRect(&point, &row)) {
+                                gambler_screen.selected = i;
+                                int wager = 0;
+                                GamblerResult result = gambler_activate(
+                                    &gambler_screen, &game, &wager);
+                                handle_gambler_result(result, wager, &game,
+                                    &screen);
+                                break;
+                            }
+                        }
+                        break;
+                    }
+
                     // Shop screen clicks
                     if (screen == SCREEN_SHOP && event.button.button == SDL_BUTTON_LEFT) {
                         if (shop_screen.type == SHOP_TYPE_HEALER ||
@@ -1295,6 +1346,8 @@ int main(int argc, char **argv) {
             shop_draw(&renderer, &game, &shop_screen);
         } else if (screen == SCREEN_HARBOR) {
             harbor_draw(&renderer, &game, &harbor_screen);
+        } else if (screen == SCREEN_GAMBLER) {
+            gambler_draw(&renderer, &game, &gambler_screen);
         } else if (screen == SCREEN_PLAYING) {
             GameState *view = player_projectile_animating &&
                 SDL_GetTicks() - game.trail_started_at < SPELL_TRAVEL_MS

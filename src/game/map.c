@@ -324,6 +324,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_NPC_DAIN &&
         m->tiles[y][x] != TILE_NPC_ALDER &&
         m->tiles[y][x] != TILE_NPC_MARA &&
+        m->tiles[y][x] != TILE_NPC_GAMBLER &&
         m->tiles[y][x] != TILE_NPC_CAIN &&
         m->tiles[y][x] != TILE_NPC_ROWAN &&
         m->tiles[y][x] != TILE_FOREST_WARDEN &&
@@ -1156,6 +1157,7 @@ void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y) {
     m->tiles[7][18] = TILE_NPC_DAIN;
     m->tiles[7][28] = TILE_NPC_ALDER;
     m->tiles[18][31] = TILE_NPC_MARA;
+    m->tiles[18][10] = TILE_NPC_GAMBLER;
     m->tiles[22][20] = TILE_TAVERN_EXIT;
     *spawn_x = 20;
     *spawn_y = 21;
