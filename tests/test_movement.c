@@ -67,6 +67,31 @@ void test_enemy_projectiles(void) {
     ASSERT("blocked shots create no projectile and clear the previous batch",
         shots.count == 0 && g.player.hp == 100);
 
+    setup_ranged_enemy(&g, ENEMY_GOBLIN_ARCHER);
+    g.enemies[0].move_timer = 0;
+    action_resolve_enemies_with_projectiles(&g, &shots);
+    ASSERT("ranged enemy holds a clear firing lane during recovery",
+        g.enemies[0].x == 14 && g.enemies[0].y == 20 &&
+        g.player.hp == 100);
+    action_resolve_enemies_with_projectiles(&g, &shots);
+    ASSERT("ranged enemy attacks without abandoning its firing lane",
+        g.enemies[0].x == 14 && g.enemies[0].y == 20 &&
+        g.player.hp == 90 && shots.count == 1);
+
+    setup_ranged_enemy(&g, ENEMY_GOBLIN_ARCHER);
+    g.enemies[0].x = 19;
+    action_resolve_enemies_with_projectiles(&g, &shots);
+    ASSERT("ranged enemy retreats instead of entering melee",
+        g.enemies[0].x == 18 && g.enemies[0].y == 20 &&
+        g.player.hp == 100 && shots.count == 0);
+
+    setup_ranged_enemy(&g, ENEMY_GOBLIN_ARCHER);
+    g.enemies[0].y = 19;
+    g.enemies[0].move_timer = 0;
+    action_resolve_enemies_with_projectiles(&g, &shots);
+    ASSERT("ranged enemy steps into an available firing lane",
+        g.enemies[0].x == 14 && g.enemies[0].y == 20);
+
     setup_ranged_enemy(&g, ENEMY_FOREST_NECROMANCER);
     g.enemies[0].move_timer = 0;
     action_resolve_enemies_with_projectiles(&g, &shots);
