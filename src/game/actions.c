@@ -1676,6 +1676,52 @@ static int enemy_is_major_boss(const Enemy *e) {
         e->type == ENEMY_FALLEN_SUN_GUARDIAN;
 }
 
+static int enemy_prefers_range(const Enemy *e);
+
+static int enemy_is_support(const Enemy *e) {
+    return e->type == ENEMY_CRYPT_CONJURER ||
+        e->type == ENEMY_GOBLIN_SHAMAN ||
+        e->type == ENEMY_SUN_PRIEST;
+}
+
+static int enemy_is_protector(const Enemy *e) {
+    return e->type == ENEMY_HOBGOBLIN_GUARD ||
+        e->type == ENEMY_ANIMATED_STATUE ||
+        e->type == ENEMY_VINEBOUND_GUARDIAN ||
+        e->type == ENEMY_LUNAR_EFFIGY;
+}
+
+static int enemy_has_backline_ally(const GameState *g, int index, int range) {
+    const Enemy *e = &g->enemies[index];
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *ally = &g->enemies[i];
+        if (i == index || !ally->active ||
+            (!enemy_prefers_range(ally) && !enemy_is_support(ally))) {
+            continue;
+        }
+        int distance = abs_int(ally->x - e->x) + abs_int(ally->y - e->y);
+        if (distance <= range) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int enemy_has_nearby_ally(const GameState *g, int index, int range) {
+    const Enemy *e = &g->enemies[index];
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *ally = &g->enemies[i];
+        if (i == index || !ally->active) {
+            continue;
+        }
+        int distance = abs_int(ally->x - e->x) + abs_int(ally->y - e->y);
+        if (distance <= range) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static void select_enemy_pursuers(const GameState *g, int pursuers[MAX_ENEMIES]) {
     for (int i = 0; i < MAX_ENEMIES; i++) {
         pursuers[i] = 0;
@@ -1685,6 +1731,7 @@ static void select_enemy_pursuers(const GameState *g, int pursuers[MAX_ENEMIES])
         int best = -1;
         int best_distance = MAP_W * MAP_H;
         int best_provoked = 0;
+        int best_role_priority = 0;
         for (int i = 0; i < g->enemy_count; i++) {
             const Enemy *e = &g->enemies[i];
             if (!e->active || pursuers[i] || enemy_is_major_boss(e)) {
@@ -1695,16 +1742,29 @@ static void select_enemy_pursuers(const GameState *g, int pursuers[MAX_ENEMIES])
                 continue;
             }
             int provoked = e->hp < e->max_hp;
+            int role_priority = 0;
+            if (slot == 0 && enemy_is_protector(e) &&
+                enemy_has_backline_ally(g, i, 6)) {
+                role_priority = 2;
+            } else if (slot == 1 &&
+                (enemy_prefers_range(e) || enemy_is_support(e))) {
+                role_priority = 1;
+            }
             int limit = provoked ? ENEMY_PROVOKED_DISTANCE :
                 ENEMY_NOTICE_DISTANCE;
             if (distance < 0 || distance > limit) {
                 continue;
             }
             if (best < 0 || provoked > best_provoked ||
-                (provoked == best_provoked && distance < best_distance)) {
+                (provoked == best_provoked &&
+                role_priority > best_role_priority) ||
+                (provoked == best_provoked &&
+                role_priority == best_role_priority &&
+                distance < best_distance)) {
                 best = i;
                 best_distance = distance;
                 best_provoked = provoked;
+                best_role_priority = role_priority;
             }
         }
         if (best < 0) {
@@ -2101,7 +2161,8 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         }
 
         int path_distance = enemy_distances[e->y][e->x];
-        if (enemy_prefers_range(e) && path_distance > 0 &&
+        if ((enemy_prefers_range(e) || enemy_is_support(e)) &&
+            path_distance > 0 &&
             path_distance < 3 && enemy_move_away(g, i)) {
             e->move_timer++;
             continue;
@@ -2353,6 +2414,10 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 push_message(g, msg);
                 continue;
             }
+        }
+
+        if (enemy_is_support(e) && enemy_has_nearby_ally(g, i, 4)) {
+            continue;
         }
 
         if (enemy_prefers_range(e) && clear_orthogonal_path(g, e)) {

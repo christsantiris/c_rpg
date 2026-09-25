@@ -531,6 +531,59 @@ void test_enemy_movement_collision(void) {
     ASSERT("flanker follows the corridor when no side route exists",
         g.enemies[0].x == 10 && g.enemies[0].y == 6);
 
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            g.map.tiles[y][x] = TILE_FLOOR;
+        }
+    }
+    g.enemy_count = 4;
+    g.enemies[0] = (Enemy){
+        .x = 10, .y = 8, .active = 1, .type = ENEMY_SKELETON,
+        .hp = 10, .max_hp = 10, .attack = 1
+    };
+    g.enemies[1] = (Enemy){
+        .x = 8, .y = 10, .active = 1, .type = ENEMY_SKELETON,
+        .hp = 10, .max_hp = 10, .attack = 1
+    };
+    g.enemies[2] = (Enemy){
+        .x = 10, .y = 4, .active = 1, .type = ENEMY_GOBLIN_ARCHER,
+        .hp = 10, .max_hp = 10, .attack = 1
+    };
+    g.enemies[3] = (Enemy){
+        .x = 9, .y = 4, .active = 1, .type = ENEMY_HOBGOBLIN_GUARD,
+        .hp = 10, .max_hp = 10, .attack = 1
+    };
+    action_resolve_enemies(&g);
+    ASSERT("protector joins pursuit to screen a nearby ranged ally",
+        g.enemies[3].x == 9 && g.enemies[3].y == 5);
+    ASSERT("protected ranged ally holds its backline firing position",
+        g.enemies[2].x == 10 && g.enemies[2].y == 4 &&
+        g.enemies[2].move_timer == 1);
+
+    g.enemy_count = 2;
+    g.enemies[0] = (Enemy){
+        .x = 10, .y = 5, .active = 1, .type = ENEMY_GOBLIN_SHAMAN,
+        .hp = 10, .max_hp = 10, .attack = 1
+    };
+    g.enemies[1] = (Enemy){
+        .x = 11, .y = 5, .active = 1, .type = ENEMY_HOBGOBLIN_GUARD,
+        .hp = 10, .max_hp = 10, .attack = 1
+    };
+    action_resolve_enemies(&g);
+    ASSERT("support enemy holds position near an ally",
+        g.enemies[0].x == 10 && g.enemies[0].y == 5);
+
+    g.enemy_count = 1;
+    g.enemies[0] = (Enemy){
+        .x = 9, .y = 10, .active = 1, .type = ENEMY_GOBLIN_SHAMAN,
+        .hp = 10, .max_hp = 10, .attack = 1
+    };
+    int hp_before_support_retreat = g.player.hp;
+    action_resolve_enemies(&g);
+    ASSERT("support enemy retreats instead of entering melee",
+        g.enemies[0].x == 8 && g.enemies[0].y == 10 &&
+        g.player.hp == hp_before_support_retreat);
+
     Location locations[4] = {
         LOCATION_DUNGEON,
         LOCATION_FOREST,
