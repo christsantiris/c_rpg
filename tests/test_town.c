@@ -1117,6 +1117,7 @@ void test_return_to_town(void) {
     g.level_cleared = 1;
     g.player.x = g.map.stairs_up_x;
     g.player.y = g.map.stairs_up_y;
+    g.player.poison_turns = 3;
 
     int enemies_before = g.enemy_count;
     ASSERT("enemies exist before return", enemies_before > 0);
@@ -1137,4 +1138,12 @@ void test_return_to_town(void) {
         g.level_cache[2].level_cleared == 1);
     ASSERT("floor items cleared",
         g.floor_item_count == 0);
+    ASSERT("returning to town clears poison",
+        g.player.poison_turns == 0);
+
+    g.player.hp = 2;
+    g.player.poison_turns = 1;
+    action_resolve_player(&g, (Action){ACTION_NONE, 0, 0});
+    ASSERT("town actions clear stale poison without dealing damage",
+        g.player.poison_turns == 0 && g.player.hp == 2);
 }
