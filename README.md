@@ -287,16 +287,11 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 
 ### High priority
 
-1. More tactical enemy behavior
-   Add recognizable combat roles such as protectors, ambushers, healers, summoners, ranged attackers, and enemies that retreat or flank.
-2. Boss encounter improvements
+1. Boss encounter improvements
    Give every boss multiple phases, telegraphed signature attacks, an arena mechanic, and a guaranteed thematic reward.
-3. Combat feedback
+2. Combat feedback
    Add clearer hit effects, critical indicators, blocked-damage feedback, status icons, and distinct weapon sounds.
-4. More weapon variation
-5. Mini quests to get more gold
-
-### Polish priority
-
-1. Accessibility and controls
+3. More weapon variation
+4. Mini quests to get more gold
+5. Accessibility and controls
    Add remappable controls, text scaling, colorblind-safe indicators, adjustable message duration, and clearer interaction prompts.

@@ -191,7 +191,8 @@ typedef enum {
     TILE_TEMPLE_RUBBLE,
     TILE_NPC_ISLAND_NAHLA,
     TILE_WITCH,
-    TILE_WITCH_DOOR
+    TILE_WITCH_DOOR,
+    TILE_NPC_GAMBLER
 } TileType;
 
 typedef struct {

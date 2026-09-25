@@ -3,6 +3,7 @@
 #include "../src/game/game.h"
 #include "../src/screens/shop.h"
 #include "../src/screens/harbor.h"
+#include "../src/screens/gambler.h"
 #include "../src/systems/save_load.h"
 
 void test_town_healer(void) {
@@ -198,6 +199,110 @@ void test_town_healer(void) {
         loaded.map.tiles[TOWN_WITCH_DOOR_Y][TOWN_WITCH_DOOR_X] ==
             TILE_WITCH_DOOR);
     remove("saves/savegame_99012.json");
+}
+
+void test_tavern_gambler(void) {
+    printf("Tavern gambler tests:\n");
+    static GameState g;
+    static GameState loaded;
+    g.player.player_class = CLASS_MAGE;
+    game_init(&g);
+    game_enter_tavern(&g);
+
+    ASSERT("Rook occupies an accessible place in the tavern",
+        g.map.tiles[18][10] == TILE_NPC_GAMBLER &&
+        !map_is_walkable(&g.map, 10, 18) &&
+        map_is_walkable(&g.map, 10, 17));
+
+    g.player.hp = 8;
+    g.player.max_hp = 160;
+    g.player.mp = 9;
+    g.player.max_mp = 110;
+    g.gold = 0;
+    g.gambler_debt = 30;
+    GamblerOption options[MAX_GAMBLER_OPTIONS];
+    int count = gambler_build_options(&g, options);
+    int recovery_cost = game_gambler_recovery_cost(&g);
+    ASSERT("the stranded mage is offered a guaranteed recovery loan",
+        recovery_cost == 85 && count == 2 &&
+        options[0].type == GAMBLER_OPTION_LOAN &&
+        options[0].wager == recovery_cost &&
+        options[1].type == GAMBLER_OPTION_LEAVE);
+
+    game_take_gambler_loan(&g);
+    ASSERT("financed recovery restores HP and MP without chance",
+        g.player.hp == g.player.max_hp && g.player.mp == g.player.max_mp &&
+        g.gold == 0 && g.gambler_debt == 30 + recovery_cost);
+    count = gambler_build_options(&g, options);
+    ASSERT("a recovered player with no gold can leave the table",
+        count == 1 && options[0].type == GAMBLER_OPTION_LEAVE);
+
+    g.player.hp = 8;
+    g.player.mp = 9;
+    g.gold = 67;
+    g.gambler_debt = 70;
+    count = gambler_build_options(&g, options);
+    ASSERT("injured players may gamble or repay debt by choice",
+        count == 6 && options[0].type == GAMBLER_OPTION_LOAN &&
+        options[0].wager == 18 && options[1].type == GAMBLER_OPTION_BET &&
+        options[4].type == GAMBLER_OPTION_REPAY);
+    int result = game_gamble(&g, 5);
+    ASSERT("gambling remains available before full recovery",
+        (result == 0 && g.gold == 62) || (result == 1 && g.gold == 72));
+    g.gold = 67;
+    game_repay_gambler(&g);
+    ASSERT("any available gold can repay debt regardless of HP and MP",
+        g.gold == 0 && g.gambler_debt == 3 &&
+        g.player.hp == 8 && g.player.mp == 9);
+    game_take_gambler_loan(&g);
+    ASSERT("recovery financing remains available after repayment",
+        g.player.hp == g.player.max_hp && g.player.mp == g.player.max_mp &&
+        g.gold == 0 && g.gambler_debt == 3 + recovery_cost);
+
+    g.gold = 4;
+    count = gambler_build_options(&g, options);
+    ASSERT("recovered players can wager their remaining gold",
+        options[0].type == GAMBLER_OPTION_BET && options[0].wager == 4);
+    result = game_gamble(&g, 4);
+    ASSERT("cash wagers either lose the stake or pay an equal profit",
+        (result == 0 && g.gold == 0) || (result == 1 && g.gold == 8));
+
+    g.gambler_debt = GAMBLER_DEBT_LIMIT;
+    g.gold = 0;
+    count = gambler_build_options(&g, options);
+    ASSERT("Rook refuses further play at the debt limit",
+        count == 1 && options[0].type == GAMBLER_OPTION_LEAVE &&
+        game_gamble(&g, 5) == -1);
+
+    g.gold = 7;
+    count = gambler_build_options(&g, options);
+    ASSERT("a debtor with earnings can repay or leave",
+        count == 2 && options[0].type == GAMBLER_OPTION_REPAY &&
+        options[1].type == GAMBLER_OPTION_LEAVE);
+    game_repay_gambler(&g);
+    ASSERT("repayment uses available gold and reduces the marker",
+        g.gold == 0 && g.gambler_debt == GAMBLER_DEBT_LIMIT - 7);
+
+    GamblerScreen screen;
+    gambler_init(&screen);
+    int wager = 0;
+    gambler_handle_key(&screen, SDL_SCANCODE_DOWN, &g, &wager);
+    ASSERT("keyboard selection reaches the leave option",
+        gambler_handle_key(&screen, SDL_SCANCODE_RETURN, &g, &wager) ==
+            GAMBLER_CLOSED);
+
+    g.gambler_debt = 17;
+    const int slot = 99013;
+    if (save_exists(slot)) {
+        ASSERT("gambler test save slot must be unused", 0);
+        return;
+    }
+    int saved = save_game(&g, slot);
+    int restored = saved && load_game(&loaded, slot);
+    ASSERT("gambler debt survives save and load",
+        restored && loaded.gambler_debt == 17 &&
+        loaded.map.tiles[18][10] == TILE_NPC_GAMBLER);
+    remove("saves/savegame_99013.json");
 }
 
 static int forest_path_exists_around(const Map *m, int blocked_room) {
@@ -1117,6 +1222,7 @@ void test_return_to_town(void) {
     g.level_cleared = 1;
     g.player.x = g.map.stairs_up_x;
     g.player.y = g.map.stairs_up_y;
+    g.player.poison_turns = 3;
 
     int enemies_before = g.enemy_count;
     ASSERT("enemies exist before return", enemies_before > 0);
@@ -1137,4 +1243,12 @@ void test_return_to_town(void) {
         g.level_cache[2].level_cleared == 1);
     ASSERT("floor items cleared",
         g.floor_item_count == 0);
+    ASSERT("returning to town clears poison",
+        g.player.poison_turns == 0);
+
+    g.player.hp = 2;
+    g.player.poison_turns = 1;
+    action_resolve_player(&g, (Action){ACTION_NONE, 0, 0});
+    ASSERT("town actions clear stale poison without dealing damage",
+        g.player.poison_turns == 0 && g.player.hp == 2);
 }

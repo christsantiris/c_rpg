@@ -3033,6 +3033,80 @@ void draw_mara(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 18, y + 15, 6, 6, (SDL_Color){69, 207, 196, 255});
 }
 
+void draw_gambler(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color outline = {35, 24, 20, 255};
+    SDL_Color hat = {77, 42, 32, 255};
+    SDL_Color hat_light = {132, 69, 43, 255};
+    SDL_Color skin = {187, 127, 84, 255};
+    SDL_Color coat = {91, 30, 39, 255};
+    SDL_Color coat_light = {142, 46, 49, 255};
+    SDL_Color gold = {218, 172, 55, 255};
+    draw_tavern_floor(r, tile_x, tile_y);
+    fill_rect(r, x + 5, y + 3, 15, 4, outline);
+    fill_rect(r, x + 7, y + 1, 11, 5, hat);
+    fill_rect(r, x + 8, y + 2, 9, 2, hat_light);
+    fill_rect(r, x + 8, y + 7, 10, 6, skin);
+    fill_rect(r, x + 9, y + 9, 2, 2, outline);
+    fill_rect(r, x + 15, y + 9, 2, 2, outline);
+    fill_rect(r, x + 7, y + 13, 12, 9, coat);
+    fill_rect(r, x + 9, y + 14, 3, 8, coat_light);
+    fill_rect(r, x + 13, y + 14, 2, 7, gold);
+    fill_rect(r, x + 4, y + 15, 4, 6, coat);
+    fill_rect(r, x + 18, y + 15, 4, 6, coat);
+    fill_rect(r, x + 20, y + 19, 3, 3, gold);
+    fill_rect(r, x + 20, y + 17, 1, 1, outline);
+}
+
+void draw_gambler_portrait(Renderer *r, int x, int y, int scale) {
+    SDL_Color outline = {35, 24, 20, 255};
+    SDL_Color hat_dark = {58, 31, 27, 255};
+    SDL_Color hat = {91, 45, 35, 255};
+    SDL_Color hat_light = {148, 75, 45, 255};
+    SDL_Color skin = {187, 127, 84, 255};
+    SDL_Color skin_light = {222, 164, 111, 255};
+    SDL_Color hair = {49, 31, 26, 255};
+    SDL_Color coat_dark = {65, 24, 32, 255};
+    SDL_Color coat = {105, 31, 42, 255};
+    SDL_Color coat_light = {158, 47, 53, 255};
+    SDL_Color shirt = {211, 194, 157, 255};
+    SDL_Color gold = {220, 176, 61, 255};
+    SDL_Color card = {226, 215, 188, 255};
+
+    healer_rect(r, x, y, scale, 5, 2, 23, 5, outline);
+    healer_rect(r, x, y, scale, 9, 0, 15, 6, outline);
+    healer_rect(r, x, y, scale, 10, 1, 13, 5, hat);
+    healer_rect(r, x, y, scale, 11, 1, 11, 2, hat_light);
+    healer_rect(r, x, y, scale, 6, 3, 21, 3, hat_dark);
+
+    healer_rect(r, x, y, scale, 8, 7, 17, 15, outline);
+    healer_rect(r, x, y, scale, 10, 8, 13, 12, skin);
+    healer_rect(r, x, y, scale, 11, 9, 10, 3, skin_light);
+    healer_rect(r, x, y, scale, 8, 8, 4, 11, hair);
+    healer_rect(r, x, y, scale, 22, 9, 3, 10, hair);
+    healer_rect(r, x, y, scale, 12, 13, 2, 2, outline);
+    healer_rect(r, x, y, scale, 19, 13, 2, 2, outline);
+    healer_rect(r, x, y, scale, 14, 18, 6, 1, outline);
+    healer_rect(r, x, y, scale, 16, 16, 2, 2, skin_light);
+
+    healer_rect(r, x, y, scale, 5, 21, 23, 4, outline);
+    healer_rect(r, x, y, scale, 3, 24, 27, 15, outline);
+    healer_rect(r, x, y, scale, 5, 23, 23, 15, coat);
+    healer_rect(r, x, y, scale, 6, 24, 5, 13, coat_light);
+    healer_rect(r, x, y, scale, 22, 24, 5, 13, coat_dark);
+    healer_rect(r, x, y, scale, 12, 23, 9, 12, shirt);
+    healer_rect(r, x, y, scale, 15, 23, 3, 11, outline);
+    healer_rect(r, x, y, scale, 16, 25, 1, 6, gold);
+
+    healer_rect(r, x, y, scale, 1, 30, 9, 8, outline);
+    healer_rect(r, x, y, scale, 2, 31, 7, 6, card);
+    healer_rect(r, x, y, scale, 4, 32, 2, 3, coat_light);
+    healer_rect(r, x, y, scale, 25, 31, 7, 7, outline);
+    healer_rect(r, x, y, scale, 26, 32, 5, 5, gold);
+    healer_rect(r, x, y, scale, 28, 33, 1, 1, skin_light);
+}
+
 void draw_forest_warden(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;

@@ -292,7 +292,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 52);
+    cJSON_AddNumberToObject(root, "save_version", 53);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -351,6 +351,7 @@ int save_game(const GameState *g, int slot) {
         g->healer_emergency_uses);
     cJSON_AddNumberToObject(root, "witch_emergency_uses",
         g->witch_emergency_uses);
+    cJSON_AddNumberToObject(root, "gambler_debt", g->gambler_debt);
     cJSON_AddNumberToObject(root, "score",             g->score);
     cJSON_AddNumberToObject(root, "equipped_main_hand",
         g->equipped_main_hand);
@@ -684,6 +685,7 @@ int load_game(GameState *g, int slot) {
         "healer_emergency_uses")->valueint;
     g->witch_emergency_uses = cJSON_GetObjectItem(root,
         "witch_emergency_uses")->valueint;
+    g->gambler_debt = cJSON_GetObjectItem(root, "gambler_debt")->valueint;
     g->score             = cJSON_GetObjectItem(root, "score")->valueint;
     cJSON *main_hand = cJSON_GetObjectItem(root, "equipped_main_hand");
     cJSON *off_hand = cJSON_GetObjectItem(root, "equipped_off_hand");

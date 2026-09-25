@@ -30,6 +30,7 @@ file(GLOB_RECURSE TEST_SOURCES
     ${CMAKE_SOURCE_DIR}/src/renderer/viewport.c
 )
 list(APPEND TEST_SOURCES ${CMAKE_SOURCE_DIR}/src/screens/shop.c)
+list(APPEND TEST_SOURCES ${CMAKE_SOURCE_DIR}/src/screens/gambler.c)
 list(APPEND TEST_SOURCES ${CMAKE_SOURCE_DIR}/src/screens/harbor.c)
 list(APPEND TEST_SOURCES ${CMAKE_SOURCE_DIR}/src/screens/slot_select.c)
 list(APPEND TEST_SOURCES ${CMAKE_SOURCE_DIR}/src/screens/quest_journal.c)
