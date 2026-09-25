@@ -13,6 +13,7 @@
 #define MAX_MESSAGE_LEN 128
 #define MAX_DIALOGUE_LEN 192
 #define MAX_SPEAKER_LEN 24
+#define EMERGENCY_RESTORATION_LIMIT 3
 
 #define DAIN_FRAGMENT_ARCHER 1
 #define DAIN_FRAGMENT_BOMBER 2
@@ -108,6 +109,8 @@ typedef struct {
     int       equipped_off_hand;
     int       equipped_armor;
     int       gold;
+    int       healer_emergency_uses;
+    int       witch_emergency_uses;
     FloorItem floor_items[MAX_FLOOR_ITEMS];
     int       floor_item_count;
     TrailTile trail[MAX_TRAIL];

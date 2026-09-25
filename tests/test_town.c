@@ -73,7 +73,19 @@ void test_town_healer(void) {
     game_visit_healer_emergency(&g);
     ASSERT("emergency care restores half health without changing other resources",
         g.player.hp == (g.player.max_hp + 1) / 2 && g.gold == 0 &&
-        g.player.mp == emergency_mp && g.inventory_count == emergency_items);
+        g.player.mp == emergency_mp && g.inventory_count == emergency_items &&
+        g.healer_emergency_uses == 1);
+    for (int use = 1; use < EMERGENCY_RESTORATION_LIMIT; use++) {
+        g.player.hp = g.player.max_hp / 4 - 1;
+        game_visit_healer_emergency(&g);
+    }
+    g.player.hp = g.player.max_hp / 4 - 1;
+    int exhausted_hp = g.player.hp;
+    game_visit_healer_emergency(&g);
+    ASSERT("emergency care is limited to three uses per game",
+        g.healer_emergency_uses == EMERGENCY_RESTORATION_LIMIT &&
+        g.player.hp == exhausted_hp &&
+        !game_healer_emergency_available(&g));
     g.player.hp = g.player.max_hp - 30;
     g.gold = 10;
     int mp = g.player.mp;
@@ -133,7 +145,19 @@ void test_town_healer(void) {
     game_visit_witch_emergency(&g);
     ASSERT("emergency ritual restores half mana without changing other resources",
         g.player.mp == (g.player.max_mp + 1) / 2 && g.gold == 0 &&
-        g.player.hp == emergency_hp && g.inventory_count == witch_items);
+        g.player.hp == emergency_hp && g.inventory_count == witch_items &&
+        g.witch_emergency_uses == 1);
+    for (int use = 1; use < EMERGENCY_RESTORATION_LIMIT; use++) {
+        g.player.mp = g.player.max_mp / 4 - 1;
+        game_visit_witch_emergency(&g);
+    }
+    g.player.mp = g.player.max_mp / 4 - 1;
+    int exhausted_mp = g.player.mp;
+    game_visit_witch_emergency(&g);
+    ASSERT("emergency mana is limited to three uses per game",
+        g.witch_emergency_uses == EMERGENCY_RESTORATION_LIMIT &&
+        g.player.mp == exhausted_mp &&
+        !game_witch_emergency_available(&g));
     g.player.mp = g.player.max_mp - 30;
     g.gold = 10;
     int hp = g.player.hp;
@@ -151,6 +175,8 @@ void test_town_healer(void) {
     ASSERT("town restoration services survive save/load",
         restored && loaded.gold == 0 && loaded.player.hp == loaded.player.max_hp &&
         loaded.player.mp == loaded.player.max_mp &&
+        loaded.healer_emergency_uses == EMERGENCY_RESTORATION_LIMIT &&
+        loaded.witch_emergency_uses == EMERGENCY_RESTORATION_LIMIT &&
         loaded.map.tiles[dy][dx] == TILE_HEALER_DOOR &&
         loaded.map.tiles[TOWN_WITCH_DOOR_Y][TOWN_WITCH_DOOR_X] ==
             TILE_WITCH_DOOR);
