@@ -185,6 +185,7 @@ int game_witch_price(const GameState *g);
 void game_visit_witch(GameState *g);
 void game_open_town_portal(GameState *g);
 void game_use_town_portal(GameState *g);
+void game_hide_portal_destination(GameState *g);
 void game_talk_to_elowen(GameState *g);
 void game_talk_to_dain(GameState *g);
 void game_record_dain_kill(GameState *g, EnemyType type);
