@@ -142,8 +142,10 @@ static void draw_restoration_visit(Renderer *r, const GameState *g, const ShopSc
         ? "EMERGENCY RITUAL TO 50%% MP    FREE (%d LEFT)"
         : "EMERGENCY CARE TO 50%% HP    FREE (%d LEFT)",
         emergency_remaining);
-    draw_healer_option(r, 1, s->selected == 1, emergency, emergency_label);
-    int leave_option = 2;
+    if (emergency) {
+        draw_healer_option(r, 1, s->selected == 1, 1, emergency_label);
+    }
+    int leave_option = emergency ? 2 : 1;
     draw_healer_option(r, leave_option, s->selected == leave_option, 1,
         "RETURN TO TOWN");
     renderer_draw_text(r, "UP/DOWN OR W/S SELECT   ENTER CONFIRM   ESC CLOSE",

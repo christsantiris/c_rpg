@@ -33,7 +33,7 @@ typedef struct {
 } ShopScreen;
 
 void shop_init(ShopScreen *s, ShopType type, int defeated_bosses);
-ShopResult shop_handle_key(ShopScreen *s, int scancode);
+ShopResult shop_handle_key(ShopScreen *s, int scancode, int emergency_visible);
 int shop_buy_price(const Item *item);
 int shop_sell_price(const Item *item);
 int shop_accepts_item(ShopType type, const Item *item);
