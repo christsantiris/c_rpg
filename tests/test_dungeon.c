@@ -267,8 +267,8 @@ void test_return_to_town_spell(void) {
     ASSERT("return spell leaves a portal beside the dungeon entrance",
         g.map.tiles[2][21] == TILE_PORTAL);
     ASSERT("return portal remains active", g.portal_active == 1);
-    ASSERT("dungeon end of portal remains in cached floor",
-        g.level_cache[0].map.tiles[origin_y][origin_x] == TILE_PORTAL);
+    ASSERT("unusable dungeon end of portal is hidden",
+        g.level_cache[0].map.tiles[origin_y][origin_x] != TILE_PORTAL);
 
     Action enter = {ACTION_MOVE, 21, 2};
     action_resolve_player(&g, enter);
@@ -278,6 +278,8 @@ void test_return_to_town_spell(void) {
     ASSERT("dungeon portal closes behind player",
         g.map.tiles[origin_y][origin_x] != TILE_PORTAL);
     ASSERT("portal closes after return trip", g.portal_active == 0);
+    ASSERT("closed portal is removed from the cached dungeon floor",
+        g.level_cache[0].map.tiles[origin_y][origin_x] != TILE_PORTAL);
 
     game_enter_coast(&g);
     for (int level = 1; level < 6; level++) {

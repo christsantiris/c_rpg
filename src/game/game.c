@@ -2032,15 +2032,44 @@ void game_open_town_portal(GameState *g) {
         g->location != LOCATION_TEMPLE) {
         return;
     }
+    game_hide_portal_destination(g);
     g->portal_active = 1;
     g->portal_level = g->level;
     g->portal_location = g->location;
     g->portal_x = g->player.x;
     g->portal_y = g->player.y;
     g->portal_origin_tile = g->map.tiles[g->player.y][g->player.x];
-    g->map.tiles[g->player.y][g->player.x] = TILE_PORTAL;
     game_return_to_town(g);
     push_message(g, "A return portal remains open.");
+}
+
+void game_hide_portal_destination(GameState *g) {
+    if (g->portal_level < 1 || g->portal_level > MAX_REGION_DEPTH ||
+        g->portal_x < 0 || g->portal_x >= MAP_W ||
+        g->portal_y < 0 || g->portal_y >= MAP_H) {
+        return;
+    }
+    LevelCache *cache = g->level_cache;
+    if (g->portal_location == LOCATION_FOREST) {
+        cache = g->forest_cache;
+    } else if (g->portal_location == LOCATION_MOUNTAINS) {
+        cache = g->mountain_cache;
+    } else if (g->portal_location == LOCATION_COAST) {
+        cache = g->coast_cache;
+    } else if (g->portal_location == LOCATION_TEMPLE) {
+        cache = g->temple_cache;
+    }
+    if (cache[g->portal_level - 1].valid &&
+        cache[g->portal_level - 1].map.tiles[g->portal_y][g->portal_x] ==
+            TILE_PORTAL) {
+        cache[g->portal_level - 1].map.tiles[g->portal_y][g->portal_x] =
+            g->portal_origin_tile;
+    }
+    if (g->location == g->portal_location &&
+        g->level == g->portal_level &&
+        g->map.tiles[g->portal_y][g->portal_x] == TILE_PORTAL) {
+        g->map.tiles[g->portal_y][g->portal_x] = g->portal_origin_tile;
+    }
 }
 
 static int portal_landing_open(const GameState *g, int x, int y) {
@@ -2110,6 +2139,7 @@ void game_use_town_portal(GameState *g) {
     }
     g->player.x = landing_x;
     g->player.y = landing_y;
+    cache[level - 1].map = g->map;
     g->portal_active = 0;
 }
 
