@@ -1727,6 +1727,17 @@ static int enemy_prefers_range(const Enemy *e) {
         e->type == ENEMY_MOONBOUND_SENTINEL;
 }
 
+static int enemy_prefers_flank(const Enemy *e) {
+    return e->type == ENEMY_CRYPT_BAT ||
+        e->type == ENEMY_PIXIE ||
+        e->type == ENEMY_BLIGHTED_WOLF ||
+        e->type == ENEMY_GIANT_SPIDER ||
+        e->type == ENEMY_GOBLIN_SCOUT ||
+        e->type == ENEMY_TUNNEL_SPIDER ||
+        e->type == ENEMY_RELIC_SCARABS ||
+        e->type == ENEMY_TEMPLE_STALKER;
+}
+
 static int clear_orthogonal_path(const GameState *g, const Enemy *e);
 
 static int enemy_move_toward(GameState *g, int index) {
@@ -1820,6 +1831,43 @@ static int enemy_move_away(GameState *g, int index) {
     e->x = best_x;
     e->y = best_y;
     return 1;
+}
+
+static int enemy_move_to_flank(GameState *g, int index) {
+    Enemy *e = &g->enemies[index];
+    int current_distance = enemy_distances[e->y][e->x];
+    if (current_distance <= 2) {
+        return 0;
+    }
+
+    int step_x = 0;
+    int step_y = 0;
+    if (e->x == g->player.x) {
+        step_x = index % 2 == 0 ? -1 : 1;
+    } else if (e->y == g->player.y) {
+        step_y = index % 2 == 0 ? -1 : 1;
+    } else {
+        return 0;
+    }
+
+    for (int side = 0; side < 2; side++) {
+        int direction = side == 0 ? 1 : -1;
+        int tx = e->x + step_x * direction;
+        int ty = e->y + step_y * direction;
+        if (!map_is_walkable(&g->map, tx, ty) ||
+            enemy_position_occupied(g, index, tx, ty) ||
+            (tx == g->player.x && ty == g->player.y)) {
+            continue;
+        }
+        int distance = enemy_distances[ty][tx];
+        if (distance < 0 || distance > current_distance + 1) {
+            continue;
+        }
+        e->x = tx;
+        e->y = ty;
+        return 1;
+    }
+    return 0;
 }
 
 static int clear_orthogonal_path(const GameState *g, const Enemy *e) {
@@ -2321,7 +2369,10 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             if (e->move_timer % 2 != 0) continue;
         }
 
-        int moved = enemy_move_toward(g, i);
+        int moved = enemy_prefers_flank(e) && enemy_move_to_flank(g, i);
+        if (!moved) {
+            moved = enemy_move_toward(g, i);
+        }
         if (e->type == ENEMY_CRYPT_BAT && moved) {
             // Bats close distance quickly, but never attack on their second move.
             enemy_move_toward(g, i);

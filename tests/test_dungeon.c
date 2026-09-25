@@ -500,6 +500,37 @@ void test_enemy_movement_collision(void) {
     ASSERT("damaged distant enemy pursues its attacker",
         g.enemies[0].x == 10 && g.enemies[0].y == 21);
 
+    g.enemy_count = 2;
+    g.enemies[0] = (Enemy){
+        .x = 10, .y = 5, .active = 1, .type = ENEMY_GOBLIN_SCOUT,
+        .hp = 10, .max_hp = 10, .attack = 1
+    };
+    g.enemies[1] = (Enemy){
+        .x = 10, .y = 4, .active = 1, .type = ENEMY_GIANT_SPIDER,
+        .hp = 10, .max_hp = 10, .attack = 1
+    };
+    action_resolve_enemies(&g);
+    ASSERT("flankers split to opposite sides of a direct approach",
+        g.enemies[0].x == 9 && g.enemies[0].y == 5 &&
+        g.enemies[1].x == 11 && g.enemies[1].y == 4);
+
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            g.map.tiles[y][x] = TILE_WALL;
+        }
+    }
+    for (int y = 5; y <= 10; y++) {
+        g.map.tiles[y][10] = TILE_FLOOR;
+    }
+    g.enemy_count = 1;
+    g.enemies[0] = (Enemy){
+        .x = 10, .y = 5, .active = 1, .type = ENEMY_GOBLIN_SCOUT,
+        .hp = 10, .max_hp = 10, .attack = 1
+    };
+    action_resolve_enemies(&g);
+    ASSERT("flanker follows the corridor when no side route exists",
+        g.enemies[0].x == 10 && g.enemies[0].y == 6);
+
     Location locations[4] = {
         LOCATION_DUNGEON,
         LOCATION_FOREST,
@@ -634,7 +665,8 @@ void test_new_dungeon_enemies(void) {
         .x = 4, .y = 10, .active = 1, .type = ENEMY_CRYPT_BAT
     };
     action_resolve_enemies(&g);
-    ASSERT("crypt bat moves two tiles", g.enemies[0].x == 6);
+    ASSERT("crypt bat flanks while moving two tiles",
+        g.enemies[0].x == 5 && g.enemies[0].y == 9);
 
     g.enemies[0] = (Enemy){
         .x = 8, .y = 8, .active = 1, .type = ENEMY_WRAITH,
