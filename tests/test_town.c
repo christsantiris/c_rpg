@@ -42,19 +42,25 @@ void test_town_healer(void) {
     ShopScreen shop;
     shop_init(&shop, SHOP_TYPE_HEALER, 0);
     int starts_on_heal = shop.selected == 0 &&
-        shop_handle_key(&shop, SDL_SCANCODE_RETURN) == SHOP_HEAL;
-    shop_handle_key(&shop, SDL_SCANCODE_DOWN);
+        shop_handle_key(&shop, SDL_SCANCODE_RETURN, 1) == SHOP_HEAL;
+    shop_handle_key(&shop, SDL_SCANCODE_DOWN, 1);
     int selects_emergency = shop.selected == 1 &&
-        shop_handle_key(&shop, SDL_SCANCODE_RETURN) == SHOP_EMERGENCY_HEAL;
-    shop_handle_key(&shop, SDL_SCANCODE_DOWN);
+        shop_handle_key(&shop, SDL_SCANCODE_RETURN, 1) == SHOP_EMERGENCY_HEAL;
+    shop_handle_key(&shop, SDL_SCANCODE_DOWN, 1);
     int selects_exit = shop.selected == 2 &&
-        shop_handle_key(&shop, SDL_SCANCODE_KP_ENTER) == SHOP_CLOSED;
-    shop_handle_key(&shop, SDL_SCANCODE_W);
+        shop_handle_key(&shop, SDL_SCANCODE_KP_ENTER, 1) == SHOP_CLOSED;
+    shop_handle_key(&shop, SDL_SCANCODE_W, 1);
     ASSERT("healer has separate paid, emergency and exit options",
         shop.item_count == 0 && starts_on_heal && selects_emergency &&
         selects_exit && shop.selected == 1 &&
-        shop_handle_key(&shop, SDL_SCANCODE_TAB) == SHOP_NONE &&
-        shop.mode == 0 && shop_handle_key(&shop, SDL_SCANCODE_ESCAPE) == SHOP_CLOSED);
+        shop_handle_key(&shop, SDL_SCANCODE_TAB, 1) == SHOP_NONE &&
+        shop.mode == 0 &&
+        shop_handle_key(&shop, SDL_SCANCODE_ESCAPE, 1) == SHOP_CLOSED);
+    shop_init(&shop, SHOP_TYPE_HEALER, 0);
+    shop_handle_key(&shop, SDL_SCANCODE_DOWN, 0);
+    ASSERT("healer hides unavailable emergency care",
+        shop.selected == 1 &&
+        shop_handle_key(&shop, SDL_SCANCODE_RETURN, 0) == SHOP_CLOSED);
     g.player.hp = g.player.max_hp - 30;
     g.gold = 9;
     ASSERT("healing thirty HP costs ten gold", game_healer_price(&g) == 10);
@@ -62,6 +68,9 @@ void test_town_healer(void) {
     ASSERT("insufficient funds leave both gold and HP unchanged",
         g.gold == 9 && g.player.hp == g.player.max_hp - 30);
     g.player.hp = g.player.max_hp / 4 - 1;
+    g.gold = game_healer_price(&g);
+    ASSERT("affordable full care suppresses the emergency option",
+        !game_healer_emergency_available(&g));
     g.gold = 0;
     int emergency_mp = g.player.mp;
     int emergency_items = g.inventory_count;
@@ -118,15 +127,20 @@ void test_town_healer(void) {
             TILE_TOWN_PATH);
     shop_init(&shop, SHOP_TYPE_WITCH, 0);
     int starts_on_restore = shop.selected == 0 &&
-        shop_handle_key(&shop, SDL_SCANCODE_RETURN) == SHOP_RESTORE_MANA;
-    shop_handle_key(&shop, SDL_SCANCODE_DOWN);
+        shop_handle_key(&shop, SDL_SCANCODE_RETURN, 1) == SHOP_RESTORE_MANA;
+    shop_handle_key(&shop, SDL_SCANCODE_DOWN, 1);
     int selects_emergency_mana = shop.selected == 1 &&
-        shop_handle_key(&shop, SDL_SCANCODE_RETURN) == SHOP_EMERGENCY_MANA;
-    shop_handle_key(&shop, SDL_SCANCODE_DOWN);
+        shop_handle_key(&shop, SDL_SCANCODE_RETURN, 1) == SHOP_EMERGENCY_MANA;
+    shop_handle_key(&shop, SDL_SCANCODE_DOWN, 1);
     int witch_exit = shop.selected == 2 &&
-        shop_handle_key(&shop, SDL_SCANCODE_RETURN) == SHOP_CLOSED;
+        shop_handle_key(&shop, SDL_SCANCODE_RETURN, 1) == SHOP_CLOSED;
     ASSERT("witch has separate paid, emergency and exit options",
         starts_on_restore && selects_emergency_mana && witch_exit);
+    shop_init(&shop, SHOP_TYPE_WITCH, 0);
+    shop_handle_key(&shop, SDL_SCANCODE_DOWN, 0);
+    ASSERT("witch hides unavailable emergency mana",
+        shop.selected == 1 &&
+        shop_handle_key(&shop, SDL_SCANCODE_RETURN, 0) == SHOP_CLOSED);
     g.player.mp = g.player.max_mp - 30;
     g.gold = 9;
     ASSERT("restoring thirty MP costs ten gold", game_witch_price(&g) == 10);
@@ -134,6 +148,9 @@ void test_town_healer(void) {
     ASSERT("witch refuses restoration the player cannot afford",
         g.gold == 9 && g.player.mp == g.player.max_mp - 30);
     g.player.mp = g.player.max_mp / 4 - 1;
+    g.gold = game_witch_price(&g);
+    ASSERT("affordable full ritual suppresses emergency mana",
+        !game_witch_emergency_available(&g));
     g.gold = 0;
     int emergency_hp = g.player.hp;
     int witch_items = g.inventory_count;
