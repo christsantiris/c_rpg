@@ -108,16 +108,33 @@ void test_town_healer(void) {
     int starts_on_restore = shop.selected == 0 &&
         shop_handle_key(&shop, SDL_SCANCODE_RETURN) == SHOP_RESTORE_MANA;
     shop_handle_key(&shop, SDL_SCANCODE_DOWN);
-    int witch_exit = shop.selected == 1 &&
+    int selects_emergency_mana = shop.selected == 1 &&
+        shop_handle_key(&shop, SDL_SCANCODE_RETURN) == SHOP_EMERGENCY_MANA;
+    shop_handle_key(&shop, SDL_SCANCODE_DOWN);
+    int witch_exit = shop.selected == 2 &&
         shop_handle_key(&shop, SDL_SCANCODE_RETURN) == SHOP_CLOSED;
-    ASSERT("witch has selectable mana restoration and exit options",
-        starts_on_restore && witch_exit);
+    ASSERT("witch has separate paid, emergency and exit options",
+        starts_on_restore && selects_emergency_mana && witch_exit);
     g.player.mp = g.player.max_mp - 30;
     g.gold = 9;
     ASSERT("restoring thirty MP costs ten gold", game_witch_price(&g) == 10);
     game_visit_witch(&g);
     ASSERT("witch refuses restoration the player cannot afford",
         g.gold == 9 && g.player.mp == g.player.max_mp - 30);
+    g.player.mp = g.player.max_mp / 4 - 1;
+    g.gold = 0;
+    int emergency_hp = g.player.hp;
+    int witch_items = g.inventory_count;
+    ASSERT("free emergency ritual is offered below one-quarter mana",
+        game_witch_emergency_available(&g));
+    game_visit_witch(&g);
+    ASSERT("paid ritual remains separate when emergency mana is available",
+        g.player.mp == g.player.max_mp / 4 - 1 && g.gold == 0);
+    game_visit_witch_emergency(&g);
+    ASSERT("emergency ritual restores half mana without changing other resources",
+        g.player.mp == (g.player.max_mp + 1) / 2 && g.gold == 0 &&
+        g.player.hp == emergency_hp && g.inventory_count == witch_items);
+    g.player.mp = g.player.max_mp - 30;
     g.gold = 10;
     int hp = g.player.hp;
     game_visit_witch(&g);

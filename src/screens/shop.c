@@ -108,7 +108,7 @@ void shop_init(ShopScreen *s, ShopType type, int defeated_bosses) {
 
 ShopResult shop_handle_key(ShopScreen *s, int scancode) {
     if (s->type == SHOP_TYPE_HEALER || s->type == SHOP_TYPE_WITCH) {
-        int last_option = s->type == SHOP_TYPE_HEALER ? 2 : 1;
+        int last_option = 2;
         switch (scancode) {
             case SDL_SCANCODE_UP:
             case SDL_SCANCODE_W:
@@ -129,8 +129,9 @@ ShopResult shop_handle_key(ShopScreen *s, int scancode) {
                 if (s->selected == last_option) {
                     return SHOP_CLOSED;
                 }
-                if (s->type == SHOP_TYPE_HEALER && s->selected == 1) {
-                    return SHOP_EMERGENCY_HEAL;
+                if (s->selected == 1) {
+                    return s->type == SHOP_TYPE_WITCH
+                        ? SHOP_EMERGENCY_MANA : SHOP_EMERGENCY_HEAL;
                 }
                 return s->type == SHOP_TYPE_WITCH
                     ? SHOP_RESTORE_MANA : SHOP_HEAL;

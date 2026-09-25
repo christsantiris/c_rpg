@@ -45,7 +45,9 @@ not restore MP.
 The **WITCH** hut stands east of the alchemist on the road to the Goblin
 Mountains. Morwen restores all missing MP for **1 gold per 3 MP, rounded up**.
 The price is shown before payment; press Enter or click the restoration button
-to accept, or Escape to leave. Full mana costs nothing.
+to accept, or Escape to leave. If MP falls below 25% and full restoration is
+unaffordable, Morwen offers a separate free emergency ritual that restores MP
+to 50%. Paid full restoration remains available. Full mana costs nothing.
 
 ### Goblin Mountains terrain
 
