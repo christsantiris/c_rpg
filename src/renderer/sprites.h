@@ -133,6 +133,8 @@ void draw_healer_portrait(Renderer *r, int x, int y, int scale);
 void draw_dain(Renderer *r, int tile_x, int tile_y);
 void draw_alder(Renderer *r, int tile_x, int tile_y);
 void draw_mara(Renderer *r, int tile_x, int tile_y);
+void draw_gambler(Renderer *r, int tile_x, int tile_y);
+void draw_gambler_portrait(Renderer *r, int x, int y, int scale);
 void draw_cain(Renderer *r, int tile_x, int tile_y);
 void draw_rowan(Renderer *r, int tile_x, int tile_y);
 void draw_nahla(Renderer *r, int tile_x, int tile_y);
