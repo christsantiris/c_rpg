@@ -862,6 +862,8 @@ void game_init(GameState *g) {
     g->equipped_off_hand = -1;
     g->equipped_armor = -1;
     g->gold = 0;
+    g->healer_emergency_uses = 0;
+    g->witch_emergency_uses = 0;
     g->score = 0;
     g->dungeon_key_found = 0;
     g->dungeon_crypt_keys = 0;
@@ -1636,6 +1638,7 @@ int game_healer_price(const GameState *g) {
 
 int game_healer_emergency_available(const GameState *g) {
     return g->player.hp > 0 &&
+        g->healer_emergency_uses < EMERGENCY_RESTORATION_LIMIT &&
         g->player.hp * 4 < g->player.max_hp &&
         g->gold < game_healer_price(g);
 }
@@ -1669,6 +1672,7 @@ void game_visit_healer_emergency(GameState *g) {
         return;
     }
     g->player.hp = (g->player.max_hp + 1) / 2;
+    g->healer_emergency_uses++;
     push_message(g, "Lysa provides emergency care, restoring you to half health.");
 }
 
@@ -1679,6 +1683,7 @@ int game_witch_price(const GameState *g) {
 
 int game_witch_emergency_available(const GameState *g) {
     return g->player.hp > 0 &&
+        g->witch_emergency_uses < EMERGENCY_RESTORATION_LIMIT &&
         g->player.mp * 4 < g->player.max_mp &&
         g->gold < game_witch_price(g);
 }
@@ -1713,6 +1718,7 @@ void game_visit_witch_emergency(GameState *g) {
         return;
     }
     g->player.mp = (g->player.max_mp + 1) / 2;
+    g->witch_emergency_uses++;
     push_message(g, "Morwen restores your spirit to half mana without charge.");
 }
 

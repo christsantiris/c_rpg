@@ -292,7 +292,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 51);
+    cJSON_AddNumberToObject(root, "save_version", 52);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -347,6 +347,10 @@ int save_game(const GameState *g, int slot) {
         g->max_temple_level_reached);
     cJSON_AddNumberToObject(root, "message_count",     g->message_count);
     cJSON_AddNumberToObject(root, "gold",              g->gold);
+    cJSON_AddNumberToObject(root, "healer_emergency_uses",
+        g->healer_emergency_uses);
+    cJSON_AddNumberToObject(root, "witch_emergency_uses",
+        g->witch_emergency_uses);
     cJSON_AddNumberToObject(root, "score",             g->score);
     cJSON_AddNumberToObject(root, "equipped_main_hand",
         g->equipped_main_hand);
@@ -676,6 +680,10 @@ int load_game(GameState *g, int slot) {
     g->max_temple_level_reached = max_temple ? max_temple->valueint : 1;
     g->message_count     = cJSON_GetObjectItem(root, "message_count")->valueint;
     g->gold              = cJSON_GetObjectItem(root, "gold")->valueint;
+    g->healer_emergency_uses = cJSON_GetObjectItem(root,
+        "healer_emergency_uses")->valueint;
+    g->witch_emergency_uses = cJSON_GetObjectItem(root,
+        "witch_emergency_uses")->valueint;
     g->score             = cJSON_GetObjectItem(root, "score")->valueint;
     cJSON *main_hand = cJSON_GetObjectItem(root, "equipped_main_hand");
     cJSON *off_hand = cJSON_GetObjectItem(root, "equipped_off_hand");

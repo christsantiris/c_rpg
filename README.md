@@ -37,8 +37,8 @@ She restores all missing HP for **1 gold per 3 HP, rounded up**. The price is
 shown before payment; press Enter or click the treatment button to accept,
 or Escape to leave. If HP falls below 25% and full treatment is unaffordable,
 Lysa offers a separate free emergency-care option that restores HP to 50%.
-Paid full treatment remains available. Full health costs nothing. Healing does
-not restore MP.
+Emergency care may be used three times during a game. Paid full treatment
+remains available. Full health costs nothing. Healing does not restore MP.
 
 ### Town witch
 
@@ -47,7 +47,8 @@ Mountains. Morwen restores all missing MP for **1 gold per 3 MP, rounded up**.
 The price is shown before payment; press Enter or click the restoration button
 to accept, or Escape to leave. If MP falls below 25% and full restoration is
 unaffordable, Morwen offers a separate free emergency ritual that restores MP
-to 50%. Paid full restoration remains available. Full mana costs nothing.
+to 50%. The emergency ritual may be used three times during a game. Paid full
+restoration remains available. Full mana costs nothing.
 
 ### Goblin Mountains terrain
 
