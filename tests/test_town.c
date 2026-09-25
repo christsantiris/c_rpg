@@ -230,35 +230,40 @@ void test_tavern_gambler(void) {
         options[1].type == GAMBLER_OPTION_LEAVE);
 
     game_take_gambler_loan(&g);
-    ASSERT("the recovery loan supplies the full restoration cost without chance",
-        g.gold == recovery_cost && g.gambler_debt == 30 + recovery_cost);
-    count = gambler_build_options(&g, options);
-    int protected_gold = g.gold;
-    ASSERT("Rook hides wagers when every coin is needed for recovery",
-        count == 1 && options[0].type == GAMBLER_OPTION_LEAVE &&
-        game_gamble(&g, 5) == -1 && g.gold == protected_gold);
-
-    g.gold = recovery_cost + 15;
-    count = gambler_build_options(&g, options);
-    ASSERT("an injured player may gamble only the surplus above recovery cost",
-        count == 4 && options[0].type == GAMBLER_OPTION_BET &&
-        options[0].wager == 5 && options[1].type == GAMBLER_OPTION_BET &&
-        options[1].wager == 10 && options[2].type == GAMBLER_OPTION_REPAY &&
-        game_gamble(&g, 25) == -1 && g.gold == recovery_cost + 15);
-    g.gold = recovery_cost;
-
-    game_leave_tavern(&g);
-    game_visit_healer(&g);
-    game_visit_witch(&g);
-    ASSERT("the loan lets the stranded mage restore both HP and MP to full",
+    ASSERT("financed recovery restores HP and MP without chance",
         g.player.hp == g.player.max_hp && g.player.mp == g.player.max_mp &&
-        g.gold == 0);
-    game_enter_tavern(&g);
+        g.gold == 0 && g.gambler_debt == 30 + recovery_cost);
+    count = gambler_build_options(&g, options);
+    ASSERT("a recovered player with no gold can leave the table",
+        count == 1 && options[0].type == GAMBLER_OPTION_LEAVE);
+
+    g.player.hp = 8;
+    g.player.mp = 9;
+    g.gold = 67;
+    g.gambler_debt = 70;
+    count = gambler_build_options(&g, options);
+    ASSERT("injured players may gamble or repay debt by choice",
+        count == 6 && options[0].type == GAMBLER_OPTION_LOAN &&
+        options[0].wager == 18 && options[1].type == GAMBLER_OPTION_BET &&
+        options[4].type == GAMBLER_OPTION_REPAY);
+    int result = game_gamble(&g, 5);
+    ASSERT("gambling remains available before full recovery",
+        (result == 0 && g.gold == 62) || (result == 1 && g.gold == 72));
+    g.gold = 67;
+    game_repay_gambler(&g);
+    ASSERT("any available gold can repay debt regardless of HP and MP",
+        g.gold == 0 && g.gambler_debt == 3 &&
+        g.player.hp == 8 && g.player.mp == 9);
+    game_take_gambler_loan(&g);
+    ASSERT("recovery financing remains available after repayment",
+        g.player.hp == g.player.max_hp && g.player.mp == g.player.max_mp &&
+        g.gold == 0 && g.gambler_debt == 3 + recovery_cost);
+
     g.gold = 4;
     count = gambler_build_options(&g, options);
     ASSERT("recovered players can wager their remaining gold",
         options[0].type == GAMBLER_OPTION_BET && options[0].wager == 4);
-    int result = game_gamble(&g, 4);
+    result = game_gamble(&g, 4);
     ASSERT("cash wagers either lose the stake or pay an equal profit",
         (result == 0 && g.gold == 0) || (result == 1 && g.gold == 8));
 

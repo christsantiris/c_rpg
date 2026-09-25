@@ -7,25 +7,22 @@ void gambler_init(GamblerScreen *s) {
 
 int gambler_build_options(const GameState *g, GamblerOption options[MAX_GAMBLER_OPTIONS]) {
     int count = 0;
-    int recovery_cost = game_gambler_recovery_cost(g);
-    int spendable = game_gambler_spendable_gold(g);
     int loan = game_gambler_loan_amount(g);
-    if (recovery_cost > 0 && g->gold < recovery_cost) {
-        if (loan > 0) {
-            options[count++] = (GamblerOption){GAMBLER_OPTION_LOAN, loan};
-        }
-    } else if (g->gambler_debt < GAMBLER_DEBT_LIMIT) {
+    if (loan > 0) {
+        options[count++] = (GamblerOption){GAMBLER_OPTION_LOAN, loan};
+    }
+    if (g->gambler_debt < GAMBLER_DEBT_LIMIT) {
         static const int wagers[] = {5, 10, 25};
-        if (spendable > 0 && spendable < wagers[0]) {
-            options[count++] = (GamblerOption){GAMBLER_OPTION_BET, spendable};
+        if (g->gold > 0 && g->gold < wagers[0]) {
+            options[count++] = (GamblerOption){GAMBLER_OPTION_BET, g->gold};
         }
         for (int i = 0; i < 3; i++) {
-            if (spendable >= wagers[i]) {
+            if (g->gold >= wagers[i]) {
                 options[count++] = (GamblerOption){GAMBLER_OPTION_BET, wagers[i]};
             }
         }
     }
-    if (g->gambler_debt > 0 && spendable > 0) {
+    if (g->gambler_debt > 0 && g->gold > 0) {
         options[count++] = (GamblerOption){GAMBLER_OPTION_REPAY, 0};
     }
     options[count++] = (GamblerOption){GAMBLER_OPTION_LEAVE, 0};
