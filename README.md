@@ -122,6 +122,8 @@ Below are screenshots of the game in action:
 
 <img width="4616" height="2580" alt="image" src="https://github.com/user-attachments/assets/4b6fdb08-713e-451b-bc3e-13b4ba9f3d12" />
 
+<img width="3836" height="2156" alt="image" src="https://github.com/user-attachments/assets/4d8ce9ce-f7c4-4be0-926a-8407eaf2f95c" />
+
 ## Compile the game
 To compile the app run `make run` in the root directory.
 
