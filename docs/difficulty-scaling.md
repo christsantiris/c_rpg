@@ -52,11 +52,12 @@ is always visible at the center of the penultimate room. Stand on the key and
 press `P` to collect it; walking into the locked door then consumes the key and
 opens the boss room. The player does not need to clear every regular enemy.
 
-Every new character starts with a Scroll: Return to Town. Learning and casting
-its zero-MP spell from the dungeon opens a portal in town and transports the
-player there. Entering that portal returns the player to the exact dungeon tile
-where the spell was cast, then closes the portal. This lets the player prepare
-for the boss without replaying the dungeon route.
+Cain gives each character one Scroll: Return to Town after the player speaks
+with him near the town crossroads. Learning and casting its zero-MP spell from
+the dungeon opens a portal in town and transports the player there. Entering
+that portal returns the player to the exact dungeon tile where the spell was
+cast, then closes the portal. This lets the player prepare for the boss without
+replaying the dungeon route.
 
 ## Enemy Count
 
@@ -79,7 +80,8 @@ enemy count = min(10 + dungeon floor, MAX_ENEMIES)
 
 ## Undead Composition
 
-Goblins and the Goblin King are reserved for a future mountain region.
+The dungeon roster is exclusively undead. Goblins have their own enemy roster
+and boss in the Goblin Mountains.
 
 | Floor | Enemy distribution |
 | --- | --- |
@@ -122,7 +124,8 @@ is `attack - defense`, with a minimum of 1.
 The Lich King is spawned before regular enemies, reserving its place under the
 enemy cap. Once engaged, it holds position in the chamber and launches a
 necrotic bolt every other turn, with a visible warning on its recovery turn.
-It guarantees either a level-appropriate weapon or Chain Mail.
+It guarantees the Warrior-only Cryptblade. Rewards for other regional bosses
+are listed in [Weapons, Armor, and Shields](weapons.md).
 
 ## Traps and Maps
 
@@ -145,6 +148,7 @@ and encounters, but not room geometry.
 On gaining a character level:
 
 - Maximum HP increases by 10 and HP is restored.
+- MP is restored to the current maximum.
 - Attack increases by 2.
 - Defense increases by 1, capped at half the player's attack.
 - The next XP requirement becomes `player level * 100`.
@@ -159,16 +163,17 @@ item-drop chance. Item drops contain only health potions, mana potions, and
 spell scrolls; regular enemies never drop weapons or armor. Deeper stages shift
 the scroll mix toward Heal and Fireball.
 
-Shop purchase prices are 200% of an item's base value. Shops pay
-25% of base value, rounded down, when buying an item from the player. These prices apply to
-both Blacksmith and Alchemist stock; existing item values in saved games stay
-unchanged.
+Shop purchase prices are 200% of an item's base value. Shops pay 25% of base
+value, rounded down, when buying an item from the player. The Blacksmith buys
+only weapons, armor, and shields; the Alchemist buys only potions, scrolls, and
+tomes.
 
 Regional bosses guarantee fixed thematic equipment rewards. Boss victories
 also expand the Blacksmith's inventory. Uncommon stock unlocks after one boss,
 the strongest class weapons unlock after two bosses, and capstone armor unlocks
 after three bosses. Enemy coin amounts, including boss purses, are halved and
-rounded down. The four quests award 40, 60, 70, and 80 gold respectively.
+rounded down. The four Tavern quests award 40, 60, 70, and 80 gold. The Ruined
+Temple quest awards 150 gold after its treasure is returned to Nahla.
 Crypt caches grant `10 + 2 × floor` gold, mountain caches grant
 `15 + 4 × stage`, and Coast caches grant `20 + 4 × stage`.
 

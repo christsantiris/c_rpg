@@ -40,3 +40,25 @@ stages use exposed basalt switchbacks. Raider Pass and Crown Approach contain
 narrow timber bridge crossings. Cinder Mines and Collapsed Tunnels use dark
 underground chambers, while Iron Ascent, Siege Camp, and Crown Peak use paved
 fortress courtyards and linked defensive positions.
+
+## Terrain and Treasure
+
+Stages 2 and 7 contain a weak bridge span that collapses after the player
+crosses it. Stand beside the gap and press `A` to rebuild the bridge from either
+side. The other mountain stages use open room routes without the old internal
+toggle-gate chambers.
+
+Stages 3–6 and 8 contain an optional rockfall passage. Press `A` beside either
+end to expose it. The falling rocks deal `4 + stage` HP, but the chamber behind
+them contains a one-time cache worth `15 + 4 × stage` gold. Stand on the cache
+and press `A` to collect it. Bridge repairs, opened passages, claimed caches,
+and minimap discoveries persist while the expedition is cached and through
+save/load.
+
+## Mountain Quest
+
+Dain's **Recover the Treasure Map** quest places guarded Map Bearers on stages
+2, 3, and 5. The Archer, Bomber, and Shaman leaders each carry one fragment and
+travel with a themed warband. Defeating the leader recovers the fragment
+automatically. Accepting the quest starts a fresh mountain expedition, while a
+previously defeated Goblin King remains dead.
