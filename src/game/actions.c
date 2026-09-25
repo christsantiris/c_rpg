@@ -1714,6 +1714,21 @@ static void select_enemy_pursuers(const GameState *g, int pursuers[MAX_ENEMIES])
     }
 }
 
+static int enemy_prefers_range(const Enemy *e) {
+    return e->type == ENEMY_CRYPT_CONJURER ||
+        e->type == ENEMY_DARK_ELF ||
+        e->type == ENEMY_GOBLIN_ARCHER ||
+        e->type == ENEMY_GOBLIN_BOMBER ||
+        e->type == ENEMY_SIREN ||
+        e->type == ENEMY_WATER_ELEMENTAL ||
+        e->type == ENEMY_BLOWDART_HUNTER ||
+        e->type == ENEMY_SUN_PRIEST ||
+        e->type == ENEMY_SERPENT_SPIRIT ||
+        e->type == ENEMY_MOONBOUND_SENTINEL;
+}
+
+static int clear_orthogonal_path(const GameState *g, const Enemy *e);
+
 static int enemy_move_toward(GameState *g, int index) {
     Enemy *e = &g->enemies[index];
     int current_distance = enemy_distances[e->y][e->x];
@@ -1726,6 +1741,7 @@ static int enemy_move_toward(GameState *g, int index) {
     int best_x = e->x;
     int best_y = e->y;
     int best_distance = current_distance;
+    int best_has_firing_lane = 0;
     for (int direction = 0; direction < 4; direction++) {
         int tx = e->x + dx[direction];
         int ty = e->y + dy[direction];
@@ -1735,13 +1751,70 @@ static int enemy_move_toward(GameState *g, int index) {
             continue;
         }
         int distance = enemy_distances[ty][tx];
-        if (distance >= 0 && distance < best_distance) {
+        Enemy candidate = *e;
+        candidate.x = tx;
+        candidate.y = ty;
+        int has_firing_lane = enemy_prefers_range(e) &&
+            clear_orthogonal_path(g, &candidate);
+        if (distance >= 0 &&
+            (distance < best_distance ||
+            (distance == best_distance &&
+            has_firing_lane > best_has_firing_lane))) {
             best_x = tx;
             best_y = ty;
             best_distance = distance;
+            best_has_firing_lane = has_firing_lane;
         }
     }
-    if (best_distance == current_distance) {
+    if (best_x == e->x && best_y == e->y) {
+        return 0;
+    }
+    e->x = best_x;
+    e->y = best_y;
+    return 1;
+}
+
+static int enemy_move_away(GameState *g, int index) {
+    Enemy *e = &g->enemies[index];
+    int current_distance = enemy_distances[e->y][e->x];
+    int current_separation = abs_int(g->player.x - e->x);
+    int vertical_separation = abs_int(g->player.y - e->y);
+    if (vertical_separation > current_separation) {
+        current_separation = vertical_separation;
+    }
+
+    static const int dx[4] = {0, 1, 0, -1};
+    static const int dy[4] = {-1, 0, 1, 0};
+    int best_x = e->x;
+    int best_y = e->y;
+    int best_distance = current_distance;
+    int best_separation = current_separation;
+    for (int direction = 0; direction < 4; direction++) {
+        int tx = e->x + dx[direction];
+        int ty = e->y + dy[direction];
+        if (!map_is_walkable(&g->map, tx, ty) ||
+            enemy_position_occupied(g, index, tx, ty) ||
+            (tx == g->player.x && ty == g->player.y)) {
+            continue;
+        }
+        int distance = enemy_distances[ty][tx];
+        if (distance < 0) {
+            continue;
+        }
+        int separation = abs_int(g->player.x - tx);
+        int vertical = abs_int(g->player.y - ty);
+        if (vertical > separation) {
+            separation = vertical;
+        }
+        if (distance > best_distance ||
+            (distance == best_distance && separation > best_separation)) {
+            best_x = tx;
+            best_y = ty;
+            best_distance = distance;
+            best_separation = separation;
+        }
+    }
+    if (best_x == e->x && best_y == e->y) {
         return 0;
     }
     e->x = best_x;
@@ -1977,6 +2050,13 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             if (distance > 16) {
                 continue;
             }
+        }
+
+        int path_distance = enemy_distances[e->y][e->x];
+        if (enemy_prefers_range(e) && path_distance > 0 &&
+            path_distance < 3 && enemy_move_away(g, i)) {
+            e->move_timer++;
+            continue;
         }
 
         // Adjacent to player — melee attack
@@ -2225,6 +2305,10 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 push_message(g, msg);
                 continue;
             }
+        }
+
+        if (enemy_prefers_range(e) && clear_orthogonal_path(g, e)) {
+            continue;
         }
 
         if (e->type == ENEMY_ZOMBIE || e->type == ENEMY_GIANT_WURM ||
