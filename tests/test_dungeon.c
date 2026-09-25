@@ -414,9 +414,91 @@ void test_enemy_movement_collision(void) {
     ASSERT("forest enemy cannot cut diagonally through trees",
         g.enemies[0].x == 5 && g.enemies[0].y == 5);
     g.map.tiles[5][6] = TILE_FOREST_FLOOR;
+    g.map.tiles[6][7] = TILE_FOREST_FLOOR;
     action_resolve_enemies(&g);
-    ASSERT("forest enemy follows an open path around the trees",
+    ASSERT("forest enemy follows an orthogonal path around the trees",
         g.enemies[0].x == 6 && g.enemies[0].y == 5);
+
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            g.map.tiles[y][x] = TILE_WALL;
+        }
+    }
+    for (int x = 4; x <= 8; x++) {
+        g.map.tiles[5][x] = TILE_FLOOR;
+    }
+    for (int y = 5; y <= 8; y++) {
+        g.map.tiles[y][8] = TILE_FLOOR;
+    }
+    for (int x = 8; x <= 12; x++) {
+        g.map.tiles[8][x] = TILE_FLOOR;
+    }
+    g.location = LOCATION_DUNGEON;
+    g.level = 1;
+    g.player.x = 12;
+    g.player.y = 8;
+    g.player.hp = 100;
+    g.enemy_count = 2;
+    g.enemies[0] = (Enemy){
+        .x = 6, .y = 5, .active = 1, .type = ENEMY_SKELETON,
+        .hp = 10, .max_hp = 10, .attack = 1
+    };
+    g.enemies[1] = (Enemy){
+        .x = 5, .y = 5, .active = 1, .type = ENEMY_SKELETON,
+        .hp = 10, .max_hp = 10, .attack = 1
+    };
+    for (int turn = 0; turn < 3; turn++) {
+        action_resolve_enemies(&g);
+    }
+    ASSERT("enemy rounds an L-shaped corner toward the player",
+        g.enemies[0].x == 8 && g.enemies[0].y == 6);
+    ASSERT("queued enemy follows through the vacated corridor",
+        g.enemies[1].x == 8 && g.enemies[1].y == 5);
+    ASSERT("corner pursuit keeps enemies on separate tiles",
+        g.enemies[0].x != g.enemies[1].x ||
+        g.enemies[0].y != g.enemies[1].y);
+
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            g.map.tiles[y][x] = TILE_FLOOR;
+        }
+    }
+    g.player.x = 10;
+    g.player.y = 10;
+    g.player.hp = 100;
+    g.enemy_count = 4;
+    int pursuit_start_x[4] = {10, 8, 12, 10};
+    int pursuit_start_y[4] = {7, 10, 10, 13};
+    for (int i = 0; i < g.enemy_count; i++) {
+        g.enemies[i] = (Enemy){
+            .x = pursuit_start_x[i], .y = pursuit_start_y[i],
+            .active = 1, .type = ENEMY_SKELETON,
+            .hp = 10, .max_hp = 10, .attack = 1
+        };
+    }
+    action_resolve_enemies(&g);
+    int moved_pursuers = 0;
+    for (int i = 0; i < g.enemy_count; i++) {
+        if (g.enemies[i].x != pursuit_start_x[i] ||
+            g.enemies[i].y != pursuit_start_y[i]) {
+            moved_pursuers++;
+        }
+    }
+    ASSERT("only three nonadjacent enemies join pursuit",
+        moved_pursuers == 3);
+
+    g.enemy_count = 1;
+    g.enemies[0] = (Enemy){
+        .x = 10, .y = 22, .active = 1, .type = ENEMY_SKELETON,
+        .hp = 10, .max_hp = 10, .attack = 1
+    };
+    action_resolve_enemies(&g);
+    ASSERT("unaware distant enemy holds position",
+        g.enemies[0].x == 10 && g.enemies[0].y == 22);
+    g.enemies[0].hp = 9;
+    action_resolve_enemies(&g);
+    ASSERT("damaged distant enemy pursues its attacker",
+        g.enemies[0].x == 10 && g.enemies[0].y == 21);
 
     Location locations[4] = {
         LOCATION_DUNGEON,
@@ -560,8 +642,9 @@ void test_new_dungeon_enemies(void) {
     };
     g.map.tiles[9][9] = TILE_WALL;
     action_resolve_enemies(&g);
-    ASSERT("wraith cannot pass through a wall",
-        g.enemies[0].x == 8 && g.enemies[0].y == 8);
+    ASSERT("wraith routes around rather than passing through a wall",
+        (g.enemies[0].x == 9 && g.enemies[0].y == 8) ||
+        (g.enemies[0].x == 8 && g.enemies[0].y == 9));
 
     g.player.defense = 2;
     g.enemies[0] = (Enemy){
