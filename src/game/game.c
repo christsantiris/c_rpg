@@ -1784,6 +1784,7 @@ void game_leave_tavern(GameState *g) {
     g->enemy_count = 0;
     g->floor_item_count = 0;
     g->dialogue_active = 0;
+    g->player.poison_turns = 0;
     place_town_portal(g);
     push_message(g, "You step back into town.");
 }
@@ -1815,6 +1816,7 @@ void game_leave_island(GameState *g) {
     g->enemy_count = 0;
     g->floor_item_count = 0;
     g->dialogue_active = 0;
+    g->player.poison_turns = 0;
     place_town_portal(g);
     push_message(g, "The ship returns you to town.");
 }
@@ -1911,6 +1913,7 @@ void game_leave_temple(GameState *g) {
     g->player.y = ISLAND_GATE_Y + 1;
     g->enemy_count = 0;
     g->floor_item_count = 0;
+    g->player.poison_turns = 0;
     push_message(g, "You step back onto the island.");
 }
 
@@ -2045,6 +2048,7 @@ void game_return_to_town(GameState *g) {
     }
     g->floor_item_count = 0;
     g->enemy_count = 0;
+    g->player.poison_turns = 0;
     place_town_portal(g);
 }
 
