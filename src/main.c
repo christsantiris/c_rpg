@@ -660,7 +660,12 @@ int main(int argc, char **argv) {
 
                     // Shop screen
                     if (screen == SCREEN_SHOP) {
-                        ShopResult result = shop_handle_key(&shop_screen, sc);
+                        int emergency_visible = shop_screen.type == SHOP_TYPE_WITCH
+                            ? game_witch_emergency_available(&game)
+                            : (shop_screen.type == SHOP_TYPE_HEALER
+                                ? game_healer_emergency_available(&game) : 0);
+                        ShopResult result = shop_handle_key(&shop_screen, sc,
+                            emergency_visible);
                         if (shop_screen.mode == 1 && shop_screen.selected >= game.inventory_count) {
                             shop_screen.selected = game.inventory_count > 0 ? game.inventory_count - 1 : 0;
                         }
@@ -1071,7 +1076,10 @@ int main(int argc, char **argv) {
                             SDL_Point point = {event.button.x, event.button.y};
                             SDL_Rect heal = shop_healer_button_rect(&renderer, 0);
                             SDL_Rect emergency = shop_healer_button_rect(&renderer, 1);
-                            int leave_option = 2;
+                            int emergency_visible = shop_screen.type == SHOP_TYPE_WITCH
+                                ? game_witch_emergency_available(&game)
+                                : game_healer_emergency_available(&game);
+                            int leave_option = emergency_visible ? 2 : 1;
                             SDL_Rect leave = shop_healer_button_rect(&renderer, leave_option);
                             if (SDL_PointInRect(&point, &heal)) {
                                 shop_screen.selected = 0;
@@ -1080,7 +1088,8 @@ int main(int argc, char **argv) {
                                 } else {
                                     game_visit_healer(&game);
                                 }
-                            } else if (SDL_PointInRect(&point, &emergency)) {
+                            } else if (emergency_visible &&
+                                SDL_PointInRect(&point, &emergency)) {
                                 shop_screen.selected = 1;
                                 if (shop_screen.type == SHOP_TYPE_WITCH) {
                                     game_visit_witch_emergency(&game);
