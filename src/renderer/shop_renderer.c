@@ -65,7 +65,8 @@ static void draw_restoration_visit(Renderer *r, const GameState *g, const ShopSc
     renderer_draw_text(r, witch ? "WITCH" : "HEALER", cx - 48, title_y,
         gold, r->font_large);
     int price = witch ? game_witch_price(g) : game_healer_price(g);
-    int emergency = !witch && game_healer_emergency_available(g);
+    int emergency = witch ? game_witch_emergency_available(g)
+        : game_healer_emergency_available(g);
     int current = witch ? g->player.mp : g->player.hp;
     int maximum = witch ? g->player.max_mp : g->player.max_hp;
     int missing = maximum - current;
@@ -101,12 +102,17 @@ static void draw_restoration_visit(Renderer *r, const GameState *g, const ShopSc
         SDL_snprintf(text, sizeof(text),
             "RATE: 1 GOLD PER 3 %s, ROUNDED UP.", resource);
         renderer_draw_text(r, text, cx - 105, 218, hint, r->font_tiny);
-        const char *status = emergency ? "FREE EMERGENCY CARE IS AVAILABLE."
+        const char *status = emergency ? (witch
+            ? "FREE EMERGENCY RITUAL IS AVAILABLE."
+            : "FREE EMERGENCY CARE IS AVAILABLE.")
             : price == 0 ? (witch
                 ? "YOUR SPIRIT IS ALREADY FULL."
                 : "YOU ARE ALREADY AT FULL HEALTH.")
-            : (g->gold < price ? "YOU CANNOT AFFORD THIS TREATMENT."
-                : "TREATMENT IS AVAILABLE.");
+            : (g->gold < price ? (witch
+                ? "YOU CANNOT AFFORD THIS RITUAL."
+                : "YOU CANNOT AFFORD THIS TREATMENT.")
+                : (witch ? "RESTORATION IS AVAILABLE."
+                : "TREATMENT IS AVAILABLE."));
         renderer_draw_text(r, status, cx - 105, 244,
             emergency || price == 0 || g->gold >= price ? green : red,
             r->font_tiny);
@@ -122,12 +128,10 @@ static void draw_restoration_visit(Renderer *r, const GameState *g, const ShopSc
     }
     draw_healer_option(r, 0, s->selected == 0,
         price == 0 || g->gold >= price, restore_label);
-    int leave_option = 1;
-    if (!witch) {
-        draw_healer_option(r, 1, s->selected == 1, emergency,
-            "EMERGENCY CARE TO 50% HP    FREE");
-        leave_option = 2;
-    }
+    draw_healer_option(r, 1, s->selected == 1, emergency, witch
+        ? "EMERGENCY RITUAL TO 50% MP    FREE"
+        : "EMERGENCY CARE TO 50% HP    FREE");
+    int leave_option = 2;
     draw_healer_option(r, leave_option, s->selected == leave_option, 1,
         "RETURN TO TOWN");
     renderer_draw_text(r, "UP/DOWN OR W/S SELECT   ENTER CONFIRM   ESC CLOSE",

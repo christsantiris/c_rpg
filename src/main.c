@@ -672,6 +672,8 @@ int main(int argc, char **argv) {
                             game_visit_healer_emergency(&game);
                         } else if (result == SHOP_RESTORE_MANA) {
                             game_visit_witch(&game);
+                        } else if (result == SHOP_EMERGENCY_MANA) {
+                            game_visit_witch_emergency(&game);
                         } else if (result == SHOP_BUY) {
                             Item *item = &shop_screen.items[shop_screen.selected];
                             int price = shop_buy_price(item);
@@ -1069,7 +1071,7 @@ int main(int argc, char **argv) {
                             SDL_Point point = {event.button.x, event.button.y};
                             SDL_Rect heal = shop_healer_button_rect(&renderer, 0);
                             SDL_Rect emergency = shop_healer_button_rect(&renderer, 1);
-                            int leave_option = shop_screen.type == SHOP_TYPE_HEALER ? 2 : 1;
+                            int leave_option = 2;
                             SDL_Rect leave = shop_healer_button_rect(&renderer, leave_option);
                             if (SDL_PointInRect(&point, &heal)) {
                                 shop_screen.selected = 0;
@@ -1078,10 +1080,13 @@ int main(int argc, char **argv) {
                                 } else {
                                     game_visit_healer(&game);
                                 }
-                            } else if (shop_screen.type == SHOP_TYPE_HEALER &&
-                                SDL_PointInRect(&point, &emergency)) {
+                            } else if (SDL_PointInRect(&point, &emergency)) {
                                 shop_screen.selected = 1;
-                                game_visit_healer_emergency(&game);
+                                if (shop_screen.type == SHOP_TYPE_WITCH) {
+                                    game_visit_witch_emergency(&game);
+                                } else {
+                                    game_visit_healer_emergency(&game);
+                                }
                             } else if (SDL_PointInRect(&point, &leave)) {
                                 shop_screen.selected = leave_option;
                                 screen = SCREEN_PLAYING;

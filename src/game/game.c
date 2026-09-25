@@ -1677,6 +1677,12 @@ int game_witch_price(const GameState *g) {
     return missing > 0 ? (missing + 2) / 3 : 0;
 }
 
+int game_witch_emergency_available(const GameState *g) {
+    return g->player.hp > 0 &&
+        g->player.mp * 4 < g->player.max_mp &&
+        g->gold < game_witch_price(g);
+}
+
 void game_visit_witch(GameState *g) {
     if (g->location != LOCATION_TOWN || g->player.hp <= 0) {
         return;
@@ -1696,6 +1702,18 @@ void game_visit_witch(GameState *g) {
     snprintf(message, sizeof(message),
         "Morwen restores your MP to full for %d gold.", price);
     push_message(g, message);
+}
+
+void game_visit_witch_emergency(GameState *g) {
+    if (g->location != LOCATION_TOWN || g->player.hp <= 0) {
+        return;
+    }
+    if (!game_witch_emergency_available(g)) {
+        push_message(g, "Morwen: Emergency aid is reserved for a drained spirit.");
+        return;
+    }
+    g->player.mp = (g->player.max_mp + 1) / 2;
+    push_message(g, "Morwen restores your spirit to half mana without charge.");
 }
 
 static void place_harbor_road(GameState *g) {
