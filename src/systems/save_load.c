@@ -292,7 +292,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 53);
+    cJSON_AddNumberToObject(root, "save_version", 54);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -352,6 +352,11 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "witch_emergency_uses",
         g->witch_emergency_uses);
     cJSON_AddNumberToObject(root, "gambler_debt", g->gambler_debt);
+    cJSON_AddNumberToObject(root, "rook_quest_state", g->rook_quest_state);
+    cJSON_AddNumberToObject(root, "rook_labyrinth_switches",
+        g->rook_labyrinth_switches);
+    cJSON_AddNumberToObject(root, "rook_quest_completions",
+        g->rook_quest_completions);
     cJSON_AddNumberToObject(root, "score",             g->score);
     cJSON_AddNumberToObject(root, "equipped_main_hand",
         g->equipped_main_hand);
@@ -686,6 +691,12 @@ int load_game(GameState *g, int slot) {
     g->witch_emergency_uses = cJSON_GetObjectItem(root,
         "witch_emergency_uses")->valueint;
     g->gambler_debt = cJSON_GetObjectItem(root, "gambler_debt")->valueint;
+    g->rook_quest_state = cJSON_GetObjectItem(root,
+        "rook_quest_state")->valueint;
+    g->rook_labyrinth_switches = cJSON_GetObjectItem(root,
+        "rook_labyrinth_switches")->valueint;
+    g->rook_quest_completions = cJSON_GetObjectItem(root,
+        "rook_quest_completions")->valueint;
     g->score             = cJSON_GetObjectItem(root, "score")->valueint;
     cJSON *main_hand = cJSON_GetObjectItem(root, "equipped_main_hand");
     cJSON *off_hand = cJSON_GetObjectItem(root, "equipped_off_hand");
@@ -1652,6 +1663,10 @@ int load_game(GameState *g, int slot) {
         if (g->level_cache[i].valid) {
             map_repair_dungeon_routes(&g->level_cache[i].map);
         }
+    }
+
+    if (g->location == LOCATION_TOWN) {
+        map_place_town_labyrinth(&g->map);
     }
 
     game_hide_portal_destination(g);

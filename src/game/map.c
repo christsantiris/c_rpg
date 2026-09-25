@@ -344,7 +344,9 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_TEMPLE_WALL &&
         m->tiles[y][x] != TILE_TEMPLE_MOON_DOOR_CLOSED &&
         m->tiles[y][x] != TILE_TEMPLE_DORMANT_SENTINEL &&
-        m->tiles[y][x] != TILE_TEMPLE_VAULT_DOOR;
+        m->tiles[y][x] != TILE_TEMPLE_VAULT_DOOR &&
+        m->tiles[y][x] != TILE_LABYRINTH_WALL &&
+        m->tiles[y][x] != TILE_LABYRINTH_GATE;
 }
 
 static int dungeon_route_reaches(const Map *m, int target_x, int target_y, int gates_open) {
@@ -1010,6 +1012,14 @@ void map_place_town_harbor(Map *m) {
     }
 }
 
+void map_place_town_labyrinth(Map *m) {
+    for (int x = 13; x < TOWN_LABYRINTH_X; x++) {
+        m->tiles[TOWN_LABYRINTH_Y][x] = TILE_TOWN_PATH;
+    }
+    m->tiles[TOWN_LABYRINTH_Y][TOWN_LABYRINTH_X] =
+        TILE_LABYRINTH_ENTRANCE;
+}
+
 void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     map_clear_exploration(m);
     m->room_count = 0;
@@ -1109,6 +1119,7 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     }
 
     map_place_town_harbor(m);
+    map_place_town_labyrinth(m);
     m->tiles[TOWN_CAIN_Y][TOWN_CAIN_X] = TILE_NPC_CAIN;
     m->tiles[TOWN_ROWAN_Y][TOWN_ROWAN_X] = TILE_NPC_ROWAN;
 
@@ -1116,6 +1127,123 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     // for a future region.
     *spawn_x = 20;
     *spawn_y = 12;
+}
+
+static unsigned int labyrinth_random(unsigned int *state) {
+    *state = *state * 1664525u + 1013904223u;
+    return *state;
+}
+
+void map_generate_labyrinth(Map *m, int switches, int *spawn_x, int *spawn_y) {
+    enum { CELLS_W = 20, CELLS_H = 11, CELL_COUNT = CELLS_W * CELLS_H };
+    unsigned char visited[CELLS_H][CELLS_W] = {{0}};
+    int stack_x[CELL_COUNT];
+    int stack_y[CELL_COUNT];
+    int stack_count = 1;
+    unsigned int random_state = 0x524f4f4bu;
+
+    map_clear_exploration(m);
+    m->room_count = 0;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            m->tiles[y][x] = TILE_LABYRINTH_WALL;
+        }
+    }
+
+    stack_x[0] = 0;
+    stack_y[0] = CELLS_H - 1;
+    visited[CELLS_H - 1][0] = 1;
+    m->tiles[LABYRINTH_H - 3][2] = TILE_LABYRINTH_FLOOR;
+    while (stack_count > 0) {
+        int cell_x = stack_x[stack_count - 1];
+        int cell_y = stack_y[stack_count - 1];
+        int options_x[4];
+        int options_y[4];
+        int option_count = 0;
+        static const int offsets[4][2] = {
+            {0, -1}, {1, 0}, {0, 1}, {-1, 0}
+        };
+        for (int direction = 0; direction < 4; direction++) {
+            int next_x = cell_x + offsets[direction][0];
+            int next_y = cell_y + offsets[direction][1];
+            if (next_x < 0 || next_x >= CELLS_W || next_y < 0 ||
+                next_y >= CELLS_H || visited[next_y][next_x]) {
+                continue;
+            }
+            options_x[option_count] = next_x;
+            options_y[option_count] = next_y;
+            option_count++;
+        }
+        if (option_count == 0) {
+            stack_count--;
+            continue;
+        }
+        int choice = (int)(labyrinth_random(&random_state) %
+            (unsigned int)option_count);
+        int next_x = options_x[choice];
+        int next_y = options_y[choice];
+        int map_x = 2 + cell_x * 2;
+        int map_y = 2 + cell_y * 2;
+        int next_map_x = 2 + next_x * 2;
+        int next_map_y = 2 + next_y * 2;
+        m->tiles[(map_y + next_map_y) / 2][(map_x + next_map_x) / 2] =
+            TILE_LABYRINTH_FLOOR;
+        m->tiles[next_map_y][next_map_x] = TILE_LABYRINTH_FLOOR;
+        visited[next_y][next_x] = 1;
+        stack_x[stack_count] = next_x;
+        stack_y[stack_count] = next_y;
+        stack_count++;
+    }
+
+    int dead_end_x[CELL_COUNT];
+    int dead_end_y[CELL_COUNT];
+    int dead_end_count = 0;
+    for (int cell_y = 0; cell_y < CELLS_H; cell_y++) {
+        for (int cell_x = 0; cell_x < CELLS_W; cell_x++) {
+            int map_x = 2 + cell_x * 2;
+            int map_y = 2 + cell_y * 2;
+            int exits = 0;
+            exits += m->tiles[map_y - 1][map_x] == TILE_LABYRINTH_FLOOR;
+            exits += m->tiles[map_y][map_x + 1] == TILE_LABYRINTH_FLOOR;
+            exits += m->tiles[map_y + 1][map_x] == TILE_LABYRINTH_FLOOR;
+            exits += m->tiles[map_y][map_x - 1] == TILE_LABYRINTH_FLOOR;
+            if (exits == 1 && !(cell_x == 0 && cell_y == CELLS_H - 1)) {
+                dead_end_x[dead_end_count] = map_x;
+                dead_end_y[dead_end_count] = map_y;
+                dead_end_count++;
+            }
+        }
+    }
+
+    for (int index = 0; index < LABYRINTH_SWITCH_COUNT; index++) {
+        int dead_end = index * (dead_end_count - 1) /
+            LABYRINTH_SWITCH_COUNT;
+        m->tiles[dead_end_y[dead_end]][dead_end_x[dead_end]] =
+            index < switches ? TILE_LABYRINTH_SWITCH_ON :
+                TILE_LABYRINTH_SWITCH_OFF;
+    }
+    int relic_x = dead_end_x[dead_end_count - 1];
+    int relic_y = dead_end_y[dead_end_count - 1];
+    m->tiles[relic_y][relic_x] = TILE_LABYRINTH_RELIC;
+    if (switches < LABYRINTH_SWITCH_COUNT) {
+        if (m->tiles[relic_y - 1][relic_x] == TILE_LABYRINTH_FLOOR) {
+            m->tiles[relic_y - 1][relic_x] = TILE_LABYRINTH_GATE;
+        } else if (m->tiles[relic_y][relic_x + 1] == TILE_LABYRINTH_FLOOR) {
+            m->tiles[relic_y][relic_x + 1] = TILE_LABYRINTH_GATE;
+        } else if (m->tiles[relic_y + 1][relic_x] == TILE_LABYRINTH_FLOOR) {
+            m->tiles[relic_y + 1][relic_x] = TILE_LABYRINTH_GATE;
+        } else {
+            m->tiles[relic_y][relic_x - 1] = TILE_LABYRINTH_GATE;
+        }
+    }
+
+    m->tiles[LABYRINTH_H - 3][1] = TILE_LABYRINTH_EXIT;
+    m->stairs_up_x = 1;
+    m->stairs_up_y = LABYRINTH_H - 3;
+    m->stairs_down_x = relic_x;
+    m->stairs_down_y = relic_y;
+    *spawn_x = 2;
+    *spawn_y = LABYRINTH_H - 3;
 }
 
 void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y) {

@@ -97,3 +97,16 @@ immediately behind the player.
 Boss victories are permanent. Defeated bosses do not appear in later
 expeditions. In a replayed dungeon finale, the return passage remains available
 without requiring the absent Lich King to be defeated again.
+
+## Rook: Rook's Marker
+
+Rook offers gambling, partial debt repayment, and guaranteed financing for a
+full HP and MP recovery. Debt cannot exceed 200 gold. When it reaches that
+limit, Rook assigns a repeatable retrieval quest and opens the overgrown stone
+labyrinth entrance beside the Tavern.
+
+The labyrinth contains no enemies or traps, so a weakened character can always
+complete it. Explore its passages, activate three runes to open the relic
+vault, recover Rook's stolen ivory rook, and leave through the entrance. Return
+to Rook to erase the entire debt and receive 40 gold and 500 score. A later
+debt at the limit starts a fresh labyrinth run.
