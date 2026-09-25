@@ -35,11 +35,10 @@ static void gambler_option_label(const GameState *g, GamblerOption option, char 
     if (option.type == GAMBLER_OPTION_BET) {
         SDL_snprintf(label, size, "WAGER %d GOLD", option.wager);
     } else if (option.type == GAMBLER_OPTION_LOAN) {
-        SDL_snprintf(label, size, "TAKE RECOVERY LOAN    %d GOLD",
+        SDL_snprintf(label, size, "FULL RECOVERY    ADD %d GOLD DEBT",
             option.wager);
     } else if (option.type == GAMBLER_OPTION_REPAY) {
-        int spendable = game_gambler_spendable_gold(g);
-        int payment = spendable < g->gambler_debt ? spendable : g->gambler_debt;
+        int payment = g->gold < g->gambler_debt ? g->gold : g->gambler_debt;
         SDL_snprintf(label, size, "REPAY DEBT    %d GOLD", payment);
     } else {
         SDL_strlcpy(label, "LEAVE THE TABLE", size);
@@ -72,7 +71,7 @@ void gambler_draw(Renderer *r, const GameState *g, GamblerScreen *s) {
     if (compact) {
         renderer_draw_text(r, "EVEN DRAW. A WIN PAYS TWICE THE STAKE.",
             cx - 245, 82, white, r->font_tiny);
-        renderer_draw_text(r, "RECOVERY LOANS COVER THE FULL HP AND MP COST.",
+        renderer_draw_text(r, "ROOK CAN FINANCE FULL HP AND MP RECOVERY.",
             cx - 245, 100, hint, r->font_tiny);
         if (g->message_count > 0) {
             renderer_draw_text(r, g->messages[g->message_count - 1],
@@ -86,32 +85,27 @@ void gambler_draw(Renderer *r, const GameState *g, GamblerScreen *s) {
         renderer_draw_text(r, "A WIN PAYS TWICE YOUR STAKE.", cx - 112, 188,
             white, r->font_small);
         renderer_draw_text(r,
-            "HP AND MP RECOVERY COSTS ARE RESERVED FROM WAGERS.", cx - 112, 218,
+            "GAMBLE, REPAY DEBT, OR FINANCE FULL RECOVERY.", cx - 112, 218,
             hint, r->font_tiny);
         const char *status;
         SDL_Color status_color;
         int recovery_cost = game_gambler_recovery_cost(g);
-        int spendable = game_gambler_spendable_gold(g);
         int loan = game_gambler_loan_amount(g);
         if (loan > 0) {
+            int payment = g->gold < recovery_cost ? g->gold : recovery_cost;
             SDL_snprintf(text, sizeof(text),
-                "GUARANTEED LOAN: %d GOLD COVERS FULL RECOVERY.", loan);
+                "FULL RECOVERY: PAY %d NOW, ADD %d TO DEBT.",
+                payment, loan);
             status = text;
             status_color = green;
         } else if (recovery_cost > 0 && g->gold < recovery_cost) {
             status = "CREDIT IS EXHAUSTED. EARN GOLD OR REPAY YOUR DEBT.";
             status_color = red;
-        } else if (recovery_cost > 0 && spendable == 0) {
-            status = "ALL OF YOUR GOLD IS RESERVED FOR FULL RECOVERY.";
-            status_color = green;
         } else if (g->gambler_debt >= GAMBLER_DEBT_LIMIT) {
             status = "ROOK REFUSES TO GAMBLE UNTIL YOU REPAY HIM.";
             status_color = red;
         } else if (recovery_cost > 0) {
-            SDL_snprintf(text, sizeof(text),
-                "%d GOLD RESERVED FOR RECOVERY. %d GOLD IS AVAILABLE.",
-                recovery_cost, spendable);
-            status = text;
+            status = "YOU CAN AFFORD RECOVERY. GAMBLING IS YOUR CHOICE.";
             status_color = green;
         } else {
             status = "PLACE A WAGER OR SETTLE YOUR MARKER.";

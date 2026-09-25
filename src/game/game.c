@@ -1729,7 +1729,7 @@ int game_gamble(GameState *g, int wager) {
         push_message(g, "Rook refuses to take the wager.");
         return -1;
     }
-    if (wager <= 0 || wager > game_gambler_spendable_gold(g)) {
+    if (wager <= 0 || wager > g->gold) {
         push_message(g, "You cannot cover that wager.");
         return -1;
     }
@@ -1754,11 +1754,6 @@ int game_gambler_recovery_cost(const GameState *g) {
     return game_healer_price(g) + game_witch_price(g);
 }
 
-int game_gambler_spendable_gold(const GameState *g) {
-    int spendable = g->gold - game_gambler_recovery_cost(g);
-    return spendable > 0 ? spendable : 0;
-}
-
 int game_gambler_loan_amount(const GameState *g) {
     int shortfall = game_gambler_recovery_cost(g) - g->gold;
     int available_credit = GAMBLER_DEBT_LIMIT - g->gambler_debt;
@@ -1777,22 +1772,26 @@ void game_take_gambler_loan(GameState *g) {
         push_message(g, "Rook cannot extend any more recovery credit.");
         return;
     }
-    g->gold += amount;
+    int cost = game_gambler_recovery_cost(g);
+    int payment = g->gold < cost ? g->gold : cost;
+    g->gold -= payment;
     g->gambler_debt += amount;
+    g->player.hp = g->player.max_hp;
+    g->player.mp = g->player.max_mp;
     char message[MAX_MESSAGE_LEN];
     snprintf(message, sizeof(message),
-        "Rook lends you %d gold for healing and mana.", amount);
+        "Rook funds your recovery: %d gold paid, %d added to debt.",
+        payment, amount);
     push_message(g, message);
 }
 
 void game_repay_gambler(GameState *g) {
-    int spendable = game_gambler_spendable_gold(g);
     if (g->location != LOCATION_TAVERN || g->gambler_debt <= 0 ||
-        spendable <= 0) {
+        g->gold <= 0) {
         push_message(g, "You have no gold to put toward Rook's marker.");
         return;
     }
-    int payment = spendable < g->gambler_debt ? spendable : g->gambler_debt;
+    int payment = g->gold < g->gambler_debt ? g->gold : g->gambler_debt;
     g->gold -= payment;
     g->gambler_debt -= payment;
     char message[MAX_MESSAGE_LEN];

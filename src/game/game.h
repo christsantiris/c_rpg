@@ -192,7 +192,6 @@ void game_visit_witch(GameState *g);
 void game_visit_witch_emergency(GameState *g);
 int game_gamble(GameState *g, int wager);
 int game_gambler_recovery_cost(const GameState *g);
-int game_gambler_spendable_gold(const GameState *g);
 int game_gambler_loan_amount(const GameState *g);
 void game_take_gambler_loan(GameState *g);
 void game_repay_gambler(GameState *g);
