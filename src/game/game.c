@@ -1770,7 +1770,7 @@ static void assign_rook_quest(GameState *g) {
     g->rook_quest_state = 1;
     g->rook_labyrinth_switches = 0;
     push_message(g, "Rook: Recover my ivory rook and your debt is cleared.");
-    push_message(g, "The labyrinth entrance in town is now open.");
+    push_message(g, "The labyrinth across from the witch's hut is now open.");
 }
 
 void game_take_gambler_loan(GameState *g) {

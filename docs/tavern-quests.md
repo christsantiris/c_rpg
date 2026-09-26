@@ -103,7 +103,7 @@ without requiring the absent Lich King to be defeated again.
 Rook offers gambling, partial debt repayment, and guaranteed financing for a
 full HP and MP recovery. Debt cannot exceed 200 gold. When it reaches that
 limit, Rook assigns a repeatable retrieval quest and opens the overgrown stone
-labyrinth entrance beside the Tavern.
+labyrinth entrance on the eastern outskirts, across the road from the witch's hut.
 
 The labyrinth contains no enemies or traps, so a weakened character can always
 complete it. Explore its passages, activate three runes to open the relic
