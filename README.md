@@ -47,46 +47,32 @@ fresh expedition through that region so completed maps never turn the quest
 into an empty walk. Regular enemies and maps regenerate, while defeated bosses
 remain defeated.
 
-The Blacksmith sells weapons, armor, and shields. The Alchemist sells potions,
-spell scrolls, and Mage spell tomes. Each shop buys only its own item types.
+The Blacksmith sells weapons, armor, and shields. The Alchemist sells both
+potion types, spell scrolls, and Mage spell tomes. The healer sells Health
+Potions and the witch sells Mana Potions. Each shop buys its own item types.
 Stock expands as bosses are defeated; buying costs twice an item's base value,
 while selling pays one quarter of base value.
 
 ### Town healer
 
 The **HEALER** building is west of the blacksmith, north of the east-west road.
-Follow its short entrance path from that road to meet Lysa.
-She restores all missing HP for **1 gold per HP**. The price is
-shown before payment; press Enter or click the treatment button to accept,
-or Escape to leave. If HP falls below 25% and full treatment is unaffordable,
-Lysa offers a separate free emergency-care option that restores HP to 50%.
-Emergency care may be used once during a game. Paid full treatment
-remains available. Full health costs nothing. Healing does not restore MP.
+Follow its short entrance path from that road to meet Lysa. She sells Health
+Potions for **20 gold** each. Each potion restores up to **30 HP** when used
+from inventory. The Alchemist also sells Health Potions.
 
 ### Town witch
 
 The **WITCH** hut stands east of the alchemist on the road to the Goblin
-Mountains. Morwen restores all missing MP for **1.5 gold per MP, rounded up**.
-The price is shown before payment; press Enter or click the restoration button
-to accept, or Escape to leave. If MP falls below 25% and full restoration is
-unaffordable, Morwen offers a separate free emergency ritual that restores MP
-to 50%. The emergency ritual may be used once during a game. Paid full
-restoration remains available. Full mana costs nothing.
-
-Potions are the cheaper recovery option: the Alchemist charges **20 gold**
-for a Health Potion restoring **30 HP**, or a Mana Potion restoring **20 MP**.
-Either amount costs **30 gold** at the corresponding town service.
+Mountains. Morwen sells Mana Potions for **20 gold** each. Each potion restores
+up to **20 MP** when used from inventory. The Alchemist also sells Mana Potions.
 
 ### Rook's labyrinth
 
-Rook lends gold when the player cannot afford full HP and MP recovery. The
-loan covers the shortfall and adds the same amount to debt. Rook does not
-restore HP or MP: take the gold to Lysa and Morwen and pay for their services.
-At the 200-gold debt limit, Rook opens an overgrown labyrinth gate on the
-eastern outskirts, across the road from the witch's hut, and asks the player
-to recover his stolen ivory rook. The labyrinth has no enemies or traps:
-activate its three runes, retrieve the relic, and return to Rook. He clears the
-debt and pays 40 gold. The quest can repeat whenever a later debt reaches the limit.
+Speak with Rook in the Tavern to receive his one-time retrieval quest and open
+the labyrinth gate on the eastern outskirts, across the road from the witch's
+hut. The labyrinth currently has no enemies or traps: activate its three runes,
+retrieve his stolen ivory rook, and return to Rook for **40 gold** and **500
+score**.
 
 ### Harbor and Ruined Isle
 
@@ -309,3 +295,4 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 3. More weapon variation
 4. Accessibility and controls
    Add remappable controls, text scaling, colorblind-safe indicators, adjustable message duration, and clearer interaction prompts.
+5. Build out town 2 and Labrynth area.

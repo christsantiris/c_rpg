@@ -13,8 +13,6 @@
 #define MAX_MESSAGE_LEN 128
 #define MAX_DIALOGUE_LEN 192
 #define MAX_SPEAKER_LEN 24
-#define EMERGENCY_RESTORATION_LIMIT 1
-#define GAMBLER_DEBT_LIMIT 200
 #define ROOK_QUEST_REWARD 40
 
 #define DAIN_FRAGMENT_ARCHER 1
@@ -112,9 +110,6 @@ typedef struct {
     int       equipped_off_hand;
     int       equipped_armor;
     int       gold;
-    int       healer_emergency_uses;
-    int       witch_emergency_uses;
-    int       gambler_debt;
     int       rook_quest_state;
     int       rook_labyrinth_switches;
     int       rook_quest_completions;
@@ -191,19 +186,6 @@ void game_mark_level_cleared(GameState *g);
 void game_update_level_progress(GameState *g);
 
 void game_return_to_town(GameState *g);
-int game_healer_price(const GameState *g);
-int game_healer_emergency_available(const GameState *g);
-void game_visit_healer(GameState *g);
-void game_visit_healer_emergency(GameState *g);
-int game_witch_price(const GameState *g);
-int game_witch_emergency_available(const GameState *g);
-void game_visit_witch(GameState *g);
-void game_visit_witch_emergency(GameState *g);
-int game_gamble(GameState *g, int wager);
-int game_gambler_recovery_cost(const GameState *g);
-int game_gambler_loan_amount(const GameState *g);
-void game_take_gambler_loan(GameState *g);
-void game_repay_gambler(GameState *g);
 void game_open_town_portal(GameState *g);
 void game_use_town_portal(GameState *g);
 void game_hide_portal_destination(GameState *g);
@@ -213,7 +195,7 @@ void game_record_dain_kill(GameState *g, EnemyType type);
 void game_talk_to_alder(GameState *g);
 void game_rescue_forest_warden(GameState *g, int x, int y);
 void game_talk_to_mara(GameState *g);
-void game_talk_to_gambler(GameState *g);
+void game_talk_to_rook(GameState *g);
 void game_talk_to_cain(GameState *g);
 void game_talk_to_rowan(GameState *g);
 void game_talk_to_nahla(GameState *g);

@@ -53,7 +53,7 @@ static const QuestDefinition quest_definitions[6] = {
         "Ruined Temple", {4, 0, 0}, 150, 2500
     },
     {
-        "Rook's Marker", "Rook",
+        "The Ivory Rook", "Rook",
         "Navigate the enemy-free labyrinth, light three",
         "runes, and recover Rook's stolen ivory rook.",
         {"Recover the ivory rook", "", ""},

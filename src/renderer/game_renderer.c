@@ -784,7 +784,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_NPC_DAIN: draw_dain(r, sx, sy); break;
                 case TILE_NPC_ALDER: draw_alder(r, sx, sy); break;
                 case TILE_NPC_MARA: draw_mara(r, sx, sy); break;
-                case TILE_NPC_GAMBLER: draw_gambler(r, sx, sy); break;
+                case TILE_NPC_ROOK: draw_rook(r, sx, sy); break;
                 case TILE_NPC_CAIN: draw_cain(r, sx, sy); break;
                 case TILE_NPC_ROWAN: draw_rowan(r, sx, sy); break;
                 case TILE_FOREST_WARDEN:
