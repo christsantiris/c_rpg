@@ -340,11 +340,16 @@ void test_rook_labyrinth(void) {
     static GameState loaded;
     g.player.player_class = CLASS_MAGE;
     game_init(&g);
-    ASSERT("town displays a labyrinth entrance connected to the tavern lane",
+    ASSERT("town places the labyrinth across the road from the witch's hut",
+        TOWN_LABYRINTH_X == TOWN_WITCH_DOOR_X && TOWN_LABYRINTH_Y > 12 &&
         g.map.tiles[TOWN_LABYRINTH_Y][TOWN_LABYRINTH_X] ==
             TILE_LABYRINTH_ENTRANCE &&
-        g.map.tiles[TOWN_LABYRINTH_Y][TOWN_LABYRINTH_X - 1] ==
+        g.map.tiles[TOWN_LABYRINTH_Y + 1][TOWN_LABYRINTH_X] ==
             TILE_TOWN_PATH);
+    ASSERT("the old labyrinth entrance and lane return to grass",
+        g.map.tiles[18][13] == TILE_TOWN_FLOOR &&
+        g.map.tiles[18][14] == TILE_TOWN_FLOOR &&
+        g.map.tiles[18][15] == TILE_TOWN_FLOOR);
 
     game_enter_tavern(&g);
     g.gambler_debt = GAMBLER_DEBT_LIMIT;
@@ -352,8 +357,17 @@ void test_rook_labyrinth(void) {
     ASSERT("Rook assigns the safe retrieval quest at the debt limit",
         g.rook_quest_state == 1 && g.rook_labyrinth_switches == 0);
     game_leave_tavern(&g);
-    g.player.x = TOWN_LABYRINTH_X - 1;
-    g.player.y = TOWN_LABYRINTH_Y;
+    g.player.x = TOWN_LABYRINTH_X - 2;
+    g.player.y = 12;
+    for (int y = 13; y <= TOWN_LABYRINTH_Y + 1; y++) {
+        action_resolve_player(&g, (Action){ACTION_MOVE, g.player.x, y});
+    }
+    for (int x = TOWN_LABYRINTH_X - 1; x <= TOWN_LABYRINTH_X; x++) {
+        action_resolve_player(&g, (Action){ACTION_MOVE, x, g.player.y});
+    }
+    ASSERT("the approach lane reaches the south-facing labyrinth entrance",
+        g.location == LOCATION_TOWN && g.player.x == TOWN_LABYRINTH_X &&
+        g.player.y == TOWN_LABYRINTH_Y + 1);
     action_resolve_player(&g, (Action){ACTION_MOVE,
         TOWN_LABYRINTH_X, TOWN_LABYRINTH_Y});
     ASSERT("walking through the open town entrance enters the labyrinth",
@@ -414,7 +428,8 @@ void test_rook_labyrinth(void) {
     ASSERT("the labyrinth exit returns beside its town entrance",
         g.location == LOCATION_TOWN &&
         g.player.x == TOWN_LABYRINTH_X &&
-        g.player.y == TOWN_LABYRINTH_Y + 1);
+        g.player.y == TOWN_LABYRINTH_Y + 1 &&
+        g.map.tiles[g.player.y][g.player.x] == TILE_TOWN_PATH);
     game_enter_tavern(&g);
     int gold_before = g.gold;
     game_talk_to_gambler(&g);
@@ -424,12 +439,17 @@ void test_rook_labyrinth(void) {
         g.rook_quest_completions == 1);
 
     const int slot = 99014;
+    game_leave_tavern(&g);
     int saved = save_game(&g, slot);
     int restored = saved && load_game(&loaded, slot);
-    ASSERT("Rook quest progress survives save and load",
+    ASSERT("Rook quest progress and the relocated town entrance survive save and load",
         restored && loaded.rook_quest_state == 3 &&
         loaded.rook_labyrinth_switches == LABYRINTH_SWITCH_COUNT &&
-        loaded.rook_quest_completions == 1);
+        loaded.rook_quest_completions == 1 && loaded.location == LOCATION_TOWN &&
+        loaded.map.tiles[TOWN_LABYRINTH_Y][TOWN_LABYRINTH_X] ==
+            TILE_LABYRINTH_ENTRANCE &&
+        loaded.map.tiles[TOWN_LABYRINTH_Y + 1][TOWN_LABYRINTH_X] ==
+            TILE_TOWN_PATH && loaded.map.tiles[18][15] == TILE_TOWN_FLOOR);
     remove("saves/savegame_99014.json");
 }
 

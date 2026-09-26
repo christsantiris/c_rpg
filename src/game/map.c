@@ -1013,8 +1013,12 @@ void map_place_town_harbor(Map *m) {
 }
 
 void map_place_town_labyrinth(Map *m) {
-    for (int x = 13; x < TOWN_LABYRINTH_X; x++) {
-        m->tiles[TOWN_LABYRINTH_Y][x] = TILE_TOWN_PATH;
+    // Branch from the east-west road and skirt the gate to its south entrance.
+    for (int y = 13; y <= TOWN_LABYRINTH_Y + 1; y++) {
+        m->tiles[y][TOWN_LABYRINTH_X - 2] = TILE_TOWN_PATH;
+    }
+    for (int x = TOWN_LABYRINTH_X - 2; x <= TOWN_LABYRINTH_X; x++) {
+        m->tiles[TOWN_LABYRINTH_Y + 1][x] = TILE_TOWN_PATH;
     }
     m->tiles[TOWN_LABYRINTH_Y][TOWN_LABYRINTH_X] =
         TILE_LABYRINTH_ENTRANCE;

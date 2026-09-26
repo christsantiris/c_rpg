@@ -92,7 +92,7 @@ void gambler_draw(Renderer *r, const GameState *g, GamblerScreen *s) {
         int recovery_cost = game_gambler_recovery_cost(g);
         int loan = game_gambler_loan_amount(g);
         if (g->rook_quest_state == 1) {
-            status = "ROOK'S LABYRINTH IS OPEN BESIDE THE TAVERN.";
+            status = "LABYRINTH OPEN ACROSS FROM THE WITCH'S HUT.";
             status_color = gold;
         } else if (g->rook_quest_state == 2) {
             status = "YOU FOUND THE IVORY ROOK. RETURN IT TO ROOK.";
