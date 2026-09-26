@@ -733,12 +733,7 @@ static void test_harbor_road_save_load(void) {
     static GameState loaded;
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
-    g.defeated_bosses = (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) |
-        (1 << LOCATION_MOUNTAINS) | (1 << LOCATION_COAST);
-    g.elowen_quest_state = 3;
-    g.dain_quest_state = 3;
-    g.alder_quest_state = 3;
-    g.mara_quest_state = 3;
+    g.defeated_bosses = 1 << LOCATION_COAST;
     game_enter_tavern(&g);
     game_leave_tavern(&g);
     ASSERT("unlocked harbor road can be saved", save_game(&g, ROUND_TRIP_SLOT));

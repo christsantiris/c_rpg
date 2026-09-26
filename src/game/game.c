@@ -27,7 +27,7 @@ static void scale_spawned_enemy(const GameState *g, Enemy *e) {
     static const int regular_attack[4] = {0, 7, 12, 15};
     static const int boss_hp[4] = {100, 130, 155, 170};
     static const int boss_attack[4] = {0, 6, 10, 13};
-    // Temple base stats already assume the four regional bosses are defeated.
+    // Temple base stats remain a late-game challenge after the harbor opens.
     int tier = g->location == LOCATION_TEMPLE ? 0 : region_order_tier(g);
     int level_progress = g->player.level - 1;
     if (level_progress < 0) {
@@ -1441,9 +1441,6 @@ static void spawn_mara_guardian(GameState *g) {
 }
 
 void game_refresh_quest_encounters(GameState *g) {
-    if (g->location == LOCATION_FOREST && g->level < FOREST_DEPTH) {
-        map_reveal_forest_exit(&g->map);
-    }
     int seal_placed = place_elowen_seal(g);
     int warden_placed = place_alder_warden(g);
     int beacon_placed = place_mara_beacon(g);
@@ -1628,11 +1625,7 @@ void game_enter_coast(GameState *g) {
 }
 
 int game_harbor_unlocked(const GameState *g) {
-    int bosses = (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) |
-        (1 << LOCATION_MOUNTAINS) | (1 << LOCATION_COAST);
-    return (g->defeated_bosses & bosses) == bosses &&
-        g->elowen_quest_state == 3 && g->dain_quest_state == 3 &&
-        g->alder_quest_state == 3 && g->mara_quest_state == 3;
+    return (g->defeated_bosses & (1 << LOCATION_COAST)) != 0;
 }
 
 static void assign_rook_quest(GameState *g) {
@@ -2422,9 +2415,8 @@ void game_talk_to_rowan(GameState *g) {
         return;
     }
     snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-        "Beyond these shores lies an island, reachable only by ship. "
-        "Sailors whisper of a ruined temple and treasure buried beneath it. "
-        "For now, the harbor is closed.");
+        "The Drowned Queen keeps the coast too dangerous to sail. "
+        "Defeat her and I can take you to the island beyond these shores.");
 }
 
 static void prepare_quest_expedition(GameState *g, Location location) {

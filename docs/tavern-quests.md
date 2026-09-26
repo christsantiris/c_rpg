@@ -65,11 +65,10 @@ expeditions, and save/load. Return to Mara after lighting all three to receive
 
 ## Harbor Unlock
 
-The harbor road appears after all four regional bosses have been defeated and
-all four Tavern quest rewards have been collected. Objectives that are ready
-to turn in do not count until the player returns to their quest giver. Captain
-Rowan then gives the Island Treasure Map, which enables ship travel from the
-dock.
+The harbor road appears after the Drowned Queen is defeated on the Sunken
+Coast. The other regional bosses and Tavern quests are not required. Captain
+Rowan then gives the Island Treasure Map when spoken to, enabling ship travel
+from the dock.
 
 ## Nahla: The Buried Sun
 

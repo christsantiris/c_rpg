@@ -1,21 +1,14 @@
 # Harbor, Ruined Isle, and Ruined Temple
 
-The harbor and island form the endgame path after the four main regions.
+The harbor and island open after the Sunken Coast boss is defeated.
 
 ## Unlocking the Harbor
 
-The harbor unlock requires all of the following:
-
-- Defeat the Lich King in the dungeon.
-- Defeat the Necromancer in the Haunted Forest.
-- Defeat the Goblin King in the Goblin Mountains.
-- Defeat the Drowned Queen on the Sunken Coast.
-- Complete and turn in all four Tavern quests.
-
-Until then, Captain Rowan describes an island reachable by sea but gives no
-item or quest. When every requirement is complete, the road extends from the
-town center to the dock. Speak with Rowan to receive the Island Treasure Map.
-Inventory space is required.
+Defeat the Drowned Queen on the Sunken Coast. The road then extends from the
+Town 1 crossroads to the dock. No other boss or Tavern quest is required.
+Until then, Captain Rowan explains that the Queen blocks the sea route. Speak
+with Rowan after defeating her to receive the Island Treasure Map. Inventory
+space is required.
 
 Walk into the dock entrance to open the harbor scene. Select **Board ship for
 the Ruined Isle** and press `Enter`, or choose the return option to stay in

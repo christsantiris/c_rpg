@@ -24,15 +24,14 @@ A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explo
 retro pixel-art style. Choose a Warrior, Mage, or Rogue, prepare in town, and
 explore an eight-floor undead dungeon, the eight-stage Haunted Forest, the
 eight-stage Goblin Mountains, and the eight-stage Sunken Coast. Each region
-keeps its own generated maps and progression. Completing all four regional
-bosses and Tavern quests opens a sea route to the Ruined Isle and its
-four-tier Ruined Temple finale.
+keeps its own generated maps and progression. Defeating the Drowned Queen on
+the Sunken Coast opens a sea route to the Ruined Isle. Its four-tier Ruined
+Temple remains a late-game challenge.
 
-Advancing never requires clearing every enemy. Forest exits on stages 1–7 are
-open without finding a landmark; landmarks reveal optional hidden trails. Final
-regional exits require defeating the region's boss, but surviving regular
-enemies do not block leaving. Defeating the Necromancer reveals the final forest
-exit if its landmark has not been found.
+Advancing never requires clearing every enemy. Final regional exits require
+defeating the region's boss, but surviving regular enemies do not block leaving.
+Defeating the Necromancer also reveals the final forest exit if its landmark
+has not been found.
 
 ## Town and Progression
 
@@ -82,9 +81,9 @@ score**.
 ### Harbor and Ruined Isle
 
 Captain Rowan waits near the harbor and describes the island before it is
-reachable. Defeat the four regional bosses and turn in all four Tavern quests
-to extend the town road to the dock. Rowan then gives the Island Treasure Map.
-Walk into the dock entrance and choose to board the ship.
+reachable. Defeat the Drowned Queen on the Sunken Coast to extend the Town 1
+road to the dock. Speak with Rowan to receive the Island Treasure Map, then
+walk into the dock entrance to board the ship.
 
 The tropical Ruined Isle is a peaceful exploration area with an abandoned
 camp, carved marker, broken statue, lagoon, Captain Rowan, and Nahla. Rowan can
