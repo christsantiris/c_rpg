@@ -149,6 +149,6 @@ require the player to have moved once to establish a direction.
   every enemy inside its blast radius.
 - Mana potions restore 20 MP, up to the player's maximum MP.
 - Gaining a character level restores MP to maximum as well as restoring HP.
-- Morwen's witch hut restores all missing MP for 1 gold per 3 MP, rounded up.
+- Morwen's witch hut restores all missing MP for 1.5 gold per MP, rounded up.
   If MP is below 25% and the player cannot afford that service, a free
   emergency ritual restores MP to 50%. It can be used once per game.

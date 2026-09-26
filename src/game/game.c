@@ -1637,7 +1637,7 @@ int game_harbor_unlocked(const GameState *g) {
 
 int game_healer_price(const GameState *g) {
     int missing = g->player.max_hp - g->player.hp;
-    return missing > 0 ? (missing + 2) / 3 : 0;
+    return missing > 0 ? missing : 0;
 }
 
 int game_healer_emergency_available(const GameState *g) {
@@ -1682,7 +1682,7 @@ void game_visit_healer_emergency(GameState *g) {
 
 int game_witch_price(const GameState *g) {
     int missing = g->player.max_mp - g->player.mp;
-    return missing > 0 ? (missing + 2) / 3 : 0;
+    return missing > 0 ? (missing * 3 + 1) / 2 : 0;
 }
 
 int game_witch_emergency_available(const GameState *g) {

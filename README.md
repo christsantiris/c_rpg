@@ -56,7 +56,7 @@ while selling pays one quarter of base value.
 
 The **HEALER** building is west of the blacksmith, north of the east-west road.
 Follow its short entrance path from that road to meet Lysa.
-She restores all missing HP for **1 gold per 3 HP, rounded up**. The price is
+She restores all missing HP for **1 gold per HP**. The price is
 shown before payment; press Enter or click the treatment button to accept,
 or Escape to leave. If HP falls below 25% and full treatment is unaffordable,
 Lysa offers a separate free emergency-care option that restores HP to 50%.
@@ -66,12 +66,16 @@ remains available. Full health costs nothing. Healing does not restore MP.
 ### Town witch
 
 The **WITCH** hut stands east of the alchemist on the road to the Goblin
-Mountains. Morwen restores all missing MP for **1 gold per 3 MP, rounded up**.
+Mountains. Morwen restores all missing MP for **1.5 gold per MP, rounded up**.
 The price is shown before payment; press Enter or click the restoration button
 to accept, or Escape to leave. If MP falls below 25% and full restoration is
 unaffordable, Morwen offers a separate free emergency ritual that restores MP
 to 50%. The emergency ritual may be used once during a game. Paid full
 restoration remains available. Full mana costs nothing.
+
+Potions are the cheaper recovery option: the Alchemist charges **20 gold**
+for a Health Potion restoring **30 HP**, or a Mana Potion restoring **20 MP**.
+Either amount costs **30 gold** at the corresponding town service.
 
 ### Rook's labyrinth
 
