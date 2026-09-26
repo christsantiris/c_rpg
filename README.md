@@ -28,10 +28,11 @@ keeps its own generated maps and progression. Completing all four regional
 bosses and Tavern quests opens a sea route to the Ruined Isle and its
 four-tier Ruined Temple finale.
 
-Advancing never requires clearing every enemy. Final regional exits require
-defeating the region's boss, but surviving regular enemies do not block leaving.
-Defeating the Necromancer also reveals the final forest exit if its landmark
-has not been found.
+Advancing never requires clearing every enemy. Forest exits on stages 1–7 are
+open without finding a landmark; landmarks reveal optional hidden trails. Final
+regional exits require defeating the region's boss, but surviving regular
+enemies do not block leaving. Defeating the Necromancer reveals the final forest
+exit if its landmark has not been found.
 
 ## Town and Progression
 
@@ -41,34 +42,38 @@ Speaking with him explains the dangers beyond town and grants one Scroll of
 Return to Town when inventory space is available. Use the scroll from the
 inventory to learn the permanent spell.
 
-The Tavern houses Elowen, Dain, Alder, Mara, and Rook. The four regional
+The Tavern houses Elowen, Dain, Alder, and Mara. The four regional
 quests add guarded objectives throughout the four regions. Accepting one begins a
 fresh expedition through that region so completed maps never turn the quest
 into an empty walk. Regular enemies and maps regenerate, while defeated bosses
 remain defeated.
 
 The Blacksmith sells weapons, armor, and shields. The Alchemist sells both
-potion types, spell scrolls, and Mage spell tomes. The healer sells Health
-Potions and the witch sells Mana Potions. Each shop buys its own item types.
+potion types, spell scrolls, and Mage spell tomes in the starting town. Defeating
+the forest Necromancer opens the way to a second town. After that victory, the
+southern two tiles of the starting town's west gate follow the cleared road directly
+to Town 2; the upper half still enters the forest. Town 2's west gate returns
+to Town 1. Town 2 has an Inn, a healer selling Health Potions, a witch selling
+Mana Potions, and Rook's labyrinth. Each shop buys its own item types.
 Stock expands as bosses are defeated; buying costs twice an item's base value,
 while selling pays one quarter of base value.
 
-### Town healer
+### Town 2 healer
 
-The **HEALER** building is west of the blacksmith, north of the east-west road.
+The **HEALER** building is north of Town 2's east-west road.
 Follow its short entrance path from that road to meet Lysa. She sells Health
 Potions for **20 gold** each. Each potion restores up to **30 HP** when used
 from inventory. The Alchemist also sells Health Potions.
 
-### Town witch
+### Town 2 witch
 
-The **WITCH** hut stands east of the alchemist on the road to the Goblin
-Mountains. Morwen sells Mana Potions for **20 gold** each. Each potion restores
+The **WITCH** hut stands east of Town 2's crossroads. Morwen sells Mana Potions
+for **20 gold** each. Each potion restores
 up to **20 MP** when used from inventory. The Alchemist also sells Mana Potions.
 
 ### Rook's labyrinth
 
-Speak with Rook in the Tavern to receive his one-time retrieval quest and open
+Speak with Rook in Town 2's Inn to receive his one-time retrieval quest and open
 the labyrinth gate on the eastern outskirts, across the road from the witch's
 hut. The labyrinth currently has no enemies or traps: activate its three runes,
 retrieve his stolen ivory rook, and return to Rook for **40 gold** and **500
@@ -286,7 +291,7 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 - Windows installer
 - Fix Linux installer
 
-### High priority
+### Feature enhancements
 
 1. Boss encounter improvements
    Give every boss multiple phases, telegraphed signature attacks, an arena mechanic, and a guaranteed thematic reward.
@@ -295,4 +300,3 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 3. More weapon variation
 4. Accessibility and controls
    Add remappable controls, text scaling, colorblind-safe indicators, adjustable message duration, and clearer interaction prompts.
-5. Build out town 2 and Labrynth area.

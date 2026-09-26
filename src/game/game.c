@@ -1441,6 +1441,9 @@ static void spawn_mara_guardian(GameState *g) {
 }
 
 void game_refresh_quest_encounters(GameState *g) {
+    if (g->location == LOCATION_FOREST && g->level < FOREST_DEPTH) {
+        map_reveal_forest_exit(&g->map);
+    }
     int seal_placed = place_elowen_seal(g);
     int warden_placed = place_alder_warden(g);
     int beacon_placed = place_mara_beacon(g);
@@ -1706,6 +1709,73 @@ void game_leave_tavern(GameState *g) {
     push_message(g, "You step back into town.");
 }
 
+void game_enter_town2(GameState *g) {
+    int spawn_x;
+    int spawn_y;
+    if (g->location == LOCATION_FOREST && g->level == FOREST_DEPTH) {
+        LevelCache *cache = &g->forest_cache[FOREST_DEPTH - 1];
+        cache->map = g->map;
+        cache->enemy_count = g->enemy_count;
+        cache->level_cleared = g->level_cleared;
+        for (int i = 0; i < g->enemy_count; i++) {
+            cache->enemies[i] = g->enemies[i];
+        }
+        cache->valid = 1;
+    }
+    g->location = LOCATION_TOWN2;
+    map_generate_town2(&g->map, &spawn_x, &spawn_y);
+    g->player.x = spawn_x;
+    g->player.y = spawn_y;
+    g->enemy_count = 0;
+    g->floor_item_count = 0;
+    g->dialogue_active = 0;
+    g->player.poison_turns = 0;
+    push_message(g, "You arrive in the second town.");
+}
+
+void game_leave_town2(GameState *g) {
+    int spawn_x;
+    int spawn_y;
+    g->location = LOCATION_TOWN;
+    map_generate_town(&g->map, &spawn_x, &spawn_y);
+    place_harbor_road(g);
+    place_town_portal(g);
+    g->player.x = 1;
+    g->player.y = 14;
+    g->enemy_count = 0;
+    g->floor_item_count = 0;
+    g->dialogue_active = 0;
+    g->player.poison_turns = 0;
+    push_message(g, "The cleared forest road leads back to town.");
+}
+
+void game_enter_inn(GameState *g) {
+    int spawn_x;
+    int spawn_y;
+    g->location = LOCATION_INN;
+    map_generate_inn(&g->map, &spawn_x, &spawn_y);
+    g->player.x = spawn_x;
+    g->player.y = spawn_y;
+    g->enemy_count = 0;
+    g->floor_item_count = 0;
+    g->dialogue_active = 0;
+    push_message(g, "You enter the inn.");
+}
+
+void game_leave_inn(GameState *g) {
+    int spawn_x;
+    int spawn_y;
+    g->location = LOCATION_TOWN2;
+    map_generate_town2(&g->map, &spawn_x, &spawn_y);
+    g->player.x = 8;
+    g->player.y = 21;
+    g->enemy_count = 0;
+    g->floor_item_count = 0;
+    g->dialogue_active = 0;
+    g->player.poison_turns = 0;
+    push_message(g, "You step out of the inn.");
+}
+
 void game_enter_labyrinth(GameState *g) {
     int spawn_x;
     int spawn_y;
@@ -1730,16 +1800,14 @@ void game_enter_labyrinth(GameState *g) {
 void game_leave_labyrinth(GameState *g) {
     int spawn_x;
     int spawn_y;
-    g->location = LOCATION_TOWN;
-    map_generate_town(&g->map, &spawn_x, &spawn_y);
-    place_harbor_road(g);
+    g->location = LOCATION_TOWN2;
+    map_generate_town2(&g->map, &spawn_x, &spawn_y);
     g->player.x = TOWN_LABYRINTH_X;
     g->player.y = TOWN_LABYRINTH_Y + 1;
     g->enemy_count = 0;
     g->floor_item_count = 0;
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
-    place_town_portal(g);
     push_message(g, "You emerge from Rook's labyrinth.");
 }
 
@@ -1815,7 +1883,7 @@ int game_interact_labyrinth(GameState *g) {
             g->rook_quest_state = 2;
             g->map.tiles[y][x] = TILE_LABYRINTH_FLOOR;
             push_message(g, "You recover Rook's stolen ivory rook.");
-            push_message(g, "Return it to Rook at the tavern.");
+            push_message(g, "Return it to Rook at the inn.");
             return 1;
         }
     }

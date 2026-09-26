@@ -57,7 +57,7 @@ static const QuestDefinition quest_definitions[6] = {
         "Navigate the enemy-free labyrinth, light three",
         "runes, and recover Rook's stolen ivory rook.",
         {"Recover the ivory rook", "", ""},
-        "Town Labyrinth", {1, 0, 0}, ROOK_QUEST_REWARD, 500
+        "Town 2 Labyrinth", {1, 0, 0}, ROOK_QUEST_REWARD, 500
     }
 };
 

@@ -10,10 +10,10 @@ rather than sustained melee combat.
 - Gaining a level increases maximum HP by 10 and restores both HP and MP to
   maximum.
 - Mana Potions restore 20 MP and are sold by the Alchemist.
-- Morwen's witch hut also sells Mana Potions for 20 gold.
+- Morwen's witch hut in Town 2 also sells Mana Potions for 20 gold.
 - Lysa sells Health Potions for 20 gold. The Alchemist sells both potion types.
 
-Speak with Rook in the Tavern to open the labyrinth. Returning his stolen
+Speak with Rook in Town 2's Inn to open the labyrinth. Returning his stolen
 ivory rook rewards 40 gold and 500 score once.
 
 ## Spell Progression
