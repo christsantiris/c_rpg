@@ -3901,38 +3901,157 @@ void draw_floor_item(Renderer *r, int tile_x, int tile_y) {
 void draw_labyrinth_entrance(Renderer *r, int tile_x, int tile_y, int open) {
     int x = (tile_x - 1) * TILE_SIZE;
     int y = (tile_y - 2) * TILE_SIZE;
-    SDL_Color shadow = {22, 27, 24, 255};
-    SDL_Color stone = {82, 88, 74, 255};
-    SDL_Color light_stone = {126, 130, 102, 255};
-    SDL_Color moss = {45, 94, 47, 255};
-    SDL_Color iron = {40, 43, 42, 255};
-    SDL_Color flame = {242, 164, 45, 255};
-    fill_rect(r, x + 4, y + 18, 64, 54, shadow);
-    fill_rect(r, x + 2, y + 24, 14, 48, stone);
-    fill_rect(r, x + 56, y + 24, 14, 48, stone);
-    fill_rect(r, x + 12, y + 12, 48, 14, stone);
-    fill_rect(r, x + 18, y + 6, 36, 8, light_stone);
-    fill_rect(r, x + 8, y + 28, 5, 7, light_stone);
-    fill_rect(r, x + 59, y + 40, 7, 5, light_stone);
-    fill_rect(r, x + 16, y + 14, 16, 4, moss);
-    fill_rect(r, x + 5, y + 35, 5, 18, moss);
-    fill_rect(r, x + 52, y + 10, 8, 6, moss);
-    fill_rect(r, x + 25, y + 1, 22, 7, (SDL_Color){55, 49, 37, 255});
-    fill_rect(r, x + 29, y + 3, 14, 3, (SDL_Color){198, 166, 73, 255});
-    if (open) {
-        fill_rect(r, x + 22, y + 29, 28, 43, (SDL_Color){10, 13, 13, 255});
-        fill_rect(r, x + 18, y + 46, 3, 10, flame);
-        fill_rect(r, x + 51, y + 46, 3, 10, flame);
-        fill_rect(r, x + 27, y + 66, 18, 6, (SDL_Color){47, 52, 47, 255});
-    } else {
-        fill_rect(r, x + 21, y + 28, 30, 44, iron);
-        for (int bar = 0; bar < 5; bar++) {
-            fill_rect(r, x + 24 + bar * 6, y + 28, 2, 44,
-                light_stone);
+    SDL_Color shadow = {25, 29, 25, 255};
+    SDL_Color mortar = {48, 49, 40, 255};
+    SDL_Color stones[3] = {
+        {105, 109, 88, 255}, {123, 124, 100, 255}, {91, 98, 81, 255}
+    };
+    SDL_Color edge = {166, 161, 126, 255};
+    SDL_Color worn = {133, 139, 104, 255};
+    SDL_Color moss = {40, 74, 37, 255};
+    SDL_Color leaf = {69, 109, 45, 255};
+    SDL_Color iron = {50, 58, 53, 255};
+    SDL_Color metal = {116, 126, 105, 255};
+    SDL_Color brass = {168, 125, 57, 255};
+    SDL_Color dark = {10, 17, 16, 255};
+
+    // Weathered masonry, with staggered joints and chipped block faces.
+    fill_rect(r, x + 3, y + 64, 67, 8, shadow);
+    fill_rect(r, x + 7, y + 16, 58, 51, mortar);
+    for (int row = 0; row < 6; row++) {
+        for (int column = 0; column < 5; column++) {
+            int left = 8 + column * 14 - (row % 2) * 7;
+            int right = left + 13;
+            if (left < 8) {
+                left = 8;
+            }
+            if (right > 64) {
+                right = 64;
+            }
+            if (left >= right) {
+                continue;
+            }
+            int top = 18 + row * 8;
+            fill_rect(r, x + left, y + top, right - left, 7,
+                stones[(row + column * 2) % 3]);
+            fill_rect(r, x + left + 1, y + top, right - left - 1, 1, edge);
+            fill_rect(r, x + left, y + top + 1, 1, 4, worn);
+            fill_rect(r, x + right - 1, y + top + 1, 1, 6, mortar);
+            fill_rect(r, x + left + 1, y + top + 6, right - left - 1, 1, stones[2]);
+            fill_rect(r, x + left + 2, y + top + 5, 2, 1, mortar);
         }
-        fill_rect(r, x + 21, y + 42, 30, 3, light_stone);
-        fill_rect(r, x + 21, y + 60, 30, 3, light_stone);
     }
+
+    // Layered coping and an ivory rook crest above the arch.
+    fill_rect(r, x + 10, y + 11, 52, 6, shadow);
+    fill_rect(r, x + 12, y + 9, 48, 5, stones[2]);
+    fill_rect(r, x + 13, y + 9, 46, 1, edge);
+    fill_rect(r, x + 16, y + 6, 40, 3, stones[0]);
+    fill_rect(r, x + 17, y + 6, 38, 1, worn);
+    fill_rect(r, x + 28, y + 1, 16, 18, shadow);
+    fill_rect(r, x + 29, y + 2, 14, 15, brass);
+    fill_rect(r, x + 30, y + 3, 12, 13, mortar);
+    fill_rect(r, x + 33, y + 7, 6, 6, edge);
+    for (int tooth = 0; tooth < 3; tooth++) {
+        fill_rect(r, x + 32 + tooth * 3, y + 5, 2, 4,
+            (SDL_Color){225, 217, 173, 255});
+    }
+    fill_rect(r, x + 32, y + 12, 8, 2, edge);
+    fill_rect(r, x + 31, y + 14, 10, 1, worn);
+
+    // Stepped arch stones surround a deep, inset doorway.
+    const int arch_widths[5] = {7, 11, 15, 18, 20};
+    for (int row = 0; row < 5; row++) {
+        int half = arch_widths[row];
+        int top = 19 + row * 4;
+        fill_rect(r, x + 36 - half, y + top, half * 2, 4, edge);
+        fill_rect(r, x + 37 - half, y + top + 1, half * 2 - 2, 3, stones[1]);
+        fill_rect(r, x + 40 - half, y + top + 3, half * 2 - 8, 4, dark);
+    }
+    fill_rect(r, x + 16, y + 39, 40, 27, stones[1]);
+    fill_rect(r, x + 17, y + 39, 2, 27, edge);
+    fill_rect(r, x + 53, y + 39, 3, 27, stones[2]);
+    fill_rect(r, x + 20, y + 39, 32, 27, dark);
+    for (int joint = 0; joint < 3; joint++) {
+        fill_rect(r, x + 16, y + 44 + joint * 8, 4, 1, mortar);
+        fill_rect(r, x + 52, y + 44 + joint * 8, 4, 1, mortar);
+    }
+    fill_rect(r, x + 34, y + 19, 4, 6, worn);
+    fill_rect(r, x + 35, y + 20, 2, 3, edge);
+
+    if (open) {
+        // Receding side walls and steps make the open passage readable.
+        fill_rect(r, x + 21, y + 40, 3, 24, mortar);
+        fill_rect(r, x + 49, y + 40, 2, 24, shadow);
+        for (int step = 0; step < 4; step++) {
+            int inset = 6 - step * 2;
+            fill_rect(r, x + 24 + inset, y + 52 + step * 4,
+                24 - inset * 2, 3, stones[2]);
+            fill_rect(r, x + 24 + inset, y + 52 + step * 4,
+                24 - inset * 2, 1, worn);
+        }
+    } else {
+        for (int bar = 0; bar < 5; bar++) {
+            int top = bar == 0 || bar == 4 ? 36 : 29;
+            int bx = x + 23 + bar * 6;
+            fill_rect(r, bx, y + top, 3, 66 - top, iron);
+            fill_rect(r, bx, y + top, 1, 65 - top, metal);
+            fill_rect(r, bx + 1, y + 57, 1, 3, brass);
+        }
+        for (int brace = 0; brace < 2; brace++) {
+            int by = y + 43 + brace * 13;
+            fill_rect(r, x + 21, by, 30, 4, iron);
+            fill_rect(r, x + 21, by, 30, 1, metal);
+            for (int rivet = 0; rivet < 5; rivet++) {
+                fill_rect(r, x + 23 + rivet * 6, by + 1, 1, 1, brass);
+            }
+        }
+        fill_rect(r, x + 33, y + 47, 6, 7, brass);
+        fill_rect(r, x + 35, y + 49, 2, 3, shadow);
+    }
+
+    // Buttresses carry iron sconces; ivy grows into their outer joints.
+    for (int side = 0; side < 2; side++) {
+        int px = x + 3 + side * 54;
+        fill_rect(r, px, y + 26, 12, 41, shadow);
+        for (int row = 0; row < 5; row++) {
+            int py = y + 27 + row * 8;
+            fill_rect(r, px + 1, py, 10, 7, stones[(row + side) % 3]);
+            fill_rect(r, px + 1, py, 9, 1, edge);
+            fill_rect(r, px + 1, py + 1, 1, 5, worn);
+            fill_rect(r, px + 10, py + 1, 1, 6, mortar);
+            fill_rect(r, px + 2, py + 6, 8, 1, stones[2]);
+            fill_rect(r, px + 3 + row % 3, py + 2, 2, 1, worn);
+            if ((row + side) % 3 == 0) {
+                fill_rect(r, px + 7, py + 1, 1, 3, mortar);
+                fill_rect(r, px + 6, py + 3, 1, 2, mortar);
+            }
+        }
+        fill_rect(r, px - 1, y + 24, 14, 3, stones[1]);
+        fill_rect(r, px, y + 24, 12, 1, edge);
+        fill_rect(r, px + 4, y + 44, 4, 12, iron);
+        fill_rect(r, px + 3, y + 47, 6, 3, brass);
+        if (open) {
+            fill_rect(r, px + 3, y + 40, 6, 7, (SDL_Color){141, 60, 28, 255});
+            fill_rect(r, px + 4, y + 38, 4, 8, (SDL_Color){236, 140, 43, 255});
+            fill_rect(r, px + 5, y + 41, 2, 5, (SDL_Color){255, 221, 120, 255});
+            fill_rect(r, px + 1, y + 48, 1, 5, brass);
+        }
+        for (int sprig = 0; sprig < 7; sprig++) {
+            int vx = px + (side == 0 ? 1 : 9) + sprig % 3 - 1;
+            int vy = y + 16 + sprig * 6 + side * 2;
+            fill_rect(r, vx, vy, 2, 9, moss);
+            fill_rect(r, vx - 2, vy + 1, 3, 3, leaf);
+            fill_rect(r, vx + 2, vy + 4, 3, 2, moss);
+            fill_rect(r, vx - 1, vy + 1, 1, 1, worn);
+        }
+    }
+    fill_rect(r, x + 14, y + 66, 44, 3, mortar);
+    fill_rect(r, x + 17, y + 66, 38, 1, edge);
+    fill_rect(r, x + 12, y + 69, 48, 3, stones[2]);
+    fill_rect(r, x + 13, y + 69, 46, 1, worn);
+    fill_rect(r, x + 29, y + 69, 1, 3, mortar);
+    fill_rect(r, x + 46, y + 69, 1, 3, mortar);
 }
 
 void draw_labyrinth_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
