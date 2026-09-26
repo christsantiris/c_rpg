@@ -13,8 +13,9 @@
 #define MAX_MESSAGE_LEN 128
 #define MAX_DIALOGUE_LEN 192
 #define MAX_SPEAKER_LEN 24
-#define EMERGENCY_RESTORATION_LIMIT 3
+#define EMERGENCY_RESTORATION_LIMIT 1
 #define GAMBLER_DEBT_LIMIT 200
+#define ROOK_QUEST_REWARD 40
 
 #define DAIN_FRAGMENT_ARCHER 1
 #define DAIN_FRAGMENT_BOMBER 2
@@ -81,7 +82,8 @@ typedef enum {
     LOCATION_COAST,
     LOCATION_TAVERN,
     LOCATION_ISLAND,
-    LOCATION_TEMPLE
+    LOCATION_TEMPLE,
+    LOCATION_LABYRINTH
 } Location;
 
 typedef struct {
@@ -113,6 +115,9 @@ typedef struct {
     int       healer_emergency_uses;
     int       witch_emergency_uses;
     int       gambler_debt;
+    int       rook_quest_state;
+    int       rook_labyrinth_switches;
+    int       rook_quest_completions;
     FloorItem floor_items[MAX_FLOOR_ITEMS];
     int       floor_item_count;
     TrailTile trail[MAX_TRAIL];
@@ -162,6 +167,10 @@ void game_enter_mountains(GameState *g);
 void game_enter_coast(GameState *g);
 void game_enter_tavern(GameState *g);
 void game_leave_tavern(GameState *g);
+void game_enter_labyrinth(GameState *g);
+void game_leave_labyrinth(GameState *g);
+int game_has_labyrinth_interaction(const GameState *g);
+int game_interact_labyrinth(GameState *g);
 void game_enter_island(GameState *g);
 void game_leave_island(GameState *g);
 void game_enter_temple(GameState *g);
