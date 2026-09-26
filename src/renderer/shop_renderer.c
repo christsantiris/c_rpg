@@ -2,154 +2,6 @@
 #include "equipment_compare_renderer.h"
 #include "sprites.h"
 
-static void draw_shop_room(Renderer *r) {
-    int tiles_x = (r->screen_w + TILE_SIZE - 1) / TILE_SIZE;
-    int tiles_y = (r->screen_h + TILE_SIZE - 1) / TILE_SIZE;
-    for (int y = 0; y < tiles_y; y++) {
-        for (int x = 0; x < tiles_x; x++) {
-            draw_floor(r, x, y);
-        }
-    }
-    for (int x = 0; x < tiles_x; x++) {
-        draw_wall(r, x, 0);
-        draw_wall(r, x, tiles_y - 1);
-    }
-    for (int y = 0; y < tiles_y; y++) {
-        draw_wall(r, 0, y);
-        draw_wall(r, tiles_x - 1, y);
-    }
-}
-
-static int healer_option_y(const Renderer *r, int option) {
-    int first = r->screen_h < 440 ? 116 : 300;
-    int spacing = r->screen_h < 440 ? 36 : 40;
-    return first + option * spacing;
-}
-
-SDL_Rect shop_healer_button_rect(const Renderer *r, int option) {
-    int width = r->screen_w < 520 ? r->screen_w - 64 : 440;
-    return (SDL_Rect){(r->screen_w - width) / 2,
-        healer_option_y(r, option) - 7, width, 30};
-}
-
-static void draw_healer_option(Renderer *r, int option, int selected, int available, const char *label) {
-    SDL_Color gold = {220, 180, 60, 255};
-    SDL_Color white = {200, 200, 200, 255};
-    SDL_Color dimmed = {80, 80, 80, 255};
-    SDL_Color red = {200, 60, 60, 255};
-    SDL_Rect row = shop_healer_button_rect(r, option);
-    if (selected) {
-        SDL_SetRenderDrawColor(r->sdl, 36, 58, 48, 255);
-        SDL_RenderFillRect(r->sdl, &row);
-        renderer_draw_text(r, ">", row.x + 12, healer_option_y(r, option),
-            gold, r->font_small);
-    }
-    SDL_Color color = selected ? (available ? gold : red)
-        : (available ? white : dimmed);
-    renderer_draw_text(r, label, row.x + 36, healer_option_y(r, option),
-        color, r->font_small);
-}
-
-static void draw_restoration_visit(Renderer *r, const GameState *g, const ShopScreen *s) {
-    draw_shop_room(r);
-    SDL_Color gold = {220, 180, 60, 255};
-    SDL_Color white = {200, 200, 200, 255};
-    SDL_Color red = {200, 60, 60, 255};
-    SDL_Color green = {80, 160, 80, 255};
-    SDL_Color hint = {110, 130, 115, 255};
-    int cx = r->screen_w / 2;
-    int compact = r->screen_h < 440;
-    int witch = s->type == SHOP_TYPE_WITCH;
-    int title_y = compact ? 18 : 40;
-    int stats_y = compact ? 48 : 80;
-    renderer_draw_text(r, witch ? "WITCH" : "HEALER", cx - 48, title_y,
-        gold, r->font_large);
-    int price = witch ? game_witch_price(g) : game_healer_price(g);
-    int emergency = witch ? game_witch_emergency_available(g)
-        : game_healer_emergency_available(g);
-    int emergency_uses = witch ? g->witch_emergency_uses
-        : g->healer_emergency_uses;
-    int emergency_remaining = EMERGENCY_RESTORATION_LIMIT - emergency_uses;
-    if (emergency_remaining < 0) {
-        emergency_remaining = 0;
-    }
-    int current = witch ? g->player.mp : g->player.hp;
-    int maximum = witch ? g->player.max_mp : g->player.max_hp;
-    int missing = maximum - current;
-    const char *resource = witch ? "MP" : "HP";
-    const char *rate = witch ? "RATE: 1.5 GOLD PER MP, ROUNDED UP."
-        : "RATE: 1 GOLD PER HP.";
-    char text[96];
-    SDL_snprintf(text, sizeof(text), "YOUR GOLD: %d", g->gold);
-    renderer_draw_text(r, text, cx - 205, stats_y, gold, r->font_small);
-    SDL_snprintf(text, sizeof(text), "%s: %d / %d", resource, current,
-        maximum);
-    renderer_draw_text(r, text, cx + 70, stats_y, white, r->font_small);
-
-    if (compact) {
-        renderer_draw_text(r, witch ? "MORWEN CAN RESTORE ALL MISSING MP."
-            : "LYSA CAN RESTORE ALL MISSING HP.", cx - 205, 72, white,
-            r->font_tiny);
-        renderer_draw_text(r, rate, cx - 205, 88, hint, r->font_tiny);
-    } else {
-        if (witch) {
-            draw_witch_portrait(r, cx - 245, 124, 3);
-        } else {
-            draw_healer_portrait(r, cx - 245, 124, 3);
-        }
-        renderer_draw_text(r, witch ? "MORWEN" : "LYSA", cx - 105, 132,
-            gold, r->font_small);
-        renderer_draw_text(r, witch ? "THE OLD MAGIC STILL ANSWERS."
-            : "WELCOME, TRAVELER.", cx - 105, 160,
-            white, r->font_small);
-        SDL_snprintf(text, sizeof(text), "I CAN RESTORE ALL MISSING %s.",
-            resource);
-        renderer_draw_text(r, text, cx - 105, 184, white, r->font_small);
-        renderer_draw_text(r, rate, cx - 105, 218, hint, r->font_tiny);
-        const char *status = emergency ? (witch
-            ? "FREE EMERGENCY RITUAL IS AVAILABLE."
-            : "FREE EMERGENCY CARE IS AVAILABLE.")
-            : price == 0 ? (witch
-                ? "YOUR SPIRIT IS ALREADY FULL."
-                : "YOU ARE ALREADY AT FULL HEALTH.")
-            : (g->gold < price && emergency_remaining == 0 ? (witch
-                ? "NO FREE EMERGENCY RITUALS REMAIN."
-                : "NO FREE EMERGENCY CARE REMAINS.")
-            : (g->gold < price ? (witch
-                ? "YOU CANNOT AFFORD THIS RITUAL."
-                : "YOU CANNOT AFFORD THIS TREATMENT.")
-                : (witch ? "RESTORATION IS AVAILABLE."
-                : "TREATMENT IS AVAILABLE.")));
-        renderer_draw_text(r, status, cx - 105, 244,
-            emergency || price == 0 || g->gold >= price ? green : red,
-            r->font_tiny);
-    }
-
-    char restore_label[96];
-    if (price == 0) {
-        SDL_snprintf(restore_label, sizeof(restore_label),
-            "FULL %s - NO RESTORATION NEEDED", witch ? "MANA" : "HEALTH");
-    } else {
-        SDL_snprintf(restore_label, sizeof(restore_label),
-            "RESTORE %d %s    %d GOLD", missing, resource, price);
-    }
-    draw_healer_option(r, 0, s->selected == 0,
-        price == 0 || g->gold >= price, restore_label);
-    char emergency_label[96];
-    SDL_snprintf(emergency_label, sizeof(emergency_label), witch
-        ? "EMERGENCY RITUAL TO 50%% MP    FREE (%d LEFT)"
-        : "EMERGENCY CARE TO 50%% HP    FREE (%d LEFT)",
-        emergency_remaining);
-    if (emergency) {
-        draw_healer_option(r, 1, s->selected == 1, 1, emergency_label);
-    }
-    int leave_option = emergency ? 2 : 1;
-    draw_healer_option(r, leave_option, s->selected == leave_option, 1,
-        "RETURN TO TOWN");
-    renderer_draw_text(r, "UP/DOWN OR W/S SELECT   ENTER CONFIRM   ESC CLOSE",
-        cx - 220, r->screen_h - 48, hint, r->font_tiny);
-}
-
 static int shop_visible_rows(const Renderer *r) {
     int list_top = 140;
     int detail_top = (r->tiles_y - 9) * TILE_SIZE;
@@ -201,10 +53,6 @@ static void draw_shop_scrollbar(Renderer *r, int x, int y, int height, int start
 }
 
 void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
-    if (s->type == SHOP_TYPE_HEALER || s->type == SHOP_TYPE_WITCH) {
-        draw_restoration_visit(r, g, s);
-        return;
-    }
     int full_tiles_x = r->screen_w / TILE_SIZE;
 
     for (int y = 0; y < r->tiles_y; y++) {
@@ -231,21 +79,24 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
 
     int cx = r->screen_w / 2;
 
-    const char *title = s->type == SHOP_TYPE_ALCHEMIST
-        ? "ALCHEMIST" : "BLACKSMITH";
+    const char *title = s->type == SHOP_TYPE_ALCHEMIST ? "ALCHEMIST"
+        : s->type == SHOP_TYPE_BLACKSMITH ? "BLACKSMITH"
+        : s->type == SHOP_TYPE_HEALER ? "HEALER" : "WITCH";
     renderer_draw_text(r, title, cx - 60, 40, gold, r->font_large);
 
     char gold_str[32];
     SDL_snprintf(gold_str, sizeof(gold_str), "YOUR GOLD: %d", g->gold);
     renderer_draw_text(r, gold_str, cx - 60, 80, gold, r->font_small);
 
-    char tier[32];
-    SDL_snprintf(tier, sizeof(tier), "STOCK TIER %d/4", s->stock_tier);
-    renderer_draw_text(r, tier, cx + 100, 80, gold, r->font_tiny);
-    const char *unlock = s->stock_tier < 4
-        ? "NEXT TIER: DEFEAT AN AREA BOSS"
-        : "ALL STOCK TIERS UNLOCKED";
-    renderer_draw_text(r, unlock, cx + 100, 96, dimmed, r->font_tiny);
+    if (s->type == SHOP_TYPE_ALCHEMIST || s->type == SHOP_TYPE_BLACKSMITH) {
+        char tier[32];
+        SDL_snprintf(tier, sizeof(tier), "STOCK TIER %d/4", s->stock_tier);
+        renderer_draw_text(r, tier, cx + 100, 80, gold, r->font_tiny);
+        const char *unlock = s->stock_tier < 4
+            ? "NEXT TIER: DEFEAT AN AREA BOSS"
+            : "ALL STOCK TIERS UNLOCKED";
+        renderer_draw_text(r, unlock, cx + 100, 96, dimmed, r->font_tiny);
+    }
 
     // Tab headers
     SDL_Color buy_color  = s->mode == 0 ? gold : dimmed;

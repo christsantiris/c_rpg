@@ -25,8 +25,6 @@
 #include "renderer/shop_renderer.h"
 #include "screens/harbor.h"
 #include "renderer/harbor_renderer.h"
-#include "screens/gambler.h"
-#include "renderer/gambler_renderer.h"
 #include "renderer/game_renderer.h"
 #include "renderer/sprites.h"
 #include "renderer/info_panel.h"
@@ -290,18 +288,6 @@ static void handle_harbor_result(HarborResult result, GameState *game, GameScree
     }
 }
 
-static void handle_gambler_result(GamblerResult result, int wager, GameState *game, GameScreen *screen) {
-    if (result == GAMBLER_CLOSED) {
-        *screen = SCREEN_PLAYING;
-    } else if (result == GAMBLER_BET) {
-        game_gamble(game, wager);
-    } else if (result == GAMBLER_LOAN) {
-        game_take_gambler_loan(game);
-    } else if (result == GAMBLER_REPAY) {
-        game_repay_gambler(game);
-    }
-}
-
 static void handle_landing_result(LandingResult result, LandingScreen *landing,
     GameScreen *screen, GameState *game, Renderer *renderer, Viewport *viewport,
     NameEntry *name_entry, SlotSelect *slot_select, int *slot_is_save, int *running) {
@@ -466,8 +452,6 @@ int main(int argc, char **argv) {
     ShopScreen shop_screen;
     HarborScreen harbor_screen;
     harbor_init(&harbor_screen);
-    GamblerScreen gambler_screen;
-    gambler_init(&gambler_screen);
     HighScoreTable highscore_table;
     highscore_load(&highscore_table);
 
@@ -676,25 +660,12 @@ int main(int argc, char **argv) {
 
                     // Shop screen
                     if (screen == SCREEN_SHOP) {
-                        int emergency_visible = shop_screen.type == SHOP_TYPE_WITCH
-                            ? game_witch_emergency_available(&game)
-                            : (shop_screen.type == SHOP_TYPE_HEALER
-                                ? game_healer_emergency_available(&game) : 0);
-                        ShopResult result = shop_handle_key(&shop_screen, sc,
-                            emergency_visible);
+                        ShopResult result = shop_handle_key(&shop_screen, sc);
                         if (shop_screen.mode == 1 && shop_screen.selected >= game.inventory_count) {
                             shop_screen.selected = game.inventory_count > 0 ? game.inventory_count - 1 : 0;
                         }
                         if (result == SHOP_CLOSED) {
                             screen = SCREEN_PLAYING;
-                        } else if (result == SHOP_HEAL) {
-                            game_visit_healer(&game);
-                        } else if (result == SHOP_EMERGENCY_HEAL) {
-                            game_visit_healer_emergency(&game);
-                        } else if (result == SHOP_RESTORE_MANA) {
-                            game_visit_witch(&game);
-                        } else if (result == SHOP_EMERGENCY_MANA) {
-                            game_visit_witch_emergency(&game);
                         } else if (result == SHOP_BUY) {
                             Item *item = &shop_screen.items[shop_screen.selected];
                             int price = shop_buy_price(item);
@@ -737,14 +708,6 @@ int main(int argc, char **argv) {
                                 shop_screen.selected = 0;
                             push_message(&game, msg);
                         }
-                        break;
-                    }
-
-                    if (screen == SCREEN_GAMBLER) {
-                        int wager = 0;
-                        GamblerResult result = gambler_handle_key(
-                            &gambler_screen, sc, &game, &wager);
-                        handle_gambler_result(result, wager, &game, &screen);
                         break;
                     }
 
@@ -867,10 +830,8 @@ int main(int argc, char **argv) {
                                             game_talk_to_mara(&game);
                                             found = 1;
                                         } else if (game.map.tiles[ty][tx] ==
-                                            TILE_NPC_GAMBLER) {
-                                            game_talk_to_gambler(&game);
-                                            gambler_init(&gambler_screen);
-                                            screen = SCREEN_GAMBLER;
+                                            TILE_NPC_ROOK) {
+                                            game_talk_to_rook(&game);
                                             found = 1;
                                         } else if (game.map.tiles[ty][tx] ==
                                             TILE_NPC_CAIN) {
@@ -1099,60 +1060,8 @@ int main(int argc, char **argv) {
                             }
                         }
                     }
-                    // Gambler screen clicks
-                    if (screen == SCREEN_GAMBLER &&
-                        event.button.button == SDL_BUTTON_LEFT) {
-                        SDL_Point point = {event.button.x, event.button.y};
-                        GamblerOption options[MAX_GAMBLER_OPTIONS];
-                        int count = gambler_build_options(&game, options);
-                        for (int i = 0; i < count; i++) {
-                            SDL_Rect row = gambler_button_rect(&renderer, i);
-                            if (SDL_PointInRect(&point, &row)) {
-                                gambler_screen.selected = i;
-                                int wager = 0;
-                                GamblerResult result = gambler_activate(
-                                    &gambler_screen, &game, &wager);
-                                handle_gambler_result(result, wager, &game,
-                                    &screen);
-                                break;
-                            }
-                        }
-                        break;
-                    }
-
                     // Shop screen clicks
                     if (screen == SCREEN_SHOP && event.button.button == SDL_BUTTON_LEFT) {
-                        if (shop_screen.type == SHOP_TYPE_HEALER ||
-                            shop_screen.type == SHOP_TYPE_WITCH) {
-                            SDL_Point point = {event.button.x, event.button.y};
-                            SDL_Rect heal = shop_healer_button_rect(&renderer, 0);
-                            SDL_Rect emergency = shop_healer_button_rect(&renderer, 1);
-                            int emergency_visible = shop_screen.type == SHOP_TYPE_WITCH
-                                ? game_witch_emergency_available(&game)
-                                : game_healer_emergency_available(&game);
-                            int leave_option = emergency_visible ? 2 : 1;
-                            SDL_Rect leave = shop_healer_button_rect(&renderer, leave_option);
-                            if (SDL_PointInRect(&point, &heal)) {
-                                shop_screen.selected = 0;
-                                if (shop_screen.type == SHOP_TYPE_WITCH) {
-                                    game_visit_witch(&game);
-                                } else {
-                                    game_visit_healer(&game);
-                                }
-                            } else if (emergency_visible &&
-                                SDL_PointInRect(&point, &emergency)) {
-                                shop_screen.selected = 1;
-                                if (shop_screen.type == SHOP_TYPE_WITCH) {
-                                    game_visit_witch_emergency(&game);
-                                } else {
-                                    game_visit_healer_emergency(&game);
-                                }
-                            } else if (SDL_PointInRect(&point, &leave)) {
-                                shop_screen.selected = leave_option;
-                                screen = SCREEN_PLAYING;
-                            }
-                            break;
-                        }
                         int cx = renderer.screen_w / 2;
                         // Tab switching
                         if (event.button.y >= 108 && event.button.y <= 132) {
@@ -1346,8 +1255,6 @@ int main(int argc, char **argv) {
             shop_draw(&renderer, &game, &shop_screen);
         } else if (screen == SCREEN_HARBOR) {
             harbor_draw(&renderer, &game, &harbor_screen);
-        } else if (screen == SCREEN_GAMBLER) {
-            gambler_draw(&renderer, &game, &gambler_screen);
         } else if (screen == SCREEN_PLAYING) {
             GameState *view = player_projectile_animating &&
                 SDL_GetTicks() - game.trail_started_at < SPELL_TRAVEL_MS

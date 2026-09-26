@@ -37,7 +37,7 @@ void test_quest_journal(void) {
     ASSERT("Rook's labyrinth retrieval appears as an active quest",
         quest_journal_count(&g, QUEST_TAB_ACTIVE) == 3 &&
         quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 2, &entry) &&
-        strcmp(entry.title, "Rook's Marker") == 0 &&
+        strcmp(entry.title, "The Ivory Rook") == 0 &&
         entry.objective_count == 1 && entry.reward_gold == ROOK_QUEST_REWARD);
     g.rook_quest_state = 2;
     ASSERT("recovering the ivory rook marks its objective ready to return",

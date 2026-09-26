@@ -862,9 +862,6 @@ void game_init(GameState *g) {
     g->equipped_off_hand = -1;
     g->equipped_armor = -1;
     g->gold = 0;
-    g->healer_emergency_uses = 0;
-    g->witch_emergency_uses = 0;
-    g->gambler_debt = 0;
     g->rook_quest_state = 0;
     g->rook_labyrinth_switches = 0;
     g->rook_quest_completions = 0;
@@ -1635,177 +1632,11 @@ int game_harbor_unlocked(const GameState *g) {
         g->alder_quest_state == 3 && g->mara_quest_state == 3;
 }
 
-int game_healer_price(const GameState *g) {
-    int missing = g->player.max_hp - g->player.hp;
-    return missing > 0 ? missing : 0;
-}
-
-int game_healer_emergency_available(const GameState *g) {
-    return g->player.hp > 0 &&
-        g->healer_emergency_uses < EMERGENCY_RESTORATION_LIMIT &&
-        g->player.hp * 4 < g->player.max_hp &&
-        g->gold < game_healer_price(g);
-}
-
-void game_visit_healer(GameState *g) {
-    if (g->location != LOCATION_TOWN || g->player.hp <= 0) {
-        return;
-    }
-    int price = game_healer_price(g);
-    if (price == 0) {
-        push_message(g, "Lysa: You are already in good health.");
-        return;
-    }
-    if (g->gold < price) {
-        push_message(g, "Lysa: You do not have enough gold for treatment.");
-        return;
-    }
-    g->gold -= price;
-    g->player.hp = g->player.max_hp;
-    char message[MAX_MESSAGE_LEN];
-    snprintf(message, sizeof(message), "Lysa restores your HP to full for %d gold.", price);
-    push_message(g, message);
-}
-
-void game_visit_healer_emergency(GameState *g) {
-    if (g->location != LOCATION_TOWN || g->player.hp <= 0) {
-        return;
-    }
-    if (!game_healer_emergency_available(g)) {
-        push_message(g, "Lysa: Emergency care is reserved for critical need.");
-        return;
-    }
-    g->player.hp = (g->player.max_hp + 1) / 2;
-    g->healer_emergency_uses++;
-    push_message(g, "Lysa provides emergency care, restoring you to half health.");
-}
-
-int game_witch_price(const GameState *g) {
-    int missing = g->player.max_mp - g->player.mp;
-    return missing > 0 ? (missing * 3 + 1) / 2 : 0;
-}
-
-int game_witch_emergency_available(const GameState *g) {
-    return g->player.hp > 0 &&
-        g->witch_emergency_uses < EMERGENCY_RESTORATION_LIMIT &&
-        g->player.mp * 4 < g->player.max_mp &&
-        g->gold < game_witch_price(g);
-}
-
-void game_visit_witch(GameState *g) {
-    if (g->location != LOCATION_TOWN || g->player.hp <= 0) {
-        return;
-    }
-    int price = game_witch_price(g);
-    if (price == 0) {
-        push_message(g, "Morwen: Your spirit is already full.");
-        return;
-    }
-    if (g->gold < price) {
-        push_message(g, "Morwen: You lack the gold for this ritual.");
-        return;
-    }
-    g->gold -= price;
-    g->player.mp = g->player.max_mp;
-    char message[MAX_MESSAGE_LEN];
-    snprintf(message, sizeof(message),
-        "Morwen restores your MP to full for %d gold.", price);
-    push_message(g, message);
-}
-
-void game_visit_witch_emergency(GameState *g) {
-    if (g->location != LOCATION_TOWN || g->player.hp <= 0) {
-        return;
-    }
-    if (!game_witch_emergency_available(g)) {
-        push_message(g, "Morwen: Emergency aid is reserved for a drained spirit.");
-        return;
-    }
-    g->player.mp = (g->player.max_mp + 1) / 2;
-    g->witch_emergency_uses++;
-    push_message(g, "Morwen restores your spirit to half mana without charge.");
-}
-
-int game_gamble(GameState *g, int wager) {
-    if (g->location != LOCATION_TAVERN || g->player.hp <= 0 ||
-        g->gambler_debt >= GAMBLER_DEBT_LIMIT) {
-        push_message(g, "Rook refuses to take the wager.");
-        return -1;
-    }
-    if (wager <= 0 || wager > g->gold) {
-        push_message(g, "You cannot cover that wager.");
-        return -1;
-    }
-    g->gold -= wager;
-
-    if (rand() % 2 == 0) {
-        g->gold += wager * 2;
-        char message[MAX_MESSAGE_LEN];
-        snprintf(message, sizeof(message),
-            "Rook pays you %d gold!", wager * 2);
-        push_message(g, message);
-        return 1;
-    }
-
-    char message[MAX_MESSAGE_LEN];
-    snprintf(message, sizeof(message), "Rook wins the %d gold wager.", wager);
-    push_message(g, message);
-    return 0;
-}
-
-int game_gambler_recovery_cost(const GameState *g) {
-    return game_healer_price(g) + game_witch_price(g);
-}
-
-int game_gambler_loan_amount(const GameState *g) {
-    int shortfall = game_gambler_recovery_cost(g) - g->gold;
-    int available_credit = GAMBLER_DEBT_LIMIT - g->gambler_debt;
-    if (shortfall <= 0 || shortfall > available_credit) {
-        return 0;
-    }
-    return shortfall;
-}
-
 static void assign_rook_quest(GameState *g) {
     g->rook_quest_state = 1;
     g->rook_labyrinth_switches = 0;
-    push_message(g, "Rook: Recover my ivory rook and your debt is cleared.");
+    push_message(g, "Rook: Recover my stolen ivory rook from the labyrinth.");
     push_message(g, "The labyrinth across from the witch's hut is now open.");
-}
-
-void game_take_gambler_loan(GameState *g) {
-    if (g->location != LOCATION_TAVERN || g->player.hp <= 0) {
-        return;
-    }
-    int amount = game_gambler_loan_amount(g);
-    if (amount <= 0) {
-        push_message(g, "Rook cannot extend any more recovery credit.");
-        return;
-    }
-    g->gold += amount;
-    g->gambler_debt += amount;
-    char message[MAX_MESSAGE_LEN];
-    snprintf(message, sizeof(message),
-        "Rook lends you %d gold. Visit Lysa or Morwen for treatment.", amount);
-    push_message(g, message);
-    if (g->gambler_debt >= GAMBLER_DEBT_LIMIT &&
-        (g->rook_quest_state == 0 || g->rook_quest_state == 3)) {
-        assign_rook_quest(g);
-    }
-}
-
-void game_repay_gambler(GameState *g) {
-    if (g->location != LOCATION_TAVERN || g->gambler_debt <= 0 ||
-        g->gold <= 0) {
-        push_message(g, "You have no gold to put toward Rook's marker.");
-        return;
-    }
-    int payment = g->gold < g->gambler_debt ? g->gold : g->gambler_debt;
-    g->gold -= payment;
-    g->gambler_debt -= payment;
-    char message[MAX_MESSAGE_LEN];
-    snprintf(message, sizeof(message), "You repay %d gold of your debt to Rook.", payment);
-    push_message(g, message);
 }
 
 static void place_harbor_road(GameState *g) {
@@ -2829,23 +2660,19 @@ void game_talk_to_mara(GameState *g) {
     push_message(g, "Mara's quest is already complete.");
 }
 
-void game_talk_to_gambler(GameState *g) {
-    if (g->rook_quest_state == 2) {
-        g->gambler_debt = 0;
+void game_talk_to_rook(GameState *g) {
+    if (g->rook_quest_state == 0) {
+        assign_rook_quest(g);
+    } else if (g->rook_quest_state == 1) {
+        push_message(g, "Rook: The ivory rook is somewhere beyond the three runes.");
+    } else if (g->rook_quest_state == 2) {
         g->gold += ROOK_QUEST_REWARD;
         g->score += 500;
         g->rook_quest_state = 3;
         g->rook_quest_completions++;
-        push_message(g, "Rook clears your debt and pays 40 gold for the ivory rook.");
-    } else if (g->gambler_debt >= GAMBLER_DEBT_LIMIT &&
-        (g->rook_quest_state == 0 || g->rook_quest_state == 3)) {
-        assign_rook_quest(g);
-    } else if (g->rook_quest_state == 1) {
-        push_message(g, "Rook: The ivory rook is somewhere beyond the three runes.");
-    } else if (game_gambler_loan_amount(g) > 0) {
-        push_message(g, "Rook: I can lend you gold to pay Lysa and Morwen.");
+        push_message(g, "Rook rewards you 40 gold for the ivory rook.");
     } else {
-        push_message(g, "Rook: High card wins. Care to test your luck?");
+        push_message(g, "Rook: Thank you for recovering my ivory rook.");
     }
 }
 
