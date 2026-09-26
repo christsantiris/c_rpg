@@ -1,4 +1,4 @@
-# Tavern Quests
+# Tavern and Inn Quests
 
 The Tavern is a walkable town hub for regional quests. Walk into its front
 door, approach an NPC inside, and press `T` to speak with them. Leave through
@@ -7,6 +7,8 @@ the south doorway to return to the same town street.
 NPC speech appears in a wrapped dialogue bubble beside the speaker. The bottom
 message bar is reserved for concise game events such as quest assignment,
 progress, and completion. Moving dismisses the current dialogue bubble.
+Rook waits in Town 2's Inn, which uses the same doorway and conversation
+controls as the Tavern.
 
 ## Elowen: The Broken Seals
 
@@ -98,15 +100,10 @@ Boss victories are permanent. Defeated bosses do not appear in later
 expeditions. In a replayed dungeon finale, the return passage remains available
 without requiring the absent Lich King to be defeated again.
 
-## Rook: Rook's Marker
+## Rook: The Ivory Rook
 
-Rook offers gambling, partial debt repayment, and guaranteed financing for a
-full HP and MP recovery. Debt cannot exceed 200 gold. When it reaches that
-limit, Rook assigns a repeatable retrieval quest and opens the overgrown stone
-labyrinth entrance on the eastern outskirts, across the road from the witch's hut.
-
-The labyrinth contains no enemies or traps, so a weakened character can always
-complete it. Explore its passages, activate three runes to open the relic
-vault, recover Rook's stolen ivory rook, and leave through the entrance. Return
-to Rook to erase the entire debt and receive 40 gold and 500 score. A later
-debt at the limit starts a fresh labyrinth run.
+Speak with Rook in Town 2's Inn to receive his one-time retrieval quest. This opens the
+labyrinth entrance on the eastern outskirts, across the road from the witch's
+hut. The current labyrinth has no enemies or traps. Explore its passages,
+activate three runes to open the relic vault, recover his stolen ivory rook,
+and return to Rook for 40 gold and 500 score.

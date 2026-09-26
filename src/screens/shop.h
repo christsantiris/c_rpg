@@ -9,11 +9,7 @@ typedef enum {
     SHOP_NONE = 0,
     SHOP_CLOSED,
     SHOP_BUY,
-    SHOP_SELL,
-    SHOP_HEAL,
-    SHOP_EMERGENCY_HEAL,
-    SHOP_RESTORE_MANA,
-    SHOP_EMERGENCY_MANA
+    SHOP_SELL
 } ShopResult;
 
 typedef enum {
@@ -33,7 +29,7 @@ typedef struct {
 } ShopScreen;
 
 void shop_init(ShopScreen *s, ShopType type, int defeated_bosses);
-ShopResult shop_handle_key(ShopScreen *s, int scancode, int emergency_visible);
+ShopResult shop_handle_key(ShopScreen *s, int scancode);
 int shop_buy_price(const Item *item);
 int shop_sell_price(const Item *item);
 int shop_accepts_item(ShopType type, const Item *item);

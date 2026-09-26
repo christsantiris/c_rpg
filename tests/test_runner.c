@@ -18,7 +18,6 @@ void test_new_dungeon_enemies(void);
 void test_return_to_town_spell(void);
 void test_town_tiles(void);
 void test_town_healer(void);
-void test_tavern_gambler(void);
 void test_rook_labyrinth(void);
 void test_town_map(void);
 void test_town_spawn(void);
@@ -74,7 +73,6 @@ int main(void) {
     printf("\n");
     test_town_tiles();
     test_town_healer();
-    test_tavern_gambler();
     test_rook_labyrinth();
     printf("\n");
     test_town_map();

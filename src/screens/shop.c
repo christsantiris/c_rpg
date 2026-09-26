@@ -18,6 +18,12 @@ int shop_accepts_item(ShopType type, const Item *item) {
         return item->type == ITEM_POTION_HEALTH || item->type == ITEM_POTION_MANA ||
             item->type == ITEM_SCROLL || item->type == ITEM_SPELL_TOME;
     }
+    if (type == SHOP_TYPE_HEALER) {
+        return item->type == ITEM_POTION_HEALTH;
+    }
+    if (type == SHOP_TYPE_WITCH) {
+        return item->type == ITEM_POTION_MANA;
+    }
     return 0;
 }
 
@@ -36,6 +42,12 @@ void shop_init(ShopScreen *s, ShopType type, int defeated_bosses) {
     s->item_count = 0;
     s->mode = 0;
     s->stock_tier = 0;
+
+    if (type == SHOP_TYPE_HEALER) {
+        s->items[s->item_count++] = item_make_health_potion();
+    } else if (type == SHOP_TYPE_WITCH) {
+        s->items[s->item_count++] = item_make_mana_potion();
+    }
 
     if (type == SHOP_TYPE_ALCHEMIST) {
         int boss_count = defeated_boss_count(defeated_bosses);
@@ -106,45 +118,7 @@ void shop_init(ShopScreen *s, ShopType type, int defeated_bosses) {
     }
 }
 
-ShopResult shop_handle_key(ShopScreen *s, int scancode, int emergency_visible) {
-    if (s->type == SHOP_TYPE_HEALER || s->type == SHOP_TYPE_WITCH) {
-        int last_option = emergency_visible ? 2 : 1;
-        if (s->selected > last_option) {
-            s->selected = last_option;
-        }
-        switch (scancode) {
-            case SDL_SCANCODE_UP:
-            case SDL_SCANCODE_W:
-                s->selected--;
-                if (s->selected < 0) {
-                    s->selected = 0;
-                }
-                break;
-            case SDL_SCANCODE_DOWN:
-            case SDL_SCANCODE_S:
-                s->selected++;
-                if (s->selected > last_option) {
-                    s->selected = last_option;
-                }
-                break;
-            case SDL_SCANCODE_RETURN:
-            case SDL_SCANCODE_KP_ENTER:
-                if (s->selected == last_option) {
-                    return SHOP_CLOSED;
-                }
-                if (emergency_visible && s->selected == 1) {
-                    return s->type == SHOP_TYPE_WITCH
-                        ? SHOP_EMERGENCY_MANA : SHOP_EMERGENCY_HEAL;
-                }
-                return s->type == SHOP_TYPE_WITCH
-                    ? SHOP_RESTORE_MANA : SHOP_HEAL;
-            case SDL_SCANCODE_ESCAPE:
-                return SHOP_CLOSED;
-            default:
-                break;
-        }
-        return SHOP_NONE;
-    }
+ShopResult shop_handle_key(ShopScreen *s, int scancode) {
     switch (scancode) {
         case SDL_SCANCODE_UP:
             s->selected--;
@@ -165,6 +139,7 @@ ShopResult shop_handle_key(ShopScreen *s, int scancode, int emergency_visible) {
             s->selected = 0;
             break;
         case SDL_SCANCODE_RETURN:
+        case SDL_SCANCODE_KP_ENTER:
             if (s->mode == 0) {
                 return SHOP_BUY;
             } else {
