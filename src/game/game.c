@@ -1782,16 +1782,11 @@ void game_take_gambler_loan(GameState *g) {
         push_message(g, "Rook cannot extend any more recovery credit.");
         return;
     }
-    int cost = game_gambler_recovery_cost(g);
-    int payment = g->gold < cost ? g->gold : cost;
-    g->gold -= payment;
+    g->gold += amount;
     g->gambler_debt += amount;
-    g->player.hp = g->player.max_hp;
-    g->player.mp = g->player.max_mp;
     char message[MAX_MESSAGE_LEN];
     snprintf(message, sizeof(message),
-        "Rook funds your recovery: %d gold paid, %d added to debt.",
-        payment, amount);
+        "Rook lends you %d gold. Visit Lysa or Morwen for treatment.", amount);
     push_message(g, message);
     if (g->gambler_debt >= GAMBLER_DEBT_LIMIT &&
         (g->rook_quest_state == 0 || g->rook_quest_state == 3)) {
@@ -2848,7 +2843,7 @@ void game_talk_to_gambler(GameState *g) {
     } else if (g->rook_quest_state == 1) {
         push_message(g, "Rook: The ivory rook is somewhere beyond the three runes.");
     } else if (game_gambler_loan_amount(g) > 0) {
-        push_message(g, "Rook: I can cover what you need to recover.");
+        push_message(g, "Rook: I can lend you gold to pay Lysa and Morwen.");
     } else {
         push_message(g, "Rook: High card wins. Care to test your luck?");
     }
