@@ -10,15 +10,15 @@ rather than sustained melee combat.
 - Gaining a level increases maximum HP by 10 and restores both HP and MP to
   maximum.
 - Mana Potions restore 20 MP and are sold by the Alchemist.
-- Morwen's witch hut restores all missing MP for 1 gold per 3 missing MP,
+- Morwen's witch hut restores all missing MP for 1.5 gold per missing MP,
   rounded up.
 - If MP is below 25% and the player cannot afford full restoration, Morwen
   offers a free emergency ritual that restores MP to 50%.
 - The emergency ritual is hidden when full restoration is affordable and may
   be used once during a game.
 
-The healer restores HP only. Its paid and emergency services follow the same
-pricing and eligibility, with its own one-use emergency allowance.
+The healer restores HP only, at 1 gold per missing HP. Emergency care follows
+the same eligibility rules, with its own one-use allowance.
 
 If both emergency services have already been used, Rook can finance full HP
 and MP recovery in the Tavern. Reaching his 200-gold debt limit opens a safe,

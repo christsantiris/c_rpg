@@ -77,6 +77,8 @@ static void draw_restoration_visit(Renderer *r, const GameState *g, const ShopSc
     int maximum = witch ? g->player.max_mp : g->player.max_hp;
     int missing = maximum - current;
     const char *resource = witch ? "MP" : "HP";
+    const char *rate = witch ? "RATE: 1.5 GOLD PER MP, ROUNDED UP."
+        : "RATE: 1 GOLD PER HP.";
     char text[96];
     SDL_snprintf(text, sizeof(text), "YOUR GOLD: %d", g->gold);
     renderer_draw_text(r, text, cx - 205, stats_y, gold, r->font_small);
@@ -88,9 +90,7 @@ static void draw_restoration_visit(Renderer *r, const GameState *g, const ShopSc
         renderer_draw_text(r, witch ? "MORWEN CAN RESTORE ALL MISSING MP."
             : "LYSA CAN RESTORE ALL MISSING HP.", cx - 205, 72, white,
             r->font_tiny);
-        SDL_snprintf(text, sizeof(text),
-            "RATE: 1 GOLD PER 3 %s, ROUNDED UP.", resource);
-        renderer_draw_text(r, text, cx - 205, 88, hint, r->font_tiny);
+        renderer_draw_text(r, rate, cx - 205, 88, hint, r->font_tiny);
     } else {
         if (witch) {
             draw_witch_portrait(r, cx - 245, 124, 3);
@@ -105,9 +105,7 @@ static void draw_restoration_visit(Renderer *r, const GameState *g, const ShopSc
         SDL_snprintf(text, sizeof(text), "I CAN RESTORE ALL MISSING %s.",
             resource);
         renderer_draw_text(r, text, cx - 105, 184, white, r->font_small);
-        SDL_snprintf(text, sizeof(text),
-            "RATE: 1 GOLD PER 3 %s, ROUNDED UP.", resource);
-        renderer_draw_text(r, text, cx - 105, 218, hint, r->font_tiny);
+        renderer_draw_text(r, rate, cx - 105, 218, hint, r->font_tiny);
         const char *status = emergency ? (witch
             ? "FREE EMERGENCY RITUAL IS AVAILABLE."
             : "FREE EMERGENCY CARE IS AVAILABLE.")

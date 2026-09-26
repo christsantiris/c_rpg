@@ -63,11 +63,14 @@ void test_town_healer(void) {
         shop.selected == 1 &&
         shop_handle_key(&shop, SDL_SCANCODE_RETURN, 0) == SHOP_CLOSED);
     g.player.hp = g.player.max_hp - 30;
-    g.gold = 9;
-    ASSERT("healing thirty HP costs ten gold", game_healer_price(&g) == 10);
+    g.gold = 29;
+    Item health_potion = item_make_health_potion();
+    ASSERT("thirty HP costs thirty gold at the healer or twenty from a potion",
+        game_healer_price(&g) == 30 && health_potion.heal_hp == 30 &&
+        shop_buy_price(&health_potion) == 20);
     game_visit_healer(&g);
     ASSERT("insufficient funds leave both gold and HP unchanged",
-        g.gold == 9 && g.player.hp == g.player.max_hp - 30);
+        g.gold == 29 && g.player.hp == g.player.max_hp - 30);
     g.player.hp = g.player.max_hp / 4 - 1;
     g.gold = game_healer_price(&g);
     ASSERT("affordable full care suppresses the emergency option",
@@ -97,7 +100,7 @@ void test_town_healer(void) {
         g.player.hp == exhausted_hp &&
         !game_healer_emergency_available(&g));
     g.player.hp = g.player.max_hp - 30;
-    g.gold = 10;
+    g.gold = 30;
     int mp = g.player.mp;
     int items = g.inventory_count;
     game_visit_healer(&g);
@@ -109,12 +112,12 @@ void test_town_healer(void) {
     ASSERT("full health and repeat purchases are free",
         game_healer_price(&g) == 0 && g.gold == 100 && g.player.hp == g.player.max_hp);
     g.player.hp -= 31;
-    ASSERT("larger wounds cost more with rounded-up pricing", game_healer_price(&g) == 11);
+    ASSERT("each missing HP costs one gold", game_healer_price(&g) == 31);
     game_visit_healer(&g);
     g.player.hp--;
     ASSERT("even a one-HP wound costs one gold", game_healer_price(&g) == 1);
     game_visit_healer(&g);
-    ASSERT("separate treatments charge their current cost", g.gold == 88);
+    ASSERT("separate treatments charge their current cost", g.gold == 68);
 
     ASSERT("witch stands between the alchemist and mountain entrance",
         TOWN_ALCHEMIST_X + 5 < TOWN_WITCH_X &&
@@ -142,12 +145,18 @@ void test_town_healer(void) {
     ASSERT("witch hides unavailable emergency mana",
         shop.selected == 1 &&
         shop_handle_key(&shop, SDL_SCANCODE_RETURN, 0) == SHOP_CLOSED);
+    g.player.max_mp = 40;
+    g.player.mp = g.player.max_mp - 20;
+    Item mana_potion = item_make_mana_potion();
+    ASSERT("twenty MP costs thirty gold at the witch or twenty from a potion",
+        game_witch_price(&g) == 30 && mana_potion.heal_mp == 20 &&
+        shop_buy_price(&mana_potion) == 20);
     g.player.mp = g.player.max_mp - 30;
-    g.gold = 9;
-    ASSERT("restoring thirty MP costs ten gold", game_witch_price(&g) == 10);
+    g.gold = 44;
+    ASSERT("restoring thirty MP costs forty-five gold", game_witch_price(&g) == 45);
     game_visit_witch(&g);
     ASSERT("witch refuses restoration the player cannot afford",
-        g.gold == 9 && g.player.mp == g.player.max_mp - 30);
+        g.gold == 44 && g.player.mp == g.player.max_mp - 30);
     g.player.mp = g.player.max_mp / 4 - 1;
     g.gold = game_witch_price(&g);
     ASSERT("affordable full ritual suppresses emergency mana",
@@ -177,11 +186,23 @@ void test_town_healer(void) {
         g.player.mp == exhausted_mp &&
         !game_witch_emergency_available(&g));
     g.player.mp = g.player.max_mp - 30;
-    g.gold = 10;
+    g.gold = 45;
     int hp = g.player.hp;
     game_visit_witch(&g);
     ASSERT("witch restores MP without changing HP",
         g.gold == 0 && g.player.mp == g.player.max_mp && g.player.hp == hp);
+    game_visit_witch(&g);
+    ASSERT("full mana and repeat purchases are free",
+        game_witch_price(&g) == 0 && g.gold == 0);
+    g.gold = 49;
+    g.player.mp -= 31;
+    ASSERT("odd mana restoration costs round up", game_witch_price(&g) == 47);
+    game_visit_witch(&g);
+    g.player.mp--;
+    ASSERT("a one-MP top-up rounds up to two gold", game_witch_price(&g) == 2);
+    game_visit_witch(&g);
+    ASSERT("rounded mana payments deduct the displayed price",
+        g.gold == 0 && g.player.mp == g.player.max_mp);
 
     const int slot = 99012;
     if (save_exists(slot)) {
@@ -220,6 +241,13 @@ void test_tavern_gambler(void) {
     g.player.max_mp = 110;
     g.gold = 0;
     g.gambler_debt = 30;
+    ASSERT("higher service prices still respect Rook's remaining credit",
+        game_gambler_recovery_cost(&g) == 304 && game_gambler_loan_amount(&g) == 0);
+    game_take_gambler_loan(&g);
+    ASSERT("unaffordable recovery leaves the player's resources unchanged",
+        g.gold == 0 && g.gambler_debt == 30 && g.player.hp == 8 && g.player.mp == 9);
+    g.player.max_hp = 48;
+    g.player.max_mp = 39;
     GamblerOption options[MAX_GAMBLER_OPTIONS];
     int count = gambler_build_options(&g, options);
     int recovery_cost = game_gambler_recovery_cost(&g);
