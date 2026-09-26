@@ -230,9 +230,23 @@ void test_tavern_gambler(void) {
         options[1].type == GAMBLER_OPTION_LEAVE);
 
     game_take_gambler_loan(&g);
-    ASSERT("financed recovery restores HP and MP without chance",
+    ASSERT("Rook lends treatment gold without restoring HP or MP",
+        g.player.hp == 8 && g.player.mp == 9 &&
+        g.gold == recovery_cost && g.gambler_debt == 30 + recovery_cost);
+    game_take_gambler_loan(&g);
+    ASSERT("enough treatment gold prevents another loan",
+        g.gold == recovery_cost && g.gambler_debt == 30 + recovery_cost &&
+        g.player.hp == 8 && g.player.mp == 9);
+    game_leave_tavern(&g);
+    game_visit_healer(&g);
+    ASSERT("borrowed gold pays the healer separately",
+        g.player.hp == g.player.max_hp && g.player.mp == 9 &&
+        g.gold == game_witch_price(&g));
+    game_visit_witch(&g);
+    ASSERT("borrowed gold pays the witch without reducing debt",
         g.player.hp == g.player.max_hp && g.player.mp == g.player.max_mp &&
         g.gold == 0 && g.gambler_debt == 30 + recovery_cost);
+    game_enter_tavern(&g);
     count = gambler_build_options(&g, options);
     ASSERT("a recovered player with no gold can leave the table",
         count == 1 && options[0].type == GAMBLER_OPTION_LEAVE);
@@ -246,6 +260,12 @@ void test_tavern_gambler(void) {
         count == 6 && options[0].type == GAMBLER_OPTION_LOAN &&
         options[0].wager == 18 && options[1].type == GAMBLER_OPTION_BET &&
         options[4].type == GAMBLER_OPTION_REPAY);
+    game_take_gambler_loan(&g);
+    ASSERT("Rook adds only the shortfall to existing gold and debt",
+        g.gold == recovery_cost && g.gambler_debt == 88 &&
+        g.player.hp == 8 && g.player.mp == 9);
+    g.gold = 67;
+    g.gambler_debt = 70;
     int result = game_gamble(&g, 5);
     ASSERT("gambling remains available before full recovery",
         (result == 0 && g.gold == 62) || (result == 1 && g.gold == 72));
@@ -255,9 +275,13 @@ void test_tavern_gambler(void) {
         g.gold == 0 && g.gambler_debt == 3 &&
         g.player.hp == 8 && g.player.mp == 9);
     game_take_gambler_loan(&g);
-    ASSERT("recovery financing remains available after repayment",
-        g.player.hp == g.player.max_hp && g.player.mp == g.player.max_mp &&
-        g.gold == 0 && g.gambler_debt == 3 + recovery_cost);
+    ASSERT("treatment loans remain available after repayment",
+        g.player.hp == 8 && g.player.mp == 9 &&
+        g.gold == recovery_cost && g.gambler_debt == 3 + recovery_cost);
+    game_leave_tavern(&g);
+    game_visit_healer(&g);
+    game_visit_witch(&g);
+    game_enter_tavern(&g);
 
     g.gold = 4;
     count = gambler_build_options(&g, options);
@@ -292,6 +316,10 @@ void test_tavern_gambler(void) {
             GAMBLER_CLOSED);
 
     g.gambler_debt = 17;
+    g.gold = 67;
+    g.player.hp = 8;
+    g.player.mp = 9;
+    game_take_gambler_loan(&g);
     const int slot = 99013;
     if (save_exists(slot)) {
         ASSERT("gambler test save slot must be unused", 0);
@@ -299,8 +327,9 @@ void test_tavern_gambler(void) {
     }
     int saved = save_game(&g, slot);
     int restored = saved && load_game(&loaded, slot);
-    ASSERT("gambler debt survives save and load",
-        restored && loaded.gambler_debt == 17 &&
+    ASSERT("borrowed gold, debt, and untreated HP and MP survive save and load",
+        restored && loaded.gambler_debt == 35 && loaded.gold == recovery_cost &&
+        loaded.player.hp == 8 && loaded.player.mp == 9 &&
         loaded.map.tiles[18][10] == TILE_NPC_GAMBLER);
     remove("saves/savegame_99013.json");
 }

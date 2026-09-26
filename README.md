@@ -75,8 +75,10 @@ restoration remains available. Full mana costs nothing.
 
 ### Rook's labyrinth
 
-Rook can finance guaranteed full HP and MP recovery when the player cannot
-afford it. Recovery credit becomes debt. At the 200-gold debt limit, Rook opens
+Rook lends gold when the player cannot afford full HP and MP recovery. The
+loan covers the shortfall and adds the same amount to debt. Rook does not
+restore HP or MP: take the gold to Lysa and Morwen and pay for their services.
+At the 200-gold debt limit, Rook opens
 an overgrown labyrinth gate beside the Tavern and asks the player to recover
 his stolen ivory rook. The labyrinth has no enemies or traps: activate its
 three runes, retrieve the relic, and return to Rook. He clears the debt and
