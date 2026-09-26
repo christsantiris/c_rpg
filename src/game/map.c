@@ -687,14 +687,16 @@ void map_generate_forest(Map *m, int level) {
         map_room_center(&m->rooms[m->room_count / 2], &false_x, &false_y);
         m->tiles[false_y][false_x] = TILE_FOREST_FALSE_MARKER;
     }
-    if (m->stairs_down_x == 1) {
-        m->tiles[m->stairs_down_y][0] = TILE_FOREST_WALL;
-    } else if (m->stairs_down_x == MAP_W - 2) {
-        m->tiles[m->stairs_down_y][MAP_W - 1] = TILE_FOREST_WALL;
-    } else if (m->stairs_down_y == 1) {
-        m->tiles[0][m->stairs_down_x] = TILE_FOREST_WALL;
-    } else {
-        m->tiles[MAP_H - 1][m->stairs_down_x] = TILE_FOREST_WALL;
+    if (level == FOREST_DEPTH) {
+        if (m->stairs_down_x == 1) {
+            m->tiles[m->stairs_down_y][0] = TILE_FOREST_WALL;
+        } else if (m->stairs_down_x == MAP_W - 2) {
+            m->tiles[m->stairs_down_y][MAP_W - 1] = TILE_FOREST_WALL;
+        } else if (m->stairs_down_y == 1) {
+            m->tiles[0][m->stairs_down_x] = TILE_FOREST_WALL;
+        } else {
+            m->tiles[MAP_H - 1][m->stairs_down_x] = TILE_FOREST_WALL;
+        }
     }
 }
 
@@ -1063,7 +1065,7 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     for (int x = 18; x <= 22; x++)
         m->tiles[TOWN_H - 1][x] = TILE_TOWN_EXIT;
 
-    // Blacksmith and healer face the east-west road.
+    // Blacksmith faces the east-west road.
     for (int dy = 0; dy < 4; dy++) {
         for (int dx = 0; dx < 5; dx++) {
             m->tiles[TOWN_BLACKSMITH_Y + dy][TOWN_BLACKSMITH_X + dx] = TILE_SHOP_BLACKSMITH;
@@ -1072,7 +1074,7 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     m->tiles[TOWN_BLACKSMITH_Y + 3][TOWN_BLACKSMITH_X + 2] = TILE_BLACKSMITH_DOOR;
     m->tiles[TOWN_BLACKSMITH_Y + 4][TOWN_BLACKSMITH_X + 2] = TILE_TOWN_PATH;
 
-    // Move the alchemist east and place the witch before the mountain gate.
+    // The alchemist faces the east-west road.
     for (int dy = 0; dy < 4; dy++) {
         for (int dx = 0; dx < 5; dx++) {
             m->tiles[TOWN_ALCHEMIST_Y + dy][TOWN_ALCHEMIST_X + dx] =
@@ -1083,14 +1085,6 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
         TILE_ALCHEMIST_DOOR;
     m->tiles[TOWN_ALCHEMIST_Y + 4][TOWN_ALCHEMIST_X + 2] =
         TILE_TOWN_PATH;
-
-    for (int dy = 0; dy < TOWN_WITCH_H; dy++) {
-        for (int dx = 0; dx < TOWN_WITCH_W; dx++) {
-            m->tiles[TOWN_WITCH_Y + dy][TOWN_WITCH_X + dx] = TILE_WITCH;
-        }
-    }
-    m->tiles[TOWN_WITCH_DOOR_Y][TOWN_WITCH_DOOR_X] = TILE_WITCH_DOOR;
-    m->tiles[TOWN_WITCH_DOOR_Y + 1][TOWN_WITCH_DOOR_X] = TILE_TOWN_PATH;
 
     // Tavern at (5, 16) — 7x5 tiles.
     for (int dy = 0; dy < 5; dy++) {
@@ -1107,29 +1101,65 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
         m->tiles[21][x] = TILE_TOWN_PATH;
     }
 
-    for (int y = TOWN_HEALER_Y; y < TOWN_HEALER_Y + TOWN_HEALER_H; y++) {
-        for (int x = TOWN_HEALER_X; x < TOWN_HEALER_X + TOWN_HEALER_W; x++) {
-            m->tiles[y][x] = TILE_HEALER;
-        }
-    }
-    m->tiles[TOWN_HEALER_DOOR_Y][TOWN_HEALER_DOOR_X] = TILE_HEALER_DOOR;
-    // Form a three-tile cobblestone plaza from the healer to the alchemist.
-    for (int x = TOWN_HEALER_DOOR_X;
-        x <= TOWN_ALCHEMIST_X + 2; x++) {
-        for (int y = TOWN_HEALER_DOOR_Y + 1;
-            y <= TOWN_HEALER_DOOR_Y + 3; y++) {
-            m->tiles[y][x] = TILE_TOWN_PATH;
-        }
-    }
-
     map_place_town_harbor(m);
-    map_place_town_labyrinth(m);
     m->tiles[TOWN_CAIN_Y][TOWN_CAIN_X] = TILE_NPC_CAIN;
     m->tiles[TOWN_ROWAN_Y][TOWN_ROWAN_X] = TILE_NPC_ROWAN;
 
     // Spawn at the central crossroads so the south road remains unobstructed
     // for a future region.
     *spawn_x = 20;
+    *spawn_y = 12;
+}
+
+void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
+    map_clear_exploration(m);
+    m->room_count = 0;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            m->tiles[y][x] = TILE_WALL;
+        }
+    }
+    for (int y = 1; y < TOWN_H - 1; y++) {
+        for (int x = 1; x < TOWN_W - 1; x++) {
+            m->tiles[y][x] = TILE_TOWN_FLOOR;
+        }
+        m->tiles[y][20] = TILE_TOWN_PATH;
+    }
+    for (int x = 1; x < TOWN_W - 1; x++) {
+        m->tiles[12][x] = TILE_TOWN_PATH;
+    }
+    for (int y = 10; y <= 14; y++) {
+        m->tiles[y][0] = TILE_TOWN_EXIT;
+    }
+    for (int y = TOWN_HEALER_Y; y < TOWN_HEALER_Y + TOWN_HEALER_H; y++) {
+        for (int x = TOWN_HEALER_X; x < TOWN_HEALER_X + TOWN_HEALER_W; x++) {
+            m->tiles[y][x] = TILE_HEALER;
+        }
+    }
+    m->tiles[TOWN_HEALER_DOOR_Y][TOWN_HEALER_DOOR_X] = TILE_HEALER_DOOR;
+    for (int y = TOWN_WITCH_Y; y < TOWN_WITCH_Y + TOWN_WITCH_H; y++) {
+        for (int x = TOWN_WITCH_X; x < TOWN_WITCH_X + TOWN_WITCH_W; x++) {
+            m->tiles[y][x] = TILE_WITCH;
+        }
+    }
+    m->tiles[TOWN_WITCH_DOOR_Y][TOWN_WITCH_DOOR_X] = TILE_WITCH_DOOR;
+    for (int x = TOWN_HEALER_DOOR_X; x <= TOWN_WITCH_DOOR_X; x++) {
+        m->tiles[11][x] = TILE_TOWN_PATH;
+    }
+    for (int y = 16; y <= 20; y++) {
+        for (int x = 5; x <= 11; x++) {
+            m->tiles[y][x] = TILE_TAVERN;
+        }
+    }
+    m->tiles[20][8] = TILE_TAVERN_DOOR;
+    for (int y = 13; y <= 21; y++) {
+        m->tiles[y][12] = TILE_TOWN_PATH;
+    }
+    for (int x = 8; x <= 12; x++) {
+        m->tiles[21][x] = TILE_TOWN_PATH;
+    }
+    map_place_town_labyrinth(m);
+    *spawn_x = 1;
     *spawn_y = 12;
 }
 
@@ -1250,7 +1280,7 @@ void map_generate_labyrinth(Map *m, int switches, int *spawn_x, int *spawn_y) {
     *spawn_y = LABYRINTH_H - 3;
 }
 
-void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y) {
+static void map_generate_tavern_room(Map *m, int *spawn_x, int *spawn_y, int inn) {
     map_clear_exploration(m);
     m->room_count = 0;
 
@@ -1285,11 +1315,14 @@ void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y) {
         }
     }
 
-    m->tiles[7][10] = TILE_NPC_ELOWEN;
-    m->tiles[7][18] = TILE_NPC_DAIN;
-    m->tiles[7][28] = TILE_NPC_ALDER;
-    m->tiles[18][31] = TILE_NPC_MARA;
-    m->tiles[18][10] = TILE_NPC_ROOK;
+    if (inn) {
+        m->tiles[18][10] = TILE_NPC_ROOK;
+    } else {
+        m->tiles[7][10] = TILE_NPC_ELOWEN;
+        m->tiles[7][18] = TILE_NPC_DAIN;
+        m->tiles[7][28] = TILE_NPC_ALDER;
+        m->tiles[18][31] = TILE_NPC_MARA;
+    }
     m->tiles[22][20] = TILE_TAVERN_EXIT;
     *spawn_x = 20;
     *spawn_y = 21;
@@ -1297,6 +1330,14 @@ void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y) {
     m->stairs_up_y = *spawn_y;
     m->stairs_down_x = 20;
     m->stairs_down_y = 22;
+}
+
+void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y) {
+    map_generate_tavern_room(m, spawn_x, spawn_y, 0);
+}
+
+void map_generate_inn(Map *m, int *spawn_x, int *spawn_y) {
+    map_generate_tavern_room(m, spawn_x, spawn_y, 1);
 }
 
 void map_generate_island(Map *m, int *spawn_x, int *spawn_y) {

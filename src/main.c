@@ -249,7 +249,8 @@ static void enter_playing(Renderer *renderer, Viewport *viewport, GameState *gam
 }
 
 static int open_shop_on_move(const GameState *game, const Action *action, ShopScreen *shop, GameScreen *screen) {
-    if (action->type != ACTION_MOVE || game->location != LOCATION_TOWN ||
+    if (action->type != ACTION_MOVE ||
+        (game->location != LOCATION_TOWN && game->location != LOCATION_TOWN2) ||
         action->target_x < 0 || action->target_x >= MAP_W ||
         action->target_y < 0 || action->target_y >= MAP_H) {
         return 0;
@@ -1227,6 +1228,8 @@ int main(int argc, char **argv) {
         // Update music based on screen and location
         int is_town = game.location == LOCATION_TOWN ||
             game.location == LOCATION_TAVERN ||
+            game.location == LOCATION_TOWN2 ||
+            game.location == LOCATION_INN ||
             game.location == LOCATION_ISLAND;
         music_update(screen, is_town);
 

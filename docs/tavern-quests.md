@@ -1,4 +1,4 @@
-# Tavern Quests
+# Tavern and Inn Quests
 
 The Tavern is a walkable town hub for regional quests. Walk into its front
 door, approach an NPC inside, and press `T` to speak with them. Leave through
@@ -7,6 +7,8 @@ the south doorway to return to the same town street.
 NPC speech appears in a wrapped dialogue bubble beside the speaker. The bottom
 message bar is reserved for concise game events such as quest assignment,
 progress, and completion. Moving dismisses the current dialogue bubble.
+Rook waits in Town 2's Inn, which uses the same doorway and conversation
+controls as the Tavern.
 
 ## Elowen: The Broken Seals
 
@@ -100,7 +102,7 @@ without requiring the absent Lich King to be defeated again.
 
 ## Rook: The Ivory Rook
 
-Speak with Rook to receive his one-time retrieval quest. This opens the
+Speak with Rook in Town 2's Inn to receive his one-time retrieval quest. This opens the
 labyrinth entrance on the eastern outskirts, across the road from the witch's
 hut. The current labyrinth has no enemies or traps. Explore its passages,
 activate three runes to open the relic vault, recover his stolen ivory rook,

@@ -608,6 +608,8 @@ void action_resolve_player(GameState *g, Action a) {
     game_repair_equipment_indices(g);
     if (g->location == LOCATION_TOWN ||
         g->location == LOCATION_TAVERN ||
+        g->location == LOCATION_TOWN2 ||
+        g->location == LOCATION_INN ||
         g->location == LOCATION_ISLAND ||
         g->location == LOCATION_LABYRINTH) {
         g->player.poison_turns = 0;
@@ -980,7 +982,10 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
         if (sp->id == SPELL_RETURN_TO_TOWN) {
-            if (g->location == LOCATION_TOWN) {
+            if (g->location == LOCATION_TOWN ||
+                g->location == LOCATION_TOWN2 ||
+                g->location == LOCATION_TAVERN ||
+                g->location == LOCATION_INN) {
                 push_message(g, "Already in town!");
                 return;
             }
@@ -1349,13 +1354,17 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
-        if (g->location == LOCATION_TOWN &&
+        if ((g->location == LOCATION_TOWN || g->location == LOCATION_TOWN2) &&
             g->map.tiles[ty][tx] == TILE_TAVERN_DOOR) {
-            game_enter_tavern(g);
+            if (g->location == LOCATION_TOWN) {
+                game_enter_tavern(g);
+            } else {
+                game_enter_inn(g);
+            }
             return;
         }
 
-        if (g->location == LOCATION_TOWN &&
+        if (g->location == LOCATION_TOWN2 &&
             g->map.tiles[ty][tx] == TILE_LABYRINTH_ENTRANCE) {
             if (g->rook_quest_state == 1 || g->rook_quest_state == 2) {
                 game_enter_labyrinth(g);
@@ -1377,10 +1386,27 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
+        if (g->location == LOCATION_INN &&
+            g->map.tiles[ty][tx] == TILE_TAVERN_EXIT) {
+            game_leave_inn(g);
+            return;
+        }
+
+        if (g->location == LOCATION_TOWN2 &&
+            g->map.tiles[ty][tx] == TILE_TOWN_EXIT && tx == 0) {
+            game_leave_town2(g);
+            return;
+        }
+
         if (g->location == LOCATION_TOWN &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
             if (tx == 0) {
-                game_enter_forest(g);
+                if (ty >= 13 &&
+                    (g->defeated_bosses & (1 << LOCATION_FOREST))) {
+                    game_enter_town2(g);
+                } else {
+                    game_enter_forest(g);
+                }
             } else if (tx == TOWN_W - 1) {
                 game_enter_mountains(g);
             } else if (ty == TOWN_H - 1) {
@@ -1486,7 +1512,7 @@ void action_resolve_player(GameState *g, Action a) {
                     return;
                 }
                 g->score += g->level * 100;
-                game_return_to_town(g);
+                game_enter_town2(g);
                 push_message(g, "The forest is freed!");
             }
             return;

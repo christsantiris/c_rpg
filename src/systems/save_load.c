@@ -1655,7 +1655,7 @@ int load_game(GameState *g, int slot) {
         }
     }
 
-    if (g->location == LOCATION_TOWN) {
+    if (g->location == LOCATION_TOWN2) {
         map_place_town_labyrinth(&g->map);
     }
 

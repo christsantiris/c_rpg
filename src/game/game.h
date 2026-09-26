@@ -81,7 +81,9 @@ typedef enum {
     LOCATION_TAVERN,
     LOCATION_ISLAND,
     LOCATION_TEMPLE,
-    LOCATION_LABYRINTH
+    LOCATION_LABYRINTH,
+    LOCATION_TOWN2,
+    LOCATION_INN
 } Location;
 
 typedef struct {
@@ -162,6 +164,10 @@ void game_enter_mountains(GameState *g);
 void game_enter_coast(GameState *g);
 void game_enter_tavern(GameState *g);
 void game_leave_tavern(GameState *g);
+void game_enter_town2(GameState *g);
+void game_leave_town2(GameState *g);
+void game_enter_inn(GameState *g);
+void game_leave_inn(GameState *g);
 void game_enter_labyrinth(GameState *g);
 void game_leave_labyrinth(GameState *g);
 int game_has_labyrinth_interaction(const GameState *g);
