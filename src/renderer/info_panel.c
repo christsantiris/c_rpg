@@ -58,6 +58,8 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor)
     } else if (g->location == LOCATION_TEMPLE) {
         SDL_snprintf(loc, sizeof(loc), g->temple_alignment
             ? "TEMPLE %d: MOON" : "TEMPLE %d: SUN", g->level);
+    } else if (g->location == LOCATION_LABYRINTH) {
+        SDL_snprintf(loc, sizeof(loc), "ROOK'S LABYRINTH");
     } else {
         SDL_snprintf(loc, sizeof(loc), "DUNGEON %d", g->level);
     }

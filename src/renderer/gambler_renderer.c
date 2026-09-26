@@ -35,7 +35,7 @@ static void gambler_option_label(const GameState *g, GamblerOption option, char 
     if (option.type == GAMBLER_OPTION_BET) {
         SDL_snprintf(label, size, "WAGER %d GOLD", option.wager);
     } else if (option.type == GAMBLER_OPTION_LOAN) {
-        SDL_snprintf(label, size, "FULL RECOVERY    ADD %d GOLD DEBT",
+        SDL_snprintf(label, size, "BORROW %d GOLD FOR TREATMENT",
             option.wager);
     } else if (option.type == GAMBLER_OPTION_REPAY) {
         int payment = g->gold < g->gambler_debt ? g->gold : g->gambler_debt;
@@ -71,7 +71,7 @@ void gambler_draw(Renderer *r, const GameState *g, GamblerScreen *s) {
     if (compact) {
         renderer_draw_text(r, "EVEN DRAW. A WIN PAYS TWICE THE STAKE.",
             cx - 245, 82, white, r->font_tiny);
-        renderer_draw_text(r, "ROOK CAN FINANCE FULL HP AND MP RECOVERY.",
+        renderer_draw_text(r, "BORROW GOLD TO PAY LYSA AND MORWEN.",
             cx - 245, 100, hint, r->font_tiny);
         if (g->message_count > 0) {
             renderer_draw_text(r, g->messages[g->message_count - 1],
@@ -85,17 +85,22 @@ void gambler_draw(Renderer *r, const GameState *g, GamblerScreen *s) {
         renderer_draw_text(r, "A WIN PAYS TWICE YOUR STAKE.", cx - 112, 188,
             white, r->font_small);
         renderer_draw_text(r,
-            "GAMBLE, REPAY DEBT, OR FINANCE FULL RECOVERY.", cx - 112, 218,
+            "GAMBLE, REPAY DEBT, OR BORROW TREATMENT GOLD.", cx - 112, 218,
             hint, r->font_tiny);
         const char *status;
         SDL_Color status_color;
         int recovery_cost = game_gambler_recovery_cost(g);
         int loan = game_gambler_loan_amount(g);
-        if (loan > 0) {
-            int payment = g->gold < recovery_cost ? g->gold : recovery_cost;
+        if (g->rook_quest_state == 1) {
+            status = "LABYRINTH OPEN ACROSS FROM THE WITCH'S HUT.";
+            status_color = gold;
+        } else if (g->rook_quest_state == 2) {
+            status = "YOU FOUND THE IVORY ROOK. RETURN IT TO ROOK.";
+            status_color = gold;
+        } else if (loan > 0) {
             SDL_snprintf(text, sizeof(text),
-                "FULL RECOVERY: PAY %d NOW, ADD %d TO DEBT.",
-                payment, loan);
+                "BORROW %d GOLD; ADD %d TO DEBT. PAY THE SHOPS.",
+                loan, loan);
             status = text;
             status_color = green;
         } else if (recovery_cost > 0 && g->gold < recovery_cost) {

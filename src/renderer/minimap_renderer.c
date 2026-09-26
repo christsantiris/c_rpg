@@ -13,7 +13,8 @@ void minimap_draw(Renderer *r, const GameState *g) {
         g->location != LOCATION_FOREST &&
         g->location != LOCATION_MOUNTAINS &&
         g->location != LOCATION_COAST &&
-        g->location != LOCATION_TEMPLE) {
+        g->location != LOCATION_TEMPLE &&
+        g->location != LOCATION_LABYRINTH) {
         return;
     }
 
@@ -66,7 +67,11 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_FOREST_WARDEN ||
                         tile == TILE_TEMPLE_ENTRANCE ||
                         tile == TILE_TEMPLE_ALTAR ||
-                        tile == TILE_TEMPLE_TREASURE) {
+                        tile == TILE_TEMPLE_TREASURE ||
+                        tile == TILE_LABYRINTH_EXIT ||
+                        tile == TILE_LABYRINTH_SWITCH_OFF ||
+                        tile == TILE_LABYRINTH_SWITCH_ON ||
+                        tile == TILE_LABYRINTH_RELIC) {
                         has_stair = 1;
                     } else if (tile == TILE_COAST_TIDE_CONTROL ||
                         tile == TILE_COAST_SLUICE_CONTROL || tile == TILE_COAST_CACHE) {
@@ -95,7 +100,9 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile != TILE_TEMPLE_WALL &&
                         tile != TILE_TEMPLE_MOON_DOOR_CLOSED &&
                         tile != TILE_TEMPLE_DORMANT_SENTINEL &&
-                        tile != TILE_TEMPLE_VAULT_DOOR) {
+                        tile != TILE_TEMPLE_VAULT_DOOR &&
+                        tile != TILE_LABYRINTH_WALL &&
+                        tile != TILE_LABYRINTH_GATE) {
                         has_floor = 1;
                     }
                 }
@@ -115,6 +122,8 @@ void minimap_draw(Renderer *r, const GameState *g) {
                     SDL_SetRenderDrawColor(r->sdl, 65, 105, 75, 255);
                 } else if (g->location == LOCATION_TAVERN) {
                     SDL_SetRenderDrawColor(r->sdl, 135, 78, 39, 255);
+                } else if (g->location == LOCATION_LABYRINTH) {
+                    SDL_SetRenderDrawColor(r->sdl, 72, 92, 70, 255);
                 } else {
                     SDL_SetRenderDrawColor(r->sdl, 145, 140, 195, 255);
                 }

@@ -865,6 +865,9 @@ void game_init(GameState *g) {
     g->healer_emergency_uses = 0;
     g->witch_emergency_uses = 0;
     g->gambler_debt = 0;
+    g->rook_quest_state = 0;
+    g->rook_labyrinth_switches = 0;
+    g->rook_quest_completions = 0;
     g->score = 0;
     g->dungeon_key_found = 0;
     g->dungeon_crypt_keys = 0;
@@ -1634,7 +1637,7 @@ int game_harbor_unlocked(const GameState *g) {
 
 int game_healer_price(const GameState *g) {
     int missing = g->player.max_hp - g->player.hp;
-    return missing > 0 ? (missing + 2) / 3 : 0;
+    return missing > 0 ? missing : 0;
 }
 
 int game_healer_emergency_available(const GameState *g) {
@@ -1679,7 +1682,7 @@ void game_visit_healer_emergency(GameState *g) {
 
 int game_witch_price(const GameState *g) {
     int missing = g->player.max_mp - g->player.mp;
-    return missing > 0 ? (missing + 2) / 3 : 0;
+    return missing > 0 ? (missing * 3 + 1) / 2 : 0;
 }
 
 int game_witch_emergency_available(const GameState *g) {
@@ -1763,6 +1766,13 @@ int game_gambler_loan_amount(const GameState *g) {
     return shortfall;
 }
 
+static void assign_rook_quest(GameState *g) {
+    g->rook_quest_state = 1;
+    g->rook_labyrinth_switches = 0;
+    push_message(g, "Rook: Recover my ivory rook and your debt is cleared.");
+    push_message(g, "The labyrinth across from the witch's hut is now open.");
+}
+
 void game_take_gambler_loan(GameState *g) {
     if (g->location != LOCATION_TAVERN || g->player.hp <= 0) {
         return;
@@ -1772,17 +1782,16 @@ void game_take_gambler_loan(GameState *g) {
         push_message(g, "Rook cannot extend any more recovery credit.");
         return;
     }
-    int cost = game_gambler_recovery_cost(g);
-    int payment = g->gold < cost ? g->gold : cost;
-    g->gold -= payment;
+    g->gold += amount;
     g->gambler_debt += amount;
-    g->player.hp = g->player.max_hp;
-    g->player.mp = g->player.max_mp;
     char message[MAX_MESSAGE_LEN];
     snprintf(message, sizeof(message),
-        "Rook funds your recovery: %d gold paid, %d added to debt.",
-        payment, amount);
+        "Rook lends you %d gold. Visit Lysa or Morwen for treatment.", amount);
     push_message(g, message);
+    if (g->gambler_debt >= GAMBLER_DEBT_LIMIT &&
+        (g->rook_quest_state == 0 || g->rook_quest_state == 3)) {
+        assign_rook_quest(g);
+    }
 }
 
 void game_repay_gambler(GameState *g) {
@@ -1864,6 +1873,122 @@ void game_leave_tavern(GameState *g) {
     g->player.poison_turns = 0;
     place_town_portal(g);
     push_message(g, "You step back into town.");
+}
+
+void game_enter_labyrinth(GameState *g) {
+    int spawn_x;
+    int spawn_y;
+    g->location = LOCATION_LABYRINTH;
+    g->level = 1;
+    map_generate_labyrinth(&g->map, g->rook_labyrinth_switches,
+        &spawn_x, &spawn_y);
+    if (g->rook_quest_state == 2) {
+        g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] =
+            TILE_LABYRINTH_FLOOR;
+    }
+    g->player.x = spawn_x;
+    g->player.y = spawn_y;
+    g->enemy_count = 0;
+    g->floor_item_count = 0;
+    g->dialogue_active = 0;
+    g->player.poison_turns = 0;
+    push_message(g, "You enter Rook's silent labyrinth.");
+    push_message(g, "Activate three runes to open the relic vault.");
+}
+
+void game_leave_labyrinth(GameState *g) {
+    int spawn_x;
+    int spawn_y;
+    g->location = LOCATION_TOWN;
+    map_generate_town(&g->map, &spawn_x, &spawn_y);
+    place_harbor_road(g);
+    g->player.x = TOWN_LABYRINTH_X;
+    g->player.y = TOWN_LABYRINTH_Y + 1;
+    g->enemy_count = 0;
+    g->floor_item_count = 0;
+    g->dialogue_active = 0;
+    g->player.poison_turns = 0;
+    place_town_portal(g);
+    push_message(g, "You emerge from Rook's labyrinth.");
+}
+
+static int labyrinth_interaction_tile(TileType tile) {
+    return tile == TILE_LABYRINTH_SWITCH_OFF ||
+        tile == TILE_LABYRINTH_SWITCH_ON || tile == TILE_LABYRINTH_RELIC;
+}
+
+int game_has_labyrinth_interaction(const GameState *g) {
+    if (g->location != LOCATION_LABYRINTH) {
+        return 0;
+    }
+    static const int offsets[5][2] = {
+        {0, 0}, {0, -1}, {1, 0}, {0, 1}, {-1, 0}
+    };
+    for (int i = 0; i < 5; i++) {
+        int x = g->player.x + offsets[i][0];
+        int y = g->player.y + offsets[i][1];
+        if (x >= 0 && x < MAP_W && y >= 0 && y < MAP_H &&
+            labyrinth_interaction_tile(g->map.tiles[y][x])) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int game_interact_labyrinth(GameState *g) {
+    if (g->location != LOCATION_LABYRINTH) {
+        return 0;
+    }
+    static const int offsets[5][2] = {
+        {0, 0}, {0, -1}, {1, 0}, {0, 1}, {-1, 0}
+    };
+    for (int i = 0; i < 5; i++) {
+        int x = g->player.x + offsets[i][0];
+        int y = g->player.y + offsets[i][1];
+        if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
+            continue;
+        }
+        TileType tile = g->map.tiles[y][x];
+        if (tile == TILE_LABYRINTH_SWITCH_ON) {
+            push_message(g, "This labyrinth rune is already lit.");
+            return 1;
+        }
+        if (tile == TILE_LABYRINTH_SWITCH_OFF) {
+            g->map.tiles[y][x] = TILE_LABYRINTH_SWITCH_ON;
+            g->rook_labyrinth_switches++;
+            if (g->rook_labyrinth_switches >= LABYRINTH_SWITCH_COUNT) {
+                for (int map_y = 0; map_y < MAP_H; map_y++) {
+                    for (int map_x = 0; map_x < MAP_W; map_x++) {
+                        if (g->map.tiles[map_y][map_x] ==
+                            TILE_LABYRINTH_GATE) {
+                            g->map.tiles[map_y][map_x] =
+                                TILE_LABYRINTH_FLOOR;
+                        }
+                    }
+                }
+                push_message(g, "The third rune opens the relic vault!");
+            } else {
+                char message[MAX_MESSAGE_LEN];
+                snprintf(message, sizeof(message),
+                    "Labyrinth rune lit: %d of %d.",
+                    g->rook_labyrinth_switches, LABYRINTH_SWITCH_COUNT);
+                push_message(g, message);
+            }
+            return 1;
+        }
+        if (tile == TILE_LABYRINTH_RELIC) {
+            if (g->rook_quest_state != 1) {
+                push_message(g, "The empty pedestal holds nothing for you.");
+                return 1;
+            }
+            g->rook_quest_state = 2;
+            g->map.tiles[y][x] = TILE_LABYRINTH_FLOOR;
+            push_message(g, "You recover Rook's stolen ivory rook.");
+            push_message(g, "Return it to Rook at the tavern.");
+            return 1;
+        }
+    }
+    return 0;
 }
 
 void game_enter_island(GameState *g) {
@@ -2705,10 +2830,20 @@ void game_talk_to_mara(GameState *g) {
 }
 
 void game_talk_to_gambler(GameState *g) {
-    if (g->gambler_debt >= GAMBLER_DEBT_LIMIT) {
-        push_message(g, "Rook: Settle your marker before we play again.");
+    if (g->rook_quest_state == 2) {
+        g->gambler_debt = 0;
+        g->gold += ROOK_QUEST_REWARD;
+        g->score += 500;
+        g->rook_quest_state = 3;
+        g->rook_quest_completions++;
+        push_message(g, "Rook clears your debt and pays 40 gold for the ivory rook.");
+    } else if (g->gambler_debt >= GAMBLER_DEBT_LIMIT &&
+        (g->rook_quest_state == 0 || g->rook_quest_state == 3)) {
+        assign_rook_quest(g);
+    } else if (g->rook_quest_state == 1) {
+        push_message(g, "Rook: The ivory rook is somewhere beyond the three runes.");
     } else if (game_gambler_loan_amount(g) > 0) {
-        push_message(g, "Rook: I can cover what you need to recover.");
+        push_message(g, "Rook: I can lend you gold to pay Lysa and Morwen.");
     } else {
         push_message(g, "Rook: High card wins. Care to test your luck?");
     }

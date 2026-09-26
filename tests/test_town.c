@@ -63,11 +63,14 @@ void test_town_healer(void) {
         shop.selected == 1 &&
         shop_handle_key(&shop, SDL_SCANCODE_RETURN, 0) == SHOP_CLOSED);
     g.player.hp = g.player.max_hp - 30;
-    g.gold = 9;
-    ASSERT("healing thirty HP costs ten gold", game_healer_price(&g) == 10);
+    g.gold = 29;
+    Item health_potion = item_make_health_potion();
+    ASSERT("thirty HP costs thirty gold at the healer or twenty from a potion",
+        game_healer_price(&g) == 30 && health_potion.heal_hp == 30 &&
+        shop_buy_price(&health_potion) == 20);
     game_visit_healer(&g);
     ASSERT("insufficient funds leave both gold and HP unchanged",
-        g.gold == 9 && g.player.hp == g.player.max_hp - 30);
+        g.gold == 29 && g.player.hp == g.player.max_hp - 30);
     g.player.hp = g.player.max_hp / 4 - 1;
     g.gold = game_healer_price(&g);
     ASSERT("affordable full care suppresses the emergency option",
@@ -92,12 +95,12 @@ void test_town_healer(void) {
     g.player.hp = g.player.max_hp / 4 - 1;
     int exhausted_hp = g.player.hp;
     game_visit_healer_emergency(&g);
-    ASSERT("emergency care is limited to three uses per game",
+    ASSERT("emergency care is limited to one use per game",
         g.healer_emergency_uses == EMERGENCY_RESTORATION_LIMIT &&
         g.player.hp == exhausted_hp &&
         !game_healer_emergency_available(&g));
     g.player.hp = g.player.max_hp - 30;
-    g.gold = 10;
+    g.gold = 30;
     int mp = g.player.mp;
     int items = g.inventory_count;
     game_visit_healer(&g);
@@ -109,12 +112,12 @@ void test_town_healer(void) {
     ASSERT("full health and repeat purchases are free",
         game_healer_price(&g) == 0 && g.gold == 100 && g.player.hp == g.player.max_hp);
     g.player.hp -= 31;
-    ASSERT("larger wounds cost more with rounded-up pricing", game_healer_price(&g) == 11);
+    ASSERT("each missing HP costs one gold", game_healer_price(&g) == 31);
     game_visit_healer(&g);
     g.player.hp--;
     ASSERT("even a one-HP wound costs one gold", game_healer_price(&g) == 1);
     game_visit_healer(&g);
-    ASSERT("separate treatments charge their current cost", g.gold == 88);
+    ASSERT("separate treatments charge their current cost", g.gold == 68);
 
     ASSERT("witch stands between the alchemist and mountain entrance",
         TOWN_ALCHEMIST_X + 5 < TOWN_WITCH_X &&
@@ -142,12 +145,18 @@ void test_town_healer(void) {
     ASSERT("witch hides unavailable emergency mana",
         shop.selected == 1 &&
         shop_handle_key(&shop, SDL_SCANCODE_RETURN, 0) == SHOP_CLOSED);
+    g.player.max_mp = 40;
+    g.player.mp = g.player.max_mp - 20;
+    Item mana_potion = item_make_mana_potion();
+    ASSERT("twenty MP costs thirty gold at the witch or twenty from a potion",
+        game_witch_price(&g) == 30 && mana_potion.heal_mp == 20 &&
+        shop_buy_price(&mana_potion) == 20);
     g.player.mp = g.player.max_mp - 30;
-    g.gold = 9;
-    ASSERT("restoring thirty MP costs ten gold", game_witch_price(&g) == 10);
+    g.gold = 44;
+    ASSERT("restoring thirty MP costs forty-five gold", game_witch_price(&g) == 45);
     game_visit_witch(&g);
     ASSERT("witch refuses restoration the player cannot afford",
-        g.gold == 9 && g.player.mp == g.player.max_mp - 30);
+        g.gold == 44 && g.player.mp == g.player.max_mp - 30);
     g.player.mp = g.player.max_mp / 4 - 1;
     g.gold = game_witch_price(&g);
     ASSERT("affordable full ritual suppresses emergency mana",
@@ -172,16 +181,28 @@ void test_town_healer(void) {
     g.player.mp = g.player.max_mp / 4 - 1;
     int exhausted_mp = g.player.mp;
     game_visit_witch_emergency(&g);
-    ASSERT("emergency mana is limited to three uses per game",
+    ASSERT("emergency mana is limited to one use per game",
         g.witch_emergency_uses == EMERGENCY_RESTORATION_LIMIT &&
         g.player.mp == exhausted_mp &&
         !game_witch_emergency_available(&g));
     g.player.mp = g.player.max_mp - 30;
-    g.gold = 10;
+    g.gold = 45;
     int hp = g.player.hp;
     game_visit_witch(&g);
     ASSERT("witch restores MP without changing HP",
         g.gold == 0 && g.player.mp == g.player.max_mp && g.player.hp == hp);
+    game_visit_witch(&g);
+    ASSERT("full mana and repeat purchases are free",
+        game_witch_price(&g) == 0 && g.gold == 0);
+    g.gold = 49;
+    g.player.mp -= 31;
+    ASSERT("odd mana restoration costs round up", game_witch_price(&g) == 47);
+    game_visit_witch(&g);
+    g.player.mp--;
+    ASSERT("a one-MP top-up rounds up to two gold", game_witch_price(&g) == 2);
+    game_visit_witch(&g);
+    ASSERT("rounded mana payments deduct the displayed price",
+        g.gold == 0 && g.player.mp == g.player.max_mp);
 
     const int slot = 99012;
     if (save_exists(slot)) {
@@ -220,6 +241,13 @@ void test_tavern_gambler(void) {
     g.player.max_mp = 110;
     g.gold = 0;
     g.gambler_debt = 30;
+    ASSERT("higher service prices still respect Rook's remaining credit",
+        game_gambler_recovery_cost(&g) == 304 && game_gambler_loan_amount(&g) == 0);
+    game_take_gambler_loan(&g);
+    ASSERT("unaffordable recovery leaves the player's resources unchanged",
+        g.gold == 0 && g.gambler_debt == 30 && g.player.hp == 8 && g.player.mp == 9);
+    g.player.max_hp = 48;
+    g.player.max_mp = 39;
     GamblerOption options[MAX_GAMBLER_OPTIONS];
     int count = gambler_build_options(&g, options);
     int recovery_cost = game_gambler_recovery_cost(&g);
@@ -230,9 +258,23 @@ void test_tavern_gambler(void) {
         options[1].type == GAMBLER_OPTION_LEAVE);
 
     game_take_gambler_loan(&g);
-    ASSERT("financed recovery restores HP and MP without chance",
+    ASSERT("Rook lends treatment gold without restoring HP or MP",
+        g.player.hp == 8 && g.player.mp == 9 &&
+        g.gold == recovery_cost && g.gambler_debt == 30 + recovery_cost);
+    game_take_gambler_loan(&g);
+    ASSERT("enough treatment gold prevents another loan",
+        g.gold == recovery_cost && g.gambler_debt == 30 + recovery_cost &&
+        g.player.hp == 8 && g.player.mp == 9);
+    game_leave_tavern(&g);
+    game_visit_healer(&g);
+    ASSERT("borrowed gold pays the healer separately",
+        g.player.hp == g.player.max_hp && g.player.mp == 9 &&
+        g.gold == game_witch_price(&g));
+    game_visit_witch(&g);
+    ASSERT("borrowed gold pays the witch without reducing debt",
         g.player.hp == g.player.max_hp && g.player.mp == g.player.max_mp &&
         g.gold == 0 && g.gambler_debt == 30 + recovery_cost);
+    game_enter_tavern(&g);
     count = gambler_build_options(&g, options);
     ASSERT("a recovered player with no gold can leave the table",
         count == 1 && options[0].type == GAMBLER_OPTION_LEAVE);
@@ -246,6 +288,12 @@ void test_tavern_gambler(void) {
         count == 6 && options[0].type == GAMBLER_OPTION_LOAN &&
         options[0].wager == 18 && options[1].type == GAMBLER_OPTION_BET &&
         options[4].type == GAMBLER_OPTION_REPAY);
+    game_take_gambler_loan(&g);
+    ASSERT("Rook adds only the shortfall to existing gold and debt",
+        g.gold == recovery_cost && g.gambler_debt == 88 &&
+        g.player.hp == 8 && g.player.mp == 9);
+    g.gold = 67;
+    g.gambler_debt = 70;
     int result = game_gamble(&g, 5);
     ASSERT("gambling remains available before full recovery",
         (result == 0 && g.gold == 62) || (result == 1 && g.gold == 72));
@@ -255,9 +303,13 @@ void test_tavern_gambler(void) {
         g.gold == 0 && g.gambler_debt == 3 &&
         g.player.hp == 8 && g.player.mp == 9);
     game_take_gambler_loan(&g);
-    ASSERT("recovery financing remains available after repayment",
-        g.player.hp == g.player.max_hp && g.player.mp == g.player.max_mp &&
-        g.gold == 0 && g.gambler_debt == 3 + recovery_cost);
+    ASSERT("treatment loans remain available after repayment",
+        g.player.hp == 8 && g.player.mp == 9 &&
+        g.gold == recovery_cost && g.gambler_debt == 3 + recovery_cost);
+    game_leave_tavern(&g);
+    game_visit_healer(&g);
+    game_visit_witch(&g);
+    game_enter_tavern(&g);
 
     g.gold = 4;
     count = gambler_build_options(&g, options);
@@ -292,6 +344,10 @@ void test_tavern_gambler(void) {
             GAMBLER_CLOSED);
 
     g.gambler_debt = 17;
+    g.gold = 67;
+    g.player.hp = 8;
+    g.player.mp = 9;
+    game_take_gambler_loan(&g);
     const int slot = 99013;
     if (save_exists(slot)) {
         ASSERT("gambler test save slot must be unused", 0);
@@ -299,10 +355,130 @@ void test_tavern_gambler(void) {
     }
     int saved = save_game(&g, slot);
     int restored = saved && load_game(&loaded, slot);
-    ASSERT("gambler debt survives save and load",
-        restored && loaded.gambler_debt == 17 &&
+    ASSERT("borrowed gold, debt, and untreated HP and MP survive save and load",
+        restored && loaded.gambler_debt == 35 && loaded.gold == recovery_cost &&
+        loaded.player.hp == 8 && loaded.player.mp == 9 &&
         loaded.map.tiles[18][10] == TILE_NPC_GAMBLER);
     remove("saves/savegame_99013.json");
+}
+
+void test_rook_labyrinth(void) {
+    printf("Rook labyrinth tests:\n");
+    static GameState g;
+    static GameState loaded;
+    g.player.player_class = CLASS_MAGE;
+    game_init(&g);
+    ASSERT("town places the labyrinth across the road from the witch's hut",
+        TOWN_LABYRINTH_X == TOWN_WITCH_DOOR_X && TOWN_LABYRINTH_Y > 12 &&
+        g.map.tiles[TOWN_LABYRINTH_Y][TOWN_LABYRINTH_X] ==
+            TILE_LABYRINTH_ENTRANCE &&
+        g.map.tiles[TOWN_LABYRINTH_Y + 1][TOWN_LABYRINTH_X] ==
+            TILE_TOWN_PATH);
+    ASSERT("the old labyrinth entrance and lane return to grass",
+        g.map.tiles[18][13] == TILE_TOWN_FLOOR &&
+        g.map.tiles[18][14] == TILE_TOWN_FLOOR &&
+        g.map.tiles[18][15] == TILE_TOWN_FLOOR);
+
+    game_enter_tavern(&g);
+    g.gambler_debt = GAMBLER_DEBT_LIMIT;
+    game_talk_to_gambler(&g);
+    ASSERT("Rook assigns the safe retrieval quest at the debt limit",
+        g.rook_quest_state == 1 && g.rook_labyrinth_switches == 0);
+    game_leave_tavern(&g);
+    g.player.x = TOWN_LABYRINTH_X - 2;
+    g.player.y = 12;
+    for (int y = 13; y <= TOWN_LABYRINTH_Y + 1; y++) {
+        action_resolve_player(&g, (Action){ACTION_MOVE, g.player.x, y});
+    }
+    for (int x = TOWN_LABYRINTH_X - 1; x <= TOWN_LABYRINTH_X; x++) {
+        action_resolve_player(&g, (Action){ACTION_MOVE, x, g.player.y});
+    }
+    ASSERT("the approach lane reaches the south-facing labyrinth entrance",
+        g.location == LOCATION_TOWN && g.player.x == TOWN_LABYRINTH_X &&
+        g.player.y == TOWN_LABYRINTH_Y + 1);
+    action_resolve_player(&g, (Action){ACTION_MOVE,
+        TOWN_LABYRINTH_X, TOWN_LABYRINTH_Y});
+    ASSERT("walking through the open town entrance enters the labyrinth",
+        g.location == LOCATION_LABYRINTH && g.enemy_count == 0 &&
+        g.floor_item_count == 0);
+
+    int switches = 0;
+    int gates = 0;
+    int traps = 0;
+    for (int y = 0; y < LABYRINTH_H; y++) {
+        for (int x = 0; x < LABYRINTH_W; x++) {
+            TileType tile = g.map.tiles[y][x];
+            if (tile == TILE_LABYRINTH_SWITCH_OFF) {
+                switches++;
+            }
+            if (tile == TILE_LABYRINTH_GATE) {
+                gates++;
+            }
+            if (tile == TILE_TRAP_HIDDEN || tile == TILE_TRAP_REVEALED ||
+                tile == TILE_TRAP_SPIKE || tile == TILE_TRAP_FIRE ||
+                tile == TILE_TRAP_POISON) {
+                traps++;
+            }
+        }
+    }
+    ASSERT("the labyrinth is a safe puzzle with three runes and one vault",
+        switches == LABYRINTH_SWITCH_COUNT && gates == 1 && traps == 0);
+
+    for (int y = 0; y < LABYRINTH_H; y++) {
+        for (int x = 0; x < LABYRINTH_W; x++) {
+            if (g.map.tiles[y][x] == TILE_LABYRINTH_SWITCH_OFF) {
+                g.player.x = x;
+                g.player.y = y;
+                game_interact_labyrinth(&g);
+            }
+        }
+    }
+    gates = 0;
+    for (int y = 0; y < LABYRINTH_H; y++) {
+        for (int x = 0; x < LABYRINTH_W; x++) {
+            gates += g.map.tiles[y][x] == TILE_LABYRINTH_GATE;
+            if (g.map.tiles[y][x] == TILE_LABYRINTH_RELIC) {
+                g.player.x = x;
+                g.player.y = y;
+            }
+        }
+    }
+    ASSERT("lighting all three runes opens the relic vault",
+        g.rook_labyrinth_switches == LABYRINTH_SWITCH_COUNT && gates == 0);
+    game_interact_labyrinth(&g);
+    ASSERT("the player can recover Rook's ivory rook without combat",
+        g.rook_quest_state == 2);
+
+    g.player.x = 2;
+    g.player.y = LABYRINTH_H - 3;
+    action_resolve_player(&g, (Action){ACTION_MOVE, 1,
+        LABYRINTH_H - 3});
+    ASSERT("the labyrinth exit returns beside its town entrance",
+        g.location == LOCATION_TOWN &&
+        g.player.x == TOWN_LABYRINTH_X &&
+        g.player.y == TOWN_LABYRINTH_Y + 1 &&
+        g.map.tiles[g.player.y][g.player.x] == TILE_TOWN_PATH);
+    game_enter_tavern(&g);
+    int gold_before = g.gold;
+    game_talk_to_gambler(&g);
+    ASSERT("returning the relic clears debt and pays Rook's reward",
+        g.rook_quest_state == 3 && g.gambler_debt == 0 &&
+        g.gold == gold_before + ROOK_QUEST_REWARD &&
+        g.rook_quest_completions == 1);
+
+    const int slot = 99014;
+    game_leave_tavern(&g);
+    int saved = save_game(&g, slot);
+    int restored = saved && load_game(&loaded, slot);
+    ASSERT("Rook quest progress and the relocated town entrance survive save and load",
+        restored && loaded.rook_quest_state == 3 &&
+        loaded.rook_labyrinth_switches == LABYRINTH_SWITCH_COUNT &&
+        loaded.rook_quest_completions == 1 && loaded.location == LOCATION_TOWN &&
+        loaded.map.tiles[TOWN_LABYRINTH_Y][TOWN_LABYRINTH_X] ==
+            TILE_LABYRINTH_ENTRANCE &&
+        loaded.map.tiles[TOWN_LABYRINTH_Y + 1][TOWN_LABYRINTH_X] ==
+            TILE_TOWN_PATH && loaded.map.tiles[18][15] == TILE_TOWN_FLOOR);
+    remove("saves/savegame_99014.json");
 }
 
 static int forest_path_exists_around(const Map *m, int blocked_room) {

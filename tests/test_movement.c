@@ -80,6 +80,7 @@ void test_enemy_projectiles(void) {
 
     setup_ranged_enemy(&g, ENEMY_GOBLIN_ARCHER);
     g.enemies[0].x = 19;
+    g.enemies[0].move_timer = 0;
     action_resolve_enemies_with_projectiles(&g, &shots);
     ASSERT("ranged enemy retreats instead of entering melee",
         g.enemies[0].x == 18 && g.enemies[0].y == 20 &&
@@ -115,6 +116,43 @@ void test_enemy_projectiles(void) {
         shots.count == 1 && shots.shots[0].start_x == 14 &&
         shots.shots[0].start_y == 14 && shots.shots[0].target_x == 20 &&
         shots.shots[0].target_y == 20);
+
+    EnemyType retreating[] = {
+        ENEMY_CRYPT_CONJURER, ENEMY_DARK_ELF, ENEMY_GOBLIN_ARCHER,
+        ENEMY_GOBLIN_BOMBER, ENEMY_SIREN, ENEMY_WATER_ELEMENTAL,
+        ENEMY_BLOWDART_HUNTER, ENEMY_SUN_PRIEST, ENEMY_SERPENT_SPIRIT,
+        ENEMY_MOONBOUND_SENTINEL, ENEMY_GOBLIN_SHAMAN
+    };
+    for (int i = 0; i < (int)(sizeof(retreating) / sizeof(retreating[0])); i++) {
+        for (int corridor = 0; corridor < 2; corridor++) {
+            for (int timer = 0; timer < 2; timer++) {
+                setup_ranged_enemy(&g, retreating[i]);
+                if (corridor) {
+                    for (int x = 10; x < 30; x++) {
+                        g.map.tiles[19][x] = TILE_FOREST_WALL;
+                        g.map.tiles[21][x] = TILE_FOREST_WALL;
+                    }
+                }
+                g.player.attack = 50;
+                g.enemies[0].x = 17;
+                g.enemies[0].move_timer = timer;
+                for (int turn = 0; turn < 8 && g.enemies[0].active; turn++) {
+                    int dx = (g.enemies[0].x > g.player.x) -
+                        (g.enemies[0].x < g.player.x);
+                    int dy = (g.enemies[0].y > g.player.y) -
+                        (g.enemies[0].y < g.player.y);
+                    action_resolve_player(&g, (Action){ACTION_MOVE,
+                        g.player.x + dx, g.player.y + dy});
+                    if (g.enemies[0].active) {
+                        action_resolve_enemies_with_projectiles(&g, &shots);
+                    }
+                }
+                ASSERT("a warrior can catch and kill a retreating enemy before cornering it",
+                    !g.enemies[0].active && g.enemies[0].x > 10 &&
+                    g.player.hp > 0);
+            }
+        }
+    }
 }
 
 void test_movement(void) {

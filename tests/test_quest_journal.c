@@ -33,6 +33,19 @@ void test_quest_journal(void) {
     ASSERT("completed tab retains turned-in quests",
         quest_journal_get_entry(&g, QUEST_TAB_COMPLETED, 0, &entry) &&
         entry.state == 3 && strcmp(entry.giver, "Alder") == 0);
+    g.rook_quest_state = 1;
+    ASSERT("Rook's labyrinth retrieval appears as an active quest",
+        quest_journal_count(&g, QUEST_TAB_ACTIVE) == 3 &&
+        quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 2, &entry) &&
+        strcmp(entry.title, "Rook's Marker") == 0 &&
+        entry.objective_count == 1 && entry.reward_gold == ROOK_QUEST_REWARD);
+    g.rook_quest_state = 2;
+    ASSERT("recovering the ivory rook marks its objective ready to return",
+        quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 2, &entry) &&
+        entry.objective_complete[0] && entry.state == 2);
+    g.rook_quest_state = 3;
+    ASSERT("a returned ivory rook is retained in completed quests",
+        quest_journal_count(&g, QUEST_TAB_COMPLETED) == 2);
 
     QuestJournalScreen screen;
     quest_journal_init(&screen);
