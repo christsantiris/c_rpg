@@ -198,7 +198,7 @@ typedef enum {
     TILE_NPC_ISLAND_NAHLA,
     TILE_WITCH,
     TILE_WITCH_DOOR,
-    TILE_NPC_GAMBLER,
+    TILE_NPC_ROOK,
     TILE_LABYRINTH_ENTRANCE,
     TILE_LABYRINTH_FLOOR,
     TILE_LABYRINTH_WALL,
@@ -227,9 +227,11 @@ int map_repair_dungeon_routes(Map *m);
 int  map_is_walkable(const Map *m, int x, int y);
 void map_room_center(const Room *r, int *cx, int *cy);
 void map_generate_town(Map *m, int *spawn_x, int *spawn_y);
+void map_generate_town2(Map *m, int *spawn_x, int *spawn_y);
 void map_place_town_labyrinth(Map *m);
 void map_place_town_harbor(Map *m);
 void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y);
+void map_generate_inn(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_island(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_temple(Map *m, int level, int *spawn_x, int *spawn_y);
 void map_generate_labyrinth(Map *m, int switches, int *spawn_x, int *spawn_y);

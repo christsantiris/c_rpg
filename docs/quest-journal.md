@@ -1,7 +1,7 @@
 # Quest Journal
 
 Press `Q` during play to open the Quest Journal. It tracks the four regional
-Tavern quests, Nahla's Ruined Temple quest, and Rook's repeatable labyrinth
+Tavern quests, Nahla's Ruined Temple quest, and Rook's one-time labyrinth
 quest after they are accepted.
 
 The Active tab contains quests in progress and quests ready to turn in. The

@@ -347,11 +347,6 @@ int save_game(const GameState *g, int slot) {
         g->max_temple_level_reached);
     cJSON_AddNumberToObject(root, "message_count",     g->message_count);
     cJSON_AddNumberToObject(root, "gold",              g->gold);
-    cJSON_AddNumberToObject(root, "healer_emergency_uses",
-        g->healer_emergency_uses);
-    cJSON_AddNumberToObject(root, "witch_emergency_uses",
-        g->witch_emergency_uses);
-    cJSON_AddNumberToObject(root, "gambler_debt", g->gambler_debt);
     cJSON_AddNumberToObject(root, "rook_quest_state", g->rook_quest_state);
     cJSON_AddNumberToObject(root, "rook_labyrinth_switches",
         g->rook_labyrinth_switches);
@@ -686,11 +681,6 @@ int load_game(GameState *g, int slot) {
     g->max_temple_level_reached = max_temple ? max_temple->valueint : 1;
     g->message_count     = cJSON_GetObjectItem(root, "message_count")->valueint;
     g->gold              = cJSON_GetObjectItem(root, "gold")->valueint;
-    g->healer_emergency_uses = cJSON_GetObjectItem(root,
-        "healer_emergency_uses")->valueint;
-    g->witch_emergency_uses = cJSON_GetObjectItem(root,
-        "witch_emergency_uses")->valueint;
-    g->gambler_debt = cJSON_GetObjectItem(root, "gambler_debt")->valueint;
     g->rook_quest_state = cJSON_GetObjectItem(root,
         "rook_quest_state")->valueint;
     g->rook_labyrinth_switches = cJSON_GetObjectItem(root,
@@ -1665,7 +1655,7 @@ int load_game(GameState *g, int slot) {
         }
     }
 
-    if (g->location == LOCATION_TOWN) {
+    if (g->location == LOCATION_TOWN2) {
         map_place_town_labyrinth(&g->map);
     }
 

@@ -49,7 +49,9 @@ static void draw_dialogue_text(Renderer *r, const char *text, int x, int y, int 
 static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport *v) {
     if (!g->dialogue_active ||
         (g->location != LOCATION_TAVERN &&
+        g->location != LOCATION_INN &&
         g->location != LOCATION_TOWN &&
+        g->location != LOCATION_TOWN2 &&
         g->location != LOCATION_FOREST)) {
         return;
     }
@@ -60,9 +62,9 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     }
 
     int viewport_w = r->screen_w - INFO_PANEL_W;
-    if (g->location == LOCATION_TOWN) {
+    if (g->location == LOCATION_TOWN || g->location == LOCATION_TOWN2) {
         viewport_w = TOWN_W * TILE_SIZE;
-    } else if (g->location == LOCATION_TAVERN) {
+    } else if (g->location == LOCATION_TAVERN || g->location == LOCATION_INN) {
         viewport_w = TAVERN_W * TILE_SIZE;
     }
     int bubble_w = viewport_w < 460 ? viewport_w - 16 : 440;
@@ -565,8 +567,10 @@ static void draw_trap_underlay(Renderer *r, const GameState *g, int map_x, int m
 
 void game_draw(Renderer *r, GameState *g, Viewport *v) {
     Viewport town_view;
-    int town_scaled = g->location == LOCATION_TOWN;
-    int tavern_scaled = g->location == LOCATION_TAVERN;
+    int town_scaled = g->location == LOCATION_TOWN ||
+        g->location == LOCATION_TOWN2;
+    int tavern_scaled = g->location == LOCATION_TAVERN ||
+        g->location == LOCATION_INN;
     int island_scaled = g->location == LOCATION_ISLAND;
     int labyrinth_scaled = g->location == LOCATION_LABYRINTH;
     if (town_scaled || island_scaled || labyrinth_scaled) {
@@ -784,7 +788,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_NPC_DAIN: draw_dain(r, sx, sy); break;
                 case TILE_NPC_ALDER: draw_alder(r, sx, sy); break;
                 case TILE_NPC_MARA: draw_mara(r, sx, sy); break;
-                case TILE_NPC_GAMBLER: draw_gambler(r, sx, sy); break;
+                case TILE_NPC_ROOK: draw_rook(r, sx, sy); break;
                 case TILE_NPC_CAIN: draw_cain(r, sx, sy); break;
                 case TILE_NPC_ROWAN: draw_rowan(r, sx, sy); break;
                 case TILE_FOREST_WARDEN:
@@ -983,6 +987,17 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         draw_shop_alchemist(r,
             viewport_to_screen_x(v, TOWN_ALCHEMIST_X),
             viewport_to_screen_y(v, TOWN_ALCHEMIST_Y));
+        draw_tavern(r,
+            viewport_to_screen_x(v, 5), viewport_to_screen_y(v, 16));
+        draw_harbor(r,
+            viewport_to_screen_x(v, TOWN_HARBOR_X),
+            viewport_to_screen_y(v, TOWN_HARBOR_Y));
+    }
+
+    if (g->location == LOCATION_TOWN2) {
+        draw_town_gate(r,
+            viewport_to_screen_x(v, 0), viewport_to_screen_y(v, 10),
+            TOWN_EXIT_FOREST);
         draw_witch_hut(r,
             viewport_to_screen_x(v, TOWN_WITCH_X),
             viewport_to_screen_y(v, TOWN_WITCH_Y));
@@ -990,9 +1005,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, 5), viewport_to_screen_y(v, 16));
         draw_healer_house(r, viewport_to_screen_x(v, TOWN_HEALER_X),
             viewport_to_screen_y(v, TOWN_HEALER_Y));
-        draw_harbor(r,
-            viewport_to_screen_x(v, TOWN_HARBOR_X),
-            viewport_to_screen_y(v, TOWN_HARBOR_Y));
         draw_labyrinth_entrance(r,
             viewport_to_screen_x(v, TOWN_LABYRINTH_X),
             viewport_to_screen_y(v, TOWN_LABYRINTH_Y),
@@ -1072,7 +1084,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         SDL_Color label = {220, 180, 60, 255};
         int blacksmith_w = 0;
         int alchemist_w = 0;
-        int witch_w = 0;
         int forest_w = 0;
         int forest_h = 0;
         int dungeon_w = 0;
@@ -1081,25 +1092,15 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int mountains_h = 0;
         int tavern_w = 0;
         int harbor_w = 0;
-        int labyrinth_w = 0;
         int coast_w = 0;
         int coast_h = 0;
         TTF_SizeText(r->font_tiny, "BLACKSMITH", &blacksmith_w, NULL);
         TTF_SizeText(r->font_tiny, "ALCHEMIST", &alchemist_w, NULL);
-        TTF_SizeText(r->font_tiny, "WITCH", &witch_w, NULL);
         TTF_SizeText(r->font_tiny, "FOREST", &forest_w, &forest_h);
         TTF_SizeText(r->font_tiny, "DUNGEON", &dungeon_w, &dungeon_h);
         TTF_SizeText(r->font_tiny, "MOUNTAINS", &mountains_w, &mountains_h);
         TTF_SizeText(r->font_tiny, "TAVERN", &tavern_w, NULL);
         TTF_SizeText(r->font_tiny, "HARBOR", &harbor_w, NULL);
-        TTF_SizeText(r->font_tiny, "LABYRINTH", &labyrinth_w, NULL);
-        int healer_w = 0;
-        TTF_SizeText(r->font_tiny, "HEALER", &healer_w, NULL);
-        renderer_draw_text(r, "HEALER",
-            viewport_to_screen_x(v, TOWN_HEALER_X) * TILE_SIZE +
-                (TOWN_HEALER_W * TILE_SIZE - healer_w) / 2,
-            viewport_to_screen_y(v, TOWN_HEALER_Y - 1) * TILE_SIZE,
-            label, r->font_tiny);
         TTF_SizeText(r->font_tiny, "SUNKEN COAST", &coast_w, &coast_h);
         int bx = viewport_to_screen_x(v, TOWN_BLACKSMITH_X) * TILE_SIZE
             + (5 * TILE_SIZE - blacksmith_w) / 2;
@@ -1107,9 +1108,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int ax = viewport_to_screen_x(v, TOWN_ALCHEMIST_X) * TILE_SIZE
             + (5 * TILE_SIZE - alchemist_w) / 2;
         int ay = viewport_to_screen_y(v, TOWN_ALCHEMIST_Y - 1) * TILE_SIZE;
-        int witch_x = viewport_to_screen_x(v, TOWN_WITCH_X) * TILE_SIZE
-            + (TOWN_WITCH_W * TILE_SIZE - witch_w) / 2;
-        int witch_y = viewport_to_screen_y(v, TOWN_WITCH_Y - 1) * TILE_SIZE;
         int tavern_x = viewport_to_screen_x(v, 5) * TILE_SIZE
             + (7 * TILE_SIZE - tavern_w) / 2;
         int tavern_y = viewport_to_screen_y(v, 15) * TILE_SIZE;
@@ -1122,10 +1120,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         if (ax > 0 && ay > 0) {
             renderer_draw_text(r, "ALCHEMIST", ax, ay, label, r->font_tiny);
         }
-        if (witch_x > 0 && witch_y > 0) {
-            renderer_draw_text(r, "WITCH", witch_x, witch_y, label,
-                r->font_tiny);
-        }
         if (tavern_x > 0 && tavern_y > 0) {
             renderer_draw_text(r, "TAVERN", tavern_x, tavern_y, label,
                 r->font_tiny);
@@ -1134,12 +1128,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             renderer_draw_text(r, "HARBOR", harbor_x, harbor_y,
                 label, r->font_tiny);
         }
-        renderer_draw_text(r, "LABYRINTH",
-            viewport_to_screen_x(v, TOWN_LABYRINTH_X) * TILE_SIZE +
-                (TILE_SIZE - labyrinth_w) / 2,
-            viewport_to_screen_y(v, TOWN_LABYRINTH_Y - 3) * TILE_SIZE,
-            g->rook_quest_state == 1 || g->rook_quest_state == 2 ?
-                label : (SDL_Color){105, 105, 90, 255}, r->font_tiny);
         int gate_top = viewport_to_screen_y(v, 10) * TILE_SIZE;
         int forest_x = viewport_to_screen_x(v, 1) * TILE_SIZE + 8;
         int forest_y = gate_top + (5 * TILE_SIZE - forest_h) / 2;
@@ -1162,6 +1150,46 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             + (TILE_SIZE - coast_h) / 2;
         renderer_draw_text(r, "SUNKEN COAST", coast_x, coast_y,
             (SDL_Color){62, 210, 205, 255}, r->font_tiny);
+        if (g->defeated_bosses & (1 << LOCATION_FOREST)) {
+            renderer_draw_text(r, "TOWN 2",
+                viewport_to_screen_x(v, 1) * TILE_SIZE + 8,
+                viewport_to_screen_y(v, 14) * TILE_SIZE,
+                label, r->font_tiny);
+        }
+    }
+
+    if (g->location == LOCATION_TOWN2) {
+        SDL_Color label = {220, 180, 60, 255};
+        int width = 0;
+        TTF_SizeText(r->font_tiny, "HEALER", &width, NULL);
+        renderer_draw_text(r, "HEALER",
+            viewport_to_screen_x(v, TOWN_HEALER_X) * TILE_SIZE +
+                (TOWN_HEALER_W * TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, TOWN_HEALER_Y - 1) * TILE_SIZE,
+            label, r->font_tiny);
+        TTF_SizeText(r->font_tiny, "WITCH", &width, NULL);
+        renderer_draw_text(r, "WITCH",
+            viewport_to_screen_x(v, TOWN_WITCH_X) * TILE_SIZE +
+                (TOWN_WITCH_W * TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, TOWN_WITCH_Y - 1) * TILE_SIZE,
+            label, r->font_tiny);
+        TTF_SizeText(r->font_tiny, "INN", &width, NULL);
+        renderer_draw_text(r, "INN",
+            viewport_to_screen_x(v, 5) * TILE_SIZE +
+                (7 * TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, 15) * TILE_SIZE,
+            label, r->font_tiny);
+        TTF_SizeText(r->font_tiny, "LABYRINTH", &width, NULL);
+        renderer_draw_text(r, "LABYRINTH",
+            viewport_to_screen_x(v, TOWN_LABYRINTH_X) * TILE_SIZE +
+                (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, TOWN_LABYRINTH_Y - 3) * TILE_SIZE,
+            g->rook_quest_state == 1 || g->rook_quest_state == 2 ?
+                label : (SDL_Color){105, 105, 90, 255}, r->font_tiny);
+        renderer_draw_text(r, "TOWN 1",
+            viewport_to_screen_x(v, 1) * TILE_SIZE + 8,
+            viewport_to_screen_y(v, 12) * TILE_SIZE,
+            label, r->font_tiny);
     }
 
     if (g->location == LOCATION_TAVERN) {
@@ -1188,6 +1216,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         name_y = viewport_to_screen_y(v, 17) * TILE_SIZE;
         renderer_draw_text(r, "MARA", name_x, name_y,
             (SDL_Color){75, 196, 201, 255}, r->font_tiny);
+    }
+
+    if (g->location == LOCATION_INN) {
+        renderer_draw_text(r, "ROOK",
+            viewport_to_screen_x(v, 10) * TILE_SIZE - 8,
+            viewport_to_screen_y(v, 17) * TILE_SIZE,
+            (SDL_Color){182, 214, 232, 255}, r->font_tiny);
     }
 
     if (g->location == LOCATION_ISLAND) {
