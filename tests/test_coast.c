@@ -214,10 +214,14 @@ void test_coast(void) {
             g.enemies[i].active = 0;
         }
     }
+    g.defeated_bosses |= 1 << LOCATION_COAST;
     action_resolve_player(&g, exit);
     ASSERT("defeating Drowned Queen returns to town",
         g.location == LOCATION_TOWN);
     ASSERT("coast completion returns at south road",
         g.player.x == 20 && g.player.y == TOWN_H - 2);
+    ASSERT("coast completion opens the harbor road",
+        game_harbor_unlocked(&g) &&
+        g.map.tiles[TOWN_HARBOR_Y + 1][21] == TILE_TOWN_PATH);
     test_queen_retaliates_to_arrows();
 }

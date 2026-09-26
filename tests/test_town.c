@@ -554,8 +554,8 @@ void test_forest(void) {
     ASSERT("forest begins just inside west edge", g.player.x == 1);
     ASSERT("forest has west entrance",
         g.map.tiles[g.map.stairs_up_y][0] == TILE_FOREST_ENTRANCE);
-    ASSERT("ordinary forest exit is open before finding the landmark",
-        g.map.tiles[g.map.stairs_down_y][MAP_W - 1] == TILE_FOREST_EXIT);
+    ASSERT("forest exit begins hidden",
+        g.map.tiles[g.map.stairs_down_y][MAP_W - 1] == TILE_FOREST_WALL);
     ASSERT("forest generation includes branching clearings",
         g.map.room_count == 7);
     ASSERT("lower route reaches exit when upper route is blocked",
@@ -586,7 +586,7 @@ void test_forest(void) {
     ASSERT("concealed shortcut initially behaves like dense woods",
         hidden_x >= 0 && !map_is_walkable(&g.map, hidden_x, hidden_y));
     reveal_forest_exit(&g);
-    ASSERT("forest landmark leaves the east stage exit open",
+    ASSERT("forest landmark reveals east stage exit",
         g.map.tiles[g.map.stairs_down_y][MAP_W - 1] == TILE_FOREST_EXIT);
     int concealed_after_landmark = 0;
     for (int y = 0; y < MAP_H; y++) {
@@ -743,28 +743,6 @@ void test_forest(void) {
     ASSERT("forest portal restores exact tile",
         g.player.x == portal_x && g.player.y == portal_y);
 
-    g.level = FOREST_DEPTH - 1;
-    g.level_cleared = 0;
-    map_generate_forest(&g.map, g.level);
-    Action level_seven_exit = outdoor_exit_action(&g.map);
-    ASSERT("level seven north exit starts open",
-        g.map.tiles[level_seven_exit.target_y]
-            [level_seven_exit.target_x] == TILE_FOREST_EXIT);
-    g.map.tiles[level_seven_exit.target_y]
-        [level_seven_exit.target_x] = TILE_FOREST_WALL;
-    game_refresh_quest_encounters(&g);
-    ASSERT("cached or loaded level seven exit is repaired",
-        g.map.tiles[level_seven_exit.target_y]
-            [level_seven_exit.target_x] == TILE_FOREST_EXIT);
-    enemies_spawn(&g);
-    g.player.x = g.map.stairs_down_x;
-    g.player.y = g.map.stairs_down_y;
-    action_resolve_player(&g, level_seven_exit);
-    ASSERT("level seven exits with enemies still alive",
-        g.level == FOREST_DEPTH &&
-        g.forest_cache[FOREST_DEPTH - 2].enemy_count > 0 &&
-        !g.forest_cache[FOREST_DEPTH - 2].level_cleared);
-
     g.level = FOREST_DEPTH;
     g.level_cleared = 0;
     map_generate_forest(&g.map, g.level);
@@ -856,49 +834,27 @@ void test_harbor_road(void) {
         g.inventory_count == inventory_count && !game_has_treasure_map(&g) &&
         g.elowen_quest_state == 0 && g.dain_quest_state == 0 &&
         g.alder_quest_state == 0 && g.mara_quest_state == 0);
-
-    int bosses = (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) |
-        (1 << LOCATION_MOUNTAINS) | (1 << LOCATION_COAST);
-    g.elowen_quest_state = 3;
-    g.dain_quest_state = 3;
-    g.alder_quest_state = 3;
-    g.mara_quest_state = 3;
-    const Location regions[] = {
-        LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST
-    };
-    for (int i = 0; i < 4; i++) {
-        g.defeated_bosses = bosses & ~(1 << regions[i]);
-        game_enter_tavern(&g);
-        game_leave_tavern(&g);
-        ASSERT("each regional boss is required to unlock the road",
-            !game_harbor_unlocked(&g) && g.map.tiles[road_y][21] == TILE_TOWN_FLOOR);
-        game_talk_to_rowan(&g);
-        ASSERT("a missing boss prevents the treasure map gift", !game_has_treasure_map(&g));
-    }
-    g.defeated_bosses = bosses;
-    int *quests[] = {
-        &g.elowen_quest_state, &g.dain_quest_state,
-        &g.alder_quest_state, &g.mara_quest_state
-    };
-    for (int i = 0; i < 4; i++) {
-        for (int state = 0; state < 3; state++) {
-            *quests[i] = state;
-            game_enter_tavern(&g);
-            game_leave_tavern(&g);
-            ASSERT("every quest must be turned in before the road appears",
-                !game_harbor_unlocked(&g) && g.map.tiles[road_y][21] == TILE_TOWN_FLOOR);
-            game_talk_to_rowan(&g);
-            ASSERT("an unfinished quest prevents the treasure map gift", !game_has_treasure_map(&g));
-        }
-        *quests[i] = 3;
-    }
-
-    g.mara_quest_state = 2;
+    ASSERT("Rowan explains that the Drowned Queen blocks sailing",
+        strstr(g.dialogue_text, "Drowned Queen") != NULL);
+    g.defeated_bosses = (1 << LOCATION_DUNGEON) |
+        (1 << LOCATION_FOREST) | (1 << LOCATION_MOUNTAINS);
     game_enter_tavern(&g);
-    game_talk_to_mara(&g);
     game_leave_tavern(&g);
+    ASSERT("other bosses do not open the harbor without the Drowned Queen",
+        !game_harbor_unlocked(&g) &&
+        g.map.tiles[road_y][21] == TILE_TOWN_FLOOR);
+    game_talk_to_rowan(&g);
+    ASSERT("Rowan withholds the map until the coast boss is defeated",
+        !game_has_treasure_map(&g));
+    g.defeated_bosses = 1 << LOCATION_COAST;
+    game_enter_tavern(&g);
+    game_leave_tavern(&g);
+    ASSERT("coast victory opens the harbor without other bosses or quests",
+        game_harbor_unlocked(&g) &&
+        g.elowen_quest_state == 0 && g.dain_quest_state == 0 &&
+        g.alder_quest_state == 0 && g.mara_quest_state == 0);
     for (int x = 20; x < TOWN_HARBOR_X; x++) {
-        ASSERT("last quest turn-in connects the south road to the harbor",
+        ASSERT("coast victory connects the south road to the harbor",
             g.map.tiles[road_y][x] == TILE_TOWN_PATH &&
             map_is_walkable(&g.map, x, road_y));
     }
