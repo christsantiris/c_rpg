@@ -2189,8 +2189,9 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         }
 
         int path_distance = enemy_distances[e->y][e->x];
+        // Leave an opening after retreating so melee attackers can catch up.
         if ((enemy_prefers_range(e) || enemy_is_support(e)) &&
-            path_distance > 0 &&
+            e->move_timer % 2 == 0 && path_distance > 0 &&
             path_distance < 3 && enemy_move_away(g, i)) {
             e->move_timer++;
             continue;
