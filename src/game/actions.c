@@ -609,6 +609,7 @@ void action_resolve_player(GameState *g, Action a) {
     if (g->location == LOCATION_TOWN ||
         g->location == LOCATION_TAVERN ||
         g->location == LOCATION_TOWN2 ||
+        g->location == LOCATION_FOREST_ROAD ||
         g->location == LOCATION_INN ||
         g->location == LOCATION_ISLAND ||
         g->location == LOCATION_LABYRINTH) {
@@ -982,6 +983,10 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
         if (sp->id == SPELL_RETURN_TO_TOWN) {
+            if (g->location == LOCATION_FOREST_ROAD) {
+                push_message(g, "A town is just ahead on the road.");
+                return;
+            }
             if (g->location == LOCATION_TOWN ||
                 g->location == LOCATION_TOWN2 ||
                 g->location == LOCATION_TAVERN ||
@@ -1393,8 +1398,8 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
         if (g->location == LOCATION_TOWN2 &&
-            g->map.tiles[ty][tx] == TILE_TOWN_EXIT && tx == 0) {
-            game_leave_town2(g);
+            g->map.tiles[ty][tx] == TILE_TOWN_EXIT && tx == TOWN_W - 1) {
+            game_enter_forest_road(g);
             return;
         }
 
@@ -1403,7 +1408,7 @@ void action_resolve_player(GameState *g, Action a) {
             if (tx == 0) {
                 if (ty >= 13 &&
                     (g->defeated_bosses & (1 << LOCATION_FOREST))) {
-                    game_enter_town2(g);
+                    game_enter_forest_road(g);
                 } else {
                     game_enter_forest(g);
                 }
@@ -1414,6 +1419,19 @@ void action_resolve_player(GameState *g, Action a) {
             } else {
                 game_enter_dungeon(g);
             }
+            return;
+        }
+
+        if (g->location == LOCATION_FOREST_ROAD &&
+            g->map.tiles[ty][tx] == TILE_FOREST_ENTRANCE && tx == 0) {
+            game_leave_forest_road(g, LOCATION_TOWN2);
+            return;
+        }
+
+        if (g->location == LOCATION_FOREST_ROAD &&
+            g->map.tiles[ty][tx] == TILE_FOREST_EXIT &&
+            tx == FOREST_ROAD_W - 1) {
+            game_leave_forest_road(g, LOCATION_TOWN);
             return;
         }
 

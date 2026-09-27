@@ -1127,7 +1127,7 @@ void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
         m->tiles[12][x] = TILE_TOWN_PATH;
     }
     for (int y = 10; y <= 14; y++) {
-        m->tiles[y][0] = TILE_TOWN_EXIT;
+        m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
     }
     for (int y = TOWN_HEALER_Y; y < TOWN_HEALER_Y + TOWN_HEALER_H; y++) {
         for (int x = TOWN_HEALER_X; x < TOWN_HEALER_X + TOWN_HEALER_W; x++) {
@@ -1159,6 +1159,31 @@ void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
     map_place_town_labyrinth(m);
     *spawn_x = 1;
     *spawn_y = 12;
+}
+
+void map_generate_forest_road(Map *m) {
+    map_clear_exploration(m);
+    m->room_count = 0;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            m->tiles[y][x] = TILE_FOREST_WALL;
+        }
+    }
+    for (int x = 1; x < FOREST_ROAD_W - 1; x++) {
+        for (int y = FOREST_ROAD_Y - 1; y <= FOREST_ROAD_Y + 1; y++) {
+            m->tiles[y][x] = TILE_FOREST_FLOOR;
+        }
+        if (x % 16 >= 5 && x % 16 <= 10) {
+            m->tiles[FOREST_ROAD_Y - 2][x] = TILE_FOREST_FLOOR;
+            m->tiles[FOREST_ROAD_Y + 2][x] = TILE_FOREST_FLOOR;
+        }
+    }
+    m->tiles[FOREST_ROAD_Y][0] = TILE_FOREST_ENTRANCE;
+    m->tiles[FOREST_ROAD_Y][FOREST_ROAD_W - 1] = TILE_FOREST_EXIT;
+    m->stairs_up_x = 1;
+    m->stairs_up_y = FOREST_ROAD_Y;
+    m->stairs_down_x = FOREST_ROAD_W - 2;
+    m->stairs_down_y = FOREST_ROAD_Y;
 }
 
 static unsigned int labyrinth_random(unsigned int *state) {

@@ -5,6 +5,7 @@ static const char *game_over_location(const GameState *g) {
     switch (g->location) {
         case LOCATION_DUNGEON: return "DUNGEON";
         case LOCATION_FOREST: return "HAUNTED FOREST";
+        case LOCATION_FOREST_ROAD: return "FOREST ROAD";
         case LOCATION_MOUNTAINS: return "GOBLIN MOUNTAINS";
         case LOCATION_COAST: return "SUNKEN COAST";
         case LOCATION_TAVERN: return "TAVERN";

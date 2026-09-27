@@ -56,7 +56,8 @@ typedef struct {
 } TownEntryTransition;
 
 static int town_entry_style(const GameState *g, Action action, TownExitStyle *style) {
-    if (g->location != LOCATION_TOWN || action.type != ACTION_MOVE ||
+    if ((g->location != LOCATION_TOWN && g->location != LOCATION_TOWN2) ||
+        action.type != ACTION_MOVE ||
         action.target_x < 0 || action.target_x >= MAP_W ||
         action.target_y < 0 || action.target_y >= MAP_H ||
         g->map.tiles[action.target_y][action.target_x] != TILE_TOWN_EXIT) {
@@ -71,7 +72,8 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
         return 1;
     }
     if (action.target_x == TOWN_W - 1) {
-        *style = TOWN_EXIT_MOUNTAINS;
+        *style = g->location == LOCATION_TOWN2 ?
+            TOWN_EXIT_FOREST : TOWN_EXIT_MOUNTAINS;
         return 1;
     }
     if (action.target_y == TOWN_H - 1) {

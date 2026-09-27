@@ -213,28 +213,50 @@ void test_rook_labyrinth(void) {
     remove("saves/savegame_99014.json");
 
     loaded.defeated_bosses |= 1 << LOCATION_FOREST;
-    loaded.player.x = 1;
+    loaded.player.x = TOWN_W - 2;
     loaded.player.y = 12;
-    action_resolve_player(&loaded, (Action){ACTION_MOVE, 0, 12});
-    ASSERT("second-town west gate returns to the starting town",
-        loaded.location == LOCATION_TOWN && loaded.player.x == 1 &&
-        loaded.player.y == 14);
-    action_resolve_player(&loaded, (Action){ACTION_MOVE, 0, 14});
-    ASSERT("cleared forest road leads back to Town 2",
-        loaded.location == LOCATION_TOWN2 && loaded.player.x == 1 &&
-        loaded.player.y == 12);
-    loaded.player.x = 8;
-    loaded.player.y = 21;
-    action_resolve_player(&loaded, (Action){ACTION_MOVE, 8, 20});
+    action_resolve_player(&loaded, (Action){ACTION_MOVE, TOWN_W - 1, 12});
+    ASSERT("Town 2's east gate enters an enemy-free forest road",
+        loaded.location == LOCATION_FOREST_ROAD && loaded.player.x == 1 &&
+        loaded.player.y == FOREST_ROAD_Y && loaded.enemy_count == 0 &&
+        loaded.map.tiles[FOREST_ROAD_Y][2] == TILE_FOREST_FLOOR);
+    saved = save_game(&loaded, slot);
+    restored = saved && load_game(&g, slot);
+    ASSERT("forest road position survives save and load",
+        restored && g.location == LOCATION_FOREST_ROAD &&
+        g.player.x == 1 && g.player.y == FOREST_ROAD_Y &&
+        g.map.tiles[FOREST_ROAD_Y][FOREST_ROAD_W - 1] == TILE_FOREST_EXIT);
+    remove("saves/savegame_99014.json");
+    for (int x = 2; x < FOREST_ROAD_W; x++) {
+        action_resolve_player(&g, (Action){ACTION_MOVE, x, FOREST_ROAD_Y});
+    }
+    ASSERT("walking east across the road reaches Town 1's west gate",
+        g.location == LOCATION_TOWN && g.player.x == 1 && g.player.y == 14);
+    action_resolve_player(&g, (Action){ACTION_MOVE, 0, 14});
+    ASSERT("Town 1's lower west gate enters the road at its east end",
+        g.location == LOCATION_FOREST_ROAD &&
+        g.player.x == FOREST_ROAD_W - 2 && g.player.y == FOREST_ROAD_Y);
+    for (int x = FOREST_ROAD_W - 3; x >= 0; x--) {
+        action_resolve_player(&g, (Action){ACTION_MOVE, x, FOREST_ROAD_Y});
+    }
+    ASSERT("walking west across the road reaches Town 2's east gate",
+        g.location == LOCATION_TOWN2 && g.player.x == TOWN_W - 2 &&
+        g.player.y == 12);
+    action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 3, 12});
+    ASSERT("continuing west enters Town 2 rather than returning to the road",
+        g.location == LOCATION_TOWN2 && g.player.x == TOWN_W - 3);
+    g.player.x = 8;
+    g.player.y = 21;
+    action_resolve_player(&g, (Action){ACTION_MOVE, 8, 20});
     ASSERT("walking through the Inn door enters Rook's room",
-        loaded.location == LOCATION_INN &&
-        loaded.map.tiles[18][10] == TILE_NPC_ROOK);
-    loaded.player.x = 20;
-    loaded.player.y = 21;
-    action_resolve_player(&loaded, (Action){ACTION_MOVE, 20, 22});
+        g.location == LOCATION_INN &&
+        g.map.tiles[18][10] == TILE_NPC_ROOK);
+    g.player.x = 20;
+    g.player.y = 21;
+    action_resolve_player(&g, (Action){ACTION_MOVE, 20, 22});
     ASSERT("leaving the Inn returns to Town 2",
-        loaded.location == LOCATION_TOWN2 &&
-        loaded.player.x == 8 && loaded.player.y == 21);
+        g.location == LOCATION_TOWN2 &&
+        g.player.x == 8 && g.player.y == 21);
 }
 
 static int forest_path_exists_around(const Map *m, int blocked_room) {
