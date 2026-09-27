@@ -68,7 +68,12 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
         return 1;
     }
     if (action.target_x == 0) {
-        *style = TOWN_EXIT_FOREST;
+        if (action.target_y >= TOWN_ROAD_EXIT_Y - 1 &&
+            !(g->defeated_bosses & (1 << LOCATION_FOREST))) {
+            return 0;
+        }
+        *style = action.target_y >= TOWN_ROAD_EXIT_Y - 1 ?
+            TOWN_EXIT_ROAD : TOWN_EXIT_FOREST;
         return 1;
     }
     if (action.target_x == TOWN_W - 1) {
@@ -1278,7 +1283,8 @@ int main(int argc, char **argv) {
         if (entry_gate.active) {
             Uint32 elapsed = SDL_GetTicks() - entry_gate.started_at;
             int covered_width = entry_gate_width(elapsed, renderer.screen_w);
-            if (entry_gate.style == TOWN_EXIT_FOREST) {
+            if (entry_gate.style == TOWN_EXIT_FOREST ||
+                entry_gate.style == TOWN_EXIT_ROAD) {
                 draw_forest_transition(&renderer, covered_width);
             } else if (entry_gate.style == TOWN_EXIT_MOUNTAINS) {
                 draw_mountain_transition(&renderer, covered_width);

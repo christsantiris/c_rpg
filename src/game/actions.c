@@ -1406,9 +1406,12 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->location == LOCATION_TOWN &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
             if (tx == 0) {
-                if (ty >= 13 &&
-                    (g->defeated_bosses & (1 << LOCATION_FOREST))) {
-                    game_enter_forest_road(g);
+                if (ty >= TOWN_ROAD_EXIT_Y - 1) {
+                    if (g->defeated_bosses & (1 << LOCATION_FOREST)) {
+                        game_enter_forest_road(g);
+                    } else {
+                        push_message(g, "The road to Town 2 is still blocked.");
+                    }
                 } else {
                     game_enter_forest(g);
                 }

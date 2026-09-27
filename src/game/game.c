@@ -1691,6 +1691,8 @@ void game_leave_tavern(GameState *g) {
     int spawn_y;
     g->location = LOCATION_TOWN;
     map_generate_town(&g->map, &spawn_x, &spawn_y);
+    map_set_town2_road(&g->map,
+        g->defeated_bosses & (1 << LOCATION_FOREST));
     place_harbor_road(g);
     g->player.x = 8;
     g->player.y = 21;
@@ -1750,10 +1752,12 @@ void game_leave_forest_road(GameState *g, Location destination) {
         g->player.y = 12;
     } else {
         map_generate_town(&g->map, &spawn_x, &spawn_y);
+        map_set_town2_road(&g->map,
+            g->defeated_bosses & (1 << LOCATION_FOREST));
         place_harbor_road(g);
         place_town_portal(g);
         g->player.x = 1;
-        g->player.y = 14;
+        g->player.y = TOWN_ROAD_EXIT_Y;
     }
     g->enemy_count = 0;
     g->floor_item_count = 0;
@@ -1925,6 +1929,8 @@ void game_leave_island(GameState *g) {
     int spawn_y;
     g->location = LOCATION_TOWN;
     map_generate_town(&g->map, &spawn_x, &spawn_y);
+    map_set_town2_road(&g->map,
+        g->defeated_bosses & (1 << LOCATION_FOREST));
     place_harbor_road(g);
     g->player.x = TOWN_HARBOR_ENTRANCE_X;
     g->player.y = TOWN_HARBOR_ENTRANCE_Y;
@@ -2148,6 +2154,8 @@ void game_return_to_town(GameState *g) {
     g->location = LOCATION_TOWN;
     int spawn_x, spawn_y;
     map_generate_town(&g->map, &spawn_x, &spawn_y);
+    map_set_town2_road(&g->map,
+        g->defeated_bosses & (1 << LOCATION_FOREST));
     place_harbor_road(g);
     if (returning_from == LOCATION_FOREST) {
         g->player.x = 1; g->player.y = 12;

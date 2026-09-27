@@ -575,6 +575,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     int island_scaled = g->location == LOCATION_ISLAND;
     int labyrinth_scaled = g->location == LOCATION_LABYRINTH;
     int road_scaled = g->location == LOCATION_FOREST_ROAD;
+    int town_road_gate = g->location == LOCATION_TOWN &&
+        (g->defeated_bosses & (1 << LOCATION_FOREST)) &&
+        g->map.tiles[TOWN_ROAD_EXIT_Y][0] == TILE_TOWN_EXIT &&
+        g->map.tiles[TOWN_ROAD_EXIT_Y][4] == TILE_TOWN_PATH;
     if (town_scaled || island_scaled || labyrinth_scaled) {
         // Keep the entire fixed map inside the play area.
         int map_w = town_scaled ? TOWN_W :
@@ -985,6 +989,15 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         draw_town_gate(r,
             viewport_to_screen_x(v, 0), viewport_to_screen_y(v, 10),
             TOWN_EXIT_FOREST);
+        if (town_road_gate) {
+            draw_town_gate(r,
+                viewport_to_screen_x(v, 0),
+                viewport_to_screen_y(v, TOWN_ROAD_GATE_Y),
+                TOWN_EXIT_ROAD);
+            draw_town_road_sign(r,
+                viewport_to_screen_x(v, 1),
+                viewport_to_screen_y(v, TOWN_ROAD_GATE_Y - 1));
+        }
         draw_town_gate(r,
             viewport_to_screen_x(v, TOWN_W - 3), viewport_to_screen_y(v, 10),
             TOWN_EXIT_MOUNTAINS);
@@ -1159,11 +1172,14 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             + (TILE_SIZE - coast_h) / 2;
         renderer_draw_text(r, "SUNKEN COAST", coast_x, coast_y,
             (SDL_Color){62, 210, 205, 255}, r->font_tiny);
-        if (g->defeated_bosses & (1 << LOCATION_FOREST)) {
+        if (town_road_gate) {
+            int town2_w = 0;
+            TTF_SizeText(r->font_tiny, "TOWN 2", &town2_w, NULL);
             renderer_draw_text(r, "TOWN 2",
-                viewport_to_screen_x(v, 1) * TILE_SIZE + 8,
-                viewport_to_screen_y(v, 14) * TILE_SIZE,
-                label, r->font_tiny);
+                viewport_to_screen_x(v, 1) * TILE_SIZE + 7 +
+                    (66 - town2_w) / 2,
+                viewport_to_screen_y(v, TOWN_ROAD_GATE_Y - 1) * TILE_SIZE + 7,
+                (SDL_Color){233, 201, 133, 255}, r->font_tiny);
         }
     }
 

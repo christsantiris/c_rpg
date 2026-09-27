@@ -107,12 +107,14 @@ typedef enum {
     TOWN_EXIT_DUNGEON,
     TOWN_EXIT_FOREST,
     TOWN_EXIT_MOUNTAINS,
-    TOWN_EXIT_COAST
+    TOWN_EXIT_COAST,
+    TOWN_EXIT_ROAD
 } TownExitStyle;
 
 void draw_town_floor(Renderer *r, int tile_x, int tile_y);
 void draw_town_path(Renderer *r, int tile_x, int tile_y);
 void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style);
+void draw_town_road_sign(Renderer *r, int tile_x, int tile_y);
 void draw_dungeon_transition(Renderer *r, int covered_width);
 void draw_forest_transition(Renderer *r, int covered_width);
 void draw_mountain_transition(Renderer *r, int covered_width);
