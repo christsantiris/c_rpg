@@ -1726,20 +1726,41 @@ void game_enter_town2(GameState *g) {
     push_message(g, "You arrive in the second town.");
 }
 
-void game_leave_town2(GameState *g) {
-    int spawn_x;
-    int spawn_y;
-    g->location = LOCATION_TOWN;
-    map_generate_town(&g->map, &spawn_x, &spawn_y);
-    place_harbor_road(g);
-    place_town_portal(g);
-    g->player.x = 1;
-    g->player.y = 14;
+void game_enter_forest_road(GameState *g) {
+    int from_town2 = g->location == LOCATION_TOWN2;
+    g->location = LOCATION_FOREST_ROAD;
+    map_generate_forest_road(&g->map);
+    g->player.x = from_town2 ? 1 : FOREST_ROAD_W - 2;
+    g->player.y = FOREST_ROAD_Y;
     g->enemy_count = 0;
     g->floor_item_count = 0;
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
-    push_message(g, "The cleared forest road leads back to town.");
+    push_message(g, from_town2 ? "The forest road leads east to Town 1." :
+        "The forest road leads west to Town 2.");
+}
+
+void game_leave_forest_road(GameState *g, Location destination) {
+    int spawn_x;
+    int spawn_y;
+    g->location = destination;
+    if (destination == LOCATION_TOWN2) {
+        map_generate_town2(&g->map, &spawn_x, &spawn_y);
+        g->player.x = TOWN_W - 2;
+        g->player.y = 12;
+    } else {
+        map_generate_town(&g->map, &spawn_x, &spawn_y);
+        place_harbor_road(g);
+        place_town_portal(g);
+        g->player.x = 1;
+        g->player.y = 14;
+    }
+    g->enemy_count = 0;
+    g->floor_item_count = 0;
+    g->dialogue_active = 0;
+    g->player.poison_turns = 0;
+    push_message(g, destination == LOCATION_TOWN2 ?
+        "You arrive in the second town." : "You return to the starting town.");
 }
 
 void game_enter_inn(GameState *g) {

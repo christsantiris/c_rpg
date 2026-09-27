@@ -50,9 +50,10 @@ remain defeated.
 The Blacksmith sells weapons, armor, and shields. The Alchemist sells both
 potion types, spell scrolls, and Mage spell tomes in the starting town. Defeating
 the forest Necromancer opens the way to a second town. After that victory, the
-southern two tiles of the starting town's west gate follow the cleared road directly
-to Town 2; the upper half still enters the forest. Town 2's west gate returns
-to Town 1. Town 2 has an Inn, a healer selling Health Potions, a witch selling
+southern two tiles of the starting town's west gate lead onto a short, enemy-free
+forest road. Walk west across it to reach Town 2; the upper half of the gate
+still enters the full forest. Town 2's east gate leads back along the road to
+Town 1. Town 2 has an Inn, a healer selling Health Potions, a witch selling
 Mana Potions, and Rook's labyrinth. Each shop buys its own item types.
 Stock expands as bosses are defeated; buying costs twice an item's base value,
 while selling pays one quarter of base value.

@@ -14,6 +14,9 @@
 
 #define TOWN_W 44 // town dimensions
 #define TOWN_H 25 // town dimensions
+#define FOREST_ROAD_W 80
+#define FOREST_ROAD_H 25
+#define FOREST_ROAD_Y 12
 #define TAVERN_X 4
 #define TAVERN_Y 2
 #define TAVERN_W 32
@@ -228,6 +231,7 @@ int  map_is_walkable(const Map *m, int x, int y);
 void map_room_center(const Room *r, int *cx, int *cy);
 void map_generate_town(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_town2(Map *m, int *spawn_x, int *spawn_y);
+void map_generate_forest_road(Map *m);
 void map_place_town_labyrinth(Map *m);
 void map_place_town_harbor(Map *m);
 void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y);

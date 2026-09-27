@@ -542,7 +542,8 @@ static void draw_trap_underlay(Renderer *r, const GameState *g, int map_x, int m
             bridge_neighbors += tile == TILE_MOUNTAIN_BRIDGE;
         }
     }
-    if (g->location == LOCATION_FOREST) {
+    if (g->location == LOCATION_FOREST ||
+        g->location == LOCATION_FOREST_ROAD) {
         draw_forest_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_COAST) {
         draw_coast_trap_underlay(r, g, map_x, map_y, screen_x, screen_y);
@@ -573,8 +574,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->location == LOCATION_INN;
     int island_scaled = g->location == LOCATION_ISLAND;
     int labyrinth_scaled = g->location == LOCATION_LABYRINTH;
+    int road_scaled = g->location == LOCATION_FOREST_ROAD;
     if (town_scaled || island_scaled || labyrinth_scaled) {
-        // Keep the entire fixed town or island map inside the play area.
+        // Keep the entire fixed map inside the play area.
         int map_w = town_scaled ? TOWN_W :
             (island_scaled ? ISLAND_W : LABYRINTH_W);
         int map_h = town_scaled ? TOWN_H :
@@ -592,6 +594,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         SDL_RenderSetScale(r->sdl,
             (float)play_w / (map_w * TILE_SIZE),
             (float)play_h / (map_h * TILE_SIZE));
+    } else if (road_scaled) {
+        int view_w = v->tiles_x < FOREST_ROAD_W ? v->tiles_x : FOREST_ROAD_W;
+        int view_h = v->tiles_y < FOREST_ROAD_H ? v->tiles_y : FOREST_ROAD_H;
+        viewport_init(&town_view, view_w, view_h,
+            FOREST_ROAD_W, FOREST_ROAD_H);
+        viewport_center_on(&town_view, g->player.x, g->player.y);
+        v = &town_view;
     } else if (tavern_scaled) {
         // Fit the entire room without stretching sprites or showing unused map tiles.
         viewport_init(&town_view, TAVERN_W, TAVERN_H, MAP_W, MAP_H);
@@ -996,7 +1005,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     if (g->location == LOCATION_TOWN2) {
         draw_town_gate(r,
-            viewport_to_screen_x(v, 0), viewport_to_screen_y(v, 10),
+            viewport_to_screen_x(v, TOWN_W - 3), viewport_to_screen_y(v, 10),
             TOWN_EXIT_FOREST);
         draw_witch_hut(r,
             viewport_to_screen_x(v, TOWN_WITCH_X),
@@ -1187,7 +1196,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             g->rook_quest_state == 1 || g->rook_quest_state == 2 ?
                 label : (SDL_Color){105, 105, 90, 255}, r->font_tiny);
         renderer_draw_text(r, "TOWN 1",
-            viewport_to_screen_x(v, 1) * TILE_SIZE + 8,
+            viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - 54,
             viewport_to_screen_y(v, 12) * TILE_SIZE,
             label, r->font_tiny);
     }
