@@ -37,6 +37,10 @@ static void test_gold_drop_scarcity(void) {
         int gold_before = g.gold;
         action_resolve_player(&g, attack);
         int coins = g.gold - gold_before;
+        if (g.floor_item_count > 0 &&
+            g.floor_items[0].item.type == ITEM_GOLD) {
+            coins += g.floor_items[0].item.value;
+        }
         if (coins > 0) {
             drops++;
             small_purses &= coins <= 2;
@@ -45,7 +49,28 @@ static void test_gold_drop_scarcity(void) {
     ASSERT("ordinary kills usually yield no gold", drops >= 120 && drops <= 280);
     ASSERT("early enemy purses contain only one or two gold", small_purses);
 
+    game_init(&g);
+    g.player.x = 10;
+    g.player.y = 10;
+    g.inventory_count = MAX_INVENTORY;
+    g.map.tiles[10][10] = TILE_ITEM;
+    g.floor_item_count = 1;
+    g.floor_items[0] = (FloorItem){
+        .active = 1, .x = 10, .y = 10, .underlying_tile = TILE_FLOOR,
+        .item = {.active = 1, .type = ITEM_GOLD, .value = 2}
+    };
+    int pickup_gold = g.gold;
+    int pickup_score = g.score;
+    action_resolve_player(&g, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("gold pickup works with a full inventory",
+        g.gold == pickup_gold + 2 && g.score == pickup_score + 2 &&
+        g.inventory_count == MAX_INVENTORY && !g.floor_items[0].active &&
+        g.map.tiles[10][10] == TILE_FLOOR);
+
+    g.player.x = x - 1;
+    g.player.y = y;
     g.location = LOCATION_FOREST;
+    g.enemy_count = 1;
     g.floor_item_count = 0;
     g.map.tiles[y][x] = TILE_FOREST_FLOOR;
     g.enemies[0] = (Enemy){
@@ -54,10 +79,24 @@ static void test_gold_drop_scarcity(void) {
     };
     int gold_before = g.gold;
     action_resolve_player(&g, attack);
-    ASSERT("bosses keep a guaranteed smaller purse and equipment reward",
-        g.gold == gold_before + 25 && g.floor_item_count == 1 &&
-        g.floor_items[0].item.type == ITEM_ARMOR &&
+    ASSERT("bosses leave separate gold and equipment pickups",
+        g.gold == gold_before && g.floor_item_count == 2 &&
+        g.floor_items[0].item.type == ITEM_GOLD &&
+        g.floor_items[0].item.value == 25 &&
+        g.floor_items[1].item.type == ITEM_ARMOR &&
         (g.defeated_bosses & (1 << LOCATION_FOREST)));
+    g.player.x = x;
+    g.player.y = y;
+    action_resolve_player(&g, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("collecting boss gold leaves its equipment on the floor",
+        g.gold == gold_before + 25 && !g.floor_items[0].active &&
+        g.floor_items[1].active && g.map.tiles[y][x] == TILE_ITEM);
+    g.inventory_count = 1;
+    action_resolve_player(&g, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("collecting boss equipment restores the floor",
+        !g.floor_items[1].active && g.inventory_count == 2 &&
+        g.inventory[1].type == ITEM_ARMOR &&
+        g.map.tiles[y][x] == TILE_FOREST_FLOOR);
 }
 
 void test_items(void) {
@@ -457,7 +496,7 @@ void test_items(void) {
         strcmp(coast_reward.name, "Tidecaller Robes") == 0);
 
     // --- Use health potion ---
-    GameState g = {0};
+    static GameState g;
     game_init(&g);
     g.location = LOCATION_DUNGEON;
     g.level = 1;
@@ -477,9 +516,10 @@ void test_items(void) {
         sizeof(g.enemies[0].name) - 1);
     Action defeat_boss = {ACTION_MOVE, 11, 10};
     action_resolve_player(&g, defeat_boss);
-    ASSERT("defeated boss places its guaranteed equipment reward",
-        g.floor_item_count == 1 &&
-        strcmp(g.floor_items[0].item.name, "Cryptblade") == 0);
+    ASSERT("defeated boss leaves gold and its guaranteed equipment reward",
+        g.floor_item_count == 2 &&
+        g.floor_items[0].item.type == ITEM_GOLD &&
+        strcmp(g.floor_items[1].item.name, "Cryptblade") == 0);
 
     game_init(&g);
     g.player.hp     = 50;
