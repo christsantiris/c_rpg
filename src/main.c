@@ -1238,7 +1238,9 @@ int main(int argc, char **argv) {
             game.location == LOCATION_TOWN2 ||
             game.location == LOCATION_INN ||
             game.location == LOCATION_ISLAND;
-        music_update(screen, is_town);
+        int in_town2 = game.location == LOCATION_TOWN2 ||
+            game.location == LOCATION_INN;
+        music_update(screen, is_town, in_town2);
 
         if (!needs_redraw) {
             continue;
