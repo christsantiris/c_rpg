@@ -83,7 +83,9 @@ score**.
 Captain Rowan waits near the harbor and describes the island before it is
 reachable. Defeat the Drowned Queen on the Sunken Coast to extend the Town 1
 road to the dock. Speak with Rowan to receive the Island Treasure Map, then
-walk into the dock entrance to board the ship.
+walk into the dock entrance to board the ship. If neither the dungeon nor the
+mountains has been cleared, Rowan warns that the Ruined Temple is dangerous
+and recommends training there first. The advice does not block sailing.
 
 The tropical Ruined Isle is a peaceful exploration area with an abandoned
 camp, carved marker, broken statue, lagoon, Captain Rowan, and Nahla. Rowan can
