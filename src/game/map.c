@@ -1050,10 +1050,10 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     for (int x = 18; x <= 22; x++)
         m->tiles[0][x] = TILE_TOWN_EXIT;
 
-    // Forest exit at the west end of the crossroad. East and south remain
-    // available for future regions.
-    for (int y = 10; y <= 14; y++)
+    // The forest gate stays on the main road. The Town 2 spur appears later.
+    for (int y = 10; y <= 12; y++) {
         m->tiles[y][0] = TILE_TOWN_EXIT;
+    }
 
     // Goblin Mountains exit at the east end of the crossroad.
     for (int y = 10; y <= 14; y++)
@@ -1084,6 +1084,13 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     m->tiles[TOWN_ALCHEMIST_Y + 4][TOWN_ALCHEMIST_X + 2] =
         TILE_TOWN_PATH;
 
+    // Widen the main road by one row above and two rows below the shops.
+    for (int y = 11; y <= 14; y++) {
+        for (int x = TOWN_BLACKSMITH_X + 2; x <= TOWN_ALCHEMIST_X + 2; x++) {
+            m->tiles[y][x] = TILE_TOWN_PATH;
+        }
+    }
+
     // Tavern at (5, 16) — 7x5 tiles.
     for (int dy = 0; dy < 5; dy++) {
         for (int dx = 0; dx < 7; dx++) {
@@ -1107,6 +1114,36 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     // for a future region.
     *spawn_x = 20;
     *spawn_y = 12;
+}
+
+void map_set_town2_road(Map *m, int unlocked) {
+    m->tiles[13][0] = TILE_WALL;
+    m->tiles[14][0] = TILE_WALL;
+    for (int y = 13; y <= 21; y++) {
+        m->tiles[y][4] = TILE_TOWN_FLOOR;
+    }
+    for (int x = 4; x < 8; x++) {
+        m->tiles[21][x] = TILE_TOWN_FLOOR;
+    }
+    for (int y = TOWN_ROAD_EXIT_Y - 1; y <= TOWN_ROAD_EXIT_Y + 1; y++) {
+        m->tiles[y][0] = TILE_WALL;
+        for (int x = 1; x <= 4; x++) {
+            m->tiles[y][x] = TILE_TOWN_FLOOR;
+        }
+    }
+    if (!unlocked) {
+        return;
+    }
+    for (int y = 12; y <= 21; y++) {
+        m->tiles[y][4] = TILE_TOWN_PATH;
+    }
+    m->tiles[TOWN_ROAD_EXIT_Y][0] = TILE_TOWN_EXIT;
+    for (int x = 1; x <= 4; x++) {
+        m->tiles[TOWN_ROAD_EXIT_Y][x] = TILE_TOWN_PATH;
+    }
+    for (int x = 4; x <= 8; x++) {
+        m->tiles[21][x] = TILE_TOWN_PATH;
+    }
 }
 
 void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
@@ -1170,13 +1207,7 @@ void map_generate_forest_road(Map *m) {
         }
     }
     for (int x = 1; x < FOREST_ROAD_W - 1; x++) {
-        for (int y = FOREST_ROAD_Y - 1; y <= FOREST_ROAD_Y + 1; y++) {
-            m->tiles[y][x] = TILE_FOREST_FLOOR;
-        }
-        if (x % 16 >= 5 && x % 16 <= 10) {
-            m->tiles[FOREST_ROAD_Y - 2][x] = TILE_FOREST_FLOOR;
-            m->tiles[FOREST_ROAD_Y + 2][x] = TILE_FOREST_FLOOR;
-        }
+        m->tiles[FOREST_ROAD_Y][x] = TILE_FOREST_FLOOR;
     }
     m->tiles[FOREST_ROAD_Y][0] = TILE_FOREST_ENTRANCE;
     m->tiles[FOREST_ROAD_Y][FOREST_ROAD_W - 1] = TILE_FOREST_EXIT;

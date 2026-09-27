@@ -1655,6 +1655,10 @@ int load_game(GameState *g, int slot) {
         }
     }
 
+    if (g->location == LOCATION_TOWN) {
+        map_set_town2_road(&g->map,
+            g->defeated_bosses & (1 << LOCATION_FOREST));
+    }
     if (g->location == LOCATION_TOWN2) {
         map_place_town_labyrinth(&g->map);
     }

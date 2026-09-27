@@ -16,6 +16,7 @@ A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explo
 - [Contributing](#contributing)
 - [License](#license)
 - [Installers](#installers)
+- [Credits](#credits)
 - [Roadmap](#roadmap)
 
 ## Overview
@@ -50,10 +51,10 @@ remain defeated.
 The Blacksmith sells weapons, armor, and shields. The Alchemist sells both
 potion types, spell scrolls, and Mage spell tomes in the starting town. Defeating
 the forest Necromancer opens the way to a second town. After that victory, the
-southern two tiles of the starting town's west gate lead onto a short, enemy-free
-forest road. Walk west across it to reach Town 2; the upper half of the gate
-still enters the full forest. Town 2's east gate leads back along the road to
-Town 1. Town 2 has an Inn, a healer selling Health Potions, a witch selling
+lower west gate of the starting town leads onto a short, enemy-free forest road.
+Walk west across it to reach Town 2; the upper west gate still enters the full
+forest. The lower gate stays blocked until the Necromancer falls. Town 2's east
+gate leads back along the road to Town 1. Town 2 has an Inn, a healer selling
 Mana Potions, and Rook's labyrinth. Each shop buys its own item types.
 Stock expands as bosses are defeated; buying costs twice an item's base value,
 while selling pays one quarter of base value.
@@ -285,6 +286,9 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 - Run directly: `cd linux && ./run.sh`
 - Install as a desktop app: `./install.sh` — adds the game to your app launcher with a double-clickable icon
 
+## Credits
+[Pixabay](https://pixabay.com/) for the sound effects
+
 ## Roadmap
 
 ### Production releases
@@ -302,3 +306,4 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 3. More weapon variation
 4. Accessibility and controls
    Add remappable controls, text scaling, colorblind-safe indicators, adjustable message duration, and clearer interaction prompts.
+5. Additional areas and storylines

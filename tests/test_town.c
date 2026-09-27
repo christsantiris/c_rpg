@@ -219,7 +219,9 @@ void test_rook_labyrinth(void) {
     ASSERT("Town 2's east gate enters an enemy-free forest road",
         loaded.location == LOCATION_FOREST_ROAD && loaded.player.x == 1 &&
         loaded.player.y == FOREST_ROAD_Y && loaded.enemy_count == 0 &&
-        loaded.map.tiles[FOREST_ROAD_Y][2] == TILE_FOREST_FLOOR);
+        loaded.map.tiles[FOREST_ROAD_Y][2] == TILE_FOREST_FLOOR &&
+        loaded.map.tiles[FOREST_ROAD_Y - 1][2] == TILE_FOREST_WALL &&
+        loaded.map.tiles[FOREST_ROAD_Y + 1][2] == TILE_FOREST_WALL);
     saved = save_game(&loaded, slot);
     restored = saved && load_game(&g, slot);
     ASSERT("forest road position survives save and load",
@@ -231,8 +233,16 @@ void test_rook_labyrinth(void) {
         action_resolve_player(&g, (Action){ACTION_MOVE, x, FOREST_ROAD_Y});
     }
     ASSERT("walking east across the road reaches Town 1's west gate",
-        g.location == LOCATION_TOWN && g.player.x == 1 && g.player.y == 14);
-    action_resolve_player(&g, (Action){ACTION_MOVE, 0, 14});
+        g.location == LOCATION_TOWN && g.player.x == 1 &&
+        g.player.y == TOWN_ROAD_EXIT_Y);
+    saved = save_game(&g, slot);
+    restored = saved && load_game(&loaded, slot);
+    ASSERT("an unlocked Town 2 gate remains paved after loading Town 1",
+        restored && loaded.location == LOCATION_TOWN &&
+        loaded.map.tiles[TOWN_ROAD_EXIT_Y][0] == TILE_TOWN_EXIT &&
+        loaded.map.tiles[TOWN_ROAD_EXIT_Y][4] == TILE_TOWN_PATH);
+    remove("saves/savegame_99014.json");
+    action_resolve_player(&g, (Action){ACTION_MOVE, 0, TOWN_ROAD_EXIT_Y});
     ASSERT("Town 1's lower west gate enters the road at its east end",
         g.location == LOCATION_FOREST_ROAD &&
         g.player.x == FOREST_ROAD_W - 2 && g.player.y == FOREST_ROAD_Y);
@@ -380,6 +390,26 @@ void test_town_map(void) {
         m.tiles[0][20] == TILE_TOWN_EXIT);
     ASSERT("forest exit at west crossroad",
         m.tiles[12][0] == TILE_TOWN_EXIT);
+    ASSERT("Town 2's lower gate and approach are absent before discovery",
+        m.tiles[TOWN_ROAD_EXIT_Y][0] == TILE_WALL &&
+        m.tiles[TOWN_ROAD_EXIT_Y][4] == TILE_TOWN_FLOOR);
+    map_set_town2_road(&m, 1);
+    ASSERT("defeating the forest boss reveals a separate paved gate",
+        m.tiles[TOWN_ROAD_EXIT_Y][0] == TILE_TOWN_EXIT &&
+        m.tiles[14][0] == TILE_WALL &&
+        m.tiles[TOWN_ROAD_EXIT_Y][4] == TILE_TOWN_PATH &&
+        m.tiles[15][4] == TILE_TOWN_PATH &&
+        m.tiles[TOWN_ROAD_EXIT_Y - 1][0] == TILE_WALL &&
+        m.tiles[TOWN_ROAD_EXIT_Y + 1][0] == TILE_WALL &&
+        m.tiles[TOWN_ROAD_EXIT_Y - 1][2] == TILE_TOWN_FLOOR &&
+        m.tiles[TOWN_ROAD_EXIT_Y + 1][2] == TILE_TOWN_FLOOR);
+    ASSERT("Town 2 spur joins the one-tile Tavern walkway",
+        m.tiles[20][4] == TILE_TOWN_PATH &&
+        m.tiles[21][4] == TILE_TOWN_PATH &&
+        m.tiles[21][5] == TILE_TOWN_PATH &&
+        m.tiles[21][7] == TILE_TOWN_PATH &&
+        m.tiles[21][8] == TILE_TOWN_PATH &&
+        m.tiles[20][5] == TILE_TAVERN);
     ASSERT("mountain exit at east crossroad",
         m.tiles[12][TOWN_W - 1] == TILE_TOWN_EXIT);
 
@@ -962,6 +992,12 @@ void test_town_spawn(void) {
     ASSERT("player not on shop tile",
         g.map.tiles[g.player.y][g.player.x] != TILE_SHOP_BLACKSMITH &&
         g.map.tiles[g.player.y][g.player.x] != TILE_SHOP_ALCHEMIST);
+    g.player.x = 1;
+    g.player.y = TOWN_ROAD_EXIT_Y;
+    action_resolve_player(&g, (Action){ACTION_MOVE, 0, TOWN_ROAD_EXIT_Y});
+    ASSERT("Town 2 road gate stays blocked before the forest boss falls",
+        g.location == LOCATION_TOWN && g.player.x == 1 &&
+        g.player.y == TOWN_ROAD_EXIT_Y);
 }
 
 static void test_goblin_king_retaliation(void) {
