@@ -2357,6 +2357,13 @@ int game_interact_island(GameState *g) {
     return 0;
 }
 
+static int temple_training_recommended(const GameState *g) {
+    int training_bosses = (1 << LOCATION_DUNGEON) |
+        (1 << LOCATION_MOUNTAINS);
+    return g->temple_treasure_state < 2 &&
+        (g->defeated_bosses & training_bosses) == 0;
+}
+
 void game_talk_to_nahla(GameState *g) {
     g->dialogue_active = 1;
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Nahla");
@@ -2364,16 +2371,30 @@ void game_talk_to_nahla(GameState *g) {
     g->dialogue_y = ISLAND_NAHLA_Y;
     if (g->temple_treasure_state == 0) {
         g->temple_treasure_state = 1;
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "The temple is a stepped pyramid. Climb its four tiers, defeat "
-            "the Fallen Sun Guardian, and recover the Buried Sun from the summit vault.");
+        if (temple_training_recommended(g)) {
+            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+                "Climb four tiers, defeat the Fallen Sun Guardian, and recover "
+                "the Buried Sun. The temple is dangerous; train in the dungeon "
+                "or mountains first if needed. You can return.");
+        } else {
+            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+                "The temple is a stepped pyramid. Climb its four tiers, defeat "
+                "the Fallen Sun Guardian, and recover the Buried Sun from the summit vault.");
+        }
         push_message(g, "Quest assigned: The Buried Sun.");
         return;
     }
     if (g->temple_treasure_state == 1) {
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "The Guardian waits at the pyramid summit. The sun and moon altars "
-            "change which passages are safe as you climb.");
+        if (temple_training_recommended(g)) {
+            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+                "The Guardian waits at the summit. If the temple proves too "
+                "hard, train in the dungeon or mountains and return. The sun "
+                "and moon altars change the safe paths.");
+        } else {
+            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+                "The Guardian waits at the pyramid summit. The sun and moon altars "
+                "change which passages are safe as you climb.");
+        }
         push_message(g, "Quest active: The Buried Sun.");
         return;
     }
@@ -2397,19 +2418,23 @@ void game_talk_to_rowan(GameState *g) {
     g->dialogue_x = TOWN_ROWAN_X;
     g->dialogue_y = TOWN_ROWAN_Y;
     if (game_harbor_unlocked(g)) {
+        const char *warning = temple_training_recommended(g)
+            ? " The ruined temple is dangerous. Clear the dungeon or mountains "
+              "for experience first, or sail now and turn back if needed."
+            : "";
         if (game_has_treasure_map(g)) {
             snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "Keep that map safe. It charts the sea route to the island "
-                "and marks buried treasure beneath the ruined temple.");
+                "Keep the island map safe; it marks the ruined temple.%s",
+                warning);
         } else if (g->inventory_count >= MAX_INVENTORY) {
             snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "The road now reaches the harbor. I have a treasure map for you. "
-                "Make room in your pack, then speak to me again.");
+                "I have an island map for you. Make room in your pack.%s",
+                warning);
         } else {
             g->inventory[g->inventory_count++] = item_make_treasure_map();
             snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "The road now reaches the harbor. Take this treasure map: "
-                "it charts a sea route to the island and marks treasure beneath its ruined temple.");
+                "Take this island map. It marks the ruined temple.%s",
+                warning);
             push_message(g, "Rowan gives you an Island Treasure Map.");
         }
         return;

@@ -46,6 +46,16 @@ void test_temple(void) {
     ASSERT("Nahla assigns The Buried Sun before the climb",
         g.temple_treasure_state == 1 &&
         strstr(g.dialogue_text, "four tiers"));
+    ASSERT("Nahla recommends training without withholding the quest",
+        strstr(g.dialogue_text, "dungeon or mountains") != NULL);
+    game_talk_to_nahla(&g);
+    ASSERT("Nahla repeats the warning while the quest is active",
+        strstr(g.dialogue_text, "train in the dungeon or mountains") != NULL);
+    g.defeated_bosses |= 1 << LOCATION_MOUNTAINS;
+    game_talk_to_nahla(&g);
+    ASSERT("Nahla recognizes mountain experience",
+        strstr(g.dialogue_text, "train in the dungeon or mountains") == NULL);
+    g.defeated_bosses &= ~(1 << LOCATION_MOUNTAINS);
     g.dialogue_active = 0;
     g.player.x = ISLAND_GATE_X;
     g.player.y = ISLAND_GATE_Y + 1;

@@ -895,6 +895,8 @@ void test_harbor_road(void) {
     ASSERT("Rowan gives the treasure map when space is available",
         game_has_treasure_map(&g) && g.inventory_count == MAX_INVENTORY &&
         g.inventory[MAX_INVENTORY - 1].type == ITEM_TREASURE_MAP);
+    ASSERT("Rowan recommends training before the temple without blocking sailing",
+        strstr(g.dialogue_text, "dungeon or mountains") != NULL);
     harbor_init(&harbor);
     ASSERT("treasure map enables the dock's boarding option",
         harbor_handle_key(&harbor, SDL_SCANCODE_RETURN,
@@ -910,9 +912,12 @@ void test_harbor_road(void) {
         game_has_treasure_map(&g) && g.inventory_count == MAX_INVENTORY &&
         g.floor_item_count == 0);
     game_remove_inventory_item(&g, MAX_INVENTORY - 2);
+    g.defeated_bosses |= 1 << LOCATION_DUNGEON;
     game_talk_to_rowan(&g);
     ASSERT("talking again with room in the pack does not duplicate the gift",
         g.inventory_count == MAX_INVENTORY - 1 && game_has_treasure_map(&g));
+    ASSERT("Rowan recognizes dungeon experience",
+        strstr(g.dialogue_text, "dungeon or mountains") == NULL);
 
     game_enter_coast(&g);
     game_open_town_portal(&g);

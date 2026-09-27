@@ -8,7 +8,9 @@ Defeat the Drowned Queen on the Sunken Coast. The road then extends from the
 Town 1 crossroads to the dock. No other boss or Tavern quest is required.
 Until then, Captain Rowan explains that the Queen blocks the sea route. Speak
 with Rowan after defeating her to receive the Island Treasure Map. Inventory
-space is required.
+space is required. If the dungeon and mountains remain uncleared, Rowan
+recommends training in one of them before facing the Ruined Temple. Nahla
+repeats the advice on the island. The advice does not block travel or entry.
 
 Walk into the dock entrance to open the harbor scene. Select **Board ship for
 the Ruined Isle** and press `Enter`, or choose the return option to stay in
