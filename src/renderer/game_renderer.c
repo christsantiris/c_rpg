@@ -474,6 +474,28 @@ static void draw_coast_trap_underlay(Renderer *r, const GameState *g, int map_x,
     }
 }
 
+static void draw_floor_loot(Renderer *r, const GameState *g, int map_x, int map_y, int screen_x, int screen_y) {
+    int has_gold = 0;
+    int has_item = 0;
+    for (int i = 0; i < g->floor_item_count; i++) {
+        const FloorItem *item = &g->floor_items[i];
+        if (item->active && item->x == map_x && item->y == map_y) {
+            if (item->item.type == ITEM_GOLD) {
+                has_gold = 1;
+            } else {
+                has_item = 1;
+            }
+        }
+    }
+    if (has_gold && has_item) {
+        draw_floor_gold_and_item(r, screen_x, screen_y);
+    } else if (has_gold) {
+        draw_floor_gold(r, screen_x, screen_y);
+    } else if (has_item) {
+        draw_floor_item(r, screen_x, screen_y);
+    }
+}
+
 static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int map_x, int map_y, int screen_x, int screen_y) {
     TileType underlay = floor_item_underlay(g, map_x, map_y);
     if (underlay == TILE_TRAP_HIDDEN && g->location == LOCATION_FOREST) {
@@ -524,7 +546,7 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
     } else {
         draw_floor(r, screen_x, screen_y);
     }
-    draw_floor_item(r, screen_x, screen_y);
+    draw_floor_loot(r, g, map_x, map_y, screen_x, screen_y);
 }
 
 static void draw_trap_underlay(Renderer *r, const GameState *g, int map_x, int map_y, int screen_x, int screen_y) {
@@ -965,18 +987,16 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         }
     }
 
-    // Regional mechanisms retain their terrain IDs even when holding loot.
+    // Loot on mechanisms and return passages keeps the underlying tile visible.
     for (int i = 0; i < g->floor_item_count; i++) {
         const FloorItem *item = &g->floor_items[i];
         if (!item->active || !viewport_is_visible(v, item->x, item->y)) {
             continue;
         }
         TileType tile = g->map.tiles[item->y][item->x];
-        if (tile == TILE_MOUNTAIN_WEAK_BRIDGE || tile == TILE_MOUNTAIN_CACHE ||
-            tile == TILE_MOUNTAIN_BRIDGE || tile == TILE_MOUNTAIN_CAVE_FLOOR ||
-            tile == TILE_COAST_DRAINED_WATER || tile == TILE_COAST_CHANNEL_DRY ||
-            map_is_coast_object(tile)) {
-            draw_floor_item(r, viewport_to_screen_x(v, item->x),
+        if (tile != TILE_ITEM && g->location != LOCATION_ISLAND) {
+            draw_floor_loot(r, g, item->x, item->y,
+                viewport_to_screen_x(v, item->x),
                 viewport_to_screen_y(v, item->y));
         }
     }
@@ -1053,7 +1073,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         for (int i = 0; i < g->floor_item_count; i++) {
             const FloorItem *item = &g->floor_items[i];
             if (item->active && viewport_is_visible(v, item->x, item->y)) {
-                draw_floor_item(r, viewport_to_screen_x(v, item->x),
+                draw_floor_loot(r, g, item->x, item->y,
+                    viewport_to_screen_x(v, item->x),
                     viewport_to_screen_y(v, item->y));
             }
         }

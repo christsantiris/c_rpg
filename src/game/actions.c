@@ -85,6 +85,54 @@ static void mark_item_tile(GameState *g, int x, int y) {
     }
 }
 
+static TileType floor_drop_underlay(const GameState *g, int x, int y) {
+    for (int i = 0; i < g->floor_item_count; i++) {
+        const FloorItem *fi = &g->floor_items[i];
+        if (fi->active && fi->x == x && fi->y == y) {
+            return (TileType)fi->underlying_tile;
+        }
+    }
+    return g->map.tiles[y][x];
+}
+
+static void award_gold(GameState *g, int gold) {
+    g->gold += gold;
+    g->score += gold;
+    char msg[MAX_MESSAGE_LEN];
+    snprintf(msg, sizeof(msg), "Found %d gold!", gold);
+    push_message(g, msg);
+}
+
+static void place_gold_drop(GameState *g, int x, int y, int gold) {
+    FloorItem fi = {0};
+    fi.active = 1;
+    fi.x = x;
+    fi.y = y;
+    fi.underlying_tile = floor_drop_underlay(g, x, y);
+    fi.item.active = 1;
+    fi.item.type = ITEM_GOLD;
+    fi.item.value = gold;
+    snprintf(fi.item.name, sizeof(fi.item.name), "%d gold", gold);
+    g->floor_items[g->floor_item_count++] = fi;
+    mark_item_tile(g, x, y);
+    char msg[MAX_MESSAGE_LEN];
+    snprintf(msg, sizeof(msg), "%d gold dropped!", gold);
+    push_message(g, msg);
+}
+
+static void finish_floor_pickup(GameState *g, FloorItem *picked) {
+    picked->active = 0;
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *fi = &g->floor_items[i];
+        if (fi->active && fi->x == picked->x && fi->y == picked->y) {
+            return;
+        }
+    }
+    if (g->map.tiles[picked->y][picked->x] == TILE_ITEM) {
+        g->map.tiles[picked->y][picked->x] = (TileType)picked->underlying_tile;
+    }
+}
+
 Item boss_equipment_reward(EnemyType type) {
     switch (type) {
         case ENEMY_LICH_KING:
@@ -218,19 +266,21 @@ static void drop_loot(GameState *g, Enemy *enemy) {
     }
     
     // Smaller purses and fewer coin drops keep routine combat income modest.
-    gold /= 2;
-    if (gold > 0 && (is_boss || rand() % 100 < 10)) {
-        g->gold += gold;
-        g->score += gold;
-        char msg[MAX_MESSAGE_LEN];
-        snprintf(msg, sizeof(msg), "Found %d gold!", gold);
-        push_message(g, msg);
+    if (is_boss && gold == 0) {
+        gold = 50;
     }
+    gold /= 2;
+    int has_gold = gold > 0 && (is_boss || rand() % 100 < 10);
 
     // Each boss leaves a fixed regional reward instead of rolling ordinary
     // equipment, so capstone weapons remain Blacksmith progression.
     if (is_boss) {
         if (type == ENEMY_FALLEN_SUN_GUARDIAN) {
+            if (g->floor_item_count < MAX_FLOOR_ITEMS) {
+                place_gold_drop(g, x, y, gold);
+            } else {
+                award_gold(g, gold);
+            }
             game_update_level_progress(g);
             return;
         }
@@ -242,13 +292,18 @@ static void drop_loot(GameState *g, Enemy *enemy) {
             }
             g->floor_item_count--;
         }
+        if (g->floor_item_count < MAX_FLOOR_ITEMS - 1) {
+            place_gold_drop(g, x, y, gold);
+        } else {
+            award_gold(g, gold);
+        }
         if (g->floor_item_count < MAX_FLOOR_ITEMS) {
             Item boss_drop = boss_equipment_reward(type);
             FloorItem fi = {0};
             fi.active = 1;
             fi.x = x;
             fi.y = y;
-            fi.underlying_tile = g->map.tiles[y][x];
+            fi.underlying_tile = floor_drop_underlay(g, x, y);
             fi.item = boss_drop;
             mark_item_tile(g, x, y);
             g->floor_items[g->floor_item_count++] = fi;
@@ -261,30 +316,57 @@ static void drop_loot(GameState *g, Enemy *enemy) {
     }
 
     if (g->location == LOCATION_TEMPLE) {
+        if (has_gold) {
+            award_gold(g, gold);
+        }
         return;
     }
 
-    // Item drop — 5% chance
-    if (rand() % 100 >= 5) {
+    int has_item = rand() % 100 < 5;
+    TileType drop_tile = g->map.tiles[y][x];
+    int plain_floor = drop_tile == TILE_FLOOR ||
+        drop_tile == TILE_FOREST_FLOOR ||
+        drop_tile == TILE_MOUNTAIN_FLOOR ||
+        drop_tile == TILE_MOUNTAIN_CAVE_FLOOR ||
+        drop_tile == TILE_MOUNTAIN_FORTRESS_FLOOR ||
+        drop_tile == TILE_COAST_FLOOR ||
+        drop_tile == TILE_TEMPLE_FLOOR;
+    int occupied = 0;
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *fi = &g->floor_items[i];
+        if (fi->active && fi->x == x && fi->y == y) {
+            occupied = 1;
+            break;
+        }
+    }
+    // Credit coins directly when another pickup or a map mechanism occupies
+    // the tile, so coin markers cannot hide items, gates, or landmarks.
+    if (has_gold && (has_item || occupied || !plain_floor ||
+        g->floor_item_count >= MAX_FLOOR_ITEMS)) {
+        award_gold(g, gold);
+        has_gold = 0;
+    }
+    if (occupied || (!has_gold && !has_item) ||
+        g->floor_item_count >= MAX_FLOOR_ITEMS) {
         return;
     }
-    if (g->floor_item_count >= MAX_FLOOR_ITEMS) {
-        return;
-    }
-
-    Item item = random_enemy_item(g->level);
 
     FloorItem fi = {0};
     fi.active = 1;
     fi.x = x;
     fi.y = y;
     fi.underlying_tile = g->map.tiles[y][x];
-    fi.item = item;
+    if (has_item) {
+        fi.item = random_enemy_item(g->level);
+    } else {
+        place_gold_drop(g, x, y, gold);
+        return;
+    }
     g->floor_items[g->floor_item_count++] = fi;
 
     mark_item_tile(g, x, y);
     char item_msg[MAX_MESSAGE_LEN];
-    snprintf(item_msg, sizeof(item_msg), "%s dropped!", item.name);
+    snprintf(item_msg, sizeof(item_msg), "%s dropped!", fi.item.name);
     push_message(g, item_msg);
 }
 
@@ -771,13 +853,21 @@ void action_resolve_player(GameState *g, Action a) {
             FloorItem *fi = &g->floor_items[i];
             if (!fi->active) continue;
             if (fi->x != g->player.x || fi->y != g->player.y) continue;
+            if (fi->item.type == ITEM_GOLD) {
+                g->gold += fi->item.value;
+                g->score += fi->item.value;
+                finish_floor_pickup(g, fi);
+                char msg[MAX_MESSAGE_LEN];
+                snprintf(msg, sizeof(msg), "Picked up %d gold", fi->item.value);
+                push_message(g, msg);
+                return;
+            }
             if (g->inventory_count >= MAX_INVENTORY) {
                 push_message(g, "Inventory full!");
                 return;
             }
             g->inventory[g->inventory_count++] = fi->item;
-            fi->active = 0;
-            g->map.tiles[fi->y][fi->x] = (TileType)fi->underlying_tile;
+            finish_floor_pickup(g, fi);
             char msg[MAX_MESSAGE_LEN];
             snprintf(msg, sizeof(msg), "Picked up %s", fi->item.name);
             push_message(g, msg);

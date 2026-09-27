@@ -356,7 +356,11 @@ void test_final_dungeon_exit(void) {
     g.player.x = g.map.stairs_down_x;
     g.player.y = g.map.stairs_down_y;
     action_resolve_player(&g, (Action){ACTION_PICK_UP, 0, 0});
-    ASSERT("picking up boss loot on the stairs preserves the unlocked exit",
+    ASSERT("picking up boss gold preserves the unlocked exit",
+        g.inventory_count == 1 && g.gold == 25 &&
+        g.map.tiles[10][12] == TILE_RETURN_EXIT);
+    action_resolve_player(&g, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("picking up boss equipment preserves the unlocked exit",
         g.inventory_count == 2 && g.map.tiles[10][12] == TILE_RETURN_EXIT);
     action_resolve_player(&g, a);
     ASSERT("final exit returns player to town", g.location == LOCATION_TOWN);
@@ -370,7 +374,7 @@ void test_final_dungeon_exit(void) {
 
 void test_enemy_movement_collision(void) {
     printf("Enemy movement collision tests:\n");
-    GameState g;
+    static GameState g;
     game_init(&g);
     g.location = LOCATION_DUNGEON;
     map_generate(&g.map, 1);

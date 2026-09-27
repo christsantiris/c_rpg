@@ -175,6 +175,7 @@ void draw_temple_rubble(Renderer *r, int tile_x, int tile_y);
 
 void draw_floor_item(Renderer *r, int tile_x, int tile_y);
 void draw_floor_gold(Renderer *r, int tile_x, int tile_y);
+void draw_floor_gold_and_item(Renderer *r, int tile_x, int tile_y);
 
 void draw_trap_warning(Renderer *r, int tile_x, int tile_y);
 void draw_trap_spike(Renderer *r, int tile_x, int tile_y);

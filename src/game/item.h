@@ -13,7 +13,8 @@ typedef enum {
     ITEM_SCROLL,
     ITEM_SHIELD,
     ITEM_SPELL_TOME,
-    ITEM_TREASURE_MAP
+    ITEM_TREASURE_MAP,
+    ITEM_GOLD
 } ItemType;
 
 typedef enum {
