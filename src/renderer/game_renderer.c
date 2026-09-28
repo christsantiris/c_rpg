@@ -366,6 +366,9 @@ static TileType floor_item_underlay(const GameState *g, int x, int y) {
     if (g->location == LOCATION_COAST) {
         return TILE_COAST_FLOOR;
     }
+    if (g->location == LOCATION_SWAMP) {
+        return TILE_SWAMP_FLOOR;
+    }
     return TILE_FLOOR;
 }
 
@@ -523,6 +526,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         draw_coast_channel(r, screen_x, screen_y, map_x, map_y, 0, 0);
     } else if (underlay == TILE_COAST_FLOOR) {
         draw_coast_floor(r, screen_x, screen_y, map_x, map_y);
+    } else if (underlay == TILE_SWAMP_FLOOR) {
+        draw_swamp_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_TOWN_FLOOR) {
         draw_town_floor(r, screen_x, screen_y);
     } else if (underlay == TILE_TOWN_PATH) {
@@ -788,6 +793,14 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_coast_cache(r, sx, sy, x, y); break;
                 case TILE_COAST_TIDE_CONTROL:
                     draw_coast_tide_control(r, sx, sy, x, y); break;
+                case TILE_SWAMP_FLOOR:
+                    draw_swamp_floor(r, sx, sy, x, y); break;
+                case TILE_SWAMP_WALL:
+                    draw_swamp_wall(r, sx, sy, x, y); break;
+                case TILE_SWAMP_ENTRANCE:
+                    draw_swamp_edge(r, sx, sy, 0); break;
+                case TILE_SWAMP_EXIT:
+                    draw_swamp_edge(r, sx, sy, 1); break;
                 case TILE_COAST_BEACON_UNLIT:
                     draw_coast_beacon(r, sx, sy, x, y, 0); break;
                 case TILE_COAST_BEACON_LIT:
@@ -1047,6 +1060,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         draw_town_gate(r,
             viewport_to_screen_x(v, TOWN_W - 3), viewport_to_screen_y(v, 10),
             TOWN_EXIT_FOREST);
+        draw_town_gate(r,
+            viewport_to_screen_x(v, 18),
+            viewport_to_screen_y(v, TOWN_H - 2), TOWN_EXIT_SWAMP);
         draw_witch_hut(r,
             viewport_to_screen_x(v, TOWN_WITCH_X),
             viewport_to_screen_y(v, TOWN_WITCH_Y));
@@ -1092,6 +1108,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->location == LOCATION_FOREST ||
         g->location == LOCATION_MOUNTAINS ||
         g->location == LOCATION_COAST ||
+        g->location == LOCATION_SWAMP ||
         g->location == LOCATION_TEMPLE ||
         g->location == LOCATION_LABYRINTH) {
         for (int i = 0; i < g->enemy_count; i++) {
@@ -1244,6 +1261,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - 54,
             viewport_to_screen_y(v, 12) * TILE_SIZE,
             label, r->font_tiny);
+        TTF_SizeText(r->font_tiny, "SWAMP", &width, NULL);
+        renderer_draw_text(r, "SWAMP",
+            viewport_to_screen_x(v, 18) * TILE_SIZE +
+                (5 * TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE + 3,
+            (SDL_Color){113, 204, 79, 255}, r->font_tiny);
     }
 
     if (g->location == LOCATION_TAVERN) {

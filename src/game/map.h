@@ -93,6 +93,7 @@
 #define MOUNTAIN_DEPTH 8
 #define COAST_DEPTH 8
 #define MAX_REGION_DEPTH 8
+#define SWAMP_DEPTH 5
 
 typedef enum {
     TILE_FLOOR = 0,
@@ -215,7 +216,11 @@ typedef enum {
     TILE_LABYRINTH_SWITCH_ON,
     TILE_LABYRINTH_GATE,
     TILE_LABYRINTH_RELIC,
-    TILE_LABYRINTH_STAIRS
+    TILE_LABYRINTH_STAIRS,
+    TILE_SWAMP_FLOOR,
+    TILE_SWAMP_WALL,
+    TILE_SWAMP_ENTRANCE,
+    TILE_SWAMP_EXIT
 } TileType;
 
 typedef struct {
@@ -251,6 +256,7 @@ void map_generate_forest(Map *m, int level);
 void map_reveal_forest_exit(Map *m);
 void map_generate_mountains(Map *m, int level);
 void map_generate_coast(Map *m, int level);
+void map_generate_swamp(Map *m, int level);
 int map_remove_coast_sluice(Map *m);
 TileType map_coast_trap_underlay(const Map *m, int x, int y);
 int map_is_coast_tidal_tile(TileType tile);

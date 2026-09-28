@@ -146,6 +146,8 @@ Item boss_equipment_reward(EnemyType type) {
             return item_make_tidecaller_robes();
         case ENEMY_LABYRINTH_WARDEN:
             return item_make_magic_shield();
+        case ENEMY_SWAMP_DEMON:
+            return item_make_demonic_sword();
         default:
             return item_make_cryptblade();
     }
@@ -193,6 +195,10 @@ static int enemy_score(EnemyType type) {
         case ENEMY_LUNAR_EFFIGY: return 220;
         case ENEMY_MOONBOUND_SENTINEL: return 300;
         case ENEMY_FALLEN_SUN_GUARDIAN: return 2200;
+        case ENEMY_GIANT_RAT: return 25;
+        case ENEMY_BANDIT: return 55;
+        case ENEMY_VAMPIRE: return 140;
+        case ENEMY_SWAMP_DEMON: return 1500;
         case ENEMY_ORC:         return 30;
         case ENEMY_TROLL:       return 50;
         case ENEMY_GIANT:       return 80;
@@ -259,6 +265,10 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         case ENEMY_LUNAR_EFFIGY: gold = 12; break;
         case ENEMY_MOONBOUND_SENTINEL: gold = 14; break;
         case ENEMY_FALLEN_SUN_GUARDIAN: gold = 0; break;
+        case ENEMY_GIANT_RAT: gold = 3 + rand() % 5; break;
+        case ENEMY_BANDIT: gold = 8 + rand() % 9; break;
+        case ENEMY_VAMPIRE: gold = 14 + rand() % 12; break;
+        case ENEMY_SWAMP_DEMON: gold = 70; break;
         case ENEMY_ORC:      gold = 6 + rand() % 8;  break;
         case ENEMY_TROLL:    gold = 10 + rand() % 10; break;
         case ENEMY_GIANT:    gold = 15 + rand() % 15; break;
@@ -335,7 +345,8 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         drop_tile == TILE_MOUNTAIN_FORTRESS_FLOOR ||
         drop_tile == TILE_COAST_FLOOR ||
         drop_tile == TILE_TEMPLE_FLOOR ||
-        drop_tile == TILE_LABYRINTH_FLOOR;
+        drop_tile == TILE_LABYRINTH_FLOOR ||
+        drop_tile == TILE_SWAMP_FLOOR;
     int occupied = 0;
     for (int i = 0; i < g->floor_item_count; i++) {
         FloorItem *fi = &g->floor_items[i];
@@ -1299,21 +1310,27 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
-        for (int i = 0; i < g->enemy_count; i++) {
-            Enemy *e = &g->enemies[i];
-            if (!e->active) {
-                continue;
-            }
-            int target_x = g->player.x + g->player.last_dx;
-            int target_y = g->player.y + g->player.last_dy;
-            if (e->x == target_x && e->y == target_y) {
-                push_message(g, "Too close to use bow!");
-                return;
+        if (wpn->weapon_family == WEAPON_FAMILY_BOW) {
+            for (int i = 0; i < g->enemy_count; i++) {
+                Enemy *e = &g->enemies[i];
+                if (!e->active) {
+                    continue;
+                }
+                int target_x = g->player.x + g->player.last_dx;
+                int target_y = g->player.y + g->player.last_dy;
+                if (e->x == target_x && e->y == target_y) {
+                    push_message(g, "Too close to use bow!");
+                    return;
+                }
             }
         }
 
         #ifndef TEST_BUILD
-        sfx_play_arrow();
+        if (wpn->weapon_family == WEAPON_FAMILY_SWORD) {
+            sfx_play_attack();
+        } else {
+            sfx_play_arrow();
+        }
         #endif
 
         int hit = 0;
@@ -1328,10 +1345,13 @@ void action_resolve_player(GameState *g, Action a) {
                 Enemy *e = &g->enemies[i];
                 if (!e->active) continue;
                 if (e->x != tx || e->y != ty) continue;
-                if (step < 2) continue;
+                if (step < 2 && wpn->weapon_family == WEAPON_FAMILY_BOW) {
+                    continue;
+                }
                 int dmg = g->player.attack - e->defense;
                 if (dmg < 1) dmg = 1;
-                int critical = rand() % 100 < 15;
+                int critical = wpn->weapon_family == WEAPON_FAMILY_BOW &&
+                    rand() % 100 < 15;
                 if (critical) dmg = dmg * 3 / 2;
                 e->hp -= dmg;
                 char msg[MAX_MESSAGE_LEN];
@@ -1356,10 +1376,13 @@ void action_resolve_player(GameState *g, Action a) {
                 hit = 1;
             }
         }
+        int demonic = wpn->visual_id == ITEM_VISUAL_DEMONIC_SWORD;
         set_trail(g, g->player.x, g->player.y,
             impact_x, impact_y,
             g->player.last_dx, g->player.last_dy,
-            wpn->range, 160, 160, 160, TRAIL_EFFECT_WEAPON_ARROW);
+            wpn->range, demonic ? 73 : 160, demonic ? 195 : 160,
+            demonic ? 63 : 160, demonic ? TRAIL_EFFECT_GENERIC :
+            TRAIL_EFFECT_WEAPON_ARROW);
         if (!hit) push_message(g, "Attack missed!");
         return;
     }
@@ -1393,7 +1416,7 @@ void action_resolve_player(GameState *g, Action a) {
                 if (g->equipped_main_hand >= 0 &&
                     g->equipped_main_hand < g->inventory_count) {
                     melee_weapon = &g->inventory[g->equipped_main_hand];
-                    if (melee_weapon->is_ranged) {
+                    if (melee_weapon->weapon_family == WEAPON_FAMILY_BOW) {
                         melee_attack -= melee_weapon->attack_bonus;
                     }
                 }
@@ -1408,7 +1431,7 @@ void action_resolve_player(GameState *g, Action a) {
                     dmg = 1;
                 }
                 int critical_chance = melee_weapon &&
-                    !melee_weapon->is_ranged
+                    melee_weapon->weapon_family != WEAPON_FAMILY_BOW
                     ? melee_weapon->critical_chance_bonus : 0;
                 if (g->equipped_off_hand >= 0 &&
                     g->equipped_off_hand < g->inventory_count) {
@@ -1519,6 +1542,12 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
+        if (g->location == LOCATION_TOWN2 &&
+            g->map.tiles[ty][tx] == TILE_TOWN_EXIT && ty == TOWN_H - 1) {
+            game_enter_swamp(g);
+            return;
+        }
+
         if (g->location == LOCATION_TOWN &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
             if (tx == 0) {
@@ -1551,6 +1580,35 @@ void action_resolve_player(GameState *g, Action a) {
             g->map.tiles[ty][tx] == TILE_FOREST_EXIT &&
             tx == FOREST_ROAD_W - 1) {
             game_leave_forest_road(g, LOCATION_TOWN);
+            return;
+        }
+
+        if (g->location == LOCATION_SWAMP &&
+            g->map.tiles[ty][tx] == TILE_SWAMP_ENTRANCE) {
+            if (g->level == 1) {
+                game_return_to_town(g);
+            } else {
+                game_ascend(g);
+            }
+            return;
+        }
+
+        if (g->location == LOCATION_SWAMP &&
+            g->map.tiles[ty][tx] == TILE_SWAMP_EXIT) {
+            if (g->level < SWAMP_DEPTH) {
+                game_descend(g);
+                g->score += g->level * 100;
+            } else {
+                for (int i = 0; i < g->enemy_count; i++) {
+                    if (g->enemies[i].active &&
+                        g->enemies[i].type == ENEMY_SWAMP_DEMON) {
+                        push_message(g, "The demon blocks the swamp trail!");
+                        return;
+                    }
+                }
+                game_return_to_town(g);
+                push_message(g, "The swamp is free of the demon.");
+            }
             return;
         }
 

@@ -1,0 +1,71 @@
+# Castle Dungeon
+
+Enter the eight-floor dungeon from the north road of Town 1. Its rooms and
+connecting corridors are generated for each new expedition, then cached while
+that expedition is in progress. Backtracking preserves explored rooms, enemies,
+opened doors, and collected treasure. A later expedition generates new maps
+and regular enemies, but a defeated Lich King does not return.
+
+The dungeon targets 6–10 rooms per floor. Descend at the marked stairs and
+ascend to revisit an earlier floor; the first floor's upward stairs return to
+town. Floors 1–7 do not require defeating every enemy before descending. Traps
+begin hidden, and deeper floors contain more of them. If other regional bosses
+have already fallen, newly generated dungeon enemies become stronger and
+advanced undead can appear earlier.
+
+| Floor | Distinct feature | Baseline encounter progression |
+| --- | --- | --- |
+| 1 | Entrance rooms and the route back to town | Skeletons |
+| 2 | Possible locked side crypt; Elowen's first seal during her quest | Zombies and Crypt Bats join |
+| 3 | Possible portcullis shortcut and floor switch | Wraiths join |
+| 4 | Possible locked side crypt; Elowen's second seal | Crypt Conjurers join |
+| 5 | Possible portcullis shortcut | Full regular undead roster |
+| 6 | Possible locked side crypt; Elowen's third seal | Full regular undead roster |
+| 7 | Possible portcullis shortcut | Full regular undead roster |
+| 8 | Golden key, locked boss chamber, and final return passage | Full roster and the Lich King |
+
+## Enemy Roles
+
+- **Skeleton:** straightforward melee pursuer.
+- **Zombie:** tougher melee enemy that moves every other turn.
+- **Crypt Bat:** fast flanker that can move twice in a turn.
+- **Wraith:** melee attacker that ignores half of the player's defense and
+  drains MP.
+- **Crypt Conjurer:** fires along a clear row or column and can revive a fallen
+  Skeleton nearby. Walls and other enemies block its shot.
+
+## Crypts, Switches, and Traps
+
+On floors 2, 4, and 6, generation can add an optional crypt where space allows.
+Stand on its key and press `P`, then walk into the locked crypt door to spend
+the key. Stand on the cache inside and press `A` to collect its gold. Each
+generated crypt cache holds `10 + 2 × floor` gold.
+
+Floors 3, 5, and 7 can have a closed portcullis across a shortcut. Stand on
+the floor switch and press `A` to open it. If a generated switch would be
+unreachable, the unusable switch and gate are removed rather than blocking
+progress. Hidden traps may become spikes, fire, or poison when stepped on;
+the starting room is excluded from trap placement.
+
+## The Lich King's Chamber
+
+The final floor places a golden key in the room before the Lich King's sealed
+chamber. Stand on the key and press `P`, then walk into the chamber door to
+unlock it. The Lich stays dormant until the player enters the chamber. Once
+engaged, he alternates a warning turn with a ranged necrotic bolt. Defeating
+him opens the glowing return passage; other surviving
+enemies do not block the trip back to Town 1. The Lich King's victory and boss
+reward are one-time.
+
+## Elowen's Quest
+
+Speak with Elowen in Town 1's Tavern to begin **The Broken Seals**. Her three
+burial seals appear on floors 2, 4, and 6, each with an undead guard group.
+Stand on a seal and press `A` to restore it. Return to Elowen after all three
+are restored for 40 gold and 300 score. Her quest does not require defeating
+the Lich or clearing every floor. Accepting it starts a fresh expedition so
+the objectives can appear even if the dungeon was visited earlier.
+
+Cain's Scroll of Return to Town teaches a zero-MP spell. Casting it in the
+dungeon places a portal in town that returns to the exact floor and tile where
+it was cast, allowing a resupply trip without replaying the route.

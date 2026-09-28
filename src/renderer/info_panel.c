@@ -59,6 +59,8 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor)
         SDL_snprintf(loc, sizeof(loc), "MOUNTAINS %d", g->level);
     } else if (g->location == LOCATION_COAST) {
         SDL_snprintf(loc, sizeof(loc), "COAST %d", g->level);
+    } else if (g->location == LOCATION_SWAMP) {
+        SDL_snprintf(loc, sizeof(loc), "SWAMP %d", g->level);
     } else if (g->location == LOCATION_ISLAND) {
         SDL_snprintf(loc, sizeof(loc), "RUINED ISLE");
     } else if (g->location == LOCATION_TEMPLE) {

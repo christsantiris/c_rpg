@@ -13,6 +13,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
         g->location != LOCATION_FOREST &&
         g->location != LOCATION_MOUNTAINS &&
         g->location != LOCATION_COAST &&
+        g->location != LOCATION_SWAMP &&
         g->location != LOCATION_TEMPLE &&
         g->location != LOCATION_LABYRINTH) {
         return;
@@ -57,6 +58,8 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_FOREST_EXIT || tile == TILE_MOUNTAIN_ENTRANCE ||
                         tile == TILE_MOUNTAIN_EXIT || tile == TILE_COAST_ENTRANCE ||
                         tile == TILE_COAST_EXIT || tile == TILE_TAVERN_EXIT ||
+                        tile == TILE_SWAMP_ENTRANCE ||
+                        tile == TILE_SWAMP_EXIT ||
                         tile == TILE_NPC_ELOWEN || tile == TILE_NPC_DAIN ||
                         tile == TILE_NPC_ALDER || tile == TILE_NPC_MARA ||
                         tile == TILE_NPC_ROOK ||
@@ -89,6 +92,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile != TILE_MOUNTAIN_CHASM &&
                         tile != TILE_MOUNTAIN_HIDDEN_CAVE &&
                         tile != TILE_COAST_WALL &&
+                        tile != TILE_SWAMP_WALL &&
                         tile != TILE_COAST_DEEP_WATER &&
                         tile != TILE_COAST_CHANNEL_WATER &&
                         tile != TILE_TAVERN_WALL &&
