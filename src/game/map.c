@@ -1211,18 +1211,71 @@ void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
 }
 
 static void swamp_carve(Map *m, int x, int y) {
-    for (int dy = 0; dy < 2; dy++) {
-        for (int dx = 0; dx < 2; dx++) {
-            if (x + dx > 0 && x + dx < MAP_W - 1 &&
-                y + dy > 0 && y + dy < MAP_H - 1) {
-                m->tiles[y + dy][x + dx] = TILE_SWAMP_FLOOR;
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            int px = x + dx;
+            int py = y + dy;
+            if (px > 0 && px < MAP_W - 1 &&
+                py > 0 && py < MAP_H - 1 &&
+                (dx == 0 || dy == 0 || rand() % 3 != 0)) {
+                m->tiles[py][px] = TILE_SWAMP_FLOOR;
             }
         }
     }
 }
 
+static void swamp_carve_clearing(Map *m, const Room *room) {
+    int cx;
+    int cy;
+    map_room_center(room, &cx, &cy);
+    int rx = room->w / 2;
+    int ry = room->h / 2;
+    int limit = rx * rx * ry * ry;
+    for (int y = room->y; y < room->y + room->h; y++) {
+        int dy = y - cy;
+        int span = rx;
+        while (span > 0 &&
+            span * span * ry * ry + dy * dy * rx * rx > limit) {
+            span--;
+        }
+        unsigned int seed = (unsigned int)room->x * 73856093u ^
+            (unsigned int)y * 19349663u;
+        seed ^= seed >> 16;
+        int left = span + (int)(seed % 3u) - 1;
+        int right = span + (int)((seed >> 5) % 3u) - 1;
+        if (left < 0) {
+            left = 0;
+        }
+        if (right < 0) {
+            right = 0;
+        }
+        for (int x = cx - left; x <= cx + right; x++) {
+            if (x >= room->x && x < room->x + room->w) {
+                m->tiles[y][x] = TILE_SWAMP_FLOOR;
+            }
+        }
+    }
+}
+
+static void swamp_carve_trail(Map *m, int x, int y, int tx, int ty, int turn) {
+    while (x != tx || y != ty) {
+        swamp_carve(m, x, y);
+        if (rand() % 4 == 0) {
+            turn = !turn;
+        }
+        if ((turn && x != tx) || y == ty) {
+            x += x < tx ? 1 : -1;
+        } else {
+            y += y < ty ? 1 : -1;
+        }
+    }
+    swamp_carve(m, tx, ty);
+}
+
 void map_generate_swamp(Map *m, int level) {
     static const int route[9] = {0, 1, 2, 5, 4, 3, 6, 7, 8};
+    static const int anchor_x[9] = {5, 28, 50, 7, 29, 53, 4, 26, 52};
+    static const int anchor_y[9] = {8, 13, 4, 25, 31, 21, 45, 44, 42};
     map_clear_exploration(m);
     m->room_count = 9;
     for (int y = 0; y < MAP_H; y++) {
@@ -1232,15 +1285,11 @@ void map_generate_swamp(Map *m, int level) {
     }
     for (int i = 0; i < 9; i++) {
         Room *room = &m->rooms[i];
-        room->x = 4 + (i % 3) * 19 + rand() % 5;
-        room->y = 4 + (i / 3) * 14 + rand() % 4;
-        room->w = 10 + rand() % 3;
-        room->h = 7 + rand() % 3;
-        for (int y = room->y; y < room->y + room->h; y++) {
-            for (int x = room->x; x < room->x + room->w; x++) {
-                m->tiles[y][x] = TILE_SWAMP_FLOOR;
-            }
-        }
+        room->x = anchor_x[i] + rand() % 7 - 3;
+        room->y = anchor_y[i] + rand() % 7 - 3;
+        room->w = 12 + rand() % 5;
+        room->h = 9 + rand() % 4;
+        swamp_carve_clearing(m, room);
     }
     for (int i = 1; i < 9; i++) {
         int x;
@@ -1249,26 +1298,7 @@ void map_generate_swamp(Map *m, int level) {
         int ty;
         map_room_center(&m->rooms[route[i - 1]], &x, &y);
         map_room_center(&m->rooms[route[i]], &tx, &ty);
-        if ((level + i) % 2 == 0) {
-            while (x != tx) {
-                swamp_carve(m, x, y);
-                x += x < tx ? 1 : -1;
-            }
-            while (y != ty) {
-                swamp_carve(m, x, y);
-                y += y < ty ? 1 : -1;
-            }
-        } else {
-            while (y != ty) {
-                swamp_carve(m, x, y);
-                y += y < ty ? 1 : -1;
-            }
-            while (x != tx) {
-                swamp_carve(m, x, y);
-                x += x < tx ? 1 : -1;
-            }
-        }
-        swamp_carve(m, tx, ty);
+        swamp_carve_trail(m, x, y, tx, ty, (level + i) % 2);
     }
     map_room_center(&m->rooms[0], &m->stairs_up_x, &m->stairs_up_y);
     map_room_center(&m->rooms[8], &m->stairs_down_x, &m->stairs_down_y);

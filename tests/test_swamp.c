@@ -4,10 +4,12 @@
 #include "../src/systems/save_load.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static GameState swamp_game;
 static GameState swamp_loaded;
+static Map swamp_layout;
 static unsigned char visited[MAP_H][MAP_W];
 static int queue[MAP_W * MAP_H];
 
@@ -24,9 +26,6 @@ static int swamp_exit_reachable(const Map *map) {
         int tile = queue[head++];
         int x = tile % MAP_W;
         int y = tile / MAP_W;
-        if (x == map->stairs_down_x && y == map->stairs_down_y) {
-            return 1;
-        }
         for (int i = 0; i < 4; i++) {
             int nx = x + dx[i];
             int ny = y + dy[i];
@@ -37,13 +36,26 @@ static int swamp_exit_reachable(const Map *map) {
             }
         }
     }
-    return 0;
+    if (!visited[map->stairs_down_y][map->stairs_down_x]) {
+        return 0;
+    }
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            TileType tile = map->tiles[y][x];
+            if ((tile == TILE_SWAMP_FLOOR || tile == TILE_SWAMP_ENTRANCE ||
+                tile == TILE_SWAMP_EXIT) && !visited[y][x]) {
+                return 0;
+            }
+        }
+    }
+    return 1;
 }
 
 void test_swamp(void) {
     printf("Swamp tests:\n");
     swamp_game.player.player_class = CLASS_WARRIOR;
     game_init(&swamp_game);
+    srand(19);
     game_enter_town2(&swamp_game);
     ASSERT("Town 2 south road ends in a one-tile swamp gate",
         swamp_game.map.tiles[TOWN_H - 1][20] == TILE_TOWN_EXIT &&
@@ -55,9 +67,24 @@ void test_swamp(void) {
         (Action){ACTION_MOVE, 20, TOWN_H - 1});
     ASSERT("south gate enters swamp level one",
         swamp_game.location == LOCATION_SWAMP && swamp_game.level == 1);
+    int rounded_clearings = 0;
+    for (int i = 0; i < swamp_game.map.room_count; i++) {
+        const Room *room = &swamp_game.map.rooms[i];
+        int corners = 0;
+        corners += swamp_game.map.tiles[room->y][room->x] == TILE_SWAMP_WALL;
+        corners += swamp_game.map.tiles[room->y][room->x + room->w - 1] ==
+            TILE_SWAMP_WALL;
+        corners += swamp_game.map.tiles[room->y + room->h - 1][room->x] ==
+            TILE_SWAMP_WALL;
+        corners += swamp_game.map.tiles[room->y + room->h - 1]
+            [room->x + room->w - 1] == TILE_SWAMP_WALL;
+        rounded_clearings += corners >= 3;
+    }
+    ASSERT("swamp clearings have irregular shorelines instead of square rooms",
+        rounded_clearings >= 5);
 
     for (int level = 1; level <= SWAMP_DEPTH; level++) {
-        ASSERT("each swamp level has a route between entry and exit",
+        ASSERT("every swamp path tile connects to the entry and exit",
             swamp_game.level == level &&
             swamp_exit_reachable(&swamp_game.map));
         ASSERT("swamp tiles use their own black-green terrain",
@@ -202,5 +229,17 @@ void test_swamp(void) {
             swamp_loaded.location == LOCATION_SWAMP &&
             swamp_loaded.level == 2);
     }
+    int connected_layouts = 1;
+    for (int seed = 0; seed < 25; seed++) {
+        srand(1000 + seed);
+        for (int level = 1; level <= SWAMP_DEPTH; level++) {
+            map_generate_swamp(&swamp_layout, level);
+            if (!swamp_exit_reachable(&swamp_layout)) {
+                connected_layouts = 0;
+            }
+        }
+    }
+    ASSERT("random swamp shorelines never isolate traversable ground",
+        connected_layouts);
     remove("saves/savegame_99121.json");
 }
