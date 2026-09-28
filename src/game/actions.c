@@ -1478,7 +1478,7 @@ void action_resolve_player(GameState *g, Action a) {
             }
         }
         // Check for town exit
-        if (g->location == LOCATION_TOWN &&
+        if ((g->location == LOCATION_TOWN || g->location == LOCATION_TOWN2) &&
             g->map.tiles[ty][tx] == TILE_PORTAL && g->portal_active) {
             game_use_town_portal(g);
             return;
