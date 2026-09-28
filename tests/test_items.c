@@ -37,6 +37,10 @@ static void test_gold_drop_scarcity(void) {
         int gold_before = g.gold;
         action_resolve_player(&g, attack);
         int coins = g.gold - gold_before;
+        if (g.floor_item_count > 0 &&
+            g.floor_items[0].item.type == ITEM_GOLD) {
+            coins += g.floor_items[0].item.value;
+        }
         if (coins > 0) {
             drops++;
             small_purses &= coins <= 2;
@@ -45,7 +49,28 @@ static void test_gold_drop_scarcity(void) {
     ASSERT("ordinary kills usually yield no gold", drops >= 120 && drops <= 280);
     ASSERT("early enemy purses contain only one or two gold", small_purses);
 
+    game_init(&g);
+    g.player.x = 10;
+    g.player.y = 10;
+    g.inventory_count = MAX_INVENTORY;
+    g.map.tiles[10][10] = TILE_ITEM;
+    g.floor_item_count = 1;
+    g.floor_items[0] = (FloorItem){
+        .active = 1, .x = 10, .y = 10, .underlying_tile = TILE_FLOOR,
+        .item = {.active = 1, .type = ITEM_GOLD, .value = 2}
+    };
+    int pickup_gold = g.gold;
+    int pickup_score = g.score;
+    action_resolve_player(&g, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("gold pickup works with a full inventory",
+        g.gold == pickup_gold + 2 && g.score == pickup_score + 2 &&
+        g.inventory_count == MAX_INVENTORY && !g.floor_items[0].active &&
+        g.map.tiles[10][10] == TILE_FLOOR);
+
+    g.player.x = x - 1;
+    g.player.y = y;
     g.location = LOCATION_FOREST;
+    g.enemy_count = 1;
     g.floor_item_count = 0;
     g.map.tiles[y][x] = TILE_FOREST_FLOOR;
     g.enemies[0] = (Enemy){
@@ -54,10 +79,24 @@ static void test_gold_drop_scarcity(void) {
     };
     int gold_before = g.gold;
     action_resolve_player(&g, attack);
-    ASSERT("bosses keep a guaranteed smaller purse and equipment reward",
-        g.gold == gold_before + 25 && g.floor_item_count == 1 &&
-        g.floor_items[0].item.type == ITEM_ARMOR &&
+    ASSERT("bosses leave separate gold and equipment pickups",
+        g.gold == gold_before && g.floor_item_count == 2 &&
+        g.floor_items[0].item.type == ITEM_GOLD &&
+        g.floor_items[0].item.value == 25 &&
+        g.floor_items[1].item.type == ITEM_ARMOR &&
         (g.defeated_bosses & (1 << LOCATION_FOREST)));
+    g.player.x = x;
+    g.player.y = y;
+    action_resolve_player(&g, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("collecting boss gold leaves its equipment on the floor",
+        g.gold == gold_before + 25 && !g.floor_items[0].active &&
+        g.floor_items[1].active && g.map.tiles[y][x] == TILE_ITEM);
+    g.inventory_count = 1;
+    action_resolve_player(&g, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("collecting boss equipment restores the floor",
+        !g.floor_items[1].active && g.inventory_count == 2 &&
+        g.inventory[1].type == ITEM_ARMOR &&
+        g.map.tiles[y][x] == TILE_FOREST_FLOOR);
 }
 
 void test_items(void) {
@@ -65,13 +104,11 @@ void test_items(void) {
 
     // --- Factory functions ---
     Item hp_potion = item_make_health_potion();
-    ASSERT("health potion type correct",    hp_potion.type    == ITEM_POTION_HEALTH);
-    ASSERT("health potion heal_hp set",     hp_potion.heal_hp == 30);
-    ASSERT("health potion has value",       hp_potion.value   > 0);
+    ASSERT("health potion type correct", hp_potion.type == ITEM_POTION_HEALTH);
+    ASSERT("health potion has value", hp_potion.value > 0);
 
     Item mp_potion = item_make_mana_potion();
-    ASSERT("mana potion type correct",      mp_potion.type    == ITEM_POTION_MANA);
-    ASSERT("mana potion heal_mp set",       mp_potion.heal_mp == 20);
+    ASSERT("mana potion type correct", mp_potion.type == ITEM_POTION_MANA);
 
     Item sword = item_make_long_sword();
     ASSERT("weapon type correct",           sword.type         == ITEM_WEAPON);
@@ -277,6 +314,9 @@ void test_items(void) {
         shop_has_item(&shop, "Apprentice Robes") &&
         shop_has_item(&shop, "Buckler") &&
         !shop_has_item(&shop, "Long Sword"));
+    shop_init(&shop, SHOP_TYPE_BLACKSMITH, 1 << LOCATION_LABYRINTH);
+    ASSERT("Maze Warden victory does not unlock regional blacksmith stock",
+        shop.stock_tier == 1 && !shop_has_item(&shop, "Long Sword"));
     shop_init(&shop, SHOP_TYPE_BLACKSMITH, 1 << LOCATION_DUNGEON);
     ASSERT("one defeated boss unlocks uncommon weapons",
         shop.stock_tier == 2 && shop.item_count == 18 &&
@@ -457,7 +497,7 @@ void test_items(void) {
         strcmp(coast_reward.name, "Tidecaller Robes") == 0);
 
     // --- Use health potion ---
-    GameState g = {0};
+    static GameState g;
     game_init(&g);
     g.location = LOCATION_DUNGEON;
     g.level = 1;
@@ -477,19 +517,37 @@ void test_items(void) {
         sizeof(g.enemies[0].name) - 1);
     Action defeat_boss = {ACTION_MOVE, 11, 10};
     action_resolve_player(&g, defeat_boss);
-    ASSERT("defeated boss places its guaranteed equipment reward",
-        g.floor_item_count == 1 &&
-        strcmp(g.floor_items[0].item.name, "Cryptblade") == 0);
+    ASSERT("defeated boss leaves gold and its guaranteed equipment reward",
+        g.floor_item_count == 2 &&
+        g.floor_items[0].item.type == ITEM_GOLD &&
+        strcmp(g.floor_items[1].item.name, "Cryptblade") == 0);
 
     game_init(&g);
-    g.player.hp     = 50;
+    g.player.hp = 5;
     g.player.max_hp = 100;
-    g.inventory[0]  = hp_potion;
+    g.inventory[0] = hp_potion;
     g.inventory_count = 1;
     Action use = {ACTION_USE_ITEM, 0, 0};
     action_resolve_player(&g, use);
-    ASSERT("hp restored after potion",      g.player.hp == 80);
+    ASSERT("health potion restores HP to maximum", g.player.hp == 100);
     ASSERT("potion removed from inventory", g.inventory_count == 0);
+    g.inventory[0] = hp_potion;
+    g.inventory_count = 1;
+    action_resolve_player(&g, use);
+    ASSERT("health potion is kept when HP is already full",
+        g.player.hp == 100 && g.inventory_count == 1);
+
+    g.player.max_mp = 200;
+    g.player.mp = 3;
+    g.inventory[0] = mp_potion;
+    action_resolve_player(&g, use);
+    ASSERT("mana potion restores MP to maximum",
+        g.player.mp == 200 && g.inventory_count == 0);
+    g.inventory[0] = mp_potion;
+    g.inventory_count = 1;
+    action_resolve_player(&g, use);
+    ASSERT("mana potion is kept when MP is already full",
+        g.player.mp == 200 && g.inventory_count == 1);
 
     // --- Equip weapon ---
     game_init(&g);
@@ -886,9 +944,15 @@ void test_items(void) {
         g.trail[1].y == g.enemies[0].y && g.trail[1].is_impact);
     g.player.known_spells[0] = spell_make_heal();
     g.player.hp = 1;
+    int mp_before_heal_cast = g.player.mp;
     action_resolve_player(&g, cast);
-    ASSERT("magic staff adds spell power to healing",
-        g.player.hp == 51);
+    ASSERT("Heal restores full HP from a large deficit",
+        g.player.hp == g.player.max_hp &&
+        g.player.mp == mp_before_heal_cast - 13);
+    action_resolve_player(&g, cast);
+    ASSERT("Heal at full HP does not spend mana",
+        g.player.hp == g.player.max_hp &&
+        g.player.mp == mp_before_heal_cast - 13);
 
     g.player.known_spells[0] = spell_make_magic_arrow();
     int tome_index = g.inventory_count;
@@ -903,10 +967,13 @@ void test_items(void) {
     Spell upgraded_heal = spell_make_heal();
     spell_upgrade(&upgraded_fireball);
     spell_upgrade(&upgraded_heal);
-    ASSERT("Fireball and Heal upgrades apply their rank-two effects",
+    ASSERT("Fireball upgrade increases damage and Heal upgrade lowers mana cost",
         upgraded_fireball.rank == 2 && upgraded_fireball.damage == 37 &&
         upgraded_fireball.mp_cost == 23 && upgraded_heal.rank == 2 &&
-        upgraded_heal.heal_hp == 60 && upgraded_heal.mp_cost == 17);
+        upgraded_heal.mp_cost == 13);
+    spell_upgrade(&upgraded_heal);
+    ASSERT("Heal III lowers its mana cost again",
+        upgraded_heal.rank == 3 && upgraded_heal.mp_cost == 11);
 
     g.player.known_spells[0] = spell_make_frost_bolt();
     g.player.mp = g.player.max_mp;
@@ -1006,6 +1073,7 @@ void test_items(void) {
     g.player.equipped_spell = 0;
     g.player.last_dx = 1;
     g.player.last_dy = 0;
+    g.player.hp = 1;
     int mp_before_cast = g.player.mp;
     action_resolve_player(&g, cast);
     ASSERT("mage armor reduces spell mana cost",

@@ -9,7 +9,7 @@ rather than sustained melee combat.
 
 - Gaining a level increases maximum HP by 10 and restores both HP and MP to
   maximum.
-- Mana Potions restore 20 MP and are sold by the Alchemist.
+- Mana Potions restore MP to full and are sold by the Alchemist.
 - Morwen's witch hut in Town 2 also sells Mana Potions for 20 gold.
 - Lysa sells Health Potions for 20 gold. The Alchemist sells both potion types.
 
@@ -36,7 +36,7 @@ no MP when the path is completely blocked.
 ## Mage Equipment
 
 Staves are two-handed weapons. Their spell power is added directly to spell
-damage and healing.
+damage; Heal restores HP to full regardless of spell power.
 
 | Tier | Weapon | Attack | Casting bonuses |
 | ---: | --- | ---: | --- |

@@ -26,21 +26,19 @@ static void set_shield_metadata(Item *it, ItemRarity rarity, int class_mask, Ite
 
 Item item_make_health_potion(void) {
     Item it = {0};
-    it.active  = 1;
-    it.type    = ITEM_POTION_HEALTH;
+    it.active = 1;
+    it.type = ITEM_POTION_HEALTH;
     strncpy(it.name, "Health Potion", sizeof(it.name) - 1);
-    it.heal_hp = 30;
-    it.value   = 10;
+    it.value = 10;
     return it;
 }
 
 Item item_make_mana_potion(void) {
     Item it = {0};
-    it.active  = 1;
-    it.type    = ITEM_POTION_MANA;
+    it.active = 1;
+    it.type = ITEM_POTION_MANA;
     strncpy(it.name, "Mana Potion", sizeof(it.name) - 1);
-    it.heal_mp = 20;
-    it.value   = 10;
+    it.value = 10;
     return it;
 }
 

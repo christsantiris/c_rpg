@@ -68,11 +68,11 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
         return 1;
     }
     if (action.target_x == 0) {
-        if (action.target_y >= TOWN_ROAD_EXIT_Y - 1 &&
+        if (action.target_y == TOWN_ROAD_EXIT_Y &&
             !(g->defeated_bosses & (1 << LOCATION_FOREST))) {
             return 0;
         }
-        *style = action.target_y >= TOWN_ROAD_EXIT_Y - 1 ?
+        *style = action.target_y == TOWN_ROAD_EXIT_Y ?
             TOWN_EXIT_ROAD : TOWN_EXIT_FOREST;
         return 1;
     }
@@ -1238,7 +1238,9 @@ int main(int argc, char **argv) {
             game.location == LOCATION_TOWN2 ||
             game.location == LOCATION_INN ||
             game.location == LOCATION_ISLAND;
-        music_update(screen, is_town);
+        int in_town2 = game.location == LOCATION_TOWN2 ||
+            game.location == LOCATION_INN;
+        music_update(screen, is_town, in_town2);
 
         if (!needs_redraw) {
             continue;

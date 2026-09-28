@@ -10,7 +10,6 @@ Spell spell_make_magic_arrow(void) {
     s.damage  = 15;
     s.range   = 6;
     s.radius  = 0;
-    s.heal_hp = 0;
     s.rank = 1;
     return s;
 }
@@ -24,7 +23,6 @@ Spell spell_make_fireball(void) {
     s.damage  = 25;
     s.range   = 4;
     s.radius  = 2;
-    s.heal_hp = 0;
     s.rank = 1;
     return s;
 }
@@ -34,11 +32,10 @@ Spell spell_make_heal(void) {
     strncpy(s.name, "Heal", sizeof(s.name) - 1);
     s.id      = SPELL_HEAL;
     s.type    = SPELL_TYPE_HEAL;
-    s.mp_cost = 15;
+    s.mp_cost = HEAL_BASE_MP_COST;
     s.damage  = 0;
     s.range   = 0;
     s.radius  = 0;
-    s.heal_hp = 40;
     s.rank = 1;
     return s;
 }
@@ -91,8 +88,7 @@ int spell_upgrade(Spell *spell) {
         spell->damage += 12;
         spell->mp_cost += 3;
     } else if (spell->id == SPELL_HEAL) {
-        spell->heal_hp += 20;
-        spell->mp_cost += 2;
+        spell->mp_cost -= 2;
     }
     return 1;
 }

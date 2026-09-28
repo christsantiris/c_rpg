@@ -68,6 +68,32 @@ void test_enemy_projectiles(void) {
         shots.count == 0 && g.player.hp == 100);
 
     setup_ranged_enemy(&g, ENEMY_GOBLIN_ARCHER);
+    g.enemies[1] = g.enemies[0];
+    g.enemies[1].type = ENEMY_SKELETON;
+    g.enemies[1].x = 17;
+    g.enemies[1].y = 20;
+    g.enemy_count = 2;
+    action_resolve_enemies_with_projectiles(&g, &shots);
+    ASSERT("a living enemy blocks the archer's shot",
+        shots.count == 0 && g.player.hp == 100);
+    g.enemies[1].active = 0;
+    g.enemies[0].move_timer = 1;
+    action_resolve_enemies_with_projectiles(&g, &shots);
+    ASSERT("a defeated enemy no longer blocks the archer's shot",
+        shots.count == 1 && g.player.hp == 90);
+
+    setup_ranged_enemy(&g, ENEMY_DROWNED_QUEEN);
+    g.enemies[0].y = 14;
+    g.enemies[1] = g.enemies[0];
+    g.enemies[1].type = ENEMY_SKELETON;
+    g.enemies[1].x = 17;
+    g.enemies[1].y = 17;
+    g.enemy_count = 2;
+    action_resolve_enemies_with_projectiles(&g, &shots);
+    ASSERT("a living enemy also blocks a diagonal boss projectile",
+        shots.count == 0 && g.player.hp == 100);
+
+    setup_ranged_enemy(&g, ENEMY_GOBLIN_ARCHER);
     g.enemies[0].move_timer = 0;
     action_resolve_enemies_with_projectiles(&g, &shots);
     ASSERT("ranged enemy holds a clear firing lane during recovery",

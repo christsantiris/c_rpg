@@ -292,7 +292,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 54);
+    cJSON_AddNumberToObject(root, "save_version", 55);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -324,7 +324,6 @@ int save_game(const GameState *g, int slot) {
         cJSON_AddNumberToObject(s, "type",     sp->type);
         cJSON_AddNumberToObject(s, "mp_cost",  sp->mp_cost);
         cJSON_AddNumberToObject(s, "damage",   sp->damage);
-        cJSON_AddNumberToObject(s, "heal_hp",  sp->heal_hp);
         cJSON_AddNumberToObject(s, "range",    sp->range);
         cJSON_AddNumberToObject(s, "radius",   sp->radius);
         cJSON_AddNumberToObject(s, "rank",     sp->rank);
@@ -408,8 +407,6 @@ int save_game(const GameState *g, int slot) {
         cJSON_AddNumberToObject(it, "active",        item->active);
         cJSON_AddNumberToObject(it, "type",          item->type);
         cJSON_AddStringToObject(it, "name",          item->name);
-        cJSON_AddNumberToObject(it, "heal_hp",       item->heal_hp);
-        cJSON_AddNumberToObject(it, "heal_mp",       item->heal_mp);
         cJSON_AddNumberToObject(it, "attack_bonus",  item->attack_bonus);
         cJSON_AddNumberToObject(it, "defense_bonus", item->defense_bonus);
         cJSON_AddNumberToObject(it, "value",         item->value);
@@ -457,8 +454,6 @@ int save_game(const GameState *g, int slot) {
         cJSON_AddNumberToObject(it, "active",        fi->item.active);
         cJSON_AddNumberToObject(it, "type",          fi->item.type);
         cJSON_AddStringToObject(it, "name",          fi->item.name);
-        cJSON_AddNumberToObject(it, "heal_hp",       fi->item.heal_hp);
-        cJSON_AddNumberToObject(it, "heal_mp",       fi->item.heal_mp);
         cJSON_AddNumberToObject(it, "attack_bonus",  fi->item.attack_bonus);
         cJSON_AddNumberToObject(it, "defense_bonus", fi->item.defense_bonus);
         cJSON_AddNumberToObject(it, "value",         fi->item.value);
@@ -599,6 +594,23 @@ int save_game(const GameState *g, int slot) {
     }
     cJSON_AddItemToObject(root, "temple_cache", temple_cache);
 
+    cJSON *labyrinth_cache = cJSON_CreateArray();
+    for (int i = 0; i < LABYRINTH_DEPTH; i++) {
+        cJSON *entry = cJSON_CreateObject();
+        cJSON_AddNumberToObject(entry, "valid", g->labyrinth_cache[i].valid);
+        cJSON_AddNumberToObject(entry, "level_cleared",
+            g->labyrinth_cache[i].level_cleared);
+        if (g->labyrinth_cache[i].valid) {
+            cJSON_AddItemToObject(entry, "map",
+                serialize_map(&g->labyrinth_cache[i].map));
+            cJSON_AddItemToObject(entry, "enemies",
+                serialize_enemies(g->labyrinth_cache[i].enemies,
+                    g->labyrinth_cache[i].enemy_count));
+        }
+        cJSON_AddItemToArray(labyrinth_cache, entry);
+    }
+    cJSON_AddItemToObject(root, "labyrinth_cache", labyrinth_cache);
+
     char *json = cJSON_Print(root);
     cJSON_Delete(root);
 
@@ -660,10 +672,12 @@ int load_game(GameState *g, int slot) {
         sp->type    = cJSON_GetObjectItem(s, "type")->valueint;
         sp->mp_cost = cJSON_GetObjectItem(s, "mp_cost")->valueint;
         sp->damage  = cJSON_GetObjectItem(s, "damage")->valueint;
-        sp->heal_hp = cJSON_GetObjectItem(s, "heal_hp")->valueint;
         sp->range   = cJSON_GetObjectItem(s, "range")->valueint;
         sp->radius  = cJSON_GetObjectItem(s, "radius")->valueint;
         sp->rank    = cJSON_GetObjectItem(s, "rank")->valueint;
+        if (sp->id == SPELL_HEAL) {
+            sp->mp_cost = HEAL_BASE_MP_COST - 2 * (sp->rank - 1);
+        }
     }
 
     // Game state
@@ -790,8 +804,6 @@ int load_game(GameState *g, int slot) {
         item->type          = cJSON_GetObjectItem(it, "type")->valueint;
         strncpy(item->name, cJSON_GetObjectItem(it, "name")->valuestring,
             sizeof(item->name) - 1);
-        item->heal_hp       = cJSON_GetObjectItem(it, "heal_hp")->valueint;
-        item->heal_mp       = cJSON_GetObjectItem(it, "heal_mp")->valueint;
         item->attack_bonus  = cJSON_GetObjectItem(it, "attack_bonus")->valueint;
         item->defense_bonus = cJSON_GetObjectItem(it, "defense_bonus")->valueint;
         item->value         = cJSON_GetObjectItem(it, "value")->valueint;
@@ -821,8 +833,6 @@ int load_game(GameState *g, int slot) {
         fi->item.type          = cJSON_GetObjectItem(it, "type")->valueint;
         strncpy(fi->item.name, cJSON_GetObjectItem(it, "name")->valuestring,
             sizeof(fi->item.name) - 1);
-        fi->item.heal_hp       = cJSON_GetObjectItem(it, "heal_hp")->valueint;
-        fi->item.heal_mp       = cJSON_GetObjectItem(it, "heal_mp")->valueint;
         fi->item.attack_bonus  = cJSON_GetObjectItem(it, "attack_bonus")->valueint;
         fi->item.defense_bonus = cJSON_GetObjectItem(it, "defense_bonus")->valueint;
         fi->item.value         = cJSON_GetObjectItem(it, "value")->valueint;
@@ -944,6 +954,30 @@ int load_game(GameState *g, int slot) {
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
                 g->temple_cache[i].enemies,
                 &g->temple_cache[i].enemy_count);
+        }
+    }
+
+    cJSON *labyrinth_cache = cJSON_GetObjectItem(root, "labyrinth_cache");
+    for (int i = 0; i < LABYRINTH_DEPTH; i++) {
+        g->labyrinth_cache[i].valid = 0;
+        g->labyrinth_cache[i].level_cleared = 0;
+        if (!labyrinth_cache) {
+            continue;
+        }
+        cJSON *entry = cJSON_GetArrayItem(labyrinth_cache, i);
+        if (!entry) {
+            continue;
+        }
+        cJSON *valid = cJSON_GetObjectItem(entry, "valid");
+        cJSON *cleared = cJSON_GetObjectItem(entry, "level_cleared");
+        g->labyrinth_cache[i].valid = valid ? valid->valueint : 0;
+        g->labyrinth_cache[i].level_cleared = cleared ? cleared->valueint : 0;
+        if (g->labyrinth_cache[i].valid) {
+            deserialize_map(cJSON_GetObjectItem(entry, "map"),
+                &g->labyrinth_cache[i].map);
+            deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
+                g->labyrinth_cache[i].enemies,
+                &g->labyrinth_cache[i].enemy_count);
         }
     }
 
@@ -1660,6 +1694,7 @@ int load_game(GameState *g, int slot) {
             g->defeated_bosses & (1 << LOCATION_FOREST));
     }
     if (g->location == LOCATION_TOWN2) {
+        map_place_town2_center(&g->map);
         map_place_town_labyrinth(&g->map);
     }
 

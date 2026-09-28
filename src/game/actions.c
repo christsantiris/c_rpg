@@ -85,6 +85,54 @@ static void mark_item_tile(GameState *g, int x, int y) {
     }
 }
 
+static TileType floor_drop_underlay(const GameState *g, int x, int y) {
+    for (int i = 0; i < g->floor_item_count; i++) {
+        const FloorItem *fi = &g->floor_items[i];
+        if (fi->active && fi->x == x && fi->y == y) {
+            return (TileType)fi->underlying_tile;
+        }
+    }
+    return g->map.tiles[y][x];
+}
+
+static void award_gold(GameState *g, int gold) {
+    g->gold += gold;
+    g->score += gold;
+    char msg[MAX_MESSAGE_LEN];
+    snprintf(msg, sizeof(msg), "Found %d gold!", gold);
+    push_message(g, msg);
+}
+
+static void place_gold_drop(GameState *g, int x, int y, int gold) {
+    FloorItem fi = {0};
+    fi.active = 1;
+    fi.x = x;
+    fi.y = y;
+    fi.underlying_tile = floor_drop_underlay(g, x, y);
+    fi.item.active = 1;
+    fi.item.type = ITEM_GOLD;
+    fi.item.value = gold;
+    snprintf(fi.item.name, sizeof(fi.item.name), "%d gold", gold);
+    g->floor_items[g->floor_item_count++] = fi;
+    mark_item_tile(g, x, y);
+    char msg[MAX_MESSAGE_LEN];
+    snprintf(msg, sizeof(msg), "%d gold dropped!", gold);
+    push_message(g, msg);
+}
+
+static void finish_floor_pickup(GameState *g, FloorItem *picked) {
+    picked->active = 0;
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *fi = &g->floor_items[i];
+        if (fi->active && fi->x == picked->x && fi->y == picked->y) {
+            return;
+        }
+    }
+    if (g->map.tiles[picked->y][picked->x] == TILE_ITEM) {
+        g->map.tiles[picked->y][picked->x] = (TileType)picked->underlying_tile;
+    }
+}
+
 Item boss_equipment_reward(EnemyType type) {
     switch (type) {
         case ENEMY_LICH_KING:
@@ -96,6 +144,8 @@ Item boss_equipment_reward(EnemyType type) {
             return item_make_goblin_king_shield();
         case ENEMY_DROWNED_QUEEN:
             return item_make_tidecaller_robes();
+        case ENEMY_LABYRINTH_WARDEN:
+            return item_make_magic_shield();
         default:
             return item_make_cryptblade();
     }
@@ -129,6 +179,7 @@ static int enemy_score(EnemyType type) {
         case ENEMY_SIREN: return 80;
         case ENEMY_GIANT_CRAB: return 100;
         case ENEMY_ANIMATED_STATUE: return 145;
+        case ENEMY_LABYRINTH_WARDEN: return 900;
         case ENEMY_WATER_ELEMENTAL: return 135;
         case ENEMY_SEA_SERPENT: return 180;
         case ENEMY_DROWNED_QUEEN: return 1600;
@@ -194,6 +245,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         case ENEMY_SIREN: gold = 8; break;
         case ENEMY_GIANT_CRAB: gold = 7; break;
         case ENEMY_ANIMATED_STATUE: gold = 12; break;
+        case ENEMY_LABYRINTH_WARDEN: gold = 50; break;
         case ENEMY_WATER_ELEMENTAL: gold = 10; break;
         case ENEMY_SEA_SERPENT: gold = 15; break;
         case ENEMY_DROWNED_QUEEN: gold = 75; break;
@@ -218,19 +270,21 @@ static void drop_loot(GameState *g, Enemy *enemy) {
     }
     
     // Smaller purses and fewer coin drops keep routine combat income modest.
-    gold /= 2;
-    if (gold > 0 && (is_boss || rand() % 100 < 10)) {
-        g->gold += gold;
-        g->score += gold;
-        char msg[MAX_MESSAGE_LEN];
-        snprintf(msg, sizeof(msg), "Found %d gold!", gold);
-        push_message(g, msg);
+    if (is_boss && gold == 0) {
+        gold = 50;
     }
+    gold /= 2;
+    int has_gold = gold > 0 && (is_boss || rand() % 100 < 10);
 
     // Each boss leaves a fixed regional reward instead of rolling ordinary
     // equipment, so capstone weapons remain Blacksmith progression.
     if (is_boss) {
         if (type == ENEMY_FALLEN_SUN_GUARDIAN) {
+            if (g->floor_item_count < MAX_FLOOR_ITEMS) {
+                place_gold_drop(g, x, y, gold);
+            } else {
+                award_gold(g, gold);
+            }
             game_update_level_progress(g);
             return;
         }
@@ -242,13 +296,18 @@ static void drop_loot(GameState *g, Enemy *enemy) {
             }
             g->floor_item_count--;
         }
+        if (g->floor_item_count < MAX_FLOOR_ITEMS - 1) {
+            place_gold_drop(g, x, y, gold);
+        } else {
+            award_gold(g, gold);
+        }
         if (g->floor_item_count < MAX_FLOOR_ITEMS) {
             Item boss_drop = boss_equipment_reward(type);
             FloorItem fi = {0};
             fi.active = 1;
             fi.x = x;
             fi.y = y;
-            fi.underlying_tile = g->map.tiles[y][x];
+            fi.underlying_tile = floor_drop_underlay(g, x, y);
             fi.item = boss_drop;
             mark_item_tile(g, x, y);
             g->floor_items[g->floor_item_count++] = fi;
@@ -261,30 +320,58 @@ static void drop_loot(GameState *g, Enemy *enemy) {
     }
 
     if (g->location == LOCATION_TEMPLE) {
+        if (has_gold) {
+            award_gold(g, gold);
+        }
         return;
     }
 
-    // Item drop — 5% chance
-    if (rand() % 100 >= 5) {
+    int has_item = rand() % 100 < 5;
+    TileType drop_tile = g->map.tiles[y][x];
+    int plain_floor = drop_tile == TILE_FLOOR ||
+        drop_tile == TILE_FOREST_FLOOR ||
+        drop_tile == TILE_MOUNTAIN_FLOOR ||
+        drop_tile == TILE_MOUNTAIN_CAVE_FLOOR ||
+        drop_tile == TILE_MOUNTAIN_FORTRESS_FLOOR ||
+        drop_tile == TILE_COAST_FLOOR ||
+        drop_tile == TILE_TEMPLE_FLOOR ||
+        drop_tile == TILE_LABYRINTH_FLOOR;
+    int occupied = 0;
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *fi = &g->floor_items[i];
+        if (fi->active && fi->x == x && fi->y == y) {
+            occupied = 1;
+            break;
+        }
+    }
+    // Credit coins directly when another pickup or a map mechanism occupies
+    // the tile, so coin markers cannot hide items, gates, or landmarks.
+    if (has_gold && (has_item || occupied || !plain_floor ||
+        g->floor_item_count >= MAX_FLOOR_ITEMS)) {
+        award_gold(g, gold);
+        has_gold = 0;
+    }
+    if (occupied || (!has_gold && !has_item) ||
+        g->floor_item_count >= MAX_FLOOR_ITEMS) {
         return;
     }
-    if (g->floor_item_count >= MAX_FLOOR_ITEMS) {
-        return;
-    }
-
-    Item item = random_enemy_item(g->level);
 
     FloorItem fi = {0};
     fi.active = 1;
     fi.x = x;
     fi.y = y;
     fi.underlying_tile = g->map.tiles[y][x];
-    fi.item = item;
+    if (has_item) {
+        fi.item = random_enemy_item(g->level);
+    } else {
+        place_gold_drop(g, x, y, gold);
+        return;
+    }
     g->floor_items[g->floor_item_count++] = fi;
 
     mark_item_tile(g, x, y);
     char item_msg[MAX_MESSAGE_LEN];
-    snprintf(item_msg, sizeof(item_msg), "%s dropped!", item.name);
+    snprintf(item_msg, sizeof(item_msg), "%s dropped!", fi.item.name);
     push_message(g, item_msg);
 }
 
@@ -611,8 +698,7 @@ void action_resolve_player(GameState *g, Action a) {
         g->location == LOCATION_TOWN2 ||
         g->location == LOCATION_FOREST_ROAD ||
         g->location == LOCATION_INN ||
-        g->location == LOCATION_ISLAND ||
-        g->location == LOCATION_LABYRINTH) {
+        g->location == LOCATION_ISLAND) {
         g->player.poison_turns = 0;
     }
     if (a.type == ACTION_NONE) {
@@ -771,13 +857,21 @@ void action_resolve_player(GameState *g, Action a) {
             FloorItem *fi = &g->floor_items[i];
             if (!fi->active) continue;
             if (fi->x != g->player.x || fi->y != g->player.y) continue;
+            if (fi->item.type == ITEM_GOLD) {
+                g->gold += fi->item.value;
+                g->score += fi->item.value;
+                finish_floor_pickup(g, fi);
+                char msg[MAX_MESSAGE_LEN];
+                snprintf(msg, sizeof(msg), "Picked up %d gold", fi->item.value);
+                push_message(g, msg);
+                return;
+            }
             if (g->inventory_count >= MAX_INVENTORY) {
                 push_message(g, "Inventory full!");
                 return;
             }
             g->inventory[g->inventory_count++] = fi->item;
-            fi->active = 0;
-            g->map.tiles[fi->y][fi->x] = (TileType)fi->underlying_tile;
+            finish_floor_pickup(g, fi);
             char msg[MAX_MESSAGE_LEN];
             snprintf(msg, sizeof(msg), "Picked up %s", fi->item.name);
             push_message(g, msg);
@@ -798,17 +892,21 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
         if (item->type == ITEM_POTION_HEALTH) {
-            int healed = item->heal_hp;
-            g->player.hp += healed;
-            if (g->player.hp > g->player.max_hp)
-                g->player.hp = g->player.max_hp;
+            if (g->player.hp >= g->player.max_hp) {
+                push_message(g, "HP is already full");
+                return;
+            }
+            int healed = g->player.max_hp - g->player.hp;
+            g->player.hp = g->player.max_hp;
             snprintf(msg, sizeof(msg), "Drank %s +%d HP", item->name, healed);
             push_message(g, msg);
         } else if (item->type == ITEM_POTION_MANA) {
-            int restored = item->heal_mp;
-            g->player.mp += restored;
-            if (g->player.mp > g->player.max_mp)
-                g->player.mp = g->player.max_mp;
+            if (g->player.mp >= g->player.max_mp) {
+                push_message(g, "MP is already full");
+                return;
+            }
+            int restored = g->player.max_mp - g->player.mp;
+            g->player.mp = g->player.max_mp;
             snprintf(msg, sizeof(msg), "Drank %s +%d MP", item->name, restored);
             push_message(g, msg);
         } else if (item->type == ITEM_SPELL_TOME) {
@@ -1043,6 +1141,12 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
+        if (sp->type == SPELL_TYPE_HEAL &&
+            g->player.hp >= g->player.max_hp) {
+            push_message(g, "HP is already full");
+            return;
+        }
+
         if (g->player.last_dx == 0 && g->player.last_dy == 0) {
             push_message(g, "Move first to aim!");
             return;
@@ -1141,10 +1245,8 @@ void action_resolve_player(GameState *g, Action a) {
             if (!hit) push_message(g, "Spell missed!");
 
         } else if (sp->type == SPELL_TYPE_HEAL) {
-            int healed = sp->heal_hp + g->player.level * 2 + spell_power;
-            g->player.hp += healed;
-            if (g->player.hp > g->player.max_hp)
-                g->player.hp = g->player.max_hp;
+            int healed = g->player.max_hp - g->player.hp;
+            g->player.hp = g->player.max_hp;
             char msg[MAX_MESSAGE_LEN];
             snprintf(msg, sizeof(msg), "Healed %d HP!", healed);
             push_message(g, msg);
@@ -1371,7 +1473,7 @@ void action_resolve_player(GameState *g, Action a) {
 
         if (g->location == LOCATION_TOWN2 &&
             g->map.tiles[ty][tx] == TILE_LABYRINTH_ENTRANCE) {
-            if (g->rook_quest_state == 1 || g->rook_quest_state == 2) {
+            if (game_labyrinth_is_open(g)) {
                 game_enter_labyrinth(g);
             } else {
                 push_message(g, "The old labyrinth gate is sealed.");
@@ -1381,7 +1483,21 @@ void action_resolve_player(GameState *g, Action a) {
 
         if (g->location == LOCATION_LABYRINTH &&
             g->map.tiles[ty][tx] == TILE_LABYRINTH_EXIT) {
-            game_leave_labyrinth(g);
+            if (g->level == 1) {
+                game_leave_labyrinth(g);
+            } else {
+                int false_stair = tx == LABYRINTH_FALSE_EXIT_X &&
+                    ty == LABYRINTH_FALSE_EXIT_Y;
+                game_change_labyrinth_floor(g, 0, false_stair);
+            }
+            return;
+        }
+
+        if (g->location == LOCATION_LABYRINTH &&
+            g->map.tiles[ty][tx] == TILE_LABYRINTH_STAIRS) {
+            int false_stair = tx != g->map.stairs_down_x ||
+                ty != g->map.stairs_down_y;
+            game_change_labyrinth_floor(g, 1, false_stair);
             return;
         }
 
@@ -1406,7 +1522,7 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->location == LOCATION_TOWN &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
             if (tx == 0) {
-                if (ty >= TOWN_ROAD_EXIT_Y - 1) {
+                if (ty == TOWN_ROAD_EXIT_Y) {
                     if (g->defeated_bosses & (1 << LOCATION_FOREST)) {
                         game_enter_forest_road(g);
                     } else {
@@ -1873,7 +1989,8 @@ static int enemy_prefers_flank(const Enemy *e) {
         e->type == ENEMY_TEMPLE_STALKER;
 }
 
-static int clear_orthogonal_path(const GameState *g, const Enemy *e);
+static int enemy_blocks_line_of_sight(const GameState *g, int shooter_index, int x, int y);
+static int clear_orthogonal_path(const GameState *g, int shooter_index, const Enemy *e);
 
 static int enemy_move_toward(GameState *g, int index) {
     Enemy *e = &g->enemies[index];
@@ -1901,7 +2018,7 @@ static int enemy_move_toward(GameState *g, int index) {
         candidate.x = tx;
         candidate.y = ty;
         int has_firing_lane = enemy_prefers_range(e) &&
-            clear_orthogonal_path(g, &candidate);
+            clear_orthogonal_path(g, index, &candidate);
         if (distance >= 0 &&
             (distance < best_distance ||
             (distance == best_distance &&
@@ -2005,18 +2122,25 @@ static int enemy_move_to_flank(GameState *g, int index) {
     return 0;
 }
 
-static int clear_orthogonal_path(const GameState *g, const Enemy *e) {
+static int clear_orthogonal_path(const GameState *g, int shooter_index, const Enemy *e) {
     int dx = g->player.x - e->x;
     int dy = g->player.y - e->y;
-    if (dx != 0 && dy != 0) return 0;
+    if (dx != 0 && dy != 0) {
+        return 0;
+    }
     int distance = abs_int(dx) + abs_int(dy);
-    if (distance < 2 || distance > 6) return 0;
+    if (distance < 2 || distance > 6) {
+        return 0;
+    }
     int sx = (dx > 0) ? 1 : (dx < 0) ? -1 : 0;
     int sy = (dy > 0) ? 1 : (dy < 0) ? -1 : 0;
     for (int step = 1; step < distance; step++) {
         int x = e->x + sx * step;
         int y = e->y + sy * step;
-        if (!map_is_walkable(&g->map, x, y)) return 0;
+        if (!map_is_walkable(&g->map, x, y) ||
+            enemy_blocks_line_of_sight(g, shooter_index, x, y)) {
+            return 0;
+        }
     }
     return 1;
 }
@@ -2074,7 +2198,20 @@ static int forest_necromancer_raise(GameState *g, int caster_index) {
     return 0;
 }
 
-static int clear_projectile_path(const GameState *g, const Enemy *e) {
+static int enemy_blocks_line_of_sight(const GameState *g, int shooter_index, int x, int y) {
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *other = &g->enemies[i];
+        if (i == shooter_index || !other->active) {
+            continue;
+        }
+        if (other->x == x && other->y == y) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int clear_projectile_path(const GameState *g, int shooter_index, const Enemy *e) {
     int x = e->x;
     int y = e->y;
     int dx = abs_int(g->player.x - x);
@@ -2096,9 +2233,10 @@ static int clear_projectile_path(const GameState *g, const Enemy *e) {
             y += step_y;
         }
         if (x == g->player.x && y == g->player.y) {
-            return 1;
+            break;
         }
-        if (!map_is_walkable(&g->map, x, y)) {
+        if (!map_is_walkable(&g->map, x, y) ||
+            enemy_blocks_line_of_sight(g, shooter_index, x, y)) {
             return 0;
         }
         if (x != old_x && y != old_y &&
@@ -2110,8 +2248,8 @@ static int clear_projectile_path(const GameState *g, const Enemy *e) {
     return 1;
 }
 
-static int apply_enemy_ranged_damage(GameState *g, const Enemy *e, int damage, EnemyProjectiles *shots) {
-    if (!clear_projectile_path(g, e)) {
+static int apply_enemy_ranged_damage(GameState *g, int shooter_index, const Enemy *e, int damage, EnemyProjectiles *shots) {
+    if (!clear_projectile_path(g, shooter_index, e)) {
         return 0;
     }
     if (shots && shots->count < MAX_ENEMIES) {
@@ -2281,7 +2419,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             if (e->move_timer % 2 == 0) {
                 int dmg = e->attack - g->player.defense / 2;
                 if (dmg < 4) dmg = 4;
-                dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
+                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
                 if (dmg == 0) {
                     continue;
                 }
@@ -2300,7 +2438,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             if (e->move_timer % 2 == 0) {
                 int dmg = e->attack - g->player.defense / 2;
                 if (dmg < 3) dmg = 3;
-                dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
+                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
                 if (dmg == 0) {
                     continue;
                 }
@@ -2317,7 +2455,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             if (e->move_timer % 2 == 0) {
                 int dmg = e->attack - g->player.defense / 2;
                 if (dmg < 4) dmg = 4;
-                dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
+                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
                 if (dmg == 0) {
                     continue;
                 }
@@ -2334,7 +2472,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 if (dmg < 5) {
                     dmg = 5;
                 }
-                dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
+                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
                 if (dmg == 0) {
                     continue;
                 }
@@ -2354,7 +2492,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 if (dmg < 6) {
                     dmg = 6;
                 }
-                dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
+                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
                 if (dmg > 0) {
                     char msg[MAX_MESSAGE_LEN];
                     snprintf(msg, sizeof(msg), "Guardian sunburst: %d dmg", dmg);
@@ -2393,12 +2531,12 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             e->type == ENEMY_SUN_PRIEST ||
             e->type == ENEMY_SERPENT_SPIRIT ||
             e->type == ENEMY_MOONBOUND_SENTINEL) &&
-            e->move_timer % 2 == 0 && clear_orthogonal_path(g, e)) {
+            e->move_timer % 2 == 0 && clear_orthogonal_path(g, i, e)) {
             int dmg = e->attack - g->player.defense / 2;
             if (dmg < 2) {
                 dmg = 2;
             }
-            dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
+            dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
             if (dmg > 0) {
                 if (e->type == ENEMY_BLOWDART_HUNTER) {
                     g->player.poison_turns = 3;
@@ -2413,12 +2551,12 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
 
         if ((e->type == ENEMY_SIREN ||
             e->type == ENEMY_WATER_ELEMENTAL) &&
-            e->move_timer % 2 == 0 && clear_orthogonal_path(g, e)) {
+            e->move_timer % 2 == 0 && clear_orthogonal_path(g, i, e)) {
             int dmg = e->attack - g->player.defense / 2;
             if (dmg < 1) {
                 dmg = 1;
             }
-            dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
+            dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
             if (dmg == 0) {
                 continue;
             }
@@ -2431,10 +2569,10 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
 
         if ((e->type == ENEMY_GOBLIN_ARCHER ||
             e->type == ENEMY_GOBLIN_BOMBER) &&
-            e->move_timer % 2 == 0 && clear_orthogonal_path(g, e)) {
+            e->move_timer % 2 == 0 && clear_orthogonal_path(g, i, e)) {
             int dmg = e->attack - g->player.defense / 2;
             if (dmg < 1) dmg = 1;
-            dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
+            dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
             if (dmg == 0) {
                 continue;
             }
@@ -2463,10 +2601,10 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         }
 
         if (e->type == ENEMY_DARK_ELF && e->move_timer % 2 == 0 &&
-            clear_orthogonal_path(g, e)) {
+            clear_orthogonal_path(g, i, e)) {
             int dmg = e->attack - g->player.defense / 2;
             if (dmg < 1) dmg = 1;
-            dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
+            dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
             if (dmg == 0) {
                 continue;
             }
@@ -2478,10 +2616,10 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
 
         if (e->type == ENEMY_CRYPT_CONJURER) {
             if (e->move_timer % 4 == 0 && necromancer_revive(g, i)) continue;
-            if (e->move_timer % 2 == 0 && clear_orthogonal_path(g, e)) {
+            if (e->move_timer % 2 == 0 && clear_orthogonal_path(g, i, e)) {
                 int dmg = e->attack - g->player.defense / 2;
                 if (dmg < 1) dmg = 1;
-                dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
+                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
                 if (dmg == 0) {
                     continue;
                 }
@@ -2496,7 +2634,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
 
-        if (enemy_prefers_range(e) && clear_orthogonal_path(g, e)) {
+        if (enemy_prefers_range(e) && clear_orthogonal_path(g, i, e)) {
             continue;
         }
 
