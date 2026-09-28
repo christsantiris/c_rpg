@@ -140,6 +140,7 @@ void draw_labyrinth_entrance(Renderer *r, int tile_x, int tile_y, int open);
 void draw_labyrinth_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_labyrinth_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_labyrinth_exit(Renderer *r, int tile_x, int tile_y);
+void draw_labyrinth_stairs(Renderer *r, int tile_x, int tile_y);
 void draw_labyrinth_switch(Renderer *r, int tile_x, int tile_y, int active);
 void draw_labyrinth_gate(Renderer *r, int tile_x, int tile_y);
 void draw_labyrinth_relic(Renderer *r, int tile_x, int tile_y);

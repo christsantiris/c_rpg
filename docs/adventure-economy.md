@@ -24,8 +24,9 @@ earn gold and experience faster than safe work in town.
 - Later boss victories currently increase the difficulty of newly generated
   enemies even in regions the player has already cleared. Those regions may
   cease to be useful for training.
-- The Ruined Temple preserves its floors when revisited, and Rook's current
-  labyrinth has no enemies. They do not yet offer repeatable combat income.
+- The Ruined Temple preserves its floors when revisited. Rook's labyrinth
+  repopulates ordinary enemies on a new expedition, while its boss and quest
+  reward remain one-time.
 
 ## Recovery loop: paid work in both towns
 
@@ -78,8 +79,8 @@ player-level adjustment. It must not inherit the increased order tier from
 subsequent boss victories. The region remains useful for practice and income;
 its boss and one-time quest rewards remain gone. Apply the same pattern to
 future combat areas. The Ruined Temple needs its own fresh-expedition reset
-before it can be advertised as repeatable. Rook's labyrinth joins this loop
-only after it has enemies.
+before it can be advertised as repeatable. Rook's labyrinth already supports
+repeatable ordinary combat after its one-time quest.
 
 ## Potions and spending
 

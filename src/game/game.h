@@ -98,6 +98,7 @@ typedef struct {
     LevelCache mountain_cache[MAX_REGION_DEPTH];
     LevelCache coast_cache[MAX_REGION_DEPTH];
     LevelCache temple_cache[TEMPLE_DEPTH];
+    LevelCache labyrinth_cache[LABYRINTH_DEPTH];
     char       messages[MAX_MESSAGES][MAX_MESSAGE_LEN];
     int        message_count;
     int        level_cleared;
@@ -172,6 +173,7 @@ void game_enter_inn(GameState *g);
 void game_leave_inn(GameState *g);
 void game_enter_labyrinth(GameState *g);
 void game_leave_labyrinth(GameState *g);
+void game_change_labyrinth_floor(GameState *g, int descending, int false_stair);
 int game_has_labyrinth_interaction(const GameState *g);
 int game_interact_labyrinth(GameState *g);
 void game_enter_island(GameState *g);

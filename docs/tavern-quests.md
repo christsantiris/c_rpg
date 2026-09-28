@@ -103,6 +103,8 @@ without requiring the absent Lich King to be defeated again.
 
 Speak with Rook in Town 2's Inn to receive his one-time retrieval quest. This opens the
 labyrinth entrance on the eastern outskirts, across the road from the witch's
-hut. The current labyrinth has no enemies or traps. Explore its passages,
-activate three runes to open the relic vault, recover his stolen ivory rook,
-and return to Rook for 40 gold and 500 score.
+hut. Explore three maze floors with enemies and look-alike stairs; some stairs
+lead only to a dead-end corridor and its return stair. Activate one rune on
+each floor to open the final vault, defeat the Maze Warden, recover the ivory
+rook, and return to Rook for 40 gold and 500 score. The quest and boss are
+one-time, but the labyrinth remains open for further combat expeditions.
