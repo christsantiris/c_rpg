@@ -68,11 +68,11 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
         return 1;
     }
     if (action.target_x == 0) {
-        if (action.target_y >= TOWN_ROAD_EXIT_Y - 1 &&
+        if (action.target_y == TOWN_ROAD_EXIT_Y &&
             !(g->defeated_bosses & (1 << LOCATION_FOREST))) {
             return 0;
         }
-        *style = action.target_y >= TOWN_ROAD_EXIT_Y - 1 ?
+        *style = action.target_y == TOWN_ROAD_EXIT_Y ?
             TOWN_EXIT_ROAD : TOWN_EXIT_FOREST;
         return 1;
     }
