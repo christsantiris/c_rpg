@@ -292,7 +292,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 57);
+    cJSON_AddNumberToObject(root, "save_version", 59);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -344,6 +344,8 @@ int save_game(const GameState *g, int slot) {
         g->max_coast_level_reached);
     cJSON_AddNumberToObject(root, "max_swamp_level_reached",
         g->max_swamp_level_reached);
+    cJSON_AddNumberToObject(root, "max_dragonspine_level_reached",
+        g->max_dragonspine_level_reached);
     cJSON_AddNumberToObject(root, "max_temple_level_reached",
         g->max_temple_level_reached);
     cJSON_AddNumberToObject(root, "message_count",     g->message_count);
@@ -385,6 +387,8 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "mara_quest_state", g->mara_quest_state);
     cJSON_AddNumberToObject(root, "mara_beacons_lit", g->mara_beacons_lit);
     cJSON_AddNumberToObject(root, "cain_scroll_given", g->cain_scroll_given);
+    cJSON_AddNumberToObject(root, "island_travel_unlocked",
+        g->island_travel_unlocked);
     cJSON_AddNumberToObject(root, "temple_alignment", g->temple_alignment);
     cJSON_AddNumberToObject(root, "temple_sentinels_awakened",
         g->temple_sentinels_awakened);
@@ -599,6 +603,25 @@ int save_game(const GameState *g, int slot) {
     }
     cJSON_AddItemToObject(root, "swamp_cache", swamp_cache);
 
+    cJSON *dragonspine_cache = cJSON_CreateArray();
+    for (int i = 0; i < DRAGONSPINE_DEPTH; i++) {
+        cJSON *entry = cJSON_CreateObject();
+        cJSON_AddNumberToObject(entry, "valid", g->dragonspine_cache[i].valid);
+        cJSON_AddNumberToObject(entry, "level_cleared",
+            g->dragonspine_cache[i].level_cleared);
+        if (g->dragonspine_cache[i].valid) {
+            cJSON_AddItemToObject(entry, "map",
+                serialize_map(&g->dragonspine_cache[i].map));
+            cJSON_AddItemToObject(entry, "enemies",
+                serialize_enemies(g->dragonspine_cache[i].enemies,
+                    g->dragonspine_cache[i].enemy_count));
+            cJSON_AddNumberToObject(entry, "enemy_count",
+                g->dragonspine_cache[i].enemy_count);
+        }
+        cJSON_AddItemToArray(dragonspine_cache, entry);
+    }
+    cJSON_AddItemToObject(root, "dragonspine_cache", dragonspine_cache);
+
     cJSON *temple_cache = cJSON_CreateArray();
     for (int i = 0; i < TEMPLE_DEPTH; i++) {
         cJSON *entry = cJSON_CreateObject();
@@ -714,6 +737,9 @@ int load_game(GameState *g, int slot) {
     g->max_coast_level_reached = max_coast ? max_coast->valueint : 1;
     cJSON *max_swamp = cJSON_GetObjectItem(root, "max_swamp_level_reached");
     g->max_swamp_level_reached = max_swamp ? max_swamp->valueint : 1;
+    cJSON *max_dragonspine = cJSON_GetObjectItem(root,
+        "max_dragonspine_level_reached");
+    g->max_dragonspine_level_reached = max_dragonspine ? max_dragonspine->valueint : 1;
     cJSON *max_temple = cJSON_GetObjectItem(root,
         "max_temple_level_reached");
     g->max_temple_level_reached = max_temple ? max_temple->valueint : 1;
@@ -762,6 +788,7 @@ int load_game(GameState *g, int slot) {
     cJSON *mara_quest = cJSON_GetObjectItem(root, "mara_quest_state");
     cJSON *mara_beacons = cJSON_GetObjectItem(root, "mara_beacons_lit");
     cJSON *cain_scroll = cJSON_GetObjectItem(root, "cain_scroll_given");
+    cJSON *island_travel = cJSON_GetObjectItem(root, "island_travel_unlocked");
     cJSON *temple_alignment = cJSON_GetObjectItem(root, "temple_alignment");
     cJSON *temple_sentinels = cJSON_GetObjectItem(root,
         "temple_sentinels_awakened");
@@ -794,6 +821,7 @@ int load_game(GameState *g, int slot) {
     g->mara_quest_state = mara_quest ? mara_quest->valueint : 0;
     g->mara_beacons_lit = mara_beacons ? mara_beacons->valueint : 0;
     g->cain_scroll_given = cain_scroll ? cain_scroll->valueint : 0;
+    g->island_travel_unlocked = island_travel ? island_travel->valueint : 0;
     g->temple_alignment = temple_alignment ? temple_alignment->valueint : 0;
     g->temple_sentinels_awakened = temple_sentinels
         ? temple_sentinels->valueint : 0;
@@ -980,6 +1008,30 @@ int load_game(GameState *g, int slot) {
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
                 g->swamp_cache[i].enemies,
                 &g->swamp_cache[i].enemy_count);
+        }
+    }
+
+    cJSON *dragonspine_cache = cJSON_GetObjectItem(root, "dragonspine_cache");
+    for (int i = 0; i < DRAGONSPINE_DEPTH; i++) {
+        g->dragonspine_cache[i].valid = 0;
+        g->dragonspine_cache[i].level_cleared = 0;
+        if (!dragonspine_cache) {
+            continue;
+        }
+        cJSON *entry = cJSON_GetArrayItem(dragonspine_cache, i);
+        if (!entry) {
+            continue;
+        }
+        cJSON *valid = cJSON_GetObjectItem(entry, "valid");
+        cJSON *cleared = cJSON_GetObjectItem(entry, "level_cleared");
+        g->dragonspine_cache[i].valid = valid ? valid->valueint : 0;
+        g->dragonspine_cache[i].level_cleared = cleared ? cleared->valueint : 0;
+        if (g->dragonspine_cache[i].valid) {
+            deserialize_map(cJSON_GetObjectItem(entry, "map"),
+                &g->dragonspine_cache[i].map);
+            deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
+                g->dragonspine_cache[i].enemies,
+                &g->dragonspine_cache[i].enemy_count);
         }
     }
 
@@ -1742,6 +1794,8 @@ int load_game(GameState *g, int slot) {
     if (g->location == LOCATION_TOWN) {
         map_set_town2_road(&g->map,
             g->defeated_bosses & (1 << LOCATION_FOREST));
+        map_set_dragonspine_road(&g->map,
+            g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
     }
     if (g->location == LOCATION_TOWN2) {
         map_place_town2_center(&g->map);

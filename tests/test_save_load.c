@@ -769,6 +769,23 @@ static void test_harbor_road_save_load(void) {
         game_talk_to_rowan(&loaded);
         ASSERT("returning to town keeps the map without repeating the gift",
             game_has_treasure_map(&loaded) && loaded.inventory_count == count);
+        game_enter_island(&loaded);
+        ASSERT("first voyage uses the map as a one-time key",
+            loaded.island_travel_unlocked && !game_has_treasure_map(&loaded) &&
+            loaded.inventory_count == count - 1);
+        game_leave_island(&loaded);
+        ASSERT("unlocked island route can be saved",
+            save_game(&loaded, ROUND_TRIP_SLOT));
+        int route_loaded = load_game(&g, ROUND_TRIP_SLOT);
+        ASSERT("loading preserves map-free island travel",
+            route_loaded && g.island_travel_unlocked &&
+            !game_has_treasure_map(&g) && game_can_sail_to_island(&g) &&
+            g.inventory_count == count - 1);
+        if (route_loaded) {
+            game_talk_to_rowan(&g);
+            ASSERT("reloading cannot cause Rowan to reissue the used map",
+                !game_has_treasure_map(&g) && g.inventory_count == count - 1);
+        }
     }
     remove_test_save(ROUND_TRIP_SLOT);
 }

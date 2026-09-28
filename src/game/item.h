@@ -176,6 +176,7 @@ Item item_make_runed_robes(void);
 Item item_make_enchanter_robes(void);
 Item item_make_archmage_robes(void);
 Item item_make_necromancer_cloak(void);
+Item item_make_dragon_scale_mantle(void);
 Item item_make_tidecaller_robes(void);
 Item item_make_buckler(void);
 Item item_make_kite_shield(void);

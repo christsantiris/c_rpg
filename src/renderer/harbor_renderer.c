@@ -71,7 +71,7 @@ static void draw_harbor_option(Renderer *r, const HarborScreen *s, int option, i
 void harbor_draw(Renderer *r, const GameState *g, const HarborScreen *s) {
     int play_w = r->screen_w - INFO_PANEL_W;
     int play_h = r->tiles_y * TILE_SIZE;
-    int has_map = game_has_treasure_map(g);
+    int can_sail = game_can_sail_to_island(g);
     int on_island = g->location == LOCATION_ISLAND;
     draw_harbor_background(r, play_w, play_h);
 
@@ -102,14 +102,16 @@ void harbor_draw(Renderer *r, const GameState *g, const HarborScreen *s) {
         play_w / 2, 34, gold, r->font_large);
     draw_centered_text(r, on_island
         ? "RETURN TO TOWN WHEN YOU ARE READY."
-        : has_map
+        : g->island_travel_unlocked
+        ? "THE SEA ROUTE TO THE RUINED ISLE IS OPEN."
+        : can_sail
         ? "THE TREASURE MAP CHARTS A COURSE TO THE RUINED ISLE."
         : "A SEA CHART IS REQUIRED. SPEAK WITH CAPTAIN ROWAN.",
-        play_w / 2, 70, on_island || has_map ? ready : locked, r->font_tiny);
+        play_w / 2, 70, on_island || can_sail ? ready : locked, r->font_tiny);
 
-    draw_harbor_option(r, s, 0, on_island || has_map, on_island
+    draw_harbor_option(r, s, 0, on_island || can_sail, on_island
         ? "RETURN TO TOWN"
-        : has_map
+        : can_sail
         ? "BOARD SHIP - SAIL TO THE RUINED ISLE"
         : "BOARD SHIP - TREASURE MAP REQUIRED");
     draw_harbor_option(r, s, 1, 1, on_island

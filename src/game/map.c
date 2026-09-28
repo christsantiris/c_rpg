@@ -311,6 +311,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_MOUNTAIN_HIDDEN_CAVE &&
         m->tiles[y][x] != TILE_COAST_WALL &&
         m->tiles[y][x] != TILE_SWAMP_WALL &&
+        m->tiles[y][x] != TILE_DRAGON_WALL &&
         m->tiles[y][x] != TILE_COAST_DEEP_WATER &&
         m->tiles[y][x] != TILE_COAST_CHANNEL_WATER &&
         m->tiles[y][x] != TILE_TAVERN &&
@@ -1158,6 +1159,19 @@ void map_set_town2_road(Map *m, int unlocked) {
     }
 }
 
+void map_set_dragonspine_road(Map *m, int unlocked) {
+    if (!unlocked) {
+        return;
+    }
+    for (int y = TOWN_DRAGON_GATE_Y; y <= 12; y++) {
+        m->tiles[y][40] = TILE_TOWN_PATH;
+    }
+    for (int x = 40; x < TOWN_W - 1; x++) {
+        m->tiles[TOWN_DRAGON_GATE_Y][x] = TILE_TOWN_PATH;
+    }
+    m->tiles[TOWN_DRAGON_GATE_Y][TOWN_W - 1] = TILE_TOWN_EXIT;
+}
+
 void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
     map_clear_exploration(m);
     m->room_count = 0;
@@ -1307,6 +1321,64 @@ void map_generate_swamp(Map *m, int level) {
     m->stairs_down_x += 3;
     m->tiles[m->stairs_up_y][m->stairs_up_x] = TILE_SWAMP_ENTRANCE;
     m->tiles[m->stairs_down_y][m->stairs_down_x] = TILE_SWAMP_EXIT;
+}
+
+void map_generate_high_pass(Map *m) {
+    map_clear_exploration(m);
+    m->room_count = 0;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            m->tiles[y][x] = TILE_DRAGON_WALL;
+        }
+    }
+    int previous_y = HIGH_PASS_Y;
+    for (int x = 1; x < HIGH_PASS_W - 1; x++) {
+        int path_y = HIGH_PASS_Y - ((x / 12) % 2);
+        m->tiles[path_y][x] = TILE_DRAGON_FLOOR;
+        m->tiles[previous_y][x] = TILE_DRAGON_FLOOR;
+        if (x == 21 || x == 43) {
+            m->tiles[path_y - 1][x] = TILE_DRAGON_FLOOR;
+            m->tiles[path_y + 1][x] = TILE_DRAGON_FLOOR;
+        }
+        previous_y = path_y;
+    }
+    m->stairs_up_x = 0;
+    m->stairs_up_y = HIGH_PASS_Y;
+    m->stairs_down_x = HIGH_PASS_W - 1;
+    m->stairs_down_y = previous_y;
+    m->tiles[m->stairs_up_y][m->stairs_up_x] = TILE_HIGH_PASS_ENTRANCE;
+    m->tiles[m->stairs_down_y][m->stairs_down_x] = TILE_HIGH_PASS_EXIT;
+}
+
+void map_generate_dragonspine(Map *m, int level) {
+    map_generate_swamp(m, level);
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            TileType tile = m->tiles[y][x];
+            if (tile == TILE_SWAMP_WALL) {
+                m->tiles[y][x] = TILE_DRAGON_WALL;
+            } else if (tile == TILE_SWAMP_ENTRANCE) {
+                m->tiles[y][x] = TILE_DRAGON_ENTRANCE;
+            } else if (tile == TILE_SWAMP_EXIT) {
+                m->tiles[y][x] = TILE_DRAGON_EXIT;
+            } else if (tile == TILE_SWAMP_FLOOR) {
+                int ash = level >= 3 && ((x * 3 + y + level) % 5 < level - 2);
+                m->tiles[y][x] = ash ? TILE_DRAGON_ASH : TILE_DRAGON_FLOOR;
+            }
+        }
+    }
+    if (level == DRAGONSPINE_DEPTH) {
+        Room *lair = &m->rooms[m->room_count - 1];
+        for (int y = lair->y + 1; y < lair->y + lair->h - 1; y++) {
+            for (int x = lair->x + 1; x < lair->x + lair->w - 1; x++) {
+                if ((x + y) % 3 == 0 &&
+                    (m->tiles[y][x] == TILE_DRAGON_FLOOR ||
+                    m->tiles[y][x] == TILE_DRAGON_ASH)) {
+                    m->tiles[y][x] = TILE_DRAGON_HOARD;
+                }
+            }
+        }
+    }
 }
 
 void map_generate_forest_road(Map *m) {
