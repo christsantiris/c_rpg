@@ -94,8 +94,6 @@ typedef struct {
     int      active;
     ItemType type;
     char     name[32];
-    int      heal_hp;
-    int      heal_mp;
     int      attack_bonus;
     int      defense_bonus;
     int      value;

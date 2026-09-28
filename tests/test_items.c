@@ -104,13 +104,11 @@ void test_items(void) {
 
     // --- Factory functions ---
     Item hp_potion = item_make_health_potion();
-    ASSERT("health potion type correct",    hp_potion.type    == ITEM_POTION_HEALTH);
-    ASSERT("health potion heal_hp set",     hp_potion.heal_hp == 30);
-    ASSERT("health potion has value",       hp_potion.value   > 0);
+    ASSERT("health potion type correct", hp_potion.type == ITEM_POTION_HEALTH);
+    ASSERT("health potion has value", hp_potion.value > 0);
 
     Item mp_potion = item_make_mana_potion();
-    ASSERT("mana potion type correct",      mp_potion.type    == ITEM_POTION_MANA);
-    ASSERT("mana potion heal_mp set",       mp_potion.heal_mp == 20);
+    ASSERT("mana potion type correct", mp_potion.type == ITEM_POTION_MANA);
 
     Item sword = item_make_long_sword();
     ASSERT("weapon type correct",           sword.type         == ITEM_WEAPON);
@@ -522,14 +520,31 @@ void test_items(void) {
         strcmp(g.floor_items[1].item.name, "Cryptblade") == 0);
 
     game_init(&g);
-    g.player.hp     = 50;
+    g.player.hp = 5;
     g.player.max_hp = 100;
-    g.inventory[0]  = hp_potion;
+    g.inventory[0] = hp_potion;
     g.inventory_count = 1;
     Action use = {ACTION_USE_ITEM, 0, 0};
     action_resolve_player(&g, use);
-    ASSERT("hp restored after potion",      g.player.hp == 80);
+    ASSERT("health potion restores HP to maximum", g.player.hp == 100);
     ASSERT("potion removed from inventory", g.inventory_count == 0);
+    g.inventory[0] = hp_potion;
+    g.inventory_count = 1;
+    action_resolve_player(&g, use);
+    ASSERT("health potion is kept when HP is already full",
+        g.player.hp == 100 && g.inventory_count == 1);
+
+    g.player.max_mp = 200;
+    g.player.mp = 3;
+    g.inventory[0] = mp_potion;
+    action_resolve_player(&g, use);
+    ASSERT("mana potion restores MP to maximum",
+        g.player.mp == 200 && g.inventory_count == 0);
+    g.inventory[0] = mp_potion;
+    g.inventory_count = 1;
+    action_resolve_player(&g, use);
+    ASSERT("mana potion is kept when MP is already full",
+        g.player.mp == 200 && g.inventory_count == 1);
 
     // --- Equip weapon ---
     game_init(&g);

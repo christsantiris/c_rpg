@@ -1,7 +1,7 @@
 # Adventure Economy Design
 
-Status: proposed economy. Distinct gold floor pickups are implemented, but the
-income and recovery changes below are not.
+Status: proposed economy. Full-restoring potions and distinct gold floor pickups
+are implemented; the income and repeatable recovery changes below are not.
 
 ## Goal
 
@@ -12,7 +12,7 @@ earn gold and experience faster than safe work in town.
 
 ## Current baseline
 
-- Health and Mana Potions cost 20 gold and restore 30 HP and 20 MP respectively.
+- Health and Mana Potions cost 20 gold and restore HP or MP to full.
 - Ordinary enemies have a 10% chance to drop a small amount of gold and a
   separate 5% chance to drop a potion or scroll. This makes routine earnings
   unpredictable, particularly for a Mage who needs MP to earn more gold.
@@ -83,8 +83,8 @@ only after it has enemies.
 
 ## Potions and spending
 
-Try Health and Mana Potions as **full restores at 20 gold each**. Their value
-then grows with maximum HP and MP, instead of shrinking as characters level.
+Health and Mana Potions are **full restores at 20 gold each**. Their value
+grows with maximum HP and MP, instead of shrinking as characters level.
 Drinking a potion in combat consumes one turn, and a potion cannot be wasted
 when its resource is already full. The Healer sells HP potions, the Witch sells
 MP potions, and the Alchemist keeps both. None provides direct HP or MP service.
@@ -114,6 +114,6 @@ or equipment incentives separately rather than taxing every class equally.
    earned, potions used, upgrades bought, deaths, and whether another expedition
    is affordable. Tune the proposed payouts against those results.
 
-Implement this in separate steps: potion behavior, town work, predictable
-combat income and bounties, then cleared-region scaling and replay support.
+Implement the remaining work in separate steps: town work, predictable combat
+income and bounties, then cleared-region scaling and replay support.
 Any new job or bounty progress stored in game state must be saved and loaded.
