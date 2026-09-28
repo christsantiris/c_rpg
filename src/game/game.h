@@ -173,6 +173,7 @@ void game_enter_inn(GameState *g);
 void game_leave_inn(GameState *g);
 void game_enter_labyrinth(GameState *g);
 void game_leave_labyrinth(GameState *g);
+int game_labyrinth_is_open(const GameState *g);
 void game_change_labyrinth_floor(GameState *g, int descending, int false_stair);
 int game_has_labyrinth_interaction(const GameState *g);
 int game_interact_labyrinth(GameState *g);

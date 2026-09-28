@@ -159,6 +159,8 @@ void test_rook_labyrinth(void) {
         g.map.tiles[18][13] == TILE_TOWN_FLOOR &&
         g.map.tiles[18][14] == TILE_TOWN_FLOOR &&
         g.map.tiles[18][15] == TILE_TOWN_FLOOR);
+    ASSERT("labyrinth stays sealed until Rook assigns its quest",
+        !game_labyrinth_is_open(&g));
 
     game_enter_inn(&g);
     ASSERT("Rook is in the inn",
@@ -166,7 +168,8 @@ void test_rook_labyrinth(void) {
         g.map.tiles[7][10] != TILE_NPC_ELOWEN);
     game_talk_to_rook(&g);
     ASSERT("Rook assigns the retrieval quest on first conversation",
-        g.rook_quest_state == 1 && g.rook_labyrinth_switches == 0);
+        g.rook_quest_state == 1 && g.rook_labyrinth_switches == 0 &&
+        game_labyrinth_is_open(&g));
     game_leave_inn(&g);
     g.player.x = TOWN_LABYRINTH_X - 2;
     g.player.y = 12;
@@ -317,12 +320,22 @@ void test_rook_labyrinth(void) {
         g.gold == gold_before + ROOK_QUEST_REWARD &&
         g.rook_quest_state == 3 && g.rook_quest_completions == 1);
     game_leave_inn(&g);
+    ASSERT("labyrinth remains visibly open after Rook rewards the quest",
+        game_labyrinth_is_open(&g));
+    g.player.x = TOWN_LABYRINTH_X;
+    g.player.y = TOWN_LABYRINTH_Y + 1;
+    action_resolve_player(&g, (Action){ACTION_MOVE,
+        TOWN_LABYRINTH_X, TOWN_LABYRINTH_Y});
+    ASSERT("completed Rook quest still permits a new labyrinth expedition",
+        g.location == LOCATION_LABYRINTH && g.enemy_count >= 4);
+    step_into_labyrinth_tile(&g, 1, g.map.stairs_up_y);
     int saved = save_game(&g, slot);
     int restored = saved && load_game(&loaded, slot);
     ASSERT("Rook quest progress and the relocated town entrance survive save and load",
         restored && loaded.rook_quest_state == 3 &&
         loaded.rook_labyrinth_switches == 7 &&
-        loaded.rook_quest_completions == 1 && loaded.location == LOCATION_TOWN2 &&
+        loaded.rook_quest_completions == 1 && game_labyrinth_is_open(&loaded) &&
+        loaded.location == LOCATION_TOWN2 &&
         loaded.map.tiles[TOWN_LABYRINTH_Y][TOWN_LABYRINTH_X] ==
             TILE_LABYRINTH_ENTRANCE &&
         loaded.map.tiles[TOWN_LABYRINTH_Y + 1][TOWN_LABYRINTH_X] ==

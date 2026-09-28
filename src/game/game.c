@@ -1878,6 +1878,10 @@ static void load_labyrinth_floor(GameState *g) {
     g->floor_item_count = 0;
 }
 
+int game_labyrinth_is_open(const GameState *g) {
+    return g->rook_quest_state != 0;
+}
+
 void game_enter_labyrinth(GameState *g) {
     g->location = LOCATION_LABYRINTH;
     g->level = 1;
