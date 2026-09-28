@@ -60,9 +60,11 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_COAST_EXIT || tile == TILE_TAVERN_EXIT ||
                         tile == TILE_SWAMP_ENTRANCE ||
                         tile == TILE_SWAMP_EXIT ||
+                        tile == TILE_SWAMP_DAUGHTER ||
                         tile == TILE_NPC_ELOWEN || tile == TILE_NPC_DAIN ||
                         tile == TILE_NPC_ALDER || tile == TILE_NPC_MARA ||
                         tile == TILE_NPC_ROOK ||
+                        tile == TILE_NPC_INNKEEPER ||
                         tile == TILE_NPC_CAIN ||
                         tile == TILE_NPC_ROWAN ||
                         tile == TILE_COAST_BEACON_UNLIT ||

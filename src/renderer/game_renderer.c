@@ -52,7 +52,8 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
         g->location != LOCATION_INN &&
         g->location != LOCATION_TOWN &&
         g->location != LOCATION_TOWN2 &&
-        g->location != LOCATION_FOREST)) {
+        g->location != LOCATION_FOREST &&
+        g->location != LOCATION_SWAMP)) {
         return;
     }
     int npc_x = g->dialogue_x;
@@ -810,6 +811,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_swamp_edge(r, sx, sy, x, y, 0); break;
                 case TILE_SWAMP_EXIT:
                     draw_swamp_edge(r, sx, sy, x, y, 1); break;
+                case TILE_SWAMP_DAUGHTER:
+                    draw_swamp_daughter(r, sx, sy, x, y); break;
                 case TILE_COAST_BEACON_UNLIT:
                     draw_coast_beacon(r, sx, sy, x, y, 0); break;
                 case TILE_COAST_BEACON_LIT:
@@ -851,6 +854,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_NPC_ALDER: draw_alder(r, sx, sy); break;
                 case TILE_NPC_MARA: draw_mara(r, sx, sy); break;
                 case TILE_NPC_ROOK: draw_rook(r, sx, sy); break;
+                case TILE_NPC_INNKEEPER: draw_innkeeper(r, sx, sy); break;
                 case TILE_NPC_CAIN: draw_cain(r, sx, sy); break;
                 case TILE_NPC_ROWAN: draw_rowan(r, sx, sy); break;
                 case TILE_FOREST_WARDEN:
@@ -1329,6 +1333,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, 10) * TILE_SIZE - 8,
             viewport_to_screen_y(v, 17) * TILE_SIZE,
             (SDL_Color){182, 214, 232, 255}, r->font_tiny);
+        renderer_draw_text(r, "BRAM",
+            viewport_to_screen_x(v, 28) * TILE_SIZE - 8,
+            viewport_to_screen_y(v, 6) * TILE_SIZE,
+            (SDL_Color){233, 201, 133, 255}, r->font_tiny);
     }
 
     if (g->location == LOCATION_ISLAND) {
@@ -1451,6 +1459,14 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         strcmp(g->dialogue_speaker, "Forest Warden") == 0 &&
         viewport_is_visible(v, g->dialogue_x, g->dialogue_y)) {
         draw_forest_warden(r,
+            viewport_to_screen_x(v, g->dialogue_x),
+            viewport_to_screen_y(v, g->dialogue_y),
+            g->dialogue_x, g->dialogue_y);
+    }
+    if (g->dialogue_active && g->location == LOCATION_SWAMP &&
+        strcmp(g->dialogue_speaker, "Mira") == 0 &&
+        viewport_is_visible(v, g->dialogue_x, g->dialogue_y)) {
+        draw_swamp_daughter(r,
             viewport_to_screen_x(v, g->dialogue_x),
             viewport_to_screen_y(v, g->dialogue_y),
             g->dialogue_x, g->dialogue_y);

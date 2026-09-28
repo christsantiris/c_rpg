@@ -292,7 +292,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 56);
+    cJSON_AddNumberToObject(root, "save_version", 57);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -349,6 +349,7 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "message_count",     g->message_count);
     cJSON_AddNumberToObject(root, "gold",              g->gold);
     cJSON_AddNumberToObject(root, "rook_quest_state", g->rook_quest_state);
+    cJSON_AddNumberToObject(root, "innkeeper_quest_state", g->innkeeper_quest_state);
     cJSON_AddNumberToObject(root, "rook_labyrinth_switches",
         g->rook_labyrinth_switches);
     cJSON_AddNumberToObject(root, "rook_quest_completions",
@@ -720,6 +721,8 @@ int load_game(GameState *g, int slot) {
     g->gold              = cJSON_GetObjectItem(root, "gold")->valueint;
     g->rook_quest_state = cJSON_GetObjectItem(root,
         "rook_quest_state")->valueint;
+    cJSON *innkeeper_quest = cJSON_GetObjectItem(root, "innkeeper_quest_state");
+    g->innkeeper_quest_state = innkeeper_quest ? innkeeper_quest->valueint : 0;
     g->rook_labyrinth_switches = cJSON_GetObjectItem(root,
         "rook_labyrinth_switches")->valueint;
     g->rook_quest_completions = cJSON_GetObjectItem(root,

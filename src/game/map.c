@@ -326,6 +326,8 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_NPC_ALDER &&
         m->tiles[y][x] != TILE_NPC_MARA &&
         m->tiles[y][x] != TILE_NPC_ROOK &&
+        m->tiles[y][x] != TILE_NPC_INNKEEPER &&
+        m->tiles[y][x] != TILE_SWAMP_DAUGHTER &&
         m->tiles[y][x] != TILE_NPC_CAIN &&
         m->tiles[y][x] != TILE_NPC_ROWAN &&
         m->tiles[y][x] != TILE_FOREST_WARDEN &&
@@ -1498,6 +1500,7 @@ static void map_generate_tavern_room(Map *m, int *spawn_x, int *spawn_y, int inn
 
     if (inn) {
         m->tiles[18][10] = TILE_NPC_ROOK;
+        m->tiles[7][28] = TILE_NPC_INNKEEPER;
     } else {
         m->tiles[7][10] = TILE_NPC_ELOWEN;
         m->tiles[7][18] = TILE_NPC_DAIN;

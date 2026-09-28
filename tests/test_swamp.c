@@ -241,5 +241,64 @@ void test_swamp(void) {
     }
     ASSERT("random swamp shorelines never isolate traversable ground",
         connected_layouts);
+
+    game_init(&swamp_game);
+    game_enter_town2(&swamp_game);
+    game_enter_inn(&swamp_game);
+    ASSERT("Bram waits in the Town 2 inn",
+        swamp_game.map.tiles[7][28] == TILE_NPC_INNKEEPER);
+    game_talk_to_innkeeper(&swamp_game);
+    ASSERT("Bram assigns Mira's rescue only once",
+        swamp_game.innkeeper_quest_state == 1);
+    game_leave_inn(&swamp_game);
+    game_enter_swamp(&swamp_game);
+    for (int level = 1; level < 4; level++) {
+        game_descend(&swamp_game);
+    }
+    ASSERT("Mira's clearing leaves the swamp exit reachable",
+        swamp_exit_reachable(&swamp_game.map));
+    int mira_x = -1;
+    int mira_y = -1;
+    int captor_index = -1;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (swamp_game.map.tiles[y][x] == TILE_SWAMP_DAUGHTER) {
+                mira_x = x;
+                mira_y = y;
+            }
+        }
+    }
+    for (int i = 0; i < swamp_game.enemy_count; i++) {
+        if (strcmp(swamp_game.enemies[i].name, "Vampire Captor") == 0) {
+            captor_index = i;
+        }
+    }
+    ASSERT("Mira and her vampire captor appear on swamp level four",
+        mira_x >= 0 && captor_index >= 0 &&
+        swamp_game.enemies[captor_index].active);
+    if (mira_x >= 0 && captor_index >= 0) {
+        game_rescue_innkeeper_daughter(&swamp_game, mira_x, mira_y);
+        ASSERT("Mira cannot leave while the vampire lives",
+            swamp_game.innkeeper_quest_state == 1);
+        swamp_game.enemies[captor_index].active = 0;
+        game_rescue_innkeeper_daughter(&swamp_game, mira_x, mira_y);
+        ASSERT("speaking to Mira after the fight completes the rescue",
+            swamp_game.innkeeper_quest_state == 2 &&
+            swamp_game.map.tiles[mira_y][mira_x] == TILE_SWAMP_FLOOR);
+        saved = save_game(&swamp_game, 99121);
+        loaded = saved && load_game(&swamp_loaded, 99121);
+        ASSERT("Mira's rescue survives save and load",
+            loaded && swamp_loaded.innkeeper_quest_state == 2);
+        game_return_to_town(&swamp_game);
+        game_enter_inn(&swamp_game);
+        int gold_before = swamp_game.gold;
+        game_talk_to_innkeeper(&swamp_game);
+        ASSERT("Bram pays the rescue reward on return",
+            swamp_game.innkeeper_quest_state == 3 &&
+            swamp_game.gold == gold_before + 80);
+        game_talk_to_innkeeper(&swamp_game);
+        ASSERT("Bram cannot pay the reward twice",
+            swamp_game.gold == gold_before + 80);
+    }
     remove("saves/savegame_99121.json");
 }

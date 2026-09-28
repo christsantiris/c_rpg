@@ -92,6 +92,7 @@ Travel south from Town 2 through five levels of black water, reeds, and muddy
 causeways. Giant Rats, Bandits, Zombies, and Wraiths appear early; Vampires join
 on deeper levels. The Swamp Demon guards the final exit and drops a Demonic
 Sword: a +6 one-handed weapon for every class, with a two-tile `F` attack.
+Talk to Bram at the Town 2 Inn to rescue his daughter from a vampire on level 4.
 See [Blackwater Swamp](docs/swamp.md) for the full area rules.
 
 ### Harbor and Ruined Isle
