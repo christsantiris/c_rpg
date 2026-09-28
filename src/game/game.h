@@ -118,6 +118,7 @@ typedef struct {
     int       equipped_armor;
     int       gold;
     int       rook_quest_state;
+    int       innkeeper_quest_state;
     int       rook_labyrinth_switches;
     int       rook_quest_completions;
     FloorItem floor_items[MAX_FLOOR_ITEMS];
@@ -175,6 +176,8 @@ void game_enter_forest_road(GameState *g);
 void game_leave_forest_road(GameState *g, Location destination);
 void game_enter_inn(GameState *g);
 void game_leave_inn(GameState *g);
+void game_talk_to_innkeeper(GameState *g);
+void game_rescue_innkeeper_daughter(GameState *g, int x, int y);
 void game_enter_labyrinth(GameState *g);
 void game_leave_labyrinth(GameState *g);
 int game_labyrinth_is_open(const GameState *g);

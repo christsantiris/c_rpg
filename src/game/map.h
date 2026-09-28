@@ -220,7 +220,9 @@ typedef enum {
     TILE_SWAMP_FLOOR,
     TILE_SWAMP_WALL,
     TILE_SWAMP_ENTRANCE,
-    TILE_SWAMP_EXIT
+    TILE_SWAMP_EXIT,
+    TILE_NPC_INNKEEPER,
+    TILE_SWAMP_DAUGHTER
 } TileType;
 
 typedef struct {

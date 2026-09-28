@@ -714,6 +714,10 @@ void enemies_spawn(GameState *g) {
 
     int order_tier = region_order_tier(g);
     int num_enemies = 10 + g->level;
+    if (g->location == LOCATION_SWAMP && g->level == 4 &&
+        g->innkeeper_quest_state == 1) {
+        num_enemies--;
+    }
     if (quest_group_pending(g)) {
         num_enemies -= 3;
     }
@@ -917,6 +921,7 @@ void game_init(GameState *g) {
     g->equipped_armor = -1;
     g->gold = 0;
     g->rook_quest_state = 0;
+    g->innkeeper_quest_state = 0;
     g->rook_labyrinth_switches = 0;
     g->rook_quest_completions = 0;
     g->score = 0;
@@ -1549,7 +1554,38 @@ static void generate_active_level(GameState *g) {
     int seal_placed = place_elowen_seal(g);
     int warden_placed = place_alder_warden(g);
     int beacon_placed = place_mara_beacon(g);
+    int daughter_x = 0;
+    int daughter_y = 0;
+    int daughter_placed = g->location == LOCATION_SWAMP && g->level == 4 &&
+        g->innkeeper_quest_state == 1;
+    if (daughter_placed) {
+        map_room_center(&g->map.rooms[7], &daughter_x, &daughter_y);
+        g->map.tiles[daughter_y][daughter_x] = TILE_SWAMP_DAUGHTER;
+    }
     enemies_spawn(g);
+    if (daughter_placed) {
+        for (int radius = 1; radius <= 4; radius++) {
+            int found = 0;
+            for (int y = daughter_y - radius; y <= daughter_y + radius && !found; y++) {
+                for (int x = daughter_x - radius; x <= daughter_x + radius; x++) {
+                    if (!enemy_tile_open(g, x, y)) {
+                        continue;
+                    }
+                    Enemy *captor = spawn_quest_enemy_at(g, ENEMY_VAMPIRE, x, y);
+                    if (captor) {
+                        snprintf(captor->name, sizeof(captor->name), "Vampire Captor");
+                        captor->max_hp += 20;
+                        captor->hp = captor->max_hp;
+                    }
+                    found = 1;
+                    break;
+                }
+            }
+            if (found) {
+                break;
+            }
+        }
+    }
     if (seal_placed) {
         spawn_elowen_guardians(g);
     }
@@ -2699,6 +2735,7 @@ void game_talk_to_rowan(GameState *g) {
 static void prepare_quest_expedition(GameState *g, Location location) {
     LevelCache *cache;
     int *max_level;
+    int depth = MAX_REGION_DEPTH;
     if (location == LOCATION_DUNGEON) {
         cache = g->level_cache;
         max_level = &g->max_level_reached;
@@ -2708,11 +2745,15 @@ static void prepare_quest_expedition(GameState *g, Location location) {
     } else if (location == LOCATION_MOUNTAINS) {
         cache = g->mountain_cache;
         max_level = &g->max_mountain_level_reached;
+    } else if (location == LOCATION_SWAMP) {
+        cache = g->swamp_cache;
+        max_level = &g->max_swamp_level_reached;
+        depth = SWAMP_DEPTH;
     } else {
         cache = g->coast_cache;
         max_level = &g->max_coast_level_reached;
     }
-    for (int i = 0; i < MAX_REGION_DEPTH; i++) {
+    for (int i = 0; i < depth; i++) {
         cache[i].valid = 0;
         cache[i].level_cleared = 0;
     }
@@ -3011,6 +3052,64 @@ void game_talk_to_rook(GameState *g) {
     } else {
         push_message(g, "Rook: Thank you for recovering my ivory rook.");
     }
+}
+
+void game_talk_to_innkeeper(GameState *g) {
+    g->dialogue_active = 1;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Bram");
+    g->dialogue_x = 28;
+    g->dialogue_y = 7;
+    if (g->innkeeper_quest_state == 0) {
+        g->innkeeper_quest_state = 1;
+        prepare_quest_expedition(g, LOCATION_SWAMP);
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "My daughter Mira vanished in Blackwater Swamp. A vampire holds her "
+            "on the fourth swamp level. Defeat her captor and bring her home. "
+            "You can retreat and return if the swamp proves too dangerous.");
+        push_message(g, "Assigned: Bring Mira Home.");
+    } else if (g->innkeeper_quest_state == 1) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Mira is in the fourth swamp level. Defeat the vampire holding her, "
+            "then speak to her before returning to the inn.");
+        push_message(g, "Bram is waiting for Mira.");
+    } else if (g->innkeeper_quest_state == 2) {
+        g->innkeeper_quest_state = 3;
+        g->gold += 80;
+        g->score += 600;
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Mira made it home. I cannot thank you enough. Please take this "
+            "reward for bringing my daughter back to me.");
+        push_message(g, "Completed: Bring Mira Home. 80 gold awarded.");
+    } else {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Mira is safe upstairs. There is always a room for you here.");
+        push_message(g, "Bram thanks you for rescuing Mira.");
+    }
+}
+
+void game_rescue_innkeeper_daughter(GameState *g, int x, int y) {
+    if (g->location != LOCATION_SWAMP || g->level != 4 ||
+        g->innkeeper_quest_state != 1 || x < 0 || x >= MAP_W ||
+        y < 0 || y >= MAP_H || g->map.tiles[y][x] != TILE_SWAMP_DAUGHTER) {
+        return;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (g->enemies[i].active &&
+            strcmp(g->enemies[i].name, "Vampire Captor") == 0) {
+            push_message(g, "Mira cannot escape while the vampire lives.");
+            return;
+        }
+    }
+    g->innkeeper_quest_state = 2;
+    g->map.tiles[y][x] = TILE_SWAMP_FLOOR;
+    g->dialogue_active = 1;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Mira");
+    g->dialogue_x = x;
+    g->dialogue_y = y;
+    snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+        "You broke the vampire's hold. I know the way back to the inn. "
+        "Please tell my father I am safe.");
+    push_message(g, "Mira rescued. Return to Bram at the inn.");
 }
 
 void game_light_coast_beacon(GameState *g, int x, int y) {

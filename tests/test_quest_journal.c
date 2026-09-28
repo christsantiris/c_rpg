@@ -46,6 +46,19 @@ void test_quest_journal(void) {
     g.rook_quest_state = 3;
     ASSERT("a returned ivory rook is retained in completed quests",
         quest_journal_count(&g, QUEST_TAB_COMPLETED) == 2);
+    g.innkeeper_quest_state = 1;
+    ASSERT("Bram's rescue appears as a swamp quest",
+        quest_journal_count(&g, QUEST_TAB_ACTIVE) == 3 &&
+        quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 2, &entry) &&
+        strcmp(entry.title, "Bring Mira Home") == 0 &&
+        entry.stages[0] == 4);
+    g.innkeeper_quest_state = 2;
+    ASSERT("rescuing Mira marks Bram's quest ready to return",
+        quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 2, &entry) &&
+        entry.objective_complete[0]);
+    g.innkeeper_quest_state = 3;
+    ASSERT("Bram's completed quest moves to the completed tab",
+        quest_journal_count(&g, QUEST_TAB_COMPLETED) == 3);
 
     QuestJournalScreen screen;
     quest_journal_init(&screen);

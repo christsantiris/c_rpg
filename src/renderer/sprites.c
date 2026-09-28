@@ -3267,6 +3267,32 @@ void draw_rook(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 20, y + 17, 1, 1, outline);
 }
 
+void draw_innkeeper(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_tavern_floor(r, tile_x, tile_y);
+    fill_rect(r, x + 6, y + 2, 13, 5, (SDL_Color){68, 39, 27, 255});
+    fill_rect(r, x + 8, y + 6, 9, 8, (SDL_Color){196, 142, 96, 255});
+    fill_rect(r, x + 8, y + 11, 9, 3, (SDL_Color){96, 53, 35, 255});
+    fill_rect(r, x + 6, y + 14, 13, 8, (SDL_Color){113, 73, 48, 255});
+    fill_rect(r, x + 9, y + 14, 7, 8, (SDL_Color){211, 185, 132, 255});
+    fill_rect(r, x + 11, y + 15, 3, 6, (SDL_Color){102, 49, 38, 255});
+    fill_rect(r, x + 9, y + 8, 2, 2, (SDL_Color){34, 29, 26, 255});
+    fill_rect(r, x + 15, y + 8, 2, 2, (SDL_Color){34, 29, 26, 255});
+}
+
+void draw_swamp_daughter(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_swamp_floor(r, tile_x, tile_y, map_x, map_y);
+    fill_rect(r, x + 7, y + 3, 11, 7, (SDL_Color){66, 39, 39, 255});
+    fill_rect(r, x + 9, y + 7, 7, 6, (SDL_Color){213, 164, 129, 255});
+    fill_rect(r, x + 7, y + 13, 11, 9, (SDL_Color){156, 116, 177, 255});
+    fill_rect(r, x + 10, y + 14, 5, 7, (SDL_Color){199, 162, 205, 255});
+    fill_rect(r, x + 9, y + 9, 2, 1, (SDL_Color){34, 29, 30, 255});
+    fill_rect(r, x + 15, y + 9, 2, 1, (SDL_Color){34, 29, 30, 255});
+}
+
 void draw_forest_warden(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;

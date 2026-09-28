@@ -24,6 +24,12 @@ health and attack of the regular roster. The Swamp Demon is a separate boss.
 Enemies can drop gold and supplies under the ordinary loot rules, while the
 demon also drops a fixed Demonic Sword reward.
 
+At the Town 2 Inn, Bram asks the player to rescue his daughter Mira. She is
+held by a named Vampire Captor in a clearing on swamp level 4. Defeat the
+captor, then speak to Mira to send her home. Return to Bram for a one-time
+reward of 80 gold and 600 score. The quest and rescue persist across saves;
+the Swamp Demon remains a separate level-5 challenge.
+
 The Demonic Sword is a one-handed weapon usable by Warriors, Mages, and Rogues.
 It gives **+6 attack**, equal to the Long Sword. Press `F` to strike in the last
 movement direction at an enemy one or two tiles away. The attack stops at the
