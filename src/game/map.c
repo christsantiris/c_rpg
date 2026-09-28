@@ -1024,6 +1024,12 @@ void map_place_town_labyrinth(Map *m) {
         TILE_LABYRINTH_ENTRANCE;
 }
 
+void map_place_town2_center(Map *m) {
+    for (int x = TOWN_HEALER_DOOR_X; x <= TOWN_WITCH_DOOR_X; x++) {
+        m->tiles[13][x] = TILE_TOWN_PATH;
+    }
+}
+
 void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     map_clear_exploration(m);
     m->room_count = 0;
@@ -1098,11 +1104,12 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
         }
     }
     m->tiles[20][8] = TILE_TAVERN_DOOR;
-    // The entrance faces south, so route the lane around the east wall.
+    // The Tavern's rectangular walkway remains even before Town 2 unlocks.
     for (int y = 13; y <= 21; y++) {
         m->tiles[y][12] = TILE_TOWN_PATH;
+        m->tiles[y][4] = TILE_TOWN_PATH;
     }
-    for (int x = 8; x < 12; x++) {
+    for (int x = 4; x < 12; x++) {
         m->tiles[21][x] = TILE_TOWN_PATH;
     }
 
@@ -1117,32 +1124,23 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
 }
 
 void map_set_town2_road(Map *m, int unlocked) {
-    m->tiles[13][0] = TILE_WALL;
-    m->tiles[14][0] = TILE_WALL;
+    // Rebuild the permanent Tavern loop on loaded town maps as well.
     for (int y = 13; y <= 21; y++) {
-        m->tiles[y][4] = TILE_TOWN_FLOOR;
+        m->tiles[y][4] = TILE_TOWN_PATH;
     }
     for (int x = 4; x < 8; x++) {
-        m->tiles[21][x] = TILE_TOWN_FLOOR;
+        m->tiles[21][x] = TILE_TOWN_PATH;
     }
-    for (int y = TOWN_ROAD_EXIT_Y - 1; y <= TOWN_ROAD_EXIT_Y + 1; y++) {
-        m->tiles[y][0] = TILE_WALL;
-        for (int x = 1; x <= 4; x++) {
-            m->tiles[y][x] = TILE_TOWN_FLOOR;
-        }
+    m->tiles[TOWN_ROAD_EXIT_Y][0] = TILE_WALL;
+    for (int x = 1; x < 4; x++) {
+        m->tiles[TOWN_ROAD_EXIT_Y][x] = TILE_TOWN_FLOOR;
     }
     if (!unlocked) {
         return;
     }
-    for (int y = 12; y <= 21; y++) {
-        m->tiles[y][4] = TILE_TOWN_PATH;
-    }
     m->tiles[TOWN_ROAD_EXIT_Y][0] = TILE_TOWN_EXIT;
-    for (int x = 1; x <= 4; x++) {
+    for (int x = 1; x < 4; x++) {
         m->tiles[TOWN_ROAD_EXIT_Y][x] = TILE_TOWN_PATH;
-    }
-    for (int x = 4; x <= 8; x++) {
-        m->tiles[21][x] = TILE_TOWN_PATH;
     }
 }
 
@@ -1181,6 +1179,7 @@ void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
     for (int x = TOWN_HEALER_DOOR_X; x <= TOWN_WITCH_DOOR_X; x++) {
         m->tiles[11][x] = TILE_TOWN_PATH;
     }
+    map_place_town2_center(m);
     for (int y = 16; y <= 20; y++) {
         for (int x = 5; x <= 11; x++) {
             m->tiles[y][x] = TILE_TAVERN;

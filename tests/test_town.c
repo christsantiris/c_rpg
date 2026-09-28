@@ -67,6 +67,7 @@ void test_town_healer(void) {
         !shop_accepts_item(SHOP_TYPE_HEALER, &shop.items[1]) &&
         !shop_accepts_item(SHOP_TYPE_WITCH, &shop.items[0]));
 
+    g.map.tiles[13][TOWN_HEALER_DOOR_X] = TILE_TOWN_FLOOR;
     const int slot = 99012;
     if (save_exists(slot)) {
         ASSERT("potion seller test save slot must be unused", 0);
@@ -80,7 +81,8 @@ void test_town_healer(void) {
         loaded.player.hp == loaded.player.max_hp &&
         loaded.player.mp == loaded.player.max_mp &&
         loaded.map.tiles[TOWN_HEALER_DOOR_Y][TOWN_HEALER_DOOR_X] == TILE_HEALER_DOOR &&
-        loaded.map.tiles[TOWN_WITCH_DOOR_Y][TOWN_WITCH_DOOR_X] == TILE_WITCH_DOOR);
+        loaded.map.tiles[TOWN_WITCH_DOOR_Y][TOWN_WITCH_DOOR_X] == TILE_WITCH_DOOR &&
+        loaded.map.tiles[13][TOWN_HEALER_DOOR_X] == TILE_TOWN_PATH);
     remove("saves/savegame_99012.json");
 }
 
@@ -94,6 +96,14 @@ void test_rook_labyrinth(void) {
         g.map.tiles[TOWN_LABYRINTH_Y][TOWN_LABYRINTH_X] !=
             TILE_LABYRINTH_ENTRANCE);
     game_enter_town2(&g);
+    ASSERT("second town center extends one row below the main road",
+        g.map.tiles[11][TOWN_HEALER_DOOR_X] == TILE_TOWN_PATH &&
+        g.map.tiles[12][20] == TILE_TOWN_PATH &&
+        g.map.tiles[13][TOWN_HEALER_DOOR_X] == TILE_TOWN_PATH &&
+        g.map.tiles[13][20] == TILE_TOWN_PATH &&
+        g.map.tiles[13][TOWN_WITCH_DOOR_X] == TILE_TOWN_PATH &&
+        g.map.tiles[13][TOWN_HEALER_DOOR_X - 1] == TILE_TOWN_FLOOR &&
+        g.map.tiles[14][TOWN_HEALER_DOOR_X] == TILE_TOWN_FLOOR);
     ASSERT("second town places the labyrinth across from the witch",
         TOWN_LABYRINTH_X == TOWN_WITCH_DOOR_X && TOWN_LABYRINTH_Y > 12 &&
         g.map.tiles[TOWN_LABYRINTH_Y][TOWN_LABYRINTH_X] ==
@@ -390,9 +400,13 @@ void test_town_map(void) {
         m.tiles[0][20] == TILE_TOWN_EXIT);
     ASSERT("forest exit at west crossroad",
         m.tiles[12][0] == TILE_TOWN_EXIT);
-    ASSERT("Town 2's lower gate and approach are absent before discovery",
+    ASSERT("Tavern loop exists before Town 2 is discovered",
         m.tiles[TOWN_ROAD_EXIT_Y][0] == TILE_WALL &&
-        m.tiles[TOWN_ROAD_EXIT_Y][4] == TILE_TOWN_FLOOR);
+        m.tiles[TOWN_ROAD_EXIT_Y][1] == TILE_TOWN_FLOOR &&
+        m.tiles[TOWN_ROAD_EXIT_Y][4] == TILE_TOWN_PATH &&
+        m.tiles[13][4] == TILE_TOWN_PATH &&
+        m.tiles[21][4] == TILE_TOWN_PATH &&
+        m.tiles[21][8] == TILE_TOWN_PATH);
     map_set_town2_road(&m, 1);
     ASSERT("defeating the forest boss reveals a separate paved gate",
         m.tiles[TOWN_ROAD_EXIT_Y][0] == TILE_TOWN_EXIT &&
@@ -410,6 +424,13 @@ void test_town_map(void) {
         m.tiles[21][7] == TILE_TOWN_PATH &&
         m.tiles[21][8] == TILE_TOWN_PATH &&
         m.tiles[20][5] == TILE_TAVERN);
+    map_set_town2_road(&m, 0);
+    ASSERT("closing the Town 2 spur leaves the Tavern loop intact",
+        m.tiles[TOWN_ROAD_EXIT_Y][0] == TILE_WALL &&
+        m.tiles[TOWN_ROAD_EXIT_Y][2] == TILE_TOWN_FLOOR &&
+        m.tiles[TOWN_ROAD_EXIT_Y][4] == TILE_TOWN_PATH &&
+        m.tiles[21][4] == TILE_TOWN_PATH);
+    map_set_town2_road(&m, 1);
     ASSERT("mountain exit at east crossroad",
         m.tiles[12][TOWN_W - 1] == TILE_TOWN_EXIT);
 
