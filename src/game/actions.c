@@ -148,6 +148,8 @@ Item boss_equipment_reward(EnemyType type) {
             return item_make_magic_shield();
         case ENEMY_SWAMP_DEMON:
             return item_make_demonic_sword();
+        case ENEMY_RED_DRAGON:
+            return item_make_dragon_scale_mantle();
         default:
             return item_make_cryptblade();
     }
@@ -199,6 +201,8 @@ static int enemy_score(EnemyType type) {
         case ENEMY_BANDIT: return 55;
         case ENEMY_VAMPIRE: return 140;
         case ENEMY_SWAMP_DEMON: return 1500;
+        case ENEMY_DRAKE: return 165;
+        case ENEMY_FIRE_ELEMENTAL: return 185;
         case ENEMY_ORC:         return 30;
         case ENEMY_TROLL:       return 50;
         case ENEMY_GIANT:       return 80;
@@ -269,13 +273,15 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         case ENEMY_BANDIT: gold = 8 + rand() % 9; break;
         case ENEMY_VAMPIRE: gold = 14 + rand() % 12; break;
         case ENEMY_SWAMP_DEMON: gold = 70; break;
+        case ENEMY_DRAKE: gold = 16 + rand() % 12; break;
+        case ENEMY_FIRE_ELEMENTAL: gold = 13 + rand() % 12; break;
         case ENEMY_ORC:      gold = 6 + rand() % 8;  break;
         case ENEMY_TROLL:    gold = 10 + rand() % 10; break;
         case ENEMY_GIANT:    gold = 15 + rand() % 15; break;
         case ENEMY_GOBLIN_KING: break;
         case ENEMY_LICH_KING:  break;
         case ENEMY_DEMON_LORD:  break;
-        case ENEMY_RED_DRAGON: break;
+        case ENEMY_RED_DRAGON: gold = 120; break;
         case ENEMY_TARRASQUE:  break;
     }
     
@@ -346,7 +352,10 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         drop_tile == TILE_COAST_FLOOR ||
         drop_tile == TILE_TEMPLE_FLOOR ||
         drop_tile == TILE_LABYRINTH_FLOOR ||
-        drop_tile == TILE_SWAMP_FLOOR;
+        drop_tile == TILE_SWAMP_FLOOR ||
+        drop_tile == TILE_DRAGON_FLOOR ||
+        drop_tile == TILE_DRAGON_ASH ||
+        drop_tile == TILE_DRAGON_HOARD;
     int occupied = 0;
     for (int i = 0; i < g->floor_item_count; i++) {
         FloorItem *fi = &g->floor_items[i];
@@ -1092,7 +1101,8 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
         if (sp->id == SPELL_RETURN_TO_TOWN) {
-            if (g->location == LOCATION_FOREST_ROAD) {
+            if (g->location == LOCATION_FOREST_ROAD ||
+                g->location == LOCATION_HIGH_PASS) {
                 push_message(g, "A town is just ahead on the road.");
                 return;
             }
@@ -1561,11 +1571,55 @@ void action_resolve_player(GameState *g, Action a) {
                     game_enter_forest(g);
                 }
             } else if (tx == TOWN_W - 1) {
-                game_enter_mountains(g);
+                if (ty == TOWN_DRAGON_GATE_Y &&
+                    (g->defeated_bosses & (1 << LOCATION_MOUNTAINS))) {
+                    game_enter_high_pass(g, 1);
+                } else {
+                    game_enter_mountains(g);
+                }
             } else if (ty == TOWN_H - 1) {
                 game_enter_coast(g);
             } else {
                 game_enter_dungeon(g);
+            }
+            return;
+        }
+
+        if (g->location == LOCATION_HIGH_PASS &&
+            g->map.tiles[ty][tx] == TILE_HIGH_PASS_ENTRANCE) {
+            game_return_to_town(g);
+            return;
+        }
+        if (g->location == LOCATION_HIGH_PASS &&
+            g->map.tiles[ty][tx] == TILE_HIGH_PASS_EXIT) {
+            game_enter_dragonspine(g);
+            return;
+        }
+        if (g->location == LOCATION_DRAGONSPINE &&
+            g->map.tiles[ty][tx] == TILE_DRAGON_ENTRANCE) {
+            if (g->level == 1) {
+                game_return_to_town(g);
+                game_enter_high_pass(g, 0);
+            } else {
+                game_ascend(g);
+            }
+            return;
+        }
+        if (g->location == LOCATION_DRAGONSPINE &&
+            g->map.tiles[ty][tx] == TILE_DRAGON_EXIT) {
+            if (g->level < DRAGONSPINE_DEPTH) {
+                game_descend(g);
+                g->score += g->level * 100;
+            } else {
+                for (int i = 0; i < g->enemy_count; i++) {
+                    if (g->enemies[i].active &&
+                        g->enemies[i].type == ENEMY_RED_DRAGON) {
+                        push_message(g, "The dragon guards the summit pass!");
+                        return;
+                    }
+                }
+                game_return_to_town(g);
+                push_message(g, "Dragonspine is free of its dragon.");
             }
             return;
         }
@@ -2031,6 +2085,7 @@ static int enemy_prefers_range(const Enemy *e) {
         e->type == ENEMY_SIREN ||
         e->type == ENEMY_WATER_ELEMENTAL ||
         e->type == ENEMY_BLOWDART_HUNTER ||
+        e->type == ENEMY_FIRE_ELEMENTAL ||
         e->type == ENEMY_SUN_PRIEST ||
         e->type == ENEMY_SERPENT_SPIRIT ||
         e->type == ENEMY_MOONBOUND_SENTINEL;
@@ -2469,6 +2524,40 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         }
 
         e->move_timer++;
+
+        if (e->type == ENEMY_RED_DRAGON && path_distance > 1 &&
+            path_distance <= 8 && clear_orthogonal_path(g, i, e)) {
+            if (e->move_timer % 2 != 0) {
+                push_message(g, "The dragon draws a fiery breath!");
+            } else {
+                int dmg = e->attack - g->player.defense / 2;
+                if (dmg < 3) {
+                    dmg = 3;
+                }
+                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
+                if (dmg > 0) {
+                    char msg[MAX_MESSAGE_LEN];
+                    snprintf(msg, sizeof(msg), "Dragonfire: %d dmg", dmg);
+                    push_message(g, msg);
+                }
+            }
+            continue;
+        }
+
+        if (e->type == ENEMY_FIRE_ELEMENTAL && e->move_timer % 2 == 0 &&
+            clear_orthogonal_path(g, i, e)) {
+            int dmg = e->attack - g->player.defense / 2;
+            if (dmg < 1) {
+                dmg = 1;
+            }
+            dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
+            if (dmg > 0) {
+                char msg[MAX_MESSAGE_LEN];
+                snprintf(msg, sizeof(msg), "Elemental flame: %d dmg", dmg);
+                push_message(g, msg);
+            }
+            continue;
+        }
 
         if (e->type == ENEMY_LICH_KING) {
             // The Lich holds the center of his chamber and alternates a ranged

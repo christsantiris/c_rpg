@@ -561,7 +561,7 @@ void test_items(void) {
     ASSERT("attack increased after equip",  g.player.attack == base_attack + 6);
 
     // --- Class-restricted weapon equip ---
-    GameState mage = {0};
+    static GameState mage;
     mage.player.player_class = CLASS_MAGE;
     game_init(&mage);
     int mage_base_attack = mage.player.attack;
@@ -575,7 +575,7 @@ void test_items(void) {
         mage.player.attack == mage_base_attack);
 
     // --- Dagger critical strike ---
-    GameState rogue = {0};
+    static GameState rogue;
     rogue.player.player_class = CLASS_ROGUE;
     game_init(&rogue);
     Item guaranteed_critical = dagger;

@@ -14,7 +14,8 @@ repeats the advice on the island. The advice does not block travel or entry.
 
 Walk into the dock entrance to open the harbor scene. Select **Board ship for
 the Ruined Isle** and press `Enter`, or choose the return option to stay in
-town. The map must be in the inventory to sail.
+town. The first voyage uses the map to unlock the route and consumes it. Later
+voyages remain available without carrying a map.
 
 ## Ruined Isle
 

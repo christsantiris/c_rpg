@@ -25,7 +25,8 @@ A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explo
 retro pixel-art style. Choose a Warrior, Mage, or Rogue, prepare in town, and
 explore an eight-floor undead dungeon, the eight-stage Haunted Forest, the
 eight-stage Goblin Mountains, the eight-stage Sunken Coast, and Town 2's
-five-level Blackwater Swamp. Each region
+five-level Blackwater Swamp. Beyond the Goblin Mountains, the five-stage
+Dragonspine ascent opens through the High Pass. Each region
 keeps its own generated maps and progression. Defeating the Drowned Queen on
 the Sunken Coast opens a sea route to the Ruined Isle. Its four-tier Ruined
 Temple remains a late-game challenge.
@@ -39,6 +40,9 @@ has not been found.
 
 The roads through town lead north to the dungeon, west to the forest, east to
 the mountains, and south to the coast. Cain stands near the central crossroads.
+Defeating the Goblin King opens a separate east gate to the enemy-free High Pass
+and Dragonspine. Leaving the first mountain area returns you to town, so the
+new ascent is a deliberate trip.
 Speaking with him explains the dangers beyond town and grants one Scroll of
 Return to Town when inventory space is available. Use the scroll from the
 inventory to learn the permanent spell.
@@ -100,7 +104,8 @@ See [Blackwater Swamp](docs/swamp.md) for the full area rules.
 Captain Rowan waits near the harbor and describes the island before it is
 reachable. Defeat the Drowned Queen on the Sunken Coast to extend the Town 1
 road to the dock. Speak with Rowan to receive the Island Treasure Map, then
-walk into the dock entrance to board the ship. If neither the dungeon nor the
+walk into the dock entrance to board the ship. The first voyage consumes the
+map and permanently unlocks return trips. If neither the dungeon nor the
 mountains has been cleared, Rowan warns that the Ruined Temple is dangerous
 and recommends training there first. The advice does not block sailing.
 
@@ -193,6 +198,7 @@ and sell modes are switched with `Tab`.
 - [Castle Dungeon](docs/dungeon.md)
 - [Haunted Forest](docs/haunted-forest.md)
 - [Goblin Mountains](docs/goblin-mountains.md)
+- [Dragonspine and High Pass](docs/dragonspine.md)
 - [Sunken Coast](docs/sunken-coast.md)
 - [Blackwater Swamp](docs/swamp.md)
 - [Harbor, Ruined Isle, and Ruined Temple](docs/harbor-and-ruined-isle.md)

@@ -12,6 +12,8 @@ void minimap_draw(Renderer *r, const GameState *g) {
     if (g->location != LOCATION_DUNGEON &&
         g->location != LOCATION_FOREST &&
         g->location != LOCATION_MOUNTAINS &&
+        g->location != LOCATION_DRAGONSPINE &&
+        g->location != LOCATION_HIGH_PASS &&
         g->location != LOCATION_COAST &&
         g->location != LOCATION_SWAMP &&
         g->location != LOCATION_TEMPLE &&
@@ -61,6 +63,10 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_SWAMP_ENTRANCE ||
                         tile == TILE_SWAMP_EXIT ||
                         tile == TILE_SWAMP_DAUGHTER ||
+                        tile == TILE_DRAGON_ENTRANCE ||
+                        tile == TILE_DRAGON_EXIT ||
+                        tile == TILE_HIGH_PASS_ENTRANCE ||
+                        tile == TILE_HIGH_PASS_EXIT ||
                         tile == TILE_NPC_ELOWEN || tile == TILE_NPC_DAIN ||
                         tile == TILE_NPC_ALDER || tile == TILE_NPC_MARA ||
                         tile == TILE_NPC_ROOK ||
@@ -95,6 +101,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile != TILE_MOUNTAIN_HIDDEN_CAVE &&
                         tile != TILE_COAST_WALL &&
                         tile != TILE_SWAMP_WALL &&
+                        tile != TILE_DRAGON_WALL &&
                         tile != TILE_COAST_DEEP_WATER &&
                         tile != TILE_COAST_CHANNEL_WATER &&
                         tile != TILE_TAVERN_WALL &&
@@ -122,6 +129,9 @@ void minimap_draw(Renderer *r, const GameState *g) {
                     SDL_SetRenderDrawColor(r->sdl, 45, 95, 55, 255);
                 } else if (g->location == LOCATION_MOUNTAINS) {
                     SDL_SetRenderDrawColor(r->sdl, 125, 42, 32, 255);
+                } else if (g->location == LOCATION_DRAGONSPINE ||
+                    g->location == LOCATION_HIGH_PASS) {
+                    SDL_SetRenderDrawColor(r->sdl, 150, 185, 211, 255);
                 } else if (g->location == LOCATION_COAST) {
                     SDL_SetRenderDrawColor(r->sdl, 35, 125, 145, 255);
                 } else if (g->location == LOCATION_TEMPLE) {

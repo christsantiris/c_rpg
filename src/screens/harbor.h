@@ -14,7 +14,7 @@ typedef struct {
 } HarborScreen;
 
 void harbor_init(HarborScreen *s);
-HarborResult harbor_activate(const HarborScreen *s, int has_map, int on_island);
-HarborResult harbor_handle_key(HarborScreen *s, int scancode, int has_map, int on_island);
+HarborResult harbor_activate(const HarborScreen *s, int can_sail, int on_island);
+HarborResult harbor_handle_key(HarborScreen *s, int scancode, int can_sail, int on_island);
 
 #endif

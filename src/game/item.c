@@ -95,7 +95,7 @@ Item item_make_demonic_sword(void) {
     it.active = 1;
     it.type = ITEM_WEAPON;
     strncpy(it.name, "Demonic Sword", sizeof(it.name) - 1);
-    it.attack_bonus = 6;
+    it.attack_bonus = 4;
     it.value = 180;
     it.is_ranged = 1;
     it.range = 2;
@@ -643,6 +643,19 @@ Item item_make_necromancer_cloak(void) {
     it.value = 450;
     set_armor_metadata(&it, ARMOR_FAMILY_LIGHT, ITEM_RARITY_RARE,
         ITEM_CLASS_ROGUE, ITEM_VISUAL_RANGER_CLOAK);
+    return it;
+}
+
+Item item_make_dragon_scale_mantle(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_ARMOR;
+    strncpy(it.name, "Dragon Scale Mantle", sizeof(it.name) - 1);
+    it.defense_bonus = 4;
+    it.max_hp_bonus = 20;
+    it.value = 1400;
+    set_armor_metadata(&it, ARMOR_FAMILY_LIGHT, ITEM_RARITY_RARE,
+        ITEM_CLASS_ALL, ITEM_VISUAL_SCALE_MAIL);
     return it;
 }
 
