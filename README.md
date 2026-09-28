@@ -63,14 +63,14 @@ while selling pays one quarter of base value.
 
 The **HEALER** building is north of Town 2's east-west road.
 Follow its short entrance path from that road to meet Lysa. She sells Health
-Potions for **20 gold** each. Each potion restores up to **30 HP** when used
+Potions for **20 gold** each. Each potion restores HP to full when used
 from inventory. The Alchemist also sells Health Potions.
 
 ### Town 2 witch
 
 The **WITCH** hut stands east of Town 2's crossroads. Morwen sells Mana Potions
-for **20 gold** each. Each potion restores
-up to **20 MP** when used from inventory. The Alchemist also sells Mana Potions.
+for **20 gold** each. Each potion restores MP to full when used from inventory.
+The Alchemist also sells Mana Potions.
 
 ### Rook's labyrinth
 

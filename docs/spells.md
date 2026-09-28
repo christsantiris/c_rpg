@@ -147,6 +147,6 @@ require the player to have moved once to establish a direction.
   directly to HP.
 - Magic Arrow hits only the first enemy in its path, while Fireball can hit
   every enemy inside its blast radius.
-- Mana potions restore 20 MP, up to the player's maximum MP.
+- Mana potions restore the player's MP to maximum.
 - Gaining a character level restores MP to maximum as well as restoring HP.
 - Morwen sells Mana Potions for 20 gold; the Alchemist also stocks them.

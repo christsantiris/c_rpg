@@ -888,17 +888,21 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
         if (item->type == ITEM_POTION_HEALTH) {
-            int healed = item->heal_hp;
-            g->player.hp += healed;
-            if (g->player.hp > g->player.max_hp)
-                g->player.hp = g->player.max_hp;
+            if (g->player.hp >= g->player.max_hp) {
+                push_message(g, "HP is already full");
+                return;
+            }
+            int healed = g->player.max_hp - g->player.hp;
+            g->player.hp = g->player.max_hp;
             snprintf(msg, sizeof(msg), "Drank %s +%d HP", item->name, healed);
             push_message(g, msg);
         } else if (item->type == ITEM_POTION_MANA) {
-            int restored = item->heal_mp;
-            g->player.mp += restored;
-            if (g->player.mp > g->player.max_mp)
-                g->player.mp = g->player.max_mp;
+            if (g->player.mp >= g->player.max_mp) {
+                push_message(g, "MP is already full");
+                return;
+            }
+            int restored = g->player.max_mp - g->player.mp;
+            g->player.mp = g->player.max_mp;
             snprintf(msg, sizeof(msg), "Drank %s +%d MP", item->name, restored);
             push_message(g, msg);
         } else if (item->type == ITEM_SPELL_TOME) {

@@ -408,8 +408,6 @@ int save_game(const GameState *g, int slot) {
         cJSON_AddNumberToObject(it, "active",        item->active);
         cJSON_AddNumberToObject(it, "type",          item->type);
         cJSON_AddStringToObject(it, "name",          item->name);
-        cJSON_AddNumberToObject(it, "heal_hp",       item->heal_hp);
-        cJSON_AddNumberToObject(it, "heal_mp",       item->heal_mp);
         cJSON_AddNumberToObject(it, "attack_bonus",  item->attack_bonus);
         cJSON_AddNumberToObject(it, "defense_bonus", item->defense_bonus);
         cJSON_AddNumberToObject(it, "value",         item->value);
@@ -457,8 +455,6 @@ int save_game(const GameState *g, int slot) {
         cJSON_AddNumberToObject(it, "active",        fi->item.active);
         cJSON_AddNumberToObject(it, "type",          fi->item.type);
         cJSON_AddStringToObject(it, "name",          fi->item.name);
-        cJSON_AddNumberToObject(it, "heal_hp",       fi->item.heal_hp);
-        cJSON_AddNumberToObject(it, "heal_mp",       fi->item.heal_mp);
         cJSON_AddNumberToObject(it, "attack_bonus",  fi->item.attack_bonus);
         cJSON_AddNumberToObject(it, "defense_bonus", fi->item.defense_bonus);
         cJSON_AddNumberToObject(it, "value",         fi->item.value);
@@ -790,8 +786,6 @@ int load_game(GameState *g, int slot) {
         item->type          = cJSON_GetObjectItem(it, "type")->valueint;
         strncpy(item->name, cJSON_GetObjectItem(it, "name")->valuestring,
             sizeof(item->name) - 1);
-        item->heal_hp       = cJSON_GetObjectItem(it, "heal_hp")->valueint;
-        item->heal_mp       = cJSON_GetObjectItem(it, "heal_mp")->valueint;
         item->attack_bonus  = cJSON_GetObjectItem(it, "attack_bonus")->valueint;
         item->defense_bonus = cJSON_GetObjectItem(it, "defense_bonus")->valueint;
         item->value         = cJSON_GetObjectItem(it, "value")->valueint;
@@ -821,8 +815,6 @@ int load_game(GameState *g, int slot) {
         fi->item.type          = cJSON_GetObjectItem(it, "type")->valueint;
         strncpy(fi->item.name, cJSON_GetObjectItem(it, "name")->valuestring,
             sizeof(fi->item.name) - 1);
-        fi->item.heal_hp       = cJSON_GetObjectItem(it, "heal_hp")->valueint;
-        fi->item.heal_mp       = cJSON_GetObjectItem(it, "heal_mp")->valueint;
         fi->item.attack_bonus  = cJSON_GetObjectItem(it, "attack_bonus")->valueint;
         fi->item.defense_bonus = cJSON_GetObjectItem(it, "defense_bonus")->valueint;
         fi->item.value         = cJSON_GetObjectItem(it, "value")->valueint;
