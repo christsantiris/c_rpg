@@ -84,7 +84,8 @@ typedef enum {
     LOCATION_LABYRINTH,
     LOCATION_TOWN2,
     LOCATION_INN,
-    LOCATION_FOREST_ROAD
+    LOCATION_FOREST_ROAD,
+    LOCATION_SWAMP
 } Location;
 
 typedef struct {
@@ -97,6 +98,7 @@ typedef struct {
     LevelCache forest_cache[MAX_REGION_DEPTH];
     LevelCache mountain_cache[MAX_REGION_DEPTH];
     LevelCache coast_cache[MAX_REGION_DEPTH];
+    LevelCache swamp_cache[SWAMP_DEPTH];
     LevelCache temple_cache[TEMPLE_DEPTH];
     LevelCache labyrinth_cache[LABYRINTH_DEPTH];
     char       messages[MAX_MESSAGES][MAX_MESSAGE_LEN];
@@ -107,6 +109,7 @@ typedef struct {
     int max_forest_level_reached;
     int max_mountain_level_reached;
     int max_coast_level_reached;
+    int max_swamp_level_reached;
     int max_temple_level_reached;
     Item      inventory[MAX_INVENTORY];
     int       inventory_count;
@@ -115,6 +118,7 @@ typedef struct {
     int       equipped_armor;
     int       gold;
     int       rook_quest_state;
+    int       innkeeper_quest_state;
     int       rook_labyrinth_switches;
     int       rook_quest_completions;
     FloorItem floor_items[MAX_FLOOR_ITEMS];
@@ -164,6 +168,7 @@ void game_enter_dungeon(GameState *g);
 void game_enter_forest(GameState *g);
 void game_enter_mountains(GameState *g);
 void game_enter_coast(GameState *g);
+void game_enter_swamp(GameState *g);
 void game_enter_tavern(GameState *g);
 void game_leave_tavern(GameState *g);
 void game_enter_town2(GameState *g);
@@ -171,6 +176,8 @@ void game_enter_forest_road(GameState *g);
 void game_leave_forest_road(GameState *g, Location destination);
 void game_enter_inn(GameState *g);
 void game_leave_inn(GameState *g);
+void game_talk_to_innkeeper(GameState *g);
+void game_rescue_innkeeper_daughter(GameState *g, int x, int y);
 void game_enter_labyrinth(GameState *g);
 void game_leave_labyrinth(GameState *g);
 int game_labyrinth_is_open(const GameState *g);

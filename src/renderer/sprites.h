@@ -49,6 +49,10 @@ void draw_mountain_bridge(Renderer *r, int tile_x, int tile_y, unsigned int path
 void draw_mountain_cave_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_mountain_fortress_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_coast_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
+void draw_swamp_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
+void draw_swamp_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
+void draw_swamp_bank(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, unsigned int edges);
+void draw_swamp_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int exit);
 void draw_coast_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_coast_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int forward);
 void draw_coast_shallow_water(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
@@ -108,7 +112,8 @@ typedef enum {
     TOWN_EXIT_FOREST,
     TOWN_EXIT_MOUNTAINS,
     TOWN_EXIT_COAST,
-    TOWN_EXIT_ROAD
+    TOWN_EXIT_ROAD,
+    TOWN_EXIT_SWAMP
 } TownExitStyle;
 
 void draw_town_floor(Renderer *r, int tile_x, int tile_y);
@@ -136,6 +141,8 @@ void draw_dain(Renderer *r, int tile_x, int tile_y);
 void draw_alder(Renderer *r, int tile_x, int tile_y);
 void draw_mara(Renderer *r, int tile_x, int tile_y);
 void draw_rook(Renderer *r, int tile_x, int tile_y);
+void draw_innkeeper(Renderer *r, int tile_x, int tile_y);
+void draw_swamp_daughter(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_labyrinth_entrance(Renderer *r, int tile_x, int tile_y, int open);
 void draw_labyrinth_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_labyrinth_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);

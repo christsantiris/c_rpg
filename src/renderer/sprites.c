@@ -188,6 +188,157 @@ static unsigned int forest_tile_seed(int map_x, int map_y) {
     return seed ^ (seed >> 13);
 }
 
+void draw_swamp_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    unsigned int seed = forest_tile_seed(map_x, map_y);
+    unsigned int phase = (SDL_GetTicks() / AMBIENT_FRAME_MS +
+        (unsigned int)(map_x / 4 + map_y / 6)) & 3u;
+    static const int sway[4] = {0, 1, 0, -1};
+    SDL_Color mud[3] = {
+        {19, 32, 22, 255},
+        {22, 35, 23, 255},
+        {17, 30, 21, 255}
+    };
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE,
+        mud[seed % 3u]);
+    int pool_x = 2 + (int)((seed >> 5) % 7u);
+    int pool_y = 5 + (int)((seed >> 12) % 8u);
+    fill_rect(r, x + pool_x, y + pool_y, 13, 6,
+        (SDL_Color){8, 28, 25, 255});
+    fill_rect(r, x + pool_x + 2 + sway[phase], y + pool_y + 2, 6, 1,
+        (SDL_Color){40, 76, 57, 255});
+    fill_rect(r, x + 2 + (int)((seed >> 17) % 9u), y + 2, 8, 3,
+        (SDL_Color){36, 59, 31, 255});
+    if (seed % 3u == 0u) {
+        int reed_x = x + 17 + (int)((seed >> 21) % 3u);
+        int lean = sway[phase];
+        fill_rect(r, reed_x, y + 15, 2, 8,
+            (SDL_Color){48, 75, 35, 255});
+        fill_rect(r, reed_x + lean, y + 12, 2, 6,
+            (SDL_Color){75, 109, 45, 255});
+        fill_rect(r, reed_x + 2 + lean, y + 14, 2, 4,
+            (SDL_Color){55, 89, 39, 255});
+    }
+}
+
+void draw_swamp_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    unsigned int seed = forest_tile_seed(map_x, map_y);
+    unsigned int phase = (SDL_GetTicks() / AMBIENT_FRAME_MS +
+        (unsigned int)(map_x / 4 + map_y / 6)) & 3u;
+    static const int sway[4] = {0, 1, 0, -1};
+    int lean = sway[phase];
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE,
+        (SDL_Color){5, 17, 16, 255});
+    fill_rect(r, x + 2, y + 18, 19, 4,
+        (SDL_Color){8, 31, 25, 255});
+    fill_rect(r, x + 4 + lean, y + 20, 7, 1,
+        (SDL_Color){33, 67, 47, 255});
+    int shape = (int)((seed >> 9) % 5u);
+    if (shape == 0) {
+        for (int i = 0; i < 4; i++) {
+            int reed_x = x + 3 + i * 5;
+            int height = 10 + (int)((seed >> (i * 3)) % 7u);
+            fill_rect(r, reed_x, y + 23 - height, 2, height,
+                (SDL_Color){39, 67, 34, 255});
+            fill_rect(r, reed_x + lean, y + 20 - height, 3, 5,
+                (SDL_Color){60, 105, 45, 255});
+        }
+    } else {
+        int trunk_x = x + 9 + (int)((seed >> 5) % 5u);
+        fill_rect(r, trunk_x, y + 5, 5, 18,
+            (SDL_Color){43, 42, 28, 255});
+        fill_rect(r, trunk_x + 1, y + 7, 1, 14,
+            (SDL_Color){70, 66, 39, 255});
+        fill_rect(r, trunk_x - 4, y + 20, 6, 2,
+            (SDL_Color){55, 52, 33, 255});
+        fill_rect(r, trunk_x + 3, y + 19, 7, 2,
+            (SDL_Color){55, 52, 33, 255});
+        if (shape == 1) {
+            fill_rect(r, trunk_x - 5, y + 8, 7, 2,
+                (SDL_Color){60, 55, 32, 255});
+            fill_rect(r, trunk_x + 3, y + 11, 8, 2,
+                (SDL_Color){60, 55, 32, 255});
+            fill_rect(r, trunk_x - 7 + lean, y + 5, 6, 5,
+                (SDL_Color){24, 53, 29, 255});
+            fill_rect(r, trunk_x + 4 + lean, y + 7, 5, 5,
+                (SDL_Color){21, 49, 27, 255});
+            fill_rect(r, trunk_x + 6 + lean, y + 11, 2, 8,
+                (SDL_Color){43, 74, 39, 255});
+        } else {
+            int crown_x = shape == 2 ? 2 : (shape == 3 ? 5 : 1);
+            int crown_y = shape == 3 ? 4 : 2;
+            int crown_w = shape == 3 ? 17 : 20;
+            fill_rect(r, x + crown_x + lean, y + crown_y,
+                crown_w, 8, (SDL_Color){17, 47, 28, 255});
+            fill_rect(r, x + crown_x + 3 + lean, y,
+                crown_w - 5, 6, (SDL_Color){22, 57, 31, 255});
+            fill_rect(r, x + crown_x - 1 + lean, y + 8, 10, 5,
+                (SDL_Color){19, 50, 29, 255});
+            fill_rect(r, x + crown_x + 6 + lean, y + 2, 7, 2,
+                (SDL_Color){45, 91, 43, 255});
+            fill_rect(r, x + crown_x + 12 + lean, y + 7, 5, 2,
+                (SDL_Color){39, 83, 40, 255});
+            fill_rect(r, x + crown_x + 2 + lean, y + 10, 2, 8,
+                (SDL_Color){36, 65, 35, 255});
+            fill_rect(r, x + crown_x + 15 + lean, y + 9, 2, 7,
+                (SDL_Color){38, 69, 37, 255});
+        }
+    }
+}
+
+void draw_swamp_bank(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, unsigned int edges) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    unsigned int seed = forest_tile_seed(map_x, map_y);
+    unsigned int phase = (SDL_GetTicks() / AMBIENT_FRAME_MS +
+        (unsigned int)(map_x / 4 + map_y / 6)) & 3u;
+    static const int sway[4] = {0, 1, 0, -1};
+    int lean = sway[phase];
+    SDL_Color bank = {12, 28, 20, 255};
+    SDL_Color root = {57, 55, 34, 255};
+    SDL_Color reed = {73, 111, 48, 255};
+    int offset = 5 + (int)((seed >> 7) % 9u);
+    if (edges & FOREST_EDGE_NORTH) {
+        fill_rect(r, x, y, TILE_SIZE, 2, bank);
+        fill_rect(r, x + offset, y + 2, 6, 2, root);
+        fill_rect(r, x + offset + lean, y + 2, 2, 7, reed);
+    }
+    if (edges & FOREST_EDGE_EAST) {
+        fill_rect(r, x + TILE_SIZE - 2, y, 2, TILE_SIZE, bank);
+        fill_rect(r, x + TILE_SIZE - 5, y + offset, 4, 3, root);
+        fill_rect(r, x + TILE_SIZE - 7 + lean,
+            y + offset - 3, 2, 8, reed);
+    }
+    if (edges & FOREST_EDGE_SOUTH) {
+        fill_rect(r, x, y + TILE_SIZE - 2, TILE_SIZE, 2, bank);
+        fill_rect(r, x + offset, y + TILE_SIZE - 5, 7, 3, root);
+        fill_rect(r, x + offset + 3 + lean,
+            y + TILE_SIZE - 11, 2, 9, reed);
+    }
+    if (edges & FOREST_EDGE_WEST) {
+        fill_rect(r, x, y, 2, TILE_SIZE, bank);
+        fill_rect(r, x + 1, y + offset, 5, 2, root);
+        fill_rect(r, x + 3 + lean, y + offset - 4, 2, 8, reed);
+    }
+}
+
+void draw_swamp_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int exit) {
+    draw_swamp_floor(r, tile_x, tile_y, map_x, map_y);
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color glow = exit ? (SDL_Color){90, 190, 66, 255} :
+        (SDL_Color){111, 157, 82, 255};
+    fill_rect(r, x + 3, y + 3, 18, 2, glow);
+    fill_rect(r, x + 3, y + 19, 18, 2, glow);
+    fill_rect(r, x + 3, y + 3, 2, 18, glow);
+    fill_rect(r, x + 19, y + 3, 2, 18, glow);
+    fill_rect(r, x + 9, y + 9, 6, 6,
+        (SDL_Color){10, 18, 12, 255});
+}
+
 void draw_forest_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
@@ -1058,6 +1209,7 @@ static int weapon_is_magic(const Item *weapon) {
         case ITEM_VISUAL_MAGIC_LONGBOW:
         case ITEM_VISUAL_MAGIC_DAGGER:
         case ITEM_VISUAL_MAGIC_GREATSWORD:
+        case ITEM_VISUAL_DEMONIC_SWORD:
             return 1;
         default:
             return 0;
@@ -1086,6 +1238,12 @@ static void draw_player_sword(Renderer *r, const Item *weapon, int bx, int by, i
     SDL_Color guard = magic ? (SDL_Color){171, 91, 211, 255}
         : (SDL_Color){205, 160, 60, 255};
     SDL_Color grip = {78, 46, 31, 255};
+    if (weapon->visual_id == ITEM_VISUAL_DEMONIC_SWORD) {
+        glow = (SDL_Color){89, 216, 69, 255};
+        blade = (SDL_Color){33, 57, 42, 255};
+        edge = (SDL_Color){137, 239, 106, 255};
+        guard = (SDL_Color){112, 60, 85, 255};
+    }
     if (weapon->visual_id == ITEM_VISUAL_RUSTY_SWORD) {
         blade = (SDL_Color){151, 77, 45, 255};
         edge = (SDL_Color){190, 105, 59, 255};
@@ -2371,8 +2529,56 @@ static void draw_coast_enemy(Renderer *r, int tx, int ty, EnemyType type) {
     }
 }
 
+static void draw_swamp_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color black = {10, 14, 12, 255};
+    SDL_Color eyes = {213, 58, 52, 255};
+    if (type == ENEMY_GIANT_RAT) {
+        fill_rect(r, x + 2, y + 16, 18, 6, black);
+        fill_rect(r, x + 6, y + 11, 13, 9,
+            (SDL_Color){80, 77, 65, 255});
+        fill_rect(r, x + 15, y + 8, 5, 7,
+            (SDL_Color){95, 85, 72, 255});
+        fill_rect(r, x + 17, y + 12, 2, 2, eyes);
+        fill_rect(r, x + 1, y + 19, 8, 2,
+            (SDL_Color){126, 82, 83, 255});
+        return;
+    }
+    if (type == ENEMY_BANDIT) {
+        fill_rect(r, x + 6, y + 9, 13, 14,
+            (SDL_Color){47, 57, 38, 255});
+        fill_rect(r, x + 7, y + 5, 11, 7,
+            (SDL_Color){80, 65, 50, 255});
+        fill_rect(r, x + 5, y + 4, 15, 4, black);
+        fill_rect(r, x + 8, y + 10, 9, 3, black);
+        fill_rect(r, x + 10, y + 10, 5, 1,
+            (SDL_Color){174, 169, 117, 255});
+        fill_rect(r, x + 19, y + 10, 2, 13,
+            (SDL_Color){155, 158, 133, 255});
+        return;
+    }
+    fill_rect(r, x + 4, y + 10, 17, 13,
+        (SDL_Color){38, 24, 37, 255});
+    fill_rect(r, x + 6, y + 5, 13, 10,
+        (SDL_Color){151, 145, 126, 255});
+    fill_rect(r, x + 5, y + 3, 15, 6, black);
+    fill_rect(r, x + 8, y + 10, 3, 2, eyes);
+    fill_rect(r, x + 15, y + 10, 3, 2, eyes);
+    fill_rect(r, x + 10, y + 16, 6, 6,
+        (SDL_Color){116, 22, 38, 255});
+}
+
 void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
     switch (type) {
+        case ENEMY_GIANT_RAT:
+        case ENEMY_BANDIT:
+        case ENEMY_VAMPIRE:
+            draw_swamp_enemy(r, tile_x, tile_y, type);
+            break;
+        case ENEMY_SWAMP_DEMON:
+            draw_demon_lord(r, tile_x, tile_y);
+            break;
         case ENEMY_SKELETON: draw_skeleton(r, tile_x, tile_y); break;
         case ENEMY_GOBLIN:   draw_goblin(r, tile_x, tile_y);   break;
         case ENEMY_ZOMBIE:   draw_zombie(r, tile_x, tile_y);   break;
@@ -3061,6 +3267,32 @@ void draw_rook(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 20, y + 17, 1, 1, outline);
 }
 
+void draw_innkeeper(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_tavern_floor(r, tile_x, tile_y);
+    fill_rect(r, x + 6, y + 2, 13, 5, (SDL_Color){68, 39, 27, 255});
+    fill_rect(r, x + 8, y + 6, 9, 8, (SDL_Color){196, 142, 96, 255});
+    fill_rect(r, x + 8, y + 11, 9, 3, (SDL_Color){96, 53, 35, 255});
+    fill_rect(r, x + 6, y + 14, 13, 8, (SDL_Color){113, 73, 48, 255});
+    fill_rect(r, x + 9, y + 14, 7, 8, (SDL_Color){211, 185, 132, 255});
+    fill_rect(r, x + 11, y + 15, 3, 6, (SDL_Color){102, 49, 38, 255});
+    fill_rect(r, x + 9, y + 8, 2, 2, (SDL_Color){34, 29, 26, 255});
+    fill_rect(r, x + 15, y + 8, 2, 2, (SDL_Color){34, 29, 26, 255});
+}
+
+void draw_swamp_daughter(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_swamp_floor(r, tile_x, tile_y, map_x, map_y);
+    fill_rect(r, x + 7, y + 3, 11, 7, (SDL_Color){66, 39, 39, 255});
+    fill_rect(r, x + 9, y + 7, 7, 6, (SDL_Color){213, 164, 129, 255});
+    fill_rect(r, x + 7, y + 13, 11, 9, (SDL_Color){156, 116, 177, 255});
+    fill_rect(r, x + 10, y + 14, 5, 7, (SDL_Color){199, 162, 205, 255});
+    fill_rect(r, x + 9, y + 9, 2, 1, (SDL_Color){34, 29, 30, 255});
+    fill_rect(r, x + 15, y + 9, 2, 1, (SDL_Color){34, 29, 30, 255});
+}
+
 void draw_forest_warden(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
@@ -3201,6 +3433,26 @@ void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style) {
         }
         fill_rect(r, x + 59, y + 56, 5, 8,
             (SDL_Color){213, 86, 46, 255});
+        return;
+    }
+
+    if (style == TOWN_EXIT_SWAMP) {
+        SDL_Color stone = {22, 38, 30, 255};
+        SDL_Color moss = {56, 100, 50, 255};
+        fill_rect(r, x, y, 120, 13, stone);
+        fill_rect(r, x, y, 120, 3, moss);
+        fill_rect(r, x, y, 17, 48, stone);
+        fill_rect(r, x + 103, y, 17, 48, stone);
+        fill_rect(r, x + 3, y + 4, 3, 39, moss);
+        fill_rect(r, x + 106, y + 4, 3, 39, moss);
+        for (int block = 1; block < 6; block++) {
+            fill_rect(r, x + block * 20, y + 3, 2, 9,
+                (SDL_Color){8, 25, 20, 255});
+        }
+        fill_rect(r, x + 52, y + 3, 16, 10,
+            (SDL_Color){13, 22, 17, 255});
+        fill_rect(r, x + 57, y + 5, 6, 6,
+            (SDL_Color){108, 194, 75, 255});
         return;
     }
 

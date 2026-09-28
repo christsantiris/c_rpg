@@ -46,6 +46,19 @@ void test_quest_journal(void) {
     g.rook_quest_state = 3;
     ASSERT("a returned ivory rook is retained in completed quests",
         quest_journal_count(&g, QUEST_TAB_COMPLETED) == 2);
+    g.innkeeper_quest_state = 1;
+    ASSERT("Bram's rescue appears as a swamp quest",
+        quest_journal_count(&g, QUEST_TAB_ACTIVE) == 3 &&
+        quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 2, &entry) &&
+        strcmp(entry.title, "Bring Mira Home") == 0 &&
+        entry.stages[0] == 4);
+    g.innkeeper_quest_state = 2;
+    ASSERT("rescuing Mira marks Bram's quest ready to return",
+        quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 2, &entry) &&
+        entry.objective_complete[0]);
+    g.innkeeper_quest_state = 3;
+    ASSERT("Bram's completed quest moves to the completed tab",
+        quest_journal_count(&g, QUEST_TAB_COMPLETED) == 3);
 
     QuestJournalScreen screen;
     quest_journal_init(&screen);
@@ -64,11 +77,11 @@ void test_quest_journal(void) {
     ASSERT("left wraps from active quests to bosses", screen.tab == QUEST_TAB_BOSSES);
     const Location regions[JOURNAL_BOSS_COUNT] = {
         LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST,
-        LOCATION_TEMPLE
+        LOCATION_TEMPLE, LOCATION_SWAMP
     };
     const char *names[JOURNAL_BOSS_COUNT] = {
         "Lich King", "Necromancer", "Goblin King", "Drowned Queen",
-        "Fallen Sun Guardian"
+        "Fallen Sun Guardian", "Swamp Demon"
     };
     for (int defeated = 0; defeated < JOURNAL_BOSS_COUNT; defeated++) {
         g.defeated_bosses = 1 << regions[defeated];

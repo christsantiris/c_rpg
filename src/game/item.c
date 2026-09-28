@@ -90,6 +90,20 @@ Item item_make_long_sword(void) {
     return it;
 }
 
+Item item_make_demonic_sword(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_WEAPON;
+    strncpy(it.name, "Demonic Sword", sizeof(it.name) - 1);
+    it.attack_bonus = 6;
+    it.value = 180;
+    it.is_ranged = 1;
+    it.range = 2;
+    set_weapon_metadata(&it, WEAPON_FAMILY_SWORD, WEAPON_HANDS_ONE,
+        ITEM_RARITY_RARE, ITEM_CLASS_ALL, ITEM_VISUAL_DEMONIC_SWORD);
+    return it;
+}
+
 Item item_make_magic_long_sword(void) {
     Item it = {0};
     it.active = 1;
@@ -314,6 +328,8 @@ void item_apply_legacy_metadata(Item *item) {
         definition = item_make_short_sword();
     } else if (strcmp(item->name, "Long Sword") == 0) {
         definition = item_make_long_sword();
+    } else if (strcmp(item->name, "Demonic Sword") == 0) {
+        definition = item_make_demonic_sword();
     } else if (strcmp(item->name, "Magic Long Sword") == 0) {
         definition = item_make_magic_long_sword();
     } else if (strcmp(item->name, "Battle Axe") == 0) {
