@@ -8,6 +8,7 @@ static const char *game_over_location(const GameState *g) {
         case LOCATION_FOREST_ROAD: return "FOREST ROAD";
         case LOCATION_MOUNTAINS: return "GOBLIN MOUNTAINS";
         case LOCATION_COAST: return "SUNKEN COAST";
+        case LOCATION_SWAMP: return "BLACKWATER SWAMP";
         case LOCATION_TAVERN: return "TAVERN";
         case LOCATION_TOWN2: return "TOWN 2";
         case LOCATION_INN: return "INN";

@@ -310,6 +310,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_MOUNTAIN_ROCKFALL &&
         m->tiles[y][x] != TILE_MOUNTAIN_HIDDEN_CAVE &&
         m->tiles[y][x] != TILE_COAST_WALL &&
+        m->tiles[y][x] != TILE_SWAMP_WALL &&
         m->tiles[y][x] != TILE_COAST_DEEP_WATER &&
         m->tiles[y][x] != TILE_COAST_CHANNEL_WATER &&
         m->tiles[y][x] != TILE_TAVERN &&
@@ -1172,6 +1173,7 @@ void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
     for (int x = 1; x < TOWN_W - 1; x++) {
         m->tiles[12][x] = TILE_TOWN_PATH;
     }
+    m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
     for (int y = 10; y <= 14; y++) {
         m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
     }
@@ -1206,6 +1208,73 @@ void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
     map_place_town_labyrinth(m);
     *spawn_x = 1;
     *spawn_y = 12;
+}
+
+static void swamp_carve(Map *m, int x, int y) {
+    for (int dy = 0; dy < 2; dy++) {
+        for (int dx = 0; dx < 2; dx++) {
+            if (x + dx > 0 && x + dx < MAP_W - 1 &&
+                y + dy > 0 && y + dy < MAP_H - 1) {
+                m->tiles[y + dy][x + dx] = TILE_SWAMP_FLOOR;
+            }
+        }
+    }
+}
+
+void map_generate_swamp(Map *m, int level) {
+    static const int route[9] = {0, 1, 2, 5, 4, 3, 6, 7, 8};
+    map_clear_exploration(m);
+    m->room_count = 9;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            m->tiles[y][x] = TILE_SWAMP_WALL;
+        }
+    }
+    for (int i = 0; i < 9; i++) {
+        Room *room = &m->rooms[i];
+        room->x = 4 + (i % 3) * 19 + rand() % 5;
+        room->y = 4 + (i / 3) * 14 + rand() % 4;
+        room->w = 10 + rand() % 3;
+        room->h = 7 + rand() % 3;
+        for (int y = room->y; y < room->y + room->h; y++) {
+            for (int x = room->x; x < room->x + room->w; x++) {
+                m->tiles[y][x] = TILE_SWAMP_FLOOR;
+            }
+        }
+    }
+    for (int i = 1; i < 9; i++) {
+        int x;
+        int y;
+        int tx;
+        int ty;
+        map_room_center(&m->rooms[route[i - 1]], &x, &y);
+        map_room_center(&m->rooms[route[i]], &tx, &ty);
+        if ((level + i) % 2 == 0) {
+            while (x != tx) {
+                swamp_carve(m, x, y);
+                x += x < tx ? 1 : -1;
+            }
+            while (y != ty) {
+                swamp_carve(m, x, y);
+                y += y < ty ? 1 : -1;
+            }
+        } else {
+            while (y != ty) {
+                swamp_carve(m, x, y);
+                y += y < ty ? 1 : -1;
+            }
+            while (x != tx) {
+                swamp_carve(m, x, y);
+                x += x < tx ? 1 : -1;
+            }
+        }
+        swamp_carve(m, tx, ty);
+    }
+    map_room_center(&m->rooms[0], &m->stairs_up_x, &m->stairs_up_y);
+    map_room_center(&m->rooms[8], &m->stairs_down_x, &m->stairs_down_y);
+    m->stairs_down_x += 3;
+    m->tiles[m->stairs_up_y][m->stairs_up_x] = TILE_SWAMP_ENTRANCE;
+    m->tiles[m->stairs_down_y][m->stairs_down_x] = TILE_SWAMP_EXIT;
 }
 
 void map_generate_forest_road(Map *m) {

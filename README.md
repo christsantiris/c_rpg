@@ -24,7 +24,8 @@ A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explo
 *The Castle of No Return* is a C/SDL roguelike with turn-based combat and a
 retro pixel-art style. Choose a Warrior, Mage, or Rogue, prepare in town, and
 explore an eight-floor undead dungeon, the eight-stage Haunted Forest, the
-eight-stage Goblin Mountains, and the eight-stage Sunken Coast. Each region
+eight-stage Goblin Mountains, the eight-stage Sunken Coast, and Town 2's
+five-level Blackwater Swamp. Each region
 keeps its own generated maps and progression. Defeating the Drowned Queen on
 the Sunken Coast opens a sea route to the Ruined Isle. Its four-tier Ruined
 Temple remains a late-game challenge.
@@ -55,7 +56,8 @@ lower west gate of the starting town leads onto a short, enemy-free forest road.
 Walk west across it to reach Town 2; the upper west gate still enters the full
 forest. The lower gate stays blocked until the Necromancer falls. Town 2's east
 gate leads back along the road to Town 1. Town 2 has an Inn, a healer selling
-Mana Potions, and Rook's labyrinth. Each shop buys its own item types.
+Health Potions, a witch selling Mana Potions, and Rook's labyrinth. Its south
+gate opens onto the five-level Blackwater Swamp. Each shop buys its own item types.
 Stock expands as bosses are defeated; buying costs twice an item's base value,
 while selling pays one quarter of base value.
 
@@ -83,6 +85,14 @@ runes, defeat the Maze Warden, recover the ivory rook, and return to Rook for
 **40 gold** and **500 score**. Stairs stay open without clearing enemies. After
 the one-time quest, the labyrinth remains open for further expeditions; ordinary
 enemies return, but the Warden and quest reward do not.
+
+### Blackwater Swamp
+
+Travel south from Town 2 through five levels of black water, reeds, and muddy
+causeways. Giant Rats, Bandits, Zombies, and Wraiths appear early; Vampires join
+on deeper levels. The Swamp Demon guards the final exit and drops a Demonic
+Sword: a +6 one-handed weapon for every class, with a two-tile `F` attack.
+See [Blackwater Swamp](docs/swamp.md) for the full area rules.
 
 ### Harbor and Ruined Isle
 
@@ -163,7 +173,7 @@ the southern entrance to return to the island surface.
 | `B` | Open spellbook |
 | `Q` | Open the quest and boss journal |
 | `C` | Cast the equipped spell |
-| `F` | Fire an equipped bow |
+| `F` | Use an equipped bow or the Demonic Sword's ranged attack |
 | `H` | Open help |
 | `Esc` | Close the current view or return to the main menu |
 
@@ -179,9 +189,11 @@ and sell modes are switched with `Tab`.
 - [Weapons, armor, and shields](docs/weapons.md)
 - [Spells](docs/spells.md) and [Mage progression](docs/mage-progression.md)
 - [Tavern quests](docs/tavern-quests.md) and [quest journal](docs/quest-journal.md)
+- [Castle Dungeon](docs/dungeon.md)
 - [Haunted Forest](docs/haunted-forest.md)
 - [Goblin Mountains](docs/goblin-mountains.md)
 - [Sunken Coast](docs/sunken-coast.md)
+- [Blackwater Swamp](docs/swamp.md)
 - [Harbor, Ruined Isle, and Ruined Temple](docs/harbor-and-ruined-isle.md)
 
 ## Screenshots

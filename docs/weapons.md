@@ -1,7 +1,7 @@
 # Weapons, Armor, and Shields
 
 Equipment is class-oriented and uses main-hand, off-hand, and armor slots.
-Regular enemies never drop equipment. The Blacksmith and the four regional
+Regular enemies never drop equipment. The Blacksmith and the five regional
 bosses are the equipment sources.
 
 ## Equipment Rules
@@ -45,12 +45,17 @@ amount and pays one quarter when buying it back.
 | Magic Staff | +9 | Two | Mage | 3 | 1,000 | +8 spell power, +35 maximum MP, 10% cheaper spells |
 | Magic Longbow | +13 | Two | Rogue | 3 | 1,200 | Range 12 and pierces every target in its path |
 | Cryptblade | +8 | One | Warrior | Boss | 350 | 10% critical chance; Lich King reward |
+| Demonic Sword | +6 | One | All | Boss | 180 | Range 2 with `F`; Swamp Demon reward |
 
 Bows fire with `F` in the last movement direction. A target directly adjacent
 to the player is too close; valid targets begin two tiles away. Arrows stop at
 walls. The Bow and Longbow stop at the first target, while the Magic Longbow
 can strike several targets on the same line. All bows have a fixed 15% ranged
 critical chance.
+
+The Demonic Sword also uses `F`, but its magic reaches one or two tiles, stops
+at the first enemy or wall, and costs no mana. It keeps its full +6 attack bonus
+in melee.
 
 ## Armor Catalog
 
@@ -94,7 +99,7 @@ two bosses unlock Tier 3, and three bosses unlock Tier 4 armor. The Blacksmith
 buys only weapons, armor, and shields; potions, scrolls, and tomes belong at the
 Alchemist.
 
-Each of the four regional bosses guarantees a fixed thematic item:
+Each of the five regional bosses guarantees a fixed thematic item:
 
 | Boss | Reward |
 | --- | --- |
@@ -102,6 +107,7 @@ Each of the four regional bosses guarantees a fixed thematic item:
 | Necromancer | Necromancer's Cloak |
 | Goblin King | Goblin King's Shield |
 | Drowned Queen | Tidecaller Robes |
+| Swamp Demon | Demonic Sword |
 
 The Fallen Sun Guardian protects the buried temple treasure and does not drop
 equipment. Boss victories remain permanent during repeat expeditions.

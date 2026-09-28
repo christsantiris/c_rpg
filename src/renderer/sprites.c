@@ -188,6 +188,62 @@ static unsigned int forest_tile_seed(int map_x, int map_y) {
     return seed ^ (seed >> 13);
 }
 
+void draw_swamp_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    unsigned int seed = forest_tile_seed(map_x, map_y);
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE,
+        (SDL_Color){18, 29, 19, 255});
+    fill_rect(r, x + 2, y + 4, 18, 7,
+        (SDL_Color){25, 48, 28, 255});
+    fill_rect(r, x + 4, y + 5, 13, 2,
+        (SDL_Color){39, 75, 39, 255});
+    fill_rect(r, x + 1 + (int)(seed % 12u), y + 15, 9, 4,
+        (SDL_Color){10, 42, 32, 255});
+    fill_rect(r, x + 4 + (int)(seed % 11u), y + 16, 4, 1,
+        (SDL_Color){53, 96, 54, 255});
+    if (seed % 4u == 0) {
+        fill_rect(r, x + 18, y + 15, 2, 7,
+            (SDL_Color){52, 69, 31, 255});
+        fill_rect(r, x + 16, y + 16, 2, 4,
+            (SDL_Color){64, 88, 38, 255});
+    }
+}
+
+void draw_swamp_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    unsigned int seed = forest_tile_seed(map_x, map_y);
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE,
+        (SDL_Color){5, 15, 13, 255});
+    fill_rect(r, x + 2, y + 3, 17, 4,
+        (SDL_Color){10, 32, 26, 255});
+    fill_rect(r, x + 5, y + 14, 15, 3,
+        (SDL_Color){13, 38, 25, 255});
+    fill_rect(r, x + 4 + (int)(seed % 11u), y + 10, 5, 1,
+        (SDL_Color){30, 71, 42, 255});
+    if (seed % 5u == 0) {
+        fill_rect(r, x + 17, y + 7, 2, 15,
+            (SDL_Color){38, 53, 28, 255});
+        fill_rect(r, x + 15, y + 10, 2, 6,
+            (SDL_Color){46, 72, 31, 255});
+    }
+}
+
+void draw_swamp_edge(Renderer *r, int tile_x, int tile_y, int exit) {
+    draw_swamp_floor(r, tile_x, tile_y, tile_x, tile_y);
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color glow = exit ? (SDL_Color){90, 190, 66, 255} :
+        (SDL_Color){111, 157, 82, 255};
+    fill_rect(r, x + 3, y + 3, 18, 2, glow);
+    fill_rect(r, x + 3, y + 19, 18, 2, glow);
+    fill_rect(r, x + 3, y + 3, 2, 18, glow);
+    fill_rect(r, x + 19, y + 3, 2, 18, glow);
+    fill_rect(r, x + 9, y + 9, 6, 6,
+        (SDL_Color){10, 18, 12, 255});
+}
+
 void draw_forest_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
@@ -1058,6 +1114,7 @@ static int weapon_is_magic(const Item *weapon) {
         case ITEM_VISUAL_MAGIC_LONGBOW:
         case ITEM_VISUAL_MAGIC_DAGGER:
         case ITEM_VISUAL_MAGIC_GREATSWORD:
+        case ITEM_VISUAL_DEMONIC_SWORD:
             return 1;
         default:
             return 0;
@@ -1086,6 +1143,12 @@ static void draw_player_sword(Renderer *r, const Item *weapon, int bx, int by, i
     SDL_Color guard = magic ? (SDL_Color){171, 91, 211, 255}
         : (SDL_Color){205, 160, 60, 255};
     SDL_Color grip = {78, 46, 31, 255};
+    if (weapon->visual_id == ITEM_VISUAL_DEMONIC_SWORD) {
+        glow = (SDL_Color){89, 216, 69, 255};
+        blade = (SDL_Color){33, 57, 42, 255};
+        edge = (SDL_Color){137, 239, 106, 255};
+        guard = (SDL_Color){112, 60, 85, 255};
+    }
     if (weapon->visual_id == ITEM_VISUAL_RUSTY_SWORD) {
         blade = (SDL_Color){151, 77, 45, 255};
         edge = (SDL_Color){190, 105, 59, 255};
@@ -2371,8 +2434,56 @@ static void draw_coast_enemy(Renderer *r, int tx, int ty, EnemyType type) {
     }
 }
 
+static void draw_swamp_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color black = {10, 14, 12, 255};
+    SDL_Color eyes = {213, 58, 52, 255};
+    if (type == ENEMY_GIANT_RAT) {
+        fill_rect(r, x + 2, y + 16, 18, 6, black);
+        fill_rect(r, x + 6, y + 11, 13, 9,
+            (SDL_Color){80, 77, 65, 255});
+        fill_rect(r, x + 15, y + 8, 5, 7,
+            (SDL_Color){95, 85, 72, 255});
+        fill_rect(r, x + 17, y + 12, 2, 2, eyes);
+        fill_rect(r, x + 1, y + 19, 8, 2,
+            (SDL_Color){126, 82, 83, 255});
+        return;
+    }
+    if (type == ENEMY_BANDIT) {
+        fill_rect(r, x + 6, y + 9, 13, 14,
+            (SDL_Color){47, 57, 38, 255});
+        fill_rect(r, x + 7, y + 5, 11, 7,
+            (SDL_Color){80, 65, 50, 255});
+        fill_rect(r, x + 5, y + 4, 15, 4, black);
+        fill_rect(r, x + 8, y + 10, 9, 3, black);
+        fill_rect(r, x + 10, y + 10, 5, 1,
+            (SDL_Color){174, 169, 117, 255});
+        fill_rect(r, x + 19, y + 10, 2, 13,
+            (SDL_Color){155, 158, 133, 255});
+        return;
+    }
+    fill_rect(r, x + 4, y + 10, 17, 13,
+        (SDL_Color){38, 24, 37, 255});
+    fill_rect(r, x + 6, y + 5, 13, 10,
+        (SDL_Color){151, 145, 126, 255});
+    fill_rect(r, x + 5, y + 3, 15, 6, black);
+    fill_rect(r, x + 8, y + 10, 3, 2, eyes);
+    fill_rect(r, x + 15, y + 10, 3, 2, eyes);
+    fill_rect(r, x + 10, y + 16, 6, 6,
+        (SDL_Color){116, 22, 38, 255});
+}
+
 void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
     switch (type) {
+        case ENEMY_GIANT_RAT:
+        case ENEMY_BANDIT:
+        case ENEMY_VAMPIRE:
+            draw_swamp_enemy(r, tile_x, tile_y, type);
+            break;
+        case ENEMY_SWAMP_DEMON:
+            draw_demon_lord(r, tile_x, tile_y);
+            break;
         case ENEMY_SKELETON: draw_skeleton(r, tile_x, tile_y); break;
         case ENEMY_GOBLIN:   draw_goblin(r, tile_x, tile_y);   break;
         case ENEMY_ZOMBIE:   draw_zombie(r, tile_x, tile_y);   break;
@@ -3201,6 +3312,26 @@ void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style) {
         }
         fill_rect(r, x + 59, y + 56, 5, 8,
             (SDL_Color){213, 86, 46, 255});
+        return;
+    }
+
+    if (style == TOWN_EXIT_SWAMP) {
+        SDL_Color stone = {22, 38, 30, 255};
+        SDL_Color moss = {56, 100, 50, 255};
+        fill_rect(r, x, y, 120, 13, stone);
+        fill_rect(r, x, y, 120, 3, moss);
+        fill_rect(r, x, y, 17, 48, stone);
+        fill_rect(r, x + 103, y, 17, 48, stone);
+        fill_rect(r, x + 3, y + 4, 3, 39, moss);
+        fill_rect(r, x + 106, y + 4, 3, 39, moss);
+        for (int block = 1; block < 6; block++) {
+            fill_rect(r, x + block * 20, y + 3, 2, 9,
+                (SDL_Color){8, 25, 20, 255});
+        }
+        fill_rect(r, x + 52, y + 3, 16, 10,
+            (SDL_Color){13, 22, 17, 255});
+        fill_rect(r, x + 57, y + 5, 6, 6,
+            (SDL_Color){108, 194, 75, 255});
         return;
     }
 
