@@ -1057,7 +1057,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         draw_labyrinth_entrance(r,
             viewport_to_screen_x(v, TOWN_LABYRINTH_X),
             viewport_to_screen_y(v, TOWN_LABYRINTH_Y),
-            g->rook_quest_state == 1 || g->rook_quest_state == 2);
+            game_labyrinth_is_open(g));
     }
 
     if (g->location == LOCATION_ISLAND) {
@@ -1092,7 +1092,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->location == LOCATION_FOREST ||
         g->location == LOCATION_MOUNTAINS ||
         g->location == LOCATION_COAST ||
-        g->location == LOCATION_TEMPLE) {
+        g->location == LOCATION_TEMPLE ||
+        g->location == LOCATION_LABYRINTH) {
         for (int i = 0; i < g->enemy_count; i++) {
             Enemy *e = &g->enemies[i];
             if (!e->active) continue;
@@ -1237,7 +1238,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, TOWN_LABYRINTH_X) * TILE_SIZE +
                 (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, TOWN_LABYRINTH_Y - 3) * TILE_SIZE,
-            g->rook_quest_state == 1 || g->rook_quest_state == 2 ?
+            game_labyrinth_is_open(g) ?
                 label : (SDL_Color){105, 105, 90, 255}, r->font_tiny);
         renderer_draw_text(r, "TOWN 1",
             viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - 54,

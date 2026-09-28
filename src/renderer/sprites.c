@@ -2363,6 +2363,7 @@ static void draw_coast_enemy(Renderer *r, int tx, int ty, EnemyType type) {
         case ENEMY_SIREN: draw_coast_siren(r, x, y); break;
         case ENEMY_GIANT_CRAB: draw_coast_crab(r, x, y); break;
         case ENEMY_ANIMATED_STATUE: draw_coast_statue(r, x, y); break;
+        case ENEMY_LABYRINTH_WARDEN: draw_coast_statue(r, x, y); break;
         case ENEMY_WATER_ELEMENTAL: draw_coast_elemental(r, x, y); break;
         case ENEMY_SEA_SERPENT: draw_coast_serpent(r, x, y); break;
         case ENEMY_DROWNED_QUEEN: draw_coast_queen(r, x, y); break;

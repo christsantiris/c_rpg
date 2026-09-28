@@ -1473,7 +1473,7 @@ void action_resolve_player(GameState *g, Action a) {
 
         if (g->location == LOCATION_TOWN2 &&
             g->map.tiles[ty][tx] == TILE_LABYRINTH_ENTRANCE) {
-            if (g->rook_quest_state != 0) {
+            if (game_labyrinth_is_open(g)) {
                 game_enter_labyrinth(g);
             } else {
                 push_message(g, "The old labyrinth gate is sealed.");
