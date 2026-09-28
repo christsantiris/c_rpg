@@ -236,6 +236,7 @@ void map_set_town2_road(Map *m, int unlocked);
 void map_generate_town2(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_forest_road(Map *m);
 void map_place_town_labyrinth(Map *m);
+void map_place_town2_center(Map *m);
 void map_place_town_harbor(Map *m);
 void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_inn(Map *m, int *spawn_x, int *spawn_y);
