@@ -192,21 +192,33 @@ void draw_swamp_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y)
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
     unsigned int seed = forest_tile_seed(map_x, map_y);
+    unsigned int phase = (SDL_GetTicks() / AMBIENT_FRAME_MS +
+        (unsigned int)(map_x / 4 + map_y / 6)) & 3u;
+    static const int sway[4] = {0, 1, 0, -1};
+    SDL_Color mud[3] = {
+        {19, 32, 22, 255},
+        {22, 35, 23, 255},
+        {17, 30, 21, 255}
+    };
     fill_rect(r, x, y, TILE_SIZE, TILE_SIZE,
-        (SDL_Color){18, 29, 19, 255});
-    fill_rect(r, x + 2, y + 4, 18, 7,
-        (SDL_Color){25, 48, 28, 255});
-    fill_rect(r, x + 4, y + 5, 13, 2,
-        (SDL_Color){39, 75, 39, 255});
-    fill_rect(r, x + 1 + (int)(seed % 12u), y + 15, 9, 4,
-        (SDL_Color){10, 42, 32, 255});
-    fill_rect(r, x + 4 + (int)(seed % 11u), y + 16, 4, 1,
-        (SDL_Color){53, 96, 54, 255});
-    if (seed % 4u == 0) {
-        fill_rect(r, x + 18, y + 15, 2, 7,
-            (SDL_Color){52, 69, 31, 255});
-        fill_rect(r, x + 16, y + 16, 2, 4,
-            (SDL_Color){64, 88, 38, 255});
+        mud[seed % 3u]);
+    int pool_x = 2 + (int)((seed >> 5) % 7u);
+    int pool_y = 5 + (int)((seed >> 12) % 8u);
+    fill_rect(r, x + pool_x, y + pool_y, 13, 6,
+        (SDL_Color){8, 28, 25, 255});
+    fill_rect(r, x + pool_x + 2 + sway[phase], y + pool_y + 2, 6, 1,
+        (SDL_Color){40, 76, 57, 255});
+    fill_rect(r, x + 2 + (int)((seed >> 17) % 9u), y + 2, 8, 3,
+        (SDL_Color){36, 59, 31, 255});
+    if (seed % 3u == 0u) {
+        int reed_x = x + 17 + (int)((seed >> 21) % 3u);
+        int lean = sway[phase];
+        fill_rect(r, reed_x, y + 15, 2, 8,
+            (SDL_Color){48, 75, 35, 255});
+        fill_rect(r, reed_x + lean, y + 12, 2, 6,
+            (SDL_Color){75, 109, 45, 255});
+        fill_rect(r, reed_x + 2 + lean, y + 14, 2, 4,
+            (SDL_Color){55, 89, 39, 255});
     }
 }
 
@@ -214,24 +226,107 @@ void draw_swamp_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) 
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
     unsigned int seed = forest_tile_seed(map_x, map_y);
+    unsigned int phase = (SDL_GetTicks() / AMBIENT_FRAME_MS +
+        (unsigned int)(map_x / 4 + map_y / 6)) & 3u;
+    static const int sway[4] = {0, 1, 0, -1};
+    int lean = sway[phase];
     fill_rect(r, x, y, TILE_SIZE, TILE_SIZE,
-        (SDL_Color){5, 15, 13, 255});
-    fill_rect(r, x + 2, y + 3, 17, 4,
-        (SDL_Color){10, 32, 26, 255});
-    fill_rect(r, x + 5, y + 14, 15, 3,
-        (SDL_Color){13, 38, 25, 255});
-    fill_rect(r, x + 4 + (int)(seed % 11u), y + 10, 5, 1,
-        (SDL_Color){30, 71, 42, 255});
-    if (seed % 5u == 0) {
-        fill_rect(r, x + 17, y + 7, 2, 15,
-            (SDL_Color){38, 53, 28, 255});
-        fill_rect(r, x + 15, y + 10, 2, 6,
-            (SDL_Color){46, 72, 31, 255});
+        (SDL_Color){5, 17, 16, 255});
+    fill_rect(r, x + 2, y + 18, 19, 4,
+        (SDL_Color){8, 31, 25, 255});
+    fill_rect(r, x + 4 + lean, y + 20, 7, 1,
+        (SDL_Color){33, 67, 47, 255});
+    int shape = (int)((seed >> 9) % 5u);
+    if (shape == 0) {
+        for (int i = 0; i < 4; i++) {
+            int reed_x = x + 3 + i * 5;
+            int height = 10 + (int)((seed >> (i * 3)) % 7u);
+            fill_rect(r, reed_x, y + 23 - height, 2, height,
+                (SDL_Color){39, 67, 34, 255});
+            fill_rect(r, reed_x + lean, y + 20 - height, 3, 5,
+                (SDL_Color){60, 105, 45, 255});
+        }
+    } else {
+        int trunk_x = x + 9 + (int)((seed >> 5) % 5u);
+        fill_rect(r, trunk_x, y + 5, 5, 18,
+            (SDL_Color){43, 42, 28, 255});
+        fill_rect(r, trunk_x + 1, y + 7, 1, 14,
+            (SDL_Color){70, 66, 39, 255});
+        fill_rect(r, trunk_x - 4, y + 20, 6, 2,
+            (SDL_Color){55, 52, 33, 255});
+        fill_rect(r, trunk_x + 3, y + 19, 7, 2,
+            (SDL_Color){55, 52, 33, 255});
+        if (shape == 1) {
+            fill_rect(r, trunk_x - 5, y + 8, 7, 2,
+                (SDL_Color){60, 55, 32, 255});
+            fill_rect(r, trunk_x + 3, y + 11, 8, 2,
+                (SDL_Color){60, 55, 32, 255});
+            fill_rect(r, trunk_x - 7 + lean, y + 5, 6, 5,
+                (SDL_Color){24, 53, 29, 255});
+            fill_rect(r, trunk_x + 4 + lean, y + 7, 5, 5,
+                (SDL_Color){21, 49, 27, 255});
+            fill_rect(r, trunk_x + 6 + lean, y + 11, 2, 8,
+                (SDL_Color){43, 74, 39, 255});
+        } else {
+            int crown_x = shape == 2 ? 2 : (shape == 3 ? 5 : 1);
+            int crown_y = shape == 3 ? 4 : 2;
+            int crown_w = shape == 3 ? 17 : 20;
+            fill_rect(r, x + crown_x + lean, y + crown_y,
+                crown_w, 8, (SDL_Color){17, 47, 28, 255});
+            fill_rect(r, x + crown_x + 3 + lean, y,
+                crown_w - 5, 6, (SDL_Color){22, 57, 31, 255});
+            fill_rect(r, x + crown_x - 1 + lean, y + 8, 10, 5,
+                (SDL_Color){19, 50, 29, 255});
+            fill_rect(r, x + crown_x + 6 + lean, y + 2, 7, 2,
+                (SDL_Color){45, 91, 43, 255});
+            fill_rect(r, x + crown_x + 12 + lean, y + 7, 5, 2,
+                (SDL_Color){39, 83, 40, 255});
+            fill_rect(r, x + crown_x + 2 + lean, y + 10, 2, 8,
+                (SDL_Color){36, 65, 35, 255});
+            fill_rect(r, x + crown_x + 15 + lean, y + 9, 2, 7,
+                (SDL_Color){38, 69, 37, 255});
+        }
     }
 }
 
-void draw_swamp_edge(Renderer *r, int tile_x, int tile_y, int exit) {
-    draw_swamp_floor(r, tile_x, tile_y, tile_x, tile_y);
+void draw_swamp_bank(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, unsigned int edges) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    unsigned int seed = forest_tile_seed(map_x, map_y);
+    unsigned int phase = (SDL_GetTicks() / AMBIENT_FRAME_MS +
+        (unsigned int)(map_x / 4 + map_y / 6)) & 3u;
+    static const int sway[4] = {0, 1, 0, -1};
+    int lean = sway[phase];
+    SDL_Color bank = {12, 28, 20, 255};
+    SDL_Color root = {57, 55, 34, 255};
+    SDL_Color reed = {73, 111, 48, 255};
+    int offset = 5 + (int)((seed >> 7) % 9u);
+    if (edges & FOREST_EDGE_NORTH) {
+        fill_rect(r, x, y, TILE_SIZE, 2, bank);
+        fill_rect(r, x + offset, y + 2, 6, 2, root);
+        fill_rect(r, x + offset + lean, y + 2, 2, 7, reed);
+    }
+    if (edges & FOREST_EDGE_EAST) {
+        fill_rect(r, x + TILE_SIZE - 2, y, 2, TILE_SIZE, bank);
+        fill_rect(r, x + TILE_SIZE - 5, y + offset, 4, 3, root);
+        fill_rect(r, x + TILE_SIZE - 7 + lean,
+            y + offset - 3, 2, 8, reed);
+    }
+    if (edges & FOREST_EDGE_SOUTH) {
+        fill_rect(r, x, y + TILE_SIZE - 2, TILE_SIZE, 2, bank);
+        fill_rect(r, x + offset, y + TILE_SIZE - 5, 7, 3, root);
+        fill_rect(r, x + offset + 3 + lean,
+            y + TILE_SIZE - 11, 2, 9, reed);
+    }
+    if (edges & FOREST_EDGE_WEST) {
+        fill_rect(r, x, y, 2, TILE_SIZE, bank);
+        fill_rect(r, x + 1, y + offset, 5, 2, root);
+        fill_rect(r, x + 3 + lean, y + offset - 4, 2, 8, reed);
+    }
+}
+
+void draw_swamp_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int exit) {
+    draw_swamp_floor(r, tile_x, tile_y, map_x, map_y);
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
     SDL_Color glow = exit ? (SDL_Color){90, 190, 66, 255} :

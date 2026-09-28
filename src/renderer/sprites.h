@@ -51,7 +51,8 @@ void draw_mountain_fortress_floor(Renderer *r, int tile_x, int tile_y, int map_x
 void draw_coast_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_swamp_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_swamp_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
-void draw_swamp_edge(Renderer *r, int tile_x, int tile_y, int exit);
+void draw_swamp_bank(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, unsigned int edges);
+void draw_swamp_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int exit);
 void draw_coast_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_coast_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int forward);
 void draw_coast_shallow_water(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);

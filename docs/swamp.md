@@ -1,11 +1,11 @@
 # Blackwater Swamp
 
 Blackwater Swamp begins at the south gate of Town 2. Its five levels form a
-separate expedition from the forest road and Rook's labyrinth. Dark water and
-reeds close off the ground between nine muddy clearings on each level. Narrow,
-winding causeways connect the clearings; the map changes when a new expedition
-begins, and progress is preserved while traveling between levels or using a
-Return to Town portal.
+separate expedition from the forest road and Rook's labyrinth. Dark water,
+cypress trees, and swaying reeds border nine uneven muddy clearings on each
+level. Winding causeways connect the clearings, with roots and reeds marking
+the shoreline. The map changes when a new expedition begins, and progress is
+preserved while traveling between levels or using a Return to Town portal.
 
 The marked entrance leads back one level, or to Town 2 from level 1. The marked
 exit advances to the next level. Levels 1–4 can be left without defeating every
