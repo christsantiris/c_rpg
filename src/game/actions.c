@@ -1137,6 +1137,12 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
+        if (sp->type == SPELL_TYPE_HEAL &&
+            g->player.hp >= g->player.max_hp) {
+            push_message(g, "HP is already full");
+            return;
+        }
+
         if (g->player.last_dx == 0 && g->player.last_dy == 0) {
             push_message(g, "Move first to aim!");
             return;
@@ -1235,10 +1241,8 @@ void action_resolve_player(GameState *g, Action a) {
             if (!hit) push_message(g, "Spell missed!");
 
         } else if (sp->type == SPELL_TYPE_HEAL) {
-            int healed = sp->heal_hp + g->player.level * 2 + spell_power;
-            g->player.hp += healed;
-            if (g->player.hp > g->player.max_hp)
-                g->player.hp = g->player.max_hp;
+            int healed = g->player.max_hp - g->player.hp;
+            g->player.hp = g->player.max_hp;
             char msg[MAX_MESSAGE_LEN];
             snprintf(msg, sizeof(msg), "Healed %d HP!", healed);
             push_message(g, msg);

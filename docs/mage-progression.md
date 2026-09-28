@@ -36,7 +36,7 @@ no MP when the path is completely blocked.
 ## Mage Equipment
 
 Staves are two-handed weapons. Their spell power is added directly to spell
-damage and healing.
+damage; Heal restores HP to full regardless of spell power.
 
 | Tier | Weapon | Attack | Casting bonuses |
 | ---: | --- | ---: | --- |

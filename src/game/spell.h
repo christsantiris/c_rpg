@@ -2,6 +2,7 @@
 #define SPELL_HEADER_H
 
 #define MAX_SPELLS 10
+#define HEAL_BASE_MP_COST 15
 
 typedef enum {
     SPELL_MAGIC_ARROW = 0,
@@ -25,7 +26,6 @@ typedef struct {
     SpellType type;
     int       mp_cost;
     int       damage;
-    int       heal_hp;
     int       range;
     int       radius;
     int       rank;

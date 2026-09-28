@@ -153,8 +153,8 @@ On gaining a character level:
 - Defense increases by 1, capped at half the player's attack.
 - The next XP requirement becomes `player level * 100`.
 
-Damage and healing spells add `player level * 2` to their base effect. Player
-progress persists across future regions.
+Damage spells add `player level * 2` to their base effect. Heal restores HP to
+maximum regardless of level. Player progress persists across future regions.
 
 ## Loot Progression
 
