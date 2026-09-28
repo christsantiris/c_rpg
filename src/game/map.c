@@ -1131,9 +1131,17 @@ void map_set_town2_road(Map *m, int unlocked) {
     for (int x = 4; x < 8; x++) {
         m->tiles[21][x] = TILE_TOWN_PATH;
     }
+    // Keep the former gate position closed while preserving the Tavern loop.
+    m->tiles[19][0] = TILE_WALL;
+    for (int x = 1; x < 4; x++) {
+        m->tiles[19][x] = TILE_TOWN_FLOOR;
+    }
     m->tiles[TOWN_ROAD_EXIT_Y][0] = TILE_WALL;
     for (int x = 1; x < 4; x++) {
         m->tiles[TOWN_ROAD_EXIT_Y][x] = TILE_TOWN_FLOOR;
+    }
+    for (int y = TOWN_ROAD_EXIT_Y; y < 12; y++) {
+        m->tiles[y][4] = TILE_TOWN_FLOOR;
     }
     if (!unlocked) {
         return;
@@ -1141,6 +1149,9 @@ void map_set_town2_road(Map *m, int unlocked) {
     m->tiles[TOWN_ROAD_EXIT_Y][0] = TILE_TOWN_EXIT;
     for (int x = 1; x < 4; x++) {
         m->tiles[TOWN_ROAD_EXIT_Y][x] = TILE_TOWN_PATH;
+    }
+    for (int y = TOWN_ROAD_EXIT_Y; y < 12; y++) {
+        m->tiles[y][4] = TILE_TOWN_PATH;
     }
 }
 

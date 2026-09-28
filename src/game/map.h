@@ -14,8 +14,8 @@
 
 #define TOWN_W 44 // town dimensions
 #define TOWN_H 25 // town dimensions
-#define TOWN_ROAD_GATE_Y 17
-#define TOWN_ROAD_EXIT_Y 19
+#define TOWN_ROAD_GATE_Y 3
+#define TOWN_ROAD_EXIT_Y 5
 #define FOREST_ROAD_W 80
 #define FOREST_ROAD_H 25
 #define FOREST_ROAD_Y 12

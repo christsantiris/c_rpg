@@ -245,15 +245,19 @@ void test_rook_labyrinth(void) {
     ASSERT("walking east across the road reaches Town 1's west gate",
         g.location == LOCATION_TOWN && g.player.x == 1 &&
         g.player.y == TOWN_ROAD_EXIT_Y);
+    g.map.tiles[19][0] = TILE_TOWN_EXIT;
+    g.map.tiles[19][1] = TILE_TOWN_PATH;
     saved = save_game(&g, slot);
     restored = saved && load_game(&loaded, slot);
-    ASSERT("an unlocked Town 2 gate remains paved after loading Town 1",
+    ASSERT("loading Town 1 moves the gate above the forest and closes the old gate",
         restored && loaded.location == LOCATION_TOWN &&
         loaded.map.tiles[TOWN_ROAD_EXIT_Y][0] == TILE_TOWN_EXIT &&
-        loaded.map.tiles[TOWN_ROAD_EXIT_Y][4] == TILE_TOWN_PATH);
+        loaded.map.tiles[TOWN_ROAD_EXIT_Y][4] == TILE_TOWN_PATH &&
+        loaded.map.tiles[19][0] == TILE_WALL &&
+        loaded.map.tiles[19][1] == TILE_TOWN_FLOOR);
     remove("saves/savegame_99014.json");
     action_resolve_player(&g, (Action){ACTION_MOVE, 0, TOWN_ROAD_EXIT_Y});
-    ASSERT("Town 1's lower west gate enters the road at its east end",
+    ASSERT("Town 1's northern west gate enters the road at its east end",
         g.location == LOCATION_FOREST_ROAD &&
         g.player.x == FOREST_ROAD_W - 2 && g.player.y == FOREST_ROAD_Y);
     for (int x = FOREST_ROAD_W - 3; x >= 0; x--) {
@@ -403,21 +407,26 @@ void test_town_map(void) {
     ASSERT("Tavern loop exists before Town 2 is discovered",
         m.tiles[TOWN_ROAD_EXIT_Y][0] == TILE_WALL &&
         m.tiles[TOWN_ROAD_EXIT_Y][1] == TILE_TOWN_FLOOR &&
-        m.tiles[TOWN_ROAD_EXIT_Y][4] == TILE_TOWN_PATH &&
+        m.tiles[TOWN_ROAD_EXIT_Y][4] == TILE_TOWN_FLOOR &&
         m.tiles[13][4] == TILE_TOWN_PATH &&
         m.tiles[21][4] == TILE_TOWN_PATH &&
         m.tiles[21][8] == TILE_TOWN_PATH);
     map_set_town2_road(&m, 1);
-    ASSERT("defeating the forest boss reveals a separate paved gate",
+    ASSERT("Town 2 gate opens north of the forest on a one-tile path",
+        TOWN_ROAD_EXIT_Y < 10 && TOWN_ROAD_GATE_Y < 10 &&
         m.tiles[TOWN_ROAD_EXIT_Y][0] == TILE_TOWN_EXIT &&
+        m.tiles[TOWN_ROAD_EXIT_Y][1] == TILE_TOWN_PATH &&
         m.tiles[14][0] == TILE_WALL &&
         m.tiles[TOWN_ROAD_EXIT_Y][4] == TILE_TOWN_PATH &&
-        m.tiles[15][4] == TILE_TOWN_PATH &&
+        m.tiles[11][4] == TILE_TOWN_PATH &&
+        m.tiles[12][4] == TILE_TOWN_PATH &&
+        m.tiles[19][0] == TILE_WALL &&
+        m.tiles[19][1] == TILE_TOWN_FLOOR &&
         m.tiles[TOWN_ROAD_EXIT_Y - 1][0] == TILE_WALL &&
         m.tiles[TOWN_ROAD_EXIT_Y + 1][0] == TILE_WALL &&
         m.tiles[TOWN_ROAD_EXIT_Y - 1][2] == TILE_TOWN_FLOOR &&
         m.tiles[TOWN_ROAD_EXIT_Y + 1][2] == TILE_TOWN_FLOOR);
-    ASSERT("Town 2 spur joins the one-tile Tavern walkway",
+    ASSERT("the Tavern's square walkway remains in place",
         m.tiles[20][4] == TILE_TOWN_PATH &&
         m.tiles[21][4] == TILE_TOWN_PATH &&
         m.tiles[21][5] == TILE_TOWN_PATH &&
@@ -428,7 +437,7 @@ void test_town_map(void) {
     ASSERT("closing the Town 2 spur leaves the Tavern loop intact",
         m.tiles[TOWN_ROAD_EXIT_Y][0] == TILE_WALL &&
         m.tiles[TOWN_ROAD_EXIT_Y][2] == TILE_TOWN_FLOOR &&
-        m.tiles[TOWN_ROAD_EXIT_Y][4] == TILE_TOWN_PATH &&
+        m.tiles[TOWN_ROAD_EXIT_Y][4] == TILE_TOWN_FLOOR &&
         m.tiles[21][4] == TILE_TOWN_PATH);
     map_set_town2_road(&m, 1);
     ASSERT("mountain exit at east crossroad",
