@@ -4,9 +4,11 @@
 #include "../screens/landing.h"
 
 #define TOWN_MUSIC    "assets/music/Woodland Fantasy.mp3"
+#define TOWN2_MUSIC   "assets/music/town-music.mp3"
 #define DUNGEON_MUSIC "assets/music/the_march_upon_the_red_mountain.mp3"
 
-static Mix_Music *town_track    = NULL;
+static Mix_Music *town_track = NULL;
+static Mix_Music *town2_track = NULL;
 static Mix_Music *dungeon_track = NULL;
 static Mix_Music *current_track = NULL;
 static int music_on = 1;
@@ -16,19 +18,27 @@ void music_init(void) {
         fprintf(stderr, "SDL_mixer error: %s\n", Mix_GetError());
         return;
     }
-    town_track    = Mix_LoadMUS(TOWN_MUSIC);
+    town_track = Mix_LoadMUS(TOWN_MUSIC);
+    town2_track = Mix_LoadMUS(TOWN2_MUSIC);
     dungeon_track = Mix_LoadMUS(DUNGEON_MUSIC);
-    if (!town_track)
+    if (!town_track) {
         fprintf(stderr, "Failed to load town music: %s\n", Mix_GetError());
-    if (!dungeon_track)
+    }
+    if (!town2_track) {
+        fprintf(stderr, "Failed to load Town 2 music: %s\n", Mix_GetError());
+    }
+    if (!dungeon_track) {
         fprintf(stderr, "Failed to load dungeon music: %s\n", Mix_GetError());
+    }
 }
 
 static void play_track(Mix_Music *track) {
     if (!track || !music_on) {
         return;
     }
-    if (track == current_track) return;
+    if (track == current_track) {
+        return;
+    }
     current_track = track;
     Mix_HaltMusic();
     Mix_PlayMusic(track, -1);
@@ -47,14 +57,17 @@ int music_enabled(void) {
     return music_on;
 }
 
-void music_update(int screen, int in_town) {
+void music_update(int screen, int in_town, int in_town2) {
     if (screen == SCREEN_PLAYING) {
-        if (in_town)
+        if (in_town2) {
+            play_track(town2_track ? town2_track : town_track);
+        } else if (in_town) {
             play_track(town_track);
-        else
+        } else {
             play_track(dungeon_track);
+        }
     } else if (screen == SCREEN_LANDING ||
-               screen == SCREEN_NAME_ENTRY) {
+        screen == SCREEN_NAME_ENTRY) {
         play_track(town_track);
     }
     // All other screens (shop, inventory, spellbook) keep current track
@@ -62,7 +75,14 @@ void music_update(int screen, int in_town) {
 
 void music_free(void) {
     Mix_HaltMusic();
-    if (town_track)    Mix_FreeMusic(town_track);
-    if (dungeon_track) Mix_FreeMusic(dungeon_track);
+    if (town_track) {
+        Mix_FreeMusic(town_track);
+    }
+    if (town2_track) {
+        Mix_FreeMusic(town2_track);
+    }
+    if (dungeon_track) {
+        Mix_FreeMusic(dungeon_track);
+    }
     Mix_CloseAudio();
 }

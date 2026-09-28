@@ -140,6 +140,7 @@ void draw_labyrinth_entrance(Renderer *r, int tile_x, int tile_y, int open);
 void draw_labyrinth_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_labyrinth_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_labyrinth_exit(Renderer *r, int tile_x, int tile_y);
+void draw_labyrinth_stairs(Renderer *r, int tile_x, int tile_y);
 void draw_labyrinth_switch(Renderer *r, int tile_x, int tile_y, int active);
 void draw_labyrinth_gate(Renderer *r, int tile_x, int tile_y);
 void draw_labyrinth_relic(Renderer *r, int tile_x, int tile_y);
@@ -175,6 +176,7 @@ void draw_temple_rubble(Renderer *r, int tile_x, int tile_y);
 
 void draw_floor_item(Renderer *r, int tile_x, int tile_y);
 void draw_floor_gold(Renderer *r, int tile_x, int tile_y);
+void draw_floor_gold_and_item(Renderer *r, int tile_x, int tile_y);
 
 void draw_trap_warning(Renderer *r, int tile_x, int tile_y);
 void draw_trap_spike(Renderer *r, int tile_x, int tile_y);

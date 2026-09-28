@@ -82,9 +82,9 @@ void inventory_draw(Renderer *r, const GameState *g, const InventoryScreen *s) {
 
             char detail[32] = "";
             if (item->type == ITEM_POTION_HEALTH) {
-                SDL_snprintf(detail, sizeof(detail), "+%d HP", item->heal_hp);
+                SDL_snprintf(detail, sizeof(detail), "FULL HP");
             } else if (item->type == ITEM_POTION_MANA) {
-                SDL_snprintf(detail, sizeof(detail), "+%d MP", item->heal_mp);
+                SDL_snprintf(detail, sizeof(detail), "FULL MP");
             } else if (item->type == ITEM_WEAPON) {
                 SDL_snprintf(detail, sizeof(detail), "+%d ATK",
                     item->attack_bonus);

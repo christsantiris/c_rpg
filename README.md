@@ -63,22 +63,26 @@ while selling pays one quarter of base value.
 
 The **HEALER** building is north of Town 2's east-west road.
 Follow its short entrance path from that road to meet Lysa. She sells Health
-Potions for **20 gold** each. Each potion restores up to **30 HP** when used
+Potions for **20 gold** each. Each potion restores HP to full when used
 from inventory. The Alchemist also sells Health Potions.
 
 ### Town 2 witch
 
 The **WITCH** hut stands east of Town 2's crossroads. Morwen sells Mana Potions
-for **20 gold** each. Each potion restores
-up to **20 MP** when used from inventory. The Alchemist also sells Mana Potions.
+for **20 gold** each. Each potion restores MP to full when used from inventory.
+The Alchemist also sells Mana Potions.
 
 ### Rook's labyrinth
 
 Speak with Rook in Town 2's Inn to receive his one-time retrieval quest and open
 the labyrinth gate on the eastern outskirts, across the road from the witch's
-hut. The labyrinth currently has no enemies or traps: activate its three runes,
-retrieve his stolen ivory rook, and return to Rook for **40 gold** and **500
-score**.
+hut. Explore three maze floors, each with a rune and enemies. Each of the first
+two floors has two identical-looking downward stairs: one leads onward, while
+the other reaches a short dead-end corridor with a return stair. Light all three
+runes, defeat the Maze Warden, recover the ivory rook, and return to Rook for
+**40 gold** and **500 score**. Stairs stay open without clearing enemies. After
+the one-time quest, the labyrinth remains open for further expeditions; ordinary
+enemies return, but the Warden and quest reward do not.
 
 ### Harbor and Ruined Isle
 

@@ -13,7 +13,8 @@ typedef enum {
     ITEM_SCROLL,
     ITEM_SHIELD,
     ITEM_SPELL_TOME,
-    ITEM_TREASURE_MAP
+    ITEM_TREASURE_MAP,
+    ITEM_GOLD
 } ItemType;
 
 typedef enum {
@@ -93,8 +94,6 @@ typedef struct {
     int      active;
     ItemType type;
     char     name[32];
-    int      heal_hp;
-    int      heal_mp;
     int      attack_bonus;
     int      defense_bonus;
     int      value;

@@ -1,8 +1,9 @@
 # Spells
 
 The game provides Magic Arrow, Fireball, Heal, Frost Bolt, Teleport, and Return
-to Town. Combat spells consume MP and scale with character level and equipped
-staff spell power. Magic Arrow, Fireball, and Heal support up to three ranks.
+to Town. Most spells consume MP; damage spells scale with character level and
+equipped staff spell power. Magic Arrow, Fireball, and Heal support up to three
+ranks.
 
 ## Spell Summary
 
@@ -10,20 +11,20 @@ staff spell power. Magic Arrow, Fireball, and Heal support up to three ranks.
 | --- | --- | ---: | ---: | ---: | ---: |
 | Magic Arrow | Ranged damage | 10 | 15 damage | 6 | - |
 | Fireball | Area damage | 20 | 25 damage | 4 | 2 |
-| Heal | Self healing | 15 | 40 HP | - | - |
+| Heal | Self healing | 15 | Full HP | - | - |
 | Return to Town | Utility portal | 0 | Town travel | - | - |
 | Frost Bolt | Ranged control | 14 | 18 damage, freeze | 5 | - |
 | Teleport | Utility movement | 12 | Move up to 4 tiles | 4 | - |
 
-Damage and healing use the following scaling formula before spell-rank and
-staff bonuses are applied:
+Damage uses the following scaling formula before spell-rank and staff bonuses
+are applied:
 
 ```text
 final effect = base effect + (player level * 2)
 ```
 
-For example, a level 5 character casts Magic Arrow for 25 damage and Heal for
-50 HP.
+For example, a level 5 character casts Magic Arrow for 25 damage. Heal always
+restores HP to maximum.
 
 ## Magic Arrow
 
@@ -64,11 +65,9 @@ abs(enemy_x - impact_x) + abs(enemy_y - impact_y) <= 2
 
 ## Heal
 
-Heal restores the caster's HP and cannot raise health above maximum HP.
+Heal restores the caster's HP to maximum. Casting it at full HP does not spend MP.
 
-- MP cost: 15
-- Base healing: 40 HP
-- Healing at level `L`: `40 + (L * 2)` HP
+- MP cost: 15 at rank I, 13 at rank II, 11 at rank III
 - Targets the player only
 - Displays a green effect on the player's tile
 
@@ -105,7 +104,7 @@ the Alchemist or included in random enemy drops.
 Upgrade tomes increase the existing spell rather than learning a separate
 spell. Each Magic Arrow rank adds 10 base damage, one tile of range, and 2 MP
 to its cost. Each Fireball rank adds 12 base damage and 3 MP to its cost. Each
-Heal rank adds 20 base healing and 2 MP to its cost.
+Heal rank reduces its MP cost by 2.
 
 ## Return to Town
 
@@ -147,6 +146,6 @@ require the player to have moved once to establish a direction.
   directly to HP.
 - Magic Arrow hits only the first enemy in its path, while Fireball can hit
   every enemy inside its blast radius.
-- Mana potions restore 20 MP, up to the player's maximum MP.
+- Mana potions restore the player's MP to maximum.
 - Gaining a character level restores MP to maximum as well as restoring HP.
 - Morwen sells Mana Potions for 20 gold; the Alchemist also stocks them.

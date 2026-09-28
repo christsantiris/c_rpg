@@ -2363,6 +2363,7 @@ static void draw_coast_enemy(Renderer *r, int tx, int ty, EnemyType type) {
         case ENEMY_SIREN: draw_coast_siren(r, x, y); break;
         case ENEMY_GIANT_CRAB: draw_coast_crab(r, x, y); break;
         case ENEMY_ANIMATED_STATUE: draw_coast_statue(r, x, y); break;
+        case ENEMY_LABYRINTH_WARDEN: draw_coast_statue(r, x, y); break;
         case ENEMY_WATER_ELEMENTAL: draw_coast_elemental(r, x, y); break;
         case ENEMY_SEA_SERPENT: draw_coast_serpent(r, x, y); break;
         case ENEMY_DROWNED_QUEEN: draw_coast_queen(r, x, y); break;
@@ -2400,6 +2401,7 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_SIREN:
         case ENEMY_GIANT_CRAB:
         case ENEMY_ANIMATED_STATUE:
+        case ENEMY_LABYRINTH_WARDEN:
         case ENEMY_WATER_ELEMENTAL:
         case ENEMY_SEA_SERPENT:
         case ENEMY_DROWNED_QUEEN:
@@ -4064,6 +4066,17 @@ void draw_labyrinth_exit(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 11, y + 9, 8, 3, (SDL_Color){208, 170, 62, 255});
 }
 
+void draw_labyrinth_stairs(Renderer *r, int tile_x, int tile_y) {
+    draw_labyrinth_floor(r, tile_x, tile_y, tile_x, tile_y);
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    fill_rect(r, x + 3, y + 3, 18, 18, (SDL_Color){17, 24, 21, 255});
+    for (int step = 0; step < 4; step++) {
+        fill_rect(r, x + 4 + step, y + 5 + step * 4,
+            16 - step * 2, 2, (SDL_Color){160, 150, 106, 255});
+    }
+}
+
 void draw_labyrinth_switch(Renderer *r, int tile_x, int tile_y, int active) {
     draw_labyrinth_floor(r, tile_x, tile_y, tile_x, tile_y);
     int x = tile_x * TILE_SIZE;
@@ -4102,11 +4115,34 @@ void draw_labyrinth_relic(Renderer *r, int tile_x, int tile_y) {
 void draw_floor_gold(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color base = { 18,  18,  35, 255};
-    SDL_Color gold = {220, 180,  40, 255};
-    fill_rect(r, x,   y,   TILE_SIZE, TILE_SIZE, base);
-    fill_rect(r, x+7, y+7, 10,        10,        gold);
-    fill_rect(r, x+9, y+9, 6,         6,         gold);
+    SDL_Color shadow = {51, 37, 26, 255};
+    SDL_Color rim = {121, 73, 24, 255};
+    SDL_Color gold = {220, 168, 43, 255};
+    SDL_Color shine = {255, 225, 111, 255};
+    fill_rect(r, x + 4, y + 17, 17, 3, shadow);
+    fill_rect(r, x + 9, y + 7, 10, 9, rim);
+    fill_rect(r, x + 10, y + 8, 8, 7, gold);
+    fill_rect(r, x + 11, y + 9, 4, 2, shine);
+    fill_rect(r, x + 5, y + 12, 11, 7, rim);
+    fill_rect(r, x + 6, y + 13, 9, 5, gold);
+    fill_rect(r, x + 7, y + 14, 5, 2, shine);
+    fill_rect(r, x + 15, y + 14, 6, 5, rim);
+    fill_rect(r, x + 16, y + 15, 4, 3, gold);
+}
+
+void draw_floor_gold_and_item(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color shadow = {51, 37, 26, 255};
+    SDL_Color blue = {100, 180, 255, 255};
+    SDL_Color gold = {220, 168, 43, 255};
+    SDL_Color shine = {255, 225, 111, 255};
+    fill_rect(r, x + 3, y + 18, 19, 2, shadow);
+    fill_rect(r, x + 3, y + 8, 8, 10, blue);
+    fill_rect(r, x + 2, y + 11, 10, 4, blue);
+    fill_rect(r, x + 13, y + 10, 8, 8, shadow);
+    fill_rect(r, x + 14, y + 11, 6, 6, gold);
+    fill_rect(r, x + 15, y + 12, 3, 2, shine);
 }
 
 void draw_trap_warning(Renderer *r, int tile_x, int tile_y) {
