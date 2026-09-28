@@ -292,7 +292,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 55);
+    cJSON_AddNumberToObject(root, "save_version", 57);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -342,11 +342,14 @@ int save_game(const GameState *g, int slot) {
         g->max_mountain_level_reached);
     cJSON_AddNumberToObject(root, "max_coast_level_reached",
         g->max_coast_level_reached);
+    cJSON_AddNumberToObject(root, "max_swamp_level_reached",
+        g->max_swamp_level_reached);
     cJSON_AddNumberToObject(root, "max_temple_level_reached",
         g->max_temple_level_reached);
     cJSON_AddNumberToObject(root, "message_count",     g->message_count);
     cJSON_AddNumberToObject(root, "gold",              g->gold);
     cJSON_AddNumberToObject(root, "rook_quest_state", g->rook_quest_state);
+    cJSON_AddNumberToObject(root, "innkeeper_quest_state", g->innkeeper_quest_state);
     cJSON_AddNumberToObject(root, "rook_labyrinth_switches",
         g->rook_labyrinth_switches);
     cJSON_AddNumberToObject(root, "rook_quest_completions",
@@ -577,6 +580,25 @@ int save_game(const GameState *g, int slot) {
     }
     cJSON_AddItemToObject(root, "coast_cache", coast_cache);
 
+    cJSON *swamp_cache = cJSON_CreateArray();
+    for (int i = 0; i < SWAMP_DEPTH; i++) {
+        cJSON *entry = cJSON_CreateObject();
+        cJSON_AddNumberToObject(entry, "valid", g->swamp_cache[i].valid);
+        cJSON_AddNumberToObject(entry, "level_cleared",
+            g->swamp_cache[i].level_cleared);
+        if (g->swamp_cache[i].valid) {
+            cJSON_AddItemToObject(entry, "map",
+                serialize_map(&g->swamp_cache[i].map));
+            cJSON_AddItemToObject(entry, "enemies",
+                serialize_enemies(g->swamp_cache[i].enemies,
+                    g->swamp_cache[i].enemy_count));
+            cJSON_AddNumberToObject(entry, "enemy_count",
+                g->swamp_cache[i].enemy_count);
+        }
+        cJSON_AddItemToArray(swamp_cache, entry);
+    }
+    cJSON_AddItemToObject(root, "swamp_cache", swamp_cache);
+
     cJSON *temple_cache = cJSON_CreateArray();
     for (int i = 0; i < TEMPLE_DEPTH; i++) {
         cJSON *entry = cJSON_CreateObject();
@@ -690,6 +712,8 @@ int load_game(GameState *g, int slot) {
     g->max_mountain_level_reached = max_mountain ? max_mountain->valueint : 1;
     cJSON *max_coast = cJSON_GetObjectItem(root, "max_coast_level_reached");
     g->max_coast_level_reached = max_coast ? max_coast->valueint : 1;
+    cJSON *max_swamp = cJSON_GetObjectItem(root, "max_swamp_level_reached");
+    g->max_swamp_level_reached = max_swamp ? max_swamp->valueint : 1;
     cJSON *max_temple = cJSON_GetObjectItem(root,
         "max_temple_level_reached");
     g->max_temple_level_reached = max_temple ? max_temple->valueint : 1;
@@ -697,6 +721,8 @@ int load_game(GameState *g, int slot) {
     g->gold              = cJSON_GetObjectItem(root, "gold")->valueint;
     g->rook_quest_state = cJSON_GetObjectItem(root,
         "rook_quest_state")->valueint;
+    cJSON *innkeeper_quest = cJSON_GetObjectItem(root, "innkeeper_quest_state");
+    g->innkeeper_quest_state = innkeeper_quest ? innkeeper_quest->valueint : 0;
     g->rook_labyrinth_switches = cJSON_GetObjectItem(root,
         "rook_labyrinth_switches")->valueint;
     g->rook_quest_completions = cJSON_GetObjectItem(root,
@@ -930,6 +956,30 @@ int load_game(GameState *g, int slot) {
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
                 g->coast_cache[i].enemies,
                 &g->coast_cache[i].enemy_count);
+        }
+    }
+
+    cJSON *swamp_cache = cJSON_GetObjectItem(root, "swamp_cache");
+    for (int i = 0; i < SWAMP_DEPTH; i++) {
+        g->swamp_cache[i].valid = 0;
+        g->swamp_cache[i].level_cleared = 0;
+        if (!swamp_cache) {
+            continue;
+        }
+        cJSON *entry = cJSON_GetArrayItem(swamp_cache, i);
+        if (!entry) {
+            continue;
+        }
+        cJSON *valid = cJSON_GetObjectItem(entry, "valid");
+        cJSON *cleared = cJSON_GetObjectItem(entry, "level_cleared");
+        g->swamp_cache[i].valid = valid ? valid->valueint : 0;
+        g->swamp_cache[i].level_cleared = cleared ? cleared->valueint : 0;
+        if (g->swamp_cache[i].valid) {
+            deserialize_map(cJSON_GetObjectItem(entry, "map"),
+                &g->swamp_cache[i].map);
+            deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
+                g->swamp_cache[i].enemies,
+                &g->swamp_cache[i].enemy_count);
         }
     }
 

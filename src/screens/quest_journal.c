@@ -13,7 +13,7 @@ typedef struct {
     int reward_score;
 } QuestDefinition;
 
-static const QuestDefinition quest_definitions[6] = {
+static const QuestDefinition quest_definitions[7] = {
     {
         "The Broken Seals", "Elowen",
         "Break through the undead guarding three shattered",
@@ -58,6 +58,13 @@ static const QuestDefinition quest_definitions[6] = {
         "runes, and recover Rook's stolen ivory rook.",
         {"Recover the ivory rook", "", ""},
         "Town 2 Labyrinth", {1, 0, 0}, ROOK_QUEST_REWARD, 500
+    },
+    {
+        "Bring Mira Home", "Bram",
+        "Defeat the vampire holding Mira in the swamp,",
+        "then speak to her and return to Bram at the inn.",
+        {"Rescue Mira", "", ""},
+        "Blackwater Swamp", {4, 0, 0}, 80, 600
     }
 };
 
@@ -77,7 +84,7 @@ static int quest_state(const GameState *g, int quest) {
     if (quest == 4) {
         return g->temple_treasure_state;
     }
-    return g->rook_quest_state;
+    return quest == 5 ? g->rook_quest_state : g->innkeeper_quest_state;
 }
 
 static int quest_progress(const GameState *g, int quest) {
@@ -96,7 +103,7 @@ static int quest_progress(const GameState *g, int quest) {
     if (quest == 4) {
         return g->temple_treasure_state >= 2 ? 1 : 0;
     }
-    return g->rook_quest_state >= 2 ? 1 : 0;
+    return (quest == 5 ? g->rook_quest_state : g->innkeeper_quest_state) >= 2 ? 1 : 0;
 }
 
 static int quest_in_tab(int state, QuestJournalTab tab) {
@@ -116,7 +123,7 @@ int quest_journal_count(const GameState *g, QuestJournalTab tab) {
         return JOURNAL_BOSS_COUNT;
     }
     int count = 0;
-    for (int quest = 0; quest < 6; quest++) {
+    for (int quest = 0; quest < 7; quest++) {
         if (quest_in_tab(quest_state(g, quest), tab)) {
             count++;
         }
@@ -127,15 +134,15 @@ int quest_journal_count(const GameState *g, QuestJournalTab tab) {
 int quest_journal_get_boss(const GameState *g, int index, BossJournalEntry *entry) {
     static const char *names[JOURNAL_BOSS_COUNT] = {
         "Lich King", "Necromancer", "Goblin King", "Drowned Queen",
-        "Fallen Sun Guardian"
+        "Fallen Sun Guardian", "Swamp Demon"
     };
     static const char *areas[JOURNAL_BOSS_COUNT] = {
         "Dungeon", "Forest", "Goblin Mountains", "Sunken Coast",
-        "Ruined Temple"
+        "Ruined Temple", "Blackwater Swamp"
     };
     static const Location regions[JOURNAL_BOSS_COUNT] = {
         LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST,
-        LOCATION_TEMPLE
+        LOCATION_TEMPLE, LOCATION_SWAMP
     };
     if (index < 0 || index >= JOURNAL_BOSS_COUNT) {
         return 0;
@@ -151,7 +158,7 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
         return 0;
     }
     int visible_index = 0;
-    for (int quest = 0; quest < 6; quest++) {
+    for (int quest = 0; quest < 7; quest++) {
         int state = quest_state(g, quest);
         if (!quest_in_tab(state, tab)) {
             continue;

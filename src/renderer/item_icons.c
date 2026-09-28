@@ -63,6 +63,20 @@ static void draw_icon_magic_long_sword(Renderer *r, int px, int py) {
     fill_rect_px(r, px + 13, py + 9, 2, 2, glow);
 }
 
+static void draw_icon_demonic_sword(Renderer *r, int px, int py) {
+    SDL_Color blade = {28, 47, 38, 255};
+    SDL_Color edge = {94, 214, 75, 255};
+    SDL_Color guard = {111, 58, 82, 255};
+    fill_rect_px(r, px + 18, py + 2, 3, 3, edge);
+    fill_rect_px(r, px + 15, py + 5, 4, 4, blade);
+    fill_rect_px(r, px + 12, py + 8, 4, 4, edge);
+    fill_rect_px(r, px + 9, py + 11, 4, 4, blade);
+    fill_rect_px(r, px + 6, py + 14, 4, 3, edge);
+    fill_rect_px(r, px + 4, py + 12, 8, 3, guard);
+    fill_rect_px(r, px + 4, py + 16, 3, 6,
+        (SDL_Color){38, 29, 32, 255});
+}
+
 static void draw_icon_battle_axe(Renderer *r, int px, int py) {
     SDL_Color handle = {104, 61, 33, 255};
     SDL_Color handle_hi = {157, 94, 45, 255};
@@ -273,6 +287,9 @@ void draw_icon_weapon(Renderer *r, int px, int py, const Item *item) {
             break;
         case ITEM_VISUAL_MAGIC_LONG_SWORD:
             draw_icon_magic_long_sword(r, px, py);
+            break;
+        case ITEM_VISUAL_DEMONIC_SWORD:
+            draw_icon_demonic_sword(r, px, py);
             break;
         case ITEM_VISUAL_BATTLE_AXE:
             draw_icon_battle_axe(r, px, py);

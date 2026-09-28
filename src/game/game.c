@@ -95,6 +95,27 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             e->attack = 7; e->defense = 2;
             e->experience = 22;
             break;
+        case ENEMY_GIANT_RAT:
+            strncpy(e->name, "Giant Rat", sizeof(e->name) - 1);
+            e->max_hp = 18; e->hp = 18;
+            e->attack = 6; e->defense = 1; e->experience = 16;
+            break;
+        case ENEMY_BANDIT:
+            strncpy(e->name, "Bandit", sizeof(e->name) - 1);
+            e->max_hp = 30; e->hp = 30;
+            e->attack = 9; e->defense = 3; e->experience = 34;
+            break;
+        case ENEMY_VAMPIRE:
+            strncpy(e->name, "Vampire", sizeof(e->name) - 1);
+            e->max_hp = 65; e->hp = 65;
+            e->attack = 15; e->defense = 5; e->experience = 80;
+            break;
+        case ENEMY_SWAMP_DEMON:
+            strncpy(e->name, "Swamp Demon", sizeof(e->name) - 1);
+            e->max_hp = 180; e->hp = 180;
+            e->attack = 20; e->defense = 7; e->experience = 550;
+            e->is_boss = 1;
+            break;
         case ENEMY_CRYPT_CONJURER:
             strncpy(e->name, "Crypt Conjurer", sizeof(e->name) - 1);
             e->name[sizeof(e->name) - 1] = '\0';
@@ -343,6 +364,8 @@ static int boss_for_level(const GameState *g, EnemyType *type) {
         boss_level = MOUNTAIN_DEPTH;
     } else if (g->location == LOCATION_COAST) {
         boss_level = COAST_DEPTH;
+    } else if (g->location == LOCATION_SWAMP) {
+        boss_level = SWAMP_DEPTH;
     }
     if (g->level != boss_level) {
         return 0;
@@ -356,6 +379,8 @@ static int boss_for_level(const GameState *g, EnemyType *type) {
         *type = ENEMY_MOUNTAIN_GOBLIN_KING;
     } else if (g->location == LOCATION_COAST) {
         *type = ENEMY_DROWNED_QUEEN;
+    } else if (g->location == LOCATION_SWAMP) {
+        *type = ENEMY_SWAMP_DEMON;
     } else {
         *type = ENEMY_LICH_KING;
     }
@@ -373,7 +398,8 @@ static int enemy_terrain_open(const GameState *g, int x, int y) {
         g->map.tiles[y][x] != TILE_COAST_FLOOR &&
         g->map.tiles[y][x] != TILE_COAST_SHALLOW_WATER &&
         g->map.tiles[y][x] != TILE_COAST_DRAINED_WATER &&
-        g->map.tiles[y][x] != TILE_COAST_CHANNEL_DRY)) {
+        g->map.tiles[y][x] != TILE_COAST_CHANNEL_DRY &&
+        g->map.tiles[y][x] != TILE_SWAMP_FLOOR)) {
         return 0;
     }
     return 1;
@@ -688,6 +714,10 @@ void enemies_spawn(GameState *g) {
 
     int order_tier = region_order_tier(g);
     int num_enemies = 10 + g->level;
+    if (g->location == LOCATION_SWAMP && g->level == 4 &&
+        g->innkeeper_quest_state == 1) {
+        num_enemies--;
+    }
     if (quest_group_pending(g)) {
         num_enemies -= 3;
     }
@@ -701,7 +731,8 @@ void enemies_spawn(GameState *g) {
         int boss_y = g->map.stairs_down_y;
         if (g->location == LOCATION_FOREST ||
             g->location == LOCATION_MOUNTAINS ||
-            g->location == LOCATION_COAST) {
+            g->location == LOCATION_COAST ||
+            g->location == LOCATION_SWAMP) {
             map_room_center(&g->map.rooms[g->map.room_count - 1],
                 &boss_x, &boss_y);
         }
@@ -717,7 +748,8 @@ void enemies_spawn(GameState *g) {
 
     int boss_level = g->location == LOCATION_FOREST ? FOREST_DEPTH :
         (g->location == LOCATION_MOUNTAINS ? MOUNTAIN_DEPTH :
-        (g->location == LOCATION_COAST ? COAST_DEPTH : DUNGEON_DEPTH));
+        (g->location == LOCATION_COAST ? COAST_DEPTH :
+        (g->location == LOCATION_SWAMP ? SWAMP_DEPTH : DUNGEON_DEPTH)));
     int regular_room_limit = g->level == boss_level
         ? g->map.room_count - 1 : g->map.room_count;
     place_dain_map_bearer(g);
@@ -739,7 +771,23 @@ void enemies_spawn(GameState *g) {
         // Completed regions advance enemy roles without skipping map stages.
         int level = g->level + 3 * order_tier;
 
-        if (g->location == LOCATION_COAST) {
+        if (g->location == LOCATION_SWAMP) {
+            if (g->level <= 2) {
+                type = roll < 30 ? ENEMY_GIANT_RAT :
+                    (roll < 55 ? ENEMY_ZOMBIE :
+                    (roll < 78 ? ENEMY_BANDIT : ENEMY_WRAITH));
+            } else if (g->level <= 4) {
+                type = roll < 15 ? ENEMY_GIANT_RAT :
+                    (roll < 35 ? ENEMY_ZOMBIE :
+                    (roll < 58 ? ENEMY_BANDIT :
+                    (roll < 80 ? ENEMY_WRAITH : ENEMY_VAMPIRE)));
+            } else {
+                type = roll < 10 ? ENEMY_GIANT_RAT :
+                    (roll < 25 ? ENEMY_ZOMBIE :
+                    (roll < 45 ? ENEMY_BANDIT :
+                    (roll < 65 ? ENEMY_WRAITH : ENEMY_VAMPIRE)));
+            }
+        } else if (g->location == LOCATION_COAST) {
             if (level == 1) {
                 type = roll < 55 ? ENEMY_ILLUSION : ENEMY_MERFOLK;
             } else if (level == 2) {
@@ -846,6 +894,9 @@ void game_init(GameState *g) {
         g->forest_cache[i].valid = 0;
         g->mountain_cache[i].valid = 0;
         g->coast_cache[i].valid = 0;
+        if (i < SWAMP_DEPTH) {
+            g->swamp_cache[i].valid = 0;
+        }
     }
     g->message_count = 0;
     g->level_cleared = 0;
@@ -853,6 +904,7 @@ void game_init(GameState *g) {
     g->max_forest_level_reached = 1;
     g->max_mountain_level_reached = 1;
     g->max_coast_level_reached = 1;
+    g->max_swamp_level_reached = 1;
     g->max_temple_level_reached = 1;
     g->location = LOCATION_TOWN;
     int spawn_x, spawn_y;
@@ -869,6 +921,7 @@ void game_init(GameState *g) {
     g->equipped_armor = -1;
     g->gold = 0;
     g->rook_quest_state = 0;
+    g->innkeeper_quest_state = 0;
     g->rook_labyrinth_switches = 0;
     g->rook_quest_completions = 0;
     g->score = 0;
@@ -1182,6 +1235,9 @@ static LevelCache *active_cache(GameState *g) {
     if (g->location == LOCATION_COAST) {
         return g->coast_cache;
     }
+    if (g->location == LOCATION_SWAMP) {
+        return g->swamp_cache;
+    }
     if (g->location == LOCATION_TEMPLE) {
         return g->temple_cache;
     }
@@ -1194,6 +1250,9 @@ static int *active_max_level(GameState *g) {
         return &g->max_mountain_level_reached;
     if (g->location == LOCATION_COAST) {
         return &g->max_coast_level_reached;
+    }
+    if (g->location == LOCATION_SWAMP) {
+        return &g->max_swamp_level_reached;
     }
     if (g->location == LOCATION_TEMPLE) {
         return &g->max_temple_level_reached;
@@ -1210,6 +1269,9 @@ static int active_depth(const GameState *g) {
     }
     if (g->location == LOCATION_COAST) {
         return COAST_DEPTH;
+    }
+    if (g->location == LOCATION_SWAMP) {
+        return SWAMP_DEPTH;
     }
     if (g->location == LOCATION_TEMPLE) {
         return TEMPLE_DEPTH;
@@ -1472,6 +1534,8 @@ static void generate_active_level(GameState *g) {
         map_generate_mountains(&g->map, g->level);
     } else if (g->location == LOCATION_COAST) {
         map_generate_coast(&g->map, g->level);
+    } else if (g->location == LOCATION_SWAMP) {
+        map_generate_swamp(&g->map, g->level);
     } else if (g->location == LOCATION_TEMPLE) {
         int spawn_x;
         int spawn_y;
@@ -1490,7 +1554,38 @@ static void generate_active_level(GameState *g) {
     int seal_placed = place_elowen_seal(g);
     int warden_placed = place_alder_warden(g);
     int beacon_placed = place_mara_beacon(g);
+    int daughter_x = 0;
+    int daughter_y = 0;
+    int daughter_placed = g->location == LOCATION_SWAMP && g->level == 4 &&
+        g->innkeeper_quest_state == 1;
+    if (daughter_placed) {
+        map_room_center(&g->map.rooms[7], &daughter_x, &daughter_y);
+        g->map.tiles[daughter_y][daughter_x] = TILE_SWAMP_DAUGHTER;
+    }
     enemies_spawn(g);
+    if (daughter_placed) {
+        for (int radius = 1; radius <= 4; radius++) {
+            int found = 0;
+            for (int y = daughter_y - radius; y <= daughter_y + radius && !found; y++) {
+                for (int x = daughter_x - radius; x <= daughter_x + radius; x++) {
+                    if (!enemy_tile_open(g, x, y)) {
+                        continue;
+                    }
+                    Enemy *captor = spawn_quest_enemy_at(g, ENEMY_VAMPIRE, x, y);
+                    if (captor) {
+                        snprintf(captor->name, sizeof(captor->name), "Vampire Captor");
+                        captor->max_hp += 20;
+                        captor->hp = captor->max_hp;
+                    }
+                    found = 1;
+                    break;
+                }
+            }
+            if (found) {
+                break;
+            }
+        }
+    }
     if (seal_placed) {
         spawn_elowen_guardians(g);
     }
@@ -1633,6 +1728,11 @@ void game_enter_coast(GameState *g) {
     enter_adventure(g, LOCATION_COAST);
 }
 
+void game_enter_swamp(GameState *g) {
+    enter_adventure(g, LOCATION_SWAMP);
+    push_message(g, "The black water closes around the swamp trail.");
+}
+
 int game_harbor_unlocked(const GameState *g) {
     return (g->defeated_bosses & (1 << LOCATION_COAST)) != 0;
 }
@@ -1662,7 +1762,17 @@ static void place_harbor_road(GameState *g) {
 }
 
 static void place_town_portal(GameState *g) {
-    if (!g->portal_active || g->location != LOCATION_TOWN) {
+    if (!g->portal_active) {
+        return;
+    }
+    if (g->location == LOCATION_TOWN2) {
+        if (g->portal_location == LOCATION_SWAMP) {
+            g->map.tiles[TOWN_H - 3][21] = TILE_PORTAL;
+        }
+        return;
+    }
+    if (g->location != LOCATION_TOWN ||
+        g->portal_location == LOCATION_SWAMP) {
         return;
     }
     int x = 21;
@@ -1729,6 +1839,7 @@ void game_enter_town2(GameState *g) {
     }
     g->location = LOCATION_TOWN2;
     map_generate_town2(&g->map, &spawn_x, &spawn_y);
+    place_town_portal(g);
     g->player.x = spawn_x;
     g->player.y = spawn_y;
     g->enemy_count = 0;
@@ -1758,6 +1869,7 @@ void game_leave_forest_road(GameState *g, Location destination) {
     g->location = destination;
     if (destination == LOCATION_TOWN2) {
         map_generate_town2(&g->map, &spawn_x, &spawn_y);
+        place_town_portal(g);
         g->player.x = TOWN_W - 2;
         g->player.y = 12;
     } else {
@@ -1795,6 +1907,7 @@ void game_leave_inn(GameState *g) {
     int spawn_y;
     g->location = LOCATION_TOWN2;
     map_generate_town2(&g->map, &spawn_x, &spawn_y);
+    place_town_portal(g);
     g->player.x = 8;
     g->player.y = 21;
     g->enemy_count = 0;
@@ -1936,6 +2049,7 @@ void game_leave_labyrinth(GameState *g) {
     int spawn_y;
     g->location = LOCATION_TOWN2;
     map_generate_town2(&g->map, &spawn_x, &spawn_y);
+    place_town_portal(g);
     g->player.x = TOWN_LABYRINTH_X;
     g->player.y = TOWN_LABYRINTH_Y + 1;
     g->enemy_count = 0;
@@ -2282,13 +2396,22 @@ void game_return_to_town(GameState *g) {
         cache[g->level - 1].valid = 1;
     }
 
-    g->location = LOCATION_TOWN;
-    int spawn_x, spawn_y;
-    map_generate_town(&g->map, &spawn_x, &spawn_y);
-    map_set_town2_road(&g->map,
-        g->defeated_bosses & (1 << LOCATION_FOREST));
-    place_harbor_road(g);
-    if (returning_from == LOCATION_FOREST) {
+    int spawn_x;
+    int spawn_y;
+    if (returning_from == LOCATION_SWAMP) {
+        g->location = LOCATION_TOWN2;
+        map_generate_town2(&g->map, &spawn_x, &spawn_y);
+    } else {
+        g->location = LOCATION_TOWN;
+        map_generate_town(&g->map, &spawn_x, &spawn_y);
+        map_set_town2_road(&g->map,
+            g->defeated_bosses & (1 << LOCATION_FOREST));
+        place_harbor_road(g);
+    }
+    if (returning_from == LOCATION_SWAMP) {
+        g->player.x = 20;
+        g->player.y = TOWN_H - 2;
+    } else if (returning_from == LOCATION_FOREST) {
         g->player.x = 1; g->player.y = 12;
     } else if (returning_from == LOCATION_MOUNTAINS) {
         g->player.x = TOWN_W - 2; g->player.y = 12;
@@ -2311,7 +2434,8 @@ void game_open_town_portal(GameState *g) {
         g->location != LOCATION_FOREST &&
         g->location != LOCATION_MOUNTAINS &&
         g->location != LOCATION_COAST &&
-        g->location != LOCATION_TEMPLE) {
+        g->location != LOCATION_TEMPLE &&
+        g->location != LOCATION_SWAMP) {
         return;
     }
     game_hide_portal_destination(g);
@@ -2338,6 +2462,8 @@ void game_hide_portal_destination(GameState *g) {
         cache = g->mountain_cache;
     } else if (g->portal_location == LOCATION_COAST) {
         cache = g->coast_cache;
+    } else if (g->portal_location == LOCATION_SWAMP) {
+        cache = g->swamp_cache;
     } else if (g->portal_location == LOCATION_TEMPLE) {
         cache = g->temple_cache;
     }
@@ -2385,6 +2511,8 @@ void game_use_town_portal(GameState *g) {
         cache = g->mountain_cache;
     } else if (g->portal_location == LOCATION_COAST) {
         cache = g->coast_cache;
+    } else if (g->portal_location == LOCATION_SWAMP) {
+        cache = g->swamp_cache;
     } else if (g->portal_location == LOCATION_TEMPLE) {
         cache = g->temple_cache;
     }
@@ -2607,6 +2735,7 @@ void game_talk_to_rowan(GameState *g) {
 static void prepare_quest_expedition(GameState *g, Location location) {
     LevelCache *cache;
     int *max_level;
+    int depth = MAX_REGION_DEPTH;
     if (location == LOCATION_DUNGEON) {
         cache = g->level_cache;
         max_level = &g->max_level_reached;
@@ -2616,11 +2745,15 @@ static void prepare_quest_expedition(GameState *g, Location location) {
     } else if (location == LOCATION_MOUNTAINS) {
         cache = g->mountain_cache;
         max_level = &g->max_mountain_level_reached;
+    } else if (location == LOCATION_SWAMP) {
+        cache = g->swamp_cache;
+        max_level = &g->max_swamp_level_reached;
+        depth = SWAMP_DEPTH;
     } else {
         cache = g->coast_cache;
         max_level = &g->max_coast_level_reached;
     }
-    for (int i = 0; i < MAX_REGION_DEPTH; i++) {
+    for (int i = 0; i < depth; i++) {
         cache[i].valid = 0;
         cache[i].level_cleared = 0;
     }
@@ -2919,6 +3052,64 @@ void game_talk_to_rook(GameState *g) {
     } else {
         push_message(g, "Rook: Thank you for recovering my ivory rook.");
     }
+}
+
+void game_talk_to_innkeeper(GameState *g) {
+    g->dialogue_active = 1;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Bram");
+    g->dialogue_x = 28;
+    g->dialogue_y = 7;
+    if (g->innkeeper_quest_state == 0) {
+        g->innkeeper_quest_state = 1;
+        prepare_quest_expedition(g, LOCATION_SWAMP);
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "My daughter Mira vanished in Blackwater Swamp. A vampire holds her "
+            "on the fourth swamp level. Defeat her captor and bring her home. "
+            "You can retreat and return if the swamp proves too dangerous.");
+        push_message(g, "Assigned: Bring Mira Home.");
+    } else if (g->innkeeper_quest_state == 1) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Mira is in the fourth swamp level. Defeat the vampire holding her, "
+            "then speak to her before returning to the inn.");
+        push_message(g, "Bram is waiting for Mira.");
+    } else if (g->innkeeper_quest_state == 2) {
+        g->innkeeper_quest_state = 3;
+        g->gold += 80;
+        g->score += 600;
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Mira made it home. I cannot thank you enough. Please take this "
+            "reward for bringing my daughter back to me.");
+        push_message(g, "Completed: Bring Mira Home. 80 gold awarded.");
+    } else {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Mira is safe upstairs. There is always a room for you here.");
+        push_message(g, "Bram thanks you for rescuing Mira.");
+    }
+}
+
+void game_rescue_innkeeper_daughter(GameState *g, int x, int y) {
+    if (g->location != LOCATION_SWAMP || g->level != 4 ||
+        g->innkeeper_quest_state != 1 || x < 0 || x >= MAP_W ||
+        y < 0 || y >= MAP_H || g->map.tiles[y][x] != TILE_SWAMP_DAUGHTER) {
+        return;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (g->enemies[i].active &&
+            strcmp(g->enemies[i].name, "Vampire Captor") == 0) {
+            push_message(g, "Mira cannot escape while the vampire lives.");
+            return;
+        }
+    }
+    g->innkeeper_quest_state = 2;
+    g->map.tiles[y][x] = TILE_SWAMP_FLOOR;
+    g->dialogue_active = 1;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Mira");
+    g->dialogue_x = x;
+    g->dialogue_y = y;
+    snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+        "You broke the vampire's hold. I know the way back to the inn. "
+        "Please tell my father I am safe.");
+    push_message(g, "Mira rescued. Return to Bram at the inn.");
 }
 
 void game_light_coast_beacon(GameState *g, int x, int y) {
