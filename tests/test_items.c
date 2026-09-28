@@ -941,9 +941,15 @@ void test_items(void) {
         g.trail[1].y == g.enemies[0].y && g.trail[1].is_impact);
     g.player.known_spells[0] = spell_make_heal();
     g.player.hp = 1;
+    int mp_before_heal_cast = g.player.mp;
     action_resolve_player(&g, cast);
-    ASSERT("magic staff adds spell power to healing",
-        g.player.hp == 51);
+    ASSERT("Heal restores full HP from a large deficit",
+        g.player.hp == g.player.max_hp &&
+        g.player.mp == mp_before_heal_cast - 13);
+    action_resolve_player(&g, cast);
+    ASSERT("Heal at full HP does not spend mana",
+        g.player.hp == g.player.max_hp &&
+        g.player.mp == mp_before_heal_cast - 13);
 
     g.player.known_spells[0] = spell_make_magic_arrow();
     int tome_index = g.inventory_count;
@@ -958,10 +964,13 @@ void test_items(void) {
     Spell upgraded_heal = spell_make_heal();
     spell_upgrade(&upgraded_fireball);
     spell_upgrade(&upgraded_heal);
-    ASSERT("Fireball and Heal upgrades apply their rank-two effects",
+    ASSERT("Fireball upgrade increases damage and Heal upgrade lowers mana cost",
         upgraded_fireball.rank == 2 && upgraded_fireball.damage == 37 &&
         upgraded_fireball.mp_cost == 23 && upgraded_heal.rank == 2 &&
-        upgraded_heal.heal_hp == 60 && upgraded_heal.mp_cost == 17);
+        upgraded_heal.mp_cost == 13);
+    spell_upgrade(&upgraded_heal);
+    ASSERT("Heal III lowers its mana cost again",
+        upgraded_heal.rank == 3 && upgraded_heal.mp_cost == 11);
 
     g.player.known_spells[0] = spell_make_frost_bolt();
     g.player.mp = g.player.max_mp;
@@ -1061,6 +1070,7 @@ void test_items(void) {
     g.player.equipped_spell = 0;
     g.player.last_dx = 1;
     g.player.last_dy = 0;
+    g.player.hp = 1;
     int mp_before_cast = g.player.mp;
     action_resolve_player(&g, cast);
     ASSERT("mage armor reduces spell mana cost",

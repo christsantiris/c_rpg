@@ -324,7 +324,6 @@ int save_game(const GameState *g, int slot) {
         cJSON_AddNumberToObject(s, "type",     sp->type);
         cJSON_AddNumberToObject(s, "mp_cost",  sp->mp_cost);
         cJSON_AddNumberToObject(s, "damage",   sp->damage);
-        cJSON_AddNumberToObject(s, "heal_hp",  sp->heal_hp);
         cJSON_AddNumberToObject(s, "range",    sp->range);
         cJSON_AddNumberToObject(s, "radius",   sp->radius);
         cJSON_AddNumberToObject(s, "rank",     sp->rank);
@@ -656,10 +655,12 @@ int load_game(GameState *g, int slot) {
         sp->type    = cJSON_GetObjectItem(s, "type")->valueint;
         sp->mp_cost = cJSON_GetObjectItem(s, "mp_cost")->valueint;
         sp->damage  = cJSON_GetObjectItem(s, "damage")->valueint;
-        sp->heal_hp = cJSON_GetObjectItem(s, "heal_hp")->valueint;
         sp->range   = cJSON_GetObjectItem(s, "range")->valueint;
         sp->radius  = cJSON_GetObjectItem(s, "radius")->valueint;
         sp->rank    = cJSON_GetObjectItem(s, "rank")->valueint;
+        if (sp->id == SPELL_HEAL) {
+            sp->mp_cost = HEAL_BASE_MP_COST - 2 * (sp->rank - 1);
+        }
     }
 
     // Game state

@@ -179,9 +179,11 @@ static void test_current_weapon_round_trip(void) {
     original.equipped_main_hand = 0;
     original.equipped_off_hand = 9;
     original.equipped_armor = 6;
-    original.player.known_spell_count = 1;
+    original.player.known_spell_count = 2;
     original.player.known_spells[0] = spell_make_magic_arrow();
     spell_upgrade(&original.player.known_spells[0]);
+    original.player.known_spells[1] = spell_make_heal();
+    spell_upgrade(&original.player.known_spells[1]);
     original.enemy_count = 1;
     original.enemies[0].active = 1;
     original.enemies[0].frozen_turns = 2;
@@ -229,6 +231,9 @@ static void test_current_weapon_round_trip(void) {
     ASSERT("spell rank survives save/load",
         loaded.player.known_spells[0].rank == 2 &&
         loaded.player.known_spells[0].damage == 25);
+    ASSERT("Heal rank and reduced mana cost survive save/load",
+        loaded.player.known_spells[1].rank == 2 &&
+        loaded.player.known_spells[1].mp_cost == 13);
     ASSERT("freeze duration survives save/load",
         loaded.enemies[0].frozen_turns == 2);
     ASSERT("crypt keys survive save/load", loaded.dungeon_crypt_keys == 2);
