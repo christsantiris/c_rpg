@@ -224,10 +224,20 @@ void test_swamp(void) {
         swamp_loaded.inventory[sword_slot].class_mask == ITEM_CLASS_ALL &&
         swamp_loaded.inventory[sword_slot].range == 2);
     if (loaded) {
-        game_use_town_portal(&swamp_loaded);
-        ASSERT("Town 2 portal restores swamp level two",
+        game_enter_forest_road(&swamp_loaded);
+        game_leave_forest_road(&swamp_loaded, LOCATION_TOWN);
+        game_enter_forest_road(&swamp_loaded);
+        game_leave_forest_road(&swamp_loaded, LOCATION_TOWN2);
+        ASSERT("Town 2 portal remains visible after traveling to Town 1 and back",
+            swamp_loaded.portal_active &&
+            swamp_loaded.map.tiles[TOWN_H - 3][21] == TILE_PORTAL);
+        swamp_loaded.player.x = 22;
+        swamp_loaded.player.y = TOWN_H - 3;
+        action_resolve_player(&swamp_loaded,
+            (Action){ACTION_MOVE, 21, TOWN_H - 3});
+        ASSERT("walking onto the Town 2 portal restores swamp level two",
             swamp_loaded.location == LOCATION_SWAMP &&
-            swamp_loaded.level == 2);
+            swamp_loaded.level == 2 && !swamp_loaded.portal_active);
     }
     int connected_layouts = 1;
     for (int seed = 0; seed < 25; seed++) {
