@@ -54,7 +54,10 @@
 
 #define LABYRINTH_W 43
 #define LABYRINTH_H 25
+#define LABYRINTH_DEPTH 3
 #define LABYRINTH_SWITCH_COUNT 3
+#define LABYRINTH_FALSE_EXIT_X 38
+#define LABYRINTH_FALSE_EXIT_Y 4
 
 #define ISLAND_W 40
 #define ISLAND_H 25
@@ -211,7 +214,8 @@ typedef enum {
     TILE_LABYRINTH_SWITCH_OFF,
     TILE_LABYRINTH_SWITCH_ON,
     TILE_LABYRINTH_GATE,
-    TILE_LABYRINTH_RELIC
+    TILE_LABYRINTH_RELIC,
+    TILE_LABYRINTH_STAIRS
 } TileType;
 
 typedef struct {
@@ -242,7 +246,7 @@ void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_inn(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_island(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_temple(Map *m, int level, int *spawn_x, int *spawn_y);
-void map_generate_labyrinth(Map *m, int switches, int *spawn_x, int *spawn_y);
+void map_generate_labyrinth(Map *m, int level, int switches, int *spawn_x, int *spawn_y);
 void map_generate_forest(Map *m, int level);
 void map_reveal_forest_exit(Map *m);
 void map_generate_mountains(Map *m, int level);

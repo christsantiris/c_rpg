@@ -292,7 +292,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 54);
+    cJSON_AddNumberToObject(root, "save_version", 55);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -593,6 +593,23 @@ int save_game(const GameState *g, int slot) {
         cJSON_AddItemToArray(temple_cache, entry);
     }
     cJSON_AddItemToObject(root, "temple_cache", temple_cache);
+
+    cJSON *labyrinth_cache = cJSON_CreateArray();
+    for (int i = 0; i < LABYRINTH_DEPTH; i++) {
+        cJSON *entry = cJSON_CreateObject();
+        cJSON_AddNumberToObject(entry, "valid", g->labyrinth_cache[i].valid);
+        cJSON_AddNumberToObject(entry, "level_cleared",
+            g->labyrinth_cache[i].level_cleared);
+        if (g->labyrinth_cache[i].valid) {
+            cJSON_AddItemToObject(entry, "map",
+                serialize_map(&g->labyrinth_cache[i].map));
+            cJSON_AddItemToObject(entry, "enemies",
+                serialize_enemies(g->labyrinth_cache[i].enemies,
+                    g->labyrinth_cache[i].enemy_count));
+        }
+        cJSON_AddItemToArray(labyrinth_cache, entry);
+    }
+    cJSON_AddItemToObject(root, "labyrinth_cache", labyrinth_cache);
 
     char *json = cJSON_Print(root);
     cJSON_Delete(root);
@@ -937,6 +954,30 @@ int load_game(GameState *g, int slot) {
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
                 g->temple_cache[i].enemies,
                 &g->temple_cache[i].enemy_count);
+        }
+    }
+
+    cJSON *labyrinth_cache = cJSON_GetObjectItem(root, "labyrinth_cache");
+    for (int i = 0; i < LABYRINTH_DEPTH; i++) {
+        g->labyrinth_cache[i].valid = 0;
+        g->labyrinth_cache[i].level_cleared = 0;
+        if (!labyrinth_cache) {
+            continue;
+        }
+        cJSON *entry = cJSON_GetArrayItem(labyrinth_cache, i);
+        if (!entry) {
+            continue;
+        }
+        cJSON *valid = cJSON_GetObjectItem(entry, "valid");
+        cJSON *cleared = cJSON_GetObjectItem(entry, "level_cleared");
+        g->labyrinth_cache[i].valid = valid ? valid->valueint : 0;
+        g->labyrinth_cache[i].level_cleared = cleared ? cleared->valueint : 0;
+        if (g->labyrinth_cache[i].valid) {
+            deserialize_map(cJSON_GetObjectItem(entry, "map"),
+                &g->labyrinth_cache[i].map);
+            deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
+                g->labyrinth_cache[i].enemies,
+                &g->labyrinth_cache[i].enemy_count);
         }
     }
 

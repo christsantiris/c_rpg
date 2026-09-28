@@ -144,6 +144,8 @@ Item boss_equipment_reward(EnemyType type) {
             return item_make_goblin_king_shield();
         case ENEMY_DROWNED_QUEEN:
             return item_make_tidecaller_robes();
+        case ENEMY_LABYRINTH_WARDEN:
+            return item_make_magic_shield();
         default:
             return item_make_cryptblade();
     }
@@ -177,6 +179,7 @@ static int enemy_score(EnemyType type) {
         case ENEMY_SIREN: return 80;
         case ENEMY_GIANT_CRAB: return 100;
         case ENEMY_ANIMATED_STATUE: return 145;
+        case ENEMY_LABYRINTH_WARDEN: return 900;
         case ENEMY_WATER_ELEMENTAL: return 135;
         case ENEMY_SEA_SERPENT: return 180;
         case ENEMY_DROWNED_QUEEN: return 1600;
@@ -242,6 +245,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         case ENEMY_SIREN: gold = 8; break;
         case ENEMY_GIANT_CRAB: gold = 7; break;
         case ENEMY_ANIMATED_STATUE: gold = 12; break;
+        case ENEMY_LABYRINTH_WARDEN: gold = 50; break;
         case ENEMY_WATER_ELEMENTAL: gold = 10; break;
         case ENEMY_SEA_SERPENT: gold = 15; break;
         case ENEMY_DROWNED_QUEEN: gold = 75; break;
@@ -330,7 +334,8 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         drop_tile == TILE_MOUNTAIN_CAVE_FLOOR ||
         drop_tile == TILE_MOUNTAIN_FORTRESS_FLOOR ||
         drop_tile == TILE_COAST_FLOOR ||
-        drop_tile == TILE_TEMPLE_FLOOR;
+        drop_tile == TILE_TEMPLE_FLOOR ||
+        drop_tile == TILE_LABYRINTH_FLOOR;
     int occupied = 0;
     for (int i = 0; i < g->floor_item_count; i++) {
         FloorItem *fi = &g->floor_items[i];
@@ -693,8 +698,7 @@ void action_resolve_player(GameState *g, Action a) {
         g->location == LOCATION_TOWN2 ||
         g->location == LOCATION_FOREST_ROAD ||
         g->location == LOCATION_INN ||
-        g->location == LOCATION_ISLAND ||
-        g->location == LOCATION_LABYRINTH) {
+        g->location == LOCATION_ISLAND) {
         g->player.poison_turns = 0;
     }
     if (a.type == ACTION_NONE) {
@@ -1469,7 +1473,7 @@ void action_resolve_player(GameState *g, Action a) {
 
         if (g->location == LOCATION_TOWN2 &&
             g->map.tiles[ty][tx] == TILE_LABYRINTH_ENTRANCE) {
-            if (g->rook_quest_state == 1 || g->rook_quest_state == 2) {
+            if (g->rook_quest_state != 0) {
                 game_enter_labyrinth(g);
             } else {
                 push_message(g, "The old labyrinth gate is sealed.");
@@ -1479,7 +1483,21 @@ void action_resolve_player(GameState *g, Action a) {
 
         if (g->location == LOCATION_LABYRINTH &&
             g->map.tiles[ty][tx] == TILE_LABYRINTH_EXIT) {
-            game_leave_labyrinth(g);
+            if (g->level == 1) {
+                game_leave_labyrinth(g);
+            } else {
+                int false_stair = tx == LABYRINTH_FALSE_EXIT_X &&
+                    ty == LABYRINTH_FALSE_EXIT_Y;
+                game_change_labyrinth_floor(g, 0, false_stair);
+            }
+            return;
+        }
+
+        if (g->location == LOCATION_LABYRINTH &&
+            g->map.tiles[ty][tx] == TILE_LABYRINTH_STAIRS) {
+            int false_stair = tx != g->map.stairs_down_x ||
+                ty != g->map.stairs_down_y;
+            game_change_labyrinth_floor(g, 1, false_stair);
             return;
         }
 
@@ -1971,7 +1989,8 @@ static int enemy_prefers_flank(const Enemy *e) {
         e->type == ENEMY_TEMPLE_STALKER;
 }
 
-static int clear_orthogonal_path(const GameState *g, const Enemy *e);
+static int enemy_blocks_line_of_sight(const GameState *g, int shooter_index, int x, int y);
+static int clear_orthogonal_path(const GameState *g, int shooter_index, const Enemy *e);
 
 static int enemy_move_toward(GameState *g, int index) {
     Enemy *e = &g->enemies[index];
@@ -1999,7 +2018,7 @@ static int enemy_move_toward(GameState *g, int index) {
         candidate.x = tx;
         candidate.y = ty;
         int has_firing_lane = enemy_prefers_range(e) &&
-            clear_orthogonal_path(g, &candidate);
+            clear_orthogonal_path(g, index, &candidate);
         if (distance >= 0 &&
             (distance < best_distance ||
             (distance == best_distance &&
@@ -2103,18 +2122,25 @@ static int enemy_move_to_flank(GameState *g, int index) {
     return 0;
 }
 
-static int clear_orthogonal_path(const GameState *g, const Enemy *e) {
+static int clear_orthogonal_path(const GameState *g, int shooter_index, const Enemy *e) {
     int dx = g->player.x - e->x;
     int dy = g->player.y - e->y;
-    if (dx != 0 && dy != 0) return 0;
+    if (dx != 0 && dy != 0) {
+        return 0;
+    }
     int distance = abs_int(dx) + abs_int(dy);
-    if (distance < 2 || distance > 6) return 0;
+    if (distance < 2 || distance > 6) {
+        return 0;
+    }
     int sx = (dx > 0) ? 1 : (dx < 0) ? -1 : 0;
     int sy = (dy > 0) ? 1 : (dy < 0) ? -1 : 0;
     for (int step = 1; step < distance; step++) {
         int x = e->x + sx * step;
         int y = e->y + sy * step;
-        if (!map_is_walkable(&g->map, x, y)) return 0;
+        if (!map_is_walkable(&g->map, x, y) ||
+            enemy_blocks_line_of_sight(g, shooter_index, x, y)) {
+            return 0;
+        }
     }
     return 1;
 }
@@ -2172,7 +2198,20 @@ static int forest_necromancer_raise(GameState *g, int caster_index) {
     return 0;
 }
 
-static int clear_projectile_path(const GameState *g, const Enemy *e) {
+static int enemy_blocks_line_of_sight(const GameState *g, int shooter_index, int x, int y) {
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *other = &g->enemies[i];
+        if (i == shooter_index || !other->active) {
+            continue;
+        }
+        if (other->x == x && other->y == y) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int clear_projectile_path(const GameState *g, int shooter_index, const Enemy *e) {
     int x = e->x;
     int y = e->y;
     int dx = abs_int(g->player.x - x);
@@ -2194,9 +2233,10 @@ static int clear_projectile_path(const GameState *g, const Enemy *e) {
             y += step_y;
         }
         if (x == g->player.x && y == g->player.y) {
-            return 1;
+            break;
         }
-        if (!map_is_walkable(&g->map, x, y)) {
+        if (!map_is_walkable(&g->map, x, y) ||
+            enemy_blocks_line_of_sight(g, shooter_index, x, y)) {
             return 0;
         }
         if (x != old_x && y != old_y &&
@@ -2208,8 +2248,8 @@ static int clear_projectile_path(const GameState *g, const Enemy *e) {
     return 1;
 }
 
-static int apply_enemy_ranged_damage(GameState *g, const Enemy *e, int damage, EnemyProjectiles *shots) {
-    if (!clear_projectile_path(g, e)) {
+static int apply_enemy_ranged_damage(GameState *g, int shooter_index, const Enemy *e, int damage, EnemyProjectiles *shots) {
+    if (!clear_projectile_path(g, shooter_index, e)) {
         return 0;
     }
     if (shots && shots->count < MAX_ENEMIES) {
@@ -2379,7 +2419,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             if (e->move_timer % 2 == 0) {
                 int dmg = e->attack - g->player.defense / 2;
                 if (dmg < 4) dmg = 4;
-                dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
+                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
                 if (dmg == 0) {
                     continue;
                 }
@@ -2398,7 +2438,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             if (e->move_timer % 2 == 0) {
                 int dmg = e->attack - g->player.defense / 2;
                 if (dmg < 3) dmg = 3;
-                dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
+                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
                 if (dmg == 0) {
                     continue;
                 }
@@ -2415,7 +2455,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             if (e->move_timer % 2 == 0) {
                 int dmg = e->attack - g->player.defense / 2;
                 if (dmg < 4) dmg = 4;
-                dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
+                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
                 if (dmg == 0) {
                     continue;
                 }
@@ -2432,7 +2472,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 if (dmg < 5) {
                     dmg = 5;
                 }
-                dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
+                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
                 if (dmg == 0) {
                     continue;
                 }
@@ -2452,7 +2492,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 if (dmg < 6) {
                     dmg = 6;
                 }
-                dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
+                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
                 if (dmg > 0) {
                     char msg[MAX_MESSAGE_LEN];
                     snprintf(msg, sizeof(msg), "Guardian sunburst: %d dmg", dmg);
@@ -2491,12 +2531,12 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             e->type == ENEMY_SUN_PRIEST ||
             e->type == ENEMY_SERPENT_SPIRIT ||
             e->type == ENEMY_MOONBOUND_SENTINEL) &&
-            e->move_timer % 2 == 0 && clear_orthogonal_path(g, e)) {
+            e->move_timer % 2 == 0 && clear_orthogonal_path(g, i, e)) {
             int dmg = e->attack - g->player.defense / 2;
             if (dmg < 2) {
                 dmg = 2;
             }
-            dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
+            dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
             if (dmg > 0) {
                 if (e->type == ENEMY_BLOWDART_HUNTER) {
                     g->player.poison_turns = 3;
@@ -2511,12 +2551,12 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
 
         if ((e->type == ENEMY_SIREN ||
             e->type == ENEMY_WATER_ELEMENTAL) &&
-            e->move_timer % 2 == 0 && clear_orthogonal_path(g, e)) {
+            e->move_timer % 2 == 0 && clear_orthogonal_path(g, i, e)) {
             int dmg = e->attack - g->player.defense / 2;
             if (dmg < 1) {
                 dmg = 1;
             }
-            dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
+            dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
             if (dmg == 0) {
                 continue;
             }
@@ -2529,10 +2569,10 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
 
         if ((e->type == ENEMY_GOBLIN_ARCHER ||
             e->type == ENEMY_GOBLIN_BOMBER) &&
-            e->move_timer % 2 == 0 && clear_orthogonal_path(g, e)) {
+            e->move_timer % 2 == 0 && clear_orthogonal_path(g, i, e)) {
             int dmg = e->attack - g->player.defense / 2;
             if (dmg < 1) dmg = 1;
-            dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
+            dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
             if (dmg == 0) {
                 continue;
             }
@@ -2561,10 +2601,10 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         }
 
         if (e->type == ENEMY_DARK_ELF && e->move_timer % 2 == 0 &&
-            clear_orthogonal_path(g, e)) {
+            clear_orthogonal_path(g, i, e)) {
             int dmg = e->attack - g->player.defense / 2;
             if (dmg < 1) dmg = 1;
-            dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
+            dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
             if (dmg == 0) {
                 continue;
             }
@@ -2576,10 +2616,10 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
 
         if (e->type == ENEMY_CRYPT_CONJURER) {
             if (e->move_timer % 4 == 0 && necromancer_revive(g, i)) continue;
-            if (e->move_timer % 2 == 0 && clear_orthogonal_path(g, e)) {
+            if (e->move_timer % 2 == 0 && clear_orthogonal_path(g, i, e)) {
                 int dmg = e->attack - g->player.defense / 2;
                 if (dmg < 1) dmg = 1;
-                dmg = apply_enemy_ranged_damage(g, e, dmg, shots);
+                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
                 if (dmg == 0) {
                     continue;
                 }
@@ -2594,7 +2634,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
 
-        if (enemy_prefers_range(e) && clear_orthogonal_path(g, e)) {
+        if (enemy_prefers_range(e) && clear_orthogonal_path(g, i, e)) {
             continue;
         }
 

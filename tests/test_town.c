@@ -5,6 +5,51 @@
 #include "../src/screens/harbor.h"
 #include "../src/systems/save_load.h"
 
+static void step_into_labyrinth_tile(GameState *g, int x, int y) {
+    static const int dx[4] = {0, 1, 0, -1};
+    static const int dy[4] = {-1, 0, 1, 0};
+    for (int side = 0; side < 4; side++) {
+        int px = x + dx[side];
+        int py = y + dy[side];
+        if (map_is_walkable(&g->map, px, py) &&
+            g->map.tiles[py][px] == TILE_LABYRINTH_FLOOR) {
+            g->player.x = px;
+            g->player.y = py;
+            action_resolve_player(g, (Action){ACTION_MOVE, x, y});
+            return;
+        }
+    }
+}
+
+static void find_labyrinth_tile(const Map *m, TileType tile, int *x, int *y) {
+    *x = -1;
+    *y = -1;
+    for (int row = 0; row < LABYRINTH_H; row++) {
+        for (int col = 0; col < LABYRINTH_W; col++) {
+            if (m->tiles[row][col] == tile) {
+                *x = col;
+                *y = row;
+                return;
+            }
+        }
+    }
+}
+
+static void find_false_labyrinth_stair(const Map *m, int *x, int *y) {
+    *x = -1;
+    *y = -1;
+    for (int row = 0; row < LABYRINTH_H; row++) {
+        for (int col = 0; col < LABYRINTH_W; col++) {
+            if (m->tiles[row][col] == TILE_LABYRINTH_STAIRS &&
+                (col != m->stairs_down_x || row != m->stairs_down_y)) {
+                *x = col;
+                *y = row;
+                return;
+            }
+        }
+    }
+}
+
 void test_town_healer(void) {
     printf("Town potion sellers tests:\n");
     static GameState g;
@@ -136,61 +181,123 @@ void test_rook_labyrinth(void) {
         g.player.y == TOWN_LABYRINTH_Y + 1);
     action_resolve_player(&g, (Action){ACTION_MOVE,
         TOWN_LABYRINTH_X, TOWN_LABYRINTH_Y});
-    ASSERT("walking through the open town entrance enters the labyrinth",
-        g.location == LOCATION_LABYRINTH && g.enemy_count == 0 &&
-        g.floor_item_count == 0);
+    ASSERT("labyrinth entrance starts a three-level combat expedition",
+        g.location == LOCATION_LABYRINTH && g.level == 1 &&
+        g.enemy_count >= 4 && g.floor_item_count == 0);
 
     int switches = 0;
-    int gates = 0;
-    int traps = 0;
+    int stairs = 0;
     for (int y = 0; y < LABYRINTH_H; y++) {
         for (int x = 0; x < LABYRINTH_W; x++) {
             TileType tile = g.map.tiles[y][x];
-            if (tile == TILE_LABYRINTH_SWITCH_OFF) {
-                switches++;
-            }
-            if (tile == TILE_LABYRINTH_GATE) {
-                gates++;
-            }
-            if (tile == TILE_TRAP_HIDDEN || tile == TILE_TRAP_REVEALED ||
-                tile == TILE_TRAP_SPIKE || tile == TILE_TRAP_FIRE ||
-                tile == TILE_TRAP_POISON) {
-                traps++;
-            }
+            switches += tile == TILE_LABYRINTH_SWITCH_OFF;
+            stairs += tile == TILE_LABYRINTH_STAIRS;
         }
     }
-    ASSERT("the labyrinth is a safe puzzle with three runes and one vault",
-        switches == LABYRINTH_SWITCH_COUNT && gates == 1 && traps == 0);
-
-    for (int y = 0; y < LABYRINTH_H; y++) {
-        for (int x = 0; x < LABYRINTH_W; x++) {
-            if (g.map.tiles[y][x] == TILE_LABYRINTH_SWITCH_OFF) {
-                g.player.x = x;
-                g.player.y = y;
-                game_interact_labyrinth(&g);
-            }
-        }
-    }
-    gates = 0;
-    for (int y = 0; y < LABYRINTH_H; y++) {
-        for (int x = 0; x < LABYRINTH_W; x++) {
-            gates += g.map.tiles[y][x] == TILE_LABYRINTH_GATE;
-            if (g.map.tiles[y][x] == TILE_LABYRINTH_RELIC) {
-                g.player.x = x;
-                g.player.y = y;
-            }
-        }
-    }
-    ASSERT("lighting all three runes opens the relic vault",
-        g.rook_labyrinth_switches == LABYRINTH_SWITCH_COUNT && gates == 0);
+    ASSERT("first floor has one rune and two indistinguishable descents",
+        switches == 1 && stairs == 2);
+    int rune_x;
+    int rune_y;
+    find_labyrinth_tile(&g.map, TILE_LABYRINTH_SWITCH_OFF,
+        &rune_x, &rune_y);
+    g.player.x = rune_x;
+    g.player.y = rune_y;
     game_interact_labyrinth(&g);
-    ASSERT("the player can recover Rook's ivory rook without combat",
+    ASSERT("first rune remains active during the expedition",
+        g.rook_labyrinth_switches == 1);
+
+    int false_x;
+    int false_y;
+    find_false_labyrinth_stair(&g.map, &false_x, &false_y);
+    g.enemies[0].active = 0;
+    step_into_labyrinth_tile(&g, false_x, false_y);
+    ASSERT("false descent reaches an isolated corridor on floor two",
+        g.level == 2 && g.player.x == LABYRINTH_FALSE_EXIT_X + 1 &&
+        g.player.y == LABYRINTH_FALSE_EXIT_Y &&
+        g.map.tiles[LABYRINTH_FALSE_EXIT_Y][LABYRINTH_FALSE_EXIT_X] ==
+            TILE_LABYRINTH_EXIT &&
+        g.map.tiles[LABYRINTH_FALSE_EXIT_Y][LABYRINTH_FALSE_EXIT_X + 2] ==
+            TILE_TRAP_REVEALED);
+    action_resolve_player(&g, (Action){ACTION_MOVE,
+        LABYRINTH_FALSE_EXIT_X, LABYRINTH_FALSE_EXIT_Y});
+    ASSERT("false corridor returns to its original stair and keeps enemy state",
+        g.level == 1 && g.player.x == false_x &&
+        g.player.y == false_y && !g.enemies[0].active);
+
+    step_into_labyrinth_tile(&g, g.map.stairs_down_x, g.map.stairs_down_y);
+    ASSERT("main stair reaches the second floor without clearing enemies",
+        g.level == 2 && g.player.x == 2 && g.enemy_count >= 5);
+    ASSERT("labyrinth floor test save slot is unused", !save_exists(99015));
+    int mid_saved = save_game(&g, 99015);
+    int mid_loaded = mid_saved && load_game(&loaded, 99015);
+    ASSERT("labyrinth floor, enemies, and prior floor cache survive save/load",
+        mid_loaded && loaded.location == LOCATION_LABYRINTH &&
+        loaded.level == 2 && loaded.enemy_count == g.enemy_count &&
+        loaded.labyrinth_cache[0].valid &&
+        !loaded.labyrinth_cache[0].enemies[0].active &&
+        loaded.rook_labyrinth_switches == 1);
+    remove("saves/savegame_99015.json");
+    find_labyrinth_tile(&g.map, TILE_LABYRINTH_SWITCH_OFF,
+        &rune_x, &rune_y);
+    g.player.x = rune_x;
+    g.player.y = rune_y;
+    game_interact_labyrinth(&g);
+    ASSERT("second floor records its own rune", g.rook_labyrinth_switches == 3);
+
+    find_false_labyrinth_stair(&g.map, &false_x, &false_y);
+    step_into_labyrinth_tile(&g, false_x, false_y);
+    ASSERT("second false descent reaches a dead end on floor three",
+        g.level == 3 && g.player.x == LABYRINTH_FALSE_EXIT_X + 1 &&
+        g.player.y == LABYRINTH_FALSE_EXIT_Y);
+    action_resolve_player(&g, (Action){ACTION_MOVE,
+        LABYRINTH_FALSE_EXIT_X, LABYRINTH_FALSE_EXIT_Y});
+    ASSERT("third-floor dead end returns to floor two", g.level == 2);
+
+    step_into_labyrinth_tile(&g, g.map.stairs_down_x, g.map.stairs_down_y);
+    ASSERT("deepest floor has a guarded relic vault",
+        g.level == LABYRINTH_DEPTH && g.enemy_count >= 7 &&
+        g.map.tiles[g.map.stairs_up_y][35] == TILE_LABYRINTH_GATE);
+    find_labyrinth_tile(&g.map, TILE_LABYRINTH_SWITCH_OFF,
+        &rune_x, &rune_y);
+    g.player.x = rune_x;
+    g.player.y = rune_y;
+    game_interact_labyrinth(&g);
+    ASSERT("all three runes open the final vault",
+        g.rook_labyrinth_switches == 7 &&
+        g.map.tiles[g.map.stairs_up_y][35] == TILE_LABYRINTH_FLOOR);
+    g.player.x = 40;
+    g.player.y = g.map.stairs_up_y;
+    game_interact_labyrinth(&g);
+    ASSERT("Maze Warden must fall before taking Rook's relic",
+        g.rook_quest_state == 1);
+    int boss_index = -1;
+    for (int i = 0; i < g.enemy_count; i++) {
+        if (g.enemies[i].is_boss) {
+            boss_index = i;
+        }
+    }
+    ASSERT("Maze Warden spawns as the labyrinth boss", boss_index >= 0);
+    if (boss_index >= 0) {
+        g.enemies[boss_index].hp = 1;
+        g.player.x = 38;
+        g.player.y = g.map.stairs_up_y;
+        action_resolve_player(&g, (Action){ACTION_MOVE, 39,
+            g.map.stairs_up_y});
+    }
+    ASSERT("defeating the Warden leaves normal boss drops",
+        g.defeated_bosses & (1 << LOCATION_LABYRINTH) &&
+        g.floor_item_count >= 2);
+    g.player.x = 40;
+    g.player.y = g.map.stairs_up_y;
+    game_interact_labyrinth(&g);
+    ASSERT("the player recovers Rook's ivory rook after the fight",
         g.rook_quest_state == 2);
 
-    g.player.x = 2;
-    g.player.y = LABYRINTH_H - 3;
-    action_resolve_player(&g, (Action){ACTION_MOVE, 1,
-        LABYRINTH_H - 3});
+    step_into_labyrinth_tile(&g, 1, g.map.stairs_up_y);
+    ASSERT("third-floor exit returns to the second floor", g.level == 2);
+    step_into_labyrinth_tile(&g, 1, g.map.stairs_up_y);
+    ASSERT("second-floor exit returns to the first floor", g.level == 1);
+    step_into_labyrinth_tile(&g, 1, g.map.stairs_up_y);
     ASSERT("the labyrinth exit returns beside its town entrance",
         g.location == LOCATION_TOWN2 &&
         g.player.x == TOWN_LABYRINTH_X &&
@@ -214,7 +321,7 @@ void test_rook_labyrinth(void) {
     int restored = saved && load_game(&loaded, slot);
     ASSERT("Rook quest progress and the relocated town entrance survive save and load",
         restored && loaded.rook_quest_state == 3 &&
-        loaded.rook_labyrinth_switches == LABYRINTH_SWITCH_COUNT &&
+        loaded.rook_labyrinth_switches == 7 &&
         loaded.rook_quest_completions == 1 && loaded.location == LOCATION_TOWN2 &&
         loaded.map.tiles[TOWN_LABYRINTH_Y][TOWN_LABYRINTH_X] ==
             TILE_LABYRINTH_ENTRANCE &&

@@ -2400,6 +2400,7 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_SIREN:
         case ENEMY_GIANT_CRAB:
         case ENEMY_ANIMATED_STATUE:
+        case ENEMY_LABYRINTH_WARDEN:
         case ENEMY_WATER_ELEMENTAL:
         case ENEMY_SEA_SERPENT:
         case ENEMY_DROWNED_QUEEN:
@@ -4062,6 +4063,17 @@ void draw_labyrinth_exit(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 1, y + 3, 8, 18, (SDL_Color){95, 101, 82, 255});
     fill_rect(r, x + 9, y + 6, 12, 15, (SDL_Color){14, 18, 16, 255});
     fill_rect(r, x + 11, y + 9, 8, 3, (SDL_Color){208, 170, 62, 255});
+}
+
+void draw_labyrinth_stairs(Renderer *r, int tile_x, int tile_y) {
+    draw_labyrinth_floor(r, tile_x, tile_y, tile_x, tile_y);
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    fill_rect(r, x + 3, y + 3, 18, 18, (SDL_Color){17, 24, 21, 255});
+    for (int step = 0; step < 4; step++) {
+        fill_rect(r, x + 4 + step, y + 5 + step * 4,
+            16 - step * 2, 2, (SDL_Color){160, 150, 106, 255});
+    }
 }
 
 void draw_labyrinth_switch(Renderer *r, int tile_x, int tile_y, int active) {

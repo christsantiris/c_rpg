@@ -529,6 +529,9 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         draw_town_path(r, screen_x, screen_y);
     } else if (underlay == TILE_TAVERN_FLOOR) {
         draw_tavern_floor(r, screen_x, screen_y);
+    } else if (underlay == TILE_LABYRINTH_FLOOR ||
+        g->location == LOCATION_LABYRINTH) {
+        draw_labyrinth_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_ISLAND_WATER ||
         underlay == TILE_ISLAND_DOCK) {
         draw_island_water(r, screen_x, screen_y, map_x, map_y);
@@ -583,6 +586,8 @@ static void draw_trap_underlay(Renderer *r, const GameState *g, int map_x, int m
         draw_mountain_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_DUNGEON) {
         draw_dungeon_floor(r, screen_x, screen_y, map_x, map_y);
+    } else if (g->location == LOCATION_LABYRINTH) {
+        draw_labyrinth_floor(r, screen_x, screen_y, map_x, map_y);
     } else {
         draw_floor(r, screen_x, screen_y);
     }
@@ -883,6 +888,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_labyrinth_wall(r, sx, sy, x, y); break;
                 case TILE_LABYRINTH_EXIT:
                     draw_labyrinth_exit(r, sx, sy); break;
+                case TILE_LABYRINTH_STAIRS:
+                    draw_labyrinth_stairs(r, sx, sy); break;
                 case TILE_LABYRINTH_SWITCH_OFF:
                     draw_labyrinth_switch(r, sx, sy, 0); break;
                 case TILE_LABYRINTH_SWITCH_ON:

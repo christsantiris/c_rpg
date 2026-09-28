@@ -196,6 +196,12 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             e->max_hp = 58; e->hp = 58; e->attack = 14; e->defense = 8;
             e->experience = 56;
             break;
+        case ENEMY_LABYRINTH_WARDEN:
+            strncpy(e->name, "Maze Warden", 15);
+            e->max_hp = 120; e->hp = 120; e->attack = 18; e->defense = 7;
+            e->experience = 250;
+            e->is_boss = 1;
+            break;
         case ENEMY_WATER_ELEMENTAL:
             strncpy(e->name, "Water Elemental", 15);
             e->max_hp = 34; e->hp = 34; e->attack = 13; e->defense = 3;
@@ -886,6 +892,9 @@ void game_init(GameState *g) {
     g->cain_scroll_given = 0;
     for (int i = 0; i < TEMPLE_DEPTH; i++) {
         g->temple_cache[i].valid = 0;
+    }
+    for (int i = 0; i < LABYRINTH_DEPTH; i++) {
+        g->labyrinth_cache[i].valid = 0;
     }
     g->temple_alignment = 0;
     g->temple_sentinels_awakened = 0;
@@ -1633,6 +1642,7 @@ static void assign_rook_quest(GameState *g) {
     g->rook_labyrinth_switches = 0;
     push_message(g, "Rook: Recover my stolen ivory rook from the labyrinth.");
     push_message(g, "The labyrinth across from the witch's hut is now open.");
+    push_message(g, "Rook: Beware the false stairs and the Warden below.");
 }
 
 static void place_harbor_road(GameState *g) {
@@ -1794,25 +1804,127 @@ void game_leave_inn(GameState *g) {
     push_message(g, "You step out of the inn.");
 }
 
-void game_enter_labyrinth(GameState *g) {
+static void spawn_labyrinth_enemies(GameState *g) {
+    int positions_x[400];
+    int positions_y[400];
+    int position_count = 0;
+    for (int y = 2; y < LABYRINTH_H - 2; y++) {
+        for (int x = 2; x < LABYRINTH_W - 2; x++) {
+            if (g->map.tiles[y][x] != TILE_LABYRINTH_FLOOR || x >= 33 ||
+                abs(x - g->map.stairs_up_x) +
+                    abs(y - g->map.stairs_up_y) < 6) {
+                continue;
+            }
+            positions_x[position_count] = x;
+            positions_y[position_count] = y;
+            position_count++;
+        }
+    }
+    int target = 3 + g->level;
+    for (int i = 0; i < target && position_count > 0; i++) {
+        int position = (i + 1) * position_count / (target + 1);
+        EnemyType type = g->level == 1 ?
+            (i % 2 == 0 ? ENEMY_SKELETON : ENEMY_GIANT_SPIDER) :
+            (i % 2 == 0 ? ENEMY_ANIMATED_STATUE : ENEMY_GIANT_SPIDER);
+        spawn_enemy(g, &g->enemies[g->enemy_count], type,
+            positions_x[position], positions_y[position]);
+        g->enemy_count++;
+    }
+    if (g->level == LABYRINTH_DEPTH &&
+        !(g->defeated_bosses & (1 << LOCATION_LABYRINTH))) {
+        spawn_enemy(g, &g->enemies[g->enemy_count], ENEMY_LABYRINTH_WARDEN,
+            39, g->map.stairs_up_y);
+        g->enemy_count++;
+    }
+}
+
+static void save_labyrinth_floor(GameState *g) {
+    LevelCache *cache = &g->labyrinth_cache[g->level - 1];
+    cache->map = g->map;
+    cache->enemy_count = g->enemy_count;
+    cache->level_cleared = g->level_cleared;
+    for (int i = 0; i < g->enemy_count; i++) {
+        cache->enemies[i] = g->enemies[i];
+    }
+    cache->valid = 1;
+}
+
+static void load_labyrinth_floor(GameState *g) {
     int spawn_x;
     int spawn_y;
-    g->location = LOCATION_LABYRINTH;
-    g->level = 1;
-    map_generate_labyrinth(&g->map, g->rook_labyrinth_switches,
-        &spawn_x, &spawn_y);
-    if (g->rook_quest_state == 2) {
+    LevelCache *cache = &g->labyrinth_cache[g->level - 1];
+    if (cache->valid) {
+        g->map = cache->map;
+        g->enemy_count = cache->enemy_count;
+        g->level_cleared = cache->level_cleared;
+        for (int i = 0; i < g->enemy_count; i++) {
+            g->enemies[i] = cache->enemies[i];
+        }
+    } else {
+        map_generate_labyrinth(&g->map, g->level, g->rook_labyrinth_switches,
+            &spawn_x, &spawn_y);
+        g->enemy_count = 0;
+        g->level_cleared = 0;
+        spawn_labyrinth_enemies(g);
+    }
+    if (g->level == LABYRINTH_DEPTH && g->rook_quest_state >= 2) {
         g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] =
             TILE_LABYRINTH_FLOOR;
     }
-    g->player.x = spawn_x;
-    g->player.y = spawn_y;
-    g->enemy_count = 0;
+    if (g->level == LABYRINTH_DEPTH &&
+        g->rook_labyrinth_switches == (1 << LABYRINTH_SWITCH_COUNT) - 1) {
+        g->map.tiles[g->map.stairs_up_y][35] = TILE_LABYRINTH_FLOOR;
+    }
     g->floor_item_count = 0;
+}
+
+void game_enter_labyrinth(GameState *g) {
+    g->location = LOCATION_LABYRINTH;
+    g->level = 1;
+    for (int i = 0; i < LABYRINTH_DEPTH; i++) {
+        g->labyrinth_cache[i].valid = 0;
+    }
+    load_labyrinth_floor(g);
+    g->player.x = 2;
+    g->player.y = g->map.stairs_up_y;
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
-    push_message(g, "You enter Rook's silent labyrinth.");
-    push_message(g, "Activate three runes to open the relic vault.");
+    push_message(g, "You enter Rook's labyrinth.");
+    push_message(g, "Three runes open the deepest vault.");
+}
+
+void game_change_labyrinth_floor(GameState *g, int descending, int false_stair) {
+    save_labyrinth_floor(g);
+    g->level += descending ? 1 : -1;
+    load_labyrinth_floor(g);
+    if (descending) {
+        g->player.x = false_stair ? LABYRINTH_FALSE_EXIT_X + 1 : 2;
+        g->player.y = false_stair ? LABYRINTH_FALSE_EXIT_Y :
+            g->map.stairs_up_y;
+    } else {
+        g->player.x = g->map.stairs_down_x;
+        g->player.y = g->map.stairs_down_y;
+        if (false_stair) {
+            for (int y = 0; y < LABYRINTH_H; y++) {
+                for (int x = 0; x < LABYRINTH_W; x++) {
+                    if (g->map.tiles[y][x] == TILE_LABYRINTH_STAIRS &&
+                        (x != g->map.stairs_down_x ||
+                        y != g->map.stairs_down_y)) {
+                        g->player.x = x;
+                        g->player.y = y;
+                    }
+                }
+            }
+        }
+    }
+    g->dialogue_active = 0;
+    if (false_stair && descending) {
+        push_message(g, "The stairs end in a blind corridor.");
+    } else if (false_stair) {
+        push_message(g, "You return to the maze above.");
+    } else {
+        push_message(g, "You reach another level of the labyrinth.");
+    }
 }
 
 void game_leave_labyrinth(GameState *g) {
@@ -1872,8 +1984,12 @@ int game_interact_labyrinth(GameState *g) {
         }
         if (tile == TILE_LABYRINTH_SWITCH_OFF) {
             g->map.tiles[y][x] = TILE_LABYRINTH_SWITCH_ON;
-            g->rook_labyrinth_switches++;
-            if (g->rook_labyrinth_switches >= LABYRINTH_SWITCH_COUNT) {
+            g->rook_labyrinth_switches |= 1 << (g->level - 1);
+            int lit = 0;
+            for (int floor = 0; floor < LABYRINTH_DEPTH; floor++) {
+                lit += (g->rook_labyrinth_switches >> floor) & 1;
+            }
+            if (lit == LABYRINTH_SWITCH_COUNT) {
                 for (int map_y = 0; map_y < MAP_H; map_y++) {
                     for (int map_x = 0; map_x < MAP_W; map_x++) {
                         if (g->map.tiles[map_y][map_x] ==
@@ -1883,12 +1999,17 @@ int game_interact_labyrinth(GameState *g) {
                         }
                     }
                 }
+                if (g->labyrinth_cache[LABYRINTH_DEPTH - 1].valid) {
+                    g->labyrinth_cache[LABYRINTH_DEPTH - 1].map.tiles[
+                        g->labyrinth_cache[LABYRINTH_DEPTH - 1].map.stairs_up_y][35] =
+                        TILE_LABYRINTH_FLOOR;
+                }
                 push_message(g, "The third rune opens the relic vault!");
             } else {
                 char message[MAX_MESSAGE_LEN];
                 snprintf(message, sizeof(message),
                     "Labyrinth rune lit: %d of %d.",
-                    g->rook_labyrinth_switches, LABYRINTH_SWITCH_COUNT);
+                    lit, LABYRINTH_SWITCH_COUNT);
                 push_message(g, message);
             }
             return 1;
@@ -1897,6 +2018,12 @@ int game_interact_labyrinth(GameState *g) {
             if (g->rook_quest_state != 1) {
                 push_message(g, "The empty pedestal holds nothing for you.");
                 return 1;
+            }
+            for (int enemy = 0; enemy < g->enemy_count; enemy++) {
+                if (g->enemies[enemy].active && g->enemies[enemy].is_boss) {
+                    push_message(g, "The Maze Warden guards the ivory rook.");
+                    return 1;
+                }
             }
             g->rook_quest_state = 2;
             g->map.tiles[y][x] = TILE_LABYRINTH_FLOOR;
@@ -2778,7 +2905,7 @@ void game_talk_to_rook(GameState *g) {
     if (g->rook_quest_state == 0) {
         assign_rook_quest(g);
     } else if (g->rook_quest_state == 1) {
-        push_message(g, "Rook: The ivory rook is somewhere beyond the three runes.");
+        push_message(g, "Rook: One rune per floor opens the Warden's vault.");
     } else if (g->rook_quest_state == 2) {
         g->gold += ROOK_QUEST_REWARD;
         g->score += 500;

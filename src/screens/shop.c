@@ -1,4 +1,5 @@
 #include "shop.h"
+#include "../game/game.h"
 #include <SDL2/SDL.h>
 
 int shop_buy_price(const Item *item) {
@@ -28,6 +29,7 @@ int shop_accepts_item(ShopType type, const Item *item) {
 }
 
 static int defeated_boss_count(int defeated_bosses) {
+    defeated_bosses &= ~(1 << LOCATION_LABYRINTH);
     int count = 0;
     while (defeated_bosses) {
         count += defeated_bosses & 1;
