@@ -11,6 +11,7 @@ typedef struct {
     SDL_Texture *blacksmith_texture;
     SDL_Texture *alchemist_texture;
     SDL_Texture *tavern_texture;
+    SDL_Texture *inn_texture;
     SDL_Texture *harbor_texture;
     SDL_Texture *healer_texture;
     SDL_Texture *witch_texture;

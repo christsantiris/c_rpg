@@ -4152,6 +4152,18 @@ void draw_tavern(Renderer *r, int tile_x, int tile_y) {
     SDL_RenderCopy(r->sdl, r->tavern_texture, NULL, &destination);
 }
 
+void draw_inn(Renderer *r, int tile_x, int tile_y) {
+    if (!r->inn_texture) {
+        draw_tavern(r, tile_x, tile_y);
+        return;
+    }
+    SDL_Rect destination = {
+        tile_x * TILE_SIZE, tile_y * TILE_SIZE,
+        7 * TILE_SIZE, 5 * TILE_SIZE
+    };
+    SDL_RenderCopy(r->sdl, r->inn_texture, NULL, &destination);
+}
+
 void draw_harbor(Renderer *r, int tile_x, int tile_y) {
     if (!r->harbor_texture) {
         return;
