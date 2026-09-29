@@ -25,6 +25,11 @@ int shop_accepts_item(ShopType type, const Item *item) {
     if (type == SHOP_TYPE_WITCH) {
         return item->type == ITEM_POTION_MANA;
     }
+    if (type == SHOP_TYPE_APOTHECARY) {
+        return item->type == ITEM_POTION_HEALTH || item->type == ITEM_POTION_MANA ||
+            item->type == ITEM_POTION_STRENGTH ||
+            item->type == ITEM_POTION_INTELLIGENCE;
+    }
     return 0;
 }
 
@@ -49,6 +54,11 @@ void shop_init(ShopScreen *s, ShopType type, int defeated_bosses) {
         s->items[s->item_count++] = item_make_health_potion();
     } else if (type == SHOP_TYPE_WITCH) {
         s->items[s->item_count++] = item_make_mana_potion();
+    } else if (type == SHOP_TYPE_APOTHECARY) {
+        s->items[s->item_count++] = item_make_health_potion();
+        s->items[s->item_count++] = item_make_mana_potion();
+        s->items[s->item_count++] = item_make_strength_potion();
+        s->items[s->item_count++] = item_make_intelligence_potion();
     }
 
     if (type == SHOP_TYPE_ALCHEMIST) {

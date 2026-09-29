@@ -29,6 +29,12 @@ sprites:
 	python3 tools/sprites/tavern.py
 	python3 tools/sprites/inn.py
 	python3 tools/sprites/blacksmith.py
+	python3 tools/sprites/alchemist.py
+	python3 tools/sprites/harbor.py
+	python3 tools/sprites/healer.py
+	python3 tools/sprites/witch.py
+	python3 tools/sprites/labyrinth.py
+	python3 tools/sprites/apothecary.py
 
 clean:
 	rm -rf build

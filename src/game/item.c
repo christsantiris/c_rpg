@@ -47,6 +47,17 @@ Item item_make_strength_potion(void) {
     it.active = 1;
     it.type = ITEM_POTION_STRENGTH;
     strncpy(it.name, "Potion of Strength", sizeof(it.name) - 1);
+    it.value = 600;
+    it.class_mask = ITEM_CLASS_ALL;
+    return it;
+}
+
+Item item_make_intelligence_potion(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_POTION_INTELLIGENCE;
+    strncpy(it.name, "Potion of Intelligence", sizeof(it.name) - 1);
+    it.value = 600;
     it.class_mask = ITEM_CLASS_ALL;
     return it;
 }

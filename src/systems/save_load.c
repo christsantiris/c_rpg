@@ -354,7 +354,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 64);
+    cJSON_AddNumberToObject(root, "save_version", 65);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -1939,6 +1939,18 @@ int load_game(GameState *g, int slot) {
         }
         clear_new_town_lot(g, TOWN_INN_X, TOWN_INN_Y, TOWN_INN_W, TOWN_INN_H);
         map_place_town_inn(&g->map);
+    }
+
+    // Version 65 adds the Apothecary east of the Town 3 square. Pave its lane
+    // under any loot, then move anything on the new lot onto that lane.
+    if (save_version < 65 && g->location == LOCATION_TOWN3) {
+        int lane_y = TOWN_APOTHECARY_Y + TOWN_APOTHECARY_H;
+        for (int x = TOWN_MOAT_X + TOWN_MOAT_W; x < TOWN_APOTHECARY_X + TOWN_APOTHECARY_W; x++) {
+            retile_town_ground(g, x, lane_y, TILE_TOWN_PATH);
+        }
+        clear_new_town_lot(g, TOWN_APOTHECARY_X, TOWN_APOTHECARY_Y, TOWN_APOTHECARY_W,
+            TOWN_APOTHECARY_H);
+        map_place_town_apothecary(&g->map);
     }
 
     if (g->location == LOCATION_MOUNTAINS) {

@@ -349,6 +349,40 @@ void test_items(void) {
         shop_has_item(&shop, "Shadow Armor") &&
         shop_has_item(&shop, "Archmage Robes"));
 
+    // --- Town 3 Apothecary ---
+    shop_init(&shop, SHOP_TYPE_APOTHECARY, 0);
+    ASSERT("apothecary sells healing, mana, strength and intelligence potions",
+        shop.item_count == 4 &&
+        shop_has_item(&shop, "Health Potion") &&
+        shop_has_item(&shop, "Mana Potion") &&
+        shop_has_item(&shop, "Potion of Strength") &&
+        shop_has_item(&shop, "Potion of Intelligence"));
+    Item healing = item_make_health_potion();
+    Item strength = item_make_strength_potion();
+    Item intelligence = item_make_intelligence_potion();
+    ASSERT("advanced potions cost 1200 gold while basic potions stay cheap",
+        shop_buy_price(&strength) == 1200 &&
+        shop_buy_price(&intelligence) == 1200 &&
+        shop_buy_price(&healing) == 20);
+    ASSERT("apothecary buys back potions but not weapons",
+        shop_accepts_item(SHOP_TYPE_APOTHECARY, &healing) &&
+        shop_accepts_item(SHOP_TYPE_APOTHECARY, &intelligence) &&
+        !shop_accepts_item(SHOP_TYPE_APOTHECARY, &sword));
+
+    static GameState potion_game;
+    potion_game.player.player_class = CLASS_WARRIOR;
+    game_init(&potion_game);
+    int max_mp = potion_game.player.max_mp;
+    int mp = potion_game.player.mp;
+    int potion_count = potion_game.inventory_count;
+    potion_game.inventory[potion_game.inventory_count++] = intelligence;
+    action_resolve_player(&potion_game,
+        (Action){ACTION_USE_ITEM, potion_game.inventory_count - 1, 0});
+    ASSERT("Potion of Intelligence permanently adds one max MP",
+        potion_game.player.max_mp == max_mp + 1 &&
+        potion_game.player.mp == mp + 1 &&
+        potion_game.inventory_count == potion_count);
+
     shop_init(&shop, SHOP_TYPE_ALCHEMIST, 0);
     ASSERT("Alchemist begins without advanced Mage stock",
         !shop_has_item(&shop, "Tome: Magic Arrow II"));

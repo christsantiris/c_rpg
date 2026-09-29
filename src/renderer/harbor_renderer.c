@@ -76,16 +76,19 @@ void harbor_draw(Renderer *r, const GameState *g, const HarborScreen *s) {
     draw_harbor_background(r, play_w, play_h);
 
     if (r->harbor_texture) {
-        SDL_Rect source = {150, 174, 1129, 827};
-        int art_h = play_h - 24;
-        int art_w = art_h * source.w / source.h;
-        if (art_w > play_w - 32) {
-            art_w = play_w - 32;
-            art_h = art_w * source.h / source.w;
+        // Enlarge the town sprite by a whole number so its pixels stay square.
+        int art_w = 0;
+        int art_h = 0;
+        SDL_QueryTexture(r->harbor_texture, NULL, NULL, &art_w, &art_h);
+        int scale_x = (play_w - 32) / (art_w > 0 ? art_w : 1);
+        int scale_y = (play_h - 24) / (art_h > 0 ? art_h : 1);
+        int scale = scale_x < scale_y ? scale_x : scale_y;
+        if (scale < 1) {
+            scale = 1;
         }
-        SDL_Rect destination = {(play_w - art_w) / 2,
-            play_h - art_h, art_w, art_h};
-        SDL_RenderCopy(r->sdl, r->harbor_texture, &source, &destination);
+        SDL_Rect destination = {(play_w - art_w * scale) / 2,
+            play_h - art_h * scale, art_w * scale, art_h * scale};
+        SDL_RenderCopy(r->sdl, r->harbor_texture, NULL, &destination);
     }
 
     SDL_Rect heading = {24, 18, play_w - 48, 82};

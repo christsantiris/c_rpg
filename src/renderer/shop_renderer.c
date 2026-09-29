@@ -81,7 +81,8 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
 
     const char *title = s->type == SHOP_TYPE_ALCHEMIST ? "ALCHEMIST"
         : s->type == SHOP_TYPE_BLACKSMITH ? "BLACKSMITH"
-        : s->type == SHOP_TYPE_HEALER ? "HEALER" : "WITCH";
+        : s->type == SHOP_TYPE_HEALER ? "HEALER"
+        : s->type == SHOP_TYPE_APOTHECARY ? "APOTHECARY" : "WITCH";
     renderer_draw_text(r, title, cx - 60, 40, gold, r->font_large);
 
     char gold_str[32];
