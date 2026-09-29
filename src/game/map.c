@@ -1250,12 +1250,13 @@ void map_generate_town3(Map *m, int *spawn_x, int *spawn_y) {
             m->tiles[y][x] = TILE_TOWN_PATH;
         }
     }
-    for (int y = TOWN_CASTLE_Y; y < TOWN_CASTLE_Y + TOWN_CASTLE_H; y++) {
-        for (int x = TOWN_CASTLE_X; x < TOWN_CASTLE_X + TOWN_CASTLE_W; x++) {
+    for (int y = TOWN_MOAT_Y; y < TOWN_MOAT_Y + TOWN_MOAT_H; y++) {
+        for (int x = TOWN_MOAT_X; x < TOWN_MOAT_X + TOWN_MOAT_W; x++) {
             m->tiles[y][x] = TILE_WALL;
         }
     }
     m->tiles[10][CROWNROAD_X] = TILE_TOWN_EXIT;
+    m->tiles[11][CROWNROAD_X] = TILE_TOWN_PATH;
     m->tiles[TOWN_H - 1][CROWNROAD_X] = TILE_TOWN_EXIT;
     *spawn_x = CROWNROAD_X;
     *spawn_y = TOWN_H - 2;

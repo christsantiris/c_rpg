@@ -856,8 +856,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     break;
                 case TILE_WALL: {
                     if (g->location == LOCATION_TOWN3 &&
-                        x >= TOWN_CASTLE_X && x < TOWN_CASTLE_X + TOWN_CASTLE_W &&
-                        y >= TOWN_CASTLE_Y && y < TOWN_CASTLE_Y + TOWN_CASTLE_H) {
+                        x >= TOWN_MOAT_X && x < TOWN_MOAT_X + TOWN_MOAT_W &&
+                        y >= TOWN_MOAT_Y && y < TOWN_MOAT_Y + TOWN_MOAT_H) {
                         draw_town_floor(r, sx, sy);
                     } else if (g->location == LOCATION_CROWNROAD) {
                         draw_crownroad_tile(r, sx, sy, x, y, 2);
