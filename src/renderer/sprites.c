@@ -2564,6 +2564,50 @@ static void draw_swamp_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type
         (SDL_Color){116, 22, 38, 255});
 }
 
+static void draw_crownroad_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color outline = {25, 22, 27, 255};
+    SDL_Color iron = {169, 170, 160, 255};
+    SDL_Color crimson = {132, 38, 39, 255};
+    SDL_Color leather = {85, 52, 37, 255};
+    SDL_Color gold = {222, 172, 83, 255};
+    if (type == ENEMY_ROAD_ARCHER) {
+        fill_rect(r, x + 7, y + 18, 4, 5, outline);
+        fill_rect(r, x + 14, y + 18, 4, 5, outline);
+        fill_rect(r, x + 5, y + 9, 15, 11, outline);
+        fill_rect(r, x + 7, y + 10, 11, 9, crimson);
+        fill_rect(r, x + 9, y + 14, 7, 2, leather);
+        fill_rect(r, x + 10, y + 3, 8, 7, outline);
+        fill_rect(r, x + 11, y + 5, 6, 4, (SDL_Color){162, 121, 91, 255});
+        fill_rect(r, x + 9, y + 2, 9, 3, crimson);
+        fill_rect(r, x + 7, y + 5, 3, 8, crimson);
+        fill_rect(r, x + 16, y + 7, 2, 1, gold);
+        fill_rect(r, x + 2, y + 9, 2, 10, leather);
+        fill_rect(r, x + 4, y + 6, 2, 3, leather);
+        fill_rect(r, x + 4, y + 19, 2, 3, leather);
+        fill_rect(r, x + 6, y + 8, 1, 12, iron);
+        fill_rect(r, x + 3, y + 14, 17, 1, gold);
+        return;
+    }
+    fill_rect(r, x + 5, y + 17, 3, 7, outline);
+    fill_rect(r, x + 16, y + 17, 3, 7, outline);
+    fill_rect(r, x + 3, y + 14, 18, 6, outline);
+    fill_rect(r, x + 4, y + 12, 15, 7, leather);
+    fill_rect(r, x + 6, y + 12, 7, 2, (SDL_Color){137, 87, 58, 255});
+    fill_rect(r, x + 18, y + 10, 4, 6, leather);
+    fill_rect(r, x + 20, y + 11, 4, 4, outline);
+    fill_rect(r, x + 22, y + 12, 1, 1, gold);
+    fill_rect(r, x + 2, y + 12, 3, 2, outline);
+    fill_rect(r, x + 10, y + 10, 7, 3, iron);
+    fill_rect(r, x + 11, y + 5, 6, 6, crimson);
+    fill_rect(r, x + 12, y + 2, 5, 5, outline);
+    fill_rect(r, x + 13, y + 3, 3, 3, iron);
+    fill_rect(r, x + 16, y + 5, 2, 1, gold);
+    fill_rect(r, x + 18, y + 2, 1, 11, iron);
+    fill_rect(r, x + 18, y + 1, 1, 2, gold);
+}
+
 static void draw_dragonspine_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
@@ -2589,6 +2633,10 @@ static void draw_dragonspine_enemy(Renderer *r, int tile_x, int tile_y, EnemyTyp
 
 void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
     switch (type) {
+        case ENEMY_ROAD_ARCHER:
+        case ENEMY_HORSEMAN:
+            draw_crownroad_enemy(r, tile_x, tile_y, type);
+            break;
         case ENEMY_GIANT_RAT:
         case ENEMY_BANDIT:
         case ENEMY_VAMPIRE:

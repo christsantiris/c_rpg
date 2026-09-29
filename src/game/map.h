@@ -22,6 +22,14 @@
 #define CROWNROAD_W 44
 #define CROWNROAD_H 48
 #define CROWNROAD_X 20
+#define TOWN_CASTLE_X 13
+#define TOWN_CASTLE_Y 3
+#define TOWN_CASTLE_W 15
+#define TOWN_CASTLE_H 8
+#define TOWN_MOAT_X (TOWN_CASTLE_X - 1)
+#define TOWN_MOAT_Y (TOWN_CASTLE_Y - 1)
+#define TOWN_MOAT_W (TOWN_CASTLE_W + 2)
+#define TOWN_MOAT_H (TOWN_CASTLE_H + 2)
 #define TAVERN_X 4
 #define TAVERN_Y 2
 #define TAVERN_W 32

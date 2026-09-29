@@ -33,7 +33,8 @@ void test_enemy_projectiles(void) {
     EnemyType ranged[] = {
         ENEMY_LICH_KING, ENEMY_FOREST_NECROMANCER, ENEMY_MOUNTAIN_GOBLIN_KING,
         ENEMY_DROWNED_QUEEN, ENEMY_SIREN, ENEMY_WATER_ELEMENTAL,
-        ENEMY_GOBLIN_ARCHER, ENEMY_GOBLIN_BOMBER, ENEMY_DARK_ELF, ENEMY_CRYPT_CONJURER
+        ENEMY_GOBLIN_ARCHER, ENEMY_ROAD_ARCHER, ENEMY_GOBLIN_BOMBER,
+        ENEMY_DARK_ELF, ENEMY_CRYPT_CONJURER
     };
     for (int i = 0; i < (int)(sizeof(ranged) / sizeof(ranged[0])); i++) {
         setup_ranged_enemy(&g, ranged[i]);
@@ -81,6 +82,32 @@ void test_enemy_projectiles(void) {
     action_resolve_enemies_with_projectiles(&g, &shots);
     ASSERT("a defeated enemy no longer blocks the archer's shot",
         shots.count == 1 && g.player.hp == 90);
+
+    setup_ranged_enemy(&g, ENEMY_ROAD_ARCHER);
+    g.location = LOCATION_CROWNROAD;
+    g.enemies[0].x = 17;
+    action_resolve_enemies_with_projectiles(&g, &shots);
+    ASSERT("road archer fires across the road without leaving its ambush lane",
+        shots.count == 1 && shots.shots[0].start_x == 17 &&
+        g.enemies[0].x == 17 && g.player.hp == 90);
+
+    setup_ranged_enemy(&g, ENEMY_ROAD_ARCHER);
+    g.location = LOCATION_CROWNROAD;
+    g.enemies[1] = g.enemies[0];
+    g.enemies[1].type = ENEMY_HORSEMAN;
+    g.enemies[1].x = 17;
+    g.enemy_count = 2;
+    action_resolve_enemies_with_projectiles(&g, &shots);
+    ASSERT("a horseman between the road and archer blocks the arrow",
+        shots.count == 0 && g.player.hp == 100);
+
+    setup_ranged_enemy(&g, ENEMY_HORSEMAN);
+    g.enemies[0].x = 20;
+    g.enemies[0].y = 14;
+    action_resolve_enemies_with_projectiles(&g, &shots);
+    ASSERT("mounted enemy closes two tiles without attacking on the charge",
+        g.enemies[0].x == 20 && g.enemies[0].y == 16 &&
+        g.player.hp == 100 && shots.count == 0);
 
     setup_ranged_enemy(&g, ENEMY_DROWNED_QUEEN);
     g.enemies[0].y = 14;

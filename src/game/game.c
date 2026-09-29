@@ -120,6 +120,17 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             e->max_hp = 58; e->hp = 58;
             e->attack = 19; e->defense = 4; e->experience = 100;
             break;
+        case ENEMY_ROAD_ARCHER:
+            snprintf(e->name, sizeof(e->name), "Road Archer");
+            e->max_hp = 24; e->hp = 24;
+            e->attack = 10; e->defense = 2; e->experience = 38;
+            e->move_timer = 1;
+            break;
+        case ENEMY_HORSEMAN:
+            snprintf(e->name, sizeof(e->name), "Horseman");
+            e->max_hp = 52; e->hp = 52;
+            e->attack = 13; e->defense = 4; e->experience = 60;
+            break;
         case ENEMY_SWAMP_DEMON:
             strncpy(e->name, "Swamp Demon", sizeof(e->name) - 1);
             e->max_hp = 180; e->hp = 180;
@@ -2024,13 +2035,20 @@ void game_leave_forest_road(GameState *g, Location destination) {
 }
 
 void game_enter_crownroad(GameState *g, int from_town3) {
-    static const EnemyType enemies[8] = {
+    static const EnemyType enemies[MAX_ENEMIES] = {
         ENEMY_BANDIT, ENEMY_BLIGHTED_WOLF, ENEMY_BANDIT,
         ENEMY_HOBGOBLIN_GUARD, ENEMY_BANDIT, ENEMY_BLIGHTED_WOLF,
-        ENEMY_HOBGOBLIN_GUARD, ENEMY_BANDIT
+        ENEMY_HOBGOBLIN_GUARD, ENEMY_BANDIT,
+        ENEMY_ROAD_ARCHER, ENEMY_HORSEMAN, ENEMY_ROAD_ARCHER,
+        ENEMY_HORSEMAN, ENEMY_ROAD_ARCHER, ENEMY_HORSEMAN,
+        ENEMY_ROAD_ARCHER
     };
-    static const int x[8] = {17, 23, 14, 24, 17, 25, 16, 23};
-    static const int y[8] = {6, 11, 17, 21, 27, 32, 38, 43};
+    static const int x[MAX_ENEMIES] = {
+        17, 23, 14, 24, 17, 25, 16, 23, 23, 20, 17, 20, 23, 20, 17
+    };
+    static const int y[MAX_ENEMIES] = {
+        6, 11, 17, 21, 27, 32, 38, 43, 8, 14, 20, 26, 34, 40, 44
+    };
     g->location = LOCATION_CROWNROAD;
     g->level = 1;
     map_generate_crownroad(&g->map);
@@ -2043,9 +2061,12 @@ void game_enter_crownroad(GameState *g, int from_town3) {
     } else {
         g->enemy_count = 0;
         g->level_cleared = 0;
-        for (int i = 0; i < 8; i++) {
-            spawn_enemy(g, &g->enemies[g->enemy_count++], enemies[i], x[i], y[i]);
-        }
+    }
+    if (g->enemy_count < MAX_ENEMIES) {
+        g->level_cleared = 0;
+    }
+    for (int i = g->enemy_count; i < MAX_ENEMIES; i++) {
+        spawn_enemy(g, &g->enemies[g->enemy_count++], enemies[i], x[i], y[i]);
     }
     g->player.x = CROWNROAD_X;
     g->player.y = from_town3 ? 1 : CROWNROAD_H - 2;

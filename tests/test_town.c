@@ -21,9 +21,25 @@ void test_crownroad_to_town3(void) {
     g.player.y = 1;
     action_resolve_player(&g, (Action){ACTION_MOVE, CROWNROAD_X, 0});
     ASSERT("Crownroad is a traversable combat stage",
-        g.location == LOCATION_CROWNROAD && g.enemy_count == 8 &&
+        g.location == LOCATION_CROWNROAD && g.enemy_count == MAX_ENEMIES &&
         g.map.tiles[0][CROWNROAD_X] == TILE_TOWN_EXIT &&
         g.map.tiles[CROWNROAD_H - 1][CROWNROAD_X] == TILE_TOWN_EXIT);
+    ASSERT("trees flank the Crownroad while its central road stays clear",
+        g.map.tiles[18][12] == TILE_FOREST_WALL &&
+        g.map.tiles[18][28] == TILE_FOREST_WALL &&
+        g.map.tiles[18][CROWNROAD_X] == TILE_TOWN_PATH &&
+        g.map.tiles[18][CROWNROAD_X - 1] == TILE_TOWN_FLOOR);
+    int archers = 0;
+    int horsemen = 0;
+    int all_spawns_open = 1;
+    for (int i = 0; i < g.enemy_count; i++) {
+        archers += g.enemies[i].type == ENEMY_ROAD_ARCHER;
+        horsemen += g.enemies[i].type == ENEMY_HORSEMAN;
+        all_spawns_open &= map_is_walkable(&g.map,
+            g.enemies[i].x, g.enemies[i].y);
+    }
+    ASSERT("dense ambush includes visible archers and mounted enemies",
+        archers == 4 && horsemen == 3 && all_spawns_open);
 
     g.enemies[0].active = 0;
     g.player.x = CROWNROAD_X;

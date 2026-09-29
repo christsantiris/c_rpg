@@ -203,6 +203,8 @@ static int enemy_score(EnemyType type) {
         case ENEMY_SWAMP_DEMON: return 1500;
         case ENEMY_DRAKE: return 165;
         case ENEMY_FIRE_ELEMENTAL: return 185;
+        case ENEMY_ROAD_ARCHER: return 65;
+        case ENEMY_HORSEMAN: return 105;
         case ENEMY_ORC:         return 30;
         case ENEMY_TROLL:       return 50;
         case ENEMY_GIANT:       return 80;
@@ -275,6 +277,8 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         case ENEMY_SWAMP_DEMON: gold = 70; break;
         case ENEMY_DRAKE: gold = 16 + rand() % 12; break;
         case ENEMY_FIRE_ELEMENTAL: gold = 13 + rand() % 12; break;
+        case ENEMY_ROAD_ARCHER: gold = 8 + rand() % 9; break;
+        case ENEMY_HORSEMAN: gold = 11 + rand() % 10; break;
         case ENEMY_ORC:      gold = 6 + rand() % 8;  break;
         case ENEMY_TROLL:    gold = 10 + rand() % 10; break;
         case ENEMY_GIANT:    gold = 15 + rand() % 15; break;
@@ -2024,6 +2028,7 @@ static int enemy_is_support(const Enemy *e) {
 
 static int enemy_is_protector(const Enemy *e) {
     return e->type == ENEMY_HOBGOBLIN_GUARD ||
+        e->type == ENEMY_HORSEMAN ||
         e->type == ENEMY_ANIMATED_STATUE ||
         e->type == ENEMY_VINEBOUND_GUARDIAN ||
         e->type == ENEMY_LUNAR_EFFIGY;
@@ -2072,7 +2077,9 @@ static void select_enemy_pursuers(const GameState *g, int pursuers[MAX_ENEMIES])
         int best_role_priority = 0;
         for (int i = 0; i < g->enemy_count; i++) {
             const Enemy *e = &g->enemies[i];
-            if (!e->active || pursuers[i] || enemy_is_major_boss(e)) {
+            if (!e->active || pursuers[i] || enemy_is_major_boss(e) ||
+                (g->location == LOCATION_CROWNROAD &&
+                e->type == ENEMY_ROAD_ARCHER)) {
                 continue;
             }
             int distance = enemy_distances[e->y][e->x];
@@ -2116,6 +2123,7 @@ static int enemy_prefers_range(const Enemy *e) {
     return e->type == ENEMY_CRYPT_CONJURER ||
         e->type == ENEMY_DARK_ELF ||
         e->type == ENEMY_GOBLIN_ARCHER ||
+        e->type == ENEMY_ROAD_ARCHER ||
         e->type == ENEMY_GOBLIN_BOMBER ||
         e->type == ENEMY_SIREN ||
         e->type == ENEMY_WATER_ELEMENTAL ||
@@ -2448,7 +2456,10 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         int dy = g->player.y - e->y;
         int adjacent = abs_int(dx) <= 1 && abs_int(dy) <= 1 &&
             !(dx == 0 && dy == 0);
-        if (!enemy_is_major_boss(e) && !adjacent && !pursuers[i]) {
+        if (!enemy_is_major_boss(e) && !adjacent && !pursuers[i] &&
+            !(g->location == LOCATION_CROWNROAD &&
+            e->type == ENEMY_ROAD_ARCHER &&
+            clear_orthogonal_path(g, i, e))) {
             continue;
         }
 
@@ -2750,6 +2761,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         }
 
         if ((e->type == ENEMY_GOBLIN_ARCHER ||
+            e->type == ENEMY_ROAD_ARCHER ||
             e->type == ENEMY_GOBLIN_BOMBER) &&
             e->move_timer % 2 == 0 && clear_orthogonal_path(g, i, e)) {
             int dmg = e->attack - g->player.defense / 2;
@@ -2759,8 +2771,10 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 continue;
             }
             char msg[MAX_MESSAGE_LEN];
-            snprintf(msg, sizeof(msg), e->type == ENEMY_GOBLIN_BOMBER
-                ? "Goblin bomb: %d dmg" : "Goblin arrow: %d dmg", dmg);
+            const char *attack_name = e->type == ENEMY_GOBLIN_BOMBER ?
+                "Goblin bomb" : e->type == ENEMY_ROAD_ARCHER ?
+                "Road arrow" : "Goblin arrow";
+            snprintf(msg, sizeof(msg), "%s: %d dmg", attack_name, dmg);
             push_message(g, msg);
             continue;
         }
@@ -2841,6 +2855,9 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         if ((e->type == ENEMY_PIXIE || e->type == ENEMY_BLIGHTED_WOLF) && moved)
             enemy_move_toward(g, i);
         if (e->type == ENEMY_TEMPLE_STALKER && moved) {
+            enemy_move_toward(g, i);
+        }
+        if (e->type == ENEMY_HORSEMAN && moved && path_distance > 3) {
             enemy_move_toward(g, i);
         }
     }
