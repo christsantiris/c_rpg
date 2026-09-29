@@ -872,6 +872,21 @@ int load_game(GameState *g, int slot) {
         deserialize_item_metadata(it, item);
     }
     game_repair_equipment_indices(g);
+    if (!g->island_travel_unlocked &&
+        (g->location == LOCATION_ISLAND || g->location == LOCATION_TEMPLE ||
+        g->temple_treasure_state > 0 || g->temple_alignment > 0 ||
+        (g->defeated_bosses & (1 << LOCATION_TEMPLE)))) {
+        g->island_travel_unlocked = 1;
+    }
+    if (g->island_travel_unlocked) {
+        for (int i = 0; i < g->inventory_count;) {
+            if (g->inventory[i].type == ITEM_TREASURE_MAP) {
+                game_remove_inventory_item(g, i);
+            } else {
+                i++;
+            }
+        }
+    }
 
     // Floor items
     g->floor_item_count = cJSON_GetObjectItem(root, "floor_item_count")->valueint;
