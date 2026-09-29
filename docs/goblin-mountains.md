@@ -62,3 +62,8 @@ Dain's **Recover the Treasure Map** quest places guarded Map Bearers on stages
 travel with a themed warband. Defeating the leader recovers the fragment
 automatically. Accepting the quest starts a fresh mountain expedition, while a
 previously defeated Goblin King remains dead.
+
+After the Goblin King falls, leaving Crown Peak returns to the starting town.
+A separate gate branches from the east road to the safe High Pass, which leads
+to [Dragonspine](dragonspine.md). The original Goblin Mountains entrance remains
+available for another expedition.

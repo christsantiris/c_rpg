@@ -4,7 +4,7 @@
 void test_map(void) {
     printf("Map border tests:\n");
 
-    GameState g;
+    static GameState g;
     game_init(&g);
 
     ASSERT("new map begins unexplored",
@@ -26,7 +26,7 @@ void test_map(void) {
         map_is_explored(&g.map, explored_x, explored_y));
 
     // Walk all the way left
-    GameState g2;
+    static GameState g2;
     game_init(&g2);
     g2.player.y = 5;
     for (int i = 0; i < MAP_W; i++) game_move_player(&g2, -1, 0);

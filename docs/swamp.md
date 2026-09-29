@@ -7,8 +7,8 @@ level. Winding causeways connect the clearings, with roots and reeds marking
 the shoreline. The map changes when a new expedition begins, and progress is
 preserved while traveling between levels or using a Return to Town portal.
 
-The marked entrance leads back one level, or to Town 2 from level 1. The marked
-exit advances to the next level. Levels 1–4 can be left without defeating every
+The west-edge trail leads back one level, or to Town 2 from level 1. The
+east-edge trail advances to the next level. Levels 1–4 can be left without defeating every
 enemy. The level-5 exit is blocked only while the Swamp Demon lives. After its
 defeat, that exit returns to Town 2. The demon does not respawn on later visits.
 

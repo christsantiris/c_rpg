@@ -1120,6 +1120,21 @@ void test_harbor_road(void) {
         g.inventory_count == MAX_INVENTORY - 1 && game_has_treasure_map(&g));
     ASSERT("Rowan recognizes dungeon experience",
         strstr(g.dialogue_text, "dungeon or mountains") == NULL);
+    int before_voyage = g.inventory_count;
+    game_enter_island(&g);
+    ASSERT("first voyage consumes the map and permanently unlocks island travel",
+        g.island_travel_unlocked && !game_has_treasure_map(&g) &&
+        g.inventory_count == before_voyage - 1);
+    game_leave_island(&g);
+    game_talk_to_rowan(&g);
+    ASSERT("Rowan does not replace a map after the route is unlocked",
+        g.inventory_count == before_voyage - 1 &&
+        !game_has_treasure_map(&g) &&
+        strstr(g.dialogue_text, "route is charted") != NULL);
+    harbor_init(&harbor);
+    ASSERT("later voyages need no inventory map",
+        harbor_handle_key(&harbor, SDL_SCANCODE_RETURN,
+            game_can_sail_to_island(&g), 0) == HARBOR_BOARD);
 
     game_enter_coast(&g);
     game_open_town_portal(&g);

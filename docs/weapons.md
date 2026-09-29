@@ -1,7 +1,7 @@
 # Weapons, Armor, and Shields
 
 Equipment is class-oriented and uses main-hand, off-hand, and armor slots.
-Regular enemies never drop equipment. The Blacksmith and the five regional
+Regular enemies never drop equipment. The Blacksmith and regional
 bosses are the equipment sources.
 
 ## Equipment Rules
@@ -45,7 +45,7 @@ amount and pays one quarter when buying it back.
 | Magic Staff | +9 | Two | Mage | 3 | 1,000 | +8 spell power, +35 maximum MP, 10% cheaper spells |
 | Magic Longbow | +13 | Two | Rogue | 3 | 1,200 | Range 12 and pierces every target in its path |
 | Cryptblade | +8 | One | Warrior | Boss | 350 | 10% critical chance; Lich King reward |
-| Demonic Sword | +6 | One | All | Boss | 180 | Range 2 with `F`; Swamp Demon reward |
+| Demonic Sword | +4 | One | All | Boss | 180 | Range 2 with `F`; Swamp Demon reward |
 
 Bows fire with `F` in the last movement direction. A target directly adjacent
 to the player is too close; valid targets begin two tiles away. Arrows stop at
@@ -75,6 +75,7 @@ in melee.
 | Archmage Robes | +4 | Mage | 4 | 1,250 | +60 maximum MP, 20% cheaper spells |
 | Necromancer's Cloak | +5 | Rogue | Boss | 450 | 8% evasion; Necromancer reward |
 | Tidecaller Robes | +3 | Mage | Boss | 500 | +30 maximum MP, 8% cheaper spells; Drowned Queen reward |
+| Dragon Scale Mantle | +4 | All | Boss | 1,400 | +20 maximum HP; Red Dragon reward |
 
 Evasion is checked before damage is applied. Staff and robe casting discounts
 stack, up to a combined reduction of 50%.

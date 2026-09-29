@@ -4,14 +4,14 @@
 // Each tile is 1x1px, scaled 1:2 (100x50px total).
 // A semi-transparent dark background sits behind it for readability.
 #define MINIMAP_SCALE 2
-#define MINIMAP_W     (MAP_W / MINIMAP_SCALE)
-#define MINIMAP_H     (MAP_H / MINIMAP_SCALE)
 #define MINIMAP_PAD   6
 
 void minimap_draw(Renderer *r, const GameState *g) {
     if (g->location != LOCATION_DUNGEON &&
         g->location != LOCATION_FOREST &&
         g->location != LOCATION_MOUNTAINS &&
+        g->location != LOCATION_DRAGONSPINE &&
+        g->location != LOCATION_HIGH_PASS &&
         g->location != LOCATION_COAST &&
         g->location != LOCATION_SWAMP &&
         g->location != LOCATION_TEMPLE &&
@@ -21,18 +21,26 @@ void minimap_draw(Renderer *r, const GameState *g) {
 
     int ox = MINIMAP_PAD;
     int oy = MINIMAP_PAD;
+    int map_w = MAP_W;
+    int map_h = MAP_H;
+    if (g->location == LOCATION_SWAMP ||
+        g->location == LOCATION_DRAGONSPINE) {
+        map_w = SWAMP_MAP_W;
+        map_h = SWAMP_MAP_H;
+    }
 
     // Dark semi-transparent background
     SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_BLEND);
-    SDL_Rect bg = { ox - 2, oy - 2, MINIMAP_W + 4, MINIMAP_H + 4 };
+    SDL_Rect bg = { ox - 2, oy - 2,
+        map_w / MINIMAP_SCALE + 4, map_h / MINIMAP_SCALE + 4 };
     SDL_SetRenderDrawColor(r->sdl, 0, 0, 0, 180);
     SDL_RenderFillRect(r->sdl, &bg);
     SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_NONE);
 
     // Tiles — sample the full 2x2 block per pixel so 1-tile-wide
     // hallways are never missed due to stride skipping.
-    for (int ty = 0; ty < MAP_H; ty += MINIMAP_SCALE) {
-        for (int tx = 0; tx < MAP_W; tx += MINIMAP_SCALE) {
+    for (int ty = 0; ty < map_h; ty += MINIMAP_SCALE) {
+        for (int tx = 0; tx < map_w; tx += MINIMAP_SCALE) {
             int draw_x = ox + tx / MINIMAP_SCALE;
             int draw_y = oy + ty / MINIMAP_SCALE;
             int has_stair = 0;
@@ -42,7 +50,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                 for (int dx = 0; dx < MINIMAP_SCALE; dx++) {
                     int sx = tx + dx;
                     int sy = ty + dy;
-                    if (sx >= MAP_W || sy >= MAP_H) {
+                    if (sx >= map_w || sy >= map_h) {
                         continue;
                     }
                     if (!map_is_explored(&g->map, sx, sy)) {
@@ -61,12 +69,18 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_SWAMP_ENTRANCE ||
                         tile == TILE_SWAMP_EXIT ||
                         tile == TILE_SWAMP_DAUGHTER ||
+                        tile == TILE_DRAGON_ENTRANCE ||
+                        tile == TILE_DRAGON_EXIT ||
+                        tile == TILE_DRAGON_TREASURE ||
+                        tile == TILE_HIGH_PASS_ENTRANCE ||
+                        tile == TILE_HIGH_PASS_EXIT ||
                         tile == TILE_NPC_ELOWEN || tile == TILE_NPC_DAIN ||
                         tile == TILE_NPC_ALDER || tile == TILE_NPC_MARA ||
                         tile == TILE_NPC_ROOK ||
                         tile == TILE_NPC_INNKEEPER ||
                         tile == TILE_NPC_CAIN ||
                         tile == TILE_NPC_ROWAN ||
+                        tile == TILE_NPC_DRAGON_SEEKER ||
                         tile == TILE_COAST_BEACON_UNLIT ||
                         tile == TILE_COAST_BEACON_LIT ||
                         tile == TILE_FOREST_WARDEN ||
@@ -95,6 +109,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile != TILE_MOUNTAIN_HIDDEN_CAVE &&
                         tile != TILE_COAST_WALL &&
                         tile != TILE_SWAMP_WALL &&
+                        tile != TILE_DRAGON_WALL &&
                         tile != TILE_COAST_DEEP_WATER &&
                         tile != TILE_COAST_CHANNEL_WATER &&
                         tile != TILE_TAVERN_WALL &&
@@ -122,6 +137,9 @@ void minimap_draw(Renderer *r, const GameState *g) {
                     SDL_SetRenderDrawColor(r->sdl, 45, 95, 55, 255);
                 } else if (g->location == LOCATION_MOUNTAINS) {
                     SDL_SetRenderDrawColor(r->sdl, 125, 42, 32, 255);
+                } else if (g->location == LOCATION_DRAGONSPINE ||
+                    g->location == LOCATION_HIGH_PASS) {
+                    SDL_SetRenderDrawColor(r->sdl, 150, 185, 211, 255);
                 } else if (g->location == LOCATION_COAST) {
                     SDL_SetRenderDrawColor(r->sdl, 35, 125, 145, 255);
                 } else if (g->location == LOCATION_TEMPLE) {
