@@ -6,6 +6,7 @@ static const char *game_over_location(const GameState *g) {
         case LOCATION_DUNGEON: return "DUNGEON";
         case LOCATION_FOREST: return "HAUNTED FOREST";
         case LOCATION_FOREST_ROAD: return "FOREST ROAD";
+        case LOCATION_CROWNROAD: return "FALLEN CROWNROAD";
         case LOCATION_MOUNTAINS: return "GOBLIN MOUNTAINS";
         case LOCATION_HIGH_PASS: return "HIGH PASS";
         case LOCATION_DRAGONSPINE: return "DRAGONSPINE";
@@ -13,6 +14,7 @@ static const char *game_over_location(const GameState *g) {
         case LOCATION_SWAMP: return "BLACKWATER SWAMP";
         case LOCATION_TAVERN: return "TAVERN";
         case LOCATION_TOWN2: return "TOWN 2";
+        case LOCATION_TOWN3: return "TOWN 3";
         case LOCATION_INN: return "INN";
         case LOCATION_ISLAND: return "RUINED ISLE";
         case LOCATION_TEMPLE: return "RUINED TEMPLE";

@@ -19,6 +19,9 @@
 #define FOREST_ROAD_W 80
 #define FOREST_ROAD_H 25
 #define FOREST_ROAD_Y 12
+#define CROWNROAD_W 44
+#define CROWNROAD_H 48
+#define CROWNROAD_X 20
 #define TAVERN_X 4
 #define TAVERN_Y 2
 #define TAVERN_W 32
@@ -264,6 +267,8 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y);
 void map_set_town2_road(Map *m, int unlocked);
 void map_set_dragonspine_road(Map *m, int unlocked);
 void map_generate_town2(Map *m, int *spawn_x, int *spawn_y);
+void map_generate_town3(Map *m, int *spawn_x, int *spawn_y);
+void map_generate_crownroad(Map *m);
 void map_generate_forest_road(Map *m);
 void map_place_town_labyrinth(Map *m);
 void map_place_town2_center(Map *m);

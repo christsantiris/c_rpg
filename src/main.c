@@ -1255,11 +1255,13 @@ int main(int argc, char **argv) {
         int is_town = game.location == LOCATION_TOWN ||
             game.location == LOCATION_TAVERN ||
             game.location == LOCATION_TOWN2 ||
+            game.location == LOCATION_TOWN3 ||
             game.location == LOCATION_INN ||
             game.location == LOCATION_ISLAND;
         int in_town2 = game.location == LOCATION_TOWN2 ||
             game.location == LOCATION_INN;
-        music_update(screen, is_town, in_town2);
+        int in_town3 = game.location == LOCATION_TOWN3;
+        music_update(screen, is_town, in_town2, in_town3);
 
         if (!needs_redraw) {
             continue;

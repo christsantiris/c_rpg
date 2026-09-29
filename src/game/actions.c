@@ -719,6 +719,7 @@ void action_resolve_player(GameState *g, Action a) {
     if (g->location == LOCATION_TOWN ||
         g->location == LOCATION_TAVERN ||
         g->location == LOCATION_TOWN2 ||
+        g->location == LOCATION_TOWN3 ||
         g->location == LOCATION_FOREST_ROAD ||
         g->location == LOCATION_INN ||
         g->location == LOCATION_ISLAND) {
@@ -1112,12 +1113,14 @@ void action_resolve_player(GameState *g, Action a) {
 
         if (sp->id == SPELL_RETURN_TO_TOWN) {
             if (g->location == LOCATION_FOREST_ROAD ||
-                g->location == LOCATION_HIGH_PASS) {
+                g->location == LOCATION_HIGH_PASS ||
+                g->location == LOCATION_CROWNROAD) {
                 push_message(g, "A town is just ahead on the road.");
                 return;
             }
             if (g->location == LOCATION_TOWN ||
                 g->location == LOCATION_TOWN2 ||
+                g->location == LOCATION_TOWN3 ||
                 g->location == LOCATION_TAVERN ||
                 g->location == LOCATION_INN) {
                 push_message(g, "Already in town!");
@@ -1557,6 +1560,12 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
         if (g->location == LOCATION_TOWN2 &&
+            g->map.tiles[ty][tx] == TILE_TOWN_EXIT && ty == 0) {
+            game_enter_crownroad(g, 0);
+            return;
+        }
+
+        if (g->location == LOCATION_TOWN2 &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT && tx == TOWN_W - 1) {
             game_enter_forest_road(g);
             return;
@@ -1565,6 +1574,16 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->location == LOCATION_TOWN2 &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT && ty == TOWN_H - 1) {
             game_enter_swamp(g);
+            return;
+        }
+
+        if (g->location == LOCATION_TOWN3 &&
+            g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
+            if (ty == TOWN_H - 1) {
+                game_enter_crownroad(g, 1);
+            } else {
+                push_message(g, "The Castle of No Return is sealed for now.");
+            }
             return;
         }
 
@@ -1644,6 +1663,12 @@ void action_resolve_player(GameState *g, Action a) {
             g->map.tiles[ty][tx] == TILE_FOREST_EXIT &&
             tx == FOREST_ROAD_W - 1) {
             game_leave_forest_road(g, LOCATION_TOWN);
+            return;
+        }
+
+        if (g->location == LOCATION_CROWNROAD &&
+            g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
+            game_leave_crownroad(g, ty == 0 ? LOCATION_TOWN3 : LOCATION_TOWN2);
             return;
         }
 

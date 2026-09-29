@@ -73,6 +73,13 @@ typedef struct {
     int   level_cleared;
 } LevelCache;
 
+typedef struct {
+    Enemy enemies[MAX_ENEMIES];
+    int enemy_count;
+    int valid;
+    int level_cleared;
+} CrownroadCache;
+
 typedef enum {
     LOCATION_TOWN,
     LOCATION_DUNGEON,
@@ -88,7 +95,9 @@ typedef enum {
     LOCATION_FOREST_ROAD,
     LOCATION_SWAMP,
     LOCATION_HIGH_PASS,
-    LOCATION_DRAGONSPINE
+    LOCATION_DRAGONSPINE,
+    LOCATION_CROWNROAD,
+    LOCATION_TOWN3
 } Location;
 
 typedef struct {
@@ -103,6 +112,7 @@ typedef struct {
     LevelCache coast_cache[MAX_REGION_DEPTH];
     LevelCache swamp_cache[SWAMP_DEPTH];
     LevelCache dragonspine_cache[DRAGONSPINE_DEPTH];
+    CrownroadCache crownroad_cache;
     LevelCache temple_cache[TEMPLE_DEPTH];
     LevelCache labyrinth_cache[LABYRINTH_DEPTH];
     char       messages[MAX_MESSAGES][MAX_MESSAGE_LEN];
@@ -183,6 +193,8 @@ void game_leave_tavern(GameState *g);
 void game_enter_town2(GameState *g);
 void game_enter_forest_road(GameState *g);
 void game_leave_forest_road(GameState *g, Location destination);
+void game_enter_crownroad(GameState *g, int from_town3);
+void game_leave_crownroad(GameState *g, Location destination);
 void game_enter_inn(GameState *g);
 void game_leave_inn(GameState *g);
 void game_talk_to_innkeeper(GameState *g);

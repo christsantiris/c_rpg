@@ -5,10 +5,12 @@
 
 #define TOWN_MUSIC    "assets/music/Woodland Fantasy.mp3"
 #define TOWN2_MUSIC   "assets/music/town-music.mp3"
+#define TOWN3_MUSIC   "assets/music/Town 3.mp3"
 #define DUNGEON_MUSIC "assets/music/the_march_upon_the_red_mountain.mp3"
 
 static Mix_Music *town_track = NULL;
 static Mix_Music *town2_track = NULL;
+static Mix_Music *town3_track = NULL;
 static Mix_Music *dungeon_track = NULL;
 static Mix_Music *current_track = NULL;
 static int music_on = 1;
@@ -20,12 +22,16 @@ void music_init(void) {
     }
     town_track = Mix_LoadMUS(TOWN_MUSIC);
     town2_track = Mix_LoadMUS(TOWN2_MUSIC);
+    town3_track = Mix_LoadMUS(TOWN3_MUSIC);
     dungeon_track = Mix_LoadMUS(DUNGEON_MUSIC);
     if (!town_track) {
         fprintf(stderr, "Failed to load town music: %s\n", Mix_GetError());
     }
     if (!town2_track) {
         fprintf(stderr, "Failed to load Town 2 music: %s\n", Mix_GetError());
+    }
+    if (!town3_track) {
+        fprintf(stderr, "Failed to load Town 3 music: %s\n", Mix_GetError());
     }
     if (!dungeon_track) {
         fprintf(stderr, "Failed to load dungeon music: %s\n", Mix_GetError());
@@ -57,9 +63,11 @@ int music_enabled(void) {
     return music_on;
 }
 
-void music_update(int screen, int in_town, int in_town2) {
+void music_update(int screen, int in_town, int in_town2, int in_town3) {
     if (screen == SCREEN_PLAYING) {
-        if (in_town2) {
+        if (in_town3) {
+            play_track(town3_track ? town3_track : town_track);
+        } else if (in_town2) {
             play_track(town2_track ? town2_track : town_track);
         } else if (in_town) {
             play_track(town_track);
@@ -80,6 +88,9 @@ void music_free(void) {
     }
     if (town2_track) {
         Mix_FreeMusic(town2_track);
+    }
+    if (town3_track) {
+        Mix_FreeMusic(town3_track);
     }
     if (dungeon_track) {
         Mix_FreeMusic(dungeon_track);
