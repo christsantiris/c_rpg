@@ -4140,6 +4140,18 @@ static void draw_tavern_fallback(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 123, y + 53, 4, 3, window);
 }
 
+void draw_apothecary(Renderer *r, int tile_x, int tile_y) {
+    if (!r->apothecary_texture) {
+        draw_shop_alchemist(r, tile_x, tile_y);
+        return;
+    }
+    SDL_Rect destination = {
+        tile_x * TILE_SIZE, tile_y * TILE_SIZE,
+        TOWN_APOTHECARY_W * TILE_SIZE, TOWN_APOTHECARY_H * TILE_SIZE
+    };
+    SDL_RenderCopy(r->sdl, r->apothecary_texture, NULL, &destination);
+}
+
 void draw_tavern(Renderer *r, int tile_x, int tile_y) {
     if (!r->tavern_texture) {
         draw_tavern_fallback(r, tile_x, tile_y);
@@ -4168,13 +4180,11 @@ void draw_harbor(Renderer *r, int tile_x, int tile_y) {
     if (!r->harbor_texture) {
         return;
     }
-    // Exclude the sample's transparent margins and preserve its proportions.
-    SDL_Rect source = {150, 174, 1129, 827};
-    int width = TOWN_HARBOR_W * TILE_SIZE;
-    int height = width * source.h / source.w;
-    int bottom = (tile_y + TOWN_HARBOR_H) * TILE_SIZE;
-    SDL_Rect destination = {tile_x * TILE_SIZE, bottom - height, width, height};
-    SDL_RenderCopy(r->sdl, r->harbor_texture, &source, &destination);
+    SDL_Rect destination = {
+        tile_x * TILE_SIZE, tile_y * TILE_SIZE,
+        TOWN_HARBOR_W * TILE_SIZE, TOWN_HARBOR_H * TILE_SIZE
+    };
+    SDL_RenderCopy(r->sdl, r->harbor_texture, NULL, &destination);
 }
 
 static void draw_island_crop(Renderer *r, SDL_Rect source, SDL_Rect destination) {
@@ -4299,7 +4309,7 @@ void draw_floor_item(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x+6, y+8, 12,          6,           glow);
 }
 
-void draw_labyrinth_entrance(Renderer *r, int tile_x, int tile_y, int open) {
+static void draw_labyrinth_entrance_fallback(Renderer *r, int tile_x, int tile_y, int open) {
     int x = (tile_x - 1) * TILE_SIZE;
     int y = (tile_y - 2) * TILE_SIZE;
     SDL_Color shadow = {25, 29, 25, 255};
@@ -4453,6 +4463,20 @@ void draw_labyrinth_entrance(Renderer *r, int tile_x, int tile_y, int open) {
     fill_rect(r, x + 13, y + 69, 46, 1, worn);
     fill_rect(r, x + 29, y + 69, 1, 3, mortar);
     fill_rect(r, x + 46, y + 69, 1, 3, mortar);
+}
+
+void draw_labyrinth_entrance(Renderer *r, int tile_x, int tile_y, int open) {
+    if (!r->labyrinth_texture) {
+        draw_labyrinth_entrance_fallback(r, tile_x, tile_y, open);
+        return;
+    }
+    // The sheet holds the sealed frame, then the open frame, 3x3 tiles each.
+    SDL_Rect source = {open ? 3 * TILE_SIZE : 0, 0, 3 * TILE_SIZE, 3 * TILE_SIZE};
+    SDL_Rect destination = {
+        (tile_x - 1) * TILE_SIZE, (tile_y - 2) * TILE_SIZE,
+        3 * TILE_SIZE, 3 * TILE_SIZE
+    };
+    SDL_RenderCopy(r->sdl, r->labyrinth_texture, &source, &destination);
 }
 
 void draw_labyrinth_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {

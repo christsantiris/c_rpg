@@ -944,6 +944,10 @@ void action_resolve_player(GameState *g, Action a) {
         } else if (item->type == ITEM_POTION_STRENGTH) {
             g->player.attack += 1;
             push_message(g, "Potion of Strength: base attack permanently increased by 1.");
+        } else if (item->type == ITEM_POTION_INTELLIGENCE) {
+            g->player.max_mp += 1;
+            g->player.mp += 1;
+            push_message(g, "Potion of Intelligence: max MP permanently increased by 1.");
         } else if (item->type == ITEM_SPELL_TOME) {
             if (!item_class_allowed(item, g->player.player_class)) {
                 push_message(g, "Only a Mage can study that tome");

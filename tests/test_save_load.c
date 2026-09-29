@@ -767,6 +767,57 @@ static void test_legacy_inn_move(void) {
     remove_test_save(LEGACY_SLOT);
 }
 
+static void test_legacy_apothecary(void) {
+    static GameState original;
+    static GameState loaded;
+    memset(&original, 0, sizeof(original));
+    game_init(&original);
+    game_leave_crownroad(&original, LOCATION_TOWN3);
+    int lane_y = TOWN_APOTHECARY_Y + TOWN_APOTHECARY_H;
+    for (int y = TOWN_APOTHECARY_Y; y < lane_y; y++) {
+        for (int x = TOWN_APOTHECARY_X; x < TOWN_APOTHECARY_X + TOWN_APOTHECARY_W; x++) {
+            original.map.tiles[y][x] = TILE_TOWN_FLOOR;
+        }
+    }
+    for (int x = TOWN_MOAT_X + TOWN_MOAT_W; x < TOWN_APOTHECARY_X + TOWN_APOTHECARY_W; x++) {
+        original.map.tiles[lane_y][x] = TILE_TOWN_FLOOR;
+    }
+    original.player.x = TOWN_APOTHECARY_X + 1;
+    original.player.y = TOWN_APOTHECARY_Y + 1;
+    original.floor_item_count = 2;
+    original.floor_items[0] = (FloorItem){
+        .active = 1, .x = TOWN_APOTHECARY_DOOR_X, .y = TOWN_APOTHECARY_Y,
+        .underlying_tile = TILE_TOWN_FLOOR, .item = item_make_health_potion()
+    };
+    original.floor_items[1] = (FloorItem){
+        .active = 1, .x = TOWN_MOAT_X + TOWN_MOAT_W + 1, .y = lane_y,
+        .underlying_tile = TILE_TOWN_FLOOR, .item = item_make_mana_potion()
+    };
+    original.map.tiles[TOWN_APOTHECARY_Y][TOWN_APOTHECARY_DOOR_X] = TILE_ITEM;
+    original.map.tiles[lane_y][TOWN_MOAT_X + TOWN_MOAT_W + 1] = TILE_ITEM;
+    int loaded_ok = save_game(&original, LEGACY_SLOT) &&
+        rewrite_save_version(LEGACY_SLOT, 64) && load_game(&loaded, LEGACY_SLOT);
+    ASSERT("legacy Town 3 save without the Apothecary loads", loaded_ok);
+    if (loaded_ok) {
+        ASSERT("loading adds the Apothecary and its lane",
+            loaded.map.tiles[TOWN_APOTHECARY_Y][TOWN_APOTHECARY_X] == TILE_SHOP_ALCHEMIST &&
+            loaded.map.tiles[TOWN_APOTHECARY_DOOR_Y][TOWN_APOTHECARY_DOOR_X] ==
+                TILE_ALCHEMIST_DOOR &&
+            loaded.map.tiles[lane_y][TOWN_MOAT_X + TOWN_MOAT_W] == TILE_TOWN_PATH);
+        ASSERT("Apothecary migration moves the player onto its lane",
+            loaded.player.x == TOWN_APOTHECARY_X + 1 && loaded.player.y == lane_y &&
+            map_is_walkable(&loaded.map, loaded.player.x, loaded.player.y));
+        ASSERT("Apothecary migration keeps loot visible on the paved lane",
+            loaded.floor_items[0].x == TOWN_APOTHECARY_DOOR_X &&
+            loaded.floor_items[0].y == lane_y &&
+            loaded.floor_items[0].underlying_tile == TILE_TOWN_PATH &&
+            loaded.map.tiles[lane_y][TOWN_APOTHECARY_DOOR_X] == TILE_ITEM &&
+            loaded.floor_items[1].underlying_tile == TILE_TOWN_PATH &&
+            loaded.map.tiles[lane_y][TOWN_MOAT_X + TOWN_MOAT_W + 1] == TILE_ITEM);
+    }
+    remove_test_save(LEGACY_SLOT);
+}
+
 static void test_forest_enemy_repair(void) {
     static GameState original;
     static GameState loaded;
@@ -1036,6 +1087,7 @@ void test_save_load(void) {
     test_legacy_tavern_move();
     test_legacy_town_square();
     test_legacy_inn_move();
+    test_legacy_apothecary();
     test_forest_enemy_repair();
     test_blocked_dungeon_gate_repair();
 }

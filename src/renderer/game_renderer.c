@@ -1347,6 +1347,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         draw_castle_front(r,
             viewport_to_screen_x(v, TOWN_MOAT_X),
             viewport_to_screen_y(v, TOWN_MOAT_Y));
+        draw_apothecary(r,
+            viewport_to_screen_x(v, TOWN_APOTHECARY_X),
+            viewport_to_screen_y(v, TOWN_APOTHECARY_Y));
         draw_crownroad_gate(r,
             viewport_to_screen_x(v, CROWNROAD_X - 1),
             viewport_to_screen_y(v, TOWN_H - 3));
@@ -1573,6 +1576,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, CROWNROAD_X) * TILE_SIZE +
                 (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, TOWN_H - 4) * TILE_SIZE,
+            label, r->font_tiny);
+        TTF_SizeText(r->font_tiny, "APOTHECARY", &width, NULL);
+        renderer_draw_text(r, "APOTHECARY",
+            viewport_to_screen_x(v, TOWN_APOTHECARY_X) * TILE_SIZE +
+                (TOWN_APOTHECARY_W * TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, TOWN_APOTHECARY_Y - 1) * TILE_SIZE,
             label, r->font_tiny);
     }
 

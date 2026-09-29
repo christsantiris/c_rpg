@@ -260,7 +260,8 @@ static void enter_playing(Renderer *renderer, Viewport *viewport, GameState *gam
 
 static int open_shop_on_move(const GameState *game, const Action *action, ShopScreen *shop, GameScreen *screen) {
     if (action->type != ACTION_MOVE ||
-        (game->location != LOCATION_TOWN && game->location != LOCATION_TOWN2) ||
+        (game->location != LOCATION_TOWN && game->location != LOCATION_TOWN2 &&
+        game->location != LOCATION_TOWN3) ||
         action->target_x < 0 || action->target_x >= MAP_W ||
         action->target_y < 0 || action->target_y >= MAP_H) {
         return 0;
@@ -269,7 +270,9 @@ static int open_shop_on_move(const GameState *game, const Action *action, ShopSc
     if (tile == TILE_BLACKSMITH_DOOR) {
         shop_init(shop, SHOP_TYPE_BLACKSMITH, game->defeated_bosses);
     } else if (tile == TILE_ALCHEMIST_DOOR) {
-        shop_init(shop, SHOP_TYPE_ALCHEMIST, game->defeated_bosses);
+        // Town 3's Apothecary reuses the alchemist shop tiles.
+        shop_init(shop, game->location == LOCATION_TOWN3 ?
+            SHOP_TYPE_APOTHECARY : SHOP_TYPE_ALCHEMIST, game->defeated_bosses);
     } else if (tile == TILE_HEALER_DOOR) {
         shop_init(shop, SHOP_TYPE_HEALER, game->defeated_bosses);
     } else if (tile == TILE_WITCH_DOOR) {

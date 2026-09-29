@@ -1035,6 +1035,23 @@ void map_place_town_inn(Map *m) {
     m->tiles[TOWN_INN_DOOR_Y][TOWN_INN_DOOR_X] = TILE_TAVERN_DOOR;
 }
 
+void map_place_town_apothecary(Map *m) {
+    // Town 3's Apothecary reuses the alchemist shop tiles; its door opens onto
+    // a lane that joins the square's north-east corner.
+    for (int y = TOWN_APOTHECARY_Y; y < TOWN_APOTHECARY_Y + TOWN_APOTHECARY_H; y++) {
+        for (int x = TOWN_APOTHECARY_X; x < TOWN_APOTHECARY_X + TOWN_APOTHECARY_W; x++) {
+            m->tiles[y][x] = TILE_SHOP_ALCHEMIST;
+        }
+    }
+    m->tiles[TOWN_APOTHECARY_DOOR_Y][TOWN_APOTHECARY_DOOR_X] = TILE_ALCHEMIST_DOOR;
+    int lane_y = TOWN_APOTHECARY_Y + TOWN_APOTHECARY_H;
+    for (int x = TOWN_MOAT_X + TOWN_MOAT_W; x < TOWN_APOTHECARY_X + TOWN_APOTHECARY_W; x++) {
+        if (m->tiles[lane_y][x] != TILE_ITEM) {
+            m->tiles[lane_y][x] = TILE_TOWN_PATH;
+        }
+    }
+}
+
 void map_place_town_labyrinth(Map *m) {
     // Branch from the east-west road and skirt the gate to its south entrance.
     for (int y = 13; y <= TOWN_LABYRINTH_Y + 1; y++) {
@@ -1247,6 +1264,7 @@ void map_generate_town3(Map *m, int *spawn_x, int *spawn_y) {
     m->tiles[10][CROWNROAD_X] = TILE_TOWN_EXIT;
     m->tiles[11][CROWNROAD_X] = TILE_TOWN_PATH;
     m->tiles[TOWN_H - 1][CROWNROAD_X] = TILE_TOWN_EXIT;
+    map_place_town_apothecary(m);
     *spawn_x = CROWNROAD_X;
     *spawn_y = TOWN_H - 2;
 }

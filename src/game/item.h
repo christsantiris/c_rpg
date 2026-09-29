@@ -15,7 +15,8 @@ typedef enum {
     ITEM_SPELL_TOME,
     ITEM_TREASURE_MAP,
     ITEM_GOLD,
-    ITEM_POTION_STRENGTH
+    ITEM_POTION_STRENGTH,
+    ITEM_POTION_INTELLIGENCE
 } ItemType;
 
 typedef enum {
@@ -131,6 +132,7 @@ typedef struct {
 Item item_make_health_potion(void);
 Item item_make_mana_potion(void);
 Item item_make_strength_potion(void);
+Item item_make_intelligence_potion(void);
 // Item item_make_weapon(const char *name, int attack_bonus, int value);
 Item item_make_armor(const char *name, int defense_bonus, int value);
 

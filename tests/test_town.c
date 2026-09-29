@@ -62,6 +62,19 @@ void test_crownroad_to_town3(void) {
     }
     ASSERT("moat surrounds the castle except for the drawbridge",
         moat_crossings == 1 && map_is_walkable(&g.map, CROWNROAD_X, 11));
+    ASSERT("Apothecary stands east of the square with a walk-in door",
+        TOWN_APOTHECARY_X >= TOWN_MOAT_X + TOWN_MOAT_W &&
+        g.map.tiles[TOWN_APOTHECARY_Y][TOWN_APOTHECARY_X] == TILE_SHOP_ALCHEMIST &&
+        !map_is_walkable(&g.map, TOWN_APOTHECARY_X, TOWN_APOTHECARY_Y) &&
+        g.map.tiles[TOWN_APOTHECARY_DOOR_Y][TOWN_APOTHECARY_DOOR_X] ==
+            TILE_ALCHEMIST_DOOR &&
+        map_is_walkable(&g.map, TOWN_APOTHECARY_DOOR_X, TOWN_APOTHECARY_DOOR_Y));
+    int apothecary_lane = 1;
+    for (int x = TOWN_MOAT_X + TOWN_MOAT_W - 1; x <= TOWN_APOTHECARY_DOOR_X; x++) {
+        apothecary_lane &=
+            g.map.tiles[TOWN_APOTHECARY_DOOR_Y + 1][x] == TILE_TOWN_PATH;
+    }
+    ASSERT("Apothecary lane joins the square's north-east corner", apothecary_lane);
 
     g.player.x = CROWNROAD_X;
     g.player.y = 11;

@@ -30,6 +30,12 @@
 #define TOWN_MOAT_Y (TOWN_CASTLE_Y - 1)
 #define TOWN_MOAT_W (TOWN_CASTLE_W + 2)
 #define TOWN_MOAT_H (TOWN_CASTLE_H + 2)
+#define TOWN_APOTHECARY_X 31
+#define TOWN_APOTHECARY_Y 8
+#define TOWN_APOTHECARY_W 5
+#define TOWN_APOTHECARY_H 4
+#define TOWN_APOTHECARY_DOOR_X (TOWN_APOTHECARY_X + 2)
+#define TOWN_APOTHECARY_DOOR_Y (TOWN_APOTHECARY_Y + TOWN_APOTHECARY_H - 1)
 #define TAVERN_X 4
 #define TAVERN_Y 2
 #define TAVERN_W 32
@@ -295,6 +301,7 @@ void map_place_town2_center(Map *m);
 void map_place_town_harbor(Map *m);
 void map_place_town_tavern(Map *m);
 void map_place_town_inn(Map *m);
+void map_place_town_apothecary(Map *m);
 void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_inn(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_island(Map *m, int *spawn_x, int *spawn_y);
