@@ -339,8 +339,6 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 5. Additional areas and storylines
 6. Double the number of enemies on the Crown Road
 7. Add a Royal Guard NPC before the Crown Road Gate that warns players of its difficulty and recommends exploring other areas first. 
-8. Improve and Expand the Crown Road Gate Sprite
-11. Improve Crown road gate sprite
 13. Town 2 additional enemy area
 14. Different music for different enemy area encounters
 15. Expanded Sfx for different weapon types.

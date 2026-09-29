@@ -18,6 +18,7 @@ typedef struct {
     SDL_Texture *labyrinth_texture;
     SDL_Texture *castle_texture;
     SDL_Texture *apothecary_texture;
+    SDL_Texture *crownroad_gate_texture;
     SDL_Texture *island_texture;
     SDL_Texture *island_ship_texture;
     SDL_Texture *temple_enemy_texture;

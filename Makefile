@@ -35,6 +35,7 @@ sprites:
 	python3 tools/sprites/witch.py
 	python3 tools/sprites/labyrinth.py
 	python3 tools/sprites/apothecary.py
+	python3 tools/sprites/crownroad_gate.py
 
 clean:
 	rm -rf build
