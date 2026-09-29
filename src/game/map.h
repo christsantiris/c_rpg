@@ -94,6 +94,14 @@
 #define COAST_DEPTH 8
 #define MAX_REGION_DEPTH 8
 #define SWAMP_DEPTH 5
+#define SWAMP_MAP_W 72
+#define SWAMP_MAP_H 64
+#define DRAGONSPINE_DEPTH 5
+#define HIGH_PASS_W 64
+#define HIGH_PASS_Y 12
+#define TOWN_DRAGON_GATE_Y 4
+#define TOWN_DRAGON_NPC_X 39
+#define TOWN_DRAGON_NPC_Y 6
 
 typedef enum {
     TILE_FLOOR = 0,
@@ -222,7 +230,17 @@ typedef enum {
     TILE_SWAMP_ENTRANCE,
     TILE_SWAMP_EXIT,
     TILE_NPC_INNKEEPER,
-    TILE_SWAMP_DAUGHTER
+    TILE_SWAMP_DAUGHTER,
+    TILE_DRAGON_FLOOR,
+    TILE_DRAGON_WALL,
+    TILE_DRAGON_ASH,
+    TILE_DRAGON_HOARD,
+    TILE_DRAGON_ENTRANCE,
+    TILE_DRAGON_EXIT,
+    TILE_HIGH_PASS_ENTRANCE,
+    TILE_HIGH_PASS_EXIT,
+    TILE_NPC_DRAGON_SEEKER,
+    TILE_DRAGON_TREASURE
 } TileType;
 
 typedef struct {
@@ -244,6 +262,7 @@ int  map_is_walkable(const Map *m, int x, int y);
 void map_room_center(const Room *r, int *cx, int *cy);
 void map_generate_town(Map *m, int *spawn_x, int *spawn_y);
 void map_set_town2_road(Map *m, int unlocked);
+void map_set_dragonspine_road(Map *m, int unlocked);
 void map_generate_town2(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_forest_road(Map *m);
 void map_place_town_labyrinth(Map *m);
@@ -259,6 +278,8 @@ void map_reveal_forest_exit(Map *m);
 void map_generate_mountains(Map *m, int level);
 void map_generate_coast(Map *m, int level);
 void map_generate_swamp(Map *m, int level);
+void map_generate_high_pass(Map *m);
+void map_generate_dragonspine(Map *m, int level);
 int map_remove_coast_sluice(Map *m);
 TileType map_coast_trap_underlay(const Map *m, int x, int y);
 int map_is_coast_tidal_tile(TileType tile);

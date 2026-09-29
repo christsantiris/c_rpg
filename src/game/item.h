@@ -14,7 +14,8 @@ typedef enum {
     ITEM_SHIELD,
     ITEM_SPELL_TOME,
     ITEM_TREASURE_MAP,
-    ITEM_GOLD
+    ITEM_GOLD,
+    ITEM_POTION_STRENGTH
 } ItemType;
 
 typedef enum {
@@ -129,6 +130,7 @@ typedef struct {
 
 Item item_make_health_potion(void);
 Item item_make_mana_potion(void);
+Item item_make_strength_potion(void);
 // Item item_make_weapon(const char *name, int attack_bonus, int value);
 Item item_make_armor(const char *name, int defense_bonus, int value);
 
@@ -176,6 +178,7 @@ Item item_make_runed_robes(void);
 Item item_make_enchanter_robes(void);
 Item item_make_archmage_robes(void);
 Item item_make_necromancer_cloak(void);
+Item item_make_dragon_scale_mantle(void);
 Item item_make_tidecaller_robes(void);
 Item item_make_buckler(void);
 Item item_make_kite_shield(void);

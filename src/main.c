@@ -78,7 +78,9 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
     }
     if (action.target_x == TOWN_W - 1) {
         *style = g->location == LOCATION_TOWN2 ?
-            TOWN_EXIT_FOREST : TOWN_EXIT_MOUNTAINS;
+            TOWN_EXIT_FOREST :
+            (action.target_y == TOWN_DRAGON_GATE_Y ?
+            TOWN_EXIT_DRAGONSPINE : TOWN_EXIT_MOUNTAINS);
         return 1;
     }
     if (action.target_y == TOWN_H - 1) {
@@ -478,6 +480,7 @@ int main(int argc, char **argv) {
             (game.location == LOCATION_DUNGEON ||
             game.location == LOCATION_FOREST ||
             game.location == LOCATION_MOUNTAINS ||
+            game.location == LOCATION_DRAGONSPINE ||
             game.location == LOCATION_COAST ||
             game.location == LOCATION_SWAMP ||
             game.location == LOCATION_ISLAND ||
@@ -724,7 +727,7 @@ int main(int argc, char **argv) {
                     // Harbor screen
                     if (screen == SCREEN_HARBOR) {
                         HarborResult result = harbor_handle_key(&harbor_screen,
-                            sc, game_has_treasure_map(&game),
+                            sc, game_can_sail_to_island(&game),
                             game.location == LOCATION_ISLAND);
                         handle_harbor_result(result, &game, &screen,
                             &renderer, &viewport);
@@ -854,6 +857,10 @@ int main(int argc, char **argv) {
                                         } else if (game.map.tiles[ty][tx] ==
                                             TILE_NPC_ROWAN) {
                                             game_talk_to_rowan(&game);
+                                            found = 1;
+                                        } else if (game.map.tiles[ty][tx] ==
+                                            TILE_NPC_DRAGON_SEEKER) {
+                                            game_talk_to_dragon_seeker(&game);
                                             found = 1;
                                         } else if (game.map.tiles[ty][tx] ==
                                             TILE_NPC_ISLAND_CAPTAIN) {
@@ -1162,7 +1169,7 @@ int main(int argc, char **argv) {
                             if (SDL_PointInRect(&point, &button)) {
                                 harbor_screen.selected = option;
                                 HarborResult result = harbor_activate(&harbor_screen,
-                                    game_has_treasure_map(&game),
+                                    game_can_sail_to_island(&game),
                                     game.location == LOCATION_ISLAND);
                                 handle_harbor_result(result, &game, &screen,
                                     &renderer, &viewport);
@@ -1300,7 +1307,8 @@ int main(int argc, char **argv) {
                 entry_gate.style == TOWN_EXIT_ROAD ||
                 entry_gate.style == TOWN_EXIT_SWAMP) {
                 draw_forest_transition(&renderer, covered_width);
-            } else if (entry_gate.style == TOWN_EXIT_MOUNTAINS) {
+            } else if (entry_gate.style == TOWN_EXIT_MOUNTAINS ||
+                entry_gate.style == TOWN_EXIT_DRAGONSPINE) {
                 draw_mountain_transition(&renderer, covered_width);
             } else if (entry_gate.style == TOWN_EXIT_COAST) {
                 draw_coast_transition(&renderer, covered_width);

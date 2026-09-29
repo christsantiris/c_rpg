@@ -110,6 +110,16 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             e->max_hp = 65; e->hp = 65;
             e->attack = 15; e->defense = 5; e->experience = 80;
             break;
+        case ENEMY_DRAKE:
+            snprintf(e->name, sizeof(e->name), "Drake");
+            e->max_hp = 75; e->hp = 75;
+            e->attack = 17; e->defense = 6; e->experience = 90;
+            break;
+        case ENEMY_FIRE_ELEMENTAL:
+            snprintf(e->name, sizeof(e->name), "Fire Elemental");
+            e->max_hp = 58; e->hp = 58;
+            e->attack = 19; e->defense = 4; e->experience = 100;
+            break;
         case ENEMY_SWAMP_DEMON:
             strncpy(e->name, "Swamp Demon", sizeof(e->name) - 1);
             e->max_hp = 180; e->hp = 180;
@@ -338,8 +348,8 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
         case ENEMY_RED_DRAGON:
             strncpy(e->name, "Red Dragon", sizeof(e->name) - 1);
             e->name[sizeof(e->name) - 1] = '\0';
-            e->max_hp = 500; e->hp = 500;
-            e->attack = 55;  e->defense = 22;
+            e->max_hp = 360; e->hp = 360;
+            e->attack = 29; e->defense = 11;
             e->experience = 1200;
             e->is_boss = 1;
             break;
@@ -366,6 +376,8 @@ static int boss_for_level(const GameState *g, EnemyType *type) {
         boss_level = COAST_DEPTH;
     } else if (g->location == LOCATION_SWAMP) {
         boss_level = SWAMP_DEPTH;
+    } else if (g->location == LOCATION_DRAGONSPINE) {
+        boss_level = DRAGONSPINE_DEPTH;
     }
     if (g->level != boss_level) {
         return 0;
@@ -381,6 +393,8 @@ static int boss_for_level(const GameState *g, EnemyType *type) {
         *type = ENEMY_DROWNED_QUEEN;
     } else if (g->location == LOCATION_SWAMP) {
         *type = ENEMY_SWAMP_DEMON;
+    } else if (g->location == LOCATION_DRAGONSPINE) {
+        *type = ENEMY_RED_DRAGON;
     } else {
         *type = ENEMY_LICH_KING;
     }
@@ -399,7 +413,10 @@ static int enemy_terrain_open(const GameState *g, int x, int y) {
         g->map.tiles[y][x] != TILE_COAST_SHALLOW_WATER &&
         g->map.tiles[y][x] != TILE_COAST_DRAINED_WATER &&
         g->map.tiles[y][x] != TILE_COAST_CHANNEL_DRY &&
-        g->map.tiles[y][x] != TILE_SWAMP_FLOOR)) {
+        g->map.tiles[y][x] != TILE_SWAMP_FLOOR &&
+        g->map.tiles[y][x] != TILE_DRAGON_FLOOR &&
+        g->map.tiles[y][x] != TILE_DRAGON_ASH &&
+        g->map.tiles[y][x] != TILE_DRAGON_HOARD)) {
         return 0;
     }
     return 1;
@@ -732,7 +749,8 @@ void enemies_spawn(GameState *g) {
         if (g->location == LOCATION_FOREST ||
             g->location == LOCATION_MOUNTAINS ||
             g->location == LOCATION_COAST ||
-            g->location == LOCATION_SWAMP) {
+            g->location == LOCATION_SWAMP ||
+            g->location == LOCATION_DRAGONSPINE) {
             map_room_center(&g->map.rooms[g->map.room_count - 1],
                 &boss_x, &boss_y);
         }
@@ -749,7 +767,8 @@ void enemies_spawn(GameState *g) {
     int boss_level = g->location == LOCATION_FOREST ? FOREST_DEPTH :
         (g->location == LOCATION_MOUNTAINS ? MOUNTAIN_DEPTH :
         (g->location == LOCATION_COAST ? COAST_DEPTH :
-        (g->location == LOCATION_SWAMP ? SWAMP_DEPTH : DUNGEON_DEPTH)));
+        (g->location == LOCATION_SWAMP ? SWAMP_DEPTH :
+        (g->location == LOCATION_DRAGONSPINE ? DRAGONSPINE_DEPTH : DUNGEON_DEPTH))));
     int regular_room_limit = g->level == boss_level
         ? g->map.room_count - 1 : g->map.room_count;
     place_dain_map_bearer(g);
@@ -771,7 +790,19 @@ void enemies_spawn(GameState *g) {
         // Completed regions advance enemy roles without skipping map stages.
         int level = g->level + 3 * order_tier;
 
-        if (g->location == LOCATION_SWAMP) {
+        if (g->location == LOCATION_DRAGONSPINE) {
+            if (g->level == 1) {
+                type = roll < 25 ? ENEMY_GOBLIN_SCOUT :
+                    (roll < 50 ? ENEMY_GOBLIN_ARCHER : ENEMY_DRAKE);
+            } else if (g->level == 2) {
+                type = roll < 20 ? ENEMY_GOBLIN_ARCHER :
+                    (roll < 55 ? ENEMY_DRAKE : ENEMY_GIANT);
+            } else {
+                type = roll < 12 ? ENEMY_GOBLIN_ARCHER :
+                    (roll < 40 ? ENEMY_DRAKE :
+                    (roll < 65 ? ENEMY_GIANT : ENEMY_FIRE_ELEMENTAL));
+            }
+        } else if (g->location == LOCATION_SWAMP) {
             if (g->level <= 2) {
                 type = roll < 30 ? ENEMY_GIANT_RAT :
                     (roll < 55 ? ENEMY_ZOMBIE :
@@ -896,6 +927,7 @@ void game_init(GameState *g) {
         g->coast_cache[i].valid = 0;
         if (i < SWAMP_DEPTH) {
             g->swamp_cache[i].valid = 0;
+            g->dragonspine_cache[i].valid = 0;
         }
     }
     g->message_count = 0;
@@ -905,6 +937,7 @@ void game_init(GameState *g) {
     g->max_mountain_level_reached = 1;
     g->max_coast_level_reached = 1;
     g->max_swamp_level_reached = 1;
+    g->max_dragonspine_level_reached = 1;
     g->max_temple_level_reached = 1;
     g->location = LOCATION_TOWN;
     int spawn_x, spawn_y;
@@ -943,6 +976,8 @@ void game_init(GameState *g) {
     g->mara_quest_state = 0;
     g->mara_beacons_lit = 0;
     g->cain_scroll_given = 0;
+    g->island_travel_unlocked = 0;
+    g->dragon_treasure_quest_state = 0;
     for (int i = 0; i < TEMPLE_DEPTH; i++) {
         g->temple_cache[i].valid = 0;
     }
@@ -1238,6 +1273,9 @@ static LevelCache *active_cache(GameState *g) {
     if (g->location == LOCATION_SWAMP) {
         return g->swamp_cache;
     }
+    if (g->location == LOCATION_DRAGONSPINE) {
+        return g->dragonspine_cache;
+    }
     if (g->location == LOCATION_TEMPLE) {
         return g->temple_cache;
     }
@@ -1253,6 +1291,9 @@ static int *active_max_level(GameState *g) {
     }
     if (g->location == LOCATION_SWAMP) {
         return &g->max_swamp_level_reached;
+    }
+    if (g->location == LOCATION_DRAGONSPINE) {
+        return &g->max_dragonspine_level_reached;
     }
     if (g->location == LOCATION_TEMPLE) {
         return &g->max_temple_level_reached;
@@ -1272,6 +1313,9 @@ static int active_depth(const GameState *g) {
     }
     if (g->location == LOCATION_SWAMP) {
         return SWAMP_DEPTH;
+    }
+    if (g->location == LOCATION_DRAGONSPINE) {
+        return DRAGONSPINE_DEPTH;
     }
     if (g->location == LOCATION_TEMPLE) {
         return TEMPLE_DEPTH;
@@ -1511,11 +1555,30 @@ static void spawn_mara_guardian(GameState *g) {
     }
 }
 
+static void place_dragon_treasure(GameState *g) {
+    if (g->location != LOCATION_DRAGONSPINE ||
+        g->level != DRAGONSPINE_DEPTH || g->dragon_treasure_quest_state != 1) {
+        return;
+    }
+    Room *lair = &g->map.rooms[g->map.room_count - 1];
+    int x;
+    int y;
+    map_room_center(lair, &x, &y);
+    x += 2;
+    y += 1;
+    if (g->map.tiles[y][x] == TILE_DRAGON_FLOOR ||
+        g->map.tiles[y][x] == TILE_DRAGON_ASH ||
+        g->map.tiles[y][x] == TILE_DRAGON_HOARD) {
+        g->map.tiles[y][x] = TILE_DRAGON_TREASURE;
+    }
+}
+
 void game_refresh_quest_encounters(GameState *g) {
     int seal_placed = place_elowen_seal(g);
     int warden_placed = place_alder_warden(g);
     int beacon_placed = place_mara_beacon(g);
     place_dain_map_bearer(g);
+    place_dragon_treasure(g);
     if (seal_placed) {
         spawn_elowen_guardians(g);
     }
@@ -1536,6 +1599,8 @@ static void generate_active_level(GameState *g) {
         map_generate_coast(&g->map, g->level);
     } else if (g->location == LOCATION_SWAMP) {
         map_generate_swamp(&g->map, g->level);
+    } else if (g->location == LOCATION_DRAGONSPINE) {
+        map_generate_dragonspine(&g->map, g->level);
     } else if (g->location == LOCATION_TEMPLE) {
         int spawn_x;
         int spawn_y;
@@ -1554,6 +1619,7 @@ static void generate_active_level(GameState *g) {
     int seal_placed = place_elowen_seal(g);
     int warden_placed = place_alder_warden(g);
     int beacon_placed = place_mara_beacon(g);
+    place_dragon_treasure(g);
     int daughter_x = 0;
     int daughter_y = 0;
     int daughter_placed = g->location == LOCATION_SWAMP && g->level == 4 &&
@@ -1733,6 +1799,22 @@ void game_enter_swamp(GameState *g) {
     push_message(g, "The black water closes around the swamp trail.");
 }
 
+void game_enter_high_pass(GameState *g, int from_town) {
+    g->location = LOCATION_HIGH_PASS;
+    map_generate_high_pass(&g->map);
+    g->player.x = from_town ? 1 : HIGH_PASS_W - 2;
+    g->player.y = from_town ? g->map.stairs_up_y : g->map.stairs_down_y;
+    g->enemy_count = 0;
+    g->floor_item_count = 0;
+    g->dialogue_active = 0;
+    push_message(g, "The pale High Pass climbs toward Dragonspine.");
+}
+
+void game_enter_dragonspine(GameState *g) {
+    enter_adventure(g, LOCATION_DRAGONSPINE);
+    push_message(g, "Dragonspine rises above the clouds.");
+}
+
 int game_harbor_unlocked(const GameState *g) {
     return (g->defeated_bosses & (1 << LOCATION_COAST)) != 0;
 }
@@ -1783,6 +1865,9 @@ static void place_town_portal(GameState *g) {
     } else if (g->portal_location == LOCATION_MOUNTAINS) {
         x = TOWN_W - 3;
         y = 13;
+    } else if (g->portal_location == LOCATION_DRAGONSPINE) {
+        x = 41;
+        y = TOWN_DRAGON_GATE_Y + 1;
     } else if (g->portal_location == LOCATION_COAST) {
         x = 21;
         y = TOWN_H - 3;
@@ -1813,6 +1898,8 @@ void game_leave_tavern(GameState *g) {
     map_generate_town(&g->map, &spawn_x, &spawn_y);
     map_set_town2_road(&g->map,
         g->defeated_bosses & (1 << LOCATION_FOREST));
+    map_set_dragonspine_road(&g->map,
+        g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
     place_harbor_road(g);
     g->player.x = 8;
     g->player.y = 21;
@@ -1876,6 +1963,8 @@ void game_leave_forest_road(GameState *g, Location destination) {
         map_generate_town(&g->map, &spawn_x, &spawn_y);
         map_set_town2_road(&g->map,
             g->defeated_bosses & (1 << LOCATION_FOREST));
+        map_set_dragonspine_road(&g->map,
+            g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
         place_harbor_road(g);
         place_town_portal(g);
         g->player.x = 1;
@@ -2154,6 +2243,13 @@ int game_interact_labyrinth(GameState *g) {
 }
 
 void game_enter_island(GameState *g) {
+    for (int i = 0; i < g->inventory_count; i++) {
+        if (g->inventory[i].type == ITEM_TREASURE_MAP) {
+            game_remove_inventory_item(g, i);
+            break;
+        }
+    }
+    g->island_travel_unlocked = 1;
     int spawn_x;
     int spawn_y;
     g->location = LOCATION_ISLAND;
@@ -2166,7 +2262,7 @@ void game_enter_island(GameState *g) {
     g->floor_item_count = 0;
     g->dialogue_active = 0;
     push_message(g, "You make landfall on the Ruined Isle.");
-    push_message(g, "The treasure map points beyond the temple gate.");
+    push_message(g, "The island route is now open for return voyages.");
 }
 
 void game_leave_island(GameState *g) {
@@ -2176,6 +2272,8 @@ void game_leave_island(GameState *g) {
     map_generate_town(&g->map, &spawn_x, &spawn_y);
     map_set_town2_road(&g->map,
         g->defeated_bosses & (1 << LOCATION_FOREST));
+    map_set_dragonspine_road(&g->map,
+        g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
     place_harbor_road(g);
     g->player.x = TOWN_HARBOR_ENTRANCE_X;
     g->player.y = TOWN_HARBOR_ENTRANCE_Y;
@@ -2387,7 +2485,8 @@ void game_return_to_town(GameState *g) {
     Location returning_from = g->location;
     LevelCache *cache = active_cache(g);
     // Cache current level before leaving
-    if (g->level >= 1 && g->level <= active_depth(g)) {
+    if (returning_from != LOCATION_HIGH_PASS && g->level >= 1 &&
+        g->level <= active_depth(g)) {
         cache[g->level - 1].map = g->map;
         cache[g->level - 1].enemy_count   = g->enemy_count;
         cache[g->level - 1].level_cleared = g->level_cleared;
@@ -2406,6 +2505,8 @@ void game_return_to_town(GameState *g) {
         map_generate_town(&g->map, &spawn_x, &spawn_y);
         map_set_town2_road(&g->map,
             g->defeated_bosses & (1 << LOCATION_FOREST));
+        map_set_dragonspine_road(&g->map,
+            g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
         place_harbor_road(g);
     }
     if (returning_from == LOCATION_SWAMP) {
@@ -2415,6 +2516,10 @@ void game_return_to_town(GameState *g) {
         g->player.x = 1; g->player.y = 12;
     } else if (returning_from == LOCATION_MOUNTAINS) {
         g->player.x = TOWN_W - 2; g->player.y = 12;
+    } else if (returning_from == LOCATION_DRAGONSPINE ||
+        returning_from == LOCATION_HIGH_PASS) {
+        g->player.x = 40;
+        g->player.y = TOWN_DRAGON_GATE_Y;
     } else if (returning_from == LOCATION_COAST) {
         g->player.x = 20; g->player.y = TOWN_H - 2;
     } else if (returning_from == LOCATION_TEMPLE) {
@@ -2435,7 +2540,8 @@ void game_open_town_portal(GameState *g) {
         g->location != LOCATION_MOUNTAINS &&
         g->location != LOCATION_COAST &&
         g->location != LOCATION_TEMPLE &&
-        g->location != LOCATION_SWAMP) {
+        g->location != LOCATION_SWAMP &&
+        g->location != LOCATION_DRAGONSPINE) {
         return;
     }
     game_hide_portal_destination(g);
@@ -2464,6 +2570,8 @@ void game_hide_portal_destination(GameState *g) {
         cache = g->coast_cache;
     } else if (g->portal_location == LOCATION_SWAMP) {
         cache = g->swamp_cache;
+    } else if (g->portal_location == LOCATION_DRAGONSPINE) {
+        cache = g->dragonspine_cache;
     } else if (g->portal_location == LOCATION_TEMPLE) {
         cache = g->temple_cache;
     }
@@ -2513,6 +2621,8 @@ void game_use_town_portal(GameState *g) {
         cache = g->coast_cache;
     } else if (g->portal_location == LOCATION_SWAMP) {
         cache = g->swamp_cache;
+    } else if (g->portal_location == LOCATION_DRAGONSPINE) {
+        cache = g->dragonspine_cache;
     } else if (g->portal_location == LOCATION_TEMPLE) {
         cache = g->temple_cache;
     }
@@ -2581,6 +2691,10 @@ int game_has_treasure_map(const GameState *g) {
         }
     }
     return 0;
+}
+
+int game_can_sail_to_island(const GameState *g) {
+    return g->island_travel_unlocked || game_has_treasure_map(g);
 }
 
 static int island_interaction_tile(TileType tile) {
@@ -2710,7 +2824,11 @@ void game_talk_to_rowan(GameState *g) {
             ? " The ruined temple is dangerous. Clear the dungeon or mountains "
               "for experience first, or sail now and turn back if needed."
             : "";
-        if (game_has_treasure_map(g)) {
+        if (g->island_travel_unlocked) {
+            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+                "The island route is charted. You may sail whenever you wish.%s",
+                warning);
+        } else if (game_has_treasure_map(g)) {
             snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
                 "Keep the island map safe; it marks the ruined temple.%s",
                 warning);
@@ -2749,6 +2867,10 @@ static void prepare_quest_expedition(GameState *g, Location location) {
         cache = g->swamp_cache;
         max_level = &g->max_swamp_level_reached;
         depth = SWAMP_DEPTH;
+    } else if (location == LOCATION_DRAGONSPINE) {
+        cache = g->dragonspine_cache;
+        max_level = &g->max_dragonspine_level_reached;
+        depth = DRAGONSPINE_DEPTH;
     } else {
         cache = g->coast_cache;
         max_level = &g->max_coast_level_reached;
@@ -2761,6 +2883,62 @@ static void prepare_quest_expedition(GameState *g, Location location) {
     if (g->portal_active && g->portal_location == location) {
         g->portal_active = 0;
     }
+}
+
+void game_talk_to_dragon_seeker(GameState *g) {
+    if (!(g->defeated_bosses & (1 << LOCATION_MOUNTAINS))) {
+        return;
+    }
+    g->dialogue_active = 1;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Ilya");
+    g->dialogue_x = TOWN_DRAGON_NPC_X;
+    g->dialogue_y = TOWN_DRAGON_NPC_Y;
+    if (g->dragon_treasure_quest_state == 0) {
+        g->dragon_treasure_quest_state = 1;
+        if (g->portal_active && g->portal_location == LOCATION_DRAGONSPINE &&
+            g->location == LOCATION_TOWN &&
+            g->map.tiles[TOWN_DRAGON_GATE_Y + 1][41] == TILE_PORTAL) {
+            g->map.tiles[TOWN_DRAGON_GATE_Y + 1][41] = TILE_TOWN_FLOOR;
+        }
+        prepare_quest_expedition(g, LOCATION_DRAGONSPINE);
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "A golden dragon seal lies in the hoard atop Dragonspine. "
+            "Bring it back and I will give you a Potion of Strength. "
+            "The High Pass begins just north of here.");
+        push_message(g, "Assigned: The Dragon's Hoard.");
+    } else if (g->dragon_treasure_quest_state == 1) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Find the golden seal in the dragon's hoard on Dragonspine's "
+            "fifth stage. Stand on it and press A, then return to me.");
+    } else if (g->dragon_treasure_quest_state == 2) {
+        if (g->inventory_count >= MAX_INVENTORY) {
+            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+                "You found the seal! Make room in your pack for the "
+                "Potion of Strength, then speak with me again.");
+            return;
+        }
+        g->inventory[g->inventory_count++] = item_make_strength_potion();
+        g->dragon_treasure_quest_state = 3;
+        g->score += 600;
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "The seal is safe. This Potion of Strength permanently raises "
+            "your attack when you drink it. Thank you.");
+        push_message(g, "Completed: The Dragon's Hoard. Potion of Strength awarded.");
+    } else {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Dragonspine's treasure is safe. The High Pass is open to you.");
+    }
+}
+
+void game_collect_dragon_treasure(GameState *g) {
+    if (g->location != LOCATION_DRAGONSPINE ||
+        g->level != DRAGONSPINE_DEPTH || g->dragon_treasure_quest_state != 1 ||
+        g->map.tiles[g->player.y][g->player.x] != TILE_DRAGON_TREASURE) {
+        return;
+    }
+    g->map.tiles[g->player.y][g->player.x] = TILE_DRAGON_HOARD;
+    g->dragon_treasure_quest_state = 2;
+    push_message(g, "Golden dragon seal recovered. Return it to Ilya in town.");
 }
 
 void game_talk_to_elowen(GameState *g) {

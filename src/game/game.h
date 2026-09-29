@@ -85,7 +85,9 @@ typedef enum {
     LOCATION_TOWN2,
     LOCATION_INN,
     LOCATION_FOREST_ROAD,
-    LOCATION_SWAMP
+    LOCATION_SWAMP,
+    LOCATION_HIGH_PASS,
+    LOCATION_DRAGONSPINE
 } Location;
 
 typedef struct {
@@ -99,6 +101,7 @@ typedef struct {
     LevelCache mountain_cache[MAX_REGION_DEPTH];
     LevelCache coast_cache[MAX_REGION_DEPTH];
     LevelCache swamp_cache[SWAMP_DEPTH];
+    LevelCache dragonspine_cache[DRAGONSPINE_DEPTH];
     LevelCache temple_cache[TEMPLE_DEPTH];
     LevelCache labyrinth_cache[LABYRINTH_DEPTH];
     char       messages[MAX_MESSAGES][MAX_MESSAGE_LEN];
@@ -110,6 +113,7 @@ typedef struct {
     int max_mountain_level_reached;
     int max_coast_level_reached;
     int max_swamp_level_reached;
+    int max_dragonspine_level_reached;
     int max_temple_level_reached;
     Item      inventory[MAX_INVENTORY];
     int       inventory_count;
@@ -146,6 +150,8 @@ typedef struct {
     int mara_quest_state;
     int mara_beacons_lit;
     int cain_scroll_given;
+    int island_travel_unlocked;
+    int dragon_treasure_quest_state;
     int temple_alignment;
     int temple_sentinels_awakened;
     int temple_treasure_state;
@@ -169,6 +175,8 @@ void game_enter_forest(GameState *g);
 void game_enter_mountains(GameState *g);
 void game_enter_coast(GameState *g);
 void game_enter_swamp(GameState *g);
+void game_enter_high_pass(GameState *g, int from_town);
+void game_enter_dragonspine(GameState *g);
 void game_enter_tavern(GameState *g);
 void game_leave_tavern(GameState *g);
 void game_enter_town2(GameState *g);
@@ -216,9 +224,12 @@ void game_talk_to_mara(GameState *g);
 void game_talk_to_rook(GameState *g);
 void game_talk_to_cain(GameState *g);
 void game_talk_to_rowan(GameState *g);
+void game_talk_to_dragon_seeker(GameState *g);
+void game_collect_dragon_treasure(GameState *g);
 void game_talk_to_nahla(GameState *g);
 int game_harbor_unlocked(const GameState *g);
 int game_has_treasure_map(const GameState *g);
+int game_can_sail_to_island(const GameState *g);
 void game_light_coast_beacon(GameState *g, int x, int y);
 void game_repair_equipment_indices(GameState *g);
 int game_equip_main_hand(GameState *g, int index);

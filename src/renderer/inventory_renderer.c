@@ -85,6 +85,8 @@ void inventory_draw(Renderer *r, const GameState *g, const InventoryScreen *s) {
                 SDL_snprintf(detail, sizeof(detail), "FULL HP");
             } else if (item->type == ITEM_POTION_MANA) {
                 SDL_snprintf(detail, sizeof(detail), "FULL MP");
+            } else if (item->type == ITEM_POTION_STRENGTH) {
+                SDL_snprintf(detail, sizeof(detail), "+1 BASE ATK");
             } else if (item->type == ITEM_WEAPON) {
                 SDL_snprintf(detail, sizeof(detail), "+%d ATK",
                     item->attack_bonus);

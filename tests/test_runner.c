@@ -37,6 +37,7 @@ void test_coast(void);
 void test_coast_terrain(void);
 void test_swamp(void);
 void test_mountain_terrain(void);
+void test_dragonspine(void);
 void test_elowen_quest(void);
 void test_tavern_interior(void);
 void test_dain_quest(void);
@@ -93,6 +94,8 @@ int main(void) {
     test_mountains();
     printf("\n");
     test_mountain_terrain();
+    printf("\n");
+    test_dragonspine();
     printf("\n");
     test_coast();
     printf("\n");

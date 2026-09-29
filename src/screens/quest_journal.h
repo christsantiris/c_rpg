@@ -9,7 +9,7 @@ typedef enum {
     QUEST_TAB_BOSSES
 } QuestJournalTab;
 
-#define JOURNAL_BOSS_COUNT 6
+#define JOURNAL_BOSS_COUNT 7
 
 typedef struct {
     const char *name;
@@ -34,6 +34,7 @@ typedef struct {
     int objective_count;
     int reward_gold;
     int reward_score;
+    const char *reward_item;
     int state;
 } QuestJournalEntry;
 

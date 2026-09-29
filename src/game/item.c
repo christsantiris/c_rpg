@@ -42,6 +42,15 @@ Item item_make_mana_potion(void) {
     return it;
 }
 
+Item item_make_strength_potion(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_POTION_STRENGTH;
+    strncpy(it.name, "Potion of Strength", sizeof(it.name) - 1);
+    it.class_mask = ITEM_CLASS_ALL;
+    return it;
+}
+
 // Item item_make_weapon(const char *name, int attack_bonus, int value) {
 //     Item it = {0};
 //     it.active       = 1;
@@ -643,6 +652,19 @@ Item item_make_necromancer_cloak(void) {
     it.value = 450;
     set_armor_metadata(&it, ARMOR_FAMILY_LIGHT, ITEM_RARITY_RARE,
         ITEM_CLASS_ROGUE, ITEM_VISUAL_RANGER_CLOAK);
+    return it;
+}
+
+Item item_make_dragon_scale_mantle(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_ARMOR;
+    strncpy(it.name, "Dragon Scale Mantle", sizeof(it.name) - 1);
+    it.defense_bonus = 4;
+    it.max_hp_bonus = 20;
+    it.value = 1400;
+    set_armor_metadata(&it, ARMOR_FAMILY_LIGHT, ITEM_RARITY_RARE,
+        ITEM_CLASS_ALL, ITEM_VISUAL_SCALE_MAIL);
     return it;
 }
 

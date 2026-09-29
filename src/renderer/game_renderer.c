@@ -364,6 +364,10 @@ static TileType floor_item_underlay(const GameState *g, int x, int y) {
     if (g->location == LOCATION_MOUNTAINS) {
         return TILE_MOUNTAIN_FLOOR;
     }
+    if (g->location == LOCATION_DRAGONSPINE ||
+        g->location == LOCATION_HIGH_PASS) {
+        return TILE_DRAGON_FLOOR;
+    }
     if (g->location == LOCATION_COAST) {
         return TILE_COAST_FLOOR;
     }
@@ -538,6 +542,13 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         draw_coast_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_SWAMP_FLOOR) {
         draw_swamp_floor(r, screen_x, screen_y, map_x, map_y);
+    } else if (underlay == TILE_DRAGON_FLOOR ||
+        underlay == TILE_DRAGON_ASH || underlay == TILE_DRAGON_HOARD) {
+        int terrain = underlay == TILE_DRAGON_ASH ? 1 :
+            (underlay == TILE_DRAGON_HOARD ? 2 : 0);
+        draw_dragonspine_floor(r, screen_x, screen_y, map_x, map_y, terrain);
+    } else if (underlay == TILE_DRAGON_TREASURE) {
+        draw_dragon_treasure(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_TOWN_FLOOR) {
         draw_town_floor(r, screen_x, screen_y);
     } else if (underlay == TILE_TOWN_PATH) {
@@ -599,6 +610,9 @@ static void draw_trap_underlay(Renderer *r, const GameState *g, int map_x, int m
             mountain_crossing_neighbors(&g->map, map_x, map_y, 0));
     } else if (g->location == LOCATION_MOUNTAINS) {
         draw_mountain_floor(r, screen_x, screen_y, map_x, map_y);
+    } else if (g->location == LOCATION_DRAGONSPINE ||
+        g->location == LOCATION_HIGH_PASS) {
+        draw_dragonspine_floor(r, screen_x, screen_y, map_x, map_y, 0);
     } else if (g->location == LOCATION_DUNGEON) {
         draw_dungeon_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_LABYRINTH) {
@@ -616,7 +630,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->location == LOCATION_INN;
     int island_scaled = g->location == LOCATION_ISLAND;
     int labyrinth_scaled = g->location == LOCATION_LABYRINTH;
-    int road_scaled = g->location == LOCATION_FOREST_ROAD;
+    int road_scaled = g->location == LOCATION_FOREST_ROAD ||
+        g->location == LOCATION_HIGH_PASS;
     int town_road_gate = g->location == LOCATION_TOWN &&
         (g->defeated_bosses & (1 << LOCATION_FOREST)) &&
         g->map.tiles[TOWN_ROAD_EXIT_Y][0] == TILE_TOWN_EXIT &&
@@ -641,10 +656,19 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             (float)play_w / (map_w * TILE_SIZE),
             (float)play_h / (map_h * TILE_SIZE));
     } else if (road_scaled) {
-        int view_w = v->tiles_x < FOREST_ROAD_W ? v->tiles_x : FOREST_ROAD_W;
+        int road_w = g->location == LOCATION_HIGH_PASS ? HIGH_PASS_W : FOREST_ROAD_W;
+        int view_w = v->tiles_x < road_w ? v->tiles_x : road_w;
         int view_h = v->tiles_y < FOREST_ROAD_H ? v->tiles_y : FOREST_ROAD_H;
         viewport_init(&town_view, view_w, view_h,
-            FOREST_ROAD_W, FOREST_ROAD_H);
+            road_w, FOREST_ROAD_H);
+        viewport_center_on(&town_view, g->player.x, g->player.y);
+        v = &town_view;
+    } else if (g->location == LOCATION_SWAMP ||
+        g->location == LOCATION_DRAGONSPINE) {
+        int view_w = v->tiles_x < SWAMP_MAP_W ? v->tiles_x : SWAMP_MAP_W;
+        int view_h = v->tiles_y < SWAMP_MAP_H ? v->tiles_y : SWAMP_MAP_H;
+        viewport_init(&town_view, view_w, view_h,
+            SWAMP_MAP_W, SWAMP_MAP_H);
         viewport_center_on(&town_view, g->player.x, g->player.y);
         v = &town_view;
     } else if (tavern_scaled) {
@@ -813,6 +837,22 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_swamp_edge(r, sx, sy, x, y, 1); break;
                 case TILE_SWAMP_DAUGHTER:
                     draw_swamp_daughter(r, sx, sy, x, y); break;
+                case TILE_DRAGON_FLOOR:
+                    draw_dragonspine_floor(r, sx, sy, x, y, 0); break;
+                case TILE_DRAGON_ASH:
+                    draw_dragonspine_floor(r, sx, sy, x, y, 1); break;
+                case TILE_DRAGON_HOARD:
+                    draw_dragonspine_floor(r, sx, sy, x, y, 2); break;
+                case TILE_DRAGON_TREASURE:
+                    draw_dragon_treasure(r, sx, sy, x, y); break;
+                case TILE_DRAGON_WALL:
+                    draw_dragonspine_wall(r, sx, sy, x, y); break;
+                case TILE_DRAGON_ENTRANCE:
+                case TILE_HIGH_PASS_ENTRANCE:
+                    draw_dragonspine_edge(r, sx, sy, 0); break;
+                case TILE_DRAGON_EXIT:
+                case TILE_HIGH_PASS_EXIT:
+                    draw_dragonspine_edge(r, sx, sy, 1); break;
                 case TILE_COAST_BEACON_UNLIT:
                     draw_coast_beacon(r, sx, sy, x, y, 0); break;
                 case TILE_COAST_BEACON_LIT:
@@ -857,6 +897,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_NPC_INNKEEPER: draw_innkeeper(r, sx, sy); break;
                 case TILE_NPC_CAIN: draw_cain(r, sx, sy); break;
                 case TILE_NPC_ROWAN: draw_rowan(r, sx, sy); break;
+                case TILE_NPC_DRAGON_SEEKER:
+                    draw_dragon_seeker(r, sx, sy); break;
                 case TILE_FOREST_WARDEN:
                     draw_forest_warden(r, sx, sy, x, y); break;
                 case TILE_ISLAND_WATER:
@@ -1074,6 +1116,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         draw_town_gate(r,
             viewport_to_screen_x(v, TOWN_W - 3), viewport_to_screen_y(v, 10),
             TOWN_EXIT_MOUNTAINS);
+        if (g->defeated_bosses & (1 << LOCATION_MOUNTAINS)) {
+            draw_dragonspine_gate(r,
+                viewport_to_screen_x(v, TOWN_W - 1),
+                viewport_to_screen_y(v, TOWN_DRAGON_GATE_Y));
+        }
         draw_town_gate(r,
             viewport_to_screen_x(v, 18),
             viewport_to_screen_y(v, TOWN_H - 2), TOWN_EXIT_COAST);
@@ -1140,6 +1187,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (g->location == LOCATION_DUNGEON ||
         g->location == LOCATION_FOREST ||
         g->location == LOCATION_MOUNTAINS ||
+        g->location == LOCATION_DRAGONSPINE ||
         g->location == LOCATION_COAST ||
         g->location == LOCATION_SWAMP ||
         g->location == LOCATION_TEMPLE ||
@@ -1245,6 +1293,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             r->font_tiny);
         renderer_draw_text(r, "MOUNTAINS", mountains_x, mountains_y,
             (SDL_Color){220, 72, 42, 255}, r->font_tiny);
+        if (g->defeated_bosses & (1 << LOCATION_MOUNTAINS)) {
+            renderer_draw_text(r, "HIGH PASS",
+                viewport_to_screen_x(v, 38) * TILE_SIZE,
+                viewport_to_screen_y(v, TOWN_DRAGON_GATE_Y - 2) * TILE_SIZE,
+                (SDL_Color){187, 218, 232, 255}, r->font_tiny);
+        }
         int coast_x = viewport_to_screen_x(v, 18) * TILE_SIZE
             + (5 * TILE_SIZE - coast_w) / 2;
         int coast_y = viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE

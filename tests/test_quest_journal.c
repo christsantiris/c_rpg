@@ -59,6 +59,21 @@ void test_quest_journal(void) {
     g.innkeeper_quest_state = 3;
     ASSERT("Bram's completed quest moves to the completed tab",
         quest_journal_count(&g, QUEST_TAB_COMPLETED) == 3);
+    g.elowen_quest_state = 0;
+    g.dain_quest_state = 0;
+    g.dragon_treasure_quest_state = 1;
+    ASSERT("Ilya's dragon treasure quest appears with the strength reward",
+        quest_journal_count(&g, QUEST_TAB_ACTIVE) == 1 &&
+        quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 0, &entry) &&
+        strcmp(entry.title, "The Dragon's Hoard") == 0 &&
+        strcmp(entry.reward_item, "Potion of Strength") == 0);
+    g.dragon_treasure_quest_state = 2;
+    ASSERT("recovered dragon treasure is ready to return",
+        quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 0, &entry) &&
+        entry.objective_complete[0] && entry.state == 2);
+    g.dragon_treasure_quest_state = 3;
+    ASSERT("Ilya's quest stays in the completed journal",
+        quest_journal_count(&g, QUEST_TAB_COMPLETED) == 4);
 
     QuestJournalScreen screen;
     quest_journal_init(&screen);
@@ -77,11 +92,11 @@ void test_quest_journal(void) {
     ASSERT("left wraps from active quests to bosses", screen.tab == QUEST_TAB_BOSSES);
     const Location regions[JOURNAL_BOSS_COUNT] = {
         LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST,
-        LOCATION_TEMPLE, LOCATION_SWAMP
+        LOCATION_TEMPLE, LOCATION_SWAMP, LOCATION_DRAGONSPINE
     };
     const char *names[JOURNAL_BOSS_COUNT] = {
         "Lich King", "Necromancer", "Goblin King", "Drowned Queen",
-        "Fallen Sun Guardian", "Swamp Demon"
+        "Fallen Sun Guardian", "Swamp Demon", "Red Dragon"
     };
     for (int defeated = 0; defeated < JOURNAL_BOSS_COUNT; defeated++) {
         g.defeated_bosses = 1 << regions[defeated];
