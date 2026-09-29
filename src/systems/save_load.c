@@ -162,6 +162,26 @@ static void hide_legacy_fort_plate(Map *m) {
     }
 }
 
+static void move_ashore_from_town3_moat(int *x, int *y) {
+    int moat_right = TOWN_MOAT_X + TOWN_MOAT_W - 1;
+    int moat_bottom = TOWN_MOAT_Y + TOWN_MOAT_H - 1;
+    if (*x < TOWN_MOAT_X || *x > moat_right ||
+        *y < TOWN_MOAT_Y || *y > moat_bottom ||
+        (*x == CROWNROAD_X && *y == moat_bottom)) {
+        return;
+    }
+    if (*y == TOWN_MOAT_Y) {
+        *y -= 1;
+    } else if (*y == moat_bottom) {
+        *y += 1;
+    }
+    if (*x == TOWN_MOAT_X) {
+        *x -= 1;
+    } else if (*x == moat_right) {
+        *x += 1;
+    }
+}
+
 static cJSON *serialize_enemies(const Enemy *enemies, int count) {
     cJSON *arr = cJSON_CreateArray();
     for (int i = 0; i < count; i++) {
@@ -292,7 +312,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 60);
+    cJSON_AddNumberToObject(root, "save_version", 61);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -1806,6 +1826,28 @@ int load_game(GameState *g, int slot) {
                 map_remove_coast_sluice(&g->coast_cache[i].map);
             }
         }
+    }
+
+    // Version 61 surrounds the Castle of No Return with a moat. Rebuild
+    // legacy Town 3 maps and move the player and loot off the new water.
+    if (save_version < 61 && g->location == LOCATION_TOWN3) {
+        int spawn_x;
+        int spawn_y;
+        map_generate_town3(&g->map, &spawn_x, &spawn_y);
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->active) {
+                move_ashore_from_town3_moat(&item->x, &item->y);
+                item->underlying_tile = g->map.tiles[item->y][item->x];
+            }
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->active) {
+                g->map.tiles[item->y][item->x] = TILE_ITEM;
+            }
+        }
+        move_ashore_from_town3_moat(&g->player.x, &g->player.y);
     }
 
     if (g->location == LOCATION_MOUNTAINS) {

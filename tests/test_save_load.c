@@ -571,6 +571,42 @@ static void test_legacy_coast_sluice_removal(void) {
     remove_test_save(LEGACY_SLOT);
 }
 
+static void test_legacy_town3_moat(void) {
+    static GameState original;
+    static GameState loaded;
+    memset(&original, 0, sizeof(original));
+    game_init(&original);
+    game_leave_crownroad(&original, LOCATION_TOWN3);
+    original.map.tiles[11][CROWNROAD_X - 1] = TILE_TOWN_FLOOR;
+    original.map.tiles[5][TOWN_MOAT_X] = TILE_ITEM;
+    original.player.x = CROWNROAD_X - 1;
+    original.player.y = 11;
+    original.floor_item_count = 1;
+    original.floor_items[0] = (FloorItem){
+        .active = 1, .x = TOWN_MOAT_X, .y = 5,
+        .underlying_tile = TILE_TOWN_FLOOR,
+        .item = item_make_health_potion()
+    };
+    int loaded_ok = save_game(&original, LEGACY_SLOT) &&
+        rewrite_save_version(LEGACY_SLOT, 60) && load_game(&loaded, LEGACY_SLOT);
+    ASSERT("legacy Town 3 save loads", loaded_ok);
+    if (loaded_ok) {
+        ASSERT("loading surrounds the castle with the moat",
+            !map_is_walkable(&loaded.map, CROWNROAD_X - 1, 11) &&
+            !map_is_walkable(&loaded.map, TOWN_MOAT_X, 5) &&
+            map_is_walkable(&loaded.map, CROWNROAD_X, 11));
+        ASSERT("moat migration moves the player onto the plaza",
+            loaded.player.x == CROWNROAD_X - 1 && loaded.player.y == 12);
+        ASSERT("moat migration moves loot onto the bank",
+            loaded.floor_items[0].active &&
+            loaded.floor_items[0].x == TOWN_MOAT_X - 1 &&
+            loaded.floor_items[0].y == 5 &&
+            loaded.map.tiles[5][TOWN_MOAT_X - 1] == TILE_ITEM &&
+            loaded.floor_items[0].underlying_tile == TILE_TOWN_FLOOR);
+    }
+    remove_test_save(LEGACY_SLOT);
+}
+
 static void test_forest_enemy_repair(void) {
     static GameState original;
     static GameState loaded;
@@ -836,6 +872,7 @@ void test_save_load(void) {
     test_migrated_armor_round_trip();
     test_harbor_relocation();
     test_legacy_coast_sluice_removal();
+    test_legacy_town3_moat();
     test_forest_enemy_repair();
     test_blocked_dungeon_gate_repair();
 }
