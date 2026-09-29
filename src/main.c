@@ -953,7 +953,8 @@ int main(int argc, char **argv) {
                                 (game.trail_effect == TRAIL_EFFECT_MAGIC_ARROW ||
                                 game.trail_effect == TRAIL_EFFECT_FIREBALL)) ||
                                 (a.type == ACTION_RANGED_ATTACK &&
-                                game.trail_effect == TRAIL_EFFECT_WEAPON_ARROW)) &&
+                                (game.trail_effect == TRAIL_EFFECT_WEAPON_ARROW ||
+                                game.trail_effect == TRAIL_EFFECT_DEMONIC_SWORD))) &&
                                 game.trail_count > 0 && game.trail_frames > 0;
                             if (projectile_started) {
                                 memcpy(projectile_view.trail, game.trail,
