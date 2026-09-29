@@ -50,6 +50,19 @@ void test_crownroad_to_town3(void) {
         g.map.tiles[10][CROWNROAD_X] == TILE_TOWN_EXIT &&
         g.crownroad_cache.valid && !g.crownroad_cache.enemies[0].active);
 
+    int moat_crossings = 0;
+    for (int y = TOWN_MOAT_Y; y < TOWN_MOAT_Y + TOWN_MOAT_H; y++) {
+        for (int x = TOWN_MOAT_X; x < TOWN_MOAT_X + TOWN_MOAT_W; x++) {
+            int ring = x == TOWN_MOAT_X || x == TOWN_MOAT_X + TOWN_MOAT_W - 1 ||
+                y == TOWN_MOAT_Y || y == TOWN_MOAT_Y + TOWN_MOAT_H - 1;
+            if (ring && map_is_walkable(&g.map, x, y)) {
+                moat_crossings++;
+            }
+        }
+    }
+    ASSERT("moat surrounds the castle except for the drawbridge",
+        moat_crossings == 1 && map_is_walkable(&g.map, CROWNROAD_X, 11));
+
     g.player.x = CROWNROAD_X;
     g.player.y = 11;
     action_resolve_player(&g, (Action){ACTION_MOVE, CROWNROAD_X, 10});

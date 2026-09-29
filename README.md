@@ -341,7 +341,6 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 7. Add a Royal Guard NPC before the Crown Road Gate that warns players of its difficulty and recommends exploring other areas first. 
 8. Improve and Expand the Crown Road Gate Sprite
 9. Add an Apothecary building to town 3 that sells mana and health potions as well intelligence potion that increase base mana points by 1. These should be very expensive 1000 gold or more.
-10. Castle of No Return looks too Royal. It should look more evil. Surround it with moat. 
 11. Improve Crown road gate sprite
 12. Move Town 2 Inn to Center Square to east of Healer.
 13. Town 2 additional enemy area
