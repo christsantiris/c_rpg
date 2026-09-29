@@ -1,8 +1,13 @@
 # Castle of No Return artwork
 
-Pixel art drawn procedurally at native game resolution with a Pillow script,
-not an image generator. The tavern, blacksmith and witch hut sprites were the
-style references for outlines, shading and window glow.
+Pixel art drawn procedurally at native game resolution by
+`tools/sprites/castle.py`, not an image generator. Shared drawing helpers live
+in `tools/sprites/pixelkit.py`. The tavern, blacksmith and witch hut sprites
+were the style references for outlines, shading and window glow.
+
+To change the castle, edit the script and run `make sprites` (Python 3 with
+Pillow). It rewrites both files below; the output is deterministic, so an
+unchanged script reproduces them exactly.
 
 Source: `castle-of-no-return.png`. Runtime asset: `castle-of-no-return.bmp`,
 408 × 240 pixels with alpha preserved. It covers the 17 × 10 tile moat

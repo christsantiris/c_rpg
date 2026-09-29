@@ -1,4 +1,4 @@
-.PHONY: all run clean debug test linux
+.PHONY: all run clean debug test linux sprites
 
 all:
 	cmake -B build -DCMAKE_BUILD_TYPE=Release
@@ -23,6 +23,11 @@ test:
 	cmake -B build -DCMAKE_BUILD_TYPE=Debug
 	cmake --build build --target test_runner
 	./build/test_runner
+
+sprites:
+	python3 tools/sprites/castle.py
+	python3 tools/sprites/tavern.py
+	python3 tools/sprites/inn.py
 
 clean:
 	rm -rf build

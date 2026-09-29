@@ -1331,7 +1331,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         draw_witch_hut(r,
             viewport_to_screen_x(v, TOWN_WITCH_X),
             viewport_to_screen_y(v, TOWN_WITCH_Y));
-        draw_tavern(r,
+        draw_inn(r,
             viewport_to_screen_x(v, 5), viewport_to_screen_y(v, 16));
         draw_healer_house(r, viewport_to_screen_x(v, TOWN_HEALER_X),
             viewport_to_screen_y(v, TOWN_HEALER_Y));
