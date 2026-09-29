@@ -3375,15 +3375,23 @@ void draw_dragonspine_gate(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 8, y + 2, 8, 3, (SDL_Color){238, 224, 171, 255});
 }
 
-void draw_dragon_treasure(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+void draw_dragon_goblet(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
     draw_dragonspine_floor(r, tile_x, tile_y, map_x, map_y, 2);
-    fill_rect(r, x + 3, y + 9, 18, 12, (SDL_Color){54, 34, 30, 255});
-    fill_rect(r, x + 5, y + 11, 14, 8, (SDL_Color){145, 86, 37, 255});
-    fill_rect(r, x + 4, y + 7, 16, 5, (SDL_Color){221, 163, 53, 255});
-    fill_rect(r, x + 10, y + 6, 4, 13, (SDL_Color){248, 208, 91, 255});
-    fill_rect(r, x + 11, y + 10, 2, 3, (SDL_Color){176, 40, 36, 255});
+    fill_rect(r, x + 5, y + 21, 14, 2, (SDL_Color){49, 37, 31, 255});
+    fill_rect(r, x + 7, y + 19, 10, 3, (SDL_Color){159, 97, 30, 255});
+    fill_rect(r, x + 9, y + 19, 6, 2, (SDL_Color){244, 195, 70, 255});
+    fill_rect(r, x + 11, y + 15, 2, 5, (SDL_Color){237, 177, 54, 255});
+    fill_rect(r, x + 3, y + 8, 4, 6, (SDL_Color){158, 94, 30, 255});
+    fill_rect(r, x + 17, y + 8, 4, 6, (SDL_Color){158, 94, 30, 255});
+    fill_rect(r, x + 4, y + 9, 3, 3, (SDL_Color){244, 195, 70, 255});
+    fill_rect(r, x + 17, y + 9, 3, 3, (SDL_Color){244, 195, 70, 255});
+    fill_rect(r, x + 6, y + 7, 12, 6, (SDL_Color){214, 145, 37, 255});
+    fill_rect(r, x + 8, y + 13, 8, 3, (SDL_Color){214, 145, 37, 255});
+    fill_rect(r, x + 5, y + 5, 14, 3, (SDL_Color){255, 211, 93, 255});
+    fill_rect(r, x + 7, y + 8, 2, 4, (SDL_Color){255, 225, 120, 255});
+    fill_rect(r, x + 11, y + 9, 2, 3, (SDL_Color){167, 35, 39, 255});
 }
 
 void draw_dragon_seeker(Renderer *r, int tile_x, int tile_y) {

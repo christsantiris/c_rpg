@@ -1824,6 +1824,17 @@ int load_game(GameState *g, int slot) {
 
     game_hide_portal_destination(g);
     game_refresh_quest_encounters(g);
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && item->item.type == ITEM_GOLD &&
+            (item->x < 0 || item->x >= MAP_W ||
+            item->y < 0 || item->y >= MAP_H ||
+            !map_is_walkable(&g->map, item->x, item->y))) {
+            g->gold += item->item.value;
+            g->score += item->item.value;
+            item->active = 0;
+        }
+    }
     cJSON_Delete(root);
     return 1;
 }

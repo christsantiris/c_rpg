@@ -596,7 +596,7 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
             (underlay == TILE_DRAGON_HOARD ? 2 : 0);
         draw_dragonspine_floor(r, screen_x, screen_y, map_x, map_y, terrain);
     } else if (underlay == TILE_DRAGON_TREASURE) {
-        draw_dragon_treasure(r, screen_x, screen_y, map_x, map_y);
+        draw_dragon_goblet(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_TOWN_FLOOR) {
         draw_town_floor(r, screen_x, screen_y);
     } else if (underlay == TILE_TOWN_PATH) {
@@ -892,7 +892,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_DRAGON_HOARD:
                     draw_dragonspine_floor(r, sx, sy, x, y, 2); break;
                 case TILE_DRAGON_TREASURE:
-                    draw_dragon_treasure(r, sx, sy, x, y); break;
+                    draw_dragon_goblet(r, sx, sy, x, y); break;
                 case TILE_DRAGON_WALL:
                     draw_dragonspine_wall(r, sx, sy, x, y); break;
                 case TILE_DRAGON_ENTRANCE:
