@@ -34,6 +34,7 @@ typedef struct {
     int objective_count;
     int reward_gold;
     int reward_score;
+    const char *reward_item;
     int state;
 } QuestJournalEntry;
 

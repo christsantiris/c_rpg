@@ -326,17 +326,12 @@ void draw_swamp_bank(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, 
 }
 
 void draw_swamp_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int exit) {
+    (void)exit;
     draw_swamp_floor(r, tile_x, tile_y, map_x, map_y);
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color glow = exit ? (SDL_Color){90, 190, 66, 255} :
-        (SDL_Color){111, 157, 82, 255};
-    fill_rect(r, x + 3, y + 3, 18, 2, glow);
-    fill_rect(r, x + 3, y + 19, 18, 2, glow);
-    fill_rect(r, x + 3, y + 3, 2, 18, glow);
-    fill_rect(r, x + 19, y + 3, 2, 18, glow);
-    fill_rect(r, x + 9, y + 9, 6, 6,
-        (SDL_Color){10, 18, 12, 255});
+    fill_rect(r, x + 2, y + 1, 4, 4, (SDL_Color){55, 51, 31, 255});
+    fill_rect(r, x + 17, y + 19, 4, 4, (SDL_Color){55, 51, 31, 255});
 }
 
 void draw_forest_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
@@ -3362,14 +3357,12 @@ void draw_dragonspine_wall(Renderer *r, int tile_x, int tile_y, int map_x, int m
 }
 
 void draw_dragonspine_edge(Renderer *r, int tile_x, int tile_y, int forward) {
+    (void)forward;
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color glow = forward ? (SDL_Color){247, 190, 79, 255} :
-        (SDL_Color){114, 211, 239, 255};
     draw_dragonspine_floor(r, tile_x, tile_y, tile_x, tile_y, 0);
-    fill_rect(r, x + 4, y + 4, 16, 16, (SDL_Color){45, 55, 75, 255});
-    fill_rect(r, x + 7, y + 7, 10, 10, glow);
-    fill_rect(r, x + 10, y + 10, 4, 4, (SDL_Color){249, 244, 212, 255});
+    fill_rect(r, x + 2, y + 1, 7, 3, (SDL_Color){82, 101, 118, 255});
+    fill_rect(r, x + 15, y + 20, 7, 3, (SDL_Color){82, 101, 118, 255});
 }
 
 void draw_dragonspine_gate(Renderer *r, int tile_x, int tile_y) {
@@ -3380,6 +3373,33 @@ void draw_dragonspine_gate(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 19, y + 1, 5, 23, (SDL_Color){92, 113, 134, 255});
     fill_rect(r, x + 1, y + 1, 22, 5, (SDL_Color){164, 188, 202, 255});
     fill_rect(r, x + 8, y + 2, 8, 3, (SDL_Color){238, 224, 171, 255});
+}
+
+void draw_dragon_treasure(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_dragonspine_floor(r, tile_x, tile_y, map_x, map_y, 2);
+    fill_rect(r, x + 3, y + 9, 18, 12, (SDL_Color){54, 34, 30, 255});
+    fill_rect(r, x + 5, y + 11, 14, 8, (SDL_Color){145, 86, 37, 255});
+    fill_rect(r, x + 4, y + 7, 16, 5, (SDL_Color){221, 163, 53, 255});
+    fill_rect(r, x + 10, y + 6, 4, 13, (SDL_Color){248, 208, 91, 255});
+    fill_rect(r, x + 11, y + 10, 2, 3, (SDL_Color){176, 40, 36, 255});
+}
+
+void draw_dragon_seeker(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_town_floor(r, tile_x, tile_y);
+    fill_rect(r, x + 5, y + 4, 14, 4, (SDL_Color){49, 48, 56, 255});
+    fill_rect(r, x + 8, y + 2, 9, 4, (SDL_Color){87, 73, 60, 255});
+    fill_rect(r, x + 8, y + 8, 8, 5, (SDL_Color){204, 159, 120, 255});
+    fill_rect(r, x + 10, y + 9, 2, 1, (SDL_Color){35, 30, 30, 255});
+    fill_rect(r, x + 14, y + 9, 2, 1, (SDL_Color){35, 30, 30, 255});
+    fill_rect(r, x + 5, y + 13, 14, 8, (SDL_Color){110, 65, 52, 255});
+    fill_rect(r, x + 7, y + 14, 10, 5, (SDL_Color){158, 89, 55, 255});
+    fill_rect(r, x + 11, y + 14, 3, 7, (SDL_Color){225, 181, 80, 255});
+    fill_rect(r, x + 7, y + 21, 4, 2, (SDL_Color){45, 39, 38, 255});
+    fill_rect(r, x + 14, y + 21, 4, 2, (SDL_Color){45, 39, 38, 255});
 }
 
 void draw_forest_warden(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {

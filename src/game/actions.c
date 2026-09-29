@@ -553,6 +553,9 @@ int game_has_regional_interaction(const GameState *g) {
         TileType tile = g->map.tiles[g->player.y][g->player.x];
         return map_is_coast_object(tile) && tile != TILE_COAST_CACHE;
     }
+    if (g->location == LOCATION_DRAGONSPINE) {
+        return g->map.tiles[g->player.y][g->player.x] == TILE_DRAGON_TREASURE;
+    }
     if (g->location != LOCATION_MOUNTAINS) {
         return 0;
     }
@@ -781,6 +784,10 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
         TileType tile = g->map.tiles[g->player.y][g->player.x];
+        if (tile == TILE_DRAGON_TREASURE) {
+            game_collect_dragon_treasure(g);
+            return;
+        }
         if (tile == TILE_DUNGEON_SWITCH_OFF) {
             int opened = 0;
             for (int y = 0; y < MAP_H; y++) {
@@ -929,6 +936,9 @@ void action_resolve_player(GameState *g, Action a) {
             g->player.mp = g->player.max_mp;
             snprintf(msg, sizeof(msg), "Drank %s +%d MP", item->name, restored);
             push_message(g, msg);
+        } else if (item->type == ITEM_POTION_STRENGTH) {
+            g->player.attack += 1;
+            push_message(g, "Potion of Strength: base attack permanently increased by 1.");
         } else if (item->type == ITEM_SPELL_TOME) {
             if (!item_class_allowed(item, g->player.player_class)) {
                 push_message(g, "Only a Mage can study that tome");

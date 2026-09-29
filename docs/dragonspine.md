@@ -7,8 +7,9 @@ Peak returns the player to town after its boss fight, so Dragonspine begins as
 a separate expedition.
 
 Dragonspine has five generated stages with independent progress and saved
-floor caches. Its pale cliff walls and snow paths give way to black ash and
-glowing embers higher up. The summit contains the Red Dragon's gilded lair.
+floor caches. Trails at the west and east map edges lead back and forward.
+Its pale cliff walls and snow paths give way to black ash and glowing embers
+higher up. The summit contains the Red Dragon's gilded lair.
 
 | Stage | Route | Main threats |
 | --- | --- | --- |
@@ -25,5 +26,12 @@ exited without defeating every enemy. On stage 5, only the Red Dragon blocks
 the summit exit. It drops gold and the all-class Dragon Scale Mantle when
 defeated.
 
-The dragon-gold quest is planned for the next phase and is not part of this
-area's initial release.
+## The Dragon's Hoard
+
+When the High Pass opens, Ilya appears beside its town path. Speak with her to
+accept **The Dragon's Hoard**. On Dragonspine stage 5, find the marked golden
+seal in the dragon's lair, stand on it, and press `A`. Return to Ilya to trade
+the seal for a one-time Potion of Strength. Make space in your pack before
+turning in the quest. Drinking the potion permanently raises base attack by 1;
+it is not sold in shops. The quest can still be completed if the Red Dragon was
+defeated before speaking with Ilya.

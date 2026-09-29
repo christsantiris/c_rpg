@@ -11,9 +11,10 @@ typedef struct {
     int stages[3];
     int reward_gold;
     int reward_score;
+    const char *reward_item;
 } QuestDefinition;
 
-static const QuestDefinition quest_definitions[7] = {
+static const QuestDefinition quest_definitions[8] = {
     {
         "The Broken Seals", "Elowen",
         "Break through the undead guarding three shattered",
@@ -65,6 +66,13 @@ static const QuestDefinition quest_definitions[7] = {
         "then speak to her and return to Bram at the inn.",
         {"Rescue Mira", "", ""},
         "Blackwater Swamp", {4, 0, 0}, 80, 600
+    },
+    {
+        "The Dragon's Hoard", "Ilya",
+        "Recover the golden dragon seal from the hoard",
+        "on Dragonspine's fifth stage and return it.",
+        {"Recover the golden dragon seal", "", ""},
+        "Dragonspine", {5, 0, 0}, 0, 600, "Potion of Strength"
     }
 };
 
@@ -84,7 +92,13 @@ static int quest_state(const GameState *g, int quest) {
     if (quest == 4) {
         return g->temple_treasure_state;
     }
-    return quest == 5 ? g->rook_quest_state : g->innkeeper_quest_state;
+    if (quest == 5) {
+        return g->rook_quest_state;
+    }
+    if (quest == 6) {
+        return g->innkeeper_quest_state;
+    }
+    return g->dragon_treasure_quest_state;
 }
 
 static int quest_progress(const GameState *g, int quest) {
@@ -103,7 +117,13 @@ static int quest_progress(const GameState *g, int quest) {
     if (quest == 4) {
         return g->temple_treasure_state >= 2 ? 1 : 0;
     }
-    return (quest == 5 ? g->rook_quest_state : g->innkeeper_quest_state) >= 2 ? 1 : 0;
+    if (quest == 5) {
+        return g->rook_quest_state >= 2;
+    }
+    if (quest == 6) {
+        return g->innkeeper_quest_state >= 2;
+    }
+    return g->dragon_treasure_quest_state >= 2;
 }
 
 static int quest_in_tab(int state, QuestJournalTab tab) {
@@ -123,7 +143,7 @@ int quest_journal_count(const GameState *g, QuestJournalTab tab) {
         return JOURNAL_BOSS_COUNT;
     }
     int count = 0;
-    for (int quest = 0; quest < 7; quest++) {
+    for (int quest = 0; quest < 8; quest++) {
         if (quest_in_tab(quest_state(g, quest), tab)) {
             count++;
         }
@@ -158,7 +178,7 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
         return 0;
     }
     int visible_index = 0;
-    for (int quest = 0; quest < 7; quest++) {
+    for (int quest = 0; quest < 8; quest++) {
         int state = quest_state(g, quest);
         if (!quest_in_tab(state, tab)) {
             continue;
@@ -176,6 +196,7 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
         entry->objective_count = quest >= 4 ? 1 : 3;
         entry->reward_gold = definition->reward_gold;
         entry->reward_score = definition->reward_score;
+        entry->reward_item = definition->reward_item;
         entry->state = state;
         for (int objective = 0; objective < 3; objective++) {
             entry->objectives[objective] =

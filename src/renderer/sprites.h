@@ -148,6 +148,8 @@ void draw_dragonspine_floor(Renderer *r, int tile_x, int tile_y, int map_x, int 
 void draw_dragonspine_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_dragonspine_edge(Renderer *r, int tile_x, int tile_y, int forward);
 void draw_dragonspine_gate(Renderer *r, int tile_x, int tile_y);
+void draw_dragon_treasure(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
+void draw_dragon_seeker(Renderer *r, int tile_x, int tile_y);
 void draw_labyrinth_entrance(Renderer *r, int tile_x, int tile_y, int open);
 void draw_labyrinth_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_labyrinth_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);

@@ -151,6 +151,7 @@ typedef struct {
     int mara_beacons_lit;
     int cain_scroll_given;
     int island_travel_unlocked;
+    int dragon_treasure_quest_state;
     int temple_alignment;
     int temple_sentinels_awakened;
     int temple_treasure_state;
@@ -223,6 +224,8 @@ void game_talk_to_mara(GameState *g);
 void game_talk_to_rook(GameState *g);
 void game_talk_to_cain(GameState *g);
 void game_talk_to_rowan(GameState *g);
+void game_talk_to_dragon_seeker(GameState *g);
+void game_collect_dragon_treasure(GameState *g);
 void game_talk_to_nahla(GameState *g);
 int game_harbor_unlocked(const GameState *g);
 int game_has_treasure_map(const GameState *g);

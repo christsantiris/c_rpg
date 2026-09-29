@@ -331,6 +331,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_SWAMP_DAUGHTER &&
         m->tiles[y][x] != TILE_NPC_CAIN &&
         m->tiles[y][x] != TILE_NPC_ROWAN &&
+        m->tiles[y][x] != TILE_NPC_DRAGON_SEEKER &&
         m->tiles[y][x] != TILE_FOREST_WARDEN &&
         m->tiles[y][x] != TILE_LOCKED_DOOR &&
         m->tiles[y][x] != TILE_CRYPT_DOOR &&
@@ -1170,6 +1171,7 @@ void map_set_dragonspine_road(Map *m, int unlocked) {
         m->tiles[TOWN_DRAGON_GATE_Y][x] = TILE_TOWN_PATH;
     }
     m->tiles[TOWN_DRAGON_GATE_Y][TOWN_W - 1] = TILE_TOWN_EXIT;
+    m->tiles[TOWN_DRAGON_NPC_Y][TOWN_DRAGON_NPC_X] = TILE_NPC_DRAGON_SEEKER;
 }
 
 void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
@@ -1231,8 +1233,8 @@ static void swamp_carve(Map *m, int x, int y) {
         for (int dx = -1; dx <= 1; dx++) {
             int px = x + dx;
             int py = y + dy;
-            if (px > 0 && px < MAP_W - 1 &&
-                py > 0 && py < MAP_H - 1 &&
+            if (px > 0 && px < SWAMP_MAP_W - 1 &&
+                py > 0 && py < SWAMP_MAP_H - 1 &&
                 (dx == 0 || dy == 0 || rand() % 3 != 0)) {
                 m->tiles[py][px] = TILE_SWAMP_FLOOR;
             }
@@ -1316,9 +1318,20 @@ void map_generate_swamp(Map *m, int level) {
         map_room_center(&m->rooms[route[i]], &tx, &ty);
         swamp_carve_trail(m, x, y, tx, ty, (level + i) % 2);
     }
-    map_room_center(&m->rooms[0], &m->stairs_up_x, &m->stairs_up_y);
-    map_room_center(&m->rooms[8], &m->stairs_down_x, &m->stairs_down_y);
-    m->stairs_down_x += 3;
+    int start_x;
+    int end_x;
+    map_room_center(&m->rooms[0], &start_x, &m->stairs_up_y);
+    map_room_center(&m->rooms[8], &end_x, &m->stairs_down_y);
+    m->stairs_up_x = 0;
+    m->stairs_down_x = SWAMP_MAP_W - 1;
+    swamp_carve_trail(m, start_x, m->stairs_up_y,
+        m->stairs_up_x, m->stairs_up_y, 0);
+    swamp_carve_trail(m, end_x, m->stairs_down_y,
+        m->stairs_down_x, m->stairs_down_y, 0);
+    for (int y = 0; y < SWAMP_MAP_H; y++) {
+        m->tiles[y][0] = TILE_SWAMP_WALL;
+        m->tiles[y][SWAMP_MAP_W - 1] = TILE_SWAMP_WALL;
+    }
     m->tiles[m->stairs_up_y][m->stairs_up_x] = TILE_SWAMP_ENTRANCE;
     m->tiles[m->stairs_down_y][m->stairs_down_x] = TILE_SWAMP_EXIT;
 }

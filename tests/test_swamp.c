@@ -51,6 +51,27 @@ static int swamp_exit_reachable(const Map *map) {
     return 1;
 }
 
+static int swamp_exits_at_edges(const Map *map) {
+    if (map->stairs_up_x != 0 ||
+        map->stairs_down_x != SWAMP_MAP_W - 1 ||
+        map->tiles[map->stairs_up_y][0] != TILE_SWAMP_ENTRANCE ||
+        map->tiles[map->stairs_down_y][SWAMP_MAP_W - 1] != TILE_SWAMP_EXIT ||
+        !map_is_walkable(map, 1, map->stairs_up_y) ||
+        !map_is_walkable(map, SWAMP_MAP_W - 2, map->stairs_down_y)) {
+        return 0;
+    }
+    for (int y = 0; y < SWAMP_MAP_H; y++) {
+        if (y != map->stairs_up_y && map_is_walkable(map, 0, y)) {
+            return 0;
+        }
+        if (y != map->stairs_down_y &&
+            map_is_walkable(map, SWAMP_MAP_W - 1, y)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 void test_swamp(void) {
     printf("Swamp tests:\n");
     swamp_game.player.player_class = CLASS_WARRIOR;
@@ -87,6 +108,8 @@ void test_swamp(void) {
         ASSERT("every swamp path tile connects to the entry and exit",
             swamp_game.level == level &&
             swamp_exit_reachable(&swamp_game.map));
+        ASSERT("swamp entrance and exit are single openings at opposite edges",
+            swamp_exits_at_edges(&swamp_game.map));
         ASSERT("swamp tiles use their own black-green terrain",
             swamp_game.map.tiles[0][0] == TILE_SWAMP_WALL &&
             swamp_game.map.tiles[swamp_game.map.stairs_up_y]
@@ -244,7 +267,8 @@ void test_swamp(void) {
         srand(1000 + seed);
         for (int level = 1; level <= SWAMP_DEPTH; level++) {
             map_generate_swamp(&swamp_layout, level);
-            if (!swamp_exit_reachable(&swamp_layout)) {
+            if (!swamp_exit_reachable(&swamp_layout) ||
+                !swamp_exits_at_edges(&swamp_layout)) {
                 connected_layouts = 0;
             }
         }

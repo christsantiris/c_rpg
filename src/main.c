@@ -859,6 +859,10 @@ int main(int argc, char **argv) {
                                             game_talk_to_rowan(&game);
                                             found = 1;
                                         } else if (game.map.tiles[ty][tx] ==
+                                            TILE_NPC_DRAGON_SEEKER) {
+                                            game_talk_to_dragon_seeker(&game);
+                                            found = 1;
+                                        } else if (game.map.tiles[ty][tx] ==
                                             TILE_NPC_ISLAND_CAPTAIN) {
                                             harbor_init(&harbor_screen);
                                             screen = SCREEN_HARBOR;
