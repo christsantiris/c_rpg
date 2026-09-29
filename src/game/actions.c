@@ -1400,8 +1400,8 @@ void action_resolve_player(GameState *g, Action a) {
         set_trail(g, g->player.x, g->player.y,
             impact_x, impact_y,
             g->player.last_dx, g->player.last_dy,
-            wpn->range, demonic ? 73 : 160, demonic ? 195 : 160,
-            demonic ? 63 : 160, demonic ? TRAIL_EFFECT_GENERIC :
+            wpn->range, demonic ? 220 : 160, demonic ? 58 : 160,
+            demonic ? 67 : 160, demonic ? TRAIL_EFFECT_DEMONIC_SWORD :
             TRAIL_EFFECT_WEAPON_ARROW);
         if (!hit) push_message(g, "Attack missed!");
         return;

@@ -204,6 +204,10 @@ void test_swamp(void) {
             (Action){ACTION_RANGED_ATTACK, 0, 0});
         ASSERT("F hits two tiles away with long sword damage",
             swamp_game.enemies[0].hp == 100 - swamp_game.player.attack);
+        ASSERT("demonic sword sends its strike to the hit target",
+            swamp_game.trail_effect == TRAIL_EFFECT_DEMONIC_SWORD &&
+            swamp_game.trail_count == 2 &&
+            swamp_game.trail[1].is_impact);
         swamp_game.enemies[0].hp = 100;
         swamp_game.enemies[0].x = 11;
         action_resolve_player(&swamp_game,

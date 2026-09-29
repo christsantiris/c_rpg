@@ -288,6 +288,54 @@ static void draw_magic_arrow(Renderer *r, int tile_x, int tile_y,
     }
 }
 
+static void draw_demonic_sword(Renderer *r, int tile_x, int tile_y, int dx, int dy, int impact, int frame) {
+    int cx = tile_x * TILE_SIZE + TILE_SIZE / 2 + dx * (impact ? 2 : frame % 2);
+    int cy = tile_y * TILE_SIZE + TILE_SIZE / 2 + dy * (impact ? 2 : frame % 2);
+    int px = -dy;
+    int py = dx;
+    int base_x = cx - dx * 2;
+    int base_y = cy - dy * 2;
+    int tip_x = cx + dx * 10;
+    int tip_y = cy + dy * 10;
+    int guard_x = cx - dx * 4;
+    int guard_y = cy - dy * 4;
+
+    SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(r->sdl, 109, 15, 24, 105);
+    SDL_RenderDrawLine(r->sdl, base_x + px * 3, base_y + py * 3,
+        tip_x + px, tip_y + py);
+    SDL_RenderDrawLine(r->sdl, base_x - px * 3, base_y - py * 3,
+        tip_x - px, tip_y - py);
+    SDL_SetRenderDrawColor(r->sdl, 208, 35, 45, 255);
+    SDL_RenderDrawLine(r->sdl, base_x + px, base_y + py, tip_x, tip_y);
+    SDL_RenderDrawLine(r->sdl, base_x - px, base_y - py, tip_x, tip_y);
+    SDL_SetRenderDrawColor(r->sdl, 255, 115, 92, 255);
+    SDL_RenderDrawLine(r->sdl, base_x, base_y, tip_x, tip_y);
+    SDL_SetRenderDrawColor(r->sdl, 67, 23, 35, 255);
+    SDL_RenderDrawLine(r->sdl, guard_x + px * 5, guard_y + py * 5,
+        guard_x - px * 5, guard_y - py * 5);
+    SDL_RenderDrawLine(r->sdl, guard_x - dx, guard_y - dy,
+        guard_x - dx * 6, guard_y - dy * 6);
+    SDL_SetRenderDrawColor(r->sdl, 236, 72, 68, 255);
+    SDL_RenderDrawLine(r->sdl, guard_x + px * 4, guard_y + py * 4,
+        guard_x - px * 4, guard_y - py * 4);
+    SDL_RenderDrawLine(r->sdl, guard_x - dx * 7 + px * 2,
+        guard_y - dy * 7 + py * 2,
+        guard_x - dx * 7 - px * 2, guard_y - dy * 7 - py * 2);
+
+    if (impact) {
+        SDL_SetRenderDrawColor(r->sdl, 255, 79, 69, 220);
+        SDL_RenderDrawLine(r->sdl, cx + px * 8 - dx * 3,
+            cy + py * 8 - dy * 3,
+            cx - px * 8 + dx * 3, cy - py * 8 + dy * 3);
+        SDL_SetRenderDrawColor(r->sdl, 255, 210, 153, 255);
+        SDL_RenderDrawPoint(r->sdl, cx + px * 6 + dx * 4,
+            cy + py * 6 + dy * 4);
+        SDL_RenderDrawPoint(r->sdl, cx - px * 6 + dx * 4,
+            cy - py * 6 + dy * 4);
+    }
+}
+
 static void draw_fireball(Renderer *r, int tile_x, int tile_y,
                           int dx, int dy, int frame) {
     int cx = tile_x * TILE_SIZE + TILE_SIZE / 2;
@@ -1451,6 +1499,23 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             } else {
                 g->trail_frames = 0;
             }
+        } else if (g->trail_effect == TRAIL_EFFECT_DEMONIC_SWORD &&
+            g->trail_count > 0) {
+            Uint32 elapsed = SDL_GetTicks() - g->trail_started_at;
+            if (elapsed < SPELL_ARROW_MS) {
+                int impact = elapsed >= SPELL_TRAVEL_MS;
+                int lead = impact ? g->trail_count - 1
+                    : (int)(elapsed * g->trail_count / SPELL_TRAVEL_MS);
+                TrailTile *t = &g->trail[lead];
+                if (t->active && viewport_is_visible(v, t->x, t->y)) {
+                    draw_demonic_sword(r, viewport_to_screen_x(v, t->x),
+                        viewport_to_screen_y(v, t->y), g->player.last_dx,
+                        g->player.last_dy, impact && t->is_impact,
+                        (int)(elapsed / 60));
+                }
+            } else {
+                g->trail_frames = 0;
+            }
         } else if (g->trail_effect == TRAIL_EFFECT_WEAPON_ARROW) {
             Uint32 elapsed = SDL_GetTicks() - g->trail_started_at;
             if (elapsed < SPELL_ARROW_MS && g->trail_count > 0) {
@@ -1504,6 +1569,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         }
         if (!timed_fireball &&
             g->trail_effect != TRAIL_EFFECT_MAGIC_ARROW &&
+            g->trail_effect != TRAIL_EFFECT_DEMONIC_SWORD &&
             g->trail_effect != TRAIL_EFFECT_WEAPON_ARROW) {
             g->trail_frames--;
         }
