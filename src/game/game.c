@@ -920,6 +920,7 @@ void enemies_spawn(GameState *g) {
 void game_init(GameState *g) {
     srand((unsigned)time(NULL));
     g->level = 1;
+    g->crownroad_cache.valid = 0;
     for (int i = 0; i < MAX_REGION_DEPTH; i++) {
         g->level_cache[i].valid = 0;
         g->forest_cache[i].valid = 0;
@@ -2022,6 +2023,72 @@ void game_leave_forest_road(GameState *g, Location destination) {
         "You arrive in the second town." : "You return to the starting town.");
 }
 
+void game_enter_crownroad(GameState *g, int from_town3) {
+    static const EnemyType enemies[8] = {
+        ENEMY_BANDIT, ENEMY_BLIGHTED_WOLF, ENEMY_BANDIT,
+        ENEMY_HOBGOBLIN_GUARD, ENEMY_BANDIT, ENEMY_BLIGHTED_WOLF,
+        ENEMY_HOBGOBLIN_GUARD, ENEMY_BANDIT
+    };
+    static const int x[8] = {17, 23, 14, 24, 17, 25, 16, 23};
+    static const int y[8] = {6, 11, 17, 21, 27, 32, 38, 43};
+    g->location = LOCATION_CROWNROAD;
+    g->level = 1;
+    map_generate_crownroad(&g->map);
+    if (g->crownroad_cache.valid) {
+        g->enemy_count = g->crownroad_cache.enemy_count;
+        g->level_cleared = g->crownroad_cache.level_cleared;
+        for (int i = 0; i < g->enemy_count; i++) {
+            g->enemies[i] = g->crownroad_cache.enemies[i];
+        }
+    } else {
+        g->enemy_count = 0;
+        g->level_cleared = 0;
+        for (int i = 0; i < 8; i++) {
+            spawn_enemy(g, &g->enemies[g->enemy_count++], enemies[i], x[i], y[i]);
+        }
+    }
+    g->player.x = CROWNROAD_X;
+    g->player.y = from_town3 ? 1 : CROWNROAD_H - 2;
+    g->floor_item_count = 0;
+    g->dialogue_active = 0;
+    push_message(g, from_town3 ? "The Crownroad leads south to Town 2." :
+        "The Fallen Crownroad leads north to Town 3.");
+}
+
+static void save_crownroad_cache(GameState *g) {
+    CrownroadCache *cache = &g->crownroad_cache;
+    clear_floor_loot(g);
+    cache->enemy_count = g->enemy_count;
+    cache->level_cleared = g->level_cleared;
+    for (int i = 0; i < g->enemy_count; i++) {
+        cache->enemies[i] = g->enemies[i];
+    }
+    cache->valid = 1;
+}
+
+void game_leave_crownroad(GameState *g, Location destination) {
+    save_crownroad_cache(g);
+    int spawn_x;
+    int spawn_y;
+    g->location = destination;
+    if (destination == LOCATION_TOWN2) {
+        map_generate_town2(&g->map, &spawn_x, &spawn_y);
+        g->player.x = CROWNROAD_X;
+        g->player.y = 1;
+    } else {
+        map_generate_town3(&g->map, &spawn_x, &spawn_y);
+        g->player.x = spawn_x;
+        g->player.y = spawn_y;
+    }
+    g->enemy_count = 0;
+    g->floor_item_count = 0;
+    g->dialogue_active = 0;
+    g->player.poison_turns = 0;
+    place_town_portal(g);
+    push_message(g, destination == LOCATION_TOWN2 ?
+        "You return to Town 2." : "You arrive at Town 3, below the castle.");
+}
+
 void game_enter_inn(GameState *g) {
     int spawn_x;
     int spawn_y;
@@ -2530,7 +2597,9 @@ void game_return_to_town(GameState *g) {
     Location returning_from = g->location;
     LevelCache *cache = active_cache(g);
     // Cache current level before leaving
-    if (returning_from != LOCATION_HIGH_PASS && g->level >= 1 &&
+    if (returning_from == LOCATION_CROWNROAD) {
+        save_crownroad_cache(g);
+    } else if (returning_from != LOCATION_HIGH_PASS && g->level >= 1 &&
         g->level <= active_depth(g)) {
         cache[g->level - 1].map = g->map;
         cache[g->level - 1].enemy_count   = g->enemy_count;
@@ -2542,7 +2611,8 @@ void game_return_to_town(GameState *g) {
 
     int spawn_x;
     int spawn_y;
-    if (returning_from == LOCATION_SWAMP) {
+    if (returning_from == LOCATION_SWAMP ||
+        returning_from == LOCATION_CROWNROAD) {
         g->location = LOCATION_TOWN2;
         map_generate_town2(&g->map, &spawn_x, &spawn_y);
     } else {
@@ -2554,7 +2624,10 @@ void game_return_to_town(GameState *g) {
             g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
         place_harbor_road(g);
     }
-    if (returning_from == LOCATION_SWAMP) {
+    if (returning_from == LOCATION_CROWNROAD) {
+        g->player.x = CROWNROAD_X;
+        g->player.y = 1;
+    } else if (returning_from == LOCATION_SWAMP) {
         g->player.x = 20;
         g->player.y = TOWN_H - 2;
     } else if (returning_from == LOCATION_FOREST) {

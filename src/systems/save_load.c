@@ -624,6 +624,19 @@ int save_game(const GameState *g, int slot) {
     }
     cJSON_AddItemToObject(root, "dragonspine_cache", dragonspine_cache);
 
+    cJSON *crownroad_cache = cJSON_CreateObject();
+    cJSON_AddNumberToObject(crownroad_cache, "valid", g->crownroad_cache.valid);
+    cJSON_AddNumberToObject(crownroad_cache, "level_cleared",
+        g->crownroad_cache.level_cleared);
+    if (g->crownroad_cache.valid) {
+        cJSON_AddItemToObject(crownroad_cache, "enemies",
+            serialize_enemies(g->crownroad_cache.enemies,
+                g->crownroad_cache.enemy_count));
+        cJSON_AddNumberToObject(crownroad_cache, "enemy_count",
+            g->crownroad_cache.enemy_count);
+    }
+    cJSON_AddItemToObject(root, "crownroad_cache", crownroad_cache);
+
     cJSON *temple_cache = cJSON_CreateArray();
     for (int i = 0; i < TEMPLE_DEPTH; i++) {
         cJSON *entry = cJSON_CreateObject();
@@ -1052,6 +1065,20 @@ int load_game(GameState *g, int slot) {
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
                 g->dragonspine_cache[i].enemies,
                 &g->dragonspine_cache[i].enemy_count);
+        }
+    }
+
+    cJSON *crownroad_cache = cJSON_GetObjectItem(root, "crownroad_cache");
+    g->crownroad_cache.valid = 0;
+    if (crownroad_cache) {
+        cJSON *valid = cJSON_GetObjectItem(crownroad_cache, "valid");
+        cJSON *cleared = cJSON_GetObjectItem(crownroad_cache, "level_cleared");
+        g->crownroad_cache.valid = valid ? valid->valueint : 0;
+        g->crownroad_cache.level_cleared = cleared ? cleared->valueint : 0;
+        if (g->crownroad_cache.valid) {
+            deserialize_enemies(cJSON_GetObjectItem(crownroad_cache, "enemies"),
+                g->crownroad_cache.enemies,
+                &g->crownroad_cache.enemy_count);
         }
     }
 

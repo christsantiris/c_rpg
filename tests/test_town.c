@@ -5,6 +5,66 @@
 #include "../src/screens/harbor.h"
 #include "../src/systems/save_load.h"
 
+void test_crownroad_to_town3(void) {
+    printf("Fallen Crownroad and Town 3 tests:\n");
+    static GameState g;
+    static GameState loaded;
+    g.player.player_class = CLASS_WARRIOR;
+    game_init(&g);
+    game_enter_town2(&g);
+    ASSERT("Town 2 has a one-tile north Crownroad gate",
+        g.map.tiles[0][CROWNROAD_X] == TILE_TOWN_EXIT &&
+        g.map.tiles[0][CROWNROAD_X - 1] == TILE_WALL &&
+        g.map.tiles[1][CROWNROAD_X] == TILE_TOWN_PATH);
+
+    g.player.x = CROWNROAD_X;
+    g.player.y = 1;
+    action_resolve_player(&g, (Action){ACTION_MOVE, CROWNROAD_X, 0});
+    ASSERT("Crownroad is a traversable combat stage",
+        g.location == LOCATION_CROWNROAD && g.enemy_count == 8 &&
+        g.map.tiles[0][CROWNROAD_X] == TILE_TOWN_EXIT &&
+        g.map.tiles[CROWNROAD_H - 1][CROWNROAD_X] == TILE_TOWN_EXIT);
+
+    g.enemies[0].active = 0;
+    g.player.x = CROWNROAD_X;
+    g.player.y = 1;
+    action_resolve_player(&g, (Action){ACTION_MOVE, CROWNROAD_X, 0});
+    ASSERT("northern edge leads to Town 3 without clearing all enemies",
+        g.location == LOCATION_TOWN3 &&
+        g.map.tiles[10][CROWNROAD_X] == TILE_TOWN_EXIT &&
+        g.crownroad_cache.valid && !g.crownroad_cache.enemies[0].active);
+
+    g.player.x = CROWNROAD_X;
+    g.player.y = 11;
+    action_resolve_player(&g, (Action){ACTION_MOVE, CROWNROAD_X, 10});
+    ASSERT("future castle entrance is visible but sealed",
+        g.location == LOCATION_TOWN3 && g.player.y == 11);
+
+    g.player.y = TOWN_H - 2;
+    action_resolve_player(&g,
+        (Action){ACTION_MOVE, CROWNROAD_X, TOWN_H - 1});
+    ASSERT("Town 3 returns to the north end of the road",
+        g.location == LOCATION_CROWNROAD && g.player.y == 1 &&
+        !g.enemies[0].active);
+
+    g.player.y = CROWNROAD_H - 2;
+    action_resolve_player(&g,
+        (Action){ACTION_MOVE, CROWNROAD_X, CROWNROAD_H - 1});
+    ASSERT("southern edge returns to Town 2",
+        g.location == LOCATION_TOWN2 && g.player.y == 1);
+
+    const int slot = 99015;
+    ASSERT("Crownroad test save slot is unused", !save_exists(slot));
+    int saved = save_game(&g, slot);
+    int restored = saved && load_game(&loaded, slot);
+    ASSERT("Crownroad enemies and gate persist through save/load",
+        restored && loaded.location == LOCATION_TOWN2 &&
+        loaded.map.tiles[0][CROWNROAD_X] == TILE_TOWN_EXIT &&
+        loaded.crownroad_cache.valid &&
+        !loaded.crownroad_cache.enemies[0].active);
+    remove("saves/savegame_99015.json");
+}
+
 static void step_into_labyrinth_tile(GameState *g, int x, int y) {
     static const int dx[4] = {0, 1, 0, -1};
     static const int dy[4] = {-1, 0, 1, 0};
@@ -676,13 +736,13 @@ static void test_necromancer_retaliates_to_arrows(void) {
 }
 
 static void test_necromancer_opens_exit(void) {
+    static GameState g;
     Action attacks[] = {
         {ACTION_MOVE, 12, 10},
         {ACTION_RANGED_ATTACK, 0, 0},
         {ACTION_CAST_SPELL, 0, 0}
     };
     for (int i = 0; i < 3; i++) {
-        GameState g;
         g.player.player_class = CLASS_WARRIOR;
         game_init(&g);
         g.location = LOCATION_FOREST;

@@ -7,6 +7,115 @@
 #include <string.h>
 #include <stdlib.h>
 
+static void draw_crownroad_tile(Renderer *r, int sx, int sy, int x, int y, int kind) {
+    int px = sx * TILE_SIZE;
+    int py = sy * TILE_SIZE;
+    SDL_Rect tile = {px, py, TILE_SIZE, TILE_SIZE};
+    SDL_Color ground = {49, 50, 38, 255};
+    SDL_Color stone = {83, 82, 75, 255};
+    SDL_Color rubble = {38, 38, 38, 255};
+    SDL_Color base = kind == 1 ? stone : (kind == 2 ? rubble : ground);
+    SDL_SetRenderDrawColor(r->sdl, base.r, base.g, base.b, 255);
+    SDL_RenderFillRect(r->sdl, &tile);
+    if (kind == 1) {
+        SDL_SetRenderDrawColor(r->sdl, 46, 47, 43, 255);
+        SDL_RenderDrawLine(r->sdl, px, py + 9, px + 19, py + 9);
+        SDL_RenderDrawLine(r->sdl, px + 9, py, px + 9, py + 8);
+        SDL_RenderDrawLine(r->sdl, px + 5, py + 10, px + 5, py + 19);
+        SDL_RenderDrawLine(r->sdl, px + 15, py + 10, px + 15, py + 19);
+        SDL_SetRenderDrawColor(r->sdl, 115, 111, 98, 255);
+        SDL_RenderDrawLine(r->sdl, px + 1, py + 1, px + 7, py + 1);
+        SDL_RenderDrawLine(r->sdl, px + 11, py + 11, px + 18, py + 11);
+    } else if (kind == 2) {
+        SDL_Rect block = {px + 2, py + 5, 16, 11};
+        SDL_SetRenderDrawColor(r->sdl, 90, 84, 75, 255);
+        SDL_RenderFillRect(r->sdl, &block);
+        SDL_SetRenderDrawColor(r->sdl, 42, 40, 38, 255);
+        SDL_RenderDrawLine(r->sdl, px + 2, py + 11, px + 17, py + 11);
+        SDL_RenderDrawLine(r->sdl, px + 9, py + 5, px + 9, py + 10);
+    } else {
+        int seed = (x * 17 + y * 31) & 7;
+        SDL_SetRenderDrawColor(r->sdl, 91, 79, 50, 255);
+        SDL_RenderDrawLine(r->sdl, px + 3 + seed, py + 12,
+            px + 3 + seed, py + 15);
+        SDL_SetRenderDrawColor(r->sdl, 31, 38, 31, 255);
+        SDL_RenderDrawPoint(r->sdl, px + 15 - seed, py + 6);
+        SDL_RenderDrawPoint(r->sdl, px + 11, py + 18);
+    }
+}
+
+static void draw_castle_front(Renderer *r, int sx, int sy) {
+    int x = sx * TILE_SIZE;
+    int y = sy * TILE_SIZE;
+    SDL_Rect wall = {x, y + 37, 300, 123};
+    SDL_SetRenderDrawColor(r->sdl, 72, 69, 75, 255);
+    SDL_RenderFillRect(r->sdl, &wall);
+    SDL_Rect left = {x, y + 15, 60, 145};
+    SDL_Rect right = {x + 240, y + 15, 60, 145};
+    SDL_SetRenderDrawColor(r->sdl, 91, 87, 94, 255);
+    SDL_RenderFillRect(r->sdl, &left);
+    SDL_RenderFillRect(r->sdl, &right);
+    SDL_SetRenderDrawColor(r->sdl, 116, 108, 106, 255);
+    for (int i = 0; i < 15; i++) {
+        SDL_Rect merlon = {x + i * 20, y + (i < 3 || i > 11 ? 4 : 27),
+            13, 15};
+        SDL_RenderFillRect(r->sdl, &merlon);
+    }
+    SDL_SetRenderDrawColor(r->sdl, 36, 34, 43, 255);
+    for (int row = 0; row < 5; row++) {
+        SDL_RenderDrawLine(r->sdl, x, y + 50 + row * 21,
+            x + 299, y + 50 + row * 21);
+    }
+    for (int col = 1; col < 15; col++) {
+        int seam = x + col * 20;
+        SDL_RenderDrawLine(r->sdl, seam, y + 57, seam, y + 70);
+        SDL_RenderDrawLine(r->sdl, seam - 10, y + 79, seam - 10, y + 91);
+    }
+    SDL_Rect door = {x + 133, y + 117, 34, 43};
+    SDL_SetRenderDrawColor(r->sdl, 28, 25, 30, 255);
+    SDL_RenderFillRect(r->sdl, &door);
+    SDL_Rect gate = {x + 140, y + 127, 20, 33};
+    SDL_SetRenderDrawColor(r->sdl, 76, 49, 37, 255);
+    SDL_RenderFillRect(r->sdl, &gate);
+    SDL_SetRenderDrawColor(r->sdl, 160, 136, 76, 255);
+    SDL_RenderDrawLine(r->sdl, x + 140, y + 127, x + 140, y + 159);
+    SDL_RenderDrawLine(r->sdl, x + 159, y + 127, x + 159, y + 159);
+    for (int i = 0; i < 3; i++) {
+        SDL_Rect slit_left = {x + 23, y + 43 + i * 31, 5, 13};
+        SDL_Rect slit_right = {x + 272, y + 43 + i * 31, 5, 13};
+        SDL_RenderFillRect(r->sdl, &slit_left);
+        SDL_RenderFillRect(r->sdl, &slit_right);
+    }
+}
+
+static void draw_crownroad_gate(Renderer *r, int sx, int sy) {
+    int x = sx * TILE_SIZE;
+    int y = sy * TILE_SIZE;
+    SDL_Rect left = {x, y + 10, 20, 50};
+    SDL_Rect right = {x + 40, y + 10, 20, 50};
+    SDL_Rect lintel = {x, y, 60, 16};
+    SDL_SetRenderDrawColor(r->sdl, 70, 68, 72, 255);
+    SDL_RenderFillRect(r->sdl, &left);
+    SDL_RenderFillRect(r->sdl, &right);
+    SDL_RenderFillRect(r->sdl, &lintel);
+    SDL_SetRenderDrawColor(r->sdl, 116, 109, 105, 255);
+    SDL_RenderDrawLine(r->sdl, x, y, x + 59, y);
+    SDL_RenderDrawLine(r->sdl, x + 19, y + 16, x + 19, y + 59);
+    SDL_RenderDrawLine(r->sdl, x + 40, y + 16, x + 40, y + 59);
+    SDL_SetRenderDrawColor(r->sdl, 34, 32, 36, 255);
+    SDL_RenderDrawLine(r->sdl, x, y + 33, x + 18, y + 33);
+    SDL_RenderDrawLine(r->sdl, x + 41, y + 33, x + 59, y + 33);
+    SDL_RenderDrawLine(r->sdl, x + 10, y + 16, x + 10, y + 32);
+    SDL_RenderDrawLine(r->sdl, x + 50, y + 34, x + 50, y + 51);
+    SDL_Rect pennant_left = {x + 5, y + 17, 7, 14};
+    SDL_Rect pennant_right = {x + 48, y + 17, 7, 14};
+    SDL_SetRenderDrawColor(r->sdl, 124, 53, 48, 255);
+    SDL_RenderFillRect(r->sdl, &pennant_left);
+    SDL_RenderFillRect(r->sdl, &pennant_right);
+    SDL_SetRenderDrawColor(r->sdl, 182, 145, 79, 255);
+    SDL_RenderDrawLine(r->sdl, x + 26, y + 5, x + 33, y + 5);
+}
+
 static void draw_dialogue_text(Renderer *r, const char *text, int x, int y, int max_chars, SDL_Color color) {
     char line[64];
     int line_len = 0;
@@ -63,7 +172,8 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     }
 
     int viewport_w = r->screen_w - INFO_PANEL_W;
-    if (g->location == LOCATION_TOWN || g->location == LOCATION_TOWN2) {
+    if (g->location == LOCATION_TOWN || g->location == LOCATION_TOWN2 ||
+        g->location == LOCATION_TOWN3) {
         viewport_w = TOWN_W * TILE_SIZE;
     } else if (g->location == LOCATION_TAVERN || g->location == LOCATION_INN) {
         viewport_w = TAVERN_W * TILE_SIZE;
@@ -598,9 +708,17 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
     } else if (underlay == TILE_DRAGON_TREASURE) {
         draw_dragon_goblet(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_TOWN_FLOOR) {
-        draw_town_floor(r, screen_x, screen_y);
+        if (g->location == LOCATION_CROWNROAD) {
+            draw_crownroad_tile(r, screen_x, screen_y, map_x, map_y, 0);
+        } else {
+            draw_town_floor(r, screen_x, screen_y);
+        }
     } else if (underlay == TILE_TOWN_PATH) {
-        draw_town_path(r, screen_x, screen_y);
+        if (g->location == LOCATION_CROWNROAD) {
+            draw_crownroad_tile(r, screen_x, screen_y, map_x, map_y, 1);
+        } else {
+            draw_town_path(r, screen_x, screen_y);
+        }
     } else if (underlay == TILE_TAVERN_FLOOR) {
         draw_tavern_floor(r, screen_x, screen_y);
     } else if (underlay == TILE_LABYRINTH_FLOOR ||
@@ -673,13 +791,15 @@ static void draw_trap_underlay(Renderer *r, const GameState *g, int map_x, int m
 void game_draw(Renderer *r, GameState *g, Viewport *v) {
     Viewport town_view;
     int town_scaled = g->location == LOCATION_TOWN ||
-        g->location == LOCATION_TOWN2;
+        g->location == LOCATION_TOWN2 ||
+        g->location == LOCATION_TOWN3;
     int tavern_scaled = g->location == LOCATION_TAVERN ||
         g->location == LOCATION_INN;
     int island_scaled = g->location == LOCATION_ISLAND;
     int labyrinth_scaled = g->location == LOCATION_LABYRINTH;
     int road_scaled = g->location == LOCATION_FOREST_ROAD ||
-        g->location == LOCATION_HIGH_PASS;
+        g->location == LOCATION_HIGH_PASS ||
+        g->location == LOCATION_CROWNROAD;
     int town_road_gate = g->location == LOCATION_TOWN &&
         (g->defeated_bosses & (1 << LOCATION_FOREST)) &&
         g->map.tiles[TOWN_ROAD_EXIT_Y][0] == TILE_TOWN_EXIT &&
@@ -704,11 +824,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             (float)play_w / (map_w * TILE_SIZE),
             (float)play_h / (map_h * TILE_SIZE));
     } else if (road_scaled) {
-        int road_w = g->location == LOCATION_HIGH_PASS ? HIGH_PASS_W : FOREST_ROAD_W;
+        int road_w = g->location == LOCATION_HIGH_PASS ? HIGH_PASS_W :
+            (g->location == LOCATION_CROWNROAD ? CROWNROAD_W : FOREST_ROAD_W);
+        int road_h = g->location == LOCATION_CROWNROAD ? CROWNROAD_H : FOREST_ROAD_H;
         int view_w = v->tiles_x < road_w ? v->tiles_x : road_w;
-        int view_h = v->tiles_y < FOREST_ROAD_H ? v->tiles_y : FOREST_ROAD_H;
+        int view_h = v->tiles_y < road_h ? v->tiles_y : road_h;
         viewport_init(&town_view, view_w, view_h,
-            road_w, FOREST_ROAD_H);
+            road_w, road_h);
         viewport_center_on(&town_view, g->player.x, g->player.y);
         v = &town_view;
     } else if (g->location == LOCATION_SWAMP ||
@@ -767,7 +889,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     }
                     break;
                 case TILE_WALL: {
-                    if (g->location == LOCATION_DUNGEON) {
+                    if (g->location == LOCATION_CROWNROAD) {
+                        draw_crownroad_tile(r, sx, sy, x, y, 2);
+                    } else if (g->location == LOCATION_DUNGEON) {
                         draw_dungeon_wall(r, sx, sy, x, y);
                         const int dx[4] = {0, 1, 0, -1};
                         const int dy[4] = {-1, 0, 1, 0};
@@ -923,8 +1047,20 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_broken_burial_seal(r, sx, sy); break;
                 case TILE_RESTORED_BURIAL_SEAL:
                     draw_restored_burial_seal(r, sx, sy); break;
-                case TILE_TOWN_FLOOR: draw_town_floor(r, sx, sy); break;
-                case TILE_TOWN_PATH: draw_town_path(r, sx, sy); break;
+                case TILE_TOWN_FLOOR:
+                    if (g->location == LOCATION_CROWNROAD) {
+                        draw_crownroad_tile(r, sx, sy, x, y, 0);
+                    } else {
+                        draw_town_floor(r, sx, sy);
+                    }
+                    break;
+                case TILE_TOWN_PATH:
+                    if (g->location == LOCATION_CROWNROAD) {
+                        draw_crownroad_tile(r, sx, sy, x, y, 1);
+                    } else {
+                        draw_town_path(r, sx, sy);
+                    }
+                    break;
                 case TILE_LABYRINTH_ENTRANCE:
                     draw_town_floor(r, sx, sy); break;
                 case TILE_BLACKSMITH_DOOR:
@@ -1014,7 +1150,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_labyrinth_gate(r, sx, sy); break;
                 case TILE_LABYRINTH_RELIC:
                     draw_labyrinth_relic(r, sx, sy); break;
-                case TILE_TOWN_EXIT: draw_town_path(r, sx, sy); break;
+                case TILE_TOWN_EXIT:
+                    if (g->location == LOCATION_CROWNROAD) {
+                        draw_crownroad_tile(r, sx, sy, x, y, 1);
+                    } else {
+                        draw_town_path(r, sx, sy);
+                    }
+                    break;
                 case TILE_SHOP_BLACKSMITH:
                 case TILE_SHOP_ALCHEMIST:
                 case TILE_HEALER:
@@ -1185,6 +1327,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     if (g->location == LOCATION_TOWN2) {
+        draw_crownroad_gate(r,
+            viewport_to_screen_x(v, CROWNROAD_X - 1),
+            viewport_to_screen_y(v, 0));
         draw_town_gate(r,
             viewport_to_screen_x(v, TOWN_W - 3), viewport_to_screen_y(v, 10),
             TOWN_EXIT_FOREST);
@@ -1202,6 +1347,14 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, TOWN_LABYRINTH_X),
             viewport_to_screen_y(v, TOWN_LABYRINTH_Y),
             game_labyrinth_is_open(g));
+    }
+
+    if (g->location == LOCATION_TOWN3) {
+        draw_castle_front(r,
+            viewport_to_screen_x(v, 13), viewport_to_screen_y(v, 3));
+        draw_crownroad_gate(r,
+            viewport_to_screen_x(v, CROWNROAD_X - 1),
+            viewport_to_screen_y(v, TOWN_H - 3));
     }
 
     if (g->location == LOCATION_ISLAND) {
@@ -1238,6 +1391,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->location == LOCATION_DRAGONSPINE ||
         g->location == LOCATION_COAST ||
         g->location == LOCATION_SWAMP ||
+        g->location == LOCATION_CROWNROAD ||
         g->location == LOCATION_TEMPLE ||
         g->location == LOCATION_LABYRINTH) {
         for (int i = 0; i < g->enemy_count; i++) {
@@ -1367,6 +1521,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (g->location == LOCATION_TOWN2) {
         SDL_Color label = {220, 180, 60, 255};
         int width = 0;
+        TTF_SizeText(r->font_tiny, "CROWNROAD", &width, NULL);
+        renderer_draw_text(r, "CROWNROAD",
+            viewport_to_screen_x(v, CROWNROAD_X) * TILE_SIZE +
+                (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, 3) * TILE_SIZE,
+            label, r->font_tiny);
         TTF_SizeText(r->font_tiny, "HEALER", &width, NULL);
         renderer_draw_text(r, "HEALER",
             viewport_to_screen_x(v, TOWN_HEALER_X) * TILE_SIZE +
@@ -1402,6 +1562,35 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 (5 * TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE + 3,
             (SDL_Color){113, 204, 79, 255}, r->font_tiny);
+    }
+
+    if (g->location == LOCATION_TOWN3) {
+        SDL_Color label = {220, 180, 60, 255};
+        int width = 0;
+        TTF_SizeText(r->font_tiny, "CASTLE OF NO RETURN", &width, NULL);
+        renderer_draw_text(r, "CASTLE OF NO RETURN",
+            viewport_to_screen_x(v, CROWNROAD_X) * TILE_SIZE +
+                (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, 1) * TILE_SIZE,
+            label, r->font_tiny);
+        TTF_SizeText(r->font_tiny, "CROWNROAD", &width, NULL);
+        renderer_draw_text(r, "CROWNROAD",
+            viewport_to_screen_x(v, CROWNROAD_X) * TILE_SIZE +
+                (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, TOWN_H - 4) * TILE_SIZE,
+            label, r->font_tiny);
+    }
+
+    if (g->location == LOCATION_CROWNROAD) {
+        SDL_Color label = {205, 179, 124, 255};
+        renderer_draw_text(r, "TOWN 3",
+            viewport_to_screen_x(v, CROWNROAD_X + 2) * TILE_SIZE,
+            viewport_to_screen_y(v, 1) * TILE_SIZE,
+            label, r->font_tiny);
+        renderer_draw_text(r, "TOWN 2",
+            viewport_to_screen_x(v, CROWNROAD_X + 2) * TILE_SIZE,
+            viewport_to_screen_y(v, CROWNROAD_H - 2) * TILE_SIZE,
+            label, r->font_tiny);
     }
 
     if (g->location == LOCATION_TAVERN) {
