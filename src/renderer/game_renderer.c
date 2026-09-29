@@ -53,7 +53,7 @@ static void draw_castle_front(Renderer *r, int sx, int sy) {
     SDL_RenderCopy(r->sdl, r->castle_texture, NULL, &destination);
 }
 
-static void draw_crownroad_gate(Renderer *r, int sx, int sy) {
+static void draw_crownroad_gate_fallback(Renderer *r, int sx, int sy) {
     int x = sx * TILE_SIZE;
     int y = sy * TILE_SIZE;
     SDL_Rect left = {x, y + 10, 20, 50};
@@ -79,6 +79,17 @@ static void draw_crownroad_gate(Renderer *r, int sx, int sy) {
     SDL_RenderFillRect(r->sdl, &pennant_right);
     SDL_SetRenderDrawColor(r->sdl, 182, 145, 79, 255);
     SDL_RenderDrawLine(r->sdl, x + 26, y + 5, x + 33, y + 5);
+}
+
+static void draw_crownroad_gate(Renderer *r, int sx, int sy) {
+    if (!r->crownroad_gate_texture) {
+        draw_crownroad_gate_fallback(r, sx, sy);
+        return;
+    }
+    // A 3x3 tile gatehouse whose archway lines up with the road's column.
+    SDL_Rect destination = {sx * TILE_SIZE, sy * TILE_SIZE,
+        3 * TILE_SIZE, 3 * TILE_SIZE};
+    SDL_RenderCopy(r->sdl, r->crownroad_gate_texture, NULL, &destination);
 }
 
 static void draw_dialogue_text(Renderer *r, const char *text, int x, int y, int max_chars, SDL_Color color) {
