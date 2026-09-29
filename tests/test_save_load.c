@@ -790,8 +790,42 @@ static void test_harbor_road_save_load(void) {
     remove_test_save(ROUND_TRIP_SLOT);
 }
 
+static void test_spent_island_map_on_load(void) {
+    static GameState g;
+    static GameState loaded;
+    g.player.player_class = CLASS_WARRIOR;
+    game_init(&g);
+    g.inventory[g.inventory_count++] = item_make_treasure_map();
+    g.equipped_armor = g.inventory_count;
+    g.inventory[g.inventory_count++] = item_make_chain_mail();
+    int original_count = g.inventory_count;
+    g.temple_treasure_state = 3;
+    g.island_travel_unlocked = 0;
+    ASSERT("save with completed island quest and stale map succeeds",
+        save_game(&g, ROUND_TRIP_SLOT));
+    int loaded_ok = load_game(&loaded, ROUND_TRIP_SLOT);
+    ASSERT("loading restores the island route and removes its spent map",
+        loaded_ok && loaded.island_travel_unlocked &&
+        !game_has_treasure_map(&loaded) &&
+        loaded.inventory_count == original_count - 1 &&
+        loaded.equipped_armor == original_count - 2 &&
+        loaded.inventory[loaded.equipped_armor].type == ITEM_ARMOR &&
+        game_can_sail_to_island(&loaded));
+    if (loaded_ok) {
+        loaded.inventory[loaded.inventory_count++] = item_make_treasure_map();
+        ASSERT("save with unlocked route and duplicate map succeeds",
+            save_game(&loaded, ROUND_TRIP_SLOT));
+        ASSERT("loading removes a map left after the route was unlocked",
+            load_game(&g, ROUND_TRIP_SLOT) &&
+            g.island_travel_unlocked && !game_has_treasure_map(&g) &&
+            g.inventory_count == original_count - 1);
+    }
+    remove_test_save(ROUND_TRIP_SLOT);
+}
+
 void test_save_load(void) {
     test_harbor_road_save_load();
+    test_spent_island_map_on_load();
     test_cain_save_load();
     printf("Save/load tests:\n");
     test_current_weapon_round_trip();
