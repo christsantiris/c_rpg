@@ -182,6 +182,48 @@ static void move_ashore_from_town3_moat(int *x, int *y) {
     }
 }
 
+static int in_lot(int x, int y, int lot_x, int lot_y, int w, int h) {
+    return x >= lot_x && x < lot_x + w && y >= lot_y && y < lot_y + h;
+}
+
+// Move the player and loot standing on a new building lot onto the square in
+// front of it, just below the lot.
+static void clear_new_town_lot(GameState *g, int lot_x, int lot_y, int w, int h) {
+    int front_y = lot_y + h;
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && in_lot(item->x, item->y, lot_x, lot_y, w, h)) {
+            item->y = front_y;
+            item->underlying_tile = TILE_TOWN_PATH;
+            g->map.tiles[item->y][item->x] = TILE_ITEM;
+        }
+    }
+    if (in_lot(g->player.x, g->player.y, lot_x, lot_y, w, h)) {
+        g->player.y = front_y;
+    }
+}
+
+// Swap a town tile between grass and cobblestone, leaving buildings, NPCs and
+// portals alone. Loot keeps its marker and records the new ground beneath it.
+static void retile_town_ground(GameState *g, int x, int y, TileType ground) {
+    TileType tile = g->map.tiles[y][x];
+    if (tile == TILE_TOWN_FLOOR || tile == TILE_TOWN_PATH) {
+        g->map.tiles[y][x] = ground;
+        return;
+    }
+    if (tile != TILE_ITEM) {
+        return;
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && item->x == x && item->y == y &&
+            (item->underlying_tile == TILE_TOWN_FLOOR ||
+            item->underlying_tile == TILE_TOWN_PATH)) {
+            item->underlying_tile = ground;
+        }
+    }
+}
+
 static cJSON *serialize_enemies(const Enemy *enemies, int count) {
     cJSON *arr = cJSON_CreateArray();
     for (int i = 0; i < count; i++) {
@@ -312,7 +354,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 61);
+    cJSON_AddNumberToObject(root, "save_version", 64);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -1848,6 +1890,55 @@ int load_game(GameState *g, int slot) {
             }
         }
         move_ashore_from_town3_moat(&g->player.x, &g->player.y);
+    }
+
+    // Version 62 moves the Tavern east of the Blacksmith, facing the square.
+    // Clear its former south-west lot and move anything on the new lot onto
+    // the square in front of it.
+    if (save_version < 62 && g->location == LOCATION_TOWN) {
+        for (int y = 16; y <= 20; y++) {
+            for (int x = 5; x <= 11; x++) {
+                g->map.tiles[y][x] = TILE_TOWN_FLOOR;
+            }
+        }
+        clear_new_town_lot(g, TOWN_TAVERN_X, TOWN_TAVERN_Y, TOWN_TAVERN_W, TOWN_TAVERN_H);
+        map_place_town_tavern(&g->map);
+    }
+
+    // Version 63 removes the old Tavern walkway loop and widens the town
+    // square to the outer walls of the Blacksmith and Alchemist.
+    if (save_version < 63 && g->location == LOCATION_TOWN) {
+        for (int y = 13; y <= 21; y++) {
+            retile_town_ground(g, 4, y, TILE_TOWN_FLOOR);
+            retile_town_ground(g, 12, y, TILE_TOWN_FLOOR);
+        }
+        for (int x = 5; x < 12; x++) {
+            retile_town_ground(g, x, 21, TILE_TOWN_FLOOR);
+        }
+        for (int y = 11; y <= 14; y++) {
+            for (int x = TOWN_BLACKSMITH_X; x <= TOWN_ALCHEMIST_X + 4; x++) {
+                retile_town_ground(g, x, y, TILE_TOWN_PATH);
+            }
+        }
+    }
+
+    // Version 64 moves the Town 2 Inn east of the Healer, facing the square.
+    // Clear its former south-west lot and lane, and move anything on the new
+    // lot onto the square in front of it.
+    if (save_version < 64 && g->location == LOCATION_TOWN2) {
+        for (int y = 16; y <= 20; y++) {
+            for (int x = 5; x <= 11; x++) {
+                g->map.tiles[y][x] = TILE_TOWN_FLOOR;
+            }
+        }
+        for (int y = 14; y <= 21; y++) {
+            retile_town_ground(g, 12, y, TILE_TOWN_FLOOR);
+        }
+        for (int x = 8; x < 12; x++) {
+            retile_town_ground(g, x, 21, TILE_TOWN_FLOOR);
+        }
+        clear_new_town_lot(g, TOWN_INN_X, TOWN_INN_Y, TOWN_INN_W, TOWN_INN_H);
+        map_place_town_inn(&g->map);
     }
 
     if (g->location == LOCATION_MOUNTAINS) {

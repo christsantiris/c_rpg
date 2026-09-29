@@ -1017,6 +1017,24 @@ void map_place_town_harbor(Map *m) {
     }
 }
 
+void map_place_town_tavern(Map *m) {
+    for (int y = TOWN_TAVERN_Y; y < TOWN_TAVERN_Y + TOWN_TAVERN_H; y++) {
+        for (int x = TOWN_TAVERN_X; x < TOWN_TAVERN_X + TOWN_TAVERN_W; x++) {
+            m->tiles[y][x] = TILE_TAVERN;
+        }
+    }
+    m->tiles[TOWN_TAVERN_DOOR_Y][TOWN_TAVERN_DOOR_X] = TILE_TAVERN_DOOR;
+}
+
+void map_place_town_inn(Map *m) {
+    for (int y = TOWN_INN_Y; y < TOWN_INN_Y + TOWN_INN_H; y++) {
+        for (int x = TOWN_INN_X; x < TOWN_INN_X + TOWN_INN_W; x++) {
+            m->tiles[y][x] = TILE_TAVERN;
+        }
+    }
+    m->tiles[TOWN_INN_DOOR_Y][TOWN_INN_DOOR_X] = TILE_TAVERN_DOOR;
+}
+
 void map_place_town_labyrinth(Map *m) {
     // Branch from the east-west road and skirt the gate to its south entrance.
     for (int y = 13; y <= TOWN_LABYRINTH_Y + 1; y++) {
@@ -1096,28 +1114,16 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     m->tiles[TOWN_ALCHEMIST_Y + 4][TOWN_ALCHEMIST_X + 2] =
         TILE_TOWN_PATH;
 
-    // Widen the main road by one row above and two rows below the shops.
+    // Widen the main road into a square spanning the Blacksmith and Alchemist,
+    // one row above and two rows below the road.
     for (int y = 11; y <= 14; y++) {
-        for (int x = TOWN_BLACKSMITH_X + 2; x <= TOWN_ALCHEMIST_X + 2; x++) {
+        for (int x = TOWN_BLACKSMITH_X; x <= TOWN_ALCHEMIST_X + 4; x++) {
             m->tiles[y][x] = TILE_TOWN_PATH;
         }
     }
 
-    // Tavern at (5, 16) — 7x5 tiles.
-    for (int dy = 0; dy < 5; dy++) {
-        for (int dx = 0; dx < 7; dx++) {
-            m->tiles[16 + dy][5 + dx] = TILE_TAVERN;
-        }
-    }
-    m->tiles[20][8] = TILE_TAVERN_DOOR;
-    // The Tavern's rectangular walkway remains even before Town 2 unlocks.
-    for (int y = 13; y <= 21; y++) {
-        m->tiles[y][12] = TILE_TOWN_PATH;
-        m->tiles[y][4] = TILE_TOWN_PATH;
-    }
-    for (int x = 4; x < 12; x++) {
-        m->tiles[21][x] = TILE_TOWN_PATH;
-    }
+    // The Tavern stands east of the Blacksmith, its door opening onto the square.
+    map_place_town_tavern(m);
 
     map_place_town_harbor(m);
     m->tiles[TOWN_CAIN_Y][TOWN_CAIN_X] = TILE_NPC_CAIN;
@@ -1130,14 +1136,7 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
 }
 
 void map_set_town2_road(Map *m, int unlocked) {
-    // Rebuild the permanent Tavern loop on loaded town maps as well.
-    for (int y = 13; y <= 21; y++) {
-        m->tiles[y][4] = TILE_TOWN_PATH;
-    }
-    for (int x = 4; x < 8; x++) {
-        m->tiles[21][x] = TILE_TOWN_PATH;
-    }
-    // Keep the former gate position closed while preserving the Tavern loop.
+    // Keep the former gate position closed.
     m->tiles[19][0] = TILE_WALL;
     for (int x = 1; x < 4; x++) {
         m->tiles[19][x] = TILE_TOWN_FLOOR;
@@ -1212,18 +1211,8 @@ void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
         m->tiles[11][x] = TILE_TOWN_PATH;
     }
     map_place_town2_center(m);
-    for (int y = 16; y <= 20; y++) {
-        for (int x = 5; x <= 11; x++) {
-            m->tiles[y][x] = TILE_TAVERN;
-        }
-    }
-    m->tiles[20][8] = TILE_TAVERN_DOOR;
-    for (int y = 13; y <= 21; y++) {
-        m->tiles[y][12] = TILE_TOWN_PATH;
-    }
-    for (int x = 8; x <= 12; x++) {
-        m->tiles[21][x] = TILE_TOWN_PATH;
-    }
+    // The Inn stands east of the Healer, its door opening onto the square.
+    map_place_town_inn(m);
     map_place_town_labyrinth(m);
     *spawn_x = 1;
     *spawn_y = 12;

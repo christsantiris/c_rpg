@@ -1957,8 +1957,8 @@ void game_leave_tavern(GameState *g) {
     map_set_dragonspine_road(&g->map,
         g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
     place_harbor_road(g);
-    g->player.x = 8;
-    g->player.y = 21;
+    g->player.x = TOWN_TAVERN_DOOR_X;
+    g->player.y = TOWN_TAVERN_DOOR_Y + 1;
     g->enemy_count = 0;
     g->floor_item_count = 0;
     g->dialogue_active = 0;
@@ -2129,8 +2129,8 @@ void game_leave_inn(GameState *g) {
     g->location = LOCATION_TOWN2;
     map_generate_town2(&g->map, &spawn_x, &spawn_y);
     place_town_portal(g);
-    g->player.x = 8;
-    g->player.y = 21;
+    g->player.x = TOWN_INN_DOOR_X;
+    g->player.y = TOWN_INN_DOOR_Y + 1;
     g->enemy_count = 0;
     g->floor_item_count = 0;
     g->dialogue_active = 0;

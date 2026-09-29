@@ -169,9 +169,9 @@ void test_tavern_interior(void) {
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
 
-    g.player.x = 8;
-    g.player.y = 21;
-    Action enter = {ACTION_MOVE, 8, 20};
+    g.player.x = TOWN_TAVERN_DOOR_X;
+    g.player.y = TOWN_TAVERN_DOOR_Y + 1;
+    Action enter = {ACTION_MOVE, TOWN_TAVERN_DOOR_X, TOWN_TAVERN_DOOR_Y};
     action_resolve_player(&g, enter);
     ASSERT("walking into the Tavern door enters its interior",
         g.location == LOCATION_TAVERN);
@@ -222,7 +222,8 @@ void test_tavern_interior(void) {
     ASSERT("walking through the Tavern doorway returns to town",
         g.location == LOCATION_TOWN);
     ASSERT("Tavern returns player outside its front door",
-        g.player.x == 8 && g.player.y == 21);
+        g.player.x == TOWN_TAVERN_DOOR_X && g.player.y == TOWN_TAVERN_DOOR_Y + 1 &&
+        map_is_walkable(&g.map, g.player.x, g.player.y));
     ASSERT("Tavern transition preserves Elowen quest state",
         g.elowen_quest_state == 1);
 }

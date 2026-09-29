@@ -607,6 +607,166 @@ static void test_legacy_town3_moat(void) {
     remove_test_save(LEGACY_SLOT);
 }
 
+static void test_legacy_tavern_move(void) {
+    static GameState original;
+    static GameState loaded;
+    memset(&original, 0, sizeof(original));
+    game_init(&original);
+    for (int y = TOWN_TAVERN_Y; y < TOWN_TAVERN_Y + TOWN_TAVERN_H; y++) {
+        for (int x = TOWN_TAVERN_X; x < TOWN_TAVERN_X + TOWN_TAVERN_W; x++) {
+            original.map.tiles[y][x] = TILE_TOWN_FLOOR;
+        }
+    }
+    for (int y = 16; y <= 20; y++) {
+        for (int x = 5; x <= 11; x++) {
+            original.map.tiles[y][x] = TILE_TAVERN;
+        }
+    }
+    original.map.tiles[20][8] = TILE_TAVERN_DOOR;
+    original.player.x = TOWN_TAVERN_X + 1;
+    original.player.y = TOWN_TAVERN_Y + 2;
+    original.floor_item_count = 1;
+    original.floor_items[0] = (FloorItem){
+        .active = 1, .x = TOWN_TAVERN_DOOR_X, .y = TOWN_TAVERN_Y,
+        .underlying_tile = TILE_TOWN_FLOOR,
+        .item = item_make_health_potion()
+    };
+    original.map.tiles[TOWN_TAVERN_Y][TOWN_TAVERN_DOOR_X] = TILE_ITEM;
+    int loaded_ok = save_game(&original, LEGACY_SLOT) &&
+        rewrite_save_version(LEGACY_SLOT, 61) && load_game(&loaded, LEGACY_SLOT);
+    ASSERT("legacy town save with the south-west Tavern loads", loaded_ok);
+    if (loaded_ok) {
+        int front_y = TOWN_TAVERN_Y + TOWN_TAVERN_H;
+        ASSERT("loading moves the Tavern beside the Blacksmith",
+            loaded.map.tiles[TOWN_TAVERN_Y][TOWN_TAVERN_X] == TILE_TAVERN &&
+            loaded.map.tiles[TOWN_TAVERN_DOOR_Y][TOWN_TAVERN_DOOR_X] == TILE_TAVERN_DOOR &&
+            loaded.map.tiles[16][5] == TILE_TOWN_FLOOR &&
+            loaded.map.tiles[20][8] == TILE_TOWN_FLOOR);
+        ASSERT("Tavern move puts the player on the square in front of it",
+            loaded.player.x == TOWN_TAVERN_X + 1 && loaded.player.y == front_y &&
+            map_is_walkable(&loaded.map, loaded.player.x, loaded.player.y));
+        ASSERT("Tavern move carries loot from the new lot onto the square",
+            loaded.floor_items[0].active &&
+            loaded.floor_items[0].x == TOWN_TAVERN_DOOR_X &&
+            loaded.floor_items[0].y == front_y &&
+            loaded.floor_items[0].underlying_tile == TILE_TOWN_PATH &&
+            loaded.map.tiles[front_y][TOWN_TAVERN_DOOR_X] == TILE_ITEM);
+    }
+    remove_test_save(LEGACY_SLOT);
+}
+
+static void test_legacy_town_square(void) {
+    static GameState original;
+    static GameState loaded;
+    memset(&original, 0, sizeof(original));
+    game_init(&original);
+    const int rows[3] = {11, 13, 14};
+    const int cols[4] = {TOWN_BLACKSMITH_X, TOWN_BLACKSMITH_X + 1,
+        TOWN_ALCHEMIST_X + 3, TOWN_ALCHEMIST_X + 4};
+    for (int r = 0; r < 3; r++) {
+        for (int c = 0; c < 4; c++) {
+            original.map.tiles[rows[r]][cols[c]] = TILE_TOWN_FLOOR;
+        }
+    }
+    for (int y = 13; y <= 21; y++) {
+        original.map.tiles[y][4] = TILE_TOWN_PATH;
+        original.map.tiles[y][12] = TILE_TOWN_PATH;
+    }
+    for (int x = 5; x < 12; x++) {
+        original.map.tiles[21][x] = TILE_TOWN_PATH;
+    }
+    original.player.x = 12;
+    original.player.y = 16;
+    original.floor_item_count = 2;
+    original.floor_items[0] = (FloorItem){
+        .active = 1, .x = 4, .y = 18, .underlying_tile = TILE_TOWN_PATH,
+        .item = item_make_health_potion()
+    };
+    original.floor_items[1] = (FloorItem){
+        .active = 1, .x = TOWN_ALCHEMIST_X + 4, .y = 13,
+        .underlying_tile = TILE_TOWN_FLOOR, .item = item_make_health_potion()
+    };
+    original.map.tiles[18][4] = TILE_ITEM;
+    original.map.tiles[13][TOWN_ALCHEMIST_X + 4] = TILE_ITEM;
+    int loaded_ok = save_game(&original, LEGACY_SLOT) &&
+        rewrite_save_version(LEGACY_SLOT, 62) && load_game(&loaded, LEGACY_SLOT);
+    ASSERT("legacy town save with the Tavern loop loads", loaded_ok);
+    if (loaded_ok) {
+        ASSERT("loading removes the old Tavern walkway loop",
+            loaded.map.tiles[13][4] == TILE_TOWN_FLOOR &&
+            loaded.map.tiles[20][12] == TILE_TOWN_FLOOR &&
+            loaded.map.tiles[21][8] == TILE_TOWN_FLOOR &&
+            loaded.map.tiles[18][4] == TILE_ITEM &&
+            loaded.floor_items[0].underlying_tile == TILE_TOWN_FLOOR);
+        ASSERT("loading widens the square to the Blacksmith and Alchemist walls",
+            loaded.map.tiles[11][TOWN_BLACKSMITH_X] == TILE_TOWN_PATH &&
+            loaded.map.tiles[13][12] == TILE_TOWN_PATH &&
+            loaded.map.tiles[14][TOWN_ALCHEMIST_X + 4] == TILE_TOWN_PATH &&
+            loaded.map.tiles[13][TOWN_ALCHEMIST_X + 4] == TILE_ITEM &&
+            loaded.floor_items[1].underlying_tile == TILE_TOWN_PATH);
+        ASSERT("square migration keeps Cain and the player in place",
+            loaded.map.tiles[TOWN_CAIN_Y][TOWN_CAIN_X] == TILE_NPC_CAIN &&
+            loaded.player.x == 12 && loaded.player.y == 16 &&
+            map_is_walkable(&loaded.map, 12, 16));
+    }
+    remove_test_save(LEGACY_SLOT);
+}
+
+static void test_legacy_inn_move(void) {
+    static GameState original;
+    static GameState loaded;
+    memset(&original, 0, sizeof(original));
+    game_init(&original);
+    game_enter_town2(&original);
+    for (int y = TOWN_INN_Y; y < TOWN_INN_Y + TOWN_INN_H; y++) {
+        for (int x = TOWN_INN_X; x < TOWN_INN_X + TOWN_INN_W; x++) {
+            original.map.tiles[y][x] = TILE_TOWN_FLOOR;
+        }
+    }
+    for (int y = 16; y <= 20; y++) {
+        for (int x = 5; x <= 11; x++) {
+            original.map.tiles[y][x] = TILE_TAVERN;
+        }
+    }
+    original.map.tiles[20][8] = TILE_TAVERN_DOOR;
+    for (int y = 14; y <= 21; y++) {
+        original.map.tiles[y][12] = TILE_TOWN_PATH;
+    }
+    for (int x = 8; x < 12; x++) {
+        original.map.tiles[21][x] = TILE_TOWN_PATH;
+    }
+    original.player.x = TOWN_INN_X + 1;
+    original.player.y = TOWN_INN_Y + 2;
+    original.floor_item_count = 1;
+    original.floor_items[0] = (FloorItem){
+        .active = 1, .x = TOWN_INN_DOOR_X, .y = TOWN_INN_Y,
+        .underlying_tile = TILE_TOWN_FLOOR,
+        .item = item_make_health_potion()
+    };
+    original.map.tiles[TOWN_INN_Y][TOWN_INN_DOOR_X] = TILE_ITEM;
+    int loaded_ok = save_game(&original, LEGACY_SLOT) &&
+        rewrite_save_version(LEGACY_SLOT, 63) && load_game(&loaded, LEGACY_SLOT);
+    ASSERT("legacy Town 2 save with the south-west Inn loads", loaded_ok);
+    if (loaded_ok) {
+        int front_y = TOWN_INN_Y + TOWN_INN_H;
+        ASSERT("loading moves the Inn beside the Healer",
+            loaded.location == LOCATION_TOWN2 &&
+            loaded.map.tiles[TOWN_INN_Y][TOWN_INN_X] == TILE_TAVERN &&
+            loaded.map.tiles[TOWN_INN_DOOR_Y][TOWN_INN_DOOR_X] == TILE_TAVERN_DOOR &&
+            loaded.map.tiles[16][5] == TILE_TOWN_FLOOR &&
+            loaded.map.tiles[18][12] == TILE_TOWN_FLOOR &&
+            loaded.map.tiles[21][9] == TILE_TOWN_FLOOR);
+        ASSERT("Inn move puts the player and loot on the square in front of it",
+            loaded.player.x == TOWN_INN_X + 1 && loaded.player.y == front_y &&
+            loaded.floor_items[0].active &&
+            loaded.floor_items[0].x == TOWN_INN_DOOR_X &&
+            loaded.floor_items[0].y == front_y &&
+            loaded.floor_items[0].underlying_tile == TILE_TOWN_PATH &&
+            loaded.map.tiles[front_y][TOWN_INN_DOOR_X] == TILE_ITEM);
+    }
+    remove_test_save(LEGACY_SLOT);
+}
+
 static void test_forest_enemy_repair(void) {
     static GameState original;
     static GameState loaded;
@@ -873,6 +1033,9 @@ void test_save_load(void) {
     test_harbor_relocation();
     test_legacy_coast_sluice_removal();
     test_legacy_town3_moat();
+    test_legacy_tavern_move();
+    test_legacy_town_square();
+    test_legacy_inn_move();
     test_forest_enemy_repair();
     test_blocked_dungeon_gate_repair();
 }
