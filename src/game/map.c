@@ -1250,8 +1250,8 @@ void map_generate_town3(Map *m, int *spawn_x, int *spawn_y) {
             m->tiles[y][x] = TILE_TOWN_PATH;
         }
     }
-    for (int y = 3; y <= 10; y++) {
-        for (int x = 13; x <= 27; x++) {
+    for (int y = TOWN_CASTLE_Y; y < TOWN_CASTLE_Y + TOWN_CASTLE_H; y++) {
+        for (int x = TOWN_CASTLE_X; x < TOWN_CASTLE_X + TOWN_CASTLE_W; x++) {
             m->tiles[y][x] = TILE_WALL;
         }
     }
@@ -1270,15 +1270,18 @@ void map_generate_crownroad(Map *m) {
         }
     }
     for (int y = 1; y < CROWNROAD_H - 1; y++) {
+        int left_tree_edge = 12 + ((y / 6) % 3 == 1);
+        int right_tree_edge = 28 - ((y / 7) % 3 == 1);
         for (int x = 1; x < CROWNROAD_W - 1; x++) {
-            m->tiles[y][x] = TILE_TOWN_FLOOR;
+            m->tiles[y][x] = x <= left_tree_edge || x >= right_tree_edge ?
+                TILE_FOREST_WALL : TILE_TOWN_FLOOR;
         }
         m->tiles[y][CROWNROAD_X] = TILE_TOWN_PATH;
     }
     for (int branch = 0; branch < 4; branch++) {
         int y = 9 + branch * 10;
-        int from = branch % 2 == 0 ? 12 : CROWNROAD_X;
-        int to = branch % 2 == 0 ? CROWNROAD_X : 29;
+        int from = branch % 2 == 0 ? 17 : CROWNROAD_X;
+        int to = branch % 2 == 0 ? CROWNROAD_X : 23;
         for (int x = from; x <= to; x++) {
             m->tiles[y][x] = TILE_TOWN_PATH;
         }
@@ -1286,7 +1289,13 @@ void map_generate_crownroad(Map *m) {
             m->tiles[y - 2][x] = TILE_WALL;
         }
         for (int x = to + 1; x <= to + 2; x++) {
-            m->tiles[y + 2][x] = TILE_WALL;
+            m->tiles[y + 3][x] = TILE_WALL;
+        }
+    }
+    for (int y = 5; y < CROWNROAD_H - 1; y += 8) {
+        m->tiles[y][15] = TILE_FOREST_WALL;
+        if (y + 4 < CROWNROAD_H - 1) {
+            m->tiles[y + 4][25] = TILE_FOREST_WALL;
         }
     }
     m->tiles[0][CROWNROAD_X] = TILE_TOWN_EXIT;

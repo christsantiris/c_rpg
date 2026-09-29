@@ -57,7 +57,9 @@ typedef enum {
     ENEMY_VAMPIRE,
     ENEMY_SWAMP_DEMON,
     ENEMY_DRAKE,
-    ENEMY_FIRE_ELEMENTAL
+    ENEMY_FIRE_ELEMENTAL,
+    ENEMY_ROAD_ARCHER,
+    ENEMY_HORSEMAN
 } EnemyType;
 
 typedef struct {

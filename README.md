@@ -334,7 +334,18 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
    Give every boss multiple phases, telegraphed signature attacks, an arena mechanic, and a guaranteed thematic reward.
 2. Combat feedback
    Add clearer hit effects, critical indicators, blocked-damage feedback, status icons, and distinct weapon sounds.
-3. More weapon variation
 4. Accessibility and controls
    Add remappable controls, text scaling, colorblind-safe indicators, adjustable message duration, and clearer interaction prompts.
 5. Additional areas and storylines
+6. Double the number of enemies on the Crown Road
+7. Add a Royal Guard NPC before the Crown Road Gate that warns players of its difficulty and recommends exploring other areas first. 
+8. Improve and Expand the Crown Road Gate Sprite
+9. Add an Apothecary building to town 3 that sells mana and health potions as well intelligence potion that increase base mana points by 1. These should be very expensive 1000 gold or more.
+10. Castle of No Return looks too Royal. It should look more evil. Surround it with moat. 
+11. Improve Crown road gate sprite
+12. Move Town 2 Inn to Center Square to east of Healer.
+13. Town 2 additional enemy area
+14. Different music for different enemy area encounters
+15. Expanded Sfx for different weapon types.
+16. Enemies don't drop scrolls. Economy Only except for boss drops or quests.
+17. More powerful spells require Books not scrolls.

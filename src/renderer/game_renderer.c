@@ -45,47 +45,12 @@ static void draw_crownroad_tile(Renderer *r, int sx, int sy, int x, int y, int k
 }
 
 static void draw_castle_front(Renderer *r, int sx, int sy) {
-    int x = sx * TILE_SIZE;
-    int y = sy * TILE_SIZE;
-    SDL_Rect wall = {x, y + 37, 300, 123};
-    SDL_SetRenderDrawColor(r->sdl, 72, 69, 75, 255);
-    SDL_RenderFillRect(r->sdl, &wall);
-    SDL_Rect left = {x, y + 15, 60, 145};
-    SDL_Rect right = {x + 240, y + 15, 60, 145};
-    SDL_SetRenderDrawColor(r->sdl, 91, 87, 94, 255);
-    SDL_RenderFillRect(r->sdl, &left);
-    SDL_RenderFillRect(r->sdl, &right);
-    SDL_SetRenderDrawColor(r->sdl, 116, 108, 106, 255);
-    for (int i = 0; i < 15; i++) {
-        SDL_Rect merlon = {x + i * 20, y + (i < 3 || i > 11 ? 4 : 27),
-            13, 15};
-        SDL_RenderFillRect(r->sdl, &merlon);
+    if (!r->castle_texture) {
+        return;
     }
-    SDL_SetRenderDrawColor(r->sdl, 36, 34, 43, 255);
-    for (int row = 0; row < 5; row++) {
-        SDL_RenderDrawLine(r->sdl, x, y + 50 + row * 21,
-            x + 299, y + 50 + row * 21);
-    }
-    for (int col = 1; col < 15; col++) {
-        int seam = x + col * 20;
-        SDL_RenderDrawLine(r->sdl, seam, y + 57, seam, y + 70);
-        SDL_RenderDrawLine(r->sdl, seam - 10, y + 79, seam - 10, y + 91);
-    }
-    SDL_Rect door = {x + 133, y + 117, 34, 43};
-    SDL_SetRenderDrawColor(r->sdl, 28, 25, 30, 255);
-    SDL_RenderFillRect(r->sdl, &door);
-    SDL_Rect gate = {x + 140, y + 127, 20, 33};
-    SDL_SetRenderDrawColor(r->sdl, 76, 49, 37, 255);
-    SDL_RenderFillRect(r->sdl, &gate);
-    SDL_SetRenderDrawColor(r->sdl, 160, 136, 76, 255);
-    SDL_RenderDrawLine(r->sdl, x + 140, y + 127, x + 140, y + 159);
-    SDL_RenderDrawLine(r->sdl, x + 159, y + 127, x + 159, y + 159);
-    for (int i = 0; i < 3; i++) {
-        SDL_Rect slit_left = {x + 23, y + 43 + i * 31, 5, 13};
-        SDL_Rect slit_right = {x + 272, y + 43 + i * 31, 5, 13};
-        SDL_RenderFillRect(r->sdl, &slit_left);
-        SDL_RenderFillRect(r->sdl, &slit_right);
-    }
+    SDL_Rect destination = {sx * TILE_SIZE, sy * TILE_SIZE,
+        TOWN_MOAT_W * TILE_SIZE, TOWN_MOAT_H * TILE_SIZE};
+    SDL_RenderCopy(r->sdl, r->castle_texture, NULL, &destination);
 }
 
 static void draw_crownroad_gate(Renderer *r, int sx, int sy) {
@@ -320,6 +285,7 @@ void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, con
             SDL_Rect burst = {cx - radius / 2, cy - radius / 2, radius, radius};
             SDL_RenderDrawRect(r->sdl, &burst);
         } else if (shot->type == ENEMY_GOBLIN_ARCHER ||
+            shot->type == ENEMY_ROAD_ARCHER ||
             shot->type == ENEMY_DARK_ELF ||
             shot->type == ENEMY_BLOWDART_HUNTER) {
             draw_weapon_arrow_at(r, cx, cy, (dx > 0) - (dx < 0), (dy > 0) - (dy < 0), 0);
@@ -889,7 +855,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     }
                     break;
                 case TILE_WALL: {
-                    if (g->location == LOCATION_CROWNROAD) {
+                    if (g->location == LOCATION_TOWN3 &&
+                        x >= TOWN_CASTLE_X && x < TOWN_CASTLE_X + TOWN_CASTLE_W &&
+                        y >= TOWN_CASTLE_Y && y < TOWN_CASTLE_Y + TOWN_CASTLE_H) {
+                        draw_town_floor(r, sx, sy);
+                    } else if (g->location == LOCATION_CROWNROAD) {
                         draw_crownroad_tile(r, sx, sy, x, y, 2);
                     } else if (g->location == LOCATION_DUNGEON) {
                         draw_dungeon_wall(r, sx, sy, x, y);
@@ -1222,6 +1192,28 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_forest_tree_edge(r, sx, sy, x, y, edges);
                 }
             }
+            if (g->location == LOCATION_CROWNROAD &&
+                (g->map.tiles[y][x] == TILE_TOWN_FLOOR ||
+                g->map.tiles[y][x] == TILE_TOWN_PATH)) {
+                unsigned int edges = 0;
+                if (y > 0 && g->map.tiles[y - 1][x] == TILE_FOREST_WALL) {
+                    edges |= FOREST_EDGE_NORTH;
+                }
+                if (x < MAP_W - 1 &&
+                    g->map.tiles[y][x + 1] == TILE_FOREST_WALL) {
+                    edges |= FOREST_EDGE_EAST;
+                }
+                if (y < MAP_H - 1 &&
+                    g->map.tiles[y + 1][x] == TILE_FOREST_WALL) {
+                    edges |= FOREST_EDGE_SOUTH;
+                }
+                if (x > 0 && g->map.tiles[y][x - 1] == TILE_FOREST_WALL) {
+                    edges |= FOREST_EDGE_WEST;
+                }
+                if (edges != 0) {
+                    draw_forest_tree_edge(r, sx, sy, x, y, edges);
+                }
+            }
             if (g->location == LOCATION_SWAMP && swamp_is_floor(g, x, y)) {
                 unsigned int edges = 0;
                 if (y > 0 && g->map.tiles[y - 1][x] == TILE_SWAMP_WALL) {
@@ -1351,7 +1343,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     if (g->location == LOCATION_TOWN3) {
         draw_castle_front(r,
-            viewport_to_screen_x(v, 13), viewport_to_screen_y(v, 3));
+            viewport_to_screen_x(v, TOWN_MOAT_X),
+            viewport_to_screen_y(v, TOWN_MOAT_Y));
         draw_crownroad_gate(r,
             viewport_to_screen_x(v, CROWNROAD_X - 1),
             viewport_to_screen_y(v, TOWN_H - 3));
