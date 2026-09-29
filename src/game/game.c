@@ -977,6 +977,7 @@ void game_init(GameState *g) {
     g->mara_beacons_lit = 0;
     g->cain_scroll_given = 0;
     g->island_travel_unlocked = 0;
+    g->dragon_treasure_quest_state = 0;
     for (int i = 0; i < TEMPLE_DEPTH; i++) {
         g->temple_cache[i].valid = 0;
     }
@@ -1554,11 +1555,30 @@ static void spawn_mara_guardian(GameState *g) {
     }
 }
 
+static void place_dragon_treasure(GameState *g) {
+    if (g->location != LOCATION_DRAGONSPINE ||
+        g->level != DRAGONSPINE_DEPTH || g->dragon_treasure_quest_state != 1) {
+        return;
+    }
+    Room *lair = &g->map.rooms[g->map.room_count - 1];
+    int x;
+    int y;
+    map_room_center(lair, &x, &y);
+    x += 2;
+    y += 1;
+    if (g->map.tiles[y][x] == TILE_DRAGON_FLOOR ||
+        g->map.tiles[y][x] == TILE_DRAGON_ASH ||
+        g->map.tiles[y][x] == TILE_DRAGON_HOARD) {
+        g->map.tiles[y][x] = TILE_DRAGON_TREASURE;
+    }
+}
+
 void game_refresh_quest_encounters(GameState *g) {
     int seal_placed = place_elowen_seal(g);
     int warden_placed = place_alder_warden(g);
     int beacon_placed = place_mara_beacon(g);
     place_dain_map_bearer(g);
+    place_dragon_treasure(g);
     if (seal_placed) {
         spawn_elowen_guardians(g);
     }
@@ -1599,6 +1619,7 @@ static void generate_active_level(GameState *g) {
     int seal_placed = place_elowen_seal(g);
     int warden_placed = place_alder_warden(g);
     int beacon_placed = place_mara_beacon(g);
+    place_dragon_treasure(g);
     int daughter_x = 0;
     int daughter_y = 0;
     int daughter_placed = g->location == LOCATION_SWAMP && g->level == 4 &&
@@ -2846,6 +2867,10 @@ static void prepare_quest_expedition(GameState *g, Location location) {
         cache = g->swamp_cache;
         max_level = &g->max_swamp_level_reached;
         depth = SWAMP_DEPTH;
+    } else if (location == LOCATION_DRAGONSPINE) {
+        cache = g->dragonspine_cache;
+        max_level = &g->max_dragonspine_level_reached;
+        depth = DRAGONSPINE_DEPTH;
     } else {
         cache = g->coast_cache;
         max_level = &g->max_coast_level_reached;
@@ -2858,6 +2883,62 @@ static void prepare_quest_expedition(GameState *g, Location location) {
     if (g->portal_active && g->portal_location == location) {
         g->portal_active = 0;
     }
+}
+
+void game_talk_to_dragon_seeker(GameState *g) {
+    if (!(g->defeated_bosses & (1 << LOCATION_MOUNTAINS))) {
+        return;
+    }
+    g->dialogue_active = 1;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Ilya");
+    g->dialogue_x = TOWN_DRAGON_NPC_X;
+    g->dialogue_y = TOWN_DRAGON_NPC_Y;
+    if (g->dragon_treasure_quest_state == 0) {
+        g->dragon_treasure_quest_state = 1;
+        if (g->portal_active && g->portal_location == LOCATION_DRAGONSPINE &&
+            g->location == LOCATION_TOWN &&
+            g->map.tiles[TOWN_DRAGON_GATE_Y + 1][41] == TILE_PORTAL) {
+            g->map.tiles[TOWN_DRAGON_GATE_Y + 1][41] = TILE_TOWN_FLOOR;
+        }
+        prepare_quest_expedition(g, LOCATION_DRAGONSPINE);
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "A golden dragon seal lies in the hoard atop Dragonspine. "
+            "Bring it back and I will give you a Potion of Strength. "
+            "The High Pass begins just north of here.");
+        push_message(g, "Assigned: The Dragon's Hoard.");
+    } else if (g->dragon_treasure_quest_state == 1) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Find the golden seal in the dragon's hoard on Dragonspine's "
+            "fifth stage. Stand on it and press A, then return to me.");
+    } else if (g->dragon_treasure_quest_state == 2) {
+        if (g->inventory_count >= MAX_INVENTORY) {
+            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+                "You found the seal! Make room in your pack for the "
+                "Potion of Strength, then speak with me again.");
+            return;
+        }
+        g->inventory[g->inventory_count++] = item_make_strength_potion();
+        g->dragon_treasure_quest_state = 3;
+        g->score += 600;
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "The seal is safe. This Potion of Strength permanently raises "
+            "your attack when you drink it. Thank you.");
+        push_message(g, "Completed: The Dragon's Hoard. Potion of Strength awarded.");
+    } else {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Dragonspine's treasure is safe. The High Pass is open to you.");
+    }
+}
+
+void game_collect_dragon_treasure(GameState *g) {
+    if (g->location != LOCATION_DRAGONSPINE ||
+        g->level != DRAGONSPINE_DEPTH || g->dragon_treasure_quest_state != 1 ||
+        g->map.tiles[g->player.y][g->player.x] != TILE_DRAGON_TREASURE) {
+        return;
+    }
+    g->map.tiles[g->player.y][g->player.x] = TILE_DRAGON_HOARD;
+    g->dragon_treasure_quest_state = 2;
+    push_message(g, "Golden dragon seal recovered. Return it to Ilya in town.");
 }
 
 void game_talk_to_elowen(GameState *g) {

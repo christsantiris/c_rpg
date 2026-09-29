@@ -547,6 +547,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         int terrain = underlay == TILE_DRAGON_ASH ? 1 :
             (underlay == TILE_DRAGON_HOARD ? 2 : 0);
         draw_dragonspine_floor(r, screen_x, screen_y, map_x, map_y, terrain);
+    } else if (underlay == TILE_DRAGON_TREASURE) {
+        draw_dragon_treasure(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_TOWN_FLOOR) {
         draw_town_floor(r, screen_x, screen_y);
     } else if (underlay == TILE_TOWN_PATH) {
@@ -659,6 +661,14 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int view_h = v->tiles_y < FOREST_ROAD_H ? v->tiles_y : FOREST_ROAD_H;
         viewport_init(&town_view, view_w, view_h,
             road_w, FOREST_ROAD_H);
+        viewport_center_on(&town_view, g->player.x, g->player.y);
+        v = &town_view;
+    } else if (g->location == LOCATION_SWAMP ||
+        g->location == LOCATION_DRAGONSPINE) {
+        int view_w = v->tiles_x < SWAMP_MAP_W ? v->tiles_x : SWAMP_MAP_W;
+        int view_h = v->tiles_y < SWAMP_MAP_H ? v->tiles_y : SWAMP_MAP_H;
+        viewport_init(&town_view, view_w, view_h,
+            SWAMP_MAP_W, SWAMP_MAP_H);
         viewport_center_on(&town_view, g->player.x, g->player.y);
         v = &town_view;
     } else if (tavern_scaled) {
@@ -833,6 +843,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_dragonspine_floor(r, sx, sy, x, y, 1); break;
                 case TILE_DRAGON_HOARD:
                     draw_dragonspine_floor(r, sx, sy, x, y, 2); break;
+                case TILE_DRAGON_TREASURE:
+                    draw_dragon_treasure(r, sx, sy, x, y); break;
                 case TILE_DRAGON_WALL:
                     draw_dragonspine_wall(r, sx, sy, x, y); break;
                 case TILE_DRAGON_ENTRANCE:
@@ -885,6 +897,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_NPC_INNKEEPER: draw_innkeeper(r, sx, sy); break;
                 case TILE_NPC_CAIN: draw_cain(r, sx, sy); break;
                 case TILE_NPC_ROWAN: draw_rowan(r, sx, sy); break;
+                case TILE_NPC_DRAGON_SEEKER:
+                    draw_dragon_seeker(r, sx, sy); break;
                 case TILE_FOREST_WARDEN:
                     draw_forest_warden(r, sx, sy, x, y); break;
                 case TILE_ISLAND_WATER:

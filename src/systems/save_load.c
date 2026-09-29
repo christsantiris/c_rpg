@@ -292,7 +292,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 59);
+    cJSON_AddNumberToObject(root, "save_version", 60);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -389,6 +389,8 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "cain_scroll_given", g->cain_scroll_given);
     cJSON_AddNumberToObject(root, "island_travel_unlocked",
         g->island_travel_unlocked);
+    cJSON_AddNumberToObject(root, "dragon_treasure_quest_state",
+        g->dragon_treasure_quest_state);
     cJSON_AddNumberToObject(root, "temple_alignment", g->temple_alignment);
     cJSON_AddNumberToObject(root, "temple_sentinels_awakened",
         g->temple_sentinels_awakened);
@@ -789,6 +791,8 @@ int load_game(GameState *g, int slot) {
     cJSON *mara_beacons = cJSON_GetObjectItem(root, "mara_beacons_lit");
     cJSON *cain_scroll = cJSON_GetObjectItem(root, "cain_scroll_given");
     cJSON *island_travel = cJSON_GetObjectItem(root, "island_travel_unlocked");
+    cJSON *dragon_treasure = cJSON_GetObjectItem(root,
+        "dragon_treasure_quest_state");
     cJSON *temple_alignment = cJSON_GetObjectItem(root, "temple_alignment");
     cJSON *temple_sentinels = cJSON_GetObjectItem(root,
         "temple_sentinels_awakened");
@@ -822,6 +826,7 @@ int load_game(GameState *g, int slot) {
     g->mara_beacons_lit = mara_beacons ? mara_beacons->valueint : 0;
     g->cain_scroll_given = cain_scroll ? cain_scroll->valueint : 0;
     g->island_travel_unlocked = island_travel ? island_travel->valueint : 0;
+    g->dragon_treasure_quest_state = dragon_treasure ? dragon_treasure->valueint : 0;
     g->temple_alignment = temple_alignment ? temple_alignment->valueint : 0;
     g->temple_sentinels_awakened = temple_sentinels
         ? temple_sentinels->valueint : 0;

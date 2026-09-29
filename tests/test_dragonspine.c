@@ -37,6 +37,12 @@ void test_dragonspine(void) {
         g.location == LOCATION_DRAGONSPINE && g.level == 1 && g.enemy_count > 0);
     ASSERT("Dragonspine uses distinct cliff terrain",
         g.map.tiles[g.map.stairs_up_y][g.map.stairs_up_x] == TILE_DRAGON_ENTRANCE);
+    ASSERT("Dragonspine trails open at the west and east map edges",
+        g.map.stairs_up_x == 0 &&
+        g.map.stairs_down_x == SWAMP_MAP_W - 1 &&
+        g.map.tiles[g.map.stairs_down_y][SWAMP_MAP_W - 1] == TILE_DRAGON_EXIT &&
+        map_is_walkable(&g.map, 1, g.map.stairs_up_y) &&
+        map_is_walkable(&g.map, SWAMP_MAP_W - 2, g.map.stairs_down_y));
 
     for (int level = 2; level <= DRAGONSPINE_DEPTH; level++) {
         game_descend(&g);
@@ -100,6 +106,92 @@ void test_dragonspine(void) {
         game_use_town_portal(&loaded);
         ASSERT("portal resumes the saved Dragonspine stage",
             loaded.location == LOCATION_DRAGONSPINE && loaded.level == saved_level);
+    }
+    remove("saves/savegame_9984.json");
+
+    memset(&g, 0, sizeof(g));
+    game_init(&g);
+    g.defeated_bosses |= 1 << LOCATION_MOUNTAINS;
+    game_enter_mountains(&g);
+    game_return_to_town(&g);
+    ASSERT("Ilya appears beside the unlocked one-tile High Pass road",
+        g.map.tiles[TOWN_DRAGON_NPC_Y][TOWN_DRAGON_NPC_X] ==
+            TILE_NPC_DRAGON_SEEKER &&
+        g.map.tiles[TOWN_DRAGON_NPC_Y][TOWN_DRAGON_NPC_X + 1] ==
+            TILE_TOWN_PATH &&
+        !map_is_walkable(&g.map, TOWN_DRAGON_NPC_X, TOWN_DRAGON_NPC_Y));
+    game_enter_dragonspine(&g);
+    game_open_town_portal(&g);
+    game_talk_to_dragon_seeker(&g);
+    ASSERT("Ilya assigns the Dragonspine treasure quest once",
+        g.dragon_treasure_quest_state == 1 && !g.portal_active &&
+        g.map.tiles[TOWN_DRAGON_GATE_Y + 1][41] == TILE_TOWN_FLOOR);
+    game_enter_dragonspine(&g);
+    for (int level = 2; level <= DRAGONSPINE_DEPTH; level++) {
+        game_descend(&g);
+    }
+    Room *lair = &g.map.rooms[g.map.room_count - 1];
+    int treasure_x;
+    int treasure_y;
+    map_room_center(lair, &treasure_x, &treasure_y);
+    treasure_x += 2;
+    treasure_y += 1;
+    ASSERT("golden dragon seal is marked in the summit hoard",
+        g.map.tiles[treasure_y][treasure_x] == TILE_DRAGON_TREASURE);
+    g.player.x = treasure_x;
+    g.player.y = treasure_y;
+    ASSERT("standing on the seal enables interaction",
+        game_has_regional_interaction(&g));
+    action_resolve_player(&g, (Action){ACTION_INTERACT, 0, 0});
+    ASSERT("collecting the seal records quest progress without an inventory item",
+        g.dragon_treasure_quest_state == 2 &&
+        g.map.tiles[treasure_y][treasure_x] == TILE_DRAGON_HOARD);
+    saved = save_game(&g, DRAGONSPINE_TEST_SLOT);
+    restored = saved && load_game(&loaded, DRAGONSPINE_TEST_SLOT);
+    ASSERT("collected dragon treasure stays collected after saving",
+        restored && loaded.dragon_treasure_quest_state == 2 &&
+        loaded.map.tiles[treasure_y][treasure_x] == TILE_DRAGON_HOARD);
+    if (restored) {
+        game_return_to_town(&loaded);
+        while (loaded.inventory_count < MAX_INVENTORY) {
+            loaded.inventory[loaded.inventory_count++] = item_make_health_potion();
+        }
+        game_talk_to_dragon_seeker(&loaded);
+        ASSERT("Ilya waits to award the potion until the pack has space",
+            loaded.dragon_treasure_quest_state == 2 &&
+            loaded.inventory_count == MAX_INVENTORY);
+        game_remove_inventory_item(&loaded, MAX_INVENTORY - 1);
+        game_talk_to_dragon_seeker(&loaded);
+        ASSERT("turn-in awards exactly one Potion of Strength",
+            loaded.dragon_treasure_quest_state == 3 &&
+            loaded.inventory_count == MAX_INVENTORY &&
+            loaded.inventory[MAX_INVENTORY - 1].type == ITEM_POTION_STRENGTH);
+        game_talk_to_dragon_seeker(&loaded);
+        ASSERT("Ilya cannot award the potion twice",
+            loaded.inventory_count == MAX_INVENTORY);
+        ASSERT("starter weapon can be equipped before testing the base bonus",
+            game_equip_main_hand(&loaded, 0));
+        int attack = loaded.player.attack;
+        action_resolve_player(&loaded,
+            (Action){ACTION_USE_ITEM, MAX_INVENTORY - 1, 0});
+        ASSERT("Potion of Strength permanently adds one base attack",
+            loaded.player.attack == attack + 1 &&
+            loaded.inventory_count == MAX_INVENTORY - 1);
+        if (loaded.equipped_main_hand >= 0) {
+            int equipped = loaded.equipped_main_hand;
+            int weapon_bonus = loaded.inventory[equipped].attack_bonus;
+            game_unequip_main_hand(&loaded);
+            ASSERT("strength bonus remains after removing a weapon",
+                loaded.player.attack == attack + 1 - weapon_bonus);
+            game_equip_main_hand(&loaded, equipped);
+            ASSERT("strength bonus remains after re-equipping a weapon",
+                loaded.player.attack == attack + 1);
+        }
+        saved = save_game(&loaded, DRAGONSPINE_TEST_SLOT);
+        restored = saved && load_game(&g, DRAGONSPINE_TEST_SLOT);
+        ASSERT("quest completion and attack gain survive save/load",
+            restored && g.dragon_treasure_quest_state == 3 &&
+            g.player.attack == attack + 1);
     }
     remove("saves/savegame_9984.json");
 }

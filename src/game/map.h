@@ -94,10 +94,14 @@
 #define COAST_DEPTH 8
 #define MAX_REGION_DEPTH 8
 #define SWAMP_DEPTH 5
+#define SWAMP_MAP_W 72
+#define SWAMP_MAP_H 64
 #define DRAGONSPINE_DEPTH 5
 #define HIGH_PASS_W 64
 #define HIGH_PASS_Y 12
 #define TOWN_DRAGON_GATE_Y 4
+#define TOWN_DRAGON_NPC_X 39
+#define TOWN_DRAGON_NPC_Y 6
 
 typedef enum {
     TILE_FLOOR = 0,
@@ -234,7 +238,9 @@ typedef enum {
     TILE_DRAGON_ENTRANCE,
     TILE_DRAGON_EXIT,
     TILE_HIGH_PASS_ENTRANCE,
-    TILE_HIGH_PASS_EXIT
+    TILE_HIGH_PASS_EXIT,
+    TILE_NPC_DRAGON_SEEKER,
+    TILE_DRAGON_TREASURE
 } TileType;
 
 typedef struct {

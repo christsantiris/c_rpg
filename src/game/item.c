@@ -42,6 +42,15 @@ Item item_make_mana_potion(void) {
     return it;
 }
 
+Item item_make_strength_potion(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_POTION_STRENGTH;
+    strncpy(it.name, "Potion of Strength", sizeof(it.name) - 1);
+    it.class_mask = ITEM_CLASS_ALL;
+    return it;
+}
+
 // Item item_make_weapon(const char *name, int attack_bonus, int value) {
 //     Item it = {0};
 //     it.active       = 1;
@@ -95,7 +104,7 @@ Item item_make_demonic_sword(void) {
     it.active = 1;
     it.type = ITEM_WEAPON;
     strncpy(it.name, "Demonic Sword", sizeof(it.name) - 1);
-    it.attack_bonus = 4;
+    it.attack_bonus = 6;
     it.value = 180;
     it.is_ranged = 1;
     it.range = 2;
