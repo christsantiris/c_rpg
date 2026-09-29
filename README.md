@@ -342,7 +342,6 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 8. Improve and Expand the Crown Road Gate Sprite
 9. Add an Apothecary building to town 3 that sells mana and health potions as well intelligence potion that increase base mana points by 1. These should be very expensive 1000 gold or more.
 11. Improve Crown road gate sprite
-12. Move Town 2 Inn to Center Square to east of Healer.
 13. Town 2 additional enemy area
 14. Different music for different enemy area encounters
 15. Expanded Sfx for different weapon types.

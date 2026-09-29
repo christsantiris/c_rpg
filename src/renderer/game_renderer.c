@@ -1312,7 +1312,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, TOWN_ALCHEMIST_X),
             viewport_to_screen_y(v, TOWN_ALCHEMIST_Y));
         draw_tavern(r,
-            viewport_to_screen_x(v, 5), viewport_to_screen_y(v, 16));
+            viewport_to_screen_x(v, TOWN_TAVERN_X),
+            viewport_to_screen_y(v, TOWN_TAVERN_Y));
         draw_harbor(r,
             viewport_to_screen_x(v, TOWN_HARBOR_X),
             viewport_to_screen_y(v, TOWN_HARBOR_Y));
@@ -1332,7 +1333,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, TOWN_WITCH_X),
             viewport_to_screen_y(v, TOWN_WITCH_Y));
         draw_inn(r,
-            viewport_to_screen_x(v, 5), viewport_to_screen_y(v, 16));
+            viewport_to_screen_x(v, TOWN_INN_X),
+            viewport_to_screen_y(v, TOWN_INN_Y));
         draw_healer_house(r, viewport_to_screen_x(v, TOWN_HEALER_X),
             viewport_to_screen_y(v, TOWN_HEALER_Y));
         draw_labyrinth_entrance(r,
@@ -1452,9 +1454,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int ax = viewport_to_screen_x(v, TOWN_ALCHEMIST_X) * TILE_SIZE
             + (5 * TILE_SIZE - alchemist_w) / 2;
         int ay = viewport_to_screen_y(v, TOWN_ALCHEMIST_Y - 1) * TILE_SIZE;
-        int tavern_x = viewport_to_screen_x(v, 5) * TILE_SIZE
-            + (7 * TILE_SIZE - tavern_w) / 2;
-        int tavern_y = viewport_to_screen_y(v, 15) * TILE_SIZE;
+        int tavern_x = viewport_to_screen_x(v, TOWN_TAVERN_X) * TILE_SIZE
+            + (TOWN_TAVERN_W * TILE_SIZE - tavern_w) / 2;
+        int tavern_y = viewport_to_screen_y(v, TOWN_TAVERN_Y - 1) * TILE_SIZE;
         int harbor_x = viewport_to_screen_x(v, TOWN_HARBOR_X) * TILE_SIZE
             + (TOWN_HARBOR_W * TILE_SIZE - harbor_w) / 2;
         int harbor_y = viewport_to_screen_y(v, TOWN_HARBOR_Y - 1) * TILE_SIZE;
@@ -1534,9 +1536,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             label, r->font_tiny);
         TTF_SizeText(r->font_tiny, "INN", &width, NULL);
         renderer_draw_text(r, "INN",
-            viewport_to_screen_x(v, 5) * TILE_SIZE +
-                (7 * TILE_SIZE - width) / 2,
-            viewport_to_screen_y(v, 15) * TILE_SIZE,
+            viewport_to_screen_x(v, TOWN_INN_X) * TILE_SIZE +
+                (TOWN_INN_W * TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, TOWN_INN_Y - 1) * TILE_SIZE,
             label, r->font_tiny);
         TTF_SizeText(r->font_tiny, "LABYRINTH", &width, NULL);
         renderer_draw_text(r, "LABYRINTH",

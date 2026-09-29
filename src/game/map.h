@@ -52,8 +52,20 @@
 #define TOWN_HEALER_H 4
 #define TOWN_HEALER_DOOR_X (TOWN_HEALER_X + 2)
 #define TOWN_HEALER_DOOR_Y (TOWN_HEALER_Y + TOWN_HEALER_H - 1)
+#define TOWN_INN_X 11
+#define TOWN_INN_Y 6
+#define TOWN_INN_W 7
+#define TOWN_INN_H 5
+#define TOWN_INN_DOOR_X (TOWN_INN_X + 3)
+#define TOWN_INN_DOOR_Y (TOWN_INN_Y + TOWN_INN_H - 1)
 #define TOWN_ALCHEMIST_X 29
 #define TOWN_ALCHEMIST_Y 7
+#define TOWN_TAVERN_X 21
+#define TOWN_TAVERN_Y 6
+#define TOWN_TAVERN_W 7
+#define TOWN_TAVERN_H 5
+#define TOWN_TAVERN_DOOR_X (TOWN_TAVERN_X + 3)
+#define TOWN_TAVERN_DOOR_Y (TOWN_TAVERN_Y + TOWN_TAVERN_H - 1)
 #define TOWN_WITCH_X 35
 #define TOWN_WITCH_Y 7
 #define TOWN_WITCH_W 5
@@ -281,6 +293,8 @@ void map_generate_forest_road(Map *m);
 void map_place_town_labyrinth(Map *m);
 void map_place_town2_center(Map *m);
 void map_place_town_harbor(Map *m);
+void map_place_town_tavern(Map *m);
+void map_place_town_inn(Map *m);
 void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_inn(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_island(Map *m, int *spawn_x, int *spawn_y);

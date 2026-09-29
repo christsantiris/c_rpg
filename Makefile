@@ -28,6 +28,7 @@ sprites:
 	python3 tools/sprites/castle.py
 	python3 tools/sprites/tavern.py
 	python3 tools/sprites/inn.py
+	python3 tools/sprites/blacksmith.py
 
 clean:
 	rm -rf build
