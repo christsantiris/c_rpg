@@ -43,7 +43,7 @@ the mountains, and south to the coast. Cain stands near the central crossroads.
 Defeating the Goblin King opens a separate east gate to the enemy-free High Pass
 and Dragonspine. Leaving the first mountain area returns you to town, so the
 new ascent is a deliberate trip. Ilya waits beside the new path and offers a
-quest to recover a golden seal from the dragon's hoard. Her one-time reward is
+quest to recover a golden goblet from the dragon's hoard. Her one-time reward is
 a Potion of Strength that permanently adds 1 base attack when consumed.
 Speaking with him explains the dangers beyond town and grants one Scroll of
 Return to Town when inventory space is available. Use the scroll from the

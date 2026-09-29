@@ -371,7 +371,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         award_gold(g, gold);
         has_gold = 0;
     }
-    if (occupied || (!has_gold && !has_item) ||
+    if (occupied || !plain_floor || (!has_gold && !has_item) ||
         g->floor_item_count >= MAX_FLOOR_ITEMS) {
         return;
     }

@@ -29,9 +29,9 @@ defeated.
 ## The Dragon's Hoard
 
 When the High Pass opens, Ilya appears beside its town path. Speak with her to
-accept **The Dragon's Hoard**. On Dragonspine stage 5, find the marked golden
-seal in the dragon's lair, stand on it, and press `A`. Return to Ilya to trade
-the seal for a one-time Potion of Strength. Make space in your pack before
+accept **The Dragon's Hoard**. On Dragonspine stage 5, find the golden goblet
+in the dragon's lair, stand on it, and press `A`. Return to Ilya to trade
+the goblet for a one-time Potion of Strength. Make space in your pack before
 turning in the quest. Drinking the potion permanently raises base attack by 1;
 it is not sold in shops. The quest can still be completed if the Red Dragon was
 defeated before speaking with Ilya.

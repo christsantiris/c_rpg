@@ -69,9 +69,9 @@ static const QuestDefinition quest_definitions[8] = {
     },
     {
         "The Dragon's Hoard", "Ilya",
-        "Recover the golden dragon seal from the hoard",
+        "Recover the golden goblet from the hoard",
         "on Dragonspine's fifth stage and return it.",
-        {"Recover the golden dragon seal", "", ""},
+        {"Recover the golden goblet", "", ""},
         "Dragonspine", {5, 0, 0}, 0, 600, "Potion of Strength"
     }
 };

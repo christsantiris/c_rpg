@@ -1561,15 +1561,42 @@ static void place_dragon_treasure(GameState *g) {
         return;
     }
     Room *lair = &g->map.rooms[g->map.room_count - 1];
-    int x;
-    int y;
-    map_room_center(lair, &x, &y);
-    x += 2;
-    y += 1;
-    if (g->map.tiles[y][x] == TILE_DRAGON_FLOOR ||
-        g->map.tiles[y][x] == TILE_DRAGON_ASH ||
-        g->map.tiles[y][x] == TILE_DRAGON_HOARD) {
-        g->map.tiles[y][x] = TILE_DRAGON_TREASURE;
+    for (int i = 0; i < g->floor_item_count; i++) {
+        if (g->floor_items[i].active &&
+            g->floor_items[i].underlying_tile == TILE_DRAGON_TREASURE) {
+            return;
+        }
+    }
+    for (int y = lair->y; y < lair->y + lair->h; y++) {
+        for (int x = lair->x; x < lair->x + lair->w; x++) {
+            if (g->map.tiles[y][x] == TILE_DRAGON_TREASURE) {
+                return;
+            }
+        }
+    }
+    int center_x;
+    int center_y;
+    map_room_center(lair, &center_x, &center_y);
+    int best_x = -1;
+    int best_y = -1;
+    int best_distance = MAP_W + MAP_H;
+    for (int y = lair->y + 1; y < lair->y + lair->h - 1; y++) {
+        for (int x = lair->x + 1; x < lair->x + lair->w - 1; x++) {
+            TileType tile = g->map.tiles[y][x];
+            if (tile != TILE_DRAGON_FLOOR && tile != TILE_DRAGON_ASH &&
+                tile != TILE_DRAGON_HOARD) {
+                continue;
+            }
+            int distance = abs(x - center_x - 2) + abs(y - center_y - 1);
+            if (distance < best_distance) {
+                best_x = x;
+                best_y = y;
+                best_distance = distance;
+            }
+        }
+    }
+    if (best_x >= 0) {
+        g->map.tiles[best_y][best_x] = TILE_DRAGON_TREASURE;
     }
 }
 
@@ -1692,10 +1719,25 @@ static void sync_temple_floor_state(GameState *g) {
     }
 }
 
+static void clear_floor_loot(GameState *g) {
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && item->x >= 0 && item->x < MAP_W &&
+            item->y >= 0 && item->y < MAP_H &&
+            g->map.tiles[item->y][item->x] == TILE_ITEM &&
+            item->underlying_tile != TILE_ITEM) {
+            g->map.tiles[item->y][item->x] =
+                (TileType)item->underlying_tile;
+        }
+    }
+    g->floor_item_count = 0;
+}
+
 void game_descend(GameState *g) {
     int depth = active_depth(g);
     if (g->level >= depth) return;
 
+    clear_floor_loot(g);
     LevelCache *cache = active_cache(g);
     int *max_level = active_max_level(g);
 
@@ -1731,6 +1773,7 @@ void game_descend(GameState *g) {
 void game_ascend(GameState *g) {
     if (g->level <= 1) return;
 
+    clear_floor_loot(g);
     LevelCache *cache = active_cache(g);
 
     if (g->level <= active_depth(g)) {
@@ -1761,6 +1804,7 @@ void game_ascend(GameState *g) {
 }
 
 static void enter_adventure(GameState *g, Location location) {
+    clear_floor_loot(g);
     g->location = location;
     LevelCache *cache = active_cache(g);
     int *max_level = active_max_level(g);
@@ -2100,6 +2144,7 @@ void game_enter_labyrinth(GameState *g) {
 }
 
 void game_change_labyrinth_floor(GameState *g, int descending, int false_stair) {
+    clear_floor_loot(g);
     save_labyrinth_floor(g);
     g->level += descending ? 1 : -1;
     load_labyrinth_floor(g);
@@ -2902,18 +2947,18 @@ void game_talk_to_dragon_seeker(GameState *g) {
         }
         prepare_quest_expedition(g, LOCATION_DRAGONSPINE);
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "A golden dragon seal lies in the hoard atop Dragonspine. "
+            "A golden goblet lies in the hoard atop Dragonspine. "
             "Bring it back and I will give you a Potion of Strength. "
             "The High Pass begins just north of here.");
         push_message(g, "Assigned: The Dragon's Hoard.");
     } else if (g->dragon_treasure_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Find the golden seal in the dragon's hoard on Dragonspine's "
+            "Find the golden goblet in the dragon's hoard on Dragonspine's "
             "fifth stage. Stand on it and press A, then return to me.");
     } else if (g->dragon_treasure_quest_state == 2) {
         if (g->inventory_count >= MAX_INVENTORY) {
             snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "You found the seal! Make room in your pack for the "
+                "You found the goblet! Make room in your pack for the "
                 "Potion of Strength, then speak with me again.");
             return;
         }
@@ -2921,7 +2966,7 @@ void game_talk_to_dragon_seeker(GameState *g) {
         g->dragon_treasure_quest_state = 3;
         g->score += 600;
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "The seal is safe. This Potion of Strength permanently raises "
+            "The goblet is safe. This Potion of Strength permanently raises "
             "your attack when you drink it. Thank you.");
         push_message(g, "Completed: The Dragon's Hoard. Potion of Strength awarded.");
     } else {
@@ -2938,7 +2983,7 @@ void game_collect_dragon_treasure(GameState *g) {
     }
     g->map.tiles[g->player.y][g->player.x] = TILE_DRAGON_HOARD;
     g->dragon_treasure_quest_state = 2;
-    push_message(g, "Golden dragon seal recovered. Return it to Ilya in town.");
+    push_message(g, "Golden goblet recovered. Return it to Ilya in town.");
 }
 
 void game_talk_to_elowen(GameState *g) {
