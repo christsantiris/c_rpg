@@ -4,6 +4,7 @@
 #include "message_bar.h"
 #include "minimap_renderer.h"
 #include "renderer.h"
+#include "../game/combat_feedback.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -329,6 +330,134 @@ void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, con
     }
     SDL_RenderSetClipRect(r->sdl, clipped ? &old_clip : NULL);
     SDL_SetRenderDrawBlendMode(r->sdl, old_blend);
+}
+
+static Uint32 combat_feedback_start(const CombatFeedbackEvent *e) {
+    if (e->arrival == FEEDBACK_AFTER_PLAYER_SHOT) {
+        return e->created_at + SPELL_TRAVEL_MS;
+    }
+    if (e->arrival == FEEDBACK_AFTER_ENEMY_SHOT) {
+        return e->created_at + ENEMY_PROJECTILE_TRAVEL_MS;
+    }
+    return e->created_at;
+}
+
+int game_combat_feedback_active(Uint32 now) {
+    for (int i = 0; i < combat_feedback_count(); i++) {
+        if (now < combat_feedback_start(combat_feedback_get(i)) + COMBAT_FEEDBACK_MS) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+// A dark outline keeps the text readable over any floor.
+static void draw_feedback_text(Renderer *r, const char *text, int cx, int y, SDL_Color color, Uint8 alpha) {
+    if (!r->font_tiny) {
+        return;
+    }
+    SDL_Surface *surface = TTF_RenderText_Solid(r->font_tiny, text, (SDL_Color){255, 255, 255, 255});
+    if (!surface) {
+        return;
+    }
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(r->sdl, surface);
+    SDL_Rect dst = {cx - surface->w / 2, y, surface->w, surface->h};
+    SDL_FreeSurface(surface);
+    if (!texture) {
+        return;
+    }
+    SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+    SDL_SetTextureAlphaMod(texture, alpha);
+    SDL_SetTextureColorMod(texture, 0, 0, 0);
+    static const int outline[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    for (int i = 0; i < 4; i++) {
+        SDL_Rect edge = {dst.x + outline[i][0], dst.y + outline[i][1], dst.w, dst.h};
+        SDL_RenderCopy(r->sdl, texture, NULL, &edge);
+    }
+    SDL_SetTextureColorMod(texture, color.r, color.g, color.b);
+    SDL_RenderCopy(r->sdl, texture, NULL, &dst);
+    SDL_DestroyTexture(texture);
+}
+
+static int combat_feedback_rise(Uint32 age) {
+    return (int)(age * 16 / COMBAT_FEEDBACK_MS);
+}
+
+// Lifts each result so it never covers one still rising from the same tile.
+// Results are placed in start order, each at the lowest clear height.
+static void combat_feedback_lifts(int lifts[MAX_COMBAT_FEEDBACK]) {
+    int count = combat_feedback_count();
+    int placed[MAX_COMBAT_FEEDBACK] = {0};
+    for (int k = 0; k < count; k++) {
+        int next = -1;
+        for (int i = 0; i < count; i++) {
+            if (!placed[i] && (next < 0 || combat_feedback_start(combat_feedback_get(i)) <
+                combat_feedback_start(combat_feedback_get(next)))) {
+                next = i;
+            }
+        }
+        const CombatFeedbackEvent *e = combat_feedback_get(next);
+        Uint32 start = combat_feedback_start(e);
+        int lift = 0;
+        int moved = 1;
+        while (moved) {
+            moved = 0;
+            for (int j = 0; j < count; j++) {
+                const CombatFeedbackEvent *other = combat_feedback_get(j);
+                Uint32 other_start = combat_feedback_start(other);
+                if (!placed[j] || other->location != e->location || other->level != e->level ||
+                    other->x != e->x || other->y != e->y || start - other_start >= COMBAT_FEEDBACK_MS) {
+                    continue;
+                }
+                int height = lifts[j] + combat_feedback_rise(start - other_start);
+                if (abs(height - lift) < 10) {
+                    lift = height + 10;
+                    moved = 1;
+                }
+            }
+        }
+        lifts[next] = lift;
+        placed[next] = 1;
+    }
+}
+
+static void draw_combat_feedback(Renderer *r, const GameState *g, const Viewport *v) {
+    Uint32 now = SDL_GetTicks();
+    int lifts[MAX_COMBAT_FEEDBACK];
+    combat_feedback_lifts(lifts);
+    for (int i = 0; i < combat_feedback_count(); i++) {
+        const CombatFeedbackEvent *e = combat_feedback_get(i);
+        Uint32 start = combat_feedback_start(e);
+        if (e->location != g->location || e->level != g->level ||
+            now < start || now - start >= COMBAT_FEEDBACK_MS ||
+            !viewport_is_visible(v, e->x, e->y)) {
+            continue;
+        }
+        char text[16];
+        SDL_Color color = {245, 245, 235, 255};
+        if (e->kind == FEEDBACK_PLAYER_DAMAGE) {
+            SDL_snprintf(text, sizeof(text), "-%d", e->amount);
+            color = (SDL_Color){240, 72, 60, 255};
+        } else if (e->kind == FEEDBACK_HEAL) {
+            SDL_snprintf(text, sizeof(text), "+%d", e->amount);
+            color = (SDL_Color){96, 224, 112, 255};
+        } else if (e->kind == FEEDBACK_MANA_LOSS) {
+            SDL_snprintf(text, sizeof(text), "-%d MP", e->amount);
+            color = (SDL_Color){112, 164, 255, 255};
+        } else {
+            SDL_snprintf(text, sizeof(text), "-%d", e->amount);
+        }
+        // Numbers rise for their whole life and fade during the second half.
+        Uint32 age = now - start;
+        Uint32 remaining = COMBAT_FEEDBACK_MS - age;
+        Uint8 alpha = remaining * 2 >= COMBAT_FEEDBACK_MS ? 255 : (Uint8)(remaining * 2 * 255 / COMBAT_FEEDBACK_MS);
+        int x = viewport_to_screen_x(v, e->x) * TILE_SIZE + TILE_SIZE / 2;
+        int y = viewport_to_screen_y(v, e->y) * TILE_SIZE + 2 - combat_feedback_rise(age) - lifts[i];
+        if (y < 0) {
+            y = 0;
+        }
+        draw_feedback_text(r, text, x, y, color, alpha);
+    }
 }
 
 static void draw_magic_arrow(Renderer *r, int tile_x, int tile_y,
@@ -1818,6 +1947,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->player.player_class, equipped_weapon, off_hand_weapon,
         equipped_armor,
         g->player.last_dx, g->player.last_dy);
+
+    draw_combat_feedback(r, g, v);
 
     draw_dialogue_bubble(r, g, v);
 

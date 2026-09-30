@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "item.h"
+#include "combat_feedback.h"
 // sfx.h is excluded from the test runner because it links SDL2_mixer,
 // which is not available in the test build. TEST_BUILD is defined in CMakeLists.txt.
 #ifndef TEST_BUILD
@@ -387,6 +388,7 @@ static int apply_melee_cleave(GameState *g, Enemy *target, int attack, int perce
             damage = 1;
         }
         enemy->hp -= damage;
+        combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_NOW, enemy->x, enemy->y, damage);
         hits++;
         if (enemy->hp <= 0) {
             enemy->active = 0;
@@ -436,7 +438,7 @@ static int equipped_spell_cost(const GameState *g, const Spell *spell) {
     return cost < 1 ? 1 : cost;
 }
 
-static int apply_enemy_damage(GameState *g, int damage) {
+static int apply_enemy_damage(GameState *g, int damage, CombatFeedbackArrival arrival) {
     const Item *armor = equipped_armor(g);
     if (armor && armor->evasion_chance > 0 &&
         rand() % 100 < armor->evasion_chance) {
@@ -457,6 +459,7 @@ static int apply_enemy_damage(GameState *g, int damage) {
         }
     }
     g->player.hp -= damage;
+    combat_feedback_add(g, FEEDBACK_PLAYER_DAMAGE, arrival, g->player.x, g->player.y, damage);
     return damage;
 }
 
@@ -591,7 +594,9 @@ static int interact_mountain(GameState *g) {
                 map_mark_explored(&g->map, cx, y);
             }
             g->map.tiles[y][(left + right) / 2] = TILE_MOUNTAIN_CACHE;
-            g->player.hp -= 4 + g->level;
+            int rock_damage = 4 + g->level;
+            g->player.hp -= rock_damage;
+            combat_feedback_add(g, FEEDBACK_PLAYER_DAMAGE, FEEDBACK_NOW, px, py, rock_damage);
             push_message(g, "Falling rocks hurt! A cave is exposed.");
         }
         map_mark_explored(&g->map, x, y);
@@ -1226,6 +1231,7 @@ void action_resolve_player(GameState *g, Action a) {
                         int dmg = sp->damage + g->player.level * 2 +
                             spell_power;
                         e->hp -= dmg;
+                        combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_AFTER_PLAYER_SHOT, e->x, e->y, dmg);
                         char msg[MAX_MESSAGE_LEN];
                         if (e->hp <= 0) {
                             e->active = 0;
@@ -1254,6 +1260,7 @@ void action_resolve_player(GameState *g, Action a) {
         } else if (sp->type == SPELL_TYPE_HEAL) {
             int healed = g->player.max_hp - g->player.hp;
             g->player.hp = g->player.max_hp;
+            combat_feedback_add(g, FEEDBACK_HEAL, FEEDBACK_NOW, g->player.x, g->player.y, healed);
             char msg[MAX_MESSAGE_LEN];
             snprintf(msg, sizeof(msg), "Healed %d HP!", healed);
             push_message(g, msg);
@@ -1272,6 +1279,7 @@ void action_resolve_player(GameState *g, Action a) {
                 if (dist <= sp->radius) {
                     int dmg = sp->damage + g->player.level * 2 + spell_power;
                     e->hp -= dmg;
+                    combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_AFTER_PLAYER_SHOT, e->x, e->y, dmg);
                     if (e->hp <= 0) {
                         e->active = 0;
                         drop_loot(g, e);
@@ -1350,6 +1358,7 @@ void action_resolve_player(GameState *g, Action a) {
                     rand() % 100 < 15;
                 if (critical) dmg = dmg * 3 / 2;
                 e->hp -= dmg;
+                combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_AFTER_PLAYER_SHOT, e->x, e->y, dmg);
                 char msg[MAX_MESSAGE_LEN];
                 if (e->hp <= 0) {
                     e->active = 0;
@@ -1441,6 +1450,7 @@ void action_resolve_player(GameState *g, Action a) {
                     dmg = (dmg * 3 + 1) / 2;
                 }
                 e->hp -= dmg;
+                combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_NOW, e->x, e->y, dmg);
                 int cleave_hits = melee_weapon
                     ? apply_melee_cleave(g, e, melee_attack,
                         melee_weapon->cleave_percent)
@@ -1835,6 +1845,7 @@ void action_resolve_player(GameState *g, Action a) {
             tile == TILE_TEMPLE_SOLAR_TRAP && !g->temple_alignment) {
             int dmg = 8 + rand() % 7;
             g->player.hp -= dmg;
+            combat_feedback_add(g, FEEDBACK_PLAYER_DAMAGE, FEEDBACK_NOW, px, py, dmg);
             char msg[MAX_MESSAGE_LEN];
             snprintf(msg, sizeof(msg), "Solar flame erupts! -%d HP", dmg);
             push_message(g, msg);
@@ -1872,6 +1883,7 @@ void action_resolve_player(GameState *g, Action a) {
             if (trap_type == TILE_TRAP_SPIKE) {
                 dmg = 5 + rand() % 10;
                 g->player.hp -= dmg;
+                combat_feedback_add(g, FEEDBACK_PLAYER_DAMAGE, FEEDBACK_NOW, px, py, dmg);
                 snprintf(msg, sizeof(msg), "Spike trap! -%d HP", dmg);
                 // Red flash
                 g->trail_count  = 0;
@@ -1884,6 +1896,7 @@ void action_resolve_player(GameState *g, Action a) {
             } else if (trap_type == TILE_TRAP_FIRE) {
                 dmg = 4 + rand() % 8;
                 g->player.hp -= dmg;
+                combat_feedback_add(g, FEEDBACK_PLAYER_DAMAGE, FEEDBACK_NOW, px, py, dmg);
                 snprintf(msg, sizeof(msg), "Fire trap! -%d HP", dmg);
                 // Orange flash
                 g->trail_count  = 0;
@@ -1915,6 +1928,7 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->player.poison_turns > 0) {
             int dmg = 3;
             g->player.hp -= dmg;
+            combat_feedback_add(g, FEEDBACK_PLAYER_DAMAGE, FEEDBACK_NOW, g->player.x, g->player.y, dmg);
             g->player.poison_turns--;
             char msg[MAX_MESSAGE_LEN];
             snprintf(msg, sizeof(msg), "Poison! -%d HP (%d left)",
@@ -2382,7 +2396,7 @@ static int apply_enemy_ranged_damage(GameState *g, int shooter_index, const Enem
             e->type, e->x, e->y, g->player.x, g->player.y
         };
     }
-    return apply_enemy_damage(g, damage);
+    return apply_enemy_damage(g, damage, FEEDBACK_AFTER_ENEMY_SHOT);
 }
 
 void action_resolve_enemies(GameState *g) {
@@ -2516,7 +2530,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 if (e->type == ENEMY_WRAITH) defense /= 2;
                 int dmg = e->attack - defense;
                 if (dmg < 1) dmg = 1;
-                dmg = apply_enemy_damage(g, dmg);
+                dmg = apply_enemy_damage(g, dmg, FEEDBACK_NOW);
                 if (dmg == 0) {
                     continue;
                 }
@@ -2528,6 +2542,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 if (e->type == ENEMY_WRAITH && g->player.mp > 0) {
                     int drained = g->player.mp < 3 ? g->player.mp : 3;
                     g->player.mp -= drained;
+                    combat_feedback_add(g, FEEDBACK_MANA_LOSS, FEEDBACK_NOW, g->player.x, g->player.y, drained);
                 }
                 char msg[MAX_MESSAGE_LEN];
                 if (e->type == ENEMY_WRAITH)
@@ -2675,10 +2690,12 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 if (ally->active && ally != e && ally->hp < ally->max_hp &&
                     abs_int(ally->x - e->x) <= 4 &&
                     abs_int(ally->y - e->y) <= 4) {
+                    int hp_before = ally->hp;
                     ally->hp += 8;
                     if (ally->hp > ally->max_hp) {
                         ally->hp = ally->max_hp;
                     }
+                    combat_feedback_add(g, FEEDBACK_HEAL, FEEDBACK_NOW, ally->x, ally->y, ally->hp - hp_before);
                     push_message(g, "Sun Priest restores a guardian!");
                     healed = 1;
                     break;
@@ -2755,8 +2772,10 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 if (ally->active && ally->hp < ally->max_hp &&
                     abs_int(ally->x - e->x) <= 4 &&
                     abs_int(ally->y - e->y) <= 4) {
+                    int hp_before = ally->hp;
                     ally->hp += 6;
                     if (ally->hp > ally->max_hp) ally->hp = ally->max_hp;
+                    combat_feedback_add(g, FEEDBACK_HEAL, FEEDBACK_NOW, ally->x, ally->y, ally->hp - hp_before);
                     healed = 1;
                     push_message(g, "Goblin Shaman heals an ally!");
                     break;
