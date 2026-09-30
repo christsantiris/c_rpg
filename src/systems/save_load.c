@@ -354,7 +354,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 65);
+    cJSON_AddNumberToObject(root, "save_version", 66);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -1961,6 +1961,20 @@ int load_game(GameState *g, int slot) {
         clear_new_town_lot(g, TOWN_APOTHECARY_X, TOWN_APOTHECARY_Y, TOWN_APOTHECARY_W,
             TOWN_APOTHECARY_H);
         map_place_town_apothecary(&g->map);
+    }
+
+    // Version 66 makes the Fireball scroll Mage-only.
+    if (save_version < 66) {
+        for (int i = 0; i < g->inventory_count; i++) {
+            if (strcmp(g->inventory[i].name, "Scroll: Fireball") == 0) {
+                g->inventory[i].class_mask = ITEM_CLASS_MAGE;
+            }
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            if (strcmp(g->floor_items[i].item.name, "Scroll: Fireball") == 0) {
+                g->floor_items[i].item.class_mask = ITEM_CLASS_MAGE;
+            }
+        }
     }
 
     if (g->location == LOCATION_MOUNTAINS) {

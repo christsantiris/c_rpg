@@ -18,7 +18,8 @@ ivory rook rewards 40 gold and 500 score once.
 
 ## Spell Progression
 
-The Alchemist sells Magic Arrow, Fireball, and Heal scrolls from the start.
+The Alchemist sells Magic Arrow, Fireball, and Heal scrolls from the start;
+Fireball is Mage-only.
 Regional boss victories unlock the Mage-only progression stock:
 
 | Regional bosses defeated | New stock |

@@ -889,6 +889,37 @@ static void test_legacy_apothecary(void) {
     remove_test_save(LEGACY_SLOT);
 }
 
+static void test_legacy_fireball_scroll(void) {
+    static GameState original;
+    static GameState loaded;
+    memset(&original, 0, sizeof(original));
+    memset(&loaded, 0, sizeof(loaded));
+    original.player.player_class = CLASS_WARRIOR;
+    game_init(&original);
+    Item legacy_scroll = item_make_scroll_fireball();
+    legacy_scroll.class_mask = 0;
+    int slot = original.inventory_count;
+    original.inventory[original.inventory_count++] = legacy_scroll;
+    int x = original.player.x;
+    int y = original.player.y;
+    original.floor_item_count = 1;
+    original.floor_items[0] = (FloorItem){
+        .active = 1, .x = x, .y = y, .underlying_tile = original.map.tiles[y][x],
+        .item = legacy_scroll
+    };
+    original.map.tiles[y][x] = TILE_ITEM;
+    int loaded_ok = save_game(&original, LEGACY_SLOT) &&
+        rewrite_save_version(LEGACY_SLOT, 65) && load_game(&loaded, LEGACY_SLOT);
+    ASSERT("legacy save with an unrestricted Fireball scroll loads", loaded_ok);
+    if (loaded_ok) {
+        ASSERT("loading makes carried and dropped Fireball scrolls Mage-only",
+            loaded.inventory[slot].class_mask == ITEM_CLASS_MAGE &&
+            loaded.floor_item_count == 1 &&
+            loaded.floor_items[0].item.class_mask == ITEM_CLASS_MAGE);
+    }
+    remove_test_save(LEGACY_SLOT);
+}
+
 static void test_forest_enemy_repair(void) {
     static GameState original;
     static GameState loaded;
@@ -1159,6 +1190,7 @@ void test_save_load(void) {
     test_legacy_town_square();
     test_legacy_inn_move();
     test_legacy_apothecary();
+    test_legacy_fireball_scroll();
     test_message_kinds_round_trip();
     test_forest_enemy_repair();
     test_blocked_dungeon_gate_repair();

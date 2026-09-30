@@ -93,7 +93,7 @@ After regional boss victories, the Alchemist expands its Mage-only stock:
 
 The Mage begins with a Magic Arrow scroll, but must use that scroll from the
 inventory before the spell becomes known. Other classes can learn Magic Arrow,
-Fireball, Heal, and Return to Town. Frost Bolt, Teleport, and upgrade tomes are
+Heal, and Return to Town. Fireball, Frost Bolt, Teleport, and upgrade tomes are
 restricted to the Mage.
 
 Cain stands near the town crossroads and gives every character one Scroll of
