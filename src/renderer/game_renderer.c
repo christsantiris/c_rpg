@@ -503,11 +503,52 @@ static void draw_block_shield(Renderer *r, int cx, int cy, Uint32 age) {
     }
 }
 
+// A struck tile flashes a colour that fades out quickly. The colour's alpha is its peak.
+static void draw_tile_flash(Renderer *r, int left, int top, SDL_Color color, Uint32 age) {
+    Uint8 alpha = (Uint8)(color.a * (HIT_FLASH_MS - age) / HIT_FLASH_MS);
+    SDL_Rect tile = {left, top, TILE_SIZE, TILE_SIZE};
+    SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(r->sdl, color.r, color.g, color.b, alpha);
+    SDL_RenderFillRect(r->sdl, &tile);
+}
+
+// A white slash cuts down across an enemy struck in melee, then fades.
+static void draw_melee_slash(Renderer *r, int left, int top, Uint32 age) {
+    Uint32 draw_in = SLASH_MS / 3;
+    Uint32 hold = SLASH_MS * 2 / 3;
+    int length = age < draw_in ? (int)(16 * age / draw_in) : 16;
+    Uint8 alpha = age < hold ? 255 : (Uint8)((SLASH_MS - age) * 255 / (SLASH_MS - hold));
+    int x0 = left + 20;
+    int y0 = top + 3;
+    int x1 = x0 - length;
+    int y1 = y0 + length;
+    SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_BLEND);
+    // Three pixels wide with a dark edge along its lower side.
+    SDL_SetRenderDrawColor(r->sdl, 24, 24, 36, alpha);
+    SDL_RenderDrawLine(r->sdl, x0 + 2, y0 + 1, x1 + 2, y1 + 1);
+    SDL_SetRenderDrawColor(r->sdl, 255, 255, 255, alpha);
+    for (int offset = -1; offset <= 1; offset++) {
+        SDL_RenderDrawLine(r->sdl, x0 + offset, y0, x1 + offset, y1);
+    }
+}
+
 static int combat_feedback_shown(const CombatFeedbackEvent *e, const GameState *g, const Viewport *v, Uint32 now) {
     Uint32 start = combat_feedback_start(e);
     return e->location == g->location && e->level == g->level &&
         now >= start && now - start < COMBAT_FEEDBACK_MS &&
         viewport_is_visible(v, e->x, e->y);
+}
+
+int game_player_hit_flash(const GameState *g, Uint32 now) {
+    for (int i = 0; i < combat_feedback_count(); i++) {
+        const CombatFeedbackEvent *e = combat_feedback_get(i);
+        Uint32 start = combat_feedback_start(e);
+        if (e->kind == FEEDBACK_PLAYER_DAMAGE && e->location == g->location &&
+            e->level == g->level && now >= start && now - start < HP_FLASH_MS) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 static void draw_combat_feedback(Renderer *r, const GameState *g, const Viewport *v) {
@@ -519,8 +560,21 @@ static void draw_combat_feedback(Renderer *r, const GameState *g, const Viewport
             continue;
         }
         Uint32 age = now - combat_feedback_start(e);
-        int cx = viewport_to_screen_x(v, e->x) * TILE_SIZE + TILE_SIZE / 2;
-        int cy = viewport_to_screen_y(v, e->y) * TILE_SIZE + TILE_SIZE / 2;
+        int left = viewport_to_screen_x(v, e->x) * TILE_SIZE;
+        int top = viewport_to_screen_y(v, e->y) * TILE_SIZE;
+        int cx = left + TILE_SIZE / 2;
+        int cy = top + TILE_SIZE / 2;
+        int melee_hit = e->arrival == FEEDBACK_NOW &&
+            (e->kind == FEEDBACK_ENEMY_DAMAGE || e->kind == FEEDBACK_ENEMY_CRITICAL);
+        if (melee_hit && age < HIT_FLASH_MS) {
+            draw_tile_flash(r, left, top, (SDL_Color){255, 255, 255, 130}, age);
+        }
+        if (melee_hit && age < SLASH_MS) {
+            draw_melee_slash(r, left, top, age);
+        }
+        if (e->kind == FEEDBACK_PLAYER_DAMAGE && age < HIT_FLASH_MS) {
+            draw_tile_flash(r, left, top, (SDL_Color){230, 40, 30, 120}, age);
+        }
         if (e->kind == FEEDBACK_ENEMY_CRITICAL && age < CRITICAL_BURST_MS) {
             draw_critical_burst(r, cx, cy, age);
         } else if (e->kind == FEEDBACK_BLOCK && age < BLOCK_SHIELD_MS) {
