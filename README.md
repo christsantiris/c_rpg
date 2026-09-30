@@ -332,8 +332,4 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 
 - Boss encounter improvements
    Give every boss multiple phases, telegraphed signature attacks, an arena mechanic, and a guaranteed thematic reward.
-- Accessibility and controls
-   Add remappable controls, text scaling, colorblind-safe indicators, adjustable message duration, and clearer interaction prompts.
-- Additional areas and storylines
-- Add a Royal Guard NPC before the Crown Road Gate that warns players of its difficulty and recommends exploring other areas first. 
-- Town 2 additional enemy area
+- Additional areas and storylines e.g Town 2 additional enemy area
