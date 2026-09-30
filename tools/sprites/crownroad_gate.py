@@ -4,7 +4,7 @@
 Draws 3 x 3 tiles (72 x 72) centred on the Crown Road, from the tile left of
 CROWNROAD_X: Town 2's north exit and Town 3's south exit. The archway is
 transparent so the road shows through. Run `make sprites` to rewrite
-assets/crownroad-gate.png and assets/crownroad-gate.bmp.
+assets/images/crownroad-gate.bmp.
 """
 import math
 import random
@@ -14,7 +14,7 @@ from PIL import Image
 
 from pixelkit import Layer, composite, flat_wall, gothic_half, merlons, save_sprite, stamp
 
-ASSETS = Path(__file__).resolve().parents[2] / "assets"
+ASSETS = Path(__file__).resolve().parents[2] / "assets" / "images"
 W, H = 72, 72
 CX = 36
 
@@ -171,7 +171,7 @@ def build():
 
 
 def main():
-    save_sprite(build(), ASSETS / "crownroad-gate.png", ASSETS / "crownroad-gate.bmp")
+    save_sprite(build(), ASSETS / "crownroad-gate.bmp")
 
 
 if __name__ == "__main__":

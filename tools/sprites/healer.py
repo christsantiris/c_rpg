@@ -3,7 +3,7 @@
 
 Draws 5 x 4 tiles (120 x 96) for the healer lot at TOWN_HEALER_X/Y in Town 2,
 with the door on TOWN_HEALER_DOOR_X/Y. Run `make sprites` to rewrite
-assets/healer.png and assets/healer.bmp.
+assets/images/healer.bmp.
 """
 from pathlib import Path
 
@@ -13,7 +13,7 @@ from pixelkit import (LANTERN, Layer, arched_door, beam, composite, flat_wall, l
                       plaster, poly_mask, roof_tiles, save_sprite, shadow_under, stamp,
                       stone_arch)
 
-ASSETS = Path(__file__).resolve().parents[2] / "assets"
+ASSETS = Path(__file__).resolve().parents[2] / "assets" / "images"
 W, H = 120, 96
 CX = 66
 DOOR_CX = 62
@@ -229,7 +229,7 @@ def build():
 
 
 def main():
-    save_sprite(build(), ASSETS / "healer.png", ASSETS / "healer.bmp")
+    save_sprite(build(), ASSETS / "healer.bmp")
 
 
 if __name__ == "__main__":

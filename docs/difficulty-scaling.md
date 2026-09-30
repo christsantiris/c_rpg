@@ -159,9 +159,8 @@ maximum regardless of level. Player progress persists across future regions.
 ## Loot Progression
 
 Non-boss enemies have a 10% gold-drop chance and a separate 5%
-item-drop chance. Item drops contain only health potions, mana potions, and
-spell scrolls; regular enemies never drop weapons or armor. Deeper stages shift
-the scroll mix toward Heal and Fireball.
+item-drop chance. Item drops contain only health potions and mana potions;
+regular enemies never drop scrolls, weapons or armor.
 
 Shop purchase prices are 200% of an item's base value. Shops pay 25% of base
 value, rounded down, when buying an item from the player. The Blacksmith buys

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Castle of No Return sprite with its moat and drawbridge (Town 3).
 
-Draws 17 x 10 tiles (408 x 240): the 15 x 8 castle plus the one-tile moat
-ring from TOWN_MOAT_* in src/game/map.h. The drawbridge covers tile (20, 11).
-Run `make sprites` to rewrite assets/castle-of-no-return.png and .bmp.
+Draws 17 x 10 tiles (408 x 240): the 15 x 8 castle plus the one-tile moat ring
+from TOWN_MOAT_* in src/game/map.h. The drawbridge covers tile (20, 11). Run
+`make sprites` to rewrite assets/images/castle-of-no-return.bmp.
 """
 import math
 import random
@@ -14,7 +14,7 @@ from PIL import Image
 from pixelkit import (Layer, clamp, composite, cyl_wall, darken_in, flat_wall, gothic_half,
                       light_spill, merlons, save_sprite, spire, stamp, wobble)
 
-ASSETS = Path(__file__).resolve().parents[2] / "assets"
+ASSETS = Path(__file__).resolve().parents[2] / "assets" / "images"
 W, H = 408, 240
 CX = 204
 
@@ -668,7 +668,7 @@ def build():
 
 
 def main():
-    save_sprite(build(), ASSETS / "castle-of-no-return.png", ASSETS / "castle-of-no-return.bmp")
+    save_sprite(build(), ASSETS / "castle-of-no-return.bmp")
 
 
 if __name__ == "__main__":

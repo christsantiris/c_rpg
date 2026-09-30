@@ -31,24 +31,24 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->tiles_x  = screen_w / TILE_SIZE;
     r->tiles_y  = (screen_h - MESSAGE_BAR_H) / TILE_SIZE;
 
-    r->blacksmith_texture = load_sprite_texture(sdl, "assets/blacksmith.bmp");
-    r->alchemist_texture = load_sprite_texture(sdl, "assets/alchemist.bmp");
-    r->tavern_texture = load_sprite_texture(sdl, "assets/tavern.bmp");
-    r->inn_texture = load_sprite_texture(sdl, "assets/inn.bmp");
-    r->harbor_texture = load_sprite_texture(sdl, "assets/harbor.bmp");
-    r->healer_texture = load_sprite_texture(sdl, "assets/healer.bmp");
-    r->witch_texture = load_sprite_texture(sdl, "assets/witch-hut.bmp");
+    r->blacksmith_texture = load_sprite_texture(sdl, "assets/images/blacksmith.bmp");
+    r->alchemist_texture = load_sprite_texture(sdl, "assets/images/alchemist.bmp");
+    r->tavern_texture = load_sprite_texture(sdl, "assets/images/tavern.bmp");
+    r->inn_texture = load_sprite_texture(sdl, "assets/images/inn.bmp");
+    r->harbor_texture = load_sprite_texture(sdl, "assets/images/harbor.bmp");
+    r->healer_texture = load_sprite_texture(sdl, "assets/images/healer.bmp");
+    r->witch_texture = load_sprite_texture(sdl, "assets/images/witch-hut.bmp");
     r->labyrinth_texture = load_sprite_texture(sdl,
-        "assets/labyrinth-entrance.bmp");
-    r->castle_texture = load_sprite_texture(sdl, "assets/castle-of-no-return.bmp");
-    r->apothecary_texture = load_sprite_texture(sdl, "assets/apothecary.bmp");
+        "assets/images/labyrinth-entrance.bmp");
+    r->castle_texture = load_sprite_texture(sdl, "assets/images/castle-of-no-return.bmp");
+    r->apothecary_texture = load_sprite_texture(sdl, "assets/images/apothecary.bmp");
     r->crownroad_gate_texture = load_sprite_texture(sdl,
-        "assets/crownroad-gate.bmp");
-    r->island_texture = load_sprite_texture(sdl, "assets/island-sprites.bmp");
+        "assets/images/crownroad-gate.bmp");
+    r->island_texture = load_sprite_texture(sdl, "assets/images/island-sprites.bmp");
     r->island_ship_texture = load_sprite_texture(sdl,
-        "assets/island-ship.bmp");
+        "assets/images/island-ship.bmp");
     r->temple_enemy_texture = load_sprite_texture(sdl,
-        "assets/temple-enemies.bmp");
+        "assets/images/temple-enemies.bmp");
 
     if (TTF_Init() != 0) {
         fprintf(stderr, "TTF_Init error: %s\n", TTF_GetError());

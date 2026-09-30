@@ -3,7 +3,7 @@
 
 Draws 5 x 4 tiles (120 x 96) for the witch's lot at TOWN_WITCH_X/Y in Town 2,
 with the door on TOWN_WITCH_DOOR_X/Y. Run `make sprites` to rewrite
-assets/witch-hut.png and assets/witch-hut.bmp.
+assets/images/witch-hut.bmp.
 """
 import random
 from pathlib import Path
@@ -14,7 +14,7 @@ from pixelkit import (LANTERN, Layer, arched_door, beam, composite, flat_wall, l
                       lit_window, plaster, poly_mask, roof_tiles, save_sprite, shadow_under,
                       stamp, stone_arch)
 
-ASSETS = Path(__file__).resolve().parents[2] / "assets"
+ASSETS = Path(__file__).resolve().parents[2] / "assets" / "images"
 W, H = 120, 96
 CX = 54
 DOOR_CX = 57
@@ -285,7 +285,7 @@ def build():
 
 
 def main():
-    save_sprite(build(), ASSETS / "witch-hut.png", ASSETS / "witch-hut.bmp")
+    save_sprite(build(), ASSETS / "witch-hut.bmp")
 
 
 if __name__ == "__main__":
