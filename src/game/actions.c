@@ -22,15 +22,23 @@ static Action make_move_or_attack(int tx, int ty) {
 }
 
 void push_message(GameState *g, const char *msg) {
+    push_message_kind(g, msg, MESSAGE_NORMAL);
+}
+
+void push_message_kind(GameState *g, const char *msg, MessageKind kind) {
     if (g->message_count < MAX_MESSAGES) {
         strncpy(g->messages[g->message_count], msg, MAX_MESSAGE_LEN - 1);
         g->messages[g->message_count][MAX_MESSAGE_LEN - 1] = '\0';
+        g->message_kinds[g->message_count] = kind;
         g->message_count++;
     } else {
-        for (int i = 0; i < MAX_MESSAGES - 1; i++)
+        for (int i = 0; i < MAX_MESSAGES - 1; i++) {
             strncpy(g->messages[i], g->messages[i + 1], MAX_MESSAGE_LEN);
+            g->message_kinds[i] = g->message_kinds[i + 1];
+        }
         strncpy(g->messages[MAX_MESSAGES - 1], msg, MAX_MESSAGE_LEN - 1);
         g->messages[MAX_MESSAGES - 1][MAX_MESSAGE_LEN - 1] = '\0';
+        g->message_kinds[MAX_MESSAGES - 1] = kind;
     }
 }
 
@@ -442,7 +450,7 @@ static int apply_enemy_damage(GameState *g, int damage, CombatFeedbackArrival ar
     const Item *armor = equipped_armor(g);
     if (armor && armor->evasion_chance > 0 &&
         rand() % 100 < armor->evasion_chance) {
-        push_message(g, "Dodged!");
+        push_message_kind(g, "Dodged!", MESSAGE_DEFENDED);
         combat_feedback_add(g, FEEDBACK_DODGE, arrival, g->player.x, g->player.y, 0);
         return 0;
     }
@@ -461,7 +469,7 @@ static int apply_enemy_damage(GameState *g, int damage, CombatFeedbackArrival ar
             blocked = full_damage - damage;
             char msg[MAX_MESSAGE_LEN];
             snprintf(msg, sizeof(msg), "Blocked %d of %d damage!", blocked, full_damage);
-            push_message(g, msg);
+            push_message_kind(g, msg, MESSAGE_DEFENDED);
         }
     }
     g->player.hp -= damage;
@@ -619,7 +627,7 @@ static int interact_mountain(GameState *g) {
             int rock_damage = 4 + g->level;
             g->player.hp -= rock_damage;
             combat_feedback_add(g, FEEDBACK_PLAYER_DAMAGE, FEEDBACK_NOW, px, py, rock_damage);
-            push_message(g, "Falling rocks hurt! A cave is exposed.");
+            push_message_kind(g, "Falling rocks hurt! A cave is exposed.", MESSAGE_DAMAGE_TAKEN);
         }
         map_mark_explored(&g->map, x, y);
         return 1;
@@ -1401,7 +1409,7 @@ void action_resolve_player(GameState *g, Action a) {
                     snprintf(msg, sizeof(msg), "Attack hit %s: %d dmg",
                         e->name, dmg);
                 }
-                push_message(g, msg);
+                push_message_kind(g, msg, critical ? MESSAGE_CRITICAL : MESSAGE_NORMAL);
                 if (!wpn->pierces_targets) {
                     impact_x = tx;
                     impact_y = ty;
@@ -1497,13 +1505,13 @@ void action_resolve_player(GameState *g, Action a) {
                     char msg[MAX_MESSAGE_LEN];
                     snprintf(msg, sizeof(msg), critical ?
                         "Critical killed %s!" : "Killed %s!", e->name);
-                    push_message(g, msg);
+                    push_message_kind(g, msg, critical ? MESSAGE_CRITICAL : MESSAGE_NORMAL);
                 } else {
                     char msg[MAX_MESSAGE_LEN];
                     snprintf(msg, sizeof(msg), critical ?
                         "Critical hit %s: %d dmg" : "Hit %s: %d dmg",
                         e->name, dmg);
-                    push_message(g, msg);
+                    push_message_kind(g, msg, critical ? MESSAGE_CRITICAL : MESSAGE_NORMAL);
                 }
                 if (cleave_hits > 0) {
                     char msg[MAX_MESSAGE_LEN];
@@ -1879,7 +1887,7 @@ void action_resolve_player(GameState *g, Action a) {
             combat_feedback_add(g, FEEDBACK_PLAYER_DAMAGE, FEEDBACK_NOW, px, py, dmg);
             char msg[MAX_MESSAGE_LEN];
             snprintf(msg, sizeof(msg), "Solar flame erupts! -%d HP", dmg);
-            push_message(g, msg);
+            push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
             if (g->player.hp <= 0) {
                 return;
             }
@@ -1949,7 +1957,7 @@ void action_resolve_player(GameState *g, Action a) {
                 t->r = 40; t->g = 180; t->b = 40;
                 t->is_impact = 1;
             }
-            push_message(g, msg);
+            push_message_kind(g, msg, trap_type == TILE_TRAP_POISON ? MESSAGE_POISON : MESSAGE_DAMAGE_TAKEN);
             if (g->player.hp <= 0) {
                 return;
             }
@@ -1964,7 +1972,7 @@ void action_resolve_player(GameState *g, Action a) {
             char msg[MAX_MESSAGE_LEN];
             snprintf(msg, sizeof(msg), "Poison! -%d HP (%d left)",
                 dmg, g->player.poison_turns);
-            push_message(g, msg);
+            push_message_kind(g, msg, MESSAGE_POISON);
         }
     }
 }
@@ -2568,7 +2576,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 if (e->type == ENEMY_GIANT_SPIDER ||
                     e->type == ENEMY_TUNNEL_SPIDER) {
                     g->player.poison_turns = 3;
-                    push_message(g, "Giant Spider venom poisons you!");
+                    push_message_kind(g, "Giant Spider venom poisons you!", MESSAGE_POISON);
                 }
                 if (e->type == ENEMY_WRAITH && g->player.mp > 0) {
                     int drained = g->player.mp < 3 ? g->player.mp : 3;
@@ -2580,7 +2588,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                     snprintf(msg, sizeof(msg), "Wraith: %d dmg, drains MP", dmg);
                 else
                     snprintf(msg, sizeof(msg), "%s: %d dmg", e->name, dmg);
-                push_message(g, msg);
+                push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
                 continue;
         }
 
@@ -2599,7 +2607,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 if (dmg > 0) {
                     char msg[MAX_MESSAGE_LEN];
                     snprintf(msg, sizeof(msg), "Dragonfire: %d dmg", dmg);
-                    push_message(g, msg);
+                    push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
                 }
             }
             continue;
@@ -2615,7 +2623,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             if (dmg > 0) {
                 char msg[MAX_MESSAGE_LEN];
                 snprintf(msg, sizeof(msg), "Elemental flame: %d dmg", dmg);
-                push_message(g, msg);
+                push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
             }
             continue;
         }
@@ -2633,7 +2641,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 }
                 char msg[MAX_MESSAGE_LEN];
                 snprintf(msg, sizeof(msg), "Lich necrotic bolt: %d dmg", dmg);
-                push_message(g, msg);
+                push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
             } else {
                 push_message(g, "The Lich gathers dark power...");
             }
@@ -2652,7 +2660,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 }
                 char msg[MAX_MESSAGE_LEN];
                 snprintf(msg, sizeof(msg), "Necromancer spirit bolt: %d dmg", dmg);
-                push_message(g, msg);
+                push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
             } else {
                 push_message(g, "The Necromancer invokes the forest...");
             }
@@ -2669,7 +2677,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 }
                 char msg[MAX_MESSAGE_LEN];
                 snprintf(msg, sizeof(msg), "Goblin King axe: %d dmg", dmg);
-                push_message(g, msg);
+                push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
             } else push_message(g, "The Goblin King raises his axe...");
             continue;
         }
@@ -2686,7 +2694,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 }
                 char msg[MAX_MESSAGE_LEN];
                 snprintf(msg, sizeof(msg), "Queen's tidal wave: %d dmg", dmg);
-                push_message(g, msg);
+                push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
             } else {
                 push_message(g, "The Drowned Queen summons the tide...");
             }
@@ -2704,7 +2712,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 if (dmg > 0) {
                     char msg[MAX_MESSAGE_LEN];
                     snprintf(msg, sizeof(msg), "Guardian sunburst: %d dmg", dmg);
-                    push_message(g, msg);
+                    push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
                 }
             } else {
                 push_message(g, e->hp <= e->max_hp / 2
@@ -2754,7 +2762,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 char msg[MAX_MESSAGE_LEN];
                 snprintf(msg, sizeof(msg), "%s ranged strike: %d dmg",
                     e->name, dmg);
-                push_message(g, msg);
+                push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
             }
             continue;
         }
@@ -2773,7 +2781,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             char msg[MAX_MESSAGE_LEN];
             snprintf(msg, sizeof(msg), e->type == ENEMY_SIREN
                 ? "Siren song: %d dmg" : "Water surge: %d dmg", dmg);
-            push_message(g, msg);
+            push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
             continue;
         }
 
@@ -2792,7 +2800,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 "Goblin bomb" : e->type == ENEMY_ROAD_ARCHER ?
                 "Road arrow" : "Goblin arrow";
             snprintf(msg, sizeof(msg), "%s: %d dmg", attack_name, dmg);
-            push_message(g, msg);
+            push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
             continue;
         }
 
@@ -2825,7 +2833,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             }
             char msg[MAX_MESSAGE_LEN];
             snprintf(msg, sizeof(msg), "Dark Elf arrow: %d dmg", dmg);
-            push_message(g, msg);
+            push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
             continue;
         }
 
@@ -2840,7 +2848,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 }
                 char msg[MAX_MESSAGE_LEN];
                 snprintf(msg, sizeof(msg), "Conjurer bolt: %d dmg", dmg);
-                push_message(g, msg);
+                push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
                 continue;
             }
         }

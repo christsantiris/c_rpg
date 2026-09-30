@@ -29,6 +29,16 @@
 
 #define MAX_TRAIL 16
 
+// Picks the message bar colour for a message.
+typedef enum {
+    MESSAGE_NORMAL = 0,
+    MESSAGE_DAMAGE_TAKEN,
+    MESSAGE_CRITICAL,
+    MESSAGE_DEFENDED,
+    MESSAGE_POISON,
+    MESSAGE_KIND_COUNT
+} MessageKind;
+
 typedef struct {
     int active;
     int x, y;
@@ -117,6 +127,7 @@ typedef struct {
     LevelCache labyrinth_cache[LABYRINTH_DEPTH];
     char       messages[MAX_MESSAGES][MAX_MESSAGE_LEN];
     int        message_count;
+    MessageKind message_kinds[MAX_MESSAGES];
     int        level_cleared;
     Location   location;
     int max_level_reached;
@@ -221,6 +232,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
 
 void player_gain_xp(GameState *g, int xp);
 void push_message(GameState *g, const char *msg);
+void push_message_kind(GameState *g, const char *msg, MessageKind kind);
 void game_mark_level_cleared(GameState *g);
 void game_update_level_progress(GameState *g);
 

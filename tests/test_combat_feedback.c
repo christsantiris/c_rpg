@@ -56,6 +56,8 @@ void test_combat_feedback(void) {
         e->x == 21 && e->y == 20 && e->amount == 100 - g.enemies[0].hp);
     ASSERT("feedback records the area and stage it happened in",
         e && e->location == LOCATION_FOREST && e->level == 3);
+    ASSERT("an ordinary hit message keeps the plain colour",
+        g.message_kinds[g.message_count - 1] == MESSAGE_NORMAL);
 
     combat_feedback_clear();
     action_resolve_enemies(&g);
@@ -63,6 +65,8 @@ void test_combat_feedback(void) {
     ASSERT("enemy melee shows the damage taken on the player's tile",
         e && e->kind == FEEDBACK_PLAYER_DAMAGE && e->arrival == FEEDBACK_NOW &&
         e->x == 20 && e->y == 20 && e->amount == 10 && g.player.hp == 90);
+    ASSERT("damage taken messages are marked red",
+        g.message_kinds[g.message_count - 1] == MESSAGE_DAMAGE_TAKEN);
 
     setup_fight(&g, CLASS_WARRIOR);
     g.enemies[0].type = ENEMY_GOBLIN_ARCHER;
@@ -129,6 +133,8 @@ void test_combat_feedback(void) {
     ASSERT("a melee crit is marked critical with its boosted damage",
         e && e->kind == FEEDBACK_ENEMY_CRITICAL && e->arrival == FEEDBACK_NOW &&
         e->x == 21 && e->amount == 15 && g.enemies[0].hp == 85);
+    ASSERT("critical hit messages are marked gold",
+        g.message_kinds[g.message_count - 1] == MESSAGE_CRITICAL);
 
     // Shields halve the damage of a blocked hit: 10 becomes 5.
     setup_fight(&g, CLASS_WARRIOR);
@@ -148,6 +154,9 @@ void test_combat_feedback(void) {
     ASSERT("the block message says how much damage the shield stopped",
         g.message_count >= 2 &&
         strcmp(g.messages[g.message_count - 2], "Blocked 5 of 10 damage!") == 0);
+    ASSERT("block messages are marked blue and the damage after them red",
+        g.message_kinds[g.message_count - 2] == MESSAGE_DEFENDED &&
+        g.message_kinds[g.message_count - 1] == MESSAGE_DAMAGE_TAKEN);
 
     setup_fight(&g, CLASS_ROGUE);
     g.inventory[0] = item_make_leather_armor();
@@ -160,6 +169,9 @@ void test_combat_feedback(void) {
     ASSERT("a dodge shows DODGE on the player and no damage",
         e && e->kind == FEEDBACK_DODGE && e->arrival == FEEDBACK_NOW &&
         e->x == 20 && e->y == 20 && g.player.hp == 100);
+    ASSERT("dodge messages are marked blue",
+        strcmp(g.messages[g.message_count - 1], "Dodged!") == 0 &&
+        g.message_kinds[g.message_count - 1] == MESSAGE_DEFENDED);
     g.enemies[0].type = ENEMY_GOBLIN_ARCHER;
     g.enemies[0].x = 14;
     g.enemies[0].move_timer = 1;
@@ -241,6 +253,8 @@ void test_combat_feedback(void) {
     ASSERT("poison damage shows on the tile the player moved to",
         e && e->kind == FEEDBACK_PLAYER_DAMAGE && e->x == 20 &&
         e->y == 19 && e->amount == 3 && g.player.hp == 97);
+    ASSERT("poison messages are marked green",
+        g.message_kinds[g.message_count - 1] == MESSAGE_POISON);
 
     setup_fight(&g, CLASS_WARRIOR);
     g.enemy_count = 2;
@@ -269,4 +283,15 @@ void test_combat_feedback(void) {
             MAX_COMBAT_FEEDBACK + 1);
     combat_feedback_clear();
     ASSERT("clearing removes every result", combat_feedback_count() == 0);
+
+    g.message_count = 0;
+    push_message_kind(&g, "one", MESSAGE_POISON);
+    push_message(&g, "two");
+    push_message_kind(&g, "three", MESSAGE_CRITICAL);
+    push_message_kind(&g, "four", MESSAGE_DAMAGE_TAKEN);
+    ASSERT("message colours stay with their messages as old ones scroll away",
+        g.message_count == MAX_MESSAGES && strcmp(g.messages[0], "two") == 0 &&
+        g.message_kinds[0] == MESSAGE_NORMAL &&
+        g.message_kinds[1] == MESSAGE_CRITICAL &&
+        g.message_kinds[2] == MESSAGE_DAMAGE_TAKEN);
 }
