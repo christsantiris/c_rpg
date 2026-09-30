@@ -157,6 +157,77 @@ static int rewrite_save_version(int slot, int version) {
     return 1;
 }
 
+// Deletes one top-level field to reproduce a save written before it existed.
+static int remove_save_field(int slot, const char *field) {
+    char path[64];
+    format_save_path(slot, path, sizeof(path));
+    FILE *file = fopen(path, "r");
+    if (!file) {
+        return 0;
+    }
+    fseek(file, 0, SEEK_END);
+    long length = ftell(file);
+    rewind(file);
+    char *text = malloc(length + 1);
+    if (!text) {
+        fclose(file);
+        return 0;
+    }
+    size_t bytes_read = fread(text, 1, length, file);
+    fclose(file);
+    text[bytes_read] = '\0';
+
+    cJSON *root = cJSON_Parse(text);
+    free(text);
+    if (!root || !cJSON_GetObjectItem(root, field)) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    cJSON_DeleteItemFromObject(root, field);
+    char *updated = cJSON_Print(root);
+    cJSON_Delete(root);
+    if (!updated) {
+        return 0;
+    }
+
+    file = fopen(path, "w");
+    if (!file) {
+        free(updated);
+        return 0;
+    }
+    fputs(updated, file);
+    fclose(file);
+    free(updated);
+    return 1;
+}
+
+static void test_message_kinds_round_trip(void) {
+    static GameState original;
+    static GameState loaded;
+    memset(&original, 0, sizeof(original));
+    memset(&loaded, 0, sizeof(loaded));
+    game_init(&original);
+    original.message_count = 0;
+    push_message(&original, "You enter the forest.");
+    push_message_kind(&original, "Goblin: 4 dmg", MESSAGE_DAMAGE_TAKEN);
+    push_message_kind(&original, "Critical hit Goblin: 18 dmg", MESSAGE_CRITICAL);
+    int loaded_ok = save_game(&original, ROUND_TRIP_SLOT) &&
+        load_game(&loaded, ROUND_TRIP_SLOT);
+    ASSERT("message colours survive save/load",
+        loaded_ok && loaded.message_count == 3 &&
+        loaded.message_kinds[0] == MESSAGE_NORMAL &&
+        loaded.message_kinds[1] == MESSAGE_DAMAGE_TAKEN &&
+        loaded.message_kinds[2] == MESSAGE_CRITICAL);
+    int legacy_ok = remove_save_field(ROUND_TRIP_SLOT, "message_kinds") &&
+        load_game(&loaded, ROUND_TRIP_SLOT);
+    ASSERT("saves without message colours load as plain messages",
+        legacy_ok && loaded.message_count == 3 &&
+        loaded.message_kinds[1] == MESSAGE_NORMAL &&
+        loaded.message_kinds[2] == MESSAGE_NORMAL &&
+        strcmp(loaded.messages[2], "Critical hit Goblin: 18 dmg") == 0);
+    remove_test_save(ROUND_TRIP_SLOT);
+}
+
 static void test_current_weapon_round_trip(void) {
     static GameState original;
     static GameState loaded;
@@ -1088,6 +1159,7 @@ void test_save_load(void) {
     test_legacy_town_square();
     test_legacy_inn_move();
     test_legacy_apothecary();
+    test_message_kinds_round_trip();
     test_forest_enemy_repair();
     test_blocked_dungeon_gate_repair();
 }
