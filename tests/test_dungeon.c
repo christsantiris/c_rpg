@@ -47,7 +47,7 @@ void test_dungeon(void) {
         }
     }
     ASSERT("final floor contains the Lich King", matching_bosses == 1);
-    ASSERT("boss floor respects enemy capacity", g.enemy_count <= MAX_ENEMIES);
+    ASSERT("boss floor respects enemy capacity", g.enemy_count <= AREA_ENEMY_LIMIT);
     int locked_doors = 0;
     int door_x = 0;
     int door_y = 0;

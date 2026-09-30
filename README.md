@@ -335,8 +335,6 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 - Accessibility and controls
    Add remappable controls, text scaling, colorblind-safe indicators, adjustable message duration, and clearer interaction prompts.
 - Additional areas and storylines
-- Double the number of enemies on the Crown Road
 - Add a Royal Guard NPC before the Crown Road Gate that warns players of its difficulty and recommends exploring other areas first. 
 - Town 2 additional enemy area
-- Different music for different enemy area encounters
 - Expanded Sfx for different weapon types.

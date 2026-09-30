@@ -3,6 +3,8 @@
 
 void sfx_init(void);
 void sfx_play_attack(void);
+void sfx_play_large_blade(void);
+void sfx_play_greatsword(void);
 void sfx_play_arrow(void);
 void sfx_play_magic_arrow(void);
 void sfx_play_fireball(void);
