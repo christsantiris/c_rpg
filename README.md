@@ -340,4 +340,3 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 - Town 2 additional enemy area
 - Different music for different enemy area encounters
 - Expanded Sfx for different weapon types.
-- More powerful spells require Books not scrolls.

@@ -401,6 +401,47 @@ void test_items(void) {
     ASSERT("three bosses unlock Heal II",
         shop_has_item(&shop, "Tome: Heal II"));
 
+    Item any_class_scrolls[3] = {
+        item_make_scroll_magic_arrow(), item_make_scroll_heal(),
+        item_make_scroll_return_to_town()
+    };
+    int any_class_learns = 1;
+    for (int i = 0; i < 3; i++) {
+        any_class_learns &= item_class_allowed(&any_class_scrolls[i], CLASS_WARRIOR) &&
+            item_class_allowed(&any_class_scrolls[i], CLASS_ROGUE) &&
+            item_class_allowed(&any_class_scrolls[i], CLASS_MAGE);
+    }
+    ASSERT("Magic Arrow, Heal and Return to Town scrolls suit every class",
+        any_class_learns);
+
+    static GameState fireball_game;
+    int fireball_blocked = 1;
+    int blocked_classes[2] = {CLASS_WARRIOR, CLASS_ROGUE};
+    for (int i = 0; i < 2; i++) {
+        memset(&fireball_game, 0, sizeof(fireball_game));
+        fireball_game.player.player_class = blocked_classes[i];
+        game_init(&fireball_game);
+        int spell_count = fireball_game.player.known_spell_count;
+        fireball_game.inventory[fireball_game.inventory_count++] = item_make_scroll_fireball();
+        action_resolve_player(&fireball_game,
+            (Action){ACTION_USE_ITEM, fireball_game.inventory_count - 1, 0});
+        fireball_blocked &= fireball_game.player.known_spell_count == spell_count &&
+            fireball_game.inventory[fireball_game.inventory_count - 1].spell_id == SPELL_FIREBALL;
+    }
+    ASSERT("Warriors and Rogues cannot learn Fireball and keep the scroll",
+        fireball_blocked);
+
+    memset(&fireball_game, 0, sizeof(fireball_game));
+    fireball_game.player.player_class = CLASS_MAGE;
+    game_init(&fireball_game);
+    int mage_spell_count = fireball_game.player.known_spell_count;
+    fireball_game.inventory[fireball_game.inventory_count++] = item_make_scroll_fireball();
+    action_resolve_player(&fireball_game,
+        (Action){ACTION_USE_ITEM, fireball_game.inventory_count - 1, 0});
+    ASSERT("a Mage learns Fireball from its scroll",
+        fireball_game.player.known_spell_count == mage_spell_count + 1 &&
+        fireball_game.player.known_spells[mage_spell_count].id == SPELL_FIREBALL);
+
     int fair_shop_prices = 1;
     int correct_shop_sales = 1;
     ShopType shop_types[2] = {SHOP_TYPE_BLACKSMITH, SHOP_TYPE_ALCHEMIST};

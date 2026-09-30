@@ -793,6 +793,7 @@ Item item_make_scroll_fireball(void) {
     strncpy(it.name, "Scroll: Fireball", sizeof(it.name) - 1);
     it.spell_id = SPELL_FIREBALL;
     it.value    = 40;
+    it.class_mask = ITEM_CLASS_MAGE;
     return it;
 }
 
