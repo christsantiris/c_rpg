@@ -1,6 +1,7 @@
 #include "test_utils.h"
 #include "../src/game/game.h"
 #include "../src/game/combat_feedback.h"
+#include <string.h>
 
 static void setup_fight(GameState *g, PlayerClass player_class) {
     g->player.player_class = player_class;
@@ -128,6 +129,72 @@ void test_combat_feedback(void) {
     ASSERT("a melee crit is marked critical with its boosted damage",
         e && e->kind == FEEDBACK_ENEMY_CRITICAL && e->arrival == FEEDBACK_NOW &&
         e->x == 21 && e->amount == 15 && g.enemies[0].hp == 85);
+
+    // Shields halve the damage of a blocked hit: 10 becomes 5.
+    setup_fight(&g, CLASS_WARRIOR);
+    g.inventory[0] = item_make_buckler();
+    g.inventory[0].block_chance = 100;
+    g.inventory_count = 1;
+    g.equipped_main_hand = -1;
+    g.equipped_off_hand = 0;
+    action_resolve_enemies(&g);
+    ASSERT("a block shows the reduced damage with BLOCK above it",
+        combat_feedback_count() == 2 &&
+        combat_feedback_get(0)->kind == FEEDBACK_PLAYER_DAMAGE &&
+        combat_feedback_get(0)->amount == 5 &&
+        combat_feedback_get(1)->kind == FEEDBACK_BLOCK &&
+        combat_feedback_get(1)->amount == 5 &&
+        combat_feedback_get(1)->x == 20 && g.player.hp == 95);
+    ASSERT("the block message says how much damage the shield stopped",
+        g.message_count >= 2 &&
+        strcmp(g.messages[g.message_count - 2], "Blocked 5 of 10 damage!") == 0);
+
+    setup_fight(&g, CLASS_ROGUE);
+    g.inventory[0] = item_make_leather_armor();
+    g.inventory[0].evasion_chance = 100;
+    g.inventory_count = 1;
+    g.equipped_main_hand = -1;
+    g.equipped_armor = 0;
+    action_resolve_enemies(&g);
+    e = only_event();
+    ASSERT("a dodge shows DODGE on the player and no damage",
+        e && e->kind == FEEDBACK_DODGE && e->arrival == FEEDBACK_NOW &&
+        e->x == 20 && e->y == 20 && g.player.hp == 100);
+    g.enemies[0].type = ENEMY_GOBLIN_ARCHER;
+    g.enemies[0].x = 14;
+    g.enemies[0].move_timer = 1;
+    combat_feedback_clear();
+    action_resolve_enemies(&g);
+    e = only_event();
+    ASSERT("a dodged arrow shows DODGE when the arrow arrives",
+        e && e->kind == FEEDBACK_DODGE &&
+        e->arrival == FEEDBACK_AFTER_ENEMY_SHOT && g.player.hp == 100);
+
+    setup_fight(&g, CLASS_ROGUE);
+    g.inventory[0] = item_make_bow();
+    g.inventory_count = 1;
+    g.equipped_main_hand = 0;
+    g.enemy_count = 0;
+    action_resolve_player(&g, (Action){ACTION_RANGED_ATTACK, 0, 0});
+    e = only_event();
+    ASSERT("a missed arrow shows MISS where it lands",
+        e && e->kind == FEEDBACK_MISS &&
+        e->arrival == FEEDBACK_AFTER_PLAYER_SHOT && e->x == 26 && e->y == 20);
+
+    setup_fight(&g, CLASS_MAGE);
+    equip_spell(&g, spell_make_magic_arrow());
+    g.enemy_count = 0;
+    action_resolve_player(&g, cast);
+    e = only_event();
+    ASSERT("a missed Magic Arrow shows MISS where it fades",
+        e && e->kind == FEEDBACK_MISS &&
+        e->arrival == FEEDBACK_AFTER_PLAYER_SHOT && e->x == 26 && e->y == 20);
+    equip_spell(&g, spell_make_fireball());
+    combat_feedback_clear();
+    action_resolve_player(&g, cast);
+    e = only_event();
+    ASSERT("a Fireball that catches no one shows MISS at the blast",
+        e && e->kind == FEEDBACK_MISS && e->x == 24 && e->y == 20);
 
     setup_fight(&g, CLASS_MAGE);
     equip_spell(&g, spell_make_magic_arrow());
