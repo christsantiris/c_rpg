@@ -334,13 +334,12 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
    Give every boss multiple phases, telegraphed signature attacks, an arena mechanic, and a guaranteed thematic reward.
 2. Combat feedback
    Add clearer hit effects, critical indicators, blocked-damage feedback, status icons, and distinct weapon sounds.
-4. Accessibility and controls
+3. Accessibility and controls
    Add remappable controls, text scaling, colorblind-safe indicators, adjustable message duration, and clearer interaction prompts.
-5. Additional areas and storylines
-6. Double the number of enemies on the Crown Road
-7. Add a Royal Guard NPC before the Crown Road Gate that warns players of its difficulty and recommends exploring other areas first. 
-13. Town 2 additional enemy area
-14. Different music for different enemy area encounters
-15. Expanded Sfx for different weapon types.
-16. Enemies don't drop scrolls. Economy Only except for boss drops or quests.
-17. More powerful spells require Books not scrolls.
+4. Additional areas and storylines
+5. Double the number of enemies on the Crown Road
+6. Add a Royal Guard NPC before the Crown Road Gate that warns players of its difficulty and recommends exploring other areas first. 
+7. Town 2 additional enemy area
+8. Different music for different enemy area encounters
+9. Expanded Sfx for different weapon types.
+10. More powerful spells require Books not scrolls.

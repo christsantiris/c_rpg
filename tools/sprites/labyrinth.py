@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Town 2 labyrinth entrance sprite sheet.
 
-Two 3 x 3 tile frames (72 x 72) side by side: sealed, then open. The game draws
-a frame from one tile left of and two tiles above the entrance tile
+Two 3 x 3 tile frames (72 x 72) side by side: sealed, then open. The game
+draws a frame from one tile left of and two tiles above the entrance tile
 TOWN_LABYRINTH_X/Y. Run `make sprites` to rewrite
-assets/labyrinth-entrance.png and assets/labyrinth-entrance.bmp.
+assets/images/labyrinth-entrance.bmp.
 """
 import random
 from pathlib import Path
@@ -13,7 +13,7 @@ from PIL import Image
 
 from pixelkit import Layer, composite, flat_wall, save_sprite, stamp
 
-ASSETS = Path(__file__).resolve().parents[2] / "assets"
+ASSETS = Path(__file__).resolve().parents[2] / "assets" / "images"
 FW, FH = 72, 72
 CX = 36
 
@@ -217,7 +217,7 @@ def build():
 
 
 def main():
-    save_sprite(build(), ASSETS / "labyrinth-entrance.png", ASSETS / "labyrinth-entrance.bmp")
+    save_sprite(build(), ASSETS / "labyrinth-entrance.bmp")
 
 
 if __name__ == "__main__":

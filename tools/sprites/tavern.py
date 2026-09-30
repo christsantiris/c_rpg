@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Town 1 tavern sprite.
 
-Draws 7 x 5 tiles (168 x 120) for the tavern lot at (5, 16) in Town 1, with
-the door centred on tile (8, 20). Run `make sprites` to rewrite
-assets/tavern.png and assets/tavern.bmp.
+Draws 7 x 5 tiles (168 x 120) for the tavern lot at TOWN_TAVERN_X/Y in Town 1,
+with the door on TOWN_TAVERN_DOOR_X/Y. Run `make sprites` to rewrite
+assets/images/tavern.bmp.
 """
 from pathlib import Path
 
@@ -13,7 +13,7 @@ from pixelkit import (BARREL, CRATE, LANTERN, Layer, arched_door, beam, composit
                       lit_window, plaster, poly_mask, roof_tiles, save_sprite, shadow_under, stamp,
                       stone_arch)
 
-ASSETS = Path(__file__).resolve().parents[2] / "assets"
+ASSETS = Path(__file__).resolve().parents[2] / "assets" / "images"
 W, H = 168, 120
 DOOR_CX = 84
 
@@ -213,7 +213,7 @@ def build():
 
 
 def main():
-    save_sprite(build(), ASSETS / "tavern.png", ASSETS / "tavern.bmp")
+    save_sprite(build(), ASSETS / "tavern.bmp")
 
 
 if __name__ == "__main__":
