@@ -492,3 +492,53 @@ void draw_icon_empty_slot(Renderer *r, int px, int py) {
     fill_rect_px(r, px,   py+ICON_SIZE-1, ICON_SIZE, 1,   border);
     fill_rect_px(r, px+ICON_SIZE-1, py, 1, ICON_SIZE,     border);
 }
+
+// Status icons are drawn from rows of pixels. Each character in keys picks the
+// matching colour; any other character leaves the pixel empty.
+static void draw_icon_pattern(Renderer *r, int px, int py, const char *const rows[], int height, const char *keys, const SDL_Color colors[]) {
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; rows[y][x] != '\0'; x++) {
+            for (int k = 0; keys[k] != '\0'; k++) {
+                if (rows[y][x] == keys[k]) {
+                    fill_rect_px(r, px + x, py + y, 1, 1, colors[k]);
+                }
+            }
+        }
+    }
+}
+
+// A 7 x 9 green drop marks a poisoned player.
+void draw_icon_poison(Renderer *r, int px, int py) {
+    static const char *const rows[9] = {
+        "...o...",
+        "..olo..",
+        "..olo..",
+        ".olggo.",
+        "olggggo",
+        "olggggo",
+        "oggggdo",
+        ".oggdo.",
+        "..ooo..",
+    };
+    static const SDL_Color colors[4] = {
+        {16, 40, 22, 255}, {176, 255, 170, 255}, {70, 200, 80, 255}, {36, 130, 50, 255}
+    };
+    draw_icon_pattern(r, px, py, rows, 9, "olgd", colors);
+}
+
+// A 7 x 7 snowflake with a dark shadow marks a frozen enemy.
+void draw_icon_frozen(Renderer *r, int px, int py) {
+    static const char *const rows[7] = {
+        "w..w..w",
+        ".w.w.w.",
+        "..www..",
+        "wwwwwww",
+        "..www..",
+        ".w.w.w.",
+        "w..w..w",
+    };
+    static const SDL_Color shadow[1] = {{16, 30, 48, 255}};
+    static const SDL_Color ice[1] = {{210, 245, 255, 255}};
+    draw_icon_pattern(r, px + 1, py + 1, rows, 7, "w", shadow);
+    draw_icon_pattern(r, px, py, rows, 7, "w", ice);
+}

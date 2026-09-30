@@ -4,6 +4,7 @@
 #include "message_bar.h"
 #include "minimap_renderer.h"
 #include "renderer.h"
+#include "item_icons.h"
 #include "../game/combat_feedback.h"
 #include <string.h>
 #include <stdlib.h>
@@ -377,6 +378,18 @@ static void draw_feedback_text(Renderer *r, TTF_Font *font, const char *text, in
     SDL_SetTextureColorMod(texture, color.r, color.g, color.b);
     SDL_RenderCopy(r->sdl, texture, NULL, &dst);
     SDL_DestroyTexture(texture);
+}
+
+// Frozen enemies get an icy tint, a snowflake and the turns they stay frozen.
+static void draw_frozen_status(Renderer *r, int left, int top, int turns) {
+    SDL_Rect tile = {left, top, TILE_SIZE, TILE_SIZE};
+    SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(r->sdl, 140, 210, 255, 70);
+    SDL_RenderFillRect(r->sdl, &tile);
+    draw_icon_frozen(r, left + 2, top + 2);
+    char text[8];
+    SDL_snprintf(text, sizeof(text), "%d", turns);
+    draw_feedback_text(r, r->font_tiny, text, left + 14, top + 1, (SDL_Color){210, 245, 255, 255}, 255);
 }
 
 static int combat_feedback_rise(Uint32 age) {
@@ -1734,6 +1747,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             SDL_RenderFillRect(r->sdl, &bg);
             SDL_SetRenderDrawColor(r->sdl, 200, 60, 60, 255);
             SDL_RenderFillRect(r->sdl, &fill);
+            if (e->frozen_turns > 0) {
+                draw_frozen_status(r, sx * TILE_SIZE, sy * TILE_SIZE, e->frozen_turns);
+            }
         }
     }
 
@@ -2116,6 +2132,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->player.player_class, equipped_weapon, off_hand_weapon,
         equipped_armor,
         g->player.last_dx, g->player.last_dy);
+    if (g->player.poison_turns > 0) {
+        draw_icon_poison(r, viewport_to_screen_x(v, g->player.x) * TILE_SIZE + 16,
+            viewport_to_screen_y(v, g->player.y) * TILE_SIZE + 1);
+    }
 
     draw_combat_feedback(r, g, v);
 
