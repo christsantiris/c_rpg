@@ -49,6 +49,7 @@ void test_quest_journal(void);
 void test_save_load(void);
 void test_save_confirmation(void);
 void test_combat_feedback(void);
+void test_controls(void);
 
 int main(void) {
     // ASSERT("sanity check true",  1 == 1);
@@ -139,6 +140,8 @@ int main(void) {
     test_dungeon_gate_reachability();
     printf("\n");
     test_combat_feedback();
+    printf("\n");
+    test_controls();
     printf("\n");
     REPORT();
 }
