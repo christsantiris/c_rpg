@@ -1495,7 +1495,15 @@ void action_resolve_player(GameState *g, Action a) {
                         melee_weapon->cleave_percent)
                     : 0;
                 #ifndef TEST_BUILD
-                sfx_play_attack();
+                int melee_visual = melee_weapon ? melee_weapon->visual_id : ITEM_VISUAL_NONE;
+                if (melee_visual == ITEM_VISUAL_GREATSWORD) {
+                    sfx_play_greatsword();
+                } else if (melee_visual == ITEM_VISUAL_SHORT_SWORD ||
+                    melee_visual == ITEM_VISUAL_LONG_SWORD) {
+                    sfx_play_large_blade();
+                } else {
+                    sfx_play_attack();
+                }
                 #endif
                 if (e->hp <= 0) {
                     e->active = 0;

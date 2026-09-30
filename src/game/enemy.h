@@ -1,7 +1,9 @@
 #ifndef ENEMY_HEADER_H
 #define ENEMY_HEADER_H
 
-#define MAX_ENEMIES 15
+// The Crownroad fills every enemy slot; other areas stop at AREA_ENEMY_LIMIT.
+#define MAX_ENEMIES 30
+#define AREA_ENEMY_LIMIT 15
 
 typedef enum {
     ENEMY_SKELETON = 0,

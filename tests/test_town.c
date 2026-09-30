@@ -32,14 +32,21 @@ void test_crownroad_to_town3(void) {
     int archers = 0;
     int horsemen = 0;
     int all_spawns_open = 1;
+    int spawns_distinct = 1;
     for (int i = 0; i < g.enemy_count; i++) {
         archers += g.enemies[i].type == ENEMY_ROAD_ARCHER;
         horsemen += g.enemies[i].type == ENEMY_HORSEMAN;
         all_spawns_open &= map_is_walkable(&g.map,
             g.enemies[i].x, g.enemies[i].y);
+        for (int j = 0; j < i; j++) {
+            spawns_distinct &= g.enemies[i].x != g.enemies[j].x ||
+                g.enemies[i].y != g.enemies[j].y;
+        }
     }
     ASSERT("dense ambush includes visible archers and mounted enemies",
-        archers == 4 && horsemen == 3 && all_spawns_open);
+        archers == 8 && horsemen == 6 && all_spawns_open);
+    ASSERT("Crownroad holds twice the usual area enemies on separate tiles",
+        g.enemy_count == 2 * AREA_ENEMY_LIMIT && spawns_distinct);
 
     g.enemies[0].active = 0;
     g.player.x = CROWNROAD_X;
@@ -105,6 +112,17 @@ void test_crownroad_to_town3(void) {
         loaded.crownroad_cache.valid &&
         !loaded.crownroad_cache.enemies[0].active);
     remove("saves/savegame_99015.json");
+
+    g.crownroad_cache.enemy_count = AREA_ENEMY_LIMIT;
+    g.crownroad_cache.level_cleared = 1;
+    game_enter_crownroad(&g, 0);
+    int second_wave_active = 1;
+    for (int i = AREA_ENEMY_LIMIT; i < g.enemy_count; i++) {
+        second_wave_active &= g.enemies[i].active;
+    }
+    ASSERT("an older 15-enemy Crownroad gains the second wave on entry",
+        g.enemy_count == MAX_ENEMIES && second_wave_active &&
+        !g.enemies[0].active && !g.level_cleared);
 }
 
 static void step_into_labyrinth_tile(GameState *g, int x, int y) {

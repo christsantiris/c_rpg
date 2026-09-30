@@ -602,7 +602,7 @@ static int find_enemy_tile(GameState *g, int *x, int *y, int room_limit) {
 }
 
 static int spawn_into_open_tile(GameState *g, EnemyType type, int room_limit) {
-    if (g->enemy_count >= MAX_ENEMIES) {
+    if (g->enemy_count >= AREA_ENEMY_LIMIT) {
         return 0;
     }
     int x;
@@ -624,7 +624,7 @@ static Enemy *spawn_quest_enemy_at(GameState *g, EnemyType type, int x, int y) {
         }
     }
     if (slot < 0) {
-        if (g->enemy_count >= MAX_ENEMIES) {
+        if (g->enemy_count >= AREA_ENEMY_LIMIT) {
             return NULL;
         }
         slot = g->enemy_count++;
@@ -749,8 +749,8 @@ void enemies_spawn(GameState *g) {
     if (quest_group_pending(g)) {
         num_enemies -= 3;
     }
-    if (num_enemies > MAX_ENEMIES) {
-        num_enemies = MAX_ENEMIES;
+    if (num_enemies > AREA_ENEMY_LIMIT) {
+        num_enemies = AREA_ENEMY_LIMIT;
     }
 
     EnemyType boss_type;
@@ -2041,13 +2041,23 @@ void game_enter_crownroad(GameState *g, int from_town3) {
         ENEMY_HOBGOBLIN_GUARD, ENEMY_BANDIT,
         ENEMY_ROAD_ARCHER, ENEMY_HORSEMAN, ENEMY_ROAD_ARCHER,
         ENEMY_HORSEMAN, ENEMY_ROAD_ARCHER, ENEMY_HORSEMAN,
+        ENEMY_ROAD_ARCHER,
+        // Second wave, added after the first 15 so older saved roads keep
+        // their enemies and gain these on the next visit.
+        ENEMY_BANDIT, ENEMY_BLIGHTED_WOLF, ENEMY_BANDIT,
+        ENEMY_HOBGOBLIN_GUARD, ENEMY_BANDIT, ENEMY_BLIGHTED_WOLF,
+        ENEMY_HOBGOBLIN_GUARD, ENEMY_BANDIT,
+        ENEMY_HORSEMAN, ENEMY_ROAD_ARCHER, ENEMY_HORSEMAN,
+        ENEMY_ROAD_ARCHER, ENEMY_ROAD_ARCHER, ENEMY_HORSEMAN,
         ENEMY_ROAD_ARCHER
     };
     static const int x[MAX_ENEMIES] = {
-        17, 23, 14, 24, 17, 25, 16, 23, 23, 20, 17, 20, 23, 20, 17
+        17, 23, 14, 24, 17, 25, 16, 23, 23, 20, 17, 20, 23, 20, 17,
+        24, 15, 25, 16, 24, 14, 24, 15, 20, 17, 20, 23, 16, 20, 24
     };
     static const int y[MAX_ENEMIES] = {
-        6, 11, 17, 21, 27, 32, 38, 43, 8, 14, 20, 26, 34, 40, 44
+        6, 11, 17, 21, 27, 32, 38, 43, 8, 14, 20, 26, 34, 40, 44,
+        5, 10, 15, 23, 29, 33, 37, 41, 9, 12, 20, 24, 30, 33, 39
     };
     g->location = LOCATION_CROWNROAD;
     g->level = 1;
@@ -2552,7 +2562,7 @@ static void toggle_temple_alignment(GameState *g) {
             } else if (g->temple_alignment &&
                 tile == TILE_TEMPLE_DORMANT_SENTINEL) {
                 g->map.tiles[y][x] = TILE_TEMPLE_FLOOR;
-                if (g->enemy_count < MAX_ENEMIES) {
+                if (g->enemy_count < AREA_ENEMY_LIMIT) {
                     spawn_enemy(g, &g->enemies[g->enemy_count++],
                         ENEMY_MOONBOUND_SENTINEL, x, y);
                 }
