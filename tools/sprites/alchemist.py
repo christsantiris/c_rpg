@@ -3,7 +3,7 @@
 
 Draws 5 x 4 tiles (120 x 96) for the alchemist lot at TOWN_ALCHEMIST_X/Y in
 Town 1, with the door on tile (31, 10). Run `make sprites` to rewrite
-assets/alchemist.png and assets/alchemist.bmp.
+assets/images/alchemist.bmp.
 """
 from pathlib import Path
 
@@ -13,7 +13,7 @@ from pixelkit import (CRATE, LANTERN, Layer, arched_door, beam, composite, flat_
                       light_spill, lit_window, plaster, poly_mask, roof_tiles, save_sprite,
                       shadow_under, stamp, stone_arch)
 
-ASSETS = Path(__file__).resolve().parents[2] / "assets"
+ASSETS = Path(__file__).resolve().parents[2] / "assets" / "images"
 W, H = 120, 96
 CX = 59
 DOOR_CX = 60
@@ -215,7 +215,7 @@ def build():
 
 
 def main():
-    save_sprite(build(), ASSETS / "alchemist.png", ASSETS / "alchemist.bmp")
+    save_sprite(build(), ASSETS / "alchemist.bmp")
 
 
 if __name__ == "__main__":

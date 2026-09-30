@@ -490,28 +490,21 @@ void test_items(void) {
 
     // --- Regular enemy and boss drops ---
     srand(7);
-    int regular_drops_are_consumables = 1;
-    int regular_drops_include_potions = 0;
-    int regular_drops_include_scrolls = 0;
-    for (int level = 1; level <= 8; level++) {
-        for (int i = 0; i < 500; i++) {
-            Item drop = random_enemy_item(level);
-            regular_drops_are_consumables &=
-                drop.type == ITEM_POTION_HEALTH ||
-                drop.type == ITEM_POTION_MANA ||
-                drop.type == ITEM_SCROLL;
-            regular_drops_include_potions |=
-                drop.type == ITEM_POTION_HEALTH ||
-                drop.type == ITEM_POTION_MANA;
-            regular_drops_include_scrolls |= drop.type == ITEM_SCROLL;
-        }
+    int regular_drops_are_potions = 1;
+    int regular_drops_include_health = 0;
+    int regular_drops_include_mana = 0;
+    for (int i = 0; i < 4000; i++) {
+        Item drop = random_enemy_item();
+        regular_drops_are_potions &=
+            drop.type == ITEM_POTION_HEALTH ||
+            drop.type == ITEM_POTION_MANA;
+        regular_drops_include_health |= drop.type == ITEM_POTION_HEALTH;
+        regular_drops_include_mana |= drop.type == ITEM_POTION_MANA;
     }
-    ASSERT("regular enemies cannot drop weapons or armor",
-        regular_drops_are_consumables);
-    ASSERT("regular enemies retain potion drops",
-        regular_drops_include_potions);
-    ASSERT("regular enemies retain scroll drops",
-        regular_drops_include_scrolls);
+    ASSERT("regular enemies drop only potions, never scrolls or equipment",
+        regular_drops_are_potions);
+    ASSERT("regular enemies drop both health and mana potions",
+        regular_drops_include_health && regular_drops_include_mana);
 
     Item lich_reward = boss_equipment_reward(ENEMY_LICH_KING);
     Item forest_reward = boss_equipment_reward(ENEMY_FOREST_NECROMANCER);

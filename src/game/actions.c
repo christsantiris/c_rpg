@@ -33,48 +33,13 @@ void push_message(GameState *g, const char *msg) {
     }
 }
 
-Item random_enemy_item(int level) {
-    int roll = rand() % 100;
-    if (level <= 3) {
-        if (roll < 40) {
-            return item_make_health_potion();
-        }
-        if (roll < 70) {
-            return item_make_mana_potion();
-        }
-        if (roll < 90) {
-            return item_make_scroll_magic_arrow();
-        }
-        return item_make_scroll_heal();
-    }
-    if (level <= 6) {
-        if (roll < 35) {
-            return item_make_health_potion();
-        }
-        if (roll < 65) {
-            return item_make_mana_potion();
-        }
-        if (roll < 82) {
-            return item_make_scroll_magic_arrow();
-        }
-        if (roll < 93) {
-            return item_make_scroll_heal();
-        }
-        return item_make_scroll_fireball();
-    }
-    if (roll < 30) {
+// Ordinary enemies drop only potions; scrolls come from shops, bosses and
+// quests.
+Item random_enemy_item(void) {
+    if (rand() % 100 < 55) {
         return item_make_health_potion();
     }
-    if (roll < 55) {
-        return item_make_mana_potion();
-    }
-    if (roll < 63) {
-        return item_make_scroll_magic_arrow();
-    }
-    if (roll < 82) {
-        return item_make_scroll_heal();
-    }
-    return item_make_scroll_fireball();
+    return item_make_mana_potion();
 }
 
 static void mark_item_tile(GameState *g, int x, int y) {
@@ -386,7 +351,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
     fi.y = y;
     fi.underlying_tile = g->map.tiles[y][x];
     if (has_item) {
-        fi.item = random_enemy_item(g->level);
+        fi.item = random_enemy_item();
     } else {
         place_gold_drop(g, x, y, gold);
         return;

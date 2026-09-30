@@ -3,7 +3,7 @@
 
 Draws 5 x 4 tiles (120 x 96) for the blacksmith lot at TOWN_BLACKSMITH_X/Y in
 Town 1, with the door on tile (13, 10). Run `make sprites` to rewrite
-assets/blacksmith.png and assets/blacksmith.bmp.
+assets/images/blacksmith.bmp.
 """
 import math
 from pathlib import Path
@@ -14,7 +14,7 @@ from pixelkit import (BARREL, CRATE, LANTERN, Layer, arched_door, beam, composit
                       light_spill, lit_window, plaster, poly_mask, roof_tiles, save_sprite,
                       shadow_under, stamp, stone_arch)
 
-ASSETS = Path(__file__).resolve().parents[2] / "assets"
+ASSETS = Path(__file__).resolve().parents[2] / "assets" / "images"
 W, H = 120, 96
 CX = 70
 DOOR_CX = 63
@@ -228,7 +228,7 @@ def build():
 
 
 def main():
-    save_sprite(build(), ASSETS / "blacksmith.png", ASSETS / "blacksmith.bmp")
+    save_sprite(build(), ASSETS / "blacksmith.bmp")
 
 
 if __name__ == "__main__":

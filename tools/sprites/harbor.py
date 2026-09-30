@@ -2,9 +2,9 @@
 """Town 1 harbor sprite.
 
 Draws 5 x 4 tiles (120 x 96) for the harbor lot at TOWN_HARBOR_X/Y in the
-south-east corner of Town 1. The dock crosses row TOWN_HARBOR_ENTRANCE_Y, where
-the harbor road ends. The harbor screen shows the same art enlarged. Run
-`make sprites` to rewrite assets/harbor.png and assets/harbor.bmp.
+south-east corner of Town 1. The dock crosses row TOWN_HARBOR_ENTRANCE_Y,
+where the harbor road ends. The harbor screen shows the same art enlarged. Run
+`make sprites` to rewrite assets/images/harbor.bmp.
 """
 import random
 from pathlib import Path
@@ -15,7 +15,7 @@ from pixelkit import (BARREL, CRATE, LANTERN, Layer, arched_door, beam, composit
                       line_points, lit_window, plaster, poly_mask, roof_tiles, save_sprite,
                       shadow_under, stamp, stone_arch, wobble)
 
-ASSETS = Path(__file__).resolve().parents[2] / "assets"
+ASSETS = Path(__file__).resolve().parents[2] / "assets" / "images"
 W, H = 120, 96
 CX = 37
 
@@ -234,7 +234,7 @@ def build():
 
 
 def main():
-    save_sprite(build(), ASSETS / "harbor.png", ASSETS / "harbor.bmp")
+    save_sprite(build(), ASSETS / "harbor.bmp")
 
 
 if __name__ == "__main__":

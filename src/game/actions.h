@@ -37,7 +37,7 @@ typedef struct {
     int count;
 } EnemyProjectiles;
 
-Item random_enemy_item(int level);
+Item random_enemy_item(void);
 Item boss_equipment_reward(EnemyType type);
 
 #endif

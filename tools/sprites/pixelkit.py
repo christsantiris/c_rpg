@@ -1,7 +1,7 @@
 """Shared drawing helpers for the procedural building sprites.
 
 Building scripts in this folder draw at native game resolution (24 px per
-tile) and call save_sprite() to write the PNG source and the runtime BMP.
+tile) and call save_sprite() to write the runtime BMP. See README.md.
 """
 import math
 import random
@@ -467,9 +467,8 @@ def gothic_half(y, ya, ys, hw):
 
 
 # ---------------------------------------------------------------- output
-def save_sprite(image, png_path, bmp_path):
-    """Write the PNG source and the runtime BMP (32-bit, top-down, with alpha)."""
-    image.save(png_path)
+def save_sprite(image, bmp_path):
+    """Write the runtime BMP (32-bit, top-down, with alpha)."""
     w, h = image.size
     pixels = image.tobytes("raw", "BGRA")
     info = struct.pack("<IiiHHIIiiII", 124, w, -h, 1, 32, 3, len(pixels), 0, 0, 0, 0)
