@@ -15,6 +15,6 @@ typedef struct {
 } InventoryScreen;
 
 void            inventory_init(InventoryScreen *s);
-InventoryResult inventory_handle_key(InventoryScreen *s, int scancode, int item_count);
+InventoryResult inventory_handle_key(InventoryScreen *s, int scancode, int item_count, int close_key);
 
 #endif

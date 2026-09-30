@@ -210,7 +210,8 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
     return 0;
 }
 
-QuestJournalResult quest_journal_handle_key(QuestJournalScreen *screen, int scancode, int entry_count) {
+// close_key is the character's journal key; the journal's own keys win.
+QuestJournalResult quest_journal_handle_key(QuestJournalScreen *screen, int scancode, int entry_count, int close_key) {
     switch (scancode) {
         case SDL_SCANCODE_UP:
             if (screen->selected > 0) {
@@ -232,9 +233,11 @@ QuestJournalResult quest_journal_handle_key(QuestJournalScreen *screen, int scan
             screen->selected = 0;
             break;
         case SDL_SCANCODE_ESCAPE:
-        case SDL_SCANCODE_Q:
             return QUEST_JOURNAL_CLOSED;
         default:
+            if (scancode == close_key) {
+                return QUEST_JOURNAL_CLOSED;
+            }
             break;
     }
     return QUEST_JOURNAL_NONE;

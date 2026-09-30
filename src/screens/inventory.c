@@ -5,8 +5,8 @@ void inventory_init(InventoryScreen *s) {
     s->selected = 0;
 }
 
-InventoryResult inventory_handle_key(InventoryScreen *s, int scancode,
-                                      int item_count) {
+// close_key is the character's inventory key; the inventory's own keys win.
+InventoryResult inventory_handle_key(InventoryScreen *s, int scancode, int item_count, int close_key) {
     switch (scancode) {
         case SDL_SCANCODE_UP:
             s->selected--;
@@ -28,12 +28,14 @@ InventoryResult inventory_handle_key(InventoryScreen *s, int scancode,
             }
             break;
         case SDL_SCANCODE_ESCAPE:
-        case SDL_SCANCODE_I:
             return INVENTORY_CLOSED;
         case SDL_SCANCODE_D:
             if (item_count > 0) return INVENTORY_DROP;
             break;
         default:
+            if (scancode == close_key) {
+                return INVENTORY_CLOSED;
+            }
             break;
     }
     return INVENTORY_NONE;
