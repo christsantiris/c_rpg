@@ -341,4 +341,6 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 
 - Boss encounter improvements
    Give every boss multiple phases, telegraphed signature attacks, an arena mechanic, and a guaranteed thematic reward.
-- Additional areas and storylines e.g Town 2 additional enemy area
+- Additional areas and storylines e.g build
+- Build out Castle of No Return
+- Recruit a party to join the adventure

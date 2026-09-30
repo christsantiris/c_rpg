@@ -163,14 +163,16 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     int npc_screen_y = viewport_to_screen_y(v, npc_y) * TILE_SIZE;
     int bubble_x = npc_screen_x - bubble_w / 2;
     int bubble_y = npc_screen_y - bubble_h - 22;
+    // An NPC near the top of the map gets the bubble below instead of under it.
+    int below = bubble_y < 8;
+    if (below) {
+        bubble_y = npc_screen_y + TILE_SIZE + 22;
+    }
     if (bubble_x < 8) {
         bubble_x = 8;
     }
     if (bubble_x + bubble_w > viewport_w - 8) {
         bubble_x = viewport_w - bubble_w - 8;
-    }
-    if (bubble_y < 8) {
-        bubble_y = 8;
     }
 
     SDL_Rect border = {bubble_x, bubble_y, bubble_w, bubble_h};
@@ -190,15 +192,15 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     }
     for (int row = 0; row < 15; row++) {
         int half_width = (15 - row) / 2;
-        SDL_Rect tail = {tail_x - half_width, bubble_y + bubble_h + row,
-            half_width * 2 + 1, 1};
+        int tail_y = below ? bubble_y - 1 - row : bubble_y + bubble_h + row;
+        SDL_Rect tail = {tail_x - half_width, tail_y, half_width * 2 + 1, 1};
         SDL_SetRenderDrawColor(r->sdl, 25, 20, 27, 255);
         SDL_RenderFillRect(r->sdl, &tail);
     }
     for (int row = 0; row < 11; row++) {
         int half_width = (11 - row) / 2;
-        SDL_Rect tail = {tail_x - half_width, bubble_y + bubble_h + row,
-            half_width * 2 + 1, 1};
+        int tail_y = below ? bubble_y - 1 - row : bubble_y + bubble_h + row;
+        SDL_Rect tail = {tail_x - half_width, tail_y, half_width * 2 + 1, 1};
         SDL_SetRenderDrawColor(r->sdl, 236, 224, 190, 255);
         SDL_RenderFillRect(r->sdl, &tail);
     }
@@ -1375,6 +1377,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_NPC_ROWAN: draw_rowan(r, sx, sy); break;
                 case TILE_NPC_DRAGON_SEEKER:
                     draw_dragon_seeker(r, sx, sy); break;
+                case TILE_NPC_ROYAL_GUARD:
+                    // Each guard holds the halberd on the side away from the road.
+                    draw_royal_guard(r, sx, sy, x < CROWNROAD_X); break;
                 case TILE_FOREST_WARDEN:
                     draw_forest_warden(r, sx, sy, x, y); break;
                 case TILE_ISLAND_WATER:
