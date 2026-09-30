@@ -77,18 +77,18 @@ void test_quest_journal(void) {
 
     QuestJournalScreen screen;
     quest_journal_init(&screen);
-    quest_journal_handle_key(&screen, SDL_SCANCODE_DOWN, 2);
+    quest_journal_handle_key(&screen, SDL_SCANCODE_DOWN, 2, SDL_SCANCODE_Q);
     ASSERT("journal moves selection", screen.selected == 1);
-    quest_journal_handle_key(&screen, SDL_SCANCODE_TAB, 2);
+    quest_journal_handle_key(&screen, SDL_SCANCODE_TAB, 2, SDL_SCANCODE_Q);
     ASSERT("journal changes tabs and resets selection",
         screen.tab == QUEST_TAB_COMPLETED && screen.selected == 0);
-    quest_journal_handle_key(&screen, SDL_SCANCODE_TAB, 1);
+    quest_journal_handle_key(&screen, SDL_SCANCODE_TAB, 1, SDL_SCANCODE_Q);
     ASSERT("boss progress is reachable after completed quests",
         screen.tab == QUEST_TAB_BOSSES &&
         quest_journal_count(&g, screen.tab) == JOURNAL_BOSS_COUNT);
-    quest_journal_handle_key(&screen, SDL_SCANCODE_RIGHT, JOURNAL_BOSS_COUNT);
+    quest_journal_handle_key(&screen, SDL_SCANCODE_RIGHT, JOURNAL_BOSS_COUNT, SDL_SCANCODE_Q);
     ASSERT("right wraps from bosses to active quests", screen.tab == QUEST_TAB_ACTIVE);
-    quest_journal_handle_key(&screen, SDL_SCANCODE_LEFT, 2);
+    quest_journal_handle_key(&screen, SDL_SCANCODE_LEFT, 2, SDL_SCANCODE_Q);
     ASSERT("left wraps from active quests to bosses", screen.tab == QUEST_TAB_BOSSES);
     const Location regions[JOURNAL_BOSS_COUNT] = {
         LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST,
@@ -115,6 +115,6 @@ void test_quest_journal(void) {
     ASSERT("boss rows are not presented as quests",
         !quest_journal_get_entry(&g, QUEST_TAB_BOSSES, 0, &entry));
     ASSERT("Q closes the quest journal",
-        quest_journal_handle_key(&screen, SDL_SCANCODE_Q, 1) ==
+        quest_journal_handle_key(&screen, SDL_SCANCODE_Q, 1, SDL_SCANCODE_Q) ==
             QUEST_JOURNAL_CLOSED);
 }

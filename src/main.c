@@ -34,6 +34,8 @@
 #include "audio/sfx.h"
 #include "renderer/help_renderer.h"
 #include "screens/help.h"
+#include "screens/controls_screen.h"
+#include "renderer/controls_renderer.h"
 #include "systems/highscore.h"
 #include "renderer/halloffame_renderer.h"
 #include "screens/class_select.h"
@@ -305,9 +307,7 @@ static void handle_harbor_result(HarborResult result, GameState *game, GameScree
     }
 }
 
-static void handle_landing_result(LandingResult result, LandingScreen *landing,
-    GameScreen *screen, GameState *game, Renderer *renderer, Viewport *viewport,
-    NameEntry *name_entry, SlotSelect *slot_select, int *slot_is_save, int *running) {
+static void handle_landing_result(LandingResult result, LandingScreen *landing, GameScreen *screen, GameState *game, Renderer *renderer, Viewport *viewport, NameEntry *name_entry, SlotSelect *slot_select, ControlsScreen *controls, int *slot_is_save, int *running) {
 
     switch (result) {
         case LANDING_NEW_GAME:
@@ -333,6 +333,10 @@ static void handle_landing_result(LandingResult result, LandingScreen *landing,
             slot_select_init(slot_select);
             *slot_is_save = 0;
             *screen = SCREEN_LOAD_SLOT;
+            break;
+        case LANDING_CONTROLS:
+            controls_screen_init(controls);
+            *screen = SCREEN_CONTROLS;
             break;
         case LANDING_QUIT:
             *running = 0;
@@ -469,6 +473,8 @@ int main(int argc, char **argv) {
     ShopScreen shop_screen;
     HarborScreen harbor_screen;
     harbor_init(&harbor_screen);
+    ControlsScreen controls_screen;
+    controls_screen_init(&controls_screen);
     HighScoreTable highscore_table;
     highscore_load(&highscore_table);
 
@@ -575,7 +581,21 @@ int main(int argc, char **argv) {
                             : landing_handle_key(&landing, sc);
                         handle_landing_result(result, &landing, &screen, &game,
                             &renderer, &viewport, &name_entry, &slot_select,
-                            &slot_is_save, &running);
+                            &controls_screen, &slot_is_save, &running);
+                        break;
+                    }
+
+                    // Controls screen
+                    if (screen == SCREEN_CONTROLS) {
+                        // Held keys are ignored so holding Enter cannot bind Enter.
+                        if (event.key.repeat) {
+                            break;
+                        }
+                        ControlsResult result = controls_screen_handle_key(
+                            &controls_screen, sc, game.key_bindings);
+                        if (result == CONTROLS_CLOSED) {
+                            screen = SCREEN_LANDING;
+                        }
                         break;
                     }
 
@@ -625,7 +645,8 @@ int main(int argc, char **argv) {
                         // Inventory screen
                     if (screen == SCREEN_INVENTORY) {
                         InventoryResult result = inventory_handle_key(
-                            &inventory_screen, sc, game.inventory_count);
+                            &inventory_screen, sc, game.inventory_count,
+                            game.key_bindings[CONTROL_INVENTORY]);
                         if (result == INVENTORY_CLOSED) {
                             screen = SCREEN_PLAYING;
                         } else if (result == INVENTORY_USE) {
@@ -671,7 +692,8 @@ int main(int argc, char **argv) {
                         int quest_count = quest_journal_count(&game,
                             quest_journal_screen.tab);
                         QuestJournalResult result = quest_journal_handle_key(
-                            &quest_journal_screen, sc, quest_count);
+                            &quest_journal_screen, sc, quest_count,
+                            game.key_bindings[CONTROL_QUEST_JOURNAL]);
                         if (result == QUEST_JOURNAL_CLOSED) {
                             screen = SCREEN_PLAYING;
                         }
@@ -753,33 +775,42 @@ int main(int argc, char **argv) {
                     // Playing screen
                     if (screen == SCREEN_PLAYING) {
                         Action a = {ACTION_NONE, 0, 0};
-                        switch (sc) {
-                            case SDL_SCANCODE_ESCAPE:
-                                landing.has_active_game = 1;
-                                landing.selected = 1;
-                                screen = SCREEN_LANDING;
-                                break;
-                            case SDL_SCANCODE_UP:
-                            case SDL_SCANCODE_W:
+                        // Escape and the arrow keys are fixed; every other
+                        // command follows this character's key bindings.
+                        int control = controls_action_for_key(game.key_bindings, sc);
+                        if (sc == SDL_SCANCODE_UP) {
+                            control = CONTROL_MOVE_UP;
+                        } else if (sc == SDL_SCANCODE_DOWN) {
+                            control = CONTROL_MOVE_DOWN;
+                        } else if (sc == SDL_SCANCODE_LEFT) {
+                            control = CONTROL_MOVE_LEFT;
+                        } else if (sc == SDL_SCANCODE_RIGHT) {
+                            control = CONTROL_MOVE_RIGHT;
+                        } else if (sc == SDL_SCANCODE_ESCAPE) {
+                            landing.has_active_game = 1;
+                            landing.selected = 1;
+                            screen = SCREEN_LANDING;
+                        }
+                        switch (control) {
+                            case CONTROL_MOVE_UP:
                                 a = (Action){ACTION_MOVE, game.player.x, game.player.y - 1};
                                 break;
-                            case SDL_SCANCODE_DOWN:
-                            case SDL_SCANCODE_S:
+                            case CONTROL_MOVE_DOWN:
                                 a = (Action){ACTION_MOVE, game.player.x, game.player.y + 1};
                                 break;
-                            case SDL_SCANCODE_LEFT:
-                                a = (Action){ACTION_MOVE, game.player.x - 1, game.player.y};
-                                break;
-                            case SDL_SCANCODE_A: {
+                            case CONTROL_MOVE_LEFT: {
+                                // The left arrow only moves; the bound key
+                                // also interacts with the object underfoot.
                                 TileType tile = game.map.tiles[game.player.y]
                                     [game.player.x];
-                                if (game_has_regional_interaction(&game) ||
+                                if (sc != SDL_SCANCODE_LEFT &&
+                                    (game_has_regional_interaction(&game) ||
                                     tile == TILE_COAST_TIDE_CONTROL ||
                                     tile == TILE_COAST_BEACON_UNLIT ||
                                     tile == TILE_BROKEN_BURIAL_SEAL ||
                                     tile == TILE_CRYPT_CACHE ||
                                     tile == TILE_DUNGEON_SWITCH_OFF ||
-                                    tile == TILE_DUNGEON_SWITCH_ON) {
+                                    tile == TILE_DUNGEON_SWITCH_ON)) {
                                     a = (Action){ACTION_INTERACT, 0, 0};
                                 } else {
                                     a = (Action){ACTION_MOVE,
@@ -787,41 +818,40 @@ int main(int argc, char **argv) {
                                 }
                                 break;
                             }
-                            case SDL_SCANCODE_RIGHT:
-                            case SDL_SCANCODE_D:
+                            case CONTROL_MOVE_RIGHT:
                                 a = (Action){ACTION_MOVE, game.player.x + 1, game.player.y};
                                 break;
-                            case SDL_SCANCODE_PERIOD:
+                            case CONTROL_DESCEND:
                                 a = (Action){ACTION_DESCEND, 0, 0};
                                 break;
-                            case SDL_SCANCODE_COMMA:
+                            case CONTROL_ASCEND:
                                 a = (Action){ACTION_ASCEND, 0, 0};
                                 break;
-                            case SDL_SCANCODE_P:
+                            case CONTROL_PICK_UP:
                                 a = (Action){ACTION_PICK_UP, 0, 0};
                                 break;
-                            case SDL_SCANCODE_I:
+                            case CONTROL_INVENTORY:
                                 inventory_init(&inventory_screen);
                                 screen = SCREEN_INVENTORY;
                                 break;
-                            case SDL_SCANCODE_B:
+                            case CONTROL_SPELLBOOK:
                                 spellbook_init(&spellbook_screen);
                                 screen = SCREEN_SPELLBOOK;
                                 break;
-                            case SDL_SCANCODE_Q:
+                            case CONTROL_QUEST_JOURNAL:
                                 quest_journal_init(&quest_journal_screen);
                                 screen = SCREEN_QUEST_JOURNAL;
                                 break;
-                            case SDL_SCANCODE_C:
+                            case CONTROL_CAST_SPELL:
                                 a = (Action){ACTION_CAST_SPELL, 0, 0};
                                 break;
-                            case SDL_SCANCODE_F:
+                            case CONTROL_RANGED_ATTACK:
                                 a = (Action){ACTION_RANGED_ATTACK, 0, 0};
                                 break;
-                            case SDL_SCANCODE_H:
+                            case CONTROL_HELP:
                                 screen = SCREEN_HELP;
                                 break;
-                            case SDL_SCANCODE_T: {
+                            case CONTROL_TALK: {
                                 int px = game.player.x;
                                 int py = game.player.y;
                                 int found = 0;
@@ -1003,7 +1033,13 @@ int main(int argc, char **argv) {
                             renderer.screen_w, renderer.screen_h);
                         handle_landing_result(result, &landing, &screen, &game,
                             &renderer, &viewport, &name_entry, &slot_select,
-                            &slot_is_save, &running);
+                            &controls_screen, &slot_is_save, &running);
+                    }
+
+                    // Controls screen clicks
+                    else if (screen == SCREEN_CONTROLS) {
+                        controls_screen_handle_click(&controls_screen,
+                            event.button.x, event.button.y, renderer.screen_w);
                     }
 
                     // Save / load slot clicks
@@ -1305,7 +1341,9 @@ int main(int argc, char **argv) {
         } else if (screen == SCREEN_GAME_OVER) {
             game_over_draw(&renderer, &game);
         } else if (screen == SCREEN_HELP) {
-            help_draw(&renderer);
+            help_draw(&renderer, &game);
+        } else if (screen == SCREEN_CONTROLS) {
+            controls_draw(&renderer, &game, &controls_screen);
         } else if (screen == SCREEN_HALL_OF_FAME) {
             halloffame_draw(&renderer, &highscore_table);
         }
