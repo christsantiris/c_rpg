@@ -460,16 +460,78 @@ static void draw_critical_burst(Renderer *r, int cx, int cy, Uint32 age) {
     }
 }
 
+// A blue shield pops over the player when a shield absorbs part of a hit.
+static void draw_block_shield(Renderer *r, int cx, int cy, Uint32 age) {
+    static const char *shield[12] = {
+        "oooooooooo",
+        "olllllllbo",
+        "olbbbwbbbo",
+        "olbbbwbbbo",
+        "olwwwwwwbo",
+        "olbbbwbbbo",
+        "olbbbwbbbo",
+        ".olbbwbbo.",
+        ".olbbwbbo.",
+        "..olbwbo..",
+        "...obbo...",
+        "....oo....",
+    };
+    Uint32 half = BLOCK_SHIELD_MS / 2;
+    Uint8 alpha = age < half ? 255 : (Uint8)((BLOCK_SHIELD_MS - age) * 255 / half);
+    // Double size for the first few frames makes the shield pop into view.
+    int scale = age < 50 ? 2 : 1;
+    int left = cx - 5 * scale;
+    int top = cy - 6 * scale;
+    SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_BLEND);
+    for (int row = 0; row < 12; row++) {
+        for (int col = 0; col < 10; col++) {
+            char c = shield[row][col];
+            if (c == 'o') {
+                SDL_SetRenderDrawColor(r->sdl, 18, 26, 52, alpha);
+            } else if (c == 'l') {
+                SDL_SetRenderDrawColor(r->sdl, 170, 205, 255, alpha);
+            } else if (c == 'b') {
+                SDL_SetRenderDrawColor(r->sdl, 70, 120, 200, alpha);
+            } else if (c == 'w') {
+                SDL_SetRenderDrawColor(r->sdl, 230, 240, 255, alpha);
+            } else {
+                continue;
+            }
+            SDL_Rect pixel = {left + col * scale, top + row * scale, scale, scale};
+            SDL_RenderFillRect(r->sdl, &pixel);
+        }
+    }
+}
+
+static int combat_feedback_shown(const CombatFeedbackEvent *e, const GameState *g, const Viewport *v, Uint32 now) {
+    Uint32 start = combat_feedback_start(e);
+    return e->location == g->location && e->level == g->level &&
+        now >= start && now - start < COMBAT_FEEDBACK_MS &&
+        viewport_is_visible(v, e->x, e->y);
+}
+
 static void draw_combat_feedback(Renderer *r, const GameState *g, const Viewport *v) {
     Uint32 now = SDL_GetTicks();
+    // Tile effects go down first so every number stays on top of them.
+    for (int i = 0; i < combat_feedback_count(); i++) {
+        const CombatFeedbackEvent *e = combat_feedback_get(i);
+        if (!combat_feedback_shown(e, g, v, now)) {
+            continue;
+        }
+        Uint32 age = now - combat_feedback_start(e);
+        int cx = viewport_to_screen_x(v, e->x) * TILE_SIZE + TILE_SIZE / 2;
+        int cy = viewport_to_screen_y(v, e->y) * TILE_SIZE + TILE_SIZE / 2;
+        if (e->kind == FEEDBACK_ENEMY_CRITICAL && age < CRITICAL_BURST_MS) {
+            draw_critical_burst(r, cx, cy, age);
+        } else if (e->kind == FEEDBACK_BLOCK && age < BLOCK_SHIELD_MS) {
+            draw_block_shield(r, cx, cy, age);
+        }
+    }
     int lifts[MAX_COMBAT_FEEDBACK];
     combat_feedback_lifts(lifts);
     for (int i = 0; i < combat_feedback_count(); i++) {
         const CombatFeedbackEvent *e = combat_feedback_get(i);
-        Uint32 start = combat_feedback_start(e);
-        if (e->location != g->location || e->level != g->level ||
-            now < start || now - start >= COMBAT_FEEDBACK_MS ||
-            !viewport_is_visible(v, e->x, e->y)) {
+        if (!combat_feedback_shown(e, g, v, now)) {
             continue;
         }
         char text[16];
@@ -488,19 +550,24 @@ static void draw_combat_feedback(Renderer *r, const GameState *g, const Viewport
         } else if (e->kind == FEEDBACK_MANA_LOSS) {
             SDL_snprintf(text, sizeof(text), "-%d MP", e->amount);
             color = (SDL_Color){112, 164, 255, 255};
+        } else if (e->kind == FEEDBACK_BLOCK) {
+            SDL_snprintf(text, sizeof(text), "BLOCK");
+            color = (SDL_Color){150, 190, 255, 255};
+        } else if (e->kind == FEEDBACK_DODGE) {
+            SDL_snprintf(text, sizeof(text), "DODGE");
+            color = (SDL_Color){150, 235, 245, 255};
+        } else if (e->kind == FEEDBACK_MISS) {
+            SDL_snprintf(text, sizeof(text), "MISS");
+            color = (SDL_Color){200, 200, 210, 255};
         } else {
             SDL_snprintf(text, sizeof(text), "-%d", e->amount);
         }
         // Numbers rise for their whole life and fade during the second half.
-        Uint32 age = now - start;
+        Uint32 age = now - combat_feedback_start(e);
         Uint32 remaining = COMBAT_FEEDBACK_MS - age;
         Uint8 alpha = remaining * 2 >= COMBAT_FEEDBACK_MS ? 255 : (Uint8)(remaining * 2 * 255 / COMBAT_FEEDBACK_MS);
         int x = viewport_to_screen_x(v, e->x) * TILE_SIZE + TILE_SIZE / 2;
-        int tile_y = viewport_to_screen_y(v, e->y) * TILE_SIZE;
-        if (e->kind == FEEDBACK_ENEMY_CRITICAL && age < CRITICAL_BURST_MS) {
-            draw_critical_burst(r, x, tile_y + TILE_SIZE / 2, age);
-        }
-        int y = tile_y + 2 - combat_feedback_rise(age) - lifts[i];
+        int y = viewport_to_screen_y(v, e->y) * TILE_SIZE + 2 - combat_feedback_rise(age) - lifts[i];
         if (y < 0) {
             y = 0;
         }

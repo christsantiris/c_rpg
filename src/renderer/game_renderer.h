@@ -12,6 +12,7 @@
 #define ENEMY_PROJECTILE_TOTAL_MS 400
 #define COMBAT_FEEDBACK_MS 700
 #define CRITICAL_BURST_MS 200
+#define BLOCK_SHIELD_MS 300
 
 void game_draw(Renderer *r, GameState *g, Viewport *v);
 void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, const Viewport *v, Uint32 elapsed);

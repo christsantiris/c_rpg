@@ -443,24 +443,46 @@ static int apply_enemy_damage(GameState *g, int damage, CombatFeedbackArrival ar
     if (armor && armor->evasion_chance > 0 &&
         rand() % 100 < armor->evasion_chance) {
         push_message(g, "Dodged!");
+        combat_feedback_add(g, FEEDBACK_DODGE, arrival, g->player.x, g->player.y, 0);
         return 0;
     }
+    int blocked = -1;
     if (g->equipped_off_hand >= 0 &&
         g->equipped_off_hand < g->inventory_count) {
         const Item *shield = &g->inventory[g->equipped_off_hand];
         if (shield->type == ITEM_SHIELD && shield->block_chance > 0 &&
             rand() % 100 < shield->block_chance) {
+            int full_damage = damage;
             damage = (damage * (100 - shield->block_reduction_percent) + 99)
                 / 100;
             if (damage < 1) {
                 damage = 1;
             }
-            push_message(g, "Blocked!");
+            blocked = full_damage - damage;
+            char msg[MAX_MESSAGE_LEN];
+            snprintf(msg, sizeof(msg), "Blocked %d of %d damage!", blocked, full_damage);
+            push_message(g, msg);
         }
     }
     g->player.hp -= damage;
     combat_feedback_add(g, FEEDBACK_PLAYER_DAMAGE, arrival, g->player.x, g->player.y, damage);
+    if (blocked >= 0) {
+        // Added after the damage so the label stacks above the number.
+        combat_feedback_add(g, FEEDBACK_BLOCK, arrival, g->player.x, g->player.y, blocked);
+    }
     return damage;
+}
+
+// A shot that hits nothing shows MISS where it came to rest: the end of its
+// trail, or the tile ahead when a wall stopped it at once.
+static void add_miss_feedback(GameState *g) {
+    int x = g->player.x + g->player.last_dx;
+    int y = g->player.y + g->player.last_dy;
+    if (g->trail_count > 0) {
+        x = g->trail[g->trail_count - 1].x;
+        y = g->trail[g->trail_count - 1].y;
+    }
+    combat_feedback_add(g, FEEDBACK_MISS, FEEDBACK_AFTER_PLAYER_SHOT, x, y, 0);
 }
 
 static void set_trail(GameState *g, int sx, int sy,
@@ -1255,7 +1277,10 @@ void action_resolve_player(GameState *g, Action a) {
                     }
                 }
             }
-            if (!hit) push_message(g, "Spell missed!");
+            if (!hit) {
+                push_message(g, "Spell missed!");
+                add_miss_feedback(g);
+            }
 
         } else if (sp->type == SPELL_TYPE_HEAL) {
             int healed = g->player.max_hp - g->player.hp;
@@ -1292,6 +1317,9 @@ void action_resolve_player(GameState *g, Action a) {
             char msg[MAX_MESSAGE_LEN];
             snprintf(msg, sizeof(msg), "Fireball hit %d enemies!", hits);
             push_message(g, msg);
+            if (hits == 0) {
+                add_miss_feedback(g);
+            }
         }
         return;
     }
@@ -1388,7 +1416,10 @@ void action_resolve_player(GameState *g, Action a) {
             wpn->range, demonic ? 220 : 160, demonic ? 58 : 160,
             demonic ? 67 : 160, demonic ? TRAIL_EFFECT_DEMONIC_SWORD :
             TRAIL_EFFECT_WEAPON_ARROW);
-        if (!hit) push_message(g, "Attack missed!");
+        if (!hit) {
+            push_message(g, "Attack missed!");
+            add_miss_feedback(g);
+        }
         return;
     }
 
