@@ -92,6 +92,16 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor)
     SDL_Color hp_color = game_player_hit_flash(g, SDL_GetTicks())
         ? (SDL_Color){240, 72, 60, 255} : value;
     renderer_draw_text(r, hp_str, x, y, hp_color, r->font_tiny);
+    // Poison shows as a green drop with the turns it has left.
+    if (g->player.poison_turns > 0 && r->font_tiny) {
+        int hp_w = 0;
+        TTF_SizeText(r->font_tiny, hp_str, &hp_w, NULL);
+        int icon_x = x + hp_w + 10;
+        draw_icon_poison(r, icon_x, y - 1);
+        char poison_str[8];
+        SDL_snprintf(poison_str, sizeof(poison_str), "%d", g->player.poison_turns);
+        renderer_draw_text(r, poison_str, icon_x + 10, y, (SDL_Color){96, 224, 112, 255}, r->font_tiny);
+    }
     y += lh + 6;
 
     // MP
