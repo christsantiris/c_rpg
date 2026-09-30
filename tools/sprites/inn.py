@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Town 2 inn sprite.
 
-Draws 7 x 5 tiles (168 x 120) for the inn lot at (5, 16) in Town 2, with the
-double door centred on tile (8, 20). Run `make sprites` to rewrite
-assets/inn.png and assets/inn.bmp.
+Draws 7 x 5 tiles (168 x 120) for the inn lot at TOWN_INN_X/Y in Town 2, with
+the double door on TOWN_INN_DOOR_X/Y. Run `make sprites` to rewrite
+assets/images/inn.bmp.
 """
 from pathlib import Path
 
@@ -12,7 +12,7 @@ from PIL import Image
 from pixelkit import (LANTERN, Layer, beam, composite, flat_wall, lit_window, plaster, poly_mask,
                       roof_tiles, save_sprite, shadow_under, stamp)
 
-ASSETS = Path(__file__).resolve().parents[2] / "assets"
+ASSETS = Path(__file__).resolve().parents[2] / "assets" / "images"
 W, H = 168, 120
 
 OUT = (18, 14, 16)
@@ -288,7 +288,7 @@ def build():
 
 
 def main():
-    save_sprite(build(), ASSETS / "inn.png", ASSETS / "inn.bmp")
+    save_sprite(build(), ASSETS / "inn.bmp")
 
 
 if __name__ == "__main__":

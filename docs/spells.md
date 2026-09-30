@@ -119,9 +119,8 @@ position, and encounter state and appears near the town harbor. Casting Return
 to Town on the Ruined Isle instead sails directly back to town without leaving
 a return portal. A new portal replaces any portal that was already open.
 
-The Alchemist sells Magic Arrow, Fireball, and Heal scrolls. Random enemy item
-drops can contain those same scrolls: early stages emphasize Magic Arrow and
-Heal, while Fireball enters the drop table from stage 4 onward.
+The Alchemist sells Magic Arrow, Fireball, and Heal scrolls. Ordinary enemies
+never drop scrolls.
 
 ## Equipping and Casting
 

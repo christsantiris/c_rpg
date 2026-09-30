@@ -3,7 +3,7 @@
 
 Draws 5 x 4 tiles (120 x 96) for the apothecary lot at TOWN_APOTHECARY_X/Y in
 Town 3, with the door on TOWN_APOTHECARY_DOOR_X/Y. Run `make sprites` to
-rewrite assets/apothecary.png and assets/apothecary.bmp.
+rewrite assets/images/apothecary.bmp.
 """
 from pathlib import Path
 
@@ -13,7 +13,7 @@ from pixelkit import (CRATE, LANTERN, Layer, arched_door, beam, composite, flat_
                       light_spill, lit_window, plaster, poly_mask, roof_tiles, save_sprite,
                       shadow_under, stamp, stone_arch)
 
-ASSETS = Path(__file__).resolve().parents[2] / "assets"
+ASSETS = Path(__file__).resolve().parents[2] / "assets" / "images"
 W, H = 120, 96
 CX = 60
 
@@ -214,7 +214,7 @@ def build():
 
 
 def main():
-    save_sprite(build(), ASSETS / "apothecary.png", ASSETS / "apothecary.bmp")
+    save_sprite(build(), ASSETS / "apothecary.bmp")
 
 
 if __name__ == "__main__":
