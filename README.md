@@ -171,6 +171,15 @@ the southern entrance to return to the island surface.
 
 ## Controls
 
+These are the default keys. To change them, press `Esc` during a game and
+choose **Controls**, select a command, press `Enter` (or click it), then press
+the new key. Picking a key another command uses swaps the two keys. `Esc` and
+the arrow keys cannot be changed, so the menu and movement always work, and the
+move-left key also interacts. Keys inside views such as the inventory stay the
+same. Remapped keys belong to the current character: saving the game keeps
+them, new games start with the defaults, and loading a save restores that
+save's keys. The help screen (`H` by default) always shows the current keys.
+
 | Key | Action |
 | --- | --- |
 | `WASD` or arrow keys | Move; `A` interacts when at a contextual object |
@@ -332,8 +341,6 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 
 - Boss encounter improvements
    Give every boss multiple phases, telegraphed signature attacks, an arena mechanic, and a guaranteed thematic reward.
-- Accessibility and controls
-   Add remappable controls, text scaling, colorblind-safe indicators, adjustable message duration, and clearer interaction prompts.
 - Additional areas and storylines
 - Add a Royal Guard NPC before the Crown Road Gate that warns players of its difficulty and recommends exploring other areas first. 
 - Town 2 additional enemy area

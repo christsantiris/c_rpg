@@ -475,6 +475,13 @@ int save_game(const GameState *g, int slot) {
     }
     cJSON_AddItemToObject(root, "message_kinds", message_kinds);
 
+    // Controls
+    cJSON *key_bindings = cJSON_CreateArray();
+    for (int i = 0; i < CONTROL_COUNT; i++) {
+        cJSON_AddItemToArray(key_bindings, cJSON_CreateNumber(g->key_bindings[i]));
+    }
+    cJSON_AddItemToObject(root, "key_bindings", key_bindings);
+
     // Inventory
     cJSON *inventory = cJSON_CreateArray();
     for (int i = 0; i < g->inventory_count; i++) {
@@ -936,6 +943,22 @@ int load_game(GameState *g, int slot) {
         cJSON *kind = message_kinds ? cJSON_GetArrayItem(message_kinds, i) : NULL;
         g->message_kinds[i] = kind && kind->valueint > MESSAGE_NORMAL &&
             kind->valueint < MESSAGE_KIND_COUNT ? (MessageKind)kind->valueint : MESSAGE_NORMAL;
+    }
+
+    // Controls. Saves made before remapping, or with an unusable set, get the
+    // defaults so another character's keys never carry over.
+    controls_reset(g->key_bindings);
+    cJSON *key_bindings = cJSON_GetObjectItem(root, "key_bindings");
+    if (cJSON_IsArray(key_bindings) &&
+        cJSON_GetArraySize(key_bindings) == CONTROL_COUNT) {
+        int saved[CONTROL_COUNT];
+        for (int i = 0; i < CONTROL_COUNT; i++) {
+            cJSON *key = cJSON_GetArrayItem(key_bindings, i);
+            saved[i] = cJSON_IsNumber(key) ? key->valueint : 0;
+        }
+        if (controls_valid(saved)) {
+            memcpy(g->key_bindings, saved, sizeof(saved));
+        }
     }
 
     // Inventory

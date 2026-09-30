@@ -19,7 +19,7 @@ LandingResult landing_handle_confirm(LandingScreen *s, int scancode) {
 }
 
 int landing_item_count(const LandingScreen *s) {
-    return s->has_active_game ? 7 : 5;
+    return s->has_active_game ? 8 : 5;
 }
 
 LandingResult landing_handle_key(LandingScreen *s, int scancode) {
@@ -51,7 +51,8 @@ LandingResult landing_handle_key(LandingScreen *s, int scancode) {
                     case 3: return LANDING_LOAD_GAME;
                     case 4: return LANDING_TOGGLE_MUSIC;
                     case 5: return LANDING_TOGGLE_SFX;
-                    case 6: return LANDING_QUIT;
+                    case 6: return LANDING_CONTROLS;
+                    case 7: return LANDING_QUIT;
                 }
             }
             break;
@@ -98,7 +99,8 @@ LandingResult landing_handle_click(LandingScreen *s, int mouse_x, int mouse_y, i
                     case 3: return LANDING_LOAD_GAME;
                     case 4: return LANDING_TOGGLE_MUSIC;
                     case 5: return LANDING_TOGGLE_SFX;
-                    case 6: return LANDING_QUIT;
+                    case 6: return LANDING_CONTROLS;
+                    case 7: return LANDING_QUIT;
                 }
             }
         }

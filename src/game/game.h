@@ -7,6 +7,7 @@
 #include "actions.h"
 #include <stdio.h>
 #include "spell.h"
+#include "controls.h"
 #include <SDL2/SDL.h>
 
 #define MAX_MESSAGES 3
@@ -182,6 +183,8 @@ typedef struct {
     char dialogue_text[MAX_DIALOGUE_LEN];
     int dialogue_x;
     int dialogue_y;
+    // Scancode for each ControlAction; belongs to this character's session.
+    int key_bindings[CONTROL_COUNT];
 } GameState;
 
 void game_init(GameState *g);

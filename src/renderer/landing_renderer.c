@@ -42,8 +42,9 @@ void landing_draw(Renderer *r, const LandingScreen *s) {
     const char *labels_base[5] = {
         "NEW GAME", "LOAD GAME", music_label, sfx_label, "QUIT"
     };
-    const char *labels_active[7] = {
-        "NEW GAME", "CONTINUE", "SAVE GAME", "LOAD GAME", music_label, sfx_label, "QUIT"
+    const char *labels_active[8] = {
+        "NEW GAME", "CONTINUE", "SAVE GAME", "LOAD GAME", music_label, sfx_label,
+        "CONTROLS", "QUIT"
     };
 
     // Menu items
