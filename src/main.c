@@ -17,6 +17,7 @@
 #include "screens/inventory.h"
 #include "renderer/inventory_renderer.h"
 #include "game/actions.h"
+#include "game/combat_feedback.h"
 #include "screens/spellbook.h"
 #include "renderer/spellbook_renderer.h"
 #include "screens/quest_journal.h"
@@ -253,6 +254,8 @@ static void debug_apply_loadout(GameState *game, const DebugConfig *config) {
 #endif
 
 static void enter_playing(Renderer *renderer, Viewport *viewport, GameState *game) {
+    // A new or loaded game starts without numbers from the previous one.
+    combat_feedback_clear();
     int vp_tiles_x = (renderer->screen_w - INFO_PANEL_W) / TILE_SIZE;
     viewport_init(viewport, vp_tiles_x, renderer->tiles_y, MAP_W, MAP_H);
     viewport_center_on(viewport, game->player.x, game->player.y);
@@ -478,7 +481,8 @@ int main(int argc, char **argv) {
 
     while (running) {
         int animating = player_projectile_animating || entry_gate.active || enemy_shots.count > 0 ||
-            (screen == SCREEN_PLAYING && game.trail_frames > 0);
+            (screen == SCREEN_PLAYING && game.trail_frames > 0) ||
+            (screen == SCREEN_PLAYING && game_combat_feedback_active(SDL_GetTicks()));
         int ambient_animating = screen == SCREEN_PLAYING &&
             (game.location == LOCATION_DUNGEON ||
             game.location == LOCATION_FOREST ||

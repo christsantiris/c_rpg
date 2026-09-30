@@ -10,8 +10,10 @@
 #define SPELL_FIREBALL_MS 460
 #define ENEMY_PROJECTILE_TRAVEL_MS 280
 #define ENEMY_PROJECTILE_TOTAL_MS 400
+#define COMBAT_FEEDBACK_MS 700
 
 void game_draw(Renderer *r, GameState *g, Viewport *v);
 void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, const Viewport *v, Uint32 elapsed);
+int game_combat_feedback_active(Uint32 now);
 
 #endif

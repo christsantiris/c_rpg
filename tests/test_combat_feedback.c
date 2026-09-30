@@ -1,0 +1,172 @@
+#include "test_utils.h"
+#include "../src/game/game.h"
+#include "../src/game/combat_feedback.h"
+
+static void setup_fight(GameState *g, PlayerClass player_class) {
+    g->player.player_class = player_class;
+    game_init(g);
+    g->location = LOCATION_FOREST;
+    g->level = 3;
+    g->map.room_count = 1;
+    g->map.rooms[0] = (Room){10, 10, 20, 20};
+    for (int y = 10; y < 30; y++) {
+        for (int x = 10; x < 30; x++) {
+            g->map.tiles[y][x] = TILE_FOREST_FLOOR;
+        }
+    }
+    g->player.x = 20;
+    g->player.y = 20;
+    g->player.hp = 100;
+    g->player.max_hp = 100;
+    g->player.mp = 100;
+    g->player.defense = 0;
+    g->player.last_dx = 1;
+    g->player.last_dy = 0;
+    g->equipped_armor = -1;
+    g->equipped_off_hand = -1;
+    g->enemy_count = 1;
+    g->enemies[0] = (Enemy){
+        .type = ENEMY_SKELETON, .x = 21, .y = 20, .active = 1,
+        .hp = 100, .max_hp = 100, .attack = 10, .move_timer = 1
+    };
+    combat_feedback_clear();
+}
+
+static void equip_spell(GameState *g, Spell spell) {
+    g->player.known_spell_count = 1;
+    g->player.known_spells[0] = spell;
+    g->player.equipped_spell = 0;
+}
+
+static const CombatFeedbackEvent *only_event(void) {
+    return combat_feedback_count() == 1 ? combat_feedback_get(0) : NULL;
+}
+
+void test_combat_feedback(void) {
+    printf("Combat feedback tests:\n");
+    static GameState g;
+    Action cast = {ACTION_CAST_SPELL, 0, 0};
+
+    setup_fight(&g, CLASS_WARRIOR);
+    action_resolve_player(&g, (Action){ACTION_MOVE, 21, 20});
+    const CombatFeedbackEvent *e = only_event();
+    ASSERT("melee hit shows the damage dealt on the enemy's tile",
+        e && e->kind == FEEDBACK_ENEMY_DAMAGE && e->arrival == FEEDBACK_NOW &&
+        e->x == 21 && e->y == 20 && e->amount == 100 - g.enemies[0].hp);
+    ASSERT("feedback records the area and stage it happened in",
+        e && e->location == LOCATION_FOREST && e->level == 3);
+
+    combat_feedback_clear();
+    action_resolve_enemies(&g);
+    e = only_event();
+    ASSERT("enemy melee shows the damage taken on the player's tile",
+        e && e->kind == FEEDBACK_PLAYER_DAMAGE && e->arrival == FEEDBACK_NOW &&
+        e->x == 20 && e->y == 20 && e->amount == 10 && g.player.hp == 90);
+
+    setup_fight(&g, CLASS_WARRIOR);
+    g.enemies[0].type = ENEMY_GOBLIN_ARCHER;
+    g.enemies[0].x = 14;
+    action_resolve_enemies(&g);
+    e = only_event();
+    ASSERT("an enemy's ranged hit appears when its projectile lands",
+        e && e->kind == FEEDBACK_PLAYER_DAMAGE &&
+        e->arrival == FEEDBACK_AFTER_ENEMY_SHOT && e->amount == 10 &&
+        g.player.hp == 90);
+
+    setup_fight(&g, CLASS_MAGE);
+    g.enemies[0].type = ENEMY_WRAITH;
+    g.player.mp = 10;
+    action_resolve_enemies(&g);
+    ASSERT("Wraith hits show the HP lost and the MP drained",
+        combat_feedback_count() == 2 &&
+        combat_feedback_get(0)->kind == FEEDBACK_PLAYER_DAMAGE &&
+        combat_feedback_get(0)->amount == 100 - g.player.hp &&
+        combat_feedback_get(1)->kind == FEEDBACK_MANA_LOSS &&
+        combat_feedback_get(1)->amount == 3 && g.player.mp == 7);
+
+    setup_fight(&g, CLASS_ROGUE);
+    g.inventory[0] = item_make_bow();
+    g.inventory_count = 1;
+    g.equipped_main_hand = 0;
+    g.enemies[0].x = 23;
+    action_resolve_player(&g, (Action){ACTION_RANGED_ATTACK, 0, 0});
+    e = only_event();
+    ASSERT("a bow hit appears when the arrow lands",
+        e && e->kind == FEEDBACK_ENEMY_DAMAGE &&
+        e->arrival == FEEDBACK_AFTER_PLAYER_SHOT && e->x == 23 &&
+        e->y == 20 && e->amount == 100 - g.enemies[0].hp && e->amount > 0);
+
+    setup_fight(&g, CLASS_MAGE);
+    equip_spell(&g, spell_make_magic_arrow());
+    g.enemies[0].x = 23;
+    action_resolve_player(&g, cast);
+    e = only_event();
+    ASSERT("a Magic Arrow hit appears when the spell lands",
+        e && e->kind == FEEDBACK_ENEMY_DAMAGE &&
+        e->arrival == FEEDBACK_AFTER_PLAYER_SHOT && e->x == 23 &&
+        e->amount == 100 - g.enemies[0].hp && e->amount > 0);
+
+    setup_fight(&g, CLASS_MAGE);
+    equip_spell(&g, spell_make_fireball());
+    g.enemy_count = 3;
+    g.enemies[0].x = 24;
+    g.enemies[1] = g.enemies[0];
+    g.enemies[1].x = 25;
+    g.enemies[2] = g.enemies[0];
+    g.enemies[2].x = 28;
+    action_resolve_player(&g, cast);
+    ASSERT("Fireball shows one number for each enemy in the blast",
+        combat_feedback_count() == 2 &&
+        combat_feedback_get(0)->x == 24 &&
+        combat_feedback_get(0)->amount == 100 - g.enemies[0].hp &&
+        combat_feedback_get(1)->x == 25 &&
+        combat_feedback_get(1)->amount == 100 - g.enemies[1].hp &&
+        combat_feedback_get(1)->arrival == FEEDBACK_AFTER_PLAYER_SHOT &&
+        g.enemies[2].hp == 100);
+
+    setup_fight(&g, CLASS_MAGE);
+    equip_spell(&g, spell_make_heal());
+    g.player.hp = 40;
+    action_resolve_player(&g, cast);
+    e = only_event();
+    ASSERT("Heal shows the HP restored on the player's tile",
+        e && e->kind == FEEDBACK_HEAL && e->arrival == FEEDBACK_NOW &&
+        e->x == 20 && e->y == 20 && e->amount == 60 && g.player.hp == 100);
+
+    setup_fight(&g, CLASS_WARRIOR);
+    g.enemy_count = 0;
+    g.player.poison_turns = 2;
+    action_resolve_player(&g, (Action){ACTION_MOVE, 20, 19});
+    e = only_event();
+    ASSERT("poison damage shows on the tile the player moved to",
+        e && e->kind == FEEDBACK_PLAYER_DAMAGE && e->x == 20 &&
+        e->y == 19 && e->amount == 3 && g.player.hp == 97);
+
+    setup_fight(&g, CLASS_WARRIOR);
+    g.enemy_count = 2;
+    g.enemies[0] = (Enemy){
+        .type = ENEMY_GOBLIN_SHAMAN, .x = 20, .y = 16, .active = 1,
+        .hp = 10, .max_hp = 10, .attack = 1, .move_timer = 2
+    };
+    g.enemies[1] = (Enemy){
+        .type = ENEMY_SKELETON, .x = 22, .y = 16, .active = 1,
+        .hp = 50, .max_hp = 100, .attack = 1
+    };
+    action_resolve_enemies(&g);
+    e = only_event();
+    ASSERT("Goblin Shaman heals show the HP restored on the healed ally",
+        e && e->kind == FEEDBACK_HEAL && e->x == 22 && e->y == 16 &&
+        e->amount == 6 && g.enemies[1].hp == 56);
+
+    combat_feedback_clear();
+    for (int i = 1; i <= MAX_COMBAT_FEEDBACK + 1; i++) {
+        combat_feedback_add(&g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_NOW, 0, 0, i);
+    }
+    ASSERT("a full feedback list keeps the newest results",
+        combat_feedback_count() == MAX_COMBAT_FEEDBACK &&
+        combat_feedback_get(0)->amount == 2 &&
+        combat_feedback_get(MAX_COMBAT_FEEDBACK - 1)->amount ==
+            MAX_COMBAT_FEEDBACK + 1);
+    combat_feedback_clear();
+    ASSERT("clearing removes every result", combat_feedback_count() == 0);
+}
