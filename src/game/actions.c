@@ -1199,7 +1199,11 @@ void action_resolve_player(GameState *g, Action a) {
         // Set trail based on spell type
         if (sp->type == SPELL_TYPE_DAMAGE_RANGED) {
             #ifndef TEST_BUILD
-            if (sp->id == SPELL_MAGIC_ARROW) sfx_play_magic_arrow();
+            if (sp->id == SPELL_MAGIC_ARROW) {
+                sfx_play_magic_arrow();
+            } else if (sp->id == SPELL_FROST_BOLT) {
+                sfx_play_frost_bolt();
+            }
             #endif
             int ex = g->player.x + g->player.last_dx * sp->range;
             int ey = g->player.y + g->player.last_dy * sp->range;
@@ -1366,7 +1370,9 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
         #ifndef TEST_BUILD
-        if (wpn->weapon_family == WEAPON_FAMILY_SWORD) {
+        if (wpn->visual_id == ITEM_VISUAL_DEMONIC_SWORD) {
+            sfx_play_demonic_sword();
+        } else if (wpn->weapon_family == WEAPON_FAMILY_SWORD) {
             sfx_play_attack();
         } else {
             sfx_play_arrow();
@@ -1496,11 +1502,27 @@ void action_resolve_player(GameState *g, Action a) {
                     : 0;
                 #ifndef TEST_BUILD
                 int melee_visual = melee_weapon ? melee_weapon->visual_id : ITEM_VISUAL_NONE;
-                if (melee_visual == ITEM_VISUAL_GREATSWORD) {
+                if (!melee_weapon) {
+                    sfx_play_punch();
+                } else if (melee_visual == ITEM_VISUAL_DEMONIC_SWORD) {
+                    sfx_play_demonic_sword();
+                } else if (melee_visual == ITEM_VISUAL_MAGIC_LONG_SWORD ||
+                    melee_visual == ITEM_VISUAL_MAGIC_GREATSWORD) {
+                    sfx_play_magic_sword();
+                } else if (melee_visual == ITEM_VISUAL_GREATSWORD) {
                     sfx_play_greatsword();
                 } else if (melee_visual == ITEM_VISUAL_SHORT_SWORD ||
                     melee_visual == ITEM_VISUAL_LONG_SWORD) {
                     sfx_play_large_blade();
+                } else if (melee_visual == ITEM_VISUAL_MAGIC_DAGGER) {
+                    sfx_play_magic_dagger();
+                } else if (melee_visual == ITEM_VISUAL_MAGIC_BATTLE_AXE) {
+                    sfx_play_magic_axe();
+                } else if (melee_visual == ITEM_VISUAL_BATTLE_AXE) {
+                    sfx_play_axe();
+                } else if (melee_weapon->weapon_family == WEAPON_FAMILY_STAFF ||
+                    melee_weapon->weapon_family == WEAPON_FAMILY_BOW) {
+                    sfx_play_staff();
                 } else {
                     sfx_play_attack();
                 }
