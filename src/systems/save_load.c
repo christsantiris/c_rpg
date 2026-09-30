@@ -469,6 +469,11 @@ int save_game(const GameState *g, int slot) {
     for (int i = 0; i < g->message_count; i++)
         cJSON_AddItemToArray(messages, cJSON_CreateString(g->messages[i]));
     cJSON_AddItemToObject(root, "messages", messages);
+    cJSON *message_kinds = cJSON_CreateArray();
+    for (int i = 0; i < g->message_count; i++) {
+        cJSON_AddItemToArray(message_kinds, cJSON_CreateNumber(g->message_kinds[i]));
+    }
+    cJSON_AddItemToObject(root, "message_kinds", message_kinds);
 
     // Inventory
     cJSON *inventory = cJSON_CreateArray();
@@ -921,11 +926,16 @@ int load_game(GameState *g, int slot) {
 
     // Messages
     cJSON *messages = cJSON_GetObjectItem(root, "messages");
+    // Saves made before message colours have no kinds and load as plain text.
+    cJSON *message_kinds = cJSON_GetObjectItem(root, "message_kinds");
     for (int i = 0; i < g->message_count && i < MAX_MESSAGES; i++) {
         strncpy(g->messages[i],
             cJSON_GetArrayItem(messages, i)->valuestring,
             MAX_MESSAGE_LEN - 1);
         g->messages[i][MAX_MESSAGE_LEN - 1] = '\0';
+        cJSON *kind = message_kinds ? cJSON_GetArrayItem(message_kinds, i) : NULL;
+        g->message_kinds[i] = kind && kind->valueint > MESSAGE_NORMAL &&
+            kind->valueint < MESSAGE_KIND_COUNT ? (MessageKind)kind->valueint : MESSAGE_NORMAL;
     }
 
     // Inventory

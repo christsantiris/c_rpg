@@ -19,6 +19,21 @@ static int message_line_length(const char *message, int max_chars) {
     return max_chars;
 }
 
+static SDL_Color message_color(MessageKind kind) {
+    switch (kind) {
+        case MESSAGE_DAMAGE_TAKEN:
+            return (SDL_Color){235, 96, 84, 255};
+        case MESSAGE_CRITICAL:
+            return (SDL_Color){255, 206, 64, 255};
+        case MESSAGE_DEFENDED:
+            return (SDL_Color){150, 190, 255, 255};
+        case MESSAGE_POISON:
+            return (SDL_Color){110, 220, 120, 255};
+        default:
+            return (SDL_Color){180, 160, 120, 255};
+    }
+}
+
 static int message_line_count(const char *message, int max_chars) {
     int lines = 0;
     while (*message) {
@@ -47,7 +62,6 @@ void message_bar_draw(Renderer *r, const GameState *g) {
         return;
     }
 
-    SDL_Color color = {180, 160, 120, 255};
     int glyph_w = 8;
     int glyph_h;
     if (TTF_SizeText(r->font_tiny, "W", &glyph_w, &glyph_h) != 0 ||
@@ -72,6 +86,7 @@ void message_bar_draw(Renderer *r, const GameState *g) {
     int y = r->screen_h - 6 - used_lines * 10;
     for (int i = first; i < g->message_count; i++) {
         const char *message = g->messages[i];
+        SDL_Color color = message_color(g->message_kinds[i]);
         while (*message) {
             int length = message_line_length(message, max_chars);
             char line[MAX_MESSAGE_LEN];
