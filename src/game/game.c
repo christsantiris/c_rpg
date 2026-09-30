@@ -944,6 +944,7 @@ void game_init(GameState *g) {
     }
     g->message_count = 0;
     g->level_cleared = 0;
+    controls_reset(g->key_bindings);
     g->max_level_reached = 1;
     g->max_forest_level_reached = 1;
     g->max_mountain_level_reached = 1;

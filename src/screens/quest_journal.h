@@ -47,6 +47,6 @@ void quest_journal_init(QuestJournalScreen *screen);
 int quest_journal_count(const GameState *g, QuestJournalTab tab);
 int quest_journal_get_boss(const GameState *g, int index, BossJournalEntry *entry);
 int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, QuestJournalEntry *entry);
-QuestJournalResult quest_journal_handle_key(QuestJournalScreen *screen, int scancode, int entry_count);
+QuestJournalResult quest_journal_handle_key(QuestJournalScreen *screen, int scancode, int entry_count, int close_key);
 
 #endif

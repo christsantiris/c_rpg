@@ -228,6 +228,36 @@ static void test_message_kinds_round_trip(void) {
     remove_test_save(ROUND_TRIP_SLOT);
 }
 
+static void test_key_bindings_round_trip(void) {
+    static GameState original;
+    static GameState loaded;
+    memset(&original, 0, sizeof(original));
+    memset(&loaded, 0, sizeof(loaded));
+    game_init(&original);
+    controls_assign(original.key_bindings, CONTROL_INVENTORY, SDL_SCANCODE_K);
+    controls_assign(original.key_bindings, CONTROL_TALK, SDL_SCANCODE_W);
+    int loaded_ok = save_game(&original, ROUND_TRIP_SLOT) &&
+        load_game(&loaded, ROUND_TRIP_SLOT);
+    ASSERT("remapped keys survive save/load",
+        loaded_ok && memcmp(loaded.key_bindings, original.key_bindings,
+            sizeof(original.key_bindings)) == 0);
+
+    int defaults[CONTROL_COUNT];
+    controls_reset(defaults);
+    controls_assign(loaded.key_bindings, CONTROL_HELP, SDL_SCANCODE_J);
+    int legacy_ok = remove_save_field(ROUND_TRIP_SLOT, "key_bindings") &&
+        load_game(&loaded, ROUND_TRIP_SLOT);
+    ASSERT("a save without controls loads the defaults, not the current keys",
+        legacy_ok && memcmp(loaded.key_bindings, defaults, sizeof(defaults)) == 0);
+
+    original.key_bindings[CONTROL_TALK] = original.key_bindings[CONTROL_PICK_UP];
+    int broken_ok = save_game(&original, ROUND_TRIP_SLOT) &&
+        load_game(&loaded, ROUND_TRIP_SLOT);
+    ASSERT("a save with duplicate keys loads the defaults",
+        broken_ok && memcmp(loaded.key_bindings, defaults, sizeof(defaults)) == 0);
+    remove_test_save(ROUND_TRIP_SLOT);
+}
+
 static void test_current_weapon_round_trip(void) {
     static GameState original;
     static GameState loaded;
@@ -1192,6 +1222,7 @@ void test_save_load(void) {
     test_legacy_apothecary();
     test_legacy_fireball_scroll();
     test_message_kinds_round_trip();
+    test_key_bindings_round_trip();
     test_forest_enemy_repair();
     test_blocked_dungeon_gate_repair();
 }
