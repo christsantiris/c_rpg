@@ -92,9 +92,42 @@ void test_combat_feedback(void) {
     action_resolve_player(&g, (Action){ACTION_RANGED_ATTACK, 0, 0});
     e = only_event();
     ASSERT("a bow hit appears when the arrow lands",
-        e && e->kind == FEEDBACK_ENEMY_DAMAGE &&
+        e && (e->kind == FEEDBACK_ENEMY_DAMAGE ||
+        e->kind == FEEDBACK_ENEMY_CRITICAL) &&
         e->arrival == FEEDBACK_AFTER_PLAYER_SHOT && e->x == 23 &&
         e->y == 20 && e->amount == 100 - g.enemies[0].hp && e->amount > 0);
+
+    // Bows crit 15% of the time for half again the damage: 10 becomes 15.
+    g.player.attack = 10;
+    int crits = 0;
+    int normal_hits = 0;
+    int kinds_match = 1;
+    for (int i = 0; i < 200; i++) {
+        g.enemies[0].hp = 1000;
+        combat_feedback_clear();
+        action_resolve_player(&g, (Action){ACTION_RANGED_ATTACK, 0, 0});
+        e = only_event();
+        int lost = 1000 - g.enemies[0].hp;
+        kinds_match &= e && e->amount == lost &&
+            (lost == 15 ? e->kind == FEEDBACK_ENEMY_CRITICAL
+            : lost == 10 && e->kind == FEEDBACK_ENEMY_DAMAGE);
+        crits += lost == 15;
+        normal_hits += lost == 10;
+    }
+    ASSERT("bow crits are marked critical and ordinary arrows are not",
+        kinds_match && crits > 0 && normal_hits > 0);
+
+    setup_fight(&g, CLASS_WARRIOR);
+    g.inventory[0] = item_make_dagger();
+    g.inventory[0].critical_chance_bonus = 100;
+    g.inventory_count = 1;
+    g.equipped_main_hand = 0;
+    g.player.attack = 10;
+    action_resolve_player(&g, (Action){ACTION_MOVE, 21, 20});
+    e = only_event();
+    ASSERT("a melee crit is marked critical with its boosted damage",
+        e && e->kind == FEEDBACK_ENEMY_CRITICAL && e->arrival == FEEDBACK_NOW &&
+        e->x == 21 && e->amount == 15 && g.enemies[0].hp == 85);
 
     setup_fight(&g, CLASS_MAGE);
     equip_spell(&g, spell_make_magic_arrow());

@@ -1358,7 +1358,7 @@ void action_resolve_player(GameState *g, Action a) {
                     rand() % 100 < 15;
                 if (critical) dmg = dmg * 3 / 2;
                 e->hp -= dmg;
-                combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_AFTER_PLAYER_SHOT, e->x, e->y, dmg);
+                combat_feedback_add(g, critical ? FEEDBACK_ENEMY_CRITICAL : FEEDBACK_ENEMY_DAMAGE, FEEDBACK_AFTER_PLAYER_SHOT, e->x, e->y, dmg);
                 char msg[MAX_MESSAGE_LEN];
                 if (e->hp <= 0) {
                     e->active = 0;
@@ -1450,7 +1450,7 @@ void action_resolve_player(GameState *g, Action a) {
                     dmg = (dmg * 3 + 1) / 2;
                 }
                 e->hp -= dmg;
-                combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_NOW, e->x, e->y, dmg);
+                combat_feedback_add(g, critical ? FEEDBACK_ENEMY_CRITICAL : FEEDBACK_ENEMY_DAMAGE, FEEDBACK_NOW, e->x, e->y, dmg);
                 int cleave_hits = melee_weapon
                     ? apply_melee_cleave(g, e, melee_attack,
                         melee_weapon->cleave_percent)

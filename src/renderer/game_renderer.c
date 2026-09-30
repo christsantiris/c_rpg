@@ -352,11 +352,11 @@ int game_combat_feedback_active(Uint32 now) {
 }
 
 // A dark outline keeps the text readable over any floor.
-static void draw_feedback_text(Renderer *r, const char *text, int cx, int y, SDL_Color color, Uint8 alpha) {
-    if (!r->font_tiny) {
+static void draw_feedback_text(Renderer *r, TTF_Font *font, const char *text, int cx, int y, SDL_Color color, Uint8 alpha) {
+    if (!font) {
         return;
     }
-    SDL_Surface *surface = TTF_RenderText_Solid(r->font_tiny, text, (SDL_Color){255, 255, 255, 255});
+    SDL_Surface *surface = TTF_RenderText_Solid(font, text, (SDL_Color){255, 255, 255, 255});
     if (!surface) {
         return;
     }
@@ -409,15 +409,54 @@ static void combat_feedback_lifts(int lifts[MAX_COMBAT_FEEDBACK]) {
                     other->x != e->x || other->y != e->y || start - other_start >= COMBAT_FEEDBACK_MS) {
                     continue;
                 }
+                // Critical numbers use the larger font and need a taller line.
+                int line = e->kind == FEEDBACK_ENEMY_CRITICAL ||
+                    other->kind == FEEDBACK_ENEMY_CRITICAL ? 13 : 10;
                 int height = lifts[j] + combat_feedback_rise(start - other_start);
-                if (abs(height - lift) < 10) {
-                    lift = height + 10;
+                if (abs(height - lift) < line) {
+                    lift = height + line;
                     moved = 1;
                 }
             }
         }
         lifts[next] = lift;
         placed[next] = 1;
+    }
+}
+
+// Gold rays burst outward from the center of a critically hit enemy.
+static void draw_critical_burst(Renderer *r, int cx, int cy, Uint32 age) {
+    static const int rays[8][2] = {{0, -1}, {1, -1}, {1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}};
+    Uint32 half = CRITICAL_BURST_MS / 2;
+    int inner = 4 + (int)(age * 6 / CRITICAL_BURST_MS);
+    // Full strength for the first half, then fade out.
+    Uint8 alpha = age < half ? 255 : (Uint8)((CRITICAL_BURST_MS - age) * 255 / half);
+    SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_BLEND);
+    for (int i = 0; i < 8; i++) {
+        int dx = rays[i][0];
+        int dy = rays[i][1];
+        // Diagonal rays start closer and are shorter so the burst reads as round.
+        int diagonal = dx != 0 && dy != 0;
+        int from = diagonal ? inner * 7 / 10 : inner;
+        int to = from + (diagonal ? 3 : 5);
+        int x0 = cx + dx * from;
+        int y0 = cy + dy * from;
+        int x1 = cx + dx * to;
+        int y1 = cy + dy * to;
+        // Rays are two pixels wide with a dark edge on one side.
+        int side_x = dy != 0 ? 1 : 0;
+        int side_y = dy == 0 ? 1 : 0;
+        SDL_SetRenderDrawColor(r->sdl, 120, 72, 12, alpha);
+        SDL_RenderDrawLine(r->sdl, x0 + side_x * 2, y0 + side_y * 2, x1 + side_x * 2, y1 + side_y * 2);
+        SDL_SetRenderDrawColor(r->sdl, 255, 214, 72, alpha);
+        SDL_RenderDrawLine(r->sdl, x0, y0, x1, y1);
+        SDL_RenderDrawLine(r->sdl, x0 + side_x, y0 + side_y, x1 + side_x, y1 + side_y);
+    }
+    if (age < half) {
+        int size = age < half / 2 ? 6 : 4;
+        SDL_Rect flash = {cx - size / 2, cy - size / 2, size, size};
+        SDL_SetRenderDrawColor(r->sdl, 255, 246, 200, alpha);
+        SDL_RenderFillRect(r->sdl, &flash);
     }
 }
 
@@ -435,7 +474,12 @@ static void draw_combat_feedback(Renderer *r, const GameState *g, const Viewport
         }
         char text[16];
         SDL_Color color = {245, 245, 235, 255};
-        if (e->kind == FEEDBACK_PLAYER_DAMAGE) {
+        TTF_Font *font = r->font_tiny;
+        if (e->kind == FEEDBACK_ENEMY_CRITICAL) {
+            SDL_snprintf(text, sizeof(text), "-%d!", e->amount);
+            color = (SDL_Color){255, 206, 64, 255};
+            font = r->font_small;
+        } else if (e->kind == FEEDBACK_PLAYER_DAMAGE) {
             SDL_snprintf(text, sizeof(text), "-%d", e->amount);
             color = (SDL_Color){240, 72, 60, 255};
         } else if (e->kind == FEEDBACK_HEAL) {
@@ -452,11 +496,15 @@ static void draw_combat_feedback(Renderer *r, const GameState *g, const Viewport
         Uint32 remaining = COMBAT_FEEDBACK_MS - age;
         Uint8 alpha = remaining * 2 >= COMBAT_FEEDBACK_MS ? 255 : (Uint8)(remaining * 2 * 255 / COMBAT_FEEDBACK_MS);
         int x = viewport_to_screen_x(v, e->x) * TILE_SIZE + TILE_SIZE / 2;
-        int y = viewport_to_screen_y(v, e->y) * TILE_SIZE + 2 - combat_feedback_rise(age) - lifts[i];
+        int tile_y = viewport_to_screen_y(v, e->y) * TILE_SIZE;
+        if (e->kind == FEEDBACK_ENEMY_CRITICAL && age < CRITICAL_BURST_MS) {
+            draw_critical_burst(r, x, tile_y + TILE_SIZE / 2, age);
+        }
+        int y = tile_y + 2 - combat_feedback_rise(age) - lifts[i];
         if (y < 0) {
             y = 0;
         }
-        draw_feedback_text(r, text, x, y, color, alpha);
+        draw_feedback_text(r, font, text, x, y, color, alpha);
     }
 }
 
