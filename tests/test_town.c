@@ -4,6 +4,7 @@
 #include "../src/screens/shop.h"
 #include "../src/screens/harbor.h"
 #include "../src/systems/save_load.h"
+#include <string.h>
 
 void test_crownroad_to_town3(void) {
     printf("Fallen Crownroad and Town 3 tests:\n");
@@ -290,6 +291,16 @@ void test_rook_labyrinth(void) {
     ASSERT("Rook assigns the retrieval quest on first conversation",
         g.rook_quest_state == 1 && g.rook_labyrinth_switches == 0 &&
         game_labyrinth_is_open(&g));
+    ASSERT("Rook speaks in a dialogue bubble and the status bar notes the quest",
+        g.dialogue_active && strcmp(g.dialogue_speaker, "Rook") == 0 &&
+        g.dialogue_x == 10 && g.dialogue_y == 18 &&
+        strstr(g.dialogue_text, "ivory rook") != NULL &&
+        strcmp(g.messages[g.message_count - 2], "Assigned: The Ivory Rook.") == 0);
+    game_talk_to_rook(&g);
+    ASSERT("Rook's reminder stays in the bubble while the bar shows a status",
+        g.dialogue_active && strstr(g.dialogue_text, "One rune per floor") != NULL &&
+        strcmp(g.messages[g.message_count - 1],
+            "Rook is waiting for the ivory rook.") == 0);
     game_leave_inn(&g);
     g.player.x = TOWN_LABYRINTH_X - 2;
     g.player.y = 12;
@@ -433,12 +444,21 @@ void test_rook_labyrinth(void) {
         g.rook_quest_state == 3 &&
         g.gold == gold_before + ROOK_QUEST_REWARD &&
         g.rook_quest_completions == 1);
+    ASSERT("Rook thanks the player in the bubble and the bar records the reward",
+        g.dialogue_active && strstr(g.dialogue_text, "My ivory rook!") != NULL &&
+        strcmp(g.messages[g.message_count - 1],
+            "Completed: The Ivory Rook. 40 gold awarded.") == 0);
 
     const int slot = 99014;
     game_talk_to_rook(&g);
     ASSERT("Rook does not award the same quest twice",
         g.gold == gold_before + ROOK_QUEST_REWARD &&
         g.rook_quest_state == 3 && g.rook_quest_completions == 1);
+    ASSERT("a finished quest keeps Rook's thanks in the bubble",
+        g.dialogue_active &&
+        strcmp(g.dialogue_text, "Thank you for recovering my ivory rook.") == 0 &&
+        strcmp(g.messages[g.message_count - 1],
+            "Rook's quest is already complete.") == 0);
     game_leave_inn(&g);
     ASSERT("labyrinth remains visibly open after Rook rewards the quest",
         game_labyrinth_is_open(&g));

@@ -1879,9 +1879,11 @@ int game_harbor_unlocked(const GameState *g) {
 static void assign_rook_quest(GameState *g) {
     g->rook_quest_state = 1;
     g->rook_labyrinth_switches = 0;
-    push_message(g, "Rook: Recover my stolen ivory rook from the labyrinth.");
+    snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+        "Recover my stolen ivory rook from the labyrinth across from the witch's "
+        "hut. Beware the false stairs and the Warden below.");
+    push_message(g, "Assigned: The Ivory Rook.");
     push_message(g, "The labyrinth across from the witch's hut is now open.");
-    push_message(g, "Rook: Beware the false stairs and the Warden below.");
 }
 
 static void place_harbor_road(GameState *g) {
@@ -3367,18 +3369,33 @@ void game_talk_to_mara(GameState *g) {
 }
 
 void game_talk_to_rook(GameState *g) {
+    g->dialogue_active = 1;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Rook");
+    g->dialogue_x = 10;
+    g->dialogue_y = 18;
     if (g->rook_quest_state == 0) {
         assign_rook_quest(g);
     } else if (g->rook_quest_state == 1) {
-        push_message(g, "Rook: One rune per floor opens the Warden's vault.");
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "One rune per floor opens the Warden's vault. Defeat the Warden and "
+            "bring my ivory rook home.");
+        push_message(g, "Rook is waiting for the ivory rook.");
     } else if (g->rook_quest_state == 2) {
         g->gold += ROOK_QUEST_REWARD;
         g->score += 500;
         g->rook_quest_state = 3;
         g->rook_quest_completions++;
-        push_message(g, "Rook rewards you 40 gold for the ivory rook.");
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "My ivory rook! Thank you for bringing it back. Please take %d gold "
+            "for your trouble.", ROOK_QUEST_REWARD);
+        char msg[MAX_MESSAGE_LEN];
+        snprintf(msg, sizeof(msg), "Completed: The Ivory Rook. %d gold awarded.",
+            ROOK_QUEST_REWARD);
+        push_message(g, msg);
     } else {
-        push_message(g, "Rook: Thank you for recovering my ivory rook.");
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Thank you for recovering my ivory rook.");
+        push_message(g, "Rook's quest is already complete.");
     }
 }
 
