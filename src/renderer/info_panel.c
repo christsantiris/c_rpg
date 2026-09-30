@@ -1,5 +1,6 @@
 #include "info_panel.h"
 #include "item_icons.h"
+#include "game_renderer.h"
 #include <stdio.h>
 
 static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor) {
@@ -87,7 +88,10 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor)
     y += lh;
     char hp_str[16];
     SDL_snprintf(hp_str, sizeof(hp_str), "%d / %d", g->player.hp, g->player.max_hp);
-    renderer_draw_text(r, hp_str, x, y, value, r->font_tiny);
+    // The value flashes red for a moment each time the player is hit.
+    SDL_Color hp_color = game_player_hit_flash(g, SDL_GetTicks())
+        ? (SDL_Color){240, 72, 60, 255} : value;
+    renderer_draw_text(r, hp_str, x, y, hp_color, r->font_tiny);
     y += lh + 6;
 
     // MP
