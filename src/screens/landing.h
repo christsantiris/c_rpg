@@ -15,7 +15,8 @@ typedef enum {
     SCREEN_HELP,
     SCREEN_HALL_OF_FAME,
     SCREEN_CLASS_SELECT,
-    SCREEN_HARBOR
+    SCREEN_HARBOR,
+    SCREEN_CONTROLS
 } GameScreen;
 
 typedef enum {
@@ -26,7 +27,8 @@ typedef enum {
     LANDING_QUIT,
     LANDING_SAVE_GAME,
     LANDING_TOGGLE_MUSIC,
-    LANDING_TOGGLE_SFX
+    LANDING_TOGGLE_SFX,
+    LANDING_CONTROLS
 } LandingResult;
 
 typedef struct {
