@@ -11,7 +11,8 @@ typedef enum {
     FEEDBACK_ENEMY_DAMAGE = 0,
     FEEDBACK_PLAYER_DAMAGE,
     FEEDBACK_HEAL,
-    FEEDBACK_MANA_LOSS
+    FEEDBACK_MANA_LOSS,
+    FEEDBACK_ENEMY_CRITICAL
 } CombatFeedbackKind;
 
 // Results carried by a projectile appear when it lands.
