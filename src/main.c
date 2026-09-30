@@ -900,6 +900,11 @@ int main(int argc, char **argv) {
                                             game_talk_to_dragon_seeker(&game);
                                             found = 1;
                                         } else if (game.map.tiles[ty][tx] ==
+                                            TILE_NPC_ROYAL_GUARD) {
+                                            game_talk_to_royal_guard(&game,
+                                                tx, ty);
+                                            found = 1;
+                                        } else if (game.map.tiles[ty][tx] ==
                                             TILE_NPC_ISLAND_CAPTAIN) {
                                             harbor_init(&harbor_screen);
                                             screen = SCREEN_HARBOR;

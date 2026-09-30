@@ -126,6 +126,57 @@ void test_crownroad_to_town3(void) {
         !g.enemies[0].active && !g.level_cleared);
 }
 
+void test_town2_royal_guards(void) {
+    printf("Town 2 Royal Guard tests:\n");
+    static GameState g;
+    static GameState loaded;
+    memset(&g, 0, sizeof(g));
+    g.player.player_class = CLASS_WARRIOR;
+    game_init(&g);
+    game_enter_town2(&g);
+    ASSERT("two Royal Guards flank the road in front of the Crownroad gate",
+        g.map.tiles[TOWN2_GUARD_Y][TOWN2_GUARD_WEST_X] == TILE_NPC_ROYAL_GUARD &&
+        g.map.tiles[TOWN2_GUARD_Y][TOWN2_GUARD_EAST_X] == TILE_NPC_ROYAL_GUARD &&
+        g.map.tiles[TOWN2_GUARD_Y][CROWNROAD_X] == TILE_TOWN_PATH &&
+        !map_is_walkable(&g.map, TOWN2_GUARD_WEST_X, TOWN2_GUARD_Y) &&
+        !map_is_walkable(&g.map, TOWN2_GUARD_EAST_X, TOWN2_GUARD_Y));
+
+    game_talk_to_royal_guard(&g, TOWN2_GUARD_WEST_X, TOWN2_GUARD_Y);
+    int west_warns = g.dialogue_active &&
+        strcmp(g.dialogue_speaker, "Royal Guard") == 0 &&
+        g.dialogue_x == TOWN2_GUARD_WEST_X && g.dialogue_y == TOWN2_GUARD_Y &&
+        strstr(g.dialogue_text, "Crownroad") != NULL;
+    game_talk_to_royal_guard(&g, TOWN2_GUARD_EAST_X, TOWN2_GUARD_Y);
+    ASSERT("the guards warn in dialogue bubbles and recommend other areas",
+        west_warns && g.dialogue_x == TOWN2_GUARD_EAST_X &&
+        strstr(g.dialogue_text, "grow stronger") != NULL &&
+        strcmp(g.messages[g.message_count - 1],
+            "The Royal Guards recommend exploring other areas first.") == 0);
+
+    g.player.x = CROWNROAD_X;
+    g.player.y = 12;
+    for (int y = 11; y >= 1; y--) {
+        action_resolve_player(&g, (Action){ACTION_MOVE, CROWNROAD_X, y});
+    }
+    int reached_gate = g.player.x == CROWNROAD_X && g.player.y == 1;
+    action_resolve_player(&g, (Action){ACTION_MOVE, CROWNROAD_X, 0});
+    ASSERT("the guards never block the road to the Crownroad",
+        reached_gate && g.location == LOCATION_CROWNROAD);
+
+    game_leave_crownroad(&g, LOCATION_TOWN2);
+    g.map.tiles[TOWN2_GUARD_Y][TOWN2_GUARD_WEST_X] = TILE_TOWN_FLOOR;
+    g.map.tiles[TOWN2_GUARD_Y][TOWN2_GUARD_EAST_X] = TILE_TOWN_FLOOR;
+    g.player.x = TOWN2_GUARD_EAST_X;
+    g.player.y = TOWN2_GUARD_Y;
+    const int slot = 99016;
+    int loaded_ok = save_game(&g, slot) && load_game(&loaded, slot);
+    ASSERT("older Town 2 saves gain the guards without covering the player",
+        loaded_ok &&
+        loaded.map.tiles[TOWN2_GUARD_Y][TOWN2_GUARD_WEST_X] == TILE_NPC_ROYAL_GUARD &&
+        loaded.map.tiles[TOWN2_GUARD_Y][TOWN2_GUARD_EAST_X] == TILE_TOWN_FLOOR);
+    remove("saves/savegame_99016.json");
+}
+
 static void step_into_labyrinth_tile(GameState *g, int x, int y) {
     static const int dx[4] = {0, 1, 0, -1};
     static const int dy[4] = {-1, 0, 1, 0};

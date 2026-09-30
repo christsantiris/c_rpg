@@ -2039,6 +2039,8 @@ int load_game(GameState *g, int slot) {
     if (g->location == LOCATION_TOWN2) {
         map_place_town2_center(&g->map);
         map_place_town_labyrinth(&g->map);
+        // Town 2 saves from before the guards gain them on load.
+        map_place_town2_guards(&g->map, g->player.x, g->player.y);
     }
 
     game_hide_portal_destination(g);

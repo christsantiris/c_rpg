@@ -19,6 +19,7 @@ void test_return_to_town_spell(void);
 void test_town_tiles(void);
 void test_town_healer(void);
 void test_crownroad_to_town3(void);
+void test_town2_royal_guards(void);
 void test_rook_labyrinth(void);
 void test_town_map(void);
 void test_town_spawn(void);
@@ -79,6 +80,7 @@ int main(void) {
     test_town_tiles();
     test_town_healer();
     test_crownroad_to_town3();
+    test_town2_royal_guards();
     test_rook_labyrinth();
     printf("\n");
     test_town_map();

@@ -3310,6 +3310,59 @@ void draw_mara(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 18, y + 15, 6, 6, (SDL_Color){69, 207, 196, 255});
 }
 
+// Draws one guard rect, mirrored across the tile when the halberd is on the left.
+static void guard_rect(Renderer *r, int x, int y, int dx, int dy, int w, int h, int mirror, SDL_Color c) {
+    fill_rect(r, x + (mirror ? TILE_SIZE - dx - w : dx), y + dy, w, h, c);
+}
+
+void draw_royal_guard(Renderer *r, int tile_x, int tile_y, int halberd_left) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    int m = halberd_left;
+    SDL_Color outline = {24, 24, 32, 255};
+    SDL_Color steel = {146, 152, 166, 255};
+    SDL_Color steel_light = {205, 210, 220, 255};
+    SDL_Color plume = {176, 38, 44, 255};
+    SDL_Color skin = {196, 146, 106, 255};
+    SDL_Color tabard = {38, 60, 140, 255};
+    SDL_Color tabard_light = {64, 92, 178, 255};
+    SDL_Color gold = {220, 176, 62, 255};
+    SDL_Color boots = {36, 28, 26, 255};
+    SDL_Color wood = {110, 72, 40, 255};
+    draw_town_floor(r, tile_x, tile_y);
+    // Kettle helm with a crimson plume.
+    guard_rect(r, x, y, 10, 0, 3, 2, m, plume);
+    guard_rect(r, x, y, 7, 1, 9, 4, m, outline);
+    guard_rect(r, x, y, 8, 2, 7, 3, m, steel);
+    guard_rect(r, x, y, 9, 2, 3, 1, m, steel_light);
+    guard_rect(r, x, y, 5, 5, 13, 2, m, outline);
+    guard_rect(r, x, y, 6, 5, 11, 1, m, steel);
+    // Face.
+    guard_rect(r, x, y, 8, 7, 7, 4, m, skin);
+    guard_rect(r, x, y, 9, 8, 1, 1, m, outline);
+    guard_rect(r, x, y, 13, 8, 1, 1, m, outline);
+    // Mail sleeves and a royal tabard with a gold crown.
+    guard_rect(r, x, y, 4, 11, 15, 10, m, outline);
+    guard_rect(r, x, y, 5, 12, 2, 6, m, steel);
+    guard_rect(r, x, y, 16, 12, 2, 5, m, steel);
+    guard_rect(r, x, y, 7, 11, 9, 10, m, tabard);
+    guard_rect(r, x, y, 8, 12, 2, 8, m, tabard_light);
+    guard_rect(r, x, y, 7, 11, 9, 1, m, gold);
+    guard_rect(r, x, y, 10, 14, 3, 2, m, gold);
+    guard_rect(r, x, y, 10, 13, 1, 1, m, gold);
+    guard_rect(r, x, y, 12, 13, 1, 1, m, gold);
+    // Legs and boots.
+    guard_rect(r, x, y, 8, 21, 3, 3, m, boots);
+    guard_rect(r, x, y, 12, 21, 3, 3, m, boots);
+    // Halberd: shaft, spear point, axe blade and back hook.
+    guard_rect(r, x, y, 19, 3, 2, 21, m, wood);
+    guard_rect(r, x, y, 19, 0, 2, 3, m, steel_light);
+    guard_rect(r, x, y, 21, 3, 2, 5, m, steel);
+    guard_rect(r, x, y, 23, 4, 1, 3, m, steel_light);
+    guard_rect(r, x, y, 17, 5, 2, 1, m, steel);
+    guard_rect(r, x, y, 18, 13, 2, 2, m, skin);
+}
+
 void draw_rook(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;

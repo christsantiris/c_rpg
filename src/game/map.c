@@ -332,6 +332,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_NPC_CAIN &&
         m->tiles[y][x] != TILE_NPC_ROWAN &&
         m->tiles[y][x] != TILE_NPC_DRAGON_SEEKER &&
+        m->tiles[y][x] != TILE_NPC_ROYAL_GUARD &&
         m->tiles[y][x] != TILE_FOREST_WARDEN &&
         m->tiles[y][x] != TILE_LOCKED_DOOR &&
         m->tiles[y][x] != TILE_CRYPT_DOOR &&
@@ -1064,6 +1065,18 @@ void map_place_town_labyrinth(Map *m) {
         TILE_LABYRINTH_ENTRANCE;
 }
 
+// Guards only replace open grass, so loot and the player's tile stay clear.
+void map_place_town2_guards(Map *m, int avoid_x, int avoid_y) {
+    const int guard_x[2] = {TOWN2_GUARD_WEST_X, TOWN2_GUARD_EAST_X};
+    for (int i = 0; i < 2; i++) {
+        int x = guard_x[i];
+        if (m->tiles[TOWN2_GUARD_Y][x] == TILE_TOWN_FLOOR &&
+            (x != avoid_x || TOWN2_GUARD_Y != avoid_y)) {
+            m->tiles[TOWN2_GUARD_Y][x] = TILE_NPC_ROYAL_GUARD;
+        }
+    }
+}
+
 void map_place_town2_center(Map *m) {
     m->tiles[0][CROWNROAD_X] = TILE_TOWN_EXIT;
     for (int x = TOWN_HEALER_DOOR_X; x <= TOWN_WITCH_DOOR_X; x++) {
@@ -1228,6 +1241,7 @@ void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
         m->tiles[11][x] = TILE_TOWN_PATH;
     }
     map_place_town2_center(m);
+    map_place_town2_guards(m, -1, -1);
     // The Inn stands east of the Healer, its door opening onto the square.
     map_place_town_inn(m);
     map_place_town_labyrinth(m);

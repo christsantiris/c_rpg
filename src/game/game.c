@@ -3037,6 +3037,25 @@ static void prepare_quest_expedition(GameState *g, Location location) {
     }
 }
 
+// The Royal Guards only warn; the Crownroad gate stays open to everyone.
+void game_talk_to_royal_guard(GameState *g, int x, int y) {
+    g->dialogue_active = 1;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Royal Guard");
+    g->dialogue_x = x;
+    g->dialogue_y = y;
+    if (x < CROWNROAD_X) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Halt, traveler. Beyond this gate the Fallen Crownroad swarms with "
+            "bandits, archers and horsemen. Few who walk it return.");
+    } else {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "We will not stop you, but grow stronger first. Brave Blackwater "
+            "Swamp, the labyrinth and the lands near the first town before "
+            "the Crownroad.");
+    }
+    push_message(g, "The Royal Guards recommend exploring other areas first.");
+}
+
 void game_talk_to_dragon_seeker(GameState *g) {
     if (!(g->defeated_bosses & (1 << LOCATION_MOUNTAINS))) {
         return;

@@ -22,6 +22,10 @@
 #define CROWNROAD_W 44
 #define CROWNROAD_H 48
 #define CROWNROAD_X 20
+// Royal Guards flank the road just south of Town 2's Crownroad gatehouse.
+#define TOWN2_GUARD_WEST_X (CROWNROAD_X - 1)
+#define TOWN2_GUARD_EAST_X (CROWNROAD_X + 1)
+#define TOWN2_GUARD_Y 4
 #define TOWN_CASTLE_X 13
 #define TOWN_CASTLE_Y 3
 #define TOWN_CASTLE_W 15
@@ -269,7 +273,8 @@ typedef enum {
     TILE_HIGH_PASS_ENTRANCE,
     TILE_HIGH_PASS_EXIT,
     TILE_NPC_DRAGON_SEEKER,
-    TILE_DRAGON_TREASURE
+    TILE_DRAGON_TREASURE,
+    TILE_NPC_ROYAL_GUARD
 } TileType;
 
 typedef struct {
@@ -298,6 +303,7 @@ void map_generate_crownroad(Map *m);
 void map_generate_forest_road(Map *m);
 void map_place_town_labyrinth(Map *m);
 void map_place_town2_center(Map *m);
+void map_place_town2_guards(Map *m, int avoid_x, int avoid_y);
 void map_place_town_harbor(Map *m);
 void map_place_town_tavern(Map *m);
 void map_place_town_inn(Map *m);

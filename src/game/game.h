@@ -253,6 +253,7 @@ void game_talk_to_rook(GameState *g);
 void game_talk_to_cain(GameState *g);
 void game_talk_to_rowan(GameState *g);
 void game_talk_to_dragon_seeker(GameState *g);
+void game_talk_to_royal_guard(GameState *g, int x, int y);
 void game_collect_dragon_treasure(GameState *g);
 void game_talk_to_nahla(GameState *g);
 int game_harbor_unlocked(const GameState *g);
