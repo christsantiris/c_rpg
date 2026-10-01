@@ -587,6 +587,10 @@ static void frost_slide(GameState *g, int old_x, int old_y) {
         slid = 1;
     }
     if (slid) {
+        // The trail records the glide from the starting tile so the screen can
+        // show the player sliding rather than jumping to the end.
+        int distance = abs_int(g->player.x - old_x) + abs_int(g->player.y - old_y);
+        set_trail(g, old_x, old_y, g->player.x, g->player.y, dx, dy, distance, 0, 0, 0, TRAIL_EFFECT_ICE_SLIDE);
         push_message(g, "You slide across the ice.");
     }
 }
