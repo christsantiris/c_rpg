@@ -408,6 +408,8 @@ int save_game(const GameState *g, int slot) {
         g->max_swamp_level_reached);
     cJSON_AddNumberToObject(root, "max_dragonspine_level_reached",
         g->max_dragonspine_level_reached);
+    cJSON_AddNumberToObject(root, "max_frostfell_level_reached",
+        g->max_frostfell_level_reached);
     cJSON_AddNumberToObject(root, "max_temple_level_reached",
         g->max_temple_level_reached);
     cJSON_AddNumberToObject(root, "message_count",     g->message_count);
@@ -698,6 +700,25 @@ int save_game(const GameState *g, int slot) {
     }
     cJSON_AddItemToObject(root, "dragonspine_cache", dragonspine_cache);
 
+    cJSON *frostfell_cache = cJSON_CreateArray();
+    for (int i = 0; i < FROSTFELL_DEPTH; i++) {
+        cJSON *entry = cJSON_CreateObject();
+        cJSON_AddNumberToObject(entry, "valid", g->frostfell_cache[i].valid);
+        cJSON_AddNumberToObject(entry, "level_cleared",
+            g->frostfell_cache[i].level_cleared);
+        if (g->frostfell_cache[i].valid) {
+            cJSON_AddItemToObject(entry, "map",
+                serialize_map(&g->frostfell_cache[i].map));
+            cJSON_AddItemToObject(entry, "enemies",
+                serialize_enemies(g->frostfell_cache[i].enemies,
+                    g->frostfell_cache[i].enemy_count));
+            cJSON_AddNumberToObject(entry, "enemy_count",
+                g->frostfell_cache[i].enemy_count);
+        }
+        cJSON_AddItemToArray(frostfell_cache, entry);
+    }
+    cJSON_AddItemToObject(root, "frostfell_cache", frostfell_cache);
+
     cJSON *crownroad_cache = cJSON_CreateObject();
     cJSON_AddNumberToObject(crownroad_cache, "valid", g->crownroad_cache.valid);
     cJSON_AddNumberToObject(crownroad_cache, "level_cleared",
@@ -829,6 +850,9 @@ int load_game(GameState *g, int slot) {
     cJSON *max_dragonspine = cJSON_GetObjectItem(root,
         "max_dragonspine_level_reached");
     g->max_dragonspine_level_reached = max_dragonspine ? max_dragonspine->valueint : 1;
+    cJSON *max_frostfell = cJSON_GetObjectItem(root,
+        "max_frostfell_level_reached");
+    g->max_frostfell_level_reached = max_frostfell ? max_frostfell->valueint : 1;
     cJSON *max_temple = cJSON_GetObjectItem(root,
         "max_temple_level_reached");
     g->max_temple_level_reached = max_temple ? max_temple->valueint : 1;
@@ -1160,6 +1184,28 @@ int load_game(GameState *g, int slot) {
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
                 g->dragonspine_cache[i].enemies,
                 &g->dragonspine_cache[i].enemy_count);
+        }
+    }
+
+    // Saves from before Frostfell have no cache and start it fresh.
+    cJSON *frostfell_cache = cJSON_GetObjectItem(root, "frostfell_cache");
+    for (int i = 0; i < FROSTFELL_DEPTH; i++) {
+        g->frostfell_cache[i].valid = 0;
+        g->frostfell_cache[i].level_cleared = 0;
+        cJSON *entry = frostfell_cache ? cJSON_GetArrayItem(frostfell_cache, i) : NULL;
+        if (!entry) {
+            continue;
+        }
+        cJSON *valid = cJSON_GetObjectItem(entry, "valid");
+        cJSON *cleared = cJSON_GetObjectItem(entry, "level_cleared");
+        g->frostfell_cache[i].valid = valid ? valid->valueint : 0;
+        g->frostfell_cache[i].level_cleared = cleared ? cleared->valueint : 0;
+        if (g->frostfell_cache[i].valid) {
+            deserialize_map(cJSON_GetObjectItem(entry, "map"),
+                &g->frostfell_cache[i].map);
+            deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
+                g->frostfell_cache[i].enemies,
+                &g->frostfell_cache[i].enemy_count);
         }
     }
 

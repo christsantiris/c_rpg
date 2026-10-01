@@ -311,6 +311,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_MOUNTAIN_HIDDEN_CAVE &&
         m->tiles[y][x] != TILE_COAST_WALL &&
         m->tiles[y][x] != TILE_SWAMP_WALL &&
+        m->tiles[y][x] != TILE_FROST_WALL &&
         m->tiles[y][x] != TILE_DRAGON_WALL &&
         m->tiles[y][x] != TILE_COAST_DEEP_WATER &&
         m->tiles[y][x] != TILE_COAST_CHANNEL_WATER &&
@@ -1079,6 +1080,10 @@ void map_place_town2_guards(Map *m, int avoid_x, int avoid_y) {
 
 void map_place_town2_center(Map *m) {
     m->tiles[0][CROWNROAD_X] = TILE_TOWN_EXIT;
+    // The west gate leads into the Frostfell Wastes.
+    for (int y = 10; y <= 14; y++) {
+        m->tiles[y][0] = TILE_TOWN_EXIT;
+    }
     for (int x = TOWN_HEALER_DOOR_X; x <= TOWN_WITCH_DOOR_X; x++) {
         m->tiles[13][x] = TILE_TOWN_PATH;
     }
@@ -1461,6 +1466,38 @@ void map_generate_high_pass(Map *m) {
     m->stairs_down_y = previous_y;
     m->tiles[m->stairs_up_y][m->stairs_up_x] = TILE_HIGH_PASS_ENTRANCE;
     m->tiles[m->stairs_down_y][m->stairs_down_x] = TILE_HIGH_PASS_EXIT;
+}
+
+// Frostfell follows the swamp's layout, mirrored so players enter from Town 2
+// on the east edge and travel west, then snows over its tiles.
+void map_generate_frostfell(Map *m, int level) {
+    map_generate_swamp(m, level);
+    for (int y = 0; y < SWAMP_MAP_H; y++) {
+        for (int x = 0; x < SWAMP_MAP_W / 2; x++) {
+            TileType tile = m->tiles[y][x];
+            m->tiles[y][x] = m->tiles[y][SWAMP_MAP_W - 1 - x];
+            m->tiles[y][SWAMP_MAP_W - 1 - x] = tile;
+        }
+    }
+    for (int i = 0; i < m->room_count; i++) {
+        m->rooms[i].x = SWAMP_MAP_W - m->rooms[i].x - m->rooms[i].w;
+    }
+    m->stairs_up_x = SWAMP_MAP_W - 1 - m->stairs_up_x;
+    m->stairs_down_x = SWAMP_MAP_W - 1 - m->stairs_down_x;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            TileType tile = m->tiles[y][x];
+            if (tile == TILE_SWAMP_WALL) {
+                m->tiles[y][x] = TILE_FROST_WALL;
+            } else if (tile == TILE_SWAMP_FLOOR) {
+                m->tiles[y][x] = TILE_FROST_FLOOR;
+            } else if (tile == TILE_SWAMP_ENTRANCE) {
+                m->tiles[y][x] = TILE_FROST_ENTRANCE;
+            } else if (tile == TILE_SWAMP_EXIT) {
+                m->tiles[y][x] = TILE_FROST_EXIT;
+            }
+        }
+    }
 }
 
 void map_generate_dragonspine(Map *m, int level) {
