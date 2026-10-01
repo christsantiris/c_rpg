@@ -1017,7 +1017,7 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     for (int x = 1; x < TOWN_W - 1; x++)
         m->tiles[12][x] = TILE_TOWN_PATH;
 
-    // Exit at north edge
+    // Goblin Mountains exit at the north end of the crossroad.
     for (int x = 18; x <= 22; x++)
         m->tiles[0][x] = TILE_TOWN_EXIT;
 
@@ -1026,7 +1026,7 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
         m->tiles[y][0] = TILE_TOWN_EXIT;
     }
 
-    // Goblin Mountains exit at the east end of the crossroad.
+    // Dungeon exit at the east end of the crossroad.
     for (int y = 10; y <= 14; y++)
         m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
 
@@ -1101,18 +1101,40 @@ void map_set_town2_road(Map *m, int unlocked) {
     }
 }
 
-void map_set_dragonspine_road(Map *m, int unlocked) {
+void map_set_town4_road(Map *m, int unlocked) {
     if (!unlocked) {
         return;
     }
-    for (int y = TOWN_DRAGON_GATE_Y; y <= 12; y++) {
-        m->tiles[y][40] = TILE_TOWN_PATH;
+    for (int y = 1; y <= 12; y++) {
+        m->tiles[y][TOWN4_ROAD_X] = TILE_TOWN_PATH;
     }
-    for (int x = 40; x < TOWN_W - 1; x++) {
-        m->tiles[TOWN_DRAGON_GATE_Y][x] = TILE_TOWN_PATH;
+    m->tiles[0][TOWN4_ROAD_X] = TILE_TOWN_EXIT;
+}
+
+void map_generate_town4(Map *m, int *spawn_x, int *spawn_y) {
+    map_clear_exploration(m);
+    m->room_count = 0;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            m->tiles[y][x] = TILE_WALL;
+        }
     }
-    m->tiles[TOWN_DRAGON_GATE_Y][TOWN_W - 1] = TILE_TOWN_EXIT;
-    m->tiles[TOWN_DRAGON_NPC_Y][TOWN_DRAGON_NPC_X] = TILE_NPC_DRAGON_SEEKER;
+    for (int y = 1; y < TOWN_H - 1; y++) {
+        for (int x = 1; x < TOWN_W - 1; x++) {
+            m->tiles[y][x] = TILE_TOWN_FLOOR;
+        }
+        m->tiles[y][20] = TILE_TOWN_PATH;
+    }
+    for (int x = 1; x < TOWN_W - 1; x++) {
+        m->tiles[12][x] = TILE_TOWN_PATH;
+    }
+    m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
+    for (int y = TOWN4_DRAGON_GATE_Y - 2; y <= TOWN4_DRAGON_GATE_Y + 2; y++) {
+        m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
+    }
+    m->tiles[TOWN4_ILYA_Y][TOWN4_ILYA_X] = TILE_NPC_DRAGON_SEEKER;
+    *spawn_x = 20;
+    *spawn_y = TOWN_H - 2;
 }
 
 void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
@@ -1355,21 +1377,19 @@ void map_generate_high_pass(Map *m) {
             m->tiles[y][x] = TILE_DRAGON_WALL;
         }
     }
-    int previous_y = HIGH_PASS_Y;
-    for (int x = 1; x < HIGH_PASS_W - 1; x++) {
-        int path_y = HIGH_PASS_Y - ((x / 12) % 2);
-        m->tiles[path_y][x] = TILE_DRAGON_FLOOR;
-        m->tiles[previous_y][x] = TILE_DRAGON_FLOOR;
-        if (x == 21 || x == 43) {
-            m->tiles[path_y - 1][x] = TILE_DRAGON_FLOOR;
-            m->tiles[path_y + 1][x] = TILE_DRAGON_FLOOR;
+    int previous_x = HIGH_PASS_X;
+    for (int y = 1; y < HIGH_PASS_H - 1; y++) {
+        int path_x = HIGH_PASS_X - ((y / 12) % 2);
+        for (int x = path_x - 2; x <= path_x + 2; x++) {
+            m->tiles[y][x] = TILE_DRAGON_FLOOR;
         }
-        previous_y = path_y;
+        m->tiles[y][previous_x] = TILE_DRAGON_FLOOR;
+        previous_x = path_x;
     }
-    m->stairs_up_x = 0;
-    m->stairs_up_y = HIGH_PASS_Y;
-    m->stairs_down_x = HIGH_PASS_W - 1;
-    m->stairs_down_y = previous_y;
+    m->stairs_up_x = HIGH_PASS_X;
+    m->stairs_up_y = HIGH_PASS_H - 1;
+    m->stairs_down_x = HIGH_PASS_X;
+    m->stairs_down_y = 0;
     m->tiles[m->stairs_up_y][m->stairs_up_x] = TILE_HIGH_PASS_ENTRANCE;
     m->tiles[m->stairs_down_y][m->stairs_down_x] = TILE_HIGH_PASS_EXIT;
 }

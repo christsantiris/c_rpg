@@ -42,7 +42,7 @@ Descending awards `new floor * 100` score.
 
 Floor 8 is the Lich King's finale. Clearing it changes the down stairs into a
 glowing return passage. Using that passage returns the player directly to the
-north road in town, preserves dungeon progress, awards completion score, and
+east road in OakHaven, preserves dungeon progress, awards completion score, and
 never creates a ninth dungeon floor.
 
 The Lich King begins inside a sealed, single-entrance chamber behind a locked

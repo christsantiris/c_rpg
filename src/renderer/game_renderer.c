@@ -139,6 +139,7 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
         g->location != LOCATION_INN &&
         g->location != LOCATION_TOWN &&
         g->location != LOCATION_TOWN2 &&
+        g->location != LOCATION_TOWN4 &&
         g->location != LOCATION_FOREST &&
         g->location != LOCATION_SWAMP)) {
         return;
@@ -151,7 +152,7 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
 
     int viewport_w = r->screen_w - INFO_PANEL_W;
     if (g->location == LOCATION_TOWN || g->location == LOCATION_TOWN2 ||
-        g->location == LOCATION_TOWN3) {
+        g->location == LOCATION_TOWN3 || g->location == LOCATION_TOWN4) {
         viewport_w = TOWN_W * TILE_SIZE;
     } else if (g->location == LOCATION_TAVERN || g->location == LOCATION_INN) {
         viewport_w = TAVERN_W * TILE_SIZE;
@@ -1210,7 +1211,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     int kraken_warning = kraken_tentacles_raised(g);
     int town_scaled = g->location == LOCATION_TOWN ||
         g->location == LOCATION_TOWN2 ||
-        g->location == LOCATION_TOWN3;
+        g->location == LOCATION_TOWN3 || g->location == LOCATION_TOWN4;
     int tavern_scaled = g->location == LOCATION_TAVERN ||
         g->location == LOCATION_INN;
     int island_scaled = g->location == LOCATION_ISLAND;
@@ -1244,7 +1245,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     } else if (road_scaled) {
         int road_w = g->location == LOCATION_HIGH_PASS ? HIGH_PASS_W :
             (g->location == LOCATION_CROWNROAD ? CROWNROAD_W : FOREST_ROAD_W);
-        int road_h = g->location == LOCATION_CROWNROAD ? CROWNROAD_H : FOREST_ROAD_H;
+        int road_h = g->location == LOCATION_HIGH_PASS ? HIGH_PASS_H :
+            (g->location == LOCATION_CROWNROAD ? CROWNROAD_H : FOREST_ROAD_H);
         int view_w = v->tiles_x < road_w ? v->tiles_x : road_w;
         int view_h = v->tiles_y < road_h ? v->tiles_y : road_h;
         viewport_init(&town_view, view_w, view_h,
@@ -1751,7 +1753,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (g->location == LOCATION_TOWN) {
         draw_town_gate(r,
             viewport_to_screen_x(v, 18), viewport_to_screen_y(v, 0),
-            TOWN_EXIT_DUNGEON);
+            TOWN_EXIT_MOUNTAINS);
         draw_town_gate(r,
             viewport_to_screen_x(v, 0), viewport_to_screen_y(v, 10),
             TOWN_EXIT_FOREST);
@@ -1766,11 +1768,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         }
         draw_town_gate(r,
             viewport_to_screen_x(v, TOWN_W - 3), viewport_to_screen_y(v, 10),
-            TOWN_EXIT_MOUNTAINS);
+            TOWN_EXIT_DUNGEON);
         if (g->defeated_bosses & (1 << LOCATION_MOUNTAINS)) {
-            draw_dragonspine_gate(r,
-                viewport_to_screen_x(v, TOWN_W - 1),
-                viewport_to_screen_y(v, TOWN_DRAGON_GATE_Y));
+            draw_crownroad_gate(r,
+                viewport_to_screen_x(v, TOWN4_ROAD_X - 1),
+                viewport_to_screen_y(v, 0));
         }
         draw_town_gate(r,
             viewport_to_screen_x(v, 18),
@@ -1786,6 +1788,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         draw_harbor(r,
             viewport_to_screen_x(v, TOWN_HARBOR_X),
             viewport_to_screen_y(v, TOWN_HARBOR_Y));
+    }
+
+    if (g->location == LOCATION_TOWN4) {
+        draw_town_gate(r,
+            viewport_to_screen_x(v, TOWN_W - 3),
+            viewport_to_screen_y(v, TOWN4_DRAGON_GATE_Y - 2),
+            TOWN_EXIT_DRAGONSPINE);
     }
 
     if (g->location == LOCATION_TOWN2) {
@@ -1956,13 +1965,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int gate_top = viewport_to_screen_y(v, 10) * TILE_SIZE;
         int forest_x = viewport_to_screen_x(v, 1) * TILE_SIZE + 8;
         int forest_y = gate_top + (5 * TILE_SIZE - forest_h) / 2;
-        int dungeon_x = viewport_to_screen_x(v, 18) * TILE_SIZE
-            + (5 * TILE_SIZE - dungeon_w) / 2;
-        int dungeon_y = viewport_to_screen_y(v, 1) * TILE_SIZE
-            + (TILE_SIZE - dungeon_h) / 2;
-        int mountains_x = viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE
-            - mountains_w - 8;
-        int mountains_y = gate_top + (5 * TILE_SIZE - mountains_h) / 2;
+        int mountains_x = viewport_to_screen_x(v, 18) * TILE_SIZE
+            + (5 * TILE_SIZE - mountains_w) / 2;
+        int mountains_y = viewport_to_screen_y(v, 1) * TILE_SIZE
+            + (TILE_SIZE - mountains_h) / 2;
+        int dungeon_x = viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE
+            - dungeon_w - 8;
+        int dungeon_y = gate_top + (5 * TILE_SIZE - dungeon_h) / 2;
         renderer_draw_text(r, "FOREST", forest_x, forest_y,
             (SDL_Color){90, 190, 105, 255}, r->font_tiny);
         renderer_draw_text(r, "DUNGEON", dungeon_x, dungeon_y, label,
@@ -1970,9 +1979,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         renderer_draw_text(r, "MOUNTAINS", mountains_x, mountains_y,
             (SDL_Color){220, 72, 42, 255}, r->font_tiny);
         if (g->defeated_bosses & (1 << LOCATION_MOUNTAINS)) {
-            renderer_draw_text(r, "HIGH PASS",
-                viewport_to_screen_x(v, 38) * TILE_SIZE,
-                viewport_to_screen_y(v, TOWN_DRAGON_GATE_Y - 2) * TILE_SIZE,
+            renderer_draw_text(r, "TOWN 4",
+                viewport_to_screen_x(v, TOWN4_ROAD_X - 1) * TILE_SIZE,
+                viewport_to_screen_y(v, 2) * TILE_SIZE,
                 (SDL_Color){187, 218, 232, 255}, r->font_tiny);
         }
         int coast_x = viewport_to_screen_x(v, 18) * TILE_SIZE
@@ -1990,6 +1999,21 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 viewport_to_screen_y(v, TOWN_ROAD_GATE_Y - 1) * TILE_SIZE + 7,
                 (SDL_Color){233, 201, 133, 255}, r->font_tiny);
         }
+    }
+
+    if (g->location == LOCATION_TOWN4) {
+        SDL_Color label = {187, 218, 232, 255};
+        int width = 0;
+        TTF_SizeText(r->font_tiny, "DRAGONSPINE", &width, NULL);
+        renderer_draw_text(r, "DRAGONSPINE",
+            viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
+            viewport_to_screen_y(v, TOWN4_DRAGON_GATE_Y) * TILE_SIZE,
+            label, r->font_tiny);
+        TTF_SizeText(r->font_tiny, "OAKHAVEN", &width, NULL);
+        renderer_draw_text(r, "OAKHAVEN",
+            viewport_to_screen_x(v, 20) * TILE_SIZE + (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE,
+            label, r->font_tiny);
     }
 
     if (g->location == LOCATION_TOWN2) {
@@ -2026,8 +2050,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_y(v, TOWN_LABYRINTH_Y - 3) * TILE_SIZE,
             game_labyrinth_is_open(g) ?
                 label : (SDL_Color){105, 105, 90, 255}, r->font_tiny);
-        renderer_draw_text(r, "TOWN 1",
-            viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - 54,
+        TTF_SizeText(r->font_tiny, "OAKHAVEN", &width, NULL);
+        renderer_draw_text(r, "OAKHAVEN",
+            viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
             viewport_to_screen_y(v, 12) * TILE_SIZE,
             label, r->font_tiny);
         renderer_draw_text(r, "FROSTFELL",
