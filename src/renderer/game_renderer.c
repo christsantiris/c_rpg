@@ -839,8 +839,7 @@ static int dungeon_is_floor(const GameState *g, int x, int y) {
     return tile == TILE_FLOOR || tile == TILE_STAIRS_UP ||
         tile == TILE_STAIRS_DOWN || tile == TILE_RETURN_EXIT ||
         tile == TILE_DUNGEON_KEY || tile == TILE_CRYPT_KEY ||
-        tile == TILE_CRYPT_CACHE || tile == TILE_DUNGEON_SWITCH_OFF ||
-        tile == TILE_DUNGEON_SWITCH_ON || tile == TILE_PORTAL ||
+        tile == TILE_CRYPT_CACHE || tile == TILE_PORTAL ||
         tile == TILE_BROKEN_BURIAL_SEAL ||
         tile == TILE_RESTORED_BURIAL_SEAL ||
         tile == TILE_TRAP_HIDDEN || tile == TILE_TRAP_REVEALED ||
@@ -1479,11 +1478,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_CRYPT_DOOR: draw_crypt_door(r, sx, sy); break;
                 case TILE_CRYPT_KEY: draw_crypt_key(r, sx, sy); break;
                 case TILE_CRYPT_CACHE: draw_crypt_cache(r, sx, sy); break;
-                case TILE_DUNGEON_GATE: draw_dungeon_gate(r, sx, sy); break;
-                case TILE_DUNGEON_SWITCH_OFF:
-                    draw_dungeon_switch(r, sx, sy, 0); break;
-                case TILE_DUNGEON_SWITCH_ON:
-                    draw_dungeon_switch(r, sx, sy, 1); break;
                 case TILE_PORTAL: draw_portal(r, sx, sy); break;
                 case TILE_BROKEN_BURIAL_SEAL:
                     draw_broken_burial_seal(r, sx, sy); break;

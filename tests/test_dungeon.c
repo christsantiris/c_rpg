@@ -176,7 +176,7 @@ void test_dungeon_exit_distance(void) {
         exits_separated);
 }
 
-static int dungeon_tile_reachable(const Map *m, int target_x, int target_y, int gates_open) {
+static int dungeon_tile_reachable(const Map *m, int target_x, int target_y) {
     unsigned char seen[MAP_H][MAP_W] = {{0}};
     int queue[MAP_W * MAP_H];
     int head = 0;
@@ -201,8 +201,7 @@ static int dungeon_tile_reachable(const Map *m, int target_x, int target_y, int 
             int nx = x + dx[side];
             int ny = y + dy[side];
             if (nx < 0 || nx >= MAP_W || ny < 0 || ny >= MAP_H ||
-                seen[ny][nx] || (!map_is_walkable(m, nx, ny) &&
-                !(gates_open && m->tiles[ny][nx] == TILE_DUNGEON_GATE))) {
+                seen[ny][nx] || !map_is_walkable(m, nx, ny)) {
                 continue;
             }
             seen[ny][nx] = 1;
@@ -212,40 +211,33 @@ static int dungeon_tile_reachable(const Map *m, int target_x, int target_y, int 
     return 0;
 }
 
-void test_dungeon_gate_reachability(void) {
-    printf("Dungeon gate reachability tests:\n");
+void test_dungeon_exit_reachability(void) {
+    printf("Dungeon exit reachability tests:\n");
     int all_routes_open = 1;
-    int all_switches_accessible = 1;
+    int no_gates = 1;
     for (int seed = 1; seed <= 512; seed++) {
         srand(seed);
         for (int level = 1; level < DUNGEON_DEPTH; level++) {
             Map m;
             map_generate(&m, level);
-            if (!dungeon_tile_reachable(&m, m.stairs_down_x,
-                m.stairs_down_y, 1)) {
+            if (!dungeon_tile_reachable(&m, m.stairs_down_x, m.stairs_down_y)) {
                 all_routes_open = 0;
             }
-            int has_gate = 0;
-            int has_reachable_switch = 0;
             for (int y = 0; y < MAP_H; y++) {
                 for (int x = 0; x < MAP_W; x++) {
-                    if (m.tiles[y][x] == TILE_DUNGEON_GATE) {
-                        has_gate = 1;
-                    } else if (m.tiles[y][x] == TILE_DUNGEON_SWITCH_OFF &&
-                        dungeon_tile_reachable(&m, x, y, 0)) {
-                        has_reachable_switch = 1;
+                    if (m.tiles[y][x] == TILE_DUNGEON_GATE ||
+                        m.tiles[y][x] == TILE_DUNGEON_SWITCH_OFF ||
+                        m.tiles[y][x] == TILE_DUNGEON_SWITCH_ON) {
+                        no_gates = 0;
                     }
                 }
             }
-            if (has_gate && !has_reachable_switch) {
-                all_switches_accessible = 0;
-            }
         }
     }
-    ASSERT("generated dungeon exits remain reachable after opening gates",
+    ASSERT("generated dungeon exits are reachable from the entrance",
         all_routes_open);
-    ASSERT("every closed portcullis has an accessible switch",
-        all_switches_accessible);
+    ASSERT("no generated dungeon floor has a portcullis or floor switch",
+        no_gates);
 }
 
 void test_return_to_town_spell(void) {
@@ -832,41 +824,6 @@ void test_stairs_locked(void) {
     ASSERT("A loots the crypt cache once",
         g.gold > gold_before &&
         g.map.tiles[cache_y][cache_x] == TILE_FLOOR);
-
-    g.level = 3;
-    map_generate(&g.map, g.level);
-    int switch_x = -1;
-    int switch_y = -1;
-    int gate_x = -1;
-    int gate_y = -1;
-    for (int y = 0; y < MAP_H; y++) {
-        for (int x = 0; x < MAP_W; x++) {
-            if (g.map.tiles[y][x] == TILE_DUNGEON_SWITCH_OFF) {
-                switch_x = x;
-                switch_y = y;
-            } else if (g.map.tiles[y][x] == TILE_DUNGEON_GATE) {
-                gate_x = x;
-                gate_y = y;
-            }
-        }
-    }
-    ASSERT("dungeon floor three contains a switch and portcullis",
-        switch_x >= 0 && gate_x >= 0);
-    if (switch_x < 0 || gate_x < 0) {
-        return;
-    }
-    ASSERT("closed portcullis blocks movement",
-        !map_is_walkable(&g.map, gate_x, gate_y));
-
-    g.player.x = switch_x;
-    g.player.y = switch_y;
-    Action activate_switch = {ACTION_INTERACT, 0, 0};
-    action_resolve_player(&g, activate_switch);
-    ASSERT("A activates the dungeon switch",
-        g.map.tiles[switch_y][switch_x] == TILE_DUNGEON_SWITCH_ON);
-    ASSERT("activated switch opens the portcullis shortcut",
-        g.map.tiles[gate_y][gate_x] == TILE_FLOOR &&
-        map_is_walkable(&g.map, gate_x, gate_y));
 }
 
 void test_level_cache_cleared(void) {

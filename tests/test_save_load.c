@@ -1035,14 +1035,14 @@ static void test_forest_enemy_repair(void) {
     remove_test_save(LEGACY_SLOT);
 }
 
-static void test_blocked_dungeon_gate_repair(void) {
+static void test_retired_dungeon_gates_removed(void) {
     static GameState original;
     static GameState loaded;
     memset(&original, 0, sizeof(original));
     memset(&loaded, 0, sizeof(loaded));
     game_init(&original);
     original.location = LOCATION_DUNGEON;
-    original.level = 2;
+    original.level = 3;
     original.player.x = 2;
     original.player.y = 5;
     Map *m = &original.map;
@@ -1059,33 +1059,39 @@ static void test_blocked_dungeon_gate_repair(void) {
     m->stairs_down_x = 8;
     m->stairs_down_y = 5;
     m->tiles[5][2] = TILE_STAIRS_UP;
+    m->tiles[5][4] = TILE_DUNGEON_SWITCH_ON;
     m->tiles[5][5] = TILE_DUNGEON_GATE;
     m->tiles[5][7] = TILE_DUNGEON_SWITCH_OFF;
     m->tiles[5][8] = TILE_STAIRS_DOWN;
-    original.level_cache[1].valid = 1;
-    original.level_cache[1].map = *m;
+    original.level_cache[2].valid = 1;
+    original.level_cache[2].map = *m;
+    // A potion dropped on the used switch keeps the switch as its underlay.
+    m->tiles[5][4] = TILE_ITEM;
+    original.floor_item_count = 1;
+    original.floor_items[0] = (FloorItem){
+        .active = 1, .x = 4, .y = 5, .underlying_tile = TILE_DUNGEON_SWITCH_ON,
+        .item = item_make_health_potion()
+    };
 
     remove_test_save(BLOCKED_DUNGEON_SLOT);
     int loaded_ok = save_game(&original, BLOCKED_DUNGEON_SLOT) &&
+        rewrite_save_version(BLOCKED_DUNGEON_SLOT, 67) &&
         load_game(&loaded, BLOCKED_DUNGEON_SLOT);
-    ASSERT("blocked dungeon gate save can be loaded", loaded_ok);
+    ASSERT("a save from before the portcullis was retired still loads", loaded_ok);
     if (loaded_ok) {
-        ASSERT("loading opens a gate with no accessible switch",
+        ASSERT("loading turns the floor's gate and switches into plain floor",
             loaded.map.tiles[5][5] == TILE_FLOOR &&
             loaded.map.tiles[5][7] == TILE_FLOOR &&
-            map_is_walkable(&loaded.map, 5, 5));
-        ASSERT("loading repairs the cached blocked dungeon floor",
-            loaded.level_cache[1].valid &&
-            loaded.level_cache[1].map.tiles[5][5] == TILE_FLOOR &&
-            loaded.level_cache[1].map.tiles[5][7] == TILE_FLOOR);
+            map_is_walkable(&loaded.map, 5, 5) &&
+            loaded.map.tiles[5][4] == TILE_ITEM &&
+            loaded.floor_items[0].underlying_tile == TILE_FLOOR);
+        ASSERT("loading clears the gate and switches from cached floors",
+            loaded.level_cache[2].valid &&
+            loaded.level_cache[2].map.tiles[5][4] == TILE_FLOOR &&
+            loaded.level_cache[2].map.tiles[5][5] == TILE_FLOOR &&
+            loaded.level_cache[2].map.tiles[5][7] == TILE_FLOOR);
     }
     remove_test_save(BLOCKED_DUNGEON_SLOT);
-
-    m->tiles[5][7] = TILE_FLOOR;
-    m->tiles[5][3] = TILE_DUNGEON_SWITCH_OFF;
-    ASSERT("gate remains when its switch is reachable before the exit",
-        map_repair_dungeon_routes(m) == 0 &&
-        m->tiles[5][5] == TILE_DUNGEON_GATE);
 }
 
 static void test_cain_save_load(void) {
@@ -1224,5 +1230,5 @@ void test_save_load(void) {
     test_message_kinds_round_trip();
     test_key_bindings_round_trip();
     test_forest_enemy_repair();
-    test_blocked_dungeon_gate_repair();
+    test_retired_dungeon_gates_removed();
 }

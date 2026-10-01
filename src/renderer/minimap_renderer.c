@@ -62,8 +62,6 @@ void minimap_draw(Renderer *r, const GameState *g) {
                     if (tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN ||
                         tile == TILE_RETURN_EXIT || tile == TILE_DUNGEON_KEY ||
                         tile == TILE_CRYPT_KEY || tile == TILE_CRYPT_CACHE ||
-                        tile == TILE_DUNGEON_SWITCH_OFF ||
-                        tile == TILE_DUNGEON_SWITCH_ON ||
                         tile == TILE_PORTAL || tile == TILE_FOREST_ENTRANCE ||
                         tile == TILE_FOREST_EXIT || tile == TILE_MOUNTAIN_ENTRANCE ||
                         tile == TILE_MOUNTAIN_EXIT || tile == TILE_COAST_ENTRANCE ||
@@ -123,7 +121,6 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile != TILE_TAVERN_TABLE &&
                         tile != TILE_LOCKED_DOOR &&
                         tile != TILE_CRYPT_DOOR &&
-                        tile != TILE_DUNGEON_GATE &&
                         tile != TILE_FOREST_HIDDEN_TRAIL &&
                         tile != TILE_TEMPLE_WALL &&
                         tile != TILE_TEMPLE_MOON_DOOR_CLOSED &&

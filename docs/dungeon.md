@@ -17,11 +17,11 @@ advanced undead can appear earlier.
 | --- | --- | --- |
 | 1 | Entrance rooms and the route back to town | Skeletons |
 | 2 | Possible locked side crypt; Elowen's first seal during her quest | Zombies and Crypt Bats join |
-| 3 | Possible portcullis shortcut and floor switch | Wraiths join |
+| 3 | Standard floor | Wraiths join |
 | 4 | Possible locked side crypt; Elowen's second seal | Crypt Conjurers join |
-| 5 | Possible portcullis shortcut | Full regular undead roster |
+| 5 | Standard floor | Full regular undead roster |
 | 6 | Possible locked side crypt; Elowen's third seal | Full regular undead roster |
-| 7 | Possible portcullis shortcut | Full regular undead roster |
+| 7 | Standard floor | Full regular undead roster |
 | 8 | Golden key, locked boss chamber, and final return passage | Full roster and the Lich King |
 
 ## Enemy Roles
@@ -34,18 +34,15 @@ advanced undead can appear earlier.
 - **Crypt Conjurer:** fires along a clear row or column and can revive a fallen
   Skeleton nearby. Walls and other enemies block its shot.
 
-## Crypts, Switches, and Traps
+## Crypts and Traps
 
 On floors 2, 4, and 6, generation can add an optional crypt where space allows.
 Stand on its key and press `P`, then walk into the locked crypt door to spend
 the key. Stand on the cache inside and press `A` to collect its gold. Each
 generated crypt cache holds `10 + 2 × floor` gold.
 
-Floors 3, 5, and 7 can have a closed portcullis across a shortcut. Stand on
-the floor switch and press `A` to open it. If a generated switch would be
-unreachable, the unusable switch and gate are removed rather than blocking
-progress. Hidden traps may become spikes, fire, or poison when stepped on;
-the starting room is excluded from trap placement.
+Hidden traps may become spikes, fire, or poison when stepped on; the starting
+room is excluded from trap placement.
 
 ## The Lich King's Chamber
 

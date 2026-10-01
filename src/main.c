@@ -819,9 +819,7 @@ int main(int argc, char **argv) {
                                     tile == TILE_COAST_TIDE_CONTROL ||
                                     tile == TILE_COAST_BEACON_UNLIT ||
                                     tile == TILE_BROKEN_BURIAL_SEAL ||
-                                    tile == TILE_CRYPT_CACHE ||
-                                    tile == TILE_DUNGEON_SWITCH_OFF ||
-                                    tile == TILE_DUNGEON_SWITCH_ON)) {
+                                    tile == TILE_CRYPT_CACHE)) {
                                     a = (Action){ACTION_INTERACT, 0, 0};
                                 } else {
                                     a = (Action){ACTION_MOVE,
