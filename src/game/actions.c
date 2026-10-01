@@ -1786,12 +1786,12 @@ void action_resolve_player(GameState *g, Action a) {
                     (g->defeated_bosses & (1 << LOCATION_MOUNTAINS))) {
                     game_enter_high_pass(g, 1);
                 } else {
-                    game_enter_mountains(g);
+                    game_enter_dungeon(g);
                 }
             } else if (ty == TOWN_H - 1) {
                 game_enter_coast(g);
             } else {
-                game_enter_dungeon(g);
+                game_enter_mountains(g);
             }
             return;
         }

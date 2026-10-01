@@ -1,8 +1,8 @@
 # Dragonspine and High Pass
 
-Defeating the Goblin King unlocks a second gate on the east side of the
-starting town. The original east gate still enters the Goblin Mountains. The
-new gate leads across the short, enemy-free High Pass to Dragonspine. Crown
+Defeating the Goblin King unlocks a second gate on the east side of OakHaven.
+The main east gate enters the dungeon; the north gate enters the Goblin Mountains.
+The new gate leads across the short, enemy-free High Pass to Dragonspine. Crown
 Peak returns the player to town after its boss fight, so Dragonspine begins as
 a separate expedition.
 
