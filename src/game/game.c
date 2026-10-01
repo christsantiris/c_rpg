@@ -2044,7 +2044,7 @@ static void place_town_portal(GameState *g) {
     if (g->portal_location == LOCATION_FOREST) {
         x = 2;
         y = 13;
-    } else if (g->portal_location == LOCATION_MOUNTAINS) {
+    } else if (g->portal_location == LOCATION_DUNGEON) {
         x = TOWN_W - 3;
         y = 13;
     } else if (g->portal_location == LOCATION_DRAGONSPINE) {
@@ -2128,7 +2128,7 @@ void game_enter_forest_road(GameState *g) {
     g->floor_item_count = 0;
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
-    push_message(g, from_town2 ? "The forest road leads east to Town 1." :
+    push_message(g, from_town2 ? "The forest road leads east to OakHaven." :
         "The forest road leads west to Town 2.");
 }
 
@@ -2157,7 +2157,7 @@ void game_leave_forest_road(GameState *g, Location destination) {
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
     push_message(g, destination == LOCATION_TOWN2 ?
-        "You arrive in the second town." : "You return to the starting town.");
+        "You arrive in the second town." : "You return to OakHaven.");
 }
 
 void game_enter_crownroad(GameState *g, int from_town3) {
@@ -2796,8 +2796,9 @@ void game_return_to_town(GameState *g) {
         g->player.y = 12;
     } else if (returning_from == LOCATION_FOREST) {
         g->player.x = 1; g->player.y = 12;
-    } else if (returning_from == LOCATION_MOUNTAINS) {
-        g->player.x = TOWN_W - 2; g->player.y = 12;
+    } else if (returning_from == LOCATION_DUNGEON) {
+        g->player.x = TOWN_W - 2;
+        g->player.y = 12;
     } else if (returning_from == LOCATION_DRAGONSPINE ||
         returning_from == LOCATION_HIGH_PASS) {
         g->player.x = 40;
@@ -2958,7 +2959,7 @@ void game_talk_to_cain(GameState *g) {
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Cain");
     g->dialogue_x = TOWN_CAIN_X;
     g->dialogue_y = TOWN_CAIN_Y;
-    const char *warning = "Undead lurk north, beasts west, goblins east, and sea horrors south.";
+    const char *warning = "Goblins lurk north, beasts west, undead east, and sea horrors south.";
     if (g->cain_scroll_given) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "%s Read your scroll to learn Return to Town. Use it when danger grows!", warning);
@@ -3188,7 +3189,7 @@ void game_talk_to_royal_guard(GameState *g, int x, int y) {
     } else {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "We will not stop you, but grow stronger first. Brave Blackwater "
-            "Swamp, the labyrinth and the lands near the first town before "
+            "Swamp, the labyrinth and the lands near OakHaven before "
             "the Crownroad.");
     }
     push_message(g, "The Royal Guards recommend exploring other areas first.");

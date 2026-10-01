@@ -760,8 +760,10 @@ void test_town_map(void) {
         m.tiles[TOWN_ROAD_EXIT_Y][4] == TILE_TOWN_FLOOR &&
         m.tiles[21][4] == TILE_TOWN_FLOOR);
     map_set_town2_road(&m, 1);
-    ASSERT("mountain exit at east crossroad",
+    ASSERT("dungeon exit at east crossroad",
         m.tiles[12][TOWN_W - 1] == TILE_TOWN_EXIT);
+    ASSERT("mountain exit at north crossroad",
+        m.tiles[0][20] == TILE_TOWN_EXIT);
 
     // Shop tiles in correct positions
     ASSERT("blacksmith remains in the starting town",
@@ -1194,8 +1196,8 @@ void test_cain_gift(void) {
     game_talk_to_cain(&g);
     ASSERT("Cain warns about dangers outside town in his dialogue bubble",
         g.dialogue_active && strcmp(g.dialogue_speaker, "Cain") == 0 &&
-        strstr(g.dialogue_text, "Undead") &&
-        strstr(g.dialogue_text, "goblins") &&
+        strstr(g.dialogue_text, "Goblins lurk north") &&
+        strstr(g.dialogue_text, "undead east") &&
         g.dialogue_x == TOWN_CAIN_X && g.dialogue_y == TOWN_CAIN_Y);
     ASSERT("Cain gives one Return to Town scroll",
         g.cain_scroll_given && g.inventory_count == count + 1 &&
@@ -1352,7 +1354,45 @@ void test_harbor_road(void) {
         g.map.tiles[TOWN_H - 3][21] == TILE_PORTAL);
 }
 
+static void test_oakhaven_portal_save(void) {
+    static GameState g;
+    static GameState loaded;
+    const int slot = 99030;
+    ASSERT("OakHaven test save slot is unused", !save_exists(slot));
+    if (save_exists(slot)) {
+        return;
+    }
+    Location regions[] = {LOCATION_DUNGEON, LOCATION_MOUNTAINS};
+    for (int i = 0; i < 2; i++) {
+        g.player.player_class = CLASS_WARRIOR;
+        game_init(&g);
+        if (regions[i] == LOCATION_DUNGEON) {
+            game_enter_dungeon(&g);
+        } else {
+            game_enter_mountains(&g);
+        }
+        int origin_x = g.player.x;
+        int origin_y = g.player.y;
+        game_open_town_portal(&g);
+        int x = regions[i] == LOCATION_DUNGEON ? TOWN_W - 3 : 21;
+        int y = regions[i] == LOCATION_DUNGEON ? 13 : 2;
+        int restored = save_game(&g, slot) && load_game(&loaded, slot);
+        ASSERT("OakHaven portal and destination survive save/load",
+            restored && loaded.location == LOCATION_TOWN &&
+            loaded.map.tiles[y][x] == TILE_PORTAL &&
+            loaded.portal_location == regions[i]);
+        if (restored) {
+            action_resolve_player(&loaded, (Action){ACTION_MOVE, x, y});
+            ASSERT("saved OakHaven portal returns to its original region",
+                loaded.location == regions[i] && !loaded.portal_active &&
+                loaded.player.x == origin_x && loaded.player.y == origin_y);
+        }
+        remove("saves/savegame_99030.json");
+    }
+}
+
 void test_town_spawn(void) {
+    test_oakhaven_portal_save();
     printf("Town spawn tests:\n");
 
     GameState g;
@@ -1460,14 +1500,26 @@ void test_mountains(void) {
     GameState g;
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
-    g.player.x = TOWN_W - 2;
-    g.player.y = 12;
-    Action enter = {ACTION_MOVE, TOWN_W - 1, 12};
+    g.player.x = 20;
+    g.player.y = 1;
+    Action enter = {ACTION_MOVE, 20, 0};
     action_resolve_player(&g, enter);
-    ASSERT("east town exit enters mountains", g.location == LOCATION_MOUNTAINS);
+    ASSERT("north OakHaven exit enters mountains", g.location == LOCATION_MOUNTAINS);
     ASSERT("mountains begin on level one", g.level == 1);
     ASSERT("mountains use red-black terrain",
         g.map.tiles[g.player.y][g.player.x] == TILE_MOUNTAIN_FLOOR);
+
+    int origin_x = g.player.x;
+    int origin_y = g.player.y;
+    game_open_town_portal(&g);
+    ASSERT("mountain portal opens beside north OakHaven entrance",
+        g.location == LOCATION_TOWN && g.portal_active &&
+        g.map.tiles[2][21] == TILE_PORTAL &&
+        g.player.x == 20 && g.player.y == 1);
+    action_resolve_player(&g, (Action){ACTION_MOVE, 21, 2});
+    ASSERT("north portal restores the mountain position and closes",
+        g.location == LOCATION_MOUNTAINS && !g.portal_active &&
+        g.player.x == origin_x && g.player.y == origin_y);
 
     for (int level = 1; level <= MOUNTAIN_DEPTH; level++) {
         g.level = level;
@@ -1546,8 +1598,8 @@ void test_mountains(void) {
     action_resolve_player(&g, exit);
     ASSERT("defeating Goblin King returns to town",
         g.location == LOCATION_TOWN);
-    ASSERT("mountain completion returns at east town road",
-        g.player.x == TOWN_W - 2 && g.player.y == 12);
+    ASSERT("mountain completion returns at north OakHaven road",
+        g.player.x == 20 && g.player.y == 1);
 }
 
 void test_return_to_town(void) {

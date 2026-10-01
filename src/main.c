@@ -67,7 +67,8 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
         return 0;
     }
     if (action.target_y == 0) {
-        *style = TOWN_EXIT_DUNGEON;
+        *style = g->location == LOCATION_TOWN ?
+            TOWN_EXIT_MOUNTAINS : TOWN_EXIT_DUNGEON;
         return 1;
     }
     if (action.target_x == 0 && g->location == LOCATION_TOWN2) {
@@ -87,7 +88,7 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
         *style = g->location == LOCATION_TOWN2 ?
             TOWN_EXIT_FOREST :
             (action.target_y == TOWN_DRAGON_GATE_Y ?
-            TOWN_EXIT_DRAGONSPINE : TOWN_EXIT_MOUNTAINS);
+            TOWN_EXIT_DRAGONSPINE : TOWN_EXIT_DUNGEON);
         return 1;
     }
     if (action.target_y == TOWN_H - 1) {

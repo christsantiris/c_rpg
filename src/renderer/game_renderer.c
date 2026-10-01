@@ -1751,7 +1751,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (g->location == LOCATION_TOWN) {
         draw_town_gate(r,
             viewport_to_screen_x(v, 18), viewport_to_screen_y(v, 0),
-            TOWN_EXIT_DUNGEON);
+            TOWN_EXIT_MOUNTAINS);
         draw_town_gate(r,
             viewport_to_screen_x(v, 0), viewport_to_screen_y(v, 10),
             TOWN_EXIT_FOREST);
@@ -1766,7 +1766,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         }
         draw_town_gate(r,
             viewport_to_screen_x(v, TOWN_W - 3), viewport_to_screen_y(v, 10),
-            TOWN_EXIT_MOUNTAINS);
+            TOWN_EXIT_DUNGEON);
         if (g->defeated_bosses & (1 << LOCATION_MOUNTAINS)) {
             draw_dragonspine_gate(r,
                 viewport_to_screen_x(v, TOWN_W - 1),
@@ -1956,13 +1956,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int gate_top = viewport_to_screen_y(v, 10) * TILE_SIZE;
         int forest_x = viewport_to_screen_x(v, 1) * TILE_SIZE + 8;
         int forest_y = gate_top + (5 * TILE_SIZE - forest_h) / 2;
-        int dungeon_x = viewport_to_screen_x(v, 18) * TILE_SIZE
-            + (5 * TILE_SIZE - dungeon_w) / 2;
-        int dungeon_y = viewport_to_screen_y(v, 1) * TILE_SIZE
-            + (TILE_SIZE - dungeon_h) / 2;
-        int mountains_x = viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE
-            - mountains_w - 8;
-        int mountains_y = gate_top + (5 * TILE_SIZE - mountains_h) / 2;
+        int mountains_x = viewport_to_screen_x(v, 18) * TILE_SIZE
+            + (5 * TILE_SIZE - mountains_w) / 2;
+        int mountains_y = viewport_to_screen_y(v, 1) * TILE_SIZE
+            + (TILE_SIZE - mountains_h) / 2;
+        int dungeon_x = viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE
+            - dungeon_w - 8;
+        int dungeon_y = gate_top + (5 * TILE_SIZE - dungeon_h) / 2;
         renderer_draw_text(r, "FOREST", forest_x, forest_y,
             (SDL_Color){90, 190, 105, 255}, r->font_tiny);
         renderer_draw_text(r, "DUNGEON", dungeon_x, dungeon_y, label,
@@ -2026,8 +2026,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_y(v, TOWN_LABYRINTH_Y - 3) * TILE_SIZE,
             game_labyrinth_is_open(g) ?
                 label : (SDL_Color){105, 105, 90, 255}, r->font_tiny);
-        renderer_draw_text(r, "TOWN 1",
-            viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - 54,
+        TTF_SizeText(r->font_tiny, "OAKHAVEN", &width, NULL);
+        renderer_draw_text(r, "OAKHAVEN",
+            viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
             viewport_to_screen_y(v, 12) * TILE_SIZE,
             label, r->font_tiny);
         renderer_draw_text(r, "FROSTFELL",

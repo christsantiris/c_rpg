@@ -20,6 +20,7 @@ static const char *game_over_location(const GameState *g) {
         case LOCATION_ISLAND: return "RUINED ISLE";
         case LOCATION_TEMPLE: return "RUINED TEMPLE";
         case LOCATION_LABYRINTH: return "ROOK'S LABYRINTH";
+        case LOCATION_TOWN: return "OakHaven";
         default: return "TOWN";
     }
 }

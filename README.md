@@ -36,10 +36,10 @@ defeating the region's boss, but surviving regular enemies do not block leaving.
 Defeating the Necromancer also reveals the final forest exit if its landmark
 has not been found.
 
-## Town and Progression
+## OakHaven and Progression
 
-The roads through town lead north to the dungeon, west to the forest, east to
-the mountains, and south to the coast. Cain stands near the central crossroads.
+The roads through OakHaven lead north to the mountains, west to the forest, east
+to the dungeon, and south to the coast. Cain stands near the central crossroads.
 Defeating the Goblin King opens a separate east gate to the enemy-free High Pass
 and Dragonspine. Leaving the first mountain area returns you to town, so the
 new ascent is a deliberate trip. Ilya waits beside the new path and offers a
@@ -56,12 +56,12 @@ into an empty walk. Regular enemies and maps regenerate, while defeated bosses
 remain defeated.
 
 The Blacksmith sells weapons, armor, and shields. The Alchemist sells both
-potion types, spell scrolls, and Mage spell tomes in the starting town. Defeating
+potion types, spell scrolls, and Mage spell tomes in OakHaven. Defeating
 the forest Necromancer opens the way to a second town. After that victory, the
-lower west gate of the starting town leads onto a short, enemy-free forest road.
+lower west gate of OakHaven leads onto a short, enemy-free forest road.
 Walk west across it to reach Town 2; the upper west gate still enters the full
 forest. The lower gate stays blocked until the Necromancer falls. Town 2's east
-gate leads back along the road to Town 1. Town 2 has an Inn, a healer selling
+gate leads back along the road to OakHaven. Town 2 has an Inn, a healer selling
 Health Potions, a witch selling Mana Potions, and Rook's labyrinth. Its south
 gate opens onto the five-level Blackwater Swamp. Each shop buys its own item types.
 Stock expands as bosses are defeated; buying costs twice an item's base value,
@@ -104,7 +104,7 @@ See [Blackwater Swamp](docs/swamp.md) for the full area rules.
 ### Harbor and Ruined Isle
 
 Captain Rowan waits near the harbor and describes the island before it is
-reachable. Defeat the Drowned Queen on the Sunken Coast to extend the Town 1
+reachable. Defeat the Drowned Queen on the Sunken Coast to extend the OakHaven
 road to the dock. Speak with Rowan to receive the Island Treasure Map, then
 walk into the dock entrance to board the ship. The first voyage consumes the
 map and permanently unlocks return trips. If neither the dungeon nor the

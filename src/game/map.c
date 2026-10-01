@@ -1017,7 +1017,7 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     for (int x = 1; x < TOWN_W - 1; x++)
         m->tiles[12][x] = TILE_TOWN_PATH;
 
-    // Exit at north edge
+    // Goblin Mountains exit at the north end of the crossroad.
     for (int x = 18; x <= 22; x++)
         m->tiles[0][x] = TILE_TOWN_EXIT;
 
@@ -1026,7 +1026,7 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
         m->tiles[y][0] = TILE_TOWN_EXIT;
     }
 
-    // Goblin Mountains exit at the east end of the crossroad.
+    // Dungeon exit at the east end of the crossroad.
     for (int y = 10; y <= 14; y++)
         m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
 

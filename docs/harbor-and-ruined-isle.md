@@ -5,7 +5,7 @@ The harbor and island open after the Sunken Coast boss is defeated.
 ## Unlocking the Harbor
 
 Defeat the Drowned Queen on the Sunken Coast. The road then extends from the
-Town 1 crossroads to the dock. No other boss or Tavern quest is required.
+OakHaven crossroads to the dock. No other boss or Tavern quest is required.
 Until then, Captain Rowan explains that the Queen blocks the sea route. Speak
 with Rowan after defeating her to receive the Island Treasure Map. Inventory
 space is required. If the dungeon and mountains remain uncleared, Rowan
