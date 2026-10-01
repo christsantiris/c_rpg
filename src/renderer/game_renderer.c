@@ -1171,6 +1171,22 @@ static int kraken_tentacles_raised(const GameState *g) {
     return 0;
 }
 
+// While an ice slide plays, moves the player's drawn position back along the
+// slide so the sprite glides at a steady speed onto the tile where it stops.
+static void ice_slide_offset(const GameState *g, int *px, int *py) {
+    if (g->trail_frames <= 0 || g->trail_effect != TRAIL_EFFECT_ICE_SLIDE || g->trail_count <= 0) {
+        return;
+    }
+    Uint32 elapsed = SDL_GetTicks() - g->trail_started_at;
+    Uint32 duration = (Uint32)g->trail_count * ICE_SLIDE_TILE_MS;
+    if (elapsed >= duration) {
+        return;
+    }
+    int remaining = (int)((duration - elapsed) * TILE_SIZE / ICE_SLIDE_TILE_MS);
+    *px -= g->player.last_dx * remaining;
+    *py -= g->player.last_dy * remaining;
+}
+
 static void draw_kraken_target(Renderer *r, const GameState *g, const Viewport *v) {
     for (int i = 0; i < g->enemy_count; i++) {
         const Enemy *e = &g->enemies[i];
@@ -2202,6 +2218,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             } else {
                 g->trail_frames = 0;
             }
+        } else if (g->trail_effect == TRAIL_EFFECT_ICE_SLIDE) {
+            // The slide is shown by moving the player sprite, drawn below.
         } else for (int i = 0; i < g->trail_count; i++) {
             TrailTile *t = &g->trail[i];
             if (!t->active) continue;
@@ -2233,7 +2251,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         if (!timed_fireball &&
             g->trail_effect != TRAIL_EFFECT_MAGIC_ARROW &&
             g->trail_effect != TRAIL_EFFECT_DEMONIC_SWORD &&
-            g->trail_effect != TRAIL_EFFECT_WEAPON_ARROW) {
+            g->trail_effect != TRAIL_EFFECT_WEAPON_ARROW &&
+            g->trail_effect != TRAIL_EFFECT_ICE_SLIDE) {
             g->trail_frames--;
         }
     }
@@ -2271,19 +2290,18 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->equipped_armor < g->inventory_count) {
         equipped_armor = &g->inventory[g->equipped_armor];
     }
-    draw_player(r,
-        viewport_to_screen_x(v, g->player.x),
-        viewport_to_screen_y(v, g->player.y),
+    int player_px = viewport_to_screen_x(v, g->player.x) * TILE_SIZE;
+    int player_py = viewport_to_screen_y(v, g->player.y) * TILE_SIZE;
+    ice_slide_offset(g, &player_px, &player_py);
+    draw_player_at(r, player_px, player_py,
         g->player.player_class, equipped_weapon, off_hand_weapon,
         equipped_armor,
         g->player.last_dx, g->player.last_dy);
     if (g->player.poison_turns > 0) {
-        draw_icon_poison(r, viewport_to_screen_x(v, g->player.x) * TILE_SIZE + 16,
-            viewport_to_screen_y(v, g->player.y) * TILE_SIZE + 1);
+        draw_icon_poison(r, player_px + 16, player_py + 1);
     }
     if (g->player.frozen_turns > 0) {
-        draw_frozen_status(r, viewport_to_screen_x(v, g->player.x) * TILE_SIZE,
-            viewport_to_screen_y(v, g->player.y) * TILE_SIZE, g->player.frozen_turns);
+        draw_frozen_status(r, player_px, player_py, g->player.frozen_turns);
     }
 
     if (g->location == LOCATION_FROSTFELL) {

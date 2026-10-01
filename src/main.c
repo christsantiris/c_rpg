@@ -452,6 +452,7 @@ int main(int argc, char **argv) {
     // Presentation-only snapshot; persistent results remain in game.
     static GameState projectile_view;
     int player_projectile_animating = 0;
+    int player_slide_animating = 0;
     EnemyProjectiles enemy_shots = {0};
     Uint32 enemy_shots_started_at = 0;
     TownEntryTransition entry_gate = {0};
@@ -490,7 +491,8 @@ int main(int argc, char **argv) {
     SDL_Event event;
 
     while (running) {
-        int animating = player_projectile_animating || entry_gate.active || enemy_shots.count > 0 ||
+        int animating = player_projectile_animating || player_slide_animating ||
+            entry_gate.active || enemy_shots.count > 0 ||
             (screen == SCREEN_PLAYING && game.trail_frames > 0) ||
             (screen == SCREEN_PLAYING && game_combat_feedback_active(SDL_GetTicks()));
         int ambient_animating = screen == SCREEN_PLAYING &&
@@ -555,7 +557,8 @@ int main(int argc, char **argv) {
                 // ── Keyboard input ────────────────────────────────────────
                 case SDL_KEYDOWN: {
                     needs_redraw = 1;
-                    if (player_projectile_animating || entry_gate.active || enemy_shots.count > 0) {
+                    if (player_projectile_animating || player_slide_animating || entry_gate.active ||
+                        enemy_shots.count > 0) {
                         break;
                     }
                     int sc = event.key.keysym.scancode;
@@ -1006,6 +1009,9 @@ int main(int argc, char **argv) {
                                 (game.trail_effect == TRAIL_EFFECT_WEAPON_ARROW ||
                                 game.trail_effect == TRAIL_EFFECT_DEMONIC_SWORD))) &&
                                 game.trail_count > 0 && game.trail_frames > 0;
+                            int slide_started = a.type == ACTION_MOVE &&
+                                game.trail_effect == TRAIL_EFFECT_ICE_SLIDE &&
+                                game.trail_count > 0 && game.trail_frames > 0;
                             if (projectile_started) {
                                 memcpy(projectile_view.trail, game.trail,
                                     sizeof(game.trail));
@@ -1016,6 +1022,9 @@ int main(int argc, char **argv) {
                                     game.trail_started_at;
                                 projectile_view.player.mp = game.player.mp;
                                 player_projectile_animating = 1;
+                            } else if (slide_started) {
+                                // Creatures act once the glide has played out.
+                                player_slide_animating = 1;
                             } else {
                                 action_resolve_enemies_with_projectiles(&game, &enemy_shots);
                                 enemy_shots_started_at = SDL_GetTicks();
@@ -1023,8 +1032,11 @@ int main(int argc, char **argv) {
                             if (game.player.hp <= 0 && enemy_shots.count == 0) {
                                 screen = SCREEN_GAME_OVER;
                             }
-                            viewport_center_on(&viewport,
-                                game.player.x, game.player.y);
+                            // The camera holds still while the player glides across the ice.
+                            if (!slide_started) {
+                                viewport_center_on(&viewport,
+                                    game.player.x, game.player.y);
+                            }
                         }
                     }
                     break;
@@ -1033,7 +1045,8 @@ int main(int argc, char **argv) {
                 // ── Mouse input ───────────────────────────────────────────
                 case SDL_MOUSEBUTTONDOWN: {
                     needs_redraw = 1;
-                    if (entry_gate.active || player_projectile_animating || enemy_shots.count > 0) {
+                    if (entry_gate.active || player_projectile_animating || player_slide_animating ||
+                        enemy_shots.count > 0) {
                         break;
                     }
                     if (event.button.button != SDL_BUTTON_LEFT) break;
@@ -1273,6 +1286,17 @@ int main(int argc, char **argv) {
                 if (game.player.hp <= 0 && enemy_shots.count == 0) {
                     screen = SCREEN_GAME_OVER;
                 }
+            }
+        }
+        if (player_slide_animating &&
+            SDL_GetTicks() - game.trail_started_at >= (Uint32)game.trail_count * ICE_SLIDE_TILE_MS) {
+            player_slide_animating = 0;
+            game.trail_frames = 0;
+            viewport_center_on(&viewport, game.player.x, game.player.y);
+            action_resolve_enemies_with_projectiles(&game, &enemy_shots);
+            enemy_shots_started_at = SDL_GetTicks();
+            if (game.player.hp <= 0 && enemy_shots.count == 0) {
+                screen = SCREEN_GAME_OVER;
             }
         }
         if (entry_gate.active) {

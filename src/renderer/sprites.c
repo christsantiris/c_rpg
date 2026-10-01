@@ -1378,9 +1378,9 @@ static void draw_equipped_player_shield(Renderer *r, const Item *shield, int x, 
     fill_rect(r, bx - 3, by - 1, 6, 2, mark);
 }
 
-void draw_player(Renderer *r, int tile_x, int tile_y, PlayerClass player_class, const Item *main_hand, const Item *off_hand, const Item *armor, int facing_dx, int facing_dy) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
+// Draws the player with its top-left corner at pixel (x, y), so it can be
+// shown partway between tiles while sliding.
+void draw_player_at(Renderer *r, int x, int y, PlayerClass player_class, const Item *main_hand, const Item *off_hand, const Item *armor, int facing_dx, int facing_dy) {
     SDL_Color outline = {16, 18, 30, 255};
     SDL_Color skin = {210, 158, 112, 255};
     SDL_Color leather = {78, 48, 30, 255};

@@ -799,6 +799,10 @@ static void test_slick_ice(void) {
         frost_game.player.poison_turns == 1 && frost_game.player.hp == 10000 - 3 &&
         frost_game.enemies[0].x == 25 && frost_game.enemies[0].y == 26 &&
         message_count_of(&frost_game, "You slide across the ice.") == 1);
+    ASSERT("a slide records its path from the first ice tile to where it stops",
+        frost_game.trail_effect == TRAIL_EFFECT_ICE_SLIDE && frost_game.trail_frames > 0 &&
+        frost_game.trail_count == 5 && frost_game.trail[0].x == 21 &&
+        frost_game.trail[4].x == 25 && frost_game.trail[4].y == 20);
 
     setup_snowfield(&frost_game, ENEMY_YETI, 23, 20);
     frost_game.enemies[0].active = 0;
@@ -811,7 +815,7 @@ static void test_slick_ice(void) {
     paint_ice(&frost_game, 21, 22, 20);
     walk_onto(&frost_game, 21, 20);
     ASSERT("a step onto ice that cannot slide stays put and says nothing about sliding",
-        frost_game.player.x == 21 &&
+        frost_game.player.x == 21 && frost_game.trail_effect != TRAIL_EFFECT_ICE_SLIDE &&
         message_count_of(&frost_game, "You slide across the ice.") == 0);
 
     setup_snowfield(&frost_game, ENEMY_YETI, 30, 30);
