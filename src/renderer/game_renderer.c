@@ -291,6 +291,8 @@ void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, con
         } else if (shot->type == ENEMY_SERPENT_SPIRIT ||
             shot->type == ENEMY_MOONBOUND_SENTINEL) {
             color = (SDL_Color){75, 224, 232, 255};
+        } else if (shot->type == ENEMY_FROST_ARCHER) {
+            color = (SDL_Color){168, 228, 255, 255};
         }
         if (impact) {
             int radius = 4 + (int)(elapsed - ENEMY_PROJECTILE_TRAVEL_MS) / 15;
@@ -301,6 +303,7 @@ void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, con
             SDL_RenderDrawRect(r->sdl, &burst);
         } else if (shot->type == ENEMY_GOBLIN_ARCHER ||
             shot->type == ENEMY_ROAD_ARCHER ||
+            shot->type == ENEMY_FROST_ARCHER ||
             shot->type == ENEMY_DARK_ELF ||
             shot->type == ENEMY_BLOWDART_HUNTER) {
             draw_weapon_arrow_at(r, cx, cy, (dx > 0) - (dx < 0), (dy > 0) - (dy < 0), 0);
@@ -995,6 +998,10 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         draw_swamp_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_FROST_FLOOR) {
         draw_frostfell_floor(r, screen_x, screen_y, map_x, map_y);
+    } else if (underlay == TILE_FROST_LAKE) {
+        draw_frostfell_lake(r, screen_x, screen_y, map_x, map_y);
+    } else if (underlay == TILE_FROST_ICE) {
+        draw_frostfell_ice(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_DRAGON_FLOOR ||
         underlay == TILE_DRAGON_ASH || underlay == TILE_DRAGON_HOARD) {
         int terrain = underlay == TILE_DRAGON_ASH ? 1 :
@@ -1085,8 +1092,88 @@ static void draw_trap_underlay(Renderer *r, const GameState *g, int map_x, int m
     }
 }
 
+// World-space flakes keep their positions when the camera moves or resizes.
+// Clock-based motion and local seeds leave turns, saves and gameplay RNG alone.
+static void draw_frostfell_snow(Renderer *r, const Viewport *v) {
+    SDL_Rect area = {0, 0, v->tiles_x * TILE_SIZE, v->tiles_y * TILE_SIZE};
+    if (area.w > r->screen_w - INFO_PANEL_W) {
+        area.w = r->screen_w - INFO_PANEL_W;
+    }
+    if (area.h > r->tiles_y * TILE_SIZE) {
+        area.h = r->tiles_y * TILE_SIZE;
+    }
+    SDL_Rect old_clip;
+    SDL_bool clipped = SDL_RenderIsClipEnabled(r->sdl);
+    SDL_RenderGetClipRect(r->sdl, &old_clip);
+    if (clipped) {
+        SDL_IntersectRect(&area, &old_clip, &area);
+    }
+    if (area.w <= 0 || area.h <= 0) {
+        return;
+    }
+    SDL_BlendMode old_blend;
+    SDL_GetRenderDrawBlendMode(r->sdl, &old_blend);
+    SDL_RenderSetClipRect(r->sdl, &area);
+    SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_BLEND);
+
+    SDL_SetRenderDrawColor(r->sdl, 202, 222, 242, 12);
+    SDL_RenderFillRect(r->sdl, &area);
+    Uint64 now = SDL_GetTicks();
+    int field_w = v->map_w * TILE_SIZE + 32;
+    int field_h = v->map_h * TILE_SIZE + 32;
+    int count = field_w * field_h / 3200;
+    for (int layer = 0; layer < 3; layer++) {
+        for (int i = 0; i < count; i++) {
+            unsigned int seed = (unsigned int)(i + 1) * 2654435761u ^
+                (unsigned int)(layer + 1) * 2246822519u;
+            seed ^= seed >> 16;
+            seed *= 3266489917u;
+            seed ^= seed >> 15;
+            int wind = 50 + layer * 35 + (int)(seed % 19u);
+            int fall = 28 + layer * 15 + (int)((seed >> 8) % 13u);
+            int drift = (int)(now * wind / 1000 % field_w);
+            int drop = (int)(now * fall / 1000 % field_h);
+            int x = ((int)(seed % field_w) + field_w - drift) % field_w -
+                16 - v->cam_x * TILE_SIZE;
+            int y = ((int)((seed >> 12) % field_h) + drop) % field_h -
+                16 - v->cam_y * TILE_SIZE;
+            if (x < area.x - 6 || y < area.y - 6 ||
+                x >= area.x + area.w + 6 || y >= area.y + area.h + 6) {
+                continue;
+            }
+            int size = layer == 0 ? 1 : 2;
+            SDL_Rect flake = {x, y, size, size};
+            // A faint blue edge keeps white flakes visible over snowfields.
+            SDL_SetRenderDrawColor(r->sdl, 94, 130, 167, 45 + layer * 20);
+            SDL_RenderDrawLine(r->sdl, x + 1, y + size, x + size, y + size);
+            SDL_SetRenderDrawColor(r->sdl, 244, 250, 255, 95 + layer * 60);
+            SDL_RenderFillRect(r->sdl, &flake);
+            if (layer == 2) {
+                SDL_RenderDrawLine(r->sdl, x + 1, y, x + 4, y - 2);
+            }
+        }
+    }
+    SDL_SetRenderDrawBlendMode(r->sdl, old_blend);
+    SDL_RenderSetClipRect(r->sdl, clipped ? &old_clip : NULL);
+}
+
+// True after the Kraken's warning turn, when its tentacles are about to strike.
+static int kraken_tentacles_raised(const GameState *g) {
+    if (g->location != LOCATION_FROSTFELL) {
+        return 0;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *e = &g->enemies[i];
+        if (e->active && e->type == ENEMY_POLAR_KRAKEN && e->move_timer % 2 == 1) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void game_draw(Renderer *r, GameState *g, Viewport *v) {
     Viewport town_view;
+    int kraken_warning = kraken_tentacles_raised(g);
     int town_scaled = g->location == LOCATION_TOWN ||
         g->location == LOCATION_TOWN2 ||
         g->location == LOCATION_TOWN3;
@@ -1318,6 +1405,17 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_FROST_ENTRANCE:
                 case TILE_FROST_EXIT:
                     draw_frostfell_edge(r, sx, sy, x, y); break;
+                case TILE_FROST_LAKE:
+                    draw_frostfell_lake(r, sx, sy, x, y); break;
+                case TILE_FROST_LAKE_HOLE:
+                    draw_frostfell_lake_hole(r, sx, sy, x, y, kraken_warning); break;
+                case TILE_FROST_ICE:
+                    draw_frostfell_ice(r, sx, sy, x, y); break;
+                case TILE_FROST_THIN_ICE:
+                    draw_frostfell_thin_ice(r, sx, sy, x, y); break;
+                case TILE_FROST_BROKEN_ICE:
+                    // Collapsed shortcuts are open water, like the lake holes.
+                    draw_frostfell_lake_hole(r, sx, sy, x, y, 0); break;
                 case TILE_DRAGON_FLOOR:
                     draw_dragonspine_floor(r, sx, sy, x, y, 0); break;
                 case TILE_DRAGON_ASH:
@@ -2163,6 +2261,14 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (g->player.poison_turns > 0) {
         draw_icon_poison(r, viewport_to_screen_x(v, g->player.x) * TILE_SIZE + 16,
             viewport_to_screen_y(v, g->player.y) * TILE_SIZE + 1);
+    }
+    if (g->player.frozen_turns > 0) {
+        draw_frozen_status(r, viewport_to_screen_x(v, g->player.x) * TILE_SIZE,
+            viewport_to_screen_y(v, g->player.y) * TILE_SIZE, g->player.frozen_turns);
+    }
+
+    if (g->location == LOCATION_FROSTFELL) {
+        draw_frostfell_snow(r, v);
     }
 
     draw_combat_feedback(r, g, v);

@@ -131,6 +131,42 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             e->max_hp = 52; e->hp = 52;
             e->attack = 13; e->defense = 4; e->experience = 60;
             break;
+        case ENEMY_ICE_WOLF:
+            snprintf(e->name, sizeof(e->name), "Ice Wolf");
+            e->max_hp = 30; e->hp = 30;
+            e->attack = 10; e->defense = 2; e->experience = 32;
+            break;
+        case ENEMY_FROST_ARCHER:
+            snprintf(e->name, sizeof(e->name), "Frost Archer");
+            e->max_hp = 26; e->hp = 26;
+            e->attack = 11; e->defense = 2; e->experience = 40;
+            break;
+        case ENEMY_YETI:
+            snprintf(e->name, sizeof(e->name), "Yeti");
+            e->max_hp = 60; e->hp = 60;
+            e->attack = 14; e->defense = 4; e->experience = 70;
+            break;
+        case ENEMY_FROST_WRAITH:
+            snprintf(e->name, sizeof(e->name), "Frost Wraith");
+            e->max_hp = 40; e->hp = 40;
+            e->attack = 13; e->defense = 3; e->experience = 75;
+            break;
+        case ENEMY_ICE_GOLEM:
+            snprintf(e->name, sizeof(e->name), "Ice Golem");
+            e->max_hp = 85; e->hp = 85;
+            e->attack = 14; e->defense = 8; e->experience = 95;
+            break;
+        case ENEMY_ICE_GIANT:
+            snprintf(e->name, sizeof(e->name), "Ice Giant");
+            e->max_hp = 100; e->hp = 100;
+            e->attack = 18; e->defense = 6; e->experience = 130;
+            break;
+        case ENEMY_POLAR_KRAKEN:
+            snprintf(e->name, sizeof(e->name), "Polar Kraken");
+            e->max_hp = 260; e->hp = 260;
+            e->attack = 22; e->defense = 8; e->experience = 650;
+            e->is_boss = 1;
+            break;
         case ENEMY_SWAMP_DEMON:
             strncpy(e->name, "Swamp Demon", sizeof(e->name) - 1);
             e->max_hp = 180; e->hp = 180;
@@ -387,6 +423,8 @@ static int boss_for_level(const GameState *g, EnemyType *type) {
         boss_level = COAST_DEPTH;
     } else if (g->location == LOCATION_SWAMP) {
         boss_level = SWAMP_DEPTH;
+    } else if (g->location == LOCATION_FROSTFELL) {
+        boss_level = FROSTFELL_DEPTH;
     } else if (g->location == LOCATION_DRAGONSPINE) {
         boss_level = DRAGONSPINE_DEPTH;
     }
@@ -404,6 +442,8 @@ static int boss_for_level(const GameState *g, EnemyType *type) {
         *type = ENEMY_DROWNED_QUEEN;
     } else if (g->location == LOCATION_SWAMP) {
         *type = ENEMY_SWAMP_DEMON;
+    } else if (g->location == LOCATION_FROSTFELL) {
+        *type = ENEMY_POLAR_KRAKEN;
     } else if (g->location == LOCATION_DRAGONSPINE) {
         *type = ENEMY_RED_DRAGON;
     } else {
@@ -426,6 +466,7 @@ static int enemy_terrain_open(const GameState *g, int x, int y) {
         g->map.tiles[y][x] != TILE_COAST_CHANNEL_DRY &&
         g->map.tiles[y][x] != TILE_SWAMP_FLOOR &&
         g->map.tiles[y][x] != TILE_FROST_FLOOR &&
+        g->map.tiles[y][x] != TILE_FROST_LAKE &&
         g->map.tiles[y][x] != TILE_DRAGON_FLOOR &&
         g->map.tiles[y][x] != TILE_DRAGON_ASH &&
         g->map.tiles[y][x] != TILE_DRAGON_HOARD)) {
@@ -737,8 +778,7 @@ static int quest_group_pending(const GameState *g) {
 
 void enemies_spawn(GameState *g) {
     g->enemy_count = 0;
-    // Frostfell has no enemy roster yet.
-    if (g->map.room_count == 0 || g->location == LOCATION_FROSTFELL) {
+    if (g->map.room_count == 0) {
         return;
     }
 
@@ -763,6 +803,7 @@ void enemies_spawn(GameState *g) {
             g->location == LOCATION_MOUNTAINS ||
             g->location == LOCATION_COAST ||
             g->location == LOCATION_SWAMP ||
+            g->location == LOCATION_FROSTFELL ||
             g->location == LOCATION_DRAGONSPINE) {
             map_room_center(&g->map.rooms[g->map.room_count - 1],
                 &boss_x, &boss_y);
@@ -781,7 +822,8 @@ void enemies_spawn(GameState *g) {
         (g->location == LOCATION_MOUNTAINS ? MOUNTAIN_DEPTH :
         (g->location == LOCATION_COAST ? COAST_DEPTH :
         (g->location == LOCATION_SWAMP ? SWAMP_DEPTH :
-        (g->location == LOCATION_DRAGONSPINE ? DRAGONSPINE_DEPTH : DUNGEON_DEPTH))));
+        (g->location == LOCATION_FROSTFELL ? FROSTFELL_DEPTH :
+        (g->location == LOCATION_DRAGONSPINE ? DRAGONSPINE_DEPTH : DUNGEON_DEPTH)))));
     int regular_room_limit = g->level == boss_level
         ? g->map.room_count - 1 : g->map.room_count;
     place_dain_map_bearer(g);
@@ -814,6 +856,29 @@ void enemies_spawn(GameState *g) {
                 type = roll < 12 ? ENEMY_GOBLIN_ARCHER :
                     (roll < 40 ? ENEMY_DRAKE :
                     (roll < 65 ? ENEMY_GIANT : ENEMY_FIRE_ELEMENTAL));
+            }
+        } else if (g->location == LOCATION_FROSTFELL) {
+            // Each deeper stage adds one heavier kind of frost creature.
+            if (g->level == 1) {
+                type = roll < 60 ? ENEMY_ICE_WOLF : ENEMY_FROST_ARCHER;
+            } else if (g->level == 2) {
+                type = roll < 40 ? ENEMY_ICE_WOLF :
+                    (roll < 70 ? ENEMY_FROST_ARCHER : ENEMY_YETI);
+            } else if (g->level == 3) {
+                type = roll < 25 ? ENEMY_ICE_WOLF :
+                    (roll < 50 ? ENEMY_FROST_ARCHER :
+                    (roll < 75 ? ENEMY_YETI : ENEMY_FROST_WRAITH));
+            } else if (g->level == 4) {
+                type = roll < 15 ? ENEMY_ICE_WOLF :
+                    (roll < 35 ? ENEMY_FROST_ARCHER :
+                    (roll < 55 ? ENEMY_YETI :
+                    (roll < 80 ? ENEMY_FROST_WRAITH : ENEMY_ICE_GOLEM)));
+            } else {
+                type = roll < 10 ? ENEMY_ICE_WOLF :
+                    (roll < 25 ? ENEMY_FROST_ARCHER :
+                    (roll < 40 ? ENEMY_YETI :
+                    (roll < 60 ? ENEMY_FROST_WRAITH :
+                    (roll < 80 ? ENEMY_ICE_GOLEM : ENEMY_ICE_GIANT))));
             }
         } else if (g->location == LOCATION_SWAMP) {
             if (g->level <= 2) {
@@ -1024,6 +1089,7 @@ void game_init(GameState *g) {
     g->player.last_dx = 0;
     g->player.last_dy = 0;
     g->player.poison_turns = 0;
+    g->player.frozen_turns = 0;
     g->trail_count = 0;
     g->trail_frames = 0;
     g->trail_effect = TRAIL_EFFECT_GENERIC;

@@ -114,6 +114,8 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile != TILE_COAST_WALL &&
                         tile != TILE_SWAMP_WALL &&
                         tile != TILE_FROST_WALL &&
+                        tile != TILE_FROST_LAKE_HOLE &&
+                        tile != TILE_FROST_BROKEN_ICE &&
                         tile != TILE_DRAGON_WALL &&
                         tile != TILE_COAST_DEEP_WATER &&
                         tile != TILE_COAST_CHANNEL_WATER &&

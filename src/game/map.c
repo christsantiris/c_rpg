@@ -312,6 +312,8 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_COAST_WALL &&
         m->tiles[y][x] != TILE_SWAMP_WALL &&
         m->tiles[y][x] != TILE_FROST_WALL &&
+        m->tiles[y][x] != TILE_FROST_LAKE_HOLE &&
+        m->tiles[y][x] != TILE_FROST_BROKEN_ICE &&
         m->tiles[y][x] != TILE_DRAGON_WALL &&
         m->tiles[y][x] != TILE_COAST_DEEP_WATER &&
         m->tiles[y][x] != TILE_COAST_CHANNEL_WATER &&
@@ -1468,6 +1470,219 @@ void map_generate_high_pass(Map *m) {
     m->tiles[m->stairs_down_y][m->stairs_down_x] = TILE_HIGH_PASS_EXIT;
 }
 
+static int place_lake_hole(Map *m, int x, int y) {
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (m->tiles[y + dy][x + dx] != TILE_FROST_LAKE) {
+                return 0;
+            }
+        }
+    }
+    m->tiles[y][x] = TILE_FROST_LAKE_HOLE;
+    return 1;
+}
+
+static void freeze_kraken_lake(Map *m) {
+    // The last clearing freezes into the Polar Kraken's lake, with up to six
+    // holes around the centre where its tentacles break through. A hole needs
+    // open ice on all eight sides so it can never cut off part of the lake.
+    static const int hole_dx[6] = {-3, 3, -4, 4, -1, 1};
+    static const int hole_dy[6] = {-2, -2, 1, 1, 3, 3};
+    const Room *lake = &m->rooms[m->room_count - 1];
+    for (int y = lake->y; y < lake->y + lake->h; y++) {
+        for (int x = lake->x; x < lake->x + lake->w; x++) {
+            if (x > 0 && x < SWAMP_MAP_W - 1 && y > 0 && y < SWAMP_MAP_H - 1 &&
+                m->tiles[y][x] == TILE_FROST_FLOOR) {
+                m->tiles[y][x] = TILE_FROST_LAKE;
+            }
+        }
+    }
+    int cx;
+    int cy;
+    map_room_center(lake, &cx, &cy);
+    int holes = 0;
+    for (int i = 0; i < 6; i++) {
+        holes += place_lake_hole(m, cx + hole_dx[i], cy + hole_dy[i]);
+    }
+    // Irregular clearings can block the usual spots, so search outward from
+    // the Kraken until the lake has at least four holes.
+    for (int radius = 2; radius <= 8 && holes < 4; radius++) {
+        for (int dy = -radius; dy <= radius && holes < 4; dy++) {
+            for (int dx = -radius; dx <= radius && holes < 4; dx++) {
+                if ((dx == -radius || dx == radius || dy == -radius || dy == radius) &&
+                    cx + dx > lake->x && cx + dx < lake->x + lake->w - 1 &&
+                    cy + dy > lake->y && cy + dy < lake->y + lake->h - 1) {
+                    holes += place_lake_hole(m, cx + dx, cy + dy);
+                }
+            }
+        }
+    }
+}
+
+// A slick-ice patch fits when the patch and a one-tile ring around it lie
+// inside the clearing's interior and are all snow. The ring means every slide
+// ends on snow and the player can always walk round the patch instead.
+static int ice_patch_fits(const Map *m, const Room *r, int px, int py, int pw, int ph) {
+    if (px - 1 < r->x + 1 || py - 1 < r->y + 1 || px + pw > r->x + r->w - 2 ||
+        py + ph > r->y + r->h - 2) {
+        return 0;
+    }
+    for (int y = py - 1; y <= py + ph; y++) {
+        for (int x = px - 1; x <= px + pw; x++) {
+            if (m->tiles[y][x] != TILE_FROST_FLOOR) {
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
+// Places a 5x3 patch in a clearing, as near its centre as it fits.
+static int place_ice_patch(Map *m, const Room *r) {
+    const int pw = 5;
+    const int ph = 3;
+    int cx;
+    int cy;
+    map_room_center(r, &cx, &cy);
+    int best_x = -1;
+    int best_y = -1;
+    int best_distance = 0;
+    for (int py = r->y; py < r->y + r->h; py++) {
+        for (int px = r->x; px < r->x + r->w; px++) {
+            if (!ice_patch_fits(m, r, px, py, pw, ph)) {
+                continue;
+            }
+            int distance = abs(px + pw / 2 - cx) + abs(py + ph / 2 - cy);
+            if (best_x < 0 || distance < best_distance) {
+                best_x = px;
+                best_y = py;
+                best_distance = distance;
+            }
+        }
+    }
+    if (best_x < 0) {
+        return 0;
+    }
+    for (int y = best_y; y < best_y + ph; y++) {
+        for (int x = best_x; x < best_x + pw; x++) {
+            m->tiles[y][x] = TILE_FROST_ICE;
+        }
+    }
+    return 1;
+}
+
+// Stage N (2-5) gets up to N-1 slick-ice patches, at most one per clearing and
+// never in the first or last clearing (the stage-5 lake). Placement draws no
+// random numbers, so the rest of the stage's terrain is unchanged.
+static void place_slick_ice_patches(Map *m, int level) {
+    int candidates = m->room_count - 2;
+    if (level < 2 || candidates <= 0) {
+        return;
+    }
+    int start = (m->rooms[0].x + m->rooms[0].y + level) % candidates;
+    int placed = 0;
+    for (int k = 0; k < candidates && placed < level - 1; k++) {
+        placed += place_ice_patch(m, &m->rooms[1 + (start + k) % candidates]);
+    }
+}
+
+static TileType frost_line_tile(const Map *m, int vertical, int line, int along) {
+    return vertical ? m->tiles[along][line] : m->tiles[line][along];
+}
+
+// Tries one straight line between two clearings, on a column (vertical) or a
+// row: from the last snow inside room a's bounds to the first snow inside room
+// b's. Only those two end tiles touch open ground. The 2-14 tiles between must
+// all be wall with wall on both sides, so nothing along the tunnel borders a
+// trail, a clearing or another tunnel.
+static int carve_thin_ice_line(Map *m, const Room *a, const Room *b, int vertical, int line) {
+    int a_start = vertical ? a->y : a->x;
+    int a_end = vertical ? a->y + a->h : a->x + a->w;
+    int b_start = vertical ? b->y : b->x;
+    int b_end = vertical ? b->y + b->h : b->x + b->w;
+    int ea = -1;
+    for (int t = a_start; t < a_end; t++) {
+        if (frost_line_tile(m, vertical, line, t) == TILE_FROST_FLOOR) {
+            ea = t;
+        }
+    }
+    int eb = -1;
+    for (int t = b_end - 1; t >= b_start; t--) {
+        if (frost_line_tile(m, vertical, line, t) == TILE_FROST_FLOOR) {
+            eb = t;
+        }
+    }
+    int gap = eb - ea - 1;
+    if (ea < 0 || eb < 0 || gap < 2 || gap > 14) {
+        return 0;
+    }
+    for (int t = ea + 1; t < eb; t++) {
+        if (frost_line_tile(m, vertical, line, t) != TILE_FROST_WALL ||
+            frost_line_tile(m, vertical, line - 1, t) != TILE_FROST_WALL ||
+            frost_line_tile(m, vertical, line + 1, t) != TILE_FROST_WALL) {
+            return 0;
+        }
+    }
+    for (int t = ea + 1; t < eb; t++) {
+        if (vertical) {
+            m->tiles[t][line] = TILE_FROST_THIN_ICE;
+        } else {
+            m->tiles[line][t] = TILE_FROST_THIN_ICE;
+        }
+    }
+    return 1;
+}
+
+// Runs a tunnel north-south when the clearings share columns, otherwise
+// east-west when they share rows, trying lines from the middle outwards.
+static int carve_thin_ice_shortcut(Map *m, const Room *a, const Room *b) {
+    int vertical = 1;
+    int lo = a->x > b->x ? a->x : b->x;
+    int hi = (a->x + a->w < b->x + b->w ? a->x + a->w : b->x + b->w) - 1;
+    int max_line = SWAMP_MAP_W - 3;
+    if (lo > hi) {
+        vertical = 0;
+        lo = a->y > b->y ? a->y : b->y;
+        hi = (a->y + a->h < b->y + b->h ? a->y + a->h : b->y + b->h) - 1;
+        max_line = SWAMP_MAP_H - 3;
+    }
+    lo = lo < 2 ? 2 : lo;
+    hi = hi > max_line ? max_line : hi;
+    if (lo > hi) {
+        return 0;
+    }
+    int a_first = vertical ? a->y <= b->y : a->x <= b->x;
+    const Room *first = a_first ? a : b;
+    const Room *second = a_first ? b : a;
+    int mid = (lo + hi) / 2;
+    for (int offset = 0; offset <= 2 * (hi - lo); offset++) {
+        int line = offset % 2 == 0 ? mid + offset / 2 : mid - (offset + 1) / 2;
+        if (line >= lo && line <= hi && carve_thin_ice_line(m, first, second, vertical, line)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+// Stage N (3-5) gets up to N-2 thin-ice shortcuts between clearings that are
+// not next to each other on the route, never to the stage-5 lake. Each is an
+// extra path carved through walls, so the stage stays fully connected after
+// every shortcut has collapsed.
+static void place_thin_ice_shortcuts(Map *m, int level) {
+    static const int pairs[5][2] = {{1, 4}, {4, 7}, {0, 3}, {1, 5}, {5, 8}};
+    if (level < 3 || m->room_count < 9) {
+        return;
+    }
+    int lake = level == FROSTFELL_DEPTH ? m->room_count - 1 : -1;
+    int placed = 0;
+    for (int i = 0; i < 5 && placed < level - 2; i++) {
+        if (pairs[i][0] == lake || pairs[i][1] == lake) {
+            continue;
+        }
+        placed += carve_thin_ice_shortcut(m, &m->rooms[pairs[i][0]], &m->rooms[pairs[i][1]]);
+    }
+}
+
 // Frostfell follows the swamp's layout, mirrored so players enter from Town 2
 // on the east edge and travel west, then snows over its tiles.
 void map_generate_frostfell(Map *m, int level) {
@@ -1498,6 +1713,11 @@ void map_generate_frostfell(Map *m, int level) {
             }
         }
     }
+    if (level == FROSTFELL_DEPTH) {
+        freeze_kraken_lake(m);
+    }
+    place_thin_ice_shortcuts(m, level);
+    place_slick_ice_patches(m, level);
 }
 
 void map_generate_dragonspine(Map *m, int level) {
