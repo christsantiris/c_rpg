@@ -26,7 +26,7 @@ retro pixel-art style. Choose a Warrior, Mage, or Rogue, prepare in town, and
 explore an eight-floor undead dungeon, the eight-stage Haunted Forest, the
 eight-stage Goblin Mountains, the eight-stage Sunken Coast, and Town 2's
 five-level Blackwater Swamp. Beyond the Goblin Mountains, the five-stage
-Dragonspine ascent opens through the High Pass. Each region
+Dragonspine ascent begins at Town 4's east gate. Each region
 keeps its own generated maps and progression. Defeating the Drowned Queen on
 the Sunken Coast opens a sea route to the Ruined Isle. Its four-tier Ruined
 Temple remains a late-game challenge.
@@ -40,12 +40,14 @@ has not been found.
 
 The roads through OakHaven lead north to the mountains, west to the forest, east
 to the dungeon, and south to the coast. Cain stands near the central crossroads.
-Defeating the Goblin King opens a separate east gate to the enemy-free High Pass
-and Dragonspine. Leaving the first mountain area returns you to town, so the
-new ascent is a deliberate trip. Ilya waits beside the new path and offers a
-quest to recover a golden goblet from the dragon's hoard. Her one-time reward is
-a Potion of Strength that permanently adds 1 base attack when consumed.
-Speaking with him explains the dangers beyond town and grants one Scroll of
+Defeating the Goblin King and leaving Crown Peak brings you to Town 4, an open
+crossroads with no buildings. Its east gate leads directly to Dragonspine.
+The safe High Pass shortcuts the mountains between Town 4's south road and a
+new northeast road in OakHaven, unlocked by the Goblin King's defeat. Ilya
+waits beside Town 4's Dragonspine gate and offers a quest to recover a golden
+goblet from the dragon's hoard. Her one-time reward is a Potion of Strength
+that permanently adds 1 base attack when consumed.
+Speaking with Cain explains the dangers beyond town and grants one Scroll of
 Return to Town when inventory space is available. Use the scroll from the
 inventory to learn the permanent spell.
 

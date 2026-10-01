@@ -54,30 +54,78 @@ void test_dragonspine(void) {
     static GameState loaded;
     memset(&g, 0, sizeof(g));
     game_init(&g);
-    ASSERT("Dragonspine gate is hidden before the Goblin King falls",
-        g.map.tiles[TOWN_DRAGON_GATE_Y][TOWN_W - 1] != TILE_TOWN_EXIT);
+    ASSERT("Town 4 shortcut is closed before the Goblin King falls",
+        g.map.tiles[0][TOWN4_ROAD_X] == TILE_WALL);
 
     g.defeated_bosses |= 1 << LOCATION_MOUNTAINS;
     game_enter_mountains(&g);
-    game_return_to_town(&g);
-    ASSERT("Goblin King victory opens a separate east-side High Pass gate",
-        g.map.tiles[TOWN_DRAGON_GATE_Y][TOWN_W - 1] == TILE_TOWN_EXIT &&
-        g.map.tiles[12][TOWN_W - 1] == TILE_TOWN_EXIT &&
-        g.map.tiles[TOWN_DRAGON_GATE_Y][TOWN_W - 2] == TILE_TOWN_PATH);
-    g.player.x = TOWN_W - 2;
-    g.player.y = TOWN_DRAGON_GATE_Y;
-    Action east = {ACTION_MOVE, TOWN_W - 1, TOWN_DRAGON_GATE_Y};
-    action_resolve_player(&g, east);
-    ASSERT("new gate leads to an enemy-free High Pass",
-        g.location == LOCATION_HIGH_PASS && g.enemy_count == 0 &&
-        g.map.stairs_down_x == HIGH_PASS_W - 1);
+    game_enter_town4(&g);
+    ASSERT("Town 4 has an east Dragonspine gate and a south shortcut",
+        g.location == LOCATION_TOWN4 && g.enemy_count == 0 &&
+        g.map.tiles[TOWN4_DRAGON_GATE_Y][TOWN_W - 1] == TILE_TOWN_EXIT &&
+        g.map.tiles[TOWN_H - 1][20] == TILE_TOWN_EXIT);
+    int empty_crossroads = 1;
+    int ilya_count = 0;
+    for (int y = 0; y < TOWN_H; y++) {
+        for (int x = 0; x < TOWN_W; x++) {
+            TileType tile = g.map.tiles[y][x];
+            ilya_count += tile == TILE_NPC_DRAGON_SEEKER;
+            empty_crossroads &= tile == TILE_WALL || tile == TILE_TOWN_FLOOR ||
+                tile == TILE_TOWN_PATH || tile == TILE_TOWN_EXIT ||
+                tile == TILE_NPC_DRAGON_SEEKER;
+        }
+    }
+    ASSERT("Town 4 is a crossroads with Ilya and no buildings",
+        empty_crossroads && ilya_count == 1 &&
+        g.map.tiles[12][20] == TILE_TOWN_PATH &&
+        g.map.tiles[0][20] == TILE_WALL && g.map.tiles[12][0] == TILE_WALL);
 
-    g.player.x = HIGH_PASS_W - 2;
-    g.player.y = g.map.stairs_down_y;
-    Action pass_exit = {ACTION_MOVE, HIGH_PASS_W - 1, g.map.stairs_down_y};
-    action_resolve_player(&g, pass_exit);
-    ASSERT("High Pass leads to Dragonspine stage one",
+    action_resolve_player(&g, (Action){ACTION_MOVE, 20, TOWN_H - 1});
+    ASSERT("Town 4 south exit enters the safe shortcut",
+        g.location == LOCATION_HIGH_PASS && g.enemy_count == 0 &&
+        g.player.x == HIGH_PASS_X && g.player.y == 1);
+    int saved = save_game(&g, DRAGONSPINE_TEST_SLOT);
+    int restored = saved && load_game(&loaded, DRAGONSPINE_TEST_SLOT);
+    ASSERT("shortcut position and mountain victory survive save/load",
+        restored && loaded.location == LOCATION_HIGH_PASS &&
+        loaded.player.y == 1 &&
+        (loaded.defeated_bosses & (1 << LOCATION_MOUNTAINS)));
+    if (restored) {
+        g = loaded;
+    }
+    remove("saves/savegame_9984.json");
+    for (int y = 2; y < HIGH_PASS_H; y++) {
+        action_resolve_player(&g, (Action){ACTION_MOVE, HIGH_PASS_X, y});
+    }
+    ASSERT("walking south through the shortcut reaches OakHaven",
+        g.location == LOCATION_TOWN && g.player.x == TOWN4_ROAD_X &&
+        g.player.y == 1 && g.map.tiles[0][TOWN4_ROAD_X] == TILE_TOWN_EXIT);
+    ASSERT("OakHaven has no old Dragonspine gate or Ilya",
+        g.map.tiles[4][TOWN_W - 1] == TILE_WALL &&
+        g.map.tiles[6][39] == TILE_TOWN_FLOOR);
+    action_resolve_player(&g, (Action){ACTION_MOVE, TOWN4_ROAD_X, 0});
+    ASSERT("OakHaven shortcut starts at the southern end of the High Pass",
+        g.location == LOCATION_HIGH_PASS && g.player.y == HIGH_PASS_H - 2 &&
+        g.enemy_count == 0);
+    for (int y = HIGH_PASS_H - 3; y >= 0; y--) {
+        action_resolve_player(&g, (Action){ACTION_MOVE, HIGH_PASS_X, y});
+    }
+    ASSERT("walking north reaches Town 4 without crossing the mountains",
+        g.location == LOCATION_TOWN4 && g.player.x == 20 &&
+        g.player.y == TOWN_H - 2 && g.enemy_count == 0);
+    g.player.x = TOWN_W - 2;
+    g.player.y = TOWN4_DRAGON_GATE_Y;
+    Action east = {ACTION_MOVE, TOWN_W - 1, TOWN4_DRAGON_GATE_Y};
+    action_resolve_player(&g, east);
+    ASSERT("Town 4 east gate leads directly to Dragonspine stage one",
         g.location == LOCATION_DRAGONSPINE && g.level == 1 && g.enemy_count > 0);
+    g.player.x = 1;
+    g.player.y = g.map.stairs_up_y;
+    action_resolve_player(&g, (Action){ACTION_MOVE, 0, g.map.stairs_up_y});
+    ASSERT("leaving Dragonspine stage one returns directly to Town 4",
+        g.location == LOCATION_TOWN4 && g.player.x == TOWN_W - 2 &&
+        g.player.y == TOWN4_DRAGON_GATE_Y);
+    action_resolve_player(&g, east);
     ASSERT("Dragonspine uses distinct cliff terrain",
         g.map.tiles[g.map.stairs_up_y][g.map.stairs_up_x] == TILE_DRAGON_ENTRANCE);
     ASSERT("Dragonspine trails open at the west and east map edges",
@@ -144,23 +192,45 @@ void test_dragonspine(void) {
     g.player.x = g.map.stairs_down_x - 1;
     g.player.y = g.map.stairs_down_y;
     action_resolve_player(&g, summit_exit);
-    ASSERT("summit exit returns to town after the dragon falls",
-        g.location == LOCATION_TOWN);
+    ASSERT("summit exit returns to Town 4 after the dragon falls",
+        g.location == LOCATION_TOWN4);
 
-    game_enter_high_pass(&g, 1);
     game_enter_dragonspine(&g);
     game_descend(&g);
     int saved_level = g.level;
     game_open_town_portal(&g);
-    ASSERT("Dragonspine portal returns to the High Pass gate in town",
+    ASSERT("Dragonspine portal returns beside Town 4 east gate",
+        g.location == LOCATION_TOWN4 && g.portal_active &&
+        g.map.tiles[TOWN4_PORTAL_Y][TOWN4_PORTAL_X] == TILE_PORTAL);
+    g.player.x = 20;
+    g.player.y = TOWN_H - 2;
+    action_resolve_player(&g, (Action){ACTION_MOVE, 20, TOWN_H - 1});
+    g.player.y = HIGH_PASS_H - 2;
+    action_resolve_player(&g, (Action){ACTION_MOVE, HIGH_PASS_X, HIGH_PASS_H - 1});
+    ASSERT("visiting OakHaven preserves the Dragonspine portal destination",
         g.location == LOCATION_TOWN && g.portal_active &&
-        g.map.tiles[TOWN_DRAGON_GATE_Y + 1][41] == TILE_PORTAL);
-    int saved = save_game(&g, DRAGONSPINE_TEST_SLOT);
-    int restored = saved && load_game(&loaded, DRAGONSPINE_TEST_SLOT);
+        !g.level_cache[saved_level - 1].valid &&
+        g.dragonspine_cache[saved_level - 1].valid);
+    saved = save_game(&g, DRAGONSPINE_TEST_SLOT);
+    restored = saved && load_game(&loaded, DRAGONSPINE_TEST_SLOT);
+    ASSERT("OakHaven saves keep the unlocked shortcut and remote portal",
+        restored && loaded.location == LOCATION_TOWN && loaded.portal_active &&
+        loaded.map.tiles[0][TOWN4_ROAD_X] == TILE_TOWN_EXIT);
+    if (restored) {
+        g = loaded;
+    }
+    action_resolve_player(&g, (Action){ACTION_MOVE, TOWN4_ROAD_X, 0});
+    g.player.y = 1;
+    action_resolve_player(&g, (Action){ACTION_MOVE, HIGH_PASS_X, 0});
+    ASSERT("returning to Town 4 restores the Dragonspine portal beside its gate",
+        g.location == LOCATION_TOWN4 && g.portal_active &&
+        g.map.tiles[TOWN4_PORTAL_Y][TOWN4_PORTAL_X] == TILE_PORTAL);
+    saved = save_game(&g, DRAGONSPINE_TEST_SLOT);
+    restored = saved && load_game(&loaded, DRAGONSPINE_TEST_SLOT);
     ASSERT("Dragonspine expedition and portal survive save/load",
-        restored && loaded.portal_active &&
+        restored && loaded.location == LOCATION_TOWN4 && loaded.portal_active &&
         loaded.portal_location == LOCATION_DRAGONSPINE &&
-        loaded.map.tiles[TOWN_DRAGON_GATE_Y][TOWN_W - 1] == TILE_TOWN_EXIT &&
+        loaded.map.tiles[TOWN4_DRAGON_GATE_Y][TOWN_W - 1] == TILE_TOWN_EXIT &&
         loaded.max_dragonspine_level_reached == saved_level &&
         loaded.dragonspine_cache[saved_level - 1].valid);
     if (restored) {
@@ -174,19 +244,21 @@ void test_dragonspine(void) {
     game_init(&g);
     g.defeated_bosses |= 1 << LOCATION_MOUNTAINS;
     game_enter_mountains(&g);
-    game_return_to_town(&g);
-    ASSERT("Ilya appears beside the unlocked one-tile High Pass road",
-        g.map.tiles[TOWN_DRAGON_NPC_Y][TOWN_DRAGON_NPC_X] ==
+    game_enter_town4(&g);
+    ASSERT("Ilya appears beside Town 4 east road",
+        g.map.tiles[TOWN4_ILYA_Y][TOWN4_ILYA_X] ==
             TILE_NPC_DRAGON_SEEKER &&
-        g.map.tiles[TOWN_DRAGON_NPC_Y][TOWN_DRAGON_NPC_X + 1] ==
+        g.map.tiles[TOWN4_ILYA_Y + 1][TOWN4_ILYA_X] ==
             TILE_TOWN_PATH &&
-        !map_is_walkable(&g.map, TOWN_DRAGON_NPC_X, TOWN_DRAGON_NPC_Y));
+        !map_is_walkable(&g.map, TOWN4_ILYA_X, TOWN4_ILYA_Y));
     game_enter_dragonspine(&g);
     game_open_town_portal(&g);
     game_talk_to_dragon_seeker(&g);
     ASSERT("Ilya assigns the Dragonspine treasure quest once",
         g.dragon_treasure_quest_state == 1 && !g.portal_active &&
-        g.map.tiles[TOWN_DRAGON_GATE_Y + 1][41] == TILE_TOWN_FLOOR);
+        g.map.tiles[TOWN4_PORTAL_Y][TOWN4_PORTAL_X] == TILE_TOWN_FLOOR &&
+        g.dialogue_x == TOWN4_ILYA_X && g.dialogue_y == TOWN4_ILYA_Y &&
+        strstr(g.dialogue_text, "east gate"));
     game_enter_dragonspine(&g);
     for (int level = 2; level <= DRAGONSPINE_DEPTH; level++) {
         game_descend(&g);

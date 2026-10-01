@@ -1596,10 +1596,10 @@ void test_mountains(void) {
         if (g.enemies[i].type == ENEMY_MOUNTAIN_GOBLIN_KING)
             g.enemies[i].active = 0;
     action_resolve_player(&g, exit);
-    ASSERT("defeating Goblin King returns to town",
-        g.location == LOCATION_TOWN);
-    ASSERT("mountain completion returns at north OakHaven road",
-        g.player.x == 20 && g.player.y == 1);
+    ASSERT("defeating Goblin King reaches Town 4",
+        g.location == LOCATION_TOWN4);
+    ASSERT("mountain completion arrives at Town 4 south road",
+        g.player.x == 20 && g.player.y == TOWN_H - 2);
 }
 
 void test_return_to_town(void) {
