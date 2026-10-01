@@ -124,6 +124,8 @@ Item boss_equipment_reward(EnemyType type) {
             return item_make_demonic_sword();
         case ENEMY_RED_DRAGON:
             return item_make_dragon_scale_mantle();
+        case ENEMY_POLAR_KRAKEN:
+            return item_make_krakenbone_bow();
         default:
             return item_make_cryptblade();
     }
@@ -179,6 +181,13 @@ static int enemy_score(EnemyType type) {
         case ENEMY_FIRE_ELEMENTAL: return 185;
         case ENEMY_ROAD_ARCHER: return 65;
         case ENEMY_HORSEMAN: return 105;
+        case ENEMY_ICE_WOLF: return 50;
+        case ENEMY_FROST_ARCHER: return 65;
+        case ENEMY_YETI: return 110;
+        case ENEMY_FROST_WRAITH: return 120;
+        case ENEMY_ICE_GOLEM: return 150;
+        case ENEMY_ICE_GIANT: return 190;
+        case ENEMY_POLAR_KRAKEN: return 1700;
         case ENEMY_ORC:         return 30;
         case ENEMY_TROLL:       return 50;
         case ENEMY_GIANT:       return 80;
@@ -253,6 +262,13 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         case ENEMY_FIRE_ELEMENTAL: gold = 13 + rand() % 12; break;
         case ENEMY_ROAD_ARCHER: gold = 8 + rand() % 9; break;
         case ENEMY_HORSEMAN: gold = 11 + rand() % 10; break;
+        case ENEMY_ICE_WOLF: gold = 4 + rand() % 6; break;
+        case ENEMY_FROST_ARCHER: gold = 8 + rand() % 8; break;
+        case ENEMY_YETI: gold = 10 + rand() % 10; break;
+        case ENEMY_FROST_WRAITH: gold = 9 + rand() % 9; break;
+        case ENEMY_ICE_GOLEM: gold = 12 + rand() % 10; break;
+        case ENEMY_ICE_GIANT: gold = 18 + rand() % 12; break;
+        case ENEMY_POLAR_KRAKEN: gold = 75; break;
         case ENEMY_ORC:      gold = 6 + rand() % 8;  break;
         case ENEMY_TROLL:    gold = 10 + rand() % 10; break;
         case ENEMY_GIANT:    gold = 15 + rand() % 15; break;
@@ -332,6 +348,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         drop_tile == TILE_LABYRINTH_FLOOR ||
         drop_tile == TILE_SWAMP_FLOOR ||
         drop_tile == TILE_FROST_FLOOR ||
+        drop_tile == TILE_FROST_LAKE ||
         drop_tile == TILE_DRAGON_FLOOR ||
         drop_tile == TILE_DRAGON_ASH ||
         drop_tile == TILE_DRAGON_HOARD;
@@ -526,6 +543,8 @@ static void set_trail(GameState *g, int sx, int sy,
     }
 }
 
+// Changes a map tile, keeping floor-item underlays in sync and marking it
+// explored. Mountain and Frostfell terrain both use it.
 static void change_mountain_tile(GameState *g, int x, int y, TileType tile) {
     g->map.tiles[y][x] = tile;
     for (int i = 0; i < g->floor_item_count; i++) {
@@ -535,6 +554,96 @@ static void change_mountain_tile(GameState *g, int x, int y, TileType tile) {
         }
     }
     map_mark_explored(&g->map, x, y);
+}
+
+static int enemy_position_occupied(const GameState *g, int skip, int x, int y);
+
+// After a step onto slick ice the player keeps sliding the same way, all in
+// one turn, until reaching snow or meeting a wall, an enemy or anything else
+// such as an exit or an item. Enemies keep their footing and never slide.
+static void frost_slide(GameState *g, int old_x, int old_y) {
+    int dx = g->player.x - old_x;
+    int dy = g->player.y - old_y;
+    if (abs_int(dx) + abs_int(dy) != 1) {
+        return;
+    }
+    int slid = 0;
+    while (g->map.tiles[g->player.y][g->player.x] == TILE_FROST_ICE) {
+        int nx = g->player.x + dx;
+        int ny = g->player.y + dy;
+        if (nx < 0 || nx >= MAP_W || ny < 0 || ny >= MAP_H ||
+            (g->map.tiles[ny][nx] != TILE_FROST_ICE &&
+            g->map.tiles[ny][nx] != TILE_FROST_FLOOR) ||
+            enemy_position_occupied(g, -1, nx, ny)) {
+            break;
+        }
+        game_move_player(g, dx, dy);
+        slid = 1;
+    }
+    if (slid) {
+        push_message(g, "You slide across the ice.");
+    }
+}
+
+// Thin ice holds while the player stays on it. The moment the player steps off
+// either end, the whole shortcut collapses into open water, so a shortcut is
+// always either whole or gone and can never strand anyone halfway. Creatures
+// still standing on it fall through and count as a normal kill.
+static void frost_thin_ice_step(GameState *g, int old_x, int old_y) {
+    TileType from_tile = g->map.tiles[old_y][old_x];
+    TileType to_tile = g->map.tiles[g->player.y][g->player.x];
+    if (to_tile == TILE_FROST_THIN_ICE && from_tile != TILE_FROST_THIN_ICE) {
+        push_message(g, "The thin ice creaks. It will give way once you step off.");
+    }
+    if (from_tile != TILE_FROST_THIN_ICE || to_tile == TILE_FROST_THIN_ICE) {
+        return;
+    }
+    static int queue[MAP_W * MAP_H];
+    static const int dx[4] = {0, 1, 0, -1};
+    static const int dy[4] = {-1, 0, 1, 0};
+    int head = 0;
+    int tail = 0;
+    change_mountain_tile(g, old_x, old_y, TILE_FROST_BROKEN_ICE);
+    queue[tail++] = old_y * MAP_W + old_x;
+    while (head < tail) {
+        int x = queue[head] % MAP_W;
+        int y = queue[head] / MAP_W;
+        head++;
+        for (int i = 0; i < 4; i++) {
+            int nx = x + dx[i];
+            int ny = y + dy[i];
+            if (nx >= 0 && nx < MAP_W && ny >= 0 && ny < MAP_H &&
+                g->map.tiles[ny][nx] == TILE_FROST_THIN_ICE) {
+                change_mountain_tile(g, nx, ny, TILE_FROST_BROKEN_ICE);
+                queue[tail++] = ny * MAP_W + nx;
+            }
+        }
+    }
+    int drowned = 0;
+    const char *victim = "";
+    for (int i = 0; i < g->enemy_count; i++) {
+        Enemy *e = &g->enemies[i];
+        if (e->active && !e->is_boss &&
+            g->map.tiles[e->y][e->x] == TILE_FROST_BROKEN_ICE) {
+            e->active = 0;
+            drop_loot(g, e);
+            player_gain_xp(g, e->experience);
+            victim = e->name;
+            drowned++;
+        }
+    }
+    if (drowned > 0) {
+        game_update_level_progress(g);
+    }
+    char msg[MAX_MESSAGE_LEN];
+    if (drowned == 0) {
+        snprintf(msg, sizeof(msg), "The thin ice collapses behind you!");
+    } else if (drowned == 1) {
+        snprintf(msg, sizeof(msg), "The thin ice collapses, drowning the %s!", victim);
+    } else {
+        snprintf(msg, sizeof(msg), "The thin ice collapses, drowning %d creatures!", drowned);
+    }
+    push_message(g, msg);
 }
 
 static int mountain_obstacle(TileType tile) {
@@ -729,8 +838,17 @@ void action_resolve_player(GameState *g, Action a) {
         g->location == LOCATION_INN ||
         g->location == LOCATION_ISLAND) {
         g->player.poison_turns = 0;
+        g->player.frozen_turns = 0;
     }
     if (a.type == ACTION_NONE) {
+        return;
+    }
+    // Frozen players lose the turn; inventory actions never take one.
+    if (g->player.frozen_turns > 0 && a.type != ACTION_USE_ITEM &&
+        a.type != ACTION_EQUIP_ITEM && a.type != ACTION_EQUIP_OFF_HAND &&
+        a.type != ACTION_DROP_ITEM) {
+        g->player.frozen_turns--;
+        push_message_kind(g, "You are frozen solid and lose a turn!", MESSAGE_DAMAGE_TAKEN);
         return;
     }
 
@@ -1083,6 +1201,12 @@ void action_resolve_player(GameState *g, Action a) {
             push_message(g, "No room to drop item!");
             return;
         }
+        // Refuse drops on thin ice: an item tile would split the shortcut, and the
+        // item would sink when it collapses.
+        if (g->map.tiles[g->player.y][g->player.x] == TILE_FROST_THIN_ICE) {
+            push_message(g, "Anything dropped here would sink when the ice gives way.");
+            return;
+        }
 
         Item item = g->inventory[idx];
 
@@ -1181,6 +1305,8 @@ void action_resolve_player(GameState *g, Action a) {
             g->player.x = destination_x;
             g->player.y = destination_y;
             push_message(g, "Teleported!");
+            // Teleporting onto or off thin ice counts like a step on it.
+            frost_thin_ice_step(g, start_x, start_y);
             return;
         }
 
@@ -1276,6 +1402,12 @@ void action_resolve_player(GameState *g, Action a) {
                             g->score += enemy_score(e->type);
                             snprintf(msg, sizeof(msg), "%s killed %s!",
                                 sp->name, e->name);
+                        } else if (sp->id == SPELL_FROST_BOLT &&
+                            (e->type == ENEMY_ICE_GOLEM ||
+                            e->type == ENEMY_POLAR_KRAKEN)) {
+                            snprintf(msg, sizeof(msg),
+                                "%s shrugs off the frost: %d dmg", e->name,
+                                dmg);
                         } else if (sp->id == SPELL_FROST_BOLT) {
                             e->frozen_turns = 2;
                             snprintf(msg, sizeof(msg),
@@ -1776,8 +1908,15 @@ void action_resolve_player(GameState *g, Action a) {
                 game_descend(g);
                 g->score += g->level * 100;
             } else {
+                for (int i = 0; i < g->enemy_count; i++) {
+                    if (g->enemies[i].active &&
+                        g->enemies[i].type == ENEMY_POLAR_KRAKEN) {
+                        push_message(g, "The Polar Kraken bars the way west!");
+                        return;
+                    }
+                }
                 game_return_to_town(g);
-                push_message(g, "You leave the Frostfell Wastes behind.");
+                push_message(g, "The Frostfell Wastes are free of the Kraken.");
             }
             return;
         }
@@ -1926,6 +2065,8 @@ void action_resolve_player(GameState *g, Action a) {
             if (g->map.tiles[g->player.y][g->player.x] == TILE_MOUNTAIN_WEAK_BRIDGE) {
                 push_message(g, "The bridge creaks beneath your feet!");
             }
+            frost_thin_ice_step(g, old_x, old_y);
+            frost_slide(g, old_x, old_y);
         }
         // Check for trap on new tile
         int px = g->player.x;
@@ -2205,6 +2346,7 @@ static int enemy_prefers_range(const Enemy *e) {
         e->type == ENEMY_DARK_ELF ||
         e->type == ENEMY_GOBLIN_ARCHER ||
         e->type == ENEMY_ROAD_ARCHER ||
+        e->type == ENEMY_FROST_ARCHER ||
         e->type == ENEMY_GOBLIN_BOMBER ||
         e->type == ENEMY_SIREN ||
         e->type == ENEMY_WATER_ELEMENTAL ||
@@ -2501,6 +2643,65 @@ void action_resolve_enemies(GameState *g) {
     action_resolve_enemies_with_projectiles(g, NULL);
 }
 
+static int near_lake_hole(const GameState *g, int x, int y) {
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            int tx = x + dx;
+            int ty = y + dy;
+            if (tx >= 0 && tx < MAP_W && ty >= 0 && ty < MAP_H &&
+                g->map.tiles[ty][tx] == TILE_FROST_LAKE_HOLE) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+// The Kraken never leaves its lake. It wakes when the player steps onto the
+// ice or hurts it, then alternates: a warning turn raises tentacles at every
+// hole (and it bites anyone beside it), and a strike turn hits a player
+// standing next to any hole.
+static void polar_kraken_turn(GameState *g, Enemy *e) {
+    const Room *lake = &g->map.rooms[g->map.room_count - 1];
+    int on_lake = g->player.x >= lake->x && g->player.x < lake->x + lake->w &&
+        g->player.y >= lake->y && g->player.y < lake->y + lake->h;
+    if (!on_lake && e->hp == e->max_hp) {
+        return;
+    }
+    e->move_timer++;
+    char msg[MAX_MESSAGE_LEN];
+    if (e->move_timer % 2 == 1) {
+        int adjacent = abs_int(g->player.x - e->x) <= 1 &&
+            abs_int(g->player.y - e->y) <= 1;
+        if (adjacent) {
+            int dmg = e->attack - g->player.defense;
+            if (dmg < 1) {
+                dmg = 1;
+            }
+            dmg = apply_enemy_damage(g, dmg, FEEDBACK_NOW);
+            if (dmg > 0) {
+                snprintf(msg, sizeof(msg), "%s bites: %d dmg", e->name, dmg);
+                push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
+            }
+        }
+        push_message(g, "Tentacles stir beneath the ice holes!");
+        return;
+    }
+    if (!near_lake_hole(g, g->player.x, g->player.y)) {
+        push_message(g, "The tentacles lash empty ice.");
+        return;
+    }
+    int dmg = e->attack - g->player.defense / 2;
+    if (dmg < 4) {
+        dmg = 4;
+    }
+    dmg = apply_enemy_damage(g, dmg, FEEDBACK_NOW);
+    if (dmg > 0) {
+        snprintf(msg, sizeof(msg), "Kraken tentacle: %d dmg", dmg);
+        push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
+    }
+}
+
 void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *shots) {
     if (shots) {
         shots->count = 0;
@@ -2612,6 +2813,10 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 continue;
             }
         }
+        if (e->type == ENEMY_POLAR_KRAKEN) {
+            polar_kraken_turn(g, e);
+            continue;
+        }
 
         int path_distance = enemy_distances[e->y][e->x];
         // Leave an opening after retreating so melee attackers can catch up.
@@ -2642,11 +2847,20 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                     g->player.mp -= drained;
                     combat_feedback_add(g, FEEDBACK_MANA_LOSS, FEEDBACK_NOW, g->player.x, g->player.y, drained);
                 }
+                // One hit in four freezes the player for their next turn.
+                int froze = e->type == ENEMY_FROST_WRAITH &&
+                    g->player.frozen_turns == 0 && rand() % 100 < 25;
+                if (froze) {
+                    g->player.frozen_turns = 1;
+                }
                 char msg[MAX_MESSAGE_LEN];
-                if (e->type == ENEMY_WRAITH)
+                if (e->type == ENEMY_WRAITH) {
                     snprintf(msg, sizeof(msg), "Wraith: %d dmg, drains MP", dmg);
-                else
+                } else if (froze) {
+                    snprintf(msg, sizeof(msg), "%s: %d dmg, freezes you!", e->name, dmg);
+                } else {
                     snprintf(msg, sizeof(msg), "%s: %d dmg", e->name, dmg);
+                }
                 push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
                 continue;
         }
@@ -2846,6 +3060,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
 
         if ((e->type == ENEMY_GOBLIN_ARCHER ||
             e->type == ENEMY_ROAD_ARCHER ||
+            e->type == ENEMY_FROST_ARCHER ||
             e->type == ENEMY_GOBLIN_BOMBER) &&
             e->move_timer % 2 == 0 && clear_orthogonal_path(g, i, e)) {
             int dmg = e->attack - g->player.defense / 2;
@@ -2857,7 +3072,8 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             char msg[MAX_MESSAGE_LEN];
             const char *attack_name = e->type == ENEMY_GOBLIN_BOMBER ?
                 "Goblin bomb" : e->type == ENEMY_ROAD_ARCHER ?
-                "Road arrow" : "Goblin arrow";
+                "Road arrow" : e->type == ENEMY_FROST_ARCHER ?
+                "Frost arrow" : "Goblin arrow";
             snprintf(msg, sizeof(msg), "%s: %d dmg", attack_name, dmg);
             push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
             continue;
@@ -2924,6 +3140,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             e->type == ENEMY_FOREST_TROLL || e->type == ENEMY_CAVE_TROLL ||
             e->type == ENEMY_GIANT_CRAB ||
             e->type == ENEMY_ANIMATED_STATUE ||
+            e->type == ENEMY_ICE_GOLEM ||
             e->type == ENEMY_VINEBOUND_GUARDIAN ||
             e->type == ENEMY_LUNAR_EFFIGY ||
             e->type == ENEMY_MOONBOUND_SENTINEL) {
@@ -2938,8 +3155,11 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             // Bats close distance quickly, but never attack on their second move.
             enemy_move_toward(g, i);
         }
-        if ((e->type == ENEMY_PIXIE || e->type == ENEMY_BLIGHTED_WOLF) && moved)
+        // Ice Wolves skip flanking and charge two tiles a turn.
+        if ((e->type == ENEMY_PIXIE || e->type == ENEMY_BLIGHTED_WOLF ||
+            e->type == ENEMY_ICE_WOLF) && moved) {
             enemy_move_toward(g, i);
+        }
         if (e->type == ENEMY_TEMPLE_STALKER && moved) {
             enemy_move_toward(g, i);
         }

@@ -154,15 +154,15 @@ int quest_journal_count(const GameState *g, QuestJournalTab tab) {
 int quest_journal_get_boss(const GameState *g, int index, BossJournalEntry *entry) {
     static const char *names[JOURNAL_BOSS_COUNT] = {
         "Lich King", "Necromancer", "Goblin King", "Drowned Queen",
-        "Fallen Sun Guardian", "Swamp Demon", "Red Dragon"
+        "Fallen Sun Guardian", "Swamp Demon", "Red Dragon", "Polar Kraken"
     };
     static const char *areas[JOURNAL_BOSS_COUNT] = {
         "Dungeon", "Forest", "Goblin Mountains", "Sunken Coast",
-        "Ruined Temple", "Blackwater Swamp", "Dragonspine"
+        "Ruined Temple", "Blackwater Swamp", "Dragonspine", "Frostfell Wastes"
     };
     static const Location regions[JOURNAL_BOSS_COUNT] = {
         LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST,
-        LOCATION_TEMPLE, LOCATION_SWAMP, LOCATION_DRAGONSPINE
+        LOCATION_TEMPLE, LOCATION_SWAMP, LOCATION_DRAGONSPINE, LOCATION_FROSTFELL
     };
     if (index < 0 || index >= JOURNAL_BOSS_COUNT) {
         return 0;

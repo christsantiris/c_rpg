@@ -73,6 +73,7 @@ typedef struct {
     int   equipped_spell;
     int   last_dx, last_dy;
     int poison_turns;
+    int frozen_turns;
     PlayerClass player_class;
 } Player;
 

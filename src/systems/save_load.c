@@ -373,6 +373,7 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(player, "last_dx",           g->player.last_dx);
     cJSON_AddNumberToObject(player, "last_dy",           g->player.last_dy);
     cJSON_AddNumberToObject(player, "equipped_spell",    g->player.equipped_spell);
+    cJSON_AddNumberToObject(player, "frozen_turns",      g->player.frozen_turns);
     cJSON_AddNumberToObject(player, "known_spell_count", g->player.known_spell_count);
     cJSON_AddNumberToObject(player, "player_class",      g->player.player_class);
 
@@ -813,6 +814,9 @@ int load_game(GameState *g, int slot) {
     g->player.last_dx          = cJSON_GetObjectItem(player, "last_dx")->valueint;
     g->player.last_dy          = cJSON_GetObjectItem(player, "last_dy")->valueint;
     g->player.equipped_spell   = cJSON_GetObjectItem(player, "equipped_spell")->valueint;
+    // Saves from before Frost Wraiths load unfrozen.
+    cJSON *frozen_turns = cJSON_GetObjectItem(player, "frozen_turns");
+    g->player.frozen_turns = frozen_turns ? frozen_turns->valueint : 0;
     g->player.known_spell_count = cJSON_GetObjectItem(player, "known_spell_count")->valueint;
     g->player.player_class      = cJSON_GetObjectItem(player, "player_class")->valueint;
 

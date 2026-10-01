@@ -498,6 +498,7 @@ int main(int argc, char **argv) {
             game.location == LOCATION_FOREST ||
             game.location == LOCATION_MOUNTAINS ||
             game.location == LOCATION_DRAGONSPINE ||
+            game.location == LOCATION_FROSTFELL ||
             game.location == LOCATION_COAST ||
             game.location == LOCATION_SWAMP ||
             game.location == LOCATION_ISLAND ||
@@ -510,8 +511,11 @@ int main(int argc, char **argv) {
                 int timeout = elapsed >= 500 ? 0 : (int)(500 - elapsed);
                 has_event = SDL_WaitEventTimeout(&event, timeout);
             } else if (ambient_animating) {
+                // Falling snow needs smoother motion than the tile animations.
+                int interval = game.location == LOCATION_FROSTFELL ? 33 :
+                    (int)AMBIENT_FRAME_MS;
                 has_event = SDL_WaitEventTimeout(&event,
-                    (int)AMBIENT_FRAME_MS);
+                    interval);
                 if (!has_event) {
                     needs_redraw = 1;
                 }
