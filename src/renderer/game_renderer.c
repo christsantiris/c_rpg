@@ -1171,6 +1171,25 @@ static int kraken_tentacles_raised(const GameState *g) {
     return 0;
 }
 
+static void draw_kraken_target(Renderer *r, const GameState *g, const Viewport *v) {
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *e = &g->enemies[i];
+        if (!e->active || e->type != ENEMY_POLAR_KRAKEN ||
+            e->move_timer % 2 != 1 ||
+            !viewport_is_visible(v, e->attack_target_x, e->attack_target_y)) {
+            continue;
+        }
+        int x = viewport_to_screen_x(v, e->attack_target_x) * TILE_SIZE;
+        int y = viewport_to_screen_y(v, e->attack_target_y) * TILE_SIZE;
+        SDL_Rect outline = {x + 1, y + 1, TILE_SIZE - 2, TILE_SIZE - 2};
+        SDL_SetRenderDrawColor(r->sdl, 118, 28, 31, 255);
+        SDL_RenderDrawRect(r->sdl, &outline);
+        outline = (SDL_Rect){x + 2, y + 2, TILE_SIZE - 4, TILE_SIZE - 4};
+        SDL_SetRenderDrawColor(r->sdl, 255, 144, 48, 255);
+        SDL_RenderDrawRect(r->sdl, &outline);
+    }
+}
+
 void game_draw(Renderer *r, GameState *g, Viewport *v) {
     Viewport town_view;
     int kraken_warning = kraken_tentacles_raised(g);
@@ -2269,6 +2288,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     if (g->location == LOCATION_FROSTFELL) {
         draw_frostfell_snow(r, v);
+        draw_kraken_target(r, g, v);
     }
 
     draw_combat_feedback(r, g, v);

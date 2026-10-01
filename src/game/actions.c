@@ -95,6 +95,9 @@ static void place_gold_drop(GameState *g, int x, int y, int gold) {
 }
 
 static void finish_floor_pickup(GameState *g, FloorItem *picked) {
+    if (strcmp(picked->item.name, "Krakenbone Bow") == 0) {
+        g->kraken_bow_unclaimed = 0;
+    }
     picked->active = 0;
     for (int i = 0; i < g->floor_item_count; i++) {
         FloorItem *fi = &g->floor_items[i];
@@ -323,6 +326,9 @@ static void drop_loot(GameState *g, Enemy *enemy) {
             g->floor_items[g->floor_item_count++] = fi;
             char msg[MAX_MESSAGE_LEN];
             snprintf(msg, sizeof(msg), "%s dropped!", boss_drop.name);
+            if (type == ENEMY_POLAR_KRAKEN) {
+                g->kraken_bow_unclaimed = 1;
+            }
             push_message(g, msg);
         }
         game_update_level_progress(g);
@@ -839,6 +845,7 @@ void action_resolve_player(GameState *g, Action a) {
         g->location == LOCATION_ISLAND) {
         g->player.poison_turns = 0;
         g->player.frozen_turns = 0;
+        g->player.freeze_recovery = 0;
     }
     if (a.type == ACTION_NONE) {
         return;
@@ -848,6 +855,7 @@ void action_resolve_player(GameState *g, Action a) {
         a.type != ACTION_EQUIP_ITEM && a.type != ACTION_EQUIP_OFF_HAND &&
         a.type != ACTION_DROP_ITEM) {
         g->player.frozen_turns--;
+        g->player.freeze_recovery = 1;
         push_message_kind(g, "You are frozen solid and lose a turn!", MESSAGE_DAMAGE_TAKEN);
         return;
     }
@@ -2658,19 +2666,25 @@ static int near_lake_hole(const GameState *g, int x, int y) {
 }
 
 // The Kraken never leaves its lake. It wakes when the player steps onto the
-// ice or hurts it, then alternates: a warning turn raises tentacles at every
-// hole (and it bites anyone beside it), and a strike turn hits a player
-// standing next to any hole.
+// ice or hurts it. Each warning marks the player's tile as well as the holes,
+// so ranged attackers must move before the next turn's strike.
 static void polar_kraken_turn(GameState *g, Enemy *e) {
     const Room *lake = &g->map.rooms[g->map.room_count - 1];
     int on_lake = g->player.x >= lake->x && g->player.x < lake->x + lake->w &&
         g->player.y >= lake->y && g->player.y < lake->y + lake->h;
-    if (!on_lake && e->hp == e->max_hp) {
+    int distance_x = abs_int(g->player.x - e->x);
+    int distance_y = abs_int(g->player.y - e->y);
+    if (!on_lake && (e->hp == e->max_hp || distance_x > 12 || distance_y > 12)) {
+        e->move_timer = 0;
+        e->attack_target_x = -1;
+        e->attack_target_y = -1;
         return;
     }
     e->move_timer++;
     char msg[MAX_MESSAGE_LEN];
     if (e->move_timer % 2 == 1) {
+        e->attack_target_x = g->player.x;
+        e->attack_target_y = g->player.y;
         int adjacent = abs_int(g->player.x - e->x) <= 1 &&
             abs_int(g->player.y - e->y) <= 1;
         if (adjacent) {
@@ -2684,10 +2698,14 @@ static void polar_kraken_turn(GameState *g, Enemy *e) {
                 push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
             }
         }
-        push_message(g, "Tentacles stir beneath the ice holes!");
+        push_message(g, "Tentacles rise! Move off the marked tile and away from holes!");
         return;
     }
-    if (!near_lake_hole(g, g->player.x, g->player.y)) {
+    int targeted = g->player.x == e->attack_target_x &&
+        g->player.y == e->attack_target_y;
+    e->attack_target_x = -1;
+    e->attack_target_y = -1;
+    if (!targeted && !near_lake_hole(g, g->player.x, g->player.y)) {
         push_message(g, "The tentacles lash empty ice.");
         return;
     }
@@ -2709,6 +2727,9 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
     if (g->player.hp <= 0) {
         return;
     }
+    // Protect the whole enemy phase after a lost turn, including every wraith.
+    int freeze_immune = g->player.freeze_recovery;
+    g->player.freeze_recovery = 0;
     build_enemy_distance_map(g);
     int pursuers[MAX_ENEMIES];
     select_enemy_pursuers(g, pursuers);
@@ -2849,7 +2870,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 }
                 // One hit in four freezes the player for their next turn.
                 int froze = e->type == ENEMY_FROST_WRAITH &&
-                    g->player.frozen_turns == 0 && rand() % 100 < 25;
+                    !freeze_immune && g->player.frozen_turns == 0 && rand() % 100 < 25;
                 if (froze) {
                     g->player.frozen_turns = 1;
                 }
