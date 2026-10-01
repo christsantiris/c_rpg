@@ -161,6 +161,8 @@ typedef enum {
     TILE_CRYPT_DOOR,
     TILE_CRYPT_KEY,
     TILE_CRYPT_CACHE,
+    // Retired with the portcullis shortcut. They keep their ids so older saves
+    // load, and loading turns them into floor.
     TILE_DUNGEON_GATE,
     TILE_DUNGEON_SWITCH_OFF,
     TILE_DUNGEON_SWITCH_ON,
@@ -302,7 +304,7 @@ typedef struct {
 } Map;
 
 void map_generate(Map *m, int level);
-int map_repair_dungeon_routes(Map *m);
+void map_remove_dungeon_gates(Map *m);
 int  map_is_walkable(const Map *m, int x, int y);
 void map_room_center(const Room *r, int *cx, int *cy);
 void map_generate_town(Map *m, int *spawn_x, int *spawn_y);

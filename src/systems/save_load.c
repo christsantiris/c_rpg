@@ -358,7 +358,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 67);
+    cJSON_AddNumberToObject(root, "save_version", 68);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -2064,6 +2064,26 @@ int load_game(GameState *g, int slot) {
         }
     }
 
+    // Version 68 retires the dungeon's portcullis shortcut. Its gates and floor
+    // switches become plain floor, including under items dropped on a switch.
+    if (save_version < 68) {
+        if (g->location == LOCATION_DUNGEON) {
+            map_remove_dungeon_gates(&g->map);
+            for (int i = 0; i < g->floor_item_count; i++) {
+                FloorItem *item = &g->floor_items[i];
+                if (item->underlying_tile == TILE_DUNGEON_SWITCH_OFF ||
+                    item->underlying_tile == TILE_DUNGEON_SWITCH_ON) {
+                    item->underlying_tile = TILE_FLOOR;
+                }
+            }
+        }
+        for (int i = 0; i < MAX_REGION_DEPTH; i++) {
+            if (g->level_cache[i].valid) {
+                map_remove_dungeon_gates(&g->level_cache[i].map);
+            }
+        }
+    }
+
     if (g->location == LOCATION_MOUNTAINS) {
         hide_legacy_fort_plate(&g->map);
     }
@@ -2082,15 +2102,6 @@ int load_game(GameState *g, int slot) {
             game_repair_forest_enemy_positions(&g->forest_cache[i].map,
                 g->forest_cache[i].enemies, g->forest_cache[i].enemy_count,
                 -1, -1);
-        }
-    }
-
-    if (g->location == LOCATION_DUNGEON && g->level < DUNGEON_DEPTH) {
-        map_repair_dungeon_routes(&g->map);
-    }
-    for (int i = 0; i < DUNGEON_DEPTH - 1; i++) {
-        if (g->level_cache[i].valid) {
-            map_repair_dungeon_routes(&g->level_cache[i].map);
         }
     }
 
