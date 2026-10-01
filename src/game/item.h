@@ -160,6 +160,7 @@ Item item_make_magic_staff(void);
 Item item_make_bow(void);
 Item item_make_longbow(void);
 Item item_make_magic_longbow(void);
+Item item_make_krakenbone_bow(void);
 Item item_make_dagger(void);
 Item item_make_magic_dagger(void);
 Item item_make_greatsword(void);

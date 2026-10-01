@@ -61,7 +61,14 @@ typedef enum {
     ENEMY_DRAKE,
     ENEMY_FIRE_ELEMENTAL,
     ENEMY_ROAD_ARCHER,
-    ENEMY_HORSEMAN
+    ENEMY_HORSEMAN,
+    ENEMY_ICE_WOLF,
+    ENEMY_FROST_ARCHER,
+    ENEMY_YETI,
+    ENEMY_FROST_WRAITH,
+    ENEMY_ICE_GOLEM,
+    ENEMY_ICE_GIANT,
+    ENEMY_POLAR_KRAKEN
 } EnemyType;
 
 typedef struct {
@@ -76,6 +83,7 @@ typedef struct {
     int       is_boss;
     int       dain_fragment;
     int       frozen_turns;
+    int attack_target_x, attack_target_y;
 } Enemy;
 
 #endif

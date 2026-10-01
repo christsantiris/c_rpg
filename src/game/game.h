@@ -73,6 +73,8 @@ typedef struct {
     int   equipped_spell;
     int   last_dx, last_dy;
     int poison_turns;
+    int frozen_turns;
+    int freeze_recovery;
     PlayerClass player_class;
 } Player;
 
@@ -108,7 +110,8 @@ typedef enum {
     LOCATION_HIGH_PASS,
     LOCATION_DRAGONSPINE,
     LOCATION_CROWNROAD,
-    LOCATION_TOWN3
+    LOCATION_TOWN3,
+    LOCATION_FROSTFELL
 } Location;
 
 typedef struct {
@@ -123,6 +126,7 @@ typedef struct {
     LevelCache coast_cache[MAX_REGION_DEPTH];
     LevelCache swamp_cache[SWAMP_DEPTH];
     LevelCache dragonspine_cache[DRAGONSPINE_DEPTH];
+    LevelCache frostfell_cache[FROSTFELL_DEPTH];
     CrownroadCache crownroad_cache;
     LevelCache temple_cache[TEMPLE_DEPTH];
     LevelCache labyrinth_cache[LABYRINTH_DEPTH];
@@ -137,6 +141,7 @@ typedef struct {
     int max_coast_level_reached;
     int max_swamp_level_reached;
     int max_dragonspine_level_reached;
+    int max_frostfell_level_reached;
     int max_temple_level_reached;
     Item      inventory[MAX_INVENTORY];
     int       inventory_count;
@@ -164,6 +169,7 @@ typedef struct {
     int portal_x, portal_y;
     TileType portal_origin_tile;
     int defeated_bosses;
+    int kraken_bow_unclaimed;
     int elowen_quest_state;
     int elowen_seals_restored;
     int dain_quest_state;
@@ -200,6 +206,7 @@ void game_enter_forest(GameState *g);
 void game_enter_mountains(GameState *g);
 void game_enter_coast(GameState *g);
 void game_enter_swamp(GameState *g);
+void game_enter_frostfell(GameState *g);
 void game_enter_high_pass(GameState *g, int from_town);
 void game_enter_dragonspine(GameState *g);
 void game_enter_tavern(GameState *g);

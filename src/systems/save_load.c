@@ -243,6 +243,8 @@ static cJSON *serialize_enemies(const Enemy *enemies, int count) {
         cJSON_AddNumberToObject(obj, "is_boss",    e->is_boss);
         cJSON_AddNumberToObject(obj, "dain_fragment", e->dain_fragment);
         cJSON_AddNumberToObject(obj, "frozen_turns", e->frozen_turns);
+        cJSON_AddNumberToObject(obj, "attack_target_x", e->attack_target_x);
+        cJSON_AddNumberToObject(obj, "attack_target_y", e->attack_target_y);
         cJSON_AddItemToArray(arr, obj);
     }
     return arr;
@@ -275,6 +277,8 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count) {
         cJSON *dain_fragment = cJSON_GetObjectItem(obj, "dain_fragment");
         e->dain_fragment = dain_fragment ? dain_fragment->valueint : 0;
         e->frozen_turns = cJSON_GetObjectItem(obj, "frozen_turns")->valueint;
+        e->attack_target_x = cJSON_GetObjectItem(obj, "attack_target_x")->valueint;
+        e->attack_target_y = cJSON_GetObjectItem(obj, "attack_target_y")->valueint;
     }
 }
 
@@ -354,7 +358,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 66);
+    cJSON_AddNumberToObject(root, "save_version", 67);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -373,6 +377,9 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(player, "last_dx",           g->player.last_dx);
     cJSON_AddNumberToObject(player, "last_dy",           g->player.last_dy);
     cJSON_AddNumberToObject(player, "equipped_spell",    g->player.equipped_spell);
+    cJSON_AddNumberToObject(player, "frozen_turns",      g->player.frozen_turns);
+    cJSON_AddNumberToObject(player, "freeze_recovery", g->player.freeze_recovery);
+    cJSON_AddNumberToObject(root, "kraken_bow_unclaimed", g->kraken_bow_unclaimed);
     cJSON_AddNumberToObject(player, "known_spell_count", g->player.known_spell_count);
     cJSON_AddNumberToObject(player, "player_class",      g->player.player_class);
 
@@ -408,6 +415,8 @@ int save_game(const GameState *g, int slot) {
         g->max_swamp_level_reached);
     cJSON_AddNumberToObject(root, "max_dragonspine_level_reached",
         g->max_dragonspine_level_reached);
+    cJSON_AddNumberToObject(root, "max_frostfell_level_reached",
+        g->max_frostfell_level_reached);
     cJSON_AddNumberToObject(root, "max_temple_level_reached",
         g->max_temple_level_reached);
     cJSON_AddNumberToObject(root, "message_count",     g->message_count);
@@ -698,6 +707,25 @@ int save_game(const GameState *g, int slot) {
     }
     cJSON_AddItemToObject(root, "dragonspine_cache", dragonspine_cache);
 
+    cJSON *frostfell_cache = cJSON_CreateArray();
+    for (int i = 0; i < FROSTFELL_DEPTH; i++) {
+        cJSON *entry = cJSON_CreateObject();
+        cJSON_AddNumberToObject(entry, "valid", g->frostfell_cache[i].valid);
+        cJSON_AddNumberToObject(entry, "level_cleared",
+            g->frostfell_cache[i].level_cleared);
+        if (g->frostfell_cache[i].valid) {
+            cJSON_AddItemToObject(entry, "map",
+                serialize_map(&g->frostfell_cache[i].map));
+            cJSON_AddItemToObject(entry, "enemies",
+                serialize_enemies(g->frostfell_cache[i].enemies,
+                    g->frostfell_cache[i].enemy_count));
+            cJSON_AddNumberToObject(entry, "enemy_count",
+                g->frostfell_cache[i].enemy_count);
+        }
+        cJSON_AddItemToArray(frostfell_cache, entry);
+    }
+    cJSON_AddItemToObject(root, "frostfell_cache", frostfell_cache);
+
     cJSON *crownroad_cache = cJSON_CreateObject();
     cJSON_AddNumberToObject(crownroad_cache, "valid", g->crownroad_cache.valid);
     cJSON_AddNumberToObject(crownroad_cache, "level_cleared",
@@ -777,6 +805,14 @@ int load_game(GameState *g, int slot) {
 
     // Player
     cJSON *player = cJSON_GetObjectItem(root, "player");
+    cJSON *freeze_recovery = cJSON_GetObjectItem(player, "freeze_recovery");
+    cJSON *kraken_bow_unclaimed = cJSON_GetObjectItem(root, "kraken_bow_unclaimed");
+    if (!cJSON_IsNumber(freeze_recovery) || !cJSON_IsNumber(kraken_bow_unclaimed)) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    g->player.freeze_recovery = freeze_recovery->valueint;
+    g->kraken_bow_unclaimed = kraken_bow_unclaimed->valueint;
     strncpy(g->player.name, cJSON_GetObjectItem(player, "name")->valuestring, 20);
     g->player.x                = cJSON_GetObjectItem(player, "x")->valueint;
     g->player.y                = cJSON_GetObjectItem(player, "y")->valueint;
@@ -792,6 +828,9 @@ int load_game(GameState *g, int slot) {
     g->player.last_dx          = cJSON_GetObjectItem(player, "last_dx")->valueint;
     g->player.last_dy          = cJSON_GetObjectItem(player, "last_dy")->valueint;
     g->player.equipped_spell   = cJSON_GetObjectItem(player, "equipped_spell")->valueint;
+    // Saves from before Frost Wraiths load unfrozen.
+    cJSON *frozen_turns = cJSON_GetObjectItem(player, "frozen_turns");
+    g->player.frozen_turns = frozen_turns ? frozen_turns->valueint : 0;
     g->player.known_spell_count = cJSON_GetObjectItem(player, "known_spell_count")->valueint;
     g->player.player_class      = cJSON_GetObjectItem(player, "player_class")->valueint;
 
@@ -829,6 +868,9 @@ int load_game(GameState *g, int slot) {
     cJSON *max_dragonspine = cJSON_GetObjectItem(root,
         "max_dragonspine_level_reached");
     g->max_dragonspine_level_reached = max_dragonspine ? max_dragonspine->valueint : 1;
+    cJSON *max_frostfell = cJSON_GetObjectItem(root,
+        "max_frostfell_level_reached");
+    g->max_frostfell_level_reached = max_frostfell ? max_frostfell->valueint : 1;
     cJSON *max_temple = cJSON_GetObjectItem(root,
         "max_temple_level_reached");
     g->max_temple_level_reached = max_temple ? max_temple->valueint : 1;
@@ -1160,6 +1202,28 @@ int load_game(GameState *g, int slot) {
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
                 g->dragonspine_cache[i].enemies,
                 &g->dragonspine_cache[i].enemy_count);
+        }
+    }
+
+    // Saves from before Frostfell have no cache and start it fresh.
+    cJSON *frostfell_cache = cJSON_GetObjectItem(root, "frostfell_cache");
+    for (int i = 0; i < FROSTFELL_DEPTH; i++) {
+        g->frostfell_cache[i].valid = 0;
+        g->frostfell_cache[i].level_cleared = 0;
+        cJSON *entry = frostfell_cache ? cJSON_GetArrayItem(frostfell_cache, i) : NULL;
+        if (!entry) {
+            continue;
+        }
+        cJSON *valid = cJSON_GetObjectItem(entry, "valid");
+        cJSON *cleared = cJSON_GetObjectItem(entry, "level_cleared");
+        g->frostfell_cache[i].valid = valid ? valid->valueint : 0;
+        g->frostfell_cache[i].level_cleared = cleared ? cleared->valueint : 0;
+        if (g->frostfell_cache[i].valid) {
+            deserialize_map(cJSON_GetObjectItem(entry, "map"),
+                &g->frostfell_cache[i].map);
+            deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
+                g->frostfell_cache[i].enemies,
+                &g->frostfell_cache[i].enemy_count);
         }
     }
 

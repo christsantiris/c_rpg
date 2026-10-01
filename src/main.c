@@ -70,6 +70,10 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
         *style = TOWN_EXIT_DUNGEON;
         return 1;
     }
+    if (action.target_x == 0 && g->location == LOCATION_TOWN2) {
+        *style = TOWN_EXIT_FROST;
+        return 1;
+    }
     if (action.target_x == 0) {
         if (action.target_y == TOWN_ROAD_EXIT_Y &&
             !(g->defeated_bosses & (1 << LOCATION_FOREST))) {
@@ -494,6 +498,7 @@ int main(int argc, char **argv) {
             game.location == LOCATION_FOREST ||
             game.location == LOCATION_MOUNTAINS ||
             game.location == LOCATION_DRAGONSPINE ||
+            game.location == LOCATION_FROSTFELL ||
             game.location == LOCATION_COAST ||
             game.location == LOCATION_SWAMP ||
             game.location == LOCATION_ISLAND ||
@@ -506,8 +511,11 @@ int main(int argc, char **argv) {
                 int timeout = elapsed >= 500 ? 0 : (int)(500 - elapsed);
                 has_event = SDL_WaitEventTimeout(&event, timeout);
             } else if (ambient_animating) {
+                // Falling snow needs smoother motion than the tile animations.
+                int interval = game.location == LOCATION_FROSTFELL ? 33 :
+                    (int)AMBIENT_FRAME_MS;
                 has_event = SDL_WaitEventTimeout(&event,
-                    (int)AMBIENT_FRAME_MS);
+                    interval);
                 if (!has_event) {
                     needs_redraw = 1;
                 }
