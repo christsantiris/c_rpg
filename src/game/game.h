@@ -74,6 +74,7 @@ typedef struct {
     int   last_dx, last_dy;
     int poison_turns;
     int frozen_turns;
+    int freeze_recovery;
     PlayerClass player_class;
 } Player;
 
@@ -168,6 +169,7 @@ typedef struct {
     int portal_x, portal_y;
     TileType portal_origin_tile;
     int defeated_bosses;
+    int kraken_bow_unclaimed;
     int elowen_quest_state;
     int elowen_seals_restored;
     int dain_quest_state;

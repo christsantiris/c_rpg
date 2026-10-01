@@ -383,7 +383,7 @@ static void test_polar_kraken(void) {
     action_resolve_enemies(&frost_game);
     int warned = frost_game.player.hp == 10000 &&
         strcmp(frost_game.messages[frost_game.message_count - 1],
-            "Tentacles stir beneath the ice holes!") == 0;
+            "Tentacles rise! Move off the marked tile and away from holes!") == 0;
     action_resolve_enemies(&frost_game);
     int struck = frost_game.player.hp < 10000 &&
         strstr(frost_game.messages[frost_game.message_count - 1], "Kraken tentacle") != NULL;
@@ -395,10 +395,8 @@ static void test_polar_kraken(void) {
     frost_game.player.y = clear_y;
     action_resolve_enemies(&frost_game);
     action_resolve_enemies(&frost_game);
-    ASSERT("standing clear of every hole dodges the strike and the Kraken never moves",
-        frost_game.player.hp == 10000 && kraken->x == kraken_x && kraken->y == kraken_y &&
-        strcmp(frost_game.messages[frost_game.message_count - 1],
-            "The tentacles lash empty ice.") == 0);
+    ASSERT("standing still away from the holes is struck without moving the Kraken",
+        frost_game.player.hp < 10000 && kraken->x == kraken_x && kraken->y == kraken_y);
 
     frost_game.player.known_spell_count = 1;
     frost_game.player.known_spells[0] = spell_make_frost_bolt();
@@ -550,6 +548,229 @@ static void test_frostfell_behaviours(void) {
     int golem_steps = steps_from(26, 20, frost_game.enemies[0].x, frost_game.enemies[0].y);
     ASSERT("Ice Wolves cover two tiles a turn while Ice Golems take two turns per tile",
         wolf_steps == 2 && golem_steps == 1);
+}
+
+static void test_freeze_recovery(void) {
+    setup_snowfield(&frost_game, ENEMY_FROST_WRAITH, 21, 20);
+    for (int i = 1; i < 3; i++) {
+        frost_game.enemies[i] = frost_game.enemies[0];
+        frost_game.enemies[i].x = 19 + i;
+        frost_game.enemies[i].y = 19;
+    }
+    frost_game.enemy_count = 3;
+    frost_game.player.frozen_turns = 1;
+    action_resolve_player(&frost_game, (Action){ACTION_MOVE, 20, 21});
+    int saved = save_game(&frost_game, 99018) && load_game(&frost_loaded, 99018);
+    ASSERT("thaw recovery survives saving between the player and enemy turns",
+        saved && frost_loaded.player.frozen_turns == 0 && frost_loaded.player.freeze_recovery == 1);
+    remove("saves/savegame_99018.json");
+    frost_game = frost_loaded;
+    action_resolve_enemies(&frost_game);
+    walk_onto(&frost_game, 20, 21);
+    ASSERT("all three wraiths leave a thawed player able to move next turn",
+        frost_game.player.x == 20 && frost_game.player.y == 21 &&
+        frost_game.player.freeze_recovery == 0 && frost_game.player.frozen_turns == 0);
+
+    frost_game.player.y = 20;
+    int previous_frozen = 0;
+    int consecutive = 0;
+    int lost = 0;
+    srand(999);
+    for (int turn = 0; turn < 500; turn++) {
+        frost_game.player.hp = 10000;
+        int frozen = frost_game.player.frozen_turns;
+        consecutive |= frozen && previous_frozen;
+        lost += frozen;
+        previous_frozen = frozen;
+        action_resolve_player(&frost_game, (Action){ACTION_PICK_UP, 0, 0});
+        action_resolve_enemies(&frost_game);
+    }
+    ASSERT("wraiths can freeze again but never cost consecutive player turns",
+        lost > 0 && !consecutive);
+}
+
+static int setup_kraken_encounter(int seed) {
+    memset(&frost_game, 0, sizeof(frost_game));
+    frost_game.player.player_class = CLASS_ROGUE;
+    game_init(&frost_game);
+    player_gain_xp(&frost_game, 2800);
+    frost_game.defeated_bosses = 1 << LOCATION_FOREST;
+    frost_game.location = LOCATION_FROSTFELL;
+    frost_game.level = FROSTFELL_DEPTH;
+    frost_game.max_frostfell_level_reached = FROSTFELL_DEPTH;
+    srand((unsigned int)seed);
+    map_generate_frostfell(&frost_game.map, frost_game.level);
+    enemies_spawn(&frost_game);
+    int k = find_kraken(&frost_game);
+    for (int i = 0; i < frost_game.enemy_count; i++) {
+        frost_game.enemies[i].active = i == k;
+    }
+    frost_game.inventory[0] = item_make_longbow();
+    action_resolve_player(&frost_game, (Action){ACTION_EQUIP_ITEM, 0, 0});
+    return k;
+}
+
+static int aim_from_clear_ice(GameState *g, const Enemy *e) {
+    const int dx[8] = {0, 1, 0, -1, 1, 1, -1, -1};
+    const int dy[8] = {-1, 0, 1, 0, -1, 1, -1, 1};
+    for (int d = 0; d < 8; d++) {
+        for (int step = 1; step <= 9; step++) {
+            int x = e->x + dx[d] * step;
+            int y = e->y + dy[d] * step;
+            if (!map_is_walkable(&g->map, x, y)) {
+                break;
+            }
+            if (step >= 2 && !beside_hole(g, x, y)) {
+                g->player.x = x;
+                g->player.y = y;
+                g->player.last_dx = -dx[d];
+                g->player.last_dy = -dy[d];
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+static void test_kraken_targeted_strike(void) {
+    int punished = 1;
+    for (int seed = 1; seed <= 100; seed++) {
+        int k = setup_kraken_encounter(seed);
+        if (k < 0 || !aim_from_clear_ice(&frost_game, &frost_game.enemies[k])) {
+            punished = 0;
+            continue;
+        }
+        Enemy *e = &frost_game.enemies[k];
+        int hp = frost_game.player.hp;
+        action_resolve_player(&frost_game, (Action){ACTION_RANGED_ATTACK, 0, 0});
+        action_resolve_enemies(&frost_game);
+        punished &= e->attack_target_x == frost_game.player.x &&
+            e->attack_target_y == frost_game.player.y && frost_game.player.hp == hp;
+        action_resolve_player(&frost_game, (Action){ACTION_RANGED_ATTACK, 0, 0});
+        action_resolve_enemies(&frost_game);
+        punished &= frost_game.player.hp < hp && e->attack_target_x == -1;
+    }
+    ASSERT("stationary bow shots on clear ice draw a warned strike on 100 maps", punished);
+
+    int k = setup_kraken_encounter(808);
+    Enemy *e = &frost_game.enemies[k];
+    aim_from_clear_ice(&frost_game, e);
+    action_resolve_player(&frost_game, (Action){ACTION_RANGED_ATTACK, 0, 0});
+    action_resolve_enemies(&frost_game);
+    int x = frost_game.player.x;
+    int y = frost_game.player.y;
+    int saved = save_game(&frost_game, 99019) && load_game(&frost_loaded, 99019);
+    ASSERT("a pending Kraken strike keeps its marked tile after save and load",
+        saved && frost_loaded.enemies[k].attack_target_x == x &&
+        frost_loaded.enemies[k].attack_target_y == y && frost_loaded.enemies[k].move_timer % 2 == 1);
+    remove("saves/savegame_99019.json");
+    frost_game = frost_loaded;
+    e = &frost_game.enemies[k];
+    const int dx[4] = {0, 1, 0, -1};
+    const int dy[4] = {-1, 0, 1, 0};
+    int moved = 0;
+    for (int d = 0; d < 4; d++) {
+        int nx = x + dx[d];
+        int ny = y + dy[d];
+        if (map_is_walkable(&frost_game.map, nx, ny) &&
+            !beside_hole(&frost_game, nx, ny) && steps_from(nx, ny, e->x, e->y) > 1) {
+            walk_onto(&frost_game, nx, ny);
+            moved = 1;
+            break;
+        }
+    }
+    int hp = frost_game.player.hp;
+    action_resolve_enemies(&frost_game);
+    ASSERT("one step off the marked tile and clear of holes dodges the strike",
+        moved && frost_game.player.hp == hp && e->attack_target_x == -1);
+
+    action_resolve_enemies(&frost_game);
+    game_open_town_portal(&frost_game);
+    game_use_town_portal(&frost_game);
+    e = &frost_game.enemies[k];
+    hp = frost_game.player.hp;
+    action_resolve_enemies(&frost_game);
+    ASSERT("a portal trip cannot erase the Kraken's pending strike",
+        frost_game.player.hp < hp && e->attack_target_x == -1);
+
+    frost_game.player.x = frost_game.map.stairs_up_x;
+    frost_game.player.y = frost_game.map.stairs_up_y;
+    action_resolve_enemies(&frost_game);
+    ASSERT("retreating across the map cancels the Kraken's targeting",
+        e->move_timer == 0 && e->attack_target_x == -1 && e->attack_target_y == -1);
+}
+
+static int kraken_bows_on_floor(const GameState *g) {
+    int count = 0;
+    for (int i = 0; i < g->floor_item_count; i++) {
+        count += g->floor_items[i].active &&
+            strcmp(g->floor_items[i].item.name, "Krakenbone Bow") == 0;
+    }
+    return count;
+}
+
+static void test_kraken_reward_persistence(void) {
+    int k = setup_kraken_encounter(808);
+    Enemy *e = &frost_game.enemies[k];
+    aim_from_clear_ice(&frost_game, e);
+    e->hp = 1;
+    action_resolve_player(&frost_game, (Action){ACTION_RANGED_ATTACK, 0, 0});
+    int dropped = frost_game.kraken_bow_unclaimed && kraken_bows_on_floor(&frost_game) == 1;
+    game_open_town_portal(&frost_game);
+    int saved = save_game(&frost_game, 99020) && load_game(&frost_loaded, 99020);
+    frost_game = frost_loaded;
+    game_use_town_portal(&frost_game);
+    game_refresh_quest_encounters(&frost_game);
+    game_refresh_quest_encounters(&frost_game);
+    ASSERT("the unclaimed bow survives a town save and portal return exactly once",
+        dropped && saved && frost_game.kraken_bow_unclaimed &&
+        kraken_bows_on_floor(&frost_game) == 1 && find_kraken(&frost_game) < 0);
+
+    game_ascend(&frost_game);
+    game_descend(&frost_game);
+    ASSERT("backtracking to stage four preserves the bow on stage five",
+        frost_game.level == FROSTFELL_DEPTH && kraken_bows_on_floor(&frost_game) == 1);
+
+    game_return_to_town(&frost_game);
+    game_enter_frostfell(&frost_game);
+    while (frost_game.level < FROSTFELL_DEPTH) {
+        game_descend(&frost_game);
+    }
+    ASSERT("the unclaimed bow returns on a fresh Frostfell map without respawning the boss",
+        kraken_bows_on_floor(&frost_game) == 1 && find_kraken(&frost_game) < 0);
+    int x;
+    int y;
+    map_room_center(&frost_game.map.rooms[frost_game.map.room_count - 1], &x, &y);
+    frost_game.player.x = x;
+    frost_game.player.y = y;
+    int inventory_count = frost_game.inventory_count;
+    frost_game.inventory_count = MAX_INVENTORY;
+    action_resolve_player(&frost_game, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("a full inventory leaves the bow unclaimed",
+        frost_game.kraken_bow_unclaimed && kraken_bows_on_floor(&frost_game) == 1);
+    frost_game.inventory_count = inventory_count;
+    action_resolve_player(&frost_game, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("collecting the bow clears its claim and restores the lake tile",
+        !frost_game.kraken_bow_unclaimed && kraken_bows_on_floor(&frost_game) == 0 &&
+        frost_game.map.tiles[y][x] == TILE_FROST_LAKE);
+    game_open_town_portal(&frost_game);
+    saved = save_game(&frost_game, 99020) && load_game(&frost_loaded, 99020);
+    frost_game = frost_loaded;
+    game_use_town_portal(&frost_game);
+    int in_pack = 0;
+    int metadata_ok = 0;
+    for (int i = 0; i < frost_game.inventory_count; i++) {
+        const Item *item = &frost_game.inventory[i];
+        if (strcmp(item->name, "Krakenbone Bow") == 0) {
+            in_pack++;
+            metadata_ok = item->attack_bonus == 10 && item->range == 10 &&
+                item->weapon_family == WEAPON_FAMILY_BOW && item->class_mask == ITEM_CLASS_ROGUE;
+        }
+    }
+    ASSERT("saving and revisiting after pickup cannot duplicate the bow",
+        saved && in_pack == 1 && metadata_ok && !frost_game.kraken_bow_unclaimed &&
+        kraken_bows_on_floor(&frost_game) == 0);
+    remove("saves/savegame_99020.json");
 }
 
 // Paints slick ice from x0 to x1 along row y of the test snowfield.
@@ -845,6 +1066,9 @@ void test_frostfell(void) {
     printf("Frostfell Wastes tests:\n");
     test_frostfell_rosters();
     test_frostfell_behaviours();
+    test_freeze_recovery();
+    test_kraken_targeted_strike();
+    test_kraken_reward_persistence();
     test_slick_ice();
     test_thin_ice();
     test_polar_kraken();

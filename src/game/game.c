@@ -57,6 +57,8 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
     e->is_boss = 0;
     e->dain_fragment = 0;
     e->frozen_turns = 0;
+    e->attack_target_x = -1;
+    e->attack_target_y = -1;
     e->move_timer = 0;
     switch (type) {
         case ENEMY_SKELETON:
@@ -1051,6 +1053,7 @@ void game_init(GameState *g) {
     g->portal_y = 0;
     g->portal_origin_tile = TILE_FLOOR;
     g->defeated_bosses = 0;
+    g->kraken_bow_unclaimed = 0;
     g->elowen_quest_state = 0;
     g->elowen_seals_restored = 0;
     g->dain_quest_state = 0;
@@ -1090,6 +1093,7 @@ void game_init(GameState *g) {
     g->player.last_dy = 0;
     g->player.poison_turns = 0;
     g->player.frozen_turns = 0;
+    g->player.freeze_recovery = 0;
     g->trail_count = 0;
     g->trail_frames = 0;
     g->trail_effect = TRAIL_EFFECT_GENERIC;
@@ -1694,7 +1698,34 @@ static void place_dragon_treasure(GameState *g) {
     }
 }
 
+// Keep the unique reward available even when a fresh visit regenerates the map.
+static void restore_frostfell_reward(GameState *g) {
+    if (g->location != LOCATION_FROSTFELL || g->level != FROSTFELL_DEPTH ||
+        !g->kraken_bow_unclaimed || g->map.room_count == 0) {
+        return;
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        if (g->floor_items[i].active &&
+            strcmp(g->floor_items[i].item.name, "Krakenbone Bow") == 0) {
+            return;
+        }
+    }
+    if (g->floor_item_count >= MAX_FLOOR_ITEMS) {
+        return;
+    }
+    int x;
+    int y;
+    map_room_center(&g->map.rooms[g->map.room_count - 1], &x, &y);
+    FloorItem *reward = &g->floor_items[g->floor_item_count++];
+    *reward = (FloorItem){
+        .active = 1, .x = x, .y = y, .underlying_tile = TILE_FROST_LAKE,
+        .item = item_make_krakenbone_bow()
+    };
+    g->map.tiles[y][x] = TILE_ITEM;
+}
+
 void game_refresh_quest_encounters(GameState *g) {
+    restore_frostfell_reward(g);
     int seal_placed = place_elowen_seal(g);
     int warden_placed = place_alder_warden(g);
     int beacon_placed = place_mara_beacon(g);
@@ -1784,6 +1815,7 @@ static void generate_active_level(GameState *g) {
     if (beacon_placed) {
         spawn_mara_guardian(g);
     }
+    restore_frostfell_reward(g);
     game_update_level_progress(g);
 }
 
@@ -2720,6 +2752,9 @@ void game_record_temple_enemy_defeated(GameState *g, EnemyType type) {
 
 void game_return_to_town(GameState *g) {
     Location returning_from = g->location;
+    if (returning_from == LOCATION_FROSTFELL) {
+        clear_floor_loot(g);
+    }
     LevelCache *cache = active_cache(g);
     // Cache current level before leaving
     if (returning_from == LOCATION_CROWNROAD) {
@@ -2880,6 +2915,9 @@ void game_use_town_portal(GameState *g) {
     }
     if (!cache[level - 1].valid) return;
 
+    if (g->portal_location == LOCATION_FROSTFELL) {
+        clear_floor_loot(g);
+    }
     g->location = g->portal_location;
     g->level = level;
     g->map = cache[level - 1].map;

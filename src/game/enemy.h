@@ -83,6 +83,7 @@ typedef struct {
     int       is_boss;
     int       dain_fragment;
     int       frozen_turns;
+    int attack_target_x, attack_target_y;
 } Enemy;
 
 #endif
