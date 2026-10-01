@@ -112,7 +112,8 @@ typedef enum {
     LOCATION_DRAGONSPINE,
     LOCATION_CROWNROAD,
     LOCATION_TOWN3,
-    LOCATION_FROSTFELL
+    LOCATION_FROSTFELL,
+    LOCATION_TOWN4
 } Location;
 
 typedef struct {
@@ -205,10 +206,12 @@ void game_repair_forest_enemy_positions(Map *m, Enemy *actors, int count, int px
 void game_enter_dungeon(GameState *g);
 void game_enter_forest(GameState *g);
 void game_enter_mountains(GameState *g);
+void game_enter_town4(GameState *g);
 void game_enter_coast(GameState *g);
 void game_enter_swamp(GameState *g);
 void game_enter_frostfell(GameState *g);
 void game_enter_high_pass(GameState *g, int from_town);
+void game_leave_high_pass(GameState *g, Location destination);
 void game_enter_dragonspine(GameState *g);
 void game_enter_tavern(GameState *g);
 void game_leave_tavern(GameState *g);

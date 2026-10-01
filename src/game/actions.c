@@ -844,6 +844,8 @@ void action_resolve_player(GameState *g, Action a) {
         g->location == LOCATION_TAVERN ||
         g->location == LOCATION_TOWN2 ||
         g->location == LOCATION_TOWN3 ||
+        g->location == LOCATION_TOWN4 ||
+        g->location == LOCATION_HIGH_PASS ||
         g->location == LOCATION_FOREST_ROAD ||
         g->location == LOCATION_INN ||
         g->location == LOCATION_ISLAND) {
@@ -1245,6 +1247,7 @@ void action_resolve_player(GameState *g, Action a) {
             if (g->location == LOCATION_TOWN ||
                 g->location == LOCATION_TOWN2 ||
                 g->location == LOCATION_TOWN3 ||
+                g->location == LOCATION_TOWN4 ||
                 g->location == LOCATION_TAVERN ||
                 g->location == LOCATION_INN) {
                 push_message(g, "Already in town!");
@@ -1769,6 +1772,16 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
+        if (g->location == LOCATION_TOWN4 &&
+            g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
+            if (tx == TOWN_W - 1) {
+                game_enter_dragonspine(g);
+            } else if (ty == TOWN_H - 1) {
+                game_enter_high_pass(g, 0);
+            }
+            return;
+        }
+
         if (g->location == LOCATION_TOWN &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
             if (tx == 0) {
@@ -1782,14 +1795,13 @@ void action_resolve_player(GameState *g, Action a) {
                     game_enter_forest(g);
                 }
             } else if (tx == TOWN_W - 1) {
-                if (ty == TOWN_DRAGON_GATE_Y &&
-                    (g->defeated_bosses & (1 << LOCATION_MOUNTAINS))) {
-                    game_enter_high_pass(g, 1);
-                } else {
-                    game_enter_dungeon(g);
-                }
+                game_enter_dungeon(g);
             } else if (ty == TOWN_H - 1) {
                 game_enter_coast(g);
+            } else if (tx == TOWN4_ROAD_X) {
+                if (g->defeated_bosses & (1 << LOCATION_MOUNTAINS)) {
+                    game_enter_high_pass(g, 1);
+                }
             } else {
                 game_enter_mountains(g);
             }
@@ -1798,19 +1810,18 @@ void action_resolve_player(GameState *g, Action a) {
 
         if (g->location == LOCATION_HIGH_PASS &&
             g->map.tiles[ty][tx] == TILE_HIGH_PASS_ENTRANCE) {
-            game_return_to_town(g);
+            game_leave_high_pass(g, LOCATION_TOWN);
             return;
         }
         if (g->location == LOCATION_HIGH_PASS &&
             g->map.tiles[ty][tx] == TILE_HIGH_PASS_EXIT) {
-            game_enter_dragonspine(g);
+            game_leave_high_pass(g, LOCATION_TOWN4);
             return;
         }
         if (g->location == LOCATION_DRAGONSPINE &&
             g->map.tiles[ty][tx] == TILE_DRAGON_ENTRANCE) {
             if (g->level == 1) {
                 game_return_to_town(g);
-                game_enter_high_pass(g, 0);
             } else {
                 game_ascend(g);
             }
@@ -1983,8 +1994,8 @@ void action_resolve_player(GameState *g, Action a) {
                     return;
                 }
                 g->score += g->level * 100;
-                game_return_to_town(g);
-                push_message(g, "The mountain pass is liberated!");
+                game_enter_town4(g);
+                push_message(g, "Beyond the liberated mountain pass lies Town 4.");
             }
             return;
         }
