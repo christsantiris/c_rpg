@@ -2631,11 +2631,211 @@ static void draw_dragonspine_enemy(Renderer *r, int tile_x, int tile_y, EnemyTyp
     }
 }
 
+static void draw_frostfell_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color outline = {24, 34, 52, 255};
+    SDL_Color fur = {226, 234, 242, 255};
+    SDL_Color fur_shade = {154, 176, 200, 255};
+    SDL_Color ice = {136, 194, 230, 255};
+    SDL_Color ice_light = {210, 238, 252, 255};
+    SDL_Color ice_dark = {72, 128, 176, 255};
+    SDL_Color glow = {170, 246, 255, 255};
+    if (type == ENEMY_ICE_WOLF) {
+        // A pale wolf mid-stride, facing right.
+        fill_rect(r, x + 1, y + 9, 4, 3, fur_shade);
+        fill_rect(r, x + 4, y + 9, 13, 8, outline);
+        fill_rect(r, x + 5, y + 10, 11, 6, fur);
+        fill_rect(r, x + 5, y + 14, 11, 2, fur_shade);
+        fill_rect(r, x + 15, y + 6, 7, 7, outline);
+        fill_rect(r, x + 16, y + 7, 5, 5, fur);
+        fill_rect(r, x + 20, y + 9, 4, 3, fur);
+        fill_rect(r, x + 16, y + 4, 2, 3, fur_shade);
+        fill_rect(r, x + 19, y + 8, 1, 1, (SDL_Color){52, 156, 232, 255});
+        fill_rect(r, x + 23, y + 10, 1, 1, outline);
+        fill_rect(r, x + 5, y + 17, 2, 5, fur_shade);
+        fill_rect(r, x + 9, y + 17, 2, 4, fur_shade);
+        fill_rect(r, x + 13, y + 17, 2, 5, fur_shade);
+        fill_rect(r, x + 16, y + 16, 2, 5, fur_shade);
+        return;
+    }
+    if (type == ENEMY_FROST_ARCHER) {
+        // A hooded archer in a white fur cloak with an ice-blue bow.
+        SDL_Color cloak = {204, 216, 230, 255};
+        SDL_Color trim = {64, 112, 176, 255};
+        fill_rect(r, x + 7, y + 19, 4, 5, outline);
+        fill_rect(r, x + 13, y + 19, 4, 5, outline);
+        fill_rect(r, x + 5, y + 9, 14, 12, outline);
+        fill_rect(r, x + 6, y + 10, 12, 10, cloak);
+        fill_rect(r, x + 6, y + 17, 12, 2, trim);
+        fill_rect(r, x + 8, y + 2, 9, 8, outline);
+        fill_rect(r, x + 9, y + 3, 7, 6, cloak);
+        fill_rect(r, x + 10, y + 5, 5, 4, (SDL_Color){190, 150, 120, 255});
+        fill_rect(r, x + 11, y + 6, 1, 1, outline);
+        fill_rect(r, x + 14, y + 6, 1, 1, outline);
+        fill_rect(r, x + 2, y + 6, 2, 14, ice_dark);
+        fill_rect(r, x + 3, y + 4, 2, 3, ice_dark);
+        fill_rect(r, x + 3, y + 19, 2, 3, ice_dark);
+        fill_rect(r, x + 5, y + 6, 1, 15, ice_light);
+        fill_rect(r, x + 4, y + 13, 14, 1, glow);
+        return;
+    }
+    if (type == ENEMY_YETI) {
+        // A shaggy beast: a domed head, broad shoulders and long arms.
+        SDL_Color face = {116, 146, 178, 255};
+        fill_rect(r, x + 7, y + 1, 10, 8, outline);
+        fill_rect(r, x + 4, y + 7, 16, 13, outline);
+        fill_rect(r, x, y + 8, 5, 12, outline);
+        fill_rect(r, x + 19, y + 8, 5, 12, outline);
+        fill_rect(r, x + 5, y + 19, 5, 5, outline);
+        fill_rect(r, x + 14, y + 19, 5, 5, outline);
+        fill_rect(r, x + 8, y + 2, 8, 6, fur);
+        fill_rect(r, x + 5, y + 8, 14, 11, fur);
+        fill_rect(r, x + 1, y + 9, 3, 10, fur);
+        fill_rect(r, x + 20, y + 9, 3, 10, fur);
+        fill_rect(r, x + 6, y + 20, 3, 3, fur_shade);
+        fill_rect(r, x + 15, y + 20, 3, 3, fur_shade);
+        fill_rect(r, x + 7, y + 13, 2, 4, fur_shade);
+        fill_rect(r, x + 11, y + 14, 2, 4, fur_shade);
+        fill_rect(r, x + 15, y + 13, 2, 4, fur_shade);
+        fill_rect(r, x + 1, y + 17, 3, 2, fur_shade);
+        fill_rect(r, x + 20, y + 17, 3, 2, fur_shade);
+        fill_rect(r, x + 9, y + 4, 6, 5, face);
+        fill_rect(r, x + 10, y + 5, 1, 1, outline);
+        fill_rect(r, x + 13, y + 5, 1, 1, outline);
+        fill_rect(r, x + 10, y + 7, 4, 1, outline);
+        fill_rect(r, x + 10, y + 8, 1, 1, ice_light);
+        fill_rect(r, x + 13, y + 8, 1, 1, ice_light);
+        return;
+    }
+    if (type == ENEMY_FROST_WRAITH) {
+        // A hooded spirit that narrows to a point and frays into frost.
+        SDL_Color shroud = {118, 178, 224, 255};
+        fill_rect(r, x + 10, y, 4, 2, ice_light);
+        fill_rect(r, x + 8, y + 2, 8, 3, ice);
+        fill_rect(r, x + 7, y + 5, 10, 4, ice);
+        fill_rect(r, x + 9, y + 5, 6, 4, (SDL_Color){28, 48, 80, 255});
+        fill_rect(r, x + 10, y + 6, 1, 2, glow);
+        fill_rect(r, x + 13, y + 6, 1, 2, glow);
+        fill_rect(r, x + 6, y + 9, 12, 4, shroud);
+        fill_rect(r, x + 5, y + 13, 14, 4, shroud);
+        fill_rect(r, x + 4, y + 17, 16, 2, shroud);
+        fill_rect(r, x + 8, y + 9, 2, 8, ice);
+        fill_rect(r, x + 2, y + 10, 4, 3, ice);
+        fill_rect(r, x + 1, y + 13, 3, 3, ice_light);
+        fill_rect(r, x + 18, y + 10, 4, 3, ice);
+        fill_rect(r, x + 20, y + 13, 3, 3, ice_light);
+        fill_rect(r, x + 4, y + 19, 3, 3, shroud);
+        fill_rect(r, x + 9, y + 19, 3, 5, shroud);
+        fill_rect(r, x + 14, y + 19, 3, 3, shroud);
+        fill_rect(r, x + 18, y + 19, 2, 2, shroud);
+        return;
+    }
+    if (type == ENEMY_ICE_GOLEM) {
+        // A blocky construct of cut ice around a glowing core.
+        fill_rect(r, x + 4, y + 3, 16, 18, outline);
+        fill_rect(r, x + 5, y + 4, 14, 16, ice);
+        fill_rect(r, x + 6, y + 5, 6, 5, ice_light);
+        fill_rect(r, x + 12, y + 13, 6, 6, ice_dark);
+        fill_rect(r, x + 8, y + 7, 2, 2, glow);
+        fill_rect(r, x + 14, y + 7, 2, 2, glow);
+        fill_rect(r, x + 10, y + 11, 4, 4, glow);
+        fill_rect(r, x, y + 7, 4, 11, outline);
+        fill_rect(r, x + 1, y + 8, 3, 9, ice_dark);
+        fill_rect(r, x + 20, y + 7, 4, 11, outline);
+        fill_rect(r, x + 20, y + 8, 3, 9, ice_dark);
+        fill_rect(r, x + 6, y + 20, 5, 4, ice_dark);
+        fill_rect(r, x + 13, y + 20, 5, 4, ice_dark);
+        return;
+    }
+    // Ice Giant: blue skin, a frost-white beard and a club of ice.
+    SDL_Color skin = {112, 152, 196, 255};
+    SDL_Color hide = {130, 100, 74, 255};
+    fill_rect(r, x + 4, y + 7, 15, 13, outline);
+    fill_rect(r, x + 5, y + 8, 13, 11, skin);
+    fill_rect(r, x + 5, y + 15, 13, 5, hide);
+    fill_rect(r, x + 6, y + 1, 11, 8, outline);
+    fill_rect(r, x + 7, y + 2, 9, 6, skin);
+    fill_rect(r, x + 6, y + 1, 11, 2, fur);
+    fill_rect(r, x + 8, y + 4, 2, 1, glow);
+    fill_rect(r, x + 13, y + 4, 2, 1, glow);
+    fill_rect(r, x + 7, y + 6, 9, 5, fur);
+    fill_rect(r, x + 9, y + 11, 5, 2, fur);
+    fill_rect(r, x + 1, y + 9, 4, 9, skin);
+    fill_rect(r, x + 18, y + 9, 3, 8, skin);
+    fill_rect(r, x + 6, y + 20, 4, 4, outline);
+    fill_rect(r, x + 13, y + 20, 4, 4, outline);
+    fill_rect(r, x + 20, y + 1, 3, 14, ice_dark);
+    fill_rect(r, x + 20, y + 1, 4, 6, ice_light);
+}
+
+// A pale kraken surfacing from its lake. It spills past its own tile so the
+// boss reads larger than ordinary creatures.
+static void draw_polar_kraken(Renderer *r, int tile_x, int tile_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color outline = {40, 34, 64, 255};
+    SDL_Color mantle = {216, 224, 244, 255};
+    SDL_Color highlight = {246, 250, 255, 255};
+    SDL_Color shade = {150, 160, 206, 255};
+    SDL_Color flesh = {200, 168, 218, 255};
+    SDL_Color flesh_dark = {150, 116, 176, 255};
+    SDL_Color sucker = {246, 226, 240, 255};
+    SDL_Color eye_glow = {120, 224, 255, 255};
+    // Side arms curl up and out across the ice.
+    fill_rect(r, x - 10, y + 14, 14, 4, flesh);
+    fill_rect(r, x - 12, y + 7, 4, 10, flesh);
+    fill_rect(r, x - 10, y + 5, 4, 3, flesh);
+    fill_rect(r, x + 20, y + 14, 14, 4, flesh);
+    fill_rect(r, x + 32, y + 7, 4, 10, flesh);
+    fill_rect(r, x + 30, y + 5, 4, 3, flesh);
+    fill_rect(r, x - 8, y + 15, 2, 2, sucker);
+    fill_rect(r, x - 11, y + 10, 2, 2, sucker);
+    fill_rect(r, x + 30, y + 15, 2, 2, sucker);
+    fill_rect(r, x + 33, y + 10, 2, 2, sucker);
+    // Four lower arms trail below, their tips turned outward.
+    fill_rect(r, x + 1, y + 18, 4, 8, flesh);
+    fill_rect(r, x - 2, y + 25, 4, 3, flesh);
+    fill_rect(r, x + 8, y + 19, 3, 9, flesh_dark);
+    fill_rect(r, x + 13, y + 19, 3, 9, flesh_dark);
+    fill_rect(r, x + 19, y + 18, 4, 8, flesh);
+    fill_rect(r, x + 22, y + 25, 4, 3, flesh);
+    fill_rect(r, x + 2, y + 21, 2, 2, sucker);
+    fill_rect(r, x + 20, y + 21, 2, 2, sucker);
+    // A domed mantle, rounded at the crown.
+    fill_rect(r, x + 7, y - 11, 10, 2, outline);
+    fill_rect(r, x + 4, y - 9, 16, 2, outline);
+    fill_rect(r, x + 2, y - 7, 20, 26, outline);
+    fill_rect(r, x + 8, y - 10, 8, 2, mantle);
+    fill_rect(r, x + 5, y - 8, 14, 2, mantle);
+    fill_rect(r, x + 3, y - 6, 18, 24, mantle);
+    fill_rect(r, x + 3, y + 11, 18, 7, shade);
+    fill_rect(r, x + 7, y - 7, 3, 9, highlight);
+    fill_rect(r, x + 11, y - 9, 2, 3, highlight);
+    // Large slanted eyes glowing ice blue.
+    fill_rect(r, x + 5, y + 4, 6, 5, outline);
+    fill_rect(r, x + 13, y + 4, 6, 5, outline);
+    fill_rect(r, x + 6, y + 5, 3, 3, eye_glow);
+    fill_rect(r, x + 15, y + 5, 3, 3, eye_glow);
+    fill_rect(r, x + 9, y + 12, 6, 2, flesh_dark);
+}
+
 void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
     switch (type) {
+        case ENEMY_POLAR_KRAKEN:
+            draw_polar_kraken(r, tile_x, tile_y);
+            break;
         case ENEMY_ROAD_ARCHER:
         case ENEMY_HORSEMAN:
             draw_crownroad_enemy(r, tile_x, tile_y, type);
+            break;
+        case ENEMY_ICE_WOLF:
+        case ENEMY_FROST_ARCHER:
+        case ENEMY_YETI:
+        case ENEMY_FROST_WRAITH:
+        case ENEMY_ICE_GOLEM:
+        case ENEMY_ICE_GIANT:
+            draw_frostfell_enemy(r, tile_x, tile_y, type);
             break;
         case ENEMY_GIANT_RAT:
         case ENEMY_BANDIT:
@@ -3466,6 +3666,143 @@ void draw_dragonspine_edge(Renderer *r, int tile_x, int tile_y, int forward) {
     fill_rect(r, x + 15, y + 20, 7, 3, (SDL_Color){82, 101, 118, 255});
 }
 
+void draw_frostfell_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    unsigned int seed = (unsigned int)map_x * 97u + (unsigned int)map_y * 61u;
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){220, 229, 238, 255});
+    fill_rect(r, x + 2 + (int)(seed % 5u), y + 4, 12, 2, (SDL_Color){244, 248, 252, 255});
+    fill_rect(r, x + 6, y + 14 + (int)(seed % 3u), 14, 2, (SDL_Color){180, 199, 218, 255});
+    if (seed % 4u == 0u) {
+        fill_rect(r, x + 17, y + 8, 2, 2, (SDL_Color){255, 255, 255, 255});
+    }
+    if (seed % 7u == 0u) {
+        fill_rect(r, x + 4, y + 19, 5, 1, (SDL_Color){150, 174, 200, 255});
+    }
+}
+
+// Mostly glacier ice, with the occasional snow-laden pine.
+void draw_frostfell_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    unsigned int seed = (unsigned int)map_x * 43u + (unsigned int)map_y * 79u;
+    SDL_Color snow = {236, 243, 249, 255};
+    if (seed % 5u == 0u) {
+        SDL_Color pine = {42, 78, 86, 255};
+        draw_frostfell_floor(r, tile_x, tile_y, map_x, map_y);
+        fill_rect(r, x + 10, y + 18, 4, 6, (SDL_Color){74, 55, 42, 255});
+        fill_rect(r, x + 4, y + 12, 16, 7, pine);
+        fill_rect(r, x + 6, y + 6, 12, 7, pine);
+        fill_rect(r, x + 9, y + 1, 6, 6, pine);
+        fill_rect(r, x + 4, y + 12, 16, 2, snow);
+        fill_rect(r, x + 6, y + 6, 12, 2, snow);
+        fill_rect(r, x + 9, y + 1, 6, 2, snow);
+        return;
+    }
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){88, 132, 168, 255});
+    fill_rect(r, x + 1, y + 1, 22, 7, (SDL_Color){148, 194, 224, 255});
+    fill_rect(r, x + 2, y + 1, 15, 2, snow);
+    fill_rect(r, x + 3, y + 11, 18, 4, (SDL_Color){116, 164, 198, 255});
+    fill_rect(r, x + 6, y + 18, 15, 3, (SDL_Color){58, 96, 132, 255});
+    if (seed % 3u == 0u) {
+        fill_rect(r, x + 14, y + 9, 1, 8, (SDL_Color){206, 232, 246, 255});
+    }
+}
+
+// Blue-flagged stakes mark the trail in and out of each Frostfell stage.
+void draw_frostfell_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color wood = {92, 64, 42, 255};
+    SDL_Color flag = {58, 116, 196, 255};
+    draw_frostfell_floor(r, tile_x, tile_y, map_x, map_y);
+    fill_rect(r, x + 3, y + 1, 2, 9, wood);
+    fill_rect(r, x + 5, y + 1, 5, 3, flag);
+    fill_rect(r, x + 17, y + 13, 2, 9, wood);
+    fill_rect(r, x + 19, y + 13, 5, 3, flag);
+}
+
+// Clear lake ice, glossier and bluer than the snow around it.
+void draw_frostfell_lake(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    unsigned int seed = (unsigned int)map_x * 71u + (unsigned int)map_y * 37u;
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){178, 210, 234, 255});
+    fill_rect(r, x + 3, y + 3 + (int)(seed % 4u), 9, 2, (SDL_Color){230, 243, 252, 255});
+    fill_rect(r, x + 13, y + 16, 8, 1, (SDL_Color){138, 180, 214, 255});
+    if (seed % 3u == 0u) {
+        fill_rect(r, x + 6, y + 12, 1, 7, (SDL_Color){138, 180, 214, 255});
+        fill_rect(r, x + 7, y + 18, 5, 1, (SDL_Color){138, 180, 214, 255});
+    }
+}
+
+// A dark hole in the lake ice. On the Kraken's warning turn a tentacle rises
+// out of it.
+void draw_frostfell_lake_hole(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int tentacle) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    draw_frostfell_lake(r, tile_x, tile_y, map_x, map_y);
+    fill_rect(r, x + 3, y + 5, 18, 14, (SDL_Color){232, 244, 252, 255});
+    fill_rect(r, x + 5, y + 6, 14, 12, (SDL_Color){20, 42, 72, 255});
+    fill_rect(r, x + 4, y + 8, 16, 8, (SDL_Color){20, 42, 72, 255});
+    fill_rect(r, x + 8, y + 10, 6, 1, (SDL_Color){58, 98, 140, 255});
+    if (!tentacle) {
+        return;
+    }
+    SDL_Color flesh = {200, 168, 218, 255};
+    SDL_Color sucker = {246, 226, 240, 255};
+    fill_rect(r, x + 8, y + 1, 7, 13, flesh);
+    fill_rect(r, x + 13, y - 2, 5, 5, flesh);
+    fill_rect(r, x + 17, y - 4, 4, 4, flesh);
+    fill_rect(r, x + 10, y + 4, 3, 2, sucker);
+    fill_rect(r, x + 10, y + 8, 3, 2, sucker);
+    fill_rect(r, x + 14, y, 2, 2, sucker);
+}
+
+// Slick ice: a pale teal sheet with a diagonal glare, so it reads apart from
+// the snow, the bluer Kraken lake and the glacier walls.
+void draw_frostfell_ice(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    unsigned int seed = (unsigned int)map_x * 59u + (unsigned int)map_y * 83u;
+    SDL_Color glare = {244, 253, 255, 255};
+    SDL_Color sheen = {104, 184, 196, 255};
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){150, 218, 222, 255});
+    int gx = x + 3 + (int)(seed % 4u);
+    for (int step = 0; step < 4; step++) {
+        fill_rect(r, gx + step * 3, y + 15 - step * 3, 3, 2, glare);
+        fill_rect(r, gx + step * 3, y + 17 - step * 3, 3, 1, sheen);
+    }
+    if (seed % 3u == 0u) {
+        fill_rect(r, x + 17, y + 17, 2, 2, glare);
+        fill_rect(r, x + 5, y + 5, 2, 2, glare);
+    }
+}
+
+// Thin ice: greyer and darker than the snow it bridges, split by a fracture
+// with dark water showing through, so it reads as fragile before a step.
+// Alternate tiles mirror their side cracks so a shortcut never looks stamped.
+void draw_frostfell_thin_ice(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    unsigned int seed = (unsigned int)map_x * 89u + (unsigned int)map_y * 47u;
+    int dir = seed % 2u == 0u ? 1 : -1;
+    SDL_Color crack = {84, 116, 148, 255};
+    SDL_Color water = {40, 70, 104, 255};
+    SDL_Color glint = {236, 246, 252, 255};
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){180, 201, 220, 255});
+    int cx = x + 9 + (int)(seed % 6u);
+    int cy = y + 9 + (int)(seed % 5u);
+    fill_rect(r, x + 1, cy, TILE_SIZE - 2, 2, crack);
+    fill_rect(r, x + 4, cy, TILE_SIZE - 8, 1, water);
+    for (int step = 0; step < 4; step++) {
+        fill_rect(r, cx + dir * step * 2, cy + 2 + step * 2, 2, 1, crack);
+    }
+    fill_rect(r, cx - dir * 4, cy - 6, 1, 6, crack);
+    fill_rect(r, x + 4, y + 4, 3, 1, glint);
+    fill_rect(r, x + 15, y + 19, 2, 1, glint);
+}
+
 void draw_dragonspine_gate(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
@@ -3651,6 +3988,29 @@ void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style) {
         }
         fill_rect(r, x + 59, y + 56, 5, 8,
             (SDL_Color){213, 86, 46, 255});
+        return;
+    }
+
+    if (style == TOWN_EXIT_FROST) {
+        // An ice post on the west wall, capped with snow and icicles.
+        SDL_Color ice_dark = {66, 106, 146, 255};
+        SDL_Color ice = {138, 188, 224, 255};
+        SDL_Color ice_light = {214, 238, 250, 255};
+        SDL_Color snow = {241, 246, 250, 255};
+        fill_rect(r, x + 1, y, 13, 120, ice_dark);
+        fill_rect(r, x + 4, y + 3, 3, 114, ice);
+        fill_rect(r, x + 10, y + 2, 30, 10, ice_dark);
+        fill_rect(r, x + 10, y, 30, 4, snow);
+        fill_rect(r, x + 10, y + 108, 30, 11, ice_dark);
+        fill_rect(r, x + 10, y + 106, 30, 3, snow);
+        fill_rect(r, x + 1, y, 13, 3, snow);
+        for (int drip = 0; drip < 4; drip++) {
+            fill_rect(r, x + 14 + drip * 7, y + 12, 2, 4 + (drip % 2) * 3, ice_light);
+        }
+        for (int mark = 0; mark < 4; mark++) {
+            fill_rect(r, x + 9, y + 20 + mark * 23, 3, 2, ice_light);
+        }
+        fill_rect(r, x + 10, y + 56, 5, 7, (SDL_Color){122, 222, 255, 255});
         return;
     }
 

@@ -238,6 +238,21 @@ Item item_make_longbow(void) {
     return it;
 }
 
+// The Polar Kraken's reward sits between the Longbow and Magic Longbow.
+Item item_make_krakenbone_bow(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_WEAPON;
+    strncpy(it.name, "Krakenbone Bow", sizeof(it.name) - 1);
+    it.attack_bonus = 10;
+    it.is_ranged = 1;
+    it.range = 10;
+    it.value = 700;
+    set_weapon_metadata(&it, WEAPON_FAMILY_BOW, WEAPON_HANDS_TWO,
+        ITEM_RARITY_RARE, ITEM_CLASS_ROGUE, ITEM_VISUAL_LONGBOW);
+    return it;
+}
+
 Item item_make_magic_longbow(void) {
     Item it = {0};
     it.active = 1;

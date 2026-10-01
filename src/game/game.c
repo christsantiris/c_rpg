@@ -57,6 +57,8 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
     e->is_boss = 0;
     e->dain_fragment = 0;
     e->frozen_turns = 0;
+    e->attack_target_x = -1;
+    e->attack_target_y = -1;
     e->move_timer = 0;
     switch (type) {
         case ENEMY_SKELETON:
@@ -130,6 +132,42 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             snprintf(e->name, sizeof(e->name), "Horseman");
             e->max_hp = 52; e->hp = 52;
             e->attack = 13; e->defense = 4; e->experience = 60;
+            break;
+        case ENEMY_ICE_WOLF:
+            snprintf(e->name, sizeof(e->name), "Ice Wolf");
+            e->max_hp = 30; e->hp = 30;
+            e->attack = 10; e->defense = 2; e->experience = 32;
+            break;
+        case ENEMY_FROST_ARCHER:
+            snprintf(e->name, sizeof(e->name), "Frost Archer");
+            e->max_hp = 26; e->hp = 26;
+            e->attack = 11; e->defense = 2; e->experience = 40;
+            break;
+        case ENEMY_YETI:
+            snprintf(e->name, sizeof(e->name), "Yeti");
+            e->max_hp = 60; e->hp = 60;
+            e->attack = 14; e->defense = 4; e->experience = 70;
+            break;
+        case ENEMY_FROST_WRAITH:
+            snprintf(e->name, sizeof(e->name), "Frost Wraith");
+            e->max_hp = 40; e->hp = 40;
+            e->attack = 13; e->defense = 3; e->experience = 75;
+            break;
+        case ENEMY_ICE_GOLEM:
+            snprintf(e->name, sizeof(e->name), "Ice Golem");
+            e->max_hp = 85; e->hp = 85;
+            e->attack = 14; e->defense = 8; e->experience = 95;
+            break;
+        case ENEMY_ICE_GIANT:
+            snprintf(e->name, sizeof(e->name), "Ice Giant");
+            e->max_hp = 100; e->hp = 100;
+            e->attack = 18; e->defense = 6; e->experience = 130;
+            break;
+        case ENEMY_POLAR_KRAKEN:
+            snprintf(e->name, sizeof(e->name), "Polar Kraken");
+            e->max_hp = 260; e->hp = 260;
+            e->attack = 22; e->defense = 8; e->experience = 650;
+            e->is_boss = 1;
             break;
         case ENEMY_SWAMP_DEMON:
             strncpy(e->name, "Swamp Demon", sizeof(e->name) - 1);
@@ -387,6 +425,8 @@ static int boss_for_level(const GameState *g, EnemyType *type) {
         boss_level = COAST_DEPTH;
     } else if (g->location == LOCATION_SWAMP) {
         boss_level = SWAMP_DEPTH;
+    } else if (g->location == LOCATION_FROSTFELL) {
+        boss_level = FROSTFELL_DEPTH;
     } else if (g->location == LOCATION_DRAGONSPINE) {
         boss_level = DRAGONSPINE_DEPTH;
     }
@@ -404,6 +444,8 @@ static int boss_for_level(const GameState *g, EnemyType *type) {
         *type = ENEMY_DROWNED_QUEEN;
     } else if (g->location == LOCATION_SWAMP) {
         *type = ENEMY_SWAMP_DEMON;
+    } else if (g->location == LOCATION_FROSTFELL) {
+        *type = ENEMY_POLAR_KRAKEN;
     } else if (g->location == LOCATION_DRAGONSPINE) {
         *type = ENEMY_RED_DRAGON;
     } else {
@@ -425,6 +467,8 @@ static int enemy_terrain_open(const GameState *g, int x, int y) {
         g->map.tiles[y][x] != TILE_COAST_DRAINED_WATER &&
         g->map.tiles[y][x] != TILE_COAST_CHANNEL_DRY &&
         g->map.tiles[y][x] != TILE_SWAMP_FLOOR &&
+        g->map.tiles[y][x] != TILE_FROST_FLOOR &&
+        g->map.tiles[y][x] != TILE_FROST_LAKE &&
         g->map.tiles[y][x] != TILE_DRAGON_FLOOR &&
         g->map.tiles[y][x] != TILE_DRAGON_ASH &&
         g->map.tiles[y][x] != TILE_DRAGON_HOARD)) {
@@ -761,6 +805,7 @@ void enemies_spawn(GameState *g) {
             g->location == LOCATION_MOUNTAINS ||
             g->location == LOCATION_COAST ||
             g->location == LOCATION_SWAMP ||
+            g->location == LOCATION_FROSTFELL ||
             g->location == LOCATION_DRAGONSPINE) {
             map_room_center(&g->map.rooms[g->map.room_count - 1],
                 &boss_x, &boss_y);
@@ -779,7 +824,8 @@ void enemies_spawn(GameState *g) {
         (g->location == LOCATION_MOUNTAINS ? MOUNTAIN_DEPTH :
         (g->location == LOCATION_COAST ? COAST_DEPTH :
         (g->location == LOCATION_SWAMP ? SWAMP_DEPTH :
-        (g->location == LOCATION_DRAGONSPINE ? DRAGONSPINE_DEPTH : DUNGEON_DEPTH))));
+        (g->location == LOCATION_FROSTFELL ? FROSTFELL_DEPTH :
+        (g->location == LOCATION_DRAGONSPINE ? DRAGONSPINE_DEPTH : DUNGEON_DEPTH)))));
     int regular_room_limit = g->level == boss_level
         ? g->map.room_count - 1 : g->map.room_count;
     place_dain_map_bearer(g);
@@ -812,6 +858,29 @@ void enemies_spawn(GameState *g) {
                 type = roll < 12 ? ENEMY_GOBLIN_ARCHER :
                     (roll < 40 ? ENEMY_DRAKE :
                     (roll < 65 ? ENEMY_GIANT : ENEMY_FIRE_ELEMENTAL));
+            }
+        } else if (g->location == LOCATION_FROSTFELL) {
+            // Each deeper stage adds one heavier kind of frost creature.
+            if (g->level == 1) {
+                type = roll < 60 ? ENEMY_ICE_WOLF : ENEMY_FROST_ARCHER;
+            } else if (g->level == 2) {
+                type = roll < 40 ? ENEMY_ICE_WOLF :
+                    (roll < 70 ? ENEMY_FROST_ARCHER : ENEMY_YETI);
+            } else if (g->level == 3) {
+                type = roll < 25 ? ENEMY_ICE_WOLF :
+                    (roll < 50 ? ENEMY_FROST_ARCHER :
+                    (roll < 75 ? ENEMY_YETI : ENEMY_FROST_WRAITH));
+            } else if (g->level == 4) {
+                type = roll < 15 ? ENEMY_ICE_WOLF :
+                    (roll < 35 ? ENEMY_FROST_ARCHER :
+                    (roll < 55 ? ENEMY_YETI :
+                    (roll < 80 ? ENEMY_FROST_WRAITH : ENEMY_ICE_GOLEM)));
+            } else {
+                type = roll < 10 ? ENEMY_ICE_WOLF :
+                    (roll < 25 ? ENEMY_FROST_ARCHER :
+                    (roll < 40 ? ENEMY_YETI :
+                    (roll < 60 ? ENEMY_FROST_WRAITH :
+                    (roll < 80 ? ENEMY_ICE_GOLEM : ENEMY_ICE_GIANT))));
             }
         } else if (g->location == LOCATION_SWAMP) {
             if (g->level <= 2) {
@@ -941,6 +1010,9 @@ void game_init(GameState *g) {
             g->swamp_cache[i].valid = 0;
             g->dragonspine_cache[i].valid = 0;
         }
+        if (i < FROSTFELL_DEPTH) {
+            g->frostfell_cache[i].valid = 0;
+        }
     }
     g->message_count = 0;
     g->level_cleared = 0;
@@ -951,6 +1023,7 @@ void game_init(GameState *g) {
     g->max_coast_level_reached = 1;
     g->max_swamp_level_reached = 1;
     g->max_dragonspine_level_reached = 1;
+    g->max_frostfell_level_reached = 1;
     g->max_temple_level_reached = 1;
     g->location = LOCATION_TOWN;
     int spawn_x, spawn_y;
@@ -980,6 +1053,7 @@ void game_init(GameState *g) {
     g->portal_y = 0;
     g->portal_origin_tile = TILE_FLOOR;
     g->defeated_bosses = 0;
+    g->kraken_bow_unclaimed = 0;
     g->elowen_quest_state = 0;
     g->elowen_seals_restored = 0;
     g->dain_quest_state = 0;
@@ -1018,6 +1092,8 @@ void game_init(GameState *g) {
     g->player.last_dx = 0;
     g->player.last_dy = 0;
     g->player.poison_turns = 0;
+    g->player.frozen_turns = 0;
+    g->player.freeze_recovery = 0;
     g->trail_count = 0;
     g->trail_frames = 0;
     g->trail_effect = TRAIL_EFFECT_GENERIC;
@@ -1289,6 +1365,9 @@ static LevelCache *active_cache(GameState *g) {
     if (g->location == LOCATION_DRAGONSPINE) {
         return g->dragonspine_cache;
     }
+    if (g->location == LOCATION_FROSTFELL) {
+        return g->frostfell_cache;
+    }
     if (g->location == LOCATION_TEMPLE) {
         return g->temple_cache;
     }
@@ -1307,6 +1386,9 @@ static int *active_max_level(GameState *g) {
     }
     if (g->location == LOCATION_DRAGONSPINE) {
         return &g->max_dragonspine_level_reached;
+    }
+    if (g->location == LOCATION_FROSTFELL) {
+        return &g->max_frostfell_level_reached;
     }
     if (g->location == LOCATION_TEMPLE) {
         return &g->max_temple_level_reached;
@@ -1329,6 +1411,9 @@ static int active_depth(const GameState *g) {
     }
     if (g->location == LOCATION_DRAGONSPINE) {
         return DRAGONSPINE_DEPTH;
+    }
+    if (g->location == LOCATION_FROSTFELL) {
+        return FROSTFELL_DEPTH;
     }
     if (g->location == LOCATION_TEMPLE) {
         return TEMPLE_DEPTH;
@@ -1613,7 +1698,34 @@ static void place_dragon_treasure(GameState *g) {
     }
 }
 
+// Keep the unique reward available even when a fresh visit regenerates the map.
+static void restore_frostfell_reward(GameState *g) {
+    if (g->location != LOCATION_FROSTFELL || g->level != FROSTFELL_DEPTH ||
+        !g->kraken_bow_unclaimed || g->map.room_count == 0) {
+        return;
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        if (g->floor_items[i].active &&
+            strcmp(g->floor_items[i].item.name, "Krakenbone Bow") == 0) {
+            return;
+        }
+    }
+    if (g->floor_item_count >= MAX_FLOOR_ITEMS) {
+        return;
+    }
+    int x;
+    int y;
+    map_room_center(&g->map.rooms[g->map.room_count - 1], &x, &y);
+    FloorItem *reward = &g->floor_items[g->floor_item_count++];
+    *reward = (FloorItem){
+        .active = 1, .x = x, .y = y, .underlying_tile = TILE_FROST_LAKE,
+        .item = item_make_krakenbone_bow()
+    };
+    g->map.tiles[y][x] = TILE_ITEM;
+}
+
 void game_refresh_quest_encounters(GameState *g) {
+    restore_frostfell_reward(g);
     int seal_placed = place_elowen_seal(g);
     int warden_placed = place_alder_warden(g);
     int beacon_placed = place_mara_beacon(g);
@@ -1639,6 +1751,8 @@ static void generate_active_level(GameState *g) {
         map_generate_coast(&g->map, g->level);
     } else if (g->location == LOCATION_SWAMP) {
         map_generate_swamp(&g->map, g->level);
+    } else if (g->location == LOCATION_FROSTFELL) {
+        map_generate_frostfell(&g->map, g->level);
     } else if (g->location == LOCATION_DRAGONSPINE) {
         map_generate_dragonspine(&g->map, g->level);
     } else if (g->location == LOCATION_TEMPLE) {
@@ -1701,6 +1815,7 @@ static void generate_active_level(GameState *g) {
     if (beacon_placed) {
         spawn_mara_guardian(g);
     }
+    restore_frostfell_reward(g);
     game_update_level_progress(g);
 }
 
@@ -1856,6 +1971,11 @@ void game_enter_swamp(GameState *g) {
     push_message(g, "The black water closes around the swamp trail.");
 }
 
+void game_enter_frostfell(GameState *g) {
+    enter_adventure(g, LOCATION_FROSTFELL);
+    push_message(g, "Bitter wind howls across the Frostfell Wastes.");
+}
+
 void game_enter_high_pass(GameState *g, int from_town) {
     g->location = LOCATION_HIGH_PASS;
     map_generate_high_pass(&g->map);
@@ -1909,11 +2029,14 @@ static void place_town_portal(GameState *g) {
     if (g->location == LOCATION_TOWN2) {
         if (g->portal_location == LOCATION_SWAMP) {
             g->map.tiles[TOWN_H - 3][21] = TILE_PORTAL;
+        } else if (g->portal_location == LOCATION_FROSTFELL) {
+            g->map.tiles[13][2] = TILE_PORTAL;
         }
         return;
     }
     if (g->location != LOCATION_TOWN ||
-        g->portal_location == LOCATION_SWAMP) {
+        g->portal_location == LOCATION_SWAMP ||
+        g->portal_location == LOCATION_FROSTFELL) {
         return;
     }
     int x = 21;
@@ -2629,6 +2752,9 @@ void game_record_temple_enemy_defeated(GameState *g, EnemyType type) {
 
 void game_return_to_town(GameState *g) {
     Location returning_from = g->location;
+    if (returning_from == LOCATION_FROSTFELL) {
+        clear_floor_loot(g);
+    }
     LevelCache *cache = active_cache(g);
     // Cache current level before leaving
     if (returning_from == LOCATION_CROWNROAD) {
@@ -2646,6 +2772,7 @@ void game_return_to_town(GameState *g) {
     int spawn_x;
     int spawn_y;
     if (returning_from == LOCATION_SWAMP ||
+        returning_from == LOCATION_FROSTFELL ||
         returning_from == LOCATION_CROWNROAD) {
         g->location = LOCATION_TOWN2;
         map_generate_town2(&g->map, &spawn_x, &spawn_y);
@@ -2664,6 +2791,9 @@ void game_return_to_town(GameState *g) {
     } else if (returning_from == LOCATION_SWAMP) {
         g->player.x = 20;
         g->player.y = TOWN_H - 2;
+    } else if (returning_from == LOCATION_FROSTFELL) {
+        g->player.x = 1;
+        g->player.y = 12;
     } else if (returning_from == LOCATION_FOREST) {
         g->player.x = 1; g->player.y = 12;
     } else if (returning_from == LOCATION_MOUNTAINS) {
@@ -2693,6 +2823,7 @@ void game_open_town_portal(GameState *g) {
         g->location != LOCATION_COAST &&
         g->location != LOCATION_TEMPLE &&
         g->location != LOCATION_SWAMP &&
+        g->location != LOCATION_FROSTFELL &&
         g->location != LOCATION_DRAGONSPINE) {
         return;
     }
@@ -2724,6 +2855,8 @@ void game_hide_portal_destination(GameState *g) {
         cache = g->swamp_cache;
     } else if (g->portal_location == LOCATION_DRAGONSPINE) {
         cache = g->dragonspine_cache;
+    } else if (g->portal_location == LOCATION_FROSTFELL) {
+        cache = g->frostfell_cache;
     } else if (g->portal_location == LOCATION_TEMPLE) {
         cache = g->temple_cache;
     }
@@ -2775,11 +2908,16 @@ void game_use_town_portal(GameState *g) {
         cache = g->swamp_cache;
     } else if (g->portal_location == LOCATION_DRAGONSPINE) {
         cache = g->dragonspine_cache;
+    } else if (g->portal_location == LOCATION_FROSTFELL) {
+        cache = g->frostfell_cache;
     } else if (g->portal_location == LOCATION_TEMPLE) {
         cache = g->temple_cache;
     }
     if (!cache[level - 1].valid) return;
 
+    if (g->portal_location == LOCATION_FROSTFELL) {
+        clear_floor_loot(g);
+    }
     g->location = g->portal_location;
     g->level = level;
     g->map = cache[level - 1].map;
