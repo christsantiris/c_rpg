@@ -59,7 +59,8 @@ typedef struct {
 } TownEntryTransition;
 
 static int town_entry_style(const GameState *g, Action action, TownExitStyle *style) {
-    if ((g->location != LOCATION_TOWN && g->location != LOCATION_TOWN2) ||
+    if ((g->location != LOCATION_TOWN && g->location != LOCATION_TOWN2 &&
+        g->location != LOCATION_TOWN4) ||
         action.type != ACTION_MOVE ||
         action.target_x < 0 || action.target_x >= MAP_W ||
         action.target_y < 0 || action.target_y >= MAP_H ||
@@ -67,7 +68,12 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
         return 0;
     }
     if (action.target_y == 0) {
-        *style = TOWN_EXIT_DUNGEON;
+        if (g->location == LOCATION_TOWN && action.target_x == TOWN4_ROAD_X &&
+            !(g->defeated_bosses & (1 << LOCATION_MOUNTAINS))) {
+            return 0;
+        }
+        *style = g->location == LOCATION_TOWN ?
+            TOWN_EXIT_MOUNTAINS : TOWN_EXIT_DUNGEON;
         return 1;
     }
     if (action.target_x == 0 && g->location == LOCATION_TOWN2) {
@@ -86,13 +92,13 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
     if (action.target_x == TOWN_W - 1) {
         *style = g->location == LOCATION_TOWN2 ?
             TOWN_EXIT_FOREST :
-            (action.target_y == TOWN_DRAGON_GATE_Y ?
-            TOWN_EXIT_DRAGONSPINE : TOWN_EXIT_MOUNTAINS);
+            (g->location == LOCATION_TOWN4 ?
+            TOWN_EXIT_DRAGONSPINE : TOWN_EXIT_DUNGEON);
         return 1;
     }
     if (action.target_y == TOWN_H - 1) {
-        *style = g->location == LOCATION_TOWN2 ?
-            TOWN_EXIT_SWAMP : TOWN_EXIT_COAST;
+        *style = g->location == LOCATION_TOWN4 ? TOWN_EXIT_MOUNTAINS :
+            (g->location == LOCATION_TOWN2 ? TOWN_EXIT_SWAMP : TOWN_EXIT_COAST);
         return 1;
     }
     return 0;
@@ -1334,6 +1340,7 @@ int main(int argc, char **argv) {
             game.location == LOCATION_TAVERN ||
             game.location == LOCATION_TOWN2 ||
             game.location == LOCATION_TOWN3 ||
+            game.location == LOCATION_TOWN4 ||
             game.location == LOCATION_INN ||
             game.location == LOCATION_ISLAND;
         int in_town2 = game.location == LOCATION_TOWN2 ||

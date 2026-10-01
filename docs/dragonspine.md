@@ -1,10 +1,15 @@
 # Dragonspine and High Pass
 
-Defeating the Goblin King unlocks a second gate on the east side of the
-starting town. The original east gate still enters the Goblin Mountains. The
-new gate leads across the short, enemy-free High Pass to Dragonspine. Crown
-Peak returns the player to town after its boss fight, so Dragonspine begins as
-a separate expedition.
+Defeating the Goblin King and leaving Crown Peak leads to Town 4. For now this
+town has only a crossroads and Ilya, with no buildings. Its full east gate
+enters Dragonspine directly. Leaving Dragonspine's first stage, completing its
+summit, or casting Return to Town brings you back beside this gate in Town 4.
+The return portal also appears there.
+
+Town 4's south road leads into the enemy-free High Pass. Walk south to reach
+OakHaven's northeast shortcut, or north from OakHaven to revisit Town 4 without
+crossing the Goblin Mountains. The shortcut opens after the Goblin King falls.
+OakHaven's main north gate still starts a Goblin Mountains expedition.
 
 Dragonspine has five generated stages with independent progress and saved
 floor caches. Trails at the west and east map edges lead back and forward.
@@ -28,7 +33,7 @@ defeated.
 
 ## The Dragon's Hoard
 
-When the High Pass opens, Ilya appears beside its town path. Speak with her to
+Ilya stands beside Town 4's east road to Dragonspine. Speak with her to
 accept **The Dragon's Hoard**. On Dragonspine stage 5, find the golden goblet
 in the dragon's lair, stand on it, and press `A`. Return to Ilya to trade
 the goblet for a one-time Potion of Strength. Make space in your pack before

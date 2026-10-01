@@ -132,11 +132,15 @@
 #define SWAMP_MAP_W 72
 #define SWAMP_MAP_H 64
 #define DRAGONSPINE_DEPTH 5
-#define HIGH_PASS_W 64
-#define HIGH_PASS_Y 12
-#define TOWN_DRAGON_GATE_Y 4
-#define TOWN_DRAGON_NPC_X 39
-#define TOWN_DRAGON_NPC_Y 6
+#define HIGH_PASS_W TOWN_W
+#define HIGH_PASS_H 64
+#define HIGH_PASS_X 20
+#define TOWN4_ROAD_X 40
+#define TOWN4_DRAGON_GATE_Y 12
+#define TOWN4_ILYA_X 39
+#define TOWN4_ILYA_Y 11
+#define TOWN4_PORTAL_X (TOWN_W - 3)
+#define TOWN4_PORTAL_Y 13
 
 typedef enum {
     TILE_FLOOR = 0,
@@ -309,7 +313,8 @@ int  map_is_walkable(const Map *m, int x, int y);
 void map_room_center(const Room *r, int *cx, int *cy);
 void map_generate_town(Map *m, int *spawn_x, int *spawn_y);
 void map_set_town2_road(Map *m, int unlocked);
-void map_set_dragonspine_road(Map *m, int unlocked);
+void map_generate_town4(Map *m, int *spawn_x, int *spawn_y);
+void map_set_town4_road(Map *m, int unlocked);
 void map_generate_town2(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_town3(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_crownroad(Map *m);

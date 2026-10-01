@@ -2108,7 +2108,7 @@ int load_game(GameState *g, int slot) {
     if (g->location == LOCATION_TOWN) {
         map_set_town2_road(&g->map,
             g->defeated_bosses & (1 << LOCATION_FOREST));
-        map_set_dragonspine_road(&g->map,
+        map_set_town4_road(&g->map,
             g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
     }
     if (g->location == LOCATION_TOWN2) {

@@ -245,7 +245,10 @@ void test_return_to_town_spell(void) {
     GameState g;
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
-    game_enter_dungeon(&g);
+    g.player.x = TOWN_W - 2;
+    g.player.y = 12;
+    action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 1, 12});
+    ASSERT("east OakHaven exit enters dungeon", g.location == LOCATION_DUNGEON);
     int origin_x = g.player.x;
     int origin_y = g.player.y;
     g.player.known_spells[0] = spell_make_return_to_town();
@@ -257,12 +260,14 @@ void test_return_to_town_spell(void) {
     action_resolve_player(&g, cast);
     ASSERT("zero-mana return spell reaches town", g.location == LOCATION_TOWN);
     ASSERT("return spell leaves a portal beside the dungeon entrance",
-        g.map.tiles[2][21] == TILE_PORTAL);
+        g.map.tiles[13][TOWN_W - 3] == TILE_PORTAL);
+    ASSERT("dungeon return spell arrives at east OakHaven road",
+        g.player.x == TOWN_W - 2 && g.player.y == 12);
     ASSERT("return portal remains active", g.portal_active == 1);
     ASSERT("unusable dungeon end of portal is hidden",
         g.level_cache[0].map.tiles[origin_y][origin_x] != TILE_PORTAL);
 
-    Action enter = {ACTION_MOVE, 21, 2};
+    Action enter = {ACTION_MOVE, TOWN_W - 3, 13};
     action_resolve_player(&g, enter);
     ASSERT("town portal returns to dungeon", g.location == LOCATION_DUNGEON);
     ASSERT("portal returns to casting position",
@@ -356,7 +361,8 @@ void test_final_dungeon_exit(void) {
         g.inventory_count == 2 && g.map.tiles[10][12] == TILE_RETURN_EXIT);
     action_resolve_player(&g, a);
     ASSERT("final exit returns player to town", g.location == LOCATION_TOWN);
-    ASSERT("final exit returns at north town road", g.player.x == 20 && g.player.y == 1);
+    ASSERT("final exit returns at east OakHaven road",
+        g.player.x == TOWN_W - 2 && g.player.y == 12);
     ASSERT("final exit does not create a ninth floor",
         g.level == DUNGEON_DEPTH);
     ASSERT("leaving the dungeon preserves surviving enemies and uncleared status",

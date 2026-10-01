@@ -1,6 +1,6 @@
 # Goblin Mountains
 
-The Goblin Mountains are entered from the east town road and use an independent
+The Goblin Mountains are entered from the north road of OakHaven and use an independent
 eight-level cache. Their black basalt, iron-red rock and ember-orange accents
 separate the region visually from the dungeon and Haunted Forest. The Mountains
 use eight authored route graphs rather than the Forest's clearing templates.
@@ -63,7 +63,8 @@ travel with a themed warband. Defeating the leader recovers the fragment
 automatically. Accepting the quest starts a fresh mountain expedition, while a
 previously defeated Goblin King remains dead.
 
-After the Goblin King falls, leaving Crown Peak returns to the starting town.
-A separate gate branches from the east road to the safe High Pass, which leads
-to [Dragonspine](dragonspine.md). The original Goblin Mountains entrance remains
-available for another expedition.
+After the Goblin King falls, leaving Crown Peak leads to Town 4. Its east gate
+enters [Dragonspine](dragonspine.md) directly, with Ilya beside the road. Town 4's
+south road follows the safe High Pass back to OakHaven, bypassing the mountains.
+The shortcut also lets you revisit Town 4 from OakHaven's northeast road.
+OakHaven's main north gate remains available for another mountain expedition.

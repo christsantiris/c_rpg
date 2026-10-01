@@ -1,6 +1,6 @@
 # Castle Dungeon
 
-Enter the eight-floor dungeon from the north road of Town 1. Its rooms and
+Enter the eight-floor dungeon from the east road of OakHaven. Its rooms and
 connecting corridors are generated for each new expedition, then cached while
 that expedition is in progress. Backtracking preserves explored rooms, enemies,
 opened doors, and collected treasure. A later expedition generates new maps
@@ -51,12 +51,12 @@ chamber. Stand on the key and press `P`, then walk into the chamber door to
 unlock it. The Lich stays dormant until the player enters the chamber. Once
 engaged, he alternates a warning turn with a ranged necrotic bolt. Defeating
 him opens the glowing return passage; other surviving
-enemies do not block the trip back to Town 1. The Lich King's victory and boss
+enemies do not block the trip back to OakHaven. The Lich King's victory and boss
 reward are one-time.
 
 ## Elowen's Quest
 
-Speak with Elowen in Town 1's Tavern to begin **The Broken Seals**. Her three
+Speak with Elowen in OakHaven's Tavern to begin **The Broken Seals**. Her three
 burial seals appear on floors 2, 4, and 6, each with an undead guard group.
 Stand on a seal and press `A` to restore it. Return to Elowen after all three
 are restored for 40 gold and 300 score. Her quest does not require defeating

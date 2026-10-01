@@ -104,7 +104,7 @@ void harbor_draw(Renderer *r, const GameState *g, const HarborScreen *s) {
     draw_centered_text(r, on_island ? "CAPTAIN ROWAN" : "HARBOR DOCK",
         play_w / 2, 34, gold, r->font_large);
     draw_centered_text(r, on_island
-        ? "RETURN TO TOWN WHEN YOU ARE READY."
+        ? "RETURN TO OAKHAVEN WHEN YOU ARE READY."
         : g->island_travel_unlocked
         ? "THE SEA ROUTE TO THE RUINED ISLE IS OPEN."
         : can_sail
@@ -113,12 +113,12 @@ void harbor_draw(Renderer *r, const GameState *g, const HarborScreen *s) {
         play_w / 2, 70, on_island || can_sail ? ready : locked, r->font_tiny);
 
     draw_harbor_option(r, s, 0, on_island || can_sail, on_island
-        ? "RETURN TO TOWN"
+        ? "RETURN TO OAKHAVEN"
         : can_sail
         ? "BOARD SHIP - SAIL TO THE RUINED ISLE"
         : "BOARD SHIP - TREASURE MAP REQUIRED");
     draw_harbor_option(r, s, 1, 1, on_island
-        ? "STAY ON THE RUINED ISLE" : "RETURN TO TOWN");
+        ? "STAY ON THE RUINED ISLE" : "RETURN TO OAKHAVEN");
 
     info_panel_draw_harbor(r, g);
     message_bar_draw(r, g);

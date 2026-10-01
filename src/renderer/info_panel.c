@@ -45,13 +45,15 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor)
         SDL_snprintf(loc, sizeof(loc), g->location == LOCATION_ISLAND
             ? "ISLAND DOCK" : "HARBOR");
     } else if (g->location == LOCATION_TOWN) {
-        SDL_snprintf(loc, sizeof(loc), "TOWN");
+        SDL_snprintf(loc, sizeof(loc), "OakHaven");
     } else if (g->location == LOCATION_TAVERN) {
         SDL_snprintf(loc, sizeof(loc), "TAVERN");
     } else if (g->location == LOCATION_TOWN2) {
         SDL_snprintf(loc, sizeof(loc), "TOWN 2");
     } else if (g->location == LOCATION_TOWN3) {
         SDL_snprintf(loc, sizeof(loc), "TOWN 3");
+    } else if (g->location == LOCATION_TOWN4) {
+        SDL_snprintf(loc, sizeof(loc), "TOWN 4");
     } else if (g->location == LOCATION_CROWNROAD) {
         SDL_snprintf(loc, sizeof(loc), "FALLEN CROWNROAD");
     } else if (g->location == LOCATION_FOREST_ROAD) {

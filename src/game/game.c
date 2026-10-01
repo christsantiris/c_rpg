@@ -1979,12 +1979,16 @@ void game_enter_frostfell(GameState *g) {
 void game_enter_high_pass(GameState *g, int from_town) {
     g->location = LOCATION_HIGH_PASS;
     map_generate_high_pass(&g->map);
-    g->player.x = from_town ? 1 : HIGH_PASS_W - 2;
-    g->player.y = from_town ? g->map.stairs_up_y : g->map.stairs_down_y;
+    g->player.x = HIGH_PASS_X;
+    g->player.y = from_town ? HIGH_PASS_H - 2 : 1;
     g->enemy_count = 0;
     g->floor_item_count = 0;
     g->dialogue_active = 0;
-    push_message(g, "The pale High Pass climbs toward Dragonspine.");
+    g->player.poison_turns = 0;
+    g->player.frozen_turns = 0;
+    g->player.freeze_recovery = 0;
+    push_message(g, from_town ? "The High Pass leads north to Town 4." :
+        "The High Pass leads south to OakHaven.");
 }
 
 void game_enter_dragonspine(GameState *g) {
@@ -2026,6 +2030,12 @@ static void place_town_portal(GameState *g) {
     if (!g->portal_active) {
         return;
     }
+    if (g->location == LOCATION_TOWN4) {
+        if (g->portal_location == LOCATION_DRAGONSPINE) {
+            g->map.tiles[TOWN4_PORTAL_Y][TOWN4_PORTAL_X] = TILE_PORTAL;
+        }
+        return;
+    }
     if (g->location == LOCATION_TOWN2) {
         if (g->portal_location == LOCATION_SWAMP) {
             g->map.tiles[TOWN_H - 3][21] = TILE_PORTAL;
@@ -2035,6 +2045,7 @@ static void place_town_portal(GameState *g) {
         return;
     }
     if (g->location != LOCATION_TOWN ||
+        g->portal_location == LOCATION_DRAGONSPINE ||
         g->portal_location == LOCATION_SWAMP ||
         g->portal_location == LOCATION_FROSTFELL) {
         return;
@@ -2044,12 +2055,9 @@ static void place_town_portal(GameState *g) {
     if (g->portal_location == LOCATION_FOREST) {
         x = 2;
         y = 13;
-    } else if (g->portal_location == LOCATION_MOUNTAINS) {
+    } else if (g->portal_location == LOCATION_DUNGEON) {
         x = TOWN_W - 3;
         y = 13;
-    } else if (g->portal_location == LOCATION_DRAGONSPINE) {
-        x = 41;
-        y = TOWN_DRAGON_GATE_Y + 1;
     } else if (g->portal_location == LOCATION_COAST) {
         x = 21;
         y = TOWN_H - 3;
@@ -2080,7 +2088,7 @@ void game_leave_tavern(GameState *g) {
     map_generate_town(&g->map, &spawn_x, &spawn_y);
     map_set_town2_road(&g->map,
         g->defeated_bosses & (1 << LOCATION_FOREST));
-    map_set_dragonspine_road(&g->map,
+    map_set_town4_road(&g->map,
         g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
     place_harbor_road(g);
     g->player.x = TOWN_TAVERN_DOOR_X;
@@ -2128,7 +2136,7 @@ void game_enter_forest_road(GameState *g) {
     g->floor_item_count = 0;
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
-    push_message(g, from_town2 ? "The forest road leads east to Town 1." :
+    push_message(g, from_town2 ? "The forest road leads east to OakHaven." :
         "The forest road leads west to Town 2.");
 }
 
@@ -2145,7 +2153,7 @@ void game_leave_forest_road(GameState *g, Location destination) {
         map_generate_town(&g->map, &spawn_x, &spawn_y);
         map_set_town2_road(&g->map,
             g->defeated_bosses & (1 << LOCATION_FOREST));
-        map_set_dragonspine_road(&g->map,
+        map_set_town4_road(&g->map,
             g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
         place_harbor_road(g);
         place_town_portal(g);
@@ -2157,7 +2165,7 @@ void game_leave_forest_road(GameState *g, Location destination) {
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
     push_message(g, destination == LOCATION_TOWN2 ?
-        "You arrive in the second town." : "You return to the starting town.");
+        "You arrive in the second town." : "You return to OakHaven.");
 }
 
 void game_enter_crownroad(GameState *g, int from_town3) {
@@ -2541,7 +2549,7 @@ void game_leave_island(GameState *g) {
     map_generate_town(&g->map, &spawn_x, &spawn_y);
     map_set_town2_road(&g->map,
         g->defeated_bosses & (1 << LOCATION_FOREST));
-    map_set_dragonspine_road(&g->map,
+    map_set_town4_road(&g->map,
         g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
     place_harbor_road(g);
     g->player.x = TOWN_HARBOR_ENTRANCE_X;
@@ -2750,9 +2758,9 @@ void game_record_temple_enemy_defeated(GameState *g, EnemyType type) {
     push_message(g, "The guardian falls. The buried vault opens!");
 }
 
-void game_return_to_town(GameState *g) {
+static void return_to_town(GameState *g, Location destination) {
     Location returning_from = g->location;
-    if (returning_from == LOCATION_FROSTFELL) {
+    if (returning_from == LOCATION_FROSTFELL || destination == LOCATION_TOWN4) {
         clear_floor_loot(g);
     }
     LevelCache *cache = active_cache(g);
@@ -2762,30 +2770,33 @@ void game_return_to_town(GameState *g) {
     } else if (returning_from != LOCATION_HIGH_PASS && g->level >= 1 &&
         g->level <= active_depth(g)) {
         cache[g->level - 1].map = g->map;
-        cache[g->level - 1].enemy_count   = g->enemy_count;
+        cache[g->level - 1].enemy_count = g->enemy_count;
         cache[g->level - 1].level_cleared = g->level_cleared;
-        for (int i = 0; i < g->enemy_count; i++)
+        for (int i = 0; i < g->enemy_count; i++) {
             cache[g->level - 1].enemies[i] = g->enemies[i];
+        }
         cache[g->level - 1].valid = 1;
     }
 
     int spawn_x;
     int spawn_y;
-    if (returning_from == LOCATION_SWAMP ||
-        returning_from == LOCATION_FROSTFELL ||
-        returning_from == LOCATION_CROWNROAD) {
-        g->location = LOCATION_TOWN2;
+    g->location = destination;
+    if (destination == LOCATION_TOWN4) {
+        map_generate_town4(&g->map, &spawn_x, &spawn_y);
+    } else if (destination == LOCATION_TOWN2) {
         map_generate_town2(&g->map, &spawn_x, &spawn_y);
     } else {
-        g->location = LOCATION_TOWN;
         map_generate_town(&g->map, &spawn_x, &spawn_y);
         map_set_town2_road(&g->map,
             g->defeated_bosses & (1 << LOCATION_FOREST));
-        map_set_dragonspine_road(&g->map,
+        map_set_town4_road(&g->map,
             g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
         place_harbor_road(g);
     }
-    if (returning_from == LOCATION_CROWNROAD) {
+    if (destination == LOCATION_TOWN4) {
+        g->player.x = returning_from == LOCATION_MOUNTAINS ? spawn_x : TOWN_W - 2;
+        g->player.y = returning_from == LOCATION_MOUNTAINS ? spawn_y : TOWN4_DRAGON_GATE_Y;
+    } else if (returning_from == LOCATION_CROWNROAD) {
         g->player.x = CROWNROAD_X;
         g->player.y = 1;
     } else if (returning_from == LOCATION_SWAMP) {
@@ -2796,12 +2807,9 @@ void game_return_to_town(GameState *g) {
         g->player.y = 12;
     } else if (returning_from == LOCATION_FOREST) {
         g->player.x = 1; g->player.y = 12;
-    } else if (returning_from == LOCATION_MOUNTAINS) {
-        g->player.x = TOWN_W - 2; g->player.y = 12;
-    } else if (returning_from == LOCATION_DRAGONSPINE ||
-        returning_from == LOCATION_HIGH_PASS) {
-        g->player.x = 40;
-        g->player.y = TOWN_DRAGON_GATE_Y;
+    } else if (returning_from == LOCATION_DUNGEON) {
+        g->player.x = TOWN_W - 2;
+        g->player.y = 12;
     } else if (returning_from == LOCATION_COAST) {
         g->player.x = 20; g->player.y = TOWN_H - 2;
     } else if (returning_from == LOCATION_TEMPLE) {
@@ -2813,7 +2821,33 @@ void game_return_to_town(GameState *g) {
     g->floor_item_count = 0;
     g->enemy_count = 0;
     g->player.poison_turns = 0;
+    g->player.frozen_turns = 0;
+    g->player.freeze_recovery = 0;
+    g->dialogue_active = 0;
     place_town_portal(g);
+}
+
+void game_return_to_town(GameState *g) {
+    Location destination = LOCATION_TOWN;
+    if (g->location == LOCATION_SWAMP || g->location == LOCATION_FROSTFELL ||
+        g->location == LOCATION_CROWNROAD) {
+        destination = LOCATION_TOWN2;
+    } else if (g->location == LOCATION_DRAGONSPINE || g->location == LOCATION_HIGH_PASS) {
+        destination = LOCATION_TOWN4;
+    }
+    return_to_town(g, destination);
+}
+
+void game_enter_town4(GameState *g) {
+    return_to_town(g, LOCATION_TOWN4);
+}
+
+void game_leave_high_pass(GameState *g, Location destination) {
+    return_to_town(g, destination);
+    g->player.x = destination == LOCATION_TOWN4 ? 20 : TOWN4_ROAD_X;
+    g->player.y = destination == LOCATION_TOWN4 ? TOWN_H - 2 : 1;
+    push_message(g, destination == LOCATION_TOWN4 ?
+        "You arrive in Town 4." : "You return to OakHaven.");
 }
 
 void game_open_town_portal(GameState *g) {
@@ -2958,7 +2992,7 @@ void game_talk_to_cain(GameState *g) {
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Cain");
     g->dialogue_x = TOWN_CAIN_X;
     g->dialogue_y = TOWN_CAIN_Y;
-    const char *warning = "Undead lurk north, beasts west, goblins east, and sea horrors south.";
+    const char *warning = "Goblins lurk north, beasts west, undead east, and sea horrors south.";
     if (g->cain_scroll_given) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "%s Read your scroll to learn Return to Town. Use it when danger grows!", warning);
@@ -3188,32 +3222,31 @@ void game_talk_to_royal_guard(GameState *g, int x, int y) {
     } else {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "We will not stop you, but grow stronger first. Brave Blackwater "
-            "Swamp, the labyrinth and the lands near the first town before "
+            "Swamp, the labyrinth and the lands near OakHaven before "
             "the Crownroad.");
     }
     push_message(g, "The Royal Guards recommend exploring other areas first.");
 }
 
 void game_talk_to_dragon_seeker(GameState *g) {
-    if (!(g->defeated_bosses & (1 << LOCATION_MOUNTAINS))) {
+    if (g->location != LOCATION_TOWN4) {
         return;
     }
     g->dialogue_active = 1;
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Ilya");
-    g->dialogue_x = TOWN_DRAGON_NPC_X;
-    g->dialogue_y = TOWN_DRAGON_NPC_Y;
+    g->dialogue_x = TOWN4_ILYA_X;
+    g->dialogue_y = TOWN4_ILYA_Y;
     if (g->dragon_treasure_quest_state == 0) {
         g->dragon_treasure_quest_state = 1;
         if (g->portal_active && g->portal_location == LOCATION_DRAGONSPINE &&
-            g->location == LOCATION_TOWN &&
-            g->map.tiles[TOWN_DRAGON_GATE_Y + 1][41] == TILE_PORTAL) {
-            g->map.tiles[TOWN_DRAGON_GATE_Y + 1][41] = TILE_TOWN_FLOOR;
+            g->map.tiles[TOWN4_PORTAL_Y][TOWN4_PORTAL_X] == TILE_PORTAL) {
+            g->map.tiles[TOWN4_PORTAL_Y][TOWN4_PORTAL_X] = TILE_TOWN_FLOOR;
         }
         prepare_quest_expedition(g, LOCATION_DRAGONSPINE);
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "A golden goblet lies in the hoard atop Dragonspine. "
             "Bring it back and I will give you a Potion of Strength. "
-            "The High Pass begins just north of here.");
+            "Dragonspine lies beyond this town's east gate.");
         push_message(g, "Assigned: The Dragon's Hoard.");
     } else if (g->dragon_treasure_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
@@ -3235,7 +3268,7 @@ void game_talk_to_dragon_seeker(GameState *g) {
         push_message(g, "Completed: The Dragon's Hoard. Potion of Strength awarded.");
     } else {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Dragonspine's treasure is safe. The High Pass is open to you.");
+            "Dragonspine's treasure is safe. The east gate is open to you.");
     }
 }
 
@@ -3247,7 +3280,7 @@ void game_collect_dragon_treasure(GameState *g) {
     }
     g->map.tiles[g->player.y][g->player.x] = TILE_DRAGON_HOARD;
     g->dragon_treasure_quest_state = 2;
-    push_message(g, "Golden goblet recovered. Return it to Ilya in town.");
+    push_message(g, "Golden goblet recovered. Return it to Ilya in Town 4.");
 }
 
 void game_talk_to_elowen(GameState *g) {

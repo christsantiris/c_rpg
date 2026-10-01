@@ -3880,10 +3880,10 @@ void draw_town_path(Renderer *r, int tile_x, int tile_y) {
 void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    if (style == TOWN_EXIT_DUNGEON) {
-        SDL_Color stone = {70, 66, 88, 255};
-        SDL_Color rim = {111, 102, 132, 255};
-        SDL_Color seam = {28, 27, 44, 255};
+    if (style == TOWN_EXIT_MOUNTAINS) {
+        SDL_Color stone = {53, 45, 50, 255};
+        SDL_Color rim = {99, 69, 65, 255};
+        SDL_Color seam = {29, 26, 33, 255};
         fill_rect(r, x, y, 120, 15, stone);
         fill_rect(r, x, y, 120, 3, rim);
         fill_rect(r, x, y + 13, 120, 3, seam);
@@ -3898,7 +3898,7 @@ void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style) {
         fill_rect(r, x + 88, y + 15, 15, 9, stone);
         fill_rect(r, x + 50, y + 8, 20, 14, rim);
         fill_rect(r, x + 56, y + 11, 8, 8,
-            (SDL_Color){191, 152, 64, 255});
+            (SDL_Color){213, 86, 46, 255});
         fill_rect(r, x + 59, y + 12, 2, 6, seam);
         fill_rect(r, x + 55, y + 15, 10, 2, seam);
         return;
@@ -3935,32 +3935,36 @@ void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style) {
             (SDL_Color){77, 151, 69, 255});
         return;
     }
-    if (style == TOWN_EXIT_MOUNTAINS) {
-        SDL_Color basalt = {53, 45, 50, 255};
-        SDL_Color ridge = {99, 69, 65, 255};
-        SDL_Color shadow = {29, 26, 33, 255};
-        fill_rect(r, x + 55, y, 17, 120, basalt);
+    if (style == TOWN_EXIT_DUNGEON || style == TOWN_EXIT_DRAGONSPINE) {
+        int dragon = style == TOWN_EXIT_DRAGONSPINE;
+        SDL_Color stone = dragon ? (SDL_Color){92, 113, 134, 255} :
+            (SDL_Color){70, 66, 88, 255};
+        SDL_Color ridge = dragon ? (SDL_Color){164, 188, 202, 255} :
+            (SDL_Color){111, 102, 132, 255};
+        SDL_Color shadow = dragon ? (SDL_Color){43, 56, 73, 255} :
+            (SDL_Color){28, 27, 44, 255};
+        fill_rect(r, x + 55, y, 17, 120, stone);
         fill_rect(r, x + 56, y + 2, 3, 116, ridge);
-        fill_rect(r, x + 10, y, 48, 12, basalt);
-        fill_rect(r, x + 27, y + 11, 31, 9, basalt);
-        fill_rect(r, x + 44, y + 19, 14, 7, basalt);
-        fill_rect(r, x + 10, y + 108, 48, 12, basalt);
-        fill_rect(r, x + 27, y + 100, 31, 9, basalt);
-        fill_rect(r, x + 44, y + 94, 14, 7, basalt);
+        fill_rect(r, x + 10, y, 48, 12, stone);
+        fill_rect(r, x + 27, y + 11, 31, 9, stone);
+        fill_rect(r, x + 44, y + 19, 14, 7, stone);
+        fill_rect(r, x + 10, y + 108, 48, 12, stone);
+        fill_rect(r, x + 27, y + 100, 31, 9, stone);
+        fill_rect(r, x + 44, y + 94, 14, 7, stone);
         fill_rect(r, x + 12, y + 1, 44, 3, ridge);
         fill_rect(r, x + 12, y + 109, 44, 3, ridge);
-        fill_rect(r, x + 44, y + 16, 14, 10, basalt);
-        fill_rect(r, x + 44, y + 94, 14, 10, basalt);
+        fill_rect(r, x + 44, y + 16, 14, 10, stone);
+        fill_rect(r, x + 44, y + 94, 14, 10, stone);
         for (int layer = 0; layer < 5; layer++) {
             int layer_y = y + layer * 24;
             fill_rect(r, x + 59, layer_y + 3, 11, 9,
-                layer % 2 == 0 ? (SDL_Color){69, 54, 56, 255} :
-                (SDL_Color){62, 50, 53, 255});
+                dragon ? stone : (layer % 2 == 0 ? (SDL_Color){86, 79, 104, 255} :
+                (SDL_Color){77, 72, 96, 255}));
             fill_rect(r, x + 60, layer_y + 3, 8, 2, ridge);
             fill_rect(r, x + 58, layer_y + 21, 12, 2, shadow);
         }
         fill_rect(r, x + 59, y + 56, 5, 8,
-            (SDL_Color){213, 86, 46, 255});
+            (SDL_Color){191, 152, 64, 255});
         return;
     }
 

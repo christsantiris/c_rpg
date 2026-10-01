@@ -70,7 +70,7 @@ static const QuestDefinition quest_definitions[8] = {
     {
         "The Dragon's Hoard", "Ilya",
         "Recover the golden goblet from the hoard",
-        "on Dragonspine's fifth stage and return it.",
+        "on Dragonspine's fifth stage. Return to Town 4.",
         {"Recover the golden goblet", "", ""},
         "Dragonspine", {5, 0, 0}, 0, 600, "Potion of Strength"
     }
