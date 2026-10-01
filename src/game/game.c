@@ -425,6 +425,7 @@ static int enemy_terrain_open(const GameState *g, int x, int y) {
         g->map.tiles[y][x] != TILE_COAST_DRAINED_WATER &&
         g->map.tiles[y][x] != TILE_COAST_CHANNEL_DRY &&
         g->map.tiles[y][x] != TILE_SWAMP_FLOOR &&
+        g->map.tiles[y][x] != TILE_FROST_FLOOR &&
         g->map.tiles[y][x] != TILE_DRAGON_FLOOR &&
         g->map.tiles[y][x] != TILE_DRAGON_ASH &&
         g->map.tiles[y][x] != TILE_DRAGON_HOARD)) {
@@ -736,7 +737,8 @@ static int quest_group_pending(const GameState *g) {
 
 void enemies_spawn(GameState *g) {
     g->enemy_count = 0;
-    if (g->map.room_count == 0) {
+    // Frostfell has no enemy roster yet.
+    if (g->map.room_count == 0 || g->location == LOCATION_FROSTFELL) {
         return;
     }
 
@@ -941,6 +943,9 @@ void game_init(GameState *g) {
             g->swamp_cache[i].valid = 0;
             g->dragonspine_cache[i].valid = 0;
         }
+        if (i < FROSTFELL_DEPTH) {
+            g->frostfell_cache[i].valid = 0;
+        }
     }
     g->message_count = 0;
     g->level_cleared = 0;
@@ -951,6 +956,7 @@ void game_init(GameState *g) {
     g->max_coast_level_reached = 1;
     g->max_swamp_level_reached = 1;
     g->max_dragonspine_level_reached = 1;
+    g->max_frostfell_level_reached = 1;
     g->max_temple_level_reached = 1;
     g->location = LOCATION_TOWN;
     int spawn_x, spawn_y;
@@ -1289,6 +1295,9 @@ static LevelCache *active_cache(GameState *g) {
     if (g->location == LOCATION_DRAGONSPINE) {
         return g->dragonspine_cache;
     }
+    if (g->location == LOCATION_FROSTFELL) {
+        return g->frostfell_cache;
+    }
     if (g->location == LOCATION_TEMPLE) {
         return g->temple_cache;
     }
@@ -1307,6 +1316,9 @@ static int *active_max_level(GameState *g) {
     }
     if (g->location == LOCATION_DRAGONSPINE) {
         return &g->max_dragonspine_level_reached;
+    }
+    if (g->location == LOCATION_FROSTFELL) {
+        return &g->max_frostfell_level_reached;
     }
     if (g->location == LOCATION_TEMPLE) {
         return &g->max_temple_level_reached;
@@ -1329,6 +1341,9 @@ static int active_depth(const GameState *g) {
     }
     if (g->location == LOCATION_DRAGONSPINE) {
         return DRAGONSPINE_DEPTH;
+    }
+    if (g->location == LOCATION_FROSTFELL) {
+        return FROSTFELL_DEPTH;
     }
     if (g->location == LOCATION_TEMPLE) {
         return TEMPLE_DEPTH;
@@ -1639,6 +1654,8 @@ static void generate_active_level(GameState *g) {
         map_generate_coast(&g->map, g->level);
     } else if (g->location == LOCATION_SWAMP) {
         map_generate_swamp(&g->map, g->level);
+    } else if (g->location == LOCATION_FROSTFELL) {
+        map_generate_frostfell(&g->map, g->level);
     } else if (g->location == LOCATION_DRAGONSPINE) {
         map_generate_dragonspine(&g->map, g->level);
     } else if (g->location == LOCATION_TEMPLE) {
@@ -1856,6 +1873,11 @@ void game_enter_swamp(GameState *g) {
     push_message(g, "The black water closes around the swamp trail.");
 }
 
+void game_enter_frostfell(GameState *g) {
+    enter_adventure(g, LOCATION_FROSTFELL);
+    push_message(g, "Bitter wind howls across the Frostfell Wastes.");
+}
+
 void game_enter_high_pass(GameState *g, int from_town) {
     g->location = LOCATION_HIGH_PASS;
     map_generate_high_pass(&g->map);
@@ -1909,11 +1931,14 @@ static void place_town_portal(GameState *g) {
     if (g->location == LOCATION_TOWN2) {
         if (g->portal_location == LOCATION_SWAMP) {
             g->map.tiles[TOWN_H - 3][21] = TILE_PORTAL;
+        } else if (g->portal_location == LOCATION_FROSTFELL) {
+            g->map.tiles[13][2] = TILE_PORTAL;
         }
         return;
     }
     if (g->location != LOCATION_TOWN ||
-        g->portal_location == LOCATION_SWAMP) {
+        g->portal_location == LOCATION_SWAMP ||
+        g->portal_location == LOCATION_FROSTFELL) {
         return;
     }
     int x = 21;
@@ -2646,6 +2671,7 @@ void game_return_to_town(GameState *g) {
     int spawn_x;
     int spawn_y;
     if (returning_from == LOCATION_SWAMP ||
+        returning_from == LOCATION_FROSTFELL ||
         returning_from == LOCATION_CROWNROAD) {
         g->location = LOCATION_TOWN2;
         map_generate_town2(&g->map, &spawn_x, &spawn_y);
@@ -2664,6 +2690,9 @@ void game_return_to_town(GameState *g) {
     } else if (returning_from == LOCATION_SWAMP) {
         g->player.x = 20;
         g->player.y = TOWN_H - 2;
+    } else if (returning_from == LOCATION_FROSTFELL) {
+        g->player.x = 1;
+        g->player.y = 12;
     } else if (returning_from == LOCATION_FOREST) {
         g->player.x = 1; g->player.y = 12;
     } else if (returning_from == LOCATION_MOUNTAINS) {
@@ -2693,6 +2722,7 @@ void game_open_town_portal(GameState *g) {
         g->location != LOCATION_COAST &&
         g->location != LOCATION_TEMPLE &&
         g->location != LOCATION_SWAMP &&
+        g->location != LOCATION_FROSTFELL &&
         g->location != LOCATION_DRAGONSPINE) {
         return;
     }
@@ -2724,6 +2754,8 @@ void game_hide_portal_destination(GameState *g) {
         cache = g->swamp_cache;
     } else if (g->portal_location == LOCATION_DRAGONSPINE) {
         cache = g->dragonspine_cache;
+    } else if (g->portal_location == LOCATION_FROSTFELL) {
+        cache = g->frostfell_cache;
     } else if (g->portal_location == LOCATION_TEMPLE) {
         cache = g->temple_cache;
     }
@@ -2775,6 +2807,8 @@ void game_use_town_portal(GameState *g) {
         cache = g->swamp_cache;
     } else if (g->portal_location == LOCATION_DRAGONSPINE) {
         cache = g->dragonspine_cache;
+    } else if (g->portal_location == LOCATION_FROSTFELL) {
+        cache = g->frostfell_cache;
     } else if (g->portal_location == LOCATION_TEMPLE) {
         cache = g->temple_cache;
     }

@@ -819,6 +819,9 @@ static TileType floor_item_underlay(const GameState *g, int x, int y) {
     if (g->location == LOCATION_COAST) {
         return TILE_COAST_FLOOR;
     }
+    if (g->location == LOCATION_FROSTFELL) {
+        return TILE_FROST_FLOOR;
+    }
     if (g->location == LOCATION_SWAMP) {
         return TILE_SWAMP_FLOOR;
     }
@@ -990,6 +993,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         draw_coast_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_SWAMP_FLOOR) {
         draw_swamp_floor(r, screen_x, screen_y, map_x, map_y);
+    } else if (underlay == TILE_FROST_FLOOR) {
+        draw_frostfell_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_DRAGON_FLOOR ||
         underlay == TILE_DRAGON_ASH || underlay == TILE_DRAGON_HOARD) {
         int terrain = underlay == TILE_DRAGON_ASH ? 1 :
@@ -1069,6 +1074,8 @@ static void draw_trap_underlay(Renderer *r, const GameState *g, int map_x, int m
     } else if (g->location == LOCATION_DRAGONSPINE ||
         g->location == LOCATION_HIGH_PASS) {
         draw_dragonspine_floor(r, screen_x, screen_y, map_x, map_y, 0);
+    } else if (g->location == LOCATION_FROSTFELL) {
+        draw_frostfell_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_DUNGEON) {
         draw_dungeon_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_LABYRINTH) {
@@ -1124,7 +1131,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         viewport_center_on(&town_view, g->player.x, g->player.y);
         v = &town_view;
     } else if (g->location == LOCATION_SWAMP ||
-        g->location == LOCATION_DRAGONSPINE) {
+        g->location == LOCATION_DRAGONSPINE ||
+        g->location == LOCATION_FROSTFELL) {
         int view_w = v->tiles_x < SWAMP_MAP_W ? v->tiles_x : SWAMP_MAP_W;
         int view_h = v->tiles_y < SWAMP_MAP_H ? v->tiles_y : SWAMP_MAP_H;
         viewport_init(&town_view, view_w, view_h,
@@ -1303,6 +1311,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_swamp_edge(r, sx, sy, x, y, 1); break;
                 case TILE_SWAMP_DAUGHTER:
                     draw_swamp_daughter(r, sx, sy, x, y); break;
+                case TILE_FROST_FLOOR:
+                    draw_frostfell_floor(r, sx, sy, x, y); break;
+                case TILE_FROST_WALL:
+                    draw_frostfell_wall(r, sx, sy, x, y); break;
+                case TILE_FROST_ENTRANCE:
+                case TILE_FROST_EXIT:
+                    draw_frostfell_edge(r, sx, sy, x, y); break;
                 case TILE_DRAGON_FLOOR:
                     draw_dragonspine_floor(r, sx, sy, x, y, 0); break;
                 case TILE_DRAGON_ASH:
@@ -1656,6 +1671,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         draw_town_gate(r,
             viewport_to_screen_x(v, 18),
             viewport_to_screen_y(v, TOWN_H - 2), TOWN_EXIT_SWAMP);
+        draw_town_gate(r,
+            viewport_to_screen_x(v, 0), viewport_to_screen_y(v, 10),
+            TOWN_EXIT_FROST);
         draw_witch_hut(r,
             viewport_to_screen_x(v, TOWN_WITCH_X),
             viewport_to_screen_y(v, TOWN_WITCH_Y));
@@ -1716,6 +1734,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->location == LOCATION_DRAGONSPINE ||
         g->location == LOCATION_COAST ||
         g->location == LOCATION_SWAMP ||
+        g->location == LOCATION_FROSTFELL ||
         g->location == LOCATION_CROWNROAD ||
         g->location == LOCATION_TEMPLE ||
         g->location == LOCATION_LABYRINTH) {
@@ -1884,6 +1903,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - 54,
             viewport_to_screen_y(v, 12) * TILE_SIZE,
             label, r->font_tiny);
+        renderer_draw_text(r, "FROSTFELL",
+            viewport_to_screen_x(v, 1) * TILE_SIZE + 22,
+            viewport_to_screen_y(v, 12) * TILE_SIZE,
+            (SDL_Color){168, 220, 250, 255}, r->font_tiny);
         TTF_SizeText(r->font_tiny, "SWAMP", &width, NULL);
         renderer_draw_text(r, "SWAMP",
             viewport_to_screen_x(v, 18) * TILE_SIZE +

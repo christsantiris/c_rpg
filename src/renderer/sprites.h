@@ -114,7 +114,8 @@ typedef enum {
     TOWN_EXIT_COAST,
     TOWN_EXIT_ROAD,
     TOWN_EXIT_SWAMP,
-    TOWN_EXIT_DRAGONSPINE
+    TOWN_EXIT_DRAGONSPINE,
+    TOWN_EXIT_FROST
 } TownExitStyle;
 
 void draw_town_floor(Renderer *r, int tile_x, int tile_y);
@@ -150,6 +151,9 @@ void draw_dragonspine_floor(Renderer *r, int tile_x, int tile_y, int map_x, int 
 void draw_dragonspine_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_dragonspine_edge(Renderer *r, int tile_x, int tile_y, int forward);
 void draw_dragonspine_gate(Renderer *r, int tile_x, int tile_y);
+void draw_frostfell_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
+void draw_frostfell_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
+void draw_frostfell_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_dragon_goblet(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_dragon_seeker(Renderer *r, int tile_x, int tile_y);
 void draw_labyrinth_entrance(Renderer *r, int tile_x, int tile_y, int open);

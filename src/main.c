@@ -70,6 +70,10 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
         *style = TOWN_EXIT_DUNGEON;
         return 1;
     }
+    if (action.target_x == 0 && g->location == LOCATION_TOWN2) {
+        *style = TOWN_EXIT_FROST;
+        return 1;
+    }
     if (action.target_x == 0) {
         if (action.target_y == TOWN_ROAD_EXIT_Y &&
             !(g->defeated_bosses & (1 << LOCATION_FOREST))) {

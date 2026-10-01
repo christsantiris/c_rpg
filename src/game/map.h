@@ -127,6 +127,8 @@
 #define COAST_DEPTH 8
 #define MAX_REGION_DEPTH 8
 #define SWAMP_DEPTH 5
+// Frostfell reuses the swamp's map size, mirrored so it runs east to west.
+#define FROSTFELL_DEPTH 5
 #define SWAMP_MAP_W 72
 #define SWAMP_MAP_H 64
 #define DRAGONSPINE_DEPTH 5
@@ -274,7 +276,11 @@ typedef enum {
     TILE_HIGH_PASS_EXIT,
     TILE_NPC_DRAGON_SEEKER,
     TILE_DRAGON_TREASURE,
-    TILE_NPC_ROYAL_GUARD
+    TILE_NPC_ROYAL_GUARD,
+    TILE_FROST_FLOOR,
+    TILE_FROST_WALL,
+    TILE_FROST_ENTRANCE,
+    TILE_FROST_EXIT
 } TileType;
 
 typedef struct {
@@ -320,6 +326,7 @@ void map_generate_coast(Map *m, int level);
 void map_generate_swamp(Map *m, int level);
 void map_generate_high_pass(Map *m);
 void map_generate_dragonspine(Map *m, int level);
+void map_generate_frostfell(Map *m, int level);
 int map_remove_coast_sluice(Map *m);
 TileType map_coast_trap_underlay(const Map *m, int x, int y);
 int map_is_coast_tidal_tile(TileType tile);

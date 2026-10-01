@@ -331,6 +331,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         drop_tile == TILE_TEMPLE_FLOOR ||
         drop_tile == TILE_LABYRINTH_FLOOR ||
         drop_tile == TILE_SWAMP_FLOOR ||
+        drop_tile == TILE_FROST_FLOOR ||
         drop_tile == TILE_DRAGON_FLOOR ||
         drop_tile == TILE_DRAGON_ASH ||
         drop_tile == TILE_DRAGON_HOARD;
@@ -1629,6 +1630,12 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
+        if (g->location == LOCATION_TOWN2 &&
+            g->map.tiles[ty][tx] == TILE_TOWN_EXIT && tx == 0) {
+            game_enter_frostfell(g);
+            return;
+        }
+
         if (g->location == LOCATION_TOWN3 &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
             if (ty == TOWN_H - 1) {
@@ -1749,6 +1756,28 @@ void action_resolve_player(GameState *g, Action a) {
                 }
                 game_return_to_town(g);
                 push_message(g, "The swamp is free of the demon.");
+            }
+            return;
+        }
+
+        if (g->location == LOCATION_FROSTFELL &&
+            g->map.tiles[ty][tx] == TILE_FROST_ENTRANCE) {
+            if (g->level == 1) {
+                game_return_to_town(g);
+            } else {
+                game_ascend(g);
+            }
+            return;
+        }
+
+        if (g->location == LOCATION_FROSTFELL &&
+            g->map.tiles[ty][tx] == TILE_FROST_EXIT) {
+            if (g->level < FROSTFELL_DEPTH) {
+                game_descend(g);
+                g->score += g->level * 100;
+            } else {
+                game_return_to_town(g);
+                push_message(g, "You leave the Frostfell Wastes behind.");
             }
             return;
         }

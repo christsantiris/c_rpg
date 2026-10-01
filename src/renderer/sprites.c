@@ -3466,6 +3466,62 @@ void draw_dragonspine_edge(Renderer *r, int tile_x, int tile_y, int forward) {
     fill_rect(r, x + 15, y + 20, 7, 3, (SDL_Color){82, 101, 118, 255});
 }
 
+void draw_frostfell_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    unsigned int seed = (unsigned int)map_x * 97u + (unsigned int)map_y * 61u;
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){220, 229, 238, 255});
+    fill_rect(r, x + 2 + (int)(seed % 5u), y + 4, 12, 2, (SDL_Color){244, 248, 252, 255});
+    fill_rect(r, x + 6, y + 14 + (int)(seed % 3u), 14, 2, (SDL_Color){180, 199, 218, 255});
+    if (seed % 4u == 0u) {
+        fill_rect(r, x + 17, y + 8, 2, 2, (SDL_Color){255, 255, 255, 255});
+    }
+    if (seed % 7u == 0u) {
+        fill_rect(r, x + 4, y + 19, 5, 1, (SDL_Color){150, 174, 200, 255});
+    }
+}
+
+// Mostly glacier ice, with the occasional snow-laden pine.
+void draw_frostfell_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    unsigned int seed = (unsigned int)map_x * 43u + (unsigned int)map_y * 79u;
+    SDL_Color snow = {236, 243, 249, 255};
+    if (seed % 5u == 0u) {
+        SDL_Color pine = {42, 78, 86, 255};
+        draw_frostfell_floor(r, tile_x, tile_y, map_x, map_y);
+        fill_rect(r, x + 10, y + 18, 4, 6, (SDL_Color){74, 55, 42, 255});
+        fill_rect(r, x + 4, y + 12, 16, 7, pine);
+        fill_rect(r, x + 6, y + 6, 12, 7, pine);
+        fill_rect(r, x + 9, y + 1, 6, 6, pine);
+        fill_rect(r, x + 4, y + 12, 16, 2, snow);
+        fill_rect(r, x + 6, y + 6, 12, 2, snow);
+        fill_rect(r, x + 9, y + 1, 6, 2, snow);
+        return;
+    }
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){88, 132, 168, 255});
+    fill_rect(r, x + 1, y + 1, 22, 7, (SDL_Color){148, 194, 224, 255});
+    fill_rect(r, x + 2, y + 1, 15, 2, snow);
+    fill_rect(r, x + 3, y + 11, 18, 4, (SDL_Color){116, 164, 198, 255});
+    fill_rect(r, x + 6, y + 18, 15, 3, (SDL_Color){58, 96, 132, 255});
+    if (seed % 3u == 0u) {
+        fill_rect(r, x + 14, y + 9, 1, 8, (SDL_Color){206, 232, 246, 255});
+    }
+}
+
+// Blue-flagged stakes mark the trail in and out of each Frostfell stage.
+void draw_frostfell_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color wood = {92, 64, 42, 255};
+    SDL_Color flag = {58, 116, 196, 255};
+    draw_frostfell_floor(r, tile_x, tile_y, map_x, map_y);
+    fill_rect(r, x + 3, y + 1, 2, 9, wood);
+    fill_rect(r, x + 5, y + 1, 5, 3, flag);
+    fill_rect(r, x + 17, y + 13, 2, 9, wood);
+    fill_rect(r, x + 19, y + 13, 5, 3, flag);
+}
+
 void draw_dragonspine_gate(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
@@ -3651,6 +3707,29 @@ void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style) {
         }
         fill_rect(r, x + 59, y + 56, 5, 8,
             (SDL_Color){213, 86, 46, 255});
+        return;
+    }
+
+    if (style == TOWN_EXIT_FROST) {
+        // An ice post on the west wall, capped with snow and icicles.
+        SDL_Color ice_dark = {66, 106, 146, 255};
+        SDL_Color ice = {138, 188, 224, 255};
+        SDL_Color ice_light = {214, 238, 250, 255};
+        SDL_Color snow = {241, 246, 250, 255};
+        fill_rect(r, x + 1, y, 13, 120, ice_dark);
+        fill_rect(r, x + 4, y + 3, 3, 114, ice);
+        fill_rect(r, x + 10, y + 2, 30, 10, ice_dark);
+        fill_rect(r, x + 10, y, 30, 4, snow);
+        fill_rect(r, x + 10, y + 108, 30, 11, ice_dark);
+        fill_rect(r, x + 10, y + 106, 30, 3, snow);
+        fill_rect(r, x + 1, y, 13, 3, snow);
+        for (int drip = 0; drip < 4; drip++) {
+            fill_rect(r, x + 14 + drip * 7, y + 12, 2, 4 + (drip % 2) * 3, ice_light);
+        }
+        for (int mark = 0; mark < 4; mark++) {
+            fill_rect(r, x + 9, y + 20 + mark * 23, 3, 2, ice_light);
+        }
+        fill_rect(r, x + 10, y + 56, 5, 7, (SDL_Color){122, 222, 255, 255});
         return;
     }
 
