@@ -3877,30 +3877,47 @@ void draw_town_path(Renderer *r, int tile_x, int tile_y) {
     }
 }
 
+static void fill_mountain_gate_rect(Renderer *r, int x, int y, int south,
+    int rect_x, int rect_y, int width, int height, SDL_Color color) {
+    int draw_y = south ? y + 48 - rect_y - height : y + rect_y;
+    fill_rect(r, x + rect_x, draw_y, width, height, color);
+}
+
+static void draw_town_mountain_gate(Renderer *r, int tile_x, int tile_y, int south) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color stone = {53, 45, 50, 255};
+    SDL_Color rim = {99, 69, 65, 255};
+    SDL_Color seam = {29, 26, 33, 255};
+    fill_mountain_gate_rect(r, x, y, south, 0, 0, 120, 15, stone);
+    fill_mountain_gate_rect(r, x, y, south, 0, 0, 120, 3, rim);
+    fill_mountain_gate_rect(r, x, y, south, 0, 13, 120, 3, seam);
+    for (int block = 1; block < 6; block++) {
+        fill_mountain_gate_rect(r, x, y, south, block * 20, 3, 2, 10,
+            seam);
+    }
+    fill_mountain_gate_rect(r, x, y, south, 0, 0, 17, 48, stone);
+    fill_mountain_gate_rect(r, x, y, south, 103, 0, 17, 48, stone);
+    fill_mountain_gate_rect(r, x, y, south, 2, 2, 3, 43, rim);
+    fill_mountain_gate_rect(r, x, y, south, 105, 2, 3, 43, rim);
+    fill_mountain_gate_rect(r, x, y, south, 17, 15, 15, 9, stone);
+    fill_mountain_gate_rect(r, x, y, south, 88, 15, 15, 9, stone);
+    fill_mountain_gate_rect(r, x, y, south, 50, 8, 20, 14, rim);
+    fill_mountain_gate_rect(r, x, y, south, 56, 11, 8, 8,
+        (SDL_Color){213, 86, 46, 255});
+    fill_mountain_gate_rect(r, x, y, south, 59, 12, 2, 6, seam);
+    fill_mountain_gate_rect(r, x, y, south, 55, 15, 10, 2, seam);
+}
+
+void draw_town_gate_south(Renderer *r, int tile_x, int tile_y) {
+    draw_town_mountain_gate(r, tile_x, tile_y, 1);
+}
+
 void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
     if (style == TOWN_EXIT_MOUNTAINS) {
-        SDL_Color stone = {53, 45, 50, 255};
-        SDL_Color rim = {99, 69, 65, 255};
-        SDL_Color seam = {29, 26, 33, 255};
-        fill_rect(r, x, y, 120, 15, stone);
-        fill_rect(r, x, y, 120, 3, rim);
-        fill_rect(r, x, y + 13, 120, 3, seam);
-        for (int block = 1; block < 6; block++) {
-            fill_rect(r, x + block * 20, y + 3, 2, 10, seam);
-        }
-        fill_rect(r, x, y, 17, 48, stone);
-        fill_rect(r, x + 103, y, 17, 48, stone);
-        fill_rect(r, x + 2, y + 2, 3, 43, rim);
-        fill_rect(r, x + 105, y + 2, 3, 43, rim);
-        fill_rect(r, x + 17, y + 15, 15, 9, stone);
-        fill_rect(r, x + 88, y + 15, 15, 9, stone);
-        fill_rect(r, x + 50, y + 8, 20, 14, rim);
-        fill_rect(r, x + 56, y + 11, 8, 8,
-            (SDL_Color){213, 86, 46, 255});
-        fill_rect(r, x + 59, y + 12, 2, 6, seam);
-        fill_rect(r, x + 55, y + 15, 10, 2, seam);
+        draw_town_mountain_gate(r, tile_x, tile_y, 0);
         return;
     }
     if (style == TOWN_EXIT_FOREST || style == TOWN_EXIT_ROAD) {

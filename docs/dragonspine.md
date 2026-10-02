@@ -8,7 +8,8 @@ The return portal also appears there.
 
 Town 4's south road leads into the enemy-free High Pass. Walk south to reach
 OakHaven's northeast shortcut, or north from OakHaven to revisit Town 4 without
-crossing the Goblin Mountains. The shortcut opens after the Goblin King falls.
+crossing the Goblin Mountains. A matching stone gate marks the Town 4 end of
+the shortcut, which opens after the Goblin King falls.
 OakHaven's main north gate still starts a Goblin Mountains expedition.
 
 Dragonspine has five generated stages with independent progress and saved
