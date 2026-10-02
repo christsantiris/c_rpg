@@ -19,13 +19,19 @@
 #define FOREST_ROAD_W 80
 #define FOREST_ROAD_H 25
 #define FOREST_ROAD_Y 12
-#define CROWNROAD_W 44
-#define CROWNROAD_H 48
+#define CROWNROAD_W 48
+#define CROWNROAD_H 44
 #define CROWNROAD_X 20
-// Royal Guards flank the road just south of Town 2's Crownroad gatehouse.
-#define TOWN2_GUARD_WEST_X (CROWNROAD_X - 1)
-#define TOWN2_GUARD_EAST_X (CROWNROAD_X + 1)
-#define TOWN2_GUARD_Y 4
+#define CROWNROAD_Y 20
+#define TOWN3_ROAD_X 28
+#define TOWN3_KING_GATE_Y 14
+#define CASTLE_ROAD_Y 14
+#define SWAMP_ROAD_W TOWN_W
+#define SWAMP_ROAD_H 48
+#define SWAMP_ROAD_X 20
+#define TOWN3_GUARD_X 39
+#define TOWN3_GUARD_NORTH_Y (TOWN3_KING_GATE_Y - 1)
+#define TOWN3_GUARD_SOUTH_Y (TOWN3_KING_GATE_Y + 1)
 #define TOWN_CASTLE_X 13
 #define TOWN_CASTLE_Y 3
 #define TOWN_CASTLE_W 15
@@ -318,10 +324,13 @@ void map_set_town4_road(Map *m, int unlocked);
 void map_generate_town2(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_town3(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_crownroad(Map *m);
+void map_generate_castle(Map *m, int *spawn_x, int *spawn_y);
+void map_generate_swamp_road(Map *m);
+void map_set_town3_road(Map *m, int unlocked);
 void map_generate_forest_road(Map *m);
 void map_place_town_labyrinth(Map *m);
 void map_place_town2_center(Map *m);
-void map_place_town2_guards(Map *m, int avoid_x, int avoid_y);
+void map_place_town3_guards(Map *m, int avoid_x, int avoid_y);
 void map_place_town_harbor(Map *m);
 void map_place_town_tavern(Map *m);
 void map_place_town_inn(Map *m);

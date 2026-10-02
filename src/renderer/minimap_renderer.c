@@ -139,10 +139,10 @@ void minimap_draw(Renderer *r, const GameState *g) {
             } else if (has_floor) {
                 if (g->location == LOCATION_FOREST) {
                     SDL_SetRenderDrawColor(r->sdl, 45, 95, 55, 255);
-                } else if (g->location == LOCATION_MOUNTAINS) {
-                    SDL_SetRenderDrawColor(r->sdl, 125, 42, 32, 255);
-                } else if (g->location == LOCATION_DRAGONSPINE ||
+                } else if (g->location == LOCATION_MOUNTAINS ||
                     g->location == LOCATION_HIGH_PASS) {
+                    SDL_SetRenderDrawColor(r->sdl, 125, 42, 32, 255);
+                } else if (g->location == LOCATION_DRAGONSPINE) {
                     SDL_SetRenderDrawColor(r->sdl, 150, 185, 211, 255);
                 } else if (g->location == LOCATION_FROSTFELL) {
                     SDL_SetRenderDrawColor(r->sdl, 205, 222, 236, 255);
