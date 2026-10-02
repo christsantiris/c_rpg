@@ -60,11 +60,23 @@ typedef struct {
 
 static int town_entry_style(const GameState *g, Action action, TownExitStyle *style) {
     if ((g->location != LOCATION_TOWN && g->location != LOCATION_TOWN2 &&
-        g->location != LOCATION_TOWN4) ||
+        g->location != LOCATION_TOWN4 && g->location != LOCATION_TOWN3 &&
+        g->location != LOCATION_CASTLE) ||
         action.type != ACTION_MOVE ||
         action.target_x < 0 || action.target_x >= MAP_W ||
         action.target_y < 0 || action.target_y >= MAP_H ||
         g->map.tiles[action.target_y][action.target_x] != TILE_TOWN_EXIT) {
+        return 0;
+    }
+    if (g->location == LOCATION_TOWN3 || g->location == LOCATION_CASTLE) {
+        if (action.target_x == 0 || action.target_x == TOWN_W - 1) {
+            *style = TOWN_EXIT_ROAD;
+            return 1;
+        }
+        if (g->location == LOCATION_TOWN3 && action.target_y == TOWN_H - 1) {
+            *style = TOWN_EXIT_SWAMP;
+            return 1;
+        }
         return 0;
     }
     if (action.target_y == 0) {
@@ -73,11 +85,15 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
             return 0;
         }
         *style = g->location == LOCATION_TOWN ?
-            TOWN_EXIT_MOUNTAINS : TOWN_EXIT_DUNGEON;
+            TOWN_EXIT_MOUNTAINS : TOWN_EXIT_SWAMP;
         return 1;
     }
     if (action.target_x == 0 && g->location == LOCATION_TOWN2) {
         *style = TOWN_EXIT_FROST;
+        return 1;
+    }
+    if (action.target_x == 0 && g->location == LOCATION_TOWN4) {
+        *style = TOWN_EXIT_ROAD;
         return 1;
     }
     if (action.target_x == 0) {
@@ -1341,11 +1357,13 @@ int main(int argc, char **argv) {
             game.location == LOCATION_TOWN2 ||
             game.location == LOCATION_TOWN3 ||
             game.location == LOCATION_TOWN4 ||
+            game.location == LOCATION_CASTLE ||
             game.location == LOCATION_INN ||
             game.location == LOCATION_ISLAND;
         int in_town2 = game.location == LOCATION_TOWN2 ||
             game.location == LOCATION_INN;
-        int in_town3 = game.location == LOCATION_TOWN3;
+        int in_town3 = game.location == LOCATION_TOWN3 ||
+            game.location == LOCATION_CASTLE;
         music_update(screen, is_town, in_town2, in_town3);
 
         if (!needs_redraw) {

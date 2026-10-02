@@ -4,6 +4,40 @@
 #include <stdlib.h>
 #include <string.h>
 
+static void test_mage_mp_growth(void) {
+    static GameState g;
+    memset(&g, 0, sizeof(g));
+    g.player.player_class = CLASS_MAGE;
+    game_init(&g);
+    int mp_at[12] = {0};
+    mp_at[1] = g.player.max_mp;
+    for (int level = 2; level <= 11; level++) {
+        player_gain_xp(&g, g.player.experience_next - g.player.experience);
+        mp_at[level] = g.player.max_mp;
+    }
+    ASSERT("a Mage gains 15 max MP per level up to level 5",
+        mp_at[1] == 100 && mp_at[2] == 115 && mp_at[5] == 160);
+    ASSERT("a Mage gains 10 max MP per level to level 10, then 5",
+        mp_at[6] == 170 && mp_at[10] == 210 && mp_at[11] == 215);
+    ASSERT("a level-up fills the Mage's larger MP pool",
+        g.player.level == 11 && g.player.mp == g.player.max_mp);
+
+    const PlayerClass others[2] = {CLASS_WARRIOR, CLASS_ROGUE};
+    int others_unchanged = 1;
+    for (int i = 0; i < 2; i++) {
+        memset(&g, 0, sizeof(g));
+        g.player.player_class = others[i];
+        game_init(&g);
+        int start_mp = g.player.max_mp;
+        for (int level = 2; level <= 6; level++) {
+            player_gain_xp(&g, g.player.experience_next - g.player.experience);
+        }
+        others_unchanged &= g.player.level == 6 && g.player.max_mp == start_mp;
+    }
+    ASSERT("Warriors and Rogues keep their max MP when they level up",
+        others_unchanged);
+}
+
 void test_leveling(void) {
     printf("Leveling tests:\n");
 
@@ -38,6 +72,8 @@ void test_leveling(void) {
     int dmg = g.player.attack - 999;
     if (dmg < 1) dmg = 1;
     ASSERT("minimum damage is always 1", dmg == 1);
+
+    test_mage_mp_growth();
 }
 
 static void test_region_order_consistency(void) {

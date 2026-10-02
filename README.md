@@ -64,7 +64,7 @@ lower west gate of OakHaven leads onto a short, enemy-free forest road.
 Walk west across it to reach Town 2; the upper west gate still enters the full
 forest. The lower gate stays blocked until the Necromancer falls. Town 2's east
 gate leads back along the road to OakHaven. Town 2 has an Inn, a healer selling
-Health Potions, a witch selling Mana Potions, and Rook's labyrinth. Its south
+Health Potions, a witch selling Mana Potions, and Rook's labyrinth. Its north
 gate opens onto the five-level Blackwater Swamp. Each shop buys its own item types.
 Stock expands as bosses are defeated; buying costs twice an item's base value,
 while selling pays one quarter of base value.
@@ -96,12 +96,23 @@ enemies return, but the Warden and quest reward do not.
 
 ### Blackwater Swamp
 
-Travel south from Town 2 through five levels of black water, reeds, and muddy
+Travel north from Town 2 through five levels of black water, reeds, and muddy
 causeways. Giant Rats, Bandits, Zombies, and Wraiths appear early; Vampires join
-on deeper levels. The Swamp Demon guards the final exit and drops a Demonic
-Sword: a +6 one-handed weapon for every class, with a two-tile `F` attack.
-Talk to Bram at the Town 2 Inn to rescue his daughter from a vampire on level 4.
-See [Blackwater Swamp](docs/swamp.md) for the full area rules.
+on deeper levels. The Swamp Demon guards the final exit, which leads to Town 3,
+and drops a Demonic Sword: a +6 one-handed weapon for every class, with a
+two-tile `F` attack. Talk to Bram at the Town 2 Inn to rescue his daughter from
+a vampire on level 4. See [Blackwater Swamp](docs/swamp.md) for the full area
+rules.
+
+### Town 3, King Roads, and the Castle
+
+Defeating the Swamp Demon also opens a second north gate in Town 2. It leads
+along a safe, enemy-free swamp shortcut to Town 3's south gate. Town 3 has the
+Apothecary. Two Royal Guards at its east gate warn that King Road East swarms
+with bandits, archers, and horsemen. That road leads to the grounds of the
+Castle of No Return, whose doors stay sealed for now. King Road West continues
+from the castle's east gate to Town 4's west gate. Each road keeps its own
+enemies and progress between visits.
 
 ### Harbor and Ruined Isle
 
@@ -347,3 +358,4 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
    Multiple levels, unique mechanics, enemies, boss
 - Recruit a party to join the adventure
 - Additional areas and storylines
+- Fix forest exists at opposite side of town 2
