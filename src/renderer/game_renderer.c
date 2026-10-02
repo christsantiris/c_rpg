@@ -1771,6 +1771,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (g->location == LOCATION_TOWN4) {
         draw_town_gate(r, viewport_to_screen_x(v, 0),
             viewport_to_screen_y(v, 10), TOWN_EXIT_ROAD);
+        draw_town_gate_south(r, viewport_to_screen_x(v, 20 - 2),
+            viewport_to_screen_y(v, TOWN_H - 3));
         draw_town_gate(r,
             viewport_to_screen_x(v, TOWN_W - 3),
             viewport_to_screen_y(v, TOWN4_DRAGON_GATE_Y - 2),

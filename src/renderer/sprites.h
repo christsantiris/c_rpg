@@ -119,6 +119,7 @@ typedef enum {
 void draw_town_floor(Renderer *r, int tile_x, int tile_y);
 void draw_town_path(Renderer *r, int tile_x, int tile_y);
 void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style);
+void draw_town_gate_south(Renderer *r, int tile_x, int tile_y);
 void draw_town_road_sign(Renderer *r, int tile_x, int tile_y);
 void draw_dungeon_transition(Renderer *r, int covered_width);
 void draw_forest_transition(Renderer *r, int covered_width);
