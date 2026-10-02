@@ -113,7 +113,10 @@ typedef enum {
     LOCATION_CROWNROAD,
     LOCATION_TOWN3,
     LOCATION_FROSTFELL,
-    LOCATION_TOWN4
+    LOCATION_TOWN4,
+    LOCATION_SWAMP_ROAD,
+    LOCATION_KING_ROAD_WEST,
+    LOCATION_CASTLE
 } Location;
 
 typedef struct {
@@ -130,6 +133,7 @@ typedef struct {
     LevelCache dragonspine_cache[DRAGONSPINE_DEPTH];
     LevelCache frostfell_cache[FROSTFELL_DEPTH];
     CrownroadCache crownroad_cache;
+    CrownroadCache kingroad_west_cache;
     LevelCache temple_cache[TEMPLE_DEPTH];
     LevelCache labyrinth_cache[LABYRINTH_DEPTH];
     char       messages[MAX_MESSAGES][MAX_MESSAGE_LEN];
@@ -218,7 +222,11 @@ void game_leave_tavern(GameState *g);
 void game_enter_town2(GameState *g);
 void game_enter_forest_road(GameState *g);
 void game_leave_forest_road(GameState *g, Location destination);
-void game_enter_crownroad(GameState *g, int from_town3);
+int game_is_king_road(const GameState *g);
+void game_enter_king_road(GameState *g, Location road, int from_castle);
+void game_enter_town3(GameState *g);
+void game_enter_swamp_road(GameState *g);
+void game_leave_swamp_road(GameState *g, Location destination);
 void game_leave_crownroad(GameState *g, Location destination);
 void game_enter_inn(GameState *g);
 void game_leave_inn(GameState *g);

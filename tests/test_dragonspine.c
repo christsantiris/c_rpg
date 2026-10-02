@@ -78,7 +78,7 @@ void test_dragonspine(void) {
     ASSERT("Town 4 is a crossroads with Ilya and no buildings",
         empty_crossroads && ilya_count == 1 &&
         g.map.tiles[12][20] == TILE_TOWN_PATH &&
-        g.map.tiles[0][20] == TILE_WALL && g.map.tiles[12][0] == TILE_WALL);
+        g.map.tiles[0][20] == TILE_WALL && g.map.tiles[12][0] == TILE_TOWN_EXIT);
 
     action_resolve_player(&g, (Action){ACTION_MOVE, 20, TOWN_H - 1});
     ASSERT("Town 4 south exit enters the safe shortcut",

@@ -1,6 +1,6 @@
 # Blackwater Swamp
 
-Blackwater Swamp begins at the south gate of Town 2. Its five levels form a
+Blackwater Swamp begins at the north gate of Town 2. Its five levels form a
 separate expedition from the forest road and Rook's labyrinth. Dark water,
 cypress trees, and swaying reeds border nine uneven muddy clearings on each
 level. Winding causeways connect the clearings, with roots and reeds marking
@@ -10,7 +10,12 @@ preserved while traveling between levels or using a Return to Town portal.
 The west-edge trail leads back one level, or to Town 2 from level 1. The
 east-edge trail advances to the next level. Levels 1–4 can be left without defeating every
 enemy. The level-5 exit is blocked only while the Swamp Demon lives. After its
-defeat, that exit returns to Town 2. The demon does not respawn on later visits.
+defeat, that exit leads to Town 3. The demon does not respawn on later visits.
+
+Its defeat also opens a second north gate in Town 2, at the end of a short
+lane east of the swamp gate. That gate leads along a safe swamp shortcut with
+no enemies to Town 3's south gate, and Town 3's south gate leads back the same
+way.
 
 | Level | Regular enemies | Threat |
 | --- | --- | --- |

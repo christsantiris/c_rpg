@@ -148,6 +148,8 @@ and encounters, but not room geometry.
 On gaining a character level:
 
 - Maximum HP increases by 10 and HP is restored.
+- A Mage's maximum MP increases by 15 up to level 5, 10 up to level 10, and 5
+  after that. Other classes keep their maximum MP.
 - MP is restored to the current maximum.
 - Attack increases by 2.
 - Defense increases by 1, capped at half the player's attack.

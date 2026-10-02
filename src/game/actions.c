@@ -846,6 +846,8 @@ void action_resolve_player(GameState *g, Action a) {
         g->location == LOCATION_TOWN3 ||
         g->location == LOCATION_TOWN4 ||
         g->location == LOCATION_HIGH_PASS ||
+        g->location == LOCATION_SWAMP_ROAD ||
+        g->location == LOCATION_CASTLE ||
         g->location == LOCATION_FOREST_ROAD ||
         g->location == LOCATION_INN ||
         g->location == LOCATION_ISLAND) {
@@ -1240,7 +1242,8 @@ void action_resolve_player(GameState *g, Action a) {
         if (sp->id == SPELL_RETURN_TO_TOWN) {
             if (g->location == LOCATION_FOREST_ROAD ||
                 g->location == LOCATION_HIGH_PASS ||
-                g->location == LOCATION_CROWNROAD) {
+                g->location == LOCATION_SWAMP_ROAD ||
+                game_is_king_road(g)) {
                 push_message(g, "A town is just ahead on the road.");
                 return;
             }
@@ -1248,6 +1251,7 @@ void action_resolve_player(GameState *g, Action a) {
                 g->location == LOCATION_TOWN2 ||
                 g->location == LOCATION_TOWN3 ||
                 g->location == LOCATION_TOWN4 ||
+                g->location == LOCATION_CASTLE ||
                 g->location == LOCATION_TAVERN ||
                 g->location == LOCATION_INN) {
                 push_message(g, "Already in town!");
@@ -1740,7 +1744,13 @@ void action_resolve_player(GameState *g, Action a) {
 
         if (g->location == LOCATION_TOWN2 &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT && ty == 0) {
-            game_enter_crownroad(g, 0);
+            if (tx == TOWN3_ROAD_X) {
+                if (g->defeated_bosses & (1 << LOCATION_SWAMP)) {
+                    game_enter_swamp_road(g);
+                }
+            } else {
+                game_enter_swamp(g);
+            }
             return;
         }
 
@@ -1750,11 +1760,6 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
-        if (g->location == LOCATION_TOWN2 &&
-            g->map.tiles[ty][tx] == TILE_TOWN_EXIT && ty == TOWN_H - 1) {
-            game_enter_swamp(g);
-            return;
-        }
 
         if (g->location == LOCATION_TOWN2 &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT && tx == 0) {
@@ -1765,7 +1770,19 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->location == LOCATION_TOWN3 &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
             if (ty == TOWN_H - 1) {
-                game_enter_crownroad(g, 1);
+                game_enter_swamp_road(g);
+            } else if (tx == TOWN_W - 1) {
+                game_enter_king_road(g, LOCATION_CROWNROAD, 0);
+            }
+            return;
+        }
+
+        if (g->location == LOCATION_CASTLE &&
+            g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
+            if (tx == 0) {
+                game_enter_king_road(g, LOCATION_CROWNROAD, 1);
+            } else if (tx == TOWN_W - 1) {
+                game_enter_king_road(g, LOCATION_KING_ROAD_WEST, 1);
             } else {
                 push_message(g, "The Castle of No Return is sealed for now.");
             }
@@ -1776,6 +1793,8 @@ void action_resolve_player(GameState *g, Action a) {
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
             if (tx == TOWN_W - 1) {
                 game_enter_dragonspine(g);
+            } else if (tx == 0) {
+                game_enter_king_road(g, LOCATION_KING_ROAD_WEST, 0);
             } else if (ty == TOWN_H - 1) {
                 game_enter_high_pass(g, 0);
             }
@@ -1859,9 +1878,22 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
-        if (g->location == LOCATION_CROWNROAD &&
+        if (game_is_king_road(g) &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
-            game_leave_crownroad(g, ty == 0 ? LOCATION_TOWN3 : LOCATION_TOWN2);
+            Location destination;
+            if (g->location == LOCATION_CROWNROAD) {
+                destination = tx == 0 ? LOCATION_TOWN3 : LOCATION_CASTLE;
+            } else {
+                destination = tx == 0 ? LOCATION_CASTLE : LOCATION_TOWN4;
+            }
+            game_leave_crownroad(g, destination);
+            return;
+        }
+
+        if (g->location == LOCATION_SWAMP_ROAD &&
+            (g->map.tiles[ty][tx] == TILE_SWAMP_ENTRANCE ||
+            g->map.tiles[ty][tx] == TILE_SWAMP_EXIT)) {
+            game_leave_swamp_road(g, ty == 0 ? LOCATION_TOWN3 : LOCATION_TOWN2);
             return;
         }
 
@@ -1888,8 +1920,8 @@ void action_resolve_player(GameState *g, Action a) {
                         return;
                     }
                 }
-                game_return_to_town(g);
-                push_message(g, "The swamp is free of the demon.");
+                game_enter_town3(g);
+                push_message(g, "Beyond the liberated swamp lies Town 3.");
             }
             return;
         }
@@ -2302,7 +2334,7 @@ static void select_enemy_pursuers(const GameState *g, int pursuers[MAX_ENEMIES])
         for (int i = 0; i < g->enemy_count; i++) {
             const Enemy *e = &g->enemies[i];
             if (!e->active || pursuers[i] || enemy_is_major_boss(e) ||
-                (g->location == LOCATION_CROWNROAD &&
+                (game_is_king_road(g) &&
                 e->type == ENEMY_ROAD_ARCHER)) {
                 continue;
             }
@@ -2754,7 +2786,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         int adjacent = abs_int(dx) <= 1 && abs_int(dy) <= 1 &&
             !(dx == 0 && dy == 0);
         if (!enemy_is_major_boss(e) && !adjacent && !pursuers[i] &&
-            !(g->location == LOCATION_CROWNROAD &&
+            !(game_is_king_road(g) &&
             e->type == ENEMY_ROAD_ARCHER &&
             clear_orthogonal_path(g, i, e))) {
             continue;

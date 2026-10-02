@@ -182,6 +182,14 @@ static void move_ashore_from_town3_moat(int *x, int *y) {
     }
 }
 
+// Older Crownroad saves ran north to south; King Road East runs west to east.
+// This is the same turn map_generate_crownroad applies to the road's layout.
+static void rotate_crownroad_position(int *x, int *y) {
+    int old_x = *x;
+    *x = CROWNROAD_W - 1 - *y;
+    *y = old_x;
+}
+
 static int in_lot(int x, int y, int lot_x, int lot_y, int w, int h) {
     return x >= lot_x && x < lot_x + w && y >= lot_y && y < lot_y + h;
 }
@@ -358,7 +366,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 68);
+    cJSON_AddNumberToObject(root, "save_version", 69);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -726,18 +734,20 @@ int save_game(const GameState *g, int slot) {
     }
     cJSON_AddItemToObject(root, "frostfell_cache", frostfell_cache);
 
-    cJSON *crownroad_cache = cJSON_CreateObject();
-    cJSON_AddNumberToObject(crownroad_cache, "valid", g->crownroad_cache.valid);
-    cJSON_AddNumberToObject(crownroad_cache, "level_cleared",
-        g->crownroad_cache.level_cleared);
-    if (g->crownroad_cache.valid) {
-        cJSON_AddItemToObject(crownroad_cache, "enemies",
-            serialize_enemies(g->crownroad_cache.enemies,
-                g->crownroad_cache.enemy_count));
-        cJSON_AddNumberToObject(crownroad_cache, "enemy_count",
-            g->crownroad_cache.enemy_count);
+    const char *road_keys[2] = {"crownroad_cache", "kingroad_west_cache"};
+    const CrownroadCache *road_caches[2] = {&g->crownroad_cache, &g->kingroad_west_cache};
+    for (int i = 0; i < 2; i++) {
+        const CrownroadCache *cache = road_caches[i];
+        cJSON *entry = cJSON_CreateObject();
+        cJSON_AddNumberToObject(entry, "valid", cache->valid);
+        cJSON_AddNumberToObject(entry, "level_cleared", cache->level_cleared);
+        if (cache->valid) {
+            cJSON_AddItemToObject(entry, "enemies",
+                serialize_enemies(cache->enemies, cache->enemy_count));
+            cJSON_AddNumberToObject(entry, "enemy_count", cache->enemy_count);
+        }
+        cJSON_AddItemToObject(root, road_keys[i], entry);
     }
-    cJSON_AddItemToObject(root, "crownroad_cache", crownroad_cache);
 
     cJSON *temple_cache = cJSON_CreateArray();
     for (int i = 0; i < TEMPLE_DEPTH; i++) {
@@ -1227,17 +1237,21 @@ int load_game(GameState *g, int slot) {
         }
     }
 
-    cJSON *crownroad_cache = cJSON_GetObjectItem(root, "crownroad_cache");
-    g->crownroad_cache.valid = 0;
-    if (crownroad_cache) {
-        cJSON *valid = cJSON_GetObjectItem(crownroad_cache, "valid");
-        cJSON *cleared = cJSON_GetObjectItem(crownroad_cache, "level_cleared");
-        g->crownroad_cache.valid = valid ? valid->valueint : 0;
-        g->crownroad_cache.level_cleared = cleared ? cleared->valueint : 0;
-        if (g->crownroad_cache.valid) {
-            deserialize_enemies(cJSON_GetObjectItem(crownroad_cache, "enemies"),
-                g->crownroad_cache.enemies,
-                &g->crownroad_cache.enemy_count);
+    const char *road_keys[2] = {"crownroad_cache", "kingroad_west_cache"};
+    CrownroadCache *road_caches[2] = {&g->crownroad_cache, &g->kingroad_west_cache};
+    for (int i = 0; i < 2; i++) {
+        CrownroadCache *cache = road_caches[i];
+        *cache = (CrownroadCache){0};
+        cJSON *entry = cJSON_GetObjectItem(root, road_keys[i]);
+        if (entry) {
+            cJSON *valid = cJSON_GetObjectItem(entry, "valid");
+            cJSON *cleared = cJSON_GetObjectItem(entry, "level_cleared");
+            cache->valid = valid ? valid->valueint : 0;
+            cache->level_cleared = cleared ? cleared->valueint : 0;
+            if (cache->valid) {
+                deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
+                    cache->enemies, &cache->enemy_count);
+            }
         }
     }
 
@@ -1969,10 +1983,10 @@ int load_game(GameState *g, int slot) {
 
     // Version 61 surrounds the Castle of No Return with a moat. Rebuild
     // legacy Town 3 maps and move the player and loot off the new water.
-    if (save_version < 61 && g->location == LOCATION_TOWN3) {
+    if (save_version < 61 && g->location == LOCATION_CASTLE) {
         int spawn_x;
         int spawn_y;
-        map_generate_town3(&g->map, &spawn_x, &spawn_y);
+        map_generate_castle(&g->map, &spawn_x, &spawn_y);
         for (int i = 0; i < g->floor_item_count; i++) {
             FloorItem *item = &g->floor_items[i];
             if (item->active) {
@@ -2084,6 +2098,63 @@ int load_game(GameState *g, int slot) {
         }
     }
 
+    // Version 69 moves the swamp to Town 2's north gate and the Royal Guards to
+    // Town 3, and turns the Crownroad into King Road East between Town 3 and
+    // the new castle grounds. Older Town 2 maps lose their guards and south
+    // gate, older Town 3 maps (the old castle town) become the new Town 3, and
+    // the road, its creatures and its saved progress turn to run west to east.
+    if (save_version < 69) {
+        if (g->location == LOCATION_TOWN2) {
+            for (int y = 0; y < TOWN_H; y++) {
+                for (int x = 0; x < TOWN_W; x++) {
+                    if (g->map.tiles[y][x] == TILE_NPC_ROYAL_GUARD) {
+                        g->map.tiles[y][x] = TILE_TOWN_FLOOR;
+                    }
+                }
+            }
+            if (g->map.tiles[TOWN_H - 1][20] == TILE_TOWN_EXIT) {
+                g->map.tiles[TOWN_H - 1][20] = TILE_WALL;
+            }
+        } else if (g->location == LOCATION_TOWN3) {
+            // The moat and castle walls become open ground, so the player and
+            // loot stay where they stand unless that tile is no longer open.
+            int spawn_x;
+            int spawn_y;
+            map_generate_town3(&g->map, &spawn_x, &spawn_y);
+            if (!map_is_walkable(&g->map, g->player.x, g->player.y)) {
+                g->player.x = spawn_x;
+                g->player.y = spawn_y;
+            }
+            for (int i = 0; i < g->floor_item_count; i++) {
+                FloorItem *item = &g->floor_items[i];
+                TileType ground = g->map.tiles[item->y][item->x];
+                if (!item->active) {
+                    continue;
+                }
+                if (ground == TILE_TOWN_FLOOR || ground == TILE_TOWN_PATH) {
+                    item->underlying_tile = ground;
+                    g->map.tiles[item->y][item->x] = TILE_ITEM;
+                } else {
+                    item->active = 0;
+                }
+            }
+        } else if (g->location == LOCATION_CROWNROAD) {
+            // Road loot is cleared whenever the road is left, so none is kept.
+            map_generate_crownroad(&g->map);
+            rotate_crownroad_position(&g->player.x, &g->player.y);
+            for (int i = 0; i < g->enemy_count; i++) {
+                rotate_crownroad_position(&g->enemies[i].x, &g->enemies[i].y);
+            }
+            g->floor_item_count = 0;
+        }
+        if (g->crownroad_cache.valid) {
+            for (int i = 0; i < g->crownroad_cache.enemy_count; i++) {
+                Enemy *e = &g->crownroad_cache.enemies[i];
+                rotate_crownroad_position(&e->x, &e->y);
+            }
+        }
+    }
+
     if (g->location == LOCATION_MOUNTAINS) {
         hide_legacy_fort_plate(&g->map);
     }
@@ -2114,8 +2185,11 @@ int load_game(GameState *g, int slot) {
     if (g->location == LOCATION_TOWN2) {
         map_place_town2_center(&g->map);
         map_place_town_labyrinth(&g->map);
-        // Town 2 saves from before the guards gain them on load.
-        map_place_town2_guards(&g->map, g->player.x, g->player.y);
+        map_set_town3_road(&g->map, g->defeated_bosses & (1 << LOCATION_SWAMP));
+    }
+
+    if (g->location == LOCATION_TOWN3) {
+        map_place_town3_guards(&g->map, g->player.x, g->player.y);
     }
 
     game_hide_portal_destination(g);

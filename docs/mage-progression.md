@@ -7,7 +7,8 @@ rather than sustained melee combat.
 
 ## Mana Recovery
 
-- Gaining a level increases maximum HP by 10 and restores both HP and MP to
+- Gaining a level increases maximum HP by 10 and maximum MP by 15 up to level
+  5, 10 up to level 10, and 5 after that, then restores both HP and MP to
   maximum.
 - Mana Potions restore MP to full and are sold by the Alchemist.
 - Morwen's witch hut in Town 2 also sells Mana Potions for 20 gold.

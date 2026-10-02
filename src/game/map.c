@@ -973,19 +973,21 @@ void map_place_town_labyrinth(Map *m) {
 }
 
 // Guards only replace open grass, so loot and the player's tile stay clear.
-void map_place_town2_guards(Map *m, int avoid_x, int avoid_y) {
-    const int guard_x[2] = {TOWN2_GUARD_WEST_X, TOWN2_GUARD_EAST_X};
+void map_place_town3_guards(Map *m, int avoid_x, int avoid_y) {
+    const int guard_y[2] = {TOWN3_GUARD_NORTH_Y, TOWN3_GUARD_SOUTH_Y};
     for (int i = 0; i < 2; i++) {
-        int x = guard_x[i];
-        if (m->tiles[TOWN2_GUARD_Y][x] == TILE_TOWN_FLOOR &&
-            (x != avoid_x || TOWN2_GUARD_Y != avoid_y)) {
-            m->tiles[TOWN2_GUARD_Y][x] = TILE_NPC_ROYAL_GUARD;
+        int y = guard_y[i];
+        if (m->tiles[y][TOWN3_GUARD_X] == TILE_TOWN_FLOOR &&
+            (TOWN3_GUARD_X != avoid_x || y != avoid_y)) {
+            m->tiles[y][TOWN3_GUARD_X] = TILE_NPC_ROYAL_GUARD;
         }
     }
 }
 
 void map_place_town2_center(Map *m) {
-    m->tiles[0][CROWNROAD_X] = TILE_TOWN_EXIT;
+    for (int x = 18; x <= 22; x++) {
+        m->tiles[0][x] = TILE_TOWN_EXIT;
+    }
     // The west gate leads into the Frostfell Wastes.
     for (int y = 10; y <= 14; y++) {
         m->tiles[y][0] = TILE_TOWN_EXIT;
@@ -1132,6 +1134,9 @@ void map_generate_town4(Map *m, int *spawn_x, int *spawn_y) {
     for (int y = TOWN4_DRAGON_GATE_Y - 2; y <= TOWN4_DRAGON_GATE_Y + 2; y++) {
         m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
     }
+    for (int y = 10; y <= 14; y++) {
+        m->tiles[y][0] = TILE_TOWN_EXIT;
+    }
     m->tiles[TOWN4_ILYA_Y][TOWN4_ILYA_X] = TILE_NPC_DRAGON_SEEKER;
     *spawn_x = 20;
     *spawn_y = TOWN_H - 2;
@@ -1154,7 +1159,6 @@ void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
     for (int x = 1; x < TOWN_W - 1; x++) {
         m->tiles[12][x] = TILE_TOWN_PATH;
     }
-    m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
     for (int y = 10; y <= 14; y++) {
         m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
     }
@@ -1174,7 +1178,6 @@ void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
         m->tiles[11][x] = TILE_TOWN_PATH;
     }
     map_place_town2_center(m);
-    map_place_town2_guards(m, -1, -1);
     // The Inn stands east of the Healer, its door opening onto the square.
     map_place_town_inn(m);
     map_place_town_labyrinth(m);
@@ -1182,26 +1185,44 @@ void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
     *spawn_y = 12;
 }
 
-void map_generate_town3(Map *m, int *spawn_x, int *spawn_y) {
+static void map_generate_town_square(Map *m) {
     map_clear_exploration(m);
     m->room_count = 0;
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
-            m->tiles[y][x] = TILE_WALL;
+            m->tiles[y][x] = x > 0 && x < TOWN_W - 1 &&
+                y > 0 && y < TOWN_H - 1 ? TILE_TOWN_FLOOR : TILE_WALL;
         }
     }
     for (int y = 1; y < TOWN_H - 1; y++) {
-        for (int x = 1; x < TOWN_W - 1; x++) {
-            m->tiles[y][x] = TILE_TOWN_FLOOR;
-        }
-    }
-    for (int y = 11; y < TOWN_H - 1; y++) {
         m->tiles[y][CROWNROAD_X] = TILE_TOWN_PATH;
+    }
+    for (int x = 1; x < TOWN_W - 1; x++) {
+        m->tiles[CASTLE_ROAD_Y][x] = TILE_TOWN_PATH;
     }
     for (int y = 12; y <= 15; y++) {
         for (int x = 12; x <= 28; x++) {
             m->tiles[y][x] = TILE_TOWN_PATH;
         }
+    }
+}
+
+void map_generate_town3(Map *m, int *spawn_x, int *spawn_y) {
+    map_generate_town_square(m);
+    m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
+    for (int y = TOWN3_KING_GATE_Y - 2; y <= TOWN3_KING_GATE_Y + 2; y++) {
+        m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
+    }
+    map_place_town_apothecary(m);
+    map_place_town3_guards(m, -1, -1);
+    *spawn_x = 20;
+    *spawn_y = TOWN_H - 2;
+}
+
+void map_generate_castle(Map *m, int *spawn_x, int *spawn_y) {
+    map_generate_town_square(m);
+    for (int y = 1; y < TOWN_MOAT_Y; y++) {
+        m->tiles[y][CROWNROAD_X] = TILE_TOWN_FLOOR;
     }
     for (int y = TOWN_MOAT_Y; y < TOWN_MOAT_Y + TOWN_MOAT_H; y++) {
         for (int x = TOWN_MOAT_X; x < TOWN_MOAT_X + TOWN_MOAT_W; x++) {
@@ -1210,10 +1231,43 @@ void map_generate_town3(Map *m, int *spawn_x, int *spawn_y) {
     }
     m->tiles[10][CROWNROAD_X] = TILE_TOWN_EXIT;
     m->tiles[11][CROWNROAD_X] = TILE_TOWN_PATH;
-    m->tiles[TOWN_H - 1][CROWNROAD_X] = TILE_TOWN_EXIT;
-    map_place_town_apothecary(m);
+    for (int y = CASTLE_ROAD_Y - 2; y <= CASTLE_ROAD_Y + 2; y++) {
+        m->tiles[y][0] = TILE_TOWN_EXIT;
+        m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
+    }
     *spawn_x = CROWNROAD_X;
-    *spawn_y = TOWN_H - 2;
+    *spawn_y = CASTLE_ROAD_Y;
+}
+
+void map_set_town3_road(Map *m, int unlocked) {
+    if (!unlocked) {
+        return;
+    }
+    for (int y = 1; y <= 12; y++) {
+        m->tiles[y][TOWN3_ROAD_X] = TILE_TOWN_PATH;
+    }
+    m->tiles[0][TOWN3_ROAD_X] = TILE_TOWN_EXIT;
+}
+
+void map_generate_swamp_road(Map *m) {
+    map_clear_exploration(m);
+    m->room_count = 0;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            m->tiles[y][x] = TILE_SWAMP_WALL;
+        }
+    }
+    for (int y = 1; y < SWAMP_ROAD_H - 1; y++) {
+        for (int x = SWAMP_ROAD_X - 1; x <= SWAMP_ROAD_X + 1; x++) {
+            m->tiles[y][x] = TILE_SWAMP_FLOOR;
+        }
+    }
+    m->stairs_up_x = SWAMP_ROAD_X;
+    m->stairs_up_y = SWAMP_ROAD_H - 1;
+    m->stairs_down_x = SWAMP_ROAD_X;
+    m->stairs_down_y = 0;
+    m->tiles[m->stairs_up_y][m->stairs_up_x] = TILE_SWAMP_ENTRANCE;
+    m->tiles[m->stairs_down_y][m->stairs_down_x] = TILE_SWAMP_EXIT;
 }
 
 void map_generate_crownroad(Map *m) {
@@ -1224,41 +1278,43 @@ void map_generate_crownroad(Map *m) {
             m->tiles[y][x] = TILE_WALL;
         }
     }
-    for (int y = 1; y < CROWNROAD_H - 1; y++) {
-        int left_tree_edge = 12 + ((y / 6) % 3 == 1);
-        int right_tree_edge = 28 - ((y / 7) % 3 == 1);
-        for (int x = 1; x < CROWNROAD_W - 1; x++) {
-            m->tiles[y][x] = x <= left_tree_edge || x >= right_tree_edge ?
+    // Rotate the authored ambush so travel runs west to east.
+    for (int x = 1; x < CROWNROAD_W - 1; x++) {
+        int old_y = CROWNROAD_W - 1 - x;
+        int top_tree_edge = 12 + ((old_y / 6) % 3 == 1);
+        int bottom_tree_edge = 28 - ((old_y / 7) % 3 == 1);
+        for (int y = 1; y < CROWNROAD_H - 1; y++) {
+            m->tiles[y][x] = y <= top_tree_edge || y >= bottom_tree_edge ?
                 TILE_FOREST_WALL : TILE_TOWN_FLOOR;
         }
-        m->tiles[y][CROWNROAD_X] = TILE_TOWN_PATH;
+        m->tiles[CROWNROAD_Y][x] = TILE_TOWN_PATH;
     }
     for (int branch = 0; branch < 4; branch++) {
-        int y = 9 + branch * 10;
-        int from = branch % 2 == 0 ? 17 : CROWNROAD_X;
-        int to = branch % 2 == 0 ? CROWNROAD_X : 23;
-        for (int x = from; x <= to; x++) {
+        int x = CROWNROAD_W - 1 - (9 + branch * 10);
+        int from = branch % 2 == 0 ? 17 : CROWNROAD_Y;
+        int to = branch % 2 == 0 ? CROWNROAD_Y : 23;
+        for (int y = from; y <= to; y++) {
             m->tiles[y][x] = TILE_TOWN_PATH;
         }
-        for (int x = from - 2; x <= from - 1; x++) {
-            m->tiles[y - 2][x] = TILE_WALL;
+        for (int y = from - 2; y <= from - 1; y++) {
+            m->tiles[y][x + 2] = TILE_WALL;
         }
-        for (int x = to + 1; x <= to + 2; x++) {
-            m->tiles[y + 3][x] = TILE_WALL;
-        }
-    }
-    for (int y = 5; y < CROWNROAD_H - 1; y += 8) {
-        m->tiles[y][15] = TILE_FOREST_WALL;
-        if (y + 4 < CROWNROAD_H - 1) {
-            m->tiles[y + 4][25] = TILE_FOREST_WALL;
+        for (int y = to + 1; y <= to + 2; y++) {
+            m->tiles[y][x - 3] = TILE_WALL;
         }
     }
-    m->tiles[0][CROWNROAD_X] = TILE_TOWN_EXIT;
-    m->tiles[CROWNROAD_H - 1][CROWNROAD_X] = TILE_TOWN_EXIT;
-    m->stairs_up_x = CROWNROAD_X;
-    m->stairs_up_y = CROWNROAD_H - 2;
-    m->stairs_down_x = CROWNROAD_X;
-    m->stairs_down_y = 1;
+    for (int old_y = 5; old_y < CROWNROAD_W - 1; old_y += 8) {
+        m->tiles[15][CROWNROAD_W - 1 - old_y] = TILE_FOREST_WALL;
+        if (old_y + 4 < CROWNROAD_W - 1) {
+            m->tiles[25][CROWNROAD_W - 1 - old_y - 4] = TILE_FOREST_WALL;
+        }
+    }
+    m->tiles[CROWNROAD_Y][0] = TILE_TOWN_EXIT;
+    m->tiles[CROWNROAD_Y][CROWNROAD_W - 1] = TILE_TOWN_EXIT;
+    m->stairs_up_x = 1;
+    m->stairs_up_y = CROWNROAD_Y;
+    m->stairs_down_x = CROWNROAD_W - 2;
+    m->stairs_down_y = CROWNROAD_Y;
 }
 
 static void swamp_carve(Map *m, int x, int y) {
