@@ -6,174 +6,135 @@
 #include "../src/systems/save_load.h"
 #include <string.h>
 
-void test_crownroad_to_town3(void) {
-    printf("Fallen Crownroad and Town 3 tests:\n");
+void test_king_roads_and_castle(void) {
+    printf("King Roads and castle grounds tests:\n");
     static GameState g;
     static GameState loaded;
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
-    game_enter_town2(&g);
-    ASSERT("Town 2 has a one-tile north Crownroad gate",
-        g.map.tiles[0][CROWNROAD_X] == TILE_TOWN_EXIT &&
-        g.map.tiles[0][CROWNROAD_X - 1] == TILE_WALL &&
-        g.map.tiles[1][CROWNROAD_X] == TILE_TOWN_PATH);
-
-    g.player.x = CROWNROAD_X;
-    g.player.y = 1;
-    action_resolve_player(&g, (Action){ACTION_MOVE, CROWNROAD_X, 0});
-    ASSERT("Crownroad is a traversable combat stage",
+    game_enter_swamp(&g);
+    game_enter_town3(&g);
+    ASSERT("Town 3 has an east road, apothecary, and no castle moat",
+        g.location == LOCATION_TOWN3 &&
+        g.map.tiles[TOWN3_KING_GATE_Y][TOWN_W - 1] == TILE_TOWN_EXIT &&
+        g.map.tiles[TOWN_APOTHECARY_Y][TOWN_APOTHECARY_X] == TILE_SHOP_ALCHEMIST &&
+        g.map.tiles[TOWN_APOTHECARY_DOOR_Y][TOWN_APOTHECARY_DOOR_X] == TILE_ALCHEMIST_DOOR &&
+        map_is_walkable(&g.map, TOWN_MOAT_X, 5) &&
+        g.map.tiles[10][20] == TILE_TOWN_PATH);
+    g.player.x = TOWN_W - 2;
+    g.player.y = TOWN3_KING_GATE_Y;
+    action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 1, TOWN3_KING_GATE_Y});
+    ASSERT("Town 3 east gate enters King Road East at its west end",
         g.location == LOCATION_CROWNROAD && g.enemy_count == MAX_ENEMIES &&
-        g.map.tiles[0][CROWNROAD_X] == TILE_TOWN_EXIT &&
-        g.map.tiles[CROWNROAD_H - 1][CROWNROAD_X] == TILE_TOWN_EXIT);
-    ASSERT("trees flank the Crownroad while its central road stays clear",
-        g.map.tiles[18][12] == TILE_FOREST_WALL &&
-        g.map.tiles[18][28] == TILE_FOREST_WALL &&
-        g.map.tiles[18][CROWNROAD_X] == TILE_TOWN_PATH &&
-        g.map.tiles[18][CROWNROAD_X - 1] == TILE_TOWN_FLOOR);
+        g.player.x == 1 && g.player.y == CROWNROAD_Y);
     int archers = 0;
     int horsemen = 0;
-    int all_spawns_open = 1;
-    int spawns_distinct = 1;
+    int open = 1;
+    int distinct = 1;
     for (int i = 0; i < g.enemy_count; i++) {
         archers += g.enemies[i].type == ENEMY_ROAD_ARCHER;
         horsemen += g.enemies[i].type == ENEMY_HORSEMAN;
-        all_spawns_open &= map_is_walkable(&g.map,
-            g.enemies[i].x, g.enemies[i].y);
+        open &= map_is_walkable(&g.map, g.enemies[i].x, g.enemies[i].y);
         for (int j = 0; j < i; j++) {
-            spawns_distinct &= g.enemies[i].x != g.enemies[j].x ||
-                g.enemies[i].y != g.enemies[j].y;
+            distinct &= g.enemies[i].x != g.enemies[j].x || g.enemies[i].y != g.enemies[j].y;
         }
     }
-    ASSERT("dense ambush includes visible archers and mounted enemies",
-        archers == 8 && horsemen == 6 && all_spawns_open);
-    ASSERT("Crownroad holds twice the usual area enemies on separate tiles",
-        g.enemy_count == 2 * AREA_ENEMY_LIMIT && spawns_distinct);
-
+    ASSERT("rotated road preserves its 30-enemy ambush on distinct walkable tiles",
+        archers == 8 && horsemen == 6 && open && distinct);
     g.enemies[0].active = 0;
-    g.player.x = CROWNROAD_X;
-    g.player.y = 1;
-    action_resolve_player(&g, (Action){ACTION_MOVE, CROWNROAD_X, 0});
-    ASSERT("northern edge leads to Town 3 without clearing all enemies",
-        g.location == LOCATION_TOWN3 &&
-        g.map.tiles[10][CROWNROAD_X] == TILE_TOWN_EXIT &&
+    g.player.x = CROWNROAD_W - 2;
+    g.player.y = CROWNROAD_Y;
+    action_resolve_player(&g, (Action){ACTION_MOVE, CROWNROAD_W - 1, CROWNROAD_Y});
+    ASSERT("King Road East reaches separate castle grounds without clearing enemies",
+        g.location == LOCATION_CASTLE && g.player.x == 1 &&
         g.crownroad_cache.valid && !g.crownroad_cache.enemies[0].active);
-
-    int moat_crossings = 0;
-    for (int y = TOWN_MOAT_Y; y < TOWN_MOAT_Y + TOWN_MOAT_H; y++) {
-        for (int x = TOWN_MOAT_X; x < TOWN_MOAT_X + TOWN_MOAT_W; x++) {
-            int ring = x == TOWN_MOAT_X || x == TOWN_MOAT_X + TOWN_MOAT_W - 1 ||
-                y == TOWN_MOAT_Y || y == TOWN_MOAT_Y + TOWN_MOAT_H - 1;
-            if (ring && map_is_walkable(&g.map, x, y)) {
-                moat_crossings++;
-            }
-        }
-    }
-    ASSERT("moat surrounds the castle except for the drawbridge",
-        moat_crossings == 1 && map_is_walkable(&g.map, CROWNROAD_X, 11));
-    ASSERT("Apothecary stands east of the square with a walk-in door",
-        TOWN_APOTHECARY_X >= TOWN_MOAT_X + TOWN_MOAT_W &&
-        g.map.tiles[TOWN_APOTHECARY_Y][TOWN_APOTHECARY_X] == TILE_SHOP_ALCHEMIST &&
-        !map_is_walkable(&g.map, TOWN_APOTHECARY_X, TOWN_APOTHECARY_Y) &&
-        g.map.tiles[TOWN_APOTHECARY_DOOR_Y][TOWN_APOTHECARY_DOOR_X] ==
-            TILE_ALCHEMIST_DOOR &&
-        map_is_walkable(&g.map, TOWN_APOTHECARY_DOOR_X, TOWN_APOTHECARY_DOOR_Y));
-    int apothecary_lane = 1;
-    for (int x = TOWN_MOAT_X + TOWN_MOAT_W - 1; x <= TOWN_APOTHECARY_DOOR_X; x++) {
-        apothecary_lane &=
-            g.map.tiles[TOWN_APOTHECARY_DOOR_Y + 1][x] == TILE_TOWN_PATH;
-    }
-    ASSERT("Apothecary lane joins the square's north-east corner", apothecary_lane);
-
-    g.player.x = CROWNROAD_X;
+    ASSERT("castle moat and drawbridge are now on the castle grounds",
+        !map_is_walkable(&g.map, TOWN_MOAT_X, 5) &&
+        map_is_walkable(&g.map, 20, 11) && g.map.tiles[10][20] == TILE_TOWN_EXIT);
+    g.player.x = 20;
     g.player.y = 11;
-    action_resolve_player(&g, (Action){ACTION_MOVE, CROWNROAD_X, 10});
-    ASSERT("future castle entrance is visible but sealed",
-        g.location == LOCATION_TOWN3 && g.player.y == 11);
-
-    g.player.y = TOWN_H - 2;
-    action_resolve_player(&g,
-        (Action){ACTION_MOVE, CROWNROAD_X, TOWN_H - 1});
-    ASSERT("Town 3 returns to the north end of the road",
-        g.location == LOCATION_CROWNROAD && g.player.y == 1 &&
-        !g.enemies[0].active);
-
-    g.player.y = CROWNROAD_H - 2;
-    action_resolve_player(&g,
-        (Action){ACTION_MOVE, CROWNROAD_X, CROWNROAD_H - 1});
-    ASSERT("southern edge returns to Town 2",
-        g.location == LOCATION_TOWN2 && g.player.y == 1);
-
+    action_resolve_player(&g, (Action){ACTION_MOVE, 20, 10});
+    ASSERT("castle interior remains sealed", g.location == LOCATION_CASTLE && g.player.y == 11);
+    g.player.x = TOWN_W - 2;
+    g.player.y = CASTLE_ROAD_Y;
+    action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 1, CASTLE_ROAD_Y});
+    ASSERT("castle east gate enters King Road West with independent enemies",
+        g.location == LOCATION_KING_ROAD_WEST && g.player.x == 1 &&
+        g.enemy_count == MAX_ENEMIES && g.enemies[0].active);
+    g.enemies[1].active = 0;
+    g.player.x = CROWNROAD_W - 2;
+    action_resolve_player(&g, (Action){ACTION_MOVE, CROWNROAD_W - 1, CROWNROAD_Y});
+    ASSERT("King Road West reaches Town 4's west entrance",
+        g.location == LOCATION_TOWN4 && g.player.x == 1 && g.player.y == 12);
     const int slot = 99015;
-    ASSERT("Crownroad test save slot is unused", !save_exists(slot));
-    int saved = save_game(&g, slot);
-    int restored = saved && load_game(&loaded, slot);
-    ASSERT("Crownroad enemies and gate persist through save/load",
-        restored && loaded.location == LOCATION_TOWN2 &&
-        loaded.map.tiles[0][CROWNROAD_X] == TILE_TOWN_EXIT &&
-        loaded.crownroad_cache.valid &&
-        !loaded.crownroad_cache.enemies[0].active);
-    remove("saves/savegame_99015.json");
-
-    g.crownroad_cache.enemy_count = AREA_ENEMY_LIMIT;
-    g.crownroad_cache.level_cleared = 1;
-    game_enter_crownroad(&g, 0);
-    int second_wave_active = 1;
-    for (int i = AREA_ENEMY_LIMIT; i < g.enemy_count; i++) {
-        second_wave_active &= g.enemies[i].active;
+    int restored = save_game(&g, slot) && load_game(&loaded, slot);
+    ASSERT("both King Road caches survive saving in Town 4",
+        restored && loaded.crownroad_cache.valid && loaded.kingroad_west_cache.valid &&
+        !loaded.crownroad_cache.enemies[0].active && loaded.crownroad_cache.enemies[1].active &&
+        loaded.kingroad_west_cache.enemies[0].active && !loaded.kingroad_west_cache.enemies[1].active);
+    if (restored) {
+        g = loaded;
     }
-    ASSERT("an older 15-enemy Crownroad gains the second wave on entry",
-        g.enemy_count == MAX_ENEMIES && second_wave_active &&
-        !g.enemies[0].active && !g.level_cleared);
+    action_resolve_player(&g, (Action){ACTION_MOVE, 0, 12});
+    ASSERT("Town 4 returns to King Road West's east end with saved enemies",
+        g.location == LOCATION_KING_ROAD_WEST && g.player.x == CROWNROAD_W - 2 &&
+        !g.enemies[1].active);
+    g.player.x = 1;
+    action_resolve_player(&g, (Action){ACTION_MOVE, 0, CROWNROAD_Y});
+    ASSERT("King Road West returns to the castle's east gate",
+        g.location == LOCATION_CASTLE && g.player.x == TOWN_W - 2);
+    restored = save_game(&g, slot) && load_game(&loaded, slot);
+    ASSERT("castle grounds and position survive save/load",
+        restored && loaded.location == LOCATION_CASTLE &&
+        loaded.player.x == TOWN_W - 2 && loaded.map.tiles[10][20] == TILE_TOWN_EXIT);
+    g.player.x = 1;
+    g.player.y = CASTLE_ROAD_Y;
+    action_resolve_player(&g, (Action){ACTION_MOVE, 0, CASTLE_ROAD_Y});
+    ASSERT("castle west gate restores King Road East's enemy progress",
+        g.location == LOCATION_CROWNROAD && g.player.x == CROWNROAD_W - 2 && !g.enemies[0].active);
+    g.player.x = 1;
+    action_resolve_player(&g, (Action){ACTION_MOVE, 0, CROWNROAD_Y});
+    ASSERT("King Road East returns to Town 3's east entrance",
+        g.location == LOCATION_TOWN3 && g.player.x == TOWN_W - 2 &&
+        g.player.y == TOWN3_KING_GATE_Y);
+    remove("saves/savegame_99015.json");
+    game_init(&g);
+    ASSERT("new game clears King Road West progress", !g.kingroad_west_cache.valid);
 }
 
-void test_town2_royal_guards(void) {
-    printf("Town 2 Royal Guard tests:\n");
+void test_town3_royal_guards(void) {
+    printf("Town 3 Royal Guard tests:\n");
     static GameState g;
     static GameState loaded;
-    memset(&g, 0, sizeof(g));
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
-    game_enter_town2(&g);
-    ASSERT("two Royal Guards flank the road in front of the Crownroad gate",
-        g.map.tiles[TOWN2_GUARD_Y][TOWN2_GUARD_WEST_X] == TILE_NPC_ROYAL_GUARD &&
-        g.map.tiles[TOWN2_GUARD_Y][TOWN2_GUARD_EAST_X] == TILE_NPC_ROYAL_GUARD &&
-        g.map.tiles[TOWN2_GUARD_Y][CROWNROAD_X] == TILE_TOWN_PATH &&
-        !map_is_walkable(&g.map, TOWN2_GUARD_WEST_X, TOWN2_GUARD_Y) &&
-        !map_is_walkable(&g.map, TOWN2_GUARD_EAST_X, TOWN2_GUARD_Y));
-
-    game_talk_to_royal_guard(&g, TOWN2_GUARD_WEST_X, TOWN2_GUARD_Y);
-    int west_warns = g.dialogue_active &&
-        strcmp(g.dialogue_speaker, "Royal Guard") == 0 &&
-        g.dialogue_x == TOWN2_GUARD_WEST_X && g.dialogue_y == TOWN2_GUARD_Y &&
-        strstr(g.dialogue_text, "Crownroad") != NULL;
-    game_talk_to_royal_guard(&g, TOWN2_GUARD_EAST_X, TOWN2_GUARD_Y);
-    ASSERT("the guards warn in dialogue bubbles and recommend other areas",
-        west_warns && g.dialogue_x == TOWN2_GUARD_EAST_X &&
-        strstr(g.dialogue_text, "grow stronger") != NULL &&
-        strcmp(g.messages[g.message_count - 1],
-            "The Royal Guards recommend exploring other areas first.") == 0);
-
-    g.player.x = CROWNROAD_X;
-    g.player.y = 12;
-    for (int y = 11; y >= 1; y--) {
-        action_resolve_player(&g, (Action){ACTION_MOVE, CROWNROAD_X, y});
+    game_enter_swamp(&g);
+    game_enter_town3(&g);
+    ASSERT("guards flank King Road East without blocking it",
+        g.map.tiles[TOWN3_GUARD_NORTH_Y][TOWN3_GUARD_X] == TILE_NPC_ROYAL_GUARD &&
+        g.map.tiles[TOWN3_GUARD_SOUTH_Y][TOWN3_GUARD_X] == TILE_NPC_ROYAL_GUARD &&
+        g.map.tiles[TOWN3_KING_GATE_Y][TOWN3_GUARD_X] == TILE_TOWN_PATH);
+    game_talk_to_royal_guard(&g, TOWN3_GUARD_X, TOWN3_GUARD_NORTH_Y);
+    ASSERT("guard warns about King Road East",
+        g.dialogue_active && strstr(g.dialogue_text, "King Road East") &&
+        g.dialogue_y == TOWN3_GUARD_NORTH_Y);
+    game_talk_to_royal_guard(&g, TOWN3_GUARD_X, TOWN3_GUARD_SOUTH_Y);
+    ASSERT("second guard recommends preparation", strstr(g.dialogue_text, "grow stronger"));
+    g.player.x = 28;
+    g.player.y = TOWN3_KING_GATE_Y;
+    for (int x = 29; x < TOWN_W; x++) {
+        action_resolve_player(&g, (Action){ACTION_MOVE, x, TOWN3_KING_GATE_Y});
     }
-    int reached_gate = g.player.x == CROWNROAD_X && g.player.y == 1;
-    action_resolve_player(&g, (Action){ACTION_MOVE, CROWNROAD_X, 0});
-    ASSERT("the guards never block the road to the Crownroad",
-        reached_gate && g.location == LOCATION_CROWNROAD);
-
-    game_leave_crownroad(&g, LOCATION_TOWN2);
-    g.map.tiles[TOWN2_GUARD_Y][TOWN2_GUARD_WEST_X] = TILE_TOWN_FLOOR;
-    g.map.tiles[TOWN2_GUARD_Y][TOWN2_GUARD_EAST_X] = TILE_TOWN_FLOOR;
-    g.player.x = TOWN2_GUARD_EAST_X;
-    g.player.y = TOWN2_GUARD_Y;
-    const int slot = 99016;
-    int loaded_ok = save_game(&g, slot) && load_game(&loaded, slot);
-    ASSERT("older Town 2 saves gain the guards without covering the player",
-        loaded_ok &&
-        loaded.map.tiles[TOWN2_GUARD_Y][TOWN2_GUARD_WEST_X] == TILE_NPC_ROYAL_GUARD &&
-        loaded.map.tiles[TOWN2_GUARD_Y][TOWN2_GUARD_EAST_X] == TILE_TOWN_FLOOR);
+    ASSERT("guards allow passage into the road", g.location == LOCATION_CROWNROAD);
+    game_leave_crownroad(&g, LOCATION_TOWN3);
+    g.map.tiles[TOWN3_GUARD_NORTH_Y][TOWN3_GUARD_X] = TILE_TOWN_FLOOR;
+    g.map.tiles[TOWN3_GUARD_SOUTH_Y][TOWN3_GUARD_X] = TILE_TOWN_FLOOR;
+    g.player.x = TOWN3_GUARD_X;
+    g.player.y = TOWN3_GUARD_SOUTH_Y;
+    int restored = save_game(&g, 99016) && load_game(&loaded, 99016);
+    ASSERT("loading Town 3 restores guards without covering the player",
+        restored && loaded.map.tiles[TOWN3_GUARD_NORTH_Y][TOWN3_GUARD_X] == TILE_NPC_ROYAL_GUARD &&
+        loaded.map.tiles[TOWN3_GUARD_SOUTH_Y][TOWN3_GUARD_X] == TILE_TOWN_FLOOR);
     remove("saves/savegame_99016.json");
 }
 

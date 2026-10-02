@@ -55,45 +55,6 @@ static void draw_castle_front(Renderer *r, int sx, int sy) {
     SDL_RenderCopy(r->sdl, r->castle_texture, NULL, &destination);
 }
 
-static void draw_crownroad_gate_fallback(Renderer *r, int sx, int sy) {
-    int x = sx * TILE_SIZE;
-    int y = sy * TILE_SIZE;
-    SDL_Rect left = {x, y + 10, 20, 50};
-    SDL_Rect right = {x + 40, y + 10, 20, 50};
-    SDL_Rect lintel = {x, y, 60, 16};
-    SDL_SetRenderDrawColor(r->sdl, 70, 68, 72, 255);
-    SDL_RenderFillRect(r->sdl, &left);
-    SDL_RenderFillRect(r->sdl, &right);
-    SDL_RenderFillRect(r->sdl, &lintel);
-    SDL_SetRenderDrawColor(r->sdl, 116, 109, 105, 255);
-    SDL_RenderDrawLine(r->sdl, x, y, x + 59, y);
-    SDL_RenderDrawLine(r->sdl, x + 19, y + 16, x + 19, y + 59);
-    SDL_RenderDrawLine(r->sdl, x + 40, y + 16, x + 40, y + 59);
-    SDL_SetRenderDrawColor(r->sdl, 34, 32, 36, 255);
-    SDL_RenderDrawLine(r->sdl, x, y + 33, x + 18, y + 33);
-    SDL_RenderDrawLine(r->sdl, x + 41, y + 33, x + 59, y + 33);
-    SDL_RenderDrawLine(r->sdl, x + 10, y + 16, x + 10, y + 32);
-    SDL_RenderDrawLine(r->sdl, x + 50, y + 34, x + 50, y + 51);
-    SDL_Rect pennant_left = {x + 5, y + 17, 7, 14};
-    SDL_Rect pennant_right = {x + 48, y + 17, 7, 14};
-    SDL_SetRenderDrawColor(r->sdl, 124, 53, 48, 255);
-    SDL_RenderFillRect(r->sdl, &pennant_left);
-    SDL_RenderFillRect(r->sdl, &pennant_right);
-    SDL_SetRenderDrawColor(r->sdl, 182, 145, 79, 255);
-    SDL_RenderDrawLine(r->sdl, x + 26, y + 5, x + 33, y + 5);
-}
-
-static void draw_crownroad_gate(Renderer *r, int sx, int sy) {
-    if (!r->crownroad_gate_texture) {
-        draw_crownroad_gate_fallback(r, sx, sy);
-        return;
-    }
-    // A 3x3 tile gatehouse whose archway lines up with the road's column.
-    SDL_Rect destination = {sx * TILE_SIZE, sy * TILE_SIZE,
-        3 * TILE_SIZE, 3 * TILE_SIZE};
-    SDL_RenderCopy(r->sdl, r->crownroad_gate_texture, NULL, &destination);
-}
-
 static void draw_dialogue_text(Renderer *r, const char *text, int x, int y, int max_chars, SDL_Color color) {
     char line[64];
     int line_len = 0;
@@ -139,6 +100,7 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
         g->location != LOCATION_INN &&
         g->location != LOCATION_TOWN &&
         g->location != LOCATION_TOWN2 &&
+        g->location != LOCATION_TOWN3 &&
         g->location != LOCATION_TOWN4 &&
         g->location != LOCATION_FOREST &&
         g->location != LOCATION_SWAMP)) {
@@ -152,7 +114,8 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
 
     int viewport_w = r->screen_w - INFO_PANEL_W;
     if (g->location == LOCATION_TOWN || g->location == LOCATION_TOWN2 ||
-        g->location == LOCATION_TOWN3 || g->location == LOCATION_TOWN4) {
+        g->location == LOCATION_TOWN3 || g->location == LOCATION_TOWN4 ||
+        g->location == LOCATION_CASTLE) {
         viewport_w = TOWN_W * TILE_SIZE;
     } else if (g->location == LOCATION_TAVERN || g->location == LOCATION_INN) {
         viewport_w = TAVERN_W * TILE_SIZE;
@@ -803,21 +766,34 @@ static void draw_fireball_impact(Renderer *r, int tile_x, int tile_y,
     SDL_RenderDrawPoint(r->sdl, cx, cy - radius - 3);
 }
 
+static TileType terrain_display_tile(const GameState *g, TileType tile) {
+    // The shortcut uses mountain art without changing its saved terrain or exits.
+    if (g->location == LOCATION_HIGH_PASS) {
+        switch (tile) {
+            case TILE_DRAGON_FLOOR: return TILE_MOUNTAIN_FLOOR;
+            case TILE_DRAGON_WALL: return TILE_MOUNTAIN_WALL;
+            case TILE_HIGH_PASS_ENTRANCE: return TILE_MOUNTAIN_ENTRANCE;
+            case TILE_HIGH_PASS_EXIT: return TILE_MOUNTAIN_EXIT;
+            default: break;
+        }
+    }
+    return tile;
+}
+
 static TileType floor_item_underlay(const GameState *g, int x, int y) {
     for (int i = 0; i < g->floor_item_count; i++) {
         const FloorItem *item = &g->floor_items[i];
         if (item->active && item->x == x && item->y == y) {
-            return (TileType)item->underlying_tile;
+            return terrain_display_tile(g, (TileType)item->underlying_tile);
         }
     }
     if (g->location == LOCATION_FOREST) {
         return TILE_FOREST_FLOOR;
     }
-    if (g->location == LOCATION_MOUNTAINS) {
+    if (g->location == LOCATION_MOUNTAINS || g->location == LOCATION_HIGH_PASS) {
         return TILE_MOUNTAIN_FLOOR;
     }
-    if (g->location == LOCATION_DRAGONSPINE ||
-        g->location == LOCATION_HIGH_PASS) {
+    if (g->location == LOCATION_DRAGONSPINE) {
         return TILE_DRAGON_FLOOR;
     }
     if (g->location == LOCATION_COAST) {
@@ -1010,13 +986,13 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
     } else if (underlay == TILE_DRAGON_TREASURE) {
         draw_dragon_goblet(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_TOWN_FLOOR) {
-        if (g->location == LOCATION_CROWNROAD) {
+        if (game_is_king_road(g)) {
             draw_crownroad_tile(r, screen_x, screen_y, map_x, map_y, 0);
         } else {
             draw_town_floor(r, screen_x, screen_y);
         }
     } else if (underlay == TILE_TOWN_PATH) {
-        if (g->location == LOCATION_CROWNROAD) {
+        if (game_is_king_road(g)) {
             draw_crownroad_tile(r, screen_x, screen_y, map_x, map_y, 1);
         } else {
             draw_town_path(r, screen_x, screen_y);
@@ -1076,10 +1052,9 @@ static void draw_trap_underlay(Renderer *r, const GameState *g, int map_x, int m
     } else if (g->location == LOCATION_MOUNTAINS && bridge_neighbors > 0) {
         draw_mountain_bridge(r, screen_x, screen_y,
             mountain_crossing_neighbors(&g->map, map_x, map_y, 0));
-    } else if (g->location == LOCATION_MOUNTAINS) {
+    } else if (g->location == LOCATION_MOUNTAINS || g->location == LOCATION_HIGH_PASS) {
         draw_mountain_floor(r, screen_x, screen_y, map_x, map_y);
-    } else if (g->location == LOCATION_DRAGONSPINE ||
-        g->location == LOCATION_HIGH_PASS) {
+    } else if (g->location == LOCATION_DRAGONSPINE) {
         draw_dragonspine_floor(r, screen_x, screen_y, map_x, map_y, 0);
     } else if (g->location == LOCATION_FROSTFELL) {
         draw_frostfell_floor(r, screen_x, screen_y, map_x, map_y);
@@ -1211,14 +1186,15 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     int kraken_warning = kraken_tentacles_raised(g);
     int town_scaled = g->location == LOCATION_TOWN ||
         g->location == LOCATION_TOWN2 ||
-        g->location == LOCATION_TOWN3 || g->location == LOCATION_TOWN4;
+        g->location == LOCATION_TOWN3 || g->location == LOCATION_TOWN4 ||
+        g->location == LOCATION_CASTLE;
     int tavern_scaled = g->location == LOCATION_TAVERN ||
         g->location == LOCATION_INN;
     int island_scaled = g->location == LOCATION_ISLAND;
     int labyrinth_scaled = g->location == LOCATION_LABYRINTH;
     int road_scaled = g->location == LOCATION_FOREST_ROAD ||
         g->location == LOCATION_HIGH_PASS ||
-        g->location == LOCATION_CROWNROAD;
+        game_is_king_road(g) || g->location == LOCATION_SWAMP_ROAD;
     int town_road_gate = g->location == LOCATION_TOWN &&
         (g->defeated_bosses & (1 << LOCATION_FOREST)) &&
         g->map.tiles[TOWN_ROAD_EXIT_Y][0] == TILE_TOWN_EXIT &&
@@ -1244,9 +1220,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             (float)play_h / (map_h * TILE_SIZE));
     } else if (road_scaled) {
         int road_w = g->location == LOCATION_HIGH_PASS ? HIGH_PASS_W :
-            (g->location == LOCATION_CROWNROAD ? CROWNROAD_W : FOREST_ROAD_W);
+            (game_is_king_road(g) ? CROWNROAD_W :
+            (g->location == LOCATION_SWAMP_ROAD ? SWAMP_ROAD_W : FOREST_ROAD_W));
         int road_h = g->location == LOCATION_HIGH_PASS ? HIGH_PASS_H :
-            (g->location == LOCATION_CROWNROAD ? CROWNROAD_H : FOREST_ROAD_H);
+            (game_is_king_road(g) ? CROWNROAD_H :
+            (g->location == LOCATION_SWAMP_ROAD ? SWAMP_ROAD_H : FOREST_ROAD_H));
         int view_w = v->tiles_x < road_w ? v->tiles_x : road_w;
         int view_h = v->tiles_y < road_h ? v->tiles_y : road_h;
         viewport_init(&town_view, view_w, view_h,
@@ -1301,7 +1279,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             map_mark_explored(&g->map, x, y);
             int sx = viewport_to_screen_x(v, x);
             int sy = viewport_to_screen_y(v, y);
-            switch (g->map.tiles[y][x]) {
+            switch (terrain_display_tile(g, g->map.tiles[y][x])) {
                 case TILE_FLOOR:
                     if (g->location == LOCATION_DUNGEON) {
                         draw_dungeon_floor(r, sx, sy, x, y);
@@ -1310,11 +1288,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     }
                     break;
                 case TILE_WALL: {
-                    if (g->location == LOCATION_TOWN3 &&
+                    if (g->location == LOCATION_CASTLE &&
                         x >= TOWN_MOAT_X && x < TOWN_MOAT_X + TOWN_MOAT_W &&
                         y >= TOWN_MOAT_Y && y < TOWN_MOAT_Y + TOWN_MOAT_H) {
                         draw_town_floor(r, sx, sy);
-                    } else if (g->location == LOCATION_CROWNROAD) {
+                    } else if (game_is_king_road(g)) {
                         draw_crownroad_tile(r, sx, sy, x, y, 2);
                     } else if (g->location == LOCATION_DUNGEON) {
                         draw_dungeon_wall(r, sx, sy, x, y);
@@ -1486,14 +1464,14 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_RESTORED_BURIAL_SEAL:
                     draw_restored_burial_seal(r, sx, sy); break;
                 case TILE_TOWN_FLOOR:
-                    if (g->location == LOCATION_CROWNROAD) {
+                    if (game_is_king_road(g)) {
                         draw_crownroad_tile(r, sx, sy, x, y, 0);
                     } else {
                         draw_town_floor(r, sx, sy);
                     }
                     break;
                 case TILE_TOWN_PATH:
-                    if (g->location == LOCATION_CROWNROAD) {
+                    if (game_is_king_road(g)) {
                         draw_crownroad_tile(r, sx, sy, x, y, 1);
                     } else {
                         draw_town_path(r, sx, sy);
@@ -1523,7 +1501,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_dragon_seeker(r, sx, sy); break;
                 case TILE_NPC_ROYAL_GUARD:
                     // Each guard holds the halberd on the side away from the road.
-                    draw_royal_guard(r, sx, sy, x < CROWNROAD_X); break;
+                    draw_royal_guard(r, sx, sy, y < TOWN3_KING_GATE_Y); break;
                 case TILE_FOREST_WARDEN:
                     draw_forest_warden(r, sx, sy, x, y); break;
                 case TILE_ISLAND_WATER:
@@ -1592,7 +1570,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_LABYRINTH_RELIC:
                     draw_labyrinth_relic(r, sx, sy); break;
                 case TILE_TOWN_EXIT:
-                    if (g->location == LOCATION_CROWNROAD) {
+                    if (game_is_king_road(g)) {
                         draw_crownroad_tile(r, sx, sy, x, y, 1);
                     } else {
                         draw_town_path(r, sx, sy);
@@ -1663,7 +1641,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_forest_tree_edge(r, sx, sy, x, y, edges);
                 }
             }
-            if (g->location == LOCATION_CROWNROAD &&
+            if (game_is_king_road(g) &&
                 (g->map.tiles[y][x] == TILE_TOWN_FLOOR ||
                 g->map.tiles[y][x] == TILE_TOWN_PATH)) {
                 unsigned int edges = 0;
@@ -1770,9 +1748,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, TOWN_W - 3), viewport_to_screen_y(v, 10),
             TOWN_EXIT_DUNGEON);
         if (g->defeated_bosses & (1 << LOCATION_MOUNTAINS)) {
-            draw_crownroad_gate(r,
-                viewport_to_screen_x(v, TOWN4_ROAD_X - 1),
-                viewport_to_screen_y(v, 0));
+            draw_town_gate(r,
+                viewport_to_screen_x(v, TOWN4_ROAD_X - 2),
+                viewport_to_screen_y(v, 0), TOWN_EXIT_MOUNTAINS);
         }
         draw_town_gate(r,
             viewport_to_screen_x(v, 18),
@@ -1791,6 +1769,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     if (g->location == LOCATION_TOWN4) {
+        draw_town_gate(r, viewport_to_screen_x(v, 0),
+            viewport_to_screen_y(v, 10), TOWN_EXIT_ROAD);
         draw_town_gate(r,
             viewport_to_screen_x(v, TOWN_W - 3),
             viewport_to_screen_y(v, TOWN4_DRAGON_GATE_Y - 2),
@@ -1798,15 +1778,15 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     if (g->location == LOCATION_TOWN2) {
-        draw_crownroad_gate(r,
-            viewport_to_screen_x(v, CROWNROAD_X - 1),
-            viewport_to_screen_y(v, 0));
+        draw_town_gate(r,
+            viewport_to_screen_x(v, 18), viewport_to_screen_y(v, 0), TOWN_EXIT_SWAMP);
+        if (g->defeated_bosses & (1 << LOCATION_SWAMP)) {
+            draw_town_gate(r, viewport_to_screen_x(v, TOWN3_ROAD_X - 2),
+                viewport_to_screen_y(v, 0), TOWN_EXIT_SWAMP);
+        }
         draw_town_gate(r,
             viewport_to_screen_x(v, TOWN_W - 3), viewport_to_screen_y(v, 10),
             TOWN_EXIT_FOREST);
-        draw_town_gate(r,
-            viewport_to_screen_x(v, 18),
-            viewport_to_screen_y(v, TOWN_H - 2), TOWN_EXIT_SWAMP);
         draw_town_gate(r,
             viewport_to_screen_x(v, 0), viewport_to_screen_y(v, 10),
             TOWN_EXIT_FROST);
@@ -1825,15 +1805,22 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     if (g->location == LOCATION_TOWN3) {
-        draw_castle_front(r,
-            viewport_to_screen_x(v, TOWN_MOAT_X),
-            viewport_to_screen_y(v, TOWN_MOAT_Y));
         draw_apothecary(r,
             viewport_to_screen_x(v, TOWN_APOTHECARY_X),
             viewport_to_screen_y(v, TOWN_APOTHECARY_Y));
-        draw_crownroad_gate(r,
-            viewport_to_screen_x(v, CROWNROAD_X - 1),
-            viewport_to_screen_y(v, TOWN_H - 3));
+        draw_town_gate(r, viewport_to_screen_x(v, TOWN_W - 3),
+            viewport_to_screen_y(v, TOWN3_KING_GATE_Y - 2), TOWN_EXIT_DUNGEON);
+        draw_town_gate(r, viewport_to_screen_x(v, 18),
+            viewport_to_screen_y(v, TOWN_H - 2), TOWN_EXIT_SWAMP);
+    }
+    if (g->location == LOCATION_CASTLE) {
+        draw_castle_front(r,
+            viewport_to_screen_x(v, TOWN_MOAT_X),
+            viewport_to_screen_y(v, TOWN_MOAT_Y));
+        draw_town_gate(r, viewport_to_screen_x(v, 0),
+            viewport_to_screen_y(v, CASTLE_ROAD_Y - 2), TOWN_EXIT_ROAD);
+        draw_town_gate(r, viewport_to_screen_x(v, TOWN_W - 3),
+            viewport_to_screen_y(v, CASTLE_ROAD_Y - 2), TOWN_EXIT_DUNGEON);
     }
 
     if (g->location == LOCATION_ISLAND) {
@@ -1871,7 +1858,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->location == LOCATION_COAST ||
         g->location == LOCATION_SWAMP ||
         g->location == LOCATION_FROSTFELL ||
-        g->location == LOCATION_CROWNROAD ||
+        game_is_king_road(g) ||
         g->location == LOCATION_TEMPLE ||
         g->location == LOCATION_LABYRINTH) {
         for (int i = 0; i < g->enemy_count; i++) {
@@ -1979,10 +1966,15 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         renderer_draw_text(r, "MOUNTAINS", mountains_x, mountains_y,
             (SDL_Color){220, 72, 42, 255}, r->font_tiny);
         if (g->defeated_bosses & (1 << LOCATION_MOUNTAINS)) {
+            int town4_w = 0;
+            int town4_h = 0;
+            TTF_SizeText(r->font_tiny, "TOWN 4", &town4_w, &town4_h);
             renderer_draw_text(r, "TOWN 4",
-                viewport_to_screen_x(v, TOWN4_ROAD_X - 1) * TILE_SIZE,
-                viewport_to_screen_y(v, 2) * TILE_SIZE,
-                (SDL_Color){187, 218, 232, 255}, r->font_tiny);
+                viewport_to_screen_x(v, TOWN4_ROAD_X - 2) * TILE_SIZE +
+                    (5 * TILE_SIZE - town4_w) / 2,
+                viewport_to_screen_y(v, 1) * TILE_SIZE +
+                    (TILE_SIZE - town4_h) / 2,
+                (SDL_Color){220, 72, 42, 255}, r->font_tiny);
         }
         int coast_x = viewport_to_screen_x(v, 18) * TILE_SIZE
             + (5 * TILE_SIZE - coast_w) / 2;
@@ -2019,12 +2011,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (g->location == LOCATION_TOWN2) {
         SDL_Color label = {220, 180, 60, 255};
         int width = 0;
-        TTF_SizeText(r->font_tiny, "CROWNROAD", &width, NULL);
-        renderer_draw_text(r, "CROWNROAD",
+        TTF_SizeText(r->font_tiny, "SWAMP", &width, NULL);
+        renderer_draw_text(r, "SWAMP",
             viewport_to_screen_x(v, CROWNROAD_X) * TILE_SIZE +
                 (TILE_SIZE - width) / 2,
-            viewport_to_screen_y(v, 3) * TILE_SIZE,
-            label, r->font_tiny);
+            viewport_to_screen_y(v, 1) * TILE_SIZE + 3,
+            (SDL_Color){113, 204, 79, 255}, r->font_tiny);
         TTF_SizeText(r->font_tiny, "HEALER", &width, NULL);
         renderer_draw_text(r, "HEALER",
             viewport_to_screen_x(v, TOWN_HEALER_X) * TILE_SIZE +
@@ -2059,29 +2051,27 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, 1) * TILE_SIZE + 22,
             viewport_to_screen_y(v, 12) * TILE_SIZE,
             (SDL_Color){168, 220, 250, 255}, r->font_tiny);
-        TTF_SizeText(r->font_tiny, "SWAMP", &width, NULL);
-        renderer_draw_text(r, "SWAMP",
-            viewport_to_screen_x(v, 18) * TILE_SIZE +
-                (5 * TILE_SIZE - width) / 2,
-            viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE + 3,
-            (SDL_Color){113, 204, 79, 255}, r->font_tiny);
+        if (g->defeated_bosses & (1 << LOCATION_SWAMP)) {
+            TTF_SizeText(r->font_tiny, "TOWN 3", &width, NULL);
+            renderer_draw_text(r, "TOWN 3",
+                viewport_to_screen_x(v, TOWN3_ROAD_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+                viewport_to_screen_y(v, 1) * TILE_SIZE + 3,
+                (SDL_Color){113, 204, 79, 255}, r->font_tiny);
+        }
     }
 
     if (g->location == LOCATION_TOWN3) {
         SDL_Color label = {220, 180, 60, 255};
         int width = 0;
-        TTF_SizeText(r->font_tiny, "CASTLE OF NO RETURN", &width, NULL);
-        renderer_draw_text(r, "CASTLE OF NO RETURN",
-            viewport_to_screen_x(v, CROWNROAD_X) * TILE_SIZE +
-                (TILE_SIZE - width) / 2,
-            viewport_to_screen_y(v, 1) * TILE_SIZE,
+        TTF_SizeText(r->font_tiny, "KING ROAD EAST", &width, NULL);
+        renderer_draw_text(r, "KING ROAD EAST",
+            viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
+            viewport_to_screen_y(v, TOWN3_KING_GATE_Y) * TILE_SIZE,
             label, r->font_tiny);
-        TTF_SizeText(r->font_tiny, "CROWNROAD", &width, NULL);
-        renderer_draw_text(r, "CROWNROAD",
-            viewport_to_screen_x(v, CROWNROAD_X) * TILE_SIZE +
-                (TILE_SIZE - width) / 2,
-            viewport_to_screen_y(v, TOWN_H - 4) * TILE_SIZE,
-            label, r->font_tiny);
+        TTF_SizeText(r->font_tiny, "TOWN 2", &width, NULL);
+        renderer_draw_text(r, "TOWN 2",
+            viewport_to_screen_x(v, 20) * TILE_SIZE + (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE, label, r->font_tiny);
         TTF_SizeText(r->font_tiny, "APOTHECARY", &width, NULL);
         renderer_draw_text(r, "APOTHECARY",
             viewport_to_screen_x(v, TOWN_APOTHECARY_X) * TILE_SIZE +
@@ -2089,17 +2079,36 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_y(v, TOWN_APOTHECARY_Y - 1) * TILE_SIZE,
             label, r->font_tiny);
     }
-
-    if (g->location == LOCATION_CROWNROAD) {
-        SDL_Color label = {205, 179, 124, 255};
+    if (g->location == LOCATION_TOWN4) {
+        renderer_draw_text(r, "KING ROAD WEST",
+            viewport_to_screen_x(v, 1) * TILE_SIZE + 8,
+            viewport_to_screen_y(v, 12) * TILE_SIZE,
+            (SDL_Color){220, 180, 60, 255}, r->font_tiny);
+    }
+    if (g->location == LOCATION_CASTLE) {
+        SDL_Color label = {220, 180, 60, 255};
+        int width = 0;
+        TTF_SizeText(r->font_tiny, "CASTLE OF NO RETURN", &width, NULL);
+        renderer_draw_text(r, "CASTLE OF NO RETURN",
+            viewport_to_screen_x(v, 20) * TILE_SIZE + (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, 1) * TILE_SIZE, label, r->font_tiny);
         renderer_draw_text(r, "TOWN 3",
-            viewport_to_screen_x(v, CROWNROAD_X + 2) * TILE_SIZE,
-            viewport_to_screen_y(v, 1) * TILE_SIZE,
-            label, r->font_tiny);
-        renderer_draw_text(r, "TOWN 2",
-            viewport_to_screen_x(v, CROWNROAD_X + 2) * TILE_SIZE,
-            viewport_to_screen_y(v, CROWNROAD_H - 2) * TILE_SIZE,
-            label, r->font_tiny);
+            viewport_to_screen_x(v, 1) * TILE_SIZE + 8,
+            viewport_to_screen_y(v, CASTLE_ROAD_Y) * TILE_SIZE, label, r->font_tiny);
+        TTF_SizeText(r->font_tiny, "TOWN 4", &width, NULL);
+        renderer_draw_text(r, "TOWN 4",
+            viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
+            viewport_to_screen_y(v, CASTLE_ROAD_Y) * TILE_SIZE, label, r->font_tiny);
+    }
+    if (game_is_king_road(g)) {
+        SDL_Color label = {205, 179, 124, 255};
+        int east = g->location == LOCATION_CROWNROAD;
+        renderer_draw_text(r, east ? "TOWN 3" : "CASTLE",
+            viewport_to_screen_x(v, 1) * TILE_SIZE,
+            viewport_to_screen_y(v, CROWNROAD_Y - 1) * TILE_SIZE, label, r->font_tiny);
+        renderer_draw_text(r, east ? "CASTLE" : "TOWN 4",
+            viewport_to_screen_x(v, CROWNROAD_W - 4) * TILE_SIZE,
+            viewport_to_screen_y(v, CROWNROAD_Y - 1) * TILE_SIZE, label, r->font_tiny);
     }
 
     if (g->location == LOCATION_TAVERN) {

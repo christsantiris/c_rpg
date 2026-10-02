@@ -78,15 +78,14 @@ void test_swamp(void) {
     game_init(&swamp_game);
     srand(19);
     game_enter_town2(&swamp_game);
-    ASSERT("Town 2 south road ends in a one-tile swamp gate",
-        swamp_game.map.tiles[TOWN_H - 1][20] == TILE_TOWN_EXIT &&
-        swamp_game.map.tiles[TOWN_H - 1][19] == TILE_WALL &&
-        swamp_game.map.tiles[TOWN_H - 1][21] == TILE_WALL);
+    ASSERT("Town 2 north gate enters the swamp and the shortcut starts closed",
+        swamp_game.map.tiles[0][20] == TILE_TOWN_EXIT &&
+        swamp_game.map.tiles[TOWN_H - 1][20] == TILE_WALL &&
+        swamp_game.map.tiles[0][TOWN3_ROAD_X] == TILE_WALL);
     swamp_game.player.x = 20;
-    swamp_game.player.y = TOWN_H - 2;
-    action_resolve_player(&swamp_game,
-        (Action){ACTION_MOVE, 20, TOWN_H - 1});
-    ASSERT("south gate enters swamp level one",
+    swamp_game.player.y = 1;
+    action_resolve_player(&swamp_game, (Action){ACTION_MOVE, 20, 0});
+    ASSERT("north gate enters swamp level one",
         swamp_game.location == LOCATION_SWAMP && swamp_game.level == 1);
     int rounded_clearings = 0;
     for (int i = 0; i < swamp_game.map.room_count; i++) {
@@ -173,8 +172,32 @@ void test_swamp(void) {
     swamp_game.player.y = final_exit_y;
     action_resolve_player(&swamp_game,
         (Action){ACTION_MOVE, final_exit_x, final_exit_y});
-    ASSERT("defeating the demon opens the return to Town 2",
-        swamp_game.location == LOCATION_TOWN2);
+    ASSERT("defeating the demon leads into Town 3",
+        swamp_game.location == LOCATION_TOWN3 && swamp_game.player.y == TOWN_H - 2);
+    action_resolve_player(&swamp_game, (Action){ACTION_MOVE, 20, TOWN_H - 1});
+    ASSERT("Town 3 south gate enters a safe swamp shortcut",
+        swamp_game.location == LOCATION_SWAMP_ROAD && swamp_game.enemy_count == 0 &&
+        swamp_game.player.y == 1);
+    for (int y = 2; y < SWAMP_ROAD_H; y++) {
+        action_resolve_player(&swamp_game, (Action){ACTION_MOVE, SWAMP_ROAD_X, y});
+    }
+    ASSERT("swamp shortcut reaches Town 2 and opens the return gate",
+        swamp_game.location == LOCATION_TOWN2 && swamp_game.player.x == TOWN3_ROAD_X &&
+        swamp_game.map.tiles[0][TOWN3_ROAD_X] == TILE_TOWN_EXIT);
+    int shortcut_loaded = save_game(&swamp_game, 99121) && load_game(&swamp_loaded, 99121);
+    ASSERT("unlocked swamp shortcut survives save/load",
+        shortcut_loaded && swamp_loaded.map.tiles[0][TOWN3_ROAD_X] == TILE_TOWN_EXIT);
+    action_resolve_player(&swamp_game, (Action){ACTION_MOVE, TOWN3_ROAD_X, 0});
+    shortcut_loaded = save_game(&swamp_game, 99121) && load_game(&swamp_loaded, 99121);
+    ASSERT("saving on the swamp shortcut preserves position and destination",
+        shortcut_loaded && swamp_loaded.location == LOCATION_SWAMP_ROAD &&
+        swamp_loaded.player.y == SWAMP_ROAD_H - 2);
+    for (int y = SWAMP_ROAD_H - 3; y >= 0; y--) {
+        action_resolve_player(&swamp_game, (Action){ACTION_MOVE, SWAMP_ROAD_X, y});
+    }
+    ASSERT("shortcut returns to Town 3 without repeating the swamp",
+        swamp_game.location == LOCATION_TOWN3 && swamp_game.enemy_count == 0);
+    remove("saves/savegame_99121.json");
 
     for (int class_id = CLASS_WARRIOR; class_id <= CLASS_ROGUE; class_id++) {
         swamp_game.player.player_class = (PlayerClass)class_id;
@@ -239,7 +262,7 @@ void test_swamp(void) {
     game_open_town_portal(&swamp_game);
     ASSERT("swamp return portal appears in Town 2",
         swamp_game.location == LOCATION_TOWN2 &&
-        swamp_game.map.tiles[TOWN_H - 3][21] == TILE_PORTAL);
+        swamp_game.map.tiles[2][21] == TILE_PORTAL);
     int saved = save_game(&swamp_game, 99121);
     int loaded = saved && load_game(&swamp_loaded, 99121);
     ASSERT("swamp portal and floor cache survive save/load",
@@ -257,11 +280,11 @@ void test_swamp(void) {
         game_leave_forest_road(&swamp_loaded, LOCATION_TOWN2);
         ASSERT("Town 2 portal remains visible after traveling to Town 1 and back",
             swamp_loaded.portal_active &&
-            swamp_loaded.map.tiles[TOWN_H - 3][21] == TILE_PORTAL);
+            swamp_loaded.map.tiles[2][21] == TILE_PORTAL);
         swamp_loaded.player.x = 22;
-        swamp_loaded.player.y = TOWN_H - 3;
+        swamp_loaded.player.y = 2;
         action_resolve_player(&swamp_loaded,
-            (Action){ACTION_MOVE, 21, TOWN_H - 3});
+            (Action){ACTION_MOVE, 21, 2});
         ASSERT("walking onto the Town 2 portal restores swamp level two",
             swamp_loaded.location == LOCATION_SWAMP &&
             swamp_loaded.level == 2 && !swamp_loaded.portal_active);

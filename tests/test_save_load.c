@@ -677,7 +677,7 @@ static void test_legacy_town3_moat(void) {
     static GameState loaded;
     memset(&original, 0, sizeof(original));
     game_init(&original);
-    game_leave_crownroad(&original, LOCATION_TOWN3);
+    game_leave_crownroad(&original, LOCATION_CASTLE);
     original.map.tiles[11][CROWNROAD_X - 1] = TILE_TOWN_FLOOR;
     original.map.tiles[5][TOWN_MOAT_X] = TILE_ITEM;
     original.player.x = CROWNROAD_X - 1;
@@ -690,7 +690,7 @@ static void test_legacy_town3_moat(void) {
     };
     int loaded_ok = save_game(&original, LEGACY_SLOT) &&
         rewrite_save_version(LEGACY_SLOT, 60) && load_game(&loaded, LEGACY_SLOT);
-    ASSERT("legacy Town 3 save loads", loaded_ok);
+    ASSERT("legacy castle save loads", loaded_ok);
     if (loaded_ok) {
         ASSERT("loading surrounds the castle with the moat",
             !map_is_walkable(&loaded.map, CROWNROAD_X - 1, 11) &&
@@ -1094,6 +1094,104 @@ static void test_retired_dungeon_gates_removed(void) {
     remove_test_save(BLOCKED_DUNGEON_SLOT);
 }
 
+// Version 68 saves come from the old world: Royal Guards and a south swamp gate
+// in Town 2, the castle town as Town 3, and a north-south Crownroad.
+static void test_legacy_king_road_world(void) {
+    static GameState original;
+    static GameState loaded;
+    memset(&original, 0, sizeof(original));
+    memset(&loaded, 0, sizeof(loaded));
+    game_init(&original);
+    game_enter_town2(&original);
+    original.map.tiles[4][19] = TILE_NPC_ROYAL_GUARD;
+    original.map.tiles[4][21] = TILE_NPC_ROYAL_GUARD;
+    original.map.tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
+    int loaded_ok = save_game(&original, LEGACY_SLOT) &&
+        rewrite_save_version(LEGACY_SLOT, 68) && load_game(&loaded, LEGACY_SLOT);
+    int guards = 0;
+    for (int y = 0; y < TOWN_H; y++) {
+        for (int x = 0; x < TOWN_W; x++) {
+            guards += loaded.map.tiles[y][x] == TILE_NPC_ROYAL_GUARD;
+        }
+    }
+    ASSERT("an older Town 2 save loses its guards and south gate and keeps the north gate",
+        loaded_ok && guards == 0 && loaded.map.tiles[TOWN_H - 1][20] == TILE_WALL &&
+        loaded.map.tiles[0][20] == TILE_TOWN_EXIT && loaded.map.tiles[4][19] == TILE_TOWN_FLOOR);
+
+    memset(&original, 0, sizeof(original));
+    memset(&loaded, 0, sizeof(loaded));
+    game_init(&original);
+    int spawn_x;
+    int spawn_y;
+    original.location = LOCATION_TOWN3;
+    map_generate_castle(&original.map, &spawn_x, &spawn_y);
+    original.player.x = 5;
+    original.player.y = 20;
+    original.floor_item_count = 1;
+    original.floor_items[0] = (FloorItem){
+        .active = 1, .x = 6, .y = 20, .underlying_tile = TILE_TOWN_FLOOR,
+        .item = item_make_health_potion()
+    };
+    original.map.tiles[20][6] = TILE_ITEM;
+    loaded_ok = save_game(&original, LEGACY_SLOT) &&
+        rewrite_save_version(LEGACY_SLOT, 68) && load_game(&loaded, LEGACY_SLOT);
+    ASSERT("an older save in the castle town becomes the new Town 3, keeping player and loot",
+        loaded_ok && loaded.location == LOCATION_TOWN3 &&
+        loaded.map.tiles[TOWN3_KING_GATE_Y][TOWN_W - 1] == TILE_TOWN_EXIT &&
+        loaded.map.tiles[TOWN3_GUARD_NORTH_Y][TOWN3_GUARD_X] == TILE_NPC_ROYAL_GUARD &&
+        map_is_walkable(&loaded.map, TOWN_MOAT_X, 5) &&
+        loaded.player.x == 5 && loaded.player.y == 20 &&
+        loaded.floor_items[0].active && loaded.map.tiles[20][6] == TILE_ITEM &&
+        loaded.floor_items[0].underlying_tile == TILE_TOWN_FLOOR);
+
+    memset(&original, 0, sizeof(original));
+    memset(&loaded, 0, sizeof(loaded));
+    game_init(&original);
+    original.location = LOCATION_TOWN3;
+    map_generate_castle(&original.map, &spawn_x, &spawn_y);
+    original.player.x = TOWN_APOTHECARY_X + 1;
+    original.player.y = TOWN_APOTHECARY_Y + 1;
+    loaded_ok = save_game(&original, LEGACY_SLOT) &&
+        rewrite_save_version(LEGACY_SLOT, 68) && load_game(&loaded, LEGACY_SLOT);
+    ASSERT("a player left on ground the new Town 3 builds over moves to its south gate",
+        loaded_ok && loaded.player.x == 20 && loaded.player.y == TOWN_H - 2);
+
+    memset(&original, 0, sizeof(original));
+    memset(&loaded, 0, sizeof(loaded));
+    game_init(&original);
+    original.location = LOCATION_CROWNROAD;
+    original.level = 1;
+    map_generate_crownroad(&original.map);
+    original.player.x = 20;
+    original.player.y = 40;
+    original.enemy_count = 1;
+    original.enemies[0].active = 1;
+    original.enemies[0].x = 15;
+    original.enemies[0].y = 10;
+    original.crownroad_cache.valid = 1;
+    original.crownroad_cache.enemy_count = 1;
+    original.crownroad_cache.enemies[0] = original.enemies[0];
+    original.crownroad_cache.enemies[0].x = 23;
+    original.crownroad_cache.enemies[0].y = 30;
+    loaded_ok = save_game(&original, LEGACY_SLOT) &&
+        rewrite_save_version(LEGACY_SLOT, 68) && load_game(&loaded, LEGACY_SLOT);
+    ASSERT("an older Crownroad save turns the player and its creatures to run west to east",
+        loaded_ok && loaded.location == LOCATION_CROWNROAD &&
+        loaded.player.x == CROWNROAD_W - 1 - 40 && loaded.player.y == 20 &&
+        loaded.enemies[0].x == CROWNROAD_W - 1 - 10 && loaded.enemies[0].y == 15 &&
+        loaded.crownroad_cache.enemies[0].x == CROWNROAD_W - 1 - 30 &&
+        loaded.crownroad_cache.enemies[0].y == 23 &&
+        loaded.map.tiles[CROWNROAD_Y][0] == TILE_TOWN_EXIT &&
+        map_is_walkable(&loaded.map, loaded.player.x, loaded.player.y));
+
+    loaded_ok = save_game(&loaded, LEGACY_SLOT) && load_game(&original, LEGACY_SLOT);
+    ASSERT("a current save of King Road East is not turned a second time",
+        loaded_ok && original.player.x == loaded.player.x &&
+        original.player.y == loaded.player.y &&
+        original.crownroad_cache.enemies[0].x == loaded.crownroad_cache.enemies[0].x);
+    remove_test_save(LEGACY_SLOT);
+}
+
 static void test_cain_save_load(void) {
     static GameState g;
     static GameState loaded;
@@ -1231,4 +1329,5 @@ void test_save_load(void) {
     test_key_bindings_round_trip();
     test_forest_enemy_repair();
     test_retired_dungeon_gates_removed();
+    test_legacy_king_road_world();
 }
