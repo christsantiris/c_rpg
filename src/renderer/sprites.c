@@ -4568,6 +4568,17 @@ void draw_adventurers_guild(Renderer *r, int tile_x, int tile_y) {
     SDL_RenderCopy(r->sdl, r->guild_texture, NULL, &destination);
 }
 
+void draw_workshop(Renderer *r, int tile_x, int tile_y) {
+    if (!r->workshop_texture) {
+        return;
+    }
+    SDL_Rect destination = {
+        tile_x * TILE_SIZE, tile_y * TILE_SIZE,
+        TOWN4_WORKSHOP_W * TILE_SIZE, TOWN4_WORKSHOP_H * TILE_SIZE
+    };
+    SDL_RenderCopy(r->sdl, r->workshop_texture, NULL, &destination);
+}
+
 void draw_tavern(Renderer *r, int tile_x, int tile_y) {
     if (!r->tavern_texture) {
         draw_tavern_fallback(r, tile_x, tile_y);

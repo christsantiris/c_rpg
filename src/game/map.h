@@ -153,6 +153,12 @@
 #define TOWN4_ILYA_Y 11
 #define TOWN4_PORTAL_X (TOWN_W - 3)
 #define TOWN4_PORTAL_Y 13
+#define TOWN4_WORKSHOP_X 7
+#define TOWN4_WORKSHOP_Y 8
+#define TOWN4_WORKSHOP_W 5
+#define TOWN4_WORKSHOP_H 4
+#define TOWN4_WORKSHOP_DOOR_X (TOWN4_WORKSHOP_X + TOWN4_WORKSHOP_W / 2)
+#define TOWN4_WORKSHOP_DOOR_Y (TOWN4_WORKSHOP_Y + TOWN4_WORKSHOP_H - 1)
 
 typedef enum {
     TILE_FLOOR = 0,
@@ -327,6 +333,7 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y);
 void map_set_town2_road(Map *m, int unlocked);
 void map_generate_town4(Map *m, int *spawn_x, int *spawn_y);
 void map_set_town4_road(Map *m, int unlocked);
+void map_place_town4_workshop(Map *m);
 void map_generate_town2(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_town3(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_crownroad(Map *m);

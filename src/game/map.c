@@ -1128,6 +1128,18 @@ void map_set_town4_road(Map *m, int unlocked) {
     m->tiles[0][TOWN4_ROAD_X] = TILE_TOWN_EXIT;
 }
 
+void map_place_town4_workshop(Map *m) {
+    for (int y = TOWN4_WORKSHOP_Y; y < TOWN4_WORKSHOP_DOOR_Y; y++) {
+        for (int x = TOWN4_WORKSHOP_X; x < TOWN4_WORKSHOP_X + TOWN4_WORKSHOP_W; x++) {
+            m->tiles[y][x] = TILE_WALL;
+        }
+    }
+    for (int x = TOWN4_WORKSHOP_X; x < TOWN4_WORKSHOP_X + TOWN4_WORKSHOP_W; x++) {
+        m->tiles[TOWN4_WORKSHOP_DOOR_Y][x] = TILE_WALL;
+    }
+    m->tiles[TOWN4_WORKSHOP_DOOR_Y][TOWN4_WORKSHOP_DOOR_X] = TILE_TOWN_PATH;
+}
+
 void map_generate_town4(Map *m, int *spawn_x, int *spawn_y) {
     map_clear_exploration(m);
     m->room_count = 0;
@@ -1152,6 +1164,7 @@ void map_generate_town4(Map *m, int *spawn_x, int *spawn_y) {
     for (int y = 10; y <= 14; y++) {
         m->tiles[y][0] = TILE_TOWN_EXIT;
     }
+    map_place_town4_workshop(m);
     m->tiles[TOWN4_ILYA_Y][TOWN4_ILYA_X] = TILE_NPC_DRAGON_SEEKER;
     *spawn_x = 20;
     *spawn_y = TOWN_H - 2;

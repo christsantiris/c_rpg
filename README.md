@@ -359,5 +359,5 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 - Build out Castle of No Return
    Multiple levels, unique mechanics, enemies, boss
 - Recruit a party to join the adventure
-- Additional areas and storylines
+- Additional areas and storylines e.g caves
 - Fix forest exists at opposite side of Stillbury

@@ -36,6 +36,7 @@ sprites:
 	python3 tools/sprites/labyrinth.py
 	python3 tools/sprites/apothecary.py
 	python3 tools/sprites/adventurers_guild.py
+	python3 tools/sprites/workshop.py
 	python3 tools/sprites/crownroad_gate.py
 
 clean:

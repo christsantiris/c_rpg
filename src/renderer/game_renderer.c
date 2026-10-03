@@ -1296,6 +1296,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                         x >= TOWN_GUILD_X && x < TOWN_GUILD_X + TOWN_GUILD_W &&
                         y >= TOWN_GUILD_Y && y < TOWN_GUILD_Y + TOWN_GUILD_H) {
                         draw_town_floor(r, sx, sy);
+                    } else if (g->location == LOCATION_TOWN4 &&
+                        x >= TOWN4_WORKSHOP_X &&
+                        x < TOWN4_WORKSHOP_X + TOWN4_WORKSHOP_W &&
+                        y >= TOWN4_WORKSHOP_Y &&
+                        y < TOWN4_WORKSHOP_Y + TOWN4_WORKSHOP_H) {
+                        draw_town_floor(r, sx, sy);
                     } else if (game_is_king_road(g)) {
                         draw_crownroad_tile(r, sx, sy, x, y, 2);
                     } else if (g->location == LOCATION_DUNGEON) {
@@ -1773,6 +1779,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     if (g->location == LOCATION_TOWN4) {
+        draw_workshop(r,
+            viewport_to_screen_x(v, TOWN4_WORKSHOP_X),
+            viewport_to_screen_y(v, TOWN4_WORKSHOP_Y));
         draw_town_gate(r, viewport_to_screen_x(v, 0),
             viewport_to_screen_y(v, 10), TOWN_EXIT_ROAD);
         draw_town_gate_south(r, viewport_to_screen_x(v, 20 - 2),
@@ -2098,6 +2107,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         renderer_draw_text(r, "KING ROAD WEST",
             viewport_to_screen_x(v, 1) * TILE_SIZE + 8,
             viewport_to_screen_y(v, 12) * TILE_SIZE,
+            (SDL_Color){220, 180, 60, 255}, r->font_tiny);
+        int width = 0;
+        TTF_SizeText(r->font_tiny, "WORKSHOP", &width, NULL);
+        renderer_draw_text(r, "WORKSHOP",
+            viewport_to_screen_x(v, TOWN4_WORKSHOP_X) * TILE_SIZE +
+                (TOWN4_WORKSHOP_W * TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, TOWN4_WORKSHOP_Y - 1) * TILE_SIZE,
             (SDL_Color){220, 180, 60, 255}, r->font_tiny);
     }
     if (g->location == LOCATION_CASTLE) {

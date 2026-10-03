@@ -77,12 +77,28 @@ void test_king_roads_and_castle(void) {
     action_resolve_player(&g, (Action){ACTION_MOVE, CROWNROAD_W - 1, CROWNROAD_Y});
     ASSERT("King Road West reaches Ridgeshire's west entrance",
         g.location == LOCATION_TOWN4 && g.player.x == 1 && g.player.y == 12);
+    int workshop_walls = 1;
+    for (int y = TOWN4_WORKSHOP_Y; y < TOWN4_WORKSHOP_DOOR_Y; y++) {
+        for (int x = TOWN4_WORKSHOP_X; x < TOWN4_WORKSHOP_X + TOWN4_WORKSHOP_W; x++) {
+            workshop_walls &= g.map.tiles[y][x] == TILE_WALL;
+        }
+    }
+    ASSERT("Ridgeshire workshop opens onto the main east-west road",
+        workshop_walls &&
+        g.map.tiles[TOWN4_WORKSHOP_DOOR_Y][TOWN4_WORKSHOP_DOOR_X] == TILE_TOWN_PATH &&
+        g.map.tiles[TOWN4_WORKSHOP_DOOR_Y + 1][TOWN4_WORKSHOP_DOOR_X] == TILE_TOWN_PATH &&
+        !map_is_walkable(&g.map, TOWN4_WORKSHOP_X, TOWN4_WORKSHOP_Y));
     const int slot = 99015;
     int restored = save_game(&g, slot) && load_game(&loaded, slot);
     ASSERT("both King Road caches survive saving in Ridgeshire",
         restored && loaded.crownroad_cache.valid && loaded.kingroad_west_cache.valid &&
         !loaded.crownroad_cache.enemies[0].active && loaded.crownroad_cache.enemies[1].active &&
         loaded.kingroad_west_cache.enemies[0].active && !loaded.kingroad_west_cache.enemies[1].active);
+    ASSERT("Ridgeshire workshop remains on the road after loading a save",
+        restored &&
+        loaded.map.tiles[TOWN4_WORKSHOP_Y][TOWN4_WORKSHOP_X] == TILE_WALL &&
+        loaded.map.tiles[TOWN4_WORKSHOP_DOOR_Y][TOWN4_WORKSHOP_DOOR_X] == TILE_TOWN_PATH &&
+        loaded.map.tiles[TOWN4_WORKSHOP_DOOR_Y + 1][TOWN4_WORKSHOP_DOOR_X] == TILE_TOWN_PATH);
     if (restored) {
         g = loaded;
     }
