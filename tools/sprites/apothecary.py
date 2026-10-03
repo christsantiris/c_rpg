@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Town 3 apothecary sprite.
+"""Rosemoor apothecary sprite.
 
 Draws 5 x 4 tiles (120 x 96) for the apothecary lot at TOWN_APOTHECARY_X/Y in
-Town 3, with the door on TOWN_APOTHECARY_DOOR_X/Y. Run `make sprites` to
+Rosemoor, with the door on TOWN_APOTHECARY_DOOR_X/Y. Run `make sprites` to
 rewrite assets/images/apothecary.bmp.
 """
 from pathlib import Path

@@ -10,11 +10,11 @@ preserved while traveling between levels or using a Return to Town portal.
 The west-edge trail leads back one level, or to Stillbury from level 1. The
 east-edge trail advances to the next level. Levels 1–4 can be left without defeating every
 enemy. The level-5 exit is blocked only while the Swamp Demon lives. After its
-defeat, that exit leads to Town 3. The demon does not respawn on later visits.
+defeat, that exit leads to Rosemoor. The demon does not respawn on later visits.
 
 Its defeat also opens a second north gate in Stillbury, at the end of a short
 lane east of the swamp gate. That gate leads along a safe swamp shortcut with
-no enemies to Town 3's south gate, and Town 3's south gate leads back the same
+no enemies to Rosemoor's south gate, and its south gate leads back the same
 way.
 
 | Level | Regular enemies | Threat |

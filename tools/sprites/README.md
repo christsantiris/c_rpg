@@ -26,7 +26,7 @@ To add a building: write a new script that uses `pixelkit.py`, add it to the
 
 | Script | Asset | Size | Where it is drawn |
 |---|---|---|---|
-| `castle.py` | `castle-of-no-return.bmp` | 408 × 240 (17 × 10 tiles) | Town 3, the moat footprint `TOWN_MOAT_*` |
+| `castle.py` | `castle-of-no-return.bmp` | 408 × 240 (17 × 10 tiles) | Rosemoor, the moat footprint `TOWN_MOAT_*` |
 | `tavern.py` | `tavern.bmp` | 168 × 120 (7 × 5) | Town 1, `TOWN_TAVERN_X/Y` |
 | `inn.py` | `inn.bmp` | 168 × 120 (7 × 5) | Stillbury, `TOWN_INN_X/Y` |
 | `blacksmith.py` | `blacksmith.bmp` | 120 × 96 (5 × 4) | Town 1, `TOWN_BLACKSMITH_X/Y` |
@@ -35,8 +35,8 @@ To add a building: write a new script that uses `pixelkit.py`, add it to the
 | `healer.py` | `healer.bmp` | 120 × 96 (5 × 4) | Stillbury, `TOWN_HEALER_X/Y` |
 | `witch.py` | `witch-hut.bmp` | 120 × 96 (5 × 4) | Stillbury, `TOWN_WITCH_X/Y` |
 | `labyrinth.py` | `labyrinth-entrance.bmp` | 144 × 72 (two 3 × 3 frames) | Stillbury, around `TOWN_LABYRINTH_X/Y` |
-| `apothecary.py` | `apothecary.bmp` | 120 × 96 (5 × 4) | Town 3, `TOWN_APOTHECARY_X/Y` |
-| `crownroad_gate.py` | `crownroad-gate.bmp` | 72 × 72 (3 × 3) | Stillbury's north exit and Town 3's south exit |
+| `apothecary.py` | `apothecary.bmp` | 120 × 96 (5 × 4) | Rosemoor, `TOWN_APOTHECARY_X/Y` |
+| `crownroad_gate.py` | `crownroad-gate.bmp` | 72 × 72 (3 × 3) | Stillbury's north exit and Rosemoor's south exit |
 
 ### Castle of No Return
 
@@ -170,7 +170,7 @@ If the file is missing, it falls back to its older rectangle drawing.
 
 ### Apothecary
 
-East of the Town 3 square, with its door on `TOWN_APOTHECARY_DOOR_X/Y`. If the
+East of the Rosemoor square, with its door on `TOWN_APOTHECARY_DOOR_X/Y`. If the
 file is missing, the game draws the alchemist sprite in its place.
 
 - A steep front gable in dark plum shingles with a stone chimney.

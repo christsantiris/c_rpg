@@ -98,16 +98,16 @@ enemies return, but the Warden and quest reward do not.
 
 Travel north from Stillbury through five levels of black water, reeds, and muddy
 causeways. Giant Rats, Bandits, Zombies, and Wraiths appear early; Vampires join
-on deeper levels. The Swamp Demon guards the final exit, which leads to Town 3,
+on deeper levels. The Swamp Demon guards the final exit, which leads to Rosemoor,
 and drops a Demonic Sword: a +6 one-handed weapon for every class, with a
 two-tile `F` attack. Talk to Bram at the Stillbury Inn to rescue his daughter from
 a vampire on level 4. See [Blackwater Swamp](docs/swamp.md) for the full area
 rules.
 
-### Town 3, King Roads, and the Castle
+### Rosemoor, King Roads, and the Castle
 
 Defeating the Swamp Demon also opens a second north gate in Stillbury. It leads
-along a safe, enemy-free swamp shortcut to Town 3's south gate. Town 3 has the
+along a safe, enemy-free swamp shortcut to Rosemoor's south gate. Rosemoor has the
 Apothecary. Two Royal Guards at its east gate warn that King Road East swarms
 with bandits, archers, and horsemen. That road leads to the grounds of the
 Castle of No Return, whose doors stay sealed for now. King Road West continues

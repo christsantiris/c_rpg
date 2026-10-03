@@ -301,7 +301,7 @@ static int open_shop_on_move(const GameState *game, const Action *action, ShopSc
     if (tile == TILE_BLACKSMITH_DOOR) {
         shop_init(shop, SHOP_TYPE_BLACKSMITH, game->defeated_bosses);
     } else if (tile == TILE_ALCHEMIST_DOOR) {
-        // Town 3's Apothecary reuses the alchemist shop tiles.
+        // Rosemoor's Apothecary reuses the alchemist shop tiles.
         shop_init(shop, game->location == LOCATION_TOWN3 ?
             SHOP_TYPE_APOTHECARY : SHOP_TYPE_ALCHEMIST, game->defeated_bosses);
     } else if (tile == TILE_HEALER_DOOR) {

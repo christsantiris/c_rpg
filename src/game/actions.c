@@ -1921,7 +1921,7 @@ void action_resolve_player(GameState *g, Action a) {
                     }
                 }
                 game_enter_town3(g);
-                push_message(g, "Beyond the liberated swamp lies Town 3.");
+                push_message(g, "Beyond the liberated swamp lies Rosemoor.");
             }
             return;
         }

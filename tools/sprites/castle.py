@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Castle of No Return sprite with its moat and drawbridge (Town 3).
+"""Castle of No Return sprite with its moat and drawbridge (Rosemoor).
 
 Draws 17 x 10 tiles (408 x 240): the 15 x 8 castle plus the one-tile moat ring
 from TOWN_MOAT_* in src/game/map.h. The drawbridge covers tile (20, 11). Run

@@ -14,7 +14,7 @@ void test_king_roads_and_castle(void) {
     game_init(&g);
     game_enter_swamp(&g);
     game_enter_town3(&g);
-    ASSERT("Town 3 has an east road, apothecary, and no castle moat",
+    ASSERT("Rosemoor has an east road, apothecary, and no castle moat",
         g.location == LOCATION_TOWN3 &&
         g.map.tiles[TOWN3_KING_GATE_Y][TOWN_W - 1] == TILE_TOWN_EXIT &&
         g.map.tiles[TOWN_APOTHECARY_Y][TOWN_APOTHECARY_X] == TILE_SHOP_ALCHEMIST &&
@@ -24,7 +24,7 @@ void test_king_roads_and_castle(void) {
     g.player.x = TOWN_W - 2;
     g.player.y = TOWN3_KING_GATE_Y;
     action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 1, TOWN3_KING_GATE_Y});
-    ASSERT("Town 3 east gate enters King Road East at its west end",
+    ASSERT("Rosemoor east gate enters King Road East at its west end",
         g.location == LOCATION_CROWNROAD && g.enemy_count == MAX_ENEMIES &&
         g.player.x == 1 && g.player.y == CROWNROAD_Y);
     int archers = 0;
@@ -94,7 +94,7 @@ void test_king_roads_and_castle(void) {
         g.location == LOCATION_CROWNROAD && g.player.x == CROWNROAD_W - 2 && !g.enemies[0].active);
     g.player.x = 1;
     action_resolve_player(&g, (Action){ACTION_MOVE, 0, CROWNROAD_Y});
-    ASSERT("King Road East returns to Town 3's east entrance",
+    ASSERT("King Road East returns to Rosemoor's east entrance",
         g.location == LOCATION_TOWN3 && g.player.x == TOWN_W - 2 &&
         g.player.y == TOWN3_KING_GATE_Y);
     remove("saves/savegame_99015.json");
@@ -103,7 +103,7 @@ void test_king_roads_and_castle(void) {
 }
 
 void test_town3_royal_guards(void) {
-    printf("Town 3 Royal Guard tests:\n");
+    printf("Rosemoor Royal Guard tests:\n");
     static GameState g;
     static GameState loaded;
     g.player.player_class = CLASS_WARRIOR;
@@ -132,7 +132,7 @@ void test_town3_royal_guards(void) {
     g.player.x = TOWN3_GUARD_X;
     g.player.y = TOWN3_GUARD_SOUTH_Y;
     int restored = save_game(&g, 99016) && load_game(&loaded, 99016);
-    ASSERT("loading Town 3 restores guards without covering the player",
+    ASSERT("loading Rosemoor restores guards without covering the player",
         restored && loaded.map.tiles[TOWN3_GUARD_NORTH_Y][TOWN3_GUARD_X] == TILE_NPC_ROYAL_GUARD &&
         loaded.map.tiles[TOWN3_GUARD_SOUTH_Y][TOWN3_GUARD_X] == TILE_TOWN_FLOOR);
     remove("saves/savegame_99016.json");

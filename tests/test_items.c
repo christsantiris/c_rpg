@@ -349,7 +349,7 @@ void test_items(void) {
         shop_has_item(&shop, "Shadow Armor") &&
         shop_has_item(&shop, "Archmage Robes"));
 
-    // --- Town 3 Apothecary ---
+    // --- Rosemoor Apothecary ---
     shop_init(&shop, SHOP_TYPE_APOTHECARY, 0);
     ASSERT("apothecary sells healing, mana, strength and intelligence potions",
         shop.item_count == 4 &&
