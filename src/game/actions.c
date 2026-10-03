@@ -1761,15 +1761,11 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
 
-        if (g->location == LOCATION_TOWN2 &&
-            g->map.tiles[ty][tx] == TILE_TOWN_EXIT && tx == 0) {
-            game_enter_frostfell(g);
-            return;
-        }
-
         if (g->location == LOCATION_TOWN3 &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
-            if (ty == TOWN_H - 1) {
+            if (ty == 0) {
+                game_enter_frostfell(g);
+            } else if (ty == TOWN_H - 1) {
                 game_enter_swamp_road(g);
             } else if (tx == TOWN_W - 1) {
                 game_enter_king_road(g, LOCATION_CROWNROAD, 0);

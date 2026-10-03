@@ -2189,6 +2189,7 @@ int load_game(GameState *g, int slot) {
     }
 
     if (g->location == LOCATION_TOWN3) {
+        map_place_town3_frost_gate(&g->map);
         map_place_town3_guards(&g->map, g->player.x, g->player.y);
     }
 

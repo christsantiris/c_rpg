@@ -437,7 +437,7 @@ static void test_polar_kraken(void) {
     frost_game.player.x = frost_game.map.stairs_down_x + 1;
     frost_game.player.y = frost_game.map.stairs_down_y;
     walk_onto(&frost_game, frost_game.map.stairs_down_x, frost_game.map.stairs_down_y);
-    int left = frost_game.location == LOCATION_TOWN2;
+    int left = frost_game.location == LOCATION_TOWN3;
     frost_game.location = LOCATION_FROSTFELL;
     frost_game.level = FROSTFELL_DEPTH;
     map_generate_frostfell(&frost_game.map, FROSTFELL_DEPTH);
@@ -1137,15 +1137,22 @@ void test_frostfell(void) {
     game_init(&frost_game);
     srand(4242);
     game_enter_town2(&frost_game);
-    int west_gate = 1;
+    int west_gate_closed = 1;
     for (int y = 10; y <= 14; y++) {
-        west_gate &= frost_game.map.tiles[y][0] == TILE_TOWN_EXIT;
+        west_gate_closed &= frost_game.map.tiles[y][0] == TILE_WALL;
     }
-    frost_game.player.x = 1;
-    frost_game.player.y = 12;
-    walk_onto(&frost_game, 0, 12);
-    ASSERT("Town 2's west gate opens onto the first Frostfell stage",
-        west_gate && frost_game.location == LOCATION_FROSTFELL &&
+    ASSERT("Stillbury's west exit no longer leads to Frostfell",
+        west_gate_closed && frost_game.location == LOCATION_TOWN2);
+    game_enter_town3(&frost_game);
+    int north_gate = 1;
+    for (int x = 18; x <= 22; x++) {
+        north_gate &= frost_game.map.tiles[0][x] == TILE_TOWN_EXIT;
+    }
+    frost_game.player.x = 20;
+    frost_game.player.y = 1;
+    walk_onto(&frost_game, 20, 0);
+    ASSERT("Rosemoor's north gate opens onto the first Frostfell stage",
+        north_gate && frost_game.location == LOCATION_FROSTFELL &&
         frost_game.level == 1 &&
         frost_game.player.x == frost_game.map.stairs_up_x &&
         frost_game.player.y == frost_game.map.stairs_up_y);
@@ -1174,11 +1181,11 @@ void test_frostfell(void) {
     int portal_x = frost_game.player.x;
     int portal_y = frost_game.player.y;
     game_open_town_portal(&frost_game);
-    int in_town = frost_game.location == LOCATION_TOWN2 &&
-        frost_game.player.x == 1 && frost_game.player.y == 12 &&
-        frost_game.map.tiles[13][2] == TILE_PORTAL;
+    int in_town = frost_game.location == LOCATION_TOWN3 &&
+        frost_game.player.x == 20 && frost_game.player.y == 1 &&
+        frost_game.map.tiles[2][20] == TILE_PORTAL;
     game_use_town_portal(&frost_game);
-    ASSERT("a return portal from Frostfell opens in Town 2 and leads back",
+    ASSERT("a return portal from Frostfell opens in Rosemoor and leads back",
         in_town && frost_game.location == LOCATION_FROSTFELL &&
         frost_game.level == FROSTFELL_DEPTH - 1 &&
         frost_game.player.x == portal_x && frost_game.player.y == portal_y);
@@ -1210,7 +1217,7 @@ void test_frostfell(void) {
     frost_game.player.x = frost_game.map.stairs_down_x + 1;
     frost_game.player.y = frost_game.map.stairs_down_y;
     walk_onto(&frost_game, frost_game.map.stairs_down_x, frost_game.map.stairs_down_y);
-    ASSERT("the final western exit returns to Town 2's west gate",
-        frost_game.location == LOCATION_TOWN2 &&
-        frost_game.player.x == 1 && frost_game.player.y == 12);
+    ASSERT("the final western exit returns to Rosemoor's north gate",
+        frost_game.location == LOCATION_TOWN3 &&
+        frost_game.player.x == 20 && frost_game.player.y == 1);
 }
