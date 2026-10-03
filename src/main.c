@@ -1364,7 +1364,8 @@ int main(int argc, char **argv) {
             game.location == LOCATION_INN;
         int in_town3 = game.location == LOCATION_TOWN3 ||
             game.location == LOCATION_CASTLE;
-        music_update(screen, is_town, in_town2, in_town3);
+        int in_town4 = game.location == LOCATION_TOWN4;
+        music_update(screen, is_town, in_town2, in_town3, in_town4);
 
         if (!needs_redraw) {
             continue;
