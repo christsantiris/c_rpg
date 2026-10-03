@@ -1292,6 +1292,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                         x >= TOWN_MOAT_X && x < TOWN_MOAT_X + TOWN_MOAT_W &&
                         y >= TOWN_MOAT_Y && y < TOWN_MOAT_Y + TOWN_MOAT_H) {
                         draw_town_floor(r, sx, sy);
+                    } else if (g->location == LOCATION_TOWN3 &&
+                        x >= TOWN_GUILD_X && x < TOWN_GUILD_X + TOWN_GUILD_W &&
+                        y >= TOWN_GUILD_Y && y < TOWN_GUILD_Y + TOWN_GUILD_H) {
+                        draw_town_floor(r, sx, sy);
                     } else if (game_is_king_road(g)) {
                         draw_crownroad_tile(r, sx, sy, x, y, 2);
                     } else if (g->location == LOCATION_DUNGEON) {
@@ -1804,6 +1808,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     if (g->location == LOCATION_TOWN3) {
+        draw_adventurers_guild(r,
+            viewport_to_screen_x(v, TOWN_GUILD_X),
+            viewport_to_screen_y(v, TOWN_GUILD_Y));
         draw_apothecary(r,
             viewport_to_screen_x(v, TOWN_APOTHECARY_X),
             viewport_to_screen_y(v, TOWN_APOTHECARY_Y));
@@ -2060,6 +2067,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (g->location == LOCATION_TOWN3) {
         SDL_Color label = {220, 180, 60, 255};
         int width = 0;
+        TTF_SizeText(r->font_tiny, "ADVENTURER'S GUILD", &width, NULL);
+        renderer_draw_text(r, "ADVENTURER'S GUILD",
+            viewport_to_screen_x(v, TOWN_GUILD_X) * TILE_SIZE +
+                (TOWN_GUILD_W * TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, TOWN_GUILD_Y - 1) * TILE_SIZE,
+            label, r->font_tiny);
         TTF_SizeText(r->font_tiny, "FROSTFELL", &width, NULL);
         renderer_draw_text(r, "FROSTFELL",
             viewport_to_screen_x(v, 20) * TILE_SIZE - width / 2,

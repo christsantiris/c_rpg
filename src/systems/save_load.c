@@ -2190,6 +2190,11 @@ int load_game(GameState *g, int slot) {
 
     if (g->location == LOCATION_TOWN3) {
         map_place_town3_frost_gate(&g->map);
+        map_place_town3_guild(&g->map);
+        if (!map_is_walkable(&g->map, g->player.x, g->player.y)) {
+            g->player.x = TOWN_GUILD_DOOR_X;
+            g->player.y = TOWN_GUILD_DOOR_Y + 1;
+        }
         map_place_town3_guards(&g->map, g->player.x, g->player.y);
     }
 
@@ -2197,6 +2202,13 @@ int load_game(GameState *g, int slot) {
     game_refresh_quest_encounters(g);
     for (int i = 0; i < g->floor_item_count; i++) {
         FloorItem *item = &g->floor_items[i];
+        if (item->active && g->location == LOCATION_TOWN3 &&
+            item->x >= TOWN_GUILD_X && item->x < TOWN_GUILD_X + TOWN_GUILD_W &&
+            item->y >= TOWN_GUILD_Y && item->y < TOWN_GUILD_Y + TOWN_GUILD_H &&
+            !map_is_walkable(&g->map, item->x, item->y)) {
+            item->x = TOWN_GUILD_DOOR_X;
+            item->y = TOWN_GUILD_DOOR_Y + 1;
+        }
         if (item->active && item->item.type == ITEM_GOLD &&
             (item->x < 0 || item->x >= MAP_W ||
             item->y < 0 || item->y >= MAP_H ||

@@ -960,6 +960,21 @@ void map_place_town_apothecary(Map *m) {
     }
 }
 
+void map_place_town3_guild(Map *m) {
+    for (int y = TOWN_GUILD_Y; y < TOWN_GUILD_Y + TOWN_GUILD_H - 1; y++) {
+        for (int x = TOWN_GUILD_X; x < TOWN_GUILD_X + TOWN_GUILD_W; x++) {
+            m->tiles[y][x] = TILE_WALL;
+        }
+    }
+    for (int x = TOWN_GUILD_X; x < TOWN_GUILD_X + TOWN_GUILD_W; x++) {
+        m->tiles[TOWN_GUILD_DOOR_Y][x] = TILE_WALL;
+    }
+    m->tiles[TOWN_GUILD_DOOR_Y][TOWN_GUILD_DOOR_X] = TILE_TOWN_PATH;
+    for (int y = TOWN_GUILD_DOOR_Y + 1; y <= CASTLE_ROAD_Y; y++) {
+        m->tiles[y][TOWN_GUILD_DOOR_X] = TILE_TOWN_PATH;
+    }
+}
+
 void map_place_town_labyrinth(Map *m) {
     // Branch from the east-west road and skirt the gate to its south entrance.
     for (int y = 13; y <= TOWN_LABYRINTH_Y + 1; y++) {
@@ -1215,6 +1230,7 @@ void map_generate_town3(Map *m, int *spawn_x, int *spawn_y) {
         m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
     }
     map_place_town_apothecary(m);
+    map_place_town3_guild(m);
     map_place_town3_guards(m, -1, -1);
     *spawn_x = 20;
     *spawn_y = TOWN_H - 2;

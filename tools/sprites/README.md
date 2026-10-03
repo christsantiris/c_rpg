@@ -36,6 +36,7 @@ To add a building: write a new script that uses `pixelkit.py`, add it to the
 | `witch.py` | `witch-hut.bmp` | 120 × 96 (5 × 4) | Stillbury, `TOWN_WITCH_X/Y` |
 | `labyrinth.py` | `labyrinth-entrance.bmp` | 144 × 72 (two 3 × 3 frames) | Stillbury, around `TOWN_LABYRINTH_X/Y` |
 | `apothecary.py` | `apothecary.bmp` | 120 × 96 (5 × 4) | Rosemoor, `TOWN_APOTHECARY_X/Y` |
+| `adventurers_guild.py` | `adventurers-guild.bmp` | 168 × 120 (7 × 5) | Rosemoor, `TOWN_GUILD_X/Y` |
 | `crownroad_gate.py` | `crownroad-gate.bmp` | 72 × 72 (3 × 3) | Stillbury's north exit and Rosemoor's south exit |
 
 ### Castle of No Return
@@ -182,6 +183,15 @@ file is missing, the game draws the alchemist sprite in its place.
 - An arched plank door with stone steps, a lantern, and a green sign with a
   brass mortar and pestle.
 - A crate of bottles and two herb planters.
+
+### Adventurer's Guild
+
+The Guild stands on the west side of the Rosemoor square, with a clear path
+from its front door to the main road.
+
+- A broad slate gable with a gold crossed-swords crest.
+- A stone-and-timber front with two lit windows.
+- An arched oak entrance and a hanging sign marked GUILD.
 
 ### Crown Road gate
 
