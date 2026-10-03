@@ -51,7 +51,7 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor)
     } else if (g->location == LOCATION_TOWN2) {
         SDL_snprintf(loc, sizeof(loc), "STILLBURY");
     } else if (g->location == LOCATION_TOWN3) {
-        SDL_snprintf(loc, sizeof(loc), "TOWN 3");
+        SDL_snprintf(loc, sizeof(loc), "ROSEMOOR");
     } else if (g->location == LOCATION_TOWN4) {
         SDL_snprintf(loc, sizeof(loc), "TOWN 4");
     } else if (g->location == LOCATION_CASTLE) {

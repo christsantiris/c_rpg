@@ -944,7 +944,7 @@ void map_place_town_inn(Map *m) {
 }
 
 void map_place_town_apothecary(Map *m) {
-    // Town 3's Apothecary reuses the alchemist shop tiles; its door opens onto
+    // Rosemoor's Apothecary reuses the alchemist shop tiles; its door opens onto
     // a lane that joins the square's north-east corner.
     for (int y = TOWN_APOTHECARY_Y; y < TOWN_APOTHECARY_Y + TOWN_APOTHECARY_H; y++) {
         for (int x = TOWN_APOTHECARY_X; x < TOWN_APOTHECARY_X + TOWN_APOTHECARY_W; x++) {

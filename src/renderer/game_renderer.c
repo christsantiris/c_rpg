@@ -2054,8 +2054,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_y(v, 12) * TILE_SIZE,
             (SDL_Color){168, 220, 250, 255}, r->font_tiny);
         if (g->defeated_bosses & (1 << LOCATION_SWAMP)) {
-            TTF_SizeText(r->font_tiny, "TOWN 3", &width, NULL);
-            renderer_draw_text(r, "TOWN 3",
+            TTF_SizeText(r->font_tiny, "ROSEMOOR", &width, NULL);
+            renderer_draw_text(r, "ROSEMOOR",
                 viewport_to_screen_x(v, TOWN3_ROAD_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
                 viewport_to_screen_y(v, 1) * TILE_SIZE + 3,
                 (SDL_Color){113, 204, 79, 255}, r->font_tiny);
@@ -2094,7 +2094,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         renderer_draw_text(r, "CASTLE OF NO RETURN",
             viewport_to_screen_x(v, 20) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, 1) * TILE_SIZE, label, r->font_tiny);
-        renderer_draw_text(r, "TOWN 3",
+        renderer_draw_text(r, "ROSEMOOR",
             viewport_to_screen_x(v, 1) * TILE_SIZE + 8,
             viewport_to_screen_y(v, CASTLE_ROAD_Y) * TILE_SIZE, label, r->font_tiny);
         TTF_SizeText(r->font_tiny, "TOWN 4", &width, NULL);
@@ -2105,7 +2105,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (game_is_king_road(g)) {
         SDL_Color label = {205, 179, 124, 255};
         int east = g->location == LOCATION_CROWNROAD;
-        renderer_draw_text(r, east ? "TOWN 3" : "CASTLE",
+        renderer_draw_text(r, east ? "ROSEMOOR" : "CASTLE",
             viewport_to_screen_x(v, 1) * TILE_SIZE,
             viewport_to_screen_y(v, CROWNROAD_Y - 1) * TILE_SIZE, label, r->font_tiny);
         renderer_draw_text(r, east ? "CASTLE" : "TOWN 4",

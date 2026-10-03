@@ -172,10 +172,10 @@ void test_swamp(void) {
     swamp_game.player.y = final_exit_y;
     action_resolve_player(&swamp_game,
         (Action){ACTION_MOVE, final_exit_x, final_exit_y});
-    ASSERT("defeating the demon leads into Town 3",
+    ASSERT("defeating the demon leads into Rosemoor",
         swamp_game.location == LOCATION_TOWN3 && swamp_game.player.y == TOWN_H - 2);
     action_resolve_player(&swamp_game, (Action){ACTION_MOVE, 20, TOWN_H - 1});
-    ASSERT("Town 3 south gate enters a safe swamp shortcut",
+    ASSERT("Rosemoor south gate enters a safe swamp shortcut",
         swamp_game.location == LOCATION_SWAMP_ROAD && swamp_game.enemy_count == 0 &&
         swamp_game.player.y == 1);
     for (int y = 2; y < SWAMP_ROAD_H; y++) {
@@ -195,7 +195,7 @@ void test_swamp(void) {
     for (int y = SWAMP_ROAD_H - 3; y >= 0; y--) {
         action_resolve_player(&swamp_game, (Action){ACTION_MOVE, SWAMP_ROAD_X, y});
     }
-    ASSERT("shortcut returns to Town 3 without repeating the swamp",
+    ASSERT("shortcut returns to Rosemoor without repeating the swamp",
         swamp_game.location == LOCATION_TOWN3 && swamp_game.enemy_count == 0);
     remove("saves/savegame_99121.json");
 

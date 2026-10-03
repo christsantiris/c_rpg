@@ -2228,7 +2228,7 @@ void game_enter_king_road(GameState *g, Location road, int from_castle) {
     g->floor_item_count = 0;
     g->dialogue_active = 0;
     push_message(g, road == LOCATION_CROWNROAD ?
-        "King Road East links Town 3 to the Castle of No Return." :
+        "King Road East links Rosemoor to the Castle of No Return." :
         "King Road West links Town 4 to the Castle of No Return.");
 }
 
@@ -2270,7 +2270,7 @@ void game_leave_crownroad(GameState *g, Location destination) {
     place_town_portal(g);
     push_message(g, destination == LOCATION_CASTLE ?
         "You reach the grounds of the Castle of No Return." :
-        (destination == LOCATION_TOWN4 ? "You return to Town 4." : "You return to Town 3."));
+        (destination == LOCATION_TOWN4 ? "You return to Town 4." : "You return to Rosemoor."));
 }
 
 void game_enter_inn(GameState *g) {
@@ -2886,7 +2886,7 @@ void game_enter_swamp_road(GameState *g) {
     g->player.poison_turns = 0;
     g->player.frozen_turns = 0;
     g->player.freeze_recovery = 0;
-    push_message(g, from_town2 ? "The safe swamp trail leads north to Town 3." :
+    push_message(g, from_town2 ? "The safe swamp trail leads north to Rosemoor." :
         "The safe swamp trail leads south to Stillbury.");
 }
 
@@ -2895,7 +2895,7 @@ void game_leave_swamp_road(GameState *g, Location destination) {
     g->player.x = destination == LOCATION_TOWN3 ? 20 : TOWN3_ROAD_X;
     g->player.y = destination == LOCATION_TOWN3 ? TOWN_H - 2 : 1;
     push_message(g, destination == LOCATION_TOWN3 ?
-        "You arrive in Town 3." : "You return to Stillbury.");
+        "You arrive in Rosemoor." : "You return to Stillbury.");
 }
 
 void game_enter_town4(GameState *g) {

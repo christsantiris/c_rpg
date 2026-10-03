@@ -31,7 +31,7 @@ void music_init(void) {
         fprintf(stderr, "Failed to load Stillbury music: %s\n", Mix_GetError());
     }
     if (!town3_track) {
-        fprintf(stderr, "Failed to load Town 3 music: %s\n", Mix_GetError());
+        fprintf(stderr, "Failed to load Rosemoor music: %s\n", Mix_GetError());
     }
     if (!dungeon_track) {
         fprintf(stderr, "Failed to load dungeon music: %s\n", Mix_GetError());
