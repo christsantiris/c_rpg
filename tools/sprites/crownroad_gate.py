@@ -2,7 +2,7 @@
 """Crown Road gatehouse sprite.
 
 Draws 3 x 3 tiles (72 x 72) centred on the Crown Road, from the tile left of
-CROWNROAD_X: Town 2's north exit and Town 3's south exit. The archway is
+CROWNROAD_X: Stillbury's north exit and Town 3's south exit. The archway is
 transparent so the road shows through. Run `make sprites` to rewrite
 assets/images/crownroad-gate.bmp.
 """

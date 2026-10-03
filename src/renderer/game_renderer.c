@@ -1985,11 +1985,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         renderer_draw_text(r, "SUNKEN COAST", coast_x, coast_y,
             (SDL_Color){62, 210, 205, 255}, r->font_tiny);
         if (town_road_gate) {
-            int town2_w = 0;
-            TTF_SizeText(r->font_tiny, "TOWN 2", &town2_w, NULL);
-            renderer_draw_text(r, "TOWN 2",
+            int stillbury_w = 0;
+            TTF_SizeText(r->font_tiny, "STILLBURY", &stillbury_w, NULL);
+            renderer_draw_text(r, "STILLBURY",
                 viewport_to_screen_x(v, 1) * TILE_SIZE + 7 +
-                    (66 - town2_w) / 2,
+                    (66 - stillbury_w) / 2,
                 viewport_to_screen_y(v, TOWN_ROAD_GATE_Y - 1) * TILE_SIZE + 7,
                 (SDL_Color){233, 201, 133, 255}, r->font_tiny);
         }
@@ -2070,8 +2070,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
             viewport_to_screen_y(v, TOWN3_KING_GATE_Y) * TILE_SIZE,
             label, r->font_tiny);
-        TTF_SizeText(r->font_tiny, "TOWN 2", &width, NULL);
-        renderer_draw_text(r, "TOWN 2",
+        TTF_SizeText(r->font_tiny, "STILLBURY", &width, NULL);
+        renderer_draw_text(r, "STILLBURY",
             viewport_to_screen_x(v, 20) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE, label, r->font_tiny);
         TTF_SizeText(r->font_tiny, "APOTHECARY", &width, NULL);

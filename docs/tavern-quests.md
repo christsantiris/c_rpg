@@ -7,7 +7,7 @@ the south doorway to return to the same town street.
 NPC speech appears in a wrapped dialogue bubble beside the speaker. The bottom
 message bar is reserved for concise game events such as quest assignment,
 progress, and completion. Moving dismisses the current dialogue bubble.
-Rook waits in Town 2's Inn, which uses the same doorway and conversation
+Rook waits in Stillbury's Inn, which uses the same doorway and conversation
 controls as the Tavern.
 
 ## Elowen: The Broken Seals
@@ -101,7 +101,7 @@ without requiring the absent Lich King to be defeated again.
 
 ## Rook: The Ivory Rook
 
-Speak with Rook in Town 2's Inn to receive his one-time retrieval quest. This opens the
+Speak with Rook in Stillbury's Inn to receive his one-time retrieval quest. This opens the
 labyrinth entrance on the eastern outskirts, across the road from the witch's
 hut. Explore three maze floors with enemies and look-alike stairs; some stairs
 lead only to a dead-end corridor and its return stair. Activate one rune on
