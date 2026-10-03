@@ -2198,6 +2198,14 @@ int load_game(GameState *g, int slot) {
         map_place_town3_guards(&g->map, g->player.x, g->player.y);
     }
 
+    if (g->location == LOCATION_TOWN4) {
+        map_place_town4_workshop(&g->map);
+        if (!map_is_walkable(&g->map, g->player.x, g->player.y)) {
+            g->player.x = TOWN4_WORKSHOP_DOOR_X;
+            g->player.y = TOWN4_WORKSHOP_DOOR_Y + 1;
+        }
+    }
+
     game_hide_portal_destination(g);
     game_refresh_quest_encounters(g);
     for (int i = 0; i < g->floor_item_count; i++) {
@@ -2208,6 +2216,15 @@ int load_game(GameState *g, int slot) {
             !map_is_walkable(&g->map, item->x, item->y)) {
             item->x = TOWN_GUILD_DOOR_X;
             item->y = TOWN_GUILD_DOOR_Y + 1;
+        }
+        if (item->active && g->location == LOCATION_TOWN4 &&
+            item->x >= TOWN4_WORKSHOP_X &&
+            item->x < TOWN4_WORKSHOP_X + TOWN4_WORKSHOP_W &&
+            item->y >= TOWN4_WORKSHOP_Y &&
+            item->y < TOWN4_WORKSHOP_Y + TOWN4_WORKSHOP_H &&
+            !map_is_walkable(&g->map, item->x, item->y)) {
+            item->x = TOWN4_WORKSHOP_DOOR_X;
+            item->y = TOWN4_WORKSHOP_DOOR_Y + 1;
         }
         if (item->active && item->item.type == ITEM_GOLD &&
             (item->x < 0 || item->x >= MAP_W ||

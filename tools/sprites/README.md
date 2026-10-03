@@ -37,6 +37,7 @@ To add a building: write a new script that uses `pixelkit.py`, add it to the
 | `labyrinth.py` | `labyrinth-entrance.bmp` | 144 × 72 (two 3 × 3 frames) | Stillbury, around `TOWN_LABYRINTH_X/Y` |
 | `apothecary.py` | `apothecary.bmp` | 120 × 96 (5 × 4) | Rosemoor, `TOWN_APOTHECARY_X/Y` |
 | `adventurers_guild.py` | `adventurers-guild.bmp` | 168 × 120 (7 × 5) | Rosemoor, `TOWN_GUILD_X/Y` |
+| `workshop.py` | `workshop.bmp` | 120 × 96 (5 × 4) | Ridgeshire, `TOWN4_WORKSHOP_X/Y` |
 | `crownroad_gate.py` | `crownroad-gate.bmp` | 72 × 72 (3 × 3) | Stillbury's north exit and Rosemoor's south exit |
 
 ### Castle of No Return
