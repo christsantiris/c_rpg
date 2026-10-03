@@ -64,11 +64,11 @@ void test_king_roads_and_castle(void) {
     g.enemies[1].active = 0;
     g.player.x = CROWNROAD_W - 2;
     action_resolve_player(&g, (Action){ACTION_MOVE, CROWNROAD_W - 1, CROWNROAD_Y});
-    ASSERT("King Road West reaches Town 4's west entrance",
+    ASSERT("King Road West reaches Ridgeshire's west entrance",
         g.location == LOCATION_TOWN4 && g.player.x == 1 && g.player.y == 12);
     const int slot = 99015;
     int restored = save_game(&g, slot) && load_game(&loaded, slot);
-    ASSERT("both King Road caches survive saving in Town 4",
+    ASSERT("both King Road caches survive saving in Ridgeshire",
         restored && loaded.crownroad_cache.valid && loaded.kingroad_west_cache.valid &&
         !loaded.crownroad_cache.enemies[0].active && loaded.crownroad_cache.enemies[1].active &&
         loaded.kingroad_west_cache.enemies[0].active && !loaded.kingroad_west_cache.enemies[1].active);
@@ -76,7 +76,7 @@ void test_king_roads_and_castle(void) {
         g = loaded;
     }
     action_resolve_player(&g, (Action){ACTION_MOVE, 0, 12});
-    ASSERT("Town 4 returns to King Road West's east end with saved enemies",
+    ASSERT("Ridgeshire returns to King Road West's east end with saved enemies",
         g.location == LOCATION_KING_ROAD_WEST && g.player.x == CROWNROAD_W - 2 &&
         !g.enemies[1].active);
     g.player.x = 1;
@@ -1557,9 +1557,9 @@ void test_mountains(void) {
         if (g.enemies[i].type == ENEMY_MOUNTAIN_GOBLIN_KING)
             g.enemies[i].active = 0;
     action_resolve_player(&g, exit);
-    ASSERT("defeating Goblin King reaches Town 4",
+    ASSERT("defeating Goblin King reaches Ridgeshire",
         g.location == LOCATION_TOWN4);
-    ASSERT("mountain completion arrives at Town 4 south road",
+    ASSERT("mountain completion arrives at Ridgeshire south road",
         g.player.x == 20 && g.player.y == TOWN_H - 2);
 }
 

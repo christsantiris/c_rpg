@@ -26,7 +26,7 @@ retro pixel-art style. Choose a Warrior, Mage, or Rogue, prepare in town, and
 explore an eight-floor undead dungeon, the eight-stage Haunted Forest, the
 eight-stage Goblin Mountains, the eight-stage Sunken Coast, and Stillbury's
 five-level Blackwater Swamp. Beyond the Goblin Mountains, the five-stage
-Dragonspine ascent begins at Town 4's east gate. Each region
+Dragonspine ascent begins at Ridgeshire's east gate. Each region
 keeps its own generated maps and progression. Defeating the Drowned Queen on
 the Sunken Coast opens a sea route to the Ruined Isle. Its four-tier Ruined
 Temple remains a late-game challenge.
@@ -40,11 +40,11 @@ has not been found.
 
 The roads through OakHaven lead north to the mountains, west to the forest, east
 to the dungeon, and south to the coast. Cain stands near the central crossroads.
-Defeating the Goblin King and leaving Crown Peak brings you to Town 4, an open
+Defeating the Goblin King and leaving Crown Peak brings you to Ridgeshire, an open
 crossroads with no buildings. Its east gate leads directly to Dragonspine.
-The safe High Pass shortcuts the mountains between Town 4's south road and a
+The safe High Pass shortcuts the mountains between Ridgeshire's south road and a
 new northeast road in OakHaven, unlocked by the Goblin King's defeat. Ilya
-waits beside Town 4's Dragonspine gate and offers a quest to recover a golden
+waits beside Ridgeshire's Dragonspine gate and offers a quest to recover a golden
 goblet from the dragon's hoard. Her one-time reward is a Potion of Strength
 that permanently adds 1 base attack when consumed.
 Speaking with Cain explains the dangers beyond town and grants one Scroll of
@@ -111,7 +111,7 @@ along a safe, enemy-free swamp shortcut to Rosemoor's south gate. Rosemoor has t
 Apothecary. Two Royal Guards at its east gate warn that King Road East swarms
 with bandits, archers, and horsemen. That road leads to the grounds of the
 Castle of No Return, whose doors stay sealed for now. King Road West continues
-from the castle's east gate to Town 4's west gate. Each road keeps its own
+from the castle's east gate to Ridgeshire's west gate. Each road keeps its own
 enemies and progress between visits.
 
 ### Harbor and Ruined Isle
