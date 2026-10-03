@@ -15,6 +15,7 @@ static char *bytes_to_base64(const unsigned char *src, int src_len) {
     if (!out) {
         return NULL;
     }
+
     int i = 0, j = 0;
     while (i < src_len) {
         unsigned int a = i < src_len ? src[i++] : 0;
@@ -232,6 +233,23 @@ static void retile_town_ground(GameState *g, int x, int y, TileType ground) {
     }
 }
 
+static void clear_town3_old_lot(GameState *g, int lot_x, int lot_y, int w, int h) {
+    for (int y = lot_y; y < lot_y + h; y++) {
+        for (int x = lot_x; x < lot_x + w; x++) {
+            if (g->map.tiles[y][x] == TILE_ITEM) {
+                for (int i = 0; i < g->floor_item_count; i++) {
+                    FloorItem *item = &g->floor_items[i];
+                    if (item->active && item->x == x && item->y == y) {
+                        item->underlying_tile = TILE_TOWN_FLOOR;
+                    }
+                }
+            } else {
+                g->map.tiles[y][x] = TILE_TOWN_FLOOR;
+            }
+        }
+    }
+}
+
 static cJSON *serialize_enemies(const Enemy *enemies, int count) {
     cJSON *arr = cJSON_CreateArray();
     for (int i = 0; i < count; i++) {
@@ -366,7 +384,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 69);
+    cJSON_AddNumberToObject(root, "save_version", 70);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -2052,18 +2070,6 @@ int load_game(GameState *g, int slot) {
         map_place_town_inn(&g->map);
     }
 
-    // Version 65 adds the Apothecary east of the Town 3 square. Pave its lane
-    // under any loot, then move anything on the new lot onto that lane.
-    if (save_version < 65 && g->location == LOCATION_TOWN3) {
-        int lane_y = TOWN_APOTHECARY_Y + TOWN_APOTHECARY_H;
-        for (int x = TOWN_MOAT_X + TOWN_MOAT_W; x < TOWN_APOTHECARY_X + TOWN_APOTHECARY_W; x++) {
-            retile_town_ground(g, x, lane_y, TILE_TOWN_PATH);
-        }
-        clear_new_town_lot(g, TOWN_APOTHECARY_X, TOWN_APOTHECARY_Y, TOWN_APOTHECARY_W,
-            TOWN_APOTHECARY_H);
-        map_place_town_apothecary(&g->map);
-    }
-
     // Version 66 makes the Fireball scroll Mage-only.
     if (save_version < 66) {
         for (int i = 0; i < g->inventory_count; i++) {
@@ -2155,6 +2161,28 @@ int load_game(GameState *g, int slot) {
         }
     }
 
+    // Version 70 moves Rosemoor's Apothecary and Adventurer's Guild to the
+    // north edge of the central square. Clear their former lots and lanes,
+    // preserve loot and move anything covered by the new footprints.
+    if (save_version < 70 && g->location == LOCATION_TOWN3) {
+        clear_new_town_lot(g, 3, 5, 7, 5);
+        clear_new_town_lot(g, 31, 8, 5, 4);
+        clear_town3_old_lot(g, 3, 5, 7, 5);
+        clear_town3_old_lot(g, 31, 8, 5, 4);
+        for (int y = 10; y < CASTLE_ROAD_Y; y++) {
+            retile_town_ground(g, 6, y, TILE_TOWN_FLOOR);
+        }
+        for (int x = 29; x <= 35; x++) {
+            retile_town_ground(g, x, 12, TILE_TOWN_FLOOR);
+        }
+        map_place_town3_guild(&g->map);
+        map_place_town_apothecary(&g->map);
+        clear_new_town_lot(g, TOWN_GUILD_X, TOWN_GUILD_Y,
+            TOWN_GUILD_W, TOWN_GUILD_H);
+        clear_new_town_lot(g, TOWN_APOTHECARY_X, TOWN_APOTHECARY_Y,
+            TOWN_APOTHECARY_W, TOWN_APOTHECARY_H);
+    }
+
     if (g->location == LOCATION_MOUNTAINS) {
         hide_legacy_fort_plate(&g->map);
     }
@@ -2191,6 +2219,7 @@ int load_game(GameState *g, int slot) {
     if (g->location == LOCATION_TOWN3) {
         map_place_town3_frost_gate(&g->map);
         map_place_town3_guild(&g->map);
+        map_place_town_apothecary(&g->map);
         if (!map_is_walkable(&g->map, g->player.x, g->player.y)) {
             g->player.x = TOWN_GUILD_DOOR_X;
             g->player.y = TOWN_GUILD_DOOR_Y + 1;
@@ -2216,6 +2245,19 @@ int load_game(GameState *g, int slot) {
             !map_is_walkable(&g->map, item->x, item->y)) {
             item->x = TOWN_GUILD_DOOR_X;
             item->y = TOWN_GUILD_DOOR_Y + 1;
+            item->underlying_tile = TILE_TOWN_PATH;
+            g->map.tiles[item->y][item->x] = TILE_ITEM;
+        }
+        if (item->active && g->location == LOCATION_TOWN3 &&
+            item->x >= TOWN_APOTHECARY_X &&
+            item->x < TOWN_APOTHECARY_X + TOWN_APOTHECARY_W &&
+            item->y >= TOWN_APOTHECARY_Y &&
+            item->y < TOWN_APOTHECARY_Y + TOWN_APOTHECARY_H &&
+            !map_is_walkable(&g->map, item->x, item->y)) {
+            item->x = TOWN_APOTHECARY_DOOR_X;
+            item->y = TOWN_APOTHECARY_DOOR_Y + 1;
+            item->underlying_tile = TILE_TOWN_PATH;
+            g->map.tiles[item->y][item->x] = TILE_ITEM;
         }
         if (item->active && g->location == LOCATION_TOWN4 &&
             item->x >= TOWN4_WORKSHOP_X &&

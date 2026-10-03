@@ -944,19 +944,15 @@ void map_place_town_inn(Map *m) {
 }
 
 void map_place_town_apothecary(Map *m) {
-    // Rosemoor's Apothecary reuses the alchemist shop tiles; its door opens onto
-    // a lane that joins the square's north-east corner.
+    // The Apothecary opens directly onto the north edge of the town square.
     for (int y = TOWN_APOTHECARY_Y; y < TOWN_APOTHECARY_Y + TOWN_APOTHECARY_H; y++) {
         for (int x = TOWN_APOTHECARY_X; x < TOWN_APOTHECARY_X + TOWN_APOTHECARY_W; x++) {
             m->tiles[y][x] = TILE_SHOP_ALCHEMIST;
         }
     }
     m->tiles[TOWN_APOTHECARY_DOOR_Y][TOWN_APOTHECARY_DOOR_X] = TILE_ALCHEMIST_DOOR;
-    int lane_y = TOWN_APOTHECARY_Y + TOWN_APOTHECARY_H;
-    for (int x = TOWN_MOAT_X + TOWN_MOAT_W; x < TOWN_APOTHECARY_X + TOWN_APOTHECARY_W; x++) {
-        if (m->tiles[lane_y][x] != TILE_ITEM) {
-            m->tiles[lane_y][x] = TILE_TOWN_PATH;
-        }
+    if (m->tiles[TOWN_APOTHECARY_DOOR_Y + 1][TOWN_APOTHECARY_DOOR_X] != TILE_ITEM) {
+        m->tiles[TOWN_APOTHECARY_DOOR_Y + 1][TOWN_APOTHECARY_DOOR_X] = TILE_TOWN_PATH;
     }
 }
 
@@ -970,8 +966,8 @@ void map_place_town3_guild(Map *m) {
         m->tiles[TOWN_GUILD_DOOR_Y][x] = TILE_WALL;
     }
     m->tiles[TOWN_GUILD_DOOR_Y][TOWN_GUILD_DOOR_X] = TILE_TOWN_PATH;
-    for (int y = TOWN_GUILD_DOOR_Y + 1; y <= CASTLE_ROAD_Y; y++) {
-        m->tiles[y][TOWN_GUILD_DOOR_X] = TILE_TOWN_PATH;
+    if (m->tiles[TOWN_GUILD_DOOR_Y + 1][TOWN_GUILD_DOOR_X] != TILE_ITEM) {
+        m->tiles[TOWN_GUILD_DOOR_Y + 1][TOWN_GUILD_DOOR_X] = TILE_TOWN_PATH;
     }
 }
 

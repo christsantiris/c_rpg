@@ -172,8 +172,9 @@ If the file is missing, it falls back to its older rectangle drawing.
 
 ### Apothecary
 
-East of the Rosemoor square, with its door on `TOWN_APOTHECARY_DOOR_X/Y`. If the
-file is missing, the game draws the alchemist sprite in its place.
+On the north edge of the Rosemoor square, with its door opening directly onto
+the plaza. If the file is missing, the game draws the alchemist sprite in its
+place.
 
 - A steep front gable in dark plum shingles with a stone chimney.
 - A cream plaster and dark timber upper floor with three lit windows and flower
@@ -187,8 +188,8 @@ file is missing, the game draws the alchemist sprite in its place.
 
 ### Adventurer's Guild
 
-The Guild stands on the west side of the Rosemoor square, with a clear path
-from its front door to the main road.
+The Guild stands on the north-west edge of the Rosemoor square, with its front
+door opening directly onto the plaza.
 
 - A broad slate gable with a gold crossed-swords crest.
 - A stone-and-timber front with two lit windows.
