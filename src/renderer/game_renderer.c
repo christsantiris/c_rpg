@@ -1968,14 +1968,14 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         renderer_draw_text(r, "MOUNTAINS", mountains_x, mountains_y,
             (SDL_Color){220, 72, 42, 255}, r->font_tiny);
         if (g->defeated_bosses & (1 << LOCATION_MOUNTAINS)) {
-            int town4_w = 0;
-            int town4_h = 0;
-            TTF_SizeText(r->font_tiny, "TOWN 4", &town4_w, &town4_h);
-            renderer_draw_text(r, "TOWN 4",
+            int ridgeshire_w = 0;
+            int ridgeshire_h = 0;
+            TTF_SizeText(r->font_tiny, "RIDGESHIRE", &ridgeshire_w, &ridgeshire_h);
+            renderer_draw_text(r, "RIDGESHIRE",
                 viewport_to_screen_x(v, TOWN4_ROAD_X - 2) * TILE_SIZE +
-                    (5 * TILE_SIZE - town4_w) / 2,
+                    (5 * TILE_SIZE - ridgeshire_w) / 2,
                 viewport_to_screen_y(v, 1) * TILE_SIZE +
-                    (TILE_SIZE - town4_h) / 2,
+                    (TILE_SIZE - ridgeshire_h) / 2,
                 (SDL_Color){220, 72, 42, 255}, r->font_tiny);
         }
         int coast_x = viewport_to_screen_x(v, 18) * TILE_SIZE
@@ -2097,8 +2097,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         renderer_draw_text(r, "ROSEMOOR",
             viewport_to_screen_x(v, 1) * TILE_SIZE + 8,
             viewport_to_screen_y(v, CASTLE_ROAD_Y) * TILE_SIZE, label, r->font_tiny);
-        TTF_SizeText(r->font_tiny, "TOWN 4", &width, NULL);
-        renderer_draw_text(r, "TOWN 4",
+        TTF_SizeText(r->font_tiny, "RIDGESHIRE", &width, NULL);
+        renderer_draw_text(r, "RIDGESHIRE",
             viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
             viewport_to_screen_y(v, CASTLE_ROAD_Y) * TILE_SIZE, label, r->font_tiny);
     }
@@ -2108,7 +2108,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         renderer_draw_text(r, east ? "ROSEMOOR" : "CASTLE",
             viewport_to_screen_x(v, 1) * TILE_SIZE,
             viewport_to_screen_y(v, CROWNROAD_Y - 1) * TILE_SIZE, label, r->font_tiny);
-        renderer_draw_text(r, east ? "CASTLE" : "TOWN 4",
+        renderer_draw_text(r, east ? "CASTLE" : "RIDGESHIRE",
             viewport_to_screen_x(v, CROWNROAD_W - 4) * TILE_SIZE,
             viewport_to_screen_y(v, CROWNROAD_Y - 1) * TILE_SIZE, label, r->font_tiny);
     }

@@ -2027,7 +2027,7 @@ void action_resolve_player(GameState *g, Action a) {
                 }
                 g->score += g->level * 100;
                 game_enter_town4(g);
-                push_message(g, "Beyond the liberated mountain pass lies Town 4.");
+                push_message(g, "Beyond the liberated mountain pass lies Ridgeshire.");
             }
             return;
         }

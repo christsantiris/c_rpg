@@ -1988,7 +1988,7 @@ void game_enter_high_pass(GameState *g, int from_town) {
     g->player.poison_turns = 0;
     g->player.frozen_turns = 0;
     g->player.freeze_recovery = 0;
-    push_message(g, from_town ? "The High Pass leads north to Town 4." :
+    push_message(g, from_town ? "The High Pass leads north to Ridgeshire." :
         "The High Pass leads south to OakHaven.");
 }
 
@@ -2229,7 +2229,7 @@ void game_enter_king_road(GameState *g, Location road, int from_castle) {
     g->dialogue_active = 0;
     push_message(g, road == LOCATION_CROWNROAD ?
         "King Road East links Rosemoor to the Castle of No Return." :
-        "King Road West links Town 4 to the Castle of No Return.");
+        "King Road West links Ridgeshire to the Castle of No Return.");
 }
 
 static void save_crownroad_cache(GameState *g) {
@@ -2270,7 +2270,7 @@ void game_leave_crownroad(GameState *g, Location destination) {
     place_town_portal(g);
     push_message(g, destination == LOCATION_CASTLE ?
         "You reach the grounds of the Castle of No Return." :
-        (destination == LOCATION_TOWN4 ? "You return to Town 4." : "You return to Rosemoor."));
+        (destination == LOCATION_TOWN4 ? "You return to Ridgeshire." : "You return to Rosemoor."));
 }
 
 void game_enter_inn(GameState *g) {
@@ -2907,7 +2907,7 @@ void game_leave_high_pass(GameState *g, Location destination) {
     g->player.x = destination == LOCATION_TOWN4 ? 20 : TOWN4_ROAD_X;
     g->player.y = destination == LOCATION_TOWN4 ? TOWN_H - 2 : 1;
     push_message(g, destination == LOCATION_TOWN4 ?
-        "You arrive in Town 4." : "You return to OakHaven.");
+        "You arrive in Ridgeshire." : "You return to OakHaven.");
 }
 
 void game_open_town_portal(GameState *g) {
@@ -3340,7 +3340,7 @@ void game_collect_dragon_treasure(GameState *g) {
     }
     g->map.tiles[g->player.y][g->player.x] = TILE_DRAGON_HOARD;
     g->dragon_treasure_quest_state = 2;
-    push_message(g, "Golden goblet recovered. Return it to Ilya in Town 4.");
+    push_message(g, "Golden goblet recovered. Return it to Ilya in Ridgeshire.");
 }
 
 void game_talk_to_elowen(GameState *g) {

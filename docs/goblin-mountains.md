@@ -63,8 +63,8 @@ travel with a themed warband. Defeating the leader recovers the fragment
 automatically. Accepting the quest starts a fresh mountain expedition, while a
 previously defeated Goblin King remains dead.
 
-After the Goblin King falls, leaving Crown Peak leads to Town 4. Its east gate
-enters [Dragonspine](dragonspine.md) directly, with Ilya beside the road. Town 4's
+After the Goblin King falls, leaving Crown Peak leads to Ridgeshire. Its east gate
+enters [Dragonspine](dragonspine.md) directly, with Ilya beside the road. Ridgeshire's
 south road follows the safe High Pass back to OakHaven, bypassing the mountains.
-The shortcut also lets you revisit Town 4 from OakHaven's northeast road.
+The shortcut also lets you revisit Ridgeshire from OakHaven's northeast road.
 OakHaven's main north gate remains available for another mountain expedition.

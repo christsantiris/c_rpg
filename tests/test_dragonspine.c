@@ -54,13 +54,13 @@ void test_dragonspine(void) {
     static GameState loaded;
     memset(&g, 0, sizeof(g));
     game_init(&g);
-    ASSERT("Town 4 shortcut is closed before the Goblin King falls",
+    ASSERT("Ridgeshire shortcut is closed before the Goblin King falls",
         g.map.tiles[0][TOWN4_ROAD_X] == TILE_WALL);
 
     g.defeated_bosses |= 1 << LOCATION_MOUNTAINS;
     game_enter_mountains(&g);
     game_enter_town4(&g);
-    ASSERT("Town 4 has an east Dragonspine gate and a south shortcut",
+    ASSERT("Ridgeshire has an east Dragonspine gate and a south shortcut",
         g.location == LOCATION_TOWN4 && g.enemy_count == 0 &&
         g.map.tiles[TOWN4_DRAGON_GATE_Y][TOWN_W - 1] == TILE_TOWN_EXIT &&
         g.map.tiles[TOWN_H - 1][20] == TILE_TOWN_EXIT);
@@ -75,13 +75,13 @@ void test_dragonspine(void) {
                 tile == TILE_NPC_DRAGON_SEEKER;
         }
     }
-    ASSERT("Town 4 is a crossroads with Ilya and no buildings",
+    ASSERT("Ridgeshire is a crossroads with Ilya and no buildings",
         empty_crossroads && ilya_count == 1 &&
         g.map.tiles[12][20] == TILE_TOWN_PATH &&
         g.map.tiles[0][20] == TILE_WALL && g.map.tiles[12][0] == TILE_TOWN_EXIT);
 
     action_resolve_player(&g, (Action){ACTION_MOVE, 20, TOWN_H - 1});
-    ASSERT("Town 4 south exit enters the safe shortcut",
+    ASSERT("Ridgeshire south exit enters the safe shortcut",
         g.location == LOCATION_HIGH_PASS && g.enemy_count == 0 &&
         g.player.x == HIGH_PASS_X && g.player.y == 1);
     int saved = save_game(&g, DRAGONSPINE_TEST_SLOT);
@@ -110,19 +110,19 @@ void test_dragonspine(void) {
     for (int y = HIGH_PASS_H - 3; y >= 0; y--) {
         action_resolve_player(&g, (Action){ACTION_MOVE, HIGH_PASS_X, y});
     }
-    ASSERT("walking north reaches Town 4 without crossing the mountains",
+    ASSERT("walking north reaches Ridgeshire without crossing the mountains",
         g.location == LOCATION_TOWN4 && g.player.x == 20 &&
         g.player.y == TOWN_H - 2 && g.enemy_count == 0);
     g.player.x = TOWN_W - 2;
     g.player.y = TOWN4_DRAGON_GATE_Y;
     Action east = {ACTION_MOVE, TOWN_W - 1, TOWN4_DRAGON_GATE_Y};
     action_resolve_player(&g, east);
-    ASSERT("Town 4 east gate leads directly to Dragonspine stage one",
+    ASSERT("Ridgeshire east gate leads directly to Dragonspine stage one",
         g.location == LOCATION_DRAGONSPINE && g.level == 1 && g.enemy_count > 0);
     g.player.x = 1;
     g.player.y = g.map.stairs_up_y;
     action_resolve_player(&g, (Action){ACTION_MOVE, 0, g.map.stairs_up_y});
-    ASSERT("leaving Dragonspine stage one returns directly to Town 4",
+    ASSERT("leaving Dragonspine stage one returns directly to Ridgeshire",
         g.location == LOCATION_TOWN4 && g.player.x == TOWN_W - 2 &&
         g.player.y == TOWN4_DRAGON_GATE_Y);
     action_resolve_player(&g, east);
@@ -192,14 +192,14 @@ void test_dragonspine(void) {
     g.player.x = g.map.stairs_down_x - 1;
     g.player.y = g.map.stairs_down_y;
     action_resolve_player(&g, summit_exit);
-    ASSERT("summit exit returns to Town 4 after the dragon falls",
+    ASSERT("summit exit returns to Ridgeshire after the dragon falls",
         g.location == LOCATION_TOWN4);
 
     game_enter_dragonspine(&g);
     game_descend(&g);
     int saved_level = g.level;
     game_open_town_portal(&g);
-    ASSERT("Dragonspine portal returns beside Town 4 east gate",
+    ASSERT("Dragonspine portal returns beside Ridgeshire east gate",
         g.location == LOCATION_TOWN4 && g.portal_active &&
         g.map.tiles[TOWN4_PORTAL_Y][TOWN4_PORTAL_X] == TILE_PORTAL);
     g.player.x = 20;
@@ -222,7 +222,7 @@ void test_dragonspine(void) {
     action_resolve_player(&g, (Action){ACTION_MOVE, TOWN4_ROAD_X, 0});
     g.player.y = 1;
     action_resolve_player(&g, (Action){ACTION_MOVE, HIGH_PASS_X, 0});
-    ASSERT("returning to Town 4 restores the Dragonspine portal beside its gate",
+    ASSERT("returning to Ridgeshire restores the Dragonspine portal beside its gate",
         g.location == LOCATION_TOWN4 && g.portal_active &&
         g.map.tiles[TOWN4_PORTAL_Y][TOWN4_PORTAL_X] == TILE_PORTAL);
     saved = save_game(&g, DRAGONSPINE_TEST_SLOT);
@@ -245,7 +245,7 @@ void test_dragonspine(void) {
     g.defeated_bosses |= 1 << LOCATION_MOUNTAINS;
     game_enter_mountains(&g);
     game_enter_town4(&g);
-    ASSERT("Ilya appears beside Town 4 east road",
+    ASSERT("Ilya appears beside Ridgeshire east road",
         g.map.tiles[TOWN4_ILYA_Y][TOWN4_ILYA_X] ==
             TILE_NPC_DRAGON_SEEKER &&
         g.map.tiles[TOWN4_ILYA_Y + 1][TOWN4_ILYA_X] ==
