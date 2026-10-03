@@ -988,9 +988,9 @@ void map_place_town2_center(Map *m) {
     for (int x = 18; x <= 22; x++) {
         m->tiles[0][x] = TILE_TOWN_EXIT;
     }
-    // The west gate leads into the Frostfell Wastes.
+    // Frostfell now branches north from Rosemoor, so Stillbury's west wall is closed.
     for (int y = 10; y <= 14; y++) {
-        m->tiles[y][0] = TILE_TOWN_EXIT;
+        m->tiles[y][0] = TILE_WALL;
     }
     for (int x = TOWN_HEALER_DOOR_X; x <= TOWN_WITCH_DOOR_X; x++) {
         m->tiles[13][x] = TILE_TOWN_PATH;
@@ -1209,6 +1209,7 @@ static void map_generate_town_square(Map *m) {
 
 void map_generate_town3(Map *m, int *spawn_x, int *spawn_y) {
     map_generate_town_square(m);
+    map_place_town3_frost_gate(m);
     m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
     for (int y = TOWN3_KING_GATE_Y - 2; y <= TOWN3_KING_GATE_Y + 2; y++) {
         m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
@@ -1217,6 +1218,12 @@ void map_generate_town3(Map *m, int *spawn_x, int *spawn_y) {
     map_place_town3_guards(m, -1, -1);
     *spawn_x = 20;
     *spawn_y = TOWN_H - 2;
+}
+
+void map_place_town3_frost_gate(Map *m) {
+    for (int x = 18; x <= 22; x++) {
+        m->tiles[0][x] = TILE_TOWN_EXIT;
+    }
 }
 
 void map_generate_castle(Map *m, int *spawn_x, int *spawn_y) {
@@ -1663,8 +1670,8 @@ static void place_thin_ice_shortcuts(Map *m, int level) {
     }
 }
 
-// Frostfell follows the swamp's layout, mirrored so players enter from Stillbury
-// on the east edge and travel west, then snows over its tiles.
+// Frostfell follows the swamp's layout, mirrored to run east to west, then
+// snows over its tiles.
 void map_generate_frostfell(Map *m, int level) {
     map_generate_swamp(m, level);
     for (int y = 0; y < SWAMP_MAP_H; y++) {

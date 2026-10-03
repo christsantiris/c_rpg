@@ -73,6 +73,10 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
             *style = TOWN_EXIT_ROAD;
             return 1;
         }
+        if (g->location == LOCATION_TOWN3 && action.target_y == 0) {
+            *style = TOWN_EXIT_FROST;
+            return 1;
+        }
         if (g->location == LOCATION_TOWN3 && action.target_y == TOWN_H - 1) {
             *style = TOWN_EXIT_SWAMP;
             return 1;
@@ -86,10 +90,6 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
         }
         *style = g->location == LOCATION_TOWN ?
             TOWN_EXIT_MOUNTAINS : TOWN_EXIT_SWAMP;
-        return 1;
-    }
-    if (action.target_x == 0 && g->location == LOCATION_TOWN2) {
-        *style = TOWN_EXIT_FROST;
         return 1;
     }
     if (action.target_x == 0 && g->location == LOCATION_TOWN4) {

@@ -1789,9 +1789,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         draw_town_gate(r,
             viewport_to_screen_x(v, TOWN_W - 3), viewport_to_screen_y(v, 10),
             TOWN_EXIT_FOREST);
-        draw_town_gate(r,
-            viewport_to_screen_x(v, 0), viewport_to_screen_y(v, 10),
-            TOWN_EXIT_FROST);
         draw_witch_hut(r,
             viewport_to_screen_x(v, TOWN_WITCH_X),
             viewport_to_screen_y(v, TOWN_WITCH_Y));
@@ -1810,6 +1807,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         draw_apothecary(r,
             viewport_to_screen_x(v, TOWN_APOTHECARY_X),
             viewport_to_screen_y(v, TOWN_APOTHECARY_Y));
+        draw_town_gate(r, viewport_to_screen_x(v, 18),
+            viewport_to_screen_y(v, 0), TOWN_EXIT_FROST);
         draw_town_gate(r, viewport_to_screen_x(v, TOWN_W - 3),
             viewport_to_screen_y(v, TOWN3_KING_GATE_Y - 2), TOWN_EXIT_DUNGEON);
         draw_town_gate(r, viewport_to_screen_x(v, 18),
@@ -2049,10 +2048,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
             viewport_to_screen_y(v, 12) * TILE_SIZE,
             label, r->font_tiny);
-        renderer_draw_text(r, "FROSTFELL",
-            viewport_to_screen_x(v, 1) * TILE_SIZE + 22,
-            viewport_to_screen_y(v, 12) * TILE_SIZE,
-            (SDL_Color){168, 220, 250, 255}, r->font_tiny);
         if (g->defeated_bosses & (1 << LOCATION_SWAMP)) {
             TTF_SizeText(r->font_tiny, "ROSEMOOR", &width, NULL);
             renderer_draw_text(r, "ROSEMOOR",
@@ -2065,6 +2060,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (g->location == LOCATION_TOWN3) {
         SDL_Color label = {220, 180, 60, 255};
         int width = 0;
+        TTF_SizeText(r->font_tiny, "FROSTFELL", &width, NULL);
+        renderer_draw_text(r, "FROSTFELL",
+            viewport_to_screen_x(v, 20) * TILE_SIZE - width / 2,
+            viewport_to_screen_y(v, 1) * TILE_SIZE,
+            (SDL_Color){168, 220, 250, 255}, r->font_tiny);
         TTF_SizeText(r->font_tiny, "KING ROAD EAST", &width, NULL);
         renderer_draw_text(r, "KING ROAD EAST",
             viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,

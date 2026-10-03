@@ -3986,25 +3986,23 @@ void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style) {
     }
 
     if (style == TOWN_EXIT_FROST) {
-        // An ice post on the west wall, capped with snow and icicles.
         SDL_Color ice_dark = {66, 106, 146, 255};
         SDL_Color ice = {138, 188, 224, 255};
         SDL_Color ice_light = {214, 238, 250, 255};
         SDL_Color snow = {241, 246, 250, 255};
-        fill_rect(r, x + 1, y, 13, 120, ice_dark);
-        fill_rect(r, x + 4, y + 3, 3, 114, ice);
-        fill_rect(r, x + 10, y + 2, 30, 10, ice_dark);
-        fill_rect(r, x + 10, y, 30, 4, snow);
-        fill_rect(r, x + 10, y + 108, 30, 11, ice_dark);
-        fill_rect(r, x + 10, y + 106, 30, 3, snow);
-        fill_rect(r, x + 1, y, 13, 3, snow);
+        fill_rect(r, x, y, 120, 13, ice_dark);
+        fill_rect(r, x, y, 120, 3, snow);
+        fill_rect(r, x, y + 11, 120, 3, ice);
+        fill_rect(r, x, y, 17, 48, ice_dark);
+        fill_rect(r, x + 103, y, 17, 48, ice_dark);
+        fill_rect(r, x + 3, y + 4, 3, 39, ice);
+        fill_rect(r, x + 106, y + 4, 3, 39, ice);
         for (int drip = 0; drip < 4; drip++) {
-            fill_rect(r, x + 14 + drip * 7, y + 12, 2, 4 + (drip % 2) * 3, ice_light);
+            fill_rect(r, x + 15 + drip * 24, y + 12,
+                2, 4 + (drip % 2) * 3, ice_light);
         }
-        for (int mark = 0; mark < 4; mark++) {
-            fill_rect(r, x + 9, y + 20 + mark * 23, 3, 2, ice_light);
-        }
-        fill_rect(r, x + 10, y + 56, 5, 7, (SDL_Color){122, 222, 255, 255});
+        fill_rect(r, x + 52, y + 3, 16, 10,
+            (SDL_Color){122, 222, 255, 255});
         return;
     }
 

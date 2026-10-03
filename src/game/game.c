@@ -2040,8 +2040,12 @@ static void place_town_portal(GameState *g) {
     if (g->location == LOCATION_TOWN2) {
         if (g->portal_location == LOCATION_SWAMP) {
             g->map.tiles[2][21] = TILE_PORTAL;
-        } else if (g->portal_location == LOCATION_FROSTFELL) {
-            g->map.tiles[13][2] = TILE_PORTAL;
+        }
+        return;
+    }
+    if (g->location == LOCATION_TOWN3) {
+        if (g->portal_location == LOCATION_FROSTFELL) {
+            g->map.tiles[2][20] = TILE_PORTAL;
         }
         return;
     }
@@ -2820,8 +2824,8 @@ static void return_to_town(GameState *g, Location destination) {
         place_harbor_road(g);
     }
     if (destination == LOCATION_TOWN3) {
-        g->player.x = spawn_x;
-        g->player.y = spawn_y;
+        g->player.x = returning_from == LOCATION_FROSTFELL ? 20 : spawn_x;
+        g->player.y = returning_from == LOCATION_FROSTFELL ? 1 : spawn_y;
     } else if (destination == LOCATION_TOWN4) {
         g->player.x = returning_from == LOCATION_MOUNTAINS ? spawn_x : TOWN_W - 2;
         g->player.y = returning_from == LOCATION_MOUNTAINS ? spawn_y : TOWN4_DRAGON_GATE_Y;
@@ -2831,9 +2835,6 @@ static void return_to_town(GameState *g, Location destination) {
     } else if (returning_from == LOCATION_SWAMP) {
         g->player.x = 20;
         g->player.y = 1;
-    } else if (returning_from == LOCATION_FROSTFELL) {
-        g->player.x = 1;
-        g->player.y = 12;
     } else if (returning_from == LOCATION_FOREST) {
         g->player.x = 1; g->player.y = 12;
     } else if (returning_from == LOCATION_DUNGEON) {
@@ -2862,8 +2863,10 @@ void game_return_to_town(GameState *g) {
         return;
     }
     Location destination = LOCATION_TOWN;
-    if (g->location == LOCATION_SWAMP || g->location == LOCATION_FROSTFELL) {
+    if (g->location == LOCATION_SWAMP) {
         destination = LOCATION_TOWN2;
+    } else if (g->location == LOCATION_FROSTFELL) {
+        destination = LOCATION_TOWN3;
     } else if (g->location == LOCATION_DRAGONSPINE || g->location == LOCATION_HIGH_PASS) {
         destination = LOCATION_TOWN4;
     }
