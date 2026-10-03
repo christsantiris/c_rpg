@@ -1808,7 +1808,7 @@ void action_resolve_player(GameState *g, Action a) {
                     if (g->defeated_bosses & (1 << LOCATION_FOREST)) {
                         game_enter_forest_road(g);
                     } else {
-                        push_message(g, "The road to Town 2 is still blocked.");
+                        push_message(g, "The road to Stillbury is still blocked.");
                     }
                 } else {
                     game_enter_forest(g);

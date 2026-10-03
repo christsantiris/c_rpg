@@ -2125,7 +2125,7 @@ void game_enter_town2(GameState *g) {
     g->floor_item_count = 0;
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
-    push_message(g, "You arrive in the second town.");
+    push_message(g, "You arrive in Stillbury.");
 }
 
 void game_enter_forest_road(GameState *g) {
@@ -2139,7 +2139,7 @@ void game_enter_forest_road(GameState *g) {
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
     push_message(g, from_town2 ? "The forest road leads east to OakHaven." :
-        "The forest road leads west to Town 2.");
+        "The forest road leads west to Stillbury.");
 }
 
 void game_leave_forest_road(GameState *g, Location destination) {
@@ -2168,7 +2168,7 @@ void game_leave_forest_road(GameState *g, Location destination) {
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
     push_message(g, destination == LOCATION_TOWN2 ?
-        "You arrive in the second town." : "You return to OakHaven.");
+        "You arrive in Stillbury." : "You return to OakHaven.");
 }
 
 int game_is_king_road(const GameState *g) {
@@ -2887,7 +2887,7 @@ void game_enter_swamp_road(GameState *g) {
     g->player.frozen_turns = 0;
     g->player.freeze_recovery = 0;
     push_message(g, from_town2 ? "The safe swamp trail leads north to Town 3." :
-        "The safe swamp trail leads south to Town 2.");
+        "The safe swamp trail leads south to Stillbury.");
 }
 
 void game_leave_swamp_road(GameState *g, Location destination) {
@@ -2895,7 +2895,7 @@ void game_leave_swamp_road(GameState *g, Location destination) {
     g->player.x = destination == LOCATION_TOWN3 ? 20 : TOWN3_ROAD_X;
     g->player.y = destination == LOCATION_TOWN3 ? TOWN_H - 2 : 1;
     push_message(g, destination == LOCATION_TOWN3 ?
-        "You arrive in Town 3." : "You return to Town 2.");
+        "You arrive in Town 3." : "You return to Stillbury.");
 }
 
 void game_enter_town4(GameState *g) {

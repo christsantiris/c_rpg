@@ -24,7 +24,7 @@ A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explo
 *The Castle of No Return* is a C/SDL roguelike with turn-based combat and a
 retro pixel-art style. Choose a Warrior, Mage, or Rogue, prepare in town, and
 explore an eight-floor undead dungeon, the eight-stage Haunted Forest, the
-eight-stage Goblin Mountains, the eight-stage Sunken Coast, and Town 2's
+eight-stage Goblin Mountains, the eight-stage Sunken Coast, and Stillbury's
 five-level Blackwater Swamp. Beyond the Goblin Mountains, the five-stage
 Dragonspine ascent begins at Town 4's east gate. Each region
 keeps its own generated maps and progression. Defeating the Drowned Queen on
@@ -59,32 +59,32 @@ remain defeated.
 
 The Blacksmith sells weapons, armor, and shields. The Alchemist sells both
 potion types, spell scrolls, and Mage spell tomes in OakHaven. Defeating
-the forest Necromancer opens the way to a second town. After that victory, the
+the forest Necromancer opens the way to Stillbury. After that victory, the
 lower west gate of OakHaven leads onto a short, enemy-free forest road.
-Walk west across it to reach Town 2; the upper west gate still enters the full
-forest. The lower gate stays blocked until the Necromancer falls. Town 2's east
-gate leads back along the road to OakHaven. Town 2 has an Inn, a healer selling
+Walk west across it to reach Stillbury; the upper west gate still enters the full
+forest. The lower gate stays blocked until the Necromancer falls. Stillbury's east
+gate leads back along the road to OakHaven. Stillbury has an Inn, a healer selling
 Health Potions, a witch selling Mana Potions, and Rook's labyrinth. Its north
 gate opens onto the five-level Blackwater Swamp. Each shop buys its own item types.
 Stock expands as bosses are defeated; buying costs twice an item's base value,
 while selling pays one quarter of base value.
 
-### Town 2 healer
+### Stillbury healer
 
-The **HEALER** building is north of Town 2's east-west road.
+The **HEALER** building is north of Stillbury's east-west road.
 Follow its short entrance path from that road to meet Lysa. She sells Health
 Potions for **20 gold** each. Each potion restores HP to full when used
 from inventory. The Alchemist also sells Health Potions.
 
-### Town 2 witch
+### Stillbury witch
 
-The **WITCH** hut stands east of Town 2's crossroads. Morwen sells Mana Potions
+The **WITCH** hut stands east of Stillbury's crossroads. Morwen sells Mana Potions
 for **20 gold** each. Each potion restores MP to full when used from inventory.
 The Alchemist also sells Mana Potions.
 
 ### Rook's labyrinth
 
-Speak with Rook in Town 2's Inn to receive his one-time retrieval quest and open
+Speak with Rook in Stillbury's Inn to receive his one-time retrieval quest and open
 the labyrinth gate on the eastern outskirts, across the road from the witch's
 hut. Explore three maze floors, each with a rune and enemies. Each of the first
 two floors has two identical-looking downward stairs: one leads onward, while
@@ -96,17 +96,17 @@ enemies return, but the Warden and quest reward do not.
 
 ### Blackwater Swamp
 
-Travel north from Town 2 through five levels of black water, reeds, and muddy
+Travel north from Stillbury through five levels of black water, reeds, and muddy
 causeways. Giant Rats, Bandits, Zombies, and Wraiths appear early; Vampires join
 on deeper levels. The Swamp Demon guards the final exit, which leads to Town 3,
 and drops a Demonic Sword: a +6 one-handed weapon for every class, with a
-two-tile `F` attack. Talk to Bram at the Town 2 Inn to rescue his daughter from
+two-tile `F` attack. Talk to Bram at the Stillbury Inn to rescue his daughter from
 a vampire on level 4. See [Blackwater Swamp](docs/swamp.md) for the full area
 rules.
 
 ### Town 3, King Roads, and the Castle
 
-Defeating the Swamp Demon also opens a second north gate in Town 2. It leads
+Defeating the Swamp Demon also opens a second north gate in Stillbury. It leads
 along a safe, enemy-free swamp shortcut to Town 3's south gate. Town 3 has the
 Apothecary. Two Royal Guards at its east gate warn that King Road East swarms
 with bandits, archers, and horsemen. That road leads to the grounds of the
@@ -358,4 +358,4 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
    Multiple levels, unique mechanics, enemies, boss
 - Recruit a party to join the adventure
 - Additional areas and storylines
-- Fix forest exists at opposite side of town 2
+- Fix forest exists at opposite side of Stillbury

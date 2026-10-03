@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Town 2 inn sprite.
+"""Stillbury inn sprite.
 
-Draws 7 x 5 tiles (168 x 120) for the inn lot at TOWN_INN_X/Y in Town 2, with
+Draws 7 x 5 tiles (168 x 120) for the inn lot at TOWN_INN_X/Y in Stillbury, with
 the double door on TOWN_INN_DOOR_X/Y. Run `make sprites` to rewrite
 assets/images/inn.bmp.
 """

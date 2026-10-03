@@ -1023,7 +1023,7 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     for (int x = 18; x <= 22; x++)
         m->tiles[0][x] = TILE_TOWN_EXIT;
 
-    // The forest gate stays on the main road. The Town 2 spur appears later.
+    // The forest gate stays on the main road. The Stillbury spur appears later.
     for (int y = 10; y <= 12; y++) {
         m->tiles[y][0] = TILE_TOWN_EXIT;
     }
@@ -1663,7 +1663,7 @@ static void place_thin_ice_shortcuts(Map *m, int level) {
     }
 }
 
-// Frostfell follows the swamp's layout, mirrored so players enter from Town 2
+// Frostfell follows the swamp's layout, mirrored so players enter from Stillbury
 // on the east edge and travel west, then snows over its tiles.
 void map_generate_frostfell(Map *m, int level) {
     map_generate_swamp(m, level);

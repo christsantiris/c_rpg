@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Town 2 witch's hut sprite.
+"""Stillbury witch's hut sprite.
 
-Draws 5 x 4 tiles (120 x 96) for the witch's lot at TOWN_WITCH_X/Y in Town 2,
+Draws 5 x 4 tiles (120 x 96) for the witch's lot at TOWN_WITCH_X/Y in Stillbury,
 with the door on TOWN_WITCH_DOOR_X/Y. Run `make sprites` to rewrite
 assets/images/witch-hut.bmp.
 """

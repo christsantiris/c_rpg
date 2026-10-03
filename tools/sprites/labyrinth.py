@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Town 2 labyrinth entrance sprite sheet.
+"""Stillbury labyrinth entrance sprite sheet.
 
 Two 3 x 3 tile frames (72 x 72) side by side: sealed, then open. The game
 draws a frame from one tile left of and two tiles above the entrance tile

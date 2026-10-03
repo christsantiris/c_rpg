@@ -30,7 +30,7 @@ earn gold and experience faster than safe work in town.
 
 ## Recovery loop: paid work in both towns
 
-The Tavern in OakHaven and Inn in Town 2 offer an always-available local errand.
+The Tavern in OakHaven and Inn in Stillbury offer an always-available local errand.
 For example, collect a sealed supply order from the host, deliver it to a town
 shop, and report back. Every step stays in a safe town; the player needs no HP,
 MP, gold, inventory space, or combat ability to complete it. A job pays **10
