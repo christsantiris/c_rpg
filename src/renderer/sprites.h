@@ -128,6 +128,7 @@ void draw_coast_transition(Renderer *r, int covered_width);
 void draw_shop_blacksmith(Renderer *r, int tile_x, int tile_y);
 void draw_shop_alchemist(Renderer *r, int tile_x, int tile_y);
 void draw_apothecary(Renderer *r, int tile_x, int tile_y);
+void draw_adventurers_guild(Renderer *r, int tile_x, int tile_y);
 void draw_tavern(Renderer *r, int tile_x, int tile_y);
 void draw_inn(Renderer *r, int tile_x, int tile_y);
 void draw_harbor(Renderer *r, int tile_x, int tile_y);

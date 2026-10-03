@@ -46,6 +46,12 @@
 #define TOWN_APOTHECARY_H 4
 #define TOWN_APOTHECARY_DOOR_X (TOWN_APOTHECARY_X + 2)
 #define TOWN_APOTHECARY_DOOR_Y (TOWN_APOTHECARY_Y + TOWN_APOTHECARY_H - 1)
+#define TOWN_GUILD_X 3
+#define TOWN_GUILD_Y 5
+#define TOWN_GUILD_W 7
+#define TOWN_GUILD_H 5
+#define TOWN_GUILD_DOOR_X (TOWN_GUILD_X + TOWN_GUILD_W / 2)
+#define TOWN_GUILD_DOOR_Y (TOWN_GUILD_Y + TOWN_GUILD_H - 1)
 #define TAVERN_X 4
 #define TAVERN_Y 2
 #define TAVERN_W 32
@@ -336,6 +342,7 @@ void map_place_town_harbor(Map *m);
 void map_place_town_tavern(Map *m);
 void map_place_town_inn(Map *m);
 void map_place_town_apothecary(Map *m);
+void map_place_town3_guild(Map *m);
 void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_inn(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_island(Map *m, int *spawn_x, int *spawn_y);

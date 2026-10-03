@@ -21,6 +21,17 @@ void test_king_roads_and_castle(void) {
         g.map.tiles[TOWN_APOTHECARY_DOOR_Y][TOWN_APOTHECARY_DOOR_X] == TILE_ALCHEMIST_DOOR &&
         map_is_walkable(&g.map, TOWN_MOAT_X, 5) &&
         g.map.tiles[10][20] == TILE_TOWN_PATH);
+    int guild_walls = 1;
+    for (int y = TOWN_GUILD_Y; y < TOWN_GUILD_DOOR_Y; y++) {
+        for (int x = TOWN_GUILD_X; x < TOWN_GUILD_X + TOWN_GUILD_W; x++) {
+            guild_walls &= g.map.tiles[y][x] == TILE_WALL;
+        }
+    }
+    ASSERT("Rosemoor's Adventurer's Guild has a walkable doorway and path to the square",
+        guild_walls && g.map.tiles[TOWN_GUILD_DOOR_Y][TOWN_GUILD_DOOR_X] ==
+            TILE_TOWN_PATH &&
+        map_is_walkable(&g.map, TOWN_GUILD_DOOR_X, TOWN_GUILD_DOOR_Y + 1) &&
+        !map_is_walkable(&g.map, TOWN_GUILD_X, TOWN_GUILD_Y));
     g.player.x = TOWN_W - 2;
     g.player.y = TOWN3_KING_GATE_Y;
     action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 1, TOWN3_KING_GATE_Y});

@@ -42,6 +42,7 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
         "assets/images/labyrinth-entrance.bmp");
     r->castle_texture = load_sprite_texture(sdl, "assets/images/castle-of-no-return.bmp");
     r->apothecary_texture = load_sprite_texture(sdl, "assets/images/apothecary.bmp");
+    r->guild_texture = load_sprite_texture(sdl, "assets/images/adventurers-guild.bmp");
     r->island_texture = load_sprite_texture(sdl, "assets/images/island-sprites.bmp");
     r->island_ship_texture = load_sprite_texture(sdl,
         "assets/images/island-ship.bmp");
@@ -72,6 +73,10 @@ void renderer_free(Renderer *r) {
     if (r->apothecary_texture) {
         SDL_DestroyTexture(r->apothecary_texture);
         r->apothecary_texture = NULL;
+    }
+    if (r->guild_texture) {
+        SDL_DestroyTexture(r->guild_texture);
+        r->guild_texture = NULL;
     }
     if (r->island_ship_texture) {
         SDL_DestroyTexture(r->island_ship_texture);
