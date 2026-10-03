@@ -995,6 +995,17 @@ void map_place_town3_guards(Map *m, int avoid_x, int avoid_y) {
     }
 }
 
+void map_place_town4_guards(Map *m, int avoid_x, int avoid_y) {
+    const int guard_y[2] = {TOWN4_KING_GATE_Y - 1, TOWN4_KING_GATE_Y + 1};
+    for (int i = 0; i < 2; i++) {
+        int y = guard_y[i];
+        if (m->tiles[y][TOWN4_KING_GATE_X] == TILE_TOWN_FLOOR &&
+            (TOWN4_KING_GATE_X != avoid_x || y != avoid_y)) {
+            m->tiles[y][TOWN4_KING_GATE_X] = TILE_NPC_ROYAL_GUARD;
+        }
+    }
+}
+
 void map_place_town2_center(Map *m) {
     for (int x = 18; x <= 22; x++) {
         m->tiles[0][x] = TILE_TOWN_EXIT;
@@ -1161,6 +1172,7 @@ void map_generate_town4(Map *m, int *spawn_x, int *spawn_y) {
         m->tiles[y][0] = TILE_TOWN_EXIT;
     }
     map_place_town4_workshop(m);
+    map_place_town4_guards(m, -1, -1);
     m->tiles[TOWN4_ILYA_Y][TOWN4_ILYA_X] = TILE_NPC_DRAGON_SEEKER;
     *spawn_x = 20;
     *spawn_y = TOWN_H - 2;

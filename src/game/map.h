@@ -25,6 +25,8 @@
 #define CROWNROAD_Y 20
 #define TOWN3_ROAD_X 28
 #define TOWN3_KING_GATE_Y 14
+#define TOWN4_KING_GATE_X 4
+#define TOWN4_KING_GATE_Y 12
 #define CASTLE_ROAD_Y 14
 #define SWAMP_ROAD_W TOWN_W
 #define SWAMP_ROAD_H 48
@@ -344,6 +346,7 @@ void map_generate_forest_road(Map *m);
 void map_place_town_labyrinth(Map *m);
 void map_place_town2_center(Map *m);
 void map_place_town3_guards(Map *m, int avoid_x, int avoid_y);
+void map_place_town4_guards(Map *m, int avoid_x, int avoid_y);
 void map_place_town3_frost_gate(Map *m);
 void map_place_town_harbor(Map *m);
 void map_place_town_tavern(Map *m);

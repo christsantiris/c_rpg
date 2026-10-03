@@ -3272,13 +3272,17 @@ static void prepare_quest_expedition(GameState *g, Location location) {
     }
 }
 
-// The Royal Guards only warn; King Road East stays open to everyone.
+// The Royal Guards warn travelers but never block the King Roads.
 void game_talk_to_royal_guard(GameState *g, int x, int y) {
     g->dialogue_active = 1;
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Royal Guard");
     g->dialogue_x = x;
     g->dialogue_y = y;
-    if (y < TOWN3_KING_GATE_Y) {
+    if (g->location == LOCATION_TOWN4) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Traveler, King Road West is dangerous. Bandits, archers and "
+            "horsemen roam the route. Stay alert, but we will not stop you.");
+    } else if (y < TOWN3_KING_GATE_Y) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "Halt, traveler. Beyond this gate King Road East swarms with "
             "bandits, archers and horsemen. Few who walk it return.");

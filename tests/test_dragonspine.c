@@ -66,17 +66,19 @@ void test_dragonspine(void) {
         g.map.tiles[TOWN_H - 1][20] == TILE_TOWN_EXIT);
     int empty_crossroads = 1;
     int ilya_count = 0;
+    int royal_guard_count = 0;
     for (int y = 0; y < TOWN_H; y++) {
         for (int x = 0; x < TOWN_W; x++) {
             TileType tile = g.map.tiles[y][x];
             ilya_count += tile == TILE_NPC_DRAGON_SEEKER;
+            royal_guard_count += tile == TILE_NPC_ROYAL_GUARD;
             empty_crossroads &= tile == TILE_WALL || tile == TILE_TOWN_FLOOR ||
                 tile == TILE_TOWN_PATH || tile == TILE_TOWN_EXIT ||
-                tile == TILE_NPC_DRAGON_SEEKER;
+                tile == TILE_NPC_DRAGON_SEEKER || tile == TILE_NPC_ROYAL_GUARD;
         }
     }
-    ASSERT("Ridgeshire is a crossroads with Ilya and no buildings",
-        empty_crossroads && ilya_count == 1 &&
+    ASSERT("Ridgeshire is a crossroads with Ilya and two guards, not buildings",
+        empty_crossroads && ilya_count == 1 && royal_guard_count == 2 &&
         g.map.tiles[12][20] == TILE_TOWN_PATH &&
         g.map.tiles[0][20] == TILE_WALL && g.map.tiles[12][0] == TILE_TOWN_EXIT);
 
