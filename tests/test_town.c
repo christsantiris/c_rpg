@@ -97,10 +97,12 @@ void test_king_roads_and_castle(void) {
             TOWN4_KING_GATE_Y));
     game_talk_to_royal_guard(&ridgeshire, TOWN4_KING_GATE_X,
         TOWN4_KING_GATE_Y + 1);
-    ASSERT("the second King Road West guard gives the same warning",
+    ASSERT("the second King Road West guard gives a distinct equivalent warning",
         ridgeshire.dialogue_active &&
-        strstr(ridgeshire.dialogue_text, "King Road West") &&
-        strstr(ridgeshire.dialogue_text, "will not stop you"));
+        !strstr(ridgeshire.dialogue_text, "King Road West") &&
+        strstr(ridgeshire.dialogue_text, "Bandits, archers and horsemen") &&
+        strstr(ridgeshire.dialogue_text, "will let you pass") &&
+        strstr(ridgeshire.dialogue_text, "cannot protect you"));
     const int west_guard_slot = 99016;
     int guards_saved = save_game(&ridgeshire, west_guard_slot) &&
         load_game(&loaded, west_guard_slot);

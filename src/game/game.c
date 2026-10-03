@@ -3279,9 +3279,16 @@ void game_talk_to_royal_guard(GameState *g, int x, int y) {
     g->dialogue_x = x;
     g->dialogue_y = y;
     if (g->location == LOCATION_TOWN4) {
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Traveler, King Road West is dangerous. Bandits, archers and "
-            "horsemen roam the route. Stay alert, but we will not stop you.");
+        if (y < TOWN4_KING_GATE_Y) {
+            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+                "Traveler, King Road West is dangerous. Bandits, archers and "
+                "horsemen roam the route. Stay alert, but we will not stop you.");
+        } else {
+            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+                "Bandits, archers and horsemen prowl the road ahead. Keep "
+                "your wits about you; we will let you pass, but cannot "
+                "protect you out there.");
+        }
     } else if (y < TOWN3_KING_GATE_Y) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "Halt, traveler. Beyond this gate King Road East swarms with "
