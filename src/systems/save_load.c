@@ -384,7 +384,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 70);
+    cJSON_AddNumberToObject(root, "save_version", 73);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -2232,6 +2232,17 @@ int load_game(GameState *g, int slot) {
         if (!map_is_walkable(&g->map, g->player.x, g->player.y)) {
             g->player.x = TOWN4_WORKSHOP_DOOR_X;
             g->player.y = TOWN4_WORKSHOP_DOOR_Y + 1;
+        }
+        map_place_town4_guards(&g->map, g->player.x, g->player.y);
+    }
+
+    if (save_version < 73 && g->location == LOCATION_KING_ROAD_WEST) {
+        for (int y = 0; y < CROWNROAD_H; y++) {
+            for (int x = 0; x < CROWNROAD_W; x++) {
+                if (g->map.tiles[y][x] == TILE_NPC_ROYAL_GUARD) {
+                    g->map.tiles[y][x] = TILE_TOWN_FLOOR;
+                }
+            }
         }
     }
 

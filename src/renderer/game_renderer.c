@@ -1511,7 +1511,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_dragon_seeker(r, sx, sy); break;
                 case TILE_NPC_ROYAL_GUARD:
                     // Each guard holds the halberd on the side away from the road.
-                    draw_royal_guard(r, sx, sy, y < TOWN3_KING_GATE_Y); break;
+                    draw_royal_guard(r, sx, sy,
+                        game_is_king_road(g) ? y < CROWNROAD_Y :
+                        (g->location == LOCATION_TOWN4 ?
+                        y < TOWN4_KING_GATE_Y : y < TOWN3_KING_GATE_Y));
+                    break;
                 case TILE_FOREST_WARDEN:
                     draw_forest_warden(r, sx, sy, x, y); break;
                 case TILE_ISLAND_WATER:

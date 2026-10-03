@@ -75,6 +75,45 @@ void test_king_roads_and_castle(void) {
     ASSERT("castle east gate enters King Road West with independent enemies",
         g.location == LOCATION_KING_ROAD_WEST && g.player.x == 1 &&
         g.enemy_count == MAX_ENEMIES && g.enemies[0].active);
+    GameState ridgeshire = g;
+    game_leave_crownroad(&ridgeshire, LOCATION_TOWN4);
+    ASSERT("Ridgeshire has two guards flanking its open King Road West gate",
+        ridgeshire.map.tiles[TOWN4_KING_GATE_Y - 1][TOWN4_KING_GATE_X] ==
+            TILE_NPC_ROYAL_GUARD &&
+        ridgeshire.map.tiles[TOWN4_KING_GATE_Y + 1][TOWN4_KING_GATE_X] ==
+            TILE_NPC_ROYAL_GUARD &&
+        ridgeshire.map.tiles[TOWN4_KING_GATE_Y][TOWN4_KING_GATE_X] ==
+            TILE_TOWN_PATH &&
+        map_is_walkable(&ridgeshire.map, TOWN4_KING_GATE_X,
+            TOWN4_KING_GATE_Y));
+    game_talk_to_royal_guard(&ridgeshire, TOWN4_KING_GATE_X,
+        TOWN4_KING_GATE_Y - 1);
+    ASSERT("King Road West guards warn about danger without blocking travel",
+        ridgeshire.dialogue_active &&
+        strstr(ridgeshire.dialogue_text, "King Road West") &&
+        strstr(ridgeshire.dialogue_text, "will not stop you") &&
+        ridgeshire.location == LOCATION_TOWN4 &&
+        map_is_walkable(&ridgeshire.map, TOWN4_KING_GATE_X,
+            TOWN4_KING_GATE_Y));
+    game_talk_to_royal_guard(&ridgeshire, TOWN4_KING_GATE_X,
+        TOWN4_KING_GATE_Y + 1);
+    ASSERT("the second King Road West guard gives the same warning",
+        ridgeshire.dialogue_active &&
+        strstr(ridgeshire.dialogue_text, "King Road West") &&
+        strstr(ridgeshire.dialogue_text, "will not stop you"));
+    const int west_guard_slot = 99016;
+    int guards_saved = save_game(&ridgeshire, west_guard_slot) &&
+        load_game(&loaded, west_guard_slot);
+    ASSERT("both King Road West guards remain after loading a Ridgeshire save",
+        guards_saved &&
+        loaded.map.tiles[TOWN4_KING_GATE_Y - 1][TOWN4_KING_GATE_X] ==
+            TILE_NPC_ROYAL_GUARD &&
+        loaded.map.tiles[TOWN4_KING_GATE_Y + 1][TOWN4_KING_GATE_X] ==
+            TILE_NPC_ROYAL_GUARD);
+    if (guards_saved) {
+        ridgeshire = loaded;
+    }
+    remove("saves/savegame_99016.json");
     g.enemies[1].active = 0;
     g.player.x = CROWNROAD_W - 2;
     action_resolve_player(&g, (Action){ACTION_MOVE, CROWNROAD_W - 1, CROWNROAD_Y});
