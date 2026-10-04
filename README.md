@@ -47,8 +47,15 @@ new northeast road in OakHaven, unlocked by the Goblin King's defeat. Ilya
 waits beside Ridgeshire's Dragonspine gate and offers a quest to recover a golden
 goblet from the dragon's hoard. Her one-time reward is a Potion of Strength
 that permanently adds 1 base attack when consumed.
-The Frostfell Wastes now begin at Rosemoor's north gate; Stillbury's west gate
-is closed.
+The Frostfell Wastes begin at Rosemoor's north gate. Stillbury's west gate opens
+onto the five-level Sunscar Wastes: enter from the east, advance west, and
+backtrack east. Both the first level's east entrance and the final west exit
+return to Stillbury. Return to Town leaves a portal by Stillbury's west gate.
+Scarabs and venomous Vipers roam its first level, Mummies join from level two,
+Djinn fire magic bolts from level three, and armored Golems appear from level
+four. Mummies and Golems move slowly. The Desert Pharaoh guards the final
+clearing with alternating magic bolts and drops the Sandstorm Staff, a rare
+two-handed Mage weapon. Unclaimed staff rewards survive leaving and saving.
 Speaking with Cain explains the dangers beyond town and grants one Scroll of
 Return to Town when inventory space is available. Use the scroll from the
 inventory to learn the permanent spell.

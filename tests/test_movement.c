@@ -32,9 +32,9 @@ void test_enemy_projectiles(void) {
     EnemyProjectiles shots = {0};
     EnemyType ranged[] = {
         ENEMY_LICH_KING, ENEMY_FOREST_NECROMANCER, ENEMY_MOUNTAIN_GOBLIN_KING,
-        ENEMY_DROWNED_QUEEN, ENEMY_SIREN, ENEMY_WATER_ELEMENTAL,
+        ENEMY_DROWNED_QUEEN, ENEMY_DESERT_PHARAOH, ENEMY_SIREN, ENEMY_WATER_ELEMENTAL,
         ENEMY_GOBLIN_ARCHER, ENEMY_ROAD_ARCHER, ENEMY_GOBLIN_BOMBER,
-        ENEMY_DARK_ELF, ENEMY_CRYPT_CONJURER
+        ENEMY_DARK_ELF, ENEMY_CRYPT_CONJURER, ENEMY_DJINN
     };
     for (int i = 0; i < (int)(sizeof(ranged) / sizeof(ranged[0])); i++) {
         setup_ranged_enemy(&g, ranged[i]);
@@ -174,7 +174,7 @@ void test_enemy_projectiles(void) {
         ENEMY_CRYPT_CONJURER, ENEMY_DARK_ELF, ENEMY_GOBLIN_ARCHER,
         ENEMY_GOBLIN_BOMBER, ENEMY_SIREN, ENEMY_WATER_ELEMENTAL,
         ENEMY_BLOWDART_HUNTER, ENEMY_SUN_PRIEST, ENEMY_SERPENT_SPIRIT,
-        ENEMY_MOONBOUND_SENTINEL, ENEMY_GOBLIN_SHAMAN
+        ENEMY_MOONBOUND_SENTINEL, ENEMY_GOBLIN_SHAMAN, ENEMY_DJINN
     };
     for (int i = 0; i < (int)(sizeof(retreating) / sizeof(retreating[0])); i++) {
         for (int corridor = 0; corridor < 2; corridor++) {
