@@ -384,7 +384,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 75);
+    cJSON_AddNumberToObject(root, "save_version", 76);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -491,6 +491,7 @@ int save_game(const GameState *g, int slot) {
         g->island_travel_unlocked);
     cJSON_AddNumberToObject(root, "dragon_treasure_quest_state",
         g->dragon_treasure_quest_state);
+    cJSON_AddNumberToObject(root, "sunscar_lamp_quest_state", g->sunscar_lamp_quest_state);
     cJSON_AddNumberToObject(root, "temple_alignment", g->temple_alignment);
     cJSON_AddNumberToObject(root, "temple_sentinels_awakened",
         g->temple_sentinels_awakened);
@@ -856,6 +857,9 @@ static void repair_floor_item_underlays(GameState *g) {
 }
 
 static void migrate_testing_save(cJSON *root, int version) {
+    if (version < 76 && !cJSON_GetObjectItem(root, "sunscar_lamp_quest_state")) {
+        cJSON_AddNumberToObject(root, "sunscar_lamp_quest_state", 0);
+    }
     if (version < 73) {
         cJSON *player = cJSON_GetObjectItem(root, "player");
         if (!cJSON_GetObjectItem(player, "freeze_recovery")) {
@@ -918,14 +922,16 @@ int load_game(GameState *g, int slot) {
     cJSON *freeze_recovery = cJSON_GetObjectItem(player, "freeze_recovery");
     cJSON *kraken_bow_unclaimed = cJSON_GetObjectItem(root, "kraken_bow_unclaimed");
     cJSON *sandstorm_staff_unclaimed = cJSON_GetObjectItem(root, "sandstorm_staff_unclaimed");
+    cJSON *lamp_quest = cJSON_GetObjectItem(root, "sunscar_lamp_quest_state");
     if (!cJSON_IsNumber(freeze_recovery) || !cJSON_IsNumber(kraken_bow_unclaimed) ||
-        !cJSON_IsNumber(sandstorm_staff_unclaimed)) {
+        !cJSON_IsNumber(sandstorm_staff_unclaimed) || !cJSON_IsNumber(lamp_quest)) {
         cJSON_Delete(root);
         return 0;
     }
     g->player.freeze_recovery = freeze_recovery->valueint;
     g->kraken_bow_unclaimed = kraken_bow_unclaimed->valueint;
     g->sandstorm_staff_unclaimed = sandstorm_staff_unclaimed->valueint;
+    g->sunscar_lamp_quest_state = lamp_quest->valueint;
     strncpy(g->player.name, cJSON_GetObjectItem(player, "name")->valuestring, 20);
     g->player.x                = cJSON_GetObjectItem(player, "x")->valueint;
     g->player.y                = cJSON_GetObjectItem(player, "y")->valueint;

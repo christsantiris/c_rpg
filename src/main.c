@@ -523,6 +523,7 @@ int main(int argc, char **argv) {
             game.location == LOCATION_MOUNTAINS ||
             game.location == LOCATION_DRAGONSPINE ||
             game.location == LOCATION_FROSTFELL ||
+            game.location == LOCATION_DESERT ||
             game.location == LOCATION_COAST ||
             game.location == LOCATION_SWAMP ||
             game.location == LOCATION_ISLAND ||
@@ -535,8 +536,9 @@ int main(int argc, char **argv) {
                 int timeout = elapsed >= 500 ? 0 : (int)(500 - elapsed);
                 has_event = SDL_WaitEventTimeout(&event, timeout);
             } else if (ambient_animating) {
-                // Falling snow needs smoother motion than the tile animations.
-                int interval = game.location == LOCATION_FROSTFELL ? 33 :
+                // Snow and blowing sand need smoother motion than tile animations.
+                int interval = (game.location == LOCATION_FROSTFELL ||
+                    game.location == LOCATION_DESERT) ? 33 :
                     (int)AMBIENT_FRAME_MS;
                 has_event = SDL_WaitEventTimeout(&event,
                     interval);
@@ -929,6 +931,9 @@ int main(int argc, char **argv) {
                                         } else if (game.map.tiles[ty][tx] ==
                                             TILE_NPC_DRAGON_SEEKER) {
                                             game_talk_to_dragon_seeker(&game);
+                                            found = 1;
+                                        } else if (game.map.tiles[ty][tx] == TILE_NPC_GUILD_SEEKER) {
+                                            game_talk_to_guild_seeker(&game);
                                             found = 1;
                                         } else if (game.map.tiles[ty][tx] ==
                                             TILE_NPC_ROYAL_GUARD) {
@@ -1359,10 +1364,12 @@ int main(int argc, char **argv) {
             game.location == LOCATION_TOWN4 ||
             game.location == LOCATION_CASTLE ||
             game.location == LOCATION_INN ||
+            game.location == LOCATION_GUILD ||
             game.location == LOCATION_ISLAND;
         int in_town2 = game.location == LOCATION_TOWN2 ||
             game.location == LOCATION_INN;
         int in_town3 = game.location == LOCATION_TOWN3 ||
+            game.location == LOCATION_GUILD ||
             game.location == LOCATION_CASTLE;
         int in_town4 = game.location == LOCATION_TOWN4;
         music_update(screen, is_town, in_town2, in_town3, in_town4);

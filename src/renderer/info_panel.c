@@ -66,6 +66,8 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor)
         SDL_snprintf(loc, sizeof(loc), "FOREST ROAD");
     } else if (g->location == LOCATION_INN) {
         SDL_snprintf(loc, sizeof(loc), "INN");
+    } else if (g->location == LOCATION_GUILD) {
+        SDL_snprintf(loc, sizeof(loc), "ADVENTURER'S GUILD");
     } else if (g->location == LOCATION_FOREST) {
         SDL_snprintf(loc, sizeof(loc), "FOREST %d", g->level);
     } else if (g->location == LOCATION_MOUNTAINS) {

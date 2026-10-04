@@ -117,7 +117,8 @@ typedef enum {
     LOCATION_SWAMP_ROAD,
     LOCATION_KING_ROAD_WEST,
     LOCATION_CASTLE,
-    LOCATION_DESERT
+    LOCATION_DESERT,
+    LOCATION_GUILD
 } Location;
 
 typedef struct {
@@ -191,6 +192,7 @@ typedef struct {
     int cain_scroll_given;
     int island_travel_unlocked;
     int dragon_treasure_quest_state;
+    int sunscar_lamp_quest_state;
     int temple_alignment;
     int temple_sentinels_awakened;
     int temple_treasure_state;
@@ -235,6 +237,10 @@ void game_leave_swamp_road(GameState *g, Location destination);
 void game_leave_crownroad(GameState *g, Location destination);
 void game_enter_inn(GameState *g);
 void game_leave_inn(GameState *g);
+void game_enter_guild(GameState *g);
+void game_leave_guild(GameState *g);
+void game_talk_to_guild_seeker(GameState *g);
+void game_collect_desert_lamp(GameState *g);
 void game_talk_to_innkeeper(GameState *g);
 void game_rescue_innkeeper_daughter(GameState *g, int x, int y);
 void game_enter_labyrinth(GameState *g);

@@ -4,6 +4,11 @@ Press `Q` during play to open the Quest Journal. It tracks the four regional
 Tavern quests, Nahla's Ruined Temple quest, and Rook's one-time labyrinth
 quest after they are accepted.
 
+Zara's **The Lost Magic Lamp** quest also appears after accepting it inside
+Rosemoor's Adventurer's Guild. Recover the lamp from Sunscar Wastes stage 4,
+then return to Zara for 80 gold and 600 score. Pickup marks the quest ready to
+return; collecting the reward moves it to the Completed tab.
+
 The Active tab contains quests in progress and quests ready to turn in. The
 Completed tab retains quests whose rewards have been collected. Each entry
 shows its quest giver, description, target area and stages, objective progress,
