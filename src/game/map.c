@@ -1218,7 +1218,7 @@ void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
     // The Inn stands east of the Healer, its door opening onto the square.
     map_place_town_inn(m);
     map_place_town_labyrinth(m);
-    *spawn_x = 1;
+    *spawn_x = TOWN_W - 2;
     *spawn_y = 12;
 }
 
