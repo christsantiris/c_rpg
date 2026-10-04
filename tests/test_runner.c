@@ -39,6 +39,7 @@ void test_coast(void);
 void test_coast_terrain(void);
 void test_swamp(void);
 void test_frostfell(void);
+void test_desert(void);
 void test_mountain_terrain(void);
 void test_dragonspine(void);
 void test_elowen_quest(void);
@@ -111,6 +112,8 @@ int main(void) {
     test_swamp();
     printf("\n");
     test_frostfell();
+    printf("\n");
+    test_desert();
     printf("\n");
     test_quest_activation_gating();
     printf("\n");

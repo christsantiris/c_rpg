@@ -139,6 +139,20 @@ static void draw_icon_runed_staff(Renderer *r, int px, int py) {
     fill_rect_px(r, px + 11, py + 7, 2, 2, rune);
 }
 
+static void draw_icon_sandstorm_staff(Renderer *r, int px, int py) {
+    SDL_Color wood = {113, 68, 35, 255};
+    SDL_Color gold = {227, 180, 71, 255};
+    SDL_Color amber = {244, 126, 35, 255};
+    SDL_Color glow = {255, 238, 157, 255};
+    fill_rect_px(r, px + 5, py + 17, 3, 5, wood);
+    fill_rect_px(r, px + 7, py + 13, 3, 6, gold);
+    fill_rect_px(r, px + 9, py + 9, 3, 6, wood);
+    fill_rect_px(r, px + 11, py + 5, 3, 6, gold);
+    fill_rect_px(r, px + 13, py + 1, 8, 8, gold);
+    fill_rect_px(r, px + 15, py + 3, 4, 4, amber);
+    fill_rect_px(r, px + 16, py + 3, 2, 2, glow);
+}
+
 static void draw_icon_magic_staff(Renderer *r, int px, int py) {
     SDL_Color wood = {69, 45, 92, 255};
     SDL_Color wood_hi = {126, 74, 153, 255};
@@ -305,6 +319,9 @@ void draw_icon_weapon(Renderer *r, int px, int py, const Item *item) {
             break;
         case ITEM_VISUAL_MAGIC_STAFF:
             draw_icon_magic_staff(r, px, py);
+            break;
+        case ITEM_VISUAL_SANDSTORM_STAFF:
+            draw_icon_sandstorm_staff(r, px, py);
             break;
         case ITEM_VISUAL_BOW:
             draw_icon_bow(r, px, py);

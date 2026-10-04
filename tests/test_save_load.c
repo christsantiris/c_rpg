@@ -157,7 +157,7 @@ static int rewrite_save_version(int slot, int version) {
     return 1;
 }
 
-// Deletes one top-level field to reproduce a save written before it existed.
+// Deletes a top-level or player.field value to reproduce an older save.
 static int remove_save_field(int slot, const char *field) {
     char path[64];
     format_save_path(slot, path, sizeof(path));
@@ -179,11 +179,16 @@ static int remove_save_field(int slot, const char *field) {
 
     cJSON *root = cJSON_Parse(text);
     free(text);
-    if (!root || !cJSON_GetObjectItem(root, field)) {
+    cJSON *parent = root;
+    if (strncmp(field, "player.", 7) == 0) {
+        parent = cJSON_GetObjectItem(root, "player");
+        field += 7;
+    }
+    if (!root || !cJSON_GetObjectItem(parent, field)) {
         cJSON_Delete(root);
         return 0;
     }
-    cJSON_DeleteItemFromObject(root, field);
+    cJSON_DeleteItemFromObject(parent, field);
     char *updated = cJSON_Print(root);
     cJSON_Delete(root);
     if (!updated) {
@@ -1316,11 +1321,155 @@ static void test_spent_island_map_on_load(void) {
     remove_test_save(ROUND_TRIP_SLOT);
 }
 
+static void test_desert_state_round_trip(void) {
+    static GameState original;
+    static GameState loaded;
+    memset(&original, 0, sizeof(original));
+    memset(&loaded, 0, sizeof(loaded));
+    for (int i = 0; i < DESERT_DEPTH; i++) {
+        original.desert_cache[i].valid = 1;
+        original.desert_cache[i].level_cleared = 1;
+        original.desert_cache[i].enemy_count = 1;
+    }
+    game_init(&original);
+    int fresh = original.max_desert_level_reached == 1;
+    for (int i = 0; i < DESERT_DEPTH; i++) {
+        fresh &= !original.desert_cache[i].valid &&
+            !original.desert_cache[i].level_cleared &&
+            original.desert_cache[i].enemy_count == 0;
+    }
+    ASSERT("a new game resets all five desert caches and progress", fresh);
+
+    original.max_desert_level_reached = DESERT_DEPTH;
+    for (int i = 0; i < DESERT_DEPTH; i++) {
+        LevelCache *cache = &original.desert_cache[i];
+        cache->valid = i != 2;
+        cache->level_cleared = i == DESERT_DEPTH - 1;
+        map_generate_desert(&cache->map, i + 1);
+        cache->enemy_count = 1;
+        cache->enemies[0] = (Enemy){
+            .type = ENEMY_SKELETON, .name = "Skeleton", .x = 5 + i, .y = 5,
+            .active = i != DESERT_DEPTH - 1, .hp = 10 + i, .max_hp = 20
+        };
+        loaded.desert_cache[i].valid = 1;
+        loaded.desert_cache[i].enemy_count = 7;
+    }
+    original.max_swamp_level_reached = 2;
+    original.max_frostfell_level_reached = 3;
+    int loaded_ok = save_game(&original, ROUND_TRIP_SLOT) &&
+        load_game(&loaded, ROUND_TRIP_SLOT);
+    ASSERT("desert depth survives save/load independently of swamp and frost",
+        loaded_ok && loaded.max_desert_level_reached == DESERT_DEPTH &&
+        loaded.max_swamp_level_reached == 2 && loaded.max_frostfell_level_reached == 3);
+    int caches_ok = loaded_ok;
+    for (int i = 0; i < DESERT_DEPTH && loaded_ok; i++) {
+        const LevelCache *cache = &loaded.desert_cache[i];
+        caches_ok &= cache->valid == original.desert_cache[i].valid &&
+            cache->level_cleared == original.desert_cache[i].level_cleared;
+        if (cache->valid) {
+            caches_ok &= memcmp(cache->map.tiles, original.desert_cache[i].map.tiles,
+                sizeof(cache->map.tiles)) == 0 && cache->enemy_count == 1 &&
+                cache->enemies[0].hp == 10 + i && cache->enemies[0].x == 5 + i &&
+                cache->enemies[0].active == (i != DESERT_DEPTH - 1);
+        } else {
+            caches_ok &= cache->enemy_count == 0;
+        }
+    }
+    ASSERT("desert maps, living/dead enemies and cleared flags survive save/load", caches_ok);
+    ASSERT("a current-format save with missing desert state is still rejected",
+        remove_save_field(ROUND_TRIP_SLOT, "desert_cache") &&
+        !load_game(&loaded, ROUND_TRIP_SLOT));
+    remove_test_save(ROUND_TRIP_SLOT);
+}
+
+static void test_sunscar_save_migration(void) {
+    static GameState original;
+    static GameState loaded;
+    memset(&original, 0, sizeof(original));
+    original.player.player_class = CLASS_WARRIOR;
+    game_init(&original);
+    original.defeated_bosses = (1 << LOCATION_FOREST) | (1 << LOCATION_SWAMP);
+    game_enter_town2(&original);
+    original.player.level = 10;
+    original.player.hp = 115;
+    original.gold = 222;
+    original.score = 1234;
+    original.dain_quest_state = 2;
+    original.dain_map_fragments = 3;
+    original.max_swamp_level_reached = 4;
+    original.max_frostfell_level_reached = 3;
+    original.inventory[0] = item_make_long_sword();
+    for (int y = 10; y <= 14; y++) {
+        original.map.tiles[y][0] = TILE_WALL;
+    }
+    for (int version = 72; version <= 73; version++) {
+        memset(&loaded, 0xff, sizeof(loaded));
+        int old_save = save_game(&original, ROUND_TRIP_SLOT) &&
+            rewrite_save_version(ROUND_TRIP_SLOT, version) &&
+            remove_save_field(ROUND_TRIP_SLOT, "max_desert_level_reached") &&
+            remove_save_field(ROUND_TRIP_SLOT, "desert_cache") &&
+            remove_save_field(ROUND_TRIP_SLOT, "sandstorm_staff_unclaimed");
+        if (version == 72 && old_save) {
+            old_save = remove_save_field(ROUND_TRIP_SLOT, "kraken_bow_unclaimed") &&
+                remove_save_field(ROUND_TRIP_SLOT, "player.freeze_recovery");
+        }
+        int migrated = old_save && load_game(&loaded, ROUND_TRIP_SLOT);
+        int fresh_desert = migrated && loaded.max_desert_level_reached == 1 &&
+            !loaded.sandstorm_staff_unclaimed && !loaded.kraken_bow_unclaimed &&
+            !loaded.player.freeze_recovery;
+        for (int i = 0; i < DESERT_DEPTH; i++) {
+            fresh_desert &= !loaded.desert_cache[i].valid &&
+                !loaded.desert_cache[i].level_cleared && loaded.desert_cache[i].enemy_count == 0;
+        }
+        ASSERT("pre-Sunscar saves initialize fresh desert state instead of resetting the game", fresh_desert);
+        ASSERT("migrating an old testing save preserves character, inventory, quests and regional progress",
+            migrated && loaded.player.level == original.player.level &&
+            loaded.player.hp == original.player.hp && loaded.player.x == original.player.x &&
+            loaded.player.y == original.player.y && loaded.gold == original.gold &&
+            loaded.score == original.score && loaded.inventory_count == original.inventory_count &&
+            weapon_fields_match(&loaded.inventory[0], &original.inventory[0]) &&
+            loaded.dain_quest_state == 2 && loaded.dain_map_fragments == 3 &&
+            loaded.defeated_bosses == original.defeated_bosses &&
+            loaded.max_swamp_level_reached == 4 && loaded.max_frostfell_level_reached == 3);
+        int west_gate = migrated;
+        for (int y = 10; y <= 14; y++) {
+            west_gate &= loaded.map.tiles[y][0] == TILE_TOWN_EXIT;
+        }
+        ASSERT("loading an old Stillbury map reopens all five west gate tiles", west_gate);
+        int resaved = migrated && save_game(&loaded, ROUND_TRIP_SLOT) && load_game(&loaded, ROUND_TRIP_SLOT);
+        ASSERT("a migrated testing save can be saved and loaded in the current format",
+            resaved && loaded.player.hp == original.player.hp && loaded.max_desert_level_reached == 1);
+    }
+
+    original.max_desert_level_reached = DESERT_DEPTH;
+    original.desert_cache[0].valid = 1;
+    map_generate_desert(&original.desert_cache[0].map, 1);
+    original.desert_cache[0].enemy_count = 1;
+    original.desert_cache[0].enemies[0] = (Enemy){
+        .type = ENEMY_SCARAB, .name = "Scarab", .active = 1, .hp = 11, .max_hp = 24,
+        .x = original.desert_cache[0].map.stairs_up_x - 1,
+        .y = original.desert_cache[0].map.stairs_up_y
+    };
+    int migrated = save_game(&original, ROUND_TRIP_SLOT) &&
+        rewrite_save_version(ROUND_TRIP_SLOT, 74) &&
+        remove_save_field(ROUND_TRIP_SLOT, "sandstorm_staff_unclaimed") &&
+        load_game(&loaded, ROUND_TRIP_SLOT);
+    ASSERT("version 74 saves gain the staff flag without losing existing desert exploration and enemies",
+        migrated && !loaded.sandstorm_staff_unclaimed && loaded.max_desert_level_reached == DESERT_DEPTH &&
+        loaded.desert_cache[0].valid && loaded.desert_cache[0].enemy_count == 1 &&
+        loaded.desert_cache[0].enemies[0].type == ENEMY_SCARAB && loaded.desert_cache[0].enemies[0].hp == 11 &&
+        memcmp(loaded.desert_cache[0].map.tiles, original.desert_cache[0].map.tiles,
+            sizeof(original.desert_cache[0].map.tiles)) == 0);
+    remove_test_save(ROUND_TRIP_SLOT);
+}
+
 void test_save_load(void) {
     test_harbor_road_save_load();
     test_spent_island_map_on_load();
     test_cain_save_load();
     printf("Save/load tests:\n");
+    test_desert_state_round_trip();
+    test_sunscar_save_migration();
     test_current_weapon_round_trip();
     test_dual_wield_round_trip();
     test_legacy_off_hand_migration();

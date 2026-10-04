@@ -210,6 +210,21 @@ Item item_make_magic_staff(void) {
     return it;
 }
 
+Item item_make_sandstorm_staff(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_WEAPON;
+    strncpy(it.name, "Sandstorm Staff", sizeof(it.name) - 1);
+    it.attack_bonus = 7;
+    it.value = 700;
+    it.spell_power_bonus = 6;
+    it.max_mp_bonus = 25;
+    it.spell_cost_reduction_percent = 7;
+    set_weapon_metadata(&it, WEAPON_FAMILY_STAFF, WEAPON_HANDS_TWO,
+        ITEM_RARITY_RARE, ITEM_CLASS_MAGE, ITEM_VISUAL_SANDSTORM_STAFF);
+    return it;
+}
+
 Item item_make_bow(void) {
     Item it = {0};
     it.active = 1;

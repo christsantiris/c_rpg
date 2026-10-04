@@ -271,6 +271,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_MOUNTAIN_HIDDEN_CAVE &&
         m->tiles[y][x] != TILE_COAST_WALL &&
         m->tiles[y][x] != TILE_SWAMP_WALL &&
+        m->tiles[y][x] != TILE_DESERT_WALL &&
         m->tiles[y][x] != TILE_FROST_WALL &&
         m->tiles[y][x] != TILE_FROST_LAKE_HOLE &&
         m->tiles[y][x] != TILE_FROST_BROKEN_ICE &&
@@ -1010,9 +1011,9 @@ void map_place_town2_center(Map *m) {
     for (int x = 18; x <= 22; x++) {
         m->tiles[0][x] = TILE_TOWN_EXIT;
     }
-    // Frostfell now branches north from Rosemoor, so Stillbury's west wall is closed.
+    // Sunscar Wastes branches west from Stillbury.
     for (int y = 10; y <= 14; y++) {
-        m->tiles[y][0] = TILE_WALL;
+        m->tiles[y][0] = TILE_TOWN_EXIT;
     }
     for (int x = TOWN_HEALER_DOOR_X; x <= TOWN_WITCH_DOOR_X; x++) {
         m->tiles[13][x] = TILE_TOWN_PATH;
@@ -1742,6 +1743,37 @@ void map_generate_frostfell(Map *m, int level) {
     }
     place_thin_ice_shortcuts(m, level);
     place_slick_ice_patches(m, level);
+}
+
+// Reuse connected clearings, mirrored east to west, as sand between rocks.
+void map_generate_desert(Map *m, int level) {
+    map_generate_swamp(m, level);
+    for (int y = 0; y < DESERT_MAP_H; y++) {
+        for (int x = 0; x < DESERT_MAP_W / 2; x++) {
+            TileType tile = m->tiles[y][x];
+            m->tiles[y][x] = m->tiles[y][DESERT_MAP_W - 1 - x];
+            m->tiles[y][DESERT_MAP_W - 1 - x] = tile;
+        }
+    }
+    for (int i = 0; i < m->room_count; i++) {
+        m->rooms[i].x = DESERT_MAP_W - m->rooms[i].x - m->rooms[i].w;
+    }
+    m->stairs_up_x = DESERT_MAP_W - 1 - m->stairs_up_x;
+    m->stairs_down_x = DESERT_MAP_W - 1 - m->stairs_down_x;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            TileType tile = m->tiles[y][x];
+            if (tile == TILE_SWAMP_WALL) {
+                m->tiles[y][x] = TILE_DESERT_WALL;
+            } else if (tile == TILE_SWAMP_FLOOR) {
+                m->tiles[y][x] = TILE_DESERT_FLOOR;
+            } else if (tile == TILE_SWAMP_ENTRANCE) {
+                m->tiles[y][x] = TILE_DESERT_ENTRANCE;
+            } else if (tile == TILE_SWAMP_EXIT) {
+                m->tiles[y][x] = TILE_DESERT_EXIT;
+            }
+        }
+    }
 }
 
 void map_generate_dragonspine(Map *m, int level) {

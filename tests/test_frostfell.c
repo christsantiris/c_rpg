@@ -428,7 +428,7 @@ static void test_polar_kraken(void) {
             strcmp(frost_game.floor_items[i].item.name, "Krakenbone Bow") == 0;
     }
     BossJournalEntry entry;
-    int journal_ok = quest_journal_get_boss(&frost_game, JOURNAL_BOSS_COUNT - 1, &entry) &&
+    int journal_ok = quest_journal_get_boss(&frost_game, 7, &entry) &&
         strcmp(entry.name, "Polar Kraken") == 0 && entry.defeated;
     ASSERT("the Kraken bars the exit, then drops the Krakenbone Bow and is marked defeated",
         blocked && !kraken->active && bow_dropped && journal_ok &&
@@ -1137,12 +1137,15 @@ void test_frostfell(void) {
     game_init(&frost_game);
     srand(4242);
     game_enter_town2(&frost_game);
-    int west_gate_closed = 1;
+    int west_gate_open = 1;
     for (int y = 10; y <= 14; y++) {
-        west_gate_closed &= frost_game.map.tiles[y][0] == TILE_WALL;
+        west_gate_open &= frost_game.map.tiles[y][0] == TILE_TOWN_EXIT;
     }
-    ASSERT("Stillbury's west exit no longer leads to Frostfell",
-        west_gate_closed && frost_game.location == LOCATION_TOWN2);
+    frost_game.player.x = 1;
+    frost_game.player.y = 12;
+    walk_onto(&frost_game, 0, 12);
+    ASSERT("Stillbury's west exit leads to Sunscar instead of Frostfell",
+        west_gate_open && frost_game.location == LOCATION_DESERT);
     game_enter_town3(&frost_game);
     int north_gate = 1;
     for (int x = 18; x <= 22; x++) {
