@@ -1463,6 +1463,54 @@ static void test_sunscar_save_migration(void) {
     remove_test_save(ROUND_TRIP_SLOT);
 }
 
+static void test_stacked_item_underlays(void) {
+    static GameState original;
+    static GameState loaded;
+    memset(&original, 0, sizeof(original));
+    game_init(&original);
+    game_enter_town2(&original);
+    original.player.x = 30;
+    original.player.y = 12;
+    original.inventory[0] = item_make_health_potion();
+    original.inventory[1] = item_make_mana_potion();
+    original.inventory_count = 2;
+    action_resolve_player(&original, (Action){ACTION_DROP_ITEM, 0, 0});
+    action_resolve_player(&original, (Action){ACTION_DROP_ITEM, 0, 0});
+    ASSERT("stacked dropped items each remember the cobblestone underneath",
+        original.floor_item_count == 2 &&
+        original.floor_items[0].underlying_tile == TILE_TOWN_PATH &&
+        original.floor_items[1].underlying_tile == TILE_TOWN_PATH);
+    action_resolve_player(&original, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("picking up the first item leaves the remaining item over cobblestone",
+        !original.floor_items[0].active && original.floor_items[1].active &&
+        original.map.tiles[12][30] == TILE_ITEM &&
+        original.floor_items[1].underlying_tile == TILE_TOWN_PATH);
+    int saved = save_game(&original, ROUND_TRIP_SLOT) && load_game(&loaded, ROUND_TRIP_SLOT);
+    ASSERT("stacked drop ground survives saving after the first pickup",
+        saved && loaded.floor_items[1].underlying_tile == TILE_TOWN_PATH &&
+        loaded.map.tiles[12][30] == TILE_ITEM);
+    action_resolve_player(&loaded, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("picking up the last saved item restores the cobblestone tile",
+        saved && !loaded.floor_items[1].active && loaded.map.tiles[12][30] == TILE_TOWN_PATH);
+
+    // Older drops recorded the second item's marker as its ground.
+    original.floor_items[1].underlying_tile = TILE_ITEM;
+    saved = save_game(&original, ROUND_TRIP_SLOT) && load_game(&loaded, ROUND_TRIP_SLOT);
+    ASSERT("loading an existing broken pile recovers its ground from the collected first item",
+        saved && loaded.floor_items[1].active &&
+        loaded.floor_items[1].underlying_tile == TILE_TOWN_PATH && loaded.map.tiles[12][30] == TILE_ITEM);
+    action_resolve_player(&loaded, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("the repaired saved pile restores cobblestone when collected",
+        saved && loaded.map.tiles[12][30] == TILE_TOWN_PATH);
+
+    original.floor_items[1].active = 0;
+    saved = save_game(&original, ROUND_TRIP_SLOT) && load_game(&loaded, ROUND_TRIP_SLOT);
+    ASSERT("loading a saved hole left by an emptied pile restores its cobblestone",
+        saved && loaded.map.tiles[12][30] == TILE_TOWN_PATH &&
+        loaded.floor_items[1].underlying_tile == TILE_TOWN_PATH);
+    remove_test_save(ROUND_TRIP_SLOT);
+}
+
 void test_save_load(void) {
     test_harbor_road_save_load();
     test_spent_island_map_on_load();
@@ -1470,6 +1518,7 @@ void test_save_load(void) {
     printf("Save/load tests:\n");
     test_desert_state_round_trip();
     test_sunscar_save_migration();
+    test_stacked_item_underlays();
     test_current_weapon_round_trip();
     test_dual_wield_round_trip();
     test_legacy_off_hand_migration();

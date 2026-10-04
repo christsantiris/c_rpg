@@ -831,6 +831,30 @@ int save_game(const GameState *g, int slot) {
     return 1;
 }
 
+static void repair_floor_item_underlays(GameState *g) {
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->underlying_tile != TILE_ITEM) {
+            continue;
+        }
+        int occupied = 0;
+        for (int j = 0; j < g->floor_item_count; j++) {
+            const FloorItem *other = &g->floor_items[j];
+            if (other->x == item->x && other->y == item->y) {
+                occupied |= other->active;
+                if (other->underlying_tile != TILE_ITEM) {
+                    item->underlying_tile = other->underlying_tile;
+                }
+            }
+        }
+        if (!occupied && item->underlying_tile != TILE_ITEM &&
+            item->x >= 0 && item->x < MAP_W && item->y >= 0 && item->y < MAP_H &&
+            g->map.tiles[item->y][item->x] == TILE_ITEM) {
+            g->map.tiles[item->y][item->x] = item->underlying_tile;
+        }
+    }
+}
+
 static void migrate_testing_save(cJSON *root, int version) {
     if (version < 73) {
         cJSON *player = cJSON_GetObjectItem(root, "player");
@@ -2321,6 +2345,7 @@ int load_game(GameState *g, int slot) {
         }
     }
 
+    repair_floor_item_underlays(g);
     game_hide_portal_destination(g);
     game_refresh_quest_encounters(g);
     for (int i = 0; i < g->floor_item_count; i++) {

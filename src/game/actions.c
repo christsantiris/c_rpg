@@ -1231,7 +1231,7 @@ void action_resolve_player(GameState *g, Action a) {
         fi.active = 1;
         fi.x      = g->player.x;
         fi.y      = g->player.y;
-        fi.underlying_tile = g->map.tiles[fi.y][fi.x];
+        fi.underlying_tile = floor_drop_underlay(g, fi.x, fi.y);
         fi.item   = item;
         mark_item_tile(g, fi.x, fi.y);
         g->floor_items[g->floor_item_count++] = fi;

@@ -1205,8 +1205,10 @@ void test_forest(void) {
     action_resolve_player(&g, east);
     ASSERT("final east forest exit reaches the second town",
         g.location == LOCATION_TOWN2);
-    ASSERT("forest completion arrives at the west road",
-        g.player.x == 1 && g.player.y == 12);
+    ASSERT("forest completion arrives beside Stillbury's east forest gate",
+        g.player.x == TOWN_W - 2 && g.player.y == 12 &&
+        g.map.tiles[g.player.y][g.player.x] == TILE_TOWN_PATH &&
+        g.map.tiles[g.player.y][TOWN_W - 1] == TILE_TOWN_EXIT);
 }
 
 void test_cain_gift(void) {
