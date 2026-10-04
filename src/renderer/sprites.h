@@ -130,6 +130,8 @@ void draw_shop_blacksmith(Renderer *r, int tile_x, int tile_y);
 void draw_shop_alchemist(Renderer *r, int tile_x, int tile_y);
 void draw_apothecary(Renderer *r, int tile_x, int tile_y);
 void draw_adventurers_guild(Renderer *r, int tile_x, int tile_y);
+void draw_guild_seeker(Renderer *r, int tx, int ty);
+void draw_desert_lamp(Renderer *r, int tx, int ty, int mx, int my);
 void draw_workshop(Renderer *r, int tile_x, int tile_y);
 void draw_tavern(Renderer *r, int tile_x, int tile_y);
 void draw_inn(Renderer *r, int tile_x, int tile_y);

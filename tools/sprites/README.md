@@ -76,6 +76,9 @@ East of the Healer, with its double door on `TOWN_INN_DOOR_X/Y` opening onto
 the square. It shares the tavern's timber-and-plaster style but has its own
 design.
 
+The double door is 19 pixels tall to match the shops' doorway proportions; its
+threshold and map entrance stay in the same position.
+
 - Twin front gables and a hipped middle roof in blue-grey slate, with a
   sandstone chimney.
 - A whitewashed upper floor with dark timber framing, small attic windows, and
@@ -190,6 +193,9 @@ place.
 
 The Guild stands on the north-west edge of the Rosemoor square, with its front
 door opening directly onto the plaza.
+
+The oak door is about 19 pixels tall after the sprite's 75% reduction, matching
+the shops' doorway proportions without moving the entrance.
 
 - A broad slate gable with a gold crossed-swords crest.
 - A stone-and-timber front with two lit windows.

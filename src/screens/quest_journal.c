@@ -14,7 +14,7 @@ typedef struct {
     const char *reward_item;
 } QuestDefinition;
 
-static const QuestDefinition quest_definitions[8] = {
+static const QuestDefinition quest_definitions[9] = {
     {
         "The Broken Seals", "Elowen",
         "Break through the undead guarding three shattered",
@@ -73,6 +73,13 @@ static const QuestDefinition quest_definitions[8] = {
         "on Dragonspine's fifth stage. Return to Ridgeshire.",
         {"Recover the golden goblet", "", ""},
         "Dragonspine", {5, 0, 0}, 0, 600, "Potion of Strength"
+    },
+    {
+        "The Lost Magic Lamp", "Zara",
+        "Recover a magic lamp from Sunscar Wastes",
+        "and return it to the Guild in Rosemoor.",
+        {"Recover the magic lamp", "", ""},
+        "Sunscar Wastes", {DESERT_LAMP_LEVEL, 0, 0}, 80, 600
     }
 };
 
@@ -98,7 +105,10 @@ static int quest_state(const GameState *g, int quest) {
     if (quest == 6) {
         return g->innkeeper_quest_state;
     }
-    return g->dragon_treasure_quest_state;
+    if (quest == 7) {
+        return g->dragon_treasure_quest_state;
+    }
+    return g->sunscar_lamp_quest_state;
 }
 
 static int quest_progress(const GameState *g, int quest) {
@@ -123,7 +133,10 @@ static int quest_progress(const GameState *g, int quest) {
     if (quest == 6) {
         return g->innkeeper_quest_state >= 2;
     }
-    return g->dragon_treasure_quest_state >= 2;
+    if (quest == 7) {
+        return g->dragon_treasure_quest_state >= 2;
+    }
+    return g->sunscar_lamp_quest_state >= 2;
 }
 
 static int quest_in_tab(int state, QuestJournalTab tab) {
@@ -143,7 +156,7 @@ int quest_journal_count(const GameState *g, QuestJournalTab tab) {
         return JOURNAL_BOSS_COUNT;
     }
     int count = 0;
-    for (int quest = 0; quest < 8; quest++) {
+    for (int quest = 0; quest < 9; quest++) {
         if (quest_in_tab(quest_state(g, quest), tab)) {
             count++;
         }
@@ -179,7 +192,7 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
         return 0;
     }
     int visible_index = 0;
-    for (int quest = 0; quest < 8; quest++) {
+    for (int quest = 0; quest < 9; quest++) {
         int state = quest_state(g, quest);
         if (!quest_in_tab(state, tab)) {
             continue;

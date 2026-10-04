@@ -1130,6 +1130,7 @@ void game_init(GameState *g) {
     g->cain_scroll_given = 0;
     g->island_travel_unlocked = 0;
     g->dragon_treasure_quest_state = 0;
+    g->sunscar_lamp_quest_state = 0;
     for (int i = 0; i < TEMPLE_DEPTH; i++) {
         g->temple_cache[i].valid = 0;
     }
@@ -1798,6 +1799,30 @@ static void restore_frostfell_reward(GameState *g) {
     g->map.tiles[y][x] = TILE_ITEM;
 }
 
+static void place_desert_lamp(GameState *g) {
+    if (g->location != LOCATION_DESERT || g->level != DESERT_LAMP_LEVEL ||
+        g->sunscar_lamp_quest_state != 1 || g->map.room_count == 0) {
+        return;
+    }
+    int x;
+    int y;
+    map_room_center(&g->map.rooms[g->map.room_count - 1], &x, &y);
+    if (g->map.tiles[y][x] == TILE_PORTAL && g->portal_origin_tile == TILE_DESERT_LAMP) {
+        return;
+    }
+    int occupied = 0;
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && item->x == x && item->y == y) {
+            item->underlying_tile = TILE_DESERT_LAMP;
+            occupied = 1;
+        }
+    }
+    if (!occupied) {
+        g->map.tiles[y][x] = TILE_DESERT_LAMP;
+    }
+}
+
 static void restore_desert_reward(GameState *g) {
     if (g->location != LOCATION_DESERT || g->level != DESERT_DEPTH ||
         !g->sandstorm_staff_unclaimed || g->map.room_count == 0) {
@@ -1827,6 +1852,7 @@ void game_refresh_quest_encounters(GameState *g) {
     restore_frostfell_reward(g);
     restore_desert_reward(g);
     int seal_placed = place_elowen_seal(g);
+    place_desert_lamp(g);
     int warden_placed = place_alder_warden(g);
     int beacon_placed = place_mara_beacon(g);
     place_dain_map_bearer(g);
@@ -1877,6 +1903,7 @@ static void generate_active_level(GameState *g) {
     int beacon_placed = place_mara_beacon(g);
     place_dragon_treasure(g);
     int daughter_x = 0;
+    place_desert_lamp(g);
     int daughter_y = 0;
     int daughter_placed = g->location == LOCATION_SWAMP && g->level == 4 &&
         g->innkeeper_quest_state == 1;
@@ -2398,6 +2425,26 @@ void game_enter_inn(GameState *g) {
     g->floor_item_count = 0;
     g->dialogue_active = 0;
     push_message(g, "You enter the inn.");
+}
+
+void game_enter_guild(GameState *g) {
+    int sx;
+    int sy;
+    g->location = LOCATION_GUILD;
+    map_generate_guild(&g->map, &sx, &sy);
+    g->player.x = sx;
+    g->player.y = sy;
+    g->enemy_count = 0;
+    g->floor_item_count = 0;
+    g->dialogue_active = 0;
+    push_message(g, "You enter the Adventurer's Guild.");
+}
+
+void game_leave_guild(GameState *g) {
+    game_enter_town3(g);
+    g->player.x = TOWN_GUILD_DOOR_X;
+    g->player.y = TOWN_GUILD_DOOR_Y + 1;
+    push_message(g, "You step out of the Adventurer's Guild.");
 }
 
 void game_leave_inn(GameState *g) {
@@ -3428,6 +3475,49 @@ void game_talk_to_royal_guard(GameState *g, int x, int y) {
             "King Road East.");
     }
     push_message(g, "The Royal Guards recommend exploring other areas first.");
+}
+
+void game_talk_to_guild_seeker(GameState *g) {
+    if (g->location != LOCATION_GUILD) {
+        return;
+    }
+    g->dialogue_active = 1;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Zara");
+    g->dialogue_x = GUILD_ZARA_X;
+    g->dialogue_y = GUILD_ZARA_Y;
+    if (g->sunscar_lamp_quest_state == 0) {
+        g->sunscar_lamp_quest_state = 1;
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Recover a magic lamp from Sunscar Wastes level 4. Enter through "
+            "Stillbury's west gate. Stand on the lamp and press A, then return "
+            "to me here for 80 gold.");
+        push_message(g, "Assigned: The Lost Magic Lamp.");
+    } else if (g->sunscar_lamp_quest_state == 1) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "The magic lamp lies in the last clearing of Sunscar Wastes level 4. "
+            "Return it to me at the Guild in Rosemoor.");
+    } else if (g->sunscar_lamp_quest_state == 2) {
+        g->sunscar_lamp_quest_state = 3;
+        g->gold += 80;
+        g->score += 600;
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "You found the lamp! The Guild will keep it safe. Here are your 80 gold.");
+        push_message(g, "Completed: The Lost Magic Lamp. 80 gold awarded.");
+    } else {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "The magic lamp is safe with the Guild. Thank you for recovering it.");
+    }
+}
+
+void game_collect_desert_lamp(GameState *g) {
+    if (g->location != LOCATION_DESERT || g->level != DESERT_LAMP_LEVEL ||
+        g->sunscar_lamp_quest_state != 1 ||
+        g->map.tiles[g->player.y][g->player.x] != TILE_DESERT_LAMP) {
+        return;
+    }
+    g->map.tiles[g->player.y][g->player.x] = TILE_DESERT_FLOOR;
+    g->sunscar_lamp_quest_state = 2;
+    push_message(g, "Magic lamp recovered. Return to Zara at the Guild in Rosemoor.");
 }
 
 void game_talk_to_dragon_seeker(GameState *g) {

@@ -699,6 +699,9 @@ int game_has_regional_interaction(const GameState *g) {
     if (g->location == LOCATION_DRAGONSPINE) {
         return g->map.tiles[g->player.y][g->player.x] == TILE_DRAGON_TREASURE;
     }
+    if (g->location == LOCATION_DESERT) {
+        return g->map.tiles[g->player.y][g->player.x] == TILE_DESERT_LAMP;
+    }
     if (g->location != LOCATION_MOUNTAINS) {
         return 0;
     }
@@ -871,6 +874,7 @@ void action_resolve_player(GameState *g, Action a) {
         g->location == LOCATION_CASTLE ||
         g->location == LOCATION_FOREST_ROAD ||
         g->location == LOCATION_INN ||
+        g->location == LOCATION_GUILD ||
         g->location == LOCATION_ISLAND) {
         g->player.poison_turns = 0;
         g->player.frozen_turns = 0;
@@ -947,6 +951,10 @@ void action_resolve_player(GameState *g, Action a) {
         TileType tile = g->map.tiles[g->player.y][g->player.x];
         if (tile == TILE_DRAGON_TREASURE) {
             game_collect_dragon_treasure(g);
+            return;
+        }
+        if (tile == TILE_DESERT_LAMP) {
+            game_collect_desert_lamp(g);
             return;
         }
         if (tile == TILE_CRYPT_CACHE) {
@@ -1274,7 +1282,7 @@ void action_resolve_player(GameState *g, Action a) {
                 g->location == LOCATION_TOWN4 ||
                 g->location == LOCATION_CASTLE ||
                 g->location == LOCATION_TAVERN ||
-                g->location == LOCATION_INN) {
+                g->location == LOCATION_INN || g->location == LOCATION_GUILD) {
                 push_message(g, "Already in town!");
                 return;
             }
@@ -1705,6 +1713,10 @@ void action_resolve_player(GameState *g, Action a) {
             }
         }
         // Check for town exit
+        if (g->location == LOCATION_TOWN3 && g->map.tiles[ty][tx] == TILE_GUILD_DOOR) {
+            game_enter_guild(g);
+            return;
+        }
         if ((g->location == LOCATION_TOWN || g->location == LOCATION_TOWN2) &&
             g->map.tiles[ty][tx] == TILE_PORTAL && g->portal_active) {
             game_use_town_portal(g);
@@ -1760,6 +1772,10 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->location == LOCATION_INN &&
             g->map.tiles[ty][tx] == TILE_TAVERN_EXIT) {
             game_leave_inn(g);
+            return;
+        }
+        if (g->location == LOCATION_GUILD && g->map.tiles[ty][tx] == TILE_TAVERN_EXIT) {
+            game_leave_guild(g);
             return;
         }
 

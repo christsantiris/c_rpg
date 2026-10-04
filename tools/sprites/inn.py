@@ -223,20 +223,20 @@ def build():
     flower_box(gf, 131, 103, 15, 4)
     composite(canvas, gf, OUT)
 
-    # entrance: fanlight, double door, steps and lanterns
+    # Shop-scale double door: 15 x 19 pixels, with the threshold kept at y=115.
     dr = Layer(W, H)
-    for x in range(72, 97):
-        dr.put(x, 88, TIMBER[3])
-        dr.put(x, 89, TIMBER[1])
-    for y in range(90, 116):
-        for x in (73, 95):
+    for x in range(74, 95):
+        dr.put(x, 95, TIMBER[3])
+        dr.put(x, 96, TIMBER[1])
+    for y in range(97, 116):
+        for x in (75, 93):
             dr.put(x, y, TIMBER[2])
-    lit_window(dr, 78, 85, 13, 2, GLOW, TIMBER, shutters=False)
-    double_door(dr, 75, 90, 93, 115)
-    for x in range(72, 97):
+    lit_window(dr, 80, 92, 9, 2, GLOW, TIMBER, shutters=False)
+    double_door(dr, 77, 97, 91, 115)
+    for x in range(74, 95):
         dr.put(x, 116, SAND[4])
         dr.put(x, 117, SAND[2])
-    for x in range(70, 99):
+    for x in range(72, 97):
         dr.put(x, 118, SAND[5] if x < 92 else SAND[4])
         dr.put(x, 119, SAND[2])
     for lx in (63, 101):

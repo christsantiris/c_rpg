@@ -72,10 +72,11 @@ def build():
     composite(canvas, front, OUT)
 
     entrance = Layer(W, H)
-    stone_arch(entrance, 60, 58, 86, 8, STONE, thick=4)
-    arched_door(entrance, 60, 60, 86, 7, WOOD, IRON)
-    rectangle(entrance, 51, 87, 69, 89, STONE[4])
-    rectangle(entrance, 47, 90, 73, 93, STONE[2])
+    # Shop-scale door: 13 x 19 pixels, keeping the threshold at y=86.
+    stone_arch(entrance, 60, 68, 86, 6, STONE, thick=3)
+    arched_door(entrance, 60, 68, 86, 6, WOOD, IRON)
+    rectangle(entrance, 52, 87, 68, 89, STONE[4])
+    rectangle(entrance, 50, 90, 70, 93, STONE[2])
     composite(canvas, entrance, OUT)
 
     sign = Layer(W, H)

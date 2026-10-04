@@ -54,6 +54,9 @@
 #define TOWN_GUILD_H 5
 #define TOWN_GUILD_DOOR_X (TOWN_GUILD_X + TOWN_GUILD_W / 2)
 #define TOWN_GUILD_DOOR_Y (TOWN_GUILD_Y + TOWN_GUILD_H - 1)
+#define GUILD_ZARA_X 28
+#define GUILD_ZARA_Y 7
+#define DESERT_LAMP_LEVEL 4
 #define TAVERN_X 4
 #define TAVERN_Y 2
 #define TAVERN_W 32
@@ -318,7 +321,10 @@ typedef enum {
     TILE_DESERT_FLOOR,
     TILE_DESERT_WALL,
     TILE_DESERT_ENTRANCE,
-    TILE_DESERT_EXIT
+    TILE_DESERT_EXIT,
+    TILE_GUILD_DOOR,
+    TILE_NPC_GUILD_SEEKER,
+    TILE_DESERT_LAMP
 } TileType;
 
 typedef struct {
@@ -374,6 +380,7 @@ void map_generate_high_pass(Map *m);
 void map_generate_dragonspine(Map *m, int level);
 void map_generate_frostfell(Map *m, int level);
 void map_generate_desert(Map *m, int level);
+void map_generate_guild(Map *m, int *sx, int *sy);
 int map_remove_coast_sluice(Map *m);
 TileType map_coast_trap_underlay(const Map *m, int x, int y);
 int map_is_coast_tidal_tile(TileType tile);

@@ -592,6 +592,138 @@ static void test_pharaoh_reward(void) {
         g->gold > 0 && g->score >= 1600);
 }
 
+static int count_desert_lamps(const Map *m) {
+    int count = 0;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            count += m->tiles[y][x] == TILE_DESERT_LAMP;
+        }
+    }
+    return count;
+}
+
+static void test_desert_lamp_quest(void) {
+    GameState *g = &desert_game;
+    memset(g, 0, sizeof(*g));
+    game_init(g);
+    srand(811);
+    g->defeated_bosses = (1 << LOCATION_FOREST) | (1 << LOCATION_SWAMP) | (1 << LOCATION_DESERT);
+    game_enter_desert(g);
+    while (g->level < DESERT_LAMP_LEVEL) {
+        game_descend(g);
+    }
+    ASSERT("the magic lamp does not appear before accepting Zara's quest", count_desert_lamps(&g->map) == 0);
+    int x;
+    int y;
+    map_room_center(&g->map.rooms[g->map.room_count - 1], &x, &y);
+    map_mark_explored(&g->map, x, y);
+    g->player.x = x;
+    g->player.y = y;
+    g->enemies[0].hp--;
+    int hp = g->enemies[0].hp;
+    game_open_town_portal(g);
+    game_enter_town3(g);
+    g->player.x = TOWN_GUILD_DOOR_X;
+    g->player.y = TOWN_GUILD_DOOR_Y + 1;
+    action_resolve_player(g, (Action){ACTION_MOVE, TOWN_GUILD_DOOR_X, TOWN_GUILD_DOOR_Y});
+    ASSERT("Rosemoor's Guild doorway enters a safe hall with Zara and no inn NPCs",
+        g->location == LOCATION_GUILD && g->enemy_count == 0 &&
+        g->map.tiles[GUILD_ZARA_Y][GUILD_ZARA_X] == TILE_NPC_GUILD_SEEKER &&
+        !map_is_walkable(&g->map, GUILD_ZARA_X, GUILD_ZARA_Y) &&
+        g->map.tiles[18][10] == TILE_TAVERN_FLOOR);
+    g->player.x = GUILD_ZARA_X;
+    g->player.y = GUILD_ZARA_Y + 1;
+    game_talk_to_guild_seeker(g);
+    ASSERT("Zara assigns the lamp quest without resetting desert progress or its portal",
+        g->sunscar_lamp_quest_state == 1 && g->portal_active &&
+        g->max_desert_level_reached == DESERT_LAMP_LEVEL &&
+        g->desert_cache[DESERT_LAMP_LEVEL - 1].enemies[0].hp == hp &&
+        map_is_explored(&g->desert_cache[DESERT_LAMP_LEVEL - 1].map, x, y));
+    QuestJournalEntry entry;
+    ASSERT("the journal shows Zara's lamp objective, stage and rewards",
+        quest_journal_count(g, QUEST_TAB_ACTIVE) == 1 &&
+        quest_journal_get_entry(g, QUEST_TAB_ACTIVE, 0, &entry) &&
+        strcmp(entry.title, "The Lost Magic Lamp") == 0 && strcmp(entry.giver, "Zara") == 0 &&
+        entry.stages[0] == DESERT_LAMP_LEVEL && entry.reward_gold == 80 && entry.reward_score == 600);
+    game_talk_to_guild_seeker(g);
+    const int slot = 99025;
+    int saved = save_game(g, slot) && load_game(&desert_loaded, slot);
+    ASSERT("saving inside the Guild preserves the quest, NPC and desert portal",
+        saved && desert_loaded.location == LOCATION_GUILD && desert_loaded.sunscar_lamp_quest_state == 1 &&
+        desert_loaded.portal_active && desert_loaded.map.tiles[GUILD_ZARA_Y][GUILD_ZARA_X] == TILE_NPC_GUILD_SEEKER);
+    if (saved) {
+        *g = desert_loaded;
+    }
+    g->player.x = 20;
+    g->player.y = 21;
+    action_resolve_player(g, (Action){ACTION_MOVE, 20, 22});
+    ASSERT("leaving the Guild returns outside its Rosemoor door",
+        g->location == LOCATION_TOWN3 && g->player.x == TOWN_GUILD_DOOR_X &&
+        g->player.y == TOWN_GUILD_DOOR_Y + 1);
+    game_enter_town2(g);
+    game_use_town_portal(g);
+    game_refresh_quest_encounters(g);
+    game_refresh_quest_encounters(g);
+    ASSERT("returning to an already explored desert stage places exactly one lamp on reachable sand",
+        g->location == LOCATION_DESERT && g->level == DESERT_LAMP_LEVEL &&
+        count_desert_lamps(&g->map) == 1 && g->map.tiles[y][x] == TILE_DESERT_LAMP &&
+        map_is_walkable(&g->map, x, y));
+    game_ascend(g);
+    game_descend(g);
+    ASSERT("backtracking preserves the uncollected lamp", count_desert_lamps(&g->map) == 1);
+    g->player.x = x;
+    g->player.y = y;
+    game_open_town_portal(g);
+    saved = save_game(g, slot) && load_game(&desert_loaded, slot);
+    if (saved) {
+        *g = desert_loaded;
+        game_use_town_portal(g);
+    }
+    ASSERT("a saved portal opened on the lamp restores the lamp without duplication",
+        saved && g->map.tiles[y][x] == TILE_DESERT_LAMP && count_desert_lamps(&g->map) == 1);
+
+    g->inventory[g->inventory_count++] = item_make_health_potion();
+    g->inventory[g->inventory_count++] = item_make_mana_potion();
+    action_resolve_player(g, (Action){ACTION_DROP_ITEM, g->inventory_count - 1, 0});
+    action_resolve_player(g, (Action){ACTION_DROP_ITEM, g->inventory_count - 1, 0});
+    game_refresh_quest_encounters(g);
+    action_resolve_player(g, (Action){ACTION_PICK_UP, 0, 0});
+    action_resolve_player(g, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("stacked loot on the lamp restores its quest marker after pickup", g->map.tiles[y][x] == TILE_DESERT_LAMP);
+    g->inventory_count = MAX_INVENTORY;
+    action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
+    ASSERT("recovering the lamp works with a full pack and marks the quest ready to return",
+        g->sunscar_lamp_quest_state == 2 && g->map.tiles[y][x] == TILE_DESERT_FLOOR &&
+        quest_journal_get_entry(g, QUEST_TAB_ACTIVE, 0, &entry) && entry.state == 2 && entry.objective_complete[0]);
+    game_open_town_portal(g);
+    saved = save_game(g, slot) && load_game(&desert_loaded, slot);
+    if (saved) {
+        *g = desert_loaded;
+        game_use_town_portal(g);
+    }
+    game_refresh_quest_encounters(g);
+    ASSERT("saving and revisiting after lamp pickup cannot spawn a second lamp",
+        saved && g->sunscar_lamp_quest_state == 2 && count_desert_lamps(&g->map) == 0);
+    game_return_to_town(g);
+    game_enter_town3(g);
+    game_enter_guild(g);
+    int gold = g->gold;
+    int score = g->score;
+    game_talk_to_guild_seeker(g);
+    game_talk_to_guild_seeker(g);
+    ASSERT("returning the lamp pays exactly once and moves the quest to the completed journal",
+        g->sunscar_lamp_quest_state == 3 && g->gold == gold + 80 && g->score == score + 600 &&
+        quest_journal_count(g, QUEST_TAB_ACTIVE) == 0 && quest_journal_count(g, QUEST_TAB_COMPLETED) == 1);
+    saved = save_game(g, slot) && load_game(&desert_loaded, slot);
+    if (saved) {
+        game_talk_to_guild_seeker(&desert_loaded);
+    }
+    ASSERT("loading a completed lamp quest cannot repeat its reward",
+        saved && desert_loaded.sunscar_lamp_quest_state == 3 &&
+        desert_loaded.gold == gold + 80 && desert_loaded.score == score + 600);
+    remove("saves/savegame_99025.json");
+}
+
 static int desert_layout_connected(const Map *m) {
     memset(visited, 0, sizeof(visited));
     int head = 0;
@@ -684,4 +816,5 @@ void test_desert(void) {
     test_desert_combat();
     test_pharaoh_combat();
     test_pharaoh_reward();
+    test_desert_lamp_quest();
 }

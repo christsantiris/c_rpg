@@ -3989,6 +3989,40 @@ void draw_forest_warden(Renderer *r, int tile_x, int tile_y, int map_x, int map_
     fill_rect(r, x + 15, y + 8, 2, 2, (SDL_Color){210, 226, 174, 255});
 }
 
+void draw_guild_seeker(Renderer *r, int tx, int ty) {
+    draw_tavern_floor(r, tx, ty);
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    SDL_Color cloak = {57, 106, 135, 255};
+    SDL_Color skin = {191, 133, 86, 255};
+    SDL_Color gold = {224, 184, 79, 255};
+    fill_rect(r, x + 7, y + 2, 10, 8, cloak);
+    fill_rect(r, x + 9, y + 4, 6, 5, skin);
+    fill_rect(r, x + 6, y + 10, 12, 11, cloak);
+    fill_rect(r, x + 9, y + 10, 6, 2, gold);
+    fill_rect(r, x + 5, y + 15, 14, 5, (SDL_Color){227, 216, 173, 255});
+    fill_rect(r, x + 11, y + 15, 1, 5, gold);
+    fill_rect(r, x + 7, y + 21, 4, 3, (SDL_Color){55, 42, 34, 255});
+    fill_rect(r, x + 13, y + 21, 4, 3, (SDL_Color){55, 42, 34, 255});
+}
+
+void draw_desert_lamp(Renderer *r, int tx, int ty, int mx, int my) {
+    draw_desert_floor(r, tx, ty, mx, my);
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    SDL_Color gold = {227, 180, 71, 255};
+    SDL_Color shine = {255, 239, 163, 255};
+    fill_rect(r, x + 7, y + 10, 12, 6, gold);
+    fill_rect(r, x + 3, y + 8, 8, 3, gold);
+    fill_rect(r, x + 2, y + 6, 3, 3, shine);
+    fill_rect(r, x + 18, y + 9, 4, 7, gold);
+    fill_rect(r, x + 19, y + 11, 2, 3, (SDL_Color){134, 84, 39, 255});
+    fill_rect(r, x + 10, y + 7, 7, 3, shine);
+    fill_rect(r, x + 12, y + 16, 3, 3, gold);
+    fill_rect(r, x + 9, y + 19, 9, 2, shine);
+    fill_rect(r, x + 2, y + 2, 2, 3, (SDL_Color){109, 231, 213, 255});
+}
+
 void draw_town_path(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;

@@ -32,7 +32,7 @@ void test_king_roads_and_castle(void) {
     }
     ASSERT("Rosemoor's Adventurer's Guild has a walkable doorway and path to the square",
         guild_walls && g.map.tiles[TOWN_GUILD_DOOR_Y][TOWN_GUILD_DOOR_X] ==
-            TILE_TOWN_PATH &&
+            TILE_GUILD_DOOR &&
         g.map.tiles[TOWN_GUILD_DOOR_Y + 1][TOWN_GUILD_DOOR_X] == TILE_TOWN_PATH &&
         !map_is_walkable(&g.map, TOWN_GUILD_X, TOWN_GUILD_Y));
     g.player.x = TOWN_W - 2;

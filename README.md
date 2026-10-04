@@ -56,6 +56,10 @@ Djinn fire magic bolts from level three, and armored Golems appear from level
 four. Mummies and Golems move slowly. The Desert Pharaoh guards the final
 clearing with alternating magic bolts and drops the Sandstorm Staff, a rare
 two-handed Mage weapon. Unclaimed staff rewards survive leaving and saving.
+A visual sandstorm sweeps across Sunscar with blowing sand and a light amber haze.
+Enter the Adventurer's Guild in Rosemoor and speak with Zara to accept
+The Lost Magic Lamp. Recover the lamp on Sunscar level 4, then return to Zara
+for a one-time reward of 80 gold and 600 score.
 Speaking with Cain explains the dangers beyond town and grants one Scroll of
 Return to Town when inventory space is available. Use the scroll from the
 inventory to learn the permanent spell.
@@ -234,6 +238,7 @@ and sell modes are switched with `Tab`.
 - [Dragonspine and High Pass](docs/dragonspine.md)
 - [Sunken Coast](docs/sunken-coast.md)
 - [Blackwater Swamp](docs/swamp.md)
+- [Sunscar Wastes and the magic lamp quest](docs/sunscar-wastes.md)
 - [Harbor, Ruined Isle, and Ruined Temple](docs/harbor-and-ruined-isle.md)
 
 ## Screenshots
@@ -366,5 +371,4 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 - Build out Castle of No Return
    Multiple levels, unique mechanics, enemies, boss
 - Recruit a party to join the adventure
-- Additional areas and storylines e.g caves
-- Fix forest exists at opposite side of Stillbury
+- Additional areas and storylines e.g caves, catacombs with minotaur boss

@@ -98,6 +98,7 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     if (!g->dialogue_active ||
         (g->location != LOCATION_TAVERN &&
         g->location != LOCATION_INN &&
+        g->location != LOCATION_GUILD &&
         g->location != LOCATION_TOWN &&
         g->location != LOCATION_TOWN2 &&
         g->location != LOCATION_TOWN3 &&
@@ -117,7 +118,7 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
         g->location == LOCATION_TOWN3 || g->location == LOCATION_TOWN4 ||
         g->location == LOCATION_CASTLE) {
         viewport_w = TOWN_W * TILE_SIZE;
-    } else if (g->location == LOCATION_TAVERN || g->location == LOCATION_INN) {
+    } else if (g->location == LOCATION_TAVERN || g->location == LOCATION_INN || g->location == LOCATION_GUILD) {
         viewport_w = TAVERN_W * TILE_SIZE;
     }
     int bubble_w = viewport_w < 460 ? viewport_w - 16 : 440;
@@ -987,6 +988,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         } else {
             draw_desert_edge(r, screen_x, screen_y, map_x, map_y);
         }
+    } else if (underlay == TILE_DESERT_LAMP) {
+        draw_desert_lamp(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_FROST_LAKE) {
         draw_frostfell_lake(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_FROST_ICE) {
@@ -1082,9 +1085,9 @@ static void draw_trap_underlay(Renderer *r, const GameState *g, int map_x, int m
     }
 }
 
-// World-space flakes keep their positions when the camera moves or resizes.
+// World-space particles keep their positions when the camera moves or resizes.
 // Clock-based motion and local seeds leave turns, saves and gameplay RNG alone.
-static void draw_frostfell_snow(Renderer *r, const Viewport *v) {
+static void draw_region_weather(Renderer *r, const Viewport *v, int desert) {
     SDL_Rect area = {0, 0, v->tiles_x * TILE_SIZE, v->tiles_y * TILE_SIZE};
     if (area.w > r->screen_w - INFO_PANEL_W) {
         area.w = r->screen_w - INFO_PANEL_W;
@@ -1106,12 +1109,16 @@ static void draw_frostfell_snow(Renderer *r, const Viewport *v) {
     SDL_RenderSetClipRect(r->sdl, &area);
     SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_BLEND);
 
-    SDL_SetRenderDrawColor(r->sdl, 202, 222, 242, 12);
+    if (desert) {
+        SDL_SetRenderDrawColor(r->sdl, 196, 151, 80, 18);
+    } else {
+        SDL_SetRenderDrawColor(r->sdl, 202, 222, 242, 12);
+    }
     SDL_RenderFillRect(r->sdl, &area);
     Uint64 now = SDL_GetTicks();
     int field_w = v->map_w * TILE_SIZE + 32;
     int field_h = v->map_h * TILE_SIZE + 32;
-    int count = field_w * field_h / 3200;
+    int count = field_w * field_h / (desert ? 2400 : 3200);
     for (int layer = 0; layer < 3; layer++) {
         for (int i = 0; i < count; i++) {
             unsigned int seed = (unsigned int)(i + 1) * 2654435761u ^
@@ -1121,14 +1128,25 @@ static void draw_frostfell_snow(Renderer *r, const Viewport *v) {
             seed ^= seed >> 15;
             int wind = 50 + layer * 35 + (int)(seed % 19u);
             int fall = 28 + layer * 15 + (int)((seed >> 8) % 13u);
+            if (desert) {
+                wind = 180 + layer * 65 + (int)(seed % 29u);
+                fall = 12 + layer * 8 + (int)((seed >> 8) % 9u);
+            }
             int drift = (int)(now * wind / 1000 % field_w);
             int drop = (int)(now * fall / 1000 % field_h);
             int x = ((int)(seed % field_w) + field_w - drift) % field_w -
                 16 - v->cam_x * TILE_SIZE;
             int y = ((int)((seed >> 12) % field_h) + drop) % field_h -
                 16 - v->cam_y * TILE_SIZE;
-            if (x < area.x - 6 || y < area.y - 6 ||
+            if (x < area.x - 12 || y < area.y - 6 ||
                 x >= area.x + area.w + 6 || y >= area.y + area.h + 6) {
+                continue;
+            }
+            if (desert) {
+                SDL_SetRenderDrawColor(r->sdl, 225, 184, 110, 65 + layer * 40);
+                SDL_RenderDrawLine(r->sdl, x, y, x + 4 + layer * 3, y - 1 - layer);
+                SDL_SetRenderDrawColor(r->sdl, 246, 211, 147, 100 + layer * 45);
+                SDL_RenderDrawPoint(r->sdl, x, y);
                 continue;
             }
             int size = layer == 0 ? 1 : 2;
@@ -1204,7 +1222,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->location == LOCATION_TOWN3 || g->location == LOCATION_TOWN4 ||
         g->location == LOCATION_CASTLE;
     int tavern_scaled = g->location == LOCATION_TAVERN ||
-        g->location == LOCATION_INN;
+        g->location == LOCATION_INN || g->location == LOCATION_GUILD;
     int island_scaled = g->location == LOCATION_ISLAND;
     int labyrinth_scaled = g->location == LOCATION_LABYRINTH;
     int road_scaled = g->location == LOCATION_FOREST_ROAD ||
@@ -1474,6 +1492,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_dragonspine_floor(r, sx, sy, x, y, 2); break;
                 case TILE_DRAGON_TREASURE:
                     draw_dragon_goblet(r, sx, sy, x, y); break;
+                case TILE_DESERT_LAMP:
+                    draw_desert_lamp(r, sx, sy, x, y); break;
                 case TILE_DRAGON_WALL:
                     draw_dragonspine_wall(r, sx, sy, x, y); break;
                 case TILE_DRAGON_ENTRANCE:
@@ -1520,6 +1540,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_HEALER_DOOR:
                 case TILE_WITCH_DOOR:
                 case TILE_TAVERN_DOOR:
+                case TILE_GUILD_DOOR:
                     draw_town_path(r, sx, sy); break;
                 case TILE_TAVERN_FLOOR: draw_tavern_floor(r, sx, sy); break;
                 case TILE_TAVERN_WALL: draw_tavern_wall(r, sx, sy); break;
@@ -1530,6 +1551,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_NPC_ALDER: draw_alder(r, sx, sy); break;
                 case TILE_NPC_MARA: draw_mara(r, sx, sy); break;
                 case TILE_NPC_ROOK: draw_rook(r, sx, sy); break;
+                case TILE_NPC_GUILD_SEEKER: draw_guild_seeker(r, sx, sy); break;
                 case TILE_NPC_INNKEEPER: draw_innkeeper(r, sx, sy); break;
                 case TILE_NPC_CAIN: draw_cain(r, sx, sy); break;
                 case TILE_NPC_ROWAN: draw_rowan(r, sx, sy); break;
@@ -2215,6 +2237,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_y(v, 6) * TILE_SIZE,
             (SDL_Color){233, 201, 133, 255}, r->font_tiny);
     }
+    if (g->location == LOCATION_GUILD) {
+        renderer_draw_text(r, "ZARA",
+            viewport_to_screen_x(v, GUILD_ZARA_X) * TILE_SIZE - 8,
+            viewport_to_screen_y(v, GUILD_ZARA_Y - 1) * TILE_SIZE,
+            (SDL_Color){233, 201, 133, 255}, r->font_tiny);
+    }
 
     if (g->location == LOCATION_ISLAND) {
         SDL_Color label = {235, 201, 92, 255};
@@ -2401,8 +2429,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     if (g->location == LOCATION_FROSTFELL) {
-        draw_frostfell_snow(r, v);
+        draw_region_weather(r, v, 0);
         draw_kraken_target(r, g, v);
+    } else if (g->location == LOCATION_DESERT) {
+        draw_region_weather(r, v, 1);
     }
 
     draw_combat_feedback(r, g, v);

@@ -296,6 +296,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_NPC_CAIN &&
         m->tiles[y][x] != TILE_NPC_ROWAN &&
         m->tiles[y][x] != TILE_NPC_DRAGON_SEEKER &&
+        m->tiles[y][x] != TILE_NPC_GUILD_SEEKER &&
         m->tiles[y][x] != TILE_NPC_ROYAL_GUARD &&
         m->tiles[y][x] != TILE_FOREST_WARDEN &&
         m->tiles[y][x] != TILE_LOCKED_DOOR &&
@@ -966,7 +967,7 @@ void map_place_town3_guild(Map *m) {
     for (int x = TOWN_GUILD_X; x < TOWN_GUILD_X + TOWN_GUILD_W; x++) {
         m->tiles[TOWN_GUILD_DOOR_Y][x] = TILE_WALL;
     }
-    m->tiles[TOWN_GUILD_DOOR_Y][TOWN_GUILD_DOOR_X] = TILE_TOWN_PATH;
+    m->tiles[TOWN_GUILD_DOOR_Y][TOWN_GUILD_DOOR_X] = TILE_GUILD_DOOR;
     if (m->tiles[TOWN_GUILD_DOOR_Y + 1][TOWN_GUILD_DOOR_X] != TILE_ITEM) {
         m->tiles[TOWN_GUILD_DOOR_Y + 1][TOWN_GUILD_DOOR_X] = TILE_TOWN_PATH;
     }
@@ -2020,6 +2021,12 @@ void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y) {
 
 void map_generate_inn(Map *m, int *spawn_x, int *spawn_y) {
     map_generate_tavern_room(m, spawn_x, spawn_y, 1);
+}
+
+void map_generate_guild(Map *m, int *sx, int *sy) {
+    map_generate_tavern_room(m, sx, sy, 1);
+    m->tiles[18][10] = TILE_TAVERN_FLOOR;
+    m->tiles[GUILD_ZARA_Y][GUILD_ZARA_X] = TILE_NPC_GUILD_SEEKER;
 }
 
 void map_generate_island(Map *m, int *spawn_x, int *spawn_y) {

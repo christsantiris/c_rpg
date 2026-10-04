@@ -1460,6 +1460,17 @@ static void test_sunscar_save_migration(void) {
         loaded.desert_cache[0].enemies[0].type == ENEMY_SCARAB && loaded.desert_cache[0].enemies[0].hp == 11 &&
         memcmp(loaded.desert_cache[0].map.tiles, original.desert_cache[0].map.tiles,
             sizeof(original.desert_cache[0].map.tiles)) == 0);
+    original.sunscar_lamp_quest_state = 2;
+    int saved = save_game(&original, ROUND_TRIP_SLOT) && load_game(&loaded, ROUND_TRIP_SLOT);
+    ASSERT("the recovered lamp quest state survives save/load", saved && loaded.sunscar_lamp_quest_state == 2);
+    int missing = remove_save_field(ROUND_TRIP_SLOT, "sunscar_lamp_quest_state");
+    ASSERT("current saves must include lamp quest state", missing && !load_game(&loaded, ROUND_TRIP_SLOT));
+    migrated = missing && rewrite_save_version(ROUND_TRIP_SLOT, 75) && load_game(&loaded, ROUND_TRIP_SLOT);
+    ASSERT("version 75 testing saves gain an unassigned lamp quest while preserving desert progress",
+        migrated && loaded.sunscar_lamp_quest_state == 0 && loaded.max_desert_level_reached == DESERT_DEPTH &&
+        loaded.desert_cache[0].valid && loaded.desert_cache[0].enemies[0].hp == 11 &&
+        loaded.player.hp == original.player.hp && loaded.gold == original.gold &&
+        loaded.defeated_bosses == original.defeated_bosses);
     remove_test_save(ROUND_TRIP_SLOT);
 }
 
