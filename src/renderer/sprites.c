@@ -1201,6 +1201,7 @@ static int weapon_is_magic(const Item *weapon) {
         case ITEM_VISUAL_MAGIC_LONG_SWORD:
         case ITEM_VISUAL_MAGIC_BATTLE_AXE:
         case ITEM_VISUAL_MAGIC_STAFF:
+        case ITEM_VISUAL_SANDSTORM_STAFF:
         case ITEM_VISUAL_MAGIC_LONGBOW:
         case ITEM_VISUAL_MAGIC_DAGGER:
         case ITEM_VISUAL_MAGIC_GREATSWORD:
@@ -1291,6 +1292,11 @@ static void draw_player_staff(Renderer *r, const Item *weapon, int bx, int by, i
         ? (SDL_Color){104, 219, 132, 255}
         : (SDL_Color){105, 181, 214, 255};
     SDL_Color core = {219, 252, 255, 255};
+    if (weapon->visual_id == ITEM_VISUAL_SANDSTORM_STAFF) {
+        wood = (SDL_Color){227, 180, 71, 255};
+        gem = (SDL_Color){244, 126, 35, 255};
+        core = (SDL_Color){255, 238, 157, 255};
+    }
     draw_weapon_line(r, bx, by, dx, dy, -5, 0, 8, 0, wood);
     draw_weapon_line(r, bx, by, dx, dy, 8, -2, 11, 0, gem);
     draw_weapon_line(r, bx, by, dx, dy, 8, 2, 11, 0, gem);
@@ -2793,8 +2799,121 @@ static void draw_polar_kraken(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 9, y + 12, 6, 2, flesh_dark);
 }
 
+static void draw_desert_enemy(Renderer *r, int tx, int ty, EnemyType type) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    SDL_Color outline = {43, 30, 24, 255};
+    SDL_Color gold = {227, 180, 71, 255};
+    SDL_Color glow = {107, 245, 221, 255};
+    if (type == ENEMY_DESERT_PHARAOH) {
+        SDL_Color blue = {42, 85, 138, 255};
+        SDL_Color linen = {230, 214, 169, 255};
+        fill_rect(r, x + 5, y, 13, 11, outline);
+        fill_rect(r, x + 6, y + 1, 11, 9, gold);
+        for (int stripe = 0; stripe < 3; stripe++) {
+            fill_rect(r, x + 6, y + 2 + stripe * 3, 11, 1, blue);
+        }
+        fill_rect(r, x + 9, y + 3, 5, 5, linen);
+        fill_rect(r, x + 10, y + 5, 1, 1, glow);
+        fill_rect(r, x + 13, y + 5, 1, 1, glow);
+        fill_rect(r, x + 7, y + 10, 10, 13, outline);
+        fill_rect(r, x + 8, y + 11, 8, 11, linen);
+        fill_rect(r, x + 8, y + 11, 8, 3, blue);
+        fill_rect(r, x + 8, y + 15, 8, 2, gold);
+        fill_rect(r, x + 3, y + 11, 4, 5, linen);
+        fill_rect(r, x + 17, y + 11, 4, 5, linen);
+        fill_rect(r, x + 21, y + 5, 2, 18, gold);
+        fill_rect(r, x + 20, y + 1, 4, 5, (SDL_Color){244, 126, 35, 255});
+        return;
+    }
+    if (type == ENEMY_SCARAB) {
+        SDL_Color shell = {61, 115, 83, 255};
+        for (int leg = 0; leg < 3; leg++) {
+            fill_rect(r, x + 2, y + 8 + leg * 4, 5, 2, gold);
+            fill_rect(r, x + 17, y + 8 + leg * 4, 5, 2, gold);
+        }
+        fill_rect(r, x + 6, y + 6, 12, 14, outline);
+        fill_rect(r, x + 7, y + 7, 10, 12, shell);
+        fill_rect(r, x + 11, y + 8, 2, 11, gold);
+        fill_rect(r, x + 8, y + 2, 8, 5, outline);
+        fill_rect(r, x + 9, y + 3, 6, 3, shell);
+        fill_rect(r, x + 9, y + 3, 1, 1, glow);
+        fill_rect(r, x + 14, y + 3, 1, 1, glow);
+        return;
+    }
+    if (type == ENEMY_VIPER) {
+        SDL_Color scales = {153, 66, 44, 255};
+        fill_rect(r, x + 3, y + 15, 18, 6, outline);
+        fill_rect(r, x + 4, y + 16, 16, 4, scales);
+        fill_rect(r, x + 7, y + 17, 8, 1, gold);
+        fill_rect(r, x + 15, y + 7, 4, 10, scales);
+        fill_rect(r, x + 10, y + 4, 11, 5, outline);
+        fill_rect(r, x + 11, y + 5, 9, 3, scales);
+        fill_rect(r, x + 12, y + 5, 2, 1, gold);
+        fill_rect(r, x + 8, y + 7, 3, 1, (SDL_Color){225, 65, 76, 255});
+        return;
+    }
+    if (type == ENEMY_MUMMY) {
+        SDL_Color linen = {213, 195, 150, 255};
+        SDL_Color seam = {141, 120, 86, 255};
+        fill_rect(r, x + 8, y + 1, 8, 7, outline);
+        fill_rect(r, x + 9, y + 2, 6, 5, linen);
+        fill_rect(r, x + 9, y + 4, 6, 1, outline);
+        fill_rect(r, x + 10, y + 4, 1, 1, (SDL_Color){215, 70, 38, 255});
+        fill_rect(r, x + 13, y + 4, 1, 1, (SDL_Color){215, 70, 38, 255});
+        fill_rect(r, x + 6, y + 8, 12, 11, outline);
+        fill_rect(r, x + 7, y + 8, 10, 10, linen);
+        for (int band = 0; band < 3; band++) {
+            fill_rect(r, x + 7, y + 10 + band * 3, 10, 1, seam);
+        }
+        fill_rect(r, x + 2, y + 9, 5, 4, linen);
+        fill_rect(r, x + 17, y + 9, 5, 4, linen);
+        fill_rect(r, x + 7, y + 19, 4, 5, linen);
+        fill_rect(r, x + 13, y + 19, 4, 5, linen);
+        return;
+    }
+    if (type == ENEMY_DJINN) {
+        SDL_Color spirit = {58, 165, 171, 255};
+        SDL_Color shadow = {38, 92, 115, 255};
+        fill_rect(r, x + 8, y + 1, 8, 3, gold);
+        fill_rect(r, x + 9, y + 4, 6, 5, spirit);
+        fill_rect(r, x + 10, y + 5, 1, 1, glow);
+        fill_rect(r, x + 13, y + 5, 1, 1, glow);
+        fill_rect(r, x + 6, y + 9, 12, 7, spirit);
+        fill_rect(r, x + 2, y + 10, 4, 4, shadow);
+        fill_rect(r, x + 18, y + 10, 4, 4, shadow);
+        fill_rect(r, x + 6, y + 15, 12, 2, gold);
+        fill_rect(r, x + 8, y + 17, 9, 3, spirit);
+        fill_rect(r, x + 11, y + 20, 5, 2, shadow);
+        fill_rect(r, x + 9, y + 22, 4, 2, spirit);
+        return;
+    }
+    SDL_Color stone = {165, 112, 66, 255};
+    SDL_Color shade = {104, 69, 46, 255};
+    fill_rect(r, x + 7, y + 1, 10, 7, outline);
+    fill_rect(r, x + 8, y + 2, 8, 5, stone);
+    fill_rect(r, x + 9, y + 4, 2, 1, glow);
+    fill_rect(r, x + 13, y + 4, 2, 1, glow);
+    fill_rect(r, x + 4, y + 8, 16, 12, outline);
+    fill_rect(r, x + 5, y + 9, 14, 10, stone);
+    fill_rect(r, x + 5, y + 14, 14, 1, shade);
+    fill_rect(r, x + 10, y + 11, 4, 4, glow);
+    fill_rect(r, x, y + 9, 4, 11, shade);
+    fill_rect(r, x + 20, y + 9, 4, 11, shade);
+    fill_rect(r, x + 5, y + 20, 5, 4, shade);
+    fill_rect(r, x + 14, y + 20, 5, 4, shade);
+}
+
 void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
     switch (type) {
+        case ENEMY_SCARAB:
+        case ENEMY_VIPER:
+        case ENEMY_MUMMY:
+        case ENEMY_DJINN:
+        case ENEMY_GOLEM:
+        case ENEMY_DESERT_PHARAOH:
+            draw_desert_enemy(r, tile_x, tile_y, type);
+            break;
         case ENEMY_POLAR_KRAKEN:
             draw_polar_kraken(r, tile_x, tile_y);
             break;
@@ -3695,6 +3814,36 @@ void draw_frostfell_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map
     fill_rect(r, x + 19, y + 13, 5, 3, flag);
 }
 
+void draw_desert_floor(Renderer *r, int tx, int ty, int mx, int my) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    unsigned int seed = (unsigned int)mx * 97u + (unsigned int)my * 61u;
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){218, 181, 110, 255});
+    fill_rect(r, x + 2 + (int)(seed % 5u), y + 5, 14, 1, (SDL_Color){240, 204, 139, 255});
+    fill_rect(r, x + 5, y + 15 + (int)(seed % 3u), 16, 1, (SDL_Color){184, 143, 83, 255});
+}
+
+void draw_desert_wall(Renderer *r, int tx, int ty, int mx, int my) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    unsigned int seed = (unsigned int)mx * 43u + (unsigned int)my * 79u;
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){100, 66, 42, 255});
+    fill_rect(r, x + 1, y + 1, 22, 8, (SDL_Color){183, 127, 72, 255});
+    fill_rect(r, x + 2, y + 1, 17, 2, (SDL_Color){226, 176, 109, 255});
+    fill_rect(r, x + 3, y + 11, 18, 5, (SDL_Color){149, 97, 54, 255});
+    fill_rect(r, x + 6 + (int)(seed % 4u), y + 18, 12, 3, (SDL_Color){77, 50, 35, 255});
+}
+
+void draw_desert_edge(Renderer *r, int tx, int ty, int mx, int my) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    draw_desert_floor(r, tx, ty, mx, my);
+    fill_rect(r, x + 3, y + 1, 2, 9, (SDL_Color){99, 65, 38, 255});
+    fill_rect(r, x + 5, y + 1, 5, 3, (SDL_Color){176, 57, 37, 255});
+    fill_rect(r, x + 17, y + 13, 2, 9, (SDL_Color){99, 65, 38, 255});
+    fill_rect(r, x + 19, y + 13, 5, 3, (SDL_Color){176, 57, 37, 255});
+}
+
 // Clear lake ice, glossier and bluer than the snow around it.
 void draw_frostfell_lake(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
     int x = tile_x * TILE_SIZE;
@@ -3916,6 +4065,17 @@ void draw_town_gate_south(Renderer *r, int tile_x, int tile_y) {
 void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
+    if (style == TOWN_EXIT_DESERT) {
+        SDL_Color stone = {151, 100, 57, 255};
+        SDL_Color light = {223, 174, 106, 255};
+        fill_rect(r, x, y, 48, 14, stone);
+        fill_rect(r, x, y + 106, 48, 14, stone);
+        fill_rect(r, x + 2, y + 2, 43, 3, light);
+        fill_rect(r, x + 2, y + 108, 43, 3, light);
+        fill_rect(r, x, y + 14, 12, 28, stone);
+        fill_rect(r, x, y + 78, 12, 28, stone);
+        return;
+    }
     if (style == TOWN_EXIT_MOUNTAINS) {
         draw_town_mountain_gate(r, tile_x, tile_y, 0);
         return;

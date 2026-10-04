@@ -98,6 +98,9 @@ static void finish_floor_pickup(GameState *g, FloorItem *picked) {
     if (strcmp(picked->item.name, "Krakenbone Bow") == 0) {
         g->kraken_bow_unclaimed = 0;
     }
+    if (strcmp(picked->item.name, "Sandstorm Staff") == 0) {
+        g->sandstorm_staff_unclaimed = 0;
+    }
     picked->active = 0;
     for (int i = 0; i < g->floor_item_count; i++) {
         FloorItem *fi = &g->floor_items[i];
@@ -112,6 +115,8 @@ static void finish_floor_pickup(GameState *g, FloorItem *picked) {
 
 Item boss_equipment_reward(EnemyType type) {
     switch (type) {
+        case ENEMY_DESERT_PHARAOH:
+            return item_make_sandstorm_staff();
         case ENEMY_LICH_KING:
             return item_make_cryptblade();
         case ENEMY_FOREST_NECROMANCER:
@@ -191,6 +196,12 @@ static int enemy_score(EnemyType type) {
         case ENEMY_ICE_GOLEM: return 150;
         case ENEMY_ICE_GIANT: return 190;
         case ENEMY_POLAR_KRAKEN: return 1700;
+        case ENEMY_SCARAB: return 40;
+        case ENEMY_VIPER: return 50;
+        case ENEMY_MUMMY: return 100;
+        case ENEMY_DJINN: return 130;
+        case ENEMY_GOLEM: return 165;
+        case ENEMY_DESERT_PHARAOH: return 1600;
         case ENEMY_ORC:         return 30;
         case ENEMY_TROLL:       return 50;
         case ENEMY_GIANT:       return 80;
@@ -272,6 +283,12 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         case ENEMY_ICE_GOLEM: gold = 12 + rand() % 10; break;
         case ENEMY_ICE_GIANT: gold = 18 + rand() % 12; break;
         case ENEMY_POLAR_KRAKEN: gold = 75; break;
+        case ENEMY_SCARAB: gold = 4 + rand() % 6; break;
+        case ENEMY_VIPER: gold = 5 + rand() % 7; break;
+        case ENEMY_MUMMY: gold = 10 + rand() % 10; break;
+        case ENEMY_DJINN: gold = 11 + rand() % 10; break;
+        case ENEMY_GOLEM: gold = 14 + rand() % 12; break;
+        case ENEMY_DESERT_PHARAOH: gold = 75; break;
         case ENEMY_ORC:      gold = 6 + rand() % 8;  break;
         case ENEMY_TROLL:    gold = 10 + rand() % 10; break;
         case ENEMY_GIANT:    gold = 15 + rand() % 15; break;
@@ -329,6 +346,9 @@ static void drop_loot(GameState *g, Enemy *enemy) {
             if (type == ENEMY_POLAR_KRAKEN) {
                 g->kraken_bow_unclaimed = 1;
             }
+            if (type == ENEMY_DESERT_PHARAOH) {
+                g->sandstorm_staff_unclaimed = 1;
+            }
             push_message(g, msg);
         }
         game_update_level_progress(g);
@@ -353,6 +373,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         drop_tile == TILE_TEMPLE_FLOOR ||
         drop_tile == TILE_LABYRINTH_FLOOR ||
         drop_tile == TILE_SWAMP_FLOOR ||
+        drop_tile == TILE_DESERT_FLOOR ||
         drop_tile == TILE_FROST_FLOOR ||
         drop_tile == TILE_FROST_LAKE ||
         drop_tile == TILE_DRAGON_FLOOR ||
@@ -1760,6 +1781,12 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
+        if (g->location == LOCATION_TOWN2 &&
+            g->map.tiles[ty][tx] == TILE_TOWN_EXIT && tx == 0) {
+            game_enter_desert(g);
+            return;
+        }
+
 
         if (g->location == LOCATION_TOWN3 &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
@@ -1947,6 +1974,34 @@ void action_resolve_player(GameState *g, Action a) {
                 }
                 game_return_to_town(g);
                 push_message(g, "The Frostfell Wastes are free of the Kraken.");
+            }
+            return;
+        }
+
+        if (g->location == LOCATION_DESERT &&
+            g->map.tiles[ty][tx] == TILE_DESERT_ENTRANCE) {
+            if (g->level == 1) {
+                game_return_to_town(g);
+            } else {
+                game_ascend(g);
+            }
+            return;
+        }
+
+        if (g->location == LOCATION_DESERT &&
+            g->map.tiles[ty][tx] == TILE_DESERT_EXIT) {
+            if (g->level < DESERT_DEPTH) {
+                game_descend(g);
+                g->score += g->level * 100;
+            } else {
+                for (int i = 0; i < g->enemy_count; i++) {
+                    if (g->enemies[i].active && g->enemies[i].is_boss) {
+                        push_message(g, "The Desert Pharaoh bars the way west!");
+                        return;
+                    }
+                }
+                game_return_to_town(g);
+                push_message(g, "You return to Stillbury.");
             }
             return;
         }
@@ -2382,6 +2437,7 @@ static int enemy_prefers_range(const Enemy *e) {
         e->type == ENEMY_WATER_ELEMENTAL ||
         e->type == ENEMY_BLOWDART_HUNTER ||
         e->type == ENEMY_FIRE_ELEMENTAL ||
+        e->type == ENEMY_DJINN ||
         e->type == ENEMY_SUN_PRIEST ||
         e->type == ENEMY_SERPENT_SPIRIT ||
         e->type == ENEMY_MOONBOUND_SENTINEL;
@@ -2395,6 +2451,7 @@ static int enemy_prefers_flank(const Enemy *e) {
         e->type == ENEMY_GOBLIN_SCOUT ||
         e->type == ENEMY_TUNNEL_SPIDER ||
         e->type == ENEMY_RELIC_SCARABS ||
+        e->type == ENEMY_SCARAB ||
         e->type == ENEMY_TEMPLE_STALKER;
 }
 
@@ -2860,6 +2917,16 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             polar_kraken_turn(g, e);
             continue;
         }
+        if (e->type == ENEMY_DESERT_PHARAOH) {
+            Room *lair = &g->map.rooms[g->map.room_count - 1];
+            int in_lair = g->player.x >= lair->x &&
+                g->player.x < lair->x + lair->w &&
+                g->player.y >= lair->y && g->player.y < lair->y + lair->h;
+            int distance = abs_int(dx) + abs_int(dy);
+            if (!in_lair && ((e->move_timer == 0 && e->hp == e->max_hp) || distance > 12)) {
+                continue;
+            }
+        }
 
         int path_distance = enemy_distances[e->y][e->x];
         // Leave an opening after retreating so melee attackers can catch up.
@@ -2881,9 +2948,12 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                     continue;
                 }
                 if (e->type == ENEMY_GIANT_SPIDER ||
-                    e->type == ENEMY_TUNNEL_SPIDER) {
+                    e->type == ENEMY_TUNNEL_SPIDER ||
+                    e->type == ENEMY_VIPER) {
                     g->player.poison_turns = 3;
-                    push_message_kind(g, "Giant Spider venom poisons you!", MESSAGE_POISON);
+                    push_message_kind(g, e->type == ENEMY_VIPER
+                        ? "Viper venom poisons you!" : "Giant Spider venom poisons you!",
+                        MESSAGE_POISON);
                 }
                 if (e->type == ENEMY_WRAITH && g->player.mp > 0) {
                     int drained = g->player.mp < 3 ? g->player.mp : 3;
@@ -2929,7 +2999,8 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
 
-        if (e->type == ENEMY_FIRE_ELEMENTAL && e->move_timer % 2 == 0 &&
+        if ((e->type == ENEMY_FIRE_ELEMENTAL || e->type == ENEMY_DJINN) &&
+            e->move_timer % 2 == 0 &&
             clear_orthogonal_path(g, i, e)) {
             int dmg = e->attack - g->player.defense / 2;
             if (dmg < 1) {
@@ -2938,7 +3009,8 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
             if (dmg > 0) {
                 char msg[MAX_MESSAGE_LEN];
-                snprintf(msg, sizeof(msg), "Elemental flame: %d dmg", dmg);
+                snprintf(msg, sizeof(msg), e->type == ENEMY_DJINN
+                    ? "Djinn magic bolt: %d dmg" : "Elemental flame: %d dmg", dmg);
                 push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
             }
             continue;
@@ -2979,6 +3051,24 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
             } else {
                 push_message(g, "The Necromancer invokes the forest...");
+            }
+            continue;
+        }
+
+        if (e->type == ENEMY_DESERT_PHARAOH) {
+            if (e->move_timer % 2 != 0) {
+                push_message(g, "The Pharaoh gathers desert magic...");
+            } else {
+                int dmg = e->attack - g->player.defense / 2;
+                if (dmg < 3) {
+                    dmg = 3;
+                }
+                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
+                if (dmg > 0) {
+                    char msg[MAX_MESSAGE_LEN];
+                    snprintf(msg, sizeof(msg), "Pharaoh magic bolt: %d dmg", dmg);
+                    push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
+                }
             }
             continue;
         }
@@ -3184,6 +3274,8 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             e->type == ENEMY_GIANT_CRAB ||
             e->type == ENEMY_ANIMATED_STATUE ||
             e->type == ENEMY_ICE_GOLEM ||
+            e->type == ENEMY_MUMMY ||
+            e->type == ENEMY_GOLEM ||
             e->type == ENEMY_VINEBOUND_GUARDIAN ||
             e->type == ENEMY_LUNAR_EFFIGY ||
             e->type == ENEMY_MOONBOUND_SENTINEL) {

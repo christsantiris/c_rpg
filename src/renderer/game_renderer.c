@@ -250,6 +250,7 @@ void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, con
         } else if (shot->type == ENEMY_GOBLIN_BOMBER) {
             color = (SDL_Color){255, 160, 55, 255};
         } else if (shot->type == ENEMY_SUN_PRIEST ||
+            shot->type == ENEMY_DESERT_PHARAOH ||
             shot->type == ENEMY_FALLEN_SUN_GUARDIAN) {
             color = (SDL_Color){255, 188, 45, 255};
         } else if (shot->type == ENEMY_SERPENT_SPIRIT ||
@@ -257,6 +258,8 @@ void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, con
             color = (SDL_Color){75, 224, 232, 255};
         } else if (shot->type == ENEMY_FROST_ARCHER) {
             color = (SDL_Color){168, 228, 255, 255};
+        } else if (shot->type == ENEMY_DJINN) {
+            color = (SDL_Color){75, 224, 232, 255};
         }
         if (impact) {
             int radius = 4 + (int)(elapsed - ENEMY_PROJECTILE_TRAVEL_MS) / 15;
@@ -802,6 +805,9 @@ static TileType floor_item_underlay(const GameState *g, int x, int y) {
     if (g->location == LOCATION_FROSTFELL) {
         return TILE_FROST_FLOOR;
     }
+    if (g->location == LOCATION_DESERT) {
+        return TILE_DESERT_FLOOR;
+    }
     if (g->location == LOCATION_SWAMP) {
         return TILE_SWAMP_FLOOR;
     }
@@ -974,6 +980,13 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         draw_swamp_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_FROST_FLOOR) {
         draw_frostfell_floor(r, screen_x, screen_y, map_x, map_y);
+    } else if (underlay == TILE_DESERT_FLOOR || underlay == TILE_DESERT_ENTRANCE ||
+        underlay == TILE_DESERT_EXIT) {
+        if (underlay == TILE_DESERT_FLOOR) {
+            draw_desert_floor(r, screen_x, screen_y, map_x, map_y);
+        } else {
+            draw_desert_edge(r, screen_x, screen_y, map_x, map_y);
+        }
     } else if (underlay == TILE_FROST_LAKE) {
         draw_frostfell_lake(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_FROST_ICE) {
@@ -1058,6 +1071,8 @@ static void draw_trap_underlay(Renderer *r, const GameState *g, int map_x, int m
         draw_dragonspine_floor(r, screen_x, screen_y, map_x, map_y, 0);
     } else if (g->location == LOCATION_FROSTFELL) {
         draw_frostfell_floor(r, screen_x, screen_y, map_x, map_y);
+    } else if (g->location == LOCATION_DESERT) {
+        draw_desert_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_DUNGEON) {
         draw_dungeon_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_LABYRINTH) {
@@ -1233,6 +1248,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         v = &town_view;
     } else if (g->location == LOCATION_SWAMP ||
         g->location == LOCATION_DRAGONSPINE ||
+        g->location == LOCATION_DESERT ||
         g->location == LOCATION_FROSTFELL) {
         int view_w = v->tiles_x < SWAMP_MAP_W ? v->tiles_x : SWAMP_MAP_W;
         int view_h = v->tiles_y < SWAMP_MAP_H ? v->tiles_y : SWAMP_MAP_H;
@@ -1424,6 +1440,16 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_swamp_daughter(r, sx, sy, x, y); break;
                 case TILE_FROST_FLOOR:
                     draw_frostfell_floor(r, sx, sy, x, y); break;
+                case TILE_DESERT_FLOOR:
+                    draw_desert_floor(r, sx, sy, x, y);
+                    break;
+                case TILE_DESERT_WALL:
+                    draw_desert_wall(r, sx, sy, x, y);
+                    break;
+                case TILE_DESERT_ENTRANCE:
+                case TILE_DESERT_EXIT:
+                    draw_desert_edge(r, sx, sy, x, y);
+                    break;
                 case TILE_FROST_WALL:
                     draw_frostfell_wall(r, sx, sy, x, y); break;
                 case TILE_FROST_ENTRANCE:
@@ -1797,6 +1823,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     if (g->location == LOCATION_TOWN2) {
+        draw_town_gate(r, viewport_to_screen_x(v, 0),
+            viewport_to_screen_y(v, 10), TOWN_EXIT_DESERT);
         draw_town_gate(r,
             viewport_to_screen_x(v, 18), viewport_to_screen_y(v, 0), TOWN_EXIT_SWAMP);
         if (g->defeated_bosses & (1 << LOCATION_SWAMP)) {
@@ -1878,6 +1906,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->location == LOCATION_DRAGONSPINE ||
         g->location == LOCATION_COAST ||
         g->location == LOCATION_SWAMP ||
+        g->location == LOCATION_DESERT ||
         g->location == LOCATION_FROSTFELL ||
         game_is_king_road(g) ||
         g->location == LOCATION_TEMPLE ||
@@ -2032,6 +2061,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (g->location == LOCATION_TOWN2) {
         SDL_Color label = {220, 180, 60, 255};
         int width = 0;
+        renderer_draw_text(r, "SUNSCAR WASTES",
+            viewport_to_screen_x(v, 1) * TILE_SIZE,
+            viewport_to_screen_y(v, 12) * TILE_SIZE,
+            label, r->font_tiny);
         TTF_SizeText(r->font_tiny, "SWAMP", &width, NULL);
         renderer_draw_text(r, "SWAMP",
             viewport_to_screen_x(v, CROWNROAD_X) * TILE_SIZE +

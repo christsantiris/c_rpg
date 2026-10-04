@@ -384,7 +384,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 73);
+    cJSON_AddNumberToObject(root, "save_version", 75);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -406,6 +406,7 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(player, "frozen_turns",      g->player.frozen_turns);
     cJSON_AddNumberToObject(player, "freeze_recovery", g->player.freeze_recovery);
     cJSON_AddNumberToObject(root, "kraken_bow_unclaimed", g->kraken_bow_unclaimed);
+    cJSON_AddNumberToObject(root, "sandstorm_staff_unclaimed", g->sandstorm_staff_unclaimed);
     cJSON_AddNumberToObject(player, "known_spell_count", g->player.known_spell_count);
     cJSON_AddNumberToObject(player, "player_class",      g->player.player_class);
 
@@ -443,6 +444,8 @@ int save_game(const GameState *g, int slot) {
         g->max_dragonspine_level_reached);
     cJSON_AddNumberToObject(root, "max_frostfell_level_reached",
         g->max_frostfell_level_reached);
+    cJSON_AddNumberToObject(root, "max_desert_level_reached",
+        g->max_desert_level_reached);
     cJSON_AddNumberToObject(root, "max_temple_level_reached",
         g->max_temple_level_reached);
     cJSON_AddNumberToObject(root, "message_count",     g->message_count);
@@ -752,6 +755,22 @@ int save_game(const GameState *g, int slot) {
     }
     cJSON_AddItemToObject(root, "frostfell_cache", frostfell_cache);
 
+    cJSON *desert_cache = cJSON_CreateArray();
+    for (int i = 0; i < DESERT_DEPTH; i++) {
+        const LevelCache *cache = &g->desert_cache[i];
+        cJSON *entry = cJSON_CreateObject();
+        cJSON_AddNumberToObject(entry, "valid", cache->valid);
+        cJSON_AddNumberToObject(entry, "level_cleared", cache->level_cleared);
+        if (cache->valid) {
+            cJSON_AddItemToObject(entry, "map", serialize_map(&cache->map));
+            cJSON_AddItemToObject(entry, "enemies",
+                serialize_enemies(cache->enemies, cache->enemy_count));
+            cJSON_AddNumberToObject(entry, "enemy_count", cache->enemy_count);
+        }
+        cJSON_AddItemToArray(desert_cache, entry);
+    }
+    cJSON_AddItemToObject(root, "desert_cache", desert_cache);
+
     const char *road_keys[2] = {"crownroad_cache", "kingroad_west_cache"};
     const CrownroadCache *road_caches[2] = {&g->crownroad_cache, &g->kingroad_west_cache};
     for (int i = 0; i < 2; i++) {
@@ -812,6 +831,36 @@ int save_game(const GameState *g, int slot) {
     return 1;
 }
 
+static void migrate_testing_save(cJSON *root, int version) {
+    if (version < 73) {
+        cJSON *player = cJSON_GetObjectItem(root, "player");
+        if (!cJSON_GetObjectItem(player, "freeze_recovery")) {
+            cJSON_AddNumberToObject(player, "freeze_recovery", 0);
+        }
+        if (!cJSON_GetObjectItem(root, "kraken_bow_unclaimed")) {
+            cJSON_AddNumberToObject(root, "kraken_bow_unclaimed", 0);
+        }
+    }
+    if (version < 74) {
+        if (!cJSON_GetObjectItem(root, "max_desert_level_reached")) {
+            cJSON_AddNumberToObject(root, "max_desert_level_reached", 1);
+        }
+        if (!cJSON_GetObjectItem(root, "desert_cache")) {
+            cJSON *cache = cJSON_CreateArray();
+            for (int i = 0; i < DESERT_DEPTH; i++) {
+                cJSON *entry = cJSON_CreateObject();
+                cJSON_AddNumberToObject(entry, "valid", 0);
+                cJSON_AddNumberToObject(entry, "level_cleared", 0);
+                cJSON_AddItemToArray(cache, entry);
+            }
+            cJSON_AddItemToObject(root, "desert_cache", cache);
+        }
+    }
+    if (version < 75 && !cJSON_GetObjectItem(root, "sandstorm_staff_unclaimed")) {
+        cJSON_AddNumberToObject(root, "sandstorm_staff_unclaimed", 0);
+    }
+}
+
 int load_game(GameState *g, int slot) {
     FILE *f = fopen(slot_path(slot), "r");
     if (!f) return 0;
@@ -830,17 +879,29 @@ int load_game(GameState *g, int slot) {
 
     cJSON *version_item = cJSON_GetObjectItem(root, "save_version");
     int save_version = version_item ? version_item->valueint : 1;
+    migrate_testing_save(root, save_version);
+
+    cJSON *max_desert = cJSON_GetObjectItem(root, "max_desert_level_reached");
+    cJSON *desert_cache = cJSON_GetObjectItem(root, "desert_cache");
+    if (!cJSON_IsNumber(max_desert) || !cJSON_IsArray(desert_cache) ||
+        cJSON_GetArraySize(desert_cache) != DESERT_DEPTH) {
+        cJSON_Delete(root);
+        return 0;
+    }
 
     // Player
     cJSON *player = cJSON_GetObjectItem(root, "player");
     cJSON *freeze_recovery = cJSON_GetObjectItem(player, "freeze_recovery");
     cJSON *kraken_bow_unclaimed = cJSON_GetObjectItem(root, "kraken_bow_unclaimed");
-    if (!cJSON_IsNumber(freeze_recovery) || !cJSON_IsNumber(kraken_bow_unclaimed)) {
+    cJSON *sandstorm_staff_unclaimed = cJSON_GetObjectItem(root, "sandstorm_staff_unclaimed");
+    if (!cJSON_IsNumber(freeze_recovery) || !cJSON_IsNumber(kraken_bow_unclaimed) ||
+        !cJSON_IsNumber(sandstorm_staff_unclaimed)) {
         cJSON_Delete(root);
         return 0;
     }
     g->player.freeze_recovery = freeze_recovery->valueint;
     g->kraken_bow_unclaimed = kraken_bow_unclaimed->valueint;
+    g->sandstorm_staff_unclaimed = sandstorm_staff_unclaimed->valueint;
     strncpy(g->player.name, cJSON_GetObjectItem(player, "name")->valuestring, 20);
     g->player.x                = cJSON_GetObjectItem(player, "x")->valueint;
     g->player.y                = cJSON_GetObjectItem(player, "y")->valueint;
@@ -899,6 +960,7 @@ int load_game(GameState *g, int slot) {
     cJSON *max_frostfell = cJSON_GetObjectItem(root,
         "max_frostfell_level_reached");
     g->max_frostfell_level_reached = max_frostfell ? max_frostfell->valueint : 1;
+    g->max_desert_level_reached = max_desert->valueint;
     cJSON *max_temple = cJSON_GetObjectItem(root,
         "max_temple_level_reached");
     g->max_temple_level_reached = max_temple ? max_temple->valueint : 1;
@@ -1252,6 +1314,19 @@ int load_game(GameState *g, int slot) {
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
                 g->frostfell_cache[i].enemies,
                 &g->frostfell_cache[i].enemy_count);
+        }
+    }
+
+    for (int i = 0; i < DESERT_DEPTH; i++) {
+        LevelCache *cache = &g->desert_cache[i];
+        *cache = (LevelCache){0};
+        cJSON *entry = cJSON_GetArrayItem(desert_cache, i);
+        cache->valid = cJSON_GetObjectItem(entry, "valid")->valueint;
+        cache->level_cleared = cJSON_GetObjectItem(entry, "level_cleared")->valueint;
+        if (cache->valid) {
+            deserialize_map(cJSON_GetObjectItem(entry, "map"), &cache->map);
+            deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
+                cache->enemies, &cache->enemy_count);
         }
     }
 
