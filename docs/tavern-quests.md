@@ -27,7 +27,10 @@ pieces. A Goblin Archer, Goblin Bomber, and Goblin Shaman each carry one
 fragment. Defeating them recovers their fragments automatically without using
 normal inventory space.
 
-Mountain stages 2, 3, and 5 contain an Archer, Bomber, and Shaman Map Bearer.
+Mountain stages 1, 2, and 3 on the OakHaven side contain an Archer, Bomber, and
+Shaman Map Bearer. From Ridgeshire, cross Crown Peak first, then encounter the
+bearers on stages 3, 2, and 1. Taking the peak shortcut from Ridgeshire skips
+these quest stages; use OakHaven's ordinary mountain gate to recover them later.
 Each leader travels with a themed warband, turning every fragment into a
 distinct combat encounter. Returning all three fragments allows Dain to
 reconstruct the map and locate its hidden dwarven hoard. He awards the player

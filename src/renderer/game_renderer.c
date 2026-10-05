@@ -95,8 +95,9 @@ static void draw_dialogue_text(Renderer *r, const char *text, int x, int y, int 
 }
 
 static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport *v) {
+    int shortcut = game_shortcut_prompt_active(g);
     if (!g->dialogue_active ||
-        (g->location != LOCATION_TAVERN &&
+        (!shortcut && g->location != LOCATION_TAVERN &&
         g->location != LOCATION_INN &&
         g->location != LOCATION_GUILD &&
         g->location != LOCATION_TOWN &&
@@ -107,8 +108,8 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
         g->location != LOCATION_SWAMP)) {
         return;
     }
-    int npc_x = g->dialogue_x;
-    int npc_y = g->dialogue_y;
+    int npc_x = shortcut ? g->player.x : g->dialogue_x;
+    int npc_y = shortcut ? g->player.y : g->dialogue_y;
     if (!viewport_is_visible(v, npc_x, npc_y)) {
         return;
     }
@@ -122,7 +123,7 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
         viewport_w = TAVERN_W * TILE_SIZE;
     }
     int bubble_w = viewport_w < 460 ? viewport_w - 16 : 440;
-    int bubble_h = 98;
+    int bubble_h = shortcut ? 132 : 98;
     int npc_screen_x = viewport_to_screen_x(v, npc_x) * TILE_SIZE +
         TILE_SIZE / 2;
     int npc_screen_y = viewport_to_screen_y(v, npc_y) * TILE_SIZE;
@@ -174,6 +175,10 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
         bubble_y + 12, (SDL_Color){71, 82, 138, 255}, r->font_small);
     draw_dialogue_text(r, g->dialogue_text, bubble_x + 14, bubble_y + 36,
         (bubble_w - 28) / 8, (SDL_Color){42, 32, 30, 255});
+    if (shortcut) {
+        renderer_draw_text(r, "Enter to continue", bubble_x + 14, bubble_y + bubble_h - 20,
+            (SDL_Color){71, 82, 138, 255}, r->font_tiny);
+    }
 }
 
 static void draw_weapon_arrow_at(Renderer *r, int cx, int cy, int dx, int dy, int impact) {
@@ -964,6 +969,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         draw_forest_edge(r, screen_x, screen_y, map_x, map_y, 1);
     } else if (underlay == TILE_SWAMP_SHORTCUT) {
         draw_swamp_edge(r, screen_x, screen_y, map_x, map_y, 1);
+    } else if (underlay == TILE_MOUNTAIN_SHORTCUT) {
+        draw_mountain_edge(r, screen_x, screen_y, map_x, map_y, 1);
     } else if (underlay == TILE_FOREST_FLOOR) {
         draw_forest_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_MOUNTAIN_BRIDGE) {
@@ -1398,6 +1405,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_mountain_edge(r, sx, sy, x, y, 0); break;
                 case TILE_MOUNTAIN_EXIT:
                     draw_mountain_edge(r, sx, sy, x, y, 1); break;
+                case TILE_MOUNTAIN_SHORTCUT:
+                    draw_mountain_edge(r, sx, sy, x, y, 1);
+                    renderer_draw_text(r, "SHORTCUT", sx * TILE_SIZE - 20, sy * TILE_SIZE - 12,
+                        (SDL_Color){128, 235, 143, 255}, r->font_tiny);
+                    break;
                 case TILE_MOUNTAIN_HIDDEN_CAVE:
                     draw_mountain_wall(r, sx, sy, x, y); break;
                 case TILE_MOUNTAIN_ROCKFALL:
@@ -1852,6 +1864,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_y(v, 10), TOWN_EXIT_ROAD);
         draw_town_gate_south(r, viewport_to_screen_x(v, 20 - 2),
             viewport_to_screen_y(v, TOWN_H - 3));
+        if (g->defeated_bosses & (1 << LOCATION_MOUNTAINS)) {
+            draw_town_gate_south(r, viewport_to_screen_x(v, RIDGESHIRE_MOUNTAIN_ROAD_X - 2),
+                viewport_to_screen_y(v, TOWN_H - 3));
+        }
         draw_town_gate(r,
             viewport_to_screen_x(v, TOWN_W - 3),
             viewport_to_screen_y(v, TOWN4_DRAGON_GATE_Y - 2),
@@ -1869,7 +1885,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, 18), viewport_to_screen_y(v, 0), TOWN_EXIT_SWAMP);
         if (g->defeated_bosses & (1 << LOCATION_SWAMP)) {
             draw_town_gate(r, viewport_to_screen_x(v, TOWN3_ROAD_X - 2),
-                viewport_to_screen_y(v, 0), TOWN_EXIT_ROAD);
+                viewport_to_screen_y(v, 0), TOWN_EXIT_SWAMP);
         }
         draw_town_gate(r,
             viewport_to_screen_x(v, TOWN_W - 3), viewport_to_screen_y(v, 10),
@@ -1903,7 +1919,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_y(v, TOWN_H - 2), TOWN_EXIT_SWAMP);
         if (g->defeated_bosses & (1 << LOCATION_SWAMP)) {
             draw_town_gate(r, viewport_to_screen_x(v, ROSEMOOR_SWAMP_ROAD_X - 2),
-                viewport_to_screen_y(v, TOWN_H - 2), TOWN_EXIT_ROAD);
+                viewport_to_screen_y(v, TOWN_H - 2), TOWN_EXIT_SWAMP);
         }
     }
     if (g->location == LOCATION_CASTLE) {
@@ -2095,11 +2111,18 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
             viewport_to_screen_y(v, TOWN4_DRAGON_GATE_Y) * TILE_SIZE,
             label, r->font_tiny);
-        TTF_SizeText(r->font_tiny, "OAKHAVEN", &width, NULL);
-        renderer_draw_text(r, "OAKHAVEN",
+        TTF_SizeText(r->font_tiny, "MOUNTAINS", &width, NULL);
+        renderer_draw_text(r, "MOUNTAINS",
             viewport_to_screen_x(v, 20) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE,
             label, r->font_tiny);
+        if (g->defeated_bosses & (1 << LOCATION_MOUNTAINS)) {
+            TTF_SizeText(r->font_tiny, "OAKHAVEN", &width, NULL);
+            renderer_draw_text(r, "OAKHAVEN",
+                viewport_to_screen_x(v, RIDGESHIRE_MOUNTAIN_ROAD_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+                viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE,
+                (SDL_Color){113, 204, 79, 255}, r->font_tiny);
+        }
     }
 
     if (g->location == LOCATION_TOWN2) {

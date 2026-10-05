@@ -116,7 +116,8 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
         return 1;
     }
     if (action.target_y == TOWN_H - 1) {
-        *style = g->location == LOCATION_TOWN4 ? TOWN_EXIT_MOUNTAINS :
+        *style = g->location == LOCATION_TOWN4 ?
+            (action.target_x == RIDGESHIRE_MOUNTAIN_ROAD_X ? TOWN_EXIT_ROAD : TOWN_EXIT_MOUNTAINS) :
             (g->location == LOCATION_TOWN2 ? TOWN_EXIT_SWAMP : TOWN_EXIT_COAST);
         return 1;
     }
@@ -589,6 +590,9 @@ int main(int argc, char **argv) {
                         break;
                     }
                     int sc = event.key.keysym.scancode;
+                    if (screen == SCREEN_PLAYING && game_handle_shortcut_prompt_key(&game, sc, event.key.repeat)) {
+                        break;
+                    }
 
                     // Game over screen
                     if (screen == SCREEN_GAME_OVER) {
@@ -990,6 +994,7 @@ int main(int argc, char **argv) {
                                 target == TILE_SWAMP_SHORTCUT ||
                                 target == TILE_MOUNTAIN_ENTRANCE ||
                                 target == TILE_MOUNTAIN_EXIT ||
+                                target == TILE_MOUNTAIN_SHORTCUT ||
                                 target == TILE_COAST_ENTRANCE ||
                                 target == TILE_COAST_EXIT ||
                                 target == TILE_TAVERN_DOOR ||
@@ -1080,6 +1085,9 @@ int main(int argc, char **argv) {
                         break;
                     }
                     if (event.button.button != SDL_BUTTON_LEFT) break;
+                    if (screen == SCREEN_PLAYING && game_shortcut_prompt_active(&game)) {
+                        break;
+                    }
 
                     // Landing screen clicks
                     if (screen == SCREEN_LANDING) {

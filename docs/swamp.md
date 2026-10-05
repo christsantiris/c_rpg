@@ -30,7 +30,9 @@ on first visits to levels from either direction.
 
 The living Demon blocks crossing level 4 toward the opposite town, but allows
 retreat toward the expedition's entry town. Defeating him displays a shortcut
-discovery prompt and opens a separate marked trail in his clearing. That trail
+discovery prompt that stays visible until a fresh press of Enter acknowledges
+it, matching the forest and mountains. A separate marked trail appears beside
+the defeated Demon, even if he was lured away from his clearing. That trail
 goes directly to Rosemoor when entering from Stillbury, or to Stillbury when
 entering from Rosemoor. Players can instead cross the three remaining levels.
 Surviving regular enemies do not block either exit choice.
