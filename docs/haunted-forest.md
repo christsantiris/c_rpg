@@ -75,6 +75,8 @@ ordinary forest gate from OakHaven to finish those rescues later.
 
 ## Save Compatibility
 
-Start a new game to test this layout. Saves from before the seven-stage forest
-refactor are not migrated. New saves retain the expedition's entry town, portal
-anchor, explored stages, and shortcut unlock.
+Older saves migrate automatically when loaded. The old final boss stage moves
+to stage 4, and saved maps and portal destinations move with the route. Warden
+placements update to stages 1, 2, and 3 while retaining rescue progress. Character
+progress, boss victories, and shortcut unlocks remain intact. Saving writes the
+current format, including the expedition's entry town and portal anchor.

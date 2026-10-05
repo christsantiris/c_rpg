@@ -103,7 +103,7 @@ void test_swamp(void) {
     ASSERT("swamp clearings have irregular shorelines instead of square rooms",
         rounded_clearings >= 5);
 
-    for (int level = 1; level <= SWAMP_DEPTH; level++) {
+    for (int level = 1; level <= SWAMP_BOSS_LEVEL; level++) {
         ASSERT("every swamp path tile connects to the entry and exit",
             swamp_game.level == level &&
             swamp_exit_reachable(&swamp_game.map));
@@ -113,7 +113,7 @@ void test_swamp(void) {
             swamp_game.map.tiles[0][0] == TILE_SWAMP_WALL &&
             swamp_game.map.tiles[swamp_game.map.stairs_up_y]
                 [swamp_game.map.stairs_up_x] == TILE_SWAMP_ENTRANCE);
-        if (level < SWAMP_DEPTH) {
+        if (level < SWAMP_BOSS_LEVEL) {
             int exit_x = swamp_game.map.stairs_down_x;
             int exit_y = swamp_game.map.stairs_down_y;
             swamp_game.player.x = exit_x - 1;
@@ -131,7 +131,7 @@ void test_swamp(void) {
             type == ENEMY_VAMPIRE || type == ENEMY_ZOMBIE ||
             type == ENEMY_WRAITH;
     }
-    ASSERT("level five has one demon and the swamp enemy roster",
+    ASSERT("central level four has one demon and the swamp enemy roster",
         demon_count == 1 && regular_count > 0 &&
         regular_count + demon_count == swamp_game.enemy_count);
     int final_exit_x = swamp_game.map.stairs_down_x;
@@ -140,8 +140,8 @@ void test_swamp(void) {
     swamp_game.player.y = final_exit_y;
     action_resolve_player(&swamp_game,
         (Action){ACTION_MOVE, final_exit_x, final_exit_y});
-    ASSERT("the final exit is blocked while the demon lives",
-        swamp_game.level == SWAMP_DEPTH &&
+    ASSERT("the central exit is blocked while the demon lives",
+        swamp_game.level == SWAMP_BOSS_LEVEL &&
         swamp_game.location == LOCATION_SWAMP);
     Item reward = boss_equipment_reward(ENEMY_SWAMP_DEMON);
     ASSERT("demon reward matches long sword power and reaches two tiles",
@@ -155,8 +155,10 @@ void test_swamp(void) {
             enemy->hp = 1;
             swamp_game.player.x = enemy->x - 1;
             swamp_game.player.y = enemy->y;
-            action_resolve_player(&swamp_game,
-                (Action){ACTION_MOVE, enemy->x, enemy->y});
+            for (int tries = 0; enemy->active && tries < 20; tries++) {
+                action_resolve_player(&swamp_game,
+                    (Action){ACTION_MOVE, enemy->x, enemy->y});
+            }
             break;
         }
     }
@@ -172,9 +174,13 @@ void test_swamp(void) {
     swamp_game.player.y = final_exit_y;
     action_resolve_player(&swamp_game,
         (Action){ACTION_MOVE, final_exit_x, final_exit_y});
+    ASSERT("victory permits continuing through the remaining levels", swamp_game.level == SWAMP_BOSS_LEVEL + 1);
+    for (int steps = 0; swamp_game.location == LOCATION_SWAMP && steps < SWAMP_DEPTH; steps++) {
+        action_resolve_player(&swamp_game, (Action){ACTION_MOVE, swamp_game.map.stairs_down_x, swamp_game.map.stairs_down_y});
+    }
     ASSERT("defeating the demon leads into Rosemoor",
         swamp_game.location == LOCATION_TOWN3 && swamp_game.player.y == TOWN_H - 2);
-    action_resolve_player(&swamp_game, (Action){ACTION_MOVE, 20, TOWN_H - 1});
+    action_resolve_player(&swamp_game, (Action){ACTION_MOVE, ROSEMOOR_SWAMP_ROAD_X, TOWN_H - 1});
     ASSERT("Rosemoor south gate enters a safe swamp shortcut",
         swamp_game.location == LOCATION_SWAMP_ROAD && swamp_game.enemy_count == 0 &&
         swamp_game.player.y == 1);
@@ -313,7 +319,7 @@ void test_swamp(void) {
         swamp_game.innkeeper_quest_state == 1);
     game_leave_inn(&swamp_game);
     game_enter_swamp(&swamp_game);
-    for (int level = 1; level < 4; level++) {
+    for (int level = 1; level < SWAMP_RESCUE_LEVEL; level++) {
         game_descend(&swamp_game);
     }
     ASSERT("Mira's clearing leaves the swamp exit reachable",
@@ -334,7 +340,7 @@ void test_swamp(void) {
             captor_index = i;
         }
     }
-    ASSERT("Mira and her vampire captor appear on swamp level four",
+    ASSERT("Mira and her vampire captor appear on swamp level three",
         mira_x >= 0 && captor_index >= 0 &&
         swamp_game.enemies[captor_index].active);
     if (mira_x >= 0 && captor_index >= 0) {

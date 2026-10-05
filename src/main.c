@@ -78,7 +78,7 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
             return 1;
         }
         if (g->location == LOCATION_TOWN3 && action.target_y == TOWN_H - 1) {
-            *style = TOWN_EXIT_SWAMP;
+            *style = action.target_x == ROSEMOOR_SWAMP_ROAD_X ? TOWN_EXIT_ROAD : TOWN_EXIT_SWAMP;
             return 1;
         }
         return 0;
@@ -90,6 +90,9 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
         }
         *style = g->location == LOCATION_TOWN ?
             TOWN_EXIT_MOUNTAINS : TOWN_EXIT_SWAMP;
+        if (g->location == LOCATION_TOWN2 && action.target_x == TOWN3_ROAD_X) {
+            *style = TOWN_EXIT_ROAD;
+        }
         return 1;
     }
     if (action.target_x == 0 && g->location == LOCATION_TOWN4) {
@@ -984,6 +987,7 @@ int main(int argc, char **argv) {
                                 target == TILE_FOREST_ENTRANCE ||
                                 target == TILE_FOREST_EXIT ||
                                 target == TILE_FOREST_SHORTCUT ||
+                                target == TILE_SWAMP_SHORTCUT ||
                                 target == TILE_MOUNTAIN_ENTRANCE ||
                                 target == TILE_MOUNTAIN_EXIT ||
                                 target == TILE_COAST_ENTRANCE ||

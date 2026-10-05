@@ -151,6 +151,8 @@ typedef struct {
     int max_mountain_level_reached;
     int max_coast_level_reached;
     int max_swamp_level_reached;
+    Location swamp_entry_town;
+    Location swamp_portal_town;
     int max_dragonspine_level_reached;
     int max_frostfell_level_reached;
     int max_desert_level_reached;
@@ -223,6 +225,8 @@ void game_enter_mountains(GameState *g);
 void game_enter_town4(GameState *g);
 void game_enter_coast(GameState *g);
 void game_enter_swamp(GameState *g);
+void game_leave_swamp(GameState *g, Location town, int shortcut);
+void game_reveal_swamp_shortcut(GameState *g);
 void game_enter_frostfell(GameState *g);
 void game_enter_desert(GameState *g);
 void game_enter_high_pass(GameState *g, int from_town);

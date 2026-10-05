@@ -962,6 +962,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         draw_coast_trap_underlay(r, g, map_x, map_y, screen_x, screen_y);
     } else if (underlay == TILE_FOREST_SHORTCUT) {
         draw_forest_edge(r, screen_x, screen_y, map_x, map_y, 1);
+    } else if (underlay == TILE_SWAMP_SHORTCUT) {
+        draw_swamp_edge(r, screen_x, screen_y, map_x, map_y, 1);
     } else if (underlay == TILE_FOREST_FLOOR) {
         draw_forest_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_MOUNTAIN_BRIDGE) {
@@ -1461,6 +1463,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_swamp_edge(r, sx, sy, x, y, 0); break;
                 case TILE_SWAMP_EXIT:
                     draw_swamp_edge(r, sx, sy, x, y, 1); break;
+                case TILE_SWAMP_SHORTCUT:
+                    draw_swamp_edge(r, sx, sy, x, y, 1);
+                    renderer_draw_text(r, "SHORTCUT", sx * TILE_SIZE - 20, sy * TILE_SIZE - 12,
+                        (SDL_Color){128, 235, 143, 255}, r->font_tiny);
+                    break;
                 case TILE_SWAMP_DAUGHTER:
                     draw_swamp_daughter(r, sx, sy, x, y); break;
                 case TILE_FROST_FLOOR:
@@ -1862,7 +1869,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, 18), viewport_to_screen_y(v, 0), TOWN_EXIT_SWAMP);
         if (g->defeated_bosses & (1 << LOCATION_SWAMP)) {
             draw_town_gate(r, viewport_to_screen_x(v, TOWN3_ROAD_X - 2),
-                viewport_to_screen_y(v, 0), TOWN_EXIT_SWAMP);
+                viewport_to_screen_y(v, 0), TOWN_EXIT_ROAD);
         }
         draw_town_gate(r,
             viewport_to_screen_x(v, TOWN_W - 3), viewport_to_screen_y(v, 10),
@@ -1894,6 +1901,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_y(v, TOWN3_KING_GATE_Y - 2), TOWN_EXIT_DUNGEON);
         draw_town_gate(r, viewport_to_screen_x(v, 18),
             viewport_to_screen_y(v, TOWN_H - 2), TOWN_EXIT_SWAMP);
+        if (g->defeated_bosses & (1 << LOCATION_SWAMP)) {
+            draw_town_gate(r, viewport_to_screen_x(v, ROSEMOOR_SWAMP_ROAD_X - 2),
+                viewport_to_screen_y(v, TOWN_H - 2), TOWN_EXIT_ROAD);
+        }
     }
     if (g->location == LOCATION_CASTLE) {
         draw_castle_front(r,
@@ -2169,10 +2180,17 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
             viewport_to_screen_y(v, TOWN3_KING_GATE_Y) * TILE_SIZE,
             label, r->font_tiny);
-        TTF_SizeText(r->font_tiny, "STILLBURY", &width, NULL);
-        renderer_draw_text(r, "STILLBURY",
+        TTF_SizeText(r->font_tiny, "SWAMP", &width, NULL);
+        renderer_draw_text(r, "SWAMP",
             viewport_to_screen_x(v, 20) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE, label, r->font_tiny);
+        if (g->defeated_bosses & (1 << LOCATION_SWAMP)) {
+            TTF_SizeText(r->font_tiny, "STILLBURY", &width, NULL);
+            renderer_draw_text(r, "STILLBURY",
+                viewport_to_screen_x(v, ROSEMOOR_SWAMP_ROAD_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+                viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE,
+                (SDL_Color){113, 204, 79, 255}, r->font_tiny);
+        }
         TTF_SizeText(r->font_tiny, "APOTHECARY", &width, NULL);
         renderer_draw_text(r, "APOTHECARY",
             viewport_to_screen_x(v, TOWN_APOTHECARY_X) * TILE_SIZE +
