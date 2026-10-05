@@ -25,7 +25,7 @@ A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explo
 retro pixel-art style. Choose a Warrior, Mage, or Rogue, prepare in town, and
 explore an eight-floor undead dungeon, the seven-stage Haunted Forest, the
 eight-stage Goblin Mountains, the eight-stage Sunken Coast, and Stillbury's
-five-level Blackwater Swamp. Beyond the Goblin Mountains, the five-stage
+seven-level Blackwater Swamp. Beyond the Goblin Mountains, the five-stage
 Dragonspine ascent begins at Ridgeshire's east gate. Each region
 keeps its own generated maps and progression. Defeating the Drowned Queen on
 the Sunken Coast opens a sea route to the Ruined Isle. Its four-tier Ruined
@@ -84,7 +84,7 @@ Stillbury permanently open onto a short, enemy-free forest road between the
 towns. Both ordinary forest gates remain available and retain explored stages.
 Stillbury has an Inn, a healer selling
 Health Potions, a witch selling Mana Potions, and Rook's labyrinth. Its north
-gate opens onto the five-level Blackwater Swamp. Each shop buys its own item types.
+gate opens onto the seven-level Blackwater Swamp. Each shop buys its own item types.
 Stock expands as bosses are defeated; buying costs twice an item's base value,
 while selling pays one quarter of base value.
 
@@ -115,19 +115,21 @@ enemies return, but the Warden and quest reward do not.
 
 ### Blackwater Swamp
 
-Travel north from Stillbury through five levels of black water, reeds, and muddy
-causeways. Giant Rats, Bandits, Zombies, and Wraiths appear early; Vampires join
-on deeper levels. The Swamp Demon guards the final exit, which leads to Rosemoor,
-and drops a Demonic Sword: a +6 one-handed weapon for every class, with a
-two-tile `F` attack. Talk to Bram at the Stillbury Inn to rescue his daughter from
-a vampire on level 4. See [Blackwater Swamp](docs/swamp.md) for the full area
-rules.
+Blackwater Swamp has seven levels and can be entered from Stillbury's north
+swamp gate at level 1 or Rosemoor's main south gate at level 7. Difficulty rises
+toward the Swamp Demon on level 4, then falls beyond it. Defeating him reveals
+a marked shortcut to the opposite town; players can instead cross the three
+remaining levels. He drops a Demonic Sword: a +6 one-handed weapon for every
+class, with a two-tile `F` attack. Talk to Bram at the Stillbury Inn to rescue
+Mira from a vampire on level 3. From Stillbury she appears before the Demon;
+from Rosemoor she appears after it. See [Blackwater Swamp](docs/swamp.md).
 
 ### Rosemoor, King Roads, and the Castle
 
 Defeating the Swamp Demon also opens a second north gate in Stillbury. It leads
-along a safe, enemy-free swamp shortcut to Rosemoor's south gate. Rosemoor has the
-Apothecary. Two Royal Guards at its east gate warn that King Road East swarms
+along a safe, enemy-free swamp shortcut to a separate south gate in Rosemoor.
+Both towns retain their ordinary swamp gates and explored swamp levels.
+Rosemoor has the Apothecary. Two Royal Guards at its east gate warn that King Road East swarms
 with bandits, archers, and horsemen. That road leads to the grounds of the
 Castle of No Return, whose doors stay sealed for now. King Road West continues
 from the castle's east gate to Ridgeshire's west gate. Each road keeps its own

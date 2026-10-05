@@ -145,7 +145,10 @@
 #define MOUNTAIN_DEPTH 8
 #define COAST_DEPTH 8
 #define MAX_REGION_DEPTH 8
-#define SWAMP_DEPTH 5
+#define SWAMP_DEPTH 7
+#define SWAMP_BOSS_LEVEL 4
+#define SWAMP_RESCUE_LEVEL 3
+#define ROSEMOOR_SWAMP_ROAD_X 28
 // Frostfell reuses the swamp's map size, mirrored so it runs east to west.
 #define FROSTFELL_DEPTH 5
 #define DESERT_DEPTH 5
@@ -327,7 +330,8 @@ typedef enum {
     TILE_GUILD_DOOR,
     TILE_NPC_GUILD_SEEKER,
     TILE_DESERT_LAMP,
-    TILE_FOREST_SHORTCUT
+    TILE_FOREST_SHORTCUT,
+    TILE_SWAMP_SHORTCUT
 } TileType;
 
 typedef struct {
@@ -359,6 +363,7 @@ void map_generate_crownroad(Map *m);
 void map_generate_castle(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_swamp_road(Map *m);
 void map_set_town3_road(Map *m, int unlocked);
+void map_set_rosemoor_swamp_road(Map *m, int unlocked);
 void map_generate_forest_road(Map *m);
 void map_place_town_labyrinth(Map *m);
 void map_place_town2_center(Map *m);
@@ -382,6 +387,7 @@ int map_forest_difficulty(int level);
 void map_generate_mountains(Map *m, int level);
 void map_generate_coast(Map *m, int level);
 void map_generate_swamp(Map *m, int level);
+int map_swamp_difficulty(int level);
 void map_generate_high_pass(Map *m);
 void map_generate_dragonspine(Map *m, int level);
 void map_generate_frostfell(Map *m, int level);
