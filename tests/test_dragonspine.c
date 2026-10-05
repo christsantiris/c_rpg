@@ -63,7 +63,7 @@ void test_dragonspine(void) {
     ASSERT("Ridgeshire has an east Dragonspine gate and a south shortcut",
         g.location == LOCATION_TOWN4 && g.enemy_count == 0 &&
         g.map.tiles[TOWN4_DRAGON_GATE_Y][TOWN_W - 1] == TILE_TOWN_EXIT &&
-        g.map.tiles[TOWN_H - 1][20] == TILE_TOWN_EXIT);
+        g.map.tiles[TOWN_H - 1][RIDGESHIRE_MOUNTAIN_ROAD_X] == TILE_TOWN_EXIT);
     int empty_crossroads = 1;
     int ilya_count = 0;
     int royal_guard_count = 0;
@@ -82,7 +82,7 @@ void test_dragonspine(void) {
         g.map.tiles[12][20] == TILE_TOWN_PATH &&
         g.map.tiles[0][20] == TILE_WALL && g.map.tiles[12][0] == TILE_TOWN_EXIT);
 
-    action_resolve_player(&g, (Action){ACTION_MOVE, 20, TOWN_H - 1});
+    action_resolve_player(&g, (Action){ACTION_MOVE, RIDGESHIRE_MOUNTAIN_ROAD_X, TOWN_H - 1});
     ASSERT("Ridgeshire south exit enters the safe shortcut",
         g.location == LOCATION_HIGH_PASS && g.enemy_count == 0 &&
         g.player.x == HIGH_PASS_X && g.player.y == 1);
@@ -113,7 +113,7 @@ void test_dragonspine(void) {
         action_resolve_player(&g, (Action){ACTION_MOVE, HIGH_PASS_X, y});
     }
     ASSERT("walking north reaches Ridgeshire without crossing the mountains",
-        g.location == LOCATION_TOWN4 && g.player.x == 20 &&
+        g.location == LOCATION_TOWN4 && g.player.x == RIDGESHIRE_MOUNTAIN_ROAD_X &&
         g.player.y == TOWN_H - 2 && g.enemy_count == 0);
     g.player.x = TOWN_W - 2;
     g.player.y = TOWN4_DRAGON_GATE_Y;
@@ -206,7 +206,7 @@ void test_dragonspine(void) {
         g.map.tiles[TOWN4_PORTAL_Y][TOWN4_PORTAL_X] == TILE_PORTAL);
     g.player.x = 20;
     g.player.y = TOWN_H - 2;
-    action_resolve_player(&g, (Action){ACTION_MOVE, 20, TOWN_H - 1});
+    action_resolve_player(&g, (Action){ACTION_MOVE, RIDGESHIRE_MOUNTAIN_ROAD_X, TOWN_H - 1});
     g.player.y = HIGH_PASS_H - 2;
     action_resolve_player(&g, (Action){ACTION_MOVE, HIGH_PASS_X, HIGH_PASS_H - 1});
     ASSERT("visiting OakHaven preserves the Dragonspine portal destination",

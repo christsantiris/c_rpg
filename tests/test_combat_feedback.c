@@ -43,8 +43,48 @@ static const CombatFeedbackEvent *only_event(void) {
     return combat_feedback_count() == 1 ? combat_feedback_get(0) : NULL;
 }
 
+static void test_spell_aim_after_melee(void) {
+    static GameState g;
+    static const int directions[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    for (int direction = 0; direction < 4; direction++) {
+        setup_fight(&g, CLASS_MAGE);
+        g.location = LOCATION_SWAMP;
+        g.level = SWAMP_BOSS_LEVEL;
+        g.inventory[0] = item_make_staff();
+        g.inventory_count = 1;
+        g.equipped_main_hand = 0;
+        equip_spell(&g, spell_make_magic_arrow());
+        int dx = directions[direction][0];
+        int dy = directions[direction][1];
+        g.player.last_dx = -dx;
+        g.player.last_dy = -dy;
+        g.enemies[0].type = ENEMY_SWAMP_DEMON;
+        g.enemies[0].x = 20 + dx;
+        g.enemies[0].y = 20 + dy;
+        g.enemies[0].hp = 1000;
+        g.enemies[0].max_hp = 1000;
+        g.enemy_count = 2;
+        g.enemies[1] = g.enemies[0];
+        g.enemies[1].x = 20 - dx;
+        g.enemies[1].y = 20 - dy;
+        action_resolve_player(&g, (Action){ACTION_MOVE, 20 + dx, 20 + dy});
+        ASSERT("staff melee faces the Demon without moving the player",
+            g.player.x == 20 && g.player.y == 20 && g.enemies[0].hp < 1000 &&
+            g.player.last_dx == dx && g.player.last_dy == dy);
+        int hp = g.enemies[0].hp;
+        int mp = g.player.mp;
+        action_resolve_player(&g, (Action){ACTION_CAST_SPELL, 0, 0});
+        ASSERT("Magic Arrow hits the melee target instead of firing behind the player",
+            g.enemies[0].hp < hp && g.enemies[1].hp == 1000 && g.player.mp < mp);
+        ASSERT("Magic Arrow animation points toward the adjacent melee target",
+            g.trail_count == 1 && g.trail[0].x == 20 + dx &&
+            g.trail[0].y == 20 + dy && g.trail[0].is_impact);
+    }
+}
+
 void test_combat_feedback(void) {
     printf("Combat feedback tests:\n");
+    test_spell_aim_after_melee();
     static GameState g;
     Action cast = {ACTION_CAST_SPELL, 0, 0};
 

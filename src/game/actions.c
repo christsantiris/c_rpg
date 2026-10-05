@@ -227,6 +227,8 @@ static void drop_loot(GameState *g, Enemy *enemy) {
             !(g->defeated_bosses & (1 << LOCATION_FOREST));
         int first_swamp_victory = g->location == LOCATION_SWAMP &&
             !(g->defeated_bosses & (1 << LOCATION_SWAMP));
+        int first_mountain_victory = g->location == LOCATION_MOUNTAINS &&
+            !(g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
         g->defeated_bosses |= 1 << g->location;
         game_record_temple_enemy_defeated(g, type);
         if (first_forest_victory) {
@@ -235,7 +237,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
             g->dialogue_y = g->player.y;
             snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Shortcut found");
             snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "You found a shortcut through the forest to %s! Take the marked trail in the grove, or continue through the forest.",
+                "You found a shortcut through the forest to %s! Take the marked shortcut beside the defeated boss, or continue through the forest.",
                 g->forest_entry_town == LOCATION_TOWN2 ? "OakHaven" : "Stillbury");
         } else if (first_swamp_victory) {
             g->dialogue_active = 1;
@@ -243,8 +245,16 @@ static void drop_loot(GameState *g, Enemy *enemy) {
             g->dialogue_y = g->player.y;
             snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Shortcut found");
             snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "You found a shortcut through the swamp to %s! Take the marked trail in the clearing, or continue through the swamp.",
+                "You found a shortcut through the swamp to %s! Take the marked shortcut beside the defeated boss, or continue through the swamp.",
                 g->swamp_entry_town == LOCATION_TOWN3 ? "Stillbury" : "Rosemoor");
+        } else if (first_mountain_victory) {
+            g->dialogue_active = 1;
+            g->dialogue_x = g->player.x;
+            g->dialogue_y = g->player.y;
+            snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Shortcut found");
+            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+                "You found a shortcut through the mountains to %s! Take the marked shortcut beside the defeated boss, or continue down the mountains.",
+                g->mountain_entry_town == LOCATION_TOWN4 ? "OakHaven" : "Ridgeshire");
         }
     }
     int gold = 0;
@@ -748,7 +758,7 @@ static int interact_mountain(GameState *g) {
     int px = g->player.x;
     int py = g->player.y;
     if (g->map.tiles[py][px] == TILE_MOUNTAIN_CACHE) {
-        int gold = 15 + g->level * 4;
+        int gold = 15 + map_mountain_difficulty(g->level) * 4;
         g->gold += gold;
         g->score += gold;
         change_mountain_tile(g, px, py, TILE_MOUNTAIN_CAVE_FLOOR);
@@ -789,7 +799,7 @@ static int interact_mountain(GameState *g) {
                 map_mark_explored(&g->map, cx, y);
             }
             g->map.tiles[y][(left + right) / 2] = TILE_MOUNTAIN_CACHE;
-            int rock_damage = 4 + g->level;
+            int rock_damage = 4 + map_mountain_difficulty(g->level);
             g->player.hp -= rock_damage;
             combat_feedback_add(g, FEEDBACK_PLAYER_DAMAGE, FEEDBACK_NOW, px, py, rock_damage);
             push_message_kind(g, "Falling rocks hurt! A cave is exposed.", MESSAGE_DAMAGE_TAKEN);
@@ -1642,6 +1652,8 @@ void action_resolve_player(GameState *g, Action a) {
             if (!e->active) continue;
             if (e->x == tx && e->y == ty) {
                 // Melee attack
+                g->player.last_dx = tx - g->player.x;
+                g->player.last_dy = ty - g->player.y;
                 int melee_attack = g->player.attack;
                 Item *melee_weapon = NULL;
                 if (g->equipped_main_hand >= 0 &&
@@ -1739,7 +1751,8 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
         if ((g->location == LOCATION_TOWN || g->location == LOCATION_TOWN2 ||
-            (g->location == LOCATION_TOWN3 && g->portal_location == LOCATION_SWAMP)) &&
+            (g->location == LOCATION_TOWN3 && g->portal_location == LOCATION_SWAMP) ||
+            (g->location == LOCATION_TOWN4 && g->portal_location == LOCATION_MOUNTAINS)) &&
             g->map.tiles[ty][tx] == TILE_PORTAL && g->portal_active) {
             game_use_town_portal(g);
             return;
@@ -1869,7 +1882,13 @@ void action_resolve_player(GameState *g, Action a) {
             } else if (tx == 0) {
                 game_enter_king_road(g, LOCATION_KING_ROAD_WEST, 0);
             } else if (ty == TOWN_H - 1) {
-                game_enter_high_pass(g, 0);
+                if (tx == RIDGESHIRE_MOUNTAIN_ROAD_X) {
+                    if (g->defeated_bosses & (1 << LOCATION_MOUNTAINS)) {
+                        game_enter_high_pass(g, 0);
+                    }
+                } else {
+                    game_enter_mountains(g);
+                }
             }
             return;
         }
@@ -2150,32 +2169,39 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
         if (g->location == LOCATION_MOUNTAINS &&
-            g->map.tiles[ty][tx] == TILE_MOUNTAIN_ENTRANCE) {
-            if (g->level == 1) game_return_to_town(g);
-            else game_ascend(g);
+            g->map.tiles[ty][tx] == TILE_MOUNTAIN_SHORTCUT) {
+            if (g->defeated_bosses & (1 << LOCATION_MOUNTAINS)) {
+                game_leave_mountains(g, g->mountain_entry_town == LOCATION_TOWN4 ? LOCATION_TOWN : LOCATION_TOWN4, 1);
+            }
             return;
         }
 
         if (g->location == LOCATION_MOUNTAINS &&
-            g->map.tiles[ty][tx] == TILE_MOUNTAIN_EXIT) {
-            if (g->level < MOUNTAIN_DEPTH) {
-                game_descend(g);
-                g->score += g->level * 100;
-            } else {
-                int king_alive = 0;
-                for (int i = 0; i < g->enemy_count; i++)
-                    if (g->enemies[i].active &&
-                        g->enemies[i].type == ENEMY_MOUNTAIN_GOBLIN_KING) {
-                        king_alive = 1;
-                        break;
+            (g->map.tiles[ty][tx] == TILE_MOUNTAIN_ENTRANCE ||
+            g->map.tiles[ty][tx] == TILE_MOUNTAIN_EXIT)) {
+            int reverse = g->map.tiles[ty][tx] == TILE_MOUNTAIN_ENTRANCE;
+            int crossing_peak = reverse == (g->mountain_entry_town == LOCATION_TOWN4);
+            if (g->level == MOUNTAIN_BOSS_LEVEL && crossing_peak) {
+                for (int i = 0; i < g->enemy_count; i++) {
+                    if (g->enemies[i].active && g->enemies[i].type == ENEMY_MOUNTAIN_GOBLIN_KING) {
+                        push_message(g, "The Goblin King bars the pass!");
+                        return;
                     }
-                if (king_alive) {
-                    push_message(g, "The Goblin King bars the pass!");
-                    return;
                 }
-                g->score += g->level * 100;
-                game_enter_town4(g);
-                push_message(g, "Beyond the liberated mountain pass lies Ridgeshire.");
+            }
+            if ((reverse && g->level == 1) || (!reverse && g->level == MOUNTAIN_DEPTH)) {
+                game_leave_mountains(g, reverse ? LOCATION_TOWN : LOCATION_TOWN4, 0);
+            } else {
+                int next = g->level + (reverse ? -1 : 1);
+                int unvisited = !g->mountain_cache[next - 1].valid;
+                if (reverse) {
+                    game_ascend(g);
+                } else {
+                    game_descend(g);
+                }
+                if (unvisited) {
+                    g->score += map_mountain_difficulty(g->level) * 100;
+                }
             }
             return;
         }

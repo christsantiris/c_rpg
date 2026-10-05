@@ -8,7 +8,7 @@ extending dungeon depth.
 
 New enemies scale from the number of **other** regional bosses defeated. This
 order tier ranges from 0 for the first region to 3 for the fourth. Each region
-keeps its own eight-stage progression and encounter count; the tier changes
+keeps its own progression and encounter count; the tier changes
 enemy strength when a floor is generated, not on every player level-up.
 
 | Prior bosses | Regular enemy HP | Regular attack | Boss HP | Boss attack | Enemy XP |

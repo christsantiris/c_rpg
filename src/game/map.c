@@ -368,7 +368,7 @@ static const ForestTemplate forest_templates[] = {
         {{0,1},{0,2},{1,3},{2,4},{3,5},{4,6},{3,4},{5,7},{6,8},{7,9},{8,9}}}
 };
 
-static const ForestTemplate mountain_templates[MOUNTAIN_DEPTH] = {
+static const ForestTemplate mountain_templates[8] = {
     {7, {8,34,61,88,116,145,172}, {70,52,70,43,58,31,12}, 6,
         {{0,1},{1,2},{2,3},{3,4},{4,5},{5,6}}},
     {8, {18,42,42,78,78,112,145,172}, {76,20,58,20,58,40,40,40}, 9,
@@ -675,26 +675,25 @@ static void place_mountain_cache_passage(Map *m) {
     m->tiles[cy + 2][cx + 3] = TILE_MOUNTAIN_ROCKFALL;
 }
 
+int map_mountain_difficulty(int level) {
+    static const int difficulty[MOUNTAIN_DEPTH] = {1, 2, 3, 8, 3, 2, 1};
+    if (level < 1 || level > MOUNTAIN_DEPTH) {
+        return 1;
+    }
+    return difficulty[level - 1];
+}
+
 void map_generate_mountains(Map *m, int level) {
+    static const int templates[MOUNTAIN_DEPTH] = {0, 1, 2, 7, 4, 5, 6};
     static const OutdoorSide entrances[MOUNTAIN_DEPTH] = {
-        OUTDOOR_SIDE_WEST,
-        OUTDOOR_SIDE_SOUTH,
-        OUTDOOR_SIDE_NORTH,
-        OUTDOOR_SIDE_SOUTH,
-        OUTDOOR_SIDE_WEST,
-        OUTDOOR_SIDE_NORTH,
-        OUTDOOR_SIDE_SOUTH,
-        OUTDOOR_SIDE_WEST
+        OUTDOOR_SIDE_WEST, OUTDOOR_SIDE_SOUTH, OUTDOOR_SIDE_NORTH,
+        OUTDOOR_SIDE_WEST, OUTDOOR_SIDE_WEST, OUTDOOR_SIDE_NORTH,
+        OUTDOOR_SIDE_SOUTH
     };
     static const OutdoorSide exits[MOUNTAIN_DEPTH] = {
-        OUTDOOR_SIDE_NORTH,
-        OUTDOOR_SIDE_EAST,
-        OUTDOOR_SIDE_SOUTH,
-        OUTDOOR_SIDE_NORTH,
-        OUTDOOR_SIDE_SOUTH,
-        OUTDOOR_SIDE_EAST,
-        OUTDOOR_SIDE_NORTH,
-        OUTDOOR_SIDE_SOUTH
+        OUTDOOR_SIDE_NORTH, OUTDOOR_SIDE_EAST, OUTDOOR_SIDE_SOUTH,
+        OUTDOOR_SIDE_SOUTH, OUTDOOR_SIDE_SOUTH, OUTDOOR_SIDE_EAST,
+        OUTDOOR_SIDE_NORTH
     };
     int index = level - 1;
     if (index < 0) {
@@ -703,18 +702,19 @@ void map_generate_mountains(Map *m, int level) {
     if (index >= MOUNTAIN_DEPTH) {
         index = MOUNTAIN_DEPTH - 1;
     }
-    map_generate_outdoor(m, level, entrances[index], exits[index], 0,
-        &mountain_templates[index]);
+    map_generate_outdoor(m, map_mountain_difficulty(level), entrances[index], exits[index], 0,
+        &mountain_templates[templates[index]]);
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
-            if (m->tiles[y][x] == TILE_FOREST_FLOOR)
+            if (m->tiles[y][x] == TILE_FOREST_FLOOR) {
                 m->tiles[y][x] = TILE_MOUNTAIN_FLOOR;
-            else if (m->tiles[y][x] == TILE_FOREST_WALL)
+            } else if (m->tiles[y][x] == TILE_FOREST_WALL) {
                 m->tiles[y][x] = TILE_MOUNTAIN_WALL;
-            else if (m->tiles[y][x] == TILE_FOREST_ENTRANCE)
+            } else if (m->tiles[y][x] == TILE_FOREST_ENTRANCE) {
                 m->tiles[y][x] = TILE_MOUNTAIN_ENTRANCE;
-            else if (m->tiles[y][x] == TILE_FOREST_EXIT)
+            } else if (m->tiles[y][x] == TILE_FOREST_EXIT) {
                 m->tiles[y][x] = TILE_MOUNTAIN_EXIT;
+            }
         }
     }
     for (int y = 0; y < MAP_H; y++) {
@@ -727,7 +727,7 @@ void map_generate_mountains(Map *m, int level) {
                 m->tiles[y][x] = TILE_MOUNTAIN_BRIDGE;
             } else if (level == 3 || level == 6) {
                 m->tiles[y][x] = TILE_MOUNTAIN_CAVE_FLOOR;
-            } else if (level == 4 || level == 5 || level == 8) {
+            } else if (level == 4 || level == 5) {
                 if (in_room) {
                     m->tiles[y][x] = TILE_MOUNTAIN_FORTRESS_FLOOR;
                 }
@@ -757,7 +757,7 @@ void map_generate_mountains(Map *m, int level) {
             }
         }
     }
-    if (level == 3 || level == 4 || level == 5 || level == 6 || level == 8) {
+    if (level == 3 || level == 4 || level == 5 || level == 6) {
         place_mountain_cache_passage(m);
     }
 }
@@ -1173,6 +1173,15 @@ void map_set_town4_road(Map *m, int unlocked) {
         m->tiles[y][TOWN4_ROAD_X] = TILE_TOWN_PATH;
     }
     m->tiles[0][TOWN4_ROAD_X] = TILE_TOWN_EXIT;
+}
+
+void map_set_ridgeshire_mountain_road(Map *m, int unlocked) {
+    m->tiles[TOWN_H - 1][RIDGESHIRE_MOUNTAIN_ROAD_X] = unlocked ? TILE_TOWN_EXIT : TILE_WALL;
+    for (int y = 13; y < TOWN_H - 1; y++) {
+        if (m->tiles[y][RIDGESHIRE_MOUNTAIN_ROAD_X] != TILE_ITEM) {
+            m->tiles[y][RIDGESHIRE_MOUNTAIN_ROAD_X] = unlocked ? TILE_TOWN_PATH : TILE_TOWN_FLOOR;
+        }
+    }
 }
 
 void map_place_town4_workshop(Map *m) {

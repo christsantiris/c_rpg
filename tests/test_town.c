@@ -964,10 +964,18 @@ static void test_necromancer_opens_exit(void) {
         ASSERT("boss defeat reveals the exit without clearing regular enemies",
             g.map.tiles[exit.target_y][exit.target_x] == TILE_FOREST_EXIT &&
             g.enemies[1].active && !g.level_cleared);
-        int shortcut_x;
-        int shortcut_y;
-        map_room_center(&g.map.rooms[g.map.room_count - 1], &shortcut_x, &shortcut_y);
-        action_resolve_player(&g, (Action){ACTION_MOVE, shortcut_x + 3, shortcut_y + 3});
+        int shortcut_x = -1;
+        int shortcut_y = -1;
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                if (g.map.tiles[y][x] == TILE_FOREST_SHORTCUT) {
+                    shortcut_x = x;
+                    shortcut_y = y;
+                }
+            }
+        }
+        game_handle_shortcut_prompt_key(&g, SDL_SCANCODE_RETURN, 0);
+        action_resolve_player(&g, (Action){ACTION_MOVE, shortcut_x, shortcut_y});
         ASSERT("grove shortcut leaves the forest with a living enemy behind",
             g.location == LOCATION_TOWN2 &&
             g.forest_cache[FOREST_BOSS_LEVEL - 1].enemies[1].active &&
@@ -1468,7 +1476,7 @@ static void test_goblin_king_retaliation(void) {
         g.player.player_class = CLASS_ROGUE;
         game_init(&g);
         g.location = LOCATION_MOUNTAINS;
-        g.level = MOUNTAIN_DEPTH;
+        g.level = MOUNTAIN_BOSS_LEVEL;
         map_generate_mountains(&g.map, g.level);
         enemies_spawn(&g);
         ASSERT("Goblin King is available for retaliation test",
@@ -1541,9 +1549,9 @@ static void test_goblin_king_retaliation(void) {
 void test_mountains(void) {
     test_goblin_king_retaliation();
     printf("Goblin Mountains tests:\n");
-    static const int expected_rooms[MOUNTAIN_DEPTH] = {7, 8, 8, 9, 9, 10, 10, 10};
-    static const int expected_entrances[MOUNTAIN_DEPTH] = {0, 2, 1, 2, 0, 1, 2, 0};
-    static const int expected_exits[MOUNTAIN_DEPTH] = {1, 0, 2, 1, 2, 0, 1, 2};
+    static const int expected_rooms[MOUNTAIN_DEPTH] = {7, 8, 8, 10, 9, 10, 10};
+    static const int expected_entrances[MOUNTAIN_DEPTH] = {0, 2, 1, 0, 0, 1, 2};
+    static const int expected_exits[MOUNTAIN_DEPTH] = {1, 0, 2, 2, 2, 0, 1};
     GameState g;
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
@@ -1610,12 +1618,13 @@ void test_mountains(void) {
                 type > ENEMY_MOUNTAIN_GOBLIN_KING) invalid = 1;
         }
         ASSERT("mountains use only mountain enemy roster", !invalid);
-        if (level < MOUNTAIN_DEPTH)
-            ASSERT("mountain stages 1-7 have no boss", bosses == 0);
-        else
-            ASSERT("mountain stage 8 has Goblin King",
+        if (level != MOUNTAIN_BOSS_LEVEL) {
+            ASSERT("mountain approaches have no boss", bosses == 0);
+        } else {
+            ASSERT("mountain stage 4 has Goblin King",
                 bosses == 1 &&
                 g.enemies[0].type == ENEMY_MOUNTAIN_GOBLIN_KING);
+        }
     }
 
     g.level = 1;
@@ -1630,21 +1639,28 @@ void test_mountains(void) {
         g.mountain_cache[0].valid && !g.level_cache[0].valid &&
         !g.forest_cache[0].valid);
 
-    g.level = MOUNTAIN_DEPTH;
+    g.level = MOUNTAIN_BOSS_LEVEL;
     map_generate_mountains(&g.map, g.level);
     enemies_spawn(&g);
     g.player.x = g.map.stairs_down_x;
     g.player.y = g.map.stairs_down_y;
     exit = outdoor_exit_action(&g.map);
     action_resolve_player(&g, exit);
-    ASSERT("Goblin King blocks final mountain exit",
-        g.location == LOCATION_MOUNTAINS);
-    for (int i = 0; i < g.enemy_count; i++)
-        if (g.enemies[i].type == ENEMY_MOUNTAIN_GOBLIN_KING)
+    ASSERT("Goblin King blocks crossing the mountain peak",
+        g.location == LOCATION_MOUNTAINS && g.level == MOUNTAIN_BOSS_LEVEL);
+    for (int i = 0; i < g.enemy_count; i++) {
+        if (g.enemies[i].type == ENEMY_MOUNTAIN_GOBLIN_KING) {
             g.enemies[i].active = 0;
+        }
+    }
     action_resolve_player(&g, exit);
-    ASSERT("defeating Goblin King reaches Ridgeshire",
-        g.location == LOCATION_TOWN4);
+    ASSERT("defeating Goblin King permits descent from the peak", g.level == MOUNTAIN_BOSS_LEVEL + 1);
+    while (g.location == LOCATION_MOUNTAINS) {
+        g.player.x = g.map.stairs_down_x;
+        g.player.y = g.map.stairs_down_y;
+        action_resolve_player(&g, outdoor_exit_action(&g.map));
+    }
+    ASSERT("remaining mountain stages reach Ridgeshire", g.location == LOCATION_TOWN4);
     ASSERT("mountain completion arrives at Ridgeshire south road",
         g.player.x == 20 && g.player.y == TOWN_H - 2);
 }

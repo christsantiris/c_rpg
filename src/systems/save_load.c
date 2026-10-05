@@ -384,11 +384,13 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 78);
+    cJSON_AddNumberToObject(root, "save_version", 79);
     cJSON_AddNumberToObject(root, "forest_entry_town", g->forest_entry_town);
     cJSON_AddNumberToObject(root, "forest_portal_town", g->forest_portal_town);
     cJSON_AddNumberToObject(root, "swamp_entry_town", g->swamp_entry_town);
     cJSON_AddNumberToObject(root, "swamp_portal_town", g->swamp_portal_town);
+    cJSON_AddNumberToObject(root, "mountain_entry_town", g->mountain_entry_town);
+    cJSON_AddNumberToObject(root, "mountain_portal_town", g->mountain_portal_town);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -861,6 +863,14 @@ static void repair_floor_item_underlays(GameState *g) {
 }
 
 static void migrate_testing_save(cJSON *root, int version) {
+    if (version < 79) {
+        if (!cJSON_GetObjectItem(root, "mountain_entry_town")) {
+            cJSON_AddNumberToObject(root, "mountain_entry_town", LOCATION_TOWN);
+        }
+        if (!cJSON_GetObjectItem(root, "mountain_portal_town")) {
+            cJSON_AddNumberToObject(root, "mountain_portal_town", LOCATION_TOWN);
+        }
+    }
     if (version < 77) {
         if (!cJSON_GetObjectItem(root, "forest_entry_town")) {
             cJSON_AddNumberToObject(root, "forest_entry_town", LOCATION_TOWN);
@@ -920,17 +930,19 @@ static void remove_legacy_wardens(Map *m) {
 }
 
 // Keep saved terrain, enemies, loot and portal coordinates while moving the
-// former end bosses into the center. Forest stage 7 merges into the outer
-// approach; its snapshot takes priority when occupied or used by a portal.
+// former end bosses into the center. Forest and mountain stages 4 and 7 merge
+// into the outer approach, retaining occupied or portal-linked snapshots.
 static int migrate_region_routes(GameState *g, Location region) {
     static const int forest_levels[8] = {1, 2, 3, 7, 5, 6, 7, 4};
     static const int swamp_levels[5] = {1, 2, 5, 3, 4};
     int forest = region == LOCATION_FOREST;
-    int old_depth = forest ? 8 : 5;
-    int depth = forest ? FOREST_DEPTH : SWAMP_DEPTH;
-    const int *levels = forest ? forest_levels : swamp_levels;
-    LevelCache *cache = forest ? g->forest_cache : g->swamp_cache;
-    int *max_level = forest ? &g->max_forest_level_reached : &g->max_swamp_level_reached;
+    int mountain = region == LOCATION_MOUNTAINS;
+    int old_depth = forest || mountain ? 8 : 5;
+    int depth = forest ? FOREST_DEPTH : (mountain ? MOUNTAIN_DEPTH : SWAMP_DEPTH);
+    const int *levels = forest || mountain ? forest_levels : swamp_levels;
+    LevelCache *cache = forest ? g->forest_cache : (mountain ? g->mountain_cache : g->swamp_cache);
+    int *max_level = forest ? &g->max_forest_level_reached :
+        (mountain ? &g->max_mountain_level_reached : &g->max_swamp_level_reached);
     LevelCache *old = malloc(old_depth * sizeof(*old));
     if (!old) {
         return 0;
@@ -942,13 +954,16 @@ static int migrate_region_routes(GameState *g, Location region) {
     }
     int keep_seventh = (g->location == region && g->level == 7) ||
         (g->portal_active && g->portal_location == region && g->portal_level == 7);
+    int keep_fourth = (g->location == region && g->level == 4) ||
+        (g->portal_active && g->portal_location == region && g->portal_level == 4);
     int reached = 1;
     for (int i = 0; i < old_depth; i++) {
         int level = levels[i];
         if (i < *max_level && level > reached) {
             reached = level;
         }
-        if (forest && i == 6 && !keep_seventh) {
+        if ((forest && i == 6 && !keep_seventh) ||
+            (mountain && ((i == 3 && !keep_fourth && old[6].valid) || (i == 6 && keep_fourth && !keep_seventh)))) {
             continue;
         }
         if (old[i].valid) {
@@ -970,6 +985,27 @@ static int migrate_region_routes(GameState *g, Location region) {
         for (int i = 0; i < depth; i++) {
             if (cache[i].valid) {
                 remove_legacy_wardens(&cache[i].map);
+            }
+        }
+        cache[MAX_REGION_DEPTH - 1].valid = 0;
+    }
+    if (mountain) {
+        // Old bearers move with their maps, but fragments now belong to stages
+        // 1-3. Keep the enemies and their health; refresh places needed bearers.
+        for (int stage = 0; stage <= depth; stage++) {
+            Enemy *enemies = stage == depth ? g->enemies : cache[stage].enemies;
+            int count = stage == depth ? g->enemy_count : cache[stage].enemy_count;
+            if ((stage == depth && g->location != region) || (stage < depth && !cache[stage].valid)) {
+                continue;
+            }
+            for (int i = 0; i < count; i++) {
+                Enemy *enemy = &enemies[i];
+                if (enemy->dain_fragment) {
+                    enemy->dain_fragment = 0;
+                    const char *name = enemy->type == ENEMY_GOBLIN_ARCHER ? "Goblin Archer" :
+                        (enemy->type == ENEMY_GOBLIN_BOMBER ? "Goblin Bomber" : "Goblin Shaman");
+                    snprintf(enemy->name, sizeof(enemy->name), "%s", name);
+                }
             }
         }
         cache[MAX_REGION_DEPTH - 1].valid = 0;
@@ -997,6 +1033,7 @@ int load_game(GameState *g, int slot) {
     int save_version = version_item ? version_item->valueint : 1;
     int old_forest = save_version < 77 && !cJSON_GetObjectItem(root, "forest_entry_town");
     int old_swamp = save_version < 78 && !cJSON_GetObjectItem(root, "swamp_entry_town");
+    int old_mountains = save_version < 79 && !cJSON_GetObjectItem(root, "mountain_entry_town");
     migrate_testing_save(root, save_version);
 
     cJSON *max_desert = cJSON_GetObjectItem(root, "max_desert_level_reached");
@@ -1017,10 +1054,13 @@ int load_game(GameState *g, int slot) {
     cJSON *forest_portal = cJSON_GetObjectItem(root, "forest_portal_town");
     cJSON *swamp_entry = cJSON_GetObjectItem(root, "swamp_entry_town");
     cJSON *swamp_portal = cJSON_GetObjectItem(root, "swamp_portal_town");
+    cJSON *mountain_entry = cJSON_GetObjectItem(root, "mountain_entry_town");
+    cJSON *mountain_portal = cJSON_GetObjectItem(root, "mountain_portal_town");
     if (!cJSON_IsNumber(freeze_recovery) || !cJSON_IsNumber(kraken_bow_unclaimed) ||
         !cJSON_IsNumber(sandstorm_staff_unclaimed) || !cJSON_IsNumber(lamp_quest) ||
         !cJSON_IsNumber(forest_entry) || !cJSON_IsNumber(forest_portal) ||
-        !cJSON_IsNumber(swamp_entry) || !cJSON_IsNumber(swamp_portal)) {
+        !cJSON_IsNumber(swamp_entry) || !cJSON_IsNumber(swamp_portal) ||
+        !cJSON_IsNumber(mountain_entry) || !cJSON_IsNumber(mountain_portal)) {
         cJSON_Delete(root);
         return 0;
     }
@@ -1032,10 +1072,14 @@ int load_game(GameState *g, int slot) {
     g->forest_portal_town = forest_portal->valueint;
     g->swamp_entry_town = swamp_entry->valueint;
     g->swamp_portal_town = swamp_portal->valueint;
+    g->mountain_entry_town = mountain_entry->valueint;
+    g->mountain_portal_town = mountain_portal->valueint;
     if ((g->forest_entry_town != LOCATION_TOWN && g->forest_entry_town != LOCATION_TOWN2) ||
         (g->forest_portal_town != LOCATION_TOWN && g->forest_portal_town != LOCATION_TOWN2) ||
         (g->swamp_entry_town != LOCATION_TOWN2 && g->swamp_entry_town != LOCATION_TOWN3) ||
-        (g->swamp_portal_town != LOCATION_TOWN2 && g->swamp_portal_town != LOCATION_TOWN3)) {
+        (g->swamp_portal_town != LOCATION_TOWN2 && g->swamp_portal_town != LOCATION_TOWN3) ||
+        (g->mountain_entry_town != LOCATION_TOWN && g->mountain_entry_town != LOCATION_TOWN4) ||
+        (g->mountain_portal_town != LOCATION_TOWN && g->mountain_portal_town != LOCATION_TOWN4)) {
         cJSON_Delete(root);
         return 0;
     }
@@ -2396,7 +2440,8 @@ int load_game(GameState *g, int slot) {
     }
 
     if ((old_forest && !migrate_region_routes(g, LOCATION_FOREST)) ||
-        (old_swamp && !migrate_region_routes(g, LOCATION_SWAMP))) {
+        (old_swamp && !migrate_region_routes(g, LOCATION_SWAMP)) ||
+        (old_mountains && !migrate_region_routes(g, LOCATION_MOUNTAINS))) {
         cJSON_Delete(root);
         return 0;
     }
@@ -2448,6 +2493,7 @@ int load_game(GameState *g, int slot) {
     }
 
     if (g->location == LOCATION_TOWN4) {
+        map_set_ridgeshire_mountain_road(&g->map, g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
         map_place_town4_workshop(&g->map);
         if (!map_is_walkable(&g->map, g->player.x, g->player.y)) {
             g->player.x = TOWN4_WORKSHOP_DOOR_X;
@@ -2468,6 +2514,7 @@ int load_game(GameState *g, int slot) {
 
     repair_floor_item_underlays(g);
     game_hide_portal_destination(g);
+    game_migrate_boss_shortcuts(g);
     game_refresh_quest_encounters(g);
     for (int i = 0; i < g->floor_item_count; i++) {
         FloorItem *item = &g->floor_items[i];

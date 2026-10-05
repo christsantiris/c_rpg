@@ -39,11 +39,17 @@ static int make_legacy_save(int version) {
         cJSON_DeleteItemFromObject(root, "forest_entry_town");
         cJSON_DeleteItemFromObject(root, "forest_portal_town");
     }
-    cJSON_DeleteItemFromObject(root, "swamp_entry_town");
-    cJSON_DeleteItemFromObject(root, "swamp_portal_town");
-    cJSON *cache = cJSON_GetObjectItem(root, "swamp_cache");
-    while (cJSON_GetArraySize(cache) > 5) {
-        cJSON_DeleteItemFromArray(cache, 5);
+    if (version < 78) {
+        cJSON_DeleteItemFromObject(root, "swamp_entry_town");
+        cJSON_DeleteItemFromObject(root, "swamp_portal_town");
+        cJSON *cache = cJSON_GetObjectItem(root, "swamp_cache");
+        while (cJSON_GetArraySize(cache) > 5) {
+            cJSON_DeleteItemFromArray(cache, 5);
+        }
+    }
+    if (version == 78) {
+        cJSON_DeleteItemFromObject(root, "mountain_entry_town");
+        cJSON_DeleteItemFromObject(root, "mountain_portal_town");
     }
     char *json = cJSON_Print(root);
     cJSON_Delete(root);
@@ -116,6 +122,92 @@ static void prepare_legacy_region(int forest, int level) {
         .item = item_make_health_potion()
     };
     original.map.tiles[y][x] = TILE_ITEM;
+}
+
+static void prepare_legacy_mountains(int level) {
+    original.player.player_class = CLASS_WARRIOR;
+    game_init(&original);
+    original.location = LOCATION_MOUNTAINS;
+    original.level = level;
+    original.max_mountain_level_reached = 8;
+    original.dain_quest_state = 1;
+    original.dain_map_fragments = DAIN_FRAGMENT_ARCHER;
+    original.gold = 321;
+    original.score = 9876;
+    for (int i = 0; i < 8; i++) {
+        LevelCache *cache = &original.mountain_cache[i];
+        map_generate_mountains(&cache->map, i == 7 ? MOUNTAIN_BOSS_LEVEL : i + 1);
+        cache->valid = 1;
+        cache->enemy_count = 1;
+        cache->level_cleared = 0;
+        int x;
+        int y;
+        map_room_center(&cache->map.rooms[0], &x, &y);
+        cache->enemies[0] = (Enemy){.active = 1, .type = ENEMY_GOBLIN_SCOUT, .x = x + 1, .y = y, .hp = 50 + i, .max_hp = 100};
+        if (i == 1 || i == 2 || i == 4) {
+            cache->enemies[0].type = i == 1 ? ENEMY_GOBLIN_ARCHER : (i == 2 ? ENEMY_GOBLIN_BOMBER : ENEMY_GOBLIN_SHAMAN);
+            cache->enemies[0].dain_fragment = i == 1 ? 1 : (i == 2 ? 2 : 4);
+            snprintf(cache->enemies[0].name, sizeof(cache->enemies[0].name), "Map Bearer");
+        }
+        if (i == 7) {
+            cache->enemies[0].type = ENEMY_MOUNTAIN_GOBLIN_KING;
+            cache->enemies[0].is_boss = 1;
+        }
+    }
+    original.map = original.mountain_cache[level - 1].map;
+    original.enemy_count = 1;
+    original.enemies[0] = original.mountain_cache[level - 1].enemies[0];
+    map_room_center(&original.map.rooms[0], &original.player.x, &original.player.y);
+    original.floor_item_count = 1;
+    original.floor_items[0] = (FloorItem){.active = 1, .x = original.player.x, .y = original.player.y, .underlying_tile = TILE_MOUNTAIN_FLOOR, .item = item_make_health_potion()};
+    original.map.tiles[original.player.y][original.player.x] = TILE_ITEM;
+}
+
+static void test_mountain_migration(void) {
+    static const int old_levels[] = {1, 2, 4, 5, 7, 8};
+    static const int new_levels[] = {1, 2, 7, 5, 7, 4};
+    for (int i = 0; i < 6; i++) {
+        prepare_legacy_mountains(old_levels[i]);
+        int ok = make_legacy_save(78) && load_game(&loaded, ROUTE_SAVE_SLOT);
+        ASSERT("version 78 mountain save migrates without new travel fields", ok);
+        if (!ok) {
+            continue;
+        }
+        ASSERT("old mountain stages move into the seven-level route", loaded.level == new_levels[i] && loaded.max_mountain_level_reached == 7 && !loaded.mountain_cache[7].valid);
+        ASSERT("mountain migration preserves stats, position, loot, and wounded enemies", loaded.player.hp == original.player.hp && loaded.player.x == original.player.x && loaded.player.y == original.player.y && loaded.gold == 321 && loaded.score == 9876 && loaded.floor_item_count == 1 && loaded.enemies[0].hp == original.enemies[0].hp);
+        ASSERT("mountain migration preserves partial map quest progress", loaded.dain_quest_state == 1 && loaded.dain_map_fragments == DAIN_FRAGMENT_ARCHER);
+        ASSERT("old summit King moves intact to level 4", loaded.mountain_cache[3].valid && loaded.mountain_cache[3].enemies[0].is_boss && loaded.mountain_cache[3].enemies[0].hp == 57);
+        ASSERT("old mountain bearers cannot award fragments beyond new quest levels", loaded.mountain_cache[4].enemies[0].dain_fragment == 0);
+        ASSERT("occupied old mountain fourth or seventh stage retains its snapshot", loaded.mountain_cache[6].enemies[0].hp == (old_levels[i] == 4 ? 53 : 56));
+        if (new_levels[i] == 2) {
+            int bearers = 0;
+            for (int enemy = 0; enemy < loaded.enemy_count; enemy++) {
+                bearers += loaded.enemies[enemy].dain_fragment == DAIN_FRAGMENT_BOMBER;
+            }
+            ASSERT("migration adds the needed Bomber to its new quest stage", bearers == 1 && loaded.enemies[0].dain_fragment == 0);
+        }
+        ASSERT("mountain migration is stable after saving the current format", save_game(&loaded, ROUTE_SAVE_SLOT) && load_game(&reloaded, ROUTE_SAVE_SLOT) && reloaded.level == loaded.level && reloaded.enemies[0].hp == loaded.enemies[0].hp);
+        remove("saves/savegame_99123.json");
+    }
+    prepare_legacy_mountains(8);
+    original.defeated_bosses = 1 << LOCATION_MOUNTAINS;
+    original.enemies[0].active = 0;
+    original.mountain_cache[7].enemies[0].active = 0;
+    game_open_town_portal(&original);
+    int ok = make_legacy_save(78) && load_game(&loaded, ROUTE_SAVE_SLOT);
+    ASSERT("legacy mountain portal retains its OakHaven anchor", ok && loaded.location == LOCATION_TOWN && loaded.mountain_portal_town == LOCATION_TOWN && loaded.portal_active && loaded.portal_level == MOUNTAIN_BOSS_LEVEL);
+    game_use_town_portal(&loaded);
+    ASSERT("legacy summit portal restores the central peak and position", ok && loaded.location == LOCATION_MOUNTAINS && loaded.level == MOUNTAIN_BOSS_LEVEL && loaded.player.x == original.portal_x && loaded.player.y == original.portal_y);
+    int found = 0;
+    for (int row = 0; row < MAP_H; row++) {
+        for (int column = 0; column < MAP_W; column++) {
+            if (loaded.map.tiles[row][column] == TILE_MOUNTAIN_SHORTCUT) {
+                found = abs(column - loaded.enemies[0].x) + abs(row - loaded.enemies[0].y) <= 1;
+            }
+        }
+    }
+    ASSERT("migrated King victory opens a shortcut beside the defeated boss", ok && loaded.defeated_bosses == original.defeated_bosses && found);
+    remove("saves/savegame_99123.json");
 }
 
 static void test_legacy_region(int forest, int level, int expected) {
@@ -193,6 +285,7 @@ void test_route_save_migrations(void) {
     map_generate_forest(&original.forest_cache[3].map, FOREST_BOSS_LEVEL);
     int ok = make_legacy_save(77) && load_game(&loaded, ROUTE_SAVE_SLOT);
     ASSERT("version 77 town save loads with default swamp travel anchors", ok && loaded.swamp_entry_town == LOCATION_TOWN2 && loaded.swamp_portal_town == LOCATION_TOWN2);
-    ASSERT("swamp migration leaves the already migrated forest unchanged", ok && loaded.forest_entry_town == LOCATION_TOWN2 && loaded.forest_portal_town == LOCATION_TOWN2 && loaded.forest_cache[3].valid && memcmp(&loaded.forest_cache[3].map, &original.forest_cache[3].map, sizeof(Map)) == 0 && loaded.defeated_bosses == original.defeated_bosses);
+    ASSERT("swamp migration leaves the already migrated forest unchanged", ok && loaded.forest_entry_town == LOCATION_TOWN2 && loaded.forest_portal_town == LOCATION_TOWN2 && loaded.forest_cache[3].valid && memcmp(loaded.forest_cache[3].map.rooms, original.forest_cache[3].map.rooms, sizeof(original.forest_cache[3].map.rooms)) == 0 && loaded.defeated_bosses == original.defeated_bosses);
     remove("saves/savegame_99123.json");
+    test_mountain_migration();
 }

@@ -149,6 +149,8 @@ typedef struct {
     Location forest_entry_town;
     Location forest_portal_town;
     int max_mountain_level_reached;
+    Location mountain_entry_town;
+    Location mountain_portal_town;
     int max_coast_level_reached;
     int max_swamp_level_reached;
     Location swamp_entry_town;
@@ -210,6 +212,9 @@ typedef struct {
 } GameState;
 
 void game_init(GameState *g);
+int game_shortcut_prompt_active(const GameState *g);
+int game_handle_shortcut_prompt_key(GameState *g, int key, int repeat);
+void game_migrate_boss_shortcuts(GameState *g);
 int game_has_regional_interaction(const GameState *g);
 void game_move_player(GameState *g, int dx, int dy);
 void game_descend(GameState *g);
@@ -222,6 +227,8 @@ void game_enter_forest(GameState *g);
 void game_leave_forest(GameState *g, Location town, int shortcut);
 void game_reveal_forest_shortcut(GameState *g);
 void game_enter_mountains(GameState *g);
+void game_leave_mountains(GameState *g, Location town, int shortcut);
+void game_reveal_mountain_shortcut(GameState *g);
 void game_enter_town4(GameState *g);
 void game_enter_coast(GameState *g);
 void game_enter_swamp(GameState *g);
