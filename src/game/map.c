@@ -348,7 +348,8 @@ typedef enum {
     OUTDOOR_SIDE_SOUTH
 } OutdoorSide;
 
-static const ForestTemplate forest_templates[FOREST_DEPTH] = {
+// The coast also uses these eight clearing templates.
+static const ForestTemplate forest_templates[] = {
     {7, {5,42,42,92,92,132,166}, {42,14,68,12,66,40,42}, 8,
         {{0,1},{0,2},{1,3},{2,4},{3,4},{3,5},{4,5},{5,6}}},
     {9, {5,38,38,78,78,78,125,105,166}, {42,20,65,10,42,74,42,82,42}, 11,
@@ -551,8 +552,17 @@ static void map_generate_outdoor(Map *m, int level, OutdoorSide entrance_side, O
     }
 }
 
+int map_forest_difficulty(int level) {
+    static const int difficulty[FOREST_DEPTH] = {1, 2, 4, 8, 4, 2, 1};
+    if (level < 1 || level > FOREST_DEPTH) {
+        return 1;
+    }
+    return difficulty[level - 1];
+}
+
 void map_generate_forest(Map *m, int level) {
-    static const OutdoorSide entrances[FOREST_DEPTH] = {
+    static const int templates[FOREST_DEPTH] = {0, 1, 2, 7, 4, 5, 3};
+    static const OutdoorSide entrances[] = {
         OUTDOOR_SIDE_WEST,
         OUTDOOR_SIDE_SOUTH,
         OUTDOOR_SIDE_NORTH,
@@ -562,7 +572,7 @@ void map_generate_forest(Map *m, int level) {
         OUTDOOR_SIDE_SOUTH,
         OUTDOOR_SIDE_WEST
     };
-    static const OutdoorSide exits[FOREST_DEPTH] = {
+    static const OutdoorSide exits[] = {
         OUTDOOR_SIDE_EAST,
         OUTDOOR_SIDE_NORTH,
         OUTDOOR_SIDE_SOUTH,
@@ -579,7 +589,8 @@ void map_generate_forest(Map *m, int level) {
     if (index >= FOREST_DEPTH) {
         index = FOREST_DEPTH - 1;
     }
-    map_generate_outdoor(m, level, entrances[index], exits[index], 1,
+    index = templates[index];
+    map_generate_outdoor(m, map_forest_difficulty(level), entrances[index], exits[index], 1,
         &forest_templates[index]);
     int hidden_start_x;
     int hidden_start_y;
@@ -590,7 +601,7 @@ void map_generate_forest(Map *m, int level) {
         &hidden_end_x, &hidden_end_y);
     mark_hidden_forest_trail(m, hidden_start_x, hidden_start_y,
         hidden_end_x, hidden_end_y);
-    int landmark_room = level == FOREST_DEPTH ? m->room_count - 2 :
+    int landmark_room = level == FOREST_BOSS_LEVEL ? m->room_count - 2 :
         m->room_count - 1;
     int landmark_x;
     int landmark_y;
@@ -611,6 +622,21 @@ void map_generate_forest(Map *m, int level) {
     } else {
         m->tiles[MAP_H - 1][m->stairs_down_x] = TILE_FOREST_WALL;
     }
+}
+
+void map_reveal_forest_entrance(Map *m) {
+    int x = m->stairs_up_x;
+    int y = m->stairs_up_y;
+    if (x == 1) {
+        x = 0;
+    } else if (x == MAP_W - 2) {
+        x = MAP_W - 1;
+    } else if (y == 1) {
+        y = 0;
+    } else {
+        y = MAP_H - 1;
+    }
+    m->tiles[y][x] = TILE_FOREST_ENTRANCE;
 }
 
 void map_reveal_forest_exit(Map *m) {
@@ -1124,6 +1150,18 @@ void map_set_town2_road(Map *m, int unlocked) {
     }
     for (int y = TOWN_ROAD_EXIT_Y; y < 12; y++) {
         m->tiles[y][4] = TILE_TOWN_PATH;
+    }
+}
+
+void map_set_stillbury_forest_road(Map *m, int unlocked) {
+    m->tiles[TOWN_ROAD_EXIT_Y][TOWN_W - 1] = unlocked ? TILE_TOWN_EXIT : TILE_WALL;
+    for (int y = TOWN_ROAD_EXIT_Y; y < 12; y++) {
+        if (m->tiles[y][STILLBURY_FOREST_ROAD_X] != TILE_ITEM) {
+            m->tiles[y][STILLBURY_FOREST_ROAD_X] = unlocked ? TILE_TOWN_PATH : TILE_TOWN_FLOOR;
+        }
+    }
+    if (m->tiles[TOWN_ROAD_EXIT_Y][TOWN_W - 2] != TILE_ITEM) {
+        m->tiles[TOWN_ROAD_EXIT_Y][TOWN_W - 2] = unlocked ? TILE_TOWN_PATH : TILE_TOWN_FLOOR;
     }
 }
 

@@ -107,7 +107,7 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
     }
     if (action.target_x == TOWN_W - 1) {
         *style = g->location == LOCATION_TOWN2 ?
-            TOWN_EXIT_FOREST :
+            (action.target_y == TOWN_ROAD_EXIT_Y ? TOWN_EXIT_ROAD : TOWN_EXIT_FOREST) :
             (g->location == LOCATION_TOWN4 ?
             TOWN_EXIT_DRAGONSPINE : TOWN_EXIT_DUNGEON);
         return 1;
@@ -983,6 +983,7 @@ int main(int argc, char **argv) {
                             if (target == TILE_TOWN_EXIT ||
                                 target == TILE_FOREST_ENTRANCE ||
                                 target == TILE_FOREST_EXIT ||
+                                target == TILE_FOREST_SHORTCUT ||
                                 target == TILE_MOUNTAIN_ENTRANCE ||
                                 target == TILE_MOUNTAIN_EXIT ||
                                 target == TILE_COAST_ENTRANCE ||

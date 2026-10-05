@@ -384,7 +384,9 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 76);
+    cJSON_AddNumberToObject(root, "save_version", 77);
+    cJSON_AddNumberToObject(root, "forest_entry_town", g->forest_entry_town);
+    cJSON_AddNumberToObject(root, "forest_portal_town", g->forest_portal_town);
 
     // Player
     cJSON *player = cJSON_CreateObject();
@@ -923,8 +925,11 @@ int load_game(GameState *g, int slot) {
     cJSON *kraken_bow_unclaimed = cJSON_GetObjectItem(root, "kraken_bow_unclaimed");
     cJSON *sandstorm_staff_unclaimed = cJSON_GetObjectItem(root, "sandstorm_staff_unclaimed");
     cJSON *lamp_quest = cJSON_GetObjectItem(root, "sunscar_lamp_quest_state");
+    cJSON *forest_entry = cJSON_GetObjectItem(root, "forest_entry_town");
+    cJSON *forest_portal = cJSON_GetObjectItem(root, "forest_portal_town");
     if (!cJSON_IsNumber(freeze_recovery) || !cJSON_IsNumber(kraken_bow_unclaimed) ||
-        !cJSON_IsNumber(sandstorm_staff_unclaimed) || !cJSON_IsNumber(lamp_quest)) {
+        !cJSON_IsNumber(sandstorm_staff_unclaimed) || !cJSON_IsNumber(lamp_quest) ||
+        !cJSON_IsNumber(forest_entry) || !cJSON_IsNumber(forest_portal)) {
         cJSON_Delete(root);
         return 0;
     }
@@ -932,6 +937,13 @@ int load_game(GameState *g, int slot) {
     g->kraken_bow_unclaimed = kraken_bow_unclaimed->valueint;
     g->sandstorm_staff_unclaimed = sandstorm_staff_unclaimed->valueint;
     g->sunscar_lamp_quest_state = lamp_quest->valueint;
+    g->forest_entry_town = forest_entry->valueint;
+    g->forest_portal_town = forest_portal->valueint;
+    if ((g->forest_entry_town != LOCATION_TOWN && g->forest_entry_town != LOCATION_TOWN2) ||
+        (g->forest_portal_town != LOCATION_TOWN && g->forest_portal_town != LOCATION_TOWN2)) {
+        cJSON_Delete(root);
+        return 0;
+    }
     strncpy(g->player.name, cJSON_GetObjectItem(player, "name")->valuestring, 20);
     g->player.x                = cJSON_GetObjectItem(player, "x")->valueint;
     g->player.y                = cJSON_GetObjectItem(player, "y")->valueint;
@@ -2319,6 +2331,7 @@ int load_game(GameState *g, int slot) {
         map_place_town2_center(&g->map);
         map_place_town_labyrinth(&g->map);
         map_set_town3_road(&g->map, g->defeated_bosses & (1 << LOCATION_SWAMP));
+        map_set_stillbury_forest_road(&g->map, g->defeated_bosses & (1 << LOCATION_FOREST));
     }
 
     if (g->location == LOCATION_TOWN3) {

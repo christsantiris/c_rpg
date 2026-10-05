@@ -960,6 +960,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
     } else if (underlay == TILE_TRAP_HIDDEN &&
         g->location == LOCATION_COAST) {
         draw_coast_trap_underlay(r, g, map_x, map_y, screen_x, screen_y);
+    } else if (underlay == TILE_FOREST_SHORTCUT) {
+        draw_forest_edge(r, screen_x, screen_y, map_x, map_y, 1);
     } else if (underlay == TILE_FOREST_FLOOR) {
         draw_forest_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_MOUNTAIN_BRIDGE) {
@@ -1301,7 +1303,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     int landmark_x = -1;
     int landmark_y = -1;
     if (g->location == LOCATION_FOREST && g->map.room_count > 1) {
-        int room = g->level == FOREST_DEPTH ? g->map.room_count - 2 :
+        int room = g->level == FOREST_BOSS_LEVEL ? g->map.room_count - 2 :
             g->map.room_count - 1;
         map_room_center(&g->map.rooms[room], &landmark_x, &landmark_y);
     }
@@ -1376,6 +1378,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_forest_edge(r, sx, sy, x, y, 0); break;
                 case TILE_FOREST_EXIT:
                     draw_forest_edge(r, sx, sy, x, y, 1); break;
+                case TILE_FOREST_SHORTCUT:
+                    draw_forest_edge(r, sx, sy, x, y, 1);
+                    renderer_draw_text(r, "SHORTCUT", sx * TILE_SIZE - 20, sy * TILE_SIZE - 12,
+                        (SDL_Color){128, 235, 143, 255}, r->font_tiny);
+                    break;
                 case TILE_FOREST_LANDMARK:
                     draw_forest_landmark(r, sx, sy, x, y); break;
                 case TILE_FOREST_FALSE_MARKER:
@@ -1847,6 +1854,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (g->location == LOCATION_TOWN2) {
         draw_town_gate(r, viewport_to_screen_x(v, 0),
             viewport_to_screen_y(v, 10), TOWN_EXIT_DESERT);
+        if (g->defeated_bosses & (1 << LOCATION_FOREST)) {
+            draw_town_gate(r, viewport_to_screen_x(v, TOWN_W - 3),
+                viewport_to_screen_y(v, TOWN_ROAD_GATE_Y), TOWN_EXIT_ROAD);
+        }
         draw_town_gate(r,
             viewport_to_screen_x(v, 18), viewport_to_screen_y(v, 0), TOWN_EXIT_SWAMP);
         if (g->defeated_bosses & (1 << LOCATION_SWAMP)) {
@@ -2118,11 +2129,18 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_y(v, TOWN_LABYRINTH_Y - 3) * TILE_SIZE,
             game_labyrinth_is_open(g) ?
                 label : (SDL_Color){105, 105, 90, 255}, r->font_tiny);
-        TTF_SizeText(r->font_tiny, "OAKHAVEN", &width, NULL);
-        renderer_draw_text(r, "OAKHAVEN",
+        TTF_SizeText(r->font_tiny, "FOREST", &width, NULL);
+        renderer_draw_text(r, "FOREST",
             viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
             viewport_to_screen_y(v, 12) * TILE_SIZE,
             label, r->font_tiny);
+        if (g->defeated_bosses & (1 << LOCATION_FOREST)) {
+            TTF_SizeText(r->font_tiny, "OAKHAVEN", &width, NULL);
+            renderer_draw_text(r, "OAKHAVEN",
+                viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
+                viewport_to_screen_y(v, TOWN_ROAD_EXIT_Y) * TILE_SIZE,
+                (SDL_Color){113, 204, 79, 255}, r->font_tiny);
+        }
         if (g->defeated_bosses & (1 << LOCATION_SWAMP)) {
             TTF_SizeText(r->font_tiny, "ROSEMOOR", &width, NULL);
             renderer_draw_text(r, "ROSEMOOR",
