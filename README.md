@@ -24,7 +24,7 @@ A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explo
 *The Castle of No Return* is a C/SDL roguelike with turn-based combat and a
 retro pixel-art style. Choose a Warrior, Mage, or Rogue, prepare in town, and
 explore an eight-floor undead dungeon, the seven-stage Haunted Forest, the
-eight-stage Goblin Mountains, the eight-stage Sunken Coast, and Stillbury's
+seven-stage Goblin Mountains, the eight-stage Sunken Coast, and Stillbury's
 seven-level Blackwater Swamp. Beyond the Goblin Mountains, the five-stage
 Dragonspine ascent begins at Ridgeshire's east gate. Each region
 keeps its own generated maps and progression. Defeating the Drowned Queen on
@@ -37,15 +37,22 @@ The Haunted Forest can be entered from OakHaven or Stillbury, with three stages
 of increasing difficulty leading to the Necromancer on stage 4. Defeating him
 reveals a marked shortcut to the opposite town. Players can instead continue
 through the remaining three stages as difficulty decreases.
+Forest, swamp, and mountain boss victories show a shortcut discovery prompt
+until Enter is pressed. The marked shortcut appears beside the defeated boss,
+including when a boss has been lured away from its original room.
 
 ## OakHaven and Progression
 
 The roads through OakHaven lead north to the mountains, west to the forest, east
 to the dungeon, and south to the coast. Cain stands near the central crossroads.
-Defeating the Goblin King and leaving Crown Peak brings you to Ridgeshire, an open
-crossroads with no buildings. Its east gate leads directly to Dragonspine.
-The safe High Pass shortcuts the mountains between Ridgeshire's south road and a
-new northeast road in OakHaven, unlocked by the Goblin King's defeat. Ilya
+The mountains connect OakHaven's north gate and Ridgeshire's south mountain gate.
+Both approaches grow harder toward the Goblin King at Crown Peak on level 4.
+Defeating him reveals a shortcut to the opposite town; the remaining three levels
+can instead be fought in decreasing difficulty. Dain's map bearers occupy levels
+1, 2, and 3 on the OakHaven side, reached after the peak when starting in Ridgeshire.
+Ridgeshire's east gate leads directly to Dragonspine. The safe High Pass links a
+separate south shortcut gate in Ridgeshire with OakHaven's northeast road, unlocked
+by the Goblin King's defeat. Both ordinary mountain gates remain available. Ilya
 waits beside Ridgeshire's Dragonspine gate and offers a quest to recover a golden
 goblet from the dragon's hoard. Her one-time reward is a Potion of Strength
 that permanently adds 1 base attack when consumed.

@@ -46,8 +46,9 @@ forest servant at half health. The roster remains bounded by the floor's
 original enemies. He blocks crossing the grove while alive, but permits retreat
 toward the town where the expedition began.
 
-Defeating him displays a shortcut discovery prompt and opens a separate marked
-trail in the grove. That shortcut goes directly to Stillbury when entering
+Defeating him displays a shortcut discovery prompt until a fresh press of Enter
+acknowledges it. A separate marked trail appears beside the defeated boss,
+matching the swamp and mountains. That shortcut goes directly to Stillbury when entering
 from OakHaven, or to OakHaven when entering from Stillbury. Players may instead
 cross the remaining three stages to reach the same town. Surviving enemies do
 not block either route.

@@ -246,7 +246,7 @@ void test_dain_quest(void) {
     ASSERT("accepting Dain's quest starts a fresh mountain expedition",
         !g.mountain_cache[3].valid && !g.portal_active);
 
-    int target_levels[3] = {2, 3, 5};
+    int target_levels[3] = {1, 2, 3};
     EnemyType target_types[3] = {
         ENEMY_GOBLIN_ARCHER, ENEMY_GOBLIN_BOMBER, ENEMY_GOBLIN_SHAMAN
     };
@@ -281,7 +281,7 @@ void test_dain_quest(void) {
     int cached_enemies = 0;
     for (int i = 0; i < g.enemy_count; i++) {
         if (g.enemies[i].active &&
-            g.enemies[i].dain_fragment == DAIN_FRAGMENT_ARCHER) {
+            g.enemies[i].dain_fragment == DAIN_FRAGMENT_BOMBER) {
             cached_bearers++;
         }
         cached_enemies += g.enemies[i].active;
@@ -292,7 +292,7 @@ void test_dain_quest(void) {
     int refreshed_bearers = 0;
     for (int i = 0; i < g.enemy_count; i++) {
         if (g.enemies[i].active &&
-            g.enemies[i].dain_fragment == DAIN_FRAGMENT_ARCHER) {
+            g.enemies[i].dain_fragment == DAIN_FRAGMENT_BOMBER) {
             refreshed_bearers++;
         }
     }
