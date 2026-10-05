@@ -142,6 +142,16 @@ Castle of No Return, whose doors stay sealed for now. Crown Road West continues
 from the castle's east gate to Ridgeshire's west gate. Each road keeps its own
 enemies and progress between visits.
 
+### Moonveil Gardens
+
+Rosemoor's west gate opens onto the five-stage Moonveil Gardens. Enter from the
+east and follow the paths west through glowing flowers, giant mushrooms,
+moonlit pools, and ancient stone circles. Fey Tricksters and Giant Moths appear
+first, followed by Carnivorous Flowers and Thorn Guardians. The Thorn Regent guards
+stage 5's return to Rosemoor and drops a Potion of Strength. Backtracking, later
+visits, saves, and Return to Town portals retain the gardens' explored maps and
+enemy progress. See [Moonveil Gardens](docs/moonveil-gardens.md).
+
 ### Harbor and Ruined Isle
 
 Captain Rowan waits near the harbor and describes the island before it is
@@ -254,6 +264,7 @@ and sell modes are switched with `Tab`.
 - [Sunken Coast](docs/sunken-coast.md)
 - [Blackwater Swamp](docs/swamp.md)
 - [Sunscar Wastes and the magic lamp quest](docs/sunscar-wastes.md)
+- [Moonveil Gardens](docs/moonveil-gardens.md)
 - [Harbor, Ruined Isle, and Ruined Temple](docs/harbor-and-ruined-isle.md)
 
 ## Screenshots
@@ -386,4 +397,4 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 - Build out Castle of No Return
    Multiple levels, unique mechanics, enemies, boss
 - Recruit a party to join the adventure
-- Additional areas and storylines e.g caves, catacombs with minotaur boss
+- Additional areas and storylines e.g caves, catacombs with minotaur boss, crypt

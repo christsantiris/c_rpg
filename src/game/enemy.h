@@ -74,14 +74,19 @@ typedef enum {
     ENEMY_MUMMY,
     ENEMY_DJINN,
     ENEMY_GOLEM,
-    ENEMY_DESERT_PHARAOH
+    ENEMY_DESERT_PHARAOH,
+    ENEMY_FEY_TRICKSTER,
+    ENEMY_GIANT_MOTH,
+    ENEMY_LIVING_FLOWER,
+    ENEMY_THORN_GUARDIAN,
+    ENEMY_THORN_REGENT
 } EnemyType;
 
 typedef struct {
     int       x, y;
     int       active;
     EnemyType type;
-    char      name[16];
+    char name[32];
     int       hp, max_hp;
     int       attack, defense;
     int       experience;

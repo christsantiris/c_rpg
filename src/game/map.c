@@ -272,6 +272,8 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_COAST_WALL &&
         m->tiles[y][x] != TILE_SWAMP_WALL &&
         m->tiles[y][x] != TILE_DESERT_WALL &&
+        m->tiles[y][x] != TILE_MOONVEIL_WALL &&
+        m->tiles[y][x] != TILE_MOONVEIL_POOL &&
         m->tiles[y][x] != TILE_FROST_WALL &&
         m->tiles[y][x] != TILE_FROST_LAKE_HOLE &&
         m->tiles[y][x] != TILE_FROST_BROKEN_ICE &&
@@ -1295,6 +1297,7 @@ static void map_generate_town_square(Map *m) {
 void map_generate_town3(Map *m, int *spawn_x, int *spawn_y) {
     map_generate_town_square(m);
     map_place_town3_frost_gate(m);
+    map_place_town3_moonveil_gate(m);
     m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
     for (int y = TOWN3_KING_GATE_Y - 2; y <= TOWN3_KING_GATE_Y + 2; y++) {
         m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
@@ -1304,6 +1307,12 @@ void map_generate_town3(Map *m, int *spawn_x, int *spawn_y) {
     map_place_town3_guards(m, -1, -1);
     *spawn_x = 20;
     *spawn_y = TOWN_H - 2;
+}
+
+void map_place_town3_moonveil_gate(Map *m) {
+    for (int y = ROSEMOOR_MOONVEIL_GATE_Y - 2; y <= ROSEMOOR_MOONVEIL_GATE_Y + 2; y++) {
+        m->tiles[y][0] = TILE_TOWN_EXIT;
+    }
 }
 
 void map_place_town3_frost_gate(Map *m) {
@@ -1836,6 +1845,64 @@ void map_generate_desert(Map *m, int level) {
                 m->tiles[y][x] = TILE_DESERT_ENTRANCE;
             } else if (tile == TILE_SWAMP_EXIT) {
                 m->tiles[y][x] = TILE_DESERT_EXIT;
+            }
+        }
+    }
+}
+
+void map_generate_moonveil(Map *m, int level) {
+    // Connected garden clearings run east to west from Rosemoor.
+    map_generate_desert(m, level);
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            TileType tile = m->tiles[y][x];
+            if (tile == TILE_DESERT_FLOOR) {
+                m->tiles[y][x] = TILE_MOONVEIL_FLOOR;
+            } else if (tile == TILE_DESERT_WALL) {
+                m->tiles[y][x] = TILE_MOONVEIL_WALL;
+            } else if (tile == TILE_DESERT_ENTRANCE) {
+                m->tiles[y][x] = TILE_MOONVEIL_ENTRANCE;
+            } else if (tile == TILE_DESERT_EXIT) {
+                m->tiles[y][x] = TILE_MOONVEIL_EXIT;
+            }
+        }
+    }
+    // Pools replace only solid hedge patches, preserving every travel path.
+    for (int cy = 7; cy < SWAMP_MAP_H - 7; cy += 13) {
+        for (int cx = 7; cx < SWAMP_MAP_W - 7; cx += 14) {
+            int enclosed = 1;
+            for (int dy = -2; dy <= 2; dy++) {
+                for (int dx = -2; dx <= 2; dx++) {
+                    enclosed &= m->tiles[cy + dy][cx + dx] == TILE_MOONVEIL_WALL;
+                }
+            }
+            if (!enclosed) {
+                continue;
+            }
+            for (int dy = -2; dy <= 2; dy++) {
+                for (int dx = -2; dx <= 2; dx++) {
+                    if (dx * dx + dy * dy <= 5) {
+                        m->tiles[cy + dy][cx + dx] = TILE_MOONVEIL_POOL;
+                    }
+                }
+            }
+        }
+    }
+    for (int i = 1; i < m->room_count; i++) {
+        if (i % 2 == 0 && i != m->room_count - 1) {
+            continue;
+        }
+        int cx;
+        int cy;
+        map_room_center(&m->rooms[i], &cx, &cy);
+        int radius = i == m->room_count - 1 ? 3 : 2;
+        for (int dy = -radius; dy <= radius; dy++) {
+            for (int dx = -radius; dx <= radius; dx++) {
+                int distance = dx * dx + dy * dy;
+                if (distance >= radius * radius - 2 && distance <= radius * radius + 1 &&
+                    m->tiles[cy + dy][cx + dx] == TILE_MOONVEIL_FLOOR) {
+                    m->tiles[cy + dy][cx + dx] = TILE_MOONVEIL_CIRCLE;
+                }
             }
         }
     }

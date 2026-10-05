@@ -200,6 +200,32 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             e->attack = 22; e->defense = 7; e->experience = 600;
             e->is_boss = 1;
             break;
+        case ENEMY_FEY_TRICKSTER:
+            snprintf(e->name, sizeof(e->name), "Fey Trickster");
+            e->max_hp = 28; e->hp = 28;
+            e->attack = 10; e->defense = 2; e->experience = 35;
+            break;
+        case ENEMY_GIANT_MOTH:
+            snprintf(e->name, sizeof(e->name), "Giant Moth");
+            e->max_hp = 24; e->hp = 24;
+            e->attack = 11; e->defense = 1; e->experience = 32;
+            break;
+        case ENEMY_LIVING_FLOWER:
+            snprintf(e->name, sizeof(e->name), "Carnivorous Flower");
+            e->max_hp = 50; e->hp = 50;
+            e->attack = 14; e->defense = 3; e->experience = 70;
+            break;
+        case ENEMY_THORN_GUARDIAN:
+            snprintf(e->name, sizeof(e->name), "Thorn Guardian");
+            e->max_hp = 95; e->hp = 95;
+            e->attack = 17; e->defense = 7; e->experience = 110;
+            break;
+        case ENEMY_THORN_REGENT:
+            snprintf(e->name, sizeof(e->name), "Thorn Regent");
+            e->max_hp = 240; e->hp = 240;
+            e->attack = 23; e->defense = 8; e->experience = 700;
+            e->is_boss = 1;
+            break;
         case ENEMY_SWAMP_DEMON:
             strncpy(e->name, "Swamp Demon", sizeof(e->name) - 1);
             e->max_hp = 180; e->hp = 180;
@@ -460,6 +486,8 @@ static int boss_for_level(const GameState *g, EnemyType *type) {
         boss_level = FROSTFELL_DEPTH;
     } else if (g->location == LOCATION_DESERT) {
         boss_level = DESERT_DEPTH;
+    } else if (g->location == LOCATION_MOONVEIL) {
+        boss_level = MOONVEIL_DEPTH;
     } else if (g->location == LOCATION_DRAGONSPINE) {
         boss_level = DRAGONSPINE_DEPTH;
     }
@@ -481,6 +509,8 @@ static int boss_for_level(const GameState *g, EnemyType *type) {
         *type = ENEMY_POLAR_KRAKEN;
     } else if (g->location == LOCATION_DESERT) {
         *type = ENEMY_DESERT_PHARAOH;
+    } else if (g->location == LOCATION_MOONVEIL) {
+        *type = ENEMY_THORN_REGENT;
     } else if (g->location == LOCATION_DRAGONSPINE) {
         *type = ENEMY_RED_DRAGON;
     } else {
@@ -503,6 +533,8 @@ static int enemy_terrain_open(const GameState *g, int x, int y) {
         g->map.tiles[y][x] != TILE_COAST_CHANNEL_DRY &&
         g->map.tiles[y][x] != TILE_SWAMP_FLOOR &&
         g->map.tiles[y][x] != TILE_DESERT_FLOOR &&
+        g->map.tiles[y][x] != TILE_MOONVEIL_FLOOR &&
+        g->map.tiles[y][x] != TILE_MOONVEIL_CIRCLE &&
         g->map.tiles[y][x] != TILE_FROST_FLOOR &&
         g->map.tiles[y][x] != TILE_FROST_LAKE &&
         g->map.tiles[y][x] != TILE_DRAGON_FLOOR &&
@@ -849,6 +881,7 @@ void enemies_spawn(GameState *g) {
             g->location == LOCATION_SWAMP ||
             g->location == LOCATION_FROSTFELL ||
             g->location == LOCATION_DESERT ||
+            g->location == LOCATION_MOONVEIL ||
             g->location == LOCATION_DRAGONSPINE) {
             map_room_center(&g->map.rooms[g->map.room_count - 1],
                 &boss_x, &boss_y);
@@ -869,7 +902,8 @@ void enemies_spawn(GameState *g) {
         (g->location == LOCATION_SWAMP ? SWAMP_BOSS_LEVEL :
         (g->location == LOCATION_FROSTFELL ? FROSTFELL_DEPTH :
         (g->location == LOCATION_DESERT ? DESERT_DEPTH :
-        (g->location == LOCATION_DRAGONSPINE ? DRAGONSPINE_DEPTH : DUNGEON_DEPTH))))));
+        (g->location == LOCATION_MOONVEIL ? MOONVEIL_DEPTH :
+        (g->location == LOCATION_DRAGONSPINE ? DRAGONSPINE_DEPTH : DUNGEON_DEPTH)))))));
     int regular_room_limit = g->level == boss_level
         ? g->map.room_count - 1 : g->map.room_count;
     place_dain_map_bearer(g);
@@ -902,6 +936,17 @@ void enemies_spawn(GameState *g) {
                 type = roll < 12 ? ENEMY_GOBLIN_ARCHER :
                     (roll < 40 ? ENEMY_DRAKE :
                     (roll < 65 ? ENEMY_GIANT : ENEMY_FIRE_ELEMENTAL));
+            }
+        } else if (g->location == LOCATION_MOONVEIL) {
+            if (g->level == 1) {
+                type = roll < 55 ? ENEMY_GIANT_MOTH : ENEMY_FEY_TRICKSTER;
+            } else if (g->level == 2) {
+                type = roll < 35 ? ENEMY_GIANT_MOTH :
+                    (roll < 75 ? ENEMY_FEY_TRICKSTER : ENEMY_LIVING_FLOWER);
+            } else {
+                type = roll < 20 ? ENEMY_GIANT_MOTH :
+                    (roll < 45 ? ENEMY_FEY_TRICKSTER :
+                    (roll < 75 ? ENEMY_LIVING_FLOWER : ENEMY_THORN_GUARDIAN));
             }
         } else if (g->location == LOCATION_DESERT) {
             if (g->level == 1) {
@@ -1081,6 +1126,9 @@ void game_init(GameState *g) {
         if (i < FROSTFELL_DEPTH) {
             g->frostfell_cache[i].valid = 0;
         }
+        if (i < MOONVEIL_DEPTH) {
+            g->moonveil_cache[i] = (LevelCache){0};
+        }
         if (i < DESERT_DEPTH) {
             g->desert_cache[i] = (LevelCache){0};
         }
@@ -1102,6 +1150,7 @@ void game_init(GameState *g) {
     g->max_dragonspine_level_reached = 1;
     g->max_frostfell_level_reached = 1;
     g->max_desert_level_reached = 1;
+    g->max_moonveil_level_reached = 1;
     g->max_temple_level_reached = 1;
     g->location = LOCATION_TOWN;
     int spawn_x, spawn_y;
@@ -1453,6 +1502,9 @@ static LevelCache *active_cache(GameState *g) {
     if (g->location == LOCATION_DESERT) {
         return g->desert_cache;
     }
+    if (g->location == LOCATION_MOONVEIL) {
+        return g->moonveil_cache;
+    }
     if (g->location == LOCATION_TEMPLE) {
         return g->temple_cache;
     }
@@ -1477,6 +1529,9 @@ static int *active_max_level(GameState *g) {
     }
     if (g->location == LOCATION_DESERT) {
         return &g->max_desert_level_reached;
+    }
+    if (g->location == LOCATION_MOONVEIL) {
+        return &g->max_moonveil_level_reached;
     }
     if (g->location == LOCATION_TEMPLE) {
         return &g->max_temple_level_reached;
@@ -1505,6 +1560,9 @@ static int active_depth(const GameState *g) {
     }
     if (g->location == LOCATION_DESERT) {
         return DESERT_DEPTH;
+    }
+    if (g->location == LOCATION_MOONVEIL) {
+        return MOONVEIL_DEPTH;
     }
     if (g->location == LOCATION_TEMPLE) {
         return TEMPLE_DEPTH;
@@ -1900,6 +1958,8 @@ static void generate_active_level(GameState *g) {
         map_generate_frostfell(&g->map, g->level);
     } else if (g->location == LOCATION_DESERT) {
         map_generate_desert(&g->map, g->level);
+    } else if (g->location == LOCATION_MOONVEIL) {
+        map_generate_moonveil(&g->map, g->level);
     } else if (g->location == LOCATION_DRAGONSPINE) {
         map_generate_dragonspine(&g->map, g->level);
     } else if (g->location == LOCATION_TEMPLE) {
@@ -2234,6 +2294,26 @@ void game_enter_desert(GameState *g) {
     push_message(g, "Scorching sands stretch across the Sunscar Wastes.");
 }
 
+void game_enter_moonveil(GameState *g) {
+    clear_floor_loot(g);
+    g->location = LOCATION_MOONVEIL;
+    g->level = 1;
+    LevelCache *cache = &g->moonveil_cache[0];
+    if (cache->valid) {
+        g->map = cache->map;
+        g->enemy_count = cache->enemy_count;
+        memcpy(g->enemies, cache->enemies, sizeof(g->enemies));
+        g->level_cleared = cache->level_cleared;
+    } else {
+        g->level_cleared = 0;
+        generate_active_level(g);
+    }
+    g->player.x = g->map.stairs_up_x;
+    g->player.y = g->map.stairs_up_y;
+    g->dialogue_active = 0;
+    push_message(g, "Moonlit blossoms glow along the paths of Moonveil Gardens.");
+}
+
 void game_enter_high_pass(GameState *g, int from_town) {
     g->location = LOCATION_HIGH_PASS;
     map_generate_high_pass(&g->map);
@@ -2307,7 +2387,9 @@ static void place_town_portal(GameState *g) {
         return;
     }
     if (g->location == LOCATION_TOWN3) {
-        if (g->portal_location == LOCATION_FROSTFELL) {
+        if (g->portal_location == LOCATION_MOONVEIL) {
+            g->map.tiles[ROSEMOOR_MOONVEIL_GATE_Y + 1][2] = TILE_PORTAL;
+        } else if (g->portal_location == LOCATION_FROSTFELL) {
             g->map.tiles[2][20] = TILE_PORTAL;
         } else if (g->portal_location == LOCATION_SWAMP && g->swamp_portal_town == LOCATION_TOWN3) {
             g->map.tiles[TOWN_H - 3][21] = TILE_PORTAL;
@@ -2320,6 +2402,7 @@ static void place_town_portal(GameState *g) {
         g->portal_location == LOCATION_DRAGONSPINE ||
         g->portal_location == LOCATION_SWAMP ||
         g->portal_location == LOCATION_DESERT ||
+        g->portal_location == LOCATION_MOONVEIL ||
         g->portal_location == LOCATION_FROSTFELL) {
         return;
     }
@@ -3080,6 +3163,7 @@ void game_record_temple_enemy_defeated(GameState *g, EnemyType type) {
 static void return_to_town(GameState *g, Location destination) {
     Location returning_from = g->location;
     if (returning_from == LOCATION_FROSTFELL || returning_from == LOCATION_DESERT ||
+        returning_from == LOCATION_MOONVEIL ||
         destination == LOCATION_TOWN4 ||
         destination == LOCATION_TOWN3) {
         clear_floor_loot(g);
@@ -3124,6 +3208,10 @@ static void return_to_town(GameState *g, Location destination) {
     if (destination == LOCATION_TOWN3) {
         g->player.x = returning_from == LOCATION_FROSTFELL ? 20 : spawn_x;
         g->player.y = returning_from == LOCATION_FROSTFELL ? 1 : spawn_y;
+        if (returning_from == LOCATION_MOONVEIL) {
+            g->player.x = 1;
+            g->player.y = ROSEMOOR_MOONVEIL_GATE_Y;
+        }
     } else if (destination == LOCATION_TOWN4) {
         g->player.x = returning_from == LOCATION_MOUNTAINS ? spawn_x : TOWN_W - 2;
         g->player.y = returning_from == LOCATION_MOUNTAINS ? spawn_y : TOWN4_DRAGON_GATE_Y;
@@ -3173,7 +3261,7 @@ void game_return_to_town(GameState *g) {
         destination = g->mountain_entry_town;
     } else if (g->location == LOCATION_DESERT) {
         destination = LOCATION_TOWN2;
-    } else if (g->location == LOCATION_FROSTFELL) {
+    } else if (g->location == LOCATION_FROSTFELL || g->location == LOCATION_MOONVEIL) {
         destination = LOCATION_TOWN3;
     } else if (g->location == LOCATION_DRAGONSPINE || g->location == LOCATION_HIGH_PASS) {
         destination = LOCATION_TOWN4;
@@ -3251,11 +3339,12 @@ void game_open_town_portal(GameState *g) {
         g->location != LOCATION_SWAMP &&
         g->location != LOCATION_FROSTFELL &&
         g->location != LOCATION_DESERT &&
+        g->location != LOCATION_MOONVEIL &&
         g->location != LOCATION_DRAGONSPINE) {
         return;
     }
     game_hide_portal_destination(g);
-    if (g->location == LOCATION_DESERT) {
+    if (g->location == LOCATION_DESERT || g->location == LOCATION_MOONVEIL) {
         clear_floor_loot(g);
     }
     g->portal_active = 1;
@@ -3299,6 +3388,11 @@ void game_hide_portal_destination(GameState *g) {
             return;
         }
         cache = g->desert_cache;
+    } else if (g->portal_location == LOCATION_MOONVEIL) {
+        if (g->portal_level > MOONVEIL_DEPTH) {
+            return;
+        }
+        cache = g->moonveil_cache;
     } else if (g->portal_location == LOCATION_TEMPLE) {
         cache = g->temple_cache;
     }
@@ -3357,12 +3451,18 @@ void game_use_town_portal(GameState *g) {
             return;
         }
         cache = g->desert_cache;
+    } else if (g->portal_location == LOCATION_MOONVEIL) {
+        if (g->portal_level > MOONVEIL_DEPTH) {
+            return;
+        }
+        cache = g->moonveil_cache;
     } else if (g->portal_location == LOCATION_TEMPLE) {
         cache = g->temple_cache;
     }
     if (!cache[level - 1].valid) return;
 
-    if (g->portal_location == LOCATION_FROSTFELL || g->portal_location == LOCATION_DESERT) {
+    if (g->portal_location == LOCATION_FROSTFELL || g->portal_location == LOCATION_DESERT ||
+        g->portal_location == LOCATION_MOONVEIL) {
         clear_floor_loot(g);
     }
     g->location = g->portal_location;
