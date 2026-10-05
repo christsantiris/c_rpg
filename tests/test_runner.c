@@ -39,6 +39,8 @@ void test_mountains(void);
 void test_coast(void);
 void test_coast_terrain(void);
 void test_swamp(void);
+void test_swamp_travel(void);
+void test_route_save_migrations(void);
 void test_frostfell(void);
 void test_desert(void);
 void test_mountain_terrain(void);
@@ -112,6 +114,8 @@ int main(void) {
     test_coast_terrain();
     printf("\n");
     test_swamp();
+    test_swamp_travel();
+    test_route_save_migrations();
     printf("\n");
     test_frostfell();
     printf("\n");

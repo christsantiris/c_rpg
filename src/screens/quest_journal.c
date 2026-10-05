@@ -65,7 +65,7 @@ static const QuestDefinition quest_definitions[9] = {
         "Defeat the vampire holding Mira in the swamp,",
         "then speak to her and return to Bram at the inn.",
         {"Rescue Mira", "", ""},
-        "Blackwater Swamp", {4, 0, 0}, 80, 600
+        "Blackwater Swamp", {SWAMP_RESCUE_LEVEL, 0, 0}, 80, 600
     },
     {
         "The Dragon's Hoard", "Ilya",

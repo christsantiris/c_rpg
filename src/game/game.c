@@ -455,7 +455,7 @@ static int boss_for_level(const GameState *g, EnemyType *type) {
     } else if (g->location == LOCATION_COAST) {
         boss_level = COAST_DEPTH;
     } else if (g->location == LOCATION_SWAMP) {
-        boss_level = SWAMP_DEPTH;
+        boss_level = SWAMP_BOSS_LEVEL;
     } else if (g->location == LOCATION_FROSTFELL) {
         boss_level = FROSTFELL_DEPTH;
     } else if (g->location == LOCATION_DESERT) {
@@ -822,8 +822,11 @@ void enemies_spawn(GameState *g) {
 
     int order_tier = region_order_tier(g);
     int difficulty = g->location == LOCATION_FOREST ? map_forest_difficulty(g->level) : g->level;
+    if (g->location == LOCATION_SWAMP) {
+        difficulty = map_swamp_difficulty(g->level);
+    }
     int num_enemies = 10 + difficulty;
-    if (g->location == LOCATION_SWAMP && g->level == 4 &&
+    if (g->location == LOCATION_SWAMP && g->level == SWAMP_RESCUE_LEVEL &&
         g->innkeeper_quest_state == 1) {
         num_enemies--;
     }
@@ -861,7 +864,7 @@ void enemies_spawn(GameState *g) {
     int boss_level = g->location == LOCATION_FOREST ? FOREST_BOSS_LEVEL :
         (g->location == LOCATION_MOUNTAINS ? MOUNTAIN_DEPTH :
         (g->location == LOCATION_COAST ? COAST_DEPTH :
-        (g->location == LOCATION_SWAMP ? SWAMP_DEPTH :
+        (g->location == LOCATION_SWAMP ? SWAMP_BOSS_LEVEL :
         (g->location == LOCATION_FROSTFELL ? FROSTFELL_DEPTH :
         (g->location == LOCATION_DESERT ? DESERT_DEPTH :
         (g->location == LOCATION_DRAGONSPINE ? DRAGONSPINE_DEPTH : DUNGEON_DEPTH))))));
@@ -943,11 +946,11 @@ void enemies_spawn(GameState *g) {
                     (roll < 80 ? ENEMY_ICE_GOLEM : ENEMY_ICE_GIANT))));
             }
         } else if (g->location == LOCATION_SWAMP) {
-            if (g->level <= 2) {
+            if (difficulty <= 2) {
                 type = roll < 30 ? ENEMY_GIANT_RAT :
                     (roll < 55 ? ENEMY_ZOMBIE :
                     (roll < 78 ? ENEMY_BANDIT : ENEMY_WRAITH));
-            } else if (g->level <= 4) {
+            } else if (difficulty <= 4) {
                 type = roll < 15 ? ENEMY_GIANT_RAT :
                     (roll < 35 ? ENEMY_ZOMBIE :
                     (roll < 58 ? ENEMY_BANDIT :
@@ -1069,6 +1072,8 @@ void game_init(GameState *g) {
         g->coast_cache[i].valid = 0;
         if (i < SWAMP_DEPTH) {
             g->swamp_cache[i].valid = 0;
+        }
+        if (i < DRAGONSPINE_DEPTH) {
             g->dragonspine_cache[i].valid = 0;
         }
         if (i < FROSTFELL_DEPTH) {
@@ -1088,6 +1093,8 @@ void game_init(GameState *g) {
     g->max_mountain_level_reached = 1;
     g->max_coast_level_reached = 1;
     g->max_swamp_level_reached = 1;
+    g->swamp_entry_town = LOCATION_TOWN2;
+    g->swamp_portal_town = LOCATION_TOWN2;
     g->max_dragonspine_level_reached = 1;
     g->max_frostfell_level_reached = 1;
     g->max_desert_level_reached = 1;
@@ -1853,6 +1860,7 @@ static void restore_desert_reward(GameState *g) {
 
 void game_refresh_quest_encounters(GameState *g) {
     game_reveal_forest_shortcut(g);
+    game_reveal_swamp_shortcut(g);
     restore_frostfell_reward(g);
     restore_desert_reward(g);
     int seal_placed = place_elowen_seal(g);
@@ -1909,7 +1917,7 @@ static void generate_active_level(GameState *g) {
     int daughter_x = 0;
     place_desert_lamp(g);
     int daughter_y = 0;
-    int daughter_placed = g->location == LOCATION_SWAMP && g->level == 4 &&
+    int daughter_placed = g->location == LOCATION_SWAMP && g->level == SWAMP_RESCUE_LEVEL &&
         g->innkeeper_quest_state == 1;
     if (daughter_placed) {
         map_room_center(&g->map.rooms[7], &daughter_x, &daughter_y);
@@ -2094,7 +2102,7 @@ void game_ascend(GameState *g) {
         game_refresh_quest_encounters(g);
     } else {
         g->level_cleared = 0;
-        if (g->location == LOCATION_FOREST) {
+        if (g->location == LOCATION_FOREST || g->location == LOCATION_SWAMP) {
             generate_active_level(g);
         }
     }
@@ -2163,7 +2171,28 @@ void game_enter_coast(GameState *g) {
 }
 
 void game_enter_swamp(GameState *g) {
-    enter_adventure(g, LOCATION_SWAMP);
+    int from_rosemoor = g->location == LOCATION_TOWN3;
+    clear_floor_loot(g);
+    g->swamp_entry_town = from_rosemoor ? LOCATION_TOWN3 : LOCATION_TOWN2;
+    g->location = LOCATION_SWAMP;
+    g->level = from_rosemoor ? SWAMP_DEPTH : 1;
+    LevelCache *cache = &g->swamp_cache[g->level - 1];
+    if (cache->valid) {
+        g->map = cache->map;
+        g->enemy_count = cache->enemy_count;
+        memcpy(g->enemies, cache->enemies, sizeof(g->enemies));
+        g->level_cleared = cache->level_cleared;
+        game_refresh_quest_encounters(g);
+    } else {
+        g->level_cleared = 0;
+        generate_active_level(g);
+    }
+    if (g->level > g->max_swamp_level_reached) {
+        g->max_swamp_level_reached = g->level;
+    }
+    g->player.x = from_rosemoor ? g->map.stairs_down_x - 1 : g->map.stairs_up_x + 1;
+    g->player.y = from_rosemoor ? g->map.stairs_down_y : g->map.stairs_up_y;
+    g->dialogue_active = 0;
     push_message(g, "The black water closes around the swamp trail.");
 }
 
@@ -2238,7 +2267,7 @@ static void place_town_portal(GameState *g) {
         return;
     }
     if (g->location == LOCATION_TOWN2) {
-        if (g->portal_location == LOCATION_SWAMP) {
+        if (g->portal_location == LOCATION_SWAMP && g->swamp_portal_town == LOCATION_TOWN2) {
             g->map.tiles[2][21] = TILE_PORTAL;
         } else if (g->portal_location == LOCATION_DESERT) {
             g->map.tiles[12][2] = TILE_PORTAL;
@@ -2250,6 +2279,8 @@ static void place_town_portal(GameState *g) {
     if (g->location == LOCATION_TOWN3) {
         if (g->portal_location == LOCATION_FROSTFELL) {
             g->map.tiles[2][20] = TILE_PORTAL;
+        } else if (g->portal_location == LOCATION_SWAMP && g->swamp_portal_town == LOCATION_TOWN3) {
+            g->map.tiles[TOWN_H - 3][21] = TILE_PORTAL;
         }
         return;
     }
@@ -2472,6 +2503,7 @@ void game_leave_crownroad(GameState *g, Location destination) {
         g->player.y = 12;
     } else {
         map_generate_town3(&g->map, &spawn_x, &spawn_y);
+        map_set_rosemoor_swamp_road(&g->map, g->defeated_bosses & (1 << LOCATION_SWAMP));
         g->player.x = TOWN_W - 2;
         g->player.y = TOWN3_KING_GATE_Y;
     }
@@ -3043,6 +3075,7 @@ static void return_to_town(GameState *g, Location destination) {
         map_generate_town4(&g->map, &spawn_x, &spawn_y);
     } else if (destination == LOCATION_TOWN3) {
         map_generate_town3(&g->map, &spawn_x, &spawn_y);
+        map_set_rosemoor_swamp_road(&g->map, g->defeated_bosses & (1 << LOCATION_SWAMP));
     } else if (destination == LOCATION_TOWN2) {
         map_generate_town2(&g->map, &spawn_x, &spawn_y);
         map_set_town3_road(&g->map, g->defeated_bosses & (1 << LOCATION_SWAMP));
@@ -3101,7 +3134,9 @@ void game_return_to_town(GameState *g) {
     Location destination = LOCATION_TOWN;
     if (g->location == LOCATION_FOREST) {
         destination = g->forest_entry_town;
-    } else if (g->location == LOCATION_SWAMP || g->location == LOCATION_DESERT) {
+    } else if (g->location == LOCATION_SWAMP) {
+        destination = g->swamp_entry_town;
+    } else if (g->location == LOCATION_DESERT) {
         destination = LOCATION_TOWN2;
     } else if (g->location == LOCATION_FROSTFELL) {
         destination = LOCATION_TOWN3;
@@ -3122,6 +3157,13 @@ void game_enter_town3(GameState *g) {
     return_to_town(g, LOCATION_TOWN3);
 }
 
+void game_leave_swamp(GameState *g, Location town, int shortcut) {
+    return_to_town(g, town);
+    g->player.x = shortcut ? (town == LOCATION_TOWN3 ? ROSEMOOR_SWAMP_ROAD_X : TOWN3_ROAD_X) : 20;
+    g->player.y = town == LOCATION_TOWN3 ? TOWN_H - 2 : 1;
+    push_message(g, town == LOCATION_TOWN3 ? "You arrive in Rosemoor." : "You arrive in Stillbury.");
+}
+
 void game_enter_swamp_road(GameState *g) {
     int from_town2 = g->location == LOCATION_TOWN2;
     g->location = LOCATION_SWAMP_ROAD;
@@ -3140,7 +3182,7 @@ void game_enter_swamp_road(GameState *g) {
 
 void game_leave_swamp_road(GameState *g, Location destination) {
     return_to_town(g, destination);
-    g->player.x = destination == LOCATION_TOWN3 ? 20 : TOWN3_ROAD_X;
+    g->player.x = destination == LOCATION_TOWN3 ? ROSEMOOR_SWAMP_ROAD_X : TOWN3_ROAD_X;
     g->player.y = destination == LOCATION_TOWN3 ? TOWN_H - 2 : 1;
     push_message(g, destination == LOCATION_TOWN3 ?
         "You arrive in Rosemoor." : "You return to Stillbury.");
@@ -3179,6 +3221,8 @@ void game_open_town_portal(GameState *g) {
     g->portal_location = g->location;
     if (g->location == LOCATION_FOREST) {
         g->forest_portal_town = g->forest_entry_town;
+    } else if (g->location == LOCATION_SWAMP) {
+        g->swamp_portal_town = g->swamp_entry_town;
     }
     g->portal_x = g->player.x;
     g->portal_y = g->player.y;
@@ -3280,6 +3324,8 @@ void game_use_town_portal(GameState *g) {
     g->location = g->portal_location;
     if (g->location == LOCATION_FOREST) {
         g->forest_entry_town = g->forest_portal_town;
+    } else if (g->location == LOCATION_SWAMP) {
+        g->swamp_entry_town = g->swamp_portal_town;
     }
     g->level = level;
     g->map = cache[level - 1].map;
@@ -3980,13 +4026,12 @@ void game_talk_to_innkeeper(GameState *g) {
         g->innkeeper_quest_state = 1;
         prepare_quest_expedition(g, LOCATION_SWAMP);
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "My daughter Mira vanished in Blackwater Swamp. A vampire holds her "
-            "on the fourth swamp level. Defeat her captor and bring her home. "
-            "You can retreat and return if the swamp proves too dangerous.");
+            "A vampire holds Mira on swamp level 3, between Stillbury and the Demon. "
+            "Defeat her captor, then speak to her and bring her home. You can retreat and return if needed.");
         push_message(g, "Assigned: Bring Mira Home.");
     } else if (g->innkeeper_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Mira is in the fourth swamp level. Defeat the vampire holding her, "
+            "Mira is on swamp level 3, on the Stillbury side of the Demon. Defeat the vampire holding her, "
             "then speak to her before returning to the inn.");
         push_message(g, "Bram is waiting for Mira.");
     } else if (g->innkeeper_quest_state == 2) {
@@ -4005,7 +4050,7 @@ void game_talk_to_innkeeper(GameState *g) {
 }
 
 void game_rescue_innkeeper_daughter(GameState *g, int x, int y) {
-    if (g->location != LOCATION_SWAMP || g->level != 4 ||
+    if (g->location != LOCATION_SWAMP || g->level != SWAMP_RESCUE_LEVEL ||
         g->innkeeper_quest_state != 1 || x < 0 || x >= MAP_W ||
         y < 0 || y >= MAP_H || g->map.tiles[y][x] != TILE_SWAMP_DAUGHTER) {
         return;
@@ -4099,10 +4144,38 @@ void game_reveal_forest_shortcut(GameState *g) {
     }
 }
 
+void game_reveal_swamp_shortcut(GameState *g) {
+    if (g->location != LOCATION_SWAMP || g->level != SWAMP_BOSS_LEVEL ||
+        !(g->defeated_bosses & (1 << LOCATION_SWAMP)) || g->map.room_count == 0) {
+        return;
+    }
+    int x;
+    int y;
+    map_room_center(&g->map.rooms[g->map.room_count - 1], &x, &y);
+    x += 3;
+    y += 2;
+    if (g->map.tiles[y][x] == TILE_PORTAL && g->portal_origin_tile == TILE_SWAMP_SHORTCUT) {
+        return;
+    }
+    int occupied = 0;
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && item->x == x && item->y == y) {
+            item->underlying_tile = TILE_SWAMP_SHORTCUT;
+            occupied = 1;
+        }
+    }
+    if (!occupied) {
+        g->map.tiles[y][x] = TILE_SWAMP_SHORTCUT;
+    }
+}
+
 void game_update_level_progress(GameState *g) {
     if (g->defeated_bosses & (1 << g->location)) {
         if (g->location == LOCATION_FOREST && g->level == FOREST_BOSS_LEVEL) {
             game_reveal_forest_shortcut(g);
+        } else if (g->location == LOCATION_SWAMP && g->level == SWAMP_BOSS_LEVEL) {
+            game_reveal_swamp_shortcut(g);
         } else if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH &&
             g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] != TILE_RETURN_EXIT) {
             g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] = TILE_RETURN_EXIT;

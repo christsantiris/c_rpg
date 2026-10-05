@@ -70,6 +70,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_COAST_EXIT || tile == TILE_TAVERN_EXIT ||
                         tile == TILE_SWAMP_ENTRANCE ||
                         tile == TILE_SWAMP_EXIT ||
+                        tile == TILE_SWAMP_SHORTCUT ||
                         tile == TILE_FROST_ENTRANCE ||
                         tile == TILE_FROST_EXIT ||
                         tile == TILE_DESERT_ENTRANCE ||

@@ -225,6 +225,8 @@ static void drop_loot(GameState *g, Enemy *enemy) {
     if (is_boss) {
         int first_forest_victory = g->location == LOCATION_FOREST &&
             !(g->defeated_bosses & (1 << LOCATION_FOREST));
+        int first_swamp_victory = g->location == LOCATION_SWAMP &&
+            !(g->defeated_bosses & (1 << LOCATION_SWAMP));
         g->defeated_bosses |= 1 << g->location;
         game_record_temple_enemy_defeated(g, type);
         if (first_forest_victory) {
@@ -235,6 +237,14 @@ static void drop_loot(GameState *g, Enemy *enemy) {
             snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
                 "You found a shortcut through the forest to %s! Take the marked trail in the grove, or continue through the forest.",
                 g->forest_entry_town == LOCATION_TOWN2 ? "OakHaven" : "Stillbury");
+        } else if (first_swamp_victory) {
+            g->dialogue_active = 1;
+            g->dialogue_x = g->player.x;
+            g->dialogue_y = g->player.y;
+            snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Shortcut found");
+            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+                "You found a shortcut through the swamp to %s! Take the marked trail in the clearing, or continue through the swamp.",
+                g->swamp_entry_town == LOCATION_TOWN3 ? "Stillbury" : "Rosemoor");
         }
     }
     int gold = 0;
@@ -1693,7 +1703,7 @@ void action_resolve_player(GameState *g, Action a) {
                     sfx_play_axe();
                 } else if (melee_weapon->weapon_family == WEAPON_FAMILY_STAFF ||
                     melee_weapon->weapon_family == WEAPON_FAMILY_BOW) {
-                    sfx_play_staff();
+                    sfx_play_punch();
                 } else {
                     sfx_play_attack();
                 }
@@ -1728,7 +1738,8 @@ void action_resolve_player(GameState *g, Action a) {
             game_enter_guild(g);
             return;
         }
-        if ((g->location == LOCATION_TOWN || g->location == LOCATION_TOWN2) &&
+        if ((g->location == LOCATION_TOWN || g->location == LOCATION_TOWN2 ||
+            (g->location == LOCATION_TOWN3 && g->portal_location == LOCATION_SWAMP)) &&
             g->map.tiles[ty][tx] == TILE_PORTAL && g->portal_active) {
             game_use_town_portal(g);
             return;
@@ -1826,7 +1837,13 @@ void action_resolve_player(GameState *g, Action a) {
             if (ty == 0) {
                 game_enter_frostfell(g);
             } else if (ty == TOWN_H - 1) {
-                game_enter_swamp_road(g);
+                if (tx == ROSEMOOR_SWAMP_ROAD_X) {
+                    if (g->defeated_bosses & (1 << LOCATION_SWAMP)) {
+                        game_enter_swamp_road(g);
+                    }
+                } else {
+                    game_enter_swamp(g);
+                }
             } else if (tx == TOWN_W - 1) {
                 game_enter_king_road(g, LOCATION_CROWNROAD, 0);
             }
@@ -1954,21 +1971,38 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
         if (g->location == LOCATION_SWAMP &&
+            g->map.tiles[ty][tx] == TILE_SWAMP_SHORTCUT) {
+            if (g->defeated_bosses & (1 << LOCATION_SWAMP)) {
+                game_leave_swamp(g, g->swamp_entry_town == LOCATION_TOWN3 ? LOCATION_TOWN2 : LOCATION_TOWN3, 1);
+            }
+            return;
+        }
+
+        if (g->location == LOCATION_SWAMP &&
             g->map.tiles[ty][tx] == TILE_SWAMP_ENTRANCE) {
+            if (g->level == SWAMP_BOSS_LEVEL && g->swamp_entry_town == LOCATION_TOWN3) {
+                for (int i = 0; i < g->enemy_count; i++) {
+                    if (g->enemies[i].active && g->enemies[i].type == ENEMY_SWAMP_DEMON) {
+                        push_message(g, "The demon blocks the swamp trail!");
+                        return;
+                    }
+                }
+            }
             if (g->level == 1) {
-                game_return_to_town(g);
+                game_leave_swamp(g, LOCATION_TOWN2, 0);
             } else {
+                int unvisited = !g->swamp_cache[g->level - 2].valid;
                 game_ascend(g);
+                if (unvisited) {
+                    g->score += map_swamp_difficulty(g->level) * 100;
+                }
             }
             return;
         }
 
         if (g->location == LOCATION_SWAMP &&
             g->map.tiles[ty][tx] == TILE_SWAMP_EXIT) {
-            if (g->level < SWAMP_DEPTH) {
-                game_descend(g);
-                g->score += g->level * 100;
-            } else {
+            if (g->level == SWAMP_BOSS_LEVEL && g->swamp_entry_town != LOCATION_TOWN3) {
                 for (int i = 0; i < g->enemy_count; i++) {
                     if (g->enemies[i].active &&
                         g->enemies[i].type == ENEMY_SWAMP_DEMON) {
@@ -1976,8 +2010,15 @@ void action_resolve_player(GameState *g, Action a) {
                         return;
                     }
                 }
-                game_enter_town3(g);
-                push_message(g, "Beyond the liberated swamp lies Rosemoor.");
+            }
+            if (g->level < SWAMP_DEPTH) {
+                int unvisited = !g->swamp_cache[g->level].valid;
+                game_descend(g);
+                if (unvisited) {
+                    g->score += map_swamp_difficulty(g->level) * 100;
+                }
+            } else {
+                game_leave_swamp(g, LOCATION_TOWN3, 0);
             }
             return;
         }
