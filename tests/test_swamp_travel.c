@@ -109,12 +109,22 @@ static void test_swamp_crossing(int reverse, int shortcut) {
     }
     ASSERT("victory unlocks the swamp shortcut", !demon->active && (swamp.defeated_bosses & (1 << LOCATION_SWAMP)));
     ASSERT("victory prompts discovery of the opposite-town shortcut", swamp.dialogue_active && strstr(swamp.dialogue_text, "shortcut through the swamp") && strstr(swamp.dialogue_text, reverse ? "Stillbury" : "Rosemoor"));
-    int x;
-    int y;
-    map_room_center(&swamp.map.rooms[swamp.map.room_count - 1], &x, &y);
-    x += 3;
-    y += 2;
-    ASSERT("boss clearing gains a separate walkable shortcut", swamp.map.tiles[y][x] == TILE_SWAMP_SHORTCUT && map_is_walkable(&swamp.map, x - 1, y));
+    int x = -1;
+    int y = -1;
+    for (int row = 0; row < MAP_H; row++) {
+        for (int column = 0; column < MAP_W; column++) {
+            if (swamp.map.tiles[row][column] == TILE_SWAMP_SHORTCUT) {
+                x = column;
+                y = row;
+            }
+        }
+    }
+    Enemy *defeated = demon;
+    ASSERT("shortcut appears beside the defeated boss", x >= 0 && abs(x - defeated->x) + abs(y - defeated->y) <= 1 && map_is_walkable(&swamp.map, x, y));
+    if (x < 0) {
+        return;
+    }
+    swamp.dialogue_active = 0;
     if (shortcut) {
         ASSERT("central shortcut saves and loads", save_game(&swamp, 99122) && load_game(&restored, 99122));
         ASSERT("loaded swamp preserves entry town, quest, and shortcut", restored.swamp_entry_town == swamp.swamp_entry_town && restored.innkeeper_quest_state == swamp.innkeeper_quest_state && restored.map.tiles[y][x] == TILE_SWAMP_SHORTCUT);

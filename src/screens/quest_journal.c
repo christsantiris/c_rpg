@@ -28,7 +28,7 @@ static const QuestDefinition quest_definitions[9] = {
         "by the Goblin Map Bearers.",
         {"Defeat Archer Map Bearer", "Defeat Bomber Map Bearer",
             "Defeat Shaman Map Bearer"},
-        "Mountains", {2, 3, 5}, 60, 400
+        "Mountains", {1, 2, 3}, 60, 400
     },
     {
         "The Lost Wardens", "Alder",

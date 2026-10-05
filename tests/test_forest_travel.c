@@ -122,12 +122,22 @@ static void test_forest_crossing(int reverse, int shortcut) {
     ASSERT("boss victory announces the shortcut and destination",
         forest.dialogue_active && strstr(forest.dialogue_text, "You found a shortcut through the forest") &&
         strstr(forest.dialogue_text, reverse ? "OakHaven" : "Stillbury"));
-    int x;
-    int y;
-    map_room_center(&forest.map.rooms[forest.map.room_count - 1], &x, &y);
-    x += 3;
-    y += 3;
-    ASSERT("grove has a separate walkable shortcut entrance", forest.map.tiles[y][x] == TILE_FOREST_SHORTCUT && map_is_walkable(&forest.map, x, y));
+    int x = -1;
+    int y = -1;
+    for (int row = 0; row < MAP_H; row++) {
+        for (int column = 0; column < MAP_W; column++) {
+            if (forest.map.tiles[row][column] == TILE_FOREST_SHORTCUT) {
+                x = column;
+                y = row;
+            }
+        }
+    }
+    Enemy *defeated = enemy;
+    ASSERT("shortcut appears beside the defeated boss", x >= 0 && abs(x - defeated->x) + abs(y - defeated->y) <= 1 && map_is_walkable(&forest.map, x, y));
+    if (x < 0) {
+        return;
+    }
+    forest.dialogue_active = 0;
     if (shortcut) {
         ASSERT("grove shortcut saves and loads", save_game(&forest, 99031) && load_game(&restored, 99031));
         ASSERT("loaded grove retains its shortcut destination", restored.forest_entry_town == forest.forest_entry_town && restored.map.tiles[y][x] == TILE_FOREST_SHORTCUT);

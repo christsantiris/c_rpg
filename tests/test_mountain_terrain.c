@@ -98,7 +98,7 @@ static void test_mountain_generation(void) {
             }
         }
     }
-    ASSERT("2048 generated mountain stages remain solvable without risky caves", solvable);
+    ASSERT("1792 generated mountain stages remain solvable without risky caves", solvable);
     ASSERT("weak bridges always form a one-tile combat bottleneck", bridges);
     ASSERT("mountain rooms have open routes without gate dividers", open_rooms);
     ASSERT("new terrain preserves existing serialized tile IDs",
@@ -124,7 +124,7 @@ static void test_mountain_interactions(void) {
         int hp = g.player.hp;
         action_resolve_player(&g, interact);
         ASSERT("clearing either rockfall reveals the whole cave at an HP cost",
-            g.player.hp == hp - 8 && g.map.tiles[y + 2][x] == TILE_MOUNTAIN_CACHE &&
+            g.player.hp == hp - (4 + map_mountain_difficulty(g.level)) && g.map.tiles[y + 2][x] == TILE_MOUNTAIN_CACHE &&
             g.map.tiles[y + 2][x - 3] == TILE_MOUNTAIN_CAVE_FLOOR &&
             g.map.tiles[y + 2][x + 3] == TILE_MOUNTAIN_CAVE_FLOOR);
         ASSERT("cave discovery updates exploration", map_is_explored(&g.map, x, y + 2));
@@ -145,7 +145,7 @@ static void test_mountain_interactions(void) {
         int gold = g.gold;
         action_resolve_player(&g, interact);
         action_resolve_player(&g, interact);
-        ASSERT("risky cache gives its reward only once", g.gold == gold + 31);
+        ASSERT("risky cache gives its reward only once", g.gold == gold + 15 + 4 * map_mountain_difficulty(g.level));
         Action pickup = {ACTION_PICK_UP, 0, 0};
         action_resolve_player(&g, pickup);
         ASSERT("picking up loot cannot restore a claimed cache",

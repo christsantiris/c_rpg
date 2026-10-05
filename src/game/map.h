@@ -142,7 +142,8 @@
 #define FOREST_DEPTH 7
 #define FOREST_BOSS_LEVEL 4
 #define STILLBURY_FOREST_ROAD_X (TOWN_W - 3)
-#define MOUNTAIN_DEPTH 8
+#define MOUNTAIN_DEPTH 7
+#define MOUNTAIN_BOSS_LEVEL 4
 #define COAST_DEPTH 8
 #define MAX_REGION_DEPTH 8
 #define SWAMP_DEPTH 7
@@ -161,6 +162,7 @@
 #define HIGH_PASS_H 64
 #define HIGH_PASS_X 20
 #define TOWN4_ROAD_X 40
+#define RIDGESHIRE_MOUNTAIN_ROAD_X 28
 #define TOWN4_DRAGON_GATE_Y 12
 #define TOWN4_ILYA_X 39
 #define TOWN4_ILYA_Y 11
@@ -331,7 +333,8 @@ typedef enum {
     TILE_NPC_GUILD_SEEKER,
     TILE_DESERT_LAMP,
     TILE_FOREST_SHORTCUT,
-    TILE_SWAMP_SHORTCUT
+    TILE_SWAMP_SHORTCUT,
+    TILE_MOUNTAIN_SHORTCUT
 } TileType;
 
 typedef struct {
@@ -356,6 +359,7 @@ void map_set_town2_road(Map *m, int unlocked);
 void map_set_stillbury_forest_road(Map *m, int unlocked);
 void map_generate_town4(Map *m, int *spawn_x, int *spawn_y);
 void map_set_town4_road(Map *m, int unlocked);
+void map_set_ridgeshire_mountain_road(Map *m, int unlocked);
 void map_place_town4_workshop(Map *m);
 void map_generate_town2(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_town3(Map *m, int *spawn_x, int *spawn_y);
@@ -385,6 +389,7 @@ void map_reveal_forest_exit(Map *m);
 void map_reveal_forest_entrance(Map *m);
 int map_forest_difficulty(int level);
 void map_generate_mountains(Map *m, int level);
+int map_mountain_difficulty(int level);
 void map_generate_coast(Map *m, int level);
 void map_generate_swamp(Map *m, int level);
 int map_swamp_difficulty(int level);

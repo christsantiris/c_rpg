@@ -1,16 +1,20 @@
 # Dragonspine and High Pass
 
-Defeating the Goblin King and leaving Crown Peak leads to Ridgeshire. For now this
-town has only a crossroads and Ilya, with no buildings. Its full east gate
+The Goblin Mountains connect OakHaven and Ridgeshire across seven stages, with
+the Goblin King at Crown Peak on stage 4. His defeat opens a shortcut to the
+opposite town; continuing through the remaining stages is also possible.
+Ridgeshire's full east gate
 enters Dragonspine directly. Leaving Dragonspine's first stage, completing its
 summit, or casting Return to Town brings you back beside this gate in Ridgeshire.
 The return portal also appears there.
 
-Ridgeshire's south road leads into the enemy-free High Pass. Walk south to reach
+Ridgeshire's separate south shortcut gate leads into the enemy-free High Pass. Walk south to reach
 OakHaven's northeast shortcut, or north from OakHaven to revisit Ridgeshire without
 crossing the Goblin Mountains. A matching stone gate marks the Ridgeshire end of
 the shortcut, which opens after the Goblin King falls.
 OakHaven's main north gate still starts a Goblin Mountains expedition.
+Ridgeshire's ordinary south mountain gate permits entering from the other end,
+even before the Goblin King is defeated.
 
 Dragonspine has five generated stages with independent progress and saved
 floor caches. Trails at the west and east map edges lead back and forward.

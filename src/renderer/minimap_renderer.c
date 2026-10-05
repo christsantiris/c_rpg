@@ -66,7 +66,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_CRYPT_KEY || tile == TILE_CRYPT_CACHE ||
                         tile == TILE_PORTAL || tile == TILE_FOREST_ENTRANCE ||
                         tile == TILE_FOREST_EXIT || tile == TILE_FOREST_SHORTCUT || tile == TILE_MOUNTAIN_ENTRANCE ||
-                        tile == TILE_MOUNTAIN_EXIT || tile == TILE_COAST_ENTRANCE ||
+                        tile == TILE_MOUNTAIN_EXIT || tile == TILE_MOUNTAIN_SHORTCUT || tile == TILE_COAST_ENTRANCE ||
                         tile == TILE_COAST_EXIT || tile == TILE_TAVERN_EXIT ||
                         tile == TILE_SWAMP_ENTRANCE ||
                         tile == TILE_SWAMP_EXIT ||
