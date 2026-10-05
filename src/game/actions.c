@@ -223,8 +223,19 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         game_record_dain_kill(g, type);
     }
     if (is_boss) {
+        int first_forest_victory = g->location == LOCATION_FOREST &&
+            !(g->defeated_bosses & (1 << LOCATION_FOREST));
         g->defeated_bosses |= 1 << g->location;
         game_record_temple_enemy_defeated(g, type);
+        if (first_forest_victory) {
+            g->dialogue_active = 1;
+            g->dialogue_x = g->player.x;
+            g->dialogue_y = g->player.y;
+            snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Shortcut found");
+            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+                "You found a shortcut through the forest to %s! Take the marked trail in the grove, or continue through the forest.",
+                g->forest_entry_town == LOCATION_TOWN2 ? "OakHaven" : "Stillbury");
+        }
     }
     int gold = 0;
     switch (type) {
@@ -1793,7 +1804,13 @@ void action_resolve_player(GameState *g, Action a) {
 
         if (g->location == LOCATION_TOWN2 &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT && tx == TOWN_W - 1) {
-            game_enter_forest_road(g);
+            if (ty == TOWN_ROAD_EXIT_Y) {
+                if (g->defeated_bosses & (1 << LOCATION_FOREST)) {
+                    game_enter_forest_road(g);
+                }
+            } else {
+                game_enter_forest(g);
+            }
             return;
         }
 
@@ -2062,9 +2079,32 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
         if (g->location == LOCATION_FOREST &&
+            g->map.tiles[ty][tx] == TILE_FOREST_SHORTCUT) {
+            if (g->defeated_bosses & (1 << LOCATION_FOREST)) {
+                game_leave_forest(g, g->forest_entry_town == LOCATION_TOWN2 ? LOCATION_TOWN : LOCATION_TOWN2, 1);
+            }
+            return;
+        }
+
+        if (g->location == LOCATION_FOREST &&
             g->map.tiles[ty][tx] == TILE_FOREST_ENTRANCE) {
-            if (g->level == 1) game_return_to_town(g);
-            else game_ascend(g);
+            if (g->level == FOREST_BOSS_LEVEL && g->forest_entry_town == LOCATION_TOWN2) {
+                for (int i = 0; i < g->enemy_count; i++) {
+                    if (g->enemies[i].active && g->enemies[i].type == ENEMY_FOREST_NECROMANCER) {
+                        push_message(g, "The Necromancer seals the path!");
+                        return;
+                    }
+                }
+            }
+            if (g->level == 1) {
+                game_leave_forest(g, LOCATION_TOWN, 0);
+            } else {
+                int unvisited = !g->forest_cache[g->level - 2].valid;
+                game_ascend(g);
+                if (unvisited) {
+                    g->score += map_forest_difficulty(g->level) * 100;
+                }
+            }
             return;
         }
 
@@ -2101,24 +2141,22 @@ void action_resolve_player(GameState *g, Action a) {
 
         if (g->location == LOCATION_FOREST &&
             g->map.tiles[ty][tx] == TILE_FOREST_EXIT) {
-            if (g->level < FOREST_DEPTH) {
-                game_descend(g);
-                g->score += g->level * 100;
-            } else {
-                int boss_alive = 0;
-                for (int i = 0; i < g->enemy_count; i++)
-                    if (g->enemies[i].active &&
-                        g->enemies[i].type == ENEMY_FOREST_NECROMANCER) {
-                        boss_alive = 1;
-                        break;
+            if (g->level == FOREST_BOSS_LEVEL && g->forest_entry_town != LOCATION_TOWN2) {
+                for (int i = 0; i < g->enemy_count; i++) {
+                    if (g->enemies[i].active && g->enemies[i].type == ENEMY_FOREST_NECROMANCER) {
+                        push_message(g, "The Necromancer seals the path!");
+                        return;
                     }
-                if (boss_alive) {
-                    push_message(g, "The Necromancer seals the path!");
-                    return;
                 }
-                g->score += g->level * 100;
-                game_enter_town2(g);
-                push_message(g, "The forest is freed!");
+            }
+            if (g->level < FOREST_DEPTH) {
+                int unvisited = !g->forest_cache[g->level].valid;
+                game_descend(g);
+                if (unvisited) {
+                    g->score += map_forest_difficulty(g->level) * 100;
+                }
+            } else {
+                game_leave_forest(g, LOCATION_TOWN2, 0);
             }
             return;
         }
@@ -2205,6 +2243,7 @@ void action_resolve_player(GameState *g, Action a) {
                 }
             }
             map_reveal_forest_exit(&g->map);
+            map_reveal_forest_entrance(&g->map);
             push_message(g, "The landmark reveals hidden trails!");
             tile = TILE_FOREST_FLOOR;
         }

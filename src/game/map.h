@@ -139,7 +139,9 @@
 #define TEMPLE_DEPTH 4
 
 #define DUNGEON_DEPTH 8
-#define FOREST_DEPTH 8
+#define FOREST_DEPTH 7
+#define FOREST_BOSS_LEVEL 4
+#define STILLBURY_FOREST_ROAD_X (TOWN_W - 3)
 #define MOUNTAIN_DEPTH 8
 #define COAST_DEPTH 8
 #define MAX_REGION_DEPTH 8
@@ -324,7 +326,8 @@ typedef enum {
     TILE_DESERT_EXIT,
     TILE_GUILD_DOOR,
     TILE_NPC_GUILD_SEEKER,
-    TILE_DESERT_LAMP
+    TILE_DESERT_LAMP,
+    TILE_FOREST_SHORTCUT
 } TileType;
 
 typedef struct {
@@ -346,6 +349,7 @@ int  map_is_walkable(const Map *m, int x, int y);
 void map_room_center(const Room *r, int *cx, int *cy);
 void map_generate_town(Map *m, int *spawn_x, int *spawn_y);
 void map_set_town2_road(Map *m, int unlocked);
+void map_set_stillbury_forest_road(Map *m, int unlocked);
 void map_generate_town4(Map *m, int *spawn_x, int *spawn_y);
 void map_set_town4_road(Map *m, int unlocked);
 void map_place_town4_workshop(Map *m);
@@ -373,6 +377,8 @@ void map_generate_temple(Map *m, int level, int *spawn_x, int *spawn_y);
 void map_generate_labyrinth(Map *m, int level, int switches, int *spawn_x, int *spawn_y);
 void map_generate_forest(Map *m, int level);
 void map_reveal_forest_exit(Map *m);
+void map_reveal_forest_entrance(Map *m);
+int map_forest_difficulty(int level);
 void map_generate_mountains(Map *m, int level);
 void map_generate_coast(Map *m, int level);
 void map_generate_swamp(Map *m, int level);
