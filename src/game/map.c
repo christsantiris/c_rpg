@@ -1333,6 +1333,15 @@ void map_set_town3_road(Map *m, int unlocked) {
     m->tiles[0][TOWN3_ROAD_X] = TILE_TOWN_EXIT;
 }
 
+void map_set_rosemoor_swamp_road(Map *m, int unlocked) {
+    m->tiles[TOWN_H - 1][ROSEMOOR_SWAMP_ROAD_X] = unlocked ? TILE_TOWN_EXIT : TILE_WALL;
+    for (int y = 15; y < TOWN_H - 1; y++) {
+        if (m->tiles[y][ROSEMOOR_SWAMP_ROAD_X] != TILE_ITEM) {
+            m->tiles[y][ROSEMOOR_SWAMP_ROAD_X] = unlocked ? TILE_TOWN_PATH : TILE_TOWN_FLOOR;
+        }
+    }
+}
+
 void map_generate_swamp_road(Map *m) {
     map_clear_exploration(m);
     m->room_count = 0;
@@ -1461,6 +1470,14 @@ static void swamp_carve_trail(Map *m, int x, int y, int tx, int ty, int turn) {
         }
     }
     swamp_carve(m, tx, ty);
+}
+
+int map_swamp_difficulty(int level) {
+    static const int difficulty[SWAMP_DEPTH] = {1, 2, 3, 5, 3, 2, 1};
+    if (level < 1 || level > SWAMP_DEPTH) {
+        return 1;
+    }
+    return difficulty[level - 1];
 }
 
 void map_generate_swamp(Map *m, int level) {

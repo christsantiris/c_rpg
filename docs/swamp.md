@@ -1,42 +1,78 @@
 # Blackwater Swamp
 
-Blackwater Swamp begins at the north gate of Stillbury. Its five levels form a
-separate expedition from the forest road and Rook's labyrinth. Dark water,
-cypress trees, and swaying reeds border nine uneven muddy clearings on each
-level. Winding causeways connect the clearings, with roots and reeds marking
-the shoreline. The map changes when a new expedition begins, and progress is
-preserved while traveling between levels or using a Return to Town portal.
+Blackwater Swamp connects Stillbury and Rosemoor across seven levels.
+Stillbury's main north gate enters level 1; Rosemoor's main south gate enters
+level 7. Either approach crosses three levels of increasing difficulty before
+meeting the Swamp Demon on level 4. Beyond the Demon, the remaining three
+levels become easier. Dark water, cypress trees, and swaying reeds border
+nine uneven muddy clearings on each level, connected by winding causeways.
 
-The west-edge trail leads back one level, or to Stillbury from level 1. The
-east-edge trail advances to the next level. Levels 1–4 can be left without defeating every
-enemy. The level-5 exit is blocked only while the Swamp Demon lives. After its
-defeat, that exit leads to Rosemoor. The demon does not respawn on later visits.
+The west-edge trail moves toward lower level numbers and Stillbury; the
+east-edge trail moves toward higher numbers and Rosemoor. Either border level
+allows immediate retreat to its town. Maps and enemies are cached independently
+from other regions and retained when entering from either town. Ordinary
+enemies do not need to be cleared to advance.
 
-Its defeat also opens a second north gate in Stillbury, at the end of a short
-lane east of the swamp gate. That gate leads along a safe swamp shortcut with
-no enemies to Rosemoor's south gate, and its south gate leads back the same
-way.
-
-| Level | Regular enemies | Threat |
+| Levels | Regular enemies | Difficulty |
 | --- | --- | --- |
-| 1–2 | Giant Rats, Zombies, Bandits, Wraiths | A mix of fast, tough, and well-armored foes |
-| 3–4 | The same roster, plus Vampires | Vampires are the strongest regular swamp enemy |
-| 5 | Full roster and Swamp Demon | Final boss encounter |
+| 1 and 7 | Giant Rats, Zombies, Bandits, Wraiths | Border levels |
+| 2 and 6 | Giant Rats, Zombies, Bandits, Wraiths | More enemies |
+| 3 and 5 | The same roster, plus Vampires | Stronger regular enemies |
+| 4 | Full roster and Swamp Demon | Central boss encounter |
 
-Zombies and Wraiths reuse their dungeon enemy rules. Giant Rats are the weakest
-swamp enemies; Bandits are tougher and better defended; Vampires have the most
-health and attack of the regular roster. The Swamp Demon is a separate boss.
-Enemies can drop gold and supplies under the ordinary loot rules, while the
-demon also drops a fixed Demonic Sword reward.
+Giant Rats are the weakest swamp enemies; Bandits are tougher and better
+defended; Vampires have the most health and attack of the regular roster.
+Zombies and Wraiths retain their dungeon enemy rules. The Demon remains a
+separate boss and drops a fixed Demonic Sword reward. Travel score is awarded
+on first visits to levels from either direction.
+
+## Demon and Shortcuts
+
+The living Demon blocks crossing level 4 toward the opposite town, but allows
+retreat toward the expedition's entry town. Defeating him displays a shortcut
+discovery prompt and opens a separate marked trail in his clearing. That trail
+goes directly to Rosemoor when entering from Stillbury, or to Stillbury when
+entering from Rosemoor. Players can instead cross the three remaining levels.
+Surviving regular enemies do not block either exit choice.
+
+Victory also permanently unlocks a safe swamp road between the towns. The
+second north gate in Stillbury and separate south gate east of Rosemoor's main
+swamp gate enter this enemy-free road. Both ordinary swamp gates remain open.
+The Demon does not respawn on later visits or after accepting Bram's quest.
+
+Return to Town returns to the expedition's entry town. Its portal preserves
+the exact swamp level, casting position, and original town, even after the
+swamp is subsequently entered from the other town. From Stillbury, the town
+portal appears beside the north swamp gate; from Rosemoor, beside the south
+swamp gate.
+
+## Bring Mira Home
 
 At the Stillbury Inn, Bram asks the player to rescue his daughter Mira. She is
-held by a named Vampire Captor in a clearing on swamp level 4. Defeat the
-captor, then speak to Mira to send her home. Return to Bram for a one-time
-reward of 80 gold and 600 score. The quest and rescue persist across saves;
-the Swamp Demon remains a separate level-5 challenge.
+held by a named Vampire Captor in a clearing on level 3, on the Stillbury side
+of the Demon. Starting from Stillbury encounters Mira before level 4. Starting
+from Rosemoor with the quest active encounters her after defeating the Demon
+and continuing through level 3. Taking the central shortcut from Rosemoor
+skips her clearing; the ordinary Stillbury swamp gate permits rescuing her later.
+
+Defeat the captor, then speak to Mira to send her home. Return to Bram for a
+one-time reward of 80 gold and 600 score. Accepting the quest starts a fresh
+swamp expedition while retaining any boss victory and unlocked shortcuts.
+Quest and rescue progress persist across backtracking and new saves.
+
+## Demonic Sword
 
 The Demonic Sword is a one-handed weapon usable by Warriors, Mages, and Rogues.
 It gives **+6 attack**, equal to the Long Sword. Press `F` to strike in the last
 movement direction at an enemy one or two tiles away. The attack stops at the
 first enemy or wall, and the sword keeps its full +6 bonus in ordinary melee.
 It costs no mana.
+
+## Save Compatibility
+
+Older saves migrate automatically when loaded. The old Demon stage moves from
+level 5 to level 4, and Mira's clearing moves from level 4 to level 3. Saved maps,
+enemies, and portal destinations move with those levels; the two additional
+stages start unexplored. Character progress, rescue progress, and boss victories
+remain intact. Saving writes the current format with seven cached levels and
+the expedition's entry town and portal anchor.

@@ -52,7 +52,7 @@ void test_quest_journal(void) {
         quest_journal_count(&g, QUEST_TAB_ACTIVE) == 3 &&
         quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 2, &entry) &&
         strcmp(entry.title, "Bring Mira Home") == 0 &&
-        entry.stages[0] == 4);
+        entry.stages[0] == SWAMP_RESCUE_LEVEL);
     g.innkeeper_quest_state = 2;
     ASSERT("rescuing Mira marks Bram's quest ready to return",
         quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 2, &entry) &&
