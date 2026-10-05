@@ -7,7 +7,7 @@
 #include <string.h>
 
 void test_king_roads_and_castle(void) {
-    printf("King Roads and castle grounds tests:\n");
+    printf("Crown Roads and castle grounds tests:\n");
     static GameState g;
     static GameState loaded;
     g.player.player_class = CLASS_WARRIOR;
@@ -38,7 +38,7 @@ void test_king_roads_and_castle(void) {
     g.player.x = TOWN_W - 2;
     g.player.y = TOWN3_KING_GATE_Y;
     action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 1, TOWN3_KING_GATE_Y});
-    ASSERT("Rosemoor east gate enters King Road East at its west end",
+    ASSERT("Rosemoor east gate enters Crown Road East at its west end",
         g.location == LOCATION_CROWNROAD && g.enemy_count == MAX_ENEMIES &&
         g.player.x == 1 && g.player.y == CROWNROAD_Y);
     int archers = 0;
@@ -59,7 +59,7 @@ void test_king_roads_and_castle(void) {
     g.player.x = CROWNROAD_W - 2;
     g.player.y = CROWNROAD_Y;
     action_resolve_player(&g, (Action){ACTION_MOVE, CROWNROAD_W - 1, CROWNROAD_Y});
-    ASSERT("King Road East reaches separate castle grounds without clearing enemies",
+    ASSERT("Crown Road East reaches separate castle grounds without clearing enemies",
         g.location == LOCATION_CASTLE && g.player.x == 1 &&
         g.crownroad_cache.valid && !g.crownroad_cache.enemies[0].active);
     ASSERT("castle moat and drawbridge are now on the castle grounds",
@@ -72,12 +72,12 @@ void test_king_roads_and_castle(void) {
     g.player.x = TOWN_W - 2;
     g.player.y = CASTLE_ROAD_Y;
     action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 1, CASTLE_ROAD_Y});
-    ASSERT("castle east gate enters King Road West with independent enemies",
+    ASSERT("castle east gate enters Crown Road West with independent enemies",
         g.location == LOCATION_KING_ROAD_WEST && g.player.x == 1 &&
         g.enemy_count == MAX_ENEMIES && g.enemies[0].active);
     GameState ridgeshire = g;
     game_leave_crownroad(&ridgeshire, LOCATION_TOWN4);
-    ASSERT("Ridgeshire has two guards flanking its open King Road West gate",
+    ASSERT("Ridgeshire has two guards flanking its open Crown Road West gate",
         ridgeshire.map.tiles[TOWN4_KING_GATE_Y - 1][TOWN4_KING_GATE_X] ==
             TILE_NPC_ROYAL_GUARD &&
         ridgeshire.map.tiles[TOWN4_KING_GATE_Y + 1][TOWN4_KING_GATE_X] ==
@@ -88,25 +88,25 @@ void test_king_roads_and_castle(void) {
             TOWN4_KING_GATE_Y));
     game_talk_to_royal_guard(&ridgeshire, TOWN4_KING_GATE_X,
         TOWN4_KING_GATE_Y - 1);
-    ASSERT("King Road West guards warn about danger without blocking travel",
+    ASSERT("Crown Road West guards warn about danger without blocking travel",
         ridgeshire.dialogue_active &&
-        strstr(ridgeshire.dialogue_text, "King Road West") &&
+        strstr(ridgeshire.dialogue_text, "Crown Road West") &&
         strstr(ridgeshire.dialogue_text, "will not stop you") &&
         ridgeshire.location == LOCATION_TOWN4 &&
         map_is_walkable(&ridgeshire.map, TOWN4_KING_GATE_X,
             TOWN4_KING_GATE_Y));
     game_talk_to_royal_guard(&ridgeshire, TOWN4_KING_GATE_X,
         TOWN4_KING_GATE_Y + 1);
-    ASSERT("the second King Road West guard gives a distinct equivalent warning",
+    ASSERT("the second Crown Road West guard gives a distinct equivalent warning",
         ridgeshire.dialogue_active &&
-        !strstr(ridgeshire.dialogue_text, "King Road West") &&
+        !strstr(ridgeshire.dialogue_text, "Crown Road West") &&
         strstr(ridgeshire.dialogue_text, "Bandits, archers and horsemen") &&
         strstr(ridgeshire.dialogue_text, "will let you pass") &&
         strstr(ridgeshire.dialogue_text, "cannot protect you"));
     const int west_guard_slot = 99016;
     int guards_saved = save_game(&ridgeshire, west_guard_slot) &&
         load_game(&loaded, west_guard_slot);
-    ASSERT("both King Road West guards remain after loading a Ridgeshire save",
+    ASSERT("both Crown Road West guards remain after loading a Ridgeshire save",
         guards_saved &&
         loaded.map.tiles[TOWN4_KING_GATE_Y - 1][TOWN4_KING_GATE_X] ==
             TILE_NPC_ROYAL_GUARD &&
@@ -119,7 +119,7 @@ void test_king_roads_and_castle(void) {
     g.enemies[1].active = 0;
     g.player.x = CROWNROAD_W - 2;
     action_resolve_player(&g, (Action){ACTION_MOVE, CROWNROAD_W - 1, CROWNROAD_Y});
-    ASSERT("King Road West reaches Ridgeshire's west entrance",
+    ASSERT("Crown Road West reaches Ridgeshire's west entrance",
         g.location == LOCATION_TOWN4 && g.player.x == 1 && g.player.y == 12);
     int workshop_walls = 1;
     for (int y = TOWN4_WORKSHOP_Y; y < TOWN4_WORKSHOP_DOOR_Y; y++) {
@@ -134,7 +134,7 @@ void test_king_roads_and_castle(void) {
         !map_is_walkable(&g.map, TOWN4_WORKSHOP_X, TOWN4_WORKSHOP_Y));
     const int slot = 99015;
     int restored = save_game(&g, slot) && load_game(&loaded, slot);
-    ASSERT("both King Road caches survive saving in Ridgeshire",
+    ASSERT("both Crown Road caches survive saving in Ridgeshire",
         restored && loaded.crownroad_cache.valid && loaded.kingroad_west_cache.valid &&
         !loaded.crownroad_cache.enemies[0].active && loaded.crownroad_cache.enemies[1].active &&
         loaded.kingroad_west_cache.enemies[0].active && !loaded.kingroad_west_cache.enemies[1].active);
@@ -147,12 +147,12 @@ void test_king_roads_and_castle(void) {
         g = loaded;
     }
     action_resolve_player(&g, (Action){ACTION_MOVE, 0, 12});
-    ASSERT("Ridgeshire returns to King Road West's east end with saved enemies",
+    ASSERT("Ridgeshire returns to Crown Road West's east end with saved enemies",
         g.location == LOCATION_KING_ROAD_WEST && g.player.x == CROWNROAD_W - 2 &&
         !g.enemies[1].active);
     g.player.x = 1;
     action_resolve_player(&g, (Action){ACTION_MOVE, 0, CROWNROAD_Y});
-    ASSERT("King Road West returns to the castle's east gate",
+    ASSERT("Crown Road West returns to the castle's east gate",
         g.location == LOCATION_CASTLE && g.player.x == TOWN_W - 2);
     restored = save_game(&g, slot) && load_game(&loaded, slot);
     ASSERT("castle grounds and position survive save/load",
@@ -161,16 +161,16 @@ void test_king_roads_and_castle(void) {
     g.player.x = 1;
     g.player.y = CASTLE_ROAD_Y;
     action_resolve_player(&g, (Action){ACTION_MOVE, 0, CASTLE_ROAD_Y});
-    ASSERT("castle west gate restores King Road East's enemy progress",
+    ASSERT("castle west gate restores Crown Road East's enemy progress",
         g.location == LOCATION_CROWNROAD && g.player.x == CROWNROAD_W - 2 && !g.enemies[0].active);
     g.player.x = 1;
     action_resolve_player(&g, (Action){ACTION_MOVE, 0, CROWNROAD_Y});
-    ASSERT("King Road East returns to Rosemoor's east entrance",
+    ASSERT("Crown Road East returns to Rosemoor's east entrance",
         g.location == LOCATION_TOWN3 && g.player.x == TOWN_W - 2 &&
         g.player.y == TOWN3_KING_GATE_Y);
     remove("saves/savegame_99015.json");
     game_init(&g);
-    ASSERT("new game clears King Road West progress", !g.kingroad_west_cache.valid);
+    ASSERT("new game clears Crown Road West progress", !g.kingroad_west_cache.valid);
 }
 
 void test_town3_royal_guards(void) {
@@ -181,13 +181,13 @@ void test_town3_royal_guards(void) {
     game_init(&g);
     game_enter_swamp(&g);
     game_enter_town3(&g);
-    ASSERT("guards flank King Road East without blocking it",
+    ASSERT("guards flank Crown Road East without blocking it",
         g.map.tiles[TOWN3_GUARD_NORTH_Y][TOWN3_GUARD_X] == TILE_NPC_ROYAL_GUARD &&
         g.map.tiles[TOWN3_GUARD_SOUTH_Y][TOWN3_GUARD_X] == TILE_NPC_ROYAL_GUARD &&
         g.map.tiles[TOWN3_KING_GATE_Y][TOWN3_GUARD_X] == TILE_TOWN_PATH);
     game_talk_to_royal_guard(&g, TOWN3_GUARD_X, TOWN3_GUARD_NORTH_Y);
-    ASSERT("guard warns about King Road East",
-        g.dialogue_active && strstr(g.dialogue_text, "King Road East") &&
+    ASSERT("guard warns about Crown Road East",
+        g.dialogue_active && strstr(g.dialogue_text, "Crown Road East") &&
         g.dialogue_y == TOWN3_GUARD_NORTH_Y);
     game_talk_to_royal_guard(&g, TOWN3_GUARD_X, TOWN3_GUARD_SOUTH_Y);
     ASSERT("second guard recommends preparation", strstr(g.dialogue_text, "grow stronger"));

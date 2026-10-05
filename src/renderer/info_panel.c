@@ -57,11 +57,11 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor)
     } else if (g->location == LOCATION_CASTLE) {
         SDL_snprintf(loc, sizeof(loc), "CASTLE OF NO RETURN");
     } else if (g->location == LOCATION_KING_ROAD_WEST) {
-        SDL_snprintf(loc, sizeof(loc), "KING ROAD WEST");
+        SDL_snprintf(loc, sizeof(loc), "CROWN ROAD WEST");
     } else if (g->location == LOCATION_SWAMP_ROAD) {
         SDL_snprintf(loc, sizeof(loc), "SWAMP SHORTCUT");
     } else if (g->location == LOCATION_CROWNROAD) {
-        SDL_snprintf(loc, sizeof(loc), "KING ROAD EAST");
+        SDL_snprintf(loc, sizeof(loc), "CROWN ROAD EAST");
     } else if (g->location == LOCATION_FOREST_ROAD) {
         SDL_snprintf(loc, sizeof(loc), "FOREST ROAD");
     } else if (g->location == LOCATION_INN) {

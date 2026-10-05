@@ -1200,7 +1200,7 @@ static void test_legacy_king_road_world(void) {
         map_is_walkable(&loaded.map, loaded.player.x, loaded.player.y));
 
     loaded_ok = save_game(&loaded, LEGACY_SLOT) && load_game(&original, LEGACY_SLOT);
-    ASSERT("a current save of King Road East is not turned a second time",
+    ASSERT("a current save of Crown Road East is not turned a second time",
         loaded_ok && original.player.x == loaded.player.x &&
         original.player.y == loaded.player.y &&
         original.crownroad_cache.enemies[0].x == loaded.crownroad_cache.enemies[0].x);

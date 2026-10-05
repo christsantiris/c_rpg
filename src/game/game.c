@@ -2502,8 +2502,8 @@ void game_enter_king_road(GameState *g, Location road, int from_castle) {
     g->floor_item_count = 0;
     g->dialogue_active = 0;
     push_message(g, road == LOCATION_CROWNROAD ?
-        "King Road East links Rosemoor to the Castle of No Return." :
-        "King Road West links Ridgeshire to the Castle of No Return.");
+        "Crown Road East links Rosemoor to the Castle of No Return." :
+        "Crown Road West links Ridgeshire to the Castle of No Return.");
 }
 
 static void save_crownroad_cache(GameState *g) {
@@ -3629,7 +3629,7 @@ static void prepare_quest_expedition(GameState *g, Location location) {
     }
 }
 
-// The Royal Guards warn travelers but never block the King Roads.
+// The Royal Guards warn travelers but never block the Crown Roads.
 void game_talk_to_royal_guard(GameState *g, int x, int y) {
     g->dialogue_active = 1;
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Royal Guard");
@@ -3638,7 +3638,7 @@ void game_talk_to_royal_guard(GameState *g, int x, int y) {
     if (g->location == LOCATION_TOWN4) {
         if (y < TOWN4_KING_GATE_Y) {
             snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "Traveler, King Road West is dangerous. Bandits, archers and "
+                "Traveler, Crown Road West is dangerous. Bandits, archers and "
                 "horsemen roam the route. Stay alert, but we will not stop you.");
         } else {
             snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
@@ -3648,13 +3648,13 @@ void game_talk_to_royal_guard(GameState *g, int x, int y) {
         }
     } else if (y < TOWN3_KING_GATE_Y) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Halt, traveler. Beyond this gate King Road East swarms with "
+            "Halt, traveler. Beyond this gate Crown Road East swarms with "
             "bandits, archers and horsemen. Few who walk it return.");
     } else {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "We will not stop you, but grow stronger first. Brave Blackwater "
             "Swamp, the labyrinth and the lands near OakHaven before "
-            "King Road East.");
+            "Crown Road East.");
     }
     push_message(g, "The Royal Guards recommend exploring other areas first.");
 }

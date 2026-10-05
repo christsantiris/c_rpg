@@ -183,7 +183,7 @@ static void move_ashore_from_town3_moat(int *x, int *y) {
     }
 }
 
-// Older Crownroad saves ran north to south; King Road East runs west to east.
+// Older Crown Road saves ran north to south; Crown Road East runs west to east.
 // This is the same turn map_generate_crownroad applies to the road's layout.
 static void rotate_crownroad_position(int *x, int *y) {
     int old_x = *x;
@@ -2361,7 +2361,7 @@ int load_game(GameState *g, int slot) {
     }
 
     // Version 69 moves the swamp to Town 2's north gate and the Royal Guards to
-    // Town 3, and turns the Crownroad into King Road East between Town 3 and
+    // Town 3, and turns the Crown Road into Crown Road East between Town 3 and
     // the new castle grounds. Older Town 2 maps lose their guards and south
     // gate, older Town 3 maps (the old castle town) become the new Town 3, and
     // the road, its creatures and its saved progress turn to run west to east.
