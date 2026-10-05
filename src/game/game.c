@@ -449,7 +449,7 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
 static int boss_for_level(const GameState *g, EnemyType *type) {
     int boss_level = DUNGEON_DEPTH;
     if (g->location == LOCATION_FOREST) {
-        boss_level = FOREST_DEPTH;
+        boss_level = FOREST_BOSS_LEVEL;
     } else if (g->location == LOCATION_MOUNTAINS) {
         boss_level = MOUNTAIN_DEPTH;
     } else if (g->location == LOCATION_COAST) {
@@ -794,9 +794,9 @@ static int quest_group_pending(const GameState *g) {
         return !(g->elowen_seals_restored & bit);
     }
     if (g->location == LOCATION_FOREST && g->alder_quest_state == 1) {
-        int bit = g->level == 2 ? ALDER_WARDEN_STAGE_2 :
-            (g->level == 5 ? ALDER_WARDEN_STAGE_5 :
-            (g->level == 7 ? ALDER_WARDEN_STAGE_7 : 0));
+        int bit = g->level == 1 ? ALDER_WARDEN_STAGE_1 :
+            (g->level == 2 ? ALDER_WARDEN_STAGE_2 :
+            (g->level == 3 ? ALDER_WARDEN_STAGE_3 : 0));
         if (!bit) {
             return 0;
         }
@@ -821,7 +821,8 @@ void enemies_spawn(GameState *g) {
     }
 
     int order_tier = region_order_tier(g);
-    int num_enemies = 10 + g->level;
+    int difficulty = g->location == LOCATION_FOREST ? map_forest_difficulty(g->level) : g->level;
+    int num_enemies = 10 + difficulty;
     if (g->location == LOCATION_SWAMP && g->level == 4 &&
         g->innkeeper_quest_state == 1) {
         num_enemies--;
@@ -857,7 +858,7 @@ void enemies_spawn(GameState *g) {
         }
     }
 
-    int boss_level = g->location == LOCATION_FOREST ? FOREST_DEPTH :
+    int boss_level = g->location == LOCATION_FOREST ? FOREST_BOSS_LEVEL :
         (g->location == LOCATION_MOUNTAINS ? MOUNTAIN_DEPTH :
         (g->location == LOCATION_COAST ? COAST_DEPTH :
         (g->location == LOCATION_SWAMP ? SWAMP_DEPTH :
@@ -883,7 +884,7 @@ void enemies_spawn(GameState *g) {
         EnemyType type;
         int roll = rand() % 100;
         // Completed regions advance enemy roles without skipping map stages.
-        int level = g->level + 3 * order_tier;
+        int level = difficulty + 3 * order_tier;
 
         if (g->location == LOCATION_DRAGONSPINE) {
             if (g->level == 1) {
@@ -1082,6 +1083,8 @@ void game_init(GameState *g) {
     controls_reset(g->key_bindings);
     g->max_level_reached = 1;
     g->max_forest_level_reached = 1;
+    g->forest_entry_town = LOCATION_TOWN;
+    g->forest_portal_town = LOCATION_TOWN;
     g->max_mountain_level_reached = 1;
     g->max_coast_level_reached = 1;
     g->max_swamp_level_reached = 1;
@@ -1548,12 +1551,12 @@ static void spawn_elowen_guardians(GameState *g) {
 }
 
 static int alder_warden_bit(int level) {
-    if (level == 2) {
+    if (level == 1) {
+        return ALDER_WARDEN_STAGE_1;
+    } else if (level == 2) {
         return ALDER_WARDEN_STAGE_2;
-    } else if (level == 5) {
-        return ALDER_WARDEN_STAGE_5;
-    } else if (level == 7) {
-        return ALDER_WARDEN_STAGE_7;
+    } else if (level == 3) {
+        return ALDER_WARDEN_STAGE_3;
     }
     return 0;
 }
@@ -1573,7 +1576,7 @@ static int place_alder_warden(GameState *g) {
             }
         }
     }
-    int room_index = g->level == 2 ? 7 : (g->level == 5 ? 8 : 5);
+    int room_index = g->level == 1 ? 4 : (g->level == 2 ? 7 : 6);
     if (room_index >= g->map.room_count) {
         return 0;
     }
@@ -1609,13 +1612,13 @@ static void spawn_alder_guardian(GameState *g) {
     }
     EnemyType primary;
     EnemyType support;
-    if (g->level == 2) {
+    if (g->level == 1) {
         primary = ENEMY_GIANT_SPIDER;
         support = ENEMY_BLIGHTED_WOLF;
-    } else if (g->level == 5) {
+    } else if (g->level == 2) {
         primary = ENEMY_DARK_ELF;
         support = ENEMY_PIXIE;
-    } else if (g->level == 7) {
+    } else if (g->level == 3) {
         primary = ENEMY_FOREST_TROLL;
         support = ENEMY_BLIGHTED_WOLF;
     } else {
@@ -1849,6 +1852,7 @@ static void restore_desert_reward(GameState *g) {
 }
 
 void game_refresh_quest_encounters(GameState *g) {
+    game_reveal_forest_shortcut(g);
     restore_frostfell_reward(g);
     restore_desert_reward(g);
     int seal_placed = place_elowen_seal(g);
@@ -1991,6 +1995,41 @@ static void clear_floor_loot(GameState *g) {
     g->floor_item_count = 0;
 }
 
+static void prepare_forest_arrival(GameState *g, int from_high) {
+    if (g->location != LOCATION_FOREST) {
+        return;
+    }
+    map_reveal_forest_entrance(&g->map);
+    map_reveal_forest_exit(&g->map);
+    if (g->level == FOREST_BOSS_LEVEL && (g->defeated_bosses & (1 << LOCATION_FOREST))) {
+        game_reveal_forest_shortcut(g);
+        return;
+    }
+    int landmark = 0;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (g->map.tiles[y][x] == TILE_FOREST_LANDMARK) {
+                landmark = 1;
+            }
+        }
+    }
+    if (!landmark) {
+        return;
+    }
+    int x = from_high ? g->map.stairs_up_x : g->map.stairs_down_x;
+    int y = from_high ? g->map.stairs_up_y : g->map.stairs_down_y;
+    if (x == 1) {
+        x = 0;
+    } else if (x == MAP_W - 2) {
+        x = MAP_W - 1;
+    } else if (y == 1) {
+        y = 0;
+    } else {
+        y = MAP_H - 1;
+    }
+    g->map.tiles[y][x] = TILE_FOREST_WALL;
+}
+
 void game_descend(GameState *g) {
     int depth = active_depth(g);
     if (g->level >= depth) return;
@@ -2023,6 +2062,7 @@ void game_descend(GameState *g) {
         g->level_cleared = 0;
         generate_active_level(g);
     }
+    prepare_forest_arrival(g, 0);
     g->player.x = g->map.stairs_up_x;
     g->player.y = g->map.stairs_up_y;
     sync_temple_floor_state(g);
@@ -2054,8 +2094,12 @@ void game_ascend(GameState *g) {
         game_refresh_quest_encounters(g);
     } else {
         g->level_cleared = 0;
+        if (g->location == LOCATION_FOREST) {
+            generate_active_level(g);
+        }
     }
 
+    prepare_forest_arrival(g, 1);
     g->player.x = g->map.stairs_down_x;
     g->player.y = g->map.stairs_down_y;
     sync_temple_floor_state(g);
@@ -2085,7 +2129,29 @@ void game_enter_dungeon(GameState *g) {
 }
 
 void game_enter_forest(GameState *g) {
-    enter_adventure(g, LOCATION_FOREST);
+    int from_stillbury = g->location == LOCATION_TOWN2;
+    clear_floor_loot(g);
+    g->forest_entry_town = from_stillbury ? LOCATION_TOWN2 : LOCATION_TOWN;
+    g->location = LOCATION_FOREST;
+    g->level = from_stillbury ? FOREST_DEPTH : 1;
+    LevelCache *cache = &g->forest_cache[g->level - 1];
+    if (cache->valid) {
+        g->map = cache->map;
+        g->enemy_count = cache->enemy_count;
+        memcpy(g->enemies, cache->enemies, sizeof(g->enemies));
+        g->level_cleared = cache->level_cleared;
+        game_refresh_quest_encounters(g);
+    } else {
+        g->level_cleared = 0;
+        generate_active_level(g);
+    }
+    if (g->level > g->max_forest_level_reached) {
+        g->max_forest_level_reached = g->level;
+    }
+    prepare_forest_arrival(g, from_stillbury);
+    g->player.x = from_stillbury ? g->map.stairs_down_x : g->map.stairs_up_x;
+    g->player.y = from_stillbury ? g->map.stairs_down_y : g->map.stairs_up_y;
+    g->dialogue_active = 0;
 }
 
 void game_enter_mountains(GameState *g) {
@@ -2176,6 +2242,8 @@ static void place_town_portal(GameState *g) {
             g->map.tiles[2][21] = TILE_PORTAL;
         } else if (g->portal_location == LOCATION_DESERT) {
             g->map.tiles[12][2] = TILE_PORTAL;
+        } else if (g->portal_location == LOCATION_FOREST && g->forest_portal_town == LOCATION_TOWN2) {
+            g->map.tiles[13][TOWN_W - 3] = TILE_PORTAL;
         }
         return;
     }
@@ -2186,6 +2254,7 @@ static void place_town_portal(GameState *g) {
         return;
     }
     if (g->location != LOCATION_TOWN ||
+        (g->portal_location == LOCATION_FOREST && g->forest_portal_town != LOCATION_TOWN) ||
         g->portal_location == LOCATION_DRAGONSPINE ||
         g->portal_location == LOCATION_SWAMP ||
         g->portal_location == LOCATION_DESERT ||
@@ -2246,8 +2315,8 @@ void game_leave_tavern(GameState *g) {
 void game_enter_town2(GameState *g) {
     int spawn_x;
     int spawn_y;
-    if (g->location == LOCATION_FOREST && g->level == FOREST_DEPTH) {
-        LevelCache *cache = &g->forest_cache[FOREST_DEPTH - 1];
+    if (g->location == LOCATION_FOREST && g->level >= 1 && g->level <= FOREST_DEPTH) {
+        LevelCache *cache = &g->forest_cache[g->level - 1];
         cache->map = g->map;
         cache->enemy_count = g->enemy_count;
         cache->level_cleared = g->level_cleared;
@@ -2259,6 +2328,7 @@ void game_enter_town2(GameState *g) {
     g->location = LOCATION_TOWN2;
     map_generate_town2(&g->map, &spawn_x, &spawn_y);
     map_set_town3_road(&g->map, g->defeated_bosses & (1 << LOCATION_SWAMP));
+    map_set_stillbury_forest_road(&g->map, g->defeated_bosses & (1 << LOCATION_FOREST));
     place_town_portal(g);
     g->player.x = spawn_x;
     g->player.y = spawn_y;
@@ -2290,9 +2360,10 @@ void game_leave_forest_road(GameState *g, Location destination) {
     if (destination == LOCATION_TOWN2) {
         map_generate_town2(&g->map, &spawn_x, &spawn_y);
         map_set_town3_road(&g->map, g->defeated_bosses & (1 << LOCATION_SWAMP));
+        map_set_stillbury_forest_road(&g->map, g->defeated_bosses & (1 << LOCATION_FOREST));
         place_town_portal(g);
         g->player.x = TOWN_W - 2;
-        g->player.y = 12;
+        g->player.y = TOWN_ROAD_EXIT_Y;
     } else {
         map_generate_town(&g->map, &spawn_x, &spawn_y);
         map_set_town2_road(&g->map,
@@ -2453,6 +2524,7 @@ void game_leave_inn(GameState *g) {
     g->location = LOCATION_TOWN2;
     map_generate_town2(&g->map, &spawn_x, &spawn_y);
     map_set_town3_road(&g->map, g->defeated_bosses & (1 << LOCATION_SWAMP));
+    map_set_stillbury_forest_road(&g->map, g->defeated_bosses & (1 << LOCATION_FOREST));
     place_town_portal(g);
     g->player.x = TOWN_INN_DOOR_X;
     g->player.y = TOWN_INN_DOOR_Y + 1;
@@ -2597,6 +2669,7 @@ void game_leave_labyrinth(GameState *g) {
     g->location = LOCATION_TOWN2;
     map_generate_town2(&g->map, &spawn_x, &spawn_y);
     map_set_town3_road(&g->map, g->defeated_bosses & (1 << LOCATION_SWAMP));
+    map_set_stillbury_forest_road(&g->map, g->defeated_bosses & (1 << LOCATION_FOREST));
     place_town_portal(g);
     g->player.x = TOWN_LABYRINTH_X;
     g->player.y = TOWN_LABYRINTH_Y + 1;
@@ -2973,6 +3046,7 @@ static void return_to_town(GameState *g, Location destination) {
     } else if (destination == LOCATION_TOWN2) {
         map_generate_town2(&g->map, &spawn_x, &spawn_y);
         map_set_town3_road(&g->map, g->defeated_bosses & (1 << LOCATION_SWAMP));
+        map_set_stillbury_forest_road(&g->map, g->defeated_bosses & (1 << LOCATION_FOREST));
     } else {
         map_generate_town(&g->map, &spawn_x, &spawn_y);
         map_set_town2_road(&g->map,
@@ -2997,7 +3071,8 @@ static void return_to_town(GameState *g, Location destination) {
         g->player.x = 1;
         g->player.y = 12;
     } else if (returning_from == LOCATION_FOREST) {
-        g->player.x = 1; g->player.y = 12;
+        g->player.x = destination == LOCATION_TOWN2 ? TOWN_W - 2 : 1;
+        g->player.y = 12;
     } else if (returning_from == LOCATION_DUNGEON) {
         g->player.x = TOWN_W - 2;
         g->player.y = 12;
@@ -3024,7 +3099,9 @@ void game_return_to_town(GameState *g) {
         return;
     }
     Location destination = LOCATION_TOWN;
-    if (g->location == LOCATION_SWAMP || g->location == LOCATION_DESERT) {
+    if (g->location == LOCATION_FOREST) {
+        destination = g->forest_entry_town;
+    } else if (g->location == LOCATION_SWAMP || g->location == LOCATION_DESERT) {
         destination = LOCATION_TOWN2;
     } else if (g->location == LOCATION_FROSTFELL) {
         destination = LOCATION_TOWN3;
@@ -3032,6 +3109,13 @@ void game_return_to_town(GameState *g) {
         destination = LOCATION_TOWN4;
     }
     return_to_town(g, destination);
+}
+
+void game_leave_forest(GameState *g, Location town, int shortcut) {
+    return_to_town(g, town);
+    g->player.x = town == LOCATION_TOWN2 ? TOWN_W - 2 : 1;
+    g->player.y = shortcut ? TOWN_ROAD_EXIT_Y : 12;
+    push_message(g, town == LOCATION_TOWN2 ? "You arrive in Stillbury." : "You arrive in OakHaven.");
 }
 
 void game_enter_town3(GameState *g) {
@@ -3093,6 +3177,9 @@ void game_open_town_portal(GameState *g) {
     g->portal_active = 1;
     g->portal_level = g->level;
     g->portal_location = g->location;
+    if (g->location == LOCATION_FOREST) {
+        g->forest_portal_town = g->forest_entry_town;
+    }
     g->portal_x = g->player.x;
     g->portal_y = g->player.y;
     g->portal_origin_tile = g->map.tiles[g->player.y][g->player.x];
@@ -3191,6 +3278,9 @@ void game_use_town_portal(GameState *g) {
         clear_floor_loot(g);
     }
     g->location = g->portal_location;
+    if (g->location == LOCATION_FOREST) {
+        g->forest_entry_town = g->forest_portal_town;
+    }
     g->level = level;
     g->map = cache[level - 1].map;
     g->enemy_count = cache[level - 1].enemy_count;
@@ -3714,7 +3804,7 @@ void game_talk_to_alder(GameState *g) {
         g->alder_wardens_rescued = 0;
         prepare_quest_expedition(g, LOCATION_FOREST);
         strncpy(g->dialogue_text,
-            "Three of my wardens are trapped behind enemy hunting parties on forest stages 2, 5, and 7. Defeat their captors and bring them home.",
+            "Three of my wardens are trapped on forest stages 1, 2, and 3, between OakHaven and the Necromancer. Defeat their captors and bring them home.",
             MAX_DIALOGUE_LEN - 1);
         g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
         push_message(g, "Assigned: The Lost Wardens.");
@@ -3728,7 +3818,7 @@ void game_talk_to_alder(GameState *g) {
             }
         }
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "You have rescued %d of my 3 wardens. Search the guarded groves on forest stages 2, 5, and 7.",
+            "You have rescued %d of my 3 wardens. Search forest stages 1, 2, and 3 on the OakHaven side of the Necromancer.",
             rescued);
         char status[MAX_MESSAGE_LEN];
         snprintf(status, sizeof(status), "Quest progress: %d/3 wardens.",
@@ -3771,11 +3861,11 @@ void game_rescue_forest_warden(GameState *g, int x, int y) {
     g->dialogue_speaker[MAX_SPEAKER_LEN - 1] = '\0';
     g->dialogue_x = x;
     g->dialogue_y = y;
-    if (g->level == 2) {
+    if (g->level == 1) {
         strncpy(g->dialogue_text,
             "You cut through the spider web binding me. I can follow your trail home from here.",
             MAX_DIALOGUE_LEN - 1);
-    } else if (g->level == 5) {
+    } else if (g->level == 2) {
         strncpy(g->dialogue_text,
             "The Dark Elves thought this grove would be my prison. I will make my way back to Alder.",
             MAX_DIALOGUE_LEN - 1);
@@ -3981,10 +4071,38 @@ void game_mark_level_cleared(GameState *g) {
     g->level_cleared = 1;
 }
 
+void game_reveal_forest_shortcut(GameState *g) {
+    if (g->location != LOCATION_FOREST || g->level != FOREST_BOSS_LEVEL ||
+        !(g->defeated_bosses & (1 << LOCATION_FOREST)) || g->map.room_count == 0) {
+        return;
+    }
+    map_reveal_forest_entrance(&g->map);
+    map_reveal_forest_exit(&g->map);
+    int x;
+    int y;
+    map_room_center(&g->map.rooms[g->map.room_count - 1], &x, &y);
+    x += 3;
+    y += 3;
+    if (g->map.tiles[y][x] == TILE_PORTAL && g->portal_origin_tile == TILE_FOREST_SHORTCUT) {
+        return;
+    }
+    int occupied = 0;
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && item->x == x && item->y == y) {
+            item->underlying_tile = TILE_FOREST_SHORTCUT;
+            occupied = 1;
+        }
+    }
+    if (!occupied) {
+        g->map.tiles[y][x] = TILE_FOREST_SHORTCUT;
+    }
+}
+
 void game_update_level_progress(GameState *g) {
     if (g->defeated_bosses & (1 << g->location)) {
-        if (g->location == LOCATION_FOREST && g->level == FOREST_DEPTH) {
-            map_reveal_forest_exit(&g->map);
+        if (g->location == LOCATION_FOREST && g->level == FOREST_BOSS_LEVEL) {
+            game_reveal_forest_shortcut(g);
         } else if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH &&
             g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] != TILE_RETURN_EXIT) {
             g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] = TILE_RETURN_EXIT;

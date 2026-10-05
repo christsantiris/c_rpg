@@ -36,7 +36,7 @@ static const QuestDefinition quest_definitions[9] = {
         "wardens, then help each warden escape.",
         {"Rescue forest warden", "Rescue forest warden",
             "Rescue forest warden"},
-        "Forest", {2, 5, 7}, 70, 500
+        "Forest", {1, 2, 3}, 70, 500
     },
     {
         "Relight the Drowned Beacons", "Mara",

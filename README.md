@@ -23,7 +23,7 @@ A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explo
 
 *The Castle of No Return* is a C/SDL roguelike with turn-based combat and a
 retro pixel-art style. Choose a Warrior, Mage, or Rogue, prepare in town, and
-explore an eight-floor undead dungeon, the eight-stage Haunted Forest, the
+explore an eight-floor undead dungeon, the seven-stage Haunted Forest, the
 eight-stage Goblin Mountains, the eight-stage Sunken Coast, and Stillbury's
 five-level Blackwater Swamp. Beyond the Goblin Mountains, the five-stage
 Dragonspine ascent begins at Ridgeshire's east gate. Each region
@@ -31,10 +31,12 @@ keeps its own generated maps and progression. Defeating the Drowned Queen on
 the Sunken Coast opens a sea route to the Ruined Isle. Its four-tier Ruined
 Temple remains a late-game challenge.
 
-Advancing never requires clearing every enemy. Final regional exits require
-defeating the region's boss, but surviving regular enemies do not block leaving.
-Defeating the Necromancer also reveals the final forest exit if its landmark
-has not been found.
+Advancing never requires clearing every enemy. Regional bosses guard their
+onward passages, but surviving regular enemies do not block leaving.
+The Haunted Forest can be entered from OakHaven or Stillbury, with three stages
+of increasing difficulty leading to the Necromancer on stage 4. Defeating him
+reveals a marked shortcut to the opposite town. Players can instead continue
+through the remaining three stages as difficulty decreases.
 
 ## OakHaven and Progression
 
@@ -69,14 +71,18 @@ quests add guarded objectives throughout the four regions. Accepting one begins 
 fresh expedition through that region so completed maps never turn the quest
 into an empty walk. Regular enemies and maps regenerate, while defeated bosses
 remain defeated.
+The Lost Wardens objectives occupy forest stages 1, 2, and 3 on the OakHaven
+side. Entering from Stillbury encounters them after the Necromancer, in order
+3, 2, and 1; taking the grove shortcut skips those rescues.
 
 The Blacksmith sells weapons, armor, and shields. The Alchemist sells both
-potion types, spell scrolls, and Mage spell tomes in OakHaven. Defeating
-the forest Necromancer opens the way to Stillbury. After that victory, the
-lower west gate of OakHaven leads onto a short, enemy-free forest road.
-Walk west across it to reach Stillbury; the upper west gate still enters the full
-forest. The lower gate stays blocked until the Necromancer falls. Stillbury's east
-gate leads back along the road to OakHaven. Stillbury has an Inn, a healer selling
+potion types, spell scrolls, and Mage spell tomes in OakHaven. OakHaven's west
+forest gate enters stage 1; Stillbury's main east gate enters stage 7. Stillbury
+can also be reached from Rosemoor before the Necromancer is defeated.
+After his defeat, the separate west gate of OakHaven and upper east gate of
+Stillbury permanently open onto a short, enemy-free forest road between the
+towns. Both ordinary forest gates remain available and retain explored stages.
+Stillbury has an Inn, a healer selling
 Health Potions, a witch selling Mana Potions, and Rook's labyrinth. Its north
 gate opens onto the five-level Blackwater Swamp. Each shop buys its own item types.
 Stock expands as bosses are defeated; buying costs twice an item's base value,
