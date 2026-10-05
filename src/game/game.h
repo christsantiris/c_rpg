@@ -118,7 +118,8 @@ typedef enum {
     LOCATION_KING_ROAD_WEST,
     LOCATION_CASTLE,
     LOCATION_DESERT,
-    LOCATION_GUILD
+    LOCATION_GUILD,
+    LOCATION_MOONVEIL
 } Location;
 
 typedef struct {
@@ -135,6 +136,7 @@ typedef struct {
     LevelCache dragonspine_cache[DRAGONSPINE_DEPTH];
     LevelCache frostfell_cache[FROSTFELL_DEPTH];
     LevelCache desert_cache[DESERT_DEPTH];
+    LevelCache moonveil_cache[MOONVEIL_DEPTH];
     CrownroadCache crownroad_cache;
     CrownroadCache kingroad_west_cache;
     LevelCache temple_cache[TEMPLE_DEPTH];
@@ -158,6 +160,7 @@ typedef struct {
     int max_dragonspine_level_reached;
     int max_frostfell_level_reached;
     int max_desert_level_reached;
+    int max_moonveil_level_reached;
     int max_temple_level_reached;
     Item      inventory[MAX_INVENTORY];
     int       inventory_count;
@@ -236,6 +239,7 @@ void game_leave_swamp(GameState *g, Location town, int shortcut);
 void game_reveal_swamp_shortcut(GameState *g);
 void game_enter_frostfell(GameState *g);
 void game_enter_desert(GameState *g);
+void game_enter_moonveil(GameState *g);
 void game_enter_high_pass(GameState *g, int from_town);
 void game_leave_high_pass(GameState *g, Location destination);
 void game_enter_dragonspine(GameState *g);

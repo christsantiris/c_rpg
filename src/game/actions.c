@@ -115,6 +115,8 @@ static void finish_floor_pickup(GameState *g, FloorItem *picked) {
 
 Item boss_equipment_reward(EnemyType type) {
     switch (type) {
+        case ENEMY_THORN_REGENT:
+            return item_make_strength_potion();
         case ENEMY_DESERT_PHARAOH:
             return item_make_sandstorm_staff();
         case ENEMY_LICH_KING:
@@ -202,6 +204,11 @@ static int enemy_score(EnemyType type) {
         case ENEMY_DJINN: return 130;
         case ENEMY_GOLEM: return 165;
         case ENEMY_DESERT_PHARAOH: return 1600;
+        case ENEMY_FEY_TRICKSTER: return 55;
+        case ENEMY_GIANT_MOTH: return 45;
+        case ENEMY_LIVING_FLOWER: return 110;
+        case ENEMY_THORN_GUARDIAN: return 170;
+        case ENEMY_THORN_REGENT: return 1800;
         case ENEMY_ORC:         return 30;
         case ENEMY_TROLL:       return 50;
         case ENEMY_GIANT:       return 80;
@@ -231,6 +238,9 @@ static void drop_loot(GameState *g, Enemy *enemy) {
             !(g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
         g->defeated_bosses |= 1 << g->location;
         game_record_temple_enemy_defeated(g, type);
+        if (type == ENEMY_THORN_REGENT) {
+            push_message(g, "The Thorn Regent falls. The path to Rosemoor opens!");
+        }
         if (first_forest_victory) {
             g->dialogue_active = 1;
             g->dialogue_x = g->player.x;
@@ -320,6 +330,11 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         case ENEMY_DJINN: gold = 11 + rand() % 10; break;
         case ENEMY_GOLEM: gold = 14 + rand() % 12; break;
         case ENEMY_DESERT_PHARAOH: gold = 75; break;
+        case ENEMY_FEY_TRICKSTER: gold = 5 + rand() % 7; break;
+        case ENEMY_GIANT_MOTH: gold = 4 + rand() % 6; break;
+        case ENEMY_LIVING_FLOWER: gold = 10 + rand() % 10; break;
+        case ENEMY_THORN_GUARDIAN: gold = 14 + rand() % 12; break;
+        case ENEMY_THORN_REGENT: gold = 80; break;
         case ENEMY_ORC:      gold = 6 + rand() % 8;  break;
         case ENEMY_TROLL:    gold = 10 + rand() % 10; break;
         case ENEMY_GIANT:    gold = 15 + rand() % 15; break;
@@ -405,6 +420,8 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         drop_tile == TILE_LABYRINTH_FLOOR ||
         drop_tile == TILE_SWAMP_FLOOR ||
         drop_tile == TILE_DESERT_FLOOR ||
+        drop_tile == TILE_MOONVEIL_FLOOR ||
+        drop_tile == TILE_MOONVEIL_CIRCLE ||
         drop_tile == TILE_FROST_FLOOR ||
         drop_tile == TILE_FROST_LAKE ||
         drop_tile == TILE_DRAGON_FLOOR ||
@@ -1859,6 +1876,8 @@ void action_resolve_player(GameState *g, Action a) {
                 }
             } else if (tx == TOWN_W - 1) {
                 game_enter_king_road(g, LOCATION_CROWNROAD, 0);
+            } else if (tx == 0) {
+                game_enter_moonveil(g);
             }
             return;
         }
@@ -2095,6 +2114,32 @@ void action_resolve_player(GameState *g, Action a) {
                 }
                 game_return_to_town(g);
                 push_message(g, "You return to Stillbury.");
+            }
+            return;
+        }
+
+        if (g->location == LOCATION_MOONVEIL &&
+            g->map.tiles[ty][tx] == TILE_MOONVEIL_ENTRANCE) {
+            if (g->level == 1) {
+                game_return_to_town(g);
+            } else {
+                game_ascend(g);
+            }
+            return;
+        }
+
+        if (g->location == LOCATION_MOONVEIL &&
+            g->map.tiles[ty][tx] == TILE_MOONVEIL_EXIT) {
+            if (g->level < MOONVEIL_DEPTH) {
+                game_descend(g);
+                g->score += g->level * 100;
+            } else {
+                if (!(g->defeated_bosses & (1 << LOCATION_MOONVEIL))) {
+                    push_message(g, "The Thorn Regent seals the path to Rosemoor!");
+                    return;
+                }
+                game_return_to_town(g);
+                push_message(g, "You return to Rosemoor through the moonlit gardens.");
             }
             return;
         }
@@ -2560,6 +2605,8 @@ static int enemy_prefers_range(const Enemy *e) {
         e->type == ENEMY_BLOWDART_HUNTER ||
         e->type == ENEMY_FIRE_ELEMENTAL ||
         e->type == ENEMY_DJINN ||
+        e->type == ENEMY_FEY_TRICKSTER ||
+        e->type == ENEMY_LIVING_FLOWER ||
         e->type == ENEMY_SUN_PRIEST ||
         e->type == ENEMY_SERPENT_SPIRIT ||
         e->type == ENEMY_MOONBOUND_SENTINEL;
@@ -2567,6 +2614,7 @@ static int enemy_prefers_range(const Enemy *e) {
 
 static int enemy_prefers_flank(const Enemy *e) {
     return e->type == ENEMY_CRYPT_BAT ||
+        e->type == ENEMY_GIANT_MOTH ||
         e->type == ENEMY_PIXIE ||
         e->type == ENEMY_BLIGHTED_WOLF ||
         e->type == ENEMY_GIANT_SPIDER ||
@@ -3039,7 +3087,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             polar_kraken_turn(g, e);
             continue;
         }
-        if (e->type == ENEMY_DESERT_PHARAOH) {
+        if (e->type == ENEMY_DESERT_PHARAOH || e->type == ENEMY_THORN_REGENT) {
             Room *lair = &g->map.rooms[g->map.room_count - 1];
             int in_lair = g->player.x >= lair->x &&
                 g->player.x < lair->x + lair->w &&
@@ -3121,7 +3169,8 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
 
-        if ((e->type == ENEMY_FIRE_ELEMENTAL || e->type == ENEMY_DJINN) &&
+        if ((e->type == ENEMY_FIRE_ELEMENTAL || e->type == ENEMY_DJINN ||
+            e->type == ENEMY_FEY_TRICKSTER || e->type == ENEMY_LIVING_FLOWER) &&
             e->move_timer % 2 == 0 &&
             clear_orthogonal_path(g, i, e)) {
             int dmg = e->attack - g->player.defense / 2;
@@ -3131,8 +3180,10 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
             if (dmg > 0) {
                 char msg[MAX_MESSAGE_LEN];
-                snprintf(msg, sizeof(msg), e->type == ENEMY_DJINN
-                    ? "Djinn magic bolt: %d dmg" : "Elemental flame: %d dmg", dmg);
+                const char *attack = e->type == ENEMY_FEY_TRICKSTER ? "Fey sparkle" :
+                    (e->type == ENEMY_LIVING_FLOWER ? "Carnivorous Flower" :
+                    (e->type == ENEMY_DJINN ? "Djinn magic bolt" : "Elemental flame"));
+                snprintf(msg, sizeof(msg), "%s: %d dmg", attack, dmg);
                 push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
             }
             continue;
@@ -3173,6 +3224,24 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
             } else {
                 push_message(g, "The Necromancer invokes the forest...");
+            }
+            continue;
+        }
+
+        if (e->type == ENEMY_THORN_REGENT) {
+            if (e->move_timer % 2 != 0) {
+                push_message(g, "The Thorn Regent gathers moonlit thorns...");
+            } else {
+                int damage = e->attack - g->player.defense / 2;
+                if (damage < 3) {
+                    damage = 3;
+                }
+                damage = apply_enemy_ranged_damage(g, i, e, damage, shots);
+                if (damage > 0) {
+                    char msg[MAX_MESSAGE_LEN];
+                    snprintf(msg, sizeof(msg), "Regent thorn bolt: %d dmg", damage);
+                    push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
+                }
             }
             continue;
         }
@@ -3398,6 +3467,8 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             e->type == ENEMY_ICE_GOLEM ||
             e->type == ENEMY_MUMMY ||
             e->type == ENEMY_GOLEM ||
+            e->type == ENEMY_THORN_GUARDIAN ||
+            e->type == ENEMY_LIVING_FLOWER ||
             e->type == ENEMY_VINEBOUND_GUARDIAN ||
             e->type == ENEMY_LUNAR_EFFIGY ||
             e->type == ENEMY_MOONBOUND_SENTINEL) {
@@ -3408,7 +3479,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         if (!moved) {
             moved = enemy_move_toward(g, i);
         }
-        if (e->type == ENEMY_CRYPT_BAT && moved) {
+        if ((e->type == ENEMY_CRYPT_BAT || e->type == ENEMY_GIANT_MOTH) && moved) {
             // Bats close distance quickly, but never attack on their second move.
             enemy_move_toward(g, i);
         }

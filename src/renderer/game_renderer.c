@@ -264,6 +264,9 @@ void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, con
             color = (SDL_Color){75, 224, 232, 255};
         } else if (shot->type == ENEMY_FROST_ARCHER) {
             color = (SDL_Color){168, 228, 255, 255};
+        } else if (shot->type == ENEMY_FEY_TRICKSTER || shot->type == ENEMY_LIVING_FLOWER ||
+            shot->type == ENEMY_THORN_REGENT) {
+            color = (SDL_Color){173, 240, 211, 255};
         } else if (shot->type == ENEMY_DJINN) {
             color = (SDL_Color){75, 224, 232, 255};
         }
@@ -811,6 +814,9 @@ static TileType floor_item_underlay(const GameState *g, int x, int y) {
     if (g->location == LOCATION_FROSTFELL) {
         return TILE_FROST_FLOOR;
     }
+    if (g->location == LOCATION_MOONVEIL) {
+        return TILE_MOONVEIL_FLOOR;
+    }
     if (g->location == LOCATION_DESERT) {
         return TILE_DESERT_FLOOR;
     }
@@ -999,6 +1005,12 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         } else {
             draw_desert_edge(r, screen_x, screen_y, map_x, map_y);
         }
+    } else if (underlay == TILE_MOONVEIL_FLOOR) {
+        draw_moonveil_floor(r, screen_x, screen_y, map_x, map_y);
+    } else if (underlay == TILE_MOONVEIL_CIRCLE) {
+        draw_moonveil_circle(r, screen_x, screen_y, map_x, map_y);
+    } else if (underlay == TILE_MOONVEIL_ENTRANCE || underlay == TILE_MOONVEIL_EXIT) {
+        draw_moonveil_edge(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_DESERT_LAMP) {
         draw_desert_lamp(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_FROST_LAKE) {
@@ -1087,6 +1099,8 @@ static void draw_trap_underlay(Renderer *r, const GameState *g, int map_x, int m
         draw_frostfell_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_DESERT) {
         draw_desert_floor(r, screen_x, screen_y, map_x, map_y);
+    } else if (g->location == LOCATION_MOONVEIL) {
+        draw_moonveil_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_DUNGEON) {
         draw_dungeon_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_LABYRINTH) {
@@ -1278,6 +1292,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     } else if (g->location == LOCATION_SWAMP ||
         g->location == LOCATION_DRAGONSPINE ||
         g->location == LOCATION_DESERT ||
+        g->location == LOCATION_MOONVEIL ||
         g->location == LOCATION_FROSTFELL) {
         int view_w = v->tiles_x < SWAMP_MAP_W ? v->tiles_x : SWAMP_MAP_W;
         int view_h = v->tiles_y < SWAMP_MAP_H ? v->tiles_y : SWAMP_MAP_H;
@@ -1484,6 +1499,22 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_swamp_daughter(r, sx, sy, x, y); break;
                 case TILE_FROST_FLOOR:
                     draw_frostfell_floor(r, sx, sy, x, y); break;
+                case TILE_MOONVEIL_FLOOR:
+                    draw_moonveil_floor(r, sx, sy, x, y);
+                    break;
+                case TILE_MOONVEIL_WALL:
+                    draw_moonveil_wall(r, sx, sy, x, y);
+                    break;
+                case TILE_MOONVEIL_POOL:
+                    draw_moonveil_pool(r, sx, sy, x, y);
+                    break;
+                case TILE_MOONVEIL_CIRCLE:
+                    draw_moonveil_circle(r, sx, sy, x, y);
+                    break;
+                case TILE_MOONVEIL_ENTRANCE:
+                case TILE_MOONVEIL_EXIT:
+                    draw_moonveil_edge(r, sx, sy, x, y);
+                    break;
                 case TILE_DESERT_FLOOR:
                     draw_desert_floor(r, sx, sy, x, y);
                     break;
@@ -1905,6 +1936,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     if (g->location == LOCATION_TOWN3) {
+        draw_town_gate(r, viewport_to_screen_x(v, 0),
+            viewport_to_screen_y(v, ROSEMOOR_MOONVEIL_GATE_Y - 2), TOWN_EXIT_MOONVEIL);
         draw_adventurers_guild(r,
             viewport_to_screen_x(v, TOWN_GUILD_X),
             viewport_to_screen_y(v, TOWN_GUILD_Y));
@@ -1967,6 +2000,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->location == LOCATION_COAST ||
         g->location == LOCATION_SWAMP ||
         g->location == LOCATION_DESERT ||
+        g->location == LOCATION_MOONVEIL ||
         g->location == LOCATION_FROSTFELL ||
         game_is_king_road(g) ||
         g->location == LOCATION_TEMPLE ||
@@ -2198,6 +2232,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, 20) * TILE_SIZE - width / 2,
             viewport_to_screen_y(v, 1) * TILE_SIZE,
             (SDL_Color){168, 220, 250, 255}, r->font_tiny);
+        renderer_draw_text(r, "MOONVEIL",
+            viewport_to_screen_x(v, 2) * TILE_SIZE + 8,
+            viewport_to_screen_y(v, ROSEMOOR_MOONVEIL_GATE_Y) * TILE_SIZE,
+            (SDL_Color){190, 163, 231, 255}, r->font_tiny);
         TTF_SizeText(r->font_tiny, "CROWN ROAD EAST", &width, NULL);
         renderer_draw_text(r, "CROWN ROAD EAST",
             viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,

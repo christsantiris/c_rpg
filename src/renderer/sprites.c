@@ -2904,8 +2904,79 @@ static void draw_desert_enemy(Renderer *r, int tx, int ty, EnemyType type) {
     fill_rect(r, x + 14, y + 20, 5, 4, shade);
 }
 
+static void draw_moonveil_enemy(Renderer *r, int tx, int ty, EnemyType type) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    SDL_Color shade = {15, 18, 30, 255};
+    SDL_Color glow = {152, 245, 225, 255};
+    SDL_Color leaf = {49, 111, 71, 255};
+    int flutter = (int)((SDL_GetTicks() / AMBIENT_FRAME_MS) & 1u);
+    if (type == ENEMY_GIANT_MOTH) {
+        fill_rect(r, x + 1, y + 4 + flutter, 9, 9, (SDL_Color){170, 108, 194, 255});
+        fill_rect(r, x + 14, y + 4 + flutter, 9, 9, (SDL_Color){170, 108, 194, 255});
+        fill_rect(r, x + 3, y + 13 - flutter, 7, 7, (SDL_Color){102, 123, 179, 255});
+        fill_rect(r, x + 14, y + 13 - flutter, 7, 7, (SDL_Color){102, 123, 179, 255});
+        fill_rect(r, x + 5, y + 7, 3, 3, glow);
+        fill_rect(r, x + 16, y + 7, 3, 3, glow);
+        fill_rect(r, x + 10, y + 5, 4, 15, shade);
+        fill_rect(r, x + 9, y + 2, 1, 5, glow);
+        fill_rect(r, x + 14, y + 2, 1, 5, glow);
+        return;
+    }
+    if (type == ENEMY_FEY_TRICKSTER) {
+        fill_rect(r, x + 2, y + 8 + flutter, 7, 8, (SDL_Color){89, 192, 197, 255});
+        fill_rect(r, x + 15, y + 8 + flutter, 7, 8, (SDL_Color){89, 192, 197, 255});
+        fill_rect(r, x + 9, y + 3, 7, 6, (SDL_Color){214, 169, 177, 255});
+        fill_rect(r, x + 8, y + 1, 9, 3, (SDL_Color){149, 79, 184, 255});
+        fill_rect(r, x + 9, y + 9, 6, 10, (SDL_Color){124, 82, 174, 255});
+        fill_rect(r, x + 9, y + 20, 2, 3, shade);
+        fill_rect(r, x + 14, y + 20, 2, 3, shade);
+        fill_rect(r, x + 19, y + 17, 3, 3, glow);
+        return;
+    }
+    if (type == ENEMY_LIVING_FLOWER) {
+        fill_rect(r, x + 10, y + 10, 4, 13, leaf);
+        fill_rect(r, x + 3, y + 17, 8, 4, leaf);
+        fill_rect(r, x + 14, y + 15, 7, 4, leaf);
+        fill_rect(r, x + 5, y + 1, 14, 5, (SDL_Color){198, 64, 133, 255});
+        fill_rect(r, x + 2, y + 5, 20, 8, (SDL_Color){157, 47, 104, 255});
+        fill_rect(r, x + 6, y + 7, 12, 5, shade);
+        for (int tooth = 0; tooth < 3; tooth++) {
+            fill_rect(r, x + 7 + tooth * 4, y + 7, 2, 2, glow);
+        }
+        return;
+    }
+    int boss = type == ENEMY_THORN_REGENT;
+    SDL_Color body = boss ? (SDL_Color){122, 62, 145, 255} : (SDL_Color){79, 78, 43, 255};
+    fill_rect(r, x + 7, y + 3, 10, 7, shade);
+    fill_rect(r, x + 8, y + 4, 8, 5, leaf);
+    fill_rect(r, x + 9, y + 6, 2, 1, glow);
+    fill_rect(r, x + 14, y + 6, 2, 1, glow);
+    fill_rect(r, x + 6, y + 10, 13, 11, body);
+    fill_rect(r, x + 2, y + 11, 5, 8, leaf);
+    fill_rect(r, x + 18, y + 11, 5, 8, leaf);
+    fill_rect(r, x + 6, y + 21, 5, 3, shade);
+    fill_rect(r, x + 14, y + 21, 5, 3, shade);
+    for (int thorn = 0; thorn < 3; thorn++) {
+        fill_rect(r, x + 6 + thorn * 5, y + (boss ? 0 : 11), 2, boss ? 5 : 4, leaf);
+    }
+    if (boss) {
+        fill_rect(r, x + 7, y + 2, 12, 2, glow);
+        fill_rect(r, x + 11, y + 12, 3, 3, glow);
+        fill_rect(r, x + 21, y + 6, 2, 17, (SDL_Color){105, 81, 60, 255});
+        fill_rect(r, x + 20, y + 3, 4, 4, glow);
+    }
+}
+
 void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
     switch (type) {
+        case ENEMY_FEY_TRICKSTER:
+        case ENEMY_GIANT_MOTH:
+        case ENEMY_LIVING_FLOWER:
+        case ENEMY_THORN_GUARDIAN:
+        case ENEMY_THORN_REGENT:
+            draw_moonveil_enemy(r, tile_x, tile_y, type);
+            break;
         case ENEMY_SCARAB:
         case ENEMY_VIPER:
         case ENEMY_MUMMY:
@@ -3814,6 +3885,105 @@ void draw_frostfell_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map
     fill_rect(r, x + 19, y + 13, 5, 3, flag);
 }
 
+void draw_moonveil_floor(Renderer *r, int tx, int ty, int mx, int my) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    unsigned int seed = forest_tile_seed(mx, my);
+    SDL_Color moss[3] = {{30, 43, 50, 255}, {32, 46, 51, 255}, {29, 41, 48, 255}};
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, moss[seed % 3u]);
+    int grass = 3 + (int)((seed >> 6) % 15u);
+    fill_rect(r, x + grass, y + 16, 1, 4, (SDL_Color){60, 85, 79, 255});
+    fill_rect(r, x + grass - 2, y + 18, 2, 2, (SDL_Color){43, 68, 64, 255});
+    if (seed % 17u == 0u) {
+        unsigned int phase = (SDL_GetTicks() / AMBIENT_FRAME_MS + (seed >> 12)) & 3u;
+        fill_rect(r, x + 8, y + 8, 6, 2, (SDL_Color){109, 119, 164, 255});
+        fill_rect(r, x + 10, y + 6, 2, 6, (SDL_Color){109, 119, 164, 255});
+        fill_rect(r, x + 10, y + 8, 2, 2, (SDL_Color){155, 207 + (int)phase * 10, 216, 255});
+    }
+}
+
+void draw_moonveil_wall(Renderer *r, int tx, int ty, int mx, int my) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    unsigned int seed = forest_tile_seed(mx, my);
+    int stem = 8 + (int)((seed >> 5) % 7u);
+    int sway = (int)((SDL_GetTicks() / AMBIENT_FRAME_MS + (seed >> 14)) & 1u);
+    SDL_Color hedge = {17, 52, 46, 255};
+    SDL_Color leaf = {38, 87, 66, 255};
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){7, 24, 28, 255});
+    fill_rect(r, x, y + 13, 9, 9, hedge);
+    fill_rect(r, x + 16, y + 8, 8, 14, hedge);
+    fill_rect(r, x + stem, y + 7, 3, 16, leaf);
+    fill_rect(r, x + stem - 5, y + 15, 7, 3, hedge);
+    fill_rect(r, x + stem + 2, y + 18, 6, 3, leaf);
+    int shape = (int)((seed >> 9) % 5u);
+    if (shape == 0) {
+        fill_rect(r, x + stem, y + 11, 4, 12, (SDL_Color){95, 87, 121, 255});
+        fill_rect(r, x + stem + 1, y + 12, 1, 10, (SDL_Color){157, 146, 180, 255});
+        fill_rect(r, x + 3, y + 6, 19, 7, (SDL_Color){81, 54, 119, 255});
+        fill_rect(r, x + 6, y + 3, 13, 5, (SDL_Color){122, 78, 156, 255});
+        fill_rect(r, x + 9, y + 2, 6, 2, (SDL_Color){156, 108, 181, 255});
+        fill_rect(r, x + 6, y + 7, 3, 2, (SDL_Color){163, 191, 210, 255});
+        fill_rect(r, x + 16, y + 8, 3, 2, (SDL_Color){163, 191, 210, 255});
+    } else if (shape <= 2) {
+        SDL_Color petal = shape == 1 ? (SDL_Color){132, 75, 156, 255} :
+            (SDL_Color){112, 146, 162, 255};
+        fill_rect(r, x + stem - 4 + sway, y + 2, 11, 6, petal);
+        fill_rect(r, x + stem - 6 + sway, y + 5, 6, 8, petal);
+        fill_rect(r, x + stem + 3 + sway, y + 5, 6, 8, petal);
+        fill_rect(r, x + stem - 3 + sway, y + 10, 9, 5, petal);
+        fill_rect(r, x + stem - 1 + sway, y + 6, 5, 5, (SDL_Color){205, 196, 129, 255});
+        fill_rect(r, x + stem + sway, y + 7, 2, 2, (SDL_Color){172, 237, 219, 255});
+    } else {
+        fill_rect(r, x + 3, y + 7, 18, 13, hedge);
+        for (int branch = 0; branch < 4; branch++) {
+            int bx = x + 3 + branch * 5;
+            int top = y + 2 + (int)((seed >> (branch * 3)) % 5u);
+            fill_rect(r, bx + sway, top, 2, y + 21 - top, leaf);
+            fill_rect(r, bx + 1 + sway, top + 3, 3, 2, hedge);
+        }
+        fill_rect(r, x + 5, y + 17, 3, 2, (SDL_Color){85, 120, 109, 255});
+        fill_rect(r, x + 17, y + 10, 2, 2, (SDL_Color){141, 94, 150, 255});
+    }
+}
+
+void draw_moonveil_pool(Renderer *r, int tx, int ty, int mx, int my) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    unsigned int seed = forest_tile_seed(mx, my);
+    int wave = (int)((SDL_GetTicks() / AMBIENT_FRAME_MS + (seed >> 12)) & 3u);
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){12, 33, 50, 255});
+    int ripple = 2 + (int)(seed % 10u);
+    fill_rect(r, x + ripple, y + 7 + wave, 9, 1, (SDL_Color){64, 113, 148, 255});
+    fill_rect(r, x + ripple + 2, y + 8 + wave, 5, 1, (SDL_Color){102, 163, 182, 255});
+    fill_rect(r, x + 3, y + 19, 11, 1, (SDL_Color){35, 75, 107, 255});
+}
+
+void draw_moonveil_circle(Renderer *r, int tx, int ty, int mx, int my) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    draw_moonveil_floor(r, tx, ty, mx, my);
+    fill_rect(r, x + 4, y + 11, 17, 10, (SDL_Color){21, 27, 40, 255});
+    fill_rect(r, x + 3, y + 9, 17, 9, (SDL_Color){100, 108, 142, 255});
+    fill_rect(r, x + 6, y + 7, 11, 3, (SDL_Color){133, 143, 173, 255});
+    fill_rect(r, x + 4, y + 10, 2, 6, (SDL_Color){153, 167, 188, 255});
+    fill_rect(r, x + 9, y + 11, 5, 1, (SDL_Color){122, 226, 216, 255});
+    fill_rect(r, x + 11, y + 10, 1, 5, (SDL_Color){122, 226, 216, 255});
+}
+
+void draw_moonveil_edge(Renderer *r, int tx, int ty, int mx, int my) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    draw_moonveil_floor(r, tx, ty, mx, my);
+    for (int side = 0; side < 2; side++) {
+        int bx = x + 2 + side * 16;
+        int by = y + 2 + side * 11;
+        fill_rect(r, bx, by, 4, 10, (SDL_Color){104, 111, 145, 255});
+        fill_rect(r, bx + 1, by - 1, 2, 3, (SDL_Color){151, 226, 219, 255});
+        fill_rect(r, bx + 1, by + 5, 2, 1, (SDL_Color){151, 226, 219, 255});
+    }
+}
+
 void draw_desert_floor(Renderer *r, int tx, int ty, int mx, int my) {
     int x = tx * TILE_SIZE;
     int y = ty * TILE_SIZE;
@@ -4158,6 +4328,23 @@ void draw_town_gate_south(Renderer *r, int tile_x, int tile_y) {
 void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
+    if (style == TOWN_EXIT_MOONVEIL) {
+        SDL_Color stone = {63, 67, 96, 255};
+        SDL_Color vine = {37, 88, 63, 255};
+        SDL_Color flower = {148, 102, 186, 255};
+        fill_rect(r, x, y, 13, 120, stone);
+        fill_rect(r, x + 3, y + 3, 3, 114, (SDL_Color){119, 130, 157, 255});
+        fill_rect(r, x + 10, y + 2, 38, 10, vine);
+        fill_rect(r, x + 10, y + 108, 38, 10, vine);
+        fill_rect(r, x + 8, y + 18, 7, 85, vine);
+        for (int bloom = 0; bloom < 4; bloom++) {
+            fill_rect(r, x + 8, y + 22 + bloom * 22, 7, 5, flower);
+            fill_rect(r, x + 10, y + 23 + bloom * 22, 2, 2, (SDL_Color){167, 240, 220, 255});
+        }
+        fill_rect(r, x + 31, y + 4, 7, 5, flower);
+        fill_rect(r, x + 24, y + 110, 7, 5, flower);
+        return;
+    }
     if (style == TOWN_EXIT_DESERT) {
         SDL_Color stone = {151, 100, 57, 255};
         SDL_Color light = {223, 174, 106, 255};

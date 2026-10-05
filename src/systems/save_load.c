@@ -285,7 +285,9 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count) {
         e->y          = cJSON_GetObjectItem(obj, "y")->valueint;
         e->active     = cJSON_GetObjectItem(obj, "active")->valueint;
         e->type       = cJSON_GetObjectItem(obj, "type")->valueint;
-        strncpy(e->name, cJSON_GetObjectItem(obj, "name")->valuestring, 15);
+        const char *name = e->type == ENEMY_LIVING_FLOWER ? "Carnivorous Flower" :
+            cJSON_GetObjectItem(obj, "name")->valuestring;
+        snprintf(e->name, sizeof(e->name), "%s", name);
         e->hp         = cJSON_GetObjectItem(obj, "hp")->valueint;
         e->max_hp     = cJSON_GetObjectItem(obj, "max_hp")->valueint;
         e->attack     = cJSON_GetObjectItem(obj, "attack")->valueint;
@@ -384,7 +386,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 79);
+    cJSON_AddNumberToObject(root, "save_version", 80);
     cJSON_AddNumberToObject(root, "forest_entry_town", g->forest_entry_town);
     cJSON_AddNumberToObject(root, "forest_portal_town", g->forest_portal_town);
     cJSON_AddNumberToObject(root, "swamp_entry_town", g->swamp_entry_town);
@@ -452,6 +454,7 @@ int save_game(const GameState *g, int slot) {
         g->max_frostfell_level_reached);
     cJSON_AddNumberToObject(root, "max_desert_level_reached",
         g->max_desert_level_reached);
+    cJSON_AddNumberToObject(root, "max_moonveil_level_reached", g->max_moonveil_level_reached);
     cJSON_AddNumberToObject(root, "max_temple_level_reached",
         g->max_temple_level_reached);
     cJSON_AddNumberToObject(root, "message_count",     g->message_count);
@@ -778,6 +781,22 @@ int save_game(const GameState *g, int slot) {
     }
     cJSON_AddItemToObject(root, "desert_cache", desert_cache);
 
+    cJSON *moonveil_cache = cJSON_CreateArray();
+    for (int i = 0; i < MOONVEIL_DEPTH; i++) {
+        const LevelCache *cache = &g->moonveil_cache[i];
+        cJSON *entry = cJSON_CreateObject();
+        cJSON_AddNumberToObject(entry, "valid", cache->valid);
+        cJSON_AddNumberToObject(entry, "level_cleared", cache->level_cleared);
+        if (cache->valid) {
+            cJSON_AddItemToObject(entry, "map", serialize_map(&cache->map));
+            cJSON_AddItemToObject(entry, "enemies",
+                serialize_enemies(cache->enemies, cache->enemy_count));
+            cJSON_AddNumberToObject(entry, "enemy_count", cache->enemy_count);
+        }
+        cJSON_AddItemToArray(moonveil_cache, entry);
+    }
+    cJSON_AddItemToObject(root, "moonveil_cache", moonveil_cache);
+
     const char *road_keys[2] = {"crownroad_cache", "kingroad_west_cache"};
     const CrownroadCache *road_caches[2] = {&g->crownroad_cache, &g->kingroad_west_cache};
     for (int i = 0; i < 2; i++) {
@@ -863,6 +882,21 @@ static void repair_floor_item_underlays(GameState *g) {
 }
 
 static void migrate_testing_save(cJSON *root, int version) {
+    if (version < 80) {
+        if (!cJSON_GetObjectItem(root, "max_moonveil_level_reached")) {
+            cJSON_AddNumberToObject(root, "max_moonveil_level_reached", 1);
+        }
+        if (!cJSON_GetObjectItem(root, "moonveil_cache")) {
+            cJSON *cache = cJSON_CreateArray();
+            for (int i = 0; i < MOONVEIL_DEPTH; i++) {
+                cJSON *entry = cJSON_CreateObject();
+                cJSON_AddNumberToObject(entry, "valid", 0);
+                cJSON_AddNumberToObject(entry, "level_cleared", 0);
+                cJSON_AddItemToArray(cache, entry);
+            }
+            cJSON_AddItemToObject(root, "moonveil_cache", cache);
+        }
+    }
     if (version < 79) {
         if (!cJSON_GetObjectItem(root, "mountain_entry_town")) {
             cJSON_AddNumberToObject(root, "mountain_entry_town", LOCATION_TOWN);
@@ -1044,6 +1078,14 @@ int load_game(GameState *g, int slot) {
         return 0;
     }
 
+    cJSON *max_moonveil = cJSON_GetObjectItem(root, "max_moonveil_level_reached");
+    cJSON *moonveil_cache = cJSON_GetObjectItem(root, "moonveil_cache");
+    if (!cJSON_IsNumber(max_moonveil) || !cJSON_IsArray(moonveil_cache) ||
+        cJSON_GetArraySize(moonveil_cache) != MOONVEIL_DEPTH) {
+        cJSON_Delete(root);
+        return 0;
+    }
+
     // Player
     cJSON *player = cJSON_GetObjectItem(root, "player");
     cJSON *freeze_recovery = cJSON_GetObjectItem(player, "freeze_recovery");
@@ -1142,6 +1184,7 @@ int load_game(GameState *g, int slot) {
         "max_frostfell_level_reached");
     g->max_frostfell_level_reached = max_frostfell ? max_frostfell->valueint : 1;
     g->max_desert_level_reached = max_desert->valueint;
+    g->max_moonveil_level_reached = max_moonveil->valueint;
     cJSON *max_temple = cJSON_GetObjectItem(root,
         "max_temple_level_reached");
     g->max_temple_level_reached = max_temple ? max_temple->valueint : 1;
@@ -1504,6 +1547,25 @@ int load_game(GameState *g, int slot) {
         cJSON *entry = cJSON_GetArrayItem(desert_cache, i);
         cache->valid = cJSON_GetObjectItem(entry, "valid")->valueint;
         cache->level_cleared = cJSON_GetObjectItem(entry, "level_cleared")->valueint;
+        if (cache->valid) {
+            deserialize_map(cJSON_GetObjectItem(entry, "map"), &cache->map);
+            deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
+                cache->enemies, &cache->enemy_count);
+        }
+    }
+
+    for (int i = 0; i < MOONVEIL_DEPTH; i++) {
+        LevelCache *cache = &g->moonveil_cache[i];
+        *cache = (LevelCache){0};
+        cJSON *entry = cJSON_GetArrayItem(moonveil_cache, i);
+        cJSON *valid = cJSON_GetObjectItem(entry, "valid");
+        cJSON *cleared = cJSON_GetObjectItem(entry, "level_cleared");
+        if (!cJSON_IsNumber(valid) || !cJSON_IsNumber(cleared)) {
+            cJSON_Delete(root);
+            return 0;
+        }
+        cache->valid = valid->valueint;
+        cache->level_cleared = cleared->valueint;
         if (cache->valid) {
             deserialize_map(cJSON_GetObjectItem(entry, "map"), &cache->map);
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
@@ -2481,6 +2543,7 @@ int load_game(GameState *g, int slot) {
     }
 
     if (g->location == LOCATION_TOWN3) {
+        map_place_town3_moonveil_gate(&g->map);
         map_place_town3_frost_gate(&g->map);
         map_set_rosemoor_swamp_road(&g->map, g->defeated_bosses & (1 << LOCATION_SWAMP));
         map_place_town3_guild(&g->map);

@@ -16,6 +16,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
         g->location != LOCATION_SWAMP &&
         g->location != LOCATION_FROSTFELL &&
         g->location != LOCATION_DESERT &&
+        g->location != LOCATION_MOONVEIL &&
         g->location != LOCATION_TEMPLE &&
         g->location != LOCATION_LABYRINTH) {
         return;
@@ -28,6 +29,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
     if (g->location == LOCATION_SWAMP ||
         g->location == LOCATION_DRAGONSPINE ||
         g->location == LOCATION_DESERT ||
+        g->location == LOCATION_MOONVEIL ||
         g->location == LOCATION_FROSTFELL) {
         map_w = SWAMP_MAP_W;
         map_h = SWAMP_MAP_H;
@@ -75,6 +77,8 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_FROST_EXIT ||
                         tile == TILE_DESERT_ENTRANCE ||
                         tile == TILE_DESERT_EXIT ||
+                        tile == TILE_MOONVEIL_ENTRANCE ||
+                        tile == TILE_MOONVEIL_EXIT ||
                         tile == TILE_SWAMP_DAUGHTER ||
                         tile == TILE_DRAGON_ENTRANCE ||
                         tile == TILE_DRAGON_EXIT ||
@@ -118,6 +122,8 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile != TILE_COAST_WALL &&
                         tile != TILE_SWAMP_WALL &&
                         tile != TILE_DESERT_WALL &&
+                        tile != TILE_MOONVEIL_WALL &&
+                        tile != TILE_MOONVEIL_POOL &&
                         tile != TILE_FROST_WALL &&
                         tile != TILE_FROST_LAKE_HOLE &&
                         tile != TILE_FROST_BROKEN_ICE &&
@@ -155,6 +161,8 @@ void minimap_draw(Renderer *r, const GameState *g) {
                     SDL_SetRenderDrawColor(r->sdl, 205, 222, 236, 255);
                 } else if (g->location == LOCATION_DESERT) {
                     SDL_SetRenderDrawColor(r->sdl, 218, 181, 110, 255);
+                } else if (g->location == LOCATION_MOONVEIL) {
+                    SDL_SetRenderDrawColor(r->sdl, 115, 153, 166, 255);
                 } else if (g->location == LOCATION_COAST) {
                     SDL_SetRenderDrawColor(r->sdl, 35, 125, 145, 255);
                 } else if (g->location == LOCATION_TEMPLE) {

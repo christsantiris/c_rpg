@@ -528,6 +528,7 @@ int main(int argc, char **argv) {
             game.location == LOCATION_DRAGONSPINE ||
             game.location == LOCATION_FROSTFELL ||
             game.location == LOCATION_DESERT ||
+            game.location == LOCATION_MOONVEIL ||
             game.location == LOCATION_COAST ||
             game.location == LOCATION_SWAMP ||
             game.location == LOCATION_ISLAND ||

@@ -487,12 +487,19 @@ static void test_pharaoh_reward(void) {
     g->player.x = boss.x + 1;
     g->player.y = boss.y;
     action_resolve_player(g, (Action){ACTION_MOVE, boss.x, boss.y});
-    BossJournalEntry entry;
+    BossJournalEntry entry = {0};
+    int found_pharaoh = 0;
+    for (int i = 0; i < JOURNAL_BOSS_COUNT; i++) {
+        if (quest_journal_get_boss(g, i, &entry) && strcmp(entry.name, "Desert Pharaoh") == 0) {
+            found_pharaoh = 1;
+            break;
+        }
+    }
     ASSERT("defeating the Pharaoh grants his staff, experience and boss journal completion",
         !g->enemies[0].active && g->player.level > 1 &&
         g->sandstorm_staff_unclaimed && sandstorm_staves_on_floor(g) == 1 &&
         (g->defeated_bosses & (1 << LOCATION_DESERT)) &&
-        quest_journal_get_boss(g, JOURNAL_BOSS_COUNT - 1, &entry) && entry.defeated &&
+        found_pharaoh && entry.defeated &&
         strcmp(entry.name, "Desert Pharaoh") == 0 && strcmp(entry.area, "Sunscar Wastes") == 0);
 
     game_open_town_portal(g);

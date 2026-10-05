@@ -153,6 +153,8 @@
 // Frostfell reuses the swamp's map size, mirrored so it runs east to west.
 #define FROSTFELL_DEPTH 5
 #define DESERT_DEPTH 5
+#define MOONVEIL_DEPTH 5
+#define ROSEMOOR_MOONVEIL_GATE_Y 14
 #define SWAMP_MAP_W 72
 #define SWAMP_MAP_H 64
 #define DESERT_MAP_W SWAMP_MAP_W
@@ -334,7 +336,13 @@ typedef enum {
     TILE_DESERT_LAMP,
     TILE_FOREST_SHORTCUT,
     TILE_SWAMP_SHORTCUT,
-    TILE_MOUNTAIN_SHORTCUT
+    TILE_MOUNTAIN_SHORTCUT,
+    TILE_MOONVEIL_FLOOR,
+    TILE_MOONVEIL_WALL,
+    TILE_MOONVEIL_ENTRANCE,
+    TILE_MOONVEIL_EXIT,
+    TILE_MOONVEIL_POOL,
+    TILE_MOONVEIL_CIRCLE
 } TileType;
 
 typedef struct {
@@ -374,6 +382,7 @@ void map_place_town2_center(Map *m);
 void map_place_town3_guards(Map *m, int avoid_x, int avoid_y);
 void map_place_town4_guards(Map *m, int avoid_x, int avoid_y);
 void map_place_town3_frost_gate(Map *m);
+void map_place_town3_moonveil_gate(Map *m);
 void map_place_town_harbor(Map *m);
 void map_place_town_tavern(Map *m);
 void map_place_town_inn(Map *m);
@@ -397,6 +406,7 @@ void map_generate_high_pass(Map *m);
 void map_generate_dragonspine(Map *m, int level);
 void map_generate_frostfell(Map *m, int level);
 void map_generate_desert(Map *m, int level);
+void map_generate_moonveil(Map *m, int level);
 void map_generate_guild(Map *m, int *sx, int *sy);
 int map_remove_coast_sluice(Map *m);
 TileType map_coast_trap_underlay(const Map *m, int x, int y);

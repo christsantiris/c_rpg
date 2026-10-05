@@ -82,6 +82,8 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor)
         SDL_snprintf(loc, sizeof(loc), "SWAMP %d", g->level);
     } else if (g->location == LOCATION_FROSTFELL) {
         SDL_snprintf(loc, sizeof(loc), "FROSTFELL %d", g->level);
+    } else if (g->location == LOCATION_MOONVEIL) {
+        SDL_snprintf(loc, sizeof(loc), "MOONVEIL GARDENS %d", g->level);
     } else if (g->location == LOCATION_DESERT) {
         SDL_snprintf(loc, sizeof(loc), "SUNSCAR WASTES %d", g->level);
     } else if (g->location == LOCATION_ISLAND) {
