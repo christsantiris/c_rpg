@@ -131,14 +131,14 @@ class, with a two-tile `F` attack. Talk to Bram at the Stillbury Inn to rescue
 Mira from a vampire on level 3. From Stillbury she appears before the Demon;
 from Rosemoor she appears after it. See [Blackwater Swamp](docs/swamp.md).
 
-### Rosemoor, King Roads, and the Castle
+### Rosemoor, Crown Roads, and the Castle
 
 Defeating the Swamp Demon also opens a second north gate in Stillbury. It leads
 along a safe, enemy-free swamp shortcut to a separate south gate in Rosemoor.
 Both towns retain their ordinary swamp gates and explored swamp levels.
-Rosemoor has the Apothecary. Two Royal Guards at its east gate warn that King Road East swarms
+Rosemoor has the Apothecary. Two Royal Guards at its east gate warn that Crown Road East swarms
 with bandits, archers, and horsemen. That road leads to the grounds of the
-Castle of No Return, whose doors stay sealed for now. King Road West continues
+Castle of No Return, whose doors stay sealed for now. Crown Road West continues
 from the castle's east gate to Ridgeshire's west gate. Each road keeps its own
 enemies and progress between visits.
 

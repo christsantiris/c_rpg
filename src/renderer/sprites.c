@@ -3826,12 +3826,71 @@ void draw_desert_floor(Renderer *r, int tx, int ty, int mx, int my) {
 void draw_desert_wall(Renderer *r, int tx, int ty, int mx, int my) {
     int x = tx * TILE_SIZE;
     int y = ty * TILE_SIZE;
-    unsigned int seed = (unsigned int)mx * 43u + (unsigned int)my * 79u;
-    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){100, 66, 42, 255});
-    fill_rect(r, x + 1, y + 1, 22, 8, (SDL_Color){183, 127, 72, 255});
-    fill_rect(r, x + 2, y + 1, 17, 2, (SDL_Color){226, 176, 109, 255});
-    fill_rect(r, x + 3, y + 11, 18, 5, (SDL_Color){149, 97, 54, 255});
-    fill_rect(r, x + 6 + (int)(seed % 4u), y + 18, 12, 3, (SDL_Color){77, 50, 35, 255});
+    unsigned int seed = forest_tile_seed(mx, my);
+    SDL_Color sand = {165, 119, 68, 255};
+    SDL_Color shadow = {110, 76, 44, 255};
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, sand);
+    fill_rect(r, x + 4, y + 19, 16, 4, shadow);
+    fill_rect(r, x + 2, y + 20, 20, 2, shadow);
+
+    // Coordinate-based variations stay fixed while moving, revisiting, or loading.
+    if (seed % 7u == 0u) {
+        SDL_Color cactus = {44, 71, 39, 255};
+        SDL_Color light = {90, 116, 53, 255};
+        SDL_Color shade = {27, 49, 31, 255};
+        int trunk = x + 9 + (int)((seed >> 5) % 4u);
+        int top = y + 2 + (int)((seed >> 9) % 4u);
+        fill_rect(r, trunk + 1, top, 4, 2, cactus);
+        fill_rect(r, trunk, top + 2, 6, y + 22 - top - 2, cactus);
+        fill_rect(r, trunk + 1, top + 3, 1, y + 20 - top - 3, light);
+        fill_rect(r, trunk + 4, top + 3, 2, y + 22 - top - 3, shade);
+        int arm = y + 9 + (int)((seed >> 13) % 4u);
+        fill_rect(r, trunk - 5, arm, 6, 4, cactus);
+        fill_rect(r, trunk - 6, arm - 6, 4, 8, cactus);
+        fill_rect(r, trunk - 5, arm - 5, 1, 6, light);
+        fill_rect(r, trunk - 5, arm, 5, 1, light);
+        if ((seed >> 17) & 1u) {
+            fill_rect(r, trunk + 5, arm + 3, 5, 4, cactus);
+            fill_rect(r, trunk + 8, arm - 4, 4, 9, cactus);
+            fill_rect(r, trunk + 8, arm - 3, 1, 7, light);
+            fill_rect(r, trunk + 10, arm - 3, 2, 10, shade);
+        }
+        fill_rect(r, trunk + 2, top + 7, 1, 2, shade);
+        fill_rect(r, trunk + 2, top + 13, 1, 2, shade);
+        return;
+    }
+
+    // Stepped outlines form a spire, rounded boulder, leaning rock, or broad mesa.
+    static const int profiles[4][6][2] = {
+        {{9, 5}, {7, 9}, {6, 11}, {4, 14}, {3, 17}, {2, 19}},
+        {{6, 11}, {3, 17}, {1, 21}, {2, 20}, {3, 18}, {5, 14}},
+        {{12, 7}, {9, 11}, {6, 14}, {4, 16}, {2, 18}, {1, 20}},
+        {{4, 14}, {2, 18}, {3, 17}, {5, 15}, {4, 16}, {2, 19}}
+    };
+    int shape = (int)((seed >> 7) % 4u);
+    int height = 2 + (int)((seed >> 24) & 1u);
+    int top = 22 - height * 6 - (int)((seed >> 12) % 3u);
+    SDL_Color stone = {184 + (int)((seed >> 16) % 12u), 128, 73, 255};
+    SDL_Color light = {217, 166, 101, 255};
+    SDL_Color shade = {136, 87, 49, 255};
+    for (int band = 0; band < 6; band++) {
+        int offset = profiles[shape][band][0];
+        int width = profiles[shape][band][1];
+        int left = x + (((seed >> 22) & 1u) ? TILE_SIZE - offset - width : offset);
+        int row = y + top + band * height;
+        fill_rect(r, left, row, width, height, stone);
+        fill_rect(r, left, row, 2, height, light);
+        fill_rect(r, left + width - 3, row, 3, height, shade);
+        if (band == 0 || band == 3) {
+            fill_rect(r, left + 2, row, width - 5, 1, light);
+        } else if (band == 2 || band == 5) {
+            fill_rect(r, left + 2, row + height - 1, width - 5, 1, shade);
+        }
+    }
+    int crack = x + 10 + (int)((seed >> 20) % 5u);
+    fill_rect(r, crack, y + top + height * 2, 1, height + 1, shade);
+    fill_rect(r, crack - 2, y + top + height * 3, 3, 1, shade);
+    fill_rect(r, crack - 2, y + top + height * 3 + 1, 1, height, shade);
 }
 
 void draw_desert_edge(Renderer *r, int tx, int ty, int mx, int my) {

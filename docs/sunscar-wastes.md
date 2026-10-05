@@ -5,6 +5,9 @@ west; backtracking uses the east edge. The first stage's east exit and the final
 stage's west exit return to Stillbury. The Desert Pharaoh guards the final exit
 and drops the Sandstorm Staff.
 
+Impassable terrain appears as varied sandstone spires, boulders, mesas, and
+cactus silhouettes. Their shapes stay consistent when revisiting or loading.
+
 Blowing sand and a light amber haze animate across the play area, including while
 standing still. The sandstorm is visual and does not affect combat or movement.
 

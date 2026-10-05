@@ -2198,8 +2198,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, 20) * TILE_SIZE - width / 2,
             viewport_to_screen_y(v, 1) * TILE_SIZE,
             (SDL_Color){168, 220, 250, 255}, r->font_tiny);
-        TTF_SizeText(r->font_tiny, "KING ROAD EAST", &width, NULL);
-        renderer_draw_text(r, "KING ROAD EAST",
+        TTF_SizeText(r->font_tiny, "CROWN ROAD EAST", &width, NULL);
+        renderer_draw_text(r, "CROWN ROAD EAST",
             viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
             viewport_to_screen_y(v, TOWN3_KING_GATE_Y) * TILE_SIZE,
             label, r->font_tiny);
@@ -2222,7 +2222,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             label, r->font_tiny);
     }
     if (g->location == LOCATION_TOWN4) {
-        renderer_draw_text(r, "KING ROAD WEST",
+        renderer_draw_text(r, "CROWN ROAD WEST",
             viewport_to_screen_x(v, 1) * TILE_SIZE + 8,
             viewport_to_screen_y(v, 12) * TILE_SIZE,
             (SDL_Color){220, 180, 60, 255}, r->font_tiny);
