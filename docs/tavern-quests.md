@@ -37,9 +37,11 @@ reconstruct the map and locate its hidden dwarven hoard. He awards the player
 
 Alder is an aging forest ranger searching for three wardens lost while
 investigating the Necromancer's influence. The wardens appear in guarded
-groves on Forest stages 2, 5, and 7. Approach a trapped warden and
-press `T` to free them. Rescuing a warden does not require clearing the entire
-stage.
+groves on Forest stages 1, 2, and 3, before the Necromancer when entering from
+OakHaven. From Stillbury, cross the boss grove first, then find them on stages
+3, 2, and 1. Taking the grove shortcut skips those quest stages. Approach a
+trapped warden and press `T` to free them. Rescuing a warden does not require
+clearing the entire stage.
 
 Each captive has a thematic hunting party led by a Giant Spider, Dark Elf, or
 Forest Troll. Missing wardens are guaranteed to appear on later expeditions,

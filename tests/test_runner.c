@@ -34,6 +34,7 @@ void test_classes(void);
 void test_level_cache_cleared(void);
 void test_return_to_town(void);
 void test_forest(void);
+void test_forest_travel(void);
 void test_mountains(void);
 void test_coast(void);
 void test_coast_terrain(void);
@@ -98,6 +99,7 @@ int main(void) {
     test_temple();
     printf("\n");
     test_forest();
+    test_forest_travel();
     printf("\n");
     test_mountains();
     printf("\n");

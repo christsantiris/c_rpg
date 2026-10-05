@@ -567,8 +567,9 @@ void test_rook_labyrinth(void) {
 
     loaded.defeated_bosses |= 1 << LOCATION_FOREST;
     loaded.player.x = TOWN_W - 2;
-    loaded.player.y = 12;
-    action_resolve_player(&loaded, (Action){ACTION_MOVE, TOWN_W - 1, 12});
+    loaded.player.y = TOWN_ROAD_EXIT_Y;
+    map_set_stillbury_forest_road(&loaded.map, 1);
+    action_resolve_player(&loaded, (Action){ACTION_MOVE, TOWN_W - 1, TOWN_ROAD_EXIT_Y});
     ASSERT("Town 2's east gate enters an enemy-free forest road",
         loaded.location == LOCATION_FOREST_ROAD && loaded.player.x == 1 &&
         loaded.player.y == FOREST_ROAD_Y && loaded.enemy_count == 0 &&
@@ -608,8 +609,8 @@ void test_rook_labyrinth(void) {
     }
     ASSERT("walking west across the road reaches Town 2's east gate",
         g.location == LOCATION_TOWN2 && g.player.x == TOWN_W - 2 &&
-        g.player.y == 12);
-    action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 3, 12});
+        g.player.y == TOWN_ROAD_EXIT_Y);
+    action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 3, TOWN_ROAD_EXIT_Y});
     ASSERT("continuing west enters Town 2 rather than returning to the road",
         g.location == LOCATION_TOWN2 && g.player.x == TOWN_W - 3);
     ASSERT("Inn stands east of the Healer with its door on the square",
@@ -867,7 +868,7 @@ static void test_necromancer_retaliates_to_arrows(void) {
         g.player.player_class = CLASS_ROGUE;
         game_init(&g);
         g.location = LOCATION_FOREST;
-        g.level = FOREST_DEPTH;
+        g.level = FOREST_BOSS_LEVEL;
         map_generate_forest(&g.map, g.level);
         enemies_spawn(&g);
         ASSERT("Necromancer is available for ranged encounter",
@@ -929,7 +930,7 @@ static void test_necromancer_opens_exit(void) {
         g.player.player_class = CLASS_WARRIOR;
         game_init(&g);
         g.location = LOCATION_FOREST;
-        g.level = FOREST_DEPTH;
+        g.level = FOREST_BOSS_LEVEL;
         map_generate_forest(&g.map, g.level);
         g.enemy_count = 2;
         g.enemies[0] = (Enemy){
@@ -963,17 +964,18 @@ static void test_necromancer_opens_exit(void) {
         ASSERT("boss defeat reveals the exit without clearing regular enemies",
             g.map.tiles[exit.target_y][exit.target_x] == TILE_FOREST_EXIT &&
             g.enemies[1].active && !g.level_cleared);
-        g.player.x = g.map.stairs_down_x;
-        g.player.y = g.map.stairs_down_y;
-        action_resolve_player(&g, exit);
-        ASSERT("player leaves the final forest with a living enemy behind",
+        int shortcut_x;
+        int shortcut_y;
+        map_room_center(&g.map.rooms[g.map.room_count - 1], &shortcut_x, &shortcut_y);
+        action_resolve_player(&g, (Action){ACTION_MOVE, shortcut_x + 3, shortcut_y + 3});
+        ASSERT("grove shortcut leaves the forest with a living enemy behind",
             g.location == LOCATION_TOWN2 &&
-            g.forest_cache[FOREST_DEPTH - 1].enemies[1].active &&
-            !g.forest_cache[FOREST_DEPTH - 1].level_cleared);
+            g.forest_cache[FOREST_BOSS_LEVEL - 1].enemies[1].active &&
+            !g.forest_cache[FOREST_BOSS_LEVEL - 1].level_cleared);
 
         g.location = LOCATION_FOREST;
-        g.level = FOREST_DEPTH - 1;
-        g.forest_cache[FOREST_DEPTH - 1].valid = 0;
+        g.level = FOREST_BOSS_LEVEL - 1;
+        g.forest_cache[FOREST_BOSS_LEVEL - 1].valid = 0;
         game_descend(&g);
         exit = outdoor_exit_action(&g.map);
         ASSERT("regenerated final forest keeps the defeated boss's exit open",
@@ -1086,16 +1088,17 @@ void test_forest(void) {
                 invalid_enemy = 1;
         }
         ASSERT("forest floors use only forest roster", !invalid_enemy);
-        if (level < FOREST_DEPTH)
-            ASSERT("forest stages 1-7 have no boss", bosses == 0);
-        else
-            ASSERT("forest stage 8 has Necromancer boss",
+        if (level != FOREST_BOSS_LEVEL) {
+            ASSERT("forest stages outside the grove have no boss", bosses == 0);
+        } else {
+            ASSERT("forest stage 4 has Necromancer boss",
                 bosses == 1 && g.enemies[0].type == ENEMY_FOREST_NECROMANCER);
+        }
     }
 
-    static const int expected_rooms[FOREST_DEPTH] = {7, 9, 9, 8, 10, 10, 10, 10};
-    static const int expected_entrances[FOREST_DEPTH] = {0, 2, 1, 2, 0, 1, 2, 0};
-    static const int expected_exits[FOREST_DEPTH] = {0, 1, 2, 1, 0, 2, 1, 0};
+    static const int expected_rooms[FOREST_DEPTH] = {7, 9, 9, 10, 10, 10, 8};
+    static const int expected_entrances[FOREST_DEPTH] = {0, 2, 1, 0, 0, 1, 2};
+    static const int expected_exits[FOREST_DEPTH] = {0, 1, 2, 0, 0, 2, 1};
     for (int level = 1; level <= FOREST_DEPTH; level++) {
         map_generate_forest(&g.map, level);
         ASSERT("forest level uses its distinct topology size",
@@ -1156,12 +1159,12 @@ void test_forest(void) {
     map_room_center(&g.map.rooms[5], &unused, &l2y5);
     ASSERT("forest level 2 has three vertically distinct routes",
         l2y3 < l2y4 && l2y4 < l2y5);
-    map_generate_forest(&g.map, 4);
+    map_generate_forest(&g.map, FOREST_DEPTH);
     int hub_y, upper_y, lower_y;
     map_room_center(&g.map.rooms[1], &unused, &hub_y);
     map_room_center(&g.map.rooms[2], &unused, &upper_y);
     map_room_center(&g.map.rooms[4], &unused, &lower_y);
-    ASSERT("forest level 4 uses a central branching hub",
+    ASSERT("Stillbury border retains a branching hub",
         upper_y < hub_y && hub_y < lower_y);
 
     g.location = LOCATION_FOREST;
@@ -1188,23 +1191,33 @@ void test_forest(void) {
     ASSERT("forest portal restores exact tile",
         g.player.x == portal_x && g.player.y == portal_y);
 
-    g.level = FOREST_DEPTH;
+    g.level = FOREST_BOSS_LEVEL;
     g.level_cleared = 0;
     map_generate_forest(&g.map, g.level);
     enemies_spawn(&g);
     reveal_forest_exit(&g);
-    g.player.x = MAP_W - 2;
+    east = outdoor_exit_action(&g.map);
+    g.player.x = g.map.stairs_down_x;
     g.player.y = g.map.stairs_down_y;
-    east = (Action){ACTION_MOVE, MAP_W - 1, g.player.y};
     action_resolve_player(&g, east);
-    ASSERT("living Necromancer blocks final forest exit",
-        g.location == LOCATION_FOREST);
-    for (int i = 0; i < g.enemy_count; i++)
-        if (g.enemies[i].type == ENEMY_FOREST_NECROMANCER)
+    ASSERT("living Necromancer blocks passage through the middle",
+        g.location == LOCATION_FOREST && g.level == FOREST_BOSS_LEVEL);
+    for (int i = 0; i < g.enemy_count; i++) {
+        if (g.enemies[i].type == ENEMY_FOREST_NECROMANCER) {
             g.enemies[i].active = 0;
+        }
+    }
+    g.defeated_bosses |= 1 << LOCATION_FOREST;
     action_resolve_player(&g, east);
-    ASSERT("final east forest exit reaches the second town",
-        g.location == LOCATION_TOWN2);
+    ASSERT("grove exit continues to the remaining forest stages", g.level == FOREST_BOSS_LEVEL + 1);
+    while (g.level < FOREST_DEPTH) {
+        game_descend(&g);
+    }
+    reveal_forest_exit(&g);
+    g.player.x = g.map.stairs_down_x;
+    g.player.y = g.map.stairs_down_y;
+    action_resolve_player(&g, outdoor_exit_action(&g.map));
+    ASSERT("full forest route reaches Stillbury", g.location == LOCATION_TOWN2);
     ASSERT("forest completion arrives beside Stillbury's east forest gate",
         g.player.x == TOWN_W - 2 && g.player.y == 12 &&
         g.map.tiles[g.player.y][g.player.x] == TILE_TOWN_PATH &&

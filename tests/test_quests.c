@@ -330,11 +330,11 @@ void test_alder_quest(void) {
     ASSERT("new Alder quest begins with no rescues",
         g.alder_wardens_rescued == 0);
     ASSERT("Alder speaks through dialogue state", g.dialogue_active &&
-        strcmp(g.dialogue_speaker, "Alder") == 0);
+        strcmp(g.dialogue_speaker, "Alder") == 0 && strstr(g.dialogue_text, "stages 1, 2, and 3"));
     ASSERT("accepting Alder's quest starts a fresh forest expedition",
         !g.forest_cache[3].valid && !g.portal_active);
 
-    int target_levels[3] = {2, 5, 7};
+    int target_levels[3] = {1, 2, 3};
     EnemyType guardian_types[3] = {
         ENEMY_GIANT_SPIDER, ENEMY_DARK_ELF, ENEMY_FOREST_TROLL
     };

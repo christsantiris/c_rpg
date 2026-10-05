@@ -20,9 +20,9 @@
 #define DAIN_FRAGMENT_BOMBER 2
 #define DAIN_FRAGMENT_SHAMAN 4
 
-#define ALDER_WARDEN_STAGE_2 1
-#define ALDER_WARDEN_STAGE_5 2
-#define ALDER_WARDEN_STAGE_7 4
+#define ALDER_WARDEN_STAGE_1 1
+#define ALDER_WARDEN_STAGE_2 2
+#define ALDER_WARDEN_STAGE_3 4
 
 #define MARA_BEACON_STAGE_1 1
 #define MARA_BEACON_STAGE_3 2
@@ -146,6 +146,8 @@ typedef struct {
     Location   location;
     int max_level_reached;
     int max_forest_level_reached;
+    Location forest_entry_town;
+    Location forest_portal_town;
     int max_mountain_level_reached;
     int max_coast_level_reached;
     int max_swamp_level_reached;
@@ -215,6 +217,8 @@ void game_refresh_quest_encounters(GameState *g);
 void game_repair_forest_enemy_positions(Map *m, Enemy *actors, int count, int px, int py);
 void game_enter_dungeon(GameState *g);
 void game_enter_forest(GameState *g);
+void game_leave_forest(GameState *g, Location town, int shortcut);
+void game_reveal_forest_shortcut(GameState *g);
 void game_enter_mountains(GameState *g);
 void game_enter_town4(GameState *g);
 void game_enter_coast(GameState *g);
