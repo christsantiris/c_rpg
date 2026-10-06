@@ -683,6 +683,18 @@ Item item_make_archmage_robes(void) {
     return it;
 }
 
+Item item_make_gravekeeper_mantle(void) {
+    Item item = {0};
+    item.active = 1;
+    item.type = ITEM_ARMOR;
+    strncpy(item.name, "Gravekeeper's Mantle", sizeof(item.name) - 1);
+    item.defense_bonus = 6;
+    item.value = 600;
+    set_armor_metadata(&item, ARMOR_FAMILY_LIGHT, ITEM_RARITY_RARE, ITEM_CLASS_ALL, ITEM_VISUAL_RANGER_CLOAK);
+    item.max_hp_bonus = 20;
+    return item;
+}
+
 Item item_make_necromancer_cloak(void) {
     Item it = {0};
     it.active = 1;

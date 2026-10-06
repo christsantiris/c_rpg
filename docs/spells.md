@@ -151,3 +151,9 @@ require the player to have moved once to establish a direction.
 - Mana potions restore the player's MP to maximum.
 - Gaining a character level restores MP to maximum as well as restoring HP.
 - Morwen sells Mana Potions for 20 gold; the Alchemist also stocks them.
+
+In the Royal Catacombs, Return to Town opens a portal beside Rosemoor's east
+Crown Road gate. Using it restores the original floor and position, with
+pending hazards at the landing position dissipated by the portal's wards.
+Ordinary upstairs and the defeated Marshal's return passage lead back to the
+castle grounds instead. See [Royal Catacombs](catacombs.md).

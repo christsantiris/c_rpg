@@ -6,6 +6,7 @@
 #include "renderer.h"
 #include "item_icons.h"
 #include "../game/combat_feedback.h"
+#include "../game/catacombs.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -19,9 +20,68 @@ static SDL_Color area_label_color(Location area) {
         case LOCATION_FROSTFELL: return (SDL_Color){168, 220, 250, 255};
         case LOCATION_MOONVEIL: return (SDL_Color){190, 163, 231, 255};
         case LOCATION_ASHEN: return (SDL_Color){240, 150, 76, 255};
+        case LOCATION_CATACOMBS: return (SDL_Color){224, 216, 186, 255};
         case LOCATION_GLASSDEEP: return (SDL_Color){170, 207, 241, 255};
         case LOCATION_TEMPLE: return (SDL_Color){235, 201, 92, 255};
         default: return (SDL_Color){220, 180, 60, 255};
+    }
+}
+
+static void draw_catacombs_tile(Renderer *r, const Map *m, int sx, int sy, int x, int y, TileType type) {
+    int px = sx * TILE_SIZE;
+    int py = sy * TILE_SIZE;
+    SDL_Rect tile = {px, py, TILE_SIZE, TILE_SIZE};
+    int wall = type == TILE_CATACOMBS_WALL;
+    int shade = (x * 17 + y * 31) % 7;
+    SDL_SetRenderDrawColor(r->sdl, wall ? 66 : 37 + shade, wall ? 65 : 40 + shade, wall ? 70 : 48 + shade, 255);
+    SDL_RenderFillRect(r->sdl, &tile);
+    SDL_SetRenderDrawColor(r->sdl, wall ? 33 : 29, wall ? 35 : 31, wall ? 43 : 40, 255);
+    SDL_RenderDrawLine(r->sdl, px, py + 11, px + 23, py + 11);
+    SDL_RenderDrawLine(r->sdl, px + 11, py, px + 11, py + 10);
+    int exposed = wall && (map_is_walkable(m, x - 1, y) || map_is_walkable(m, x + 1, y) ||
+        map_is_walkable(m, x, y - 1) || map_is_walkable(m, x, y + 1));
+    if (exposed) {
+        SDL_Rect niche = {px + 3, py + 3, 17, 7};
+        SDL_SetRenderDrawColor(r->sdl, 24, 26, 35, 255);
+        SDL_RenderFillRect(r->sdl, &niche);
+        SDL_SetRenderDrawColor(r->sdl, 166, 159, 132, 255);
+        SDL_RenderDrawLine(r->sdl, px + 5, py + 6, px + 17, py + 6);
+        SDL_Rect skull = {px + 7 + shade, py + 13, 5, 5};
+        SDL_RenderFillRect(r->sdl, &skull);
+        SDL_SetRenderDrawColor(r->sdl, 30, 30, 37, 255);
+        SDL_RenderDrawPoint(r->sdl, skull.x + 1, skull.y + 2);
+        SDL_RenderDrawPoint(r->sdl, skull.x + 3, skull.y + 2);
+    } else if (type == TILE_OSSUARY_BRAZIER || type == TILE_OSSUARY_COLD) {
+        SDL_Rect bowl = {px + 5, py + 13, 14, 5};
+        SDL_SetRenderDrawColor(r->sdl, 132, 124, 105, 255);
+        SDL_RenderFillRect(r->sdl, &bowl);
+        SDL_RenderDrawLine(r->sdl, px + 11, py + 18, px + 11, py + 22);
+        if (type == TILE_OSSUARY_BRAZIER) {
+            int flicker = (SDL_GetTicks() / 180 + x + y) % 3;
+            SDL_Rect flame = {px + 8, py + 5 - flicker, 8, 9 + flicker};
+            SDL_SetRenderDrawColor(r->sdl, 42, 115, 195, 255);
+            SDL_RenderFillRect(r->sdl, &flame);
+            flame = (SDL_Rect){px + 11, py + 7 - flicker, 3, 6 + flicker};
+            SDL_SetRenderDrawColor(r->sdl, 154, 226, 244, 255);
+            SDL_RenderFillRect(r->sdl, &flame);
+        }
+    } else if (type == TILE_CATACOMBS_SARCOPHAGUS) {
+        SDL_Rect tomb = {px + 4, py + 2, 16, 21};
+        SDL_SetRenderDrawColor(r->sdl, 102, 103, 105, 255);
+        SDL_RenderFillRect(r->sdl, &tomb);
+        SDL_SetRenderDrawColor(r->sdl, 171, 159, 118, 255);
+        SDL_RenderDrawRect(r->sdl, &tomb);
+        SDL_RenderDrawLine(r->sdl, px + 12, py + 6, px + 12, py + 18);
+        SDL_RenderDrawLine(r->sdl, px + 8, py + 10, px + 16, py + 10);
+    } else if (type == TILE_BURIAL_PLATE) {
+        SDL_Rect plate = {px + 3, py + 3, 18, 18};
+        SDL_SetRenderDrawColor(r->sdl, 146, 113, 65, 255);
+        SDL_RenderDrawRect(r->sdl, &plate);
+        SDL_RenderDrawLine(r->sdl, px + 7, py + 8, px + 12, py + 15);
+        SDL_RenderDrawLine(r->sdl, px + 12, py + 15, px + 17, py + 8);
+    } else if (!wall && shade == 0) {
+        SDL_SetRenderDrawColor(r->sdl, 83, 79, 72, 255);
+        SDL_RenderDrawLine(r->sdl, px + 5, py + 16, px + 16, py + 19);
     }
 }
 
@@ -304,7 +364,7 @@ void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, con
             SDL_SetRenderDrawColor(r->sdl, 220, 255, 255, 255);
             SDL_RenderDrawLine(r->sdl, start_x, start_y, cx, cy);
         } else if (shot->type == ENEMY_GOBLIN_ARCHER ||
-            shot->type == ENEMY_ROAD_ARCHER ||
+            shot->type == ENEMY_ROAD_ARCHER || shot->type == ENEMY_GRAVE_ARCHER ||
             shot->type == ENEMY_FROST_ARCHER ||
             shot->type == ENEMY_DARK_ELF ||
             shot->type == ENEMY_BLOWDART_HUNTER) {
@@ -846,6 +906,9 @@ static TileType floor_item_underlay(const GameState *g, int x, int y) {
     if (g->location == LOCATION_ASHEN) {
         return TILE_ASHEN_FLOOR;
     }
+    if (g->location == LOCATION_CATACOMBS) {
+        return TILE_CATACOMBS_FLOOR;
+    }
     if (g->location == LOCATION_GLASSDEEP) {
         return TILE_GLASSDEEP_FLOOR;
     }
@@ -1043,6 +1106,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         draw_ashen_ruin(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_ASHEN_ENTRANCE || underlay == TILE_ASHEN_EXIT) {
         draw_ashen_edge(r, screen_x, screen_y, map_x, map_y);
+    } else if (underlay == TILE_CATACOMBS_FLOOR || underlay == TILE_BURIAL_PLATE) {
+        draw_catacombs_tile(r, &g->map, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay == TILE_GLASSDEEP_FLOOR) {
         draw_glassdeep_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_GLASSDEEP_RUIN) {
@@ -1322,6 +1387,38 @@ static void draw_prism_warning(Renderer *r, const GameState *g, const Viewport *
     }
 }
 
+static void draw_catacombs_warnings(Renderer *r, const GameState *g, const Viewport *v) {
+    if (g->location != LOCATION_CATACOMBS) {
+        return;
+    }
+    for (int y = v->cam_y; y < v->cam_y + v->tiles_y; y++) {
+        for (int x = v->cam_x; x < v->cam_x + v->tiles_x; x++) {
+            int marked = 0;
+            for (int i = 0; i < g->map.burial_trap_count; i++) {
+                const BurialTrap *trap = &g->map.burial_traps[i];
+                marked |= trap->timer > 0 && catacombs_trap_marks(&g->map, trap, x, y);
+            }
+            for (int i = 0; i < g->enemy_count; i++) {
+                const Enemy *e = &g->enemies[i];
+                marked |= e->active && e->type == ENEMY_GRAVE_MARSHAL && catacombs_sweep_marks(&g->map, e, x, y);
+                if (!e->active && e->revive_timer > 0 && e->x == x && e->y == y) {
+                    int px = viewport_to_screen_x(v, x) * TILE_SIZE;
+                    int py = viewport_to_screen_y(v, y) * TILE_SIZE;
+                    SDL_SetRenderDrawColor(r->sdl, 170, 225, 234, 255);
+                    SDL_RenderDrawLine(r->sdl, px + 5, py + 17, px + 18, py + 20);
+                    SDL_RenderDrawLine(r->sdl, px + 7, py + 21, px + 17, py + 15);
+                }
+            }
+            if (marked) {
+                SDL_Rect outline = {viewport_to_screen_x(v, x) * TILE_SIZE + 2, viewport_to_screen_y(v, y) * TILE_SIZE + 2, TILE_SIZE - 4, TILE_SIZE - 4};
+                SDL_SetRenderDrawColor(r->sdl, 235, 116, 62, 255);
+                SDL_RenderDrawRect(r->sdl, &outline);
+                SDL_RenderDrawLine(r->sdl, outline.x + 3, outline.y + 3, outline.x + outline.w - 3, outline.y + outline.h - 3);
+            }
+        }
+    }
+}
+
 void game_draw(Renderer *r, GameState *g, Viewport *v) {
     Viewport town_view;
     int kraken_warning = kraken_tentacles_raised(g);
@@ -1370,6 +1467,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int view_h = v->tiles_y < road_h ? v->tiles_y : road_h;
         viewport_init(&town_view, view_w, view_h,
             road_w, road_h);
+        viewport_center_on(&town_view, g->player.x, g->player.y);
+        v = &town_view;
+    } else if (g->location == LOCATION_CATACOMBS) {
+        viewport_init(&town_view, v->tiles_x < CATACOMBS_W ? v->tiles_x : CATACOMBS_W, v->tiles_y < CATACOMBS_H ? v->tiles_y : CATACOMBS_H, CATACOMBS_W, CATACOMBS_H);
         viewport_center_on(&town_view, g->player.x, g->player.y);
         v = &town_view;
     } else if (g->location == LOCATION_SWAMP ||
@@ -1600,6 +1701,14 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_ASHEN_EXIT:
                     draw_ashen_edge(r, sx, sy, x, y);
                     break;
+                case TILE_CATACOMBS_FLOOR:
+                case TILE_CATACOMBS_WALL:
+                case TILE_OSSUARY_BRAZIER:
+                case TILE_OSSUARY_COLD:
+                case TILE_BURIAL_PLATE:
+                case TILE_CATACOMBS_SARCOPHAGUS:
+                    draw_catacombs_tile(r, &g->map, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
                 case TILE_GLASSDEEP_FLOOR:
                     draw_glassdeep_floor(r, sx, sy, x, y);
                     break;
@@ -1680,9 +1789,27 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_coast_beacon(r, sx, sy, x, y, 0); break;
                 case TILE_COAST_BEACON_LIT:
                     draw_coast_beacon(r, sx, sy, x, y, 1); break;
-                case TILE_STAIRS_UP: draw_stairs_up(r, sx, sy); break;
-                case TILE_STAIRS_DOWN: draw_stairs_down(r, sx, sy); break;
-                case TILE_RETURN_EXIT: draw_return_exit(r, sx, sy); break;
+                case TILE_STAIRS_UP:
+                case TILE_STAIRS_DOWN:
+                case TILE_RETURN_EXIT:
+                    if (g->location == LOCATION_CATACOMBS) {
+                        draw_catacombs_tile(r, &g->map, sx, sy, x, y, TILE_CATACOMBS_FLOOR);
+                        TileType stair = g->map.tiles[y][x];
+                        SDL_SetRenderDrawColor(r->sdl, stair == TILE_RETURN_EXIT ? 111 : 202, stair == TILE_RETURN_EXIT ? 219 : 190, stair == TILE_RETURN_EXIT ? 225 : 154, 255);
+                        for (int step = 0; step < 5; step++) {
+                            int width = stair == TILE_STAIRS_UP ? 16 - step * 2 : 8 + step * 2;
+                            int px = sx * TILE_SIZE + (TILE_SIZE - width) / 2;
+                            int py = sy * TILE_SIZE + 5 + step * 3;
+                            SDL_RenderDrawLine(r->sdl, px, py, px + width, py);
+                        }
+                    } else if (g->map.tiles[y][x] == TILE_STAIRS_UP) {
+                        draw_stairs_up(r, sx, sy);
+                    } else if (g->map.tiles[y][x] == TILE_STAIRS_DOWN) {
+                        draw_stairs_down(r, sx, sy);
+                    } else {
+                        draw_return_exit(r, sx, sy);
+                    }
+                    break;
                 case TILE_LOCKED_DOOR: draw_locked_door(r, sx, sy); break;
                 case TILE_DUNGEON_KEY: draw_dungeon_key(r, sx, sy); break;
                 case TILE_CRYPT_DOOR: draw_crypt_door(r, sx, sy); break;
@@ -2111,7 +2238,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     // Draw enemies
-    if (g->location == LOCATION_DUNGEON ||
+    if (g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
         g->location == LOCATION_FOREST ||
         g->location == LOCATION_MOUNTAINS ||
         g->location == LOCATION_DRAGONSPINE ||
@@ -2378,6 +2505,20 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             (SDL_Color){220, 180, 60, 255}, r->font_tiny);
     }
     if (g->location == LOCATION_CASTLE) {
+        int gx = viewport_to_screen_x(v, CROWNROAD_X - 2) * TILE_SIZE;
+        int gy = viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE;
+        SDL_Rect left_post = {gx, gy, 14, TILE_SIZE * 2};
+        SDL_Rect right_post = {gx + TILE_SIZE * 5 - 14, gy, 14, TILE_SIZE * 2};
+        SDL_SetRenderDrawColor(r->sdl, 91, 88, 81, 255);
+        SDL_RenderFillRect(r->sdl, &left_post);
+        SDL_RenderFillRect(r->sdl, &right_post);
+        SDL_SetRenderDrawColor(r->sdl, 224, 216, 186, 255);
+        SDL_RenderDrawLine(r->sdl, gx + 3, gy + 3, gx + 3, gy + TILE_SIZE * 2 - 3);
+        SDL_RenderDrawLine(r->sdl, right_post.x + 3, gy + 3, right_post.x + 3, gy + TILE_SIZE * 2 - 3);
+        int gate_width = 0;
+        TTF_SizeText(r->font_tiny, "CATACOMBS", &gate_width, NULL);
+        renderer_draw_text(r, "CATACOMBS", viewport_to_screen_x(v, CROWNROAD_X) * TILE_SIZE + (TILE_SIZE - gate_width) / 2,
+            viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE, area_label_color(LOCATION_CATACOMBS), r->font_tiny);
         SDL_Color label = {220, 180, 60, 255};
         int width = 0;
         TTF_SizeText(r->font_tiny, "CASTLE OF NO RETURN", &width, NULL);
@@ -2630,6 +2771,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         draw_region_weather(r, v, 1);
     }
     draw_prism_warning(r, g, v);
+    draw_catacombs_warnings(r, g, v);
 
     draw_combat_feedback(r, g, v);
 

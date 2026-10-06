@@ -87,7 +87,12 @@ typedef enum {
     ENEMY_CRYSTAL_SPIDER,
     ENEMY_BLIND_STALKER,
     ENEMY_SHARD_GOLEM,
-    ENEMY_PRISM_SOVEREIGN
+    ENEMY_PRISM_SOVEREIGN,
+    ENEMY_ANCIENT_SKELETON,
+    ENEMY_BONE_SENTINEL,
+    ENEMY_GRAVE_ARCHER,
+    ENEMY_BONE_CANTOR,
+    ENEMY_GRAVE_MARSHAL
 } EnemyType;
 
 typedef struct {
@@ -103,6 +108,8 @@ typedef struct {
     int       dain_fragment;
     int       frozen_turns;
     int attack_target_x, attack_target_y;
+    int revived;
+    int revive_timer;
 } Enemy;
 
 #endif

@@ -186,3 +186,12 @@ roles, and additional traps. Bats add speed, Wraiths undermine heavy armor and
 mana reserves, and Crypt Conjurers create ranged pressure and target priority. Floor
 8 combines the complete roster with the Lich King before returning the player
 to town.
+
+## Royal Catacombs
+
+The castle's south road opens a five-floor advanced dungeon with stronger
+undead, paired chamber encounters, limited resurrection, and telegraphed
+burial spikes. New enemies use the same regional-order and player-level
+scaling as the original dungeon. Catacomb victory does not add an order tier
+to the four original regions. See [Royal Catacombs](catacombs.md) for base
+stats, the resurrection cap, and the Grave Marshal's brazier protection.

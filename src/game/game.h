@@ -121,7 +121,8 @@ typedef enum {
     LOCATION_GUILD,
     LOCATION_MOONVEIL,
     LOCATION_ASHEN,
-    LOCATION_GLASSDEEP
+    LOCATION_GLASSDEEP,
+    LOCATION_CATACOMBS
 } Location;
 
 typedef struct {
@@ -141,6 +142,7 @@ typedef struct {
     LevelCache moonveil_cache[MOONVEIL_DEPTH];
     LevelCache ashen_cache[ASHEN_DEPTH];
     LevelCache glassdeep_cache[GLASSDEEP_DEPTH];
+    LevelCache catacombs_cache[CATACOMBS_DEPTH];
     CrownroadCache crownroad_cache;
     CrownroadCache kingroad_west_cache;
     LevelCache temple_cache[TEMPLE_DEPTH];
@@ -167,6 +169,8 @@ typedef struct {
     int max_moonveil_level_reached;
     int max_ashen_level_reached;
     int max_glassdeep_level_reached;
+    int max_catacombs_level_reached;
+    int catacombs_mantle_unclaimed;
     int max_temple_level_reached;
     Item      inventory[MAX_INVENTORY];
     int       inventory_count;
@@ -248,6 +252,8 @@ void game_enter_desert(GameState *g);
 void game_enter_moonveil(GameState *g);
 void game_enter_ashen(GameState *g);
 void game_enter_glassdeep(GameState *g);
+void game_enter_catacombs(GameState *g);
+void game_leave_catacombs(GameState *g);
 void game_enter_high_pass(GameState *g, int from_town);
 void game_leave_high_pass(GameState *g, Location destination);
 void game_enter_dragonspine(GameState *g);

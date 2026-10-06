@@ -16,6 +16,10 @@ static void draw_boss_progress(Renderer *r, const GameState *g) {
     SDL_Color dimmed = {105, 105, 120, 255};
     int top = r->screen_h < 320 ? 100 : 110;
     int gap = r->screen_h < 400 ? 18 : 42;
+    int available_gap = (r->screen_h - top - 68) / JOURNAL_BOSS_COUNT;
+    if (available_gap < gap) {
+        gap = available_gap > 12 ? available_gap : 12;
+    }
     int y = top + 8;
     int defeated = 0;
     draw_panel(r, (SDL_Rect){50, top, r->screen_w - 100,

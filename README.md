@@ -182,6 +182,20 @@ step aside during its warning turn. Defeating it opens stage 5's return to
 Stillbury and drops a Potion of Strength. Saves and Return to Town portals
 preserve the caverns' independent progress. See [Glassdeep Caverns](docs/glassdeep-caverns.md).
 
+### Royal Catacombs
+
+The castle grounds' south gate opens into five floors of Royal Catacombs,
+a harder undead dungeon with looping burial chambers. Ancient Skeletons can
+reassemble once while their ossuary brazier burns; stand beside a brazier and
+press **A** to extinguish it. Bone Sentinels, Grave Archers, tougher Crypt Bats
+and Wraiths, and reviving Bone Cantors populate the chambers. Burial plates
+mark spike lines a turn before striking. The Grave Marshal guards floor 5,
+telegraphing polearm sweeps and drawing protection from two braziers. Victory
+opens a direct return to the castle and rewards Gravekeeper's Mantle, armor
+for every class with +6 defense and +20 maximum health. Return to Town opens
+a portal in Rosemoor. Save migration preserves existing progress and adds
+the new area. See [Royal Catacombs](docs/catacombs.md).
+
 ### Harbor and Ruined Isle
 
 Captain Rowan waits near the harbor and describes the island before it is
@@ -297,6 +311,7 @@ and sell modes are switched with `Tab`.
 - [Moonveil Gardens](docs/moonveil-gardens.md)
 - [Ashen Hollow](docs/ashen-hollow.md)
 - [Glassdeep Caverns](docs/glassdeep-caverns.md)
+- [Royal Catacombs](docs/catacombs.md)
 - [Harbor, Ruined Isle, and Ruined Temple](docs/harbor-and-ruined-isle.md)
 
 ## Screenshots
@@ -429,4 +444,6 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 - Build out Castle of No Return
    Multiple levels, unique mechanics, enemies, boss
 - Recruit a party to join the adventure
-- Additional areas and storylines e.g caves, catacombs with minotaur boss, crypt
+- Improve difficulty scaling and economy
+- Increase importance of upgrading weapons and spells
+   Warrior and Rogue should struggle at certain levels without better weapons. Mage should struggle without better spells. 

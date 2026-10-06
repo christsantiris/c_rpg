@@ -98,6 +98,19 @@ static cJSON *serialize_map(const Map *m) {
     cJSON_AddNumberToObject(obj, "stairs_down_x", m->stairs_down_x);
     cJSON_AddNumberToObject(obj, "stairs_down_y", m->stairs_down_y);
 
+    cJSON *traps = cJSON_CreateArray();
+    for (int i = 0; i < m->burial_trap_count; i++) {
+        const BurialTrap *trap = &m->burial_traps[i];
+        cJSON *entry = cJSON_CreateObject();
+        cJSON_AddNumberToObject(entry, "x", trap->x);
+        cJSON_AddNumberToObject(entry, "y", trap->y);
+        cJSON_AddNumberToObject(entry, "vertical", trap->vertical);
+        cJSON_AddNumberToObject(entry, "timer", trap->timer);
+        cJSON_AddNumberToObject(entry, "spent", trap->spent);
+        cJSON_AddItemToArray(traps, entry);
+    }
+    cJSON_AddItemToObject(obj, "burial_traps", traps);
+
     // Rooms
     cJSON *rooms = cJSON_CreateArray();
     for (int i = 0; i < m->room_count; i++) {
@@ -139,6 +152,25 @@ static void deserialize_map(const cJSON *obj, Map *m) {
         m->rooms[i].h = cJSON_GetObjectItem(r, "h")->valueint;
     }
 
+    m->burial_trap_count = 0;
+    memset(m->burial_traps, 0, sizeof(m->burial_traps));
+    cJSON *traps = cJSON_GetObjectItem(obj, "burial_traps");
+    int count = cJSON_GetArraySize(traps);
+    if (count > MAX_ROOMS) {
+        count = MAX_ROOMS;
+    }
+    for (int i = 0; i < count; i++) {
+        cJSON *entry = cJSON_GetArrayItem(traps, i);
+        cJSON *x = cJSON_GetObjectItem(entry, "x");
+        cJSON *y = cJSON_GetObjectItem(entry, "y");
+        cJSON *vertical = cJSON_GetObjectItem(entry, "vertical");
+        cJSON *timer = cJSON_GetObjectItem(entry, "timer");
+        cJSON *spent = cJSON_GetObjectItem(entry, "spent");
+        if (cJSON_IsNumber(x) && cJSON_IsNumber(y) && cJSON_IsNumber(vertical) && cJSON_IsNumber(timer) && cJSON_IsNumber(spent) &&
+            x->valueint >= 0 && x->valueint < MAP_W && y->valueint >= 0 && y->valueint < MAP_H) {
+            m->burial_traps[m->burial_trap_count++] = (BurialTrap){x->valueint, y->valueint, vertical->valueint != 0, timer->valueint > 0 ? 1 : 0, spent->valueint != 0};
+        }
+    }
     base64_to_tiles(cJSON_GetObjectItem(obj, "tiles_b64")->valuestring, m->tiles);
     map_clear_exploration(m);
     cJSON *explored = cJSON_GetObjectItem(obj, "explored_b64");
@@ -271,6 +303,8 @@ static cJSON *serialize_enemies(const Enemy *enemies, int count) {
         cJSON_AddNumberToObject(obj, "frozen_turns", e->frozen_turns);
         cJSON_AddNumberToObject(obj, "attack_target_x", e->attack_target_x);
         cJSON_AddNumberToObject(obj, "attack_target_y", e->attack_target_y);
+        cJSON_AddNumberToObject(obj, "revived", e->revived);
+        cJSON_AddNumberToObject(obj, "revive_timer", e->revive_timer);
         cJSON_AddItemToArray(arr, obj);
     }
     return arr;
@@ -311,6 +345,10 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count) {
         e->frozen_turns = cJSON_GetObjectItem(obj, "frozen_turns")->valueint;
         e->attack_target_x = cJSON_GetObjectItem(obj, "attack_target_x")->valueint;
         e->attack_target_y = cJSON_GetObjectItem(obj, "attack_target_y")->valueint;
+        cJSON *revived = cJSON_GetObjectItem(obj, "revived");
+        cJSON *revive_timer = cJSON_GetObjectItem(obj, "revive_timer");
+        e->revived = revived ? revived->valueint : 0;
+        e->revive_timer = revive_timer ? revive_timer->valueint : 0;
     }
 }
 
@@ -390,7 +428,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 82);
+    cJSON_AddNumberToObject(root, "save_version", 83);
     cJSON_AddNumberToObject(root, "forest_entry_town", g->forest_entry_town);
     cJSON_AddNumberToObject(root, "forest_portal_town", g->forest_portal_town);
     cJSON_AddNumberToObject(root, "swamp_entry_town", g->swamp_entry_town);
@@ -461,6 +499,8 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "max_moonveil_level_reached", g->max_moonveil_level_reached);
     cJSON_AddNumberToObject(root, "max_ashen_level_reached", g->max_ashen_level_reached);
     cJSON_AddNumberToObject(root, "max_glassdeep_level_reached", g->max_glassdeep_level_reached);
+    cJSON_AddNumberToObject(root, "max_catacombs_level_reached", g->max_catacombs_level_reached);
+    cJSON_AddNumberToObject(root, "catacombs_mantle_unclaimed", g->catacombs_mantle_unclaimed);
     cJSON_AddNumberToObject(root, "max_temple_level_reached",
         g->max_temple_level_reached);
     cJSON_AddNumberToObject(root, "message_count",     g->message_count);
@@ -835,6 +875,22 @@ int save_game(const GameState *g, int slot) {
     }
     cJSON_AddItemToObject(root, "glassdeep_cache", glassdeep_cache);
 
+    cJSON *catacombs_cache = cJSON_CreateArray();
+    for (int i = 0; i < CATACOMBS_DEPTH; i++) {
+        const LevelCache *cache = &g->catacombs_cache[i];
+        cJSON *entry = cJSON_CreateObject();
+        cJSON_AddNumberToObject(entry, "valid", cache->valid);
+        cJSON_AddNumberToObject(entry, "level_cleared", cache->level_cleared);
+        if (cache->valid) {
+            cJSON_AddItemToObject(entry, "map", serialize_map(&cache->map));
+            cJSON_AddItemToObject(entry, "enemies",
+                serialize_enemies(cache->enemies, cache->enemy_count));
+            cJSON_AddNumberToObject(entry, "enemy_count", cache->enemy_count);
+        }
+        cJSON_AddItemToArray(catacombs_cache, entry);
+    }
+    cJSON_AddItemToObject(root, "catacombs_cache", catacombs_cache);
+
     const char *road_keys[2] = {"crownroad_cache", "kingroad_west_cache"};
     const CrownroadCache *road_caches[2] = {&g->crownroad_cache, &g->kingroad_west_cache};
     for (int i = 0; i < 2; i++) {
@@ -920,6 +976,24 @@ static void repair_floor_item_underlays(GameState *g) {
 }
 
 static void migrate_testing_save(cJSON *root, int version) {
+    if (version < 83) {
+        if (!cJSON_GetObjectItem(root, "max_catacombs_level_reached")) {
+            cJSON_AddNumberToObject(root, "max_catacombs_level_reached", 1);
+        }
+        if (!cJSON_GetObjectItem(root, "catacombs_mantle_unclaimed")) {
+            cJSON_AddNumberToObject(root, "catacombs_mantle_unclaimed", 0);
+        }
+        if (!cJSON_GetObjectItem(root, "catacombs_cache")) {
+            cJSON *cache = cJSON_CreateArray();
+            for (int i = 0; i < CATACOMBS_DEPTH; i++) {
+                cJSON *entry = cJSON_CreateObject();
+                cJSON_AddNumberToObject(entry, "valid", 0);
+                cJSON_AddNumberToObject(entry, "level_cleared", 0);
+                cJSON_AddItemToArray(cache, entry);
+            }
+            cJSON_AddItemToObject(root, "catacombs_cache", cache);
+        }
+    }
     if (version < 82) {
         if (!cJSON_GetObjectItem(root, "max_glassdeep_level_reached")) {
             cJSON_AddNumberToObject(root, "max_glassdeep_level_reached", 1);
@@ -1170,6 +1244,19 @@ int load_game(GameState *g, int slot) {
         return 0;
     }
 
+    cJSON *max_catacombs = cJSON_GetObjectItem(root, "max_catacombs_level_reached");
+    cJSON *catacombs_cache = cJSON_GetObjectItem(root, "catacombs_cache");
+    if (!cJSON_IsNumber(max_catacombs) || !cJSON_IsArray(catacombs_cache) ||
+        cJSON_GetArraySize(catacombs_cache) != CATACOMBS_DEPTH) {
+        cJSON_Delete(root);
+        return 0;
+    }
+
+    cJSON *mantle = cJSON_GetObjectItem(root, "catacombs_mantle_unclaimed");
+    if (!cJSON_IsNumber(mantle)) {
+        cJSON_Delete(root);
+        return 0;
+    }
     // Player
     cJSON *player = cJSON_GetObjectItem(root, "player");
     cJSON *freeze_recovery = cJSON_GetObjectItem(player, "freeze_recovery");
@@ -1271,6 +1358,8 @@ int load_game(GameState *g, int slot) {
     g->max_moonveil_level_reached = max_moonveil->valueint;
     g->max_ashen_level_reached = max_ashen->valueint;
     g->max_glassdeep_level_reached = max_glassdeep->valueint;
+    g->max_catacombs_level_reached = max_catacombs->valueint;
+    g->catacombs_mantle_unclaimed = mantle->valueint;
     cJSON *max_temple = cJSON_GetObjectItem(root,
         "max_temple_level_reached");
     g->max_temple_level_reached = max_temple ? max_temple->valueint : 1;
@@ -1697,6 +1786,25 @@ int load_game(GameState *g, int slot) {
         }
     }
 
+    for (int i = 0; i < CATACOMBS_DEPTH; i++) {
+        LevelCache *cache = &g->catacombs_cache[i];
+        *cache = (LevelCache){0};
+        cJSON *entry = cJSON_GetArrayItem(catacombs_cache, i);
+        cJSON *valid = cJSON_GetObjectItem(entry, "valid");
+        cJSON *cleared = cJSON_GetObjectItem(entry, "level_cleared");
+        if (!cJSON_IsNumber(valid) || !cJSON_IsNumber(cleared)) {
+            cJSON_Delete(root);
+            return 0;
+        }
+        cache->valid = valid->valueint;
+        cache->level_cleared = cleared->valueint;
+        if (cache->valid) {
+            deserialize_map(cJSON_GetObjectItem(entry, "map"), &cache->map);
+            deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
+                cache->enemies, &cache->enemy_count);
+        }
+    }
+
     const char *road_keys[2] = {"crownroad_cache", "kingroad_west_cache"};
     CrownroadCache *road_caches[2] = {&g->crownroad_cache, &g->kingroad_west_cache};
     for (int i = 0; i < 2; i++) {
@@ -1760,6 +1868,15 @@ int load_game(GameState *g, int slot) {
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
                 g->labyrinth_cache[i].enemies,
                 &g->labyrinth_cache[i].enemy_count);
+        }
+    }
+
+    if (save_version < 83 && g->location == LOCATION_CASTLE) {
+        g->map.tiles[TOWN_H - 1][CROWNROAD_X] = TILE_TOWN_EXIT;
+        for (int y = CASTLE_ROAD_Y; y < TOWN_H - 1; y++) {
+            if (g->map.tiles[y][CROWNROAD_X] != TILE_ITEM) {
+                g->map.tiles[y][CROWNROAD_X] = TILE_TOWN_PATH;
+            }
         }
     }
 

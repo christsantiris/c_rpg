@@ -49,6 +49,7 @@ void test_desert(void);
 void test_moonveil(void);
 void test_ashen(void);
 void test_glassdeep(void);
+void test_catacombs(void);
 void test_mountain_terrain(void);
 void test_dragonspine(void);
 void test_elowen_quest(void);
@@ -132,6 +133,7 @@ int main(void) {
     test_moonveil();
     test_ashen();
     test_glassdeep();
+    test_catacombs();
     printf("\n");
     test_quest_activation_gating();
     printf("\n");

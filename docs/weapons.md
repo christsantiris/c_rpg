@@ -112,3 +112,10 @@ Each of the five regional bosses guarantees a fixed thematic item:
 
 The Fallen Sun Guardian protects the buried temple treasure and does not drop
 equipment. Boss victories remain permanent during repeat expeditions.
+
+### Gravekeeper's Mantle
+
+The Grave Marshal in the Royal Catacombs drops this rare armor for every class.
+It grants +6 defense and +20 maximum health. Extinguish the boss chamber's two
+braziers to remove its damage protection. An unclaimed mantle remains
+recoverable on returning to the final catacomb floor.
