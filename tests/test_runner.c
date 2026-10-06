@@ -46,6 +46,7 @@ void test_regional_shortcuts(void);
 void test_frostfell(void);
 void test_desert(void);
 void test_moonveil(void);
+void test_ashen(void);
 void test_mountain_terrain(void);
 void test_dragonspine(void);
 void test_elowen_quest(void);
@@ -126,6 +127,7 @@ int main(void) {
     printf("\n");
     test_desert();
     test_moonveil();
+    test_ashen();
     printf("\n");
     test_quest_activation_gating();
     printf("\n");

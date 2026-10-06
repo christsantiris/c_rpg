@@ -77,10 +77,10 @@ void test_dragonspine(void) {
                 tile == TILE_NPC_DRAGON_SEEKER || tile == TILE_NPC_ROYAL_GUARD;
         }
     }
-    ASSERT("Ridgeshire is a crossroads with Ilya and two guards, not buildings",
+    ASSERT("Ridgeshire keeps its crossroads, Ilya, and guards with an open Ashen Hollow gate",
         empty_crossroads && ilya_count == 1 && royal_guard_count == 2 &&
         g.map.tiles[12][20] == TILE_TOWN_PATH &&
-        g.map.tiles[0][20] == TILE_WALL && g.map.tiles[12][0] == TILE_TOWN_EXIT);
+        g.map.tiles[0][RIDGESHIRE_ASHEN_GATE_X] == TILE_TOWN_EXIT && g.map.tiles[12][0] == TILE_TOWN_EXIT);
 
     action_resolve_player(&g, (Action){ACTION_MOVE, RIDGESHIRE_MOUNTAIN_ROAD_X, TOWN_H - 1});
     ASSERT("Ridgeshire south exit enters the safe shortcut",

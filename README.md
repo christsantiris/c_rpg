@@ -152,6 +152,16 @@ stage 5's return to Rosemoor and drops a Potion of Strength. Backtracking, later
 visits, saves, and Return to Town portals retain the gardens' explored maps and
 enemy progress. See [Moonveil Gardens](docs/moonveil-gardens.md).
 
+### Ashen Hollow
+
+Ridgeshire's north gate leads into five stages of Ashen Hollow, a volcanic basin
+of basalt columns, charred trees, ruined stonework, and animated lava pools.
+Enter from the south and follow winding ash paths north. Cinder Imps throw
+firebolts, Ash Hounds rush forward, and Obsidian Guardians defend later stages.
+The Cinder Lord guards stage 5's return route to Ridgeshire and drops a Potion
+of Strength. Exploration and enemy progress survive backtracking, later visits,
+saves, and Return to Town portals. See [Ashen Hollow](docs/ashen-hollow.md).
+
 ### Harbor and Ruined Isle
 
 Captain Rowan waits near the harbor and describes the island before it is
@@ -265,6 +275,7 @@ and sell modes are switched with `Tab`.
 - [Blackwater Swamp](docs/swamp.md)
 - [Sunscar Wastes and the magic lamp quest](docs/sunscar-wastes.md)
 - [Moonveil Gardens](docs/moonveil-gardens.md)
+- [Ashen Hollow](docs/ashen-hollow.md)
 - [Harbor, Ruined Isle, and Ruined Temple](docs/harbor-and-ruined-isle.md)
 
 ## Screenshots
@@ -398,3 +409,5 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
    Multiple levels, unique mechanics, enemies, boss
 - Recruit a party to join the adventure
 - Additional areas and storylines e.g caves, catacombs with minotaur boss, crypt
+- Glassdeep Caverns south of Stillbury: luminous crystals, underground pools,
+  Crystal Spiders, Blind Stalkers, Shard Golems, and the Prism Sovereign.
