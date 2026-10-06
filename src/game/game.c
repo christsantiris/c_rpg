@@ -247,6 +247,27 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             e->attack = 24; e->defense = 9; e->experience = 750;
             e->is_boss = 1;
             break;
+        case ENEMY_CRYSTAL_SPIDER:
+            snprintf(e->name, sizeof(e->name), "Crystal Spider");
+            e->max_hp = 30; e->hp = 30;
+            e->attack = 11; e->defense = 2; e->experience = 40;
+            break;
+        case ENEMY_BLIND_STALKER:
+            snprintf(e->name, sizeof(e->name), "Blind Stalker");
+            e->max_hp = 38; e->hp = 38;
+            e->attack = 16; e->defense = 3; e->experience = 60;
+            break;
+        case ENEMY_SHARD_GOLEM:
+            snprintf(e->name, sizeof(e->name), "Shard Golem");
+            e->max_hp = 110; e->hp = 110;
+            e->attack = 18; e->defense = 9; e->experience = 130;
+            break;
+        case ENEMY_PRISM_SOVEREIGN:
+            snprintf(e->name, sizeof(e->name), "Prism Sovereign");
+            e->max_hp = 275; e->hp = 275;
+            e->attack = 24; e->defense = 8; e->experience = 800;
+            e->is_boss = 1;
+            break;
         case ENEMY_SWAMP_DEMON:
             strncpy(e->name, "Swamp Demon", sizeof(e->name) - 1);
             e->max_hp = 180; e->hp = 180;
@@ -511,6 +532,8 @@ static int boss_for_level(const GameState *g, EnemyType *type) {
         boss_level = MOONVEIL_DEPTH;
     } else if (g->location == LOCATION_ASHEN) {
         boss_level = ASHEN_DEPTH;
+    } else if (g->location == LOCATION_GLASSDEEP) {
+        boss_level = GLASSDEEP_DEPTH;
     } else if (g->location == LOCATION_DRAGONSPINE) {
         boss_level = DRAGONSPINE_DEPTH;
     }
@@ -536,6 +559,8 @@ static int boss_for_level(const GameState *g, EnemyType *type) {
         *type = ENEMY_THORN_REGENT;
     } else if (g->location == LOCATION_ASHEN) {
         *type = ENEMY_CINDER_LORD;
+    } else if (g->location == LOCATION_GLASSDEEP) {
+        *type = ENEMY_PRISM_SOVEREIGN;
     } else if (g->location == LOCATION_DRAGONSPINE) {
         *type = ENEMY_RED_DRAGON;
     } else {
@@ -562,6 +587,8 @@ static int enemy_terrain_open(const GameState *g, int x, int y) {
         g->map.tiles[y][x] != TILE_MOONVEIL_CIRCLE &&
         g->map.tiles[y][x] != TILE_ASHEN_FLOOR &&
         g->map.tiles[y][x] != TILE_ASHEN_RUIN &&
+        g->map.tiles[y][x] != TILE_GLASSDEEP_FLOOR &&
+        g->map.tiles[y][x] != TILE_GLASSDEEP_RUIN &&
         g->map.tiles[y][x] != TILE_FROST_FLOOR &&
         g->map.tiles[y][x] != TILE_FROST_LAKE &&
         g->map.tiles[y][x] != TILE_DRAGON_FLOOR &&
@@ -910,6 +937,7 @@ void enemies_spawn(GameState *g) {
             g->location == LOCATION_DESERT ||
             g->location == LOCATION_MOONVEIL ||
             g->location == LOCATION_ASHEN ||
+            g->location == LOCATION_GLASSDEEP ||
             g->location == LOCATION_DRAGONSPINE) {
             map_room_center(&g->map.rooms[g->map.room_count - 1],
                 &boss_x, &boss_y);
@@ -932,7 +960,8 @@ void enemies_spawn(GameState *g) {
         (g->location == LOCATION_DESERT ? DESERT_DEPTH :
         (g->location == LOCATION_MOONVEIL ? MOONVEIL_DEPTH :
         (g->location == LOCATION_ASHEN ? ASHEN_DEPTH :
-        (g->location == LOCATION_DRAGONSPINE ? DRAGONSPINE_DEPTH : DUNGEON_DEPTH))))))));
+        (g->location == LOCATION_GLASSDEEP ? GLASSDEEP_DEPTH :
+        (g->location == LOCATION_DRAGONSPINE ? DRAGONSPINE_DEPTH : DUNGEON_DEPTH)))))))));
     int regular_room_limit = g->level == boss_level
         ? g->map.room_count - 1 : g->map.room_count;
     place_dain_map_bearer(g);
@@ -965,6 +994,13 @@ void enemies_spawn(GameState *g) {
                 type = roll < 12 ? ENEMY_GOBLIN_ARCHER :
                     (roll < 40 ? ENEMY_DRAKE :
                     (roll < 65 ? ENEMY_GIANT : ENEMY_FIRE_ELEMENTAL));
+            }
+        } else if (g->location == LOCATION_GLASSDEEP) {
+            if (g->level < 3) {
+                type = roll < 65 ? ENEMY_CRYSTAL_SPIDER : ENEMY_BLIND_STALKER;
+            } else {
+                type = roll < 30 ? ENEMY_CRYSTAL_SPIDER :
+                    (roll < 65 ? ENEMY_BLIND_STALKER : ENEMY_SHARD_GOLEM);
             }
         } else if (g->location == LOCATION_ASHEN) {
             if (g->level < 3) {
@@ -1168,6 +1204,9 @@ void game_init(GameState *g) {
         if (i < ASHEN_DEPTH) {
             g->ashen_cache[i] = (LevelCache){0};
         }
+        if (i < GLASSDEEP_DEPTH) {
+            g->glassdeep_cache[i] = (LevelCache){0};
+        }
         if (i < DESERT_DEPTH) {
             g->desert_cache[i] = (LevelCache){0};
         }
@@ -1191,6 +1230,7 @@ void game_init(GameState *g) {
     g->max_desert_level_reached = 1;
     g->max_moonveil_level_reached = 1;
     g->max_ashen_level_reached = 1;
+    g->max_glassdeep_level_reached = 1;
     g->max_temple_level_reached = 1;
     g->location = LOCATION_TOWN;
     int spawn_x, spawn_y;
@@ -1548,6 +1588,9 @@ static LevelCache *active_cache(GameState *g) {
     if (g->location == LOCATION_ASHEN) {
         return g->ashen_cache;
     }
+    if (g->location == LOCATION_GLASSDEEP) {
+        return g->glassdeep_cache;
+    }
     if (g->location == LOCATION_TEMPLE) {
         return g->temple_cache;
     }
@@ -1578,6 +1621,9 @@ static int *active_max_level(GameState *g) {
     }
     if (g->location == LOCATION_ASHEN) {
         return &g->max_ashen_level_reached;
+    }
+    if (g->location == LOCATION_GLASSDEEP) {
+        return &g->max_glassdeep_level_reached;
     }
     if (g->location == LOCATION_TEMPLE) {
         return &g->max_temple_level_reached;
@@ -1612,6 +1658,9 @@ static int active_depth(const GameState *g) {
     }
     if (g->location == LOCATION_ASHEN) {
         return ASHEN_DEPTH;
+    }
+    if (g->location == LOCATION_GLASSDEEP) {
+        return GLASSDEEP_DEPTH;
     }
     if (g->location == LOCATION_TEMPLE) {
         return TEMPLE_DEPTH;
@@ -2011,6 +2060,8 @@ static void generate_active_level(GameState *g) {
         map_generate_moonveil(&g->map, g->level);
     } else if (g->location == LOCATION_ASHEN) {
         map_generate_ashen(&g->map, g->level);
+    } else if (g->location == LOCATION_GLASSDEEP) {
+        map_generate_glassdeep(&g->map, g->level);
     } else if (g->location == LOCATION_DRAGONSPINE) {
         map_generate_dragonspine(&g->map, g->level);
     } else if (g->location == LOCATION_TEMPLE) {
@@ -2385,6 +2436,26 @@ void game_enter_ashen(GameState *g) {
     push_message(g, "Ash drifts across the basalt paths of Ashen Hollow.");
 }
 
+void game_enter_glassdeep(GameState *g) {
+    clear_floor_loot(g);
+    g->location = LOCATION_GLASSDEEP;
+    g->level = 1;
+    LevelCache *cache = &g->glassdeep_cache[0];
+    if (cache->valid) {
+        g->map = cache->map;
+        g->enemy_count = cache->enemy_count;
+        memcpy(g->enemies, cache->enemies, sizeof(g->enemies));
+        g->level_cleared = cache->level_cleared;
+    } else {
+        g->level_cleared = 0;
+        generate_active_level(g);
+    }
+    g->player.x = g->map.stairs_up_x;
+    g->player.y = g->map.stairs_up_y;
+    g->dialogue_active = 0;
+    push_message(g, "Crystals illuminate the abandoned quarry of Glassdeep Caverns.");
+}
+
 void game_enter_high_pass(GameState *g, int from_town) {
     g->location = LOCATION_HIGH_PASS;
     map_generate_high_pass(&g->map);
@@ -2450,7 +2521,9 @@ static void place_town_portal(GameState *g) {
         return;
     }
     if (g->location == LOCATION_TOWN2) {
-        if (g->portal_location == LOCATION_SWAMP && g->swamp_portal_town == LOCATION_TOWN2) {
+        if (g->portal_location == LOCATION_GLASSDEEP) {
+            g->map.tiles[TOWN_H - 3][STILLBURY_GLASSDEEP_GATE_X + 1] = TILE_PORTAL;
+        } else if (g->portal_location == LOCATION_SWAMP && g->swamp_portal_town == LOCATION_TOWN2) {
             g->map.tiles[2][21] = TILE_PORTAL;
         } else if (g->portal_location == LOCATION_DESERT) {
             g->map.tiles[12][2] = TILE_PORTAL;
@@ -2477,6 +2550,7 @@ static void place_town_portal(GameState *g) {
         g->portal_location == LOCATION_DESERT ||
         g->portal_location == LOCATION_MOONVEIL ||
         g->portal_location == LOCATION_ASHEN ||
+        g->portal_location == LOCATION_GLASSDEEP ||
         g->portal_location == LOCATION_FROSTFELL) {
         return;
     }
@@ -3237,7 +3311,7 @@ void game_record_temple_enemy_defeated(GameState *g, EnemyType type) {
 static void return_to_town(GameState *g, Location destination) {
     Location returning_from = g->location;
     if (returning_from == LOCATION_FROSTFELL || returning_from == LOCATION_DESERT ||
-        returning_from == LOCATION_MOONVEIL ||
+        returning_from == LOCATION_MOONVEIL || returning_from == LOCATION_GLASSDEEP ||
         destination == LOCATION_TOWN4 ||
         destination == LOCATION_TOWN3) {
         clear_floor_loot(g);
@@ -3299,6 +3373,9 @@ static void return_to_town(GameState *g, Location destination) {
     } else if (returning_from == LOCATION_SWAMP) {
         g->player.x = 20;
         g->player.y = 1;
+    } else if (returning_from == LOCATION_GLASSDEEP) {
+        g->player.x = STILLBURY_GLASSDEEP_GATE_X;
+        g->player.y = TOWN_H - 2;
     } else if (returning_from == LOCATION_DESERT) {
         g->player.x = 1;
         g->player.y = 12;
@@ -3337,7 +3414,7 @@ void game_return_to_town(GameState *g) {
         destination = g->swamp_entry_town;
     } else if (g->location == LOCATION_MOUNTAINS) {
         destination = g->mountain_entry_town;
-    } else if (g->location == LOCATION_DESERT) {
+    } else if (g->location == LOCATION_DESERT || g->location == LOCATION_GLASSDEEP) {
         destination = LOCATION_TOWN2;
     } else if (g->location == LOCATION_FROSTFELL || g->location == LOCATION_MOONVEIL) {
         destination = LOCATION_TOWN3;
@@ -3420,12 +3497,13 @@ void game_open_town_portal(GameState *g) {
         g->location != LOCATION_DESERT &&
         g->location != LOCATION_MOONVEIL &&
         g->location != LOCATION_ASHEN &&
+        g->location != LOCATION_GLASSDEEP &&
         g->location != LOCATION_DRAGONSPINE) {
         return;
     }
     game_hide_portal_destination(g);
     if (g->location == LOCATION_DESERT || g->location == LOCATION_MOONVEIL ||
-        g->location == LOCATION_ASHEN) {
+        g->location == LOCATION_ASHEN || g->location == LOCATION_GLASSDEEP) {
         clear_floor_loot(g);
     }
     g->portal_active = 1;
@@ -3479,6 +3557,11 @@ void game_hide_portal_destination(GameState *g) {
             return;
         }
         cache = g->ashen_cache;
+    } else if (g->portal_location == LOCATION_GLASSDEEP) {
+        if (g->portal_level > GLASSDEEP_DEPTH) {
+            return;
+        }
+        cache = g->glassdeep_cache;
     } else if (g->portal_location == LOCATION_TEMPLE) {
         cache = g->temple_cache;
     }
@@ -3547,13 +3630,19 @@ void game_use_town_portal(GameState *g) {
             return;
         }
         cache = g->ashen_cache;
+    } else if (g->portal_location == LOCATION_GLASSDEEP) {
+        if (g->portal_level > GLASSDEEP_DEPTH) {
+            return;
+        }
+        cache = g->glassdeep_cache;
     } else if (g->portal_location == LOCATION_TEMPLE) {
         cache = g->temple_cache;
     }
     if (!cache[level - 1].valid) return;
 
     if (g->portal_location == LOCATION_FROSTFELL || g->portal_location == LOCATION_DESERT ||
-        g->portal_location == LOCATION_MOONVEIL || g->portal_location == LOCATION_ASHEN) {
+        g->portal_location == LOCATION_MOONVEIL || g->portal_location == LOCATION_ASHEN ||
+        g->portal_location == LOCATION_GLASSDEEP) {
         clear_floor_loot(g);
     }
     g->location = g->portal_location;

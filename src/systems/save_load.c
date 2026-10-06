@@ -386,7 +386,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 81);
+    cJSON_AddNumberToObject(root, "save_version", 82);
     cJSON_AddNumberToObject(root, "forest_entry_town", g->forest_entry_town);
     cJSON_AddNumberToObject(root, "forest_portal_town", g->forest_portal_town);
     cJSON_AddNumberToObject(root, "swamp_entry_town", g->swamp_entry_town);
@@ -456,6 +456,7 @@ int save_game(const GameState *g, int slot) {
         g->max_desert_level_reached);
     cJSON_AddNumberToObject(root, "max_moonveil_level_reached", g->max_moonveil_level_reached);
     cJSON_AddNumberToObject(root, "max_ashen_level_reached", g->max_ashen_level_reached);
+    cJSON_AddNumberToObject(root, "max_glassdeep_level_reached", g->max_glassdeep_level_reached);
     cJSON_AddNumberToObject(root, "max_temple_level_reached",
         g->max_temple_level_reached);
     cJSON_AddNumberToObject(root, "message_count",     g->message_count);
@@ -814,6 +815,22 @@ int save_game(const GameState *g, int slot) {
     }
     cJSON_AddItemToObject(root, "ashen_cache", ashen_cache);
 
+    cJSON *glassdeep_cache = cJSON_CreateArray();
+    for (int i = 0; i < GLASSDEEP_DEPTH; i++) {
+        const LevelCache *cache = &g->glassdeep_cache[i];
+        cJSON *entry = cJSON_CreateObject();
+        cJSON_AddNumberToObject(entry, "valid", cache->valid);
+        cJSON_AddNumberToObject(entry, "level_cleared", cache->level_cleared);
+        if (cache->valid) {
+            cJSON_AddItemToObject(entry, "map", serialize_map(&cache->map));
+            cJSON_AddItemToObject(entry, "enemies",
+                serialize_enemies(cache->enemies, cache->enemy_count));
+            cJSON_AddNumberToObject(entry, "enemy_count", cache->enemy_count);
+        }
+        cJSON_AddItemToArray(glassdeep_cache, entry);
+    }
+    cJSON_AddItemToObject(root, "glassdeep_cache", glassdeep_cache);
+
     const char *road_keys[2] = {"crownroad_cache", "kingroad_west_cache"};
     const CrownroadCache *road_caches[2] = {&g->crownroad_cache, &g->kingroad_west_cache};
     for (int i = 0; i < 2; i++) {
@@ -899,6 +916,21 @@ static void repair_floor_item_underlays(GameState *g) {
 }
 
 static void migrate_testing_save(cJSON *root, int version) {
+    if (version < 82) {
+        if (!cJSON_GetObjectItem(root, "max_glassdeep_level_reached")) {
+            cJSON_AddNumberToObject(root, "max_glassdeep_level_reached", 1);
+        }
+        if (!cJSON_GetObjectItem(root, "glassdeep_cache")) {
+            cJSON *cache = cJSON_CreateArray();
+            for (int i = 0; i < GLASSDEEP_DEPTH; i++) {
+                cJSON *entry = cJSON_CreateObject();
+                cJSON_AddNumberToObject(entry, "valid", 0);
+                cJSON_AddNumberToObject(entry, "level_cleared", 0);
+                cJSON_AddItemToArray(cache, entry);
+            }
+            cJSON_AddItemToObject(root, "glassdeep_cache", cache);
+        }
+    }
     if (version < 81) {
         if (!cJSON_GetObjectItem(root, "max_ashen_level_reached")) {
             cJSON_AddNumberToObject(root, "max_ashen_level_reached", 1);
@@ -1126,6 +1158,14 @@ int load_game(GameState *g, int slot) {
         return 0;
     }
 
+    cJSON *max_glassdeep = cJSON_GetObjectItem(root, "max_glassdeep_level_reached");
+    cJSON *glassdeep_cache = cJSON_GetObjectItem(root, "glassdeep_cache");
+    if (!cJSON_IsNumber(max_glassdeep) || !cJSON_IsArray(glassdeep_cache) ||
+        cJSON_GetArraySize(glassdeep_cache) != GLASSDEEP_DEPTH) {
+        cJSON_Delete(root);
+        return 0;
+    }
+
     // Player
     cJSON *player = cJSON_GetObjectItem(root, "player");
     cJSON *freeze_recovery = cJSON_GetObjectItem(player, "freeze_recovery");
@@ -1226,6 +1266,7 @@ int load_game(GameState *g, int slot) {
     g->max_desert_level_reached = max_desert->valueint;
     g->max_moonveil_level_reached = max_moonveil->valueint;
     g->max_ashen_level_reached = max_ashen->valueint;
+    g->max_glassdeep_level_reached = max_glassdeep->valueint;
     cJSON *max_temple = cJSON_GetObjectItem(root,
         "max_temple_level_reached");
     g->max_temple_level_reached = max_temple ? max_temple->valueint : 1;
@@ -1618,6 +1659,25 @@ int load_game(GameState *g, int slot) {
         LevelCache *cache = &g->ashen_cache[i];
         *cache = (LevelCache){0};
         cJSON *entry = cJSON_GetArrayItem(ashen_cache, i);
+        cJSON *valid = cJSON_GetObjectItem(entry, "valid");
+        cJSON *cleared = cJSON_GetObjectItem(entry, "level_cleared");
+        if (!cJSON_IsNumber(valid) || !cJSON_IsNumber(cleared)) {
+            cJSON_Delete(root);
+            return 0;
+        }
+        cache->valid = valid->valueint;
+        cache->level_cleared = cleared->valueint;
+        if (cache->valid) {
+            deserialize_map(cJSON_GetObjectItem(entry, "map"), &cache->map);
+            deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
+                cache->enemies, &cache->enemy_count);
+        }
+    }
+
+    for (int i = 0; i < GLASSDEEP_DEPTH; i++) {
+        LevelCache *cache = &g->glassdeep_cache[i];
+        *cache = (LevelCache){0};
+        cJSON *entry = cJSON_GetArrayItem(glassdeep_cache, i);
         cJSON *valid = cJSON_GetObjectItem(entry, "valid");
         cJSON *cleared = cJSON_GetObjectItem(entry, "level_cleared");
         if (!cJSON_IsNumber(valid) || !cJSON_IsNumber(cleared)) {

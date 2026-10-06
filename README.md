@@ -162,6 +162,17 @@ The Cinder Lord guards stage 5's return route to Ridgeshire and drops a Potion
 of Strength. Exploration and enemy progress survive backtracking, later visits,
 saves, and Return to Town portals. See [Ashen Hollow](docs/ashen-hollow.md).
 
+### Glassdeep Caverns
+
+Stillbury's south gate opens into five stages of Glassdeep Caverns. Descend
+south through irregular crystal chambers, underground pools, mineral seams,
+and the paving of a buried sanctuary. Crystal Spiders rush forward, Blind
+Stalkers wait to ambush nearby explorers, and armored Shard Golems guard later
+stages. The Prism Sovereign marks a beam before firing along that fixed path:
+step aside during its warning turn. Defeating it opens stage 5's return to
+Stillbury and drops a Potion of Strength. Saves and Return to Town portals
+preserve the caverns' independent progress. See [Glassdeep Caverns](docs/glassdeep-caverns.md).
+
 ### Harbor and Ruined Isle
 
 Captain Rowan waits near the harbor and describes the island before it is
@@ -276,6 +287,7 @@ and sell modes are switched with `Tab`.
 - [Sunscar Wastes and the magic lamp quest](docs/sunscar-wastes.md)
 - [Moonveil Gardens](docs/moonveil-gardens.md)
 - [Ashen Hollow](docs/ashen-hollow.md)
+- [Glassdeep Caverns](docs/glassdeep-caverns.md)
 - [Harbor, Ruined Isle, and Ruined Temple](docs/harbor-and-ruined-isle.md)
 
 ## Screenshots
@@ -409,5 +421,3 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
    Multiple levels, unique mechanics, enemies, boss
 - Recruit a party to join the adventure
 - Additional areas and storylines e.g caves, catacombs with minotaur boss, crypt
-- Glassdeep Caverns south of Stillbury: luminous crystals, underground pools,
-  Crystal Spiders, Blind Stalkers, Shard Golems, and the Prism Sovereign.
