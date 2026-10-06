@@ -80,7 +80,7 @@ static void test_coast_routes(void) {
             reversible &= memcmp(original, g.map.tiles, sizeof(original)) == 0;
         }
     }
-    ASSERT("2048 coast stages keep exits, boss rooms and the tide control reachable in both tides", solvable);
+    ASSERT("1280 coast stages keep exits, boss rooms and the tide control reachable in both tides", solvable);
     ASSERT("opposite tides switch the guarded treasure chambers", chambers);
     ASSERT("the tide control reverses the water changes", reversible);
     ASSERT("each optional coast treasure chamber has a guardian", guarded);

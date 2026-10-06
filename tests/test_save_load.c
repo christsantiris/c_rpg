@@ -1522,6 +1522,181 @@ static void test_stacked_item_underlays(void) {
     remove_test_save(ROUND_TRIP_SLOT);
 }
 
+static void test_coast_stage_migration(void) {
+    static const int stages[8] = {1, 2, 3, 3, 4, 4, 4, 5};
+    static GameState original;
+    static GameState loaded;
+    const int slot = 99135;
+    if (save_exists(slot)) {
+        ASSERT("coast migration test slot must be unused", 0);
+        return;
+    }
+    for (int old_level = 1; old_level <= 8; old_level++) {
+        memset(&original, 0, sizeof(original));
+        game_init(&original);
+        original.location = LOCATION_COAST;
+        original.level = old_level;
+        original.max_coast_level_reached = old_level;
+        original.mara_quest_state = 1;
+        original.mara_beacons_lit = 5;
+        original.gold = 123;
+        original.score = 4567;
+        original.defeated_bosses = 1 << LOCATION_FOREST;
+        map_generate_coast(&original.map, stages[old_level - 1]);
+        original.player.x = original.map.stairs_up_x;
+        original.player.y = original.map.stairs_up_y;
+        original.player.hp = 37;
+        original.enemy_count = 1;
+        original.enemies[0] = (Enemy){.active = 1, .type = ENEMY_GIANT_CRAB, .hp = 11, .max_hp = 60, .x = original.map.stairs_down_x, .y = original.map.stairs_down_y, .attack_target_x = -1, .attack_target_y = -1};
+        if (old_level == 8) {
+            original.enemies[0].type = ENEMY_DROWNED_QUEEN;
+            original.enemies[0].is_boss = 1;
+        }
+        original.floor_item_count = 1;
+        original.floor_items[0] = (FloorItem){.active = 1, .x = original.player.x, .y = original.player.y, .underlying_tile = TILE_COAST_FLOOR, .item = item_make_health_potion()};
+        original.map.tiles[original.player.y][original.player.x] = TILE_ITEM;
+        if (old_level == 2) {
+            int bx;
+            int by;
+            map_room_center(&original.map.rooms[1], &bx, &by);
+            original.floor_items[1] = (FloorItem){.active = 1, .x = bx, .y = by, .underlying_tile = TILE_COAST_FLOOR, .item = item_make_health_potion()};
+            original.floor_item_count = 2;
+            original.map.tiles[by][bx] = TILE_ITEM;
+        }
+        for (int i = 0; i < 8; i++) {
+            original.coast_cache[i].valid = 1;
+            original.coast_cache[i].map = original.map;
+            original.coast_cache[i].enemy_count = 1;
+            original.coast_cache[i].enemies[0] = original.enemies[0];
+            original.coast_cache[i].enemies[0].hp = 100 + i;
+        }
+        if (old_level == 1) {
+            int bx;
+            int by;
+            map_room_center(&original.map.rooms[1], &bx, &by);
+            original.map.tiles[by][bx] = TILE_COAST_BEACON_LIT;
+        }
+        int migrated = save_game(&original, slot) &&
+            rewrite_save_version(slot, 83) && load_game(&loaded, slot);
+        ASSERT("every legacy coast stage loads at its compressed stage",
+            migrated && loaded.level == stages[old_level - 1] &&
+            loaded.max_coast_level_reached == stages[old_level - 1]);
+        if (!migrated) {
+            continue;
+        }
+        ASSERT("coast migration preserves character and quest progress",
+            loaded.gold == original.gold && loaded.score == original.score &&
+            loaded.player.hp == original.player.hp &&
+            loaded.player.x == original.player.x && loaded.player.y == original.player.y &&
+            loaded.defeated_bosses == original.defeated_bosses &&
+            loaded.mara_quest_state == 1 && loaded.mara_beacons_lit == 5);
+        ASSERT("coast migration keeps damaged enemies and active dropped loot",
+            loaded.enemies[0].hp == 11 && loaded.enemies[0].type == original.enemies[0].type &&
+            loaded.floor_item_count == original.floor_item_count && loaded.floor_items[0].active &&
+            loaded.map.tiles[loaded.player.y][loaded.player.x] == TILE_ITEM &&
+            loaded.coast_cache[loaded.level - 1].enemies[0].hp == 11);
+        ASSERT("obsolete coast cache slots are inaccessible",
+            !loaded.coast_cache[5].valid && !loaded.coast_cache[6].valid &&
+            !loaded.coast_cache[7].valid);
+        if (old_level == 1) {
+            int bx;
+            int by;
+            map_room_center(&loaded.map.rooms[1], &bx, &by);
+            ASSERT("the old stage-one beacon is removed without resetting completion",
+                loaded.map.tiles[by][bx] == TILE_COAST_FLOOR);
+            ASSERT("compression retains the original final boss snapshot",
+                loaded.coast_cache[4].enemies[0].hp == 107);
+        }
+        if (old_level == 2) {
+            FloorItem *item = &loaded.floor_items[1];
+            ASSERT("moving the first beacon preserves items dropped on its new position",
+                item->active && item->underlying_tile == TILE_COAST_BEACON_LIT &&
+                loaded.map.tiles[item->y][item->x] == TILE_ITEM);
+        }
+        int stage = loaded.level;
+        int resaved = save_game(&loaded, slot) && load_game(&loaded, slot);
+        ASSERT("rewritten coast saves do not migrate twice",
+            resaved && loaded.level == stage && loaded.mara_beacons_lit == 5);
+    }
+    for (int old_level = 1; old_level <= 8; old_level++) {
+        memset(&original, 0, sizeof(original));
+        game_init(&original);
+        original.portal_active = 1;
+        original.portal_location = LOCATION_COAST;
+        original.portal_level = old_level;
+        original.max_coast_level_reached = 8;
+        LevelCache *cache = &original.coast_cache[old_level - 1];
+        map_generate_coast(&cache->map, stages[old_level - 1]);
+        cache->valid = 1;
+        original.portal_x = cache->map.stairs_up_x;
+        original.portal_y = cache->map.stairs_up_y;
+        original.portal_origin_tile = TILE_COAST_FLOOR;
+        cache->map.tiles[original.portal_y][original.portal_x] = TILE_PORTAL;
+        int migrated = save_game(&original, slot) &&
+            rewrite_save_version(slot, 83) && load_game(&loaded, slot);
+        ASSERT("legacy coast portals follow their original saved terrain",
+            migrated && loaded.portal_level == stages[old_level - 1] &&
+            loaded.coast_cache[loaded.portal_level - 1].valid &&
+            loaded.max_coast_level_reached == COAST_DEPTH);
+        if (migrated) {
+            game_use_town_portal(&loaded);
+            ASSERT("migrated coast portals remain usable",
+                loaded.location == LOCATION_COAST && loaded.level == stages[old_level - 1] &&
+                loaded.player.x == original.portal_x && loaded.player.y == original.portal_y);
+        }
+    }
+    memset(&original, 0, sizeof(original));
+    game_init(&original);
+    original.location = LOCATION_COAST;
+    original.level = 7;
+    original.max_coast_level_reached = 8;
+    map_generate_coast(&original.map, 3);
+    original.player.x = original.map.stairs_up_x;
+    original.player.y = original.map.stairs_up_y;
+    original.portal_active = 1;
+    original.portal_location = LOCATION_COAST;
+    original.portal_level = 6;
+    original.coast_cache[5].valid = 1;
+    map_generate_coast(&original.coast_cache[5].map, 4);
+    original.portal_x = original.coast_cache[5].map.stairs_up_x;
+    original.portal_y = original.coast_cache[5].map.stairs_up_y;
+    original.portal_origin_tile = TILE_COAST_FLOOR;
+    int migrated = save_game(&original, slot) &&
+        rewrite_save_version(slot, 83) && load_game(&loaded, slot);
+    ASSERT("merged active and portal stages preserve the active map and a safe landing",
+        migrated && loaded.level == 4 && loaded.portal_level == 4 &&
+        loaded.portal_x == original.map.stairs_up_x && loaded.portal_y == original.map.stairs_up_y &&
+        loaded.map.room_count == original.map.room_count &&
+        memcmp(loaded.map.rooms, original.map.rooms, original.map.room_count * sizeof(Room)) == 0 &&
+        memcmp(loaded.map.tiles, original.map.tiles, sizeof(original.map.tiles)) == 0 &&
+        memcmp(loaded.map.explored, original.map.explored, sizeof(original.map.explored)) == 0 &&
+        memcmp(loaded.coast_cache[3].map.tiles, original.map.tiles, sizeof(original.map.tiles)) == 0);
+    if (migrated) {
+        game_return_to_town(&loaded);
+        game_use_town_portal(&loaded);
+        ASSERT("a portal remains usable when its former floor merged with the current stage",
+            loaded.location == LOCATION_COAST && loaded.level == 4 &&
+            loaded.player.x == original.map.stairs_up_x && loaded.player.y == original.map.stairs_up_y);
+        game_return_to_town(&loaded);
+        loaded.portal_active = 1;
+        loaded.portal_level = 6;
+        loaded.coast_cache[5].valid = 1;
+        game_use_town_portal(&loaded);
+        ASSERT("modern coast portals cannot reopen removed stages", loaded.location == LOCATION_TOWN);
+    }
+    memset(&original, 0, sizeof(original));
+    game_init(&original);
+    original.coast_cache[7].valid = 1;
+    map_generate_coast(&original.coast_cache[7].map, COAST_DEPTH);
+    original.coast_cache[7].enemy_count = 1;
+    original.coast_cache[7].enemies[0].type = ENEMY_DROWNED_QUEEN;
+    int legacy = save_game(&original, slot) &&
+        rewrite_save_version(slot, 17) && load_game(&loaded, slot);
+    ASSERT("pre-boss-flag saves retain a Queen defeated on the former final stage",
+        legacy && (loaded.defeated_bosses & (1 << LOCATION_COAST)));
+    remove_test_save(slot);
+}
+
 void test_save_load(void) {
     test_harbor_road_save_load();
     test_spent_island_map_on_load();
@@ -1538,6 +1713,7 @@ void test_save_load(void) {
     test_migrated_armor_round_trip();
     test_harbor_relocation();
     test_legacy_coast_sluice_removal();
+    test_coast_stage_migration();
     test_legacy_town3_moat();
     test_legacy_tavern_move();
     test_legacy_town_square();

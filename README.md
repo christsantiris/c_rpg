@@ -24,7 +24,7 @@ A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explo
 *The Castle of No Return* is a C/SDL roguelike with turn-based combat and a
 retro pixel-art style. Choose a Warrior, Mage, or Rogue, prepare in town, and
 explore an eight-floor undead dungeon, the seven-stage Haunted Forest, the
-seven-stage Goblin Mountains, the eight-stage Sunken Coast, and Stillbury's
+seven-stage Goblin Mountains, the five-stage Sunken Coast, and Stillbury's
 seven-level Blackwater Swamp. Beyond the Goblin Mountains, the five-stage
 Dragonspine ascent begins at Ridgeshire's east gate. Each region
 keeps its own generated maps and progression. Defeating the Drowned Queen on
@@ -227,8 +227,11 @@ cached revisits and saving/loading. Arrow keys always move;
 
 ### Sunken Coast water routes
 
-Each new Coast stage has one tide control. Stand on it and press `A` to transfer
-water between the blue and amber channels. Every activation
+The Sunken Coast has five stages, with Mara's beacons on stages 2, 3, and 4
+and the Drowned Queen on stage 5. Existing saves migrate coast stages and
+portals while preserving beacon progress. Each new Coast stage has one tide
+control. Stand on it and press `A` to transfer water between the blue and amber
+channels. Every activation
 reverses the flow: one basin drains while the other floods. Colored corner
 markers identify the channels; drained channels show exposed stone.
 

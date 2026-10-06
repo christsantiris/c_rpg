@@ -428,7 +428,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 83);
+    cJSON_AddNumberToObject(root, "save_version", 84);
     cJSON_AddNumberToObject(root, "forest_entry_town", g->forest_entry_town);
     cJSON_AddNumberToObject(root, "forest_portal_town", g->forest_portal_town);
     cJSON_AddNumberToObject(root, "swamp_entry_town", g->swamp_entry_town);
@@ -1093,6 +1093,102 @@ static void migrate_testing_save(cJSON *root, int version) {
     if (version < 75 && !cJSON_GetObjectItem(root, "sandstorm_staff_unclaimed")) {
         cJSON_AddNumberToObject(root, "sandstorm_staff_unclaimed", 0);
     }
+}
+
+static void remove_legacy_coast_beacon(Map *m) {
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (m->tiles[y][x] == TILE_COAST_BEACON_UNLIT ||
+                m->tiles[y][x] == TILE_COAST_BEACON_LIT) {
+                m->tiles[y][x] = TILE_COAST_FLOOR;
+            }
+        }
+    }
+}
+
+static int migrate_coast_stages(GameState *g) {
+    static const int levels[8] = {1, 2, 3, 3, 4, 4, 4, 5};
+    static const int retained[COAST_DEPTH] = {0, 1, 2, 5, 7};
+    LevelCache *old = malloc(sizeof(g->coast_cache));
+    if (!old) {
+        return 0;
+    }
+    memcpy(old, g->coast_cache, sizeof(g->coast_cache));
+    int active = g->location == LOCATION_COAST ? g->level : 0;
+    int portal = g->portal_active && g->portal_location == LOCATION_COAST ? g->portal_level : 0;
+    for (int i = 0; i < MAX_REGION_DEPTH; i++) {
+        g->coast_cache[i].valid = 0;
+        g->coast_cache[i].level_cleared = 0;
+    }
+    // Prefer the retained stages, but keep other explored snapshots when the
+    // corresponding retained stage has not been visited yet.
+    for (int i = 0; i < 8; i++) {
+        if (old[i].valid) {
+            g->coast_cache[levels[i] - 1] = old[i];
+        }
+    }
+    for (int i = 0; i < COAST_DEPTH; i++) {
+        if (old[retained[i]].valid) {
+            g->coast_cache[i] = old[retained[i]];
+        }
+    }
+    if (portal >= 1 && portal <= 8 && old[portal - 1].valid) {
+        g->coast_cache[levels[portal - 1] - 1] = old[portal - 1];
+    }
+    free(old);
+    if (active >= 1 && active <= 8) {
+        g->level = levels[active - 1];
+        LevelCache *cache = &g->coast_cache[g->level - 1];
+        cache->map = g->map;
+        cache->enemy_count = g->enemy_count;
+        memcpy(cache->enemies, g->enemies, sizeof(g->enemies));
+        cache->level_cleared = g->level_cleared;
+        cache->valid = 1;
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->active && item->x >= 0 && item->x < MAP_W &&
+                item->y >= 0 && item->y < MAP_H &&
+                cache->map.tiles[item->y][item->x] == TILE_ITEM) {
+                cache->map.tiles[item->y][item->x] = item->underlying_tile;
+            }
+        }
+    }
+    int reached = g->max_coast_level_reached;
+    if (reached < 1) {
+        reached = 1;
+    } else if (reached > 8) {
+        reached = 8;
+    }
+    g->max_coast_level_reached = levels[reached - 1];
+    if (g->portal_location == LOCATION_COAST && g->portal_level >= 1 && g->portal_level <= 8) {
+        g->portal_level = levels[g->portal_level - 1];
+        if (active && portal && active != portal && g->level == g->portal_level) {
+            // Two old floors now share one stage; land on the retained map's
+            // entrance rather than the discarded floor's coordinates.
+            g->portal_x = g->map.stairs_up_x;
+            g->portal_y = g->map.stairs_up_y;
+            g->portal_origin_tile = g->map.tiles[g->portal_y][g->portal_x];
+        }
+    }
+    if (g->coast_cache[0].valid) {
+        remove_legacy_coast_beacon(&g->coast_cache[0].map);
+    }
+    if (active == 1) {
+        remove_legacy_coast_beacon(&g->map);
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->underlying_tile == TILE_COAST_BEACON_UNLIT ||
+                item->underlying_tile == TILE_COAST_BEACON_LIT) {
+                item->underlying_tile = TILE_COAST_FLOOR;
+            }
+        }
+    }
+    if (g->portal_location == LOCATION_COAST && g->portal_level == 1 &&
+        (g->portal_origin_tile == TILE_COAST_BEACON_UNLIT ||
+        g->portal_origin_tile == TILE_COAST_BEACON_LIT)) {
+        g->portal_origin_tile = TILE_COAST_FLOOR;
+    }
+    return 1;
 }
 
 static void remove_legacy_wardens(Map *m) {
@@ -2213,7 +2309,8 @@ int load_game(GameState *g, int slot) {
             LOCATION_MOUNTAINS, LOCATION_COAST
         };
         int boss_depths[4] = {
-            DUNGEON_DEPTH, FOREST_DEPTH, MOUNTAIN_DEPTH, COAST_DEPTH
+            // Coast caches still use the old eight-stage numbering here.
+            DUNGEON_DEPTH, FOREST_DEPTH, MOUNTAIN_DEPTH, 8
         };
         for (int region = 0; region < 4; region++) {
             LevelCache *finale = &boss_caches[region][boss_depths[region] - 1];
@@ -2744,7 +2841,8 @@ int load_game(GameState *g, int slot) {
 
     if ((old_forest && !migrate_region_routes(g, LOCATION_FOREST)) ||
         (old_swamp && !migrate_region_routes(g, LOCATION_SWAMP)) ||
-        (old_mountains && !migrate_region_routes(g, LOCATION_MOUNTAINS))) {
+        (old_mountains && !migrate_region_routes(g, LOCATION_MOUNTAINS)) ||
+        (save_version < 84 && !migrate_coast_stages(g))) {
         cJSON_Delete(root);
         return 0;
     }

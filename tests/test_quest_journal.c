@@ -47,6 +47,14 @@ void test_quest_journal(void) {
     g.rook_quest_state = 3;
     ASSERT("a returned ivory rook is retained in completed quests",
         quest_journal_count(&g, QUEST_TAB_COMPLETED) == 2);
+    g.mara_quest_state = 1;
+    g.mara_beacons_lit = MARA_BEACON_STAGE_2 | MARA_BEACON_STAGE_4;
+    ASSERT("Mara's journal shows stages two through four and preserved completion bits",
+        quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 2, &entry) &&
+        strcmp(entry.giver, "Mara") == 0 && entry.stages[0] == 2 &&
+        entry.stages[1] == 3 && entry.stages[2] == 4 &&
+        entry.objective_complete[0] && !entry.objective_complete[1] && entry.objective_complete[2]);
+    g.mara_quest_state = 0;
     g.innkeeper_quest_state = 1;
     ASSERT("Bram's rescue appears as a swamp quest",
         quest_journal_count(&g, QUEST_TAB_ACTIVE) == 3 &&

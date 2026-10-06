@@ -930,9 +930,9 @@ static int quest_group_pending(const GameState *g) {
         return !(g->alder_wardens_rescued & bit);
     }
     if (g->location == LOCATION_COAST && g->mara_quest_state == 1) {
-        int bit = g->level == 1 ? MARA_BEACON_STAGE_1 :
+        int bit = g->level == 2 ? MARA_BEACON_STAGE_2 :
             (g->level == 3 ? MARA_BEACON_STAGE_3 :
-            (g->level == 6 ? MARA_BEACON_STAGE_6 : 0));
+            (g->level == 4 ? MARA_BEACON_STAGE_4 : 0));
         if (!bit) {
             return 0;
         }
@@ -953,6 +953,9 @@ void enemies_spawn(GameState *g) {
         difficulty = map_swamp_difficulty(g->level);
     } else if (g->location == LOCATION_MOUNTAINS) {
         difficulty = map_mountain_difficulty(g->level);
+    } else if (g->location == LOCATION_COAST) {
+        // Keep the early-to-deep enemy progression within five stages.
+        difficulty = g->level <= 2 ? g->level : 2 * (g->level - 1);
     }
     int num_enemies = 10 + difficulty;
     if (g->location == LOCATION_SWAMP && g->level == SWAMP_RESCUE_LEVEL &&
@@ -1013,7 +1016,7 @@ void enemies_spawn(GameState *g) {
             for (int x = 2; x < MAP_W - 1; x++) {
                 if (g->map.tiles[y][x] == TILE_COAST_CACHE &&
                     g->enemy_count < num_enemies && enemy_tile_open(g, x - 2, y)) {
-                    EnemyType guard = g->level >= 6 ? ENEMY_SEA_SERPENT :
+                    EnemyType guard = difficulty >= 6 ? ENEMY_SEA_SERPENT :
                         (g->level >= 3 ? ENEMY_ANIMATED_STATUE : ENEMY_GIANT_CRAB);
                     spawn_enemy(g, &g->enemies[g->enemy_count++], guard, x - 2, y);
                 }
@@ -1890,14 +1893,27 @@ static void spawn_alder_guardian(GameState *g) {
 }
 
 static int mara_beacon_bit(int level) {
-    if (level == 1) {
-        return MARA_BEACON_STAGE_1;
+    if (level == 2) {
+        return MARA_BEACON_STAGE_2;
     } else if (level == 3) {
         return MARA_BEACON_STAGE_3;
-    } else if (level == 6) {
-        return MARA_BEACON_STAGE_6;
+    } else if (level == 4) {
+        return MARA_BEACON_STAGE_4;
     }
     return 0;
+}
+
+static TileType coast_quest_tile(const GameState *g, int x, int y) {
+    TileType tile = g->map.tiles[y][x];
+    if (tile == TILE_ITEM) {
+        for (int i = 0; i < g->floor_item_count; i++) {
+            const FloorItem *item = &g->floor_items[i];
+            if (item->active && item->x == x && item->y == y) {
+                return item->underlying_tile;
+            }
+        }
+    }
+    return tile;
 }
 
 static int place_mara_beacon(GameState *g) {
@@ -1910,20 +1926,20 @@ static int place_mara_beacon(GameState *g) {
     }
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
-            if (g->map.tiles[y][x] == TILE_COAST_BEACON_UNLIT ||
-                g->map.tiles[y][x] == TILE_COAST_BEACON_LIT) {
+            TileType tile = coast_quest_tile(g, x, y);
+            if (tile == TILE_COAST_BEACON_UNLIT || tile == TILE_COAST_BEACON_LIT) {
                 return 0;
             }
         }
     }
-    int room_index = g->level == 1 ? 1 : (g->level == 3 ? 3 : 8);
+    int room_index = g->level == 2 ? 1 : (g->level == 3 ? 3 : 8);
     if (room_index >= g->map.room_count) {
         return 0;
     }
     int x;
     int y;
     map_room_center(&g->map.rooms[room_index], &x, &y);
-    if (g->level == 6) {
+    if (g->level == 4) {
         int tide_is_high = 0;
         for (int map_y = 0; map_y < MAP_H && !tide_is_high; map_y++) {
             for (int map_x = 0; map_x < MAP_W; map_x++) {
@@ -1947,8 +1963,16 @@ static int place_mara_beacon(GameState *g) {
             }
         }
     }
-    g->map.tiles[y][x] = (g->mara_beacons_lit & bit)
+    TileType beacon = (g->mara_beacons_lit & bit)
         ? TILE_COAST_BEACON_LIT : TILE_COAST_BEACON_UNLIT;
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && item->x == x && item->y == y) {
+            item->underlying_tile = beacon;
+            return !(g->mara_beacons_lit & bit);
+        }
+    }
+    g->map.tiles[y][x] = beacon;
     return !(g->mara_beacons_lit & bit);
 }
 
@@ -1958,13 +1982,13 @@ static void spawn_mara_guardian(GameState *g) {
     }
     EnemyType primary;
     EnemyType support;
-    if (g->level == 1) {
+    if (g->level == 2) {
         primary = ENEMY_GIANT_CRAB;
         support = ENEMY_MERFOLK;
     } else if (g->level == 3) {
         primary = ENEMY_ANIMATED_STATUE;
         support = ENEMY_GIANT_CRAB;
-    } else if (g->level == 6) {
+    } else if (g->level == 4) {
         primary = ENEMY_SEA_SERPENT;
         support = ENEMY_WATER_ELEMENTAL;
     } else {
@@ -1972,7 +1996,7 @@ static void spawn_mara_guardian(GameState *g) {
     }
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
-            if (g->map.tiles[y][x] != TILE_COAST_BEACON_UNLIT) {
+            if (coast_quest_tile(g, x, y) != TILE_COAST_BEACON_UNLIT) {
                 continue;
             }
             spawn_quest_enemy_near(g, primary, x, y);
@@ -3663,6 +3687,9 @@ void game_hide_portal_destination(GameState *g) {
     } else if (g->portal_location == LOCATION_MOUNTAINS) {
         cache = g->mountain_cache;
     } else if (g->portal_location == LOCATION_COAST) {
+        if (g->portal_level > COAST_DEPTH) {
+            return;
+        }
         cache = g->coast_cache;
     } else if (g->portal_location == LOCATION_SWAMP) {
         cache = g->swamp_cache;
@@ -3741,6 +3768,9 @@ void game_use_town_portal(GameState *g) {
     } else if (g->portal_location == LOCATION_MOUNTAINS) {
         cache = g->mountain_cache;
     } else if (g->portal_location == LOCATION_COAST) {
+        if (g->portal_level > COAST_DEPTH) {
+            return;
+        }
         cache = g->coast_cache;
     } else if (g->portal_location == LOCATION_SWAMP) {
         cache = g->swamp_cache;
@@ -4429,7 +4459,7 @@ void game_talk_to_mara(GameState *g) {
         g->mara_beacons_lit = 0;
         prepare_quest_expedition(g, LOCATION_COAST);
         strncpy(g->dialogue_text,
-            "Drowned guardians surround beacons on coast stages 1, 3, and 6. Lower the tide, defeat them, and relight each flame.",
+            "Drowned guardians surround beacons on coast stages 2, 3, and 4. Lower the tide, defeat them, and relight each flame.",
             MAX_DIALOGUE_LEN - 1);
         g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
         push_message(g, "Assigned: Relight the Drowned Beacons.");
@@ -4443,7 +4473,7 @@ void game_talk_to_mara(GameState *g) {
             }
         }
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "You have relit %d of 3 beacons. The remaining lights wait on coast stages 1, 3, and 6.",
+            "You have relit %d of 3 beacons. The remaining lights wait on coast stages 2, 3, and 4.",
             lit);
         char status[MAX_MESSAGE_LEN];
         snprintf(status, sizeof(status), "Quest progress: %d/3 beacons.", lit);

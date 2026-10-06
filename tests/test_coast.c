@@ -128,7 +128,7 @@ void test_coast(void) {
             }
         }
         ASSERT("coast stages use only coast enemies", roster_ok);
-        ASSERT("Drowned Queen appears only on stage eight",
+        ASSERT("Drowned Queen appears only on stage five",
             queen_count == (level == COAST_DEPTH ? 1 : 0));
         ASSERT("coast entry and exit use different edges",
             !((g.map.stairs_up_x == 1 && g.map.stairs_down_x == 1) ||
