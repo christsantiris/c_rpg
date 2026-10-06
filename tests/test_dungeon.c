@@ -594,7 +594,7 @@ void test_enemy_movement_collision(void) {
     };
     for (int region = 0; region < 4; region++) {
         g.location = locations[region];
-        g.level = 8;
+        g.level = DUNGEON_DEPTH;
         if (g.location == LOCATION_DUNGEON) {
             map_generate(&g.map, g.level);
         } else if (g.location == LOCATION_FOREST) {

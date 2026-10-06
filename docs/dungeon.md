@@ -1,6 +1,6 @@
 # Castle Dungeon
 
-Enter the eight-floor dungeon from the east road of OakHaven. Its rooms and
+Enter the five-floor dungeon from the east road of OakHaven. Its rooms and
 connecting corridors are generated for each new expedition, then cached while
 that expedition is in progress. Backtracking preserves explored rooms, enemies,
 opened doors, and collected treasure. A later expedition generates new maps
@@ -8,7 +8,7 @@ and regular enemies, but a defeated Lich King does not return.
 
 The dungeon targets 6–10 rooms per floor. Descend at the marked stairs and
 ascend to revisit an earlier floor; the first floor's upward stairs return to
-town. Floors 1–7 do not require defeating every enemy before descending. Traps
+town. Floors 1–4 do not require defeating every enemy before descending. Traps
 begin hidden, and deeper floors contain more of them. If other regional bosses
 have already fallen, newly generated dungeon enemies become stronger and
 advanced undead can appear earlier.
@@ -17,12 +17,9 @@ advanced undead can appear earlier.
 | --- | --- | --- |
 | 1 | Entrance rooms and the route back to town | Skeletons |
 | 2 | Possible locked side crypt; Elowen's first seal during her quest | Zombies and Crypt Bats join |
-| 3 | Standard floor | Wraiths join |
-| 4 | Possible locked side crypt; Elowen's second seal | Crypt Conjurers join |
-| 5 | Standard floor | Full regular undead roster |
-| 6 | Possible locked side crypt; Elowen's third seal | Full regular undead roster |
-| 7 | Standard floor | Full regular undead roster |
-| 8 | Golden key, locked boss chamber, and final return passage | Full roster and the Lich King |
+| 3 | Possible locked side crypt; Elowen's second seal | Wraiths join |
+| 4 | Possible locked side crypt; Elowen's third seal | Crypt Conjurers join |
+| 5 | Golden key, locked boss chamber, and final return passage | Full roster and the Lich King |
 
 ## Enemy Roles
 
@@ -36,7 +33,7 @@ advanced undead can appear earlier.
 
 ## Crypts and Traps
 
-On floors 2, 4, and 6, generation can add an optional crypt where space allows.
+On floors 2, 3, and 4, generation can add an optional crypt where space allows.
 Stand on its key and press `P`, then walk into the locked crypt door to spend
 the key. Stand on the cache inside and press `A` to collect its gold. Each
 generated crypt cache holds `10 + 2 × floor` gold.
@@ -57,7 +54,7 @@ reward are one-time.
 ## Elowen's Quest
 
 Speak with Elowen in OakHaven's Tavern to begin **The Broken Seals**. Her three
-burial seals appear on floors 2, 4, and 6, each with an undead guard group.
+burial seals appear on floors 2, 3, and 4, each with an undead guard group.
 Stand on a seal and press `A` to restore it. Return to Elowen after all three
 are restored for 40 gold and 300 score. Her quest does not require defeating
 the Lich or clearing every floor. Accepting it starts a fresh expedition so
@@ -66,3 +63,7 @@ the objectives can appear even if the dungeon was visited earlier.
 Cain's Scroll of Return to Town teaches a zero-MP spell. Casting it in the
 dungeon places a portal in town that returns to the exact floor and tile where
 it was cast, allowing a resupply trip without replaying the route.
+
+Save version 85 merges the old eight floors into five, retaining the Lich
+chamber on floor 5 and preserving seal completion, character progress, active
+terrain, enemies, loot, and portal access.

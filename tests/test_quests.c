@@ -111,7 +111,7 @@ void test_elowen_quest(void) {
 
     game_enter_dungeon(&g);
     ASSERT("new dungeon expedition starts on floor one", g.level == 1);
-    int expected_levels[3] = {2, 4, 6};
+    int expected_levels[3] = {2, 3, 4};
     for (int seal = 0; seal < 3; seal++) {
         while (g.level < expected_levels[seal]) {
             game_descend(&g);

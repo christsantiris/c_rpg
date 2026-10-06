@@ -1093,7 +1093,10 @@ void action_resolve_player(GameState *g, Action a) {
                 push_message(g, "A shattered burial seal lies here.");
                 return;
             }
-            int seal_index = g->level == 2 ? 0 : (g->level == 4 ? 1 : 2);
+            int seal_index = g->level - 2;
+            if (seal_index < 0 || seal_index >= 3) {
+                return;
+            }
             g->elowen_seals_restored |= 1 << seal_index;
             g->map.tiles[g->player.y][g->player.x] =
                 TILE_RESTORED_BURIAL_SEAL;

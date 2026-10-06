@@ -39,6 +39,7 @@ void test_forest_travel(void);
 void test_mountains(void);
 void test_mountain_travel(void);
 void test_coast(void);
+void test_area_depths(void);
 void test_coast_terrain(void);
 void test_swamp(void);
 void test_swamp_travel(void);
@@ -119,6 +120,7 @@ int main(void) {
     test_dragonspine();
     printf("\n");
     test_coast();
+    test_area_depths();
     printf("\n");
     test_coast_terrain();
     printf("\n");

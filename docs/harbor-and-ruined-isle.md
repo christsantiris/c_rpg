@@ -32,7 +32,7 @@ Sun**. Walk into the temple gate to enter the pyramid.
 
 ## Ruined Temple Structure
 
-The temple is a four-tier stepped pyramid. Each tier is a separate combat map.
+The temple is a five-tier stepped pyramid. Each tier is a separate combat map.
 Use the upward stairs to climb and the downward stairs to revisit lower tiers.
 The southern entrance on tier 1 returns to the island. Enemies do not have to
 be cleared before using stairs.
@@ -42,7 +42,8 @@ be cleared before using stairs.
 | 1 | 6 enemies | Core temple roster |
 | 2 | 7 enemies | Lunar Effigy |
 | 3 | 8 enemies | Treasure Wraith |
-| 4 | 6 regular enemies and 1 boss | Fallen Sun Guardian and buried vault |
+| 4 | 8 enemies | Solar traps, flooded galleries, and lunar defenders |
+| 5 | 6 regular enemies and 1 boss | Fallen Sun Guardian and buried vault |
 
 Walls and closed lunar doors block player and enemy ranged attacks.
 
@@ -82,3 +83,7 @@ Return to Town works from every temple tier. It creates a portal near the town
 harbor and records the exact tier, position, and current encounter state.
 Entering that portal returns to the temple and closes it. Walking out through
 tier 1 returns to the island without creating a portal.
+
+Save version 85 moves the old tier-4 summit and its portal destination to
+tier 5, preserving enemy health, alignment, treasure, and boss completion.
+The new tier 4 is inserted below the summit.

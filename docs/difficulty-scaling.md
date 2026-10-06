@@ -33,14 +33,14 @@ uses the boss victories and player level at that time.
 
 ## Dungeon Structure
 
-The dungeon contains eight floors (`DUNGEON_DEPTH`). New floors generate a map and
+The dungeon contains five floors (`DUNGEON_DEPTH`). New floors generate a map and
 enemy roster. Previously visited floors are cached, preserving their map,
 enemies, and cleared state.
 
-Floors 1-7 use down stairs and do not require every enemy to be defeated.
+Floors 1-4 use down stairs and do not require every enemy to be defeated.
 Descending awards `new floor * 100` score.
 
-Floor 8 is the Lich King's finale. Clearing it changes the down stairs into a
+Floor 5 is the Lich King's finale. Clearing it changes the down stairs into a
 glowing return passage. Using that passage returns the player directly to the
 east road in OakHaven, preserves dungeon progress, awards completion score, and
 never creates a ninth dungeon floor.
@@ -73,10 +73,7 @@ enemy count = min(10 + dungeon floor, MAX_ENEMIES)
 | 2 | 12 | 0 | 12 |
 | 3 | 13 | 0 | 13 |
 | 4 | 14 | 0 | 14 |
-| 5 | 15 | 0 | 15 |
-| 6 | 15 | 0 | 15 |
-| 7 | 15 | 0 | 15 |
-| 8 | 14 | 1 | 15 |
+| 5 | 14 | 1 | 15 |
 
 ## Undead Composition
 
@@ -89,8 +86,7 @@ and boss in the Goblin Mountains.
 | 2 | 50% Skeleton, 30% Zombie, 20% Crypt Bat |
 | 3 | 30% Skeleton, 35% Zombie, 20% Crypt Bat, 15% Wraith |
 | 4 | 20% Skeleton, 35% Zombie, 15% Crypt Bat, 20% Wraith, 10% Crypt Conjurer |
-| 5–7 | 15% Skeleton, 30% Zombie, 15% Crypt Bat, 20% Wraith, 20% Crypt Conjurer |
-| 8 | 15% Skeleton, 30% Zombie, 15% Crypt Bat, 20% Wraith, 20% Crypt Conjurer, plus the Lich King |
+| 5 | 15% Skeleton, 30% Zombie, 15% Crypt Bat, 20% Wraith, 20% Crypt Conjurer, plus the Lich King |
 
 | Enemy | HP | Attack | Defense | XP |
 | --- | ---: | ---: | ---: | ---: |
@@ -119,7 +115,7 @@ is `attack - defense`, with a minimum of 1.
 
 | Floor | Boss | HP | Attack | Defense | XP |
 | --- | --- | ---: | ---: | ---: | ---: |
-| 8 | Lich King | 140 | 18 | 6 | 400 |
+| 5 | Lich King | 140 | 18 | 6 | 400 |
 
 The Lich King is spawned before regular enemies, reserving its place under the
 enemy cap. Once engaged, it holds position in the chamber and launches a
@@ -133,7 +129,7 @@ are listed in [Weapons, Armor, and Shields](weapons.md).
 trap count = 2 + dungeon floor
 ```
 
-This gives three traps on floor 1 and ten on floor 8. Placement can yield
+This gives three traps on floor 1 and seven on floor 5. Placement can yield
 fewer traps when a selected tile is unsuitable.
 
 Ordinary traps stay hidden until stepped on. Visible plates are reserved for
@@ -181,10 +177,10 @@ Crypt caches grant `10 + 2 × floor` gold, mountain caches grant
 
 ## Current Curve Summary
 
-Difficulty rises over eight floors through increasing enemy count, new tactical
+Difficulty rises over five floors through increasing enemy count, new tactical
 roles, and additional traps. Bats add speed, Wraiths undermine heavy armor and
 mana reserves, and Crypt Conjurers create ranged pressure and target priority. Floor
-8 combines the complete roster with the Lich King before returning the player
+5 combines the complete roster with the Lich King before returning the player
 to town.
 
 ## Royal Catacombs
