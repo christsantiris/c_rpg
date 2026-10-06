@@ -12,9 +12,9 @@ return; collecting the reward moves it to the Completed tab.
 The Active tab contains quests in progress and quests ready to turn in. The
 Completed tab retains quests whose rewards have been collected. Each entry
 shows its quest giver, description, target area and stages, objective progress,
-status, gold reward, and score reward. The Bosses tab always lists the Lich
-King, Necromancer, Goblin King, Drowned Queen, and Fallen Sun Guardian with
-their defeated or undefeated status.
+status, gold reward, and score reward. The Bosses tab always lists every
+regional boss, including Glassdeep Caverns' Prism Sovereign, with their
+defeated or undefeated status.
 
 Use the up and down arrows to select a quest. Use `Tab`, left, or right to
 change tabs. Press `Q` or `Esc` to return to the game. Completing every

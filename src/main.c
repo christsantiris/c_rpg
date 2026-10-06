@@ -120,6 +120,10 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
         return 1;
     }
     if (action.target_y == TOWN_H - 1) {
+        if (g->location == LOCATION_TOWN2) {
+            *style = TOWN_EXIT_GLASSDEEP;
+            return 1;
+        }
         *style = g->location == LOCATION_TOWN4 ?
             (action.target_x == RIDGESHIRE_MOUNTAIN_ROAD_X ? TOWN_EXIT_ROAD : TOWN_EXIT_MOUNTAINS) :
             (g->location == LOCATION_TOWN2 ? TOWN_EXIT_SWAMP : TOWN_EXIT_COAST);
@@ -534,6 +538,7 @@ int main(int argc, char **argv) {
             game.location == LOCATION_DESERT ||
             game.location == LOCATION_MOONVEIL ||
             game.location == LOCATION_ASHEN ||
+            game.location == LOCATION_GLASSDEEP ||
             game.location == LOCATION_COAST ||
             game.location == LOCATION_SWAMP ||
             game.location == LOCATION_ISLAND ||

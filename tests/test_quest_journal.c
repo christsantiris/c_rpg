@@ -94,11 +94,11 @@ void test_quest_journal(void) {
     const Location regions[JOURNAL_BOSS_COUNT] = {
         LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST,
         LOCATION_TEMPLE, LOCATION_SWAMP, LOCATION_DRAGONSPINE, LOCATION_FROSTFELL,
-        LOCATION_DESERT, LOCATION_MOONVEIL, LOCATION_ASHEN
+        LOCATION_DESERT, LOCATION_MOONVEIL, LOCATION_ASHEN, LOCATION_GLASSDEEP
     };
     const char *names[JOURNAL_BOSS_COUNT] = {
         "Lich King", "Necromancer", "Goblin King", "Drowned Queen",
-        "Fallen Sun Guardian", "Swamp Demon", "Red Dragon", "Polar Kraken", "Desert Pharaoh", "Thorn Regent", "Cinder Lord"
+        "Fallen Sun Guardian", "Swamp Demon", "Red Dragon", "Polar Kraken", "Desert Pharaoh", "Thorn Regent", "Cinder Lord", "Prism Sovereign"
     };
     for (int defeated = 0; defeated < JOURNAL_BOSS_COUNT; defeated++) {
         g.defeated_bosses = 1 << regions[defeated];
