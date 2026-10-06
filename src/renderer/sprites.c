@@ -4831,22 +4831,32 @@ void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style) {
         (SDL_Color){178, 146, 73, 255});
 }
 
-void draw_town_road_sign(Renderer *r, int tile_x, int tile_y) {
+void draw_town_road_sign(Renderer *r, int tile_x, int tile_y, const char *name) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
+    int text_w = 0;
+    int text_h = 0;
+    TTF_SizeText(r->font_tiny, name, &text_w, &text_h);
+    int width = text_w + 12;
+    if (width < 66) {
+        width = 66;
+    }
+    int post = width - 10;
     SDL_Color shadow = {37, 29, 24, 255};
     SDL_Color wood = {93, 62, 37, 255};
     SDL_Color bark = {154, 109, 59, 255};
     SDL_Color brass = {215, 178, 97, 255};
-    fill_rect(r, x + 56, y + 16, 9, 47, shadow);
-    fill_rect(r, x + 58, y + 18, 5, 44, wood);
-    fill_rect(r, x + 58, y + 20, 2, 40, bark);
-    fill_rect(r, x + 53, y + 60, 15, 4, shadow);
-    fill_rect(r, x + 4, y + 2, 72, 24, shadow);
-    fill_rect(r, x + 7, y + 5, 66, 18, wood);
-    fill_rect(r, x + 7, y + 5, 66, 2, bark);
+    fill_rect(r, x + post, y + 16, 9, 47, shadow);
+    fill_rect(r, x + post + 2, y + 18, 5, 44, wood);
+    fill_rect(r, x + post + 2, y + 20, 2, 40, bark);
+    fill_rect(r, x + post - 3, y + 60, 15, 4, shadow);
+    fill_rect(r, x + 4, y + 2, width + 6, 24, shadow);
+    fill_rect(r, x + 7, y + 5, width, 18, wood);
+    fill_rect(r, x + 7, y + 5, width, 2, bark);
     fill_rect(r, x + 10, y + 9, 2, 2, brass);
-    fill_rect(r, x + 68, y + 9, 2, 2, brass);
+    fill_rect(r, x + width + 2, y + 9, 2, 2, brass);
+    renderer_draw_text(r, name, x + 7 + (width - text_w) / 2,
+        y + 5 + (18 - text_h) / 2, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
 }
 
 static void draw_dungeon_door_panel(Renderer *r, int x, int width, int right) {

@@ -9,6 +9,22 @@
 #include <string.h>
 #include <stdlib.h>
 
+static SDL_Color area_label_color(Location area) {
+    switch (area) {
+        case LOCATION_FOREST: return (SDL_Color){90, 190, 105, 255};
+        case LOCATION_MOUNTAINS: return (SDL_Color){220, 72, 42, 255};
+        case LOCATION_COAST: return (SDL_Color){62, 210, 205, 255};
+        case LOCATION_SWAMP: return (SDL_Color){113, 204, 79, 255};
+        case LOCATION_DRAGONSPINE: return (SDL_Color){187, 218, 232, 255};
+        case LOCATION_FROSTFELL: return (SDL_Color){168, 220, 250, 255};
+        case LOCATION_MOONVEIL: return (SDL_Color){190, 163, 231, 255};
+        case LOCATION_ASHEN: return (SDL_Color){240, 150, 76, 255};
+        case LOCATION_GLASSDEEP: return (SDL_Color){170, 207, 241, 255};
+        case LOCATION_TEMPLE: return (SDL_Color){235, 201, 92, 255};
+        default: return (SDL_Color){220, 180, 60, 255};
+    }
+}
+
 static void draw_crownroad_tile(Renderer *r, int sx, int sy, int x, int y, int kind) {
     int px = sx * TILE_SIZE;
     int py = sy * TILE_SIZE;
@@ -1960,9 +1976,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 viewport_to_screen_x(v, 0),
                 viewport_to_screen_y(v, TOWN_ROAD_GATE_Y),
                 TOWN_EXIT_ROAD);
-            draw_town_road_sign(r,
-                viewport_to_screen_x(v, 1),
-                viewport_to_screen_y(v, TOWN_ROAD_GATE_Y - 1));
         }
         draw_town_gate(r,
             viewport_to_screen_x(v, TOWN_W - 3), viewport_to_screen_y(v, 10),
@@ -2151,7 +2164,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         }
     }
 
-    // Draw shop labels
+    // Area labels share a palette; town destinations use wooden signs.
     if (g->location == LOCATION_TOWN) {
         SDL_Color label = {220, 180, 60, 255};
         int blacksmith_w = 0;
@@ -2211,63 +2224,47 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             - dungeon_w - 8;
         int dungeon_y = gate_top + (5 * TILE_SIZE - dungeon_h) / 2;
         renderer_draw_text(r, "FOREST", forest_x, forest_y,
-            (SDL_Color){90, 190, 105, 255}, r->font_tiny);
-        renderer_draw_text(r, "DUNGEON", dungeon_x, dungeon_y, label,
+            area_label_color(LOCATION_FOREST), r->font_tiny);
+        renderer_draw_text(r, "DUNGEON", dungeon_x, dungeon_y, area_label_color(LOCATION_DUNGEON),
             r->font_tiny);
         renderer_draw_text(r, "MOUNTAINS", mountains_x, mountains_y,
-            (SDL_Color){220, 72, 42, 255}, r->font_tiny);
+            area_label_color(LOCATION_MOUNTAINS), r->font_tiny);
         if (g->defeated_bosses & (1 << LOCATION_MOUNTAINS)) {
-            int ridgeshire_w = 0;
-            int ridgeshire_h = 0;
-            TTF_SizeText(r->font_tiny, "RIDGESHIRE", &ridgeshire_w, &ridgeshire_h);
-            renderer_draw_text(r, "RIDGESHIRE",
-                viewport_to_screen_x(v, TOWN4_ROAD_X - 2) * TILE_SIZE +
-                    (5 * TILE_SIZE - ridgeshire_w) / 2,
-                viewport_to_screen_y(v, 1) * TILE_SIZE +
-                    (TILE_SIZE - ridgeshire_h) / 2,
-                (SDL_Color){220, 72, 42, 255}, r->font_tiny);
+            draw_town_road_sign(r, viewport_to_screen_x(v, TOWN4_ROAD_X - 5),
+                viewport_to_screen_y(v, 2), "RIDGESHIRE");
         }
         int coast_x = viewport_to_screen_x(v, 18) * TILE_SIZE
             + (5 * TILE_SIZE - coast_w) / 2;
         int coast_y = viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE
             + (TILE_SIZE - coast_h) / 2;
         renderer_draw_text(r, "SUNKEN COAST", coast_x, coast_y,
-            (SDL_Color){62, 210, 205, 255}, r->font_tiny);
+            area_label_color(LOCATION_COAST), r->font_tiny);
         if (town_road_gate) {
-            int stillbury_w = 0;
-            TTF_SizeText(r->font_tiny, "STILLBURY", &stillbury_w, NULL);
-            renderer_draw_text(r, "STILLBURY",
-                viewport_to_screen_x(v, 1) * TILE_SIZE + 7 +
-                    (66 - stillbury_w) / 2,
-                viewport_to_screen_y(v, TOWN_ROAD_GATE_Y - 1) * TILE_SIZE + 7,
-                (SDL_Color){233, 201, 133, 255}, r->font_tiny);
+            draw_town_road_sign(r, viewport_to_screen_x(v, 1),
+                viewport_to_screen_y(v, TOWN_ROAD_GATE_Y - 1), "STILLBURY");
         }
     }
 
     if (g->location == LOCATION_TOWN4) {
-        SDL_Color label = {187, 218, 232, 255};
         int width = 0;
         TTF_SizeText(r->font_tiny, "ASHEN HOLLOW", &width, NULL);
         renderer_draw_text(r, "ASHEN HOLLOW",
             viewport_to_screen_x(v, RIDGESHIRE_ASHEN_GATE_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, 1) * TILE_SIZE,
-            (SDL_Color){240, 150, 76, 255}, r->font_tiny);
+            area_label_color(LOCATION_ASHEN), r->font_tiny);
         TTF_SizeText(r->font_tiny, "DRAGONSPINE", &width, NULL);
         renderer_draw_text(r, "DRAGONSPINE",
             viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
             viewport_to_screen_y(v, TOWN4_DRAGON_GATE_Y) * TILE_SIZE,
-            label, r->font_tiny);
+            area_label_color(LOCATION_DRAGONSPINE), r->font_tiny);
         TTF_SizeText(r->font_tiny, "MOUNTAINS", &width, NULL);
         renderer_draw_text(r, "MOUNTAINS",
             viewport_to_screen_x(v, 20) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE,
-            label, r->font_tiny);
+            area_label_color(LOCATION_MOUNTAINS), r->font_tiny);
         if (g->defeated_bosses & (1 << LOCATION_MOUNTAINS)) {
-            TTF_SizeText(r->font_tiny, "OAKHAVEN", &width, NULL);
-            renderer_draw_text(r, "OAKHAVEN",
-                viewport_to_screen_x(v, RIDGESHIRE_MOUNTAIN_ROAD_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
-                viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE,
-                (SDL_Color){113, 204, 79, 255}, r->font_tiny);
+            draw_town_road_sign(r, viewport_to_screen_x(v, RIDGESHIRE_MOUNTAIN_ROAD_X + 3),
+                viewport_to_screen_y(v, TOWN_H - 4), "OAKHAVEN");
         }
     }
 
@@ -2277,18 +2274,18 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         renderer_draw_text(r, "SUNSCAR WASTES",
             viewport_to_screen_x(v, 1) * TILE_SIZE,
             viewport_to_screen_y(v, 12) * TILE_SIZE,
-            label, r->font_tiny);
+            area_label_color(LOCATION_DESERT), r->font_tiny);
         TTF_SizeText(r->font_tiny, "GLASSDEEP", &width, NULL);
         renderer_draw_text(r, "GLASSDEEP",
             viewport_to_screen_x(v, STILLBURY_GLASSDEEP_GATE_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE + 8,
-            (SDL_Color){170, 207, 241, 255}, r->font_tiny);
+            area_label_color(LOCATION_GLASSDEEP), r->font_tiny);
         TTF_SizeText(r->font_tiny, "SWAMP", &width, NULL);
         renderer_draw_text(r, "SWAMP",
             viewport_to_screen_x(v, CROWNROAD_X) * TILE_SIZE +
                 (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, 1) * TILE_SIZE + 3,
-            (SDL_Color){113, 204, 79, 255}, r->font_tiny);
+            area_label_color(LOCATION_SWAMP), r->font_tiny);
         TTF_SizeText(r->font_tiny, "HEALER", &width, NULL);
         renderer_draw_text(r, "HEALER",
             viewport_to_screen_x(v, TOWN_HEALER_X) * TILE_SIZE +
@@ -2318,20 +2315,14 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         renderer_draw_text(r, "FOREST",
             viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
             viewport_to_screen_y(v, 12) * TILE_SIZE,
-            label, r->font_tiny);
+            area_label_color(LOCATION_FOREST), r->font_tiny);
         if (g->defeated_bosses & (1 << LOCATION_FOREST)) {
-            TTF_SizeText(r->font_tiny, "OAKHAVEN", &width, NULL);
-            renderer_draw_text(r, "OAKHAVEN",
-                viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
-                viewport_to_screen_y(v, TOWN_ROAD_EXIT_Y) * TILE_SIZE,
-                (SDL_Color){113, 204, 79, 255}, r->font_tiny);
+            draw_town_road_sign(r, viewport_to_screen_x(v, TOWN_W - 6),
+                viewport_to_screen_y(v, TOWN_ROAD_GATE_Y - 1), "OAKHAVEN");
         }
         if (g->defeated_bosses & (1 << LOCATION_SWAMP)) {
-            TTF_SizeText(r->font_tiny, "ROSEMOOR", &width, NULL);
-            renderer_draw_text(r, "ROSEMOOR",
-                viewport_to_screen_x(v, TOWN3_ROAD_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
-                viewport_to_screen_y(v, 1) * TILE_SIZE + 3,
-                (SDL_Color){113, 204, 79, 255}, r->font_tiny);
+            draw_town_road_sign(r, viewport_to_screen_x(v, TOWN3_ROAD_X + 3),
+                viewport_to_screen_y(v, 2), "ROSEMOOR");
         }
     }
 
@@ -2348,26 +2339,23 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         renderer_draw_text(r, "FROSTFELL",
             viewport_to_screen_x(v, 20) * TILE_SIZE - width / 2,
             viewport_to_screen_y(v, 1) * TILE_SIZE,
-            (SDL_Color){168, 220, 250, 255}, r->font_tiny);
+            area_label_color(LOCATION_FROSTFELL), r->font_tiny);
         renderer_draw_text(r, "MOONVEIL",
             viewport_to_screen_x(v, 2) * TILE_SIZE + 8,
             viewport_to_screen_y(v, ROSEMOOR_MOONVEIL_GATE_Y) * TILE_SIZE,
-            (SDL_Color){190, 163, 231, 255}, r->font_tiny);
+            area_label_color(LOCATION_MOONVEIL), r->font_tiny);
         TTF_SizeText(r->font_tiny, "CROWN ROAD EAST", &width, NULL);
         renderer_draw_text(r, "CROWN ROAD EAST",
             viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
             viewport_to_screen_y(v, TOWN3_KING_GATE_Y) * TILE_SIZE,
-            label, r->font_tiny);
+            area_label_color(LOCATION_CROWNROAD), r->font_tiny);
         TTF_SizeText(r->font_tiny, "SWAMP", &width, NULL);
         renderer_draw_text(r, "SWAMP",
             viewport_to_screen_x(v, 20) * TILE_SIZE + (TILE_SIZE - width) / 2,
-            viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE, label, r->font_tiny);
+            viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE, area_label_color(LOCATION_SWAMP), r->font_tiny);
         if (g->defeated_bosses & (1 << LOCATION_SWAMP)) {
-            TTF_SizeText(r->font_tiny, "STILLBURY", &width, NULL);
-            renderer_draw_text(r, "STILLBURY",
-                viewport_to_screen_x(v, ROSEMOOR_SWAMP_ROAD_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
-                viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE,
-                (SDL_Color){113, 204, 79, 255}, r->font_tiny);
+            draw_town_road_sign(r, viewport_to_screen_x(v, ROSEMOOR_SWAMP_ROAD_X + 3),
+                viewport_to_screen_y(v, TOWN_H - 4), "STILLBURY");
         }
         TTF_SizeText(r->font_tiny, "APOTHECARY", &width, NULL);
         renderer_draw_text(r, "APOTHECARY",
@@ -2380,7 +2368,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         renderer_draw_text(r, "CROWN ROAD WEST",
             viewport_to_screen_x(v, 1) * TILE_SIZE + 8,
             viewport_to_screen_y(v, 12) * TILE_SIZE,
-            (SDL_Color){220, 180, 60, 255}, r->font_tiny);
+            area_label_color(LOCATION_KING_ROAD_WEST), r->font_tiny);
         int width = 0;
         TTF_SizeText(r->font_tiny, "WORKSHOP", &width, NULL);
         renderer_draw_text(r, "WORKSHOP",
@@ -2396,23 +2384,17 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         renderer_draw_text(r, "CASTLE OF NO RETURN",
             viewport_to_screen_x(v, 20) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, 1) * TILE_SIZE, label, r->font_tiny);
-        renderer_draw_text(r, "ROSEMOOR",
-            viewport_to_screen_x(v, 1) * TILE_SIZE + 8,
-            viewport_to_screen_y(v, CASTLE_ROAD_Y) * TILE_SIZE, label, r->font_tiny);
-        TTF_SizeText(r->font_tiny, "RIDGESHIRE", &width, NULL);
-        renderer_draw_text(r, "RIDGESHIRE",
-            viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
-            viewport_to_screen_y(v, CASTLE_ROAD_Y) * TILE_SIZE, label, r->font_tiny);
+        draw_town_road_sign(r, viewport_to_screen_x(v, 1),
+            viewport_to_screen_y(v, CASTLE_ROAD_Y - 4), "ROSEMOOR");
+        draw_town_road_sign(r, viewport_to_screen_x(v, TOWN_W - 6),
+            viewport_to_screen_y(v, CASTLE_ROAD_Y - 4), "RIDGESHIRE");
     }
     if (game_is_king_road(g)) {
-        SDL_Color label = {205, 179, 124, 255};
         int east = g->location == LOCATION_CROWNROAD;
-        renderer_draw_text(r, east ? "ROSEMOOR" : "CASTLE",
-            viewport_to_screen_x(v, 1) * TILE_SIZE,
-            viewport_to_screen_y(v, CROWNROAD_Y - 1) * TILE_SIZE, label, r->font_tiny);
-        renderer_draw_text(r, east ? "CASTLE" : "RIDGESHIRE",
-            viewport_to_screen_x(v, CROWNROAD_W - 4) * TILE_SIZE,
-            viewport_to_screen_y(v, CROWNROAD_Y - 1) * TILE_SIZE, label, r->font_tiny);
+        draw_town_road_sign(r, viewport_to_screen_x(v, 1),
+            viewport_to_screen_y(v, CROWNROAD_Y - 3), east ? "ROSEMOOR" : "CASTLE");
+        draw_town_road_sign(r, viewport_to_screen_x(v, CROWNROAD_W - 6),
+            viewport_to_screen_y(v, CROWNROAD_Y - 3), east ? "CASTLE" : "RIDGESHIRE");
     }
 
     if (g->location == LOCATION_TAVERN) {
@@ -2459,12 +2441,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     if (g->location == LOCATION_ISLAND) {
-        SDL_Color label = {235, 201, 92, 255};
         int width = 0;
         TTF_SizeText(r->font_tiny, "RUINED TEMPLE", &width, NULL);
         renderer_draw_text(r, "RUINED TEMPLE",
             viewport_to_screen_x(v, 20) * TILE_SIZE - width / 2,
-            viewport_to_screen_y(v, 1) * TILE_SIZE, label, r->font_tiny);
+            viewport_to_screen_y(v, 1) * TILE_SIZE, area_label_color(LOCATION_TEMPLE), r->font_tiny);
         TTF_SizeText(r->font_tiny, "CAPTAIN ROWAN", &width, NULL);
         renderer_draw_text(r, "CAPTAIN ROWAN",
             viewport_to_screen_x(v, ISLAND_CAPTAIN_X) * TILE_SIZE +

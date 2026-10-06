@@ -139,7 +139,7 @@ void draw_glassdeep_pool(Renderer *r, int tx, int ty, int mx, int my);
 void draw_glassdeep_ruin(Renderer *r, int tx, int ty, int mx, int my);
 void draw_glassdeep_edge(Renderer *r, int tx, int ty, int mx, int my);
 void draw_town_gate_south(Renderer *r, int tile_x, int tile_y);
-void draw_town_road_sign(Renderer *r, int tile_x, int tile_y);
+void draw_town_road_sign(Renderer *r, int tile_x, int tile_y, const char *name);
 void draw_dungeon_transition(Renderer *r, int covered_width);
 void draw_forest_transition(Renderer *r, int covered_width);
 void draw_mountain_transition(Renderer *r, int covered_width);
