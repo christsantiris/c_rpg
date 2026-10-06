@@ -124,9 +124,15 @@ static void test_travel_and_saves(void) {
     int saved = save_game(&game, MOONVEIL_TEST_SLOT) && load_game(&loaded, MOONVEIL_TEST_SLOT);
     if (saved) {
         game = loaded;
-        game_use_town_portal(&game);
+        game.player.x = 2;
+        game.player.y = ROSEMOOR_MOONVEIL_GATE_Y + 2;
+        action_resolve_player(&game, (Action){ACTION_MOVE, 2, game.player.y - 1});
     }
-    ASSERT("a saved return portal restores the garden stage and underlying stone", saved && game.location == LOCATION_MOONVEIL && game.level == 3 && game.player.x == x && game.player.y == y && game.map.tiles[y][x] == TILE_MOONVEIL_CIRCLE);
+    ASSERT("stepping onto a saved return portal restores the garden stage and underlying stone", saved && game.location == LOCATION_MOONVEIL && game.level == 3 && game.player.x == x && game.player.y == y && game.map.tiles[y][x] == TILE_MOONVEIL_CIRCLE);
+    if (game.location != LOCATION_MOONVEIL) {
+        remove("saves/savegame_99130.json");
+        return;
+    }
     while (game.level < MOONVEIL_DEPTH) {
         walk_edge(1);
     }
@@ -168,7 +174,7 @@ static void test_boss_victories(void) {
             rewards += game.floor_items[i].active && game.floor_items[i].item.type == ITEM_POTION_STRENGTH;
         }
         BossJournalEntry entry;
-        ASSERT("melee, spell, and bow victories grant the Regent reward and journal completion", !boss->active && (game.defeated_bosses & (1 << LOCATION_MOONVEIL)) && rewards == 1 && quest_journal_get_boss(&game, JOURNAL_BOSS_COUNT - 1, &entry) && entry.defeated && strcmp(entry.name, "Thorn Regent") == 0);
+        ASSERT("melee, spell, and bow victories grant the Regent reward and journal completion", !boss->active && (game.defeated_bosses & (1 << LOCATION_MOONVEIL)) && rewards == 1 && quest_journal_get_boss(&game, 9, &entry) && entry.defeated && strcmp(entry.name, "Thorn Regent") == 0);
         walk_edge(1);
         ASSERT("defeating the Regent allows return while other enemies remain", game.location == LOCATION_TOWN3 && game.moonveil_cache[MOONVEIL_DEPTH - 1].enemy_count > 1);
         game_enter_moonveil(&game);

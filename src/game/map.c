@@ -274,6 +274,8 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_DESERT_WALL &&
         m->tiles[y][x] != TILE_MOONVEIL_WALL &&
         m->tiles[y][x] != TILE_MOONVEIL_POOL &&
+        m->tiles[y][x] != TILE_ASHEN_WALL &&
+        m->tiles[y][x] != TILE_ASHEN_LAVA &&
         m->tiles[y][x] != TILE_FROST_WALL &&
         m->tiles[y][x] != TILE_FROST_LAKE_HOLE &&
         m->tiles[y][x] != TILE_FROST_BROKEN_ICE &&
@@ -1222,11 +1224,18 @@ void map_generate_town4(Map *m, int *spawn_x, int *spawn_y) {
     for (int y = 10; y <= 14; y++) {
         m->tiles[y][0] = TILE_TOWN_EXIT;
     }
+    map_place_town4_ashen_gate(m);
     map_place_town4_workshop(m);
     map_place_town4_guards(m, -1, -1);
     m->tiles[TOWN4_ILYA_Y][TOWN4_ILYA_X] = TILE_NPC_DRAGON_SEEKER;
     *spawn_x = 20;
     *spawn_y = TOWN_H - 2;
+}
+
+void map_place_town4_ashen_gate(Map *m) {
+    for (int x = RIDGESHIRE_ASHEN_GATE_X - 2; x <= RIDGESHIRE_ASHEN_GATE_X + 2; x++) {
+        m->tiles[0][x] = TILE_TOWN_EXIT;
+    }
 }
 
 void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
@@ -1905,6 +1914,88 @@ void map_generate_moonveil(Map *m, int level) {
                 }
             }
         }
+    }
+}
+
+void map_generate_ashen(Map *m, int level) {
+    static const int route[9] = {6, 7, 8, 5, 4, 3, 0, 1, 2};
+    map_clear_exploration(m);
+    m->room_count = 9;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            m->tiles[y][x] = TILE_SWAMP_WALL;
+        }
+    }
+    for (int i = 0; i < m->room_count; i++) {
+        Room *room = &m->rooms[i];
+        int anchor = route[i];
+        room->x = 5 + anchor % 3 * 23 + rand() % 5 - 2;
+        room->y = 5 + anchor / 3 * 20 + rand() % 5 - 2;
+        room->w = 12 + rand() % 5;
+        room->h = 9 + rand() % 4;
+        swamp_carve_clearing(m, room);
+        if (i > 0) {
+            int x;
+            int y;
+            int tx;
+            int ty;
+            map_room_center(&m->rooms[i - 1], &x, &y);
+            map_room_center(room, &tx, &ty);
+            swamp_carve_trail(m, x, y, tx, ty, (level + i) % 2);
+        }
+    }
+    int start_y;
+    int end_y;
+    map_room_center(&m->rooms[0], &m->stairs_up_x, &start_y);
+    map_room_center(&m->rooms[m->room_count - 1], &m->stairs_down_x, &end_y);
+    m->stairs_up_y = SWAMP_MAP_H - 1;
+    m->stairs_down_y = 0;
+    swamp_carve_trail(m, m->stairs_up_x, start_y, m->stairs_up_x, m->stairs_up_y, 1);
+    swamp_carve_trail(m, m->stairs_down_x, end_y, m->stairs_down_x, 0, 1);
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            m->tiles[y][x] = m->tiles[y][x] == TILE_SWAMP_FLOOR ? TILE_ASHEN_FLOOR : TILE_ASHEN_WALL;
+        }
+    }
+    m->tiles[m->stairs_up_y][m->stairs_up_x] = TILE_ASHEN_ENTRANCE;
+    m->tiles[m->stairs_down_y][m->stairs_down_x] = TILE_ASHEN_EXIT;
+    // Lava replaces solid rock only, leaving the connected route intact.
+    for (int row = 8; row < SWAMP_MAP_H - 4; row += 11) {
+        for (int column = 8; column < SWAMP_MAP_W - 4; column += 13) {
+            int cx = column + rand() % 7 - 3;
+            int cy = row + rand() % 7 - 3;
+            int solid = 1;
+            for (int dy = -2; dy <= 2; dy++) {
+                for (int dx = -2; dx <= 2; dx++) {
+                    solid &= m->tiles[cy + dy][cx + dx] == TILE_ASHEN_WALL;
+                }
+            }
+            if (!solid) {
+                continue;
+            }
+            for (int dy = -2; dy <= 2; dy++) {
+                for (int dx = -2; dx <= 2; dx++) {
+                    if (dx * dx + dy * dy <= 5) {
+                        m->tiles[cy + dy][cx + dx] = TILE_ASHEN_LAVA;
+                    }
+                }
+            }
+        }
+    }
+    for (int i = 1; i < m->room_count; i += 2) {
+        const Room *room = &m->rooms[i];
+        for (int x = room->x + 2; x < room->x + room->w - 2; x++) {
+            int y = room->y + room->h / 2 + 2;
+            if (m->tiles[y][x] == TILE_ASHEN_FLOOR) {
+                m->tiles[y][x] = TILE_ASHEN_RUIN;
+            }
+        }
+    }
+    if (level == ASHEN_DEPTH) {
+        int x;
+        int y;
+        map_room_center(&m->rooms[m->room_count - 1], &x, &y);
+        m->tiles[y][x] = TILE_ASHEN_RUIN;
     }
 }
 

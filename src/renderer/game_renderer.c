@@ -817,6 +817,9 @@ static TileType floor_item_underlay(const GameState *g, int x, int y) {
     if (g->location == LOCATION_MOONVEIL) {
         return TILE_MOONVEIL_FLOOR;
     }
+    if (g->location == LOCATION_ASHEN) {
+        return TILE_ASHEN_FLOOR;
+    }
     if (g->location == LOCATION_DESERT) {
         return TILE_DESERT_FLOOR;
     }
@@ -1005,6 +1008,12 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         } else {
             draw_desert_edge(r, screen_x, screen_y, map_x, map_y);
         }
+    } else if (underlay == TILE_ASHEN_FLOOR) {
+        draw_ashen_floor(r, screen_x, screen_y, map_x, map_y);
+    } else if (underlay == TILE_ASHEN_RUIN) {
+        draw_ashen_ruin(r, screen_x, screen_y, map_x, map_y);
+    } else if (underlay == TILE_ASHEN_ENTRANCE || underlay == TILE_ASHEN_EXIT) {
+        draw_ashen_edge(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_MOONVEIL_FLOOR) {
         draw_moonveil_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_MOONVEIL_CIRCLE) {
@@ -1101,6 +1110,8 @@ static void draw_trap_underlay(Renderer *r, const GameState *g, int map_x, int m
         draw_desert_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_MOONVEIL) {
         draw_moonveil_floor(r, screen_x, screen_y, map_x, map_y);
+    } else if (g->location == LOCATION_ASHEN) {
+        draw_ashen_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_DUNGEON) {
         draw_dungeon_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_LABYRINTH) {
@@ -1293,6 +1304,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->location == LOCATION_DRAGONSPINE ||
         g->location == LOCATION_DESERT ||
         g->location == LOCATION_MOONVEIL ||
+        g->location == LOCATION_ASHEN ||
         g->location == LOCATION_FROSTFELL) {
         int view_w = v->tiles_x < SWAMP_MAP_W ? v->tiles_x : SWAMP_MAP_W;
         int view_h = v->tiles_y < SWAMP_MAP_H ? v->tiles_y : SWAMP_MAP_H;
@@ -1499,6 +1511,22 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_swamp_daughter(r, sx, sy, x, y); break;
                 case TILE_FROST_FLOOR:
                     draw_frostfell_floor(r, sx, sy, x, y); break;
+                case TILE_ASHEN_FLOOR:
+                    draw_ashen_floor(r, sx, sy, x, y);
+                    break;
+                case TILE_ASHEN_WALL:
+                    draw_ashen_wall(r, sx, sy, x, y);
+                    break;
+                case TILE_ASHEN_LAVA:
+                    draw_ashen_lava(r, sx, sy, x, y);
+                    break;
+                case TILE_ASHEN_RUIN:
+                    draw_ashen_ruin(r, sx, sy, x, y);
+                    break;
+                case TILE_ASHEN_ENTRANCE:
+                case TILE_ASHEN_EXIT:
+                    draw_ashen_edge(r, sx, sy, x, y);
+                    break;
                 case TILE_MOONVEIL_FLOOR:
                     draw_moonveil_floor(r, sx, sy, x, y);
                     break;
@@ -1891,6 +1919,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         draw_workshop(r,
             viewport_to_screen_x(v, TOWN4_WORKSHOP_X),
             viewport_to_screen_y(v, TOWN4_WORKSHOP_Y));
+        draw_town_gate(r, viewport_to_screen_x(v, RIDGESHIRE_ASHEN_GATE_X - 2),
+            viewport_to_screen_y(v, 0), TOWN_EXIT_ASHEN);
         draw_town_gate(r, viewport_to_screen_x(v, 0),
             viewport_to_screen_y(v, 10), TOWN_EXIT_ROAD);
         draw_town_gate_south(r, viewport_to_screen_x(v, 20 - 2),
@@ -2001,6 +2031,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->location == LOCATION_SWAMP ||
         g->location == LOCATION_DESERT ||
         g->location == LOCATION_MOONVEIL ||
+        g->location == LOCATION_ASHEN ||
         g->location == LOCATION_FROSTFELL ||
         game_is_king_road(g) ||
         g->location == LOCATION_TEMPLE ||
@@ -2140,6 +2171,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (g->location == LOCATION_TOWN4) {
         SDL_Color label = {187, 218, 232, 255};
         int width = 0;
+        TTF_SizeText(r->font_tiny, "ASHEN HOLLOW", &width, NULL);
+        renderer_draw_text(r, "ASHEN HOLLOW",
+            viewport_to_screen_x(v, RIDGESHIRE_ASHEN_GATE_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, 1) * TILE_SIZE,
+            (SDL_Color){240, 150, 76, 255}, r->font_tiny);
         TTF_SizeText(r->font_tiny, "DRAGONSPINE", &width, NULL);
         renderer_draw_text(r, "DRAGONSPINE",
             viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,

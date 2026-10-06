@@ -2968,8 +2968,69 @@ static void draw_moonveil_enemy(Renderer *r, int tx, int ty, EnemyType type) {
     }
 }
 
+static void draw_ashen_enemy(Renderer *r, int tx, int ty, EnemyType type) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    SDL_Color rock = {42, 38, 47, 255};
+    SDL_Color rim = {101, 85, 87, 255};
+    SDL_Color fire = {239, 96, 38, 255};
+    SDL_Color glow = {255, 204, 92, 255};
+    int flicker = (int)((SDL_GetTicks() / AMBIENT_FRAME_MS) & 1u);
+    if (type == ENEMY_ASH_HOUND) {
+        fill_rect(r, x + 2, y + 9, 16, 9, rock);
+        fill_rect(r, x + 15, y + 5, 8, 9, rock);
+        fill_rect(r, x + 16, y + 2, 3, 5, rim);
+        fill_rect(r, x + 3, y + 17, 3, 6, rim);
+        fill_rect(r, x + 13, y + 17, 3, 6, rim);
+        fill_rect(r, x, y + 6, 3, 8, rock);
+        fill_rect(r, x + 18, y + 7, 2, 2, glow);
+        fill_rect(r, x + 4, y + 9, 9, 2, fire);
+        fill_rect(r, x + 7, y + 5 - flicker, 3, 5, fire);
+        return;
+    }
+    if (type == ENEMY_CINDER_IMP) {
+        fill_rect(r, x + 7, y + 5, 11, 7, fire);
+        fill_rect(r, x + 6, y + 1, 3, 6, rim);
+        fill_rect(r, x + 16, y + 1, 3, 6, rim);
+        fill_rect(r, x + 9, y + 7, 2, 2, glow);
+        fill_rect(r, x + 14, y + 7, 2, 2, glow);
+        fill_rect(r, x + 8, y + 12, 8, 8, rock);
+        fill_rect(r, x + 3, y + 12, 5, 4, fire);
+        fill_rect(r, x + 16, y + 12, 5, 4, fire);
+        fill_rect(r, x + 7, y + 20, 3, 4, fire);
+        fill_rect(r, x + 14, y + 20, 3, 4, fire);
+        fill_rect(r, x + 19, y + 9 - flicker, 3, 3, glow);
+        return;
+    }
+    int boss = type == ENEMY_CINDER_LORD;
+    fill_rect(r, x + 7, y + 3, 10, 7, rock);
+    fill_rect(r, x + 8, y + 4, 2, 5, rim);
+    fill_rect(r, x + 10, y + 6, 2, 1, glow);
+    fill_rect(r, x + 14, y + 6, 2, 1, glow);
+    fill_rect(r, x + 5, y + 10, 14, 11, rock);
+    fill_rect(r, x + 1, y + 10, 5, 10, rim);
+    fill_rect(r, x + 19, y + 10, 4, 10, rim);
+    fill_rect(r, x + 5, y + 21, 5, 3, rim);
+    fill_rect(r, x + 14, y + 21, 5, 3, rim);
+    fill_rect(r, x + 11, y + 11, 2, 8, fire);
+    fill_rect(r, x + 8, y + 14, 7, 2, fire);
+    if (boss) {
+        for (int flame = 0; flame < 3; flame++) {
+            fill_rect(r, x + 6 + flame * 5, y + flicker, 3, 5, fire);
+        }
+        fill_rect(r, x + 7, y + 3, 11, 2, glow);
+        fill_rect(r, x + 21, y + 5, 2, 17, fire);
+    }
+}
+
 void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
     switch (type) {
+        case ENEMY_CINDER_IMP:
+        case ENEMY_ASH_HOUND:
+        case ENEMY_OBSIDIAN_GUARDIAN:
+        case ENEMY_CINDER_LORD:
+            draw_ashen_enemy(r, tile_x, tile_y, type);
+            break;
         case ENEMY_FEY_TRICKSTER:
         case ENEMY_GIANT_MOTH:
         case ENEMY_LIVING_FLOWER:
@@ -3885,6 +3946,92 @@ void draw_frostfell_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map
     fill_rect(r, x + 19, y + 13, 5, 3, flag);
 }
 
+void draw_ashen_floor(Renderer *r, int tx, int ty, int mx, int my) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    unsigned int seed = forest_tile_seed(mx, my);
+    int shade = (int)(seed % 5u);
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){51 + shade, 46 + shade, 49 + shade, 255});
+    fill_rect(r, x + 3 + (int)(seed % 12u), y + 4 + (int)((seed >> 5) % 14u), 4, 1,
+        (SDL_Color){80, 72, 72, 255});
+    fill_rect(r, x + 7, y + 18, 3, 2, (SDL_Color){37, 32, 39, 255});
+    if (seed % 11u == 0) {
+        int ember = (int)((SDL_GetTicks() / AMBIENT_FRAME_MS + seed) % 3u);
+        fill_rect(r, x + 16, y + 11, 2, 1, (SDL_Color){188 + ember * 20, 80 + ember * 15, 34, 255});
+    }
+}
+
+void draw_ashen_wall(Renderer *r, int tx, int ty, int mx, int my) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    unsigned int seed = forest_tile_seed(mx, my);
+    SDL_Color stone = {30, 27, 36, 255};
+    SDL_Color rim = {77, 65, 74, 255};
+    draw_ashen_floor(r, tx, ty, mx, my);
+    if (seed % 5u == 0) {
+        // A charred tree's silhouette leaves ash visible between branches.
+        fill_rect(r, x + 10, y + 4, 5, 20, stone);
+        fill_rect(r, x + 11, y + 4, 1, 19, rim);
+        fill_rect(r, x + 4, y + 8, 7, 3, stone);
+        fill_rect(r, x + 3, y + 4, 3, 6, stone);
+        fill_rect(r, x + 14, y + 12, 7, 3, stone);
+        fill_rect(r, x + 19, y + 6, 3, 7, stone);
+        return;
+    }
+    if (seed % 5u == 1) {
+        // Broken stonework from a settlement swallowed by the volcano.
+        fill_rect(r, x + 2, y + 12, 20, 10, stone);
+        fill_rect(r, x + 3, y + 7, 8, 6, rim);
+        fill_rect(r, x + 12, y + 10, 9, 3, rim);
+        fill_rect(r, x + 4, y + 16, 16, 1, rim);
+        fill_rect(r, x + 10, y + 17, 1, 4, rim);
+        return;
+    }
+    for (int column = 0; column < 3; column++) {
+        int top = 2 + (int)((seed >> (column * 4)) % 8u);
+        int left = x + column * 8 + 1;
+        fill_rect(r, left, y + top + 2, 7, 22 - top, stone);
+        fill_rect(r, left + 1, y + top, 5, 3, rim);
+        fill_rect(r, left + 1, y + top + 3, 1, 18 - top, rim);
+    }
+    if (seed % 7u == 0) {
+        fill_rect(r, x + 12, y + 12, 1, 9, (SDL_Color){191, 77, 39, 255});
+        fill_rect(r, x + 9, y + 18, 4, 1, (SDL_Color){191, 77, 39, 255});
+    }
+}
+
+void draw_ashen_lava(Renderer *r, int tx, int ty, int mx, int my) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    unsigned int seed = forest_tile_seed(mx, my);
+    int flow = (int)((SDL_GetTicks() / AMBIENT_FRAME_MS + seed) % 6u);
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){159, 43, 26, 255});
+    fill_rect(r, x, y + 4 + flow, TILE_SIZE, 4, (SDL_Color){228, 91, 30, 255});
+    fill_rect(r, x, y + 16 - flow, TILE_SIZE, 3, (SDL_Color){246, 135, 41, 255});
+    fill_rect(r, x + 5 + flow, y + 7, 3, 2, (SDL_Color){255, 205, 95, 255});
+    fill_rect(r, x + 16 - flow, y + 19, 2, 2, (SDL_Color){255, 182, 69, 255});
+}
+
+void draw_ashen_ruin(Renderer *r, int tx, int ty, int mx, int my) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    draw_ashen_floor(r, tx, ty, mx, my);
+    fill_rect(r, x + 2, y + 4, 10, 7, (SDL_Color){105, 85, 78, 255});
+    fill_rect(r, x + 13, y + 6, 8, 6, (SDL_Color){87, 73, 72, 255});
+    fill_rect(r, x + 5, y + 14, 13, 7, (SDL_Color){95, 77, 71, 255});
+    fill_rect(r, x + 6, y + 15, 10, 1, (SDL_Color){153, 114, 89, 255});
+}
+
+void draw_ashen_edge(Renderer *r, int tx, int ty, int mx, int my) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    draw_ashen_floor(r, tx, ty, mx, my);
+    fill_rect(r, x + 1, y + 1, 5, 22, (SDL_Color){101, 78, 76, 255});
+    fill_rect(r, x + 18, y + 1, 5, 22, (SDL_Color){101, 78, 76, 255});
+    fill_rect(r, x + 2, y + 3, 3, 3, (SDL_Color){240, 136, 52, 255});
+    fill_rect(r, x + 19, y + 3, 3, 3, (SDL_Color){240, 136, 52, 255});
+}
+
 void draw_moonveil_floor(Renderer *r, int tx, int ty, int mx, int my) {
     int x = tx * TILE_SIZE;
     int y = ty * TILE_SIZE;
@@ -4328,6 +4475,21 @@ void draw_town_gate_south(Renderer *r, int tile_x, int tile_y) {
 void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
+    if (style == TOWN_EXIT_ASHEN) {
+        SDL_Color stone = {55, 43, 48, 255};
+        SDL_Color rim = {124, 87, 74, 255};
+        SDL_Color glow = {235, 122, 48, 255};
+        fill_rect(r, x, y, 120, 12, stone);
+        fill_rect(r, x + 2, y + 2, 116, 3, rim);
+        fill_rect(r, x, y + 12, 14, 36, stone);
+        fill_rect(r, x + 106, y + 12, 14, 36, stone);
+        fill_rect(r, x + 4, y + 14, 4, 25, rim);
+        fill_rect(r, x + 110, y + 14, 4, 25, rim);
+        fill_rect(r, x + 51, y + 8, 18, 8, rim);
+        fill_rect(r, x + 57, y + 6, 6, 7, glow);
+        fill_rect(r, x + 59, y + 3, 2, 4, glow);
+        return;
+    }
     if (style == TOWN_EXIT_MOONVEIL) {
         SDL_Color stone = {63, 67, 96, 255};
         SDL_Color vine = {37, 88, 63, 255};
