@@ -360,7 +360,7 @@ typedef enum {
     OUTDOOR_SIDE_SOUTH
 } OutdoorSide;
 
-// The coast also uses these eight clearing templates.
+// The coast also uses selected clearing templates.
 static const ForestTemplate forest_templates[] = {
     {7, {5,42,42,92,92,132,166}, {42,14,68,12,66,40,42}, 8,
         {{0,1},{0,2},{1,3},{2,4},{3,4},{3,5},{4,5},{5,6}}},
@@ -808,7 +808,7 @@ static void place_coast_chamber(Map *m, int room_index, TileType water) {
             m->tiles[y][x] = edge ? water : TILE_COAST_FLOOR;
         }
     }
-    // Leave the center available for Mara's beacon on stage one.
+    // Leave the center available for Mara's first beacon on stage two.
     m->tiles[cy][cx + 1] = TILE_COAST_CACHE;
 }
 
@@ -887,15 +887,14 @@ TileType map_coast_trap_underlay(const Map *m, int x, int y) {
 }
 
 void map_generate_coast(Map *m, int level) {
+    static const int templates[COAST_DEPTH] = {0, 1, 2, 5, 7};
     static const OutdoorSide entrances[COAST_DEPTH] = {
         OUTDOOR_SIDE_NORTH, OUTDOOR_SIDE_WEST, OUTDOOR_SIDE_SOUTH,
-        OUTDOOR_SIDE_EAST, OUTDOOR_SIDE_NORTH, OUTDOOR_SIDE_EAST,
-        OUTDOOR_SIDE_WEST, OUTDOOR_SIDE_SOUTH
+        OUTDOOR_SIDE_EAST, OUTDOOR_SIDE_SOUTH
     };
     static const OutdoorSide exits[COAST_DEPTH] = {
         OUTDOOR_SIDE_EAST, OUTDOOR_SIDE_SOUTH, OUTDOOR_SIDE_WEST,
-        OUTDOOR_SIDE_NORTH, OUTDOOR_SIDE_WEST, OUTDOOR_SIDE_SOUTH,
-        OUTDOOR_SIDE_NORTH, OUTDOOR_SIDE_EAST
+        OUTDOOR_SIDE_SOUTH, OUTDOOR_SIDE_EAST
     };
     int index = level - 1;
     if (index < 0) {
@@ -904,8 +903,8 @@ void map_generate_coast(Map *m, int level) {
     if (index >= COAST_DEPTH) {
         index = COAST_DEPTH - 1;
     }
-    map_generate_outdoor(m, level, entrances[index], exits[index], 0,
-        &forest_templates[index]);
+    map_generate_outdoor(m, templates[index] + 1, entrances[index], exits[index], 0,
+        &forest_templates[templates[index]]);
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
             if (m->tiles[y][x] == TILE_FOREST_FLOOR) {

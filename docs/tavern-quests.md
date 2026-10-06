@@ -57,8 +57,8 @@ score.
 ## Mara: Relight the Drowned Beacons
 
 Mara is a retired tidekeeper who carries a sheltered ember from the old coast
-lights. She asks the player to relight drowned beacons on Coast stages 1, 3,
-and 6. Each beacon stands inside a flooded side room and cannot be reached or
+lights. She asks the player to relight drowned beacons on Coast stages 2, 3,
+and 4. Each beacon stands inside a flooded side room and cannot be reached or
 lit until the stage's tide control drains the surrounding deep water. Stand on
 the exposed beacon and press `A` to light it.
 

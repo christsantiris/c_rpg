@@ -279,28 +279,28 @@ void test_return_to_town_spell(void) {
         g.level_cache[0].map.tiles[origin_y][origin_x] != TILE_PORTAL);
 
     game_enter_coast(&g);
-    for (int level = 1; level < 6; level++) {
+    for (int level = 1; level < COAST_DEPTH; level++) {
         game_descend(&g);
     }
     game_open_town_portal(&g);
-    ASSERT("coast portal remembers stage six",
-        g.portal_active && g.portal_level == 6);
+    ASSERT("coast portal remembers stage five",
+        g.portal_active && g.portal_level == COAST_DEPTH);
     game_enter_coast(&g);
     game_return_to_town(&g);
     ASSERT("coast portal survives another expedition",
         g.map.tiles[TOWN_H - 3][21] == TILE_PORTAL);
     game_use_town_portal(&g);
-    ASSERT("coast portal returns to stage six",
-        g.location == LOCATION_COAST && g.level == 6);
+    ASSERT("coast portal returns to stage five",
+        g.location == LOCATION_COAST && g.level == COAST_DEPTH);
 
     map_room_center(&g.map.rooms[0], &g.player.x, &g.player.y);
     int blocked_x = g.player.x;
     int blocked_y = g.player.y;
     game_open_town_portal(&g);
-    g.coast_cache[5].map.tiles[blocked_y][blocked_x] = TILE_COAST_WALL;
+    g.coast_cache[COAST_DEPTH - 1].map.tiles[blocked_y][blocked_x] = TILE_COAST_WALL;
     game_use_town_portal(&g);
     ASSERT("portal avoids a blocked destination in the cached map",
-        g.location == LOCATION_COAST && g.level == 6 &&
+        g.location == LOCATION_COAST && g.level == COAST_DEPTH &&
         (g.player.x != blocked_x || g.player.y != blocked_y) &&
         map_is_walkable(&g.map, g.player.x, g.player.y) &&
         g.map.tiles[blocked_y][blocked_x] == TILE_COAST_WALL);

@@ -44,7 +44,7 @@ static const QuestDefinition quest_definitions[9] = {
         "and relight the three old coast beacons.",
         {"Light drowned beacon", "Light drowned beacon",
             "Light drowned beacon"},
-        "Coast", {1, 3, 6}, 80, 600
+        "Coast", {2, 3, 4}, 80, 600
     },
     {
         "The Buried Sun", "Nahla",

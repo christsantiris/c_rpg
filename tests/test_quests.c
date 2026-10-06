@@ -391,11 +391,15 @@ void test_mara_quest(void) {
     ASSERT("accepting Mara's quest starts a fresh coast expedition",
         !g.coast_cache[3].valid && !g.portal_active);
 
-    int target_levels[3] = {1, 3, 6};
+    int target_levels[3] = {2, 3, 4};
     EnemyType guardian_types[3] = {
         ENEMY_GIANT_CRAB, ENEMY_ANIMATED_STATUE, ENEMY_SEA_SERPENT
     };
     game_enter_coast(&g);
+    int absent_x = 0;
+    int absent_y = 0;
+    ASSERT("stage one is an approach without a quest beacon",
+        !find_tile(&g.map, TILE_COAST_BEACON_UNLIT, &absent_x, &absent_y));
     for (int target = 0; target < 3; target++) {
         while (g.level < target_levels[target]) {
             game_descend(&g);
@@ -422,6 +426,11 @@ void test_mara_quest(void) {
     }
     ASSERT("three lit beacons make Mara's quest ready",
         g.mara_quest_state == 2 && g.mara_beacons_lit == 7);
+    game_descend(&g);
+    ASSERT("the final stage has no quest beacon",
+        g.level == COAST_DEPTH &&
+        !find_tile(&g.map, TILE_COAST_BEACON_UNLIT, &absent_x, &absent_y) &&
+        !find_tile(&g.map, TILE_COAST_BEACON_LIT, &absent_x, &absent_y));
 
     game_return_to_town(&g);
     int gold_before = g.gold;
@@ -432,6 +441,7 @@ void test_mara_quest(void) {
     ASSERT("Mara awards 600 score", g.score == score_before + 600);
 
     game_enter_coast(&g);
+    game_descend(&g);
     int beacon_x = 0;
     int beacon_y = 0;
     ASSERT("lit beacons remain lit on later expeditions",
