@@ -276,6 +276,8 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_MOONVEIL_POOL &&
         m->tiles[y][x] != TILE_ASHEN_WALL &&
         m->tiles[y][x] != TILE_ASHEN_LAVA &&
+        m->tiles[y][x] != TILE_GLASSDEEP_WALL &&
+        m->tiles[y][x] != TILE_GLASSDEEP_POOL &&
         m->tiles[y][x] != TILE_FROST_WALL &&
         m->tiles[y][x] != TILE_FROST_LAKE_HOLE &&
         m->tiles[y][x] != TILE_FROST_BROKEN_ICE &&
@@ -1046,8 +1048,15 @@ void map_place_town2_center(Map *m) {
     for (int y = 10; y <= 14; y++) {
         m->tiles[y][0] = TILE_TOWN_EXIT;
     }
+    map_place_town2_glassdeep_gate(m);
     for (int x = TOWN_HEALER_DOOR_X; x <= TOWN_WITCH_DOOR_X; x++) {
         m->tiles[13][x] = TILE_TOWN_PATH;
+    }
+}
+
+void map_place_town2_glassdeep_gate(Map *m) {
+    for (int x = STILLBURY_GLASSDEEP_GATE_X - 2; x <= STILLBURY_GLASSDEEP_GATE_X + 2; x++) {
+        m->tiles[TOWN_H - 1][x] = TILE_TOWN_EXIT;
     }
 }
 
@@ -1996,6 +2005,48 @@ void map_generate_ashen(Map *m, int level) {
         int y;
         map_room_center(&m->rooms[m->room_count - 1], &x, &y);
         m->tiles[y][x] = TILE_ASHEN_RUIN;
+    }
+}
+
+void map_generate_glassdeep(Map *m, int level) {
+    // Reuse connected irregular chambers, mirrored to descend north to south.
+    map_generate_ashen(m, level);
+    for (int y = 0; y < SWAMP_MAP_H / 2; y++) {
+        for (int x = 0; x < SWAMP_MAP_W; x++) {
+            TileType tile = m->tiles[y][x];
+            m->tiles[y][x] = m->tiles[SWAMP_MAP_H - 1 - y][x];
+            m->tiles[SWAMP_MAP_H - 1 - y][x] = tile;
+        }
+    }
+    for (int i = 0; i < m->room_count; i++) {
+        m->rooms[i].y = SWAMP_MAP_H - m->rooms[i].y - m->rooms[i].h;
+    }
+    m->stairs_up_y = SWAMP_MAP_H - 1 - m->stairs_up_y;
+    m->stairs_down_y = SWAMP_MAP_H - 1 - m->stairs_down_y;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            switch (m->tiles[y][x]) {
+                case TILE_ASHEN_FLOOR: m->tiles[y][x] = TILE_GLASSDEEP_FLOOR; break;
+                case TILE_ASHEN_WALL: m->tiles[y][x] = TILE_GLASSDEEP_WALL; break;
+                case TILE_ASHEN_ENTRANCE: m->tiles[y][x] = TILE_GLASSDEEP_ENTRANCE; break;
+                case TILE_ASHEN_EXIT: m->tiles[y][x] = TILE_GLASSDEEP_EXIT; break;
+                case TILE_ASHEN_LAVA: m->tiles[y][x] = TILE_GLASSDEEP_POOL; break;
+                case TILE_ASHEN_RUIN: m->tiles[y][x] = TILE_GLASSDEEP_RUIN; break;
+                default: break;
+            }
+        }
+    }
+    if (level == GLASSDEEP_DEPTH) {
+        int cx;
+        int cy;
+        map_room_center(&m->rooms[m->room_count - 1], &cx, &cy);
+        for (int y = cy - 3; y <= cy + 3; y++) {
+            for (int x = cx - 3; x <= cx + 3; x++) {
+                if (m->tiles[y][x] == TILE_GLASSDEEP_FLOOR) {
+                    m->tiles[y][x] = TILE_GLASSDEEP_RUIN;
+                }
+            }
+        }
     }
 }
 

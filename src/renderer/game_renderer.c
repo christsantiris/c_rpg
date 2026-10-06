@@ -267,6 +267,8 @@ void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, con
         } else if (shot->type == ENEMY_FEY_TRICKSTER || shot->type == ENEMY_LIVING_FLOWER ||
             shot->type == ENEMY_THORN_REGENT) {
             color = (SDL_Color){173, 240, 211, 255};
+        } else if (shot->type == ENEMY_PRISM_SOVEREIGN) {
+            color = (SDL_Color){177, 147, 255, 255};
         } else if (shot->type == ENEMY_DJINN) {
             color = (SDL_Color){75, 224, 232, 255};
         }
@@ -277,6 +279,14 @@ void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, con
             SDL_RenderDrawLine(r->sdl, cx, cy - radius, cx, cy + radius);
             SDL_Rect burst = {cx - radius / 2, cy - radius / 2, radius, radius};
             SDL_RenderDrawRect(r->sdl, &burst);
+        } else if (shot->type == ENEMY_PRISM_SOVEREIGN) {
+            int start_x = viewport_to_screen_x(v, shot->start_x) * TILE_SIZE + TILE_SIZE / 2;
+            int start_y = viewport_to_screen_y(v, shot->start_y) * TILE_SIZE + TILE_SIZE / 2;
+            SDL_SetRenderDrawColor(r->sdl, color.r, color.g, color.b, 255);
+            SDL_RenderDrawLine(r->sdl, start_x - (int)vy, start_y + (int)vx, cx - (int)vy, cy + (int)vx);
+            SDL_RenderDrawLine(r->sdl, start_x + (int)vy, start_y - (int)vx, cx + (int)vy, cy - (int)vx);
+            SDL_SetRenderDrawColor(r->sdl, 220, 255, 255, 255);
+            SDL_RenderDrawLine(r->sdl, start_x, start_y, cx, cy);
         } else if (shot->type == ENEMY_GOBLIN_ARCHER ||
             shot->type == ENEMY_ROAD_ARCHER ||
             shot->type == ENEMY_FROST_ARCHER ||
@@ -820,6 +830,9 @@ static TileType floor_item_underlay(const GameState *g, int x, int y) {
     if (g->location == LOCATION_ASHEN) {
         return TILE_ASHEN_FLOOR;
     }
+    if (g->location == LOCATION_GLASSDEEP) {
+        return TILE_GLASSDEEP_FLOOR;
+    }
     if (g->location == LOCATION_DESERT) {
         return TILE_DESERT_FLOOR;
     }
@@ -1014,6 +1027,12 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         draw_ashen_ruin(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_ASHEN_ENTRANCE || underlay == TILE_ASHEN_EXIT) {
         draw_ashen_edge(r, screen_x, screen_y, map_x, map_y);
+    } else if (underlay == TILE_GLASSDEEP_FLOOR) {
+        draw_glassdeep_floor(r, screen_x, screen_y, map_x, map_y);
+    } else if (underlay == TILE_GLASSDEEP_RUIN) {
+        draw_glassdeep_ruin(r, screen_x, screen_y, map_x, map_y);
+    } else if (underlay == TILE_GLASSDEEP_ENTRANCE || underlay == TILE_GLASSDEEP_EXIT) {
+        draw_glassdeep_edge(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_MOONVEIL_FLOOR) {
         draw_moonveil_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_MOONVEIL_CIRCLE) {
@@ -1112,6 +1131,8 @@ static void draw_trap_underlay(Renderer *r, const GameState *g, int map_x, int m
         draw_moonveil_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_ASHEN) {
         draw_ashen_floor(r, screen_x, screen_y, map_x, map_y);
+    } else if (g->location == LOCATION_GLASSDEEP) {
+        draw_glassdeep_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_DUNGEON) {
         draw_dungeon_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_LABYRINTH) {
@@ -1250,6 +1271,41 @@ static void draw_kraken_target(Renderer *r, const GameState *g, const Viewport *
     }
 }
 
+static void draw_prism_warning(Renderer *r, const GameState *g, const Viewport *v) {
+    if (g->location != LOCATION_GLASSDEEP) {
+        return;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *enemy = &g->enemies[i];
+        if (!enemy->active || enemy->type != ENEMY_PRISM_SOVEREIGN ||
+            enemy->attack_target_x < 0 || enemy->attack_target_y < 0) {
+            continue;
+        }
+        int dx = (enemy->attack_target_x > enemy->x) - (enemy->attack_target_x < enemy->x);
+        int dy = (enemy->attack_target_y > enemy->y) - (enemy->attack_target_y < enemy->y);
+        for (int step = 1; step <= 8; step++) {
+            int x = enemy->x + dx * step;
+            int y = enemy->y + dy * step;
+            if (!map_is_walkable(&g->map, x, y)) {
+                break;
+            }
+            int blocked = 0;
+            for (int j = 0; j < g->enemy_count; j++) {
+                blocked |= j != i && g->enemies[j].active && g->enemies[j].x == x && g->enemies[j].y == y;
+            }
+            if (blocked) {
+                break;
+            }
+            if (viewport_is_visible(v, x, y)) {
+                SDL_Rect outline = {viewport_to_screen_x(v, x) * TILE_SIZE + 2,
+                    viewport_to_screen_y(v, y) * TILE_SIZE + 2, TILE_SIZE - 4, TILE_SIZE - 4};
+                SDL_SetRenderDrawColor(r->sdl, 168, 112, 238, 255);
+                SDL_RenderDrawRect(r->sdl, &outline);
+            }
+        }
+    }
+}
+
 void game_draw(Renderer *r, GameState *g, Viewport *v) {
     Viewport town_view;
     int kraken_warning = kraken_tentacles_raised(g);
@@ -1305,6 +1361,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->location == LOCATION_DESERT ||
         g->location == LOCATION_MOONVEIL ||
         g->location == LOCATION_ASHEN ||
+        g->location == LOCATION_GLASSDEEP ||
         g->location == LOCATION_FROSTFELL) {
         int view_w = v->tiles_x < SWAMP_MAP_W ? v->tiles_x : SWAMP_MAP_W;
         int view_h = v->tiles_y < SWAMP_MAP_H ? v->tiles_y : SWAMP_MAP_H;
@@ -1526,6 +1583,22 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_ASHEN_ENTRANCE:
                 case TILE_ASHEN_EXIT:
                     draw_ashen_edge(r, sx, sy, x, y);
+                    break;
+                case TILE_GLASSDEEP_FLOOR:
+                    draw_glassdeep_floor(r, sx, sy, x, y);
+                    break;
+                case TILE_GLASSDEEP_WALL:
+                    draw_glassdeep_wall(r, sx, sy, x, y);
+                    break;
+                case TILE_GLASSDEEP_POOL:
+                    draw_glassdeep_pool(r, sx, sy, x, y);
+                    break;
+                case TILE_GLASSDEEP_RUIN:
+                    draw_glassdeep_ruin(r, sx, sy, x, y);
+                    break;
+                case TILE_GLASSDEEP_ENTRANCE:
+                case TILE_GLASSDEEP_EXIT:
+                    draw_glassdeep_edge(r, sx, sy, x, y);
                     break;
                 case TILE_MOONVEIL_FLOOR:
                     draw_moonveil_floor(r, sx, sy, x, y);
@@ -1938,6 +2011,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (g->location == LOCATION_TOWN2) {
         draw_town_gate(r, viewport_to_screen_x(v, 0),
             viewport_to_screen_y(v, 10), TOWN_EXIT_DESERT);
+        draw_town_gate(r, viewport_to_screen_x(v, STILLBURY_GLASSDEEP_GATE_X - 2),
+            viewport_to_screen_y(v, TOWN_H - 2), TOWN_EXIT_GLASSDEEP);
         if (g->defeated_bosses & (1 << LOCATION_FOREST)) {
             draw_town_gate(r, viewport_to_screen_x(v, TOWN_W - 3),
                 viewport_to_screen_y(v, TOWN_ROAD_GATE_Y), TOWN_EXIT_ROAD);
@@ -2032,6 +2107,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->location == LOCATION_DESERT ||
         g->location == LOCATION_MOONVEIL ||
         g->location == LOCATION_ASHEN ||
+        g->location == LOCATION_GLASSDEEP ||
         g->location == LOCATION_FROSTFELL ||
         game_is_king_road(g) ||
         g->location == LOCATION_TEMPLE ||
@@ -2202,6 +2278,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, 1) * TILE_SIZE,
             viewport_to_screen_y(v, 12) * TILE_SIZE,
             label, r->font_tiny);
+        TTF_SizeText(r->font_tiny, "GLASSDEEP", &width, NULL);
+        renderer_draw_text(r, "GLASSDEEP",
+            viewport_to_screen_x(v, STILLBURY_GLASSDEEP_GATE_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE + 8,
+            (SDL_Color){170, 207, 241, 255}, r->font_tiny);
         TTF_SizeText(r->font_tiny, "SWAMP", &width, NULL);
         renderer_draw_text(r, "SWAMP",
             viewport_to_screen_x(v, CROWNROAD_X) * TILE_SIZE +
@@ -2567,6 +2648,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     } else if (g->location == LOCATION_DESERT) {
         draw_region_weather(r, v, 1);
     }
+    draw_prism_warning(r, g, v);
 
     draw_combat_feedback(r, g, v);
 

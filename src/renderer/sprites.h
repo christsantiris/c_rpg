@@ -116,7 +116,8 @@ typedef enum {
     TOWN_EXIT_FROST,
     TOWN_EXIT_DESERT,
     TOWN_EXIT_MOONVEIL,
-    TOWN_EXIT_ASHEN
+    TOWN_EXIT_ASHEN,
+    TOWN_EXIT_GLASSDEEP
 } TownExitStyle;
 
 void draw_town_floor(Renderer *r, int tile_x, int tile_y);
@@ -132,6 +133,11 @@ void draw_ashen_wall(Renderer *r, int tx, int ty, int mx, int my);
 void draw_ashen_lava(Renderer *r, int tx, int ty, int mx, int my);
 void draw_ashen_ruin(Renderer *r, int tx, int ty, int mx, int my);
 void draw_ashen_edge(Renderer *r, int tx, int ty, int mx, int my);
+void draw_glassdeep_floor(Renderer *r, int tx, int ty, int mx, int my);
+void draw_glassdeep_wall(Renderer *r, int tx, int ty, int mx, int my);
+void draw_glassdeep_pool(Renderer *r, int tx, int ty, int mx, int my);
+void draw_glassdeep_ruin(Renderer *r, int tx, int ty, int mx, int my);
+void draw_glassdeep_edge(Renderer *r, int tx, int ty, int mx, int my);
 void draw_town_gate_south(Renderer *r, int tile_x, int tile_y);
 void draw_town_road_sign(Renderer *r, int tile_x, int tile_y);
 void draw_dungeon_transition(Renderer *r, int covered_width);

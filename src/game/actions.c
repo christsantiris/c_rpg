@@ -117,6 +117,7 @@ Item boss_equipment_reward(EnemyType type) {
     switch (type) {
         case ENEMY_THORN_REGENT:
         case ENEMY_CINDER_LORD:
+        case ENEMY_PRISM_SOVEREIGN:
             return item_make_strength_potion();
         case ENEMY_DESERT_PHARAOH:
             return item_make_sandstorm_staff();
@@ -214,6 +215,10 @@ static int enemy_score(EnemyType type) {
         case ENEMY_ASH_HOUND: return 70;
         case ENEMY_OBSIDIAN_GUARDIAN: return 180;
         case ENEMY_CINDER_LORD: return 1900;
+        case ENEMY_CRYSTAL_SPIDER: return 60;
+        case ENEMY_BLIND_STALKER: return 85;
+        case ENEMY_SHARD_GOLEM: return 190;
+        case ENEMY_PRISM_SOVEREIGN: return 2000;
         case ENEMY_ORC:         return 30;
         case ENEMY_TROLL:       return 50;
         case ENEMY_GIANT:       return 80;
@@ -248,6 +253,9 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         }
         if (type == ENEMY_CINDER_LORD) {
             push_message(g, "The Cinder Lord falls. The path to Ridgeshire opens!");
+        }
+        if (type == ENEMY_PRISM_SOVEREIGN) {
+            push_message(g, "The Prism Sovereign shatters. The path to Stillbury opens!");
         }
         if (first_forest_victory) {
             g->dialogue_active = 1;
@@ -347,6 +355,10 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         case ENEMY_ASH_HOUND: gold = 7 + rand() % 8; break;
         case ENEMY_OBSIDIAN_GUARDIAN: gold = 15 + rand() % 12; break;
         case ENEMY_CINDER_LORD: gold = 85; break;
+        case ENEMY_CRYSTAL_SPIDER: gold = 6 + rand() % 7; break;
+        case ENEMY_BLIND_STALKER: gold = 8 + rand() % 8; break;
+        case ENEMY_SHARD_GOLEM: gold = 16 + rand() % 12; break;
+        case ENEMY_PRISM_SOVEREIGN: gold = 90; break;
         case ENEMY_ORC:      gold = 6 + rand() % 8;  break;
         case ENEMY_TROLL:    gold = 10 + rand() % 10; break;
         case ENEMY_GIANT:    gold = 15 + rand() % 15; break;
@@ -436,6 +448,8 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         drop_tile == TILE_MOONVEIL_CIRCLE ||
         drop_tile == TILE_ASHEN_FLOOR ||
         drop_tile == TILE_ASHEN_RUIN ||
+        drop_tile == TILE_GLASSDEEP_FLOOR ||
+        drop_tile == TILE_GLASSDEEP_RUIN ||
         drop_tile == TILE_FROST_FLOOR ||
         drop_tile == TILE_FROST_LAKE ||
         drop_tile == TILE_DRAGON_FLOOR ||
@@ -1899,6 +1913,12 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
 
+        if (g->location == LOCATION_TOWN2 &&
+            g->map.tiles[ty][tx] == TILE_TOWN_EXIT && ty == TOWN_H - 1) {
+            game_enter_glassdeep(g);
+            return;
+        }
+
         if (g->location == LOCATION_TOWN3 &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
             if (ty == 0) {
@@ -2203,6 +2223,30 @@ void action_resolve_player(GameState *g, Action a) {
                 push_message(g, "You return to Ridgeshire through the volcanic pass.");
             } else {
                 push_message(g, "The Cinder Lord seals the path to Ridgeshire!");
+            }
+            return;
+        }
+
+        if (g->location == LOCATION_GLASSDEEP &&
+            g->map.tiles[ty][tx] == TILE_GLASSDEEP_ENTRANCE) {
+            if (g->level == 1) {
+                game_return_to_town(g);
+            } else {
+                game_ascend(g);
+            }
+            return;
+        }
+
+        if (g->location == LOCATION_GLASSDEEP &&
+            g->map.tiles[ty][tx] == TILE_GLASSDEEP_EXIT) {
+            if (g->level < GLASSDEEP_DEPTH) {
+                game_descend(g);
+                g->score += g->level * 100;
+            } else if (g->defeated_bosses & (1 << LOCATION_GLASSDEEP)) {
+                game_return_to_town(g);
+                push_message(g, "You emerge from Glassdeep at Stillbury's quarry gate.");
+            } else {
+                push_message(g, "The Prism Sovereign seals the path to Stillbury!");
             }
             return;
         }
@@ -2678,6 +2722,8 @@ static int enemy_prefers_range(const Enemy *e) {
 
 static int enemy_prefers_flank(const Enemy *e) {
     return e->type == ENEMY_CRYPT_BAT ||
+        e->type == ENEMY_CRYSTAL_SPIDER ||
+        e->type == ENEMY_BLIND_STALKER ||
         e->type == ENEMY_ASH_HOUND ||
         e->type == ENEMY_GIANT_MOTH ||
         e->type == ENEMY_PIXIE ||
@@ -3034,6 +3080,58 @@ static void polar_kraken_turn(GameState *g, Enemy *e) {
     }
 }
 
+static void prism_sovereign_turn(GameState *g, int index, EnemyProjectiles *shots) {
+    Enemy *enemy = &g->enemies[index];
+    enemy->move_timer++;
+    if (enemy->move_timer % 2 != 0) {
+        int dx = g->player.x - enemy->x;
+        int dy = g->player.y - enemy->y;
+        if (abs_int(dx) >= abs_int(dy)) {
+            enemy->attack_target_x = enemy->x + (dx < 0 ? -8 : 8);
+            enemy->attack_target_y = enemy->y;
+        } else {
+            enemy->attack_target_x = enemy->x;
+            enemy->attack_target_y = enemy->y + (dy < 0 ? -8 : 8);
+        }
+        push_message(g, "The Sovereign gathers light. Step out of the marked beam!");
+        return;
+    }
+    int dx = (enemy->attack_target_x > enemy->x) - (enemy->attack_target_x < enemy->x);
+    int dy = (enemy->attack_target_y > enemy->y) - (enemy->attack_target_y < enemy->y);
+    int x = enemy->x;
+    int y = enemy->y;
+    int hit = 0;
+    for (int step = 1; step <= 8; step++) {
+        int tx = enemy->x + dx * step;
+        int ty = enemy->y + dy * step;
+        if (!map_is_walkable(&g->map, tx, ty) || enemy_blocks_line_of_sight(g, index, tx, ty)) {
+            break;
+        }
+        x = tx;
+        y = ty;
+        hit |= g->player.x == x && g->player.y == y;
+    }
+    enemy->attack_target_x = -1;
+    enemy->attack_target_y = -1;
+    if (shots && shots->count < MAX_ENEMIES && (x != enemy->x || y != enemy->y)) {
+        shots->shots[shots->count++] = (EnemyProjectile){enemy->type, enemy->x, enemy->y, x, y};
+    }
+    if (hit) {
+        int damage = enemy->attack - g->player.defense / 2;
+        if (damage < 3) {
+            damage = 3;
+        }
+        damage = apply_enemy_damage(g, damage, FEEDBACK_AFTER_ENEMY_SHOT);
+        if (damage > 0) {
+            char message[MAX_MESSAGE_LEN];
+            snprintf(message, sizeof(message), "Prismatic beam: %d dmg", damage);
+            push_message_kind(g, message, MESSAGE_DAMAGE_TAKEN);
+        }
+    } else {
+        push_message(g, "The prismatic beam strikes empty stone.");
+    }
+}
+
 void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *shots) {
     if (shots) {
         shots->count = 0;
@@ -3153,7 +3251,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
         if (e->type == ENEMY_DESERT_PHARAOH || e->type == ENEMY_THORN_REGENT ||
-            e->type == ENEMY_CINDER_LORD) {
+            e->type == ENEMY_CINDER_LORD || e->type == ENEMY_PRISM_SOVEREIGN) {
             Room *lair = &g->map.rooms[g->map.room_count - 1];
             int in_lair = g->player.x >= lair->x &&
                 g->player.x < lair->x + lair->w &&
@@ -3162,6 +3260,15 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             if (!in_lair && ((e->move_timer == 0 && e->hp == e->max_hp) || distance > 12)) {
                 continue;
             }
+        }
+
+        if (e->type == ENEMY_PRISM_SOVEREIGN) {
+            prism_sovereign_turn(g, i, shots);
+            continue;
+        }
+        if (e->type == ENEMY_BLIND_STALKER && e->hp == e->max_hp &&
+            e->move_timer == 0 && abs_int(dx) + abs_int(dy) > 4) {
+            continue;
         }
 
         int path_distance = enemy_distances[e->y][e->x];
@@ -3540,6 +3647,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             e->type == ENEMY_GOLEM ||
             e->type == ENEMY_THORN_GUARDIAN ||
             e->type == ENEMY_OBSIDIAN_GUARDIAN ||
+            e->type == ENEMY_SHARD_GOLEM ||
             e->type == ENEMY_LIVING_FLOWER ||
             e->type == ENEMY_VINEBOUND_GUARDIAN ||
             e->type == ENEMY_LUNAR_EFFIGY ||
@@ -3552,7 +3660,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             moved = enemy_move_toward(g, i);
         }
         if ((e->type == ENEMY_CRYPT_BAT || e->type == ENEMY_GIANT_MOTH ||
-            e->type == ENEMY_ASH_HOUND) && moved) {
+            e->type == ENEMY_ASH_HOUND || e->type == ENEMY_CRYSTAL_SPIDER) && moved) {
             // Fast enemies close distance without attacking on their second move.
             enemy_move_toward(g, i);
         }
