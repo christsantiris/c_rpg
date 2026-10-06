@@ -3023,8 +3023,76 @@ static void draw_ashen_enemy(Renderer *r, int tx, int ty, EnemyType type) {
     }
 }
 
+static void draw_glassdeep_enemy(Renderer *r, int tx, int ty, EnemyType type) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    SDL_Color shade = {49, 41, 78, 255};
+    SDL_Color crystal = {86, 181, 216, 255};
+    SDL_Color light = {191, 238, 247, 255};
+    SDL_Color violet = {146, 109, 213, 255};
+    if (type == ENEMY_CRYSTAL_SPIDER) {
+        for (int leg = 0; leg < 4; leg++) {
+            int offset = leg * 4;
+            fill_rect(r, x + 1, y + 4 + offset, 7, 2, crystal);
+            fill_rect(r, x + 16, y + 4 + offset, 7, 2, crystal);
+            fill_rect(r, x, y + 2 + offset, 2, 4, violet);
+            fill_rect(r, x + 22, y + 2 + offset, 2, 4, violet);
+        }
+        fill_rect(r, x + 7, y + 4, 10, 13, shade);
+        fill_rect(r, x + 9, y + 3, 6, 8, violet);
+        fill_rect(r, x + 11, y + 4, 2, 5, light);
+        fill_rect(r, x + 8, y + 16, 8, 5, crystal);
+        fill_rect(r, x + 9, y + 18, 2, 1, light);
+        fill_rect(r, x + 13, y + 18, 2, 1, light);
+        return;
+    }
+    if (type == ENEMY_BLIND_STALKER) {
+        SDL_Color skin = {163, 170, 185, 255};
+        fill_rect(r, x + 8, y + 2, 8, 8, skin);
+        fill_rect(r, x + 7, y + 3, 2, 5, light);
+        fill_rect(r, x + 9, y + 8, 6, 2, shade);
+        fill_rect(r, x + 6, y + 11, 12, 8, skin);
+        fill_rect(r, x + 3, y + 10, 3, 11, skin);
+        fill_rect(r, x + 18, y + 10, 3, 11, skin);
+        fill_rect(r, x + 1, y + 18, 4, 3, light);
+        fill_rect(r, x + 20, y + 18, 4, 3, light);
+        fill_rect(r, x + 6, y + 19, 4, 5, skin);
+        fill_rect(r, x + 14, y + 19, 4, 5, skin);
+        fill_rect(r, x + 11, y + 11, 2, 7, shade);
+        return;
+    }
+    int boss = type == ENEMY_PRISM_SOVEREIGN;
+    SDL_Color body = boss ? violet : crystal;
+    fill_rect(r, x + 7, y + 3, 10, 7, body);
+    fill_rect(r, x + 8, y + 4, 2, 4, light);
+    fill_rect(r, x + 10, y + 7, 5, 1, shade);
+    fill_rect(r, x + 5, y + 10, 14, 11, body);
+    fill_rect(r, x + 1, y + 10, 5, 10, body);
+    fill_rect(r, x + 19, y + 10, 4, 10, body);
+    fill_rect(r, x + 6, y + 20, 4, 4, shade);
+    fill_rect(r, x + 14, y + 20, 4, 4, shade);
+    fill_rect(r, x + 6, y + 11, 2, 8, light);
+    fill_rect(r, x + 11, y + 12, 3, 6, crystal);
+    fill_rect(r, x + 12, y + 13, 1, 3, light);
+    if (boss) {
+        for (int point = 0; point < 3; point++) {
+            fill_rect(r, x + 6 + point * 5, y, 3, 5, light);
+        }
+        fill_rect(r, x + 6, y + 4, 13, 2, crystal);
+        int pulse = (int)((SDL_GetTicks() / AMBIENT_FRAME_MS) & 1u);
+        fill_rect(r, x + 21, y + 3, 2, 6, light);
+        fill_rect(r, x + 20 - pulse, y + 5, 4 + pulse, 2, violet);
+    }
+}
+
 void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
     switch (type) {
+        case ENEMY_CRYSTAL_SPIDER:
+        case ENEMY_BLIND_STALKER:
+        case ENEMY_SHARD_GOLEM:
+        case ENEMY_PRISM_SOVEREIGN:
+            draw_glassdeep_enemy(r, tile_x, tile_y, type);
+            break;
         case ENEMY_CINDER_IMP:
         case ENEMY_ASH_HOUND:
         case ENEMY_OBSIDIAN_GUARDIAN:
@@ -3946,6 +4014,97 @@ void draw_frostfell_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map
     fill_rect(r, x + 19, y + 13, 5, 3, flag);
 }
 
+static void draw_crystal(Renderer *r, int x, int y, int width, int height, int violet) {
+    SDL_Color facet = violet ? (SDL_Color){137, 107, 192, 255} : (SDL_Color){65, 157, 192, 255};
+    SDL_Color light = violet ? (SDL_Color){208, 178, 250, 255} : (SDL_Color){172, 235, 242, 255};
+    fill_rect(r, x + width / 2, y, 1, 2, light);
+    fill_rect(r, x + width / 2 - 1, y + 2, 3, 2, facet);
+    fill_rect(r, x + 1, y + 4, width - 2, height - 4, facet);
+    fill_rect(r, x + 2, y + 4, 1, height - 5, light);
+    fill_rect(r, x + width / 2 + 1, y + 5, 1, height - 5, (SDL_Color){59, 72, 118, 255});
+}
+
+void draw_glassdeep_floor(Renderer *r, int tx, int ty, int mx, int my) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    unsigned int seed = forest_tile_seed(mx, my);
+    int shade = (int)(seed % 4u);
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){30 + shade, 34 + shade, 48 + shade, 255});
+    fill_rect(r, x + 3 + (int)(seed % 13u), y + 5 + (int)((seed >> 5) % 12u), 4, 1, (SDL_Color){67, 72, 88, 255});
+    if (seed % 13u == 0) {
+        fill_rect(r, x + 3, y + 16, 15, 2, (SDL_Color){114, 127, 145, 255});
+        fill_rect(r, x + 12, y + 15, 5, 1, (SDL_Color){151, 160, 171, 255});
+    } else if (seed % 17u == 0) {
+        int pulse = (int)((SDL_GetTicks() / AMBIENT_FRAME_MS + seed) % 3u);
+        fill_rect(r, x + 15, y + 8, 2, 3, (SDL_Color){91, 173 + pulse * 20, 203 + pulse * 15, 255});
+    }
+}
+
+void draw_glassdeep_wall(Renderer *r, int tx, int ty, int mx, int my) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    unsigned int seed = forest_tile_seed(mx, my);
+    SDL_Color stone = {23, 26, 41, 255};
+    SDL_Color rim = {66, 70, 94, 255};
+    draw_glassdeep_floor(r, tx, ty, mx, my);
+    if (seed % 4u == 0) {
+        fill_rect(r, x + 2, y + 12, 20, 11, stone);
+        draw_crystal(r, x + 2, y + 7, 7, 15, 0);
+        draw_crystal(r, x + 8, y + 1, 8, 21, 1);
+        draw_crystal(r, x + 15, y + 9, 7, 13, 0);
+        return;
+    }
+    for (int column = 0; column < 3; column++) {
+        int top = 2 + (int)((seed >> (column * 4)) % 7u);
+        int left = x + column * 8;
+        fill_rect(r, left + 1, y + top + 2, 7, 22 - top, stone);
+        fill_rect(r, left + 2, y + top, 5, 3, rim);
+        fill_rect(r, left + 2, y + top + 3, 1, 17 - top, rim);
+    }
+    if (seed % 4u == 1) {
+        draw_crystal(r, x + 12, y + 7, 8, 16, (seed >> 7) & 1u);
+    } else {
+        fill_rect(r, x + 8, y + 13, 1, 7, (SDL_Color){105, 127, 156, 255});
+        fill_rect(r, x + 8, y + 17, 5, 1, (SDL_Color){105, 127, 156, 255});
+    }
+}
+
+void draw_glassdeep_pool(Renderer *r, int tx, int ty, int mx, int my) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    unsigned int seed = forest_tile_seed(mx, my);
+    int ripple = (int)((SDL_GetTicks() / AMBIENT_FRAME_MS + seed) % 4u);
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){20, 39, 64, 255});
+    fill_rect(r, x + 2, y + 4 + ripple, 17, 1, (SDL_Color){55, 105, 140, 255});
+    fill_rect(r, x + 7, y + 16 - ripple, 15, 1, (SDL_Color){74, 139, 165, 255});
+    fill_rect(r, x + 12, y + 5 + ripple, 3, 1, (SDL_Color){136, 208, 218, 255});
+    fill_rect(r, x + 3, y + 18, 4, 1, (SDL_Color){113, 107, 170, 255});
+}
+
+void draw_glassdeep_ruin(Renderer *r, int tx, int ty, int mx, int my) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    draw_glassdeep_floor(r, tx, ty, mx, my);
+    fill_rect(r, x + 2, y + 3, 10, 8, (SDL_Color){99, 108, 136, 255});
+    fill_rect(r, x + 13, y + 5, 9, 7, (SDL_Color){77, 85, 114, 255});
+    fill_rect(r, x + 5, y + 14, 13, 7, (SDL_Color){88, 96, 123, 255});
+    fill_rect(r, x + 6, y + 15, 10, 1, (SDL_Color){146, 157, 180, 255});
+    if (forest_tile_seed(mx, my) % 5u == 0) {
+        fill_rect(r, x + 7, y + 5, 1, 4, (SDL_Color){98, 193, 207, 255});
+        fill_rect(r, x + 5, y + 7, 5, 1, (SDL_Color){98, 193, 207, 255});
+    }
+}
+
+void draw_glassdeep_edge(Renderer *r, int tx, int ty, int mx, int my) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    draw_glassdeep_floor(r, tx, ty, mx, my);
+    fill_rect(r, x + 1, y + 1, 5, 22, (SDL_Color){102, 109, 137, 255});
+    fill_rect(r, x + 18, y + 1, 5, 22, (SDL_Color){102, 109, 137, 255});
+    fill_rect(r, x + 2, y + 3, 3, 4, (SDL_Color){176, 220, 238, 255});
+    fill_rect(r, x + 19, y + 3, 3, 4, (SDL_Color){200, 166, 237, 255});
+}
+
 void draw_ashen_floor(Renderer *r, int tx, int ty, int mx, int my) {
     int x = tx * TILE_SIZE;
     int y = ty * TILE_SIZE;
@@ -4475,6 +4634,19 @@ void draw_town_gate_south(Renderer *r, int tile_x, int tile_y) {
 void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
+    if (style == TOWN_EXIT_GLASSDEEP) {
+        SDL_Color stone = {68, 71, 94, 255};
+        SDL_Color rim = {133, 146, 172, 255};
+        fill_rect(r, x, y, 14, 48, stone);
+        fill_rect(r, x + 106, y, 14, 48, stone);
+        fill_rect(r, x + 3, y + 3, 3, 38, rim);
+        fill_rect(r, x + 109, y + 3, 3, 38, rim);
+        fill_rect(r, x, y + 36, 120, 12, stone);
+        fill_rect(r, x + 2, y + 44, 116, 3, rim);
+        draw_crystal(r, x + 5, y + 8, 7, 17, 0);
+        draw_crystal(r, x + 108, y + 8, 7, 17, 1);
+        return;
+    }
     if (style == TOWN_EXIT_ASHEN) {
         SDL_Color stone = {55, 43, 48, 255};
         SDL_Color rim = {124, 87, 74, 255};

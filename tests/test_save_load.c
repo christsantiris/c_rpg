@@ -1129,8 +1129,8 @@ static void test_legacy_king_road_world(void) {
             guards += loaded.map.tiles[y][x] == TILE_NPC_ROYAL_GUARD;
         }
     }
-    ASSERT("an older Town 2 save loses its guards and south gate and keeps the north gate",
-        loaded_ok && guards == 0 && loaded.map.tiles[TOWN_H - 1][20] == TILE_WALL &&
+    ASSERT("an older Town 2 save loses obsolete guards and opens both region gates",
+        loaded_ok && guards == 0 && loaded.map.tiles[TOWN_H - 1][STILLBURY_GLASSDEEP_GATE_X] == TILE_TOWN_EXIT &&
         loaded.map.tiles[0][20] == TILE_TOWN_EXIT && loaded.map.tiles[4][19] == TILE_TOWN_FLOOR);
 
     memset(&original, 0, sizeof(original));

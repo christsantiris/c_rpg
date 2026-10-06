@@ -155,6 +155,8 @@
 #define DESERT_DEPTH 5
 #define MOONVEIL_DEPTH 5
 #define ASHEN_DEPTH 5
+#define GLASSDEEP_DEPTH 5
+#define STILLBURY_GLASSDEEP_GATE_X 20
 #define RIDGESHIRE_ASHEN_GATE_X 20
 #define ROSEMOOR_MOONVEIL_GATE_Y 14
 #define SWAMP_MAP_W 72
@@ -350,7 +352,13 @@ typedef enum {
     TILE_ASHEN_ENTRANCE,
     TILE_ASHEN_EXIT,
     TILE_ASHEN_LAVA,
-    TILE_ASHEN_RUIN
+    TILE_ASHEN_RUIN,
+    TILE_GLASSDEEP_FLOOR,
+    TILE_GLASSDEEP_WALL,
+    TILE_GLASSDEEP_ENTRANCE,
+    TILE_GLASSDEEP_EXIT,
+    TILE_GLASSDEEP_POOL,
+    TILE_GLASSDEEP_RUIN
 } TileType;
 
 typedef struct {
@@ -392,6 +400,7 @@ void map_place_town4_guards(Map *m, int avoid_x, int avoid_y);
 void map_place_town3_frost_gate(Map *m);
 void map_place_town3_moonveil_gate(Map *m);
 void map_place_town4_ashen_gate(Map *m);
+void map_place_town2_glassdeep_gate(Map *m);
 void map_place_town_harbor(Map *m);
 void map_place_town_tavern(Map *m);
 void map_place_town_inn(Map *m);
@@ -417,6 +426,7 @@ void map_generate_frostfell(Map *m, int level);
 void map_generate_desert(Map *m, int level);
 void map_generate_moonveil(Map *m, int level);
 void map_generate_ashen(Map *m, int level);
+void map_generate_glassdeep(Map *m, int level);
 void map_generate_guild(Map *m, int *sx, int *sy);
 int map_remove_coast_sluice(Map *m);
 TileType map_coast_trap_underlay(const Map *m, int x, int y);

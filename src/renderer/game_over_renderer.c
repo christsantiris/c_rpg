@@ -17,6 +17,7 @@ static const char *game_over_location(const GameState *g) {
         case LOCATION_SWAMP: return "BLACKWATER SWAMP";
         case LOCATION_FROSTFELL: return "FROSTFELL WASTES";
         case LOCATION_ASHEN: return "ASHEN HOLLOW";
+        case LOCATION_GLASSDEEP: return "GLASSDEEP CAVERNS";
         case LOCATION_MOONVEIL: return "MOONVEIL GARDENS";
         case LOCATION_DESERT: return "SUNSCAR WASTES";
         case LOCATION_TAVERN: return "TAVERN";
