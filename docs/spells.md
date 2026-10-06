@@ -45,9 +45,12 @@ trailing sparks, and an impact flash.
 
 ## Fireball
 
-Fireball travels four tiles in the player's last movement direction, then
-damages every active enemy within a Manhattan-distance radius of two around
-the destination.
+Fireball travels up to four tiles in the player's last movement direction.
+It explodes on the first active enemy it reaches, including adjacent melee
+targets. If it hits no enemy, it explodes at the end of its path. Walls and
+other non-walkable terrain stop its travel; an immediately blocked cast hits
+nothing. The blast damages every active enemy within a Manhattan-distance
+radius of two around the impact, matching the animated explosion.
 
 - MP cost: 20
 - Base damage: 25 per affected enemy
