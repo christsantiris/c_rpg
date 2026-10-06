@@ -315,7 +315,7 @@ void test_items(void) {
         shop_has_item(&shop, "Buckler") &&
         !shop_has_item(&shop, "Long Sword"));
     shop_init(&shop, SHOP_TYPE_BLACKSMITH, 1 << LOCATION_LABYRINTH);
-    ASSERT("Maze Warden victory does not unlock regional blacksmith stock",
+    ASSERT("Minotaur victory does not unlock regional blacksmith stock",
         shop.stock_tier == 1 && !shop_has_item(&shop, "Long Sword"));
     shop_init(&shop, SHOP_TYPE_BLACKSMITH, 1 << LOCATION_DUNGEON);
     ASSERT("one defeated boss unlocks uncommon weapons",

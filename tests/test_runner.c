@@ -21,6 +21,7 @@ void test_town_healer(void);
 void test_king_roads_and_castle(void);
 void test_town3_royal_guards(void);
 void test_rook_labyrinth(void);
+void test_minotaur(void);
 void test_town_map(void);
 void test_town_spawn(void);
 void test_cain_gift(void);
@@ -92,6 +93,7 @@ int main(void) {
     test_king_roads_and_castle();
     test_town3_royal_guards();
     test_rook_labyrinth();
+    test_minotaur();
     printf("\n");
     test_town_map();
     printf("\n");

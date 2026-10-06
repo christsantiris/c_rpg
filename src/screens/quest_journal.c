@@ -55,8 +55,8 @@ static const QuestDefinition quest_definitions[9] = {
     },
     {
         "The Ivory Rook", "Rook",
-        "Navigate the enemy-free labyrinth, light three",
-        "runes, and recover Rook's stolen ivory rook.",
+        "Navigate the labyrinth, light three runes,",
+        "defeat the Minotaur, and recover the ivory rook.",
         {"Recover the ivory rook", "", ""},
         "Stillbury Labyrinth", {1, 0, 0}, ROOK_QUEST_REWARD, 500
     },
@@ -167,16 +167,16 @@ int quest_journal_count(const GameState *g, QuestJournalTab tab) {
 int quest_journal_get_boss(const GameState *g, int index, BossJournalEntry *entry) {
     static const char *names[JOURNAL_BOSS_COUNT] = {
         "Lich King", "Necromancer", "Goblin King", "Drowned Queen",
-        "Fallen Sun Guardian", "Swamp Demon", "Red Dragon", "Polar Kraken", "Desert Pharaoh", "Thorn Regent", "Cinder Lord", "Prism Sovereign"
+        "Fallen Sun Guardian", "Swamp Demon", "Red Dragon", "Polar Kraken", "Desert Pharaoh", "Thorn Regent", "Cinder Lord", "Prism Sovereign", "Minotaur"
     };
     static const char *areas[JOURNAL_BOSS_COUNT] = {
         "Dungeon", "Forest", "Goblin Mountains", "Sunken Coast",
-        "Ruined Temple", "Blackwater Swamp", "Dragonspine", "Frostfell Wastes", "Sunscar Wastes", "Moonveil Gardens", "Ashen Hollow", "Glassdeep Caverns"
+        "Ruined Temple", "Blackwater Swamp", "Dragonspine", "Frostfell Wastes", "Sunscar Wastes", "Moonveil Gardens", "Ashen Hollow", "Glassdeep Caverns", "Labyrinth"
     };
     static const Location regions[JOURNAL_BOSS_COUNT] = {
         LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST,
         LOCATION_TEMPLE, LOCATION_SWAMP, LOCATION_DRAGONSPINE, LOCATION_FROSTFELL,
-        LOCATION_DESERT, LOCATION_MOONVEIL, LOCATION_ASHEN, LOCATION_GLASSDEEP
+        LOCATION_DESERT, LOCATION_MOONVEIL, LOCATION_ASHEN, LOCATION_GLASSDEEP, LOCATION_LABYRINTH
     };
     if (index < 0 || index >= JOURNAL_BOSS_COUNT) {
         return 0;

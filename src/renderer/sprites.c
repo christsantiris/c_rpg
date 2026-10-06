@@ -2495,7 +2495,6 @@ static void draw_coast_enemy(Renderer *r, int tx, int ty, EnemyType type) {
         case ENEMY_SIREN: draw_coast_siren(r, x, y); break;
         case ENEMY_GIANT_CRAB: draw_coast_crab(r, x, y); break;
         case ENEMY_ANIMATED_STATUE: draw_coast_statue(r, x, y); break;
-        case ENEMY_LABYRINTH_WARDEN: draw_coast_statue(r, x, y); break;
         case ENEMY_WATER_ELEMENTAL: draw_coast_elemental(r, x, y); break;
         case ENEMY_SEA_SERPENT: draw_coast_serpent(r, x, y); break;
         case ENEMY_DROWNED_QUEEN: draw_coast_queen(r, x, y); break;
@@ -3085,8 +3084,47 @@ static void draw_glassdeep_enemy(Renderer *r, int tx, int ty, EnemyType type) {
     }
 }
 
+static void draw_minotaur(Renderer *r, int tx, int ty) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    SDL_Color fur = {132, 77, 45, 255};
+    SDL_Color light = {177, 113, 64, 255};
+    SDL_Color shade = {69, 40, 32, 255};
+    SDL_Color horn = {228, 206, 157, 255};
+    SDL_Color steel = {161, 176, 186, 255};
+    // Broad bull's head, raised horns, and a pale muzzle.
+    fill_rect(r, x + 6, y + 2, 3, 6, horn);
+    fill_rect(r, x + 15, y + 2, 3, 6, horn);
+    fill_rect(r, x + 5, y, 2, 4, horn);
+    fill_rect(r, x + 17, y, 2, 4, horn);
+    fill_rect(r, x + 8, y + 4, 8, 8, fur);
+    fill_rect(r, x + 9, y + 5, 6, 3, light);
+    fill_rect(r, x + 9, y + 7, 2, 1, (SDL_Color){231, 104, 48, 255});
+    fill_rect(r, x + 13, y + 7, 2, 1, (SDL_Color){231, 104, 48, 255});
+    fill_rect(r, x + 8, y + 9, 8, 3, horn);
+    fill_rect(r, x + 10, y + 10, 1, 1, shade);
+    fill_rect(r, x + 13, y + 10, 1, 1, shade);
+    fill_rect(r, x + 5, y + 12, 14, 8, fur);
+    fill_rect(r, x + 7, y + 12, 10, 2, light);
+    fill_rect(r, x + 3, y + 12, 3, 7, fur);
+    fill_rect(r, x + 18, y + 12, 3, 7, fur);
+    fill_rect(r, x + 6, y + 19, 12, 2, shade);
+    fill_rect(r, x + 11, y + 19, 2, 2, horn);
+    fill_rect(r, x + 6, y + 21, 4, 3, shade);
+    fill_rect(r, x + 14, y + 21, 4, 3, shade);
+    // The axe sits beside the body so it reads apart from the horns.
+    fill_rect(r, x + 21, y + 7, 2, 16, shade);
+    fill_rect(r, x + 21, y + 8, 1, 14, light);
+    fill_rect(r, x + 19, y + 4, 5, 5, steel);
+    fill_rect(r, x + 20, y + 3, 4, 2, horn);
+    fill_rect(r, x + 23, y + 5, 1, 3, (SDL_Color){221, 229, 225, 255});
+}
+
 void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
     switch (type) {
+        case ENEMY_MINOTAUR:
+            draw_minotaur(r, tile_x, tile_y);
+            break;
         case ENEMY_CRYSTAL_SPIDER:
         case ENEMY_BLIND_STALKER:
         case ENEMY_SHARD_GOLEM:
@@ -3165,7 +3203,6 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_SIREN:
         case ENEMY_GIANT_CRAB:
         case ENEMY_ANIMATED_STATUE:
-        case ENEMY_LABYRINTH_WARDEN:
         case ENEMY_WATER_ELEMENTAL:
         case ENEMY_SEA_SERPENT:
         case ENEMY_DROWNED_QUEEN:

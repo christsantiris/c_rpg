@@ -130,7 +130,7 @@ Item boss_equipment_reward(EnemyType type) {
             return item_make_goblin_king_shield();
         case ENEMY_DROWNED_QUEEN:
             return item_make_tidecaller_robes();
-        case ENEMY_LABYRINTH_WARDEN:
+        case ENEMY_MINOTAUR:
             return item_make_magic_shield();
         case ENEMY_SWAMP_DEMON:
             return item_make_demonic_sword();
@@ -171,7 +171,7 @@ static int enemy_score(EnemyType type) {
         case ENEMY_SIREN: return 80;
         case ENEMY_GIANT_CRAB: return 100;
         case ENEMY_ANIMATED_STATUE: return 145;
-        case ENEMY_LABYRINTH_WARDEN: return 900;
+        case ENEMY_MINOTAUR: return 900;
         case ENEMY_WATER_ELEMENTAL: return 135;
         case ENEMY_SEA_SERPENT: return 180;
         case ENEMY_DROWNED_QUEEN: return 1600;
@@ -311,7 +311,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         case ENEMY_SIREN: gold = 8; break;
         case ENEMY_GIANT_CRAB: gold = 7; break;
         case ENEMY_ANIMATED_STATUE: gold = 12; break;
-        case ENEMY_LABYRINTH_WARDEN: gold = 50; break;
+        case ENEMY_MINOTAUR: gold = 50; break;
         case ENEMY_WATER_ELEMENTAL: gold = 10; break;
         case ENEMY_SEA_SERPENT: gold = 15; break;
         case ENEMY_DROWNED_QUEEN: gold = 75; break;
