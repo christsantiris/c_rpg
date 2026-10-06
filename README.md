@@ -142,6 +142,10 @@ Castle of No Return, whose doors stay sealed for now. Crown Road West continues
 from the castle's east gate to Ridgeshire's west gate. Each road keeps its own
 enemies and progress between visits.
 
+Town destinations use wooden signposts with cream lettering, including both
+ends of each unlocked shortcut. Area gate labels keep the same color at every
+entrance: forest green, mountains red, swamp lime, and Crown Roads gold.
+
 ### Moonveil Gardens
 
 Rosemoor's west gate opens onto the five-stage Moonveil Gardens. Enter from the
