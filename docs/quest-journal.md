@@ -16,6 +16,9 @@ status, gold reward, and score reward. The Bosses tab always lists every
 regional boss, including Glassdeep Caverns' Prism Sovereign, with their
 defeated or undefeated status.
 
+The Labyrinth entry tracks the Minotaur guarding Rook's ivory rook. Previous
+Maze Warden victories count as completed Minotaur encounters.
+
 Use the up and down arrows to select a quest. Use `Tab`, left, or right to
 change tabs. Press `Q` or `Esc` to return to the game. Completing every
 objective changes a quest to `Return to NPC`; rewards must still be collected

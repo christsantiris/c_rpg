@@ -110,6 +110,14 @@ Speak with Rook in Stillbury's Inn to receive his one-time retrieval quest. This
 labyrinth entrance on the eastern outskirts, across the road from the witch's
 hut. Explore three maze floors with enemies and look-alike stairs; some stairs
 lead only to a dead-end corridor and its return stair. Activate one rune on
-each floor to open the final vault, defeat the Maze Warden, recover the ivory
+each floor to open the final vault, defeat the Minotaur, recover the ivory
 rook, and return to Rook for 40 gold and 500 score. The quest and boss are
 one-time, but the labyrinth remains open for further combat expeditions.
+
+The Minotaur guards floor 3's relic vault and pursues players with melee
+attacks once the runes open the gate. It has 120 base HP, 18 attack, 7 defense,
+and grants 250 base XP before the shared enemy scaling. Its guaranteed drop
+is the Warrior's Magic Shield. The Labyrinth entry in the Bosses journal
+records its defeat. Legacy Maze Warden enemies load as Minotaurs using the
+same saved enemy ID, preserving health, explored maps, runes, and quest or
+boss completion. A previously defeated Warden stays defeated.

@@ -485,7 +485,7 @@ void test_rook_labyrinth(void) {
     g.player.x = 40;
     g.player.y = g.map.stairs_up_y;
     game_interact_labyrinth(&g);
-    ASSERT("Maze Warden must fall before taking Rook's relic",
+    ASSERT("Minotaur must fall before taking Rook's relic",
         g.rook_quest_state == 1);
     int boss_index = -1;
     for (int i = 0; i < g.enemy_count; i++) {
@@ -493,7 +493,9 @@ void test_rook_labyrinth(void) {
             boss_index = i;
         }
     }
-    ASSERT("Maze Warden spawns as the labyrinth boss", boss_index >= 0);
+    ASSERT("Minotaur spawns as the labyrinth boss", boss_index >= 0 &&
+        g.enemies[boss_index].type == ENEMY_MINOTAUR &&
+        strcmp(g.enemies[boss_index].name, "Minotaur") == 0);
     if (boss_index >= 0) {
         g.enemies[boss_index].hp = 1;
         g.player.x = 38;
@@ -501,9 +503,15 @@ void test_rook_labyrinth(void) {
         action_resolve_player(&g, (Action){ACTION_MOVE, 39,
             g.map.stairs_up_y});
     }
-    ASSERT("defeating the Warden leaves normal boss drops",
+    ASSERT("defeating the Minotaur leaves normal boss drops",
         g.defeated_bosses & (1 << LOCATION_LABYRINTH) &&
         g.floor_item_count >= 2);
+    int shields = 0;
+    for (int i = 0; i < g.floor_item_count; i++) {
+        shields += g.floor_items[i].active &&
+            g.floor_items[i].item.visual_id == ITEM_VISUAL_MAGIC_SHIELD;
+    }
+    ASSERT("the Minotaur guarantees one Magic Shield", shields == 1);
     g.player.x = 40;
     g.player.y = g.map.stairs_up_y;
     game_interact_labyrinth(&g);

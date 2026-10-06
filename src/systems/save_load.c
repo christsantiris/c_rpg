@@ -287,6 +287,10 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count) {
         e->type       = cJSON_GetObjectItem(obj, "type")->valueint;
         const char *name = e->type == ENEMY_LIVING_FLOWER ? "Carnivorous Flower" :
             cJSON_GetObjectItem(obj, "name")->valuestring;
+        // Migrate active and cached Wardens without changing combat or quest state.
+        if (e->type == ENEMY_MINOTAUR) {
+            name = "Minotaur";
+        }
         snprintf(e->name, sizeof(e->name), "%s", name);
         e->hp         = cJSON_GetObjectItem(obj, "hp")->valueint;
         e->max_hp     = cJSON_GetObjectItem(obj, "max_hp")->valueint;

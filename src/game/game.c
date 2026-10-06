@@ -375,8 +375,8 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             e->max_hp = 58; e->hp = 58; e->attack = 14; e->defense = 8;
             e->experience = 56;
             break;
-        case ENEMY_LABYRINTH_WARDEN:
-            strncpy(e->name, "Maze Warden", 15);
+        case ENEMY_MINOTAUR:
+            snprintf(e->name, sizeof(e->name), "Minotaur");
             e->max_hp = 120; e->hp = 120; e->attack = 18; e->defense = 7;
             e->experience = 250;
             e->is_boss = 1;
@@ -2485,7 +2485,7 @@ static void assign_rook_quest(GameState *g) {
     g->rook_labyrinth_switches = 0;
     snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
         "Recover my stolen ivory rook from the labyrinth across from the witch's "
-        "hut. Beware the false stairs and the Warden below.");
+        "hut. Beware the false stairs and the Minotaur below.");
     push_message(g, "Assigned: The Ivory Rook.");
     push_message(g, "The labyrinth across from the witch's hut is now open.");
 }
@@ -2858,7 +2858,7 @@ static void spawn_labyrinth_enemies(GameState *g) {
     }
     if (g->level == LABYRINTH_DEPTH &&
         !(g->defeated_bosses & (1 << LOCATION_LABYRINTH))) {
-        spawn_enemy(g, &g->enemies[g->enemy_count], ENEMY_LABYRINTH_WARDEN,
+        spawn_enemy(g, &g->enemies[g->enemy_count], ENEMY_MINOTAUR,
             39, g->map.stairs_up_y);
         g->enemy_count++;
     }
@@ -3055,7 +3055,7 @@ int game_interact_labyrinth(GameState *g) {
             }
             for (int enemy = 0; enemy < g->enemy_count; enemy++) {
                 if (g->enemies[enemy].active && g->enemies[enemy].is_boss) {
-                    push_message(g, "The Maze Warden guards the ivory rook.");
+                    push_message(g, "The Minotaur guards the ivory rook.");
                     return 1;
                 }
             }
@@ -4321,7 +4321,7 @@ void game_talk_to_rook(GameState *g) {
         assign_rook_quest(g);
     } else if (g->rook_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "One rune per floor opens the Warden's vault. Defeat the Warden and "
+            "One rune per floor opens the Minotaur's vault. Defeat the Minotaur and "
             "bring my ivory rook home.");
         push_message(g, "Rook is waiting for the ivory rook.");
     } else if (g->rook_quest_state == 2) {

@@ -53,7 +53,7 @@ typedef enum {
     ENEMY_LUNAR_EFFIGY,
     ENEMY_MOONBOUND_SENTINEL,
     ENEMY_FALLEN_SUN_GUARDIAN,
-    ENEMY_LABYRINTH_WARDEN,
+    ENEMY_MINOTAUR, // Keep the former Maze Warden's saved numeric ID.
     ENEMY_GIANT_RAT,
     ENEMY_BANDIT,
     ENEMY_VAMPIRE,
