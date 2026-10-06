@@ -13,7 +13,7 @@ controls as the Tavern.
 ## Elowen: The Broken Seals
 
 Elowen asks the player to repair shattered burial seals on dungeon floors 2,
-4, and 6. Each seal is protected by an escalating undead group. Stand
+3, and 4. Each seal is protected by an escalating undead group. Stand
 on a seal and press `A` to restore it, then return to Elowen after repairing
 all three to receive 40 gold and 300 score.
 
@@ -78,7 +78,7 @@ from the dock.
 ## Nahla: The Buried Sun
 
 Nahla waits on the Ruined Isle rather than in the Tavern. She asks the player
-to climb the four-tier Ruined Temple, defeat the Fallen Sun Guardian, and
+to climb the five-tier Ruined Temple, defeat the Fallen Sun Guardian, and
 recover the buried treasure from the summit vault. Return to Nahla with the
 treasure for 150 gold and 2,500 score. This quest also appears in the Quest
 Journal and gives the game one boss and one quest for every adventure area.
@@ -108,16 +108,21 @@ without requiring the absent Lich King to be defeated again.
 
 Speak with Rook in Stillbury's Inn to receive his one-time retrieval quest. This opens the
 labyrinth entrance on the eastern outskirts, across the road from the witch's
-hut. Explore three maze floors with enemies and look-alike stairs; some stairs
+hut. Explore five maze floors with enemies and look-alike stairs; some stairs
 lead only to a dead-end corridor and its return stair. Activate one rune on
 each floor to open the final vault, defeat the Minotaur, recover the ivory
 rook, and return to Rook for 40 gold and 500 score. The quest and boss are
 one-time, but the labyrinth remains open for further combat expeditions.
 
-The Minotaur guards floor 3's relic vault and pursues players with melee
+The Minotaur guards floor 5's relic vault and pursues players with melee
 attacks once the runes open the gate. It has 120 base HP, 18 attack, 7 defense,
 and grants 250 base XP before the shared enemy scaling. Its guaranteed drop
 is the Warrior's Magic Shield. The Labyrinth entry in the Bosses journal
 records its defeat. Legacy Maze Warden enemies load as Minotaurs using the
 same saved enemy ID, preserving health, explored maps, runes, and quest or
 boss completion. A previously defeated Warden stays defeated.
+
+Save version 85 preserves existing seal progress and moves the former temple
+summit and labyrinth vault to level 5. Old labyrinth runes on floors 1 and 2
+keep their bits; the old third rune moves to floor 5. Expeditions that already
+reached the old vault receive credit for the two new intermediate runes.

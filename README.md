@@ -7,6 +7,7 @@ A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explo
 ## Table of Contents
 
 - [Overview](#overview)
+- [Combat Areas and Level Counts](#combat-areas-and-level-counts)
 - [Town and Progression](#town-and-progression)
 - [Controls](#controls)
 - [Game Documentation](#game-documentation)
@@ -23,12 +24,12 @@ A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explo
 
 *The Castle of No Return* is a C/SDL roguelike with turn-based combat and a
 retro pixel-art style. Choose a Warrior, Mage, or Rogue, prepare in town, and
-explore an eight-floor undead dungeon, the seven-stage Haunted Forest, the
+explore an five-floor undead dungeon, the seven-stage Haunted Forest, the
 seven-stage Goblin Mountains, the five-stage Sunken Coast, and Stillbury's
 seven-level Blackwater Swamp. Beyond the Goblin Mountains, the five-stage
 Dragonspine ascent begins at Ridgeshire's east gate. Each region
 keeps its own generated maps and progression. Defeating the Drowned Queen on
-the Sunken Coast opens a sea route to the Ruined Isle. Its four-tier Ruined
+the Sunken Coast opens a sea route to the Ruined Isle. Its five-tier Ruined
 Temple remains a late-game challenge.
 
 Advancing never requires clearing every enemy. Regional bosses guard their
@@ -40,6 +41,35 @@ through the remaining three stages as difficulty decreases.
 Forest, swamp, and mountain boss victories show a shortcut discovery prompt
 until Enter is pressed. The marked shortcut appears beside the defeated boss,
 including when a boss has been lured away from its original room.
+
+## Combat Areas and Level Counts
+
+| Combat area | Number of levels |
+| --- | ---: |
+| OakHaven Dungeon | 5 |
+| Haunted Forest | 7 |
+| Goblin Mountains | 7 |
+| Blackwater Swamp | 7 |
+| Sunken Coast | 5 |
+| Dragonspine | 5 |
+| Frostfell Wastes | 5 |
+| Sunscar Wastes | 5 |
+| Moonveil Gardens | 5 |
+| Ashen Hollow | 5 |
+| Glassdeep Caverns | 5 |
+| Royal Catacombs | 5 |
+| Ruined Temple | 5 |
+| Rook's Labyrinth | 5 |
+| Crown Road East | 1 |
+| Crown Road West | 1 |
+
+Combat areas that connect towns have seven levels; standalone adventures have
+five. Crown Road East and West each use one combat map. The future castle
+interior may follow a different standard.
+
+The forest, mountains, and swamp can be played from either end, with their
+boss on level 4. Defeating that boss opens a shortcut to the opposite town;
+the remaining three levels can also be explored.
 
 ## OakHaven and Progression
 
@@ -112,15 +142,15 @@ The Alchemist also sells Mana Potions.
 
 Speak with Rook in Stillbury's Inn to receive his one-time retrieval quest and open
 the labyrinth gate on the eastern outskirts, across the road from the witch's
-hut. Explore three maze floors, each with a rune and enemies. Each of the first
-two floors has two identical-looking downward stairs: one leads onward, while
-the other reaches a short dead-end corridor with a return stair. Light all three
+hut. Explore five maze floors, each with a rune and enemies. Each of the first
+four floors has two identical-looking downward stairs: one leads onward, while
+the other reaches a short dead-end corridor with a return stair. Light all five
 runes, defeat the Minotaur, recover the ivory rook, and return to Rook for
 **40 gold** and **500 score**. Stairs stay open without clearing enemies. After
 the one-time quest, the labyrinth remains open for further expeditions; ordinary
 enemies return, but the Minotaur and quest reward do not.
 
-The Minotaur is a horned, axe-wielding melee boss guarding floor 3's relic
+The Minotaur is a horned, axe-wielding melee boss guarding floor 5's relic
 vault. Defeating it drops a Magic Shield and marks the Labyrinth boss journal
 entry complete. Existing Maze Warden saves become Minotaurs on load, retaining
 their health and previous victories.
@@ -250,7 +280,7 @@ sluice wall and switch while retaining their tide state and treasure chambers.
 ### Ruined Temple
 
 Talk to Nahla on the Ruined Isle to begin **The Buried Sun**, then walk through
-the temple gate. The temple is a four-tier stepped pyramid. Use the upward
+the temple gate. The temple is a five-tier stepped pyramid. Use the upward
 stairs on each tier to climb toward the summit and the downward stairs to return
 to the tier below. The Fallen Sun Guardian and buried vault appear only on the
 summit.

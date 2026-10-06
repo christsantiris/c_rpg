@@ -913,8 +913,8 @@ static int place_dain_map_bearer(GameState *g) {
 
 static int quest_group_pending(const GameState *g) {
     if (g->location == LOCATION_DUNGEON && g->elowen_quest_state == 1) {
-        int bit = g->level == 2 ? 1 : (g->level == 4 ? 2 :
-            (g->level == 6 ? 4 : 0));
+        int bit = g->level == 2 ? 1 : (g->level == 3 ? 2 :
+            (g->level == 4 ? 4 : 0));
         if (!bit) {
             return 0;
         }
@@ -1754,6 +1754,19 @@ static int active_depth(const GameState *g) {
     return DUNGEON_DEPTH;
 }
 
+static TileType quest_tile(const GameState *g, int x, int y) {
+    TileType tile = g->map.tiles[y][x];
+    if (tile == TILE_ITEM) {
+        for (int i = 0; i < g->floor_item_count; i++) {
+            const FloorItem *item = &g->floor_items[i];
+            if (item->active && item->x == x && item->y == y) {
+                return item->underlying_tile;
+            }
+        }
+    }
+    return tile;
+}
+
 static int place_elowen_seal(GameState *g) {
     if (g->location != LOCATION_DUNGEON || g->elowen_quest_state != 1) {
         return 0;
@@ -1761,9 +1774,9 @@ static int place_elowen_seal(GameState *g) {
     int seal_index = -1;
     if (g->level == 2) {
         seal_index = 0;
-    } else if (g->level == 4) {
+    } else if (g->level == 3) {
         seal_index = 1;
-    } else if (g->level == 6) {
+    } else if (g->level == 4) {
         seal_index = 2;
     }
     if (seal_index < 0 || g->map.room_count < 2) {
@@ -1771,8 +1784,8 @@ static int place_elowen_seal(GameState *g) {
     }
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
-            if (g->map.tiles[y][x] == TILE_BROKEN_BURIAL_SEAL ||
-                g->map.tiles[y][x] == TILE_RESTORED_BURIAL_SEAL) {
+            TileType tile = quest_tile(g, x, y);
+            if (tile == TILE_BROKEN_BURIAL_SEAL || tile == TILE_RESTORED_BURIAL_SEAL) {
                 return 0;
             }
         }
@@ -1781,20 +1794,27 @@ static int place_elowen_seal(GameState *g) {
     int x;
     int y;
     map_room_center(room, &x, &y);
-    g->map.tiles[y][x] =
-        (g->elowen_seals_restored & (1 << seal_index))
+    TileType seal = (g->elowen_seals_restored & (1 << seal_index))
         ? TILE_RESTORED_BURIAL_SEAL : TILE_BROKEN_BURIAL_SEAL;
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && item->x == x && item->y == y) {
+            item->underlying_tile = seal;
+            return !(g->elowen_seals_restored & (1 << seal_index));
+        }
+    }
+    g->map.tiles[y][x] = seal;
     return !(g->elowen_seals_restored & (1 << seal_index));
 }
 
 static void spawn_elowen_guardians(GameState *g) {
     EnemyType primary = g->level == 2 ? ENEMY_SKELETON :
-        (g->level == 4 ? ENEMY_WRAITH : ENEMY_CRYPT_CONJURER);
+        (g->level == 3 ? ENEMY_WRAITH : ENEMY_CRYPT_CONJURER);
     EnemyType support = g->level == 2 ? ENEMY_CRYPT_BAT :
-        (g->level == 4 ? ENEMY_SKELETON : ENEMY_WRAITH);
+        (g->level == 3 ? ENEMY_SKELETON : ENEMY_WRAITH);
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
-            if (g->map.tiles[y][x] != TILE_BROKEN_BURIAL_SEAL) {
+            if (quest_tile(g, x, y) != TILE_BROKEN_BURIAL_SEAL) {
                 continue;
             }
             spawn_quest_enemy_near(g, primary, x, y);
@@ -1903,19 +1923,6 @@ static int mara_beacon_bit(int level) {
     return 0;
 }
 
-static TileType coast_quest_tile(const GameState *g, int x, int y) {
-    TileType tile = g->map.tiles[y][x];
-    if (tile == TILE_ITEM) {
-        for (int i = 0; i < g->floor_item_count; i++) {
-            const FloorItem *item = &g->floor_items[i];
-            if (item->active && item->x == x && item->y == y) {
-                return item->underlying_tile;
-            }
-        }
-    }
-    return tile;
-}
-
 static int place_mara_beacon(GameState *g) {
     if (g->location != LOCATION_COAST || g->mara_quest_state == 0) {
         return 0;
@@ -1926,7 +1933,7 @@ static int place_mara_beacon(GameState *g) {
     }
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
-            TileType tile = coast_quest_tile(g, x, y);
+            TileType tile = quest_tile(g, x, y);
             if (tile == TILE_COAST_BEACON_UNLIT || tile == TILE_COAST_BEACON_LIT) {
                 return 0;
             }
@@ -1996,7 +2003,7 @@ static void spawn_mara_guardian(GameState *g) {
     }
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
-            if (coast_quest_tile(g, x, y) != TILE_COAST_BEACON_UNLIT) {
+            if (quest_tile(g, x, y) != TILE_COAST_BEACON_UNLIT) {
                 continue;
             }
             spawn_quest_enemy_near(g, primary, x, y);
@@ -3054,7 +3061,7 @@ void game_enter_labyrinth(GameState *g) {
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
     push_message(g, "You enter Rook's labyrinth.");
-    push_message(g, "Three runes open the deepest vault.");
+    push_message(g, "Five runes open the deepest vault.");
 }
 
 void game_change_labyrinth_floor(GameState *g, int descending, int false_stair) {
@@ -3172,7 +3179,7 @@ int game_interact_labyrinth(GameState *g) {
                         g->labyrinth_cache[LABYRINTH_DEPTH - 1].map.stairs_up_y][35] =
                         TILE_LABYRINTH_FLOOR;
                 }
-                push_message(g, "The third rune opens the relic vault!");
+                push_message(g, "The fifth rune opens the relic vault!");
             } else {
                 char message[MAX_MESSAGE_LEN];
                 snprintf(message, sizeof(message),
@@ -3258,7 +3265,7 @@ static void cache_temple_level(GameState *g) {
 }
 
 static void spawn_temple_enemies(GameState *g) {
-    static const int counts[TEMPLE_DEPTH] = {6, 7, 8, 7};
+    static const int counts[TEMPLE_DEPTH] = {6, 7, 8, 8, 7};
     static const EnemyType types[TEMPLE_DEPTH][8] = {
         {ENEMY_RELIC_SCARABS, ENEMY_TEMPLE_STALKER,
             ENEMY_BLOWDART_HUNTER, ENEMY_VINEBOUND_GUARDIAN,
@@ -3271,6 +3278,10 @@ static void spawn_temple_enemies(GameState *g) {
             ENEMY_VINEBOUND_GUARDIAN, ENEMY_SUN_PRIEST,
             ENEMY_SERPENT_SPIRIT, ENEMY_TREASURE_WRAITH,
             ENEMY_LUNAR_EFFIGY, ENEMY_RELIC_SCARABS},
+        {ENEMY_VINEBOUND_GUARDIAN, ENEMY_SUN_PRIEST,
+            ENEMY_SERPENT_SPIRIT, ENEMY_TREASURE_WRAITH,
+            ENEMY_LUNAR_EFFIGY, ENEMY_TREASURE_WRAITH,
+            ENEMY_TEMPLE_STALKER, ENEMY_RELIC_SCARABS},
         {ENEMY_RELIC_SCARABS, ENEMY_TEMPLE_STALKER,
             ENEMY_BLOWDART_HUNTER, ENEMY_SUN_PRIEST,
             ENEMY_SERPENT_SPIRIT, ENEMY_TREASURE_WRAITH,
@@ -3281,6 +3292,8 @@ static void spawn_temple_enemies(GameState *g) {
             {53, 24}, {48, 29}},
         {{10, 25}, {18, 23}, {48, 24}, {55, 27},
             {26, 17}, {39, 17}, {42, 6}},
+        {{10, 25}, {18, 24}, {48, 25}, {55, 27},
+            {24, 17}, {40, 17}, {12, 6}, {50, 6}},
         {{10, 25}, {18, 24}, {48, 25}, {55, 27},
             {24, 17}, {40, 17}, {12, 6}, {50, 6}},
         {{14, 26}, {10, 29}, {19, 24}, {53, 24},
@@ -3691,6 +3704,10 @@ void game_hide_portal_destination(GameState *g) {
             return;
         }
         cache = g->coast_cache;
+    } else if (g->portal_location == LOCATION_DUNGEON) {
+        if (g->portal_level > DUNGEON_DEPTH) {
+            return;
+        }
     } else if (g->portal_location == LOCATION_SWAMP) {
         cache = g->swamp_cache;
     } else if (g->portal_location == LOCATION_DRAGONSPINE) {
@@ -3723,6 +3740,9 @@ void game_hide_portal_destination(GameState *g) {
         }
         cache = g->glassdeep_cache;
     } else if (g->portal_location == LOCATION_TEMPLE) {
+        if (g->portal_level > TEMPLE_DEPTH) {
+            return;
+        }
         cache = g->temple_cache;
     }
     if (cache[g->portal_level - 1].valid &&
@@ -3772,6 +3792,10 @@ void game_use_town_portal(GameState *g) {
             return;
         }
         cache = g->coast_cache;
+    } else if (g->portal_location == LOCATION_DUNGEON) {
+        if (g->portal_level > DUNGEON_DEPTH) {
+            return;
+        }
     } else if (g->portal_location == LOCATION_SWAMP) {
         cache = g->swamp_cache;
     } else if (g->portal_location == LOCATION_DRAGONSPINE) {
@@ -3804,6 +3828,9 @@ void game_use_town_portal(GameState *g) {
         }
         cache = g->glassdeep_cache;
     } else if (g->portal_location == LOCATION_TEMPLE) {
+        if (g->portal_level > TEMPLE_DEPTH) {
+            return;
+        }
         cache = g->temple_cache;
     }
     if (!cache[level - 1].valid) return;
@@ -3985,12 +4012,12 @@ void game_talk_to_nahla(GameState *g) {
         g->temple_treasure_state = 1;
         if (temple_training_recommended(g)) {
             snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "Climb four tiers, defeat the Fallen Sun Guardian, and recover "
+                "Climb five tiers, defeat the Fallen Sun Guardian, and recover "
                 "the Buried Sun. The temple is dangerous; train in the dungeon "
                 "or mountains first if needed. You can return.");
         } else {
             snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "The temple is a stepped pyramid. Climb its four tiers, defeat "
+                "The temple is a stepped pyramid. Climb its five tiers, defeat "
                 "the Fallen Sun Guardian, and recover the Buried Sun from the summit vault.");
         }
         push_message(g, "Quest assigned: The Buried Sun.");
@@ -4234,7 +4261,7 @@ void game_talk_to_elowen(GameState *g) {
         g->elowen_seals_restored = 0;
         prepare_quest_expedition(g, LOCATION_DUNGEON);
         strncpy(g->dialogue_text,
-            "The dead have gathered around shattered burial seals on dungeon floors 2, 4, and 6. Break through them and restore each seal.",
+            "The dead have gathered around shattered burial seals on dungeon floors 2, 3, and 4. Break through them and restore each seal.",
             MAX_DIALOGUE_LEN - 1);
         g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
         push_message(g, "Quest assigned: The Broken Seals.");

@@ -20,7 +20,7 @@ static const QuestDefinition quest_definitions[9] = {
         "Break through the undead guarding three shattered",
         "burial seals, then restore each seal.",
         {"Repair burial seal", "Repair burial seal", "Repair burial seal"},
-        "Dungeon", {2, 4, 6}, 40, 300
+        "Dungeon", {2, 3, 4}, 40, 300
     },
     {
         "Recover the Treasure Map", "Dain",
@@ -51,14 +51,14 @@ static const QuestDefinition quest_definitions[9] = {
         "Defeat the temple guardian and recover the",
         "treasure buried beneath the solar vault.",
         {"Recover the buried treasure", "", ""},
-        "Ruined Temple", {4, 0, 0}, 150, 2500
+        "Ruined Temple", {5, 0, 0}, 150, 2500
     },
     {
         "The Ivory Rook", "Rook",
-        "Navigate the labyrinth, light three runes,",
+        "Navigate the labyrinth, light five runes,",
         "defeat the Minotaur, and recover the ivory rook.",
         {"Recover the ivory rook", "", ""},
-        "Stillbury Labyrinth", {1, 0, 0}, ROOK_QUEST_REWARD, 500
+        "Stillbury Labyrinth", {5, 0, 0}, ROOK_QUEST_REWARD, 500
     },
     {
         "Bring Mira Home", "Bram",

@@ -428,7 +428,7 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 84);
+    cJSON_AddNumberToObject(root, "save_version", 85);
     cJSON_AddNumberToObject(root, "forest_entry_town", g->forest_entry_town);
     cJSON_AddNumberToObject(root, "forest_portal_town", g->forest_portal_town);
     cJSON_AddNumberToObject(root, "swamp_entry_town", g->swamp_entry_town);
@@ -1106,61 +1106,66 @@ static void remove_legacy_coast_beacon(Map *m) {
     }
 }
 
-static int migrate_coast_stages(GameState *g) {
+static int migrate_shortened_stages(GameState *g, Location region) {
     static const int levels[8] = {1, 2, 3, 3, 4, 4, 4, 5};
-    static const int retained[COAST_DEPTH] = {0, 1, 2, 5, 7};
-    LevelCache *old = malloc(sizeof(g->coast_cache));
+    static const int coast_retained[5] = {0, 1, 2, 5, 7};
+    static const int dungeon_retained[5] = {0, 1, 3, 5, 7};
+    int coast = region == LOCATION_COAST;
+    const int *retained = coast ? coast_retained : dungeon_retained;
+    LevelCache *cache = coast ? g->coast_cache : g->level_cache;
+    int *max_level = coast ? &g->max_coast_level_reached : &g->max_level_reached;
+    LevelCache *old = malloc(MAX_REGION_DEPTH * sizeof(*cache));
     if (!old) {
         return 0;
     }
-    memcpy(old, g->coast_cache, sizeof(g->coast_cache));
-    int active = g->location == LOCATION_COAST ? g->level : 0;
-    int portal = g->portal_active && g->portal_location == LOCATION_COAST ? g->portal_level : 0;
+    memcpy(old, cache, MAX_REGION_DEPTH * sizeof(*cache));
+    int active = g->location == region ? g->level : 0;
+    int portal = g->portal_active && g->portal_location == region ? g->portal_level : 0;
     for (int i = 0; i < MAX_REGION_DEPTH; i++) {
-        g->coast_cache[i].valid = 0;
-        g->coast_cache[i].level_cleared = 0;
+        cache[i].valid = 0;
+        cache[i].level_cleared = 0;
     }
     // Prefer the retained stages, but keep other explored snapshots when the
     // corresponding retained stage has not been visited yet.
     for (int i = 0; i < 8; i++) {
         if (old[i].valid) {
-            g->coast_cache[levels[i] - 1] = old[i];
+            cache[levels[i] - 1] = old[i];
         }
     }
-    for (int i = 0; i < COAST_DEPTH; i++) {
+    for (int i = 0; i < 5; i++) {
         if (old[retained[i]].valid) {
-            g->coast_cache[i] = old[retained[i]];
+            cache[i] = old[retained[i]];
         }
     }
     if (portal >= 1 && portal <= 8 && old[portal - 1].valid) {
-        g->coast_cache[levels[portal - 1] - 1] = old[portal - 1];
+        cache[levels[portal - 1] - 1] = old[portal - 1];
     }
     free(old);
     if (active >= 1 && active <= 8) {
         g->level = levels[active - 1];
-        LevelCache *cache = &g->coast_cache[g->level - 1];
-        cache->map = g->map;
-        cache->enemy_count = g->enemy_count;
-        memcpy(cache->enemies, g->enemies, sizeof(g->enemies));
-        cache->level_cleared = g->level_cleared;
-        cache->valid = 1;
+        LevelCache *snapshot = &cache[g->level - 1];
+        snapshot->map = g->map;
+        snapshot->enemy_count = g->enemy_count;
+        memcpy(snapshot->enemies, g->enemies, sizeof(g->enemies));
+        snapshot->level_cleared = g->level_cleared;
+        snapshot->valid = 1;
         for (int i = 0; i < g->floor_item_count; i++) {
             FloorItem *item = &g->floor_items[i];
             if (item->active && item->x >= 0 && item->x < MAP_W &&
                 item->y >= 0 && item->y < MAP_H &&
-                cache->map.tiles[item->y][item->x] == TILE_ITEM) {
-                cache->map.tiles[item->y][item->x] = item->underlying_tile;
+                snapshot->map.tiles[item->y][item->x] == TILE_ITEM) {
+                snapshot->map.tiles[item->y][item->x] = item->underlying_tile;
             }
         }
     }
-    int reached = g->max_coast_level_reached;
+    int reached = *max_level;
     if (reached < 1) {
         reached = 1;
     } else if (reached > 8) {
         reached = 8;
     }
-    g->max_coast_level_reached = levels[reached - 1];
-    if (g->portal_location == LOCATION_COAST && g->portal_level >= 1 && g->portal_level <= 8) {
+    *max_level = levels[reached - 1];
+    if (g->portal_location == region && g->portal_level >= 1 && g->portal_level <= 8) {
         g->portal_level = levels[g->portal_level - 1];
         if (active && portal && active != portal && g->level == g->portal_level) {
             // Two old floors now share one stage; land on the retained map's
@@ -1170,10 +1175,10 @@ static int migrate_coast_stages(GameState *g) {
             g->portal_origin_tile = g->map.tiles[g->portal_y][g->portal_x];
         }
     }
-    if (g->coast_cache[0].valid) {
-        remove_legacy_coast_beacon(&g->coast_cache[0].map);
+    if (coast && cache[0].valid) {
+        remove_legacy_coast_beacon(&cache[0].map);
     }
-    if (active == 1) {
+    if (coast && active == 1) {
         remove_legacy_coast_beacon(&g->map);
         for (int i = 0; i < g->floor_item_count; i++) {
             FloorItem *item = &g->floor_items[i];
@@ -1183,12 +1188,38 @@ static int migrate_coast_stages(GameState *g) {
             }
         }
     }
-    if (g->portal_location == LOCATION_COAST && g->portal_level == 1 &&
+    if (coast && g->portal_location == region && g->portal_level == 1 &&
         (g->portal_origin_tile == TILE_COAST_BEACON_UNLIT ||
         g->portal_origin_tile == TILE_COAST_BEACON_LIT)) {
         g->portal_origin_tile = TILE_COAST_FLOOR;
     }
     return 1;
+}
+
+static void migrate_expanded_finale(GameState *g, Location region, int old_depth) {
+    int labyrinth = region == LOCATION_LABYRINTH;
+    LevelCache *cache = labyrinth ? g->labyrinth_cache : g->temple_cache;
+    if (labyrinth) {
+        int old_switches = g->rook_labyrinth_switches;
+        g->rook_labyrinth_switches = (old_switches & 3) | ((old_switches & 4) ? 16 : 0);
+        if ((old_switches & 4) || cache[old_depth - 1].valid ||
+            (g->location == region && g->level == old_depth)) {
+            // Players already at the old vault keep access without having to
+            // backtrack through the two newly inserted rune floors.
+            g->rook_labyrinth_switches |= 12;
+        }
+    } else if (g->max_temple_level_reached == old_depth) {
+        g->max_temple_level_reached = TEMPLE_DEPTH;
+    }
+    cache[4] = cache[old_depth - 1];
+    cache[old_depth - 1].valid = 0;
+    cache[old_depth - 1].level_cleared = 0;
+    if (g->location == region && g->level == old_depth) {
+        g->level = 5;
+    }
+    if (g->portal_location == region && g->portal_level == old_depth) {
+        g->portal_level = 5;
+    }
 }
 
 static void remove_legacy_wardens(Map *m) {
@@ -1976,23 +2007,15 @@ int load_game(GameState *g, int slot) {
         }
     }
 
-    // Clamp saves from the former 25-floor dungeon to the current dungeon arc.
-    if (g->level > DUNGEON_DEPTH) {
-        g->level = DUNGEON_DEPTH;
-        g->floor_item_count = 0;
-        g->level_cache[DUNGEON_DEPTH - 1].valid = 0;
-        map_generate(&g->map, g->level);
-        enemies_spawn(g);
-        g->level_cleared = 0;
-        g->player.x = g->map.stairs_up_x;
-        g->player.y = g->map.stairs_up_y;
+    // Preserve the old numbering until route migrations have moved saved floors.
+    int dungeon_depth = save_version < 85 ? 8 : DUNGEON_DEPTH;
+    if (g->max_level_reached > dungeon_depth) {
+        g->max_level_reached = dungeon_depth;
     }
-    if (g->max_level_reached > DUNGEON_DEPTH)
-        g->max_level_reached = DUNGEON_DEPTH;
 
     if (save_version < 2) {
-        g->level_cache[DUNGEON_DEPTH - 1].valid = 0;
-        if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH) {
+        g->level_cache[dungeon_depth - 1].valid = 0;
+        if (g->location == LOCATION_DUNGEON && g->level == dungeon_depth) {
             g->floor_item_count = 0;
             map_generate(&g->map, g->level);
             enemies_spawn(g);
@@ -2003,10 +2026,10 @@ int load_game(GameState *g, int slot) {
     }
 
     if (save_version < 3) {
-        g->level_cache[DUNGEON_DEPTH - 1].valid = 0;
+        g->level_cache[dungeon_depth - 1].valid = 0;
         g->dungeon_key_found = 0;
         g->portal_active = 0;
-        if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH) {
+        if (g->location == LOCATION_DUNGEON && g->level == dungeon_depth) {
             g->floor_item_count = 0;
             map_generate(&g->map, g->level);
             enemies_spawn(g);
@@ -2036,9 +2059,9 @@ int load_game(GameState *g, int slot) {
     // Version 4 replaces the porous random boss room with a sealed arena,
     // guarantees a visible key, and gives the Lich dedicated encounter AI.
     if (save_version < 4) {
-        g->level_cache[DUNGEON_DEPTH - 1].valid = 0;
+        g->level_cache[dungeon_depth - 1].valid = 0;
         g->dungeon_key_found = 0;
-        if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH) {
+        if (g->location == LOCATION_DUNGEON && g->level == dungeon_depth) {
             g->floor_item_count = 0;
             map_generate(&g->map, g->level);
             enemies_spawn(g);
@@ -2309,8 +2332,8 @@ int load_game(GameState *g, int slot) {
             LOCATION_MOUNTAINS, LOCATION_COAST
         };
         int boss_depths[4] = {
-            // Coast caches still use the old eight-stage numbering here.
-            DUNGEON_DEPTH, FOREST_DEPTH, MOUNTAIN_DEPTH, 8
+            // Dungeon and coast caches still use eight-stage numbering here.
+            8, FOREST_DEPTH, MOUNTAIN_DEPTH, 8
         };
         for (int region = 0; region < 4; region++) {
             LevelCache *finale = &boss_caches[region][boss_depths[region] - 1];
@@ -2440,12 +2463,12 @@ int load_game(GameState *g, int slot) {
     // Floor five used to contain the Goblin King. Regenerate that legacy
     // floor so old saves receive the new undead finale.
     int legacy_finale = 0;
-    if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH) {
+    if (g->location == LOCATION_DUNGEON && g->level == dungeon_depth) {
         for (int i = 0; i < g->enemy_count; i++)
             if (g->enemies[i].type == ENEMY_GOBLIN_KING) legacy_finale = 1;
     }
     if (legacy_finale) {
-        g->level_cache[DUNGEON_DEPTH - 1].valid = 0;
+        g->level_cache[dungeon_depth - 1].valid = 0;
         g->floor_item_count = 0;
         map_generate(&g->map, g->level);
         enemies_spawn(g);
@@ -2842,9 +2865,28 @@ int load_game(GameState *g, int slot) {
     if ((old_forest && !migrate_region_routes(g, LOCATION_FOREST)) ||
         (old_swamp && !migrate_region_routes(g, LOCATION_SWAMP)) ||
         (old_mountains && !migrate_region_routes(g, LOCATION_MOUNTAINS)) ||
-        (save_version < 84 && !migrate_coast_stages(g))) {
+        (save_version < 84 && !migrate_shortened_stages(g, LOCATION_COAST)) ||
+        (save_version < 85 && !migrate_shortened_stages(g, LOCATION_DUNGEON))) {
         cJSON_Delete(root);
         return 0;
+    }
+    if (save_version < 85 && cJSON_GetArraySize(temple_cache) == 4) {
+        migrate_expanded_finale(g, LOCATION_TEMPLE, 4);
+    }
+    if (save_version < 85 && cJSON_GetArraySize(labyrinth_cache) == 3) {
+        migrate_expanded_finale(g, LOCATION_LABYRINTH, 3);
+    }
+
+    if (g->location == LOCATION_DUNGEON &&
+        (g->level > DUNGEON_DEPTH || (save_version < 4 && g->level == DUNGEON_DEPTH))) {
+        g->level = DUNGEON_DEPTH;
+        g->floor_item_count = 0;
+        g->level_cache[DUNGEON_DEPTH - 1].valid = 0;
+        map_generate(&g->map, g->level);
+        enemies_spawn(g);
+        g->level_cleared = 0;
+        g->player.x = g->map.stairs_up_x;
+        g->player.y = g->map.stairs_up_y;
     }
 
     if (g->location == LOCATION_MOUNTAINS) {

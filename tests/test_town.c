@@ -398,7 +398,7 @@ void test_rook_labyrinth(void) {
         g.player.y == TOWN_LABYRINTH_Y + 1);
     action_resolve_player(&g, (Action){ACTION_MOVE,
         TOWN_LABYRINTH_X, TOWN_LABYRINTH_Y});
-    ASSERT("labyrinth entrance starts a three-level combat expedition",
+    ASSERT("labyrinth entrance starts a five-level combat expedition",
         g.location == LOCATION_LABYRINTH && g.level == 1 &&
         g.enemy_count >= 4 && g.floor_item_count == 0);
 
@@ -471,6 +471,15 @@ void test_rook_labyrinth(void) {
     ASSERT("third-floor dead end returns to floor two", g.level == 2);
 
     step_into_labyrinth_tile(&g, g.map.stairs_down_x, g.map.stairs_down_y);
+    for (int level = 3; level < LABYRINTH_DEPTH; level++) {
+        find_labyrinth_tile(&g.map, TILE_LABYRINTH_SWITCH_OFF, &rune_x, &rune_y);
+        ASSERT("intermediate labyrinth floors keep their rune and descent",
+            g.level == level && g.map.tiles[rune_y][rune_x] == TILE_LABYRINTH_SWITCH_OFF);
+        g.player.x = rune_x;
+        g.player.y = rune_y;
+        game_interact_labyrinth(&g);
+        step_into_labyrinth_tile(&g, g.map.stairs_down_x, g.map.stairs_down_y);
+    }
     ASSERT("deepest floor has a guarded relic vault",
         g.level == LABYRINTH_DEPTH && g.enemy_count >= 7 &&
         g.map.tiles[g.map.stairs_up_y][35] == TILE_LABYRINTH_GATE);
@@ -479,8 +488,8 @@ void test_rook_labyrinth(void) {
     g.player.x = rune_x;
     g.player.y = rune_y;
     game_interact_labyrinth(&g);
-    ASSERT("all three runes open the final vault",
-        g.rook_labyrinth_switches == 7 &&
+    ASSERT("all five runes open the final vault",
+        g.rook_labyrinth_switches == 31 &&
         g.map.tiles[g.map.stairs_up_y][35] == TILE_LABYRINTH_FLOOR);
     g.player.x = 40;
     g.player.y = g.map.stairs_up_y;
@@ -518,6 +527,9 @@ void test_rook_labyrinth(void) {
     ASSERT("the player recovers Rook's ivory rook after the fight",
         g.rook_quest_state == 2);
 
+    while (g.level > 3) {
+        step_into_labyrinth_tile(&g, 1, g.map.stairs_up_y);
+    }
     step_into_labyrinth_tile(&g, 1, g.map.stairs_up_y);
     ASSERT("third-floor exit returns to the second floor", g.level == 2);
     step_into_labyrinth_tile(&g, 1, g.map.stairs_up_y);
@@ -564,7 +576,7 @@ void test_rook_labyrinth(void) {
     int restored = saved && load_game(&loaded, slot);
     ASSERT("Rook quest progress and the relocated town entrance survive save and load",
         restored && loaded.rook_quest_state == 3 &&
-        loaded.rook_labyrinth_switches == 7 &&
+        loaded.rook_labyrinth_switches == 31 &&
         loaded.rook_quest_completions == 1 && game_labyrinth_is_open(&loaded) &&
         loaded.location == LOCATION_TOWN2 &&
         loaded.map.tiles[TOWN_LABYRINTH_Y][TOWN_LABYRINTH_X] ==

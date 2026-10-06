@@ -14,8 +14,9 @@ static int enter_vault(int runes) {
     game.rook_quest_state = 1;
     game.rook_labyrinth_switches = runes;
     game_enter_labyrinth(&game);
-    game_change_labyrinth_floor(&game, 1, 0);
-    game_change_labyrinth_floor(&game, 1, 0);
+    while (game.level < LABYRINTH_DEPTH) {
+        game_change_labyrinth_floor(&game, 1, 0);
+    }
     for (int i = 0; i < game.enemy_count; i++) {
         if (game.enemies[i].type == ENEMY_MINOTAUR) {
             return i;
@@ -25,8 +26,8 @@ static int enter_vault(int runes) {
 }
 
 static void test_vault_combat(void) {
-    int index = enter_vault(3);
-    ASSERT("the third labyrinth floor has a Minotaur guarding the sealed vault", index >= 0 && game.enemies[index].is_boss && game.enemies[index].x == 39 && game.map.tiles[game.map.stairs_up_y][35] == TILE_LABYRINTH_GATE);
+    int index = enter_vault(15);
+    ASSERT("the fifth labyrinth floor has a Minotaur guarding the sealed vault", index >= 0 && game.enemies[index].is_boss && game.enemies[index].x == 39 && game.map.tiles[game.map.stairs_up_y][35] == TILE_LABYRINTH_GATE);
     if (index < 0) {
         return;
     }
@@ -54,7 +55,7 @@ static void test_vault_combat(void) {
 
 static void test_ranged_victories(void) {
     for (int attack = 0; attack < 3; attack++) {
-        int index = enter_vault(7);
+        int index = enter_vault(31);
         if (index < 0) {
             ASSERT("a Minotaur is available for ranged combat", 0);
             return;
@@ -86,7 +87,7 @@ static void test_ranged_victories(void) {
 }
 
 static void test_warden_save_migration(void) {
-    int index = enter_vault(7);
+    int index = enter_vault(31);
     if (index < 0) {
         ASSERT("a legacy Warden save fixture can be created", 0);
         return;
@@ -108,7 +109,7 @@ static void test_warden_save_migration(void) {
     int ok = save_game(&game, MINOTAUR_TEST_SLOT) && load_game(&loaded, MINOTAUR_TEST_SLOT);
     ASSERT("legacy active and cached Wardens load as Minotaurs", ok && loaded.enemies[index].type == ENEMY_MINOTAUR && strcmp(loaded.enemies[index].name, "Minotaur") == 0 && loaded.labyrinth_cache[LABYRINTH_DEPTH - 1].valid && strcmp(loaded.labyrinth_cache[LABYRINTH_DEPTH - 1].enemies[index].name, "Minotaur") == 0);
     ASSERT("migration retains enemy health, combat stats, and turn state", ok && loaded.enemies[index].hp == 57 && loaded.enemies[index].max_hp == boss->max_hp && loaded.enemies[index].attack == boss->attack && loaded.enemies[index].defense == boss->defense && loaded.enemies[index].move_timer == 7 && loaded.enemies[index].frozen_turns == 1 && loaded.labyrinth_cache[LABYRINTH_DEPTH - 1].enemies[index].hp == 57);
-    ASSERT("migration retains explored maps, runes, quest state, and character progress", ok && memcmp(&loaded.map, &game.map, sizeof(Map)) == 0 && memcmp(&loaded.labyrinth_cache[LABYRINTH_DEPTH - 1].map, &cache->map, sizeof(Map)) == 0 && loaded.rook_labyrinth_switches == 7 && loaded.rook_quest_state == 1 && loaded.gold == 37 && loaded.score == 1234 && loaded.player.hp == 89);
+    ASSERT("migration retains explored maps, runes, quest state, and character progress", ok && memcmp(&loaded.map, &game.map, sizeof(Map)) == 0 && memcmp(&loaded.labyrinth_cache[LABYRINTH_DEPTH - 1].map, &cache->map, sizeof(Map)) == 0 && loaded.rook_labyrinth_switches == 31 && loaded.rook_quest_state == 1 && loaded.gold == 37 && loaded.score == 1234 && loaded.player.hp == 89);
     ASSERT("migrated Minotaurs can be saved and loaded again", ok && save_game(&loaded, MINOTAUR_TEST_SLOT) && load_game(&loaded, MINOTAUR_TEST_SLOT) && loaded.enemies[index].hp == 57 && strcmp(loaded.enemies[index].name, "Minotaur") == 0);
     boss->active = 0;
     boss->hp = 0;
@@ -121,8 +122,9 @@ static void test_warden_save_migration(void) {
     ASSERT("previous Warden victories retain the completed Minotaur journal and quest", ok && !loaded.enemies[index].active && !loaded.labyrinth_cache[LABYRINTH_DEPTH - 1].enemies[index].active && loaded.rook_quest_state == 3 && loaded.rook_quest_completions == 1 && quest_journal_get_boss(&loaded, 12, &entry) && entry.defeated);
     if (ok) {
         game_enter_labyrinth(&loaded);
-        game_change_labyrinth_floor(&loaded, 1, 0);
-        game_change_labyrinth_floor(&loaded, 1, 0);
+        while (loaded.level < LABYRINTH_DEPTH) {
+            game_change_labyrinth_floor(&loaded, 1, 0);
+        }
     }
     int alive = 0;
     for (int i = 0; i < loaded.enemy_count; i++) {

@@ -254,7 +254,7 @@ void map_generate(Map *m, int level) {
         }
     }
 
-    if (level >= 2 && level < DUNGEON_DEPTH && level % 2 == 0) {
+    if (level >= 2 && level < DUNGEON_DEPTH) {
         place_locked_crypt(m);
     }
 }
@@ -2140,6 +2140,12 @@ void map_generate_labyrinth(Map *m, int level, int switches, int *spawn_x, int *
     enum { MAX_CELLS_W = 16, MAX_CELLS_H = 10, CELL_COUNT = 160 };
     int cells_w = 10 + level * 2;
     int cells_h = 7 + level;
+    if (cells_w > MAX_CELLS_W) {
+        cells_w = MAX_CELLS_W;
+    }
+    if (cells_h > MAX_CELLS_H) {
+        cells_h = MAX_CELLS_H;
+    }
     unsigned char visited[MAX_CELLS_H][MAX_CELLS_W] = {{0}};
     int stack_x[CELL_COUNT];
     int stack_y[CELL_COUNT];
@@ -2457,7 +2463,7 @@ void map_generate_temple(Map *m, int level, int *spawn_x, int *spawn_y) {
         m->tiles[23][44] = TILE_TEMPLE_DORMANT_SENTINEL;
         m->tiles[18][27] = TILE_TEMPLE_SOLAR_TRAP;
         m->tiles[18][37] = TILE_TEMPLE_SOLAR_TRAP;
-    } else if (level == 3) {
+    } else if (level == 3 || level == 4) {
         m->room_count = 6;
         fill_rect(m, 27, 29, 11, 6, TILE_TEMPLE_FLOOR);
         fill_rect(m, 4, 22, 22, 8, TILE_TEMPLE_FLOOR);
@@ -2485,6 +2491,14 @@ void map_generate_temple(Map *m, int level, int *spawn_x, int *spawn_y) {
         m->tiles[16][42] = TILE_TEMPLE_DORMANT_SENTINEL;
         fill_rect(m, 18, 15, 5, 4, TILE_TEMPLE_WATER);
         fill_rect(m, 42, 15, 4, 4, TILE_TEMPLE_WATER);
+        if (level == 4) {
+            fill_rect(m, 14, 4, 5, 4, TILE_TEMPLE_WATER);
+            fill_rect(m, 45, 4, 4, 4, TILE_TEMPLE_WATER);
+            m->tiles[24][14] = TILE_TEMPLE_SOLAR_TRAP;
+            m->tiles[24][51] = TILE_TEMPLE_SOLAR_TRAP;
+            m->tiles[19][26] = TILE_TEMPLE_SOLAR_TRAP;
+            m->tiles[19][38] = TILE_TEMPLE_SOLAR_TRAP;
+        }
     } else {
         m->room_count = 5;
         fill_rect(m, 26, 28, 13, 7, TILE_TEMPLE_FLOOR);
