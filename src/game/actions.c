@@ -1,5 +1,6 @@
 #include "actions.h"
 #include "game.h"
+#include "catacombs.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -53,7 +54,7 @@ Item random_enemy_item(void) {
 
 static void mark_item_tile(GameState *g, int x, int y) {
     TileType tile = g->map.tiles[y][x];
-    if (tile != TILE_MOUNTAIN_WEAK_BRIDGE && tile != TILE_MOUNTAIN_CACHE &&
+    if (tile != TILE_BURIAL_PLATE && tile != TILE_MOUNTAIN_WEAK_BRIDGE && tile != TILE_MOUNTAIN_CACHE &&
         !map_is_coast_tidal_tile(tile) && !map_is_coast_object(tile)) {
         g->map.tiles[y][x] = TILE_ITEM;
     }
@@ -101,6 +102,9 @@ static void finish_floor_pickup(GameState *g, FloorItem *picked) {
     if (strcmp(picked->item.name, "Sandstorm Staff") == 0) {
         g->sandstorm_staff_unclaimed = 0;
     }
+    if (strcmp(picked->item.name, "Gravekeeper's Mantle") == 0) {
+        g->catacombs_mantle_unclaimed = 0;
+    }
     picked->active = 0;
     for (int i = 0; i < g->floor_item_count; i++) {
         FloorItem *fi = &g->floor_items[i];
@@ -115,6 +119,8 @@ static void finish_floor_pickup(GameState *g, FloorItem *picked) {
 
 Item boss_equipment_reward(EnemyType type) {
     switch (type) {
+        case ENEMY_GRAVE_MARSHAL:
+            return item_make_gravekeeper_mantle();
         case ENEMY_THORN_REGENT:
         case ENEMY_CINDER_LORD:
         case ENEMY_PRISM_SOVEREIGN:
@@ -145,6 +151,11 @@ Item boss_equipment_reward(EnemyType type) {
 
 static int enemy_score(EnemyType type) {
     switch (type) {
+        case ENEMY_ANCIENT_SKELETON: return 80;
+        case ENEMY_BONE_SENTINEL: return 150;
+        case ENEMY_GRAVE_ARCHER: return 100;
+        case ENEMY_BONE_CANTOR: return 170;
+        case ENEMY_GRAVE_MARSHAL: return 2400;
         case ENEMY_SKELETON:    return 10;
         case ENEMY_GOBLIN:      return 15;
         case ENEMY_ZOMBIE:      return 20;
@@ -232,6 +243,10 @@ static int enemy_score(EnemyType type) {
 }
 
 static void drop_loot(GameState *g, Enemy *enemy) {
+    if (g->location == LOCATION_CATACOMBS && enemy->revived) {
+        return;
+    }
+    catacombs_record_death(g, enemy);
     int x = enemy->x;
     int y = enemy->y;
     EnemyType type = enemy->type;
@@ -253,6 +268,9 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         }
         if (type == ENEMY_CINDER_LORD) {
             push_message(g, "The Cinder Lord falls. The path to Ridgeshire opens!");
+        }
+        if (type == ENEMY_GRAVE_MARSHAL) {
+            push_message(g, "The Grave Marshal falls. The passage to the castle opens!");
         }
         if (type == ENEMY_PRISM_SOVEREIGN) {
             push_message(g, "The Prism Sovereign shatters. The path to Stillbury opens!");
@@ -285,6 +303,11 @@ static void drop_loot(GameState *g, Enemy *enemy) {
     }
     int gold = 0;
     switch (type) {
+        case ENEMY_ANCIENT_SKELETON: gold = 8 + rand() % 8; break;
+        case ENEMY_BONE_SENTINEL: gold = 12 + rand() % 10; break;
+        case ENEMY_GRAVE_ARCHER: gold = 10 + rand() % 8; break;
+        case ENEMY_BONE_CANTOR: gold = 14 + rand() % 10; break;
+        case ENEMY_GRAVE_MARSHAL: gold = 100; break;
         case ENEMY_SKELETON: gold = 2 + rand() % 4;  break;
         case ENEMY_GOBLIN:   gold = 3 + rand() % 5;  break;
         case ENEMY_ZOMBIE:   gold = 4 + rand() % 6;  break;
@@ -416,6 +439,9 @@ static void drop_loot(GameState *g, Enemy *enemy) {
             if (type == ENEMY_POLAR_KRAKEN) {
                 g->kraken_bow_unclaimed = 1;
             }
+            if (type == ENEMY_GRAVE_MARSHAL) {
+                g->catacombs_mantle_unclaimed = 1;
+            }
             if (type == ENEMY_DESERT_PHARAOH) {
                 g->sandstorm_staff_unclaimed = 1;
             }
@@ -448,6 +474,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         drop_tile == TILE_MOONVEIL_CIRCLE ||
         drop_tile == TILE_ASHEN_FLOOR ||
         drop_tile == TILE_ASHEN_RUIN ||
+        drop_tile == TILE_CATACOMBS_FLOOR ||
         drop_tile == TILE_GLASSDEEP_FLOOR ||
         drop_tile == TILE_GLASSDEEP_RUIN ||
         drop_tile == TILE_FROST_FLOOR ||
@@ -516,6 +543,7 @@ static int apply_melee_cleave(GameState *g, Enemy *target, int attack, int perce
         if (damage < 1) {
             damage = 1;
         }
+        damage = catacombs_enemy_damage(g, enemy, damage);
         enemy->hp -= damage;
         combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_NOW, enemy->x, enemy->y, damage);
         hits++;
@@ -759,6 +787,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (g->location == LOCATION_CATACOMBS) {
+        return catacombs_has_interaction(g);
+    }
     if (g->location == LOCATION_LABYRINTH) {
         return game_has_labyrinth_interaction(g);
     }
@@ -977,6 +1008,14 @@ void action_resolve_player(GameState *g, Action a) {
             }
             return;
         }
+        if (g->location == LOCATION_CATACOMBS && tile == TILE_RETURN_EXIT) {
+            if (g->defeated_bosses & (1 << LOCATION_CATACOMBS)) {
+                game_leave_catacombs(g);
+            } else {
+                push_message(g, "The Grave Marshal seals this return passage.");
+            }
+            return;
+        }
         if (tile == TILE_RETURN_EXIT && (g->defeated_bosses & (1 << g->location))) {
             int forest = g->location == LOCATION_FOREST;
             g->score += g->level * 100;
@@ -1002,7 +1041,9 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
         if (tile == TILE_STAIRS_UP) {
-            if (g->level == 1) {
+            if (g->level == 1 && g->location == LOCATION_CATACOMBS) {
+                game_leave_catacombs(g);
+            } else if (g->level == 1) {
                 game_return_to_town(g);
             } else {
                 game_ascend(g);
@@ -1012,6 +1053,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (catacombs_interact(g)) {
+            return;
+        }
         if (game_interact_labyrinth(g)) {
             return;
         }
@@ -1494,6 +1538,7 @@ void action_resolve_player(GameState *g, Action a) {
                         }
                         int dmg = sp->damage + g->player.level * 2 +
                             spell_power;
+                        dmg = catacombs_enemy_damage(g, e, dmg);
                         e->hp -= dmg;
                         combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_AFTER_PLAYER_SHOT, e->x, e->y, dmg);
                         char msg[MAX_MESSAGE_LEN];
@@ -1502,7 +1547,7 @@ void action_resolve_player(GameState *g, Action a) {
                             game_update_level_progress(g);
                             drop_loot(g, e);
                             player_gain_xp(g, e->experience);
-                            g->score += enemy_score(e->type);
+                            g->score += e->revived ? 0 : enemy_score(e->type);
                             snprintf(msg, sizeof(msg), "%s killed %s!",
                                 sp->name, e->name);
                         } else if (sp->id == SPELL_FROST_BOLT &&
@@ -1575,6 +1620,7 @@ void action_resolve_player(GameState *g, Action a) {
                 int dist = (dx < 0 ? -dx : dx) + (dy < 0 ? -dy : dy);
                 if (dist <= sp->radius) {
                     int dmg = sp->damage + g->player.level * 2 + spell_power;
+                    dmg = catacombs_enemy_damage(g, e, dmg);
                     e->hp -= dmg;
                     combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_AFTER_PLAYER_SHOT, e->x, e->y, dmg);
                     if (e->hp <= 0) {
@@ -1659,6 +1705,7 @@ void action_resolve_player(GameState *g, Action a) {
                 int critical = wpn->weapon_family == WEAPON_FAMILY_BOW &&
                     rand() % 100 < 15;
                 if (critical) dmg = dmg * 3 / 2;
+                dmg = catacombs_enemy_damage(g, e, dmg);
                 e->hp -= dmg;
                 combat_feedback_add(g, critical ? FEEDBACK_ENEMY_CRITICAL : FEEDBACK_ENEMY_DAMAGE, FEEDBACK_AFTER_PLAYER_SHOT, e->x, e->y, dmg);
                 char msg[MAX_MESSAGE_LEN];
@@ -1756,6 +1803,7 @@ void action_resolve_player(GameState *g, Action a) {
                 if (critical) {
                     dmg = (dmg * 3 + 1) / 2;
                 }
+                dmg = catacombs_enemy_damage(g, e, dmg);
                 e->hp -= dmg;
                 combat_feedback_add(g, critical ? FEEDBACK_ENEMY_CRITICAL : FEEDBACK_ENEMY_DAMAGE, FEEDBACK_NOW, e->x, e->y, dmg);
                 int cleave_hits = melee_weapon
@@ -1941,7 +1989,9 @@ void action_resolve_player(GameState *g, Action a) {
 
         if (g->location == LOCATION_CASTLE &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
-            if (tx == 0) {
+            if (ty == TOWN_H - 1) {
+                game_enter_catacombs(g);
+            } else if (tx == 0) {
                 game_enter_king_road(g, LOCATION_CROWNROAD, 1);
             } else if (tx == TOWN_W - 1) {
                 game_enter_king_road(g, LOCATION_KING_ROAD_WEST, 1);
@@ -2602,13 +2652,13 @@ static int enemy_is_major_boss(const Enemy *e) {
 static int enemy_prefers_range(const Enemy *e);
 
 static int enemy_is_support(const Enemy *e) {
-    return e->type == ENEMY_CRYPT_CONJURER ||
+    return e->type == ENEMY_BONE_CANTOR || e->type == ENEMY_CRYPT_CONJURER ||
         e->type == ENEMY_GOBLIN_SHAMAN ||
         e->type == ENEMY_SUN_PRIEST;
 }
 
 static int enemy_is_protector(const Enemy *e) {
-    return e->type == ENEMY_HOBGOBLIN_GUARD ||
+    return e->type == ENEMY_BONE_SENTINEL || e->type == ENEMY_HOBGOBLIN_GUARD ||
         e->type == ENEMY_HORSEMAN ||
         e->type == ENEMY_ANIMATED_STATUE ||
         e->type == ENEMY_VINEBOUND_GUARDIAN ||
@@ -2701,7 +2751,7 @@ static void select_enemy_pursuers(const GameState *g, int pursuers[MAX_ENEMIES])
 }
 
 static int enemy_prefers_range(const Enemy *e) {
-    return e->type == ENEMY_CRYPT_CONJURER ||
+    return e->type == ENEMY_GRAVE_ARCHER || e->type == ENEMY_BONE_CANTOR || e->type == ENEMY_CRYPT_CONJURER ||
         e->type == ENEMY_DARK_ELF ||
         e->type == ENEMY_GOBLIN_ARCHER ||
         e->type == ENEMY_ROAD_ARCHER ||
@@ -3132,12 +3182,67 @@ static void prism_sovereign_turn(GameState *g, int index, EnemyProjectiles *shot
     }
 }
 
+static void grave_marshal_turn(GameState *g, int index) {
+    Enemy *e = &g->enemies[index];
+    int room = catacombs_room_at(&g->map, g->player.x, g->player.y);
+    if (room != g->map.room_count - 1 && e->hp == e->max_hp && e->move_timer == 0) {
+        return;
+    }
+    if (e->attack_target_x >= 0) {
+        if (catacombs_sweep_marks(&g->map, e, g->player.x, g->player.y)) {
+            int damage = e->attack - g->player.defense;
+            if (damage < 3) {
+                damage = 3;
+            }
+            apply_enemy_damage(g, damage, FEEDBACK_NOW);
+            push_message_kind(g, "The Marshal's polearm sweeps the marked stones!", MESSAGE_DAMAGE_TAKEN);
+        } else {
+            push_message(g, "The Marshal's polearm sweeps empty stone.");
+        }
+        e->attack_target_x = -1;
+        e->attack_target_y = -1;
+        e->move_timer = 1;
+        return;
+    }
+    if (e->move_timer == 1) {
+        e->move_timer = 2;
+        return;
+    }
+    int dx = g->player.x - e->x;
+    int dy = g->player.y - e->y;
+    if (abs_int(dx) <= 1 && abs_int(dy) <= 1) {
+        int sx = abs_int(dx) >= abs_int(dy) ? (dx < 0 ? -1 : 1) : 0;
+        int sy = sx == 0 ? (dy < 0 ? -1 : 1) : 0;
+        e->attack_target_x = e->x + sx;
+        e->attack_target_y = e->y + sy;
+        e->move_timer = 2;
+        push_message(g, "The Grave Marshal raises its polearm. Leave the marked sweep!");
+    } else {
+        int old_x = e->x;
+        int old_y = e->y;
+        enemy_move_toward(g, index);
+        if (catacombs_room_at(&g->map, e->x, e->y) != g->map.room_count - 1) {
+            e->x = old_x;
+            e->y = old_y;
+        }
+        e->move_timer = 2;
+    }
+}
+
 void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *shots) {
     if (shots) {
         shots->count = 0;
     }
     if (g->player.hp <= 0) {
         return;
+    }
+    int burial_damage = catacombs_tick(g);
+    if (burial_damage > 0) {
+        int damage = burial_damage - g->player.defense / 2;
+        if (damage < 3) {
+            damage = 3;
+        }
+        apply_enemy_damage(g, damage, FEEDBACK_NOW);
     }
     // Protect the whole enemy phase after a lost turn, including every wraith.
     int freeze_immune = g->player.freeze_recovery;
@@ -3178,6 +3283,10 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
 
+        if (e->type == ENEMY_GRAVE_MARSHAL) {
+            grave_marshal_turn(g, i);
+            continue;
+        }
         if (e->type == ENEMY_LICH_KING) {
             Room *chamber = &g->map.rooms[g->map.room_count - 1];
             int player_in_chamber =
@@ -3560,7 +3669,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
 
-        if ((e->type == ENEMY_GOBLIN_ARCHER ||
+        if ((e->type == ENEMY_GRAVE_ARCHER || e->type == ENEMY_GOBLIN_ARCHER ||
             e->type == ENEMY_ROAD_ARCHER ||
             e->type == ENEMY_FROST_ARCHER ||
             e->type == ENEMY_GOBLIN_BOMBER) &&
@@ -3572,7 +3681,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 continue;
             }
             char msg[MAX_MESSAGE_LEN];
-            const char *attack_name = e->type == ENEMY_GOBLIN_BOMBER ?
+            const char *attack_name = e->type == ENEMY_GRAVE_ARCHER ? "Grave arrow" : e->type == ENEMY_GOBLIN_BOMBER ?
                 "Goblin bomb" : e->type == ENEMY_ROAD_ARCHER ?
                 "Road arrow" : e->type == ENEMY_FROST_ARCHER ?
                 "Frost arrow" : "Goblin arrow";
@@ -3614,6 +3723,20 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
 
+        if (e->type == ENEMY_BONE_CANTOR) {
+            if (e->move_timer % 4 == 0 && catacombs_cantor_raise(g, e)) {
+                continue;
+            }
+            if (e->move_timer % 2 == 0 && clear_orthogonal_path(g, i, e)) {
+                int damage = e->attack - g->player.defense / 2;
+                if (damage < 1) {
+                    damage = 1;
+                }
+                apply_enemy_ranged_damage(g, i, e, damage, shots);
+                push_message_kind(g, "The Bone Cantor hurls a grave bolt!", MESSAGE_DAMAGE_TAKEN);
+                continue;
+            }
+        }
         if (e->type == ENEMY_CRYPT_CONJURER) {
             if (e->move_timer % 4 == 0 && necromancer_revive(g, i)) continue;
             if (e->move_timer % 2 == 0 && clear_orthogonal_path(g, i, e)) {

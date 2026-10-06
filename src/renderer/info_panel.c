@@ -86,6 +86,8 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor)
         SDL_snprintf(loc, sizeof(loc), "MOONVEIL GARDENS %d", g->level);
     } else if (g->location == LOCATION_ASHEN) {
         SDL_snprintf(loc, sizeof(loc), "ASHEN HOLLOW %d", g->level);
+    } else if (g->location == LOCATION_CATACOMBS) {
+        SDL_snprintf(loc, sizeof(loc), "ROYAL CATACOMBS %d", g->level);
     } else if (g->location == LOCATION_GLASSDEEP) {
         SDL_snprintf(loc, sizeof(loc), "GLASSDEEP CAVERNS %d", g->level);
     } else if (g->location == LOCATION_DESERT) {

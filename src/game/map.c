@@ -108,6 +108,8 @@ static int place_locked_crypt(Map *m) {
 void map_generate(Map *m, int level) {
     (void)level;
     map_clear_exploration(m);
+    m->burial_trap_count = 0;
+    memset(m->burial_traps, 0, sizeof(m->burial_traps));
 
     // Fill with walls
     for (int y = 0; y < MAP_H; y++)
@@ -261,7 +263,11 @@ int map_is_walkable(const Map *m, int x, int y) {
     if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
         return 0;
     }
-    return m->tiles[y][x] != TILE_WALL &&
+    return m->tiles[y][x] != TILE_CATACOMBS_WALL &&
+        m->tiles[y][x] != TILE_OSSUARY_BRAZIER &&
+        m->tiles[y][x] != TILE_OSSUARY_COLD &&
+        m->tiles[y][x] != TILE_CATACOMBS_SARCOPHAGUS &&
+        m->tiles[y][x] != TILE_WALL &&
         m->tiles[y][x] != TILE_FOREST_WALL &&
         m->tiles[y][x] != TILE_FOREST_HIDDEN_TRAIL &&
         m->tiles[y][x] != TILE_MOUNTAIN_WALL &&
@@ -452,6 +458,8 @@ static void carve_forest_clearing(Map *m, Room *room) {
 
 static void map_generate_outdoor(Map *m, int level, OutdoorSide entrance_side, OutdoorSide exit_side, int organic, const ForestTemplate *layout) {
     map_clear_exploration(m);
+    m->burial_trap_count = 0;
+    memset(m->burial_traps, 0, sizeof(m->burial_traps));
     for (int y = 0; y < MAP_H; y++)
         for (int x = 0; x < MAP_W; x++)
             m->tiles[y][x] = TILE_FOREST_WALL;
@@ -1062,6 +1070,8 @@ void map_place_town2_glassdeep_gate(Map *m) {
 
 void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     map_clear_exploration(m);
+    m->burial_trap_count = 0;
+    memset(m->burial_traps, 0, sizeof(m->burial_traps));
     m->room_count = 0;
 
     // Fill with walls
@@ -1211,6 +1221,8 @@ void map_place_town4_workshop(Map *m) {
 
 void map_generate_town4(Map *m, int *spawn_x, int *spawn_y) {
     map_clear_exploration(m);
+    m->burial_trap_count = 0;
+    memset(m->burial_traps, 0, sizeof(m->burial_traps));
     m->room_count = 0;
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
@@ -1249,6 +1261,8 @@ void map_place_town4_ashen_gate(Map *m) {
 
 void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
     map_clear_exploration(m);
+    m->burial_trap_count = 0;
+    memset(m->burial_traps, 0, sizeof(m->burial_traps));
     m->room_count = 0;
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
@@ -1292,6 +1306,8 @@ void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
 
 static void map_generate_town_square(Map *m) {
     map_clear_exploration(m);
+    m->burial_trap_count = 0;
+    memset(m->burial_traps, 0, sizeof(m->burial_traps));
     m->room_count = 0;
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
@@ -1355,6 +1371,10 @@ void map_generate_castle(Map *m, int *spawn_x, int *spawn_y) {
         m->tiles[y][0] = TILE_TOWN_EXIT;
         m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
     }
+    for (int y = CASTLE_ROAD_Y; y < TOWN_H - 1; y++) {
+        m->tiles[y][CROWNROAD_X] = TILE_TOWN_PATH;
+    }
+    m->tiles[TOWN_H - 1][CROWNROAD_X] = TILE_TOWN_EXIT;
     *spawn_x = CROWNROAD_X;
     *spawn_y = CASTLE_ROAD_Y;
 }
@@ -1380,6 +1400,8 @@ void map_set_rosemoor_swamp_road(Map *m, int unlocked) {
 
 void map_generate_swamp_road(Map *m) {
     map_clear_exploration(m);
+    m->burial_trap_count = 0;
+    memset(m->burial_traps, 0, sizeof(m->burial_traps));
     m->room_count = 0;
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
@@ -1401,6 +1423,8 @@ void map_generate_swamp_road(Map *m) {
 
 void map_generate_crownroad(Map *m) {
     map_clear_exploration(m);
+    m->burial_trap_count = 0;
+    memset(m->burial_traps, 0, sizeof(m->burial_traps));
     m->room_count = 0;
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
@@ -1521,6 +1545,8 @@ void map_generate_swamp(Map *m, int level) {
     static const int anchor_x[9] = {5, 28, 50, 7, 29, 53, 4, 26, 52};
     static const int anchor_y[9] = {8, 13, 4, 25, 31, 21, 45, 44, 42};
     map_clear_exploration(m);
+    m->burial_trap_count = 0;
+    memset(m->burial_traps, 0, sizeof(m->burial_traps));
     m->room_count = 9;
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
@@ -1564,6 +1590,8 @@ void map_generate_swamp(Map *m, int level) {
 
 void map_generate_high_pass(Map *m) {
     map_clear_exploration(m);
+    m->burial_trap_count = 0;
+    memset(m->burial_traps, 0, sizeof(m->burial_traps));
     m->room_count = 0;
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
@@ -1929,6 +1957,8 @@ void map_generate_moonveil(Map *m, int level) {
 void map_generate_ashen(Map *m, int level) {
     static const int route[9] = {6, 7, 8, 5, 4, 3, 0, 1, 2};
     map_clear_exploration(m);
+    m->burial_trap_count = 0;
+    memset(m->burial_traps, 0, sizeof(m->burial_traps));
     m->room_count = 9;
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
@@ -2083,6 +2113,8 @@ void map_generate_dragonspine(Map *m, int level) {
 
 void map_generate_forest_road(Map *m) {
     map_clear_exploration(m);
+    m->burial_trap_count = 0;
+    memset(m->burial_traps, 0, sizeof(m->burial_traps));
     m->room_count = 0;
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
@@ -2116,6 +2148,8 @@ void map_generate_labyrinth(Map *m, int level, int switches, int *spawn_x, int *
     unsigned int random_state = 0x524f4f4bu ^ (unsigned int)level * 2654435761u;
 
     map_clear_exploration(m);
+    m->burial_trap_count = 0;
+    memset(m->burial_traps, 0, sizeof(m->burial_traps));
     m->room_count = 0;
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
@@ -2237,6 +2271,8 @@ void map_generate_labyrinth(Map *m, int level, int switches, int *spawn_x, int *
 
 static void map_generate_tavern_room(Map *m, int *spawn_x, int *spawn_y, int inn) {
     map_clear_exploration(m);
+    m->burial_trap_count = 0;
+    memset(m->burial_traps, 0, sizeof(m->burial_traps));
     m->room_count = 0;
 
     for (int y = 0; y < MAP_H; y++) {
@@ -2312,6 +2348,8 @@ void map_generate_island(Map *m, int *spawn_x, int *spawn_y) {
         37, 37, 37, 37, 36, 35, 33, 31, 28, 24
     };
     map_clear_exploration(m);
+    m->burial_trap_count = 0;
+    memset(m->burial_traps, 0, sizeof(m->burial_traps));
     m->room_count = 0;
 
     for (int y = 0; y < MAP_H; y++) {
@@ -2387,6 +2425,8 @@ void map_generate_island(Map *m, int *spawn_x, int *spawn_y) {
 
 void map_generate_temple(Map *m, int level, int *spawn_x, int *spawn_y) {
     map_clear_exploration(m);
+    m->burial_trap_count = 0;
+    memset(m->burial_traps, 0, sizeof(m->burial_traps));
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
             m->tiles[y][x] = TILE_TEMPLE_WALL;

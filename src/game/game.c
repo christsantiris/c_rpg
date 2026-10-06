@@ -1,4 +1,5 @@
 #include "game.h"
+#include "catacombs.h"
 
 #include <stdlib.h>
 #include <time.h>
@@ -60,7 +61,35 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
     e->attack_target_x = -1;
     e->attack_target_y = -1;
     e->move_timer = 0;
+    e->revived = 0;
+    e->revive_timer = 0;
     switch (type) {
+        case ENEMY_ANCIENT_SKELETON:
+            snprintf(e->name, sizeof(e->name), "Ancient Skeleton");
+            e->max_hp = 48; e->hp = 48;
+            e->attack = 13; e->defense = 4; e->experience = 45;
+            break;
+        case ENEMY_BONE_SENTINEL:
+            snprintf(e->name, sizeof(e->name), "Bone Sentinel");
+            e->max_hp = 80; e->hp = 80;
+            e->attack = 17; e->defense = 8; e->experience = 75;
+            break;
+        case ENEMY_GRAVE_ARCHER:
+            snprintf(e->name, sizeof(e->name), "Grave Archer");
+            e->max_hp = 40; e->hp = 40;
+            e->attack = 15; e->defense = 3; e->experience = 55;
+            break;
+        case ENEMY_BONE_CANTOR:
+            snprintf(e->name, sizeof(e->name), "Bone Cantor");
+            e->max_hp = 58; e->hp = 58;
+            e->attack = 16; e->defense = 4; e->experience = 90;
+            break;
+        case ENEMY_GRAVE_MARSHAL:
+            snprintf(e->name, sizeof(e->name), "Grave Marshal");
+            e->max_hp = 280; e->hp = 280;
+            e->attack = 26; e->defense = 8; e->experience = 750;
+            e->is_boss = 1;
+            break;
         case ENEMY_SKELETON:
             strncpy(e->name, "Skeleton", sizeof(e->name) - 1);
             e->name[sizeof(e->name) - 1] = '\0';
@@ -511,6 +540,13 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             break;
     }
     e->name[sizeof(e->name) - 1] = '\0';
+    if (g->location == LOCATION_CATACOMBS && (type == ENEMY_CRYPT_BAT || type == ENEMY_WRAITH)) {
+        e->max_hp *= 2;
+        e->hp = e->max_hp;
+        e->attack += 6;
+        e->defense += 2;
+        e->experience *= 2;
+    }
     scale_spawned_enemy(g, e);
 }
 
@@ -534,6 +570,8 @@ static int boss_for_level(const GameState *g, EnemyType *type) {
         boss_level = ASHEN_DEPTH;
     } else if (g->location == LOCATION_GLASSDEEP) {
         boss_level = GLASSDEEP_DEPTH;
+    } else if (g->location == LOCATION_CATACOMBS) {
+        boss_level = CATACOMBS_DEPTH;
     } else if (g->location == LOCATION_DRAGONSPINE) {
         boss_level = DRAGONSPINE_DEPTH;
     }
@@ -561,6 +599,8 @@ static int boss_for_level(const GameState *g, EnemyType *type) {
         *type = ENEMY_CINDER_LORD;
     } else if (g->location == LOCATION_GLASSDEEP) {
         *type = ENEMY_PRISM_SOVEREIGN;
+    } else if (g->location == LOCATION_CATACOMBS) {
+        *type = ENEMY_GRAVE_MARSHAL;
     } else if (g->location == LOCATION_DRAGONSPINE) {
         *type = ENEMY_RED_DRAGON;
     } else {
@@ -587,6 +627,7 @@ static int enemy_terrain_open(const GameState *g, int x, int y) {
         g->map.tiles[y][x] != TILE_MOONVEIL_CIRCLE &&
         g->map.tiles[y][x] != TILE_ASHEN_FLOOR &&
         g->map.tiles[y][x] != TILE_ASHEN_RUIN &&
+        g->map.tiles[y][x] != TILE_CATACOMBS_FLOOR &&
         g->map.tiles[y][x] != TILE_GLASSDEEP_FLOOR &&
         g->map.tiles[y][x] != TILE_GLASSDEEP_RUIN &&
         g->map.tiles[y][x] != TILE_FROST_FLOOR &&
@@ -938,6 +979,7 @@ void enemies_spawn(GameState *g) {
             g->location == LOCATION_MOONVEIL ||
             g->location == LOCATION_ASHEN ||
             g->location == LOCATION_GLASSDEEP ||
+            g->location == LOCATION_CATACOMBS ||
             g->location == LOCATION_DRAGONSPINE) {
             map_room_center(&g->map.rooms[g->map.room_count - 1],
                 &boss_x, &boss_y);
@@ -961,7 +1003,8 @@ void enemies_spawn(GameState *g) {
         (g->location == LOCATION_MOONVEIL ? MOONVEIL_DEPTH :
         (g->location == LOCATION_ASHEN ? ASHEN_DEPTH :
         (g->location == LOCATION_GLASSDEEP ? GLASSDEEP_DEPTH :
-        (g->location == LOCATION_DRAGONSPINE ? DRAGONSPINE_DEPTH : DUNGEON_DEPTH)))))))));
+        (g->location == LOCATION_CATACOMBS ? CATACOMBS_DEPTH :
+        (g->location == LOCATION_DRAGONSPINE ? DRAGONSPINE_DEPTH : DUNGEON_DEPTH))))))))));
     int regular_room_limit = g->level == boss_level
         ? g->map.room_count - 1 : g->map.room_count;
     place_dain_map_bearer(g);
@@ -994,6 +1037,19 @@ void enemies_spawn(GameState *g) {
                 type = roll < 12 ? ENEMY_GOBLIN_ARCHER :
                     (roll < 40 ? ENEMY_DRAKE :
                     (roll < 65 ? ENEMY_GIANT : ENEMY_FIRE_ELEMENTAL));
+            }
+        } else if (g->location == LOCATION_CATACOMBS) {
+            int slot = g->enemy_count;
+            if (slot % 2 == 0) {
+                type = slot % 4 == 0 ? ENEMY_BONE_SENTINEL : ENEMY_ANCIENT_SKELETON;
+            } else if (g->level >= 3 && slot % 6 == 5) {
+                type = ENEMY_BONE_CANTOR;
+            } else if (g->level >= 2 && slot % 6 == 3) {
+                type = ENEMY_WRAITH;
+            } else if (g->level >= 2 && slot % 4 == 1) {
+                type = ENEMY_GRAVE_ARCHER;
+            } else {
+                type = ENEMY_CRYPT_BAT;
             }
         } else if (g->location == LOCATION_GLASSDEEP) {
             if (g->level < 3) {
@@ -1169,6 +1225,19 @@ void enemies_spawn(GameState *g) {
             else if (roll < 80) type = ENEMY_WRAITH;
             else type = ENEMY_CRYPT_CONJURER;
         }
+        if (g->location == LOCATION_CATACOMBS) {
+            int room = 1 + (g->enemy_count - (g->level == CATACOMBS_DEPTH && !(g->defeated_bosses & (1 << LOCATION_CATACOMBS)))) / 2;
+            if (room >= regular_room_limit) {
+                break;
+            }
+            int x;
+            int y;
+            if (!find_enemy_tile_in_room(g, room, &x, &y)) {
+                break;
+            }
+            spawn_enemy(g, &g->enemies[g->enemy_count++], type, x, y);
+            continue;
+        }
         if (!spawn_into_open_tile(g, type, regular_room_limit)) {
             break;
         }
@@ -1204,6 +1273,9 @@ void game_init(GameState *g) {
         if (i < ASHEN_DEPTH) {
             g->ashen_cache[i] = (LevelCache){0};
         }
+        if (i < CATACOMBS_DEPTH) {
+            g->catacombs_cache[i] = (LevelCache){0};
+        }
         if (i < GLASSDEEP_DEPTH) {
             g->glassdeep_cache[i] = (LevelCache){0};
         }
@@ -1231,6 +1303,8 @@ void game_init(GameState *g) {
     g->max_moonveil_level_reached = 1;
     g->max_ashen_level_reached = 1;
     g->max_glassdeep_level_reached = 1;
+    g->max_catacombs_level_reached = 1;
+    g->catacombs_mantle_unclaimed = 0;
     g->max_temple_level_reached = 1;
     g->location = LOCATION_TOWN;
     int spawn_x, spawn_y;
@@ -1588,6 +1662,9 @@ static LevelCache *active_cache(GameState *g) {
     if (g->location == LOCATION_ASHEN) {
         return g->ashen_cache;
     }
+    if (g->location == LOCATION_CATACOMBS) {
+        return g->catacombs_cache;
+    }
     if (g->location == LOCATION_GLASSDEEP) {
         return g->glassdeep_cache;
     }
@@ -1621,6 +1698,9 @@ static int *active_max_level(GameState *g) {
     }
     if (g->location == LOCATION_ASHEN) {
         return &g->max_ashen_level_reached;
+    }
+    if (g->location == LOCATION_CATACOMBS) {
+        return &g->max_catacombs_level_reached;
     }
     if (g->location == LOCATION_GLASSDEEP) {
         return &g->max_glassdeep_level_reached;
@@ -1658,6 +1738,9 @@ static int active_depth(const GameState *g) {
     }
     if (g->location == LOCATION_ASHEN) {
         return ASHEN_DEPTH;
+    }
+    if (g->location == LOCATION_CATACOMBS) {
+        return CATACOMBS_DEPTH;
     }
     if (g->location == LOCATION_GLASSDEEP) {
         return GLASSDEEP_DEPTH;
@@ -2026,6 +2109,7 @@ void game_refresh_quest_encounters(GameState *g) {
     game_reveal_mountain_shortcut(g);
     restore_frostfell_reward(g);
     restore_desert_reward(g);
+    catacombs_restore_reward(g);
     int seal_placed = place_elowen_seal(g);
     place_desert_lamp(g);
     int warden_placed = place_alder_warden(g);
@@ -2062,6 +2146,8 @@ static void generate_active_level(GameState *g) {
         map_generate_ashen(&g->map, g->level);
     } else if (g->location == LOCATION_GLASSDEEP) {
         map_generate_glassdeep(&g->map, g->level);
+    } else if (g->location == LOCATION_CATACOMBS) {
+        map_generate_catacombs(&g->map, g->level);
     } else if (g->location == LOCATION_DRAGONSPINE) {
         map_generate_dragonspine(&g->map, g->level);
     } else if (g->location == LOCATION_TEMPLE) {
@@ -2127,6 +2213,7 @@ static void generate_active_level(GameState *g) {
     }
     restore_frostfell_reward(g);
     restore_desert_reward(g);
+    catacombs_restore_reward(g);
     game_update_level_progress(g);
 }
 
@@ -2436,6 +2523,26 @@ void game_enter_ashen(GameState *g) {
     push_message(g, "Ash drifts across the basalt paths of Ashen Hollow.");
 }
 
+void game_enter_catacombs(GameState *g) {
+    clear_floor_loot(g);
+    g->location = LOCATION_CATACOMBS;
+    g->level = 1;
+    LevelCache *cache = &g->catacombs_cache[0];
+    if (cache->valid) {
+        g->map = cache->map;
+        g->enemy_count = cache->enemy_count;
+        memcpy(g->enemies, cache->enemies, sizeof(g->enemies));
+        g->level_cleared = cache->level_cleared;
+    } else {
+        g->level_cleared = 0;
+        generate_active_level(g);
+    }
+    g->player.x = g->map.stairs_up_x;
+    g->player.y = g->map.stairs_up_y;
+    g->dialogue_active = 0;
+    push_message(g, "The royal dead stir beneath the castle. Blue braziers bind their bones.");
+}
+
 void game_enter_glassdeep(GameState *g) {
     clear_floor_loot(g);
     g->location = LOCATION_GLASSDEEP;
@@ -2533,7 +2640,9 @@ static void place_town_portal(GameState *g) {
         return;
     }
     if (g->location == LOCATION_TOWN3) {
-        if (g->portal_location == LOCATION_MOONVEIL) {
+        if (g->portal_location == LOCATION_CATACOMBS) {
+            g->map.tiles[TOWN3_KING_GATE_Y + 1][TOWN_W - 3] = TILE_PORTAL;
+        } else if (g->portal_location == LOCATION_MOONVEIL) {
             g->map.tiles[ROSEMOOR_MOONVEIL_GATE_Y + 1][2] = TILE_PORTAL;
         } else if (g->portal_location == LOCATION_FROSTFELL) {
             g->map.tiles[2][20] = TILE_PORTAL;
@@ -2551,6 +2660,7 @@ static void place_town_portal(GameState *g) {
         g->portal_location == LOCATION_MOONVEIL ||
         g->portal_location == LOCATION_ASHEN ||
         g->portal_location == LOCATION_GLASSDEEP ||
+        g->portal_location == LOCATION_CATACOMBS ||
         g->portal_location == LOCATION_FROSTFELL) {
         return;
     }
@@ -3312,6 +3422,7 @@ static void return_to_town(GameState *g, Location destination) {
     Location returning_from = g->location;
     if (returning_from == LOCATION_FROSTFELL || returning_from == LOCATION_DESERT ||
         returning_from == LOCATION_MOONVEIL || returning_from == LOCATION_GLASSDEEP ||
+        returning_from == LOCATION_CATACOMBS ||
         destination == LOCATION_TOWN4 ||
         destination == LOCATION_TOWN3) {
         clear_floor_loot(g);
@@ -3335,7 +3446,9 @@ static void return_to_town(GameState *g, Location destination) {
     int spawn_x;
     int spawn_y;
     g->location = destination;
-    if (destination == LOCATION_TOWN4) {
+    if (destination == LOCATION_CASTLE) {
+        map_generate_castle(&g->map, &spawn_x, &spawn_y);
+    } else if (destination == LOCATION_TOWN4) {
         map_generate_town4(&g->map, &spawn_x, &spawn_y);
         map_set_ridgeshire_mountain_road(&g->map, g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
     } else if (destination == LOCATION_TOWN3) {
@@ -3353,9 +3466,16 @@ static void return_to_town(GameState *g, Location destination) {
             g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
         place_harbor_road(g);
     }
-    if (destination == LOCATION_TOWN3) {
+    if (destination == LOCATION_CASTLE) {
+        g->player.x = CROWNROAD_X;
+        g->player.y = TOWN_H - 2;
+    } else if (destination == LOCATION_TOWN3) {
         g->player.x = returning_from == LOCATION_FROSTFELL ? 20 : spawn_x;
         g->player.y = returning_from == LOCATION_FROSTFELL ? 1 : spawn_y;
+        if (returning_from == LOCATION_CATACOMBS) {
+            g->player.x = TOWN_W - 2;
+            g->player.y = TOWN3_KING_GATE_Y;
+        }
         if (returning_from == LOCATION_MOONVEIL) {
             g->player.x = 1;
             g->player.y = ROSEMOOR_MOONVEIL_GATE_Y;
@@ -3402,6 +3522,11 @@ static void return_to_town(GameState *g, Location destination) {
     place_town_portal(g);
 }
 
+void game_leave_catacombs(GameState *g) {
+    return_to_town(g, LOCATION_CASTLE);
+    push_message(g, "You emerge at the castle's south gate.");
+}
+
 void game_return_to_town(GameState *g) {
     if (g->location == LOCATION_CROWNROAD || g->location == LOCATION_KING_ROAD_WEST) {
         game_leave_crownroad(g, g->location == LOCATION_CROWNROAD ? LOCATION_TOWN3 : LOCATION_TOWN4);
@@ -3416,7 +3541,8 @@ void game_return_to_town(GameState *g) {
         destination = g->mountain_entry_town;
     } else if (g->location == LOCATION_DESERT || g->location == LOCATION_GLASSDEEP) {
         destination = LOCATION_TOWN2;
-    } else if (g->location == LOCATION_FROSTFELL || g->location == LOCATION_MOONVEIL) {
+    } else if (g->location == LOCATION_FROSTFELL || g->location == LOCATION_MOONVEIL ||
+        g->location == LOCATION_CATACOMBS) {
         destination = LOCATION_TOWN3;
     } else if (g->location == LOCATION_DRAGONSPINE || g->location == LOCATION_HIGH_PASS ||
         g->location == LOCATION_ASHEN) {
@@ -3498,12 +3624,14 @@ void game_open_town_portal(GameState *g) {
         g->location != LOCATION_MOONVEIL &&
         g->location != LOCATION_ASHEN &&
         g->location != LOCATION_GLASSDEEP &&
+        g->location != LOCATION_CATACOMBS &&
         g->location != LOCATION_DRAGONSPINE) {
         return;
     }
     game_hide_portal_destination(g);
     if (g->location == LOCATION_DESERT || g->location == LOCATION_MOONVEIL ||
-        g->location == LOCATION_ASHEN || g->location == LOCATION_GLASSDEEP) {
+        g->location == LOCATION_ASHEN || g->location == LOCATION_GLASSDEEP ||
+        g->location == LOCATION_CATACOMBS) {
         clear_floor_loot(g);
     }
     g->portal_active = 1;
@@ -3557,6 +3685,11 @@ void game_hide_portal_destination(GameState *g) {
             return;
         }
         cache = g->ashen_cache;
+    } else if (g->portal_location == LOCATION_CATACOMBS) {
+        if (g->portal_level > CATACOMBS_DEPTH) {
+            return;
+        }
+        cache = g->catacombs_cache;
     } else if (g->portal_location == LOCATION_GLASSDEEP) {
         if (g->portal_level > GLASSDEEP_DEPTH) {
             return;
@@ -3630,6 +3763,11 @@ void game_use_town_portal(GameState *g) {
             return;
         }
         cache = g->ashen_cache;
+    } else if (g->portal_location == LOCATION_CATACOMBS) {
+        if (g->portal_level > CATACOMBS_DEPTH) {
+            return;
+        }
+        cache = g->catacombs_cache;
     } else if (g->portal_location == LOCATION_GLASSDEEP) {
         if (g->portal_level > GLASSDEEP_DEPTH) {
             return;
@@ -3642,7 +3780,7 @@ void game_use_town_portal(GameState *g) {
 
     if (g->portal_location == LOCATION_FROSTFELL || g->portal_location == LOCATION_DESERT ||
         g->portal_location == LOCATION_MOONVEIL || g->portal_location == LOCATION_ASHEN ||
-        g->portal_location == LOCATION_GLASSDEEP) {
+        g->portal_location == LOCATION_GLASSDEEP || g->portal_location == LOCATION_CATACOMBS) {
         clear_floor_loot(g);
     }
     g->location = g->portal_location;
@@ -3683,6 +3821,24 @@ void game_use_town_portal(GameState *g) {
     }
     g->player.x = landing_x;
     g->player.y = landing_y;
+    if (g->location == LOCATION_CATACOMBS) {
+        // Portal wards prevent a saved warning from striking immediately on arrival.
+        for (int i = 0; i < g->map.burial_trap_count; i++) {
+            BurialTrap *trap = &g->map.burial_traps[i];
+            if (trap->timer > 0 && catacombs_trap_marks(&g->map, trap, landing_x, landing_y)) {
+                trap->timer = 0;
+                trap->spent = 1;
+            }
+        }
+        for (int i = 0; i < g->enemy_count; i++) {
+            Enemy *e = &g->enemies[i];
+            if (e->type == ENEMY_GRAVE_MARSHAL && catacombs_sweep_marks(&g->map, e, landing_x, landing_y)) {
+                e->attack_target_x = -1;
+                e->attack_target_y = -1;
+                e->move_timer = 1;
+            }
+        }
+    }
     cache[level - 1].map = g->map;
     g->portal_active = 0;
 }
@@ -4615,13 +4771,15 @@ void game_update_level_progress(GameState *g) {
 
     int active_enemies = 0;
     for (int i = 0; i < g->enemy_count; i++) {
-        if (g->enemies[i].active) {
+        if (g->enemies[i].active || (g->location == LOCATION_CATACOMBS && g->enemies[i].revive_timer > 0)) {
             active_enemies++;
         }
     }
 
     if (active_enemies == 0) {
         game_mark_level_cleared(g);
+    } else if (g->location == LOCATION_CATACOMBS) {
+        g->level_cleared = 0;
     }
 }
 

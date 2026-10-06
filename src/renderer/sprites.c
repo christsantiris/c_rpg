@@ -3120,8 +3120,51 @@ static void draw_minotaur(Renderer *r, int tx, int ty) {
     fill_rect(r, x + 23, y + 5, 1, 3, (SDL_Color){221, 229, 225, 255});
 }
 
+static void draw_catacombs_enemy(Renderer *r, int tx, int ty, EnemyType type) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    SDL_Color iron = {83, 94, 114, 255};
+    SDL_Color gold = {190, 159, 84, 255};
+    SDL_Color blue = {105, 216, 232, 255};
+    draw_skeleton(r, tx, ty);
+    fill_rect(r, x + 8, y + 5, 2, 2, blue);
+    fill_rect(r, x + 14, y + 5, 2, 2, blue);
+    if (type == ENEMY_BONE_CANTOR) {
+        fill_rect(r, x + 6, y + 11, 13, 10, (SDL_Color){74, 55, 109, 255});
+        fill_rect(r, x + 11, y + 11, 2, 9, gold);
+        fill_rect(r, x + 2, y + 4, 2, 19, gold);
+        fill_rect(r, x + 1, y + 2, 4, 4, blue);
+    } else if (type == ENEMY_GRAVE_ARCHER) {
+        fill_rect(r, x + 1, y + 4, 5, 14, (SDL_Color){37, 40, 48, 255});
+        fill_rect(r, x + 3, y + 8, 1, 12, gold);
+        fill_rect(r, x + 1, y + 7, 3, 2, gold);
+        fill_rect(r, x + 1, y + 19, 3, 2, gold);
+    } else {
+        fill_rect(r, x + 7, y + 1, 11, 3, iron);
+        fill_rect(r, x + 7, y + 11, 12, 6, iron);
+        fill_rect(r, x + 10, y + 12, 5, 1, gold);
+        if (type == ENEMY_BONE_SENTINEL || type == ENEMY_GRAVE_MARSHAL) {
+            fill_rect(r, x + 18, y + 10, 6, 12, iron);
+            fill_rect(r, x + 20, y + 11, 2, 9, gold);
+        }
+        if (type == ENEMY_GRAVE_MARSHAL) {
+            fill_rect(r, x + 7, y, 11, 3, gold);
+            fill_rect(r, x + 6, y + 18, 13, 3, (SDL_Color){111, 38, 47, 255});
+            fill_rect(r, x + 2, y + 2, 2, 21, gold);
+            fill_rect(r, x, y + 2, 8, 3, (SDL_Color){192, 205, 213, 255});
+        }
+    }
+}
+
 void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
     switch (type) {
+        case ENEMY_ANCIENT_SKELETON:
+        case ENEMY_BONE_SENTINEL:
+        case ENEMY_GRAVE_ARCHER:
+        case ENEMY_BONE_CANTOR:
+        case ENEMY_GRAVE_MARSHAL:
+            draw_catacombs_enemy(r, tile_x, tile_y, type);
+            break;
         case ENEMY_MINOTAUR:
             draw_minotaur(r, tile_x, tile_y);
             break;

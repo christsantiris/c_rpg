@@ -19,6 +19,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
         g->location != LOCATION_MOONVEIL &&
         g->location != LOCATION_ASHEN &&
         g->location != LOCATION_GLASSDEEP &&
+        g->location != LOCATION_CATACOMBS &&
         g->location != LOCATION_TEMPLE &&
         g->location != LOCATION_LABYRINTH) {
         return;
@@ -37,6 +38,11 @@ void minimap_draw(Renderer *r, const GameState *g) {
         g->location == LOCATION_FROSTFELL) {
         map_w = SWAMP_MAP_W;
         map_h = SWAMP_MAP_H;
+    }
+
+    if (g->location == LOCATION_CATACOMBS) {
+        map_w = CATACOMBS_W;
+        map_h = CATACOMBS_H;
     }
 
     // Dark semi-transparent background
@@ -122,7 +128,10 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         has_stair = 1;
                     } else if (tile == TILE_BROKEN_BURIAL_SEAL) {
                         has_stair = 1;
-                    } else if (tile != TILE_WALL &&
+                    } else if (tile == TILE_OSSUARY_BRAZIER || tile == TILE_OSSUARY_COLD) {
+                        has_stair = 1;
+                    } else if (tile != TILE_CATACOMBS_WALL &&
+                        tile != TILE_CATACOMBS_SARCOPHAGUS && tile != TILE_WALL &&
                         tile != TILE_FOREST_WALL &&
                         tile != TILE_MOUNTAIN_WALL &&
                         tile != TILE_MOUNTAIN_CHASM &&
@@ -177,6 +186,8 @@ void minimap_draw(Renderer *r, const GameState *g) {
                     SDL_SetRenderDrawColor(r->sdl, 115, 153, 166, 255);
                 } else if (g->location == LOCATION_ASHEN) {
                     SDL_SetRenderDrawColor(r->sdl, 176, 100, 62, 255);
+                } else if (g->location == LOCATION_CATACOMBS) {
+                    SDL_SetRenderDrawColor(r->sdl, 166, 158, 134, 255);
                 } else if (g->location == LOCATION_GLASSDEEP) {
                     SDL_SetRenderDrawColor(r->sdl, 130, 153, 213, 255);
                 } else if (g->location == LOCATION_COAST) {

@@ -156,6 +156,9 @@
 #define MOONVEIL_DEPTH 5
 #define ASHEN_DEPTH 5
 #define GLASSDEEP_DEPTH 5
+#define CATACOMBS_DEPTH 5
+#define CATACOMBS_W 60
+#define CATACOMBS_H 80
 #define STILLBURY_GLASSDEEP_GATE_X 20
 #define RIDGESHIRE_ASHEN_GATE_X 20
 #define ROSEMOOR_MOONVEIL_GATE_Y 14
@@ -358,12 +361,25 @@ typedef enum {
     TILE_GLASSDEEP_ENTRANCE,
     TILE_GLASSDEEP_EXIT,
     TILE_GLASSDEEP_POOL,
-    TILE_GLASSDEEP_RUIN
+    TILE_GLASSDEEP_RUIN,
+    TILE_CATACOMBS_FLOOR,
+    TILE_CATACOMBS_WALL,
+    TILE_OSSUARY_BRAZIER,
+    TILE_OSSUARY_COLD,
+    TILE_BURIAL_PLATE,
+    TILE_CATACOMBS_SARCOPHAGUS
 } TileType;
 
 typedef struct {
     int x, y, w, h;
 } Room;
+
+typedef struct {
+    int x, y;
+    int vertical;
+    int timer;
+    int spent;
+} BurialTrap;
 
 typedef struct {
     TileType tiles[MAP_H][MAP_W];
@@ -372,6 +388,8 @@ typedef struct {
     int      room_count;
     int      stairs_up_x,   stairs_up_y;
     int      stairs_down_x, stairs_down_y;
+    BurialTrap burial_traps[MAX_ROOMS];
+    int burial_trap_count;
 } Map;
 
 void map_generate(Map *m, int level);

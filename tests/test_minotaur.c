@@ -78,7 +78,7 @@ static void test_ranged_victories(void) {
             shields += game.floor_items[i].active && game.floor_items[i].item.visual_id == ITEM_VISUAL_MAGIC_SHIELD;
         }
         BossJournalEntry entry;
-        ASSERT("Magic Arrow, Fireball, and bow victories award the Minotaur's shield and journal completion", !boss->active && shields == 1 && quest_journal_get_boss(&game, JOURNAL_BOSS_COUNT - 1, &entry) && entry.defeated && strcmp(entry.name, "Minotaur") == 0);
+        ASSERT("Magic Arrow, Fireball, and bow victories award the Minotaur's shield and journal completion", !boss->active && shields == 1 && quest_journal_get_boss(&game, 12, &entry) && entry.defeated && strcmp(entry.name, "Minotaur") == 0);
         game.player.x = 40;
         game_interact_labyrinth(&game);
         ASSERT("a ranged Minotaur victory releases Rook's ivory rook", game.rook_quest_state == 2);
@@ -118,7 +118,7 @@ static void test_warden_save_migration(void) {
     game.rook_quest_completions = 1;
     ok = save_game(&game, MINOTAUR_TEST_SLOT) && load_game(&loaded, MINOTAUR_TEST_SLOT);
     BossJournalEntry entry;
-    ASSERT("previous Warden victories retain the completed Minotaur journal and quest", ok && !loaded.enemies[index].active && !loaded.labyrinth_cache[LABYRINTH_DEPTH - 1].enemies[index].active && loaded.rook_quest_state == 3 && loaded.rook_quest_completions == 1 && quest_journal_get_boss(&loaded, JOURNAL_BOSS_COUNT - 1, &entry) && entry.defeated);
+    ASSERT("previous Warden victories retain the completed Minotaur journal and quest", ok && !loaded.enemies[index].active && !loaded.labyrinth_cache[LABYRINTH_DEPTH - 1].enemies[index].active && loaded.rook_quest_state == 3 && loaded.rook_quest_completions == 1 && quest_journal_get_boss(&loaded, 12, &entry) && entry.defeated);
     if (ok) {
         game_enter_labyrinth(&loaded);
         game_change_labyrinth_floor(&loaded, 1, 0);
