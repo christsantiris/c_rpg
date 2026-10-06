@@ -82,9 +82,74 @@ static void test_spell_aim_after_melee(void) {
     }
 }
 
+static void test_fireball_collisions(void) {
+    static GameState g;
+    static const int directions[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    static const EnemyType types[4] = {ENEMY_SKELETON, ENEMY_ASH_HOUND, ENEMY_OBSIDIAN_GUARDIAN, ENEMY_CINDER_LORD};
+    Action cast = {ACTION_CAST_SPELL, 0, 0};
+    for (int direction = 0; direction < 4; direction++) {
+        setup_fight(&g, CLASS_MAGE);
+        equip_spell(&g, spell_make_fireball());
+        int dx = directions[direction][0];
+        int dy = directions[direction][1];
+        g.player.last_dx = dx;
+        g.player.last_dy = dy;
+        g.enemies[0].type = types[direction];
+        g.enemies[0].x = 20 + dx;
+        g.enemies[0].y = 20 + dy;
+        g.enemy_count = 3;
+        g.enemies[1] = g.enemies[0];
+        g.enemies[1].x += dy;
+        g.enemies[1].y += dx;
+        g.enemies[2] = g.enemies[0];
+        g.enemies[2].x = 20 + 4 * dx;
+        g.enemies[2].y = 20 + 4 * dy;
+        action_resolve_player(&g, cast);
+        ASSERT("Fireball damages an adjacent enemy in every direction and spends mana once",
+            g.enemies[0].hp < 100 && g.player.mp == 80);
+        ASSERT("Fireball explodes on the melee target and damages nearby enemies rather than passing through",
+            g.enemies[1].hp < 100 && g.enemies[2].hp == 100 && combat_feedback_count() == 2);
+        ASSERT("Fireball's animated impact matches the adjacent blast location",
+            g.trail_count == 1 && g.trail[0].x == 20 + dx &&
+            g.trail[0].y == 20 + dy && g.trail[0].is_impact);
+    }
+
+    setup_fight(&g, CLASS_MAGE);
+    equip_spell(&g, spell_make_fireball());
+    g.enemies[0].active = 0;
+    g.enemy_count = 2;
+    g.enemies[1] = g.enemies[0];
+    g.enemies[1].active = 1;
+    g.enemies[1].x = 22;
+    action_resolve_player(&g, cast);
+    ASSERT("inactive enemies do not stop Fireball before its first living target",
+        g.enemies[0].hp == 100 && g.enemies[1].hp < 100 &&
+        g.trail_count == 2 && g.trail[1].x == 22 && g.trail[1].is_impact);
+
+    setup_fight(&g, CLASS_MAGE);
+    equip_spell(&g, spell_make_fireball());
+    g.enemies[0].x = 25;
+    g.map.tiles[20][22] = TILE_FOREST_WALL;
+    action_resolve_player(&g, cast);
+    const CombatFeedbackEvent *event = only_event();
+    ASSERT("a wall stops Fireball's blast at the visible end of its path",
+        g.enemies[0].hp == 100 && g.trail_count == 1 && g.trail[0].is_impact);
+    ASSERT("a blocked Fireball reports its miss at the actual blast location",
+        event && event->kind == FEEDBACK_MISS && event->x == 21 && event->y == 20);
+
+    setup_fight(&g, CLASS_MAGE);
+    equip_spell(&g, spell_make_fireball());
+    g.enemies[0].x = 24;
+    g.map.tiles[20][21] = TILE_FOREST_WALL;
+    action_resolve_player(&g, cast);
+    ASSERT("Fireball cannot damage a distant enemy when its first step is blocked",
+        g.enemies[0].hp == 100 && g.trail_count == 0 && g.player.mp == 80);
+}
+
 void test_combat_feedback(void) {
     printf("Combat feedback tests:\n");
     test_spell_aim_after_melee();
+    test_fireball_collisions();
     static GameState g;
     Action cast = {ACTION_CAST_SPELL, 0, 0};
 

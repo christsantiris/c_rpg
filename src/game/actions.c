@@ -1525,13 +1525,37 @@ void action_resolve_player(GameState *g, Action a) {
             push_message(g, msg);
 
         } else if (sp->type == SPELL_TYPE_DAMAGE_AREA) {
-            // Travel then explode in radius
-            int cx = g->player.x + g->player.last_dx * sp->range;
-            int cy = g->player.y + g->player.last_dy * sp->range;
+            // Explode on the first enemy, or at the end of the visible path.
+            if (g->trail_count == 0) {
+                push_message(g, "Fireball path is blocked!");
+                add_miss_feedback(g);
+                return;
+            }
+            for (int step = 0; step < g->trail_count; step++) {
+                int impact = 0;
+                for (int i = 0; i < g->enemy_count; i++) {
+                    const Enemy *enemy = &g->enemies[i];
+                    if (enemy->active && enemy->x == g->trail[step].x &&
+                        enemy->y == g->trail[step].y) {
+                        impact = 1;
+                        break;
+                    }
+                }
+                if (impact) {
+                    g->trail_count = step + 1;
+                    break;
+                }
+            }
+            TrailTile *impact = &g->trail[g->trail_count - 1];
+            impact->is_impact = 1;
+            int cx = impact->x;
+            int cy = impact->y;
             int hits = 0;
             for (int i = 0; i < g->enemy_count; i++) {
                 Enemy *e = &g->enemies[i];
-                if (!e->active) continue;
+                if (!e->active) {
+                    continue;
+                }
                 int dx = e->x - cx;
                 int dy = e->y - cy;
                 int dist = (dx < 0 ? -dx : dx) + (dy < 0 ? -dy : dy);

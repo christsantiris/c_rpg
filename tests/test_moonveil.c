@@ -114,6 +114,12 @@ static void test_travel_and_saves(void) {
     }
     ASSERT("saving and loading Moonveil preserves independent stage caches", save_game(&game, MOONVEIL_TEST_SLOT) && load_game(&loaded, MOONVEIL_TEST_SLOT) && loaded.location == LOCATION_MOONVEIL && loaded.level == 3 && loaded.max_moonveil_level_reached == 3 && loaded.moonveil_cache[0].enemies[0].hp == 7 && memcmp(&game.map, &loaded.map, sizeof(Map)) == 0);
     map_room_center(&game.map.rooms[1], &x, &y);
+    // The player cannot stand on a tile occupied by a randomly spawned enemy.
+    for (int i = 0; i < game.enemy_count; i++) {
+        if (game.enemies[i].x == x && game.enemies[i].y == y) {
+            game.enemies[i].active = 0;
+        }
+    }
     game.player.x = x;
     game.player.y = y;
     game.map.tiles[y][x] = TILE_ITEM;
