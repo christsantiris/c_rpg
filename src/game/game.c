@@ -4865,17 +4865,20 @@ void game_talk_to_elowen(GameState *g) {
 }
 
 void game_talk_to_dain(GameState *g) {
+    if (g->location != LOCATION_GUILD || abs(g->player.x - GUILD_DAIN_X) > 1 || abs(g->player.y - GUILD_DAIN_Y) > 1) {
+        return;
+    }
     g->dialogue_active = 1;
     strncpy(g->dialogue_speaker, "Dain", MAX_SPEAKER_LEN - 1);
     g->dialogue_speaker[MAX_SPEAKER_LEN - 1] = '\0';
-    g->dialogue_x = 18;
-    g->dialogue_y = 7;
+    g->dialogue_x = GUILD_DAIN_X;
+    g->dialogue_y = GUILD_DAIN_Y;
     if (g->dain_quest_state == 0) {
         g->dain_quest_state = 1;
         g->dain_map_fragments = 0;
         prepare_quest_expedition(g, LOCATION_MOUNTAINS);
         strncpy(g->dialogue_text,
-            "Three goblin warbands carry pieces of an old dwarven map. Hunt their leaders on mountain stages 1, 2, and 3, between OakHaven and the peak.",
+            "Three goblin warbands carry a dwarven map's pieces on mountain stages 1, 2, and 3, between Oakhaven and the peak. Recover them and return to me at Rosemoor's Adventurer's Guild.",
             MAX_DIALOGUE_LEN - 1);
         g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
         push_message(g, "Assigned: Recover the Treasure Map.");
@@ -4889,7 +4892,7 @@ void game_talk_to_dain(GameState *g) {
             }
         }
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "You have recovered %d of 3 map fragments. The remaining pieces are still carried through the mountains.",
+            "You have recovered %d of 3 map fragments. Find the remaining pieces in the mountains, then return to me at Rosemoor's Adventurer's Guild.",
             defeated);
         char status[MAX_MESSAGE_LEN];
         snprintf(status, sizeof(status),
@@ -4938,7 +4941,7 @@ void game_record_dain_kill(GameState *g, EnemyType type) {
     push_message(g, status);
     if ((g->dain_map_fragments & 7) == 7) {
         g->dain_quest_state = 2;
-        push_message(g, "Treasure map complete. Return to Dain.");
+        push_message(g, "Treasure map complete. Return to Dain in Rosemoor's Adventurer's Guild.");
     }
 }
 

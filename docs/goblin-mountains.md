@@ -64,7 +64,8 @@ save/load.
 
 ## Mountain Quest
 
-Dain's **Recover the Treasure Map** quest places guarded Map Bearers on stages
+Speak to Dain with `T` in **Rosemoor's Adventurer's Guild Hall** to accept
+**Recover the Treasure Map**. His quest places guarded Map Bearers on stages
 1, 2, and 3 on the OakHaven side. The Archer, Bomber, and Shaman leaders each carry one fragment and
 travel with a themed warband. Defeating the leader recovers the fragment
 automatically. Accepting the quest starts a fresh mountain expedition, while a
@@ -72,6 +73,9 @@ previously defeated Goblin King remains dead and permanent shortcuts stay open.
 Starting from Ridgeshire reaches the bearers on stages 3, 2, and 1 after the King.
 Taking the peak shortcut from Ridgeshire skips these stages; OakHaven's ordinary
 mountain gate remains available for completing the quest later.
+
+Return all three fragments to Dain in Rosemoor's Guild Hall for the one-time
+reward of **60 gold and 400 score**.
 
 Ridgeshire's east gate enters [Dragonspine](dragonspine.md) directly, with Ilya
 beside the road. After the Goblin King's defeat, a separate south shortcut gate

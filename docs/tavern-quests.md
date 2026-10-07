@@ -1,4 +1,4 @@
-# Tavern and Inn Quests
+# Tavern, Inn, and Guild Quests
 
 The Tavern is a walkable town hub for regional quests. Walk into its front
 door, approach an NPC inside, and press `T` to speak with them. Leave through
@@ -29,6 +29,10 @@ Inn after repairing all three to receive 40 gold and 300 score.
 Quest acceptance, seal progress, completion, and rewards persist in saves.
 
 ## Dain: Recover the Treasure Map
+
+Dain waits in **Rosemoor's Adventurer's Guild Hall** alongside Zara. Press `T`
+beside him to accept **Recover the Treasure Map**, and return to the same hall
+with all three fragments for the reward.
 
 Dain is a retired dwarven caravan warden who tracks the organized goblin raids
 through the mountains. Goblins tore an old dwarven treasure map into three
