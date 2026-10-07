@@ -1377,6 +1377,9 @@ void game_init(GameState *g) {
     g->emberforge_quest_state = 0;
     g->emberforge_progress = 0;
     g->emberforge_encounters = 0;
+    g->frostfell_quest_state = 0;
+    g->frostfell_quest_progress = 0;
+    g->frostfell_quest_encounters = 0;
     for (int i = 0; i < TEMPLE_DEPTH; i++) {
         g->temple_cache[i].valid = 0;
     }
@@ -2251,6 +2254,129 @@ static void place_emberforge_encounter(GameState *g) {
     g->emberforge_encounters |= bit;
 }
 
+static int frostfell_quest_stage_bit(const GameState *g) {
+    if (g->location != LOCATION_FROSTFELL) {
+        return 0;
+    }
+    if (g->level == FROSTFELL_JOURNAL_LEVEL) {
+        return FROSTFELL_JOURNAL_RECOVERED;
+    }
+    return g->level == FROSTFELL_SURVIVOR_LEVEL ? FROSTFELL_SURVIVOR_RESCUED : 0;
+}
+
+static TileType frostfell_quest_tile(const GameState *g, int x, int y) {
+    TileType tile = quest_tile(g, x, y);
+    if (tile == TILE_PORTAL && g->portal_active && g->portal_location == g->location &&
+        g->portal_level == g->level && g->portal_x == x && g->portal_y == y) {
+        return g->portal_origin_tile;
+    }
+    return tile;
+}
+
+static void set_frostfell_quest_tile(GameState *g, int x, int y, TileType tile) {
+    if (g->map.tiles[y][x] == TILE_PORTAL) {
+        g->portal_origin_tile = tile;
+        return;
+    }
+    int covered = 0;
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && item->x == x && item->y == y) {
+            item->underlying_tile = tile;
+            covered = 1;
+        }
+    }
+    if (!covered) {
+        g->map.tiles[y][x] = tile;
+    }
+}
+
+static int spawn_frostfell_quest_guard(GameState *g, EnemyType type, int cx, int cy) {
+    int slot = g->enemy_count;
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (!g->enemies[i].active && strcmp(g->enemies[i].name, "Expedition Guardian") != 0) {
+            slot = i;
+            break;
+        }
+    }
+    if (slot >= MAX_ENEMIES) {
+        return 0;
+    }
+    for (int radius = 1; radius <= 4; radius++) {
+        for (int y = cy - radius; y <= cy + radius; y++) {
+            for (int x = cx - radius; x <= cx + radius; x++) {
+                if (!enemy_tile_open(g, x, y) || (g->player.x == x && g->player.y == y)) {
+                    continue;
+                }
+                if (slot == g->enemy_count) {
+                    g->enemy_count++;
+                }
+                spawn_enemy(g, &g->enemies[slot], type, x, y);
+                snprintf(g->enemies[slot].name, sizeof(g->enemies[slot].name), "Expedition Guardian");
+                g->level_cleared = 0;
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+static void place_frostfell_quest_encounter(GameState *g) {
+    int bit = frostfell_quest_stage_bit(g);
+    if (!bit || g->frostfell_quest_state != 1 || (g->frostfell_quest_progress & bit) || !g->map.room_count) {
+        return;
+    }
+    TileType objective = bit == FROSTFELL_JOURNAL_RECOVERED ? TILE_FROST_JOURNAL : TILE_NPC_FROST_SURVIVOR;
+    int x = -1;
+    int y = -1;
+    for (int ty = 0; ty < MAP_H && x < 0; ty++) {
+        for (int tx = 0; tx < MAP_W; tx++) {
+            if (frostfell_quest_tile(g, tx, ty) == objective) {
+                x = tx;
+                y = ty;
+                break;
+            }
+        }
+    }
+    if (x < 0) {
+        const Room *room = &g->map.rooms[g->map.room_count - 1];
+        for (int ty = room->y + 1; ty < room->y + room->h - 1 && x < 0; ty++) {
+            for (int tx = room->x + 1; tx < room->x + room->w - 1; tx++) {
+                if (g->map.tiles[ty][tx] == TILE_FROST_FLOOR && enemy_tile_open(g, tx, ty) &&
+                    (g->player.x != tx || g->player.y != ty) &&
+                    !(bit == FROSTFELL_SURVIVOR_RESCUED && g->portal_active &&
+                    g->portal_location == g->location && g->portal_level == g->level &&
+                    g->portal_x == tx && g->portal_y == ty)) {
+                    x = tx;
+                    y = ty;
+                    break;
+                }
+            }
+        }
+    }
+    if (x < 0) {
+        return;
+    }
+    set_frostfell_quest_tile(g, x, y, objective);
+    if (g->frostfell_quest_encounters & bit) {
+        return;
+    }
+    int existing = 0;
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (strcmp(g->enemies[i].name, "Expedition Guardian") == 0) {
+            existing++;
+        }
+    }
+    for (int i = existing; i < 2; i++) {
+        EnemyType type = bit == FROSTFELL_JOURNAL_RECOVERED ? ENEMY_ICE_WOLF :
+            (i == 0 ? ENEMY_ICE_GIANT : ENEMY_FROST_ARCHER);
+        if (!spawn_frostfell_quest_guard(g, type, x, y)) {
+            return;
+        }
+    }
+    g->frostfell_quest_encounters |= bit;
+}
+
 void game_refresh_quest_encounters(GameState *g) {
     game_reveal_forest_shortcut(g);
     game_reveal_swamp_shortcut(g);
@@ -2265,6 +2391,7 @@ void game_refresh_quest_encounters(GameState *g) {
     place_dain_map_bearer(g);
     place_dragon_treasure(g);
     place_emberforge_encounter(g);
+    place_frostfell_quest_encounter(g);
     if (seal_placed) {
         spawn_elowen_guardians(g);
     }
@@ -2364,6 +2491,9 @@ static void generate_active_level(GameState *g) {
     restore_desert_reward(g);
     catacombs_restore_reward(g);
     place_emberforge_encounter(g);
+    // A regenerated stage needs new guards for any unfinished objective.
+    g->frostfell_quest_encounters &= ~frostfell_quest_stage_bit(g);
+    place_frostfell_quest_encounter(g);
     game_update_level_progress(g);
 }
 
@@ -3215,6 +3345,116 @@ int game_interact_emberforge(GameState *g) {
         g->emberforge_quest_state = 2;
         push_message(g, "The Emberforge burns again! Return to Steward Hadrin in Ridgeshire Town Hall.");
     }
+    return 1;
+}
+
+void game_talk_to_brenna(GameState *g) {
+    if (g->location != LOCATION_TAVERN || abs(g->player.x - BRENNA_X) > 1 || abs(g->player.y - BRENNA_Y) > 1) {
+        return;
+    }
+    g->dialogue_active = 1;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Quartermaster Brenna");
+    g->dialogue_x = BRENNA_X;
+    g->dialogue_y = BRENNA_Y;
+    if (g->frostfell_quest_state == 0) {
+        g->frostfell_quest_state = 1;
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Frostfell lies two towns away, in the far north. Follow the woods to Stillbury, then cross the swamp to Rosemoor. "
+            "My expedition vanished beyond Rosemoor's north gate.");
+        push_message(g, "Assigned: The Silent Expedition. Recover the journal on Frostfell stage 2 and rescue the surveyor on stage 4.");
+    } else if (g->frostfell_quest_state == 1) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, g->frostfell_quest_progress & FROSTFELL_JOURNAL_RECOVERED ?
+            "The journal says Surveyor Fen survived. Find him on Frostfell stage 4, defeat his captors, and speak to him. Return here for 100 gold." :
+            "Recover the journal guarded by Ice Wolves on Frostfell stage 2. Press A beside it, then find Surveyor Fen on stage 4. Return here for 100 gold.");
+    } else if (g->frostfell_quest_state == 2) {
+        g->frostfell_quest_state = 3;
+        g->gold += FROSTFELL_REWARD_GOLD;
+        g->score += FROSTFELL_REWARD_SCORE;
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Fen has returned safely, and the journal preserves our expedition's work. Take these 100 gold with my thanks.");
+        push_message(g, "Completed: The Silent Expedition. 100 gold and 800 score awarded.");
+    } else {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "Fen is recovering. Thanks to you, our expedition will not be forgotten.");
+    }
+}
+
+static int frostfell_quest_guarded(const GameState *g, int x, int y) {
+    int bit = frostfell_quest_stage_bit(g);
+    if (!(g->frostfell_quest_encounters & bit)) {
+        return 1;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *enemy = &g->enemies[i];
+        if (enemy->active && (strcmp(enemy->name, "Expedition Guardian") == 0 ||
+            abs(enemy->x - x) + abs(enemy->y - y) <= 4)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void game_talk_to_frost_survivor(GameState *g, int x, int y) {
+    if (g->location != LOCATION_FROSTFELL || g->level != FROSTFELL_SURVIVOR_LEVEL ||
+        g->frostfell_quest_state != 1 || x < 0 || x >= MAP_W || y < 0 || y >= MAP_H ||
+        abs(g->player.x - x) > 1 || abs(g->player.y - y) > 1 ||
+        frostfell_quest_tile(g, x, y) != TILE_NPC_FROST_SURVIVOR) {
+        return;
+    }
+    g->dialogue_active = 1;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Surveyor Fen");
+    g->dialogue_x = x;
+    g->dialogue_y = y;
+    if (!(g->frostfell_quest_progress & FROSTFELL_JOURNAL_RECOVERED)) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Our journal lies back on Frostfell stage 2. Please recover it first; its markings show the safe route home.");
+    } else if (frostfell_quest_guarded(g, x, y)) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "I cannot escape while my captors are alive. Please defeat them first!");
+    } else {
+        g->frostfell_quest_progress |= FROSTFELL_SURVIVOR_RESCUED;
+        g->frostfell_quest_state = 2;
+        set_frostfell_quest_tile(g, x, y, TILE_FROST_FLOOR);
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "The journal shows the route! I can make my own way home now. Tell Brenna in Oakhaven's Tavern that the expedition's work is safe.");
+        push_message(g, "Surveyor Fen heads home. Return to Quartermaster Brenna in Oakhaven's Tavern.");
+    }
+}
+
+static int frostfell_journal_target(const GameState *g, int *x, int *y) {
+    if (g->location != LOCATION_FROSTFELL || g->level != FROSTFELL_JOURNAL_LEVEL || g->frostfell_quest_state != 1) {
+        return 0;
+    }
+    const int offsets[5][2] = {{0, 0}, {0, -1}, {1, 0}, {0, 1}, {-1, 0}};
+    for (int i = 0; i < 5; i++) {
+        int tx = g->player.x + offsets[i][0];
+        int ty = g->player.y + offsets[i][1];
+        if (tx >= 0 && tx < MAP_W && ty >= 0 && ty < MAP_H && frostfell_quest_tile(g, tx, ty) == TILE_FROST_JOURNAL) {
+            *x = tx;
+            *y = ty;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int game_has_frostfell_interaction(const GameState *g) {
+    int x;
+    int y;
+    return frostfell_journal_target(g, &x, &y);
+}
+
+int game_interact_frostfell(GameState *g) {
+    int x;
+    int y;
+    if (!frostfell_journal_target(g, &x, &y)) {
+        return 0;
+    }
+    if (frostfell_quest_guarded(g, x, y)) {
+        push_message(g, "Defeat the expedition journal's defenders before retrieving it.");
+        return 1;
+    }
+    g->frostfell_quest_progress |= FROSTFELL_JOURNAL_RECOVERED;
+    set_frostfell_quest_tile(g, x, y, TILE_FROST_FLOOR);
+    push_message(g, "Expedition journal recovered. Find Surveyor Fen on Frostfell stage 4 and speak to him.");
     return 1;
 }
 

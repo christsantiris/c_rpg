@@ -152,6 +152,10 @@
 #define ROSEMOOR_SWAMP_ROAD_X 28
 // Frostfell reuses the swamp's map size, mirrored so it runs east to west.
 #define FROSTFELL_DEPTH 5
+#define FROSTFELL_JOURNAL_LEVEL 2
+#define FROSTFELL_SURVIVOR_LEVEL 4
+#define BRENNA_X 10
+#define BRENNA_Y 18
 #define DESERT_DEPTH 5
 #define MOONVEIL_DEPTH 5
 #define ASHEN_DEPTH 5
@@ -405,7 +409,10 @@ typedef enum {
     TILE_NPC_STEWARD,
     TILE_EMBERFORGE_MECHANISM,
     TILE_EMBERFORGE_COLD,
-    TILE_EMBERFORGE_LIT
+    TILE_EMBERFORGE_LIT,
+    TILE_NPC_BRENNA,
+    TILE_FROST_JOURNAL,
+    TILE_NPC_FROST_SURVIVOR
 } TileType;
 
 typedef struct {
@@ -464,6 +471,7 @@ void map_place_town_inn(Map *m);
 void map_place_town_apothecary(Map *m);
 void map_place_town3_guild(Map *m);
 void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y);
+void map_place_tavern_brenna(Map *m);
 void map_generate_inn(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_island(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_temple(Map *m, int level, int *spawn_x, int *spawn_y);

@@ -104,7 +104,18 @@ standing on or beside each objective. Return to Hadrin for **100 gold and
 accepting the quest preserves previously explored Ashen stages. See
 [Ashen Hollow](docs/ashen-hollow.md#reclaim-the-emberforge).
 
-The Frostfell Wastes begin at Rosemoor's north gate. Stillbury's west gate opens
+The Frostfell Wastes begin at Rosemoor's north gate. **Quartermaster Brenna** in
+**Oakhaven's Tavern** assigns **The Silent Expedition**. She explains the route
+through the woods to Stillbury, across the swamp to Rosemoor, and north into
+Frostfell. Recover the guarded expedition journal on stage **2** with **A**,
+then defeat the captors of **Surveyor Fen** on stage **4** and speak to him with
+**T**. He returns home without an escort. Return to Brenna for **100 gold and
+800 score**, awarded once. The Polar Kraken is optional for this quest; quest
+objects need no inventory space. Acceptance preserves existing maps and boss
+victories, and quest progress survives saving. See
+[The Silent Expedition](docs/tavern-quests.md#brenna-the-silent-expedition).
+
+Stillbury's west gate opens
 onto the five-level Sunscar Wastes: enter from the east, advance west, and
 backtrack east. Both the first level's east entrance and the final west exit
 return to Stillbury. Return to Town leaves a portal by Stillbury's west gate.
@@ -121,7 +132,7 @@ Speaking with Cain explains the dangers beyond town and grants one Scroll of
 Return to Town when inventory space is available. Use the scroll from the
 inventory to learn the permanent spell.
 
-The Tavern houses Elowen, Dain, Alder, and Mara. The four regional
+The Tavern houses Elowen, Dain, Alder, Mara, and Brenna. The original four regional
 quests add guarded objectives throughout the four regions. Accepting one begins a
 fresh expedition through that region so completed maps never turn the quest
 into an empty walk. Regular enemies and maps regenerate, while defeated bosses

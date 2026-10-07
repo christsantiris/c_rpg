@@ -14,7 +14,7 @@ typedef struct {
     const char *reward_item;
 } QuestDefinition;
 
-static const QuestDefinition quest_definitions[10] = {
+static const QuestDefinition quest_definitions[11] = {
     {
         "The Broken Seals", "Elowen",
         "Break through the undead guarding three shattered",
@@ -88,6 +88,14 @@ static const QuestDefinition quest_definitions[10] = {
         {"Recover the forge mechanism", "Restore the Emberforge", ""},
         "Ashen Hollow", {EMBERFORGE_MECHANISM_LEVEL, EMBERFORGE_FURNACE_LEVEL, 0},
         EMBERFORGE_REWARD_GOLD, EMBERFORGE_REWARD_SCORE
+    },
+    {
+        "The Silent Expedition", "Quartermaster Brenna",
+        "Recover the expedition journal and rescue",
+        "Surveyor Fen in the far northern wastes.",
+        {"Recover the expedition journal", "Rescue Surveyor Fen", ""},
+        "Frostfell Wastes", {FROSTFELL_JOURNAL_LEVEL, FROSTFELL_SURVIVOR_LEVEL, 0},
+        FROSTFELL_REWARD_GOLD, FROSTFELL_REWARD_SCORE
     }
 };
 
@@ -119,7 +127,10 @@ static int quest_state(const GameState *g, int quest) {
     if (quest == 8) {
         return g->sunscar_lamp_quest_state;
     }
-    return g->emberforge_quest_state;
+    if (quest == 9) {
+        return g->emberforge_quest_state;
+    }
+    return g->frostfell_quest_state;
 }
 
 static int quest_progress(const GameState *g, int quest) {
@@ -150,7 +161,10 @@ static int quest_progress(const GameState *g, int quest) {
     if (quest == 8) {
         return g->sunscar_lamp_quest_state >= 2;
     }
-    return g->emberforge_progress;
+    if (quest == 9) {
+        return g->emberforge_progress;
+    }
+    return g->frostfell_quest_progress;
 }
 
 static int quest_in_tab(int state, QuestJournalTab tab) {
@@ -170,7 +184,7 @@ int quest_journal_count(const GameState *g, QuestJournalTab tab) {
         return JOURNAL_BOSS_COUNT;
     }
     int count = 0;
-    for (int quest = 0; quest < 10; quest++) {
+    for (int quest = 0; quest < 11; quest++) {
         if (quest_in_tab(quest_state(g, quest), tab)) {
             count++;
         }
@@ -207,7 +221,7 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
         return 0;
     }
     int visible_index = 0;
-    for (int quest = 0; quest < 10; quest++) {
+    for (int quest = 0; quest < 11; quest++) {
         int state = quest_state(g, quest);
         if (!quest_in_tab(state, tab)) {
             continue;
@@ -222,7 +236,7 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
         entry->summary_line_1 = definition->summary_line_1;
         entry->summary_line_2 = definition->summary_line_2;
         entry->area = definition->area;
-        entry->objective_count = quest == 9 ? 2 : (quest >= 4 ? 1 : 3);
+        entry->objective_count = (quest == 9 || quest == 10) ? 2 : (quest >= 4 ? 1 : 3);
         entry->reward_gold = definition->reward_gold;
         entry->reward_score = definition->reward_score;
         entry->reward_item = definition->reward_item;

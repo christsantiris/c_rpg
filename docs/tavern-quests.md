@@ -76,6 +76,27 @@ part of the objective. Lit beacons remain lit through backtracking, repeat
 expeditions, and save/load. Return to Mara after lighting all three to receive
 80 gold and 600 score.
 
+## Brenna: The Silent Expedition
+
+Quartermaster Brenna waits in Oakhaven's Tavern. Press `T` beside her to accept.
+She explains that Frostfell is two towns away, through the woods to Stillbury,
+across the swamp to Rosemoor, and beyond Rosemoor's north gate into the far north.
+
+On Frostfell stage **2**, defeat the two Ice Wolves guarding the expedition
+journal, then press `A` on or beside the journal to recover it. On stage **4**,
+defeat the Ice Giant and Frost Archer holding **Surveyor Fen**, then press `T`
+beside him. The journal's route markings let Fen travel home on his own; no
+escort is required. Recover the journal before rescuing him. The Polar Kraken
+and full-stage clearance are not required, but living quest guards must be
+defeated even if lured away from the objective.
+
+Return to Brenna for **100 gold and 800 score**, awarded once. Neither objective
+uses an inventory slot. Accepting adds the encounters to existing maps when
+revisited without resetting enemies, exploration, or boss victories. Unfinished
+objectives have new guards on fresh expeditions; completed objectives remain
+completed. Quest progress, guard damage, and rewards persist through save/load.
+Existing saves migrate automatically, including saves inside the Tavern.
+
 ## Harbor Unlock
 
 The harbor road appears after the Drowned Queen is defeated on the Sunken
@@ -93,7 +114,7 @@ Journal and gives the game one boss and one quest for every adventure area.
 
 ## Quest expeditions
 
-Accepting a Tavern regional quest closes any portal into that region and
+Accepting one of the original four Tavern regional quests closes any portal into that region and
 starts a fresh expedition from its entrance. Its maps and regular enemies are
 generated again, while defeated bosses remain defeated. Each objective is
 protected by a themed enemy group. Objectives are spread into later stages so

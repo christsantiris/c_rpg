@@ -311,6 +311,8 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_NPC_DAIN &&
         m->tiles[y][x] != TILE_NPC_ALDER &&
         m->tiles[y][x] != TILE_NPC_MARA &&
+        m->tiles[y][x] != TILE_NPC_BRENNA &&
+        m->tiles[y][x] != TILE_NPC_FROST_SURVIVOR &&
         m->tiles[y][x] != TILE_NPC_ROOK &&
         m->tiles[y][x] != TILE_NPC_INNKEEPER &&
         m->tiles[y][x] != TILE_SWAMP_DAUGHTER &&
@@ -2347,6 +2349,11 @@ static void map_generate_tavern_room(Map *m, int *spawn_x, int *spawn_y, int inn
 
 void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y) {
     map_generate_tavern_room(m, spawn_x, spawn_y, 0);
+    map_place_tavern_brenna(m);
+}
+
+void map_place_tavern_brenna(Map *m) {
+    m->tiles[BRENNA_Y][BRENNA_X] = TILE_NPC_BRENNA;
 }
 
 void map_generate_inn(Map *m, int *spawn_x, int *spawn_y) {

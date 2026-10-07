@@ -28,6 +28,50 @@ static SDL_Color area_label_color(Location area) {
     }
 }
 
+static void draw_frostfell_quest_tile(Renderer *r, int sx, int sy, int x, int y, TileType tile) {
+    if (tile == TILE_NPC_BRENNA) {
+        draw_tavern_floor(r, sx, sy);
+    } else {
+        draw_frostfell_floor(r, sx, sy, x, y);
+    }
+    int px = sx * TILE_SIZE;
+    int py = sy * TILE_SIZE;
+    if (tile == TILE_FROST_JOURNAL) {
+        SDL_SetRenderDrawColor(r->sdl, 64, 50, 43, 255);
+        SDL_Rect cover = {px + 5, py + 7, 15, 13};
+        SDL_RenderFillRect(r->sdl, &cover);
+        SDL_SetRenderDrawColor(r->sdl, 229, 214, 178, 255);
+        SDL_Rect pages = {px + 8, py + 8, 11, 10};
+        SDL_RenderFillRect(r->sdl, &pages);
+        SDL_SetRenderDrawColor(r->sdl, 51, 128, 164, 255);
+        SDL_RenderDrawLine(r->sdl, px + 7, py + 8, px + 7, py + 18);
+        SDL_RenderDrawLine(r->sdl, px + 10, py + 11, px + 17, py + 11);
+        SDL_RenderDrawLine(r->sdl, px + 10, py + 14, px + 16, py + 14);
+        return;
+    }
+    SDL_SetRenderDrawColor(r->sdl, 53, 77, 110, 255);
+    SDL_Rect hood = {px + 6, py + 3, 13, 11};
+    SDL_Rect coat = {px + 5, py + 12, 15, 10};
+    SDL_RenderFillRect(r->sdl, &hood);
+    SDL_RenderFillRect(r->sdl, &coat);
+    SDL_SetRenderDrawColor(r->sdl, 208, 164, 126, 255);
+    SDL_Rect face = {px + 9, py + 6, 7, 6};
+    SDL_RenderFillRect(r->sdl, &face);
+    SDL_SetRenderDrawColor(r->sdl, 214, 225, 230, 255);
+    SDL_RenderDrawLine(r->sdl, px + 7, py + 13, px + 17, py + 13);
+    SDL_RenderDrawLine(r->sdl, px + 12, py + 14, px + 12, py + 20);
+    SDL_SetRenderDrawColor(r->sdl, 29, 37, 49, 255);
+    SDL_RenderDrawPoint(r->sdl, px + 10, py + 8);
+    SDL_RenderDrawPoint(r->sdl, px + 14, py + 8);
+    SDL_Rect boots[2] = {{px + 6, py + 22, 5, 2}, {px + 14, py + 22, 5, 2}};
+    SDL_RenderFillRects(r->sdl, boots, 2);
+    if (tile == TILE_NPC_BRENNA) {
+        SDL_SetRenderDrawColor(r->sdl, 228, 182, 78, 255);
+        SDL_Rect badge = {px + 15, py + 15, 3, 3};
+        SDL_RenderFillRect(r->sdl, &badge);
+    }
+}
+
 static void draw_emberforge_tile(Renderer *r, int sx, int sy, int x, int y, TileType tile) {
     draw_ashen_ruin(r, sx, sy, x, y);
     int px = sx * TILE_SIZE;
@@ -226,7 +270,8 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
         g->location != LOCATION_TOWN4 &&
         g->location != LOCATION_CASTLE_INTERIOR &&
         g->location != LOCATION_FOREST &&
-        g->location != LOCATION_SWAMP)) {
+        g->location != LOCATION_SWAMP &&
+        g->location != LOCATION_FROSTFELL)) {
         return;
     }
     int npc_x = shortcut ? g->player.x : g->dialogue_x;
@@ -1139,6 +1184,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         draw_coast_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_SWAMP_FLOOR) {
         draw_swamp_floor(r, screen_x, screen_y, map_x, map_y);
+    } else if (underlay == TILE_FROST_JOURNAL || underlay == TILE_NPC_FROST_SURVIVOR) {
+        draw_frostfell_quest_tile(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay == TILE_FROST_FLOOR) {
         draw_frostfell_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_DESERT_FLOOR || underlay == TILE_DESERT_ENTRANCE ||
@@ -1747,6 +1794,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_swamp_daughter(r, sx, sy, x, y); break;
                 case TILE_FROST_FLOOR:
                     draw_frostfell_floor(r, sx, sy, x, y); break;
+                case TILE_FROST_JOURNAL:
+                case TILE_NPC_FROST_SURVIVOR:
+                case TILE_NPC_BRENNA:
+                    draw_frostfell_quest_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
                 case TILE_ASHEN_FLOOR:
                     draw_ashen_floor(r, sx, sy, x, y);
                     break;
@@ -2666,6 +2718,27 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         name_y = viewport_to_screen_y(v, 17) * TILE_SIZE;
         renderer_draw_text(r, "MARA", name_x, name_y,
             (SDL_Color){75, 196, 201, 255}, r->font_tiny);
+        TTF_SizeText(r->font_tiny, "BRENNA", &name_w, NULL);
+        name_x = viewport_to_screen_x(v, BRENNA_X) * TILE_SIZE + (TILE_SIZE - name_w) / 2;
+        name_y = viewport_to_screen_y(v, BRENNA_Y - 1) * TILE_SIZE;
+        renderer_draw_text(r, "BRENNA", name_x, name_y, name, r->font_tiny);
+    }
+
+    if (g->location == LOCATION_FROSTFELL) {
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                TileType tile = g->map.tiles[y][x];
+                if ((tile != TILE_FROST_JOURNAL && tile != TILE_NPC_FROST_SURVIVOR) ||
+                    !viewport_is_visible(v, x, y) || !map_is_explored(&g->map, x, y)) {
+                    continue;
+                }
+                const char *label = tile == TILE_FROST_JOURNAL ? "JOURNAL (A)" : "SURVEYOR FEN";
+                int width = 0;
+                TTF_SizeText(r->font_tiny, label, &width, NULL);
+                renderer_draw_text(r, label, viewport_to_screen_x(v, x) * TILE_SIZE + (TILE_SIZE - width) / 2,
+                    viewport_to_screen_y(v, y) * TILE_SIZE - 12, area_label_color(LOCATION_FROSTFELL), r->font_tiny);
+            }
+        }
     }
 
     if (g->location == LOCATION_INN) {

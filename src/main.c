@@ -973,6 +973,12 @@ int main(int argc, char **argv) {
                                         } else if (game.map.tiles[ty][tx] == TILE_NPC_GUILD_SEEKER) {
                                             game_talk_to_guild_seeker(&game);
                                             found = 1;
+                                        } else if (game.map.tiles[ty][tx] == TILE_NPC_BRENNA) {
+                                            game_talk_to_brenna(&game);
+                                            found = 1;
+                                        } else if (game.map.tiles[ty][tx] == TILE_NPC_FROST_SURVIVOR) {
+                                            game_talk_to_frost_survivor(&game, tx, ty);
+                                            found = 1;
                                         } else if (game.map.tiles[ty][tx] == TILE_NPC_STEWARD) {
                                             game_talk_to_steward(&game);
                                             found = 1;
