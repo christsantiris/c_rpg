@@ -58,6 +58,7 @@ void test_emberforge(void);
 void test_mountain_terrain(void);
 void test_dragonspine(void);
 void test_elowen_quest(void);
+void test_elowen_relocation(void);
 void test_tavern_interior(void);
 void test_dain_quest(void);
 void test_alder_quest(void);
@@ -148,6 +149,7 @@ int main(void) {
     test_quest_activation_gating();
     printf("\n");
     test_elowen_quest();
+    test_elowen_relocation();
     printf("\n");
     test_tavern_interior();
     printf("\n");

@@ -17,8 +17,8 @@ typedef struct {
 static const QuestDefinition quest_definitions[11] = {
     {
         "The Broken Seals", "Elowen",
-        "Break through the undead guarding three shattered",
-        "burial seals, then restore each seal.",
+        "Restore three guarded seals in Oakhaven's dungeon.",
+        "Return to Elowen in Stillbury's Inn.",
         {"Repair burial seal", "Repair burial seal", "Repair burial seal"},
         "Dungeon", {2, 3, 4}, 40, 300
     },
