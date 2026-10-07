@@ -254,7 +254,7 @@ void castle_enter(GameState *g, int level) {
     g->dialogue_active = 0;
     g->castle_prompt = 0;
     char message[MAX_MESSAGE_LEN];
-    snprintf(message, sizeof(message), "Castle %d: %s. Use Stairs/onward to climb; Stairs/back to descend.", level, castle_floor_name(level));
+    snprintf(message, sizeof(message), "Castle %d: %s. Use Ascend to climb; Descend to return.", level, castle_floor_name(level));
     push_message(g, message);
 }
 

@@ -23,8 +23,9 @@ and three appearances of the final boss.
 
 Each floor has six rooms linked by loops. Closed portcullises and magical
 barriers retain alternate routes. The entry room and stairs are free of traps;
-bosses remain inside their arenas. Use the configured **Stairs/onward** command
-(default `.`) to climb and **Stairs/back** (default `,`) to descend.
+bosses remain inside their arenas. Use the configured **Ascend stairs** command
+(default `,`) to climb and **Descend stairs / exit** (default `.`) to descend.
+Descending from floor 1 returns you to the castle grounds.
 
 ## Enemies and combat
 

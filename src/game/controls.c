@@ -10,7 +10,7 @@ static const int default_bindings[CONTROL_COUNT] = {
 
 static const char *labels[CONTROL_COUNT] = {
     "Move up", "Move down", "Move left / interact", "Move right",
-    "Stairs / onward", "Stairs back", "Pick up", "Talk", "Inventory",
+    "Descend stairs / exit", "Ascend stairs", "Pick up", "Talk", "Inventory",
     "Spellbook", "Quest journal", "Cast spell", "Fire ranged", "Help"
 };
 

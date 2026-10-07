@@ -322,9 +322,13 @@ static void test_castle_wide_warning(void) {
     game.player.x = game.map.stairs_down_x;
     game.player.y = game.map.stairs_down_y;
     action_resolve_player(&game, (Action){ACTION_DESCEND, 0, 0});
-    ASSERT("ordinary onward command climbs castle stairs", game.level == 2);
+    ASSERT("descending cannot climb castle stairs", game.level == 1 && game.location == LOCATION_CASTLE_INTERIOR);
     action_resolve_player(&game, (Action){ACTION_ASCEND, 0, 0});
-    ASSERT("ordinary back command descends castle stairs", game.level == 1);
+    ASSERT("ascending climbs castle stairs", game.level == 2 && game.location == LOCATION_CASTLE_INTERIOR);
+    action_resolve_player(&game, (Action){ACTION_ASCEND, 0, 0});
+    ASSERT("ascending cannot descend castle stairs", game.level == 2 && game.location == LOCATION_CASTLE_INTERIOR);
+    action_resolve_player(&game, (Action){ACTION_DESCEND, 0, 0});
+    ASSERT("descending returns to previous castle floor", game.level == 1 && game.location == LOCATION_CASTLE_INTERIOR);
 }
 
 static void test_castle_mechanisms(void) {
@@ -334,7 +338,7 @@ static void test_castle_mechanisms(void) {
     game.equipped_main_hand = -1;
     action_resolve_player(&game, (Action){ACTION_DROP_ITEM, 0, 0});
     ASSERT("loot cannot hide castle stairs", game.map.tiles[game.player.y][game.player.x] == TILE_STAIRS_DOWN);
-    action_resolve_player(&game, (Action){ACTION_ASCEND, 0, 0});
+    action_resolve_player(&game, (Action){ACTION_DESCEND, 0, 0});
     ASSERT("stairs remain usable with dropped loot", game.location == LOCATION_CASTLE);
     castle_enter(&game, 2);
     game.player.x = 48;
