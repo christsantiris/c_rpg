@@ -623,7 +623,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 93);
+    cJSON_AddNumberToObject(root, "save_version", 94);
     cJSON_AddNumberToObject(root, "forest_entry_town", g->forest_entry_town);
     cJSON_AddNumberToObject(root, "forest_portal_town", g->forest_portal_town);
     cJSON_AddNumberToObject(root, "swamp_entry_town", g->swamp_entry_town);
@@ -748,6 +748,9 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "frostfell_quest_state", g->frostfell_quest_state);
     cJSON_AddNumberToObject(root, "frostfell_quest_progress", g->frostfell_quest_progress);
     cJSON_AddNumberToObject(root, "frostfell_quest_encounters", g->frostfell_quest_encounters);
+    cJSON_AddNumberToObject(root, "glassdeep_quest_state", g->glassdeep_quest_state);
+    cJSON_AddNumberToObject(root, "glassdeep_quest_progress", g->glassdeep_quest_progress);
+    cJSON_AddNumberToObject(root, "glassdeep_quest_encounters", g->glassdeep_quest_encounters);
     cJSON_AddNumberToObject(root, "temple_alignment", g->temple_alignment);
     cJSON_AddNumberToObject(root, "temple_sentinels_awakened",
         g->temple_sentinels_awakened);
@@ -1199,6 +1202,14 @@ static void repair_floor_item_underlays(GameState *g) {
 }
 
 static void migrate_testing_save(cJSON *root, int version) {
+    if (version < 94) {
+        const char *fields[3] = {"glassdeep_quest_state", "glassdeep_quest_progress", "glassdeep_quest_encounters"};
+        for (int i = 0; i < 3; i++) {
+            if (!cJSON_GetObjectItem(root, fields[i])) {
+                cJSON_AddNumberToObject(root, fields[i], 0);
+            }
+        }
+    }
     if (version < 91) {
         const char *fields[3] = {"frostfell_quest_state", "frostfell_quest_progress", "frostfell_quest_encounters"};
         for (int i = 0; i < 3; i++) {
@@ -1673,6 +1684,22 @@ int load_game(GameState *g, int slot) {
     g->frostfell_quest_state = frostfell_quest->valueint;
     g->frostfell_quest_progress = frostfell_progress->valueint;
     g->frostfell_quest_encounters = frostfell_encounters->valueint;
+    cJSON *glassdeep_quest = cJSON_GetObjectItem(root, "glassdeep_quest_state");
+    cJSON *glassdeep_progress = cJSON_GetObjectItem(root, "glassdeep_quest_progress");
+    cJSON *glassdeep_encounters = cJSON_GetObjectItem(root, "glassdeep_quest_encounters");
+    if (!cJSON_IsNumber(glassdeep_quest) || !cJSON_IsNumber(glassdeep_progress) || !cJSON_IsNumber(glassdeep_encounters) ||
+        glassdeep_quest->valueint < 0 || glassdeep_quest->valueint > 3 ||
+        glassdeep_progress->valueint < 0 || glassdeep_progress->valueint > 7 ||
+        glassdeep_encounters->valueint < 0 || glassdeep_encounters->valueint > 7 ||
+        (glassdeep_quest->valueint == 0 && (glassdeep_progress->valueint || glassdeep_encounters->valueint)) ||
+        (glassdeep_quest->valueint == 1 && glassdeep_progress->valueint == 7) ||
+        (glassdeep_quest->valueint >= 2 && glassdeep_progress->valueint != 7)) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    g->glassdeep_quest_state = glassdeep_quest->valueint;
+    g->glassdeep_quest_progress = glassdeep_progress->valueint;
+    g->glassdeep_quest_encounters = glassdeep_encounters->valueint;
     g->forest_entry_town = forest_entry->valueint;
     g->forest_portal_town = forest_portal->valueint;
     g->swamp_entry_town = swamp_entry->valueint;
@@ -3298,6 +3325,20 @@ int load_game(GameState *g, int slot) {
             }
         }
         map_place_tavern_brenna(&g->map);
+    }
+    if (save_version < 94 && g->location == LOCATION_GUILD) {
+        if (g->player.x == GUILD_ORIN_X && g->player.y == GUILD_ORIN_Y) {
+            g->player.y++;
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->active && item->x == GUILD_ORIN_X && item->y == GUILD_ORIN_Y) {
+                item->y++;
+                item->underlying_tile = TILE_TAVERN_FLOOR;
+                g->map.tiles[item->y][item->x] = TILE_ITEM;
+            }
+        }
+        g->map.tiles[GUILD_ORIN_Y][GUILD_ORIN_X] = TILE_NPC_ORIN;
     }
     if (g->castle_prompt) {
         castle_request(g, g->castle_prompt == 2);

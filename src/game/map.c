@@ -312,6 +312,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_NPC_ALDER &&
         m->tiles[y][x] != TILE_NPC_MARA &&
         m->tiles[y][x] != TILE_NPC_BRENNA &&
+        m->tiles[y][x] != TILE_NPC_ORIN &&
         m->tiles[y][x] != TILE_NPC_FROST_SURVIVOR &&
         m->tiles[y][x] != TILE_NPC_ROOK &&
         m->tiles[y][x] != TILE_NPC_INNKEEPER &&
@@ -2365,7 +2366,7 @@ void map_place_inn_elowen(Map *m) {
 
 void map_generate_guild(Map *m, int *sx, int *sy) {
     map_generate_tavern_room(m, sx, sy, 1);
-    m->tiles[18][10] = TILE_TAVERN_FLOOR;
+    m->tiles[GUILD_ORIN_Y][GUILD_ORIN_X] = TILE_NPC_ORIN;
     m->tiles[GUILD_ZARA_Y][GUILD_ZARA_X] = TILE_NPC_GUILD_SEEKER;
     m->tiles[GUILD_DAIN_Y][GUILD_DAIN_X] = TILE_NPC_DAIN;
 }

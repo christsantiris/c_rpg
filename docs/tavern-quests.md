@@ -49,6 +49,19 @@ distinct combat encounter. Returning all three fragments allows Dain to
 reconstruct the map and locate its hidden dwarven hoard. He awards the player
 60 gold and 400 score.
 
+## Orin: The Broken Resonance
+
+Surveyor Orin waits in **Rosemoor's Adventurer's Guild**. Press `T` beside him
+to accept a quest in **Glassdeep Caverns**, reached through **Stillbury's south
+gate**. Restore the guarded Root, Tide, and Crown resonators on stages **2,
+3, and 4** in any order. Press `A` on or beside a crystal to read its inscription
+and choose a tone with `1` (Low), `2` (Middle), or `3` (High). `Esc` cancels;
+incorrect tones allow another attempt without damage or lost progress.
+
+Return to Orin for **120 gold and 1,000 score**, awarded once. Acceptance
+preserves existing cavern progress, and the Prism Sovereign is optional.
+See [The Broken Resonance](glassdeep-caverns.md#the-broken-resonance).
+
 ## Alder: The Lost Wardens
 
 Alder is an aging forest ranger searching for three wardens lost while

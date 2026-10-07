@@ -29,7 +29,7 @@ static SDL_Color area_label_color(Location area) {
 }
 
 static void draw_frostfell_quest_tile(Renderer *r, int sx, int sy, int x, int y, TileType tile) {
-    if (tile == TILE_NPC_BRENNA) {
+    if (tile == TILE_NPC_BRENNA || tile == TILE_NPC_ORIN) {
         draw_tavern_floor(r, sx, sy);
     } else {
         draw_frostfell_floor(r, sx, sy, x, y);
@@ -65,10 +65,44 @@ static void draw_frostfell_quest_tile(Renderer *r, int sx, int sy, int x, int y,
     SDL_RenderDrawPoint(r->sdl, px + 14, py + 8);
     SDL_Rect boots[2] = {{px + 6, py + 22, 5, 2}, {px + 14, py + 22, 5, 2}};
     SDL_RenderFillRects(r->sdl, boots, 2);
+    if (tile == TILE_NPC_ORIN) {
+        SDL_SetRenderDrawColor(r->sdl, 236, 220, 172, 255);
+        SDL_Rect map = {px + 16, py + 13, 6, 9};
+        SDL_RenderFillRect(r->sdl, &map);
+        SDL_SetRenderDrawColor(r->sdl, 70, 148, 174, 255);
+        SDL_RenderDrawLine(r->sdl, px + 18, py + 15, px + 20, py + 20);
+    }
     if (tile == TILE_NPC_BRENNA) {
         SDL_SetRenderDrawColor(r->sdl, 228, 182, 78, 255);
         SDL_Rect badge = {px + 15, py + 15, 3, 3};
         SDL_RenderFillRect(r->sdl, &badge);
+    }
+}
+
+static void draw_glassdeep_resonator(Renderer *r, int sx, int sy, int x, int y, TileType tile) {
+    draw_glassdeep_ruin(r, sx, sy, x, y);
+    int px = sx * TILE_SIZE;
+    int py = sy * TILE_SIZE;
+    int lit = tile == TILE_GLASSDEEP_RESONATOR_LIT;
+    if (lit) {
+        int pulse = (SDL_GetTicks() / 160) % 4;
+        SDL_SetRenderDrawColor(r->sdl, 44, 100 + pulse * 12, 124 + pulse * 15, 255);
+        SDL_Rect glow = {px + 3 - pulse / 2, py + 3 - pulse / 2, 18 + pulse, 18 + pulse};
+        SDL_RenderDrawRect(r->sdl, &glow);
+    }
+    SDL_SetRenderDrawColor(r->sdl, 94, 100, 120, 255);
+    SDL_Rect base = {px + 4, py + 18, 17, 5};
+    SDL_RenderFillRect(r->sdl, &base);
+    SDL_SetRenderDrawColor(r->sdl, lit ? 112 : 69, lit ? 232 : 91, lit ? 248 : 127, 255);
+    for (int row = 0; row < 15; row++) {
+        int half = row < 7 ? row / 2 : (14 - row) / 2;
+        SDL_RenderDrawLine(r->sdl, px + 12 - half, py + 3 + row, px + 12 + half, py + 3 + row);
+    }
+    SDL_SetRenderDrawColor(r->sdl, lit ? 233 : 128, lit ? 255 : 146, lit ? 255 : 175, 255);
+    SDL_RenderDrawLine(r->sdl, px + 11, py + 5, px + 11, py + 15);
+    // The three pedestal marks stay visible even when the crystal is dark.
+    for (int mark = 0; mark < 3; mark++) {
+        SDL_RenderDrawPoint(r->sdl, px + 8 + mark * 4, py + 20);
     }
 }
 
@@ -271,7 +305,8 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
         g->location != LOCATION_CASTLE_INTERIOR &&
         g->location != LOCATION_FOREST &&
         g->location != LOCATION_SWAMP &&
-        g->location != LOCATION_FROSTFELL)) {
+        g->location != LOCATION_FROSTFELL &&
+        g->location != LOCATION_GLASSDEEP)) {
         return;
     }
     int npc_x = shortcut ? g->player.x : g->dialogue_x;
@@ -290,7 +325,7 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
         viewport_w = TAVERN_W * TILE_SIZE;
     }
     int bubble_w = viewport_w < 460 ? viewport_w - 16 : 440;
-    int bubble_h = shortcut ? 132 : 98;
+    int bubble_h = shortcut || game_glassdeep_prompt_active(g) ? 132 : 98;
     int npc_screen_x = viewport_to_screen_x(v, npc_x) * TILE_SIZE +
         TILE_SIZE / 2;
     int npc_screen_y = viewport_to_screen_y(v, npc_y) * TILE_SIZE;
@@ -1203,6 +1238,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         draw_ashen_edge(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_CATACOMBS_FLOOR || underlay == TILE_BURIAL_PLATE) {
         draw_catacombs_tile(r, &g->map, screen_x, screen_y, map_x, map_y, underlay);
+    } else if (underlay == TILE_GLASSDEEP_RESONATOR || underlay == TILE_GLASSDEEP_RESONATOR_LIT) {
+        draw_glassdeep_resonator(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay == TILE_GLASSDEEP_FLOOR) {
         draw_glassdeep_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_GLASSDEEP_RUIN) {
@@ -1797,6 +1834,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_FROST_JOURNAL:
                 case TILE_NPC_FROST_SURVIVOR:
                 case TILE_NPC_BRENNA:
+                case TILE_NPC_ORIN:
                     draw_frostfell_quest_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
                     break;
                 case TILE_ASHEN_FLOOR:
@@ -1827,6 +1865,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_BURIAL_PLATE:
                 case TILE_CATACOMBS_SARCOPHAGUS:
                     draw_catacombs_tile(r, &g->map, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
+                case TILE_GLASSDEEP_RESONATOR:
+                case TILE_GLASSDEEP_RESONATOR_LIT:
+                    draw_glassdeep_resonator(r, sx, sy, x, y, g->map.tiles[y][x]);
                     break;
                 case TILE_GLASSDEEP_FLOOR:
                     draw_glassdeep_floor(r, sx, sy, x, y);
@@ -2714,6 +2756,23 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         renderer_draw_text(r, "BRENNA", name_x, name_y, name, r->font_tiny);
     }
 
+    if (g->location == LOCATION_GLASSDEEP) {
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                TileType tile = g->map.tiles[y][x];
+                if ((tile != TILE_GLASSDEEP_RESONATOR && tile != TILE_GLASSDEEP_RESONATOR_LIT) ||
+                    !viewport_is_visible(v, x, y) || !map_is_explored(&g->map, x, y)) {
+                    continue;
+                }
+                const char *label = tile == TILE_GLASSDEEP_RESONATOR_LIT ? "RESTORED" : "RESONATOR (A)";
+                int width = 0;
+                TTF_SizeText(r->font_tiny, label, &width, NULL);
+                renderer_draw_text(r, label, viewport_to_screen_x(v, x) * TILE_SIZE + (TILE_SIZE - width) / 2,
+                    viewport_to_screen_y(v, y) * TILE_SIZE - 12, area_label_color(LOCATION_GLASSDEEP), r->font_tiny);
+            }
+        }
+    }
+
     if (g->location == LOCATION_FROSTFELL) {
         for (int y = 0; y < MAP_H; y++) {
             for (int x = 0; x < MAP_W; x++) {
@@ -2770,6 +2829,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
     if (g->location == LOCATION_GUILD) {
         int width = 0;
+        TTF_SizeText(r->font_tiny, "ORIN", &width, NULL);
+        renderer_draw_text(r, "ORIN", viewport_to_screen_x(v, GUILD_ORIN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, GUILD_ORIN_Y - 1) * TILE_SIZE, area_label_color(LOCATION_GLASSDEEP), r->font_tiny);
         TTF_SizeText(r->font_tiny, "DAIN", &width, NULL);
         renderer_draw_text(r, "DAIN", viewport_to_screen_x(v, GUILD_DAIN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, GUILD_DAIN_Y - 1) * TILE_SIZE, (SDL_Color){218, 164, 84, 255}, r->font_tiny);
