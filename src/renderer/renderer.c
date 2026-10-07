@@ -50,6 +50,9 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->temple_enemy_texture = load_sprite_texture(sdl,
         "assets/images/temple-enemies.bmp");
 
+    r->castle_enemy_texture = load_sprite_texture(sdl, "assets/images/castle-enemies.bmp");
+    r->castle_boss_texture = load_sprite_texture(sdl, "assets/images/castle-bosses.bmp");
+
     if (TTF_Init() != 0) {
         fprintf(stderr, "TTF_Init error: %s\n", TTF_GetError());
         r->font_large = NULL;
@@ -67,6 +70,14 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
 }
 
 void renderer_free(Renderer *r) {
+    if (r->castle_enemy_texture) {
+        SDL_DestroyTexture(r->castle_enemy_texture);
+        r->castle_enemy_texture = NULL;
+    }
+    if (r->castle_boss_texture) {
+        SDL_DestroyTexture(r->castle_boss_texture);
+        r->castle_boss_texture = NULL;
+    }
     if (r->castle_texture) {
         SDL_DestroyTexture(r->castle_texture);
         r->castle_texture = NULL;

@@ -90,7 +90,7 @@ void inventory_draw(Renderer *r, const GameState *g, const InventoryScreen *s) {
             } else if (item->type == ITEM_POTION_INTELLIGENCE) {
                 SDL_snprintf(detail, sizeof(detail), "+1 MAX MP");
             } else if (item->type == ITEM_WEAPON) {
-                SDL_snprintf(detail, sizeof(detail), "+%d ATK",
+                SDL_snprintf(detail, sizeof(detail), item->sharpened ? "+%d ATK (SHARPENED)" : "+%d ATK",
                     item->attack_bonus);
             } else if (item->type == ITEM_ARMOR ||
                 item->type == ITEM_SHIELD) {

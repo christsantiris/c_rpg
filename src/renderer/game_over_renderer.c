@@ -6,7 +6,8 @@ static const char *game_over_location(const GameState *g) {
         case LOCATION_DUNGEON: return "DUNGEON";
         case LOCATION_FOREST: return "HAUNTED FOREST";
         case LOCATION_FOREST_ROAD: return "FOREST ROAD";
-        case LOCATION_CASTLE: return "CASTLE OF NO RETURN";
+        case LOCATION_CASTLE:
+        case LOCATION_CASTLE_INTERIOR: return "CASTLE OF NO RETURN";
         case LOCATION_SWAMP_ROAD: return "SWAMP SHORTCUT";
         case LOCATION_KING_ROAD_WEST: return "CROWN ROAD WEST";
         case LOCATION_CROWNROAD: return "CROWN ROAD EAST";
@@ -65,21 +66,23 @@ void game_over_draw(Renderer *r, const GameState *g) {
 
     int cy = r->screen_h / 2;
 
-    draw_centered(r, "GAME OVER", cy - 130, red, r->font_large);
+    draw_centered(r, g->game_won ? "VICTORY" : "GAME OVER", cy - 130, g->game_won ? gold : red, r->font_large);
 
     char name_str[32];
     SDL_snprintf(name_str, sizeof(name_str), "%s", g->player.name);
     draw_centered(r, name_str, cy - 70, gold, r->font_small);
 
     char level_str[64];
-    SDL_snprintf(level_str, sizeof(level_str), "FELL IN %s - LEVEL %d",
-        game_over_location(g), g->level);
+    if (g->game_won) {
+        SDL_snprintf(level_str, sizeof(level_str), "THE CASTLE'S CURSE IS BROKEN");
+    } else {
+        SDL_snprintf(level_str, sizeof(level_str), "FELL IN %s - LEVEL %d", game_over_location(g), g->level);
+    }
     draw_centered(r, level_str, cy - 35, white, r->font_small);
 
-    draw_centered(r, "CAUSE OF DEATH", cy + 10, red, r->font_small);
-    const char *cause = g->message_count > 0
-        ? g->messages[g->message_count - 1]
-        : "Your injuries proved fatal.";
+    draw_centered(r, g->game_won ? "LORD VEYR IS DEFEATED" : "CAUSE OF DEATH", cy + 10, g->game_won ? gold : red, r->font_small);
+    const char *cause = g->game_won ? "THE BROKEN OATH IS UNDONE. THE KINGDOM IS FREE." :
+        g->message_count > 0 ? g->messages[g->message_count - 1] : "Your injuries proved fatal.";
     draw_centered(r, cause, cy + 38, white, r->font_small);
 
     draw_centered(r, "PRESS ENTER FOR HALL OF FAME", cy + 95, hint,

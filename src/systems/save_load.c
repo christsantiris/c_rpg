@@ -1,5 +1,6 @@
 #include "save_load.h"
 #include "../game/game.h"
+#include "../game/castle.h"
 #include "cJSON.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -305,6 +306,9 @@ static cJSON *serialize_enemies(const Enemy *enemies, int count) {
         cJSON_AddNumberToObject(obj, "attack_target_y", e->attack_target_y);
         cJSON_AddNumberToObject(obj, "revived", e->revived);
         cJSON_AddNumberToObject(obj, "revive_timer", e->revive_timer);
+        cJSON_AddNumberToObject(obj, "facing_dx", e->facing_dx);
+        cJSON_AddNumberToObject(obj, "facing_dy", e->facing_dy);
+        cJSON_AddNumberToObject(obj, "attack_phase", e->attack_phase);
         cJSON_AddItemToArray(arr, obj);
     }
     return arr;
@@ -349,10 +353,18 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count) {
         cJSON *revive_timer = cJSON_GetObjectItem(obj, "revive_timer");
         e->revived = revived ? revived->valueint : 0;
         e->revive_timer = revive_timer ? revive_timer->valueint : 0;
+        cJSON *fx = cJSON_GetObjectItem(obj, "facing_dx");
+        cJSON *fy = cJSON_GetObjectItem(obj, "facing_dy");
+        e->facing_dx = fx ? fx->valueint : 0;
+        e->facing_dy = fy ? fy->valueint : -1;
+        cJSON *phase = cJSON_GetObjectItem(obj, "attack_phase");
+        e->attack_phase = phase ? phase->valueint : 0;
     }
 }
 
 static void deserialize_item_metadata(const cJSON *obj, Item *item) {
+    cJSON *sharpened = cJSON_GetObjectItem(obj, "sharpened");
+    item->sharpened = sharpened ? !!sharpened->valueint : 0;
     cJSON *family = cJSON_GetObjectItem(obj, "weapon_family");
     cJSON *critical = cJSON_GetObjectItem(obj, "critical_chance_bonus");
     cJSON *cleave = cJSON_GetObjectItem(obj, "cleave_percent");
@@ -425,10 +437,92 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
         ? block_reduction->valueint : 0;
 }
 
+static cJSON *serialize_castle_loot(const FloorItem *items, int count) {
+    cJSON *floor_items = cJSON_CreateArray();
+    for (int i = 0; i < count; i++) {
+        const FloorItem *fi = &items[i];
+        cJSON *f = cJSON_CreateObject();
+        cJSON_AddNumberToObject(f, "active", fi->active);
+        cJSON_AddNumberToObject(f, "x", fi->x);
+        cJSON_AddNumberToObject(f, "y", fi->y);
+        cJSON_AddNumberToObject(f, "underlying_tile", fi->underlying_tile);
+        cJSON *it = cJSON_CreateObject();
+        cJSON_AddNumberToObject(it, "active", fi->item.active);
+        cJSON_AddNumberToObject(it, "type", fi->item.type);
+        cJSON_AddStringToObject(it, "name", fi->item.name);
+        cJSON_AddNumberToObject(it, "attack_bonus", fi->item.attack_bonus);
+        cJSON_AddNumberToObject(it, "sharpened", fi->item.sharpened);
+        cJSON_AddNumberToObject(it, "defense_bonus", fi->item.defense_bonus);
+        cJSON_AddNumberToObject(it, "value", fi->item.value);
+        cJSON_AddNumberToObject(it, "spell_id", fi->item.spell_id);
+        cJSON_AddNumberToObject(it, "is_ranged", fi->item.is_ranged);
+        cJSON_AddNumberToObject(it, "range", fi->item.range);
+        cJSON_AddNumberToObject(it, "weapon_family",
+            fi->item.weapon_family);
+        cJSON_AddNumberToObject(it, "weapon_hands", fi->item.weapon_hands);
+        cJSON_AddNumberToObject(it, "rarity", fi->item.rarity);
+        cJSON_AddNumberToObject(it, "class_mask", fi->item.class_mask);
+        cJSON_AddNumberToObject(it, "visual_id", fi->item.visual_id);
+        cJSON_AddNumberToObject(it, "critical_chance_bonus",
+            fi->item.critical_chance_bonus);
+        cJSON_AddNumberToObject(it, "cleave_percent",
+            fi->item.cleave_percent);
+        cJSON_AddNumberToObject(it, "pierces_targets",
+            fi->item.pierces_targets);
+        cJSON_AddNumberToObject(it, "spell_power_bonus",
+            fi->item.spell_power_bonus);
+        cJSON_AddNumberToObject(it, "armor_penetration_percent",
+            fi->item.armor_penetration_percent);
+        cJSON_AddNumberToObject(it, "armor_family", fi->item.armor_family);
+        cJSON_AddNumberToObject(it, "max_hp_bonus", fi->item.max_hp_bonus);
+        cJSON_AddNumberToObject(it, "max_mp_bonus", fi->item.max_mp_bonus);
+        cJSON_AddNumberToObject(it, "evasion_chance",
+            fi->item.evasion_chance);
+        cJSON_AddNumberToObject(it, "spell_cost_reduction_percent",
+            fi->item.spell_cost_reduction_percent);
+        cJSON_AddNumberToObject(it, "block_chance",
+            fi->item.block_chance);
+        cJSON_AddNumberToObject(it, "block_reduction_percent",
+            fi->item.block_reduction_percent);
+        cJSON_AddItemToObject(f, "item", it);
+        cJSON_AddItemToArray(floor_items, f);
+    }
+    return floor_items;
+}
+
+static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, int *count) {
+    if (!cJSON_IsArray(floor_items) || cJSON_GetArraySize(floor_items) > MAX_FLOOR_ITEMS) {
+        return 0;
+    }
+    *count = cJSON_GetArraySize(floor_items);
+    for (int i = 0; i < *count; i++) {
+        cJSON *f = cJSON_GetArrayItem(floor_items, i);
+        FloorItem *fi = &items[i];
+        fi->active = cJSON_GetObjectItem(f, "active")->valueint;
+        fi->x = cJSON_GetObjectItem(f, "x")->valueint;
+        fi->y = cJSON_GetObjectItem(f, "y")->valueint;
+        cJSON *underlying = cJSON_GetObjectItem(f, "underlying_tile");
+        fi->underlying_tile = underlying ? underlying->valueint : TILE_CASTLE_FLOOR;
+        cJSON *it = cJSON_GetObjectItem(f, "item");
+        fi->item.active = cJSON_GetObjectItem(it, "active")->valueint;
+        fi->item.type = cJSON_GetObjectItem(it, "type")->valueint;
+        strncpy(fi->item.name, cJSON_GetObjectItem(it, "name")->valuestring,
+            sizeof(fi->item.name) - 1);
+        fi->item.attack_bonus = cJSON_GetObjectItem(it, "attack_bonus")->valueint;
+        fi->item.defense_bonus = cJSON_GetObjectItem(it, "defense_bonus")->valueint;
+        fi->item.value = cJSON_GetObjectItem(it, "value")->valueint;
+        fi->item.spell_id = cJSON_GetObjectItem(it, "spell_id")->valueint;
+        fi->item.is_ranged = cJSON_GetObjectItem(it, "is_ranged")->valueint;
+        fi->item.range = cJSON_GetObjectItem(it, "range")->valueint;
+        deserialize_item_metadata(it, &fi->item);
+    }
+    return 1;
+}
+
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 85);
+    cJSON_AddNumberToObject(root, "save_version", 87);
     cJSON_AddNumberToObject(root, "forest_entry_town", g->forest_entry_town);
     cJSON_AddNumberToObject(root, "forest_portal_town", g->forest_portal_town);
     cJSON_AddNumberToObject(root, "swamp_entry_town", g->swamp_entry_town);
@@ -585,6 +679,7 @@ int save_game(const GameState *g, int slot) {
         cJSON_AddNumberToObject(it, "type",          item->type);
         cJSON_AddStringToObject(it, "name",          item->name);
         cJSON_AddNumberToObject(it, "attack_bonus",  item->attack_bonus);
+        cJSON_AddNumberToObject(it, "sharpened", item->sharpened);
         cJSON_AddNumberToObject(it, "defense_bonus", item->defense_bonus);
         cJSON_AddNumberToObject(it, "value",         item->value);
         cJSON_AddNumberToObject(it, "spell_id",      item->spell_id);
@@ -632,6 +727,7 @@ int save_game(const GameState *g, int slot) {
         cJSON_AddNumberToObject(it, "type",          fi->item.type);
         cJSON_AddStringToObject(it, "name",          fi->item.name);
         cJSON_AddNumberToObject(it, "attack_bonus",  fi->item.attack_bonus);
+        cJSON_AddNumberToObject(it, "sharpened", fi->item.sharpened);
         cJSON_AddNumberToObject(it, "defense_bonus", fi->item.defense_bonus);
         cJSON_AddNumberToObject(it, "value",         fi->item.value);
         cJSON_AddNumberToObject(it, "spell_id",      fi->item.spell_id);
@@ -890,6 +986,27 @@ int save_game(const GameState *g, int slot) {
         cJSON_AddItemToArray(catacombs_cache, entry);
     }
     cJSON_AddItemToObject(root, "catacombs_cache", catacombs_cache);
+
+    cJSON *castle = cJSON_CreateObject();
+    cJSON_AddNumberToObject(castle, "seals", g->castle_seals);
+    cJSON_AddNumberToObject(castle, "minibosses", g->castle_minibosses);
+    cJSON_AddNumberToObject(castle, "prompt", g->castle_prompt);
+    cJSON_AddNumberToObject(castle, "won", g->game_won);
+    cJSON *floors = cJSON_CreateArray();
+    for (int i = 0; i < CASTLE_DEPTH; i++) {
+        const LevelCache *cache = &g->castle_cache[i];
+        cJSON *entry = cJSON_CreateObject();
+        cJSON_AddNumberToObject(entry, "valid", cache->valid);
+        cJSON_AddNumberToObject(entry, "level_cleared", cache->level_cleared);
+        if (cache->valid) {
+            cJSON_AddItemToObject(entry, "map", serialize_map(&cache->map));
+            cJSON_AddItemToObject(entry, "enemies", serialize_enemies(cache->enemies, cache->enemy_count));
+        }
+        cJSON_AddItemToObject(entry, "loot", serialize_castle_loot(g->castle_loot[i], g->castle_loot_count[i]));
+        cJSON_AddItemToArray(floors, entry);
+    }
+    cJSON_AddItemToObject(castle, "floors", floors);
+    cJSON_AddItemToObject(root, "castle", castle);
 
     const char *road_keys[2] = {"crownroad_cache", "kingroad_west_cache"};
     const CrownroadCache *road_caches[2] = {&g->crownroad_cache, &g->kingroad_west_cache};
@@ -1932,6 +2049,60 @@ int load_game(GameState *g, int slot) {
         }
     }
 
+    memset(g->castle_cache, 0, sizeof(g->castle_cache));
+    memset(g->castle_loot, 0, sizeof(g->castle_loot));
+    memset(g->castle_loot_count, 0, sizeof(g->castle_loot_count));
+    g->castle_seals = 0;
+    g->castle_minibosses = 0;
+    g->castle_prompt = 0;
+    g->game_won = 0;
+    cJSON *castle = cJSON_GetObjectItem(root, "castle");
+    if (castle) {
+        cJSON *seals = cJSON_GetObjectItem(castle, "seals");
+        cJSON *minis = cJSON_GetObjectItem(castle, "minibosses");
+        cJSON *prompt = cJSON_GetObjectItem(castle, "prompt");
+        cJSON *won = cJSON_GetObjectItem(castle, "won");
+        cJSON *floors = cJSON_GetObjectItem(castle, "floors");
+        if (!cJSON_IsNumber(seals) || !cJSON_IsNumber(minis) || !cJSON_IsNumber(prompt) || !cJSON_IsNumber(won) ||
+            !cJSON_IsArray(floors) || cJSON_GetArraySize(floors) != CASTLE_DEPTH || seals->valueint < 0 || seals->valueint > 15 ||
+            minis->valueint < 0 || minis->valueint > 3 || prompt->valueint < 0 || prompt->valueint > 2) {
+            cJSON_Delete(root);
+            return 0;
+        }
+        g->castle_seals = seals->valueint;
+        g->castle_minibosses = minis->valueint;
+        g->castle_prompt = prompt->valueint;
+        g->game_won = won->valueint;
+        for (int i = 0; i < CASTLE_DEPTH; i++) {
+            LevelCache *cache = &g->castle_cache[i];
+            cJSON *entry = cJSON_GetArrayItem(floors, i);
+            cJSON *valid = cJSON_GetObjectItem(entry, "valid");
+            cJSON *cleared = cJSON_GetObjectItem(entry, "level_cleared");
+            if (!cJSON_IsNumber(valid) || !cJSON_IsNumber(cleared) || !deserialize_castle_loot(cJSON_GetObjectItem(entry, "loot"), g->castle_loot[i], &g->castle_loot_count[i])) {
+                cJSON_Delete(root);
+                return 0;
+            }
+            cache->valid = valid->valueint;
+            cache->level_cleared = cleared->valueint;
+            if (cache->valid) {
+                cJSON *enemies = cJSON_GetObjectItem(entry, "enemies");
+                if (!cJSON_IsObject(cJSON_GetObjectItem(entry, "map")) || !cJSON_IsArray(enemies) || cJSON_GetArraySize(enemies) > MAX_ENEMIES) {
+                    cJSON_Delete(root);
+                    return 0;
+                }
+                deserialize_map(cJSON_GetObjectItem(entry, "map"), &cache->map);
+                deserialize_enemies(enemies, cache->enemies, &cache->enemy_count);
+            }
+        }
+    } else if (save_version >= 86) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    if (g->location == LOCATION_CASTLE_INTERIOR && (g->level < 1 || g->level > CASTLE_DEPTH)) {
+        cJSON_Delete(root);
+        return 0;
+    }
+
     const char *road_keys[2] = {"crownroad_cache", "kingroad_west_cache"};
     CrownroadCache *road_caches[2] = {&g->crownroad_cache, &g->kingroad_west_cache};
     for (int i = 0; i < 2; i++) {
@@ -2957,6 +3128,9 @@ int load_game(GameState *g, int slot) {
         }
     }
 
+    if (g->castle_prompt) {
+        castle_request(g, g->castle_prompt == 2);
+    }
     repair_floor_item_underlays(g);
     game_hide_portal_destination(g);
     game_migrate_boss_shortcuts(g);

@@ -16,7 +16,8 @@ typedef enum {
     SCREEN_HALL_OF_FAME,
     SCREEN_CLASS_SELECT,
     SCREEN_HARBOR,
-    SCREEN_CONTROLS
+    SCREEN_CONTROLS,
+    SCREEN_WORKSHOP
 } GameScreen;
 
 typedef enum {
