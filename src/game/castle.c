@@ -5,8 +5,6 @@
 
 static const int dxs[4] = {0, 1, 0, -1};
 static const int dys[4] = {-1, 0, 1, 0};
-static const Location seal_regions[4] = {LOCATION_DUNGEON, LOCATION_GLASSDEEP, LOCATION_MOONVEIL, LOCATION_ASHEN};
-static const char *seal_names[4] = {"Hearth (Oakhaven Dungeon)", "Depths (Glassdeep)", "Moon (Moonveil)", "Ember (Ashen Hollow)"};
 static int line_clear(const Map *m, int x, int y, int tx, int ty);
 
 static TileType underfoot(const GameState *g) {
@@ -338,18 +336,6 @@ int castle_travel(GameState *g, int forward) {
             push_message(g, "The Castellan guards the next floor.");
         } else if (g->level == 4 && !(g->castle_minibosses & 2)) {
             push_message(g, "The Royal Arcanist guards the next floor.");
-        } else if (g->level == 5 && g->castle_seals != 15) {
-            push_message(g, "Four royal seals open the throne. Find these on regional level 3:");
-            for (int i = 0; i < 4; i++) {
-                if (!(g->castle_seals & (1 << i))) {
-                    push_message(g, seal_names[i]);
-                }
-            }
-            g->dialogue_active = 1;
-            g->dialogue_x = g->player.x;
-            g->dialogue_y = g->player.y;
-            snprintf(g->dialogue_speaker, sizeof(g->dialogue_speaker), "Royal seals");
-            snprintf(g->dialogue_text, sizeof(g->dialogue_text), "Level 3: Hearth/Oakhaven Dungeon, Depths/Glassdeep, Moon/Moonveil, Ember/Ashen Hollow. Seals collected: %d/4.", !!(g->castle_seals & 1) + !!(g->castle_seals & 2) + !!(g->castle_seals & 4) + !!(g->castle_seals & 8));
         } else if (g->level < CASTLE_DEPTH) {
             castle_enter(g, g->level + 1);
         }
@@ -366,7 +352,7 @@ void castle_request(GameState *g, int escape) {
     g->castle_prompt = escape ? 2 : 1;
     g->dialogue_active = 1;
     snprintf(g->dialogue_speaker, sizeof(g->dialogue_speaker), "Castle ward");
-    snprintf(g->dialogue_text, sizeof(g->dialogue_text), "%s", escape ? "Escape to Rosemoor? No return portal. Surviving defenders regroup; defeated minibosses stay dead. Enter confirms; Esc cancels." : "Return portals are severed here. Retreat regroups surviving defenders. Four regional seals open the throne. Enter enters; Esc cancels.");
+    snprintf(g->dialogue_text, sizeof(g->dialogue_text), "%s", escape ? "Escape to Rosemoor? No return portal. Surviving defenders regroup; defeated minibosses stay dead. Enter confirms; Esc cancels." : "Return portals are severed here. Retreat regroups surviving defenders. Enter enters; Esc cancels.");
 }
 
 int castle_prompt_key(GameState *g, int key, int repeat) {
@@ -391,60 +377,12 @@ int castle_prompt_key(GameState *g, int key, int repeat) {
     return 1;
 }
 
-void castle_refresh_seal(GameState *g) {
-    if (g->level != 3) {
-        return;
-    }
-    int seal = -1;
-    for (int i = 0; i < 4; i++) {
-        if (g->location == seal_regions[i] && !(g->castle_seals & (1 << i))) {
-            seal = i;
-        }
-    }
-    if (seal < 0 || g->map.room_count < 2) {
-        return;
-    }
-    for (int i = 0; i < g->floor_item_count; i++) {
-        if (g->floor_items[i].active && g->floor_items[i].underlying_tile == TILE_CASTLE_SEAL) {
-            return;
-        }
-    }
-    for (int y = 0; y < MAP_H; y++) {
-        for (int x = 0; x < MAP_W; x++) {
-            if (g->map.tiles[y][x] == TILE_CASTLE_SEAL) {
-                return;
-            }
-        }
-    }
-    Room *r = &g->map.rooms[1];
-    // Use existing reachable ground; never replace a quest marker, loot, stairs or portal.
-    for (int y = r->y + 1; y < r->y + r->h - 1; y++) {
-        for (int x = r->x + 1; x < r->x + r->w - 1; x++) {
-            TileType t = g->map.tiles[y][x];
-            if (t == TILE_FLOOR || t == TILE_GLASSDEEP_FLOOR || t == TILE_MOONVEIL_FLOOR || t == TILE_ASHEN_FLOOR) {
-                g->map.tiles[y][x] = TILE_CASTLE_SEAL;
-                const EnemyType guards[4] = {ENEMY_SKELETON, ENEMY_SHARD_GOLEM, ENEMY_THORN_GUARDIAN, ENEMY_OBSIDIAN_GUARDIAN};
-                int placed = 0;
-                for (int gy = r->y + 1; gy < r->y + r->h - 1 && !placed; gy++) {
-                    for (int gx = r->x + 1; gx < r->x + r->w - 1; gx++) {
-                        if ((gx != x || gy != y) && game_spawn_seal_guard(g, guards[seal], gx, gy)) {
-                            placed = 1;
-                            break;
-                        }
-                    }
-                }
-                return;
-            }
-        }
-    }
-}
-
 int castle_has_interaction(const GameState *g) {
     if (g->location == LOCATION_CASTLE && g->player.y == 12) {
         return (g->player.x == 17 && (g->castle_minibosses & 1)) || (g->player.x == 23 && (g->castle_minibosses & 2));
     }
     TileType t = underfoot(g);
-    if (t == TILE_CASTLE_SEAL || t == TILE_CASTLE_PASSAGE) {
+    if (t == TILE_CASTLE_PASSAGE) {
         return 1;
     }
     if (g->location == LOCATION_CASTLE_INTERIOR) {
@@ -473,26 +411,7 @@ int castle_interact(GameState *g) {
         push_message(g, "The earned passage leads past the defeated miniboss.");
         return 1;
     }
-    if (t == TILE_CASTLE_SEAL) {
-        for (int i = 0; i < 4; i++) {
-            if (g->location == seal_regions[i]) {
-                g->castle_seals |= 1 << i;
-                push_message(g, seal_names[i]);
-                push_message(g, "Royal seal claimed permanently. It will open the castle throne.");
-                TileType floor = i == 0 ? TILE_FLOOR : i == 1 ? TILE_GLASSDEEP_FLOOR : i == 2 ? TILE_MOONVEIL_FLOOR : TILE_ASHEN_FLOOR;
-                if (g->map.tiles[g->player.y][g->player.x] != TILE_ITEM) {
-                    g->map.tiles[g->player.y][g->player.x] = floor;
-                }
-                for (int j = 0; j < g->floor_item_count; j++) {
-                    FloorItem *item = &g->floor_items[j];
-                    if (item->x == g->player.x && item->y == g->player.y && item->underlying_tile == TILE_CASTLE_SEAL) {
-                        item->underlying_tile = floor;
-                    }
-                }
-                return 1;
-            }
-        }
-    } else if (t == TILE_CASTLE_PASSAGE) {
+    if (t == TILE_CASTLE_PASSAGE) {
         castle_leave(g, 0);
         return 1;
     } else if (g->location == LOCATION_CASTLE_INTERIOR) {

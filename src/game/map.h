@@ -395,7 +395,7 @@ typedef enum {
     TILE_CASTLE_TRAP_HIDDEN,
     TILE_CASTLE_TRAP_OPEN,
     TILE_CASTLE_PASSAGE,
-    TILE_CASTLE_SEAL,
+    TILE_CASTLE_SEAL, // Retired; keep its numeric ID for save migration.
     TILE_CASTLE_TABLE,
     TILE_CASTLE_BOOKCASE,
     TILE_CASTLE_THRONE,

@@ -18,7 +18,7 @@ and three appearances of the final boss.
 | 2 | Iron Keep | Castellan miniboss; permanent passage to the grounds |
 | 3 | Forsaken Court | Court Hexers, Bell Heralds, flanking routes, and trapdoors |
 | 4 | Crown Chapel | Royal Arcanist miniboss; shifting wards and a second permanent passage |
-| 5 | Royal Archives | Mixed guards and bookcases; four seals unlock the throne stair |
+| 5 | Royal Archives | Mixed guards and bookcases on the approach to the throne |
 | 6 | Throne of No Return | Lord Veyr; his defeat ends the campaign with victory |
 
 Each floor has six rooms linked by loops. Closed portcullises and magical
@@ -60,25 +60,10 @@ Crossing a health threshold does not enlarge an already announced attack.
 Veyr calls at most two escorts per attempt. Defeating him immediately records
 victory, stops combat, and opens the ending and Hall of Fame flow.
 
-## Royal seals
+## Progression
 
-Four seals connect the finale to the four towns. Floors 1–5 can be explored
-without them; all four are required only at the stair from floor 5 to floor 6.
-The throne stair identifies the locations and reports collected progress.
-
-| Town | Seal location | Object |
-|---|---|---|
-| Oakhaven | Dungeon, floor 3 | Seal of the Hearth |
-| Stillbury | Glassdeep Caverns, floor 3 | Seal of the Depths |
-| Rosemoor | Moonveil Gardens, stage 3 | Seal of the Moon |
-| Ridgeshire | Ashen Hollow, stage 3 | Seal of the Ember |
-
-Each seal appears on reachable ground in an existing room, with an additional
-regional guardian where space allows. Stand on the gold marker and use
-**Interact** to claim it. Collection is permanent and does not occupy inventory.
-Seals are independent of regional quests and final bosses and can be collected
-in any order. Previously explored levels receive missing seals when revisited,
-without regenerating the map, enemies, or completed quests.
+Defeating the Castellan and Royal Arcanist opens the route to the throne.
+No regional collectibles are required; visiting other areas is optional.
 
 ## Trapdoors
 
@@ -91,7 +76,7 @@ retreating. Entering an open hole causes another fall, but no turn can drop the
 player multiple floors. Landing relocates enemies and cancels warnings covering
 the arrival tile. The first fall rallies a small patrol farther along the route;
 each trapdoor can call this patrol only once. Falls cause no separate damage
-and preserve defeated minibosses, passages, seals, terrain, and dropped items.
+and preserve defeated minibosses, passages, terrain, and dropped items.
 
 ## Retreat and passages
 
@@ -100,7 +85,7 @@ It creates no return portal. Entering the castle also abandons any older portal.
 Walking out or using an earned passage likewise ends the current attempt.
 
 Ordinary defenders respawn, surviving bosses regain full health, and gates and
-wards reset. Maps, dropped items, collected seals, defeated minibosses, unlocked
+wards reset. Maps, dropped items, defeated minibosses, unlocked
 passages, revealed trapdoors, and spent trapdoor/Herald calls persist. Defeated
 minibosses never respawn or repeat their unique rewards.
 
@@ -110,10 +95,11 @@ resume at the cleared floor instead of repeating the lower floors.
 
 ## Persistence and play testing
 
-Save version 86 records castle floor caches, loot and item metadata, facing,
-queued attack phases, wards, miniboss deaths, seals, trapdoor reveals, pending
-confirmations, and victory. Older saves initialize fresh castle progress while
-preserving existing characters, regional maps, quests, inventory, and boss wins.
+Save version 89 records castle floor caches, loot and item metadata, facing,
+queued attack phases, wards, miniboss deaths, trapdoor reveals, pending
+confirmations, and victory. Earlier saves retain their castle and regional
+progress. Migration removes retired royal seal markers and their extra guardians,
+including markers beneath loot and portals, without regenerating explored maps.
 
 Suggested play test:
 
@@ -122,7 +108,7 @@ Suggested play test:
 3. Defeat the Castellan on floor 2 and the Arcanist on floor 4; use each passage
    in both directions and confirm the miniboss stays defeated after retreat.
 4. Trigger a trapdoor, revisit its open hole, and save/load with loot over it.
-5. Confirm that floor 5 lists missing seals, then collect the four level-3 seals.
+5. Reach floor 6 without collecting objects from other regions.
 6. Cancel and accept Return to Town; verify surviving defenders reset and
    permanent progress and dropped items survive.
 7. Fight all three Veyr phases, dodge marked areas, and confirm the victory ending.

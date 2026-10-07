@@ -10,6 +10,107 @@
 static const char b64[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
+static TileType retired_seal_floor(Location location) {
+    if (location == LOCATION_GLASSDEEP) {
+        return TILE_GLASSDEEP_FLOOR;
+    }
+    if (location == LOCATION_MOONVEIL) {
+        return TILE_MOONVEIL_FLOOR;
+    }
+    if (location == LOCATION_ASHEN) {
+        return TILE_ASHEN_FLOOR;
+    }
+    return TILE_FLOOR;
+}
+
+static void remove_royal_seals(Map *map, Enemy *enemies, int count, TileType floor) {
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (map->tiles[y][x] == TILE_CASTLE_SEAL) {
+                map->tiles[y][x] = floor;
+            }
+        }
+    }
+    for (int i = 0; i < count; i++) {
+        if (strcmp(enemies[i].name, "Royal Seal Guardian") == 0) {
+            enemies[i].active = 0;
+        }
+    }
+}
+
+static void migrate_removed_royal_seals(GameState *g) {
+    TileType floor = retired_seal_floor(g->location);
+    remove_royal_seals(&g->map, g->enemies, g->enemy_count, floor);
+    for (int i = 0; i < g->floor_item_count; i++) {
+        if (g->floor_items[i].underlying_tile == TILE_CASTLE_SEAL) {
+            g->floor_items[i].underlying_tile = floor;
+        }
+    }
+    LevelCache *caches[] = {g->level_cache, g->glassdeep_cache, g->moonveil_cache, g->ashen_cache};
+    const int depths[] = {MAX_REGION_DEPTH, GLASSDEEP_DEPTH, MOONVEIL_DEPTH, ASHEN_DEPTH};
+    const Location regions[] = {LOCATION_DUNGEON, LOCATION_GLASSDEEP, LOCATION_MOONVEIL, LOCATION_ASHEN};
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < depths[i]; j++) {
+            LevelCache *cache = &caches[i][j];
+            if (cache->valid) {
+                remove_royal_seals(&cache->map, cache->enemies, cache->enemy_count, retired_seal_floor(regions[i]));
+            }
+        }
+    }
+    if (g->portal_origin_tile == TILE_CASTLE_SEAL) {
+        g->portal_origin_tile = retired_seal_floor(g->portal_location);
+    }
+    if (strcmp(g->dialogue_speaker, "Royal seals") == 0) {
+        g->dialogue_active = 0;
+        g->dialogue_speaker[0] = '\0';
+        g->dialogue_text[0] = '\0';
+    }
+}
+
+static int shortcut_row(int y, int height) {
+    if (y < 1) {
+        return 1;
+    }
+    if (y > height - 2) {
+        return height - 2;
+    }
+    return y;
+}
+
+static void migrate_narrow_shortcuts(GameState *g) {
+    Map map;
+    int x;
+    int height;
+    TileType floor;
+    if (g->location == LOCATION_SWAMP_ROAD) {
+        map_generate_swamp_road(&map);
+        x = SWAMP_ROAD_X;
+        height = SWAMP_ROAD_H;
+        floor = TILE_SWAMP_FLOOR;
+    } else if (g->location == LOCATION_HIGH_PASS) {
+        map_generate_high_pass(&map);
+        x = HIGH_PASS_X;
+        height = HIGH_PASS_H;
+        floor = TILE_DRAGON_FLOOR;
+    } else {
+        return;
+    }
+    // Preserve exploration and progress while replacing the old wider terrain.
+    memcpy(g->map.tiles, map.tiles, sizeof(g->map.tiles));
+    g->player.x = x;
+    g->player.y = shortcut_row(g->player.y, height);
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (!item->active) {
+            continue;
+        }
+        item->x = x;
+        item->y = shortcut_row(item->y, height);
+        item->underlying_tile = floor;
+        g->map.tiles[item->y][item->x] = TILE_ITEM;
+    }
+}
+
 static char *bytes_to_base64(const unsigned char *src, int src_len) {
     int dst_len = ((src_len + 2) / 3) * 4 + 1;
     char *out = malloc(dst_len);
@@ -522,7 +623,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 88);
+    cJSON_AddNumberToObject(root, "save_version", 90);
     cJSON_AddNumberToObject(root, "forest_entry_town", g->forest_entry_town);
     cJSON_AddNumberToObject(root, "forest_portal_town", g->forest_portal_town);
     cJSON_AddNumberToObject(root, "swamp_entry_town", g->swamp_entry_town);
@@ -991,7 +1092,6 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddItemToObject(root, "catacombs_cache", catacombs_cache);
 
     cJSON *castle = cJSON_CreateObject();
-    cJSON_AddNumberToObject(castle, "seals", g->castle_seals);
     cJSON_AddNumberToObject(castle, "minibosses", g->castle_minibosses);
     cJSON_AddNumberToObject(castle, "prompt", g->castle_prompt);
     cJSON_AddNumberToObject(castle, "won", g->game_won);
@@ -2076,24 +2176,21 @@ int load_game(GameState *g, int slot) {
     memset(g->castle_cache, 0, sizeof(g->castle_cache));
     memset(g->castle_loot, 0, sizeof(g->castle_loot));
     memset(g->castle_loot_count, 0, sizeof(g->castle_loot_count));
-    g->castle_seals = 0;
     g->castle_minibosses = 0;
     g->castle_prompt = 0;
     g->game_won = 0;
     cJSON *castle = cJSON_GetObjectItem(root, "castle");
     if (castle) {
-        cJSON *seals = cJSON_GetObjectItem(castle, "seals");
         cJSON *minis = cJSON_GetObjectItem(castle, "minibosses");
         cJSON *prompt = cJSON_GetObjectItem(castle, "prompt");
         cJSON *won = cJSON_GetObjectItem(castle, "won");
         cJSON *floors = cJSON_GetObjectItem(castle, "floors");
-        if (!cJSON_IsNumber(seals) || !cJSON_IsNumber(minis) || !cJSON_IsNumber(prompt) || !cJSON_IsNumber(won) ||
-            !cJSON_IsArray(floors) || cJSON_GetArraySize(floors) != CASTLE_DEPTH || seals->valueint < 0 || seals->valueint > 15 ||
+        if (!cJSON_IsNumber(minis) || !cJSON_IsNumber(prompt) || !cJSON_IsNumber(won) ||
+            !cJSON_IsArray(floors) || cJSON_GetArraySize(floors) != CASTLE_DEPTH ||
             minis->valueint < 0 || minis->valueint > 3 || prompt->valueint < 0 || prompt->valueint > 2) {
             cJSON_Delete(root);
             return 0;
         }
-        g->castle_seals = seals->valueint;
         g->castle_minibosses = minis->valueint;
         g->castle_prompt = prompt->valueint;
         g->game_won = won->valueint;
@@ -3158,6 +3255,12 @@ int load_game(GameState *g, int slot) {
         }
     }
 
+    if (save_version < 89) {
+        migrate_removed_royal_seals(g);
+    }
+    if (save_version < 90) {
+        migrate_narrow_shortcuts(g);
+    }
     if (g->castle_prompt) {
         castle_request(g, g->castle_prompt == 2);
     }

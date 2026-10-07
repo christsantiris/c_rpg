@@ -14,7 +14,6 @@ void castle_request(GameState *g, int escape);
 int castle_prompt_key(GameState *g, int key, int repeat);
 int castle_has_interaction(const GameState *g);
 int castle_interact(GameState *g);
-void castle_refresh_seal(GameState *g);
 int castle_step(GameState *g);
 int castle_tick(GameState *g);
 int castle_attack_marks(const Map *m, const Enemy *e, int x, int y);

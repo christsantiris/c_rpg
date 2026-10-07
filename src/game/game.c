@@ -853,18 +853,6 @@ static Enemy *spawn_quest_enemy_at(GameState *g, EnemyType type, int x, int y) {
     return &g->enemies[slot];
 }
 
-Enemy *game_spawn_seal_guard(GameState *g, EnemyType type, int x, int y) {
-    if (!enemy_tile_open(g, x, y) || g->enemy_count >= MAX_ENEMIES) {
-        return NULL;
-    }
-    // Append without replacing defeated quest actors recorded in old saves.
-    Enemy *e = &g->enemies[g->enemy_count++];
-    spawn_enemy(g, e, type, x, y);
-    snprintf(e->name, sizeof(e->name), "Royal Seal Guardian");
-    g->level_cleared = 0;
-    return e;
-}
-
 static Enemy *spawn_quest_enemy_open(GameState *g, EnemyType type, int room_limit) {
     int x;
     int y;
@@ -1284,7 +1272,6 @@ void game_init(GameState *g) {
     memset(g->castle_cache, 0, sizeof(g->castle_cache));
     memset(g->castle_loot, 0, sizeof(g->castle_loot));
     memset(g->castle_loot_count, 0, sizeof(g->castle_loot_count));
-    g->castle_seals = 0;
     g->castle_minibosses = 0;
     g->castle_prompt = 0;
     g->game_won = 0;
@@ -2265,7 +2252,6 @@ static void place_emberforge_encounter(GameState *g) {
 }
 
 void game_refresh_quest_encounters(GameState *g) {
-    castle_refresh_seal(g);
     game_reveal_forest_shortcut(g);
     game_reveal_swamp_shortcut(g);
     game_reveal_mountain_shortcut(g);
@@ -2342,7 +2328,6 @@ static void generate_active_level(GameState *g) {
         g->map.tiles[daughter_y][daughter_x] = TILE_SWAMP_DAUGHTER;
     }
     enemies_spawn(g);
-    castle_refresh_seal(g);
     if (daughter_placed) {
         for (int radius = 1; radius <= 4; radius++) {
             int found = 0;

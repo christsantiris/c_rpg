@@ -142,9 +142,64 @@ static void shortcut_migration(int region) {
     remove("saves/savegame_99125.json");
 }
 
+static int single_tile_shortcut(const GameState *g) {
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            int path;
+            if (g->location == LOCATION_FOREST_ROAD) {
+                path = y == FOREST_ROAD_Y && x < FOREST_ROAD_W;
+            } else if (g->location == LOCATION_SWAMP_ROAD) {
+                path = x == SWAMP_ROAD_X && y < SWAMP_ROAD_H;
+            } else {
+                path = x == HIGH_PASS_X && y < HIGH_PASS_H;
+            }
+            if (!!map_is_walkable(&g->map, x, y) != path) {
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
+static void town_shortcut_crossing(int road, int reverse) {
+    memset(&game, 0, sizeof(game));
+    game_init(&game);
+    game.defeated_bosses = (1 << LOCATION_FOREST) | (1 << LOCATION_SWAMP) | (1 << LOCATION_MOUNTAINS);
+    Location destination;
+    int dx = 0;
+    int dy = reverse ? 1 : -1;
+    if (road == 0) {
+        game.location = reverse ? LOCATION_TOWN2 : LOCATION_TOWN;
+        destination = reverse ? LOCATION_TOWN : LOCATION_TOWN2;
+        game_enter_forest_road(&game);
+        dx = reverse ? 1 : -1;
+        dy = 0;
+    } else if (road == 1) {
+        game.location = reverse ? LOCATION_TOWN3 : LOCATION_TOWN2;
+        destination = reverse ? LOCATION_TOWN2 : LOCATION_TOWN3;
+        game_enter_swamp_road(&game);
+    } else {
+        destination = reverse ? LOCATION_TOWN : LOCATION_TOWN4;
+        game_enter_high_pass(&game, !reverse);
+    }
+    ASSERT("safe town shortcuts have exactly one walkable tile across their width", single_tile_shortcut(&game));
+    Location shortcut = game.location;
+    int steps = 0;
+    while (game.location == shortcut && steps < MAP_W + MAP_H) {
+        action_resolve_player(&game, (Action){ACTION_MOVE, game.player.x + dx, game.player.y + dy});
+        steps++;
+    }
+    ASSERT("one-tile shortcuts connect the correct towns in both directions", game.location == destination && game.enemy_count == 0);
+}
+
 void test_regional_shortcuts(void) {
     printf("Consistent regional shortcut discovery tests:\n");
     ASSERT("regional shortcut test slot is unused", !save_exists(SHORTCUT_TEST_SLOT));
+    for (int road = 0; road < 3; road++) {
+        for (int reverse = 0; reverse < 2; reverse++) {
+            town_shortcut_crossing(road, reverse);
+        }
+    }
     for (int region = 0; region < 3; region++) {
         for (int attack = 0; attack < 3; attack++) {
             shortcut_victory(region, attack);

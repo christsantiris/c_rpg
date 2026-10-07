@@ -198,12 +198,15 @@ enemies and progress between visits.
 The castle introduces shield formations, portcullis levers, warned attacks,
 shifting magical barriers, and trapdoors that drop you one floor and remain
 visible. Defeat the Castellan on floor 2 and the Royal Arcanist on floor 4 to
-unlock permanent passages from the grounds. Four royal seals on level 3 of
-Oakhaven Dungeon, Glassdeep Caverns, Moonveil Gardens, and Ashen Hollow unlock
-floor 6. Return to Town becomes a confirmed one-way escape to Rosemoor:
-surviving defenders reset, while miniboss victories, seals, passages, revealed
+unlock permanent passages from the grounds. The final floor requires no
+regional collectibles. Return to Town becomes a confirmed one-way escape to Rosemoor:
+surviving defenders reset, while miniboss victories, passages, revealed
 trapdoors, and dropped items persist. Defeating Lord Veyr ends the campaign with
 victory. See [Castle interior and play testing](docs/castle-design.md).
+
+The safe forest road, swamp road, and High Pass shortcuts are one tile wide.
+Older saves narrow these routes while preserving exploration and moving players
+and dropped items onto the path.
 
 Town destinations use wooden signposts with cream lettering, including both
 ends of each unlocked shortcut. Area gate labels keep the same color at every

@@ -98,10 +98,7 @@ static void test_castle_progress(void) {
     castle_travel(&game, 1);
     ASSERT("Arcanist victory opens floor 5", game.level == 5 && game.castle_minibosses == 3);
     castle_travel(&game, 1);
-    ASSERT("missing seals block only throne entrance", game.level == 5 && game.dialogue_active);
-    game.castle_seals = 15;
-    castle_travel(&game, 1);
-    ASSERT("four seals open floor 6", game.level == 6 && boss() && boss()->type == ENEMY_LORD_VEYR);
+    ASSERT("throne opens without regional collectibles", game.level == 6 && boss() && boss()->type == ENEMY_LORD_VEYR);
     kill_boss();
     ASSERT("final boss ends the game with victory", game.game_won && (game.defeated_bosses & (1 << LOCATION_CASTLE_INTERIOR)));
     int hp = game.player.hp;
@@ -136,7 +133,6 @@ static void test_castle_fall_and_retreat(void) {
     Enemy *e = boss();
     e->hp = 1;
     game.enemies[0].active = 0;
-    game.castle_seals = 5;
     game.defeated_bosses |= 1 << LOCATION_SWAMP;
     game.portal_active = 1;
     game_open_town_portal(&game);
@@ -147,7 +143,7 @@ static void test_castle_fall_and_retreat(void) {
     castle_prompt_key(&game, SDL_SCANCODE_RETURN, 0);
     ASSERT("confirmed escape reaches town without return portal", game.location == LOCATION_TOWN3 && !game.portal_active);
     ASSERT("castle escape preserves Rosemoor's unlocked swamp shortcut", game.map.tiles[TOWN_H - 1][ROSEMOOR_SWAMP_ROAD_X] == TILE_TOWN_EXIT);
-    ASSERT("retreat retains seals and miniboss victory", game.castle_seals == 5 && game.castle_minibosses == 1);
+    ASSERT("retreat retains miniboss victory", game.castle_minibosses == 1);
     castle_enter(&game, 4);
     ASSERT("retreat restores surviving boss and ordinary guards", boss()->hp == boss()->max_hp && game.enemies[0].active);
     castle_enter(&game, 2);
@@ -199,12 +195,13 @@ static void test_castle_combat(void) {
     ASSERT("warned wards change after player's dodge turn", game.map.tiles[48][40] != gate);
 }
 
-static void test_castle_seals(void) {
+static void test_castle_no_seals(void) {
     const Location regions[4] = {LOCATION_DUNGEON, LOCATION_GLASSDEEP, LOCATION_MOONVEIL, LOCATION_ASHEN};
     for (int i = 0; i < 4; i++) {
         start();
         game.location = regions[i];
         game.level = 3;
+        game.enemy_count = 0;
         if (i == 0) {
             map_generate(&game.map, 3);
         } else if (i == 1) {
@@ -214,22 +211,117 @@ static void test_castle_seals(void) {
         } else {
             map_generate_ashen(&game.map, 3);
         }
-        castle_refresh_seal(&game);
+        game_refresh_quest_encounters(&game);
         int found = 0;
         for (int y = 0; y < MAP_H; y++) {
             for (int x = 0; x < MAP_W; x++) {
-                if (game.map.tiles[y][x] == TILE_CASTLE_SEAL) {
-                    game.player.x = x;
-                    game.player.y = y;
-                    found++;
-                }
+                found += game.map.tiles[y][x] == TILE_CASTLE_SEAL;
             }
         }
-        ASSERT("one guaranteed seal appears on each town's regional floor 3", found == 1);
-        ASSERT("seal interaction records correct permanent bit", castle_interact(&game) && game.castle_seals == (1 << i));
-        castle_refresh_seal(&game);
-        ASSERT("collected seal does not respawn", game.map.tiles[game.player.y][game.player.x] != TILE_CASTLE_SEAL);
+        ASSERT("regional floors no longer spawn castle collectibles or guardians", found == 0 && game.enemy_count == 0);
     }
+}
+
+static int write_legacy_seal_save(void) {
+    FILE *file = fopen("saves/savegame_99136.json", "rb");
+    if (!file) {
+        return 0;
+    }
+    fseek(file, 0, SEEK_END);
+    long size = ftell(file);
+    rewind(file);
+    char *buffer = malloc((size_t)size + 1);
+    if (!buffer) {
+        fclose(file);
+        return 0;
+    }
+    size_t read = fread(buffer, 1, (size_t)size, file);
+    buffer[read] = '\0';
+    fclose(file);
+    cJSON *root = cJSON_Parse(buffer);
+    free(buffer);
+    if (!root) {
+        return 0;
+    }
+    cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 88);
+    cJSON_AddNumberToObject(cJSON_GetObjectItem(root, "castle"), "seals", 7);
+    char *json = cJSON_Print(root);
+    cJSON_Delete(root);
+    if (!json) {
+        return 0;
+    }
+    file = fopen("saves/savegame_99136.json", "wb");
+    if (!file) {
+        free(json);
+        return 0;
+    }
+    int written = fputs(json, file) >= 0;
+    fclose(file);
+    free(json);
+    return written;
+}
+
+static void test_castle_removed_seal_migration(void) {
+    const Location regions[4] = {LOCATION_DUNGEON, LOCATION_GLASSDEEP, LOCATION_MOONVEIL, LOCATION_ASHEN};
+    const TileType floors[4] = {TILE_FLOOR, TILE_GLASSDEEP_FLOOR, TILE_MOONVEIL_FLOOR, TILE_ASHEN_FLOOR};
+    for (int i = 0; i < 4; i++) {
+        start();
+        game.location = regions[i];
+        game.level = 3;
+        game.player.x = 15;
+        game.player.y = 11;
+        if (i == 0) {
+            map_generate(&game.map, 3);
+        } else if (i == 1) {
+            map_generate_glassdeep(&game.map, 3);
+        } else if (i == 2) {
+            map_generate_moonveil(&game.map, 3);
+        } else {
+            map_generate_ashen(&game.map, 3);
+        }
+        game.gold = 321;
+        game.castle_minibosses = 1;
+        game.elowen_quest_state = 2;
+        game.elowen_seals_restored = 7;
+        game.map.tiles[11][11] = TILE_ITEM;
+        game.map.tiles[11][12] = TILE_CASTLE_SEAL;
+        game.map.tiles[11][14] = TILE_PORTAL;
+        map_mark_explored(&game.map, 12, 11);
+        game.enemy_count = 2;
+        game.enemies[0] = (Enemy){.active = 1, .type = ENEMY_SKELETON, .x = 10, .y = 11, .hp = 100, .max_hp = 100};
+        strcpy(game.enemies[0].name, "Royal Seal Guardian");
+        game.enemies[1] = (Enemy){.active = 1, .type = ENEMY_SKELETON, .x = 13, .y = 11, .hp = 7, .max_hp = 100};
+        strcpy(game.enemies[1].name, "Skeleton");
+        game.floor_item_count = 1;
+        game.floor_items[0] = (FloorItem){.active = 1, .x = 11, .y = 11, .underlying_tile = TILE_CASTLE_SEAL, .item = item_make_health_potion()};
+        game.portal_active = 1;
+        game.portal_location = regions[i];
+        game.portal_level = 3;
+        game.portal_x = 14;
+        game.portal_y = 11;
+        game.portal_origin_tile = TILE_CASTLE_SEAL;
+        game.dialogue_active = 1;
+        strcpy(game.dialogue_speaker, "Royal seals");
+        strcpy(game.dialogue_text, "Four seals are required.");
+        LevelCache *caches[] = {game.level_cache, game.glassdeep_cache, game.moonveil_cache, game.ashen_cache};
+        LevelCache *cache = &caches[i][2];
+        cache->valid = 1;
+        cache->map = game.map;
+        cache->enemy_count = 2;
+        memcpy(cache->enemies, game.enemies, sizeof(game.enemies));
+        ASSERT("version 88 royal seal fixture loads", save_game(&game, CASTLE_TEST_SLOT) && write_legacy_seal_save() && load_game(&loaded, CASTLE_TEST_SLOT));
+        ASSERT("retired marker becomes regional ground without losing exploration", loaded.map.tiles[11][12] == floors[i] && map_is_explored(&loaded.map, 12, 11));
+        ASSERT("migration preserves loot while replacing its seal underlay", loaded.floor_items[0].active && loaded.floor_items[0].item.type == ITEM_POTION_HEALTH && loaded.floor_items[0].underlying_tile == floors[i] && loaded.map.tiles[11][11] == TILE_ITEM);
+        ASSERT("migration preserves portal while replacing its seal underlay", loaded.portal_active && loaded.portal_origin_tile == floors[i] && loaded.map.tiles[11][14] == floors[i]);
+        ASSERT("migration removes only the extra royal guardian", !loaded.enemies[0].active && loaded.enemies[1].active && loaded.enemies[1].hp == 7);
+        LevelCache *restored[] = {loaded.level_cache, loaded.glassdeep_cache, loaded.moonveil_cache, loaded.ashen_cache};
+        cache = &restored[i][2];
+        ASSERT("cached royal markers and guardians are also retired", cache->valid && cache->map.tiles[11][12] == floors[i] && !cache->enemies[0].active && cache->enemies[1].hp == 7);
+        ASSERT("migration preserves gold, miniboss wins and burial quest progress", loaded.gold == 321 && loaded.castle_minibosses == 1 && loaded.elowen_quest_state == 2 && loaded.elowen_seals_restored == 7);
+        ASSERT("obsolete seal requirement dialogue is cleared", !loaded.dialogue_active && loaded.dialogue_speaker[0] == '\0');
+        ASSERT("migrated save round-trips without seal fields", save_game(&loaded, CASTLE_TEST_SLOT) && load_game(&game, CASTLE_TEST_SLOT) && !game.enemies[0].active && game.floor_items[0].underlying_tile == floors[i]);
+    }
+    remove("saves/savegame_99136.json");
 }
 
 static void test_castle_saves(void) {
@@ -238,7 +330,6 @@ static void test_castle_saves(void) {
     kill_boss();
     game.map.burial_traps[0].spent = 1;
     game.map.tiles[32][17] = TILE_CASTLE_TRAP_OPEN;
-    game.castle_seals = 9;
     game.floor_item_count = 1;
     game.floor_items[0] = (FloorItem){.active = 1, .x = 8, .y = 15, .underlying_tile = TILE_CASTLE_FLOOR, .item = item_make_magic_shield()};
     game.map.tiles[15][8] = TILE_ITEM;
@@ -253,7 +344,7 @@ static void test_castle_saves(void) {
     castle_request(&game, 1);
     ASSERT("castle saves successfully", save_game(&game, CASTLE_TEST_SLOT));
     ASSERT("castle loads successfully", load_game(&loaded, CASTLE_TEST_SLOT));
-    ASSERT("save restores castle and permanent progress", loaded.location == LOCATION_CASTLE_INTERIOR && loaded.level == 4 && loaded.castle_seals == 9 && loaded.castle_minibosses == 1);
+    ASSERT("save restores castle and permanent progress", loaded.location == LOCATION_CASTLE_INTERIOR && loaded.level == 4 && loaded.castle_minibosses == 1);
     ASSERT("save restores warning and enemy facing", loaded.enemies[loaded.enemy_count - 1].hp == 123 && loaded.enemies[loaded.enemy_count - 1].attack_target_y == 53 && loaded.enemies[loaded.enemy_count - 1].facing_dx == 1);
     ASSERT("save restores pending escape confirmation", loaded.castle_prompt == 2 && loaded.dialogue_active);
     castle_prompt_key(&loaded, SDL_SCANCODE_ESCAPE, 0);
@@ -425,17 +516,17 @@ static void test_castle_legacy_save(void) {
     free(json);
     ASSERT("version 85 save migrates without castle fields", load_game(&loaded, CASTLE_TEST_SLOT));
     ASSERT("migration preserves character and progress", strcmp(loaded.player.name, "Legacy Hero") == 0 && loaded.gold == 321 && loaded.score == 9876 && loaded.level == 3);
-    ASSERT("migration initializes fresh castle progress", !loaded.castle_seals && !loaded.castle_minibosses && !loaded.game_won && !loaded.castle_cache[0].valid);
+    ASSERT("migration initializes fresh castle progress", !loaded.castle_minibosses && !loaded.game_won && !loaded.castle_cache[0].valid);
     int seals = 0;
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
             seals += loaded.map.tiles[y][x] == TILE_CASTLE_SEAL;
         }
     }
-    ASSERT("old explored floor receives its collectible without regeneration", seals == 1 && loaded.map.stairs_up_x == game.map.stairs_up_x && loaded.map.stairs_down_y == game.map.stairs_down_y);
+    ASSERT("old explored floor loads without collectibles or regeneration", seals == 0 && loaded.map.stairs_up_x == game.map.stairs_up_x && loaded.map.stairs_down_y == game.map.stairs_down_y);
     int enemies = loaded.enemy_count;
     game_refresh_quest_encounters(&loaded);
-    ASSERT("seal migration cannot duplicate guardian on refresh", loaded.enemy_count == enemies && enemies == 1);
+    ASSERT("legacy refresh no longer adds royal guardians", loaded.enemy_count == enemies && enemies == 0);
     ASSERT("migrated save rewrites and reloads", save_game(&loaded, CASTLE_TEST_SLOT) && load_game(&game, CASTLE_TEST_SLOT));
     remove("saves/savegame_99136.json");
 }
@@ -446,7 +537,8 @@ void test_castle(void) {
     test_castle_progress();
     test_castle_fall_and_retreat();
     test_castle_combat();
-    test_castle_seals();
+    test_castle_no_seals();
+    test_castle_removed_seal_migration();
     test_castle_saves();
     test_castle_class_victory();
     test_castle_wide_warning();

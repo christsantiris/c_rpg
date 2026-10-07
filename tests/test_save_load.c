@@ -1697,7 +1697,78 @@ static void test_coast_stage_migration(void) {
     remove_test_save(slot);
 }
 
+static void test_narrow_shortcut_migration(void) {
+    static GameState original;
+    static GameState loaded;
+    for (int road = 0; road < 2; road++) {
+        memset(&original, 0, sizeof(original));
+        game_init(&original);
+        int x = road ? HIGH_PASS_X : SWAMP_ROAD_X;
+        int height = road ? HIGH_PASS_H : SWAMP_ROAD_H;
+        TileType floor = road ? TILE_DRAGON_FLOOR : TILE_SWAMP_FLOOR;
+        if (road) {
+            game_enter_high_pass(&original, 1);
+        } else {
+            original.location = LOCATION_TOWN2;
+            game_enter_swamp_road(&original);
+        }
+        // Reproduce the former three-tile swamp and five-tile winding mountain roads.
+        for (int y = 1; y < height - 1; y++) {
+            int center = road ? x - ((y / 12) % 2) : x;
+            int radius = road ? 2 : 1;
+            for (int column = center - radius; column <= center + radius; column++) {
+                original.map.tiles[y][column] = floor;
+            }
+        }
+        original.player.x = road ? x - 2 : x - 1;
+        original.player.y = 18;
+        original.gold = 321;
+        original.score = 9876;
+        original.defeated_bosses = (1 << LOCATION_FOREST) | (1 << LOCATION_SWAMP) | (1 << LOCATION_MOUNTAINS);
+        original.inventory_count = 0;
+        original.equipped_main_hand = -1;
+        original.equipped_off_hand = -1;
+        original.equipped_armor = -1;
+        original.floor_item_count = 2;
+        original.floor_items[0] = (FloorItem){.active = 1, .x = x - 1, .y = 20, .underlying_tile = floor, .item = item_make_health_potion()};
+        original.floor_items[1] = (FloorItem){.active = 1, .x = x + 1, .y = 20, .underlying_tile = floor, .item = item_make_greatsword()};
+        original.floor_items[1].item.sharpened = 1;
+        original.floor_items[1].item.attack_bonus++;
+        original.map.tiles[20][x - 1] = TILE_ITEM;
+        original.map.tiles[20][x + 1] = TILE_ITEM;
+        map_mark_explored(&original.map, x - 1, 18);
+        map_mark_explored(&original.map, x, 19);
+        int ok = save_game(&original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, 89) && load_game(&loaded, LEGACY_SLOT);
+        ASSERT("old wide shortcut saves migrate successfully", ok);
+        if (!ok) {
+            remove_test_save(LEGACY_SLOT);
+            continue;
+        }
+        int narrow = 1;
+        for (int y = 0; y < height; y++) {
+            int walkable = 0;
+            for (int column = 0; column < MAP_W; column++) {
+                walkable += !!map_is_walkable(&loaded.map, column, y);
+            }
+            narrow &= walkable == 1 && map_is_walkable(&loaded.map, x, y);
+        }
+        ASSERT("saved shortcuts narrow to a connected one-tile path", narrow);
+        ASSERT("off-path saved player lands on the path at the same row", loaded.player.x == x && loaded.player.y == 18 && map_is_walkable(&loaded.map, loaded.player.x, loaded.player.y));
+        ASSERT("shortcut migration preserves exploration and progress", memcmp(loaded.map.explored, original.map.explored, sizeof(original.map.explored)) == 0 && loaded.gold == original.gold && loaded.score == original.score && loaded.defeated_bosses == original.defeated_bosses);
+        ASSERT("side-by-side dropped items remain accessible after narrowing", loaded.floor_items[0].active && loaded.floor_items[1].active && loaded.floor_items[0].x == x && loaded.floor_items[1].x == x && loaded.floor_items[0].y == 20 && loaded.floor_items[1].y == 20 && loaded.floor_items[0].underlying_tile == floor && loaded.floor_items[1].underlying_tile == floor);
+        loaded.player.x = x;
+        loaded.player.y = 20;
+        action_resolve_player(&loaded, (Action){ACTION_PICK_UP, 0, 0});
+        action_resolve_player(&loaded, (Action){ACTION_PICK_UP, 0, 0});
+        ASSERT("stacked migrated loot can be recovered with its metadata intact", loaded.inventory_count == 2 && loaded.inventory[1].sharpened && loaded.inventory[1].attack_bonus == original.floor_items[1].item.attack_bonus && loaded.map.tiles[20][x] == floor);
+        ASSERT("narrow shortcut saves round-trip without resetting exploration", save_game(&loaded, MIGRATED_SLOT) && load_game(&original, MIGRATED_SLOT) && original.player.x == x && original.player.y == 20 && original.inventory_count == 2 && map_is_explored(&original.map, x, 19));
+        remove_test_save(LEGACY_SLOT);
+        remove_test_save(MIGRATED_SLOT);
+    }
+}
+
 void test_save_load(void) {
+    test_narrow_shortcut_migration();
     test_harbor_road_save_load();
     test_spent_island_map_on_load();
     test_cain_save_load();
