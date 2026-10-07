@@ -95,6 +95,15 @@ weapon, and press Enter to pay; Esc returns to the room. Sharpening status
 persists through dropping, re-equipping, and saving. The Blacksmith continues
 to buy and sell equipment. See [weapon sharpening](docs/weapons.md#workshop-sharpening).
 
+Ridgeshire's **Town Hall** stands northeast of the crossroads. Inside, approach
+**Steward Hadrin** and press **T** to accept **Reclaim the Emberforge**. Recover
+the guarded forge mechanism on Ashen Hollow stage **2**, then defeat the
+Obsidian Guardians and repair the furnace on stage **4**. Press **A** while
+standing on or beside each objective. Return to Hadrin for **100 gold and
+800 score**, awarded once. Quest objects require no inventory slots, and
+accepting the quest preserves previously explored Ashen stages. See
+[Ashen Hollow](docs/ashen-hollow.md#reclaim-the-emberforge).
+
 The Frostfell Wastes begin at Rosemoor's north gate. Stillbury's west gate opens
 onto the five-level Sunscar Wastes: enter from the east, advance west, and
 backtrack east. Both the first level's east entrance and the final west exit

@@ -10,6 +10,14 @@ progress, and completion. Moving dismisses the current dialogue bubble.
 Rook waits in Stillbury's Inn, which uses the same doorway and conversation
 controls as the Tavern.
 
+Ridgeshire's Town Hall uses the same entry, conversation, and exit controls.
+Steward Hadrin assigns **Reclaim the Emberforge**: recover its guarded mechanism
+on Ashen Hollow stage 2, then defeat the forge defenders and repair its furnace
+on stage 4. Press `A` on or beside each objective. Return to Hadrin for a
+one-time reward of 100 gold and 800 score. This quest adds encounters to
+previously explored stages without resetting the expedition. See
+[Ashen Hollow](ashen-hollow.md#reclaim-the-emberforge).
+
 ## Elowen: The Broken Seals
 
 Elowen asks the player to repair shattered burial seals on dungeon floors 2,

@@ -44,6 +44,7 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->apothecary_texture = load_sprite_texture(sdl, "assets/images/apothecary.bmp");
     r->guild_texture = load_sprite_texture(sdl, "assets/images/adventurers-guild.bmp");
     r->workshop_texture = load_sprite_texture(sdl, "assets/images/workshop.bmp");
+    r->town_hall_texture = load_sprite_texture(sdl, "assets/images/town-hall.bmp");
     r->island_texture = load_sprite_texture(sdl, "assets/images/island-sprites.bmp");
     r->island_ship_texture = load_sprite_texture(sdl,
         "assets/images/island-ship.bmp");
@@ -105,6 +106,10 @@ void renderer_free(Renderer *r) {
     if (r->workshop_texture) {
         SDL_DestroyTexture(r->workshop_texture);
         r->workshop_texture = NULL;
+    }
+    if (r->town_hall_texture) {
+        SDL_DestroyTexture(r->town_hall_texture);
+        r->town_hall_texture = NULL;
     }
     if (r->healer_texture) {
         SDL_DestroyTexture(r->healer_texture);

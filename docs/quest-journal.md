@@ -9,6 +9,11 @@ Rosemoor's Adventurer's Guild. Recover the lamp from Sunscar Wastes stage 4,
 then return to Zara for 80 gold and 600 score. Pickup marks the quest ready to
 return; collecting the reward moves it to the Completed tab.
 
+Town Hall quest, **Reclaim the Emberforge**, tracks recovery of its mechanism
+on Ashen Hollow stage 2 and repair of its furnace on stage 4. Return to Steward
+Hadrin in Ridgeshire for 100 gold and 800 score; both objectives stay recorded
+after collecting the reward.
+
 The Active tab contains quests in progress and quests ready to turn in. The
 Completed tab retains quests whose rewards have been collected. Each entry
 shows its quest giver, description, target area and stages, objective progress,

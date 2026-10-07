@@ -806,6 +806,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (game_has_emberforge_interaction(g)) {
+        return 1;
+    }
     if (castle_has_interaction(g)) {
         return 1;
     }
@@ -1007,6 +1010,7 @@ void action_resolve_player(GameState *g, Action a) {
         g->location == LOCATION_FOREST_ROAD ||
         g->location == LOCATION_INN ||
         g->location == LOCATION_WORKSHOP ||
+        g->location == LOCATION_TOWN_HALL ||
         g->location == LOCATION_GUILD ||
         g->location == LOCATION_ISLAND) {
         g->player.poison_turns = 0;
@@ -1089,6 +1093,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (game_interact_emberforge(g)) {
+            return;
+        }
         if (castle_interact(g)) {
             return;
         }
@@ -1444,7 +1451,8 @@ void action_resolve_player(GameState *g, Action a) {
                 g->location == LOCATION_TOWN4 ||
                 g->location == LOCATION_CASTLE ||
                 g->location == LOCATION_TAVERN ||
-                g->location == LOCATION_INN || g->location == LOCATION_WORKSHOP || g->location == LOCATION_GUILD) {
+                g->location == LOCATION_INN || g->location == LOCATION_WORKSHOP ||
+                g->location == LOCATION_TOWN_HALL || g->location == LOCATION_GUILD) {
                 push_message(g, "Already in town!");
                 return;
             }
@@ -1909,6 +1917,14 @@ void action_resolve_player(GameState *g, Action a) {
             }
         }
         // Check for town exit
+        if (g->location == LOCATION_TOWN4 && g->map.tiles[ty][tx] == TILE_TOWN_HALL_DOOR) {
+            game_enter_town_hall(g);
+            return;
+        }
+        if (g->location == LOCATION_TOWN_HALL && g->map.tiles[ty][tx] == TILE_TAVERN_EXIT) {
+            game_leave_town_hall(g);
+            return;
+        }
         if (g->location == LOCATION_TOWN4 && g->map.tiles[ty][tx] == TILE_WORKSHOP_DOOR) {
             game_enter_workshop(g);
             return;

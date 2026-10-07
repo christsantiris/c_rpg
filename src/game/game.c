@@ -1387,6 +1387,9 @@ void game_init(GameState *g) {
     g->island_travel_unlocked = 0;
     g->dragon_treasure_quest_state = 0;
     g->sunscar_lamp_quest_state = 0;
+    g->emberforge_quest_state = 0;
+    g->emberforge_progress = 0;
+    g->emberforge_encounters = 0;
     for (int i = 0; i < TEMPLE_DEPTH; i++) {
         g->temple_cache[i].valid = 0;
     }
@@ -2170,6 +2173,97 @@ static void restore_desert_reward(GameState *g) {
     g->map.tiles[y][x] = TILE_ITEM;
 }
 
+static int emberforge_stage_bit(const GameState *g) {
+    if (g->location != LOCATION_ASHEN) {
+        return 0;
+    }
+    if (g->level == EMBERFORGE_MECHANISM_LEVEL) {
+        return EMBERFORGE_MECHANISM_RECOVERED;
+    }
+    return g->level == EMBERFORGE_FURNACE_LEVEL ? EMBERFORGE_RESTORED : 0;
+}
+
+static void set_emberforge_tile(GameState *g, int x, int y, TileType tile) {
+    if (g->map.tiles[y][x] == TILE_PORTAL) {
+        g->portal_origin_tile = tile;
+        return;
+    }
+    int covered = 0;
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && item->x == x && item->y == y) {
+            item->underlying_tile = tile;
+            covered = 1;
+        }
+    }
+    if (!covered) {
+        g->map.tiles[y][x] = tile;
+    }
+}
+
+static int spawn_emberforge_guard(GameState *g, EnemyType type, int cx, int cy) {
+    int slot = g->enemy_count;
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (!g->enemies[i].active && strcmp(g->enemies[i].name, "Emberforge Guardian") != 0) {
+            slot = i;
+            break;
+        }
+    }
+    if (slot >= MAX_ENEMIES) {
+        return 0;
+    }
+    for (int radius = 1; radius <= 4; radius++) {
+        for (int y = cy - radius; y <= cy + radius; y++) {
+            for (int x = cx - radius; x <= cx + radius; x++) {
+                if (!enemy_tile_open(g, x, y)) {
+                    continue;
+                }
+                if (slot == g->enemy_count) {
+                    g->enemy_count++;
+                }
+                Enemy *enemy = &g->enemies[slot];
+                spawn_enemy(g, enemy, type, x, y);
+                snprintf(enemy->name, sizeof(enemy->name), "Emberforge Guardian");
+                g->level_cleared = 0;
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+static void place_emberforge_encounter(GameState *g) {
+    int bit = emberforge_stage_bit(g);
+    if (!bit || !g->emberforge_quest_state || !g->map.room_count) {
+        return;
+    }
+    int x;
+    int y;
+    map_room_center(&g->map.rooms[g->map.room_count - 1], &x, &y);
+    if (bit == EMBERFORGE_MECHANISM_RECOVERED) {
+        set_emberforge_tile(g, x, y, g->emberforge_progress & bit ? TILE_ASHEN_RUIN : TILE_EMBERFORGE_MECHANISM);
+    } else {
+        set_emberforge_tile(g, x, y, g->emberforge_progress & bit ? TILE_EMBERFORGE_LIT : TILE_EMBERFORGE_COLD);
+    }
+    if ((g->emberforge_progress & bit) || (g->emberforge_encounters & bit)) {
+        return;
+    }
+    int guards = bit == EMBERFORGE_RESTORED ? 4 : 3;
+    int existing = 0;
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (strcmp(g->enemies[i].name, "Emberforge Guardian") == 0) {
+            existing++;
+        }
+    }
+    for (int i = existing; i < guards; i++) {
+        EnemyType type = i < 2 ? (bit == EMBERFORGE_RESTORED ? ENEMY_OBSIDIAN_GUARDIAN : ENEMY_ASH_HOUND) : ENEMY_CINDER_IMP;
+        if (!spawn_emberforge_guard(g, type, x, y)) {
+            return;
+        }
+    }
+    g->emberforge_encounters |= bit;
+}
+
 void game_refresh_quest_encounters(GameState *g) {
     castle_refresh_seal(g);
     game_reveal_forest_shortcut(g);
@@ -2184,6 +2278,7 @@ void game_refresh_quest_encounters(GameState *g) {
     int beacon_placed = place_mara_beacon(g);
     place_dain_map_bearer(g);
     place_dragon_treasure(g);
+    place_emberforge_encounter(g);
     if (seal_placed) {
         spawn_elowen_guardians(g);
     }
@@ -2283,6 +2378,7 @@ static void generate_active_level(GameState *g) {
     restore_frostfell_reward(g);
     restore_desert_reward(g);
     catacombs_restore_reward(g);
+    place_emberforge_encounter(g);
     game_update_level_progress(g);
 }
 
@@ -3011,6 +3107,130 @@ void game_leave_workshop(GameState *g) {
     g->floor_item_count = 0;
     g->dialogue_active = 0;
     push_message(g, "You step out of the workshop.");
+}
+
+void game_enter_town_hall(GameState *g) {
+    g->location = LOCATION_TOWN_HALL;
+    map_generate_town_hall(&g->map, &g->player.x, &g->player.y);
+    g->enemy_count = 0;
+    g->floor_item_count = 0;
+    g->dialogue_active = 0;
+    push_message(g, "Ridgeshire Town Hall. Approach Steward Hadrin and press T to talk.");
+}
+
+void game_leave_town_hall(GameState *g) {
+    g->location = LOCATION_TOWN4;
+    map_generate_town4(&g->map, &g->player.x, &g->player.y);
+    map_set_ridgeshire_mountain_road(&g->map, g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
+    g->player.x = TOWN4_HALL_DOOR_X;
+    g->player.y = TOWN4_HALL_DOOR_Y + 1;
+    place_town_portal(g);
+    g->enemy_count = 0;
+    g->floor_item_count = 0;
+    g->dialogue_active = 0;
+    push_message(g, "You step out of the Town Hall.");
+}
+
+void game_talk_to_steward(GameState *g) {
+    if (g->location != LOCATION_TOWN_HALL ||
+        abs(g->player.x - HALL_STEWARD_X) > 1 || abs(g->player.y - HALL_STEWARD_Y) > 1) {
+        return;
+    }
+    g->dialogue_active = 1;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Steward Hadrin");
+    g->dialogue_x = HALL_STEWARD_X;
+    g->dialogue_y = HALL_STEWARD_Y;
+    if (g->emberforge_quest_state == 0) {
+        g->emberforge_quest_state = 1;
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Reclaim the Emberforge! Recover its mechanism on Ashen Hollow stage 2, "
+            "then repair the furnace on stage 4. Defeat the guards and press A beside each. Return for 100 gold.");
+        push_message(g, "Assigned: Reclaim the Emberforge. See your quest journal.");
+    } else if (g->emberforge_quest_state == 1) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, g->emberforge_progress & EMBERFORGE_MECHANISM_RECOVERED ?
+            "You have the mechanism. Defeat the Obsidian Guardians at the Emberforge on Ashen Hollow stage 4, "
+            "then press A beside the furnace to repair it." :
+            "The stolen mechanism lies in Ashen Hollow stage 2's last clearing. Defeat its guards and press A beside it. "
+            "The abandoned furnace is on stage 4.");
+    } else if (g->emberforge_quest_state == 2) {
+        g->emberforge_quest_state = 3;
+        g->gold += EMBERFORGE_REWARD_GOLD;
+        g->score += EMBERFORGE_REWARD_SCORE;
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "The Emberforge burns again! Ridgeshire's miners can reclaim their livelihood. "
+            "Here are your 100 gold, with the town's thanks.");
+        push_message(g, "Completed: Reclaim the Emberforge. 100 gold and 800 score awarded.");
+    } else {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "The Emberforge is restored. Ridgeshire will remember your help.");
+    }
+}
+
+static int emberforge_target(const GameState *g, int *x, int *y) {
+    if (!emberforge_stage_bit(g)) {
+        return 0;
+    }
+    const int offsets[5][2] = {{0, 0}, {0, -1}, {1, 0}, {0, 1}, {-1, 0}};
+    for (int i = 0; i < 5; i++) {
+        int tx = g->player.x + offsets[i][0];
+        int ty = g->player.y + offsets[i][1];
+        if (tx < 0 || tx >= MAP_W || ty < 0 || ty >= MAP_H) {
+            continue;
+        }
+        TileType tile = quest_tile(g, tx, ty);
+        if (tile == TILE_PORTAL && g->portal_active && g->portal_location == g->location && g->portal_level == g->level) {
+            tile = g->portal_origin_tile;
+        }
+        if (tile == TILE_EMBERFORGE_MECHANISM || tile == TILE_EMBERFORGE_COLD || tile == TILE_EMBERFORGE_LIT) {
+            *x = tx;
+            *y = ty;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int game_has_emberforge_interaction(const GameState *g) {
+    int x;
+    int y;
+    return emberforge_target(g, &x, &y);
+}
+
+int game_interact_emberforge(GameState *g) {
+    int x;
+    int y;
+    if (!emberforge_target(g, &x, &y)) {
+        return 0;
+    }
+    int bit = emberforge_stage_bit(g);
+    if (g->emberforge_progress & bit) {
+        push_message(g, "The Emberforge already burns brightly.");
+        return 1;
+    }
+    if (g->emberforge_quest_state != 1) {
+        return 1;
+    }
+    if (bit == EMBERFORGE_RESTORED && !(g->emberforge_progress & EMBERFORGE_MECHANISM_RECOVERED)) {
+        push_message(g, "The furnace needs its stolen mechanism from Ashen Hollow stage 2.");
+        return 1;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *enemy = &g->enemies[i];
+        if (enemy->active && (strcmp(enemy->name, "Emberforge Guardian") == 0 ||
+            abs(enemy->x - x) + abs(enemy->y - y) <= 4)) {
+            push_message(g, "Defeat the Emberforge's defenders before working here.");
+            return 1;
+        }
+    }
+    g->emberforge_progress |= bit;
+    if (bit == EMBERFORGE_MECHANISM_RECOVERED) {
+        set_emberforge_tile(g, x, y, TILE_ASHEN_RUIN);
+        push_message(g, "Forge mechanism recovered. Repair the Emberforge on Ashen Hollow stage 4.");
+    } else {
+        set_emberforge_tile(g, x, y, TILE_EMBERFORGE_LIT);
+        g->emberforge_quest_state = 2;
+        push_message(g, "The Emberforge burns again! Return to Steward Hadrin in Ridgeshire Town Hall.");
+    }
+    return 1;
 }
 
 int game_workshop_near_smith(const GameState *g) {

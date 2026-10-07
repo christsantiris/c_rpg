@@ -189,6 +189,16 @@
 #define WORKSHOP_SMITH_X 18
 #define WORKSHOP_SMITH_Y 7
 #define WORKSHOP_SHARPEN_PRICE 50
+#define TOWN4_HALL_X 28
+#define TOWN4_HALL_Y 6
+#define TOWN4_HALL_W 7
+#define TOWN4_HALL_H 5
+#define TOWN4_HALL_DOOR_X (TOWN4_HALL_X + TOWN4_HALL_W / 2)
+#define TOWN4_HALL_DOOR_Y (TOWN4_HALL_Y + TOWN4_HALL_H - 1)
+#define HALL_STEWARD_X 20
+#define HALL_STEWARD_Y 8
+#define EMBERFORGE_MECHANISM_LEVEL 2
+#define EMBERFORGE_FURNACE_LEVEL 4
 
 typedef enum {
     TILE_FLOOR = 0,
@@ -390,7 +400,12 @@ typedef enum {
     TILE_CASTLE_BOOKCASE,
     TILE_CASTLE_THRONE,
     TILE_WORKSHOP_DOOR,
-    TILE_NPC_SHARPENER
+    TILE_NPC_SHARPENER,
+    TILE_TOWN_HALL_DOOR,
+    TILE_NPC_STEWARD,
+    TILE_EMBERFORGE_MECHANISM,
+    TILE_EMBERFORGE_COLD,
+    TILE_EMBERFORGE_LIT
 } TileType;
 
 typedef struct {
@@ -426,6 +441,7 @@ void map_generate_town4(Map *m, int *spawn_x, int *spawn_y);
 void map_set_town4_road(Map *m, int unlocked);
 void map_set_ridgeshire_mountain_road(Map *m, int unlocked);
 void map_place_town4_workshop(Map *m);
+void map_place_town4_hall(Map *m);
 void map_generate_town2(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_town3(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_crownroad(Map *m);
@@ -470,6 +486,7 @@ void map_generate_ashen(Map *m, int level);
 void map_generate_glassdeep(Map *m, int level);
 void map_generate_guild(Map *m, int *sx, int *sy);
 void map_generate_workshop(Map *m, int *sx, int *sy);
+void map_generate_town_hall(Map *m, int *sx, int *sy);
 int map_remove_coast_sluice(Map *m);
 TileType map_coast_trap_underlay(const Map *m, int x, int y);
 int map_is_coast_tidal_tile(TileType tile);
