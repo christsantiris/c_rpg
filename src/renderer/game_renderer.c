@@ -2838,12 +2838,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int name_y = viewport_to_screen_y(v, 6) * TILE_SIZE;
         renderer_draw_text(r, "ALDER", name_x, name_y,
             (SDL_Color){126, 190, 112, 255}, r->font_tiny);
-        TTF_SizeText(r->font_tiny, "MARA", &name_w, NULL);
-        name_x = viewport_to_screen_x(v, 31) * TILE_SIZE +
-            (TILE_SIZE - name_w) / 2;
-        name_y = viewport_to_screen_y(v, 17) * TILE_SIZE;
-        renderer_draw_text(r, "MARA", name_x, name_y,
-            (SDL_Color){75, 196, 201, 255}, r->font_tiny);
         TTF_SizeText(r->font_tiny, "BRENNA", &name_w, NULL);
         name_x = viewport_to_screen_x(v, BRENNA_X) * TILE_SIZE + (TILE_SIZE - name_w) / 2;
         name_y = viewport_to_screen_y(v, BRENNA_Y - 1) * TILE_SIZE;
@@ -2928,6 +2922,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (g->location == LOCATION_TOWN_HALL) {
         renderer_draw_text(r, "STEWARD HADRIN", viewport_to_screen_x(v, HALL_STEWARD_X) * TILE_SIZE - 45,
             viewport_to_screen_y(v, HALL_STEWARD_Y - 1) * TILE_SIZE, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
+        int width = 0;
+        TTF_SizeText(r->font_tiny, "MARA", &width, NULL);
+        renderer_draw_text(r, "MARA", viewport_to_screen_x(v, HALL_MARA_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, HALL_MARA_Y - 1) * TILE_SIZE, (SDL_Color){75, 196, 201, 255}, r->font_tiny);
     }
     if (g->location == LOCATION_ASHEN && g->emberforge_quest_state && g->map.room_count &&
         (g->level == EMBERFORGE_MECHANISM_LEVEL || g->level == EMBERFORGE_FURNACE_LEVEL)) {

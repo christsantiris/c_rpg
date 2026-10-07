@@ -92,7 +92,7 @@ static void test_seed_first(void) {
     game_enter_tavern(&game);
     ASSERT("Liora has a blocked NPC tile and a walkable approach in Oakhaven's Tavern", game.map.tiles[LIORA_Y][LIORA_X] == TILE_NPC_LIORA &&
         !map_is_walkable(&game.map, LIORA_X, LIORA_Y) && map_is_walkable(&game.map, LIORA_X, LIORA_Y + 1) &&
-        game.map.tiles[BRENNA_Y][BRENNA_X] == TILE_NPC_BRENNA && game.map.tiles[7][28] == TILE_NPC_ALDER && game.map.tiles[18][31] == TILE_NPC_MARA);
+        game.map.tiles[BRENNA_Y][BRENNA_X] == TILE_NPC_BRENNA && game.map.tiles[7][28] == TILE_NPC_ALDER && game.map.tiles[18][31] == TILE_TAVERN_FLOOR);
     game_talk_to_liora(&game);
     ASSERT("Liora cannot assign remotely", !game.moonveil_quest_state);
     game.player.x = LIORA_X;

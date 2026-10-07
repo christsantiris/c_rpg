@@ -62,11 +62,13 @@ Every stage has two guarded treasure chambers at opposite tide levels. Each
 cache grants `20 + 4 × stage` gold once. Stand on the cache and press `P` to
 collect it.
 
-Mara's **Relight the Drowned Beacons** quest places beacons on stages 2, 3, and
+Mara assigns **Relight the Drowned Beacons** in **Ridgeshire's Town Hall**.
+The quest places beacons on stages 2, 3, and
 4. Drain the blue channel to reach each beacon, then stand on it and press `A`.
 The beacons are guarded by groups led by a Giant Crab, Animated Statue, and Sea
 Serpent. Accepting the quest starts a fresh coast expedition; a previously
 defeated Drowned Queen remains dead.
+Return to Mara in the Town Hall for 80 gold and 600 score once all three are lit.
 
 Save version 84 compresses the former eight-stage coast into five stages.
 Existing beacon completion, boss victories, character progress, and active
