@@ -1155,7 +1155,7 @@ void action_resolve_player(GameState *g, Action a) {
             push_message(g, "Burial seal restored.");
             if ((g->elowen_seals_restored & 7) == 7) {
                 g->elowen_quest_state = 2;
-                push_message(g, "All seals restored. Return to Elowen.");
+                push_message(g, "All seals restored. Return to Elowen in Stillbury's Inn.");
             }
             return;
         }

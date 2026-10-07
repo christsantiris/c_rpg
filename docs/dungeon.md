@@ -53,10 +53,11 @@ reward are one-time.
 
 ## Elowen's Quest
 
-Speak with Elowen in OakHaven's Tavern to begin **The Broken Seals**. Her three
-burial seals appear on floors 2, 3, and 4, each with an undead guard group.
-Stand on a seal and press `A` to restore it. Return to Elowen after all three
-are restored for 40 gold and 300 score. Her quest does not require defeating
+Speak with Elowen in **Stillbury's Inn** to begin **The Broken Seals** in
+**Oakhaven's dungeon**. Her three burial seals appear on floors 2, 3, and 4,
+each with an undead guard group.
+Stand on a seal and press `A` to restore it. Return to Elowen in Stillbury
+after all three are restored for 40 gold and 300 score. Her quest does not require defeating
 the Lich or clearing every floor. Accepting it starts a fresh expedition so
 the objectives can appear even if the dungeon was visited earlier.
 

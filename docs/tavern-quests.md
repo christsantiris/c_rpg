@@ -7,8 +7,8 @@ the south doorway to return to the same town street.
 NPC speech appears in a wrapped dialogue bubble beside the speaker. The bottom
 message bar is reserved for concise game events such as quest assignment,
 progress, and completion. Moving dismisses the current dialogue bubble.
-Rook waits in Stillbury's Inn, which uses the same doorway and conversation
-controls as the Tavern.
+Elowen and Rook wait in Stillbury's Inn, which uses the same doorway and
+conversation controls as the Tavern.
 
 Ridgeshire's Town Hall uses the same entry, conversation, and exit controls.
 Steward Hadrin assigns **Reclaim the Emberforge**: recover its guarded mechanism
@@ -20,10 +20,11 @@ previously explored stages without resetting the expedition. See
 
 ## Elowen: The Broken Seals
 
-Elowen asks the player to repair shattered burial seals on dungeon floors 2,
+Speak to Elowen with `T` in **Stillbury's Inn**. She asks the player to repair
+shattered burial seals in **Oakhaven's dungeon**, on floors 2,
 3, and 4. Each seal is protected by an escalating undead group. Stand
-on a seal and press `A` to restore it, then return to Elowen after repairing
-all three to receive 40 gold and 300 score.
+on a seal and press `A` to restore it, then return to Elowen in Stillbury's
+Inn after repairing all three to receive 40 gold and 300 score.
 
 Quest acceptance, seal progress, completion, and rewards persist in saves.
 
@@ -114,8 +115,8 @@ Journal and gives the game one boss and one quest for every adventure area.
 
 ## Quest expeditions
 
-Accepting one of the original four Tavern regional quests closes any portal into that region and
-starts a fresh expedition from its entrance. Its maps and regular enemies are
+Accepting a dungeon, mountain, forest, or coast quest closes any portal into
+that region and starts a fresh expedition from its entrance. Its maps and regular enemies are
 generated again, while defeated bosses remain defeated. Each objective is
 protected by a themed enemy group. Objectives are spread into later stages so
 the quest remains a substantial expedition without becoming an empty walk

@@ -1,8 +1,13 @@
 # Quest Journal
 
-Press `Q` during play to open the Quest Journal. It tracks the four regional
-Tavern quests, Nahla's Ruined Temple quest, and Rook's one-time labyrinth
+Press `Q` during play to open the Quest Journal. It tracks the dungeon,
+mountain, forest, and coast quests, Nahla's Ruined Temple quest, and Rook's
+one-time labyrinth
 quest after they are accepted.
+
+Elowen assigns **The Broken Seals** in **Stillbury's Inn**. Its objectives remain
+on Oakhaven's dungeon floors 2, 3, and 4. Return to her in the Inn for 40 gold
+and 300 score.
 
 Zara's **The Lost Magic Lamp** quest also appears after accepting it inside
 Rosemoor's Adventurer's Guild. Recover the lamp from Sunscar Wastes stage 4,

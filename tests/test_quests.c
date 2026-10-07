@@ -86,6 +86,9 @@ void test_elowen_quest(void) {
     g.level_cache[3].valid = 1;
     g.portal_active = 1;
     g.portal_location = LOCATION_DUNGEON;
+    game_enter_inn(&g);
+    g.player.x = ELOWEN_INN_X;
+    g.player.y = ELOWEN_INN_Y + 1;
     game_talk_to_elowen(&g);
     ASSERT("Elowen offers The Broken Seals", g.elowen_quest_state == 1);
     ASSERT("Elowen speaks through dialogue state", g.dialogue_active &&
@@ -132,6 +135,9 @@ void test_elowen_quest(void) {
 
     game_return_to_town(&g);
     int gold_before = g.gold;
+    game_enter_inn(&g);
+    g.player.x = ELOWEN_INN_X;
+    g.player.y = ELOWEN_INN_Y + 1;
     game_talk_to_elowen(&g);
     ASSERT("Elowen completes the quest", g.elowen_quest_state == 3);
     ASSERT("Elowen awards 40 gold", g.gold == gold_before + 40);
@@ -180,10 +186,10 @@ void test_tavern_interior(void) {
 
     int elowen_x = 0;
     int elowen_y = 0;
-    ASSERT("Elowen has an in-world Tavern tile",
-        find_tile(&g.map, TILE_NPC_ELOWEN, &elowen_x, &elowen_y));
-    ASSERT("player cannot overlap Elowen",
-        !map_is_walkable(&g.map, elowen_x, elowen_y));
+    ASSERT("Elowen no longer occupies the Tavern",
+        !find_tile(&g.map, TILE_NPC_ELOWEN, &elowen_x, &elowen_y));
+    ASSERT("Elowen's old Tavern position is walkable",
+        map_is_walkable(&g.map, ELOWEN_INN_X, ELOWEN_INN_Y));
     int dain_x = 0;
     int dain_y = 0;
     ASSERT("Dain has an in-world Tavern tile",
@@ -202,12 +208,12 @@ void test_tavern_interior(void) {
         find_tile(&g.map, TILE_NPC_MARA, &mara_x, &mara_y));
     ASSERT("player cannot overlap Mara",
         !map_is_walkable(&g.map, mara_x, mara_y));
-    g.player.x = elowen_x;
-    g.player.y = elowen_y + 1;
-    game_talk_to_elowen(&g);
-    ASSERT("Elowen quest interaction works inside the Tavern",
-        g.elowen_quest_state == 1);
-    ASSERT("talking opens Elowen's dialogue bubble", g.dialogue_active);
+    g.player.x = dain_x;
+    g.player.y = dain_y + 1;
+    game_talk_to_dain(&g);
+    ASSERT("Dain quest interaction works inside the Tavern",
+        g.dain_quest_state == 1);
+    ASSERT("talking opens Dain's dialogue bubble", g.dialogue_active);
     game_move_player(&g, 1, 0);
     ASSERT("moving dismisses the dialogue bubble", !g.dialogue_active);
 
@@ -224,8 +230,8 @@ void test_tavern_interior(void) {
     ASSERT("Tavern returns player outside its front door",
         g.player.x == TOWN_TAVERN_DOOR_X && g.player.y == TOWN_TAVERN_DOOR_Y + 1 &&
         map_is_walkable(&g.map, g.player.x, g.player.y));
-    ASSERT("Tavern transition preserves Elowen quest state",
-        g.elowen_quest_state == 1);
+    ASSERT("Tavern transition preserves Dain quest state",
+        g.dain_quest_state == 1);
 }
 
 void test_dain_quest(void) {

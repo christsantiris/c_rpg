@@ -169,7 +169,8 @@ Regional bosses guarantee fixed thematic equipment rewards. Boss victories
 also expand the Blacksmith's inventory. Uncommon stock unlocks after one boss,
 the strongest class weapons unlock after two bosses, and capstone armor unlocks
 after three bosses. Enemy coin amounts, including boss purses, are halved and
-rounded down. The four regional Tavern quests award 40, 60, 70, and 80 gold.
+rounded down. The dungeon, mountain, forest, and coast quests award 40, 60, 70,
+and 80 gold.
 Rook's labyrinth retrieval quest awards 40 gold once. The Ruined
 Temple quest awards 150 gold after its treasure is returned to Nahla.
 Crypt caches grant `10 + 2 × floor` gold, mountain caches grant

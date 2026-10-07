@@ -2313,7 +2313,7 @@ static void map_generate_tavern_room(Map *m, int *spawn_x, int *spawn_y, int inn
     }
 
     // Bar and dining furniture create navigable pockets without blocking the
-    // route between Elowen and the exit.
+    // route between the quest givers and the exit.
     for (int x = 25; x <= 32; x++) {
         m->tiles[7][x] = TILE_TAVERN_TABLE;
     }
@@ -2333,7 +2333,6 @@ static void map_generate_tavern_room(Map *m, int *spawn_x, int *spawn_y, int inn
         m->tiles[18][10] = TILE_NPC_ROOK;
         m->tiles[7][28] = TILE_NPC_INNKEEPER;
     } else {
-        m->tiles[7][10] = TILE_NPC_ELOWEN;
         m->tiles[7][18] = TILE_NPC_DAIN;
         m->tiles[7][28] = TILE_NPC_ALDER;
         m->tiles[18][31] = TILE_NPC_MARA;
@@ -2358,6 +2357,11 @@ void map_place_tavern_brenna(Map *m) {
 
 void map_generate_inn(Map *m, int *spawn_x, int *spawn_y) {
     map_generate_tavern_room(m, spawn_x, spawn_y, 1);
+    map_place_inn_elowen(m);
+}
+
+void map_place_inn_elowen(Map *m) {
+    m->tiles[ELOWEN_INN_Y][ELOWEN_INN_X] = TILE_NPC_ELOWEN;
 }
 
 void map_generate_guild(Map *m, int *sx, int *sy) {

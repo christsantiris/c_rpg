@@ -132,8 +132,13 @@ Speaking with Cain explains the dangers beyond town and grants one Scroll of
 Return to Town when inventory space is available. Use the scroll from the
 inventory to learn the permanent spell.
 
-The Tavern houses Elowen, Dain, Alder, Mara, and Brenna. The original four regional
-quests add guarded objectives throughout the four regions. Accepting one begins a
+Oakhaven's Tavern houses Dain, Alder, Mara, and Brenna. **Elowen** now waits in
+**Stillbury's Inn**, alongside Rook and Bram. Press **T** beside her to accept
+**The Broken Seals**, restore the burial seals on **Oakhaven's dungeon floors
+2, 3, and 4**, and return to her in Stillbury for **40 gold and 300 score**.
+
+The original dungeon, mountain, forest, and coast quests add guarded objectives
+throughout their regions. Accepting one begins a
 fresh expedition through that region so completed maps never turn the quest
 into an empty walk. Regular enemies and maps regenerate, while defeated bosses
 remain defeated.
