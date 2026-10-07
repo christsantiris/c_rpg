@@ -23,8 +23,8 @@ traits do not apply from the off hand.
 
 ## Workshop Sharpening
 
-Enter the workshop in Ridgeshire and approach Garrick, or press your configured
-Action key (default `A`) while beside him. His service screen lists your inventory.
+Enter the workshop in Ridgeshire and press your configured Talk key (default
+`T`) while beside Garrick. His service screen lists your inventory.
 Use Up/Down or click to select a weapon, then Enter or the sharpening button to
 pay **50 gold** for **+1 weapon attack**. Press Esc to return to the workshop.
 

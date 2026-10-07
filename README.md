@@ -90,8 +90,8 @@ that permanently adds 1 base attack when consumed.
 
 Ridgeshire's workshop houses Garrick, who sharpens a selected sword, axe, or
 dagger for **50 gold**, permanently adding **+1 weapon attack**. Each individual
-weapon can be sharpened only once. Approach him inside the workshop, select a
-weapon, and press Enter to pay; Esc returns to the room. Sharpening status
+weapon can be sharpened only once. Press **T** beside him inside the workshop,
+select a weapon, and press Enter to pay; Esc returns to the room. Sharpening status
 persists through dropping, re-equipping, and saving. The Blacksmith continues
 to buy and sell equipment. See [weapon sharpening](docs/weapons.md#workshop-sharpening).
 
