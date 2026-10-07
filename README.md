@@ -464,6 +464,7 @@ make debug WEAPON=bow GOLD=500 SCROLLS=magic-arrow,fireball,heal
 | `WEAPON` | `--weapon NAME` | `rusty-sword`, `short-sword`, `long-sword`, `battle-axe`, `staff`, `bow`, `none` | Keep the selected class's normal starting weapon |
 | `GOLD` | `--gold N` | Any whole number from `0` through `999999` | Keep the normal starting gold |
 | `SCROLLS` | `--scrolls LIST` | Up to three comma-separated values chosen from `magic-arrow`, `fireball`, and `heal`, or `none` | Keep the selected class's normal starting scrolls |
+| Not applicable | `--unlock-shortcuts` | Flag with no value; automatically supplied by `tools/debug_shortcuts.sh` | Town shortcuts unlock through normal boss victories |
 
 Providing `WEAPON` or `SCROLLS` replaces the normal class starting items in
 that category. Use `WEAPON=none` or `SCROLLS=none` to begin without that item
@@ -474,6 +475,12 @@ modify a loaded save.
 Examples:
 
 ```bash
+# Start NPC testing with all town shortcuts open.
+./tools/debug_shortcuts.sh
+
+# Combine unlocked shortcuts with a custom starting loadout.
+./tools/debug_shortcuts.sh --gold 500 --weapon bow --scrolls magic-arrow,fireball,heal
+
 # Override every supported starting value.
 make debug WEAPON=bow GOLD=500 SCROLLS=magic-arrow,fireball,heal
 
