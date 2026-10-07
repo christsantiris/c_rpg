@@ -23,6 +23,8 @@
 #define FROSTFELL_REWARD_SCORE 800
 #define FROSTFELL_JOURNAL_RECOVERED 1
 #define FROSTFELL_SURVIVOR_RESCUED 2
+#define GLASSDEEP_REWARD_GOLD 120
+#define GLASSDEEP_REWARD_SCORE 1000
 
 #define DAIN_FRAGMENT_ARCHER 1
 #define DAIN_FRAGMENT_BOMBER 2
@@ -235,6 +237,9 @@ typedef struct {
     int frostfell_quest_state;
     int frostfell_quest_progress;
     int frostfell_quest_encounters;
+    int glassdeep_quest_state;
+    int glassdeep_quest_progress;
+    int glassdeep_quest_encounters;
     int temple_alignment;
     int temple_sentinels_awakened;
     int temple_treasure_state;
@@ -300,6 +305,11 @@ void game_enter_town_hall(GameState *g);
 void game_leave_town_hall(GameState *g);
 void game_talk_to_steward(GameState *g);
 void game_talk_to_brenna(GameState *g);
+void game_talk_to_orin(GameState *g);
+int game_has_glassdeep_interaction(const GameState *g);
+int game_interact_glassdeep(GameState *g);
+int game_glassdeep_prompt_active(const GameState *g);
+int game_handle_glassdeep_prompt_key(GameState *g, int key, int repeat);
 void game_talk_to_frost_survivor(GameState *g, int x, int y);
 int game_has_frostfell_interaction(const GameState *g);
 int game_interact_frostfell(GameState *g);

@@ -1380,6 +1380,9 @@ void game_init(GameState *g) {
     g->frostfell_quest_state = 0;
     g->frostfell_quest_progress = 0;
     g->frostfell_quest_encounters = 0;
+    g->glassdeep_quest_state = 0;
+    g->glassdeep_quest_progress = 0;
+    g->glassdeep_quest_encounters = 0;
     for (int i = 0; i < TEMPLE_DEPTH; i++) {
         g->temple_cache[i].valid = 0;
     }
@@ -2264,7 +2267,7 @@ static int frostfell_quest_stage_bit(const GameState *g) {
     return g->level == FROSTFELL_SURVIVOR_LEVEL ? FROSTFELL_SURVIVOR_RESCUED : 0;
 }
 
-static TileType frostfell_quest_tile(const GameState *g, int x, int y) {
+static TileType quest_object_tile(const GameState *g, int x, int y) {
     TileType tile = quest_tile(g, x, y);
     if (tile == TILE_PORTAL && g->portal_active && g->portal_location == g->location &&
         g->portal_level == g->level && g->portal_x == x && g->portal_y == y) {
@@ -2273,7 +2276,7 @@ static TileType frostfell_quest_tile(const GameState *g, int x, int y) {
     return tile;
 }
 
-static void set_frostfell_quest_tile(GameState *g, int x, int y, TileType tile) {
+static void set_quest_object_tile(GameState *g, int x, int y, TileType tile) {
     if (g->map.tiles[y][x] == TILE_PORTAL) {
         g->portal_origin_tile = tile;
         return;
@@ -2291,10 +2294,10 @@ static void set_frostfell_quest_tile(GameState *g, int x, int y, TileType tile) 
     }
 }
 
-static int spawn_frostfell_quest_guard(GameState *g, EnemyType type, int cx, int cy) {
+static int spawn_quest_guard(GameState *g, EnemyType type, int cx, int cy, const char *name) {
     int slot = g->enemy_count;
     for (int i = 0; i < g->enemy_count; i++) {
-        if (!g->enemies[i].active && strcmp(g->enemies[i].name, "Expedition Guardian") != 0) {
+        if (!g->enemies[i].active && strcmp(g->enemies[i].name, name) != 0) {
             slot = i;
             break;
         }
@@ -2305,14 +2308,16 @@ static int spawn_frostfell_quest_guard(GameState *g, EnemyType type, int cx, int
     for (int radius = 1; radius <= 4; radius++) {
         for (int y = cy - radius; y <= cy + radius; y++) {
             for (int x = cx - radius; x <= cx + radius; x++) {
-                if (!enemy_tile_open(g, x, y) || (g->player.x == x && g->player.y == y)) {
+                if (!enemy_tile_open(g, x, y) || (x == cx && y == cy) || (g->player.x == x && g->player.y == y) ||
+                    (g->portal_active && g->portal_location == g->location && g->portal_level == g->level &&
+                    g->portal_x == x && g->portal_y == y)) {
                     continue;
                 }
                 if (slot == g->enemy_count) {
                     g->enemy_count++;
                 }
                 spawn_enemy(g, &g->enemies[slot], type, x, y);
-                snprintf(g->enemies[slot].name, sizeof(g->enemies[slot].name), "Expedition Guardian");
+                snprintf(g->enemies[slot].name, sizeof(g->enemies[slot].name), "%s", name);
                 g->level_cleared = 0;
                 return 1;
             }
@@ -2331,7 +2336,7 @@ static void place_frostfell_quest_encounter(GameState *g) {
     int y = -1;
     for (int ty = 0; ty < MAP_H && x < 0; ty++) {
         for (int tx = 0; tx < MAP_W; tx++) {
-            if (frostfell_quest_tile(g, tx, ty) == objective) {
+            if (quest_object_tile(g, tx, ty) == objective) {
                 x = tx;
                 y = ty;
                 break;
@@ -2357,7 +2362,7 @@ static void place_frostfell_quest_encounter(GameState *g) {
     if (x < 0) {
         return;
     }
-    set_frostfell_quest_tile(g, x, y, objective);
+    set_quest_object_tile(g, x, y, objective);
     if (g->frostfell_quest_encounters & bit) {
         return;
     }
@@ -2370,11 +2375,124 @@ static void place_frostfell_quest_encounter(GameState *g) {
     for (int i = existing; i < 2; i++) {
         EnemyType type = bit == FROSTFELL_JOURNAL_RECOVERED ? ENEMY_ICE_WOLF :
             (i == 0 ? ENEMY_ICE_GIANT : ENEMY_FROST_ARCHER);
-        if (!spawn_frostfell_quest_guard(g, type, x, y)) {
+        if (!spawn_quest_guard(g, type, x, y, "Expedition Guardian")) {
             return;
         }
     }
     g->frostfell_quest_encounters |= bit;
+}
+
+static int glassdeep_quest_bit(const GameState *g) {
+    if (g->location != LOCATION_GLASSDEEP || g->level < 2 || g->level > 4) {
+        return 0;
+    }
+    return 1 << (g->level - 2);
+}
+
+static const char *glassdeep_resonator_name(const GameState *g) {
+    static const char *names[3] = {"Root Resonator", "Tide Resonator", "Crown Resonator"};
+    return names[g->level - 2];
+}
+
+static const char *glassdeep_inscription(const GameState *g) {
+    static const char *clues[3] = {
+        "The inscription reads: Let the roots answer with a low rumble.",
+        "Reflected carvings read: Between the deep and the sky, let the middle voice flow.",
+        "The inscription reads: Let the crown ring high above the stone."
+    };
+    return clues[g->level - 2];
+}
+
+static void place_glassdeep_quest_encounter(GameState *g) {
+    int bit = glassdeep_quest_bit(g);
+    if (!bit || !g->glassdeep_quest_state || !g->map.room_count) {
+        return;
+    }
+    int x = -1;
+    int y = -1;
+    int best = -100000;
+    const Room *room = &g->map.rooms[g->map.room_count - 1];
+    int cx;
+    int cy;
+    map_room_center(room, &cx, &cy);
+    for (int ty = 1; ty < MAP_H - 1; ty++) {
+        for (int tx = 1; tx < MAP_W - 1; tx++) {
+            TileType tile = quest_object_tile(g, tx, ty);
+            if (tile == TILE_GLASSDEEP_RESONATOR || tile == TILE_GLASSDEEP_RESONATOR_LIT) {
+                x = tx;
+                y = ty;
+                goto found;
+            }
+            if ((g->map.tiles[ty][tx] != TILE_GLASSDEEP_FLOOR && g->map.tiles[ty][tx] != TILE_GLASSDEEP_RUIN) ||
+                !enemy_tile_open(g, tx, ty) || (g->player.x == tx && g->player.y == ty) ||
+                abs(tx - g->map.stairs_up_x) + abs(ty - g->map.stairs_up_y) < 8 ||
+                (g->portal_active && g->portal_location == g->location && g->portal_level == g->level &&
+                g->portal_x == tx && g->portal_y == ty)) {
+                continue;
+            }
+            int score = -abs(tx - cx) - abs(ty - cy);
+            if (g->level == 3) {
+                const int offsets[4][2] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
+                int pool = 0;
+                int rock = 0;
+                for (int i = 0; i < 4; i++) {
+                    TileType neighbor = g->map.tiles[ty + offsets[i][1]][tx + offsets[i][0]];
+                    pool |= neighbor == TILE_GLASSDEEP_POOL;
+                    rock |= neighbor == TILE_GLASSDEEP_WALL;
+                }
+                score += (pool ? 2 : rock) * (MAP_W + MAP_H);
+            }
+            if (g->level == 4 && tile == TILE_GLASSDEEP_RUIN) {
+                score += MAP_W + MAP_H;
+            }
+            if (score > best) {
+                best = score;
+                x = tx;
+                y = ty;
+            }
+        }
+    }
+found:
+    if (x < 0) {
+        return;
+    }
+    int restored = g->glassdeep_quest_progress & bit;
+    if (g->level == 3) {
+        // Pools carved into solid rock keep the connected walking route intact.
+        for (int ty = y - 1; ty <= y + 1; ty++) {
+            for (int tx = x - 1; tx <= x + 1; tx++) {
+                if (tx >= 0 && tx < MAP_W && ty >= 0 && ty < MAP_H && g->map.tiles[ty][tx] == TILE_GLASSDEEP_WALL) {
+                    g->map.tiles[ty][tx] = TILE_GLASSDEEP_POOL;
+                }
+            }
+        }
+    } else {
+        for (int ty = y - 1; ty <= y + 1; ty++) {
+            for (int tx = x - 1; tx <= x + 1; tx++) {
+                if (g->map.tiles[ty][tx] == TILE_GLASSDEEP_FLOOR) {
+                    g->map.tiles[ty][tx] = TILE_GLASSDEEP_RUIN;
+                }
+            }
+        }
+    }
+    set_quest_object_tile(g, x, y, restored ? TILE_GLASSDEEP_RESONATOR_LIT : TILE_GLASSDEEP_RESONATOR);
+    if (restored || (g->glassdeep_quest_encounters & bit)) {
+        return;
+    }
+    int guards = g->level == 4 ? 1 : 2;
+    int existing = 0;
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (strcmp(g->enemies[i].name, "Resonator Guardian") == 0) {
+            existing++;
+        }
+    }
+    EnemyType type = g->level == 2 ? ENEMY_CRYSTAL_SPIDER : g->level == 3 ? ENEMY_BLIND_STALKER : ENEMY_SHARD_GOLEM;
+    for (int i = existing; i < guards; i++) {
+        if (!spawn_quest_guard(g, type, x, y, "Resonator Guardian")) {
+            return;
+        }
+    }
+    g->glassdeep_quest_encounters |= bit;
 }
 
 void game_refresh_quest_encounters(GameState *g) {
@@ -2392,6 +2510,7 @@ void game_refresh_quest_encounters(GameState *g) {
     place_dragon_treasure(g);
     place_emberforge_encounter(g);
     place_frostfell_quest_encounter(g);
+    place_glassdeep_quest_encounter(g);
     if (seal_placed) {
         spawn_elowen_guardians(g);
     }
@@ -2494,6 +2613,8 @@ static void generate_active_level(GameState *g) {
     // A regenerated stage needs new guards for any unfinished objective.
     g->frostfell_quest_encounters &= ~frostfell_quest_stage_bit(g);
     place_frostfell_quest_encounter(g);
+    g->glassdeep_quest_encounters &= ~glassdeep_quest_bit(g);
+    place_glassdeep_quest_encounter(g);
     game_update_level_progress(g);
 }
 
@@ -3348,6 +3469,146 @@ int game_interact_emberforge(GameState *g) {
     return 1;
 }
 
+void game_talk_to_orin(GameState *g) {
+    if (g->location != LOCATION_GUILD || abs(g->player.x - GUILD_ORIN_X) > 1 || abs(g->player.y - GUILD_ORIN_Y) > 1) {
+        return;
+    }
+    g->dialogue_active = 1;
+    g->dialogue_x = GUILD_ORIN_X;
+    g->dialogue_y = GUILD_ORIN_Y;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Surveyor Orin");
+    if (g->glassdeep_quest_state == 0) {
+        g->glassdeep_quest_state = 1;
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "I once tended Glassdeep's resonators below Stillbury's south gate. Restore Root, Tide, and Crown on stages 2, 3, and 4. Read their inscriptions for the tones, then return here for 120 gold.");
+        push_message(g, "Assigned: The Broken Resonance. Restore three resonators in Glassdeep Caverns.");
+    } else if (g->glassdeep_quest_state == 1) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Defeat each resonator's guards, then press A beside it. Read the inscription and choose its tone. Restore all three, then return to me here in Rosemoor's Guild.");
+    } else if (g->glassdeep_quest_state == 2) {
+        g->glassdeep_quest_state = 3;
+        g->gold += GLASSDEEP_REWARD_GOLD;
+        g->score += GLASSDEEP_REWARD_SCORE;
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "The caverns sing again! Your work has restored the old survey network. Take these 120 gold with my thanks.");
+        push_message(g, "Completed: The Broken Resonance. 120 gold and 1,000 score awarded.");
+    } else {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "The resonators still shine. Thanks to you, our survey work can begin again.");
+    }
+}
+
+static int glassdeep_resonator_target(const GameState *g, int *x, int *y) {
+    if (!glassdeep_quest_bit(g) || !g->glassdeep_quest_state) {
+        return 0;
+    }
+    const int offsets[5][2] = {{0, 0}, {0, -1}, {1, 0}, {0, 1}, {-1, 0}};
+    for (int i = 0; i < 5; i++) {
+        int tx = g->player.x + offsets[i][0];
+        int ty = g->player.y + offsets[i][1];
+        if (tx < 0 || tx >= MAP_W || ty < 0 || ty >= MAP_H) {
+            continue;
+        }
+        TileType tile = quest_object_tile(g, tx, ty);
+        if (tile == TILE_GLASSDEEP_RESONATOR || tile == TILE_GLASSDEEP_RESONATOR_LIT) {
+            *x = tx;
+            *y = ty;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int glassdeep_resonator_guarded(const GameState *g, int x, int y) {
+    if (!(g->glassdeep_quest_encounters & glassdeep_quest_bit(g))) {
+        return 1;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *enemy = &g->enemies[i];
+        if (enemy->active && (strcmp(enemy->name, "Resonator Guardian") == 0 ||
+            abs(enemy->x - x) + abs(enemy->y - y) <= 4)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int game_has_glassdeep_interaction(const GameState *g) {
+    int x;
+    int y;
+    return glassdeep_resonator_target(g, &x, &y);
+}
+
+int game_interact_glassdeep(GameState *g) {
+    int x;
+    int y;
+    if (!glassdeep_resonator_target(g, &x, &y)) {
+        return 0;
+    }
+    if (g->glassdeep_quest_progress & glassdeep_quest_bit(g)) {
+        push_message(g, "The restored resonator glows steadily.");
+        return 1;
+    }
+    if (glassdeep_resonator_guarded(g, x, y)) {
+        push_message(g, "Defeat the resonator's defenders before tuning it.");
+        return 1;
+    }
+    g->dialogue_active = 1;
+    g->dialogue_x = x;
+    g->dialogue_y = y;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "%s", glassdeep_resonator_name(g));
+    snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "%s Choose: 1 Low, 2 Middle, 3 High. Esc cancels.", glassdeep_inscription(g));
+    return 1;
+}
+
+int game_glassdeep_prompt_active(const GameState *g) {
+    int x;
+    int y;
+    return g->dialogue_active && g->glassdeep_quest_state == 1 &&
+        glassdeep_resonator_target(g, &x, &y) && x == g->dialogue_x && y == g->dialogue_y &&
+        !(g->glassdeep_quest_progress & glassdeep_quest_bit(g)) &&
+        strcmp(g->dialogue_speaker, glassdeep_resonator_name(g)) == 0;
+}
+
+int game_handle_glassdeep_prompt_key(GameState *g, int key, int repeat) {
+    if (!game_glassdeep_prompt_active(g)) {
+        return 0;
+    }
+    if (repeat) {
+        return 1;
+    }
+    if (key == SDL_SCANCODE_ESCAPE || key == SDL_SCANCODE_RETURN) {
+        g->dialogue_active = 0;
+        return 1;
+    }
+    int tone = key == SDL_SCANCODE_1 || key == SDL_SCANCODE_KP_1 ? 1 :
+        key == SDL_SCANCODE_2 || key == SDL_SCANCODE_KP_2 ? 2 :
+        key == SDL_SCANCODE_3 || key == SDL_SCANCODE_KP_3 ? 3 : 0;
+    if (!tone) {
+        return 1;
+    }
+    if (glassdeep_resonator_guarded(g, g->dialogue_x, g->dialogue_y)) {
+        g->dialogue_active = 0;
+        push_message(g, "Defeat the resonator's defenders before tuning it.");
+        return 1;
+    }
+    if (tone != g->level - 1) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "The crystal stays dark. %s Choose: 1 Low, 2 Middle, 3 High. Esc cancels.", glassdeep_inscription(g));
+        push_message(g, "That tone does not match the inscription. Try another resonance.");
+        return 1;
+    }
+    g->glassdeep_quest_progress |= glassdeep_quest_bit(g);
+    set_quest_object_tile(g, g->dialogue_x, g->dialogue_y, TILE_GLASSDEEP_RESONATOR_LIT);
+    snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "The crystal answers and shines. Its resonance has been restored.");
+    char message[MAX_MESSAGE_LEN];
+    snprintf(message, sizeof(message), "%s restored!", glassdeep_resonator_name(g));
+    push_message(g, message);
+    if (g->glassdeep_quest_progress == 7) {
+        g->glassdeep_quest_state = 2;
+        push_message(g, "All three resonators shine. Return to Surveyor Orin in Rosemoor's Adventurer's Guild.");
+    }
+    return 1;
+}
+
 void game_talk_to_brenna(GameState *g) {
     if (g->location != LOCATION_TAVERN || abs(g->player.x - BRENNA_X) > 1 || abs(g->player.y - BRENNA_Y) > 1) {
         return;
@@ -3397,7 +3658,7 @@ void game_talk_to_frost_survivor(GameState *g, int x, int y) {
     if (g->location != LOCATION_FROSTFELL || g->level != FROSTFELL_SURVIVOR_LEVEL ||
         g->frostfell_quest_state != 1 || x < 0 || x >= MAP_W || y < 0 || y >= MAP_H ||
         abs(g->player.x - x) > 1 || abs(g->player.y - y) > 1 ||
-        frostfell_quest_tile(g, x, y) != TILE_NPC_FROST_SURVIVOR) {
+        quest_object_tile(g, x, y) != TILE_NPC_FROST_SURVIVOR) {
         return;
     }
     g->dialogue_active = 1;
@@ -3412,7 +3673,7 @@ void game_talk_to_frost_survivor(GameState *g, int x, int y) {
     } else {
         g->frostfell_quest_progress |= FROSTFELL_SURVIVOR_RESCUED;
         g->frostfell_quest_state = 2;
-        set_frostfell_quest_tile(g, x, y, TILE_FROST_FLOOR);
+        set_quest_object_tile(g, x, y, TILE_FROST_FLOOR);
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "The journal shows the route! I can make my own way home now. Tell Brenna in Oakhaven's Tavern that the expedition's work is safe.");
         push_message(g, "Surveyor Fen heads home. Return to Quartermaster Brenna in Oakhaven's Tavern.");
@@ -3427,7 +3688,7 @@ static int frostfell_journal_target(const GameState *g, int *x, int *y) {
     for (int i = 0; i < 5; i++) {
         int tx = g->player.x + offsets[i][0];
         int ty = g->player.y + offsets[i][1];
-        if (tx >= 0 && tx < MAP_W && ty >= 0 && ty < MAP_H && frostfell_quest_tile(g, tx, ty) == TILE_FROST_JOURNAL) {
+        if (tx >= 0 && tx < MAP_W && ty >= 0 && ty < MAP_H && quest_object_tile(g, tx, ty) == TILE_FROST_JOURNAL) {
             *x = tx;
             *y = ty;
             return 1;
@@ -3453,7 +3714,7 @@ int game_interact_frostfell(GameState *g) {
         return 1;
     }
     g->frostfell_quest_progress |= FROSTFELL_JOURNAL_RECOVERED;
-    set_frostfell_quest_tile(g, x, y, TILE_FROST_FLOOR);
+    set_quest_object_tile(g, x, y, TILE_FROST_FLOOR);
     push_message(g, "Expedition journal recovered. Find Surveyor Fen on Frostfell stage 4 and speak to him.");
     return 1;
 }

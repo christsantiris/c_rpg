@@ -51,6 +51,7 @@ void test_desert(void);
 void test_moonveil(void);
 void test_ashen(void);
 void test_glassdeep(void);
+void test_glassdeep_quest(void);
 void test_catacombs(void);
 void test_castle(void);
 void test_workshop(void);
@@ -142,6 +143,7 @@ int main(void) {
     test_moonveil();
     test_ashen();
     test_glassdeep();
+    test_glassdeep_quest();
     test_catacombs();
     test_castle();
     test_workshop();

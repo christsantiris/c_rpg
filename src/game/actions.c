@@ -806,6 +806,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (game_has_glassdeep_interaction(g)) {
+        return 1;
+    }
     if (game_has_frostfell_interaction(g)) {
         return 1;
     }
@@ -1096,6 +1099,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (game_interact_glassdeep(g)) {
+            return;
+        }
         if (game_interact_frostfell(g)) {
             return;
         }

@@ -637,7 +637,7 @@ static void test_desert_lamp_quest(void) {
         g->location == LOCATION_GUILD && g->enemy_count == 0 &&
         g->map.tiles[GUILD_ZARA_Y][GUILD_ZARA_X] == TILE_NPC_GUILD_SEEKER &&
         !map_is_walkable(&g->map, GUILD_ZARA_X, GUILD_ZARA_Y) &&
-        g->map.tiles[18][10] == TILE_TAVERN_FLOOR);
+        g->map.tiles[GUILD_ORIN_Y][GUILD_ORIN_X] == TILE_NPC_ORIN);
     g->player.x = GUILD_ZARA_X;
     g->player.y = GUILD_ZARA_Y + 1;
     game_talk_to_guild_seeker(g);

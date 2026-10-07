@@ -262,7 +262,16 @@ Stalkers wait to ambush nearby explorers, and armored Shard Golems guard later
 stages. The Prism Sovereign marks a beam before firing along that fixed path:
 step aside during its warning turn. Defeating it opens stage 5's return to
 Stillbury and drops a Potion of Strength. Saves and Return to Town portals
-preserve the caverns' independent progress. See [Glassdeep Caverns](docs/glassdeep-caverns.md).
+preserve the caverns' independent progress.
+
+**Surveyor Orin**, inside **Rosemoor's Adventurer's Guild**, assigns **The Broken
+Resonance** with **T**. Restore the guarded Root, Tide, and Crown resonators on
+Glassdeep stages **2, 3, and 4**, in any order. Press **A** on or beside each
+resonator to read its inscription, then choose **1 Low**, **2 Middle**, or
+**3 High**; **Esc** cancels. Incorrect tones allow another attempt. Return to
+Orin for **120 gold and 1,000 score**, awarded once. The Prism Sovereign is
+optional for this quest, and acceptance preserves existing cavern progress.
+See [Glassdeep Caverns](docs/glassdeep-caverns.md#the-broken-resonance).
 
 ### Royal Catacombs
 

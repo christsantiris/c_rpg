@@ -30,6 +30,13 @@ speak to him with `T`. Return to Brenna for 100 gold and 800 score. The Polar
 Kraken is optional, and both completed objectives remain in the journal after
 collecting the reward.
 
+Orin's **The Broken Resonance** appears after talking to him in Rosemoor's
+Adventurer's Guild. It tracks the Root, Tide, and Crown resonators on Glassdeep
+stages 2, 3, and 4 independently. Defeat their guards and press `A` beside each
+crystal to choose its tone from the inscription. Return to Orin for 120 gold
+and 1,000 score. All three restored objectives remain recorded after turning
+in the quest; the Prism Sovereign is optional.
+
 The Active tab contains quests in progress and quests ready to turn in. The
 Completed tab retains quests whose rewards have been collected. Each entry
 shows its quest giver, description, target area and stages, objective progress,

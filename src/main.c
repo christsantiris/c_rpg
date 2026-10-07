@@ -615,6 +615,9 @@ int main(int argc, char **argv) {
                         break;
                     }
                     int sc = event.key.keysym.scancode;
+                    if (screen == SCREEN_PLAYING && game_handle_glassdeep_prompt_key(&game, sc, event.key.repeat)) {
+                        break;
+                    }
                     if (screen == SCREEN_PLAYING && game_handle_shortcut_prompt_key(&game, sc, event.key.repeat)) {
                         break;
                     }
@@ -982,6 +985,9 @@ int main(int argc, char **argv) {
                                         } else if (game.map.tiles[ty][tx] == TILE_NPC_GUILD_SEEKER) {
                                             game_talk_to_guild_seeker(&game);
                                             found = 1;
+                                        } else if (game.map.tiles[ty][tx] == TILE_NPC_ORIN) {
+                                            game_talk_to_orin(&game);
+                                            found = 1;
                                         } else if (game.map.tiles[ty][tx] == TILE_NPC_BRENNA) {
                                             game_talk_to_brenna(&game);
                                             found = 1;
@@ -1134,7 +1140,7 @@ int main(int argc, char **argv) {
                         break;
                     }
                     if (event.button.button != SDL_BUTTON_LEFT) break;
-                    if (screen == SCREEN_PLAYING && game_shortcut_prompt_active(&game)) {
+                    if (screen == SCREEN_PLAYING && (game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game))) {
                         break;
                     }
 
