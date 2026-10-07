@@ -46,6 +46,7 @@ void test_swamp_travel(void);
 void test_route_save_migrations(void);
 void test_regional_shortcuts(void);
 void test_frostfell(void);
+void test_frostfell_quest(void);
 void test_desert(void);
 void test_moonveil(void);
 void test_ashen(void);
@@ -133,6 +134,7 @@ int main(void) {
     test_regional_shortcuts();
     printf("\n");
     test_frostfell();
+    test_frostfell_quest();
     printf("\n");
     test_desert();
     test_moonveil();

@@ -19,6 +19,10 @@
 #define EMBERFORGE_REWARD_SCORE 800
 #define EMBERFORGE_MECHANISM_RECOVERED 1
 #define EMBERFORGE_RESTORED 2
+#define FROSTFELL_REWARD_GOLD 100
+#define FROSTFELL_REWARD_SCORE 800
+#define FROSTFELL_JOURNAL_RECOVERED 1
+#define FROSTFELL_SURVIVOR_RESCUED 2
 
 #define DAIN_FRAGMENT_ARCHER 1
 #define DAIN_FRAGMENT_BOMBER 2
@@ -228,6 +232,9 @@ typedef struct {
     int emberforge_quest_state;
     int emberforge_progress;
     int emberforge_encounters;
+    int frostfell_quest_state;
+    int frostfell_quest_progress;
+    int frostfell_quest_encounters;
     int temple_alignment;
     int temple_sentinels_awakened;
     int temple_treasure_state;
@@ -292,6 +299,10 @@ void game_leave_workshop(GameState *g);
 void game_enter_town_hall(GameState *g);
 void game_leave_town_hall(GameState *g);
 void game_talk_to_steward(GameState *g);
+void game_talk_to_brenna(GameState *g);
+void game_talk_to_frost_survivor(GameState *g, int x, int y);
+int game_has_frostfell_interaction(const GameState *g);
+int game_interact_frostfell(GameState *g);
 int game_has_emberforge_interaction(const GameState *g);
 int game_interact_emberforge(GameState *g);
 int game_workshop_near_smith(const GameState *g);

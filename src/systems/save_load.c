@@ -623,7 +623,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 90);
+    cJSON_AddNumberToObject(root, "save_version", 91);
     cJSON_AddNumberToObject(root, "forest_entry_town", g->forest_entry_town);
     cJSON_AddNumberToObject(root, "forest_portal_town", g->forest_portal_town);
     cJSON_AddNumberToObject(root, "swamp_entry_town", g->swamp_entry_town);
@@ -745,6 +745,9 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "emberforge_quest_state", g->emberforge_quest_state);
     cJSON_AddNumberToObject(root, "emberforge_progress", g->emberforge_progress);
     cJSON_AddNumberToObject(root, "emberforge_encounters", g->emberforge_encounters);
+    cJSON_AddNumberToObject(root, "frostfell_quest_state", g->frostfell_quest_state);
+    cJSON_AddNumberToObject(root, "frostfell_quest_progress", g->frostfell_quest_progress);
+    cJSON_AddNumberToObject(root, "frostfell_quest_encounters", g->frostfell_quest_encounters);
     cJSON_AddNumberToObject(root, "temple_alignment", g->temple_alignment);
     cJSON_AddNumberToObject(root, "temple_sentinels_awakened",
         g->temple_sentinels_awakened);
@@ -1196,6 +1199,14 @@ static void repair_floor_item_underlays(GameState *g) {
 }
 
 static void migrate_testing_save(cJSON *root, int version) {
+    if (version < 91) {
+        const char *fields[3] = {"frostfell_quest_state", "frostfell_quest_progress", "frostfell_quest_encounters"};
+        for (int i = 0; i < 3; i++) {
+            if (!cJSON_GetObjectItem(root, fields[i])) {
+                cJSON_AddNumberToObject(root, fields[i], 0);
+            }
+        }
+    }
     if (version < 88) {
         const char *fields[3] = {"emberforge_quest_state", "emberforge_progress", "emberforge_encounters"};
         for (int i = 0; i < 3; i++) {
@@ -1649,6 +1660,19 @@ int load_game(GameState *g, int slot) {
     g->emberforge_quest_state = emberforge_quest->valueint;
     g->emberforge_progress = emberforge_progress->valueint;
     g->emberforge_encounters = emberforge_encounters->valueint;
+    cJSON *frostfell_quest = cJSON_GetObjectItem(root, "frostfell_quest_state");
+    cJSON *frostfell_progress = cJSON_GetObjectItem(root, "frostfell_quest_progress");
+    cJSON *frostfell_encounters = cJSON_GetObjectItem(root, "frostfell_quest_encounters");
+    if (!cJSON_IsNumber(frostfell_quest) || !cJSON_IsNumber(frostfell_progress) || !cJSON_IsNumber(frostfell_encounters) ||
+        frostfell_quest->valueint < 0 || frostfell_quest->valueint > 3 ||
+        frostfell_progress->valueint < 0 || frostfell_progress->valueint > 3 ||
+        frostfell_encounters->valueint < 0 || frostfell_encounters->valueint > 3) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    g->frostfell_quest_state = frostfell_quest->valueint;
+    g->frostfell_quest_progress = frostfell_progress->valueint;
+    g->frostfell_quest_encounters = frostfell_encounters->valueint;
     g->forest_entry_town = forest_entry->valueint;
     g->forest_portal_town = forest_portal->valueint;
     g->swamp_entry_town = swamp_entry->valueint;
@@ -3260,6 +3284,20 @@ int load_game(GameState *g, int slot) {
     }
     if (save_version < 90) {
         migrate_narrow_shortcuts(g);
+    }
+    if (save_version < 91 && g->location == LOCATION_TAVERN) {
+        if (g->player.x == BRENNA_X && g->player.y == BRENNA_Y) {
+            g->player.y++;
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->active && item->x == BRENNA_X && item->y == BRENNA_Y) {
+                item->y++;
+                item->underlying_tile = TILE_TAVERN_FLOOR;
+                g->map.tiles[item->y][item->x] = TILE_ITEM;
+            }
+        }
+        map_place_tavern_brenna(&g->map);
     }
     if (g->castle_prompt) {
         castle_request(g, g->castle_prompt == 2);
