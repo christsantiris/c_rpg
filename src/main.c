@@ -159,6 +159,7 @@ typedef struct {
     int scrolls_set;
     int scrolls[3];
     int scroll_count;
+    int unlock_shortcuts;
 } DebugConfig;
 
 static int debug_weapon(const char *name, Item *weapon, int *none) {
@@ -237,6 +238,8 @@ static int debug_parse_args(DebugConfig *config, int argc, char **argv) {
             }
             config->gold_set = 1;
             config->gold = (int)gold;
+        } else if (strcmp(argv[i], "--unlock-shortcuts") == 0) {
+            config->unlock_shortcuts = 1;
         } else if (strcmp(argv[i], "--scrolls") == 0 && i + 1 < argc) {
             config->scrolls_set = 1;
             if (!debug_parse_scrolls(config, argv[++i])) {
@@ -291,6 +294,12 @@ static void debug_apply_loadout(GameState *game, const DebugConfig *config) {
     }
     if (config->gold_set) {
         game->gold = config->gold;
+    }
+    if (config->unlock_shortcuts) {
+        game->defeated_bosses |= (1 << LOCATION_FOREST) | (1 << LOCATION_MOUNTAINS) | (1 << LOCATION_SWAMP);
+        map_set_town2_road(&game->map, 1);
+        map_set_town4_road(&game->map, 1);
+        push_message(game, "Debug: all town shortcuts unlocked.");
     }
 }
 #endif
@@ -428,7 +437,7 @@ int main(int argc, char **argv) {
     DebugConfig debug_config;
     if (!debug_parse_args(&debug_config, argc, argv)) {
         fprintf(stderr, "Usage: %s [--weapon NAME] [--gold N] "
-            "[--scrolls LIST]\n", argv[0]);
+            "[--scrolls LIST] [--unlock-shortcuts]\n", argv[0]);
         return 2;
     }
 #else

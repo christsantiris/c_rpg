@@ -435,6 +435,23 @@ The executable is written to `build/conr`.
 
 ### Debug interface
 
+To test quest NPCs with every town shortcut already open, run:
+
+```bash
+./tools/debug_shortcuts.sh
+```
+
+Select **New Game**, enter a name, and choose a class. The forest shortcut
+between Oakhaven and Stillbury, swamp shortcut between Stillbury and Rosemoor,
+and High Pass between Oakhaven and Ridgeshire are open immediately. This uses
+the existing completion flags for the forest, mountain, and swamp bosses;
+quests stay unassigned and their NPCs still award their normal rewards.
+The unlocks persist if you save this debug character.
+
+The launcher builds a separate debug executable in `build/debug-shortcuts`
+and runs it from the project directory. It accepts the existing debug options,
+for example `./tools/debug_shortcuts.sh --gold 500 --weapon bow`.
+
 The `debug` target builds the game with debug support and accepts optional
 Make variables for configuring the next new character:
 
@@ -473,6 +490,9 @@ also be passed directly:
 ```bash
 ./build/conr --weapon bow --gold 500 --scrolls magic-arrow,heal
 ```
+
+Debug executables also accept `--unlock-shortcuts` for new characters.
+As with the loadout options, it does not modify a loaded save.
 
 Unknown options, unsupported item names, lists longer than three scrolls, and
 gold values outside the accepted range cause the program to print usage
