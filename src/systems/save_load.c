@@ -424,8 +424,10 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count) {
         e->y          = cJSON_GetObjectItem(obj, "y")->valueint;
         e->active     = cJSON_GetObjectItem(obj, "active")->valueint;
         e->type       = cJSON_GetObjectItem(obj, "type")->valueint;
-        const char *name = e->type == ENEMY_LIVING_FLOWER ? "Carnivorous Flower" :
-            cJSON_GetObjectItem(obj, "name")->valuestring;
+        const char *name = cJSON_GetObjectItem(obj, "name")->valuestring;
+        if (e->type == ENEMY_LIVING_FLOWER && strcmp(name, "Moonwater Guardian") != 0) {
+            name = "Carnivorous Flower";
+        }
         // Migrate active and cached Wardens without changing combat or quest state.
         if (e->type == ENEMY_MINOTAUR) {
             name = "Minotaur";
@@ -623,7 +625,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 94);
+    cJSON_AddNumberToObject(root, "save_version", 95);
     cJSON_AddNumberToObject(root, "forest_entry_town", g->forest_entry_town);
     cJSON_AddNumberToObject(root, "forest_portal_town", g->forest_portal_town);
     cJSON_AddNumberToObject(root, "swamp_entry_town", g->swamp_entry_town);
@@ -751,6 +753,9 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "glassdeep_quest_state", g->glassdeep_quest_state);
     cJSON_AddNumberToObject(root, "glassdeep_quest_progress", g->glassdeep_quest_progress);
     cJSON_AddNumberToObject(root, "glassdeep_quest_encounters", g->glassdeep_quest_encounters);
+    cJSON_AddNumberToObject(root, "moonveil_quest_state", g->moonveil_quest_state);
+    cJSON_AddNumberToObject(root, "moonveil_quest_progress", g->moonveil_quest_progress);
+    cJSON_AddNumberToObject(root, "moonveil_quest_encounters", g->moonveil_quest_encounters);
     cJSON_AddNumberToObject(root, "temple_alignment", g->temple_alignment);
     cJSON_AddNumberToObject(root, "temple_sentinels_awakened",
         g->temple_sentinels_awakened);
@@ -1202,6 +1207,14 @@ static void repair_floor_item_underlays(GameState *g) {
 }
 
 static void migrate_testing_save(cJSON *root, int version) {
+    if (version < 95) {
+        const char *fields[3] = {"moonveil_quest_state", "moonveil_quest_progress", "moonveil_quest_encounters"};
+        for (int i = 0; i < 3; i++) {
+            if (!cJSON_GetObjectItem(root, fields[i])) {
+                cJSON_AddNumberToObject(root, fields[i], 0);
+            }
+        }
+    }
     if (version < 94) {
         const char *fields[3] = {"glassdeep_quest_state", "glassdeep_quest_progress", "glassdeep_quest_encounters"};
         for (int i = 0; i < 3; i++) {
@@ -1700,6 +1713,22 @@ int load_game(GameState *g, int slot) {
     g->glassdeep_quest_state = glassdeep_quest->valueint;
     g->glassdeep_quest_progress = glassdeep_progress->valueint;
     g->glassdeep_quest_encounters = glassdeep_encounters->valueint;
+    cJSON *moonveil_quest = cJSON_GetObjectItem(root, "moonveil_quest_state");
+    cJSON *moonveil_progress = cJSON_GetObjectItem(root, "moonveil_quest_progress");
+    cJSON *moonveil_encounters = cJSON_GetObjectItem(root, "moonveil_quest_encounters");
+    if (!cJSON_IsNumber(moonveil_quest) || !cJSON_IsNumber(moonveil_progress) || !cJSON_IsNumber(moonveil_encounters) ||
+        moonveil_quest->valueint < 0 || moonveil_quest->valueint > 3 ||
+        moonveil_progress->valueint < 0 || moonveil_progress->valueint > 7 ||
+        moonveil_encounters->valueint < 0 || moonveil_encounters->valueint > 7 ||
+        (moonveil_quest->valueint == 0 && (moonveil_progress->valueint || moonveil_encounters->valueint)) ||
+        (moonveil_quest->valueint == 1 && moonveil_progress->valueint > 3) ||
+        (moonveil_quest->valueint >= 2 && moonveil_progress->valueint != 7)) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    g->moonveil_quest_state = moonveil_quest->valueint;
+    g->moonveil_quest_progress = moonveil_progress->valueint;
+    g->moonveil_quest_encounters = moonveil_encounters->valueint;
     g->forest_entry_town = forest_entry->valueint;
     g->forest_portal_town = forest_portal->valueint;
     g->swamp_entry_town = swamp_entry->valueint;
@@ -3339,6 +3368,20 @@ int load_game(GameState *g, int slot) {
             }
         }
         g->map.tiles[GUILD_ORIN_Y][GUILD_ORIN_X] = TILE_NPC_ORIN;
+    }
+    if (save_version < 95 && g->location == LOCATION_TAVERN) {
+        if (g->player.x == LIORA_X && g->player.y == LIORA_Y) {
+            g->player.y++;
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->active && item->x == LIORA_X && item->y == LIORA_Y) {
+                item->y++;
+                item->underlying_tile = TILE_TAVERN_FLOOR;
+                g->map.tiles[item->y][item->x] = TILE_ITEM;
+            }
+        }
+        map_place_tavern_liora(&g->map);
     }
     if (g->castle_prompt) {
         castle_request(g, g->castle_prompt == 2);

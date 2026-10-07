@@ -79,6 +79,89 @@ static void draw_frostfell_quest_tile(Renderer *r, int sx, int sy, int x, int y,
     }
 }
 
+static void draw_moonveil_quest_tile(Renderer *r, int sx, int sy, int x, int y, TileType tile) {
+    int px = sx * TILE_SIZE;
+    int py = sy * TILE_SIZE;
+    if (tile == TILE_NPC_LIORA) {
+        draw_tavern_floor(r, sx, sy);
+        SDL_SetRenderDrawColor(r->sdl, 80, 52, 42, 255);
+        SDL_Rect hair = {px + 7, py + 3, 12, 11};
+        SDL_RenderFillRect(r->sdl, &hair);
+        SDL_SetRenderDrawColor(r->sdl, 220, 175, 139, 255);
+        SDL_Rect face = {px + 9, py + 6, 7, 7};
+        SDL_RenderFillRect(r->sdl, &face);
+        SDL_SetRenderDrawColor(r->sdl, 67, 121, 78, 255);
+        SDL_Rect cloak = {px + 5, py + 13, 15, 10};
+        SDL_RenderFillRect(r->sdl, &cloak);
+        SDL_SetRenderDrawColor(r->sdl, 175, 208, 139, 255);
+        SDL_RenderDrawLine(r->sdl, px + 10, py + 14, px + 10, py + 21);
+        SDL_SetRenderDrawColor(r->sdl, 33, 34, 30, 255);
+        SDL_RenderDrawPoint(r->sdl, px + 10, py + 8);
+        SDL_RenderDrawPoint(r->sdl, px + 14, py + 8);
+        SDL_SetRenderDrawColor(r->sdl, 145, 102, 62, 255);
+        SDL_Rect satchel = {px + 16, py + 16, 6, 6};
+        SDL_RenderFillRect(r->sdl, &satchel);
+        SDL_SetRenderDrawColor(r->sdl, 191, 161, 229, 255);
+        SDL_RenderDrawPoint(r->sdl, px + 18, py + 15);
+        SDL_RenderDrawPoint(r->sdl, px + 19, py + 14);
+        return;
+    }
+    if (tile == TILE_MOONVEIL_PLANTING_CIRCLE || tile == TILE_MOONVEIL_MOONFLOWER) {
+        draw_moonveil_circle(r, sx, sy, x, y);
+    } else {
+        draw_moonveil_floor(r, sx, sy, x, y);
+    }
+    if (tile == TILE_MOONVEIL_SEED_POD) {
+        SDL_SetRenderDrawColor(r->sdl, 105, 79, 60, 255);
+        SDL_Rect pod = {px + 6, py + 8, 13, 12};
+        SDL_RenderFillRect(r->sdl, &pod);
+        SDL_SetRenderDrawColor(r->sdl, 61, 137, 82, 255);
+        SDL_RenderDrawLine(r->sdl, px + 10, py + 8, px + 7, py + 4);
+        SDL_RenderDrawLine(r->sdl, px + 11, py + 8, px + 16, py + 3);
+        SDL_SetRenderDrawColor(r->sdl, 218, 209, 249, 255);
+        SDL_Rect seed = {px + 10, py + 11, 5, 6};
+        SDL_RenderFillRect(r->sdl, &seed);
+        return;
+    }
+    if (tile == TILE_MOONVEIL_SPRING) {
+        SDL_SetRenderDrawColor(r->sdl, 133, 141, 166, 255);
+        SDL_Rect basin = {px + 4, py + 9, 17, 10};
+        SDL_RenderFillRect(r->sdl, &basin);
+        SDL_SetRenderDrawColor(r->sdl, 102, 178, 209, 255);
+        SDL_Rect water = {px + 6, py + 10, 13, 6};
+        SDL_RenderFillRect(r->sdl, &water);
+        SDL_SetRenderDrawColor(r->sdl, 214, 228, 251, 255);
+        int glint = (SDL_GetTicks() / 220) % 7;
+        SDL_RenderDrawLine(r->sdl, px + 8 + glint, py + 12, px + 10 + glint, py + 12);
+        return;
+    }
+    if (tile == TILE_MOONVEIL_PLANTING_CIRCLE) {
+        SDL_SetRenderDrawColor(r->sdl, 60, 85, 49, 255);
+        SDL_RenderDrawLine(r->sdl, px + 3, py + 8, px + 20, py + 18);
+        SDL_RenderDrawLine(r->sdl, px + 6, py + 20, px + 17, py + 5);
+        SDL_RenderDrawLine(r->sdl, px + 4, py + 15, px + 19, py + 10);
+        return;
+    }
+    SDL_SetRenderDrawColor(r->sdl, 102, 171, 117, 255);
+    SDL_RenderDrawLine(r->sdl, px + 12, py + 11, px + 12, py + 21);
+    SDL_RenderDrawLine(r->sdl, px + 12, py + 17, px + 7, py + 15);
+    SDL_RenderDrawLine(r->sdl, px + 12, py + 19, px + 17, py + 16);
+    int bloom = tile == TILE_MOONVEIL_MOONFLOWER;
+    int pulse = (SDL_GetTicks() / 180) % 3;
+    SDL_SetRenderDrawColor(r->sdl, 198 + pulse * 12, 184 + pulse * 15, 240, 255);
+    SDL_Rect petals[4] = {{px + 8, py + 4, 7, 4}, {px + 8, py + 11, 7, 4},
+        {px + 5, py + 7, 4, 5}, {px + 15, py + 7, 4, 5}};
+    if (bloom) {
+        SDL_RenderFillRects(r->sdl, petals, 4);
+    } else {
+        SDL_RenderDrawLine(r->sdl, px + 8, py + 8, px + 16, py + 8);
+        SDL_RenderDrawLine(r->sdl, px + 12, py + 5, px + 12, py + 11);
+    }
+    SDL_SetRenderDrawColor(r->sdl, 225, 248, 235, 255);
+    SDL_Rect heart = {px + 10, py + 7, bloom ? 5 : 3, bloom ? 5 : 3};
+    SDL_RenderFillRect(r->sdl, &heart);
+}
+
 static void draw_glassdeep_resonator(Renderer *r, int sx, int sy, int x, int y, TileType tile) {
     draw_glassdeep_ruin(r, sx, sy, x, y);
     int px = sx * TILE_SIZE;
@@ -1246,6 +1329,9 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         draw_glassdeep_ruin(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_GLASSDEEP_ENTRANCE || underlay == TILE_GLASSDEEP_EXIT) {
         draw_glassdeep_edge(r, screen_x, screen_y, map_x, map_y);
+    } else if (underlay == TILE_MOONVEIL_SEED_POD || underlay == TILE_MOONVEIL_SPRING ||
+        underlay == TILE_MOONVEIL_PLANTING_CIRCLE || underlay == TILE_MOONVEIL_MOONFLOWER || underlay == TILE_MOONVEIL_BLOSSOMS) {
+        draw_moonveil_quest_tile(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay == TILE_MOONVEIL_FLOOR) {
         draw_moonveil_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_MOONVEIL_CIRCLE) {
@@ -1885,6 +1971,14 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_GLASSDEEP_ENTRANCE:
                 case TILE_GLASSDEEP_EXIT:
                     draw_glassdeep_edge(r, sx, sy, x, y);
+                    break;
+                case TILE_NPC_LIORA:
+                case TILE_MOONVEIL_SEED_POD:
+                case TILE_MOONVEIL_SPRING:
+                case TILE_MOONVEIL_PLANTING_CIRCLE:
+                case TILE_MOONVEIL_MOONFLOWER:
+                case TILE_MOONVEIL_BLOSSOMS:
+                    draw_moonveil_quest_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
                     break;
                 case TILE_MOONVEIL_FLOOR:
                     draw_moonveil_floor(r, sx, sy, x, y);
@@ -2754,6 +2848,29 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         name_x = viewport_to_screen_x(v, BRENNA_X) * TILE_SIZE + (TILE_SIZE - name_w) / 2;
         name_y = viewport_to_screen_y(v, BRENNA_Y - 1) * TILE_SIZE;
         renderer_draw_text(r, "BRENNA", name_x, name_y, name, r->font_tiny);
+        TTF_SizeText(r->font_tiny, "LIORA", &name_w, NULL);
+        name_x = viewport_to_screen_x(v, LIORA_X) * TILE_SIZE + (TILE_SIZE - name_w) / 2;
+        name_y = viewport_to_screen_y(v, LIORA_Y - 1) * TILE_SIZE;
+        renderer_draw_text(r, "LIORA", name_x, name_y, area_label_color(LOCATION_MOONVEIL), r->font_tiny);
+    }
+
+    if (g->location == LOCATION_MOONVEIL) {
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                TileType tile = g->map.tiles[y][x];
+                const char *label = tile == TILE_MOONVEIL_SEED_POD ? "MOONSEED (A)" :
+                    tile == TILE_MOONVEIL_SPRING ? (g->moonveil_quest_progress & MOONVEIL_WATER_GATHERED ? "MOONLIT SPRING" : "MOONWATER (A)") :
+                    tile == TILE_MOONVEIL_PLANTING_CIRCLE ? "PLANTING CIRCLE (A)" :
+                    tile == TILE_MOONVEIL_MOONFLOWER ? "MOONFLOWER" : NULL;
+                if (!label || !viewport_is_visible(v, x, y) || !map_is_explored(&g->map, x, y)) {
+                    continue;
+                }
+                int width = 0;
+                TTF_SizeText(r->font_tiny, label, &width, NULL);
+                renderer_draw_text(r, label, viewport_to_screen_x(v, x) * TILE_SIZE + (TILE_SIZE - width) / 2,
+                    viewport_to_screen_y(v, y) * TILE_SIZE - 12, area_label_color(LOCATION_MOONVEIL), r->font_tiny);
+            }
+        }
     }
 
     if (g->location == LOCATION_GLASSDEEP) {

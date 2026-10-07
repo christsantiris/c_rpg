@@ -132,7 +132,7 @@ Speaking with Cain explains the dangers beyond town and grants one Scroll of
 Return to Town when inventory space is available. Use the scroll from the
 inventory to learn the permanent spell.
 
-Oakhaven's Tavern houses Alder, Mara, and Brenna. **Elowen** now waits in
+Oakhaven's Tavern houses Alder, Mara, Brenna, and Liora. **Elowen** now waits in
 **Stillbury's Inn**, alongside Rook and Bram. Press **T** beside her to accept
 **The Broken Seals**, restore the burial seals on **Oakhaven's dungeon floors
 2, 3, and 4**, and return to her in Stillbury for **40 gold and 300 score**.
@@ -241,7 +241,17 @@ moonlit pools, and ancient stone circles. Fey Tricksters and Giant Moths appear
 first, followed by Carnivorous Flowers and Thorn Guardians. The Thorn Regent guards
 stage 5's return to Rosemoor and drops a Potion of Strength. Backtracking, later
 visits, saves, and Return to Town portals retain the gardens' explored maps and
-enemy progress. See [Moonveil Gardens](docs/moonveil-gardens.md).
+enemy progress.
+
+**Botanist Liora** in **Oakhaven's Tavern** assigns **The Stolen Moonseed** with
+**T**. She directs you through the forest to Stillbury, across the swamp to
+Rosemoor, and through its west gate. Defeat the guards and use **A** on or
+beside the stage **2** seed pod and stage **3** moonwater spring, in either
+order. With both recovered, plant and water the ancient circle on stage **4**.
+A Moonflower blooms and the clearing remains restored on later visits.
+Return to Liora for **90 gold and 700 score**, awarded once. The Thorn Regent
+is optional, quest objects use no inventory space, and acceptance preserves
+existing garden progress. See [Moonveil Gardens](docs/moonveil-gardens.md#the-stolen-moonseed).
 
 ### Ashen Hollow
 

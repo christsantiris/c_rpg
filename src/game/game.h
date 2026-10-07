@@ -25,6 +25,11 @@
 #define FROSTFELL_SURVIVOR_RESCUED 2
 #define GLASSDEEP_REWARD_GOLD 120
 #define GLASSDEEP_REWARD_SCORE 1000
+#define MOONVEIL_REWARD_GOLD 90
+#define MOONVEIL_REWARD_SCORE 700
+#define MOONVEIL_SEED_RECOVERED 1
+#define MOONVEIL_WATER_GATHERED 2
+#define MOONVEIL_GARDEN_RESTORED 4
 
 #define DAIN_FRAGMENT_ARCHER 1
 #define DAIN_FRAGMENT_BOMBER 2
@@ -240,6 +245,9 @@ typedef struct {
     int glassdeep_quest_state;
     int glassdeep_quest_progress;
     int glassdeep_quest_encounters;
+    int moonveil_quest_state;
+    int moonveil_quest_progress;
+    int moonveil_quest_encounters;
     int temple_alignment;
     int temple_sentinels_awakened;
     int temple_treasure_state;
@@ -306,6 +314,9 @@ void game_leave_town_hall(GameState *g);
 void game_talk_to_steward(GameState *g);
 void game_talk_to_brenna(GameState *g);
 void game_talk_to_orin(GameState *g);
+void game_talk_to_liora(GameState *g);
+int game_has_moonveil_interaction(const GameState *g);
+int game_interact_moonveil(GameState *g);
 int game_has_glassdeep_interaction(const GameState *g);
 int game_interact_glassdeep(GameState *g);
 int game_glassdeep_prompt_active(const GameState *g);
