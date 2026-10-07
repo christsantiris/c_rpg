@@ -113,6 +113,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_NPC_ROWAN ||
                         tile == TILE_NPC_DRAGON_SEEKER ||
                         tile == TILE_NPC_GUILD_SEEKER || tile == TILE_DESERT_LAMP ||
+                        tile == TILE_EMBERFORGE_MECHANISM || tile == TILE_EMBERFORGE_COLD || tile == TILE_EMBERFORGE_LIT ||
                         tile == TILE_COAST_BEACON_UNLIT ||
                         tile == TILE_COAST_BEACON_LIT ||
                         tile == TILE_FOREST_WARDEN ||

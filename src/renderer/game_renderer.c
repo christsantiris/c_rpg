@@ -28,6 +28,48 @@ static SDL_Color area_label_color(Location area) {
     }
 }
 
+static void draw_emberforge_tile(Renderer *r, int sx, int sy, int x, int y, TileType tile) {
+    draw_ashen_ruin(r, sx, sy, x, y);
+    int px = sx * TILE_SIZE;
+    int py = sy * TILE_SIZE;
+    if (tile == TILE_EMBERFORGE_MECHANISM) {
+        SDL_SetRenderDrawColor(r->sdl, 44, 40, 38, 255);
+        SDL_Rect shadow = {px + 4, py + 5, 17, 16};
+        SDL_RenderFillRect(r->sdl, &shadow);
+        SDL_SetRenderDrawColor(r->sdl, 174, 183, 188, 255);
+        SDL_Rect gear = {px + 7, py + 7, 10, 10};
+        SDL_RenderDrawRect(r->sdl, &gear);
+        SDL_Rect teeth[4] = {{px + 10, py + 4, 4, 4}, {px + 16, py + 10, 4, 4},
+            {px + 10, py + 16, 4, 4}, {px + 4, py + 10, 4, 4}};
+        for (int i = 0; i < 4; i++) {
+            SDL_RenderFillRect(r->sdl, &teeth[i]);
+        }
+        SDL_SetRenderDrawColor(r->sdl, 237, 183, 78, 255);
+        SDL_Rect hub = {px + 10, py + 10, 4, 4};
+        SDL_RenderFillRect(r->sdl, &hub);
+        return;
+    }
+    SDL_SetRenderDrawColor(r->sdl, 32, 29, 33, 255);
+    SDL_Rect body = {px + 3, py + 8, 18, 14};
+    SDL_RenderFillRect(r->sdl, &body);
+    SDL_SetRenderDrawColor(r->sdl, 103, 97, 91, 255);
+    SDL_Rect chimney = {px + 14, py + 3, 6, 7};
+    SDL_RenderFillRect(r->sdl, &chimney);
+    SDL_RenderDrawRect(r->sdl, &body);
+    SDL_RenderDrawLine(r->sdl, px + 4, py + 12, px + 19, py + 12);
+    SDL_RenderDrawLine(r->sdl, px + 4, py + 20, px + 19, py + 20);
+    int lit = tile == TILE_EMBERFORGE_LIT;
+    SDL_SetRenderDrawColor(r->sdl, lit ? 234 : 55, lit ? 111 : 52, lit ? 28 : 53, 255);
+    SDL_Rect hearth = {px + 7, py + 14, 10, 6};
+    SDL_RenderFillRect(r->sdl, &hearth);
+    if (lit) {
+        int flicker = (SDL_GetTicks() / AMBIENT_FRAME_MS) % 2;
+        SDL_SetRenderDrawColor(r->sdl, 255, 217, 108, 255);
+        SDL_Rect fire = {px + 10, py + 15 - flicker, 4, 5 + flicker};
+        SDL_RenderFillRect(r->sdl, &fire);
+    }
+}
+
 static void draw_catacombs_tile(Renderer *r, const Map *m, int sx, int sy, int x, int y, TileType type) {
     int px = sx * TILE_SIZE;
     int py = sy * TILE_SIZE;
@@ -177,6 +219,7 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
         (!shortcut && g->location != LOCATION_TAVERN &&
         g->location != LOCATION_INN &&
         g->location != LOCATION_GUILD &&
+        g->location != LOCATION_TOWN_HALL &&
         g->location != LOCATION_TOWN &&
         g->location != LOCATION_TOWN2 &&
         g->location != LOCATION_TOWN3 &&
@@ -197,7 +240,8 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
         g->location == LOCATION_TOWN3 || g->location == LOCATION_TOWN4 ||
         g->location == LOCATION_CASTLE) {
         viewport_w = TOWN_W * TILE_SIZE;
-    } else if (g->location == LOCATION_TAVERN || g->location == LOCATION_INN || g->location == LOCATION_GUILD) {
+    } else if (g->location == LOCATION_TAVERN || g->location == LOCATION_INN ||
+        g->location == LOCATION_TOWN_HALL || g->location == LOCATION_GUILD) {
         viewport_w = TAVERN_W * TILE_SIZE;
     }
     int bubble_w = viewport_w < 460 ? viewport_w - 16 : 440;
@@ -1062,6 +1106,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
     TileType underlay = floor_item_underlay(g, map_x, map_y);
     if (underlay == TILE_CASTLE_SEAL) {
         castle_draw_tile(r, g, screen_x, screen_y, map_x, map_y, underlay);
+    } else if (underlay == TILE_EMBERFORGE_MECHANISM || underlay == TILE_EMBERFORGE_COLD || underlay == TILE_EMBERFORGE_LIT) {
+        draw_emberforge_tile(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay == TILE_TRAP_HIDDEN && g->location == LOCATION_FOREST) {
         draw_forest_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_TRAP_HIDDEN &&
@@ -1431,7 +1477,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->location == LOCATION_TOWN3 || g->location == LOCATION_TOWN4 ||
         g->location == LOCATION_CASTLE;
     int tavern_scaled = g->location == LOCATION_TAVERN ||
-        g->location == LOCATION_INN || g->location == LOCATION_WORKSHOP || g->location == LOCATION_GUILD;
+        g->location == LOCATION_INN || g->location == LOCATION_WORKSHOP ||
+        g->location == LOCATION_TOWN_HALL || g->location == LOCATION_GUILD;
     int island_scaled = g->location == LOCATION_ISLAND;
     int labyrinth_scaled = g->location == LOCATION_LABYRINTH;
     int road_scaled = g->location == LOCATION_FOREST_ROAD ||
@@ -1563,6 +1610,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                         x < TOWN4_WORKSHOP_X + TOWN4_WORKSHOP_W &&
                         y >= TOWN4_WORKSHOP_Y &&
                         y < TOWN4_WORKSHOP_Y + TOWN4_WORKSHOP_H) {
+                        draw_town_floor(r, sx, sy);
+                    } else if (g->location == LOCATION_TOWN4 &&
+                        x >= TOWN4_HALL_X && x < TOWN4_HALL_X + TOWN4_HALL_W &&
+                        y >= TOWN4_HALL_Y && y < TOWN4_HALL_Y + TOWN4_HALL_H) {
                         draw_town_floor(r, sx, sy);
                     } else if (game_is_king_road(g)) {
                         draw_crownroad_tile(r, sx, sy, x, y, 2);
@@ -1713,6 +1764,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_ASHEN_RUIN:
                     draw_ashen_ruin(r, sx, sy, x, y);
                     break;
+                case TILE_EMBERFORGE_MECHANISM:
+                case TILE_EMBERFORGE_COLD:
+                case TILE_EMBERFORGE_LIT:
+                    draw_emberforge_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
                 case TILE_ASHEN_ENTRANCE:
                 case TILE_ASHEN_EXIT:
                     draw_ashen_edge(r, sx, sy, x, y);
@@ -1859,6 +1915,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_TAVERN_DOOR:
                 case TILE_GUILD_DOOR:
                 case TILE_WORKSHOP_DOOR:
+                case TILE_TOWN_HALL_DOOR:
                     draw_town_path(r, sx, sy); break;
                 case TILE_TAVERN_FLOOR: draw_tavern_floor(r, sx, sy); break;
                 case TILE_TAVERN_WALL: draw_tavern_wall(r, sx, sy); break;
@@ -1872,6 +1929,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_NPC_MARA: draw_mara(r, sx, sy); break;
                 case TILE_NPC_ROOK: draw_rook(r, sx, sy); break;
                 case TILE_NPC_GUILD_SEEKER: draw_guild_seeker(r, sx, sy); break;
+                case TILE_NPC_STEWARD: {
+                    draw_alder(r, sx, sy);
+                    SDL_SetRenderDrawColor(r->sdl, 218, 175, 78, 255);
+                    SDL_Rect badge = {sx * TILE_SIZE + 13, sy * TILE_SIZE + 15, 3, 3};
+                    SDL_RenderFillRect(r->sdl, &badge);
+                    break;
+                }
                 case TILE_NPC_INNKEEPER: draw_innkeeper(r, sx, sy); break;
                 case TILE_NPC_CAIN: draw_cain(r, sx, sy); break;
                 case TILE_NPC_ROWAN: draw_rowan(r, sx, sy); break;
@@ -2151,6 +2215,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         draw_workshop(r,
             viewport_to_screen_x(v, TOWN4_WORKSHOP_X),
             viewport_to_screen_y(v, TOWN4_WORKSHOP_Y));
+        draw_town_hall(r, viewport_to_screen_x(v, TOWN4_HALL_X),
+            viewport_to_screen_y(v, TOWN4_HALL_Y));
         draw_town_gate(r, viewport_to_screen_x(v, RIDGESHIRE_ASHEN_GATE_X - 2),
             viewport_to_screen_y(v, 0), TOWN_EXIT_ASHEN);
         draw_town_gate(r, viewport_to_screen_x(v, 0),
@@ -2529,6 +2595,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 (TOWN4_WORKSHOP_W * TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, TOWN4_WORKSHOP_Y - 1) * TILE_SIZE,
             (SDL_Color){220, 180, 60, 255}, r->font_tiny);
+        TTF_SizeText(r->font_tiny, "TOWN HALL", &width, NULL);
+        renderer_draw_text(r, "TOWN HALL",
+            viewport_to_screen_x(v, TOWN4_HALL_X) * TILE_SIZE + (TOWN4_HALL_W * TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, TOWN4_HALL_Y - 1) * TILE_SIZE,
+            (SDL_Color){220, 180, 60, 255}, r->font_tiny);
     }
     if (g->location == LOCATION_CASTLE) {
         if (g->castle_minibosses & 1) {
@@ -2617,6 +2688,25 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_y(v, WORKSHOP_SMITH_Y - 1) * TILE_SIZE, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
         renderer_draw_text(r, "APPROACH GARRICK OR PRESS ACTION BESIDE HIM", viewport_to_screen_x(v, 8) * TILE_SIZE,
             viewport_to_screen_y(v, 19) * TILE_SIZE, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
+    }
+    if (g->location == LOCATION_TOWN_HALL) {
+        renderer_draw_text(r, "STEWARD HADRIN", viewport_to_screen_x(v, HALL_STEWARD_X) * TILE_SIZE - 45,
+            viewport_to_screen_y(v, HALL_STEWARD_Y - 1) * TILE_SIZE, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
+    }
+    if (g->location == LOCATION_ASHEN && g->emberforge_quest_state && g->map.room_count &&
+        (g->level == EMBERFORGE_MECHANISM_LEVEL || g->level == EMBERFORGE_FURNACE_LEVEL)) {
+        int x;
+        int y;
+        map_room_center(&g->map.rooms[g->map.room_count - 1], &x, &y);
+        if (viewport_is_visible(v, x, y) && map_is_explored(&g->map, x, y) &&
+            (g->level == EMBERFORGE_FURNACE_LEVEL || !(g->emberforge_progress & EMBERFORGE_MECHANISM_RECOVERED))) {
+            const char *label = g->level == EMBERFORGE_MECHANISM_LEVEL ? "MECHANISM (A)" :
+                (g->emberforge_progress & EMBERFORGE_RESTORED ? "EMBERFORGE" : "EMBERFORGE (A)");
+            int width = 0;
+            TTF_SizeText(r->font_tiny, label, &width, NULL);
+            renderer_draw_text(r, label, viewport_to_screen_x(v, x) * TILE_SIZE + (TILE_SIZE - width) / 2,
+                viewport_to_screen_y(v, y) * TILE_SIZE - 12, (SDL_Color){240, 190, 95, 255}, r->font_tiny);
+        }
     }
     if (g->location == LOCATION_GUILD) {
         renderer_draw_text(r, "ZARA",

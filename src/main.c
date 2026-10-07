@@ -983,6 +983,9 @@ int main(int argc, char **argv) {
                                         } else if (game.map.tiles[ty][tx] == TILE_NPC_GUILD_SEEKER) {
                                             game_talk_to_guild_seeker(&game);
                                             found = 1;
+                                        } else if (game.map.tiles[ty][tx] == TILE_NPC_STEWARD) {
+                                            game_talk_to_steward(&game);
+                                            found = 1;
                                         } else if (game.map.tiles[ty][tx] ==
                                             TILE_NPC_ROYAL_GUARD) {
                                             game_talk_to_royal_guard(&game,
@@ -1433,6 +1436,7 @@ int main(int argc, char **argv) {
             game.location == LOCATION_TOWN3 ||
             game.location == LOCATION_TOWN4 ||
             game.location == LOCATION_WORKSHOP ||
+            game.location == LOCATION_TOWN_HALL ||
             game.location == LOCATION_CASTLE ||
             game.location == LOCATION_INN ||
             game.location == LOCATION_GUILD ||
@@ -1442,7 +1446,8 @@ int main(int argc, char **argv) {
         int in_town3 = game.location == LOCATION_TOWN3 ||
             game.location == LOCATION_GUILD ||
             game.location == LOCATION_CASTLE;
-        int in_town4 = game.location == LOCATION_TOWN4 || game.location == LOCATION_WORKSHOP;
+        int in_town4 = game.location == LOCATION_TOWN4 || game.location == LOCATION_WORKSHOP ||
+            game.location == LOCATION_TOWN_HALL;
         music_update(screen, is_town, in_town2, in_town3, in_town4);
 
         if (!needs_redraw) {

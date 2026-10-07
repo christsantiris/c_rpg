@@ -263,7 +263,8 @@ int map_is_walkable(const Map *m, int x, int y) {
     if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
         return 0;
     }
-    return m->tiles[y][x] != TILE_NPC_SHARPENER &&
+    return m->tiles[y][x] != TILE_NPC_STEWARD &&
+        m->tiles[y][x] != TILE_NPC_SHARPENER &&
         m->tiles[y][x] != TILE_CASTLE_WALL &&
         m->tiles[y][x] != TILE_CASTLE_TABLE &&
         m->tiles[y][x] != TILE_CASTLE_BOOKCASE &&
@@ -1254,6 +1255,7 @@ void map_generate_town4(Map *m, int *spawn_x, int *spawn_y) {
     }
     map_place_town4_ashen_gate(m);
     map_place_town4_workshop(m);
+    map_place_town4_hall(m);
     map_place_town4_guards(m, -1, -1);
     m->tiles[TOWN4_ILYA_Y][TOWN4_ILYA_X] = TILE_NPC_DRAGON_SEEKER;
     *spawn_x = 20;
@@ -1263,6 +1265,20 @@ void map_generate_town4(Map *m, int *spawn_x, int *spawn_y) {
 void map_place_town4_ashen_gate(Map *m) {
     for (int x = RIDGESHIRE_ASHEN_GATE_X - 2; x <= RIDGESHIRE_ASHEN_GATE_X + 2; x++) {
         m->tiles[0][x] = TILE_TOWN_EXIT;
+    }
+}
+
+void map_place_town4_hall(Map *m) {
+    for (int y = TOWN4_HALL_Y; y <= TOWN4_HALL_DOOR_Y; y++) {
+        for (int x = TOWN4_HALL_X; x < TOWN4_HALL_X + TOWN4_HALL_W; x++) {
+            m->tiles[y][x] = TILE_WALL;
+        }
+    }
+    m->tiles[TOWN4_HALL_DOOR_Y][TOWN4_HALL_DOOR_X] = TILE_TOWN_HALL_DOOR;
+    for (int y = TOWN4_HALL_DOOR_Y + 1; y <= 12; y++) {
+        if (m->tiles[y][TOWN4_HALL_DOOR_X] != TILE_ITEM) {
+            m->tiles[y][TOWN4_HALL_DOOR_X] = TILE_TOWN_PATH;
+        }
     }
 }
 
@@ -2365,6 +2381,23 @@ void map_generate_workshop(Map *m, int *sx, int *sy) {
         m->tiles[11][x] = TILE_TAVERN_TABLE;
     }
     m->tiles[WORKSHOP_SMITH_Y][WORKSHOP_SMITH_X] = TILE_NPC_SHARPENER;
+}
+
+void map_generate_town_hall(Map *m, int *sx, int *sy) {
+    map_generate_workshop(m, sx, sy);
+    m->tiles[WORKSHOP_SMITH_Y][WORKSHOP_SMITH_X] = TILE_TAVERN_FLOOR;
+    for (int x = 25; x <= 32; x++) {
+        m->tiles[7][x] = TILE_TAVERN_FLOOR;
+    }
+    for (int x = 18; x <= 22; x++) {
+        m->tiles[7][x] = TILE_TAVERN_TABLE;
+    }
+    for (int y = 13; y <= 17; y += 2) {
+        for (int x = 27; x <= 30; x++) {
+            m->tiles[y][x] = TILE_TAVERN_TABLE;
+        }
+    }
+    m->tiles[HALL_STEWARD_Y][HALL_STEWARD_X] = TILE_NPC_STEWARD;
 }
 
 void map_generate_island(Map *m, int *spawn_x, int *spawn_y) {

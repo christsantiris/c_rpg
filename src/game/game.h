@@ -15,6 +15,10 @@
 #define MAX_DIALOGUE_LEN 192
 #define MAX_SPEAKER_LEN 24
 #define ROOK_QUEST_REWARD 40
+#define EMBERFORGE_REWARD_GOLD 100
+#define EMBERFORGE_REWARD_SCORE 800
+#define EMBERFORGE_MECHANISM_RECOVERED 1
+#define EMBERFORGE_RESTORED 2
 
 #define DAIN_FRAGMENT_ARCHER 1
 #define DAIN_FRAGMENT_BOMBER 2
@@ -124,7 +128,8 @@ typedef enum {
     LOCATION_GLASSDEEP,
     LOCATION_CATACOMBS,
     LOCATION_CASTLE_INTERIOR,
-    LOCATION_WORKSHOP
+    LOCATION_WORKSHOP,
+    LOCATION_TOWN_HALL
 } Location;
 
 typedef struct {
@@ -221,6 +226,9 @@ typedef struct {
     int island_travel_unlocked;
     int dragon_treasure_quest_state;
     int sunscar_lamp_quest_state;
+    int emberforge_quest_state;
+    int emberforge_progress;
+    int emberforge_encounters;
     int temple_alignment;
     int temple_sentinels_awakened;
     int temple_treasure_state;
@@ -283,6 +291,11 @@ void game_leave_inn(GameState *g);
 void game_enter_guild(GameState *g);
 void game_enter_workshop(GameState *g);
 void game_leave_workshop(GameState *g);
+void game_enter_town_hall(GameState *g);
+void game_leave_town_hall(GameState *g);
+void game_talk_to_steward(GameState *g);
+int game_has_emberforge_interaction(const GameState *g);
+int game_interact_emberforge(GameState *g);
 int game_workshop_near_smith(const GameState *g);
 int game_sharpen_weapon(GameState *g, int index);
 void game_leave_guild(GameState *g);

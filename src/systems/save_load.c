@@ -522,7 +522,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 87);
+    cJSON_AddNumberToObject(root, "save_version", 88);
     cJSON_AddNumberToObject(root, "forest_entry_town", g->forest_entry_town);
     cJSON_AddNumberToObject(root, "forest_portal_town", g->forest_portal_town);
     cJSON_AddNumberToObject(root, "swamp_entry_town", g->swamp_entry_town);
@@ -641,6 +641,9 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "dragon_treasure_quest_state",
         g->dragon_treasure_quest_state);
     cJSON_AddNumberToObject(root, "sunscar_lamp_quest_state", g->sunscar_lamp_quest_state);
+    cJSON_AddNumberToObject(root, "emberforge_quest_state", g->emberforge_quest_state);
+    cJSON_AddNumberToObject(root, "emberforge_progress", g->emberforge_progress);
+    cJSON_AddNumberToObject(root, "emberforge_encounters", g->emberforge_encounters);
     cJSON_AddNumberToObject(root, "temple_alignment", g->temple_alignment);
     cJSON_AddNumberToObject(root, "temple_sentinels_awakened",
         g->temple_sentinels_awakened);
@@ -1093,6 +1096,14 @@ static void repair_floor_item_underlays(GameState *g) {
 }
 
 static void migrate_testing_save(cJSON *root, int version) {
+    if (version < 88) {
+        const char *fields[3] = {"emberforge_quest_state", "emberforge_progress", "emberforge_encounters"};
+        for (int i = 0; i < 3; i++) {
+            if (!cJSON_GetObjectItem(root, fields[i])) {
+                cJSON_AddNumberToObject(root, fields[i], 0);
+            }
+        }
+    }
     if (version < 83) {
         if (!cJSON_GetObjectItem(root, "max_catacombs_level_reached")) {
             cJSON_AddNumberToObject(root, "max_catacombs_level_reached", 1);
@@ -1525,6 +1536,19 @@ int load_game(GameState *g, int slot) {
     g->kraken_bow_unclaimed = kraken_bow_unclaimed->valueint;
     g->sandstorm_staff_unclaimed = sandstorm_staff_unclaimed->valueint;
     g->sunscar_lamp_quest_state = lamp_quest->valueint;
+    cJSON *emberforge_quest = cJSON_GetObjectItem(root, "emberforge_quest_state");
+    cJSON *emberforge_progress = cJSON_GetObjectItem(root, "emberforge_progress");
+    cJSON *emberforge_encounters = cJSON_GetObjectItem(root, "emberforge_encounters");
+    if (!cJSON_IsNumber(emberforge_quest) || !cJSON_IsNumber(emberforge_progress) || !cJSON_IsNumber(emberforge_encounters) ||
+        emberforge_quest->valueint < 0 || emberforge_quest->valueint > 3 ||
+        emberforge_progress->valueint < 0 || emberforge_progress->valueint > 3 ||
+        emberforge_encounters->valueint < 0 || emberforge_encounters->valueint > 3) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    g->emberforge_quest_state = emberforge_quest->valueint;
+    g->emberforge_progress = emberforge_progress->valueint;
+    g->emberforge_encounters = emberforge_encounters->valueint;
     g->forest_entry_town = forest_entry->valueint;
     g->forest_portal_town = forest_portal->valueint;
     g->swamp_entry_town = swamp_entry->valueint;
@@ -3111,9 +3135,15 @@ int load_game(GameState *g, int slot) {
         map_place_town4_ashen_gate(&g->map);
         map_set_ridgeshire_mountain_road(&g->map, g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
         map_place_town4_workshop(&g->map);
+        map_place_town4_hall(&g->map);
         if (!map_is_walkable(&g->map, g->player.x, g->player.y)) {
-            g->player.x = TOWN4_WORKSHOP_DOOR_X;
-            g->player.y = TOWN4_WORKSHOP_DOOR_Y + 1;
+            if (in_lot(g->player.x, g->player.y, TOWN4_HALL_X, TOWN4_HALL_Y, TOWN4_HALL_W, TOWN4_HALL_H)) {
+                g->player.x = TOWN4_HALL_DOOR_X;
+                g->player.y = TOWN4_HALL_DOOR_Y + 1;
+            } else {
+                g->player.x = TOWN4_WORKSHOP_DOOR_X;
+                g->player.y = TOWN4_WORKSHOP_DOOR_Y + 1;
+            }
         }
         map_place_town4_guards(&g->map, g->player.x, g->player.y);
     }
@@ -3154,6 +3184,13 @@ int load_game(GameState *g, int slot) {
             !map_is_walkable(&g->map, item->x, item->y)) {
             item->x = TOWN_APOTHECARY_DOOR_X;
             item->y = TOWN_APOTHECARY_DOOR_Y + 1;
+            item->underlying_tile = TILE_TOWN_PATH;
+            g->map.tiles[item->y][item->x] = TILE_ITEM;
+        }
+        if (item->active && g->location == LOCATION_TOWN4 &&
+            in_lot(item->x, item->y, TOWN4_HALL_X, TOWN4_HALL_Y, TOWN4_HALL_W, TOWN4_HALL_H)) {
+            item->x = TOWN4_HALL_DOOR_X;
+            item->y = TOWN4_HALL_DOOR_Y + 1;
             item->underlying_tile = TILE_TOWN_PATH;
             g->map.tiles[item->y][item->x] = TILE_ITEM;
         }
