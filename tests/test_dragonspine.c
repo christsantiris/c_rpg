@@ -74,6 +74,7 @@ void test_dragonspine(void) {
             royal_guard_count += tile == TILE_NPC_ROYAL_GUARD;
             empty_crossroads &= tile == TILE_WALL || tile == TILE_TOWN_FLOOR ||
                 tile == TILE_TOWN_PATH || tile == TILE_TOWN_EXIT ||
+                tile == TILE_WORKSHOP_DOOR ||
                 tile == TILE_NPC_DRAGON_SEEKER || tile == TILE_NPC_ROYAL_GUARD;
         }
     }

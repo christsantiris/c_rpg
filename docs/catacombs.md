@@ -2,7 +2,8 @@
 
 The south road from the grounds of the Castle of No Return leads into the
 Royal Catacombs. They open as soon as the castle grounds are reachable from
-either Crown Road. The castle's interior remains sealed.
+either Crown Road. The north entrance leads separately to the six-floor
+[castle interior](castle-design.md).
 
 ## Exploration and travel
 

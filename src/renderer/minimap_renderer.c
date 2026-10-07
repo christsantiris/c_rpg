@@ -20,6 +20,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
         g->location != LOCATION_ASHEN &&
         g->location != LOCATION_GLASSDEEP &&
         g->location != LOCATION_CATACOMBS &&
+        g->location != LOCATION_CASTLE_INTERIOR &&
         g->location != LOCATION_TEMPLE &&
         g->location != LOCATION_LABYRINTH) {
         return;
@@ -43,6 +44,10 @@ void minimap_draw(Renderer *r, const GameState *g) {
     if (g->location == LOCATION_CATACOMBS) {
         map_w = CATACOMBS_W;
         map_h = CATACOMBS_H;
+    }
+    if (g->location == LOCATION_CASTLE_INTERIOR) {
+        map_w = CASTLE_W;
+        map_h = CASTLE_H;
     }
 
     // Dark semi-transparent background
@@ -73,7 +78,8 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         continue;
                     }
                     TileType tile = g->map.tiles[sy][sx];
-                    if (tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN ||
+                    if (tile == TILE_CASTLE_SEAL || tile == TILE_CASTLE_PASSAGE || tile == TILE_CASTLE_TRAP_OPEN ||
+                        tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN ||
                         tile == TILE_RETURN_EXIT || tile == TILE_DUNGEON_KEY ||
                         tile == TILE_CRYPT_KEY || tile == TILE_CRYPT_CACHE ||
                         tile == TILE_PORTAL || tile == TILE_FOREST_ENTRANCE ||
@@ -130,7 +136,9 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         has_stair = 1;
                     } else if (tile == TILE_OSSUARY_BRAZIER || tile == TILE_OSSUARY_COLD) {
                         has_stair = 1;
-                    } else if (tile != TILE_CATACOMBS_WALL &&
+                    } else if (tile != TILE_CASTLE_WALL && tile != TILE_CASTLE_PILLAR &&
+                        tile != TILE_CASTLE_BANNER && tile != TILE_CASTLE_GATE && tile != TILE_CASTLE_TABLE &&
+                        tile != TILE_CASTLE_BOOKCASE && tile != TILE_CASTLE_THRONE && tile != TILE_CATACOMBS_WALL &&
                         tile != TILE_CATACOMBS_SARCOPHAGUS && tile != TILE_WALL &&
                         tile != TILE_FOREST_WALL &&
                         tile != TILE_MOUNTAIN_WALL &&

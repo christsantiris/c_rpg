@@ -92,7 +92,15 @@ typedef enum {
     ENEMY_BONE_SENTINEL,
     ENEMY_GRAVE_ARCHER,
     ENEMY_BONE_CANTOR,
-    ENEMY_GRAVE_MARSHAL
+    ENEMY_GRAVE_MARSHAL,
+    ENEMY_OATHBOUND_SOLDIER,
+    ENEMY_IRON_WARDEN,
+    ENEMY_ROYAL_MARKSMAN,
+    ENEMY_COURT_HEXER,
+    ENEMY_BELL_HERALD,
+    ENEMY_CASTELLAN,
+    ENEMY_ROYAL_ARCANIST,
+    ENEMY_LORD_VEYR
 } EnemyType;
 
 typedef struct {
@@ -110,6 +118,8 @@ typedef struct {
     int attack_target_x, attack_target_y;
     int revived;
     int revive_timer;
+    int facing_dx, facing_dy;
+    int attack_phase;
 } Enemy;
 
 #endif

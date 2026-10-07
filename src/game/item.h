@@ -121,6 +121,7 @@ typedef struct {
     int spell_cost_reduction_percent;
     int block_chance;
     int block_reduction_percent;
+    int sharpened;
 } Item;
 
 typedef struct {
@@ -195,6 +196,7 @@ void item_apply_legacy_metadata(Item *item);
 void item_apply_legacy_armor_metadata(Item *item);
 void item_apply_legacy_shield_metadata(Item *item);
 int item_class_allowed(const Item *item, int player_class);
+int item_can_sharpen(const Item *item);
 const char *item_class_label(const Item *item);
 const char *item_hands_label(const Item *item);
 const char *item_rarity_label(const Item *item);

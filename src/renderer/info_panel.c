@@ -52,8 +52,12 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor)
         SDL_snprintf(loc, sizeof(loc), "STILLBURY");
     } else if (g->location == LOCATION_TOWN3) {
         SDL_snprintf(loc, sizeof(loc), "ROSEMOOR");
+    } else if (g->location == LOCATION_WORKSHOP) {
+        SDL_snprintf(loc, sizeof(loc), "WORKSHOP");
     } else if (g->location == LOCATION_TOWN4) {
         SDL_snprintf(loc, sizeof(loc), "RIDGESHIRE");
+    } else if (g->location == LOCATION_CASTLE_INTERIOR) {
+        SDL_snprintf(loc, sizeof(loc), "CASTLE %d", g->level);
     } else if (g->location == LOCATION_CASTLE) {
         SDL_snprintf(loc, sizeof(loc), "CASTLE OF NO RETURN");
     } else if (g->location == LOCATION_KING_ROAD_WEST) {

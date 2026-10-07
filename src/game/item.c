@@ -72,6 +72,12 @@ Item item_make_intelligence_potion(void) {
 //     return it;
 // }
 
+int item_can_sharpen(const Item *item) {
+    return item->type == ITEM_WEAPON && !item->sharpened &&
+        (item->weapon_family == WEAPON_FAMILY_SWORD || item->weapon_family == WEAPON_FAMILY_AXE ||
+        item->weapon_family == WEAPON_FAMILY_DAGGER);
+}
+
 Item item_make_rusty_sword(void) {
     Item it = {0};
     it.active = 1;

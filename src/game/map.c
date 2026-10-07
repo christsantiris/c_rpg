@@ -263,7 +263,15 @@ int map_is_walkable(const Map *m, int x, int y) {
     if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
         return 0;
     }
-    return m->tiles[y][x] != TILE_CATACOMBS_WALL &&
+    return m->tiles[y][x] != TILE_NPC_SHARPENER &&
+        m->tiles[y][x] != TILE_CASTLE_WALL &&
+        m->tiles[y][x] != TILE_CASTLE_TABLE &&
+        m->tiles[y][x] != TILE_CASTLE_BOOKCASE &&
+        m->tiles[y][x] != TILE_CASTLE_THRONE &&
+        m->tiles[y][x] != TILE_CASTLE_PILLAR &&
+        m->tiles[y][x] != TILE_CASTLE_BANNER &&
+        m->tiles[y][x] != TILE_CASTLE_GATE &&
+        m->tiles[y][x] != TILE_CATACOMBS_WALL &&
         m->tiles[y][x] != TILE_OSSUARY_BRAZIER &&
         m->tiles[y][x] != TILE_OSSUARY_COLD &&
         m->tiles[y][x] != TILE_CATACOMBS_SARCOPHAGUS &&
@@ -1215,7 +1223,7 @@ void map_place_town4_workshop(Map *m) {
     for (int x = TOWN4_WORKSHOP_X; x < TOWN4_WORKSHOP_X + TOWN4_WORKSHOP_W; x++) {
         m->tiles[TOWN4_WORKSHOP_DOOR_Y][x] = TILE_WALL;
     }
-    m->tiles[TOWN4_WORKSHOP_DOOR_Y][TOWN4_WORKSHOP_DOOR_X] = TILE_TOWN_PATH;
+    m->tiles[TOWN4_WORKSHOP_DOOR_Y][TOWN4_WORKSHOP_DOOR_X] = TILE_WORKSHOP_DOOR;
 }
 
 void map_generate_town4(Map *m, int *spawn_x, int *spawn_y) {
@@ -2341,6 +2349,22 @@ void map_generate_guild(Map *m, int *sx, int *sy) {
     map_generate_tavern_room(m, sx, sy, 1);
     m->tiles[18][10] = TILE_TAVERN_FLOOR;
     m->tiles[GUILD_ZARA_Y][GUILD_ZARA_X] = TILE_NPC_GUILD_SEEKER;
+}
+
+void map_generate_workshop(Map *m, int *sx, int *sy) {
+    map_generate_tavern_room(m, sx, sy, 0);
+    for (int y = TAVERN_Y + 1; y < TAVERN_Y + TAVERN_H - 1; y++) {
+        for (int x = TAVERN_X + 1; x < TAVERN_X + TAVERN_W - 1; x++) {
+            m->tiles[y][x] = TILE_TAVERN_FLOOR;
+        }
+    }
+    for (int x = 25; x <= 32; x++) {
+        m->tiles[7][x] = TILE_TAVERN_TABLE;
+    }
+    for (int x = 9; x <= 11; x++) {
+        m->tiles[11][x] = TILE_TAVERN_TABLE;
+    }
+    m->tiles[WORKSHOP_SMITH_Y][WORKSHOP_SMITH_X] = TILE_NPC_SHARPENER;
 }
 
 void map_generate_island(Map *m, int *spawn_x, int *spawn_y) {

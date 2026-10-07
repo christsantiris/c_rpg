@@ -24,6 +24,8 @@
 #include "renderer/quest_journal_renderer.h"
 #include "screens/shop.h"
 #include "renderer/shop_renderer.h"
+#include "screens/workshop.h"
+#include "renderer/workshop_renderer.h"
 #include "screens/harbor.h"
 #include "renderer/harbor_renderer.h"
 #include "renderer/game_renderer.h"
@@ -327,6 +329,16 @@ static int open_shop_on_move(const GameState *game, const Action *action, ShopSc
     return 1;
 }
 
+static int open_workshop_on_move(const GameState *g, const Action *a, WorkshopScreen *s, GameScreen *screen) {
+    if (a->type != ACTION_MOVE || !game_workshop_near_smith(g) ||
+        a->target_x != WORKSHOP_SMITH_X || a->target_y != WORKSHOP_SMITH_Y) {
+        return 0;
+    }
+    s->selected = 0;
+    *screen = SCREEN_WORKSHOP;
+    return 1;
+}
+
 static void handle_harbor_result(HarborResult result, GameState *game, GameScreen *screen, Renderer *renderer, Viewport *viewport) {
     if (result == HARBOR_CLOSED) {
         *screen = SCREEN_PLAYING;
@@ -481,7 +493,7 @@ int main(int argc, char **argv) {
     music_init();
     sfx_init();
 
-    GameState game = {0};
+    static GameState game;
     game_init(&game);
     // Presentation-only snapshot; persistent results remain in game.
     static GameState projectile_view;
@@ -510,6 +522,7 @@ int main(int argc, char **argv) {
     ClassSelectScreen class_select_screen;
     class_select_init(&class_select_screen);
     ShopScreen shop_screen;
+    WorkshopScreen workshop_screen = {0};
     HarborScreen harbor_screen;
     harbor_init(&harbor_screen);
     ControlsScreen controls_screen;
@@ -540,6 +553,7 @@ int main(int argc, char **argv) {
             game.location == LOCATION_ASHEN ||
             game.location == LOCATION_GLASSDEEP ||
             game.location == LOCATION_CATACOMBS ||
+            game.location == LOCATION_CASTLE_INTERIOR ||
             game.location == LOCATION_COAST ||
             game.location == LOCATION_SWAMP ||
             game.location == LOCATION_ISLAND ||
@@ -754,6 +768,16 @@ int main(int argc, char **argv) {
                         break;
                     }
 
+                    if (screen == SCREEN_WORKSHOP) {
+                        WorkshopResult result = workshop_handle_key(&workshop_screen, sc, game.inventory_count);
+                        if (result == WORKSHOP_CLOSED) {
+                            screen = SCREEN_PLAYING;
+                        } else if (result == WORKSHOP_SHARPEN) {
+                            game_sharpen_weapon(&game, workshop_screen.selected);
+                        }
+                        break;
+                    }
+
                     // Shop screen
                     if (screen == SCREEN_SHOP) {
                         ShopResult result = shop_handle_key(&shop_screen, sc);
@@ -853,6 +877,11 @@ int main(int argc, char **argv) {
                                 a = (Action){ACTION_MOVE, game.player.x, game.player.y + 1};
                                 break;
                             case CONTROL_MOVE_LEFT: {
+                                if (sc != SDL_SCANCODE_LEFT && game_workshop_near_smith(&game)) {
+                                    workshop_screen.selected = 0;
+                                    screen = SCREEN_WORKSHOP;
+                                    break;
+                                }
                                 // The left arrow only moves; the bound key
                                 // also interacts with the object underfoot.
                                 TileType tile = game.map.tiles[game.player.y]
@@ -993,6 +1022,9 @@ int main(int argc, char **argv) {
                         }
                         if (open_shop_on_move(&game, &a, &shop_screen,
                             &screen)) {
+                            a.type = ACTION_NONE;
+                        }
+                        if (open_workshop_on_move(&game, &a, &workshop_screen, &screen)) {
                             a.type = ACTION_NONE;
                         }
                         if (event.key.repeat && a.type == ACTION_MOVE &&
@@ -1206,6 +1238,14 @@ int main(int argc, char **argv) {
                             }
                         }
                     }
+                    if (screen == SCREEN_WORKSHOP) {
+                        WorkshopResult result = workshop_handle_click(&workshop_screen, event.button.x, event.button.y,
+                            renderer.screen_w, renderer.screen_h, game.inventory_count);
+                        if (result == WORKSHOP_SHARPEN) {
+                            game_sharpen_weapon(&game, workshop_screen.selected);
+                        }
+                        break;
+                    }
                     // Shop screen clicks
                     if (screen == SCREEN_SHOP && event.button.button == SDL_BUTTON_LEFT) {
                         int cx = renderer.screen_w / 2;
@@ -1381,12 +1421,18 @@ int main(int argc, char **argv) {
             }
         }
 
+        if (screen == SCREEN_PLAYING && game.game_won) {
+            screen = SCREEN_GAME_OVER;
+            needs_redraw = 1;
+        }
+
         // Update music based on screen and location
         int is_town = game.location == LOCATION_TOWN ||
             game.location == LOCATION_TAVERN ||
             game.location == LOCATION_TOWN2 ||
             game.location == LOCATION_TOWN3 ||
             game.location == LOCATION_TOWN4 ||
+            game.location == LOCATION_WORKSHOP ||
             game.location == LOCATION_CASTLE ||
             game.location == LOCATION_INN ||
             game.location == LOCATION_GUILD ||
@@ -1396,7 +1442,7 @@ int main(int argc, char **argv) {
         int in_town3 = game.location == LOCATION_TOWN3 ||
             game.location == LOCATION_GUILD ||
             game.location == LOCATION_CASTLE;
-        int in_town4 = game.location == LOCATION_TOWN4;
+        int in_town4 = game.location == LOCATION_TOWN4 || game.location == LOCATION_WORKSHOP;
         music_update(screen, is_town, in_town2, in_town3, in_town4);
 
         if (!needs_redraw) {
@@ -1422,6 +1468,8 @@ int main(int argc, char **argv) {
             quest_journal_draw(&renderer, &game, &quest_journal_screen);
         } else if (screen == SCREEN_SHOP) {
             shop_draw(&renderer, &game, &shop_screen);
+        } else if (screen == SCREEN_WORKSHOP) {
+            workshop_draw(&renderer, &game, &workshop_screen);
         } else if (screen == SCREEN_HARBOR) {
             harbor_draw(&renderer, &game, &harbor_screen);
         } else if (screen == SCREEN_PLAYING) {

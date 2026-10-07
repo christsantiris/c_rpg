@@ -14,7 +14,9 @@ Completed tab retains quests whose rewards have been collected. Each entry
 shows its quest giver, description, target area and stages, objective progress,
 status, gold reward, and score reward. The Bosses tab always lists every
 regional boss, including Glassdeep Caverns' Prism Sovereign, with their
-defeated or undefeated status.
+defeated or undefeated status. It also tracks the castle's Castellan, Royal
+Arcanist, and Lord Veyr. Miniboss victories remain recorded after retreat;
+Veyr's defeat ends the campaign with victory.
 
 The Labyrinth entry tracks the Minotaur guarding Rook's ivory rook. Previous
 Maze Warden victories count as completed Minotaur encounters.

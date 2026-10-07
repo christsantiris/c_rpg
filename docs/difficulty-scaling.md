@@ -191,3 +191,15 @@ burial spikes. New enemies use the same regional-order and player-level
 scaling as the original dungeon. Catacomb victory does not add an order tier
 to the four original regions. See [Royal Catacombs](catacombs.md) for base
 stats, the resurrection cap, and the Grave Marshal's brazier protection.
+
+## Castle finale
+
+The six-floor castle uses fixed endgame statistics rather than the regional-order
+multiplier. Regular guards start at 65–150 HP, 18–28 attack plus half the floor
+number (rounded down), and 4–11 defense. The Castellan has 420 HP, the Royal
+Arcanist 470 HP, and Lord Veyr 950 HP. Shields, guard formations, Hexer support,
+telegraphed attacks, wards, and trapdoor patrols supply the tactical difficulty.
+Castle enemies award fixed gold: 5 per regular enemy and 100 per miniboss.
+Veyr awards 10,000 score and campaign victory. Bring supplies before entry;
+retreat resets surviving defenders while preserving permanent progress.
+See [Castle interior](castle-design.md) for mechanics and play-test expectations.

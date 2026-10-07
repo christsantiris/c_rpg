@@ -68,7 +68,8 @@ void test_king_roads_and_castle(void) {
     g.player.x = 20;
     g.player.y = 11;
     action_resolve_player(&g, (Action){ACTION_MOVE, 20, 10});
-    ASSERT("castle interior remains sealed", g.location == LOCATION_CASTLE && g.player.y == 11);
+    ASSERT("castle entrance warns before committing", g.location == LOCATION_CASTLE && g.player.y == 11 && g.castle_prompt == 1);
+    game_handle_shortcut_prompt_key(&g, SDL_SCANCODE_ESCAPE, 0);
     g.player.x = TOWN_W - 2;
     g.player.y = CASTLE_ROAD_Y;
     action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 1, CASTLE_ROAD_Y});
@@ -129,7 +130,7 @@ void test_king_roads_and_castle(void) {
     }
     ASSERT("Ridgeshire workshop opens onto the main east-west road",
         workshop_walls &&
-        g.map.tiles[TOWN4_WORKSHOP_DOOR_Y][TOWN4_WORKSHOP_DOOR_X] == TILE_TOWN_PATH &&
+        g.map.tiles[TOWN4_WORKSHOP_DOOR_Y][TOWN4_WORKSHOP_DOOR_X] == TILE_WORKSHOP_DOOR &&
         g.map.tiles[TOWN4_WORKSHOP_DOOR_Y + 1][TOWN4_WORKSHOP_DOOR_X] == TILE_TOWN_PATH &&
         !map_is_walkable(&g.map, TOWN4_WORKSHOP_X, TOWN4_WORKSHOP_Y));
     const int slot = 99015;
@@ -141,7 +142,7 @@ void test_king_roads_and_castle(void) {
     ASSERT("Ridgeshire workshop remains on the road after loading a save",
         restored &&
         loaded.map.tiles[TOWN4_WORKSHOP_Y][TOWN4_WORKSHOP_X] == TILE_WALL &&
-        loaded.map.tiles[TOWN4_WORKSHOP_DOOR_Y][TOWN4_WORKSHOP_DOOR_X] == TILE_TOWN_PATH &&
+        loaded.map.tiles[TOWN4_WORKSHOP_DOOR_Y][TOWN4_WORKSHOP_DOOR_X] == TILE_WORKSHOP_DOOR &&
         loaded.map.tiles[TOWN4_WORKSHOP_DOOR_Y + 1][TOWN4_WORKSHOP_DOOR_X] == TILE_TOWN_PATH);
     if (restored) {
         g = loaded;
