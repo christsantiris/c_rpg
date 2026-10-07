@@ -9,6 +9,10 @@ Elowen assigns **The Broken Seals** in **Stillbury's Inn**. Its objectives remai
 on Oakhaven's dungeon floors 2, 3, and 4. Return to her in the Inn for 40 gold
 and 300 score.
 
+Dain assigns **Recover the Treasure Map** in **Rosemoor's Adventurer's Guild
+Hall**. Its Map Bearers remain on mountain stages 1, 2, and 3 on the Oakhaven
+side. Return to him in the Guild for 60 gold and 400 score.
+
 Zara's **The Lost Magic Lamp** quest also appears after accepting it inside
 Rosemoor's Adventurer's Guild. Recover the lamp from Sunscar Wastes stage 4,
 then return to Zara for 80 gold and 600 score. Pickup marks the quest ready to

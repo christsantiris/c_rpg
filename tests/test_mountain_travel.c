@@ -63,11 +63,13 @@ static void mountain_crossing(int reverse, int shortcut) {
     mountain.player.player_class = CLASS_WARRIOR;
     game_init(&mountain);
     srand(2701 + reverse + 2 * shortcut);
+    game_enter_guild(&mountain);
+    mountain.player.x = GUILD_DAIN_X;
+    mountain.player.y = GUILD_DAIN_Y + 1;
     game_talk_to_dain(&mountain);
     ASSERT("Dain directs the player to revised stages", strstr(mountain.dialogue_text, "1, 2, and 3") != NULL);
-    if (reverse) {
-        game_enter_town4(&mountain);
-    }
+    game_leave_guild(&mountain);
+    game_leave_mountains(&mountain, reverse ? LOCATION_TOWN4 : LOCATION_TOWN, 0);
     int gate_y = reverse ? TOWN_H - 1 : 0;
     int road_x = reverse ? RIDGESHIRE_MOUNTAIN_ROAD_X : TOWN4_ROAD_X;
     ASSERT("High Pass starts locked at either town", mountain.map.tiles[gate_y][road_x] == TILE_WALL);

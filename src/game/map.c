@@ -2333,7 +2333,6 @@ static void map_generate_tavern_room(Map *m, int *spawn_x, int *spawn_y, int inn
         m->tiles[18][10] = TILE_NPC_ROOK;
         m->tiles[7][28] = TILE_NPC_INNKEEPER;
     } else {
-        m->tiles[7][18] = TILE_NPC_DAIN;
         m->tiles[7][28] = TILE_NPC_ALDER;
         m->tiles[18][31] = TILE_NPC_MARA;
     }
@@ -2368,6 +2367,7 @@ void map_generate_guild(Map *m, int *sx, int *sy) {
     map_generate_tavern_room(m, sx, sy, 1);
     m->tiles[18][10] = TILE_TAVERN_FLOOR;
     m->tiles[GUILD_ZARA_Y][GUILD_ZARA_X] = TILE_NPC_GUILD_SEEKER;
+    m->tiles[GUILD_DAIN_Y][GUILD_DAIN_X] = TILE_NPC_DAIN;
 }
 
 void map_generate_workshop(Map *m, int *sx, int *sy) {

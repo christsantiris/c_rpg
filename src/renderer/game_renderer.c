@@ -2697,14 +2697,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (g->location == LOCATION_TAVERN) {
         SDL_Color name = {182, 214, 232, 255};
         int name_w = 0;
-        TTF_SizeText(r->font_tiny, "DAIN", &name_w, NULL);
-        int name_x = viewport_to_screen_x(v, 18) * TILE_SIZE + (TILE_SIZE - name_w) / 2;
-        int name_y = viewport_to_screen_y(v, 6) * TILE_SIZE;
-        renderer_draw_text(r, "DAIN", name_x, name_y,
-            (SDL_Color){218, 164, 84, 255}, r->font_tiny);
         TTF_SizeText(r->font_tiny, "ALDER", &name_w, NULL);
-        name_x = viewport_to_screen_x(v, 28) * TILE_SIZE +
-            (TILE_SIZE - name_w) / 2;
+        int name_x = viewport_to_screen_x(v, 28) * TILE_SIZE + (TILE_SIZE - name_w) / 2;
+        int name_y = viewport_to_screen_y(v, 6) * TILE_SIZE;
         renderer_draw_text(r, "ALDER", name_x, name_y,
             (SDL_Color){126, 190, 112, 255}, r->font_tiny);
         TTF_SizeText(r->font_tiny, "MARA", &name_w, NULL);
@@ -2774,6 +2769,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         }
     }
     if (g->location == LOCATION_GUILD) {
+        int width = 0;
+        TTF_SizeText(r->font_tiny, "DAIN", &width, NULL);
+        renderer_draw_text(r, "DAIN", viewport_to_screen_x(v, GUILD_DAIN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, GUILD_DAIN_Y - 1) * TILE_SIZE, (SDL_Color){218, 164, 84, 255}, r->font_tiny);
         renderer_draw_text(r, "ZARA",
             viewport_to_screen_x(v, GUILD_ZARA_X) * TILE_SIZE - 8,
             viewport_to_screen_y(v, GUILD_ZARA_Y - 1) * TILE_SIZE,

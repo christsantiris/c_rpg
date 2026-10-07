@@ -56,6 +56,8 @@
 #define TOWN_GUILD_DOOR_Y (TOWN_GUILD_Y + TOWN_GUILD_H - 1)
 #define GUILD_ZARA_X 28
 #define GUILD_ZARA_Y 7
+#define GUILD_DAIN_X 18
+#define GUILD_DAIN_Y 7
 #define DESERT_LAMP_LEVEL 4
 #define TAVERN_X 4
 #define TAVERN_Y 2

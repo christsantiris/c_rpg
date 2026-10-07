@@ -132,10 +132,15 @@ Speaking with Cain explains the dangers beyond town and grants one Scroll of
 Return to Town when inventory space is available. Use the scroll from the
 inventory to learn the permanent spell.
 
-Oakhaven's Tavern houses Dain, Alder, Mara, and Brenna. **Elowen** now waits in
+Oakhaven's Tavern houses Alder, Mara, and Brenna. **Elowen** now waits in
 **Stillbury's Inn**, alongside Rook and Bram. Press **T** beside her to accept
 **The Broken Seals**, restore the burial seals on **Oakhaven's dungeon floors
 2, 3, and 4**, and return to her in Stillbury for **40 gold and 300 score**.
+
+**Dain** waits in **Rosemoor's Adventurer's Guild Hall**, alongside Zara. Press
+**T** beside him to accept **Recover the Treasure Map**. Defeat the Map Bearers
+on **mountain stages 1, 2, and 3 on the Oakhaven side**, then return to Dain in
+Rosemoor for **60 gold and 400 score**, awarded once.
 
 The original dungeon, mountain, forest, and coast quests add guarded objectives
 throughout their regions. Accepting one begins a

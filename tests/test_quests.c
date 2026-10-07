@@ -1,5 +1,7 @@
 #include "test_utils.h"
 #include "../src/game/game.h"
+#include "../src/systems/save_load.h"
+#include "../src/screens/quest_journal.h"
 #include <string.h>
 
 static int find_tile(const Map *map, TileType type, int *found_x, int *found_y) {
@@ -192,10 +194,10 @@ void test_tavern_interior(void) {
         map_is_walkable(&g.map, ELOWEN_INN_X, ELOWEN_INN_Y));
     int dain_x = 0;
     int dain_y = 0;
-    ASSERT("Dain has an in-world Tavern tile",
-        find_tile(&g.map, TILE_NPC_DAIN, &dain_x, &dain_y));
-    ASSERT("player cannot overlap Dain",
-        !map_is_walkable(&g.map, dain_x, dain_y));
+    ASSERT("Dain no longer occupies the Tavern",
+        !find_tile(&g.map, TILE_NPC_DAIN, &dain_x, &dain_y));
+    ASSERT("Dain's old Tavern position is walkable",
+        map_is_walkable(&g.map, GUILD_DAIN_X, GUILD_DAIN_Y));
     int alder_x = 0;
     int alder_y = 0;
     ASSERT("Alder has an in-world Tavern tile",
@@ -208,12 +210,12 @@ void test_tavern_interior(void) {
         find_tile(&g.map, TILE_NPC_MARA, &mara_x, &mara_y));
     ASSERT("player cannot overlap Mara",
         !map_is_walkable(&g.map, mara_x, mara_y));
-    g.player.x = dain_x;
-    g.player.y = dain_y + 1;
-    game_talk_to_dain(&g);
-    ASSERT("Dain quest interaction works inside the Tavern",
-        g.dain_quest_state == 1);
-    ASSERT("talking opens Dain's dialogue bubble", g.dialogue_active);
+    g.player.x = alder_x;
+    g.player.y = alder_y + 1;
+    game_talk_to_alder(&g);
+    ASSERT("Alder quest interaction works inside the Tavern",
+        g.alder_quest_state == 1);
+    ASSERT("talking opens Alder's dialogue bubble", g.dialogue_active);
     game_move_player(&g, 1, 0);
     ASSERT("moving dismisses the dialogue bubble", !g.dialogue_active);
 
@@ -230,8 +232,8 @@ void test_tavern_interior(void) {
     ASSERT("Tavern returns player outside its front door",
         g.player.x == TOWN_TAVERN_DOOR_X && g.player.y == TOWN_TAVERN_DOOR_Y + 1 &&
         map_is_walkable(&g.map, g.player.x, g.player.y));
-    ASSERT("Tavern transition preserves Dain quest state",
-        g.dain_quest_state == 1);
+    ASSERT("Tavern transition preserves Alder quest state",
+        g.alder_quest_state == 1);
 }
 
 void test_dain_quest(void) {
@@ -243,6 +245,9 @@ void test_dain_quest(void) {
     g.mountain_cache[3].valid = 1;
     g.portal_active = 1;
     g.portal_location = LOCATION_MOUNTAINS;
+    game_enter_guild(&g);
+    g.player.x = GUILD_DAIN_X;
+    g.player.y = GUILD_DAIN_Y + 1;
     game_talk_to_dain(&g);
     ASSERT("Dain assigns Recover the Treasure Map", g.dain_quest_state == 1);
     ASSERT("new Dain quest begins with no map fragments",
@@ -317,9 +322,82 @@ void test_dain_quest(void) {
         g.dain_quest_state == 2 && g.dain_map_fragments == 7);
 
     int gold_before = g.gold;
+    game_enter_guild(&g);
+    g.player.x = GUILD_DAIN_X;
+    g.player.y = GUILD_DAIN_Y + 1;
     game_talk_to_dain(&g);
     ASSERT("Dain completes the mountain quest", g.dain_quest_state == 3);
     ASSERT("Dain awards 60 gold", g.gold == gold_before + 60);
+}
+
+void test_dain_guild(void) {
+    printf("Dain in Rosemoor's Adventurer's Guild tests:\n");
+    static GameState g;
+    static GameState loaded;
+    memset(&g, 0, sizeof(g));
+    g.player.player_class = CLASS_WARRIOR;
+    game_init(&g);
+    game_enter_tavern(&g);
+    g.player.x = GUILD_DAIN_X;
+    g.player.y = GUILD_DAIN_Y + 1;
+    game_talk_to_dain(&g);
+    ASSERT("Dain cannot assign the quest at his former Tavern position", !g.dain_quest_state && !g.dialogue_active);
+    game_leave_tavern(&g);
+    game_enter_town3(&g);
+    g.player.x = TOWN_GUILD_DOOR_X;
+    g.player.y = TOWN_GUILD_DOOR_Y + 1;
+    action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_GUILD_DOOR_X, TOWN_GUILD_DOOR_Y});
+    ASSERT("Rosemoor's Guild houses Dain and Zara in separate reachable positions", g.location == LOCATION_GUILD &&
+        g.map.tiles[GUILD_DAIN_Y][GUILD_DAIN_X] == TILE_NPC_DAIN &&
+        g.map.tiles[GUILD_ZARA_Y][GUILD_ZARA_X] == TILE_NPC_GUILD_SEEKER &&
+        !map_is_walkable(&g.map, GUILD_DAIN_X, GUILD_DAIN_Y) && map_is_walkable(&g.map, GUILD_DAIN_X, GUILD_DAIN_Y + 1));
+    game_talk_to_dain(&g);
+    ASSERT("Dain cannot assign his quest remotely in the Guild", !g.dain_quest_state);
+    g.player.x = GUILD_DAIN_X;
+    g.player.y = GUILD_DAIN_Y + 1;
+    action_resolve_player(&g, (Action){ACTION_INTERACT, 0, 0});
+    ASSERT("Dain requires conversation rather than Action", !g.dain_quest_state);
+    g.sunscar_lamp_quest_state = 1;
+    game_talk_to_dain(&g);
+    ASSERT("Dain assigns the same mountain quest from the Guild and leaves Zara's quest intact", g.dain_quest_state == 1 &&
+        !g.dain_map_fragments && g.sunscar_lamp_quest_state == 1 &&
+        g.dialogue_x == GUILD_DAIN_X && g.dialogue_y == GUILD_DAIN_Y &&
+        strstr(g.dialogue_text, "stages 1, 2, and 3") && strstr(g.dialogue_text, "Rosemoor's Adventurer's Guild"));
+    g.dain_map_fragments = DAIN_FRAGMENT_ARCHER | DAIN_FRAGMENT_SHAMAN;
+    QuestJournalEntry entry;
+    ASSERT("the journal retains mountain objectives and rewards and names the new return location", quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 0, &entry) &&
+        strcmp(entry.title, "Recover the Treasure Map") == 0 && entry.stages[0] == 1 && entry.stages[1] == 2 && entry.stages[2] == 3 &&
+        entry.reward_gold == 60 && entry.reward_score == 400 && entry.objective_complete[0] && !entry.objective_complete[1] &&
+        entry.objective_complete[2] && strstr(entry.summary_line_2, "Rosemoor's Adventurer's Guild"));
+    ASSERT("saving in the Guild retains Dain, Zara, and partial map progress", save_game(&g, 99141) && load_game(&loaded, 99141) &&
+        loaded.location == LOCATION_GUILD && loaded.dain_quest_state == 1 && loaded.dain_map_fragments == 5 && loaded.sunscar_lamp_quest_state == 1 &&
+        loaded.map.tiles[GUILD_DAIN_Y][GUILD_DAIN_X] == TILE_NPC_DAIN &&
+        loaded.map.tiles[GUILD_ZARA_Y][GUILD_ZARA_X] == TILE_NPC_GUILD_SEEKER);
+    g = loaded;
+    int gold = g.gold;
+    int score = g.score;
+    game_talk_to_dain(&g);
+    ASSERT("partial map progress cannot claim the reward", g.gold == gold && g.score == score && g.dain_quest_state == 1);
+    g.dain_quest_state = 2;
+    g.dain_map_fragments = 7;
+    g.player.x = g.map.stairs_up_x;
+    g.player.y = g.map.stairs_up_y;
+    game_talk_to_dain(&g);
+    ASSERT("completed quest rewards cannot be claimed remotely", g.gold == gold && g.score == score && g.dain_quest_state == 2);
+    g.player.x = GUILD_DAIN_X;
+    g.player.y = GUILD_DAIN_Y + 1;
+    game_talk_to_dain(&g);
+    game_talk_to_dain(&g);
+    ASSERT("Dain awards the original 60 gold and 400 score once in the Guild", g.dain_quest_state == 3 && g.gold == gold + 60 && g.score == score + 400);
+    ASSERT("completed quest survives saving and loading in the Guild", save_game(&g, 99141) && load_game(&loaded, 99141) &&
+        loaded.dain_quest_state == 3 && loaded.dain_map_fragments == 7 && loaded.gold == gold + 60 && loaded.score == score + 400);
+    g = loaded;
+    g.player.x = g.map.stairs_down_x;
+    g.player.y = g.map.stairs_down_y - 1;
+    action_resolve_player(&g, (Action){ACTION_MOVE, g.map.stairs_down_x, g.map.stairs_down_y});
+    ASSERT("the Guild doorway returns to Rosemoor with quest completion intact", g.location == LOCATION_TOWN3 && g.dain_quest_state == 3 &&
+        g.player.x == TOWN_GUILD_DOOR_X && g.player.y == TOWN_GUILD_DOOR_Y + 1);
+    remove("saves/savegame_99141.json");
 }
 
 void test_alder_quest(void) {

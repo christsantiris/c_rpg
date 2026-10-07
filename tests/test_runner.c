@@ -61,6 +61,7 @@ void test_elowen_quest(void);
 void test_elowen_relocation(void);
 void test_tavern_interior(void);
 void test_dain_quest(void);
+void test_dain_guild(void);
 void test_alder_quest(void);
 void test_mara_quest(void);
 void test_quest_activation_gating(void);
@@ -154,6 +155,7 @@ int main(void) {
     test_tavern_interior();
     printf("\n");
     test_dain_quest();
+    test_dain_guild();
     printf("\n");
     test_alder_quest();
     printf("\n");

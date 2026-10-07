@@ -24,8 +24,8 @@ static const QuestDefinition quest_definitions[11] = {
     },
     {
         "Recover the Treasure Map", "Dain",
-        "Recover the three treasure-map fragments carried",
-        "by the Goblin Map Bearers.",
+        "Recover the three Goblin Map Bearer fragments.",
+        "Return to Dain in Rosemoor's Adventurer's Guild.",
         {"Defeat Archer Map Bearer", "Defeat Bomber Map Bearer",
             "Defeat Shaman Map Bearer"},
         "Mountains", {1, 2, 3}, 60, 400
