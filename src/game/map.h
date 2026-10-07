@@ -157,6 +157,9 @@
 #define ASHEN_DEPTH 5
 #define GLASSDEEP_DEPTH 5
 #define CATACOMBS_DEPTH 5
+#define CASTLE_DEPTH 6
+#define CASTLE_W 64
+#define CASTLE_H 64
 #define CATACOMBS_W 60
 #define CATACOMBS_H 80
 #define STILLBURY_GLASSDEEP_GATE_X 20
@@ -183,6 +186,9 @@
 #define TOWN4_WORKSHOP_H 4
 #define TOWN4_WORKSHOP_DOOR_X (TOWN4_WORKSHOP_X + TOWN4_WORKSHOP_W / 2)
 #define TOWN4_WORKSHOP_DOOR_Y (TOWN4_WORKSHOP_Y + TOWN4_WORKSHOP_H - 1)
+#define WORKSHOP_SMITH_X 18
+#define WORKSHOP_SMITH_Y 7
+#define WORKSHOP_SHARPEN_PRICE 50
 
 typedef enum {
     TILE_FLOOR = 0,
@@ -367,7 +373,24 @@ typedef enum {
     TILE_OSSUARY_BRAZIER,
     TILE_OSSUARY_COLD,
     TILE_BURIAL_PLATE,
-    TILE_CATACOMBS_SARCOPHAGUS
+    TILE_CATACOMBS_SARCOPHAGUS,
+    TILE_CASTLE_FLOOR,
+    TILE_CASTLE_WALL,
+    TILE_CASTLE_CARPET,
+    TILE_CASTLE_PILLAR,
+    TILE_CASTLE_BANNER,
+    TILE_CASTLE_GATE,
+    TILE_CASTLE_GATE_OPEN,
+    TILE_CASTLE_LEVER,
+    TILE_CASTLE_TRAP_HIDDEN,
+    TILE_CASTLE_TRAP_OPEN,
+    TILE_CASTLE_PASSAGE,
+    TILE_CASTLE_SEAL,
+    TILE_CASTLE_TABLE,
+    TILE_CASTLE_BOOKCASE,
+    TILE_CASTLE_THRONE,
+    TILE_WORKSHOP_DOOR,
+    TILE_NPC_SHARPENER
 } TileType;
 
 typedef struct {
@@ -446,6 +469,7 @@ void map_generate_moonveil(Map *m, int level);
 void map_generate_ashen(Map *m, int level);
 void map_generate_glassdeep(Map *m, int level);
 void map_generate_guild(Map *m, int *sx, int *sy);
+void map_generate_workshop(Map *m, int *sx, int *sy);
 int map_remove_coast_sluice(Map *m);
 TileType map_coast_trap_underlay(const Map *m, int x, int y);
 int map_is_coast_tidal_tile(TileType tile);

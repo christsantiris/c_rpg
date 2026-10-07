@@ -1,5 +1,6 @@
 #include "game.h"
 #include "catacombs.h"
+#include "castle.h"
 
 #include <stdlib.h>
 #include <time.h>
@@ -63,7 +64,19 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
     e->move_timer = 0;
     e->revived = 0;
     e->revive_timer = 0;
+    e->facing_dx = 0;
+    e->facing_dy = -1;
+    e->attack_phase = 0;
     switch (type) {
+        case ENEMY_OATHBOUND_SOLDIER:
+        case ENEMY_IRON_WARDEN:
+        case ENEMY_ROYAL_MARKSMAN:
+        case ENEMY_COURT_HEXER:
+        case ENEMY_BELL_HERALD:
+        case ENEMY_CASTELLAN:
+        case ENEMY_ROYAL_ARCANIST:
+        case ENEMY_LORD_VEYR:
+            break;
         case ENEMY_ANCIENT_SKELETON:
             snprintf(e->name, sizeof(e->name), "Ancient Skeleton");
             e->max_hp = 48; e->hp = 48;
@@ -840,6 +853,18 @@ static Enemy *spawn_quest_enemy_at(GameState *g, EnemyType type, int x, int y) {
     return &g->enemies[slot];
 }
 
+Enemy *game_spawn_seal_guard(GameState *g, EnemyType type, int x, int y) {
+    if (!enemy_tile_open(g, x, y) || g->enemy_count >= MAX_ENEMIES) {
+        return NULL;
+    }
+    // Append without replacing defeated quest actors recorded in old saves.
+    Enemy *e = &g->enemies[g->enemy_count++];
+    spawn_enemy(g, e, type, x, y);
+    snprintf(e->name, sizeof(e->name), "Royal Seal Guardian");
+    g->level_cleared = 0;
+    return e;
+}
+
 static Enemy *spawn_quest_enemy_open(GameState *g, EnemyType type, int room_limit) {
     int x;
     int y;
@@ -942,6 +967,10 @@ static int quest_group_pending(const GameState *g) {
 }
 
 void enemies_spawn(GameState *g) {
+    if (g->location == LOCATION_CASTLE_INTERIOR) {
+        castle_spawn(g);
+        return;
+    }
     g->enemy_count = 0;
     if (g->map.room_count == 0) {
         return;
@@ -1252,6 +1281,13 @@ void enemies_spawn(GameState *g) {
 }
 
 void game_init(GameState *g) {
+    memset(g->castle_cache, 0, sizeof(g->castle_cache));
+    memset(g->castle_loot, 0, sizeof(g->castle_loot));
+    memset(g->castle_loot_count, 0, sizeof(g->castle_loot_count));
+    g->castle_seals = 0;
+    g->castle_minibosses = 0;
+    g->castle_prompt = 0;
+    g->game_won = 0;
     srand((unsigned)time(NULL));
     g->level = 1;
     g->crownroad_cache.valid = 0;
@@ -2135,6 +2171,7 @@ static void restore_desert_reward(GameState *g) {
 }
 
 void game_refresh_quest_encounters(GameState *g) {
+    castle_refresh_seal(g);
     game_reveal_forest_shortcut(g);
     game_reveal_swamp_shortcut(g);
     game_reveal_mountain_shortcut(g);
@@ -2210,6 +2247,7 @@ static void generate_active_level(GameState *g) {
         g->map.tiles[daughter_y][daughter_x] = TILE_SWAMP_DAUGHTER;
     }
     enemies_spawn(g);
+    castle_refresh_seal(g);
     if (daughter_placed) {
         for (int radius = 1; radius <= 4; radius++) {
             int found = 0;
@@ -2326,6 +2364,9 @@ static void prepare_forest_arrival(GameState *g, int from_high) {
 }
 
 void game_descend(GameState *g) {
+    if (castle_travel(g, 1)) {
+        return;
+    }
     int depth = active_depth(g);
     if (g->level >= depth) return;
 
@@ -2364,6 +2405,9 @@ void game_descend(GameState *g) {
 }
 
 void game_ascend(GameState *g) {
+    if (castle_travel(g, 0)) {
+        return;
+    }
     if (g->level <= 1) return;
 
     clear_floor_loot(g);
@@ -2945,6 +2989,65 @@ void game_enter_guild(GameState *g) {
     g->floor_item_count = 0;
     g->dialogue_active = 0;
     push_message(g, "You enter the Adventurer's Guild.");
+}
+
+void game_enter_workshop(GameState *g) {
+    g->location = LOCATION_WORKSHOP;
+    map_generate_workshop(&g->map, &g->player.x, &g->player.y);
+    g->enemy_count = 0;
+    g->floor_item_count = 0;
+    g->dialogue_active = 0;
+    push_message(g, "Garrick sharpens swords, axes and daggers: +1 attack for 50 gold, once per weapon.");
+}
+
+void game_leave_workshop(GameState *g) {
+    g->location = LOCATION_TOWN4;
+    map_generate_town4(&g->map, &g->player.x, &g->player.y);
+    map_set_ridgeshire_mountain_road(&g->map, g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
+    g->player.x = TOWN4_WORKSHOP_DOOR_X;
+    g->player.y = TOWN4_WORKSHOP_DOOR_Y + 1;
+    place_town_portal(g);
+    g->enemy_count = 0;
+    g->floor_item_count = 0;
+    g->dialogue_active = 0;
+    push_message(g, "You step out of the workshop.");
+}
+
+int game_workshop_near_smith(const GameState *g) {
+    return g->location == LOCATION_WORKSHOP &&
+        abs(g->player.x - WORKSHOP_SMITH_X) + abs(g->player.y - WORKSHOP_SMITH_Y) == 1;
+}
+
+int game_sharpen_weapon(GameState *g, int index) {
+    if (!game_workshop_near_smith(g) || index < 0 || index >= g->inventory_count) {
+        return 0;
+    }
+    Item *item = &g->inventory[index];
+    if (item->sharpened) {
+        push_message(g, "Garrick: This weapon has already been sharpened.");
+        return 0;
+    }
+    if (!item_can_sharpen(item)) {
+        push_message(g, "Garrick: I sharpen swords, axes and daggers.");
+        return 0;
+    }
+    if (g->gold < WORKSHOP_SHARPEN_PRICE) {
+        push_message(g, "Garrick: Sharpening costs 50 gold.");
+        return 0;
+    }
+    int old_off_hand = game_off_hand_attack_bonus(item);
+    item->attack_bonus++;
+    item->sharpened = 1;
+    g->gold -= WORKSHOP_SHARPEN_PRICE;
+    if (g->equipped_main_hand == index) {
+        g->player.attack++;
+    } else if (g->equipped_off_hand == index) {
+        g->player.attack += game_off_hand_attack_bonus(item) - old_off_hand;
+    }
+    char message[MAX_MESSAGE_LEN];
+    snprintf(message, sizeof(message), "Garrick sharpens %s: +1 attack. Paid 50 gold.", item->name);
+    push_message(g, message);
+    return 1;
 }
 
 void game_leave_guild(GameState *g) {
@@ -3565,6 +3668,10 @@ void game_leave_catacombs(GameState *g) {
 }
 
 void game_return_to_town(GameState *g) {
+    if (g->location == LOCATION_CASTLE_INTERIOR) {
+        castle_leave(g, 1);
+        return;
+    }
     if (g->location == LOCATION_CROWNROAD || g->location == LOCATION_KING_ROAD_WEST) {
         game_leave_crownroad(g, g->location == LOCATION_CROWNROAD ? LOCATION_TOWN3 : LOCATION_TOWN4);
         return;
@@ -3650,6 +3757,10 @@ void game_leave_high_pass(GameState *g, Location destination) {
 }
 
 void game_open_town_portal(GameState *g) {
+    if (g->location == LOCATION_CASTLE_INTERIOR) {
+        castle_request(g, 1);
+        return;
+    }
     if (g->location != LOCATION_DUNGEON &&
         g->location != LOCATION_FOREST &&
         g->location != LOCATION_MOUNTAINS &&
@@ -3779,6 +3890,11 @@ static int portal_landing_open(const GameState *g, int x, int y) {
 }
 
 void game_use_town_portal(GameState *g) {
+    if (g->portal_location == LOCATION_CASTLE_INTERIOR) {
+        g->portal_active = 0;
+        push_message(g, "The castle has severed this portal.");
+        return;
+    }
     if (!g->portal_active || g->portal_level < 1 ||
         g->portal_level > MAX_REGION_DEPTH) return;
     int level = g->portal_level;
@@ -4656,11 +4772,17 @@ void game_mark_level_cleared(GameState *g) {
 }
 
 int game_shortcut_prompt_active(const GameState *g) {
+    if (g->castle_prompt) {
+        return 1;
+    }
     return g->dialogue_active && strcmp(g->dialogue_speaker, "Shortcut found") == 0 &&
         (g->location == LOCATION_FOREST || g->location == LOCATION_SWAMP || g->location == LOCATION_MOUNTAINS);
 }
 
 int game_handle_shortcut_prompt_key(GameState *g, int key, int repeat) {
+    if (castle_prompt_key(g, key, repeat)) {
+        return 1;
+    }
     if (!game_shortcut_prompt_active(g)) {
         return 0;
     }

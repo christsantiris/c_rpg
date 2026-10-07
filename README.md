@@ -62,10 +62,11 @@ including when a boss has been lured away from its original room.
 | Rook's Labyrinth | 5 |
 | Crown Road East | 1 |
 | Crown Road West | 1 |
+| Castle of No Return interior | 6 |
 
 Combat areas that connect towns have seven levels; standalone adventures have
-five. Crown Road East and West each use one combat map. The future castle
-interior may follow a different standard.
+five. Crown Road East and West each use one combat map. The final Castle of
+No Return is a six-floor ascent with minibosses on floors 2 and 4.
 
 The forest, mountains, and swamp can be played from either end, with their
 boss on level 4. Defeating that boss opens a shortcut to the opposite town;
@@ -86,6 +87,14 @@ by the Goblin King's defeat. Both ordinary mountain gates remain available. Ilya
 waits beside Ridgeshire's Dragonspine gate and offers a quest to recover a golden
 goblet from the dragon's hoard. Her one-time reward is a Potion of Strength
 that permanently adds 1 base attack when consumed.
+
+Ridgeshire's workshop houses Garrick, who sharpens a selected sword, axe, or
+dagger for **50 gold**, permanently adding **+1 weapon attack**. Each individual
+weapon can be sharpened only once. Approach him inside the workshop, select a
+weapon, and press Enter to pay; Esc returns to the room. Sharpening status
+persists through dropping, re-equipping, and saving. The Blacksmith continues
+to buy and sell equipment. See [weapon sharpening](docs/weapons.md#workshop-sharpening).
+
 The Frostfell Wastes begin at Rosemoor's north gate. Stillbury's west gate opens
 onto the five-level Sunscar Wastes: enter from the east, advance west, and
 backtrack east. Both the first level's east entrance and the final west exit
@@ -173,9 +182,19 @@ along a safe, enemy-free swamp shortcut to a separate south gate in Rosemoor.
 Both towns retain their ordinary swamp gates and explored swamp levels.
 Rosemoor has the Apothecary. Two Royal Guards at its east gate warn that Crown Road East swarms
 with bandits, archers, and horsemen. That road leads to the grounds of the
-Castle of No Return, whose doors stay sealed for now. Crown Road West continues
+Castle of No Return. Its north entrance leads into the six-floor final area. Crown Road West continues
 from the castle's east gate to Ridgeshire's west gate. Each road keeps its own
 enemies and progress between visits.
+
+The castle introduces shield formations, portcullis levers, warned attacks,
+shifting magical barriers, and trapdoors that drop you one floor and remain
+visible. Defeat the Castellan on floor 2 and the Royal Arcanist on floor 4 to
+unlock permanent passages from the grounds. Four royal seals on level 3 of
+Oakhaven Dungeon, Glassdeep Caverns, Moonveil Gardens, and Ashen Hollow unlock
+floor 6. Return to Town becomes a confirmed one-way escape to Rosemoor:
+surviving defenders reset, while miniboss victories, seals, passages, revealed
+trapdoors, and dropped items persist. Defeating Lord Veyr ends the campaign with
+victory. See [Castle interior and play testing](docs/castle-design.md).
 
 Town destinations use wooden signposts with cream lettering, including both
 ends of each unlocked shortcut. Area gate labels keep the same color at every
@@ -345,6 +364,7 @@ and sell modes are switched with `Tab`.
 - [Ashen Hollow](docs/ashen-hollow.md)
 - [Glassdeep Caverns](docs/glassdeep-caverns.md)
 - [Royal Catacombs](docs/catacombs.md)
+- [Castle interior and play testing](docs/castle-design.md)
 - [Harbor, Ruined Isle, and Ruined Temple](docs/harbor-and-ruined-isle.md)
 
 ## Screenshots
@@ -474,8 +494,6 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 
 - Boss encounter improvements
    Give every boss multiple phases, telegraphed signature attacks, an arena mechanic, and a guaranteed thematic reward.
-- Build out Castle of No Return
-   Multiple levels, unique mechanics, enemies, boss
 - Recruit a party to join the adventure
 - Improve difficulty scaling and economy
 - Increase importance of upgrading weapons and spells

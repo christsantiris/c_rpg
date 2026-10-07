@@ -7,6 +7,7 @@
 #include "item_icons.h"
 #include "../game/combat_feedback.h"
 #include "../game/catacombs.h"
+#include "castle_renderer.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -180,6 +181,7 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
         g->location != LOCATION_TOWN2 &&
         g->location != LOCATION_TOWN3 &&
         g->location != LOCATION_TOWN4 &&
+        g->location != LOCATION_CASTLE_INTERIOR &&
         g->location != LOCATION_FOREST &&
         g->location != LOCATION_SWAMP)) {
         return;
@@ -1058,7 +1060,9 @@ static void draw_floor_loot(Renderer *r, const GameState *g, int map_x, int map_
 
 static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int map_x, int map_y, int screen_x, int screen_y) {
     TileType underlay = floor_item_underlay(g, map_x, map_y);
-    if (underlay == TILE_TRAP_HIDDEN && g->location == LOCATION_FOREST) {
+    if (underlay == TILE_CASTLE_SEAL) {
+        castle_draw_tile(r, g, screen_x, screen_y, map_x, map_y, underlay);
+    } else if (underlay == TILE_TRAP_HIDDEN && g->location == LOCATION_FOREST) {
         draw_forest_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_TRAP_HIDDEN &&
         g->location == LOCATION_MOUNTAINS) {
@@ -1427,7 +1431,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->location == LOCATION_TOWN3 || g->location == LOCATION_TOWN4 ||
         g->location == LOCATION_CASTLE;
     int tavern_scaled = g->location == LOCATION_TAVERN ||
-        g->location == LOCATION_INN || g->location == LOCATION_GUILD;
+        g->location == LOCATION_INN || g->location == LOCATION_WORKSHOP || g->location == LOCATION_GUILD;
     int island_scaled = g->location == LOCATION_ISLAND;
     int labyrinth_scaled = g->location == LOCATION_LABYRINTH;
     int road_scaled = g->location == LOCATION_FOREST_ROAD ||
@@ -1467,6 +1471,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int view_h = v->tiles_y < road_h ? v->tiles_y : road_h;
         viewport_init(&town_view, view_w, view_h,
             road_w, road_h);
+        viewport_center_on(&town_view, g->player.x, g->player.y);
+        v = &town_view;
+    } else if (g->location == LOCATION_CASTLE_INTERIOR) {
+        viewport_init(&town_view, v->tiles_x < CASTLE_W ? v->tiles_x : CASTLE_W, v->tiles_y < CASTLE_H ? v->tiles_y : CASTLE_H, CASTLE_W, CASTLE_H);
         viewport_center_on(&town_view, g->player.x, g->player.y);
         v = &town_view;
     } else if (g->location == LOCATION_CATACOMBS) {
@@ -1525,7 +1533,15 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             map_mark_explored(&g->map, x, y);
             int sx = viewport_to_screen_x(v, x);
             int sy = viewport_to_screen_y(v, y);
+            if (g->location == LOCATION_CASTLE_INTERIOR) {
+                TileType tile = g->map.tiles[y][x];
+                castle_draw_tile(r, g, sx, sy, x, y, tile == TILE_ITEM ? floor_item_underlay(g, x, y) : tile);
+                continue;
+            }
             switch (terrain_display_tile(g, g->map.tiles[y][x])) {
+                case TILE_CASTLE_SEAL:
+                    castle_draw_tile(r, g, sx, sy, x, y, TILE_CASTLE_SEAL);
+                    break;
                 case TILE_FLOOR:
                     if (g->location == LOCATION_DUNGEON) {
                         draw_dungeon_floor(r, sx, sy, x, y);
@@ -1842,13 +1858,16 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_WITCH_DOOR:
                 case TILE_TAVERN_DOOR:
                 case TILE_GUILD_DOOR:
+                case TILE_WORKSHOP_DOOR:
                     draw_town_path(r, sx, sy); break;
                 case TILE_TAVERN_FLOOR: draw_tavern_floor(r, sx, sy); break;
                 case TILE_TAVERN_WALL: draw_tavern_wall(r, sx, sy); break;
                 case TILE_TAVERN_EXIT: draw_tavern_exit(r, sx, sy); break;
                 case TILE_TAVERN_TABLE: draw_tavern_table(r, sx, sy); break;
                 case TILE_NPC_ELOWEN: draw_elowen(r, sx, sy); break;
-                case TILE_NPC_DAIN: draw_dain(r, sx, sy); break;
+                case TILE_NPC_DAIN:
+                case TILE_NPC_SHARPENER:
+                    draw_dain(r, sx, sy); break;
                 case TILE_NPC_ALDER: draw_alder(r, sx, sy); break;
                 case TILE_NPC_MARA: draw_mara(r, sx, sy); break;
                 case TILE_NPC_ROOK: draw_rook(r, sx, sy); break;
@@ -2083,7 +2102,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             continue;
         }
         TileType tile = g->map.tiles[item->y][item->x];
-        if (tile != TILE_ITEM && g->location != LOCATION_ISLAND) {
+        if ((tile != TILE_ITEM || g->location == LOCATION_CASTLE_INTERIOR) && g->location != LOCATION_ISLAND) {
             draw_floor_loot(r, g, item->x, item->y,
                 viewport_to_screen_x(v, item->x),
                 viewport_to_screen_y(v, item->y));
@@ -2238,7 +2257,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     // Draw enemies
-    if (g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
+    if (g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
         g->location == LOCATION_FOREST ||
         g->location == LOCATION_MOUNTAINS ||
         g->location == LOCATION_DRAGONSPINE ||
@@ -2258,7 +2277,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             if (!viewport_is_visible(v, e->x, e->y)) continue;
             int sx = viewport_to_screen_x(v, e->x);
             int sy = viewport_to_screen_y(v, e->y);
-            if (e->type == ENEMY_FALLEN_SUN_GUARDIAN &&
+            if (g->location == LOCATION_CASTLE_INTERIOR) {
+                castle_draw_enemy(r, sx, sy, e);
+            } else if (e->type == ENEMY_FALLEN_SUN_GUARDIAN &&
                 e->hp <= e->max_hp / 2) {
                 draw_fallen_sun_guardian_broken(r, sx, sy);
             } else {
@@ -2278,6 +2299,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             int bar_h = 3;
             int bar_x = sx * TILE_SIZE + 2;
             int bar_y = sy * TILE_SIZE - 5;
+            if (g->location == LOCATION_CASTLE_INTERIOR && e->is_boss) {
+                bar_w = 32;
+                bar_x = sx * TILE_SIZE - 4;
+                bar_y = sy * TILE_SIZE - 17;
+            }
             int fill_w = (bar_w * e->hp) / e->max_hp;
             SDL_Rect bg = {bar_x, bar_y, bar_w, bar_h};
             SDL_Rect fill = {bar_x, bar_y, fill_w, bar_h};
@@ -2505,6 +2531,18 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             (SDL_Color){220, 180, 60, 255}, r->font_tiny);
     }
     if (g->location == LOCATION_CASTLE) {
+        if (g->castle_minibosses & 1) {
+            int sx = viewport_to_screen_x(v, 17);
+            int sy = viewport_to_screen_y(v, 12);
+            castle_draw_tile(r, g, sx, sy, 17, 12, TILE_CASTLE_PASSAGE);
+            renderer_draw_text(r, "KEEP (A)", sx * 24 - 20, sy * 24 + 25, (SDL_Color){126, 224, 166, 255}, r->font_tiny);
+        }
+        if (g->castle_minibosses & 2) {
+            int sx = viewport_to_screen_x(v, 23);
+            int sy = viewport_to_screen_y(v, 12);
+            castle_draw_tile(r, g, sx, sy, 23, 12, TILE_CASTLE_PASSAGE);
+            renderer_draw_text(r, "CHAPEL (A)", sx * 24 - 28, sy * 24 + 25, (SDL_Color){126, 224, 166, 255}, r->font_tiny);
+        }
         int gx = viewport_to_screen_x(v, CROWNROAD_X - 2) * TILE_SIZE;
         int gy = viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE;
         SDL_Rect left_post = {gx, gy, 14, TILE_SIZE * 2};
@@ -2573,6 +2611,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, 28) * TILE_SIZE - 8,
             viewport_to_screen_y(v, 6) * TILE_SIZE,
             (SDL_Color){233, 201, 133, 255}, r->font_tiny);
+    }
+    if (g->location == LOCATION_WORKSHOP) {
+        renderer_draw_text(r, "GARRICK - SHARPENING", viewport_to_screen_x(v, WORKSHOP_SMITH_X) * TILE_SIZE - 60,
+            viewport_to_screen_y(v, WORKSHOP_SMITH_Y - 1) * TILE_SIZE, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
+        renderer_draw_text(r, "APPROACH GARRICK OR PRESS ACTION BESIDE HIM", viewport_to_screen_x(v, 8) * TILE_SIZE,
+            viewport_to_screen_y(v, 19) * TILE_SIZE, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
     }
     if (g->location == LOCATION_GUILD) {
         renderer_draw_text(r, "ZARA",
@@ -2772,6 +2816,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
     draw_prism_warning(r, g, v);
     draw_catacombs_warnings(r, g, v);
+    castle_draw_warnings(r, g, v);
 
     draw_combat_feedback(r, g, v);
 

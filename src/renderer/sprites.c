@@ -3158,6 +3158,16 @@ static void draw_catacombs_enemy(Renderer *r, int tx, int ty, EnemyType type) {
 
 void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
     switch (type) {
+        case ENEMY_OATHBOUND_SOLDIER:
+        case ENEMY_IRON_WARDEN:
+        case ENEMY_ROYAL_MARKSMAN:
+        case ENEMY_COURT_HEXER:
+        case ENEMY_BELL_HERALD:
+        case ENEMY_CASTELLAN:
+        case ENEMY_ROYAL_ARCANIST:
+        case ENEMY_LORD_VEYR:
+            draw_orc(r, tile_x, tile_y);
+            break;
         case ENEMY_ANCIENT_SKELETON:
         case ENEMY_BONE_SENTINEL:
         case ENEMY_GRAVE_ARCHER:
