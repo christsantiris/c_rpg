@@ -1032,9 +1032,9 @@ void action_resolve_player(GameState *g, Action a) {
 
     if (g->location == LOCATION_CASTLE_INTERIOR && (a.type == ACTION_ASCEND || a.type == ACTION_DESCEND)) {
         TileType tile = g->map.tiles[g->player.y][g->player.x];
-        if (a.type == ACTION_DESCEND && tile == TILE_STAIRS_UP) {
+        if (a.type == ACTION_ASCEND && tile == TILE_STAIRS_UP) {
             castle_travel(g, 1);
-        } else if (a.type == ACTION_ASCEND && tile == TILE_STAIRS_DOWN) {
+        } else if (a.type == ACTION_DESCEND && tile == TILE_STAIRS_DOWN) {
             castle_travel(g, 0);
         }
         return;
