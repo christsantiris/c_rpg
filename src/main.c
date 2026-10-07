@@ -329,16 +329,6 @@ static int open_shop_on_move(const GameState *game, const Action *action, ShopSc
     return 1;
 }
 
-static int open_workshop_on_move(const GameState *g, const Action *a, WorkshopScreen *s, GameScreen *screen) {
-    if (a->type != ACTION_MOVE || !game_workshop_near_smith(g) ||
-        a->target_x != WORKSHOP_SMITH_X || a->target_y != WORKSHOP_SMITH_Y) {
-        return 0;
-    }
-    s->selected = 0;
-    *screen = SCREEN_WORKSHOP;
-    return 1;
-}
-
 static void handle_harbor_result(HarborResult result, GameState *game, GameScreen *screen, Renderer *renderer, Viewport *viewport) {
     if (result == HARBOR_CLOSED) {
         *screen = SCREEN_PLAYING;
@@ -877,11 +867,6 @@ int main(int argc, char **argv) {
                                 a = (Action){ACTION_MOVE, game.player.x, game.player.y + 1};
                                 break;
                             case CONTROL_MOVE_LEFT: {
-                                if (sc != SDL_SCANCODE_LEFT && game_workshop_near_smith(&game)) {
-                                    workshop_screen.selected = 0;
-                                    screen = SCREEN_WORKSHOP;
-                                    break;
-                                }
                                 // The left arrow only moves; the bound key
                                 // also interacts with the object underfoot.
                                 TileType tile = game.map.tiles[game.player.y]
@@ -933,6 +918,11 @@ int main(int argc, char **argv) {
                                 screen = SCREEN_HELP;
                                 break;
                             case CONTROL_TALK: {
+                                if (game_workshop_near_smith(&game)) {
+                                    workshop_screen.selected = 0;
+                                    screen = SCREEN_WORKSHOP;
+                                    break;
+                                }
                                 int px = game.player.x;
                                 int py = game.player.y;
                                 int found = 0;
@@ -1025,9 +1015,6 @@ int main(int argc, char **argv) {
                         }
                         if (open_shop_on_move(&game, &a, &shop_screen,
                             &screen)) {
-                            a.type = ACTION_NONE;
-                        }
-                        if (open_workshop_on_move(&game, &a, &workshop_screen, &screen)) {
                             a.type = ACTION_NONE;
                         }
                         if (event.key.repeat && a.type == ACTION_MOVE &&

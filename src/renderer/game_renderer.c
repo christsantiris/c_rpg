@@ -2686,8 +2686,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (g->location == LOCATION_WORKSHOP) {
         renderer_draw_text(r, "GARRICK - SHARPENING", viewport_to_screen_x(v, WORKSHOP_SMITH_X) * TILE_SIZE - 60,
             viewport_to_screen_y(v, WORKSHOP_SMITH_Y - 1) * TILE_SIZE, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
-        renderer_draw_text(r, "APPROACH GARRICK OR PRESS ACTION BESIDE HIM", viewport_to_screen_x(v, 8) * TILE_SIZE,
-            viewport_to_screen_y(v, 19) * TILE_SIZE, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
     }
     if (g->location == LOCATION_TOWN_HALL) {
         renderer_draw_text(r, "STEWARD HADRIN", viewport_to_screen_x(v, HALL_STEWARD_X) * TILE_SIZE - 45,
