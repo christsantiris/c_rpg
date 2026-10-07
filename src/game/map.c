@@ -2336,7 +2336,6 @@ static void map_generate_tavern_room(Map *m, int *spawn_x, int *spawn_y, int inn
         m->tiles[7][28] = TILE_NPC_INNKEEPER;
     } else {
         m->tiles[7][28] = TILE_NPC_ALDER;
-        m->tiles[18][31] = TILE_NPC_MARA;
     }
     m->tiles[22][20] = TILE_TAVERN_EXIT;
     *spawn_x = 20;
@@ -2408,6 +2407,7 @@ void map_generate_town_hall(Map *m, int *sx, int *sy) {
         }
     }
     m->tiles[HALL_STEWARD_Y][HALL_STEWARD_X] = TILE_NPC_STEWARD;
+    m->tiles[HALL_MARA_Y][HALL_MARA_X] = TILE_NPC_MARA;
 }
 
 void map_generate_island(Map *m, int *spawn_x, int *spawn_y) {

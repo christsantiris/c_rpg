@@ -1,4 +1,4 @@
-# Tavern, Inn, and Guild Quests
+# Tavern, Inn, Guild, and Town Hall Quests
 
 The Tavern is a walkable town hub for regional quests. Walk into its front
 door, approach an NPC inside, and press `T` to speak with them. Leave through
@@ -97,17 +97,20 @@ score.
 
 ## Mara: Relight the Drowned Beacons
 
-Mara is a retired tidekeeper who carries a sheltered ember from the old coast
-lights. She asks the player to relight drowned beacons on Coast stages 2, 3,
-and 4. Each beacon stands inside a flooded side room and cannot be reached or
+Mara waits in **Ridgeshire's Town Hall**, alongside Steward Hadrin. Press `T`
+beside her to speak. She is a retired tidekeeper who carries a sheltered ember
+from the old coast lights. She asks the player to relight drowned beacons on
+Coast stages 2, 3, and 4. Each beacon stands inside a flooded side room and cannot be reached or
 lit until the stage's tide control drains the surrounding deep water. Stand on
 the exposed beacon and press `A` to light it.
 
 The beacons are defended by groups led by a Giant Crab, Animated Statue, and
 Sea Serpent. Stages do not need to be cleared, and the Drowned Queen is not
 part of the objective. Lit beacons remain lit through backtracking, repeat
-expeditions, and save/load. Return to Mara after lighting all three to receive
-80 gold and 600 score.
+expeditions, and save/load. Return to Mara in Ridgeshire's Town Hall after
+lighting all three to receive 80 gold and 600 score once. Older saves remove
+her from Oakhaven's Tavern and place her in the Town Hall without changing
+quest progress.
 
 ## Brenna: The Silent Expedition
 

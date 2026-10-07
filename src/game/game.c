@@ -3479,7 +3479,7 @@ void game_enter_town_hall(GameState *g) {
     g->enemy_count = 0;
     g->floor_item_count = 0;
     g->dialogue_active = 0;
-    push_message(g, "Ridgeshire Town Hall. Approach Steward Hadrin and press T to talk.");
+    push_message(g, "Ridgeshire Town Hall. Press T beside Steward Hadrin or Mara to talk.");
 }
 
 void game_leave_town_hall(GameState *g) {
@@ -5535,17 +5535,21 @@ void game_rescue_forest_warden(GameState *g, int x, int y) {
 }
 
 void game_talk_to_mara(GameState *g) {
+    if (g->location != LOCATION_TOWN_HALL ||
+        abs(g->player.x - HALL_MARA_X) > 1 || abs(g->player.y - HALL_MARA_Y) > 1) {
+        return;
+    }
     g->dialogue_active = 1;
     strncpy(g->dialogue_speaker, "Mara", MAX_SPEAKER_LEN - 1);
     g->dialogue_speaker[MAX_SPEAKER_LEN - 1] = '\0';
-    g->dialogue_x = 31;
-    g->dialogue_y = 18;
+    g->dialogue_x = HALL_MARA_X;
+    g->dialogue_y = HALL_MARA_Y;
     if (g->mara_quest_state == 0) {
         g->mara_quest_state = 1;
         g->mara_beacons_lit = 0;
         prepare_quest_expedition(g, LOCATION_COAST);
         strncpy(g->dialogue_text,
-            "Drowned guardians surround beacons on coast stages 2, 3, and 4. Lower the tide, defeat them, and relight each flame.",
+            "Sunken Coast lies south of Oakhaven. Lower the tide, defeat the guardians, and relight beacons on stages 2, 3, and 4. Return here to Ridgeshire's Town Hall.",
             MAX_DIALOGUE_LEN - 1);
         g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
         push_message(g, "Assigned: Relight the Drowned Beacons.");
@@ -5706,7 +5710,7 @@ void game_light_coast_beacon(GameState *g, int x, int y) {
     push_message(g, status);
     if ((g->mara_beacons_lit & 7) == 7) {
         g->mara_quest_state = 2;
-        push_message(g, "All beacons lit. Return to Mara.");
+        push_message(g, "All beacons lit. Return to Mara in Ridgeshire's Town Hall.");
     }
 }
 

@@ -13,6 +13,11 @@ Dain assigns **Recover the Treasure Map** in **Rosemoor's Adventurer's Guild
 Hall**. Its Map Bearers remain on mountain stages 1, 2, and 3 on the Oakhaven
 side. Return to him in the Guild for 60 gold and 400 score.
 
+Mara assigns **Relight the Drowned Beacons** in **Ridgeshire's Town Hall**.
+The beacons remain on Sunken Coast stages 2, 3, and 4. Return to her in the
+Town Hall for 80 gold and 600 score; her location change preserves existing
+quest progress.
+
 Zara's **The Lost Magic Lamp** quest also appears after accepting it inside
 Rosemoor's Adventurer's Guild. Recover the lamp from Sunscar Wastes stage 4,
 then return to Zara for 80 gold and 600 score. Pickup marks the quest ready to

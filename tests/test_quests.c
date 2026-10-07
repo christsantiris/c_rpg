@@ -206,10 +206,10 @@ void test_tavern_interior(void) {
         !map_is_walkable(&g.map, alder_x, alder_y));
     int mara_x = 0;
     int mara_y = 0;
-    ASSERT("Mara has an in-world Tavern tile",
-        find_tile(&g.map, TILE_NPC_MARA, &mara_x, &mara_y));
-    ASSERT("player cannot overlap Mara",
-        !map_is_walkable(&g.map, mara_x, mara_y));
+    ASSERT("Mara no longer occupies Oakhaven's Tavern",
+        !find_tile(&g.map, TILE_NPC_MARA, &mara_x, &mara_y));
+    ASSERT("Mara's old Tavern position is walkable",
+        map_is_walkable(&g.map, 31, 18));
     g.player.x = alder_x;
     g.player.y = alder_y + 1;
     game_talk_to_alder(&g);
@@ -461,6 +461,9 @@ void test_mara_quest(void) {
     GameState g;
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
+    game_enter_town_hall(&g);
+    g.player.x = HALL_MARA_X;
+    g.player.y = HALL_MARA_Y + 1;
 
     g.coast_cache[3].valid = 1;
     g.portal_active = 1;
@@ -474,6 +477,7 @@ void test_mara_quest(void) {
         strcmp(g.dialogue_speaker, "Mara") == 0);
     ASSERT("accepting Mara's quest starts a fresh coast expedition",
         !g.coast_cache[3].valid && !g.portal_active);
+    game_leave_town_hall(&g);
 
     int target_levels[3] = {2, 3, 4};
     EnemyType guardian_types[3] = {
@@ -517,12 +521,19 @@ void test_mara_quest(void) {
         !find_tile(&g.map, TILE_COAST_BEACON_LIT, &absent_x, &absent_y));
 
     game_return_to_town(&g);
+    game_enter_town_hall(&g);
+    g.player.x = HALL_MARA_X;
+    g.player.y = HALL_MARA_Y + 1;
     int gold_before = g.gold;
     int score_before = g.score;
     game_talk_to_mara(&g);
     ASSERT("Mara completes the coast quest", g.mara_quest_state == 3);
     ASSERT("Mara awards 80 gold", g.gold == gold_before + 80);
     ASSERT("Mara awards 600 score", g.score == score_before + 600);
+    game_talk_to_mara(&g);
+    ASSERT("Mara's reward can only be collected once",
+        g.gold == gold_before + 80 && g.score == score_before + 600);
+    game_leave_town_hall(&g);
 
     game_enter_coast(&g);
     game_descend(&g);

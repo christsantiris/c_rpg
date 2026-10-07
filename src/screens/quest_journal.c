@@ -40,8 +40,8 @@ static const QuestDefinition quest_definitions[13] = {
     },
     {
         "Relight the Drowned Beacons", "Mara",
-        "Lower the tides, fight through drowned guardians,",
-        "and relight the three old coast beacons.",
+        "Lower the tides and relight three guarded beacons.",
+        "Return to Mara in Ridgeshire's Town Hall.",
         {"Light drowned beacon", "Light drowned beacon",
             "Light drowned beacon"},
         "Coast", {2, 3, 4}, 80, 600

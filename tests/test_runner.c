@@ -66,6 +66,7 @@ void test_dain_quest(void);
 void test_dain_guild(void);
 void test_alder_quest(void);
 void test_mara_quest(void);
+void test_mara_relocation(void);
 void test_quest_activation_gating(void);
 void test_quest_journal(void);
 void test_save_load(void);
@@ -164,6 +165,7 @@ int main(void) {
     test_alder_quest();
     printf("\n");
     test_mara_quest();
+    test_mara_relocation();
     printf("\n");
     test_quest_journal();
     printf("\n");
