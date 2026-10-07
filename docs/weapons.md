@@ -21,6 +21,30 @@ An off-hand weapon contributes half its attack bonus, rounded up, and half its
 critical chance. Its range, cleave, armor penetration, spell bonuses, and other
 traits do not apply from the off hand.
 
+## Workshop Sharpening
+
+Enter the workshop in Ridgeshire and approach Garrick, or press your configured
+Action key (default `A`) while beside him. His service screen lists your inventory.
+Use Up/Down or click to select a weapon, then Enter or the sharpening button to
+pay **50 gold** for **+1 weapon attack**. Press Esc to return to the workshop.
+
+Swords (including greatswords), axes, and daggers qualify. Bows, staves, armor,
+and other items do not. Each individual weapon can be sharpened only once;
+another copy of the same weapon has its own allowance. Already sharpened weapons
+are marked in the service screen and inventory. Insufficient funds and invalid
+selections never charge gold.
+
+An equipped main-hand weapon immediately adds 1 to displayed attack. Off-hand
+weapons retain the normal half-attack contribution, rounded up, so their +1
+weapon improvement can add either 0 or 1 to total attack. Unequipping and
+re-equipping uses the upgraded bonus without stacking it again.
+
+Sharpening does not change a weapon's name, class restrictions, traits, or shop
+value. The improvement and its spent allowance remain attached when dropping,
+picking up, saving, or restoring castle floor loot. Older saves initialize all
+existing weapons as unsharpened without changing their attack or player progress.
+The workshop offers this service; the Blacksmith buys and sells equipment.
+
 ## Weapon Catalog
 
 The value column is the item's base value. The Blacksmith charges twice this

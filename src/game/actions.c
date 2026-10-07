@@ -1,6 +1,7 @@
 #include "actions.h"
 #include "game.h"
 #include "catacombs.h"
+#include "castle.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -54,6 +55,10 @@ Item random_enemy_item(void) {
 
 static void mark_item_tile(GameState *g, int x, int y) {
     TileType tile = g->map.tiles[y][x];
+    if (g->location == LOCATION_CASTLE_INTERIOR && (tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN ||
+        tile == TILE_CASTLE_LEVER || tile == TILE_CASTLE_GATE_OPEN)) {
+        return;
+    }
     if (tile != TILE_BURIAL_PLATE && tile != TILE_MOUNTAIN_WEAK_BRIDGE && tile != TILE_MOUNTAIN_CACHE &&
         !map_is_coast_tidal_tile(tile) && !map_is_coast_object(tile)) {
         g->map.tiles[y][x] = TILE_ITEM;
@@ -243,6 +248,10 @@ static int enemy_score(EnemyType type) {
 }
 
 static void drop_loot(GameState *g, Enemy *enemy) {
+    if (g->location == LOCATION_CASTLE_INTERIOR) {
+        castle_record_death(g, enemy);
+        return;
+    }
     if (g->location == LOCATION_CATACOMBS && enemy->revived) {
         return;
     }
@@ -303,6 +312,15 @@ static void drop_loot(GameState *g, Enemy *enemy) {
     }
     int gold = 0;
     switch (type) {
+        case ENEMY_OATHBOUND_SOLDIER:
+        case ENEMY_IRON_WARDEN:
+        case ENEMY_ROYAL_MARKSMAN:
+        case ENEMY_COURT_HEXER:
+        case ENEMY_BELL_HERALD:
+        case ENEMY_CASTELLAN:
+        case ENEMY_ROYAL_ARCANIST:
+        case ENEMY_LORD_VEYR:
+            break;
         case ENEMY_ANCIENT_SKELETON: gold = 8 + rand() % 8; break;
         case ENEMY_BONE_SENTINEL: gold = 12 + rand() % 10; break;
         case ENEMY_GRAVE_ARCHER: gold = 10 + rand() % 8; break;
@@ -544,6 +562,7 @@ static int apply_melee_cleave(GameState *g, Enemy *target, int attack, int perce
             damage = 1;
         }
         damage = catacombs_enemy_damage(g, enemy, damage);
+        damage = castle_enemy_damage(g, enemy, damage);
         enemy->hp -= damage;
         combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_NOW, enemy->x, enemy->y, damage);
         hits++;
@@ -787,6 +806,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (castle_has_interaction(g)) {
+        return 1;
+    }
     if (g->location == LOCATION_CATACOMBS) {
         return catacombs_has_interaction(g);
     }
@@ -970,6 +992,9 @@ static void coast_toggle_tide(GameState *g) {
 }
 
 void action_resolve_player(GameState *g, Action a) {
+    if (g->game_won || g->castle_prompt) {
+        return;
+    }
     game_repair_equipment_indices(g);
     if (g->location == LOCATION_TOWN ||
         g->location == LOCATION_TAVERN ||
@@ -981,6 +1006,7 @@ void action_resolve_player(GameState *g, Action a) {
         g->location == LOCATION_CASTLE ||
         g->location == LOCATION_FOREST_ROAD ||
         g->location == LOCATION_INN ||
+        g->location == LOCATION_WORKSHOP ||
         g->location == LOCATION_GUILD ||
         g->location == LOCATION_ISLAND) {
         g->player.poison_turns = 0;
@@ -997,6 +1023,16 @@ void action_resolve_player(GameState *g, Action a) {
         g->player.frozen_turns--;
         g->player.freeze_recovery = 1;
         push_message_kind(g, "You are frozen solid and lose a turn!", MESSAGE_DAMAGE_TAKEN);
+        return;
+    }
+
+    if (g->location == LOCATION_CASTLE_INTERIOR && (a.type == ACTION_ASCEND || a.type == ACTION_DESCEND)) {
+        TileType tile = g->map.tiles[g->player.y][g->player.x];
+        if (a.type == ACTION_DESCEND && tile == TILE_STAIRS_UP) {
+            castle_travel(g, 1);
+        } else if (a.type == ACTION_ASCEND && tile == TILE_STAIRS_DOWN) {
+            castle_travel(g, 0);
+        }
         return;
     }
 
@@ -1053,6 +1089,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (castle_interact(g)) {
+            return;
+        }
         if (catacombs_interact(g)) {
             return;
         }
@@ -1405,7 +1444,7 @@ void action_resolve_player(GameState *g, Action a) {
                 g->location == LOCATION_TOWN4 ||
                 g->location == LOCATION_CASTLE ||
                 g->location == LOCATION_TAVERN ||
-                g->location == LOCATION_INN || g->location == LOCATION_GUILD) {
+                g->location == LOCATION_INN || g->location == LOCATION_WORKSHOP || g->location == LOCATION_GUILD) {
                 push_message(g, "Already in town!");
                 return;
             }
@@ -1542,6 +1581,7 @@ void action_resolve_player(GameState *g, Action a) {
                         int dmg = sp->damage + g->player.level * 2 +
                             spell_power;
                         dmg = catacombs_enemy_damage(g, e, dmg);
+                        dmg = castle_enemy_damage(g, e, dmg);
                         e->hp -= dmg;
                         combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_AFTER_PLAYER_SHOT, e->x, e->y, dmg);
                         char msg[MAX_MESSAGE_LEN];
@@ -1624,6 +1664,7 @@ void action_resolve_player(GameState *g, Action a) {
                 if (dist <= sp->radius) {
                     int dmg = sp->damage + g->player.level * 2 + spell_power;
                     dmg = catacombs_enemy_damage(g, e, dmg);
+                    dmg = castle_enemy_damage(g, e, dmg);
                     e->hp -= dmg;
                     combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_AFTER_PLAYER_SHOT, e->x, e->y, dmg);
                     if (e->hp <= 0) {
@@ -1709,6 +1750,7 @@ void action_resolve_player(GameState *g, Action a) {
                     rand() % 100 < 15;
                 if (critical) dmg = dmg * 3 / 2;
                 dmg = catacombs_enemy_damage(g, e, dmg);
+                dmg = castle_enemy_damage(g, e, dmg);
                 e->hp -= dmg;
                 combat_feedback_add(g, critical ? FEEDBACK_ENEMY_CRITICAL : FEEDBACK_ENEMY_DAMAGE, FEEDBACK_AFTER_PLAYER_SHOT, e->x, e->y, dmg);
                 char msg[MAX_MESSAGE_LEN];
@@ -1807,6 +1849,7 @@ void action_resolve_player(GameState *g, Action a) {
                     dmg = (dmg * 3 + 1) / 2;
                 }
                 dmg = catacombs_enemy_damage(g, e, dmg);
+                dmg = castle_enemy_damage(g, e, dmg);
                 e->hp -= dmg;
                 combat_feedback_add(g, critical ? FEEDBACK_ENEMY_CRITICAL : FEEDBACK_ENEMY_DAMAGE, FEEDBACK_NOW, e->x, e->y, dmg);
                 int cleave_hits = melee_weapon
@@ -1866,6 +1909,14 @@ void action_resolve_player(GameState *g, Action a) {
             }
         }
         // Check for town exit
+        if (g->location == LOCATION_TOWN4 && g->map.tiles[ty][tx] == TILE_WORKSHOP_DOOR) {
+            game_enter_workshop(g);
+            return;
+        }
+        if (g->location == LOCATION_WORKSHOP && g->map.tiles[ty][tx] == TILE_TAVERN_EXIT) {
+            game_leave_workshop(g);
+            return;
+        }
         if (g->location == LOCATION_TOWN3 && g->map.tiles[ty][tx] == TILE_GUILD_DOOR) {
             game_enter_guild(g);
             return;
@@ -1999,7 +2050,7 @@ void action_resolve_player(GameState *g, Action a) {
             } else if (tx == TOWN_W - 1) {
                 game_enter_king_road(g, LOCATION_KING_ROAD_WEST, 1);
             } else {
-                push_message(g, "The Castle of No Return is sealed for now.");
+                castle_request(g, 0);
             }
             return;
         }
@@ -3236,7 +3287,15 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
     if (shots) {
         shots->count = 0;
     }
-    if (g->player.hp <= 0) {
+    if (g->player.hp <= 0 || g->game_won || g->castle_prompt) {
+        return;
+    }
+    if (g->location == LOCATION_CASTLE_INTERIOR) {
+        int damage = castle_tick(g);
+        if (damage > 0) {
+            apply_enemy_damage(g, damage, FEEDBACK_NOW);
+        }
+        game_update_level_progress(g);
         return;
     }
     int burial_damage = catacombs_tick(g);

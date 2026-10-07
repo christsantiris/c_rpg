@@ -122,7 +122,9 @@ typedef enum {
     LOCATION_MOONVEIL,
     LOCATION_ASHEN,
     LOCATION_GLASSDEEP,
-    LOCATION_CATACOMBS
+    LOCATION_CATACOMBS,
+    LOCATION_CASTLE_INTERIOR,
+    LOCATION_WORKSHOP
 } Location;
 
 typedef struct {
@@ -143,6 +145,13 @@ typedef struct {
     LevelCache ashen_cache[ASHEN_DEPTH];
     LevelCache glassdeep_cache[GLASSDEEP_DEPTH];
     LevelCache catacombs_cache[CATACOMBS_DEPTH];
+    LevelCache castle_cache[CASTLE_DEPTH];
+    FloorItem castle_loot[CASTLE_DEPTH][MAX_FLOOR_ITEMS];
+    int castle_loot_count[CASTLE_DEPTH];
+    int castle_seals;
+    int castle_minibosses;
+    int castle_prompt;
+    int game_won;
     CrownroadCache crownroad_cache;
     CrownroadCache kingroad_west_cache;
     LevelCache temple_cache[TEMPLE_DEPTH];
@@ -233,6 +242,7 @@ void game_move_player(GameState *g, int dx, int dy);
 void game_descend(GameState *g);
 void game_ascend(GameState *g);
 void enemies_spawn(GameState *g);
+Enemy *game_spawn_seal_guard(GameState *g, EnemyType type, int x, int y);
 void game_refresh_quest_encounters(GameState *g);
 void game_repair_forest_enemy_positions(Map *m, Enemy *actors, int count, int px, int py);
 void game_enter_dungeon(GameState *g);
@@ -271,6 +281,10 @@ void game_leave_crownroad(GameState *g, Location destination);
 void game_enter_inn(GameState *g);
 void game_leave_inn(GameState *g);
 void game_enter_guild(GameState *g);
+void game_enter_workshop(GameState *g);
+void game_leave_workshop(GameState *g);
+int game_workshop_near_smith(const GameState *g);
+int game_sharpen_weapon(GameState *g, int index);
 void game_leave_guild(GameState *g);
 void game_talk_to_guild_seeker(GameState *g);
 void game_collect_desert_lamp(GameState *g);
