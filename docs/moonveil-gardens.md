@@ -28,3 +28,39 @@ Town opens a portal beside that gate, restoring the original garden stage when
 used. Saves preserve active and cached maps, enemy health, explored terrain,
 portals, and the Regent's defeat. Older testing saves migrate to fresh Moonveil
 progress without resetting existing character, quest, or regional progress.
+
+## The Stolen Moonseed
+
+**Botanist Liora** waits in **Oakhaven's Tavern**. Approach her and press `T` to
+accept the quest. She once cared for Moonveil's gardens, but Fey Tricksters
+stole their last viable Moonseed. She explains the route through the forest
+to Stillbury, across the swamp to Rosemoor, and through Rosemoor's west gate.
+
+| Stage | Objective | Defenders |
+|---|---|---|
+| 2 | Recover the Moonseed from a stolen seed pod | One Fey Trickster and two Giant Moths |
+| 3 | Gather moonwater from a marked spring on a pool's bank | One Carnivorous Flower |
+| 4 | Plant and water an ancient stone circle | Two Thorn Guardians |
+
+Defeat the objective's quest defenders and nearby threats, then press `A` while
+standing on or beside it. Gather the seed and moonwater in either order; both
+are needed to restore the stage 4 circle. The moonwater spring is reachable
+from walkable ground, so you never need to enter its impassable pool. The
+objects use no inventory slots and can be collected with a full inventory.
+
+Planting replaces the tangled circle with an animated Moonflower. Nearby
+growth recedes and blossoms spread over the restored clearing. The flower and
+clearing remain visible when backtracking, returning through portals, or
+visiting again. The Thorn Regent on stage 5 is optional for this quest.
+
+Return to Liora in **Oakhaven's Tavern** for **90 gold and 700 score**, awarded
+once. The journal tracks the seed, moonwater, and planting separately and
+retains all three objectives after collecting the reward.
+
+Acceptance preserves explored gardens, enemy health, boss victories, and
+existing portals. Quest encounters appear when their stages are visited;
+cached encounters preserve damaged or defeated quest defenders. Save version
+**95** records quest state, objective progress, guard encounters, and the
+restored terrain. Older saves gain an unassigned quest without losing existing
+progress. Saves inside the Tavern receive Liora, with any overlapping player
+or loot moved safely beside her.

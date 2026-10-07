@@ -162,6 +162,8 @@
 #define FROSTFELL_SURVIVOR_LEVEL 4
 #define BRENNA_X 10
 #define BRENNA_Y 18
+#define LIORA_X 18
+#define LIORA_Y 18
 #define DESERT_DEPTH 5
 #define MOONVEIL_DEPTH 5
 #define ASHEN_DEPTH 5
@@ -421,7 +423,13 @@ typedef enum {
     TILE_NPC_FROST_SURVIVOR,
     TILE_NPC_ORIN,
     TILE_GLASSDEEP_RESONATOR,
-    TILE_GLASSDEEP_RESONATOR_LIT
+    TILE_GLASSDEEP_RESONATOR_LIT,
+    TILE_NPC_LIORA,
+    TILE_MOONVEIL_SEED_POD,
+    TILE_MOONVEIL_SPRING,
+    TILE_MOONVEIL_PLANTING_CIRCLE,
+    TILE_MOONVEIL_MOONFLOWER,
+    TILE_MOONVEIL_BLOSSOMS
 } TileType;
 
 typedef struct {
@@ -481,6 +489,7 @@ void map_place_town_apothecary(Map *m);
 void map_place_town3_guild(Map *m);
 void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y);
 void map_place_tavern_brenna(Map *m);
+void map_place_tavern_liora(Map *m);
 void map_generate_inn(Map *m, int *spawn_x, int *spawn_y);
 void map_place_inn_elowen(Map *m);
 void map_generate_island(Map *m, int *spawn_x, int *spawn_y);

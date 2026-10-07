@@ -490,6 +490,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         drop_tile == TILE_DESERT_FLOOR ||
         drop_tile == TILE_MOONVEIL_FLOOR ||
         drop_tile == TILE_MOONVEIL_CIRCLE ||
+        drop_tile == TILE_MOONVEIL_BLOSSOMS ||
         drop_tile == TILE_ASHEN_FLOOR ||
         drop_tile == TILE_ASHEN_RUIN ||
         drop_tile == TILE_CATACOMBS_FLOOR ||
@@ -806,6 +807,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (game_has_moonveil_interaction(g)) {
+        return 1;
+    }
     if (game_has_glassdeep_interaction(g)) {
         return 1;
     }
@@ -1099,6 +1103,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (game_interact_moonveil(g)) {
+            return;
+        }
         if (game_interact_glassdeep(g)) {
             return;
         }

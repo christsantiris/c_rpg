@@ -37,6 +37,13 @@ crystal to choose its tone from the inscription. Return to Orin for 120 gold
 and 1,000 score. All three restored objectives remain recorded after turning
 in the quest; the Prism Sovereign is optional.
 
+Liora's **The Stolen Moonseed** appears after talking to her in Oakhaven's
+Tavern. It tracks the Moonseed on Moonveil stage 2, moonwater on stage 3, and
+restoration of the planting circle on stage 4. The seed and water can be
+collected in either order; planting needs both. Return to Liora for 90 gold
+and 700 score. The Thorn Regent is optional, and all three objectives remain
+recorded in the Completed tab after turning in the quest.
+
 The Active tab contains quests in progress and quests ready to turn in. The
 Completed tab retains quests whose rewards have been collected. Each entry
 shows its quest giver, description, target area and stages, objective progress,

@@ -49,6 +49,7 @@ void test_frostfell(void);
 void test_frostfell_quest(void);
 void test_desert(void);
 void test_moonveil(void);
+void test_moonveil_quest(void);
 void test_ashen(void);
 void test_glassdeep(void);
 void test_glassdeep_quest(void);
@@ -141,6 +142,7 @@ int main(void) {
     printf("\n");
     test_desert();
     test_moonveil();
+    test_moonveil_quest();
     test_ashen();
     test_glassdeep();
     test_glassdeep_quest();

@@ -14,7 +14,7 @@ typedef struct {
     const char *reward_item;
 } QuestDefinition;
 
-static const QuestDefinition quest_definitions[12] = {
+static const QuestDefinition quest_definitions[13] = {
     {
         "The Broken Seals", "Elowen",
         "Restore three guarded seals in Oakhaven's dungeon.",
@@ -103,6 +103,13 @@ static const QuestDefinition quest_definitions[12] = {
         "Return to Orin in Rosemoor's Adventurer's Guild.",
         {"Restore Root Resonator", "Restore Tide Resonator", "Restore Crown Resonator"},
         "Glassdeep Caverns", {2, 3, 4}, GLASSDEEP_REWARD_GOLD, GLASSDEEP_REWARD_SCORE
+    },
+    {
+        "The Stolen Moonseed", "Botanist Liora",
+        "Recover the Moonseed, gather moonwater, and plant",
+        "the ancient circle. Return to Oakhaven's Tavern.",
+        {"Recover the Moonseed", "Gather moonwater", "Restore the planting circle"},
+        "Moonveil Gardens", {2, 3, 4}, MOONVEIL_REWARD_GOLD, MOONVEIL_REWARD_SCORE
     }
 };
 
@@ -140,7 +147,10 @@ static int quest_state(const GameState *g, int quest) {
     if (quest == 10) {
         return g->frostfell_quest_state;
     }
-    return g->glassdeep_quest_state;
+    if (quest == 11) {
+        return g->glassdeep_quest_state;
+    }
+    return g->moonveil_quest_state;
 }
 
 static int quest_progress(const GameState *g, int quest) {
@@ -177,7 +187,10 @@ static int quest_progress(const GameState *g, int quest) {
     if (quest == 10) {
         return g->frostfell_quest_progress;
     }
-    return g->glassdeep_quest_progress;
+    if (quest == 11) {
+        return g->glassdeep_quest_progress;
+    }
+    return g->moonveil_quest_progress;
 }
 
 static int quest_in_tab(int state, QuestJournalTab tab) {
@@ -197,7 +210,7 @@ int quest_journal_count(const GameState *g, QuestJournalTab tab) {
         return JOURNAL_BOSS_COUNT;
     }
     int count = 0;
-    for (int quest = 0; quest < 12; quest++) {
+    for (int quest = 0; quest < 13; quest++) {
         if (quest_in_tab(quest_state(g, quest), tab)) {
             count++;
         }
@@ -234,7 +247,7 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
         return 0;
     }
     int visible_index = 0;
-    for (int quest = 0; quest < 12; quest++) {
+    for (int quest = 0; quest < 13; quest++) {
         int state = quest_state(g, quest);
         if (!quest_in_tab(state, tab)) {
             continue;

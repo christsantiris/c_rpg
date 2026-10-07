@@ -638,6 +638,7 @@ static int enemy_terrain_open(const GameState *g, int x, int y) {
         g->map.tiles[y][x] != TILE_DESERT_FLOOR &&
         g->map.tiles[y][x] != TILE_MOONVEIL_FLOOR &&
         g->map.tiles[y][x] != TILE_MOONVEIL_CIRCLE &&
+        g->map.tiles[y][x] != TILE_MOONVEIL_BLOSSOMS &&
         g->map.tiles[y][x] != TILE_ASHEN_FLOOR &&
         g->map.tiles[y][x] != TILE_ASHEN_RUIN &&
         g->map.tiles[y][x] != TILE_CATACOMBS_FLOOR &&
@@ -1383,6 +1384,9 @@ void game_init(GameState *g) {
     g->glassdeep_quest_state = 0;
     g->glassdeep_quest_progress = 0;
     g->glassdeep_quest_encounters = 0;
+    g->moonveil_quest_state = 0;
+    g->moonveil_quest_progress = 0;
+    g->moonveil_quest_encounters = 0;
     for (int i = 0; i < TEMPLE_DEPTH; i++) {
         g->temple_cache[i].valid = 0;
     }
@@ -2495,6 +2499,127 @@ found:
     g->glassdeep_quest_encounters |= bit;
 }
 
+static int moonveil_quest_bit(const GameState *g) {
+    if (g->location != LOCATION_MOONVEIL || g->level < 2 || g->level > 4) {
+        return 0;
+    }
+    return 1 << (g->level - 2);
+}
+
+static const char *moonveil_guard_name(const GameState *g) {
+    static const char *names[3] = {"Moonseed Guardian", "Moonwater Guardian", "Mooncircle Guardian"};
+    return names[g->level - 2];
+}
+
+static void restore_moonveil_clearing(GameState *g, int x, int y) {
+    for (int dy = -2; dy <= 2; dy++) {
+        for (int dx = -2; dx <= 2; dx++) {
+            int tx = x + dx;
+            int ty = y + dy;
+            if ((!dx && !dy) || dx * dx + dy * dy > 5 || tx <= 0 || tx >= SWAMP_MAP_W - 1 || ty <= 0 || ty >= SWAMP_MAP_H - 1) {
+                continue;
+            }
+            TileType tile = quest_object_tile(g, tx, ty);
+            if (tile == TILE_MOONVEIL_FLOOR || tile == TILE_MOONVEIL_CIRCLE || tile == TILE_MOONVEIL_WALL) {
+                set_quest_object_tile(g, tx, ty, TILE_MOONVEIL_BLOSSOMS);
+            }
+        }
+    }
+}
+
+static void place_moonveil_quest_encounter(GameState *g) {
+    int bit = moonveil_quest_bit(g);
+    if (!bit || !g->moonveil_quest_state || !g->map.room_count) {
+        return;
+    }
+    TileType objective = bit == MOONVEIL_SEED_RECOVERED ? TILE_MOONVEIL_SEED_POD :
+        bit == MOONVEIL_WATER_GATHERED ? TILE_MOONVEIL_SPRING : TILE_MOONVEIL_PLANTING_CIRCLE;
+    int x = -1;
+    int y = -1;
+    int cx;
+    int cy;
+    map_room_center(&g->map.rooms[g->map.room_count - 1], &cx, &cy);
+    int best = -2 * (MAP_W + MAP_H);
+    for (int ty = 1; ty < SWAMP_MAP_H - 1; ty++) {
+        for (int tx = 1; tx < SWAMP_MAP_W - 1; tx++) {
+            TileType tile = quest_object_tile(g, tx, ty);
+            if (tile == objective || (bit == MOONVEIL_GARDEN_RESTORED && tile == TILE_MOONVEIL_MOONFLOWER)) {
+                x = tx;
+                y = ty;
+                goto found;
+            }
+            if ((g->map.tiles[ty][tx] != TILE_MOONVEIL_FLOOR && g->map.tiles[ty][tx] != TILE_MOONVEIL_CIRCLE) ||
+                !enemy_tile_open(g, tx, ty) || (g->player.x == tx && g->player.y == ty) ||
+                abs(tx - g->map.stairs_up_x) + abs(ty - g->map.stairs_up_y) < 8 ||
+                (g->portal_active && g->portal_location == g->location && g->portal_level == g->level &&
+                g->portal_x == tx && g->portal_y == ty)) {
+                continue;
+            }
+            int score = -abs(tx - cx) - abs(ty - cy);
+            if (bit == MOONVEIL_WATER_GATHERED) {
+                const int offsets[4][2] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
+                int pool = 0;
+                int hedge = 0;
+                for (int i = 0; i < 4; i++) {
+                    TileType neighbor = g->map.tiles[ty + offsets[i][1]][tx + offsets[i][0]];
+                    pool |= neighbor == TILE_MOONVEIL_POOL;
+                    hedge |= neighbor == TILE_MOONVEIL_WALL;
+                }
+                score += (pool ? 2 : hedge) * (MAP_W + MAP_H);
+            }
+            if (score > best) {
+                best = score;
+                x = tx;
+                y = ty;
+            }
+        }
+    }
+found:
+    if (x < 0) {
+        return;
+    }
+    int complete = g->moonveil_quest_progress & bit;
+    if (bit == MOONVEIL_SEED_RECOVERED && complete) {
+        if (quest_object_tile(g, x, y) == objective) {
+            set_quest_object_tile(g, x, y, TILE_MOONVEIL_FLOOR);
+        }
+        return;
+    }
+    if (bit == MOONVEIL_WATER_GATHERED) {
+        // Expose a spring along the bank without replacing any walking tiles.
+        for (int ty = y - 1; ty <= y + 1; ty++) {
+            for (int tx = x - 1; tx <= x + 1; tx++) {
+                if (g->map.tiles[ty][tx] == TILE_MOONVEIL_WALL) {
+                    g->map.tiles[ty][tx] = TILE_MOONVEIL_POOL;
+                }
+            }
+        }
+    }
+    set_quest_object_tile(g, x, y, bit == MOONVEIL_GARDEN_RESTORED && complete ? TILE_MOONVEIL_MOONFLOWER : objective);
+    if (bit == MOONVEIL_GARDEN_RESTORED && complete) {
+        restore_moonveil_clearing(g, x, y);
+    }
+    if (complete || (g->moonveil_quest_encounters & bit)) {
+        return;
+    }
+    int guards = bit == MOONVEIL_SEED_RECOVERED ? 3 : bit == MOONVEIL_WATER_GATHERED ? 1 : 2;
+    const char *name = moonveil_guard_name(g);
+    int existing = 0;
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (strcmp(g->enemies[i].name, name) == 0) {
+            existing++;
+        }
+    }
+    for (int i = existing; i < guards; i++) {
+        EnemyType type = bit == MOONVEIL_SEED_RECOVERED ? (i == 0 ? ENEMY_FEY_TRICKSTER : ENEMY_GIANT_MOTH) :
+            bit == MOONVEIL_WATER_GATHERED ? ENEMY_LIVING_FLOWER : ENEMY_THORN_GUARDIAN;
+        if (!spawn_quest_guard(g, type, x, y, name)) {
+            return;
+        }
+    }
+    g->moonveil_quest_encounters |= bit;
+}
+
 void game_refresh_quest_encounters(GameState *g) {
     game_reveal_forest_shortcut(g);
     game_reveal_swamp_shortcut(g);
@@ -2511,6 +2636,7 @@ void game_refresh_quest_encounters(GameState *g) {
     place_emberforge_encounter(g);
     place_frostfell_quest_encounter(g);
     place_glassdeep_quest_encounter(g);
+    place_moonveil_quest_encounter(g);
     if (seal_placed) {
         spawn_elowen_guardians(g);
     }
@@ -2615,6 +2741,8 @@ static void generate_active_level(GameState *g) {
     place_frostfell_quest_encounter(g);
     g->glassdeep_quest_encounters &= ~glassdeep_quest_bit(g);
     place_glassdeep_quest_encounter(g);
+    g->moonveil_quest_encounters &= ~moonveil_quest_bit(g);
+    place_moonveil_quest_encounter(g);
     game_update_level_progress(g);
 }
 
@@ -3465,6 +3593,109 @@ int game_interact_emberforge(GameState *g) {
         set_emberforge_tile(g, x, y, TILE_EMBERFORGE_LIT);
         g->emberforge_quest_state = 2;
         push_message(g, "The Emberforge burns again! Return to Steward Hadrin in Ridgeshire Town Hall.");
+    }
+    return 1;
+}
+
+void game_talk_to_liora(GameState *g) {
+    if (g->location != LOCATION_TAVERN || abs(g->player.x - LIORA_X) > 1 || abs(g->player.y - LIORA_Y) > 1) {
+        return;
+    }
+    g->dialogue_active = 1;
+    g->dialogue_x = LIORA_X;
+    g->dialogue_y = LIORA_Y;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Botanist Liora");
+    if (g->moonveil_quest_state == 0) {
+        g->moonveil_quest_state = 1;
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Fey stole Moonveil's last seed. Cross the forest to Stillbury, then the swamp to Rosemoor's west gate. Recover the seed on stage 2, moonwater on 3, and plant the circle on 4. Return here.");
+        push_message(g, "Assigned: The Stolen Moonseed. Restore Moonveil Gardens, then return to Liora in Oakhaven's Tavern.");
+    } else if (g->moonveil_quest_state == 1) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "I once tended Moonveil. Defeat the guards and press A beside the stage 2 seed pod and stage 3 spring, in either order. Plant and water the stage 4 circle, then return here for 90 gold.");
+    } else if (g->moonveil_quest_state == 2) {
+        g->moonveil_quest_state = 3;
+        g->gold += MOONVEIL_REWARD_GOLD;
+        g->score += MOONVEIL_REWARD_SCORE;
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "A Moonflower blooms again! You have given the gardens a future. Take these 90 gold with my thanks.");
+        push_message(g, "Completed: The Stolen Moonseed. 90 gold and 700 score awarded.");
+    } else {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "The Moonflower still shines. One living seed was enough to give the gardens hope.");
+    }
+}
+
+static int moonveil_quest_target(const GameState *g, int *x, int *y) {
+    if (!moonveil_quest_bit(g) || !g->moonveil_quest_state) {
+        return 0;
+    }
+    const int offsets[5][2] = {{0, 0}, {0, -1}, {1, 0}, {0, 1}, {-1, 0}};
+    for (int i = 0; i < 5; i++) {
+        int tx = g->player.x + offsets[i][0];
+        int ty = g->player.y + offsets[i][1];
+        if (tx < 0 || tx >= MAP_W || ty < 0 || ty >= MAP_H) {
+            continue;
+        }
+        TileType tile = quest_object_tile(g, tx, ty);
+        if (tile == TILE_MOONVEIL_SEED_POD || tile == TILE_MOONVEIL_SPRING ||
+            tile == TILE_MOONVEIL_PLANTING_CIRCLE || tile == TILE_MOONVEIL_MOONFLOWER) {
+            *x = tx;
+            *y = ty;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int game_has_moonveil_interaction(const GameState *g) {
+    int x;
+    int y;
+    return moonveil_quest_target(g, &x, &y);
+}
+
+int game_interact_moonveil(GameState *g) {
+    int x;
+    int y;
+    if (!moonveil_quest_target(g, &x, &y)) {
+        return 0;
+    }
+    int bit = moonveil_quest_bit(g);
+    if (g->moonveil_quest_progress & bit) {
+        push_message(g, bit == MOONVEIL_GARDEN_RESTORED ? "The Moonflower shines over the restored clearing." : "You have already gathered enough moonwater.");
+        return 1;
+    }
+    if (bit == MOONVEIL_GARDEN_RESTORED && (g->moonveil_quest_progress & 3) != 3) {
+        push_message(g, "Planting requires the Moonseed from stage 2 and moonwater from the stage 3 spring.");
+        return 1;
+    }
+    if (!(g->moonveil_quest_encounters & bit)) {
+        push_message(g, "The quest defenders must be defeated before restoring the gardens.");
+        return 1;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *enemy = &g->enemies[i];
+        if (enemy->active && (strcmp(enemy->name, moonveil_guard_name(g)) == 0 ||
+            abs(enemy->x - x) + abs(enemy->y - y) <= 4)) {
+            push_message(g, "Defeat this objective's defenders before continuing Liora's quest.");
+            return 1;
+        }
+    }
+    g->moonveil_quest_progress |= bit;
+    if (bit == MOONVEIL_SEED_RECOVERED) {
+        set_quest_object_tile(g, x, y, TILE_MOONVEIL_FLOOR);
+        push_message(g, g->moonveil_quest_progress & MOONVEIL_WATER_GATHERED ?
+            "Moonseed recovered. You have moonwater; plant and water the circle on stage 4." :
+            "Moonseed recovered. Gather moonwater on stage 3, then plant the circle on stage 4.");
+    } else if (bit == MOONVEIL_WATER_GATHERED) {
+        push_message(g, g->moonveil_quest_progress & MOONVEIL_SEED_RECOVERED ?
+            "Moonwater gathered. Plant and water the ancient circle on stage 4." :
+            "Moonwater gathered. Recover the Moonseed on stage 2, then plant the circle on stage 4.");
+    } else {
+        set_quest_object_tile(g, x, y, TILE_MOONVEIL_MOONFLOWER);
+        restore_moonveil_clearing(g, x, y);
+        g->moonveil_quest_state = 2;
+        push_message(g, "The tangled growth recedes and a Moonflower blooms!");
+        push_message(g, "Return to Botanist Liora in Oakhaven's Tavern.");
     }
     return 1;
 }

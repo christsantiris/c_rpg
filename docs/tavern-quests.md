@@ -62,6 +62,21 @@ Return to Orin for **120 gold and 1,000 score**, awarded once. Acceptance
 preserves existing cavern progress, and the Prism Sovereign is optional.
 See [The Broken Resonance](glassdeep-caverns.md#the-broken-resonance).
 
+## Liora: The Stolen Moonseed
+
+Botanist Liora waits in **Oakhaven's Tavern**. Press `T` beside her to accept a
+quest in **Moonveil Gardens**, reached through **Rosemoor's west gate**. She
+explains the route through the forest to Stillbury and across the swamp to
+Rosemoor. Defeat the guards and press `A` beside the seed pod on stage **2**
+and moonwater spring on stage **3**, in either order. With both collected,
+defeat the stage **4** circle's defenders and press `A` to plant and water it.
+A Moonflower blooms and the clearing stays restored on later visits.
+
+Return to Liora for **90 gold and 700 score**, awarded once. Quest objects
+need no inventory slots, acceptance preserves existing garden progress, and
+the Thorn Regent is optional. See
+[The Stolen Moonseed](moonveil-gardens.md#the-stolen-moonseed).
+
 ## Alder: The Lost Wardens
 
 Alder is an aging forest ranger searching for three wardens lost while
