@@ -565,5 +565,4 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
    Give every boss multiple phases, telegraphed signature attacks, an arena mechanic, and a guaranteed thematic reward.
 - Recruit a party to join the adventure
 - Improve difficulty scaling and economy
-- Increase importance of upgrading weapons and spells
-   Warrior and Rogue should struggle at certain levels without better weapons. Mage should struggle without better spells. 
+   Warrior and Rogue should struggle at certain levels without better weapons. Mage should struggle without better spells. Purchasing new weapons, armor and tomes should become necessary to progress.
