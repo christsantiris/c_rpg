@@ -39,7 +39,7 @@ Surviving regular enemies do not block either exit choice.
 
 Victory also permanently unlocks a safe swamp road between the towns. The
 second north gate in Stillbury and separate south gate east of Rosemoor's main
-swamp gate enter this enemy-free road. Both ordinary swamp gates remain open.
+swamp gate enter this enemy-free, one-tile-wide road. Both ordinary swamp gates remain open.
 The Demon does not respawn on later visits or after accepting Bram's quest.
 
 Return to Town returns to the expedition's entry town. Its portal preserves

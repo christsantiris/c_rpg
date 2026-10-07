@@ -1432,9 +1432,7 @@ void map_generate_swamp_road(Map *m) {
         }
     }
     for (int y = 1; y < SWAMP_ROAD_H - 1; y++) {
-        for (int x = SWAMP_ROAD_X - 1; x <= SWAMP_ROAD_X + 1; x++) {
-            m->tiles[y][x] = TILE_SWAMP_FLOOR;
-        }
+        m->tiles[y][SWAMP_ROAD_X] = TILE_SWAMP_FLOOR;
     }
     m->stairs_up_x = SWAMP_ROAD_X;
     m->stairs_up_y = SWAMP_ROAD_H - 1;
@@ -1621,14 +1619,8 @@ void map_generate_high_pass(Map *m) {
             m->tiles[y][x] = TILE_DRAGON_WALL;
         }
     }
-    int previous_x = HIGH_PASS_X;
     for (int y = 1; y < HIGH_PASS_H - 1; y++) {
-        int path_x = HIGH_PASS_X - ((y / 12) % 2);
-        for (int x = path_x - 2; x <= path_x + 2; x++) {
-            m->tiles[y][x] = TILE_DRAGON_FLOOR;
-        }
-        m->tiles[y][previous_x] = TILE_DRAGON_FLOOR;
-        previous_x = path_x;
+        m->tiles[y][HIGH_PASS_X] = TILE_DRAGON_FLOOR;
     }
     m->stairs_up_x = HIGH_PASS_X;
     m->stairs_up_y = HIGH_PASS_H - 1;

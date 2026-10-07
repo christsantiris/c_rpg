@@ -153,7 +153,6 @@ typedef struct {
     LevelCache castle_cache[CASTLE_DEPTH];
     FloorItem castle_loot[CASTLE_DEPTH][MAX_FLOOR_ITEMS];
     int castle_loot_count[CASTLE_DEPTH];
-    int castle_seals;
     int castle_minibosses;
     int castle_prompt;
     int game_won;
@@ -250,7 +249,6 @@ void game_move_player(GameState *g, int dx, int dy);
 void game_descend(GameState *g);
 void game_ascend(GameState *g);
 void enemies_spawn(GameState *g);
-Enemy *game_spawn_seal_guard(GameState *g, EnemyType type, int x, int y);
 void game_refresh_quest_encounters(GameState *g);
 void game_repair_forest_enemy_positions(Map *m, Enemy *actors, int count, int px, int py);
 void game_enter_dungeon(GameState *g);

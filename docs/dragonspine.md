@@ -8,7 +8,7 @@ enters Dragonspine directly. Leaving Dragonspine's first stage, completing its
 summit, or casting Return to Town brings you back beside this gate in Ridgeshire.
 The return portal also appears there.
 
-Ridgeshire's separate south shortcut gate leads into the enemy-free High Pass. Walk south to reach
+Ridgeshire's separate south shortcut gate leads into the enemy-free, one-tile-wide High Pass. Walk south to reach
 OakHaven's northeast shortcut, or north from OakHaven to revisit Ridgeshire without
 crossing the Goblin Mountains. A matching stone gate marks the Ridgeshire end of
 the shortcut, which opens after the Goblin King falls.

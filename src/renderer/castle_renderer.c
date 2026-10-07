@@ -122,10 +122,6 @@ void castle_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, in
         for (int by = 9; by < 21; by += 4) {
             rect(r, px + 5, py + by, 7, 1, (SDL_Color){125, 70, 51, 255});
         }
-    } else if (tile == TILE_CASTLE_SEAL) {
-        rect(r, px + 5, py + 4, 14, 16, (SDL_Color){158, 111, 51, 255});
-        rect(r, px + 7, py + 6, 10, 12, (SDL_Color){242, 199, 96, 255});
-        rect(r, px + 10, py + 8, 4, 8, (SDL_Color){101, 51, 137, 255});
     } else if (tile == TILE_CASTLE_PASSAGE) {
         rect(r, px + 4, py + 3, 16, 20, (SDL_Color){151, 124, 77, 255});
         rect(r, px + 6, py + 5, 12, 18, (SDL_Color){15, 28, 26, 255});

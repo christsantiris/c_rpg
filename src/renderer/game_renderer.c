@@ -1104,9 +1104,7 @@ static void draw_floor_loot(Renderer *r, const GameState *g, int map_x, int map_
 
 static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int map_x, int map_y, int screen_x, int screen_y) {
     TileType underlay = floor_item_underlay(g, map_x, map_y);
-    if (underlay == TILE_CASTLE_SEAL) {
-        castle_draw_tile(r, g, screen_x, screen_y, map_x, map_y, underlay);
-    } else if (underlay == TILE_EMBERFORGE_MECHANISM || underlay == TILE_EMBERFORGE_COLD || underlay == TILE_EMBERFORGE_LIT) {
+    if (underlay == TILE_EMBERFORGE_MECHANISM || underlay == TILE_EMBERFORGE_COLD || underlay == TILE_EMBERFORGE_LIT) {
         draw_emberforge_tile(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay == TILE_TRAP_HIDDEN && g->location == LOCATION_FOREST) {
         draw_forest_floor(r, screen_x, screen_y, map_x, map_y);
@@ -1586,9 +1584,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 continue;
             }
             switch (terrain_display_tile(g, g->map.tiles[y][x])) {
-                case TILE_CASTLE_SEAL:
-                    castle_draw_tile(r, g, sx, sy, x, y, TILE_CASTLE_SEAL);
-                    break;
                 case TILE_FLOOR:
                     if (g->location == LOCATION_DUNGEON) {
                         draw_dungeon_floor(r, sx, sy, x, y);
