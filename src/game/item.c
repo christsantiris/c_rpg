@@ -357,26 +357,12 @@ Item item_make_cryptblade(void) {
     it.active = 1;
     it.type = ITEM_WEAPON;
     strncpy(it.name, "Cryptblade", sizeof(it.name) - 1);
-    it.attack_bonus = 8;
+    it.attack_bonus = 5;
     it.value = 350;
     it.critical_chance_bonus = 10;
     set_weapon_metadata(&it, WEAPON_FAMILY_SWORD, WEAPON_HANDS_ONE,
         ITEM_RARITY_UNCOMMON, ITEM_CLASS_WARRIOR,
         ITEM_VISUAL_MAGIC_LONG_SWORD);
-    return it;
-}
-
-Item item_make_goblin_king_greatsword(void) {
-    Item it = {0};
-    it.active = 1;
-    it.type = ITEM_WEAPON;
-    strncpy(it.name, "Goblin King's Greatsword", sizeof(it.name) - 1);
-    it.attack_bonus = 13;
-    it.value = 500;
-    it.cleave_percent = 55;
-    set_weapon_metadata(&it, WEAPON_FAMILY_SWORD, WEAPON_HANDS_TWO,
-        ITEM_RARITY_RARE, ITEM_CLASS_WARRIOR,
-        ITEM_VISUAL_GREATSWORD);
     return it;
 }
 
@@ -423,8 +409,6 @@ void item_apply_legacy_metadata(Item *item) {
         definition = item_make_magic_greatsword();
     } else if (strcmp(item->name, "Cryptblade") == 0) {
         definition = item_make_cryptblade();
-    } else if (strcmp(item->name, "Goblin King's Greatsword") == 0) {
-        definition = item_make_goblin_king_greatsword();
     } else {
         set_weapon_metadata(item, WEAPON_FAMILY_NONE, WEAPON_HANDS_ONE,
             ITEM_RARITY_COMMON, ITEM_CLASS_ALL, ITEM_VISUAL_WEAPON_GENERIC);

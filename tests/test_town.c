@@ -272,7 +272,7 @@ void test_town_healer(void) {
         g.map.tiles[TOWN_WITCH_DOOR_Y][TOWN_WITCH_DOOR_X] == TILE_WITCH_DOOR);
 
     ShopScreen shop;
-    shop_init(&shop, SHOP_TYPE_HEALER, 0);
+    shop_init(&shop, SHOP_TYPE_HEALER, 0, g.player.player_class);
     ASSERT("healer sells only health potions at the usual price",
         shop.item_count == 1 && shop.items[0].type == ITEM_POTION_HEALTH &&
         shop_buy_price(&shop.items[0]) == 20 &&
@@ -291,7 +291,7 @@ void test_town_healer(void) {
         g.gold == 0 && g.player.hp == g.player.max_hp &&
         g.player.mp == g.player.max_mp);
 
-    shop_init(&shop, SHOP_TYPE_WITCH, 0);
+    shop_init(&shop, SHOP_TYPE_WITCH, 0, g.player.player_class);
     ASSERT("witch sells only mana potions at the usual price",
         shop.item_count == 1 && shop.items[0].type == ITEM_POTION_MANA &&
         shop_buy_price(&shop.items[0]) == 20 &&
@@ -305,7 +305,7 @@ void test_town_healer(void) {
         g.gold == 0 && g.player.mp == g.player.max_mp &&
         g.player.hp == g.player.max_hp);
 
-    shop_init(&shop, SHOP_TYPE_ALCHEMIST, 0);
+    shop_init(&shop, SHOP_TYPE_ALCHEMIST, 0, g.player.player_class);
     ASSERT("alchemist still sells and buys both potion types",
         shop.item_count >= 2 &&
         shop.items[0].type == ITEM_POTION_HEALTH &&
