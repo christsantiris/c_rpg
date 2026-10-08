@@ -937,7 +937,7 @@ static int quest_group_pending(const GameState *g) {
     if (g->location == LOCATION_FOREST && g->alder_quest_state == 1) {
         int bit = g->level == 1 ? ALDER_WARDEN_STAGE_1 :
             (g->level == 2 ? ALDER_WARDEN_STAGE_2 :
-            (g->level == 3 ? ALDER_WARDEN_STAGE_3 : 0));
+            (g->level == 5 ? ALDER_WARDEN_STAGE_5 : 0));
         if (!bit) {
             return 0;
         }
@@ -1869,8 +1869,8 @@ static int alder_warden_bit(int level) {
         return ALDER_WARDEN_STAGE_1;
     } else if (level == 2) {
         return ALDER_WARDEN_STAGE_2;
-    } else if (level == 3) {
-        return ALDER_WARDEN_STAGE_3;
+    } else if (level == 5) {
+        return ALDER_WARDEN_STAGE_5;
     }
     return 0;
 }
@@ -1932,7 +1932,7 @@ static void spawn_alder_guardian(GameState *g) {
     } else if (g->level == 2) {
         primary = ENEMY_DARK_ELF;
         support = ENEMY_PIXIE;
-    } else if (g->level == 3) {
+    } else if (g->level == 5) {
         primary = ENEMY_FOREST_TROLL;
         support = ENEMY_BLIGHTED_WOLF;
     } else {
@@ -5492,7 +5492,7 @@ void game_talk_to_alder(GameState *g) {
         g->alder_wardens_rescued = 0;
         prepare_quest_expedition(g, LOCATION_FOREST);
         strncpy(g->dialogue_text,
-            "My wardens are trapped on forest stages 1, 2, and 3, between Oakhaven and the Necromancer. Defeat their captors, rescue them, and return to me here in Stillbury's Inn.",
+            "Two wardens are trapped on forest stages 1 and 2 near Oakhaven; the third is on stage 5 near Stillbury, across the Necromancer's grove. Rescue them, then return here to Stillbury's Inn.",
             MAX_DIALOGUE_LEN - 1);
         g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
         push_message(g, "Assigned: The Lost Wardens.");
@@ -5506,7 +5506,7 @@ void game_talk_to_alder(GameState *g) {
             }
         }
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "You have rescued %d of my 3 wardens. Search forest stages 1, 2, and 3 on the OakHaven side of the Necromancer.",
+            "You have rescued %d of my 3 wardens. Search stages 1 and 2 near Oakhaven, and stage 5 near Stillbury. The stage-4 grove shortcut skips unfinished rescues on the far side.",
             rescued);
         char status[MAX_MESSAGE_LEN];
         snprintf(status, sizeof(status), "Quest progress: %d/3 wardens.",

@@ -14,7 +14,9 @@ Hall**. Its Map Bearers remain on mountain stages 1, 2, and 3 on the Oakhaven
 side. Return to him in the Guild for 60 gold and 400 score.
 
 Alder assigns **The Lost Wardens** in **Stillbury's Inn**. Return to him there
-after rescuing all three forest wardens for 70 gold and 500 score once.
+after rescuing all three forest wardens for 70 gold and 500 score once. Two
+objectives are on stages 1 and 2 near Oakhaven, and one is on stage 5 near
+Stillbury, across the stage-4 Necromancer.
 
 Mara assigns **Relight the Drowned Beacons** in **Ridgeshire's Town Hall**.
 The beacons remain on Sunken Coast stages 2, 3, and 4. Return to her in the

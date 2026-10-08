@@ -90,9 +90,10 @@ the Thorn Regent is optional. See
 Alder waits in **Stillbury's Inn**; press `T` beside him to accept the quest.
 He is an aging forest ranger searching for three wardens lost while
 investigating the Necromancer's influence. The wardens appear in guarded
-groves on Forest stages 1, 2, and 3, before the Necromancer when entering from
-OakHaven. From Stillbury, cross the boss grove first, then find them on stages
-3, 2, and 1. Taking the grove shortcut skips those quest stages. Approach a
+groves on Forest stages **1 and 2 near Oakhaven** and **5 near Stillbury**.
+From Oakhaven, find two wardens before the Necromancer and one after him.
+From Stillbury, find the stage-5 warden first, then stages 2 and 1 after crossing
+the boss grove. Taking the grove shortcut skips unfinished rescues on the far side. Approach a
 trapped warden and press `T` to free them. Rescuing a warden does not require
 clearing the entire stage.
 

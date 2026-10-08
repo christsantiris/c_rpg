@@ -33,7 +33,7 @@ void test_quest_journal(void) {
     ASSERT("completed tab retains turned-in quests",
         quest_journal_get_entry(&g, QUEST_TAB_COMPLETED, 0, &entry) &&
         entry.state == 3 && strcmp(entry.giver, "Alder") == 0);
-    ASSERT("Alder's journal points to the OakHaven approach", entry.stages[0] == 1 && entry.stages[1] == 2 && entry.stages[2] == 3);
+    ASSERT("Alder's journal places objectives on both sides of the central grove", entry.stages[0] == 1 && entry.stages[1] == 2 && entry.stages[2] == 5);
     g.rook_quest_state = 1;
     ASSERT("Rook's labyrinth retrieval appears as an active quest",
         quest_journal_count(&g, QUEST_TAB_ACTIVE) == 3 &&

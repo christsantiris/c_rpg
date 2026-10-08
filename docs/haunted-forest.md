@@ -66,20 +66,25 @@ subsequently entered from the other town.
 Speak to Alder with `T` in **Stillbury's Inn** to accept **The Lost Wardens**.
 Return to him there for 70 gold and 500 score once all three wardens are rescued.
 The quest places captives in guarded groves on stages
-1, 2, and 3 on the OakHaven side of the Necromancer. Entering from Stillbury
-encounters them on stages 3, 2, and 1 after crossing the boss grove. Their
+**1 and 2 near Oakhaven** and **5 near Stillbury**, across the stage-4 Necromancer.
+Entering from Stillbury encounters the stage-5 warden first, then stages 2 and
+1 after crossing the boss grove. Their
 hunting parties are led by a Giant Spider, Dark Elf, and
 Forest Troll. Defeat or evade the guards, then stand beside a warden and press
 `T` to rescue them. A full stage clear is never required. Accepting the quest
 starts a fresh forest expedition, while a previously defeated Necromancer
 remains dead and unlocked shortcuts stay open.
-Taking the grove shortcut from Stillbury skips the warden stages; enter the
-ordinary forest gate from OakHaven to finish those rescues later.
+Taking the grove shortcut skips unfinished rescues on the far side from either
+direction. Keep fighting through the remaining stages or use the destination
+town's ordinary forest gate to finish those rescues later.
 
 ## Save Compatibility
 
 Older saves migrate automatically when loaded. The old final boss stage moves
 to stage 4, and saved maps and portal destinations move with the route. Warden
-placements update to stages 1, 2, and 3 while retaining rescue progress. Character
+placements update to stages 1, 2, and 5 while retaining rescue progress. Version
+99 removes the old stage-3 captive without resetting explored maps, enemy
+damage, loot, or portal coordinates. A previously completed third rescue still
+counts; an unfinished third rescue appears on stage 5 when visited. Character
 progress, boss victories, and shortcut unlocks remain intact. Saving writes the
 current format, including the expedition's entry town and portal anchor.
