@@ -471,29 +471,7 @@ and sell modes are switched with `Tab`.
 
 Below are screenshots of the game in action:
 
-<img width="2554" height="1428" alt="image" src="https://github.com/user-attachments/assets/2608e154-f4db-48a3-afa9-59fc8775f54f" />
-
-<img width="2554" height="1428" alt="image" src="https://github.com/user-attachments/assets/5dcf54c0-0f35-4a1d-b0db-e788f0214a62" />
-
-<img width="2548" height="1428" alt="image" src="https://github.com/user-attachments/assets/b789ff2d-a9d1-4138-97a8-c8fd152c06c9" />
-
-<img width="2554" height="1434" alt="image" src="https://github.com/user-attachments/assets/2ee519e4-2a53-4cb3-9596-242298ddbba0" />
-
-<img width="2550" height="1434" alt="image" src="https://github.com/user-attachments/assets/6e198c44-2add-4212-b7c7-7aadf8ba9180" />
-
-<img width="3834" height="2138" alt="image" src="https://github.com/user-attachments/assets/59a939ed-29a8-4ea2-aa6c-dffabce33bae" />
-
-<img width="2554" height="1444" alt="image" src="https://github.com/user-attachments/assets/3a55d05f-0c2a-4d6e-b735-c8af4b2c9050" />
-
-<img width="4616" height="2580" alt="image" src="https://github.com/user-attachments/assets/4b6fdb08-713e-451b-bc3e-13b4ba9f3d12" />
-
-<img width="3836" height="2156" alt="image" src="https://github.com/user-attachments/assets/4d8ce9ce-f7c4-4be0-926a-8407eaf2f95c" />
-
-<img width="3842" height="2134" alt="image" src="https://github.com/user-attachments/assets/d5cfe0da-4660-410c-8221-d8b621f4bed3" />
-
-<img width="3842" height="2134" alt="image" src="https://github.com/user-attachments/assets/5fb19eb3-b565-49c8-b089-b58688d4d13c" />
-
-<img width="2540" height="1432" alt="image" src="https://github.com/user-attachments/assets/529379b1-1317-4510-b5e3-d0f9440952b5" />
+<img width="2552" height="1434" alt="image" src="https://github.com/user-attachments/assets/90d05a5a-e6f2-40f3-99d8-0efe8705f952" />
 
 ## Building and Running
 
