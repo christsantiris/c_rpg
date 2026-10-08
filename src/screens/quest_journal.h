@@ -27,10 +27,10 @@ typedef struct {
     const char *giver;
     const char *summary_line_1;
     const char *summary_line_2;
-    const char *objectives[3];
+    const char *objectives[4];
     const char *area;
-    int stages[3];
-    int objective_complete[3];
+    int stages[4];
+    int objective_complete[4];
     int objective_count;
     int reward_gold;
     int reward_score;

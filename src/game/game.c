@@ -1387,6 +1387,9 @@ void game_init(GameState *g) {
     g->moonveil_quest_state = 0;
     g->moonveil_quest_progress = 0;
     g->moonveil_quest_encounters = 0;
+    g->catacombs_quest_state = 0;
+    g->catacombs_quest_progress = 0;
+    g->catacombs_quest_encounters = 0;
     for (int i = 0; i < TEMPLE_DEPTH; i++) {
         g->temple_cache[i].valid = 0;
     }
@@ -2300,8 +2303,9 @@ static void set_quest_object_tile(GameState *g, int x, int y, TileType tile) {
 
 static int spawn_quest_guard(GameState *g, EnemyType type, int cx, int cy, const char *name) {
     int slot = g->enemy_count;
+    // Catacomb corpses may still revive; adding guards must preserve their slots.
     for (int i = 0; i < g->enemy_count; i++) {
-        if (!g->enemies[i].active && strcmp(g->enemies[i].name, name) != 0) {
+        if (g->location != LOCATION_CATACOMBS && !g->enemies[i].active && strcmp(g->enemies[i].name, name) != 0) {
             slot = i;
             break;
         }
@@ -2620,6 +2624,38 @@ found:
     g->moonveil_quest_encounters |= bit;
 }
 
+static void place_catacombs_quest_encounter(GameState *g) {
+    catacombs_refresh_quest(g);
+    if (g->location != LOCATION_CATACOMBS || g->catacombs_quest_state != 1 ||
+        g->level < 2 || g->level > 4 || g->map.room_count <= CATACOMBS_MEMORIAL_ROOM) {
+        return;
+    }
+    int bit = 1 << (g->level - 2);
+    if ((g->catacombs_quest_progress | g->catacombs_quest_encounters) & bit) {
+        return;
+    }
+    static const EnemyType types[3][2] = {
+        {ENEMY_ANCIENT_SKELETON, ENEMY_BONE_SENTINEL},
+        {ENEMY_GRAVE_ARCHER, ENEMY_WRAITH},
+        {ENEMY_BONE_CANTOR, ENEMY_ANCIENT_SKELETON}
+    };
+    static const char *names[3] = {"Soldiers' Memorial Guard", "Watchers' Memorial Guard", "Choir Memorial Guard"};
+    const char *name = names[g->level - 2];
+    int existing = 0;
+    for (int i = 0; i < g->enemy_count; i++) {
+        existing += strcmp(g->enemies[i].name, name) == 0;
+    }
+    int x;
+    int y;
+    map_room_center(&g->map.rooms[CATACOMBS_MEMORIAL_ROOM], &x, &y);
+    for (int i = existing; i < 2; i++) {
+        if (!spawn_quest_guard(g, types[g->level - 2][i], x, y, name)) {
+            return;
+        }
+    }
+    g->catacombs_quest_encounters |= bit;
+}
+
 void game_refresh_quest_encounters(GameState *g) {
     game_reveal_forest_shortcut(g);
     game_reveal_swamp_shortcut(g);
@@ -2637,6 +2673,7 @@ void game_refresh_quest_encounters(GameState *g) {
     place_frostfell_quest_encounter(g);
     place_glassdeep_quest_encounter(g);
     place_moonveil_quest_encounter(g);
+    place_catacombs_quest_encounter(g);
     if (seal_placed) {
         spawn_elowen_guardians(g);
     }
@@ -2743,6 +2780,10 @@ static void generate_active_level(GameState *g) {
     place_glassdeep_quest_encounter(g);
     g->moonveil_quest_encounters &= ~moonveil_quest_bit(g);
     place_moonveil_quest_encounter(g);
+    if (g->location == LOCATION_CATACOMBS && g->level >= 2 && g->level <= 4) {
+        g->catacombs_quest_encounters &= ~(1 << (g->level - 2));
+    }
+    place_catacombs_quest_encounter(g);
     game_update_level_progress(g);
 }
 
@@ -3479,7 +3520,7 @@ void game_enter_town_hall(GameState *g) {
     g->enemy_count = 0;
     g->floor_item_count = 0;
     g->dialogue_active = 0;
-    push_message(g, "Ridgeshire Town Hall. Press T beside Steward Hadrin or Mara to talk.");
+    push_message(g, "Ridgeshire Town Hall. Press T beside an NPC to talk.");
 }
 
 void game_leave_town_hall(GameState *g) {

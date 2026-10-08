@@ -303,6 +303,17 @@ for every class with +6 defense and +20 maximum health. Return to Town opens
 a portal in Rosemoor. Save migration preserves existing progress and adds
 the new area. See [Royal Catacombs](docs/catacombs.md).
 
+**Brother Oswin** offers **Rest for the Forgotten** in **Ridgeshire's Town
+Hall**. Press **T** beside him, then follow Crown Road West from Ridgeshire's
+west gate to the castle grounds and take the south gate. Extinguish the marked
+Soldiers', Watchers', and Choir memorial braziers on **Catacombs floors 2, 3,
+and 4** with **A**, then defeat the Grave Marshal and recover the burial ledger
+on **floor 5**. Braziers can be silenced while guards live, preventing
+resurrection. Return to Oswin for **150 gold and 1,500 score**, awarded once.
+Already extinguished memorials and previous boss victories count; acceptance
+preserves exploration and portals. Quest objects use no inventory space.
+The quest is optional and does not gate castle entry or victory.
+
 ### Harbor and Ruined Isle
 
 Captain Rowan waits near the harbor and describes the island before it is
