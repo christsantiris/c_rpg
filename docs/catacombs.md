@@ -109,4 +109,43 @@ the final floor; collecting it ends that restoration.
 Save format **83** stores all catacomb progression, pending attacks, revival
 state, trap mechanisms, and the unclaimed reward. Older saves receive a fresh
 catacomb cache and the castle south exit without losing existing character,
-quest, equipment, or regional progress. This pass adds no regional quest.
+quest, equipment, or regional progress.
+
+## Rest for the Forgotten
+
+**Brother Oswin**, a royal archivist in **Ridgeshire's Town Hall**, assigns
+this optional quest when spoken to with **T**. He wants the royal dead's names
+returned to their families and their disturbed graves put to rest. Take
+Ridgeshire's west gate along **Crown Road West**, then enter the Catacombs
+through the castle grounds' south gate.
+
+| Floor | Objective | Additional defenders |
+|---|---|---|
+| 2 | Silence the Soldiers' memorial | Ancient Skeleton and Bone Sentinel |
+| 3 | Silence the Watchers' memorial | Grave Archer and Wraith |
+| 4 | Silence the Choir memorial | Bone Cantor and Ancient Skeleton |
+| 5 | Recover the royal burial ledger | Existing Grave Marshal boss |
+
+Each memorial is a marked blue brazier with an ivory plaque and name label.
+Stand directly beside it and press **A**. Guards do not need to be defeated
+first: silencing the flame prevents the chamber's resurrection magic and
+cancels pending revivals. The brazier remains visibly cold. Other ossuary
+braziers still work normally and do not count as quest objectives.
+
+The ledger rests on a plinth in floor 5's royal tomb. Its seal remains locked
+while the Grave Marshal lives. After victory, stand directly beside it and
+press **A** to recover it. Memorials can be silenced in any order, and the
+ledger can be collected before finishing the memorials. No quest object uses
+an inventory slot. The existing Gravekeeper's Mantle reward is unchanged.
+
+Return to Oswin for **150 gold and 1,500 score**, awarded once. The journal
+tracks all four objectives separately and retains them in its Completed tab.
+The quest never gates castle entry or victory.
+
+Accepting preserves existing caches, portals, enemy damage, deaths, revival
+allowances, and traps. Memorial braziers already extinguished before accepting
+receive credit; their defenders are not added again. A previous Grave Marshal
+victory unlocks the ledger without a second fight. Save version **97** stores
+quest state, completed objectives, and encounter placement. Older saves gain
+an unassigned quest and Oswin in the Town Hall without losing existing progress;
+players or loot occupying his new position move safely beside him.

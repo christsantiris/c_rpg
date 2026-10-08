@@ -988,6 +988,9 @@ int main(int argc, char **argv) {
                                         } else if (game.map.tiles[ty][tx] == TILE_NPC_LIORA) {
                                             game_talk_to_liora(&game);
                                             found = 1;
+                                        } else if (game.map.tiles[ty][tx] == TILE_NPC_OSWIN) {
+                                            game_talk_to_oswin(&game);
+                                            found = 1;
                                         } else if (game.map.tiles[ty][tx] == TILE_NPC_ORIN) {
                                             game_talk_to_orin(&game);
                                             found = 1;

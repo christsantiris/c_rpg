@@ -89,10 +89,15 @@ void quest_journal_draw(Renderer *r, const GameState *g, const QuestJournalScree
             r->font_small);
     }
 
-    for (int index = 0; index < count; index++) {
+    int visible = (height - 35) / 42;
+    if (visible < 1) {
+        visible = 1;
+    }
+    int first = screen->selected >= visible ? screen->selected - visible + 1 : 0;
+    for (int index = first; index < count && index < first + visible; index++) {
         QuestJournalEntry entry;
         quest_journal_get_entry(g, screen->tab, index, &entry);
-        int y = top + 25 + index * 42;
+        int y = top + 25 + (index - first) * 42;
         if (index == screen->selected) {
             renderer_draw_text(r, ">", margin + 12, y, gold,
                 r->font_small);

@@ -248,6 +248,9 @@ typedef struct {
     int moonveil_quest_state;
     int moonveil_quest_progress;
     int moonveil_quest_encounters;
+    int catacombs_quest_state;
+    int catacombs_quest_progress;
+    int catacombs_quest_encounters;
     int temple_alignment;
     int temple_sentinels_awakened;
     int temple_treasure_state;
@@ -369,6 +372,7 @@ void game_record_dain_kill(GameState *g, EnemyType type);
 void game_talk_to_alder(GameState *g);
 void game_rescue_forest_warden(GameState *g, int x, int y);
 void game_talk_to_mara(GameState *g);
+void game_talk_to_oswin(GameState *g);
 void game_talk_to_rook(GameState *g);
 void game_talk_to_cain(GameState *g);
 void game_talk_to_rowan(GameState *g);

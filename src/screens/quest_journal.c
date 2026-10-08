@@ -1,20 +1,21 @@
 #include "quest_journal.h"
 #include <SDL2/SDL.h>
+#include "../game/catacombs.h"
 
 typedef struct {
     const char *title;
     const char *giver;
     const char *summary_line_1;
     const char *summary_line_2;
-    const char *objectives[3];
+    const char *objectives[4];
     const char *area;
-    int stages[3];
+    int stages[4];
     int reward_gold;
     int reward_score;
     const char *reward_item;
 } QuestDefinition;
 
-static const QuestDefinition quest_definitions[13] = {
+static const QuestDefinition quest_definitions[14] = {
     {
         "The Broken Seals", "Elowen",
         "Restore three guarded seals in Oakhaven's dungeon.",
@@ -110,6 +111,13 @@ static const QuestDefinition quest_definitions[13] = {
         "the ancient circle. Return to Oakhaven's Tavern.",
         {"Recover the Moonseed", "Gather moonwater", "Restore the planting circle"},
         "Moonveil Gardens", {2, 3, 4}, MOONVEIL_REWARD_GOLD, MOONVEIL_REWARD_SCORE
+    },
+    {
+        "Rest for the Forgotten", "Brother Oswin",
+        "Silence three memorials and recover the royal ledger.",
+        "Return to Oswin in Ridgeshire's Town Hall.",
+        {"Silence Soldiers' memorial", "Silence Watchers' memorial", "Silence Choir memorial", "Recover the burial ledger"},
+        "Royal Catacombs", {2, 3, 4, 5}, CATACOMBS_REWARD_GOLD, CATACOMBS_REWARD_SCORE
     }
 };
 
@@ -150,7 +158,10 @@ static int quest_state(const GameState *g, int quest) {
     if (quest == 11) {
         return g->glassdeep_quest_state;
     }
-    return g->moonveil_quest_state;
+    if (quest == 12) {
+        return g->moonveil_quest_state;
+    }
+    return g->catacombs_quest_state;
 }
 
 static int quest_progress(const GameState *g, int quest) {
@@ -190,7 +201,10 @@ static int quest_progress(const GameState *g, int quest) {
     if (quest == 11) {
         return g->glassdeep_quest_progress;
     }
-    return g->moonveil_quest_progress;
+    if (quest == 12) {
+        return g->moonveil_quest_progress;
+    }
+    return g->catacombs_quest_progress;
 }
 
 static int quest_in_tab(int state, QuestJournalTab tab) {
@@ -210,7 +224,7 @@ int quest_journal_count(const GameState *g, QuestJournalTab tab) {
         return JOURNAL_BOSS_COUNT;
     }
     int count = 0;
-    for (int quest = 0; quest < 13; quest++) {
+    for (int quest = 0; quest < 14; quest++) {
         if (quest_in_tab(quest_state(g, quest), tab)) {
             count++;
         }
@@ -247,7 +261,7 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
         return 0;
     }
     int visible_index = 0;
-    for (int quest = 0; quest < 13; quest++) {
+    for (int quest = 0; quest < 14; quest++) {
         int state = quest_state(g, quest);
         if (!quest_in_tab(state, tab)) {
             continue;
@@ -262,12 +276,12 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
         entry->summary_line_1 = definition->summary_line_1;
         entry->summary_line_2 = definition->summary_line_2;
         entry->area = definition->area;
-        entry->objective_count = definition->stages[2] ? 3 : definition->stages[1] ? 2 : 1;
+        entry->objective_count = definition->stages[3] ? 4 : definition->stages[2] ? 3 : definition->stages[1] ? 2 : 1;
         entry->reward_gold = definition->reward_gold;
         entry->reward_score = definition->reward_score;
         entry->reward_item = definition->reward_item;
         entry->state = state;
-        for (int objective = 0; objective < 3; objective++) {
+        for (int objective = 0; objective < 4; objective++) {
             entry->objectives[objective] =
                 definition->objectives[objective];
             entry->stages[objective] = definition->stages[objective];

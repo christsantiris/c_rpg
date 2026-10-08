@@ -28,6 +28,32 @@ static SDL_Color area_label_color(Location area) {
     }
 }
 
+static void draw_oswin(Renderer *r, int sx, int sy) {
+    draw_tavern_floor(r, sx, sy);
+    int px = sx * TILE_SIZE;
+    int py = sy * TILE_SIZE;
+    SDL_SetRenderDrawColor(r->sdl, 89, 85, 103, 255);
+    SDL_Rect hood = {px + 6, py + 3, 13, 12};
+    SDL_Rect robe = {px + 5, py + 13, 15, 11};
+    SDL_RenderFillRect(r->sdl, &hood);
+    SDL_RenderFillRect(r->sdl, &robe);
+    SDL_SetRenderDrawColor(r->sdl, 208, 168, 137, 255);
+    SDL_Rect face = {px + 9, py + 6, 7, 7};
+    SDL_RenderFillRect(r->sdl, &face);
+    SDL_SetRenderDrawColor(r->sdl, 224, 216, 186, 255);
+    SDL_RenderDrawLine(r->sdl, px + 10, py + 14, px + 10, py + 22);
+    SDL_RenderDrawLine(r->sdl, px + 14, py + 14, px + 14, py + 22);
+    SDL_SetRenderDrawColor(r->sdl, 29, 27, 36, 255);
+    SDL_RenderDrawPoint(r->sdl, px + 10, py + 8);
+    SDL_RenderDrawPoint(r->sdl, px + 14, py + 8);
+    SDL_SetRenderDrawColor(r->sdl, 112, 74, 47, 255);
+    SDL_Rect book = {px + 14, py + 15, 8, 7};
+    SDL_RenderFillRect(r->sdl, &book);
+    SDL_SetRenderDrawColor(r->sdl, 226, 216, 183, 255);
+    SDL_RenderDrawLine(r->sdl, px + 16, py + 17, px + 20, py + 17);
+    SDL_RenderDrawLine(r->sdl, px + 16, py + 19, px + 20, py + 19);
+}
+
 static void draw_frostfell_quest_tile(Renderer *r, int sx, int sy, int x, int y, TileType tile) {
     if (tile == TILE_NPC_BRENNA || tile == TILE_NPC_ORIN) {
         draw_tavern_floor(r, sx, sy);
@@ -255,12 +281,18 @@ static void draw_catacombs_tile(Renderer *r, const Map *m, int sx, int sy, int x
         SDL_SetRenderDrawColor(r->sdl, 30, 30, 37, 255);
         SDL_RenderDrawPoint(r->sdl, skull.x + 1, skull.y + 2);
         SDL_RenderDrawPoint(r->sdl, skull.x + 3, skull.y + 2);
-    } else if (type == TILE_OSSUARY_BRAZIER || type == TILE_OSSUARY_COLD) {
+    } else if (type == TILE_OSSUARY_BRAZIER || type == TILE_OSSUARY_COLD ||
+        type == TILE_MEMORIAL_BRAZIER || type == TILE_MEMORIAL_COLD) {
         SDL_Rect bowl = {px + 5, py + 13, 14, 5};
         SDL_SetRenderDrawColor(r->sdl, 132, 124, 105, 255);
         SDL_RenderFillRect(r->sdl, &bowl);
         SDL_RenderDrawLine(r->sdl, px + 11, py + 18, px + 11, py + 22);
-        if (type == TILE_OSSUARY_BRAZIER) {
+        if (type == TILE_MEMORIAL_BRAZIER || type == TILE_MEMORIAL_COLD) {
+            SDL_SetRenderDrawColor(r->sdl, 224, 216, 186, 255);
+            SDL_Rect plaque = {px + 7, py + 19, 10, 4};
+            SDL_RenderFillRect(r->sdl, &plaque);
+        }
+        if (type == TILE_OSSUARY_BRAZIER || type == TILE_MEMORIAL_BRAZIER) {
             int flicker = (SDL_GetTicks() / 180 + x + y) % 3;
             SDL_Rect flame = {px + 8, py + 5 - flicker, 8, 9 + flicker};
             SDL_SetRenderDrawColor(r->sdl, 42, 115, 195, 255);
@@ -269,6 +301,17 @@ static void draw_catacombs_tile(Renderer *r, const Map *m, int sx, int sy, int x
             SDL_SetRenderDrawColor(r->sdl, 154, 226, 244, 255);
             SDL_RenderFillRect(r->sdl, &flame);
         }
+    } else if (type == TILE_BURIAL_LEDGER) {
+        SDL_SetRenderDrawColor(r->sdl, 102, 103, 105, 255);
+        SDL_Rect plinth = {px + 3, py + 14, 18, 9};
+        SDL_RenderFillRect(r->sdl, &plinth);
+        SDL_SetRenderDrawColor(r->sdl, 115, 70, 42, 255);
+        SDL_Rect book = {px + 5, py + 4, 14, 13};
+        SDL_RenderFillRect(r->sdl, &book);
+        SDL_SetRenderDrawColor(r->sdl, 224, 216, 186, 255);
+        SDL_RenderDrawLine(r->sdl, px + 8, py + 6, px + 8, py + 15);
+        SDL_RenderDrawLine(r->sdl, px + 11, py + 9, px + 16, py + 9);
+        SDL_RenderDrawLine(r->sdl, px + 11, py + 12, px + 16, py + 12);
     } else if (type == TILE_CATACOMBS_SARCOPHAGUS) {
         SDL_Rect tomb = {px + 4, py + 2, 16, 21};
         SDL_SetRenderDrawColor(r->sdl, 102, 103, 105, 255);
@@ -1948,6 +1991,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_CATACOMBS_WALL:
                 case TILE_OSSUARY_BRAZIER:
                 case TILE_OSSUARY_COLD:
+                case TILE_MEMORIAL_BRAZIER:
+                case TILE_MEMORIAL_COLD:
+                case TILE_BURIAL_LEDGER:
                 case TILE_BURIAL_PLATE:
                 case TILE_CATACOMBS_SARCOPHAGUS:
                     draw_catacombs_tile(r, &g->map, sx, sy, x, y, g->map.tiles[y][x]);
@@ -2119,6 +2165,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     SDL_RenderFillRect(r->sdl, &badge);
                     break;
                 }
+                case TILE_NPC_OSWIN:
+                    draw_oswin(r, sx, sy);
+                    break;
                 case TILE_NPC_INNKEEPER: draw_innkeeper(r, sx, sy); break;
                 case TILE_NPC_CAIN: draw_cain(r, sx, sy); break;
                 case TILE_NPC_ROWAN: draw_rowan(r, sx, sy); break;
@@ -2884,6 +2933,25 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         }
     }
 
+    if (g->location == LOCATION_CATACOMBS && g->catacombs_quest_state) {
+        static const char *names[3] = {"SOLDIERS' MEMORIAL", "WATCHERS' MEMORIAL", "CHOIR MEMORIAL"};
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                TileType tile = g->map.tiles[y][x];
+                const char *label = tile == TILE_BURIAL_LEDGER ?
+                    (g->defeated_bosses & (1 << LOCATION_CATACOMBS) ? "BURIAL LEDGER (A)" : "SEALED LEDGER") :
+                    (tile == TILE_MEMORIAL_BRAZIER || tile == TILE_MEMORIAL_COLD) && g->level >= 2 && g->level <= 4 ? names[g->level - 2] : NULL;
+                if (!label || !viewport_is_visible(v, x, y) || !map_is_explored(&g->map, x, y)) {
+                    continue;
+                }
+                int width = 0;
+                TTF_SizeText(r->font_tiny, label, &width, NULL);
+                renderer_draw_text(r, label, viewport_to_screen_x(v, x) * TILE_SIZE + (TILE_SIZE - width) / 2,
+                    viewport_to_screen_y(v, y) * TILE_SIZE - 12, area_label_color(LOCATION_CATACOMBS), r->font_tiny);
+            }
+        }
+    }
+
     if (g->location == LOCATION_FROSTFELL) {
         for (int y = 0; y < MAP_H; y++) {
             for (int x = 0; x < MAP_W; x++) {
@@ -2926,6 +2994,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         TTF_SizeText(r->font_tiny, "MARA", &width, NULL);
         renderer_draw_text(r, "MARA", viewport_to_screen_x(v, HALL_MARA_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, HALL_MARA_Y - 1) * TILE_SIZE, (SDL_Color){75, 196, 201, 255}, r->font_tiny);
+        TTF_SizeText(r->font_tiny, "BROTHER OSWIN", &width, NULL);
+        renderer_draw_text(r, "BROTHER OSWIN", viewport_to_screen_x(v, HALL_OSWIN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, HALL_OSWIN_Y - 1) * TILE_SIZE, area_label_color(LOCATION_CATACOMBS), r->font_tiny);
     }
     if (g->location == LOCATION_ASHEN && g->emberforge_quest_state && g->map.room_count &&
         (g->level == EMBERFORGE_MECHANISM_LEVEL || g->level == EMBERFORGE_FURNACE_LEVEL)) {

@@ -49,6 +49,15 @@ collected in either order; planting needs both. Return to Liora for 90 gold
 and 700 score. The Thorn Regent is optional, and all three objectives remain
 recorded in the Completed tab after turning in the quest.
 
+Brother Oswin's **Rest for the Forgotten** appears after talking to him in
+Ridgeshire's Town Hall. Its four separate objectives are the Soldiers',
+Watchers', and Choir memorial braziers on Catacombs floors 2, 3, and 4, and the
+burial ledger on floor 5. Press `A` beside each; the ledger requires the Grave
+Marshal's defeat. Already cold memorials receive credit when the quest is
+accepted. Return to Oswin for 150 gold and 1,500 score once. All four objectives
+remain recorded after completion, and the quest list scrolls as selection moves
+past the visible entries.
+
 The Active tab contains quests in progress and quests ready to turn in. The
 Completed tab retains quests whose rewards have been collected. Each entry
 shows its quest giver, description, target area and stages, objective progress,

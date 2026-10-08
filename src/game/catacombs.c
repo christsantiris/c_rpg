@@ -1,6 +1,7 @@
 #include "catacombs.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 static void carve_path(Map *m, int x, int y, int tx, int ty) {
@@ -89,7 +90,7 @@ int catacombs_lit_braziers(const Map *m, int room) {
     const Room *r = &m->rooms[room];
     for (int y = r->y; y < r->y + r->h; y++) {
         for (int x = r->x; x < r->x + r->w; x++) {
-            count += m->tiles[y][x] == TILE_OSSUARY_BRAZIER;
+            count += m->tiles[y][x] == TILE_OSSUARY_BRAZIER || m->tiles[y][x] == TILE_MEMORIAL_BRAZIER;
         }
     }
     return count;
@@ -104,7 +105,8 @@ static int adjacent_brazier(const GameState *g, int *tx, int *ty) {
     for (int i = 0; i < 4; i++) {
         int x = g->player.x + dx[i];
         int y = g->player.y + dy[i];
-        if (x >= 0 && x < MAP_W && y >= 0 && y < MAP_H && g->map.tiles[y][x] == TILE_OSSUARY_BRAZIER) {
+        if (x >= 0 && x < MAP_W && y >= 0 && y < MAP_H &&
+            (g->map.tiles[y][x] == TILE_OSSUARY_BRAZIER || g->map.tiles[y][x] == TILE_MEMORIAL_BRAZIER)) {
             *tx = x;
             *ty = y;
             return 1;
@@ -113,20 +115,130 @@ static int adjacent_brazier(const GameState *g, int *tx, int *ty) {
     return 0;
 }
 
+static int adjacent_ledger(const GameState *g, int *tx, int *ty) {
+    if (g->location != LOCATION_CATACOMBS || g->catacombs_quest_state != 1 || g->level != CATACOMBS_DEPTH ||
+        (g->catacombs_quest_progress & CATACOMBS_LEDGER_RECOVERED)) {
+        return 0;
+    }
+    for (int y = g->player.y - 1; y <= g->player.y + 1; y++) {
+        for (int x = g->player.x - 1; x <= g->player.x + 1; x++) {
+            if (abs(x - g->player.x) + abs(y - g->player.y) == 1 && x >= 0 && x < MAP_W && y >= 0 && y < MAP_H &&
+                g->map.tiles[y][x] == TILE_BURIAL_LEDGER) {
+                *tx = x;
+                *ty = y;
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+static void quest_ready(GameState *g) {
+    if (g->catacombs_quest_state == 1 && g->catacombs_quest_progress == CATACOMBS_QUEST_COMPLETE) {
+        g->catacombs_quest_state = 2;
+        push_message(g, "The dead rest. Return to Brother Oswin in Ridgeshire's Town Hall.");
+    }
+}
+
+static int memorial_is_cold(const Map *m) {
+    if (m->room_count <= CATACOMBS_MEMORIAL_ROOM) {
+        return 0;
+    }
+    const Room *room = &m->rooms[CATACOMBS_MEMORIAL_ROOM];
+    TileType tile = m->tiles[room->y + 1][room->x + 1];
+    return tile == TILE_OSSUARY_COLD || tile == TILE_MEMORIAL_COLD;
+}
+
+void catacombs_refresh_quest(GameState *g) {
+    if (g->location != LOCATION_CATACOMBS || !g->catacombs_quest_state || g->map.room_count <= CATACOMBS_MEMORIAL_ROOM) {
+        return;
+    }
+    if (g->level >= 2 && g->level <= 4) {
+        int bit = 1 << (g->level - 2);
+        if (memorial_is_cold(&g->map)) {
+            g->catacombs_quest_progress |= bit;
+        }
+        const Room *room = &g->map.rooms[CATACOMBS_MEMORIAL_ROOM];
+        g->map.tiles[room->y + 1][room->x + 1] = g->catacombs_quest_progress & bit ? TILE_MEMORIAL_COLD : TILE_MEMORIAL_BRAZIER;
+    } else if (g->level == CATACOMBS_DEPTH) {
+        const Room *room = &g->map.rooms[g->map.room_count - 1];
+        g->map.tiles[room->y + room->h - 2][room->x + 1] =
+            g->catacombs_quest_progress & CATACOMBS_LEDGER_RECOVERED ? TILE_CATACOMBS_SARCOPHAGUS : TILE_BURIAL_LEDGER;
+    }
+    quest_ready(g);
+}
+
+void game_talk_to_oswin(GameState *g) {
+    if (g->location != LOCATION_TOWN_HALL || abs(g->player.x - HALL_OSWIN_X) > 1 || abs(g->player.y - HALL_OSWIN_Y) > 1) {
+        return;
+    }
+    g->dialogue_active = 1;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Brother Oswin");
+    g->dialogue_x = HALL_OSWIN_X;
+    g->dialogue_y = HALL_OSWIN_Y;
+    if (g->catacombs_quest_state == 0) {
+        g->catacombs_quest_state = 1;
+        for (int level = 2; level <= 4; level++) {
+            const LevelCache *cache = &g->catacombs_cache[level - 1];
+            if (cache->valid && memorial_is_cold(&cache->map)) {
+                g->catacombs_quest_progress |= 1 << (level - 2);
+            }
+        }
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "The dead need names and rest. Take Crown Road West from Ridgeshire's west gate, then the castle's south gate. Press A at memorials on floors 2-4; take the Grave Marshal's ledger on floor 5.");
+        push_message(g, "Assigned: Rest for the Forgotten. See your quest journal.");
+    } else if (g->catacombs_quest_state == 1) {
+        int silenced = 0;
+        for (int i = 0; i < 3; i++) {
+            silenced += !!(g->catacombs_quest_progress & (1 << i));
+        }
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "%d of 3 memorials are silent; the ledger is %s. Press A beside a memorial to stop resurrection, even while its guards live. Bring the royal dead's names back here.",
+            silenced, g->catacombs_quest_progress & CATACOMBS_LEDGER_RECOVERED ? "recovered" : "still in the royal tomb");
+    } else if (g->catacombs_quest_state == 2) {
+        g->catacombs_quest_state = 3;
+        g->gold += CATACOMBS_REWARD_GOLD;
+        g->score += CATACOMBS_REWARD_SCORE;
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Their families can finally learn where they rest. The memorial flames are silent. Take 150 gold with the Town Hall's thanks.");
+        push_message(g, "Completed: Rest for the Forgotten. 150 gold and 1500 score awarded.");
+    } else {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "The forgotten have their names again. May their graves remain quiet.");
+    }
+}
+
 int catacombs_has_interaction(const GameState *g) {
     int x;
     int y;
-    return adjacent_brazier(g, &x, &y);
+    return adjacent_brazier(g, &x, &y) || adjacent_ledger(g, &x, &y);
 }
 
 int catacombs_interact(GameState *g) {
     int x;
     int y;
+    if (adjacent_ledger(g, &x, &y)) {
+        if (!(g->defeated_bosses & (1 << LOCATION_CATACOMBS))) {
+            push_message(g, "The Grave Marshal's seal binds the ledger. Defeat him first.");
+            return 1;
+        }
+        g->catacombs_quest_progress |= CATACOMBS_LEDGER_RECOVERED;
+        g->map.tiles[y][x] = TILE_CATACOMBS_SARCOPHAGUS;
+        push_message(g, "Royal burial ledger recovered. The fallen have names again.");
+        quest_ready(g);
+        return 1;
+    }
     if (!adjacent_brazier(g, &x, &y)) {
         return 0;
     }
-    g->map.tiles[y][x] = TILE_OSSUARY_COLD;
-    push_message(g, "The ossuary flame dies. Its bound bones fall silent.");
+    int memorial = g->map.tiles[y][x] == TILE_MEMORIAL_BRAZIER;
+    g->map.tiles[y][x] = memorial ? TILE_MEMORIAL_COLD : TILE_OSSUARY_COLD;
+    if (memorial && g->catacombs_quest_state == 1 && g->level >= 2 && g->level <= 4) {
+        g->catacombs_quest_progress |= 1 << (g->level - 2);
+        push_message(g, "Memorial silenced. Its bound bones cannot rise again.");
+        quest_ready(g);
+    } else {
+        push_message(g, "The ossuary flame dies. Its bound bones fall silent.");
+    }
     return 1;
 }
 

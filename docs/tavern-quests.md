@@ -18,6 +18,14 @@ one-time reward of 100 gold and 800 score. This quest adds encounters to
 previously explored stages without resetting the expedition. See
 [Ashen Hollow](ashen-hollow.md#reclaim-the-emberforge).
 
+Brother Oswin also waits in the Town Hall and offers **Rest for the Forgotten**.
+Silence the three marked memorial braziers on Royal Catacombs floors 2, 3, and
+4, then defeat the Grave Marshal and recover the burial ledger on floor 5.
+Press `A` directly beside each objective. Memorials can be silenced before
+fighting their guards to prevent resurrection. Return to Oswin for 150 gold
+and 1,500 score once. Existing exploration, cold braziers, and boss victories
+are preserved. See [Royal Catacombs](catacombs.md#rest-for-the-forgotten).
+
 ## Elowen: The Broken Seals
 
 Speak to Elowen with `T` in **Stillbury's Inn**. She asks the player to repair
