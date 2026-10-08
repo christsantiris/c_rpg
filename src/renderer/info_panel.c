@@ -58,6 +58,10 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor)
         SDL_snprintf(loc, sizeof(loc), "TOWN HALL");
     } else if (g->location == LOCATION_TOWN4) {
         SDL_snprintf(loc, sizeof(loc), "RIDGESHIRE");
+    } else if (g->location == LOCATION_JAIL) {
+        SDL_snprintf(loc, sizeof(loc), "ROYAL JAIL");
+    } else if (g->location == LOCATION_ESCAPE_TUNNEL) {
+        SDL_snprintf(loc, sizeof(loc), "ESCAPE TUNNEL");
     } else if (g->location == LOCATION_CASTLE_INTERIOR) {
         SDL_snprintf(loc, sizeof(loc), "CASTLE %d", g->level);
     } else if (g->location == LOCATION_CASTLE) {
@@ -262,6 +266,9 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor)
         renderer_draw_text(r, "F     FIRE", x, y + lh * 9, hint, r->font_tiny);
         renderer_draw_text(r, "T     TALK", x, y + lh * 10, hint, r->font_tiny);
         renderer_draw_text(r, "ESC   MENU", x, y + lh * 11, hint, r->font_tiny);
+        if (g->location == LOCATION_ESCAPE_TUNNEL && controls_action_for_key(g->key_bindings, SDL_SCANCODE_SPACE) < 0) {
+            renderer_draw_text(r, "SPACE WAIT FOR TOMAS", x, y + lh * 12, hint, r->font_tiny);
+        }
     }
 
 }

@@ -1,4 +1,5 @@
 #include "map.h"
+#include "jail.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -263,7 +264,10 @@ int map_is_walkable(const Map *m, int x, int y) {
     if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
         return 0;
     }
-    return m->tiles[y][x] != TILE_NPC_OSWIN &&
+    return m->tiles[y][x] != TILE_JAIL_BUILDING &&
+        m->tiles[y][x] != TILE_JAIL_DOOR && m->tiles[y][x] != TILE_JAIL_BARS &&
+        m->tiles[y][x] != TILE_NPC_INFORMANT && m->tiles[y][x] != TILE_NPC_PRISONER &&
+        m->tiles[y][x] != TILE_NPC_OSWIN &&
         m->tiles[y][x] != TILE_MEMORIAL_BRAZIER &&
         m->tiles[y][x] != TILE_MEMORIAL_COLD &&
         m->tiles[y][x] != TILE_BURIAL_LEDGER &&
@@ -1406,6 +1410,7 @@ void map_generate_castle(Map *m, int *spawn_x, int *spawn_y) {
         m->tiles[y][CROWNROAD_X] = TILE_TOWN_PATH;
     }
     m->tiles[TOWN_H - 1][CROWNROAD_X] = TILE_TOWN_EXIT;
+    jail_place_castle(m);
     *spawn_x = CROWNROAD_X;
     *spawn_y = CASTLE_ROAD_Y;
 }

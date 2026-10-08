@@ -7,6 +7,7 @@
 #include "renderer/landing_renderer.h"
 #include "renderer/game_over_renderer.h"
 #include "game/game.h"
+#include "game/jail.h"
 #include "game/map.h"
 #include "screens/landing.h"
 #include "screens/name_entry.h"
@@ -871,6 +872,9 @@ int main(int argc, char **argv) {
                             landing.selected = 1;
                             screen = SCREEN_LANDING;
                         }
+                        if (control < 0 && sc == SDL_SCANCODE_SPACE && game.location == LOCATION_ESCAPE_TUNNEL) {
+                            a = (Action){ACTION_WAIT, 0, 0};
+                        }
                         switch (control) {
                             case CONTROL_MOVE_UP:
                                 a = (Action){ACTION_MOVE, game.player.x, game.player.y - 1};
@@ -930,6 +934,9 @@ int main(int argc, char **argv) {
                                 screen = SCREEN_HELP;
                                 break;
                             case CONTROL_TALK: {
+                                if (jail_talk_nearby(&game)) {
+                                    break;
+                                }
                                 if (game_workshop_near_smith(&game)) {
                                     workshop_screen.selected = 0;
                                     screen = SCREEN_WORKSHOP;
@@ -1452,6 +1459,7 @@ int main(int argc, char **argv) {
             game.location == LOCATION_WORKSHOP ||
             game.location == LOCATION_TOWN_HALL ||
             game.location == LOCATION_CASTLE ||
+            game.location == LOCATION_JAIL ||
             game.location == LOCATION_INN ||
             game.location == LOCATION_GUILD ||
             game.location == LOCATION_ISLAND;

@@ -8,6 +8,8 @@
 #include "../game/combat_feedback.h"
 #include "../game/catacombs.h"
 #include "castle_renderer.h"
+#include "jail_renderer.h"
+#include "../game/jail.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -429,6 +431,9 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
         g->location != LOCATION_TOWN3 &&
         g->location != LOCATION_TOWN4 &&
         g->location != LOCATION_CASTLE_INTERIOR &&
+        g->location != LOCATION_CASTLE &&
+        g->location != LOCATION_JAIL &&
+        g->location != LOCATION_ESCAPE_TUNNEL &&
         g->location != LOCATION_FOREST &&
         g->location != LOCATION_SWAMP &&
         g->location != LOCATION_FROSTFELL &&
@@ -1699,11 +1704,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         (g->defeated_bosses & (1 << LOCATION_FOREST)) &&
         g->map.tiles[TOWN_ROAD_EXIT_Y][0] == TILE_TOWN_EXIT &&
         g->map.tiles[TOWN_ROAD_EXIT_Y][4] == TILE_TOWN_PATH;
-    if (town_scaled || island_scaled || labyrinth_scaled) {
+    int jail_scaled = g->location == LOCATION_JAIL;
+    if (town_scaled || island_scaled || labyrinth_scaled || jail_scaled) {
         // Keep the entire fixed map inside the play area.
-        int map_w = town_scaled ? TOWN_W :
+        int map_w = jail_scaled ? JAIL_ROOM_W : town_scaled ? TOWN_W :
             (island_scaled ? ISLAND_W : LABYRINTH_W);
-        int map_h = town_scaled ? TOWN_H :
+        int map_h = jail_scaled ? JAIL_ROOM_H : town_scaled ? TOWN_H :
             (island_scaled ? ISLAND_H : LABYRINTH_H);
         viewport_init(&town_view, map_w, map_h, map_w, map_h);
         v = &town_view;
@@ -1718,6 +1724,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         SDL_RenderSetScale(r->sdl,
             (float)play_w / (map_w * TILE_SIZE),
             (float)play_h / (map_h * TILE_SIZE));
+    } else if (g->location == LOCATION_ESCAPE_TUNNEL) {
+        viewport_init(&town_view, v->tiles_x < ESCAPE_TUNNEL_W ? v->tiles_x : ESCAPE_TUNNEL_W,
+            v->tiles_y < ESCAPE_TUNNEL_H ? v->tiles_y : ESCAPE_TUNNEL_H, ESCAPE_TUNNEL_W, ESCAPE_TUNNEL_H);
+        viewport_center_on(&town_view, g->player.x, g->player.y);
+        v = &town_view;
     } else if (road_scaled) {
         int road_w = g->location == LOCATION_HIGH_PASS ? HIGH_PASS_W :
             (game_is_king_road(g) ? CROWNROAD_W :
@@ -1791,6 +1802,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             map_mark_explored(&g->map, x, y);
             int sx = viewport_to_screen_x(v, x);
             int sy = viewport_to_screen_y(v, y);
+            if (g->location == LOCATION_JAIL || g->location == LOCATION_ESCAPE_TUNNEL) {
+                jail_draw_tile(r, g, sx, sy, x, y, g->map.tiles[y][x] == TILE_ITEM ? floor_item_underlay(g, x, y) : g->map.tiles[y][x]);
+                continue;
+            }
             if (g->location == LOCATION_CASTLE_INTERIOR) {
                 TileType tile = g->map.tiles[y][x];
                 castle_draw_tile(r, g, sx, sy, x, y, tile == TILE_ITEM ? floor_item_underlay(g, x, y) : tile);
@@ -2165,6 +2180,14 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     SDL_RenderFillRect(r->sdl, &badge);
                     break;
                 }
+                case TILE_JAIL_BUILDING:
+                case TILE_JAIL_DOOR:
+                    draw_town_floor(r, sx, sy);
+                    break;
+                case TILE_NPC_INFORMANT:
+                    draw_town_floor(r, sx, sy);
+                    jail_draw_person(r, sx, sy, 0);
+                    break;
                 case TILE_NPC_OSWIN:
                     draw_oswin(r, sx, sy);
                     break;
@@ -2398,7 +2421,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             continue;
         }
         TileType tile = g->map.tiles[item->y][item->x];
-        if ((tile != TILE_ITEM || g->location == LOCATION_CASTLE_INTERIOR) && g->location != LOCATION_ISLAND) {
+        if ((tile != TILE_ITEM || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_JAIL ||
+            g->location == LOCATION_ESCAPE_TUNNEL) && g->location != LOCATION_ISLAND) {
             draw_floor_loot(r, g, item->x, item->y,
                 viewport_to_screen_x(v, item->x),
                 viewport_to_screen_y(v, item->y));
@@ -2518,6 +2542,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         }
     }
     if (g->location == LOCATION_CASTLE) {
+        jail_draw_building(r, v);
         draw_castle_front(r,
             viewport_to_screen_x(v, TOWN_MOAT_X),
             viewport_to_screen_y(v, TOWN_MOAT_Y));
@@ -2555,7 +2580,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     // Draw enemies
-    if (g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
+    if (g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
         g->location == LOCATION_FOREST ||
         g->location == LOCATION_MOUNTAINS ||
         g->location == LOCATION_DRAGONSPINE ||
@@ -3194,6 +3219,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->equipped_armor < g->inventory_count) {
         equipped_armor = &g->inventory[g->equipped_armor];
     }
+    if (jail_prisoner_at(g, g->prisoner_x, g->prisoner_y) && viewport_is_visible(v, g->prisoner_x, g->prisoner_y)) {
+        jail_draw_person(r, viewport_to_screen_x(v, g->prisoner_x), viewport_to_screen_y(v, g->prisoner_y), 1);
+    }
     int player_px = viewport_to_screen_x(v, g->player.x) * TILE_SIZE;
     int player_py = viewport_to_screen_y(v, g->player.y) * TILE_SIZE;
     ice_slide_offset(g, &player_px, &player_py);
@@ -3222,7 +3250,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     draw_dialogue_bubble(r, g, v);
 
-    if (town_scaled || tavern_scaled || island_scaled || labyrinth_scaled) {
+    if (town_scaled || tavern_scaled || island_scaled || labyrinth_scaled || jail_scaled) {
         SDL_RenderSetScale(r->sdl, 1.0f, 1.0f);
     }
     if (tavern_scaled) {

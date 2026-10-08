@@ -160,6 +160,20 @@ recover the buried treasure from the summit vault. Return to Nahla with the
 treasure for 150 gold and 2,500 score. This quest also appears in the Quest
 Journal and gives the game one boss and one quest for every adventure area.
 
+## Tomas: Guide Tomas Home
+
+Tomas waits in the **Royal Jail on the castle grounds**. A seemingly ordinary
+townsman has the Royal Guards arrest you when spoken to with `T`; approaching
+or bumping into him does not trigger it. Speak to Tomas with `T` inside the
+cell. He reveals a hidden escape hatch and asks for help reaching Ridgeshire,
+because the tunnel's smugglers, spiders, and rats are too dangerous for him alone.
+
+Step onto the hatch to enter the single-level **Escape Tunnel**. Tomas follows
+your cleared route; press `Space` to spend a turn letting him catch up. Enemies
+still act while you wait. Reach the eastern exit together to emerge in central
+Ridgeshire and collect **100 gold and 750 score** automatically. Arrest and
+reward happen only once. See [Royal Jail](royal-jail.md).
+
 ## Quest expeditions
 
 Accepting a dungeon, mountain, forest, or coast quest closes any portal into

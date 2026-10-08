@@ -1,6 +1,7 @@
 #include "game.h"
 #include "catacombs.h"
 #include "castle.h"
+#include "jail.h"
 
 #include <stdlib.h>
 #include <time.h>
@@ -1270,6 +1271,9 @@ void enemies_spawn(GameState *g) {
 }
 
 void game_init(GameState *g) {
+    g->jail_quest_state = 0;
+    g->prisoner_x = 0;
+    g->prisoner_y = 0;
     memset(g->castle_cache, 0, sizeof(g->castle_cache));
     memset(g->castle_loot, 0, sizeof(g->castle_loot));
     memset(g->castle_loot_count, 0, sizeof(g->castle_loot_count));
@@ -4550,6 +4554,7 @@ static void return_to_town(GameState *g, Location destination) {
     if (returning_from == LOCATION_CROWNROAD || returning_from == LOCATION_KING_ROAD_WEST) {
         save_crownroad_cache(g);
     } else if (returning_from != LOCATION_HIGH_PASS && returning_from != LOCATION_SWAMP_ROAD &&
+        returning_from != LOCATION_JAIL && returning_from != LOCATION_ESCAPE_TUNNEL &&
         g->level >= 1 &&
         g->level <= active_depth(g)) {
         cache[g->level - 1].map = g->map;
@@ -4646,6 +4651,9 @@ void game_leave_catacombs(GameState *g) {
 }
 
 void game_return_to_town(GameState *g) {
+    if (jail_blocks_portal(g)) {
+        return;
+    }
     if (g->location == LOCATION_CASTLE_INTERIOR) {
         castle_leave(g, 1);
         return;
@@ -4735,6 +4743,9 @@ void game_leave_high_pass(GameState *g, Location destination) {
 }
 
 void game_open_town_portal(GameState *g) {
+    if (jail_blocks_portal(g)) {
+        return;
+    }
     if (g->location == LOCATION_CASTLE_INTERIOR) {
         castle_request(g, 1);
         return;
@@ -4868,6 +4879,9 @@ static int portal_landing_open(const GameState *g, int x, int y) {
 }
 
 void game_use_town_portal(GameState *g) {
+    if (jail_blocks_portal(g)) {
+        return;
+    }
     if (g->portal_location == LOCATION_CASTLE_INTERIOR) {
         g->portal_active = 0;
         push_message(g, "The castle has severed this portal.");
@@ -5918,7 +5932,7 @@ void game_migrate_boss_shortcuts(GameState *g) {
 }
 
 void game_update_level_progress(GameState *g) {
-    if (g->defeated_bosses & (1 << g->location)) {
+    if (g->location < LOCATION_JAIL && (g->defeated_bosses & (1 << g->location))) {
         if (g->location == LOCATION_FOREST && g->level == FOREST_BOSS_LEVEL) {
             game_reveal_forest_shortcut(g);
         } else if (g->location == LOCATION_SWAMP && g->level == SWAMP_BOSS_LEVEL) {

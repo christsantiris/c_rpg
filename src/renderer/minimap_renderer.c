@@ -1,4 +1,5 @@
 #include "minimap_renderer.h"
+#include "../game/jail.h"
 
 // Minimap renders as a corner overlay on the game viewport.
 // Each tile is 1x1px, scaled 1:2 (100x50px total).
@@ -7,7 +8,7 @@
 #define MINIMAP_PAD   6
 
 void minimap_draw(Renderer *r, const GameState *g) {
-    if (g->location != LOCATION_DUNGEON &&
+    if (g->location != LOCATION_ESCAPE_TUNNEL && g->location != LOCATION_DUNGEON &&
         g->location != LOCATION_FOREST &&
         g->location != LOCATION_MOUNTAINS &&
         g->location != LOCATION_DRAGONSPINE &&
@@ -30,6 +31,10 @@ void minimap_draw(Renderer *r, const GameState *g) {
     int oy = MINIMAP_PAD;
     int map_w = MAP_W;
     int map_h = MAP_H;
+    if (g->location == LOCATION_ESCAPE_TUNNEL) {
+        map_w = ESCAPE_TUNNEL_W;
+        map_h = ESCAPE_TUNNEL_H;
+    }
     if (g->location == LOCATION_SWAMP ||
         g->location == LOCATION_DRAGONSPINE ||
         g->location == LOCATION_DESERT ||
@@ -105,6 +110,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_DRAGON_TREASURE ||
                         tile == TILE_HIGH_PASS_ENTRANCE ||
                         tile == TILE_HIGH_PASS_EXIT ||
+                        tile == TILE_TUNNEL_EXIT || tile == TILE_JAIL_HATCH ||
                         tile == TILE_NPC_ELOWEN || tile == TILE_NPC_DAIN ||
                         tile == TILE_NPC_ALDER || tile == TILE_NPC_MARA ||
                         tile == TILE_NPC_ROOK || tile == TILE_NPC_OSWIN || tile == TILE_BURIAL_LEDGER ||
