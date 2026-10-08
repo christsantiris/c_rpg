@@ -626,7 +626,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 105);
+    cJSON_AddNumberToObject(root, "save_version", 107);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -3666,6 +3666,18 @@ int load_game(GameState *g, int slot) {
             }
         }
         g->map.tiles[y][x] = g->location == LOCATION_TAVERN ? TILE_NPC_MARA : TILE_NPC_LIORA;
+    }
+    // Version 107 checks every dungeon floor, including saved side rooms.
+    if (save_version < 107) {
+        if (g->location == LOCATION_DUNGEON) {
+            map_ensure_dungeon_connectivity(&g->map, g->level);
+        }
+        for (int level = 1; level <= DUNGEON_DEPTH; level++) {
+            LevelCache *cache = &g->level_cache[level - 1];
+            if (cache->valid) {
+                map_ensure_dungeon_connectivity(&cache->map, level);
+            }
+        }
     }
     repair_floor_item_underlays(g);
     game_hide_portal_destination(g);

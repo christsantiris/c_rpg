@@ -475,6 +475,8 @@ typedef struct {
 } Map;
 
 void map_generate(Map *m, int level);
+void map_repair_dungeon_boss_access(Map *m);
+int map_ensure_dungeon_connectivity(Map *m, int level);
 void map_remove_dungeon_gates(Map *m);
 int  map_is_walkable(const Map *m, int x, int y);
 void map_room_center(const Room *r, int *cx, int *cy);

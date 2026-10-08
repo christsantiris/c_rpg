@@ -14,6 +14,8 @@ void test_viewport(void);
 void test_dungeon(void);
 void test_dungeon_exit_distance(void);
 void test_dungeon_exit_reachability(void);
+void test_dungeon_boss_save_migration(void);
+void test_dungeon_all_room_connectivity(void);
 void test_stairs_locked(void);
 void test_final_dungeon_exit(void);
 void test_enemy_movement_collision(void);
@@ -198,6 +200,8 @@ int main(void) {
     printf("\n");
     test_dungeon_exit_distance();
     test_dungeon_exit_reachability();
+    test_dungeon_boss_save_migration();
+    test_dungeon_all_room_connectivity();
     printf("\n");
     test_combat_feedback();
     printf("\n");

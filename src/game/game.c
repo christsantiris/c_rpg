@@ -2663,6 +2663,9 @@ static void place_catacombs_quest_encounter(GameState *g) {
 }
 
 void game_refresh_quest_encounters(GameState *g) {
+    if (g->location == LOCATION_DUNGEON) {
+        map_ensure_dungeon_connectivity(&g->map, g->level);
+    }
     game_reveal_forest_shortcut(g);
     game_reveal_swamp_shortcut(g);
     game_reveal_mountain_shortcut(g);

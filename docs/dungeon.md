@@ -21,6 +21,27 @@ advanced undead can appear earlier.
 | 4 | Possible locked side crypt; Elowen's third seal | Crypt Conjurers join |
 | 5 | Golden key, locked boss chamber, and final return passage | Full roster and the Lich King |
 
+Every generated floor is checked from its entrance before play. All rooms,
+corridors, and side crypts must connect through walkable passages or their
+intended locked doors. Disconnected sections receive connecting corridors
+without bypassing locks or changing existing items and traps. A layout that
+cannot be repaired is generated again. Cached floors are checked when revisited.
+
+Save version 107 repairs disconnected sections on every active and cached
+dungeon floor, preserving the player's position, exploration, enemies, loot,
+and quest progress. Tests check every walkable tile across 5,120 layouts and
+verify that keys can be reached before opening their doors.
+
+## Boss Chamber
+
+On floor 5, collect the golden key in the penultimate room with `P`, then walk
+into the Lich King's locked door to open it. Corridors around the outside of
+the sealed chamber keep earlier rooms and the door accessible. Its entrance
+is placed away from corners so unlocking it leads into the chamber.
+
+Older boss floors also receive the corridor and corner-door repairs introduced
+in save version 106. Doors already opened remain open.
+
 ## Enemy Roles
 
 - **Skeleton:** straightforward melee pursuer.
