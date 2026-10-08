@@ -11,6 +11,7 @@
 #include <SDL2/SDL.h>
 
 #define MAX_MESSAGES 3
+#define MAX_ARROWS 100
 #define MAX_MESSAGE_LEN 128
 #define MAX_DIALOGUE_LEN 192
 #define MAX_SPEAKER_LEN 24
@@ -92,6 +93,7 @@ typedef struct {
     int frozen_turns;
     int freeze_recovery;
     PlayerClass player_class;
+    int arrows;
 } Player;
 
 typedef struct {

@@ -154,6 +154,12 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor)
     char mp_str[16];
     SDL_snprintf(mp_str, sizeof(mp_str), "%d / %d", g->player.mp, g->player.max_mp);
     renderer_draw_text(r, mp_str, x, y, value, r->font_tiny);
+    if (g->player.player_class == CLASS_ROGUE) {
+        char arrows[24];
+        renderer_draw_text(r, "ARROWS", x + 100, y - lh, label, r->font_tiny);
+        SDL_snprintf(arrows, sizeof(arrows), "%d/%d", g->player.arrows, MAX_ARROWS);
+        renderer_draw_text(r, arrows, x + 100, y, g->player.arrows == 0 ? (SDL_Color){240, 72, 60, 255} : value, r->font_tiny);
+    }
     y += lh + 6;
 
     // Level and XP

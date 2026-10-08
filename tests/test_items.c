@@ -310,7 +310,7 @@ void test_items(void) {
     ShopScreen shop;
     shop_init(&shop, SHOP_TYPE_BLACKSMITH, 0);
     ASSERT("new characters see only tier-one blacksmith stock",
-        shop.stock_tier == 1 && shop.item_count == 9 &&
+        shop.stock_tier == 1 && shop.item_count == 10 &&
         shop_has_item(&shop, "Apprentice Robes") &&
         shop_has_item(&shop, "Buckler") &&
         !shop_has_item(&shop, "Long Sword"));
@@ -319,7 +319,7 @@ void test_items(void) {
         shop.stock_tier == 1 && !shop_has_item(&shop, "Long Sword"));
     shop_init(&shop, SHOP_TYPE_BLACKSMITH, 1 << LOCATION_DUNGEON);
     ASSERT("one defeated boss unlocks uncommon weapons",
-        shop.stock_tier == 2 && shop.item_count == 18 &&
+        shop.stock_tier == 2 && shop.item_count == 19 &&
         shop_has_item(&shop, "Greatsword") &&
         shop_has_item(&shop, "Runed Staff") &&
         shop_has_item(&shop, "Studded Leather") &&
@@ -328,7 +328,7 @@ void test_items(void) {
     shop_init(&shop, SHOP_TYPE_BLACKSMITH,
         (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST));
     ASSERT("two defeated bosses unlock all magical weapons",
-        shop.stock_tier == 3 && shop.item_count == 29 &&
+        shop.stock_tier == 3 && shop.item_count == 30 &&
         shop_has_item(&shop, "Magic Battle Axe") &&
         shop_has_item(&shop, "Enchanter Robes") &&
         shop_has_item(&shop, "Magic Greatsword") &&
@@ -341,7 +341,7 @@ void test_items(void) {
         (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) |
         (1 << LOCATION_MOUNTAINS));
     ASSERT("three defeated bosses unlock capstone armor",
-        shop.stock_tier == 4 && shop.item_count == 32 &&
+        shop.stock_tier == 4 && shop.item_count == 33 &&
         shop_has_item(&shop, "Magic Greatsword") &&
         shop_has_item(&shop, "Magic Staff") &&
         shop_has_item(&shop, "Magic Longbow") &&

@@ -77,6 +77,23 @@ walls. The Bow and Longbow stop at the first target, while the Magic Longbow
 can strike several targets on the same line. All bows have a fixed 15% ranged
 critical chance.
 
+Rogues start with 100 arrows and can carry at most 100 in a shared quiver. Each
+fired bow shot consumes one arrow, including misses and shots stopped by walls.
+A piercing arrow consumes only one regardless of how many enemies it hits.
+Rejected shots (no aim, no equipped bow, or an adjacent target) consume none.
+At zero arrows, ranged bow attacks stop; buy more or equip a melee weapon such
+as a dagger. Melee attacks, spells, and the Demonic Sword do not use arrows.
+If no dagger is available, an empty bow still permits melee hits against adjacent
+enemies, using the existing melee damage without the bow's attack bonus.
+
+The Blacksmith stocks 20-arrow bundles for 10 gold at every stock tier. Purchases
+go directly into the quiver, including with a full inventory. If fewer than 20
+spaces remain, only the missing arrows are purchased at a proportional price
+rounded up; a full quiver cannot be charged. The character panel shows the
+remaining count. Switching bows, travel, and saving never refill the quiver.
+Older Rogue saves receive 100 arrows once when migrated to save version 103,
+with all existing progress retained.
+
 The Demonic Sword also uses `F`, but its magic reaches one or two tiles, stops
 at the first enemy or wall, and costs no mana. It keeps its full +6 attack bonus
 in melee.

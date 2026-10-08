@@ -172,6 +172,7 @@ static void test_boss_victories(void) {
         game.player.last_dy = 0;
         game.player.mp = 100;
         game.inventory[0] = attack == 2 ? item_make_bow() : item_make_staff();
+        game.player.arrows = MAX_ARROWS;
         game.inventory_count = 1;
         game.equipped_main_hand = 0;
         game.player.known_spells[0] = spell_make_magic_arrow();

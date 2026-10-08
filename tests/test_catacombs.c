@@ -325,6 +325,7 @@ static void test_boss(void) {
             action_resolve_player(&game, (Action){ACTION_MOVE, boss->x, boss->y});
         } else if (method == 3) {
             game.inventory[game.inventory_count] = item_make_magic_longbow();
+            game.player.arrows = MAX_ARROWS;
             game.equipped_main_hand = game.inventory_count++;
             action_resolve_player(&game, (Action){ACTION_RANGED_ATTACK, 0, 0});
         } else {

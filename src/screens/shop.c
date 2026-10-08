@@ -6,6 +6,51 @@ int shop_buy_price(const Item *item) {
     return item->value * 2;
 }
 
+int shop_purchase_price(const GameState *g, const Item *item) {
+    int price = shop_buy_price(item);
+    if (item->type == ITEM_ARROWS) {
+        int amount = MAX_ARROWS - g->player.arrows;
+        if (amount < ARROW_BUNDLE_SIZE) {
+            price = (price * amount + ARROW_BUNDLE_SIZE - 1) / ARROW_BUNDLE_SIZE;
+        }
+    }
+    return price;
+}
+
+int shop_purchase(GameState *g, const Item *item) {
+    if (item->type == ITEM_ARROWS && g->player.arrows >= MAX_ARROWS) {
+        push_message(g, "Your quiver is full: 100 arrows.");
+        return 0;
+    }
+    int price = shop_purchase_price(g, item);
+    if (g->gold < price) {
+        push_message(g, "Not enough gold!");
+        return 0;
+    }
+    if (item->type == ITEM_ARROWS) {
+        int amount = MAX_ARROWS - g->player.arrows;
+        if (amount > ARROW_BUNDLE_SIZE) {
+            amount = ARROW_BUNDLE_SIZE;
+        }
+        g->player.arrows += amount;
+        g->gold -= price;
+        char message[MAX_MESSAGE_LEN];
+        snprintf(message, sizeof(message), "Bought %d arrows. Quiver: %d/%d.", amount, g->player.arrows, MAX_ARROWS);
+        push_message(g, message);
+        return 1;
+    }
+    if (g->inventory_count >= MAX_INVENTORY) {
+        push_message(g, "Inventory full!");
+        return 0;
+    }
+    g->gold -= price;
+    g->inventory[g->inventory_count++] = *item;
+    char message[MAX_MESSAGE_LEN];
+    snprintf(message, sizeof(message), "Bought %s", item->name);
+    push_message(g, message);
+    return 1;
+}
+
 int shop_sell_price(const Item *item) {
     return item->value / 4;
 }
@@ -13,7 +58,7 @@ int shop_sell_price(const Item *item) {
 int shop_accepts_item(ShopType type, const Item *item) {
     if (type == SHOP_TYPE_BLACKSMITH) {
         return item->type == ITEM_WEAPON || item->type == ITEM_ARMOR ||
-            item->type == ITEM_SHIELD;
+            item->type == ITEM_SHIELD || item->type == ITEM_ARROWS;
     }
     if (type == SHOP_TYPE_ALCHEMIST) {
         return item->type == ITEM_POTION_HEALTH || item->type == ITEM_POTION_MANA ||
@@ -93,6 +138,7 @@ void shop_init(ShopScreen *s, ShopType type, int defeated_bosses) {
         s->items[s->item_count++] = item_make_staff();
         s->items[s->item_count++] = item_make_bow();
         s->items[s->item_count++] = item_make_dagger();
+        s->items[s->item_count++] = item_make_arrows();
         s->items[s->item_count++] = item_make_leather_armor();
         s->items[s->item_count++] = item_make_chain_mail();
         s->items[s->item_count++] = item_make_apprentice_robes();

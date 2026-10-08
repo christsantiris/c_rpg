@@ -214,6 +214,7 @@ void test_combat_feedback(void) {
     int kinds_match = 1;
     for (int i = 0; i < 200; i++) {
         g.enemies[0].hp = 1000;
+        g.player.arrows = MAX_ARROWS;
         combat_feedback_clear();
         action_resolve_player(&g, (Action){ACTION_RANGED_ATTACK, 0, 0});
         e = only_event();
