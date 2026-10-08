@@ -1,9 +1,10 @@
 #ifndef SHOP_HEADER_H
 #define SHOP_HEADER_H
 
-#include "../game/item.h"
+#include "../game/game.h"
 
-#define MAX_SHOP_ITEMS 32
+#define MAX_SHOP_ITEMS 33
+#define ARROW_BUNDLE_SIZE 20
 
 typedef enum {
     SHOP_NONE = 0,
@@ -32,6 +33,8 @@ typedef struct {
 void shop_init(ShopScreen *s, ShopType type, int defeated_bosses);
 ShopResult shop_handle_key(ShopScreen *s, int scancode);
 int shop_buy_price(const Item *item);
+int shop_purchase_price(const GameState *g, const Item *item);
+int shop_purchase(GameState *g, const Item *item);
 int shop_sell_price(const Item *item);
 int shop_accepts_item(ShopType type, const Item *item);
 

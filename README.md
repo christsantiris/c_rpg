@@ -168,7 +168,17 @@ from Stillbury finds the stage-5 warden first, then stages 2 and 1 after the
 boss. Taking the grove shortcut skips unfinished rescues on the far side;
 either ordinary forest gate remains available to finish them later.
 
-The Blacksmith sells weapons, armor, and shields. The Alchemist sells both
+Rogues start with **100 arrows** and can carry at most 100. Every fired bow shot
+uses one arrow, including misses. At zero, buy more at the Blacksmith or switch
+to a melee weapon such as a dagger. Without a dagger, the empty bow can still
+strike adjacent enemies in melee, without its bow attack bonus. Arrow counts
+appear in the character panel and survive saving, travel, and changing bows.
+The Blacksmith sells **20 arrows
+for 10 gold**, directly into the quiver without using an inventory slot; partial
+refills cost proportionally less, rounded up. Older Rogue saves begin with 100
+arrows without changing existing progress.
+
+The Blacksmith sells weapons, armor, shields, and arrows. The Alchemist sells both
 potion types, spell scrolls, and Mage spell tomes in OakHaven. OakHaven's west
 forest gate enters stage 1; Stillbury's main east gate enters stage 7. Stillbury
 can also be reached from Rosemoor before the Necromancer is defeated.

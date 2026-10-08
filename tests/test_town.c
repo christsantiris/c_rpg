@@ -968,6 +968,7 @@ static void test_necromancer_opens_exit(void) {
         g.player.last_dy = 0;
         g.inventory_count = 1;
         g.inventory[0] = i == 0 ? item_make_dagger() : item_make_bow();
+        g.player.arrows = MAX_ARROWS;
         g.equipped_main_hand = 0;
         g.player.known_spell_count = 1;
         g.player.known_spells[0] = spell_make_magic_arrow();

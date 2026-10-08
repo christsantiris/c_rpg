@@ -68,6 +68,7 @@ static void test_ranged_victories(void) {
         game.player.last_dy = 0;
         game.player.mp = 100;
         game.inventory[0] = attack == 2 ? item_make_bow() : item_make_staff();
+        game.player.arrows = MAX_ARROWS;
         game.inventory_count = 1;
         game.equipped_main_hand = 0;
         game.player.known_spells[0] = attack == 1 ? spell_make_fireball() : spell_make_magic_arrow();

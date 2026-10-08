@@ -338,6 +338,7 @@ void test_final_dungeon_exit(void) {
     g.player.last_dy = 0;
     g.inventory_count = 1;
     g.inventory[0] = item_make_bow();
+    g.player.arrows = MAX_ARROWS;
     g.equipped_main_hand = 0;
     for (int x = 10; x <= 12; x++) {
         g.map.tiles[10][x] = TILE_FLOOR;

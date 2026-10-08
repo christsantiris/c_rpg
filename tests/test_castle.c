@@ -378,6 +378,7 @@ static void test_castle_class_victory(void) {
         } else {
             game.player.y = e->y + 2;
             game.inventory[0] = item_make_bow();
+            game.player.arrows = MAX_ARROWS;
             game.inventory_count = 1;
             game.equipped_main_hand = 0;
             action_resolve_player(&game, (Action){ACTION_RANGED_ATTACK, 0, 0});

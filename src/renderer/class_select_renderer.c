@@ -11,7 +11,7 @@ static const char *class_descs[3] = {
 static const char *class_items[3] = {
     "Starts with: Rusty Sword",
     "Starts with: Staff, Magic Arrow Scroll",
-    "Starts with: Bow"
+    "Starts with: Bow, 100 arrows"
 };
 
 void class_select_draw(Renderer *r, const ClassSelectScreen *s) {

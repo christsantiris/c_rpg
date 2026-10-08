@@ -125,9 +125,16 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
             const Item *item = &s->items[i];
             int item_y = 140 + (i - list_start) * 32;
             char label[64];
-            SDL_snprintf(label, sizeof(label), "%-20s  %d gold",
-                item->name, shop_buy_price(item));
-            int can_afford = g->gold >= shop_buy_price(item);
+            int price = shop_purchase_price(g, item);
+            SDL_snprintf(label, sizeof(label), "%-20s  %d gold", item->name, price);
+            if (item->type == ITEM_ARROWS) {
+                int amount = MAX_ARROWS - g->player.arrows;
+                if (amount > ARROW_BUNDLE_SIZE) {
+                    amount = ARROW_BUNDLE_SIZE;
+                }
+                SDL_snprintf(label, sizeof(label), "%d Arrows             %d gold", amount, price);
+            }
+            int can_afford = g->gold >= price && (item->type != ITEM_ARROWS || g->player.arrows < MAX_ARROWS);
             if (s->selected == i) {
                 renderer_draw_text(r, ">", cx - 200, item_y, gold, r->font_small);
                 renderer_draw_text(r, label, cx - 180, item_y,
@@ -178,10 +185,15 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
             ? &s->items[s->selected] : &g->inventory[s->selected];
         Item priced_selected = *selected;
         priced_selected.value = s->mode == 0
-            ? shop_buy_price(selected)
+            ? shop_purchase_price(g, selected)
             : (shop_accepts_item(s->type, selected) ? shop_sell_price(selected) : 0);
         selected = &priced_selected;
-        if (selected->type == ITEM_WEAPON) {
+        if (selected->type == ITEM_ARROWS) {
+            char quiver[64];
+            SDL_snprintf(quiver, sizeof(quiver), "QUIVER: %d/%d ARROWS", g->player.arrows, MAX_ARROWS);
+            renderer_draw_text(r, quiver, cx - 180, (r->tiles_y - 9) * TILE_SIZE, gold, r->font_small);
+            renderer_draw_text(r, "ADDED TO QUIVER; NO INVENTORY SLOT", cx - 180, (r->tiles_y - 8) * TILE_SIZE, white, r->font_tiny);
+        } else if (selected->type == ITEM_WEAPON) {
             const Item *equipped = NULL;
             if (g->equipped_main_hand >= 0 &&
                 g->equipped_main_hand < g->inventory_count) {

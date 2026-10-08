@@ -1740,6 +1740,10 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
         if (wpn->weapon_family == WEAPON_FAMILY_BOW) {
+            if (g->player.arrows <= 0) {
+                push_message(g, "No arrows! Buy more at the Blacksmith or equip a melee weapon.");
+                return;
+            }
             for (int i = 0; i < g->enemy_count; i++) {
                 Enemy *e = &g->enemies[i];
                 if (!e->active) {
@@ -1752,6 +1756,7 @@ void action_resolve_player(GameState *g, Action a) {
                     return;
                 }
             }
+            g->player.arrows--;
         }
 
         #ifndef TEST_BUILD
@@ -1820,6 +1825,9 @@ void action_resolve_player(GameState *g, Action a) {
         if (!hit) {
             push_message(g, "Attack missed!");
             add_miss_feedback(g);
+        }
+        if (wpn->weapon_family == WEAPON_FAMILY_BOW && g->player.arrows == 0) {
+            push_message(g, "Last arrow fired. Buy more at the Blacksmith or equip a melee weapon.");
         }
         return;
     }

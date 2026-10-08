@@ -6,6 +6,7 @@ int tests_passed = 0;
 void test_movement(void);
 void test_jail(void);
 void test_ilya_relocation(void);
+void test_arrows(void);
 void test_enemy_projectiles(void);
 void test_map(void);
 void test_map_tiles(void);
@@ -191,6 +192,7 @@ int main(void) {
     test_save_confirmation();
     printf("\n");
     test_classes();
+    test_arrows();
     printf("\n");
     test_dungeon_exit_distance();
     test_dungeon_exit_reachability();

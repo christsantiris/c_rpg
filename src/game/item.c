@@ -42,6 +42,15 @@ Item item_make_mana_potion(void) {
     return it;
 }
 
+Item item_make_arrows(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_ARROWS;
+    strncpy(it.name, "20 Arrows", sizeof(it.name) - 1);
+    it.value = 5;
+    return it;
+}
+
 Item item_make_strength_potion(void) {
     Item it = {0};
     it.active = 1;
