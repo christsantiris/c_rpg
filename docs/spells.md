@@ -130,7 +130,7 @@ never drop scrolls.
 1. Press `I` to open the inventory and use a spell scroll.
 2. Press `B` during play to open the spellbook.
 3. Select a known spell with the arrow keys.
-4. Press `Enter` to equip the selected spell.
+4. Press `E` or `Enter` to equip the selected spell.
 5. Return to play with `Esc`.
 6. Move in the direction you want to aim.
 7. Press `C` to cast the equipped spell.

@@ -20,7 +20,11 @@ InventoryResult inventory_handle_key(InventoryScreen *s, int scancode, int item_
             if (item_count > 0) return INVENTORY_USE;
             break;
         case SDL_SCANCODE_E:
-            if (item_count > 0) return INVENTORY_EQUIP;
+        case SDL_SCANCODE_RETURN:
+        case SDL_SCANCODE_KP_ENTER:
+            if (item_count > 0) {
+                return INVENTORY_EQUIP;
+            }
             break;
         case SDL_SCANCODE_O:
             if (item_count > 0) {

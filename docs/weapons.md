@@ -6,10 +6,10 @@ bosses are the equipment sources.
 
 ## Equipment Rules
 
-- Press `E` on a weapon in the inventory to equip it in the main hand.
-- Press `E` on armor to equip it in the armor slot.
+- Press `E` or `Enter` on a weapon in the inventory to equip it in the main hand.
+- Press `E` or `Enter` on armor to equip it in the armor slot.
 - Press `O` on a one-handed weapon to equip it in the off hand.
-- Press `E` on a shield to equip it in the off hand.
+- Press `E` or `Enter` on a shield to equip it in the off hand.
 - A one-handed main weapon may be paired with one one-handed weapon or shield.
 - Two-handed weapons clear the off hand and prevent off-hand equipment.
 - Removing a main weapon promotes an off-hand weapon to the main hand.

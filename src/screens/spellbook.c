@@ -5,8 +5,7 @@ void spellbook_init(SpellbookScreen *s) {
     s->selected = 0;
 }
 
-SpellbookResult spellbook_handle_key(SpellbookScreen *s, int scancode,
-                                      int spell_count) {
+SpellbookResult spellbook_handle_key(SpellbookScreen *s, int scancode, int spell_count) {
     switch (scancode) {
         case SDL_SCANCODE_UP:
             s->selected--;
@@ -17,8 +16,12 @@ SpellbookResult spellbook_handle_key(SpellbookScreen *s, int scancode,
             if (s->selected >= spell_count)
                 s->selected = spell_count - 1;
             break;
+        case SDL_SCANCODE_E:
         case SDL_SCANCODE_RETURN:
-            if (spell_count > 0) return SPELLBOOK_EQUIP;
+        case SDL_SCANCODE_KP_ENTER:
+            if (spell_count > 0) {
+                return SPELLBOOK_EQUIP;
+            }
             break;
         case SDL_SCANCODE_ESCAPE:
         case SDL_SCANCODE_A:

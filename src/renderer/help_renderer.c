@@ -79,7 +79,7 @@ void help_draw(Renderer *r, const GameState *g) {
     draw_help_row(r, "U", "Use item", col1, y, white);
     draw_help_row(r, bound(g, CONTROL_TALK), "Talk to NPC", col2, y, white);
     y += lh;
-    draw_help_row(r, "E", "Equip item", col1, y, white);
+    draw_help_row(r, "E/ENTER", "Equip item", col1, y, white);
     draw_help_row(r, bound(g, CONTROL_MOVE_LEFT), "Interact", col2, y, white);
     y += lh;
     draw_help_row(r, "D", "Drop item", col1, y, white);
