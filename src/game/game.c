@@ -5193,7 +5193,7 @@ void game_talk_to_rowan(GameState *g) {
     }
     snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
         "The Drowned Queen keeps the coast too dangerous to sail. "
-        "Defeat her and I can take you to the island beyond these shores.");
+        "Defeat her in the Sunken Coast, and I can take you to the island beyond these shores.");
 }
 
 static void prepare_quest_expedition(GameState *g, Location location) {
