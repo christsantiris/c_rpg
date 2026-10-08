@@ -452,7 +452,9 @@ typedef enum {
     TILE_JAIL_BARS,
     TILE_JAIL_HATCH,
     TILE_TUNNEL_EXIT,
-    TILE_NPC_BRAM
+    TILE_NPC_BRAM,
+    TILE_DUNGEON_STAIRS_SEALED,
+    TILE_DUNGEON_STAIRS_RETURN
 } TileType;
 
 typedef struct {

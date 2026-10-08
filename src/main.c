@@ -543,7 +543,7 @@ int main(int argc, char **argv) {
             (screen == SCREEN_PLAYING && game.trail_frames > 0) ||
             (screen == SCREEN_PLAYING && game_combat_feedback_active(SDL_GetTicks()));
         int ambient_animating = screen == SCREEN_PLAYING &&
-            (game.location == LOCATION_DUNGEON ||
+            (game_player_low_health(&game) || game.location == LOCATION_DUNGEON ||
             game.location == LOCATION_FOREST ||
             game.location == LOCATION_MOUNTAINS ||
             game.location == LOCATION_DRAGONSPINE ||
@@ -566,8 +566,8 @@ int main(int argc, char **argv) {
                 int timeout = elapsed >= 500 ? 0 : (int)(500 - elapsed);
                 has_event = SDL_WaitEventTimeout(&event, timeout);
             } else if (ambient_animating) {
-                // Snow and blowing sand need smoother motion than tile animations.
-                int interval = (game.location == LOCATION_FROSTFELL ||
+                // Weather and the low-health pulse need smooth motion while idle.
+                int interval = (game_player_low_health(&game) || game.location == LOCATION_FROSTFELL ||
                     game.location == LOCATION_DESERT) ? 33 :
                     (int)AMBIENT_FRAME_MS;
                 has_event = SDL_WaitEventTimeout(&event,

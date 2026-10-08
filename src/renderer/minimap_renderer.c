@@ -86,6 +86,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                     if (tile == TILE_CASTLE_PASSAGE || tile == TILE_CASTLE_TRAP_OPEN ||
                         tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN ||
                         tile == TILE_RETURN_EXIT || tile == TILE_DUNGEON_KEY ||
+                        tile == TILE_DUNGEON_STAIRS_SEALED || tile == TILE_DUNGEON_STAIRS_RETURN ||
                         tile == TILE_CRYPT_KEY || tile == TILE_CRYPT_CACHE ||
                         tile == TILE_PORTAL || tile == TILE_FOREST_ENTRANCE ||
                         tile == TILE_FOREST_EXIT || tile == TILE_FOREST_SHORTCUT || tile == TILE_MOUNTAIN_ENTRANCE ||

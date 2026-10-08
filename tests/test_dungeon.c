@@ -442,10 +442,11 @@ void test_final_dungeon_exit(void) {
 
     g.player.x = g.map.stairs_down_x;
     g.player.y = g.map.stairs_down_y;
-    Action a = {ACTION_DESCEND, 0, 0};
+    Action a = {ACTION_ASCEND, 0, 0};
     action_resolve_player(&g, a);
-    ASSERT("living Lich King blocks the final dungeon exit",
-        g.location == LOCATION_DUNGEON);
+    ASSERT("living Lich King seals the special upward stairs",
+        g.location == LOCATION_DUNGEON && g.level == DUNGEON_DEPTH &&
+        g.map.tiles[g.player.y][g.player.x] == TILE_DUNGEON_STAIRS_SEALED);
 
     g.enemy_count = 2;
     g.enemies[0] = (Enemy){
@@ -469,26 +470,30 @@ void test_final_dungeon_exit(void) {
     }
     g.map.stairs_down_x = 12;
     g.map.stairs_down_y = 10;
-    g.map.tiles[10][12] = TILE_STAIRS_DOWN;
+    g.map.tiles[10][12] = TILE_DUNGEON_STAIRS_SEALED;
     action_resolve_player(&g, (Action){ACTION_RANGED_ATTACK, 0, 0});
     ASSERT("defeating the Lich opens the return exit with regular enemies alive",
         !g.enemies[0].active && g.enemies[1].active && !g.level_cleared &&
-        g.map.tiles[g.map.stairs_down_y][g.map.stairs_down_x] == TILE_RETURN_EXIT);
+        g.floor_items[0].underlying_tile == TILE_DUNGEON_STAIRS_RETURN &&
+        g.floor_items[1].underlying_tile == TILE_DUNGEON_STAIRS_RETURN);
 
     g.player.x = g.map.stairs_down_x;
     g.player.y = g.map.stairs_down_y;
     action_resolve_player(&g, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("picking up boss gold preserves the unlocked exit",
         g.inventory_count == 1 && g.gold == 25 &&
-        g.map.tiles[10][12] == TILE_RETURN_EXIT);
+        g.floor_items[1].underlying_tile == TILE_DUNGEON_STAIRS_RETURN);
     action_resolve_player(&g, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("picking up boss equipment preserves the unlocked exit",
-        g.inventory_count == 2 && g.map.tiles[10][12] == TILE_RETURN_EXIT);
+        g.inventory_count == 2 && g.map.tiles[10][12] == TILE_DUNGEON_STAIRS_RETURN);
+    action_resolve_player(&g, (Action){ACTION_DESCEND, 0, 0});
+    ASSERT("the stairs-down control does not activate the upward return staircase",
+        g.location == LOCATION_DUNGEON && g.level == DUNGEON_DEPTH);
     action_resolve_player(&g, a);
     ASSERT("final exit returns player to town", g.location == LOCATION_TOWN);
     ASSERT("final exit returns at east OakHaven road",
         g.player.x == TOWN_W - 2 && g.player.y == 12);
-    ASSERT("final exit does not create a ninth floor",
+    ASSERT("final stairs return directly to town without changing the dungeon floor",
         g.level == DUNGEON_DEPTH);
     ASSERT("leaving the dungeon preserves surviving enemies and uncleared status",
         g.level_cache[DUNGEON_DEPTH - 1].enemies[1].active &&
@@ -1289,6 +1294,97 @@ static int lich_guard_count(const Enemy *enemies, int count) {
         }
     }
     return guards;
+}
+
+void test_dungeon_return_stairs_migration(void) {
+    printf("Special dungeon return stairs save migration tests:\n");
+    static GameState g;
+    static GameState loaded;
+    for (int open = 0; open <= 1; open++) {
+        game_init(&g);
+        g.location = LOCATION_DUNGEON;
+        g.level = DUNGEON_DEPTH;
+        map_generate(&g.map, g.level);
+        enemies_spawn(&g);
+        if (open) {
+            g.defeated_bosses |= 1 << LOCATION_DUNGEON;
+            g.enemies[0].active = 0;
+            g.enemies[0].hp = 0;
+        }
+        int x = g.map.stairs_down_x;
+        int y = g.map.stairs_down_y;
+        TileType old_stair = open ? TILE_RETURN_EXIT : TILE_STAIRS_DOWN;
+        TileType stair = open ? TILE_DUNGEON_STAIRS_RETURN : TILE_DUNGEON_STAIRS_SEALED;
+        g.map.tiles[y][x] = old_stair;
+        LevelCache *cache = &g.level_cache[DUNGEON_DEPTH - 1];
+        cache->map = g.map;
+        memcpy(cache->enemies, g.enemies, sizeof(g.enemies));
+        cache->enemy_count = g.enemy_count;
+        cache->valid = 1;
+        g.level_cache[0].valid = 1;
+        map_generate(&g.level_cache[0].map, 1);
+        g.player.x = x;
+        g.player.y = y;
+        g.gold = 77;
+        g.elowen_quest_state = 1;
+        g.elowen_seals_restored = 7;
+        g.floor_item_count = 1;
+        g.floor_items[0] = (FloorItem){
+            .active = 1, .x = x, .y = y, .underlying_tile = old_stair,
+            .item = item_make_health_potion()
+        };
+        g.map.tiles[y][x] = TILE_ITEM;
+        ASSERT("legacy return stairs fixture saves", save_old_dungeon(&g, 108));
+        ASSERT("legacy return stairs migrate while retaining the boss lock state", load_game(&loaded, 99151) &&
+            loaded.map.tiles[y][x] == stair && loaded.level_cache[DUNGEON_DEPTH - 1].map.tiles[y][x] == stair);
+        ASSERT("stairs migration preserves loot, player position, enemies and quest progress",
+            loaded.floor_items[0].active && loaded.floor_items[0].x == x && loaded.floor_items[0].y == y &&
+            loaded.floor_items[0].underlying_tile == stair &&
+            loaded.floor_items[0].item.type == ITEM_POTION_HEALTH &&
+            loaded.player.x == x && loaded.player.y == y && loaded.gold == 77 &&
+            loaded.enemies[0].hp == g.enemies[0].hp && loaded.enemy_count == g.enemy_count &&
+            loaded.elowen_quest_state == 1 && loaded.elowen_seals_restored == 7);
+        const Map *first = &loaded.level_cache[0].map;
+        ASSERT("ordinary downward stairs remain unchanged", first->tiles[first->stairs_down_y][first->stairs_down_x] == TILE_STAIRS_DOWN);
+        ASSERT("special stairs and loot survive a current-version save/load", save_game(&loaded, 99151) &&
+            load_game(&g, 99151) && g.map.tiles[y][x] == stair && g.floor_items[0].underlying_tile == stair);
+        int message_count = g.message_count;
+        game_update_level_progress(&g);
+        game_update_level_progress(&g);
+        ASSERT("loot on open stairs does not cause repeated unlock announcements", g.message_count == message_count);
+        action_resolve_player(&g, (Action){ACTION_DESCEND, 0, 0});
+        ASSERT("stairs-down never activates migrated return stairs", g.location == LOCATION_DUNGEON && g.level == DUNGEON_DEPTH);
+        action_resolve_player(&g, (Action){ACTION_ASCEND, 0, 0});
+        ASSERT("stairs-up returns to Oakhaven only after the Lich is defeated, even with loot on the stairs",
+            open ? g.location == LOCATION_TOWN && g.player.x == TOWN_W - 2 && g.player.y == 12
+            : g.location == LOCATION_DUNGEON && g.level == DUNGEON_DEPTH);
+    }
+
+    // A Return to Town portal may have been cast while standing on the old exit.
+    game_init(&g);
+    game_enter_dungeon(&g);
+    while (g.level < DUNGEON_DEPTH) {
+        game_descend(&g);
+    }
+    g.defeated_bosses |= 1 << LOCATION_DUNGEON;
+    g.player.x = g.map.stairs_down_x;
+    g.player.y = g.map.stairs_down_y;
+    int x = g.player.x;
+    int y = g.player.y;
+    g.map.tiles[y][x] = TILE_RETURN_EXIT;
+    game_open_town_portal(&g);
+    g.level_cache[DUNGEON_DEPTH - 1].map.tiles[y][x] = TILE_RETURN_EXIT;
+    g.portal_origin_tile = TILE_RETURN_EXIT;
+    ASSERT("legacy return portal fixture saves", save_old_dungeon(&g, 108));
+    ASSERT("portal destination retains the new return stairs", load_game(&loaded, 99151) &&
+        loaded.portal_active && loaded.portal_origin_tile == TILE_DUNGEON_STAIRS_RETURN);
+    game_use_town_portal(&loaded);
+    ASSERT("returning through the portal restores the special upward stairs at the exact tile",
+        loaded.location == LOCATION_DUNGEON && loaded.player.x == x && loaded.player.y == y &&
+        loaded.map.tiles[y][x] == TILE_DUNGEON_STAIRS_RETURN);
+    action_resolve_player(&loaded, (Action){ACTION_ASCEND, 0, 0});
+    ASSERT("stairs-up works after restoring a migrated portal destination", loaded.location == LOCATION_TOWN);
+    remove("saves/savegame_99151.json");
 }
 
 void test_lich_minions(void) {

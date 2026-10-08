@@ -56,6 +56,9 @@ Item random_enemy_item(void) {
 
 static void mark_item_tile(GameState *g, int x, int y) {
     TileType tile = g->map.tiles[y][x];
+    if (tile == TILE_DUNGEON_STAIRS_SEALED || tile == TILE_DUNGEON_STAIRS_RETURN) {
+        return;
+    }
     if (g->location == LOCATION_CASTLE_INTERIOR && (tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN ||
         tile == TILE_CASTLE_LEVER || tile == TILE_CASTLE_GATE_OPEN)) {
         return;
@@ -1088,6 +1091,18 @@ void action_resolve_player(GameState *g, Action a) {
 
     if (a.type == ACTION_ASCEND) {
         TileType tile = g->map.tiles[g->player.y][g->player.x];
+        TileType underlay = floor_drop_underlay(g, g->player.x, g->player.y);
+        if (g->location == LOCATION_DUNGEON &&
+            (underlay == TILE_DUNGEON_STAIRS_RETURN || underlay == TILE_DUNGEON_STAIRS_SEALED)) {
+            if (g->defeated_bosses & (1 << LOCATION_DUNGEON)) {
+                g->score += g->level * 100;
+                game_return_to_town(g);
+                push_message(g, "You climb the stairs back to Oakhaven.");
+            } else {
+                push_message(g, "The Lich King seals these stairs.");
+            }
+            return;
+        }
         if (g->location == LOCATION_TEMPLE && tile == TILE_STAIRS_UP) {
             if (g->level < TEMPLE_DEPTH) {
                 game_descend(g);

@@ -168,9 +168,9 @@ void test_elowen_quest(void) {
     while (g.level < DUNGEON_DEPTH) {
         game_descend(&g);
     }
-    ASSERT("replayed finale keeps its return passage open",
+    ASSERT("replayed finale keeps its return stairs open",
         g.map.tiles[g.map.stairs_down_y][g.map.stairs_down_x] ==
-            TILE_RETURN_EXIT);
+            TILE_DUNGEON_STAIRS_RETURN);
 }
 
 void test_tavern_interior(void) {

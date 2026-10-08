@@ -1192,6 +1192,7 @@ static int dungeon_is_floor(const GameState *g, int x, int y) {
     }
     return tile == TILE_FLOOR || tile == TILE_STAIRS_UP ||
         tile == TILE_STAIRS_DOWN || tile == TILE_RETURN_EXIT ||
+        tile == TILE_DUNGEON_STAIRS_SEALED || tile == TILE_DUNGEON_STAIRS_RETURN ||
         tile == TILE_DUNGEON_KEY || tile == TILE_CRYPT_KEY ||
         tile == TILE_CRYPT_CACHE || tile == TILE_PORTAL ||
         tile == TILE_BROKEN_BURIAL_SEAL ||
@@ -1332,6 +1333,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
     } else if (underlay == TILE_TRAP_HIDDEN &&
         g->location == LOCATION_COAST) {
         draw_coast_trap_underlay(r, g, map_x, map_y, screen_x, screen_y);
+    } else if (underlay == TILE_DUNGEON_STAIRS_SEALED || underlay == TILE_DUNGEON_STAIRS_RETURN) {
+        draw_dungeon_return_stairs(r, screen_x, screen_y, underlay == TILE_DUNGEON_STAIRS_RETURN);
     } else if (underlay == TILE_FOREST_SHORTCUT) {
         draw_forest_edge(r, screen_x, screen_y, map_x, map_y, 1);
     } else if (underlay == TILE_SWAMP_SHORTCUT) {
@@ -1690,6 +1693,42 @@ static void draw_catacombs_warnings(Renderer *r, const GameState *g, const Viewp
             }
         }
     }
+}
+
+static void draw_low_health_warning(Renderer *r, const GameState *g) {
+    if (!game_player_low_health(g)) {
+        return;
+    }
+    int width = r->screen_w - INFO_PANEL_W;
+    int height = r->tiles_y * TILE_SIZE;
+    int band = (width < height ? width : height) / 160;
+    if (band < 1) {
+        band = 1;
+    } else if (band > 6) {
+        band = 6;
+    }
+    if (width <= band * 16 || height <= band * 16) {
+        return;
+    }
+    // A slow 1.6-second pulse never disappears entirely while health is low.
+    int phase = SDL_GetTicks() % 1600;
+    int pulse = phase <= 800 ? phase : 1600 - phase;
+    int alpha = 48 + pulse * 48 / 800;
+    SDL_BlendMode blend;
+    SDL_GetRenderDrawBlendMode(r->sdl, &blend);
+    SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_BLEND);
+    for (int layer = 0; layer < 8; layer++) {
+        int inset = layer * band;
+        SDL_SetRenderDrawColor(r->sdl, 225, 20, 28, alpha * (8 - layer) / 8);
+        SDL_Rect edges[4] = {
+            {inset, inset, width - inset * 2, band},
+            {inset, height - inset - band, width - inset * 2, band},
+            {inset, inset + band, band, height - inset * 2 - band * 2},
+            {width - inset - band, inset + band, band, height - inset * 2 - band * 2}
+        };
+        SDL_RenderFillRects(r->sdl, edges, 4);
+    }
+    SDL_SetRenderDrawBlendMode(r->sdl, blend);
 }
 
 void game_draw(Renderer *r, GameState *g, Viewport *v) {
@@ -2112,6 +2151,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_coast_beacon(r, sx, sy, x, y, 0); break;
                 case TILE_COAST_BEACON_LIT:
                     draw_coast_beacon(r, sx, sy, x, y, 1); break;
+                case TILE_DUNGEON_STAIRS_SEALED:
+                case TILE_DUNGEON_STAIRS_RETURN:
+                    draw_dungeon_return_stairs(r, sx, sy, g->map.tiles[y][x] == TILE_DUNGEON_STAIRS_RETURN);
+                    break;
                 case TILE_STAIRS_UP:
                 case TILE_STAIRS_DOWN:
                 case TILE_RETURN_EXIT:
@@ -3271,6 +3314,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (tavern_scaled) {
         SDL_RenderSetViewport(r->sdl, NULL);
     }
+
+    draw_low_health_warning(r, g);
 
     // Draw info panel
     info_panel_draw(r, g);
