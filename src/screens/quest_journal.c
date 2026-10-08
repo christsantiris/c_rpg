@@ -37,7 +37,7 @@ static const QuestDefinition quest_definitions[14] = {
         "Return to Alder in Stillbury's Inn.",
         {"Rescue forest warden", "Rescue forest warden",
             "Rescue forest warden"},
-        "Forest", {1, 2, 3}, 70, 500
+        "Forest", {1, 2, 5}, 70, 500
     },
     {
         "Relight the Drowned Beacons", "Mara",

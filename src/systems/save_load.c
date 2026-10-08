@@ -625,7 +625,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 98);
+    cJSON_AddNumberToObject(root, "save_version", 99);
     cJSON_AddNumberToObject(root, "forest_entry_town", g->forest_entry_town);
     cJSON_AddNumberToObject(root, "forest_portal_town", g->forest_portal_town);
     cJSON_AddNumberToObject(root, "swamp_entry_town", g->swamp_entry_town);
@@ -3480,6 +3480,21 @@ int load_game(GameState *g, int slot) {
             }
         }
         g->map.tiles[ALDER_INN_Y][ALDER_INN_X] = TILE_NPC_ALDER;
+    }
+    if (save_version < 99) {
+        // The third rescue keeps its completion bit but moves across the boss to stage 5.
+        remove_legacy_wardens(&g->forest_cache[2].map);
+        if (g->location == LOCATION_FOREST && g->level == 3) {
+            remove_legacy_wardens(&g->map);
+            for (int i = 0; i < g->floor_item_count; i++) {
+                if (g->floor_items[i].underlying_tile == TILE_FOREST_WARDEN) {
+                    g->floor_items[i].underlying_tile = TILE_FOREST_FLOOR;
+                }
+            }
+        }
+        if (g->portal_location == LOCATION_FOREST && g->portal_level == 3 && g->portal_origin_tile == TILE_FOREST_WARDEN) {
+            g->portal_origin_tile = TILE_FOREST_FLOOR;
+        }
     }
     if (g->castle_prompt) {
         castle_request(g, g->castle_prompt == 2);

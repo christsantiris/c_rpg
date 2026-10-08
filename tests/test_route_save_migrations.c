@@ -248,6 +248,69 @@ static void test_legacy_region(int forest, int level, int expected) {
     remove("saves/savegame_99123.json");
 }
 
+static void test_split_forest_migration(void) {
+    for (int portal = 0; portal < 2; portal++) {
+        for (int rescued = 0; rescued < 2; rescued++) {
+            memset(&original, 0, sizeof(original));
+            original.player.player_class = CLASS_WARRIOR;
+            game_init(&original);
+            original.defeated_bosses |= 1 << LOCATION_FOREST;
+            game_enter_forest(&original);
+            while (original.level < 5) {
+                game_descend(&original);
+            }
+            original.enemies[0].hp = 11;
+            game_ascend(&original);
+            game_ascend(&original);
+            original.alder_quest_state = 1;
+            original.alder_wardens_rescued = ALDER_WARDEN_STAGE_1 | (rescued ? ALDER_WARDEN_STAGE_5 : 0);
+            original.gold = 617;
+            original.enemies[0].hp = 9;
+            int x;
+            int y;
+            map_room_center(&original.map.rooms[6], &x, &y);
+            original.map.tiles[y][x] = TILE_FOREST_WARDEN;
+            original.forest_cache[2].map.tiles[y][x] = TILE_FOREST_WARDEN;
+            original.floor_item_count = 1;
+            original.floor_items[0] = (FloorItem){.active = 1, .x = original.player.x, .y = original.player.y,
+                .underlying_tile = original.map.tiles[original.player.y][original.player.x], .item = item_make_health_potion()};
+            original.map.tiles[original.player.y][original.player.x] = TILE_ITEM;
+            if (portal) {
+                game_open_town_portal(&original);
+            }
+            ASSERT("version 98 forest quest saves migrate", make_legacy_save(98) && load_game(&loaded, ROUTE_SAVE_SLOT));
+            ASSERT("moving a captive preserves rescues, money, boss victory, and explored far-side enemies", loaded.alder_quest_state == 1 &&
+                loaded.alder_wardens_rescued == original.alder_wardens_rescued && loaded.gold == 617 &&
+                loaded.defeated_bosses == original.defeated_bosses && loaded.forest_cache[4].valid && loaded.forest_cache[4].enemies[0].hp == 11 &&
+                memcmp(loaded.forest_cache[4].map.rooms, original.forest_cache[4].map.rooms, sizeof(original.map.rooms)) == 0);
+            ASSERT("migration removes the obsolete captive from the cached third stage", loaded.forest_cache[2].map.tiles[y][x] == TILE_FOREST_FLOOR);
+            if (portal) {
+                ASSERT("migration keeps the third-stage portal anchor", loaded.portal_active && loaded.portal_level == 3 &&
+                    loaded.portal_x == original.portal_x && loaded.portal_y == original.portal_y);
+                game_use_town_portal(&loaded);
+            } else {
+                ASSERT("migration keeps active third-stage position and loot", loaded.player.x == original.player.x && loaded.player.y == original.player.y &&
+                    loaded.floor_items[0].active && loaded.floor_items[0].underlying_tile == original.floor_items[0].underlying_tile);
+            }
+            ASSERT("migration keeps the active third-stage enemy damage and removes its old captive", loaded.level == 3 &&
+                loaded.enemies[0].hp == 9 && loaded.map.tiles[y][x] == TILE_FOREST_FLOOR);
+            game_descend(&loaded);
+            game_descend(&loaded);
+            int wardens = 0;
+            for (int row = 0; row < MAP_H; row++) {
+                for (int column = 0; column < MAP_W; column++) {
+                    wardens += loaded.map.tiles[row][column] == TILE_FOREST_WARDEN;
+                }
+            }
+            ASSERT("only unfinished third rescues appear on the explored fifth stage", loaded.level == 5 && wardens == !rescued &&
+                loaded.enemies[0].hp == 11 && loaded.alder_wardens_rescued == original.alder_wardens_rescued);
+            ASSERT("migrated forest quest rewrites and reloads successfully", save_game(&loaded, ROUTE_SAVE_SLOT) && load_game(&reloaded, ROUTE_SAVE_SLOT) &&
+                reloaded.alder_wardens_rescued == loaded.alder_wardens_rescued);
+        }
+    }
+    remove("saves/savegame_99123.json");
+}
+
 void test_route_save_migrations(void) {
     printf("Forest and swamp save migration tests:\n");
     ASSERT("route migration test slot is unused", !save_exists(ROUTE_SAVE_SLOT));
@@ -288,4 +351,5 @@ void test_route_save_migrations(void) {
     ASSERT("swamp migration leaves the already migrated forest unchanged", ok && loaded.forest_entry_town == LOCATION_TOWN2 && loaded.forest_portal_town == LOCATION_TOWN2 && loaded.forest_cache[3].valid && memcmp(loaded.forest_cache[3].map.rooms, original.forest_cache[3].map.rooms, sizeof(original.forest_cache[3].map.rooms)) == 0 && loaded.defeated_bosses == original.defeated_bosses);
     remove("saves/savegame_99123.json");
     test_mountain_migration();
+    test_split_forest_migration();
 }

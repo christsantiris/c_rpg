@@ -57,7 +57,7 @@ static void forest_rescue(GameState *g) {
             }
         }
     }
-    ASSERT("active quest places wardens only on the OakHaven approach", found == (g->level <= 3 ? 1 : 0));
+    ASSERT("wardens occupy stages 1 and 2 near Oakhaven and stage 5 near Stillbury", found == (g->level == 1 || g->level == 2 || g->level == 5 ? 1 : 0));
 }
 
 static void test_forest_crossing(int reverse, int shortcut) {
@@ -99,7 +99,8 @@ static void test_forest_crossing(int reverse, int shortcut) {
     }
     int boss = forest_boss(&forest);
     ASSERT("both approaches reach the central boss grove", forest.level == FOREST_BOSS_LEVEL && boss >= 0);
-    ASSERT("OakHaven rescues precede the boss and Stillbury rescues follow it", forest.alder_wardens_rescued == (reverse ? 0 : 7));
+    ASSERT("either approach finds quest objectives before crossing the boss", forest.alder_wardens_rescued ==
+        (reverse ? ALDER_WARDEN_STAGE_5 : ALDER_WARDEN_STAGE_1 | ALDER_WARDEN_STAGE_2));
     if (boss < 0) {
         return;
     }

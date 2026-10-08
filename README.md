@@ -158,9 +158,11 @@ throughout their regions. Accepting one begins a
 fresh expedition through that region so completed maps never turn the quest
 into an empty walk. Regular enemies and maps regenerate, while defeated bosses
 remain defeated.
-The Lost Wardens objectives occupy forest stages 1, 2, and 3 on the OakHaven
-side. Entering from Stillbury encounters them after the Necromancer, in order
-3, 2, and 1; taking the grove shortcut skips those rescues.
+The Lost Wardens objectives occupy forest stages **1 and 2 near Oakhaven** and
+**5 near Stillbury**, on opposite sides of the stage-4 Necromancer. Entering
+from Stillbury finds the stage-5 warden first, then stages 2 and 1 after the
+boss. Taking the grove shortcut skips unfinished rescues on the far side;
+either ordinary forest gate remains available to finish them later.
 
 The Blacksmith sells weapons, armor, and shields. The Alchemist sells both
 potion types, spell scrolls, and Mage spell tomes in OakHaven. OakHaven's west
