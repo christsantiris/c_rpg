@@ -479,6 +479,8 @@ equip it. Shops, the healer, the witch, and the harbor use the arrow keys and
 
 Below are screenshots of the game in action:
 
+<img width="2560" height="1438" alt="image" src="https://github.com/user-attachments/assets/f2e73317-2c66-4b8f-b3f8-e5677a77a6c2" />
+
 <img width="2552" height="1434" alt="image" src="https://github.com/user-attachments/assets/90d05a5a-e6f2-40f3-99d8-0efe8705f952" />
 
 ## Building and Running
