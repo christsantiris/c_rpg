@@ -160,6 +160,16 @@ recover the buried treasure from the summit vault. Return to Nahla with the
 treasure for 150 gold and 2,500 score. This quest also appears in the Quest
 Journal and gives the game one boss and one quest for every adventure area.
 
+## Ilya: The Dragon's Hoard
+
+Ilya waits beside Brenna and Liora in **Oakhaven's Tavern**. Press `T` beside
+her to accept the quest. Travel north through the mountains to Ridgeshire,
+then take its east gate to Dragonspine. Recover the golden goblet on stage 5
+by standing on it and pressing `A`, then return to Ilya in the Tavern for
+one **Potion of Strength and 600 score**. Make room in your pack before
+turning it in. The potion permanently adds 1 base attack when consumed.
+Older saves move Ilya while retaining existing quest and boss progress.
+
 ## Tomas: Guide Tomas Home
 
 Tomas waits in the **Royal Jail on the castle grounds**. A seemingly ordinary

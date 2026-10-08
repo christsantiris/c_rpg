@@ -5304,29 +5304,24 @@ void game_collect_desert_lamp(GameState *g) {
 }
 
 void game_talk_to_dragon_seeker(GameState *g) {
-    if (g->location != LOCATION_TOWN4) {
+    if (g->location != LOCATION_TAVERN || abs(g->player.x - ILYA_TAVERN_X) > 1 || abs(g->player.y - ILYA_TAVERN_Y) > 1) {
         return;
     }
     g->dialogue_active = 1;
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Ilya");
-    g->dialogue_x = TOWN4_ILYA_X;
-    g->dialogue_y = TOWN4_ILYA_Y;
+    g->dialogue_x = ILYA_TAVERN_X;
+    g->dialogue_y = ILYA_TAVERN_Y;
     if (g->dragon_treasure_quest_state == 0) {
         g->dragon_treasure_quest_state = 1;
-        if (g->portal_active && g->portal_location == LOCATION_DRAGONSPINE &&
-            g->map.tiles[TOWN4_PORTAL_Y][TOWN4_PORTAL_X] == TILE_PORTAL) {
-            g->map.tiles[TOWN4_PORTAL_Y][TOWN4_PORTAL_X] = TILE_TOWN_FLOOR;
-        }
         prepare_quest_expedition(g, LOCATION_DRAGONSPINE);
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "A golden goblet lies in the hoard atop Dragonspine. "
-            "Bring it back and I will give you a Potion of Strength. "
-            "Dragonspine lies beyond this town's east gate.");
+            "Travel north through the mountains to Ridgeshire, then east to Dragonspine. "
+            "Bring its fifth-stage golden goblet back here to Oakhaven's Tavern for a Potion of Strength.");
         push_message(g, "Assigned: The Dragon's Hoard.");
     } else if (g->dragon_treasure_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "Find the golden goblet in the dragon's hoard on Dragonspine's "
-            "fifth stage. Stand on it and press A, then return to me.");
+            "fifth stage. Stand on it and press A, then return to me in Oakhaven's Tavern.");
     } else if (g->dragon_treasure_quest_state == 2) {
         if (g->inventory_count >= MAX_INVENTORY) {
             snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
@@ -5343,7 +5338,7 @@ void game_talk_to_dragon_seeker(GameState *g) {
         push_message(g, "Completed: The Dragon's Hoard. Potion of Strength awarded.");
     } else {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Dragonspine's treasure is safe. The east gate is open to you.");
+            "Dragonspine's treasure is safe. Thank you for returning to Oakhaven with the goblet.");
     }
 }
 
@@ -5355,7 +5350,7 @@ void game_collect_dragon_treasure(GameState *g) {
     }
     g->map.tiles[g->player.y][g->player.x] = TILE_DRAGON_HOARD;
     g->dragon_treasure_quest_state = 2;
-    push_message(g, "Golden goblet recovered. Return it to Ilya in Ridgeshire.");
+    push_message(g, "Golden goblet recovered. Return to Ilya in Oakhaven's Tavern.");
 }
 
 void game_talk_to_elowen(GameState *g) {

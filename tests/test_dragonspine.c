@@ -79,8 +79,8 @@ void test_dragonspine(void) {
                 tile == TILE_NPC_DRAGON_SEEKER || tile == TILE_NPC_ROYAL_GUARD;
         }
     }
-    ASSERT("Ridgeshire keeps its crossroads, Ilya, and guards with an open Ashen Hollow gate",
-        empty_crossroads && ilya_count == 1 && royal_guard_count == 2 &&
+    ASSERT("Ridgeshire keeps its crossroads and guards without Ilya and with an open Ashen Hollow gate",
+        empty_crossroads && ilya_count == 0 && royal_guard_count == 2 &&
         g.map.tiles[12][20] == TILE_TOWN_PATH &&
         g.map.tiles[0][RIDGESHIRE_ASHEN_GATE_X] == TILE_TOWN_EXIT && g.map.tiles[12][0] == TILE_TOWN_EXIT);
 
@@ -249,20 +249,21 @@ void test_dragonspine(void) {
     g.defeated_bosses |= 1 << LOCATION_MOUNTAINS;
     game_enter_mountains(&g);
     game_enter_town4(&g);
-    ASSERT("Ilya appears beside Ridgeshire east road",
-        g.map.tiles[TOWN4_ILYA_Y][TOWN4_ILYA_X] ==
-            TILE_NPC_DRAGON_SEEKER &&
-        g.map.tiles[TOWN4_ILYA_Y + 1][TOWN4_ILYA_X] ==
-            TILE_TOWN_PATH &&
-        !map_is_walkable(&g.map, TOWN4_ILYA_X, TOWN4_ILYA_Y));
+    ASSERT("Ilya's former Ridgeshire position is ordinary grass", g.map.tiles[11][39] == TILE_TOWN_FLOOR &&
+        map_is_walkable(&g.map, 39, 11));
     game_enter_dragonspine(&g);
     game_open_town_portal(&g);
+    game_enter_high_pass(&g, 0);
+    game_leave_high_pass(&g, LOCATION_TOWN);
+    game_enter_tavern(&g);
+    g.player.x = ILYA_TAVERN_X;
+    g.player.y = ILYA_TAVERN_Y + 1;
     game_talk_to_dragon_seeker(&g);
     ASSERT("Ilya assigns the Dragonspine treasure quest once",
         g.dragon_treasure_quest_state == 1 && !g.portal_active &&
-        g.map.tiles[TOWN4_PORTAL_Y][TOWN4_PORTAL_X] == TILE_TOWN_FLOOR &&
-        g.dialogue_x == TOWN4_ILYA_X && g.dialogue_y == TOWN4_ILYA_Y &&
-        strstr(g.dialogue_text, "east gate"));
+        g.map.tiles[ILYA_TAVERN_Y][ILYA_TAVERN_X] == TILE_NPC_DRAGON_SEEKER &&
+        g.dialogue_x == ILYA_TAVERN_X && g.dialogue_y == ILYA_TAVERN_Y &&
+        strstr(g.dialogue_text, "Ridgeshire") && strstr(g.dialogue_text, "Oakhaven's Tavern"));
     game_enter_dragonspine(&g);
     for (int level = 2; level <= DRAGONSPINE_DEPTH; level++) {
         game_descend(&g);
@@ -286,6 +287,11 @@ void test_dragonspine(void) {
         loaded.map.tiles[treasure_y][treasure_x] == TILE_DRAGON_HOARD);
     if (restored) {
         game_return_to_town(&loaded);
+        game_enter_high_pass(&loaded, 0);
+        game_leave_high_pass(&loaded, LOCATION_TOWN);
+        game_enter_tavern(&loaded);
+        loaded.player.x = ILYA_TAVERN_X;
+        loaded.player.y = ILYA_TAVERN_Y + 1;
         while (loaded.inventory_count < MAX_INVENTORY) {
             loaded.inventory[loaded.inventory_count++] = item_make_health_potion();
         }
