@@ -115,5 +115,10 @@ Claude will review your output once you are done.
 
 ## 9. Completion Commit Message
 
+The user reviews and commits changes manually. Do not stage changes or create
+Git commits unless the user explicitly requests that action. Leave completed
+changes uncommitted for the user's review. A request for "one commit per change"
+defines change-set scope; it does not authorize committing.
+
 After each change set is complete, provide a suggested Git commit message in
 the final response. This signals that the work is finished and ready to commit.

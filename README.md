@@ -442,10 +442,10 @@ save's keys. The help screen (`H` by default) always shows the current keys.
 | `Esc` | Close the current view or return to the main menu |
 
 Inside the inventory, use the arrow keys to select an item, `U` to use it,
-`E` to equip it, `O` to equip a one-handed weapon in the off hand, and `D` to
-drop it. In the spellbook, select a spell and press `Enter` to equip it. Shops,
-the healer, the witch, and the harbor use the arrow keys and `Enter`; shop buy
-and sell modes are switched with `Tab`.
+`E` or `Enter` to equip it, `O` to equip a one-handed weapon in the off hand, and
+`D` to drop it. In the spellbook, select a spell and press `E` or `Enter` to
+equip it. Shops, the healer, the witch, and the harbor use the arrow keys and
+`Enter`; shop buy and sell modes are switched with `Tab`.
 
 ## Game Documentation
 

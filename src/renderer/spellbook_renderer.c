@@ -58,5 +58,5 @@ void spellbook_draw(Renderer *r, const GameState *g, const SpellbookScreen *s) {
         }
     }
 
-    renderer_draw_text(r, "ENTER EQUIP   B/ESC CLOSE", cx - 130, (r->tiles_y - 2) * TILE_SIZE, hint, r->font_small);
+    renderer_draw_text(r, "E/ENTER EQUIP   B/ESC CLOSE", cx - 150, (r->tiles_y - 2) * TILE_SIZE, hint, r->font_small);
 }

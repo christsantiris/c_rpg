@@ -166,6 +166,6 @@ void inventory_draw(Renderer *r, const GameState *g, const InventoryScreen *s) {
         }
     }
 
-    renderer_draw_text(r, "U USE  E MAIN  O OFF-HAND  D DROP  ESC CLOSE",
-        cx - 245, (r->tiles_y - 2) * TILE_SIZE, hint, r->font_small);
+    renderer_draw_text(r, "U USE  E/ENTER EQUIP  O OFF-HAND  D DROP  ESC CLOSE",
+        cx - 270, (r->tiles_y - 2) * TILE_SIZE, hint, r->font_small);
 }

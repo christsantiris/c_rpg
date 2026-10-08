@@ -12,7 +12,6 @@ typedef struct {
 } SpellbookScreen;
 
 void            spellbook_init(SpellbookScreen *s);
-SpellbookResult spellbook_handle_key(SpellbookScreen *s, int scancode,
-                                     int spell_count);
+SpellbookResult spellbook_handle_key(SpellbookScreen *s, int scancode, int spell_count);
 
 #endif
