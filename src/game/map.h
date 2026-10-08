@@ -166,6 +166,8 @@
 #define BRENNA_Y 18
 #define LIORA_X 18
 #define LIORA_Y 18
+#define ILYA_TAVERN_X 28
+#define ILYA_TAVERN_Y 18
 #define DESERT_DEPTH 5
 #define MOONVEIL_DEPTH 5
 #define ASHEN_DEPTH 5
@@ -190,8 +192,6 @@
 #define TOWN4_ROAD_X 40
 #define RIDGESHIRE_MOUNTAIN_ROAD_X 28
 #define TOWN4_DRAGON_GATE_Y 12
-#define TOWN4_ILYA_X 39
-#define TOWN4_ILYA_Y 11
 #define TOWN4_PORTAL_X (TOWN_W - 3)
 #define TOWN4_PORTAL_Y 13
 #define TOWN4_WORKSHOP_X 7

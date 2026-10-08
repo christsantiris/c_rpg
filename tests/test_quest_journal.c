@@ -75,7 +75,7 @@ void test_quest_journal(void) {
         quest_journal_count(&g, QUEST_TAB_ACTIVE) == 1 &&
         quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 0, &entry) &&
         strcmp(entry.title, "The Dragon's Hoard") == 0 &&
-        strcmp(entry.reward_item, "Potion of Strength") == 0);
+        strcmp(entry.reward_item, "Potion of Strength") == 0 && strstr(entry.summary_line_2, "Oakhaven's Tavern"));
     g.dragon_treasure_quest_state = 2;
     ASSERT("recovered dragon treasure is ready to return",
         quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 0, &entry) &&

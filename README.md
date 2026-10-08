@@ -86,9 +86,11 @@ Either approach finds fragments before and after the boss.
 Ridgeshire's east gate leads directly to Dragonspine. The safe High Pass links a
 separate south shortcut gate in Ridgeshire with OakHaven's northeast road, unlocked
 by the Goblin King's defeat. Both ordinary mountain gates remain available. Ilya
-waits beside Ridgeshire's Dragonspine gate and offers a quest to recover a golden
-goblet from the dragon's hoard. Her one-time reward is a Potion of Strength
-that permanently adds 1 base attack when consumed.
+waits in **Oakhaven's Tavern** and offers a quest to recover a golden goblet
+from Dragonspine's fifth-stage hoard. Return to her in the Tavern for a
+one-time **Potion of Strength and 600 score**. The potion permanently adds
+1 base attack when consumed. Older saves preserve quest progress and update
+her location when loaded.
 
 Ridgeshire's workshop houses Garrick, who sharpens a selected sword, axe, or
 dagger for **50 gold**, permanently adding **+1 weapon attack**. Each individual

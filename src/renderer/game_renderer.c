@@ -2915,6 +2915,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         name_x = viewport_to_screen_x(v, LIORA_X) * TILE_SIZE + (TILE_SIZE - name_w) / 2;
         name_y = viewport_to_screen_y(v, LIORA_Y - 1) * TILE_SIZE;
         renderer_draw_text(r, "LIORA", name_x, name_y, area_label_color(LOCATION_MOONVEIL), r->font_tiny);
+        TTF_SizeText(r->font_tiny, "ILYA", &name_w, NULL);
+        name_x = viewport_to_screen_x(v, ILYA_TAVERN_X) * TILE_SIZE + (TILE_SIZE - name_w) / 2;
+        name_y = viewport_to_screen_y(v, ILYA_TAVERN_Y - 1) * TILE_SIZE;
+        renderer_draw_text(r, "ILYA", name_x, name_y, area_label_color(LOCATION_DRAGONSPINE), r->font_tiny);
     }
 
     if (g->location == LOCATION_MOONVEIL) {

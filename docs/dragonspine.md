@@ -38,10 +38,16 @@ defeated.
 
 ## The Dragon's Hoard
 
-Ilya stands beside Ridgeshire's east road to Dragonspine. Speak with her to
+Ilya waits in **Oakhaven's Tavern**, alongside Brenna and Liora. Press `T` beside her to
 accept **The Dragon's Hoard**. On Dragonspine stage 5, find the golden goblet
-in the dragon's lair, stand on it, and press `A`. Return to Ilya to trade
-the goblet for a one-time Potion of Strength. Make space in your pack before
+in the dragon's lair, stand on it, and press `A`. Return to Ilya in the Tavern to trade
+the goblet for a one-time Potion of Strength and 600 score. Make space in your pack before
 turning in the quest. Drinking the potion permanently raises base attack by 1;
 it is not sold in shops. The quest can still be completed if the Red Dragon was
 defeated before speaking with Ilya.
+
+Her directions lead north through the mountains to Ridgeshire, then east
+through its Dragonspine gate. Save version **102** moves Ilya from saved
+Ridgeshire maps into saved Tavern interiors while preserving the goblet,
+quest completion, boss victories, equipment, and money. Overlapping players
+and dropped items move one tile south of her new Tavern position.

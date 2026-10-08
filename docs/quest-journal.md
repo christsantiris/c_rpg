@@ -24,6 +24,10 @@ The beacons remain on Sunken Coast stages 2, 3, and 4. Return to her in the
 Town Hall for 80 gold and 600 score; her location change preserves existing
 quest progress.
 
+Ilya assigns **The Dragon's Hoard** in **Oakhaven's Tavern**. Its objective
+remains the golden goblet on Dragonspine stage 5, beyond Ridgeshire's east
+gate. Return to Ilya in the Tavern for one Potion of Strength and 600 score.
+
 Zara's **The Lost Magic Lamp** quest also appears after accepting it inside
 Rosemoor's Adventurer's Guild. Recover the lamp from Sunscar Wastes stage 4,
 then return to Zara for 80 gold and 600 score. Pickup marks the quest ready to

@@ -4586,7 +4586,7 @@ void draw_dragon_goblet(Renderer *r, int tile_x, int tile_y, int map_x, int map_
 void draw_dragon_seeker(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    draw_town_floor(r, tile_x, tile_y);
+    draw_tavern_floor(r, tile_x, tile_y);
     fill_rect(r, x + 5, y + 4, 14, 4, (SDL_Color){49, 48, 56, 255});
     fill_rect(r, x + 8, y + 2, 9, 4, (SDL_Color){87, 73, 60, 255});
     fill_rect(r, x + 8, y + 8, 8, 5, (SDL_Color){204, 159, 120, 255});

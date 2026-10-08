@@ -1269,7 +1269,6 @@ void map_generate_town4(Map *m, int *spawn_x, int *spawn_y) {
     map_place_town4_workshop(m);
     map_place_town4_hall(m);
     map_place_town4_guards(m, -1, -1);
-    m->tiles[TOWN4_ILYA_Y][TOWN4_ILYA_X] = TILE_NPC_DRAGON_SEEKER;
     *spawn_x = 20;
     *spawn_y = TOWN_H - 2;
 }
@@ -2359,6 +2358,7 @@ void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y) {
     map_generate_tavern_room(m, spawn_x, spawn_y, 0);
     map_place_tavern_brenna(m);
     map_place_tavern_liora(m);
+    m->tiles[ILYA_TAVERN_Y][ILYA_TAVERN_X] = TILE_NPC_DRAGON_SEEKER;
 }
 
 void map_place_tavern_liora(Map *m) {
