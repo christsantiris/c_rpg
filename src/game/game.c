@@ -5355,20 +5355,20 @@ void game_collect_dragon_treasure(GameState *g) {
 }
 
 void game_talk_to_elowen(GameState *g) {
-    if (g->location != LOCATION_INN || abs(g->player.x - ELOWEN_INN_X) > 1 || abs(g->player.y - ELOWEN_INN_Y) > 1) {
+    if (g->location != LOCATION_TAVERN || abs(g->player.x - ELOWEN_TAVERN_X) > 1 || abs(g->player.y - ELOWEN_TAVERN_Y) > 1) {
         return;
     }
     g->dialogue_active = 1;
     strncpy(g->dialogue_speaker, "Elowen", MAX_SPEAKER_LEN - 1);
     g->dialogue_speaker[MAX_SPEAKER_LEN - 1] = '\0';
-    g->dialogue_x = ELOWEN_INN_X;
-    g->dialogue_y = ELOWEN_INN_Y;
+    g->dialogue_x = ELOWEN_TAVERN_X;
+    g->dialogue_y = ELOWEN_TAVERN_Y;
     if (g->elowen_quest_state == 0) {
         g->elowen_quest_state = 1;
         g->elowen_seals_restored = 0;
         prepare_quest_expedition(g, LOCATION_DUNGEON);
         strncpy(g->dialogue_text,
-            "The dead gather around shattered burial seals on floors 2, 3, and 4 of Oakhaven's dungeon. Restore each seal, then return to me here in Stillbury's Inn.",
+            "The dead gather around shattered burial seals on floors 2, 3, and 4 of Oakhaven's dungeon. Restore each seal, then return to me here in Oakhaven's Tavern.",
             MAX_DIALOGUE_LEN - 1);
         g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
         push_message(g, "Quest assigned: The Broken Seals.");
@@ -5382,7 +5382,7 @@ void game_talk_to_elowen(GameState *g) {
             }
         }
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "You have restored %d of 3 burial seals in Oakhaven's dungeon. Return to me in Stillbury's Inn when all three are whole.",
+            "You have restored %d of 3 burial seals in Oakhaven's dungeon. Return to me in Oakhaven's Tavern when all three are whole.",
             restored);
         char status[MAX_MESSAGE_LEN];
         snprintf(status, sizeof(status), "Quest progress: %d/3 seals.",

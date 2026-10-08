@@ -67,8 +67,8 @@
 #define TAVERN_Y 2
 #define TAVERN_W 32
 #define TAVERN_H 21
-#define ELOWEN_INN_X 10
-#define ELOWEN_INN_Y 7
+#define ELOWEN_TAVERN_X 10
+#define ELOWEN_TAVERN_Y 7
 #define TOWN_CAIN_X 19
 #define TOWN_CAIN_Y 11
 #define TOWN_HARBOR_W 5
@@ -508,7 +508,7 @@ void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y);
 void map_place_tavern_brenna(Map *m);
 void map_place_tavern_liora(Map *m);
 void map_generate_inn(Map *m, int *spawn_x, int *spawn_y);
-void map_place_inn_elowen(Map *m);
+void map_place_tavern_elowen(Map *m);
 void map_generate_island(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_temple(Map *m, int level, int *spawn_x, int *spawn_y);
 void map_generate_labyrinth(Map *m, int level, int switches, int *spawn_x, int *spawn_y);

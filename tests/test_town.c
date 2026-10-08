@@ -368,9 +368,9 @@ void test_rook_labyrinth(void) {
         !game_labyrinth_is_open(&g));
 
     game_enter_inn(&g);
-    ASSERT("Rook and Elowen are in Stillbury's inn",
+    ASSERT("Rook remains in Stillbury's inn while Elowen returns to Oakhaven",
         g.map.tiles[18][10] == TILE_NPC_ROOK &&
-        g.map.tiles[ELOWEN_INN_Y][ELOWEN_INN_X] == TILE_NPC_ELOWEN);
+        g.map.tiles[ELOWEN_TAVERN_Y][ELOWEN_TAVERN_X] == TILE_TAVERN_FLOOR);
     game_talk_to_rook(&g);
     ASSERT("Rook assigns the retrieval quest on first conversation",
         g.rook_quest_state == 1 && g.rook_labyrinth_switches == 0 &&

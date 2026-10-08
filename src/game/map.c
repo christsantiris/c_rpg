@@ -2356,6 +2356,7 @@ static void map_generate_tavern_room(Map *m, int *spawn_x, int *spawn_y, int inn
 
 void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y) {
     map_generate_tavern_room(m, spawn_x, spawn_y, 0);
+    map_place_tavern_elowen(m);
     map_place_tavern_brenna(m);
     map_place_tavern_liora(m);
     m->tiles[ILYA_TAVERN_Y][ILYA_TAVERN_X] = TILE_NPC_DRAGON_SEEKER;
@@ -2371,12 +2372,11 @@ void map_place_tavern_brenna(Map *m) {
 
 void map_generate_inn(Map *m, int *spawn_x, int *spawn_y) {
     map_generate_tavern_room(m, spawn_x, spawn_y, 1);
-    map_place_inn_elowen(m);
     m->tiles[ALDER_INN_Y][ALDER_INN_X] = TILE_NPC_ALDER;
 }
 
-void map_place_inn_elowen(Map *m) {
-    m->tiles[ELOWEN_INN_Y][ELOWEN_INN_X] = TILE_NPC_ELOWEN;
+void map_place_tavern_elowen(Map *m) {
+    m->tiles[ELOWEN_TAVERN_Y][ELOWEN_TAVERN_X] = TILE_NPC_ELOWEN;
 }
 
 void map_generate_guild(Map *m, int *sx, int *sy) {
