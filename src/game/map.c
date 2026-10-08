@@ -2358,12 +2358,12 @@ void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y) {
     map_generate_tavern_room(m, spawn_x, spawn_y, 0);
     map_place_tavern_elowen(m);
     map_place_tavern_brenna(m);
-    map_place_tavern_liora(m);
+    m->tiles[MARA_TAVERN_Y][MARA_TAVERN_X] = TILE_NPC_MARA;
     m->tiles[ILYA_TAVERN_Y][ILYA_TAVERN_X] = TILE_NPC_DRAGON_SEEKER;
 }
 
-void map_place_tavern_liora(Map *m) {
-    m->tiles[LIORA_Y][LIORA_X] = TILE_NPC_LIORA;
+void map_place_inn_liora(Map *m) {
+    m->tiles[LIORA_INN_Y][LIORA_INN_X] = TILE_NPC_LIORA;
 }
 
 void map_place_tavern_brenna(Map *m) {
@@ -2372,6 +2372,7 @@ void map_place_tavern_brenna(Map *m) {
 
 void map_generate_inn(Map *m, int *spawn_x, int *spawn_y) {
     map_generate_tavern_room(m, spawn_x, spawn_y, 1);
+    map_place_inn_liora(m);
     m->tiles[ALDER_INN_Y][ALDER_INN_X] = TILE_NPC_ALDER;
 }
 
@@ -2417,7 +2418,6 @@ void map_generate_town_hall(Map *m, int *sx, int *sy) {
         }
     }
     m->tiles[HALL_STEWARD_Y][HALL_STEWARD_X] = TILE_NPC_STEWARD;
-    m->tiles[HALL_MARA_Y][HALL_MARA_X] = TILE_NPC_MARA;
     m->tiles[HALL_OSWIN_Y][HALL_OSWIN_X] = TILE_NPC_OSWIN;
 }
 

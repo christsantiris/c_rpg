@@ -58,8 +58,11 @@ static void test_swamp_crossing(int reverse, int shortcut) {
     game_init(&swamp);
     srand(1037 + reverse + shortcut * 2);
     game_enter_town2(&swamp);
+    game_enter_inn(&swamp);
     game_talk_to_innkeeper(&swamp);
+    game_handle_quest_offer_key(&swamp, SDL_SCANCODE_Y, 0);
     ASSERT("Bram names the revised rescue level", strstr(swamp.dialogue_text, "level 3") != NULL);
+    game_leave_inn(&swamp);
     if (reverse) {
         game_enter_town3(&swamp);
     }

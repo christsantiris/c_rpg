@@ -23,5 +23,6 @@ int catacombs_sweep_marks(const Map *m, const Enemy *e, int x, int y);
 int catacombs_enemy_damage(const GameState *g, const Enemy *e, int damage);
 void catacombs_restore_reward(GameState *g);
 void catacombs_refresh_quest(GameState *g);
+void catacombs_accept_quest(GameState *g);
 
 #endif

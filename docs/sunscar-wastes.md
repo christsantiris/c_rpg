@@ -14,9 +14,10 @@ standing still. The sandstorm is visual and does not affect combat or movement.
 ## The Lost Magic Lamp
 
 Enter the Adventurer's Guild beside Rosemoor's town square. Approach Zara behind
-the desk and press `T` to accept her quest. Travel to Sunscar through Stillbury's
-west gate and find the golden magic lamp in the last clearing of stage 4.
-Stand on it and press `A` to recover it, then return to Zara in the Guild.
+the desk and press `T` to hear her offer, then `Y` to accept her quest. Travel
+to Sunscar through Stillbury's west gate and find the golden magic lamp in the
+last clearing of stage 4. Stand on it and press `A` to recover it, then return
+to Zara in the Guild.
 
 The one-time reward is **80 gold and 600 score**. The lamp uses quest state rather
 than inventory space, so a full pack does not prevent recovery. The journal

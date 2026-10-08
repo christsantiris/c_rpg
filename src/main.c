@@ -616,6 +616,9 @@ int main(int argc, char **argv) {
                         break;
                     }
                     int sc = event.key.keysym.scancode;
+                    if (screen == SCREEN_PLAYING && game_handle_quest_offer_key(&game, sc, event.key.repeat)) {
+                        break;
+                    }
                     if (screen == SCREEN_PLAYING && game_handle_glassdeep_prompt_key(&game, sc, event.key.repeat)) {
                         break;
                     }
@@ -879,8 +882,7 @@ int main(int argc, char **argv) {
                                     (game_has_regional_interaction(&game) ||
                                     tile == TILE_COAST_TIDE_CONTROL ||
                                     tile == TILE_COAST_BEACON_UNLIT ||
-                                    tile == TILE_BROKEN_BURIAL_SEAL ||
-                                    tile == TILE_CRYPT_CACHE)) {
+                                    tile == TILE_BROKEN_BURIAL_SEAL)) {
                                     a = (Action){ACTION_INTERACT, 0, 0};
                                 } else {
                                     a = (Action){ACTION_MOVE,
@@ -1141,7 +1143,7 @@ int main(int argc, char **argv) {
                         break;
                     }
                     if (event.button.button != SDL_BUTTON_LEFT) break;
-                    if (screen == SCREEN_PLAYING && (game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game))) {
+                    if (screen == SCREEN_PLAYING && (game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game))) {
                         break;
                     }
 

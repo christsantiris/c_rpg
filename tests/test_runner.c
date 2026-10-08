@@ -73,6 +73,7 @@ void test_alder_relocation(void);
 void test_mara_quest(void);
 void test_mara_relocation(void);
 void test_quest_activation_gating(void);
+void test_quest_offer_controls(void);
 void test_quest_journal(void);
 void test_save_load(void);
 void test_save_confirmation(void);
@@ -159,6 +160,7 @@ int main(void) {
     test_emberforge();
     printf("\n");
     test_quest_activation_gating();
+    test_quest_offer_controls();
     printf("\n");
     test_elowen_quest();
     test_elowen_relocation();

@@ -6,9 +6,13 @@ the south doorway to return to the same town street.
 
 NPC speech appears in a wrapped dialogue bubble beside the speaker. The bottom
 message bar is reserved for concise game events such as quest assignment,
-progress, and completion. Moving dismisses the current dialogue bubble.
-Elowen, Brenna, Liora, and Ilya wait in Oakhaven's Tavern. Alder, Rook, and Bram
-wait in Stillbury's Inn, which uses the same doorway and conversation controls.
+progress, and completion. Quest offers display **Y** to accept and **N** to
+decline; **Esc** also declines. Declining leaves the quest inactive and
+available when you speak to the NPC again. Only acceptance adds it to the
+journal and starts its expedition. Other dialogue bubbles are dismissed by
+movement. Elowen, Brenna, Mara, and Ilya wait in Oakhaven's Tavern. Alder,
+Liora, Rook, and Bram wait in Stillbury's Inn, which uses the same doorway and
+conversation controls.
 
 Ridgeshire's Town Hall uses the same entry, conversation, and exit controls.
 Steward Hadrin assigns **Reclaim the Emberforge**: recover its guarded mechanism
@@ -41,8 +45,8 @@ to the Tavern without resetting the quest or dungeon exploration.
 ## Dain: Recover the Treasure Map
 
 Dain waits in **Rosemoor's Adventurer's Guild Hall** alongside Zara. Press `T`
-beside him to accept **Recover the Treasure Map**, and return to the same hall
-with all three fragments for the reward.
+beside him, then `Y` to accept **Recover the Treasure Map**, and return to the
+same hall with all three fragments for the reward.
 
 Dain is a retired dwarven caravan warden who tracks the organized goblin raids
 through the mountains. Goblins tore an old dwarven treasure map into three
@@ -64,11 +68,12 @@ reconstruct the map and locate its hidden dwarven hoard. He awards the player
 ## Orin: The Broken Resonance
 
 Surveyor Orin waits in **Rosemoor's Adventurer's Guild**. Press `T` beside him
-to accept a quest in **Glassdeep Caverns**, reached through **Stillbury's south
-gate**. Restore the guarded Root, Tide, and Crown resonators on stages **2,
-3, and 4** in any order. Press `A` on or beside a crystal to read its inscription
-and choose a tone with `1` (Low), `2` (Middle), or `3` (High). `Esc` cancels;
-incorrect tones allow another attempt without damage or lost progress.
+to hear the offer, then `Y` to accept a quest in **Glassdeep Caverns**, reached
+through **Stillbury's south gate**. Restore the guarded Root, Tide, and Crown
+resonators on stages **2, 3, and 4** in any order. Press `A` on or beside a
+crystal to read its inscription and choose a tone with `1` (Low), `2` (Middle),
+or `3` (High). `Esc` cancels; incorrect tones allow another attempt without
+damage or lost progress.
 
 Return to Orin for **120 gold and 1,000 score**, awarded once. Acceptance
 preserves existing cavern progress, and the Prism Sovereign is optional.
@@ -76,30 +81,31 @@ See [The Broken Resonance](glassdeep-caverns.md#the-broken-resonance).
 
 ## Liora: The Stolen Moonseed
 
-Botanist Liora waits in **Oakhaven's Tavern**. Press `T` beside her to accept a
-quest in **Moonveil Gardens**, reached through **Rosemoor's west gate**. She
-explains the route through the forest to Stillbury and across the swamp to
-Rosemoor. Defeat the guards and press `A` beside the seed pod on stage **2**
-and moonwater spring on stage **3**, in either order. With both collected,
-defeat the stage **4** circle's defenders and press `A` to plant and water it.
-A Moonflower blooms and the clearing stays restored on later visits.
+Botanist Liora waits in **Stillbury's Inn**. Press `T` beside her, then `Y` to
+accept a quest in **Moonveil Gardens**, reached through **Rosemoor's west
+gate**. She explains the route north across the swamp to Rosemoor. Defeat the
+guards and press `A` beside the seed pod on stage **2** and moonwater spring on
+stage **3**, in either order. With both collected, defeat the stage **4**
+circle's defenders and press `A` to plant and water it. A Moonflower blooms and
+the clearing stays restored on later visits.
 
-Return to Liora for **90 gold and 700 score**, awarded once. Quest objects
+Return to Liora in Stillbury's Inn for **90 gold and 700 score**, awarded once.
+Quest objects
 need no inventory slots, acceptance preserves existing garden progress, and
 the Thorn Regent is optional. See
 [The Stolen Moonseed](moonveil-gardens.md#the-stolen-moonseed).
 
 ## Alder: The Lost Wardens
 
-Alder waits in **Stillbury's Inn**; press `T` beside him to accept the quest.
-He is an aging forest ranger searching for three wardens lost while
-investigating the Necromancer's influence. The wardens appear in guarded
-groves on Forest stages **1 and 2 near Oakhaven** and **5 near Stillbury**.
-From Oakhaven, find two wardens before the Necromancer and one after him.
-From Stillbury, find the stage-5 warden first, then stages 2 and 1 after crossing
-the boss grove. Taking the grove shortcut skips unfinished rescues on the far side. Approach a
-trapped warden and press `T` to free them. Rescuing a warden does not require
-clearing the entire stage.
+Alder waits in **Stillbury's Inn**; press `T` beside him, then `Y` to accept the
+quest. He is an aging forest ranger searching for three wardens lost while
+investigating the Necromancer's influence. The wardens appear in guarded groves
+on Forest stages **1 and 2 near Oakhaven** and **5 near Stillbury**. From
+Oakhaven, find two wardens before the Necromancer and one after him. From
+Stillbury, find the stage-5 warden first, then stages 2 and 1 after crossing the
+boss grove. Taking the grove shortcut skips unfinished rescues on the far side.
+Approach a trapped warden and press `T` to free them. Rescuing a warden does not
+require clearing the entire stage.
 
 Each captive has a thematic hunting party led by a Giant Spider, Dark Elf, or
 Forest Troll. Missing wardens are guaranteed to appear on later expeditions,
@@ -111,7 +117,7 @@ After rescuing all three wardens, return to Alder in Stillbury's Inn to receive
 
 ## Mara: Relight the Drowned Beacons
 
-Mara waits in **Ridgeshire's Town Hall**, alongside Steward Hadrin. Press `T`
+Mara waits in **Oakhaven's Tavern**. Press `T`
 beside her to speak. She is a retired tidekeeper who carries a sheltered ember
 from the old coast lights. She asks the player to relight drowned beacons on
 Coast stages 2, 3, and 4. Each beacon stands inside a flooded side room and cannot be reached or
@@ -121,16 +127,16 @@ the exposed beacon and press `A` to light it.
 The beacons are defended by groups led by a Giant Crab, Animated Statue, and
 Sea Serpent. Stages do not need to be cleared, and the Drowned Queen is not
 part of the objective. Lit beacons remain lit through backtracking, repeat
-expeditions, and save/load. Return to Mara in Ridgeshire's Town Hall after
-lighting all three to receive 80 gold and 600 score once. Older saves remove
-her from Oakhaven's Tavern and place her in the Town Hall without changing
-quest progress.
+expeditions, and save/load. Return to Mara in Oakhaven's Tavern after
+lighting all three to receive 80 gold and 600 score once. Older saves return
+her to Oakhaven's Tavern without changing quest progress.
 
 ## Brenna: The Silent Expedition
 
-Quartermaster Brenna waits in Oakhaven's Tavern. Press `T` beside her to accept.
-She explains that Frostfell is two towns away, through the woods to Stillbury,
-across the swamp to Rosemoor, and beyond Rosemoor's north gate into the far north.
+Quartermaster Brenna waits in Oakhaven's Tavern. Press `T` beside her, then `Y`
+to accept. She explains that Frostfell is two towns away, through the woods to
+Stillbury, across the swamp to Rosemoor, and beyond Rosemoor's north gate into
+the far north.
 
 On Frostfell stage **2**, defeat the two Ice Wolves guarding the expedition
 journal, then press `A` on or beside the journal to recover it. On stage **4**,
@@ -156,29 +162,31 @@ from the dock.
 
 ## Nahla: The Buried Sun
 
-Nahla waits on the Ruined Isle rather than in the Tavern. She asks the player
-to climb the five-tier Ruined Temple, defeat the Fallen Sun Guardian, and
-recover the buried treasure from the summit vault. Return to Nahla with the
-treasure for 150 gold and 2,500 score. This quest also appears in the Quest
-Journal and gives the game one boss and one quest for every adventure area.
+Nahla waits on the Ruined Isle rather than in the Tavern. She asks the player to
+climb the five-tier Ruined Temple, defeat the Fallen Sun Guardian, and recover
+the buried treasure from the summit vault. Press `Y` to accept her offer. Return
+to Nahla with the treasure for 150 gold and 2,500 score. This quest also appears
+in the Quest Journal and gives the game one boss and one quest for every
+adventure area.
 
 ## Ilya: The Dragon's Hoard
 
-Ilya waits beside Brenna and Liora in **Oakhaven's Tavern**. Press `T` beside
-her to accept the quest. Travel north through the mountains to Ridgeshire,
-then take its east gate to Dragonspine. Recover the golden goblet on stage 5
-by standing on it and pressing `A`, then return to Ilya in the Tavern for
-one **Potion of Strength and 600 score**. Make room in your pack before
-turning it in. The potion permanently adds 1 base attack when consumed.
-Older saves move Ilya while retaining existing quest and boss progress.
+Ilya waits alongside Elowen, Brenna, and Mara in **Oakhaven's Tavern**. Press
+`T` beside her, then `Y` to accept the quest. Travel north through the mountains
+to Ridgeshire, then take its east gate to Dragonspine. Recover the golden goblet
+on stage 5 by standing on it and pressing `A`, then return to Ilya in the Tavern
+for one **Potion of Strength and 600 score**. Make room in your pack before
+turning it in. The potion permanently adds 1 base attack when consumed. Older
+saves move Ilya while retaining existing quest and boss progress.
 
 ## Tomas: Guide Tomas Home
 
 Tomas waits in the **Royal Jail on the castle grounds**. A seemingly ordinary
-townsman has the Royal Guards arrest you when spoken to with `T`; approaching
-or bumping into him does not trigger it. Speak to Tomas with `T` inside the
-cell. He reveals a hidden escape hatch and asks for help reaching Ridgeshire,
-because the tunnel's smugglers, spiders, and rats are too dangerous for him alone.
+townsman has the Royal Guards arrest you when spoken to with `T`; approaching or
+bumping into him does not trigger it. Speak to Tomas with `T` inside the cell,
+then press `Y` to accept. He reveals a hidden escape hatch and asks for help
+reaching Ridgeshire, because the tunnel's smugglers, spiders, and rats are too
+dangerous for him alone.
 
 Step onto the hatch to enter the single-level **Escape Tunnel**. Tomas follows
 your cleared route; press `Space` to spend a turn letting him catch up. Enemies
@@ -209,13 +217,14 @@ without requiring the absent Lich King to be defeated again.
 
 ## Rook: The Ivory Rook
 
-Speak with Rook in Stillbury's Inn to receive his one-time retrieval quest. This opens the
-labyrinth entrance on the eastern outskirts, across the road from the witch's
-hut. Explore five maze floors with enemies and look-alike stairs; some stairs
-lead only to a dead-end corridor and its return stair. Activate one rune on
-each floor to open the final vault, defeat the Minotaur, recover the ivory
-rook, and return to Rook for 40 gold and 500 score. The quest and boss are
-one-time, but the labyrinth remains open for further combat expeditions.
+Speak with Rook in Stillbury's Inn and press `Y` to accept his one-time
+retrieval quest. This opens the labyrinth entrance on the eastern outskirts,
+across the road from the witch's hut. Explore five maze floors with enemies and
+look-alike stairs; some stairs lead only to a dead-end corridor and its return
+stair. Activate one rune on each floor to open the final vault, defeat the
+Minotaur, recover the ivory rook, and return to Rook for 40 gold and 500 score.
+The quest and boss are one-time, but the labyrinth remains open for further
+combat expeditions.
 
 The Minotaur guards floor 5's relic vault and pursues players with melee
 attacks once the runes open the gate. It has 120 base HP, 18 attack, 7 defense,

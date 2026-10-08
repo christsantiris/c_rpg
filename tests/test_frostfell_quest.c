@@ -23,6 +23,7 @@ static void accept(void) {
     game.player.x = BRENNA_X;
     game.player.y = BRENNA_Y + 1;
     game_talk_to_brenna(&game);
+    game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
     game_leave_tavern(&game);
 }
 
@@ -71,6 +72,7 @@ static void test_expedition(void) {
     action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
     ASSERT("Brenna assigns through conversation, not Action", !game.frostfell_quest_state);
     game_talk_to_brenna(&game);
+    game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
     ASSERT("Brenna explains the two-town route through the woods into the far north", game.frostfell_quest_state == 1 &&
         strstr(game.dialogue_text, "two towns away") && strstr(game.dialogue_text, "far north") &&
         strstr(game.dialogue_text, "woods to Stillbury") && strstr(game.dialogue_text, "swamp to Rosemoor"));
@@ -322,6 +324,7 @@ static void test_legacy_save(void) {
         loaded.map.tiles[BRENNA_Y][BRENNA_X] == TILE_NPC_BRENNA && loaded.map.tiles[BRENNA_Y + 1][BRENNA_X] == TILE_ITEM);
     ASSERT("migrated save writes and reloads", save_game(&loaded, FROST_QUEST_SLOT) && load_game(&game, FROST_QUEST_SLOT));
     game_talk_to_brenna(&game);
+    game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
     ASSERT("the quest remains available after a previous Kraken victory", game.frostfell_quest_state == 1 &&
         (game.defeated_bosses & (1 << LOCATION_FROSTFELL)));
 }

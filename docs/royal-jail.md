@@ -7,12 +7,12 @@ to the Royal Guards, who imprison them. The arrest dialogue explains exactly
 what happened. Walking nearby, bumping into him, or pressing Interact does not
 cause arrest. The jail's front door is locked.
 
-Equipment, money, and regional progress survive arrest. The player appears in
-a barred stone cell with fellow prisoner **Tomas**; guards stand beyond the bars.
-Speak to Tomas with **T** to accept **Guide Tomas Home**. He explains that a
-loose flagstone conceals a tunnel to central Ridgeshire, but he cannot escape
-alone because smugglers, spiders, and rats occupy it. His conversation reveals
-a visible ladder hatch in the cell's southeast corner.
+Equipment, money, and regional progress survive arrest. The player appears in a
+barred stone cell with fellow prisoner **Tomas**; guards stand beyond the bars.
+Speak to Tomas with **T**, then **Y** to accept **Guide Tomas Home**. He
+explains that a loose flagstone conceals a tunnel to central Ridgeshire, but he
+cannot escape alone because smugglers, spiders, and rats occupy it. Accepting
+his offer reveals a visible ladder hatch in the cell's southeast corner.
 
 Walking onto the hatch takes both characters into the **Escape Tunnel**.
 Tomas closes it behind them to prevent pursuit, so there is no return to jail.

@@ -31,10 +31,10 @@ progress without resetting existing character, quest, or regional progress.
 
 ## The Stolen Moonseed
 
-**Botanist Liora** waits in **Oakhaven's Tavern**. Approach her and press `T` to
-accept the quest. She once cared for Moonveil's gardens, but Fey Tricksters
-stole their last viable Moonseed. She explains the route through the forest
-to Stillbury, across the swamp to Rosemoor, and through Rosemoor's west gate.
+**Botanist Liora** waits in **Stillbury's Inn**. Approach her and press `T` to
+hear the offer, then `Y` to accept the quest. She once cared for Moonveil's
+gardens, but Fey Tricksters stole their last viable Moonseed. She explains the
+route north across the swamp to Rosemoor, and through Rosemoor's west gate.
 
 | Stage | Objective | Defenders |
 |---|---|---|
@@ -53,7 +53,7 @@ growth recedes and blossoms spread over the restored clearing. The flower and
 clearing remain visible when backtracking, returning through portals, or
 visiting again. The Thorn Regent on stage 5 is optional for this quest.
 
-Return to Liora in **Oakhaven's Tavern** for **90 gold and 700 score**, awarded
+Return to Liora in **Stillbury's Inn** for **90 gold and 700 score**, awarded
 once. The journal tracks the seed, moonwater, and planting separately and
 retains all three objectives after collecting the reward.
 
@@ -62,5 +62,7 @@ existing portals. Quest encounters appear when their stages are visited;
 cached encounters preserve damaged or defeated quest defenders. Save version
 **95** records quest state, objective progress, guard encounters, and the
 restored terrain. Older saves gain an unassigned quest without losing existing
-progress. Saves inside the Tavern receive Liora, with any overlapping player
-or loot moved safely beside her.
+progress. Save version **105** moves Liora to Stillbury's Inn without resetting
+her quest or garden exploration. Saves inside the Inn receive Liora, with any
+overlapping player or loot moved safely beside her; Tavern saves remove her
+former NPC tile and repair any loot covering it.

@@ -100,13 +100,13 @@ persists through dropping, re-equipping, and saving. The Blacksmith continues
 to buy and sell equipment. See [weapon sharpening](docs/weapons.md#workshop-sharpening).
 
 Ridgeshire's **Town Hall** stands northeast of the crossroads. Inside, approach
-**Steward Hadrin** and press **T** to accept **Reclaim the Emberforge**. Recover
-the guarded forge mechanism on Ashen Hollow stage **2**, then defeat the
-Obsidian Guardians and repair the furnace on stage **4**. Press **A** while
-standing on or beside each objective. Return to Hadrin for **100 gold and
-800 score**, awarded once. Quest objects require no inventory slots, and
-accepting the quest preserves previously explored Ashen stages. See
-[Ashen Hollow](docs/ashen-hollow.md#reclaim-the-emberforge).
+**Steward Hadrin** and press **T**, then **Y** to accept **Reclaim the
+Emberforge**. Recover the guarded forge mechanism on Ashen Hollow stage **2**,
+then defeat the Obsidian Guardians and repair the furnace on stage **4**. Press
+**A** while standing on or beside each objective. Return to Hadrin for **100
+gold and 800 score**, awarded once. Quest objects require no inventory slots,
+and accepting the quest preserves previously explored Ashen stages. See [Ashen
+Hollow](docs/ashen-hollow.md#reclaim-the-emberforge).
 
 The Frostfell Wastes begin at Rosemoor's north gate. **Quartermaster Brenna** in
 **Oakhaven's Tavern** assigns **The Silent Expedition**. She explains the route
@@ -119,44 +119,48 @@ objects need no inventory space. Acceptance preserves existing maps and boss
 victories, and quest progress survives saving. See
 [The Silent Expedition](docs/tavern-quests.md#brenna-the-silent-expedition).
 
-Stillbury's west gate opens
-onto the five-level Sunscar Wastes: enter from the east, advance west, and
-backtrack east. Both the first level's east entrance and the final west exit
-return to Stillbury. Return to Town leaves a portal by Stillbury's west gate.
-Scarabs and venomous Vipers roam its first level, Mummies join from level two,
-Djinn fire magic bolts from level three, and armored Golems appear from level
-four. Mummies and Golems move slowly. The Desert Pharaoh guards the final
-clearing with alternating magic bolts and drops the Sandstorm Staff, a rare
-two-handed Mage weapon. Unclaimed staff rewards survive leaving and saving.
-A visual sandstorm sweeps across Sunscar with blowing sand and a light amber haze.
-Enter the Adventurer's Guild in Rosemoor and speak with Zara to accept
-The Lost Magic Lamp. Recover the lamp on Sunscar level 4, then return to Zara
-for a one-time reward of 80 gold and 600 score.
-Speaking with Cain explains the dangers beyond town and grants one Scroll of
-Return to Town when inventory space is available. Use the scroll from the
-inventory to learn the permanent spell.
+Stillbury's west gate opens onto the five-level Sunscar Wastes: enter from the
+east, advance west, and backtrack east. Both the first level's east entrance and
+the final west exit return to Stillbury. Return to Town leaves a portal by
+Stillbury's west gate. Scarabs and venomous Vipers roam its first level, Mummies
+join from level two, Djinn fire magic bolts from level three, and armored Golems
+appear from level four. Mummies and Golems move slowly. The Desert Pharaoh
+guards the final clearing with alternating magic bolts and drops the Sandstorm
+Staff, a rare two-handed Mage weapon. Unclaimed staff rewards survive leaving
+and saving. A visual sandstorm sweeps across Sunscar with blowing sand and a
+light amber haze. Enter the Adventurer's Guild in Rosemoor, speak with Zara, and
+press **Y** to accept The Lost Magic Lamp. Recover the lamp on Sunscar level 4,
+then return to Zara for a one-time reward of 80 gold and 600 score. Speaking
+with Cain explains the dangers beyond town, recommends Elowen's **The Broken
+Seals** quest in Oakhaven's Tavern, and grants one Scroll of Return to Town when
+inventory space is available. Use the scroll from the inventory to learn the
+permanent spell.
 
-Oakhaven's Tavern houses **Elowen**, Brenna, Liora, and Ilya. Press **T** beside
-Elowen to accept **The Broken Seals**, restore the burial seals on **Oakhaven's
-dungeon floors 2, 3, and 4**, and return to her in the Tavern for **40 gold and
-300 score**. This local quest can be accepted and completed without visiting
-another town. Existing saves preserve seal progress and update her location.
-Stillbury's Inn continues to house Alder, Rook, and Bram.
+NPC quest offers wait for **Y** to accept or **N** to decline (**Esc** also
+declines). Declined quests remain available when you talk again and do not
+appear in the active journal. Existing active quests keep their progress.
+
+Oakhaven's Tavern houses **Elowen**, Brenna, Mara, and Ilya. Press **T** beside
+Elowen, then **Y** to accept **The Broken Seals**, restore the burial seals on
+**Oakhaven's dungeon floors 2, 3, and 4**, and return to her in the Tavern for
+**40 gold and 300 score**. This local quest can be accepted and completed
+without visiting another town. Existing saves preserve seal progress and update
+her location. Stillbury's Inn houses Alder, Liora, Rook, and Bram.
 
 **Alder** assigns **The Lost Wardens** in **Stillbury's Inn**. Press **T**
-beside him to accept the forest quest and return to the same Inn for **70 gold
-and 500 score**, awarded once. Existing saves retain rescue progress and update
-his location when loaded.
+beside him, then **Y** to accept the forest quest and return to the same Inn for
+**70 gold and 500 score**, awarded once. Existing saves retain rescue progress
+and update his location when loaded.
 
 **Dain** waits in **Rosemoor's Adventurer's Guild Hall**, alongside Zara. Press
-**T** beside him to accept **Recover the Treasure Map**. Defeat the Map Bearers
-on **mountain stages 1 and 2 near Oakhaven and 5 near Ridgeshire**, then return to Dain in
-Rosemoor for **60 gold and 400 score**, awarded once.
+**T** beside him, then **Y** to accept **Recover the Treasure Map**. Defeat the
+Map Bearers on **mountain stages 1 and 2 near Oakhaven and 5 near Ridgeshire**,
+then return to Dain in Rosemoor for **60 gold and 400 score**, awarded once.
 
-**Mara** waits in **Ridgeshire's Town Hall**, alongside Steward Hadrin. Press
+**Mara** waits in **Oakhaven's Tavern**. Press
 **T** beside her to accept **Relight the Drowned Beacons**. Relight the guarded
 beacons on **Sunken Coast stages 2, 3, and 4**, south of Oakhaven, then return to
-Mara in the Town Hall for **80 gold and 600 score**, awarded once. Existing
+Mara in the Tavern for **80 gold and 600 score**, awarded once. Existing
 saves keep coast quest progress and update her location when loaded.
 
 The original dungeon, mountain, forest, and coast quests add guarded objectives
@@ -208,15 +212,16 @@ The Alchemist also sells Mana Potions.
 
 ### Rook's labyrinth
 
-Speak with Rook in Stillbury's Inn to receive his one-time retrieval quest and open
-the labyrinth gate on the eastern outskirts, across the road from the witch's
-hut. Explore five maze floors, each with a rune and enemies. Each of the first
-four floors has two identical-looking downward stairs: one leads onward, while
-the other reaches a short dead-end corridor with a return stair. Light all five
-runes, defeat the Minotaur, recover the ivory rook, and return to Rook for
-**40 gold** and **500 score**. Stairs stay open without clearing enemies. After
-the one-time quest, the labyrinth remains open for further expeditions; ordinary
-enemies return, but the Minotaur and quest reward do not.
+Speak with Rook in Stillbury's Inn and press **Y** to accept his one-time
+retrieval quest and open the labyrinth gate on the eastern outskirts, across the
+road from the witch's hut. Explore five maze floors, each with a rune and
+enemies. Each of the first four floors has two identical-looking downward
+stairs: one leads onward, while the other reaches a short dead-end corridor with
+a return stair. Light all five runes, defeat the Minotaur, recover the ivory
+rook, and return to Rook for **40 gold** and **500 score**. Stairs stay open
+without clearing enemies. After the one-time quest, the labyrinth remains open
+for further expeditions; ordinary enemies return, but the Minotaur and quest
+reward do not.
 
 The Minotaur is a horned, axe-wielding melee boss guarding floor 5's relic
 vault. Defeating it drops a Magic Shield and marks the Labyrinth boss journal
@@ -254,15 +259,15 @@ surviving defenders reset, while miniboss victories, passages, revealed
 trapdoors, and dropped items persist. Defeating Lord Veyr ends the campaign with
 victory. See [Castle interior and play testing](docs/castle-design.md).
 
-A townsman on the castle grounds secretly reports you to the Royal Guards
-when spoken to with **T**, causing a one-time arrest in the new **Royal Jail**.
-Speak to fellow prisoner **Tomas** with **T** to accept **Guide Tomas Home**
-and reveal the escape hatch. Step onto it and lead him through a single-level
-tunnel with smugglers, spiders, and rats. **Space** waits a combat turn so he
-can catch up; the exit requires you to arrive together. You emerge in central
-Ridgeshire and receive **100 gold and 750 score** once. The jail's wards block
-town portals, and equipment is retained. Saves preserve the escape and escort.
-See [Royal Jail and escape quest](docs/royal-jail.md).
+A townsman on the castle grounds secretly reports you to the Royal Guards when
+spoken to with **T**, causing a one-time arrest in the new **Royal Jail**. Speak
+to fellow prisoner **Tomas** with **T**, then **Y** to accept **Guide Tomas
+Home** and reveal the escape hatch. Step onto it and lead him through a
+single-level tunnel with smugglers, spiders, and rats. **Space** waits a combat
+turn so he can catch up; the exit requires you to arrive together. You emerge in
+central Ridgeshire and receive **100 gold and 750 score** once. The jail's wards
+block town portals, and equipment is retained. Saves preserve the escape and
+escort. See [Royal Jail and escape quest](docs/royal-jail.md).
 
 The safe forest road, swamp road, and High Pass shortcuts are one tile wide.
 Older saves narrow these routes while preserving exploration and moving players
@@ -282,13 +287,14 @@ stage 5's return to Rosemoor and drops a Potion of Strength. Backtracking, later
 visits, saves, and Return to Town portals retain the gardens' explored maps and
 enemy progress.
 
-**Botanist Liora** in **Oakhaven's Tavern** assigns **The Stolen Moonseed** with
-**T**. She directs you through the forest to Stillbury, across the swamp to
-Rosemoor, and through its west gate. Defeat the guards and use **A** on or
+**Botanist Liora** in **Stillbury's Inn** assigns **The Stolen Moonseed** with
+**T**. She directs you north across the swamp to Rosemoor, then through its
+west gate. Defeat the guards and use **A** on or
 beside the stage **2** seed pod and stage **3** moonwater spring, in either
 order. With both recovered, plant and water the ancient circle on stage **4**.
 A Moonflower blooms and the clearing remains restored on later visits.
-Return to Liora for **90 gold and 700 score**, awarded once. The Thorn Regent
+Return to Liora in Stillbury's Inn for **90 gold and 700 score**, awarded once.
+The Thorn Regent
 is optional, quest objects use no inventory space, and acceptance preserves
 existing garden progress. See [Moonveil Gardens](docs/moonveil-gardens.md#the-stolen-moonseed).
 
@@ -337,15 +343,15 @@ a portal in Rosemoor. Save migration preserves existing progress and adds
 the new area. See [Royal Catacombs](docs/catacombs.md).
 
 **Brother Oswin** offers **Rest for the Forgotten** in **Ridgeshire's Town
-Hall**. Press **T** beside him, then follow Crown Road West from Ridgeshire's
-west gate to the castle grounds and take the south gate. Extinguish the marked
-Soldiers', Watchers', and Choir memorial braziers on **Catacombs floors 2, 3,
-and 4** with **A**, then defeat the Grave Marshal and recover the burial ledger
-on **floor 5**. Braziers can be silenced while guards live, preventing
-resurrection. Return to Oswin for **150 gold and 1,500 score**, awarded once.
-Already extinguished memorials and previous boss victories count; acceptance
-preserves exploration and portals. Quest objects use no inventory space.
-The quest is optional and does not gate castle entry or victory.
+Hall**. Press **T** beside him and **Y** to accept, then follow Crown Road West
+from Ridgeshire's west gate to the castle grounds and take the south gate.
+Extinguish the marked Soldiers', Watchers', and Choir memorial braziers on
+**Catacombs floors 2, 3, and 4** with **A**, then defeat the Grave Marshal and
+recover the burial ledger on **floor 5**. Braziers can be silenced while guards
+live, preventing resurrection. Return to Oswin for **150 gold and 1,500 score**,
+awarded once. Already extinguished memorials and previous boss victories count;
+acceptance preserves exploration and portals. Quest objects use no inventory
+space. The quest is optional and does not gate castle entry or victory.
 
 ### Harbor and Ruined Isle
 

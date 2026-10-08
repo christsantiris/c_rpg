@@ -68,6 +68,7 @@ static void test_forest_crossing(int reverse, int shortcut) {
     forest.player.x = ALDER_INN_X;
     forest.player.y = ALDER_INN_Y + 1;
     game_talk_to_alder(&forest);
+    game_handle_quest_offer_key(&forest, SDL_SCANCODE_Y, 0);
     game_leave_inn(&forest);
     if (reverse) {
         game_enter_town2(&forest);

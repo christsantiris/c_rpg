@@ -78,6 +78,7 @@ void test_alder_relocation(void) {
     action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
     ASSERT("Alder requires talking rather than Action", !game.alder_quest_state);
     game_talk_to_alder(&game);
+    game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
     ASSERT("Alder assigns the forest quest and anchors dialogue beside his Inn position", game.alder_quest_state == 1 &&
         game.dialogue_x == ALDER_INN_X && game.dialogue_y == ALDER_INN_Y && strstr(game.dialogue_text, "Stillbury's Inn"));
     game.alder_wardens_rescued = 5;

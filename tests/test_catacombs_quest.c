@@ -67,9 +67,9 @@ static void test_quest(void) {
     game.player.x = TOWN4_HALL_DOOR_X;
     game.player.y = TOWN4_HALL_DOOR_Y + 1;
     action_resolve_player(&game, (Action){ACTION_MOVE, TOWN4_HALL_DOOR_X, TOWN4_HALL_DOOR_Y});
-    ASSERT("Town Hall contains Oswin with a walkable approach alongside Hadrin and Mara", game.location == LOCATION_TOWN_HALL &&
+    ASSERT("Town Hall contains Oswin with a walkable approach alongside Hadrin", game.location == LOCATION_TOWN_HALL &&
         game.map.tiles[HALL_OSWIN_Y][HALL_OSWIN_X] == TILE_NPC_OSWIN && !map_is_walkable(&game.map, HALL_OSWIN_X, HALL_OSWIN_Y) &&
-        map_is_walkable(&game.map, HALL_OSWIN_X, HALL_OSWIN_Y + 1) && game.map.tiles[HALL_MARA_Y][HALL_MARA_X] == TILE_NPC_MARA &&
+        map_is_walkable(&game.map, HALL_OSWIN_X, HALL_OSWIN_Y + 1) && game.map.tiles[HALL_MARA_Y][HALL_MARA_X] == TILE_TAVERN_FLOOR &&
         game.map.tiles[HALL_STEWARD_Y][HALL_STEWARD_X] == TILE_NPC_STEWARD);
     game_talk_to_oswin(&game);
     ASSERT("Oswin cannot assign remotely inside Town Hall", !game.catacombs_quest_state);
@@ -78,6 +78,7 @@ static void test_quest(void) {
     action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
     ASSERT("Action does not replace talking to Oswin", !game.catacombs_quest_state);
     game_talk_to_oswin(&game);
+    game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
     ASSERT("Oswin assigns Rest for the Forgotten with the Crown Road and south-gate route", game.catacombs_quest_state == 1 &&
         !game.catacombs_quest_progress && !game.catacombs_quest_encounters && !game.mara_quest_state && !game.emberforge_quest_state &&
         game.dialogue_x == HALL_OSWIN_X && game.dialogue_y == HALL_OSWIN_Y && strstr(game.dialogue_text, "Crown Road West") &&
@@ -199,6 +200,7 @@ static void test_previous_exploration(void) {
     game_open_town_portal(&game);
     approach_oswin();
     game_talk_to_oswin(&game);
+    game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
     ASSERT("accepting after exploration credits all cold memorials and preserves portal, traps, and enemies", game.catacombs_quest_state == 1 &&
         game.catacombs_quest_progress == 7 && !game.catacombs_quest_encounters && game.portal_active && game.catacombs_cache[4].valid &&
         game.catacombs_cache[4].enemies[0].hp == 9 && game.catacombs_cache[4].map.burial_traps[0].spent);
@@ -214,6 +216,7 @@ static void test_previous_exploration(void) {
     start();
     approach_oswin();
     game_talk_to_oswin(&game);
+    game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
     game_leave_town_hall(&game);
     game.defeated_bosses |= 1 << LOCATION_CATACOMBS;
     game_enter_catacombs(&game);
@@ -240,6 +243,7 @@ static void test_previous_exploration(void) {
     game_open_town_portal(&game);
     approach_oswin();
     game_talk_to_oswin(&game);
+    game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
     game_use_town_portal(&game);
     ASSERT("adding guards to an explored chamber preserves corpses with pending resurrection", game.enemy_count == count + 2 &&
         game.enemies[0].hp == 0 && !game.enemies[0].active && game.enemies[0].revive_timer == 2 && guards(&game, 1) == 2);
@@ -320,6 +324,7 @@ static void test_migration(void) {
         loaded.map.tiles[HALL_OSWIN_Y + 1][HALL_OSWIN_X] == TILE_ITEM);
     game = loaded;
     game_talk_to_oswin(&game);
+    game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
     ASSERT("migrated cold memorial receives credit when Oswin assigns the quest", game.catacombs_quest_state == 1 && game.catacombs_quest_progress == 1);
     ASSERT("migrated quest rewrites and reloads successfully", save_game(&game, OSWIN_SLOT) && load_game(&loaded, OSWIN_SLOT) &&
         loaded.catacombs_quest_progress == 1 && loaded.catacombs_quest_state == 1);

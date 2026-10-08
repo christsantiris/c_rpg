@@ -43,6 +43,7 @@ void test_temple(void) {
         g.map.tiles[ISLAND_NAHLA_Y][ISLAND_NAHLA_X] ==
         TILE_NPC_ISLAND_NAHLA);
     game_talk_to_nahla(&g);
+    game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
     ASSERT("Nahla assigns The Buried Sun before the climb",
         g.temple_treasure_state == 1 &&
         strstr(g.dialogue_text, "five tiers"));

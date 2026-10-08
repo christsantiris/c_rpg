@@ -35,7 +35,7 @@ advanced undead can appear earlier.
 
 On floors 2, 3, and 4, generation can add an optional crypt where space allows.
 Stand on its key and press `P`, then walk into the locked crypt door to spend
-the key. Stand on the cache inside and press `A` to collect its gold. Each
+the key. Stand on the cache inside and press `P` to collect its gold. Each
 generated crypt cache holds `10 + 2 × floor` gold.
 
 Hidden traps may become spikes, fire, or poison when stepped on; the starting

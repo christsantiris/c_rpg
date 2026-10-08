@@ -24,6 +24,7 @@ static void accept(void) {
     game.player.x = GUILD_ORIN_X;
     game.player.y = GUILD_ORIN_Y + 1;
     game_talk_to_orin(&game);
+    game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
     game_leave_guild(&game);
 }
 
@@ -89,6 +90,7 @@ static void test_quest_flow(void) {
     action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
     ASSERT("Action beside Orin does not assign the conversation quest", !game.glassdeep_quest_state);
     game_talk_to_orin(&game);
+    game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
     ASSERT("Orin directs the player to Stillbury's south gate and stages two through four", game.glassdeep_quest_state == 1 &&
         strstr(game.dialogue_text, "Stillbury's south gate") && strstr(game.dialogue_text, "2, 3, and 4") &&
         !game.dain_quest_state && !game.sunscar_lamp_quest_state);
@@ -362,6 +364,7 @@ static void test_legacy_save(void) {
         loaded.floor_items[0].underlying_tile == TILE_TAVERN_FLOOR && loaded.map.tiles[GUILD_ORIN_Y + 1][GUILD_ORIN_X] == TILE_ITEM);
     game = loaded;
     game_talk_to_orin(&game);
+    game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
     ASSERT("Orin offers the quest after a previous Prism Sovereign victory", game.glassdeep_quest_state == 1);
     ASSERT("migrated Guild save rewrites and reloads", save_game(&game, RESONANCE_SLOT) && load_game(&loaded, RESONANCE_SLOT));
     root = read_save();

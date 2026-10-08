@@ -60,7 +60,7 @@ static void test_tavern(void) {
     start();
     game_enter_tavern(&game);
     ASSERT("Oakhaven's Tavern houses Elowen beside the other quest givers", game.map.tiles[ELOWEN_TAVERN_Y][ELOWEN_TAVERN_X] == TILE_NPC_ELOWEN &&
-        game.map.tiles[BRENNA_Y][BRENNA_X] == TILE_NPC_BRENNA && game.map.tiles[LIORA_Y][LIORA_X] == TILE_NPC_LIORA &&
+        game.map.tiles[BRENNA_Y][BRENNA_X] == TILE_NPC_BRENNA && game.map.tiles[MARA_TAVERN_Y][MARA_TAVERN_X] == TILE_NPC_MARA &&
         game.map.tiles[ILYA_TAVERN_Y][ILYA_TAVERN_X] == TILE_NPC_DRAGON_SEEKER &&
         !map_is_walkable(&game.map, ELOWEN_TAVERN_X, ELOWEN_TAVERN_Y) && map_is_walkable(&game.map, ELOWEN_TAVERN_X, ELOWEN_TAVERN_Y + 1));
     game_talk_to_elowen(&game);
@@ -70,6 +70,7 @@ static void test_tavern(void) {
     action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
     ASSERT("Elowen still requires conversation rather than Action", !game.elowen_quest_state);
     game_talk_to_elowen(&game);
+    game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
     ASSERT("conversation in the Tavern assigns the unchanged local dungeon quest", game.elowen_quest_state == 1 &&
         strstr(game.dialogue_text, "Oakhaven's dungeon") && strstr(game.dialogue_text, "Oakhaven's Tavern") &&
         game.dialogue_x == ELOWEN_TAVERN_X && game.dialogue_y == ELOWEN_TAVERN_Y);

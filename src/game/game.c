@@ -7,6 +7,7 @@
 #include <time.h>
 #include <string.h>
 #include <stdio.h>
+#include <stddef.h>
 #include "../game/actions.h"
 
 static void spawn_temple_enemies(GameState *g);
@@ -3168,14 +3169,10 @@ int game_harbor_unlocked(const GameState *g) {
     return (g->defeated_bosses & (1 << LOCATION_COAST)) != 0;
 }
 
-static void assign_rook_quest(GameState *g) {
-    g->rook_quest_state = 1;
-    g->rook_labyrinth_switches = 0;
+static void offer_rook_quest(GameState *g) {
     snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
         "Recover my stolen ivory rook from the labyrinth across from the witch's "
         "hut. Beware the false stairs and the Minotaur below.");
-    push_message(g, "Assigned: The Ivory Rook.");
-    push_message(g, "The labyrinth across from the witch's hut is now open.");
 }
 
 static void place_harbor_road(GameState *g) {
@@ -3551,11 +3548,9 @@ void game_talk_to_steward(GameState *g) {
     g->dialogue_x = HALL_STEWARD_X;
     g->dialogue_y = HALL_STEWARD_Y;
     if (g->emberforge_quest_state == 0) {
-        g->emberforge_quest_state = 1;
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "Reclaim the Emberforge! Recover its mechanism on Ashen Hollow stage 2, "
             "then repair the furnace on stage 4. Defeat the guards and press A beside each. Return for 100 gold.");
-        push_message(g, "Assigned: Reclaim the Emberforge. See your quest journal.");
     } else if (g->emberforge_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, g->emberforge_progress & EMBERFORGE_MECHANISM_RECOVERED ?
             "You have the mechanism. Defeat the Obsidian Guardians at the Emberforge on Ashen Hollow stage 4, "
@@ -3644,18 +3639,16 @@ int game_interact_emberforge(GameState *g) {
 }
 
 void game_talk_to_liora(GameState *g) {
-    if (g->location != LOCATION_TAVERN || abs(g->player.x - LIORA_X) > 1 || abs(g->player.y - LIORA_Y) > 1) {
+    if (g->location != LOCATION_INN || abs(g->player.x - LIORA_INN_X) > 1 || abs(g->player.y - LIORA_INN_Y) > 1) {
         return;
     }
     g->dialogue_active = 1;
-    g->dialogue_x = LIORA_X;
-    g->dialogue_y = LIORA_Y;
+    g->dialogue_x = LIORA_INN_X;
+    g->dialogue_y = LIORA_INN_Y;
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Botanist Liora");
     if (g->moonveil_quest_state == 0) {
-        g->moonveil_quest_state = 1;
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Fey stole Moonveil's last seed. Cross the forest to Stillbury, then the swamp to Rosemoor's west gate. Recover the seed on stage 2, moonwater on 3, and plant the circle on 4. Return here.");
-        push_message(g, "Assigned: The Stolen Moonseed. Restore Moonveil Gardens, then return to Liora in Oakhaven's Tavern.");
+            "Fey stole Moonveil's last seed. Cross the swamp north to Rosemoor's west gate. Recover the seed on stage 2, moonwater on 3, and plant on 4. Return to Stillbury's Inn.");
     } else if (g->moonveil_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "I once tended Moonveil. Defeat the guards and press A beside the stage 2 seed pod and stage 3 spring, in either order. Plant and water the stage 4 circle, then return here for 90 gold.");
@@ -3741,7 +3734,7 @@ int game_interact_moonveil(GameState *g) {
         restore_moonveil_clearing(g, x, y);
         g->moonveil_quest_state = 2;
         push_message(g, "The tangled growth recedes and a Moonflower blooms!");
-        push_message(g, "Return to Botanist Liora in Oakhaven's Tavern.");
+        push_message(g, "Return to Botanist Liora in Stillbury's Inn.");
     }
     return 1;
 }
@@ -3755,10 +3748,8 @@ void game_talk_to_orin(GameState *g) {
     g->dialogue_y = GUILD_ORIN_Y;
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Surveyor Orin");
     if (g->glassdeep_quest_state == 0) {
-        g->glassdeep_quest_state = 1;
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "I once tended Glassdeep's resonators below Stillbury's south gate. Restore Root, Tide, and Crown on stages 2, 3, and 4. Read their inscriptions for the tones, then return here for 120 gold.");
-        push_message(g, "Assigned: The Broken Resonance. Restore three resonators in Glassdeep Caverns.");
     } else if (g->glassdeep_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "Defeat each resonator's guards, then press A beside it. Read the inscription and choose its tone. Restore all three, then return to me here in Rosemoor's Guild.");
@@ -3895,11 +3886,9 @@ void game_talk_to_brenna(GameState *g) {
     g->dialogue_x = BRENNA_X;
     g->dialogue_y = BRENNA_Y;
     if (g->frostfell_quest_state == 0) {
-        g->frostfell_quest_state = 1;
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "Frostfell lies two towns away, in the far north. Follow the woods to Stillbury, then cross the swamp to Rosemoor. "
             "My expedition vanished beyond Rosemoor's north gate.");
-        push_message(g, "Assigned: The Silent Expedition. Recover the journal on Frostfell stage 2 and rescue the surveyor on stage 4.");
     } else if (g->frostfell_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, g->frostfell_quest_progress & FROSTFELL_JOURNAL_RECOVERED ?
             "The journal says Surveyor Fen survived. Find him on Frostfell stage 4, defeat his captors, and speak to him. Return here for 100 gold." :
@@ -5015,17 +5004,18 @@ void game_talk_to_cain(GameState *g) {
     g->dialogue_x = TOWN_CAIN_X;
     g->dialogue_y = TOWN_CAIN_Y;
     const char *warning = "Goblins lurk north, beasts west, undead east, and sea horrors south.";
+    const char *recommendation = "Ask Elowen in Oakhaven's Tavern about The Broken Seals.";
     if (g->cain_scroll_given) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "%s Read your scroll to learn Return to Town. Use it when danger grows!", warning);
     } else if (g->inventory_count >= MAX_INVENTORY) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "%s Make room in your pack, then speak to me for a Return to Town scroll.", warning);
+            "%s %s Make room in your pack, then return for a Return to Town scroll.", warning, recommendation);
     } else {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "%s %s Take this Return to Town scroll; read it to learn a way home!", warning, recommendation);
         g->inventory[g->inventory_count++] = item_make_scroll_return_to_town();
         g->cain_scroll_given = 1;
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "%s Take this Return to Town scroll for your adventure. Read it to learn a way home!", warning);
         push_message(g, "Cain gives you a Scroll of Return to Town.");
     }
 }
@@ -5118,7 +5108,6 @@ void game_talk_to_nahla(GameState *g) {
     g->dialogue_x = ISLAND_NAHLA_X;
     g->dialogue_y = ISLAND_NAHLA_Y;
     if (g->temple_treasure_state == 0) {
-        g->temple_treasure_state = 1;
         if (temple_training_recommended(g)) {
             snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
                 "Climb five tiers, defeat the Fallen Sun Guardian, and recover "
@@ -5129,7 +5118,6 @@ void game_talk_to_nahla(GameState *g) {
                 "The temple is a stepped pyramid. Climb its five tiers, defeat "
                 "the Fallen Sun Guardian, and recover the Buried Sun from the summit vault.");
         }
-        push_message(g, "Quest assigned: The Buried Sun.");
         return;
     }
     if (g->temple_treasure_state == 1) {
@@ -5231,6 +5219,105 @@ static void prepare_quest_expedition(GameState *g, Location location) {
     }
 }
 
+typedef struct {
+    const char *speaker;
+    Location location;
+    size_t state_offset;
+    int offered_state;
+    const char *message;
+} QuestOffer;
+
+static const QuestOffer quest_offers[] = {
+    {"Elowen", LOCATION_TAVERN, offsetof(GameState, elowen_quest_state), 0, "Quest assigned: The Broken Seals."},
+    {"Dain", LOCATION_GUILD, offsetof(GameState, dain_quest_state), 0, "Assigned: Recover the Treasure Map."},
+    {"Alder", LOCATION_INN, offsetof(GameState, alder_quest_state), 0, "Assigned: The Lost Wardens."},
+    {"Mara", LOCATION_TAVERN, offsetof(GameState, mara_quest_state), 0, "Assigned: Relight the Drowned Beacons."},
+    {"Rook", LOCATION_INN, offsetof(GameState, rook_quest_state), 0, "Assigned: The Ivory Rook."},
+    {"Bram", LOCATION_INN, offsetof(GameState, innkeeper_quest_state), 0, "Assigned: Bring Mira Home."},
+    {"Zara", LOCATION_GUILD, offsetof(GameState, sunscar_lamp_quest_state), 0, "Assigned: The Lost Magic Lamp."},
+    {"Ilya", LOCATION_TAVERN, offsetof(GameState, dragon_treasure_quest_state), 0, "Assigned: The Dragon's Hoard."},
+    {"Nahla", LOCATION_ISLAND, offsetof(GameState, temple_treasure_state), 0, "Quest assigned: The Buried Sun."},
+    {"Steward Hadrin", LOCATION_TOWN_HALL, offsetof(GameState, emberforge_quest_state), 0, "Assigned: Reclaim the Emberforge. See your quest journal."},
+    {"Quartermaster Brenna", LOCATION_TAVERN, offsetof(GameState, frostfell_quest_state), 0,
+        "Assigned: The Silent Expedition. Recover the journal on Frostfell stage 2 and rescue the surveyor on stage 4."},
+    {"Surveyor Orin", LOCATION_GUILD, offsetof(GameState, glassdeep_quest_state), 0,
+        "Assigned: The Broken Resonance. Restore three resonators in Glassdeep Caverns."},
+    {"Botanist Liora", LOCATION_INN, offsetof(GameState, moonveil_quest_state), 0,
+        "Assigned: The Stolen Moonseed. Restore Moonveil Gardens, then return to Liora in Stillbury's Inn."},
+    {"Brother Oswin", LOCATION_TOWN_HALL, offsetof(GameState, catacombs_quest_state), 0,
+        "Assigned: Rest for the Forgotten. See your quest journal."},
+    {"Tomas", LOCATION_JAIL, offsetof(GameState, jail_quest_state), 1,
+        "Assigned: Guide Tomas Home. Tomas reveals a loose flagstone."}
+};
+
+// Existing saved dialogue and quest state also preserve an unanswered offer.
+static const QuestOffer *current_quest_offer(const GameState *g) {
+    if (!g->dialogue_active) {
+        return NULL;
+    }
+    for (size_t i = 0; i < sizeof(quest_offers) / sizeof(quest_offers[0]); i++) {
+        const QuestOffer *offer = &quest_offers[i];
+        const int *state = (const int *)((const char *)g + offer->state_offset);
+        if (g->location == offer->location && *state == offer->offered_state &&
+            strcmp(g->dialogue_speaker, offer->speaker) == 0) {
+            return offer;
+        }
+    }
+    return NULL;
+}
+
+int game_quest_offer_active(const GameState *g) {
+    return current_quest_offer(g) != NULL;
+}
+
+int game_handle_quest_offer_key(GameState *g, int key, int repeat) {
+    const QuestOffer *offer = current_quest_offer(g);
+    if (!offer) {
+        return 0;
+    }
+    if (repeat) {
+        return 1;
+    }
+    if (key == SDL_SCANCODE_N || key == SDL_SCANCODE_ESCAPE) {
+        g->dialogue_active = 0;
+        push_message(g, "Quest declined. Speak to the NPC again if you change your mind.");
+        return 1;
+    }
+    if (key != SDL_SCANCODE_Y) {
+        return 1;
+    }
+    int *state = (int *)((char *)g + offer->state_offset);
+    *state = offer->offered_state + 1;
+    if (state == &g->elowen_quest_state) {
+        g->elowen_seals_restored = 0;
+        prepare_quest_expedition(g, LOCATION_DUNGEON);
+    } else if (state == &g->dain_quest_state) {
+        g->dain_map_fragments = 0;
+        prepare_quest_expedition(g, LOCATION_MOUNTAINS);
+    } else if (state == &g->alder_quest_state) {
+        g->alder_wardens_rescued = 0;
+        prepare_quest_expedition(g, LOCATION_FOREST);
+    } else if (state == &g->mara_quest_state) {
+        g->mara_beacons_lit = 0;
+        prepare_quest_expedition(g, LOCATION_COAST);
+    } else if (state == &g->innkeeper_quest_state) {
+        prepare_quest_expedition(g, LOCATION_SWAMP);
+    } else if (state == &g->dragon_treasure_quest_state) {
+        prepare_quest_expedition(g, LOCATION_DRAGONSPINE);
+    } else if (state == &g->rook_quest_state) {
+        g->rook_labyrinth_switches = 0;
+    } else if (state == &g->catacombs_quest_state) {
+        catacombs_accept_quest(g);
+    } else if (state == &g->jail_quest_state) {
+        g->map.tiles[JAIL_HATCH_Y][JAIL_HATCH_X] = TILE_JAIL_HATCH;
+    }
+    push_message(g, offer->message);
+    if (state == &g->rook_quest_state) {
+        push_message(g, "The labyrinth across from the witch's hut is now open.");
+    }
+    return 1;
+}
+
 // The Royal Guards warn travelers but never block the Crown Roads.
 void game_talk_to_royal_guard(GameState *g, int x, int y) {
     g->dialogue_active = 1;
@@ -5270,12 +5357,10 @@ void game_talk_to_guild_seeker(GameState *g) {
     g->dialogue_x = GUILD_ZARA_X;
     g->dialogue_y = GUILD_ZARA_Y;
     if (g->sunscar_lamp_quest_state == 0) {
-        g->sunscar_lamp_quest_state = 1;
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "Recover a magic lamp from Sunscar Wastes level 4. Enter through "
             "Stillbury's west gate. Stand on the lamp and press A, then return "
             "to me here for 80 gold.");
-        push_message(g, "Assigned: The Lost Magic Lamp.");
     } else if (g->sunscar_lamp_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "The magic lamp lies in the last clearing of Sunscar Wastes level 4. "
@@ -5313,12 +5398,9 @@ void game_talk_to_dragon_seeker(GameState *g) {
     g->dialogue_x = ILYA_TAVERN_X;
     g->dialogue_y = ILYA_TAVERN_Y;
     if (g->dragon_treasure_quest_state == 0) {
-        g->dragon_treasure_quest_state = 1;
-        prepare_quest_expedition(g, LOCATION_DRAGONSPINE);
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "Travel north through the mountains to Ridgeshire, then east to Dragonspine. "
             "Bring its fifth-stage golden goblet back here to Oakhaven's Tavern for a Potion of Strength.");
-        push_message(g, "Assigned: The Dragon's Hoard.");
     } else if (g->dragon_treasure_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "Find the golden goblet in the dragon's hoard on Dragonspine's "
@@ -5364,14 +5446,10 @@ void game_talk_to_elowen(GameState *g) {
     g->dialogue_x = ELOWEN_TAVERN_X;
     g->dialogue_y = ELOWEN_TAVERN_Y;
     if (g->elowen_quest_state == 0) {
-        g->elowen_quest_state = 1;
-        g->elowen_seals_restored = 0;
-        prepare_quest_expedition(g, LOCATION_DUNGEON);
         strncpy(g->dialogue_text,
             "The dead gather around shattered burial seals on floors 2, 3, and 4 of Oakhaven's dungeon. Restore each seal, then return to me here in Oakhaven's Tavern.",
             MAX_DIALOGUE_LEN - 1);
         g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
-        push_message(g, "Quest assigned: The Broken Seals.");
         return;
     }
     if (g->elowen_quest_state == 1) {
@@ -5417,14 +5495,10 @@ void game_talk_to_dain(GameState *g) {
     g->dialogue_x = GUILD_DAIN_X;
     g->dialogue_y = GUILD_DAIN_Y;
     if (g->dain_quest_state == 0) {
-        g->dain_quest_state = 1;
-        g->dain_map_fragments = 0;
-        prepare_quest_expedition(g, LOCATION_MOUNTAINS);
         strncpy(g->dialogue_text,
             "Map Bearers hold fragments on mountain stages 1, 2, and 5: two near Oakhaven, one near Ridgeshire, across the Goblin King. Return to Rosemoor's Adventurer's Guild.",
             MAX_DIALOGUE_LEN - 1);
         g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
-        push_message(g, "Assigned: Recover the Treasure Map.");
         return;
     }
     if (g->dain_quest_state == 1) {
@@ -5498,14 +5572,10 @@ void game_talk_to_alder(GameState *g) {
     g->dialogue_x = ALDER_INN_X;
     g->dialogue_y = ALDER_INN_Y;
     if (g->alder_quest_state == 0) {
-        g->alder_quest_state = 1;
-        g->alder_wardens_rescued = 0;
-        prepare_quest_expedition(g, LOCATION_FOREST);
         strncpy(g->dialogue_text,
             "Two wardens are trapped on forest stages 1 and 2 near Oakhaven; the third is on stage 5 near Stillbury, across the Necromancer's grove. Rescue them, then return here to Stillbury's Inn.",
             MAX_DIALOGUE_LEN - 1);
         g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
-        push_message(g, "Assigned: The Lost Wardens.");
         return;
     }
     if (g->alder_quest_state == 1) {
@@ -5589,24 +5659,20 @@ void game_rescue_forest_warden(GameState *g, int x, int y) {
 }
 
 void game_talk_to_mara(GameState *g) {
-    if (g->location != LOCATION_TOWN_HALL ||
-        abs(g->player.x - HALL_MARA_X) > 1 || abs(g->player.y - HALL_MARA_Y) > 1) {
+    if (g->location != LOCATION_TAVERN ||
+        abs(g->player.x - MARA_TAVERN_X) > 1 || abs(g->player.y - MARA_TAVERN_Y) > 1) {
         return;
     }
     g->dialogue_active = 1;
     strncpy(g->dialogue_speaker, "Mara", MAX_SPEAKER_LEN - 1);
     g->dialogue_speaker[MAX_SPEAKER_LEN - 1] = '\0';
-    g->dialogue_x = HALL_MARA_X;
-    g->dialogue_y = HALL_MARA_Y;
+    g->dialogue_x = MARA_TAVERN_X;
+    g->dialogue_y = MARA_TAVERN_Y;
     if (g->mara_quest_state == 0) {
-        g->mara_quest_state = 1;
-        g->mara_beacons_lit = 0;
-        prepare_quest_expedition(g, LOCATION_COAST);
         strncpy(g->dialogue_text,
-            "Sunken Coast lies south of Oakhaven. Lower the tide, defeat the guardians, and relight beacons on stages 2, 3, and 4. Return here to Ridgeshire's Town Hall.",
+            "Sunken Coast lies south of Oakhaven. Lower the tide, defeat the guardians, and relight beacons on stages 2, 3, and 4. Return here to Oakhaven's Tavern.",
             MAX_DIALOGUE_LEN - 1);
         g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
-        push_message(g, "Assigned: Relight the Drowned Beacons.");
         return;
     }
     if (g->mara_quest_state == 1) {
@@ -5648,7 +5714,7 @@ void game_talk_to_rook(GameState *g) {
     g->dialogue_x = 10;
     g->dialogue_y = 18;
     if (g->rook_quest_state == 0) {
-        assign_rook_quest(g);
+        offer_rook_quest(g);
     } else if (g->rook_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "One rune per floor opens the Minotaur's vault. Defeat the Minotaur and "
@@ -5679,12 +5745,9 @@ void game_talk_to_innkeeper(GameState *g) {
     g->dialogue_x = 28;
     g->dialogue_y = 7;
     if (g->innkeeper_quest_state == 0) {
-        g->innkeeper_quest_state = 1;
-        prepare_quest_expedition(g, LOCATION_SWAMP);
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "A vampire holds Mira on swamp level 3, between Stillbury and the Demon. "
             "Defeat her captor, then speak to her and bring her home. You can retreat and return if needed.");
-        push_message(g, "Assigned: Bring Mira Home.");
     } else if (g->innkeeper_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "Mira is on swamp level 3, on the Stillbury side of the Demon. Defeat the vampire holding her, "
@@ -5764,7 +5827,7 @@ void game_light_coast_beacon(GameState *g, int x, int y) {
     push_message(g, status);
     if ((g->mara_beacons_lit & 7) == 7) {
         g->mara_quest_state = 2;
-        push_message(g, "All beacons lit. Return to Mara in Ridgeshire's Town Hall.");
+        push_message(g, "All beacons lit. Return to Mara in Oakhaven's Tavern.");
     }
 }
 

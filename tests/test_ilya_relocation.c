@@ -56,8 +56,8 @@ void test_ilya_relocation(void) {
     game.player.player_class = CLASS_WARRIOR;
     game_init(&game);
     game_enter_tavern(&game);
-    ASSERT("the Tavern contains Ilya beside Brenna and Liora", game.map.tiles[ILYA_TAVERN_Y][ILYA_TAVERN_X] == TILE_NPC_DRAGON_SEEKER &&
-        game.map.tiles[BRENNA_Y][BRENNA_X] == TILE_NPC_BRENNA && game.map.tiles[LIORA_Y][LIORA_X] == TILE_NPC_LIORA &&
+    ASSERT("the Tavern contains Ilya beside Brenna and Mara", game.map.tiles[ILYA_TAVERN_Y][ILYA_TAVERN_X] == TILE_NPC_DRAGON_SEEKER &&
+        game.map.tiles[BRENNA_Y][BRENNA_X] == TILE_NPC_BRENNA && game.map.tiles[MARA_TAVERN_Y][MARA_TAVERN_X] == TILE_NPC_MARA &&
         !map_is_walkable(&game.map, ILYA_TAVERN_X, ILYA_TAVERN_Y) && map_is_walkable(&game.map, ILYA_TAVERN_X, ILYA_TAVERN_Y + 1));
     game_talk_to_dragon_seeker(&game);
     ASSERT("Ilya cannot assign her quest remotely", !game.dragon_treasure_quest_state && !game.dialogue_active);
@@ -66,6 +66,7 @@ void test_ilya_relocation(void) {
     action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
     ASSERT("Ilya requires talking rather than Action", !game.dragon_treasure_quest_state);
     game_talk_to_dragon_seeker(&game);
+    game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
     ASSERT("Ilya gives directions to Ridgeshire and the Tavern return", game.dragon_treasure_quest_state == 1 &&
         strstr(game.dialogue_text, "mountains to Ridgeshire") && strstr(game.dialogue_text, "Oakhaven's Tavern"));
     ASSERT("current saves retain Ilya and the active quest", save_game(&game, ILYA_SLOT) && load_game(&loaded, ILYA_SLOT) &&
