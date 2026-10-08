@@ -625,7 +625,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 97);
+    cJSON_AddNumberToObject(root, "save_version", 98);
     cJSON_AddNumberToObject(root, "forest_entry_town", g->forest_entry_town);
     cJSON_AddNumberToObject(root, "forest_portal_town", g->forest_portal_town);
     cJSON_AddNumberToObject(root, "swamp_entry_town", g->swamp_entry_town);
@@ -3452,6 +3452,34 @@ int load_game(GameState *g, int slot) {
             }
         }
         g->map.tiles[HALL_OSWIN_Y][HALL_OSWIN_X] = TILE_NPC_OSWIN;
+    }
+    if (save_version < 98 && g->location == LOCATION_TAVERN) {
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                if (g->map.tiles[y][x] == TILE_NPC_ALDER) {
+                    g->map.tiles[y][x] = TILE_TAVERN_FLOOR;
+                }
+            }
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            if (g->floor_items[i].underlying_tile == TILE_NPC_ALDER) {
+                g->floor_items[i].underlying_tile = TILE_TAVERN_FLOOR;
+            }
+        }
+    }
+    if (save_version < 98 && g->location == LOCATION_INN) {
+        if (g->player.x == ALDER_INN_X && g->player.y == ALDER_INN_Y) {
+            g->player.y++;
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->active && item->x == ALDER_INN_X && item->y == ALDER_INN_Y) {
+                item->y++;
+                item->underlying_tile = TILE_TAVERN_FLOOR;
+                g->map.tiles[item->y][item->x] = TILE_ITEM;
+            }
+        }
+        g->map.tiles[ALDER_INN_Y][ALDER_INN_X] = TILE_NPC_ALDER;
     }
     if (g->castle_prompt) {
         castle_request(g, g->castle_prompt == 2);

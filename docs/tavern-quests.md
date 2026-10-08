@@ -7,7 +7,7 @@ the south doorway to return to the same town street.
 NPC speech appears in a wrapped dialogue bubble beside the speaker. The bottom
 message bar is reserved for concise game events such as quest assignment,
 progress, and completion. Moving dismisses the current dialogue bubble.
-Elowen and Rook wait in Stillbury's Inn, which uses the same doorway and
+Elowen, Alder, Rook, and Bram wait in Stillbury's Inn, which uses the same doorway and
 conversation controls as the Tavern.
 
 Ridgeshire's Town Hall uses the same entry, conversation, and exit controls.
@@ -87,7 +87,8 @@ the Thorn Regent is optional. See
 
 ## Alder: The Lost Wardens
 
-Alder is an aging forest ranger searching for three wardens lost while
+Alder waits in **Stillbury's Inn**; press `T` beside him to accept the quest.
+He is an aging forest ranger searching for three wardens lost while
 investigating the Necromancer's influence. The wardens appear in guarded
 groves on Forest stages 1, 2, and 3, before the Necromancer when entering from
 OakHaven. From Stillbury, cross the boss grove first, then find them on stages
@@ -100,8 +101,8 @@ Forest Troll. Missing wardens are guaranteed to appear on later expeditions,
 while rescued wardens never respawn. Quest acceptance and rescue progress
 persist through backtracking and save/load.
 
-After rescuing all three wardens, return to Alder to receive 70 gold and 500
-score.
+After rescuing all three wardens, return to Alder in Stillbury's Inn to receive
+70 gold and 500 score once. Older saves update his location without losing rescues.
 
 ## Mara: Relight the Drowned Beacons
 

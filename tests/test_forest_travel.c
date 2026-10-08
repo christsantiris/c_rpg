@@ -64,9 +64,16 @@ static void test_forest_crossing(int reverse, int shortcut) {
     srand(809 + reverse + shortcut * 2);
     forest.player.player_class = CLASS_WARRIOR;
     game_init(&forest);
+    game_enter_inn(&forest);
+    forest.player.x = ALDER_INN_X;
+    forest.player.y = ALDER_INN_Y + 1;
     game_talk_to_alder(&forest);
+    game_leave_inn(&forest);
     if (reverse) {
         game_enter_town2(&forest);
+    } else {
+        forest.location = LOCATION_TOWN;
+        map_generate_town(&forest.map, &forest.player.x, &forest.player.y);
     }
     int gate_x = reverse ? TOWN_W - 1 : 0;
     ASSERT("shortcut gate starts closed at either town", forest.map.tiles[TOWN_ROAD_EXIT_Y][gate_x] == TILE_WALL);

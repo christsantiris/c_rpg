@@ -200,22 +200,22 @@ void test_tavern_interior(void) {
         map_is_walkable(&g.map, GUILD_DAIN_X, GUILD_DAIN_Y));
     int alder_x = 0;
     int alder_y = 0;
-    ASSERT("Alder has an in-world Tavern tile",
-        find_tile(&g.map, TILE_NPC_ALDER, &alder_x, &alder_y));
-    ASSERT("player cannot overlap Alder",
-        !map_is_walkable(&g.map, alder_x, alder_y));
+    ASSERT("Alder no longer occupies the Tavern",
+        !find_tile(&g.map, TILE_NPC_ALDER, &alder_x, &alder_y));
+    ASSERT("Alder's old Tavern position is walkable",
+        map_is_walkable(&g.map, 28, 7));
     int mara_x = 0;
     int mara_y = 0;
     ASSERT("Mara no longer occupies Oakhaven's Tavern",
         !find_tile(&g.map, TILE_NPC_MARA, &mara_x, &mara_y));
     ASSERT("Mara's old Tavern position is walkable",
         map_is_walkable(&g.map, 31, 18));
-    g.player.x = alder_x;
-    g.player.y = alder_y + 1;
-    game_talk_to_alder(&g);
-    ASSERT("Alder quest interaction works inside the Tavern",
-        g.alder_quest_state == 1);
-    ASSERT("talking opens Alder's dialogue bubble", g.dialogue_active);
+    g.player.x = BRENNA_X;
+    g.player.y = BRENNA_Y + 1;
+    game_talk_to_brenna(&g);
+    ASSERT("Brenna quest interaction works inside the Tavern",
+        g.frostfell_quest_state == 1);
+    ASSERT("talking opens Brenna's dialogue bubble", g.dialogue_active);
     game_move_player(&g, 1, 0);
     ASSERT("moving dismisses the dialogue bubble", !g.dialogue_active);
 
@@ -232,8 +232,8 @@ void test_tavern_interior(void) {
     ASSERT("Tavern returns player outside its front door",
         g.player.x == TOWN_TAVERN_DOOR_X && g.player.y == TOWN_TAVERN_DOOR_Y + 1 &&
         map_is_walkable(&g.map, g.player.x, g.player.y));
-    ASSERT("Tavern transition preserves Alder quest state",
-        g.alder_quest_state == 1);
+    ASSERT("Tavern transition preserves Brenna quest state",
+        g.frostfell_quest_state == 1);
 }
 
 void test_dain_quest(void) {
@@ -405,6 +405,9 @@ void test_alder_quest(void) {
     GameState g;
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
+    game_enter_inn(&g);
+    g.player.x = ALDER_INN_X;
+    g.player.y = ALDER_INN_Y + 1;
 
     g.forest_cache[3].valid = 1;
     g.portal_active = 1;
@@ -417,6 +420,8 @@ void test_alder_quest(void) {
         strcmp(g.dialogue_speaker, "Alder") == 0 && strstr(g.dialogue_text, "stages 1, 2, and 3"));
     ASSERT("accepting Alder's quest starts a fresh forest expedition",
         !g.forest_cache[3].valid && !g.portal_active);
+    game_leave_inn(&g);
+    game_return_to_town(&g);
 
     int target_levels[3] = {1, 2, 3};
     EnemyType guardian_types[3] = {
@@ -441,12 +446,17 @@ void test_alder_quest(void) {
         g.alder_quest_state == 2 && g.alder_wardens_rescued == 7);
 
     game_return_to_town(&g);
+    game_enter_inn(&g);
+    g.player.x = ALDER_INN_X;
+    g.player.y = ALDER_INN_Y + 1;
     int gold_before = g.gold;
     int score_before = g.score;
     game_talk_to_alder(&g);
     ASSERT("Alder completes the forest quest", g.alder_quest_state == 3);
     ASSERT("Alder awards 70 gold", g.gold == gold_before + 70);
     ASSERT("Alder awards 500 score", g.score == score_before + 500);
+    game_leave_inn(&g);
+    game_return_to_town(&g);
 
     game_enter_forest(&g);
     game_descend(&g);

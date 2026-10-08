@@ -33,8 +33,8 @@ static const QuestDefinition quest_definitions[14] = {
     },
     {
         "The Lost Wardens", "Alder",
-        "Defeat the hunting parties guarding three lost",
-        "wardens, then help each warden escape.",
+        "Defeat the captors and rescue three lost wardens.",
+        "Return to Alder in Stillbury's Inn.",
         {"Rescue forest warden", "Rescue forest warden",
             "Rescue forest warden"},
         "Forest", {1, 2, 3}, 70, 500
