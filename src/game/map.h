@@ -71,6 +71,8 @@
 #define ELOWEN_TAVERN_Y 7
 #define TOWN_CAIN_X 19
 #define TOWN_CAIN_Y 11
+#define TOWN_BRAM_X 17
+#define TOWN_BRAM_Y 11
 #define TOWN_HARBOR_W 5
 #define TOWN_HARBOR_H 4
 #define TOWN_HARBOR_X (TOWN_W - 1 - TOWN_HARBOR_W)
@@ -449,7 +451,8 @@ typedef enum {
     TILE_NPC_PRISONER,
     TILE_JAIL_BARS,
     TILE_JAIL_HATCH,
-    TILE_TUNNEL_EXIT
+    TILE_TUNNEL_EXIT,
+    TILE_NPC_BRAM
 } TileType;
 
 typedef struct {

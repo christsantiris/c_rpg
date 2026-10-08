@@ -495,6 +495,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_NPC_INNKEEPER &&
         m->tiles[y][x] != TILE_SWAMP_DAUGHTER &&
         m->tiles[y][x] != TILE_NPC_CAIN &&
+        m->tiles[y][x] != TILE_NPC_BRAM &&
         m->tiles[y][x] != TILE_NPC_ROWAN &&
         m->tiles[y][x] != TILE_NPC_DRAGON_SEEKER &&
         m->tiles[y][x] != TILE_NPC_GUILD_SEEKER &&
@@ -1331,6 +1332,7 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
 
     map_place_town_harbor(m);
     m->tiles[TOWN_CAIN_Y][TOWN_CAIN_X] = TILE_NPC_CAIN;
+    m->tiles[TOWN_BRAM_Y][TOWN_BRAM_X] = TILE_NPC_BRAM;
     m->tiles[TOWN_ROWAN_Y][TOWN_ROWAN_X] = TILE_NPC_ROWAN;
 
     // Spawn at the central crossroads so the south road remains unobstructed

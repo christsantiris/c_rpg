@@ -957,6 +957,54 @@ static int quest_group_pending(const GameState *g) {
     return 0;
 }
 
+void game_add_lich_minions(GameState *g) {
+    if (g->location != LOCATION_DUNGEON || g->level != DUNGEON_DEPTH ||
+        (g->defeated_bosses & (1 << LOCATION_DUNGEON)) || g->map.room_count == 0) {
+        return;
+    }
+    Enemy *boss = NULL;
+    int guards = 0;
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (g->enemies[i].type == ENEMY_LICH_KING && g->enemies[i].active) {
+            boss = &g->enemies[i];
+        }
+        // Fallen guards still count so loading never resurrects them.
+        if (strcmp(g->enemies[i].name, "Lich Guard") == 0) {
+            guards++;
+        }
+    }
+    if (!boss) {
+        return;
+    }
+    Room *room = &g->map.rooms[g->map.room_count - 1];
+    for (int guard = guards; guard < 2 && g->enemy_count < MAX_ENEMIES; guard++) {
+        int target_x = boss->x + (guard == 0 ? -2 : 2);
+        int best_x = -1;
+        int best_y = -1;
+        int best_distance = MAP_W + MAP_H;
+        for (int y = room->y + 1; y < room->y + room->h - 1; y++) {
+            for (int x = room->x + 1; x < room->x + room->w - 1; x++) {
+                if (!enemy_tile_open(g, x, y) ||
+                    (x == g->player.x && y == g->player.y)) {
+                    continue;
+                }
+                int distance = abs(x - target_x) + abs(y - boss->y);
+                if (distance < best_distance) {
+                    best_x = x;
+                    best_y = y;
+                    best_distance = distance;
+                }
+            }
+        }
+        if (best_x < 0) {
+            return;
+        }
+        Enemy *minion = &g->enemies[g->enemy_count++];
+        spawn_enemy(g, minion, ENEMY_SKELETON, best_x, best_y);
+        snprintf(minion->name, sizeof(minion->name), "Lich Guard");
+    }
+}
+
 void enemies_spawn(GameState *g) {
     if (g->location == LOCATION_CASTLE_INTERIOR) {
         castle_spawn(g);
@@ -1016,6 +1064,8 @@ void enemies_spawn(GameState *g) {
                 boss_x, boss_y);
         }
     }
+
+    game_add_lich_minions(g);
 
     int boss_level = g->location == LOCATION_FOREST ? FOREST_BOSS_LEVEL :
         (g->location == LOCATION_MOUNTAINS ? MOUNTAIN_BOSS_LEVEL :
@@ -4999,6 +5049,18 @@ void game_use_town_portal(GameState *g) {
     }
     cache[level - 1].map = g->map;
     g->portal_active = 0;
+}
+
+void game_talk_to_bram(GameState *g) {
+    g->dialogue_active = 1;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Bram");
+    g->dialogue_x = TOWN_BRAM_X;
+    g->dialogue_y = TOWN_BRAM_Y;
+    const char *warning = (g->defeated_bosses & (1 << LOCATION_DUNGEON))
+        ? "Oakhaven is safer now that the Lich King is defeated."
+        : "The Lich King in the dungeon east of Oakhaven raises undead and endangers our town.";
+    snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+        "%s The blacksmith sells weapons and armor; the alchemist sells potions and scrolls for your journey.", warning);
 }
 
 void game_talk_to_cain(GameState *g) {

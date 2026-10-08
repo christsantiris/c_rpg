@@ -77,6 +77,9 @@ the remaining three levels can also be explored.
 
 The roads through OakHaven lead north to the mountains, west to the forest, east
 to the dungeon, and south to the coast. Cain stands near the central crossroads.
+Bram stands nearby; press **T** beside him to hear about the dungeon's Lich King
+and the supplies sold by the blacksmith and alchemist. Two Skeleton minions
+guard the Lich King inside his locked chamber on dungeon floor 5.
 The mountains connect OakHaven's north gate and Ridgeshire's south mountain gate.
 Both approaches grow harder toward the Goblin King at Crown Peak on level 4.
 Defeating him reveals a shortcut to the opposite town; the remaining three levels

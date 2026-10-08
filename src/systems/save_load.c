@@ -626,7 +626,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 107);
+    cJSON_AddNumberToObject(root, "save_version", 108);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -1380,6 +1380,39 @@ static void migrate_testing_save(cJSON *root, int version) {
     if (version < 75 && !cJSON_GetObjectItem(root, "sandstorm_staff_unclaimed")) {
         cJSON_AddNumberToObject(root, "sandstorm_staff_unclaimed", 0);
     }
+}
+
+static void migrate_lich_minions(GameState *g) {
+    game_add_lich_minions(g);
+    LevelCache *cache = &g->level_cache[DUNGEON_DEPTH - 1];
+    if (!cache->valid || (g->defeated_bosses & (1 << LOCATION_DUNGEON))) {
+        return;
+    }
+    LevelCache active;
+    active.map = g->map;
+    memcpy(active.enemies, g->enemies, sizeof(active.enemies));
+    active.enemy_count = g->enemy_count;
+    Location location = g->location;
+    int level = g->level;
+    int player_x = g->player.x;
+    int player_y = g->player.y;
+    g->location = LOCATION_DUNGEON;
+    g->level = DUNGEON_DEPTH;
+    g->map = cache->map;
+    memcpy(g->enemies, cache->enemies, sizeof(g->enemies));
+    g->enemy_count = cache->enemy_count;
+    g->player.x = -1;
+    g->player.y = -1;
+    game_add_lich_minions(g);
+    memcpy(cache->enemies, g->enemies, sizeof(cache->enemies));
+    cache->enemy_count = g->enemy_count;
+    g->map = active.map;
+    memcpy(g->enemies, active.enemies, sizeof(g->enemies));
+    g->enemy_count = active.enemy_count;
+    g->location = location;
+    g->level = level;
+    g->player.x = player_x;
+    g->player.y = player_y;
 }
 
 static void remove_legacy_coast_beacon(Map *m) {
@@ -3678,6 +3711,23 @@ int load_game(GameState *g, int slot) {
                 map_ensure_dungeon_connectivity(&cache->map, level);
             }
         }
+    }
+    if (save_version < 108) {
+        if (g->location == LOCATION_TOWN) {
+            if (g->player.x == TOWN_BRAM_X && g->player.y == TOWN_BRAM_Y) {
+                g->player.y++;
+            }
+            for (int i = 0; i < g->floor_item_count; i++) {
+                FloorItem *item = &g->floor_items[i];
+                if (item->active && item->x == TOWN_BRAM_X && item->y == TOWN_BRAM_Y) {
+                    item->y++;
+                    item->underlying_tile = TILE_TOWN_PATH;
+                    g->map.tiles[item->y][item->x] = TILE_ITEM;
+                }
+            }
+            g->map.tiles[TOWN_BRAM_Y][TOWN_BRAM_X] = TILE_NPC_BRAM;
+        }
+        migrate_lich_minions(g);
     }
     repair_floor_item_underlays(g);
     game_hide_portal_destination(g);

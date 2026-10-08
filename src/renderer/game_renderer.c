@@ -2200,6 +2200,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     break;
                 case TILE_NPC_INNKEEPER: draw_innkeeper(r, sx, sy); break;
                 case TILE_NPC_CAIN: draw_cain(r, sx, sy); break;
+                case TILE_NPC_BRAM:
+                    draw_town_path(r, sx, sy);
+                    jail_draw_person(r, sx, sy, 0);
+                    break;
                 case TILE_NPC_ROWAN: draw_rowan(r, sx, sy); break;
                 case TILE_NPC_DRAGON_SEEKER:
                     draw_dragon_seeker(r, sx, sy); break;
