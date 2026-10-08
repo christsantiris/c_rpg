@@ -136,10 +136,12 @@ Speaking with Cain explains the dangers beyond town and grants one Scroll of
 Return to Town when inventory space is available. Use the scroll from the
 inventory to learn the permanent spell.
 
-Oakhaven's Tavern houses Brenna and Liora. **Elowen** now waits in
-**Stillbury's Inn**, alongside Alder, Rook, and Bram. Press **T** beside her to accept
-**The Broken Seals**, restore the burial seals on **Oakhaven's dungeon floors
-2, 3, and 4**, and return to her in Stillbury for **40 gold and 300 score**.
+Oakhaven's Tavern houses **Elowen**, Brenna, Liora, and Ilya. Press **T** beside
+Elowen to accept **The Broken Seals**, restore the burial seals on **Oakhaven's
+dungeon floors 2, 3, and 4**, and return to her in the Tavern for **40 gold and
+300 score**. This local quest can be accepted and completed without visiting
+another town. Existing saves preserve seal progress and update her location.
+Stillbury's Inn continues to house Alder, Rook, and Bram.
 
 **Alder** assigns **The Lost Wardens** in **Stillbury's Inn**. Press **T**
 beside him to accept the forest quest and return to the same Inn for **70 gold

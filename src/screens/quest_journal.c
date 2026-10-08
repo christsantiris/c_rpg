@@ -20,7 +20,7 @@ static const QuestDefinition quest_definitions[15] = {
     {
         "The Broken Seals", "Elowen",
         "Restore three guarded seals in Oakhaven's dungeon.",
-        "Return to Elowen in Stillbury's Inn.",
+        "Return to Elowen in Oakhaven's Tavern.",
         {"Repair burial seal", "Repair burial seal", "Repair burial seal"},
         "Dungeon", {2, 3, 4}, 40, 300
     },

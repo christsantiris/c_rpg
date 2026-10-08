@@ -2907,6 +2907,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (g->location == LOCATION_TAVERN) {
         SDL_Color name = {182, 214, 232, 255};
         int name_w = 0;
+        TTF_SizeText(r->font_tiny, "ELOWEN", &name_w, NULL);
+        renderer_draw_text(r, "ELOWEN", viewport_to_screen_x(v, ELOWEN_TAVERN_X) * TILE_SIZE + (TILE_SIZE - name_w) / 2,
+            viewport_to_screen_y(v, ELOWEN_TAVERN_Y - 1) * TILE_SIZE, name, r->font_tiny);
         TTF_SizeText(r->font_tiny, "BRENNA", &name_w, NULL);
         int name_x = viewport_to_screen_x(v, BRENNA_X) * TILE_SIZE + (TILE_SIZE - name_w) / 2;
         int name_y = viewport_to_screen_y(v, BRENNA_Y - 1) * TILE_SIZE;
@@ -2998,9 +3001,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         TTF_SizeText(r->font_tiny, "ALDER", &width, NULL);
         renderer_draw_text(r, "ALDER", viewport_to_screen_x(v, ALDER_INN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, ALDER_INN_Y - 1) * TILE_SIZE, (SDL_Color){126, 190, 112, 255}, r->font_tiny);
-        TTF_SizeText(r->font_tiny, "ELOWEN", &width, NULL);
-        renderer_draw_text(r, "ELOWEN", viewport_to_screen_x(v, ELOWEN_INN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
-            viewport_to_screen_y(v, ELOWEN_INN_Y - 1) * TILE_SIZE, (SDL_Color){182, 214, 232, 255}, r->font_tiny);
         renderer_draw_text(r, "ROOK",
             viewport_to_screen_x(v, 10) * TILE_SIZE - 8,
             viewport_to_screen_y(v, 17) * TILE_SIZE,

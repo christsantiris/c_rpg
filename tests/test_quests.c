@@ -88,9 +88,9 @@ void test_elowen_quest(void) {
     g.level_cache[3].valid = 1;
     g.portal_active = 1;
     g.portal_location = LOCATION_DUNGEON;
-    game_enter_inn(&g);
-    g.player.x = ELOWEN_INN_X;
-    g.player.y = ELOWEN_INN_Y + 1;
+    game_enter_tavern(&g);
+    g.player.x = ELOWEN_TAVERN_X;
+    g.player.y = ELOWEN_TAVERN_Y + 1;
     game_talk_to_elowen(&g);
     ASSERT("Elowen offers The Broken Seals", g.elowen_quest_state == 1);
     ASSERT("Elowen speaks through dialogue state", g.dialogue_active &&
@@ -137,9 +137,9 @@ void test_elowen_quest(void) {
 
     game_return_to_town(&g);
     int gold_before = g.gold;
-    game_enter_inn(&g);
-    g.player.x = ELOWEN_INN_X;
-    g.player.y = ELOWEN_INN_Y + 1;
+    game_enter_tavern(&g);
+    g.player.x = ELOWEN_TAVERN_X;
+    g.player.y = ELOWEN_TAVERN_Y + 1;
     game_talk_to_elowen(&g);
     ASSERT("Elowen completes the quest", g.elowen_quest_state == 3);
     ASSERT("Elowen awards 40 gold", g.gold == gold_before + 40);
@@ -188,10 +188,11 @@ void test_tavern_interior(void) {
 
     int elowen_x = 0;
     int elowen_y = 0;
-    ASSERT("Elowen no longer occupies the Tavern",
-        !find_tile(&g.map, TILE_NPC_ELOWEN, &elowen_x, &elowen_y));
-    ASSERT("Elowen's old Tavern position is walkable",
-        map_is_walkable(&g.map, ELOWEN_INN_X, ELOWEN_INN_Y));
+    ASSERT("Elowen occupies her original Tavern position",
+        find_tile(&g.map, TILE_NPC_ELOWEN, &elowen_x, &elowen_y) &&
+        elowen_x == ELOWEN_TAVERN_X && elowen_y == ELOWEN_TAVERN_Y);
+    ASSERT("Elowen can be approached beside her Tavern position",
+        map_is_walkable(&g.map, ELOWEN_TAVERN_X, ELOWEN_TAVERN_Y + 1));
     int dain_x = 0;
     int dain_y = 0;
     ASSERT("Dain no longer occupies the Tavern",

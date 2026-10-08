@@ -7,8 +7,8 @@ the south doorway to return to the same town street.
 NPC speech appears in a wrapped dialogue bubble beside the speaker. The bottom
 message bar is reserved for concise game events such as quest assignment,
 progress, and completion. Moving dismisses the current dialogue bubble.
-Elowen, Alder, Rook, and Bram wait in Stillbury's Inn, which uses the same doorway and
-conversation controls as the Tavern.
+Elowen, Brenna, Liora, and Ilya wait in Oakhaven's Tavern. Alder, Rook, and Bram
+wait in Stillbury's Inn, which uses the same doorway and conversation controls.
 
 Ridgeshire's Town Hall uses the same entry, conversation, and exit controls.
 Steward Hadrin assigns **Reclaim the Emberforge**: recover its guarded mechanism
@@ -28,13 +28,15 @@ are preserved. See [Royal Catacombs](catacombs.md#rest-for-the-forgotten).
 
 ## Elowen: The Broken Seals
 
-Speak to Elowen with `T` in **Stillbury's Inn**. She asks the player to repair
+Speak to Elowen with `T` in **Oakhaven's Tavern**. She asks the player to repair
 shattered burial seals in **Oakhaven's dungeon**, on floors 2,
 3, and 4. Each seal is protected by an escalating undead group. Stand
-on a seal and press `A` to restore it, then return to Elowen in Stillbury's
-Inn after repairing all three to receive 40 gold and 300 score.
+on a seal and press `A` to restore it, then return to Elowen in Oakhaven's
+Tavern after repairing all three to receive 40 gold and 300 score.
 
 Quest acceptance, seal progress, completion, and rewards persist in saves.
+This local quest requires no trip to another town. Older saves move Elowen back
+to the Tavern without resetting the quest or dungeon exploration.
 
 ## Dain: Recover the Treasure Map
 

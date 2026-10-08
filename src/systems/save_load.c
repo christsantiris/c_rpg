@@ -626,7 +626,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 103);
+    cJSON_AddNumberToObject(root, "save_version", 104);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -3598,6 +3598,38 @@ int load_game(GameState *g, int slot) {
             }
         }
         g->map.tiles[ILYA_TAVERN_Y][ILYA_TAVERN_X] = TILE_NPC_DRAGON_SEEKER;
+    }
+    // Version 104 returns Elowen to Oakhaven without resetting dungeon progress.
+    if (save_version < 104 && g->location == LOCATION_INN) {
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                if (g->map.tiles[y][x] == TILE_NPC_ELOWEN) {
+                    g->map.tiles[y][x] = TILE_TAVERN_FLOOR;
+                }
+            }
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            if (g->floor_items[i].underlying_tile == TILE_NPC_ELOWEN) {
+                g->floor_items[i].underlying_tile = TILE_TAVERN_FLOOR;
+            }
+        }
+        if (strcmp(g->dialogue_speaker, "Elowen") == 0) {
+            g->dialogue_active = 0;
+        }
+    }
+    if (save_version < 104 && g->location == LOCATION_TAVERN) {
+        if (g->player.x == ELOWEN_TAVERN_X && g->player.y == ELOWEN_TAVERN_Y) {
+            g->player.y++;
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->active && item->x == ELOWEN_TAVERN_X && item->y == ELOWEN_TAVERN_Y) {
+                item->y++;
+                item->underlying_tile = TILE_TAVERN_FLOOR;
+                g->map.tiles[item->y][item->x] = TILE_ITEM;
+            }
+        }
+        map_place_tavern_elowen(&g->map);
     }
     repair_floor_item_underlays(g);
     game_hide_portal_destination(g);
