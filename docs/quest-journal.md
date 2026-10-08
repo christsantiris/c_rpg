@@ -10,8 +10,9 @@ on Oakhaven's dungeon floors 2, 3, and 4. Return to her in the Inn for 40 gold
 and 300 score.
 
 Dain assigns **Recover the Treasure Map** in **Rosemoor's Adventurer's Guild
-Hall**. Its Map Bearers remain on mountain stages 1, 2, and 3 on the Oakhaven
-side. Return to him in the Guild for 60 gold and 400 score.
+Hall**. Its Archer and Bomber Map Bearers occupy mountain stages 1 and 2 near
+Oakhaven; the Shaman is on stage 5 near Ridgeshire, across the stage-4 Goblin
+King. Return to him in the Guild for 60 gold and 400 score.
 
 Alder assigns **The Lost Wardens** in **Stillbury's Inn**. Return to him there
 after rescuing all three forest wardens for 70 gold and 500 score once. Two

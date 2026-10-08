@@ -311,6 +311,85 @@ static void test_split_forest_migration(void) {
     remove("saves/savegame_99123.json");
 }
 
+static void test_split_mountain_migration(void) {
+    for (int portal = 0; portal < 2; portal++) {
+        for (int collected = 0; collected < 2; collected++) {
+            memset(&original, 0, sizeof(original));
+            original.player.player_class = CLASS_WARRIOR;
+            game_init(&original);
+            original.defeated_bosses |= 1 << LOCATION_MOUNTAINS;
+            game_enter_mountains(&original);
+            while (original.level < 5) {
+                game_descend(&original);
+            }
+            original.enemies[0].hp = 11;
+            game_ascend(&original);
+            game_ascend(&original);
+            original.dain_quest_state = 1;
+            original.dain_map_fragments = DAIN_FRAGMENT_ARCHER | (collected ? DAIN_FRAGMENT_SHAMAN : 0);
+            original.gold = 617;
+            Enemy *bearer = &original.enemies[0];
+            bearer->type = ENEMY_GOBLIN_SHAMAN;
+            bearer->active = !collected;
+            bearer->hp = collected ? 0 : 9;
+            bearer->dain_fragment = DAIN_FRAGMENT_SHAMAN;
+            snprintf(bearer->name, sizeof(bearer->name), "Map Bearer");
+            original.mountain_cache[2].enemies[0] = *bearer;
+            original.floor_item_count = 1;
+            original.floor_items[0] = (FloorItem){.active = 1, .x = original.player.x, .y = original.player.y,
+                .underlying_tile = original.map.tiles[original.player.y][original.player.x], .item = item_make_health_potion()};
+            original.map.tiles[original.player.y][original.player.x] = TILE_ITEM;
+            if (portal) {
+                game_open_town_portal(&original);
+            }
+            ASSERT("version 99 mountain quest saves migrate", make_legacy_save(99) && load_game(&loaded, ROUTE_SAVE_SLOT));
+            ASSERT("moving a bearer preserves fragments, money, boss victory, and explored far-side enemies", loaded.dain_quest_state == 1 &&
+                loaded.dain_map_fragments == original.dain_map_fragments && loaded.gold == 617 &&
+                loaded.defeated_bosses == original.defeated_bosses && loaded.mountain_cache[4].valid && loaded.mountain_cache[4].enemies[0].hp == 11 &&
+                loaded.mountain_cache[4].map.room_count == original.mountain_cache[4].map.room_count &&
+                memcmp(loaded.mountain_cache[4].map.rooms, original.mountain_cache[4].map.rooms, original.mountain_cache[4].map.room_count * sizeof(Room)) == 0 &&
+                memcmp(loaded.mountain_cache[4].map.tiles, original.mountain_cache[4].map.tiles, sizeof(original.map.tiles)) == 0);
+            ASSERT("old cached Shaman keeps health and death state without a misplaced fragment", !loaded.mountain_cache[2].enemies[0].dain_fragment &&
+                loaded.mountain_cache[2].enemies[0].hp == (collected ? 0 : 9) && loaded.mountain_cache[2].enemies[0].active == !collected);
+            if (portal) {
+                ASSERT("migration keeps the third-stage mountain portal anchor", loaded.portal_active && loaded.portal_level == 3 &&
+                    loaded.portal_x == original.portal_x && loaded.portal_y == original.portal_y);
+                game_use_town_portal(&loaded);
+            } else {
+                ASSERT("mountain migration keeps active position and loot", loaded.player.x == original.player.x && loaded.player.y == original.player.y &&
+                    loaded.floor_items[0].active && loaded.floor_items[0].underlying_tile == original.floor_items[0].underlying_tile);
+            }
+            ASSERT("old active Shaman becomes a regular enemy without losing damage", loaded.level == 3 && !loaded.enemies[0].dain_fragment &&
+                loaded.enemies[0].hp == (collected ? 0 : 9) && strcmp(loaded.enemies[0].name, "Goblin Shaman") == 0);
+            if (!collected) {
+                loaded.player.attack = 10000;
+                loaded.player.x = loaded.enemies[0].x;
+                loaded.player.y = loaded.enemies[0].y + 1;
+                action_resolve_player(&loaded, (Action){ACTION_MOVE, loaded.enemies[0].x, loaded.enemies[0].y});
+                ASSERT("defeating the former bearer cannot award the relocated fragment", !loaded.enemies[0].active &&
+                    loaded.dain_map_fragments == original.dain_map_fragments);
+            }
+            game_descend(&loaded);
+            game_descend(&loaded);
+            int bearers = 0;
+            for (int i = 0; i < loaded.enemy_count; i++) {
+                bearers += loaded.enemies[i].active && loaded.enemies[i].dain_fragment == DAIN_FRAGMENT_SHAMAN;
+            }
+            ASSERT("only missing Shaman fragments gain bearers on the explored fifth stage", loaded.level == 5 && bearers == !collected &&
+                loaded.enemies[0].hp == 11 && loaded.dain_map_fragments == original.dain_map_fragments);
+            game_refresh_quest_encounters(&loaded);
+            int refreshed = 0;
+            for (int i = 0; i < loaded.enemy_count; i++) {
+                refreshed += loaded.enemies[i].active && loaded.enemies[i].dain_fragment == DAIN_FRAGMENT_SHAMAN;
+            }
+            ASSERT("refreshing migrated stage five does not duplicate the bearer", refreshed == bearers);
+            ASSERT("migrated mountain quest rewrites and reloads successfully", save_game(&loaded, ROUTE_SAVE_SLOT) && load_game(&reloaded, ROUTE_SAVE_SLOT) &&
+                reloaded.dain_map_fragments == loaded.dain_map_fragments);
+        }
+    }
+    remove("saves/savegame_99123.json");
+}
+
 void test_route_save_migrations(void) {
     printf("Forest and swamp save migration tests:\n");
     ASSERT("route migration test slot is unused", !save_exists(ROUTE_SAVE_SLOT));
@@ -352,4 +431,5 @@ void test_route_save_migrations(void) {
     remove("saves/savegame_99123.json");
     test_mountain_migration();
     test_split_forest_migration();
+    test_split_mountain_migration();
 }

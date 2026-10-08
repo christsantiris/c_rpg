@@ -51,12 +51,13 @@ static void mountain_fragments(GameState *g) {
     for (int i = 0; i < g->enemy_count; i++) {
         Enemy *enemy = &g->enemies[i];
         if (enemy->active && enemy->dain_fragment) {
-            ASSERT("map bearers occupy levels 1-3 on OakHaven's side", g->level >= 1 && g->level <= 3 && enemy->dain_fragment == (1 << (g->level - 1)));
+            ASSERT("map bearers occupy stages 1 and 2 near Oakhaven and stage 5 near Ridgeshire", enemy->dain_fragment ==
+                (g->level == 1 ? DAIN_FRAGMENT_ARCHER : g->level == 2 ? DAIN_FRAGMENT_BOMBER : g->level == 5 ? DAIN_FRAGMENT_SHAMAN : 0));
             bearers++;
             mountain_kill(g, i);
         }
     }
-    ASSERT("each pending fragment has one bearer on its own stage", bearers == (g->level <= 3 ? 1 : 0));
+    ASSERT("each pending fragment has one bearer on its own stage", bearers == (g->level == 1 || g->level == 2 || g->level == 5 ? 1 : 0));
 }
 
 static void mountain_crossing(int reverse, int shortcut) {
@@ -67,7 +68,7 @@ static void mountain_crossing(int reverse, int shortcut) {
     mountain.player.x = GUILD_DAIN_X;
     mountain.player.y = GUILD_DAIN_Y + 1;
     game_talk_to_dain(&mountain);
-    ASSERT("Dain directs the player to revised stages", strstr(mountain.dialogue_text, "1, 2, and 3") != NULL);
+    ASSERT("Dain directs the player to revised stages", strstr(mountain.dialogue_text, "1, 2, and 5") != NULL);
     game_leave_guild(&mountain);
     game_leave_mountains(&mountain, reverse ? LOCATION_TOWN4 : LOCATION_TOWN, 0);
     int gate_y = reverse ? TOWN_H - 1 : 0;
@@ -90,7 +91,8 @@ static void mountain_crossing(int reverse, int shortcut) {
     }
     int king = mountain_king(&mountain);
     ASSERT("either approach reaches the King at the central peak", mountain.level == MOUNTAIN_BOSS_LEVEL && king >= 0);
-    ASSERT("map quest precedes the peak only from OakHaven", mountain.dain_map_fragments == (reverse ? 0 : 7));
+    ASSERT("both approaches encounter map fragments before the peak", mountain.dain_map_fragments ==
+        (reverse ? DAIN_FRAGMENT_SHAMAN : DAIN_FRAGMENT_ARCHER | DAIN_FRAGMENT_BOMBER));
     if (king < 0) {
         return;
     }
@@ -133,9 +135,7 @@ static void mountain_crossing(int reverse, int shortcut) {
         mountain_step(&mountain, reverse);
         guard = 0;
         while (mountain.location == LOCATION_MOUNTAINS && guard++ < MOUNTAIN_DEPTH) {
-            if (reverse) {
-                mountain_fragments(&mountain);
-            }
+            mountain_fragments(&mountain);
             mountain_step(&mountain, reverse);
         }
         ASSERT("full crossings permit completing Dain's map from either side", mountain.dain_map_fragments == 7 && mountain.dain_quest_state == 2);

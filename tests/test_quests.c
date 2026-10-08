@@ -257,7 +257,7 @@ void test_dain_quest(void) {
     ASSERT("accepting Dain's quest starts a fresh mountain expedition",
         !g.mountain_cache[3].valid && !g.portal_active);
 
-    int target_levels[3] = {1, 2, 3};
+    int target_levels[3] = {1, 2, 5};
     EnemyType target_types[3] = {
         ENEMY_GOBLIN_ARCHER, ENEMY_GOBLIN_BOMBER, ENEMY_GOBLIN_SHAMAN
     };
@@ -362,11 +362,11 @@ void test_dain_guild(void) {
     ASSERT("Dain assigns the same mountain quest from the Guild and leaves Zara's quest intact", g.dain_quest_state == 1 &&
         !g.dain_map_fragments && g.sunscar_lamp_quest_state == 1 &&
         g.dialogue_x == GUILD_DAIN_X && g.dialogue_y == GUILD_DAIN_Y &&
-        strstr(g.dialogue_text, "stages 1, 2, and 3") && strstr(g.dialogue_text, "Rosemoor's Adventurer's Guild"));
+        strstr(g.dialogue_text, "stages 1, 2, and 5") && strstr(g.dialogue_text, "Rosemoor's Adventurer's Guild"));
     g.dain_map_fragments = DAIN_FRAGMENT_ARCHER | DAIN_FRAGMENT_SHAMAN;
     QuestJournalEntry entry;
     ASSERT("the journal retains mountain objectives and rewards and names the new return location", quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 0, &entry) &&
-        strcmp(entry.title, "Recover the Treasure Map") == 0 && entry.stages[0] == 1 && entry.stages[1] == 2 && entry.stages[2] == 3 &&
+        strcmp(entry.title, "Recover the Treasure Map") == 0 && entry.stages[0] == 1 && entry.stages[1] == 2 && entry.stages[2] == 5 &&
         entry.reward_gold == 60 && entry.reward_score == 400 && entry.objective_complete[0] && !entry.objective_complete[1] &&
         entry.objective_complete[2] && strstr(entry.summary_line_2, "Rosemoor's Adventurer's Guild"));
     ASSERT("saving in the Guild retains Dain, Zara, and partial map progress", save_game(&g, 99141) && load_game(&loaded, 99141) &&

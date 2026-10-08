@@ -29,7 +29,7 @@ static const QuestDefinition quest_definitions[14] = {
         "Return to Dain in Rosemoor's Adventurer's Guild.",
         {"Defeat Archer Map Bearer", "Defeat Bomber Map Bearer",
             "Defeat Shaman Map Bearer"},
-        "Mountains", {1, 2, 3}, 60, 400
+        "Mountains", {1, 2, 5}, 60, 400
     },
     {
         "The Lost Wardens", "Alder",
