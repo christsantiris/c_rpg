@@ -971,6 +971,9 @@ int main(int argc, char **argv) {
                                             TILE_NPC_CAIN) {
                                             game_talk_to_cain(&game);
                                             found = 1;
+                                        } else if (game.map.tiles[ty][tx] == TILE_NPC_BRAM) {
+                                            game_talk_to_bram(&game);
+                                            found = 1;
                                         } else if (game.map.tiles[ty][tx] ==
                                             TILE_NPC_ROWAN) {
                                             game_talk_to_rowan(&game);

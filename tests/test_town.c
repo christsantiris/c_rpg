@@ -5,6 +5,7 @@
 #include "../src/screens/harbor.h"
 #include "../src/systems/save_load.h"
 #include <string.h>
+#include <stdlib.h>
 
 void test_king_roads_and_castle(void) {
     printf("Crown Roads and castle grounds tests:\n");
@@ -1253,6 +1254,42 @@ void test_forest(void) {
         g.player.x == TOWN_W - 2 && g.player.y == 12 &&
         g.map.tiles[g.player.y][g.player.x] == TILE_TOWN_PATH &&
         g.map.tiles[g.player.y][TOWN_W - 1] == TILE_TOWN_EXIT);
+}
+
+void test_bram_guidance(void) {
+    printf("Bram town guidance tests:\n");
+    static GameState g;
+    game_init(&g);
+    ASSERT("Bram stands near Cain in Oakhaven's central square",
+        g.map.tiles[TOWN_BRAM_Y][TOWN_BRAM_X] == TILE_NPC_BRAM &&
+        abs(TOWN_BRAM_X - TOWN_CAIN_X) == 2 && TOWN_BRAM_Y == TOWN_CAIN_Y);
+    ASSERT("Bram is solid and leaves the main crossroads and tavern approach open",
+        !map_is_walkable(&g.map, TOWN_BRAM_X, TOWN_BRAM_Y) &&
+        map_is_walkable(&g.map, TOWN_BRAM_X, TOWN_BRAM_Y + 1) &&
+        map_is_walkable(&g.map, 20, 12) &&
+        map_is_walkable(&g.map, TOWN_TAVERN_DOOR_X, TOWN_TAVERN_DOOR_Y + 1));
+    int count = g.inventory_count;
+    game_talk_to_bram(&g);
+    ASSERT("Bram identifies the Lich King, dungeon direction, and danger to Oakhaven",
+        g.dialogue_active && strcmp(g.dialogue_speaker, "Bram") == 0 &&
+        g.dialogue_x == TOWN_BRAM_X && g.dialogue_y == TOWN_BRAM_Y &&
+        strstr(g.dialogue_text, "Lich King") &&
+        strstr(g.dialogue_text, "dungeon east of Oakhaven") &&
+        strstr(g.dialogue_text, "endangers our town"));
+    ASSERT("Bram explains both shops and their supplies without giving items or a quest",
+        strstr(g.dialogue_text, "blacksmith sells weapons and armor") &&
+        strstr(g.dialogue_text, "alchemist sells potions and scrolls") &&
+        strstr(g.dialogue_text, "journey.") && g.inventory_count == count &&
+        !game_quest_offer_active(&g));
+    g.defeated_bosses |= 1 << LOCATION_DUNGEON;
+    game_talk_to_bram(&g);
+    ASSERT("Bram acknowledges the defeated Lich King and still recommends supplies",
+        strstr(g.dialogue_text, "Lich King is defeated") &&
+        strstr(g.dialogue_text, "blacksmith") && strstr(g.dialogue_text, "alchemist"));
+    game_enter_tavern(&g);
+    game_leave_tavern(&g);
+    ASSERT("Bram returns when Oakhaven is regenerated after visiting the tavern",
+        g.map.tiles[TOWN_BRAM_Y][TOWN_BRAM_X] == TILE_NPC_BRAM);
 }
 
 void test_cain_gift(void) {

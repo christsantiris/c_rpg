@@ -1280,3 +1280,143 @@ void test_dungeon_all_room_connectivity(void) {
     ASSERT("cached-floor refresh enforces connectivity before play resumes", dungeon_tile_reachable(&g.map, 182, 72));
     remove("saves/savegame_99151.json");
 }
+
+static int lich_guard_count(const Enemy *enemies, int count) {
+    int guards = 0;
+    for (int i = 0; i < count; i++) {
+        if (strcmp(enemies[i].name, "Lich Guard") == 0) {
+            guards++;
+        }
+    }
+    return guards;
+}
+
+void test_lich_minions(void) {
+    printf("Lich King minion and town guidance migration tests:\n");
+    static GameState g;
+    static GameState loaded;
+    game_init(&g);
+    g.location = LOCATION_DUNGEON;
+    g.level = DUNGEON_DEPTH;
+    int valid = 1;
+    for (int seed = 0; seed < 256; seed++) {
+        srand((unsigned)seed);
+        map_generate(&g.map, g.level);
+        g.player.x = g.map.stairs_up_x;
+        g.player.y = g.map.stairs_up_y;
+        enemies_spawn(&g);
+        Room *room = &g.map.rooms[g.map.room_count - 1];
+        if (lich_guard_count(g.enemies, g.enemy_count) != 2 ||
+            g.enemy_count > AREA_ENEMY_LIMIT) {
+            valid = 0;
+        }
+        for (int i = 0; i < g.enemy_count; i++) {
+            Enemy *e = &g.enemies[i];
+            if (strcmp(e->name, "Lich Guard") == 0 &&
+                (!e->active || e->is_boss || e->type != ENEMY_SKELETON ||
+                e->x <= room->x || e->x >= room->x + room->w - 1 ||
+                e->y <= room->y || e->y >= room->y + room->h - 1 ||
+                g.map.tiles[e->y][e->x] != TILE_FLOOR ||
+                dungeon_tile_reachable(&g.map, e->x, e->y))) {
+                valid = 0;
+            }
+            for (int j = 0; j < i; j++) {
+                if (g.enemies[j].x == e->x && g.enemies[j].y == e->y) {
+                    valid = 0;
+                }
+            }
+        }
+    }
+    ASSERT("256 boss layouts have exactly two Skeleton guards inside the lock, without overlaps or blocked stairs", valid);
+    int count = g.enemy_count;
+    game_add_lich_minions(&g);
+    ASSERT("adding minions again does not duplicate them", g.enemy_count == count);
+    g.enemies[1].active = 0;
+    g.enemies[1].hp = 0;
+    game_add_lich_minions(&g);
+    ASSERT("fallen minions are not resurrected by encounter setup", g.enemy_count == count && !g.enemies[1].active);
+
+    // Remove the new guards to model a final floor saved before version 108.
+    int legacy_count = 0;
+    for (int i = 0; i < g.enemy_count; i++) {
+        if (strcmp(g.enemies[i].name, "Lich Guard") != 0) {
+            g.enemies[legacy_count++] = g.enemies[i];
+        }
+    }
+    g.enemy_count = legacy_count;
+    g.enemies[0].hp = 73;
+    g.gold = 121;
+    g.elowen_quest_state = 1;
+    g.elowen_seals_restored = 7;
+    LevelCache *cache = &g.level_cache[DUNGEON_DEPTH - 1];
+    cache->map = g.map;
+    memcpy(cache->enemies, g.enemies, sizeof(g.enemies));
+    cache->enemy_count = g.enemy_count;
+    cache->valid = 1;
+    ASSERT("legacy boss floor fixture saves", save_old_dungeon(&g, 107));
+    ASSERT("legacy boss floor gains two minions on load", load_game(&loaded, 99151) &&
+        lich_guard_count(loaded.enemies, loaded.enemy_count) == 2);
+    ASSERT("cached boss floor also gains two minions", lich_guard_count(
+        loaded.level_cache[DUNGEON_DEPTH - 1].enemies,
+        loaded.level_cache[DUNGEON_DEPTH - 1].enemy_count) == 2);
+    ASSERT("minion migration preserves player, boss health, money and completed seals",
+        loaded.player.x == g.player.x && loaded.player.y == g.player.y &&
+        loaded.enemies[0].hp == 73 && loaded.gold == 121 &&
+        loaded.elowen_quest_state == 1 && loaded.elowen_seals_restored == 7);
+    loaded.enemies[legacy_count].hp = 0;
+    loaded.enemies[legacy_count].active = 0;
+    ASSERT("saving and loading does not respawn a defeated guard", save_game(&loaded, 99151) &&
+        load_game(&g, 99151) && lich_guard_count(g.enemies, g.enemy_count) == 2 &&
+        !g.enemies[legacy_count].active && g.enemies[legacy_count].hp == 0);
+
+    game_init(&g);
+    g.map.tiles[TOWN_BRAM_Y][TOWN_BRAM_X] = TILE_ITEM;
+    g.player.x = TOWN_BRAM_X;
+    g.player.y = TOWN_BRAM_Y;
+    g.floor_item_count = 1;
+    g.floor_items[0].active = 1;
+    g.floor_items[0].x = TOWN_BRAM_X;
+    g.floor_items[0].y = TOWN_BRAM_Y;
+    g.floor_items[0].underlying_tile = TILE_TOWN_PATH;
+    g.floor_items[0].item = item_make_health_potion();
+    g.level_cache[DUNGEON_DEPTH - 1] = loaded.level_cache[DUNGEON_DEPTH - 1];
+    // Model an old cache with no guards while the player is in town.
+    g.level_cache[DUNGEON_DEPTH - 1].enemy_count = legacy_count;
+    ASSERT("legacy town fixture saves", save_old_dungeon(&g, 107));
+    ASSERT("old town save gains Bram", load_game(&loaded, 99151) &&
+        loaded.map.tiles[TOWN_BRAM_Y][TOWN_BRAM_X] == TILE_NPC_BRAM);
+    ASSERT("town migration keeps the player and dropped potion on the adjoining cobblestone",
+        loaded.player.x == TOWN_BRAM_X && loaded.player.y == TOWN_BRAM_Y + 1 &&
+        loaded.floor_items[0].active && loaded.floor_items[0].item.type == ITEM_POTION_HEALTH &&
+        loaded.floor_items[0].x == TOWN_BRAM_X && loaded.floor_items[0].y == TOWN_BRAM_Y + 1 &&
+        loaded.floor_items[0].underlying_tile == TILE_TOWN_PATH &&
+        loaded.map.tiles[TOWN_BRAM_Y + 1][TOWN_BRAM_X] == TILE_ITEM);
+    ASSERT("town save migration adds cached guards without changing the active town or its enemies",
+        loaded.location == LOCATION_TOWN && loaded.level == g.level &&
+        loaded.enemy_count == g.enemy_count && lich_guard_count(
+        loaded.level_cache[DUNGEON_DEPTH - 1].enemies,
+        loaded.level_cache[DUNGEON_DEPTH - 1].enemy_count) == 2);
+
+    game_init(&g);
+    g.location = LOCATION_DUNGEON;
+    g.level = 1;
+    map_generate(&g.map, g.level);
+    enemies_spawn(&g);
+    ASSERT("early floors do not have Lich guards", lich_guard_count(g.enemies, g.enemy_count) == 0);
+    g.level = DUNGEON_DEPTH;
+    g.defeated_bosses |= 1 << LOCATION_DUNGEON;
+    map_generate(&g.map, g.level);
+    enemies_spawn(&g);
+    ASSERT("a defeated Lich King does not generate guards on a new expedition", lich_guard_count(g.enemies, g.enemy_count) == 0);
+    g.level_cache[DUNGEON_DEPTH - 1].map = g.map;
+    memcpy(g.level_cache[DUNGEON_DEPTH - 1].enemies, g.enemies, sizeof(g.enemies));
+    g.level_cache[DUNGEON_DEPTH - 1].enemy_count = g.enemy_count;
+    g.level_cache[DUNGEON_DEPTH - 1].valid = 1;
+    ASSERT("completed dungeon fixture saves", save_old_dungeon(&g, 107));
+    ASSERT("old completed dungeon stays completed without guards", load_game(&loaded, 99151) &&
+        (loaded.defeated_bosses & (1 << LOCATION_DUNGEON)) &&
+        lich_guard_count(loaded.enemies, loaded.enemy_count) == 0 &&
+        lich_guard_count(loaded.level_cache[DUNGEON_DEPTH - 1].enemies,
+        loaded.level_cache[DUNGEON_DEPTH - 1].enemy_count) == 0);
+    remove("saves/savegame_99151.json");
+}

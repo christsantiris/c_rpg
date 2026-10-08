@@ -67,10 +67,18 @@ room is excluded from trap placement.
 The final floor places a golden key in the room before the Lich King's sealed
 chamber. Stand on the key and press `P`, then walk into the chamber door to
 unlock it. The Lich stays dormant until the player enters the chamber. Once
-engaged, he alternates a warning turn with a ranged necrotic bolt. Defeating
+engaged, he alternates a warning turn with a ranged necrotic bolt. Two Skeleton
+minions named **Lich Guard** flank him inside the locked chamber and pursue
+the player in melee. They count toward the floor's normal enemy limit. Defeating
 him opens the glowing return passage; other surviving
 enemies do not block the trip back to OakHaven. The Lich King's victory and boss
 reward are one-time.
+
+Bram stands near Cain in Oakhaven's central square. Speak to him with `T` for
+a warning about the Lich King in the eastern dungeon and advice to buy supplies
+from the blacksmith and alchemist. His warning changes after the Lich is defeated.
+Save version 108 adds Bram and the guards to older saves without resetting
+progress; defeated bosses and fallen guards remain defeated.
 
 ## Elowen's Quest
 
