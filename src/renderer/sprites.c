@@ -3898,6 +3898,11 @@ static void guard_rect(Renderer *r, int x, int y, int dx, int dy, int w, int h, 
 }
 
 void draw_royal_guard(Renderer *r, int tile_x, int tile_y, int halberd_left) {
+    draw_town_floor(r, tile_x, tile_y);
+    draw_royal_guard_overlay(r, tile_x, tile_y, halberd_left);
+}
+
+void draw_royal_guard_overlay(Renderer *r, int tile_x, int tile_y, int halberd_left) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
     int m = halberd_left;
@@ -3911,7 +3916,6 @@ void draw_royal_guard(Renderer *r, int tile_x, int tile_y, int halberd_left) {
     SDL_Color gold = {220, 176, 62, 255};
     SDL_Color boots = {36, 28, 26, 255};
     SDL_Color wood = {110, 72, 40, 255};
-    draw_town_floor(r, tile_x, tile_y);
     // Kettle helm with a crimson plume.
     guard_rect(r, x, y, 10, 0, 3, 2, m, plume);
     guard_rect(r, x, y, 7, 1, 9, 4, m, outline);

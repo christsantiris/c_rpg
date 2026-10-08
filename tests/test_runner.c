@@ -4,6 +4,7 @@ int tests_run    = 0;
 int tests_passed = 0;
 
 void test_movement(void);
+void test_jail(void);
 void test_enemy_projectiles(void);
 void test_map(void);
 void test_map_tiles(void);
@@ -161,6 +162,7 @@ int main(void) {
     test_elowen_relocation();
     printf("\n");
     test_tavern_interior();
+    test_jail();
     printf("\n");
     test_dain_quest();
     test_dain_guild();

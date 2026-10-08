@@ -64,6 +64,12 @@ accepted. Return to Oswin for 150 gold and 1,500 score once. All four objectives
 remain recorded after completion, and the quest list scrolls as selection moves
 past the visible entries.
 
+**Guide Tomas Home** is offered by Tomas inside the Royal Jail after the castle
+grounds informant has you arrested. It tracks discovering the secret tunnel
+and escorting Tomas to central Ridgeshire. Both objectives occupy a single
+tunnel level; reaching town together automatically awards 100 gold and 750
+score and moves the quest to Completed. This quest requires no return trip.
+
 The Active tab contains quests in progress and quests ready to turn in. The
 Completed tab retains quests whose rewards have been collected. Each entry
 shows its quest giver, description, target area and stages, objective progress,
@@ -79,5 +85,6 @@ Maze Warden victories count as completed Minotaur encounters.
 Use the up and down arrows to select a quest. Use `Tab`, left, or right to
 change tabs. Press `Q` or `Esc` to return to the game. Completing every
 objective changes a quest to `Return to NPC`; rewards must still be collected
-from the original quest giver. Boss victories are recorded immediately and
+from the original quest giver, except Tomas's escort reward, awarded on arrival.
+Boss victories are recorded immediately and
 remain complete during later expeditions.

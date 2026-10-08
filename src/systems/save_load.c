@@ -1,6 +1,7 @@
 #include "save_load.h"
 #include "../game/game.h"
 #include "../game/castle.h"
+#include "../game/jail.h"
 #include "cJSON.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -625,7 +626,10 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 100);
+    cJSON_AddNumberToObject(root, "save_version", 101);
+    cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
+    cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
+    cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
     cJSON_AddNumberToObject(root, "forest_entry_town", g->forest_entry_town);
     cJSON_AddNumberToObject(root, "forest_portal_town", g->forest_portal_town);
     cJSON_AddNumberToObject(root, "swamp_entry_town", g->swamp_entry_town);
@@ -1210,6 +1214,14 @@ static void repair_floor_item_underlays(GameState *g) {
 }
 
 static void migrate_testing_save(cJSON *root, int version) {
+    if (version < 101) {
+        const char *fields[] = {"jail_quest_state", "prisoner_x", "prisoner_y"};
+        for (int i = 0; i < 3; i++) {
+            if (!cJSON_GetObjectItem(root, fields[i])) {
+                cJSON_AddNumberToObject(root, fields[i], 0);
+            }
+        }
+    }
     if (version < 97) {
         const char *fields[3] = {"catacombs_quest_state", "catacombs_quest_progress", "catacombs_quest_encounters"};
         for (int i = 0; i < 3; i++) {
@@ -1766,6 +1778,19 @@ int load_game(GameState *g, int slot) {
     g->catacombs_quest_state = catacombs_quest->valueint;
     g->catacombs_quest_progress = catacombs_progress->valueint;
     g->catacombs_quest_encounters = catacombs_encounters->valueint;
+    cJSON *jail_state = cJSON_GetObjectItem(root, "jail_quest_state");
+    cJSON *prisoner_x = cJSON_GetObjectItem(root, "prisoner_x");
+    cJSON *prisoner_y = cJSON_GetObjectItem(root, "prisoner_y");
+    if (!cJSON_IsNumber(jail_state) || !cJSON_IsNumber(prisoner_x) || !cJSON_IsNumber(prisoner_y) ||
+        jail_state->valueint < 0 || jail_state->valueint > 3 ||
+        prisoner_x->valueint < 0 || prisoner_x->valueint >= ESCAPE_TUNNEL_W ||
+        prisoner_y->valueint < 0 || prisoner_y->valueint >= ESCAPE_TUNNEL_H) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    g->jail_quest_state = jail_state->valueint;
+    g->prisoner_x = prisoner_x->valueint;
+    g->prisoner_y = prisoner_y->valueint;
     g->forest_entry_town = forest_entry->valueint;
     g->forest_portal_town = forest_portal->valueint;
     g->swamp_entry_town = swamp_entry->valueint;
@@ -1868,6 +1893,13 @@ int load_game(GameState *g, int slot) {
     g->equipped_off_hand = off_hand ? off_hand->valueint : -1;
     g->equipped_armor    = cJSON_GetObjectItem(root, "equipped_armor")->valueint;
     g->location          = cJSON_GetObjectItem(root, "location")->valueint;
+    if ((g->location == LOCATION_JAIL && (g->jail_quest_state != 1 && g->jail_quest_state != 2)) ||
+        (g->location == LOCATION_ESCAPE_TUNNEL && (g->jail_quest_state != 2 ||
+        g->player.x < 1 || g->player.x >= ESCAPE_TUNNEL_W || g->player.y < 1 || g->player.y >= ESCAPE_TUNNEL_H - 1 ||
+        g->prisoner_x < 1 || g->prisoner_x >= ESCAPE_TUNNEL_W - 1 || g->prisoner_y < 1 || g->prisoner_y >= ESCAPE_TUNNEL_H - 1))) {
+        cJSON_Delete(root);
+        return 0;
+    }
     cJSON *key_found = cJSON_GetObjectItem(root, "dungeon_key_found");
     cJSON *crypt_keys = cJSON_GetObjectItem(root, "dungeon_crypt_keys");
     cJSON *portal_active = cJSON_GetObjectItem(root, "portal_active");
@@ -3522,6 +3554,9 @@ int load_game(GameState *g, int slot) {
     }
     if (g->castle_prompt) {
         castle_request(g, g->castle_prompt == 2);
+    }
+    if (save_version < 101) {
+        jail_migrate_castle(g);
     }
     repair_floor_item_underlays(g);
     game_hide_portal_destination(g);

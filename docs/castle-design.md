@@ -4,6 +4,11 @@ The six-floor castle interior is implemented and ready for play testing.
 Reach the safe grounds through either Crown Road, approach the north castle
 entrance, and confirm entry. The south gate still leads to the Royal Catacombs.
 
+The grounds also contain the **Royal Jail** and a townsman who secretly reports
+you to the Royal Guards when spoken to with `T`. This one-time arrest begins
+an optional jail escape and prisoner escort to Ridgeshire; it does not reset
+castle victories or equipment. See [Royal Jail](royal-jail.md).
+
 ## Floors and appearance
 
 The player climbs from the gatehouse on floor 1 to the throne on floor 6.

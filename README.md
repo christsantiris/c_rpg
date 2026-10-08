@@ -62,10 +62,11 @@ including when a boss has been lured away from its original room.
 | Rook's Labyrinth | 5 |
 | Crown Road East | 1 |
 | Crown Road West | 1 |
+| Jail Escape Tunnel | 1 |
 | Castle of No Return interior | 6 |
 
 Combat areas that connect towns have seven levels; standalone adventures have
-five. Crown Road East and West each use one combat map. The final Castle of
+five. Crown Road East and West and the jail escape tunnel each use one combat map. The final Castle of
 No Return is a six-floor ascent with minibosses on floors 2 and 4.
 
 The forest, mountains, and swamp can be played from either end, with their
@@ -238,6 +239,16 @@ regional collectibles. Return to Town becomes a confirmed one-way escape to Rose
 surviving defenders reset, while miniboss victories, passages, revealed
 trapdoors, and dropped items persist. Defeating Lord Veyr ends the campaign with
 victory. See [Castle interior and play testing](docs/castle-design.md).
+
+A townsman on the castle grounds secretly reports you to the Royal Guards
+when spoken to with **T**, causing a one-time arrest in the new **Royal Jail**.
+Speak to fellow prisoner **Tomas** with **T** to accept **Guide Tomas Home**
+and reveal the escape hatch. Step onto it and lead him through a single-level
+tunnel with smugglers, spiders, and rats. **Space** waits a combat turn so he
+can catch up; the exit requires you to arrive together. You emerge in central
+Ridgeshire and receive **100 gold and 750 score** once. The jail's wards block
+town portals, and equipment is retained. Saves preserve the escape and escort.
+See [Royal Jail and escape quest](docs/royal-jail.md).
 
 The safe forest road, swamp road, and High Pass shortcuts are one tile wide.
 Older saves narrow these routes while preserving exploration and moving players

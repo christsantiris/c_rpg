@@ -1,6 +1,7 @@
 #include "quest_journal.h"
 #include <SDL2/SDL.h>
 #include "../game/catacombs.h"
+#include "../game/jail.h"
 
 typedef struct {
     const char *title;
@@ -15,7 +16,7 @@ typedef struct {
     const char *reward_item;
 } QuestDefinition;
 
-static const QuestDefinition quest_definitions[14] = {
+static const QuestDefinition quest_definitions[15] = {
     {
         "The Broken Seals", "Elowen",
         "Restore three guarded seals in Oakhaven's dungeon.",
@@ -118,6 +119,13 @@ static const QuestDefinition quest_definitions[14] = {
         "Return to Oswin in Ridgeshire's Town Hall.",
         {"Silence Soldiers' memorial", "Silence Watchers' memorial", "Silence Choir memorial", "Recover the burial ledger"},
         "Royal Catacombs", {2, 3, 4, 5}, CATACOMBS_REWARD_GOLD, CATACOMBS_REWARD_SCORE
+    },
+    {
+        "Guide Tomas Home", "Tomas",
+        "Escape the royal jail through the hidden tunnel.",
+        "Guide your fellow prisoner to central Ridgeshire.",
+        {"Find the secret tunnel", "Escort Tomas to Ridgeshire"},
+        "Escape Tunnel", {1, 1, 0, 0}, ESCAPE_REWARD_GOLD, ESCAPE_REWARD_SCORE
     }
 };
 
@@ -161,7 +169,10 @@ static int quest_state(const GameState *g, int quest) {
     if (quest == 12) {
         return g->moonveil_quest_state;
     }
-    return g->catacombs_quest_state;
+    if (quest == 13) {
+        return g->catacombs_quest_state;
+    }
+    return g->jail_quest_state == 3 ? 3 : g->jail_quest_state == 2 ? 1 : 0;
 }
 
 static int quest_progress(const GameState *g, int quest) {
@@ -204,7 +215,10 @@ static int quest_progress(const GameState *g, int quest) {
     if (quest == 12) {
         return g->moonveil_quest_progress;
     }
-    return g->catacombs_quest_progress;
+    if (quest == 13) {
+        return g->catacombs_quest_progress;
+    }
+    return g->jail_quest_state == 3 ? 3 : g->location == LOCATION_ESCAPE_TUNNEL ? 1 : 0;
 }
 
 static int quest_in_tab(int state, QuestJournalTab tab) {
@@ -224,7 +238,7 @@ int quest_journal_count(const GameState *g, QuestJournalTab tab) {
         return JOURNAL_BOSS_COUNT;
     }
     int count = 0;
-    for (int quest = 0; quest < 14; quest++) {
+    for (int quest = 0; quest < 15; quest++) {
         if (quest_in_tab(quest_state(g, quest), tab)) {
             count++;
         }
@@ -261,7 +275,7 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
         return 0;
     }
     int visible_index = 0;
-    for (int quest = 0; quest < 14; quest++) {
+    for (int quest = 0; quest < 15; quest++) {
         int state = quest_state(g, quest);
         if (!quest_in_tab(state, tab)) {
             continue;

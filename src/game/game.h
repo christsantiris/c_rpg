@@ -140,7 +140,9 @@ typedef enum {
     LOCATION_CATACOMBS,
     LOCATION_CASTLE_INTERIOR,
     LOCATION_WORKSHOP,
-    LOCATION_TOWN_HALL
+    LOCATION_TOWN_HALL,
+    LOCATION_JAIL,
+    LOCATION_ESCAPE_TUNNEL
 } Location;
 
 typedef struct {
@@ -167,6 +169,9 @@ typedef struct {
     int castle_minibosses;
     int castle_prompt;
     int game_won;
+    int jail_quest_state; // 0: not arrested, 1: jailed, 2: escorting, 3: rewarded.
+    int prisoner_x;
+    int prisoner_y;
     CrownroadCache crownroad_cache;
     CrownroadCache kingroad_west_cache;
     LevelCache temple_cache[TEMPLE_DEPTH];

@@ -2,6 +2,7 @@
 #include "game.h"
 #include "catacombs.h"
 #include "castle.h"
+#include "jail.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -1019,6 +1020,7 @@ void action_resolve_player(GameState *g, Action a) {
         g->location == LOCATION_CASTLE ||
         g->location == LOCATION_FOREST_ROAD ||
         g->location == LOCATION_INN ||
+        g->location == LOCATION_JAIL ||
         g->location == LOCATION_WORKSHOP ||
         g->location == LOCATION_TOWN_HALL ||
         g->location == LOCATION_GUILD ||
@@ -1037,6 +1039,9 @@ void action_resolve_player(GameState *g, Action a) {
         g->player.frozen_turns--;
         g->player.freeze_recovery = 1;
         push_message_kind(g, "You are frozen solid and lose a turn!", MESSAGE_DAMAGE_TAKEN);
+        return;
+    }
+    if (a.type == ACTION_WAIT) {
         return;
     }
 
@@ -1457,6 +1462,9 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
         if (sp->id == SPELL_RETURN_TO_TOWN) {
+            if (jail_blocks_portal(g)) {
+                return;
+            }
             if (g->location == LOCATION_FOREST_ROAD ||
                 g->location == LOCATION_HIGH_PASS ||
                 g->location == LOCATION_SWAMP_ROAD ||
@@ -1494,7 +1502,7 @@ void action_resolve_player(GameState *g, Action a) {
                 if (!map_is_walkable(&g->map, x, y)) {
                     break;
                 }
-                int occupied = 0;
+                int occupied = jail_prisoner_at(g, x, y);
                 for (int i = 0; i < g->enemy_count; i++) {
                     if (g->enemies[i].active && g->enemies[i].x == x &&
                         g->enemies[i].y == y) {
@@ -1835,6 +1843,9 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
         // Check for enemy at target
+        if (jail_move_exit(g, tx, ty)) {
+            return;
+        }
         for (int i = 0; i < g->enemy_count; i++) {
             Enemy *e = &g->enemies[i];
             if (!e->active) continue;
@@ -2553,6 +2564,10 @@ void action_resolve_player(GameState *g, Action a) {
             g->player.last_dy = ty - g->player.y;
             int old_x = g->player.x;
             int old_y = g->player.y;
+            if (jail_prisoner_at(g, tx, ty)) {
+                g->prisoner_x = old_x;
+                g->prisoner_y = old_y;
+            }
             game_move_player(g, tx - g->player.x, ty - g->player.y);
             if ((old_x != g->player.x || old_y != g->player.y) &&
                 g->map.tiles[old_y][old_x] == TILE_MOUNTAIN_WEAK_BRIDGE) {
@@ -2676,6 +2691,9 @@ void action_resolve_player(GameState *g, Action a) {
 }
 
 static int enemy_position_occupied(const GameState *g, int skip, int x, int y) {
+    if (jail_prisoner_at(g, x, y)) {
+        return 1;
+    }
     for (int i = 0; i < g->enemy_count; i++) {
         if (i == skip || !g->enemies[i].active) {
             continue;
@@ -3325,6 +3343,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
     if (g->player.hp <= 0 || g->game_won || g->castle_prompt) {
         return;
     }
+    jail_follow(g);
     if (g->location == LOCATION_CASTLE_INTERIOR) {
         int damage = castle_tick(g);
         if (damage > 0) {
