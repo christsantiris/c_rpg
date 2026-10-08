@@ -3483,7 +3483,9 @@ int load_game(GameState *g, int slot) {
     }
     if (save_version < 99) {
         // The third rescue keeps its completion bit but moves across the boss to stage 5.
-        remove_legacy_wardens(&g->forest_cache[2].map);
+        if (g->forest_cache[2].valid) {
+            remove_legacy_wardens(&g->forest_cache[2].map);
+        }
         if (g->location == LOCATION_FOREST && g->level == 3) {
             remove_legacy_wardens(&g->map);
             for (int i = 0; i < g->floor_item_count; i++) {
