@@ -626,7 +626,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 104);
+    cJSON_AddNumberToObject(root, "save_version", 105);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -3449,18 +3449,18 @@ int load_game(GameState *g, int slot) {
         g->map.tiles[GUILD_ORIN_Y][GUILD_ORIN_X] = TILE_NPC_ORIN;
     }
     if (save_version < 95 && g->location == LOCATION_TAVERN) {
-        if (g->player.x == LIORA_X && g->player.y == LIORA_Y) {
+        if (g->player.x == 18 && g->player.y == 18) {
             g->player.y++;
         }
         for (int i = 0; i < g->floor_item_count; i++) {
             FloorItem *item = &g->floor_items[i];
-            if (item->active && item->x == LIORA_X && item->y == LIORA_Y) {
+            if (item->active && item->x == 18 && item->y == 18) {
                 item->y++;
                 item->underlying_tile = TILE_TAVERN_FLOOR;
                 g->map.tiles[item->y][item->x] = TILE_ITEM;
             }
         }
-        map_place_tavern_liora(&g->map);
+        g->map.tiles[18][18] = TILE_NPC_LIORA;
     }
     // Version 96 moves Mara to the Town Hall without resetting her quest or coast caches.
     if (save_version < 96 && g->location == LOCATION_TAVERN) {
@@ -3630,6 +3630,42 @@ int load_game(GameState *g, int slot) {
             }
         }
         map_place_tavern_elowen(&g->map);
+    }
+    // Version 105 moves Mara to Oakhaven and Liora to Stillbury without resetting quests.
+    if (save_version < 105 && (g->location == LOCATION_TAVERN || g->location == LOCATION_TOWN_HALL)) {
+        TileType removed = g->location == LOCATION_TAVERN ? TILE_NPC_LIORA : TILE_NPC_MARA;
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                if (g->map.tiles[y][x] == removed) {
+                    g->map.tiles[y][x] = TILE_TAVERN_FLOOR;
+                }
+            }
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            if (g->floor_items[i].underlying_tile == removed) {
+                g->floor_items[i].underlying_tile = TILE_TAVERN_FLOOR;
+            }
+        }
+        if ((removed == TILE_NPC_LIORA && strcmp(g->dialogue_speaker, "Botanist Liora") == 0) ||
+            (removed == TILE_NPC_MARA && strcmp(g->dialogue_speaker, "Mara") == 0)) {
+            g->dialogue_active = 0;
+        }
+    }
+    if (save_version < 105 && (g->location == LOCATION_TAVERN || g->location == LOCATION_INN)) {
+        int x = g->location == LOCATION_TAVERN ? MARA_TAVERN_X : LIORA_INN_X;
+        int y = g->location == LOCATION_TAVERN ? MARA_TAVERN_Y : LIORA_INN_Y;
+        if (g->player.x == x && g->player.y == y) {
+            g->player.y++;
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->active && item->x == x && item->y == y) {
+                item->y++;
+                item->underlying_tile = TILE_TAVERN_FLOOR;
+                g->map.tiles[item->y][item->x] = TILE_ITEM;
+            }
+        }
+        g->map.tiles[y][x] = g->location == LOCATION_TAVERN ? TILE_NPC_MARA : TILE_NPC_LIORA;
     }
     repair_floor_item_underlays(g);
     game_hide_portal_destination(g);

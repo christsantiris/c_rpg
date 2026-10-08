@@ -68,6 +68,7 @@ static void mountain_crossing(int reverse, int shortcut) {
     mountain.player.x = GUILD_DAIN_X;
     mountain.player.y = GUILD_DAIN_Y + 1;
     game_talk_to_dain(&mountain);
+    game_handle_quest_offer_key(&mountain, SDL_SCANCODE_Y, 0);
     ASSERT("Dain directs the player to revised stages", strstr(mountain.dialogue_text, "1, 2, and 5") != NULL);
     game_leave_guild(&mountain);
     game_leave_mountains(&mountain, reverse ? LOCATION_TOWN4 : LOCATION_TOWN, 0);

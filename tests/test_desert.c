@@ -641,6 +641,7 @@ static void test_desert_lamp_quest(void) {
     g->player.x = GUILD_ZARA_X;
     g->player.y = GUILD_ZARA_Y + 1;
     game_talk_to_guild_seeker(g);
+    game_handle_quest_offer_key(g, SDL_SCANCODE_Y, 0);
     ASSERT("Zara assigns the lamp quest without resetting desert progress or its portal",
         g->sunscar_lamp_quest_state == 1 && g->portal_active &&
         g->max_desert_level_reached == DESERT_LAMP_LEVEL &&

@@ -19,9 +19,9 @@ after rescuing all three forest wardens for 70 gold and 500 score once. Two
 objectives are on stages 1 and 2 near Oakhaven, and one is on stage 5 near
 Stillbury, across the stage-4 Necromancer.
 
-Mara assigns **Relight the Drowned Beacons** in **Ridgeshire's Town Hall**.
+Mara assigns **Relight the Drowned Beacons** in **Oakhaven's Tavern**.
 The beacons remain on Sunken Coast stages 2, 3, and 4. Return to her in the
-Town Hall for 80 gold and 600 score; her location change preserves existing
+Tavern for 80 gold and 600 score; her location change preserves existing
 quest progress.
 
 Ilya assigns **The Dragon's Hoard** in **Oakhaven's Tavern**. Its objective
@@ -52,11 +52,11 @@ crystal to choose its tone from the inscription. Return to Orin for 120 gold
 and 1,000 score. All three restored objectives remain recorded after turning
 in the quest; the Prism Sovereign is optional.
 
-Liora's **The Stolen Moonseed** appears after talking to her in Oakhaven's
-Tavern. It tracks the Moonseed on Moonveil stage 2, moonwater on stage 3, and
+Liora's **The Stolen Moonseed** appears after talking to her in Stillbury's
+Inn. It tracks the Moonseed on Moonveil stage 2, moonwater on stage 3, and
 restoration of the planting circle on stage 4. The seed and water can be
-collected in either order; planting needs both. Return to Liora for 90 gold
-and 700 score. The Thorn Regent is optional, and all three objectives remain
+collected in either order; planting needs both. Return to Liora in Stillbury's
+Inn for 90 gold and 700 score. The Thorn Regent is optional, and all three objectives remain
 recorded in the Completed tab after turning in the quest.
 
 Brother Oswin's **Rest for the Forgotten** appears after talking to him in

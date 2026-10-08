@@ -168,6 +168,16 @@ void catacombs_refresh_quest(GameState *g) {
     quest_ready(g);
 }
 
+void catacombs_accept_quest(GameState *g) {
+    g->catacombs_quest_state = 1;
+    for (int level = 2; level <= 4; level++) {
+        const LevelCache *cache = &g->catacombs_cache[level - 1];
+        if (cache->valid && memorial_is_cold(&cache->map)) {
+            g->catacombs_quest_progress |= 1 << (level - 2);
+        }
+    }
+}
+
 void game_talk_to_oswin(GameState *g) {
     if (g->location != LOCATION_TOWN_HALL || abs(g->player.x - HALL_OSWIN_X) > 1 || abs(g->player.y - HALL_OSWIN_Y) > 1) {
         return;
@@ -177,16 +187,8 @@ void game_talk_to_oswin(GameState *g) {
     g->dialogue_x = HALL_OSWIN_X;
     g->dialogue_y = HALL_OSWIN_Y;
     if (g->catacombs_quest_state == 0) {
-        g->catacombs_quest_state = 1;
-        for (int level = 2; level <= 4; level++) {
-            const LevelCache *cache = &g->catacombs_cache[level - 1];
-            if (cache->valid && memorial_is_cold(&cache->map)) {
-                g->catacombs_quest_progress |= 1 << (level - 2);
-            }
-        }
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "The dead need names and rest. Take Crown Road West from Ridgeshire's west gate, then the castle's south gate. Press A at memorials on floors 2-4; take the Grave Marshal's ledger on floor 5.");
-        push_message(g, "Assigned: Rest for the Forgotten. See your quest journal.");
     } else if (g->catacombs_quest_state == 1) {
         int silenced = 0;
         for (int i = 0; i < 3; i++) {

@@ -421,6 +421,7 @@ static void draw_dialogue_text(Renderer *r, const char *text, int x, int y, int 
 
 static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport *v) {
     int shortcut = game_shortcut_prompt_active(g);
+    int quest_offer = game_quest_offer_active(g);
     if (!g->dialogue_active ||
         (!shortcut && g->location != LOCATION_TAVERN &&
         g->location != LOCATION_INN &&
@@ -433,6 +434,7 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
         g->location != LOCATION_CASTLE_INTERIOR &&
         g->location != LOCATION_CASTLE &&
         g->location != LOCATION_JAIL &&
+        g->location != LOCATION_ISLAND &&
         g->location != LOCATION_ESCAPE_TUNNEL &&
         g->location != LOCATION_FOREST &&
         g->location != LOCATION_SWAMP &&
@@ -454,9 +456,11 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     } else if (g->location == LOCATION_TAVERN || g->location == LOCATION_INN ||
         g->location == LOCATION_TOWN_HALL || g->location == LOCATION_GUILD) {
         viewport_w = TAVERN_W * TILE_SIZE;
+    } else if (g->location == LOCATION_ISLAND) {
+        viewport_w = ISLAND_W * TILE_SIZE;
     }
     int bubble_w = viewport_w < 460 ? viewport_w - 16 : 440;
-    int bubble_h = shortcut || game_glassdeep_prompt_active(g) ? 132 : 98;
+    int bubble_h = shortcut || quest_offer || game_glassdeep_prompt_active(g) ? 132 : 98;
     int npc_screen_x = viewport_to_screen_x(v, npc_x) * TILE_SIZE +
         TILE_SIZE / 2;
     int npc_screen_y = viewport_to_screen_y(v, npc_y) * TILE_SIZE;
@@ -510,6 +514,9 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
         (bubble_w - 28) / 8, (SDL_Color){42, 32, 30, 255});
     if (shortcut) {
         renderer_draw_text(r, "Enter to continue", bubble_x + 14, bubble_y + bubble_h - 20,
+            (SDL_Color){71, 82, 138, 255}, r->font_tiny);
+    } else if (quest_offer) {
+        renderer_draw_text(r, "Accept quest? Y: Yes   N: No", bubble_x + 14, bubble_y + bubble_h - 20,
             (SDL_Color){71, 82, 138, 255}, r->font_tiny);
     }
 }
@@ -2914,10 +2921,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int name_x = viewport_to_screen_x(v, BRENNA_X) * TILE_SIZE + (TILE_SIZE - name_w) / 2;
         int name_y = viewport_to_screen_y(v, BRENNA_Y - 1) * TILE_SIZE;
         renderer_draw_text(r, "BRENNA", name_x, name_y, name, r->font_tiny);
-        TTF_SizeText(r->font_tiny, "LIORA", &name_w, NULL);
-        name_x = viewport_to_screen_x(v, LIORA_X) * TILE_SIZE + (TILE_SIZE - name_w) / 2;
-        name_y = viewport_to_screen_y(v, LIORA_Y - 1) * TILE_SIZE;
-        renderer_draw_text(r, "LIORA", name_x, name_y, area_label_color(LOCATION_MOONVEIL), r->font_tiny);
+        TTF_SizeText(r->font_tiny, "MARA", &name_w, NULL);
+        name_x = viewport_to_screen_x(v, MARA_TAVERN_X) * TILE_SIZE + (TILE_SIZE - name_w) / 2;
+        name_y = viewport_to_screen_y(v, MARA_TAVERN_Y - 1) * TILE_SIZE;
+        renderer_draw_text(r, "MARA", name_x, name_y, area_label_color(LOCATION_COAST), r->font_tiny);
         TTF_SizeText(r->font_tiny, "ILYA", &name_w, NULL);
         name_x = viewport_to_screen_x(v, ILYA_TAVERN_X) * TILE_SIZE + (TILE_SIZE - name_w) / 2;
         name_y = viewport_to_screen_y(v, ILYA_TAVERN_Y - 1) * TILE_SIZE;
@@ -2998,6 +3005,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     if (g->location == LOCATION_INN) {
         int width = 0;
+        TTF_SizeText(r->font_tiny, "LIORA", &width, NULL);
+        renderer_draw_text(r, "LIORA", viewport_to_screen_x(v, LIORA_INN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, LIORA_INN_Y - 1) * TILE_SIZE, area_label_color(LOCATION_MOONVEIL), r->font_tiny);
         TTF_SizeText(r->font_tiny, "ALDER", &width, NULL);
         renderer_draw_text(r, "ALDER", viewport_to_screen_x(v, ALDER_INN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, ALDER_INN_Y - 1) * TILE_SIZE, (SDL_Color){126, 190, 112, 255}, r->font_tiny);
@@ -3018,9 +3028,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         renderer_draw_text(r, "STEWARD HADRIN", viewport_to_screen_x(v, HALL_STEWARD_X) * TILE_SIZE - 45,
             viewport_to_screen_y(v, HALL_STEWARD_Y - 1) * TILE_SIZE, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
         int width = 0;
-        TTF_SizeText(r->font_tiny, "MARA", &width, NULL);
-        renderer_draw_text(r, "MARA", viewport_to_screen_x(v, HALL_MARA_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
-            viewport_to_screen_y(v, HALL_MARA_Y - 1) * TILE_SIZE, (SDL_Color){75, 196, 201, 255}, r->font_tiny);
         TTF_SizeText(r->font_tiny, "BROTHER OSWIN", &width, NULL);
         renderer_draw_text(r, "BROTHER OSWIN", viewport_to_screen_x(v, HALL_OSWIN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, HALL_OSWIN_Y - 1) * TILE_SIZE, area_label_color(LOCATION_CATACOMBS), r->font_tiny);

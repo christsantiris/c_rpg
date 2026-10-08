@@ -43,7 +43,7 @@ static const QuestDefinition quest_definitions[15] = {
     {
         "Relight the Drowned Beacons", "Mara",
         "Lower the tides and relight three guarded beacons.",
-        "Return to Mara in Ridgeshire's Town Hall.",
+        "Return to Mara in Oakhaven's Tavern.",
         {"Light drowned beacon", "Light drowned beacon",
             "Light drowned beacon"},
         "Coast", {2, 3, 4}, 80, 600
@@ -109,7 +109,7 @@ static const QuestDefinition quest_definitions[15] = {
     {
         "The Stolen Moonseed", "Botanist Liora",
         "Recover the Moonseed, gather moonwater, and plant",
-        "the ancient circle. Return to Oakhaven's Tavern.",
+        "the ancient circle. Return to Stillbury's Inn.",
         {"Recover the Moonseed", "Gather moonwater", "Restore the planting circle"},
         "Moonveil Gardens", {2, 3, 4}, MOONVEIL_REWARD_GOLD, MOONVEIL_REWARD_SCORE
     },

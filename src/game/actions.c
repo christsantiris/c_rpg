@@ -1147,17 +1147,6 @@ void action_resolve_player(GameState *g, Action a) {
             game_collect_desert_lamp(g);
             return;
         }
-        if (tile == TILE_CRYPT_CACHE) {
-            int gold = 10 + g->level * 2;
-            g->gold += gold;
-            g->score += gold;
-            g->map.tiles[g->player.y][g->player.x] = TILE_FLOOR;
-            char message[MAX_MESSAGE_LEN];
-            snprintf(message, sizeof(message),
-                "The crypt cache holds %d gold!", gold);
-            push_message(g, message);
-            return;
-        }
         if (tile == TILE_BROKEN_BURIAL_SEAL) {
             if (g->elowen_quest_state != 1) {
                 push_message(g, "A shattered burial seal lies here.");
@@ -1194,6 +1183,17 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_PICK_UP) {
+        if (g->map.tiles[g->player.y][g->player.x] == TILE_CRYPT_CACHE) {
+            int gold = 10 + g->level * 2;
+            g->gold += gold;
+            g->score += gold;
+            g->map.tiles[g->player.y][g->player.x] = TILE_FLOOR;
+            char message[MAX_MESSAGE_LEN];
+            snprintf(message, sizeof(message),
+                "The crypt cache holds %d gold!", gold);
+            push_message(g, message);
+            return;
+        }
         if (g->map.tiles[g->player.y][g->player.x] == TILE_COAST_CACHE) {
             int gold = 20 + g->level * 4;
             g->gold += gold;

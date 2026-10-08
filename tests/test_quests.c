@@ -3,6 +3,7 @@
 #include "../src/systems/save_load.h"
 #include "../src/screens/quest_journal.h"
 #include <string.h>
+#include "../src/game/jail.h"
 
 static int find_tile(const Map *map, TileType type, int *found_x, int *found_y) {
     for (int y = 0; y < MAP_H; y++) {
@@ -92,6 +93,7 @@ void test_elowen_quest(void) {
     g.player.x = ELOWEN_TAVERN_X;
     g.player.y = ELOWEN_TAVERN_Y + 1;
     game_talk_to_elowen(&g);
+    game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
     ASSERT("Elowen offers The Broken Seals", g.elowen_quest_state == 1);
     ASSERT("Elowen speaks through dialogue state", g.dialogue_active &&
         strstr(g.dialogue_text, "burial seals") != NULL);
@@ -207,13 +209,15 @@ void test_tavern_interior(void) {
         map_is_walkable(&g.map, 28, 7));
     int mara_x = 0;
     int mara_y = 0;
-    ASSERT("Mara no longer occupies Oakhaven's Tavern",
-        !find_tile(&g.map, TILE_NPC_MARA, &mara_x, &mara_y));
-    ASSERT("Mara's old Tavern position is walkable",
-        map_is_walkable(&g.map, 31, 18));
+    ASSERT("Mara occupies her original Oakhaven Tavern position",
+        find_tile(&g.map, TILE_NPC_MARA, &mara_x, &mara_y) &&
+        mara_x == MARA_TAVERN_X && mara_y == MARA_TAVERN_Y);
+    ASSERT("Mara can be approached beside her Tavern position",
+        map_is_walkable(&g.map, MARA_TAVERN_X, MARA_TAVERN_Y + 1));
     g.player.x = BRENNA_X;
     g.player.y = BRENNA_Y + 1;
     game_talk_to_brenna(&g);
+    game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
     ASSERT("Brenna quest interaction works inside the Tavern",
         g.frostfell_quest_state == 1);
     ASSERT("talking opens Brenna's dialogue bubble", g.dialogue_active);
@@ -250,6 +254,7 @@ void test_dain_quest(void) {
     g.player.x = GUILD_DAIN_X;
     g.player.y = GUILD_DAIN_Y + 1;
     game_talk_to_dain(&g);
+    game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
     ASSERT("Dain assigns Recover the Treasure Map", g.dain_quest_state == 1);
     ASSERT("new Dain quest begins with no map fragments",
         g.dain_map_fragments == 0);
@@ -360,6 +365,7 @@ void test_dain_guild(void) {
     ASSERT("Dain requires conversation rather than Action", !g.dain_quest_state);
     g.sunscar_lamp_quest_state = 1;
     game_talk_to_dain(&g);
+    game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
     ASSERT("Dain assigns the same mountain quest from the Guild and leaves Zara's quest intact", g.dain_quest_state == 1 &&
         !g.dain_map_fragments && g.sunscar_lamp_quest_state == 1 &&
         g.dialogue_x == GUILD_DAIN_X && g.dialogue_y == GUILD_DAIN_Y &&
@@ -414,6 +420,7 @@ void test_alder_quest(void) {
     g.portal_active = 1;
     g.portal_location = LOCATION_FOREST;
     game_talk_to_alder(&g);
+    game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
     ASSERT("Alder assigns The Lost Wardens", g.alder_quest_state == 1);
     ASSERT("new Alder quest begins with no rescues",
         g.alder_wardens_rescued == 0);
@@ -472,14 +479,15 @@ void test_mara_quest(void) {
     GameState g;
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
-    game_enter_town_hall(&g);
-    g.player.x = HALL_MARA_X;
-    g.player.y = HALL_MARA_Y + 1;
+    game_enter_tavern(&g);
+    g.player.x = MARA_TAVERN_X;
+    g.player.y = MARA_TAVERN_Y + 1;
 
     g.coast_cache[3].valid = 1;
     g.portal_active = 1;
     g.portal_location = LOCATION_COAST;
     game_talk_to_mara(&g);
+    game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
     ASSERT("Mara assigns Relight the Drowned Beacons",
         g.mara_quest_state == 1);
     ASSERT("new Mara quest begins with no lit beacons",
@@ -488,7 +496,7 @@ void test_mara_quest(void) {
         strcmp(g.dialogue_speaker, "Mara") == 0);
     ASSERT("accepting Mara's quest starts a fresh coast expedition",
         !g.coast_cache[3].valid && !g.portal_active);
-    game_leave_town_hall(&g);
+    game_leave_tavern(&g);
 
     int target_levels[3] = {2, 3, 4};
     EnemyType guardian_types[3] = {
@@ -532,9 +540,9 @@ void test_mara_quest(void) {
         !find_tile(&g.map, TILE_COAST_BEACON_LIT, &absent_x, &absent_y));
 
     game_return_to_town(&g);
-    game_enter_town_hall(&g);
-    g.player.x = HALL_MARA_X;
-    g.player.y = HALL_MARA_Y + 1;
+    game_enter_tavern(&g);
+    g.player.x = MARA_TAVERN_X;
+    g.player.y = MARA_TAVERN_Y + 1;
     int gold_before = g.gold;
     int score_before = g.score;
     game_talk_to_mara(&g);
@@ -544,7 +552,7 @@ void test_mara_quest(void) {
     game_talk_to_mara(&g);
     ASSERT("Mara's reward can only be collected once",
         g.gold == gold_before + 80 && g.score == score_before + 600);
-    game_leave_town_hall(&g);
+    game_leave_tavern(&g);
 
     game_enter_coast(&g);
     game_descend(&g);
@@ -552,4 +560,81 @@ void test_mara_quest(void) {
     int beacon_y = 0;
     ASSERT("lit beacons remain lit on later expeditions",
         find_tile(&g.map, TILE_COAST_BEACON_LIT, &beacon_x, &beacon_y));
+}
+
+void test_quest_offer_controls(void) {
+    printf("Quest offer controls tests:\n");
+    static GameState g;
+    static GameState loaded;
+    struct {
+        void (*talk)(GameState *);
+        Location location;
+        int x;
+        int y;
+        int *state;
+    } cases[] = {
+        {game_talk_to_elowen, LOCATION_TAVERN, ELOWEN_TAVERN_X, ELOWEN_TAVERN_Y, &g.elowen_quest_state},
+        {game_talk_to_dain, LOCATION_GUILD, GUILD_DAIN_X, GUILD_DAIN_Y, &g.dain_quest_state},
+        {game_talk_to_alder, LOCATION_INN, ALDER_INN_X, ALDER_INN_Y, &g.alder_quest_state},
+        {game_talk_to_mara, LOCATION_TAVERN, MARA_TAVERN_X, MARA_TAVERN_Y, &g.mara_quest_state},
+        {game_talk_to_rook, LOCATION_INN, 10, 18, &g.rook_quest_state},
+        {game_talk_to_innkeeper, LOCATION_INN, 28, 7, &g.innkeeper_quest_state},
+        {game_talk_to_guild_seeker, LOCATION_GUILD, GUILD_ZARA_X, GUILD_ZARA_Y, &g.sunscar_lamp_quest_state},
+        {game_talk_to_dragon_seeker, LOCATION_TAVERN, ILYA_TAVERN_X, ILYA_TAVERN_Y, &g.dragon_treasure_quest_state},
+        {game_talk_to_nahla, LOCATION_ISLAND, ISLAND_NAHLA_X, ISLAND_NAHLA_Y, &g.temple_treasure_state},
+        {game_talk_to_steward, LOCATION_TOWN_HALL, HALL_STEWARD_X, HALL_STEWARD_Y, &g.emberforge_quest_state},
+        {game_talk_to_brenna, LOCATION_TAVERN, BRENNA_X, BRENNA_Y, &g.frostfell_quest_state},
+        {game_talk_to_orin, LOCATION_GUILD, GUILD_ORIN_X, GUILD_ORIN_Y, &g.glassdeep_quest_state},
+        {game_talk_to_liora, LOCATION_INN, LIORA_INN_X, LIORA_INN_Y, &g.moonveil_quest_state},
+        {game_talk_to_oswin, LOCATION_TOWN_HALL, HALL_OSWIN_X, HALL_OSWIN_Y, &g.catacombs_quest_state}
+    };
+    for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
+        g.player.player_class = CLASS_WARRIOR;
+        game_init(&g);
+        g.location = cases[i].location;
+        g.player.x = cases[i].x;
+        g.player.y = cases[i].y + 1;
+        int messages = g.message_count;
+        cases[i].talk(&g);
+        ASSERT("talking offers a quest without activating it or logging an assignment", game_quest_offer_active(&g) &&
+            *cases[i].state == 0 && !quest_journal_count(&g, QUEST_TAB_ACTIVE) && g.message_count == messages);
+        ASSERT("holding Y or pressing Enter does not accept an offer", game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 1) &&
+            game_handle_quest_offer_key(&g, SDL_SCANCODE_RETURN, 0) && *cases[i].state == 0);
+        ASSERT("N declines without adding a quest to the journal", game_handle_quest_offer_key(&g, SDL_SCANCODE_N, 0) &&
+            *cases[i].state == 0 && !g.dialogue_active && !quest_journal_count(&g, QUEST_TAB_ACTIVE));
+        cases[i].talk(&g);
+        ASSERT("a declined quest can be offered again and accepted with Y", game_quest_offer_active(&g) &&
+            game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0) && *cases[i].state == 1 &&
+            !game_quest_offer_active(&g) && quest_journal_count(&g, QUEST_TAB_ACTIVE) == 1);
+        int gold = g.gold;
+        int score = g.score;
+        ASSERT("Y after acceptance cannot accept twice or award a reward", !game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0) &&
+            g.gold == gold && g.score == score && *cases[i].state == 1);
+    }
+
+    g.player.player_class = CLASS_WARRIOR;
+    game_init(&g);
+    game_enter_tavern(&g);
+    g.player.x = ELOWEN_TAVERN_X;
+    g.player.y = ELOWEN_TAVERN_Y + 1;
+    g.level_cache[3].valid = 1;
+    g.level_cache[3].level_cleared = 1;
+    g.max_level_reached = 4;
+    g.portal_active = 1;
+    g.portal_location = LOCATION_DUNGEON;
+    game_talk_to_elowen(&g);
+    ASSERT("an undecided offer and existing expedition survive save/load", save_game(&g, 99150) && load_game(&loaded, 99150) &&
+        game_quest_offer_active(&loaded) && !loaded.elowen_quest_state && loaded.level_cache[3].valid && loaded.portal_active);
+    game_handle_quest_offer_key(&loaded, SDL_SCANCODE_ESCAPE, 0);
+    ASSERT("Esc declines without resetting maps, depth, or portals", !loaded.dialogue_active && !loaded.elowen_quest_state &&
+        loaded.level_cache[3].valid && loaded.level_cache[3].level_cleared && loaded.max_level_reached == 4 && loaded.portal_active);
+    ASSERT("a declined quest remains inactive after saving", save_game(&loaded, 99150) && load_game(&g, 99150) &&
+        !g.elowen_quest_state && !game_quest_offer_active(&g) && !quest_journal_count(&g, QUEST_TAB_ACTIVE));
+    game_talk_to_elowen(&g);
+    game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
+    ASSERT("only acceptance starts a fresh dungeon expedition", g.elowen_quest_state == 1 && !g.level_cache[3].valid &&
+        !g.portal_active && g.max_level_reached == 1);
+    ASSERT("accepted quests stay active after save/load without another offer", save_game(&g, 99150) && load_game(&loaded, 99150) &&
+        loaded.elowen_quest_state == 1 && !game_quest_offer_active(&loaded) && quest_journal_count(&loaded, QUEST_TAB_ACTIVE) == 1);
+    remove("saves/savegame_99150.json");
 }

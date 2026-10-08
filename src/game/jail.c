@@ -167,12 +167,9 @@ int jail_talk_nearby(GameState *g) {
         return 1;
     }
     if (g->location == LOCATION_JAIL && near(g->player.x, g->player.y, JAIL_PRISONER_X, JAIL_PRISONER_Y)) {
-        if (g->jail_quest_state == 1) {
-            g->jail_quest_state = 2;
-            g->map.tiles[JAIL_HATCH_Y][JAIL_HATCH_X] = TILE_JAIL_HATCH;
-            push_message(g, "Assigned: Guide Tomas Home. Tomas reveals a loose flagstone.");
-        }
-        dialogue(g, "Tomas", "A loose flagstone hides a tunnel to central Ridgeshire. The smugglers, spiders, and rats make it too dangerous for me alone. Lead me home and I will repay you. Step onto the revealed hatch; I will follow your lead.", JAIL_PRISONER_X, JAIL_PRISONER_Y);
+        dialogue(g, "Tomas", g->jail_quest_state == 1 ?
+            "A flagstone hides a tunnel to central Ridgeshire. Smugglers, spiders, and rats make it too dangerous for me alone. Lead me home for a reward; I will reveal the hatch and follow you." :
+            "Step onto the revealed hatch to enter the tunnel. I will follow you to Ridgeshire. Clear the way; Space lets me catch up.", JAIL_PRISONER_X, JAIL_PRISONER_Y);
         return 1;
     }
     if (jail_prisoner_at(g, g->prisoner_x, g->prisoner_y) && near(g->player.x, g->player.y, g->prisoner_x, g->prisoner_y)) {

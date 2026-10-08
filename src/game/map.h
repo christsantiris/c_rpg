@@ -164,8 +164,10 @@
 #define FROSTFELL_SURVIVOR_LEVEL 4
 #define BRENNA_X 10
 #define BRENNA_Y 18
-#define LIORA_X 18
-#define LIORA_Y 18
+#define LIORA_INN_X 18
+#define LIORA_INN_Y 18
+#define MARA_TAVERN_X 31
+#define MARA_TAVERN_Y 18
 #define ILYA_TAVERN_X 28
 #define ILYA_TAVERN_Y 18
 #define DESERT_DEPTH 5
@@ -211,6 +213,7 @@
 #define TOWN4_HALL_DOOR_Y (TOWN4_HALL_Y + TOWN4_HALL_H - 1)
 #define HALL_STEWARD_X 20
 #define HALL_STEWARD_Y 8
+// Mara's former position is retained for save migrations.
 #define HALL_MARA_X 10
 #define HALL_MARA_Y 18
 #define HALL_OSWIN_X 28
@@ -506,7 +509,7 @@ void map_place_town_apothecary(Map *m);
 void map_place_town3_guild(Map *m);
 void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y);
 void map_place_tavern_brenna(Map *m);
-void map_place_tavern_liora(Map *m);
+void map_place_inn_liora(Map *m);
 void map_generate_inn(Map *m, int *spawn_x, int *spawn_y);
 void map_place_tavern_elowen(Map *m);
 void map_generate_island(Map *m, int *spawn_x, int *spawn_y);

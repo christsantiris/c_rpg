@@ -315,6 +315,7 @@ void test_swamp(void) {
     ASSERT("Bram waits in the Town 2 inn",
         swamp_game.map.tiles[7][28] == TILE_NPC_INNKEEPER);
     game_talk_to_innkeeper(&swamp_game);
+    game_handle_quest_offer_key(&swamp_game, SDL_SCANCODE_Y, 0);
     ASSERT("Bram assigns Mira's rescue only once",
         swamp_game.innkeeper_quest_state == 1);
     game_leave_inn(&swamp_game);

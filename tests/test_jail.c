@@ -30,6 +30,7 @@ static void accept_escape(void) {
         move(game.player.x + 1, game.player.y);
     }
     jail_talk_nearby(&game);
+    game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
 }
 
 static void reach_tunnel(void) {
@@ -167,7 +168,14 @@ void test_jail(void) {
     while (game.player.x < JAIL_PRISONER_X - 1) {
         move(game.player.x + 1, game.player.y);
     }
-    ASSERT("Tomas assigns the escort and reveals a hatch", jail_talk_nearby(&game) && game.jail_quest_state == 2 &&
+    jail_talk_nearby(&game);
+    ASSERT("Tomas offers the escort without revealing the hatch", game_quest_offer_active(&game) && game.jail_quest_state == 1 &&
+        game.map.tiles[JAIL_HATCH_Y][JAIL_HATCH_X] != TILE_JAIL_HATCH && !quest_journal_count(&game, QUEST_TAB_ACTIVE));
+    game_handle_quest_offer_key(&game, SDL_SCANCODE_N, 0);
+    ASSERT("declining Tomas leaves the escort available for later", game.jail_quest_state == 1 && !game.dialogue_active);
+    jail_talk_nearby(&game);
+    game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
+    ASSERT("accepting Tomas's escort reveals a hatch", game.jail_quest_state == 2 &&
         game.map.tiles[JAIL_HATCH_Y][JAIL_HATCH_X] == TILE_JAIL_HATCH && strstr(game.dialogue_text, "dangerous"));
     QuestJournalEntry entry;
     ASSERT("journal records the assigned escort and its reward", quest_journal_get_entry(&game, QUEST_TAB_ACTIVE, 0, &entry) &&

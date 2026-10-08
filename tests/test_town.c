@@ -372,6 +372,7 @@ void test_rook_labyrinth(void) {
         g.map.tiles[18][10] == TILE_NPC_ROOK &&
         g.map.tiles[ELOWEN_TAVERN_Y][ELOWEN_TAVERN_X] == TILE_TAVERN_FLOOR);
     game_talk_to_rook(&g);
+    game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
     ASSERT("Rook assigns the retrieval quest on first conversation",
         g.rook_quest_state == 1 && g.rook_labyrinth_switches == 0 &&
         game_labyrinth_is_open(&g));

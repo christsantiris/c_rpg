@@ -259,6 +259,7 @@ void test_dragonspine(void) {
     g.player.x = ILYA_TAVERN_X;
     g.player.y = ILYA_TAVERN_Y + 1;
     game_talk_to_dragon_seeker(&g);
+    game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
     ASSERT("Ilya assigns the Dragonspine treasure quest once",
         g.dragon_treasure_quest_state == 1 && !g.portal_active &&
         g.map.tiles[ILYA_TAVERN_Y][ILYA_TAVERN_X] == TILE_NPC_DRAGON_SEEKER &&

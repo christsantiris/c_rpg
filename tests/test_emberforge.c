@@ -24,6 +24,7 @@ static void accept_quest(void) {
     game.player.x = HALL_STEWARD_X;
     game.player.y = HALL_STEWARD_Y + 1;
     game_talk_to_steward(&game);
+    game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
     game_leave_town_hall(&game);
 }
 
@@ -69,6 +70,7 @@ static void test_hall(void) {
     game.player.x = HALL_STEWARD_X;
     game.player.y = HALL_STEWARD_Y + 1;
     game_talk_to_steward(&game);
+    game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
     ASSERT("talking assigns Reclaim the Emberforge", game.emberforge_quest_state == 1 && game.dialogue_active &&
         strcmp(game.dialogue_speaker, "Steward Hadrin") == 0);
     ASSERT("saving inside Town Hall preserves the interior and accepted quest", save_game(&game, EMBERFORGE_TEST_SLOT) &&
