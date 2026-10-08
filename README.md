@@ -80,7 +80,8 @@ The mountains connect OakHaven's north gate and Ridgeshire's south mountain gate
 Both approaches grow harder toward the Goblin King at Crown Peak on level 4.
 Defeating him reveals a shortcut to the opposite town; the remaining three levels
 can instead be fought in decreasing difficulty. Dain's map bearers occupy levels
-1, 2, and 3 on the OakHaven side, reached after the peak when starting in Ridgeshire.
+**1 and 2 near Oakhaven** and **5 near Ridgeshire**, across the stage-4 peak.
+Either approach finds fragments before and after the boss.
 Ridgeshire's east gate leads directly to Dragonspine. The safe High Pass links a
 separate south shortcut gate in Ridgeshire with OakHaven's northeast road, unlocked
 by the Goblin King's defeat. Both ordinary mountain gates remain available. Ilya
@@ -144,7 +145,7 @@ his location when loaded.
 
 **Dain** waits in **Rosemoor's Adventurer's Guild Hall**, alongside Zara. Press
 **T** beside him to accept **Recover the Treasure Map**. Defeat the Map Bearers
-on **mountain stages 1, 2, and 3 on the Oakhaven side**, then return to Dain in
+on **mountain stages 1 and 2 near Oakhaven and 5 near Ridgeshire**, then return to Dain in
 Rosemoor for **60 gold and 400 score**, awarded once.
 
 **Mara** waits in **Ridgeshire's Town Hall**, alongside Steward Hadrin. Press

@@ -66,13 +66,20 @@ save/load.
 
 Speak to Dain with `T` in **Rosemoor's Adventurer's Guild Hall** to accept
 **Recover the Treasure Map**. His quest places guarded Map Bearers on stages
-1, 2, and 3 on the OakHaven side. The Archer, Bomber, and Shaman leaders each carry one fragment and
+**1 and 2 near Oakhaven** and **5 near Ridgeshire**, across the stage-4 peak.
+The Archer, Bomber, and Shaman leaders respectively carry one fragment and
 travel with a themed warband. Defeating the leader recovers the fragment
 automatically. Accepting the quest starts a fresh mountain expedition, while a
 previously defeated Goblin King remains dead and permanent shortcuts stay open.
-Starting from Ridgeshire reaches the bearers on stages 3, 2, and 1 after the King.
-Taking the peak shortcut from Ridgeshire skips these stages; OakHaven's ordinary
-mountain gate remains available for completing the quest later.
+Starting from Ridgeshire reaches the Shaman on stage 5 before the King, then
+the Bomber on stage 2 and Archer on stage 1 after him. Taking the peak shortcut
+skips unfinished bearers on the far side from either direction; keep fighting
+through or enter from the destination town's ordinary mountain gate later.
+
+Save version **100** preserves collected fragments and explored maps. Old
+Shaman bearers outside stage 5 become regular enemies with their existing
+health and position; a missing third fragment gains a new bearer on stage 5
+when visited. Loot, boss victories, and portal anchors remain intact.
 
 Return all three fragments to Dain in Rosemoor's Guild Hall for the one-time
 reward of **60 gold and 400 score**.

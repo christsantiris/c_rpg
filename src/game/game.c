@@ -891,7 +891,7 @@ static int place_dain_map_bearer(GameState *g) {
     } else if (g->level == 2) {
         target_type = ENEMY_GOBLIN_BOMBER;
         target_bit = DAIN_FRAGMENT_BOMBER;
-    } else if (g->level == 3) {
+    } else if (g->level == 5) {
         target_type = ENEMY_GOBLIN_SHAMAN;
         target_bit = DAIN_FRAGMENT_SHAMAN;
     } else {
@@ -5411,7 +5411,7 @@ void game_talk_to_dain(GameState *g) {
         g->dain_map_fragments = 0;
         prepare_quest_expedition(g, LOCATION_MOUNTAINS);
         strncpy(g->dialogue_text,
-            "Three goblin warbands carry a dwarven map's pieces on mountain stages 1, 2, and 3, between Oakhaven and the peak. Recover them and return to me at Rosemoor's Adventurer's Guild.",
+            "Map Bearers hold fragments on mountain stages 1, 2, and 5: two near Oakhaven, one near Ridgeshire, across the Goblin King. Return to Rosemoor's Adventurer's Guild.",
             MAX_DIALOGUE_LEN - 1);
         g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
         push_message(g, "Assigned: Recover the Treasure Map.");
@@ -5425,7 +5425,7 @@ void game_talk_to_dain(GameState *g) {
             }
         }
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "You have recovered %d of 3 map fragments. Find the remaining pieces in the mountains, then return to me at Rosemoor's Adventurer's Guild.",
+            "You have recovered %d of 3 fragments. Search mountain stages 1, 2, and 5, on both sides of Crown Peak. The peak shortcut skips unfinished bearers on the far side. Return here to the Guild.",
             defeated);
         char status[MAX_MESSAGE_LEN];
         snprintf(status, sizeof(status),

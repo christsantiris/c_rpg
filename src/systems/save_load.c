@@ -625,7 +625,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 99);
+    cJSON_AddNumberToObject(root, "save_version", 100);
     cJSON_AddNumberToObject(root, "forest_entry_town", g->forest_entry_town);
     cJSON_AddNumberToObject(root, "forest_portal_town", g->forest_portal_town);
     cJSON_AddNumberToObject(root, "swamp_entry_town", g->swamp_entry_town);
@@ -1493,6 +1493,16 @@ static void migrate_expanded_finale(GameState *g, Location region, int old_depth
     }
     if (g->portal_location == region && g->portal_level == old_depth) {
         g->portal_level = 5;
+    }
+}
+
+static void remove_misplaced_shaman(Enemy *enemies, int count) {
+    for (int i = 0; i < count; i++) {
+        Enemy *enemy = &enemies[i];
+        if (enemy->dain_fragment == DAIN_FRAGMENT_SHAMAN) {
+            enemy->dain_fragment = 0;
+            snprintf(enemy->name, sizeof(enemy->name), "Goblin Shaman");
+        }
     }
 }
 
@@ -3496,6 +3506,18 @@ int load_game(GameState *g, int slot) {
         }
         if (g->portal_location == LOCATION_FOREST && g->portal_level == 3 && g->portal_origin_tile == TILE_FOREST_WARDEN) {
             g->portal_origin_tile = TILE_FOREST_FLOOR;
+        }
+    }
+    if (save_version < 100) {
+        // Preserve actors and collected fragments; pending Shaman fragments now belong to stage 5.
+        for (int i = 0; i < MOUNTAIN_DEPTH; i++) {
+            LevelCache *cache = &g->mountain_cache[i];
+            if (i != 4 && cache->valid) {
+                remove_misplaced_shaman(cache->enemies, cache->enemy_count);
+            }
+        }
+        if (g->location == LOCATION_MOUNTAINS && g->level != 5) {
+            remove_misplaced_shaman(g->enemies, g->enemy_count);
         }
     }
     if (g->castle_prompt) {
