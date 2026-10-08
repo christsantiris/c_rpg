@@ -5479,17 +5479,20 @@ void game_record_dain_kill(GameState *g, EnemyType type) {
 }
 
 void game_talk_to_alder(GameState *g) {
+    if (g->location != LOCATION_INN || abs(g->player.x - ALDER_INN_X) > 1 || abs(g->player.y - ALDER_INN_Y) > 1) {
+        return;
+    }
     g->dialogue_active = 1;
     strncpy(g->dialogue_speaker, "Alder", MAX_SPEAKER_LEN - 1);
     g->dialogue_speaker[MAX_SPEAKER_LEN - 1] = '\0';
-    g->dialogue_x = 28;
-    g->dialogue_y = 7;
+    g->dialogue_x = ALDER_INN_X;
+    g->dialogue_y = ALDER_INN_Y;
     if (g->alder_quest_state == 0) {
         g->alder_quest_state = 1;
         g->alder_wardens_rescued = 0;
         prepare_quest_expedition(g, LOCATION_FOREST);
         strncpy(g->dialogue_text,
-            "Three of my wardens are trapped on forest stages 1, 2, and 3, between OakHaven and the Necromancer. Defeat their captors and bring them home.",
+            "My wardens are trapped on forest stages 1, 2, and 3, between Oakhaven and the Necromancer. Defeat their captors, rescue them, and return to me here in Stillbury's Inn.",
             MAX_DIALOGUE_LEN - 1);
         g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
         push_message(g, "Assigned: The Lost Wardens.");
@@ -5571,7 +5574,7 @@ void game_rescue_forest_warden(GameState *g, int x, int y) {
     push_message(g, status);
     if ((g->alder_wardens_rescued & 7) == 7) {
         g->alder_quest_state = 2;
-        push_message(g, "All wardens rescued. Return to Alder.");
+        push_message(g, "All wardens rescued. Return to Alder in Stillbury's Inn.");
     }
 }
 

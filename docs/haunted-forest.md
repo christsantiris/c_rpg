@@ -63,7 +63,9 @@ subsequently entered from the other town.
 
 ## Forest Quest
 
-Alder's **The Lost Wardens** quest places captives in guarded groves on stages
+Speak to Alder with `T` in **Stillbury's Inn** to accept **The Lost Wardens**.
+Return to him there for 70 gold and 500 score once all three wardens are rescued.
+The quest places captives in guarded groves on stages
 1, 2, and 3 on the OakHaven side of the Necromancer. Entering from Stillbury
 encounters them on stages 3, 2, and 1 after crossing the boss grove. Their
 hunting parties are led by a Giant Spider, Dark Elf, and

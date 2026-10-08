@@ -13,6 +13,9 @@ Dain assigns **Recover the Treasure Map** in **Rosemoor's Adventurer's Guild
 Hall**. Its Map Bearers remain on mountain stages 1, 2, and 3 on the Oakhaven
 side. Return to him in the Guild for 60 gold and 400 score.
 
+Alder assigns **The Lost Wardens** in **Stillbury's Inn**. Return to him there
+after rescuing all three forest wardens for 70 gold and 500 score once.
+
 Mara assigns **Relight the Drowned Beacons** in **Ridgeshire's Town Hall**.
 The beacons remain on Sunken Coast stages 2, 3, and 4. Return to her in the
 Town Hall for 80 gold and 600 score; her location change preserves existing

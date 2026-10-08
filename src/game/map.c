@@ -2339,7 +2339,7 @@ static void map_generate_tavern_room(Map *m, int *spawn_x, int *spawn_y, int inn
         m->tiles[18][10] = TILE_NPC_ROOK;
         m->tiles[7][28] = TILE_NPC_INNKEEPER;
     } else {
-        m->tiles[7][28] = TILE_NPC_ALDER;
+        m->tiles[7][28] = TILE_TAVERN_FLOOR;
     }
     m->tiles[22][20] = TILE_TAVERN_EXIT;
     *spawn_x = 20;
@@ -2367,6 +2367,7 @@ void map_place_tavern_brenna(Map *m) {
 void map_generate_inn(Map *m, int *spawn_x, int *spawn_y) {
     map_generate_tavern_room(m, spawn_x, spawn_y, 1);
     map_place_inn_elowen(m);
+    m->tiles[ALDER_INN_Y][ALDER_INN_X] = TILE_NPC_ALDER;
 }
 
 void map_place_inn_elowen(Map *m) {

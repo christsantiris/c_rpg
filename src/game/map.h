@@ -58,6 +58,8 @@
 #define GUILD_ZARA_Y 7
 #define GUILD_DAIN_X 18
 #define GUILD_DAIN_Y 7
+#define ALDER_INN_X 31
+#define ALDER_INN_Y 18
 #define GUILD_ORIN_X 10
 #define GUILD_ORIN_Y 18
 #define DESERT_LAMP_LEVEL 4
