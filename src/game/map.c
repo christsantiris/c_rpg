@@ -106,7 +106,169 @@ static int place_locked_crypt(Map *m) {
     return 0;
 }
 
-void map_generate(Map *m, int level) {
+void map_repair_dungeon_boss_access(Map *m) {
+    if (m->room_count < 2) {
+        return;
+    }
+    const Room *room = &m->rooms[m->room_count - 1];
+    if (room->w < 3 || room->h < 3 || room->x < 1 || room->y < 1 ||
+        room->x + room->w >= MAP_W || room->y + room->h >= MAP_H) {
+        return;
+    }
+    for (int side = 0; side < 4; side++) {
+        int x = side & 1 ? room->x + room->w - 1 : room->x;
+        int y = side & 2 ? room->y + room->h - 1 : room->y;
+        int entry_y = side & 2 ? y - 1 : y + 1;
+        TileType tile = m->tiles[y][x];
+        if (m->tiles[entry_y][x] != TILE_WALL) {
+            continue;
+        }
+        if (tile == TILE_LOCKED_DOOR) {
+            m->tiles[y][x] = TILE_WALL;
+            m->tiles[entry_y][x] = TILE_LOCKED_DOOR;
+        } else if (map_is_walkable(m, x, y)) {
+            // Keep an already opened corner walkable for saved players/loot.
+            m->tiles[entry_y][x] = TILE_FLOOR;
+        }
+    }
+    // Sealing this room may sever older corridors that crossed it. Connect
+    // those approaches around the outside without opening the locked chamber.
+    for (int y = room->y - 1; y <= room->y + room->h; y++) {
+        for (int x = room->x - 1; x <= room->x + room->w; x++) {
+            if (x < 1 || x >= MAP_W - 1 || y < 1 || y >= MAP_H - 1) {
+                continue;
+            }
+            int outside = x == room->x - 1 || x == room->x + room->w ||
+                y == room->y - 1 || y == room->y + room->h;
+            if (outside && m->tiles[y][x] == TILE_WALL) {
+                m->tiles[y][x] = TILE_FLOOR;
+            }
+        }
+    }
+}
+
+static int dungeon_passage(const Map *m, int x, int y) {
+    TileType tile = m->tiles[y][x];
+    return map_is_walkable(m, x, y) || tile == TILE_LOCKED_DOOR || tile == TILE_CRYPT_DOOR;
+}
+
+int map_ensure_dungeon_connectivity(Map *m, int level) {
+    if (level == DUNGEON_DEPTH) {
+        map_repair_dungeon_boss_access(m);
+    }
+    if (m->stairs_up_x < 1 || m->stairs_up_x >= MAP_W - 1 ||
+        m->stairs_up_y < 1 || m->stairs_up_y >= MAP_H - 1 ||
+        !dungeon_passage(m, m->stairs_up_x, m->stairs_up_y)) {
+        return 0;
+    }
+    unsigned char protected[MAP_H][MAP_W] = {{0}};
+    if (level == DUNGEON_DEPTH && m->room_count > 1) {
+        const Room *room = &m->rooms[m->room_count - 1];
+        for (int y = room->y; y < room->y + room->h; y++) {
+            for (int x = room->x; x < room->x + room->w; x++) {
+                if (x >= 0 && x < MAP_W && y >= 0 && y < MAP_H &&
+                    (x == room->x || x == room->x + room->w - 1 ||
+                    y == room->y || y == room->y + room->h - 1)) {
+                    protected[y][x] = 1;
+                }
+            }
+        }
+    }
+    // Locked side crypts extend five tiles east of their door. Their walls
+    // must remain intact so connecting a room cannot bypass its key.
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (m->tiles[y][x] != TILE_CRYPT_DOOR) {
+                continue;
+            }
+            for (int cy = y - 3; cy <= y + 3; cy++) {
+                for (int cx = x; cx <= x + 6; cx++) {
+                    if (cx >= 0 && cx < MAP_W && cy >= 0 && cy < MAP_H) {
+                        protected[cy][cx] = 1;
+                    }
+                }
+            }
+        }
+    }
+    const int dx[4] = {0, 1, 0, -1};
+    const int dy[4] = {-1, 0, 1, 0};
+    unsigned char reached[MAP_H][MAP_W];
+    int parents[MAP_W * MAP_H];
+    int queue[MAP_W * MAP_H];
+    for (;;) {
+        memset(reached, 0, sizeof(reached));
+        int start = m->stairs_up_y * MAP_W + m->stairs_up_x;
+        int head = 0;
+        int tail = 0;
+        reached[m->stairs_up_y][m->stairs_up_x] = 1;
+        queue[tail++] = start;
+        while (head < tail) {
+            int cell = queue[head++];
+            for (int side = 0; side < 4; side++) {
+                int x = cell % MAP_W + dx[side];
+                int y = cell / MAP_W + dy[side];
+                if (x < 1 || x >= MAP_W - 1 || y < 1 || y >= MAP_H - 1 ||
+                    reached[y][x] || !dungeon_passage(m, x, y)) {
+                    continue;
+                }
+                reached[y][x] = 1;
+                queue[tail++] = y * MAP_W + x;
+            }
+        }
+        int disconnected = 0;
+        for (int y = 1; y < MAP_H - 1; y++) {
+            for (int x = 1; x < MAP_W - 1; x++) {
+                disconnected |= !reached[y][x] && dungeon_passage(m, x, y);
+            }
+        }
+        if (!disconnected) {
+            return 1;
+        }
+        // Search outwards from the connected floor for the shortest connector
+        // to another section. Only plain walls may become corridor tiles.
+        for (int i = 0; i < MAP_W * MAP_H; i++) {
+            parents[i] = -1;
+        }
+        for (int i = 0; i < tail; i++) {
+            parents[queue[i]] = queue[i];
+        }
+        head = 0;
+        int target = -1;
+        while (head < tail && target < 0) {
+            int cell = queue[head++];
+            for (int side = 0; side < 4; side++) {
+                int x = cell % MAP_W + dx[side];
+                int y = cell / MAP_W + dy[side];
+                if (x < 1 || x >= MAP_W - 1 || y < 1 || y >= MAP_H - 1) {
+                    continue;
+                }
+                int next = y * MAP_W + x;
+                int passage = dungeon_passage(m, x, y);
+                if (parents[next] >= 0 || (!passage && (m->tiles[y][x] != TILE_WALL || protected[y][x]))) {
+                    continue;
+                }
+                parents[next] = cell;
+                if (passage && !reached[y][x]) {
+                    target = next;
+                    break;
+                }
+                queue[tail++] = next;
+            }
+        }
+        if (target < 0) {
+            return 0;
+        }
+        for (int cell = target; parents[cell] != cell; cell = parents[cell]) {
+            int x = cell % MAP_W;
+            int y = cell / MAP_W;
+            if (m->tiles[y][x] == TILE_WALL) {
+                m->tiles[y][x] = TILE_FLOOR;
+            }
+        }
+    }
+}
+
+static void generate_dungeon_layout(Map *m, int level) {
     (void)level;
     map_clear_exploration(m);
     m->burial_trap_count = 0;
@@ -258,6 +420,12 @@ void map_generate(Map *m, int level) {
     if (level >= 2 && level < DUNGEON_DEPTH) {
         place_locked_crypt(m);
     }
+}
+
+void map_generate(Map *m, int level) {
+    do {
+        generate_dungeon_layout(m, level);
+    } while (!map_ensure_dungeon_connectivity(m, level));
 }
 
 int map_is_walkable(const Map *m, int x, int y) {
