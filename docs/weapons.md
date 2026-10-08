@@ -50,26 +50,49 @@ The workshop offers this service; the Blacksmith buys and sells equipment.
 The value column is the item's base value. The Blacksmith charges twice this
 amount and pays one quarter when buying it back.
 
+### Melee weapons by attack
+
+Sorted by the weapon's base attack bonus, before sharpening. The bonus adds to
+the character's attack; critical hits, cleave, and armor penetration also affect
+actual damage. Staves are included because they strike in melee. The Demonic
+Sword also has a ranged attack.
+
 | Weapon | Attack | Hands | Class | Tier | Base value | Trait |
 | --- | ---: | --- | --- | ---: | ---: | --- |
 | Rusty Sword | +1 | One | Warrior | 1 | 10 | — |
+| Dagger | +2 | One | Rogue | 1 | 90 | 25% critical chance |
 | Short Sword | +3 | One | Warrior, Rogue | 1 | 40 | — |
 | Staff | +4 | Two | Mage | 1 | 60 | +2 spell power, +10 maximum MP |
-| Bow | +3 | Two | Rogue | 1 | 60 | Range 6 |
-| Dagger | +2 | One | Rogue | 1 | 90 | 25% critical chance |
+| Cryptblade | +5 | One | Warrior | Boss | 350 | 10% critical chance; Lich King reward |
+| Demonic Sword | +6 | One | All | Boss | 180 | Range 2 with `F`; Swamp Demon reward |
 | Long Sword | +6 | One | Warrior | 2 | 180 | — |
-| Battle Axe | +10 | Two | Warrior | 2 | 275 | Ignores 25% of enemy defense |
-| Greatsword | +12 | Two | Warrior | 2 | 400 | 50% cleave damage to adjacent enemies |
-| Longbow | +7 | Two | Rogue | 2 | 250 | Range 9 |
-| Runed Staff | +6 | Two | Mage | 2 | 300 | +4 spell power, +20 maximum MP, 5% cheaper spells |
-| Magic Long Sword | +10 | One | Warrior | 3 | 550 | 20% critical chance |
-| Magic Battle Axe | +13 | Two | Warrior | 3 | 700 | Ignores 50% of enemy defense |
 | Magic Dagger | +6 | One | Rogue | 3 | 500 | 40% critical chance |
-| Magic Greatsword | +18 | Two | Warrior | 3 | 1,100 | 75% cleave damage to adjacent enemies |
+| Runed Staff | +6 | Two | Mage | 2 | 300 | +4 spell power, +20 maximum MP, 5% cheaper spells |
+| Sandstorm Staff | +7 | Two | Mage | Boss | 700 | +6 spell power, +25 maximum MP, 7% cheaper spells; Desert Pharaoh reward |
 | Magic Staff | +9 | Two | Mage | 3 | 1,000 | +8 spell power, +35 maximum MP, 10% cheaper spells |
+| Battle Axe | +10 | Two | Warrior | 2 | 275 | Ignores 25% of enemy defense |
+| Magic Long Sword | +10 | One | Warrior | 3 | 550 | 20% critical chance |
+| Greatsword | +12 | Two | Warrior | 2 | 400 | 50% cleave damage to adjacent enemies |
+| Magic Battle Axe | +13 | Two | Warrior | 3 | 700 | Ignores 50% of enemy defense |
+| Magic Greatsword | +18 | Two | Warrior | 3 | 1,100 | 75% cleave damage to adjacent enemies |
+
+The Cryptblade's +5 attack and 10% critical chance make it an early Lich King
+reward with room for later upgrades. Its one-handed grip permits a shield or
+off-hand weapon. Existing saves update its attack while preserving sharpening
+(+6 attack when sharpened). The Goblin King drops the Goblin King's Shield;
+saved copies of his retired greatsword are converted to that shield.
+
+### Ranged bows
+
+Bows are excluded from the melee ranking: their attack bonus is removed when
+striking adjacent enemies in melee.
+
+| Weapon | Ranged attack | Hands | Class | Tier | Base value | Trait |
+| --- | ---: | --- | --- | ---: | ---: | --- |
+| Bow | +3 | Two | Rogue | 1 | 60 | Range 6 |
+| Longbow | +7 | Two | Rogue | 2 | 250 | Range 9 |
+| Krakenbone Bow | +10 | Two | Rogue | Boss | 700 | Range 10; Polar Kraken reward |
 | Magic Longbow | +13 | Two | Rogue | 3 | 1,200 | Range 12 and pierces every target in its path |
-| Cryptblade | +8 | One | Warrior | Boss | 350 | 10% critical chance; Lich King reward |
-| Demonic Sword | +4 | One | All | Boss | 180 | Range 2 with `F`; Swamp Demon reward |
 
 Bows fire with `F` in the last movement direction. A target directly adjacent
 to the player is too close; valid targets begin two tiles away. Arrows stop at

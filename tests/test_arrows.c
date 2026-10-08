@@ -114,7 +114,7 @@ void test_arrows(void) {
     ASSERT("switching to a dagger permits melee without arrows", game.enemies[0].hp < hp && game.player.arrows == 0);
 
     ShopScreen shop;
-    shop_init(&shop, SHOP_TYPE_BLACKSMITH, 0);
+    shop_init(&shop, SHOP_TYPE_BLACKSMITH, 0, CLASS_ROGUE);
     int stocks_arrows = 0;
     for (int i = 0; i < shop.item_count; i++) {
         stocks_arrows |= shop.items[i].type == ITEM_ARROWS;

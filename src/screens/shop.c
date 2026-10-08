@@ -18,6 +18,11 @@ int shop_purchase_price(const GameState *g, const Item *item) {
 }
 
 int shop_purchase(GameState *g, const Item *item) {
+    if ((item->type == ITEM_SCROLL || item->type == ITEM_SPELL_TOME) &&
+        !item_class_allowed(item, g->player.player_class)) {
+        push_message(g, "Your class cannot use that spell item.");
+        return 0;
+    }
     if (item->type == ITEM_ARROWS && g->player.arrows >= MAX_ARROWS) {
         push_message(g, "Your quiver is full: 100 arrows.");
         return 0;
@@ -88,7 +93,7 @@ static int defeated_boss_count(int defeated_bosses) {
     return count;
 }
 
-void shop_init(ShopScreen *s, ShopType type, int defeated_bosses) {
+void shop_init(ShopScreen *s, ShopType type, int defeated_bosses, PlayerClass player_class) {
     s->selected = 0;
     s->type = type;
     s->item_count = 0;
@@ -174,6 +179,16 @@ void shop_init(ShopScreen *s, ShopType type, int defeated_bosses) {
             s->items[s->item_count++] = item_make_archmage_robes();
         }
     }
+    int count = 0;
+    for (int i = 0; i < s->item_count; i++) {
+        Item *item = &s->items[i];
+        if ((item->type == ITEM_SCROLL || item->type == ITEM_SPELL_TOME) &&
+            !item_class_allowed(item, player_class)) {
+            continue;
+        }
+        s->items[count++] = *item;
+    }
+    s->item_count = count;
 }
 
 ShopResult shop_handle_key(ShopScreen *s, int scancode) {

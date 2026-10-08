@@ -416,7 +416,12 @@ static void test_legacy_goblin_reward_migration(void) {
     game_unequip_main_hand(&legacy);
     int base_attack = legacy.player.attack;
     legacy.inventory_count = 1;
-    legacy.inventory[0] = item_make_goblin_king_greatsword();
+    // Construct the retired reward only as an old-save fixture.
+    legacy.inventory[0] = item_make_greatsword();
+    snprintf(legacy.inventory[0].name, sizeof(legacy.inventory[0].name), "Goblin King's Greatsword");
+    legacy.inventory[0].attack_bonus = 13;
+    legacy.inventory[0].value = 500;
+    legacy.inventory[0].cleave_percent = 55;
     game_equip_main_hand(&legacy, 0);
 
     remove_test_save(LEGACY_GOBLIN_REWARD_SLOT);
@@ -436,6 +441,75 @@ static void test_legacy_goblin_reward_migration(void) {
             migrated.player.attack == base_attack);
     }
     remove_test_save(LEGACY_GOBLIN_REWARD_SLOT);
+}
+
+static void test_cryptblade_rebalance_migration(void) {
+    static GameState original;
+    static GameState loaded;
+    static GameState reloaded;
+    for (int sharpened = 0; sharpened <= 1; sharpened++) {
+        memset(&original, 0, sizeof(original));
+        original.player.player_class = CLASS_WARRIOR;
+        game_init(&original);
+        game_unequip_main_hand(&original);
+        int base_attack = original.player.attack;
+        original.inventory_count = 3;
+        for (int i = 0; i < 3; i++) {
+            original.inventory[i] = item_make_cryptblade();
+            original.inventory[i].sharpened = i == 0 ? sharpened : (i == 1 ? !sharpened : 0);
+            original.inventory[i].attack_bonus = 8 + original.inventory[i].sharpened;
+        }
+        game_equip_main_hand(&original, 0);
+        game_equip_off_hand(&original, 1);
+        original.floor_item_count = 2;
+        original.floor_items[0] = (FloorItem){.active = 1, .x = 20, .y = 20,
+            .underlying_tile = TILE_TOWN_FLOOR, .item = original.inventory[0]};
+        Item retired = item_make_greatsword();
+        snprintf(retired.name, sizeof(retired.name), "Goblin King's Greatsword");
+        retired.attack_bonus = 13;
+        retired.cleave_percent = 55;
+        original.floor_items[1] = (FloorItem){.active = 1, .x = 21, .y = 20,
+            .underlying_tile = TILE_TOWN_FLOOR, .item = retired};
+        original.map.tiles[20][20] = TILE_ITEM;
+        original.map.tiles[20][21] = TILE_ITEM;
+        original.castle_loot_count[0] = 2;
+        original.castle_loot[0][0] = original.floor_items[0];
+        original.castle_loot[0][1] = original.floor_items[1];
+        original.gold = 234;
+        original.defeated_bosses = 1 << LOCATION_DUNGEON;
+        int ok = save_game(&original, LEGACY_SLOT) &&
+            rewrite_save_version(LEGACY_SLOT, 109) && load_game(&loaded, LEGACY_SLOT);
+        ASSERT("old Cryptblade saves load successfully", ok);
+        if (!ok) {
+            remove_test_save(LEGACY_SLOT);
+            continue;
+        }
+        ASSERT("Cryptblade migration preserves sharpening and critical chance",
+            loaded.inventory[0].attack_bonus == 5 + sharpened &&
+            loaded.inventory[0].sharpened == sharpened && loaded.inventory[0].critical_chance_bonus == 10 &&
+            loaded.inventory[1].attack_bonus == 6 - sharpened && loaded.inventory[2].attack_bonus == 5);
+        ASSERT("equipped main and off-hand Cryptblades update attack with correct rounding",
+            loaded.equipped_main_hand == 0 && loaded.equipped_off_hand == 1 &&
+            loaded.player.attack == base_attack + 5 + sharpened + (7 - sharpened) / 2);
+        ASSERT("dropped and cached Cryptblades receive the same balance change",
+            loaded.floor_items[0].item.attack_bonus == 5 + sharpened &&
+            loaded.castle_loot[0][0].item.attack_bonus == 5 + sharpened &&
+            loaded.castle_loot[0][0].item.sharpened == sharpened);
+        ASSERT("retired greatswords on the floor and in castle loot become shields",
+            loaded.floor_items[1].item.type == ITEM_SHIELD &&
+            strcmp(loaded.floor_items[1].item.name, "Goblin King's Shield") == 0 &&
+            loaded.castle_loot[0][1].item.type == ITEM_SHIELD &&
+            strcmp(loaded.castle_loot[0][1].item.name, "Goblin King's Shield") == 0);
+        ASSERT("weapon migration preserves gold and boss progress",
+            loaded.gold == original.gold && loaded.defeated_bosses == original.defeated_bosses);
+        ASSERT("rebalanced weapons round-trip without repeating equipped stat changes",
+            save_game(&loaded, MIGRATED_SLOT) && load_game(&reloaded, MIGRATED_SLOT) &&
+            reloaded.player.attack == loaded.player.attack &&
+            weapon_fields_match(&reloaded.inventory[0], &loaded.inventory[0]) &&
+            reloaded.inventory[0].sharpened == sharpened);
+        remove_test_save(LEGACY_SLOT);
+        remove_test_save(MIGRATED_SLOT);
+    }
 }
 
 static void test_migrated_armor_round_trip(void) {
@@ -1780,6 +1854,7 @@ void test_save_load(void) {
     test_dual_wield_round_trip();
     test_legacy_off_hand_migration();
     test_legacy_goblin_reward_migration();
+    test_cryptblade_rebalance_migration();
     test_migrated_weapon_round_trip();
     test_migrated_armor_round_trip();
     test_harbor_relocation();

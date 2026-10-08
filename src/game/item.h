@@ -171,7 +171,6 @@ Item item_make_magic_dagger(void);
 Item item_make_greatsword(void);
 Item item_make_magic_greatsword(void);
 Item item_make_cryptblade(void);
-Item item_make_goblin_king_greatsword(void);
 
 Item item_make_leather_armor(void);
 Item item_make_chain_mail(void);

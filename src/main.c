@@ -323,15 +323,15 @@ static int open_shop_on_move(const GameState *game, const Action *action, ShopSc
     }
     TileType tile = game->map.tiles[action->target_y][action->target_x];
     if (tile == TILE_BLACKSMITH_DOOR) {
-        shop_init(shop, SHOP_TYPE_BLACKSMITH, game->defeated_bosses);
+        shop_init(shop, SHOP_TYPE_BLACKSMITH, game->defeated_bosses, game->player.player_class);
     } else if (tile == TILE_ALCHEMIST_DOOR) {
         // Rosemoor's Apothecary reuses the alchemist shop tiles.
         shop_init(shop, game->location == LOCATION_TOWN3 ?
-            SHOP_TYPE_APOTHECARY : SHOP_TYPE_ALCHEMIST, game->defeated_bosses);
+            SHOP_TYPE_APOTHECARY : SHOP_TYPE_ALCHEMIST, game->defeated_bosses, game->player.player_class);
     } else if (tile == TILE_HEALER_DOOR) {
-        shop_init(shop, SHOP_TYPE_HEALER, game->defeated_bosses);
+        shop_init(shop, SHOP_TYPE_HEALER, game->defeated_bosses, game->player.player_class);
     } else if (tile == TILE_WITCH_DOOR) {
-        shop_init(shop, SHOP_TYPE_WITCH, game->defeated_bosses);
+        shop_init(shop, SHOP_TYPE_WITCH, game->defeated_bosses, game->player.player_class);
     } else {
         return 0;
     }

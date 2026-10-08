@@ -99,8 +99,60 @@ static void test_gold_drop_scarcity(void) {
         g.map.tiles[y][x] == TILE_FOREST_FLOOR);
 }
 
+static void test_shop_spell_classes(void) {
+    static GameState g;
+    const int victories[4] = {
+        0, 1 << LOCATION_DUNGEON,
+        (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST),
+        (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) | (1 << LOCATION_MOUNTAINS)
+    };
+    const int mage_counts[4] = {5, 7, 9, 10};
+    Item mage_items[6] = {
+        item_make_scroll_fireball(), item_make_scroll_frost_bolt(), item_make_scroll_teleport(),
+        item_make_magic_arrow_tome(), item_make_fireball_tome(), item_make_heal_tome()
+    };
+    for (int player_class = CLASS_WARRIOR; player_class <= CLASS_ROGUE; player_class++) {
+        for (int tier = 0; tier < 4; tier++) {
+            ShopScreen shop;
+            shop_init(&shop, SHOP_TYPE_ALCHEMIST, victories[tier], player_class);
+            int usable = 1;
+            for (int i = 0; i < shop.item_count; i++) {
+                usable &= item_class_allowed(&shop.items[i], player_class);
+            }
+            ASSERT("all Alchemist stock tiers hide spells the current class cannot use", usable &&
+                shop.item_count == (player_class == CLASS_MAGE ? mage_counts[tier] : 4));
+            ASSERT("every class retains both potions and the Magic Arrow and Heal scrolls",
+                shop_has_item(&shop, "Health Potion") && shop_has_item(&shop, "Mana Potion") &&
+                shop_has_item(&shop, "Scroll: Magic Arrow") && shop_has_item(&shop, "Scroll: Heal"));
+            ASSERT("only Mages see Fireball for purchase", shop_has_item(&shop, "Scroll: Fireball") == (player_class == CLASS_MAGE));
+        }
+        g.player.player_class = player_class;
+        game_init(&g);
+        g.inventory_count = 0;
+        g.gold = 10000;
+        int correct = 1;
+        for (int i = 0; i < 6; i++) {
+            int gold = g.gold;
+            int count = g.inventory_count;
+            int bought = shop_purchase(&g, &mage_items[i]);
+            if (player_class == CLASS_MAGE) {
+                correct &= bought && g.gold == gold - shop_buy_price(&mage_items[i]) && g.inventory_count == count + 1;
+            } else {
+                correct &= !bought && g.gold == gold && g.inventory_count == count;
+            }
+        }
+        ASSERT("direct Mage-only purchases enforce class restrictions without charging rejected purchases", correct);
+        Item arrow = item_make_scroll_magic_arrow();
+        Item heal = item_make_scroll_heal();
+        ASSERT("all classes can purchase shared Magic Arrow and Heal scrolls", shop_purchase(&g, &arrow) && shop_purchase(&g, &heal));
+        ASSERT("Mage-only items remain sellable to the Alchemist", shop_accepts_item(SHOP_TYPE_ALCHEMIST, &mage_items[0]) &&
+            shop_accepts_item(SHOP_TYPE_ALCHEMIST, &mage_items[3]));
+    }
+}
+
 void test_items(void) {
     printf("Item tests:\n");
+    test_shop_spell_classes();
 
     // --- Factory functions ---
     Item hp_potion = item_make_health_potion();
@@ -308,16 +360,16 @@ void test_items(void) {
 
     // --- Blacksmith stock progression ---
     ShopScreen shop;
-    shop_init(&shop, SHOP_TYPE_BLACKSMITH, 0);
+    shop_init(&shop, SHOP_TYPE_BLACKSMITH, 0, CLASS_MAGE);
     ASSERT("new characters see only tier-one blacksmith stock",
         shop.stock_tier == 1 && shop.item_count == 10 &&
         shop_has_item(&shop, "Apprentice Robes") &&
         shop_has_item(&shop, "Buckler") &&
         !shop_has_item(&shop, "Long Sword"));
-    shop_init(&shop, SHOP_TYPE_BLACKSMITH, 1 << LOCATION_LABYRINTH);
+    shop_init(&shop, SHOP_TYPE_BLACKSMITH, 1 << LOCATION_LABYRINTH, CLASS_MAGE);
     ASSERT("Minotaur victory does not unlock regional blacksmith stock",
         shop.stock_tier == 1 && !shop_has_item(&shop, "Long Sword"));
-    shop_init(&shop, SHOP_TYPE_BLACKSMITH, 1 << LOCATION_DUNGEON);
+    shop_init(&shop, SHOP_TYPE_BLACKSMITH, 1 << LOCATION_DUNGEON, CLASS_MAGE);
     ASSERT("one defeated boss unlocks uncommon weapons",
         shop.stock_tier == 2 && shop.item_count == 19 &&
         shop_has_item(&shop, "Greatsword") &&
@@ -326,7 +378,7 @@ void test_items(void) {
         shop_has_item(&shop, "Kite Shield") &&
         !shop_has_item(&shop, "Magic Dagger"));
     shop_init(&shop, SHOP_TYPE_BLACKSMITH,
-        (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST));
+        (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST), CLASS_MAGE);
     ASSERT("two defeated bosses unlock all magical weapons",
         shop.stock_tier == 3 && shop.item_count == 30 &&
         shop_has_item(&shop, "Magic Battle Axe") &&
@@ -339,7 +391,7 @@ void test_items(void) {
         !shop_has_item(&shop, "Magic Plate"));
     shop_init(&shop, SHOP_TYPE_BLACKSMITH,
         (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) |
-        (1 << LOCATION_MOUNTAINS));
+        (1 << LOCATION_MOUNTAINS), CLASS_MAGE);
     ASSERT("three defeated bosses unlock capstone armor",
         shop.stock_tier == 4 && shop.item_count == 33 &&
         shop_has_item(&shop, "Magic Greatsword") &&
@@ -350,7 +402,7 @@ void test_items(void) {
         shop_has_item(&shop, "Archmage Robes"));
 
     // --- Rosemoor Apothecary ---
-    shop_init(&shop, SHOP_TYPE_APOTHECARY, 0);
+    shop_init(&shop, SHOP_TYPE_APOTHECARY, 0, CLASS_MAGE);
     ASSERT("apothecary sells healing, mana, strength and intelligence potions",
         shop.item_count == 4 &&
         shop_has_item(&shop, "Health Potion") &&
@@ -383,21 +435,21 @@ void test_items(void) {
         potion_game.player.mp == mp + 1 &&
         potion_game.inventory_count == potion_count);
 
-    shop_init(&shop, SHOP_TYPE_ALCHEMIST, 0);
+    shop_init(&shop, SHOP_TYPE_ALCHEMIST, 0, CLASS_MAGE);
     ASSERT("Alchemist begins without advanced Mage stock",
         !shop_has_item(&shop, "Tome: Magic Arrow II"));
-    shop_init(&shop, SHOP_TYPE_ALCHEMIST, 1 << LOCATION_DUNGEON);
+    shop_init(&shop, SHOP_TYPE_ALCHEMIST, 1 << LOCATION_DUNGEON, CLASS_MAGE);
     ASSERT("one boss unlocks Magic Arrow II and Frost Bolt",
         shop_has_item(&shop, "Tome: Magic Arrow II") &&
         shop_has_item(&shop, "Scroll: Frost Bolt"));
     shop_init(&shop, SHOP_TYPE_ALCHEMIST,
-        (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST));
+        (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST), CLASS_MAGE);
     ASSERT("two bosses unlock Fireball II and Teleport",
         shop_has_item(&shop, "Tome: Fireball II") &&
         shop_has_item(&shop, "Scroll: Teleport"));
     shop_init(&shop, SHOP_TYPE_ALCHEMIST,
         (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) |
-        (1 << LOCATION_MOUNTAINS));
+        (1 << LOCATION_MOUNTAINS), CLASS_MAGE);
     ASSERT("three bosses unlock Heal II",
         shop_has_item(&shop, "Tome: Heal II"));
 
@@ -448,7 +500,7 @@ void test_items(void) {
     for (int type = 0; type < 2; type++) {
         shop_init(&shop, shop_types[type],
             (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) |
-            (1 << LOCATION_MOUNTAINS));
+            (1 << LOCATION_MOUNTAINS), CLASS_MAGE);
         for (int i = 0; i < shop.item_count; i++) {
             Item *item = &shop.items[i];
             fair_shop_prices &= shop_buy_price(item) ==
@@ -553,7 +605,8 @@ void test_items(void) {
         ENEMY_MOUNTAIN_GOBLIN_KING);
     Item coast_reward = boss_equipment_reward(ENEMY_DROWNED_QUEEN);
     ASSERT("Lich King guarantees the Cryptblade",
-        strcmp(lich_reward.name, "Cryptblade") == 0);
+        strcmp(lich_reward.name, "Cryptblade") == 0 &&
+        lich_reward.attack_bonus == 5 && lich_reward.critical_chance_bonus == 10);
     ASSERT("forest Necromancer guarantees its cloak",
         strcmp(forest_reward.name, "Necromancer's Cloak") == 0);
     ASSERT("Goblin King guarantees a mid-tier shield",

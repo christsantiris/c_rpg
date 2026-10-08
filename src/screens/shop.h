@@ -30,7 +30,7 @@ typedef struct {
     int stock_tier;
 } ShopScreen;
 
-void shop_init(ShopScreen *s, ShopType type, int defeated_bosses);
+void shop_init(ShopScreen *s, ShopType type, int defeated_bosses, PlayerClass player_class);
 ShopResult shop_handle_key(ShopScreen *s, int scancode);
 int shop_buy_price(const Item *item);
 int shop_purchase_price(const GameState *g, const Item *item);

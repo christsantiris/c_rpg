@@ -190,8 +190,14 @@ refills cost proportionally less, rounded up. Older Rogue saves begin with 100
 arrows without changing existing progress.
 
 The Blacksmith sells weapons, armor, shields, and arrows. The Alchemist sells both
-potion types, spell scrolls, and Mage spell tomes in OakHaven. OakHaven's west
-forest gate enters stage 1; Stillbury's main east gate enters stage 7. Stillbury
+potion types, spell scrolls, and Mage spell tomes in OakHaven.
+Mage-only scrolls (Fireball, Frost Bolt, and Teleport) and spell-upgrade tomes
+appear for purchase only when playing a Mage. Magic Arrow and Heal scrolls
+remain available to all classes. See the [weapons sorted by attack](docs/weapons.md#melee-weapons-by-attack)
+for equipment comparisons.
+
+OakHaven's west forest gate enters stage 1; Stillbury's main east gate enters
+stage 7. Stillbury
 can also be reached from Rosemoor before the Necromancer is defeated.
 After his defeat, the separate west gate of OakHaven and upper east gate of
 Stillbury permanently open onto a short, enemy-free forest road between the
