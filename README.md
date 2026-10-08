@@ -80,6 +80,8 @@ to the dungeon, and south to the coast. Cain stands near the central crossroads.
 Bram stands nearby; press **T** beside him to hear about the dungeon's Lich King
 and the supplies sold by the blacksmith and alchemist. Two Skeleton minions
 guard the Lich King inside his locked chamber on dungeon floor 5.
+His defeat opens a distinct upward staircase back to Oakhaven; use **`<`**
+(the comma key by default) to climb it.
 The mountains connect OakHaven's north gate and Ridgeshire's south mountain gate.
 Both approaches grow harder toward the Goblin King at Crown Peak on level 4.
 Defeating him reveals a shortcut to the opposite town; the remaining three levels
@@ -428,6 +430,10 @@ temple tier, position, and encounter state. Descend from the first tier through
 the southern entrance to return to the island surface.
 
 ## Controls
+
+At **30% HP or below**, the play area gains a slowly pulsing red border and the
+HP display turns red with a **LOW HEALTH** label. Heal above 30% to clear the
+warning. Open inventory with **I** to use a Health Potion.
 
 These are the default keys. To change them, press `Esc` during a game and
 choose **Controls**, select a command, press `Enter` (or click it), then press

@@ -75,6 +75,7 @@ void draw_player_at(Renderer *r, int x, int y, PlayerClass player_class, const I
 void draw_stairs_up(Renderer *r, int tile_x, int tile_y);
 void draw_stairs_down(Renderer *r, int tile_x, int tile_y);
 void draw_return_exit(Renderer *r, int tile_x, int tile_y);
+void draw_dungeon_return_stairs(Renderer *r, int tile_x, int tile_y, int open);
 void draw_locked_door(Renderer *r, int tile_x, int tile_y);
 void draw_dungeon_door_support(Renderer *r, int tile_x, int tile_y, unsigned int side, int crypt);
 void draw_dungeon_key(Renderer *r, int tile_x, int tile_y);

@@ -19,6 +19,7 @@ void test_dungeon_all_room_connectivity(void);
 void test_lich_minions(void);
 void test_stairs_locked(void);
 void test_final_dungeon_exit(void);
+void test_dungeon_return_stairs_migration(void);
 void test_enemy_movement_collision(void);
 void test_new_dungeon_enemies(void);
 void test_return_to_town_spell(void);
@@ -102,6 +103,7 @@ int main(void) {
     test_stairs_locked();
     printf("\n");
     test_final_dungeon_exit();
+    test_dungeon_return_stairs_migration();
     printf("\n");
     test_enemy_movement_collision();
     printf("\n");

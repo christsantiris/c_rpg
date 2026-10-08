@@ -626,7 +626,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 108);
+    cJSON_AddNumberToObject(root, "save_version", 109);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -1379,6 +1379,17 @@ static void migrate_testing_save(cJSON *root, int version) {
     }
     if (version < 75 && !cJSON_GetObjectItem(root, "sandstorm_staff_unclaimed")) {
         cJSON_AddNumberToObject(root, "sandstorm_staff_unclaimed", 0);
+    }
+}
+
+static void migrate_dungeon_return_stairs(Map *map, int defeated) {
+    int x = map->stairs_down_x;
+    int y = map->stairs_down_y;
+    if (x <= 0 || x >= MAP_W - 1 || y <= 0 || y >= MAP_H - 1) {
+        return;
+    }
+    if (map->tiles[y][x] == TILE_STAIRS_DOWN || map->tiles[y][x] == TILE_RETURN_EXIT || map->tiles[y][x] == TILE_ITEM) {
+        map->tiles[y][x] = defeated ? TILE_DUNGEON_STAIRS_RETURN : TILE_DUNGEON_STAIRS_SEALED;
     }
 }
 
@@ -3728,6 +3739,29 @@ int load_game(GameState *g, int slot) {
             g->map.tiles[TOWN_BRAM_Y][TOWN_BRAM_X] = TILE_NPC_BRAM;
         }
         migrate_lich_minions(g);
+    }
+    if (save_version < 109) {
+        int defeated = g->defeated_bosses & (1 << LOCATION_DUNGEON);
+        TileType stair = defeated ? TILE_DUNGEON_STAIRS_RETURN : TILE_DUNGEON_STAIRS_SEALED;
+        if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH) {
+            migrate_dungeon_return_stairs(&g->map, defeated);
+            for (int i = 0; i < g->floor_item_count; i++) {
+                FloorItem *item = &g->floor_items[i];
+                if (item->active && item->x == g->map.stairs_down_x &&
+                    item->y == g->map.stairs_down_y) {
+                    item->underlying_tile = stair;
+                }
+            }
+        }
+        LevelCache *cache = &g->level_cache[DUNGEON_DEPTH - 1];
+        if (cache->valid) {
+            migrate_dungeon_return_stairs(&cache->map, defeated);
+        }
+        if (g->portal_active && g->portal_location == LOCATION_DUNGEON &&
+            g->portal_level == DUNGEON_DEPTH &&
+            (g->portal_origin_tile == TILE_STAIRS_DOWN || g->portal_origin_tile == TILE_RETURN_EXIT)) {
+            g->portal_origin_tile = stair;
+        }
     }
     repair_floor_item_underlays(g);
     game_hide_portal_destination(g);

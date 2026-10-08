@@ -6064,16 +6064,12 @@ void game_update_level_progress(GameState *g) {
         } else if (g->location == LOCATION_MOUNTAINS && g->level == MOUNTAIN_BOSS_LEVEL) {
             game_reveal_mountain_shortcut(g);
         } else if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH &&
-            g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] != TILE_RETURN_EXIT) {
-            g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] = TILE_RETURN_EXIT;
-            for (int i = 0; i < g->floor_item_count; i++) {
-                FloorItem *item = &g->floor_items[i];
-                if (item->active && item->x == g->map.stairs_down_x &&
-                    item->y == g->map.stairs_down_y) {
-                    item->underlying_tile = TILE_RETURN_EXIT;
-                }
+            quest_object_tile(g, g->map.stairs_down_x, g->map.stairs_down_y) != TILE_DUNGEON_STAIRS_RETURN) {
+            set_quest_object_tile(g, g->map.stairs_down_x, g->map.stairs_down_y, TILE_DUNGEON_STAIRS_RETURN);
+            if (g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] != TILE_PORTAL) {
+                g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] = TILE_DUNGEON_STAIRS_RETURN;
             }
-            push_message(g, "A passage to town opens!");
+            push_message(g, "The sealed stairs open! Ascend them to return to Oakhaven.");
         }
     }
 

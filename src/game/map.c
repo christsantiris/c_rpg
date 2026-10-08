@@ -373,7 +373,7 @@ static void generate_dungeon_layout(Map *m, int level) {
                 m->tiles[y][x] = perimeter ? TILE_WALL : TILE_FLOOR;
             }
         }
-        m->tiles[dy][dx] = TILE_STAIRS_DOWN;
+        m->tiles[dy][dx] = TILE_DUNGEON_STAIRS_SEALED;
         m->tiles[door_y][door_x] = TILE_LOCKED_DOOR;
     }
 

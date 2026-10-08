@@ -1533,6 +1533,34 @@ void draw_stairs_down(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x + 9,     y + 12,    6,         1,         edge);
 }
 
+void draw_dungeon_return_stairs(Renderer *r, int tile_x, int tile_y, int open) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    SDL_Color stone = open ? (SDL_Color){185, 185, 166, 255} : (SDL_Color){68, 64, 81, 255};
+    SDL_Color edge = open ? (SDL_Color){246, 239, 209, 255} : (SDL_Color){103, 88, 119, 255};
+    SDL_Color rail = {198, 154, 61, 255};
+    draw_floor(r, tile_x, tile_y);
+    fill_rect(r, x + 2, y + 1, 20, 22, (SDL_Color){25, 23, 38, 255});
+    // Five broad steps rise toward the light, framed by gold handrails.
+    for (int step = 0; step < 5; step++) {
+        int width = 6 + step * 3;
+        int px = x + (TILE_SIZE - width) / 2;
+        int py = y + 5 + step * 3;
+        fill_rect(r, px, py, width, 3, stone);
+        fill_rect(r, px, py, width, 1, edge);
+    }
+    SDL_SetRenderDrawColor(r->sdl, rail.r, rail.g, rail.b, rail.a);
+    SDL_RenderDrawLine(r->sdl, x + 3, y + 21, x + 8, y + 4);
+    SDL_RenderDrawLine(r->sdl, x + 20, y + 21, x + 15, y + 4);
+    if (open) {
+        fill_rect(r, x + 9, y + 2, 6, 3, (SDL_Color){186, 253, 225, 255});
+        fill_rect(r, x + 10, y + 2, 4, 2, (SDL_Color){245, 255, 239, 255});
+    } else {
+        fill_rect(r, x + 5, y + 11, 14, 3, (SDL_Color){126, 54, 153, 255});
+        fill_rect(r, x + 10, y + 9, 4, 6, (SDL_Color){209, 111, 230, 255});
+    }
+}
+
 void draw_return_exit(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;

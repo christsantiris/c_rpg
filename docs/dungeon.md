@@ -19,7 +19,7 @@ advanced undead can appear earlier.
 | 2 | Possible locked side crypt; Elowen's first seal during her quest | Zombies and Crypt Bats join |
 | 3 | Possible locked side crypt; Elowen's second seal | Wraiths join |
 | 4 | Possible locked side crypt; Elowen's third seal | Crypt Conjurers join |
-| 5 | Golden key, locked boss chamber, and final return passage | Full roster and the Lich King |
+| 5 | Golden key, locked boss chamber, and sealed return stairs | Full roster and the Lich King |
 
 Every generated floor is checked from its entrance before play. All rooms,
 corridors, and side crypts must connect through walkable passages or their
@@ -70,9 +70,16 @@ unlock it. The Lich stays dormant until the player enters the chamber. Once
 engaged, he alternates a warning turn with a ranged necrotic bolt. Two Skeleton
 minions named **Lich Guard** flank him inside the locked chamber and pursue
 the player in melee. They count toward the floor's normal enemy limit. Defeating
-him opens the glowing return passage; other surviving
-enemies do not block the trip back to OakHaven. The Lich King's victory and boss
+him unseals a special upward staircase with pale stone steps, gold rails, and a
+light at the top. Stand on it and use the **stairs-up key (`<`, the comma key
+by default)** to return directly to Oakhaven. The stairs-down key (`.`) does
+not activate it. Other surviving enemies do not block the trip back to OakHaven.
+The Lich King's victory and boss
 reward are one-time.
+
+Save version 109 converts old boss-room return doors and downward stair markers
+into the special staircase, including cached floors, loot underlays, and portal
+destinations. The stairs remain sealed if the Lich King is still alive.
 
 Bram stands near Cain in Oakhaven's central square. Speak to him with `T` for
 a warning about the Lich King in the eastern dungeon and advice to buy supplies

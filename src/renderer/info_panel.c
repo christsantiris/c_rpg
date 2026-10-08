@@ -116,13 +116,16 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor)
     y += lh + 6;
 
     // HP
-    renderer_draw_text(r, "HP", x, y, label, r->font_tiny);
+    int low_health = game_player_low_health(g);
+    SDL_Color health_warning = {240, 72, 60, 255};
+    renderer_draw_text(r, low_health ? "LOW HEALTH" : "HP", x, y,
+        low_health ? health_warning : label, r->font_tiny);
     y += lh;
     char hp_str[16];
     SDL_snprintf(hp_str, sizeof(hp_str), "%d / %d", g->player.hp, g->player.max_hp);
-    // The value flashes red for a moment each time the player is hit.
-    SDL_Color hp_color = game_player_hit_flash(g, SDL_GetTicks())
-        ? (SDL_Color){240, 72, 60, 255} : value;
+    // Low health stays red after the brief flash from taking damage ends.
+    SDL_Color hp_color = low_health || game_player_hit_flash(g, SDL_GetTicks())
+        ? health_warning : value;
     renderer_draw_text(r, hp_str, x, y, hp_color, r->font_tiny);
     // Poison shows as a green drop and freezing as a snowflake, each with the
     // turns it has left.
@@ -261,8 +264,18 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor)
         renderer_draw_text(r, "ESC      RETURN", x, y + lh * 2, hint, r->font_tiny);
     } else {
         renderer_draw_text(r, "WASD  MOVE", x, y, hint, r->font_tiny);
-        renderer_draw_text(r, ".     STAIRS/EXIT", x, y + lh, hint, r->font_tiny);
-        renderer_draw_text(r, ",     ASCEND", x, y + lh * 2, hint, r->font_tiny);
+        if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH) {
+            renderer_draw_text(r, ".     STAIRS DOWN", x, y + lh, hint, r->font_tiny);
+            char ascent_hint[40];
+            int key = g->key_bindings[CONTROL_ASCEND];
+            SDL_snprintf(ascent_hint, sizeof(ascent_hint), "%s     %s",
+                key == SDL_SCANCODE_COMMA ? "<" : SDL_GetScancodeName(key),
+                (g->defeated_bosses & (1 << LOCATION_DUNGEON)) ? "UP TO OAKHAVEN" : "STAIRS UP");
+            renderer_draw_text(r, ascent_hint, x, y + lh * 2, hint, r->font_tiny);
+        } else {
+            renderer_draw_text(r, ".     STAIRS/EXIT", x, y + lh, hint, r->font_tiny);
+            renderer_draw_text(r, ",     ASCEND", x, y + lh * 2, hint, r->font_tiny);
+        }
         renderer_draw_text(r, "I     INV", x, y + lh * 3, hint, r->font_tiny);
         renderer_draw_text(r, "Q     QUESTS/BOSSES", x, y + lh * 4, hint, r->font_tiny);
         renderer_draw_text(r, "P     PICK UP", x, y + lh * 5, hint, r->font_tiny);

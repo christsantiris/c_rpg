@@ -18,6 +18,11 @@
 #define SLASH_MS 180
 #define HP_FLASH_MS 300
 
+static inline int game_player_low_health(const GameState *g) {
+    return !g->game_won && g->player.hp > 0 && g->player.max_hp > 0 &&
+        (long long)g->player.hp * 10 <= (long long)g->player.max_hp * 3;
+}
+
 void game_draw(Renderer *r, GameState *g, Viewport *v);
 void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, const Viewport *v, Uint32 elapsed);
 int game_combat_feedback_active(Uint32 now);
