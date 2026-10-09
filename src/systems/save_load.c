@@ -694,7 +694,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 122);
+    cJSON_AddNumberToObject(root, "save_version", 123);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -835,6 +835,9 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "watchfire_quest_state", g->watchfire_quest_state);
     cJSON_AddNumberToObject(root, "watchfire_quest_progress", g->watchfire_quest_progress);
     cJSON_AddNumberToObject(root, "watchfire_quest_encounters", g->watchfire_quest_encounters);
+    cJSON_AddNumberToObject(root, "hunt_quest_state", g->hunt_quest_state);
+    cJSON_AddNumberToObject(root, "hunt_quest_progress", g->hunt_quest_progress);
+    cJSON_AddNumberToObject(root, "hunt_quest_encounters", g->hunt_quest_encounters);
     cJSON_AddNumberToObject(root, "temple_alignment", g->temple_alignment);
     cJSON_AddNumberToObject(root, "temple_sentinels_awakened",
         g->temple_sentinels_awakened);
@@ -1287,6 +1290,14 @@ static void repair_floor_item_underlays(GameState *g) {
 }
 
 static void migrate_testing_save(cJSON *root, int version) {
+    if (version < 123) {
+        const char *fields[3] = {"hunt_quest_state", "hunt_quest_progress", "hunt_quest_encounters"};
+        for (int i = 0; i < 3; i++) {
+            if (!cJSON_GetObjectItem(root, fields[i])) {
+                cJSON_AddNumberToObject(root, fields[i], 0);
+            }
+        }
+    }
     if (version < 122) {
         const char *fields[3] = {"watchfire_quest_state", "watchfire_quest_progress", "watchfire_quest_encounters"};
         for (int i = 0; i < 3; i++) {
@@ -2105,6 +2116,25 @@ int load_game(GameState *g, int slot) {
     g->watchfire_quest_state = watchfire_state->valueint;
     g->watchfire_quest_progress = watchfire_progress->valueint;
     g->watchfire_quest_encounters = watchfire_encounters->valueint;
+    cJSON *hunt_state = cJSON_GetObjectItem(root, "hunt_quest_state");
+    cJSON *hunt_progress = cJSON_GetObjectItem(root, "hunt_quest_progress");
+    cJSON *hunt_encounters = cJSON_GetObjectItem(root, "hunt_quest_encounters");
+    if (!cJSON_IsNumber(hunt_state) || !cJSON_IsNumber(hunt_progress) || !cJSON_IsNumber(hunt_encounters) ||
+        hunt_state->valuedouble != hunt_state->valueint || hunt_state->valueint < 0 || hunt_state->valueint > 3 ||
+        hunt_progress->valuedouble != hunt_progress->valueint || hunt_progress->valueint < 0 || hunt_progress->valueint > 7 ||
+        hunt_encounters->valuedouble != hunt_encounters->valueint || hunt_encounters->valueint < 0 || hunt_encounters->valueint > 1023 ||
+        (hunt_state->valueint == 0 && (hunt_progress->valueint || hunt_encounters->valueint)) ||
+        (hunt_state->valueint == 1 && hunt_progress->valueint == 7) ||
+        (hunt_state->valueint >= 2 && hunt_progress->valueint != 7) ||
+        ((hunt_progress->valueint & 1) && (hunt_encounters->valueint & 15) != 15) ||
+        ((hunt_progress->valueint & 2) && (hunt_encounters->valueint & 112) != 112) ||
+        ((hunt_progress->valueint & 4) && (hunt_encounters->valueint & 896) != 896)) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    g->hunt_quest_state = hunt_state->valueint;
+    g->hunt_quest_progress = hunt_progress->valueint;
+    g->hunt_quest_encounters = hunt_encounters->valueint;
     cJSON *jail_state = cJSON_GetObjectItem(root, "jail_quest_state");
     cJSON *prisoner_x = cJSON_GetObjectItem(root, "prisoner_x");
     cJSON *prisoner_y = cJSON_GetObjectItem(root, "prisoner_y");
@@ -3700,6 +3730,14 @@ int load_game(GameState *g, int slot) {
     if (g->location == LOCATION_TOWN4) {
         map_place_town4_ashen_gate(&g->map);
         map_set_ridgeshire_mountain_road(&g->map, g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
+        // Extend saved town paving, including terrain covered by dropped items.
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->underlying_tile == TILE_TOWN_FLOOR &&
+                in_lot(item->x, item->y, TOWN4_SQUARE_X, TOWN4_SQUARE_Y, TOWN4_SQUARE_W, TOWN4_SQUARE_H)) {
+                item->underlying_tile = TILE_TOWN_PATH;
+            }
+        }
         map_place_town4_workshop(&g->map);
         map_place_town4_hall(&g->map);
         if (!map_is_walkable(&g->map, g->player.x, g->player.y)) {
@@ -4113,6 +4151,20 @@ int load_game(GameState *g, int slot) {
             }
         }
         g->map.tiles[HALL_VEYRA_Y][HALL_VEYRA_X] = TILE_NPC_VEYRA;
+    }
+    if (save_version < 123 && g->location == LOCATION_GUILD) {
+        if (g->player.x == GUILD_SELENE_X && g->player.y == GUILD_SELENE_Y) {
+            g->player.y++;
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->active && item->x == GUILD_SELENE_X && item->y == GUILD_SELENE_Y) {
+                item->y++;
+                item->underlying_tile = TILE_TAVERN_FLOOR;
+                g->map.tiles[item->y][item->x] = TILE_ITEM;
+            }
+        }
+        g->map.tiles[GUILD_SELENE_Y][GUILD_SELENE_X] = TILE_NPC_SELENE;
     }
     game_hide_portal_destination(g);
     game_migrate_boss_shortcuts(g);

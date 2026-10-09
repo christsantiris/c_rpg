@@ -71,6 +71,11 @@
 #define ALDER_INN_Y 18
 #define GUILD_ORIN_X 10
 #define GUILD_ORIN_Y 18
+#define GUILD_SELENE_X 28
+#define GUILD_SELENE_Y 14
+#define HUNT_FROSTFELL_LEVEL 3
+#define HUNT_GLASSDEEP_LEVEL 4
+#define HUNT_SUNSCAR_LEVEL 3
 #define DESERT_LAMP_LEVEL 4
 #define TAVERN_X 4
 #define TAVERN_Y 2
@@ -208,6 +213,10 @@
 #define HIGH_PASS_X 20
 #define TOWN4_ROAD_X 40
 #define RIDGESHIRE_MOUNTAIN_ROAD_X 28
+#define TOWN4_SQUARE_X 20
+#define TOWN4_SQUARE_Y 12
+#define TOWN4_SQUARE_W (RIDGESHIRE_MOUNTAIN_ROAD_X - TOWN4_SQUARE_X + 1)
+#define TOWN4_SQUARE_H 3
 #define TOWN4_DRAGON_GATE_Y 12
 #define TOWN4_PORTAL_X (TOWN_W - 3)
 #define TOWN4_PORTAL_Y 13
@@ -482,7 +491,8 @@ typedef enum {
     TILE_CASTLE_FIRE_RUNE,
     TILE_NPC_VEYRA,
     TILE_WATCHFIRE_COLD,
-    TILE_WATCHFIRE_LIT
+    TILE_WATCHFIRE_LIT,
+    TILE_NPC_SELENE
 } TileType;
 
 typedef struct {
@@ -519,6 +529,7 @@ void map_set_stillbury_forest_road(Map *m, int unlocked);
 void map_generate_town4(Map *m, int *spawn_x, int *spawn_y);
 void map_set_town4_road(Map *m, int unlocked);
 void map_set_ridgeshire_mountain_road(Map *m, int unlocked);
+void map_place_town4_square(Map *m);
 void map_place_town4_workshop(Map *m);
 void map_place_town4_hall(Map *m);
 void map_generate_town2(Map *m, int *spawn_x, int *spawn_y);

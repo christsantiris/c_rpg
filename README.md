@@ -122,6 +122,16 @@ The journal lists each region and stage; regional bosses are optional.
 Restored flames and quest progress persist through revisits and saves. See
 [Watchfires of Ridgeshire](docs/watchfires-of-ridgeshire.md).
 
+**Huntmaster Selene** waits beside the contract table in **Rosemoor's
+Adventurer's Guild**. Press **T**, then **Y** to accept **The Three Great Hunts**.
+Defeat **Rimefang's pack in Frostfell stage 3**, **Shardwarden's group in
+Glassdeep stage 4**, and **Dunehex's group in Sunscar stage 3**, in any order.
+Each named leader has 25% more health; defeat the entire assigned group to
+complete its hunt automatically. Gold corner marks identify hunt enemies, and
+the leaders display their names. Regional bosses are optional. Return and
+speak to Selene in the Guild for **200 gold and 1,500 score**, awarded once.
+See [The Three Great Hunts](docs/three-great-hunts.md).
+
 The Frostfell Wastes begin at Rosemoor's north gate. **Quartermaster Brenna** in
 **Stillbury's Inn** assigns **The Silent Expedition**. She explains the route
 across the swamp to Rosemoor and north into

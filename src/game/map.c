@@ -493,6 +493,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_NPC_BRENNA &&
         m->tiles[y][x] != TILE_NPC_LIORA &&
         m->tiles[y][x] != TILE_NPC_ORIN &&
+        m->tiles[y][x] != TILE_NPC_SELENE &&
         m->tiles[y][x] != TILE_NPC_FROST_SURVIVOR &&
         m->tiles[y][x] != TILE_NPC_ROOK &&
         m->tiles[y][x] != TILE_NPC_INNKEEPER &&
@@ -1392,6 +1393,16 @@ void map_set_town4_road(Map *m, int unlocked) {
     m->tiles[0][TOWN4_ROAD_X] = TILE_TOWN_EXIT;
 }
 
+void map_place_town4_square(Map *m) {
+    for (int y = TOWN4_SQUARE_Y; y < TOWN4_SQUARE_Y + TOWN4_SQUARE_H; y++) {
+        for (int x = TOWN4_SQUARE_X; x < TOWN4_SQUARE_X + TOWN4_SQUARE_W; x++) {
+            if (m->tiles[y][x] == TILE_TOWN_FLOOR) {
+                m->tiles[y][x] = TILE_TOWN_PATH;
+            }
+        }
+    }
+}
+
 void map_set_ridgeshire_mountain_road(Map *m, int unlocked) {
     m->tiles[TOWN_H - 1][RIDGESHIRE_MOUNTAIN_ROAD_X] = unlocked ? TILE_TOWN_EXIT : TILE_WALL;
     for (int y = 13; y < TOWN_H - 1; y++) {
@@ -1399,6 +1410,7 @@ void map_set_ridgeshire_mountain_road(Map *m, int unlocked) {
             m->tiles[y][RIDGESHIRE_MOUNTAIN_ROAD_X] = unlocked ? TILE_TOWN_PATH : TILE_TOWN_FLOOR;
         }
     }
+    map_place_town4_square(m);
 }
 
 void map_place_town4_workshop(Map *m) {
@@ -1445,6 +1457,7 @@ void map_generate_town4(Map *m, int *spawn_x, int *spawn_y) {
     map_place_town4_guards(m, -1, -1);
     town_life_place(m, LOCATION_TOWN4);
     m->tiles[DAIN_TOWN_Y][DAIN_TOWN_X] = TILE_NPC_DAIN;
+    map_place_town4_square(m);
     *spawn_x = 20;
     *spawn_y = TOWN_H - 2;
 }
@@ -2567,6 +2580,7 @@ void map_place_tavern_elowen(Map *m) {
 void map_generate_guild(Map *m, int *sx, int *sy) {
     map_generate_tavern_room(m, sx, sy, 1);
     m->tiles[GUILD_ORIN_Y][GUILD_ORIN_X] = TILE_NPC_ORIN;
+    m->tiles[GUILD_SELENE_Y][GUILD_SELENE_X] = TILE_NPC_SELENE;
     m->tiles[GUILD_ZARA_Y][GUILD_ZARA_X] = TILE_TAVERN_FLOOR;
 }
 

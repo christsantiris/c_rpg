@@ -57,6 +57,14 @@ crystal to choose its tone from the inscription. Return to Orin for 120 gold
 and 1,000 score. All three restored objectives remain recorded after turning
 in the quest; the Prism Sovereign is optional.
 
+Huntmaster Selene offers **The Three Great Hunts** in **Rosemoor's Adventurer's
+Guild**. The journal tracks **Rimefang's pack in Frostfell 3**, **Shardwarden's
+group in Glassdeep 4**, and **Dunehex's group in Sunscar 3**, with each region
+and stage displayed separately. Defeating the leader and every assigned
+companion automatically completes that hunt; the order is unrestricted.
+Return and speak to Selene in Rosemoor's Adventurer's Guild for **200 gold and
+1,500 score**. All three objectives remain in the Completed tab afterward.
+
 Liora's **The Stolen Moonseed** appears after talking to her in Rosemoor's
 town center. It tracks the Moonseed on Moonveil stage 2, moonwater on stage 3, and
 restoration of the planting circle on stage 4. The seed and water can be

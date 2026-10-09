@@ -2429,6 +2429,17 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_WATCHFIRE_LIT:
                     draw_watchfire(r, g, sx, sy, x, y, g->map.tiles[y][x]);
                     break;
+                case TILE_NPC_SELENE: {
+                    draw_guild_seeker(r, sx, sy);
+                    SDL_SetRenderDrawColor(r->sdl, 117, 76, 44, 255);
+                    int px = sx * TILE_SIZE;
+                    int py = sy * TILE_SIZE;
+                    SDL_Point bow[5] = {{px + 18, py + 7}, {px + 21, py + 10}, {px + 22, py + 14}, {px + 21, py + 18}, {px + 18, py + 21}};
+                    SDL_RenderDrawLines(r->sdl, bow, 5);
+                    SDL_SetRenderDrawColor(r->sdl, 227, 216, 173, 255);
+                    SDL_RenderDrawLine(r->sdl, px + 18, py + 7, px + 18, py + 21);
+                    break;
+                }
                 case TILE_NPC_VEYRA:
                     draw_tavern_floor(r, sx, sy);
                     draw_royal_guard_overlay(r, sx, sy, 1);
@@ -2879,6 +2890,23 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     TILE_SIZE - 4};
                 SDL_RenderDrawRect(r->sdl, &marker);
                 SDL_RenderDrawRect(r->sdl, &marker);
+            }
+            if (g->hunt_quest_state && game_hunt_enemy_index(e) >= 0) {
+                SDL_SetRenderDrawColor(r->sdl, 237, 186, 82, 255);
+                int px = sx * TILE_SIZE;
+                int py = sy * TILE_SIZE;
+                SDL_RenderDrawLine(r->sdl, px + 1, py + 4, px + 1, py + 1);
+                SDL_RenderDrawLine(r->sdl, px + 1, py + 1, px + 4, py + 1);
+                SDL_RenderDrawLine(r->sdl, px + 19, py + 22, px + 22, py + 22);
+                SDL_RenderDrawLine(r->sdl, px + 22, py + 22, px + 22, py + 19);
+                if (game_is_hunt_leader(e)) {
+                    int width = 0;
+                    TTF_SizeText(r->font_tiny, e->name, &width, NULL);
+                    renderer_draw_text(r, e->name, px + (TILE_SIZE - width) / 2 + 1, py - 18,
+                        (SDL_Color){38, 26, 20, 255}, r->font_tiny);
+                    renderer_draw_text(r, e->name, px + (TILE_SIZE - width) / 2, py - 19,
+                        (SDL_Color){237, 186, 82, 255}, r->font_tiny);
+                }
             }
             if (e->type != ENEMY_POLAR_KRAKEN) {
                 // Draw health bar above enemy
@@ -3331,6 +3359,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
     if (g->location == LOCATION_GUILD) {
         int width = 0;
+        TTF_SizeText(r->font_tiny, "HUNTMASTER SELENE", &width, NULL);
+        renderer_draw_text(r, "HUNTMASTER SELENE", viewport_to_screen_x(v, GUILD_SELENE_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, GUILD_SELENE_Y - 1) * TILE_SIZE, (SDL_Color){237, 186, 82, 255}, r->font_tiny);
         TTF_SizeText(r->font_tiny, "ORIN", &width, NULL);
         renderer_draw_text(r, "ORIN", viewport_to_screen_x(v, GUILD_ORIN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, GUILD_ORIN_Y - 1) * TILE_SIZE, area_label_color(LOCATION_GLASSDEEP), r->font_tiny);
