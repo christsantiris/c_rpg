@@ -685,11 +685,15 @@ void test_items(void) {
         lich_reward.attack_bonus == 5 && lich_reward.critical_chance_bonus == 10);
     ASSERT("forest Necromancer guarantees its cloak",
         strcmp(forest_reward.name, "Necromancer's Cloak") == 0);
-    ASSERT("Goblin King guarantees a mid-tier shield",
+    ASSERT("Goblin King guarantees a shield between Buckler and Kite",
         strcmp(mountain_reward.name, "Goblin King's Shield") == 0 &&
         mountain_reward.type == ITEM_SHIELD &&
-        mountain_reward.defense_bonus == 5 &&
-        mountain_reward.block_chance == 15);
+        mountain_reward.defense_bonus == 3 &&
+        mountain_reward.block_chance == 12 && mountain_reward.value == 200 &&
+        mountain_reward.defense_bonus > shield_catalog[0].defense_bonus &&
+        mountain_reward.defense_bonus < shield_catalog[1].defense_bonus &&
+        mountain_reward.block_chance > shield_catalog[0].block_chance &&
+        mountain_reward.block_chance < shield_catalog[1].block_chance);
     ASSERT("Drowned Queen guarantees Tidecaller Robes",
         strcmp(coast_reward.name, "Tidecaller Robes") == 0);
 

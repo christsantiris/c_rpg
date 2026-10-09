@@ -487,7 +487,11 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
     cJSON *block_reduction = cJSON_GetObjectItem(obj,
         "block_reduction_percent");
     if (!block_reduction && item->type == ITEM_SHIELD) {
+        int old_defense = item->defense_bonus;
         item_apply_legacy_shield_metadata(item);
+        if (strcmp(item->name, "Goblin King's Shield") == 0) {
+            item->defense_bonus = old_defense;
+        }
         return;
     }
     if (!family && item->type == ITEM_WEAPON) {
@@ -632,7 +636,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 111);
+    cJSON_AddNumberToObject(root, "save_version", 112);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -1661,6 +1665,34 @@ static int migrate_region_routes(GameState *g, Location region) {
         cache[MAX_REGION_DEPTH - 1].valid = 0;
     }
     return 1;
+}
+
+static void migrate_goblin_shield(Item *item) {
+    if (item->type == ITEM_SHIELD && strcmp(item->name, "Goblin King's Shield") == 0) {
+        Item shield = item_make_goblin_king_shield();
+        item->defense_bonus = shield.defense_bonus;
+        item->block_chance = shield.block_chance;
+        item->value = shield.value;
+    }
+}
+
+static void migrate_goblin_shields(GameState *g) {
+    for (int i = 0; i < g->inventory_count; i++) {
+        Item *item = &g->inventory[i];
+        int old_defense = item->defense_bonus;
+        migrate_goblin_shield(item);
+        if (g->equipped_off_hand == i) {
+            g->player.defense += item->defense_bonus - old_defense;
+        }
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        migrate_goblin_shield(&g->floor_items[i].item);
+    }
+    for (int level = 0; level < CASTLE_DEPTH; level++) {
+        for (int i = 0; i < g->castle_loot_count[level]; i++) {
+            migrate_goblin_shield(&g->castle_loot[level][i].item);
+        }
+    }
 }
 
 static void migrate_rebalanced_weapon(Item *item) {
@@ -3800,6 +3832,40 @@ int load_game(GameState *g, int slot) {
     repair_floor_item_underlays(g);
     if (save_version < 111) {
         town_life_migrate(g);
+    }
+    if (save_version < 112) {
+        migrate_goblin_shields(g);
+        if (g->location == LOCATION_TAVERN) {
+            for (int y = 0; y < MAP_H; y++) {
+                for (int x = 0; x < MAP_W; x++) {
+                    if (g->map.tiles[y][x] == TILE_NPC_BRENNA) {
+                        g->map.tiles[y][x] = TILE_TAVERN_FLOOR;
+                    }
+                }
+            }
+            for (int i = 0; i < g->floor_item_count; i++) {
+                if (g->floor_items[i].underlying_tile == TILE_NPC_BRENNA) {
+                    g->floor_items[i].underlying_tile = TILE_TAVERN_FLOOR;
+                }
+            }
+            if (strcmp(g->dialogue_speaker, "Quartermaster Brenna") == 0) {
+                g->dialogue_active = 0;
+            }
+        }
+        if (g->location == LOCATION_INN) {
+            if (g->player.x == BRENNA_INN_X && g->player.y == BRENNA_INN_Y) {
+                g->player.y++;
+            }
+            for (int i = 0; i < g->floor_item_count; i++) {
+                FloorItem *item = &g->floor_items[i];
+                if (item->active && item->x == BRENNA_INN_X && item->y == BRENNA_INN_Y) {
+                    item->y++;
+                    item->underlying_tile = TILE_TAVERN_FLOOR;
+                    g->map.tiles[item->y][item->x] = TILE_ITEM;
+                }
+            }
+            g->map.tiles[BRENNA_INN_Y][BRENNA_INN_X] = TILE_NPC_BRENNA;
+        }
     }
     game_hide_portal_destination(g);
     game_migrate_boss_shortcuts(g);

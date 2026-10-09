@@ -10,8 +10,8 @@ progress, and completion. Quest offers display **Y** to accept and **N** to
 decline; **Esc** also declines. Declining leaves the quest inactive and
 available when you speak to the NPC again. Only acceptance adds it to the
 journal and starts its expedition. Other dialogue bubbles are dismissed by
-movement. Elowen, Brenna, Mara, and Ilya wait in Oakhaven's Tavern. Alder,
-Liora, Rook, and Bram wait in Stillbury's Inn, which uses the same doorway and
+movement. Elowen, Mara, and Ilya wait in Oakhaven's Tavern. Alder,
+Liora, Brenna, Rook, and Bram wait in Stillbury's Inn, which uses the same doorway and
 conversation controls.
 
 Ridgeshire's Town Hall uses the same entry, conversation, and exit controls.
@@ -133,10 +133,9 @@ her to Oakhaven's Tavern without changing quest progress.
 
 ## Brenna: The Silent Expedition
 
-Quartermaster Brenna waits in Oakhaven's Tavern. Press `T` beside her, then `Y`
-to accept. She explains that Frostfell is two towns away, through the woods to
-Stillbury, across the swamp to Rosemoor, and beyond Rosemoor's north gate into
-the far north.
+Quartermaster Brenna waits in Stillbury's Inn. Press `T` beside her, then `Y`
+to accept. She explains the route across the swamp north of Stillbury to
+Rosemoor, then through Rosemoor's north gate into Frostfell in the far north.
 
 On Frostfell stage **2**, defeat the two Ice Wolves guarding the expedition
 journal, then press `A` on or beside the journal to recover it. On stage **4**,
@@ -171,7 +170,7 @@ adventure area.
 
 ## Ilya: The Dragon's Hoard
 
-Ilya waits alongside Elowen, Brenna, and Mara in **Oakhaven's Tavern**. Press
+Ilya waits alongside Elowen and Mara in **Oakhaven's Tavern**. Press
 `T` beside her, then `Y` to accept the quest. Travel north through the mountains
 to Ridgeshire, then take its east gate to Dragonspine. Recover the golden goblet
 on stage 5 by standing on it and pressing `A`, then return to Ilya in the Tavern

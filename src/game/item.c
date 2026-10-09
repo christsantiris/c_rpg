@@ -791,9 +791,9 @@ Item item_make_goblin_king_shield(void) {
     it.active = 1;
     it.type = ITEM_SHIELD;
     strncpy(it.name, "Goblin King's Shield", sizeof(it.name) - 1);
-    it.defense_bonus = 5;
-    it.block_chance = 15;
-    it.value = 500;
+    it.defense_bonus = 3;
+    it.block_chance = 12;
+    it.value = 200;
     set_shield_metadata(&it, ITEM_RARITY_UNCOMMON,
         ITEM_CLASS_WARRIOR | ITEM_CLASS_ROGUE, ITEM_VISUAL_KITE_SHIELD);
     return it;

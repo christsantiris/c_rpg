@@ -214,11 +214,13 @@ void test_tavern_interior(void) {
         mara_x == MARA_TAVERN_X && mara_y == MARA_TAVERN_Y);
     ASSERT("Mara can be approached beside her Tavern position",
         map_is_walkable(&g.map, MARA_TAVERN_X, MARA_TAVERN_Y + 1));
-    g.player.x = BRENNA_X;
-    g.player.y = BRENNA_Y + 1;
+    game_leave_tavern(&g);
+    game_enter_inn(&g);
+    g.player.x = BRENNA_INN_X;
+    g.player.y = BRENNA_INN_Y + 1;
     game_talk_to_brenna(&g);
     game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
-    ASSERT("Brenna quest interaction works inside the Tavern",
+    ASSERT("Brenna quest interaction works inside the Inn",
         g.frostfell_quest_state == 1);
     ASSERT("talking opens Brenna's dialogue bubble", g.dialogue_active);
     game_move_player(&g, 1, 0);
@@ -226,18 +228,18 @@ void test_tavern_interior(void) {
 
     int exit_x = 0;
     int exit_y = 0;
-    ASSERT("Tavern has a south doorway",
+    ASSERT("Inn has a south doorway",
         find_tile(&g.map, TILE_TAVERN_EXIT, &exit_x, &exit_y));
     g.player.x = exit_x;
     g.player.y = exit_y - 1;
     Action leave = {ACTION_MOVE, exit_x, exit_y};
     action_resolve_player(&g, leave);
-    ASSERT("walking through the Tavern doorway returns to town",
-        g.location == LOCATION_TOWN);
-    ASSERT("Tavern returns player outside its front door",
-        g.player.x == TOWN_TAVERN_DOOR_X && g.player.y == TOWN_TAVERN_DOOR_Y + 1 &&
+    ASSERT("walking through the Inn doorway returns to town",
+        g.location == LOCATION_TOWN2);
+    ASSERT("Inn returns player outside its front door",
+        g.player.x == TOWN_INN_DOOR_X && g.player.y == TOWN_INN_DOOR_Y + 1 &&
         map_is_walkable(&g.map, g.player.x, g.player.y));
-    ASSERT("Tavern transition preserves Brenna quest state",
+    ASSERT("Inn transition preserves Brenna quest state",
         g.frostfell_quest_state == 1);
 }
 
@@ -583,7 +585,7 @@ void test_quest_offer_controls(void) {
         {game_talk_to_dragon_seeker, LOCATION_TAVERN, ILYA_TAVERN_X, ILYA_TAVERN_Y, &g.dragon_treasure_quest_state},
         {game_talk_to_nahla, LOCATION_ISLAND, ISLAND_NAHLA_X, ISLAND_NAHLA_Y, &g.temple_treasure_state},
         {game_talk_to_steward, LOCATION_TOWN_HALL, HALL_STEWARD_X, HALL_STEWARD_Y, &g.emberforge_quest_state},
-        {game_talk_to_brenna, LOCATION_TAVERN, BRENNA_X, BRENNA_Y, &g.frostfell_quest_state},
+        {game_talk_to_brenna, LOCATION_INN, BRENNA_INN_X, BRENNA_INN_Y, &g.frostfell_quest_state},
         {game_talk_to_orin, LOCATION_GUILD, GUILD_ORIN_X, GUILD_ORIN_Y, &g.glassdeep_quest_state},
         {game_talk_to_liora, LOCATION_INN, LIORA_INN_X, LIORA_INN_Y, &g.moonveil_quest_state},
         {game_talk_to_oswin, LOCATION_TOWN_HALL, HALL_OSWIN_X, HALL_OSWIN_Y, &g.catacombs_quest_state}

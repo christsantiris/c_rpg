@@ -93,8 +93,8 @@ static const QuestDefinition quest_definitions[15] = {
     },
     {
         "The Silent Expedition", "Quartermaster Brenna",
-        "Recover the expedition journal and rescue",
-        "Surveyor Fen in the far northern wastes.",
+        "Recover the journal and rescue Surveyor Fen.",
+        "Return to Brenna in Stillbury's Inn.",
         {"Recover the expedition journal", "Rescue Surveyor Fen", ""},
         "Frostfell Wastes", {FROSTFELL_JOURNAL_LEVEL, FROSTFELL_SURVIVOR_LEVEL, 0},
         FROSTFELL_REWARD_GOLD, FROSTFELL_REWARD_SCORE

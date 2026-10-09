@@ -155,7 +155,10 @@ usable by the listed classes and require a one-handed main weapon.
 | Kite Shield | +4 | 15% | Warrior | 2 | 300 |
 | Tower Shield | +7 | 20% | Warrior | 3 | 700 |
 | Magic Shield | +9 | 25% | Warrior | 3 | 1,250 |
-| Goblin King's Shield | +5 | 15% | Warrior, Rogue | Boss | 500 |
+| Goblin King's Shield | +3 | 12% | Warrior, Rogue | Boss | 200 |
+
+The Goblin King's Shield improves on the Buckler while leaving the Kite, Tower,
+and Magic Shields as stronger Warrior upgrades.
 
 ## Blacksmith Progression and Boss Rewards
 

@@ -38,7 +38,7 @@ defeated.
 
 ## The Dragon's Hoard
 
-Ilya waits in **Oakhaven's Tavern**, alongside Elowen, Brenna, and Mara. Press
+Ilya waits in **Oakhaven's Tavern**, alongside Elowen and Mara. Press
 `T` beside her to hear the offer, then `Y` to accept **The Dragon's Hoard**. On
 Dragonspine stage 5, find the golden goblet in the dragon's lair, stand on it,
 and press `A`. Return to Ilya in the Tavern to trade the goblet for a one-time

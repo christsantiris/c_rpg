@@ -3977,16 +3977,16 @@ int game_handle_glassdeep_prompt_key(GameState *g, int key, int repeat) {
 }
 
 void game_talk_to_brenna(GameState *g) {
-    if (g->location != LOCATION_TAVERN || abs(g->player.x - BRENNA_X) > 1 || abs(g->player.y - BRENNA_Y) > 1) {
+    if (g->location != LOCATION_INN || abs(g->player.x - BRENNA_INN_X) > 1 || abs(g->player.y - BRENNA_INN_Y) > 1) {
         return;
     }
     g->dialogue_active = 1;
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Quartermaster Brenna");
-    g->dialogue_x = BRENNA_X;
-    g->dialogue_y = BRENNA_Y;
+    g->dialogue_x = BRENNA_INN_X;
+    g->dialogue_y = BRENNA_INN_Y;
     if (g->frostfell_quest_state == 0) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Frostfell lies two towns away, in the far north. Follow the woods to Stillbury, then cross the swamp to Rosemoor. "
+            "Frostfell lies in the far north. Cross the swamp north of Stillbury to Rosemoor, then head through its north gate into Frostfell. "
             "My expedition vanished beyond Rosemoor's north gate.");
     } else if (g->frostfell_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, g->frostfell_quest_progress & FROSTFELL_JOURNAL_RECOVERED ?
@@ -4040,8 +4040,8 @@ void game_talk_to_frost_survivor(GameState *g, int x, int y) {
         g->frostfell_quest_state = 2;
         set_quest_object_tile(g, x, y, TILE_FROST_FLOOR);
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "The journal shows the route! I can make my own way home now. Tell Brenna in Oakhaven's Tavern that the expedition's work is safe.");
-        push_message(g, "Surveyor Fen heads home. Return to Quartermaster Brenna in Oakhaven's Tavern.");
+            "The journal shows the route! I can make my own way home now. Tell Brenna in Stillbury's Inn that the expedition's work is safe.");
+        push_message(g, "Surveyor Fen heads home. Return to Quartermaster Brenna in Stillbury's Inn.");
     }
 }
 
@@ -5382,7 +5382,7 @@ static const QuestOffer quest_offers[] = {
     {"Ilya", LOCATION_TAVERN, offsetof(GameState, dragon_treasure_quest_state), 0, "Assigned: The Dragon's Hoard."},
     {"Nahla", LOCATION_ISLAND, offsetof(GameState, temple_treasure_state), 0, "Quest assigned: The Buried Sun."},
     {"Steward Hadrin", LOCATION_TOWN_HALL, offsetof(GameState, emberforge_quest_state), 0, "Assigned: Reclaim the Emberforge. See your quest journal."},
-    {"Quartermaster Brenna", LOCATION_TAVERN, offsetof(GameState, frostfell_quest_state), 0,
+    {"Quartermaster Brenna", LOCATION_INN, offsetof(GameState, frostfell_quest_state), 0,
         "Assigned: The Silent Expedition. Recover the journal on Frostfell stage 2 and rescue the surveyor on stage 4."},
     {"Surveyor Orin", LOCATION_GUILD, offsetof(GameState, glassdeep_quest_state), 0,
         "Assigned: The Broken Resonance. Restore three resonators in Glassdeep Caverns."},
