@@ -80,9 +80,9 @@ static void test_quest_flow(void) {
     start();
     game_enter_town3(&game);
     game_enter_guild(&game);
-    ASSERT("Orin shares the Guild with Dain and Zara and has an accessible approach", game.map.tiles[GUILD_ORIN_Y][GUILD_ORIN_X] == TILE_NPC_ORIN &&
+    ASSERT("Orin remains in the Guild with an accessible approach", game.map.tiles[GUILD_ORIN_Y][GUILD_ORIN_X] == TILE_NPC_ORIN &&
         !map_is_walkable(&game.map, GUILD_ORIN_X, GUILD_ORIN_Y) && map_is_walkable(&game.map, GUILD_ORIN_X, GUILD_ORIN_Y + 1) &&
-        game.map.tiles[GUILD_DAIN_Y][GUILD_DAIN_X] == TILE_NPC_DAIN && game.map.tiles[GUILD_ZARA_Y][GUILD_ZARA_X] == TILE_NPC_GUILD_SEEKER);
+        game.map.tiles[GUILD_DAIN_Y][GUILD_DAIN_X] == TILE_TAVERN_FLOOR && game.map.tiles[GUILD_ZARA_Y][GUILD_ZARA_X] == TILE_TAVERN_FLOOR);
     game_talk_to_orin(&game);
     ASSERT("Orin cannot assign the quest remotely", !game.glassdeep_quest_state);
     game.player.x = GUILD_ORIN_X;

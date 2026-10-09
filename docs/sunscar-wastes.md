@@ -13,17 +13,16 @@ standing still. The sandstorm is visual and does not affect combat or movement.
 
 ## The Lost Magic Lamp
 
-Enter the Adventurer's Guild beside Rosemoor's town square. Approach Zara behind
-the desk and press `T` to hear her offer, then `Y` to accept her quest. Travel
-to Sunscar through Stillbury's west gate and find the golden magic lamp in the
-last clearing of stage 4. Stand on it and press `A` to recover it, then return
-to Zara in the Guild.
+Enter Stillbury's Inn. Approach Zara and press `T` to hear her offer, then `Y`
+to accept her quest. Travel to Sunscar through Stillbury's west gate and find
+the golden magic lamp in the last clearing of stage 4. Stand on it and press `A` to recover it, then return
+to Zara in the Inn.
 
 The one-time reward is **80 gold and 600 score**. The lamp uses quest state rather
 than inventory space, so a full pack does not prevent recovery. The journal
 tracks the objective and marks it ready to return after pickup.
 
 Accepting the quest preserves existing desert exploration, enemies, and portals.
-The quest works after the Pharaoh has been defeated. Saving preserves the hall,
+The quest works after the Pharaoh has been defeated. Saving preserves the Inn,
 quest progress, and reward completion; older testing saves start with the quest
 unassigned.

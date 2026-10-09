@@ -9,10 +9,10 @@ Elowen assigns **The Broken Seals** in **Oakhaven's Tavern**. Its objectives rem
 on Oakhaven's dungeon floors 2, 3, and 4. Return to her in the Tavern for 40 gold
 and 300 score.
 
-Dain assigns **Recover the Treasure Map** in **Rosemoor's Adventurer's Guild
-Hall**. Take Crown Road West to Ridgeshire and enter its south mountain gate.
+Dain assigns **Recover the Treasure Map** in **Ridgeshire's town center**.
+Enter its south mountain gate.
 The Archer, Bomber, and Shaman Map Bearers occupy stages **7, 6, and 5** before
-the stage-4 Goblin King. Return to Dain in the Guild for 60 gold and 400 score.
+the stage-4 Goblin King. Return to Dain in Ridgeshire's town center for 60 gold and 400 score.
 
 Alder assigns **The Lost Wardens** in **Stillbury's Inn**. Enter Stillbury's
 east forest gate and rescue the wardens on stages **7, 6, and 5** before the
@@ -28,7 +28,7 @@ remains the golden goblet on Dragonspine stage 5, beyond Ridgeshire's east
 gate. Return to Ilya in the Tavern for one Potion of Strength and 600 score.
 
 Zara's **The Lost Magic Lamp** quest also appears after accepting it inside
-Rosemoor's Adventurer's Guild. Recover the lamp from Sunscar Wastes stage 4,
+Stillbury's Inn. Recover the lamp from Sunscar Wastes stage 4,
 then return to Zara for 80 gold and 600 score. Pickup marks the quest ready to
 return; collecting the reward moves it to the Completed tab.
 
@@ -51,11 +51,11 @@ crystal to choose its tone from the inscription. Return to Orin for 120 gold
 and 1,000 score. All three restored objectives remain recorded after turning
 in the quest; the Prism Sovereign is optional.
 
-Liora's **The Stolen Moonseed** appears after talking to her in Stillbury's
-Inn. It tracks the Moonseed on Moonveil stage 2, moonwater on stage 3, and
+Liora's **The Stolen Moonseed** appears after talking to her in Rosemoor's
+town center. It tracks the Moonseed on Moonveil stage 2, moonwater on stage 3, and
 restoration of the planting circle on stage 4. The seed and water can be
-collected in either order; planting needs both. Return to Liora in Stillbury's
-Inn for 90 gold and 700 score. The Thorn Regent is optional, and all three objectives remain
+collected in either order; planting needs both. Return to Liora in Rosemoor's
+town center for 90 gold and 700 score. The Thorn Regent is optional, and all three objectives remain
 recorded in the Completed tab after turning in the quest.
 
 Brother Oswin's **Rest for the Forgotten** appears after talking to him in

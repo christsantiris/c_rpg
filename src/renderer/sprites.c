@@ -3869,7 +3869,6 @@ void draw_elowen(Renderer *r, int tile_x, int tile_y) {
 void draw_dain(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    draw_tavern_floor(r, tile_x, tile_y);
     fill_rect(r, x + 5, y + 4, 14, 5, (SDL_Color){72, 67, 62, 255});
     fill_rect(r, x + 7, y + 7, 10, 7, (SDL_Color){189, 132, 91, 255});
     fill_rect(r, x + 6, y + 11, 12, 8, (SDL_Color){116, 67, 35, 255});
