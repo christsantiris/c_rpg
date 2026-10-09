@@ -4185,43 +4185,161 @@ void draw_dragonspine_edge(Renderer *r, int tile_x, int tile_y, int map_x, int m
 void draw_frostfell_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    unsigned int seed = (unsigned int)map_x * 97u + (unsigned int)map_y * 61u;
-    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){220, 229, 238, 255});
-    fill_rect(r, x + 2 + (int)(seed % 5u), y + 4, 12, 2, (SDL_Color){244, 248, 252, 255});
-    fill_rect(r, x + 6, y + 14 + (int)(seed % 3u), 14, 2, (SDL_Color){180, 199, 218, 255});
-    if (seed % 4u == 0u) {
-        fill_rect(r, x + 17, y + 8, 2, 2, (SDL_Color){255, 255, 255, 255});
+    int wx = map_x * TILE_SIZE;
+    int wy = map_y * TILE_SIZE;
+    unsigned int seed = dragonspine_noise(map_x, map_y);
+    int shade = dragonspine_shade(wx, wy, 96, 72) / 64;
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){217 + shade * 3, 229 + shade * 2, 239 + shade, 255});
+    // The mountain renderer's clipped patches also let these wind drifts
+    // continue across snow tiles without a visible tile-sized repeat.
+    for (int gy = wy / 38 - 1; gy <= (wy + TILE_SIZE) / 38; gy++) {
+        for (int gx = wx / 76 - 1; gx <= (wx + TILE_SIZE) / 76; gx++) {
+            unsigned int drift = dragonspine_noise(gx, gy);
+            int px = gx * 76 + (int)(drift % 30u) - wx;
+            int py = gy * 38 + (int)((drift >> 8) % 23u) - wy;
+            int width = 34 + (int)((drift >> 16) % 25u);
+            for (int row = 0; row < 7; row++) {
+                int inset = abs(row - 3) * abs(row - 3);
+                dragonspine_patch(r, tile_x, tile_y, px + inset, py + row, width - inset * 2, 1,
+                    row < 4 ? (SDL_Color){239, 246, 250, 255} : (SDL_Color){199, 216, 232, 255});
+            }
+        }
     }
-    if (seed % 7u == 0u) {
-        fill_rect(r, x + 4, y + 19, 5, 1, (SDL_Color){150, 174, 200, 255});
+    if (seed % 31u == 0u) {
+        int px = x + 5 + (int)((seed >> 8) % 10u);
+        int py = y + 8 + (int)((seed >> 16) % 9u);
+        fill_rect(r, px + 1, py, 5, 2, (SDL_Color){244, 249, 252, 255});
+        fill_rect(r, px, py + 2, 7, 2, (SDL_Color){142, 167, 190, 255});
+        fill_rect(r, px + 2, py + 4, 4, 1, (SDL_Color){186, 205, 222, 255});
+    } else if (seed % 43u == 0u) {
+        for (int step = 0; step < 9; step++) {
+            fill_rect(r, x + 6 + step, y + 10 + step / 3, 1, 1, (SDL_Color){120, 126, 132, 255});
+        }
+        fill_rect(r, x + 10, y + 9, 1, 3, (SDL_Color){120, 126, 132, 255});
+        fill_rect(r, x + 7, y + 10, 5, 1, (SDL_Color){249, 252, 254, 255});
     }
 }
 
-// Mostly glacier ice, with the occasional snow-laden pine.
-void draw_frostfell_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+static void draw_frostfell_pine(Renderer *r, int x, int y, unsigned int seed) {
+    int height = 16 + (int)(seed % 6u);
+    int cx = x + 10 + (int)((seed >> 8) % 5u);
+    int top = y + 22 - height;
+    fill_rect(r, cx - 5, y + 21, 12, 2, (SDL_Color){109, 155, 180, 255});
+    fill_rect(r, cx - 1, y + 18, 3, 5, (SDL_Color){83, 70, 61, 255});
+    for (int row = 0; row < height - 2; row++) {
+        int width = 1 + row * 8 / height;
+        int tier = row % 6;
+        width += tier >= 3 ? 2 : 0;
+        fill_rect(r, cx - width, top + row, width * 2 + 1, 1, (SDL_Color){37, 74, 85, 255});
+        fill_rect(r, cx - width, top + row, width, 1, (SDL_Color){56, 104, 112, 255});
+        if (tier == 0 || tier == 1 || row == height - 3) {
+            int snow_width = width - (int)((seed >> (row % 16)) & 1u);
+            fill_rect(r, cx - width, top + row, snow_width * 2 + 1, 1, (SDL_Color){239, 247, 252, 255});
+        }
+    }
+}
+
+// Connected glacier shelves: shade the whole formation, exposing cliff
+// faces only where the neighboring tile is open terrain.
+void draw_frostfell_wall(Renderer *r, const Map *map, int tile_x, int tile_y, int map_x, int map_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    unsigned int seed = (unsigned int)map_x * 43u + (unsigned int)map_y * 79u;
-    SDL_Color snow = {236, 243, 249, 255};
-    if (seed % 5u == 0u) {
-        SDL_Color pine = {42, 78, 86, 255};
-        draw_frostfell_floor(r, tile_x, tile_y, map_x, map_y);
-        fill_rect(r, x + 10, y + 18, 4, 6, (SDL_Color){74, 55, 42, 255});
-        fill_rect(r, x + 4, y + 12, 16, 7, pine);
-        fill_rect(r, x + 6, y + 6, 12, 7, pine);
-        fill_rect(r, x + 9, y + 1, 6, 6, pine);
-        fill_rect(r, x + 4, y + 12, 16, 2, snow);
-        fill_rect(r, x + 6, y + 6, 12, 2, snow);
-        fill_rect(r, x + 9, y + 1, 6, 2, snow);
+    int wx = map_x * TILE_SIZE;
+    int wy = map_y * TILE_SIZE;
+    unsigned int seed = dragonspine_noise(map_x, map_y);
+    int north = map_y > 0 && map->tiles[map_y - 1][map_x] != TILE_FROST_WALL;
+    int south = map_y < MAP_H - 1 && map->tiles[map_y + 1][map_x] != TILE_FROST_WALL;
+    int west = map_x > 0 && map->tiles[map_y][map_x - 1] != TILE_FROST_WALL;
+    int east = map_x < MAP_W - 1 && map->tiles[map_y][map_x + 1] != TILE_FROST_WALL;
+    SDL_Rect patches[6][64];
+    int counts[6] = {0};
+    for (int py = 0; py < TILE_SIZE; py += 3) {
+        for (int px = 0; px < TILE_SIZE; px += 3) {
+            int shade = (dragonspine_shade(wx + px, wy + py, 90, 66) * 3 +
+                dragonspine_shade(wx + px, wy + py, 24, 33)) / 171;
+            patches[shade][counts[shade]++] = (SDL_Rect){x + px, y + py, 3, 3};
+        }
+    }
+    for (int shade = 0; shade < 6; shade++) {
+        if (counts[shade] > 0) {
+            SDL_SetRenderDrawColor(r->sdl, 118 + shade * 16, 171 + shade * 11, 202 + shade * 9, 255);
+            SDL_RenderFillRects(r->sdl, patches[shade], counts[shade]);
+        }
+    }
+    SDL_Color snow = {238, 247, 251, 255};
+    for (int step = 0; step < TILE_SIZE; step += 2) {
+        int depth = 2 + dragonspine_shade(wx + step, wy, 12, 18) / 70;
+        if (north) {
+            fill_rect(r, x + step, y, 2, depth + 1, (SDL_Color){92, 145, 180, 255});
+            fill_rect(r, x + step, y + 1, 2, depth, snow);
+        }
+        if (south) {
+            int face = 7 + dragonspine_shade(wx + step, wy + TILE_SIZE, 18, 12) / 52;
+            fill_rect(r, x + step, y + TILE_SIZE - face, 2, face, (SDL_Color){62, 112, 151, 255});
+            fill_rect(r, x + step, y + TILE_SIZE - face + 2, 2, face / 2, (SDL_Color){91, 146, 181, 255});
+            fill_rect(r, x + step, y + TILE_SIZE - face, 2, 2, snow);
+            unsigned int icicle = dragonspine_noise((wx + step) / 7, map_y);
+            if (icicle % 3u == 0u && (wx + step) % 7 < 2) {
+                int length = 2 + (int)((icicle >> 8) % 4u);
+                fill_rect(r, x + step, y + TILE_SIZE - face + 2, 1, length, (SDL_Color){180, 222, 239, 255});
+            }
+            fill_rect(r, x + step, y + TILE_SIZE - 2, 2, 2, (SDL_Color){45, 87, 124, 255});
+        }
+        if (west) {
+            fill_rect(r, x, y + step, depth + 1, 2, (SDL_Color){220, 238, 246, 255});
+        }
+        if (east) {
+            fill_rect(r, x + TILE_SIZE - depth - 1, y + step, depth + 1, 2, (SDL_Color){69, 119, 157, 255});
+            fill_rect(r, x + TILE_SIZE - depth - 2, y + step, 1, 2, snow);
+        }
+    }
+    for (int cy = 0; cy < 2; cy++) {
+        for (int cx = 0; cx < 2; cx++) {
+            if ((cy == 0 ? north : south) && (cx == 0 ? west : east)) {
+                fill_rect(r, x + cx * (TILE_SIZE - 3), y + cy * (TILE_SIZE - 3), 3, 3,
+                    (SDL_Color){217, 229, 239, 255});
+            }
+        }
+    }
+    // Broad noise groups pines into stands rather than a regular scatter.
+    if (!south && dragonspine_shade(wx, wy, 96, 72) > 142 && seed % 3u != 0u) {
+        draw_frostfell_pine(r, x, y, seed);
+    }
+}
+
+// Decorative expedition traces stay on safe snow and cannot become pickups.
+void draw_frostfell_details(Renderer *r, const Map *map, int tx, int ty, int mx, int my) {
+    if (map->tiles[my][mx] != TILE_FROST_FLOOR) {
         return;
     }
-    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){88, 132, 168, 255});
-    fill_rect(r, x + 1, y + 1, 22, 7, (SDL_Color){148, 194, 224, 255});
-    fill_rect(r, x + 2, y + 1, 15, 2, snow);
-    fill_rect(r, x + 3, y + 11, 18, 4, (SDL_Color){116, 164, 198, 255});
-    fill_rect(r, x + 6, y + 18, 15, 3, (SDL_Color){58, 96, 132, 255});
-    if (seed % 3u == 0u) {
-        fill_rect(r, x + 14, y + 9, 1, 8, (SDL_Color){206, 232, 246, 255});
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    unsigned int seed = dragonspine_noise(mx, my);
+    for (int dy = -2; dy <= 2; dy++) {
+        for (int dx = -2; dx <= 2; dx++) {
+            int qx = mx + dx;
+            int qy = my + dy;
+            if (qx < 0 || qy < 0 || qx >= MAP_W || qy >= MAP_H ||
+                (map->tiles[qy][qx] != TILE_FROST_JOURNAL && map->tiles[qy][qx] != TILE_NPC_FROST_SURVIVOR)) {
+                continue;
+            }
+            if (dy == 0 || dx == 0) {
+                for (int step = 0; step < 3; step++) {
+                    int px = x + (dy == 0 ? 4 + step * 7 : 9 + (step % 2) * 4);
+                    int py = y + (dx == 0 ? 4 + step * 7 : 9 + (step % 2) * 4);
+                    fill_rect(r, px, py, 2, 3, (SDL_Color){169, 194, 215, 255});
+                    fill_rect(r, px, py, 1, 1, (SDL_Color){204, 222, 235, 255});
+                }
+            } else if (seed % 3u == 0u) {
+                fill_rect(r, x + 6, y + 10, 11, 7, (SDL_Color){111, 89, 72, 255});
+                fill_rect(r, x + 7, y + 11, 9, 1, (SDL_Color){166, 139, 108, 255});
+                fill_rect(r, x + 9, y + 11, 1, 5, (SDL_Color){69, 65, 65, 255});
+                fill_rect(r, x + 14, y + 11, 1, 5, (SDL_Color){69, 65, 65, 255});
+                fill_rect(r, x + 5, y + 9, 9, 3, (SDL_Color){242, 249, 252, 255});
+                fill_rect(r, x + 9, y + 16, 10, 3, (SDL_Color){224, 237, 246, 255});
+            }
+            return;
+        }
     }
 }
 
@@ -4603,17 +4721,72 @@ void draw_desert_edge(Renderer *r, int tx, int ty, int mx, int my) {
     fill_rect(r, x + 19, y + 13, 5, 3, (SDL_Color){176, 57, 37, 255});
 }
 
-// Clear lake ice, glossier and bluer than the snow around it.
-void draw_frostfell_lake(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+static void draw_frostfell_sheet(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int slick) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    unsigned int seed = (unsigned int)map_x * 71u + (unsigned int)map_y * 37u;
-    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){178, 210, 234, 255});
-    fill_rect(r, x + 3, y + 3 + (int)(seed % 4u), 9, 2, (SDL_Color){230, 243, 252, 255});
-    fill_rect(r, x + 13, y + 16, 8, 1, (SDL_Color){138, 180, 214, 255});
-    if (seed % 3u == 0u) {
-        fill_rect(r, x + 6, y + 12, 1, 7, (SDL_Color){138, 180, 214, 255});
-        fill_rect(r, x + 7, y + 18, 5, 1, (SDL_Color){138, 180, 214, 255});
+    int wx = map_x * TILE_SIZE;
+    int wy = map_y * TILE_SIZE;
+    int shade = dragonspine_shade(wx, wy, 72, 60) / 48;
+    SDL_Color base = slick ? (SDL_Color){139 + shade * 3, 207 + shade * 2, 216 + shade, 255} :
+        (SDL_Color){159 + shade * 3, 199 + shade * 2, 225 + shade * 2, 255};
+    SDL_Color crack = slick ? (SDL_Color){112, 181, 194, 255} : (SDL_Color){125, 170, 205, 255};
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, base);
+    for (int gy = wy / 60 - 1; gy <= (wy + TILE_SIZE) / 60 + 1; gy++) {
+        for (int gx = wx / 72 - 1; gx <= (wx + TILE_SIZE) / 72; gx++) {
+            unsigned int seed = dragonspine_noise(gx + 17, gy + 29);
+            int px = gx * 72 + (int)(seed % 22u) - wx;
+            int py = gy * 60 + (int)((seed >> 8) % 25u) - wy;
+            int dir = seed & 1u ? 1 : -1;
+            for (int step = 0; step < 52; step++) {
+                int bend = step / 19;
+                int cy = py + dir * (step / 2 + bend * 3);
+                dragonspine_patch(r, tile_x, tile_y, px + step, cy, 1, 1, crack);
+                if (step >= 23 && step < 38) {
+                    dragonspine_patch(r, tile_x, tile_y, px + 23 + (step - 23) / 2,
+                        py + dir * 14 - dir * (step - 23), 1, 1, crack);
+                }
+            }
+            // A few slanted reflections, spaced across the sheet rather
+            // than stamped once into every tile.
+            if (seed % 3u == 0u || slick) {
+                for (int step = 0; step < 12; step++) {
+                    dragonspine_patch(r, tile_x, tile_y, px + 13 + step * 2,
+                        py + 24 - step, 2, 1, (SDL_Color){224, 244, 250, 255});
+                }
+            }
+        }
+    }
+}
+
+// Clear lake ice stays blue; slick ice uses a separate teal palette.
+void draw_frostfell_lake(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    draw_frostfell_sheet(r, tile_x, tile_y, map_x, map_y, 0);
+}
+
+void draw_frostfell_bank(Renderer *r, int tx, int ty, int mx, int my, unsigned int edges) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    for (int step = 0; step < TILE_SIZE; step++) {
+        int horizontal = 2 + dragonspine_shade(mx * TILE_SIZE + step, my * TILE_SIZE, 12, 18) / 65;
+        int vertical = 2 + dragonspine_shade(mx * TILE_SIZE, my * TILE_SIZE + step, 18, 12) / 65;
+        SDL_Color snow = {232, 243, 249, 255};
+        SDL_Color rim = {115, 162, 197, 255};
+        if (edges & FROST_EDGE_NORTH) {
+            fill_rect(r, x + step, y, 1, horizontal, snow);
+            fill_rect(r, x + step, y + horizontal, 1, 1, rim);
+        }
+        if (edges & FROST_EDGE_SOUTH) {
+            fill_rect(r, x + step, y + TILE_SIZE - horizontal, 1, horizontal, snow);
+            fill_rect(r, x + step, y + TILE_SIZE - horizontal - 1, 1, 1, rim);
+        }
+        if (edges & FROST_EDGE_WEST) {
+            fill_rect(r, x, y + step, vertical, 1, snow);
+            fill_rect(r, x + vertical, y + step, 1, 1, rim);
+        }
+        if (edges & FROST_EDGE_EAST) {
+            fill_rect(r, x + TILE_SIZE - vertical, y + step, vertical, 1, snow);
+            fill_rect(r, x + TILE_SIZE - vertical - 1, y + step, 1, 1, rim);
+        }
     }
 }
 
@@ -4623,10 +4796,18 @@ void draw_frostfell_lake_hole(Renderer *r, int tile_x, int tile_y, int map_x, in
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
     draw_frostfell_lake(r, tile_x, tile_y, map_x, map_y);
-    fill_rect(r, x + 3, y + 5, 18, 14, (SDL_Color){232, 244, 252, 255});
-    fill_rect(r, x + 5, y + 6, 14, 12, (SDL_Color){20, 42, 72, 255});
-    fill_rect(r, x + 4, y + 8, 16, 8, (SDL_Color){20, 42, 72, 255});
-    fill_rect(r, x + 8, y + 10, 6, 1, (SDL_Color){58, 98, 140, 255});
+    unsigned int seed = dragonspine_noise(map_x, map_y);
+    for (int row = -7; row <= 7; row++) {
+        int width = 9 - row * row / 9;
+        int shift = (int)((seed >> (row + 7)) & 1u);
+        fill_rect(r, x + 12 - width + shift, y + 12 + row, width * 2, 1, (SDL_Color){231, 246, 252, 255});
+        if (width > 2 && abs(row) < 6) {
+            fill_rect(r, x + 14 - width + shift, y + 12 + row, width * 2 - 4, 1, (SDL_Color){22, 48, 78, 255});
+        }
+    }
+    fill_rect(r, x + 7, y + 16, 9, 1, (SDL_Color){61, 104, 143, 255});
+    fill_rect(r, x + 4, y + 10, 2, 3, (SDL_Color){155, 205, 230, 255});
+    fill_rect(r, x + 16, y + 6, 3, 2, (SDL_Color){249, 253, 255, 255});
     if (!tentacle) {
         return;
     }
@@ -4643,21 +4824,7 @@ void draw_frostfell_lake_hole(Renderer *r, int tile_x, int tile_y, int map_x, in
 // Slick ice: a pale teal sheet with a diagonal glare, so it reads apart from
 // the snow, the bluer Kraken lake and the glacier walls.
 void draw_frostfell_ice(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    unsigned int seed = (unsigned int)map_x * 59u + (unsigned int)map_y * 83u;
-    SDL_Color glare = {244, 253, 255, 255};
-    SDL_Color sheen = {104, 184, 196, 255};
-    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){150, 218, 222, 255});
-    int gx = x + 3 + (int)(seed % 4u);
-    for (int step = 0; step < 4; step++) {
-        fill_rect(r, gx + step * 3, y + 15 - step * 3, 3, 2, glare);
-        fill_rect(r, gx + step * 3, y + 17 - step * 3, 3, 1, sheen);
-    }
-    if (seed % 3u == 0u) {
-        fill_rect(r, x + 17, y + 17, 2, 2, glare);
-        fill_rect(r, x + 5, y + 5, 2, 2, glare);
-    }
+    draw_frostfell_sheet(r, tile_x, tile_y, map_x, map_y, 1);
 }
 
 // Thin ice: greyer and darker than the snow it bridges, split by a fracture
