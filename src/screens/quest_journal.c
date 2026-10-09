@@ -14,9 +14,10 @@ typedef struct {
     int reward_gold;
     int reward_score;
     const char *reward_item;
+    const char *objective_areas[4];
 } QuestDefinition;
 
-static const QuestDefinition quest_definitions[15] = {
+static const QuestDefinition quest_definitions[16] = {
     {
         "The Broken Seals", "Elowen",
         "Restore three guarded seals in Oakhaven's dungeon.",
@@ -126,10 +127,22 @@ static const QuestDefinition quest_definitions[15] = {
         "Guide your fellow prisoner to central Ridgeshire.",
         {"Find the secret tunnel", "Escort Tomas to Ridgeshire"},
         "Escape Tunnel", {1, 1, 0, 0}, ESCAPE_REWARD_GOLD, ESCAPE_REWARD_SCORE
+    },
+    {
+        "Watchfires of Ridgeshire", "Marshal Veyra",
+        "Clear the defenders and restore three watchfires.",
+        "Return to Veyra in Ridgeshire's Town Hall.",
+        {"Restore southern watchfire", "Restore northern watchfire", "Restore eastern watchfire"},
+        "Ridgeshire approaches", {WATCHFIRE_MOUNTAINS_LEVEL, WATCHFIRE_ASHEN_LEVEL, WATCHFIRE_DRAGONSPINE_LEVEL},
+        WATCHFIRE_REWARD_GOLD, WATCHFIRE_REWARD_SCORE, NULL,
+        {"Goblin Mountains", "Ashen Hollow", "Dragonspine"}
     }
 };
 
 static int quest_state(const GameState *g, int quest) {
+    if (quest == 15) {
+        return g->watchfire_quest_state;
+    }
     if (quest == 0) {
         return g->elowen_quest_state;
     }
@@ -176,6 +189,9 @@ static int quest_state(const GameState *g, int quest) {
 }
 
 static int quest_progress(const GameState *g, int quest) {
+    if (quest == 15) {
+        return g->watchfire_quest_progress;
+    }
     if (quest == 0) {
         return g->elowen_seals_restored;
     }
@@ -238,7 +254,7 @@ int quest_journal_count(const GameState *g, QuestJournalTab tab) {
         return JOURNAL_BOSS_COUNT;
     }
     int count = 0;
-    for (int quest = 0; quest < 15; quest++) {
+    for (int quest = 0; quest < 16; quest++) {
         if (quest_in_tab(quest_state(g, quest), tab)) {
             count++;
         }
@@ -275,7 +291,7 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
         return 0;
     }
     int visible_index = 0;
-    for (int quest = 0; quest < 15; quest++) {
+    for (int quest = 0; quest < 16; quest++) {
         int state = quest_state(g, quest);
         if (!quest_in_tab(state, tab)) {
             continue;
@@ -299,6 +315,7 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
             entry->objectives[objective] =
                 definition->objectives[objective];
             entry->stages[objective] = definition->stages[objective];
+            entry->objective_areas[objective] = definition->objective_areas[objective] ? definition->objective_areas[objective] : definition->area;
             entry->objective_complete[objective] =
                 (progress & (1 << objective)) != 0;
         }
