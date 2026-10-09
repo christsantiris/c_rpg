@@ -2778,6 +2778,11 @@ static void draw_frostfell_enemy(Renderer *r, int tile_x, int tile_y, EnemyType 
 // A pale kraken surfacing from its lake. It spills past its own tile so the
 // boss reads larger than ordinary creatures.
 static void draw_polar_kraken(Renderer *r, int tile_x, int tile_y) {
+    if (r->polar_kraken_texture) {
+        SDL_Rect destination = {tile_x * TILE_SIZE - 36, tile_y * TILE_SIZE - 48, 96, 96};
+        SDL_RenderCopy(r->sdl, r->polar_kraken_texture, NULL, &destination);
+        return;
+    }
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
     SDL_Color outline = {40, 34, 64, 255};
