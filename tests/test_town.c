@@ -40,7 +40,7 @@ void test_king_roads_and_castle(void) {
     g.player.y = TOWN3_KING_GATE_Y;
     action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 1, TOWN3_KING_GATE_Y});
     ASSERT("Rosemoor east gate enters Crown Road East at its west end",
-        g.location == LOCATION_CROWNROAD && g.enemy_count == MAX_ENEMIES &&
+        g.location == LOCATION_CROWNROAD && g.enemy_count == CROWNROAD_ENEMIES &&
         g.player.x == 1 && g.player.y == CROWNROAD_Y);
     int archers = 0;
     int horsemen = 0;
@@ -56,10 +56,12 @@ void test_king_roads_and_castle(void) {
             distinct &= g.enemies[i].x != g.enemies[j].x || g.enemies[i].y != g.enemies[j].y;
         }
     }
-    ASSERT("rotated road preserves its 30-enemy ambush on distinct walkable tiles",
-        archers == 8 && horsemen == 6 && open && distinct);
+    ASSERT("longer roads preserve the original enemy density and mix on distinct walkable tiles",
+        g.enemy_count == 30 * CROWNROAD_LENGTH_SCALE &&
+        archers == 8 * CROWNROAD_LENGTH_SCALE && horsemen == 6 * CROWNROAD_LENGTH_SCALE && open && distinct);
     ASSERT("Crown Road encounters span at least 140 tiles with enemies throughout",
-        CROWNROAD_W >= 140 && groups[0] >= 7 && groups[1] >= 7 && groups[2] >= 7);
+        CROWNROAD_W >= 140 && groups[0] >= 7 * CROWNROAD_LENGTH_SCALE &&
+        groups[1] >= 7 * CROWNROAD_LENGTH_SCALE && groups[2] >= 7 * CROWNROAD_LENGTH_SCALE);
     loaded = g;
     loaded.enemy_count = 0;
     int travel_turns = 0;
@@ -89,7 +91,7 @@ void test_king_roads_and_castle(void) {
     action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 1, CASTLE_ROAD_Y});
     ASSERT("castle east gate enters Crown Road West with independent enemies",
         g.location == LOCATION_KING_ROAD_WEST && g.player.x == 1 &&
-        g.enemy_count == MAX_ENEMIES && g.enemies[0].active);
+        g.enemy_count == CROWNROAD_ENEMIES && g.enemies[0].active);
     GameState ridgeshire = g;
     game_leave_crownroad(&ridgeshire, LOCATION_TOWN4);
     ASSERT("Ridgeshire has two guards flanking its open Crown Road West gate",

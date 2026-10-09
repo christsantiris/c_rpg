@@ -187,7 +187,7 @@ void test_jail(void) {
         loaded.jail_quest_state == 2 && loaded.map.tiles[JAIL_HATCH_Y][JAIL_HATCH_X] == TILE_JAIL_HATCH);
     reach_tunnel();
     ASSERT("walking onto the hatch enters one tunnel with Tomas and enemies", game.location == LOCATION_ESCAPE_TUNNEL &&
-        game.level == 1 && game.enemy_count == MAX_ENEMIES && jail_prisoner_at(&game, 1, 14) &&
+        game.level == 1 && game.enemy_count == NON_ROAD_ENEMY_LIMIT && jail_prisoner_at(&game, 1, 14) &&
         quest_journal_get_entry(&game, QUEST_TAB_ACTIVE, 0, &entry) && entry.objective_complete[0] && !entry.objective_complete[1]);
     int open = 1;
     int archers = 0;
@@ -254,7 +254,7 @@ void test_jail(void) {
     }
     ASSERT("old tunnel saves gain the deeper passage without moving Tomas or respawning defeated enemies",
         write_fixture(legacy) && load_game(&loaded, JAIL_TEST_SLOT) &&
-        loaded.enemy_count == MAX_ENEMIES && loaded.player.x == game.player.x && loaded.prisoner_x == game.prisoner_x &&
+        loaded.enemy_count == NON_ROAD_ENEMY_LIMIT && loaded.player.x == game.player.x && loaded.prisoner_x == game.prisoner_x &&
         loaded.prisoner_y == game.prisoner_y && loaded.enemies[0].hp == 7 && !loaded.enemies[1].active &&
         loaded.floor_items[0].active && loaded.floor_items[0].x == 3 && loaded.map.tiles[14][3] == TILE_ITEM &&
         map_is_explored(&loaded.map, 6, 14) && !map_is_explored(&loaded.map, 90, 8) &&
@@ -265,7 +265,7 @@ void test_jail(void) {
     game.enemies[13].hp = 9;
     ASSERT("saving an extended tunnel keeps new enemy damage and defeats without rebuilding it again",
         save_game(&game, JAIL_TEST_SLOT) && load_game(&loaded, JAIL_TEST_SLOT) &&
-        loaded.enemy_count == MAX_ENEMIES && !loaded.enemies[12].active && loaded.enemies[13].hp == 9 &&
+        loaded.enemy_count == NON_ROAD_ENEMY_LIMIT && !loaded.enemies[12].active && loaded.enemies[13].hp == 9 &&
         memcmp(loaded.map.tiles, game.map.tiles, sizeof(game.map.tiles)) == 0);
     game.prisoner_x = 3;
     game.prisoner_y = 14;

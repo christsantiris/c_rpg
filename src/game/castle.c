@@ -239,7 +239,7 @@ static int occupied(const GameState *g, int x, int y) {
 }
 
 static Enemy *add_enemy(GameState *g, EnemyType type, int x, int y) {
-    if (g->enemy_count >= MAX_ENEMIES || occupied(g, x, y)) {
+    if (g->enemy_count >= NON_ROAD_ENEMY_LIMIT || occupied(g, x, y)) {
         return NULL;
     }
     int n = type - ENEMY_OATHBOUND_SOLDIER;
@@ -336,7 +336,7 @@ int castle_migrate_encounters(GameState *g) {
             continue;
         }
         floor->map = cache->map;
-        memcpy(floor->enemies, cache->enemies, sizeof(floor->enemies));
+        memcpy(floor->enemies, cache->enemies, sizeof(cache->enemies));
         floor->enemy_count = cache->enemy_count;
         memcpy(floor->floor_items, g->castle_loot[i], sizeof(floor->floor_items));
         floor->floor_item_count = g->castle_loot_count[i];
@@ -370,7 +370,7 @@ void castle_store(GameState *g) {
     int i = g->level - 1;
     LevelCache *c = &g->castle_cache[i];
     c->map = g->map;
-    memcpy(c->enemies, g->enemies, sizeof(g->enemies));
+    memcpy(c->enemies, g->enemies, sizeof(c->enemies));
     c->enemy_count = g->enemy_count;
     c->level_cleared = g->level_cleared;
     c->valid = 1;
@@ -421,7 +421,7 @@ void castle_enter(GameState *g, int level) {
     LevelCache *c = &g->castle_cache[level - 1];
     if (c->valid) {
         g->map = c->map;
-        memcpy(g->enemies, c->enemies, sizeof(g->enemies));
+        memcpy(g->enemies, c->enemies, sizeof(c->enemies));
         g->enemy_count = c->enemy_count;
         g->level_cleared = c->level_cleared;
     } else {
@@ -478,7 +478,7 @@ void castle_leave(GameState *g, int town) {
                 herald++;
             }
         }
-        memcpy(c->enemies, g->enemies, sizeof(g->enemies));
+        memcpy(c->enemies, g->enemies, sizeof(c->enemies));
         c->enemy_count = g->enemy_count;
         c->level_cleared = 0;
         memcpy(g->floor_items, g->castle_loot[i], sizeof(g->floor_items));

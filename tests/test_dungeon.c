@@ -1318,7 +1318,7 @@ void test_dungeon_return_stairs_migration(void) {
         g.map.tiles[y][x] = old_stair;
         LevelCache *cache = &g.level_cache[DUNGEON_DEPTH - 1];
         cache->map = g.map;
-        memcpy(cache->enemies, g.enemies, sizeof(g.enemies));
+        memcpy(cache->enemies, g.enemies, sizeof(cache->enemies));
         cache->enemy_count = g.enemy_count;
         cache->valid = 1;
         g.level_cache[0].valid = 1;
@@ -1446,7 +1446,7 @@ void test_lich_minions(void) {
     g.elowen_seals_restored = 7;
     LevelCache *cache = &g.level_cache[DUNGEON_DEPTH - 1];
     cache->map = g.map;
-    memcpy(cache->enemies, g.enemies, sizeof(g.enemies));
+    memcpy(cache->enemies, g.enemies, sizeof(cache->enemies));
     cache->enemy_count = g.enemy_count;
     cache->valid = 1;
     ASSERT("legacy boss floor fixture saves", save_old_dungeon(&g, 107));
@@ -1505,7 +1505,7 @@ void test_lich_minions(void) {
     enemies_spawn(&g);
     ASSERT("a defeated Lich King does not generate guards on a new expedition", lich_guard_count(g.enemies, g.enemy_count) == 0);
     g.level_cache[DUNGEON_DEPTH - 1].map = g.map;
-    memcpy(g.level_cache[DUNGEON_DEPTH - 1].enemies, g.enemies, sizeof(g.enemies));
+    memcpy(g.level_cache[DUNGEON_DEPTH - 1].enemies, g.enemies, sizeof(g.level_cache[DUNGEON_DEPTH - 1].enemies));
     g.level_cache[DUNGEON_DEPTH - 1].enemy_count = g.enemy_count;
     g.level_cache[DUNGEON_DEPTH - 1].valid = 1;
     ASSERT("completed dungeon fixture saves", save_old_dungeon(&g, 107));

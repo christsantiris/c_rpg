@@ -1,8 +1,13 @@
 #ifndef ENEMY_HEADER_H
 #define ENEMY_HEADER_H
 
-// The Crownroad fills every enemy slot; other areas stop at AREA_ENEMY_LIMIT.
-#define MAX_ENEMIES 30
+#include "map.h"
+
+// Road capacity scales with length; other areas retain their existing limits.
+#define NON_ROAD_ENEMY_LIMIT 30
+#define CROWNROAD_BASE_ENEMIES 30
+#define CROWNROAD_ENEMIES (CROWNROAD_BASE_ENEMIES * CROWNROAD_LENGTH_SCALE)
+#define MAX_ENEMIES CROWNROAD_ENEMIES
 #define AREA_ENEMY_LIMIT 15
 
 typedef enum {
