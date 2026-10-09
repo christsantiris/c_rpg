@@ -629,17 +629,16 @@ static void test_desert_lamp_quest(void) {
     g->enemies[0].hp--;
     int hp = g->enemies[0].hp;
     game_open_town_portal(g);
-    game_enter_town3(g);
-    g->player.x = TOWN_GUILD_DOOR_X;
-    g->player.y = TOWN_GUILD_DOOR_Y + 1;
-    action_resolve_player(g, (Action){ACTION_MOVE, TOWN_GUILD_DOOR_X, TOWN_GUILD_DOOR_Y});
-    ASSERT("Rosemoor's Guild doorway enters a safe hall with Zara and no inn NPCs",
-        g->location == LOCATION_GUILD && g->enemy_count == 0 &&
-        g->map.tiles[GUILD_ZARA_Y][GUILD_ZARA_X] == TILE_NPC_GUILD_SEEKER &&
-        !map_is_walkable(&g->map, GUILD_ZARA_X, GUILD_ZARA_Y) &&
-        g->map.tiles[GUILD_ORIN_Y][GUILD_ORIN_X] == TILE_NPC_ORIN);
-    g->player.x = GUILD_ZARA_X;
-    g->player.y = GUILD_ZARA_Y + 1;
+    game_enter_town2(g);
+    g->player.x = TOWN_INN_DOOR_X;
+    g->player.y = TOWN_INN_DOOR_Y + 1;
+    action_resolve_player(g, (Action){ACTION_MOVE, TOWN_INN_DOOR_X, TOWN_INN_DOOR_Y});
+    ASSERT("Stillbury's Inn houses Zara in an accessible position", g->location == LOCATION_INN && g->enemy_count == 0 &&
+        g->map.tiles[ZARA_INN_Y][ZARA_INN_X] == TILE_NPC_GUILD_SEEKER &&
+        !map_is_walkable(&g->map, ZARA_INN_X, ZARA_INN_Y) && map_is_walkable(&g->map, ZARA_INN_X, ZARA_INN_Y + 1) &&
+        g->map.tiles[ALDER_INN_Y][ALDER_INN_X] == TILE_NPC_ALDER);
+    g->player.x = ZARA_INN_X;
+    g->player.y = ZARA_INN_Y + 1;
     game_talk_to_guild_seeker(g);
     game_handle_quest_offer_key(g, SDL_SCANCODE_Y, 0);
     ASSERT("Zara assigns the lamp quest without resetting desert progress or its portal",
@@ -656,18 +655,18 @@ static void test_desert_lamp_quest(void) {
     game_talk_to_guild_seeker(g);
     const int slot = 99025;
     int saved = save_game(g, slot) && load_game(&desert_loaded, slot);
-    ASSERT("saving inside the Guild preserves the quest, NPC and desert portal",
-        saved && desert_loaded.location == LOCATION_GUILD && desert_loaded.sunscar_lamp_quest_state == 1 &&
-        desert_loaded.portal_active && desert_loaded.map.tiles[GUILD_ZARA_Y][GUILD_ZARA_X] == TILE_NPC_GUILD_SEEKER);
+    ASSERT("saving inside the Inn preserves the quest, NPC and desert portal",
+        saved && desert_loaded.location == LOCATION_INN && desert_loaded.sunscar_lamp_quest_state == 1 &&
+        desert_loaded.portal_active && desert_loaded.map.tiles[ZARA_INN_Y][ZARA_INN_X] == TILE_NPC_GUILD_SEEKER);
     if (saved) {
         *g = desert_loaded;
     }
     g->player.x = 20;
     g->player.y = 21;
     action_resolve_player(g, (Action){ACTION_MOVE, 20, 22});
-    ASSERT("leaving the Guild returns outside its Rosemoor door",
-        g->location == LOCATION_TOWN3 && g->player.x == TOWN_GUILD_DOOR_X &&
-        g->player.y == TOWN_GUILD_DOOR_Y + 1);
+    ASSERT("leaving the Inn returns outside its Stillbury door",
+        g->location == LOCATION_TOWN2 && g->player.x == TOWN_INN_DOOR_X &&
+        g->player.y == TOWN_INN_DOOR_Y + 1);
     game_enter_town2(g);
     game_use_town_portal(g);
     game_refresh_quest_encounters(g);
@@ -713,8 +712,10 @@ static void test_desert_lamp_quest(void) {
     ASSERT("saving and revisiting after lamp pickup cannot spawn a second lamp",
         saved && g->sunscar_lamp_quest_state == 2 && count_desert_lamps(&g->map) == 0);
     game_return_to_town(g);
-    game_enter_town3(g);
-    game_enter_guild(g);
+    game_enter_town2(g);
+    game_enter_inn(g);
+    g->player.x = ZARA_INN_X;
+    g->player.y = ZARA_INN_Y + 1;
     int gold = g->gold;
     int score = g->score;
     game_talk_to_guild_seeker(g);

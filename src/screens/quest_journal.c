@@ -27,7 +27,7 @@ static const QuestDefinition quest_definitions[15] = {
     {
         "Recover the Treasure Map", "Dain",
         "Recover the three Goblin Map Bearer fragments.",
-        "Return to Dain in Rosemoor's Adventurer's Guild.",
+        "Return to Dain in Ridgeshire's town center.",
         {"Defeat Archer Map Bearer", "Defeat Bomber Map Bearer",
             "Defeat Shaman Map Bearer"},
         "Mountains", {7, 6, 5}, 60, 400
@@ -79,7 +79,7 @@ static const QuestDefinition quest_definitions[15] = {
     {
         "The Lost Magic Lamp", "Zara",
         "Recover a magic lamp from Sunscar Wastes",
-        "and return it to the Guild in Rosemoor.",
+        "and return it to Zara in Stillbury's Inn.",
         {"Recover the magic lamp", "", ""},
         "Sunscar Wastes", {DESERT_LAMP_LEVEL, 0, 0}, 80, 600
     },
@@ -109,7 +109,7 @@ static const QuestDefinition quest_definitions[15] = {
     {
         "The Stolen Moonseed", "Botanist Liora",
         "Recover the Moonseed, gather moonwater, and plant",
-        "the ancient circle. Return to Stillbury's Inn.",
+        "the ancient circle. Return to Rosemoor's town center.",
         {"Recover the Moonseed", "Gather moonwater", "Restore the planting circle"},
         "Moonveil Gardens", {2, 3, 4}, MOONVEIL_REWARD_GOLD, MOONVEIL_REWARD_SCORE
     },

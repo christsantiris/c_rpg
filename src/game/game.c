@@ -3738,16 +3738,16 @@ int game_interact_emberforge(GameState *g) {
 }
 
 void game_talk_to_liora(GameState *g) {
-    if (g->location != LOCATION_INN || abs(g->player.x - LIORA_INN_X) > 1 || abs(g->player.y - LIORA_INN_Y) > 1) {
+    if (g->location != LOCATION_TOWN3 || abs(g->player.x - LIORA_TOWN_X) > 1 || abs(g->player.y - LIORA_TOWN_Y) > 1) {
         return;
     }
     g->dialogue_active = 1;
-    g->dialogue_x = LIORA_INN_X;
-    g->dialogue_y = LIORA_INN_Y;
+    g->dialogue_x = LIORA_TOWN_X;
+    g->dialogue_y = LIORA_TOWN_Y;
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Botanist Liora");
     if (g->moonveil_quest_state == 0) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Fey stole Moonveil's last seed. Cross the swamp north to Rosemoor's west gate. Recover the seed on stage 2, moonwater on 3, and plant on 4. Return to Stillbury's Inn.");
+            "Fey stole Moonveil's last seed. Enter Moonveil through Rosemoor's west gate. Recover the seed on stage 2, moonwater on 3, and plant on 4. Return to Rosemoor's town center.");
     } else if (g->moonveil_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "I once tended Moonveil. Defeat the guards and press A beside the stage 2 seed pod and stage 3 spring, in either order. Plant and water the stage 4 circle, then return here for 90 gold.");
@@ -3833,7 +3833,7 @@ int game_interact_moonveil(GameState *g) {
         restore_moonveil_clearing(g, x, y);
         g->moonveil_quest_state = 2;
         push_message(g, "The tangled growth recedes and a Moonflower blooms!");
-        push_message(g, "Return to Botanist Liora in Stillbury's Inn.");
+        push_message(g, "Return to Botanist Liora in Rosemoor's town center.");
     }
     return 1;
 }
@@ -5373,12 +5373,12 @@ typedef struct {
 
 static const QuestOffer quest_offers[] = {
     {"Elowen", LOCATION_TAVERN, offsetof(GameState, elowen_quest_state), 0, "Quest assigned: The Broken Seals."},
-    {"Dain", LOCATION_GUILD, offsetof(GameState, dain_quest_state), 0, "Assigned: Recover the Treasure Map."},
+    {"Dain", LOCATION_TOWN4, offsetof(GameState, dain_quest_state), 0, "Assigned: Recover the Treasure Map."},
     {"Alder", LOCATION_INN, offsetof(GameState, alder_quest_state), 0, "Assigned: The Lost Wardens."},
     {"Mara", LOCATION_TAVERN, offsetof(GameState, mara_quest_state), 0, "Assigned: Relight the Drowned Beacons."},
     {"Rook", LOCATION_INN, offsetof(GameState, rook_quest_state), 0, "Assigned: The Ivory Rook."},
     {"Bram", LOCATION_INN, offsetof(GameState, innkeeper_quest_state), 0, "Assigned: Bring Mira Home."},
-    {"Zara", LOCATION_GUILD, offsetof(GameState, sunscar_lamp_quest_state), 0, "Assigned: The Lost Magic Lamp."},
+    {"Zara", LOCATION_INN, offsetof(GameState, sunscar_lamp_quest_state), 0, "Assigned: The Lost Magic Lamp."},
     {"Ilya", LOCATION_TAVERN, offsetof(GameState, dragon_treasure_quest_state), 0, "Assigned: The Dragon's Hoard."},
     {"Nahla", LOCATION_ISLAND, offsetof(GameState, temple_treasure_state), 0, "Quest assigned: The Buried Sun."},
     {"Steward Hadrin", LOCATION_TOWN_HALL, offsetof(GameState, emberforge_quest_state), 0, "Assigned: Reclaim the Emberforge. See your quest journal."},
@@ -5386,8 +5386,8 @@ static const QuestOffer quest_offers[] = {
         "Assigned: The Silent Expedition. Recover the journal on Frostfell stage 2 and rescue the surveyor on stage 4."},
     {"Surveyor Orin", LOCATION_GUILD, offsetof(GameState, glassdeep_quest_state), 0,
         "Assigned: The Broken Resonance. Restore three resonators in Glassdeep Caverns."},
-    {"Botanist Liora", LOCATION_INN, offsetof(GameState, moonveil_quest_state), 0,
-        "Assigned: The Stolen Moonseed. Restore Moonveil Gardens, then return to Liora in Stillbury's Inn."},
+    {"Botanist Liora", LOCATION_TOWN3, offsetof(GameState, moonveil_quest_state), 0,
+        "Assigned: The Stolen Moonseed. Restore Moonveil Gardens, then return to Liora in Rosemoor's town center."},
     {"Brother Oswin", LOCATION_TOWN_HALL, offsetof(GameState, catacombs_quest_state), 0,
         "Assigned: Rest for the Forgotten. See your quest journal."},
     {"Tomas", LOCATION_JAIL, offsetof(GameState, jail_quest_state), 1,
@@ -5493,13 +5493,13 @@ void game_talk_to_royal_guard(GameState *g, int x, int y) {
 }
 
 void game_talk_to_guild_seeker(GameState *g) {
-    if (g->location != LOCATION_GUILD) {
+    if (g->location != LOCATION_INN || abs(g->player.x - ZARA_INN_X) > 1 || abs(g->player.y - ZARA_INN_Y) > 1) {
         return;
     }
     g->dialogue_active = 1;
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Zara");
-    g->dialogue_x = GUILD_ZARA_X;
-    g->dialogue_y = GUILD_ZARA_Y;
+    g->dialogue_x = ZARA_INN_X;
+    g->dialogue_y = ZARA_INN_Y;
     if (g->sunscar_lamp_quest_state == 0) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "Recover a magic lamp from Sunscar Wastes level 4. Enter through "
@@ -5508,17 +5508,17 @@ void game_talk_to_guild_seeker(GameState *g) {
     } else if (g->sunscar_lamp_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "The magic lamp lies in the last clearing of Sunscar Wastes level 4. "
-            "Return it to me at the Guild in Rosemoor.");
+            "Return it to me at the Inn in Stillbury.");
     } else if (g->sunscar_lamp_quest_state == 2) {
         g->sunscar_lamp_quest_state = 3;
         g->gold += 80;
         g->score += 600;
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "You found the lamp! The Guild will keep it safe. Here are your 80 gold.");
+            "You found the lamp! I will keep it safe. Here are your 80 gold.");
         push_message(g, "Completed: The Lost Magic Lamp. 80 gold awarded.");
     } else {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "The magic lamp is safe with the Guild. Thank you for recovering it.");
+            "The magic lamp is safe with me. Thank you for recovering it.");
     }
 }
 
@@ -5530,7 +5530,7 @@ void game_collect_desert_lamp(GameState *g) {
     }
     g->map.tiles[g->player.y][g->player.x] = TILE_DESERT_FLOOR;
     g->sunscar_lamp_quest_state = 2;
-    push_message(g, "Magic lamp recovered. Return to Zara at the Guild in Rosemoor.");
+    push_message(g, "Magic lamp recovered. Return to Zara in Stillbury's Inn.");
 }
 
 void game_talk_to_dragon_seeker(GameState *g) {
@@ -5630,17 +5630,17 @@ void game_talk_to_elowen(GameState *g) {
 }
 
 void game_talk_to_dain(GameState *g) {
-    if (g->location != LOCATION_GUILD || abs(g->player.x - GUILD_DAIN_X) > 1 || abs(g->player.y - GUILD_DAIN_Y) > 1) {
+    if (g->location != LOCATION_TOWN4 || abs(g->player.x - DAIN_TOWN_X) > 1 || abs(g->player.y - DAIN_TOWN_Y) > 1) {
         return;
     }
     g->dialogue_active = 1;
     strncpy(g->dialogue_speaker, "Dain", MAX_SPEAKER_LEN - 1);
     g->dialogue_speaker[MAX_SPEAKER_LEN - 1] = '\0';
-    g->dialogue_x = GUILD_DAIN_X;
-    g->dialogue_y = GUILD_DAIN_Y;
+    g->dialogue_x = DAIN_TOWN_X;
+    g->dialogue_y = DAIN_TOWN_Y;
     if (g->dain_quest_state == 0) {
         strncpy(g->dialogue_text,
-            "Take Crown Road West to Ridgeshire, then enter its south mountain gate. Map Bearers hold fragments on stages 7, 6, and 5 before the Goblin King. Return to Rosemoor's Adventurer's Guild.",
+            "Enter Ridgeshire's south mountain gate. Map Bearers hold fragments on stages 7, 6, and 5 before the Goblin King. Return to Ridgeshire's town center.",
             MAX_DIALOGUE_LEN - 1);
         g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
         return;
@@ -5653,7 +5653,7 @@ void game_talk_to_dain(GameState *g) {
             }
         }
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "You have recovered %d of 3 fragments. Search mountain stages 7, 6, and 5 from Ridgeshire. After the Goblin King, use the shortcut and town roads home, or fight through to Oakhaven. Return here to the Guild.",
+            "You have recovered %d of 3 fragments. Search mountain stages 7, 6, and 5 from Ridgeshire. After the Goblin King, use the shortcut and town roads home, or fight through to Oakhaven. Return here to Ridgeshire's town center.",
             defeated);
         char status[MAX_MESSAGE_LEN];
         snprintf(status, sizeof(status),
@@ -5702,7 +5702,7 @@ void game_record_dain_kill(GameState *g, EnemyType type) {
     push_message(g, status);
     if ((g->dain_map_fragments & 7) == 7) {
         g->dain_quest_state = 2;
-        push_message(g, "Treasure map complete. Return to Dain in Rosemoor's Adventurer's Guild.");
+        push_message(g, "Treasure map complete. Return to Dain in Ridgeshire's town center.");
     }
 }
 

@@ -636,7 +636,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 113);
+    cJSON_AddNumberToObject(root, "save_version", 114);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -1707,6 +1707,57 @@ static int migrate_region_routes(GameState *g, Location region) {
         cache[MAX_REGION_DEPTH - 1].valid = 0;
     }
     return 1;
+}
+
+// Version 114 relocates quest givers without regenerating maps or quest progress.
+static void migrate_quest_giver_locations(GameState *g) {
+    static const struct {
+        TileType tile;
+        const char *speaker;
+        Location from;
+        Location to;
+        int x;
+        int y;
+    } moves[] = {
+        {TILE_NPC_LIORA, "Botanist Liora", LOCATION_INN, LOCATION_TOWN3, LIORA_TOWN_X, LIORA_TOWN_Y},
+        {TILE_NPC_DAIN, "Dain", LOCATION_GUILD, LOCATION_TOWN4, DAIN_TOWN_X, DAIN_TOWN_Y},
+        {TILE_NPC_GUILD_SEEKER, "Zara", LOCATION_GUILD, LOCATION_INN, ZARA_INN_X, ZARA_INN_Y}
+    };
+    for (size_t i = 0; i < sizeof(moves) / sizeof(moves[0]); i++) {
+        if (strcmp(g->dialogue_speaker, moves[i].speaker) == 0) {
+            g->dialogue_active = 0;
+        }
+        if (g->location == moves[i].from) {
+            for (int y = 0; y < MAP_H; y++) {
+                for (int x = 0; x < MAP_W; x++) {
+                    if (g->map.tiles[y][x] == moves[i].tile) {
+                        g->map.tiles[y][x] = TILE_TAVERN_FLOOR;
+                    }
+                }
+            }
+            for (int j = 0; j < g->floor_item_count; j++) {
+                if (g->floor_items[j].underlying_tile == moves[i].tile) {
+                    g->floor_items[j].underlying_tile = TILE_TAVERN_FLOOR;
+                }
+            }
+        }
+        if (g->location == moves[i].to) {
+            int x = moves[i].x;
+            int y = moves[i].y;
+            if (g->player.x == x && g->player.y == y) {
+                g->player.y++;
+            }
+            for (int j = 0; j < g->floor_item_count; j++) {
+                FloorItem *item = &g->floor_items[j];
+                if (item->active && item->x == x && item->y == y) {
+                    item->y++;
+                    item->underlying_tile = g->location == LOCATION_INN ? TILE_TAVERN_FLOOR : TILE_TOWN_PATH;
+                    g->map.tiles[item->y][item->x] = TILE_ITEM;
+                }
+            }
+            g->map.tiles[y][x] = moves[i].tile;
+        }
+    }
 }
 
 static void migrate_goblin_shield(Item *item) {
@@ -3911,6 +3962,9 @@ int load_game(GameState *g, int slot) {
     }
     if (save_version < 113) {
         migrate_near_side_quests(g);
+    }
+    if (save_version < 114) {
+        migrate_quest_giver_locations(g);
     }
     game_hide_portal_destination(g);
     game_migrate_boss_shortcuts(g);

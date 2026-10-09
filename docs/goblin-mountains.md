@@ -64,11 +64,10 @@ save/load.
 
 ## Mountain Quest
 
-Speak to Dain with `T` in **Rosemoor's Adventurer's Guild Hall** to accept
+Speak to Dain with `T` in **Ridgeshire's town center** to accept
 **Recover the Treasure Map**. His quest places guarded Map Bearers on stages
-**7, 6, and 5**, entered through Ridgeshire's south mountain gate after traveling
-west from Rosemoor along Crown Road West. The Archer, Bomber, and Shaman leaders
-respectively carry one fragment and travel with a themed warband. Defeating the
+**7, 6, and 5**, entered through Ridgeshire's south mountain gate. The Archer,
+Bomber, and Shaman leaders respectively carry one fragment and travel with a themed warband. Defeating the
 leader recovers the fragment automatically. All three objectives precede the
 stage-4 Goblin King from Ridgeshire; entering from Oakhaven finds them after him.
 Accepting starts a fresh mountain expedition, while a previously defeated
@@ -82,7 +81,7 @@ positions, and death state. Missing Archer and Bomber fragments gain bearers on
 stages 7 and 6 when visited; the Shaman remains on stage 5. Loot, boss victories,
 and portal anchors remain intact.
 
-Return all three fragments to Dain in Rosemoor's Guild Hall for the one-time
+Return all three fragments to Dain in Ridgeshire's town center for the one-time
 reward of **60 gold and 400 score**.
 
 Ridgeshire's east gate enters [Dragonspine](dragonspine.md) directly. Ilya

@@ -54,10 +54,17 @@
 #define TOWN_GUILD_H 5
 #define TOWN_GUILD_DOOR_X (TOWN_GUILD_X + TOWN_GUILD_W / 2)
 #define TOWN_GUILD_DOOR_Y (TOWN_GUILD_Y + TOWN_GUILD_H - 1)
+// Legacy Guild coordinates used by save migrations.
 #define GUILD_ZARA_X 28
 #define GUILD_ZARA_Y 7
 #define GUILD_DAIN_X 18
 #define GUILD_DAIN_Y 7
+#define ZARA_INN_X 18
+#define ZARA_INN_Y 18
+#define DAIN_TOWN_X 18
+#define DAIN_TOWN_Y 11
+#define LIORA_TOWN_X 18
+#define LIORA_TOWN_Y 13
 #define ALDER_INN_X 31
 #define ALDER_INN_Y 18
 #define GUILD_ORIN_X 10
@@ -169,6 +176,7 @@
 #define BRENNA_Y 18
 #define BRENNA_INN_X 23
 #define BRENNA_INN_Y 18
+// Legacy Inn coordinates used by save migrations.
 #define LIORA_INN_X 18
 #define LIORA_INN_Y 18
 #define MARA_TAVERN_X 31
@@ -522,7 +530,6 @@ void map_place_town_apothecary(Map *m);
 void map_place_town3_guild(Map *m);
 void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y);
 void map_place_tavern_brenna(Map *m);
-void map_place_inn_liora(Map *m);
 void map_generate_inn(Map *m, int *spawn_x, int *spawn_y);
 void map_place_tavern_elowen(Map *m);
 void map_generate_island(Map *m, int *spawn_x, int *spawn_y);

@@ -11,7 +11,7 @@ decline; **Esc** also declines. Declining leaves the quest inactive and
 available when you speak to the NPC again. Only acceptance adds it to the
 journal and starts its expedition. Other dialogue bubbles are dismissed by
 movement. Elowen, Mara, and Ilya wait in Oakhaven's Tavern. Alder,
-Liora, Brenna, Rook, and Bram wait in Stillbury's Inn, which uses the same doorway and
+Zara, Brenna, Rook, and Bram wait in Stillbury's Inn, which uses the same doorway and
 conversation controls.
 
 Ridgeshire's Town Hall uses the same entry, conversation, and exit controls.
@@ -44,9 +44,9 @@ to the Tavern without resetting the quest or dungeon exploration.
 
 ## Dain: Recover the Treasure Map
 
-Dain waits in **Rosemoor's Adventurer's Guild Hall** alongside Zara. Press `T`
-beside him, then `Y` to accept **Recover the Treasure Map**, and return to the
-same hall with all three fragments for the reward.
+Dain waits in **Ridgeshire's town center**. Press `T` beside him, then `Y` to
+accept **Recover the Treasure Map**, and return to him with all three fragments
+for the reward.
 
 Dain is a retired dwarven caravan warden who tracks the organized goblin raids
 through the mountains. Goblins tore an old dwarven treasure map into three
@@ -54,15 +54,20 @@ pieces. A Goblin Archer, Goblin Bomber, and Goblin Shaman each carry one
 fragment. Defeating them recovers their fragments automatically without using
 normal inventory space.
 
-Take Crown Road West from Rosemoor to Ridgeshire, then enter its south mountain
-gate. The Archer, Bomber, and Shaman Map Bearers occupy **stages 7, 6, and 5**,
-respectively, before the stage-4 Goblin King. Once the King falls, take the peak
+Enter Ridgeshire's south mountain gate. The Archer, Bomber, and Shaman Map
+Bearers occupy **stages 7, 6, and 5**, respectively, before the stage-4 Goblin King. Once the King falls, take the peak
 shortcut to Oakhaven and return along the unlocked town roads, or fight through
 stages 3, 2, and 1. From Oakhaven, all three fragments follow the central boss.
 Each leader travels with a themed warband, turning every fragment into a
 distinct combat encounter. Returning all three fragments allows Dain to
 reconstruct the map and locate its hidden dwarven hoard. He awards the player
 60 gold and 400 score.
+
+## Zara: The Lost Magic Lamp
+
+Zara waits in **Stillbury's Inn**. Press `T` beside her, then `Y` to accept.
+Enter **Sunscar Wastes** through Stillbury's west gate, recover the magic lamp
+on stage **4**, and return to Zara in the Inn for **80 gold and 600 score**.
 
 ## Orin: The Broken Resonance
 
@@ -80,15 +85,14 @@ See [The Broken Resonance](glassdeep-caverns.md#the-broken-resonance).
 
 ## Liora: The Stolen Moonseed
 
-Botanist Liora waits in **Stillbury's Inn**. Press `T` beside her, then `Y` to
+Botanist Liora waits in **Rosemoor's town center**. Press `T` beside her, then `Y` to
 accept a quest in **Moonveil Gardens**, reached through **Rosemoor's west
-gate**. She explains the route north across the swamp to Rosemoor. Defeat the
-guards and press `A` beside the seed pod on stage **2** and moonwater spring on
+gate**. Defeat the guards and press `A` beside the seed pod on stage **2** and moonwater spring on
 stage **3**, in either order. With both collected, defeat the stage **4**
 circle's defenders and press `A` to plant and water it. A Moonflower blooms and
 the clearing stays restored on later visits.
 
-Return to Liora in Stillbury's Inn for **90 gold and 700 score**, awarded once.
+Return to Liora in Rosemoor's town center for **90 gold and 700 score**, awarded once.
 Quest objects
 need no inventory slots, acceptance preserves existing garden progress, and
 the Thorn Regent is optional. See
@@ -236,3 +240,9 @@ Save version 85 preserves existing seal progress and moves the former temple
 summit and labyrinth vault to level 5. Old labyrinth runes on floors 1 and 2
 keep their bits; the old third rune moves to floor 5. Expeditions that already
 reached the old vault receive credit for the two new intermediate runes.
+
+Save version **114** moves Liora to Rosemoor's town center, Dain to Ridgeshire's
+town center, and Zara to Stillbury's Inn. Existing quest progress, rewards,
+exploration, and region caches are preserved. Saved maps remove the former NPC
+tiles and repair loot underlays; overlapping players and loot move beside the
+new positions. Stale dialogue from the moved NPCs is dismissed.

@@ -1444,6 +1444,7 @@ void map_generate_town4(Map *m, int *spawn_x, int *spawn_y) {
     map_place_town4_hall(m);
     map_place_town4_guards(m, -1, -1);
     town_life_place(m, LOCATION_TOWN4);
+    m->tiles[DAIN_TOWN_Y][DAIN_TOWN_X] = TILE_NPC_DAIN;
     *spawn_x = 20;
     *spawn_y = TOWN_H - 2;
 }
@@ -1550,6 +1551,7 @@ void map_generate_town3(Map *m, int *spawn_x, int *spawn_y) {
     map_place_town3_guild(m);
     map_place_town3_guards(m, -1, -1);
     town_life_place(m, LOCATION_TOWN3);
+    m->tiles[LIORA_TOWN_Y][LIORA_TOWN_X] = TILE_NPC_LIORA;
     *spawn_x = 20;
     *spawn_y = TOWN_H - 2;
 }
@@ -2538,17 +2540,13 @@ void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y) {
     m->tiles[ILYA_TAVERN_Y][ILYA_TAVERN_X] = TILE_NPC_DRAGON_SEEKER;
 }
 
-void map_place_inn_liora(Map *m) {
-    m->tiles[LIORA_INN_Y][LIORA_INN_X] = TILE_NPC_LIORA;
-}
-
 void map_place_tavern_brenna(Map *m) {
     m->tiles[BRENNA_Y][BRENNA_X] = TILE_NPC_BRENNA;
 }
 
 void map_generate_inn(Map *m, int *spawn_x, int *spawn_y) {
     map_generate_tavern_room(m, spawn_x, spawn_y, 1);
-    map_place_inn_liora(m);
+    m->tiles[ZARA_INN_Y][ZARA_INN_X] = TILE_NPC_GUILD_SEEKER;
     m->tiles[BRENNA_INN_Y][BRENNA_INN_X] = TILE_NPC_BRENNA;
     m->tiles[ALDER_INN_Y][ALDER_INN_X] = TILE_NPC_ALDER;
 }
@@ -2560,8 +2558,7 @@ void map_place_tavern_elowen(Map *m) {
 void map_generate_guild(Map *m, int *sx, int *sy) {
     map_generate_tavern_room(m, sx, sy, 1);
     m->tiles[GUILD_ORIN_Y][GUILD_ORIN_X] = TILE_NPC_ORIN;
-    m->tiles[GUILD_ZARA_Y][GUILD_ZARA_X] = TILE_NPC_GUILD_SEEKER;
-    m->tiles[GUILD_DAIN_Y][GUILD_DAIN_X] = TILE_NPC_DAIN;
+    m->tiles[GUILD_ZARA_Y][GUILD_ZARA_X] = TILE_TAVERN_FLOOR;
 }
 
 void map_generate_workshop(Map *m, int *sx, int *sy) {

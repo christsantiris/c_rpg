@@ -112,7 +112,7 @@ static void draw_moonveil_quest_tile(Renderer *r, int sx, int sy, int x, int y, 
     int px = sx * TILE_SIZE;
     int py = sy * TILE_SIZE;
     if (tile == TILE_NPC_LIORA) {
-        draw_tavern_floor(r, sx, sy);
+        draw_town_path(r, sx, sy);
         SDL_SetRenderDrawColor(r->sdl, 80, 52, 42, 255);
         SDL_Rect hair = {px + 7, py + 3, 12, 11};
         SDL_RenderFillRect(r->sdl, &hair);
@@ -2241,8 +2241,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 }
                 case TILE_NPC_ELOWEN: draw_elowen(r, sx, sy); break;
                 case TILE_NPC_DAIN:
+                    draw_town_floor(r, sx, sy);
+                    draw_dain(r, sx, sy);
+                    break;
                 case TILE_NPC_SHARPENER:
-                    draw_dain(r, sx, sy); break;
+                    draw_tavern_floor(r, sx, sy);
+                    draw_dain(r, sx, sy);
+                    break;
                 case TILE_NPC_ALDER: draw_alder(r, sx, sy); break;
                 case TILE_NPC_MARA: draw_mara(r, sx, sy); break;
                 case TILE_NPC_ROOK: draw_rook(r, sx, sy); break;
@@ -2998,13 +3003,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         TTF_SizeText(r->font_tiny, "ELOWEN", &name_w, NULL);
         renderer_draw_text(r, "ELOWEN", viewport_to_screen_x(v, ELOWEN_TAVERN_X) * TILE_SIZE + (TILE_SIZE - name_w) / 2,
             viewport_to_screen_y(v, ELOWEN_TAVERN_Y - 1) * TILE_SIZE, name, r->font_tiny);
-        TTF_SizeText(r->font_tiny, "BRENNA", &name_w, NULL);
-        int name_x = viewport_to_screen_x(v, BRENNA_X) * TILE_SIZE + (TILE_SIZE - name_w) / 2;
-        int name_y = viewport_to_screen_y(v, BRENNA_Y - 1) * TILE_SIZE;
-        renderer_draw_text(r, "BRENNA", name_x, name_y, name, r->font_tiny);
         TTF_SizeText(r->font_tiny, "MARA", &name_w, NULL);
-        name_x = viewport_to_screen_x(v, MARA_TAVERN_X) * TILE_SIZE + (TILE_SIZE - name_w) / 2;
-        name_y = viewport_to_screen_y(v, MARA_TAVERN_Y - 1) * TILE_SIZE;
+        int name_x = viewport_to_screen_x(v, MARA_TAVERN_X) * TILE_SIZE + (TILE_SIZE - name_w) / 2;
+        int name_y = viewport_to_screen_y(v, MARA_TAVERN_Y - 1) * TILE_SIZE;
         renderer_draw_text(r, "MARA", name_x, name_y, area_label_color(LOCATION_COAST), r->font_tiny);
         TTF_SizeText(r->font_tiny, "ILYA", &name_w, NULL);
         name_x = viewport_to_screen_x(v, ILYA_TAVERN_X) * TILE_SIZE + (TILE_SIZE - name_w) / 2;
@@ -3084,11 +3085,20 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         }
     }
 
-    if (g->location == LOCATION_INN) {
+    if (g->location == LOCATION_TOWN3) {
         int width = 0;
         TTF_SizeText(r->font_tiny, "LIORA", &width, NULL);
-        renderer_draw_text(r, "LIORA", viewport_to_screen_x(v, LIORA_INN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
-            viewport_to_screen_y(v, LIORA_INN_Y - 1) * TILE_SIZE, area_label_color(LOCATION_MOONVEIL), r->font_tiny);
+        renderer_draw_text(r, "LIORA", viewport_to_screen_x(v, LIORA_TOWN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, LIORA_TOWN_Y - 1) * TILE_SIZE, area_label_color(LOCATION_MOONVEIL), r->font_tiny);
+    }
+    if (g->location == LOCATION_INN) {
+        int width = 0;
+        TTF_SizeText(r->font_tiny, "BRENNA", &width, NULL);
+        renderer_draw_text(r, "BRENNA", viewport_to_screen_x(v, BRENNA_INN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, BRENNA_INN_Y - 1) * TILE_SIZE, area_label_color(LOCATION_FROSTFELL), r->font_tiny);
+        TTF_SizeText(r->font_tiny, "ZARA", &width, NULL);
+        renderer_draw_text(r, "ZARA", viewport_to_screen_x(v, ZARA_INN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, ZARA_INN_Y - 1) * TILE_SIZE, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
         TTF_SizeText(r->font_tiny, "ALDER", &width, NULL);
         renderer_draw_text(r, "ALDER", viewport_to_screen_x(v, ALDER_INN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, ALDER_INN_Y - 1) * TILE_SIZE, (SDL_Color){126, 190, 112, 255}, r->font_tiny);
@@ -3128,18 +3138,17 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 viewport_to_screen_y(v, y) * TILE_SIZE - 12, (SDL_Color){240, 190, 95, 255}, r->font_tiny);
         }
     }
+    if (g->location == LOCATION_TOWN4) {
+        int width = 0;
+        TTF_SizeText(r->font_tiny, "DAIN", &width, NULL);
+        renderer_draw_text(r, "DAIN", viewport_to_screen_x(v, DAIN_TOWN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, DAIN_TOWN_Y - 1) * TILE_SIZE, (SDL_Color){218, 164, 84, 255}, r->font_tiny);
+    }
     if (g->location == LOCATION_GUILD) {
         int width = 0;
         TTF_SizeText(r->font_tiny, "ORIN", &width, NULL);
         renderer_draw_text(r, "ORIN", viewport_to_screen_x(v, GUILD_ORIN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, GUILD_ORIN_Y - 1) * TILE_SIZE, area_label_color(LOCATION_GLASSDEEP), r->font_tiny);
-        TTF_SizeText(r->font_tiny, "DAIN", &width, NULL);
-        renderer_draw_text(r, "DAIN", viewport_to_screen_x(v, GUILD_DAIN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
-            viewport_to_screen_y(v, GUILD_DAIN_Y - 1) * TILE_SIZE, (SDL_Color){218, 164, 84, 255}, r->font_tiny);
-        renderer_draw_text(r, "ZARA",
-            viewport_to_screen_x(v, GUILD_ZARA_X) * TILE_SIZE - 8,
-            viewport_to_screen_y(v, GUILD_ZARA_Y - 1) * TILE_SIZE,
-            (SDL_Color){233, 201, 133, 255}, r->font_tiny);
     }
 
     if (g->location == LOCATION_ISLAND) {

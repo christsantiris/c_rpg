@@ -524,7 +524,7 @@ static void test_brenna_inn_migration(void) {
         if (inn) {
             ASSERT("legacy Inn moves the player clear and keeps existing residents", ok &&
                 loaded.player.x == x && loaded.player.y == y + 1 && loaded.map.tiles[y][x] == TILE_NPC_BRENNA &&
-                loaded.map.tiles[18][10] == TILE_NPC_ROOK && loaded.map.tiles[LIORA_INN_Y][LIORA_INN_X] == TILE_NPC_LIORA &&
+                loaded.map.tiles[18][10] == TILE_NPC_ROOK && loaded.map.tiles[ZARA_INN_Y][ZARA_INN_X] == TILE_NPC_GUILD_SEEKER &&
                 loaded.map.tiles[ALDER_INN_Y][ALDER_INN_X] == TILE_NPC_ALDER && loaded.map.tiles[7][28] == TILE_NPC_INNKEEPER);
         } else {
             ASSERT("legacy Tavern dismisses Brenna's old dialogue and never restores her under loot", ok &&
@@ -1945,6 +1945,104 @@ static void test_narrow_shortcut_migration(void) {
     }
 }
 
+static void test_quest_giver_location_migration(void) {
+    printf("Quest giver location migration tests:\n");
+    static GameState original;
+    static GameState loaded;
+    const Location locations[] = {LOCATION_GUILD, LOCATION_INN, LOCATION_TOWN3, LOCATION_TOWN4};
+    for (size_t i = 0; i < sizeof(locations) / sizeof(locations[0]); i++) {
+        memset(&original, 0, sizeof(original));
+        original.player.player_class = CLASS_WARRIOR;
+        game_init(&original);
+        original.location = locations[i];
+        int x;
+        int y;
+        TileType floor;
+        TileType npc;
+        if (original.location == LOCATION_GUILD) {
+            map_generate_guild(&original.map, &original.player.x, &original.player.y);
+            original.map.tiles[GUILD_DAIN_Y][GUILD_DAIN_X] = TILE_NPC_DAIN;
+            x = GUILD_ZARA_X;
+            y = GUILD_ZARA_Y;
+            floor = TILE_NPC_GUILD_SEEKER;
+            npc = TILE_TAVERN_FLOOR;
+            snprintf(original.dialogue_speaker, MAX_SPEAKER_LEN, "Dain");
+        } else if (original.location == LOCATION_INN) {
+            map_generate_inn(&original.map, &original.player.x, &original.player.y);
+            x = ZARA_INN_X;
+            y = ZARA_INN_Y;
+            floor = TILE_NPC_LIORA;
+            npc = TILE_NPC_GUILD_SEEKER;
+            snprintf(original.dialogue_speaker, MAX_SPEAKER_LEN, "Botanist Liora");
+        } else if (original.location == LOCATION_TOWN3) {
+            map_generate_town3(&original.map, &original.player.x, &original.player.y);
+            x = LIORA_TOWN_X;
+            y = LIORA_TOWN_Y;
+            floor = TILE_TOWN_PATH;
+            npc = TILE_NPC_LIORA;
+        } else {
+            map_generate_town4(&original.map, &original.player.x, &original.player.y);
+            x = DAIN_TOWN_X;
+            y = DAIN_TOWN_Y;
+            floor = TILE_TOWN_FLOOR;
+            npc = TILE_NPC_DAIN;
+        }
+        original.gold = 617;
+        original.score = 803;
+        original.dain_quest_state = 1;
+        original.dain_map_fragments = 5;
+        original.moonveil_quest_state = 2;
+        original.moonveil_quest_progress = 7;
+        original.moonveil_quest_encounters = 7;
+        original.sunscar_lamp_quest_state = 2;
+        original.defeated_bosses = (1 << LOCATION_MOONVEIL) | (1 << LOCATION_DESERT);
+        original.portal_active = 1;
+        original.portal_location = LOCATION_MOONVEIL;
+        original.portal_level = 2;
+        original.portal_x = 3;
+        original.portal_y = 3;
+        original.portal_origin_tile = TILE_MOONVEIL_FLOOR;
+        original.moonveil_cache[1].valid = 1;
+        map_generate_moonveil(&original.moonveil_cache[1].map, 2);
+        original.moonveil_cache[1].enemy_count = 1;
+        original.moonveil_cache[1].enemies[0] = (Enemy){.active = 1, .type = ENEMY_FEY_TRICKSTER, .hp = 9, .max_hp = 40};
+        original.player.x = x;
+        original.player.y = y;
+        original.dialogue_active = original.location == LOCATION_GUILD || original.location == LOCATION_INN;
+        original.floor_item_count = 2;
+        for (int item = 0; item < 2; item++) {
+            original.floor_items[item] = (FloorItem){.active = 1, .x = x, .y = y,
+                .underlying_tile = floor, .item = item_make_health_potion()};
+        }
+        original.map.tiles[y][x] = TILE_ITEM;
+        map_mark_explored(&original.map, 2, 2);
+        int ok = save_game(&original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, 113) && load_game(&loaded, LEGACY_SLOT);
+        int shifted = original.location != LOCATION_GUILD;
+        TileType underlay = original.location == LOCATION_GUILD || original.location == LOCATION_INN ? TILE_TAVERN_FLOOR : TILE_TOWN_PATH;
+        ASSERT("version 113 relocates NPCs while retaining player and stacked loot", ok && loaded.map.tiles[y][x] == (shifted ? npc : TILE_ITEM) &&
+            loaded.player.x == x && loaded.player.y == y + shifted && map_is_walkable(&loaded.map, loaded.player.x, loaded.player.y) &&
+            loaded.floor_items[0].active && loaded.floor_items[1].active && loaded.floor_items[0].y == y + shifted &&
+            loaded.floor_items[1].y == y + shifted && loaded.floor_items[0].underlying_tile == underlay && loaded.floor_items[1].underlying_tile == underlay);
+        ASSERT("relocation preserves quests, rewards, exploration, bosses, portal, and cached enemy health", ok && loaded.gold == 617 && loaded.score == 803 &&
+            loaded.dain_quest_state == 1 && loaded.dain_map_fragments == 5 && loaded.moonveil_quest_state == 2 &&
+            loaded.moonveil_quest_progress == 7 && loaded.moonveil_quest_encounters == 7 && loaded.sunscar_lamp_quest_state == 2 &&
+            loaded.defeated_bosses == original.defeated_bosses && loaded.portal_active && loaded.moonveil_cache[1].valid &&
+            loaded.moonveil_cache[1].enemies[0].hp == 9 && map_is_explored(&loaded.map, 2, 2) && !loaded.dialogue_active);
+        if (original.location == LOCATION_GUILD) {
+            ASSERT("legacy Guild removes both givers and preserves Orin", loaded.map.tiles[GUILD_DAIN_Y][GUILD_DAIN_X] == TILE_TAVERN_FLOOR &&
+                loaded.map.tiles[GUILD_ORIN_Y][GUILD_ORIN_X] == TILE_NPC_ORIN);
+        }
+        action_resolve_player(&loaded, (Action){ACTION_PICK_UP, 0, 0});
+        action_resolve_player(&loaded, (Action){ACTION_PICK_UP, 0, 0});
+        ASSERT("picking up migrated stacked loot leaves the correct walkable floor", loaded.map.tiles[y + shifted][x] == underlay);
+        ASSERT("migrated placements survive a current-version round trip", save_game(&loaded, LEGACY_SLOT) && load_game(&original, LEGACY_SLOT) &&
+            original.map.tiles[y][x] == (shifted ? npc : TILE_TAVERN_FLOOR) && original.dain_map_fragments == 5 && original.moonveil_quest_progress == 7);
+    }
+    char path[64];
+    format_save_path(LEGACY_SLOT, path, sizeof(path));
+    remove(path);
+}
+
 void test_save_load(void) {
     test_narrow_shortcut_migration();
     test_harbor_road_save_load();
@@ -1961,6 +2059,7 @@ void test_save_load(void) {
     test_cryptblade_rebalance_migration();
     test_goblin_shield_rebalance_migration();
     test_brenna_inn_migration();
+    test_quest_giver_location_migration();
     test_migrated_weapon_round_trip();
     test_migrated_armor_round_trip();
     test_harbor_relocation();

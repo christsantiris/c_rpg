@@ -19,12 +19,11 @@ static void start(void) {
 }
 
 static void accept(void) {
-    game_enter_inn(&game);
-    game.player.x = LIORA_INN_X;
-    game.player.y = LIORA_INN_Y + 1;
+    game_enter_town3(&game);
+    game.player.x = LIORA_TOWN_X;
+    game.player.y = LIORA_TOWN_Y + 1;
     game_talk_to_liora(&game);
     game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
-    game_leave_inn(&game);
 }
 
 static void stage(int level) {
@@ -90,24 +89,22 @@ static int bloom_tiles(const Map *map) {
 
 static void test_seed_first(void) {
     start();
-    game_enter_inn(&game);
-    ASSERT("Liora has a blocked NPC tile and a walkable approach in Stillbury's Inn", game.map.tiles[LIORA_INN_Y][LIORA_INN_X] == TILE_NPC_LIORA &&
-        !map_is_walkable(&game.map, LIORA_INN_X, LIORA_INN_Y) && map_is_walkable(&game.map, LIORA_INN_X, LIORA_INN_Y + 1) &&
-        game.map.tiles[18][10] == TILE_NPC_ROOK && game.map.tiles[7][28] == TILE_NPC_INNKEEPER && game.map.tiles[ALDER_INN_Y][ALDER_INN_X] == TILE_NPC_ALDER);
+    game_enter_town3(&game);
+    ASSERT("Liora has a blocked NPC tile and a walkable approach in Rosemoor's center", game.map.tiles[LIORA_TOWN_Y][LIORA_TOWN_X] == TILE_NPC_LIORA &&
+        !map_is_walkable(&game.map, LIORA_TOWN_X, LIORA_TOWN_Y) && map_is_walkable(&game.map, LIORA_TOWN_X, LIORA_TOWN_Y + 1));
     game_talk_to_liora(&game);
     ASSERT("Liora cannot assign remotely", !game.moonveil_quest_state);
-    game.player.x = LIORA_INN_X;
-    game.player.y = LIORA_INN_Y + 1;
+    game.player.x = LIORA_TOWN_X;
+    game.player.y = LIORA_TOWN_Y + 1;
     action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
     ASSERT("Action does not replace talking to Liora", !game.moonveil_quest_state);
     game_talk_to_liora(&game);
     game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
-    ASSERT("Liora explains the swamp and Rosemoor west-gate route from Stillbury", game.moonveil_quest_state == 1 &&
-        strstr(game.dialogue_text, "swamp north to Rosemoor's west gate") && strstr(game.dialogue_text, "Stillbury's Inn") &&
+    ASSERT("Liora explains Rosemoor's west-gate route and town-center return", game.moonveil_quest_state == 1 &&
+        strstr(game.dialogue_text, "through Rosemoor's west gate") && strstr(game.dialogue_text, "Rosemoor's town center") &&
         !game.alder_quest_state && !game.mara_quest_state && !game.frostfell_quest_state);
-    ASSERT("Inn acceptance survives saving", save_game(&game, MOONSEED_SLOT) && load_game(&loaded, MOONSEED_SLOT) &&
-        loaded.moonveil_quest_state == 1 && loaded.map.tiles[LIORA_INN_Y][LIORA_INN_X] == TILE_NPC_LIORA);
-    game_leave_inn(&game);
+    ASSERT("town-center acceptance survives saving", save_game(&game, MOONSEED_SLOT) && load_game(&loaded, MOONSEED_SLOT) &&
+        loaded.moonveil_quest_state == 1 && loaded.map.tiles[LIORA_TOWN_Y][LIORA_TOWN_X] == TILE_NPC_LIORA);
     game_enter_moonveil(&game);
     int x = -1;
     int y = -1;
@@ -175,10 +172,9 @@ static void test_seed_first(void) {
     ASSERT("return portal restores the Moonflower and blooming terrain", game.location == LOCATION_MOONVEIL && game.level == 4 &&
         game.map.tiles[by][bx] == TILE_MOONVEIL_MOONFLOWER && bloom_tiles(&game.map) == blooms);
     game_return_to_town(&game);
-    game.location = LOCATION_TOWN2;
-    game_enter_inn(&game);
-    game.player.x = LIORA_INN_X;
-    game.player.y = LIORA_INN_Y + 1;
+    game_enter_town3(&game);
+    game.player.x = LIORA_TOWN_X;
+    game.player.y = LIORA_TOWN_Y + 1;
     int gold = game.gold;
     int score = game.score;
     game_talk_to_liora(&game);
@@ -187,9 +183,8 @@ static void test_seed_first(void) {
     ASSERT("repeat conversation cannot duplicate the reward", game.gold == gold + 90 && game.score == score + 700);
     ASSERT("completed journal retains all restored objectives", quest_journal_get_entry(&game, QUEST_TAB_COMPLETED, 0, &entry) &&
         entry.state == 3 && entry.objective_complete[0] && entry.objective_complete[1] && entry.objective_complete[2]);
-    ASSERT("completed quest and reward survive saving in the Tavern", save_game(&game, MOONSEED_SLOT) && load_game(&loaded, MOONSEED_SLOT) &&
+    ASSERT("completed quest and reward survive saving in Rosemoor", save_game(&game, MOONSEED_SLOT) && load_game(&loaded, MOONSEED_SLOT) &&
         loaded.moonveil_quest_state == 3 && loaded.gold == gold + 90 && loaded.score == score + 700);
-    game_leave_inn(&game);
     game_enter_moonveil(&game);
     stage(4);
     ASSERT("later visits retain the Moonflower and clearing", game.map.tiles[by][bx] == TILE_MOONVEIL_MOONFLOWER && bloom_tiles(&game.map) == blooms);
@@ -286,7 +281,6 @@ static void test_existing_progress(void) {
     int count = game.enemy_count;
     map_mark_explored(&game.map, game.map.stairs_up_x, game.map.stairs_up_y);
     game_open_town_portal(&game);
-    game.location = LOCATION_TOWN2;
     accept();
     ASSERT("accepting Liora's quest retains explored maps, enemies, and an existing garden portal", game.moonveil_cache[1].valid && game.portal_active &&
         game.moonveil_cache[1].enemy_count == count && game.moonveil_cache[1].enemies[0].hp == 5 &&
@@ -416,10 +410,13 @@ static void test_legacy_save(void) {
         !loaded.moonveil_quest_state && !loaded.moonveil_quest_progress && !loaded.moonveil_quest_encounters &&
         loaded.gold == 731 && loaded.player.hp == 63 && loaded.portal_active && loaded.max_moonveil_level_reached == 5 &&
         (loaded.defeated_bosses & (1 << LOCATION_MOONVEIL)) && loaded.moonveil_cache[1].valid && loaded.moonveil_cache[1].enemies[0].hp == 5);
-    ASSERT("legacy Inn gains Liora and safely moves overlapping player and loot beside her", loaded.map.tiles[LIORA_INN_Y][LIORA_INN_X] == TILE_NPC_LIORA &&
+    ASSERT("legacy Inn gains Zara and safely moves overlapping player and loot beside her", loaded.map.tiles[ZARA_INN_Y][ZARA_INN_X] == TILE_NPC_GUILD_SEEKER &&
         loaded.player.y == LIORA_INN_Y + 1 && loaded.floor_items[0].active && loaded.floor_items[0].y == LIORA_INN_Y + 1 &&
         loaded.floor_items[0].underlying_tile == TILE_TAVERN_FLOOR && loaded.map.tiles[LIORA_INN_Y + 1][LIORA_INN_X] == TILE_ITEM);
     game = loaded;
+    game_enter_town3(&game);
+    game.player.x = LIORA_TOWN_X;
+    game.player.y = LIORA_TOWN_Y + 1;
     game_talk_to_liora(&game);
     game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
     ASSERT("Liora offers the quest after a previous Thorn Regent victory", game.moonveil_quest_state == 1);
@@ -427,7 +424,9 @@ static void test_legacy_save(void) {
     int x;
     int y;
     map_generate_inn(&loaded.map, &x, &y);
-    ASSERT("Stillbury's Inn houses Liora", loaded.map.tiles[LIORA_INN_Y][LIORA_INN_X] == TILE_NPC_LIORA);
+    ASSERT("Stillbury's Inn houses Zara", loaded.map.tiles[ZARA_INN_Y][ZARA_INN_X] == TILE_NPC_GUILD_SEEKER);
+    map_generate_town3(&loaded.map, &x, &y);
+    ASSERT("Rosemoor's center houses Liora", loaded.map.tiles[LIORA_TOWN_Y][LIORA_TOWN_X] == TILE_NPC_LIORA);
     map_generate_tavern(&loaded.map, &x, &y);
     ASSERT("Oakhaven's Tavern no longer houses Liora", loaded.map.tiles[LIORA_INN_Y][LIORA_INN_X] == TILE_TAVERN_FLOOR);
     map_generate_guild(&loaded.map, &x, &y);

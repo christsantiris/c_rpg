@@ -53,7 +53,7 @@ static int legacy_save(void) {
 }
 
 void test_mara_relocation(void) {
-    printf("Mara Tavern and Liora Inn relocation tests:\n");
+    printf("Mara Tavern and legacy Liora relocation tests:\n");
     ASSERT("Mara test slot is unused", !save_exists(MARA_SLOT));
     memset(&game, 0, sizeof(game));
     game.player.player_class = CLASS_WARRIOR;
@@ -150,16 +150,19 @@ void test_mara_relocation(void) {
     game.floor_item_count = 1;
     game.floor_items[0] = (FloorItem){.active = 1, .x = LIORA_INN_X, .y = LIORA_INN_Y,
         .underlying_tile = TILE_TAVERN_FLOOR, .item = item_make_health_potion()};
-    ASSERT("legacy Inn gains Liora while retaining ready-to-return Moonseed progress", legacy_save() && load_game(&loaded, MARA_SLOT) &&
-        loaded.map.tiles[LIORA_INN_Y][LIORA_INN_X] == TILE_NPC_LIORA && loaded.moonveil_quest_state == 2 && loaded.moonveil_quest_progress == 7);
-    ASSERT("Inn migration moves overlapping player and loot beside Liora", loaded.player.y == LIORA_INN_Y + 1 && loaded.floor_items[0].active &&
+    ASSERT("legacy Inn gains Zara while retaining ready-to-return Moonseed progress", legacy_save() && load_game(&loaded, MARA_SLOT) &&
+        loaded.map.tiles[ZARA_INN_Y][ZARA_INN_X] == TILE_NPC_GUILD_SEEKER && loaded.moonveil_quest_state == 2 && loaded.moonveil_quest_progress == 7);
+    ASSERT("Inn migration moves overlapping player and loot beside Zara", loaded.player.y == LIORA_INN_Y + 1 && loaded.floor_items[0].active &&
         loaded.floor_items[0].y == LIORA_INN_Y + 1 && loaded.floor_items[0].underlying_tile == TILE_TAVERN_FLOOR &&
         loaded.map.tiles[LIORA_INN_Y + 1][LIORA_INN_X] == TILE_ITEM);
     score = loaded.score;
+    game_enter_town3(&loaded);
+    loaded.player.x = LIORA_TOWN_X;
+    loaded.player.y = LIORA_TOWN_Y + 1;
     game_talk_to_liora(&loaded);
     game_talk_to_liora(&loaded);
-    ASSERT("Liora awards 90 gold and 700 score once in the Inn", loaded.moonveil_quest_state == 3 && loaded.gold == 787 && loaded.score == score + 700);
-    ASSERT("both moved quests and Liora's Inn placement survive another save/load", save_game(&loaded, MARA_SLOT) && load_game(&loaded, MARA_SLOT) &&
-        loaded.mara_quest_state == 3 && loaded.moonveil_quest_state == 3 && loaded.map.tiles[LIORA_INN_Y][LIORA_INN_X] == TILE_NPC_LIORA);
+    ASSERT("Liora awards 90 gold and 700 score once in Rosemoor", loaded.moonveil_quest_state == 3 && loaded.gold == 787 && loaded.score == score + 700);
+    ASSERT("both moved quests and Liora's town placement survive another save/load", save_game(&loaded, MARA_SLOT) && load_game(&loaded, MARA_SLOT) &&
+        loaded.mara_quest_state == 3 && loaded.moonveil_quest_state == 3 && loaded.map.tiles[LIORA_TOWN_Y][LIORA_TOWN_X] == TILE_NPC_LIORA);
     remove(MARA_SAVE);
 }

@@ -37,9 +37,8 @@ retaining existing characters, quests, and regional progress.
 
 ## The Broken Resonance
 
-Surveyor Orin waits inside **Rosemoor's Adventurer's Guild**, alongside Dain and
-Zara. Approach him and press `T` to hear his offer, then `Y` to accept his
-survey quest. He directs you to **Stillbury's south gate** and asks you to
+Surveyor Orin waits inside **Rosemoor's Adventurer's Guild**. Approach him and
+press `T` to hear his offer, then `Y` to accept his survey quest. He directs you to **Stillbury's south gate** and asks you to
 restore three ancient resonators.
 
 | Stage | Resonator | Defenders | Inscription and tone |

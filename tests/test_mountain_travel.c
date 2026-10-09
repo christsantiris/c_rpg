@@ -64,13 +64,12 @@ static void mountain_crossing(int reverse, int shortcut) {
     mountain.player.player_class = CLASS_WARRIOR;
     game_init(&mountain);
     srand(2701 + reverse + 2 * shortcut);
-    game_enter_guild(&mountain);
-    mountain.player.x = GUILD_DAIN_X;
-    mountain.player.y = GUILD_DAIN_Y + 1;
+    game_leave_mountains(&mountain, LOCATION_TOWN4, 0);
+    mountain.player.x = DAIN_TOWN_X;
+    mountain.player.y = DAIN_TOWN_Y + 1;
     game_talk_to_dain(&mountain);
     game_handle_quest_offer_key(&mountain, SDL_SCANCODE_Y, 0);
     ASSERT("Dain directs the player to revised stages", strstr(mountain.dialogue_text, "7, 6, and 5") != NULL);
-    game_leave_guild(&mountain);
     game_leave_mountains(&mountain, reverse ? LOCATION_TOWN4 : LOCATION_TOWN, 0);
     int gate_y = reverse ? TOWN_H - 1 : 0;
     int road_x = reverse ? RIDGESHIRE_MOUNTAIN_ROAD_X : TOWN4_ROAD_X;
