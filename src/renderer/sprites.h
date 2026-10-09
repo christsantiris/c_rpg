@@ -187,7 +187,7 @@ enum {
 void draw_frostfell_bank(Renderer *r, int tx, int ty, int mx, int my, unsigned int edges);
 void draw_frostfell_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_desert_floor(Renderer *r, int tx, int ty, int mx, int my);
-void draw_desert_wall(Renderer *r, int tx, int ty, int mx, int my);
+void draw_desert_wall(Renderer *r, const Map *map, int tx, int ty, int mx, int my);
 void draw_desert_edge(Renderer *r, int tx, int ty, int mx, int my);
 void draw_frostfell_lake(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_frostfell_lake_hole(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int tentacle);

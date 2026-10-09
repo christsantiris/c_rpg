@@ -5,8 +5,13 @@ west; backtracking uses the east edge. The first stage's east exit and the final
 stage's west exit return to Stillbury. The Desert Pharaoh guards the final exit
 and drops the Sandstorm Staff.
 
-Impassable terrain appears as varied sandstone spires, boulders, mesas, and
-cactus silhouettes. Their shapes stay consistent when revisiting or loading.
+Impassable terrain appears as connected sandstone shelves with layered cliff
+faces and eroded corners. Scattered spires and boulders retain their varied
+shapes, while tall and barrel cacti form small stands. Curved dune ridges cross
+tile boundaries on the open sand, with occasional pebbles and dry scrub.
+These details stay fixed when moving, revisiting, or loading. Existing saved
+maps receive the new appearance without changing collision or progress. See
+the [renderer comparisons](art-sources/sunscar/README.md).
 
 Blowing sand and a light amber haze animate across the play area, including while
 standing still. The sandstorm is visual and does not affect combat or movement.
