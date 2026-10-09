@@ -33,6 +33,8 @@
 #define MOONVEIL_GARDEN_RESTORED 4
 #define WATCHFIRE_REWARD_GOLD 180
 #define WATCHFIRE_REWARD_SCORE 1400
+#define HUNT_REWARD_GOLD 200
+#define HUNT_REWARD_SCORE 1500
 
 #define DAIN_FRAGMENT_ARCHER 1
 #define DAIN_FRAGMENT_BOMBER 2
@@ -268,6 +270,10 @@ typedef struct {
     int watchfire_quest_state;
     int watchfire_quest_progress;
     int watchfire_quest_encounters;
+    int hunt_quest_state;
+    int hunt_quest_progress;
+    // One placement bit per hunt member: four Wolves/Wraith, three Golem/Stalkers, three Djinn/Mummies.
+    int hunt_quest_encounters;
     int temple_alignment;
     int temple_sentinels_awakened;
     int temple_treasure_state;
@@ -337,6 +343,9 @@ void game_enter_town_hall(GameState *g);
 void game_leave_town_hall(GameState *g);
 void game_talk_to_steward(GameState *g);
 void game_talk_to_veyra(GameState *g);
+void game_talk_to_selene(GameState *g);
+int game_hunt_enemy_index(const Enemy *enemy);
+int game_is_hunt_leader(const Enemy *enemy);
 int game_has_watchfire_interaction(const GameState *g);
 int game_interact_watchfire(GameState *g);
 void game_talk_to_brenna(GameState *g);
