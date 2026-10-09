@@ -172,6 +172,7 @@ typedef struct {
     LevelCache castle_cache[CASTLE_DEPTH];
     FloorItem castle_loot[CASTLE_DEPTH][MAX_FLOOR_ITEMS];
     int castle_loot_count[CASTLE_DEPTH];
+    int castle_fire_phase[CASTLE_DEPTH];
     int castle_minibosses;
     int castle_prompt;
     int game_won;

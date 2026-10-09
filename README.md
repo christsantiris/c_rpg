@@ -283,10 +283,16 @@ terrain to the longer routes while retaining damage, defeats, and dropped loot.
 
 The castle introduces shield formations, portcullis levers, warned attacks,
 shifting magical barriers, and trapdoors that drop you one floor and remain
-visible. Defeat the Castellan on floor 2 and the Royal Arcanist on floor 4 to
-unlock permanent passages from the grounds. The final floor requires no
+visible. Each floor has its own tactical challenge: independently gated approaches,
+the Castellan's guard detail, Herald doorway patrols, usable ward pedestals,
+and archive patrols among shelves and warned fire lanes. The throne combines
+these threats. Use **Interact** beside glowing pedestals to weaken royal bosses;
+orange fire countdowns show **2**, then **1**, turns to leave the marked lane.
+Defeat the Castellan on floor 2 and the Royal Arcanist on floor 4 to
+open the way to floors 3 and 5. Carpeted corridors remain clear of tables,
+and minibosses no longer create shortcut portals to the grounds. The final floor requires no
 regional collectibles. Return to Town becomes a confirmed one-way escape to Rosemoor:
-surviving defenders reset, while miniboss victories, passages, revealed
+surviving defenders reset, while miniboss victories, revealed
 trapdoors, and dropped items persist. Defeating Lord Veyr ends the campaign with
 victory. See [Castle interior and play testing](docs/castle-design.md).
 
@@ -661,4 +667,3 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 - Improve difficulty scaling and economy
    Warrior and Rogue should struggle at certain levels without better weapons. Mage should struggle without better spells. Purchasing new weapons, armor and tomes should become necessary to progress.
 - Improve all npc and enemy sprites
-- Update UI for dragonspine, frostfell, sunscar

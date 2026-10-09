@@ -430,7 +430,7 @@ typedef enum {
     TILE_CASTLE_LEVER,
     TILE_CASTLE_TRAP_HIDDEN,
     TILE_CASTLE_TRAP_OPEN,
-    TILE_CASTLE_PASSAGE,
+    TILE_CASTLE_PASSAGE, // Retired; keep its numeric ID for save migration.
     TILE_CASTLE_SEAL, // Retired; keep its numeric ID for save migration.
     TILE_CASTLE_TABLE,
     TILE_CASTLE_BOOKCASE,
@@ -470,7 +470,11 @@ typedef enum {
     TILE_DUNGEON_STAIRS_RETURN,
     TILE_LOCAL_BUILDING,
     TILE_LOCAL_DOOR,
-    TILE_NPC_RESIDENT
+    TILE_NPC_RESIDENT,
+    TILE_CASTLE_WARD,
+    TILE_CASTLE_WARD_SPENT,
+    TILE_CASTLE_MUSTER,
+    TILE_CASTLE_FIRE_RUNE
 } TileType;
 
 typedef struct {

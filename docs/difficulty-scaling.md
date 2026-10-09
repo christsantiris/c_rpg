@@ -201,6 +201,11 @@ number (rounded down), and 4–11 defense. The Castellan has 420 HP, the Royal
 Arcanist 470 HP, and Lord Veyr 950 HP. Shields, guard formations, Hexer support,
 telegraphed attacks, wards, and trapdoor patrols supply the tactical difficulty.
 Castle enemies award fixed gold: 5 per regular enemy and 100 per miniboss.
+The six floors add distinct guard details, independent firing-lane gates,
+limited Herald patrols, ward pedestals, and archive fire lanes. Each active
+pedestal reduces boss damage taken by 20 percentage points and adds 4 outgoing
+damage. Fire lanes warn for two turns, then deal 24 minus half player defense
+(minimum 6). Disable pedestals with Interact; interrupt Heralds before their calls.
 Veyr awards 10,000 score and campaign victory. Bring supplies before entry;
 retreat resets surviving defenders while preserving permanent progress.
 See [Castle interior](castle-design.md) for mechanics and play-test expectations.

@@ -7,17 +7,36 @@ static const int dxs[4] = {0, 1, 0, -1};
 static const int dys[4] = {-1, 0, 1, 0};
 static int line_clear(const Map *m, int x, int y, int tx, int ty);
 
-static TileType underfoot(const GameState *g) {
-    TileType tile = g->map.tiles[g->player.y][g->player.x];
+static TileType tile_at(const GameState *g, int x, int y) {
+    if (x < 0 || y < 0 || x >= MAP_W || y >= MAP_H) {
+        return TILE_CASTLE_WALL;
+    }
+    TileType tile = g->map.tiles[y][x];
     if (tile == TILE_ITEM) {
         for (int i = 0; i < g->floor_item_count; i++) {
             const FloorItem *item = &g->floor_items[i];
-            if (item->active && item->x == g->player.x && item->y == g->player.y) {
+            if (item->active && item->x == x && item->y == y) {
                 return item->underlying_tile;
             }
         }
     }
     return tile;
+}
+
+static TileType underfoot(const GameState *g) {
+    return tile_at(g, g->player.x, g->player.y);
+}
+
+static void set_tile(GameState *g, int x, int y, TileType tile) {
+    if (g->map.tiles[y][x] != TILE_ITEM) {
+        g->map.tiles[y][x] = tile;
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && item->x == x && item->y == y) {
+            item->underlying_tile = tile;
+        }
+    }
 }
 
 const char *castle_floor_name(int level) {
@@ -38,6 +57,43 @@ static void path(Map *m, int x, int y, int tx, int ty) {
             y += ty > y ? 1 : -1;
         }
     }
+}
+
+static TileType encounter_tile(int level, int x, int y, TileType tile) {
+    if (tile != TILE_CASTLE_FLOOR && tile != TILE_CASTLE_CARPET) {
+        return tile;
+    }
+    if (level == 1 || level == 6) {
+        if (y == 21 && x >= 14 && x <= 16) {
+            return TILE_CASTLE_GATE_OPEN;
+        }
+        if (x == 10 && y == 15) {
+            return TILE_CASTLE_LEVER;
+        }
+    }
+    if ((level == 4 || level == 6) && y == 54 && (x == 37 || x == 53)) {
+        return TILE_CASTLE_WARD;
+    }
+    if ((level == 3 && x == 53 && y == 35) || (level == 6 && x == 53 && y == 46)) {
+        return TILE_CASTLE_MUSTER;
+    }
+    if (level == 6 && y == 51 && x >= 41 && x <= 49) {
+        return TILE_CASTLE_FIRE_RUNE;
+    }
+    if (level == 5) {
+        for (int i = 1; i < 5; i++) {
+            int rx = 4 + (i % 2) * 30;
+            int ry = 4 + (i / 2) * 20;
+            if (y == ry + 10 && x >= rx + 7 && x <= rx + 15) {
+                return TILE_CASTLE_FIRE_RUNE;
+            }
+            if (tile == TILE_CASTLE_FLOOR && (x == rx + 6 || x == rx + 16) &&
+                y >= ry + 2 && y <= ry + 11 && (y < ry + 6 || y == ry + 9 || y == ry + 11)) {
+                return TILE_CASTLE_BOOKCASE;
+            }
+        }
+    }
+    return tile;
 }
 
 void castle_generate(Map *m, int level) {
@@ -79,8 +135,12 @@ void castle_generate(Map *m, int level) {
         }
         if (level == 3 || level == 4) {
             for (int y = r->y + 6; y <= r->y + 8; y++) {
-                m->tiles[y][r->x + 5] = TILE_CASTLE_TABLE;
-                m->tiles[y][r->x + r->w - 6] = TILE_CASTLE_TABLE;
+                if (m->tiles[y][r->x + 5] != TILE_CASTLE_CARPET) {
+                    m->tiles[y][r->x + 5] = TILE_CASTLE_TABLE;
+                }
+                if (m->tiles[y][r->x + r->w - 6] != TILE_CASTLE_CARPET) {
+                    m->tiles[y][r->x + r->w - 6] = TILE_CASTLE_TABLE;
+                }
             }
         } else if (level == 5) {
             for (int x = r->x + 5; x < r->x + r->w - 5; x += 3) {
@@ -111,6 +171,58 @@ void castle_generate(Map *m, int level) {
         m->burial_trap_count = 1;
         m->burial_traps[0] = (BurialTrap){17, 32, 0, 0, 0};
         m->tiles[32][17] = TILE_CASTLE_TRAP_HIDDEN;
+    }
+    for (int y = 0; y < CASTLE_H; y++) {
+        for (int x = 0; x < CASTLE_W; x++) {
+            m->tiles[y][x] = encounter_tile(level, x, y, m->tiles[y][x]);
+        }
+    }
+}
+
+static TileType repaired_tile(const Map *m, int level, int x, int y, TileType tile) {
+    if (tile == TILE_CASTLE_PASSAGE) {
+        return TILE_CASTLE_FLOOR;
+    }
+    if ((level == 3 || level == 4) && tile == TILE_CASTLE_TABLE) {
+        for (int i = 0; i + 1 < m->room_count; i += 2) {
+            int cx;
+            int cy;
+            int tx;
+            int ty;
+            map_room_center(&m->rooms[i], &cx, &cy);
+            map_room_center(&m->rooms[i + 1], &tx, &ty);
+            if (x >= cx - 1 && x <= tx && y >= cy - 1 && y <= cy + 1) {
+                return TILE_CASTLE_CARPET;
+            }
+        }
+    }
+    return tile;
+}
+
+static void repair_layout(Map *m, int level, FloorItem *loot, int count) {
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            m->tiles[y][x] = repaired_tile(m, level, x, y, m->tiles[y][x]);
+        }
+    }
+    for (int i = 0; i < count; i++) {
+        FloorItem *item = &loot[i];
+        item->underlying_tile = repaired_tile(m, level, item->x, item->y, item->underlying_tile);
+    }
+}
+
+void castle_migrate_layout(GameState *g) {
+    if (g->location == LOCATION_CASTLE_INTERIOR) {
+        repair_layout(&g->map, g->level, g->floor_items, g->floor_item_count);
+    }
+    for (int i = 0; i < CASTLE_DEPTH; i++) {
+        LevelCache *cache = &g->castle_cache[i];
+        if (cache->valid) {
+            repair_layout(&cache->map, i + 1, g->castle_loot[i], g->castle_loot_count[i]);
+        }
+    }
+    if (g->portal_location == LOCATION_CASTLE_INTERIOR && g->portal_origin_tile == TILE_CASTLE_PASSAGE) {
+        g->portal_origin_tile = TILE_CASTLE_FLOOR;
     }
 }
 
@@ -144,6 +256,36 @@ static Enemy *add_enemy(GameState *g, EnemyType type, int x, int y) {
     return e;
 }
 
+static void spawn_detail(GameState *g) {
+    if (g->level == 1 || g->level == 6) {
+        add_enemy(g, ENEMY_IRON_WARDEN, 31, 11);
+        add_enemy(g, ENEMY_ROYAL_MARKSMAN, 33, 11);
+        add_enemy(g, ENEMY_OATHBOUND_SOLDIER, 14, 25);
+        add_enemy(g, ENEMY_ROYAL_MARKSMAN, 17, 25);
+    }
+    if (g->level == 2 && !(g->castle_minibosses & 1)) {
+        add_enemy(g, ENEMY_IRON_WARDEN, 42, 48);
+        add_enemy(g, ENEMY_ROYAL_MARKSMAN, 48, 50);
+    }
+    if (g->level == 3) {
+        add_enemy(g, ENEMY_IRON_WARDEN, 48, 34);
+        add_enemy(g, ENEMY_ROYAL_MARKSMAN, 52, 28);
+    }
+    if ((g->level == 4 && !(g->castle_minibosses & 2)) || g->level == 6) {
+        add_enemy(g, ENEMY_IRON_WARDEN, 39, 54);
+        add_enemy(g, ENEMY_ROYAL_MARKSMAN, 51, 54);
+    }
+    if (g->level == 5) {
+        for (int i = 1; i < 5; i++) {
+            const Room *room = &g->map.rooms[i];
+            add_enemy(g, ENEMY_OATHBOUND_SOLDIER, room->x + 3, room->y + 10);
+        }
+    }
+    if (g->level == 6) {
+        add_enemy(g, ENEMY_BELL_HERALD, 53, 48);
+    }
+}
+
 void castle_spawn(GameState *g) {
     g->enemy_count = 0;
     for (int i = 1; i < 5; i++) {
@@ -156,6 +298,7 @@ void castle_spawn(GameState *g) {
     if (g->level >= 3) {
         add_enemy(g, ENEMY_BELL_HERALD, 49, 32);
     }
+    spawn_detail(g);
     if (g->level == 2 && !(g->castle_minibosses & 1)) {
         add_enemy(g, ENEMY_CASTELLAN, 45, 49);
     } else if (g->level == 4 && !(g->castle_minibosses & 2)) {
@@ -164,6 +307,60 @@ void castle_spawn(GameState *g) {
         add_enemy(g, ENEMY_LORD_VEYR, 45, 49);
     }
     g->level_cleared = 0;
+}
+
+static void migrate_encounter(GameState *g) {
+    for (int y = 0; y < CASTLE_H; y++) {
+        for (int x = 0; x < CASTLE_W; x++) {
+            TileType old = tile_at(g, x, y);
+            TileType tile = encounter_tile(g->level, x, y, old);
+            // Keep old occupants and loot in place when installing solid shelves.
+            if (tile != old && (tile != TILE_CASTLE_BOOKCASE || (!occupied(g, x, y) && g->map.tiles[y][x] != TILE_ITEM))) {
+                set_tile(g, x, y, tile);
+            }
+        }
+    }
+    if (!g->level_cleared && !g->game_won) {
+        spawn_detail(g);
+    }
+}
+
+int castle_migrate_encounters(GameState *g) {
+    GameState *floor = calloc(1, sizeof(*floor));
+    if (!floor) {
+        return 0;
+    }
+    for (int i = 0; i < CASTLE_DEPTH; i++) {
+        LevelCache *cache = &g->castle_cache[i];
+        if (!cache->valid) {
+            continue;
+        }
+        floor->map = cache->map;
+        memcpy(floor->enemies, cache->enemies, sizeof(floor->enemies));
+        floor->enemy_count = cache->enemy_count;
+        memcpy(floor->floor_items, g->castle_loot[i], sizeof(floor->floor_items));
+        floor->floor_item_count = g->castle_loot_count[i];
+        floor->level = i + 1;
+        floor->level_cleared = cache->level_cleared;
+        floor->castle_minibosses = g->castle_minibosses;
+        floor->game_won = g->game_won;
+        floor->player.x = -1;
+        floor->player.y = -1;
+        if (g->location == LOCATION_CASTLE_INTERIOR && g->level == i + 1) {
+            floor->player.x = g->player.x;
+            floor->player.y = g->player.y;
+        }
+        migrate_encounter(floor);
+        cache->map = floor->map;
+        memcpy(cache->enemies, floor->enemies, sizeof(cache->enemies));
+        cache->enemy_count = floor->enemy_count;
+        memcpy(g->castle_loot[i], floor->floor_items, sizeof(floor->floor_items));
+    }
+    free(floor);
+    if (g->location == LOCATION_CASTLE_INTERIOR) {
+        migrate_encounter(g);
+    }
+    return 1;
 }
 
 void castle_store(GameState *g) {
@@ -179,20 +376,6 @@ void castle_store(GameState *g) {
     c->valid = 1;
     memcpy(g->castle_loot[i], g->floor_items, sizeof(g->floor_items));
     g->castle_loot_count[i] = g->floor_item_count;
-}
-
-static void reveal_passage(GameState *g) {
-    if ((g->level == 2 && (g->castle_minibosses & 1)) || (g->level == 4 && (g->castle_minibosses & 2))) {
-        if (g->map.tiles[52][48] != TILE_ITEM) {
-            g->map.tiles[52][48] = TILE_CASTLE_PASSAGE;
-        }
-        for (int i = 0; i < g->floor_item_count; i++) {
-            FloorItem *item = &g->floor_items[i];
-            if (item->active && item->x == 48 && item->y == 52) {
-                item->underlying_tile = TILE_CASTLE_PASSAGE;
-            }
-        }
-    }
 }
 
 static void arrive(GameState *g, int x, int y) {
@@ -247,12 +430,19 @@ void castle_enter(GameState *g, int level) {
     }
     memcpy(g->floor_items, g->castle_loot[level - 1], sizeof(g->floor_items));
     g->floor_item_count = g->castle_loot_count[level - 1];
-    reveal_passage(g);
     arrive(g, 15, 11);
     g->dialogue_active = 0;
     g->castle_prompt = 0;
     char message[MAX_MESSAGE_LEN];
-    snprintf(message, sizeof(message), "Castle %d: %s. Use Ascend to climb; Descend to return.", level, castle_floor_name(level));
+    static const char *hints[CASTLE_DEPTH] = {
+        "Two approaches: use their levers to control shooting lanes.",
+        "Bait the Castellan's charge into his guard detail.",
+        "Stop the Herald before a patrol arrives at the marked doorway.",
+        "Interact beside the two glowing pedestals to weaken the Arcanist.",
+        "Patrols circle the shelves. Fire runes flash twice before burning.",
+        "Break the wards, silence the Herald, and watch the throne's fire lane."
+    };
+    snprintf(message, sizeof(message), "%s: %s", castle_floor_name(level), hints[level - 1]);
     push_message(g, message);
 }
 
@@ -271,36 +461,49 @@ void castle_leave(GameState *g, int town) {
         }
         g->level = i + 1;
         g->map = c->map;
-        int herald_called = 0;
+        int calls[MAX_ENEMIES];
+        int heralds = 0;
         for (int j = 0; j < c->enemy_count; j++) {
             if (c->enemies[j].type == ENEMY_BELL_HERALD) {
-                herald_called |= c->enemies[j].revived;
+                calls[heralds++] = c->enemies[j].revived;
             }
         }
         castle_spawn(g);
+        int herald = 0;
         for (int j = 0; j < g->enemy_count; j++) {
             if (g->enemies[j].type == ENEMY_BELL_HERALD) {
-                g->enemies[j].revived = herald_called;
+                if (herald < heralds) {
+                    g->enemies[j].revived = calls[herald];
+                }
+                herald++;
             }
         }
         memcpy(c->enemies, g->enemies, sizeof(g->enemies));
         c->enemy_count = g->enemy_count;
         c->level_cleared = 0;
+        memcpy(g->floor_items, g->castle_loot[i], sizeof(g->floor_items));
+        g->floor_item_count = g->castle_loot_count[i];
         for (int y = 10; y <= 12; y++) {
-            if (c->map.tiles[y][29] != TILE_ITEM) {
-                c->map.tiles[y][29] = TILE_CASTLE_GATE;
+            set_tile(g, 29, y, TILE_CASTLE_GATE);
+        }
+        if (i == 0 || i == 5) {
+            for (int x = 14; x <= 16; x++) {
+                set_tile(g, x, 21, TILE_CASTLE_GATE_OPEN);
             }
         }
         if (i == 3 || i == 5) {
             for (int y = 47; y <= 49; y++) {
-                if (c->map.tiles[y][40] != TILE_ITEM) {
-                    c->map.tiles[y][40] = TILE_CASTLE_GATE_OPEN;
-                }
-                if (c->map.tiles[y][50] != TILE_ITEM) {
-                    c->map.tiles[y][50] = TILE_CASTLE_GATE;
-                }
+                set_tile(g, 40, y, TILE_CASTLE_GATE_OPEN);
+                set_tile(g, 50, y, TILE_CASTLE_GATE);
+            }
+            if (i == 5 || !(g->castle_minibosses & 2)) {
+                set_tile(g, 37, 54, TILE_CASTLE_WARD);
+                set_tile(g, 53, 54, TILE_CASTLE_WARD);
             }
         }
+        c->map = g->map;
+        memcpy(g->castle_loot[i], g->floor_items, sizeof(g->floor_items));
+        g->castle_fire_phase[i] = 0;
     }
     g->level = saved_level;
     g->player.x = px;
@@ -377,56 +580,49 @@ int castle_prompt_key(GameState *g, int key, int repeat) {
     return 1;
 }
 
-int castle_has_interaction(const GameState *g) {
-    if (g->location == LOCATION_CASTLE && g->player.y == 12) {
-        return (g->player.x == 17 && (g->castle_minibosses & 1)) || (g->player.x == 23 && (g->castle_minibosses & 2));
+static int interaction_at(const GameState *g, int *x, int *y) {
+    if (g->location != LOCATION_CASTLE_INTERIOR) {
+        return 0;
     }
-    TileType t = underfoot(g);
-    if (t == TILE_CASTLE_PASSAGE) {
-        return 1;
-    }
-    if (g->location == LOCATION_CASTLE_INTERIOR) {
-        for (int i = 0; i < 4; i++) {
-            int x = g->player.x + dxs[i];
-            int y = g->player.y + dys[i];
-            if (x >= 0 && y >= 0 && x < MAP_W && y < MAP_H && g->map.tiles[y][x] == TILE_CASTLE_LEVER) {
-                return 1;
-            }
+    for (int i = -1; i < 4; i++) {
+        *x = g->player.x + (i < 0 ? 0 : dxs[i]);
+        *y = g->player.y + (i < 0 ? 0 : dys[i]);
+        TileType tile = tile_at(g, *x, *y);
+        if (tile == TILE_CASTLE_LEVER || tile == TILE_CASTLE_WARD) {
+            return 1;
         }
     }
-    return t == TILE_CASTLE_LEVER;
+    return 0;
+}
+
+int castle_has_interaction(const GameState *g) {
+    int x;
+    int y;
+    return interaction_at(g, &x, &y);
 }
 
 int castle_interact(GameState *g) {
-    if (!castle_has_interaction(g)) {
+    int x;
+    int y;
+    if (!interaction_at(g, &x, &y)) {
         return 0;
     }
-    TileType t = underfoot(g);
-    if (g->location == LOCATION_CASTLE) {
-        int floor = g->player.x == 17 ? 2 : 4;
-        game_hide_portal_destination(g);
-        g->portal_active = 0;
-        castle_enter(g, floor);
-        arrive(g, 48, 52);
-        push_message(g, "The earned passage leads past the defeated miniboss.");
+    if (tile_at(g, x, y) == TILE_CASTLE_WARD) {
+        set_tile(g, x, y, TILE_CASTLE_WARD_SPENT);
+        push_message(g, "The pedestal goes dark. Royal ward protection weakens!");
         return 1;
     }
-    if (t == TILE_CASTLE_PASSAGE) {
-        castle_leave(g, 0);
-        return 1;
-    } else if (g->location == LOCATION_CASTLE_INTERIOR) {
-        int open = g->map.tiles[11][29] == TILE_CASTLE_GATE;
-        for (int y = 10; y <= 12; y++) {
-            if (!occupied(g, 29, y)) {
-                g->map.tiles[y][29] = open ? TILE_CASTLE_GATE_OPEN : TILE_CASTLE_GATE;
-            } else if (open) {
-                g->map.tiles[y][29] = TILE_CASTLE_GATE_OPEN;
-            }
+    int vertical = x == 10 && y == 15;
+    int open = tile_at(g, vertical ? 15 : 29, vertical ? 21 : 11) == TILE_CASTLE_GATE;
+    for (int i = -1; i <= 1; i++) {
+        int gx = vertical ? 15 + i : 29;
+        int gy = vertical ? 21 : 11 + i;
+        if (open || !occupied(g, gx, gy)) {
+            set_tile(g, gx, gy, open ? TILE_CASTLE_GATE_OPEN : TILE_CASTLE_GATE);
         }
-        push_message(g, "The lever moves the portcullis. Another route circles the keep.");
-        return 1;
     }
-    return 0;
+    push_message(g, "The lever moves its portcullis, changing cover along this approach.");
+    return 1;
 }
 
 int castle_step(GameState *g) {
@@ -563,6 +759,82 @@ static int line_clear(const Map *m, int x, int y, int tx, int ty) {
     return 1;
 }
 
+static void patrol(GameState *g, Enemy *e) {
+    if (g->level != 5 || e->type != ENEMY_OATHBOUND_SOLDIER) {
+        return;
+    }
+    for (int i = 1; i < 5; i++) {
+        const Room *room = &g->map.rooms[i];
+        if (e->x < room->x || e->x >= room->x + room->w || e->y < room->y || e->y >= room->y + room->h) {
+            continue;
+        }
+        for (int turn = 0; turn < 4; turn++) {
+            int x = e->x + e->facing_dx;
+            int y = e->y + e->facing_dy;
+            if (x > room->x && x < room->x + room->w - 1 && y > room->y && y < room->y + room->h - 1 && !occupied(g, x, y)) {
+                e->x = x;
+                e->y = y;
+                return;
+            }
+            int dx = e->facing_dx;
+            e->facing_dx = -e->facing_dy;
+            e->facing_dy = dx;
+        }
+        return;
+    }
+}
+
+static int active_wards(const GameState *g) {
+    return (tile_at(g, 37, 54) == TILE_CASTLE_WARD) + (tile_at(g, 53, 54) == TILE_CASTLE_WARD);
+}
+
+int castle_fire_warning(const GameState *g, int x, int y) {
+    if (g->location != LOCATION_CASTLE_INTERIOR || (g->level != 5 && g->level != 6) || g->game_won) {
+        return 0;
+    }
+    int phase = g->castle_fire_phase[g->level - 1];
+    return (phase == 1 || phase == 2) && tile_at(g, x, y) == TILE_CASTLE_FIRE_RUNE;
+}
+
+static int tick_fire(GameState *g) {
+    if (g->level != 5 && g->level != 6) {
+        return 0;
+    }
+    int *phase = &g->castle_fire_phase[g->level - 1];
+    *phase = (*phase + 1) % 4;
+    if ((*phase == 1 || *phase == 2) && (g->level == 5 || (g->player.x >= 34 && g->player.y >= 44))) {
+        push_message(g, *phase == 1 ? "Fire runes glow! Their lanes ignite in two turns." : "Fire lanes ignite next turn! Step off the glowing runes.");
+    }
+    if (*phase == 3 && underfoot(g) == TILE_CASTLE_FIRE_RUNE) {
+        int damage = 24 - g->player.defense / 2;
+        push_message(g, "Royal fire erupts beneath you!");
+        return damage > 6 ? damage : 6;
+    }
+    return 0;
+}
+
+static void call_patrol(GameState *g, Enemy *e) {
+    int court = g->level == 3;
+    int throne = g->level == 6 && e->y >= 44;
+    if (court || throne) {
+        int y = court ? 35 : 46;
+        const EnemyType types[3] = {ENEMY_OATHBOUND_SOLDIER, ENEMY_IRON_WARDEN, ENEMY_ROYAL_MARKSMAN};
+        for (int i = 0; i < 3; i++) {
+            // Doorway and adjacent arrival tiles; newcomers act next turn.
+            add_enemy(g, types[i], i == 1 ? 52 : 53, i == 2 ? y - 1 : y);
+        }
+        push_message(g, "The bell calls a patrol through the marked doorway!");
+    } else {
+        for (int d = 0; d < 4; d++) {
+            if (add_enemy(g, ENEMY_OATHBOUND_SOLDIER, e->x + dxs[d], e->y + dys[d])) {
+                break;
+            }
+        }
+        push_message(g, "The Herald's bell calls one royal guard!");
+    }
+    e->revived = 1;
+}
+
 int castle_barrier_warning(const GameState *g, int x, int y) {
     if ((x != 40 && x != 50) || y < 47 || y > 49) {
         return 0;
@@ -580,11 +852,11 @@ int castle_barrier_warning(const GameState *g, int x, int y) {
 static void change_wards(GameState *g) {
     for (int y = 47; y <= 49; y++) {
         for (int x = 40; x <= 50; x += 10) {
-            TileType tile = g->map.tiles[y][x];
+            TileType tile = tile_at(g, x, y);
             if (tile == TILE_CASTLE_GATE) {
-                g->map.tiles[y][x] = TILE_CASTLE_GATE_OPEN;
+                set_tile(g, x, y, TILE_CASTLE_GATE_OPEN);
             } else if (tile == TILE_CASTLE_GATE_OPEN && !occupied(g, x, y)) {
-                g->map.tiles[y][x] = TILE_CASTLE_GATE;
+                set_tile(g, x, y, TILE_CASTLE_GATE);
             }
         }
     }
@@ -615,6 +887,7 @@ int castle_tick(GameState *g) {
         if ((e->is_boss && (g->player.x < 34 || g->player.x >= 56 || g->player.y < 44 || g->player.y >= 58)) || (!e->is_boss && distances[e->y][e->x] > 12)) {
             e->attack_target_x = -1;
             e->move_timer = 0;
+            patrol(g, e);
             continue;
         }
         if (e->move_timer >= 3) {
@@ -623,16 +896,13 @@ int castle_tick(GameState *g) {
         }
         if (e->move_timer == 1) {
             if (e->type == ENEMY_BELL_HERALD && !e->revived) {
-                for (int d = 0; d < 4; d++) {
-                    if (add_enemy(g, ENEMY_OATHBOUND_SOLDIER, e->x + dxs[d], e->y + dys[d])) {
-                        break;
-                    }
-                }
-                e->revived = 1;
-                push_message(g, "The Herald's bell calls one royal guard!");
+                call_patrol(g, e);
             } else {
                 if (castle_attack_marks(&g->map, e, g->player.x, g->player.y)) {
                     int hit = e->attack - g->player.defense;
+                    if (e->type == ENEMY_ROYAL_ARCANIST || e->type == ENEMY_LORD_VEYR) {
+                        hit += active_wards(g) * 4;
+                    }
                     for (int j = 0; j < count; j++) {
                         const Enemy *hexer = &g->enemies[j];
                         if (hexer->active && hexer->type == ENEMY_COURT_HEXER && hexer != e &&
@@ -651,6 +921,16 @@ int castle_tick(GameState *g) {
                             if (!map_is_walkable(&g->map, e->x + sx, e->y + sy)) {
                                 e->frozen_turns = 1;
                                 push_message(g, "The Castellan crashes into stone and is staggered!");
+                            }
+                            for (int j = 0; j < count; j++) {
+                                Enemy *guard = &g->enemies[j];
+                                if (guard->active && !guard->is_boss && guard->x == e->x + sx && guard->y == e->y + sy) {
+                                    guard->frozen_turns = 2;
+                                    guard->move_timer = 2;
+                                    guard->attack_target_x = -1;
+                                    guard->attack_target_y = -1;
+                                    push_message(g, "The Castellan crashes into his guard and breaks its defense!");
+                                }
                             }
                             break;
                         }
@@ -686,8 +966,8 @@ int castle_tick(GameState *g) {
             e->attack_phase = e->type == ENEMY_LORD_VEYR ? (e->hp * 3 > e->max_hp * 2 ? 1 : e->hp * 3 > e->max_hp ? 2 : 3) : 0;
             if (e->type == ENEMY_LORD_VEYR && !e->revived) {
                 e->revived = 1;
-                add_enemy(g, ENEMY_OATHBOUND_SOLDIER, 42, 46);
-                add_enemy(g, ENEMY_OATHBOUND_SOLDIER, 48, 46);
+                add_enemy(g, ENEMY_IRON_WARDEN, 42, 46);
+                add_enemy(g, ENEMY_ROYAL_MARKSMAN, 48, 46);
                 push_message(g, "Veyr commands his last two royal guards to defend the throne!");
             }
             if (e->type == ENEMY_CASTELLAN) {
@@ -715,14 +995,14 @@ int castle_tick(GameState *g) {
             advance(g, e);
         }
     }
-    return damage;
+    return damage + tick_fire(g);
 }
 
 int castle_enemy_damage(const GameState *g, const Enemy *e, int damage) {
     if (g->location != LOCATION_CASTLE_INTERIOR) {
         return damage;
     }
-    if ((e->type == ENEMY_IRON_WARDEN || e->type == ENEMY_CASTELLAN || (e->type == ENEMY_LORD_VEYR && e->hp * 3 > e->max_hp * 2)) && e->move_timer != 2) {
+    if ((e->type == ENEMY_IRON_WARDEN || e->type == ENEMY_CASTELLAN || (e->type == ENEMY_LORD_VEYR && e->hp * 3 > e->max_hp * 2)) && e->move_timer != 2 && !e->frozen_turns) {
         int front = (g->player.x - e->x) * e->facing_dx + (g->player.y - e->y) * e->facing_dy > 0;
         if (front) {
             damage /= 2;
@@ -730,7 +1010,7 @@ int castle_enemy_damage(const GameState *g, const Enemy *e, int damage) {
     } else if (!e->is_boss) {
         for (int i = 0; i < g->enemy_count; i++) {
             const Enemy *guard = &g->enemies[i];
-            if (!guard->active || guard->type != ENEMY_IRON_WARDEN || guard->move_timer == 2 ||
+            if (!guard->active || guard->type != ENEMY_IRON_WARDEN || guard->move_timer == 2 || guard->frozen_turns ||
                 abs(guard->x - e->x) + abs(guard->y - e->y) > 4) {
                 continue;
             }
@@ -742,15 +1022,17 @@ int castle_enemy_damage(const GameState *g, const Enemy *e, int damage) {
             }
         }
     }
+    if (e->type == ENEMY_ROYAL_ARCANIST || e->type == ENEMY_LORD_VEYR) {
+        damage = damage * (100 - active_wards(g) * 20) / 100;
+    }
     return damage > 0 ? damage : 1;
 }
 
 void castle_record_death(GameState *g, Enemy *e) {
     if (e->type == ENEMY_CASTELLAN || e->type == ENEMY_ROYAL_ARCANIST) {
         g->castle_minibosses |= e->type == ENEMY_CASTELLAN ? 1 : 2;
-        reveal_passage(g);
         g->gold += 100;
-        push_message(g, "Miniboss defeated! A permanent passage to the castle grounds opens. Press A on it.");
+        push_message(g, "Miniboss defeated! The way to the next castle floor is open.");
     } else if (e->type == ENEMY_LORD_VEYR) {
         g->game_won = 1;
         g->defeated_bosses |= 1 << LOCATION_CASTLE_INTERIOR;
