@@ -13,17 +13,64 @@ of that screenshot. These are renderer captures, not generated game scenes.
 
 This change gives the Kraken a larger sprite, a separate health display, and
 warnings covering the marked tile and walkable tiles within one step of lake
-holes. Warnings render beneath characters. Damage, collision, attack timing,
-map generation, and saved state retain their existing behavior. The larger
-art still uses the boss's original center tile for attacks.
+holes. Warnings render beneath characters. The larger art still uses the
+boss's original center tile for attacks.
 
-## Recommended next fight change
+## Recovery turn
 
-Replace the repeated warning/strike pattern with a readable sequence: mark a
-strike, resolve it, expose the core for a recovery turn. Then add a distinct
-sweeping tentacle attack, with every affected tile marked one turn ahead.
-At half health, vary the patterns rather than simply increasing damage.
-Any new persistent phase/target state needs save/load support and migrations.
+The fight now repeats warning → strike → recovery. After a strike, the boss
+display turns green and reads "RECOVERING - ATTACK NOW". The next player
+action has no Kraken retaliation, including its adjacent bite and attacks
+beside lake holes. Then a fresh warning begins. The adjacent bite still
+applies during warning turns; attack damage and collision are unchanged.
+
+`recovery.png` captures this opening through the actual SDL `game_draw()`
+renderer on the same seed 808 arena, immediately after a dodged strike.
+
+The existing saved enemy timer stores the three-turn cycle. Save version 115
+migrates older live and cached Kraken timers: an odd timer keeps its pending
+strike and marked tile; an even timer prepares a new warning. Health, maps,
+quest progress, and rewards are preserved. Recovery and warning turns survive
+save/load and town portal visits.
+
+## Sweeping tentacles
+
+The Kraken alternates its targeted strike with a sweep of one row or column
+across the lake, aimed at the player's marked position. The direction uses
+the dominant axis from the Kraken to that position, with horizontal sweeps
+on ties. A perpendicular step escapes the lane; moving along it still takes
+damage. The marked position remains threatened even outside the lake.
+
+Every walkable tile in the lane is marked orange for one turn, with a "SWEEP
+NEXT TURN" cue. The original warning still raises tentacles beside lake
+holes; the sweep does not attack unrelated holes. Both patterns keep the
+same damage and a full recovery opening. `sweep.png` is an actual SDL renderer
+capture of the vertical warning on seed 808.
+
+`kraken_tile_threatened()` supplies both the warning tiles and the damage
+check. The existing saved timer now covers six turns, retaining the original
+phases 0–2 for version 115 saves. Version 116 saves also preserve sweep
+warnings, recovery, and the next pattern across save/load and portal visits;
+the version 115 migration still handles older two-turn saves.
+
+## Half-health phase
+
+At 50% health or below, newly warned sweeps mark two parallel lanes, separated
+by one safe lane. The added lane lies two tiles toward the Kraken's center;
+when the original lane passes through the center, it lies two tiles in the
+positive map direction. One perpendicular step still escapes the attack.
+Targeted strikes, damage, adjacent bites, and recovery timing stay the same.
+
+The boss display adds "ENRAGED", a warm health bar, and a "DOUBLE SWEEP" cue.
+`enraged.png` captures the actual SDL renderer on seed 808 with the Kraken
+set to half health before the sweep's warning.
+
+The existing enemy `attack_phase` field locks the pattern at warning time,
+so reducing the Kraken's health during wind-up cannot add unmarked danger
+tiles. That field is already serialized for live and cached enemies. Save
+version 117 preserves double sweeps through save/load and town portal visits.
+Older saves keep their pending single-lane patterns; subsequent warnings
+select the half-health pattern without resetting maps, health, or progress.
 
 ## Recommended Frostfell improvements
 

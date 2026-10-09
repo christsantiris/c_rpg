@@ -657,3 +657,4 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 - Improve difficulty scaling and economy
    Warrior and Rogue should struggle at certain levels without better weapons. Mage should struggle without better spells. Purchasing new weapons, armor and tomes should become necessary to progress.
 - Improve all npc and enemy sprites
+- Update UI for dragonspine, frostfell, sunscar

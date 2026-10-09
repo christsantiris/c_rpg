@@ -372,6 +372,7 @@ void action_resolve_player(GameState *g, Action a);
 int action_use_inventory_item(GameState *g, int index, EnemyProjectiles *shots);
 void action_resolve_enemies(GameState *g);
 void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *shots);
+int kraken_tile_threatened(const GameState *g, const Enemy *e, int x, int y);
 
 void player_gain_xp(GameState *g, int xp);
 void push_message(GameState *g, const char *msg);

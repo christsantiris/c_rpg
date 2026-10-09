@@ -395,6 +395,7 @@ static void test_polar_kraken(void) {
     frost_game.player.y = clear_y;
     action_resolve_enemies(&frost_game);
     action_resolve_enemies(&frost_game);
+    action_resolve_enemies(&frost_game);
     ASSERT("standing still away from the holes is struck without moving the Kraken",
         frost_game.player.hp < 10000 && kraken->x == kraken_x && kraken->y == kraken_y);
 
@@ -662,7 +663,7 @@ static void test_kraken_targeted_strike(void) {
     int saved = save_game(&frost_game, 99019) && load_game(&frost_loaded, 99019);
     ASSERT("a pending Kraken strike keeps its marked tile after save and load",
         saved && frost_loaded.enemies[k].attack_target_x == x &&
-        frost_loaded.enemies[k].attack_target_y == y && frost_loaded.enemies[k].move_timer % 2 == 1);
+        frost_loaded.enemies[k].attack_target_y == y && frost_loaded.enemies[k].move_timer % 3 == 1);
     remove("saves/savegame_99019.json");
     frost_game = frost_loaded;
     e = &frost_game.enemies[k];
@@ -685,6 +686,7 @@ static void test_kraken_targeted_strike(void) {
         moved && frost_game.player.hp == hp && e->attack_target_x == -1);
 
     action_resolve_enemies(&frost_game);
+    action_resolve_enemies(&frost_game);
     game_open_town_portal(&frost_game);
     game_use_town_portal(&frost_game);
     e = &frost_game.enemies[k];
@@ -698,6 +700,263 @@ static void test_kraken_targeted_strike(void) {
     action_resolve_enemies(&frost_game);
     ASSERT("retreating across the map cancels the Kraken's targeting",
         e->move_timer == 0 && e->attack_target_x == -1 && e->attack_target_y == -1);
+}
+
+static void test_kraken_recovery(void) {
+    int k = setup_kraken_encounter(808);
+    Enemy *e = &frost_game.enemies[k];
+    aim_from_clear_ice(&frost_game, e);
+    action_resolve_enemies(&frost_game);
+    action_resolve_enemies(&frost_game);
+    int saved = save_game(&frost_game, 99019) && load_game(&frost_loaded, 99019);
+    ASSERT("a Kraken recovery opening survives save and load",
+        saved && frost_loaded.enemies[k].move_timer == 2 &&
+        frost_loaded.enemies[k].attack_target_x == -1 && frost_loaded.enemies[k].attack_target_y == -1);
+    frost_game = frost_loaded;
+    e = &frost_game.enemies[k];
+    int hp = frost_game.player.hp;
+    int boss_hp = e->hp;
+    action_resolve_player(&frost_game, (Action){ACTION_RANGED_ATTACK, 0, 0});
+    action_resolve_enemies(&frost_game);
+    ASSERT("a ranged attack during recovery deals damage without retaliation",
+        e->hp < boss_hp && frost_game.player.hp == hp && e->move_timer % 3 == 0 && e->attack_target_x == -1);
+    action_resolve_enemies(&frost_game);
+    ASSERT("recovery is followed by a fresh marked warning",
+        e->move_timer == 4 && e->attack_target_x == frost_game.player.x && e->attack_target_y == frost_game.player.y);
+    action_resolve_enemies(&frost_game);
+    ASSERT("the next warned strike still punishes standing still",
+        e->move_timer == 5 && frost_game.player.hp < hp && e->attack_target_x == -1);
+
+    game_open_town_portal(&frost_game);
+    saved = save_game(&frost_game, 99019) && load_game(&frost_loaded, 99019);
+    frost_game = frost_loaded;
+    game_use_town_portal(&frost_game);
+    k = find_kraken(&frost_game);
+    e = &frost_game.enemies[k];
+    hp = frost_game.player.hp;
+    int recovered = e->move_timer == 5;
+    action_resolve_enemies(&frost_game);
+    ASSERT("a town save and portal return preserve the recovery turn",
+        saved && recovered && e->move_timer == 0 && frost_game.player.hp == hp);
+    remove("saves/savegame_99019.json");
+
+    k = setup_kraken_encounter(808);
+    e = &frost_game.enemies[k];
+    aim_from_clear_ice(&frost_game, e);
+    action_resolve_enemies(&frost_game);
+    action_resolve_enemies(&frost_game);
+    frost_game.player.x = e->x + 1;
+    frost_game.player.y = e->y;
+    hp = frost_game.player.hp;
+    boss_hp = e->hp;
+    action_resolve_player(&frost_game, (Action){ACTION_MOVE, e->x, e->y});
+    action_resolve_enemies(&frost_game);
+    ASSERT("a melee attack during recovery does not trigger the Kraken's bite",
+        e->hp < boss_hp && frost_game.player.hp == hp && e->move_timer % 3 == 0 && e->attack_target_x == -1);
+    action_resolve_enemies(&frost_game);
+    ASSERT("the Kraken resumes biting adjacent players on its next warning",
+        e->move_timer == 4 && frost_game.player.hp < hp);
+    action_resolve_enemies(&frost_game);
+    int hole_x = 0;
+    int hole_y = 0;
+    int found = find_lake_spot(&frost_game, e, 1, &hole_x, &hole_y);
+    frost_game.player.x = hole_x;
+    frost_game.player.y = hole_y;
+    hp = frost_game.player.hp;
+    action_resolve_enemies(&frost_game);
+    ASSERT("lake holes do not trigger a tentacle hit during recovery",
+        found && frost_game.player.hp == hp && e->move_timer == 0 && e->attack_target_x == -1);
+}
+
+// Pick clear lake ice with room to dodge perpendicular to a sweep or move along it.
+static int aim_for_sweep(GameState *g, const Enemy *e, int horizontal) {
+    const Room *lake = &g->map.rooms[g->map.room_count - 1];
+    for (int y = lake->y + 1; y < lake->y + lake->h - 1; y++) {
+        for (int x = lake->x + 1; x < lake->x + lake->w - 1; x++) {
+            int dx = abs(x - e->x);
+            int dy = abs(y - e->y);
+            if ((dx >= dy) != horizontal || steps_from(x, y, e->x, e->y) < 3 ||
+                g->map.tiles[y][x] != TILE_FROST_LAKE || beside_hole(g, x, y) ||
+                g->map.tiles[y][x + 1] != TILE_FROST_LAKE || g->map.tiles[y + 1][x] != TILE_FROST_LAKE) {
+                continue;
+            }
+            g->player.x = x;
+            g->player.y = y;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void test_kraken_sweep(void) {
+    int warned = 1;
+    int dodged = 1;
+    int struck = 1;
+    int recovered = 1;
+    for (int seed = 1; seed <= 100; seed++) {
+        for (int horizontal = 0; horizontal <= 1; horizontal++) {
+            for (int perpendicular = 0; perpendicular <= 1; perpendicular++) {
+                int k = setup_kraken_encounter(seed);
+                Enemy *e = &frost_game.enemies[k];
+                if (!aim_for_sweep(&frost_game, e, horizontal)) {
+                    warned = 0;
+                    continue;
+                }
+                e->move_timer = 3;
+                int hp = frost_game.player.hp;
+                action_resolve_enemies(&frost_game);
+                warned &= e->move_timer == 4 && frost_game.player.hp == hp &&
+                    strstr(frost_game.messages[frost_game.message_count - 1], "sweep next turn") != NULL;
+                int x = frost_game.player.x + (horizontal != perpendicular);
+                int y = frost_game.player.y + (horizontal == perpendicular);
+                walk_onto(&frost_game, x, y);
+                action_resolve_enemies(&frost_game);
+                if (perpendicular) {
+                    dodged &= frost_game.player.hp == hp;
+                } else {
+                    struck &= frost_game.player.hp < hp;
+                }
+                hp = frost_game.player.hp;
+                action_resolve_enemies(&frost_game);
+                recovered &= e->move_timer == 0 && frost_game.player.hp == hp && e->attack_target_x == -1;
+                action_resolve_enemies(&frost_game);
+                recovered &= e->move_timer == 1;
+            }
+        }
+    }
+    ASSERT("horizontal and vertical sweeps warn before striking on 100 maps", warned);
+    ASSERT("one perpendicular step dodges either sweep direction on 100 maps", dodged);
+    ASSERT("moving along a warned lane still takes sweep damage on 100 maps", struck);
+    ASSERT("each sweep leaves a safe recovery turn before a targeted strike", recovered);
+
+    int k = setup_kraken_encounter(808);
+    Enemy *e = &frost_game.enemies[k];
+    aim_for_sweep(&frost_game, e, 1);
+    e->move_timer = 3;
+    action_resolve_enemies(&frost_game);
+    int x = e->attack_target_x;
+    int y = e->attack_target_y;
+    int saved = save_game(&frost_game, 99019) && load_game(&frost_loaded, 99019);
+    ASSERT("saving a sweep retains its pattern and marked row",
+        saved && frost_loaded.enemies[k].move_timer == 4 &&
+        frost_loaded.enemies[k].attack_target_x == x && frost_loaded.enemies[k].attack_target_y == y);
+    frost_game = frost_loaded;
+    game_open_town_portal(&frost_game);
+    saved = save_game(&frost_game, 99019) && load_game(&frost_loaded, 99019);
+    frost_game = frost_loaded;
+    game_use_town_portal(&frost_game);
+    k = find_kraken(&frost_game);
+    e = &frost_game.enemies[k];
+    int pending = e->move_timer == 4 && e->attack_target_x == x && e->attack_target_y == y;
+    walk_onto(&frost_game, x + 1, y);
+    int hp = frost_game.player.hp;
+    action_resolve_enemies(&frost_game);
+    ASSERT("a town save and portal return cannot erase or retarget a sweep",
+        saved && pending && frost_game.player.hp < hp && e->move_timer == 5 && e->attack_target_x == -1);
+    remove("saves/savegame_99019.json");
+}
+
+// Put the player on the added lane to check its damage separately from dodging.
+static int stand_in_second_lane(GameState *g, const Enemy *e, int horizontal) {
+    const Room *lake = &g->map.rooms[g->map.room_count - 1];
+    int lane = horizontal ? e->attack_target_y : e->attack_target_x;
+    int center = horizontal ? e->y : e->x;
+    int second = lane + (lane > center ? -2 : 2);
+    for (int step = 0; step < (horizontal ? lake->w : lake->h); step++) {
+        int x = horizontal ? lake->x + step : second;
+        int y = horizontal ? second : lake->y + step;
+        if (map_is_walkable(&g->map, x, y) && steps_from(x, y, e->x, e->y) > 1) {
+            g->player.x = x;
+            g->player.y = y;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void test_kraken_enraged(void) {
+    int warned = 1;
+    int dodged = 1;
+    int struck = 1;
+    int recovered = 1;
+    for (int seed = 1; seed <= 100; seed++) {
+        for (int horizontal = 0; horizontal <= 1; horizontal++) {
+            for (int second_lane = 0; second_lane <= 1; second_lane++) {
+                int k = setup_kraken_encounter(seed);
+                Enemy *e = &frost_game.enemies[k];
+                if (!aim_for_sweep(&frost_game, e, horizontal)) {
+                    warned = 0;
+                    continue;
+                }
+                e->hp = e->max_hp / 2;
+                e->move_timer = 3;
+                int hp = frost_game.player.hp;
+                action_resolve_enemies(&frost_game);
+                warned &= e->attack_phase == 1 && frost_game.player.hp == hp &&
+                    strstr(frost_game.messages[frost_game.message_count - 1], "Double sweep") != NULL;
+                if (second_lane) {
+                    struck &= stand_in_second_lane(&frost_game, e, horizontal);
+                } else {
+                    walk_onto(&frost_game, frost_game.player.x + !horizontal, frost_game.player.y + horizontal);
+                }
+                action_resolve_enemies(&frost_game);
+                if (second_lane) {
+                    struck &= frost_game.player.hp < hp;
+                } else {
+                    dodged &= frost_game.player.hp == hp;
+                }
+                hp = frost_game.player.hp;
+                action_resolve_enemies(&frost_game);
+                recovered &= e->move_timer == 0 && frost_game.player.hp == hp;
+            }
+        }
+    }
+    ASSERT("the half-health phase announces double sweeps on 100 maps", warned);
+    ASSERT("one perpendicular step still dodges both enraged sweep directions", dodged);
+    ASSERT("the additional warned lane deals damage on 100 maps", struck);
+    ASSERT("enraged sweeps keep a full turn without retaliation", recovered);
+
+    int k = setup_kraken_encounter(808);
+    Enemy *e = &frost_game.enemies[k];
+    aim_for_sweep(&frost_game, e, 1);
+    e->hp = e->max_hp / 2 + 1;
+    e->move_timer = 3;
+    action_resolve_enemies(&frost_game);
+    int x = e->attack_target_x;
+    int y = e->attack_target_y;
+    int normal = e->attack_phase == 0;
+    e->hp = e->max_hp / 2;
+    int extra = stand_in_second_lane(&frost_game, e, 1);
+    int hp = frost_game.player.hp;
+    action_resolve_enemies(&frost_game);
+    ASSERT("crossing half health cannot expand an already-warned sweep",
+        normal && extra && frost_game.player.hp == hp && e->move_timer == 5);
+    action_resolve_enemies(&frost_game);
+    frost_game.player.x = x;
+    frost_game.player.y = y;
+    action_resolve_enemies(&frost_game);
+    ASSERT("the first new warning below half health locks the enraged phase", e->attack_phase == 1);
+    action_resolve_enemies(&frost_game);
+    action_resolve_enemies(&frost_game);
+    action_resolve_enemies(&frost_game);
+    int saved = save_game(&frost_game, 99019) && load_game(&frost_loaded, 99019);
+    ASSERT("a pending double sweep retains its lanes and half-health phase after loading",
+        saved && frost_loaded.enemies[k].move_timer == 4 && frost_loaded.enemies[k].attack_phase == 1 &&
+        frost_loaded.enemies[k].attack_target_x == x && frost_loaded.enemies[k].attack_target_y == y);
+    frost_game = frost_loaded;
+    game_open_town_portal(&frost_game);
+    saved = save_game(&frost_game, 99019) && load_game(&frost_loaded, 99019);
+    frost_game = frost_loaded;
+    game_use_town_portal(&frost_game);
+    k = find_kraken(&frost_game);
+    e = &frost_game.enemies[k];
+    int pending = e->move_timer == 4 && e->attack_phase == 1;
+    extra = stand_in_second_lane(&frost_game, e, 1);
+    hp = frost_game.player.hp;
+    action_resolve_enemies(&frost_game);
+    ASSERT("a town save and portal return preserve damage on the added lane",
+        saved && pending && extra && frost_game.player.hp < hp && e->move_timer == 5);
+    remove("saves/savegame_99019.json");
 }
 
 static int kraken_bows_on_floor(const GameState *g) {
@@ -1072,6 +1331,9 @@ void test_frostfell(void) {
     test_frostfell_behaviours();
     test_freeze_recovery();
     test_kraken_targeted_strike();
+    test_kraken_recovery();
+    test_kraken_sweep();
+    test_kraken_enraged();
     test_kraken_reward_persistence();
     test_slick_ice();
     test_thin_ice();

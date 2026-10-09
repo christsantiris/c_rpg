@@ -2043,6 +2043,78 @@ static void test_quest_giver_location_migration(void) {
     remove(path);
 }
 
+static void test_kraken_cycle_migration(void) {
+    static GameState original;
+    static GameState loaded;
+    int unused = !save_exists(LEGACY_SLOT);
+    ASSERT("Kraken migration test slot is unused", unused);
+    if (!unused) {
+        return;
+    }
+    for (int scenario = 0; scenario < 11; scenario++) {
+        int version = scenario < 2 ? 114 : scenario < 5 ? 115 : 116;
+        int timer = scenario < 2 ? scenario + 7 : scenario < 5 ? scenario - 2 : scenario - 5;
+        memset(&original, 0, sizeof(original));
+        original.player.player_class = CLASS_ROGUE;
+        game_init(&original);
+        original.location = LOCATION_FROSTFELL;
+        original.level = FROSTFELL_DEPTH;
+        original.max_frostfell_level_reached = FROSTFELL_DEPTH;
+        srand(808);
+        map_generate_frostfell(&original.map, original.level);
+        enemies_spawn(&original);
+        int k = -1;
+        for (int i = 0; i < original.enemy_count; i++) {
+            if (original.enemies[i].type == ENEMY_POLAR_KRAKEN) {
+                k = i;
+            }
+        }
+        ASSERT("legacy fixture contains a Kraken", k >= 0);
+        if (k < 0) {
+            continue;
+        }
+        Enemy *e = &original.enemies[k];
+        e->move_timer = timer;
+        int targeted = version == 114 || timer % 3 == 1;
+        e->attack_target_x = targeted ? e->x + 3 : -1;
+        e->attack_target_y = targeted ? e->y : -1;
+        e->attack_phase = 1;
+        e->hp = e->max_hp / 2;
+        int other = original.enemy_count++;
+        original.enemies[other] = (Enemy){.type = ENEMY_ICE_WOLF, .move_timer = 5, .attack_target_x = -1, .attack_target_y = -1, .attack_phase = 2};
+        original.gold = 617;
+        original.defeated_bosses = 1 << LOCATION_FOREST;
+        original.dain_map_fragments = 3;
+        map_mark_explored(&original.map, 2, 2);
+        LevelCache *cache = &original.frostfell_cache[FROSTFELL_DEPTH - 1];
+        cache->valid = 1;
+        cache->map = original.map;
+        cache->enemy_count = original.enemy_count;
+        memcpy(cache->enemies, original.enemies, sizeof(original.enemies));
+        int ok = save_game(&original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, version) && load_game(&loaded, LEGACY_SLOT);
+        int phase = version == 114 ? timer % 2 : timer;
+        Enemy *live = &loaded.enemies[k];
+        Enemy *cached = &loaded.frostfell_cache[FROSTFELL_DEPTH - 1].enemies[k];
+        ASSERT("old live and cached cycles preserve pending strikes and recovery",
+            ok && live->move_timer == phase && cached->move_timer == phase &&
+            live->attack_target_x == (phase % 3 == 1 ? e->attack_target_x : -1) &&
+            live->attack_target_y == (phase % 3 == 1 ? e->attack_target_y : -1) &&
+            cached->attack_target_x == live->attack_target_x && cached->attack_target_y == live->attack_target_y);
+        ASSERT("old warnings below half health retain their original single-lane pattern",
+            ok && live->attack_phase == 0 && cached->attack_phase == 0 &&
+            loaded.enemies[other].attack_phase == 2 && loaded.frostfell_cache[FROSTFELL_DEPTH - 1].enemies[other].attack_phase == 2);
+        ASSERT("Kraken migration preserves health, maps, quests, rewards, and other enemies",
+            ok && live->hp == e->hp && cached->hp == e->hp && live->active && cached->active &&
+            loaded.gold == 617 && loaded.dain_map_fragments == 3 && loaded.defeated_bosses == original.defeated_bosses &&
+            loaded.enemies[other].move_timer == 5 && loaded.frostfell_cache[FROSTFELL_DEPTH - 1].enemies[other].move_timer == 5 &&
+            map_is_explored(&loaded.map, 2, 2) && memcmp(loaded.map.tiles, original.map.tiles, sizeof(original.map.tiles)) == 0);
+        ASSERT("migrated Kraken phases survive a current-version round trip",
+            save_game(&loaded, LEGACY_SLOT) && load_game(&original, LEGACY_SLOT) &&
+            original.enemies[k].move_timer == phase && original.frostfell_cache[FROSTFELL_DEPTH - 1].enemies[k].move_timer == phase);
+    }
+    remove_test_save(LEGACY_SLOT);
+}
+
 void test_save_load(void) {
     test_narrow_shortcut_migration();
     test_harbor_road_save_load();
@@ -2060,6 +2132,7 @@ void test_save_load(void) {
     test_goblin_shield_rebalance_migration();
     test_brenna_inn_migration();
     test_quest_giver_location_migration();
+    test_kraken_cycle_migration();
     test_migrated_weapon_round_trip();
     test_migrated_armor_round_trip();
     test_harbor_relocation();
