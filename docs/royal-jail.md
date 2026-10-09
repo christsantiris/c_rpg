@@ -16,8 +16,11 @@ his offer reveals a visible ladder hatch in the cell's southeast corner.
 
 Walking onto the hatch takes both characters into the **Escape Tunnel**.
 Tomas closes it behind them to prevent pursuit, so there is no return to jail.
-The tunnel is a single combat map with bends and room to maneuver, like the
-Crown Roads. Twelve enemies impede the route; there is no boss or stair travel.
+The tunnel is a single 190-tile combat map with thirty enemies. Its original
+passage has room to maneuver; deeper stretches narrow to three tiles and add
+three larger bends. Eighteen stronger enemies guard the extension, including
+archers, shielding bodyguards, smugglers, and poisonous spiders. There is no
+boss or stair travel.
 
 Tomas visibly follows one tile per combat turn along walkable, unoccupied
 terrain. He avoids enemies and does not teleport to the player. Clear the way
@@ -44,6 +47,11 @@ hatch is revealed, after accepting, or mid-tunnel resumes that exact encounter.
 Earlier saves gain an unstarted quest; saved castle grounds gain the jail and
 informant. Players and loot overlapping the new footprint move to the jail's
 front path while equipment, money, boss victories, and quest progress remain.
+
+Version **118** extends older tunnel saves beyond their original eastern exit.
+The existing passage, revealed terrain, Tomas's position, enemy damage and
+defeats, and dropped loot stay intact. The additional enemies occupy only the
+new passage. Saving again retains the extension and its combat progress.
 
 For play testing:
 

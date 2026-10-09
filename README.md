@@ -276,8 +276,10 @@ Both towns retain their ordinary swamp gates and explored swamp levels.
 Rosemoor has the Apothecary. Two Royal Guards at its east gate warn that Crown Road East swarms
 with bandits, archers, and horsemen. That road leads to the grounds of the
 Castle of No Return. Its north entrance leads into the six-floor final area. Crown Road West continues
-from the castle's east gate to Ridgeshire's west gate. Each road keeps its own
-enemies and progress between visits.
+from the castle's east gate to Ridgeshire's west gate. Both roads span 142 tiles,
+with 30 enemies spread through successive ambushes. Each road keeps its own
+enemies and progress between visits. Older saves stretch positions and revealed
+terrain to the longer routes while retaining damage, defeats, and dropped loot.
 
 The castle introduces shield formations, portcullis levers, warned attacks,
 shifting magical barriers, and trapdoors that drop you one floor and remain
@@ -292,7 +294,9 @@ A townsman on the castle grounds secretly reports you to the Royal Guards when
 spoken to with **T**, causing a one-time arrest in the new **Royal Jail**. Speak
 to fellow prisoner **Tomas** with **T**, then **Y** to accept **Guide Tomas
 Home** and reveal the escape hatch. Step onto it and lead him through a
-single-level tunnel with smugglers, spiders, and rats. **Space** waits a combat
+single-level, 190-tile tunnel with 30 enemies. Beyond the first passage, deeper
+bends narrow to three tiles and stronger smugglers, archers, bodyguards, and
+spiders guard the route. **Space** waits a combat
 turn so he can catch up; the exit requires you to arrive together. You emerge in
 central Ridgeshire and receive **100 gold and 750 score** once. The jail's wards
 block town portals, and equipment is retained. Saves preserve the escape and

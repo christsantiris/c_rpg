@@ -17,13 +17,15 @@
 #define JAIL_PRISONER_Y 8
 #define JAIL_HATCH_X 17
 #define JAIL_HATCH_Y 11
-#define ESCAPE_TUNNEL_W 64
+#define ESCAPE_TUNNEL_LEGACY_W 64
+#define ESCAPE_TUNNEL_W 190
 #define ESCAPE_TUNNEL_H 28
 #define ESCAPE_REWARD_GOLD 100
 #define ESCAPE_REWARD_SCORE 750
 
 void jail_place_castle(Map *m);
 void jail_migrate_castle(GameState *g);
+void jail_migrate_tunnel(GameState *g);
 int jail_talk_nearby(GameState *g);
 int jail_move_exit(GameState *g, int x, int y);
 void jail_follow(GameState *g);

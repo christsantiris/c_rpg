@@ -104,7 +104,67 @@ static void enter_jail(GameState *g) {
 }
 
 static int tunnel_y(int x) {
+    if (x >= 76 && x <= 98) {
+        return 8;
+    }
+    if (x >= 113 && x <= 135) {
+        return 20;
+    }
+    if (x >= 151 && x <= 174) {
+        return 8;
+    }
     return 14 + (x >= 12 && x <= 25 ? -3 : x >= 38 && x <= 49 ? 3 : 0);
+}
+
+static void carve_tunnel(Map *m, int start_x) {
+    for (int x = start_x; x < ESCAPE_TUNNEL_W - 1; x++) {
+        int radius = x < ESCAPE_TUNNEL_LEGACY_W ? 2 : 1;
+        int from = tunnel_y(x - 1) - radius;
+        int to = tunnel_y(x) + radius;
+        if (from > tunnel_y(x) - radius) {
+            from = tunnel_y(x) - radius;
+        }
+        if (to < tunnel_y(x - 1) + radius) {
+            to = tunnel_y(x - 1) + radius;
+        }
+        for (int y = from; y <= to; y++) {
+            m->tiles[y][x] = TILE_CASTLE_FLOOR;
+        }
+    }
+    m->tiles[14][ESCAPE_TUNNEL_W - 1] = TILE_TUNNEL_EXIT;
+}
+
+static void populate_tunnel(GameState *g) {
+    static const EnemyType deeper_types[] = {
+        ENEMY_HOBGOBLIN_GUARD, ENEMY_TUNNEL_SPIDER, ENEMY_ROAD_ARCHER,
+        ENEMY_BANDIT, ENEMY_TUNNEL_SPIDER, ENEMY_ROAD_ARCHER
+    };
+    for (int i = g->enemy_count; i < MAX_ENEMIES; i++) {
+        int deeper = i >= 12;
+        int x = deeper ? 69 + (i - 12) * 7 : 9 + i * 4;
+        EnemyType type = deeper ? deeper_types[(i - 12) % 6] :
+            i % 3 == 0 ? ENEMY_BANDIT : i % 3 == 1 ? ENEMY_TUNNEL_SPIDER : ENEMY_GIANT_RAT;
+        int hp = deeper ? (type == ENEMY_HOBGOBLIN_GUARD ? 80 : 48) : 32;
+        Enemy *enemy = &g->enemies[g->enemy_count++];
+        *enemy = (Enemy){.active = 1, .type = type, .x = x, .y = tunnel_y(x), .max_hp = hp, .hp = hp,
+            .attack = deeper ? 16 : 10, .defense = deeper ? 5 : 3, .experience = deeper ? 60 : 35,
+            .attack_target_x = -1, .attack_target_y = -1, .facing_dy = -1};
+        const char *name = type == ENEMY_BANDIT ? "Tunnel Smuggler" : type == ENEMY_TUNNEL_SPIDER ? "Tunnel Spider" :
+            type == ENEMY_HOBGOBLIN_GUARD ? "Smuggler Bodyguard" : type == ENEMY_ROAD_ARCHER ? "Smuggler Archer" : "Giant Rat";
+        snprintf(enemy->name, sizeof(enemy->name), "%s", name);
+    }
+}
+
+void jail_migrate_tunnel(GameState *g) {
+    if (g->location != LOCATION_ESCAPE_TUNNEL) {
+        return;
+    }
+    // Keep the original passage, escort, loot, and enemy state; open the deeper section.
+    carve_tunnel(&g->map, ESCAPE_TUNNEL_LEGACY_W - 1);
+    if (g->enemy_count < MAX_ENEMIES) {
+        g->level_cleared = 0;
+        populate_tunnel(g);
+    }
 }
 
 static void enter_tunnel(GameState *g) {
@@ -120,35 +180,15 @@ static void enter_tunnel(GameState *g) {
             g->map.tiles[y][x] = TILE_CASTLE_WALL;
         }
     }
-    for (int x = 1; x < ESCAPE_TUNNEL_W - 1; x++) {
-        int from = tunnel_y(x - 1) - 2;
-        int to = tunnel_y(x) + 2;
-        if (from > tunnel_y(x) - 2) {
-            from = tunnel_y(x) - 2;
-        }
-        if (to < tunnel_y(x - 1) + 2) {
-            to = tunnel_y(x - 1) + 2;
-        }
-        for (int y = from; y <= to; y++) {
-            g->map.tiles[y][x] = TILE_CASTLE_FLOOR;
-        }
-    }
+    carve_tunnel(&g->map, 1);
     g->map.tiles[14][0] = TILE_JAIL_HATCH;
-    g->map.tiles[14][ESCAPE_TUNNEL_W - 1] = TILE_TUNNEL_EXIT;
     g->player.x = 2;
     g->player.y = 14;
     g->prisoner_x = 1;
     g->prisoner_y = 14;
-    for (int i = 0; i < 12; i++) {
-        int x = 9 + i * 4;
-        EnemyType type = i % 3 == 0 ? ENEMY_BANDIT : i % 3 == 1 ? ENEMY_TUNNEL_SPIDER : ENEMY_GIANT_RAT;
-        Enemy *enemy = &g->enemies[g->enemy_count++];
-        *enemy = (Enemy){.active = 1, .type = type, .x = x, .y = tunnel_y(x), .max_hp = 32, .hp = 32,
-            .attack = 10, .defense = 3, .experience = 35, .attack_target_x = -1, .attack_target_y = -1};
-        const char *name = type == ENEMY_BANDIT ? "Tunnel Smuggler" : type == ENEMY_TUNNEL_SPIDER ? "Tunnel Spider" : "Giant Rat";
-        snprintf(enemy->name, sizeof(enemy->name), "%s", name);
-    }
+    populate_tunnel(g);
     push_message(g, "Tomas follows. Clear the tunnel east to Ridgeshire; Space lets him catch up.");
+    push_message(g, "The passage narrows deeper in; armed smugglers guard the long route home.");
     push_message(g, "Tomas pulls the hatch shut behind you so the guards cannot follow.");
 }
 

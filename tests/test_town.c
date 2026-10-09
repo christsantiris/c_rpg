@@ -46,16 +46,29 @@ void test_king_roads_and_castle(void) {
     int horsemen = 0;
     int open = 1;
     int distinct = 1;
+    int groups[3] = {0};
     for (int i = 0; i < g.enemy_count; i++) {
         archers += g.enemies[i].type == ENEMY_ROAD_ARCHER;
         horsemen += g.enemies[i].type == ENEMY_HORSEMAN;
         open &= map_is_walkable(&g.map, g.enemies[i].x, g.enemies[i].y);
+        groups[g.enemies[i].x * 3 / CROWNROAD_W]++;
         for (int j = 0; j < i; j++) {
             distinct &= g.enemies[i].x != g.enemies[j].x || g.enemies[i].y != g.enemies[j].y;
         }
     }
     ASSERT("rotated road preserves its 30-enemy ambush on distinct walkable tiles",
         archers == 8 && horsemen == 6 && open && distinct);
+    ASSERT("Crown Road encounters span at least 140 tiles with enemies throughout",
+        CROWNROAD_W >= 140 && groups[0] >= 7 && groups[1] >= 7 && groups[2] >= 7);
+    loaded = g;
+    loaded.enemy_count = 0;
+    int travel_turns = 0;
+    while (loaded.location == LOCATION_CROWNROAD && travel_turns < 200) {
+        action_resolve_player(&loaded, (Action){ACTION_MOVE, loaded.player.x + 1, CROWNROAD_Y});
+        travel_turns++;
+    }
+    ASSERT("the longer road remains traversable from Rosemoor to the castle",
+        loaded.location == LOCATION_CASTLE && travel_turns >= 140);
     g.enemies[0].active = 0;
     g.player.x = CROWNROAD_W - 2;
     g.player.y = CROWNROAD_Y;
