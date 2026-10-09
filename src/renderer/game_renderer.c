@@ -2221,13 +2221,16 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_DESERT_LAMP:
                     draw_desert_lamp(r, sx, sy, x, y); break;
                 case TILE_DRAGON_WALL:
-                    draw_dragonspine_wall(r, sx, sy, x, y); break;
+                    draw_dragonspine_wall(r, &g->map, sx, sy, x, y);
+                    break;
                 case TILE_DRAGON_ENTRANCE:
                 case TILE_HIGH_PASS_ENTRANCE:
-                    draw_dragonspine_edge(r, sx, sy, 0); break;
+                    draw_dragonspine_edge(r, sx, sy, x, y, 0);
+                    break;
                 case TILE_DRAGON_EXIT:
                 case TILE_HIGH_PASS_EXIT:
-                    draw_dragonspine_edge(r, sx, sy, 1); break;
+                    draw_dragonspine_edge(r, sx, sy, x, y, 1);
+                    break;
                 case TILE_COAST_BEACON_UNLIT:
                     draw_coast_beacon(r, sx, sy, x, y, 0); break;
                 case TILE_COAST_BEACON_LIT:

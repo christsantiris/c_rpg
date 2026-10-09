@@ -1,4 +1,5 @@
 #include "sprites.h"
+#include <stdlib.h>
 
 static void fill_rect(Renderer *r, int x, int y, int w, int h, SDL_Color c) {
     SDL_Rect rect = {x, y, w, h};
@@ -4033,53 +4034,150 @@ void draw_swamp_daughter(Renderer *r, int tile_x, int tile_y, int map_x, int map
     fill_rect(r, x + 15, y + 9, 2, 1, (SDL_Color){34, 29, 30, 255});
 }
 
+static unsigned int dragonspine_noise(int x, int y) {
+    unsigned int seed = (unsigned int)x * 2246822519u ^ (unsigned int)y * 3266489917u;
+    seed ^= seed >> 16;
+    seed *= 668265263u;
+    return seed ^ (seed >> 15);
+}
+
+static int dragonspine_shade(int x, int y, int width, int height) {
+    int gx = x / width;
+    int gy = y / height;
+    int fx = x % width;
+    int fy = y % height;
+    int a = (int)(dragonspine_noise(gx, gy) & 255u);
+    int b = (int)(dragonspine_noise(gx + 1, gy) & 255u);
+    int c = (int)(dragonspine_noise(gx, gy + 1) & 255u);
+    int d = (int)(dragonspine_noise(gx + 1, gy + 1) & 255u);
+    int top = (a * (width - fx) + b * fx) / width;
+    int bottom = (c * (width - fx) + d * fx) / width;
+    return (top * (height - fy) + bottom * fy) / height;
+}
+
+// Clip world-space texture clusters to a tile so they join across tile boundaries.
+static void dragonspine_patch(Renderer *r, int tx, int ty, int px, int py, int w, int h, SDL_Color color) {
+    int right = px + w < TILE_SIZE ? px + w : TILE_SIZE;
+    int bottom = py + h < TILE_SIZE ? py + h : TILE_SIZE;
+    if (px < 0) {
+        px = 0;
+    }
+    if (py < 0) {
+        py = 0;
+    }
+    if (right > px && bottom > py) {
+        fill_rect(r, tx * TILE_SIZE + px, ty * TILE_SIZE + py, right - px, bottom - py, color);
+    }
+}
+
 void draw_dragonspine_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int terrain) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    unsigned int seed = (unsigned int)map_x * 131u + (unsigned int)map_y * 53u;
-    SDL_Color base = terrain == 2 ? (SDL_Color){74, 74, 82, 255} :
-        (terrain == 1 ? (SDL_Color){78, 82, 91, 255} :
-        (SDL_Color){143, 163, 180, 255});
-    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, base);
-    if (terrain == 2) {
-        fill_rect(r, x + 3, y + 16, 15, 4, (SDL_Color){153, 115, 49, 255});
-        fill_rect(r, x + 5, y + 14, 9, 3, (SDL_Color){240, 192, 65, 255});
-        fill_rect(r, x + 16, y + 8, 4, 3, (SDL_Color){251, 221, 125, 255});
-    } else if (terrain == 1) {
-        fill_rect(r, x + 2, y + 4, 11, 2, (SDL_Color){112, 117, 126, 255});
-        fill_rect(r, x + 10, y + 15, 11, 2, (SDL_Color){45, 51, 61, 255});
-        if (seed % 3u == 0u) {
-            fill_rect(r, x + 8, y + 14, 2, 7, (SDL_Color){220, 100, 43, 255});
-            fill_rect(r, x + 10, y + 19, 6, 2, (SDL_Color){245, 171, 63, 255});
+    int world_x = map_x * TILE_SIZE;
+    int world_y = map_y * TILE_SIZE;
+    unsigned int seed = dragonspine_noise(map_x, map_y);
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){166, 184, 198, 255});
+    for (int gy = world_y / 28 - 1; gy <= (world_y + TILE_SIZE) / 28; gy++) {
+        for (int gx = world_x / 36 - 1; gx <= (world_x + TILE_SIZE) / 36; gx++) {
+            unsigned int drift = dragonspine_noise(gx, gy);
+            if (drift % 3u == 0u) {
+                continue;
+            }
+            int px = gx * 36 + (int)(drift % 28u) - world_x;
+            int py = gy * 28 + (int)((drift >> 8) % 22u) - world_y;
+            int width = 17 + (int)((drift >> 16) % 11u);
+            for (int row = 0; row < 3; row++) {
+                int inset = row == 1 ? 0 : 4;
+                dragonspine_patch(r, tile_x, tile_y, px + inset, py + row * 2, width - inset * 2, 2,
+                    (SDL_Color){183, 201, 213, 255});
+            }
         }
-    } else {
-        fill_rect(r, x + 2, y + 2, 18, 3, (SDL_Color){204, 222, 230, 255});
-        fill_rect(r, x + 5, y + 12, 15, 2, (SDL_Color){104, 128, 150, 255});
-        if (seed % 4u == 0u) {
-            fill_rect(r, x + 16, y + 17, 4, 3, (SDL_Color){227, 237, 241, 255});
+    }
+    int cx = 6 + (int)(seed % 12u);
+    int cy = 6 + (int)((seed >> 8) % 12u);
+    if (terrain != 0) {
+        for (int row = -3; row <= 3; row++) {
+            int width = 13 - abs(row) * 2 + (int)((seed >> (row + 3)) & 3u);
+            dragonspine_patch(r, tile_x, tile_y, cx - width / 2, cy + row, width, 1,
+                (SDL_Color){137, 154, 169, 255});
         }
+        fill_rect(r, x + cx - 3, y + cy, 6, 2, (SDL_Color){111, 130, 147, 255});
+        if (terrain == 1 && seed % 4u == 0u) {
+            fill_rect(r, x + cx - 1, y + cy - 2, 2, 2, (SDL_Color){222, 126, 60, 255});
+            fill_rect(r, x + cx, y + cy - 2, 1, 1, (SDL_Color){250, 191, 106, 255});
+        } else if (terrain == 2) {
+            for (int coin = 0; coin < 3; coin++) {
+                int px = cx - 4 + coin * 4;
+                int py = cy + (int)((seed >> (coin * 3)) & 3u);
+                fill_rect(r, x + px, y + py + 1, 4, 2, (SDL_Color){151, 110, 48, 255});
+                fill_rect(r, x + px + 1, y + py, 3, 2, (SDL_Color){239, 197, 93, 255});
+            }
+        }
+    } else if (seed % 5u == 0u) {
+        fill_rect(r, x + cx, y + cy, 3, 2, (SDL_Color){141, 161, 179, 255});
+        fill_rect(r, x + cx + 1, y + cy, 2, 1, (SDL_Color){209, 223, 232, 255});
     }
 }
 
-void draw_dragonspine_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+void draw_dragonspine_wall(Renderer *r, const Map *map, int tile_x, int tile_y, int map_x, int map_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    unsigned int seed = (unsigned int)map_x * 43u + (unsigned int)map_y * 79u;
-    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){48, 65, 83, 255});
-    fill_rect(r, x + 1, y + 2, 18, 5, (SDL_Color){103, 126, 146, 255});
-    fill_rect(r, x + 3, y + 1, 14, 2, (SDL_Color){209, 224, 230, 255});
-    fill_rect(r, x + 4, y + 9, 17, 4, (SDL_Color){77, 98, 119, 255});
-    fill_rect(r, x + 7, y + 16, 15, 3, (SDL_Color){33, 49, 68, 255});
-    if (seed % 5u == 0u) {
-        fill_rect(r, x + 15, y + 13, 5, 2, (SDL_Color){178, 198, 209, 255});
+    int world_x = map_x * TILE_SIZE;
+    int world_y = map_y * TILE_SIZE;
+    SDL_Rect patches[8][64];
+    int counts[8] = {0};
+    for (int py = 0; py < TILE_SIZE; py += 3) {
+        for (int px = 0; px < TILE_SIZE; px += 3) {
+            int broad = dragonspine_shade(world_x + px, world_y + py, 48, 36);
+            int detail = dragonspine_shade(world_x + px, world_y + py, 15, 21);
+            int shade = (broad * 3 + detail) / 128;
+            patches[shade][counts[shade]++] = (SDL_Rect){x + px, y + py, 3, 3};
+        }
+    }
+    for (int shade = 0; shade < 8; shade++) {
+        if (counts[shade] > 0) {
+            SDL_SetRenderDrawColor(r->sdl, 35 + shade * 7, 52 + shade * 7, 70 + shade * 7, 255);
+            SDL_RenderFillRects(r->sdl, patches[shade], counts[shade]);
+        }
+    }
+    int north = map_y > 0 && map->tiles[map_y - 1][map_x] != TILE_DRAGON_WALL;
+    int east = map_x < MAP_W - 1 && map->tiles[map_y][map_x + 1] != TILE_DRAGON_WALL;
+    int south = map_y < MAP_H - 1 && map->tiles[map_y + 1][map_x] != TILE_DRAGON_WALL;
+    int west = map_x > 0 && map->tiles[map_y][map_x - 1] != TILE_DRAGON_WALL;
+    for (int step = 0; step < TILE_SIZE; step += 3) {
+        int depth = 2 + (int)(dragonspine_noise(world_x + step, world_y) % 3u);
+        if (north) {
+            fill_rect(r, x + step, y, 3, depth, (SDL_Color){190, 208, 220, 255});
+        }
+        if (south) {
+            fill_rect(r, x + step, y + TILE_SIZE - depth, 3, depth, (SDL_Color){26, 43, 59, 255});
+        }
+        if (west) {
+            fill_rect(r, x, y + step, depth, 3, (SDL_Color){110, 136, 157, 255});
+        }
+        if (east) {
+            fill_rect(r, x + TILE_SIZE - depth, y + step, depth, 3, (SDL_Color){30, 47, 64, 255});
+        }
+    }
+    if (north && west) {
+        fill_rect(r, x, y, 3, 3, (SDL_Color){166, 184, 198, 255});
+    }
+    if (north && east) {
+        fill_rect(r, x + TILE_SIZE - 3, y, 3, 3, (SDL_Color){166, 184, 198, 255});
+    }
+    if (south && west) {
+        fill_rect(r, x, y + TILE_SIZE - 3, 3, 3, (SDL_Color){166, 184, 198, 255});
+    }
+    if (south && east) {
+        fill_rect(r, x + TILE_SIZE - 3, y + TILE_SIZE - 3, 3, 3, (SDL_Color){166, 184, 198, 255});
     }
 }
 
-void draw_dragonspine_edge(Renderer *r, int tile_x, int tile_y, int forward) {
+void draw_dragonspine_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int forward) {
     (void)forward;
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    draw_dragonspine_floor(r, tile_x, tile_y, tile_x, tile_y, 0);
+    draw_dragonspine_floor(r, tile_x, tile_y, map_x, map_y, 0);
     fill_rect(r, x + 2, y + 1, 7, 3, (SDL_Color){82, 101, 118, 255});
     fill_rect(r, x + 15, y + 20, 7, 3, (SDL_Color){82, 101, 118, 255});
 }
