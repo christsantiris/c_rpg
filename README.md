@@ -146,6 +146,11 @@ Seals** quest in Oakhaven's Tavern, and grants one Scroll of Return to Town when
 inventory space is available. Use the scroll from the inventory to learn the
 permanent spell.
 
+Sunscar's sandstone shelves have connected faces and eroded edges, with
+scattered boulders and stands of tall and barrel cacti. Curved dune ridges
+continue across the sand. See the [terrain comparisons](docs/art-sources/sunscar/README.md);
+the new appearance also applies to existing saved maps.
+
 NPC quest offers wait for **Y** to accept or **N** to decline (**Esc** also
 declines). Declined quests remain available when you talk again and do not
 appear in the active journal. Existing active quests keep their progress.

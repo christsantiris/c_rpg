@@ -2223,7 +2223,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_desert_floor(r, sx, sy, x, y);
                     break;
                 case TILE_DESERT_WALL:
-                    draw_desert_wall(r, sx, sy, x, y);
+                    draw_desert_wall(r, &g->map, sx, sy, x, y);
                     break;
                 case TILE_DESERT_ENTRANCE:
                 case TILE_DESERT_EXIT:

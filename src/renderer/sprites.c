@@ -4632,30 +4632,76 @@ void draw_moonveil_edge(Renderer *r, int tx, int ty, int mx, int my) {
     }
 }
 
+static void desert_dune_patch(SDL_Rect *rects, int *count, int x, int y, int px, int py, int w, int h) {
+    int right = px + w < TILE_SIZE ? px + w : TILE_SIZE;
+    int bottom = py + h < TILE_SIZE ? py + h : TILE_SIZE;
+    px = px < 0 ? 0 : px;
+    py = py < 0 ? 0 : py;
+    if (right > px && bottom > py) {
+        rects[(*count)++] = (SDL_Rect){x + px, y + py, right - px, bottom - py};
+    }
+}
+
 void draw_desert_floor(Renderer *r, int tx, int ty, int mx, int my) {
     int x = tx * TILE_SIZE;
     int y = ty * TILE_SIZE;
-    unsigned int seed = (unsigned int)mx * 97u + (unsigned int)my * 61u;
-    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){218, 181, 110, 255});
-    fill_rect(r, x + 2 + (int)(seed % 5u), y + 5, 14, 1, (SDL_Color){240, 204, 139, 255});
-    fill_rect(r, x + 5, y + 15 + (int)(seed % 3u), 16, 1, (SDL_Color){184, 143, 83, 255});
+    int wx = mx * TILE_SIZE;
+    int wy = my * TILE_SIZE;
+    unsigned int seed = dragonspine_noise(mx, my);
+    int shade = dragonspine_shade(wx, wy, 120, 90) / 64;
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){211 + shade * 3, 171 + shade * 3, 102 + shade * 2, 255});
+    // Clip dunes in world coordinates so ridges join across tiles. At most
+    // nine anchors contribute thirteen clipped segments each per color.
+    SDL_Rect dunes[3][128];
+    int counts[3] = {0};
+    for (int gy = wy / 46 - 1; gy <= (wy + TILE_SIZE) / 46; gy++) {
+        for (int gx = wx / 90 - 1; gx <= (wx + TILE_SIZE) / 90; gx++) {
+            unsigned int dune = dragonspine_noise(gx + 31, gy + 7);
+            int px = gx * 90 + (int)(dune % 28u) - wx;
+            int py = gy * 46 + (int)((dune >> 8) % 26u) - wy;
+            int width = 47 + (int)((dune >> 16) % 28u);
+            int height = (width / 2) * (width / 2) / 100 + width / 12 + 7;
+            if (px >= TILE_SIZE || px + width + 3 <= 0 || py >= TILE_SIZE || py + height <= 0) {
+                continue;
+            }
+            for (int step = 0; step < width; step += 2) {
+                int curve = (step - width / 2) * (step - width / 2) / 100;
+                int cy = py + curve + step / 12;
+                int span = step + 1 < width ? 2 : 1;
+                desert_dune_patch(dunes[0], &counts[0], x, y, px + step, cy, span, 2);
+                desert_dune_patch(dunes[1], &counts[1], x, y, px + step, cy + 2, span, 2);
+                desert_dune_patch(dunes[2], &counts[2], x, y, px + step + 3, cy + 6, span, 1);
+            }
+        }
+    }
+    const SDL_Color colors[3] = {{239, 199, 128, 255}, {192, 151, 87, 255}, {222, 182, 109, 255}};
+    for (int color = 0; color < 3; color++) {
+        if (counts[color] > 0) {
+            SDL_SetRenderDrawColor(r->sdl, colors[color].r, colors[color].g, colors[color].b, 255);
+            SDL_RenderFillRects(r->sdl, dunes[color], counts[color]);
+        }
+    }
+    if (seed % 19u == 0u) {
+        int px = x + 5 + (int)((seed >> 8) % 10u);
+        int py = y + 7 + (int)((seed >> 16) % 10u);
+        fill_rect(r, px + 1, py, 3, 1, (SDL_Color){179, 135, 83, 255});
+        fill_rect(r, px, py + 1, 5, 2, (SDL_Color){149, 107, 66, 255});
+        fill_rect(r, px + 1, py + 1, 3, 1, (SDL_Color){211, 172, 111, 255});
+        fill_rect(r, px + 7, py + 4, 2, 1, (SDL_Color){175, 134, 78, 255});
+    } else if (seed % 47u == 0u) {
+        fill_rect(r, x + 11, y + 13, 1, 5, (SDL_Color){137, 113, 61, 255});
+        fill_rect(r, x + 8, y + 12, 1, 3, (SDL_Color){155, 129, 66, 255});
+        fill_rect(r, x + 9, y + 15, 5, 1, (SDL_Color){137, 113, 61, 255});
+        fill_rect(r, x + 15, y + 11, 1, 4, (SDL_Color){155, 129, 66, 255});
+    }
 }
 
-void draw_desert_wall(Renderer *r, int tx, int ty, int mx, int my) {
-    int x = tx * TILE_SIZE;
-    int y = ty * TILE_SIZE;
-    unsigned int seed = forest_tile_seed(mx, my);
-    SDL_Color sand = {165, 119, 68, 255};
-    SDL_Color shadow = {110, 76, 44, 255};
-    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, sand);
-    fill_rect(r, x + 4, y + 19, 16, 4, shadow);
-    fill_rect(r, x + 2, y + 20, 20, 2, shadow);
-
-    // Coordinate-based variations stay fixed while moving, revisiting, or loading.
-    if (seed % 7u == 0u) {
-        SDL_Color cactus = {44, 71, 39, 255};
-        SDL_Color light = {90, 116, 53, 255};
-        SDL_Color shade = {27, 49, 31, 255};
+static void draw_desert_cactus(Renderer *r, int x, int y, unsigned int seed) {
+    SDL_Color cactus = {44, 71, 39, 255};
+    SDL_Color light = {90, 116, 53, 255};
+    SDL_Color shade = {27, 49, 31, 255};
+    fill_rect(r, x + 5, y + 21, 15, 2, (SDL_Color){106, 81, 48, 255});
+    if (seed & 1u) {
         int trunk = x + 9 + (int)((seed >> 5) % 4u);
         int top = y + 2 + (int)((seed >> 9) % 4u);
         fill_rect(r, trunk + 1, top, 4, 2, cactus);
@@ -4675,9 +4721,27 @@ void draw_desert_wall(Renderer *r, int tx, int ty, int mx, int my) {
         }
         fill_rect(r, trunk + 2, top + 7, 1, 2, shade);
         fill_rect(r, trunk + 2, top + 13, 1, 2, shade);
-        return;
+    } else {
+        // Short barrel cacti have rounded shoulders, ribs, and pale spines.
+        int height = 10 + (int)((seed >> 8) % 5u);
+        int top = y + 22 - height;
+        fill_rect(r, x + 9, top, 7, 2, cactus);
+        fill_rect(r, x + 7, top + 2, 11, height - 4, cactus);
+        fill_rect(r, x + 8, y + 20, 9, 2, shade);
+        fill_rect(r, x + 8, top + 3, 2, height - 5, light);
+        fill_rect(r, x + 12, top + 2, 1, height - 3, light);
+        fill_rect(r, x + 16, top + 3, 2, height - 5, shade);
+        for (int row = 0; row < 3; row++) {
+            fill_rect(r, x + 9 + row % 2, top + 3 + row * 3, 1, 1, (SDL_Color){203, 188, 113, 255});
+            fill_rect(r, x + 14, top + 4 + row * 3, 1, 1, (SDL_Color){203, 188, 113, 255});
+        }
+        if (seed % 5u == 0u) {
+            fill_rect(r, x + 11, top - 1, 3, 2, (SDL_Color){189, 106, 76, 255});
+        }
     }
+}
 
+static void draw_desert_boulder(Renderer *r, int x, int y, unsigned int seed) {
     // Stepped outlines form a spire, rounded boulder, leaning rock, or broad mesa.
     static const int profiles[4][6][2] = {
         {{9, 5}, {7, 9}, {6, 11}, {4, 14}, {3, 17}, {2, 19}},
@@ -4709,6 +4773,74 @@ void draw_desert_wall(Renderer *r, int tx, int ty, int mx, int my) {
     fill_rect(r, crack, y + top + height * 2, 1, height + 1, shade);
     fill_rect(r, crack - 2, y + top + height * 3, 3, 1, shade);
     fill_rect(r, crack - 2, y + top + height * 3 + 1, 1, height, shade);
+}
+
+// Joined sandstone outcrops retain boulders and cactus stands without
+// outlining a separate rock in every blocked tile.
+void draw_desert_wall(Renderer *r, const Map *map, int tx, int ty, int mx, int my) {
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    int wx = mx * TILE_SIZE;
+    int wy = my * TILE_SIZE;
+    unsigned int seed = dragonspine_noise(mx, my);
+    int north = my > 0 && map->tiles[my - 1][mx] != TILE_DESERT_WALL;
+    int south = my < MAP_H - 1 && map->tiles[my + 1][mx] != TILE_DESERT_WALL;
+    int west = mx > 0 && map->tiles[my][mx - 1] != TILE_DESERT_WALL;
+    int east = mx < MAP_W - 1 && map->tiles[my][mx + 1] != TILE_DESERT_WALL;
+    SDL_Rect patches[7][32];
+    int counts[7] = {0};
+    for (int py = 0; py < TILE_SIZE; py += 3) {
+        for (int px = 0; px < TILE_SIZE; px += 6) {
+            int broad = dragonspine_shade(wx + px, wy + py, 90, 72);
+            int detail = dragonspine_shade(wx + px, wy + py, 27, 39);
+            int strata = ((wy + py + broad / 24) / 7) % 4 == 0;
+            int shade = (broad * 3 + detail) / 171 + strata;
+            patches[shade][counts[shade]++] = (SDL_Rect){x + px, y + py, 6, 3};
+        }
+    }
+    for (int shade = 0; shade < 7; shade++) {
+        if (counts[shade] > 0) {
+            SDL_SetRenderDrawColor(r->sdl, 132 + shade * 14, 83 + shade * 11, 49 + shade * 7, 255);
+            SDL_RenderFillRects(r->sdl, patches[shade], counts[shade]);
+        }
+    }
+    for (int step = 0; step < TILE_SIZE; step += 2) {
+        int horizontal = 2 + dragonspine_shade(wx + step, wy, 18, 21) / 70;
+        int vertical = 2 + dragonspine_shade(wx, wy + step, 21, 18) / 70;
+        if (north) {
+            fill_rect(r, x + step, y, 2, horizontal, (SDL_Color){230, 177, 110, 255});
+            fill_rect(r, x + step, y + horizontal, 2, 1, (SDL_Color){153, 101, 58, 255});
+        }
+        if (south) {
+            int face = 8 + dragonspine_shade(wx + step, wy + TILE_SIZE, 27, 18) / 50;
+            fill_rect(r, x + step, y + TILE_SIZE - face, 2, face, (SDL_Color){121, 77, 45, 255});
+            fill_rect(r, x + step, y + TILE_SIZE - face, 2, 2, (SDL_Color){222, 162, 96, 255});
+            fill_rect(r, x + step, y + TILE_SIZE - face + 4, 2, 2, (SDL_Color){166, 108, 62, 255});
+            fill_rect(r, x + step, y + TILE_SIZE - 2, 2, 2, (SDL_Color){90, 62, 40, 255});
+        }
+        if (west) {
+            fill_rect(r, x, y + step, vertical, 2, (SDL_Color){218, 159, 95, 255});
+        }
+        if (east) {
+            fill_rect(r, x + TILE_SIZE - vertical, y + step, vertical, 2, (SDL_Color){106, 73, 47, 255});
+            fill_rect(r, x + TILE_SIZE - vertical - 1, y + step, 1, 2, (SDL_Color){181, 126, 74, 255});
+        }
+    }
+    for (int cy = 0; cy < 2; cy++) {
+        for (int cx = 0; cx < 2; cx++) {
+            if ((cy == 0 ? north : south) && (cx == 0 ? west : east)) {
+                int size = 3 + (int)((seed >> (cx + cy * 2)) & 1u);
+                fill_rect(r, x + cx * (TILE_SIZE - size), y + cy * (TILE_SIZE - size), size, size,
+                    (SDL_Color){217, 177, 106, 255});
+            }
+        }
+    }
+    int cactus = (dragonspine_shade(wx, wy, 120, 96) > 140 && seed % 3u == 0u) || seed % 19u == 0u;
+    if (cactus && !south) {
+        draw_desert_cactus(r, x, y, seed);
+    } else if ((!north && !south && !west && !east && seed % 11u == 0u) || (north && south && west && east)) {
+        draw_desert_boulder(r, x, y, seed);
+    }
 }
 
 void draw_desert_edge(Renderer *r, int tx, int ty, int mx, int my) {
