@@ -113,6 +113,15 @@ gold and 800 score**, awarded once. Quest objects require no inventory slots,
 and accepting the quest preserves previously explored Ashen stages. See [Ashen
 Hollow](docs/ashen-hollow.md#reclaim-the-emberforge).
 
+**Marshal Veyra** also waits in Ridgeshire's Town Hall. Press **T**, then **Y**
+to accept **Watchfires of Ridgeshire**. Restore guarded watchfires in **Goblin
+Mountains stage 6**, **Ashen Hollow stage 3**, and **Dragonspine stage 3**, in
+any order. Defeat each fire's defenders and nearby threats, then press **A**
+on or beside it. Return to Veyra for **180 gold and 1,400 score**, awarded once.
+The journal lists each region and stage; regional bosses are optional.
+Restored flames and quest progress persist through revisits and saves. See
+[Watchfires of Ridgeshire](docs/watchfires-of-ridgeshire.md).
+
 The Frostfell Wastes begin at Rosemoor's north gate. **Quartermaster Brenna** in
 **Stillbury's Inn** assigns **The Silent Expedition**. She explains the route
 across the swamp to Rosemoor and north into

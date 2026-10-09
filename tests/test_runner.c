@@ -67,6 +67,7 @@ void test_catacombs_quest(void);
 void test_castle(void);
 void test_workshop(void);
 void test_emberforge(void);
+void test_watchfires(void);
 void test_mountain_terrain(void);
 void test_dragonspine(void);
 void test_elowen_quest(void);
@@ -167,6 +168,7 @@ int main(void) {
     test_castle();
     test_workshop();
     test_emberforge();
+    test_watchfires();
     printf("\n");
     test_quest_activation_gating();
     test_quest_offer_controls();

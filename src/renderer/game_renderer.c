@@ -31,6 +31,43 @@ static SDL_Color area_label_color(Location area) {
     }
 }
 
+static void draw_watchfire(Renderer *r, const GameState *g, int sx, int sy, int x, int y, TileType tile) {
+    if (g->location == LOCATION_MOUNTAINS) {
+        draw_mountain_cave_floor(r, sx, sy, x, y);
+    } else if (g->location == LOCATION_ASHEN) {
+        draw_ashen_floor(r, sx, sy, x, y);
+    } else {
+        draw_dragonspine_floor(r, sx, sy, x, y, 1);
+    }
+    int px = sx * TILE_SIZE;
+    int py = sy * TILE_SIZE;
+    SDL_SetRenderDrawColor(r->sdl, 29, 27, 32, 255);
+    SDL_Rect base = {px + 4, py + 19, 17, 4};
+    SDL_Rect pillar = {px + 8, py + 11, 9, 10};
+    SDL_Rect bowl = {px + 5, py + 8, 15, 6};
+    SDL_RenderFillRect(r->sdl, &base);
+    SDL_RenderFillRect(r->sdl, &pillar);
+    SDL_RenderFillRect(r->sdl, &bowl);
+    SDL_SetRenderDrawColor(r->sdl, 135, 139, 146, 255);
+    SDL_RenderDrawLine(r->sdl, px + 5, py + 20, px + 19, py + 20);
+    SDL_RenderDrawLine(r->sdl, px + 9, py + 14, px + 9, py + 18);
+    SDL_RenderDrawLine(r->sdl, px + 6, py + 9, px + 18, py + 9);
+    SDL_SetRenderDrawColor(r->sdl, 82, 86, 96, 255);
+    SDL_RenderDrawLine(r->sdl, px + 10, py + 16, px + 15, py + 16);
+    SDL_RenderDrawLine(r->sdl, px + 15, py + 17, px + 15, py + 19);
+    if (tile == TILE_WATCHFIRE_LIT) {
+        int flicker = (SDL_GetTicks() / 220 + x + y) & 1;
+        SDL_SetRenderDrawColor(r->sdl, 235, 112, 38, 255);
+        SDL_Rect flame = {px + 8, py + 4 + flicker, 9, 7};
+        SDL_RenderFillRect(r->sdl, &flame);
+        SDL_SetRenderDrawColor(r->sdl, 255, 213, 98, 255);
+        SDL_RenderDrawLine(r->sdl, px + 12, py + 1 + flicker, px + 12, py + 9);
+        SDL_RenderDrawLine(r->sdl, px + 13, py + 3, px + 13, py + 9);
+        SDL_SetRenderDrawColor(r->sdl, 255, 241, 188, 255);
+        SDL_RenderDrawLine(r->sdl, px + 11, py + 6, px + 11, py + 9);
+    }
+}
+
 static void draw_oswin(Renderer *r, int sx, int sy) {
     draw_tavern_floor(r, sx, sy);
     int px = sx * TILE_SIZE;
@@ -1356,7 +1393,9 @@ static void draw_floor_loot(Renderer *r, const GameState *g, int map_x, int map_
 
 static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int map_x, int map_y, int screen_x, int screen_y) {
     TileType underlay = floor_item_underlay(g, map_x, map_y);
-    if (underlay == TILE_EMBERFORGE_MECHANISM || underlay == TILE_EMBERFORGE_COLD || underlay == TILE_EMBERFORGE_LIT) {
+    if (underlay == TILE_WATCHFIRE_COLD || underlay == TILE_WATCHFIRE_LIT) {
+        draw_watchfire(r, g, screen_x, screen_y, map_x, map_y, underlay);
+    } else if (underlay == TILE_EMBERFORGE_MECHANISM || underlay == TILE_EMBERFORGE_COLD || underlay == TILE_EMBERFORGE_LIT) {
         draw_emberforge_tile(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay == TILE_TRAP_HIDDEN && g->location == LOCATION_FOREST) {
         draw_forest_floor(r, screen_x, screen_y, map_x, map_y);
@@ -2386,6 +2425,14 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_town_floor(r, sx, sy);
                     jail_draw_person(r, sx, sy, 0);
                     break;
+                case TILE_WATCHFIRE_COLD:
+                case TILE_WATCHFIRE_LIT:
+                    draw_watchfire(r, g, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
+                case TILE_NPC_VEYRA:
+                    draw_tavern_floor(r, sx, sy);
+                    draw_royal_guard_overlay(r, sx, sy, 1);
+                    break;
                 case TILE_NPC_OSWIN:
                     draw_oswin(r, sx, sy);
                     break;
@@ -3229,12 +3276,37 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_y(v, WORKSHOP_SMITH_Y - 1) * TILE_SIZE, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
     }
     if (g->location == LOCATION_TOWN_HALL) {
+        int veyra_width = 0;
+        TTF_SizeText(r->font_tiny, "MARSHAL VEYRA", &veyra_width, NULL);
+        renderer_draw_text(r, "MARSHAL VEYRA", viewport_to_screen_x(v, HALL_VEYRA_X) * TILE_SIZE + (TILE_SIZE - veyra_width) / 2,
+            viewport_to_screen_y(v, HALL_VEYRA_Y - 1) * TILE_SIZE, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
         renderer_draw_text(r, "STEWARD HADRIN", viewport_to_screen_x(v, HALL_STEWARD_X) * TILE_SIZE - 45,
             viewport_to_screen_y(v, HALL_STEWARD_Y - 1) * TILE_SIZE, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
         int width = 0;
         TTF_SizeText(r->font_tiny, "BROTHER OSWIN", &width, NULL);
         renderer_draw_text(r, "BROTHER OSWIN", viewport_to_screen_x(v, HALL_OSWIN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, HALL_OSWIN_Y - 1) * TILE_SIZE, area_label_color(LOCATION_CATACOMBS), r->font_tiny);
+    }
+    if (g->watchfire_quest_state && (g->location == LOCATION_MOUNTAINS || g->location == LOCATION_ASHEN || g->location == LOCATION_DRAGONSPINE)) {
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                TileType tile = g->map.tiles[y][x];
+                if (tile == TILE_ITEM) {
+                    tile = floor_item_underlay(g, x, y);
+                } else if (tile == TILE_PORTAL) {
+                    tile = g->portal_origin_tile;
+                }
+                if ((tile != TILE_WATCHFIRE_COLD && tile != TILE_WATCHFIRE_LIT) ||
+                    !viewport_is_visible(v, x, y) || !map_is_explored(&g->map, x, y)) {
+                    continue;
+                }
+                const char *label = tile == TILE_WATCHFIRE_LIT ? "WATCHFIRE" : "WATCHFIRE (A)";
+                int width = 0;
+                TTF_SizeText(r->font_tiny, label, &width, NULL);
+                renderer_draw_text(r, label, viewport_to_screen_x(v, x) * TILE_SIZE + (TILE_SIZE - width) / 2,
+                    viewport_to_screen_y(v, y) * TILE_SIZE - 12, (SDL_Color){240, 190, 95, 255}, r->font_tiny);
+            }
+        }
     }
     if (g->location == LOCATION_ASHEN && g->emberforge_quest_state && g->map.room_count &&
         (g->level == EMBERFORGE_MECHANISM_LEVEL || g->level == EMBERFORGE_FURNACE_LEVEL)) {

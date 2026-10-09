@@ -1447,6 +1447,9 @@ void game_init(GameState *g) {
     g->catacombs_quest_state = 0;
     g->catacombs_quest_progress = 0;
     g->catacombs_quest_encounters = 0;
+    g->watchfire_quest_state = 0;
+    g->watchfire_quest_progress = 0;
+    g->watchfire_quest_encounters = 0;
     for (int i = 0; i < TEMPLE_DEPTH; i++) {
         g->temple_cache[i].valid = 0;
     }
@@ -2714,6 +2717,128 @@ static void place_catacombs_quest_encounter(GameState *g) {
     g->catacombs_quest_encounters |= bit;
 }
 
+static int watchfire_stage_bit(const GameState *g) {
+    if (g->location == LOCATION_MOUNTAINS && g->level == WATCHFIRE_MOUNTAINS_LEVEL) {
+        return 1;
+    }
+    if (g->location == LOCATION_ASHEN && g->level == WATCHFIRE_ASHEN_LEVEL) {
+        return 2;
+    }
+    return g->location == LOCATION_DRAGONSPINE && g->level == WATCHFIRE_DRAGONSPINE_LEVEL ? 4 : 0;
+}
+
+static int watchfire_position(const GameState *g, int *x, int *y) {
+    for (int ty = 0; ty < MAP_H; ty++) {
+        for (int tx = 0; tx < MAP_W; tx++) {
+            TileType tile = quest_object_tile(g, tx, ty);
+            if (tile == TILE_WATCHFIRE_COLD || tile == TILE_WATCHFIRE_LIT) {
+                *x = tx;
+                *y = ty;
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+static void place_watchfire_encounter(GameState *g) {
+    int bit = watchfire_stage_bit(g);
+    if (!bit || !g->watchfire_quest_state || !g->map.room_count) {
+        return;
+    }
+    int x;
+    int y;
+    if (!watchfire_position(g, &x, &y)) {
+        // Use an ordinary floor in the middle clearing, preserving landmarks and paths.
+        const Room *room = &g->map.rooms[g->map.room_count / 2];
+        int cx;
+        int cy;
+        map_room_center(room, &cx, &cy);
+        int best = MAP_W + MAP_H;
+        x = -1;
+        y = -1;
+        for (int ty = room->y; ty < room->y + room->h; ty++) {
+            for (int tx = room->x; tx < room->x + room->w; tx++) {
+                int distance = abs(tx - cx) + abs(ty - cy);
+                if (distance < best && enemy_tile_open(g, tx, ty) &&
+                    (g->player.x != tx || g->player.y != ty) &&
+                    (tx != g->map.stairs_down_x || ty != g->map.stairs_down_y)) {
+                    x = tx;
+                    y = ty;
+                    best = distance;
+                }
+            }
+        }
+        if (x < 0) {
+            return;
+        }
+    }
+    set_quest_object_tile(g, x, y, g->watchfire_quest_progress & bit ? TILE_WATCHFIRE_LIT : TILE_WATCHFIRE_COLD);
+    if ((g->watchfire_quest_progress | g->watchfire_quest_encounters) & bit) {
+        return;
+    }
+    static const EnemyType mountain_guards[4] = {ENEMY_GOBLIN_ARCHER, ENEMY_GOBLIN_ARCHER, ENEMY_HOBGOBLIN_GUARD, ENEMY_HOBGOBLIN_GUARD};
+    static const EnemyType ashen_guards[3] = {ENEMY_OBSIDIAN_GUARDIAN, ENEMY_CINDER_IMP, ENEMY_CINDER_IMP};
+    static const EnemyType dragon_guards[3] = {ENEMY_GIANT, ENEMY_GOBLIN_ARCHER, ENEMY_FIRE_ELEMENTAL};
+    const EnemyType *types = bit == 1 ? mountain_guards : bit == 2 ? ashen_guards : dragon_guards;
+    int guards = bit == 1 ? 4 : 3;
+    int existing = 0;
+    for (int i = 0; i < g->enemy_count; i++) {
+        existing += strcmp(g->enemies[i].name, "Watchfire Defender") == 0;
+    }
+    for (int i = existing; i < guards; i++) {
+        if (!spawn_quest_guard(g, types[i], x, y, "Watchfire Defender")) {
+            return;
+        }
+    }
+    g->watchfire_quest_encounters |= bit;
+}
+
+int game_has_watchfire_interaction(const GameState *g) {
+    int x;
+    int y;
+    return watchfire_stage_bit(g) && watchfire_position(g, &x, &y) &&
+        abs(g->player.x - x) + abs(g->player.y - y) <= 1;
+}
+
+int game_interact_watchfire(GameState *g) {
+    if (!game_has_watchfire_interaction(g)) {
+        return 0;
+    }
+    int x;
+    int y;
+    watchfire_position(g, &x, &y);
+    int bit = watchfire_stage_bit(g);
+    if (g->watchfire_quest_progress & bit) {
+        push_message(g, "The restored watchfire burns brightly.");
+        return 1;
+    }
+    if (g->watchfire_quest_state != 1) {
+        return 1;
+    }
+    place_watchfire_encounter(g);
+    if (!(g->watchfire_quest_encounters & bit)) {
+        push_message(g, "The watchfire's defenders must be cleared before repairs can begin.");
+        return 1;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *enemy = &g->enemies[i];
+        if (enemy->active && (strcmp(enemy->name, "Watchfire Defender") == 0 || abs(enemy->x - x) + abs(enemy->y - y) <= 4)) {
+            push_message(g, "Defeat the watchfire's defenders and nearby threats before lighting it.");
+            return 1;
+        }
+    }
+    g->watchfire_quest_progress |= bit;
+    set_quest_object_tile(g, x, y, TILE_WATCHFIRE_LIT);
+    if (g->watchfire_quest_progress == 7) {
+        g->watchfire_quest_state = 2;
+        push_message(g, "All three watchfires burn! Return to Marshal Veyra in Ridgeshire Town Hall.");
+    } else {
+        push_message(g, "Watchfire restored. Check your journal for the remaining regions.");
+    }
+    return 1;
+}
+
 void game_refresh_quest_encounters(GameState *g) {
     if (g->location == LOCATION_DUNGEON) {
         map_ensure_dungeon_connectivity(&g->map, g->level);
@@ -2735,6 +2860,7 @@ void game_refresh_quest_encounters(GameState *g) {
     place_glassdeep_quest_encounter(g);
     place_moonveil_quest_encounter(g);
     place_catacombs_quest_encounter(g);
+    place_watchfire_encounter(g);
     if (seal_placed) {
         spawn_elowen_guardians(g);
     }
@@ -2845,6 +2971,8 @@ static void generate_active_level(GameState *g) {
         g->catacombs_quest_encounters &= ~(1 << (g->level - 2));
     }
     place_catacombs_quest_encounter(g);
+    g->watchfire_quest_encounters &= ~watchfire_stage_bit(g);
+    place_watchfire_encounter(g);
     game_update_level_progress(g);
 }
 
@@ -3699,6 +3827,33 @@ void game_leave_town_hall(GameState *g) {
     g->floor_item_count = 0;
     g->dialogue_active = 0;
     push_message(g, "You step out of the Town Hall.");
+}
+
+void game_talk_to_veyra(GameState *g) {
+    if (g->location != LOCATION_TOWN_HALL || abs(g->player.x - HALL_VEYRA_X) > 1 || abs(g->player.y - HALL_VEYRA_Y) > 1) {
+        return;
+    }
+    g->dialogue_active = 1;
+    g->dialogue_x = HALL_VEYRA_X;
+    g->dialogue_y = HALL_VEYRA_Y;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Marshal Veyra");
+    if (!g->watchfire_quest_state) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Our warning fires are dark. Restore the watchfires in Goblin Mountains 6, Ashen Hollow 3, and Dragonspine 3, in any order. Defeat their guards, then press A beside each. Return for 180 gold.");
+    } else if (g->watchfire_quest_state == 1) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Watchfires: Mountains 6 %s; Ashen Hollow 3 %s; Dragonspine 3 %s. Use our south, north, and east gates. Defeat each fire's defenders and press A beside it. Regional bosses are optional.",
+            g->watchfire_quest_progress & 1 ? "lit" : "dark", g->watchfire_quest_progress & 2 ? "lit" : "dark", g->watchfire_quest_progress & 4 ? "lit" : "dark");
+    } else if (g->watchfire_quest_state == 2) {
+        g->watchfire_quest_state = 3;
+        g->gold += WATCHFIRE_REWARD_GOLD;
+        g->score += WATCHFIRE_REWARD_SCORE;
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Three watchfires burn again. Our scouts can warn Ridgeshire of danger from every approach. Take 180 gold with the town's thanks.");
+        push_message(g, "Completed: Watchfires of Ridgeshire. 180 gold and 1400 score awarded.");
+    } else {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "Ridgeshire's watchfires still burn. Our scouts remember who restored them.");
+    }
 }
 
 void game_talk_to_steward(GameState *g) {
@@ -5436,6 +5591,7 @@ typedef struct {
 } QuestOffer;
 
 static const QuestOffer quest_offers[] = {
+    {"Marshal Veyra", LOCATION_TOWN_HALL, offsetof(GameState, watchfire_quest_state), 0, "Assigned: Watchfires of Ridgeshire. See your quest journal."},
     {"Elowen", LOCATION_TAVERN, offsetof(GameState, elowen_quest_state), 0, "Quest assigned: The Broken Seals."},
     {"Dain", LOCATION_TOWN4, offsetof(GameState, dain_quest_state), 0, "Assigned: Recover the Treasure Map."},
     {"Alder", LOCATION_INN, offsetof(GameState, alder_quest_state), 0, "Assigned: The Lost Wardens."},

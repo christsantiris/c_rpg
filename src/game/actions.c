@@ -786,6 +786,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (game_has_watchfire_interaction(g)) {
+        return 1;
+    }
     if (game_has_moonveil_interaction(g)) {
         return 1;
     }
@@ -1111,6 +1114,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (game_interact_watchfire(g)) {
+            return;
+        }
         if (game_interact_moonveil(g)) {
             return;
         }

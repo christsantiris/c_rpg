@@ -114,6 +114,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_TUNNEL_EXIT || tile == TILE_JAIL_HATCH ||
                         tile == TILE_NPC_ELOWEN || tile == TILE_NPC_DAIN ||
                         tile == TILE_NPC_ALDER || tile == TILE_NPC_MARA ||
+                        tile == TILE_NPC_VEYRA || tile == TILE_WATCHFIRE_COLD || tile == TILE_WATCHFIRE_LIT ||
                         tile == TILE_NPC_ROOK || tile == TILE_NPC_OSWIN || tile == TILE_BURIAL_LEDGER ||
                         tile == TILE_NPC_LIORA || tile == TILE_MOONVEIL_SEED_POD || tile == TILE_MOONVEIL_SPRING ||
                         tile == TILE_MOONVEIL_PLANTING_CIRCLE || tile == TILE_MOONVEIL_MOONFLOWER ||

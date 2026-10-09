@@ -37,6 +37,12 @@ on Ashen Hollow stage 2 and repair of its furnace on stage 4. Return to Steward
 Hadrin in Ridgeshire for 100 gold and 800 score; both objectives stay recorded
 after collecting the reward.
 
+Marshal Veyra's **Watchfires of Ridgeshire**, offered in **Ridgeshire's Town
+Hall**, spans three regions: **Goblin Mountains 6**, **Ashen Hollow 3**, and
+**Dragonspine 3**. Each objective displays its own region and stage. Restore
+the watchfires in any order and return for **180 gold and 1,400 score**.
+Completed objectives remain recorded after claiming the reward.
+
 Brenna's **The Silent Expedition** appears after talking to her in Stillbury's
 Inn. It tracks the expedition journal on Frostfell stage 2 and Surveyor Fen's
 rescue on stage 4. Recover the journal with `A`, then defeat Fen's captors and
