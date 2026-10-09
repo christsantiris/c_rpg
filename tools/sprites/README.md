@@ -1,6 +1,6 @@
 # Building sprites
 
-Each script in this folder draws one town building as pixel art at native game
+Each script in this folder draws town buildings as pixel art at native game
 resolution (24 px per tile) and writes the BMP that the game loads from
 `assets/images/`. The shared drawing helpers are in `pixelkit.py`: layers and
 outlines, stone walls, battlements, cone and tiled roofs, timber framing,
@@ -22,6 +22,14 @@ To add a building: write a new script that uses `pixelkit.py`, add it to the
 `sprites` target in the `Makefile`, and load its BMP in
 `src/renderer/renderer.c`.
 
+New buildings must match the existing shops: use the shared textured roof,
+shaded stone, timber, window, door and outline helpers at 24 pixels per tile.
+Keep ordinary single doors about 13 pixels wide and 17–19 pixels tall. Review
+new artwork beside an existing shop at the same scale, then check its
+transparency, doorway alignment and signage in the game renderer.
+Do not mark building artwork complete until both comparisons have been
+inspected; automated gameplay tests do not verify visual quality.
+
 ## Sprites
 
 | Script | Asset | Size | Where it is drawn |
@@ -39,6 +47,10 @@ To add a building: write a new script that uses `pixelkit.py`, add it to the
 | `adventurers_guild.py` | `adventurers-guild.bmp` | 168 × 120 (7 × 5) | Rosemoor, `TOWN_GUILD_X/Y` |
 | `workshop.py` | `workshop.bmp` | 120 × 96 (5 × 4) | Ridgeshire, `TOWN4_WORKSHOP_X/Y` |
 | `town_hall.py` | `town-hall.bmp` | 168 × 120 (7 × 5) | Ridgeshire, `TOWN4_HALL_X/Y` |
+| `local_buildings.py` | `bakery.bmp` | 120 × 96 (5 × 4) | Oakhaven, southwest bakery plot |
+| `local_buildings.py` | `butcher.bmp` | 120 × 96 (5 × 4) | Stillbury, southwest butcher plot |
+| `local_buildings.py` | `monastery.bmp` | 168 × 120 (7 × 5) | Ridgeshire, southwest monastery plot |
+| `local_buildings.py` | `spice-merchant.bmp` | 120 × 96 (5 × 4) | Rosemoor, southwest spice merchant plot |
 | `crownroad_gate.py` | `crownroad-gate.bmp` | 72 × 72 (3 × 3) | Stillbury's north exit and Rosemoor's south exit |
 
 ### Castle of No Return
@@ -214,6 +226,28 @@ If the file is missing, the game falls back to the older rectangle drawing.
 - A cracked gold crown relief above the arch, for the fallen Crown Road.
 - Torn crimson banners edged in gold with small crowns, a torch on each side of
   the arch, and ivy up the outer tower walls.
+
+### Butcher shop
+
+Stillbury's butcher uses the same roof, masonry and timber detailing as the
+healer and blacksmith, with its existing 5 × 4 tile footprint and doorway.
+It has a burgundy shingle roof, a lit dormer, striped awnings, hanging ham,
+ribs and sausage links, a chopping counter, a warm display window, and a
+cleaver sign. Crates, a barrel, herbs and a metal jug fill out the frontage.
+
+### Monastery
+
+Ridgeshire's monastery uses a 7 × 5 tile footprint, with its entrance centered
+on the existing doorway tile. Its chapel and separate bell tower give it a
+different silhouette from the Town Hall.
+
+- A steep slate chapel roof and a taller bell tower with a polished brass bell.
+- Shaded limestone masonry, carved cornices, buttresses and an oak door in a
+  layered stone arch.
+- A circular stained-glass rose window and narrow windows with colored panes
+  and lead tracery.
+- Blue altar banners, warm lanterns, climbing ivy, planters and a small shaded
+  cloister with a wooden bench.
 
 ## Source art that is not generated
 

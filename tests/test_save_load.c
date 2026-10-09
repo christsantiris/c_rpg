@@ -821,7 +821,7 @@ static void test_legacy_tavern_move(void) {
             loaded.map.tiles[TOWN_TAVERN_Y][TOWN_TAVERN_X] == TILE_TAVERN &&
             loaded.map.tiles[TOWN_TAVERN_DOOR_Y][TOWN_TAVERN_DOOR_X] == TILE_TAVERN_DOOR &&
             loaded.map.tiles[16][5] == TILE_TOWN_FLOOR &&
-            loaded.map.tiles[20][8] == TILE_TOWN_FLOOR);
+            loaded.map.tiles[20][8] == TILE_LOCAL_BUILDING);
         ASSERT("Tavern move puts the player on the square in front of it",
             loaded.player.x == TOWN_TAVERN_X + 1 && loaded.player.y == front_y &&
             map_is_walkable(&loaded.map, loaded.player.x, loaded.player.y));
@@ -875,7 +875,7 @@ static void test_legacy_town_square(void) {
         ASSERT("loading removes the old Tavern walkway loop",
             loaded.map.tiles[13][4] == TILE_TOWN_FLOOR &&
             loaded.map.tiles[20][12] == TILE_TOWN_FLOOR &&
-            loaded.map.tiles[21][8] == TILE_TOWN_FLOOR &&
+            loaded.map.tiles[21][8] == TILE_TOWN_PATH &&
             loaded.map.tiles[18][4] == TILE_ITEM &&
             loaded.floor_items[0].underlying_tile == TILE_TOWN_FLOOR);
         ASSERT("loading widens the square to the Blacksmith and Alchemist walls",
@@ -935,7 +935,7 @@ static void test_legacy_inn_move(void) {
             loaded.map.tiles[TOWN_INN_DOOR_Y][TOWN_INN_DOOR_X] == TILE_TAVERN_DOOR &&
             loaded.map.tiles[16][5] == TILE_TOWN_FLOOR &&
             loaded.map.tiles[18][12] == TILE_TOWN_FLOOR &&
-            loaded.map.tiles[21][9] == TILE_TOWN_FLOOR);
+            loaded.map.tiles[21][9] == TILE_TOWN_PATH);
         ASSERT("Inn move puts the player and loot on the square in front of it",
             loaded.player.x == TOWN_INN_X + 1 && loaded.player.y == front_y &&
             loaded.floor_items[0].active &&
@@ -1231,7 +1231,7 @@ static void test_legacy_king_road_world(void) {
         map_is_walkable(&loaded.map, TOWN_MOAT_X, 5) &&
         loaded.player.x == 5 && loaded.player.y == 20 &&
         loaded.floor_items[0].active && loaded.map.tiles[20][6] == TILE_ITEM &&
-        loaded.floor_items[0].underlying_tile == TILE_TOWN_FLOOR);
+        loaded.floor_items[0].underlying_tile == TILE_TOWN_PATH);
 
     memset(&original, 0, sizeof(original));
     memset(&loaded, 0, sizeof(loaded));

@@ -1,5 +1,6 @@
 #include "map.h"
 #include "jail.h"
+#include "town_life.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -483,6 +484,8 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_WATCHTOWER &&
         m->tiles[y][x] != TILE_TAVERN_WALL &&
         m->tiles[y][x] != TILE_TAVERN_TABLE &&
+        m->tiles[y][x] != TILE_LOCAL_BUILDING &&
+        m->tiles[y][x] != TILE_NPC_RESIDENT &&
         m->tiles[y][x] != TILE_NPC_ELOWEN &&
         m->tiles[y][x] != TILE_NPC_DAIN &&
         m->tiles[y][x] != TILE_NPC_ALDER &&
@@ -1334,6 +1337,7 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     m->tiles[TOWN_CAIN_Y][TOWN_CAIN_X] = TILE_NPC_CAIN;
     m->tiles[TOWN_BRAM_Y][TOWN_BRAM_X] = TILE_NPC_BRAM;
     m->tiles[TOWN_ROWAN_Y][TOWN_ROWAN_X] = TILE_NPC_ROWAN;
+    town_life_place(m, LOCATION_TOWN);
 
     // Spawn at the central crossroads so the south road remains unobstructed
     // for a future region.
@@ -1439,6 +1443,7 @@ void map_generate_town4(Map *m, int *spawn_x, int *spawn_y) {
     map_place_town4_workshop(m);
     map_place_town4_hall(m);
     map_place_town4_guards(m, -1, -1);
+    town_life_place(m, LOCATION_TOWN4);
     *spawn_x = 20;
     *spawn_y = TOWN_H - 2;
 }
@@ -1504,6 +1509,7 @@ void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
     // The Inn stands east of the Healer, its door opening onto the square.
     map_place_town_inn(m);
     map_place_town_labyrinth(m);
+    town_life_place(m, LOCATION_TOWN2);
     *spawn_x = TOWN_W - 2;
     *spawn_y = 12;
 }
@@ -1543,6 +1549,7 @@ void map_generate_town3(Map *m, int *spawn_x, int *spawn_y) {
     map_place_town_apothecary(m);
     map_place_town3_guild(m);
     map_place_town3_guards(m, -1, -1);
+    town_life_place(m, LOCATION_TOWN3);
     *spawn_x = 20;
     *spawn_y = TOWN_H - 2;
 }

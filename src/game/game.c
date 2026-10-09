@@ -2,6 +2,7 @@
 #include "catacombs.h"
 #include "castle.h"
 #include "jail.h"
+#include "town_life.h"
 
 #include <stdlib.h>
 #include <time.h>
@@ -3547,6 +3548,51 @@ void game_enter_guild(GameState *g) {
     push_message(g, "You enter the Adventurer's Guild.");
 }
 
+void town_life_enter(GameState *g) {
+    const TownBuilding *b = town_life_building(g->location);
+    if (!b || b->town != g->location) {
+        return;
+    }
+    g->location = b->interior;
+    town_life_generate(&g->map, g->location, &g->player.x, &g->player.y);
+    g->enemy_count = 0;
+    g->floor_item_count = 0;
+    g->player.poison_turns = 0;
+    g->player.frozen_turns = 0;
+    g->player.freeze_recovery = 0;
+    g->dialogue_active = 0;
+    if (g->location != LOCATION_BAKERY && g->location != LOCATION_MONASTERY) {
+        town_life_talk(g, 1);
+    }
+}
+
+void town_life_leave(GameState *g) {
+    const TownBuilding *b = town_life_building(g->location);
+    if (!b || b->interior != g->location) {
+        return;
+    }
+    if (b->town == LOCATION_TOWN) {
+        game_leave_tavern(g);
+    } else if (b->town == LOCATION_TOWN2) {
+        game_leave_inn(g);
+    } else if (b->town == LOCATION_TOWN3) {
+        g->location = LOCATION_TOWN3;
+        map_generate_town3(&g->map, &g->player.x, &g->player.y);
+        map_set_rosemoor_swamp_road(&g->map, g->defeated_bosses & (1 << LOCATION_SWAMP));
+        place_town_portal(g);
+    } else {
+        g->location = LOCATION_TOWN4;
+        map_generate_town4(&g->map, &g->player.x, &g->player.y);
+        map_set_ridgeshire_mountain_road(&g->map, g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
+        place_town_portal(g);
+    }
+    g->player.x = b->x + b->w / 2;
+    g->player.y = b->y + b->h;
+    g->dialogue_active = 0;
+    g->enemy_count = 0;
+    g->floor_item_count = 0;
+}
+
 void game_enter_workshop(GameState *g) {
     g->location = LOCATION_WORKSHOP;
     map_generate_workshop(&g->map, &g->player.x, &g->player.y);
@@ -4487,6 +4533,34 @@ static int temple_interaction_tile(TileType tile) {
     return tile == TILE_TEMPLE_ALTAR || tile == TILE_TEMPLE_TREASURE;
 }
 
+int game_temple_dormant_sentinels(const GameState *g) {
+    if (g->location != LOCATION_TEMPLE) {
+        return 0;
+    }
+    int count = 0;
+    for (int y = 0; y < TEMPLE_H; y++) {
+        for (int x = 0; x < TEMPLE_W; x++) {
+            if (g->map.tiles[y][x] == TILE_TEMPLE_DORMANT_SENTINEL) {
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
+int game_temple_remaining_enemies(const GameState *g) {
+    if (g->location != LOCATION_TEMPLE) {
+        return 0;
+    }
+    int count = game_temple_dormant_sentinels(g);
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (g->enemies[i].active) {
+            count++;
+        }
+    }
+    return count;
+}
+
 int game_has_temple_interaction(const GameState *g) {
     if (g->location != LOCATION_TEMPLE) {
         return 0;
@@ -4528,6 +4602,7 @@ static void toggle_temple_alignment(GameState *g) {
             }
         }
     }
+    game_update_level_progress(g);
     push_message(g, g->temple_alignment
         ? "Moon rises: lunar doors open and sentinels awaken!"
         : "Sun rises: lunar doors close and solar traps ignite!");
@@ -4554,6 +4629,10 @@ int game_interact_temple(GameState *g) {
         if (tile == TILE_TEMPLE_TREASURE) {
             if (!(g->defeated_bosses & (1 << LOCATION_TEMPLE))) {
                 push_message(g, "The Fallen Sun Guardian seals the treasure vault.");
+                return 1;
+            }
+            if (g->temple_treasure_state < 2 && game_temple_remaining_enemies(g) > 0) {
+                push_message(g, "Treasure sealed: clear all Sun and Moon enemies. Use an altar to awaken dormant sentinels.");
                 return 1;
             }
             if (g->temple_treasure_state < 2) {
@@ -6080,9 +6159,13 @@ void game_update_level_progress(GameState *g) {
         }
     }
 
+    if (g->location == LOCATION_TEMPLE) {
+        active_enemies = game_temple_remaining_enemies(g);
+    }
+
     if (active_enemies == 0) {
         game_mark_level_cleared(g);
-    } else if (g->location == LOCATION_CATACOMBS) {
+    } else if (g->location == LOCATION_CATACOMBS || g->location == LOCATION_TEMPLE) {
         g->level_cleared = 0;
     }
 }

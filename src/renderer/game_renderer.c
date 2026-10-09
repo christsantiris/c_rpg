@@ -9,6 +9,7 @@
 #include "../game/catacombs.h"
 #include "castle_renderer.h"
 #include "jail_renderer.h"
+#include "town_life_renderer.h"
 #include "../game/jail.h"
 #include <string.h>
 #include <stdlib.h>
@@ -423,7 +424,7 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     int shortcut = game_shortcut_prompt_active(g);
     int quest_offer = game_quest_offer_active(g);
     if (!g->dialogue_active ||
-        (!shortcut && g->location != LOCATION_TAVERN &&
+        (!shortcut && !town_life_is_interior(g->location) && g->location != LOCATION_TAVERN &&
         g->location != LOCATION_INN &&
         g->location != LOCATION_GUILD &&
         g->location != LOCATION_TOWN_HALL &&
@@ -454,7 +455,8 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
         g->location == LOCATION_CASTLE) {
         viewport_w = TOWN_W * TILE_SIZE;
     } else if (g->location == LOCATION_TAVERN || g->location == LOCATION_INN ||
-        g->location == LOCATION_TOWN_HALL || g->location == LOCATION_GUILD) {
+        g->location == LOCATION_TOWN_HALL || g->location == LOCATION_GUILD ||
+        town_life_is_interior(g->location)) {
         viewport_w = TAVERN_W * TILE_SIZE;
     } else if (g->location == LOCATION_ISLAND) {
         viewport_w = ISLAND_W * TILE_SIZE;
@@ -1733,6 +1735,7 @@ static void draw_low_health_warning(Renderer *r, const GameState *g) {
 
 void game_draw(Renderer *r, GameState *g, Viewport *v) {
     Viewport town_view;
+    int temple_remaining = game_temple_remaining_enemies(g);
     int kraken_warning = kraken_tentacles_raised(g);
     int town_scaled = g->location == LOCATION_TOWN ||
         g->location == LOCATION_TOWN2 ||
@@ -1740,7 +1743,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->location == LOCATION_CASTLE;
     int tavern_scaled = g->location == LOCATION_TAVERN ||
         g->location == LOCATION_INN || g->location == LOCATION_WORKSHOP ||
-        g->location == LOCATION_TOWN_HALL || g->location == LOCATION_GUILD;
+        g->location == LOCATION_TOWN_HALL || g->location == LOCATION_GUILD ||
+        town_life_is_interior(g->location);
     int island_scaled = g->location == LOCATION_ISLAND;
     int labyrinth_scaled = g->location == LOCATION_LABYRINTH;
     int road_scaled = g->location == LOCATION_FOREST_ROAD ||
@@ -2170,6 +2174,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                         }
                     } else if (g->map.tiles[y][x] == TILE_STAIRS_UP) {
                         draw_stairs_up(r, sx, sy);
+                        if (g->location == LOCATION_TEMPLE && temple_remaining > 0) {
+                            SDL_SetRenderDrawColor(r->sdl, 190, 136, 255, 255);
+                            SDL_Rect seal = {sx * TILE_SIZE + 3, sy * TILE_SIZE + 9, 18, 2};
+                            SDL_RenderFillRect(r->sdl, &seal);
+                            SDL_RenderDrawLine(r->sdl, sx * TILE_SIZE + 12, sy * TILE_SIZE + 4, sx * TILE_SIZE + 12, sy * TILE_SIZE + 18);
+                        }
                     } else if (g->map.tiles[y][x] == TILE_STAIRS_DOWN) {
                         draw_stairs_down(r, sx, sy);
                     } else {
@@ -2210,11 +2220,25 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_GUILD_DOOR:
                 case TILE_WORKSHOP_DOOR:
                 case TILE_TOWN_HALL_DOOR:
+                case TILE_LOCAL_DOOR:
                     draw_town_path(r, sx, sy); break;
+                case TILE_LOCAL_BUILDING:
+                    draw_town_floor(r, sx, sy);
+                    break;
                 case TILE_TAVERN_FLOOR: draw_tavern_floor(r, sx, sy); break;
                 case TILE_TAVERN_WALL: draw_tavern_wall(r, sx, sy); break;
                 case TILE_TAVERN_EXIT: draw_tavern_exit(r, sx, sy); break;
-                case TILE_TAVERN_TABLE: draw_tavern_table(r, sx, sy); break;
+                case TILE_TAVERN_TABLE:
+                    draw_tavern_table(r, sx, sy);
+                    if (town_life_is_interior(g->location) && (y == 7 || y == 17)) {
+                        town_life_draw_goods(r, sx, sy, town_life_building(g->location)->style);
+                    }
+                    break;
+                case TILE_NPC_RESIDENT: {
+                    const TownBuilding *b = town_life_building(g->location);
+                    town_life_draw_resident(r, sx, sy, b ? b->style : 0);
+                    break;
+                }
                 case TILE_NPC_ELOWEN: draw_elowen(r, sx, sy); break;
                 case TILE_NPC_DAIN:
                 case TILE_NPC_SHARPENER:
@@ -2303,7 +2327,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_TEMPLE_VAULT_DOOR:
                     draw_temple_vault_door(r, sx, sy); break;
                 case TILE_TEMPLE_TREASURE:
-                    draw_temple_treasure(r, sx, sy); break;
+                    draw_temple_treasure(r, sx, sy);
+                    if (temple_remaining > 0 && g->temple_treasure_state < 2) {
+                        SDL_SetRenderDrawColor(r->sdl, 190, 136, 255, 255);
+                        SDL_Rect seal = {sx * TILE_SIZE + 4, sy * TILE_SIZE + 10, 16, 2};
+                        SDL_RenderFillRect(r->sdl, &seal);
+                    }
+                    break;
                 case TILE_TEMPLE_WATER:
                     draw_temple_water(r, sx, sy, x, y); break;
                 case TILE_TEMPLE_RUBBLE:
@@ -2484,6 +2514,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     // Gates and buildings span several town cells; draw them over the map.
+    const TownBuilding *local_building = town_life_building(g->location);
+    if (local_building && local_building->town == g->location) {
+        town_life_draw_building(r, v, local_building);
+    }
     if (g->location == LOCATION_TOWN) {
         draw_town_gate(r,
             viewport_to_screen_x(v, 18), viewport_to_screen_y(v, 0),
@@ -3316,6 +3350,25 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     draw_low_health_warning(r, g);
+
+    if (g->location == LOCATION_TEMPLE && temple_remaining > 0) {
+        int notice_x = r->screen_w - INFO_PANEL_W - 312;
+        if (notice_x < 8) {
+            notice_x = 8;
+        }
+        SDL_Rect notice = {notice_x, 8, 304, 40};
+        SDL_SetRenderDrawColor(r->sdl, 20, 16, 35, 255);
+        SDL_RenderFillRect(r->sdl, &notice);
+        SDL_SetRenderDrawColor(r->sdl, 128, 87, 177, 255);
+        SDL_RenderDrawRect(r->sdl, &notice);
+        char status[48];
+        SDL_snprintf(status, sizeof(status), "%s SEALED: %d FOES LEFT",
+            g->level == TEMPLE_DEPTH ? "TREASURE" : "STAIRS", temple_remaining);
+        renderer_draw_text(r, status, notice_x + 8, 16, (SDL_Color){220, 187, 255, 255}, r->font_tiny);
+        renderer_draw_text(r, game_temple_dormant_sentinels(g) > 0 ?
+            "Use altar to awaken Moon foes" : "Defeat all Sun and Moon foes",
+            notice_x + 8, 32, (SDL_Color){230, 218, 195, 255}, r->font_tiny);
+    }
 
     // Draw info panel
     info_panel_draw(r, g);

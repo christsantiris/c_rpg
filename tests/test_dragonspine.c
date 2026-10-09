@@ -76,6 +76,7 @@ void test_dragonspine(void) {
                 tile == TILE_TOWN_PATH || tile == TILE_TOWN_EXIT ||
                 tile == TILE_WORKSHOP_DOOR ||
                 tile == TILE_TOWN_HALL_DOOR ||
+                tile == TILE_LOCAL_BUILDING || tile == TILE_LOCAL_DOOR ||
                 tile == TILE_NPC_DRAGON_SEEKER || tile == TILE_NPC_ROYAL_GUARD;
         }
     }

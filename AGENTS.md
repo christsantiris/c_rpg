@@ -122,3 +122,11 @@ defines change-set scope; it does not authorize committing.
 
 After each change set is complete, provide a suggested Git commit message in
 the final response. This signals that the work is finished and ready to commit.
+
+## 10. Building art must match the existing buildings
+
+Use the established `tools/sprites/pixelkit.py` pipeline for town buildings,
+matching the existing textures, shading, outlines and doorway scale. Do not
+substitute simple rectangle drawings. Inspect new or changed art beside an
+existing building at the same scale and in the game renderer before reporting
+it complete. Gameplay tests alone do not establish visual quality.

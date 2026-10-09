@@ -31,6 +31,7 @@ void test_rook_labyrinth(void);
 void test_minotaur(void);
 void test_town_map(void);
 void test_town_spawn(void);
+void test_town_life(void);
 void test_cain_gift(void);
 void test_bram_guidance(void);
 void test_harbor_road(void);
@@ -121,6 +122,7 @@ int main(void) {
     test_town_map();
     printf("\n");
     test_town_spawn();
+    test_town_life();
     printf("\n");
     test_cain_gift();
     test_bram_guidance();

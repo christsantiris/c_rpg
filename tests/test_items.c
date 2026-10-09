@@ -15,6 +15,82 @@ static int shop_has_item(const ShopScreen *shop, const char *name) {
     return 0;
 }
 
+static void setup_potion_combat(GameState *g, Item item) {
+    memset(g, 0, sizeof(*g));
+    g->player.player_class = CLASS_WARRIOR;
+    game_init(g);
+    g->location = LOCATION_DUNGEON;
+    g->level = 1;
+    g->player.x = 10;
+    g->player.y = 10;
+    g->player.max_hp = 100;
+    g->player.hp = 50;
+    g->player.max_mp = 20;
+    g->player.mp = 5;
+    g->player.defense = 0;
+    for (int y = 5; y <= 15; y++) {
+        for (int x = 5; x <= 17; x++) {
+            g->map.tiles[y][x] = TILE_FLOOR;
+        }
+    }
+    g->inventory[0] = item;
+    g->inventory_count = 1;
+    g->equipped_main_hand = -1;
+    g->equipped_off_hand = -1;
+    g->equipped_armor = -1;
+    g->enemy_count = 1;
+    g->enemies[0] = (Enemy){.active = 1, .type = ENEMY_SKELETON, .x = 15, .y = 10,
+        .hp = 40, .max_hp = 40, .attack = 20, .move_timer = 3};
+}
+
+static void test_potion_combat_turns(void) {
+    static GameState g;
+    const Item potions[] = {item_make_health_potion(), item_make_mana_potion(),
+        item_make_strength_potion(), item_make_intelligence_potion()};
+    for (int i = 0; i < 4; i++) {
+        setup_potion_combat(&g, potions[i]);
+        EnemyProjectiles shots = {0};
+        ASSERT("each successfully drunk potion consumes exactly one enemy phase",
+            action_use_inventory_item(&g, 0, &shots) && g.inventory_count == 0 && g.enemies[0].move_timer == 4);
+    }
+    setup_potion_combat(&g, item_make_health_potion());
+    g.enemies[0].x = 11;
+    g.enemies[0].move_timer = 0;
+    srand(123);
+    ASSERT("an adjacent enemy responds after the healing potion takes effect",
+        action_use_inventory_item(&g, 0, NULL) && g.player.hp < 100 && g.player.hp > 50);
+
+    setup_potion_combat(&g, item_make_health_potion());
+    g.player.hp = g.player.max_hp;
+    ASSERT("refusing a potion at full HP preserves it and consumes no enemy turn",
+        !action_use_inventory_item(&g, 0, NULL) && g.inventory_count == 1 && g.enemies[0].move_timer == 3);
+    setup_potion_combat(&g, item_make_mana_potion());
+    g.player.mp = g.player.max_mp;
+    ASSERT("refusing a potion at full MP preserves it and consumes no enemy turn",
+        !action_use_inventory_item(&g, 0, NULL) && g.inventory_count == 1 && g.enemies[0].move_timer == 3);
+    ASSERT("invalid inventory selections do not consume combat turns",
+        !action_use_inventory_item(&g, -1, NULL) && !action_use_inventory_item(&g, 1, NULL) && g.enemies[0].move_timer == 3);
+    setup_potion_combat(&g, item_make_treasure_map());
+    ASSERT("reading the treasure map remains free",
+        !action_use_inventory_item(&g, 0, NULL) && g.inventory_count == 1 && g.enemies[0].move_timer == 3);
+
+    setup_potion_combat(&g, item_make_health_potion());
+    g.player.poison_turns = 2;
+    ASSERT("drinking consumes one poison tick after the potion heals",
+        action_use_inventory_item(&g, 0, NULL) && g.player.hp == 97 && g.player.poison_turns == 1 && g.enemies[0].move_timer == 4);
+    setup_potion_combat(&g, item_make_health_potion());
+    g.player.frozen_turns = 1;
+    ASSERT("drinking while frozen uses the turn and still allows enemy actions",
+        action_use_inventory_item(&g, 0, NULL) && g.player.frozen_turns == 0 && g.enemies[0].move_timer == 4);
+    setup_potion_combat(&g, item_make_mana_potion());
+    g.player.hp = 1;
+    g.enemies[0].x = 11;
+    g.enemies[0].move_timer = 0;
+    srand(123);
+    ASSERT("a potion's enemy response can be lethal",
+        action_use_inventory_item(&g, 0, NULL) && g.player.hp <= 0 && g.inventory_count == 0);
+}
+
 static void test_gold_drop_scarcity(void) {
     static GameState g;
     g.player.player_class = CLASS_WARRIOR;
@@ -1224,4 +1300,5 @@ void test_items(void) {
     ASSERT("rogue armor evasion can avoid enemy attacks",
         g.player.hp == hp_before_attack);
     test_gold_drop_scarcity();
+    test_potion_combat_turns();
 }

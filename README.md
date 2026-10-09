@@ -152,6 +152,22 @@ Elowen, then **Y** to accept **The Broken Seals**, restore the burial seals on
 without visiting another town. Existing saves preserve seal progress and update
 her location. Stillbury's Inn houses Alder, Liora, Rook, and Bram.
 
+Each town also has a local building in its southwest quarter. Walk through its
+door and press **T** beside the resident to talk. The baker and abbot wait until
+spoken to; the butcher and spice merchant also greet you on entry. These visits
+add town life without purchases, quests, or rewards:
+
+| Town | Building | Resident and conversation |
+| --- | --- | --- |
+| Oakhaven | Bakery | Baker Nessa describes slow business while the Lich King occupies the dungeon, then thanks you for restoring business after his defeat. |
+| Stillbury | Butcher shop | Butcher Holt warns of evil lurking in the swamp north of town. |
+| Ridgeshire | Monastery | Abbot Edric describes the dragons terrorizing Ridgeshire, then speaks of a safer town after the Dragonspine boss is defeated. |
+| Rosemoor | Spice merchant | Suri describes dangerous caravan journeys along the Crown Road. |
+
+Dialogue changes use existing boss victories. Existing saves gain the buildings
+without losing progress; players and dropped loot in the new footprints move
+to the accessible path outside the door.
+
 **Alder** assigns **The Lost Wardens** in **Stillbury's Inn**. Press **T**
 beside him, then **Y** to accept the forest quest and return to the same Inn for
 **70 gold and 500 score**, awarded once. Existing saves retain rescue progress
@@ -469,6 +485,11 @@ Inside the inventory, use the arrow keys to select an item, `U` to use it,
 `D` to drop it. In the spellbook, select a spell and press `E` or `Enter` to
 equip it. Shops, the healer, the witch, and the harbor use the arrow keys and
 `Enter`; shop buy and sell modes are switched with `Tab`.
+
+Drinking any potion consumes one combat turn and closes the inventory so you
+can see the enemies respond. Poison and freezing advance with that turn.
+Attempting to drink at full HP or MP keeps the potion and costs no turn;
+reading scrolls and equipping or dropping items remain free inventory actions.
 
 ## Game Documentation
 

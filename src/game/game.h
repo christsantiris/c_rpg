@@ -144,7 +144,11 @@ typedef enum {
     LOCATION_WORKSHOP,
     LOCATION_TOWN_HALL,
     LOCATION_JAIL,
-    LOCATION_ESCAPE_TUNNEL
+    LOCATION_ESCAPE_TUNNEL,
+    LOCATION_BAKERY,
+    LOCATION_BUTCHER,
+    LOCATION_MONASTERY,
+    LOCATION_SPICE_SHOP
 } Location;
 
 typedef struct {
@@ -358,11 +362,14 @@ void game_enter_temple(GameState *g);
 void game_leave_temple(GameState *g);
 int game_has_temple_interaction(const GameState *g);
 int game_interact_temple(GameState *g);
+int game_temple_dormant_sentinels(const GameState *g);
+int game_temple_remaining_enemies(const GameState *g);
 void game_record_temple_enemy_defeated(GameState *g, EnemyType type);
 int game_has_island_interaction(const GameState *g);
 int game_interact_island(GameState *g);
 
 void action_resolve_player(GameState *g, Action a);
+int action_use_inventory_item(GameState *g, int index, EnemyProjectiles *shots);
 void action_resolve_enemies(GameState *g);
 void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *shots);
 
