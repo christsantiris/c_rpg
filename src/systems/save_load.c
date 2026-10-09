@@ -694,7 +694,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 121);
+    cJSON_AddNumberToObject(root, "save_version", 122);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -832,6 +832,9 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "catacombs_quest_state", g->catacombs_quest_state);
     cJSON_AddNumberToObject(root, "catacombs_quest_progress", g->catacombs_quest_progress);
     cJSON_AddNumberToObject(root, "catacombs_quest_encounters", g->catacombs_quest_encounters);
+    cJSON_AddNumberToObject(root, "watchfire_quest_state", g->watchfire_quest_state);
+    cJSON_AddNumberToObject(root, "watchfire_quest_progress", g->watchfire_quest_progress);
+    cJSON_AddNumberToObject(root, "watchfire_quest_encounters", g->watchfire_quest_encounters);
     cJSON_AddNumberToObject(root, "temple_alignment", g->temple_alignment);
     cJSON_AddNumberToObject(root, "temple_sentinels_awakened",
         g->temple_sentinels_awakened);
@@ -1284,6 +1287,14 @@ static void repair_floor_item_underlays(GameState *g) {
 }
 
 static void migrate_testing_save(cJSON *root, int version) {
+    if (version < 122) {
+        const char *fields[3] = {"watchfire_quest_state", "watchfire_quest_progress", "watchfire_quest_encounters"};
+        for (int i = 0; i < 3; i++) {
+            if (!cJSON_GetObjectItem(root, fields[i])) {
+                cJSON_AddNumberToObject(root, fields[i], 0);
+            }
+        }
+    }
     if (version < 101) {
         const char *fields[] = {"jail_quest_state", "prisoner_x", "prisoner_y"};
         for (int i = 0; i < 3; i++) {
@@ -2078,6 +2089,22 @@ int load_game(GameState *g, int slot) {
     g->catacombs_quest_state = catacombs_quest->valueint;
     g->catacombs_quest_progress = catacombs_progress->valueint;
     g->catacombs_quest_encounters = catacombs_encounters->valueint;
+    cJSON *watchfire_state = cJSON_GetObjectItem(root, "watchfire_quest_state");
+    cJSON *watchfire_progress = cJSON_GetObjectItem(root, "watchfire_quest_progress");
+    cJSON *watchfire_encounters = cJSON_GetObjectItem(root, "watchfire_quest_encounters");
+    if (!cJSON_IsNumber(watchfire_state) || !cJSON_IsNumber(watchfire_progress) || !cJSON_IsNumber(watchfire_encounters) ||
+        watchfire_state->valuedouble != watchfire_state->valueint || watchfire_state->valueint < 0 || watchfire_state->valueint > 3 ||
+        watchfire_progress->valuedouble != watchfire_progress->valueint || watchfire_progress->valueint < 0 || watchfire_progress->valueint > 7 ||
+        watchfire_encounters->valuedouble != watchfire_encounters->valueint || watchfire_encounters->valueint < 0 || watchfire_encounters->valueint > 7 ||
+        (watchfire_state->valueint == 0 && (watchfire_progress->valueint || watchfire_encounters->valueint)) ||
+        (watchfire_state->valueint == 1 && watchfire_progress->valueint == 7) ||
+        (watchfire_state->valueint >= 2 && watchfire_progress->valueint != 7)) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    g->watchfire_quest_state = watchfire_state->valueint;
+    g->watchfire_quest_progress = watchfire_progress->valueint;
+    g->watchfire_quest_encounters = watchfire_encounters->valueint;
     cJSON *jail_state = cJSON_GetObjectItem(root, "jail_quest_state");
     cJSON *prisoner_x = cJSON_GetObjectItem(root, "prisoner_x");
     cJSON *prisoner_y = cJSON_GetObjectItem(root, "prisoner_y");
@@ -4072,6 +4099,20 @@ int load_game(GameState *g, int slot) {
     }
     if (save_version < 121) {
         game_migrate_crownroad_density(g);
+    }
+    if (save_version < 122 && g->location == LOCATION_TOWN_HALL) {
+        if (g->player.x == HALL_VEYRA_X && g->player.y == HALL_VEYRA_Y) {
+            g->player.y++;
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->active && item->x == HALL_VEYRA_X && item->y == HALL_VEYRA_Y) {
+                item->y++;
+                item->underlying_tile = TILE_TAVERN_FLOOR;
+                g->map.tiles[item->y][item->x] = TILE_ITEM;
+            }
+        }
+        g->map.tiles[HALL_VEYRA_Y][HALL_VEYRA_X] = TILE_NPC_VEYRA;
     }
     game_hide_portal_destination(g);
     game_migrate_boss_shortcuts(g);

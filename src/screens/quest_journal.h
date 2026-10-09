@@ -29,6 +29,7 @@ typedef struct {
     const char *summary_line_2;
     const char *objectives[4];
     const char *area;
+    const char *objective_areas[4];
     int stages[4];
     int objective_complete[4];
     int objective_count;

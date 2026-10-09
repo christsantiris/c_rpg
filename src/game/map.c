@@ -436,7 +436,7 @@ int map_is_walkable(const Map *m, int x, int y) {
     return m->tiles[y][x] != TILE_JAIL_BUILDING &&
         m->tiles[y][x] != TILE_JAIL_DOOR && m->tiles[y][x] != TILE_JAIL_BARS &&
         m->tiles[y][x] != TILE_NPC_INFORMANT && m->tiles[y][x] != TILE_NPC_PRISONER &&
-        m->tiles[y][x] != TILE_NPC_OSWIN &&
+        m->tiles[y][x] != TILE_NPC_OSWIN && m->tiles[y][x] != TILE_NPC_VEYRA &&
         m->tiles[y][x] != TILE_MEMORIAL_BRAZIER &&
         m->tiles[y][x] != TILE_MEMORIAL_COLD &&
         m->tiles[y][x] != TILE_BURIAL_LEDGER &&
@@ -2602,6 +2602,7 @@ void map_generate_town_hall(Map *m, int *sx, int *sy) {
     }
     m->tiles[HALL_STEWARD_Y][HALL_STEWARD_X] = TILE_NPC_STEWARD;
     m->tiles[HALL_OSWIN_Y][HALL_OSWIN_X] = TILE_NPC_OSWIN;
+    m->tiles[HALL_VEYRA_Y][HALL_VEYRA_X] = TILE_NPC_VEYRA;
 }
 
 void map_generate_island(Map *m, int *spawn_x, int *spawn_y) {
