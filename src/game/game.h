@@ -31,6 +31,8 @@
 #define MOONVEIL_SEED_RECOVERED 1
 #define MOONVEIL_WATER_GATHERED 2
 #define MOONVEIL_GARDEN_RESTORED 4
+#define WATCHFIRE_REWARD_GOLD 180
+#define WATCHFIRE_REWARD_SCORE 1400
 
 #define DAIN_FRAGMENT_ARCHER 1
 #define DAIN_FRAGMENT_BOMBER 2
@@ -263,6 +265,9 @@ typedef struct {
     int catacombs_quest_state;
     int catacombs_quest_progress;
     int catacombs_quest_encounters;
+    int watchfire_quest_state;
+    int watchfire_quest_progress;
+    int watchfire_quest_encounters;
     int temple_alignment;
     int temple_sentinels_awakened;
     int temple_treasure_state;
@@ -331,6 +336,9 @@ void game_leave_workshop(GameState *g);
 void game_enter_town_hall(GameState *g);
 void game_leave_town_hall(GameState *g);
 void game_talk_to_steward(GameState *g);
+void game_talk_to_veyra(GameState *g);
+int game_has_watchfire_interaction(const GameState *g);
+int game_interact_watchfire(GameState *g);
 void game_talk_to_brenna(GameState *g);
 void game_talk_to_orin(GameState *g);
 void game_talk_to_liora(GameState *g);

@@ -137,7 +137,7 @@ void quest_journal_draw(Renderer *r, const GameState *g, const QuestJournalScree
             complete_count += complete;
             SDL_snprintf(line, sizeof(line), "[%c] %s - %s %d",
                 complete ? 'X' : ' ', entry.objectives[objective],
-                entry.area, entry.stages[objective]);
+                entry.objective_areas[objective], entry.stages[objective]);
             renderer_draw_text(r, line, x, y, complete ? green : white,
                 r->font_tiny);
             y += 25;
