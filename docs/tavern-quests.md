@@ -176,7 +176,7 @@ adventure area.
 Ilya waits alongside Elowen and Mara in **Oakhaven's Tavern**. Press
 `T` beside her, then `Y` to accept the quest. Travel north through the mountains
 to Ridgeshire, then take its east gate to Dragonspine. Recover the golden goblet
-on stage 5 by standing on it and pressing `A`, then return to Ilya in the Tavern
+on stage 5 by standing on it and pressing `P` (Pick up), then return to Ilya in the Tavern
 for one **Potion of Strength and 600 score**. Make room in your pack before
 turning it in. The potion permanently adds 1 base attack when consumed. Older
 saves move Ilya while retaining existing quest and boss progress.

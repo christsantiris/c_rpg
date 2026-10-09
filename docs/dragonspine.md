@@ -20,6 +20,9 @@ Dragonspine has five generated stages with independent progress and saved
 floor caches. Trails at the west and east map edges lead back and forward.
 Its pale cliff walls and snow paths give way to black ash and glowing embers
 higher up. The summit contains the Red Dragon's gilded lair.
+Cliff faces connect across tiles, with chipped rims and broad rock shading.
+Snow drifts cross tile boundaries; ash and gold form irregular patches instead
+of dark square floor tiles. These visuals apply to existing saved maps.
 
 | Stage | Route | Main threats |
 | --- | --- | --- |
@@ -41,7 +44,7 @@ defeated.
 Ilya waits in **Oakhaven's Tavern**, alongside Elowen and Mara. Press
 `T` beside her to hear the offer, then `Y` to accept **The Dragon's Hoard**. On
 Dragonspine stage 5, find the golden goblet in the dragon's lair, stand on it,
-and press `A`. Return to Ilya in the Tavern to trade the goblet for a one-time
+and press `P` (Pick up). Return to Ilya in the Tavern to trade the goblet for a one-time
 Potion of Strength and 600 score. Make space in your pack before turning in the
 quest. Drinking the potion permanently raises base attack by 1; it is not sold
 in shops. The quest can still be completed if the Red Dragon was defeated before

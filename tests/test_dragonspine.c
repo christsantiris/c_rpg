@@ -276,11 +276,20 @@ void test_dragonspine(void) {
         dragon_goblet_reachable(&g.map, &treasure_x, &treasure_y));
     g.player.x = treasure_x;
     g.player.y = treasure_y;
-    ASSERT("standing on the goblet enables interaction",
-        game_has_regional_interaction(&g));
+    ASSERT("standing on the goblet leaves A available for moving left",
+        !game_has_regional_interaction(&g));
     action_resolve_player(&g, (Action){ACTION_INTERACT, 0, 0});
+    ASSERT("interacting cannot collect the golden goblet",
+        g.dragon_treasure_quest_state == 1 && g.map.tiles[treasure_y][treasure_x] == TILE_DRAGON_TREASURE);
+    int pack_count = g.inventory_count;
+    g.inventory_count = MAX_INVENTORY;
+    action_resolve_player(&g, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("collecting the goblet records quest progress without an inventory item",
         g.dragon_treasure_quest_state == 2 &&
+        g.map.tiles[treasure_y][treasure_x] == TILE_DRAGON_HOARD && g.inventory_count == MAX_INVENTORY);
+    g.inventory_count = pack_count;
+    action_resolve_player(&g, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("repeated pickup cannot collect the goblet again", g.dragon_treasure_quest_state == 2 &&
         g.map.tiles[treasure_y][treasure_x] == TILE_DRAGON_HOARD);
     saved = save_game(&g, DRAGONSPINE_TEST_SLOT);
     restored = saved && load_game(&loaded, DRAGONSPINE_TEST_SLOT);

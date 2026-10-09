@@ -843,9 +843,6 @@ int game_has_regional_interaction(const GameState *g) {
         TileType tile = g->map.tiles[g->player.y][g->player.x];
         return map_is_coast_object(tile) && tile != TILE_COAST_CACHE;
     }
-    if (g->location == LOCATION_DRAGONSPINE) {
-        return g->map.tiles[g->player.y][g->player.x] == TILE_DRAGON_TREASURE;
-    }
     if (g->location == LOCATION_DESERT) {
         return g->map.tiles[g->player.y][g->player.x] == TILE_DESERT_LAMP;
     }
@@ -1171,10 +1168,6 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
         TileType tile = g->map.tiles[g->player.y][g->player.x];
-        if (tile == TILE_DRAGON_TREASURE) {
-            game_collect_dragon_treasure(g);
-            return;
-        }
         if (tile == TILE_DESERT_LAMP) {
             game_collect_desert_lamp(g);
             return;
@@ -1215,6 +1208,10 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_PICK_UP) {
+        if (g->map.tiles[g->player.y][g->player.x] == TILE_DRAGON_TREASURE) {
+            game_collect_dragon_treasure(g);
+            return;
+        }
         if (g->map.tiles[g->player.y][g->player.x] == TILE_CRYPT_CACHE) {
             int gold = 10 + g->level * 2;
             g->gold += gold;
