@@ -102,6 +102,7 @@ static void test_gold_drop_scarcity(void) {
     Action attack = {ACTION_MOVE, x, y};
     int drops = 0;
     int small_purses = 1;
+    int gold_only = 1;
     srand(424242);
     for (int i = 0; i < 2000; i++) {
         g.floor_item_count = 0;
@@ -112,6 +113,9 @@ static void test_gold_drop_scarcity(void) {
         };
         int gold_before = g.gold;
         action_resolve_player(&g, attack);
+        for (int j = 0; j < g.floor_item_count; j++) {
+            gold_only &= g.floor_items[j].item.type == ITEM_GOLD;
+        }
         int coins = g.gold - gold_before;
         if (g.floor_item_count > 0 &&
             g.floor_items[0].item.type == ITEM_GOLD) {
@@ -124,6 +128,7 @@ static void test_gold_drop_scarcity(void) {
     }
     ASSERT("ordinary kills usually yield no gold", drops >= 120 && drops <= 280);
     ASSERT("early enemy purses contain only one or two gold", small_purses);
+    ASSERT("regular enemy kills drop only gold, never ordinary potions or equipment", gold_only);
 
     game_init(&g);
     g.player.x = 10;
@@ -657,24 +662,11 @@ void test_items(void) {
         shield_catalog[2].block_reduction_percent == 50 &&
         shield_catalog[3].block_reduction_percent == 50);
 
-    // --- Regular enemy and boss drops ---
-    srand(7);
-    int regular_drops_are_potions = 1;
-    int regular_drops_include_health = 0;
-    int regular_drops_include_mana = 0;
-    for (int i = 0; i < 4000; i++) {
-        Item drop = random_enemy_item();
-        regular_drops_are_potions &=
-            drop.type == ITEM_POTION_HEALTH ||
-            drop.type == ITEM_POTION_MANA;
-        regular_drops_include_health |= drop.type == ITEM_POTION_HEALTH;
-        regular_drops_include_mana |= drop.type == ITEM_POTION_MANA;
-    }
-    ASSERT("regular enemies drop only potions, never scrolls or equipment",
-        regular_drops_are_potions);
-    ASSERT("regular enemies drop both health and mana potions",
-        regular_drops_include_health && regular_drops_include_mana);
-
+    // --- Special boss rewards ---
+    ASSERT("special boss Strength Potion rewards are preserved",
+        boss_equipment_reward(ENEMY_THORN_REGENT).type == ITEM_POTION_STRENGTH &&
+        boss_equipment_reward(ENEMY_CINDER_LORD).type == ITEM_POTION_STRENGTH &&
+        boss_equipment_reward(ENEMY_PRISM_SOVEREIGN).type == ITEM_POTION_STRENGTH);
     Item lich_reward = boss_equipment_reward(ENEMY_LICH_KING);
     Item forest_reward = boss_equipment_reward(ENEMY_FOREST_NECROMANCER);
     Item mountain_reward = boss_equipment_reward(

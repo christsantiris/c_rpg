@@ -13,8 +13,8 @@ earn gold and experience faster than safe work in town.
 ## Current baseline
 
 - Health and Mana Potions cost 20 gold and restore HP or MP to full.
-- Ordinary enemies have a 10% chance to drop a small amount of gold and a
-  separate 5% chance to drop a potion. This makes routine earnings
+- Ordinary enemies have a 10% chance to drop a small amount of gold and no
+  ordinary item drops. Health and Mana Potions must be bought. This makes routine earnings
   unpredictable, particularly for a Mage who needs MP to earn more gold.
 - Gold from ordinary enemies and bosses appears as a gold pickup that needs no
   inventory space; item drops keep their blue marker. Boss equipment and gold
@@ -52,7 +52,7 @@ back from adventure areas without requiring a consumable.
 
 ## Ordinary expedition loop
 
-Gold should remain a chance drop, separate from the chance to find a potion.
+Gold should remain a chance drop; regular enemies should drop no potions.
 Try a **35% gold-drop chance** with early purses of roughly **5-10
 gold**, then tune larger purses for tougher enemies. Some kills should yield
 only experience. Dropped coins should appear as a gold-colored pickup on the
