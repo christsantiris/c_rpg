@@ -493,9 +493,9 @@ static void test_frostfell_behaviours(void) {
     frost_game.inventory[0] = item_make_health_potion();
     frost_game.inventory_count = 1;
     action_resolve_player(&frost_game, (Action){ACTION_USE_ITEM, 0, 0});
-    ASSERT("potions still work while frozen and do not use up the freeze",
+    ASSERT("drinking a potion while frozen restores health and spends the frozen turn",
         frost_game.player.hp == frost_game.player.max_hp &&
-        frost_game.player.frozen_turns == 1);
+        frost_game.player.frozen_turns == 0 && frost_game.player.freeze_recovery == 1);
 
     setup_snowfield(&frost_game, ENEMY_FROST_WRAITH, 21, 20);
     srand(99);

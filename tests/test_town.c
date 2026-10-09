@@ -354,7 +354,7 @@ void test_rook_labyrinth(void) {
         g.map.tiles[13][20] == TILE_TOWN_PATH &&
         g.map.tiles[13][TOWN_WITCH_DOOR_X] == TILE_TOWN_PATH &&
         g.map.tiles[13][TOWN_HEALER_DOOR_X - 1] == TILE_TOWN_FLOOR &&
-        g.map.tiles[14][TOWN_HEALER_DOOR_X] == TILE_TOWN_FLOOR);
+        g.map.tiles[14][TOWN_HEALER_DOOR_X] == TILE_TOWN_PATH);
     ASSERT("second town places the labyrinth across from the witch",
         TOWN_LABYRINTH_X == TOWN_WITCH_DOOR_X && TOWN_LABYRINTH_Y > 12 &&
         g.map.tiles[TOWN_LABYRINTH_Y][TOWN_LABYRINTH_X] ==
@@ -642,8 +642,8 @@ void test_rook_labyrinth(void) {
         g.map.tiles[TOWN_INN_Y][TOWN_INN_X] == TILE_TAVERN &&
         g.map.tiles[TOWN_INN_DOOR_Y][TOWN_INN_DOOR_X] == TILE_TAVERN_DOOR &&
         g.map.tiles[TOWN_INN_DOOR_Y + 1][TOWN_INN_DOOR_X] == TILE_TOWN_PATH);
-    ASSERT("the Inn's former lot and lane are open green",
-        g.map.tiles[16][5] == TILE_TOWN_FLOOR && g.map.tiles[20][8] == TILE_TOWN_FLOOR &&
+    ASSERT("the Inn's former lot contains the Butcher while surrounding green stays open",
+        g.map.tiles[16][5] == TILE_TOWN_FLOOR && g.map.tiles[20][8] == TILE_LOCAL_BUILDING &&
         g.map.tiles[18][12] == TILE_TOWN_FLOOR && g.map.tiles[21][10] == TILE_TOWN_FLOOR);
     g.player.x = TOWN_INN_DOOR_X;
     g.player.y = TOWN_INN_DOOR_Y + 1;
@@ -786,7 +786,7 @@ void test_town_map(void) {
         m.tiles[TOWN_ROAD_EXIT_Y][4] == TILE_TOWN_FLOOR &&
         m.tiles[13][4] == TILE_TOWN_FLOOR &&
         m.tiles[21][4] == TILE_TOWN_FLOOR &&
-        m.tiles[21][8] == TILE_TOWN_FLOOR);
+        m.tiles[21][8] == TILE_TOWN_PATH);
     map_set_town2_road(&m, 1);
     ASSERT("Town 2 gate opens north of the forest on a one-tile path",
         TOWN_ROAD_EXIT_Y < 10 && TOWN_ROAD_GATE_Y < 10 &&
@@ -806,8 +806,8 @@ void test_town_map(void) {
         m.tiles[20][4] == TILE_TOWN_FLOOR &&
         m.tiles[21][4] == TILE_TOWN_FLOOR &&
         m.tiles[21][5] == TILE_TOWN_FLOOR &&
-        m.tiles[21][7] == TILE_TOWN_FLOOR &&
-        m.tiles[21][8] == TILE_TOWN_FLOOR &&
+        m.tiles[21][7] == TILE_TOWN_PATH &&
+        m.tiles[21][8] == TILE_TOWN_PATH &&
         m.tiles[20][5] == TILE_TOWN_FLOOR);
     map_set_town2_road(&m, 0);
     ASSERT("closing the Town 2 spur leaves open green behind",
@@ -862,8 +862,8 @@ void test_town_map(void) {
         map_is_walkable(&m, TOWN_TAVERN_DOOR_X, TOWN_TAVERN_DOOR_Y));
     ASSERT("tavern door opens onto the town square",
         m.tiles[TOWN_TAVERN_DOOR_Y + 1][TOWN_TAVERN_DOOR_X] == TILE_TOWN_PATH);
-    ASSERT("tavern's former south-west lot is open green",
-        m.tiles[16][5] == TILE_TOWN_FLOOR && m.tiles[20][8] == TILE_TOWN_FLOOR);
+    ASSERT("tavern's former south-west lot now houses the bakery",
+        m.tiles[16][5] == TILE_TOWN_FLOOR && m.tiles[20][8] == TILE_LOCAL_BUILDING);
     ASSERT("harbor reaches the southeast corner of the town green",
         m.tiles[TOWN_HARBOR_Y][TOWN_HARBOR_X] == TILE_WATCHTOWER &&
         m.tiles[TOWN_H - 2][TOWN_W - 2] == TILE_WATCHTOWER);

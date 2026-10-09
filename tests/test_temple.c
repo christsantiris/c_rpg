@@ -33,6 +33,123 @@ static int temple_enemies_are_on_walkable_tiles(const GameState *g) {
     return 1;
 }
 
+static void awaken_temple_sentinels(GameState *g) {
+    if (g->temple_alignment) {
+        return;
+    }
+    for (int y = 0; y < TEMPLE_H; y++) {
+        for (int x = 0; x < TEMPLE_W; x++) {
+            if (g->map.tiles[y][x] == TILE_TEMPLE_ALTAR) {
+                g->player.x = x;
+                g->player.y = y;
+                game_interact_temple(g);
+                return;
+            }
+        }
+    }
+}
+
+static void clear_temple_floor(GameState *g) {
+    awaken_temple_sentinels(g);
+    for (int i = 0; i < g->enemy_count; i++) {
+        g->enemies[i].active = 0;
+    }
+    game_update_level_progress(g);
+}
+
+static void test_temple_seals(void) {
+    static GameState g;
+    static GameState loaded;
+    memset(&g, 0, sizeof(g));
+    g.player.player_class = CLASS_WARRIOR;
+    game_init(&g);
+    game_enter_temple(&g);
+    for (int floor = 1; floor <= TEMPLE_DEPTH; floor++) {
+        int dormant = game_temple_dormant_sentinels(&g);
+        ASSERT("each temple floor starts with Sun enemies and dormant Moon sentinels",
+            g.temple_alignment == 0 && dormant > 0 && game_temple_remaining_enemies(&g) > dormant);
+        if (floor < TEMPLE_DEPTH) {
+            g.player.x = g.map.stairs_down_x;
+            g.player.y = g.map.stairs_down_y;
+            action_resolve_player(&g, (Action){ACTION_ASCEND, 0, 0});
+            ASSERT("living Sun enemies seal the temple's upward stairs", g.level == floor &&
+                strstr(g.messages[g.message_count - 1], "Stairs sealed") != NULL);
+        }
+        for (int i = 0; i < g.enemy_count; i++) {
+            g.enemies[i].active = 0;
+        }
+        game_update_level_progress(&g);
+        ASSERT("clearing only Sun enemies leaves the floor sealed", !g.level_cleared &&
+            game_temple_remaining_enemies(&g) == dormant);
+        if (floor == 1) {
+            g.level_cleared = 1;
+            g.floor_item_count = 1;
+            g.floor_items[0] = (FloorItem){.active = 1, .x = g.map.stairs_down_x, .y = g.map.stairs_down_y,
+                .underlying_tile = TILE_STAIRS_UP, .item = item_make_health_potion()};
+            g.map.tiles[g.map.stairs_down_y][g.map.stairs_down_x] = TILE_ITEM;
+            ASSERT("temple seals preserve existing saved progress without new fields",
+                save_game(&g, 99015) && load_game(&loaded, 99015) &&
+                game_temple_remaining_enemies(&loaded) == dormant &&
+                loaded.temple_alignment == 0);
+            loaded.player.x = loaded.map.stairs_down_x;
+            loaded.player.y = loaded.map.stairs_down_y;
+            action_resolve_player(&loaded, (Action){ACTION_ASCEND, 0, 0});
+            ASSERT("a stale saved cleared flag cannot bypass dormant sentinels", loaded.level == 1);
+            ASSERT("items covering temple stairs do not bypass the seal",
+                strstr(loaded.messages[loaded.message_count - 1], "Stairs sealed") != NULL);
+            g.floor_item_count = 0;
+            g.map.tiles[g.map.stairs_down_y][g.map.stairs_down_x] = TILE_STAIRS_UP;
+            remove("saves/savegame_99015.json");
+        }
+        awaken_temple_sentinels(&g);
+        ASSERT("switching to Moon replaces dormant tiles with living sentinels",
+            game_temple_dormant_sentinels(&g) == 0 &&
+            count_temple_enemies(&g, ENEMY_MOONBOUND_SENTINEL) == dormant &&
+            game_temple_remaining_enemies(&g) == dormant);
+        if (floor < TEMPLE_DEPTH) {
+            g.player.x = g.map.stairs_down_x;
+            g.player.y = g.map.stairs_down_y;
+            action_resolve_player(&g, (Action){ACTION_ASCEND, 0, 0});
+            ASSERT("awakened Moon enemies also seal the upward stairs", g.level == floor);
+        } else {
+            game_record_temple_enemy_defeated(&g, ENEMY_FALLEN_SUN_GUARDIAN);
+            g.player.x = TEMPLE_TREASURE_X;
+            g.player.y = TEMPLE_TREASURE_Y + 1;
+            game_interact_temple(&g);
+            ASSERT("defeating the summit boss cannot bypass the remaining Moon enemies",
+                g.temple_treasure_state == 0 && strstr(g.messages[g.message_count - 1], "Treasure sealed"));
+        }
+        clear_temple_floor(&g);
+        ASSERT("clearing both enemy groups removes the temple seal",
+            g.level_cleared && game_temple_remaining_enemies(&g) == 0);
+        if (floor < TEMPLE_DEPTH) {
+            g.player.x = g.map.stairs_down_x;
+            g.player.y = g.map.stairs_down_y;
+            action_resolve_player(&g, (Action){ACTION_ASCEND, 0, 0});
+            ASSERT("cleared temple floors allow climbing", g.level == floor + 1);
+            action_resolve_player(&g, (Action){ACTION_DESCEND, 0, 0});
+            ASSERT("uncleared higher floors still allow retreat to the cleared floor",
+                g.level == floor && game_temple_remaining_enemies(&g) == 0);
+            action_resolve_player(&g, (Action){ACTION_ASCEND, 0, 0});
+        } else {
+            g.player.x = TEMPLE_TREASURE_X;
+            g.player.y = TEMPLE_TREASURE_Y + 1;
+            game_interact_temple(&g);
+            ASSERT("the summit treasure becomes available after both groups are cleared", g.temple_treasure_state == 2);
+        }
+    }
+    game_init(&g);
+    g.location = LOCATION_DUNGEON;
+    g.level = 1;
+    map_generate(&g.map, 1);
+    g.enemy_count = 1;
+    g.enemies[0].active = 1;
+    g.player.x = g.map.stairs_down_x;
+    g.player.y = g.map.stairs_down_y;
+    action_resolve_player(&g, (Action){ACTION_DESCEND, 0, 0});
+    ASSERT("ordinary dungeon stairs remain usable with living enemies", g.level == 2);
+}
+
 void test_temple(void) {
     printf("Ruined Temple tests:\n");
     static GameState g;
@@ -134,6 +251,9 @@ void test_temple(void) {
     g.player.y = g.map.stairs_down_y;
     ASSERT("the first tier exits by stairs that climb the pyramid",
         g.map.tiles[g.player.y][g.player.x] == TILE_STAIRS_UP);
+    clear_temple_floor(&g);
+    g.player.x = g.map.stairs_down_x;
+    g.player.y = g.map.stairs_down_y;
     action_resolve_player(&g, (Action){ACTION_ASCEND, 0, 0});
     ASSERT("climbing reaches tier two and its downward return stairs",
         g.level == 2 &&
@@ -142,6 +262,7 @@ void test_temple(void) {
     action_resolve_player(&g, (Action){ACTION_DESCEND, 0, 0});
     ASSERT("descending returns to the previous pyramid tier", g.level == 1);
     for (int floor = 2; floor <= TEMPLE_DEPTH; floor++) {
+        clear_temple_floor(&g);
         g.player.x = g.map.stairs_down_x;
         g.player.y = g.map.stairs_down_y;
         action_resolve_player(&g, (Action){ACTION_ASCEND, 0, 0});
@@ -188,6 +309,7 @@ void test_temple(void) {
         g.player.y == 18 && g.level == TEMPLE_DEPTH &&
         g.temple_alignment == 0);
 
+    clear_temple_floor(&g);
     game_record_temple_enemy_defeated(&g, ENEMY_FALLEN_SUN_GUARDIAN);
     g.player.x = TEMPLE_TREASURE_X;
     g.player.y = TEMPLE_TREASURE_Y + 1;
@@ -221,4 +343,5 @@ void test_temple(void) {
             .map.tiles[TEMPLE_TREASURE_Y][TEMPLE_TREASURE_X] ==
             TILE_TEMPLE_RUBBLE);
     remove("saves/savegame_99014.json");
+    test_temple_seals();
 }

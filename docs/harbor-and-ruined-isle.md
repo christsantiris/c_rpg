@@ -34,8 +34,11 @@ Sun**. Walk into the temple gate to enter the pyramid.
 
 The temple is a five-tier stepped pyramid. Each tier is a separate combat map.
 Use the upward stairs to climb and the downward stairs to revisit lower tiers.
-The southern entrance on tier 1 returns to the island. Enemies do not have to
-be cleared before using stairs.
+The southern entrance on tier 1 returns to the island. Upward stairs stay
+magically sealed until every enemy on that tier is defeated, including dormant
+Moonbound Sentinels that must first be awakened at an altar. Downward stairs
+and the island exit remain available for retreat. This rule applies only to
+the Ruined Temple; other areas keep their existing travel rules.
 
 | Tier | Encounter size | Notable addition |
 | ---: | ---: | --- |
@@ -57,6 +60,11 @@ Stand on or beside a solar altar and press `A` to change the temple alignment.
 Awakened sentinels remain active if the alignment returns to Sun. Alignment,
 opened routes, awakened enemies, defeated enemies, and the treasure state are
 cached separately for every tier and persist through saving and loading.
+The seal counts dormant sentinels as remaining foes. A purple barrier marks
+sealed stairs, and an on-screen notice shows the remaining count and reminds
+you to use an altar while any sentinels are still dormant. The summit treasure
+also remains sealed until both enemy groups are cleared, even after the
+Guardian opens the vault. Clearing a tier keeps its stairs open on later visits.
 
 ## Enemy Roles
 
@@ -74,7 +82,8 @@ cached separately for every tier and persist through saving and loading.
 The Fallen Sun Guardian wakes when the player enters the summit arena or
 attacks from range. Below half health its armor breaks and its sunburst gains
 damage. Defeating it permanently records the fifth boss victory and opens the
-vault. Stand on or beside the treasure and press `A` to recover the Buried
+vault. Clear the remaining Sun and Moon enemies, then stand on or beside the
+treasure and press `A` to recover the Buried
 Sun, then return to Nahla for 150 gold and 2,500 score.
 
 ## Return to Town

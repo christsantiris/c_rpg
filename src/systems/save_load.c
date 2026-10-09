@@ -2,6 +2,7 @@
 #include "../game/game.h"
 #include "../game/castle.h"
 #include "../game/jail.h"
+#include "../game/town_life.h"
 #include "cJSON.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -631,7 +632,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 110);
+    cJSON_AddNumberToObject(root, "save_version", 111);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -3797,6 +3798,9 @@ int load_game(GameState *g, int slot) {
         migrate_rebalanced_weapons(g);
     }
     repair_floor_item_underlays(g);
+    if (save_version < 111) {
+        town_life_migrate(g);
+    }
     game_hide_portal_destination(g);
     game_migrate_boss_shortcuts(g);
     game_refresh_quest_encounters(g);

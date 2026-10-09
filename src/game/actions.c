@@ -3,6 +3,7 @@
 #include "catacombs.h"
 #include "castle.h"
 #include "jail.h"
+#include "town_life.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -1008,6 +1009,18 @@ static void coast_toggle_tide(GameState *g) {
         "Blue channels rise; amber channels drain.");
 }
 
+static void tick_player_poison(GameState *g) {
+    if (g->player.poison_turns > 0) {
+        int damage = 3;
+        g->player.hp -= damage;
+        combat_feedback_add(g, FEEDBACK_PLAYER_DAMAGE, FEEDBACK_NOW, g->player.x, g->player.y, damage);
+        g->player.poison_turns--;
+        char message[MAX_MESSAGE_LEN];
+        snprintf(message, sizeof(message), "Poison! -%d HP (%d left)", damage, g->player.poison_turns);
+        push_message_kind(g, message, MESSAGE_POISON);
+    }
+}
+
 void action_resolve_player(GameState *g, Action a) {
     if (g->game_won || g->castle_prompt) {
         return;
@@ -1027,7 +1040,7 @@ void action_resolve_player(GameState *g, Action a) {
         g->location == LOCATION_WORKSHOP ||
         g->location == LOCATION_TOWN_HALL ||
         g->location == LOCATION_GUILD ||
-        g->location == LOCATION_ISLAND) {
+        g->location == LOCATION_ISLAND || town_life_is_interior(g->location)) {
         g->player.poison_turns = 0;
         g->player.frozen_turns = 0;
         g->player.freeze_recovery = 0;
@@ -1035,7 +1048,7 @@ void action_resolve_player(GameState *g, Action a) {
     if (a.type == ACTION_NONE) {
         return;
     }
-    // Frozen players lose the turn; inventory actions never take one.
+    // Frozen players can drink potions; other inventory actions remain free.
     if (g->player.frozen_turns > 0 && a.type != ACTION_USE_ITEM &&
         a.type != ACTION_EQUIP_ITEM && a.type != ACTION_EQUIP_OFF_HAND &&
         a.type != ACTION_DROP_ITEM) {
@@ -1103,7 +1116,11 @@ void action_resolve_player(GameState *g, Action a) {
             }
             return;
         }
-        if (g->location == LOCATION_TEMPLE && tile == TILE_STAIRS_UP) {
+        if (g->location == LOCATION_TEMPLE && underlay == TILE_STAIRS_UP) {
+            if (game_temple_remaining_enemies(g) > 0) {
+                push_message(g, "Stairs sealed: clear all Sun and Moon enemies. Use an altar to awaken dormant sentinels.");
+                return;
+            }
             if (g->level < TEMPLE_DEPTH) {
                 game_descend(g);
                 g->score += g->level * 100;
@@ -1266,8 +1283,12 @@ void action_resolve_player(GameState *g, Action a) {
 
     if (a.type == ACTION_USE_ITEM) {
         int idx = a.target_x;
-        if (idx < 0 || idx >= g->inventory_count) return;
+        if (idx < 0 || idx >= g->inventory_count) {
+            return;
+        }
         Item *item = &g->inventory[idx];
+        int drinking = item->type == ITEM_POTION_HEALTH || item->type == ITEM_POTION_MANA ||
+            item->type == ITEM_POTION_STRENGTH || item->type == ITEM_POTION_INTELLIGENCE;
         char msg[MAX_MESSAGE_LEN];
 
         if (item->type == ITEM_TREASURE_MAP) {
@@ -1360,6 +1381,13 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
         game_remove_inventory_item(g, idx);
+        if (drinking) {
+            if (g->player.frozen_turns > 0) {
+                g->player.frozen_turns--;
+                g->player.freeze_recovery = 1;
+            }
+            tick_player_poison(g);
+        }
         return;
     }
 
@@ -1494,7 +1522,8 @@ void action_resolve_player(GameState *g, Action a) {
                 g->location == LOCATION_CASTLE ||
                 g->location == LOCATION_TAVERN ||
                 g->location == LOCATION_INN || g->location == LOCATION_WORKSHOP ||
-                g->location == LOCATION_TOWN_HALL || g->location == LOCATION_GUILD) {
+                g->location == LOCATION_TOWN_HALL || g->location == LOCATION_GUILD ||
+                town_life_is_interior(g->location)) {
                 push_message(g, "Already in town!");
                 return;
             }
@@ -1970,6 +1999,14 @@ void action_resolve_player(GameState *g, Action a) {
             }
         }
         // Check for town exit
+        if (g->map.tiles[ty][tx] == TILE_LOCAL_DOOR) {
+            town_life_enter(g);
+            return;
+        }
+        if (town_life_is_interior(g->location) && g->map.tiles[ty][tx] == TILE_TAVERN_EXIT) {
+            town_life_leave(g);
+            return;
+        }
         if (g->location == LOCATION_TOWN4 && g->map.tiles[ty][tx] == TILE_TOWN_HALL_DOOR) {
             game_enter_town_hall(g);
             return;
@@ -2699,18 +2736,24 @@ void action_resolve_player(GameState *g, Action a) {
             }
         }
 
-        // Apply poison damage each turn
-        if (g->player.poison_turns > 0) {
-            int dmg = 3;
-            g->player.hp -= dmg;
-            combat_feedback_add(g, FEEDBACK_PLAYER_DAMAGE, FEEDBACK_NOW, g->player.x, g->player.y, dmg);
-            g->player.poison_turns--;
-            char msg[MAX_MESSAGE_LEN];
-            snprintf(msg, sizeof(msg), "Poison! -%d HP (%d left)",
-                dmg, g->player.poison_turns);
-            push_message_kind(g, msg, MESSAGE_POISON);
-        }
+        tick_player_poison(g);
     }
+}
+
+int action_use_inventory_item(GameState *g, int index, EnemyProjectiles *shots) {
+    if (index < 0 || index >= g->inventory_count) {
+        return 0;
+    }
+    ItemType type = g->inventory[index].type;
+    int count = g->inventory_count;
+    action_resolve_player(g, (Action){ACTION_USE_ITEM, index, 0});
+    if (g->inventory_count == count - 1 &&
+        (type == ITEM_POTION_HEALTH || type == ITEM_POTION_MANA ||
+        type == ITEM_POTION_STRENGTH || type == ITEM_POTION_INTELLIGENCE)) {
+        action_resolve_enemies_with_projectiles(g, shots);
+        return 1;
+    }
+    return 0;
 }
 
 static int enemy_position_occupied(const GameState *g, int skip, int x, int y) {

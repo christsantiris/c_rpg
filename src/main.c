@@ -8,6 +8,7 @@
 #include "renderer/game_over_renderer.h"
 #include "game/game.h"
 #include "game/jail.h"
+#include "game/town_life.h"
 #include "game/map.h"
 #include "screens/landing.h"
 #include "screens/name_entry.h"
@@ -433,6 +434,15 @@ static void handle_slot_result(SlotResult result, SlotSelect *slots, int saving,
     }
 }
 
+static void handle_inventory_use(GameState *g, int index, GameScreen *screen, EnemyProjectiles *shots, Uint32 *started) {
+    if (action_use_inventory_item(g, index, shots)) {
+        *started = SDL_GetTicks();
+        *screen = g->player.hp <= 0 && shots->count == 0 ? SCREEN_GAME_OVER : SCREEN_PLAYING;
+    } else if (g->inventory_count == 0) {
+        *screen = SCREEN_PLAYING;
+    }
+}
+
 int main(int argc, char **argv) {
 #ifdef DEBUG
     DebugConfig debug_config;
@@ -724,11 +734,7 @@ int main(int argc, char **argv) {
                         if (result == INVENTORY_CLOSED) {
                             screen = SCREEN_PLAYING;
                         } else if (result == INVENTORY_USE) {
-                            Action a = {ACTION_USE_ITEM,
-                                inventory_screen.selected, 0};
-                            action_resolve_player(&game, a);
-                            if (game.inventory_count == 0)
-                                screen = SCREEN_PLAYING;
+                            handle_inventory_use(&game, inventory_screen.selected, &screen, &enemy_shots, &enemy_shots_started_at);
                         } else if (result == INVENTORY_EQUIP) {
                             Action a = {ACTION_EQUIP_ITEM,
                                 inventory_screen.selected, 0};
@@ -924,6 +930,9 @@ int main(int argc, char **argv) {
                                 screen = SCREEN_HELP;
                                 break;
                             case CONTROL_TALK: {
+                                if (town_life_talk(&game, 0)) {
+                                    break;
+                                }
                                 if (jail_talk_nearby(&game)) {
                                     break;
                                 }
@@ -1059,6 +1068,7 @@ int main(int argc, char **argv) {
                                 target == TILE_COAST_ENTRANCE ||
                                 target == TILE_COAST_EXIT ||
                                 target == TILE_TAVERN_DOOR ||
+                                target == TILE_LOCAL_DOOR ||
                                 target == TILE_TAVERN_EXIT ||
                                 target == TILE_RETURN_EXIT) {
                                 a.type = ACTION_NONE;
@@ -1204,11 +1214,7 @@ int main(int argc, char **argv) {
                             event.button.y <= hint_y + 24 &&
                             event.button.x >= cx - 245 &&
                             event.button.x <= cx - 190) {
-                            Action a = {ACTION_USE_ITEM, inventory_screen.selected, 0};
-                            action_resolve_player(&game, a);
-                            if (game.inventory_count == 0) {
-                                screen = SCREEN_PLAYING;
-                            }
+                            handle_inventory_use(&game, inventory_screen.selected, &screen, &enemy_shots, &enemy_shots_started_at);
                         }
                         // E - Equip
                         if (event.button.y >= hint_y &&
@@ -1443,14 +1449,15 @@ int main(int argc, char **argv) {
             game.location == LOCATION_JAIL ||
             game.location == LOCATION_INN ||
             game.location == LOCATION_GUILD ||
-            game.location == LOCATION_ISLAND;
+            game.location == LOCATION_ISLAND || town_life_is_interior(game.location);
         int in_town2 = game.location == LOCATION_TOWN2 ||
-            game.location == LOCATION_INN;
+            game.location == LOCATION_INN || game.location == LOCATION_BUTCHER;
         int in_town3 = game.location == LOCATION_TOWN3 ||
             game.location == LOCATION_GUILD ||
+            game.location == LOCATION_SPICE_SHOP ||
             game.location == LOCATION_CASTLE;
         int in_town4 = game.location == LOCATION_TOWN4 || game.location == LOCATION_WORKSHOP ||
-            game.location == LOCATION_TOWN_HALL;
+            game.location == LOCATION_TOWN_HALL || game.location == LOCATION_MONASTERY;
         music_update(screen, is_town, in_town2, in_town3, in_town4);
 
         if (!needs_redraw) {
