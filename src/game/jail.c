@@ -139,7 +139,7 @@ static void populate_tunnel(GameState *g) {
         ENEMY_HOBGOBLIN_GUARD, ENEMY_TUNNEL_SPIDER, ENEMY_ROAD_ARCHER,
         ENEMY_BANDIT, ENEMY_TUNNEL_SPIDER, ENEMY_ROAD_ARCHER
     };
-    for (int i = g->enemy_count; i < MAX_ENEMIES; i++) {
+    for (int i = g->enemy_count; i < NON_ROAD_ENEMY_LIMIT; i++) {
         int deeper = i >= 12;
         int x = deeper ? 69 + (i - 12) * 7 : 9 + i * 4;
         EnemyType type = deeper ? deeper_types[(i - 12) % 6] :
@@ -161,7 +161,7 @@ void jail_migrate_tunnel(GameState *g) {
     }
     // Keep the original passage, escort, loot, and enemy state; open the deeper section.
     carve_tunnel(&g->map, ESCAPE_TUNNEL_LEGACY_W - 1);
-    if (g->enemy_count < MAX_ENEMIES) {
+    if (g->enemy_count < NON_ROAD_ENEMY_LIMIT) {
         g->level_cleared = 0;
         populate_tunnel(g);
     }

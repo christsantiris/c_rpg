@@ -165,7 +165,7 @@ static void test_expanded_migration(Location region, int old_depth) {
     cache[old_depth - 1].valid = 1;
     cache[old_depth - 1].map = game.map;
     cache[old_depth - 1].enemy_count = game.enemy_count;
-    memcpy(cache[old_depth - 1].enemies, game.enemies, sizeof(game.enemies));
+    memcpy(cache[old_depth - 1].enemies, game.enemies, sizeof(cache[old_depth - 1].enemies));
     int boss = -1;
     for (int i = 0; i < game.enemy_count; i++) {
         if (game.enemies[i].is_boss) {

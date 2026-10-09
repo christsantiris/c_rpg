@@ -289,9 +289,13 @@ Rosemoor has the Apothecary. Two Royal Guards at its east gate warn that Crown R
 with bandits, archers, and horsemen. That road leads to the grounds of the
 Castle of No Return. Its north entrance leads into the six-floor final area. Crown Road West continues
 from the castle's east gate to Ridgeshire's west gate. Both roads span 142 tiles,
-with 30 enemies spread through successive ambushes. Each road keeps its own
-enemies and progress between visits. Older saves stretch positions and revealed
-terrain to the longer routes while retaining damage, defeats, and dropped loot.
+with 90 enemies spread through successive ambushes: three times the original
+30-enemy roster to preserve density over the threefold length. The enemy mix
+scales with it, including 24 archers and 18 horsemen per road. Each road keeps
+its own enemies and progress between visits. Older saves stretch positions and
+revealed terrain to the longer routes while retaining damage, defeats, and
+dropped loot. Save version 121 expands existing road populations once; additions
+corresponding to defeated enemies stay defeated, and cleared roads stay cleared.
 
 The castle introduces shield formations, portcullis levers, warned attacks,
 shifting magical barriers, and trapdoors that drop you one floor and remain

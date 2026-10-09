@@ -98,7 +98,7 @@ typedef struct {
 
 typedef struct {
     Map   map;
-    Enemy enemies[MAX_ENEMIES];
+    Enemy enemies[NON_ROAD_ENEMY_LIMIT];
     int   enemy_count;
     int   valid;
     int   level_cleared;
@@ -318,6 +318,7 @@ void game_enter_forest_road(GameState *g);
 void game_leave_forest_road(GameState *g, Location destination);
 int game_is_king_road(const GameState *g);
 void game_enter_king_road(GameState *g, Location road, int from_castle);
+void game_migrate_crownroad_density(GameState *g);
 void game_enter_town3(GameState *g);
 void game_enter_swamp_road(GameState *g);
 void game_leave_swamp_road(GameState *g, Location destination);

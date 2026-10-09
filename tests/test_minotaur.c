@@ -106,7 +106,7 @@ static void test_warden_save_migration(void) {
     cache->valid = 1;
     cache->map = game.map;
     cache->enemy_count = game.enemy_count;
-    memcpy(cache->enemies, game.enemies, sizeof(game.enemies));
+    memcpy(cache->enemies, game.enemies, sizeof(cache->enemies));
     int ok = save_game(&game, MINOTAUR_TEST_SLOT) && load_game(&loaded, MINOTAUR_TEST_SLOT);
     ASSERT("legacy active and cached Wardens load as Minotaurs", ok && loaded.enemies[index].type == ENEMY_MINOTAUR && strcmp(loaded.enemies[index].name, "Minotaur") == 0 && loaded.labyrinth_cache[LABYRINTH_DEPTH - 1].valid && strcmp(loaded.labyrinth_cache[LABYRINTH_DEPTH - 1].enemies[index].name, "Minotaur") == 0);
     ASSERT("migration retains enemy health, combat stats, and turn state", ok && loaded.enemies[index].hp == 57 && loaded.enemies[index].max_hp == boss->max_hp && loaded.enemies[index].attack == boss->attack && loaded.enemies[index].defense == boss->defense && loaded.enemies[index].move_timer == 7 && loaded.enemies[index].frozen_turns == 1 && loaded.labyrinth_cache[LABYRINTH_DEPTH - 1].enemies[index].hp == 57);

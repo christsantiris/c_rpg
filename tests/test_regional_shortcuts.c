@@ -129,7 +129,7 @@ static void shortcut_migration(int region) {
     cache->valid = 1;
     cache->map = game.map;
     cache->enemy_count = game.enemy_count;
-    memcpy(cache->enemies, game.enemies, sizeof(game.enemies));
+    memcpy(cache->enemies, game.enemies, sizeof(cache->enemies));
     game.location = LOCATION_TOWN3;
     game.floor_item_count = 0;
     game.enemy_count = 0;

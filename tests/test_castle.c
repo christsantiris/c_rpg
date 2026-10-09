@@ -345,7 +345,7 @@ static void test_castle_removed_seal_migration(void) {
         cache->valid = 1;
         cache->map = game.map;
         cache->enemy_count = 2;
-        memcpy(cache->enemies, game.enemies, sizeof(game.enemies));
+        memcpy(cache->enemies, game.enemies, sizeof(cache->enemies));
         ASSERT("version 88 royal seal fixture loads", save_game(&game, CASTLE_TEST_SLOT) && write_legacy_seal_save() && load_game(&loaded, CASTLE_TEST_SLOT));
         ASSERT("retired marker becomes regional ground without losing exploration", loaded.map.tiles[11][12] == floors[i] && map_is_explored(&loaded.map, 12, 11));
         ASSERT("migration preserves loot while replacing its seal underlay", loaded.floor_items[0].active && loaded.floor_items[0].item.type == ITEM_POTION_HEALTH && loaded.floor_items[0].underlying_tile == floors[i] && loaded.map.tiles[11][11] == TILE_ITEM);

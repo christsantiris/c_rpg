@@ -1399,8 +1399,12 @@ static void test_longer_crownroad_migration(void) {
         original.enemies[0].hp = 11;
         original.enemies[2].active = 0;
         game_leave_crownroad(&original, LOCATION_TOWN4);
+        // Version 117 had thirty slots on each road, before the density fix.
+        original.crownroad_cache.enemy_count = CROWNROAD_BASE_ENEMIES;
+        original.kingroad_west_cache.enemy_count = CROWNROAD_BASE_ENEMIES;
         if (scenario < 2) {
             game_enter_king_road(&original, scenario == 0 ? LOCATION_CROWNROAD : LOCATION_KING_ROAD_WEST, 0);
+            original.enemy_count = CROWNROAD_BASE_ENEMIES;
             // Reconstruct the short road's map and positions as saved by version 117.
             for (int y = 0; y < MAP_H; y++) {
                 for (int x = 0; x < CROWNROAD_LEGACY_W; x++) {
@@ -1427,7 +1431,7 @@ static void test_longer_crownroad_migration(void) {
             original.enemies[0].attack_target_y = CROWNROAD_Y;
             original.enemies[0].frozen_turns = 3;
         }
-        for (int i = 0; i < MAX_ENEMIES; i++) {
+        for (int i = 0; i < CROWNROAD_BASE_ENEMIES; i++) {
             original.crownroad_cache.enemies[i].x /= CROWNROAD_LENGTH_SCALE;
             original.kingroad_west_cache.enemies[i].x /= CROWNROAD_LENGTH_SCALE;
         }
@@ -1462,6 +1466,100 @@ static void test_longer_crownroad_migration(void) {
             saved && original.player.x == player_x &&
             original.crownroad_cache.enemies[0].x == east_x * CROWNROAD_LENGTH_SCALE &&
             original.kingroad_west_cache.enemies[0].x == west_x * CROWNROAD_LENGTH_SCALE);
+    }
+    remove_test_save(LEGACY_SLOT);
+}
+
+static void test_crownroad_density_migration(void) {
+    static GameState original;
+    static GameState loaded;
+    for (int scenario = 0; scenario < 4; scenario++) {
+        memset(&original, 0, sizeof(original));
+        game_init(&original);
+        game_enter_king_road(&original, LOCATION_CROWNROAD, 0);
+        original.enemies[0].hp = 7;
+        original.enemies[1].active = 0;
+        game_leave_crownroad(&original, LOCATION_CASTLE);
+        game_enter_king_road(&original, LOCATION_KING_ROAD_WEST, 1);
+        original.enemies[0].hp = 11;
+        original.enemies[2].active = 0;
+        game_leave_crownroad(&original, LOCATION_TOWN4);
+        original.crownroad_cache.enemy_count = CROWNROAD_BASE_ENEMIES;
+        original.kingroad_west_cache.enemy_count = CROWNROAD_BASE_ENEMIES;
+        if (scenario < 2) {
+            game_enter_king_road(&original, scenario == 0 ? LOCATION_CROWNROAD : LOCATION_KING_ROAD_WEST, 0);
+            original.enemy_count = CROWNROAD_BASE_ENEMIES;
+            original.player.x = original.enemies[3].x + 1;
+            original.player.y = original.enemies[3].y;
+            original.enemies[0].x = original.enemies[5].x + 1;
+            original.enemies[0].y = original.enemies[5].y;
+            original.enemies[0].frozen_turns = 3;
+            original.enemies[0].attack_target_x = original.player.x;
+            original.enemies[0].attack_target_y = original.player.y;
+            original.floor_item_count = 1;
+            original.floor_items[0] = (FloorItem){.active = 1, .x = original.enemies[4].x + 1,
+                .y = original.enemies[4].y, .underlying_tile = TILE_TOWN_FLOOR,
+                .item = {.type = ITEM_GOLD, .name = "Gold", .value = 5}};
+            original.map.tiles[original.floor_items[0].y][original.floor_items[0].x] = TILE_ITEM;
+            map_mark_explored(&original.map, original.player.x, original.player.y);
+        } else if (scenario == 3) {
+            original.crownroad_cache.level_cleared = 1;
+            original.kingroad_west_cache.level_cleared = 1;
+            for (int i = 0; i < CROWNROAD_BASE_ENEMIES; i++) {
+                original.crownroad_cache.enemies[i].active = 0;
+                original.kingroad_west_cache.enemies[i].active = 0;
+            }
+        }
+        int ok = save_game(&original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, 120) &&
+            load_game(&loaded, LEGACY_SLOT);
+        ASSERT("version 120 expands both cached Crown Roads to ninety slots without resetting old damage or defeats",
+            ok && loaded.crownroad_cache.enemy_count == CROWNROAD_ENEMIES &&
+            loaded.kingroad_west_cache.enemy_count == CROWNROAD_ENEMIES &&
+            loaded.crownroad_cache.enemies[0].hp == 7 && !loaded.crownroad_cache.enemies[1].active &&
+            !loaded.crownroad_cache.enemies[31].active && !loaded.crownroad_cache.enemies[61].active &&
+            loaded.kingroad_west_cache.enemies[0].hp == 11 && !loaded.kingroad_west_cache.enemies[2].active &&
+            !loaded.kingroad_west_cache.enemies[32].active && !loaded.kingroad_west_cache.enemies[62].active);
+        ASSERT("density migration keeps player position, gold, terrain, and exploration",
+            ok && loaded.location == original.location && loaded.player.x == original.player.x &&
+            loaded.player.y == original.player.y && loaded.gold == original.gold &&
+            memcmp(loaded.map.tiles, original.map.tiles, sizeof(original.map.tiles)) == 0 &&
+            memcmp(loaded.map.explored, original.map.explored, sizeof(original.map.explored)) == 0);
+        if (scenario < 2) {
+            int distinct = 1;
+            for (int i = 0; i < loaded.enemy_count; i++) {
+                const Enemy *enemy = &loaded.enemies[i];
+                if (!enemy->active) {
+                    continue;
+                }
+                distinct &= map_is_walkable(&loaded.map, enemy->x, enemy->y) &&
+                    loaded.map.tiles[enemy->y][enemy->x] != TILE_ITEM &&
+                    (enemy->x != loaded.player.x || enemy->y != loaded.player.y);
+                for (int j = 0; j < i; j++) {
+                    distinct &= !loaded.enemies[j].active || enemy->x != loaded.enemies[j].x || enemy->y != loaded.enemies[j].y;
+                }
+            }
+            ASSERT("live road additions avoid patrols, player, and loot while keeping combat state",
+                ok && loaded.enemy_count == CROWNROAD_ENEMIES && distinct &&
+                loaded.enemies[0].x == original.enemies[0].x && loaded.enemies[0].y == original.enemies[0].y &&
+                loaded.enemies[0].hp == original.enemies[0].hp && loaded.enemies[0].frozen_turns == 3 &&
+                loaded.enemies[0].attack_target_x == original.enemies[0].attack_target_x &&
+                loaded.enemies[0].attack_target_y == original.enemies[0].attack_target_y &&
+                loaded.floor_items[0].active && loaded.floor_items[0].item.value == 5);
+            loaded.enemies[40].hp = 9;
+            loaded.enemies[41].active = 0;
+        } else if (scenario == 3) {
+            int cleared = loaded.crownroad_cache.level_cleared && loaded.kingroad_west_cache.level_cleared;
+            for (int i = 0; i < CROWNROAD_ENEMIES; i++) {
+                cleared &= !loaded.crownroad_cache.enemies[i].active && !loaded.kingroad_west_cache.enemies[i].active;
+            }
+            ASSERT("previously cleared Crown Roads stay cleared without respawning enemies", ok && cleared);
+        }
+        ok = ok && save_game(&loaded, LEGACY_SLOT) && load_game(&original, LEGACY_SLOT);
+        ASSERT("version 121 saves round-trip all expanded road slots without respawning the new enemies",
+            ok && original.crownroad_cache.enemy_count == CROWNROAD_ENEMIES &&
+            original.kingroad_west_cache.enemy_count == CROWNROAD_ENEMIES &&
+            (scenario >= 2 || (original.enemy_count == CROWNROAD_ENEMIES &&
+            original.enemies[40].hp == 9 && !original.enemies[41].active)));
     }
     remove_test_save(LEGACY_SLOT);
 }
@@ -2171,7 +2269,7 @@ static void test_kraken_cycle_migration(void) {
         cache->valid = 1;
         cache->map = original.map;
         cache->enemy_count = original.enemy_count;
-        memcpy(cache->enemies, original.enemies, sizeof(original.enemies));
+        memcpy(cache->enemies, original.enemies, sizeof(cache->enemies));
         int ok = save_game(&original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, version) && load_game(&loaded, LEGACY_SLOT);
         int phase = version == 114 ? timer % 2 : timer;
         Enemy *live = &loaded.enemies[k];
@@ -2231,4 +2329,5 @@ void test_save_load(void) {
     test_retired_dungeon_gates_removed();
     test_legacy_king_road_world();
     test_longer_crownroad_migration();
+    test_crownroad_density_migration();
 }

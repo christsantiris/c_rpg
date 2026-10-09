@@ -472,8 +472,11 @@ static cJSON *serialize_enemies(const Enemy *enemies, int count) {
     return arr;
 }
 
-static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count) {
+static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count, int capacity) {
     *count = cJSON_GetArraySize(arr);
+    if (*count > capacity) {
+        *count = capacity;
+    }
     for (int i = 0; i < *count; i++) {
         cJSON *obj = cJSON_GetArrayItem(arr, i);
         Enemy *e = &enemies[i];
@@ -691,7 +694,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 120);
+    cJSON_AddNumberToObject(root, "save_version", 121);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -1465,10 +1468,10 @@ static void migrate_lich_minions(GameState *g) {
     if (!cache->valid || (g->defeated_bosses & (1 << LOCATION_DUNGEON))) {
         return;
     }
-    LevelCache active;
-    active.map = g->map;
-    memcpy(active.enemies, g->enemies, sizeof(active.enemies));
-    active.enemy_count = g->enemy_count;
+    Map active_map = g->map;
+    Enemy active_enemies[MAX_ENEMIES];
+    memcpy(active_enemies, g->enemies, sizeof(active_enemies));
+    int active_count = g->enemy_count;
     Location location = g->location;
     int level = g->level;
     int player_x = g->player.x;
@@ -1476,16 +1479,16 @@ static void migrate_lich_minions(GameState *g) {
     g->location = LOCATION_DUNGEON;
     g->level = DUNGEON_DEPTH;
     g->map = cache->map;
-    memcpy(g->enemies, cache->enemies, sizeof(g->enemies));
+    memcpy(g->enemies, cache->enemies, sizeof(cache->enemies));
     g->enemy_count = cache->enemy_count;
     g->player.x = -1;
     g->player.y = -1;
     game_add_lich_minions(g);
     memcpy(cache->enemies, g->enemies, sizeof(cache->enemies));
     cache->enemy_count = g->enemy_count;
-    g->map = active.map;
-    memcpy(g->enemies, active.enemies, sizeof(g->enemies));
-    g->enemy_count = active.enemy_count;
+    g->map = active_map;
+    memcpy(g->enemies, active_enemies, sizeof(active_enemies));
+    g->enemy_count = active_count;
     g->location = location;
     g->level = level;
     g->player.x = player_x;
@@ -1543,7 +1546,7 @@ static int migrate_shortened_stages(GameState *g, Location region) {
         LevelCache *snapshot = &cache[g->level - 1];
         snapshot->map = g->map;
         snapshot->enemy_count = g->enemy_count;
-        memcpy(snapshot->enemies, g->enemies, sizeof(g->enemies));
+        memcpy(snapshot->enemies, g->enemies, sizeof(snapshot->enemies));
         snapshot->level_cleared = g->level_cleared;
         snapshot->valid = 1;
         for (int i = 0; i < g->floor_item_count; i++) {
@@ -2384,7 +2387,7 @@ int load_game(GameState *g, int slot) {
 
     // Current enemies
     deserialize_enemies(cJSON_GetObjectItem(root, "enemies"),
-                        g->enemies, &g->enemy_count);
+                        g->enemies, &g->enemy_count, sizeof(g->enemies) / sizeof(Enemy));
 
     // Level cache
     cJSON *cache = cJSON_GetObjectItem(root, "level_cache");
@@ -2402,7 +2405,7 @@ int load_game(GameState *g, int slot) {
                             &g->level_cache[i].map);
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
                                 g->level_cache[i].enemies,
-                                &g->level_cache[i].enemy_count);
+                                &g->level_cache[i].enemy_count, sizeof(g->level_cache[i].enemies) / sizeof(Enemy));
         }
     }
 
@@ -2422,7 +2425,7 @@ int load_game(GameState *g, int slot) {
                 &g->forest_cache[i].map);
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
                 g->forest_cache[i].enemies,
-                &g->forest_cache[i].enemy_count);
+                &g->forest_cache[i].enemy_count, sizeof(g->forest_cache[i].enemies) / sizeof(Enemy));
         }
     }
 
@@ -2442,7 +2445,7 @@ int load_game(GameState *g, int slot) {
                 &g->mountain_cache[i].map);
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
                 g->mountain_cache[i].enemies,
-                &g->mountain_cache[i].enemy_count);
+                &g->mountain_cache[i].enemy_count, sizeof(g->mountain_cache[i].enemies) / sizeof(Enemy));
         }
     }
 
@@ -2466,7 +2469,7 @@ int load_game(GameState *g, int slot) {
                 &g->coast_cache[i].map);
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
                 g->coast_cache[i].enemies,
-                &g->coast_cache[i].enemy_count);
+                &g->coast_cache[i].enemy_count, sizeof(g->coast_cache[i].enemies) / sizeof(Enemy));
         }
     }
 
@@ -2490,7 +2493,7 @@ int load_game(GameState *g, int slot) {
                 &g->swamp_cache[i].map);
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
                 g->swamp_cache[i].enemies,
-                &g->swamp_cache[i].enemy_count);
+                &g->swamp_cache[i].enemy_count, sizeof(g->swamp_cache[i].enemies) / sizeof(Enemy));
         }
     }
 
@@ -2514,7 +2517,7 @@ int load_game(GameState *g, int slot) {
                 &g->dragonspine_cache[i].map);
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
                 g->dragonspine_cache[i].enemies,
-                &g->dragonspine_cache[i].enemy_count);
+                &g->dragonspine_cache[i].enemy_count, sizeof(g->dragonspine_cache[i].enemies) / sizeof(Enemy));
         }
     }
 
@@ -2536,7 +2539,7 @@ int load_game(GameState *g, int slot) {
                 &g->frostfell_cache[i].map);
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
                 g->frostfell_cache[i].enemies,
-                &g->frostfell_cache[i].enemy_count);
+                &g->frostfell_cache[i].enemy_count, sizeof(g->frostfell_cache[i].enemies) / sizeof(Enemy));
         }
     }
 
@@ -2549,7 +2552,7 @@ int load_game(GameState *g, int slot) {
         if (cache->valid) {
             deserialize_map(cJSON_GetObjectItem(entry, "map"), &cache->map);
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
-                cache->enemies, &cache->enemy_count);
+                cache->enemies, &cache->enemy_count, sizeof(cache->enemies) / sizeof(Enemy));
         }
     }
 
@@ -2568,7 +2571,7 @@ int load_game(GameState *g, int slot) {
         if (cache->valid) {
             deserialize_map(cJSON_GetObjectItem(entry, "map"), &cache->map);
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
-                cache->enemies, &cache->enemy_count);
+                cache->enemies, &cache->enemy_count, sizeof(cache->enemies) / sizeof(Enemy));
         }
     }
 
@@ -2587,7 +2590,7 @@ int load_game(GameState *g, int slot) {
         if (cache->valid) {
             deserialize_map(cJSON_GetObjectItem(entry, "map"), &cache->map);
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
-                cache->enemies, &cache->enemy_count);
+                cache->enemies, &cache->enemy_count, sizeof(cache->enemies) / sizeof(Enemy));
         }
     }
 
@@ -2606,7 +2609,7 @@ int load_game(GameState *g, int slot) {
         if (cache->valid) {
             deserialize_map(cJSON_GetObjectItem(entry, "map"), &cache->map);
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
-                cache->enemies, &cache->enemy_count);
+                cache->enemies, &cache->enemy_count, sizeof(cache->enemies) / sizeof(Enemy));
         }
     }
 
@@ -2625,7 +2628,7 @@ int load_game(GameState *g, int slot) {
         if (cache->valid) {
             deserialize_map(cJSON_GetObjectItem(entry, "map"), &cache->map);
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
-                cache->enemies, &cache->enemy_count);
+                cache->enemies, &cache->enemy_count, sizeof(cache->enemies) / sizeof(Enemy));
         }
     }
 
@@ -2670,12 +2673,12 @@ int load_game(GameState *g, int slot) {
             cache->level_cleared = cleared->valueint;
             if (cache->valid) {
                 cJSON *enemies = cJSON_GetObjectItem(entry, "enemies");
-                if (!cJSON_IsObject(cJSON_GetObjectItem(entry, "map")) || !cJSON_IsArray(enemies) || cJSON_GetArraySize(enemies) > MAX_ENEMIES) {
+                if (!cJSON_IsObject(cJSON_GetObjectItem(entry, "map")) || !cJSON_IsArray(enemies) || cJSON_GetArraySize(enemies) > NON_ROAD_ENEMY_LIMIT) {
                     cJSON_Delete(root);
                     return 0;
                 }
                 deserialize_map(cJSON_GetObjectItem(entry, "map"), &cache->map);
-                deserialize_enemies(enemies, cache->enemies, &cache->enemy_count);
+                deserialize_enemies(enemies, cache->enemies, &cache->enemy_count, NON_ROAD_ENEMY_LIMIT);
             }
         }
     } else if (save_version >= 86) {
@@ -2700,7 +2703,7 @@ int load_game(GameState *g, int slot) {
             cache->level_cleared = cleared ? cleared->valueint : 0;
             if (cache->valid) {
                 deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
-                    cache->enemies, &cache->enemy_count);
+                    cache->enemies, &cache->enemy_count, sizeof(cache->enemies) / sizeof(Enemy));
             }
         }
     }
@@ -2725,7 +2728,7 @@ int load_game(GameState *g, int slot) {
                 &g->temple_cache[i].map);
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
                 g->temple_cache[i].enemies,
-                &g->temple_cache[i].enemy_count);
+                &g->temple_cache[i].enemy_count, sizeof(g->temple_cache[i].enemies) / sizeof(Enemy));
         }
     }
 
@@ -2749,7 +2752,7 @@ int load_game(GameState *g, int slot) {
                 &g->labyrinth_cache[i].map);
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
                 g->labyrinth_cache[i].enemies,
-                &g->labyrinth_cache[i].enemy_count);
+                &g->labyrinth_cache[i].enemy_count, sizeof(g->labyrinth_cache[i].enemies) / sizeof(Enemy));
         }
     }
 
@@ -4066,6 +4069,9 @@ int load_game(GameState *g, int slot) {
     if (save_version < 120 && !castle_migrate_encounters(g)) {
         cJSON_Delete(root);
         return 0;
+    }
+    if (save_version < 121) {
+        game_migrate_crownroad_density(g);
     }
     game_hide_portal_destination(g);
     game_migrate_boss_shortcuts(g);

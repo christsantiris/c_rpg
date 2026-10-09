@@ -978,7 +978,7 @@ void game_add_lich_minions(GameState *g) {
         return;
     }
     Room *room = &g->map.rooms[g->map.room_count - 1];
-    for (int guard = guards; guard < 2 && g->enemy_count < MAX_ENEMIES; guard++) {
+    for (int guard = guards; guard < 2 && g->enemy_count < NON_ROAD_ENEMY_LIMIT; guard++) {
         int target_x = boss->x + (guard == 0 ? -2 : 2);
         int best_x = -1;
         int best_y = -1;
@@ -2267,7 +2267,7 @@ static int spawn_emberforge_guard(GameState *g, EnemyType type, int cx, int cy) 
             break;
         }
     }
-    if (slot >= MAX_ENEMIES) {
+    if (slot >= NON_ROAD_ENEMY_LIMIT) {
         return 0;
     }
     for (int radius = 1; radius <= 4; radius++) {
@@ -2368,7 +2368,7 @@ static int spawn_quest_guard(GameState *g, EnemyType type, int cx, int cy, const
             break;
         }
     }
-    if (slot >= MAX_ENEMIES) {
+    if (slot >= NON_ROAD_ENEMY_LIMIT) {
         return 0;
     }
     for (int radius = 1; radius <= 4; radius++) {
@@ -3039,7 +3039,7 @@ void game_enter_forest(GameState *g) {
     if (cache->valid) {
         g->map = cache->map;
         g->enemy_count = cache->enemy_count;
-        memcpy(g->enemies, cache->enemies, sizeof(g->enemies));
+        memcpy(g->enemies, cache->enemies, sizeof(cache->enemies));
         g->level_cleared = cache->level_cleared;
         game_refresh_quest_encounters(g);
     } else {
@@ -3065,7 +3065,7 @@ void game_enter_mountains(GameState *g) {
     if (cache->valid) {
         g->map = cache->map;
         g->enemy_count = cache->enemy_count;
-        memcpy(g->enemies, cache->enemies, sizeof(g->enemies));
+        memcpy(g->enemies, cache->enemies, sizeof(cache->enemies));
         g->level_cleared = cache->level_cleared;
         game_refresh_quest_encounters(g);
     } else {
@@ -3094,7 +3094,7 @@ void game_enter_swamp(GameState *g) {
     if (cache->valid) {
         g->map = cache->map;
         g->enemy_count = cache->enemy_count;
-        memcpy(g->enemies, cache->enemies, sizeof(g->enemies));
+        memcpy(g->enemies, cache->enemies, sizeof(cache->enemies));
         g->level_cleared = cache->level_cleared;
         game_refresh_quest_encounters(g);
     } else {
@@ -3128,7 +3128,7 @@ void game_enter_moonveil(GameState *g) {
     if (cache->valid) {
         g->map = cache->map;
         g->enemy_count = cache->enemy_count;
-        memcpy(g->enemies, cache->enemies, sizeof(g->enemies));
+        memcpy(g->enemies, cache->enemies, sizeof(cache->enemies));
         g->level_cleared = cache->level_cleared;
     } else {
         g->level_cleared = 0;
@@ -3148,7 +3148,7 @@ void game_enter_ashen(GameState *g) {
     if (cache->valid) {
         g->map = cache->map;
         g->enemy_count = cache->enemy_count;
-        memcpy(g->enemies, cache->enemies, sizeof(g->enemies));
+        memcpy(g->enemies, cache->enemies, sizeof(cache->enemies));
         g->level_cleared = cache->level_cleared;
     } else {
         g->level_cleared = 0;
@@ -3168,7 +3168,7 @@ void game_enter_catacombs(GameState *g) {
     if (cache->valid) {
         g->map = cache->map;
         g->enemy_count = cache->enemy_count;
-        memcpy(g->enemies, cache->enemies, sizeof(g->enemies));
+        memcpy(g->enemies, cache->enemies, sizeof(cache->enemies));
         g->level_cleared = cache->level_cleared;
     } else {
         g->level_cleared = 0;
@@ -3188,7 +3188,7 @@ void game_enter_glassdeep(GameState *g) {
     if (cache->valid) {
         g->map = cache->map;
         g->enemy_count = cache->enemy_count;
-        memcpy(g->enemies, cache->enemies, sizeof(g->enemies));
+        memcpy(g->enemies, cache->enemies, sizeof(cache->enemies));
         g->level_cleared = cache->level_cleared;
     } else {
         g->level_cleared = 0;
@@ -3423,8 +3423,22 @@ int game_is_king_road(const GameState *g) {
     return g->location == LOCATION_CROWNROAD || g->location == LOCATION_KING_ROAD_WEST;
 }
 
-void game_enter_king_road(GameState *g, Location road, int from_castle) {
-    static const EnemyType enemies[MAX_ENEMIES] = {
+static int crownroad_spawn_open(const GameState *g, const Map *map, const Enemy *enemies, int count, int x, int y) {
+    if (x < 1 || x >= CROWNROAD_W - 1 || y < 1 || y >= CROWNROAD_H - 1 ||
+        !map_is_walkable(map, x, y) || map->tiles[y][x] == TILE_ITEM || map->tiles[y][x] == TILE_PORTAL ||
+        (enemies == g->enemies && g->player.x == x && g->player.y == y)) {
+        return 0;
+    }
+    for (int i = 0; i < count; i++) {
+        if (enemies[i].active && enemies[i].x == x && enemies[i].y == y) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static void populate_crownroad(GameState *g, const Map *map, Enemy *roster, int *count, int *cleared) {
+    static const EnemyType enemies[CROWNROAD_BASE_ENEMIES] = {
         ENEMY_BANDIT, ENEMY_BLIGHTED_WOLF, ENEMY_BANDIT,
         ENEMY_HOBGOBLIN_GUARD, ENEMY_BANDIT, ENEMY_BLIGHTED_WOLF,
         ENEMY_HOBGOBLIN_GUARD, ENEMY_BANDIT,
@@ -3440,14 +3454,69 @@ void game_enter_king_road(GameState *g, Location road, int from_castle) {
         ENEMY_ROAD_ARCHER, ENEMY_ROAD_ARCHER, ENEMY_HORSEMAN,
         ENEMY_ROAD_ARCHER
     };
-    static const int x[MAX_ENEMIES] = {
+    static const int x[CROWNROAD_BASE_ENEMIES] = {
         17, 23, 14, 24, 17, 25, 16, 23, 23, 20, 17, 20, 23, 20, 17,
         24, 15, 25, 16, 24, 14, 24, 15, 20, 17, 20, 23, 16, 20, 24
     };
-    static const int y[MAX_ENEMIES] = {
+    static const int y[CROWNROAD_BASE_ENEMIES] = {
         6, 11, 17, 21, 27, 32, 38, 43, 8, 14, 20, 26, 34, 40, 44,
         5, 10, 15, 23, 29, 33, 37, 41, 9, 12, 20, 24, 30, 33, 39
     };
+    int old_count = *count;
+    int was_cleared = *cleared;
+    Location location = g->location;
+    // Road enemies use road difficulty even when migrating a cache from town.
+    g->location = LOCATION_CROWNROAD;
+    for (int i = old_count; i < CROWNROAD_ENEMIES; i++) {
+        int base = i % CROWNROAD_BASE_ENEMIES;
+        int sx = (CROWNROAD_LEGACY_W - 1 - y[base]) * CROWNROAD_LENGTH_SCALE + i / CROWNROAD_BASE_ENEMIES;
+        int sy = x[base];
+        int active = !was_cleared && !(base < old_count && !roster[base].active);
+        // Existing patrols may have moved onto a new spawn. Choose the
+        // nearest free road tile without moving saved enemies, loot, or player.
+        if (active && !crownroad_spawn_open(g, map, roster, *count, sx, sy)) {
+            int found = 0;
+            for (int radius = 1; radius < CROWNROAD_W && !found; radius++) {
+                for (int dy = -radius; dy <= radius && !found; dy++) {
+                    int dx = radius - abs(dy);
+                    for (int side = -1; side <= 1 && !found; side += 2) {
+                        int nx = sx + side * dx;
+                        int ny = sy + dy;
+                        if (crownroad_spawn_open(g, map, roster, *count, nx, ny)) {
+                            sx = nx;
+                            sy = ny;
+                            found = 1;
+                        }
+                    }
+                }
+            }
+            if (!found) {
+                break;
+            }
+        }
+        spawn_enemy(g, &roster[i], enemies[base], sx, sy);
+        roster[i].active = active;
+        (*count)++;
+    }
+    g->location = location;
+}
+
+void game_migrate_crownroad_density(GameState *g) {
+    if (game_is_king_road(g)) {
+        populate_crownroad(g, &g->map, g->enemies, &g->enemy_count, &g->level_cleared);
+    }
+    Map road;
+    map_generate_crownroad(&road);
+    CrownroadCache *caches[2] = {&g->crownroad_cache, &g->kingroad_west_cache};
+    for (int i = 0; i < 2; i++) {
+        CrownroadCache *cache = caches[i];
+        if (cache->valid) {
+            populate_crownroad(g, &road, cache->enemies, &cache->enemy_count, &cache->level_cleared);
+        }
+    }
+}
+
+void game_enter_king_road(GameState *g, Location road, int from_castle) {
     CrownroadCache *cache = road == LOCATION_KING_ROAD_WEST ?
         &g->kingroad_west_cache : &g->crownroad_cache;
     g->location = road;
@@ -3463,16 +3532,10 @@ void game_enter_king_road(GameState *g, Location road, int from_castle) {
         g->enemy_count = 0;
         g->level_cleared = 0;
     }
-    if (g->enemy_count < MAX_ENEMIES) {
-        g->level_cleared = 0;
-    }
-    for (int i = g->enemy_count; i < MAX_ENEMIES; i++) {
-        spawn_enemy(g, &g->enemies[g->enemy_count++], enemies[i],
-            (CROWNROAD_LEGACY_W - 1 - y[i]) * CROWNROAD_LENGTH_SCALE, x[i]);
-    }
     int from_west = (road == LOCATION_CROWNROAD) != from_castle;
     g->player.x = from_west ? 1 : CROWNROAD_W - 2;
     g->player.y = CROWNROAD_Y;
+    populate_crownroad(g, &g->map, g->enemies, &g->enemy_count, &g->level_cleared);
     g->floor_item_count = 0;
     g->dialogue_active = 0;
     push_message(g, road == LOCATION_CROWNROAD ?
