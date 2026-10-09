@@ -54,12 +54,11 @@ pieces. A Goblin Archer, Goblin Bomber, and Goblin Shaman each carry one
 fragment. Defeating them recovers their fragments automatically without using
 normal inventory space.
 
-Mountain stages **1 and 2 near Oakhaven** contain the Archer and Bomber Map
-Bearers. The Shaman holds the third fragment on **stage 5 near Ridgeshire**,
-across the stage-4 Goblin King. From Ridgeshire, find the Shaman before Crown
-Peak, then the Bomber and Archer after crossing it. Taking the peak shortcut
-skips unfinished bearers on the far side from either direction; the destination
-town's ordinary mountain gate remains available to recover those fragments.
+Take Crown Road West from Rosemoor to Ridgeshire, then enter its south mountain
+gate. The Archer, Bomber, and Shaman Map Bearers occupy **stages 7, 6, and 5**,
+respectively, before the stage-4 Goblin King. Once the King falls, take the peak
+shortcut to Oakhaven and return along the unlocked town roads, or fight through
+stages 3, 2, and 1. From Oakhaven, all three fragments follow the central boss.
 Each leader travels with a themed warband, turning every fragment into a
 distinct combat encounter. Returning all three fragments allows Dain to
 reconstruct the map and locate its hidden dwarven hoard. He awards the player
@@ -100,10 +99,10 @@ the Thorn Regent is optional. See
 Alder waits in **Stillbury's Inn**; press `T` beside him, then `Y` to accept the
 quest. He is an aging forest ranger searching for three wardens lost while
 investigating the Necromancer's influence. The wardens appear in guarded groves
-on Forest stages **1 and 2 near Oakhaven** and **5 near Stillbury**. From
-Oakhaven, find two wardens before the Necromancer and one after him. From
-Stillbury, find the stage-5 warden first, then stages 2 and 1 after crossing the
-boss grove. Taking the grove shortcut skips unfinished rescues on the far side.
+on Forest **stages 7, 6, and 5**. Enter Stillbury's east forest gate to find all
+three before the stage-4 Necromancer. Once he falls, take the grove shortcut to
+Oakhaven and the unlocked town road back to Stillbury, or battle through stages
+3, 2, and 1. From Oakhaven, the wardens follow the central boss.
 Approach a trapped warden and press `T` to free them. Rescuing a warden does not
 require clearing the entire stage.
 

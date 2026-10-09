@@ -66,20 +66,21 @@ save/load.
 
 Speak to Dain with `T` in **Rosemoor's Adventurer's Guild Hall** to accept
 **Recover the Treasure Map**. His quest places guarded Map Bearers on stages
-**1 and 2 near Oakhaven** and **5 near Ridgeshire**, across the stage-4 peak.
-The Archer, Bomber, and Shaman leaders respectively carry one fragment and
-travel with a themed warband. Defeating the leader recovers the fragment
-automatically. Accepting the quest starts a fresh mountain expedition, while a
-previously defeated Goblin King remains dead and permanent shortcuts stay open.
-Starting from Ridgeshire reaches the Shaman on stage 5 before the King, then
-the Bomber on stage 2 and Archer on stage 1 after him. Taking the peak shortcut
-skips unfinished bearers on the far side from either direction; keep fighting
-through or enter from the destination town's ordinary mountain gate later.
+**7, 6, and 5**, entered through Ridgeshire's south mountain gate after traveling
+west from Rosemoor along Crown Road West. The Archer, Bomber, and Shaman leaders
+respectively carry one fragment and travel with a themed warband. Defeating the
+leader recovers the fragment automatically. All three objectives precede the
+stage-4 Goblin King from Ridgeshire; entering from Oakhaven finds them after him.
+Accepting starts a fresh mountain expedition, while a previously defeated
+Goblin King remains dead and permanent shortcuts stay open. After victory,
+take the peak shortcut to Oakhaven and the unlocked town roads home, or battle
+through stages 3, 2, and 1.
 
-Save version **100** preserves collected fragments and explored maps. Old
-Shaman bearers outside stage 5 become regular enemies with their existing
-health and position; a missing third fragment gains a new bearer on stage 5
-when visited. Loot, boss victories, and portal anchors remain intact.
+Save version **113** preserves collected fragments and explored maps. Old
+bearers on incorrect stages become regular enemies with their existing health,
+positions, and death state. Missing Archer and Bomber fragments gain bearers on
+stages 7 and 6 when visited; the Shaman remains on stage 5. Loot, boss victories,
+and portal anchors remain intact.
 
 Return all three fragments to Dain in Rosemoor's Guild Hall for the one-time
 reward of **60 gold and 400 score**.

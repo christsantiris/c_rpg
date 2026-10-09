@@ -888,10 +888,10 @@ static int place_dain_map_bearer(GameState *g) {
     }
     EnemyType target_type;
     int target_bit;
-    if (g->level == 1) {
+    if (g->level == 7) {
         target_type = ENEMY_GOBLIN_ARCHER;
         target_bit = DAIN_FRAGMENT_ARCHER;
-    } else if (g->level == 2) {
+    } else if (g->level == 6) {
         target_type = ENEMY_GOBLIN_BOMBER;
         target_bit = DAIN_FRAGMENT_BOMBER;
     } else if (g->level == 5) {
@@ -921,8 +921,8 @@ static int place_dain_map_bearer(GameState *g) {
     target->attack += 2;
     strncpy(target->name, "Map Bearer", sizeof(target->name) - 1);
     target->name[sizeof(target->name) - 1] = '\0';
-    EnemyType guard = g->level == 1 ? ENEMY_GOBLIN_SCOUT :
-        (g->level == 2 ? ENEMY_TUNNEL_SPIDER : ENEMY_HOBGOBLIN_GUARD);
+    EnemyType guard = g->level == 7 ? ENEMY_GOBLIN_SCOUT :
+        (g->level == 6 ? ENEMY_TUNNEL_SPIDER : ENEMY_HOBGOBLIN_GUARD);
     spawn_quest_enemy_near(g, guard, target->x, target->y);
     spawn_quest_enemy_near(g, guard, target->x, target->y);
     return 1;
@@ -938,8 +938,8 @@ static int quest_group_pending(const GameState *g) {
         return !(g->elowen_seals_restored & bit);
     }
     if (g->location == LOCATION_FOREST && g->alder_quest_state == 1) {
-        int bit = g->level == 1 ? ALDER_WARDEN_STAGE_1 :
-            (g->level == 2 ? ALDER_WARDEN_STAGE_2 :
+        int bit = g->level == 7 ? ALDER_WARDEN_STAGE_7 :
+            (g->level == 6 ? ALDER_WARDEN_STAGE_6 :
             (g->level == 5 ? ALDER_WARDEN_STAGE_5 : 0));
         if (!bit) {
             return 0;
@@ -1922,10 +1922,10 @@ static void spawn_elowen_guardians(GameState *g) {
 }
 
 static int alder_warden_bit(int level) {
-    if (level == 1) {
-        return ALDER_WARDEN_STAGE_1;
-    } else if (level == 2) {
-        return ALDER_WARDEN_STAGE_2;
+    if (level == 7) {
+        return ALDER_WARDEN_STAGE_7;
+    } else if (level == 6) {
+        return ALDER_WARDEN_STAGE_6;
     } else if (level == 5) {
         return ALDER_WARDEN_STAGE_5;
     }
@@ -1947,7 +1947,7 @@ static int place_alder_warden(GameState *g) {
             }
         }
     }
-    int room_index = g->level == 1 ? 4 : (g->level == 2 ? 7 : 6);
+    int room_index = g->level == 7 ? 4 : (g->level == 6 ? 7 : 6);
     if (room_index >= g->map.room_count) {
         return 0;
     }
@@ -1983,10 +1983,10 @@ static void spawn_alder_guardian(GameState *g) {
     }
     EnemyType primary;
     EnemyType support;
-    if (g->level == 1) {
+    if (g->level == 7) {
         primary = ENEMY_GIANT_SPIDER;
         support = ENEMY_BLIGHTED_WOLF;
-    } else if (g->level == 2) {
+    } else if (g->level == 6) {
         primary = ENEMY_DARK_ELF;
         support = ENEMY_PIXIE;
     } else if (g->level == 5) {
@@ -5640,7 +5640,7 @@ void game_talk_to_dain(GameState *g) {
     g->dialogue_y = GUILD_DAIN_Y;
     if (g->dain_quest_state == 0) {
         strncpy(g->dialogue_text,
-            "Map Bearers hold fragments on mountain stages 1, 2, and 5: two near Oakhaven, one near Ridgeshire, across the Goblin King. Return to Rosemoor's Adventurer's Guild.",
+            "Take Crown Road West to Ridgeshire, then enter its south mountain gate. Map Bearers hold fragments on stages 7, 6, and 5 before the Goblin King. Return to Rosemoor's Adventurer's Guild.",
             MAX_DIALOGUE_LEN - 1);
         g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
         return;
@@ -5653,7 +5653,7 @@ void game_talk_to_dain(GameState *g) {
             }
         }
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "You have recovered %d of 3 fragments. Search mountain stages 1, 2, and 5, on both sides of Crown Peak. The peak shortcut skips unfinished bearers on the far side. Return here to the Guild.",
+            "You have recovered %d of 3 fragments. Search mountain stages 7, 6, and 5 from Ridgeshire. After the Goblin King, use the shortcut and town roads home, or fight through to Oakhaven. Return here to the Guild.",
             defeated);
         char status[MAX_MESSAGE_LEN];
         snprintf(status, sizeof(status),
@@ -5717,7 +5717,7 @@ void game_talk_to_alder(GameState *g) {
     g->dialogue_y = ALDER_INN_Y;
     if (g->alder_quest_state == 0) {
         strncpy(g->dialogue_text,
-            "Two wardens are trapped on forest stages 1 and 2 near Oakhaven; the third is on stage 5 near Stillbury, across the Necromancer's grove. Rescue them, then return here to Stillbury's Inn.",
+            "Enter the forest through Stillbury's east gate. Three wardens are trapped on stages 7, 6, and 5 before the Necromancer's grove. Rescue them, then return here to Stillbury's Inn.",
             MAX_DIALOGUE_LEN - 1);
         g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
         return;
@@ -5730,7 +5730,7 @@ void game_talk_to_alder(GameState *g) {
             }
         }
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "You have rescued %d of my 3 wardens. Search stages 1 and 2 near Oakhaven, and stage 5 near Stillbury. The stage-4 grove shortcut skips unfinished rescues on the far side.",
+            "You have rescued %d of my 3 wardens. Search forest stages 7, 6, and 5 from Stillbury. After the Necromancer, take the shortcut and unlocked town road home, or fight through to Oakhaven.",
             rescued);
         char status[MAX_MESSAGE_LEN];
         snprintf(status, sizeof(status), "Quest progress: %d/3 wardens.",
@@ -5773,11 +5773,11 @@ void game_rescue_forest_warden(GameState *g, int x, int y) {
     g->dialogue_speaker[MAX_SPEAKER_LEN - 1] = '\0';
     g->dialogue_x = x;
     g->dialogue_y = y;
-    if (g->level == 1) {
+    if (g->level == 7) {
         strncpy(g->dialogue_text,
             "You cut through the spider web binding me. I can follow your trail home from here.",
             MAX_DIALOGUE_LEN - 1);
-    } else if (g->level == 2) {
+    } else if (g->level == 6) {
         strncpy(g->dialogue_text,
             "The Dark Elves thought this grove would be my prison. I will make my way back to Alder.",
             MAX_DIALOGUE_LEN - 1);

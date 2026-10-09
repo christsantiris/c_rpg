@@ -10,14 +10,13 @@ on Oakhaven's dungeon floors 2, 3, and 4. Return to her in the Tavern for 40 gol
 and 300 score.
 
 Dain assigns **Recover the Treasure Map** in **Rosemoor's Adventurer's Guild
-Hall**. Its Archer and Bomber Map Bearers occupy mountain stages 1 and 2 near
-Oakhaven; the Shaman is on stage 5 near Ridgeshire, across the stage-4 Goblin
-King. Return to him in the Guild for 60 gold and 400 score.
+Hall**. Take Crown Road West to Ridgeshire and enter its south mountain gate.
+The Archer, Bomber, and Shaman Map Bearers occupy stages **7, 6, and 5** before
+the stage-4 Goblin King. Return to Dain in the Guild for 60 gold and 400 score.
 
-Alder assigns **The Lost Wardens** in **Stillbury's Inn**. Return to him there
-after rescuing all three forest wardens for 70 gold and 500 score once. Two
-objectives are on stages 1 and 2 near Oakhaven, and one is on stage 5 near
-Stillbury, across the stage-4 Necromancer.
+Alder assigns **The Lost Wardens** in **Stillbury's Inn**. Enter Stillbury's
+east forest gate and rescue the wardens on stages **7, 6, and 5** before the
+stage-4 Necromancer. Return to Alder for 70 gold and 500 score, awarded once.
 
 Mara assigns **Relight the Drowned Beacons** in **Oakhaven's Tavern**.
 The beacons remain on Sunken Coast stages 2, 3, and 4. Return to her in the

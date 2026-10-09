@@ -184,7 +184,7 @@ static void test_mountain_migration(void) {
             for (int enemy = 0; enemy < loaded.enemy_count; enemy++) {
                 bearers += loaded.enemies[enemy].dain_fragment == DAIN_FRAGMENT_BOMBER;
             }
-            ASSERT("migration adds the needed Bomber to its new quest stage", bearers == 1 && loaded.enemies[0].dain_fragment == 0);
+            ASSERT("migration removes Bomber fragments from the old second stage", bearers == 0 && loaded.enemies[0].dain_fragment == 0);
         }
         ASSERT("mountain migration is stable after saving the current format", save_game(&loaded, ROUTE_SAVE_SLOT) && load_game(&reloaded, ROUTE_SAVE_SLOT) && reloaded.level == loaded.level && reloaded.enemies[0].hp == loaded.enemies[0].hp);
         remove("saves/savegame_99123.json");
@@ -263,7 +263,7 @@ static void test_split_forest_migration(void) {
             game_ascend(&original);
             game_ascend(&original);
             original.alder_quest_state = 1;
-            original.alder_wardens_rescued = ALDER_WARDEN_STAGE_1 | (rescued ? ALDER_WARDEN_STAGE_5 : 0);
+            original.alder_wardens_rescued = ALDER_WARDEN_STAGE_7 | (rescued ? ALDER_WARDEN_STAGE_5 : 0);
             original.gold = 617;
             original.enemies[0].hp = 9;
             int x;
@@ -390,6 +390,124 @@ static void test_split_mountain_migration(void) {
     remove("saves/savegame_99123.json");
 }
 
+static void test_near_side_quest_migration(void) {
+    for (int forest = 0; forest < 2; forest++) {
+        for (int portal = 0; portal < 2; portal++) {
+            memset(&original, 0, sizeof(original));
+            original.player.player_class = CLASS_WARRIOR;
+            game_init(&original);
+            original.location = forest ? LOCATION_FOREST : LOCATION_MOUNTAINS;
+            original.level = 2;
+            original.defeated_bosses = 1 << original.location;
+            original.alder_quest_state = 1;
+            original.alder_wardens_rescued = 1;
+            original.dain_quest_state = 1;
+            original.dain_map_fragments = DAIN_FRAGMENT_ARCHER;
+            original.gold = 617;
+            LevelCache *cache = forest ? original.forest_cache : original.mountain_cache;
+            for (int stage = 2; stage <= 7; stage++) {
+                LevelCache *snapshot = &cache[stage - 1];
+                if (forest) {
+                    map_generate_forest(&snapshot->map, stage);
+                } else {
+                    map_generate_mountains(&snapshot->map, stage);
+                }
+                snapshot->valid = 1;
+                snapshot->level_cleared = 1;
+                snapshot->enemy_count = 1;
+                int x;
+                int y;
+                map_room_center(&snapshot->map.rooms[0], &x, &y);
+                snapshot->enemies[0] = (Enemy){.active = 1, .x = x, .y = y,
+                    .type = forest ? ENEMY_BLIGHTED_WOLF : ENEMY_GOBLIN_BOMBER,
+                    .hp = 17, .max_hp = 50, .dain_fragment = !forest && stage == 2 ? DAIN_FRAGMENT_BOMBER : 0};
+                map_mark_explored(&snapshot->map, x, y);
+            }
+            original.map = cache[1].map;
+            original.enemies[0] = cache[1].enemies[0];
+            original.enemy_count = 1;
+            int x;
+            int y;
+            map_room_center(&original.map.rooms[4], &x, &y);
+            original.player.x = x;
+            original.player.y = y + 1;
+            int player_x = original.player.x;
+            int player_y = original.player.y;
+            original.floor_item_count = 1;
+            original.floor_items[0] = (FloorItem){.active = 1, .x = x, .y = y,
+                .underlying_tile = forest ? TILE_FOREST_WARDEN : TILE_MOUNTAIN_FLOOR,
+                .item = item_make_health_potion()};
+            original.map.tiles[y][x] = TILE_ITEM;
+            if (forest) {
+                original.map.tiles[y][x + 1] = TILE_FOREST_WARDEN;
+                cache[1].map.tiles[y][x + 1] = TILE_FOREST_WARDEN;
+            }
+            if (portal) {
+                game_open_town_portal(&original);
+                if (forest) {
+                    original.portal_origin_tile = TILE_FOREST_WARDEN;
+                }
+            }
+            int ok = make_legacy_save(112) && load_game(&loaded, ROUTE_SAVE_SLOT);
+            ASSERT("version 112 quest migration preserves collected objectives and money", ok &&
+                loaded.alder_wardens_rescued == 1 && loaded.dain_map_fragments == 1 &&
+                loaded.alder_quest_state == 1 && loaded.dain_quest_state == 1 && loaded.gold == 617 && loaded.defeated_bosses == original.defeated_bosses);
+            LevelCache *saved = forest ? loaded.forest_cache : loaded.mountain_cache;
+            ASSERT("quest relocation keeps cached enemy health, exploration and room geometry", ok &&
+                saved[1].enemies[0].hp == 17 && saved[5].enemies[0].hp == 17 &&
+                memcmp(saved[5].map.explored, cache[5].map.explored, sizeof(saved[5].map.explored)) == 0 &&
+                memcmp(saved[5].map.rooms, cache[5].map.rooms, sizeof(saved[5].map.rooms)) == 0);
+            if (forest) {
+                ASSERT("obsolete cached captives and portal underlays become forest floor", saved[1].map.tiles[y][x + 1] == TILE_FOREST_FLOOR &&
+                    (!portal || (loaded.portal_level == 2 && loaded.portal_origin_tile == TILE_FOREST_FLOOR)));
+            } else {
+                ASSERT("obsolete cached Map Bearers keep their health but lose fragment markers", saved[1].enemies[0].hp == 17 &&
+                    !saved[1].enemies[0].dain_fragment && strcmp(saved[1].enemies[0].name, "Goblin Bomber") == 0);
+            }
+            if (portal) {
+                game_use_town_portal(&loaded);
+            }
+            ASSERT("quest migration keeps the active stage and position", loaded.level == 2 &&
+                loaded.player.x == player_x && loaded.player.y == player_y && loaded.enemies[0].hp == 17);
+            if (forest && !portal) {
+                ASSERT("obsolete captive hidden under active loot is removed without losing the item", loaded.floor_items[0].active &&
+                    loaded.floor_items[0].underlying_tile == TILE_FOREST_FLOOR && loaded.map.tiles[y][x] == TILE_ITEM);
+            }
+            for (int stage = 3; stage <= 7; stage++) {
+                game_descend(&loaded);
+            }
+            int objectives = 0;
+            for (int row = 0; row < MAP_H; row++) {
+                for (int column = 0; column < MAP_W; column++) {
+                    objectives += loaded.map.tiles[row][column] == TILE_FOREST_WARDEN;
+                }
+            }
+            for (int enemy = 0; enemy < loaded.enemy_count; enemy++) {
+                objectives += loaded.enemies[enemy].active && loaded.enemies[enemy].dain_fragment == DAIN_FRAGMENT_ARCHER;
+            }
+            ASSERT("a collected first objective does not respawn on relocated stage seven", loaded.level == 7 && !objectives);
+            game_ascend(&loaded);
+            objectives = 0;
+            for (int row = 0; row < MAP_H; row++) {
+                for (int column = 0; column < MAP_W; column++) {
+                    objectives += loaded.map.tiles[row][column] == TILE_FOREST_WARDEN;
+                }
+            }
+            for (int enemy = 0; enemy < loaded.enemy_count; enemy++) {
+                objectives += loaded.enemies[enemy].active && loaded.enemies[enemy].dain_fragment == DAIN_FRAGMENT_BOMBER;
+            }
+            int enemies = loaded.enemy_count;
+            game_refresh_quest_encounters(&loaded);
+            ASSERT("a missing second objective appears once on cached stage six without resetting enemies", loaded.level == 6 &&
+                objectives == 1 && loaded.enemies[0].hp == 17 && loaded.enemy_count == enemies);
+            ASSERT("relocated objectives and partial progress survive another save", save_game(&loaded, ROUTE_SAVE_SLOT) &&
+                load_game(&reloaded, ROUTE_SAVE_SLOT) && reloaded.level == 6 &&
+                reloaded.alder_wardens_rescued == 1 && reloaded.dain_map_fragments == 1 && reloaded.enemy_count == enemies);
+        }
+    }
+    remove("saves/savegame_99123.json");
+}
+
 void test_route_save_migrations(void) {
     printf("Forest and swamp save migration tests:\n");
     ASSERT("route migration test slot is unused", !save_exists(ROUTE_SAVE_SLOT));
@@ -432,4 +550,5 @@ void test_route_save_migrations(void) {
     test_mountain_migration();
     test_split_forest_migration();
     test_split_mountain_migration();
+    test_near_side_quest_migration();
 }

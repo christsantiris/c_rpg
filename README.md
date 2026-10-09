@@ -86,8 +86,8 @@ The mountains connect OakHaven's north gate and Ridgeshire's south mountain gate
 Both approaches grow harder toward the Goblin King at Crown Peak on level 4.
 Defeating him reveals a shortcut to the opposite town; the remaining three levels
 can instead be fought in decreasing difficulty. Dain's map bearers occupy levels
-**1 and 2 near Oakhaven** and **5 near Ridgeshire**, across the stage-4 peak.
-Either approach finds fragments before and after the boss.
+**7, 6, and 5 near Ridgeshire**, before the stage-4 peak when entering from
+Ridgeshire and after it when entering from Oakhaven.
 Ridgeshire's east gate leads directly to Dragonspine. The safe High Pass links a
 separate south shortcut gate in Ridgeshire with OakHaven's northeast road, unlocked
 by the Goblin King's defeat. Both ordinary mountain gates remain available. Ilya
@@ -175,8 +175,8 @@ and update his location when loaded.
 
 **Dain** waits in **Rosemoor's Adventurer's Guild Hall**, alongside Zara. Press
 **T** beside him, then **Y** to accept **Recover the Treasure Map**. Defeat the
-Map Bearers on **mountain stages 1 and 2 near Oakhaven and 5 near Ridgeshire**,
-then return to Dain in Rosemoor for **60 gold and 400 score**, awarded once.
+Map Bearers on **mountain stages 7, 6, and 5**, entering through Ridgeshire
+after taking Crown Road West from Rosemoor, then return to Dain in Rosemoor for **60 gold and 400 score**, awarded once.
 
 **Mara** waits in **Oakhaven's Tavern**. Press
 **T** beside her to accept **Relight the Drowned Beacons**. Relight the guarded
@@ -189,11 +189,13 @@ throughout their regions. Accepting one begins a
 fresh expedition through that region so completed maps never turn the quest
 into an empty walk. Regular enemies and maps regenerate, while defeated bosses
 remain defeated.
-The Lost Wardens objectives occupy forest stages **1 and 2 near Oakhaven** and
-**5 near Stillbury**, on opposite sides of the stage-4 Necromancer. Entering
-from Stillbury finds the stage-5 warden first, then stages 2 and 1 after the
-boss. Taking the grove shortcut skips unfinished rescues on the far side;
-either ordinary forest gate remains available to finish them later.
+The Lost Wardens objectives occupy forest stages **7, 6, and 5**, reached in
+that order from Stillbury's east forest gate, before the stage-4 Necromancer.
+Dain's Map Bearers likewise occupy mountain stages **7, 6, and 5** from
+Ridgeshire's south mountain gate, before the stage-4 Goblin King. After defeating
+the central boss, take its shortcut to Oakhaven and use the unlocked town roads
+home, or fight through the remaining three stages. Both regions remain playable
+from Oakhaven, where the quest objectives follow the central boss.
 
 Rogues start with **100 arrows** and can carry at most 100. Every fired bow shot
 uses one arrow, including misses. At zero, buy more at the Blacksmith or switch

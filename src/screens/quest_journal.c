@@ -30,7 +30,7 @@ static const QuestDefinition quest_definitions[15] = {
         "Return to Dain in Rosemoor's Adventurer's Guild.",
         {"Defeat Archer Map Bearer", "Defeat Bomber Map Bearer",
             "Defeat Shaman Map Bearer"},
-        "Mountains", {1, 2, 5}, 60, 400
+        "Mountains", {7, 6, 5}, 60, 400
     },
     {
         "The Lost Wardens", "Alder",
@@ -38,7 +38,7 @@ static const QuestDefinition quest_definitions[15] = {
         "Return to Alder in Stillbury's Inn.",
         {"Rescue forest warden", "Rescue forest warden",
             "Rescue forest warden"},
-        "Forest", {1, 2, 5}, 70, 500
+        "Forest", {7, 6, 5}, 70, 500
     },
     {
         "Relight the Drowned Beacons", "Mara",
