@@ -124,6 +124,11 @@ objects need no inventory space. Acceptance preserves existing maps and boss
 victories, and quest progress survives saving. See
 [The Silent Expedition](docs/tavern-quests.md#brenna-the-silent-expedition).
 
+Frostfell's glacier shelves have connected snow caps and shaded ice faces.
+Wind-shaped drifts, clustered snowy pines, cracked lake ice, and expedition
+traces add winter detail. See the [renderer comparisons](docs/art-sources/frostfell/README.md)
+for the terrain art pass; existing saved maps receive it automatically.
+
 Stillbury's west gate opens onto the five-level Sunscar Wastes: enter from the
 east, advance west, and backtrack east. Both the first level's east entrance and
 the final west exit return to Stillbury. Return to Town leaves a portal by

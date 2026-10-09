@@ -1301,6 +1301,37 @@ static void draw_coast_trap_underlay(Renderer *r, const GameState *g, int map_x,
     }
 }
 
+static int frostfell_surface_family(TileType tile) {
+    if (tile == TILE_FROST_LAKE || tile == TILE_FROST_LAKE_HOLE || tile == TILE_FROST_BROKEN_ICE) {
+        return 1;
+    }
+    return tile == TILE_FROST_ICE ? 2 : 0;
+}
+
+static void draw_frostfell_shore(Renderer *r, const GameState *g, int sx, int sy, int x, int y, TileType tile) {
+    const int dx[4] = {0, 1, 0, -1};
+    const int dy[4] = {-1, 0, 1, 0};
+    unsigned int edges = 0;
+    int family = frostfell_surface_family(tile);
+    for (int side = 0; side < 4; side++) {
+        int nx = x + dx[side];
+        int ny = y + dy[side];
+        if (nx < 0 || ny < 0 || nx >= MAP_W || ny >= MAP_H) {
+            continue;
+        }
+        TileType next = g->map.tiles[ny][nx];
+        if (next == TILE_ITEM) {
+            next = floor_item_underlay(g, nx, ny);
+        }
+        if (frostfell_surface_family(next) != family) {
+            edges |= 1u << side;
+        }
+    }
+    if (edges != 0) {
+        draw_frostfell_bank(r, sx, sy, x, y, edges);
+    }
+}
+
 static void draw_floor_loot(Renderer *r, const GameState *g, int map_x, int map_y, int screen_x, int screen_y) {
     int has_gold = 0;
     int has_item = 0;
@@ -1402,8 +1433,10 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         draw_desert_lamp(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_FROST_LAKE) {
         draw_frostfell_lake(r, screen_x, screen_y, map_x, map_y);
+        draw_frostfell_shore(r, g, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay == TILE_FROST_ICE) {
         draw_frostfell_ice(r, screen_x, screen_y, map_x, map_y);
+        draw_frostfell_shore(r, g, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay == TILE_DRAGON_FLOOR ||
         underlay == TILE_DRAGON_ASH || underlay == TILE_DRAGON_HOARD) {
         int terrain = underlay == TILE_DRAGON_ASH ? 1 :
@@ -2101,7 +2134,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_SWAMP_DAUGHTER:
                     draw_swamp_daughter(r, sx, sy, x, y); break;
                 case TILE_FROST_FLOOR:
-                    draw_frostfell_floor(r, sx, sy, x, y); break;
+                    draw_frostfell_floor(r, sx, sy, x, y);
+                    draw_frostfell_details(r, &g->map, sx, sy, x, y);
+                    break;
                 case TILE_FROST_JOURNAL:
                 case TILE_NPC_FROST_SURVIVOR:
                 case TILE_NPC_BRENNA:
@@ -2195,16 +2230,20 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_desert_edge(r, sx, sy, x, y);
                     break;
                 case TILE_FROST_WALL:
-                    draw_frostfell_wall(r, sx, sy, x, y); break;
+                    draw_frostfell_wall(r, &g->map, sx, sy, x, y); break;
                 case TILE_FROST_ENTRANCE:
                 case TILE_FROST_EXIT:
                     draw_frostfell_edge(r, sx, sy, x, y); break;
                 case TILE_FROST_LAKE:
-                    draw_frostfell_lake(r, sx, sy, x, y); break;
+                    draw_frostfell_lake(r, sx, sy, x, y);
+                    draw_frostfell_shore(r, g, sx, sy, x, y, TILE_FROST_LAKE);
+                    break;
                 case TILE_FROST_LAKE_HOLE:
                     draw_frostfell_lake_hole(r, sx, sy, x, y, kraken_warning); break;
                 case TILE_FROST_ICE:
-                    draw_frostfell_ice(r, sx, sy, x, y); break;
+                    draw_frostfell_ice(r, sx, sy, x, y);
+                    draw_frostfell_shore(r, g, sx, sy, x, y, TILE_FROST_ICE);
+                    break;
                 case TILE_FROST_THIN_ICE:
                     draw_frostfell_thin_ice(r, sx, sy, x, y); break;
                 case TILE_FROST_BROKEN_ICE:

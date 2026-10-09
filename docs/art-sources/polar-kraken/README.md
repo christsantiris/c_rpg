@@ -74,6 +74,10 @@ select the half-health pattern without resetting maps, health, or progress.
 
 ## Recommended Frostfell improvements
 
+The terrain rendering improvements below are now implemented. See the
+[Frostfell terrain captures](../frostfell/README.md) for matching comparisons
+and expedition details. The original Kraken captures above retain the older terrain.
+
 | Priority | Change | Effect |
 |---|---|---|
 | 1 | Draw connected glacier faces using neighboring wall tiles, with irregular snow caps and outer corners | Removes the repeated block silhouette while retaining collision |

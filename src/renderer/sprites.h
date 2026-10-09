@@ -176,7 +176,15 @@ void draw_dragonspine_wall(Renderer *r, const Map *map, int tile_x, int tile_y, 
 void draw_dragonspine_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int forward);
 void draw_dragonspine_gate(Renderer *r, int tile_x, int tile_y);
 void draw_frostfell_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
-void draw_frostfell_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
+void draw_frostfell_wall(Renderer *r, const Map *map, int tile_x, int tile_y, int map_x, int map_y);
+void draw_frostfell_details(Renderer *r, const Map *map, int tx, int ty, int mx, int my);
+enum {
+    FROST_EDGE_NORTH = 1,
+    FROST_EDGE_EAST = 2,
+    FROST_EDGE_SOUTH = 4,
+    FROST_EDGE_WEST = 8
+};
+void draw_frostfell_bank(Renderer *r, int tx, int ty, int mx, int my, unsigned int edges);
 void draw_frostfell_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_desert_floor(Renderer *r, int tx, int ty, int mx, int my);
 void draw_desert_wall(Renderer *r, int tx, int ty, int mx, int my);
