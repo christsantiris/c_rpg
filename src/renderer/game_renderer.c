@@ -1581,14 +1581,14 @@ static void draw_region_weather(Renderer *r, const Viewport *v, int desert) {
     SDL_RenderSetClipRect(r->sdl, clipped ? &old_clip : NULL);
 }
 
-// True after the Kraken's warning turn, when its tentacles are about to strike.
+// Hole tentacles rise only for the targeted strike, not the lake sweep.
 static int kraken_tentacles_raised(const GameState *g) {
     if (g->location != LOCATION_FROSTFELL) {
         return 0;
     }
     for (int i = 0; i < g->enemy_count; i++) {
         const Enemy *e = &g->enemies[i];
-        if (e->active && e->type == ENEMY_POLAR_KRAKEN && e->move_timer % 2 == 1) {
+        if (e->active && e->type == ENEMY_POLAR_KRAKEN && e->move_timer == 1) {
             return 1;
         }
     }
@@ -1614,7 +1614,7 @@ static void ice_slide_offset(const GameState *g, int *px, int *py) {
 static void draw_kraken_target(Renderer *r, const GameState *g, const Viewport *v) {
     for (int i = 0; i < g->enemy_count; i++) {
         const Enemy *e = &g->enemies[i];
-        if (!e->active || e->type != ENEMY_POLAR_KRAKEN || e->move_timer % 2 != 1) {
+        if (!e->active || e->type != ENEMY_POLAR_KRAKEN || e->move_timer % 3 != 1) {
             continue;
         }
         SDL_BlendMode blend;
@@ -1626,16 +1626,7 @@ static void draw_kraken_target(Renderer *r, const GameState *g, const Viewport *
                     continue;
                 }
                 int targeted = x == e->attack_target_x && y == e->attack_target_y;
-                int danger = targeted;
-                for (int dy = -1; dy <= 1 && !danger; dy++) {
-                    for (int dx = -1; dx <= 1 && !danger; dx++) {
-                        int tx = x + dx;
-                        int ty = y + dy;
-                        danger = tx >= 0 && tx < MAP_W && ty >= 0 && ty < MAP_H &&
-                            g->map.tiles[ty][tx] == TILE_FROST_LAKE_HOLE;
-                    }
-                }
-                if (!danger) {
+                if (!kraken_tile_threatened(g, e, x, y)) {
                     continue;
                 }
                 int px = viewport_to_screen_x(v, x) * TILE_SIZE;
@@ -1678,7 +1669,9 @@ static void draw_kraken_status(Renderer *r, const GameState *g, const Viewport *
         SDL_RenderFillRect(r->sdl, &panel);
         SDL_SetRenderDrawColor(r->sdl, 111, 172, 203, 255);
         SDL_RenderDrawRect(r->sdl, &panel);
-        renderer_draw_text(r, "POLAR KRAKEN", x + 10, 16, (SDL_Color){218, 243, 255, 255}, r->font_tiny);
+        int enraged = e->hp <= e->max_hp / 2;
+        const char *name = enraged ? (width < 300 ? "ENRAGED KRAKEN" : "POLAR KRAKEN - ENRAGED") : "POLAR KRAKEN";
+        renderer_draw_text(r, name, x + 10, 16, (SDL_Color){218, 243, 255, 255}, r->font_tiny);
         if (width >= 240) {
             char hp[32];
             snprintf(hp, sizeof(hp), "%d / %d", e->hp, e->max_hp);
@@ -1690,14 +1683,27 @@ static void draw_kraken_status(Renderer *r, const GameState *g, const Viewport *
         SDL_SetRenderDrawColor(r->sdl, 39, 58, 77, 255);
         SDL_RenderFillRect(r->sdl, &bar);
         bar.w = bar.w * e->hp / e->max_hp;
-        SDL_SetRenderDrawColor(r->sdl, 80, 201, 217, 255);
+        SDL_Color hp_color = enraged ? (SDL_Color){237, 130, 86, 255} : (SDL_Color){80, 201, 217, 255};
+        SDL_SetRenderDrawColor(r->sdl, hp_color.r, hp_color.g, hp_color.b, hp_color.a);
         SDL_RenderFillRect(r->sdl, &bar);
-        int warning = e->move_timer % 2 == 1;
+        int warning = e->move_timer % 3 == 1;
+        int recovery = e->move_timer % 3 == 2;
         const char *hint = warning ? "STRIKE NEXT TURN - LEAVE ORANGE ICE" : "TENTACLES LOWERED";
         if (width < 300 && warning) {
             hint = "STRIKE NEXT TURN";
         }
-        renderer_draw_text(r, hint, x + 10, 49, warning ? (SDL_Color){255, 177, 81, 255} : (SDL_Color){157, 196, 219, 255}, r->font_tiny);
+        if (warning && e->move_timer == 4) {
+            hint = width < 300 ? "SWEEP NEXT TURN" : "SWEEP NEXT TURN - LEAVE ORANGE ICE";
+            if (e->attack_phase == 1) {
+                hint = width < 300 ? "DOUBLE SWEEP" : "DOUBLE SWEEP - LEAVE ORANGE ICE";
+            }
+        }
+        SDL_Color hint_color = warning ? (SDL_Color){255, 177, 81, 255} : (SDL_Color){157, 196, 219, 255};
+        if (recovery) {
+            hint = width < 300 ? "ATTACK NOW" : "RECOVERING - ATTACK NOW";
+            hint_color = (SDL_Color){139, 230, 163, 255};
+        }
+        renderer_draw_text(r, hint, x + 10, 49, hint_color, r->font_tiny);
     }
 }
 

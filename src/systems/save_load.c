@@ -636,7 +636,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 114);
+    cJSON_AddNumberToObject(root, "save_version", 117);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -1707,6 +1707,24 @@ static int migrate_region_routes(GameState *g, Location region) {
         cache[MAX_REGION_DEPTH - 1].valid = 0;
     }
     return 1;
+}
+
+// Preserve old warnings: version 115 added recovery, and 117 locks the sweep pattern.
+static void migrate_kraken_cycle(Enemy *enemies, int count, int version) {
+    for (int i = 0; i < count; i++) {
+        Enemy *e = &enemies[i];
+        if (e->type != ENEMY_POLAR_KRAKEN) {
+            continue;
+        }
+        e->attack_phase = 0;
+        if (version < 115) {
+            e->move_timer = e->move_timer % 2 == 1 ? 1 : 0;
+            if (e->move_timer == 0) {
+                e->attack_target_x = -1;
+                e->attack_target_y = -1;
+            }
+        }
+    }
 }
 
 // Version 114 relocates quest givers without regenerating maps or quest progress.
@@ -3965,6 +3983,14 @@ int load_game(GameState *g, int slot) {
     }
     if (save_version < 114) {
         migrate_quest_giver_locations(g);
+    }
+    if (save_version < 117) {
+        migrate_kraken_cycle(g->enemies, g->enemy_count, save_version);
+        for (int i = 0; i < FROSTFELL_DEPTH; i++) {
+            if (g->frostfell_cache[i].valid) {
+                migrate_kraken_cycle(g->frostfell_cache[i].enemies, g->frostfell_cache[i].enemy_count, save_version);
+            }
+        }
     }
     game_hide_portal_destination(g);
     game_migrate_boss_shortcuts(g);

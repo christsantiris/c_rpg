@@ -3248,9 +3248,33 @@ static int near_lake_hole(const GameState *g, int x, int y) {
     return 0;
 }
 
-// The Kraken never leaves its lake. It wakes when the player steps onto the
-// ice or hurts it. Each warning marks the player's tile as well as the holes,
-// so ranged attackers must move before the next turn's strike.
+// Shared by damage resolution and warning tiles. The saved target fixes the
+// sweep's row/column even if the player moves during its wind-up.
+int kraken_tile_threatened(const GameState *g, const Enemy *e, int x, int y) {
+    if (e->move_timer % 3 == 0 || e->attack_target_x < 0 || e->attack_target_y < 0 || !map_is_walkable(&g->map, x, y)) {
+        return 0;
+    }
+    if (x == e->attack_target_x && y == e->attack_target_y) {
+        return 1;
+    }
+    if (e->move_timer % 6 >= 3) {
+        const Room *lake = &g->map.rooms[g->map.room_count - 1];
+        if (x < lake->x || x >= lake->x + lake->w || y < lake->y || y >= lake->y + lake->h) {
+            return 0;
+        }
+        int dx = abs_int(e->attack_target_x - e->x);
+        int dy = abs_int(e->attack_target_y - e->y);
+        int lane = dx >= dy ? e->attack_target_y : e->attack_target_x;
+        int center = dx >= dy ? e->y : e->x;
+        int tile = dx >= dy ? y : x;
+        int second_lane = lane + (lane > center ? -2 : 2);
+        return tile == lane || (e->attack_phase == 1 && tile == second_lane);
+    }
+    return near_lake_hole(g, x, y);
+}
+
+// Alternate a targeted strike (phases 1-2) with a lake sweep (phases 4-5).
+// Phases 3 and 0 provide recovery; retreat resets the cycle to the first strike.
 static void polar_kraken_turn(GameState *g, Enemy *e) {
     const Room *lake = &g->map.rooms[g->map.room_count - 1];
     int on_lake = g->player.x >= lake->x && g->player.x < lake->x + lake->w &&
@@ -3263,9 +3287,18 @@ static void polar_kraken_turn(GameState *g, Enemy *e) {
         e->attack_target_y = -1;
         return;
     }
-    e->move_timer++;
+    e->move_timer = (e->move_timer + 1) % 6;
     char msg[MAX_MESSAGE_LEN];
-    if (e->move_timer % 2 == 1) {
+    if (e->move_timer % 3 == 0) {
+        push_message(g, "The Kraken readies its next strike.");
+        return;
+    }
+    if (e->move_timer % 3 == 1) {
+        int enraged = e->hp <= e->max_hp / 2;
+        if (enraged && e->attack_phase == 0) {
+            push_message(g, "The Kraken thrashes! Its sweeps split into two lanes!");
+        }
+        e->attack_phase = enraged;
         e->attack_target_x = g->player.x;
         e->attack_target_y = g->player.y;
         int adjacent = abs_int(g->player.x - e->x) <= 1 &&
@@ -3281,15 +3314,19 @@ static void polar_kraken_turn(GameState *g, Enemy *e) {
                 push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
             }
         }
-        push_message(g, "Tentacles rise! Move off the marked tile and away from holes!");
+        const char *warning = "Tentacles rise! Move off the marked tile and away from holes!";
+        if (e->move_timer == 4) {
+            warning = e->attack_phase == 1 ? "Double sweep next turn! Step into a clear lane!" :
+                "Tentacles sweep next turn! Step out of the marked row or column!";
+        }
+        push_message(g, warning);
         return;
     }
-    int targeted = g->player.x == e->attack_target_x &&
-        g->player.y == e->attack_target_y;
+    int threatened = kraken_tile_threatened(g, e, g->player.x, g->player.y);
     e->attack_target_x = -1;
     e->attack_target_y = -1;
-    if (!targeted && !near_lake_hole(g, g->player.x, g->player.y)) {
-        push_message(g, "The tentacles lash empty ice.");
+    if (!threatened) {
+        push_message(g, e->move_timer == 5 ? "The tentacles sweep empty ice." : "The tentacles lash empty ice.");
         return;
     }
     int dmg = e->attack - g->player.defense / 2;
@@ -3298,7 +3335,7 @@ static void polar_kraken_turn(GameState *g, Enemy *e) {
     }
     dmg = apply_enemy_damage(g, dmg, FEEDBACK_NOW);
     if (dmg > 0) {
-        snprintf(msg, sizeof(msg), "Kraken tentacle: %d dmg", dmg);
+        snprintf(msg, sizeof(msg), e->move_timer == 5 ? "Kraken sweep: %d dmg" : "Kraken tentacle: %d dmg", dmg);
         push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
     }
 }
