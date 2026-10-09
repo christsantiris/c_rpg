@@ -209,6 +209,8 @@ arrows without changing existing progress.
 
 The Blacksmith sells weapons, armor, shields, and arrows. The Alchemist sells both
 potion types, spell scrolls, and Mage spell tomes in OakHaven.
+Regular enemies drop only gold; buy Health and Mana Potions from the shops.
+Special boss and quest rewards, including Potions of Strength, still apply.
 Mage-only scrolls (Fireball, Frost Bolt, and Teleport) and spell-upgrade tomes
 appear for purchase only when playing a Mage. Magic Arrow and Heal scrolls
 remain available to all classes. See the [weapons sorted by attack](docs/weapons.md#melee-weapons-by-attack)
@@ -498,8 +500,10 @@ Inside the inventory, use the arrow keys to select an item, `U` to use it,
 equip it. Shops, the healer, the witch, and the harbor use the arrow keys and
 `Enter`; shop buy and sell modes are switched with `Tab`.
 
-Drinking any potion consumes one combat turn and closes the inventory so you
-can see the enemies respond. Poison and freezing advance with that turn.
+Using an item keeps the inventory open, even after consuming the last item.
+Close it manually with **I** (or the remapped inventory key) or **Esc**.
+Drinking any potion still consumes one combat turn: enemies respond, and
+poison and freezing advance with that turn.
 Attempting to drink at full HP or MP keeps the potion and costs no turn;
 reading scrolls and equipping or dropping items remain free inventory actions.
 
@@ -570,7 +574,7 @@ make debug WEAPON=bow GOLD=500 SCROLLS=magic-arrow,fireball,heal
 
 | Make variable | Executable option | Accepted values | Behavior when omitted |
 | --- | --- | --- | --- |
-| `WEAPON` | `--weapon NAME` | `rusty-sword`, `short-sword`, `long-sword`, `battle-axe`, `staff`, `bow`, `none` | Keep the selected class's normal starting weapon |
+| `WEAPON` | `--weapon NAME` | Any [debug weapon name](#debug-weapon-names), or `none` | Keep the selected class's normal starting weapon |
 | `GOLD` | `--gold N` | Any whole number from `0` through `999999` | Keep the normal starting gold |
 | `SCROLLS` | `--scrolls LIST` | Up to three comma-separated values chosen from `magic-arrow`, `fireball`, and `heal`, or `none` | Keep the selected class's normal starting scrolls |
 | Not applicable | `--unlock-shortcuts` | Flag with no value; automatically supplied by `tools/debug_shortcuts.sh` | Town shortcuts unlock through normal boss victories |
@@ -581,6 +585,20 @@ category. Scroll names must be comma-separated without spaces. These settings
 are applied after class selection when a new game is created; they do not
 modify a loaded save.
 
+#### Debug weapon names
+
+Every weapon, including boss rewards, is available for testing. Use these names
+with `--weapon` or `WEAPON`. Normal class restrictions still apply; open inventory
+with **I** and equip the weapon with **E** or **Enter**.
+
+| Weapon family | Accepted names |
+| --- | --- |
+| Swords | `rusty-sword`, `short-sword`, `long-sword`, `magic-long-sword`, `demonic-sword`, `greatsword`, `magic-greatsword`, `cryptblade` |
+| Axes | `battle-axe`, `magic-battle-axe` |
+| Staves | `staff`, `runed-staff`, `magic-staff`, `sandstorm-staff` |
+| Bows | `bow`, `longbow`, `magic-longbow`, `krakenbone-bow` |
+| Daggers | `dagger`, `magic-dagger` |
+
 Examples:
 
 ```bash
@@ -589,6 +607,9 @@ Examples:
 
 # Combine unlocked shortcuts with a custom starting loadout.
 ./tools/debug_shortcuts.sh --gold 500 --weapon bow --scrolls magic-arrow,fireball,heal
+
+# Start a Warrior test with unlocked shortcuts, 1,000 gold, and a Magic Greatsword.
+./tools/debug_shortcuts.sh --gold 1000 --weapon magic-greatsword
 
 # Override every supported starting value.
 make debug WEAPON=bow GOLD=500 SCROLLS=magic-arrow,fireball,heal

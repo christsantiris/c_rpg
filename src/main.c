@@ -172,12 +172,40 @@ static int debug_weapon(const char *name, Item *weapon, int *none) {
         *weapon = item_make_short_sword();
     } else if (strcmp(name, "long-sword") == 0) {
         *weapon = item_make_long_sword();
+    } else if (strcmp(name, "magic-long-sword") == 0) {
+        *weapon = item_make_magic_long_sword();
+    } else if (strcmp(name, "demonic-sword") == 0) {
+        *weapon = item_make_demonic_sword();
+    } else if (strcmp(name, "greatsword") == 0) {
+        *weapon = item_make_greatsword();
+    } else if (strcmp(name, "magic-greatsword") == 0) {
+        *weapon = item_make_magic_greatsword();
+    } else if (strcmp(name, "cryptblade") == 0) {
+        *weapon = item_make_cryptblade();
     } else if (strcmp(name, "battle-axe") == 0) {
         *weapon = item_make_battle_axe();
+    } else if (strcmp(name, "magic-battle-axe") == 0) {
+        *weapon = item_make_magic_battle_axe();
     } else if (strcmp(name, "staff") == 0) {
         *weapon = item_make_staff();
+    } else if (strcmp(name, "runed-staff") == 0) {
+        *weapon = item_make_runed_staff();
+    } else if (strcmp(name, "magic-staff") == 0) {
+        *weapon = item_make_magic_staff();
+    } else if (strcmp(name, "sandstorm-staff") == 0) {
+        *weapon = item_make_sandstorm_staff();
     } else if (strcmp(name, "bow") == 0) {
         *weapon = item_make_bow();
+    } else if (strcmp(name, "longbow") == 0) {
+        *weapon = item_make_longbow();
+    } else if (strcmp(name, "magic-longbow") == 0) {
+        *weapon = item_make_magic_longbow();
+    } else if (strcmp(name, "krakenbone-bow") == 0) {
+        *weapon = item_make_krakenbone_bow();
+    } else if (strcmp(name, "dagger") == 0) {
+        *weapon = item_make_dagger();
+    } else if (strcmp(name, "magic-dagger") == 0) {
+        *weapon = item_make_magic_dagger();
     } else if (strcmp(name, "none") == 0) {
         *none = 1;
     } else {
@@ -434,12 +462,15 @@ static void handle_slot_result(SlotResult result, SlotSelect *slots, int saving,
     }
 }
 
-static void handle_inventory_use(GameState *g, int index, GameScreen *screen, EnemyProjectiles *shots, Uint32 *started) {
-    if (action_use_inventory_item(g, index, shots)) {
+static void handle_inventory_use(GameState *g, InventoryScreen *inv, GameScreen *screen, EnemyProjectiles *shots, Uint32 *started) {
+    if (action_use_inventory_item(g, inv->selected, shots)) {
         *started = SDL_GetTicks();
-        *screen = g->player.hp <= 0 && shots->count == 0 ? SCREEN_GAME_OVER : SCREEN_PLAYING;
-    } else if (g->inventory_count == 0) {
-        *screen = SCREEN_PLAYING;
+    }
+    if (inv->selected >= g->inventory_count) {
+        inv->selected = g->inventory_count > 0 ? g->inventory_count - 1 : 0;
+    }
+    if (g->player.hp <= 0 && shots->count == 0) {
+        *screen = SCREEN_GAME_OVER;
     }
 }
 
@@ -734,7 +765,7 @@ int main(int argc, char **argv) {
                         if (result == INVENTORY_CLOSED) {
                             screen = SCREEN_PLAYING;
                         } else if (result == INVENTORY_USE) {
-                            handle_inventory_use(&game, inventory_screen.selected, &screen, &enemy_shots, &enemy_shots_started_at);
+                            handle_inventory_use(&game, &inventory_screen, &screen, &enemy_shots, &enemy_shots_started_at);
                         } else if (result == INVENTORY_EQUIP) {
                             Action a = {ACTION_EQUIP_ITEM,
                                 inventory_screen.selected, 0};
@@ -1214,7 +1245,7 @@ int main(int argc, char **argv) {
                             event.button.y <= hint_y + 24 &&
                             event.button.x >= cx - 245 &&
                             event.button.x <= cx - 190) {
-                            handle_inventory_use(&game, inventory_screen.selected, &screen, &enemy_shots, &enemy_shots_started_at);
+                            handle_inventory_use(&game, &inventory_screen, &screen, &enemy_shots, &enemy_shots_started_at);
                         }
                         // E - Equip
                         if (event.button.y >= hint_y &&

@@ -156,9 +156,10 @@ maximum regardless of level. Player progress persists across future regions.
 
 ## Loot Progression
 
-Non-boss enemies have a 10% gold-drop chance and a separate 5%
-item-drop chance. Item drops contain only health potions and mana potions;
-regular enemies never drop scrolls, weapons or armor.
+Non-boss enemies have a 10% gold-drop chance and drop no ordinary items.
+Health and Mana Potions come from shops. Special boss and quest rewards,
+including Potions of Strength, remain available. Castle guards use their
+existing fixed gold rewards.
 
 Shop purchase prices are 200% of an item's base value. Shops pay 25% of base
 value, rounded down, when buying an item from the player. The Blacksmith buys

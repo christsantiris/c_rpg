@@ -46,15 +46,6 @@ void push_message_kind(GameState *g, const char *msg, MessageKind kind) {
     }
 }
 
-// Ordinary enemies drop only potions; scrolls come from shops, bosses and
-// quests.
-Item random_enemy_item(void) {
-    if (rand() % 100 < 55) {
-        return item_make_health_potion();
-    }
-    return item_make_mana_potion();
-}
-
 static void mark_item_tile(GameState *g, int x, int y) {
     TileType tile = g->map.tiles[y][x];
     if (tile == TILE_DUNGEON_STAIRS_SEALED || tile == TILE_DUNGEON_STAIRS_RETURN) {
@@ -481,7 +472,6 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         return;
     }
 
-    int has_item = rand() % 100 < 5;
     TileType drop_tile = g->map.tiles[y][x];
     int plain_floor = drop_tile == TILE_FLOOR ||
         drop_tile == TILE_FOREST_FLOOR ||
@@ -516,33 +506,17 @@ static void drop_loot(GameState *g, Enemy *enemy) {
     }
     // Credit coins directly when another pickup or a map mechanism occupies
     // the tile, so coin markers cannot hide items, gates, or landmarks.
-    if (has_gold && (has_item || occupied || !plain_floor ||
+    if (has_gold && (occupied || !plain_floor ||
         g->floor_item_count >= MAX_FLOOR_ITEMS)) {
         award_gold(g, gold);
         has_gold = 0;
     }
-    if (occupied || !plain_floor || (!has_gold && !has_item) ||
+    if (occupied || !plain_floor || !has_gold ||
         g->floor_item_count >= MAX_FLOOR_ITEMS) {
         return;
     }
 
-    FloorItem fi = {0};
-    fi.active = 1;
-    fi.x = x;
-    fi.y = y;
-    fi.underlying_tile = g->map.tiles[y][x];
-    if (has_item) {
-        fi.item = random_enemy_item();
-    } else {
-        place_gold_drop(g, x, y, gold);
-        return;
-    }
-    g->floor_items[g->floor_item_count++] = fi;
-
-    mark_item_tile(g, x, y);
-    char item_msg[MAX_MESSAGE_LEN];
-    snprintf(item_msg, sizeof(item_msg), "%s dropped!", fi.item.name);
-    push_message(g, item_msg);
+    place_gold_drop(g, x, y, gold);
 }
 
 static int apply_melee_cleave(GameState *g, Enemy *target, int attack, int percent) {
@@ -1952,10 +1926,8 @@ void action_resolve_player(GameState *g, Action a) {
                 } else if (melee_visual == ITEM_VISUAL_MAGIC_LONG_SWORD ||
                     melee_visual == ITEM_VISUAL_MAGIC_GREATSWORD) {
                     sfx_play_magic_sword();
-                } else if (melee_visual == ITEM_VISUAL_GREATSWORD) {
-                    sfx_play_greatsword();
                 } else if (melee_visual == ITEM_VISUAL_SHORT_SWORD ||
-                    melee_visual == ITEM_VISUAL_LONG_SWORD) {
+                    melee_visual == ITEM_VISUAL_LONG_SWORD || melee_visual == ITEM_VISUAL_GREATSWORD) {
                     sfx_play_large_blade();
                 } else if (melee_visual == ITEM_VISUAL_MAGIC_DAGGER) {
                     sfx_play_magic_dagger();

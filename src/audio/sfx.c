@@ -4,7 +4,6 @@
 
 #define SFX_ATTACK "assets/sfx/smallblade.ogg"
 #define SFX_LARGE_BLADE "assets/sfx/largeblade.ogg"
-#define SFX_GREATSWORD "assets/sfx/greatsword.mp3"
 #define SFX_MAGIC_SWORD "assets/sfx/studio-sword.mp3"
 #define SFX_DEMONIC_SWORD "assets/sfx/swordsound1.mp3"
 #define SFX_STAFF "assets/sfx/staffswing.mp3"
@@ -20,7 +19,6 @@
 
 static Mix_Chunk *sfx_attack = NULL;
 static Mix_Chunk *sfx_large_blade = NULL;
-static Mix_Chunk *sfx_greatsword = NULL;
 static Mix_Chunk *sfx_magic_sword = NULL;
 static Mix_Chunk *sfx_demonic_sword = NULL;
 static Mix_Chunk *sfx_staff = NULL;
@@ -43,10 +41,6 @@ void sfx_init(void) {
     sfx_large_blade = Mix_LoadWAV(SFX_LARGE_BLADE);
     if (!sfx_large_blade) {
         fprintf(stderr, "Failed to load large blade sfx: %s\n", Mix_GetError());
-    }
-    sfx_greatsword = Mix_LoadWAV(SFX_GREATSWORD);
-    if (!sfx_greatsword) {
-        fprintf(stderr, "Failed to load greatsword sfx: %s\n", Mix_GetError());
     }
     sfx_magic_sword = Mix_LoadWAV(SFX_MAGIC_SWORD);
     if (!sfx_magic_sword) {
@@ -147,13 +141,6 @@ void sfx_play_large_blade(void) {
     Mix_PlayChannel(-1, sfx_large_blade, 0);
 }
 
-void sfx_play_greatsword(void) {
-    if (!sfx_greatsword || !sfx_on) {
-        return;
-    }
-    Mix_PlayChannel(-1, sfx_greatsword, 0);
-}
-
 void sfx_play_magic_sword(void) {
     if (!sfx_magic_sword || !sfx_on) {
         return;
@@ -218,9 +205,6 @@ void sfx_free(void) {
     if (sfx_large_blade) {
         Mix_FreeChunk(sfx_large_blade);
     }
-    if (sfx_greatsword) {
-        Mix_FreeChunk(sfx_greatsword);
-    }
     if (sfx_magic_sword) {
         Mix_FreeChunk(sfx_magic_sword);
     }
@@ -259,7 +243,6 @@ void sfx_free(void) {
     }
     sfx_attack = NULL;
     sfx_large_blade = NULL;
-    sfx_greatsword = NULL;
     sfx_magic_sword = NULL;
     sfx_demonic_sword = NULL;
     sfx_staff = NULL;
