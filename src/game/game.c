@@ -1450,6 +1450,9 @@ void game_init(GameState *g) {
     g->watchfire_quest_state = 0;
     g->watchfire_quest_progress = 0;
     g->watchfire_quest_encounters = 0;
+    g->hunt_quest_state = 0;
+    g->hunt_quest_progress = 0;
+    g->hunt_quest_encounters = 0;
     for (int i = 0; i < TEMPLE_DEPTH; i++) {
         g->temple_cache[i].valid = 0;
     }
@@ -2839,6 +2842,130 @@ int game_interact_watchfire(GameState *g) {
     return 1;
 }
 
+typedef struct {
+    Location location;
+    int level;
+    const char *leader;
+    const char *support;
+    EnemyType types[4];
+    int count;
+    int offset;
+} GuildHunt;
+
+static const GuildHunt guild_hunts[3] = {
+    {LOCATION_FROSTFELL, HUNT_FROSTFELL_LEVEL, "Rimefang", "Rimefang Pack",
+        {ENEMY_ICE_WOLF, ENEMY_ICE_WOLF, ENEMY_ICE_WOLF, ENEMY_FROST_WRAITH}, 4, 0},
+    {LOCATION_GLASSDEEP, HUNT_GLASSDEEP_LEVEL, "Shardwarden", "Shardwarden Stalker",
+        {ENEMY_SHARD_GOLEM, ENEMY_BLIND_STALKER, ENEMY_BLIND_STALKER}, 3, 4},
+    {LOCATION_DESERT, HUNT_SUNSCAR_LEVEL, "Dunehex", "Dunehex Mummy",
+        {ENEMY_DJINN, ENEMY_MUMMY, ENEMY_MUMMY}, 3, 7}
+};
+
+static int hunt_stage_index(const GameState *g) {
+    for (int i = 0; i < 3; i++) {
+        if (g->location == guild_hunts[i].location && g->level == guild_hunts[i].level) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int game_hunt_enemy_index(const Enemy *enemy) {
+    for (int i = 0; i < 3; i++) {
+        if (strcmp(enemy->name, guild_hunts[i].leader) == 0 || strcmp(enemy->name, guild_hunts[i].support) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int game_is_hunt_leader(const Enemy *enemy) {
+    int index = game_hunt_enemy_index(enemy);
+    return index >= 0 && strcmp(enemy->name, guild_hunts[index].leader) == 0;
+}
+
+static int hunt_encounter_mask(int index) {
+    return ((1 << guild_hunts[index].count) - 1) << guild_hunts[index].offset;
+}
+
+static void refresh_hunt_progress(GameState *g) {
+    int index = hunt_stage_index(g);
+    if (index < 0 || g->hunt_quest_state != 1 || (g->hunt_quest_progress & (1 << index)) ||
+        (g->hunt_quest_encounters & hunt_encounter_mask(index)) != hunt_encounter_mask(index)) {
+        return;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (g->enemies[i].active && game_hunt_enemy_index(&g->enemies[i]) == index) {
+            return;
+        }
+    }
+    g->hunt_quest_progress |= 1 << index;
+    char message[MAX_MESSAGE_LEN];
+    snprintf(message, sizeof(message), "Hunt complete: %s and its entire group are defeated.", guild_hunts[index].leader);
+    push_message(g, message);
+    if (g->hunt_quest_progress == 7) {
+        g->hunt_quest_state = 2;
+        push_message(g, "All three hunts are complete! Speak to Huntmaster Selene in Rosemoor's Adventurer's Guild.");
+    }
+}
+
+static void place_hunt_encounter(GameState *g) {
+    int index = hunt_stage_index(g);
+    if (index < 0 || g->hunt_quest_state != 1 || (g->hunt_quest_progress & (1 << index)) || !g->map.room_count) {
+        return;
+    }
+    const GuildHunt *hunt = &guild_hunts[index];
+    if ((g->hunt_quest_encounters & hunt_encounter_mask(index)) == hunt_encounter_mask(index)) {
+        return;
+    }
+    const Room *room = &g->map.rooms[g->map.room_count / 2];
+    int cx;
+    int cy;
+    map_room_center(room, &cx, &cy);
+    int x = -1;
+    int y = -1;
+    int best = MAP_W + MAP_H;
+    TileType floor = index == 0 ? TILE_FROST_FLOOR : index == 1 ? TILE_GLASSDEEP_FLOOR : TILE_DESERT_FLOOR;
+    for (int ty = room->y; ty < room->y + room->h; ty++) {
+        for (int tx = room->x; tx < room->x + room->w; tx++) {
+            int distance = abs(tx - cx) + abs(ty - cy);
+            if (distance < best && g->map.tiles[ty][tx] == floor && enemy_tile_open(g, tx, ty) &&
+                (g->player.x != tx || g->player.y != ty)) {
+                x = tx;
+                y = ty;
+                best = distance;
+            }
+        }
+    }
+    if (x < 0) {
+        return;
+    }
+    for (int i = 0; i < hunt->count; i++) {
+        int bit = 1 << (hunt->offset + i);
+        if (g->hunt_quest_encounters & bit) {
+            continue;
+        }
+        const char *name = i == 0 ? hunt->leader : hunt->support;
+        if (!spawn_quest_guard(g, hunt->types[i], x, y, name)) {
+            return;
+        }
+        g->hunt_quest_encounters |= bit;
+        if (i == 0) {
+            for (int e = 0; e < g->enemy_count; e++) {
+                Enemy *leader = &g->enemies[e];
+                if (leader->active && strcmp(leader->name, name) == 0) {
+                    leader->max_hp += (leader->max_hp + 3) / 4;
+                    leader->hp = leader->max_hp;
+                    break;
+                }
+            }
+        }
+    }
+    char message[MAX_MESSAGE_LEN];
+    snprintf(message, sizeof(message), "Hunt sighted: %s. Defeat the leader and its entire group.", hunt->leader);
+    push_message(g, message);
+}
+
 void game_refresh_quest_encounters(GameState *g) {
     if (g->location == LOCATION_DUNGEON) {
         map_ensure_dungeon_connectivity(&g->map, g->level);
@@ -2861,6 +2988,8 @@ void game_refresh_quest_encounters(GameState *g) {
     place_moonveil_quest_encounter(g);
     place_catacombs_quest_encounter(g);
     place_watchfire_encounter(g);
+    place_hunt_encounter(g);
+    refresh_hunt_progress(g);
     if (seal_placed) {
         spawn_elowen_guardians(g);
     }
@@ -2973,6 +3102,11 @@ static void generate_active_level(GameState *g) {
     place_catacombs_quest_encounter(g);
     g->watchfire_quest_encounters &= ~watchfire_stage_bit(g);
     place_watchfire_encounter(g);
+    int hunt = hunt_stage_index(g);
+    if (hunt >= 0 && !(g->hunt_quest_progress & (1 << hunt))) {
+        g->hunt_quest_encounters &= ~hunt_encounter_mask(hunt);
+    }
+    place_hunt_encounter(g);
     game_update_level_progress(g);
 }
 
@@ -4055,6 +4189,33 @@ int game_interact_moonveil(GameState *g) {
         push_message(g, "Return to Botanist Liora in Rosemoor's town center.");
     }
     return 1;
+}
+
+void game_talk_to_selene(GameState *g) {
+    if (g->location != LOCATION_GUILD || abs(g->player.x - GUILD_SELENE_X) > 1 || abs(g->player.y - GUILD_SELENE_Y) > 1) {
+        return;
+    }
+    g->dialogue_active = 1;
+    g->dialogue_x = GUILD_SELENE_X;
+    g->dialogue_y = GUILD_SELENE_Y;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Huntmaster Selene");
+    if (!g->hunt_quest_state) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Hunt Rimefang in Frostfell 3, Shardwarden in Glassdeep 4, and Dunehex in Sunscar 3. Defeat each entire group, in any order. Return to me here in Rosemoor's Guild for 200 gold.");
+    } else if (g->hunt_quest_state == 1) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Rimefang, Frostfell 3: %s. Shardwarden, Glassdeep 4: %s. Dunehex, Sunscar 3: %s. Defeat each entire group. Bosses are optional. Return to me here in Rosemoor's Guild.",
+            g->hunt_quest_progress & 1 ? "done" : "hunting", g->hunt_quest_progress & 2 ? "done" : "hunting", g->hunt_quest_progress & 4 ? "done" : "hunting");
+    } else if (g->hunt_quest_state == 2) {
+        g->hunt_quest_state = 3;
+        g->gold += HUNT_REWARD_GOLD;
+        g->score += HUNT_REWARD_SCORE;
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Three great hunts completed. Our expedition routes are safer thanks to you. Take 200 gold, and the Guild's respect.");
+        push_message(g, "Completed: The Three Great Hunts. 200 gold and 1500 score awarded.");
+    } else {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "The Guild remembers your three great hunts. Our expeditions can travel those routes again.");
+    }
 }
 
 void game_talk_to_orin(GameState *g) {
@@ -5591,6 +5752,7 @@ typedef struct {
 } QuestOffer;
 
 static const QuestOffer quest_offers[] = {
+    {"Huntmaster Selene", LOCATION_GUILD, offsetof(GameState, hunt_quest_state), 0, "Assigned: The Three Great Hunts. See your quest journal."},
     {"Marshal Veyra", LOCATION_TOWN_HALL, offsetof(GameState, watchfire_quest_state), 0, "Assigned: Watchfires of Ridgeshire. See your quest journal."},
     {"Elowen", LOCATION_TAVERN, offsetof(GameState, elowen_quest_state), 0, "Quest assigned: The Broken Seals."},
     {"Dain", LOCATION_TOWN4, offsetof(GameState, dain_quest_state), 0, "Assigned: Recover the Treasure Map."},
@@ -6355,6 +6517,7 @@ void game_migrate_boss_shortcuts(GameState *g) {
 }
 
 void game_update_level_progress(GameState *g) {
+    refresh_hunt_progress(g);
     if (g->location < LOCATION_JAIL && (g->defeated_bosses & (1 << g->location))) {
         if (g->location == LOCATION_FOREST && g->level == FOREST_BOSS_LEVEL) {
             game_reveal_forest_shortcut(g);

@@ -118,7 +118,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_NPC_ROOK || tile == TILE_NPC_OSWIN || tile == TILE_BURIAL_LEDGER ||
                         tile == TILE_NPC_LIORA || tile == TILE_MOONVEIL_SEED_POD || tile == TILE_MOONVEIL_SPRING ||
                         tile == TILE_MOONVEIL_PLANTING_CIRCLE || tile == TILE_MOONVEIL_MOONFLOWER ||
-                        tile == TILE_NPC_ORIN || tile == TILE_GLASSDEEP_RESONATOR || tile == TILE_GLASSDEEP_RESONATOR_LIT ||
+                        tile == TILE_NPC_SELENE || tile == TILE_NPC_ORIN || tile == TILE_GLASSDEEP_RESONATOR || tile == TILE_GLASSDEEP_RESONATOR_LIT ||
                         tile == TILE_NPC_BRENNA || tile == TILE_FROST_JOURNAL || tile == TILE_NPC_FROST_SURVIVOR ||
                         tile == TILE_NPC_INNKEEPER ||
                         tile == TILE_NPC_CAIN ||

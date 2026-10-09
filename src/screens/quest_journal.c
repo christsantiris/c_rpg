@@ -17,7 +17,7 @@ typedef struct {
     const char *objective_areas[4];
 } QuestDefinition;
 
-static const QuestDefinition quest_definitions[16] = {
+static const QuestDefinition quest_definitions[17] = {
     {
         "The Broken Seals", "Elowen",
         "Restore three guarded seals in Oakhaven's dungeon.",
@@ -136,10 +136,22 @@ static const QuestDefinition quest_definitions[16] = {
         "Ridgeshire approaches", {WATCHFIRE_MOUNTAINS_LEVEL, WATCHFIRE_ASHEN_LEVEL, WATCHFIRE_DRAGONSPINE_LEVEL},
         WATCHFIRE_REWARD_GOLD, WATCHFIRE_REWARD_SCORE, NULL,
         {"Goblin Mountains", "Ashen Hollow", "Dragonspine"}
+    },
+    {
+        "The Three Great Hunts", "Huntmaster Selene",
+        "Defeat each named leader and its entire hunt group.",
+        "Return and speak to Selene in Rosemoor's Adventurer's Guild.",
+        {"Defeat Rimefang's pack", "Defeat Shardwarden's group", "Defeat Dunehex's group"},
+        "Guild hunting routes", {HUNT_FROSTFELL_LEVEL, HUNT_GLASSDEEP_LEVEL, HUNT_SUNSCAR_LEVEL},
+        HUNT_REWARD_GOLD, HUNT_REWARD_SCORE, NULL,
+        {"Frostfell Wastes", "Glassdeep Caverns", "Sunscar Wastes"}
     }
 };
 
 static int quest_state(const GameState *g, int quest) {
+    if (quest == 16) {
+        return g->hunt_quest_state;
+    }
     if (quest == 15) {
         return g->watchfire_quest_state;
     }
@@ -189,6 +201,9 @@ static int quest_state(const GameState *g, int quest) {
 }
 
 static int quest_progress(const GameState *g, int quest) {
+    if (quest == 16) {
+        return g->hunt_quest_progress;
+    }
     if (quest == 15) {
         return g->watchfire_quest_progress;
     }
@@ -254,7 +269,7 @@ int quest_journal_count(const GameState *g, QuestJournalTab tab) {
         return JOURNAL_BOSS_COUNT;
     }
     int count = 0;
-    for (int quest = 0; quest < 16; quest++) {
+    for (int quest = 0; quest < 17; quest++) {
         if (quest_in_tab(quest_state(g, quest), tab)) {
             count++;
         }
@@ -291,7 +306,7 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
         return 0;
     }
     int visible_index = 0;
-    for (int quest = 0; quest < 16; quest++) {
+    for (int quest = 0; quest < 17; quest++) {
         int state = quest_state(g, quest);
         if (!quest_in_tab(state, tab)) {
             continue;
