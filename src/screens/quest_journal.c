@@ -21,14 +21,14 @@ static const QuestDefinition quest_definitions[16] = {
     {
         "The Broken Seals", "Elowen",
         "Restore three guarded seals in Oakhaven's dungeon.",
-        "Return to Elowen in Oakhaven's Tavern.",
+        "Return and speak to Elowen in Oakhaven's Tavern.",
         {"Repair burial seal", "Repair burial seal", "Repair burial seal"},
         "Dungeon", {2, 3, 4}, 40, 300
     },
     {
         "Recover the Treasure Map", "Dain",
         "Recover the three Goblin Map Bearer fragments.",
-        "Return to Dain in Ridgeshire's town center.",
+        "Return and speak to Dain in Ridgeshire's town center.",
         {"Defeat Archer Map Bearer", "Defeat Bomber Map Bearer",
             "Defeat Shaman Map Bearer"},
         "Mountains", {7, 6, 5}, 60, 400
@@ -36,7 +36,7 @@ static const QuestDefinition quest_definitions[16] = {
     {
         "The Lost Wardens", "Alder",
         "Defeat the captors and rescue three lost wardens.",
-        "Return to Alder in Stillbury's Inn.",
+        "Return and speak to Alder in Stillbury's Inn.",
         {"Rescue forest warden", "Rescue forest warden",
             "Rescue forest warden"},
         "Forest", {7, 6, 5}, 70, 500
@@ -44,50 +44,50 @@ static const QuestDefinition quest_definitions[16] = {
     {
         "Relight the Drowned Beacons", "Mara",
         "Lower the tides and relight three guarded beacons.",
-        "Return to Mara in Oakhaven's Tavern.",
+        "Return and speak to Mara in Oakhaven's Tavern.",
         {"Light drowned beacon", "Light drowned beacon",
             "Light drowned beacon"},
         "Coast", {2, 3, 4}, 80, 600
     },
     {
         "The Buried Sun", "Nahla",
-        "Defeat the temple guardian and recover the",
-        "treasure buried beneath the solar vault.",
+        "Defeat the temple guardian and recover the buried treasure.",
+        "Return and speak to Nahla by the temple on the Ruined Isle.",
         {"Recover the buried treasure", "", ""},
         "Ruined Temple", {5, 0, 0}, 150, 2500
     },
     {
         "The Ivory Rook", "Rook",
-        "Navigate the labyrinth, light five runes,",
-        "defeat the Minotaur, and recover the ivory rook.",
+        "Light five runes, defeat the Minotaur, and recover the rook.",
+        "Return and speak to Rook in Stillbury's Inn.",
         {"Recover the ivory rook", "", ""},
         "Stillbury Labyrinth", {5, 0, 0}, ROOK_QUEST_REWARD, 500
     },
     {
         "Bring Mira Home", "Bram",
-        "Defeat the vampire holding Mira in the swamp,",
-        "then speak to her and return to Bram at the inn.",
+        "Defeat Mira's vampire captor in the swamp and speak to her.",
+        "Return and speak to Bram in Stillbury's Inn.",
         {"Rescue Mira", "", ""},
         "Blackwater Swamp", {SWAMP_RESCUE_LEVEL, 0, 0}, 80, 600
     },
     {
         "The Dragon's Hoard", "Ilya",
-        "Recover the golden goblet from the hoard",
-        "on Dragonspine's fifth stage. Return to Oakhaven's Tavern.",
+        "Recover the golden goblet from Dragonspine's fifth stage.",
+        "Return and speak to Ilya in Oakhaven's Tavern.",
         {"Recover the golden goblet", "", ""},
         "Dragonspine", {5, 0, 0}, 0, 600, "Potion of Strength"
     },
     {
         "The Lost Magic Lamp", "Zara",
-        "Recover a magic lamp from Sunscar Wastes",
-        "and return it to Zara in Stillbury's Inn.",
+        "Recover a magic lamp from Sunscar Wastes.",
+        "Return and speak to Zara in Stillbury's Inn.",
         {"Recover the magic lamp", "", ""},
         "Sunscar Wastes", {DESERT_LAMP_LEVEL, 0, 0}, 80, 600
     },
     {
         "Reclaim the Emberforge", "Steward Hadrin",
-        "Recover the stolen mechanism, defeat the forge's",
-        "defenders, and repair the abandoned furnace.",
+        "Recover the mechanism, defeat the guards, and repair the forge.",
+        "Return and speak to Steward Hadrin in Ridgeshire's Town Hall.",
         {"Recover the forge mechanism", "Restore the Emberforge", ""},
         "Ashen Hollow", {EMBERFORGE_MECHANISM_LEVEL, EMBERFORGE_FURNACE_LEVEL, 0},
         EMBERFORGE_REWARD_GOLD, EMBERFORGE_REWARD_SCORE
@@ -95,7 +95,7 @@ static const QuestDefinition quest_definitions[16] = {
     {
         "The Silent Expedition", "Quartermaster Brenna",
         "Recover the journal and rescue Surveyor Fen.",
-        "Return to Brenna in Stillbury's Inn.",
+        "Return and speak to Brenna in Stillbury's Inn.",
         {"Recover the expedition journal", "Rescue Surveyor Fen", ""},
         "Frostfell Wastes", {FROSTFELL_JOURNAL_LEVEL, FROSTFELL_SURVIVOR_LEVEL, 0},
         FROSTFELL_REWARD_GOLD, FROSTFELL_REWARD_SCORE
@@ -103,35 +103,35 @@ static const QuestDefinition quest_definitions[16] = {
     {
         "The Broken Resonance", "Surveyor Orin",
         "Read the inscriptions and restore three resonators.",
-        "Return to Orin in Rosemoor's Adventurer's Guild.",
+        "Return and speak to Orin in Rosemoor's Adventurer's Guild.",
         {"Restore Root Resonator", "Restore Tide Resonator", "Restore Crown Resonator"},
         "Glassdeep Caverns", {2, 3, 4}, GLASSDEEP_REWARD_GOLD, GLASSDEEP_REWARD_SCORE
     },
     {
         "The Stolen Moonseed", "Botanist Liora",
-        "Recover the Moonseed, gather moonwater, and plant",
-        "the ancient circle. Return to Rosemoor's town center.",
+        "Recover the Moonseed and moonwater; restore the ancient circle.",
+        "Return and speak to Liora in Rosemoor's town center.",
         {"Recover the Moonseed", "Gather moonwater", "Restore the planting circle"},
         "Moonveil Gardens", {2, 3, 4}, MOONVEIL_REWARD_GOLD, MOONVEIL_REWARD_SCORE
     },
     {
         "Rest for the Forgotten", "Brother Oswin",
         "Silence three memorials and recover the royal ledger.",
-        "Return to Oswin in Ridgeshire's Town Hall.",
+        "Return and speak to Brother Oswin in Ridgeshire's Town Hall.",
         {"Silence Soldiers' memorial", "Silence Watchers' memorial", "Silence Choir memorial", "Recover the burial ledger"},
         "Royal Catacombs", {2, 3, 4, 5}, CATACOMBS_REWARD_GOLD, CATACOMBS_REWARD_SCORE
     },
     {
         "Guide Tomas Home", "Tomas",
-        "Escape the royal jail through the hidden tunnel.",
-        "Guide your fellow prisoner to central Ridgeshire.",
+        "Escape through the hidden tunnel and escort Tomas home.",
+        "Tomas rewards you on arrival in Ridgeshire's town center.",
         {"Find the secret tunnel", "Escort Tomas to Ridgeshire"},
         "Escape Tunnel", {1, 1, 0, 0}, ESCAPE_REWARD_GOLD, ESCAPE_REWARD_SCORE
     },
     {
         "Watchfires of Ridgeshire", "Marshal Veyra",
         "Clear the defenders and restore three watchfires.",
-        "Return to Veyra in Ridgeshire's Town Hall.",
+        "Return and speak to Marshal Veyra in Ridgeshire's Town Hall.",
         {"Restore southern watchfire", "Restore northern watchfire", "Restore eastern watchfire"},
         "Ridgeshire approaches", {WATCHFIRE_MOUNTAINS_LEVEL, WATCHFIRE_ASHEN_LEVEL, WATCHFIRE_DRAGONSPINE_LEVEL},
         WATCHFIRE_REWARD_GOLD, WATCHFIRE_REWARD_SCORE, NULL,
