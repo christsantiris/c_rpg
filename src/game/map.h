@@ -164,8 +164,11 @@
 #define FROSTFELL_DEPTH 5
 #define FROSTFELL_JOURNAL_LEVEL 2
 #define FROSTFELL_SURVIVOR_LEVEL 4
+// Legacy Tavern coordinates used by save migrations.
 #define BRENNA_X 10
 #define BRENNA_Y 18
+#define BRENNA_INN_X 23
+#define BRENNA_INN_Y 18
 #define LIORA_INN_X 18
 #define LIORA_INN_Y 18
 #define MARA_TAVERN_X 31

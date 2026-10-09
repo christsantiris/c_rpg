@@ -19,12 +19,12 @@ static void start(void) {
 }
 
 static void accept(void) {
-    game_enter_tavern(&game);
-    game.player.x = BRENNA_X;
-    game.player.y = BRENNA_Y + 1;
+    game_enter_inn(&game);
+    game.player.x = BRENNA_INN_X;
+    game.player.y = BRENNA_INN_Y + 1;
     game_talk_to_brenna(&game);
     game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
-    game_leave_tavern(&game);
+    game_leave_inn(&game);
 }
 
 static int objective(TileType tile, int *x, int *y) {
@@ -62,23 +62,23 @@ static void defeat_defenders(int x, int y) {
 
 static void test_expedition(void) {
     start();
-    game_enter_tavern(&game);
-    ASSERT("Brenna occupies a reachable, blocked NPC tile", game.map.tiles[BRENNA_Y][BRENNA_X] == TILE_NPC_BRENNA &&
-        !map_is_walkable(&game.map, BRENNA_X, BRENNA_Y) && map_is_walkable(&game.map, BRENNA_X, BRENNA_Y + 1));
+    game_enter_inn(&game);
+    ASSERT("Brenna occupies a reachable, blocked NPC tile", game.map.tiles[BRENNA_INN_Y][BRENNA_INN_X] == TILE_NPC_BRENNA &&
+        !map_is_walkable(&game.map, BRENNA_INN_X, BRENNA_INN_Y) && map_is_walkable(&game.map, BRENNA_INN_X, BRENNA_INN_Y + 1));
     game_talk_to_brenna(&game);
     ASSERT("Brenna cannot assign remotely", !game.frostfell_quest_state);
-    game.player.x = BRENNA_X;
-    game.player.y = BRENNA_Y + 1;
+    game.player.x = BRENNA_INN_X;
+    game.player.y = BRENNA_INN_Y + 1;
     action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
     ASSERT("Brenna assigns through conversation, not Action", !game.frostfell_quest_state);
     game_talk_to_brenna(&game);
     game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
-    ASSERT("Brenna explains the two-town route through the woods into the far north", game.frostfell_quest_state == 1 &&
-        strstr(game.dialogue_text, "two towns away") && strstr(game.dialogue_text, "far north") &&
-        strstr(game.dialogue_text, "woods to Stillbury") && strstr(game.dialogue_text, "swamp to Rosemoor"));
-    ASSERT("acceptance persists inside the Tavern", save_game(&game, FROST_QUEST_SLOT) && load_game(&loaded, FROST_QUEST_SLOT) &&
-        loaded.frostfell_quest_state == 1 && loaded.map.tiles[BRENNA_Y][BRENNA_X] == TILE_NPC_BRENNA);
-    game_leave_tavern(&game);
+    ASSERT("Brenna explains the route from Stillbury through Rosemoor into the far north", game.frostfell_quest_state == 1 &&
+        strstr(game.dialogue_text, "far north") &&
+        strstr(game.dialogue_text, "swamp north of Stillbury to Rosemoor") && strstr(game.dialogue_text, "north gate into Frostfell"));
+    ASSERT("acceptance persists inside the Inn", save_game(&game, FROST_QUEST_SLOT) && load_game(&loaded, FROST_QUEST_SLOT) &&
+        loaded.frostfell_quest_state == 1 && loaded.map.tiles[BRENNA_INN_Y][BRENNA_INN_X] == TILE_NPC_BRENNA);
+    game_leave_inn(&game);
     game_enter_frostfell(&game);
     game_descend(&game);
     int x = -1;
@@ -318,13 +318,12 @@ static void test_legacy_save(void) {
     ASSERT("version 90 migrates new quest fields while retaining progress", load_game(&loaded, FROST_QUEST_SLOT) &&
         loaded.gold == 731 && !loaded.frostfell_quest_state && !loaded.frostfell_quest_progress && !loaded.frostfell_quest_encounters &&
         loaded.max_frostfell_level_reached == 5 && (loaded.defeated_bosses & (1 << LOCATION_FROSTFELL)));
-    ASSERT("migration places Brenna and moves the old player and loot safely beside her", loaded.player.x == BRENNA_X &&
+    ASSERT("legacy migration preserves player and loot while removing Brenna from the Tavern", loaded.player.x == BRENNA_X &&
         loaded.player.y == BRENNA_Y + 1 && loaded.floor_items[0].active && loaded.floor_items[0].y == BRENNA_Y + 1 &&
         loaded.floor_items[0].item.type == ITEM_WEAPON && loaded.floor_items[0].underlying_tile == TILE_TAVERN_FLOOR &&
-        loaded.map.tiles[BRENNA_Y][BRENNA_X] == TILE_NPC_BRENNA && loaded.map.tiles[BRENNA_Y + 1][BRENNA_X] == TILE_ITEM);
+        loaded.map.tiles[BRENNA_Y][BRENNA_X] == TILE_TAVERN_FLOOR && loaded.map.tiles[BRENNA_Y + 1][BRENNA_X] == TILE_ITEM);
     ASSERT("migrated save writes and reloads", save_game(&loaded, FROST_QUEST_SLOT) && load_game(&game, FROST_QUEST_SLOT));
-    game_talk_to_brenna(&game);
-    game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
+    accept();
     ASSERT("the quest remains available after a previous Kraken victory", game.frostfell_quest_state == 1 &&
         (game.defeated_bosses & (1 << LOCATION_FROSTFELL)));
 }

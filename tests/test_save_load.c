@@ -443,6 +443,110 @@ static void test_legacy_goblin_reward_migration(void) {
     remove_test_save(LEGACY_GOBLIN_REWARD_SLOT);
 }
 
+static void test_goblin_shield_rebalance_migration(void) {
+    static GameState original;
+    static GameState loaded;
+    static GameState reloaded;
+    for (int equipped = 0; equipped <= 1; equipped++) {
+        memset(&original, 0, sizeof(original));
+        original.player.player_class = CLASS_WARRIOR;
+        game_init(&original);
+        game_equip_main_hand(&original, 0);
+        original.inventory[original.inventory_count] = item_make_goblin_king_shield();
+        int index = original.inventory_count++;
+        original.inventory[index].defense_bonus = 5;
+        original.inventory[index].block_chance = 15;
+        original.inventory[index].value = 500;
+        int base_defense = original.player.defense;
+        if (equipped) {
+            game_equip_shield(&original, index);
+        }
+        original.floor_item_count = 1;
+        original.floor_items[0] = (FloorItem){.active = 1, .x = 20, .y = 20,
+            .underlying_tile = TILE_TOWN_FLOOR, .item = original.inventory[index]};
+        original.map.tiles[20][20] = TILE_ITEM;
+        original.castle_loot_count[0] = 1;
+        original.castle_loot[0][0] = original.floor_items[0];
+        int ok = save_game(&original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, 111) &&
+            load_game(&loaded, LEGACY_SLOT);
+        ASSERT("legacy Goblin shields migrate in inventory, dropped loot and castle loot", ok &&
+            loaded.inventory[index].defense_bonus == 3 && loaded.inventory[index].block_chance == 12 &&
+            loaded.inventory[index].value == 200 && loaded.floor_items[0].item.defense_bonus == 3 &&
+            loaded.floor_items[0].item.block_chance == 12 && loaded.floor_items[0].item.value == 200 &&
+            loaded.castle_loot[0][0].item.defense_bonus == 3 && loaded.castle_loot[0][0].item.block_chance == 12 &&
+            loaded.castle_loot[0][0].item.value == 200);
+        ASSERT("shield migration adjusts defense only for an equipped shield", ok &&
+            loaded.player.defense == base_defense + (equipped ? 3 : 0) &&
+            loaded.equipped_off_hand == (equipped ? index : -1));
+        ASSERT("shield migration preserves progress and does not apply twice", ok &&
+            loaded.gold == original.gold && loaded.defeated_bosses == original.defeated_bosses &&
+            save_game(&loaded, MIGRATED_SLOT) && load_game(&reloaded, MIGRATED_SLOT) &&
+            reloaded.player.defense == loaded.player.defense && reloaded.inventory[index].defense_bonus == 3);
+        remove_test_save(LEGACY_SLOT);
+        remove_test_save(MIGRATED_SLOT);
+    }
+}
+
+static void test_brenna_inn_migration(void) {
+    static GameState original;
+    static GameState loaded;
+    for (int inn = 0; inn <= 1; inn++) {
+        memset(&original, 0, sizeof(original));
+        original.player.player_class = CLASS_WARRIOR;
+        game_init(&original);
+        if (inn) {
+            game_enter_inn(&original);
+        } else {
+            game_enter_tavern(&original);
+            snprintf(original.dialogue_speaker, MAX_SPEAKER_LEN, "Quartermaster Brenna");
+            original.dialogue_active = 1;
+        }
+        int x = inn ? BRENNA_INN_X : BRENNA_X;
+        int y = inn ? BRENNA_INN_Y : BRENNA_Y;
+        original.player.x = x;
+        original.player.y = y;
+        original.frostfell_quest_state = 2;
+        original.frostfell_quest_progress = 3;
+        original.frostfell_quest_encounters = 3;
+        original.floor_item_count = 1;
+        original.floor_items[0] = (FloorItem){.active = 1, .x = x, .y = y,
+            .underlying_tile = inn ? TILE_TAVERN_FLOOR : TILE_NPC_BRENNA, .item = item_make_buckler()};
+        original.map.tiles[y][x] = TILE_ITEM;
+        int ok = save_game(&original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, 111) &&
+            load_game(&loaded, LEGACY_SLOT);
+        ASSERT("Brenna relocation preserves Frostfell objectives and pending rewards", ok &&
+            loaded.frostfell_quest_state == 2 && loaded.frostfell_quest_progress == 3 &&
+            loaded.frostfell_quest_encounters == 3 && loaded.gold == original.gold && loaded.score == original.score);
+        ASSERT("Brenna relocation preserves dropped loot and repairs its floor", ok &&
+            loaded.floor_items[0].active && loaded.floor_items[0].item.type == ITEM_SHIELD &&
+            loaded.floor_items[0].underlying_tile == TILE_TAVERN_FLOOR &&
+            loaded.floor_items[0].y == y + inn && loaded.map.tiles[y + inn][x] == TILE_ITEM);
+        if (inn) {
+            ASSERT("legacy Inn moves the player clear and keeps existing residents", ok &&
+                loaded.player.x == x && loaded.player.y == y + 1 && loaded.map.tiles[y][x] == TILE_NPC_BRENNA &&
+                loaded.map.tiles[18][10] == TILE_NPC_ROOK && loaded.map.tiles[LIORA_INN_Y][LIORA_INN_X] == TILE_NPC_LIORA &&
+                loaded.map.tiles[ALDER_INN_Y][ALDER_INN_X] == TILE_NPC_ALDER && loaded.map.tiles[7][28] == TILE_NPC_INNKEEPER);
+        } else {
+            ASSERT("legacy Tavern dismisses Brenna's old dialogue and never restores her under loot", ok &&
+                !loaded.dialogue_active && loaded.player.y == y);
+            action_resolve_player(&loaded, (Action){ACTION_PICK_UP, 0, 0});
+            ASSERT("picking up legacy Tavern loot leaves walkable floor", loaded.map.tiles[y][x] == TILE_TAVERN_FLOOR);
+            game_enter_inn(&loaded);
+            loaded.player.x = BRENNA_INN_X;
+            loaded.player.y = BRENNA_INN_Y + 1;
+        }
+        game_talk_to_brenna(&loaded);
+        game_talk_to_brenna(&loaded);
+        ASSERT("moved Brenna pays a pending reward exactly once", loaded.frostfell_quest_state == 3 &&
+            loaded.gold == original.gold + FROSTFELL_REWARD_GOLD && loaded.score == original.score + FROSTFELL_REWARD_SCORE);
+        ASSERT("moved Brenna and quest completion survive another save", save_game(&loaded, MIGRATED_SLOT) &&
+            load_game(&original, MIGRATED_SLOT) && original.frostfell_quest_state == 3 &&
+            original.map.tiles[BRENNA_INN_Y][BRENNA_INN_X] == TILE_NPC_BRENNA);
+        remove_test_save(LEGACY_SLOT);
+        remove_test_save(MIGRATED_SLOT);
+    }
+}
+
 static void test_cryptblade_rebalance_migration(void) {
     static GameState original;
     static GameState loaded;
@@ -1855,6 +1959,8 @@ void test_save_load(void) {
     test_legacy_off_hand_migration();
     test_legacy_goblin_reward_migration();
     test_cryptblade_rebalance_migration();
+    test_goblin_shield_rebalance_migration();
+    test_brenna_inn_migration();
     test_migrated_weapon_round_trip();
     test_migrated_armor_round_trip();
     test_harbor_relocation();

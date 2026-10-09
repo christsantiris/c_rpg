@@ -114,8 +114,8 @@ and accepting the quest preserves previously explored Ashen stages. See [Ashen
 Hollow](docs/ashen-hollow.md#reclaim-the-emberforge).
 
 The Frostfell Wastes begin at Rosemoor's north gate. **Quartermaster Brenna** in
-**Oakhaven's Tavern** assigns **The Silent Expedition**. She explains the route
-through the woods to Stillbury, across the swamp to Rosemoor, and north into
+**Stillbury's Inn** assigns **The Silent Expedition**. She explains the route
+across the swamp to Rosemoor and north into
 Frostfell. Recover the guarded expedition journal on stage **2** with **A**,
 then defeat the captors of **Surveyor Fen** on stage **4** and speak to him with
 **T**. He returns home without an escort. Return to Brenna for **100 gold and
@@ -145,12 +145,12 @@ NPC quest offers wait for **Y** to accept or **N** to decline (**Esc** also
 declines). Declined quests remain available when you talk again and do not
 appear in the active journal. Existing active quests keep their progress.
 
-Oakhaven's Tavern houses **Elowen**, Brenna, Mara, and Ilya. Press **T** beside
+Oakhaven's Tavern houses **Elowen**, Mara, and Ilya. Press **T** beside
 Elowen, then **Y** to accept **The Broken Seals**, restore the burial seals on
 **Oakhaven's dungeon floors 2, 3, and 4**, and return to her in the Tavern for
 **40 gold and 300 score**. This local quest can be accepted and completed
 without visiting another town. Existing saves preserve seal progress and update
-her location. Stillbury's Inn houses Alder, Liora, Rook, and Bram.
+her location. Stillbury's Inn houses Alder, Liora, Brenna, Rook, and Bram.
 
 Each town also has a local building in its southwest quarter. Walk through its
 door and press **T** beside the resident to talk. The baker and abbot wait until

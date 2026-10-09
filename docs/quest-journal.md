@@ -38,10 +38,10 @@ on Ashen Hollow stage 2 and repair of its furnace on stage 4. Return to Steward
 Hadrin in Ridgeshire for 100 gold and 800 score; both objectives stay recorded
 after collecting the reward.
 
-Brenna's **The Silent Expedition** appears after talking to her in Oakhaven's
-Tavern. It tracks the expedition journal on Frostfell stage 2 and Surveyor Fen's
+Brenna's **The Silent Expedition** appears after talking to her in Stillbury's
+Inn. It tracks the expedition journal on Frostfell stage 2 and Surveyor Fen's
 rescue on stage 4. Recover the journal with `A`, then defeat Fen's captors and
-speak to him with `T`. Return to Brenna for 100 gold and 800 score. The Polar
+speak to him with `T`. Return to Brenna in Stillbury's Inn for 100 gold and 800 score. The Polar
 Kraken is optional, and both completed objectives remain in the journal after
 collecting the reward.
 
