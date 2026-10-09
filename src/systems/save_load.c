@@ -636,7 +636,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 112);
+    cJSON_AddNumberToObject(root, "save_version", 113);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -1580,6 +1580,48 @@ static void remove_legacy_wardens(Map *m) {
                 m->tiles[y][x] = TILE_FOREST_FLOOR;
             }
         }
+    }
+}
+
+static void remove_misplaced_map_bearers(Enemy *enemies, int count, int level) {
+    int expected = level == 7 ? DAIN_FRAGMENT_ARCHER :
+        (level == 6 ? DAIN_FRAGMENT_BOMBER : (level == 5 ? DAIN_FRAGMENT_SHAMAN : 0));
+    for (int i = 0; i < count; i++) {
+        Enemy *enemy = &enemies[i];
+        if (enemy->dain_fragment && enemy->dain_fragment != expected) {
+            enemy->dain_fragment = 0;
+            const char *name = enemy->type == ENEMY_GOBLIN_ARCHER ? "Goblin Archer" :
+                (enemy->type == ENEMY_GOBLIN_BOMBER ? "Goblin Bomber" : "Goblin Shaman");
+            snprintf(enemy->name, sizeof(enemy->name), "%s", name);
+        }
+    }
+}
+
+static void migrate_near_side_quests(GameState *g) {
+    for (int i = 0; i < FOREST_DEPTH; i++) {
+        if (i < 4 && g->forest_cache[i].valid) {
+            remove_legacy_wardens(&g->forest_cache[i].map);
+        }
+    }
+    if (g->location == LOCATION_FOREST && g->level < 5) {
+        remove_legacy_wardens(&g->map);
+        for (int i = 0; i < g->floor_item_count; i++) {
+            if (g->floor_items[i].underlying_tile == TILE_FOREST_WARDEN) {
+                g->floor_items[i].underlying_tile = TILE_FOREST_FLOOR;
+            }
+        }
+    }
+    if (g->portal_location == LOCATION_FOREST && g->portal_level < 5 &&
+        g->portal_origin_tile == TILE_FOREST_WARDEN) {
+        g->portal_origin_tile = TILE_FOREST_FLOOR;
+    }
+    for (int i = 0; i < MOUNTAIN_DEPTH; i++) {
+        if (g->mountain_cache[i].valid) {
+            remove_misplaced_map_bearers(g->mountain_cache[i].enemies, g->mountain_cache[i].enemy_count, i + 1);
+        }
+    }
+    if (g->location == LOCATION_MOUNTAINS) {
+        remove_misplaced_map_bearers(g->enemies, g->enemy_count, g->level);
     }
 }
 
@@ -3866,6 +3908,9 @@ int load_game(GameState *g, int slot) {
             }
             g->map.tiles[BRENNA_INN_Y][BRENNA_INN_X] = TILE_NPC_BRENNA;
         }
+    }
+    if (save_version < 113) {
+        migrate_near_side_quests(g);
     }
     game_hide_portal_destination(g);
     game_migrate_boss_shortcuts(g);

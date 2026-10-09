@@ -265,7 +265,7 @@ void test_dain_quest(void) {
     ASSERT("accepting Dain's quest starts a fresh mountain expedition",
         !g.mountain_cache[3].valid && !g.portal_active);
 
-    int target_levels[3] = {1, 2, 5};
+    int target_levels[3] = {7, 6, 5};
     EnemyType target_types[3] = {
         ENEMY_GOBLIN_ARCHER, ENEMY_GOBLIN_BOMBER, ENEMY_GOBLIN_SHAMAN
     };
@@ -287,15 +287,15 @@ void test_dain_quest(void) {
             marked_target);
     }
 
-    g.level = 1;
+    g.level = 7;
     map_generate_mountains(&g.map, g.level);
     g.enemy_count = 0;
-    LevelCache *cached = &g.mountain_cache[1];
-    map_generate_mountains(&cached->map, 2);
+    LevelCache *cached = &g.mountain_cache[5];
+    map_generate_mountains(&cached->map, 6);
     cached->enemy_count = 0;
     cached->level_cleared = 1;
     cached->valid = 1;
-    game_descend(&g);
+    game_ascend(&g);
     int cached_bearers = 0;
     int cached_enemies = 0;
     for (int i = 0; i < g.enemy_count; i++) {
@@ -306,7 +306,7 @@ void test_dain_quest(void) {
         cached_enemies += g.enemies[i].active;
     }
     ASSERT("backtracking adds a guarded bearer to a cleared cached stage",
-        g.level == 2 && cached_bearers == 1 && cached_enemies >= 3);
+        g.level == 6 && cached_bearers == 1 && cached_enemies >= 3);
     game_refresh_quest_encounters(&g);
     int refreshed_bearers = 0;
     for (int i = 0; i < g.enemy_count; i++) {
@@ -371,11 +371,11 @@ void test_dain_guild(void) {
     ASSERT("Dain assigns the same mountain quest from the Guild and leaves Zara's quest intact", g.dain_quest_state == 1 &&
         !g.dain_map_fragments && g.sunscar_lamp_quest_state == 1 &&
         g.dialogue_x == GUILD_DAIN_X && g.dialogue_y == GUILD_DAIN_Y &&
-        strstr(g.dialogue_text, "stages 1, 2, and 5") && strstr(g.dialogue_text, "Rosemoor's Adventurer's Guild"));
+        strstr(g.dialogue_text, "stages 7, 6, and 5") && strstr(g.dialogue_text, "Rosemoor's Adventurer's Guild"));
     g.dain_map_fragments = DAIN_FRAGMENT_ARCHER | DAIN_FRAGMENT_SHAMAN;
     QuestJournalEntry entry;
     ASSERT("the journal retains mountain objectives and rewards and names the new return location", quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 0, &entry) &&
-        strcmp(entry.title, "Recover the Treasure Map") == 0 && entry.stages[0] == 1 && entry.stages[1] == 2 && entry.stages[2] == 5 &&
+        strcmp(entry.title, "Recover the Treasure Map") == 0 && entry.stages[0] == 7 && entry.stages[1] == 6 && entry.stages[2] == 5 &&
         entry.reward_gold == 60 && entry.reward_score == 400 && entry.objective_complete[0] && !entry.objective_complete[1] &&
         entry.objective_complete[2] && strstr(entry.summary_line_2, "Rosemoor's Adventurer's Guild"));
     ASSERT("saving in the Guild retains Dain, Zara, and partial map progress", save_game(&g, 99141) && load_game(&loaded, 99141) &&
@@ -427,20 +427,19 @@ void test_alder_quest(void) {
     ASSERT("new Alder quest begins with no rescues",
         g.alder_wardens_rescued == 0);
     ASSERT("Alder speaks through dialogue state", g.dialogue_active &&
-        strcmp(g.dialogue_speaker, "Alder") == 0 && strstr(g.dialogue_text, "stages 1 and 2") && strstr(g.dialogue_text, "stage 5"));
+        strcmp(g.dialogue_speaker, "Alder") == 0 && strstr(g.dialogue_text, "stages 7, 6, and 5") && strstr(g.dialogue_text, "Stillbury"));
     ASSERT("accepting Alder's quest starts a fresh forest expedition",
         !g.forest_cache[3].valid && !g.portal_active);
     game_leave_inn(&g);
-    game_return_to_town(&g);
 
-    int target_levels[3] = {1, 2, 5};
+    int target_levels[3] = {7, 6, 5};
     EnemyType guardian_types[3] = {
         ENEMY_GIANT_SPIDER, ENEMY_DARK_ELF, ENEMY_FOREST_TROLL
     };
     game_enter_forest(&g);
     for (int target = 0; target < 3; target++) {
-        while (g.level < target_levels[target]) {
-            game_descend(&g);
+        while (g.level > target_levels[target]) {
+            game_ascend(&g);
         }
         int warden_x = 0;
         int warden_y = 0;
@@ -466,7 +465,6 @@ void test_alder_quest(void) {
     ASSERT("Alder awards 70 gold", g.gold == gold_before + 70);
     ASSERT("Alder awards 500 score", g.score == score_before + 500);
     game_leave_inn(&g);
-    game_return_to_town(&g);
 
     game_enter_forest(&g);
     game_descend(&g);
