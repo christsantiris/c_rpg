@@ -187,8 +187,29 @@ void test_jail(void) {
         loaded.jail_quest_state == 2 && loaded.map.tiles[JAIL_HATCH_Y][JAIL_HATCH_X] == TILE_JAIL_HATCH);
     reach_tunnel();
     ASSERT("walking onto the hatch enters one tunnel with Tomas and enemies", game.location == LOCATION_ESCAPE_TUNNEL &&
-        game.level == 1 && game.enemy_count == 12 && jail_prisoner_at(&game, 1, 14) &&
+        game.level == 1 && game.enemy_count == MAX_ENEMIES && jail_prisoner_at(&game, 1, 14) &&
         quest_journal_get_entry(&game, QUEST_TAB_ACTIVE, 0, &entry) && entry.objective_complete[0] && !entry.objective_complete[1]);
+    int open = 1;
+    int archers = 0;
+    int bodyguards = 0;
+    int stronger = 0;
+    for (int i = 0; i < game.enemy_count; i++) {
+        Enemy *enemy = &game.enemies[i];
+        open &= map_is_walkable(&game.map, enemy->x, enemy->y);
+        archers += enemy->type == ENEMY_ROAD_ARCHER;
+        bodyguards += enemy->type == ENEMY_HOBGOBLIN_GUARD;
+        stronger += enemy->x >= ESCAPE_TUNNEL_LEGACY_W && enemy->max_hp > 32 && enemy->attack > 10;
+        for (int j = 0; j < i; j++) {
+            open &= enemy->x != game.enemies[j].x || enemy->y != game.enemies[j].y;
+        }
+    }
+    ASSERT("the longer tunnel adds stronger ranged and shielding enemies on distinct walkable tiles",
+        ESCAPE_TUNNEL_W >= 180 && open && stronger >= 18 && archers >= 6 && bodyguards >= 3);
+    ASSERT("deeper tunnel bends narrow to three tiles while leaving Tomas a walkable route",
+        map_is_walkable(&game.map, 90, 7) && map_is_walkable(&game.map, 90, 8) &&
+        map_is_walkable(&game.map, 90, 9) && !map_is_walkable(&game.map, 90, 6) &&
+        !map_is_walkable(&game.map, 90, 10) && map_is_walkable(&game.map, 120, 20) &&
+        map_is_walkable(&game.map, 160, 8));
     game.player.known_spell_count = 1;
     game.player.equipped_spell = 0;
     game.player.known_spells[0] = spell_make_return_to_town();
@@ -215,6 +236,37 @@ void test_jail(void) {
         load_game(&loaded, JAIL_TEST_SLOT) && loaded.location == LOCATION_ESCAPE_TUNNEL && loaded.jail_quest_state == 2 &&
         loaded.prisoner_x == game.prisoner_x && loaded.prisoner_y == game.prisoner_y && loaded.enemies[0].hp == 7 &&
         loaded.floor_items[0].active && memcmp(loaded.map.tiles, game.map.tiles, sizeof(game.map.tiles)) == 0);
+    // Model an in-progress short tunnel without disturbing its original actors or loot.
+    game.enemy_count = 12;
+    game.enemies[1].active = 0;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = ESCAPE_TUNNEL_LEGACY_W - 1; x < MAP_W; x++) {
+            game.map.tiles[y][x] = TILE_CASTLE_WALL;
+        }
+    }
+    game.map.tiles[14][ESCAPE_TUNNEL_LEGACY_W - 1] = TILE_TUNNEL_EXIT;
+    map_clear_exploration(&game.map);
+    map_mark_explored(&game.map, 6, 14);
+    ASSERT("short tunnel migration fixture saves", save_game(&game, JAIL_TEST_SLOT));
+    cJSON *legacy = read_fixture();
+    if (legacy) {
+        cJSON_SetNumberValue(cJSON_GetObjectItem(legacy, "save_version"), 117);
+    }
+    ASSERT("old tunnel saves gain the deeper passage without moving Tomas or respawning defeated enemies",
+        write_fixture(legacy) && load_game(&loaded, JAIL_TEST_SLOT) &&
+        loaded.enemy_count == MAX_ENEMIES && loaded.player.x == game.player.x && loaded.prisoner_x == game.prisoner_x &&
+        loaded.prisoner_y == game.prisoner_y && loaded.enemies[0].hp == 7 && !loaded.enemies[1].active &&
+        loaded.floor_items[0].active && loaded.floor_items[0].x == 3 && loaded.map.tiles[14][3] == TILE_ITEM &&
+        map_is_explored(&loaded.map, 6, 14) && !map_is_explored(&loaded.map, 90, 8) &&
+        loaded.map.tiles[14][ESCAPE_TUNNEL_LEGACY_W - 1] == TILE_CASTLE_FLOOR &&
+        loaded.map.tiles[14][ESCAPE_TUNNEL_W - 1] == TILE_TUNNEL_EXIT && loaded.gold == game.gold);
+    game = loaded;
+    game.enemies[12].active = 0;
+    game.enemies[13].hp = 9;
+    ASSERT("saving an extended tunnel keeps new enemy damage and defeats without rebuilding it again",
+        save_game(&game, JAIL_TEST_SLOT) && load_game(&loaded, JAIL_TEST_SLOT) &&
+        loaded.enemy_count == MAX_ENEMIES && !loaded.enemies[12].active && loaded.enemies[13].hp == 9 &&
+        memcmp(loaded.map.tiles, game.map.tiles, sizeof(game.map.tiles)) == 0);
     game.prisoner_x = 3;
     game.prisoner_y = 14;
     game.enemy_count = 5;
@@ -237,7 +289,7 @@ void test_jail(void) {
     game.player.max_hp = 10000;
     int guard = 0;
     int defeated = 0;
-    int previous_enemies = 12;
+    int previous_enemies = game.enemy_count;
     while (game.location == LOCATION_ESCAPE_TUNNEL && guard++ < 400 && tunnel_step()) {
         if (game.location == LOCATION_ESCAPE_TUNNEL) {
             int remaining = 0;
@@ -248,8 +300,9 @@ void test_jail(void) {
             previous_enemies = remaining;
         }
     }
-    ASSERT("the full tunnel can be fought and escorted around both bends", game.location == LOCATION_TOWN4 &&
-        game.player.x == 20 && game.player.y == 12 && game.jail_quest_state == 3 && jail_prisoner_at(&game, 21, 12) && defeated > 0);
+    ASSERT("the full tunnel can be fought and escorted around all bends", game.location == LOCATION_TOWN4 &&
+        game.player.x == 20 && game.player.y == 12 && game.jail_quest_state == 3 && jail_prisoner_at(&game, 21, 12) &&
+        defeated >= 18 && guard >= 180);
     ASSERT("arrival awards the escort reward once without damaging dungeon caches", game.gold >= gold + ESCAPE_REWARD_GOLD &&
         game.score >= ESCAPE_REWARD_SCORE && !game.level_cache[0].valid && !game.enemy_count && !game.floor_item_count);
     ASSERT("completed journal records both escape objectives", quest_journal_get_entry(&game, QUEST_TAB_COMPLETED, 0, &entry) &&

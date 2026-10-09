@@ -323,8 +323,63 @@ static void move_ashore_from_town3_moat(int *x, int *y) {
 // This is the same turn map_generate_crownroad applies to the road's layout.
 static void rotate_crownroad_position(int *x, int *y) {
     int old_x = *x;
-    *x = CROWNROAD_W - 1 - *y;
+    *x = CROWNROAD_LEGACY_W - 1 - *y;
     *y = old_x;
+}
+
+static void stretch_crownroad_x(int *x) {
+    if (*x >= 0 && *x < CROWNROAD_LEGACY_W) {
+        *x *= CROWNROAD_LENGTH_SCALE;
+    }
+}
+
+static void stretch_crownroad_enemies(Enemy *enemies, int count) {
+    for (int i = 0; i < count; i++) {
+        stretch_crownroad_x(&enemies[i].x);
+        stretch_crownroad_x(&enemies[i].attack_target_x);
+    }
+}
+
+static void migrate_longer_crownroads(GameState *g, int version) {
+    if (game_is_king_road(g)) {
+        unsigned char explored[MAP_EXPLORED_BYTES];
+        memcpy(explored, g->map.explored, sizeof(explored));
+        map_generate_crownroad(&g->map);
+        // Before version 69 the orientation migration already regenerated the new map.
+        if (version >= 69) {
+            for (int y = 0; y < CROWNROAD_H; y++) {
+                for (int x = 0; x < CROWNROAD_W; x++) {
+                    int index = y * MAP_W + x / CROWNROAD_LENGTH_SCALE;
+                    if (explored[index / 8] & (1u << (index % 8))) {
+                        map_mark_explored(&g->map, x, y);
+                    }
+                }
+            }
+        }
+        stretch_crownroad_x(&g->player.x);
+        stretch_crownroad_enemies(g->enemies, g->enemy_count);
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            stretch_crownroad_x(&item->x);
+            if (item->active && item->x >= 0 && item->x < MAP_W && item->y >= 0 && item->y < MAP_H) {
+                item->underlying_tile = g->map.tiles[item->y][item->x];
+            }
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->active && item->x >= 0 && item->x < MAP_W && item->y >= 0 && item->y < MAP_H) {
+                g->map.tiles[item->y][item->x] = TILE_ITEM;
+            }
+        }
+        g->trail_count = 0;
+        g->trail_frames = 0;
+    }
+    if (g->crownroad_cache.valid) {
+        stretch_crownroad_enemies(g->crownroad_cache.enemies, g->crownroad_cache.enemy_count);
+    }
+    if (g->kingroad_west_cache.valid) {
+        stretch_crownroad_enemies(g->kingroad_west_cache.enemies, g->kingroad_west_cache.enemy_count);
+    }
 }
 
 static int in_lot(int x, int y, int lot_x, int lot_y, int w, int h) {
@@ -636,7 +691,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 117);
+    cJSON_AddNumberToObject(root, "save_version", 118);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -2022,9 +2077,10 @@ int load_game(GameState *g, int slot) {
     cJSON *jail_state = cJSON_GetObjectItem(root, "jail_quest_state");
     cJSON *prisoner_x = cJSON_GetObjectItem(root, "prisoner_x");
     cJSON *prisoner_y = cJSON_GetObjectItem(root, "prisoner_y");
+    int tunnel_width = save_version < 118 ? ESCAPE_TUNNEL_LEGACY_W : ESCAPE_TUNNEL_W;
     if (!cJSON_IsNumber(jail_state) || !cJSON_IsNumber(prisoner_x) || !cJSON_IsNumber(prisoner_y) ||
         jail_state->valueint < 0 || jail_state->valueint > 3 ||
-        prisoner_x->valueint < 0 || prisoner_x->valueint >= ESCAPE_TUNNEL_W ||
+        prisoner_x->valueint < 0 || prisoner_x->valueint >= tunnel_width ||
         prisoner_y->valueint < 0 || prisoner_y->valueint >= ESCAPE_TUNNEL_H) {
         cJSON_Delete(root);
         return 0;
@@ -2145,8 +2201,8 @@ int load_game(GameState *g, int slot) {
     g->location          = cJSON_GetObjectItem(root, "location")->valueint;
     if ((g->location == LOCATION_JAIL && (g->jail_quest_state != 1 && g->jail_quest_state != 2)) ||
         (g->location == LOCATION_ESCAPE_TUNNEL && (g->jail_quest_state != 2 ||
-        g->player.x < 1 || g->player.x >= ESCAPE_TUNNEL_W || g->player.y < 1 || g->player.y >= ESCAPE_TUNNEL_H - 1 ||
-        g->prisoner_x < 1 || g->prisoner_x >= ESCAPE_TUNNEL_W - 1 || g->prisoner_y < 1 || g->prisoner_y >= ESCAPE_TUNNEL_H - 1))) {
+        g->player.x < 1 || g->player.x >= tunnel_width || g->player.y < 1 || g->player.y >= ESCAPE_TUNNEL_H - 1 ||
+        g->prisoner_x < 1 || g->prisoner_x >= tunnel_width - 1 || g->prisoner_y < 1 || g->prisoner_y >= ESCAPE_TUNNEL_H - 1))) {
         cJSON_Delete(root);
         return 0;
     }
@@ -3991,6 +4047,10 @@ int load_game(GameState *g, int slot) {
                 migrate_kraken_cycle(g->frostfell_cache[i].enemies, g->frostfell_cache[i].enemy_count, save_version);
             }
         }
+    }
+    if (save_version < 118) {
+        migrate_longer_crownroads(g, save_version);
+        jail_migrate_tunnel(g);
     }
     game_hide_portal_destination(g);
     game_migrate_boss_shortcuts(g);

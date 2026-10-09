@@ -3467,7 +3467,7 @@ void game_enter_king_road(GameState *g, Location road, int from_castle) {
     }
     for (int i = g->enemy_count; i < MAX_ENEMIES; i++) {
         spawn_enemy(g, &g->enemies[g->enemy_count++], enemies[i],
-            CROWNROAD_W - 1 - y[i], x[i]);
+            (CROWNROAD_LEGACY_W - 1 - y[i]) * CROWNROAD_LENGTH_SCALE, x[i]);
     }
     int from_west = (road == LOCATION_CROWNROAD) != from_castle;
     g->player.x = from_west ? 1 : CROWNROAD_W - 2;

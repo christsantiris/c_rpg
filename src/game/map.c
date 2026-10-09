@@ -1644,8 +1644,8 @@ void map_generate_crownroad(Map *m) {
         }
     }
     // Rotate the authored ambush so travel runs west to east.
-    for (int x = 1; x < CROWNROAD_W - 1; x++) {
-        int old_y = CROWNROAD_W - 1 - x;
+    for (int x = 1; x < CROWNROAD_LEGACY_W - 1; x++) {
+        int old_y = CROWNROAD_LEGACY_W - 1 - x;
         int top_tree_edge = 12 + ((old_y / 6) % 3 == 1);
         int bottom_tree_edge = 28 - ((old_y / 7) % 3 == 1);
         for (int y = 1; y < CROWNROAD_H - 1; y++) {
@@ -1655,7 +1655,7 @@ void map_generate_crownroad(Map *m) {
         m->tiles[CROWNROAD_Y][x] = TILE_TOWN_PATH;
     }
     for (int branch = 0; branch < 4; branch++) {
-        int x = CROWNROAD_W - 1 - (9 + branch * 10);
+        int x = CROWNROAD_LEGACY_W - 1 - (9 + branch * 10);
         int from = branch % 2 == 0 ? 17 : CROWNROAD_Y;
         int to = branch % 2 == 0 ? CROWNROAD_Y : 23;
         for (int y = from; y <= to; y++) {
@@ -1668,11 +1668,20 @@ void map_generate_crownroad(Map *m) {
             m->tiles[y][x - 3] = TILE_WALL;
         }
     }
-    for (int old_y = 5; old_y < CROWNROAD_W - 1; old_y += 8) {
-        m->tiles[15][CROWNROAD_W - 1 - old_y] = TILE_FOREST_WALL;
-        if (old_y + 4 < CROWNROAD_W - 1) {
-            m->tiles[25][CROWNROAD_W - 1 - old_y - 4] = TILE_FOREST_WALL;
+    for (int old_y = 5; old_y < CROWNROAD_LEGACY_W - 1; old_y += 8) {
+        m->tiles[15][CROWNROAD_LEGACY_W - 1 - old_y] = TILE_FOREST_WALL;
+        if (old_y + 4 < CROWNROAD_LEGACY_W - 1) {
+            m->tiles[25][CROWNROAD_LEGACY_W - 1 - old_y - 4] = TILE_FOREST_WALL;
         }
+    }
+    // Expand from right to left so the authored terrain and ambush cover stay aligned.
+    for (int y = 0; y < CROWNROAD_H; y++) {
+        for (int x = CROWNROAD_W - 1; x >= 0; x--) {
+            m->tiles[y][x] = m->tiles[y][x / CROWNROAD_LENGTH_SCALE];
+        }
+    }
+    for (int x = 1; x < CROWNROAD_W - 1; x++) {
+        m->tiles[CROWNROAD_Y][x] = TILE_TOWN_PATH;
     }
     m->tiles[CROWNROAD_Y][0] = TILE_TOWN_EXIT;
     m->tiles[CROWNROAD_Y][CROWNROAD_W - 1] = TILE_TOWN_EXIT;
