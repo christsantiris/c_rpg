@@ -3038,18 +3038,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             (SDL_Color){220, 180, 60, 255}, r->font_tiny);
     }
     if (g->location == LOCATION_CASTLE) {
-        if (g->castle_minibosses & 1) {
-            int sx = viewport_to_screen_x(v, 17);
-            int sy = viewport_to_screen_y(v, 12);
-            castle_draw_tile(r, g, sx, sy, 17, 12, TILE_CASTLE_PASSAGE);
-            renderer_draw_text(r, "KEEP (A)", sx * 24 - 20, sy * 24 + 25, (SDL_Color){126, 224, 166, 255}, r->font_tiny);
-        }
-        if (g->castle_minibosses & 2) {
-            int sx = viewport_to_screen_x(v, 23);
-            int sy = viewport_to_screen_y(v, 12);
-            castle_draw_tile(r, g, sx, sy, 23, 12, TILE_CASTLE_PASSAGE);
-            renderer_draw_text(r, "CHAPEL (A)", sx * 24 - 28, sy * 24 + 25, (SDL_Color){126, 224, 166, 255}, r->font_tiny);
-        }
         int gx = viewport_to_screen_x(v, CROWNROAD_X - 2) * TILE_SIZE;
         int gy = viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE;
         SDL_Rect left_post = {gx, gy, 14, TILE_SIZE * 2};

@@ -691,7 +691,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 118);
+    cJSON_AddNumberToObject(root, "save_version", 120);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -1185,6 +1185,7 @@ int save_game(const GameState *g, int slot) {
         cJSON *entry = cJSON_CreateObject();
         cJSON_AddNumberToObject(entry, "valid", cache->valid);
         cJSON_AddNumberToObject(entry, "level_cleared", cache->level_cleared);
+        cJSON_AddNumberToObject(entry, "fire_phase", g->castle_fire_phase[i]);
         if (cache->valid) {
             cJSON_AddItemToObject(entry, "map", serialize_map(&cache->map));
             cJSON_AddItemToObject(entry, "enemies", serialize_enemies(cache->enemies, cache->enemy_count));
@@ -2631,6 +2632,7 @@ int load_game(GameState *g, int slot) {
     memset(g->castle_cache, 0, sizeof(g->castle_cache));
     memset(g->castle_loot, 0, sizeof(g->castle_loot));
     memset(g->castle_loot_count, 0, sizeof(g->castle_loot_count));
+    memset(g->castle_fire_phase, 0, sizeof(g->castle_fire_phase));
     g->castle_minibosses = 0;
     g->castle_prompt = 0;
     g->game_won = 0;
@@ -2654,6 +2656,12 @@ int load_game(GameState *g, int slot) {
             cJSON *entry = cJSON_GetArrayItem(floors, i);
             cJSON *valid = cJSON_GetObjectItem(entry, "valid");
             cJSON *cleared = cJSON_GetObjectItem(entry, "level_cleared");
+            cJSON *fire = cJSON_GetObjectItem(entry, "fire_phase");
+            if ((save_version >= 120 || fire) && (!cJSON_IsNumber(fire) || fire->valuedouble != fire->valueint || fire->valueint < 0 || fire->valueint > 3)) {
+                cJSON_Delete(root);
+                return 0;
+            }
+            g->castle_fire_phase[i] = fire ? fire->valueint : 0;
             if (!cJSON_IsNumber(valid) || !cJSON_IsNumber(cleared) || !deserialize_castle_loot(cJSON_GetObjectItem(entry, "loot"), g->castle_loot[i], &g->castle_loot_count[i])) {
                 cJSON_Delete(root);
                 return 0;
@@ -4051,6 +4059,13 @@ int load_game(GameState *g, int slot) {
     if (save_version < 118) {
         migrate_longer_crownroads(g, save_version);
         jail_migrate_tunnel(g);
+    }
+    if (save_version < 119) {
+        castle_migrate_layout(g);
+    }
+    if (save_version < 120 && !castle_migrate_encounters(g)) {
+        cJSON_Delete(root);
+        return 0;
     }
     game_hide_portal_destination(g);
     game_migrate_boss_shortcuts(g);

@@ -13,7 +13,7 @@ static int carpet(const Map *m, int x, int y) {
     }
     TileType tile = m->tiles[y][x];
     return tile == TILE_CASTLE_CARPET || tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN ||
-        tile == TILE_CASTLE_TRAP_OPEN || tile == TILE_CASTLE_GATE || tile == TILE_CASTLE_GATE_OPEN;
+        tile == TILE_CASTLE_TRAP_OPEN || tile == TILE_CASTLE_GATE || tile == TILE_CASTLE_GATE_OPEN || tile == TILE_CASTLE_FIRE_RUNE;
 }
 
 void castle_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, int y, TileType tile) {
@@ -30,7 +30,7 @@ void castle_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, in
     rect(r, px, py, 24, 24, (SDL_Color){24, 23, 32, 255});
     rect(r, px + 1, py + 1, 22, 22, stone);
     rect(r, px + 2, py + 2, 20, 1, tile == TILE_CASTLE_WALL ? (SDL_Color){47, 42, 56, 255} : (SDL_Color){79, 72, 86, 255});
-    if (tile == TILE_CASTLE_FLOOR) {
+    if (tile == TILE_CASTLE_FLOOR || tile == TILE_CASTLE_WARD || tile == TILE_CASTLE_WARD_SPENT || tile == TILE_CASTLE_MUSTER) {
         rect(r, px + 2, py + 11, 20, 1, (SDL_Color){37, 34, 45, 255});
         rect(r, px + 7 + (x % 2) * 5, py + 2, 1, 9, (SDL_Color){37, 34, 45, 255});
         rect(r, px + 12 - (x % 2) * 5, py + 12, 1, 10, (SDL_Color){37, 34, 45, 255});
@@ -53,7 +53,7 @@ void castle_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, in
         }
         return;
     }
-    if (tile == TILE_CASTLE_CARPET) {
+    if (tile == TILE_CASTLE_CARPET || tile == TILE_CASTLE_FIRE_RUNE) {
         rect(r, px, py, 24, 24, (SDL_Color){89 + shade, 27, 41, 255});
         if (!carpet(&g->map, x - 1, y)) {
             rect(r, px + 1, py, 2, 24, (SDL_Color){155, 111, 54, 255});
@@ -71,7 +71,29 @@ void castle_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, in
             rect(r, px + 10, py + 10, 4, 4, (SDL_Color){128, 61, 53, 255});
         }
     }
-    if (tile == TILE_CASTLE_TABLE) {
+    if (tile == TILE_CASTLE_FIRE_RUNE) {
+        SDL_SetRenderDrawColor(r->sdl, 202, 137, 68, 255);
+        SDL_RenderDrawLine(r->sdl, px + 6, py + 16, px + 12, py + 6);
+        SDL_RenderDrawLine(r->sdl, px + 12, py + 6, px + 18, py + 16);
+        SDL_RenderDrawLine(r->sdl, px + 6, py + 16, px + 18, py + 16);
+        rect(r, px + 11, py + 10, 2, 4, (SDL_Color){240, 188, 91, 255});
+    } else if (tile == TILE_CASTLE_WARD || tile == TILE_CASTLE_WARD_SPENT) {
+        rect(r, px + 4, py + 19, 16, 3, (SDL_Color){101, 89, 116, 255});
+        rect(r, px + 7, py + 12, 10, 7, (SDL_Color){68, 62, 83, 255});
+        rect(r, px + 5, py + 11, 14, 2, (SDL_Color){156, 132, 80, 255});
+        SDL_Color orb = tile == TILE_CASTLE_WARD ? (SDL_Color){101, 218, 239, 255} : (SDL_Color){77, 78, 94, 255};
+        rect(r, px + 9, py + 3, 6, 8, orb);
+        rect(r, px + 7, py + 5, 10, 4, orb);
+        if (tile == TILE_CASTLE_WARD) {
+            rect(r, px + 10, py + 4, 3, 3, (SDL_Color){220, 251, 255, 255});
+        }
+    } else if (tile == TILE_CASTLE_MUSTER) {
+        rect(r, px + 3, py + 2, 18, 20, (SDL_Color){150, 121, 73, 255});
+        rect(r, px + 5, py + 4, 14, 16, (SDL_Color){23, 25, 36, 255});
+        rect(r, px + 8, py + 8, 8, 1, (SDL_Color){222, 183, 104, 255});
+        rect(r, px + 11, py + 6, 2, 7, (SDL_Color){222, 183, 104, 255});
+        rect(r, px + 7, py + 17, 10, 2, (SDL_Color){169, 128, 75, 255});
+    } else if (tile == TILE_CASTLE_TABLE) {
         rect(r, px + 3, py + 3, 18, 19, (SDL_Color){58, 34, 31, 255});
         rect(r, px + 4, py + 3, 16, 15, (SDL_Color){120, 78, 50, 255});
         rect(r, px + 8, py + 5, 8, 8, (SDL_Color){179, 150, 105, 255});
@@ -122,10 +144,6 @@ void castle_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, in
         for (int by = 9; by < 21; by += 4) {
             rect(r, px + 5, py + by, 7, 1, (SDL_Color){125, 70, 51, 255});
         }
-    } else if (tile == TILE_CASTLE_PASSAGE) {
-        rect(r, px + 4, py + 3, 16, 20, (SDL_Color){151, 124, 77, 255});
-        rect(r, px + 6, py + 5, 12, 18, (SDL_Color){15, 28, 26, 255});
-        rect(r, px + 8, py + 8, 8, 12, (SDL_Color){76, 185, 137, 255});
     } else if (tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN) {
         for (int i = 0; i < 4; i++) {
             rect(r, px + 4, py + 5 + i * 4, 16, 3, (SDL_Color){109 + i * 12, 94 + i * 10, 119 + i * 10, 255});
@@ -168,6 +186,14 @@ void castle_draw_warnings(Renderer *r, const GameState *g, const Viewport *v) {
     SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_BLEND);
     for (int y = v->cam_y; y < v->cam_y + v->tiles_y; y++) {
         for (int x = v->cam_x; x < v->cam_x + v->tiles_x; x++) {
+            if (castle_fire_warning(g, x, y) && map_is_explored(&g->map, x, y)) {
+                SDL_Rect tile = {(x - v->cam_x) * 24 + 1, (y - v->cam_y) * 24 + 1, 22, 22};
+                SDL_SetRenderDrawColor(r->sdl, 246, 135, 39, 90);
+                SDL_RenderFillRect(r->sdl, &tile);
+                SDL_SetRenderDrawColor(r->sdl, 255, 204, 94, 255);
+                SDL_RenderDrawRect(r->sdl, &tile);
+                renderer_draw_text(r, g->castle_fire_phase[g->level - 1] == 1 ? "2" : "1", tile.x + 8, tile.y + 4, (SDL_Color){255, 236, 181, 255}, r->font_tiny);
+            }
             for (int i = 0; i < g->enemy_count; i++) {
                 if (castle_attack_marks(&g->map, &g->enemies[i], x, y) || castle_barrier_warning(g, x, y)) {
                     SDL_Rect tile = {(x - v->cam_x) * 24 + 1, (y - v->cam_y) * 24 + 1, 22, 22};

@@ -65,6 +65,27 @@ static void test_castle_layout(void) {
             }
         }
         int reachable = visited[game.map.stairs_down_y][game.map.stairs_down_x];
+        int clear_corridors = 1;
+        for (int i = 0; i < game.map.room_count; i++) {
+            int x;
+            int y;
+            map_room_center(&game.map.rooms[i], &x, &y);
+            reachable &= visited[y][x];
+            if (i % 2 == 0) {
+                for (int ty = y - 1; ty <= y + 1; ty++) {
+                    for (int tx = x; tx <= x + 30; tx++) {
+                        clear_corridors &= game.map.tiles[ty][tx] != TILE_CASTLE_TABLE;
+                    }
+                }
+            }
+        }
+        for (int y = 0; y < CASTLE_H; y++) {
+            for (int x = 0; x < CASTLE_W; x++) {
+                if (map_is_walkable(&game.map, x, y)) {
+                    reachable &= visited[y][x];
+                }
+            }
+        }
         int distinct = 1;
         int bosses = 0;
         for (int i = 0; i < game.enemy_count; i++) {
@@ -76,6 +97,18 @@ static void test_castle_layout(void) {
             }
         }
         ASSERT("castle guards and progression reachable around closed gates", reachable && distinct);
+        ASSERT("every castle room is connected and tables leave carpeted corridors clear", reachable && clear_corridors);
+        if (floor == 3 || floor == 4) {
+            loaded = game;
+            loaded.enemy_count = 0;
+            loaded.player.x = 15;
+            loaded.player.y = 31;
+            for (int x = 16; x <= 45; x++) {
+                action_resolve_player(&loaded, (Action){ACTION_MOVE, x, 31});
+            }
+            ASSERT("court corridors can be walked directly without moving tables or using a lever",
+                loaded.player.x == 45 && loaded.player.y == 31 && loaded.level == floor);
+        }
         ASSERT("castle minibosses occur only on 2/4; final boss on 6", bosses == (floor == 2 || floor == 4 || floor == 6));
         ASSERT("castle entrance is protected from traps", game.map.tiles[game.player.y][game.player.x] == TILE_STAIRS_DOWN);
     }
@@ -88,7 +121,7 @@ static void test_castle_progress(void) {
     ASSERT("living Castellan blocks floor 3", game.level == 2);
     kill_boss();
     ASSERT("melee victory records miniboss without ending campaign", game.castle_minibosses == 1 && !game.game_won && !(game.defeated_bosses & (1 << LOCATION_CASTLE_INTERIOR)));
-    ASSERT("Castellan victory reveals persistent passage", game.map.tiles[52][48] == TILE_CASTLE_PASSAGE);
+    ASSERT("Castellan victory leaves ordinary floor without an exit portal", game.map.tiles[52][48] == TILE_CASTLE_FLOOR);
     castle_travel(&game, 1);
     ASSERT("Castellan victory opens floor 3", game.level == 3);
     castle_enter(&game, 4);
@@ -151,7 +184,11 @@ static void test_castle_fall_and_retreat(void) {
     castle_leave(&game, 0);
     game.player.x = 17;
     game.player.y = 12;
-    ASSERT("earned passage is reachable from grounds", castle_interact(&game) && game.level == 2 && game.player.x == 48 && game.player.y == 52);
+    ASSERT("retired shortcut cannot enter the keep from the grounds", !castle_has_interaction(&game) &&
+        !castle_interact(&game) && game.location == LOCATION_CASTLE);
+    game.player.x = 23;
+    game.castle_minibosses |= 2;
+    ASSERT("retired chapel shortcut is also unavailable", !castle_has_interaction(&game) && !castle_interact(&game));
 }
 
 static void test_castle_combat(void) {
@@ -402,7 +439,7 @@ static void test_castle_wide_warning(void) {
         action_resolve_enemies(&game);
     }
     ASSERT("ordinary walking escapes widest boss attack", game.player.hp == hp && e->move_timer == 2);
-    ASSERT("Veyr summons a capped escort once", e->revived && game.enemy_count == 12);
+    ASSERT("Veyr summons a capped escort once", e->revived && game.enemy_count == 19);
     game.player.x = 45;
     game.player.y = 53;
     e->hp = e->max_hp / 2;
@@ -439,12 +476,12 @@ static void test_castle_mechanisms(void) {
     game.inventory_count = 1;
     action_resolve_player(&game, (Action){ACTION_DROP_ITEM, 0, 0});
     kill_boss();
-    ASSERT("miniboss passage reveals beneath existing loot", game.map.tiles[52][48] == TILE_ITEM && game.floor_items[0].underlying_tile == TILE_CASTLE_PASSAGE);
+    ASSERT("miniboss victory keeps ordinary floor beneath existing loot", game.map.tiles[52][48] == TILE_ITEM && game.floor_items[0].underlying_tile == TILE_CASTLE_FLOOR);
     game.player.x = 48;
     game.player.y = 52;
-    ASSERT("loot cannot prevent passage interaction", castle_has_interaction(&game));
+    ASSERT("miniboss victory cannot create an exit interaction", !castle_has_interaction(&game) && !castle_interact(&game));
     action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
-    ASSERT("picking up loot restores earned passage", game.map.tiles[52][48] == TILE_CASTLE_PASSAGE);
+    ASSERT("picking up loot restores ordinary castle floor", game.map.tiles[52][48] == TILE_CASTLE_FLOOR);
 
     start();
     game.enemy_count = 1;
@@ -476,14 +513,143 @@ static void test_castle_mechanisms(void) {
     game.player.y = 33;
     castle_tick(&game);
     castle_tick(&game);
-    ASSERT("Herald calls exactly one reinforcement", game.enemy_count == 2 && game.enemies[0].revived);
+    ASSERT("Court Herald calls one three-guard patrol", game.enemy_count == 4 && game.enemies[0].revived);
     for (int i = 0; i < 15; i++) {
         castle_tick(&game);
     }
-    ASSERT("Herald melee attacks cannot repeat reinforcement call", game.enemy_count == 2);
+    ASSERT("Herald melee attacks cannot repeat reinforcement call", game.enemy_count == 4);
     castle_leave(&game, 0);
     castle_enter(&game, 3);
     ASSERT("retreat preserves Herald's spent reinforcement allowance", game.enemies[8].revived);
+}
+
+static int save_legacy_layout(int version) {
+    if (!save_game(&game, CASTLE_TEST_SLOT)) {
+        return 0;
+    }
+    FILE *file = fopen("saves/savegame_99136.json", "rb");
+    if (!file) {
+        return 0;
+    }
+    fseek(file, 0, SEEK_END);
+    long size = ftell(file);
+    rewind(file);
+    char *buffer = malloc((size_t)size + 1);
+    if (!buffer) {
+        fclose(file);
+        return 0;
+    }
+    size_t count = fread(buffer, 1, (size_t)size, file);
+    buffer[count] = '\0';
+    fclose(file);
+    cJSON *root = cJSON_Parse(buffer);
+    free(buffer);
+    if (!root) {
+        return 0;
+    }
+    cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), version);
+    char *json = cJSON_Print(root);
+    cJSON_Delete(root);
+    file = fopen("saves/savegame_99136.json", "wb");
+    int result = file && json;
+    if (result) {
+        result = fputs(json, file) >= 0;
+    }
+    if (file) {
+        fclose(file);
+    }
+    free(json);
+    return result;
+}
+
+static void test_castle_layout_migration(void) {
+    for (int scenario = 0; scenario < 3; scenario++) {
+        start();
+        game.castle_minibosses = 3;
+        game.gold = 321;
+        for (int floor = 2; floor <= 4; floor++) {
+            castle_enter(&game, floor);
+            if (floor == 3 || floor == 4) {
+                for (int i = 0; i < game.map.room_count; i++) {
+                    Room *room = &game.map.rooms[i];
+                    for (int y = room->y + 6; y <= room->y + 8; y++) {
+                        game.map.tiles[y][room->x + 5] = TILE_CASTLE_TABLE;
+                        game.map.tiles[y][room->x + room->w - 6] = TILE_CASTLE_TABLE;
+                    }
+                }
+            }
+            game.map.tiles[52][48] = TILE_CASTLE_PASSAGE;
+            game.floor_item_count = 2;
+            game.floor_items[0] = (FloorItem){.active = 1, .x = 48, .y = 52,
+                .underlying_tile = TILE_CASTLE_PASSAGE, .item = item_make_magic_shield()};
+            game.map.tiles[52][48] = TILE_ITEM;
+            game.floor_items[1] = (FloorItem){.active = 1, .x = 20, .y = 31,
+                .underlying_tile = floor >= 3 ? TILE_CASTLE_TABLE : TILE_CASTLE_CARPET, .item = item_make_health_potion()};
+            game.map.tiles[31][20] = TILE_ITEM;
+            game.map.tiles[52][49] = TILE_CASTLE_PASSAGE;
+            game.map.tiles[32][17] = TILE_CASTLE_TRAP_OPEN;
+            game.map.burial_traps[0].spent = 1;
+            game.map.burial_traps[0].timer = 1;
+            map_mark_explored(&game.map, 20, 31);
+            game.map.tiles[11][29] = TILE_CASTLE_GATE_OPEN;
+            game.enemies[0].active = 0;
+            game.enemies[1].hp = 7;
+            game.enemies[1].move_timer = 1;
+            game.enemies[1].attack_target_x = 15;
+            game.enemies[1].attack_target_y = 32;
+            castle_store(&game);
+        }
+        if (scenario < 2) {
+            castle_enter(&game, scenario == 0 ? 3 : 4);
+            game.player.x = 19;
+            game.player.y = 31;
+        } else {
+            // The player may be outside the castle when a cached floor needs repair.
+            game.location = LOCATION_CASTLE;
+            game.level = 1;
+            map_generate_castle(&game.map, &game.player.x, &game.player.y);
+            game.floor_item_count = 0;
+            game.enemy_count = 0;
+        }
+        int saved = save_legacy_layout(118) && load_game(&loaded, CASTLE_TEST_SLOT);
+        ASSERT("castle layout migration preserves character, position, victories, and rewards",
+            saved && loaded.location == game.location && loaded.level == game.level &&
+            loaded.player.x == game.player.x && loaded.player.y == game.player.y &&
+            loaded.gold == 321 && loaded.castle_minibosses == 3);
+        int repaired = saved;
+        for (int i = 1; i <= 3; i++) {
+            LevelCache *cache = &loaded.castle_cache[i];
+            repaired &= cache->valid && cache->map.tiles[52][49] == TILE_CASTLE_FLOOR &&
+                cache->map.tiles[52][48] == TILE_ITEM && loaded.castle_loot[i][0].underlying_tile == TILE_CASTLE_FLOOR &&
+                loaded.castle_loot[i][0].item.block_chance == game.castle_loot[i][0].item.block_chance &&
+                cache->map.tiles[31][20] == TILE_ITEM && loaded.castle_loot[i][1].underlying_tile == TILE_CASTLE_CARPET &&
+                !cache->enemies[0].active && cache->enemies[1].hp == 7 && cache->enemies[1].move_timer == 1 &&
+                cache->enemies[1].attack_target_y == 32 && cache->map.burial_traps[0].spent &&
+                cache->map.burial_traps[0].timer && cache->map.tiles[32][17] == TILE_CASTLE_TRAP_OPEN &&
+                map_is_explored(&cache->map, 20, 31) && cache->map.tiles[11][29] == TILE_CASTLE_GATE_OPEN;
+            if (i >= 2) {
+                repaired &= cache->map.tiles[30][20] == TILE_CASTLE_CARPET && cache->map.tiles[32][39] == TILE_CASTLE_CARPET &&
+                    cache->map.tiles[10][9] == TILE_CASTLE_TABLE;
+            }
+        }
+        ASSERT("cached castle migration removes portals and blocking tables while retaining loot, combat, gates, and traps", repaired);
+        if (scenario < 2) {
+            ASSERT("live court migration repairs the same corridor and portal beneath loot",
+                saved && loaded.map.tiles[30][20] == TILE_CASTLE_CARPET && loaded.map.tiles[32][39] == TILE_CASTLE_CARPET &&
+                loaded.floor_items[0].underlying_tile == TILE_CASTLE_FLOOR &&
+                loaded.floor_items[1].underlying_tile == TILE_CASTLE_CARPET && !loaded.enemies[0].active && loaded.enemies[1].hp == 7);
+            loaded.enemy_count = 0;
+            action_resolve_player(&loaded, (Action){ACTION_MOVE, 20, 31});
+            action_resolve_player(&loaded, (Action){ACTION_PICK_UP, 0, 0});
+            ASSERT("picking up migrated corridor loot exposes walkable carpet", loaded.player.x == 20 &&
+                loaded.map.tiles[31][20] == TILE_CASTLE_CARPET);
+        }
+        ASSERT("repaired castle layout and progress survive another save/load",
+            saved && save_game(&loaded, CASTLE_TEST_SLOT) && load_game(&game, CASTLE_TEST_SLOT) &&
+            game.castle_minibosses == 3 && game.castle_cache[2].map.tiles[30][20] == TILE_CASTLE_CARPET &&
+            game.castle_cache[1].map.tiles[52][49] == TILE_CASTLE_FLOOR);
+    }
+    remove("saves/savegame_99136.json");
 }
 
 static void test_castle_legacy_save(void) {
@@ -532,6 +698,201 @@ static void test_castle_legacy_save(void) {
     remove("saves/savegame_99136.json");
 }
 
+static void test_castle_floor_tactics(void) {
+    start();
+    Enemy shot = game.enemies[1];
+    shot.x = 15;
+    shot.y = 25;
+    shot.attack_target_x = 15;
+    shot.attack_target_y = 17;
+    ASSERT("gatehouse has two guarded approaches with independent cover", game.enemy_count == 12 &&
+        game.map.tiles[11][29] == TILE_CASTLE_GATE && game.map.tiles[21][15] == TILE_CASTLE_GATE_OPEN &&
+        castle_attack_marks(&game.map, &shot, 15, 17));
+    game.player.x = 10;
+    game.player.y = 14;
+    action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
+    ASSERT("second lever closes only its own portcullis and blocks a shooting lane",
+        game.map.tiles[21][15] == TILE_CASTLE_GATE && game.map.tiles[11][29] == TILE_CASTLE_GATE &&
+        !castle_attack_marks(&game.map, &shot, 15, 17));
+    castle_interact(&game);
+    ASSERT("second lever can reopen the alternate approach", game.map.tiles[21][15] == TILE_CASTLE_GATE_OPEN);
+
+    castle_enter(&game, 2);
+    Enemy *e = boss();
+    Enemy *guard = &game.enemies[8];
+    ASSERT("Castellan has a Warden and Marksman guard detail", guard->type == ENEMY_IRON_WARDEN &&
+        game.enemies[9].type == ENEMY_ROYAL_MARKSMAN && game.enemy_count == 11);
+    for (int i = 0; i < game.enemy_count; i++) {
+        game.enemies[i].active = &game.enemies[i] == e || &game.enemies[i] == guard;
+    }
+    game.player.x = 46;
+    game.player.y = 45;
+    guard->x = 45;
+    guard->y = 47;
+    guard->move_timer = 2;
+    e->attack_phase = 1;
+    e->attack_target_x = 45;
+    e->attack_target_y = 44;
+    e->move_timer = 1;
+    castle_tick(&game);
+    ASSERT("baiting Castellan's charge into a guard breaks its defense and interrupts its attack",
+        e->y == 48 && guard->frozen_turns == 2 && guard->attack_target_x == -1 &&
+        castle_enemy_damage(&game, guard, 20) == 20);
+
+    for (int player_class = CLASS_WARRIOR; player_class <= CLASS_ROGUE; player_class++) {
+        start();
+        castle_enter(&game, 4);
+        e = boss();
+        game.player.player_class = player_class;
+        ASSERT("two chapel pedestals protect the Arcanist", castle_enemy_damage(&game, e, 100) == 60);
+        game.player.x = 37;
+        game.player.y = 53;
+        action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
+        ASSERT("every class can disable a pedestal and reduce royal protection",
+            game.map.tiles[54][37] == TILE_CASTLE_WARD_SPENT && castle_enemy_damage(&game, e, 100) == 80);
+        game.player.x = 53;
+        game.player.y = 53;
+        castle_interact(&game);
+        ASSERT("disabling both pedestals removes ward protection", castle_enemy_damage(&game, e, 100) == 100);
+        castle_enter(&game, 5);
+        castle_enter(&game, 4);
+        ASSERT("disabled wards survive floor revisits", game.map.tiles[54][37] == TILE_CASTLE_WARD_SPENT);
+        castle_leave(&game, 0);
+        castle_enter(&game, 4);
+        ASSERT("retreat restores wards around a surviving Arcanist", game.map.tiles[54][37] == TILE_CASTLE_WARD);
+    }
+    e = boss();
+    game.enemies[0] = *e;
+    game.enemy_count = 1;
+    e = &game.enemies[0];
+    game.player.x = 45;
+    game.player.y = 53;
+    game.player.defense = 0;
+    e->attack_target_x = 45;
+    e->attack_target_y = 53;
+    e->move_timer = 1;
+    ASSERT("active pedestals also strengthen warned boss attacks", castle_tick(&game) == e->attack + 8);
+
+    start();
+    castle_enter(&game, 5);
+    int px = game.enemies[0].x;
+    int py = game.enemies[0].y;
+    castle_tick(&game);
+    ASSERT("archive guards patrol while the player is elsewhere", game.enemies[0].x != px || game.enemies[0].y != py);
+    ASSERT("archive shelves create cover beside open carpeted routes", game.map.tiles[26][40] == TILE_CASTLE_BOOKCASE &&
+        map_is_walkable(&game.map, 45, 31) && game.map.tiles[34][45] == TILE_CASTLE_FIRE_RUNE);
+    game.enemy_count = 0;
+    game.castle_fire_phase[4] = 0;
+    game.player.x = 45;
+    game.player.y = 34;
+    game.player.defense = 0;
+    ASSERT("archive fire gives a first harmless warning", castle_tick(&game) == 0 && castle_fire_warning(&game, 45, 34));
+    ASSERT("archive fire gives a second harmless warning", castle_tick(&game) == 0 && game.castle_fire_phase[4] == 2);
+    ASSERT("remaining in a warned lane causes fire damage", castle_tick(&game) == 24 && !castle_fire_warning(&game, 45, 34));
+    game.castle_fire_phase[4] = 2;
+    game.player.y = 33;
+    ASSERT("one ordinary step escapes the warned fire lane", castle_tick(&game) == 0);
+    game.floor_item_count = 1;
+    game.floor_items[0] = (FloorItem){.active = 1, .x = 45, .y = 34,
+        .underlying_tile = TILE_CASTLE_FIRE_RUNE, .item = item_make_health_potion()};
+    game.map.tiles[34][45] = TILE_ITEM;
+    game.player.y = 34;
+    game.castle_fire_phase[4] = 2;
+    ASSERT("loot cannot conceal or deactivate a warned fire lane", castle_fire_warning(&game, 45, 34) && castle_tick(&game) == 24);
+    castle_request(&game, 1);
+    int phase = game.castle_fire_phase[4];
+    ASSERT("escape confirmation pauses floor hazards", castle_tick(&game) == 0 && game.castle_fire_phase[4] == phase);
+
+    start();
+    castle_enter(&game, 6);
+    e = boss();
+    ASSERT("throne combines guarded approaches, wards, a muster door and fire runes",
+        game.map.tiles[21][15] == TILE_CASTLE_GATE_OPEN && game.map.tiles[54][37] == TILE_CASTLE_WARD &&
+        game.map.tiles[46][53] == TILE_CASTLE_MUSTER && game.map.tiles[51][45] == TILE_CASTLE_FIRE_RUNE &&
+        castle_enemy_damage(&game, e, 100) == 30);
+    game.enemies[8].revived = 0;
+    game.enemies[15].revived = 1;
+    castle_leave(&game, 0);
+    castle_enter(&game, 6);
+    ASSERT("each Herald retains its own spent call through retreat", !game.enemies[8].revived && game.enemies[15].revived);
+}
+
+static void test_castle_tactics_saves(void) {
+    start();
+    castle_enter(&game, 4);
+    game.player.x = 37;
+    game.player.y = 53;
+    castle_interact(&game);
+    castle_enter(&game, 5);
+    game.castle_fire_phase[4] = 2;
+    game.enemies[0].facing_dx = 1;
+    game.enemies[0].facing_dy = 0;
+    castle_enter(&game, 6);
+    game.castle_fire_phase[5] = 1;
+    game.enemies[15].revived = 1;
+    ASSERT("new castle encounters save and load", save_game(&game, CASTLE_TEST_SLOT) && load_game(&loaded, CASTLE_TEST_SLOT));
+    ASSERT("save restores live and cached fire warnings, ward state, patrol facing and Herald calls",
+        loaded.castle_fire_phase[4] == 2 && loaded.castle_fire_phase[5] == 1 && loaded.enemies[15].revived &&
+        loaded.castle_cache[3].map.tiles[54][37] == TILE_CASTLE_WARD_SPENT && loaded.castle_cache[4].enemies[0].facing_dx == 1);
+    castle_enter(&loaded, 5);
+    ASSERT("revisited archive resumes the saved warning rather than restarting its timer", castle_fire_warning(&loaded, 45, 34));
+
+    // Build a version 119 fixture with the old roster and floor decoration.
+    start();
+    game.castle_minibosses = 1;
+    game.gold = 321;
+    for (int level = 1; level <= CASTLE_DEPTH; level++) {
+        castle_enter(&game, level);
+        Enemy *e = boss();
+        int count = 8 + (level >= 3);
+        if (e) {
+            game.enemies[count++] = *e;
+        }
+        game.enemy_count = count;
+        game.enemies[0].hp = 7;
+        game.enemies[1].active = 0;
+        game.level_cleared = level == 1;
+        for (int y = 0; y < CASTLE_H; y++) {
+            for (int x = 0; x < CASTLE_W; x++) {
+                TileType tile = game.map.tiles[y][x];
+                if (tile >= TILE_CASTLE_WARD) {
+                    game.map.tiles[y][x] = tile == TILE_CASTLE_FIRE_RUNE ? TILE_CASTLE_CARPET : TILE_CASTLE_FLOOR;
+                }
+                if (level == 5 && tile == TILE_CASTLE_BOOKCASE && y % 20 != 5) {
+                    game.map.tiles[y][x] = TILE_CASTLE_FLOOR;
+                }
+            }
+        }
+        game.map.tiles[15][10] = TILE_CASTLE_FLOOR;
+        for (int x = 14; x <= 16; x++) {
+            game.map.tiles[21][x] = TILE_CASTLE_CARPET;
+        }
+        map_mark_explored(&game.map, 45, 31);
+    }
+    castle_enter(&game, 5);
+    game.player.x = 40;
+    game.player.y = 26;
+    game.floor_item_count = 1;
+    game.floor_items[0] = (FloorItem){.active = 1, .x = 50, .y = 26,
+        .underlying_tile = TILE_CASTLE_FLOOR, .item = item_make_magic_shield()};
+    game.map.tiles[26][50] = TILE_ITEM;
+    castle_store(&game);
+    ASSERT("version 119 castle save migrates", save_legacy_layout(119) && load_game(&loaded, CASTLE_TEST_SLOT));
+    ASSERT("migration preserves player, money, defeated guards, damage and miniboss progress",
+        loaded.player.x == 40 && loaded.player.y == 26 && loaded.gold == 321 && loaded.castle_minibosses == 1 &&
+        loaded.enemies[0].hp == 7 && !loaded.enemies[1].active && loaded.castle_cache[1].enemy_count == 8);
+    ASSERT("migration installs distinct encounters without crushing player or loot",
+        loaded.map.tiles[26][40] == TILE_CASTLE_FLOOR && loaded.map.tiles[26][50] == TILE_ITEM &&
+        loaded.floor_items[0].underlying_tile == TILE_CASTLE_FLOOR && loaded.floor_items[0].item.block_chance == game.floor_items[0].item.block_chance &&
+        loaded.map.tiles[34][45] == TILE_CASTLE_FIRE_RUNE && loaded.castle_cache[3].map.tiles[54][37] == TILE_CASTLE_WARD &&
+        loaded.castle_cache[2].map.tiles[35][53] == TILE_CASTLE_MUSTER && loaded.castle_cache[5].enemy_count == 17 &&
+        loaded.castle_cache[0].enemy_count == 8 && map_is_explored(&loaded.map, 45, 31));
+    int count = loaded.enemy_count;
+    ASSERT("resaving migrated castle does not add another guard detail", save_game(&loaded, CASTLE_TEST_SLOT) &&
+        load_game(&game, CASTLE_TEST_SLOT) && game.enemy_count == count && game.castle_cache[5].enemy_count == 17);
+    remove("saves/savegame_99136.json");
+}
+
 void test_castle(void) {
     printf("Castle of No Return\n");
     test_castle_layout();
@@ -544,5 +905,8 @@ void test_castle(void) {
     test_castle_class_victory();
     test_castle_wide_warning();
     test_castle_mechanisms();
+    test_castle_layout_migration();
     test_castle_legacy_save();
+    test_castle_floor_tactics();
+    test_castle_tactics_saves();
 }
