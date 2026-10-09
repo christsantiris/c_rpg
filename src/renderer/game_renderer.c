@@ -1614,19 +1614,90 @@ static void ice_slide_offset(const GameState *g, int *px, int *py) {
 static void draw_kraken_target(Renderer *r, const GameState *g, const Viewport *v) {
     for (int i = 0; i < g->enemy_count; i++) {
         const Enemy *e = &g->enemies[i];
-        if (!e->active || e->type != ENEMY_POLAR_KRAKEN ||
-            e->move_timer % 2 != 1 ||
-            !viewport_is_visible(v, e->attack_target_x, e->attack_target_y)) {
+        if (!e->active || e->type != ENEMY_POLAR_KRAKEN || e->move_timer % 2 != 1) {
             continue;
         }
-        int x = viewport_to_screen_x(v, e->attack_target_x) * TILE_SIZE;
-        int y = viewport_to_screen_y(v, e->attack_target_y) * TILE_SIZE;
-        SDL_Rect outline = {x + 1, y + 1, TILE_SIZE - 2, TILE_SIZE - 2};
-        SDL_SetRenderDrawColor(r->sdl, 118, 28, 31, 255);
-        SDL_RenderDrawRect(r->sdl, &outline);
-        outline = (SDL_Rect){x + 2, y + 2, TILE_SIZE - 4, TILE_SIZE - 4};
-        SDL_SetRenderDrawColor(r->sdl, 255, 144, 48, 255);
-        SDL_RenderDrawRect(r->sdl, &outline);
+        SDL_BlendMode blend;
+        SDL_GetRenderDrawBlendMode(r->sdl, &blend);
+        SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_BLEND);
+        for (int y = v->cam_y; y < v->cam_y + v->tiles_y; y++) {
+            for (int x = v->cam_x; x < v->cam_x + v->tiles_x; x++) {
+                if (!map_is_explored(&g->map, x, y) || !map_is_walkable(&g->map, x, y)) {
+                    continue;
+                }
+                int targeted = x == e->attack_target_x && y == e->attack_target_y;
+                int danger = targeted;
+                for (int dy = -1; dy <= 1 && !danger; dy++) {
+                    for (int dx = -1; dx <= 1 && !danger; dx++) {
+                        int tx = x + dx;
+                        int ty = y + dy;
+                        danger = tx >= 0 && tx < MAP_W && ty >= 0 && ty < MAP_H &&
+                            g->map.tiles[ty][tx] == TILE_FROST_LAKE_HOLE;
+                    }
+                }
+                if (!danger) {
+                    continue;
+                }
+                int px = viewport_to_screen_x(v, x) * TILE_SIZE;
+                int py = viewport_to_screen_y(v, y) * TILE_SIZE;
+                SDL_Rect tile = {px + 1, py + 1, TILE_SIZE - 2, TILE_SIZE - 2};
+                SDL_SetRenderDrawColor(r->sdl, 230, 82, 28, 65);
+                SDL_RenderFillRect(r->sdl, &tile);
+                SDL_SetRenderDrawColor(r->sdl, 255, 155, 57, targeted ? 255 : 145);
+                SDL_RenderDrawRect(r->sdl, &tile);
+                if (targeted) {
+                    SDL_RenderDrawLine(r->sdl, px + 7, py + 7, px + 16, py + 16);
+                    SDL_RenderDrawLine(r->sdl, px + 16, py + 7, px + 7, py + 16);
+                }
+            }
+        }
+        SDL_SetRenderDrawBlendMode(r->sdl, blend);
+    }
+}
+
+static void draw_kraken_status(Renderer *r, const GameState *g, const Viewport *v) {
+    if (g->location != LOCATION_FROSTFELL) {
+        return;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *e = &g->enemies[i];
+        if (!e->active || e->type != ENEMY_POLAR_KRAKEN || e->max_hp <= 0 ||
+            !viewport_is_visible(v, e->x, e->y) || !map_is_explored(&g->map, e->x, e->y)) {
+            continue;
+        }
+        int width = r->screen_w - INFO_PANEL_W - 16;
+        if (width > 360) {
+            width = 360;
+        }
+        if (width < 160) {
+            return;
+        }
+        int x = (r->screen_w - INFO_PANEL_W - width) / 2;
+        SDL_Rect panel = {x, 8, width, 62};
+        SDL_SetRenderDrawColor(r->sdl, 16, 28, 43, 255);
+        SDL_RenderFillRect(r->sdl, &panel);
+        SDL_SetRenderDrawColor(r->sdl, 111, 172, 203, 255);
+        SDL_RenderDrawRect(r->sdl, &panel);
+        renderer_draw_text(r, "POLAR KRAKEN", x + 10, 16, (SDL_Color){218, 243, 255, 255}, r->font_tiny);
+        if (width >= 240) {
+            char hp[32];
+            snprintf(hp, sizeof(hp), "%d / %d", e->hp, e->max_hp);
+            int text_w = 0;
+            TTF_SizeText(r->font_tiny, hp, &text_w, NULL);
+            renderer_draw_text(r, hp, x + width - text_w - 10, 16, (SDL_Color){168, 211, 230, 255}, r->font_tiny);
+        }
+        SDL_Rect bar = {x + 10, 31, width - 20, 8};
+        SDL_SetRenderDrawColor(r->sdl, 39, 58, 77, 255);
+        SDL_RenderFillRect(r->sdl, &bar);
+        bar.w = bar.w * e->hp / e->max_hp;
+        SDL_SetRenderDrawColor(r->sdl, 80, 201, 217, 255);
+        SDL_RenderFillRect(r->sdl, &bar);
+        int warning = e->move_timer % 2 == 1;
+        const char *hint = warning ? "STRIKE NEXT TURN - LEAVE ORANGE ICE" : "TENTACLES LOWERED";
+        if (width < 300 && warning) {
+            hint = "STRIKE NEXT TURN";
+        }
+        renderer_draw_text(r, hint, x + 10, 49, warning ? (SDL_Color){255, 177, 81, 255} : (SDL_Color){157, 196, 219, 255}, r->font_tiny);
     }
 }
 
@@ -2672,6 +2743,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         }
     }
 
+    if (g->location == LOCATION_FROSTFELL) {
+        draw_kraken_target(r, g, v);
+    }
+
     // Draw enemies
     if (g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
         g->location == LOCATION_FOREST ||
@@ -2710,23 +2785,25 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 SDL_RenderDrawRect(r->sdl, &marker);
                 SDL_RenderDrawRect(r->sdl, &marker);
             }
-            // Draw health bar above enemy
-            int bar_w = TILE_SIZE - 4;
-            int bar_h = 3;
-            int bar_x = sx * TILE_SIZE + 2;
-            int bar_y = sy * TILE_SIZE - 5;
-            if (g->location == LOCATION_CASTLE_INTERIOR && e->is_boss) {
-                bar_w = 32;
-                bar_x = sx * TILE_SIZE - 4;
-                bar_y = sy * TILE_SIZE - 17;
+            if (e->type != ENEMY_POLAR_KRAKEN) {
+                // Draw health bar above enemy
+                int bar_w = TILE_SIZE - 4;
+                int bar_h = 3;
+                int bar_x = sx * TILE_SIZE + 2;
+                int bar_y = sy * TILE_SIZE - 5;
+                if (g->location == LOCATION_CASTLE_INTERIOR && e->is_boss) {
+                    bar_w = 32;
+                    bar_x = sx * TILE_SIZE - 4;
+                    bar_y = sy * TILE_SIZE - 17;
+                }
+                int fill_w = (bar_w * e->hp) / e->max_hp;
+                SDL_Rect bg = {bar_x, bar_y, bar_w, bar_h};
+                SDL_Rect fill = {bar_x, bar_y, fill_w, bar_h};
+                SDL_SetRenderDrawColor(r->sdl, 60, 20, 20, 255);
+                SDL_RenderFillRect(r->sdl, &bg);
+                SDL_SetRenderDrawColor(r->sdl, 200, 60, 60, 255);
+                SDL_RenderFillRect(r->sdl, &fill);
             }
-            int fill_w = (bar_w * e->hp) / e->max_hp;
-            SDL_Rect bg = {bar_x, bar_y, bar_w, bar_h};
-            SDL_Rect fill = {bar_x, bar_y, fill_w, bar_h};
-            SDL_SetRenderDrawColor(r->sdl, 60, 20, 20, 255);
-            SDL_RenderFillRect(r->sdl, &bg);
-            SDL_SetRenderDrawColor(r->sdl, 200, 60, 60, 255);
-            SDL_RenderFillRect(r->sdl, &fill);
             if (e->frozen_turns > 0) {
                 draw_frozen_status(r, sx * TILE_SIZE, sy * TILE_SIZE, e->frozen_turns);
             }
@@ -3339,7 +3416,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     if (g->location == LOCATION_FROSTFELL) {
         draw_region_weather(r, v, 0);
-        draw_kraken_target(r, g, v);
     } else if (g->location == LOCATION_DESERT) {
         draw_region_weather(r, v, 1);
     }
@@ -3378,6 +3454,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             "Use altar to awaken Moon foes" : "Defeat all Sun and Moon foes",
             notice_x + 8, 32, (SDL_Color){230, 218, 195, 255}, r->font_tiny);
     }
+
+    draw_kraken_status(r, g, v);
 
     // Draw info panel
     info_panel_draw(r, g);

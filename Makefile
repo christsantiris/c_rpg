@@ -39,6 +39,7 @@ sprites:
 	python3 tools/sprites/workshop.py
 	python3 tools/sprites/town_hall.py
 	python3 tools/sprites/local_buildings.py
+	python3 tools/sprites/polar_kraken.py
 	python3 tools/sprites/crownroad_gate.py
 
 clean:
