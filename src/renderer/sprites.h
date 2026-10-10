@@ -145,6 +145,7 @@ void draw_dungeon_transition(Renderer *r, int covered_width);
 void draw_forest_transition(Renderer *r, int covered_width);
 void draw_mountain_transition(Renderer *r, int covered_width);
 void draw_coast_transition(Renderer *r, int covered_width);
+void draw_area_transition(Renderer *r, int covered_width, TownExitStyle style);
 void draw_shop_blacksmith(Renderer *r, int tile_x, int tile_y);
 void draw_shop_alchemist(Renderer *r, int tile_x, int tile_y);
 void draw_apothecary(Renderer *r, int tile_x, int tile_y);

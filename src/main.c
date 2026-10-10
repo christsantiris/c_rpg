@@ -74,7 +74,7 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
     }
     if (g->location == LOCATION_TOWN3 || g->location == LOCATION_CASTLE) {
         if (action.target_x == 0 || action.target_x == TOWN_W - 1) {
-            *style = TOWN_EXIT_ROAD;
+            *style = g->location == LOCATION_TOWN3 && action.target_x == 0 ? TOWN_EXIT_MOONVEIL : TOWN_EXIT_ROAD;
             return 1;
         }
         if (g->location == LOCATION_TOWN3 && action.target_y == 0) {
@@ -108,6 +108,10 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
         return 1;
     }
     if (action.target_x == 0) {
+        if (g->location == LOCATION_TOWN2) {
+            *style = TOWN_EXIT_DESERT;
+            return 1;
+        }
         if (action.target_y == TOWN_ROAD_EXIT_Y &&
             !(g->defeated_bosses & (1 << LOCATION_FOREST))) {
             return 0;
@@ -1544,18 +1548,7 @@ int main(int argc, char **argv) {
         if (entry_gate.active) {
             Uint32 elapsed = SDL_GetTicks() - entry_gate.started_at;
             int covered_width = entry_gate_width(elapsed, renderer.screen_w);
-            if (entry_gate.style == TOWN_EXIT_FOREST ||
-                entry_gate.style == TOWN_EXIT_ROAD ||
-                entry_gate.style == TOWN_EXIT_SWAMP) {
-                draw_forest_transition(&renderer, covered_width);
-            } else if (entry_gate.style == TOWN_EXIT_MOUNTAINS ||
-                entry_gate.style == TOWN_EXIT_DRAGONSPINE) {
-                draw_mountain_transition(&renderer, covered_width);
-            } else if (entry_gate.style == TOWN_EXIT_COAST) {
-                draw_coast_transition(&renderer, covered_width);
-            } else {
-                draw_dungeon_transition(&renderer, covered_width);
-            }
+            draw_area_transition(&renderer, covered_width, entry_gate.style);
         }
 
         renderer_end_frame(&renderer);

@@ -5622,6 +5622,142 @@ void draw_coast_transition(Renderer *r, int covered_width) {
     }
 }
 
+static void draw_transition_terrain(Renderer *r, const Map *map, int tx, int ty, int mx, int my, TownExitStyle style) {
+    TileType tile = map->tiles[my][mx];
+    switch (style) {
+        case TOWN_EXIT_FROST:
+            if (tile == TILE_FROST_WALL) {
+                draw_frostfell_wall(r, map, tx, ty, mx, my);
+            } else if (tile == TILE_FROST_ICE) {
+                draw_frostfell_ice(r, tx, ty, mx, my);
+            } else {
+                draw_frostfell_floor(r, tx, ty, mx, my);
+            }
+            break;
+        case TOWN_EXIT_DESERT:
+            if (tile == TILE_DESERT_WALL) {
+                draw_desert_wall(r, map, tx, ty, mx, my);
+            } else {
+                draw_desert_floor(r, tx, ty, mx, my);
+            }
+            break;
+        case TOWN_EXIT_MOONVEIL:
+            if (tile == TILE_MOONVEIL_WALL) {
+                draw_moonveil_wall(r, tx, ty, mx, my);
+            } else if (tile == TILE_MOONVEIL_POOL) {
+                draw_moonveil_pool(r, tx, ty, mx, my);
+            } else {
+                draw_moonveil_floor(r, tx, ty, mx, my);
+            }
+            break;
+        case TOWN_EXIT_ASHEN:
+            if (tile == TILE_ASHEN_WALL) {
+                draw_ashen_wall(r, tx, ty, mx, my);
+            } else if (tile == TILE_ASHEN_LAVA) {
+                draw_ashen_lava(r, tx, ty, mx, my);
+            } else {
+                draw_ashen_floor(r, tx, ty, mx, my);
+            }
+            break;
+        case TOWN_EXIT_GLASSDEEP:
+            if (tile == TILE_GLASSDEEP_WALL) {
+                draw_glassdeep_wall(r, tx, ty, mx, my);
+            } else if (tile == TILE_GLASSDEEP_POOL) {
+                draw_glassdeep_pool(r, tx, ty, mx, my);
+            } else {
+                draw_glassdeep_floor(r, tx, ty, mx, my);
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+void draw_area_transition(Renderer *r, int covered_width, TownExitStyle style) {
+    switch (style) {
+        case TOWN_EXIT_FOREST:
+        case TOWN_EXIT_ROAD:
+        case TOWN_EXIT_SWAMP:
+            draw_forest_transition(r, covered_width);
+            return;
+        case TOWN_EXIT_MOUNTAINS:
+        case TOWN_EXIT_DRAGONSPINE:
+            draw_mountain_transition(r, covered_width);
+            return;
+        case TOWN_EXIT_COAST:
+            draw_coast_transition(r, covered_width);
+            return;
+        case TOWN_EXIT_FROST:
+        case TOWN_EXIT_DESERT:
+        case TOWN_EXIT_MOONVEIL:
+        case TOWN_EXIT_ASHEN:
+        case TOWN_EXIT_GLASSDEEP:
+            break;
+        default:
+            draw_dungeon_transition(r, covered_width);
+            return;
+    }
+    if (covered_width <= 0) {
+        return;
+    }
+    int max_width = (r->screen_w + 1) / 2;
+    if (covered_width > max_width) {
+        covered_width = max_width;
+    }
+    int columns = (max_width + TILE_SIZE - 1) / TILE_SIZE;
+    int rows = (r->screen_h + TILE_SIZE - 1) / TILE_SIZE;
+    static const TileType walls[] = {TILE_FROST_WALL, TILE_DESERT_WALL, TILE_MOONVEIL_WALL, TILE_ASHEN_WALL, TILE_GLASSDEEP_WALL};
+    static const TileType floors[] = {TILE_FROST_FLOOR, TILE_DESERT_FLOOR, TILE_MOONVEIL_FLOOR, TILE_ASHEN_FLOOR, TILE_GLASSDEEP_FLOOR};
+    static const TileType pools[] = {TILE_FROST_ICE, TILE_DESERT_FLOOR, TILE_MOONVEIL_POOL, TILE_ASHEN_LAVA, TILE_GLASSDEEP_POOL};
+    int biome = style - TOWN_EXIT_FROST;
+    // A decorative map lets connected snow and sandstone reuse their normal
+    // terrain shading. It never touches the player's map or random sequence.
+    Map terrain = {0};
+    for (int my = 0; my < MAP_H && my < rows + 2; my++) {
+        for (int mx = 0; mx < MAP_W && mx < columns * 2 + 2; mx++) {
+            int shade = dragonspine_shade(mx * TILE_SIZE, my * TILE_SIZE, 108, 84);
+            terrain.tiles[my][mx] = shade > 122 ? walls[biome] : shade < 72 ? pools[biome] : floors[biome];
+        }
+    }
+    SDL_Rect previous_view;
+    SDL_Rect previous_clip;
+    SDL_bool had_clip = SDL_RenderIsClipEnabled(r->sdl);
+    SDL_RenderGetViewport(r->sdl, &previous_view);
+    SDL_Rect bounds = previous_view;
+    if (had_clip) {
+        SDL_RenderGetClipRect(r->sdl, &previous_clip);
+        bounds = (SDL_Rect){previous_view.x + previous_clip.x, previous_view.y + previous_clip.y, previous_clip.w, previous_clip.h};
+    }
+    for (int side = 0; side < 2; side++) {
+        int x = side ? r->screen_w - covered_width : covered_width - max_width;
+        SDL_Rect view = {x, 0, max_width, r->screen_h};
+        SDL_RenderSetViewport(r->sdl, &view);
+        SDL_Rect local_bounds = {bounds.x - x, bounds.y, bounds.w, bounds.h};
+        for (int row = 0; row < rows; row++) {
+            int inset = dragonspine_shade(side * 96, row * TILE_SIZE, 36, 72) / 20;
+            if (inset > max_width - covered_width) {
+                inset = max_width - covered_width;
+            }
+            if (inset >= covered_width) {
+                continue;
+            }
+            SDL_Rect edge = {side ? inset : max_width - covered_width, row * TILE_SIZE, covered_width - inset, TILE_SIZE};
+            SDL_Rect clip;
+            if (!SDL_IntersectRect(&edge, &local_bounds, &clip)) {
+                continue;
+            }
+            SDL_RenderSetClipRect(r->sdl, &clip);
+            for (int col = clip.x / TILE_SIZE; col * TILE_SIZE < clip.x + clip.w; col++) {
+                int mx = (col + side * columns) % (MAP_W - 2) + 1;
+                int my = row % (MAP_H - 2) + 1;
+                draw_transition_terrain(r, &terrain, col, row, mx, my, style);
+            }
+        }
+    }
+    SDL_RenderSetViewport(r->sdl, &previous_view);
+    SDL_RenderSetClipRect(r->sdl, had_clip ? &previous_clip : NULL);
+}
+
 static void draw_shop_blacksmith_fallback(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
