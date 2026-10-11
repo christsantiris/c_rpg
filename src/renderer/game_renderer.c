@@ -1,5 +1,6 @@
 #include "game_renderer.h"
 #include "sprites.h"
+#include "npc_renderer.h"
 #include "info_panel.h"
 #include "message_bar.h"
 #include "minimap_renderer.h"
@@ -70,28 +71,7 @@ static void draw_watchfire(Renderer *r, const GameState *g, int sx, int sy, int 
 
 static void draw_oswin(Renderer *r, int sx, int sy) {
     draw_tavern_floor(r, sx, sy);
-    int px = sx * TILE_SIZE;
-    int py = sy * TILE_SIZE;
-    SDL_SetRenderDrawColor(r->sdl, 89, 85, 103, 255);
-    SDL_Rect hood = {px + 6, py + 3, 13, 12};
-    SDL_Rect robe = {px + 5, py + 13, 15, 11};
-    SDL_RenderFillRect(r->sdl, &hood);
-    SDL_RenderFillRect(r->sdl, &robe);
-    SDL_SetRenderDrawColor(r->sdl, 208, 168, 137, 255);
-    SDL_Rect face = {px + 9, py + 6, 7, 7};
-    SDL_RenderFillRect(r->sdl, &face);
-    SDL_SetRenderDrawColor(r->sdl, 224, 216, 186, 255);
-    SDL_RenderDrawLine(r->sdl, px + 10, py + 14, px + 10, py + 22);
-    SDL_RenderDrawLine(r->sdl, px + 14, py + 14, px + 14, py + 22);
-    SDL_SetRenderDrawColor(r->sdl, 29, 27, 36, 255);
-    SDL_RenderDrawPoint(r->sdl, px + 10, py + 8);
-    SDL_RenderDrawPoint(r->sdl, px + 14, py + 8);
-    SDL_SetRenderDrawColor(r->sdl, 112, 74, 47, 255);
-    SDL_Rect book = {px + 14, py + 15, 8, 7};
-    SDL_RenderFillRect(r->sdl, &book);
-    SDL_SetRenderDrawColor(r->sdl, 226, 216, 183, 255);
-    SDL_RenderDrawLine(r->sdl, px + 16, py + 17, px + 20, py + 17);
-    SDL_RenderDrawLine(r->sdl, px + 16, py + 19, px + 20, py + 19);
+    npc_draw(r, sx, sy, NPC_ART_OSWIN, 0);
 }
 
 static void draw_frostfell_quest_tile(Renderer *r, int sx, int sy, int x, int y, TileType tile) {
@@ -115,34 +95,9 @@ static void draw_frostfell_quest_tile(Renderer *r, int sx, int sy, int x, int y,
         SDL_RenderDrawLine(r->sdl, px + 10, py + 14, px + 16, py + 14);
         return;
     }
-    SDL_SetRenderDrawColor(r->sdl, 53, 77, 110, 255);
-    SDL_Rect hood = {px + 6, py + 3, 13, 11};
-    SDL_Rect coat = {px + 5, py + 12, 15, 10};
-    SDL_RenderFillRect(r->sdl, &hood);
-    SDL_RenderFillRect(r->sdl, &coat);
-    SDL_SetRenderDrawColor(r->sdl, 208, 164, 126, 255);
-    SDL_Rect face = {px + 9, py + 6, 7, 6};
-    SDL_RenderFillRect(r->sdl, &face);
-    SDL_SetRenderDrawColor(r->sdl, 214, 225, 230, 255);
-    SDL_RenderDrawLine(r->sdl, px + 7, py + 13, px + 17, py + 13);
-    SDL_RenderDrawLine(r->sdl, px + 12, py + 14, px + 12, py + 20);
-    SDL_SetRenderDrawColor(r->sdl, 29, 37, 49, 255);
-    SDL_RenderDrawPoint(r->sdl, px + 10, py + 8);
-    SDL_RenderDrawPoint(r->sdl, px + 14, py + 8);
-    SDL_Rect boots[2] = {{px + 6, py + 22, 5, 2}, {px + 14, py + 22, 5, 2}};
-    SDL_RenderFillRects(r->sdl, boots, 2);
-    if (tile == TILE_NPC_ORIN) {
-        SDL_SetRenderDrawColor(r->sdl, 236, 220, 172, 255);
-        SDL_Rect map = {px + 16, py + 13, 6, 9};
-        SDL_RenderFillRect(r->sdl, &map);
-        SDL_SetRenderDrawColor(r->sdl, 70, 148, 174, 255);
-        SDL_RenderDrawLine(r->sdl, px + 18, py + 15, px + 20, py + 20);
-    }
-    if (tile == TILE_NPC_BRENNA) {
-        SDL_SetRenderDrawColor(r->sdl, 228, 182, 78, 255);
-        SDL_Rect badge = {px + 15, py + 15, 3, 3};
-        SDL_RenderFillRect(r->sdl, &badge);
-    }
+    NpcArt art = tile == TILE_NPC_BRENNA ? NPC_ART_BRENNA
+        : (tile == TILE_NPC_ORIN ? NPC_ART_ORIN : NPC_ART_FEN);
+    npc_draw(r, sx, sy, art, 0);
 }
 
 static void draw_moonveil_quest_tile(Renderer *r, int sx, int sy, int x, int y, TileType tile) {
@@ -150,26 +105,7 @@ static void draw_moonveil_quest_tile(Renderer *r, int sx, int sy, int x, int y, 
     int py = sy * TILE_SIZE;
     if (tile == TILE_NPC_LIORA) {
         draw_town_path(r, sx, sy);
-        SDL_SetRenderDrawColor(r->sdl, 80, 52, 42, 255);
-        SDL_Rect hair = {px + 7, py + 3, 12, 11};
-        SDL_RenderFillRect(r->sdl, &hair);
-        SDL_SetRenderDrawColor(r->sdl, 220, 175, 139, 255);
-        SDL_Rect face = {px + 9, py + 6, 7, 7};
-        SDL_RenderFillRect(r->sdl, &face);
-        SDL_SetRenderDrawColor(r->sdl, 67, 121, 78, 255);
-        SDL_Rect cloak = {px + 5, py + 13, 15, 10};
-        SDL_RenderFillRect(r->sdl, &cloak);
-        SDL_SetRenderDrawColor(r->sdl, 175, 208, 139, 255);
-        SDL_RenderDrawLine(r->sdl, px + 10, py + 14, px + 10, py + 21);
-        SDL_SetRenderDrawColor(r->sdl, 33, 34, 30, 255);
-        SDL_RenderDrawPoint(r->sdl, px + 10, py + 8);
-        SDL_RenderDrawPoint(r->sdl, px + 14, py + 8);
-        SDL_SetRenderDrawColor(r->sdl, 145, 102, 62, 255);
-        SDL_Rect satchel = {px + 16, py + 16, 6, 6};
-        SDL_RenderFillRect(r->sdl, &satchel);
-        SDL_SetRenderDrawColor(r->sdl, 191, 161, 229, 255);
-        SDL_RenderDrawPoint(r->sdl, px + 18, py + 15);
-        SDL_RenderDrawPoint(r->sdl, px + 19, py + 14);
+        npc_draw(r, sx, sy, NPC_ART_LIORA, 0);
         return;
     }
     if (tile == TILE_MOONVEIL_PLANTING_CIRCLE || tile == TILE_MOONVEIL_MOONFLOWER) {
@@ -2404,19 +2340,16 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     break;
                 case TILE_NPC_SHARPENER:
                     draw_tavern_floor(r, sx, sy);
-                    draw_dain(r, sx, sy);
+                    npc_draw(r, sx, sy, NPC_ART_GARRICK, 0);
                     break;
                 case TILE_NPC_ALDER: draw_alder(r, sx, sy); break;
                 case TILE_NPC_MARA: draw_mara(r, sx, sy); break;
                 case TILE_NPC_ROOK: draw_rook(r, sx, sy); break;
                 case TILE_NPC_GUILD_SEEKER: draw_guild_seeker(r, sx, sy); break;
-                case TILE_NPC_STEWARD: {
-                    draw_alder(r, sx, sy);
-                    SDL_SetRenderDrawColor(r->sdl, 218, 175, 78, 255);
-                    SDL_Rect badge = {sx * TILE_SIZE + 13, sy * TILE_SIZE + 15, 3, 3};
-                    SDL_RenderFillRect(r->sdl, &badge);
+                case TILE_NPC_STEWARD:
+                    draw_tavern_floor(r, sx, sy);
+                    npc_draw(r, sx, sy, NPC_ART_HADRIN, 0);
                     break;
-                }
                 case TILE_JAIL_BUILDING:
                 case TILE_JAIL_DOOR:
                     draw_town_floor(r, sx, sy);
@@ -2429,20 +2362,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_WATCHFIRE_LIT:
                     draw_watchfire(r, g, sx, sy, x, y, g->map.tiles[y][x]);
                     break;
-                case TILE_NPC_SELENE: {
-                    draw_guild_seeker(r, sx, sy);
-                    SDL_SetRenderDrawColor(r->sdl, 117, 76, 44, 255);
-                    int px = sx * TILE_SIZE;
-                    int py = sy * TILE_SIZE;
-                    SDL_Point bow[5] = {{px + 18, py + 7}, {px + 21, py + 10}, {px + 22, py + 14}, {px + 21, py + 18}, {px + 18, py + 21}};
-                    SDL_RenderDrawLines(r->sdl, bow, 5);
-                    SDL_SetRenderDrawColor(r->sdl, 227, 216, 173, 255);
-                    SDL_RenderDrawLine(r->sdl, px + 18, py + 7, px + 18, py + 21);
+                case TILE_NPC_SELENE:
+                    draw_tavern_floor(r, sx, sy);
+                    npc_draw(r, sx, sy, NPC_ART_SELENE, 0);
                     break;
-                }
                 case TILE_NPC_VEYRA:
                     draw_tavern_floor(r, sx, sy);
-                    draw_royal_guard_overlay(r, sx, sy, 1);
+                    npc_draw(r, sx, sy, NPC_ART_VEYRA, 0);
                     break;
                 case TILE_NPC_OSWIN:
                     draw_oswin(r, sx, sy);
@@ -2451,9 +2377,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_NPC_CAIN: draw_cain(r, sx, sy); break;
                 case TILE_NPC_BRAM:
                     draw_town_path(r, sx, sy);
-                    jail_draw_person(r, sx, sy, 0);
+                    npc_draw(r, sx, sy, NPC_ART_BRAM_TOWN, 0);
                     break;
-                case TILE_NPC_ROWAN: draw_rowan(r, sx, sy); break;
+                case TILE_NPC_ROWAN:
+                    draw_town_floor(r, sx, sy);
+                    draw_rowan(r, sx, sy);
+                    break;
                 case TILE_NPC_DRAGON_SEEKER:
                     draw_dragon_seeker(r, sx, sy); break;
                 case TILE_NPC_ROYAL_GUARD:
