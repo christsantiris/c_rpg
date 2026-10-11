@@ -205,6 +205,7 @@ void draw_labyrinth_switch(Renderer *r, int tile_x, int tile_y, int active);
 void draw_labyrinth_gate(Renderer *r, int tile_x, int tile_y);
 void draw_labyrinth_relic(Renderer *r, int tile_x, int tile_y);
 void draw_cain(Renderer *r, int tile_x, int tile_y);
+// Character overlay for town and island; callers draw the local ground first.
 void draw_rowan(Renderer *r, int tile_x, int tile_y);
 void draw_royal_guard(Renderer *r, int tile_x, int tile_y, int halberd_left);
 void draw_royal_guard_overlay(Renderer *r, int tile_x, int tile_y, int halberd_left);

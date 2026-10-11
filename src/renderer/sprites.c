@@ -1,5 +1,6 @@
 #include "sprites.h"
 #include "player_art.h"
+#include "npc_renderer.h"
 #include <stdlib.h>
 
 static void fill_rect(Renderer *r, int x, int y, int w, int h, SDL_Color c) {
@@ -3585,73 +3586,16 @@ void draw_tavern_table(Renderer *r, int tile_x, int tile_y) {
 }
 
 void draw_cain(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
     draw_town_path(r, tile_x, tile_y);
-    SDL_Color robe = {112, 78, 47, 255};
-    SDL_Color hair = {223, 218, 200, 255};
-    fill_rect(r, x + 6, y + 3, 12, 7, hair);
-    fill_rect(r, x + 8, y + 6, 8, 7, (SDL_Color){198, 151, 113, 255});
-    fill_rect(r, x + 5, y + 12, 14, 10, robe);
-    fill_rect(r, x + 8, y + 11, 8, 5, hair);
-    fill_rect(r, x + 10, y + 16, 4, 2, hair);
-    fill_rect(r, x + 9, y + 8, 2, 2, (SDL_Color){41, 32, 27, 255});
-    fill_rect(r, x + 14, y + 8, 2, 2, (SDL_Color){41, 32, 27, 255});
-    fill_rect(r, x + 20, y + 5, 2, 18, (SDL_Color){80, 52, 30, 255});
-    fill_rect(r, x + 3, y + 15, 5, 6, (SDL_Color){238, 218, 162, 255});
+    npc_draw(r, tile_x, tile_y, NPC_ART_CAIN, 0);
 }
 
 void draw_rowan(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color outline = {22, 28, 39, 255};
-    SDL_Color coat = {43, 66, 101, 255};
-    SDL_Color trim = {208, 167, 85, 255};
-    SDL_Color skin = {195, 148, 109, 255};
-    SDL_Color hair = {206, 205, 191, 255};
-    draw_town_floor(r, tile_x, tile_y);
-    fill_rect(r, x + 7, y + 2, 10, 5, outline);
-    fill_rect(r, x + 8, y + 3, 8, 3, coat);
-    fill_rect(r, x + 4, y + 6, 16, 2, outline);
-    fill_rect(r, x + 8, y + 5, 8, 1, trim);
-    fill_rect(r, x + 7, y + 8, 10, 5, hair);
-    fill_rect(r, x + 8, y + 8, 8, 4, skin);
-    fill_rect(r, x + 9, y + 9, 2, 1, outline);
-    fill_rect(r, x + 14, y + 9, 2, 1, outline);
-    fill_rect(r, x + 10, y + 11, 4, 2, hair);
-    fill_rect(r, x + 4, y + 13, 16, 8, outline);
-    fill_rect(r, x + 5, y + 14, 14, 6, coat);
-    fill_rect(r, x + 5, y + 13, 4, 2, trim);
-    fill_rect(r, x + 15, y + 13, 4, 2, trim);
-    fill_rect(r, x + 11, y + 14, 2, 4, hair);
-    fill_rect(r, x + 5, y + 18, 2, 2, skin);
-    fill_rect(r, x + 17, y + 18, 2, 2, skin);
-    fill_rect(r, x + 8, y + 19, 8, 1, trim);
-    fill_rect(r, x + 7, y + 21, 4, 2, outline);
-    fill_rect(r, x + 14, y + 21, 4, 2, outline);
+    npc_draw(r, tile_x, tile_y, NPC_ART_ROWAN, 0);
 }
 
 void draw_nahla(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color outline = {31, 24, 24, 255};
-    SDL_Color hat = {181, 132, 64, 255};
-    SDL_Color shirt = {47, 112, 104, 255};
-    SDL_Color skin = {173, 112, 72, 255};
-    fill_rect(r, x + 5, y + 2, 14, 3, outline);
-    fill_rect(r, x + 7, y, 10, 5, hat);
-    fill_rect(r, x + 8, y + 5, 8, 7, skin);
-    fill_rect(r, x + 7, y + 5, 2, 6, (SDL_Color){54, 35, 29, 255});
-    fill_rect(r, x + 15, y + 5, 2, 6, (SDL_Color){54, 35, 29, 255});
-    fill_rect(r, x + 9, y + 7, 2, 2, outline);
-    fill_rect(r, x + 13, y + 7, 2, 2, outline);
-    fill_rect(r, x + 5, y + 12, 14, 9, outline);
-    fill_rect(r, x + 6, y + 13, 12, 7, shirt);
-    fill_rect(r, x + 9, y + 13, 6, 5, (SDL_Color){214, 190, 127, 255});
-    fill_rect(r, x + 4, y + 14, 3, 6, skin);
-    fill_rect(r, x + 17, y + 14, 3, 6, skin);
-    fill_rect(r, x + 7, y + 20, 4, 3, outline);
-    fill_rect(r, x + 14, y + 20, 4, 3, outline);
+    npc_draw(r, tile_x, tile_y, NPC_ART_NAHLA, 0);
 }
 
 void draw_healer_house(Renderer *r, int tile_x, int tile_y) {
@@ -3869,76 +3813,22 @@ void draw_witch_portrait(Renderer *r, int x, int y, int scale) {
 }
 
 void draw_elowen(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
     draw_tavern_floor(r, tile_x, tile_y);
-    fill_rect(r, x + 6, y + 3, 12, 7, (SDL_Color){225, 216, 190, 255});
-    fill_rect(r, x + 8, y + 7, 8, 6, (SDL_Color){202, 154, 119, 255});
-    fill_rect(r, x + 6, y + 12, 12, 10, (SDL_Color){48, 76, 132, 255});
-    fill_rect(r, x + 4, y + 13, 3, 8, (SDL_Color){67, 101, 165, 255});
-    fill_rect(r, x + 17, y + 13, 3, 8, (SDL_Color){67, 101, 165, 255});
-    fill_rect(r, x + 10, y + 9, 2, 2, (SDL_Color){44, 37, 51, 255});
-    fill_rect(r, x + 14, y + 9, 2, 2, (SDL_Color){44, 37, 51, 255});
-    fill_rect(r, x + 20, y + 4, 2, 18, (SDL_Color){94, 61, 38, 255});
-    fill_rect(r, x + 18, y + 3, 6, 3, (SDL_Color){112, 194, 210, 255});
+    npc_draw(r, tile_x, tile_y, NPC_ART_ELOWEN, 0);
 }
 
 void draw_dain(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    fill_rect(r, x + 5, y + 4, 14, 5, (SDL_Color){72, 67, 62, 255});
-    fill_rect(r, x + 7, y + 7, 10, 7, (SDL_Color){189, 132, 91, 255});
-    fill_rect(r, x + 6, y + 11, 12, 8, (SDL_Color){116, 67, 35, 255});
-    fill_rect(r, x + 8, y + 12, 2, 7, (SDL_Color){173, 105, 50, 255});
-    fill_rect(r, x + 14, y + 12, 2, 7, (SDL_Color){173, 105, 50, 255});
-    fill_rect(r, x + 5, y + 17, 14, 5, (SDL_Color){65, 77, 91, 255});
-    fill_rect(r, x + 9, y + 9, 2, 2, (SDL_Color){35, 29, 27, 255});
-    fill_rect(r, x + 14, y + 9, 2, 2, (SDL_Color){35, 29, 27, 255});
-    fill_rect(r, x + 2, y + 5, 3, 17, (SDL_Color){87, 55, 34, 255});
-    fill_rect(r, x, y + 3, 7, 4, (SDL_Color){151, 157, 164, 255});
+    npc_draw(r, tile_x, tile_y, NPC_ART_DAIN, 0);
 }
 
 void draw_alder(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
     draw_tavern_floor(r, tile_x, tile_y);
-    SDL_Color cloak = {48, 91, 55, 255};
-    SDL_Color cloak_light = {76, 126, 69, 255};
-    SDL_Color leather = {91, 57, 32, 255};
-    SDL_Color skin = {191, 142, 101, 255};
-    fill_rect(r, x + 7, y + 3, 10, 8, cloak);
-    fill_rect(r, x + 9, y + 6, 7, 6, skin);
-    fill_rect(r, x + 6, y + 11, 13, 11, cloak);
-    fill_rect(r, x + 4, y + 13, 4, 8, cloak_light);
-    fill_rect(r, x + 17, y + 13, 4, 8, cloak_light);
-    fill_rect(r, x + 8, y + 16, 10, 3, leather);
-    fill_rect(r, x + 10, y + 8, 2, 2, (SDL_Color){30, 39, 27, 255});
-    fill_rect(r, x + 15, y + 8, 2, 2, (SDL_Color){30, 39, 27, 255});
-    fill_rect(r, x + 21, y + 3, 2, 19, leather);
-    fill_rect(r, x + 19, y + 2, 5, 2, (SDL_Color){154, 177, 118, 255});
+    npc_draw(r, tile_x, tile_y, NPC_ART_ALDER, 0);
 }
 
 void draw_mara(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
     draw_tavern_floor(r, tile_x, tile_y);
-    SDL_Color coat = {29, 91, 111, 255};
-    SDL_Color coat_light = {47, 137, 147, 255};
-    SDL_Color skin = {188, 137, 101, 255};
-    SDL_Color brass = {207, 164, 63, 255};
-    fill_rect(r, x + 6, y + 4, 13, 5, (SDL_Color){30, 54, 66, 255});
-    fill_rect(r, x + 8, y + 7, 9, 6, skin);
-    fill_rect(r, x + 6, y + 12, 13, 10, coat);
-    fill_rect(r, x + 9, y + 13, 3, 8, coat_light);
-    fill_rect(r, x + 10, y + 9, 2, 2, (SDL_Color){25, 35, 42, 255});
-    fill_rect(r, x + 15, y + 9, 2, 2, (SDL_Color){25, 35, 42, 255});
-    fill_rect(r, x + 20, y + 12, 3, 10, brass);
-    fill_rect(r, x + 18, y + 15, 6, 6, (SDL_Color){69, 207, 196, 255});
-}
-
-// Draws one guard rect, mirrored across the tile when the halberd is on the left.
-static void guard_rect(Renderer *r, int x, int y, int dx, int dy, int w, int h, int mirror, SDL_Color c) {
-    fill_rect(r, x + (mirror ? TILE_SIZE - dx - w : dx), y + dy, w, h, c);
+    npc_draw(r, tile_x, tile_y, NPC_ART_MARA, 0);
 }
 
 void draw_royal_guard(Renderer *r, int tile_x, int tile_y, int halberd_left) {
@@ -3947,102 +3837,22 @@ void draw_royal_guard(Renderer *r, int tile_x, int tile_y, int halberd_left) {
 }
 
 void draw_royal_guard_overlay(Renderer *r, int tile_x, int tile_y, int halberd_left) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    int m = halberd_left;
-    SDL_Color outline = {24, 24, 32, 255};
-    SDL_Color steel = {146, 152, 166, 255};
-    SDL_Color steel_light = {205, 210, 220, 255};
-    SDL_Color plume = {176, 38, 44, 255};
-    SDL_Color skin = {196, 146, 106, 255};
-    SDL_Color tabard = {38, 60, 140, 255};
-    SDL_Color tabard_light = {64, 92, 178, 255};
-    SDL_Color gold = {220, 176, 62, 255};
-    SDL_Color boots = {36, 28, 26, 255};
-    SDL_Color wood = {110, 72, 40, 255};
-    // Kettle helm with a crimson plume.
-    guard_rect(r, x, y, 10, 0, 3, 2, m, plume);
-    guard_rect(r, x, y, 7, 1, 9, 4, m, outline);
-    guard_rect(r, x, y, 8, 2, 7, 3, m, steel);
-    guard_rect(r, x, y, 9, 2, 3, 1, m, steel_light);
-    guard_rect(r, x, y, 5, 5, 13, 2, m, outline);
-    guard_rect(r, x, y, 6, 5, 11, 1, m, steel);
-    // Face.
-    guard_rect(r, x, y, 8, 7, 7, 4, m, skin);
-    guard_rect(r, x, y, 9, 8, 1, 1, m, outline);
-    guard_rect(r, x, y, 13, 8, 1, 1, m, outline);
-    // Mail sleeves and a royal tabard with a gold crown.
-    guard_rect(r, x, y, 4, 11, 15, 10, m, outline);
-    guard_rect(r, x, y, 5, 12, 2, 6, m, steel);
-    guard_rect(r, x, y, 16, 12, 2, 5, m, steel);
-    guard_rect(r, x, y, 7, 11, 9, 10, m, tabard);
-    guard_rect(r, x, y, 8, 12, 2, 8, m, tabard_light);
-    guard_rect(r, x, y, 7, 11, 9, 1, m, gold);
-    guard_rect(r, x, y, 10, 14, 3, 2, m, gold);
-    guard_rect(r, x, y, 10, 13, 1, 1, m, gold);
-    guard_rect(r, x, y, 12, 13, 1, 1, m, gold);
-    // Legs and boots.
-    guard_rect(r, x, y, 8, 21, 3, 3, m, boots);
-    guard_rect(r, x, y, 12, 21, 3, 3, m, boots);
-    // Halberd: shaft, spear point, axe blade and back hook.
-    guard_rect(r, x, y, 19, 3, 2, 21, m, wood);
-    guard_rect(r, x, y, 19, 0, 2, 3, m, steel_light);
-    guard_rect(r, x, y, 21, 3, 2, 5, m, steel);
-    guard_rect(r, x, y, 23, 4, 1, 3, m, steel_light);
-    guard_rect(r, x, y, 17, 5, 2, 1, m, steel);
-    guard_rect(r, x, y, 18, 13, 2, 2, m, skin);
+    npc_draw(r, tile_x, tile_y, NPC_ART_GUARD, halberd_left);
 }
 
 void draw_rook(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color outline = {35, 24, 20, 255};
-    SDL_Color hat = {77, 42, 32, 255};
-    SDL_Color hat_light = {132, 69, 43, 255};
-    SDL_Color skin = {187, 127, 84, 255};
-    SDL_Color coat = {91, 30, 39, 255};
-    SDL_Color coat_light = {142, 46, 49, 255};
-    SDL_Color gold = {218, 172, 55, 255};
     draw_tavern_floor(r, tile_x, tile_y);
-    fill_rect(r, x + 5, y + 3, 15, 4, outline);
-    fill_rect(r, x + 7, y + 1, 11, 5, hat);
-    fill_rect(r, x + 8, y + 2, 9, 2, hat_light);
-    fill_rect(r, x + 8, y + 7, 10, 6, skin);
-    fill_rect(r, x + 9, y + 9, 2, 2, outline);
-    fill_rect(r, x + 15, y + 9, 2, 2, outline);
-    fill_rect(r, x + 7, y + 13, 12, 9, coat);
-    fill_rect(r, x + 9, y + 14, 3, 8, coat_light);
-    fill_rect(r, x + 13, y + 14, 2, 7, gold);
-    fill_rect(r, x + 4, y + 15, 4, 6, coat);
-    fill_rect(r, x + 18, y + 15, 4, 6, coat);
-    fill_rect(r, x + 20, y + 19, 3, 3, gold);
-    fill_rect(r, x + 20, y + 17, 1, 1, outline);
+    npc_draw(r, tile_x, tile_y, NPC_ART_ROOK, 0);
 }
 
 void draw_innkeeper(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
     draw_tavern_floor(r, tile_x, tile_y);
-    fill_rect(r, x + 6, y + 2, 13, 5, (SDL_Color){68, 39, 27, 255});
-    fill_rect(r, x + 8, y + 6, 9, 8, (SDL_Color){196, 142, 96, 255});
-    fill_rect(r, x + 8, y + 11, 9, 3, (SDL_Color){96, 53, 35, 255});
-    fill_rect(r, x + 6, y + 14, 13, 8, (SDL_Color){113, 73, 48, 255});
-    fill_rect(r, x + 9, y + 14, 7, 8, (SDL_Color){211, 185, 132, 255});
-    fill_rect(r, x + 11, y + 15, 3, 6, (SDL_Color){102, 49, 38, 255});
-    fill_rect(r, x + 9, y + 8, 2, 2, (SDL_Color){34, 29, 26, 255});
-    fill_rect(r, x + 15, y + 8, 2, 2, (SDL_Color){34, 29, 26, 255});
+    npc_draw(r, tile_x, tile_y, NPC_ART_BRAM_INN, 0);
 }
 
 void draw_swamp_daughter(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
     draw_swamp_floor(r, tile_x, tile_y, map_x, map_y);
-    fill_rect(r, x + 7, y + 3, 11, 7, (SDL_Color){66, 39, 39, 255});
-    fill_rect(r, x + 9, y + 7, 7, 6, (SDL_Color){213, 164, 129, 255});
-    fill_rect(r, x + 7, y + 13, 11, 9, (SDL_Color){156, 116, 177, 255});
-    fill_rect(r, x + 10, y + 14, 5, 7, (SDL_Color){199, 162, 205, 255});
-    fill_rect(r, x + 9, y + 9, 2, 1, (SDL_Color){34, 29, 30, 255});
-    fill_rect(r, x + 15, y + 9, 2, 1, (SDL_Color){34, 29, 30, 255});
+    npc_draw(r, tile_x, tile_y, NPC_ART_MIRA, 0);
 }
 
 static unsigned int dragonspine_noise(int x, int y) {
@@ -5024,55 +4834,18 @@ void draw_dragon_goblet(Renderer *r, int tile_x, int tile_y, int map_x, int map_
 }
 
 void draw_dragon_seeker(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
     draw_tavern_floor(r, tile_x, tile_y);
-    fill_rect(r, x + 5, y + 4, 14, 4, (SDL_Color){49, 48, 56, 255});
-    fill_rect(r, x + 8, y + 2, 9, 4, (SDL_Color){87, 73, 60, 255});
-    fill_rect(r, x + 8, y + 8, 8, 5, (SDL_Color){204, 159, 120, 255});
-    fill_rect(r, x + 10, y + 9, 2, 1, (SDL_Color){35, 30, 30, 255});
-    fill_rect(r, x + 14, y + 9, 2, 1, (SDL_Color){35, 30, 30, 255});
-    fill_rect(r, x + 5, y + 13, 14, 8, (SDL_Color){110, 65, 52, 255});
-    fill_rect(r, x + 7, y + 14, 10, 5, (SDL_Color){158, 89, 55, 255});
-    fill_rect(r, x + 11, y + 14, 3, 7, (SDL_Color){225, 181, 80, 255});
-    fill_rect(r, x + 7, y + 21, 4, 2, (SDL_Color){45, 39, 38, 255});
-    fill_rect(r, x + 14, y + 21, 4, 2, (SDL_Color){45, 39, 38, 255});
+    npc_draw(r, tile_x, tile_y, NPC_ART_ILYA, 0);
 }
 
 void draw_forest_warden(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
     draw_forest_floor(r, tile_x, tile_y, map_x, map_y);
-    SDL_Color cloak = {41, 84, 49, 255};
-    SDL_Color skin = {199, 151, 108, 255};
-    SDL_Color binding = {157, 174, 132, 255};
-    SDL_Color root = {80, 57, 31, 255};
-    fill_rect(r, x + 7, y + 3, 10, 8, cloak);
-    fill_rect(r, x + 9, y + 6, 7, 5, skin);
-    fill_rect(r, x + 6, y + 11, 13, 11, cloak);
-    fill_rect(r, x + 3, y + 12, 19, 3, binding);
-    fill_rect(r, x + 4, y + 17, 17, 3, binding);
-    fill_rect(r, x + 2, y + 7, 3, 15, root);
-    fill_rect(r, x + 20, y + 5, 3, 17, root);
-    fill_rect(r, x + 9, y + 8, 2, 2, (SDL_Color){210, 226, 174, 255});
-    fill_rect(r, x + 15, y + 8, 2, 2, (SDL_Color){210, 226, 174, 255});
+    npc_draw(r, tile_x, tile_y, NPC_ART_WARDEN, 0);
 }
 
 void draw_guild_seeker(Renderer *r, int tx, int ty) {
     draw_tavern_floor(r, tx, ty);
-    int x = tx * TILE_SIZE;
-    int y = ty * TILE_SIZE;
-    SDL_Color cloak = {57, 106, 135, 255};
-    SDL_Color skin = {191, 133, 86, 255};
-    SDL_Color gold = {224, 184, 79, 255};
-    fill_rect(r, x + 7, y + 2, 10, 8, cloak);
-    fill_rect(r, x + 9, y + 4, 6, 5, skin);
-    fill_rect(r, x + 6, y + 10, 12, 11, cloak);
-    fill_rect(r, x + 9, y + 10, 6, 2, gold);
-    fill_rect(r, x + 5, y + 15, 14, 5, (SDL_Color){227, 216, 173, 255});
-    fill_rect(r, x + 11, y + 15, 1, 5, gold);
-    fill_rect(r, x + 7, y + 21, 4, 3, (SDL_Color){55, 42, 34, 255});
-    fill_rect(r, x + 13, y + 21, 4, 3, (SDL_Color){55, 42, 34, 255});
+    npc_draw(r, tx, ty, NPC_ART_ZARA, 0);
 }
 
 void draw_desert_lamp(Renderer *r, int tx, int ty, int mx, int my) {

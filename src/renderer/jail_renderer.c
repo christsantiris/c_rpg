@@ -1,5 +1,6 @@
 #include "jail_renderer.h"
 #include "sprites.h"
+#include "npc_renderer.h"
 #include "../game/jail.h"
 
 static void rect(Renderer *r, int x, int y, int w, int h, SDL_Color color) {
@@ -9,23 +10,7 @@ static void rect(Renderer *r, int x, int y, int w, int h, SDL_Color color) {
 }
 
 void jail_draw_person(Renderer *r, int sx, int sy, int prisoner) {
-    int x = sx * TILE_SIZE;
-    int y = sy * TILE_SIZE;
-    SDL_Color skin = {208, 165, 126, 255};
-    SDL_Color coat = prisoner ? (SDL_Color){112, 128, 143, 255} : (SDL_Color){130, 96, 65, 255};
-    rect(r, x + 6, y + 3, 13, 9, (SDL_Color){67, 53, 44, 255});
-    rect(r, x + 8, y + 6, 9, 7, skin);
-    rect(r, x + 5, y + 13, 15, 8, coat);
-    rect(r, x + 3, y + 14, 3, 6, skin);
-    rect(r, x + 19, y + 14, 3, 6, skin);
-    rect(r, x + 6, y + 21, 5, 3, (SDL_Color){49, 41, 37, 255});
-    rect(r, x + 14, y + 21, 5, 3, (SDL_Color){49, 41, 37, 255});
-    rect(r, x + 9, y + 8, 2, 1, (SDL_Color){31, 29, 28, 255});
-    rect(r, x + 14, y + 8, 2, 1, (SDL_Color){31, 29, 28, 255});
-    if (prisoner) {
-        rect(r, x + 6, y + 16, 13, 2, (SDL_Color){76, 87, 102, 255});
-        rect(r, x + 14, y + 19, 3, 2, (SDL_Color){183, 163, 127, 255});
-    }
+    npc_draw(r, sx, sy, prisoner ? NPC_ART_TOMAS : NPC_ART_INFORMANT, 0);
 }
 
 void jail_draw_building(Renderer *r, const Viewport *v) {

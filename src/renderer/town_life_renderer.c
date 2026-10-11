@@ -1,5 +1,6 @@
 #include "town_life_renderer.h"
 #include "sprites.h"
+#include "npc_renderer.h"
 
 static void box(Renderer *r, int x, int y, int w, int h, SDL_Color color) {
     SDL_Rect rect = {x, y, w, h};
@@ -54,24 +55,10 @@ void town_life_draw_building(Renderer *r, const Viewport *v, const TownBuilding 
 }
 
 void town_life_draw_resident(Renderer *r, int tx, int ty, int style) {
-    int x = tx * TILE_SIZE;
-    int y = ty * TILE_SIZE;
-    SDL_Color clothes[4] = {{168, 122, 65, 255}, {115, 65, 57, 255}, {91, 76, 52, 255}, {125, 67, 145, 255}};
-    draw_tavern_floor(r, tx, ty);
-    box(r, x + 8, y + 3, 9, 5, (SDL_Color){71, 48, 33, 255});
-    box(r, x + 8, y + 7, 9, 6, (SDL_Color){203, 156, 118, 255});
-    box(r, x + 6, y + 13, 13, 10, clothes[style]);
-    box(r, x + 3, y + 14, 4, 7, clothes[style]);
-    box(r, x + 18, y + 14, 4, 7, clothes[style]);
-    box(r, x + 10, y + 9, 2, 2, (SDL_Color){38, 30, 27, 255});
-    box(r, x + 15, y + 9, 2, 2, (SDL_Color){38, 30, 27, 255});
-    if (style == 0 || style == 1) {
-        box(r, x + 8, y + 14, 9, 8, (SDL_Color){229, 216, 185, 255});
-        box(r, x + 6, y + 2, 13, 5, (SDL_Color){229, 216, 185, 255});
-    } else if (style == 2) {
-        box(r, x + 8, y + 12, 9, 4, (SDL_Color){188, 182, 164, 255});
-        box(r, x + 6, y + 19, 13, 2, (SDL_Color){148, 119, 60, 255});
-    } else {
-        box(r, x + 6, y + 3, 13, 4, (SDL_Color){201, 150, 78, 255});
+    static const NpcArt residents[4] = {NPC_ART_NESSA, NPC_ART_HOLT, NPC_ART_EDRIC, NPC_ART_SURI};
+    if (style < 0 || style >= 4) {
+        style = 0;
     }
+    draw_tavern_floor(r, tx, ty);
+    npc_draw(r, tx, ty, residents[style], 0);
 }
