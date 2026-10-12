@@ -1,6 +1,6 @@
 # Polar Kraken sprite and renderer preview
 
-`source.png` is the transparent sprite produced with the built-in imagegen tool.
+`source.png` is the current transparent sprite, refined with the built-in imagegen tool during enemy batch 8. See [the current edit prompt and renderer comparisons](../enemy-batch-8/README.md). The captures in this directory document the original sprite and fight changes; current artwork captures are in `enemy-batch-8/`.
 `tools/sprites/polar_kraken.py` converts it to the runtime
 `assets/images/polar-kraken.bmp`: 96 x 96 pixels, nearest-neighbor sampling,
 32 colors, with its alpha preserved. Rebuild with `make sprites` or
@@ -89,7 +89,7 @@ Terrain changes should keep walls, safe snow, slick ice, thin ice, and lake
 holes visually distinct. Orange warning tiles should remain legible above
 terrain texture.
 
-## Exact generation prompt
+## Original generation prompt
 
 Built-in imagegen mode; transparent background requested. No CLI/API fallback.
 

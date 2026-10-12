@@ -2,7 +2,7 @@
 
 The current roster contains **95 enemy types in 16 batches**. Each `EnemyType` from `src/game/enemy.h` appears exactly once below. Additional boss forms, named hunts, quest enemies, and shared-renderer dependencies are tracked separately.
 
-Progress: **41/95 enemy types completed (batches 1–7)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
+Progress: **48/95 enemy types completed (batches 1–8)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
 
 ## Batch overview
 
@@ -15,7 +15,7 @@ Progress: **41/95 enemy types completed (batches 1–7)**. Completed boxes have 
 | 5 | Sunken Coast | 8 | Yes |
 | 6 | Blackwater Swamp and Labyrinth | 5 | Yes |
 | 7 | Dragonspine and Crown Roads | 4 | Yes |
-| 8 | Frostfell | 7 | No |
+| 8 | Frostfell | 7 | Yes |
 | 9 | Sunscar Wastes | 6 | No |
 | 10 | Moonveil Gardens | 5 | No |
 | 11 | Ashen Hollow | 4 | No |
@@ -148,15 +148,24 @@ Scene previews use controlled room and road fixtures for artwork review rather t
 
 ### Batch 8: Frostfell (7)
 
-- [ ] Ice Wolf — `ENEMY_ICE_WOLF`
-- [ ] Frost Archer — `ENEMY_FROST_ARCHER`
-- [ ] Yeti — `ENEMY_YETI`
-- [ ] Frost Wraith — `ENEMY_FROST_WRAITH`
-- [ ] Ice Golem — `ENEMY_ICE_GOLEM`
-- [ ] Ice Giant — `ENEMY_ICE_GIANT`
-- [ ] Polar Kraken — `ENEMY_POLAR_KRAKEN`
+- [x] Ice Wolf — `ENEMY_ICE_WOLF`
+- [x] Frost Archer — `ENEMY_FROST_ARCHER`
+- [x] Yeti — `ENEMY_YETI`
+- [x] Frost Wraith — `ENEMY_FROST_WRAITH`
+- [x] Ice Golem — `ENEMY_ICE_GOLEM`
+- [x] Ice Giant — `ENEMY_ICE_GIANT`
+- [x] Polar Kraken — `ENEMY_POLAR_KRAKEN`
 
-Include the Kraken texture and its fallback drawing. Review its 96×96 appearance with targeted warnings, sweeps, recovery, and the half-health phase.
+Reviewed the six native 24×24 sprites on snow and slick ice, including Rimefang’s label and hunt markers, expedition journal/Fen context, frozen overlays, health bars, melee damage feedback, and Frost Archer projectile travel/impact. Reviewed the Polar Kraken texture and fallback at their 96×96 display size, including targeted warnings, single sweeps, enraged double sweeps, and recovery cues. The fallback now matches the texture’s display footprint. Tile bounds, transparent terrain, SDL scale/viewport/clip/blend preservation, Release and Debug builds, and AddressSanitizer/UndefinedBehaviorSanitizer renderer checks passed. All 41 sprites from batches 1–7 remain pixel-for-pixel identical.
+
+- [Regular enemy comparison at native and enlarged sizes](art-sources/enemy-batch-8/before-after.png).
+- [Kraken texture and fallback comparison](art-sources/enemy-batch-8/kraken-before-after.png).
+- [Frostfell renderer preview](art-sources/enemy-batch-8/frostfell.png).
+- [Kraken warning, sweep, enraged phase, and recovery](art-sources/enemy-batch-8/kraken-phases.png).
+- [Kraken fallback on lake terrain](art-sources/enemy-batch-8/kraken-fallback.png).
+- [Kraken source, pipeline, and exact imagegen edit prompt](art-sources/enemy-batch-8/README.md).
+
+Scene previews use controlled snow, ice, quest, and lake fixtures through the actual SDL renderer rather than quest playthroughs. The Kraken source was refined with the built-in imagegen tool and converted with the existing `tools/sprites/polar_kraken.py` pipeline. Combat, collision footprints, saved enemy types, and animations are unchanged.
 
 ### Batch 9: Sunscar Wastes (6)
 
@@ -243,10 +252,10 @@ These entries reuse enemy types above. They do not increase the 95-type count. N
 | [ ] | Lord Veyr: damaged form, above one-third through two-thirds health | Lord Veyr, batch 16 |
 | [ ] | Lord Veyr: spectral form, at or below one-third health | Lord Veyr, batch 16 |
 | [ ] | Sun Guardian: broken form, at or below half health; deactivated appearance | Fallen Sun Guardian, batch 15 |
-| [ ] | Rimefang and Rimefang Pack | Ice Wolf and Frost Wraith, batch 8 |
+| [x] | Rimefang and Rimefang Pack | Ice Wolf and Frost Wraith, batch 8 |
 | [ ] | Shardwarden and Shardwarden Stalker | Shard Golem and Blind Stalker, batch 12 |
 | [ ] | Dunehex and Dunehex Mummy | Djinn and Mummy, batch 9 |
-| [ ] | Expedition Guardians | Ice Wolf, Ice Giant, Frost Archer, batch 8 |
+| [x] | Expedition Guardians | Ice Wolf, Ice Giant, Frost Archer, batch 8 |
 | [ ] | Resonator Guardians | Crystal Spider, Blind Stalker, Shard Golem, batch 12 |
 | [ ] | Emberforge Guardians | Cinder Imp, Ash Hound, Obsidian Guardian, batch 11 |
 | [ ] | Moonseed Guardians | Fey Trickster and Giant Moth, batch 10 |
