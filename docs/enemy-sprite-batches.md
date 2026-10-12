@@ -2,7 +2,7 @@
 
 The current roster contains **95 enemy types in 16 batches**. Each `EnemyType` from `src/game/enemy.h` appears exactly once below. Additional boss forms, named hunts, quest enemies, and shared-renderer dependencies are tracked separately.
 
-Progress: **16/95 enemy types completed (batches 1–3)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
+Progress: **24/95 enemy types completed (batches 1–4)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
 
 ## Batch overview
 
@@ -11,7 +11,7 @@ Progress: **16/95 enemy types completed (batches 1–3)**. Completed boxes have 
 | 1 | Core dungeon enemies | 6 | Yes |
 | 2 | Crypt enemies | 3 | Yes |
 | 3 | Haunted Forest | 7 | Yes |
-| 4 | Goblin Mountains | 8 | No |
+| 4 | Goblin Mountains | 8 | Yes |
 | 5 | Sunken Coast | 8 | No |
 | 6 | Blackwater Swamp and Labyrinth | 5 | No |
 | 7 | Dragonspine and Crown Roads | 4 | No |
@@ -79,14 +79,22 @@ Scene previews use controlled clearing and road fixtures to compare character re
 
 ### Batch 4: Goblin Mountains (8)
 
-- [ ] Goblin Scout — `ENEMY_GOBLIN_SCOUT`
-- [ ] Goblin Archer — `ENEMY_GOBLIN_ARCHER`
-- [ ] Goblin Bomber — `ENEMY_GOBLIN_BOMBER`
-- [ ] Tunnel Spider — `ENEMY_TUNNEL_SPIDER`
-- [ ] Cave Troll — `ENEMY_CAVE_TROLL`
-- [ ] Hobgoblin Guard — `ENEMY_HOBGOBLIN_GUARD`
-- [ ] Goblin Shaman — `ENEMY_GOBLIN_SHAMAN`
-- [ ] Mountain Goblin King — `ENEMY_MOUNTAIN_GOBLIN_KING`
+- [x] Goblin Scout — `ENEMY_GOBLIN_SCOUT`
+- [x] Goblin Archer — `ENEMY_GOBLIN_ARCHER`
+- [x] Goblin Bomber — `ENEMY_GOBLIN_BOMBER`
+- [x] Tunnel Spider — `ENEMY_TUNNEL_SPIDER`
+- [x] Cave Troll — `ENEMY_CAVE_TROLL`
+- [x] Hobgoblin Guard — `ENEMY_HOBGOBLIN_GUARD`
+- [x] Goblin Shaman — `ENEMY_GOBLIN_SHAMAN`
+- [x] Mountain Goblin King — `ENEMY_MOUNTAIN_GOBLIN_KING`
+
+Reviewed all eight sprites at native 24×24 size through the actual SDL renderer on mountain terrain, including the King’s boss flag, Dain’s three Map Bearer borders, watchfire context, and frozen overlays. Also inspected the shared Hobgoblin Guard on Crown Road East, Goblin Archer in Dragonspine, and Tunnel Spider/Smuggler Bodyguard through the escape-tunnel renderer. Tile bounds, terrain transparency, SDL scale/viewport/clip preservation, Release and Debug builds, and AddressSanitizer/UndefinedBehaviorSanitizer checks passed. All 16 sprites from batches 1–3 remain pixel-for-pixel identical.
+
+- [Before/after comparison, including native-size views](art-sources/enemy-batch-4/before-after.png).
+- [Mountain renderer preview with Dain’s markers](art-sources/enemy-batch-4/mountains.png).
+- [Shared Hobgoblin Guard on Crown Road East](art-sources/enemy-batch-4/crownroad-east.png).
+
+Scene previews use controlled room and road fixtures to compare character readability on the actual terrain. The comparison includes a margin around the native tile so the old Shaman’s overhanging staff light remains visible; the new sprites fit within 24×24 pixels.
 
 ### Batch 5: Sunken Coast (8)
 
@@ -223,19 +231,21 @@ These entries reuse enemy types above. They do not increase the 95-type count. N
 | [ ] | Soldiers’ Memorial Guards | Ancient Skeleton and Bone Sentinel, batch 13 |
 | [ ] | Watchers’ Memorial Guards | Grave Archer (batch 13), Wraith (batch 2) |
 | [ ] | Choir Memorial Guards | Bone Cantor and Ancient Skeleton, batch 13 |
-| [ ] | Watchfire Defenders: Mountains objective | Goblin Archer and Hobgoblin Guard, batch 4 |
+| [x] | Watchfire Defenders: Mountains objective | Goblin Archer and Hobgoblin Guard, batch 4 |
 | [ ] | Watchfire Defenders: Ashen objective | Obsidian Guardian and Cinder Imp, batch 11 |
 | [ ] | Watchfire Defenders: Dragonspine objective | Giant (batch 1), Goblin Archer (batch 4), Fire Elemental (batch 7) |
 | [x] | Elowen’s burial-seal guardians | Skeleton (batch 1); Crypt Bat, Wraith, Crypt Conjurer (batch 2) |
 | [x] | Alder’s Warden rescue guardians | Giant Spider, Blighted Wolf, Dark Elf, Pixie, Forest Troll, batch 3 |
 | [x] | Blighted Wolves on Crown Road East and West | Blighted Wolf, batch 3 |
+| [x] | Hobgoblin Guards on the Crown Roads | Hobgoblin Guard, batch 4 |
+| [ ] | Goblin Scouts and Archers in Dragonspine | Batch 4 art; recheck with the regional enemies in batch 7 |
 | [ ] | Lich Guards | Skeleton, batch 1; recheck with Lich King in batch 14 |
 | [ ] | Vampire Captor | Vampire, batch 6 |
 | [ ] | Tunnel Smugglers | Bandit, batch 6 |
-| [ ] | Smuggler Bodyguards | Hobgoblin Guard, batch 4 |
+| [x] | Smuggler Bodyguards | Hobgoblin Guard, batch 4 |
 | [ ] | Smuggler Archers | Road Archer, batch 7 |
 | [ ] | Escape-tunnel spiders and rats | Tunnel Spider (batch 4), Giant Rat (batch 6) |
-| [ ] | Dain fragment carriers | Existing gold border; inspect alongside affected base sprites |
+| [x] | Dain’s Map Bearers and their guards | Goblin Archer, Goblin Bomber, Goblin Shaman; Scout, Tunnel Spider, Hobgoblin Guard escorts, batch 4 |
 | [ ] | Catacomb corpses and revived enemies | Batch 13; keep revival cues legible |
 
 ## Shared artwork and dependencies

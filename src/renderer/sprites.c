@@ -2,6 +2,7 @@
 #include "player_art.h"
 #include "dungeon_enemy_art.h"
 #include "forest_enemy_art.h"
+#include "mountain_enemy_art.h"
 #include "npc_renderer.h"
 #include <stdlib.h>
 
@@ -2013,40 +2014,73 @@ static void draw_forest_enemy(Renderer *r, int tx, int ty, EnemyType type) {
 }
 
 static void draw_mountain_enemy(Renderer *r, int tx, int ty, EnemyType type) {
-    int x=tx*TILE_SIZE, y=ty*TILE_SIZE;
-    SDL_Color skin={91,121,45,255}, dark={23,17,19,255};
-    SDL_Color rust={128,48,30,255}, iron={103,91,88,255};
-    SDL_Color ember={244,67,20,255};
-    if (type == ENEMY_TUNNEL_SPIDER) {
-        fill_rect(r,x+7,y+7,11,12,iron); fill_rect(r,x+9,y+9,7,7,dark);
-        for(int i=0;i<4;i++){fill_rect(r,x+1,y+4+i*5,7,2,rust);fill_rect(r,x+17,y+4+i*5,7,2,rust);}
-        fill_rect(r,x+10,y+10,2,2,ember); fill_rect(r,x+14,y+10,2,2,ember);
-        return;
+    int art;
+    switch (type) {
+        case ENEMY_GOBLIN_SCOUT: art = MOUNTAIN_ART_GOBLIN_SCOUT; break;
+        case ENEMY_GOBLIN_ARCHER: art = MOUNTAIN_ART_GOBLIN_ARCHER; break;
+        case ENEMY_GOBLIN_BOMBER: art = MOUNTAIN_ART_GOBLIN_BOMBER; break;
+        case ENEMY_TUNNEL_SPIDER: art = MOUNTAIN_ART_TUNNEL_SPIDER; break;
+        case ENEMY_CAVE_TROLL: art = MOUNTAIN_ART_CAVE_TROLL; break;
+        case ENEMY_HOBGOBLIN_GUARD: art = MOUNTAIN_ART_HOBGOBLIN_GUARD; break;
+        case ENEMY_GOBLIN_SHAMAN: art = MOUNTAIN_ART_GOBLIN_SHAMAN; break;
+        case ENEMY_MOUNTAIN_GOBLIN_KING: art = MOUNTAIN_ART_MOUNTAIN_GOBLIN_KING; break;
+        default: return;
     }
-    if (type == ENEMY_CAVE_TROLL) {
-        fill_rect(r,x+4,y+5,16,17,iron); fill_rect(r,x+7,y+8,3,2,ember);
-        fill_rect(r,x+15,y+8,3,2,ember); fill_rect(r,x+1,y+10,5,12,dark);
-        fill_rect(r,x+19,y+2,4,21,(SDL_Color){85,62,45,255}); return;
-    }
-    fill_rect(r,x+6,y+5,13,8,skin); fill_rect(r,x+4,y+7,4,3,skin);
-    fill_rect(r,x+17,y+7,4,3,skin); fill_rect(r,x+8,y+8,2,2,ember);
-    fill_rect(r,x+15,y+8,2,2,ember); fill_rect(r,x+6,y+13,13,9,rust);
-    if (type == ENEMY_GOBLIN_ARCHER) {
-        fill_rect(r,x+20,y+4,2,18,(SDL_Color){101,67,34,255});
-        fill_rect(r,x+18,y+4,5,2,iron); fill_rect(r,x+18,y+20,5,2,iron);
-    } else if (type == ENEMY_GOBLIN_BOMBER) {
-        fill_rect(r,x+18,y+2,6,6,dark); fill_rect(r,x+20,y,2,3,ember);
-    } else if (type == ENEMY_HOBGOBLIN_GUARD) {
-        fill_rect(r,x+1,y+8,7,14,iron); fill_rect(r,x+20,y+1,2,22,iron);
-    } else if (type == ENEMY_GOBLIN_SHAMAN) {
-        fill_rect(r,x+20,y+2,3,21,(SDL_Color){86,51,27,255});
-        fill_rect(r,x+18,y,7,6,ember); fill_rect(r,x+5,y+3,15,3,dark);
-    } else if (type == ENEMY_MOUNTAIN_GOBLIN_KING) {
-        fill_rect(r,x+4,y+12,17,11,dark); fill_rect(r,x+6,y+1,13,5,iron);
-        fill_rect(r,x+7,y,3,4,ember); fill_rect(r,x+15,y,3,4,ember);
-        fill_rect(r,x+20,y+5,4,18,(SDL_Color){92,58,32,255});
-    } else {
-        fill_rect(r,x+20,y+5,3,17,iron); fill_rect(r,x+19,y+3,5,5,iron);
+    static const SDL_Color bodies[MOUNTAIN_ART_COUNT] = {
+        {91, 121, 45, 255}, {91, 121, 45, 255}, {91, 121, 45, 255}, {103, 91, 88, 255},
+        {103, 91, 88, 255}, {91, 121, 45, 255}, {91, 121, 45, 255}, {91, 121, 45, 255}
+    };
+    static const SDL_Color clothes[MOUNTAIN_ART_COUNT] = {
+        {128, 48, 30, 255}, {128, 48, 30, 255}, {128, 48, 30, 255}, {128, 48, 30, 255},
+        {85, 62, 45, 255}, {128, 48, 30, 255}, {128, 48, 30, 255}, {105, 35, 32, 255}
+    };
+    SDL_Color body = bodies[art];
+    SDL_Color cloth = clothes[art];
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){22, 23, 29, 255};
+    palette['s'] = (SDL_Color){body.r * 2 / 3, body.g * 2 / 3, body.b * 2 / 3, 255};
+    palette['S'] = body;
+    palette['H'] = (SDL_Color){body.r + (255 - body.r) / 3,
+        body.g + (255 - body.g) / 3, body.b + (255 - body.b) / 3, 255};
+    palette['e'] = (SDL_Color){18, 18, 29, 255};
+    palette['y'] = (SDL_Color){244, 67, 20, 255};
+    palette['c'] = (SDL_Color){cloth.r * 2 / 3, cloth.g * 2 / 3, cloth.b * 2 / 3, 255};
+    palette['C'] = cloth;
+    palette['v'] = (SDL_Color){cloth.r + (255 - cloth.r) / 4,
+        cloth.g + (255 - cloth.g) / 4, cloth.b + (255 - cloth.b) / 4, 255};
+    palette['m'] = (SDL_Color){68, 72, 82, 255};
+    palette['M'] = (SDL_Color){133, 141, 150, 255};
+    palette['N'] = (SDL_Color){208, 220, 223, 255};
+    palette['b'] = (SDL_Color){28, 28, 35, 255};
+    palette['B'] = (SDL_Color){53, 54, 66, 255};
+    palette['t'] = (SDL_Color){163, 151, 126, 255};
+    palette['p'] = (SDL_Color){244, 67, 20, 255};
+    palette['P'] = (SDL_Color){255, 208, 99, 255};
+    palette['f'] = (SDL_Color){225, 219, 186, 255};
+    palette['w'] = (SDL_Color){86, 58, 32, 255};
+    palette['W'] = (SDL_Color){155, 116, 64, 255};
+    palette['l'] = (SDL_Color){69, 43, 32, 255};
+    palette['L'] = (SDL_Color){115, 73, 40, 255};
+    palette['K'] = (SDL_Color){159, 112, 66, 255};
+    palette['k'] = (SDL_Color){43, 31, 27, 255};
+    palette['g'] = (SDL_Color){133, 89, 35, 255};
+    palette['G'] = (SDL_Color){212, 168, 71, 255};
+    palette['u'] = (SDL_Color){47, 43, 35, 255};
+    palette['U'] = (SDL_Color){100, 81, 50, 255};
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    for (int row = 0; row < 24; row++) {
+        for (int col = 0; col < 24;) {
+            char ink = mountain_enemy_art[art][row][col];
+            int end = col + 1;
+            while (end < 24 && mountain_enemy_art[art][row][end] == ink) {
+                end++;
+            }
+            if (ink != '.') {
+                fill_rect(r, x + col, y + row, end - col, 1, palette[(unsigned char)ink]);
+            }
+            col = end;
+        }
     }
 }
 
