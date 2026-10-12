@@ -5,6 +5,7 @@
 #include "mountain_enemy_art.h"
 #include "coast_enemy_art.h"
 #include "swamp_enemy_art.h"
+#include "dragonspine_road_art.h"
 #include "npc_renderer.h"
 #include <stdlib.h>
 
@@ -2229,70 +2230,73 @@ static void draw_swamp_enemy(Renderer *r, int tx, int ty, EnemyType type) {
     }
 }
 
-static void draw_crownroad_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color outline = {25, 22, 27, 255};
-    SDL_Color iron = {169, 170, 160, 255};
-    SDL_Color crimson = {132, 38, 39, 255};
-    SDL_Color leather = {85, 52, 37, 255};
-    SDL_Color gold = {222, 172, 83, 255};
-    if (type == ENEMY_ROAD_ARCHER) {
-        fill_rect(r, x + 7, y + 18, 4, 5, outline);
-        fill_rect(r, x + 14, y + 18, 4, 5, outline);
-        fill_rect(r, x + 5, y + 9, 15, 11, outline);
-        fill_rect(r, x + 7, y + 10, 11, 9, crimson);
-        fill_rect(r, x + 9, y + 14, 7, 2, leather);
-        fill_rect(r, x + 10, y + 3, 8, 7, outline);
-        fill_rect(r, x + 11, y + 5, 6, 4, (SDL_Color){162, 121, 91, 255});
-        fill_rect(r, x + 9, y + 2, 9, 3, crimson);
-        fill_rect(r, x + 7, y + 5, 3, 8, crimson);
-        fill_rect(r, x + 16, y + 7, 2, 1, gold);
-        fill_rect(r, x + 2, y + 9, 2, 10, leather);
-        fill_rect(r, x + 4, y + 6, 2, 3, leather);
-        fill_rect(r, x + 4, y + 19, 2, 3, leather);
-        fill_rect(r, x + 6, y + 8, 1, 12, iron);
-        fill_rect(r, x + 3, y + 14, 17, 1, gold);
-        return;
+static void draw_dragonspine_road_enemy(Renderer *r, int tx, int ty, EnemyType type) {
+    int art;
+    switch (type) {
+        case ENEMY_DRAKE: art = DRAGON_ROAD_ART_DRAKE; break;
+        case ENEMY_FIRE_ELEMENTAL: art = DRAGON_ROAD_ART_FIRE_ELEMENTAL; break;
+        case ENEMY_ROAD_ARCHER: art = DRAGON_ROAD_ART_ROAD_ARCHER; break;
+        case ENEMY_HORSEMAN: art = DRAGON_ROAD_ART_HORSEMAN; break;
+        default: return;
     }
-    fill_rect(r, x + 5, y + 17, 3, 7, outline);
-    fill_rect(r, x + 16, y + 17, 3, 7, outline);
-    fill_rect(r, x + 3, y + 14, 18, 6, outline);
-    fill_rect(r, x + 4, y + 12, 15, 7, leather);
-    fill_rect(r, x + 6, y + 12, 7, 2, (SDL_Color){137, 87, 58, 255});
-    fill_rect(r, x + 18, y + 10, 4, 6, leather);
-    fill_rect(r, x + 20, y + 11, 4, 4, outline);
-    fill_rect(r, x + 22, y + 12, 1, 1, gold);
-    fill_rect(r, x + 2, y + 12, 3, 2, outline);
-    fill_rect(r, x + 10, y + 10, 7, 3, iron);
-    fill_rect(r, x + 11, y + 5, 6, 6, crimson);
-    fill_rect(r, x + 12, y + 2, 5, 5, outline);
-    fill_rect(r, x + 13, y + 3, 3, 3, iron);
-    fill_rect(r, x + 16, y + 5, 2, 1, gold);
-    fill_rect(r, x + 18, y + 2, 1, 11, iron);
-    fill_rect(r, x + 18, y + 1, 1, 2, gold);
-}
-
-static void draw_dragonspine_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    if (type == ENEMY_DRAKE) {
-        fill_rect(r, x + 1, y + 7, 9, 10, (SDL_Color){41, 82, 101, 255});
-        fill_rect(r, x + 14, y + 7, 9, 10, (SDL_Color){41, 82, 101, 255});
-        fill_rect(r, x + 5, y + 11, 15, 10, (SDL_Color){55, 108, 119, 255});
-        fill_rect(r, x + 9, y + 4, 9, 10, (SDL_Color){82, 141, 150, 255});
-        fill_rect(r, x + 17, y + 5, 5, 5, (SDL_Color){82, 141, 150, 255});
-        fill_rect(r, x + 18, y + 7, 2, 2, (SDL_Color){248, 193, 75, 255});
-        fill_rect(r, x + 7, y + 20, 3, 3, (SDL_Color){32, 54, 68, 255});
-        fill_rect(r, x + 16, y + 20, 3, 3, (SDL_Color){32, 54, 68, 255});
-    } else {
-        fill_rect(r, x + 5, y + 13, 14, 9, (SDL_Color){164, 54, 31, 255});
-        fill_rect(r, x + 8, y + 5, 9, 13, (SDL_Color){237, 111, 39, 255});
-        fill_rect(r, x + 10, y + 1, 5, 13, (SDL_Color){255, 200, 76, 255});
-        fill_rect(r, x + 7, y + 9, 3, 7, (SDL_Color){248, 174, 58, 255});
-        fill_rect(r, x + 17, y + 11, 4, 7, (SDL_Color){248, 174, 58, 255});
-        fill_rect(r, x + 10, y + 10, 2, 2, (SDL_Color){43, 35, 41, 255});
-        fill_rect(r, x + 15, y + 10, 2, 2, (SDL_Color){43, 35, 41, 255});
+    static const SDL_Color bodies[DRAGON_ROAD_ART_COUNT] = {
+        {82, 141, 150, 255}, {237, 111, 39, 255}, {162, 121, 91, 255}, {137, 87, 58, 255}
+    };
+    static const SDL_Color clothes[DRAGON_ROAD_ART_COUNT] = {
+        {41, 82, 101, 255}, {164, 54, 31, 255}, {132, 38, 39, 255}, {132, 38, 39, 255}
+    };
+    SDL_Color body = bodies[art];
+    SDL_Color cloth = clothes[art];
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){22, 25, 32, 255};
+    palette['s'] = (SDL_Color){body.r * 2 / 3, body.g * 2 / 3, body.b * 2 / 3, 255};
+    palette['S'] = body;
+    palette['H'] = (SDL_Color){body.r + (255 - body.r) / 3,
+        body.g + (255 - body.g) / 3, body.b + (255 - body.b) / 3, 255};
+    palette['c'] = (SDL_Color){cloth.r * 2 / 3, cloth.g * 2 / 3, cloth.b * 2 / 3, 255};
+    palette['C'] = cloth;
+    palette['v'] = (SDL_Color){cloth.r + (255 - cloth.r) / 4,
+        cloth.g + (255 - cloth.g) / 4, cloth.b + (255 - cloth.b) / 4, 255};
+    palette['e'] = (SDL_Color){18, 20, 28, 255};
+    palette['y'] = (SDL_Color){248, 193, 75, 255};
+    palette['f'] = (SDL_Color){228, 219, 187, 255};
+    palette['p'] = (SDL_Color){245, 134, 38, 255};
+    palette['P'] = (SDL_Color){255, 231, 137, 255};
+    palette['t'] = (SDL_Color){43, 83, 101, 255};
+    palette['T'] = (SDL_Color){106, 172, 180, 255};
+    palette['u'] = (SDL_Color){25, 23, 26, 255};
+    palette['U'] = (SDL_Color){57, 41, 32, 255};
+    palette['w'] = (SDL_Color){74, 46, 30, 255};
+    palette['W'] = (SDL_Color){151, 111, 64, 255};
+    palette['l'] = (SDL_Color){51, 32, 28, 255};
+    palette['L'] = (SDL_Color){107, 67, 41, 255};
+    palette['K'] = (SDL_Color){162, 114, 69, 255};
+    palette['k'] = (SDL_Color){32, 26, 27, 255};
+    palette['m'] = (SDL_Color){71, 82, 94, 255};
+    palette['M'] = (SDL_Color){169, 170, 160, 255};
+    palette['N'] = (SDL_Color){224, 233, 226, 255};
+    palette['g'] = (SDL_Color){138, 96, 43, 255};
+    palette['G'] = (SDL_Color){222, 172, 83, 255};
+    palette['b'] = (SDL_Color){139, 94, 69, 255};
+    palette['B'] = (SDL_Color){192, 146, 107, 255};
+    if (type == ENEMY_FIRE_ELEMENTAL) {
+        palette['s'] = (SDL_Color){164, 54, 31, 255};
+        palette['H'] = (SDL_Color){255, 200, 76, 255};
+    }
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    for (int row = 0; row < 24; row++) {
+        for (int col = 0; col < 24;) {
+            char ink = dragonspine_road_art[art][row][col];
+            int end = col + 1;
+            while (end < 24 && dragonspine_road_art[art][row][end] == ink) {
+                end++;
+            }
+            if (ink != '.') {
+                fill_rect(r, x + col, y + row, end - col, 1, palette[(unsigned char)ink]);
+            }
+            col = end;
+        }
     }
 }
 
@@ -2866,7 +2870,7 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
             break;
         case ENEMY_ROAD_ARCHER:
         case ENEMY_HORSEMAN:
-            draw_crownroad_enemy(r, tile_x, tile_y, type);
+            draw_dragonspine_road_enemy(r, tile_x, tile_y, type);
             break;
         case ENEMY_ICE_WOLF:
         case ENEMY_FROST_ARCHER:
@@ -2958,7 +2962,7 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_RED_DRAGON:  draw_red_dragon(r, tile_x, tile_y);  break;
         case ENEMY_DRAKE:
         case ENEMY_FIRE_ELEMENTAL:
-            draw_dragonspine_enemy(r, tile_x, tile_y, type); break;
+            draw_dragonspine_road_enemy(r, tile_x, tile_y, type); break;
         case ENEMY_TARRASQUE:   draw_tarrasque(r, tile_x, tile_y);   break;
     }
 }

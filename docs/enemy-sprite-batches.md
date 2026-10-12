@@ -2,7 +2,7 @@
 
 The current roster contains **95 enemy types in 16 batches**. Each `EnemyType` from `src/game/enemy.h` appears exactly once below. Additional boss forms, named hunts, quest enemies, and shared-renderer dependencies are tracked separately.
 
-Progress: **37/95 enemy types completed (batches 1–6)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
+Progress: **41/95 enemy types completed (batches 1–7)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
 
 ## Batch overview
 
@@ -14,7 +14,7 @@ Progress: **37/95 enemy types completed (batches 1–6)**. Completed boxes have 
 | 4 | Goblin Mountains | 8 | Yes |
 | 5 | Sunken Coast | 8 | Yes |
 | 6 | Blackwater Swamp and Labyrinth | 5 | Yes |
-| 7 | Dragonspine and Crown Roads | 4 | No |
+| 7 | Dragonspine and Crown Roads | 4 | Yes |
 | 8 | Frostfell | 7 | No |
 | 9 | Sunscar Wastes | 6 | No |
 | 10 | Moonveil Gardens | 5 | No |
@@ -133,10 +133,18 @@ Scene previews use controlled room and road fixtures for artwork review rather t
 
 ### Batch 7: Dragonspine and Crown Roads (4)
 
-- [ ] Drake — `ENEMY_DRAKE`
-- [ ] Fire Elemental — `ENEMY_FIRE_ELEMENTAL`
-- [ ] Road Archer — `ENEMY_ROAD_ARCHER`
-- [ ] Horseman — `ENEMY_HORSEMAN`
+- [x] Drake — `ENEMY_DRAKE`
+- [x] Fire Elemental — `ENEMY_FIRE_ELEMENTAL`
+- [x] Road Archer — `ENEMY_ROAD_ARCHER`
+- [x] Horseman — `ENEMY_HORSEMAN`
+
+Reviewed all four sprites at native 24×24 size through the actual SDL renderer: Drake and Fire Elemental on Dragonspine terrain, and Road Archer/Horseman on both Crown Roads. Also inspected the existing Goblin Scout, Goblin Archer, and Giant beside the regional enemies and watchfire; the Smuggler Archer beside tunnel enemies; frozen overlays; health bars; melee damage feedback; and Road Archer projectile travel/impact. Tile bounds, terrain transparency, SDL scale/viewport/clip preservation, Release and Debug builds, and AddressSanitizer/UndefinedBehaviorSanitizer renderer checks passed. All 37 sprites from batches 1–6 and the original Red Dragon remain pixel-for-pixel identical.
+
+- [Before/after comparison, including native-size views](art-sources/enemy-batch-7/before-after.png).
+- [Dragonspine renderer preview with watchfire context](art-sources/enemy-batch-7/dragonspine.png).
+- [Crown Road East renderer preview](art-sources/enemy-batch-7/crownroad-east.png).
+
+Scene previews use controlled room and road fixtures for artwork review rather than quest playthroughs. The Drake keeps its blue-green scales with defined wing membranes and talons; the Fire Elemental has curved flames and a darker core; the road enemies retain crimson clothing with clearer equipment and horse/rider separation. Combat, collision footprints, saved enemy types, and animations are unchanged.
 
 ### Batch 8: Frostfell (7)
 
@@ -249,18 +257,19 @@ These entries reuse enemy types above. They do not increase the 95-type count. N
 | [ ] | Choir Memorial Guards | Bone Cantor and Ancient Skeleton, batch 13 |
 | [x] | Watchfire Defenders: Mountains objective | Goblin Archer and Hobgoblin Guard, batch 4 |
 | [ ] | Watchfire Defenders: Ashen objective | Obsidian Guardian and Cinder Imp, batch 11 |
-| [ ] | Watchfire Defenders: Dragonspine objective | Giant (batch 1), Goblin Archer (batch 4), Fire Elemental (batch 7) |
+| [x] | Watchfire Defenders: Dragonspine objective | Giant (batch 1), Goblin Archer (batch 4), Fire Elemental (batch 7) |
 | [x] | Elowen’s burial-seal guardians | Skeleton (batch 1); Crypt Bat, Wraith, Crypt Conjurer (batch 2) |
 | [x] | Alder’s Warden rescue guardians | Giant Spider, Blighted Wolf, Dark Elf, Pixie, Forest Troll, batch 3 |
 | [x] | Blighted Wolves on Crown Road East and West | Blighted Wolf, batch 3 |
+| [x] | Road Archers and Horsemen on both Crown Roads | Road Archer and Horseman, batch 7 |
 | [x] | Bandits on Crown Road East | Bandit, batch 6 |
 | [x] | Hobgoblin Guards on the Crown Roads | Hobgoblin Guard, batch 4 |
-| [ ] | Goblin Scouts and Archers in Dragonspine | Batch 4 art; recheck with the regional enemies in batch 7 |
+| [x] | Goblin Scouts and Archers in Dragonspine | Batch 4 art; reviewed beside batch 7 regional enemies |
 | [ ] | Lich Guards | Skeleton, batch 1; recheck with Lich King in batch 14 |
 | [x] | Vampire Captor | Vampire, batch 6 |
 | [x] | Tunnel Smugglers | Bandit, batch 6 |
 | [x] | Smuggler Bodyguards | Hobgoblin Guard, batch 4 |
-| [ ] | Smuggler Archers | Road Archer, batch 7 |
+| [x] | Smuggler Archers | Road Archer, batch 7 |
 | [x] | Escape-tunnel spiders and rats | Tunnel Spider (batch 4), Giant Rat (batch 6) |
 | [x] | Dain’s Map Bearers and their guards | Goblin Archer, Goblin Bomber, Goblin Shaman; Scout, Tunnel Spider, Hobgoblin Guard escorts, batch 4 |
 | [x] | Mara’s beacon guardians | Giant Crab, Merfolk, Animated Statue, Sea Serpent, Water Elemental, batch 5 |
