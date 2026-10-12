@@ -1,5 +1,6 @@
 #include "sprites.h"
 #include "player_art.h"
+#include "dungeon_enemy_art.h"
 #include "npc_renderer.h"
 #include <stdlib.h>
 
@@ -1718,111 +1719,87 @@ void draw_portal(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x+7, y+11, 10, 3, (SDL_Color){24, 30, 82, 255});
 }
 
-void draw_goblin(Renderer *r, int tile_x, int tile_y) {
+static void draw_dungeon_enemy_body(Renderer *r, int tile_x, int tile_y, int art) {
+    static const SDL_Color bodies[DUNGEON_ART_COUNT] = {
+        {210, 210, 190, 255}, {78, 142, 38, 255}, {132, 146, 108, 255},
+        {92, 116, 48, 255}, {72, 94, 58, 255}, {166, 122, 82, 255}
+    };
+    static const SDL_Color clothes[DUNGEON_ART_COUNT] = {
+        {92, 62, 38, 255}, {92, 58, 30, 255}, {100, 48, 54, 255},
+        {84, 48, 28, 255}, {90, 58, 32, 255}, {92, 62, 38, 255}
+    };
+    static const SDL_Color eyes[DUNGEON_ART_COUNT] = {
+        {18, 18, 35, 255}, {232, 186, 38, 255}, {226, 207, 91, 255},
+        {232, 166, 34, 255}, {224, 154, 36, 255}, {34, 28, 28, 255}
+    };
+    SDL_Color body = bodies[art];
+    SDL_Color cloth = clothes[art];
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){20, 24, 30, 255};
+    palette['s'] = (SDL_Color){body.r * 2 / 3, body.g * 2 / 3, body.b * 2 / 3, 255};
+    palette['S'] = body;
+    palette['H'] = (SDL_Color){body.r + (255 - body.r) / 3,
+        body.g + (255 - body.g) / 3, body.b + (255 - body.b) / 3, 255};
+    palette['e'] = (SDL_Color){18, 18, 35, 255};
+    palette['y'] = eyes[art];
+    palette['c'] = (SDL_Color){cloth.r * 2 / 3, cloth.g * 2 / 3, cloth.b * 2 / 3, 255};
+    palette['C'] = cloth;
+    palette['v'] = (SDL_Color){cloth.r + (255 - cloth.r) / 4,
+        cloth.g + (255 - cloth.g) / 4, cloth.b + (255 - cloth.b) / 4, 255};
+    palette['l'] = (SDL_Color){73, 43, 27, 255};
+    palette['k'] = (SDL_Color){43, 31, 27, 255};
+    palette['L'] = (SDL_Color){115, 73, 40, 255};
+    palette['K'] = (SDL_Color){159, 112, 66, 255};
+    palette['m'] = (SDL_Color){83, 94, 105, 255};
+    palette['M'] = (SDL_Color){157, 174, 182, 255};
+    palette['N'] = (SDL_Color){224, 235, 234, 255};
+    palette['f'] = (SDL_Color){232, 224, 188, 255};
+    palette['u'] = (SDL_Color){66, 52, 39, 255};
+    palette['U'] = (SDL_Color){108, 89, 61, 255};
+    palette['w'] = (SDL_Color){86, 58, 32, 255};
+    palette['W'] = (SDL_Color){139, 100, 51, 255};
+    palette['g'] = (SDL_Color){132, 88, 31, 255};
+    palette['G'] = (SDL_Color){212, 168, 71, 255};
+    palette['r'] = (SDL_Color){99, 51, 44, 255};
+    palette['R'] = (SDL_Color){150, 70, 62, 255};
+    if (art == DUNGEON_ART_SKELETON) {
+        palette['s'] = (SDL_Color){145, 151, 145, 255};
+    }
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color skin = {78, 142, 38, 255};
-    SDL_Color dark = {28, 48, 26, 255};
-    SDL_Color cloth = {92, 58, 30, 255};
-    fill_rect(r, x+4, y+6, 16, 3, skin);
-    fill_rect(r, x+7, y+4, 10, 9, skin);
-    fill_rect(r, x+8, y+7, 2, 2, (SDL_Color){232, 186, 38, 255});
-    fill_rect(r, x+14,y+7, 2, 2, (SDL_Color){232, 186, 38, 255});
-    fill_rect(r, x+7, y+13, 10, 7, cloth);
-    fill_rect(r, x+4, y+14, 3, 5, skin);
-    fill_rect(r, x+17,y+13, 3, 6, skin);
-    fill_rect(r, x+7, y+20, 4, 2, dark);
-    fill_rect(r, x+14,y+20, 4, 2, dark);
-    fill_rect(r, x+19,y+10, 2, 8, (SDL_Color){174, 184, 188, 255});
+    for (int row = 0; row < 24; row++) {
+        for (int col = 0; col < 24;) {
+            char ink = dungeon_enemy_art[art][row][col];
+            int end = col + 1;
+            while (end < 24 && dungeon_enemy_art[art][row][end] == ink) {
+                end++;
+            }
+            if (ink != '.') {
+                fill_rect(r, x + col, y + row, end - col, 1, palette[(unsigned char)ink]);
+            }
+            col = end;
+        }
+    }
+}
+
+void draw_goblin(Renderer *r, int tile_x, int tile_y) {
+    draw_dungeon_enemy_body(r, tile_x, tile_y, DUNGEON_ART_GOBLIN);
 }
 
 void draw_skeleton(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color bone = {210, 210, 190, 255};
-    SDL_Color shade = {145, 151, 145, 255};
-    SDL_Color dark = {18, 18, 35, 255};
-    SDL_Color iron = {174, 184, 192, 255};
-    fill_rect(r, x + 2, y + 5, 2, 12, iron);
-    fill_rect(r, x + 1, y + 4, 4, 3, (SDL_Color){220, 226, 227, 255});
-    fill_rect(r, x + 1, y + 16, 5, 2, (SDL_Color){111, 72, 48, 255});
-    fill_rect(r, x + 7, y + 2, 10, 8, bone);
-    fill_rect(r, x + 7, y + 3, 2, 6, shade);
-    fill_rect(r, x + 8, y + 5, 3, 3, dark);
-    fill_rect(r, x + 14, y + 5, 3, 3, dark);
-    fill_rect(r, x + 9, y + 9, 6, 3, shade);
-    fill_rect(r, x + 11, y + 9, 3, 1, dark);
-    fill_rect(r, x + 8, y + 12, 9, 7, dark);
-    fill_rect(r, x + 11, y + 12, 3, 9, bone);
-    fill_rect(r, x + 8, y + 13, 9, 2, bone);
-    fill_rect(r, x + 8, y + 16, 9, 2, shade);
-    fill_rect(r, x + 5, y + 13, 3, 3, bone);
-    fill_rect(r, x + 17, y + 13, 2, 4, bone);
-    fill_rect(r, x + 7, y + 19, 3, 4, bone);
-    fill_rect(r, x + 15, y + 19, 3, 4, bone);
-    fill_rect(r, x + 19, y + 12, 5, 8, (SDL_Color){101, 69, 48, 255});
-    fill_rect(r, x + 20, y + 13, 3, 5, iron);
+    draw_dungeon_enemy_body(r, tile_x, tile_y, DUNGEON_ART_SKELETON);
 }
 
 void draw_orc(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color skin = {92, 116, 48, 255};
-    SDL_Color dark = {30, 38, 26, 255};
-    SDL_Color armor = {82, 82, 86, 255};
-    fill_rect(r, x+6, y+3, 12, 10, skin);
-    fill_rect(r, x+5, y+5, 2, 5, skin);
-    fill_rect(r, x+17,y+5, 2, 5, skin);
-    fill_rect(r, x+8, y+7, 2, 2, (SDL_Color){232, 166, 34, 255});
-    fill_rect(r, x+14,y+7, 2, 2, (SDL_Color){232, 166, 34, 255});
-    fill_rect(r, x+8, y+11,2, 3, (SDL_Color){224, 210, 170, 255});
-    fill_rect(r, x+15,y+11,2, 3, (SDL_Color){224, 210, 170, 255});
-    fill_rect(r, x+4, y+13,16, 7, armor);
-    fill_rect(r, x+8, y+14,8, 6, (SDL_Color){84, 48, 28, 255});
-    fill_rect(r, x+5, y+20,5, 3, dark);
-    fill_rect(r, x+15,y+20,5, 3, dark);
-    fill_rect(r, x+20,y+7, 3, 13, (SDL_Color){172, 180, 182, 255});
+    draw_dungeon_enemy_body(r, tile_x, tile_y, DUNGEON_ART_ORC);
 }
 
 void draw_troll(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color skin = {72, 94, 58, 255};
-    SDL_Color shade = {42, 56, 40, 255};
-    fill_rect(r, x+5, y+3, 14, 10, skin);
-    fill_rect(r, x+7, y+6, 3, 2, (SDL_Color){224, 154, 36, 255});
-    fill_rect(r, x+14,y+6, 3, 2, (SDL_Color){224, 154, 36, 255});
-    fill_rect(r, x+3, y+12,18, 8, skin);
-    fill_rect(r, x+2, y+13,4, 8, skin);
-    fill_rect(r, x+18,y+12,4, 9, skin);
-    fill_rect(r, x+8, y+13,8, 7, (SDL_Color){90, 58, 32, 255});
-    fill_rect(r, x+4, y+20,6, 3, shade);
-    fill_rect(r, x+15,y+20,6, 3, shade);
-    fill_rect(r, x+20,y+5, 3, 15, (SDL_Color){104, 76, 48, 255});
-    fill_rect(r, x+19,y+4, 5, 6, (SDL_Color){126, 126, 116, 255});
+    draw_dungeon_enemy_body(r, tile_x, tile_y, DUNGEON_ART_TROLL);
 }
 
 void draw_zombie(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color skin = {132, 146, 108, 255};
-    SDL_Color cloth = {100, 48, 54, 255};
-    SDL_Color dark = {42, 34, 42, 255};
-    fill_rect(r, x + 11, y + 2, 9, 8, dark);
-    fill_rect(r, x + 10, y + 4, 9, 8, skin);
-    fill_rect(r, x + 17, y + 7, 3, 4, (SDL_Color){91, 105, 78, 255});
-    fill_rect(r, x + 12, y + 6, 2, 2, (SDL_Color){226, 207, 91, 255});
-    fill_rect(r, x + 17, y + 6, 2, 2, dark);
-    fill_rect(r, x + 6, y + 11, 12, 9, cloth);
-    fill_rect(r, x + 10, y + 12, 7, 3, (SDL_Color){69, 39, 47, 255});
-    fill_rect(r, x + 11, y + 15, 5, 2, (SDL_Color){150, 48, 48, 255});
-    fill_rect(r, x + 4, y + 12, 4, 3, cloth);
-    fill_rect(r, x + 1, y + 13, 5, 3, skin);
-    fill_rect(r, x + 17, y + 13, 3, 6, cloth);
-    fill_rect(r, x + 19, y + 18, 3, 3, skin);
-    fill_rect(r, x + 7, y + 20, 4, 3, dark);
-    fill_rect(r, x + 15, y + 19, 4, 4, dark);
-    fill_rect(r, x + 5, y + 22, 6, 2, dark);
+    draw_dungeon_enemy_body(r, tile_x, tile_y, DUNGEON_ART_ZOMBIE);
 }
 
 void draw_crypt_bat(Renderer *r, int tile_x, int tile_y) {
@@ -1902,21 +1879,7 @@ void draw_necromancer(Renderer *r, int tile_x, int tile_y) {
 }
 
 void draw_giant(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color skin = {166, 122, 82, 255};
-    SDL_Color shade = {104, 72, 50, 255};
-    fill_rect(r, x+5, y+2, 14, 10, skin);
-    fill_rect(r, x+8, y+5, 2, 2, (SDL_Color){34, 28, 28, 255});
-    fill_rect(r, x+15,y+5, 2, 2, (SDL_Color){34, 28, 28, 255});
-    fill_rect(r, x+3, y+11,18, 10, skin);
-    fill_rect(r, x+1, y+12,4, 9, skin);
-    fill_rect(r, x+19,y+11,4, 10, skin);
-    fill_rect(r, x+7, y+13,10, 8, (SDL_Color){92, 62, 38, 255});
-    fill_rect(r, x+4, y+20,6, 3, shade);
-    fill_rect(r, x+15,y+20,6, 3, shade);
-    fill_rect(r, x+20,y+3, 3, 17, (SDL_Color){92, 58, 30, 255});
-    fill_rect(r, x+19,y+2, 5, 6, (SDL_Color){116, 76, 40, 255});
+    draw_dungeon_enemy_body(r, tile_x, tile_y, DUNGEON_ART_GIANT);
 }
 
 void draw_goblin_king(Renderer *r, int tile_x, int tile_y) {
