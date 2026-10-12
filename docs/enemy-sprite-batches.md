@@ -2,7 +2,7 @@
 
 The current roster contains **95 enemy types in 16 batches**. Each `EnemyType` from `src/game/enemy.h` appears exactly once below. Additional boss forms, named hunts, quest enemies, and shared-renderer dependencies are tracked separately.
 
-Progress: **24/95 enemy types completed (batches 1–4)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
+Progress: **32/95 enemy types completed (batches 1–5)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
 
 ## Batch overview
 
@@ -12,7 +12,7 @@ Progress: **24/95 enemy types completed (batches 1–4)**. Completed boxes have 
 | 2 | Crypt enemies | 3 | Yes |
 | 3 | Haunted Forest | 7 | Yes |
 | 4 | Goblin Mountains | 8 | Yes |
-| 5 | Sunken Coast | 8 | No |
+| 5 | Sunken Coast | 8 | Yes |
 | 6 | Blackwater Swamp and Labyrinth | 5 | No |
 | 7 | Dragonspine and Crown Roads | 4 | No |
 | 8 | Frostfell | 7 | No |
@@ -98,14 +98,22 @@ Scene previews use controlled room and road fixtures to compare character readab
 
 ### Batch 5: Sunken Coast (8)
 
-- [ ] Illusion — `ENEMY_ILLUSION`
-- [ ] Merfolk — `ENEMY_MERFOLK`
-- [ ] Siren — `ENEMY_SIREN`
-- [ ] Giant Crab — `ENEMY_GIANT_CRAB`
-- [ ] Animated Statue — `ENEMY_ANIMATED_STATUE`
-- [ ] Water Elemental — `ENEMY_WATER_ELEMENTAL`
-- [ ] Sea Serpent — `ENEMY_SEA_SERPENT`
-- [ ] Drowned Queen — `ENEMY_DROWNED_QUEEN`
+- [x] Illusion — `ENEMY_ILLUSION`
+- [x] Merfolk — `ENEMY_MERFOLK`
+- [x] Siren — `ENEMY_SIREN`
+- [x] Giant Crab — `ENEMY_GIANT_CRAB`
+- [x] Animated Statue — `ENEMY_ANIMATED_STATUE`
+- [x] Water Elemental — `ENEMY_WATER_ELEMENTAL`
+- [x] Sea Serpent — `ENEMY_SEA_SERPENT`
+- [x] Drowned Queen — `ENEMY_DROWNED_QUEEN`
+
+Reviewed all eight sprites at native 24×24 size through the actual SDL renderer on coast stone and shallow water, including beacon/cache context and the Drowned Queen. Also inspected Animated Statues beside Giant Spiders on Rook’s labyrinth terrain, frozen overlays, health bars, ranged projectile travel/impact, and melee damage feedback. Tile bounds, terrain transparency, SDL scale/viewport/clip preservation, Release and Debug builds, and AddressSanitizer/UndefinedBehaviorSanitizer renderer checks passed. All 24 sprites from batches 1–4 remain pixel-for-pixel identical.
+
+- [Before/after comparison, including native-size views](art-sources/enemy-batch-5/before-after.png).
+- [Coast renderer preview with beacons and cache](art-sources/enemy-batch-5/coast.png).
+- [Shared Animated Statue in Rook’s labyrinth](art-sources/enemy-batch-5/labyrinth.png).
+
+Scene previews use controlled room fixtures to compare character readability on the actual terrain. These are artwork checks rather than quest playthroughs. Transparent gaps provide the Illusion’s broken contour and Water Elemental’s open wave interior; combat, collision footprints, saved enemy types, and animations are unchanged.
 
 ### Batch 6: Blackwater Swamp and Labyrinth (5)
 
@@ -246,6 +254,9 @@ These entries reuse enemy types above. They do not increase the 95-type count. N
 | [ ] | Smuggler Archers | Road Archer, batch 7 |
 | [ ] | Escape-tunnel spiders and rats | Tunnel Spider (batch 4), Giant Rat (batch 6) |
 | [x] | Dain’s Map Bearers and their guards | Goblin Archer, Goblin Bomber, Goblin Shaman; Scout, Tunnel Spider, Hobgoblin Guard escorts, batch 4 |
+| [x] | Mara’s beacon guardians | Giant Crab, Merfolk, Animated Statue, Sea Serpent, Water Elemental, batch 5 |
+| [x] | Coast cache guards | Giant Crab, Animated Statue, Sea Serpent, batch 5 |
+| [x] | Animated Statues in Rook’s labyrinth | Animated Statue, batch 5; checked beside batch 3 Giant Spider |
 | [ ] | Catacomb corpses and revived enemies | Batch 13; keep revival cues legible |
 
 ## Shared artwork and dependencies
