@@ -1722,15 +1722,18 @@ void draw_portal(Renderer *r, int tile_x, int tile_y) {
 static void draw_dungeon_enemy_body(Renderer *r, int tile_x, int tile_y, int art) {
     static const SDL_Color bodies[DUNGEON_ART_COUNT] = {
         {210, 210, 190, 255}, {78, 142, 38, 255}, {132, 146, 108, 255},
-        {92, 116, 48, 255}, {72, 94, 58, 255}, {166, 122, 82, 255}
+        {92, 116, 48, 255}, {72, 94, 58, 255}, {166, 122, 82, 255},
+        {54, 32, 72, 255}, {112, 224, 232, 255}, {172, 166, 134, 255}
     };
     static const SDL_Color clothes[DUNGEON_ART_COUNT] = {
         {92, 62, 38, 255}, {92, 58, 30, 255}, {100, 48, 54, 255},
-        {84, 48, 28, 255}, {90, 58, 32, 255}, {92, 62, 38, 255}
+        {84, 48, 28, 255}, {90, 58, 32, 255}, {92, 62, 38, 255},
+        {92, 42, 126, 255}, {54, 112, 132, 255}, {62, 28, 92, 255}
     };
     static const SDL_Color eyes[DUNGEON_ART_COUNT] = {
         {18, 18, 35, 255}, {232, 186, 38, 255}, {226, 207, 91, 255},
-        {232, 166, 34, 255}, {224, 154, 36, 255}, {34, 28, 28, 255}
+        {232, 166, 34, 255}, {224, 154, 36, 255}, {34, 28, 28, 255},
+        {244, 48, 62, 255}, {176, 242, 238, 255}, {78, 232, 76, 255}
     };
     SDL_Color body = bodies[art];
     SDL_Color cloth = clothes[art];
@@ -1762,8 +1765,14 @@ static void draw_dungeon_enemy_body(Renderer *r, int tile_x, int tile_y, int art
     palette['G'] = (SDL_Color){212, 168, 71, 255};
     palette['r'] = (SDL_Color){99, 51, 44, 255};
     palette['R'] = (SDL_Color){150, 70, 62, 255};
+    palette['p'] = (SDL_Color){78, 232, 76, 255};
+    palette['P'] = (SDL_Color){183, 255, 157, 255};
     if (art == DUNGEON_ART_SKELETON) {
         palette['s'] = (SDL_Color){145, 151, 145, 255};
+    } else if (art == DUNGEON_ART_WRAITH) {
+        palette['s'] = (SDL_Color){54, 112, 132, 255};
+        palette['H'] = (SDL_Color){176, 242, 238, 255};
+        palette['e'] = (SDL_Color){12, 20, 38, 255};
     }
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
@@ -1803,79 +1812,15 @@ void draw_zombie(Renderer *r, int tile_x, int tile_y) {
 }
 
 void draw_crypt_bat(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color wing = {92, 42, 126, 255};
-    SDL_Color edge = {46, 22, 70, 255};
-    SDL_Color body = {54, 32, 72, 255};
-    SDL_Color eye = {244, 48, 62, 255};
-    fill_rect(r, x + 1, y + 5, 6, 3, edge);
-    fill_rect(r, x + 2, y + 8, 7, 4, wing);
-    fill_rect(r, x + 4, y + 12, 5, 3, wing);
-    fill_rect(r, x + 6, y + 15, 2, 3, edge);
-    fill_rect(r, x + 17, y + 5, 6, 3, edge);
-    fill_rect(r, x + 15, y + 8, 7, 4, wing);
-    fill_rect(r, x + 15, y + 12, 5, 3, wing);
-    fill_rect(r, x + 16, y + 15, 2, 3, edge);
-    fill_rect(r, x + 8, y + 7, 8, 11, body);
-    fill_rect(r, x + 8, y + 6, 3, 3, edge);
-    fill_rect(r, x + 13, y + 6, 3, 3, edge);
-    fill_rect(r, x + 9, y + 11, 2, 2, eye);
-    fill_rect(r, x + 13, y + 11, 2, 2, eye);
-    fill_rect(r, x + 11, y + 14, 2, 3, (SDL_Color){207, 197, 188, 255});
-    fill_rect(r, x + 10, y + 17, 4, 3, edge);
+    draw_dungeon_enemy_body(r, tile_x, tile_y, DUNGEON_ART_CRYPT_BAT);
 }
 
 void draw_wraith(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color glow = {112, 224, 232, 255};
-    SDL_Color pale = {176, 242, 238, 255};
-    SDL_Color shade = {54, 112, 132, 255};
-    SDL_Color voidc = {12, 20, 38, 255};
-    fill_rect(r, x + 8, y + 2, 8, 3, pale);
-    fill_rect(r, x + 6, y + 5, 12, 8, glow);
-    fill_rect(r, x + 8, y + 6, 8, 7, voidc);
-    fill_rect(r, x + 9, y + 9, 2, 2, pale);
-    fill_rect(r, x + 14, y + 9, 2, 2, pale);
-    fill_rect(r, x + 5, y + 13, 14, 5, shade);
-    fill_rect(r, x + 3, y + 12, 4, 3, glow);
-    fill_rect(r, x + 1, y + 15, 4, 3, pale);
-    fill_rect(r, x + 18, y + 12, 4, 3, glow);
-    fill_rect(r, x + 20, y + 15, 3, 3, pale);
-    fill_rect(r, x + 7, y + 18, 10, 2, glow);
-    fill_rect(r, x + 9, y + 20, 6, 2, shade);
-    fill_rect(r, x + 11, y + 22, 3, 2, glow);
-    fill_rect(r, x + 6, y + 20, 2, 2, pale);
-    fill_rect(r, x + 17, y + 19, 2, 2, pale);
+    draw_dungeon_enemy_body(r, tile_x, tile_y, DUNGEON_ART_WRAITH);
 }
 
 void draw_necromancer(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color robe = {62, 28, 92, 255};
-    SDL_Color trim = {116, 54, 148, 255};
-    SDL_Color skin = {172, 166, 134, 255};
-    SDL_Color magic = {78, 232, 76, 255};
-    SDL_Color bone = {210, 204, 170, 255};
-    fill_rect(r, x + 2, y + 5, 2, 17, bone);
-    fill_rect(r, x + 1, y + 3, 4, 4, bone);
-    fill_rect(r, x + 2, y + 2, 2, 2, magic);
-    fill_rect(r, x + 10, y + 1, 5, 3, trim);
-    fill_rect(r, x + 8, y + 4, 9, 3, trim);
-    fill_rect(r, x + 6, y + 7, 13, 7, robe);
-    fill_rect(r, x + 8, y + 7, 9, 6, skin);
-    fill_rect(r, x + 9, y + 8, 3, 3, (SDL_Color){31, 17, 48, 255});
-    fill_rect(r, x + 14, y + 8, 3, 3, (SDL_Color){31, 17, 48, 255});
-    fill_rect(r, x + 10, y + 9, 2, 2, magic);
-    fill_rect(r, x + 14, y + 9, 2, 2, magic);
-    fill_rect(r, x + 5, y + 14, 15, 8, robe);
-    fill_rect(r, x + 4, y + 20, 4, 3, robe);
-    fill_rect(r, x + 17, y + 20, 4, 3, robe);
-    fill_rect(r, x + 9, y + 15, 7, 2, trim);
-    fill_rect(r, x + 11, y + 17, 3, 3, magic);
-    fill_rect(r, x + 17, y + 13, 4, 4, skin);
-    fill_rect(r, x + 19, y + 11, 4, 4, magic);
+    draw_dungeon_enemy_body(r, tile_x, tile_y, DUNGEON_ART_CRYPT_CONJURER);
 }
 
 void draw_giant(Renderer *r, int tile_x, int tile_y) {
