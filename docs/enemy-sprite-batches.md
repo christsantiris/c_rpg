@@ -2,7 +2,7 @@
 
 The current roster contains **95 enemy types in 16 batches**. Each `EnemyType` from `src/game/enemy.h` appears exactly once below. Additional boss forms, named hunts, quest enemies, and shared-renderer dependencies are tracked separately.
 
-Progress: **9/95 enemy types completed (batches 1–2)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
+Progress: **16/95 enemy types completed (batches 1–3)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
 
 ## Batch overview
 
@@ -10,7 +10,7 @@ Progress: **9/95 enemy types completed (batches 1–2)**. Completed boxes have p
 |---|---|---:|---|
 | 1 | Core dungeon enemies | 6 | Yes |
 | 2 | Crypt enemies | 3 | Yes |
-| 3 | Haunted Forest | 7 | No |
+| 3 | Haunted Forest | 7 | Yes |
 | 4 | Goblin Mountains | 8 | No |
 | 5 | Sunken Coast | 8 | No |
 | 6 | Blackwater Swamp and Labyrinth | 5 | No |
@@ -61,13 +61,21 @@ Scene previews use controlled room fixtures to compare the artwork on its actual
 
 ### Batch 3: Haunted Forest (7)
 
-- [ ] Pixie — `ENEMY_PIXIE`
-- [ ] Blighted Wolf — `ENEMY_BLIGHTED_WOLF`
-- [ ] Giant Spider — `ENEMY_GIANT_SPIDER`
-- [ ] Dark Elf — `ENEMY_DARK_ELF`
-- [ ] Giant Wurm — `ENEMY_GIANT_WURM`
-- [ ] Forest Troll — `ENEMY_FOREST_TROLL`
-- [ ] Forest Necromancer — `ENEMY_FOREST_NECROMANCER`
+- [x] Pixie — `ENEMY_PIXIE`
+- [x] Blighted Wolf — `ENEMY_BLIGHTED_WOLF`
+- [x] Giant Spider — `ENEMY_GIANT_SPIDER`
+- [x] Dark Elf — `ENEMY_DARK_ELF`
+- [x] Giant Wurm — `ENEMY_GIANT_WURM`
+- [x] Forest Troll — `ENEMY_FOREST_TROLL`
+- [x] Forest Necromancer — `ENEMY_FOREST_NECROMANCER`
+
+Reviewed all seven sprites at native 24×24 size through the actual SDL renderer on forest terrain, including Alder’s bound Warden setting and the Forest Necromancer’s boss flag. Also inspected the shared Blighted Wolf on Crown Road East and West, plus frozen overlays. Tile bounds, terrain transparency, SDL scale/viewport/clip preservation, Release and Debug builds, and AddressSanitizer/UndefinedBehaviorSanitizer checks passed. All nine sprites from batches 1–2 remain pixel-for-pixel identical.
+
+- [Before/after comparison, including native-size views](art-sources/enemy-batch-3/before-after.png).
+- [Forest renderer preview](art-sources/enemy-batch-3/forest.png).
+- [Blighted Wolves on Crown Road East](art-sources/enemy-batch-3/crownroad-east.png).
+
+Scene previews use controlled clearing and road fixtures to compare character readability on the actual terrain.
 
 ### Batch 4: Goblin Mountains (8)
 
@@ -219,6 +227,8 @@ These entries reuse enemy types above. They do not increase the 95-type count. N
 | [ ] | Watchfire Defenders: Ashen objective | Obsidian Guardian and Cinder Imp, batch 11 |
 | [ ] | Watchfire Defenders: Dragonspine objective | Giant (batch 1), Goblin Archer (batch 4), Fire Elemental (batch 7) |
 | [x] | Elowen’s burial-seal guardians | Skeleton (batch 1); Crypt Bat, Wraith, Crypt Conjurer (batch 2) |
+| [x] | Alder’s Warden rescue guardians | Giant Spider, Blighted Wolf, Dark Elf, Pixie, Forest Troll, batch 3 |
+| [x] | Blighted Wolves on Crown Road East and West | Blighted Wolf, batch 3 |
 | [ ] | Lich Guards | Skeleton, batch 1; recheck with Lich King in batch 14 |
 | [ ] | Vampire Captor | Vampire, batch 6 |
 | [ ] | Tunnel Smugglers | Bandit, batch 6 |
