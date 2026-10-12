@@ -2,14 +2,14 @@
 
 The current roster contains **95 enemy types in 16 batches**. Each `EnemyType` from `src/game/enemy.h` appears exactly once below. Additional boss forms, named hunts, quest enemies, and shared-renderer dependencies are tracked separately.
 
-Progress: **6/95 enemy types completed (batch 1)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
+Progress: **9/95 enemy types completed (batches 1–2)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
 
 ## Batch overview
 
 | Batch | Group | Enemy types | Complete |
 |---|---|---:|---|
 | 1 | Core dungeon enemies | 6 | Yes |
-| 2 | Crypt enemies | 3 | No |
+| 2 | Crypt enemies | 3 | Yes |
 | 3 | Haunted Forest | 7 | No |
 | 4 | Goblin Mountains | 8 | No |
 | 5 | Sunken Coast | 8 | No |
@@ -47,9 +47,17 @@ The dungeon scene uses a controlled room fixture so all six enemies can be compa
 
 ### Batch 2: Crypt enemies (3)
 
-- [ ] Crypt Bat — `ENEMY_CRYPT_BAT`
-- [ ] Wraith — `ENEMY_WRAITH`
-- [ ] Crypt Conjurer — `ENEMY_CRYPT_CONJURER`
+- [x] Crypt Bat — `ENEMY_CRYPT_BAT`
+- [x] Wraith — `ENEMY_WRAITH`
+- [x] Crypt Conjurer — `ENEMY_CRYPT_CONJURER`
+
+Reviewed at native 24×24 size through the actual SDL renderer on dungeon terrain, including a burial-seal fixture. Also inspected the Bat and Wraith in the catacombs, the Wraith beside the existing Grave Archer and on swamp terrain, and frozen overlays. Tile bounds, terrain transparency, SDL scale/viewport/clip preservation, Release and Debug builds, and AddressSanitizer/UndefinedBehaviorSanitizer checks passed. All six batch 1 sprites still render pixel-for-pixel identically.
+
+- [Before/after comparison, including native-size views](art-sources/enemy-batch-2/before-after.png).
+- [Dungeon and burial-seal renderer preview](art-sources/enemy-batch-2/dungeon.png).
+- [Catacomb renderer preview](art-sources/enemy-batch-2/catacombs.png).
+
+Scene previews use controlled room fixtures to compare the artwork on its actual terrain. Watchers’ Memorial Guard identities remain tracked for batch 13; this batch reviews the shared Wraith appearance.
 
 ### Batch 3: Haunted Forest (7)
 
@@ -210,6 +218,7 @@ These entries reuse enemy types above. They do not increase the 95-type count. N
 | [ ] | Watchfire Defenders: Mountains objective | Goblin Archer and Hobgoblin Guard, batch 4 |
 | [ ] | Watchfire Defenders: Ashen objective | Obsidian Guardian and Cinder Imp, batch 11 |
 | [ ] | Watchfire Defenders: Dragonspine objective | Giant (batch 1), Goblin Archer (batch 4), Fire Elemental (batch 7) |
+| [x] | Elowen’s burial-seal guardians | Skeleton (batch 1); Crypt Bat, Wraith, Crypt Conjurer (batch 2) |
 | [ ] | Lich Guards | Skeleton, batch 1; recheck with Lich King in batch 14 |
 | [ ] | Vampire Captor | Vampire, batch 6 |
 | [ ] | Tunnel Smugglers | Bandit, batch 6 |

@@ -2,11 +2,12 @@
 #define DUNGEON_ENEMY_ART_H
 
 // Static artwork indices; EnemyType values and saved actors are unchanged.
-enum { DUNGEON_ART_SKELETON, DUNGEON_ART_GOBLIN, DUNGEON_ART_ZOMBIE, DUNGEON_ART_ORC, DUNGEON_ART_TROLL, DUNGEON_ART_GIANT, DUNGEON_ART_COUNT };
+enum { DUNGEON_ART_SKELETON, DUNGEON_ART_GOBLIN, DUNGEON_ART_ZOMBIE, DUNGEON_ART_ORC, DUNGEON_ART_TROLL, DUNGEON_ART_GIANT, DUNGEON_ART_CRYPT_BAT, DUNGEON_ART_WRAITH, DUNGEON_ART_CRYPT_CONJURER, DUNGEON_ART_COUNT };
 
 // Native 24-pixel art. Dots preserve the terrain underneath.
 // s/S/H skin or bone; e/y eyes; c/C/v cloth; l/L/K leather;
-// m/M/N steel; k boots; f teeth; u/U hair or fur; w/W wood; g/G brass; r/R wounds.
+// m/M/N steel; k boots; f teeth or bone; u/U hair or fur; w/W wood;
+// g/G brass; r/R wounds; p/P green magic.
 static const char dungeon_enemy_art[DUNGEON_ART_COUNT][24][25] = {
     { // SKELETON
         "........................",
@@ -163,6 +164,84 @@ static const char dungeon_enemy_art[DUNGEON_ART_COUNT][24][25] = {
         "....oHSSSso..oSSSSo.oo..",
         "...oHSSssso..oSSHSo.....",
         "...oooooooo..oooooo.....",
+    },
+    { // CRYPT_BAT
+        "........................",
+        "........................",
+        "........................",
+        "........oSo..oSo........",
+        "oo......oSSo.oSSo.....oo",
+        "oCCo....oHSSSSSSo...occo",
+        ".oCvCo..oHSSSSSSo.ocCco.",
+        ".oCvCvCooHySSSySocCcCco.",
+        "..oCvCvCoHSseeSSoCcCco..",
+        "..oCvCCcCoSfefSocccCco..",
+        "...oCvCcCoHSSSSoccCco...",
+        "...ocvCcooHSSSSoccCco...",
+        "....ocCcCoHSSSsoccco....",
+        ".....ocCooHSSssocco.....",
+        ".....occCoHSSssocco.....",
+        "......oco.oSSsooco......",
+        ".......o..ofSfo.o.......",
+        "..........oSso..........",
+        "...........oSo..........",
+        "...........oSo..........",
+        "............o...........",
+        "........................",
+        "........ooooooo.........",
+        "........................",
+    },
+    { // WRAITH
+        "........................",
+        "..........oHSo..........",
+        ".........oHHSSo.........",
+        "........oHSSSSSo........",
+        ".......oHSSssSSo........",
+        ".......oHSoooSSSo.......",
+        "......oHSoeeeeoSSo......",
+        "......oHSoyeeyoSSo......",
+        "......oHSoyeeyoSSo......",
+        "......oHSoeeeeoSSo......",
+        ".......oHSooSSSSo.SH....",
+        "...SHoHSSScCCCCCCoSoH...",
+        "..SHoHSCcCHCCCCCCo.SoH..",
+        ".SHooHCcCHCCCCCCco..SH..",
+        ".HsooHCcCHCCCCCCco..Ho..",
+        ".Hso.oHCcCHCCCCCCo.SHo..",
+        "..HsooHCcCHCCcCCCo.S....",
+        "...S.oHCcCHCccCCo.......",
+        ".H....oHCco.CcCCo.......",
+        ".....oHCo..Cco.oSo...S..",
+        "..S..HCo...oSo..So......",
+        ".....o.....oSo...o......",
+        "........................",
+        ".........ooooooo........",
+    },
+    { // CRYPT_CONJURER
+        "........................",
+        "..pp.......ovCo.........",
+        "..pPp....ovCCCco........",
+        ".fpPpf..ovCCCCcco.......",
+        ".feyef.ovCCcccCCco......",
+        "..fff..ovCooooCCco......",
+        "...fo.ovCofSSSoCCco.....",
+        "...fo.ovCoSSSsoCCco.....",
+        "...fo.ovCoySSySoCCco....",
+        "...fo..oCofSeeSoCco.....",
+        "...fo..oCofSfSfoCco.....",
+        "...foovCCoooSooCCCco....",
+        "...fovCCCoCGlGCCCCcp....",
+        "...fovCCoCcvGCCCoCppPp..",
+        "..fSfoSoCvCccCCCoCpPPp..",
+        "...foSSoCvCcpCCCoSspp...",
+        "...fooooCvCcpCCCoSSo....",
+        "...fo.ovvCcpPpCCcco.....",
+        "...foovvCCCpCcccCCo.....",
+        "...foovCCCcCccCCcCco....",
+        "...fovCCCcCcCCcccCco....",
+        "...fovCCcCCcCCCccCco....",
+        "...oogGgGgGgGgGggggo....",
+        ".....oooooo.ooooooo.....",
     },
 };
 
