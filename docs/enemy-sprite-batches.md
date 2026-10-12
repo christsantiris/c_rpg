@@ -2,7 +2,7 @@
 
 The current roster contains **95 enemy types in 16 batches**. Each `EnemyType` from `src/game/enemy.h` appears exactly once below. Additional boss forms, named hunts, quest enemies, and shared-renderer dependencies are tracked separately.
 
-Progress: **32/95 enemy types completed (batches 1–5)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
+Progress: **37/95 enemy types completed (batches 1–6)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
 
 ## Batch overview
 
@@ -13,7 +13,7 @@ Progress: **32/95 enemy types completed (batches 1–5)**. Completed boxes have 
 | 3 | Haunted Forest | 7 | Yes |
 | 4 | Goblin Mountains | 8 | Yes |
 | 5 | Sunken Coast | 8 | Yes |
-| 6 | Blackwater Swamp and Labyrinth | 5 | No |
+| 6 | Blackwater Swamp and Labyrinth | 5 | Yes |
 | 7 | Dragonspine and Crown Roads | 4 | No |
 | 8 | Frostfell | 7 | No |
 | 9 | Sunscar Wastes | 6 | No |
@@ -117,11 +117,19 @@ Scene previews use controlled room fixtures to compare character readability on 
 
 ### Batch 6: Blackwater Swamp and Labyrinth (5)
 
-- [ ] Giant Rat — `ENEMY_GIANT_RAT`
-- [ ] Bandit — `ENEMY_BANDIT`
-- [ ] Vampire — `ENEMY_VAMPIRE`
-- [ ] Swamp Demon — `ENEMY_SWAMP_DEMON`
-- [ ] Minotaur — `ENEMY_MINOTAUR`
+- [x] Giant Rat — `ENEMY_GIANT_RAT`
+- [x] Bandit — `ENEMY_BANDIT`
+- [x] Vampire — `ENEMY_VAMPIRE`
+- [x] Swamp Demon — `ENEMY_SWAMP_DEMON`
+- [x] Minotaur — `ENEMY_MINOTAUR`
+
+Reviewed all five sprites at native 24×24 size through the actual SDL renderer: the four swamp enemies on bog terrain, and the Minotaur beside Animated Statues and Giant Spiders in Rook’s labyrinth. Also inspected the Vampire Captor beside the rescued daughter, Bandit/Giant Rat/Tunnel Spider in the escape tunnel, the Bandit on Crown Road East, frozen overlays, health bars, and melee damage feedback. Tile bounds, terrain transparency, SDL scale/viewport/clip preservation, Release and Debug builds, and AddressSanitizer/UndefinedBehaviorSanitizer renderer checks passed. All 32 sprites from batches 1–5 and the original Demon Lord remain pixel-for-pixel identical.
+
+- [Before/after comparison, including native-size views](art-sources/enemy-batch-6/before-after.png).
+- [Swamp renderer preview](art-sources/enemy-batch-6/swamp.png).
+- [Minotaur in Rook’s labyrinth](art-sources/enemy-batch-6/labyrinth.png).
+
+Scene previews use controlled room and road fixtures for artwork review rather than quest playthroughs. The Swamp Demon now has its own mossy body, broken horns, and hanging bog growth. Combat, collision footprints, saved enemy types, and animations are unchanged.
 
 ### Batch 7: Dragonspine and Crown Roads (4)
 
@@ -245,14 +253,15 @@ These entries reuse enemy types above. They do not increase the 95-type count. N
 | [x] | Elowen’s burial-seal guardians | Skeleton (batch 1); Crypt Bat, Wraith, Crypt Conjurer (batch 2) |
 | [x] | Alder’s Warden rescue guardians | Giant Spider, Blighted Wolf, Dark Elf, Pixie, Forest Troll, batch 3 |
 | [x] | Blighted Wolves on Crown Road East and West | Blighted Wolf, batch 3 |
+| [x] | Bandits on Crown Road East | Bandit, batch 6 |
 | [x] | Hobgoblin Guards on the Crown Roads | Hobgoblin Guard, batch 4 |
 | [ ] | Goblin Scouts and Archers in Dragonspine | Batch 4 art; recheck with the regional enemies in batch 7 |
 | [ ] | Lich Guards | Skeleton, batch 1; recheck with Lich King in batch 14 |
-| [ ] | Vampire Captor | Vampire, batch 6 |
-| [ ] | Tunnel Smugglers | Bandit, batch 6 |
+| [x] | Vampire Captor | Vampire, batch 6 |
+| [x] | Tunnel Smugglers | Bandit, batch 6 |
 | [x] | Smuggler Bodyguards | Hobgoblin Guard, batch 4 |
 | [ ] | Smuggler Archers | Road Archer, batch 7 |
-| [ ] | Escape-tunnel spiders and rats | Tunnel Spider (batch 4), Giant Rat (batch 6) |
+| [x] | Escape-tunnel spiders and rats | Tunnel Spider (batch 4), Giant Rat (batch 6) |
 | [x] | Dain’s Map Bearers and their guards | Goblin Archer, Goblin Bomber, Goblin Shaman; Scout, Tunnel Spider, Hobgoblin Guard escorts, batch 4 |
 | [x] | Mara’s beacon guardians | Giant Crab, Merfolk, Animated Statue, Sea Serpent, Water Elemental, batch 5 |
 | [x] | Coast cache guards | Giant Crab, Animated Statue, Sea Serpent, batch 5 |
@@ -262,7 +271,7 @@ These entries reuse enemy types above. They do not increase the 95-type count. N
 ## Shared artwork and dependencies
 
 - The five catacomb enemies currently call `draw_skeleton()`. Batch 1 must also check the existing catacomb overlays for visual regressions; their dedicated art remains scheduled for batch 13.
-- Swamp Demon currently calls `draw_demon_lord()`. Give it its own swamp identity in batch 6 and recheck it when the Demon Lord changes in batch 14.
+- Swamp Demon now has dedicated artwork in `src/renderer/swamp_enemy_art.h`. It no longer shares `draw_demon_lord()`; the original Demon Lord remains scheduled for batch 14.
 - Castle artwork uses `castle_draw_enemy()` in `src/renderer/castle_renderer.c`; the generic castle cases in `draw_enemy()` are not the live castle rendering path. The castle missing-texture fallback uses the Orc sprite from batch 1.
 - Temple artwork uses `assets/images/temple-enemies.bmp`, including the separate broken guardian crop. Castle artwork uses `assets/images/castle-enemies.bmp` and `castle-bosses.bmp`.
 - Polar Kraken uses `assets/images/polar-kraken.bmp` and a procedural fallback; preserve both paths during batch 8.

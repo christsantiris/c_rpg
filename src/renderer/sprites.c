@@ -4,6 +4,7 @@
 #include "forest_enemy_art.h"
 #include "mountain_enemy_art.h"
 #include "coast_enemy_art.h"
+#include "swamp_enemy_art.h"
 #include "npc_renderer.h"
 #include <stdlib.h>
 
@@ -2155,44 +2156,77 @@ static void draw_coast_enemy(Renderer *r, int tx, int ty, EnemyType type) {
     }
 }
 
-static void draw_swamp_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color black = {10, 14, 12, 255};
-    SDL_Color eyes = {213, 58, 52, 255};
-    if (type == ENEMY_GIANT_RAT) {
-        fill_rect(r, x + 2, y + 16, 18, 6, black);
-        fill_rect(r, x + 6, y + 11, 13, 9,
-            (SDL_Color){80, 77, 65, 255});
-        fill_rect(r, x + 15, y + 8, 5, 7,
-            (SDL_Color){95, 85, 72, 255});
-        fill_rect(r, x + 17, y + 12, 2, 2, eyes);
-        fill_rect(r, x + 1, y + 19, 8, 2,
-            (SDL_Color){126, 82, 83, 255});
-        return;
+static void draw_swamp_enemy(Renderer *r, int tx, int ty, EnemyType type) {
+    int art;
+    switch (type) {
+        case ENEMY_GIANT_RAT: art = SWAMP_ART_GIANT_RAT; break;
+        case ENEMY_BANDIT: art = SWAMP_ART_BANDIT; break;
+        case ENEMY_VAMPIRE: art = SWAMP_ART_VAMPIRE; break;
+        case ENEMY_SWAMP_DEMON: art = SWAMP_ART_SWAMP_DEMON; break;
+        case ENEMY_MINOTAUR: art = SWAMP_ART_MINOTAUR; break;
+        default: return;
     }
+    static const SDL_Color bodies[SWAMP_ART_COUNT] = {
+        {80, 77, 65, 255}, {174, 128, 93, 255}, {151, 145, 126, 255},
+        {63, 98, 66, 255}, {132, 77, 45, 255}
+    };
+    static const SDL_Color clothes[SWAMP_ART_COUNT] = {
+        {80, 77, 65, 255}, {47, 57, 38, 255}, {92, 25, 46, 255},
+        {25, 47, 45, 255}, {95, 53, 33, 255}
+    };
+    SDL_Color body = bodies[art];
+    SDL_Color cloth = clothes[art];
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){13, 21, 23, 255};
+    palette['s'] = (SDL_Color){body.r * 2 / 3, body.g * 2 / 3, body.b * 2 / 3, 255};
+    palette['S'] = body;
+    palette['H'] = (SDL_Color){body.r + (255 - body.r) / 3,
+        body.g + (255 - body.g) / 3, body.b + (255 - body.b) / 3, 255};
+    palette['c'] = (SDL_Color){cloth.r * 2 / 3, cloth.g * 2 / 3, cloth.b * 2 / 3, 255};
+    palette['C'] = cloth;
+    palette['v'] = (SDL_Color){cloth.r + (255 - cloth.r) / 4,
+        cloth.g + (255 - cloth.g) / 4, cloth.b + (255 - cloth.b) / 4, 255};
+    palette['e'] = (SDL_Color){14, 15, 20, 255};
+    palette['y'] = (SDL_Color){231, 76, 48, 255};
+    palette['u'] = (SDL_Color){29, 25, 32, 255};
+    palette['U'] = (SDL_Color){68, 48, 39, 255};
+    palette['f'] = (SDL_Color){228, 206, 157, 255};
+    palette['t'] = (SDL_Color){92, 55, 53, 255};
+    palette['T'] = (SDL_Color){149, 96, 91, 255};
+    palette['w'] = (SDL_Color){155, 145, 121, 255};
+    palette['l'] = (SDL_Color){55, 35, 28, 255};
+    palette['L'] = (SDL_Color){113, 73, 43, 255};
+    palette['K'] = (SDL_Color){165, 118, 65, 255};
+    palette['k'] = (SDL_Color){33, 28, 29, 255};
+    palette['m'] = (SDL_Color){72, 86, 96, 255};
+    palette['M'] = (SDL_Color){161, 176, 186, 255};
+    palette['N'] = (SDL_Color){221, 229, 225, 255};
+    palette['g'] = (SDL_Color){133, 92, 37, 255};
+    palette['G'] = (SDL_Color){203, 164, 72, 255};
+    palette['a'] = (SDL_Color){37, 68, 44, 255};
+    palette['A'] = (SDL_Color){109, 132, 58, 255};
     if (type == ENEMY_BANDIT) {
-        fill_rect(r, x + 6, y + 9, 13, 14,
-            (SDL_Color){47, 57, 38, 255});
-        fill_rect(r, x + 7, y + 5, 11, 7,
-            (SDL_Color){80, 65, 50, 255});
-        fill_rect(r, x + 5, y + 4, 15, 4, black);
-        fill_rect(r, x + 8, y + 10, 9, 3, black);
-        fill_rect(r, x + 10, y + 10, 5, 1,
-            (SDL_Color){174, 169, 117, 255});
-        fill_rect(r, x + 19, y + 10, 2, 13,
-            (SDL_Color){155, 158, 133, 255});
-        return;
+        palette['y'] = (SDL_Color){174, 169, 117, 255};
     }
-    fill_rect(r, x + 4, y + 10, 17, 13,
-        (SDL_Color){38, 24, 37, 255});
-    fill_rect(r, x + 6, y + 5, 13, 10,
-        (SDL_Color){151, 145, 126, 255});
-    fill_rect(r, x + 5, y + 3, 15, 6, black);
-    fill_rect(r, x + 8, y + 10, 3, 2, eyes);
-    fill_rect(r, x + 15, y + 10, 3, 2, eyes);
-    fill_rect(r, x + 10, y + 16, 6, 6,
-        (SDL_Color){116, 22, 38, 255});
+    if (type == ENEMY_SWAMP_DEMON) {
+        palette['y'] = (SDL_Color){226, 232, 99, 255};
+        palette['f'] = (SDL_Color){181, 185, 133, 255};
+    }
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    for (int row = 0; row < 24; row++) {
+        for (int col = 0; col < 24;) {
+            char ink = swamp_enemy_art[art][row][col];
+            int end = col + 1;
+            while (end < 24 && swamp_enemy_art[art][row][end] == ink) {
+                end++;
+            }
+            if (ink != '.') {
+                fill_rect(r, x + col, y + row, end - col, 1, palette[(unsigned char)ink]);
+            }
+            col = end;
+        }
+    }
 }
 
 static void draw_crownroad_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
@@ -2742,42 +2776,6 @@ static void draw_glassdeep_enemy(Renderer *r, int tx, int ty, EnemyType type) {
     }
 }
 
-static void draw_minotaur(Renderer *r, int tx, int ty) {
-    int x = tx * TILE_SIZE;
-    int y = ty * TILE_SIZE;
-    SDL_Color fur = {132, 77, 45, 255};
-    SDL_Color light = {177, 113, 64, 255};
-    SDL_Color shade = {69, 40, 32, 255};
-    SDL_Color horn = {228, 206, 157, 255};
-    SDL_Color steel = {161, 176, 186, 255};
-    // Broad bull's head, raised horns, and a pale muzzle.
-    fill_rect(r, x + 6, y + 2, 3, 6, horn);
-    fill_rect(r, x + 15, y + 2, 3, 6, horn);
-    fill_rect(r, x + 5, y, 2, 4, horn);
-    fill_rect(r, x + 17, y, 2, 4, horn);
-    fill_rect(r, x + 8, y + 4, 8, 8, fur);
-    fill_rect(r, x + 9, y + 5, 6, 3, light);
-    fill_rect(r, x + 9, y + 7, 2, 1, (SDL_Color){231, 104, 48, 255});
-    fill_rect(r, x + 13, y + 7, 2, 1, (SDL_Color){231, 104, 48, 255});
-    fill_rect(r, x + 8, y + 9, 8, 3, horn);
-    fill_rect(r, x + 10, y + 10, 1, 1, shade);
-    fill_rect(r, x + 13, y + 10, 1, 1, shade);
-    fill_rect(r, x + 5, y + 12, 14, 8, fur);
-    fill_rect(r, x + 7, y + 12, 10, 2, light);
-    fill_rect(r, x + 3, y + 12, 3, 7, fur);
-    fill_rect(r, x + 18, y + 12, 3, 7, fur);
-    fill_rect(r, x + 6, y + 19, 12, 2, shade);
-    fill_rect(r, x + 11, y + 19, 2, 2, horn);
-    fill_rect(r, x + 6, y + 21, 4, 3, shade);
-    fill_rect(r, x + 14, y + 21, 4, 3, shade);
-    // The axe sits beside the body so it reads apart from the horns.
-    fill_rect(r, x + 21, y + 7, 2, 16, shade);
-    fill_rect(r, x + 21, y + 8, 1, 14, light);
-    fill_rect(r, x + 19, y + 4, 5, 5, steel);
-    fill_rect(r, x + 20, y + 3, 4, 2, horn);
-    fill_rect(r, x + 23, y + 5, 1, 3, (SDL_Color){221, 229, 225, 255});
-}
-
 static void draw_catacombs_enemy(Renderer *r, int tx, int ty, EnemyType type) {
     int x = tx * TILE_SIZE;
     int y = ty * TILE_SIZE;
@@ -2834,7 +2832,7 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
             draw_catacombs_enemy(r, tile_x, tile_y, type);
             break;
         case ENEMY_MINOTAUR:
-            draw_minotaur(r, tile_x, tile_y);
+            draw_swamp_enemy(r, tile_x, tile_y, type);
             break;
         case ENEMY_CRYSTAL_SPIDER:
         case ENEMY_BLIND_STALKER:
@@ -2881,10 +2879,8 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_GIANT_RAT:
         case ENEMY_BANDIT:
         case ENEMY_VAMPIRE:
-            draw_swamp_enemy(r, tile_x, tile_y, type);
-            break;
         case ENEMY_SWAMP_DEMON:
-            draw_demon_lord(r, tile_x, tile_y);
+            draw_swamp_enemy(r, tile_x, tile_y, type);
             break;
         case ENEMY_SKELETON: draw_skeleton(r, tile_x, tile_y); break;
         case ENEMY_GOBLIN:   draw_goblin(r, tile_x, tile_y);   break;
