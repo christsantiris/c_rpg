@@ -6,6 +6,8 @@
 #include "coast_enemy_art.h"
 #include "swamp_enemy_art.h"
 #include "dragonspine_road_art.h"
+#include "frostfell_enemy_art.h"
+#include "polar_kraken_art.h"
 #include "npc_renderer.h"
 #include <stdlib.h>
 
@@ -2300,198 +2302,105 @@ static void draw_dragonspine_road_enemy(Renderer *r, int tx, int ty, EnemyType t
     }
 }
 
-static void draw_frostfell_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color outline = {24, 34, 52, 255};
-    SDL_Color fur = {226, 234, 242, 255};
-    SDL_Color fur_shade = {154, 176, 200, 255};
-    SDL_Color ice = {136, 194, 230, 255};
-    SDL_Color ice_light = {210, 238, 252, 255};
-    SDL_Color ice_dark = {72, 128, 176, 255};
-    SDL_Color glow = {170, 246, 255, 255};
+static void draw_frostfell_enemy(Renderer *r, int tx, int ty, EnemyType type) {
+    int art;
+    switch (type) {
+        case ENEMY_ICE_WOLF: art = FROST_ART_ICE_WOLF; break;
+        case ENEMY_FROST_ARCHER: art = FROST_ART_FROST_ARCHER; break;
+        case ENEMY_YETI: art = FROST_ART_YETI; break;
+        case ENEMY_FROST_WRAITH: art = FROST_ART_FROST_WRAITH; break;
+        case ENEMY_ICE_GOLEM: art = FROST_ART_ICE_GOLEM; break;
+        case ENEMY_ICE_GIANT: art = FROST_ART_ICE_GIANT; break;
+        default: return;
+    }
+    static const SDL_Color bodies[FROST_ART_COUNT] = {
+        {226, 234, 242, 255}, {190, 150, 120, 255}, {226, 234, 242, 255},
+        {118, 178, 224, 255}, {136, 194, 230, 255}, {112, 152, 196, 255}
+    };
+    static const SDL_Color clothes[FROST_ART_COUNT] = {
+        {154, 176, 200, 255}, {204, 216, 230, 255}, {154, 176, 200, 255},
+        {118, 178, 224, 255}, {72, 128, 176, 255}, {130, 100, 74, 255}
+    };
+    SDL_Color body = bodies[art];
+    SDL_Color cloth = clothes[art];
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){24, 34, 52, 255};
+    palette['s'] = (SDL_Color){body.r * 2 / 3, body.g * 2 / 3, body.b * 2 / 3, 255};
+    palette['S'] = body;
+    palette['H'] = (SDL_Color){body.r + (255 - body.r) / 3,
+        body.g + (255 - body.g) / 3, body.b + (255 - body.b) / 3, 255};
+    palette['c'] = (SDL_Color){cloth.r * 2 / 3, cloth.g * 2 / 3, cloth.b * 2 / 3, 255};
+    palette['C'] = cloth;
+    palette['v'] = (SDL_Color){cloth.r + (255 - cloth.r) / 4,
+        cloth.g + (255 - cloth.g) / 4, cloth.b + (255 - cloth.b) / 4, 255};
+    palette['e'] = (SDL_Color){15, 25, 43, 255};
+    palette['y'] = (SDL_Color){170, 246, 255, 255};
+    palette['j'] = (SDL_Color){66, 86, 123, 255};
+    palette['J'] = (SDL_Color){116, 146, 178, 255};
+    palette['f'] = (SDL_Color){226, 234, 242, 255};
+    palette['F'] = (SDL_Color){154, 176, 200, 255};
+    palette['p'] = (SDL_Color){230, 238, 243, 255};
+    palette['i'] = (SDL_Color){72, 128, 176, 255};
+    palette['I'] = (SDL_Color){210, 238, 252, 255};
+    palette['l'] = (SDL_Color){50, 42, 38, 255};
+    palette['L'] = (SDL_Color){108, 81, 59, 255};
+    palette['K'] = (SDL_Color){153, 116, 76, 255};
+    palette['k'] = (SDL_Color){33, 34, 43, 255};
+    palette['g'] = (SDL_Color){130, 105, 52, 255};
+    palette['G'] = (SDL_Color){207, 177, 91, 255};
     if (type == ENEMY_ICE_WOLF) {
-        // A pale wolf mid-stride, facing right.
-        fill_rect(r, x + 1, y + 9, 4, 3, fur_shade);
-        fill_rect(r, x + 4, y + 9, 13, 8, outline);
-        fill_rect(r, x + 5, y + 10, 11, 6, fur);
-        fill_rect(r, x + 5, y + 14, 11, 2, fur_shade);
-        fill_rect(r, x + 15, y + 6, 7, 7, outline);
-        fill_rect(r, x + 16, y + 7, 5, 5, fur);
-        fill_rect(r, x + 20, y + 9, 4, 3, fur);
-        fill_rect(r, x + 16, y + 4, 2, 3, fur_shade);
-        fill_rect(r, x + 19, y + 8, 1, 1, (SDL_Color){52, 156, 232, 255});
-        fill_rect(r, x + 23, y + 10, 1, 1, outline);
-        fill_rect(r, x + 5, y + 17, 2, 5, fur_shade);
-        fill_rect(r, x + 9, y + 17, 2, 4, fur_shade);
-        fill_rect(r, x + 13, y + 17, 2, 5, fur_shade);
-        fill_rect(r, x + 16, y + 16, 2, 5, fur_shade);
-        return;
-    }
-    if (type == ENEMY_FROST_ARCHER) {
-        // A hooded archer in a white fur cloak with an ice-blue bow.
-        SDL_Color cloak = {204, 216, 230, 255};
-        SDL_Color trim = {64, 112, 176, 255};
-        fill_rect(r, x + 7, y + 19, 4, 5, outline);
-        fill_rect(r, x + 13, y + 19, 4, 5, outline);
-        fill_rect(r, x + 5, y + 9, 14, 12, outline);
-        fill_rect(r, x + 6, y + 10, 12, 10, cloak);
-        fill_rect(r, x + 6, y + 17, 12, 2, trim);
-        fill_rect(r, x + 8, y + 2, 9, 8, outline);
-        fill_rect(r, x + 9, y + 3, 7, 6, cloak);
-        fill_rect(r, x + 10, y + 5, 5, 4, (SDL_Color){190, 150, 120, 255});
-        fill_rect(r, x + 11, y + 6, 1, 1, outline);
-        fill_rect(r, x + 14, y + 6, 1, 1, outline);
-        fill_rect(r, x + 2, y + 6, 2, 14, ice_dark);
-        fill_rect(r, x + 3, y + 4, 2, 3, ice_dark);
-        fill_rect(r, x + 3, y + 19, 2, 3, ice_dark);
-        fill_rect(r, x + 5, y + 6, 1, 15, ice_light);
-        fill_rect(r, x + 4, y + 13, 14, 1, glow);
-        return;
-    }
-    if (type == ENEMY_YETI) {
-        // A shaggy beast: a domed head, broad shoulders and long arms.
-        SDL_Color face = {116, 146, 178, 255};
-        fill_rect(r, x + 7, y + 1, 10, 8, outline);
-        fill_rect(r, x + 4, y + 7, 16, 13, outline);
-        fill_rect(r, x, y + 8, 5, 12, outline);
-        fill_rect(r, x + 19, y + 8, 5, 12, outline);
-        fill_rect(r, x + 5, y + 19, 5, 5, outline);
-        fill_rect(r, x + 14, y + 19, 5, 5, outline);
-        fill_rect(r, x + 8, y + 2, 8, 6, fur);
-        fill_rect(r, x + 5, y + 8, 14, 11, fur);
-        fill_rect(r, x + 1, y + 9, 3, 10, fur);
-        fill_rect(r, x + 20, y + 9, 3, 10, fur);
-        fill_rect(r, x + 6, y + 20, 3, 3, fur_shade);
-        fill_rect(r, x + 15, y + 20, 3, 3, fur_shade);
-        fill_rect(r, x + 7, y + 13, 2, 4, fur_shade);
-        fill_rect(r, x + 11, y + 14, 2, 4, fur_shade);
-        fill_rect(r, x + 15, y + 13, 2, 4, fur_shade);
-        fill_rect(r, x + 1, y + 17, 3, 2, fur_shade);
-        fill_rect(r, x + 20, y + 17, 3, 2, fur_shade);
-        fill_rect(r, x + 9, y + 4, 6, 5, face);
-        fill_rect(r, x + 10, y + 5, 1, 1, outline);
-        fill_rect(r, x + 13, y + 5, 1, 1, outline);
-        fill_rect(r, x + 10, y + 7, 4, 1, outline);
-        fill_rect(r, x + 10, y + 8, 1, 1, ice_light);
-        fill_rect(r, x + 13, y + 8, 1, 1, ice_light);
-        return;
+        palette['y'] = (SDL_Color){52, 156, 232, 255};
     }
     if (type == ENEMY_FROST_WRAITH) {
-        // A hooded spirit that narrows to a point and frays into frost.
-        SDL_Color shroud = {118, 178, 224, 255};
-        fill_rect(r, x + 10, y, 4, 2, ice_light);
-        fill_rect(r, x + 8, y + 2, 8, 3, ice);
-        fill_rect(r, x + 7, y + 5, 10, 4, ice);
-        fill_rect(r, x + 9, y + 5, 6, 4, (SDL_Color){28, 48, 80, 255});
-        fill_rect(r, x + 10, y + 6, 1, 2, glow);
-        fill_rect(r, x + 13, y + 6, 1, 2, glow);
-        fill_rect(r, x + 6, y + 9, 12, 4, shroud);
-        fill_rect(r, x + 5, y + 13, 14, 4, shroud);
-        fill_rect(r, x + 4, y + 17, 16, 2, shroud);
-        fill_rect(r, x + 8, y + 9, 2, 8, ice);
-        fill_rect(r, x + 2, y + 10, 4, 3, ice);
-        fill_rect(r, x + 1, y + 13, 3, 3, ice_light);
-        fill_rect(r, x + 18, y + 10, 4, 3, ice);
-        fill_rect(r, x + 20, y + 13, 3, 3, ice_light);
-        fill_rect(r, x + 4, y + 19, 3, 3, shroud);
-        fill_rect(r, x + 9, y + 19, 3, 5, shroud);
-        fill_rect(r, x + 14, y + 19, 3, 3, shroud);
-        fill_rect(r, x + 18, y + 19, 2, 2, shroud);
-        return;
+        palette['J'] = (SDL_Color){28, 48, 80, 255};
     }
-    if (type == ENEMY_ICE_GOLEM) {
-        // A blocky construct of cut ice around a glowing core.
-        fill_rect(r, x + 4, y + 3, 16, 18, outline);
-        fill_rect(r, x + 5, y + 4, 14, 16, ice);
-        fill_rect(r, x + 6, y + 5, 6, 5, ice_light);
-        fill_rect(r, x + 12, y + 13, 6, 6, ice_dark);
-        fill_rect(r, x + 8, y + 7, 2, 2, glow);
-        fill_rect(r, x + 14, y + 7, 2, 2, glow);
-        fill_rect(r, x + 10, y + 11, 4, 4, glow);
-        fill_rect(r, x, y + 7, 4, 11, outline);
-        fill_rect(r, x + 1, y + 8, 3, 9, ice_dark);
-        fill_rect(r, x + 20, y + 7, 4, 11, outline);
-        fill_rect(r, x + 20, y + 8, 3, 9, ice_dark);
-        fill_rect(r, x + 6, y + 20, 5, 4, ice_dark);
-        fill_rect(r, x + 13, y + 20, 5, 4, ice_dark);
-        return;
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    for (int row = 0; row < 24; row++) {
+        for (int col = 0; col < 24;) {
+            char ink = frostfell_enemy_art[art][row][col];
+            int end = col + 1;
+            while (end < 24 && frostfell_enemy_art[art][row][end] == ink) {
+                end++;
+            }
+            if (ink != '.') {
+                fill_rect(r, x + col, y + row, end - col, 1, palette[(unsigned char)ink]);
+            }
+            col = end;
+        }
     }
-    // Ice Giant: blue skin, a frost-white beard and a club of ice.
-    SDL_Color skin = {112, 152, 196, 255};
-    SDL_Color hide = {130, 100, 74, 255};
-    fill_rect(r, x + 4, y + 7, 15, 13, outline);
-    fill_rect(r, x + 5, y + 8, 13, 11, skin);
-    fill_rect(r, x + 5, y + 15, 13, 5, hide);
-    fill_rect(r, x + 6, y + 1, 11, 8, outline);
-    fill_rect(r, x + 7, y + 2, 9, 6, skin);
-    fill_rect(r, x + 6, y + 1, 11, 2, fur);
-    fill_rect(r, x + 8, y + 4, 2, 1, glow);
-    fill_rect(r, x + 13, y + 4, 2, 1, glow);
-    fill_rect(r, x + 7, y + 6, 9, 5, fur);
-    fill_rect(r, x + 9, y + 11, 5, 2, fur);
-    fill_rect(r, x + 1, y + 9, 4, 9, skin);
-    fill_rect(r, x + 18, y + 9, 3, 8, skin);
-    fill_rect(r, x + 6, y + 20, 4, 4, outline);
-    fill_rect(r, x + 13, y + 20, 4, 4, outline);
-    fill_rect(r, x + 20, y + 1, 3, 14, ice_dark);
-    fill_rect(r, x + 20, y + 1, 4, 6, ice_light);
 }
 
-// A pale kraken surfacing from its lake. It spills past its own tile so the
-// boss reads larger than ordinary creatures.
-static void draw_polar_kraken(Renderer *r, int tile_x, int tile_y) {
+// Both rendering paths use the same 96-pixel footprint above the lake tile.
+static void draw_polar_kraken(Renderer *r, int tx, int ty) {
+    SDL_Rect destination = {tx * TILE_SIZE - 36, ty * TILE_SIZE - 48, 96, 96};
     if (r->polar_kraken_texture) {
-        SDL_Rect destination = {tile_x * TILE_SIZE - 36, tile_y * TILE_SIZE - 48, 96, 96};
         SDL_RenderCopy(r->sdl, r->polar_kraken_texture, NULL, &destination);
         return;
     }
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color outline = {40, 34, 64, 255};
-    SDL_Color mantle = {216, 224, 244, 255};
-    SDL_Color highlight = {246, 250, 255, 255};
-    SDL_Color shade = {150, 160, 206, 255};
-    SDL_Color flesh = {200, 168, 218, 255};
-    SDL_Color flesh_dark = {150, 116, 176, 255};
-    SDL_Color sucker = {246, 226, 240, 255};
-    SDL_Color eye_glow = {120, 224, 255, 255};
-    // Side arms curl up and out across the ice.
-    fill_rect(r, x - 10, y + 14, 14, 4, flesh);
-    fill_rect(r, x - 12, y + 7, 4, 10, flesh);
-    fill_rect(r, x - 10, y + 5, 4, 3, flesh);
-    fill_rect(r, x + 20, y + 14, 14, 4, flesh);
-    fill_rect(r, x + 32, y + 7, 4, 10, flesh);
-    fill_rect(r, x + 30, y + 5, 4, 3, flesh);
-    fill_rect(r, x - 8, y + 15, 2, 2, sucker);
-    fill_rect(r, x - 11, y + 10, 2, 2, sucker);
-    fill_rect(r, x + 30, y + 15, 2, 2, sucker);
-    fill_rect(r, x + 33, y + 10, 2, 2, sucker);
-    // Four lower arms trail below, their tips turned outward.
-    fill_rect(r, x + 1, y + 18, 4, 8, flesh);
-    fill_rect(r, x - 2, y + 25, 4, 3, flesh);
-    fill_rect(r, x + 8, y + 19, 3, 9, flesh_dark);
-    fill_rect(r, x + 13, y + 19, 3, 9, flesh_dark);
-    fill_rect(r, x + 19, y + 18, 4, 8, flesh);
-    fill_rect(r, x + 22, y + 25, 4, 3, flesh);
-    fill_rect(r, x + 2, y + 21, 2, 2, sucker);
-    fill_rect(r, x + 20, y + 21, 2, 2, sucker);
-    // A domed mantle, rounded at the crown.
-    fill_rect(r, x + 7, y - 11, 10, 2, outline);
-    fill_rect(r, x + 4, y - 9, 16, 2, outline);
-    fill_rect(r, x + 2, y - 7, 20, 26, outline);
-    fill_rect(r, x + 8, y - 10, 8, 2, mantle);
-    fill_rect(r, x + 5, y - 8, 14, 2, mantle);
-    fill_rect(r, x + 3, y - 6, 18, 24, mantle);
-    fill_rect(r, x + 3, y + 11, 18, 7, shade);
-    fill_rect(r, x + 7, y - 7, 3, 9, highlight);
-    fill_rect(r, x + 11, y - 9, 2, 3, highlight);
-    // Large slanted eyes glowing ice blue.
-    fill_rect(r, x + 5, y + 4, 6, 5, outline);
-    fill_rect(r, x + 13, y + 4, 6, 5, outline);
-    fill_rect(r, x + 6, y + 5, 3, 3, eye_glow);
-    fill_rect(r, x + 15, y + 5, 3, 3, eye_glow);
-    fill_rect(r, x + 9, y + 12, 6, 2, flesh_dark);
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){24, 28, 55, 255};
+    palette['s'] = (SDL_Color){40, 53, 94, 255};
+    palette['S'] = (SDL_Color){45, 100, 131, 255};
+    palette['H'] = (SDL_Color){76, 148, 174, 255};
+    palette['I'] = (SDL_Color){147, 199, 234, 255};
+    palette['f'] = (SDL_Color){234, 245, 255, 255};
+    palette['p'] = (SDL_Color){190, 147, 216, 255};
+    palette['y'] = (SDL_Color){115, 240, 248, 255};
+    palette['w'] = (SDL_Color){23, 60, 83, 255};
+    for (int row = 0; row < 48; row++) {
+        for (int col = 0; col < 48;) {
+            char ink = polar_kraken_art[row][col];
+            int end = col + 1;
+            while (end < 48 && polar_kraken_art[row][end] == ink) {
+                end++;
+            }
+            if (ink != '.') {
+                fill_rect(r, destination.x + col * 2, destination.y + row * 2, (end - col) * 2, 2, palette[(unsigned char)ink]);
+            }
+            col = end;
+        }
+    }
 }
 
 static void draw_desert_enemy(Renderer *r, int tx, int ty, EnemyType type) {
