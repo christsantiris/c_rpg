@@ -8,6 +8,7 @@
 #include "dragonspine_road_art.h"
 #include "frostfell_enemy_art.h"
 #include "polar_kraken_art.h"
+#include "desert_enemy_art.h"
 #include "npc_renderer.h"
 #include <stdlib.h>
 
@@ -2404,108 +2405,74 @@ static void draw_polar_kraken(Renderer *r, int tx, int ty) {
 }
 
 static void draw_desert_enemy(Renderer *r, int tx, int ty, EnemyType type) {
-    int x = tx * TILE_SIZE;
-    int y = ty * TILE_SIZE;
-    SDL_Color outline = {43, 30, 24, 255};
-    SDL_Color gold = {227, 180, 71, 255};
-    SDL_Color glow = {107, 245, 221, 255};
-    if (type == ENEMY_DESERT_PHARAOH) {
-        SDL_Color blue = {42, 85, 138, 255};
-        SDL_Color linen = {230, 214, 169, 255};
-        fill_rect(r, x + 5, y, 13, 11, outline);
-        fill_rect(r, x + 6, y + 1, 11, 9, gold);
-        for (int stripe = 0; stripe < 3; stripe++) {
-            fill_rect(r, x + 6, y + 2 + stripe * 3, 11, 1, blue);
-        }
-        fill_rect(r, x + 9, y + 3, 5, 5, linen);
-        fill_rect(r, x + 10, y + 5, 1, 1, glow);
-        fill_rect(r, x + 13, y + 5, 1, 1, glow);
-        fill_rect(r, x + 7, y + 10, 10, 13, outline);
-        fill_rect(r, x + 8, y + 11, 8, 11, linen);
-        fill_rect(r, x + 8, y + 11, 8, 3, blue);
-        fill_rect(r, x + 8, y + 15, 8, 2, gold);
-        fill_rect(r, x + 3, y + 11, 4, 5, linen);
-        fill_rect(r, x + 17, y + 11, 4, 5, linen);
-        fill_rect(r, x + 21, y + 5, 2, 18, gold);
-        fill_rect(r, x + 20, y + 1, 4, 5, (SDL_Color){244, 126, 35, 255});
-        return;
+    int art;
+    switch (type) {
+        case ENEMY_SCARAB: art = DESERT_ART_SCARAB; break;
+        case ENEMY_VIPER: art = DESERT_ART_VIPER; break;
+        case ENEMY_MUMMY: art = DESERT_ART_MUMMY; break;
+        case ENEMY_DJINN: art = DESERT_ART_DJINN; break;
+        case ENEMY_GOLEM: art = DESERT_ART_GOLEM; break;
+        case ENEMY_DESERT_PHARAOH: art = DESERT_ART_DESERT_PHARAOH; break;
+        default: return;
     }
-    if (type == ENEMY_SCARAB) {
-        SDL_Color shell = {61, 115, 83, 255};
-        for (int leg = 0; leg < 3; leg++) {
-            fill_rect(r, x + 2, y + 8 + leg * 4, 5, 2, gold);
-            fill_rect(r, x + 17, y + 8 + leg * 4, 5, 2, gold);
-        }
-        fill_rect(r, x + 6, y + 6, 12, 14, outline);
-        fill_rect(r, x + 7, y + 7, 10, 12, shell);
-        fill_rect(r, x + 11, y + 8, 2, 11, gold);
-        fill_rect(r, x + 8, y + 2, 8, 5, outline);
-        fill_rect(r, x + 9, y + 3, 6, 3, shell);
-        fill_rect(r, x + 9, y + 3, 1, 1, glow);
-        fill_rect(r, x + 14, y + 3, 1, 1, glow);
-        return;
-    }
+    static const SDL_Color bodies[DESERT_ART_COUNT] = {
+        {61, 115, 83, 255}, {153, 66, 44, 255}, {213, 195, 150, 255},
+        {58, 165, 171, 255}, {165, 112, 66, 255}, {230, 214, 169, 255}
+    };
+    static const SDL_Color clothes[DESERT_ART_COUNT] = {
+        {61, 115, 83, 255}, {153, 66, 44, 255}, {141, 120, 86, 255},
+        {38, 92, 115, 255}, {104, 69, 46, 255}, {42, 85, 138, 255}
+    };
+    SDL_Color body = bodies[art];
+    SDL_Color cloth = clothes[art];
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){43, 30, 24, 255};
+    palette['s'] = (SDL_Color){body.r * 2 / 3, body.g * 2 / 3, body.b * 2 / 3, 255};
+    palette['S'] = body;
+    palette['H'] = (SDL_Color){body.r + (255 - body.r) / 3,
+        body.g + (255 - body.g) / 3, body.b + (255 - body.b) / 3, 255};
+    palette['c'] = (SDL_Color){cloth.r * 2 / 3, cloth.g * 2 / 3, cloth.b * 2 / 3, 255};
+    palette['C'] = cloth;
+    palette['v'] = (SDL_Color){cloth.r + (255 - cloth.r) / 4,
+        cloth.g + (255 - cloth.g) / 4, cloth.b + (255 - cloth.b) / 4, 255};
+    palette['e'] = (SDL_Color){29, 22, 24, 255};
+    palette['y'] = (SDL_Color){107, 245, 221, 255};
+    palette['b'] = (SDL_Color){141, 120, 86, 255};
+    palette['f'] = (SDL_Color){230, 214, 169, 255};
+    palette['u'] = (SDL_Color){23, 44, 67, 255};
+    palette['U'] = (SDL_Color){42, 85, 138, 255};
+    palette['r'] = (SDL_Color){142, 38, 46, 255};
+    palette['R'] = (SDL_Color){225, 65, 76, 255};
+    palette['g'] = (SDL_Color){142, 99, 41, 255};
+    palette['G'] = (SDL_Color){227, 180, 71, 255};
+    palette['l'] = (SDL_Color){59, 41, 30, 255};
+    palette['L'] = (SDL_Color){114, 80, 46, 255};
+    palette['K'] = (SDL_Color){161, 121, 69, 255};
+    palette['k'] = (SDL_Color){44, 31, 28, 255};
     if (type == ENEMY_VIPER) {
-        SDL_Color scales = {153, 66, 44, 255};
-        fill_rect(r, x + 3, y + 15, 18, 6, outline);
-        fill_rect(r, x + 4, y + 16, 16, 4, scales);
-        fill_rect(r, x + 7, y + 17, 8, 1, gold);
-        fill_rect(r, x + 15, y + 7, 4, 10, scales);
-        fill_rect(r, x + 10, y + 4, 11, 5, outline);
-        fill_rect(r, x + 11, y + 5, 9, 3, scales);
-        fill_rect(r, x + 12, y + 5, 2, 1, gold);
-        fill_rect(r, x + 8, y + 7, 3, 1, (SDL_Color){225, 65, 76, 255});
-        return;
+        palette['y'] = (SDL_Color){244, 187, 80, 255};
     }
     if (type == ENEMY_MUMMY) {
-        SDL_Color linen = {213, 195, 150, 255};
-        SDL_Color seam = {141, 120, 86, 255};
-        fill_rect(r, x + 8, y + 1, 8, 7, outline);
-        fill_rect(r, x + 9, y + 2, 6, 5, linen);
-        fill_rect(r, x + 9, y + 4, 6, 1, outline);
-        fill_rect(r, x + 10, y + 4, 1, 1, (SDL_Color){215, 70, 38, 255});
-        fill_rect(r, x + 13, y + 4, 1, 1, (SDL_Color){215, 70, 38, 255});
-        fill_rect(r, x + 6, y + 8, 12, 11, outline);
-        fill_rect(r, x + 7, y + 8, 10, 10, linen);
-        for (int band = 0; band < 3; band++) {
-            fill_rect(r, x + 7, y + 10 + band * 3, 10, 1, seam);
+        palette['y'] = (SDL_Color){215, 70, 38, 255};
+    }
+    if (type == ENEMY_GOLEM) {
+        palette['b'] = (SDL_Color){104, 69, 46, 255};
+    }
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    for (int row = 0; row < 24; row++) {
+        for (int col = 0; col < 24;) {
+            char ink = desert_enemy_art[art][row][col];
+            int end = col + 1;
+            while (end < 24 && desert_enemy_art[art][row][end] == ink) {
+                end++;
+            }
+            if (ink != '.') {
+                fill_rect(r, x + col, y + row, end - col, 1, palette[(unsigned char)ink]);
+            }
+            col = end;
         }
-        fill_rect(r, x + 2, y + 9, 5, 4, linen);
-        fill_rect(r, x + 17, y + 9, 5, 4, linen);
-        fill_rect(r, x + 7, y + 19, 4, 5, linen);
-        fill_rect(r, x + 13, y + 19, 4, 5, linen);
-        return;
     }
-    if (type == ENEMY_DJINN) {
-        SDL_Color spirit = {58, 165, 171, 255};
-        SDL_Color shadow = {38, 92, 115, 255};
-        fill_rect(r, x + 8, y + 1, 8, 3, gold);
-        fill_rect(r, x + 9, y + 4, 6, 5, spirit);
-        fill_rect(r, x + 10, y + 5, 1, 1, glow);
-        fill_rect(r, x + 13, y + 5, 1, 1, glow);
-        fill_rect(r, x + 6, y + 9, 12, 7, spirit);
-        fill_rect(r, x + 2, y + 10, 4, 4, shadow);
-        fill_rect(r, x + 18, y + 10, 4, 4, shadow);
-        fill_rect(r, x + 6, y + 15, 12, 2, gold);
-        fill_rect(r, x + 8, y + 17, 9, 3, spirit);
-        fill_rect(r, x + 11, y + 20, 5, 2, shadow);
-        fill_rect(r, x + 9, y + 22, 4, 2, spirit);
-        return;
-    }
-    SDL_Color stone = {165, 112, 66, 255};
-    SDL_Color shade = {104, 69, 46, 255};
-    fill_rect(r, x + 7, y + 1, 10, 7, outline);
-    fill_rect(r, x + 8, y + 2, 8, 5, stone);
-    fill_rect(r, x + 9, y + 4, 2, 1, glow);
-    fill_rect(r, x + 13, y + 4, 2, 1, glow);
-    fill_rect(r, x + 4, y + 8, 16, 12, outline);
-    fill_rect(r, x + 5, y + 9, 14, 10, stone);
-    fill_rect(r, x + 5, y + 14, 14, 1, shade);
-    fill_rect(r, x + 10, y + 11, 4, 4, glow);
-    fill_rect(r, x, y + 9, 4, 11, shade);
-    fill_rect(r, x + 20, y + 9, 4, 11, shade);
-    fill_rect(r, x + 5, y + 20, 5, 4, shade);
-    fill_rect(r, x + 14, y + 20, 5, 4, shade);
 }
 
 static void draw_moonveil_enemy(Renderer *r, int tx, int ty, EnemyType type) {

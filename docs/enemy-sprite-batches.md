@@ -2,7 +2,7 @@
 
 The current roster contains **95 enemy types in 16 batches**. Each `EnemyType` from `src/game/enemy.h` appears exactly once below. Additional boss forms, named hunts, quest enemies, and shared-renderer dependencies are tracked separately.
 
-Progress: **48/95 enemy types completed (batches 1–8)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
+Progress: **54/95 enemy types completed (batches 1–9)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
 
 ## Batch overview
 
@@ -16,7 +16,7 @@ Progress: **48/95 enemy types completed (batches 1–8)**. Completed boxes have 
 | 6 | Blackwater Swamp and Labyrinth | 5 | Yes |
 | 7 | Dragonspine and Crown Roads | 4 | Yes |
 | 8 | Frostfell | 7 | Yes |
-| 9 | Sunscar Wastes | 6 | No |
+| 9 | Sunscar Wastes | 6 | Yes |
 | 10 | Moonveil Gardens | 5 | No |
 | 11 | Ashen Hollow | 4 | No |
 | 12 | Glassdeep Caverns | 4 | No |
@@ -169,12 +169,20 @@ Scene previews use controlled snow, ice, quest, and lake fixtures through the ac
 
 ### Batch 9: Sunscar Wastes (6)
 
-- [ ] Scarab — `ENEMY_SCARAB`
-- [ ] Viper — `ENEMY_VIPER`
-- [ ] Mummy — `ENEMY_MUMMY`
-- [ ] Djinn — `ENEMY_DJINN`
-- [ ] Golem — `ENEMY_GOLEM`
-- [ ] Desert Pharaoh — `ENEMY_DESERT_PHARAOH`
+- [x] Scarab — `ENEMY_SCARAB`
+- [x] Viper — `ENEMY_VIPER`
+- [x] Mummy — `ENEMY_MUMMY`
+- [x] Djinn — `ENEMY_DJINN`
+- [x] Golem — `ENEMY_GOLEM`
+- [x] Desert Pharaoh — `ENEMY_DESERT_PHARAOH`
+
+Reviewed all six sprites at native 24×24 size through the actual SDL renderer on Sunscar sand, including Dunehex’s label and hunt markers, desert lamp context, and the Pharaoh at normal and low health. Also inspected frozen overlays, health bars, melee damage feedback, and Djinn/Pharaoh projectile travel and impact. Tile bounds, transparent terrain, SDL scale/viewport/clip/blend preservation, Release and Debug builds, and AddressSanitizer/UndefinedBehaviorSanitizer renderer checks passed. All 48 sprites from batches 1–8 remain pixel-for-pixel identical.
+
+- [Before/after comparison, including native-size views](art-sources/enemy-batch-9/before-after.png).
+- [Sunscar renderer preview](art-sources/enemy-batch-9/sunscar.png).
+- [Dunehex and Mummy hunt group](art-sources/enemy-batch-9/dunehex.png).
+
+Scene previews use controlled desert room fixtures for artwork review rather than quest playthroughs. The Scarab has an oval shell and connected jointed legs; the Viper has a continuous coil and scale bands; the Mummy has diagonal wraps and loose strips; the Djinn has a curling smoke tail; the Golem has carved sandstone joints; and the Pharaoh has a striped headdress and connected crook grip. Combat, collision footprints, saved enemy types, and animations are unchanged.
 
 ### Batch 10: Moonveil Gardens (5)
 
@@ -254,7 +262,7 @@ These entries reuse enemy types above. They do not increase the 95-type count. N
 | [ ] | Sun Guardian: broken form, at or below half health; deactivated appearance | Fallen Sun Guardian, batch 15 |
 | [x] | Rimefang and Rimefang Pack | Ice Wolf and Frost Wraith, batch 8 |
 | [ ] | Shardwarden and Shardwarden Stalker | Shard Golem and Blind Stalker, batch 12 |
-| [ ] | Dunehex and Dunehex Mummy | Djinn and Mummy, batch 9 |
+| [x] | Dunehex and Dunehex Mummy | Djinn and Mummy, batch 9 |
 | [x] | Expedition Guardians | Ice Wolf, Ice Giant, Frost Archer, batch 8 |
 | [ ] | Resonator Guardians | Crystal Spider, Blind Stalker, Shard Golem, batch 12 |
 | [ ] | Emberforge Guardians | Cinder Imp, Ash Hound, Obsidian Guardian, batch 11 |
