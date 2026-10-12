@@ -3,6 +3,7 @@
 #include "dungeon_enemy_art.h"
 #include "forest_enemy_art.h"
 #include "mountain_enemy_art.h"
+#include "coast_enemy_art.h"
 #include "npc_renderer.h"
 #include <stdlib.h>
 
@@ -2084,289 +2085,73 @@ static void draw_mountain_enemy(Renderer *r, int tx, int ty, EnemyType type) {
     }
 }
 
-static void draw_coast_illusion(Renderer *r, int x, int y) {
-    SDL_Color outline = {22, 22, 46, 255};
-    SDL_Color shadow = {57, 48, 101, 255};
-    SDL_Color veil = {109, 94, 169, 255};
-    SDL_Color light = {172, 158, 214, 255};
-    SDL_Color glow = {173, 242, 225, 255};
-    fill_rect(r, x + 8, y + 2, 8, 3, outline);
-    fill_rect(r, x + 6, y + 5, 12, 11, outline);
-    fill_rect(r, x + 7, y + 4, 10, 8, veil);
-    fill_rect(r, x + 9, y + 3, 6, 2, light);
-    fill_rect(r, x + 8, y + 7, 8, 5, shadow);
-    fill_rect(r, x + 9, y + 8, 2, 1, glow);
-    fill_rect(r, x + 14, y + 8, 2, 1, glow);
-    fill_rect(r, x + 11, y + 11, 2, 2, outline);
-    fill_rect(r, x + 4, y + 12, 16, 5, outline);
-    fill_rect(r, x + 5, y + 13, 14, 3, veil);
-    fill_rect(r, x + 3, y + 15, 3, 4, light);
-    fill_rect(r, x + 18, y + 15, 3, 3, light);
-    fill_rect(r, x + 7, y + 16, 10, 3, shadow);
-    fill_rect(r, x + 8, y + 16, 3, 3, veil);
-    fill_rect(r, x + 13, y + 16, 2, 2, light);
-    fill_rect(r, x + 6, y + 20, 4, 2, veil);
-    fill_rect(r, x + 12, y + 19, 5, 2, veil);
-    fill_rect(r, x + 10, y + 22, 3, 1, glow);
-    fill_rect(r, x + 2, y + 8, 2, 2, glow);
-    fill_rect(r, x + 20, y + 5, 2, 2, light);
-    fill_rect(r, x + 20, y + 21, 2, 1, glow);
-}
-
-static void draw_coast_merfolk(Renderer *r, int x, int y) {
-    SDL_Color outline = {12, 27, 37, 255};
-    SDL_Color skin = {57, 155, 151, 255};
-    SDL_Color light = {145, 222, 192, 255};
-    SDL_Color fin = {39, 97, 114, 255};
-    SDL_Color gold = {202, 162, 86, 255};
-    fill_rect(r, x + 8, y + 1, 3, 5, fin);
-    fill_rect(r, x + 7, y + 3, 9, 9, outline);
-    fill_rect(r, x + 8, y + 4, 7, 7, skin);
-    fill_rect(r, x + 4, y + 5, 3, 4, light);
-    fill_rect(r, x + 15, y + 5, 3, 4, light);
-    fill_rect(r, x + 9, y + 4, 3, 2, light);
-    fill_rect(r, x + 9, y + 7, 2, 2, outline);
-    fill_rect(r, x + 13, y + 7, 2, 2, outline);
-    fill_rect(r, x + 10, y + 10, 3, 1, fin);
-    fill_rect(r, x + 5, y + 12, 13, 6, outline);
-    fill_rect(r, x + 6, y + 12, 10, 4, skin);
-    fill_rect(r, x + 8, y + 12, 5, 1, light);
-    fill_rect(r, x + 8, y + 15, 8, 2, gold);
-    fill_rect(r, x + 7, y + 17, 10, 4, outline);
-    fill_rect(r, x + 8, y + 17, 8, 3, fin);
-    fill_rect(r, x + 9, y + 17, 2, 1, light);
-    fill_rect(r, x + 12, y + 19, 2, 1, skin);
-    fill_rect(r, x + 4, y + 21, 7, 2, skin);
-    fill_rect(r, x + 14, y + 21, 5, 2, skin);
-    fill_rect(r, x + 5, y + 21, 3, 1, light);
-    fill_rect(r, x + 20, y + 2, 3, 21, outline);
-    fill_rect(r, x + 21, y + 2, 1, 20, gold);
-    fill_rect(r, x + 18, y + 2, 1, 4, light);
-    fill_rect(r, x + 23, y + 2, 1, 4, light);
-    fill_rect(r, x + 18, y + 6, 6, 1, gold);
-    fill_rect(r, x + 21, y, 1, 3, light);
-    fill_rect(r, x + 17, y + 13, 5, 2, skin);
-}
-
-static void draw_coast_siren(Renderer *r, int x, int y) {
-    SDL_Color outline = {22, 22, 39, 255};
-    SDL_Color hair = {71, 52, 98, 255};
-    SDL_Color hair_light = {133, 88, 144, 255};
-    SDL_Color skin = {164, 214, 198, 255};
-    SDL_Color tail = {39, 116, 152, 255};
-    SDL_Color foam = {138, 227, 226, 255};
-    fill_rect(r, x + 5, y + 2, 11, 12, outline);
-    fill_rect(r, x + 6, y + 3, 9, 8, hair);
-    fill_rect(r, x + 7, y + 3, 6, 2, hair_light);
-    fill_rect(r, x + 8, y + 6, 7, 6, skin);
-    fill_rect(r, x + 5, y + 7, 3, 9, hair);
-    fill_rect(r, x + 6, y + 8, 1, 5, hair_light);
-    fill_rect(r, x + 9, y + 8, 2, 1, outline);
-    fill_rect(r, x + 13, y + 8, 2, 1, outline);
-    fill_rect(r, x + 11, y + 10, 2, 2, hair);
-    fill_rect(r, x + 8, y + 12, 8, 4, outline);
-    fill_rect(r, x + 9, y + 12, 6, 3, hair_light);
-    fill_rect(r, x + 3, y + 13, 4, 2, skin);
-    fill_rect(r, x + 15, y + 12, 4, 2, skin);
-    fill_rect(r, x + 7, y + 16, 10, 4, outline);
-    fill_rect(r, x + 8, y + 15, 8, 4, tail);
-    fill_rect(r, x + 9, y + 16, 2, 1, foam);
-    fill_rect(r, x + 12, y + 18, 2, 1, foam);
-    fill_rect(r, x + 10, y + 19, 9, 3, tail);
-    fill_rect(r, x + 17, y + 18, 4, 3, foam);
-    fill_rect(r, x + 18, y + 22, 5, 1, foam);
-    fill_rect(r, x + 20, y + 4, 1, 5, foam);
-    fill_rect(r, x + 18, y + 8, 3, 2, foam);
-    fill_rect(r, x + 21, y + 4, 2, 1, foam);
-    fill_rect(r, x + 2, y + 5, 1, 4, foam);
-    fill_rect(r, x + 1, y + 8, 2, 2, foam);
-}
-
-static void draw_coast_crab(Renderer *r, int x, int y) {
-    SDL_Color outline = {37, 24, 30, 255};
-    SDL_Color shadow = {127, 48, 45, 255};
-    SDL_Color shell = {211, 92, 67, 255};
-    SDL_Color light = {246, 156, 102, 255};
-    SDL_Color barnacle = {223, 205, 157, 255};
-    for (int side = 0; side < 2; side++) {
-        int leg_x = side == 0 ? 1 : 18;
-        for (int leg = 0; leg < 3; leg++) {
-            fill_rect(r, x + leg_x, y + 13 + leg * 3, 5, 2, outline);
-            fill_rect(r, x + leg_x + 1, y + 13 + leg * 3, 3, 1, shell);
-        }
-        int claw_x = side == 0 ? 0 : 18;
-        fill_rect(r, x + claw_x, y + 3, 6, 8, outline);
-        fill_rect(r, x + claw_x + 1, y + 4, 4, 6, shell);
-        fill_rect(r, x + claw_x + 2, y + 3, 2, 4, outline);
-        fill_rect(r, x + claw_x + 1, y + 4, 1, 3, light);
-        fill_rect(r, x + claw_x + 2, y + 10, 3, 3, shadow);
-    }
-    fill_rect(r, x + 7, y + 7, 2, 4, outline);
-    fill_rect(r, x + 15, y + 7, 2, 4, outline);
-    fill_rect(r, x + 7, y + 7, 1, 1, barnacle);
-    fill_rect(r, x + 16, y + 7, 1, 1, barnacle);
-    fill_rect(r, x + 5, y + 10, 14, 10, outline);
-    fill_rect(r, x + 7, y + 9, 10, 2, outline);
-    fill_rect(r, x + 6, y + 11, 12, 6, shell);
-    fill_rect(r, x + 8, y + 10, 8, 2, light);
-    fill_rect(r, x + 7, y + 17, 10, 2, shadow);
-    fill_rect(r, x + 8, y + 13, 3, 1, light);
-    fill_rect(r, x + 13, y + 14, 3, 3, shadow);
-    fill_rect(r, x + 13, y + 14, 2, 2, barnacle);
-    fill_rect(r, x + 10, y + 17, 4, 1, outline);
-}
-
-static void draw_coast_statue(Renderer *r, int x, int y) {
-    SDL_Color outline = {22, 31, 37, 255};
-    SDL_Color shadow = {62, 85, 83, 255};
-    SDL_Color stone = {118, 141, 128, 255};
-    SDL_Color light = {183, 192, 161, 255};
-    SDL_Color moss = {53, 115, 84, 255};
-    SDL_Color magic = {119, 245, 219, 255};
-    fill_rect(r, x + 7, y + 2, 10, 9, outline);
-    fill_rect(r, x + 8, y + 3, 8, 7, stone);
-    fill_rect(r, x + 8, y + 3, 7, 2, light);
-    fill_rect(r, x + 9, y + 6, 2, 2, outline);
-    fill_rect(r, x + 13, y + 6, 2, 2, outline);
-    fill_rect(r, x + 9, y + 6, 2, 1, magic);
-    fill_rect(r, x + 13, y + 6, 2, 1, magic);
-    fill_rect(r, x + 11, y + 9, 3, 1, shadow);
-    fill_rect(r, x + 3, y + 10, 18, 9, outline);
-    fill_rect(r, x + 4, y + 11, 4, 7, stone);
-    fill_rect(r, x + 17, y + 11, 3, 7, shadow);
-    fill_rect(r, x + 8, y + 11, 8, 7, stone);
-    fill_rect(r, x + 5, y + 11, 3, 2, light);
-    fill_rect(r, x + 9, y + 12, 2, 5, light);
-    fill_rect(r, x + 13, y + 10, 1, 4, outline);
-    fill_rect(r, x + 12, y + 13, 2, 1, outline);
-    fill_rect(r, x + 12, y + 14, 1, 3, magic);
-    fill_rect(r, x + 6, y + 18, 12, 2, shadow);
-    fill_rect(r, x + 6, y + 20, 5, 3, outline);
-    fill_rect(r, x + 13, y + 20, 5, 3, outline);
-    fill_rect(r, x + 7, y + 20, 3, 2, stone);
-    fill_rect(r, x + 14, y + 20, 3, 2, stone);
-    fill_rect(r, x + 15, y + 3, 2, 3, moss);
-    fill_rect(r, x + 4, y + 15, 2, 3, moss);
-    fill_rect(r, x + 17, y + 12, 2, 2, moss);
-}
-
-static void draw_coast_elemental(Renderer *r, int x, int y) {
-    SDL_Color outline = {13, 34, 60, 255};
-    SDL_Color shadow = {33, 85, 147, 255};
-    SDL_Color water = {44, 151, 194, 255};
-    SDL_Color light = {89, 209, 221, 255};
-    SDL_Color foam = {192, 248, 233, 255};
-    fill_rect(r, x + 10, y + 1, 5, 3, light);
-    fill_rect(r, x + 8, y + 3, 9, 8, outline);
-    fill_rect(r, x + 9, y + 4, 7, 6, water);
-    fill_rect(r, x + 10, y + 3, 5, 2, foam);
-    fill_rect(r, x + 10, y + 6, 2, 2, outline);
-    fill_rect(r, x + 14, y + 6, 2, 2, outline);
-    fill_rect(r, x + 3, y + 10, 18, 7, outline);
-    fill_rect(r, x + 4, y + 11, 16, 4, water);
-    fill_rect(r, x + 1, y + 7, 4, 6, outline);
-    fill_rect(r, x + 2, y + 8, 2, 4, light);
-    fill_rect(r, x + 19, y + 8, 4, 6, outline);
-    fill_rect(r, x + 20, y + 9, 2, 4, light);
-    fill_rect(r, x + 1, y + 6, 2, 2, foam);
-    fill_rect(r, x + 21, y + 7, 2, 2, foam);
-    fill_rect(r, x + 7, y + 12, 10, 7, shadow);
-    fill_rect(r, x + 8, y + 11, 7, 2, light);
-    fill_rect(r, x + 13, y + 13, 3, 2, light);
-    fill_rect(r, x + 9, y + 15, 6, 2, water);
-    fill_rect(r, x + 9, y + 14, 2, 1, foam);
-    fill_rect(r, x + 5, y + 18, 14, 3, outline);
-    fill_rect(r, x + 6, y + 18, 12, 2, water);
-    fill_rect(r, x + 2, y + 21, 20, 2, shadow);
-    fill_rect(r, x + 4, y + 21, 14, 1, light);
-    fill_rect(r, x + 5, y + 18, 4, 1, foam);
-    fill_rect(r, x + 1, y + 17, 2, 2, light);
-    fill_rect(r, x + 21, y + 18, 2, 2, foam);
-}
-
-static void draw_coast_serpent(Renderer *r, int x, int y) {
-    SDL_Color outline = {15, 29, 39, 255};
-    SDL_Color shadow = {31, 94, 99, 255};
-    SDL_Color scales = {49, 161, 153, 255};
-    SDL_Color belly = {162, 211, 162, 255};
-    SDL_Color fin = {207, 108, 81, 255};
-    fill_rect(r, x + 3, y + 16, 17, 7, outline);
-    fill_rect(r, x + 4, y + 17, 15, 4, scales);
-    fill_rect(r, x + 6, y + 20, 12, 2, belly);
-    fill_rect(r, x + 1, y + 13, 3, 7, outline);
-    fill_rect(r, x + 2, y + 14, 2, 4, fin);
-    fill_rect(r, x + 8, y + 15, 3, 3, fin);
-    fill_rect(r, x + 12, y + 8, 8, 12, outline);
-    fill_rect(r, x + 13, y + 9, 6, 10, scales);
-    fill_rect(r, x + 17, y + 10, 2, 8, belly);
-    fill_rect(r, x + 11, y + 8, 2, 4, fin);
-    fill_rect(r, x + 12, y + 4, 9, 6, outline);
-    fill_rect(r, x + 13, y + 5, 7, 4, scales);
-    fill_rect(r, x + 14, y + 3, 3, 2, fin);
-    fill_rect(r, x + 18, y + 6, 6, 5, outline);
-    fill_rect(r, x + 19, y + 7, 4, 2, belly);
-    fill_rect(r, x + 18, y + 5, 2, 2, outline);
-    fill_rect(r, x + 18, y + 5, 1, 1, (SDL_Color){255, 191, 99, 255});
-    fill_rect(r, x + 20, y + 10, 1, 2, belly);
-    fill_rect(r, x + 23, y + 10, 1, 2, belly);
-    fill_rect(r, x + 14, y + 10, 2, 1, belly);
-    fill_rect(r, x + 13, y + 13, 2, 1, shadow);
-    fill_rect(r, x + 14, y + 16, 2, 1, belly);
-    fill_rect(r, x + 7, y + 18, 2, 1, shadow);
-    fill_rect(r, x + 10, y + 19, 2, 1, belly);
-}
-
-static void draw_coast_queen(Renderer *r, int x, int y) {
-    SDL_Color outline = {19, 24, 40, 255};
-    SDL_Color robe = {43, 65, 109, 255};
-    SDL_Color fold = {79, 107, 149, 255};
-    SDL_Color skin = {159, 214, 199, 255};
-    SDL_Color gold = {211, 172, 94, 255};
-    SDL_Color coral = {225, 111, 111, 255};
-    fill_rect(r, x + 6, y + 4, 11, 12, outline);
-    fill_rect(r, x + 7, y + 5, 9, 9, robe);
-    fill_rect(r, x + 8, y + 6, 7, 6, skin);
-    fill_rect(r, x + 6, y + 1, 2, 4, coral);
-    fill_rect(r, x + 10, y, 2, 5, coral);
-    fill_rect(r, x + 15, y + 1, 2, 4, coral);
-    fill_rect(r, x + 7, y + 4, 9, 2, gold);
-    fill_rect(r, x + 10, y + 4, 2, 2, skin);
-    fill_rect(r, x + 9, y + 8, 2, 1, outline);
-    fill_rect(r, x + 13, y + 8, 2, 1, outline);
-    fill_rect(r, x + 11, y + 10, 2, 1, coral);
-    fill_rect(r, x + 4, y + 12, 15, 7, outline);
-    fill_rect(r, x + 5, y + 13, 13, 5, robe);
-    fill_rect(r, x + 7, y + 12, 3, 2, gold);
-    fill_rect(r, x + 13, y + 12, 3, 2, gold);
-    fill_rect(r, x + 10, y + 14, 3, 2, skin);
-    fill_rect(r, x + 3, y + 19, 17, 4, outline);
-    fill_rect(r, x + 5, y + 18, 13, 4, robe);
-    fill_rect(r, x + 7, y + 16, 2, 5, fold);
-    fill_rect(r, x + 13, y + 16, 2, 6, fold);
-    fill_rect(r, x + 5, y + 21, 3, 1, gold);
-    fill_rect(r, x + 15, y + 21, 3, 1, gold);
-    fill_rect(r, x + 2, y + 15, 3, 2, skin);
-    fill_rect(r, x + 20, y + 7, 3, 16, outline);
-    fill_rect(r, x + 21, y + 7, 1, 15, gold);
-    fill_rect(r, x + 18, y + 2, 6, 6, outline);
-    fill_rect(r, x + 19, y + 3, 4, 4, coral);
-    fill_rect(r, x + 20, y + 3, 2, 3, skin);
-    fill_rect(r, x + 18, y + 14, 4, 2, skin);
-}
-
 static void draw_coast_enemy(Renderer *r, int tx, int ty, EnemyType type) {
+    int art;
+    switch (type) {
+        case ENEMY_ILLUSION: art = COAST_ART_ILLUSION; break;
+        case ENEMY_MERFOLK: art = COAST_ART_MERFOLK; break;
+        case ENEMY_SIREN: art = COAST_ART_SIREN; break;
+        case ENEMY_GIANT_CRAB: art = COAST_ART_GIANT_CRAB; break;
+        case ENEMY_ANIMATED_STATUE: art = COAST_ART_ANIMATED_STATUE; break;
+        case ENEMY_WATER_ELEMENTAL: art = COAST_ART_WATER_ELEMENTAL; break;
+        case ENEMY_SEA_SERPENT: art = COAST_ART_SEA_SERPENT; break;
+        case ENEMY_DROWNED_QUEEN: art = COAST_ART_DROWNED_QUEEN; break;
+        default: return;
+    }
+    static const SDL_Color bodies[COAST_ART_COUNT] = {
+        {57, 48, 101, 255}, {57, 155, 151, 255}, {164, 214, 198, 255}, {211, 92, 67, 255},
+        {118, 141, 128, 255}, {44, 151, 194, 255}, {49, 161, 153, 255}, {159, 214, 199, 255}
+    };
+    static const SDL_Color clothes[COAST_ART_COUNT] = {
+        {109, 94, 169, 255}, {39, 97, 114, 255}, {133, 88, 144, 255}, {127, 48, 45, 255},
+        {62, 85, 83, 255}, {33, 85, 147, 255}, {31, 94, 99, 255}, {43, 65, 109, 255}
+    };
+    SDL_Color body = bodies[art];
+    SDL_Color cloth = clothes[art];
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){15, 25, 38, 255};
+    palette['s'] = (SDL_Color){body.r * 2 / 3, body.g * 2 / 3, body.b * 2 / 3, 255};
+    palette['S'] = body;
+    palette['H'] = (SDL_Color){body.r + (255 - body.r) / 3,
+        body.g + (255 - body.g) / 3, body.b + (255 - body.b) / 3, 255};
+    palette['c'] = (SDL_Color){cloth.r * 2 / 3, cloth.g * 2 / 3, cloth.b * 2 / 3, 255};
+    palette['C'] = cloth;
+    palette['v'] = (SDL_Color){cloth.r + (255 - cloth.r) / 3,
+        cloth.g + (255 - cloth.g) / 3, cloth.b + (255 - cloth.b) / 3, 255};
+    palette['e'] = (SDL_Color){11, 22, 33, 255};
+    palette['y'] = (SDL_Color){119, 245, 219, 255};
+    palette['f'] = (SDL_Color){192, 248, 233, 255};
+    palette['u'] = (SDL_Color){44, 40, 72, 255};
+    palette['U'] = (SDL_Color){92, 65, 114, 255};
+    palette['r'] = (SDL_Color){39, 97, 114, 255};
+    palette['R'] = (SDL_Color){89, 180, 191, 255};
+    palette['g'] = (SDL_Color){135, 99, 50, 255};
+    palette['G'] = (SDL_Color){211, 172, 94, 255};
+    palette['m'] = (SDL_Color){53, 115, 84, 255};
+    palette['b'] = (SDL_Color){223, 205, 157, 255};
+    palette['p'] = (SDL_Color){229, 235, 206, 255};
+    if (type == ENEMY_SEA_SERPENT || type == ENEMY_DROWNED_QUEEN) {
+        palette['r'] = (SDL_Color){144, 62, 62, 255};
+        palette['R'] = (SDL_Color){225, 111, 111, 255};
+    }
+    if (type == ENEMY_SEA_SERPENT) {
+        palette['H'] = (SDL_Color){162, 211, 162, 255};
+        palette['y'] = (SDL_Color){255, 191, 99, 255};
+    }
     int x = tx * TILE_SIZE;
     int y = ty * TILE_SIZE;
-    switch (type) {
-        case ENEMY_ILLUSION: draw_coast_illusion(r, x, y); break;
-        case ENEMY_MERFOLK: draw_coast_merfolk(r, x, y); break;
-        case ENEMY_SIREN: draw_coast_siren(r, x, y); break;
-        case ENEMY_GIANT_CRAB: draw_coast_crab(r, x, y); break;
-        case ENEMY_ANIMATED_STATUE: draw_coast_statue(r, x, y); break;
-        case ENEMY_WATER_ELEMENTAL: draw_coast_elemental(r, x, y); break;
-        case ENEMY_SEA_SERPENT: draw_coast_serpent(r, x, y); break;
-        case ENEMY_DROWNED_QUEEN: draw_coast_queen(r, x, y); break;
-        default: break;
+    for (int row = 0; row < 24; row++) {
+        for (int col = 0; col < 24;) {
+            char ink = coast_enemy_art[art][row][col];
+            int end = col + 1;
+            while (end < 24 && coast_enemy_art[art][row][end] == ink) {
+                end++;
+            }
+            if (ink != '.') {
+                fill_rect(r, x + col, y + row, end - col, 1, palette[(unsigned char)ink]);
+            }
+            col = end;
+        }
     }
 }
 
