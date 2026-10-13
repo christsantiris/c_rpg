@@ -1,5 +1,19 @@
 #include "sprites.h"
 #include "player_art.h"
+#include "dungeon_enemy_art.h"
+#include "dungeon_boss_art.h"
+#include "forest_enemy_art.h"
+#include "mountain_enemy_art.h"
+#include "coast_enemy_art.h"
+#include "swamp_enemy_art.h"
+#include "dragonspine_road_art.h"
+#include "frostfell_enemy_art.h"
+#include "polar_kraken_art.h"
+#include "desert_enemy_art.h"
+#include "moonveil_enemy_art.h"
+#include "ashen_enemy_art.h"
+#include "glassdeep_enemy_art.h"
+#include "catacombs_enemy_art.h"
 #include "npc_renderer.h"
 #include <stdlib.h>
 
@@ -1718,1486 +1732,1010 @@ void draw_portal(Renderer *r, int tile_x, int tile_y) {
     fill_rect(r, x+7, y+11, 10, 3, (SDL_Color){24, 30, 82, 255});
 }
 
-void draw_goblin(Renderer *r, int tile_x, int tile_y) {
+static void draw_dungeon_enemy_body(Renderer *r, int tile_x, int tile_y, int art) {
+    static const SDL_Color bodies[DUNGEON_ART_COUNT] = {
+        {210, 210, 190, 255}, {78, 142, 38, 255}, {132, 146, 108, 255},
+        {92, 116, 48, 255}, {72, 94, 58, 255}, {166, 122, 82, 255},
+        {54, 32, 72, 255}, {112, 224, 232, 255}, {172, 166, 134, 255}
+    };
+    static const SDL_Color clothes[DUNGEON_ART_COUNT] = {
+        {92, 62, 38, 255}, {92, 58, 30, 255}, {100, 48, 54, 255},
+        {84, 48, 28, 255}, {90, 58, 32, 255}, {92, 62, 38, 255},
+        {92, 42, 126, 255}, {54, 112, 132, 255}, {62, 28, 92, 255}
+    };
+    static const SDL_Color eyes[DUNGEON_ART_COUNT] = {
+        {18, 18, 35, 255}, {232, 186, 38, 255}, {226, 207, 91, 255},
+        {232, 166, 34, 255}, {224, 154, 36, 255}, {34, 28, 28, 255},
+        {244, 48, 62, 255}, {176, 242, 238, 255}, {78, 232, 76, 255}
+    };
+    SDL_Color body = bodies[art];
+    SDL_Color cloth = clothes[art];
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){20, 24, 30, 255};
+    palette['s'] = (SDL_Color){body.r * 2 / 3, body.g * 2 / 3, body.b * 2 / 3, 255};
+    palette['S'] = body;
+    palette['H'] = (SDL_Color){body.r + (255 - body.r) / 3,
+        body.g + (255 - body.g) / 3, body.b + (255 - body.b) / 3, 255};
+    palette['e'] = (SDL_Color){18, 18, 35, 255};
+    palette['y'] = eyes[art];
+    palette['c'] = (SDL_Color){cloth.r * 2 / 3, cloth.g * 2 / 3, cloth.b * 2 / 3, 255};
+    palette['C'] = cloth;
+    palette['v'] = (SDL_Color){cloth.r + (255 - cloth.r) / 4,
+        cloth.g + (255 - cloth.g) / 4, cloth.b + (255 - cloth.b) / 4, 255};
+    palette['l'] = (SDL_Color){73, 43, 27, 255};
+    palette['k'] = (SDL_Color){43, 31, 27, 255};
+    palette['L'] = (SDL_Color){115, 73, 40, 255};
+    palette['K'] = (SDL_Color){159, 112, 66, 255};
+    palette['m'] = (SDL_Color){83, 94, 105, 255};
+    palette['M'] = (SDL_Color){157, 174, 182, 255};
+    palette['N'] = (SDL_Color){224, 235, 234, 255};
+    palette['f'] = (SDL_Color){232, 224, 188, 255};
+    palette['u'] = (SDL_Color){66, 52, 39, 255};
+    palette['U'] = (SDL_Color){108, 89, 61, 255};
+    palette['w'] = (SDL_Color){86, 58, 32, 255};
+    palette['W'] = (SDL_Color){139, 100, 51, 255};
+    palette['g'] = (SDL_Color){132, 88, 31, 255};
+    palette['G'] = (SDL_Color){212, 168, 71, 255};
+    palette['r'] = (SDL_Color){99, 51, 44, 255};
+    palette['R'] = (SDL_Color){150, 70, 62, 255};
+    palette['p'] = (SDL_Color){78, 232, 76, 255};
+    palette['P'] = (SDL_Color){183, 255, 157, 255};
+    if (art == DUNGEON_ART_SKELETON) {
+        palette['s'] = (SDL_Color){145, 151, 145, 255};
+    } else if (art == DUNGEON_ART_WRAITH) {
+        palette['s'] = (SDL_Color){54, 112, 132, 255};
+        palette['H'] = (SDL_Color){176, 242, 238, 255};
+        palette['e'] = (SDL_Color){12, 20, 38, 255};
+    }
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    SDL_Color skin = {78, 142, 38, 255};
-    SDL_Color dark = {28, 48, 26, 255};
-    SDL_Color cloth = {92, 58, 30, 255};
-    fill_rect(r, x+4, y+6, 16, 3, skin);
-    fill_rect(r, x+7, y+4, 10, 9, skin);
-    fill_rect(r, x+8, y+7, 2, 2, (SDL_Color){232, 186, 38, 255});
-    fill_rect(r, x+14,y+7, 2, 2, (SDL_Color){232, 186, 38, 255});
-    fill_rect(r, x+7, y+13, 10, 7, cloth);
-    fill_rect(r, x+4, y+14, 3, 5, skin);
-    fill_rect(r, x+17,y+13, 3, 6, skin);
-    fill_rect(r, x+7, y+20, 4, 2, dark);
-    fill_rect(r, x+14,y+20, 4, 2, dark);
-    fill_rect(r, x+19,y+10, 2, 8, (SDL_Color){174, 184, 188, 255});
+    for (int row = 0; row < 24; row++) {
+        for (int col = 0; col < 24;) {
+            char ink = dungeon_enemy_art[art][row][col];
+            int end = col + 1;
+            while (end < 24 && dungeon_enemy_art[art][row][end] == ink) {
+                end++;
+            }
+            if (ink != '.') {
+                fill_rect(r, x + col, y + row, end - col, 1, palette[(unsigned char)ink]);
+            }
+            col = end;
+        }
+    }
+}
+
+void draw_goblin(Renderer *r, int tile_x, int tile_y) {
+    draw_dungeon_enemy_body(r, tile_x, tile_y, DUNGEON_ART_GOBLIN);
 }
 
 void draw_skeleton(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color bone = {210, 210, 190, 255};
-    SDL_Color shade = {145, 151, 145, 255};
-    SDL_Color dark = {18, 18, 35, 255};
-    SDL_Color iron = {174, 184, 192, 255};
-    fill_rect(r, x + 2, y + 5, 2, 12, iron);
-    fill_rect(r, x + 1, y + 4, 4, 3, (SDL_Color){220, 226, 227, 255});
-    fill_rect(r, x + 1, y + 16, 5, 2, (SDL_Color){111, 72, 48, 255});
-    fill_rect(r, x + 7, y + 2, 10, 8, bone);
-    fill_rect(r, x + 7, y + 3, 2, 6, shade);
-    fill_rect(r, x + 8, y + 5, 3, 3, dark);
-    fill_rect(r, x + 14, y + 5, 3, 3, dark);
-    fill_rect(r, x + 9, y + 9, 6, 3, shade);
-    fill_rect(r, x + 11, y + 9, 3, 1, dark);
-    fill_rect(r, x + 8, y + 12, 9, 7, dark);
-    fill_rect(r, x + 11, y + 12, 3, 9, bone);
-    fill_rect(r, x + 8, y + 13, 9, 2, bone);
-    fill_rect(r, x + 8, y + 16, 9, 2, shade);
-    fill_rect(r, x + 5, y + 13, 3, 3, bone);
-    fill_rect(r, x + 17, y + 13, 2, 4, bone);
-    fill_rect(r, x + 7, y + 19, 3, 4, bone);
-    fill_rect(r, x + 15, y + 19, 3, 4, bone);
-    fill_rect(r, x + 19, y + 12, 5, 8, (SDL_Color){101, 69, 48, 255});
-    fill_rect(r, x + 20, y + 13, 3, 5, iron);
+    draw_dungeon_enemy_body(r, tile_x, tile_y, DUNGEON_ART_SKELETON);
 }
 
 void draw_orc(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color skin = {92, 116, 48, 255};
-    SDL_Color dark = {30, 38, 26, 255};
-    SDL_Color armor = {82, 82, 86, 255};
-    fill_rect(r, x+6, y+3, 12, 10, skin);
-    fill_rect(r, x+5, y+5, 2, 5, skin);
-    fill_rect(r, x+17,y+5, 2, 5, skin);
-    fill_rect(r, x+8, y+7, 2, 2, (SDL_Color){232, 166, 34, 255});
-    fill_rect(r, x+14,y+7, 2, 2, (SDL_Color){232, 166, 34, 255});
-    fill_rect(r, x+8, y+11,2, 3, (SDL_Color){224, 210, 170, 255});
-    fill_rect(r, x+15,y+11,2, 3, (SDL_Color){224, 210, 170, 255});
-    fill_rect(r, x+4, y+13,16, 7, armor);
-    fill_rect(r, x+8, y+14,8, 6, (SDL_Color){84, 48, 28, 255});
-    fill_rect(r, x+5, y+20,5, 3, dark);
-    fill_rect(r, x+15,y+20,5, 3, dark);
-    fill_rect(r, x+20,y+7, 3, 13, (SDL_Color){172, 180, 182, 255});
+    draw_dungeon_enemy_body(r, tile_x, tile_y, DUNGEON_ART_ORC);
 }
 
 void draw_troll(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color skin = {72, 94, 58, 255};
-    SDL_Color shade = {42, 56, 40, 255};
-    fill_rect(r, x+5, y+3, 14, 10, skin);
-    fill_rect(r, x+7, y+6, 3, 2, (SDL_Color){224, 154, 36, 255});
-    fill_rect(r, x+14,y+6, 3, 2, (SDL_Color){224, 154, 36, 255});
-    fill_rect(r, x+3, y+12,18, 8, skin);
-    fill_rect(r, x+2, y+13,4, 8, skin);
-    fill_rect(r, x+18,y+12,4, 9, skin);
-    fill_rect(r, x+8, y+13,8, 7, (SDL_Color){90, 58, 32, 255});
-    fill_rect(r, x+4, y+20,6, 3, shade);
-    fill_rect(r, x+15,y+20,6, 3, shade);
-    fill_rect(r, x+20,y+5, 3, 15, (SDL_Color){104, 76, 48, 255});
-    fill_rect(r, x+19,y+4, 5, 6, (SDL_Color){126, 126, 116, 255});
+    draw_dungeon_enemy_body(r, tile_x, tile_y, DUNGEON_ART_TROLL);
 }
 
 void draw_zombie(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color skin = {132, 146, 108, 255};
-    SDL_Color cloth = {100, 48, 54, 255};
-    SDL_Color dark = {42, 34, 42, 255};
-    fill_rect(r, x + 11, y + 2, 9, 8, dark);
-    fill_rect(r, x + 10, y + 4, 9, 8, skin);
-    fill_rect(r, x + 17, y + 7, 3, 4, (SDL_Color){91, 105, 78, 255});
-    fill_rect(r, x + 12, y + 6, 2, 2, (SDL_Color){226, 207, 91, 255});
-    fill_rect(r, x + 17, y + 6, 2, 2, dark);
-    fill_rect(r, x + 6, y + 11, 12, 9, cloth);
-    fill_rect(r, x + 10, y + 12, 7, 3, (SDL_Color){69, 39, 47, 255});
-    fill_rect(r, x + 11, y + 15, 5, 2, (SDL_Color){150, 48, 48, 255});
-    fill_rect(r, x + 4, y + 12, 4, 3, cloth);
-    fill_rect(r, x + 1, y + 13, 5, 3, skin);
-    fill_rect(r, x + 17, y + 13, 3, 6, cloth);
-    fill_rect(r, x + 19, y + 18, 3, 3, skin);
-    fill_rect(r, x + 7, y + 20, 4, 3, dark);
-    fill_rect(r, x + 15, y + 19, 4, 4, dark);
-    fill_rect(r, x + 5, y + 22, 6, 2, dark);
+    draw_dungeon_enemy_body(r, tile_x, tile_y, DUNGEON_ART_ZOMBIE);
 }
 
 void draw_crypt_bat(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color wing = {92, 42, 126, 255};
-    SDL_Color edge = {46, 22, 70, 255};
-    SDL_Color body = {54, 32, 72, 255};
-    SDL_Color eye = {244, 48, 62, 255};
-    fill_rect(r, x + 1, y + 5, 6, 3, edge);
-    fill_rect(r, x + 2, y + 8, 7, 4, wing);
-    fill_rect(r, x + 4, y + 12, 5, 3, wing);
-    fill_rect(r, x + 6, y + 15, 2, 3, edge);
-    fill_rect(r, x + 17, y + 5, 6, 3, edge);
-    fill_rect(r, x + 15, y + 8, 7, 4, wing);
-    fill_rect(r, x + 15, y + 12, 5, 3, wing);
-    fill_rect(r, x + 16, y + 15, 2, 3, edge);
-    fill_rect(r, x + 8, y + 7, 8, 11, body);
-    fill_rect(r, x + 8, y + 6, 3, 3, edge);
-    fill_rect(r, x + 13, y + 6, 3, 3, edge);
-    fill_rect(r, x + 9, y + 11, 2, 2, eye);
-    fill_rect(r, x + 13, y + 11, 2, 2, eye);
-    fill_rect(r, x + 11, y + 14, 2, 3, (SDL_Color){207, 197, 188, 255});
-    fill_rect(r, x + 10, y + 17, 4, 3, edge);
+    draw_dungeon_enemy_body(r, tile_x, tile_y, DUNGEON_ART_CRYPT_BAT);
 }
 
 void draw_wraith(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color glow = {112, 224, 232, 255};
-    SDL_Color pale = {176, 242, 238, 255};
-    SDL_Color shade = {54, 112, 132, 255};
-    SDL_Color voidc = {12, 20, 38, 255};
-    fill_rect(r, x + 8, y + 2, 8, 3, pale);
-    fill_rect(r, x + 6, y + 5, 12, 8, glow);
-    fill_rect(r, x + 8, y + 6, 8, 7, voidc);
-    fill_rect(r, x + 9, y + 9, 2, 2, pale);
-    fill_rect(r, x + 14, y + 9, 2, 2, pale);
-    fill_rect(r, x + 5, y + 13, 14, 5, shade);
-    fill_rect(r, x + 3, y + 12, 4, 3, glow);
-    fill_rect(r, x + 1, y + 15, 4, 3, pale);
-    fill_rect(r, x + 18, y + 12, 4, 3, glow);
-    fill_rect(r, x + 20, y + 15, 3, 3, pale);
-    fill_rect(r, x + 7, y + 18, 10, 2, glow);
-    fill_rect(r, x + 9, y + 20, 6, 2, shade);
-    fill_rect(r, x + 11, y + 22, 3, 2, glow);
-    fill_rect(r, x + 6, y + 20, 2, 2, pale);
-    fill_rect(r, x + 17, y + 19, 2, 2, pale);
+    draw_dungeon_enemy_body(r, tile_x, tile_y, DUNGEON_ART_WRAITH);
 }
 
 void draw_necromancer(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color robe = {62, 28, 92, 255};
-    SDL_Color trim = {116, 54, 148, 255};
-    SDL_Color skin = {172, 166, 134, 255};
-    SDL_Color magic = {78, 232, 76, 255};
-    SDL_Color bone = {210, 204, 170, 255};
-    fill_rect(r, x + 2, y + 5, 2, 17, bone);
-    fill_rect(r, x + 1, y + 3, 4, 4, bone);
-    fill_rect(r, x + 2, y + 2, 2, 2, magic);
-    fill_rect(r, x + 10, y + 1, 5, 3, trim);
-    fill_rect(r, x + 8, y + 4, 9, 3, trim);
-    fill_rect(r, x + 6, y + 7, 13, 7, robe);
-    fill_rect(r, x + 8, y + 7, 9, 6, skin);
-    fill_rect(r, x + 9, y + 8, 3, 3, (SDL_Color){31, 17, 48, 255});
-    fill_rect(r, x + 14, y + 8, 3, 3, (SDL_Color){31, 17, 48, 255});
-    fill_rect(r, x + 10, y + 9, 2, 2, magic);
-    fill_rect(r, x + 14, y + 9, 2, 2, magic);
-    fill_rect(r, x + 5, y + 14, 15, 8, robe);
-    fill_rect(r, x + 4, y + 20, 4, 3, robe);
-    fill_rect(r, x + 17, y + 20, 4, 3, robe);
-    fill_rect(r, x + 9, y + 15, 7, 2, trim);
-    fill_rect(r, x + 11, y + 17, 3, 3, magic);
-    fill_rect(r, x + 17, y + 13, 4, 4, skin);
-    fill_rect(r, x + 19, y + 11, 4, 4, magic);
+    draw_dungeon_enemy_body(r, tile_x, tile_y, DUNGEON_ART_CRYPT_CONJURER);
 }
 
 void draw_giant(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color skin = {166, 122, 82, 255};
-    SDL_Color shade = {104, 72, 50, 255};
-    fill_rect(r, x+5, y+2, 14, 10, skin);
-    fill_rect(r, x+8, y+5, 2, 2, (SDL_Color){34, 28, 28, 255});
-    fill_rect(r, x+15,y+5, 2, 2, (SDL_Color){34, 28, 28, 255});
-    fill_rect(r, x+3, y+11,18, 10, skin);
-    fill_rect(r, x+1, y+12,4, 9, skin);
-    fill_rect(r, x+19,y+11,4, 10, skin);
-    fill_rect(r, x+7, y+13,10, 8, (SDL_Color){92, 62, 38, 255});
-    fill_rect(r, x+4, y+20,6, 3, shade);
-    fill_rect(r, x+15,y+20,6, 3, shade);
-    fill_rect(r, x+20,y+3, 3, 17, (SDL_Color){92, 58, 30, 255});
-    fill_rect(r, x+19,y+2, 5, 6, (SDL_Color){116, 76, 40, 255});
+    draw_dungeon_enemy_body(r, tile_x, tile_y, DUNGEON_ART_GIANT);
+}
+
+static void draw_dungeon_boss(Renderer *r, int tx, int ty, int art) {
+    static const SDL_Color bodies[BOSS_ART_COUNT] = {
+        {82, 128, 38, 255}, {208, 204, 170, 255}, {142, 38, 34, 255},
+        {174, 42, 24, 255}, {101, 80, 50, 255}
+    };
+    static const SDL_Color clothes[BOSS_ART_COUNT] = {
+        {132, 34, 42, 255}, {55, 35, 88, 255}, {54, 20, 26, 255},
+        {92, 24, 20, 255}, {125, 104, 63, 255}
+    };
+    SDL_Color body = bodies[art];
+    SDL_Color cloth = clothes[art];
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){22, 19, 27, 255};
+    palette['s'] = (SDL_Color){body.r * 2 / 3, body.g * 2 / 3, body.b * 2 / 3, 255};
+    palette['S'] = body;
+    palette['H'] = (SDL_Color){body.r + (255 - body.r) / 4,
+        body.g + (255 - body.g) / 4, body.b + (255 - body.b) / 4, 255};
+    palette['c'] = (SDL_Color){cloth.r * 2 / 3, cloth.g * 2 / 3, cloth.b * 2 / 3, 255};
+    palette['C'] = cloth;
+    palette['v'] = (SDL_Color){cloth.r + (255 - cloth.r) / 4,
+        cloth.g + (255 - cloth.g) / 4, cloth.b + (255 - cloth.b) / 4, 255};
+    palette['e'] = (SDL_Color){27, 18, 24, 255};
+    palette['y'] = (SDL_Color){250, 76, 36, 255};
+    palette['m'] = (SDL_Color){52, 58, 68, 255};
+    palette['M'] = (SDL_Color){116, 133, 147, 255};
+    palette['N'] = (SDL_Color){202, 216, 218, 255};
+    palette['f'] = (SDL_Color){148, 129, 89, 255};
+    palette['F'] = (SDL_Color){225, 210, 166, 255};
+    palette['a'] = (SDL_Color){48, 22, 30, 255};
+    palette['A'] = (SDL_Color){86, 30, 37, 255};
+    palette['h'] = (SDL_Color){121, 49, 48, 255};
+    palette['g'] = (SDL_Color){137, 91, 34, 255};
+    palette['G'] = (SDL_Color){224, 177, 61, 255};
+    palette['l'] = (SDL_Color){53, 36, 25, 255};
+    palette['L'] = (SDL_Color){105, 69, 39, 255};
+    palette['K'] = (SDL_Color){147, 106, 60, 255};
+    palette['k'] = (SDL_Color){30, 28, 27, 255};
+    palette['R'] = (SDL_Color){224, 66, 64, 255};
+    palette['p'] = (SDL_Color){116, 55, 179, 255};
+    palette['P'] = (SDL_Color){209, 151, 255, 255};
+    if (art == BOSS_ART_LICH_KING) {
+        palette['y'] = (SDL_Color){179, 106, 255, 255};
+        palette['g'] = (SDL_Color){91, 73, 120, 255};
+        palette['G'] = (SDL_Color){171, 156, 190, 255};
+    } else if (art == BOSS_ART_DEMON_LORD) {
+        palette['y'] = (SDL_Color){255, 183, 57, 255};
+    } else if (art == BOSS_ART_RED_DRAGON) {
+        palette['y'] = (SDL_Color){255, 202, 71, 255};
+        palette['a'] = (SDL_Color){69, 24, 26, 255};
+        palette['A'] = (SDL_Color){119, 34, 27, 255};
+        palette['p'] = (SDL_Color){255, 109, 22, 255};
+        palette['P'] = (SDL_Color){255, 214, 63, 255};
+    }
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    for (int row = 0; row < 24; row++) {
+        for (int col = 0; col < 24;) {
+            char ink = dungeon_boss_art[art][row][col];
+            int end = col + 1;
+            while (end < 24 && dungeon_boss_art[art][row][end] == ink) {
+                end++;
+            }
+            if (ink != '.') {
+                fill_rect(r, x + col, y + row, end - col, 1, palette[(unsigned char)ink]);
+            }
+            col = end;
+        }
+    }
 }
 
 void draw_goblin_king(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color skin = {82, 128, 38, 255};
-    SDL_Color crown = {230, 184, 42, 255};
-    SDL_Color cloak = {132, 34, 42, 255};
-    fill_rect(r, x+5, y+1, 14, 4, crown);
-    fill_rect(r, x+6, y, 3, 3, crown);
-    fill_rect(r, x+11,y, 3, 3, crown);
-    fill_rect(r, x+16,y, 3, 3, crown);
-    fill_rect(r, x+4, y+7, 16, 3, skin);
-    fill_rect(r, x+7, y+4, 10, 9, skin);
-    fill_rect(r, x+8, y+7, 2, 2, (SDL_Color){250, 56, 36, 255});
-    fill_rect(r, x+14,y+7, 2, 2, (SDL_Color){250, 56, 36, 255});
-    fill_rect(r, x+3, y+12,18, 9, cloak);
-    fill_rect(r, x+7, y+13,10, 8, (SDL_Color){72, 50, 28, 255});
-    fill_rect(r, x+5, y+20,5, 3, (SDL_Color){26, 34, 24, 255});
-    fill_rect(r, x+15,y+20,5, 3, (SDL_Color){26, 34, 24, 255});
-    fill_rect(r, x+20,y+8, 2, 12, (SDL_Color){194, 202, 204, 255});
+    draw_dungeon_boss(r, tile_x, tile_y, BOSS_ART_GOBLIN_KING);
 }
 
 void draw_lich_king(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color robe = {42, 24, 76, 255};
-    SDL_Color bone = {208, 204, 170, 255};
-    SDL_Color glow = {142, 80, 248, 255};
-    fill_rect(r, x+7, y+1, 10, 4, (SDL_Color){92, 76, 120, 255});
-    fill_rect(r, x+8, y, 2, 3, bone);
-    fill_rect(r, x+14,y, 2, 3, bone);
-    fill_rect(r, x+7, y+4, 10, 8, bone);
-    fill_rect(r, x+9, y+6, 2, 2, glow);
-    fill_rect(r, x+14,y+6, 2, 2, glow);
-    fill_rect(r, x+5, y+12,14, 9, robe);
-    fill_rect(r, x+3, y+14,4, 8, robe);
-    fill_rect(r, x+17,y+14,4, 8, robe);
-    fill_rect(r, x+4, y+21,5, 2, robe);
-    fill_rect(r, x+15,y+21,5, 2, robe);
-    fill_rect(r, x+2, y+7, 2, 14, bone);
-    fill_rect(r, x+1, y+3, 4, 5, glow);
-    fill_rect(r, x+2, y+1, 2, 3, (SDL_Color){206, 166, 255, 255});
+    draw_dungeon_boss(r, tile_x, tile_y, BOSS_ART_LICH_KING);
 }
 
 void draw_demon_lord(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color body = {142, 38, 34, 255};
-    SDL_Color dark = {54, 20, 26, 255};
-    SDL_Color horn = {126, 116, 94, 255};
-    fill_rect(r, x, y+7, 5, 12, dark);
-    fill_rect(r, x+19,y+7,5, 12, dark);
-    fill_rect(r, x+5, y+2, 4, 6, horn);
-    fill_rect(r, x+15,y+2,4, 6, horn);
-    fill_rect(r, x+7, y, 2, 4, horn);
-    fill_rect(r, x+15,y, 2, 4, horn);
-    fill_rect(r, x+6, y+5,12, 9, body);
-    fill_rect(r, x+8, y+8,2, 2, (SDL_Color){248, 160, 28, 255});
-    fill_rect(r, x+14,y+8,2, 2, (SDL_Color){248, 160, 28, 255});
-    fill_rect(r, x+4, y+13,16, 8, body);
-    fill_rect(r, x+8, y+14,8, 6, dark);
-    fill_rect(r, x+4, y+20,6, 3, dark);
-    fill_rect(r, x+15,y+20,6, 3, dark);
+    draw_dungeon_boss(r, tile_x, tile_y, BOSS_ART_DEMON_LORD);
 }
 
 void draw_red_dragon(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color body = {174, 42, 24, 255};
-    SDL_Color dark = {92, 24, 20, 255};
-    SDL_Color gold = {224, 154, 42, 255};
-    fill_rect(r, x, y+6, 5, 12, dark);
-    fill_rect(r, x+19,y+6,5, 12, dark);
-    fill_rect(r, x+6, y+3,12, 9, body);
-    fill_rect(r, x+7, y+1,3, 4, (SDL_Color){196, 174, 126, 255});
-    fill_rect(r, x+14,y+1,3, 4, (SDL_Color){196, 174, 126, 255});
-    fill_rect(r, x+8, y+6,2, 2, gold);
-    fill_rect(r, x+14,y+6,2, 2, gold);
-    fill_rect(r, x+5, y+11,14, 10, body);
-    fill_rect(r, x+9, y+12,6, 9, gold);
-    fill_rect(r, x+4, y+20,6, 3, dark);
-    fill_rect(r, x+15,y+20,6, 3, dark);
-    fill_rect(r, x+19,y+18,4, 2, body);
-    fill_rect(r, x+21,y+16,2, 3, body);
-    fill_rect(r, x+1, y+18,3, 3, (SDL_Color){255, 110, 16, 255});
-    fill_rect(r, x, y+20,2, 2, (SDL_Color){255, 210, 54, 255});
+    draw_dungeon_boss(r, tile_x, tile_y, BOSS_ART_RED_DRAGON);
 }
 
 void draw_tarrasque(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color body = {78, 58, 36, 255};
-    SDL_Color shell = {112, 88, 52, 255};
-    SDL_Color spike = {176, 156, 112, 255};
-    fill_rect(r, x+3, y+4, 18, 15, shell);
-    fill_rect(r, x+5, y+2, 4, 5, spike);
-    fill_rect(r, x+10,y, 4, 6, spike);
-    fill_rect(r, x+16,y+2,4, 5, spike);
-    fill_rect(r, x+5, y+9, 14, 11, body);
-    fill_rect(r, x+7, y+9, 3, 2, (SDL_Color){238, 48, 26, 255});
-    fill_rect(r, x+15,y+9, 3, 2, (SDL_Color){238, 48, 26, 255});
-    fill_rect(r, x+10,y+12,5, 5, (SDL_Color){48, 36, 28, 255});
-    fill_rect(r, x, y+14,6, 7, body);
-    fill_rect(r, x+18,y+14,6, 7, body);
-    fill_rect(r, x+1, y+20,7, 3, spike);
-    fill_rect(r, x+16,y+20,7, 3, spike);
-}
-
-static void draw_forest_pixie(Renderer *r, int x, int y) {
-    SDL_Color outline = {19, 28, 34, 255};
-    SDL_Color wing = {127, 181, 177, 255};
-    SDL_Color light = {213, 238, 203, 255};
-    SDL_Color robe = {100, 72, 133, 255};
-    SDL_Color gold = {238, 189, 84, 255};
-    fill_rect(r, x + 1, y + 6, 8, 12, outline);
-    fill_rect(r, x + 15, y + 6, 8, 12, outline);
-    fill_rect(r, x + 2, y + 7, 6, 8, wing);
-    fill_rect(r, x + 4, y + 5, 4, 4, light);
-    fill_rect(r, x + 3, y + 15, 4, 4, wing);
-    fill_rect(r, x + 16, y + 7, 6, 8, wing);
-    fill_rect(r, x + 16, y + 5, 4, 4, light);
-    fill_rect(r, x + 17, y + 15, 4, 4, wing);
-    fill_rect(r, x + 9, y + 3, 6, 16, outline);
-    fill_rect(r, x + 10, y + 4, 4, 5, gold);
-    fill_rect(r, x + 10, y + 10, 4, 8, robe);
-    fill_rect(r, x + 11, y + 6, 1, 2, outline);
-    fill_rect(r, x + 13, y + 6, 1, 2, outline);
-    fill_rect(r, x + 8, y + 17, 2, 3, gold);
-    fill_rect(r, x + 14, y + 17, 2, 3, gold);
-    fill_rect(r, x + 5, y + 21, 2, 2, light);
-    fill_rect(r, x + 18, y + 21, 2, 2, light);
-}
-
-static void draw_forest_wolf(Renderer *r, int x, int y) {
-    SDL_Color outline = {18, 22, 30, 255};
-    SDL_Color fur = {83, 87, 108, 255};
-    SDL_Color light = {133, 139, 153, 255};
-    SDL_Color blight = {125, 210, 102, 255};
-    fill_rect(r, x + 1, y + 7, 5, 4, outline);
-    fill_rect(r, x + 2, y + 8, 5, 3, fur);
-    fill_rect(r, x + 4, y + 9, 14, 10, outline);
-    fill_rect(r, x + 6, y + 10, 11, 7, fur);
-    fill_rect(r, x + 7, y + 10, 8, 2, light);
-    fill_rect(r, x + 16, y + 6, 7, 10, outline);
-    fill_rect(r, x + 17, y + 7, 5, 7, fur);
-    fill_rect(r, x + 16, y + 3, 3, 5, outline);
-    fill_rect(r, x + 20, y + 4, 3, 5, outline);
-    fill_rect(r, x + 18, y + 7, 2, 3, light);
-    fill_rect(r, x + 20, y + 10, 4, 4, light);
-    fill_rect(r, x + 21, y + 13, 3, 2, outline);
-    fill_rect(r, x + 20, y + 8, 2, 2, blight);
-    fill_rect(r, x + 8, y + 13, 4, 2, blight);
-    fill_rect(r, x + 5, y + 17, 4, 6, outline);
-    fill_rect(r, x + 6, y + 18, 2, 4, fur);
-    fill_rect(r, x + 15, y + 17, 4, 6, outline);
-    fill_rect(r, x + 16, y + 18, 2, 4, fur);
-}
-
-static void draw_forest_spider(Renderer *r, int x, int y) {
-    SDL_Color outline = {19, 18, 30, 255};
-    SDL_Color shell = {106, 64, 103, 255};
-    SDL_Color light = {171, 105, 146, 255};
-    SDL_Color venom = {239, 117, 88, 255};
-    for (int side = 0; side < 2; side++) {
-        int lx = side == 0 ? 1 : 17;
-        int joint = side == 0 ? 5 : 16;
-        fill_rect(r, x + lx, y + 4, 6, 2, outline);
-        fill_rect(r, x + lx, y + 6, 2, 5, outline);
-        fill_rect(r, x + joint, y + 9, 4, 2, outline);
-        fill_rect(r, x + lx, y + 11, 7, 2, outline);
-        fill_rect(r, x + lx, y + 13, 2, 5, outline);
-        fill_rect(r, x + joint, y + 14, 4, 2, outline);
-        fill_rect(r, x + lx, y + 18, 7, 2, outline);
-        fill_rect(r, x + lx, y + 19, 2, 4, outline);
-        fill_rect(r, x + lx + 2, y + 5, 4, 1, light);
-        fill_rect(r, x + lx + 2, y + 12, 4, 1, shell);
-        fill_rect(r, x + lx + 2, y + 19, 4, 1, shell);
-    }
-    fill_rect(r, x + 7, y + 9, 11, 10, outline);
-    fill_rect(r, x + 8, y + 10, 9, 7, shell);
-    fill_rect(r, x + 10, y + 10, 5, 3, light);
-    fill_rect(r, x + 9, y + 5, 7, 7, outline);
-    fill_rect(r, x + 10, y + 6, 5, 4, shell);
-    fill_rect(r, x + 10, y + 8, 2, 2, venom);
-    fill_rect(r, x + 14, y + 8, 2, 2, venom);
-    fill_rect(r, x + 11, y + 12, 3, 2, venom);
-}
-
-static void draw_forest_elf(Renderer *r, int x, int y) {
-    SDL_Color outline = {20, 19, 32, 255};
-    SDL_Color cloak = {83, 63, 109, 255};
-    SDL_Color light = {139, 112, 153, 255};
-    SDL_Color face = {185, 166, 178, 255};
-    SDL_Color bow = {190, 139, 70, 255};
-    fill_rect(r, x + 1, y + 4, 3, 16, bow);
-    fill_rect(r, x + 3, y + 2, 3, 3, bow);
-    fill_rect(r, x + 3, y + 19, 3, 3, bow);
-    fill_rect(r, x + 4, y + 11, 7, 1, face);
-    fill_rect(r, x + 9, y + 10, 10, 2, bow);
-    fill_rect(r, x + 17, y + 9, 4, 1, face);
-    fill_rect(r, x + 6, y + 3, 12, 18, outline);
-    fill_rect(r, x + 8, y + 4, 9, 7, cloak);
-    fill_rect(r, x + 10, y + 6, 6, 6, face);
-    fill_rect(r, x + 6, y + 7, 4, 3, outline);
-    fill_rect(r, x + 16, y + 7, 4, 3, outline);
-    fill_rect(r, x + 11, y + 8, 2, 2, (SDL_Color){219, 111, 95, 255});
-    fill_rect(r, x + 8, y + 13, 9, 7, cloak);
-    fill_rect(r, x + 9, y + 13, 3, 6, light);
-    fill_rect(r, x + 7, y + 20, 4, 3, outline);
-    fill_rect(r, x + 15, y + 20, 4, 3, outline);
-}
-
-static void draw_forest_wurm(Renderer *r, int x, int y) {
-    SDL_Color outline = {29, 29, 25, 255};
-    SDL_Color hide = {127, 103, 65, 255};
-    SDL_Color plate = {182, 151, 90, 255};
-    SDL_Color mouth = {74, 30, 41, 255};
-    fill_rect(r, x + 1, y + 16, 17, 7, outline);
-    fill_rect(r, x + 3, y + 17, 13, 5, hide);
-    fill_rect(r, x + 5, y + 12, 13, 9, outline);
-    fill_rect(r, x + 6, y + 13, 10, 7, hide);
-    fill_rect(r, x + 12, y + 5, 9, 11, outline);
-    fill_rect(r, x + 13, y + 6, 7, 8, hide);
-    fill_rect(r, x + 16, y + 3, 6, 5, plate);
-    fill_rect(r, x + 19, y + 8, 5, 6, outline);
-    fill_rect(r, x + 20, y + 9, 4, 3, mouth);
-    fill_rect(r, x + 21, y + 12, 3, 2, plate);
-    fill_rect(r, x + 17, y + 7, 2, 2, (SDL_Color){238, 98, 75, 255});
-    fill_rect(r, x + 13, y + 9, 2, 5, plate);
-    fill_rect(r, x + 9, y + 14, 2, 6, plate);
-    fill_rect(r, x + 5, y + 18, 2, 4, plate);
-    fill_rect(r, x + 1, y + 19, 3, 3, plate);
-}
-
-static void draw_forest_troll(Renderer *r, int x, int y) {
-    SDL_Color outline = {22, 27, 28, 255};
-    SDL_Color skin = {92, 111, 98, 255};
-    SDL_Color light = {143, 158, 125, 255};
-    SDL_Color bark = {105, 73, 47, 255};
-    fill_rect(r, x + 3, y + 7, 17, 14, outline);
-    fill_rect(r, x + 5, y + 8, 14, 11, skin);
-    fill_rect(r, x + 7, y + 4, 10, 9, outline);
-    fill_rect(r, x + 8, y + 5, 8, 7, skin);
-    fill_rect(r, x + 9, y + 7, 2, 2, (SDL_Color){239, 175, 74, 255});
-    fill_rect(r, x + 14, y + 7, 2, 2, (SDL_Color){239, 175, 74, 255});
-    fill_rect(r, x + 10, y + 11, 5, 2, outline);
-    fill_rect(r, x + 10, y + 12, 2, 2, light);
-    fill_rect(r, x + 14, y + 12, 2, 2, light);
-    fill_rect(r, x + 3, y + 11, 4, 10, skin);
-    fill_rect(r, x + 17, y + 10, 4, 11, skin);
-    fill_rect(r, x + 7, y + 14, 10, 4, bark);
-    fill_rect(r, x + 6, y + 19, 5, 4, outline);
-    fill_rect(r, x + 15, y + 19, 5, 4, outline);
-    fill_rect(r, x + 21, y + 2, 2, 20, bark);
-    fill_rect(r, x + 19, y + 2, 5, 6, outline);
-    fill_rect(r, x + 20, y + 3, 4, 4, bark);
-    fill_rect(r, x + 8, y + 5, 5, 2, light);
-}
-
-static void draw_forest_necromancer(Renderer *r, int x, int y) {
-    SDL_Color outline = {20, 19, 32, 255};
-    SDL_Color robe = {69, 53, 94, 255};
-    SDL_Color trim = {132, 103, 145, 255};
-    SDL_Color bone = {208, 195, 163, 255};
-    SDL_Color magic = {151, 235, 110, 255};
-    fill_rect(r, x + 3, y + 2, 3, 9, bone);
-    fill_rect(r, x + 18, y + 2, 3, 9, bone);
-    fill_rect(r, x + 5, y + 1, 3, 4, bone);
-    fill_rect(r, x + 16, y + 1, 3, 4, bone);
-    fill_rect(r, x + 5, y + 4, 14, 18, outline);
-    fill_rect(r, x + 7, y + 5, 10, 8, robe);
-    fill_rect(r, x + 8, y + 8, 8, 6, bone);
-    fill_rect(r, x + 9, y + 9, 2, 2, magic);
-    fill_rect(r, x + 14, y + 9, 2, 2, magic);
-    fill_rect(r, x + 11, y + 12, 3, 2, outline);
-    fill_rect(r, x + 6, y + 14, 12, 7, robe);
-    fill_rect(r, x + 8, y + 15, 7, 2, trim);
-    fill_rect(r, x + 4, y + 19, 5, 4, outline);
-    fill_rect(r, x + 16, y + 19, 5, 4, outline);
-    fill_rect(r, x + 21, y + 6, 2, 17, bone);
-    fill_rect(r, x + 19, y + 2, 5, 5, magic);
-    fill_rect(r, x + 20, y + 1, 3, 2, bone);
+    draw_dungeon_boss(r, tile_x, tile_y, BOSS_ART_TARRASQUE);
 }
 
 static void draw_forest_enemy(Renderer *r, int tx, int ty, EnemyType type) {
+    int art;
+    switch (type) {
+        case ENEMY_PIXIE: art = FOREST_ART_PIXIE; break;
+        case ENEMY_BLIGHTED_WOLF: art = FOREST_ART_BLIGHTED_WOLF; break;
+        case ENEMY_GIANT_SPIDER: art = FOREST_ART_GIANT_SPIDER; break;
+        case ENEMY_DARK_ELF: art = FOREST_ART_DARK_ELF; break;
+        case ENEMY_GIANT_WURM: art = FOREST_ART_GIANT_WURM; break;
+        case ENEMY_FOREST_TROLL: art = FOREST_ART_FOREST_TROLL; break;
+        case ENEMY_FOREST_NECROMANCER: art = FOREST_ART_FOREST_NECROMANCER; break;
+        default: return;
+    }
+    static const SDL_Color bodies[FOREST_ART_COUNT] = {
+        {238, 189, 84, 255}, {83, 87, 108, 255}, {106, 64, 103, 255},
+        {185, 166, 178, 255}, {127, 103, 65, 255}, {92, 111, 98, 255}, {208, 195, 163, 255}
+    };
+    static const SDL_Color clothes[FOREST_ART_COUNT] = {
+        {100, 72, 133, 255}, {83, 87, 108, 255}, {106, 64, 103, 255},
+        {83, 63, 109, 255}, {182, 151, 90, 255}, {105, 73, 47, 255}, {69, 53, 94, 255}
+    };
+    static const SDL_Color eyes[FOREST_ART_COUNT] = {
+        {213, 238, 203, 255}, {125, 210, 102, 255}, {239, 117, 88, 255},
+        {219, 111, 95, 255}, {238, 98, 75, 255}, {239, 175, 74, 255}, {151, 235, 110, 255}
+    };
+    SDL_Color body = bodies[art];
+    SDL_Color cloth = clothes[art];
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){19, 24, 30, 255};
+    palette['s'] = (SDL_Color){body.r * 2 / 3, body.g * 2 / 3, body.b * 2 / 3, 255};
+    palette['S'] = body;
+    palette['H'] = (SDL_Color){body.r + (255 - body.r) / 3,
+        body.g + (255 - body.g) / 3, body.b + (255 - body.b) / 3, 255};
+    palette['e'] = (SDL_Color){18, 18, 32, 255};
+    palette['y'] = eyes[art];
+    palette['c'] = (SDL_Color){cloth.r * 2 / 3, cloth.g * 2 / 3, cloth.b * 2 / 3, 255};
+    palette['C'] = cloth;
+    palette['v'] = (SDL_Color){cloth.r + (255 - cloth.r) / 4,
+        cloth.g + (255 - cloth.g) / 4, cloth.b + (255 - cloth.b) / 4, 255};
+    palette['b'] = (SDL_Color){75, 120, 126, 255};
+    palette['B'] = (SDL_Color){127, 181, 177, 255};
+    palette['t'] = (SDL_Color){213, 238, 203, 255};
+    palette['p'] = (SDL_Color){125, 210, 102, 255};
+    palette['P'] = (SDL_Color){190, 245, 148, 255};
+    palette['f'] = (SDL_Color){225, 219, 186, 255};
+    palette['w'] = (SDL_Color){86, 58, 32, 255};
+    palette['W'] = (SDL_Color){155, 116, 64, 255};
+    palette['l'] = (SDL_Color){69, 43, 32, 255};
+    palette['L'] = (SDL_Color){115, 73, 40, 255};
+    palette['K'] = (SDL_Color){159, 112, 66, 255};
+    palette['k'] = (SDL_Color){43, 31, 27, 255};
+    palette['G'] = (SDL_Color){212, 168, 71, 255};
+    palette['u'] = (SDL_Color){48, 65, 44, 255};
+    palette['U'] = (SDL_Color){102, 129, 72, 255};
+    palette['N'] = (SDL_Color){213, 226, 223, 255};
+    if (art == FOREST_ART_BLIGHTED_WOLF) {
+        palette['H'] = (SDL_Color){133, 139, 153, 255};
+    } else if (art == FOREST_ART_FOREST_NECROMANCER) {
+        palette['p'] = (SDL_Color){151, 235, 110, 255};
+        palette['P'] = (SDL_Color){214, 255, 179, 255};
+    }
     int x = tx * TILE_SIZE;
     int y = ty * TILE_SIZE;
-    switch (type) {
-        case ENEMY_PIXIE: draw_forest_pixie(r, x, y); break;
-        case ENEMY_BLIGHTED_WOLF: draw_forest_wolf(r, x, y); break;
-        case ENEMY_GIANT_SPIDER: draw_forest_spider(r, x, y); break;
-        case ENEMY_DARK_ELF: draw_forest_elf(r, x, y); break;
-        case ENEMY_GIANT_WURM: draw_forest_wurm(r, x, y); break;
-        case ENEMY_FOREST_TROLL: draw_forest_troll(r, x, y); break;
-        case ENEMY_FOREST_NECROMANCER:
-            draw_forest_necromancer(r, x, y);
-            break;
-        default: break;
+    for (int row = 0; row < 24; row++) {
+        for (int col = 0; col < 24;) {
+            char ink = forest_enemy_art[art][row][col];
+            int end = col + 1;
+            while (end < 24 && forest_enemy_art[art][row][end] == ink) {
+                end++;
+            }
+            if (ink != '.') {
+                fill_rect(r, x + col, y + row, end - col, 1, palette[(unsigned char)ink]);
+            }
+            col = end;
+        }
     }
 }
 
 static void draw_mountain_enemy(Renderer *r, int tx, int ty, EnemyType type) {
-    int x=tx*TILE_SIZE, y=ty*TILE_SIZE;
-    SDL_Color skin={91,121,45,255}, dark={23,17,19,255};
-    SDL_Color rust={128,48,30,255}, iron={103,91,88,255};
-    SDL_Color ember={244,67,20,255};
-    if (type == ENEMY_TUNNEL_SPIDER) {
-        fill_rect(r,x+7,y+7,11,12,iron); fill_rect(r,x+9,y+9,7,7,dark);
-        for(int i=0;i<4;i++){fill_rect(r,x+1,y+4+i*5,7,2,rust);fill_rect(r,x+17,y+4+i*5,7,2,rust);}
-        fill_rect(r,x+10,y+10,2,2,ember); fill_rect(r,x+14,y+10,2,2,ember);
-        return;
+    int art;
+    switch (type) {
+        case ENEMY_GOBLIN_SCOUT: art = MOUNTAIN_ART_GOBLIN_SCOUT; break;
+        case ENEMY_GOBLIN_ARCHER: art = MOUNTAIN_ART_GOBLIN_ARCHER; break;
+        case ENEMY_GOBLIN_BOMBER: art = MOUNTAIN_ART_GOBLIN_BOMBER; break;
+        case ENEMY_TUNNEL_SPIDER: art = MOUNTAIN_ART_TUNNEL_SPIDER; break;
+        case ENEMY_CAVE_TROLL: art = MOUNTAIN_ART_CAVE_TROLL; break;
+        case ENEMY_HOBGOBLIN_GUARD: art = MOUNTAIN_ART_HOBGOBLIN_GUARD; break;
+        case ENEMY_GOBLIN_SHAMAN: art = MOUNTAIN_ART_GOBLIN_SHAMAN; break;
+        case ENEMY_MOUNTAIN_GOBLIN_KING: art = MOUNTAIN_ART_MOUNTAIN_GOBLIN_KING; break;
+        default: return;
     }
-    if (type == ENEMY_CAVE_TROLL) {
-        fill_rect(r,x+4,y+5,16,17,iron); fill_rect(r,x+7,y+8,3,2,ember);
-        fill_rect(r,x+15,y+8,3,2,ember); fill_rect(r,x+1,y+10,5,12,dark);
-        fill_rect(r,x+19,y+2,4,21,(SDL_Color){85,62,45,255}); return;
-    }
-    fill_rect(r,x+6,y+5,13,8,skin); fill_rect(r,x+4,y+7,4,3,skin);
-    fill_rect(r,x+17,y+7,4,3,skin); fill_rect(r,x+8,y+8,2,2,ember);
-    fill_rect(r,x+15,y+8,2,2,ember); fill_rect(r,x+6,y+13,13,9,rust);
-    if (type == ENEMY_GOBLIN_ARCHER) {
-        fill_rect(r,x+20,y+4,2,18,(SDL_Color){101,67,34,255});
-        fill_rect(r,x+18,y+4,5,2,iron); fill_rect(r,x+18,y+20,5,2,iron);
-    } else if (type == ENEMY_GOBLIN_BOMBER) {
-        fill_rect(r,x+18,y+2,6,6,dark); fill_rect(r,x+20,y,2,3,ember);
-    } else if (type == ENEMY_HOBGOBLIN_GUARD) {
-        fill_rect(r,x+1,y+8,7,14,iron); fill_rect(r,x+20,y+1,2,22,iron);
-    } else if (type == ENEMY_GOBLIN_SHAMAN) {
-        fill_rect(r,x+20,y+2,3,21,(SDL_Color){86,51,27,255});
-        fill_rect(r,x+18,y,7,6,ember); fill_rect(r,x+5,y+3,15,3,dark);
-    } else if (type == ENEMY_MOUNTAIN_GOBLIN_KING) {
-        fill_rect(r,x+4,y+12,17,11,dark); fill_rect(r,x+6,y+1,13,5,iron);
-        fill_rect(r,x+7,y,3,4,ember); fill_rect(r,x+15,y,3,4,ember);
-        fill_rect(r,x+20,y+5,4,18,(SDL_Color){92,58,32,255});
-    } else {
-        fill_rect(r,x+20,y+5,3,17,iron); fill_rect(r,x+19,y+3,5,5,iron);
-    }
-}
-
-static void draw_coast_illusion(Renderer *r, int x, int y) {
-    SDL_Color outline = {22, 22, 46, 255};
-    SDL_Color shadow = {57, 48, 101, 255};
-    SDL_Color veil = {109, 94, 169, 255};
-    SDL_Color light = {172, 158, 214, 255};
-    SDL_Color glow = {173, 242, 225, 255};
-    fill_rect(r, x + 8, y + 2, 8, 3, outline);
-    fill_rect(r, x + 6, y + 5, 12, 11, outline);
-    fill_rect(r, x + 7, y + 4, 10, 8, veil);
-    fill_rect(r, x + 9, y + 3, 6, 2, light);
-    fill_rect(r, x + 8, y + 7, 8, 5, shadow);
-    fill_rect(r, x + 9, y + 8, 2, 1, glow);
-    fill_rect(r, x + 14, y + 8, 2, 1, glow);
-    fill_rect(r, x + 11, y + 11, 2, 2, outline);
-    fill_rect(r, x + 4, y + 12, 16, 5, outline);
-    fill_rect(r, x + 5, y + 13, 14, 3, veil);
-    fill_rect(r, x + 3, y + 15, 3, 4, light);
-    fill_rect(r, x + 18, y + 15, 3, 3, light);
-    fill_rect(r, x + 7, y + 16, 10, 3, shadow);
-    fill_rect(r, x + 8, y + 16, 3, 3, veil);
-    fill_rect(r, x + 13, y + 16, 2, 2, light);
-    fill_rect(r, x + 6, y + 20, 4, 2, veil);
-    fill_rect(r, x + 12, y + 19, 5, 2, veil);
-    fill_rect(r, x + 10, y + 22, 3, 1, glow);
-    fill_rect(r, x + 2, y + 8, 2, 2, glow);
-    fill_rect(r, x + 20, y + 5, 2, 2, light);
-    fill_rect(r, x + 20, y + 21, 2, 1, glow);
-}
-
-static void draw_coast_merfolk(Renderer *r, int x, int y) {
-    SDL_Color outline = {12, 27, 37, 255};
-    SDL_Color skin = {57, 155, 151, 255};
-    SDL_Color light = {145, 222, 192, 255};
-    SDL_Color fin = {39, 97, 114, 255};
-    SDL_Color gold = {202, 162, 86, 255};
-    fill_rect(r, x + 8, y + 1, 3, 5, fin);
-    fill_rect(r, x + 7, y + 3, 9, 9, outline);
-    fill_rect(r, x + 8, y + 4, 7, 7, skin);
-    fill_rect(r, x + 4, y + 5, 3, 4, light);
-    fill_rect(r, x + 15, y + 5, 3, 4, light);
-    fill_rect(r, x + 9, y + 4, 3, 2, light);
-    fill_rect(r, x + 9, y + 7, 2, 2, outline);
-    fill_rect(r, x + 13, y + 7, 2, 2, outline);
-    fill_rect(r, x + 10, y + 10, 3, 1, fin);
-    fill_rect(r, x + 5, y + 12, 13, 6, outline);
-    fill_rect(r, x + 6, y + 12, 10, 4, skin);
-    fill_rect(r, x + 8, y + 12, 5, 1, light);
-    fill_rect(r, x + 8, y + 15, 8, 2, gold);
-    fill_rect(r, x + 7, y + 17, 10, 4, outline);
-    fill_rect(r, x + 8, y + 17, 8, 3, fin);
-    fill_rect(r, x + 9, y + 17, 2, 1, light);
-    fill_rect(r, x + 12, y + 19, 2, 1, skin);
-    fill_rect(r, x + 4, y + 21, 7, 2, skin);
-    fill_rect(r, x + 14, y + 21, 5, 2, skin);
-    fill_rect(r, x + 5, y + 21, 3, 1, light);
-    fill_rect(r, x + 20, y + 2, 3, 21, outline);
-    fill_rect(r, x + 21, y + 2, 1, 20, gold);
-    fill_rect(r, x + 18, y + 2, 1, 4, light);
-    fill_rect(r, x + 23, y + 2, 1, 4, light);
-    fill_rect(r, x + 18, y + 6, 6, 1, gold);
-    fill_rect(r, x + 21, y, 1, 3, light);
-    fill_rect(r, x + 17, y + 13, 5, 2, skin);
-}
-
-static void draw_coast_siren(Renderer *r, int x, int y) {
-    SDL_Color outline = {22, 22, 39, 255};
-    SDL_Color hair = {71, 52, 98, 255};
-    SDL_Color hair_light = {133, 88, 144, 255};
-    SDL_Color skin = {164, 214, 198, 255};
-    SDL_Color tail = {39, 116, 152, 255};
-    SDL_Color foam = {138, 227, 226, 255};
-    fill_rect(r, x + 5, y + 2, 11, 12, outline);
-    fill_rect(r, x + 6, y + 3, 9, 8, hair);
-    fill_rect(r, x + 7, y + 3, 6, 2, hair_light);
-    fill_rect(r, x + 8, y + 6, 7, 6, skin);
-    fill_rect(r, x + 5, y + 7, 3, 9, hair);
-    fill_rect(r, x + 6, y + 8, 1, 5, hair_light);
-    fill_rect(r, x + 9, y + 8, 2, 1, outline);
-    fill_rect(r, x + 13, y + 8, 2, 1, outline);
-    fill_rect(r, x + 11, y + 10, 2, 2, hair);
-    fill_rect(r, x + 8, y + 12, 8, 4, outline);
-    fill_rect(r, x + 9, y + 12, 6, 3, hair_light);
-    fill_rect(r, x + 3, y + 13, 4, 2, skin);
-    fill_rect(r, x + 15, y + 12, 4, 2, skin);
-    fill_rect(r, x + 7, y + 16, 10, 4, outline);
-    fill_rect(r, x + 8, y + 15, 8, 4, tail);
-    fill_rect(r, x + 9, y + 16, 2, 1, foam);
-    fill_rect(r, x + 12, y + 18, 2, 1, foam);
-    fill_rect(r, x + 10, y + 19, 9, 3, tail);
-    fill_rect(r, x + 17, y + 18, 4, 3, foam);
-    fill_rect(r, x + 18, y + 22, 5, 1, foam);
-    fill_rect(r, x + 20, y + 4, 1, 5, foam);
-    fill_rect(r, x + 18, y + 8, 3, 2, foam);
-    fill_rect(r, x + 21, y + 4, 2, 1, foam);
-    fill_rect(r, x + 2, y + 5, 1, 4, foam);
-    fill_rect(r, x + 1, y + 8, 2, 2, foam);
-}
-
-static void draw_coast_crab(Renderer *r, int x, int y) {
-    SDL_Color outline = {37, 24, 30, 255};
-    SDL_Color shadow = {127, 48, 45, 255};
-    SDL_Color shell = {211, 92, 67, 255};
-    SDL_Color light = {246, 156, 102, 255};
-    SDL_Color barnacle = {223, 205, 157, 255};
-    for (int side = 0; side < 2; side++) {
-        int leg_x = side == 0 ? 1 : 18;
-        for (int leg = 0; leg < 3; leg++) {
-            fill_rect(r, x + leg_x, y + 13 + leg * 3, 5, 2, outline);
-            fill_rect(r, x + leg_x + 1, y + 13 + leg * 3, 3, 1, shell);
+    static const SDL_Color bodies[MOUNTAIN_ART_COUNT] = {
+        {91, 121, 45, 255}, {91, 121, 45, 255}, {91, 121, 45, 255}, {103, 91, 88, 255},
+        {103, 91, 88, 255}, {91, 121, 45, 255}, {91, 121, 45, 255}, {91, 121, 45, 255}
+    };
+    static const SDL_Color clothes[MOUNTAIN_ART_COUNT] = {
+        {128, 48, 30, 255}, {128, 48, 30, 255}, {128, 48, 30, 255}, {128, 48, 30, 255},
+        {85, 62, 45, 255}, {128, 48, 30, 255}, {128, 48, 30, 255}, {105, 35, 32, 255}
+    };
+    SDL_Color body = bodies[art];
+    SDL_Color cloth = clothes[art];
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){22, 23, 29, 255};
+    palette['s'] = (SDL_Color){body.r * 2 / 3, body.g * 2 / 3, body.b * 2 / 3, 255};
+    palette['S'] = body;
+    palette['H'] = (SDL_Color){body.r + (255 - body.r) / 3,
+        body.g + (255 - body.g) / 3, body.b + (255 - body.b) / 3, 255};
+    palette['e'] = (SDL_Color){18, 18, 29, 255};
+    palette['y'] = (SDL_Color){244, 67, 20, 255};
+    palette['c'] = (SDL_Color){cloth.r * 2 / 3, cloth.g * 2 / 3, cloth.b * 2 / 3, 255};
+    palette['C'] = cloth;
+    palette['v'] = (SDL_Color){cloth.r + (255 - cloth.r) / 4,
+        cloth.g + (255 - cloth.g) / 4, cloth.b + (255 - cloth.b) / 4, 255};
+    palette['m'] = (SDL_Color){68, 72, 82, 255};
+    palette['M'] = (SDL_Color){133, 141, 150, 255};
+    palette['N'] = (SDL_Color){208, 220, 223, 255};
+    palette['b'] = (SDL_Color){28, 28, 35, 255};
+    palette['B'] = (SDL_Color){53, 54, 66, 255};
+    palette['t'] = (SDL_Color){163, 151, 126, 255};
+    palette['p'] = (SDL_Color){244, 67, 20, 255};
+    palette['P'] = (SDL_Color){255, 208, 99, 255};
+    palette['f'] = (SDL_Color){225, 219, 186, 255};
+    palette['w'] = (SDL_Color){86, 58, 32, 255};
+    palette['W'] = (SDL_Color){155, 116, 64, 255};
+    palette['l'] = (SDL_Color){69, 43, 32, 255};
+    palette['L'] = (SDL_Color){115, 73, 40, 255};
+    palette['K'] = (SDL_Color){159, 112, 66, 255};
+    palette['k'] = (SDL_Color){43, 31, 27, 255};
+    palette['g'] = (SDL_Color){133, 89, 35, 255};
+    palette['G'] = (SDL_Color){212, 168, 71, 255};
+    palette['u'] = (SDL_Color){47, 43, 35, 255};
+    palette['U'] = (SDL_Color){100, 81, 50, 255};
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    for (int row = 0; row < 24; row++) {
+        for (int col = 0; col < 24;) {
+            char ink = mountain_enemy_art[art][row][col];
+            int end = col + 1;
+            while (end < 24 && mountain_enemy_art[art][row][end] == ink) {
+                end++;
+            }
+            if (ink != '.') {
+                fill_rect(r, x + col, y + row, end - col, 1, palette[(unsigned char)ink]);
+            }
+            col = end;
         }
-        int claw_x = side == 0 ? 0 : 18;
-        fill_rect(r, x + claw_x, y + 3, 6, 8, outline);
-        fill_rect(r, x + claw_x + 1, y + 4, 4, 6, shell);
-        fill_rect(r, x + claw_x + 2, y + 3, 2, 4, outline);
-        fill_rect(r, x + claw_x + 1, y + 4, 1, 3, light);
-        fill_rect(r, x + claw_x + 2, y + 10, 3, 3, shadow);
     }
-    fill_rect(r, x + 7, y + 7, 2, 4, outline);
-    fill_rect(r, x + 15, y + 7, 2, 4, outline);
-    fill_rect(r, x + 7, y + 7, 1, 1, barnacle);
-    fill_rect(r, x + 16, y + 7, 1, 1, barnacle);
-    fill_rect(r, x + 5, y + 10, 14, 10, outline);
-    fill_rect(r, x + 7, y + 9, 10, 2, outline);
-    fill_rect(r, x + 6, y + 11, 12, 6, shell);
-    fill_rect(r, x + 8, y + 10, 8, 2, light);
-    fill_rect(r, x + 7, y + 17, 10, 2, shadow);
-    fill_rect(r, x + 8, y + 13, 3, 1, light);
-    fill_rect(r, x + 13, y + 14, 3, 3, shadow);
-    fill_rect(r, x + 13, y + 14, 2, 2, barnacle);
-    fill_rect(r, x + 10, y + 17, 4, 1, outline);
-}
-
-static void draw_coast_statue(Renderer *r, int x, int y) {
-    SDL_Color outline = {22, 31, 37, 255};
-    SDL_Color shadow = {62, 85, 83, 255};
-    SDL_Color stone = {118, 141, 128, 255};
-    SDL_Color light = {183, 192, 161, 255};
-    SDL_Color moss = {53, 115, 84, 255};
-    SDL_Color magic = {119, 245, 219, 255};
-    fill_rect(r, x + 7, y + 2, 10, 9, outline);
-    fill_rect(r, x + 8, y + 3, 8, 7, stone);
-    fill_rect(r, x + 8, y + 3, 7, 2, light);
-    fill_rect(r, x + 9, y + 6, 2, 2, outline);
-    fill_rect(r, x + 13, y + 6, 2, 2, outline);
-    fill_rect(r, x + 9, y + 6, 2, 1, magic);
-    fill_rect(r, x + 13, y + 6, 2, 1, magic);
-    fill_rect(r, x + 11, y + 9, 3, 1, shadow);
-    fill_rect(r, x + 3, y + 10, 18, 9, outline);
-    fill_rect(r, x + 4, y + 11, 4, 7, stone);
-    fill_rect(r, x + 17, y + 11, 3, 7, shadow);
-    fill_rect(r, x + 8, y + 11, 8, 7, stone);
-    fill_rect(r, x + 5, y + 11, 3, 2, light);
-    fill_rect(r, x + 9, y + 12, 2, 5, light);
-    fill_rect(r, x + 13, y + 10, 1, 4, outline);
-    fill_rect(r, x + 12, y + 13, 2, 1, outline);
-    fill_rect(r, x + 12, y + 14, 1, 3, magic);
-    fill_rect(r, x + 6, y + 18, 12, 2, shadow);
-    fill_rect(r, x + 6, y + 20, 5, 3, outline);
-    fill_rect(r, x + 13, y + 20, 5, 3, outline);
-    fill_rect(r, x + 7, y + 20, 3, 2, stone);
-    fill_rect(r, x + 14, y + 20, 3, 2, stone);
-    fill_rect(r, x + 15, y + 3, 2, 3, moss);
-    fill_rect(r, x + 4, y + 15, 2, 3, moss);
-    fill_rect(r, x + 17, y + 12, 2, 2, moss);
-}
-
-static void draw_coast_elemental(Renderer *r, int x, int y) {
-    SDL_Color outline = {13, 34, 60, 255};
-    SDL_Color shadow = {33, 85, 147, 255};
-    SDL_Color water = {44, 151, 194, 255};
-    SDL_Color light = {89, 209, 221, 255};
-    SDL_Color foam = {192, 248, 233, 255};
-    fill_rect(r, x + 10, y + 1, 5, 3, light);
-    fill_rect(r, x + 8, y + 3, 9, 8, outline);
-    fill_rect(r, x + 9, y + 4, 7, 6, water);
-    fill_rect(r, x + 10, y + 3, 5, 2, foam);
-    fill_rect(r, x + 10, y + 6, 2, 2, outline);
-    fill_rect(r, x + 14, y + 6, 2, 2, outline);
-    fill_rect(r, x + 3, y + 10, 18, 7, outline);
-    fill_rect(r, x + 4, y + 11, 16, 4, water);
-    fill_rect(r, x + 1, y + 7, 4, 6, outline);
-    fill_rect(r, x + 2, y + 8, 2, 4, light);
-    fill_rect(r, x + 19, y + 8, 4, 6, outline);
-    fill_rect(r, x + 20, y + 9, 2, 4, light);
-    fill_rect(r, x + 1, y + 6, 2, 2, foam);
-    fill_rect(r, x + 21, y + 7, 2, 2, foam);
-    fill_rect(r, x + 7, y + 12, 10, 7, shadow);
-    fill_rect(r, x + 8, y + 11, 7, 2, light);
-    fill_rect(r, x + 13, y + 13, 3, 2, light);
-    fill_rect(r, x + 9, y + 15, 6, 2, water);
-    fill_rect(r, x + 9, y + 14, 2, 1, foam);
-    fill_rect(r, x + 5, y + 18, 14, 3, outline);
-    fill_rect(r, x + 6, y + 18, 12, 2, water);
-    fill_rect(r, x + 2, y + 21, 20, 2, shadow);
-    fill_rect(r, x + 4, y + 21, 14, 1, light);
-    fill_rect(r, x + 5, y + 18, 4, 1, foam);
-    fill_rect(r, x + 1, y + 17, 2, 2, light);
-    fill_rect(r, x + 21, y + 18, 2, 2, foam);
-}
-
-static void draw_coast_serpent(Renderer *r, int x, int y) {
-    SDL_Color outline = {15, 29, 39, 255};
-    SDL_Color shadow = {31, 94, 99, 255};
-    SDL_Color scales = {49, 161, 153, 255};
-    SDL_Color belly = {162, 211, 162, 255};
-    SDL_Color fin = {207, 108, 81, 255};
-    fill_rect(r, x + 3, y + 16, 17, 7, outline);
-    fill_rect(r, x + 4, y + 17, 15, 4, scales);
-    fill_rect(r, x + 6, y + 20, 12, 2, belly);
-    fill_rect(r, x + 1, y + 13, 3, 7, outline);
-    fill_rect(r, x + 2, y + 14, 2, 4, fin);
-    fill_rect(r, x + 8, y + 15, 3, 3, fin);
-    fill_rect(r, x + 12, y + 8, 8, 12, outline);
-    fill_rect(r, x + 13, y + 9, 6, 10, scales);
-    fill_rect(r, x + 17, y + 10, 2, 8, belly);
-    fill_rect(r, x + 11, y + 8, 2, 4, fin);
-    fill_rect(r, x + 12, y + 4, 9, 6, outline);
-    fill_rect(r, x + 13, y + 5, 7, 4, scales);
-    fill_rect(r, x + 14, y + 3, 3, 2, fin);
-    fill_rect(r, x + 18, y + 6, 6, 5, outline);
-    fill_rect(r, x + 19, y + 7, 4, 2, belly);
-    fill_rect(r, x + 18, y + 5, 2, 2, outline);
-    fill_rect(r, x + 18, y + 5, 1, 1, (SDL_Color){255, 191, 99, 255});
-    fill_rect(r, x + 20, y + 10, 1, 2, belly);
-    fill_rect(r, x + 23, y + 10, 1, 2, belly);
-    fill_rect(r, x + 14, y + 10, 2, 1, belly);
-    fill_rect(r, x + 13, y + 13, 2, 1, shadow);
-    fill_rect(r, x + 14, y + 16, 2, 1, belly);
-    fill_rect(r, x + 7, y + 18, 2, 1, shadow);
-    fill_rect(r, x + 10, y + 19, 2, 1, belly);
-}
-
-static void draw_coast_queen(Renderer *r, int x, int y) {
-    SDL_Color outline = {19, 24, 40, 255};
-    SDL_Color robe = {43, 65, 109, 255};
-    SDL_Color fold = {79, 107, 149, 255};
-    SDL_Color skin = {159, 214, 199, 255};
-    SDL_Color gold = {211, 172, 94, 255};
-    SDL_Color coral = {225, 111, 111, 255};
-    fill_rect(r, x + 6, y + 4, 11, 12, outline);
-    fill_rect(r, x + 7, y + 5, 9, 9, robe);
-    fill_rect(r, x + 8, y + 6, 7, 6, skin);
-    fill_rect(r, x + 6, y + 1, 2, 4, coral);
-    fill_rect(r, x + 10, y, 2, 5, coral);
-    fill_rect(r, x + 15, y + 1, 2, 4, coral);
-    fill_rect(r, x + 7, y + 4, 9, 2, gold);
-    fill_rect(r, x + 10, y + 4, 2, 2, skin);
-    fill_rect(r, x + 9, y + 8, 2, 1, outline);
-    fill_rect(r, x + 13, y + 8, 2, 1, outline);
-    fill_rect(r, x + 11, y + 10, 2, 1, coral);
-    fill_rect(r, x + 4, y + 12, 15, 7, outline);
-    fill_rect(r, x + 5, y + 13, 13, 5, robe);
-    fill_rect(r, x + 7, y + 12, 3, 2, gold);
-    fill_rect(r, x + 13, y + 12, 3, 2, gold);
-    fill_rect(r, x + 10, y + 14, 3, 2, skin);
-    fill_rect(r, x + 3, y + 19, 17, 4, outline);
-    fill_rect(r, x + 5, y + 18, 13, 4, robe);
-    fill_rect(r, x + 7, y + 16, 2, 5, fold);
-    fill_rect(r, x + 13, y + 16, 2, 6, fold);
-    fill_rect(r, x + 5, y + 21, 3, 1, gold);
-    fill_rect(r, x + 15, y + 21, 3, 1, gold);
-    fill_rect(r, x + 2, y + 15, 3, 2, skin);
-    fill_rect(r, x + 20, y + 7, 3, 16, outline);
-    fill_rect(r, x + 21, y + 7, 1, 15, gold);
-    fill_rect(r, x + 18, y + 2, 6, 6, outline);
-    fill_rect(r, x + 19, y + 3, 4, 4, coral);
-    fill_rect(r, x + 20, y + 3, 2, 3, skin);
-    fill_rect(r, x + 18, y + 14, 4, 2, skin);
 }
 
 static void draw_coast_enemy(Renderer *r, int tx, int ty, EnemyType type) {
+    int art;
+    switch (type) {
+        case ENEMY_ILLUSION: art = COAST_ART_ILLUSION; break;
+        case ENEMY_MERFOLK: art = COAST_ART_MERFOLK; break;
+        case ENEMY_SIREN: art = COAST_ART_SIREN; break;
+        case ENEMY_GIANT_CRAB: art = COAST_ART_GIANT_CRAB; break;
+        case ENEMY_ANIMATED_STATUE: art = COAST_ART_ANIMATED_STATUE; break;
+        case ENEMY_WATER_ELEMENTAL: art = COAST_ART_WATER_ELEMENTAL; break;
+        case ENEMY_SEA_SERPENT: art = COAST_ART_SEA_SERPENT; break;
+        case ENEMY_DROWNED_QUEEN: art = COAST_ART_DROWNED_QUEEN; break;
+        default: return;
+    }
+    static const SDL_Color bodies[COAST_ART_COUNT] = {
+        {57, 48, 101, 255}, {57, 155, 151, 255}, {164, 214, 198, 255}, {211, 92, 67, 255},
+        {118, 141, 128, 255}, {44, 151, 194, 255}, {49, 161, 153, 255}, {159, 214, 199, 255}
+    };
+    static const SDL_Color clothes[COAST_ART_COUNT] = {
+        {109, 94, 169, 255}, {39, 97, 114, 255}, {133, 88, 144, 255}, {127, 48, 45, 255},
+        {62, 85, 83, 255}, {33, 85, 147, 255}, {31, 94, 99, 255}, {43, 65, 109, 255}
+    };
+    SDL_Color body = bodies[art];
+    SDL_Color cloth = clothes[art];
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){15, 25, 38, 255};
+    palette['s'] = (SDL_Color){body.r * 2 / 3, body.g * 2 / 3, body.b * 2 / 3, 255};
+    palette['S'] = body;
+    palette['H'] = (SDL_Color){body.r + (255 - body.r) / 3,
+        body.g + (255 - body.g) / 3, body.b + (255 - body.b) / 3, 255};
+    palette['c'] = (SDL_Color){cloth.r * 2 / 3, cloth.g * 2 / 3, cloth.b * 2 / 3, 255};
+    palette['C'] = cloth;
+    palette['v'] = (SDL_Color){cloth.r + (255 - cloth.r) / 3,
+        cloth.g + (255 - cloth.g) / 3, cloth.b + (255 - cloth.b) / 3, 255};
+    palette['e'] = (SDL_Color){11, 22, 33, 255};
+    palette['y'] = (SDL_Color){119, 245, 219, 255};
+    palette['f'] = (SDL_Color){192, 248, 233, 255};
+    palette['u'] = (SDL_Color){44, 40, 72, 255};
+    palette['U'] = (SDL_Color){92, 65, 114, 255};
+    palette['r'] = (SDL_Color){39, 97, 114, 255};
+    palette['R'] = (SDL_Color){89, 180, 191, 255};
+    palette['g'] = (SDL_Color){135, 99, 50, 255};
+    palette['G'] = (SDL_Color){211, 172, 94, 255};
+    palette['m'] = (SDL_Color){53, 115, 84, 255};
+    palette['b'] = (SDL_Color){223, 205, 157, 255};
+    palette['p'] = (SDL_Color){229, 235, 206, 255};
+    if (type == ENEMY_SEA_SERPENT || type == ENEMY_DROWNED_QUEEN) {
+        palette['r'] = (SDL_Color){144, 62, 62, 255};
+        palette['R'] = (SDL_Color){225, 111, 111, 255};
+    }
+    if (type == ENEMY_SEA_SERPENT) {
+        palette['H'] = (SDL_Color){162, 211, 162, 255};
+        palette['y'] = (SDL_Color){255, 191, 99, 255};
+    }
     int x = tx * TILE_SIZE;
     int y = ty * TILE_SIZE;
+    for (int row = 0; row < 24; row++) {
+        for (int col = 0; col < 24;) {
+            char ink = coast_enemy_art[art][row][col];
+            int end = col + 1;
+            while (end < 24 && coast_enemy_art[art][row][end] == ink) {
+                end++;
+            }
+            if (ink != '.') {
+                fill_rect(r, x + col, y + row, end - col, 1, palette[(unsigned char)ink]);
+            }
+            col = end;
+        }
+    }
+}
+
+static void draw_swamp_enemy(Renderer *r, int tx, int ty, EnemyType type) {
+    int art;
     switch (type) {
-        case ENEMY_ILLUSION: draw_coast_illusion(r, x, y); break;
-        case ENEMY_MERFOLK: draw_coast_merfolk(r, x, y); break;
-        case ENEMY_SIREN: draw_coast_siren(r, x, y); break;
-        case ENEMY_GIANT_CRAB: draw_coast_crab(r, x, y); break;
-        case ENEMY_ANIMATED_STATUE: draw_coast_statue(r, x, y); break;
-        case ENEMY_WATER_ELEMENTAL: draw_coast_elemental(r, x, y); break;
-        case ENEMY_SEA_SERPENT: draw_coast_serpent(r, x, y); break;
-        case ENEMY_DROWNED_QUEEN: draw_coast_queen(r, x, y); break;
-        default: break;
+        case ENEMY_GIANT_RAT: art = SWAMP_ART_GIANT_RAT; break;
+        case ENEMY_BANDIT: art = SWAMP_ART_BANDIT; break;
+        case ENEMY_VAMPIRE: art = SWAMP_ART_VAMPIRE; break;
+        case ENEMY_SWAMP_DEMON: art = SWAMP_ART_SWAMP_DEMON; break;
+        case ENEMY_MINOTAUR: art = SWAMP_ART_MINOTAUR; break;
+        default: return;
     }
-}
-
-static void draw_swamp_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color black = {10, 14, 12, 255};
-    SDL_Color eyes = {213, 58, 52, 255};
-    if (type == ENEMY_GIANT_RAT) {
-        fill_rect(r, x + 2, y + 16, 18, 6, black);
-        fill_rect(r, x + 6, y + 11, 13, 9,
-            (SDL_Color){80, 77, 65, 255});
-        fill_rect(r, x + 15, y + 8, 5, 7,
-            (SDL_Color){95, 85, 72, 255});
-        fill_rect(r, x + 17, y + 12, 2, 2, eyes);
-        fill_rect(r, x + 1, y + 19, 8, 2,
-            (SDL_Color){126, 82, 83, 255});
-        return;
-    }
+    static const SDL_Color bodies[SWAMP_ART_COUNT] = {
+        {80, 77, 65, 255}, {174, 128, 93, 255}, {151, 145, 126, 255},
+        {63, 98, 66, 255}, {132, 77, 45, 255}
+    };
+    static const SDL_Color clothes[SWAMP_ART_COUNT] = {
+        {80, 77, 65, 255}, {47, 57, 38, 255}, {92, 25, 46, 255},
+        {25, 47, 45, 255}, {95, 53, 33, 255}
+    };
+    SDL_Color body = bodies[art];
+    SDL_Color cloth = clothes[art];
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){13, 21, 23, 255};
+    palette['s'] = (SDL_Color){body.r * 2 / 3, body.g * 2 / 3, body.b * 2 / 3, 255};
+    palette['S'] = body;
+    palette['H'] = (SDL_Color){body.r + (255 - body.r) / 3,
+        body.g + (255 - body.g) / 3, body.b + (255 - body.b) / 3, 255};
+    palette['c'] = (SDL_Color){cloth.r * 2 / 3, cloth.g * 2 / 3, cloth.b * 2 / 3, 255};
+    palette['C'] = cloth;
+    palette['v'] = (SDL_Color){cloth.r + (255 - cloth.r) / 4,
+        cloth.g + (255 - cloth.g) / 4, cloth.b + (255 - cloth.b) / 4, 255};
+    palette['e'] = (SDL_Color){14, 15, 20, 255};
+    palette['y'] = (SDL_Color){231, 76, 48, 255};
+    palette['u'] = (SDL_Color){29, 25, 32, 255};
+    palette['U'] = (SDL_Color){68, 48, 39, 255};
+    palette['f'] = (SDL_Color){228, 206, 157, 255};
+    palette['t'] = (SDL_Color){92, 55, 53, 255};
+    palette['T'] = (SDL_Color){149, 96, 91, 255};
+    palette['w'] = (SDL_Color){155, 145, 121, 255};
+    palette['l'] = (SDL_Color){55, 35, 28, 255};
+    palette['L'] = (SDL_Color){113, 73, 43, 255};
+    palette['K'] = (SDL_Color){165, 118, 65, 255};
+    palette['k'] = (SDL_Color){33, 28, 29, 255};
+    palette['m'] = (SDL_Color){72, 86, 96, 255};
+    palette['M'] = (SDL_Color){161, 176, 186, 255};
+    palette['N'] = (SDL_Color){221, 229, 225, 255};
+    palette['g'] = (SDL_Color){133, 92, 37, 255};
+    palette['G'] = (SDL_Color){203, 164, 72, 255};
+    palette['a'] = (SDL_Color){37, 68, 44, 255};
+    palette['A'] = (SDL_Color){109, 132, 58, 255};
     if (type == ENEMY_BANDIT) {
-        fill_rect(r, x + 6, y + 9, 13, 14,
-            (SDL_Color){47, 57, 38, 255});
-        fill_rect(r, x + 7, y + 5, 11, 7,
-            (SDL_Color){80, 65, 50, 255});
-        fill_rect(r, x + 5, y + 4, 15, 4, black);
-        fill_rect(r, x + 8, y + 10, 9, 3, black);
-        fill_rect(r, x + 10, y + 10, 5, 1,
-            (SDL_Color){174, 169, 117, 255});
-        fill_rect(r, x + 19, y + 10, 2, 13,
-            (SDL_Color){155, 158, 133, 255});
-        return;
+        palette['y'] = (SDL_Color){174, 169, 117, 255};
     }
-    fill_rect(r, x + 4, y + 10, 17, 13,
-        (SDL_Color){38, 24, 37, 255});
-    fill_rect(r, x + 6, y + 5, 13, 10,
-        (SDL_Color){151, 145, 126, 255});
-    fill_rect(r, x + 5, y + 3, 15, 6, black);
-    fill_rect(r, x + 8, y + 10, 3, 2, eyes);
-    fill_rect(r, x + 15, y + 10, 3, 2, eyes);
-    fill_rect(r, x + 10, y + 16, 6, 6,
-        (SDL_Color){116, 22, 38, 255});
-}
-
-static void draw_crownroad_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color outline = {25, 22, 27, 255};
-    SDL_Color iron = {169, 170, 160, 255};
-    SDL_Color crimson = {132, 38, 39, 255};
-    SDL_Color leather = {85, 52, 37, 255};
-    SDL_Color gold = {222, 172, 83, 255};
-    if (type == ENEMY_ROAD_ARCHER) {
-        fill_rect(r, x + 7, y + 18, 4, 5, outline);
-        fill_rect(r, x + 14, y + 18, 4, 5, outline);
-        fill_rect(r, x + 5, y + 9, 15, 11, outline);
-        fill_rect(r, x + 7, y + 10, 11, 9, crimson);
-        fill_rect(r, x + 9, y + 14, 7, 2, leather);
-        fill_rect(r, x + 10, y + 3, 8, 7, outline);
-        fill_rect(r, x + 11, y + 5, 6, 4, (SDL_Color){162, 121, 91, 255});
-        fill_rect(r, x + 9, y + 2, 9, 3, crimson);
-        fill_rect(r, x + 7, y + 5, 3, 8, crimson);
-        fill_rect(r, x + 16, y + 7, 2, 1, gold);
-        fill_rect(r, x + 2, y + 9, 2, 10, leather);
-        fill_rect(r, x + 4, y + 6, 2, 3, leather);
-        fill_rect(r, x + 4, y + 19, 2, 3, leather);
-        fill_rect(r, x + 6, y + 8, 1, 12, iron);
-        fill_rect(r, x + 3, y + 14, 17, 1, gold);
-        return;
+    if (type == ENEMY_SWAMP_DEMON) {
+        palette['y'] = (SDL_Color){226, 232, 99, 255};
+        palette['f'] = (SDL_Color){181, 185, 133, 255};
     }
-    fill_rect(r, x + 5, y + 17, 3, 7, outline);
-    fill_rect(r, x + 16, y + 17, 3, 7, outline);
-    fill_rect(r, x + 3, y + 14, 18, 6, outline);
-    fill_rect(r, x + 4, y + 12, 15, 7, leather);
-    fill_rect(r, x + 6, y + 12, 7, 2, (SDL_Color){137, 87, 58, 255});
-    fill_rect(r, x + 18, y + 10, 4, 6, leather);
-    fill_rect(r, x + 20, y + 11, 4, 4, outline);
-    fill_rect(r, x + 22, y + 12, 1, 1, gold);
-    fill_rect(r, x + 2, y + 12, 3, 2, outline);
-    fill_rect(r, x + 10, y + 10, 7, 3, iron);
-    fill_rect(r, x + 11, y + 5, 6, 6, crimson);
-    fill_rect(r, x + 12, y + 2, 5, 5, outline);
-    fill_rect(r, x + 13, y + 3, 3, 3, iron);
-    fill_rect(r, x + 16, y + 5, 2, 1, gold);
-    fill_rect(r, x + 18, y + 2, 1, 11, iron);
-    fill_rect(r, x + 18, y + 1, 1, 2, gold);
-}
-
-static void draw_dragonspine_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    if (type == ENEMY_DRAKE) {
-        fill_rect(r, x + 1, y + 7, 9, 10, (SDL_Color){41, 82, 101, 255});
-        fill_rect(r, x + 14, y + 7, 9, 10, (SDL_Color){41, 82, 101, 255});
-        fill_rect(r, x + 5, y + 11, 15, 10, (SDL_Color){55, 108, 119, 255});
-        fill_rect(r, x + 9, y + 4, 9, 10, (SDL_Color){82, 141, 150, 255});
-        fill_rect(r, x + 17, y + 5, 5, 5, (SDL_Color){82, 141, 150, 255});
-        fill_rect(r, x + 18, y + 7, 2, 2, (SDL_Color){248, 193, 75, 255});
-        fill_rect(r, x + 7, y + 20, 3, 3, (SDL_Color){32, 54, 68, 255});
-        fill_rect(r, x + 16, y + 20, 3, 3, (SDL_Color){32, 54, 68, 255});
-    } else {
-        fill_rect(r, x + 5, y + 13, 14, 9, (SDL_Color){164, 54, 31, 255});
-        fill_rect(r, x + 8, y + 5, 9, 13, (SDL_Color){237, 111, 39, 255});
-        fill_rect(r, x + 10, y + 1, 5, 13, (SDL_Color){255, 200, 76, 255});
-        fill_rect(r, x + 7, y + 9, 3, 7, (SDL_Color){248, 174, 58, 255});
-        fill_rect(r, x + 17, y + 11, 4, 7, (SDL_Color){248, 174, 58, 255});
-        fill_rect(r, x + 10, y + 10, 2, 2, (SDL_Color){43, 35, 41, 255});
-        fill_rect(r, x + 15, y + 10, 2, 2, (SDL_Color){43, 35, 41, 255});
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    for (int row = 0; row < 24; row++) {
+        for (int col = 0; col < 24;) {
+            char ink = swamp_enemy_art[art][row][col];
+            int end = col + 1;
+            while (end < 24 && swamp_enemy_art[art][row][end] == ink) {
+                end++;
+            }
+            if (ink != '.') {
+                fill_rect(r, x + col, y + row, end - col, 1, palette[(unsigned char)ink]);
+            }
+            col = end;
+        }
     }
 }
 
-static void draw_frostfell_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color outline = {24, 34, 52, 255};
-    SDL_Color fur = {226, 234, 242, 255};
-    SDL_Color fur_shade = {154, 176, 200, 255};
-    SDL_Color ice = {136, 194, 230, 255};
-    SDL_Color ice_light = {210, 238, 252, 255};
-    SDL_Color ice_dark = {72, 128, 176, 255};
-    SDL_Color glow = {170, 246, 255, 255};
+static void draw_dragonspine_road_enemy(Renderer *r, int tx, int ty, EnemyType type) {
+    int art;
+    switch (type) {
+        case ENEMY_DRAKE: art = DRAGON_ROAD_ART_DRAKE; break;
+        case ENEMY_FIRE_ELEMENTAL: art = DRAGON_ROAD_ART_FIRE_ELEMENTAL; break;
+        case ENEMY_ROAD_ARCHER: art = DRAGON_ROAD_ART_ROAD_ARCHER; break;
+        case ENEMY_HORSEMAN: art = DRAGON_ROAD_ART_HORSEMAN; break;
+        default: return;
+    }
+    static const SDL_Color bodies[DRAGON_ROAD_ART_COUNT] = {
+        {82, 141, 150, 255}, {237, 111, 39, 255}, {162, 121, 91, 255}, {137, 87, 58, 255}
+    };
+    static const SDL_Color clothes[DRAGON_ROAD_ART_COUNT] = {
+        {41, 82, 101, 255}, {164, 54, 31, 255}, {132, 38, 39, 255}, {132, 38, 39, 255}
+    };
+    SDL_Color body = bodies[art];
+    SDL_Color cloth = clothes[art];
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){22, 25, 32, 255};
+    palette['s'] = (SDL_Color){body.r * 2 / 3, body.g * 2 / 3, body.b * 2 / 3, 255};
+    palette['S'] = body;
+    palette['H'] = (SDL_Color){body.r + (255 - body.r) / 3,
+        body.g + (255 - body.g) / 3, body.b + (255 - body.b) / 3, 255};
+    palette['c'] = (SDL_Color){cloth.r * 2 / 3, cloth.g * 2 / 3, cloth.b * 2 / 3, 255};
+    palette['C'] = cloth;
+    palette['v'] = (SDL_Color){cloth.r + (255 - cloth.r) / 4,
+        cloth.g + (255 - cloth.g) / 4, cloth.b + (255 - cloth.b) / 4, 255};
+    palette['e'] = (SDL_Color){18, 20, 28, 255};
+    palette['y'] = (SDL_Color){248, 193, 75, 255};
+    palette['f'] = (SDL_Color){228, 219, 187, 255};
+    palette['p'] = (SDL_Color){245, 134, 38, 255};
+    palette['P'] = (SDL_Color){255, 231, 137, 255};
+    palette['t'] = (SDL_Color){43, 83, 101, 255};
+    palette['T'] = (SDL_Color){106, 172, 180, 255};
+    palette['u'] = (SDL_Color){25, 23, 26, 255};
+    palette['U'] = (SDL_Color){57, 41, 32, 255};
+    palette['w'] = (SDL_Color){74, 46, 30, 255};
+    palette['W'] = (SDL_Color){151, 111, 64, 255};
+    palette['l'] = (SDL_Color){51, 32, 28, 255};
+    palette['L'] = (SDL_Color){107, 67, 41, 255};
+    palette['K'] = (SDL_Color){162, 114, 69, 255};
+    palette['k'] = (SDL_Color){32, 26, 27, 255};
+    palette['m'] = (SDL_Color){71, 82, 94, 255};
+    palette['M'] = (SDL_Color){169, 170, 160, 255};
+    palette['N'] = (SDL_Color){224, 233, 226, 255};
+    palette['g'] = (SDL_Color){138, 96, 43, 255};
+    palette['G'] = (SDL_Color){222, 172, 83, 255};
+    palette['b'] = (SDL_Color){139, 94, 69, 255};
+    palette['B'] = (SDL_Color){192, 146, 107, 255};
+    if (type == ENEMY_FIRE_ELEMENTAL) {
+        palette['s'] = (SDL_Color){164, 54, 31, 255};
+        palette['H'] = (SDL_Color){255, 200, 76, 255};
+    }
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    for (int row = 0; row < 24; row++) {
+        for (int col = 0; col < 24;) {
+            char ink = dragonspine_road_art[art][row][col];
+            int end = col + 1;
+            while (end < 24 && dragonspine_road_art[art][row][end] == ink) {
+                end++;
+            }
+            if (ink != '.') {
+                fill_rect(r, x + col, y + row, end - col, 1, palette[(unsigned char)ink]);
+            }
+            col = end;
+        }
+    }
+}
+
+static void draw_frostfell_enemy(Renderer *r, int tx, int ty, EnemyType type) {
+    int art;
+    switch (type) {
+        case ENEMY_ICE_WOLF: art = FROST_ART_ICE_WOLF; break;
+        case ENEMY_FROST_ARCHER: art = FROST_ART_FROST_ARCHER; break;
+        case ENEMY_YETI: art = FROST_ART_YETI; break;
+        case ENEMY_FROST_WRAITH: art = FROST_ART_FROST_WRAITH; break;
+        case ENEMY_ICE_GOLEM: art = FROST_ART_ICE_GOLEM; break;
+        case ENEMY_ICE_GIANT: art = FROST_ART_ICE_GIANT; break;
+        default: return;
+    }
+    static const SDL_Color bodies[FROST_ART_COUNT] = {
+        {226, 234, 242, 255}, {190, 150, 120, 255}, {226, 234, 242, 255},
+        {118, 178, 224, 255}, {136, 194, 230, 255}, {112, 152, 196, 255}
+    };
+    static const SDL_Color clothes[FROST_ART_COUNT] = {
+        {154, 176, 200, 255}, {204, 216, 230, 255}, {154, 176, 200, 255},
+        {118, 178, 224, 255}, {72, 128, 176, 255}, {130, 100, 74, 255}
+    };
+    SDL_Color body = bodies[art];
+    SDL_Color cloth = clothes[art];
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){24, 34, 52, 255};
+    palette['s'] = (SDL_Color){body.r * 2 / 3, body.g * 2 / 3, body.b * 2 / 3, 255};
+    palette['S'] = body;
+    palette['H'] = (SDL_Color){body.r + (255 - body.r) / 3,
+        body.g + (255 - body.g) / 3, body.b + (255 - body.b) / 3, 255};
+    palette['c'] = (SDL_Color){cloth.r * 2 / 3, cloth.g * 2 / 3, cloth.b * 2 / 3, 255};
+    palette['C'] = cloth;
+    palette['v'] = (SDL_Color){cloth.r + (255 - cloth.r) / 4,
+        cloth.g + (255 - cloth.g) / 4, cloth.b + (255 - cloth.b) / 4, 255};
+    palette['e'] = (SDL_Color){15, 25, 43, 255};
+    palette['y'] = (SDL_Color){170, 246, 255, 255};
+    palette['j'] = (SDL_Color){66, 86, 123, 255};
+    palette['J'] = (SDL_Color){116, 146, 178, 255};
+    palette['f'] = (SDL_Color){226, 234, 242, 255};
+    palette['F'] = (SDL_Color){154, 176, 200, 255};
+    palette['p'] = (SDL_Color){230, 238, 243, 255};
+    palette['i'] = (SDL_Color){72, 128, 176, 255};
+    palette['I'] = (SDL_Color){210, 238, 252, 255};
+    palette['l'] = (SDL_Color){50, 42, 38, 255};
+    palette['L'] = (SDL_Color){108, 81, 59, 255};
+    palette['K'] = (SDL_Color){153, 116, 76, 255};
+    palette['k'] = (SDL_Color){33, 34, 43, 255};
+    palette['g'] = (SDL_Color){130, 105, 52, 255};
+    palette['G'] = (SDL_Color){207, 177, 91, 255};
     if (type == ENEMY_ICE_WOLF) {
-        // A pale wolf mid-stride, facing right.
-        fill_rect(r, x + 1, y + 9, 4, 3, fur_shade);
-        fill_rect(r, x + 4, y + 9, 13, 8, outline);
-        fill_rect(r, x + 5, y + 10, 11, 6, fur);
-        fill_rect(r, x + 5, y + 14, 11, 2, fur_shade);
-        fill_rect(r, x + 15, y + 6, 7, 7, outline);
-        fill_rect(r, x + 16, y + 7, 5, 5, fur);
-        fill_rect(r, x + 20, y + 9, 4, 3, fur);
-        fill_rect(r, x + 16, y + 4, 2, 3, fur_shade);
-        fill_rect(r, x + 19, y + 8, 1, 1, (SDL_Color){52, 156, 232, 255});
-        fill_rect(r, x + 23, y + 10, 1, 1, outline);
-        fill_rect(r, x + 5, y + 17, 2, 5, fur_shade);
-        fill_rect(r, x + 9, y + 17, 2, 4, fur_shade);
-        fill_rect(r, x + 13, y + 17, 2, 5, fur_shade);
-        fill_rect(r, x + 16, y + 16, 2, 5, fur_shade);
-        return;
-    }
-    if (type == ENEMY_FROST_ARCHER) {
-        // A hooded archer in a white fur cloak with an ice-blue bow.
-        SDL_Color cloak = {204, 216, 230, 255};
-        SDL_Color trim = {64, 112, 176, 255};
-        fill_rect(r, x + 7, y + 19, 4, 5, outline);
-        fill_rect(r, x + 13, y + 19, 4, 5, outline);
-        fill_rect(r, x + 5, y + 9, 14, 12, outline);
-        fill_rect(r, x + 6, y + 10, 12, 10, cloak);
-        fill_rect(r, x + 6, y + 17, 12, 2, trim);
-        fill_rect(r, x + 8, y + 2, 9, 8, outline);
-        fill_rect(r, x + 9, y + 3, 7, 6, cloak);
-        fill_rect(r, x + 10, y + 5, 5, 4, (SDL_Color){190, 150, 120, 255});
-        fill_rect(r, x + 11, y + 6, 1, 1, outline);
-        fill_rect(r, x + 14, y + 6, 1, 1, outline);
-        fill_rect(r, x + 2, y + 6, 2, 14, ice_dark);
-        fill_rect(r, x + 3, y + 4, 2, 3, ice_dark);
-        fill_rect(r, x + 3, y + 19, 2, 3, ice_dark);
-        fill_rect(r, x + 5, y + 6, 1, 15, ice_light);
-        fill_rect(r, x + 4, y + 13, 14, 1, glow);
-        return;
-    }
-    if (type == ENEMY_YETI) {
-        // A shaggy beast: a domed head, broad shoulders and long arms.
-        SDL_Color face = {116, 146, 178, 255};
-        fill_rect(r, x + 7, y + 1, 10, 8, outline);
-        fill_rect(r, x + 4, y + 7, 16, 13, outline);
-        fill_rect(r, x, y + 8, 5, 12, outline);
-        fill_rect(r, x + 19, y + 8, 5, 12, outline);
-        fill_rect(r, x + 5, y + 19, 5, 5, outline);
-        fill_rect(r, x + 14, y + 19, 5, 5, outline);
-        fill_rect(r, x + 8, y + 2, 8, 6, fur);
-        fill_rect(r, x + 5, y + 8, 14, 11, fur);
-        fill_rect(r, x + 1, y + 9, 3, 10, fur);
-        fill_rect(r, x + 20, y + 9, 3, 10, fur);
-        fill_rect(r, x + 6, y + 20, 3, 3, fur_shade);
-        fill_rect(r, x + 15, y + 20, 3, 3, fur_shade);
-        fill_rect(r, x + 7, y + 13, 2, 4, fur_shade);
-        fill_rect(r, x + 11, y + 14, 2, 4, fur_shade);
-        fill_rect(r, x + 15, y + 13, 2, 4, fur_shade);
-        fill_rect(r, x + 1, y + 17, 3, 2, fur_shade);
-        fill_rect(r, x + 20, y + 17, 3, 2, fur_shade);
-        fill_rect(r, x + 9, y + 4, 6, 5, face);
-        fill_rect(r, x + 10, y + 5, 1, 1, outline);
-        fill_rect(r, x + 13, y + 5, 1, 1, outline);
-        fill_rect(r, x + 10, y + 7, 4, 1, outline);
-        fill_rect(r, x + 10, y + 8, 1, 1, ice_light);
-        fill_rect(r, x + 13, y + 8, 1, 1, ice_light);
-        return;
+        palette['y'] = (SDL_Color){52, 156, 232, 255};
     }
     if (type == ENEMY_FROST_WRAITH) {
-        // A hooded spirit that narrows to a point and frays into frost.
-        SDL_Color shroud = {118, 178, 224, 255};
-        fill_rect(r, x + 10, y, 4, 2, ice_light);
-        fill_rect(r, x + 8, y + 2, 8, 3, ice);
-        fill_rect(r, x + 7, y + 5, 10, 4, ice);
-        fill_rect(r, x + 9, y + 5, 6, 4, (SDL_Color){28, 48, 80, 255});
-        fill_rect(r, x + 10, y + 6, 1, 2, glow);
-        fill_rect(r, x + 13, y + 6, 1, 2, glow);
-        fill_rect(r, x + 6, y + 9, 12, 4, shroud);
-        fill_rect(r, x + 5, y + 13, 14, 4, shroud);
-        fill_rect(r, x + 4, y + 17, 16, 2, shroud);
-        fill_rect(r, x + 8, y + 9, 2, 8, ice);
-        fill_rect(r, x + 2, y + 10, 4, 3, ice);
-        fill_rect(r, x + 1, y + 13, 3, 3, ice_light);
-        fill_rect(r, x + 18, y + 10, 4, 3, ice);
-        fill_rect(r, x + 20, y + 13, 3, 3, ice_light);
-        fill_rect(r, x + 4, y + 19, 3, 3, shroud);
-        fill_rect(r, x + 9, y + 19, 3, 5, shroud);
-        fill_rect(r, x + 14, y + 19, 3, 3, shroud);
-        fill_rect(r, x + 18, y + 19, 2, 2, shroud);
-        return;
+        palette['J'] = (SDL_Color){28, 48, 80, 255};
     }
-    if (type == ENEMY_ICE_GOLEM) {
-        // A blocky construct of cut ice around a glowing core.
-        fill_rect(r, x + 4, y + 3, 16, 18, outline);
-        fill_rect(r, x + 5, y + 4, 14, 16, ice);
-        fill_rect(r, x + 6, y + 5, 6, 5, ice_light);
-        fill_rect(r, x + 12, y + 13, 6, 6, ice_dark);
-        fill_rect(r, x + 8, y + 7, 2, 2, glow);
-        fill_rect(r, x + 14, y + 7, 2, 2, glow);
-        fill_rect(r, x + 10, y + 11, 4, 4, glow);
-        fill_rect(r, x, y + 7, 4, 11, outline);
-        fill_rect(r, x + 1, y + 8, 3, 9, ice_dark);
-        fill_rect(r, x + 20, y + 7, 4, 11, outline);
-        fill_rect(r, x + 20, y + 8, 3, 9, ice_dark);
-        fill_rect(r, x + 6, y + 20, 5, 4, ice_dark);
-        fill_rect(r, x + 13, y + 20, 5, 4, ice_dark);
-        return;
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    for (int row = 0; row < 24; row++) {
+        for (int col = 0; col < 24;) {
+            char ink = frostfell_enemy_art[art][row][col];
+            int end = col + 1;
+            while (end < 24 && frostfell_enemy_art[art][row][end] == ink) {
+                end++;
+            }
+            if (ink != '.') {
+                fill_rect(r, x + col, y + row, end - col, 1, palette[(unsigned char)ink]);
+            }
+            col = end;
+        }
     }
-    // Ice Giant: blue skin, a frost-white beard and a club of ice.
-    SDL_Color skin = {112, 152, 196, 255};
-    SDL_Color hide = {130, 100, 74, 255};
-    fill_rect(r, x + 4, y + 7, 15, 13, outline);
-    fill_rect(r, x + 5, y + 8, 13, 11, skin);
-    fill_rect(r, x + 5, y + 15, 13, 5, hide);
-    fill_rect(r, x + 6, y + 1, 11, 8, outline);
-    fill_rect(r, x + 7, y + 2, 9, 6, skin);
-    fill_rect(r, x + 6, y + 1, 11, 2, fur);
-    fill_rect(r, x + 8, y + 4, 2, 1, glow);
-    fill_rect(r, x + 13, y + 4, 2, 1, glow);
-    fill_rect(r, x + 7, y + 6, 9, 5, fur);
-    fill_rect(r, x + 9, y + 11, 5, 2, fur);
-    fill_rect(r, x + 1, y + 9, 4, 9, skin);
-    fill_rect(r, x + 18, y + 9, 3, 8, skin);
-    fill_rect(r, x + 6, y + 20, 4, 4, outline);
-    fill_rect(r, x + 13, y + 20, 4, 4, outline);
-    fill_rect(r, x + 20, y + 1, 3, 14, ice_dark);
-    fill_rect(r, x + 20, y + 1, 4, 6, ice_light);
 }
 
-// A pale kraken surfacing from its lake. It spills past its own tile so the
-// boss reads larger than ordinary creatures.
-static void draw_polar_kraken(Renderer *r, int tile_x, int tile_y) {
+// Both rendering paths use the same 96-pixel footprint above the lake tile.
+static void draw_polar_kraken(Renderer *r, int tx, int ty) {
+    SDL_Rect destination = {tx * TILE_SIZE - 36, ty * TILE_SIZE - 48, 96, 96};
     if (r->polar_kraken_texture) {
-        SDL_Rect destination = {tile_x * TILE_SIZE - 36, tile_y * TILE_SIZE - 48, 96, 96};
         SDL_RenderCopy(r->sdl, r->polar_kraken_texture, NULL, &destination);
         return;
     }
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color outline = {40, 34, 64, 255};
-    SDL_Color mantle = {216, 224, 244, 255};
-    SDL_Color highlight = {246, 250, 255, 255};
-    SDL_Color shade = {150, 160, 206, 255};
-    SDL_Color flesh = {200, 168, 218, 255};
-    SDL_Color flesh_dark = {150, 116, 176, 255};
-    SDL_Color sucker = {246, 226, 240, 255};
-    SDL_Color eye_glow = {120, 224, 255, 255};
-    // Side arms curl up and out across the ice.
-    fill_rect(r, x - 10, y + 14, 14, 4, flesh);
-    fill_rect(r, x - 12, y + 7, 4, 10, flesh);
-    fill_rect(r, x - 10, y + 5, 4, 3, flesh);
-    fill_rect(r, x + 20, y + 14, 14, 4, flesh);
-    fill_rect(r, x + 32, y + 7, 4, 10, flesh);
-    fill_rect(r, x + 30, y + 5, 4, 3, flesh);
-    fill_rect(r, x - 8, y + 15, 2, 2, sucker);
-    fill_rect(r, x - 11, y + 10, 2, 2, sucker);
-    fill_rect(r, x + 30, y + 15, 2, 2, sucker);
-    fill_rect(r, x + 33, y + 10, 2, 2, sucker);
-    // Four lower arms trail below, their tips turned outward.
-    fill_rect(r, x + 1, y + 18, 4, 8, flesh);
-    fill_rect(r, x - 2, y + 25, 4, 3, flesh);
-    fill_rect(r, x + 8, y + 19, 3, 9, flesh_dark);
-    fill_rect(r, x + 13, y + 19, 3, 9, flesh_dark);
-    fill_rect(r, x + 19, y + 18, 4, 8, flesh);
-    fill_rect(r, x + 22, y + 25, 4, 3, flesh);
-    fill_rect(r, x + 2, y + 21, 2, 2, sucker);
-    fill_rect(r, x + 20, y + 21, 2, 2, sucker);
-    // A domed mantle, rounded at the crown.
-    fill_rect(r, x + 7, y - 11, 10, 2, outline);
-    fill_rect(r, x + 4, y - 9, 16, 2, outline);
-    fill_rect(r, x + 2, y - 7, 20, 26, outline);
-    fill_rect(r, x + 8, y - 10, 8, 2, mantle);
-    fill_rect(r, x + 5, y - 8, 14, 2, mantle);
-    fill_rect(r, x + 3, y - 6, 18, 24, mantle);
-    fill_rect(r, x + 3, y + 11, 18, 7, shade);
-    fill_rect(r, x + 7, y - 7, 3, 9, highlight);
-    fill_rect(r, x + 11, y - 9, 2, 3, highlight);
-    // Large slanted eyes glowing ice blue.
-    fill_rect(r, x + 5, y + 4, 6, 5, outline);
-    fill_rect(r, x + 13, y + 4, 6, 5, outline);
-    fill_rect(r, x + 6, y + 5, 3, 3, eye_glow);
-    fill_rect(r, x + 15, y + 5, 3, 3, eye_glow);
-    fill_rect(r, x + 9, y + 12, 6, 2, flesh_dark);
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){24, 28, 55, 255};
+    palette['s'] = (SDL_Color){40, 53, 94, 255};
+    palette['S'] = (SDL_Color){45, 100, 131, 255};
+    palette['H'] = (SDL_Color){76, 148, 174, 255};
+    palette['I'] = (SDL_Color){147, 199, 234, 255};
+    palette['f'] = (SDL_Color){234, 245, 255, 255};
+    palette['p'] = (SDL_Color){190, 147, 216, 255};
+    palette['y'] = (SDL_Color){115, 240, 248, 255};
+    palette['w'] = (SDL_Color){23, 60, 83, 255};
+    for (int row = 0; row < 48; row++) {
+        for (int col = 0; col < 48;) {
+            char ink = polar_kraken_art[row][col];
+            int end = col + 1;
+            while (end < 48 && polar_kraken_art[row][end] == ink) {
+                end++;
+            }
+            if (ink != '.') {
+                fill_rect(r, destination.x + col * 2, destination.y + row * 2, (end - col) * 2, 2, palette[(unsigned char)ink]);
+            }
+            col = end;
+        }
+    }
 }
 
 static void draw_desert_enemy(Renderer *r, int tx, int ty, EnemyType type) {
-    int x = tx * TILE_SIZE;
-    int y = ty * TILE_SIZE;
-    SDL_Color outline = {43, 30, 24, 255};
-    SDL_Color gold = {227, 180, 71, 255};
-    SDL_Color glow = {107, 245, 221, 255};
-    if (type == ENEMY_DESERT_PHARAOH) {
-        SDL_Color blue = {42, 85, 138, 255};
-        SDL_Color linen = {230, 214, 169, 255};
-        fill_rect(r, x + 5, y, 13, 11, outline);
-        fill_rect(r, x + 6, y + 1, 11, 9, gold);
-        for (int stripe = 0; stripe < 3; stripe++) {
-            fill_rect(r, x + 6, y + 2 + stripe * 3, 11, 1, blue);
-        }
-        fill_rect(r, x + 9, y + 3, 5, 5, linen);
-        fill_rect(r, x + 10, y + 5, 1, 1, glow);
-        fill_rect(r, x + 13, y + 5, 1, 1, glow);
-        fill_rect(r, x + 7, y + 10, 10, 13, outline);
-        fill_rect(r, x + 8, y + 11, 8, 11, linen);
-        fill_rect(r, x + 8, y + 11, 8, 3, blue);
-        fill_rect(r, x + 8, y + 15, 8, 2, gold);
-        fill_rect(r, x + 3, y + 11, 4, 5, linen);
-        fill_rect(r, x + 17, y + 11, 4, 5, linen);
-        fill_rect(r, x + 21, y + 5, 2, 18, gold);
-        fill_rect(r, x + 20, y + 1, 4, 5, (SDL_Color){244, 126, 35, 255});
-        return;
+    int art;
+    switch (type) {
+        case ENEMY_SCARAB: art = DESERT_ART_SCARAB; break;
+        case ENEMY_VIPER: art = DESERT_ART_VIPER; break;
+        case ENEMY_MUMMY: art = DESERT_ART_MUMMY; break;
+        case ENEMY_DJINN: art = DESERT_ART_DJINN; break;
+        case ENEMY_GOLEM: art = DESERT_ART_GOLEM; break;
+        case ENEMY_DESERT_PHARAOH: art = DESERT_ART_DESERT_PHARAOH; break;
+        default: return;
     }
-    if (type == ENEMY_SCARAB) {
-        SDL_Color shell = {61, 115, 83, 255};
-        for (int leg = 0; leg < 3; leg++) {
-            fill_rect(r, x + 2, y + 8 + leg * 4, 5, 2, gold);
-            fill_rect(r, x + 17, y + 8 + leg * 4, 5, 2, gold);
-        }
-        fill_rect(r, x + 6, y + 6, 12, 14, outline);
-        fill_rect(r, x + 7, y + 7, 10, 12, shell);
-        fill_rect(r, x + 11, y + 8, 2, 11, gold);
-        fill_rect(r, x + 8, y + 2, 8, 5, outline);
-        fill_rect(r, x + 9, y + 3, 6, 3, shell);
-        fill_rect(r, x + 9, y + 3, 1, 1, glow);
-        fill_rect(r, x + 14, y + 3, 1, 1, glow);
-        return;
-    }
+    static const SDL_Color bodies[DESERT_ART_COUNT] = {
+        {61, 115, 83, 255}, {153, 66, 44, 255}, {213, 195, 150, 255},
+        {58, 165, 171, 255}, {165, 112, 66, 255}, {230, 214, 169, 255}
+    };
+    static const SDL_Color clothes[DESERT_ART_COUNT] = {
+        {61, 115, 83, 255}, {153, 66, 44, 255}, {141, 120, 86, 255},
+        {38, 92, 115, 255}, {104, 69, 46, 255}, {42, 85, 138, 255}
+    };
+    SDL_Color body = bodies[art];
+    SDL_Color cloth = clothes[art];
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){43, 30, 24, 255};
+    palette['s'] = (SDL_Color){body.r * 2 / 3, body.g * 2 / 3, body.b * 2 / 3, 255};
+    palette['S'] = body;
+    palette['H'] = (SDL_Color){body.r + (255 - body.r) / 3,
+        body.g + (255 - body.g) / 3, body.b + (255 - body.b) / 3, 255};
+    palette['c'] = (SDL_Color){cloth.r * 2 / 3, cloth.g * 2 / 3, cloth.b * 2 / 3, 255};
+    palette['C'] = cloth;
+    palette['v'] = (SDL_Color){cloth.r + (255 - cloth.r) / 4,
+        cloth.g + (255 - cloth.g) / 4, cloth.b + (255 - cloth.b) / 4, 255};
+    palette['e'] = (SDL_Color){29, 22, 24, 255};
+    palette['y'] = (SDL_Color){107, 245, 221, 255};
+    palette['b'] = (SDL_Color){141, 120, 86, 255};
+    palette['f'] = (SDL_Color){230, 214, 169, 255};
+    palette['u'] = (SDL_Color){23, 44, 67, 255};
+    palette['U'] = (SDL_Color){42, 85, 138, 255};
+    palette['r'] = (SDL_Color){142, 38, 46, 255};
+    palette['R'] = (SDL_Color){225, 65, 76, 255};
+    palette['g'] = (SDL_Color){142, 99, 41, 255};
+    palette['G'] = (SDL_Color){227, 180, 71, 255};
+    palette['l'] = (SDL_Color){59, 41, 30, 255};
+    palette['L'] = (SDL_Color){114, 80, 46, 255};
+    palette['K'] = (SDL_Color){161, 121, 69, 255};
+    palette['k'] = (SDL_Color){44, 31, 28, 255};
     if (type == ENEMY_VIPER) {
-        SDL_Color scales = {153, 66, 44, 255};
-        fill_rect(r, x + 3, y + 15, 18, 6, outline);
-        fill_rect(r, x + 4, y + 16, 16, 4, scales);
-        fill_rect(r, x + 7, y + 17, 8, 1, gold);
-        fill_rect(r, x + 15, y + 7, 4, 10, scales);
-        fill_rect(r, x + 10, y + 4, 11, 5, outline);
-        fill_rect(r, x + 11, y + 5, 9, 3, scales);
-        fill_rect(r, x + 12, y + 5, 2, 1, gold);
-        fill_rect(r, x + 8, y + 7, 3, 1, (SDL_Color){225, 65, 76, 255});
-        return;
+        palette['y'] = (SDL_Color){244, 187, 80, 255};
     }
     if (type == ENEMY_MUMMY) {
-        SDL_Color linen = {213, 195, 150, 255};
-        SDL_Color seam = {141, 120, 86, 255};
-        fill_rect(r, x + 8, y + 1, 8, 7, outline);
-        fill_rect(r, x + 9, y + 2, 6, 5, linen);
-        fill_rect(r, x + 9, y + 4, 6, 1, outline);
-        fill_rect(r, x + 10, y + 4, 1, 1, (SDL_Color){215, 70, 38, 255});
-        fill_rect(r, x + 13, y + 4, 1, 1, (SDL_Color){215, 70, 38, 255});
-        fill_rect(r, x + 6, y + 8, 12, 11, outline);
-        fill_rect(r, x + 7, y + 8, 10, 10, linen);
-        for (int band = 0; band < 3; band++) {
-            fill_rect(r, x + 7, y + 10 + band * 3, 10, 1, seam);
+        palette['y'] = (SDL_Color){215, 70, 38, 255};
+    }
+    if (type == ENEMY_GOLEM) {
+        palette['b'] = (SDL_Color){104, 69, 46, 255};
+    }
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    for (int row = 0; row < 24; row++) {
+        for (int col = 0; col < 24;) {
+            char ink = desert_enemy_art[art][row][col];
+            int end = col + 1;
+            while (end < 24 && desert_enemy_art[art][row][end] == ink) {
+                end++;
+            }
+            if (ink != '.') {
+                fill_rect(r, x + col, y + row, end - col, 1, palette[(unsigned char)ink]);
+            }
+            col = end;
         }
-        fill_rect(r, x + 2, y + 9, 5, 4, linen);
-        fill_rect(r, x + 17, y + 9, 5, 4, linen);
-        fill_rect(r, x + 7, y + 19, 4, 5, linen);
-        fill_rect(r, x + 13, y + 19, 4, 5, linen);
-        return;
     }
-    if (type == ENEMY_DJINN) {
-        SDL_Color spirit = {58, 165, 171, 255};
-        SDL_Color shadow = {38, 92, 115, 255};
-        fill_rect(r, x + 8, y + 1, 8, 3, gold);
-        fill_rect(r, x + 9, y + 4, 6, 5, spirit);
-        fill_rect(r, x + 10, y + 5, 1, 1, glow);
-        fill_rect(r, x + 13, y + 5, 1, 1, glow);
-        fill_rect(r, x + 6, y + 9, 12, 7, spirit);
-        fill_rect(r, x + 2, y + 10, 4, 4, shadow);
-        fill_rect(r, x + 18, y + 10, 4, 4, shadow);
-        fill_rect(r, x + 6, y + 15, 12, 2, gold);
-        fill_rect(r, x + 8, y + 17, 9, 3, spirit);
-        fill_rect(r, x + 11, y + 20, 5, 2, shadow);
-        fill_rect(r, x + 9, y + 22, 4, 2, spirit);
-        return;
-    }
-    SDL_Color stone = {165, 112, 66, 255};
-    SDL_Color shade = {104, 69, 46, 255};
-    fill_rect(r, x + 7, y + 1, 10, 7, outline);
-    fill_rect(r, x + 8, y + 2, 8, 5, stone);
-    fill_rect(r, x + 9, y + 4, 2, 1, glow);
-    fill_rect(r, x + 13, y + 4, 2, 1, glow);
-    fill_rect(r, x + 4, y + 8, 16, 12, outline);
-    fill_rect(r, x + 5, y + 9, 14, 10, stone);
-    fill_rect(r, x + 5, y + 14, 14, 1, shade);
-    fill_rect(r, x + 10, y + 11, 4, 4, glow);
-    fill_rect(r, x, y + 9, 4, 11, shade);
-    fill_rect(r, x + 20, y + 9, 4, 11, shade);
-    fill_rect(r, x + 5, y + 20, 5, 4, shade);
-    fill_rect(r, x + 14, y + 20, 5, 4, shade);
 }
 
 static void draw_moonveil_enemy(Renderer *r, int tx, int ty, EnemyType type) {
+    int art;
+    switch (type) {
+        case ENEMY_FEY_TRICKSTER: art = MOON_ART_FEY_TRICKSTER; break;
+        case ENEMY_GIANT_MOTH: art = MOON_ART_GIANT_MOTH; break;
+        case ENEMY_LIVING_FLOWER: art = MOON_ART_LIVING_FLOWER; break;
+        case ENEMY_THORN_GUARDIAN: art = MOON_ART_THORN_GUARDIAN; break;
+        case ENEMY_THORN_REGENT: art = MOON_ART_THORN_REGENT; break;
+        default: return;
+    }
+    static const SDL_Color bodies[MOON_ART_COUNT] = {
+        {214, 169, 177, 255}, {205, 190, 160, 255}, {157, 47, 104, 255},
+        {79, 78, 43, 255}, {49, 111, 71, 255}
+    };
+    static const SDL_Color clothes[MOON_ART_COUNT] = {
+        {124, 82, 174, 255}, {102, 123, 179, 255}, {198, 64, 133, 255},
+        {79, 78, 43, 255}, {122, 62, 145, 255}
+    };
+    SDL_Color body = bodies[art];
+    SDL_Color cloth = clothes[art];
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){15, 18, 30, 255};
+    palette['s'] = (SDL_Color){body.r * 2 / 3, body.g * 2 / 3, body.b * 2 / 3, 255};
+    palette['S'] = body;
+    palette['H'] = (SDL_Color){body.r + (255 - body.r) / 3,
+        body.g + (255 - body.g) / 3, body.b + (255 - body.b) / 3, 255};
+    palette['c'] = (SDL_Color){cloth.r * 2 / 3, cloth.g * 2 / 3, cloth.b * 2 / 3, 255};
+    palette['C'] = cloth;
+    palette['v'] = (SDL_Color){cloth.r + (255 - cloth.r) / 4,
+        cloth.g + (255 - cloth.g) / 4, cloth.b + (255 - cloth.b) / 4, 255};
+    palette['e'] = (SDL_Color){14, 15, 28, 255};
+    palette['y'] = (SDL_Color){152, 245, 225, 255};
+    palette['r'] = (SDL_Color){30, 71, 51, 255};
+    palette['R'] = (SDL_Color){89, 156, 93, 255};
+    palette['w'] = (SDL_Color){89, 192, 197, 255};
+    palette['W'] = (SDL_Color){144, 217, 215, 255};
+    palette['b'] = (SDL_Color){102, 123, 179, 255};
+    palette['B'] = (SDL_Color){147, 174, 215, 255};
+    palette['t'] = (SDL_Color){49, 108, 129, 255};
+    palette['T'] = (SDL_Color){131, 219, 218, 255};
+    palette['u'] = (SDL_Color){105, 100, 93, 255};
+    palette['U'] = (SDL_Color){210, 200, 175, 255};
+    palette['f'] = (SDL_Color){200, 244, 217, 255};
+    palette['p'] = (SDL_Color){55, 138, 131, 255};
+    palette['P'] = (SDL_Color){152, 245, 225, 255};
+    palette['l'] = (SDL_Color){54, 39, 45, 255};
+    palette['L'] = (SDL_Color){105, 81, 60, 255};
+    palette['K'] = (SDL_Color){150, 121, 92, 255};
+    palette['k'] = (SDL_Color){34, 30, 48, 255};
+    palette['g'] = (SDL_Color){143, 101, 57, 255};
+    palette['G'] = (SDL_Color){209, 179, 101, 255};
+    if (type == ENEMY_GIANT_MOTH) {
+        palette['w'] = (SDL_Color){170, 108, 194, 255};
+        palette['W'] = (SDL_Color){211, 160, 218, 255};
+        palette['t'] = (SDL_Color){108, 67, 137, 255};
+    }
     int x = tx * TILE_SIZE;
     int y = ty * TILE_SIZE;
-    SDL_Color shade = {15, 18, 30, 255};
-    SDL_Color glow = {152, 245, 225, 255};
-    SDL_Color leaf = {49, 111, 71, 255};
+    int has_wings = type == ENEMY_FEY_TRICKSTER || type == ENEMY_GIANT_MOTH;
+    int wing = type == ENEMY_FEY_TRICKSTER ? 0 : 1;
     int flutter = (int)((SDL_GetTicks() / AMBIENT_FRAME_MS) & 1u);
-    if (type == ENEMY_GIANT_MOTH) {
-        fill_rect(r, x + 1, y + 4 + flutter, 9, 9, (SDL_Color){170, 108, 194, 255});
-        fill_rect(r, x + 14, y + 4 + flutter, 9, 9, (SDL_Color){170, 108, 194, 255});
-        fill_rect(r, x + 3, y + 13 - flutter, 7, 7, (SDL_Color){102, 123, 179, 255});
-        fill_rect(r, x + 14, y + 13 - flutter, 7, 7, (SDL_Color){102, 123, 179, 255});
-        fill_rect(r, x + 5, y + 7, 3, 3, glow);
-        fill_rect(r, x + 16, y + 7, 3, 3, glow);
-        fill_rect(r, x + 10, y + 5, 4, 15, shade);
-        fill_rect(r, x + 9, y + 2, 1, 5, glow);
-        fill_rect(r, x + 14, y + 2, 1, 5, glow);
-        return;
-    }
-    if (type == ENEMY_FEY_TRICKSTER) {
-        fill_rect(r, x + 2, y + 8 + flutter, 7, 8, (SDL_Color){89, 192, 197, 255});
-        fill_rect(r, x + 15, y + 8 + flutter, 7, 8, (SDL_Color){89, 192, 197, 255});
-        fill_rect(r, x + 9, y + 3, 7, 6, (SDL_Color){214, 169, 177, 255});
-        fill_rect(r, x + 8, y + 1, 9, 3, (SDL_Color){149, 79, 184, 255});
-        fill_rect(r, x + 9, y + 9, 6, 10, (SDL_Color){124, 82, 174, 255});
-        fill_rect(r, x + 9, y + 20, 2, 3, shade);
-        fill_rect(r, x + 14, y + 20, 2, 3, shade);
-        fill_rect(r, x + 19, y + 17, 3, 3, glow);
-        return;
-    }
-    if (type == ENEMY_LIVING_FLOWER) {
-        fill_rect(r, x + 10, y + 10, 4, 13, leaf);
-        fill_rect(r, x + 3, y + 17, 8, 4, leaf);
-        fill_rect(r, x + 14, y + 15, 7, 4, leaf);
-        fill_rect(r, x + 5, y + 1, 14, 5, (SDL_Color){198, 64, 133, 255});
-        fill_rect(r, x + 2, y + 5, 20, 8, (SDL_Color){157, 47, 104, 255});
-        fill_rect(r, x + 6, y + 7, 12, 5, shade);
-        for (int tooth = 0; tooth < 3; tooth++) {
-            fill_rect(r, x + 7 + tooth * 4, y + 7, 2, 2, glow);
+    for (int layer = 0; layer < 2; layer++) {
+        if (layer == 0 && !has_wings) {
+            continue;
         }
-        return;
-    }
-    int boss = type == ENEMY_THORN_REGENT;
-    SDL_Color body = boss ? (SDL_Color){122, 62, 145, 255} : (SDL_Color){79, 78, 43, 255};
-    fill_rect(r, x + 7, y + 3, 10, 7, shade);
-    fill_rect(r, x + 8, y + 4, 8, 5, leaf);
-    fill_rect(r, x + 9, y + 6, 2, 1, glow);
-    fill_rect(r, x + 14, y + 6, 2, 1, glow);
-    fill_rect(r, x + 6, y + 10, 13, 11, body);
-    fill_rect(r, x + 2, y + 11, 5, 8, leaf);
-    fill_rect(r, x + 18, y + 11, 5, 8, leaf);
-    fill_rect(r, x + 6, y + 21, 5, 3, shade);
-    fill_rect(r, x + 14, y + 21, 5, 3, shade);
-    for (int thorn = 0; thorn < 3; thorn++) {
-        fill_rect(r, x + 6 + thorn * 5, y + (boss ? 0 : 11), 2, boss ? 5 : 4, leaf);
-    }
-    if (boss) {
-        fill_rect(r, x + 7, y + 2, 12, 2, glow);
-        fill_rect(r, x + 11, y + 12, 3, 3, glow);
-        fill_rect(r, x + 21, y + 6, 2, 17, (SDL_Color){105, 81, 60, 255});
-        fill_rect(r, x + 20, y + 3, 4, 4, glow);
+        const char (*rows)[25] = layer == 0 ? moonveil_wing_art[wing] : moonveil_enemy_art[art];
+        for (int row = 0; row < 24; row++) {
+            int offset = 0;
+            if (layer == 0) {
+                // Preserve the Moth's opposing upper/lower wing motion.
+                offset = type == ENEMY_GIANT_MOTH && row >= 13 ? -flutter : flutter;
+            }
+            for (int col = 0; col < 24;) {
+                char ink = rows[row][col];
+                int end = col + 1;
+                while (end < 24 && rows[row][end] == ink) {
+                    end++;
+                }
+                if (ink != '.') {
+                    fill_rect(r, x + col, y + row + offset, end - col, 1, palette[(unsigned char)ink]);
+                }
+                col = end;
+            }
+        }
     }
 }
 
 static void draw_ashen_enemy(Renderer *r, int tx, int ty, EnemyType type) {
+    int art;
+    int ember = -1;
+    switch (type) {
+        case ENEMY_CINDER_IMP: art = ASHEN_ART_CINDER_IMP; ember = 0; break;
+        case ENEMY_ASH_HOUND: art = ASHEN_ART_ASH_HOUND; ember = 1; break;
+        case ENEMY_OBSIDIAN_GUARDIAN: art = ASHEN_ART_OBSIDIAN_GUARDIAN; break;
+        case ENEMY_CINDER_LORD: art = ASHEN_ART_CINDER_LORD; ember = 2; break;
+        default: return;
+    }
+    static const SDL_Color bodies[ASHEN_ART_COUNT] = {
+        {174, 65, 40, 255}, {42, 38, 47, 255}, {42, 38, 47, 255}, {42, 38, 47, 255}
+    };
+    static const SDL_Color clothes[ASHEN_ART_COUNT] = {
+        {42, 38, 47, 255}, {42, 38, 47, 255}, {42, 38, 47, 255}, {79, 36, 46, 255}
+    };
+    SDL_Color body = bodies[art];
+    SDL_Color cloth = clothes[art];
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){15, 14, 20, 255};
+    palette['s'] = (SDL_Color){body.r * 2 / 3, body.g * 2 / 3, body.b * 2 / 3, 255};
+    palette['S'] = body;
+    palette['H'] = (SDL_Color){body.r + (255 - body.r) / 3,
+        body.g + (255 - body.g) / 3, body.b + (255 - body.b) / 3, 255};
+    palette['c'] = (SDL_Color){cloth.r * 2 / 3, cloth.g * 2 / 3, cloth.b * 2 / 3, 255};
+    palette['C'] = cloth;
+    palette['v'] = (SDL_Color){cloth.r + (255 - cloth.r) / 4,
+        cloth.g + (255 - cloth.g) / 4, cloth.b + (255 - cloth.b) / 4, 255};
+    palette['e'] = (SDL_Color){19, 14, 23, 255};
+    palette['y'] = (SDL_Color){255, 204, 92, 255};
+    palette['m'] = (SDL_Color){61, 49, 61, 255};
+    palette['M'] = (SDL_Color){101, 85, 87, 255};
+    palette['N'] = (SDL_Color){167, 148, 154, 255};
+    palette['f'] = (SDL_Color){177, 157, 131, 255};
+    palette['u'] = (SDL_Color){35, 27, 40, 255};
+    palette['U'] = (SDL_Color){82, 62, 66, 255};
+    palette['p'] = (SDL_Color){239, 96, 38, 255};
+    palette['P'] = (SDL_Color){255, 204, 92, 255};
+    palette['l'] = (SDL_Color){62, 40, 31, 255};
+    palette['L'] = (SDL_Color){123, 83, 53, 255};
+    if (type == ENEMY_CINDER_IMP) {
+        palette['H'] = (SDL_Color){239, 96, 38, 255};
+    }
     int x = tx * TILE_SIZE;
     int y = ty * TILE_SIZE;
-    SDL_Color rock = {42, 38, 47, 255};
-    SDL_Color rim = {101, 85, 87, 255};
-    SDL_Color fire = {239, 96, 38, 255};
-    SDL_Color glow = {255, 204, 92, 255};
     int flicker = (int)((SDL_GetTicks() / AMBIENT_FRAME_MS) & 1u);
-    if (type == ENEMY_ASH_HOUND) {
-        fill_rect(r, x + 2, y + 9, 16, 9, rock);
-        fill_rect(r, x + 15, y + 5, 8, 9, rock);
-        fill_rect(r, x + 16, y + 2, 3, 5, rim);
-        fill_rect(r, x + 3, y + 17, 3, 6, rim);
-        fill_rect(r, x + 13, y + 17, 3, 6, rim);
-        fill_rect(r, x, y + 6, 3, 8, rock);
-        fill_rect(r, x + 18, y + 7, 2, 2, glow);
-        fill_rect(r, x + 4, y + 9, 9, 2, fire);
-        fill_rect(r, x + 7, y + 5 - flicker, 3, 5, fire);
-        return;
-    }
-    if (type == ENEMY_CINDER_IMP) {
-        fill_rect(r, x + 7, y + 5, 11, 7, fire);
-        fill_rect(r, x + 6, y + 1, 3, 6, rim);
-        fill_rect(r, x + 16, y + 1, 3, 6, rim);
-        fill_rect(r, x + 9, y + 7, 2, 2, glow);
-        fill_rect(r, x + 14, y + 7, 2, 2, glow);
-        fill_rect(r, x + 8, y + 12, 8, 8, rock);
-        fill_rect(r, x + 3, y + 12, 5, 4, fire);
-        fill_rect(r, x + 16, y + 12, 5, 4, fire);
-        fill_rect(r, x + 7, y + 20, 3, 4, fire);
-        fill_rect(r, x + 14, y + 20, 3, 4, fire);
-        fill_rect(r, x + 19, y + 9 - flicker, 3, 3, glow);
-        return;
-    }
-    int boss = type == ENEMY_CINDER_LORD;
-    fill_rect(r, x + 7, y + 3, 10, 7, rock);
-    fill_rect(r, x + 8, y + 4, 2, 5, rim);
-    fill_rect(r, x + 10, y + 6, 2, 1, glow);
-    fill_rect(r, x + 14, y + 6, 2, 1, glow);
-    fill_rect(r, x + 5, y + 10, 14, 11, rock);
-    fill_rect(r, x + 1, y + 10, 5, 10, rim);
-    fill_rect(r, x + 19, y + 10, 4, 10, rim);
-    fill_rect(r, x + 5, y + 21, 5, 3, rim);
-    fill_rect(r, x + 14, y + 21, 5, 3, rim);
-    fill_rect(r, x + 11, y + 11, 2, 8, fire);
-    fill_rect(r, x + 8, y + 14, 7, 2, fire);
-    if (boss) {
-        for (int flame = 0; flame < 3; flame++) {
-            fill_rect(r, x + 6 + flame * 5, y + flicker, 3, 5, fire);
+    for (int layer = 0; layer < 2; layer++) {
+        if (layer == 1 && ember < 0) {
+            continue;
         }
-        fill_rect(r, x + 7, y + 3, 11, 2, glow);
-        fill_rect(r, x + 21, y + 5, 2, 17, fire);
+        const char (*rows)[25] = layer == 0 ? ashen_enemy_art[art] : ashen_ember_art[ember];
+        int offset = layer == 0 ? 0 : type == ENEMY_CINDER_LORD ? flicker : -flicker;
+        for (int row = 0; row < 24; row++) {
+            for (int col = 0; col < 24;) {
+                char ink = rows[row][col];
+                int end = col + 1;
+                while (end < 24 && rows[row][end] == ink) {
+                    end++;
+                }
+                if (ink != '.') {
+                    fill_rect(r, x + col, y + row + offset, end - col, 1, palette[(unsigned char)ink]);
+                }
+                col = end;
+            }
+        }
     }
 }
 
 static void draw_glassdeep_enemy(Renderer *r, int tx, int ty, EnemyType type) {
+    int art;
+    switch (type) {
+        case ENEMY_CRYSTAL_SPIDER: art = GLASS_ART_CRYSTAL_SPIDER; break;
+        case ENEMY_BLIND_STALKER: art = GLASS_ART_BLIND_STALKER; break;
+        case ENEMY_SHARD_GOLEM: art = GLASS_ART_SHARD_GOLEM; break;
+        case ENEMY_PRISM_SOVEREIGN: art = GLASS_ART_PRISM_SOVEREIGN; break;
+        default: return;
+    }
+    static const SDL_Color bodies[GLASS_ART_COUNT] = {
+        {86, 181, 216, 255}, {163, 170, 185, 255}, {86, 181, 216, 255}, {146, 109, 213, 255}
+    };
+    static const SDL_Color clothes[GLASS_ART_COUNT] = {
+        {146, 109, 213, 255}, {69, 63, 89, 255}, {49, 41, 78, 255}, {146, 109, 213, 255}
+    };
+    SDL_Color body = bodies[art];
+    SDL_Color cloth = clothes[art];
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){22, 22, 41, 255};
+    palette['s'] = (SDL_Color){body.r * 2 / 3, body.g * 2 / 3, body.b * 2 / 3, 255};
+    palette['S'] = body;
+    palette['H'] = (SDL_Color){body.r + (255 - body.r) / 3,
+        body.g + (255 - body.g) / 3, body.b + (255 - body.b) / 3, 255};
+    palette['c'] = (SDL_Color){cloth.r * 2 / 3, cloth.g * 2 / 3, cloth.b * 2 / 3, 255};
+    palette['C'] = cloth;
+    palette['v'] = (SDL_Color){cloth.r + (255 - cloth.r) / 4,
+        cloth.g + (255 - cloth.g) / 4, cloth.b + (255 - cloth.b) / 4, 255};
+    palette['e'] = (SDL_Color){17, 19, 35, 255};
+    palette['y'] = (SDL_Color){152, 236, 242, 255};
+    palette['m'] = (SDL_Color){49, 41, 78, 255};
+    palette['M'] = (SDL_Color){86, 181, 216, 255};
+    palette['N'] = (SDL_Color){191, 238, 247, 255};
+    palette['f'] = (SDL_Color){191, 238, 247, 255};
+    palette['r'] = (SDL_Color){87, 96, 125, 255};
+    palette['R'] = (SDL_Color){131, 150, 179, 255};
+    palette['j'] = (SDL_Color){31, 29, 49, 255};
+    palette['J'] = (SDL_Color){49, 41, 78, 255};
+    palette['p'] = (SDL_Color){106, 200, 228, 255};
+    palette['P'] = (SDL_Color){191, 238, 247, 255};
     int x = tx * TILE_SIZE;
     int y = ty * TILE_SIZE;
-    SDL_Color shade = {49, 41, 78, 255};
-    SDL_Color crystal = {86, 181, 216, 255};
-    SDL_Color light = {191, 238, 247, 255};
-    SDL_Color violet = {146, 109, 213, 255};
-    if (type == ENEMY_CRYSTAL_SPIDER) {
-        for (int leg = 0; leg < 4; leg++) {
-            int offset = leg * 4;
-            fill_rect(r, x + 1, y + 4 + offset, 7, 2, crystal);
-            fill_rect(r, x + 16, y + 4 + offset, 7, 2, crystal);
-            fill_rect(r, x, y + 2 + offset, 2, 4, violet);
-            fill_rect(r, x + 22, y + 2 + offset, 2, 4, violet);
+    int pulse = (int)((SDL_GetTicks() / AMBIENT_FRAME_MS) & 1u);
+    for (int layer = 0; layer < 2; layer++) {
+        if (layer == 1 && type != ENEMY_PRISM_SOVEREIGN) {
+            continue;
         }
-        fill_rect(r, x + 7, y + 4, 10, 13, shade);
-        fill_rect(r, x + 9, y + 3, 6, 8, violet);
-        fill_rect(r, x + 11, y + 4, 2, 5, light);
-        fill_rect(r, x + 8, y + 16, 8, 5, crystal);
-        fill_rect(r, x + 9, y + 18, 2, 1, light);
-        fill_rect(r, x + 13, y + 18, 2, 1, light);
-        return;
-    }
-    if (type == ENEMY_BLIND_STALKER) {
-        SDL_Color skin = {163, 170, 185, 255};
-        fill_rect(r, x + 8, y + 2, 8, 8, skin);
-        fill_rect(r, x + 7, y + 3, 2, 5, light);
-        fill_rect(r, x + 9, y + 8, 6, 2, shade);
-        fill_rect(r, x + 6, y + 11, 12, 8, skin);
-        fill_rect(r, x + 3, y + 10, 3, 11, skin);
-        fill_rect(r, x + 18, y + 10, 3, 11, skin);
-        fill_rect(r, x + 1, y + 18, 4, 3, light);
-        fill_rect(r, x + 20, y + 18, 4, 3, light);
-        fill_rect(r, x + 6, y + 19, 4, 5, skin);
-        fill_rect(r, x + 14, y + 19, 4, 5, skin);
-        fill_rect(r, x + 11, y + 11, 2, 7, shade);
-        return;
-    }
-    int boss = type == ENEMY_PRISM_SOVEREIGN;
-    SDL_Color body = boss ? violet : crystal;
-    fill_rect(r, x + 7, y + 3, 10, 7, body);
-    fill_rect(r, x + 8, y + 4, 2, 4, light);
-    fill_rect(r, x + 10, y + 7, 5, 1, shade);
-    fill_rect(r, x + 5, y + 10, 14, 11, body);
-    fill_rect(r, x + 1, y + 10, 5, 10, body);
-    fill_rect(r, x + 19, y + 10, 4, 10, body);
-    fill_rect(r, x + 6, y + 20, 4, 4, shade);
-    fill_rect(r, x + 14, y + 20, 4, 4, shade);
-    fill_rect(r, x + 6, y + 11, 2, 8, light);
-    fill_rect(r, x + 11, y + 12, 3, 6, crystal);
-    fill_rect(r, x + 12, y + 13, 1, 3, light);
-    if (boss) {
-        for (int point = 0; point < 3; point++) {
-            fill_rect(r, x + 6 + point * 5, y, 3, 5, light);
+        const char (*rows)[25] = layer == 0 ? glassdeep_enemy_art[art] : glassdeep_prism_art[pulse];
+        for (int row = 0; row < 24; row++) {
+            for (int col = 0; col < 24;) {
+                char ink = rows[row][col];
+                int end = col + 1;
+                while (end < 24 && rows[row][end] == ink) {
+                    end++;
+                }
+                if (ink != '.') {
+                    fill_rect(r, x + col, y + row, end - col, 1, palette[(unsigned char)ink]);
+                }
+                col = end;
+            }
         }
-        fill_rect(r, x + 6, y + 4, 13, 2, crystal);
-        int pulse = (int)((SDL_GetTicks() / AMBIENT_FRAME_MS) & 1u);
-        fill_rect(r, x + 21, y + 3, 2, 6, light);
-        fill_rect(r, x + 20 - pulse, y + 5, 4 + pulse, 2, violet);
     }
-}
-
-static void draw_minotaur(Renderer *r, int tx, int ty) {
-    int x = tx * TILE_SIZE;
-    int y = ty * TILE_SIZE;
-    SDL_Color fur = {132, 77, 45, 255};
-    SDL_Color light = {177, 113, 64, 255};
-    SDL_Color shade = {69, 40, 32, 255};
-    SDL_Color horn = {228, 206, 157, 255};
-    SDL_Color steel = {161, 176, 186, 255};
-    // Broad bull's head, raised horns, and a pale muzzle.
-    fill_rect(r, x + 6, y + 2, 3, 6, horn);
-    fill_rect(r, x + 15, y + 2, 3, 6, horn);
-    fill_rect(r, x + 5, y, 2, 4, horn);
-    fill_rect(r, x + 17, y, 2, 4, horn);
-    fill_rect(r, x + 8, y + 4, 8, 8, fur);
-    fill_rect(r, x + 9, y + 5, 6, 3, light);
-    fill_rect(r, x + 9, y + 7, 2, 1, (SDL_Color){231, 104, 48, 255});
-    fill_rect(r, x + 13, y + 7, 2, 1, (SDL_Color){231, 104, 48, 255});
-    fill_rect(r, x + 8, y + 9, 8, 3, horn);
-    fill_rect(r, x + 10, y + 10, 1, 1, shade);
-    fill_rect(r, x + 13, y + 10, 1, 1, shade);
-    fill_rect(r, x + 5, y + 12, 14, 8, fur);
-    fill_rect(r, x + 7, y + 12, 10, 2, light);
-    fill_rect(r, x + 3, y + 12, 3, 7, fur);
-    fill_rect(r, x + 18, y + 12, 3, 7, fur);
-    fill_rect(r, x + 6, y + 19, 12, 2, shade);
-    fill_rect(r, x + 11, y + 19, 2, 2, horn);
-    fill_rect(r, x + 6, y + 21, 4, 3, shade);
-    fill_rect(r, x + 14, y + 21, 4, 3, shade);
-    // The axe sits beside the body so it reads apart from the horns.
-    fill_rect(r, x + 21, y + 7, 2, 16, shade);
-    fill_rect(r, x + 21, y + 8, 1, 14, light);
-    fill_rect(r, x + 19, y + 4, 5, 5, steel);
-    fill_rect(r, x + 20, y + 3, 4, 2, horn);
-    fill_rect(r, x + 23, y + 5, 1, 3, (SDL_Color){221, 229, 225, 255});
 }
 
 static void draw_catacombs_enemy(Renderer *r, int tx, int ty, EnemyType type) {
+    int art;
+    switch (type) {
+        case ENEMY_ANCIENT_SKELETON: art = CATA_ART_ANCIENT_SKELETON; break;
+        case ENEMY_BONE_SENTINEL: art = CATA_ART_BONE_SENTINEL; break;
+        case ENEMY_GRAVE_ARCHER: art = CATA_ART_GRAVE_ARCHER; break;
+        case ENEMY_BONE_CANTOR: art = CATA_ART_BONE_CANTOR; break;
+        case ENEMY_GRAVE_MARSHAL: art = CATA_ART_GRAVE_MARSHAL; break;
+        default: return;
+    }
+    static const SDL_Color clothes[CATA_ART_COUNT] = {
+        {62, 65, 70, 255}, {49, 57, 75, 255}, {37, 40, 48, 255},
+        {74, 55, 109, 255}, {111, 38, 47, 255}
+    };
+    SDL_Color cloth = clothes[art];
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){19, 20, 29, 255};
+    palette['s'] = (SDL_Color){147, 140, 122, 255};
+    palette['S'] = (SDL_Color){220, 211, 184, 255};
+    palette['H'] = (SDL_Color){239, 234, 210, 255};
+    palette['c'] = (SDL_Color){cloth.r * 2 / 3, cloth.g * 2 / 3, cloth.b * 2 / 3, 255};
+    palette['C'] = cloth;
+    palette['v'] = (SDL_Color){cloth.r + (255 - cloth.r) / 4,
+        cloth.g + (255 - cloth.g) / 4, cloth.b + (255 - cloth.b) / 4, 255};
+    palette['e'] = (SDL_Color){15, 18, 29, 255};
+    palette['y'] = (SDL_Color){105, 216, 232, 255};
+    palette['m'] = (SDL_Color){45, 48, 62, 255};
+    palette['M'] = (SDL_Color){83, 94, 114, 255};
+    palette['N'] = (SDL_Color){192, 205, 213, 255};
+    palette['r'] = (SDL_Color){105, 72, 42, 255};
+    palette['R'] = (SDL_Color){159, 115, 62, 255};
+    palette['f'] = (SDL_Color){233, 226, 201, 255};
+    palette['p'] = (SDL_Color){56, 121, 150, 255};
+    palette['P'] = (SDL_Color){145, 237, 244, 255};
+    palette['g'] = (SDL_Color){125, 93, 41, 255};
+    palette['G'] = (SDL_Color){190, 159, 84, 255};
+    palette['w'] = (SDL_Color){62, 43, 32, 255};
+    palette['W'] = (SDL_Color){133, 100, 61, 255};
+    palette['l'] = (SDL_Color){51, 37, 29, 255};
+    palette['L'] = (SDL_Color){110, 77, 46, 255};
+    palette['K'] = (SDL_Color){150, 116, 73, 255};
+    palette['k'] = (SDL_Color){34, 29, 27, 255};
     int x = tx * TILE_SIZE;
     int y = ty * TILE_SIZE;
-    SDL_Color iron = {83, 94, 114, 255};
-    SDL_Color gold = {190, 159, 84, 255};
-    SDL_Color blue = {105, 216, 232, 255};
-    draw_skeleton(r, tx, ty);
-    fill_rect(r, x + 8, y + 5, 2, 2, blue);
-    fill_rect(r, x + 14, y + 5, 2, 2, blue);
-    if (type == ENEMY_BONE_CANTOR) {
-        fill_rect(r, x + 6, y + 11, 13, 10, (SDL_Color){74, 55, 109, 255});
-        fill_rect(r, x + 11, y + 11, 2, 9, gold);
-        fill_rect(r, x + 2, y + 4, 2, 19, gold);
-        fill_rect(r, x + 1, y + 2, 4, 4, blue);
-    } else if (type == ENEMY_GRAVE_ARCHER) {
-        fill_rect(r, x + 1, y + 4, 5, 14, (SDL_Color){37, 40, 48, 255});
-        fill_rect(r, x + 3, y + 8, 1, 12, gold);
-        fill_rect(r, x + 1, y + 7, 3, 2, gold);
-        fill_rect(r, x + 1, y + 19, 3, 2, gold);
-    } else {
-        fill_rect(r, x + 7, y + 1, 11, 3, iron);
-        fill_rect(r, x + 7, y + 11, 12, 6, iron);
-        fill_rect(r, x + 10, y + 12, 5, 1, gold);
-        if (type == ENEMY_BONE_SENTINEL || type == ENEMY_GRAVE_MARSHAL) {
-            fill_rect(r, x + 18, y + 10, 6, 12, iron);
-            fill_rect(r, x + 20, y + 11, 2, 9, gold);
-        }
-        if (type == ENEMY_GRAVE_MARSHAL) {
-            fill_rect(r, x + 7, y, 11, 3, gold);
-            fill_rect(r, x + 6, y + 18, 13, 3, (SDL_Color){111, 38, 47, 255});
-            fill_rect(r, x + 2, y + 2, 2, 21, gold);
-            fill_rect(r, x, y + 2, 8, 3, (SDL_Color){192, 205, 213, 255});
+    for (int row = 0; row < 24; row++) {
+        for (int col = 0; col < 24;) {
+            char ink = catacombs_enemy_art[art][row][col];
+            int end = col + 1;
+            while (end < 24 && catacombs_enemy_art[art][row][end] == ink) {
+                end++;
+            }
+            if (ink != '.') {
+                fill_rect(r, x + col, y + row, end - col, 1, palette[(unsigned char)ink]);
+            }
+            col = end;
         }
     }
 }
@@ -3222,7 +2760,7 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
             draw_catacombs_enemy(r, tile_x, tile_y, type);
             break;
         case ENEMY_MINOTAUR:
-            draw_minotaur(r, tile_x, tile_y);
+            draw_swamp_enemy(r, tile_x, tile_y, type);
             break;
         case ENEMY_CRYSTAL_SPIDER:
         case ENEMY_BLIND_STALKER:
@@ -3256,7 +2794,7 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
             break;
         case ENEMY_ROAD_ARCHER:
         case ENEMY_HORSEMAN:
-            draw_crownroad_enemy(r, tile_x, tile_y, type);
+            draw_dragonspine_road_enemy(r, tile_x, tile_y, type);
             break;
         case ENEMY_ICE_WOLF:
         case ENEMY_FROST_ARCHER:
@@ -3269,10 +2807,8 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_GIANT_RAT:
         case ENEMY_BANDIT:
         case ENEMY_VAMPIRE:
-            draw_swamp_enemy(r, tile_x, tile_y, type);
-            break;
         case ENEMY_SWAMP_DEMON:
-            draw_demon_lord(r, tile_x, tile_y);
+            draw_swamp_enemy(r, tile_x, tile_y, type);
             break;
         case ENEMY_SKELETON: draw_skeleton(r, tile_x, tile_y); break;
         case ENEMY_GOBLIN:   draw_goblin(r, tile_x, tile_y);   break;
@@ -3319,20 +2855,23 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
             if (!r->temple_enemy_texture) {
                 break;
             }
-            SDL_Rect source = {0, 20, 290, 280};
+            int art = 0;
             switch (type) {
-                case ENEMY_TEMPLE_STALKER: source = (SDL_Rect){280, 0, 320, 310}; break;
-                case ENEMY_BLOWDART_HUNTER: source = (SDL_Rect){580, 0, 300, 320}; break;
-                case ENEMY_VINEBOUND_GUARDIAN: source = (SDL_Rect){875, 0, 340, 330}; break;
-                case ENEMY_SUN_PRIEST: source = (SDL_Rect){0, 315, 300, 340}; break;
-                case ENEMY_SERPENT_SPIRIT: source = (SDL_Rect){300, 325, 305, 370}; break;
-                case ENEMY_TREASURE_WRAITH: source = (SDL_Rect){600, 320, 315, 355}; break;
-                case ENEMY_LUNAR_EFFIGY: source = (SDL_Rect){900, 350, 300, 320}; break;
-                case ENEMY_MOONBOUND_SENTINEL: source = (SDL_Rect){280, 650, 310, 440}; break;
-                case ENEMY_FALLEN_SUN_GUARDIAN: source = (SDL_Rect){490, 650, 500, 645}; break;
+                case ENEMY_TEMPLE_STALKER: art = 1; break;
+                case ENEMY_BLOWDART_HUNTER: art = 2; break;
+                case ENEMY_VINEBOUND_GUARDIAN: art = 3; break;
+                case ENEMY_SUN_PRIEST: art = 4; break;
+                case ENEMY_SERPENT_SPIRIT: art = 5; break;
+                case ENEMY_TREASURE_WRAITH: art = 6; break;
+                case ENEMY_LUNAR_EFFIGY: art = 7; break;
+                case ENEMY_MOONBOUND_SENTINEL: art = 8; break;
+                case ENEMY_FALLEN_SUN_GUARDIAN: art = 9; break;
                 default: break;
             }
             int size = type == ENEMY_FALLEN_SUN_GUARDIAN ? 40 : 28;
+            // Native frames occupy bottom-centered slots in the 48-pixel atlas.
+            SDL_Rect source = {art % 4 * 48 + (48 - size) / 2,
+                art / 4 * 48 + 48 - size, size, size};
             SDL_Rect destination = {
                 tile_x * TILE_SIZE + (TILE_SIZE - size) / 2,
                 tile_y * TILE_SIZE + TILE_SIZE - size, size, size
@@ -3350,7 +2889,7 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_RED_DRAGON:  draw_red_dragon(r, tile_x, tile_y);  break;
         case ENEMY_DRAKE:
         case ENEMY_FIRE_ELEMENTAL:
-            draw_dragonspine_enemy(r, tile_x, tile_y, type); break;
+            draw_dragonspine_road_enemy(r, tile_x, tile_y, type); break;
         case ENEMY_TARRASQUE:   draw_tarrasque(r, tile_x, tile_y);   break;
     }
 }
@@ -3359,7 +2898,7 @@ void draw_fallen_sun_guardian_broken(Renderer *r, int tile_x, int tile_y) {
     if (!r->temple_enemy_texture) {
         return;
     }
-    SDL_Rect source = {930, 720, 285, 575};
+    SDL_Rect source = {100, 104, 40, 40};
     SDL_Rect destination = {
         tile_x * TILE_SIZE - 8,
         tile_y * TILE_SIZE - 16, 40, 40
