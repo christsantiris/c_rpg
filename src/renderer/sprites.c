@@ -12,6 +12,7 @@
 #include "moonveil_enemy_art.h"
 #include "ashen_enemy_art.h"
 #include "glassdeep_enemy_art.h"
+#include "catacombs_enemy_art.h"
 #include "npc_renderer.h"
 #include <stdlib.h>
 
@@ -2697,37 +2698,60 @@ static void draw_glassdeep_enemy(Renderer *r, int tx, int ty, EnemyType type) {
 }
 
 static void draw_catacombs_enemy(Renderer *r, int tx, int ty, EnemyType type) {
+    int art;
+    switch (type) {
+        case ENEMY_ANCIENT_SKELETON: art = CATA_ART_ANCIENT_SKELETON; break;
+        case ENEMY_BONE_SENTINEL: art = CATA_ART_BONE_SENTINEL; break;
+        case ENEMY_GRAVE_ARCHER: art = CATA_ART_GRAVE_ARCHER; break;
+        case ENEMY_BONE_CANTOR: art = CATA_ART_BONE_CANTOR; break;
+        case ENEMY_GRAVE_MARSHAL: art = CATA_ART_GRAVE_MARSHAL; break;
+        default: return;
+    }
+    static const SDL_Color clothes[CATA_ART_COUNT] = {
+        {62, 65, 70, 255}, {49, 57, 75, 255}, {37, 40, 48, 255},
+        {74, 55, 109, 255}, {111, 38, 47, 255}
+    };
+    SDL_Color cloth = clothes[art];
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){19, 20, 29, 255};
+    palette['s'] = (SDL_Color){147, 140, 122, 255};
+    palette['S'] = (SDL_Color){220, 211, 184, 255};
+    palette['H'] = (SDL_Color){239, 234, 210, 255};
+    palette['c'] = (SDL_Color){cloth.r * 2 / 3, cloth.g * 2 / 3, cloth.b * 2 / 3, 255};
+    palette['C'] = cloth;
+    palette['v'] = (SDL_Color){cloth.r + (255 - cloth.r) / 4,
+        cloth.g + (255 - cloth.g) / 4, cloth.b + (255 - cloth.b) / 4, 255};
+    palette['e'] = (SDL_Color){15, 18, 29, 255};
+    palette['y'] = (SDL_Color){105, 216, 232, 255};
+    palette['m'] = (SDL_Color){45, 48, 62, 255};
+    palette['M'] = (SDL_Color){83, 94, 114, 255};
+    palette['N'] = (SDL_Color){192, 205, 213, 255};
+    palette['r'] = (SDL_Color){105, 72, 42, 255};
+    palette['R'] = (SDL_Color){159, 115, 62, 255};
+    palette['f'] = (SDL_Color){233, 226, 201, 255};
+    palette['p'] = (SDL_Color){56, 121, 150, 255};
+    palette['P'] = (SDL_Color){145, 237, 244, 255};
+    palette['g'] = (SDL_Color){125, 93, 41, 255};
+    palette['G'] = (SDL_Color){190, 159, 84, 255};
+    palette['w'] = (SDL_Color){62, 43, 32, 255};
+    palette['W'] = (SDL_Color){133, 100, 61, 255};
+    palette['l'] = (SDL_Color){51, 37, 29, 255};
+    palette['L'] = (SDL_Color){110, 77, 46, 255};
+    palette['K'] = (SDL_Color){150, 116, 73, 255};
+    palette['k'] = (SDL_Color){34, 29, 27, 255};
     int x = tx * TILE_SIZE;
     int y = ty * TILE_SIZE;
-    SDL_Color iron = {83, 94, 114, 255};
-    SDL_Color gold = {190, 159, 84, 255};
-    SDL_Color blue = {105, 216, 232, 255};
-    draw_skeleton(r, tx, ty);
-    fill_rect(r, x + 8, y + 5, 2, 2, blue);
-    fill_rect(r, x + 14, y + 5, 2, 2, blue);
-    if (type == ENEMY_BONE_CANTOR) {
-        fill_rect(r, x + 6, y + 11, 13, 10, (SDL_Color){74, 55, 109, 255});
-        fill_rect(r, x + 11, y + 11, 2, 9, gold);
-        fill_rect(r, x + 2, y + 4, 2, 19, gold);
-        fill_rect(r, x + 1, y + 2, 4, 4, blue);
-    } else if (type == ENEMY_GRAVE_ARCHER) {
-        fill_rect(r, x + 1, y + 4, 5, 14, (SDL_Color){37, 40, 48, 255});
-        fill_rect(r, x + 3, y + 8, 1, 12, gold);
-        fill_rect(r, x + 1, y + 7, 3, 2, gold);
-        fill_rect(r, x + 1, y + 19, 3, 2, gold);
-    } else {
-        fill_rect(r, x + 7, y + 1, 11, 3, iron);
-        fill_rect(r, x + 7, y + 11, 12, 6, iron);
-        fill_rect(r, x + 10, y + 12, 5, 1, gold);
-        if (type == ENEMY_BONE_SENTINEL || type == ENEMY_GRAVE_MARSHAL) {
-            fill_rect(r, x + 18, y + 10, 6, 12, iron);
-            fill_rect(r, x + 20, y + 11, 2, 9, gold);
-        }
-        if (type == ENEMY_GRAVE_MARSHAL) {
-            fill_rect(r, x + 7, y, 11, 3, gold);
-            fill_rect(r, x + 6, y + 18, 13, 3, (SDL_Color){111, 38, 47, 255});
-            fill_rect(r, x + 2, y + 2, 2, 21, gold);
-            fill_rect(r, x, y + 2, 8, 3, (SDL_Color){192, 205, 213, 255});
+    for (int row = 0; row < 24; row++) {
+        for (int col = 0; col < 24;) {
+            char ink = catacombs_enemy_art[art][row][col];
+            int end = col + 1;
+            while (end < 24 && catacombs_enemy_art[art][row][end] == ink) {
+                end++;
+            }
+            if (ink != '.') {
+                fill_rect(r, x + col, y + row, end - col, 1, palette[(unsigned char)ink]);
+            }
+            col = end;
         }
     }
 }
