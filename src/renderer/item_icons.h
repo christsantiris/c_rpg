@@ -7,6 +7,7 @@
 
 #define ICON_SIZE 24
 
+void draw_icon_item(Renderer *r, int px, int py, const Item *item);
 void draw_icon_weapon(Renderer *r, int px, int py, const Item *item);
 void draw_icon_armor(Renderer *r, int px, int py, const Item *item);
 void draw_icon_shield(Renderer *r, int px, int py, const Item *item);

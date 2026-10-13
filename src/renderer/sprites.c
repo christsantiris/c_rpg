@@ -16,6 +16,7 @@
 #include "catacombs_enemy_art.h"
 #include "npc_renderer.h"
 #include <stdlib.h>
+#include <string.h>
 
 static void fill_rect(Renderer *r, int x, int y, int w, int h, SDL_Color c) {
     SDL_Rect rect = {x, y, w, h};
@@ -1261,7 +1262,14 @@ static void draw_player_sword(Renderer *r, const Item *weapon, int bx, int by, i
         blade = (SDL_Color){151, 77, 45, 255};
         edge = (SDL_Color){190, 105, 59, 255};
     }
+    if (strcmp(weapon->name, "Cryptblade") == 0) {
+        glow = (SDL_Color){184, 134, 242, 255};
+        blade = (SDL_Color){142, 144, 180, 255};
+    }
 
+    SDL_Color outline = {16, 20, 29, 255};
+    draw_weapon_line(r, bx, by, dx, dy, 1, -width - 1, length, -width - 1, outline);
+    draw_weapon_line(r, bx, by, dx, dy, 1, width + 1, length, width + 1, outline);
     if (magic) {
         draw_weapon_line(r, bx, by, dx, dy, 1, -width - 1,
             length, -width - 1, glow);
@@ -1273,6 +1281,11 @@ static void draw_player_sword(Renderer *r, const Item *weapon, int bx, int by, i
             side == -width ? edge : blade);
     }
     draw_weapon_line(r, bx, by, dx, dy, -4, 0, 0, 0, grip);
+    for (int band = -3; band < 0; band += 2) {
+        draw_weapon_line(r, bx, by, dx, dy, band, -1, band, 1, guard);
+    }
+    draw_weapon_line(r, bx, by, dx, dy, 3, 0, length - 2, 0,
+        magic ? glow : (SDL_Color){110, 128, 148, 255});
     draw_weapon_line(r, bx, by, dx, dy, 0, -3, 0, 3, guard);
     draw_weapon_line(r, bx, by, dx, dy, length, -width,
         length + 1, 0, edge);
@@ -1290,6 +1303,12 @@ static void draw_player_axe(Renderer *r, const Item *weapon, int bx, int by, int
     SDL_Color edge = magic ? (SDL_Color){217, 249, 255, 255}
         : (SDL_Color){225, 231, 233, 255};
     draw_weapon_line(r, bx, by, dx, dy, -4, 0, 9, 0, handle);
+    draw_weapon_line(r, bx, by, dx, dy, -4, -1, 7, -1, (SDL_Color){36, 28, 29, 255});
+    for (int forward = 7; forward <= 10; forward++) {
+        int half = forward < 9 ? 4 : 3;
+        draw_weapon_line(r, bx, by, dx, dy, forward, -half, forward, half, head);
+    }
+    draw_weapon_line(r, bx, by, dx, dy, 6, -1, 6, 1, edge);
     if (magic) {
         draw_weapon_line(r, bx, by, dx, dy, 7, -5, 10, -3, glow);
         draw_weapon_line(r, bx, by, dx, dy, 7, 5, 10, 3, glow);
@@ -1314,7 +1333,15 @@ static void draw_player_staff(Renderer *r, const Item *weapon, int bx, int by, i
         gem = (SDL_Color){244, 126, 35, 255};
         core = (SDL_Color){255, 238, 157, 255};
     }
+    draw_weapon_line(r, bx, by, dx, dy, -5, -1, 8, -1, (SDL_Color){28, 23, 34, 255});
     draw_weapon_line(r, bx, by, dx, dy, -5, 0, 8, 0, wood);
+    for (int band = -2; band <= 6; band += 4) {
+        draw_weapon_line(r, bx, by, dx, dy, band, 0, band, 1,
+            runed || magic ? gem : (SDL_Color){186, 141, 63, 255});
+    }
+    draw_weapon_line(r, bx, by, dx, dy, 8, -1, 10, -1, gem);
+    draw_weapon_line(r, bx, by, dx, dy, 8, 0, 11, 0, gem);
+    draw_weapon_line(r, bx, by, dx, dy, 8, 1, 10, 1, gem);
     draw_weapon_line(r, bx, by, dx, dy, 8, -2, 11, 0, gem);
     draw_weapon_line(r, bx, by, dx, dy, 8, 2, 11, 0, gem);
     draw_weapon_line(r, bx, by, dx, dy, 9, -1, 9, 1,
@@ -1330,8 +1357,14 @@ static void draw_player_bow(Renderer *r, const Item *weapon, int bx, int by, int
         : (SDL_Color){217, 214, 191, 255};
     SDL_Color arrow = magic ? (SDL_Color){80, 228, 245, 255}
         : (SDL_Color){190, 201, 204, 255};
-    draw_weapon_line(r, bx, by, dx, dy, -length / 2, 3, 0, -1, wood);
-    draw_weapon_line(r, bx, by, dx, dy, 0, -1, length / 2, 3, wood);
+    if (strcmp(weapon->name, "Krakenbone Bow") == 0) {
+        wood = (SDL_Color){192, 193, 158, 255};
+    }
+    draw_weapon_line(r, bx, by, dx, dy, -length / 2, 3, -length / 2 + 2, 0, wood);
+    draw_weapon_line(r, bx, by, dx, dy, -length / 2 + 2, 0, 0, -2, wood);
+    draw_weapon_line(r, bx, by, dx, dy, 0, -2, length / 2 - 2, 0, wood);
+    draw_weapon_line(r, bx, by, dx, dy, length / 2 - 2, 0, length / 2, 3, wood);
+    draw_weapon_line(r, bx, by, dx, dy, -1, -1, 1, -1, string);
     draw_weapon_line(r, bx, by, dx, dy, -length / 2, 3,
         length / 2, 3, string);
     draw_weapon_line(r, bx, by, dx, dy, -4, 0, length, 0, arrow);
@@ -1405,10 +1438,25 @@ static void draw_equipped_player_shield(Renderer *r, const Item *shield, int x, 
         face = (SDL_Color){79, 65, 153, 255};
         mark = (SDL_Color){221, 250, 255, 255};
     }
-    fill_rect(r, bx - 5, by - 6, 10, 12, rim);
-    fill_rect(r, bx - 3, by - 4, 6, 9, face);
-    fill_rect(r, bx - 1, by - 4, 2, 8, mark);
-    fill_rect(r, bx - 3, by - 1, 6, 2, mark);
+    if (strcmp(shield->name, "Goblin King's Shield") == 0) {
+        face = (SDL_Color){74, 115, 59, 255};
+    }
+    static const char shapes[3][13][12] = {
+        {"...........", "...ooooo...", "..oRRRRRo..", ".oRRfffRRo.", ".oRfffffRo.", ".oRffmffRo.", ".oRfmRmfRo.", ".oRffmffRo.", ".oRfffffRo.", ".oRRfffRRo.", "..oRRRRRo..", "...ooooo...", "..........."},
+        {".ooooooooo.", "oRRRRRRRRRo", "oRfffffffRo", "oRfffmfffRo", "oRfffmfffRo", "oRfmmmmmfRo", "oRfffmfffRo", "oRfffmfffRo", ".oRffmffRo.", ".oRRfffRRo.", "..oRRfRRo..", "...oRRRo...", "....ooo...."},
+        {"..ooooooo..", ".oRRRRRRRo.", "oRRfffffRRo", "oRfffmfffRo", "oRfffmfffRo", "oRfmmmmmfRo", "oRfffmfffRo", "oRfffmfffRo", "oRfffmfffRo", "oRRfffffRRo", ".oRRRRRRRo.", "..ooooooo..", "..........."}
+    };
+    int shape = shield->visual_id == ITEM_VISUAL_BUCKLER ? 0 : shield->visual_id == ITEM_VISUAL_TOWER_SHIELD ? 2 : 1;
+    for (int row = 0; row < 13; row++) {
+        for (int col = 0; col < 11; col++) {
+            char ink = shapes[shape][row][col];
+            if (ink == '.' || ink == ' ') {
+                continue;
+            }
+            SDL_Color color = ink == 'R' ? rim : ink == 'f' ? face : ink == 'm' ? mark : (SDL_Color){16, 20, 29, 255};
+            fill_rect(r, bx - 5 + col, by - 6 + row, 1, 1, color);
+        }
+    }
 }
 
 static void player_body_palette(SDL_Color *palette, PlayerClass player_class, const Item *armor) {
@@ -1465,6 +1513,17 @@ static void player_body_palette(SDL_Color *palette, PlayerClass player_class, co
         palette['r'] = armor->rarity == ITEM_RARITY_COMMON
             ? (SDL_Color){91, 132, 201, 255} : (SDL_Color){91, 231, 225, 255};
     }
+    if (armor) {
+        if (strcmp(armor->name, "Necromancer's Cloak") == 0) {
+            suit = (SDL_Color){62, 46, 86, 255};
+        } else if (strcmp(armor->name, "Gravekeeper's Mantle") == 0) {
+            suit = (SDL_Color){81, 91, 102, 255};
+        } else if (strcmp(armor->name, "Dragon Scale Mantle") == 0) {
+            suit = (SDL_Color){165, 84, 55, 255};
+        } else if (strcmp(armor->name, "Tidecaller Robes") == 0) {
+            suit = (SDL_Color){38, 132, 146, 255};
+        }
+    }
     palette['a'] = (SDL_Color){suit.r * 2 / 3, suit.g * 2 / 3, suit.b * 2 / 3, 255};
     palette['A'] = suit;
     palette['v'] = (SDL_Color){suit.r + (255 - suit.r) / 3,
@@ -1485,7 +1544,22 @@ static void draw_player_body(Renderer *r, int x, int y, PlayerClass player_class
             }
             if (ink != '.') {
                 int start = dx < 0 ? 24 - end : col;
-                fill_rect(r, x + start, y + row, end - col, 1, palette[(unsigned char)ink]);
+                for (int pixel = 0; pixel < end - col; pixel++) {
+                    char detail = ink;
+                    int source_col = dx < 0 ? end - pixel - 1 : col + pixel;
+                    if (armor && ink == 'A') {
+                        if (armor->visual_id == ITEM_VISUAL_CHAIN_MAIL) {
+                            detail = (row + source_col) % 2 ? 'a' : 'v';
+                        } else if (armor->visual_id == ITEM_VISUAL_SCALE_MAIL) {
+                            detail = (source_col + row / 3) % 3 == 0 ? 'a' : row % 3 == 0 ? 'v' : 'A';
+                        } else if (armor->visual_id == ITEM_VISUAL_STUDDED_LEATHER && row % 3 == 0 && source_col % 3 == 0) {
+                            detail = 'H';
+                        } else if (armor->armor_family == ARMOR_FAMILY_ROBE && armor->rarity != ITEM_RARITY_COMMON && row % 4 == 0 && source_col % 3 == 0) {
+                            detail = 'r';
+                        }
+                    }
+                    fill_rect(r, x + start + pixel, y + row, 1, 1, palette[(unsigned char)detail]);
+                }
             }
             col = end;
         }
