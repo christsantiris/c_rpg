@@ -268,3 +268,18 @@ transparent edge. Keep the atlas and the source rectangles in `draw_enemy()`
 and `draw_fallen_sun_guardian_broken()` in `src/renderer/sprites.c` together.
 The source, exact imagegen prompts, and review images are documented in
 [`docs/art-sources/enemy-batch-15/README.md`](../../docs/art-sources/enemy-batch-15/README.md).
+
+The Castle enemy and boss sheets are imported with:
+
+```sh
+python3 tools/sprites/castle_enemies.py
+```
+
+The importer uses `pixelkit.save_sprite()` to write two native atlases: five
+24×26 regular frames in a 96×64 sheet and five 36×36 boss poses in a 120×80
+sheet. Boss poses include the Castellan, Royal Arcanist, and all three Veyr
+forms. Frames have at most 32 opaque colors and clear transparent borders.
+Keep both BMPs and the source rectangles in `castle_draw_enemy()` in
+`src/renderer/castle_renderer.c` together. Sources, exact imagegen prompts,
+and renderer previews are in
+[`docs/art-sources/enemy-batch-16/README.md`](../../docs/art-sources/enemy-batch-16/README.md).
