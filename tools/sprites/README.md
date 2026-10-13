@@ -251,7 +251,20 @@ different silhouette from the Town Hall.
 
 ## Source art that is not generated
 
-The island and temple sprite sheets (`island-sprites.bmp`, `island-ship.bmp`
-and `temple-enemies.bmp`) are not drawn by these scripts. Their original
-high-resolution images, which the BMPs were converted from, are in
-`docs/art-sources/`.
+The island sprite sheets (`island-sprites.bmp` and `island-ship.bmp`) are not
+drawn by these scripts. Their original high-resolution images, which the
+BMPs were converted from, are in `docs/art-sources/`.
+
+The Temple enemy sheet is imported from its refined source with:
+
+```sh
+python3 tools/sprites/temple_enemies.py
+```
+
+The importer uses `pixelkit.save_sprite()` to write the alpha BMP at native
+display resolution. It packs nine 28×28 enemy frames and two 40×40 Guardian
+poses into a 192×144 atlas. Each pose has at most 32 opaque colors and a clear
+transparent edge. Keep the atlas and the source rectangles in `draw_enemy()`
+and `draw_fallen_sun_guardian_broken()` in `src/renderer/sprites.c` together.
+The source, exact imagegen prompts, and review images are documented in
+[`docs/art-sources/enemy-batch-15/README.md`](../../docs/art-sources/enemy-batch-15/README.md).

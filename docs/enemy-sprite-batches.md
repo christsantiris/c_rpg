@@ -2,7 +2,7 @@
 
 The current roster contains **95 enemy types in 16 batches**. Each `EnemyType` from `src/game/enemy.h` appears exactly once below. Additional boss forms, named hunts, quest enemies, and shared-renderer dependencies are tracked separately.
 
-Progress: **77/95 enemy types completed (batches 1–14)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
+Progress: **87/95 enemy types completed (batches 1–15)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
 
 ## Batch overview
 
@@ -22,7 +22,7 @@ Progress: **77/95 enemy types completed (batches 1–14)**. Completed boxes have
 | 12 | Glassdeep Caverns | 4 | Yes |
 | 13 | Royal Catacombs | 5 | Yes |
 | 14 | Original dungeon bosses | 5 | Yes |
-| 15 | Ruined Isle and Temple | 10 | No |
+| 15 | Ruined Isle and Temple | 10 | Yes |
 | 16 | Castle of No Return | 8 | No |
 | **Total** | | **95** | |
 
@@ -270,18 +270,26 @@ Scene previews use controlled dungeon and Dragonspine room fixtures for artwork 
 
 ### Batch 15: Ruined Isle and Temple (10)
 
-- [ ] Relic Scarabs — `ENEMY_RELIC_SCARABS`
-- [ ] Temple Stalker — `ENEMY_TEMPLE_STALKER`
-- [ ] Blowdart Hunter — `ENEMY_BLOWDART_HUNTER`
-- [ ] Vinebound Guardian (displayed as Vine Guardian) — `ENEMY_VINEBOUND_GUARDIAN`
-- [ ] Sun Priest — `ENEMY_SUN_PRIEST`
-- [ ] Serpent Spirit — `ENEMY_SERPENT_SPIRIT`
-- [ ] Treasure Wraith — `ENEMY_TREASURE_WRAITH`
-- [ ] Lunar Effigy — `ENEMY_LUNAR_EFFIGY`
-- [ ] Moonbound Sentinel — `ENEMY_MOONBOUND_SENTINEL`
-- [ ] Fallen Sun Guardian (displayed as Sun Guardian) — `ENEMY_FALLEN_SUN_GUARDIAN`
+- [x] Relic Scarabs — `ENEMY_RELIC_SCARABS`
+- [x] Temple Stalker — `ENEMY_TEMPLE_STALKER`
+- [x] Blowdart Hunter — `ENEMY_BLOWDART_HUNTER`
+- [x] Vinebound Guardian (displayed as Vine Guardian) — `ENEMY_VINEBOUND_GUARDIAN`
+- [x] Sun Priest — `ENEMY_SUN_PRIEST`
+- [x] Serpent Spirit — `ENEMY_SERPENT_SPIRIT`
+- [x] Treasure Wraith — `ENEMY_TREASURE_WRAITH`
+- [x] Lunar Effigy — `ENEMY_LUNAR_EFFIGY`
+- [x] Moonbound Sentinel — `ENEMY_MOONBOUND_SENTINEL`
+- [x] Fallen Sun Guardian (displayed as Sun Guardian) — `ENEMY_FALLEN_SUN_GUARDIAN`
 
-Include the Sun Guardian’s intact and broken appearances. These temple assets display at 28×28 pixels, with the guardian at 40×40; review the artwork at those sizes.
+Reviewed all ten sprites through the actual SDL renderer on Temple terrain at their native display sizes: 28×28 pixels for regular enemies and 40×40 for the Sun Guardian. Checked the Guardian at 51% and 50% health to verify the intact/broken switch, its low-health and defeated appearance, and the awakened Moonbound Sentinel beside the dormant marker and altar. Also inspected transparent terrain, frozen overlays, health bars, melee damage feedback, and Hunter/Priest/Serpent/Sentinel/Guardian projectile travel and impact. Display bounds, SDL scale/viewport/clip/blend preservation, missing-texture behavior, Release and Debug builds, and AddressSanitizer/UndefinedBehaviorSanitizer renderer checks passed. All 77 sprites from batches 1–14 remain pixel-for-pixel identical.
+
+- [Before/after comparison of all ten enemies and the broken Guardian](art-sources/enemy-batch-15/before-after.png).
+- [Temple renderer preview](art-sources/enemy-batch-15/temple.png).
+- [Guardian phases and awakened Sentinel context](art-sources/enemy-batch-15/guardian-and-sentinel.png).
+- [Frozen overlays, damage, and projectiles](art-sources/enemy-batch-15/effects.png).
+- [Source art, exact imagegen prompts, and import pipeline](art-sources/enemy-batch-15/README.md).
+
+Scene previews use controlled Temple room and encounter fixtures for artwork review rather than quest or boss-fight playthroughs. The artwork keeps mossy stone, gold relic trim, and cyan/orange magic, with distinct beetles, connected weapon grips, larger facial features, carved wing feathers, and clearer armor joints. The broken Guardian has a shorter slumped silhouette, missing armor and halo pieces, and a cracked core. The source was refined with the built-in imagegen tool and imported with `tools/sprites/temple_enemies.py` into isolated native frames, removing neighboring-sprite bleed from the old irregular crops. Combat, display footprints, enemy enum values, saved state, and animation rules are unchanged.
 
 ### Batch 16: Castle of No Return (8)
 
@@ -305,7 +313,7 @@ These entries reuse enemy types above. They do not increase the 95-type count. N
 | [ ] | Lord Veyr: armored form, above two-thirds health | Lord Veyr, batch 16 |
 | [ ] | Lord Veyr: damaged form, above one-third through two-thirds health | Lord Veyr, batch 16 |
 | [ ] | Lord Veyr: spectral form, at or below one-third health | Lord Veyr, batch 16 |
-| [ ] | Sun Guardian: broken form, at or below half health; deactivated appearance | Fallen Sun Guardian, batch 15 |
+| [x] | Sun Guardian: broken form, at or below half health; deactivated appearance | Fallen Sun Guardian, batch 15 |
 | [x] | Rimefang and Rimefang Pack | Ice Wolf and Frost Wraith, batch 8 |
 | [x] | Shardwarden and Shardwarden Stalker | Shard Golem and Blind Stalker, batch 12 |
 | [x] | Dunehex and Dunehex Mummy | Djinn and Mummy, batch 9 |
@@ -345,7 +353,7 @@ These entries reuse enemy types above. They do not increase the 95-type count. N
 - The five catacomb enemies now use dedicated artwork in `src/renderer/catacombs_enemy_art.h`. They no longer share `draw_skeleton()`; the batch 1 comparison preserves the earlier shared-overlay review, and batch 13 verifies that the dungeon Skeleton remains unchanged.
 - Swamp Demon now has dedicated artwork in `src/renderer/swamp_enemy_art.h`. It no longer shares `draw_demon_lord()`; the original Demon Lord remains scheduled for batch 14.
 - Castle artwork uses `castle_draw_enemy()` in `src/renderer/castle_renderer.c`; the generic castle cases in `draw_enemy()` are not the live castle rendering path. The castle missing-texture fallback uses the Orc sprite from batch 1.
-- Temple artwork uses `assets/images/temple-enemies.bmp`, including the separate broken guardian crop. Castle artwork uses `assets/images/castle-enemies.bmp` and `castle-bosses.bmp`.
+- Temple artwork uses `assets/images/temple-enemies.bmp`, imported by `tools/sprites/temple_enemies.py` into 48-pixel atlas cells with native 28/40-pixel frames, including the separate broken Guardian. Castle artwork uses `assets/images/castle-enemies.bmp` and `castle-bosses.bmp`.
 - Polar Kraken uses `assets/images/polar-kraken.bmp` and a procedural fallback; preserve both paths during batch 8.
 - Minotaur retains the former Maze Warden’s saved numeric ID. Its appearance is batch 6, with no enum reordering.
 
