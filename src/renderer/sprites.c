@@ -11,6 +11,7 @@
 #include "desert_enemy_art.h"
 #include "moonveil_enemy_art.h"
 #include "ashen_enemy_art.h"
+#include "glassdeep_enemy_art.h"
 #include "npc_renderer.h"
 #include <stdlib.h>
 
@@ -2633,64 +2634,65 @@ static void draw_ashen_enemy(Renderer *r, int tx, int ty, EnemyType type) {
 }
 
 static void draw_glassdeep_enemy(Renderer *r, int tx, int ty, EnemyType type) {
+    int art;
+    switch (type) {
+        case ENEMY_CRYSTAL_SPIDER: art = GLASS_ART_CRYSTAL_SPIDER; break;
+        case ENEMY_BLIND_STALKER: art = GLASS_ART_BLIND_STALKER; break;
+        case ENEMY_SHARD_GOLEM: art = GLASS_ART_SHARD_GOLEM; break;
+        case ENEMY_PRISM_SOVEREIGN: art = GLASS_ART_PRISM_SOVEREIGN; break;
+        default: return;
+    }
+    static const SDL_Color bodies[GLASS_ART_COUNT] = {
+        {86, 181, 216, 255}, {163, 170, 185, 255}, {86, 181, 216, 255}, {146, 109, 213, 255}
+    };
+    static const SDL_Color clothes[GLASS_ART_COUNT] = {
+        {146, 109, 213, 255}, {69, 63, 89, 255}, {49, 41, 78, 255}, {146, 109, 213, 255}
+    };
+    SDL_Color body = bodies[art];
+    SDL_Color cloth = clothes[art];
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){22, 22, 41, 255};
+    palette['s'] = (SDL_Color){body.r * 2 / 3, body.g * 2 / 3, body.b * 2 / 3, 255};
+    palette['S'] = body;
+    palette['H'] = (SDL_Color){body.r + (255 - body.r) / 3,
+        body.g + (255 - body.g) / 3, body.b + (255 - body.b) / 3, 255};
+    palette['c'] = (SDL_Color){cloth.r * 2 / 3, cloth.g * 2 / 3, cloth.b * 2 / 3, 255};
+    palette['C'] = cloth;
+    palette['v'] = (SDL_Color){cloth.r + (255 - cloth.r) / 4,
+        cloth.g + (255 - cloth.g) / 4, cloth.b + (255 - cloth.b) / 4, 255};
+    palette['e'] = (SDL_Color){17, 19, 35, 255};
+    palette['y'] = (SDL_Color){152, 236, 242, 255};
+    palette['m'] = (SDL_Color){49, 41, 78, 255};
+    palette['M'] = (SDL_Color){86, 181, 216, 255};
+    palette['N'] = (SDL_Color){191, 238, 247, 255};
+    palette['f'] = (SDL_Color){191, 238, 247, 255};
+    palette['r'] = (SDL_Color){87, 96, 125, 255};
+    palette['R'] = (SDL_Color){131, 150, 179, 255};
+    palette['j'] = (SDL_Color){31, 29, 49, 255};
+    palette['J'] = (SDL_Color){49, 41, 78, 255};
+    palette['p'] = (SDL_Color){106, 200, 228, 255};
+    palette['P'] = (SDL_Color){191, 238, 247, 255};
     int x = tx * TILE_SIZE;
     int y = ty * TILE_SIZE;
-    SDL_Color shade = {49, 41, 78, 255};
-    SDL_Color crystal = {86, 181, 216, 255};
-    SDL_Color light = {191, 238, 247, 255};
-    SDL_Color violet = {146, 109, 213, 255};
-    if (type == ENEMY_CRYSTAL_SPIDER) {
-        for (int leg = 0; leg < 4; leg++) {
-            int offset = leg * 4;
-            fill_rect(r, x + 1, y + 4 + offset, 7, 2, crystal);
-            fill_rect(r, x + 16, y + 4 + offset, 7, 2, crystal);
-            fill_rect(r, x, y + 2 + offset, 2, 4, violet);
-            fill_rect(r, x + 22, y + 2 + offset, 2, 4, violet);
+    int pulse = (int)((SDL_GetTicks() / AMBIENT_FRAME_MS) & 1u);
+    for (int layer = 0; layer < 2; layer++) {
+        if (layer == 1 && type != ENEMY_PRISM_SOVEREIGN) {
+            continue;
         }
-        fill_rect(r, x + 7, y + 4, 10, 13, shade);
-        fill_rect(r, x + 9, y + 3, 6, 8, violet);
-        fill_rect(r, x + 11, y + 4, 2, 5, light);
-        fill_rect(r, x + 8, y + 16, 8, 5, crystal);
-        fill_rect(r, x + 9, y + 18, 2, 1, light);
-        fill_rect(r, x + 13, y + 18, 2, 1, light);
-        return;
-    }
-    if (type == ENEMY_BLIND_STALKER) {
-        SDL_Color skin = {163, 170, 185, 255};
-        fill_rect(r, x + 8, y + 2, 8, 8, skin);
-        fill_rect(r, x + 7, y + 3, 2, 5, light);
-        fill_rect(r, x + 9, y + 8, 6, 2, shade);
-        fill_rect(r, x + 6, y + 11, 12, 8, skin);
-        fill_rect(r, x + 3, y + 10, 3, 11, skin);
-        fill_rect(r, x + 18, y + 10, 3, 11, skin);
-        fill_rect(r, x + 1, y + 18, 4, 3, light);
-        fill_rect(r, x + 20, y + 18, 4, 3, light);
-        fill_rect(r, x + 6, y + 19, 4, 5, skin);
-        fill_rect(r, x + 14, y + 19, 4, 5, skin);
-        fill_rect(r, x + 11, y + 11, 2, 7, shade);
-        return;
-    }
-    int boss = type == ENEMY_PRISM_SOVEREIGN;
-    SDL_Color body = boss ? violet : crystal;
-    fill_rect(r, x + 7, y + 3, 10, 7, body);
-    fill_rect(r, x + 8, y + 4, 2, 4, light);
-    fill_rect(r, x + 10, y + 7, 5, 1, shade);
-    fill_rect(r, x + 5, y + 10, 14, 11, body);
-    fill_rect(r, x + 1, y + 10, 5, 10, body);
-    fill_rect(r, x + 19, y + 10, 4, 10, body);
-    fill_rect(r, x + 6, y + 20, 4, 4, shade);
-    fill_rect(r, x + 14, y + 20, 4, 4, shade);
-    fill_rect(r, x + 6, y + 11, 2, 8, light);
-    fill_rect(r, x + 11, y + 12, 3, 6, crystal);
-    fill_rect(r, x + 12, y + 13, 1, 3, light);
-    if (boss) {
-        for (int point = 0; point < 3; point++) {
-            fill_rect(r, x + 6 + point * 5, y, 3, 5, light);
+        const char (*rows)[25] = layer == 0 ? glassdeep_enemy_art[art] : glassdeep_prism_art[pulse];
+        for (int row = 0; row < 24; row++) {
+            for (int col = 0; col < 24;) {
+                char ink = rows[row][col];
+                int end = col + 1;
+                while (end < 24 && rows[row][end] == ink) {
+                    end++;
+                }
+                if (ink != '.') {
+                    fill_rect(r, x + col, y + row, end - col, 1, palette[(unsigned char)ink]);
+                }
+                col = end;
+            }
         }
-        fill_rect(r, x + 6, y + 4, 13, 2, crystal);
-        int pulse = (int)((SDL_GetTicks() / AMBIENT_FRAME_MS) & 1u);
-        fill_rect(r, x + 21, y + 3, 2, 6, light);
-        fill_rect(r, x + 20 - pulse, y + 5, 4 + pulse, 2, violet);
     }
 }
 
