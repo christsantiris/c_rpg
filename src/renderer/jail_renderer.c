@@ -1,5 +1,6 @@
 #include "jail_renderer.h"
 #include "sprites.h"
+#include "world_props.h"
 #include "npc_renderer.h"
 #include "../game/jail.h"
 
@@ -61,30 +62,17 @@ void jail_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, int 
         return;
     }
     draw_dungeon_floor(r, sx, sy, x, y);
-    int px = sx * TILE_SIZE;
-    int py = sy * TILE_SIZE;
     if (tile == TILE_JAIL_BARS) {
-        rect(r, px, py + 2, 24, 3, (SDL_Color){122, 126, 139, 255});
-        rect(r, px, py + 20, 24, 3, (SDL_Color){87, 93, 110, 255});
-        for (int bar = 0; bar < 4; bar++) {
-            rect(r, px + 2 + bar * 6, py + 3, 2, 20, (SDL_Color){151, 155, 168, 255});
-        }
+        draw_world_prop(r, sx, sy, PROP_GATE, (SDL_Color){151, 155, 168, 255});
     } else if (tile == TILE_JAIL_HATCH) {
-        rect(r, px + 2, py + 3, 20, 19, (SDL_Color){20, 23, 30, 255});
-        for (int rung = 0; rung < 3; rung++) {
-            rect(r, px + 5, py + 6 + rung * 5, 13, 2, (SDL_Color){165, 135, 90, 255});
-        }
+        draw_world_prop(r, sx, sy, PROP_HATCH, (SDL_Color){165, 135, 90, 255});
     } else if (tile == TILE_TUNNEL_EXIT) {
-        rect(r, px + 3, py + 2, 18, 22, (SDL_Color){138, 190, 149, 255});
-        rect(r, px + 6, py + 6, 12, 18, (SDL_Color){217, 223, 172, 255});
+        draw_world_prop(r, sx, sy, PROP_EXIT, (SDL_Color){138, 190, 149, 255});
     } else if (tile == TILE_NPC_PRISONER) {
         jail_draw_person(r, sx, sy, 1);
     } else if (tile == TILE_NPC_ROYAL_GUARD) {
         draw_royal_guard_overlay(r, sx, sy, 0);
     } else if (g->location == LOCATION_JAIL && x == 6 && y == 6) {
-        rect(r, px + 2, py + 7, 20, 15, (SDL_Color){97, 79, 48, 255});
-        for (int straw = 0; straw < 5; straw++) {
-            rect(r, px + 4 + straw * 3, py + 9 + straw % 3, 1, 10, (SDL_Color){171, 146, 87, 255});
-        }
+        draw_world_prop(r, sx, sy, PROP_STRAW, (SDL_Color){171, 146, 87, 255});
     }
 }
