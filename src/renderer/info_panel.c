@@ -224,7 +224,18 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor)
 
     // Slot 2: Off-hand (top-right)
     draw_icon_empty_slot(r, grid_x2, grid_y1);
-    if (g->equipped_off_hand >= 0 &&
+    int off_hand_unavailable = g->equipped_main_hand >= 0 &&
+        g->equipped_main_hand < g->inventory_count &&
+        g->inventory[g->equipped_main_hand].weapon_hands == WEAPON_HANDS_TWO;
+    if (off_hand_unavailable) {
+        SDL_SetRenderDrawColor(r->sdl, 172, 86, 101, 255);
+        for (int stroke = 0; stroke < 2; stroke++) {
+            SDL_RenderDrawLine(r->sdl, grid_x2 + 6 + stroke, grid_y1 + 6,
+                grid_x2 + 17 + stroke, grid_y1 + 17);
+            SDL_RenderDrawLine(r->sdl, grid_x2 + 6 + stroke, grid_y1 + 17,
+                grid_x2 + 17 + stroke, grid_y1 + 6);
+        }
+    } else if (g->equipped_off_hand >= 0 &&
         g->equipped_off_hand < g->inventory_count) {
         const Item *off_hand = &g->inventory[g->equipped_off_hand];
         if (off_hand->type == ITEM_SHIELD) {
