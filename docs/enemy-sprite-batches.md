@@ -2,7 +2,7 @@
 
 The current roster contains **95 enemy types in 16 batches**. Each `EnemyType` from `src/game/enemy.h` appears exactly once below. Additional boss forms, named hunts, quest enemies, and shared-renderer dependencies are tracked separately.
 
-Progress: **63/95 enemy types completed (batches 1–11)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
+Progress: **67/95 enemy types completed (batches 1–12)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
 
 ## Batch overview
 
@@ -19,7 +19,7 @@ Progress: **63/95 enemy types completed (batches 1–11)**. Completed boxes have
 | 9 | Sunscar Wastes | 6 | Yes |
 | 10 | Moonveil Gardens | 5 | Yes |
 | 11 | Ashen Hollow | 4 | Yes |
-| 12 | Glassdeep Caverns | 4 | No |
+| 12 | Glassdeep Caverns | 4 | Yes |
 | 13 | Royal Catacombs | 5 | No |
 | 14 | Original dungeon bosses | 5 | No |
 | 15 | Ruined Isle and Temple | 10 | No |
@@ -219,10 +219,20 @@ Scene previews use controlled volcanic and quest fixtures for artwork review rat
 
 ### Batch 12: Glassdeep Caverns (4)
 
-- [ ] Crystal Spider — `ENEMY_CRYSTAL_SPIDER`
-- [ ] Blind Stalker — `ENEMY_BLIND_STALKER`
-- [ ] Shard Golem — `ENEMY_SHARD_GOLEM`
-- [ ] Prism Sovereign — `ENEMY_PRISM_SOVEREIGN`
+- [x] Crystal Spider — `ENEMY_CRYSTAL_SPIDER`
+- [x] Blind Stalker — `ENEMY_BLIND_STALKER`
+- [x] Shard Golem — `ENEMY_SHARD_GOLEM`
+- [x] Prism Sovereign — `ENEMY_PRISM_SOVEREIGN`
+
+Reviewed all four sprites at native 24×24 size through the actual SDL renderer on Glassdeep terrain, including Shardwarden’s hunt label and markers, all three resonator guardian types, and the Prism Sovereign at normal and low health. Both existing scepter-pulse phases were reviewed; the original 350-ms timing and one-pixel expansion remain. Also inspected frozen overlays, health bars, melee damage feedback, and the Sovereign’s beam warning, travel, and impact. Tile bounds in both phases, transparent terrain, SDL scale/viewport/clip/blend preservation, Release and Debug builds, and AddressSanitizer/UndefinedBehaviorSanitizer renderer checks passed. All 63 sprites from batches 1–11 remain pixel-for-pixel identical.
+
+- [Before/after comparison, including native-size views](art-sources/enemy-batch-12/before-after.png).
+- [Both existing scepter-pulse phases](art-sources/enemy-batch-12/pulse.png).
+- [Glassdeep renderer preview](art-sources/enemy-batch-12/glassdeep.png).
+- [Shardwarden and Stalker hunt group](art-sources/enemy-batch-12/shardwarden.png).
+- [Sovereign beam warning](art-sources/enemy-batch-12/beam-warning.png).
+
+Scene previews use controlled cavern, hunt, and resonator fixtures for artwork review rather than quest playthroughs. The Spider has jointed crystal legs and a faceted abdomen; the Stalker has an eyeless ridged face, hunched spine, and hooked fingers; the Golem has separated slabs and a recessed prism core; and the Sovereign has a distinct segmented silhouette, crown, and faceted scepter. Combat, collision footprints, saved enemy types, and animation rules are unchanged.
 
 ### Batch 13: Royal Catacombs (5)
 
@@ -279,10 +289,10 @@ These entries reuse enemy types above. They do not increase the 95-type count. N
 | [ ] | Lord Veyr: spectral form, at or below one-third health | Lord Veyr, batch 16 |
 | [ ] | Sun Guardian: broken form, at or below half health; deactivated appearance | Fallen Sun Guardian, batch 15 |
 | [x] | Rimefang and Rimefang Pack | Ice Wolf and Frost Wraith, batch 8 |
-| [ ] | Shardwarden and Shardwarden Stalker | Shard Golem and Blind Stalker, batch 12 |
+| [x] | Shardwarden and Shardwarden Stalker | Shard Golem and Blind Stalker, batch 12 |
 | [x] | Dunehex and Dunehex Mummy | Djinn and Mummy, batch 9 |
 | [x] | Expedition Guardians | Ice Wolf, Ice Giant, Frost Archer, batch 8 |
-| [ ] | Resonator Guardians | Crystal Spider, Blind Stalker, Shard Golem, batch 12 |
+| [x] | Resonator Guardians | Crystal Spider, Blind Stalker, Shard Golem, batch 12 |
 | [x] | Emberforge Guardians | Cinder Imp, Ash Hound, Obsidian Guardian, batch 11 |
 | [x] | Moonseed Guardians | Fey Trickster and Giant Moth, batch 10 |
 | [x] | Moonwater Guardian | Living Flower, batch 10 |
