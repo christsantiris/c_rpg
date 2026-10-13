@@ -2,7 +2,7 @@
 
 The current roster contains **95 enemy types in 16 batches**. Each `EnemyType` from `src/game/enemy.h` appears exactly once below. Additional boss forms, named hunts, quest enemies, and shared-renderer dependencies are tracked separately.
 
-Progress: **54/95 enemy types completed (batches 1–9)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
+Progress: **59/95 enemy types completed (batches 1–10)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
 
 ## Batch overview
 
@@ -17,7 +17,7 @@ Progress: **54/95 enemy types completed (batches 1–9)**. Completed boxes have 
 | 7 | Dragonspine and Crown Roads | 4 | Yes |
 | 8 | Frostfell | 7 | Yes |
 | 9 | Sunscar Wastes | 6 | Yes |
-| 10 | Moonveil Gardens | 5 | No |
+| 10 | Moonveil Gardens | 5 | Yes |
 | 11 | Ashen Hollow | 4 | No |
 | 12 | Glassdeep Caverns | 4 | No |
 | 13 | Royal Catacombs | 5 | No |
@@ -186,11 +186,20 @@ Scene previews use controlled desert room fixtures for artwork review rather tha
 
 ### Batch 10: Moonveil Gardens (5)
 
-- [ ] Fey Trickster — `ENEMY_FEY_TRICKSTER`
-- [ ] Giant Moth — `ENEMY_GIANT_MOTH`
-- [ ] Living Flower (displayed as Carnivorous Flower) — `ENEMY_LIVING_FLOWER`
-- [ ] Thorn Guardian — `ENEMY_THORN_GUARDIAN`
-- [ ] Thorn Regent — `ENEMY_THORN_REGENT`
+- [x] Fey Trickster — `ENEMY_FEY_TRICKSTER`
+- [x] Giant Moth — `ENEMY_GIANT_MOTH`
+- [x] Living Flower (displayed as Carnivorous Flower) — `ENEMY_LIVING_FLOWER`
+- [x] Thorn Guardian — `ENEMY_THORN_GUARDIAN`
+- [x] Thorn Regent — `ENEMY_THORN_REGENT`
+
+Reviewed all five sprites at native 24×24 size through the actual SDL renderer on Moonveil terrain, including the Moonseed, Moonwater, and Mooncircle guardians beside their objectives, and the Thorn Regent at normal and low health. Both existing wing-flutter phases were reviewed for the Trickster and Moth; the original 350-ms timing and opposing upper/lower Moth wing motion remain. Also inspected frozen overlays, health bars, melee damage feedback, and Trickster/Flower/Regent projectile travel and impact. Tile bounds in both phases, transparent terrain, SDL scale/viewport/clip/blend preservation, Release and Debug builds, and AddressSanitizer/UndefinedBehaviorSanitizer renderer checks passed. All 54 sprites from batches 1–9 remain pixel-for-pixel identical.
+
+- [Before/after comparison, including native-size views](art-sources/enemy-batch-10/before-after.png).
+- [Both existing wing-flutter phases](art-sources/enemy-batch-10/flutter.png).
+- [Moonveil renderer preview](art-sources/enemy-batch-10/moonveil.png).
+- [Moonseed guardians and objective](art-sources/enemy-batch-10/moonseed.png).
+
+Scene previews use controlled garden and quest fixtures for artwork review rather than quest playthroughs. The Trickster has a pointed hat, wing veins, and a discrete conjured light; the Moth has scalloped wings and eye-spots; the Flower has layered petals, irregular teeth, and a bending stem; the Guardian has interlocking branches and rooted feet; and the Regent has a spreading crown and trailing root mantle. Combat, collision footprints, saved enemy types, and animation rules are unchanged.
 
 ### Batch 11: Ashen Hollow (4)
 
@@ -266,9 +275,9 @@ These entries reuse enemy types above. They do not increase the 95-type count. N
 | [x] | Expedition Guardians | Ice Wolf, Ice Giant, Frost Archer, batch 8 |
 | [ ] | Resonator Guardians | Crystal Spider, Blind Stalker, Shard Golem, batch 12 |
 | [ ] | Emberforge Guardians | Cinder Imp, Ash Hound, Obsidian Guardian, batch 11 |
-| [ ] | Moonseed Guardians | Fey Trickster and Giant Moth, batch 10 |
-| [ ] | Moonwater Guardian | Living Flower, batch 10 |
-| [ ] | Mooncircle Guardians | Thorn Guardian, batch 10 |
+| [x] | Moonseed Guardians | Fey Trickster and Giant Moth, batch 10 |
+| [x] | Moonwater Guardian | Living Flower, batch 10 |
+| [x] | Mooncircle Guardians | Thorn Guardian, batch 10 |
 | [ ] | Soldiers’ Memorial Guards | Ancient Skeleton and Bone Sentinel, batch 13 |
 | [ ] | Watchers’ Memorial Guards | Grave Archer (batch 13), Wraith (batch 2) |
 | [ ] | Choir Memorial Guards | Bone Cantor and Ancient Skeleton, batch 13 |
