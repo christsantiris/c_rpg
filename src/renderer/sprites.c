@@ -10,6 +10,7 @@
 #include "polar_kraken_art.h"
 #include "desert_enemy_art.h"
 #include "moonveil_enemy_art.h"
+#include "ashen_enemy_art.h"
 #include "npc_renderer.h"
 #include <stdlib.h>
 
@@ -2564,57 +2565,70 @@ static void draw_moonveil_enemy(Renderer *r, int tx, int ty, EnemyType type) {
 }
 
 static void draw_ashen_enemy(Renderer *r, int tx, int ty, EnemyType type) {
+    int art;
+    int ember = -1;
+    switch (type) {
+        case ENEMY_CINDER_IMP: art = ASHEN_ART_CINDER_IMP; ember = 0; break;
+        case ENEMY_ASH_HOUND: art = ASHEN_ART_ASH_HOUND; ember = 1; break;
+        case ENEMY_OBSIDIAN_GUARDIAN: art = ASHEN_ART_OBSIDIAN_GUARDIAN; break;
+        case ENEMY_CINDER_LORD: art = ASHEN_ART_CINDER_LORD; ember = 2; break;
+        default: return;
+    }
+    static const SDL_Color bodies[ASHEN_ART_COUNT] = {
+        {174, 65, 40, 255}, {42, 38, 47, 255}, {42, 38, 47, 255}, {42, 38, 47, 255}
+    };
+    static const SDL_Color clothes[ASHEN_ART_COUNT] = {
+        {42, 38, 47, 255}, {42, 38, 47, 255}, {42, 38, 47, 255}, {79, 36, 46, 255}
+    };
+    SDL_Color body = bodies[art];
+    SDL_Color cloth = clothes[art];
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){15, 14, 20, 255};
+    palette['s'] = (SDL_Color){body.r * 2 / 3, body.g * 2 / 3, body.b * 2 / 3, 255};
+    palette['S'] = body;
+    palette['H'] = (SDL_Color){body.r + (255 - body.r) / 3,
+        body.g + (255 - body.g) / 3, body.b + (255 - body.b) / 3, 255};
+    palette['c'] = (SDL_Color){cloth.r * 2 / 3, cloth.g * 2 / 3, cloth.b * 2 / 3, 255};
+    palette['C'] = cloth;
+    palette['v'] = (SDL_Color){cloth.r + (255 - cloth.r) / 4,
+        cloth.g + (255 - cloth.g) / 4, cloth.b + (255 - cloth.b) / 4, 255};
+    palette['e'] = (SDL_Color){19, 14, 23, 255};
+    palette['y'] = (SDL_Color){255, 204, 92, 255};
+    palette['m'] = (SDL_Color){61, 49, 61, 255};
+    palette['M'] = (SDL_Color){101, 85, 87, 255};
+    palette['N'] = (SDL_Color){167, 148, 154, 255};
+    palette['f'] = (SDL_Color){177, 157, 131, 255};
+    palette['u'] = (SDL_Color){35, 27, 40, 255};
+    palette['U'] = (SDL_Color){82, 62, 66, 255};
+    palette['p'] = (SDL_Color){239, 96, 38, 255};
+    palette['P'] = (SDL_Color){255, 204, 92, 255};
+    palette['l'] = (SDL_Color){62, 40, 31, 255};
+    palette['L'] = (SDL_Color){123, 83, 53, 255};
+    if (type == ENEMY_CINDER_IMP) {
+        palette['H'] = (SDL_Color){239, 96, 38, 255};
+    }
     int x = tx * TILE_SIZE;
     int y = ty * TILE_SIZE;
-    SDL_Color rock = {42, 38, 47, 255};
-    SDL_Color rim = {101, 85, 87, 255};
-    SDL_Color fire = {239, 96, 38, 255};
-    SDL_Color glow = {255, 204, 92, 255};
     int flicker = (int)((SDL_GetTicks() / AMBIENT_FRAME_MS) & 1u);
-    if (type == ENEMY_ASH_HOUND) {
-        fill_rect(r, x + 2, y + 9, 16, 9, rock);
-        fill_rect(r, x + 15, y + 5, 8, 9, rock);
-        fill_rect(r, x + 16, y + 2, 3, 5, rim);
-        fill_rect(r, x + 3, y + 17, 3, 6, rim);
-        fill_rect(r, x + 13, y + 17, 3, 6, rim);
-        fill_rect(r, x, y + 6, 3, 8, rock);
-        fill_rect(r, x + 18, y + 7, 2, 2, glow);
-        fill_rect(r, x + 4, y + 9, 9, 2, fire);
-        fill_rect(r, x + 7, y + 5 - flicker, 3, 5, fire);
-        return;
-    }
-    if (type == ENEMY_CINDER_IMP) {
-        fill_rect(r, x + 7, y + 5, 11, 7, fire);
-        fill_rect(r, x + 6, y + 1, 3, 6, rim);
-        fill_rect(r, x + 16, y + 1, 3, 6, rim);
-        fill_rect(r, x + 9, y + 7, 2, 2, glow);
-        fill_rect(r, x + 14, y + 7, 2, 2, glow);
-        fill_rect(r, x + 8, y + 12, 8, 8, rock);
-        fill_rect(r, x + 3, y + 12, 5, 4, fire);
-        fill_rect(r, x + 16, y + 12, 5, 4, fire);
-        fill_rect(r, x + 7, y + 20, 3, 4, fire);
-        fill_rect(r, x + 14, y + 20, 3, 4, fire);
-        fill_rect(r, x + 19, y + 9 - flicker, 3, 3, glow);
-        return;
-    }
-    int boss = type == ENEMY_CINDER_LORD;
-    fill_rect(r, x + 7, y + 3, 10, 7, rock);
-    fill_rect(r, x + 8, y + 4, 2, 5, rim);
-    fill_rect(r, x + 10, y + 6, 2, 1, glow);
-    fill_rect(r, x + 14, y + 6, 2, 1, glow);
-    fill_rect(r, x + 5, y + 10, 14, 11, rock);
-    fill_rect(r, x + 1, y + 10, 5, 10, rim);
-    fill_rect(r, x + 19, y + 10, 4, 10, rim);
-    fill_rect(r, x + 5, y + 21, 5, 3, rim);
-    fill_rect(r, x + 14, y + 21, 5, 3, rim);
-    fill_rect(r, x + 11, y + 11, 2, 8, fire);
-    fill_rect(r, x + 8, y + 14, 7, 2, fire);
-    if (boss) {
-        for (int flame = 0; flame < 3; flame++) {
-            fill_rect(r, x + 6 + flame * 5, y + flicker, 3, 5, fire);
+    for (int layer = 0; layer < 2; layer++) {
+        if (layer == 1 && ember < 0) {
+            continue;
         }
-        fill_rect(r, x + 7, y + 3, 11, 2, glow);
-        fill_rect(r, x + 21, y + 5, 2, 17, fire);
+        const char (*rows)[25] = layer == 0 ? ashen_enemy_art[art] : ashen_ember_art[ember];
+        int offset = layer == 0 ? 0 : type == ENEMY_CINDER_LORD ? flicker : -flicker;
+        for (int row = 0; row < 24; row++) {
+            for (int col = 0; col < 24;) {
+                char ink = rows[row][col];
+                int end = col + 1;
+                while (end < 24 && rows[row][end] == ink) {
+                    end++;
+                }
+                if (ink != '.') {
+                    fill_rect(r, x + col, y + row + offset, end - col, 1, palette[(unsigned char)ink]);
+                }
+                col = end;
+            }
+        }
     }
 }
 
