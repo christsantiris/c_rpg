@@ -2,7 +2,7 @@
 
 The current roster contains **95 enemy types in 16 batches**. Each `EnemyType` from `src/game/enemy.h` appears exactly once below. Additional boss forms, named hunts, quest enemies, and shared-renderer dependencies are tracked separately.
 
-Progress: **72/95 enemy types completed (batches 1–13)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
+Progress: **77/95 enemy types completed (batches 1–14)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
 
 ## Batch overview
 
@@ -21,7 +21,7 @@ Progress: **72/95 enemy types completed (batches 1–13)**. Completed boxes have
 | 11 | Ashen Hollow | 4 | Yes |
 | 12 | Glassdeep Caverns | 4 | Yes |
 | 13 | Royal Catacombs | 5 | Yes |
-| 14 | Original dungeon bosses | 5 | No |
+| 14 | Original dungeon bosses | 5 | Yes |
 | 15 | Ruined Isle and Temple | 10 | No |
 | 16 | Castle of No Return | 8 | No |
 | **Total** | | **95** | |
@@ -253,11 +253,20 @@ Scene previews use controlled catacomb and memorial fixtures for artwork review 
 
 ### Batch 14: Original dungeon bosses (5)
 
-- [ ] Goblin King — `ENEMY_GOBLIN_KING`
-- [ ] Lich King — `ENEMY_LICH_KING`
-- [ ] Demon Lord — `ENEMY_DEMON_LORD`
-- [ ] Red Dragon — `ENEMY_RED_DRAGON`
-- [ ] Tarrasque — `ENEMY_TARRASQUE`
+- [x] Goblin King — `ENEMY_GOBLIN_KING`
+- [x] Lich King — `ENEMY_LICH_KING`
+- [x] Demon Lord — `ENEMY_DEMON_LORD`
+- [x] Red Dragon — `ENEMY_RED_DRAGON`
+- [x] Tarrasque — `ENEMY_TARRASQUE`
+
+Reviewed all five sprites at native 24×24 size through the actual SDL renderer on dungeon terrain, including the Lich King beside his two Skeleton guards. Also inspected the Red Dragon on Dragonspine hoard terrain beside the existing Drake and Fire Elemental, all five bosses at low health, frozen overlays, health bars, melee damage feedback, and Lich/Dragon projectile travel and impact. Tile bounds, transparent terrain, SDL scale/viewport/clip/blend preservation, Release and Debug builds, and AddressSanitizer/UndefinedBehaviorSanitizer renderer checks passed. All 72 sprites from batches 1–13 remain pixel-for-pixel identical.
+
+- [Before/after comparison, including native-size views](art-sources/enemy-batch-14/before-after.png).
+- [Dungeon renderer preview](art-sources/enemy-batch-14/dungeon.png).
+- [Red Dragon on Dragonspine terrain](art-sources/enemy-batch-14/dragonspine.png).
+- [Lich guards, frozen overlays, damage, projectiles, and low-health bosses](art-sources/enemy-batch-14/encounters-and-effects.png).
+
+Scene previews use controlled dungeon and Dragonspine room fixtures for artwork review rather than boss-fight playthroughs. The Goblin King has a jeweled crown, pointed ears, plate armor, and a trimmed crimson mantle; the Lich has a defined skull, horned crown, layered violet robes, and a connected staff grip; the Demon Lord has curved horns, folded wing membranes, defined muscles, claws, and a curling tail; the Red Dragon has a scaled snout, wing ribs, belly plates, talons, and a curved tail; and the Tarrasque has overlapping shell plates, ivory spikes, a toothed jaw, and heavy claws. The five public drawing functions now use dedicated static templates in `src/renderer/dungeon_boss_art.h`. Combat, collision footprints, saved enemy types, and animation rules are unchanged.
 
 ### Batch 15: Ruined Isle and Temple (10)
 
@@ -319,7 +328,7 @@ These entries reuse enemy types above. They do not increase the 95-type count. N
 | [x] | Bandits on Crown Road East | Bandit, batch 6 |
 | [x] | Hobgoblin Guards on the Crown Roads | Hobgoblin Guard, batch 4 |
 | [x] | Goblin Scouts and Archers in Dragonspine | Batch 4 art; reviewed beside batch 7 regional enemies |
-| [ ] | Lich Guards | Skeleton, batch 1; recheck with Lich King in batch 14 |
+| [x] | Lich Guards | Skeleton, batch 1; reviewed with Lich King in batch 14 |
 | [x] | Vampire Captor | Vampire, batch 6 |
 | [x] | Tunnel Smugglers | Bandit, batch 6 |
 | [x] | Smuggler Bodyguards | Hobgoblin Guard, batch 4 |

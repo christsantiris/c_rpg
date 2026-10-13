@@ -1,6 +1,7 @@
 #include "sprites.h"
 #include "player_art.h"
 #include "dungeon_enemy_art.h"
+#include "dungeon_boss_art.h"
 #include "forest_enemy_art.h"
 #include "mountain_enemy_art.h"
 #include "coast_enemy_art.h"
@@ -1839,111 +1840,94 @@ void draw_giant(Renderer *r, int tile_x, int tile_y) {
     draw_dungeon_enemy_body(r, tile_x, tile_y, DUNGEON_ART_GIANT);
 }
 
+static void draw_dungeon_boss(Renderer *r, int tx, int ty, int art) {
+    static const SDL_Color bodies[BOSS_ART_COUNT] = {
+        {82, 128, 38, 255}, {208, 204, 170, 255}, {142, 38, 34, 255},
+        {174, 42, 24, 255}, {101, 80, 50, 255}
+    };
+    static const SDL_Color clothes[BOSS_ART_COUNT] = {
+        {132, 34, 42, 255}, {55, 35, 88, 255}, {54, 20, 26, 255},
+        {92, 24, 20, 255}, {125, 104, 63, 255}
+    };
+    SDL_Color body = bodies[art];
+    SDL_Color cloth = clothes[art];
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){22, 19, 27, 255};
+    palette['s'] = (SDL_Color){body.r * 2 / 3, body.g * 2 / 3, body.b * 2 / 3, 255};
+    palette['S'] = body;
+    palette['H'] = (SDL_Color){body.r + (255 - body.r) / 4,
+        body.g + (255 - body.g) / 4, body.b + (255 - body.b) / 4, 255};
+    palette['c'] = (SDL_Color){cloth.r * 2 / 3, cloth.g * 2 / 3, cloth.b * 2 / 3, 255};
+    palette['C'] = cloth;
+    palette['v'] = (SDL_Color){cloth.r + (255 - cloth.r) / 4,
+        cloth.g + (255 - cloth.g) / 4, cloth.b + (255 - cloth.b) / 4, 255};
+    palette['e'] = (SDL_Color){27, 18, 24, 255};
+    palette['y'] = (SDL_Color){250, 76, 36, 255};
+    palette['m'] = (SDL_Color){52, 58, 68, 255};
+    palette['M'] = (SDL_Color){116, 133, 147, 255};
+    palette['N'] = (SDL_Color){202, 216, 218, 255};
+    palette['f'] = (SDL_Color){148, 129, 89, 255};
+    palette['F'] = (SDL_Color){225, 210, 166, 255};
+    palette['a'] = (SDL_Color){48, 22, 30, 255};
+    palette['A'] = (SDL_Color){86, 30, 37, 255};
+    palette['h'] = (SDL_Color){121, 49, 48, 255};
+    palette['g'] = (SDL_Color){137, 91, 34, 255};
+    palette['G'] = (SDL_Color){224, 177, 61, 255};
+    palette['l'] = (SDL_Color){53, 36, 25, 255};
+    palette['L'] = (SDL_Color){105, 69, 39, 255};
+    palette['K'] = (SDL_Color){147, 106, 60, 255};
+    palette['k'] = (SDL_Color){30, 28, 27, 255};
+    palette['R'] = (SDL_Color){224, 66, 64, 255};
+    palette['p'] = (SDL_Color){116, 55, 179, 255};
+    palette['P'] = (SDL_Color){209, 151, 255, 255};
+    if (art == BOSS_ART_LICH_KING) {
+        palette['y'] = (SDL_Color){179, 106, 255, 255};
+        palette['g'] = (SDL_Color){91, 73, 120, 255};
+        palette['G'] = (SDL_Color){171, 156, 190, 255};
+    } else if (art == BOSS_ART_DEMON_LORD) {
+        palette['y'] = (SDL_Color){255, 183, 57, 255};
+    } else if (art == BOSS_ART_RED_DRAGON) {
+        palette['y'] = (SDL_Color){255, 202, 71, 255};
+        palette['a'] = (SDL_Color){69, 24, 26, 255};
+        palette['A'] = (SDL_Color){119, 34, 27, 255};
+        palette['p'] = (SDL_Color){255, 109, 22, 255};
+        palette['P'] = (SDL_Color){255, 214, 63, 255};
+    }
+    int x = tx * TILE_SIZE;
+    int y = ty * TILE_SIZE;
+    for (int row = 0; row < 24; row++) {
+        for (int col = 0; col < 24;) {
+            char ink = dungeon_boss_art[art][row][col];
+            int end = col + 1;
+            while (end < 24 && dungeon_boss_art[art][row][end] == ink) {
+                end++;
+            }
+            if (ink != '.') {
+                fill_rect(r, x + col, y + row, end - col, 1, palette[(unsigned char)ink]);
+            }
+            col = end;
+        }
+    }
+}
+
 void draw_goblin_king(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color skin = {82, 128, 38, 255};
-    SDL_Color crown = {230, 184, 42, 255};
-    SDL_Color cloak = {132, 34, 42, 255};
-    fill_rect(r, x+5, y+1, 14, 4, crown);
-    fill_rect(r, x+6, y, 3, 3, crown);
-    fill_rect(r, x+11,y, 3, 3, crown);
-    fill_rect(r, x+16,y, 3, 3, crown);
-    fill_rect(r, x+4, y+7, 16, 3, skin);
-    fill_rect(r, x+7, y+4, 10, 9, skin);
-    fill_rect(r, x+8, y+7, 2, 2, (SDL_Color){250, 56, 36, 255});
-    fill_rect(r, x+14,y+7, 2, 2, (SDL_Color){250, 56, 36, 255});
-    fill_rect(r, x+3, y+12,18, 9, cloak);
-    fill_rect(r, x+7, y+13,10, 8, (SDL_Color){72, 50, 28, 255});
-    fill_rect(r, x+5, y+20,5, 3, (SDL_Color){26, 34, 24, 255});
-    fill_rect(r, x+15,y+20,5, 3, (SDL_Color){26, 34, 24, 255});
-    fill_rect(r, x+20,y+8, 2, 12, (SDL_Color){194, 202, 204, 255});
+    draw_dungeon_boss(r, tile_x, tile_y, BOSS_ART_GOBLIN_KING);
 }
 
 void draw_lich_king(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color robe = {42, 24, 76, 255};
-    SDL_Color bone = {208, 204, 170, 255};
-    SDL_Color glow = {142, 80, 248, 255};
-    fill_rect(r, x+7, y+1, 10, 4, (SDL_Color){92, 76, 120, 255});
-    fill_rect(r, x+8, y, 2, 3, bone);
-    fill_rect(r, x+14,y, 2, 3, bone);
-    fill_rect(r, x+7, y+4, 10, 8, bone);
-    fill_rect(r, x+9, y+6, 2, 2, glow);
-    fill_rect(r, x+14,y+6, 2, 2, glow);
-    fill_rect(r, x+5, y+12,14, 9, robe);
-    fill_rect(r, x+3, y+14,4, 8, robe);
-    fill_rect(r, x+17,y+14,4, 8, robe);
-    fill_rect(r, x+4, y+21,5, 2, robe);
-    fill_rect(r, x+15,y+21,5, 2, robe);
-    fill_rect(r, x+2, y+7, 2, 14, bone);
-    fill_rect(r, x+1, y+3, 4, 5, glow);
-    fill_rect(r, x+2, y+1, 2, 3, (SDL_Color){206, 166, 255, 255});
+    draw_dungeon_boss(r, tile_x, tile_y, BOSS_ART_LICH_KING);
 }
 
 void draw_demon_lord(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color body = {142, 38, 34, 255};
-    SDL_Color dark = {54, 20, 26, 255};
-    SDL_Color horn = {126, 116, 94, 255};
-    fill_rect(r, x, y+7, 5, 12, dark);
-    fill_rect(r, x+19,y+7,5, 12, dark);
-    fill_rect(r, x+5, y+2, 4, 6, horn);
-    fill_rect(r, x+15,y+2,4, 6, horn);
-    fill_rect(r, x+7, y, 2, 4, horn);
-    fill_rect(r, x+15,y, 2, 4, horn);
-    fill_rect(r, x+6, y+5,12, 9, body);
-    fill_rect(r, x+8, y+8,2, 2, (SDL_Color){248, 160, 28, 255});
-    fill_rect(r, x+14,y+8,2, 2, (SDL_Color){248, 160, 28, 255});
-    fill_rect(r, x+4, y+13,16, 8, body);
-    fill_rect(r, x+8, y+14,8, 6, dark);
-    fill_rect(r, x+4, y+20,6, 3, dark);
-    fill_rect(r, x+15,y+20,6, 3, dark);
+    draw_dungeon_boss(r, tile_x, tile_y, BOSS_ART_DEMON_LORD);
 }
 
 void draw_red_dragon(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color body = {174, 42, 24, 255};
-    SDL_Color dark = {92, 24, 20, 255};
-    SDL_Color gold = {224, 154, 42, 255};
-    fill_rect(r, x, y+6, 5, 12, dark);
-    fill_rect(r, x+19,y+6,5, 12, dark);
-    fill_rect(r, x+6, y+3,12, 9, body);
-    fill_rect(r, x+7, y+1,3, 4, (SDL_Color){196, 174, 126, 255});
-    fill_rect(r, x+14,y+1,3, 4, (SDL_Color){196, 174, 126, 255});
-    fill_rect(r, x+8, y+6,2, 2, gold);
-    fill_rect(r, x+14,y+6,2, 2, gold);
-    fill_rect(r, x+5, y+11,14, 10, body);
-    fill_rect(r, x+9, y+12,6, 9, gold);
-    fill_rect(r, x+4, y+20,6, 3, dark);
-    fill_rect(r, x+15,y+20,6, 3, dark);
-    fill_rect(r, x+19,y+18,4, 2, body);
-    fill_rect(r, x+21,y+16,2, 3, body);
-    fill_rect(r, x+1, y+18,3, 3, (SDL_Color){255, 110, 16, 255});
-    fill_rect(r, x, y+20,2, 2, (SDL_Color){255, 210, 54, 255});
+    draw_dungeon_boss(r, tile_x, tile_y, BOSS_ART_RED_DRAGON);
 }
 
 void draw_tarrasque(Renderer *r, int tile_x, int tile_y) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color body = {78, 58, 36, 255};
-    SDL_Color shell = {112, 88, 52, 255};
-    SDL_Color spike = {176, 156, 112, 255};
-    fill_rect(r, x+3, y+4, 18, 15, shell);
-    fill_rect(r, x+5, y+2, 4, 5, spike);
-    fill_rect(r, x+10,y, 4, 6, spike);
-    fill_rect(r, x+16,y+2,4, 5, spike);
-    fill_rect(r, x+5, y+9, 14, 11, body);
-    fill_rect(r, x+7, y+9, 3, 2, (SDL_Color){238, 48, 26, 255});
-    fill_rect(r, x+15,y+9, 3, 2, (SDL_Color){238, 48, 26, 255});
-    fill_rect(r, x+10,y+12,5, 5, (SDL_Color){48, 36, 28, 255});
-    fill_rect(r, x, y+14,6, 7, body);
-    fill_rect(r, x+18,y+14,6, 7, body);
-    fill_rect(r, x+1, y+20,7, 3, spike);
-    fill_rect(r, x+16,y+20,7, 3, spike);
+    draw_dungeon_boss(r, tile_x, tile_y, BOSS_ART_TARRASQUE);
 }
 
 static void draw_forest_enemy(Renderer *r, int tx, int ty, EnemyType type) {
