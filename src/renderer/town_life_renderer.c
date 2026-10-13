@@ -1,37 +1,11 @@
 #include "town_life_renderer.h"
 #include "sprites.h"
+#include "world_props.h"
 #include "npc_renderer.h"
 
-static void box(Renderer *r, int x, int y, int w, int h, SDL_Color color) {
-    SDL_Rect rect = {x, y, w, h};
-    SDL_SetRenderDrawColor(r->sdl, color.r, color.g, color.b, color.a);
-    SDL_RenderFillRect(r->sdl, &rect);
-}
-
 void town_life_draw_goods(Renderer *r, int tx, int ty, int style) {
-    int x = tx * TILE_SIZE;
-    int y = ty * TILE_SIZE;
-    if (style == 0) {
-        box(r, x + 3, y + 8, 18, 8, (SDL_Color){137, 80, 36, 255});
-        box(r, x + 5, y + 6, 14, 8, (SDL_Color){228, 177, 86, 255});
-        for (int i = 0; i < 3; i++) {
-            box(r, x + 7 + i * 4, y + 7, 2, 4, (SDL_Color){255, 220, 139, 255});
-        }
-    } else if (style == 1) {
-        box(r, x + 3, y + 6, 18, 12, (SDL_Color){96, 49, 40, 255});
-        box(r, x + 5, y + 7, 14, 8, (SDL_Color){190, 83, 80, 255});
-        box(r, x + 10, y + 9, 5, 4, (SDL_Color){242, 205, 179, 255});
-    } else if (style == 2) {
-        box(r, x + 6, y + 16, 12, 3, (SDL_Color){148, 137, 111, 255});
-        box(r, x + 9, y + 6, 6, 11, (SDL_Color){233, 218, 164, 255});
-        box(r, x + 11, y + 3, 2, 4, (SDL_Color){255, 185, 67, 255});
-    } else {
-        SDL_Color spices[3] = {{197, 83, 42, 255}, {225, 170, 48, 255}, {111, 153, 73, 255}};
-        for (int i = 0; i < 3; i++) {
-            box(r, x + 2 + i * 7, y + 10, 6, 8, (SDL_Color){122, 78, 52, 255});
-            box(r, x + 2 + i * 7, y + 8, 6, 4, spices[i]);
-        }
-    }
+    WorldPropArt art = style == 0 ? PROP_BREAD : style == 1 ? PROP_MEAT : style == 2 ? PROP_CANDLE : PROP_SPICES;
+    draw_world_prop(r, tx, ty, art, (SDL_Color){239, 145, 42, 255});
 }
 
 void town_life_draw_building(Renderer *r, const Viewport *v, const TownBuilding *b) {

@@ -1,4 +1,6 @@
 #include "item_icons.h"
+#include "item_icon_art.h"
+#include <string.h>
 
 static void fill_rect_px(Renderer *r, int x, int y, int w, int h, SDL_Color c) {
     SDL_Rect rect = {x, y, w, h};
@@ -6,508 +8,283 @@ static void fill_rect_px(Renderer *r, int x, int y, int w, int h, SDL_Color c) {
     SDL_RenderFillRect(r->sdl, &rect);
 }
 
-static void draw_icon_rusty_sword(Renderer *r, int px, int py) {
-    SDL_Color rust = {139, 72, 43, 255};
-    SDL_Color rust_hi = {188, 103, 57, 255};
-    SDL_Color guard = {92, 67, 47, 255};
-    SDL_Color grip = {73, 44, 29, 255};
-    fill_rect_px(r, px + 15, py + 3, 3, 3, rust_hi);
-    fill_rect_px(r, px + 12, py + 6, 4, 4, rust);
-    fill_rect_px(r, px + 9, py + 9, 4, 4, rust_hi);
-    fill_rect_px(r, px + 6, py + 12, 4, 3, rust);
-    fill_rect_px(r, px + 4, py + 11, 7, 3, guard);
-    fill_rect_px(r, px + 5, py + 14, 3, 6, grip);
+static SDL_Color lighter(SDL_Color c) {
+    return (SDL_Color){c.r + (255 - c.r) / 3, c.g + (255 - c.g) / 3, c.b + (255 - c.b) / 3, 255};
 }
 
-static void draw_icon_short_sword(Renderer *r, int px, int py) {
-    SDL_Color blade = {191, 200, 210, 255};
-    SDL_Color edge = {235, 240, 242, 255};
-    SDL_Color guard = {196, 153, 48, 255};
-    SDL_Color grip = {91, 54, 34, 255};
-    fill_rect_px(r, px + 14, py + 5, 4, 4, edge);
-    fill_rect_px(r, px + 11, py + 8, 4, 4, blade);
-    fill_rect_px(r, px + 8, py + 11, 4, 4, edge);
-    fill_rect_px(r, px + 5, py + 12, 8, 3, guard);
-    fill_rect_px(r, px + 5, py + 15, 3, 5, grip);
+static SDL_Color darker(SDL_Color c) {
+    return (SDL_Color){c.r * 2 / 3, c.g * 2 / 3, c.b * 2 / 3, 255};
 }
 
-static void draw_icon_long_sword(Renderer *r, int px, int py) {
-    SDL_Color blade = {155, 180, 207, 255};
-    SDL_Color edge = {225, 235, 244, 255};
-    SDL_Color guard = {208, 170, 62, 255};
-    SDL_Color grip = {73, 47, 42, 255};
-    fill_rect_px(r, px + 18, py + 2, 3, 3, edge);
-    fill_rect_px(r, px + 15, py + 5, 4, 4, blade);
-    fill_rect_px(r, px + 12, py + 8, 4, 4, edge);
-    fill_rect_px(r, px + 9, py + 11, 4, 4, blade);
-    fill_rect_px(r, px + 6, py + 14, 4, 3, edge);
-    fill_rect_px(r, px + 4, py + 12, 8, 3, guard);
-    fill_rect_px(r, px + 4, py + 16, 3, 6, grip);
-    fill_rect_px(r, px + 2, py + 20, 5, 2, guard);
+static void icon_palette(SDL_Color *pal, const Item *item) {
+    SDL_Color metal = {139, 157, 177, 255};
+    SDL_Color cloth = {98, 65, 43, 255};
+    SDL_Color wood = {103, 64, 36, 255};
+    SDL_Color trim = {197, 155, 66, 255};
+    SDL_Color accent = {93, 219, 243, 255};
+    if (item) {
+        if (item->type == ITEM_SHIELD) {
+            cloth = (SDL_Color){92, 101, 111, 255};
+        }
+        switch (item->visual_id) {
+            case ITEM_VISUAL_RUSTY_SWORD: metal = (SDL_Color){161, 85, 47, 255}; break;
+            case ITEM_VISUAL_DEMONIC_SWORD:
+                metal = (SDL_Color){39, 67, 48, 255};
+                accent = (SDL_Color){111, 239, 90, 255};
+                trim = (SDL_Color){134, 67, 99, 255};
+                break;
+            case ITEM_VISUAL_MAGIC_LONG_SWORD:
+            case ITEM_VISUAL_MAGIC_GREATSWORD:
+            case ITEM_VISUAL_MAGIC_DAGGER:
+            case ITEM_VISUAL_MAGIC_BATTLE_AXE:
+            case ITEM_VISUAL_MAGIC_STAFF:
+            case ITEM_VISUAL_MAGIC_LONGBOW:
+                metal = (SDL_Color){120, 147, 210, 255};
+                wood = (SDL_Color){96, 56, 124, 255};
+                trim = (SDL_Color){172, 98, 218, 255};
+                break;
+            case ITEM_VISUAL_RUNED_STAFF:
+                accent = (SDL_Color){110, 221, 135, 255};
+                wood = (SDL_Color){126, 107, 50, 255};
+                break;
+            case ITEM_VISUAL_SANDSTORM_STAFF:
+                accent = (SDL_Color){247, 151, 43, 255};
+                trim = (SDL_Color){234, 184, 73, 255};
+                break;
+            case ITEM_VISUAL_LONGBOW: wood = (SDL_Color){112, 141, 63, 255}; break;
+            case ITEM_VISUAL_CHAIN_MAIL: cloth = (SDL_Color){111, 134, 156, 255}; break;
+            case ITEM_VISUAL_SCALE_MAIL: cloth = (SDL_Color){171, 131, 73, 255}; break;
+            case ITEM_VISUAL_PLATE_ARMOR: cloth = (SDL_Color){169, 182, 192, 255}; break;
+            case ITEM_VISUAL_MAGIC_PLATE: cloth = (SDL_Color){99, 177, 211, 255}; break;
+            case ITEM_VISUAL_STUDDED_LEATHER: cloth = (SDL_Color){132, 89, 48, 255}; break;
+            case ITEM_VISUAL_RANGER_CLOAK: cloth = (SDL_Color){57, 114, 63, 255}; break;
+            case ITEM_VISUAL_SHADOW_ARMOR:
+                cloth = (SDL_Color){75, 49, 111, 255};
+                trim = (SDL_Color){174, 117, 211, 255};
+                break;
+            case ITEM_VISUAL_APPRENTICE_ROBES: cloth = (SDL_Color){54, 98, 177, 255}; break;
+            case ITEM_VISUAL_RUNED_ROBES: cloth = (SDL_Color){42, 124, 144, 255}; break;
+            case ITEM_VISUAL_ENCHANTER_ROBES: cloth = (SDL_Color){84, 77, 168, 255}; break;
+            case ITEM_VISUAL_ARCHMAGE_ROBES:
+                cloth = (SDL_Color){119, 74, 181, 255};
+                accent = (SDL_Color){226, 167, 255, 255};
+                break;
+            case ITEM_VISUAL_BUCKLER: cloth = (SDL_Color){126, 88, 51, 255}; break;
+            case ITEM_VISUAL_KITE_SHIELD: cloth = (SDL_Color){62, 91, 151, 255}; break;
+            case ITEM_VISUAL_TOWER_SHIELD:
+                cloth = (SDL_Color){106, 119, 133, 255};
+                trim = (SDL_Color){199, 69, 59, 255};
+                break;
+            case ITEM_VISUAL_MAGIC_SHIELD:
+                cloth = (SDL_Color){86, 69, 165, 255};
+                metal = accent;
+                break;
+            default: break;
+        }
+        if (item->type == ITEM_ARMOR && item->armor_family == ARMOR_FAMILY_HEAVY) {
+            metal = cloth;
+        }
+        // Named rewards keep their saved visual IDs but get recognizable finishes.
+        if (strcmp(item->name, "Krakenbone Bow") == 0) {
+            wood = (SDL_Color){192, 193, 158, 255};
+            trim = (SDL_Color){99, 179, 191, 255};
+        } else if (strcmp(item->name, "Cryptblade") == 0) {
+            metal = (SDL_Color){142, 144, 180, 255};
+            accent = (SDL_Color){184, 134, 242, 255};
+        } else if (strcmp(item->name, "Necromancer's Cloak") == 0) {
+            cloth = (SDL_Color){62, 46, 86, 255};
+            trim = (SDL_Color){128, 198, 124, 255};
+        } else if (strcmp(item->name, "Gravekeeper's Mantle") == 0) {
+            cloth = (SDL_Color){81, 91, 102, 255};
+        } else if (strcmp(item->name, "Dragon Scale Mantle") == 0) {
+            cloth = (SDL_Color){165, 84, 55, 255};
+            metal = cloth;
+        } else if (strcmp(item->name, "Tidecaller Robes") == 0) {
+            cloth = (SDL_Color){38, 132, 146, 255};
+        } else if (strcmp(item->name, "Goblin King's Shield") == 0) {
+            cloth = (SDL_Color){74, 115, 59, 255};
+        }
+        if (item->type == ITEM_POTION_HEALTH) {
+            accent = (SDL_Color){211, 60, 71, 255};
+        } else if (item->type == ITEM_POTION_MANA) {
+            accent = (SDL_Color){58, 135, 233, 255};
+        } else if (item->type == ITEM_POTION_STRENGTH) {
+            accent = (SDL_Color){238, 164, 51, 255};
+        } else if (item->type == ITEM_POTION_INTELLIGENCE) {
+            accent = (SDL_Color){173, 101, 234, 255};
+        }
+    }
+    pal['o'] = (SDL_Color){10, 13, 23, 255};
+    pal['m'] = darker(metal);
+    pal['M'] = metal;
+    pal['N'] = lighter(metal);
+    pal['l'] = wood;
+    pal['L'] = lighter(wood);
+    pal['g'] = darker(trim);
+    pal['G'] = trim;
+    pal['c'] = darker(cloth);
+    pal['C'] = cloth;
+    pal['v'] = lighter(cloth);
+    pal['f'] = (SDL_Color){220, 204, 158, 255};
+    pal['p'] = accent;
+    pal['P'] = lighter(accent);
 }
 
-static void draw_icon_magic_long_sword(Renderer *r, int px, int py) {
-    SDL_Color glow = {89, 232, 255, 255};
-    SDL_Color blade = {102, 127, 200, 255};
-    SDL_Color edge = {218, 250, 255, 255};
-    SDL_Color guard = {164, 87, 211, 255};
-    SDL_Color grip = {57, 34, 76, 255};
-    fill_rect_px(r, px + 18, py + 1, 4, 4, glow);
-    fill_rect_px(r, px + 15, py + 4, 4, 4, edge);
-    fill_rect_px(r, px + 12, py + 7, 4, 4, blade);
-    fill_rect_px(r, px + 9, py + 10, 4, 4, edge);
-    fill_rect_px(r, px + 6, py + 13, 4, 4, blade);
-    fill_rect_px(r, px + 4, py + 12, 8, 3, guard);
-    fill_rect_px(r, px + 4, py + 16, 3, 6, grip);
-    fill_rect_px(r, px + 2, py + 20, 5, 2, glow);
-    fill_rect_px(r, px + 13, py + 9, 2, 2, glow);
-}
-
-static void draw_icon_demonic_sword(Renderer *r, int px, int py) {
-    SDL_Color blade = {28, 47, 38, 255};
-    SDL_Color edge = {94, 214, 75, 255};
-    SDL_Color guard = {111, 58, 82, 255};
-    fill_rect_px(r, px + 18, py + 2, 3, 3, edge);
-    fill_rect_px(r, px + 15, py + 5, 4, 4, blade);
-    fill_rect_px(r, px + 12, py + 8, 4, 4, edge);
-    fill_rect_px(r, px + 9, py + 11, 4, 4, blade);
-    fill_rect_px(r, px + 6, py + 14, 4, 3, edge);
-    fill_rect_px(r, px + 4, py + 12, 8, 3, guard);
-    fill_rect_px(r, px + 4, py + 16, 3, 6,
-        (SDL_Color){38, 29, 32, 255});
-}
-
-static void draw_icon_battle_axe(Renderer *r, int px, int py) {
-    SDL_Color handle = {104, 61, 33, 255};
-    SDL_Color handle_hi = {157, 94, 45, 255};
-    SDL_Color iron = {145, 154, 163, 255};
-    SDL_Color edge = {218, 225, 228, 255};
-    fill_rect_px(r, px + 5, py + 16, 3, 6, handle);
-    fill_rect_px(r, px + 7, py + 12, 3, 6, handle_hi);
-    fill_rect_px(r, px + 9, py + 8, 3, 6, handle);
-    fill_rect_px(r, px + 11, py + 4, 3, 7, handle_hi);
-    fill_rect_px(r, px + 13, py + 3, 7, 4, iron);
-    fill_rect_px(r, px + 16, py + 6, 6, 5, iron);
-    fill_rect_px(r, px + 19, py + 8, 3, 5, edge);
-    fill_rect_px(r, px + 11, py + 2, 4, 8, iron);
-}
-
-static void draw_icon_magic_battle_axe(Renderer *r, int px, int py) {
-    SDL_Color glow = {83, 230, 255, 255};
-    SDL_Color handle = {63, 35, 79, 255};
-    SDL_Color handle_hi = {126, 72, 151, 255};
-    SDL_Color metal = {91, 110, 186, 255};
-    SDL_Color edge = {210, 247, 255, 255};
-    fill_rect_px(r, px + 4, py + 17, 3, 6, handle);
-    fill_rect_px(r, px + 6, py + 13, 3, 6, handle_hi);
-    fill_rect_px(r, px + 8, py + 9, 3, 6, handle);
-    fill_rect_px(r, px + 10, py + 4, 3, 7, handle_hi);
-    fill_rect_px(r, px + 12, py + 2, 8, 4, metal);
-    fill_rect_px(r, px + 15, py + 5, 7, 6, metal);
-    fill_rect_px(r, px + 19, py + 7, 3, 6, edge);
-    fill_rect_px(r, px + 10, py + 1, 4, 9, glow);
-    fill_rect_px(r, px + 15, py + 4, 2, 2, glow);
-}
-
-static void draw_icon_staff(Renderer *r, int px, int py) {
-    SDL_Color wood = {105, 66, 38, 255};
-    SDL_Color wood_hi = {164, 105, 51, 255};
-    SDL_Color gem = {104, 178, 214, 255};
-    SDL_Color glow = {190, 230, 242, 255};
-    fill_rect_px(r, px + 5, py + 17, 3, 5, wood);
-    fill_rect_px(r, px + 7, py + 13, 3, 6, wood_hi);
-    fill_rect_px(r, px + 9, py + 9, 3, 6, wood);
-    fill_rect_px(r, px + 11, py + 5, 3, 6, wood_hi);
-    fill_rect_px(r, px + 13, py + 2, 7, 3, wood);
-    fill_rect_px(r, px + 17, py + 4, 4, 5, gem);
-    fill_rect_px(r, px + 18, py + 4, 2, 2, glow);
-}
-
-static void draw_icon_runed_staff(Renderer *r, int px, int py) {
-    SDL_Color wood = {84, 72, 39, 255};
-    SDL_Color wood_hi = {139, 119, 55, 255};
-    SDL_Color rune = {108, 221, 135, 255};
-    SDL_Color glow = {219, 247, 161, 255};
-    fill_rect_px(r, px + 5, py + 17, 3, 5, wood);
-    fill_rect_px(r, px + 7, py + 13, 3, 6, wood_hi);
-    fill_rect_px(r, px + 9, py + 9, 3, 6, wood);
-    fill_rect_px(r, px + 11, py + 5, 3, 6, wood_hi);
-    fill_rect_px(r, px + 13, py + 2, 7, 3, wood);
-    fill_rect_px(r, px + 16, py + 4, 5, 5, rune);
-    fill_rect_px(r, px + 18, py + 3, 2, 3, glow);
-    fill_rect_px(r, px + 8, py + 12, 2, 2, rune);
-    fill_rect_px(r, px + 11, py + 7, 2, 2, rune);
-}
-
-static void draw_icon_sandstorm_staff(Renderer *r, int px, int py) {
-    SDL_Color wood = {113, 68, 35, 255};
-    SDL_Color gold = {227, 180, 71, 255};
-    SDL_Color amber = {244, 126, 35, 255};
-    SDL_Color glow = {255, 238, 157, 255};
-    fill_rect_px(r, px + 5, py + 17, 3, 5, wood);
-    fill_rect_px(r, px + 7, py + 13, 3, 6, gold);
-    fill_rect_px(r, px + 9, py + 9, 3, 6, wood);
-    fill_rect_px(r, px + 11, py + 5, 3, 6, gold);
-    fill_rect_px(r, px + 13, py + 1, 8, 8, gold);
-    fill_rect_px(r, px + 15, py + 3, 4, 4, amber);
-    fill_rect_px(r, px + 16, py + 3, 2, 2, glow);
-}
-
-static void draw_icon_magic_staff(Renderer *r, int px, int py) {
-    SDL_Color wood = {69, 45, 92, 255};
-    SDL_Color wood_hi = {126, 74, 153, 255};
-    SDL_Color gem = {78, 216, 241, 255};
-    SDL_Color glow = {213, 249, 255, 255};
-    fill_rect_px(r, px + 4, py + 18, 3, 5, wood);
-    fill_rect_px(r, px + 6, py + 14, 3, 6, wood_hi);
-    fill_rect_px(r, px + 8, py + 10, 3, 6, wood);
-    fill_rect_px(r, px + 10, py + 6, 3, 6, wood_hi);
-    fill_rect_px(r, px + 11, py + 2, 5, 5, wood);
-    fill_rect_px(r, px + 16, py + 1, 6, 3, glow);
-    fill_rect_px(r, px + 17, py + 3, 5, 6, gem);
-    fill_rect_px(r, px + 18, py + 4, 3, 3, glow);
-    fill_rect_px(r, px + 14, py + 9, 2, 2, gem);
-}
-
-static void draw_icon_bow(Renderer *r, int px, int py) {
-    SDL_Color wood = {148, 91, 43, 255};
-    SDL_Color wood_hi = {205, 142, 65, 255};
-    SDL_Color string = {205, 206, 190, 255};
-    SDL_Color arrow = {173, 181, 184, 255};
-    fill_rect_px(r, px + 6, py + 3, 4, 4, wood_hi);
-    fill_rect_px(r, px + 4, py + 6, 4, 5, wood);
-    fill_rect_px(r, px + 3, py + 10, 4, 5, wood_hi);
-    fill_rect_px(r, px + 5, py + 15, 4, 5, wood);
-    fill_rect_px(r, px + 8, py + 19, 4, 3, wood_hi);
-    fill_rect_px(r, px + 9, py + 4, 1, 16, string);
-    fill_rect_px(r, px + 10, py + 11, 10, 2, arrow);
-    fill_rect_px(r, px + 18, py + 9, 3, 6, arrow);
-}
-
-static void draw_icon_longbow(Renderer *r, int px, int py) {
-    SDL_Color wood = {91, 119, 50, 255};
-    SDL_Color wood_hi = {163, 181, 79, 255};
-    SDL_Color string = {220, 218, 183, 255};
-    SDL_Color arrow = {190, 205, 207, 255};
-    fill_rect_px(r, px + 7, py + 1, 4, 4, wood_hi);
-    fill_rect_px(r, px + 4, py + 4, 4, 6, wood);
-    fill_rect_px(r, px + 2, py + 9, 4, 6, wood_hi);
-    fill_rect_px(r, px + 4, py + 14, 4, 6, wood);
-    fill_rect_px(r, px + 7, py + 19, 4, 4, wood_hi);
-    fill_rect_px(r, px + 10, py + 2, 1, 19, string);
-    fill_rect_px(r, px + 9, py + 11, 11, 2, arrow);
-    fill_rect_px(r, px + 18, py + 9, 4, 6, arrow);
-}
-
-static void draw_icon_magic_longbow(Renderer *r, int px, int py) {
-    SDL_Color glow = {80, 230, 255, 255};
-    SDL_Color wood = {82, 63, 145, 255};
-    SDL_Color wood_hi = {153, 112, 221, 255};
-    SDL_Color string = {203, 247, 255, 255};
-    SDL_Color arrow = {139, 229, 244, 255};
-    fill_rect_px(r, px + 7, py, 5, 4, glow);
-    fill_rect_px(r, px + 5, py + 3, 4, 6, wood_hi);
-    fill_rect_px(r, px + 2, py + 8, 4, 7, wood);
-    fill_rect_px(r, px + 5, py + 14, 4, 6, wood_hi);
-    fill_rect_px(r, px + 7, py + 19, 5, 4, glow);
-    fill_rect_px(r, px + 10, py + 2, 1, 19, string);
-    fill_rect_px(r, px + 9, py + 11, 11, 2, arrow);
-    fill_rect_px(r, px + 18, py + 8, 4, 7, glow);
-    fill_rect_px(r, px + 4, py + 10, 2, 2, glow);
-}
-
-static void draw_icon_dagger(Renderer *r, int px, int py) {
-    SDL_Color blade = {188, 205, 214, 255};
-    SDL_Color edge = {236, 242, 244, 255};
-    SDL_Color guard = {107, 122, 128, 255};
-    SDL_Color grip = {66, 42, 50, 255};
-    fill_rect_px(r, px + 15, py + 5, 3, 3, edge);
-    fill_rect_px(r, px + 12, py + 8, 4, 4, blade);
-    fill_rect_px(r, px + 9, py + 11, 4, 4, edge);
-    fill_rect_px(r, px + 7, py + 13, 7, 2, guard);
-    fill_rect_px(r, px + 6, py + 15, 3, 5, grip);
-    fill_rect_px(r, px + 5, py + 19, 4, 2, guard);
-}
-
-static void draw_icon_magic_dagger(Renderer *r, int px, int py) {
-    SDL_Color glow = {93, 235, 255, 255};
-    SDL_Color blade = {112, 108, 205, 255};
-    SDL_Color edge = {221, 249, 255, 255};
-    SDL_Color guard = {176, 83, 206, 255};
-    SDL_Color grip = {51, 29, 72, 255};
-    fill_rect_px(r, px + 16, py + 4, 4, 4, glow);
-    fill_rect_px(r, px + 13, py + 7, 4, 4, edge);
-    fill_rect_px(r, px + 10, py + 10, 4, 4, blade);
-    fill_rect_px(r, px + 7, py + 13, 8, 2, guard);
-    fill_rect_px(r, px + 6, py + 15, 3, 5, grip);
-    fill_rect_px(r, px + 5, py + 19, 4, 2, glow);
-    fill_rect_px(r, px + 12, py + 9, 2, 2, glow);
-}
-
-static void draw_icon_greatsword(Renderer *r, int px, int py) {
-    SDL_Color blade = {119, 139, 158, 255};
-    SDL_Color edge = {218, 229, 235, 255};
-    SDL_Color guard = {184, 132, 43, 255};
-    SDL_Color grip = {76, 43, 31, 255};
-    fill_rect_px(r, px + 17, py + 1, 4, 4, edge);
-    fill_rect_px(r, px + 14, py + 4, 6, 6, blade);
-    fill_rect_px(r, px + 11, py + 7, 6, 6, edge);
-    fill_rect_px(r, px + 8, py + 10, 6, 6, blade);
-    fill_rect_px(r, px + 4, py + 13, 11, 3, guard);
-    fill_rect_px(r, px + 5, py + 16, 4, 6, grip);
-    fill_rect_px(r, px + 3, py + 20, 7, 2, guard);
-}
-
-static void draw_icon_magic_greatsword(Renderer *r, int px, int py) {
-    SDL_Color glow = {75, 221, 255, 255};
-    SDL_Color blade = {92, 118, 190, 255};
-    SDL_Color edge = {204, 245, 255, 255};
-    SDL_Color guard = {174, 92, 220, 255};
-    SDL_Color grip = {54, 31, 75, 255};
-    fill_rect_px(r, px + 18, py, 4, 5, glow);
-    fill_rect_px(r, px + 16, py + 2, 4, 4, edge);
-    fill_rect_px(r, px + 13, py + 5, 6, 6, blade);
-    fill_rect_px(r, px + 10, py + 8, 6, 6, edge);
-    fill_rect_px(r, px + 7, py + 11, 6, 6, blade);
-    fill_rect_px(r, px + 3, py + 14, 11, 3, guard);
-    fill_rect_px(r, px + 5, py + 17, 4, 5, grip);
-    fill_rect_px(r, px + 2, py + 20, 7, 2, glow);
-    fill_rect_px(r, px + 13, py + 9, 2, 2, glow);
-}
-
-static void draw_icon_generic_weapon(Renderer *r, int px, int py) {
-    SDL_Color blade = {200, 200, 220, 255};
-    SDL_Color guard = {220, 180, 40, 255};
-    SDL_Color handle = {120, 80, 40, 255};
-    fill_rect_px(r, px + 14, py + 2, 4, 4, blade);
-    fill_rect_px(r, px + 10, py + 6, 4, 4, blade);
-    fill_rect_px(r, px + 6, py + 10, 4, 4, blade);
-    fill_rect_px(r, px + 4, py + 8, 6, 3, guard);
-    fill_rect_px(r, px + 8, py + 4, 3, 6, guard);
-    fill_rect_px(r, px + 2, py + 14, 4, 4, handle);
-    fill_rect_px(r, px + 4, py + 16, 3, 5, handle);
+static void draw_item_art(Renderer *r, int x, int y, int art, SDL_Color *pal, const Item *item) {
+    int enchanted = item && (item->visual_id == ITEM_VISUAL_MAGIC_LONG_SWORD ||
+        item->visual_id == ITEM_VISUAL_MAGIC_GREATSWORD || item->visual_id == ITEM_VISUAL_MAGIC_DAGGER ||
+        item->visual_id == ITEM_VISUAL_MAGIC_BATTLE_AXE || item->visual_id == ITEM_VISUAL_MAGIC_STAFF ||
+        item->visual_id == ITEM_VISUAL_MAGIC_LONGBOW || item->visual_id == ITEM_VISUAL_DEMONIC_SWORD);
+    for (int row = 0; row < ICON_SIZE; row++) {
+        for (int col = 0; col < ICON_SIZE; col++) {
+            char ink = item_icon_art[art][row][col];
+            if (ink == '.') {
+                continue;
+            }
+            // Ring holes, staggered scales, leather rivets and robe embroidery.
+            if (item && ink == 'C') {
+                if (item->visual_id == ITEM_VISUAL_CHAIN_MAIL) {
+                    ink = (row + col) % 2 ? 'm' : 'N';
+                } else if (item->visual_id == ITEM_VISUAL_SCALE_MAIL) {
+                    ink = (col + row / 3) % 3 == 0 ? 'g' : row % 3 == 0 ? 'v' : 'C';
+                } else if (item->visual_id == ITEM_VISUAL_STUDDED_LEATHER && row % 4 == 0 && col % 4 == 0) {
+                    ink = 'N';
+                } else if (item->armor_family == ARMOR_FAMILY_ROBE && item->rarity != ITEM_RARITY_COMMON && row % 4 == 1 && col % 5 == 0) {
+                    ink = 'p';
+                }
+            }
+            if (enchanted && ink == 'M' && (row + col) % 6 == 0) {
+                ink = 'p';
+            }
+            fill_rect_px(r, x + col, y + row, 1, 1, pal[(unsigned char)ink]);
+        }
+    }
 }
 
 void draw_icon_weapon(Renderer *r, int px, int py, const Item *item) {
+    if (!item) {
+        return;
+    }
+    int art = ICON_ART_LONG_SWORD;
     switch (item->visual_id) {
         case ITEM_VISUAL_RUSTY_SWORD:
-            draw_icon_rusty_sword(r, px, py);
-            break;
-        case ITEM_VISUAL_SHORT_SWORD:
-            draw_icon_short_sword(r, px, py);
-            break;
-        case ITEM_VISUAL_LONG_SWORD:
-            draw_icon_long_sword(r, px, py);
-            break;
-        case ITEM_VISUAL_MAGIC_LONG_SWORD:
-            draw_icon_magic_long_sword(r, px, py);
-            break;
-        case ITEM_VISUAL_DEMONIC_SWORD:
-            draw_icon_demonic_sword(r, px, py);
-            break;
-        case ITEM_VISUAL_BATTLE_AXE:
-            draw_icon_battle_axe(r, px, py);
-            break;
-        case ITEM_VISUAL_MAGIC_BATTLE_AXE:
-            draw_icon_magic_battle_axe(r, px, py);
-            break;
-        case ITEM_VISUAL_STAFF:
-            draw_icon_staff(r, px, py);
-            break;
-        case ITEM_VISUAL_RUNED_STAFF:
-            draw_icon_runed_staff(r, px, py);
-            break;
-        case ITEM_VISUAL_MAGIC_STAFF:
-            draw_icon_magic_staff(r, px, py);
-            break;
-        case ITEM_VISUAL_SANDSTORM_STAFF:
-            draw_icon_sandstorm_staff(r, px, py);
-            break;
-        case ITEM_VISUAL_BOW:
-            draw_icon_bow(r, px, py);
-            break;
-        case ITEM_VISUAL_LONGBOW:
-            draw_icon_longbow(r, px, py);
-            break;
-        case ITEM_VISUAL_MAGIC_LONGBOW:
-            draw_icon_magic_longbow(r, px, py);
-            break;
+        case ITEM_VISUAL_SHORT_SWORD: art = ICON_ART_SHORT_SWORD; break;
         case ITEM_VISUAL_DAGGER:
-            draw_icon_dagger(r, px, py);
-            break;
-        case ITEM_VISUAL_MAGIC_DAGGER:
-            draw_icon_magic_dagger(r, px, py);
-            break;
+        case ITEM_VISUAL_MAGIC_DAGGER: art = ICON_ART_DAGGER; break;
         case ITEM_VISUAL_GREATSWORD:
-            draw_icon_greatsword(r, px, py);
-            break;
-        case ITEM_VISUAL_MAGIC_GREATSWORD:
-            draw_icon_magic_greatsword(r, px, py);
-            break;
+        case ITEM_VISUAL_MAGIC_GREATSWORD: art = ICON_ART_GREATSWORD; break;
         default:
-            draw_icon_generic_weapon(r, px, py);
+            if (item->weapon_family == WEAPON_FAMILY_AXE) {
+                art = ICON_ART_AXE;
+            } else if (item->weapon_family == WEAPON_FAMILY_STAFF) {
+                art = ICON_ART_STAFF;
+            } else if (item->weapon_family == WEAPON_FAMILY_BOW) {
+                art = item->visual_id == ITEM_VISUAL_BOW ? ICON_ART_BOW : ICON_ART_LONGBOW;
+            } else if (item->weapon_family == WEAPON_FAMILY_DAGGER) {
+                art = ICON_ART_DAGGER;
+            }
             break;
     }
+    SDL_Color palette[128] = {{0}};
+    icon_palette(palette, item);
+    if (item->visual_id == ITEM_VISUAL_DEMONIC_SWORD) {
+        palette['N'] = palette['p'];
+    }
+    draw_item_art(r, px, py, art, palette, item);
 }
 
 void draw_icon_armor(Renderer *r, int px, int py, const Item *item) {
-    SDL_Color primary = {100, 120, 140, 255};
-    SDL_Color accent = {60, 80, 100, 255};
-    if (item->armor_family == ARMOR_FAMILY_LIGHT) {
-        if (item->visual_id == ITEM_VISUAL_SHADOW_ARMOR) {
-            primary = (SDL_Color){68, 45, 92, 255};
-            accent = (SDL_Color){169, 91, 211, 255};
-        } else if (item->visual_id == ITEM_VISUAL_RANGER_CLOAK) {
-            primary = (SDL_Color){58, 102, 53, 255};
-            accent = (SDL_Color){139, 184, 79, 255};
-        } else if (item->visual_id == ITEM_VISUAL_STUDDED_LEATHER) {
-            primary = (SDL_Color){105, 72, 43, 255};
-            accent = (SDL_Color){174, 154, 106, 255};
-        } else {
-            primary = (SDL_Color){91, 57, 35, 255};
-            accent = (SDL_Color){139, 91, 52, 255};
-        }
-        fill_rect_px(r, px + 7, py + 2, 10, 4, primary);
-        fill_rect_px(r, px + 5, py + 6, 14, 10, primary);
-        fill_rect_px(r, px + 3, py + 16, 18, 3, primary);
-        fill_rect_px(r, px + 9, py + 7, 6, 10, accent);
-    } else if (item->armor_family == ARMOR_FAMILY_ROBE) {
-        if (item->visual_id == ITEM_VISUAL_ARCHMAGE_ROBES) {
-            primary = (SDL_Color){112, 68, 178, 255};
-            accent = (SDL_Color){225, 153, 255, 255};
-        } else if (item->visual_id == ITEM_VISUAL_ENCHANTER_ROBES) {
-            primary = (SDL_Color){78, 66, 163, 255};
-            accent = (SDL_Color){112, 231, 237, 255};
-        } else if (item->visual_id == ITEM_VISUAL_RUNED_ROBES) {
-            primary = (SDL_Color){38, 112, 133, 255};
-            accent = (SDL_Color){83, 224, 221, 255};
-        } else {
-            primary = (SDL_Color){48, 89, 164, 255};
-            accent = (SDL_Color){94, 133, 198, 255};
-        }
-        fill_rect_px(r, px + 7, py + 3, 10, 5, primary);
-        fill_rect_px(r, px + 5, py + 8, 14, 7, primary);
-        fill_rect_px(r, px + 3, py + 15, 18, 5, primary);
-        fill_rect_px(r, px + 11, py + 8, 2, 10, accent);
-        fill_rect_px(r, px + 8, py + 12, 8, 2, accent);
-    } else {
-        if (item->visual_id == ITEM_VISUAL_MAGIC_PLATE) {
-            primary = (SDL_Color){100, 151, 193, 255};
-            accent = (SDL_Color){93, 235, 255, 255};
-        } else if (item->visual_id == ITEM_VISUAL_PLATE_ARMOR) {
-            primary = (SDL_Color){158, 169, 178, 255};
-            accent = (SDL_Color){82, 91, 102, 255};
-        } else if (item->visual_id == ITEM_VISUAL_SCALE_MAIL) {
-            primary = (SDL_Color){145, 111, 67, 255};
-            accent = (SDL_Color){207, 169, 92, 255};
-        }
-        fill_rect_px(r, px + 4, py + 4, 16, 14, primary);
-        fill_rect_px(r, px + 6, py + 6, 12, 10, accent);
-        fill_rect_px(r, px + 2, py + 4, 4, 8, primary);
-        fill_rect_px(r, px + 18, py + 4, 4, 8, primary);
-        fill_rect_px(r, px + 11, py + 4, 2, 14, primary);
+    if (!item) {
+        return;
     }
+    int art = ICON_ART_PLATE;
+    if (item->armor_family == ARMOR_FAMILY_ROBE) {
+        art = ICON_ART_ROBE;
+    } else if (item->visual_id == ITEM_VISUAL_RANGER_CLOAK) {
+        art = ICON_ART_CLOAK;
+    } else if (item->visual_id == ITEM_VISUAL_CHAIN_MAIL || item->visual_id == ITEM_VISUAL_SCALE_MAIL) {
+        art = ICON_ART_MAIL;
+    } else if (item->armor_family == ARMOR_FAMILY_LIGHT) {
+        art = ICON_ART_LEATHER;
+    }
+    SDL_Color palette[128] = {{0}};
+    icon_palette(palette, item);
+    draw_item_art(r, px, py, art, palette, item);
 }
 
 void draw_icon_shield(Renderer *r, int px, int py, const Item *item) {
-    SDL_Color rim = {166, 174, 181, 255};
-    SDL_Color face = {92, 101, 111, 255};
-    SDL_Color mark = {195, 151, 52, 255};
-    int left = 4;
-    int right = 20;
-
-    if (item->visual_id == ITEM_VISUAL_BUCKLER) {
-        left = 6;
-        right = 18;
-        face = (SDL_Color){119, 82, 48, 255};
-    } else if (item->visual_id == ITEM_VISUAL_KITE_SHIELD) {
-        face = (SDL_Color){61, 87, 145, 255};
-    } else if (item->visual_id == ITEM_VISUAL_TOWER_SHIELD) {
-        left = 3;
-        right = 21;
-        face = (SDL_Color){113, 119, 125, 255};
-        mark = (SDL_Color){184, 61, 48, 255};
-    } else if (item->visual_id == ITEM_VISUAL_MAGIC_SHIELD) {
-        rim = (SDL_Color){94, 233, 250, 255};
-        face = (SDL_Color){82, 69, 156, 255};
-        mark = (SDL_Color){220, 247, 255, 255};
+    if (!item) {
+        return;
     }
-
-    fill_rect_px(r, px + left, py + 3, right - left, 2, rim);
-    fill_rect_px(r, px + left - 1, py + 5, right - left + 2, 10, rim);
-    fill_rect_px(r, px + left + 1, py + 5, right - left - 2, 11, face);
-    fill_rect_px(r, px + left + 1, py + 15, right - left - 2, 3, rim);
-    fill_rect_px(r, px + 9, py + 18, 6, 3, rim);
-    fill_rect_px(r, px + 11, py + 6, 2, 10, mark);
-    fill_rect_px(r, px + 8, py + 9, 8, 2, mark);
+    int art = item->visual_id == ITEM_VISUAL_BUCKLER ? ICON_ART_BUCKLER
+        : item->visual_id == ITEM_VISUAL_TOWER_SHIELD ? ICON_ART_TOWER
+        : item->visual_id == ITEM_VISUAL_MAGIC_SHIELD ? ICON_ART_MAGIC_SHIELD : ICON_ART_KITE;
+    SDL_Color palette[128] = {{0}};
+    icon_palette(palette, item);
+    draw_item_art(r, px, py, art, palette, item);
 }
 
 void draw_icon_spell(Renderer *r, int px, int py, SpellID spell_id) {
-    if (spell_id == SPELL_MAGIC_ARROW) {
-        SDL_Color glow = {80, 220, 255, 255};
-        SDL_Color core = {220, 250, 255, 255};
-        fill_rect_px(r, px + 4, py + 15, 4, 4, glow);
-        fill_rect_px(r, px + 7, py + 12, 4, 4, glow);
-        fill_rect_px(r, px + 10, py + 9, 4, 4, core);
-        fill_rect_px(r, px + 13, py + 6, 4, 4, glow);
-        fill_rect_px(r, px + 16, py + 3, 4, 4, core);
-        fill_rect_px(r, px + 15, py + 2, 6, 2, glow);
-        fill_rect_px(r, px + 19, py + 2, 2, 6, glow);
-    } else if (spell_id == SPELL_FIREBALL) {
-        SDL_Color outer = {220, 55, 20, 255};
-        SDL_Color flame = {255, 135, 25, 255};
-        SDL_Color core = {255, 230, 90, 255};
-        fill_rect_px(r, px + 5, py + 7, 14, 13, outer);
-        fill_rect_px(r, px + 8, py + 5, 9, 16, flame);
-        fill_rect_px(r, px + 10, py + 9, 6, 8, core);
-        fill_rect_px(r, px + 12, py + 2, 4, 5, flame);
+    static const int art[] = {ICON_ART_MAGIC_ARROW, ICON_ART_FIREBALL, ICON_ART_HEAL, ICON_ART_RETURN, ICON_ART_FROST, ICON_ART_PORTAL};
+    SDL_Color palette[128] = {{0}};
+    icon_palette(palette, NULL);
+    if (spell_id == SPELL_FIREBALL) {
+        palette['c'] = (SDL_Color){199, 54, 27, 255};
+        palette['p'] = (SDL_Color){255, 135, 31, 255};
+        palette['P'] = (SDL_Color){255, 233, 111, 255};
     } else if (spell_id == SPELL_HEAL) {
-        SDL_Color glow = {60, 220, 110, 255};
-        SDL_Color core = {190, 255, 205, 255};
-        fill_rect_px(r, px + 9, py + 3, 7, 18, glow);
-        fill_rect_px(r, px + 4, py + 8, 17, 8, glow);
-        fill_rect_px(r, px + 11, py + 5, 3, 14, core);
-        fill_rect_px(r, px + 6, py + 10, 13, 3, core);
-    } else if (spell_id == SPELL_FROST_BOLT) {
-        SDL_Color ice = {104, 219, 246, 255};
-        SDL_Color core = {224, 252, 255, 255};
-        fill_rect_px(r, px + 10, py + 2, 4, 20, ice);
-        fill_rect_px(r, px + 2, py + 10, 20, 4, ice);
-        fill_rect_px(r, px + 5, py + 5, 4, 4, ice);
-        fill_rect_px(r, px + 15, py + 5, 4, 4, ice);
-        fill_rect_px(r, px + 5, py + 15, 4, 4, ice);
-        fill_rect_px(r, px + 15, py + 15, 4, 4, ice);
-        fill_rect_px(r, px + 11, py + 8, 2, 8, core);
-    } else if (spell_id == SPELL_TELEPORT) {
-        SDL_Color outer = {140, 76, 224, 255};
-        SDL_Color core = {225, 190, 255, 255};
-        fill_rect_px(r, px + 3, py + 5, 5, 14, outer);
-        fill_rect_px(r, px + 9, py + 7, 5, 10, core);
-        fill_rect_px(r, px + 15, py + 5, 6, 14, outer);
-        fill_rect_px(r, px + 6, py + 3, 3, 3, core);
-        fill_rect_px(r, px + 15, py + 18, 3, 3, core);
-    } else {
-        SDL_Color outer = {140, 75, 230, 255};
-        SDL_Color inner = {80, 220, 235, 255};
-        fill_rect_px(r, px + 6, py + 3, 12, 3, outer);
-        fill_rect_px(r, px + 3, py + 6, 3, 12, outer);
-        fill_rect_px(r, px + 18, py + 6, 3, 12, outer);
-        fill_rect_px(r, px + 6, py + 18, 12, 3, outer);
-        fill_rect_px(r, px + 8, py + 6, 8, 3, inner);
-        fill_rect_px(r, px + 6, py + 9, 3, 7, inner);
-        fill_rect_px(r, px + 15, py + 9, 3, 7, inner);
-        fill_rect_px(r, px + 8, py + 16, 8, 3, inner);
+        palette['p'] = (SDL_Color){64, 203, 114, 255};
+        palette['P'] = (SDL_Color){196, 255, 213, 255};
+    } else if (spell_id == SPELL_TELEPORT || spell_id == SPELL_RETURN_TO_TOWN) {
+        palette['p'] = (SDL_Color){150, 92, 227, 255};
+        palette['P'] = (SDL_Color){231, 203, 255, 255};
     }
+    int index = spell_id >= SPELL_MAGIC_ARROW && spell_id <= SPELL_TELEPORT ? spell_id : SPELL_TELEPORT;
+    draw_item_art(r, px, py, art[index], palette, NULL);
+}
+
+void draw_icon_item(Renderer *r, int px, int py, const Item *item) {
+    if (!item || item->type == ITEM_NONE) {
+        return;
+    }
+    if (item->type == ITEM_WEAPON) {
+        draw_icon_weapon(r, px, py, item);
+        return;
+    } else if (item->type == ITEM_ARMOR) {
+        draw_icon_armor(r, px, py, item);
+        return;
+    } else if (item->type == ITEM_SHIELD) {
+        draw_icon_shield(r, px, py, item);
+        return;
+    }
+    int art = ICON_ART_POTION;
+    switch (item->type) {
+        case ITEM_SCROLL: art = ICON_ART_SCROLL; break;
+        case ITEM_SPELL_TOME: art = ICON_ART_BOOK; break;
+        case ITEM_TREASURE_MAP: art = ICON_ART_MAP; break;
+        case ITEM_ARROWS: art = ICON_ART_ARROWS; break;
+        case ITEM_GOLD: art = ICON_ART_GOLD; break;
+        default: break;
+    }
+    SDL_Color palette[128] = {{0}};
+    icon_palette(palette, item);
+    if (item->type == ITEM_SCROLL || item->type == ITEM_SPELL_TOME) {
+        palette['p'] = item->spell_id == SPELL_FIREBALL ? (SDL_Color){241, 133, 39, 255}
+            : item->spell_id == SPELL_HEAL ? (SDL_Color){69, 203, 120, 255}
+            : item->spell_id == SPELL_TELEPORT || item->spell_id == SPELL_RETURN_TO_TOWN ? (SDL_Color){167, 105, 227, 255}
+            : (SDL_Color){91, 217, 241, 255};
+        palette['P'] = lighter(palette['p']);
+        palette['C'] = (SDL_Color){65, 69, 130, 255};
+    }
+    draw_item_art(r, px, py, art, palette, item);
 }
 
 void draw_icon_empty_slot(Renderer *r, int px, int py) {
-    SDL_Color border = {40, 40, 60, 255};
-    SDL_Color bg     = {18, 18, 35, 255};
-    fill_rect_px(r, px,   py,   ICON_SIZE,   ICON_SIZE,   bg);
-    fill_rect_px(r, px,   py,   ICON_SIZE,   1,           border);
-    fill_rect_px(r, px,   py,   1,           ICON_SIZE,   border);
-    fill_rect_px(r, px,   py+ICON_SIZE-1, ICON_SIZE, 1,   border);
-    fill_rect_px(r, px+ICON_SIZE-1, py, 1, ICON_SIZE,     border);
+    fill_rect_px(r, px, py, ICON_SIZE, ICON_SIZE, (SDL_Color){16, 19, 32, 255});
+    fill_rect_px(r, px, py, ICON_SIZE, 1, (SDL_Color){67, 72, 96, 255});
+    fill_rect_px(r, px, py, 1, ICON_SIZE, (SDL_Color){48, 54, 77, 255});
+    fill_rect_px(r, px, py + ICON_SIZE - 1, ICON_SIZE, 1, (SDL_Color){8, 11, 23, 255});
+    fill_rect_px(r, px + ICON_SIZE - 1, py, 1, ICON_SIZE, (SDL_Color){8, 11, 23, 255});
 }
 
 // Status icons are drawn from rows of pixels. Each character in keys picks the

@@ -1,5 +1,6 @@
 #include "game_renderer.h"
 #include "sprites.h"
+#include "world_props.h"
 #include "npc_renderer.h"
 #include "info_panel.h"
 #include "message_bar.h"
@@ -40,32 +41,10 @@ static void draw_watchfire(Renderer *r, const GameState *g, int sx, int sy, int 
     } else {
         draw_dragonspine_floor(r, sx, sy, x, y, 1);
     }
-    int px = sx * TILE_SIZE;
-    int py = sy * TILE_SIZE;
-    SDL_SetRenderDrawColor(r->sdl, 29, 27, 32, 255);
-    SDL_Rect base = {px + 4, py + 19, 17, 4};
-    SDL_Rect pillar = {px + 8, py + 11, 9, 10};
-    SDL_Rect bowl = {px + 5, py + 8, 15, 6};
-    SDL_RenderFillRect(r->sdl, &base);
-    SDL_RenderFillRect(r->sdl, &pillar);
-    SDL_RenderFillRect(r->sdl, &bowl);
-    SDL_SetRenderDrawColor(r->sdl, 135, 139, 146, 255);
-    SDL_RenderDrawLine(r->sdl, px + 5, py + 20, px + 19, py + 20);
-    SDL_RenderDrawLine(r->sdl, px + 9, py + 14, px + 9, py + 18);
-    SDL_RenderDrawLine(r->sdl, px + 6, py + 9, px + 18, py + 9);
-    SDL_SetRenderDrawColor(r->sdl, 82, 86, 96, 255);
-    SDL_RenderDrawLine(r->sdl, px + 10, py + 16, px + 15, py + 16);
-    SDL_RenderDrawLine(r->sdl, px + 15, py + 17, px + 15, py + 19);
+    draw_world_prop(r, sx, sy, PROP_BRAZIER, (SDL_Color){135, 139, 146, 255});
     if (tile == TILE_WATCHFIRE_LIT) {
         int flicker = (SDL_GetTicks() / 220 + x + y) & 1;
-        SDL_SetRenderDrawColor(r->sdl, 235, 112, 38, 255);
-        SDL_Rect flame = {px + 8, py + 4 + flicker, 9, 7};
-        SDL_RenderFillRect(r->sdl, &flame);
-        SDL_SetRenderDrawColor(r->sdl, 255, 213, 98, 255);
-        SDL_RenderDrawLine(r->sdl, px + 12, py + 1 + flicker, px + 12, py + 9);
-        SDL_RenderDrawLine(r->sdl, px + 13, py + 3, px + 13, py + 9);
-        SDL_SetRenderDrawColor(r->sdl, 255, 241, 188, 255);
-        SDL_RenderDrawLine(r->sdl, px + 11, py + 6, px + 11, py + 9);
+        draw_world_prop(r, sx, sy, flicker == 0 ? PROP_SMALL_FLAME_0 : PROP_SMALL_FLAME_1, (SDL_Color){235, 112, 38, 255});
     }
 }
 
@@ -80,19 +59,8 @@ static void draw_frostfell_quest_tile(Renderer *r, int sx, int sy, int x, int y,
     } else {
         draw_frostfell_floor(r, sx, sy, x, y);
     }
-    int px = sx * TILE_SIZE;
-    int py = sy * TILE_SIZE;
     if (tile == TILE_FROST_JOURNAL) {
-        SDL_SetRenderDrawColor(r->sdl, 64, 50, 43, 255);
-        SDL_Rect cover = {px + 5, py + 7, 15, 13};
-        SDL_RenderFillRect(r->sdl, &cover);
-        SDL_SetRenderDrawColor(r->sdl, 229, 214, 178, 255);
-        SDL_Rect pages = {px + 8, py + 8, 11, 10};
-        SDL_RenderFillRect(r->sdl, &pages);
-        SDL_SetRenderDrawColor(r->sdl, 51, 128, 164, 255);
-        SDL_RenderDrawLine(r->sdl, px + 7, py + 8, px + 7, py + 18);
-        SDL_RenderDrawLine(r->sdl, px + 10, py + 11, px + 17, py + 11);
-        SDL_RenderDrawLine(r->sdl, px + 10, py + 14, px + 16, py + 14);
+        draw_world_prop(r, sx, sy, PROP_BOOK, (SDL_Color){51, 128, 164, 255});
         return;
     }
     NpcArt art = tile == TILE_NPC_BRENNA ? NPC_ART_BRENNA
@@ -101,8 +69,6 @@ static void draw_frostfell_quest_tile(Renderer *r, int sx, int sy, int x, int y,
 }
 
 static void draw_moonveil_quest_tile(Renderer *r, int sx, int sy, int x, int y, TileType tile) {
-    int px = sx * TILE_SIZE;
-    int py = sy * TILE_SIZE;
     if (tile == TILE_NPC_LIORA) {
         draw_town_path(r, sx, sy);
         npc_draw(r, sx, sy, NPC_ART_LIORA, 0);
@@ -114,54 +80,19 @@ static void draw_moonveil_quest_tile(Renderer *r, int sx, int sy, int x, int y, 
         draw_moonveil_floor(r, sx, sy, x, y);
     }
     if (tile == TILE_MOONVEIL_SEED_POD) {
-        SDL_SetRenderDrawColor(r->sdl, 105, 79, 60, 255);
-        SDL_Rect pod = {px + 6, py + 8, 13, 12};
-        SDL_RenderFillRect(r->sdl, &pod);
-        SDL_SetRenderDrawColor(r->sdl, 61, 137, 82, 255);
-        SDL_RenderDrawLine(r->sdl, px + 10, py + 8, px + 7, py + 4);
-        SDL_RenderDrawLine(r->sdl, px + 11, py + 8, px + 16, py + 3);
-        SDL_SetRenderDrawColor(r->sdl, 218, 209, 249, 255);
-        SDL_Rect seed = {px + 10, py + 11, 5, 6};
-        SDL_RenderFillRect(r->sdl, &seed);
-        return;
-    }
-    if (tile == TILE_MOONVEIL_SPRING) {
-        SDL_SetRenderDrawColor(r->sdl, 133, 141, 166, 255);
-        SDL_Rect basin = {px + 4, py + 9, 17, 10};
-        SDL_RenderFillRect(r->sdl, &basin);
-        SDL_SetRenderDrawColor(r->sdl, 102, 178, 209, 255);
-        SDL_Rect water = {px + 6, py + 10, 13, 6};
-        SDL_RenderFillRect(r->sdl, &water);
+        draw_world_prop(r, sx, sy, PROP_POD, (SDL_Color){168, 163, 210, 255});
+    } else if (tile == TILE_MOONVEIL_SPRING) {
+        draw_world_prop(r, sx, sy, PROP_SPRING, (SDL_Color){102, 178, 209, 255});
         SDL_SetRenderDrawColor(r->sdl, 214, 228, 251, 255);
         int glint = (SDL_GetTicks() / 220) % 7;
-        SDL_RenderDrawLine(r->sdl, px + 8 + glint, py + 12, px + 10 + glint, py + 12);
-        return;
-    }
-    if (tile == TILE_MOONVEIL_PLANTING_CIRCLE) {
-        SDL_SetRenderDrawColor(r->sdl, 60, 85, 49, 255);
-        SDL_RenderDrawLine(r->sdl, px + 3, py + 8, px + 20, py + 18);
-        SDL_RenderDrawLine(r->sdl, px + 6, py + 20, px + 17, py + 5);
-        SDL_RenderDrawLine(r->sdl, px + 4, py + 15, px + 19, py + 10);
-        return;
-    }
-    SDL_SetRenderDrawColor(r->sdl, 102, 171, 117, 255);
-    SDL_RenderDrawLine(r->sdl, px + 12, py + 11, px + 12, py + 21);
-    SDL_RenderDrawLine(r->sdl, px + 12, py + 17, px + 7, py + 15);
-    SDL_RenderDrawLine(r->sdl, px + 12, py + 19, px + 17, py + 16);
-    int bloom = tile == TILE_MOONVEIL_MOONFLOWER;
-    int pulse = (SDL_GetTicks() / 180) % 3;
-    SDL_SetRenderDrawColor(r->sdl, 198 + pulse * 12, 184 + pulse * 15, 240, 255);
-    SDL_Rect petals[4] = {{px + 8, py + 4, 7, 4}, {px + 8, py + 11, 7, 4},
-        {px + 5, py + 7, 4, 5}, {px + 15, py + 7, 4, 5}};
-    if (bloom) {
-        SDL_RenderFillRects(r->sdl, petals, 4);
+        SDL_RenderDrawLine(r->sdl, sx * TILE_SIZE + 8 + glint, sy * TILE_SIZE + 12, sx * TILE_SIZE + 10 + glint, sy * TILE_SIZE + 12);
+    } else if (tile == TILE_MOONVEIL_PLANTING_CIRCLE) {
+        draw_world_prop(r, sx, sy, PROP_PLANTING, (SDL_Color){60, 85, 49, 255});
     } else {
-        SDL_RenderDrawLine(r->sdl, px + 8, py + 8, px + 16, py + 8);
-        SDL_RenderDrawLine(r->sdl, px + 12, py + 5, px + 12, py + 11);
+        int pulse = (SDL_GetTicks() / 180) % 3;
+        SDL_Color petals = {198 + pulse * 12, 184 + pulse * 15, 240, 255};
+        draw_world_prop(r, sx, sy, tile == TILE_MOONVEIL_MOONFLOWER ? PROP_FLOWER : PROP_PICKED_FLOWER, petals);
     }
-    SDL_SetRenderDrawColor(r->sdl, 225, 248, 235, 255);
-    SDL_Rect heart = {px + 10, py + 7, bloom ? 5 : 3, bloom ? 5 : 3};
-    SDL_RenderFillRect(r->sdl, &heart);
 }
 
 static void draw_glassdeep_resonator(Renderer *r, int sx, int sy, int x, int y, TileType tile) {
@@ -175,61 +106,24 @@ static void draw_glassdeep_resonator(Renderer *r, int sx, int sy, int x, int y, 
         SDL_Rect glow = {px + 3 - pulse / 2, py + 3 - pulse / 2, 18 + pulse, 18 + pulse};
         SDL_RenderDrawRect(r->sdl, &glow);
     }
-    SDL_SetRenderDrawColor(r->sdl, 94, 100, 120, 255);
-    SDL_Rect base = {px + 4, py + 18, 17, 5};
-    SDL_RenderFillRect(r->sdl, &base);
-    SDL_SetRenderDrawColor(r->sdl, lit ? 112 : 69, lit ? 232 : 91, lit ? 248 : 127, 255);
-    for (int row = 0; row < 15; row++) {
-        int half = row < 7 ? row / 2 : (14 - row) / 2;
-        SDL_RenderDrawLine(r->sdl, px + 12 - half, py + 3 + row, px + 12 + half, py + 3 + row);
-    }
-    SDL_SetRenderDrawColor(r->sdl, lit ? 233 : 128, lit ? 255 : 146, lit ? 255 : 175, 255);
-    SDL_RenderDrawLine(r->sdl, px + 11, py + 5, px + 11, py + 15);
-    // The three pedestal marks stay visible even when the crystal is dark.
-    for (int mark = 0; mark < 3; mark++) {
-        SDL_RenderDrawPoint(r->sdl, px + 8 + mark * 4, py + 20);
-    }
+    SDL_Color crystal = lit ? (SDL_Color){112, 232, 248, 255} : (SDL_Color){69, 91, 127, 255};
+    draw_world_prop(r, sx, sy, PROP_CRYSTAL, crystal);
 }
 
 static void draw_emberforge_tile(Renderer *r, int sx, int sy, int x, int y, TileType tile) {
     draw_ashen_ruin(r, sx, sy, x, y);
-    int px = sx * TILE_SIZE;
-    int py = sy * TILE_SIZE;
     if (tile == TILE_EMBERFORGE_MECHANISM) {
-        SDL_SetRenderDrawColor(r->sdl, 44, 40, 38, 255);
-        SDL_Rect shadow = {px + 4, py + 5, 17, 16};
-        SDL_RenderFillRect(r->sdl, &shadow);
-        SDL_SetRenderDrawColor(r->sdl, 174, 183, 188, 255);
-        SDL_Rect gear = {px + 7, py + 7, 10, 10};
-        SDL_RenderDrawRect(r->sdl, &gear);
-        SDL_Rect teeth[4] = {{px + 10, py + 4, 4, 4}, {px + 16, py + 10, 4, 4},
-            {px + 10, py + 16, 4, 4}, {px + 4, py + 10, 4, 4}};
-        for (int i = 0; i < 4; i++) {
-            SDL_RenderFillRect(r->sdl, &teeth[i]);
-        }
-        SDL_SetRenderDrawColor(r->sdl, 237, 183, 78, 255);
-        SDL_Rect hub = {px + 10, py + 10, 4, 4};
-        SDL_RenderFillRect(r->sdl, &hub);
+        draw_world_prop(r, sx, sy, PROP_GEAR, (SDL_Color){237, 183, 78, 255});
         return;
     }
-    SDL_SetRenderDrawColor(r->sdl, 32, 29, 33, 255);
-    SDL_Rect body = {px + 3, py + 8, 18, 14};
-    SDL_RenderFillRect(r->sdl, &body);
-    SDL_SetRenderDrawColor(r->sdl, 103, 97, 91, 255);
-    SDL_Rect chimney = {px + 14, py + 3, 6, 7};
-    SDL_RenderFillRect(r->sdl, &chimney);
-    SDL_RenderDrawRect(r->sdl, &body);
-    SDL_RenderDrawLine(r->sdl, px + 4, py + 12, px + 19, py + 12);
-    SDL_RenderDrawLine(r->sdl, px + 4, py + 20, px + 19, py + 20);
     int lit = tile == TILE_EMBERFORGE_LIT;
-    SDL_SetRenderDrawColor(r->sdl, lit ? 234 : 55, lit ? 111 : 52, lit ? 28 : 53, 255);
-    SDL_Rect hearth = {px + 7, py + 14, 10, 6};
-    SDL_RenderFillRect(r->sdl, &hearth);
+    SDL_Color hearth = lit ? (SDL_Color){234, 111, 28, 255} : (SDL_Color){55, 52, 53, 255};
+    draw_world_prop(r, sx, sy, PROP_FURNACE, hearth);
     if (lit) {
         int flicker = (SDL_GetTicks() / AMBIENT_FRAME_MS) % 2;
         SDL_SetRenderDrawColor(r->sdl, 255, 217, 108, 255);
-        SDL_Rect fire = {px + 10, py + 15 - flicker, 4, 5 + flicker};
-        SDL_RenderFillRect(r->sdl, &fire);
+        SDL_RenderDrawLine(r->sdl, sx * TILE_SIZE + 10, sy * TILE_SIZE + 15 - flicker, sx * TILE_SIZE + 10, sy * TILE_SIZE + 19);
+        SDL_RenderDrawLine(r->sdl, sx * TILE_SIZE + 12, sy * TILE_SIZE + 16 - flicker, sx * TILE_SIZE + 12, sy * TILE_SIZE + 19);
     }
 }
 
@@ -259,10 +153,7 @@ static void draw_catacombs_tile(Renderer *r, const Map *m, int sx, int sy, int x
         SDL_RenderDrawPoint(r->sdl, skull.x + 3, skull.y + 2);
     } else if (type == TILE_OSSUARY_BRAZIER || type == TILE_OSSUARY_COLD ||
         type == TILE_MEMORIAL_BRAZIER || type == TILE_MEMORIAL_COLD) {
-        SDL_Rect bowl = {px + 5, py + 13, 14, 5};
-        SDL_SetRenderDrawColor(r->sdl, 132, 124, 105, 255);
-        SDL_RenderFillRect(r->sdl, &bowl);
-        SDL_RenderDrawLine(r->sdl, px + 11, py + 18, px + 11, py + 22);
+        draw_world_prop(r, sx, sy, PROP_BRAZIER, (SDL_Color){132, 124, 105, 255});
         if (type == TILE_MEMORIAL_BRAZIER || type == TILE_MEMORIAL_COLD) {
             SDL_SetRenderDrawColor(r->sdl, 224, 216, 186, 255);
             SDL_Rect plaque = {px + 7, py + 19, 10, 4};
@@ -270,38 +161,15 @@ static void draw_catacombs_tile(Renderer *r, const Map *m, int sx, int sy, int x
         }
         if (type == TILE_OSSUARY_BRAZIER || type == TILE_MEMORIAL_BRAZIER) {
             int flicker = (SDL_GetTicks() / 180 + x + y) % 3;
-            SDL_Rect flame = {px + 8, py + 5 - flicker, 8, 9 + flicker};
-            SDL_SetRenderDrawColor(r->sdl, 42, 115, 195, 255);
-            SDL_RenderFillRect(r->sdl, &flame);
-            flame = (SDL_Rect){px + 11, py + 7 - flicker, 3, 6 + flicker};
-            SDL_SetRenderDrawColor(r->sdl, 154, 226, 244, 255);
-            SDL_RenderFillRect(r->sdl, &flame);
+            draw_world_prop(r, sx, sy, PROP_LOW_FLAME_0 + flicker, (SDL_Color){42, 115, 195, 255});
         }
     } else if (type == TILE_BURIAL_LEDGER) {
-        SDL_SetRenderDrawColor(r->sdl, 102, 103, 105, 255);
-        SDL_Rect plinth = {px + 3, py + 14, 18, 9};
-        SDL_RenderFillRect(r->sdl, &plinth);
-        SDL_SetRenderDrawColor(r->sdl, 115, 70, 42, 255);
-        SDL_Rect book = {px + 5, py + 4, 14, 13};
-        SDL_RenderFillRect(r->sdl, &book);
-        SDL_SetRenderDrawColor(r->sdl, 224, 216, 186, 255);
-        SDL_RenderDrawLine(r->sdl, px + 8, py + 6, px + 8, py + 15);
-        SDL_RenderDrawLine(r->sdl, px + 11, py + 9, px + 16, py + 9);
-        SDL_RenderDrawLine(r->sdl, px + 11, py + 12, px + 16, py + 12);
+        draw_world_prop(r, sx, sy, PROP_ALTAR, (SDL_Color){98, 91, 72, 255});
+        draw_world_prop(r, sx, sy, PROP_BOOK, (SDL_Color){138, 108, 62, 255});
     } else if (type == TILE_CATACOMBS_SARCOPHAGUS) {
-        SDL_Rect tomb = {px + 4, py + 2, 16, 21};
-        SDL_SetRenderDrawColor(r->sdl, 102, 103, 105, 255);
-        SDL_RenderFillRect(r->sdl, &tomb);
-        SDL_SetRenderDrawColor(r->sdl, 171, 159, 118, 255);
-        SDL_RenderDrawRect(r->sdl, &tomb);
-        SDL_RenderDrawLine(r->sdl, px + 12, py + 6, px + 12, py + 18);
-        SDL_RenderDrawLine(r->sdl, px + 8, py + 10, px + 16, py + 10);
+        draw_world_prop(r, sx, sy, PROP_TOMB, (SDL_Color){171, 159, 118, 255});
     } else if (type == TILE_BURIAL_PLATE) {
-        SDL_Rect plate = {px + 3, py + 3, 18, 18};
-        SDL_SetRenderDrawColor(r->sdl, 146, 113, 65, 255);
-        SDL_RenderDrawRect(r->sdl, &plate);
-        SDL_RenderDrawLine(r->sdl, px + 7, py + 8, px + 12, py + 15);
-        SDL_RenderDrawLine(r->sdl, px + 12, py + 15, px + 17, py + 8);
+        draw_world_prop(r, sx, sy, PROP_BURIAL_PLATE, (SDL_Color){146, 113, 65, 255});
     } else if (!wall && shade == 0) {
         SDL_SetRenderDrawColor(r->sdl, 83, 79, 72, 255);
         SDL_RenderDrawLine(r->sdl, px + 5, py + 16, px + 16, py + 19);
