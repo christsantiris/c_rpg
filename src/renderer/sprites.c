@@ -2855,20 +2855,23 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
             if (!r->temple_enemy_texture) {
                 break;
             }
-            SDL_Rect source = {0, 20, 290, 280};
+            int art = 0;
             switch (type) {
-                case ENEMY_TEMPLE_STALKER: source = (SDL_Rect){280, 0, 320, 310}; break;
-                case ENEMY_BLOWDART_HUNTER: source = (SDL_Rect){580, 0, 300, 320}; break;
-                case ENEMY_VINEBOUND_GUARDIAN: source = (SDL_Rect){875, 0, 340, 330}; break;
-                case ENEMY_SUN_PRIEST: source = (SDL_Rect){0, 315, 300, 340}; break;
-                case ENEMY_SERPENT_SPIRIT: source = (SDL_Rect){300, 325, 305, 370}; break;
-                case ENEMY_TREASURE_WRAITH: source = (SDL_Rect){600, 320, 315, 355}; break;
-                case ENEMY_LUNAR_EFFIGY: source = (SDL_Rect){900, 350, 300, 320}; break;
-                case ENEMY_MOONBOUND_SENTINEL: source = (SDL_Rect){280, 650, 310, 440}; break;
-                case ENEMY_FALLEN_SUN_GUARDIAN: source = (SDL_Rect){490, 650, 500, 645}; break;
+                case ENEMY_TEMPLE_STALKER: art = 1; break;
+                case ENEMY_BLOWDART_HUNTER: art = 2; break;
+                case ENEMY_VINEBOUND_GUARDIAN: art = 3; break;
+                case ENEMY_SUN_PRIEST: art = 4; break;
+                case ENEMY_SERPENT_SPIRIT: art = 5; break;
+                case ENEMY_TREASURE_WRAITH: art = 6; break;
+                case ENEMY_LUNAR_EFFIGY: art = 7; break;
+                case ENEMY_MOONBOUND_SENTINEL: art = 8; break;
+                case ENEMY_FALLEN_SUN_GUARDIAN: art = 9; break;
                 default: break;
             }
             int size = type == ENEMY_FALLEN_SUN_GUARDIAN ? 40 : 28;
+            // Native frames occupy bottom-centered slots in the 48-pixel atlas.
+            SDL_Rect source = {art % 4 * 48 + (48 - size) / 2,
+                art / 4 * 48 + 48 - size, size, size};
             SDL_Rect destination = {
                 tile_x * TILE_SIZE + (TILE_SIZE - size) / 2,
                 tile_y * TILE_SIZE + TILE_SIZE - size, size, size
@@ -2895,7 +2898,7 @@ void draw_fallen_sun_guardian_broken(Renderer *r, int tile_x, int tile_y) {
     if (!r->temple_enemy_texture) {
         return;
     }
-    SDL_Rect source = {930, 720, 285, 575};
+    SDL_Rect source = {100, 104, 40, 40};
     SDL_Rect destination = {
         tile_x * TILE_SIZE - 8,
         tile_y * TILE_SIZE - 16, 40, 40
