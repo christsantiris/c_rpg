@@ -2,7 +2,7 @@
 
 The current roster contains **95 enemy types in 16 batches**. Each `EnemyType` from `src/game/enemy.h` appears exactly once below. Additional boss forms, named hunts, quest enemies, and shared-renderer dependencies are tracked separately.
 
-Progress: **59/95 enemy types completed (batches 1–10)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
+Progress: **63/95 enemy types completed (batches 1–11)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
 
 ## Batch overview
 
@@ -18,7 +18,7 @@ Progress: **59/95 enemy types completed (batches 1–10)**. Completed boxes have
 | 8 | Frostfell | 7 | Yes |
 | 9 | Sunscar Wastes | 6 | Yes |
 | 10 | Moonveil Gardens | 5 | Yes |
-| 11 | Ashen Hollow | 4 | No |
+| 11 | Ashen Hollow | 4 | Yes |
 | 12 | Glassdeep Caverns | 4 | No |
 | 13 | Royal Catacombs | 5 | No |
 | 14 | Original dungeon bosses | 5 | No |
@@ -203,10 +203,19 @@ Scene previews use controlled garden and quest fixtures for artwork review rathe
 
 ### Batch 11: Ashen Hollow (4)
 
-- [ ] Cinder Imp — `ENEMY_CINDER_IMP`
-- [ ] Ash Hound — `ENEMY_ASH_HOUND`
-- [ ] Obsidian Guardian — `ENEMY_OBSIDIAN_GUARDIAN`
-- [ ] Cinder Lord — `ENEMY_CINDER_LORD`
+- [x] Cinder Imp — `ENEMY_CINDER_IMP`
+- [x] Ash Hound — `ENEMY_ASH_HOUND`
+- [x] Obsidian Guardian — `ENEMY_OBSIDIAN_GUARDIAN`
+- [x] Cinder Lord — `ENEMY_CINDER_LORD`
+
+Reviewed all four sprites at native 24×24 size through the actual SDL renderer on Ashen Hollow terrain, including the mechanism and furnace Emberforge guardians, Ashen watchfire defenders, and the Cinder Lord at normal and low health. Both existing ember phases were reviewed for the Imp, Hound, and Lord; the original 350-ms timing and one-pixel motion remain, and the Obsidian Guardian stays static. Also inspected frozen overlays, health bars, melee damage feedback, and Cinder Lord projectile travel/impact. Tile bounds in both phases, transparent terrain, SDL scale/viewport/clip/blend preservation, Release and Debug builds, and AddressSanitizer/UndefinedBehaviorSanitizer renderer checks passed. All 59 sprites from batches 1–10 remain pixel-for-pixel identical.
+
+- [Before/after comparison, including native-size views](art-sources/enemy-batch-11/before-after.png).
+- [Both existing ember phases](art-sources/enemy-batch-11/embers.png).
+- [Ashen Hollow renderer preview](art-sources/enemy-batch-11/ashen.png).
+- [Emberforge furnace guardians](art-sources/enemy-batch-11/emberforge.png).
+
+Scene previews use controlled volcanic and quest fixtures for artwork review rather than quest playthroughs. The Imp has curved horns, a pointed grin, folded wings, and a tail; the Hound has a defined jaw, staggered legs, charred fur, and connected shoulder flames; the Guardian has angular obsidian plates and a recessed molten core; and the Lord has a distinct crown, layered mantle, and separate flame staff. Combat, collision footprints, saved enemy types, and animation rules are unchanged.
 
 ### Batch 12: Glassdeep Caverns (4)
 
@@ -274,7 +283,7 @@ These entries reuse enemy types above. They do not increase the 95-type count. N
 | [x] | Dunehex and Dunehex Mummy | Djinn and Mummy, batch 9 |
 | [x] | Expedition Guardians | Ice Wolf, Ice Giant, Frost Archer, batch 8 |
 | [ ] | Resonator Guardians | Crystal Spider, Blind Stalker, Shard Golem, batch 12 |
-| [ ] | Emberforge Guardians | Cinder Imp, Ash Hound, Obsidian Guardian, batch 11 |
+| [x] | Emberforge Guardians | Cinder Imp, Ash Hound, Obsidian Guardian, batch 11 |
 | [x] | Moonseed Guardians | Fey Trickster and Giant Moth, batch 10 |
 | [x] | Moonwater Guardian | Living Flower, batch 10 |
 | [x] | Mooncircle Guardians | Thorn Guardian, batch 10 |
@@ -282,7 +291,7 @@ These entries reuse enemy types above. They do not increase the 95-type count. N
 | [ ] | Watchers’ Memorial Guards | Grave Archer (batch 13), Wraith (batch 2) |
 | [ ] | Choir Memorial Guards | Bone Cantor and Ancient Skeleton, batch 13 |
 | [x] | Watchfire Defenders: Mountains objective | Goblin Archer and Hobgoblin Guard, batch 4 |
-| [ ] | Watchfire Defenders: Ashen objective | Obsidian Guardian and Cinder Imp, batch 11 |
+| [x] | Watchfire Defenders: Ashen objective | Obsidian Guardian and Cinder Imp, batch 11 |
 | [x] | Watchfire Defenders: Dragonspine objective | Giant (batch 1), Goblin Archer (batch 4), Fire Elemental (batch 7) |
 | [x] | Elowen’s burial-seal guardians | Skeleton (batch 1); Crypt Bat, Wraith, Crypt Conjurer (batch 2) |
 | [x] | Alder’s Warden rescue guardians | Giant Spider, Blighted Wolf, Dark Elf, Pixie, Forest Troll, batch 3 |
