@@ -1,5 +1,6 @@
 #include "inventory_renderer.h"
 #include "equipment_compare_renderer.h"
+#include "item_icons.h"
 #include "sprites.h"
 
 static int inventory_visible_rows(const Renderer *r) {
@@ -79,6 +80,7 @@ void inventory_draw(Renderer *r, const GameState *g, const InventoryScreen *s) {
         for (int i = list_start; i < list_end; i++) {
             const Item *item = &g->inventory[i];
             int item_y = 130 + (i - list_start) * 36;
+            draw_icon_item(r, cx - 314, item_y - 5, item);
 
             char detail[32] = "";
             if (item->type == ITEM_POTION_HEALTH) {

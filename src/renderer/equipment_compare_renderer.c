@@ -1,4 +1,5 @@
 #include "equipment_compare_renderer.h"
+#include "item_icons.h"
 
 static void format_weapon_range(const Item *item, char *text, int size) {
     if (item->is_ranged) {
@@ -42,6 +43,7 @@ static void draw_compare_column(Renderer *r, const GameState *g, const Item *ite
         return;
     }
 
+    draw_icon_item(r, x + 266, y + 3, item);
     int allowed = item_class_allowed(item, g->player.player_class);
     renderer_draw_text(r, item->name, x + 10, y + 25,
         allowed || !selected_column ? white : red, r->font_small);
@@ -125,6 +127,7 @@ static void draw_armor_column(Renderer *r, const GameState *g, const Item *item,
         return;
     }
 
+    draw_icon_item(r, x + 266, y + 3, item);
     int allowed = item_class_allowed(item, g->player.player_class);
     renderer_draw_text(r, item->name, x + 10, y + 25,
         allowed || !selected_column ? white : red, r->font_small);
@@ -199,6 +202,7 @@ static void draw_shield_column(Renderer *r, const GameState *g, const Item *item
         return;
     }
 
+    draw_icon_item(r, x + 266, y + 3, item);
     int allowed = item_class_allowed(item, g->player.player_class);
     renderer_draw_text(r, item->name, x + 10, y + 25,
         allowed || !selected_column ? white : red, r->font_small);
