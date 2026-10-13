@@ -153,9 +153,9 @@ void castle_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, in
 }
 
 void castle_draw_enemy(Renderer *r, int sx, int sy, const Enemy *e) {
-    // Source rectangles select the unchanged review sprites from the BMP sheets.
-    static const SDL_Rect regular[5] = {{55, 20, 420, 465}, {515, 20, 510, 465}, {1110, 25, 400, 460}, {275, 500, 420, 510}, {805, 500, 405, 500}};
-    static const SDL_Rect bosses[5] = {{115, 5, 690, 505}, {820, 5, 475, 505}, {10, 495, 510, 520}, {500, 505, 535, 510}, {960, 470, 575, 545}};
+    // Native frames are bottom-centered in 32-pixel regular / 40-pixel boss cells.
+    static const SDL_Rect regular[5] = {{4, 6, 24, 26}, {36, 6, 24, 26}, {68, 6, 24, 26}, {4, 38, 24, 26}, {36, 38, 24, 26}};
+    static const SDL_Rect bosses[5] = {{2, 4, 36, 36}, {42, 4, 36, 36}, {82, 4, 36, 36}, {2, 44, 36, 36}, {42, 44, 36, 36}};
     int index = e->type - ENEMY_OATHBOUND_SOLDIER;
     SDL_Texture *texture = index < 5 ? r->castle_enemy_texture : r->castle_boss_texture;
     SDL_Rect source;

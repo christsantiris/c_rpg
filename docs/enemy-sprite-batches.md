@@ -2,7 +2,7 @@
 
 The current roster contains **95 enemy types in 16 batches**. Each `EnemyType` from `src/game/enemy.h` appears exactly once below. Additional boss forms, named hunts, quest enemies, and shared-renderer dependencies are tracked separately.
 
-Progress: **87/95 enemy types completed (batches 1–15)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
+Progress: **95/95 enemy types completed (batches 1–16)**. All listed sprites and additional encounter forms have passed artwork and renderer review. This completes the static-art pass; animation remains a separate change set.
 
 ## Batch overview
 
@@ -23,7 +23,7 @@ Progress: **87/95 enemy types completed (batches 1–15)**. Completed boxes have
 | 13 | Royal Catacombs | 5 | Yes |
 | 14 | Original dungeon bosses | 5 | Yes |
 | 15 | Ruined Isle and Temple | 10 | Yes |
-| 16 | Castle of No Return | 8 | No |
+| 16 | Castle of No Return | 8 | Yes |
 | **Total** | | **95** | |
 
 ## Sprite checklist
@@ -293,16 +293,26 @@ Scene previews use controlled Temple room and encounter fixtures for artwork rev
 
 ### Batch 16: Castle of No Return (8)
 
-- [ ] Oathbound Soldier — `ENEMY_OATHBOUND_SOLDIER`
-- [ ] Iron Warden — `ENEMY_IRON_WARDEN`
-- [ ] Royal Marksman — `ENEMY_ROYAL_MARKSMAN`
-- [ ] Court Hexer — `ENEMY_COURT_HEXER`
-- [ ] Bell Herald — `ENEMY_BELL_HERALD`
-- [ ] Castellan — `ENEMY_CASTELLAN`
-- [ ] Royal Arcanist — `ENEMY_ROYAL_ARCANIST`
-- [ ] Lord Veyr — `ENEMY_LORD_VEYR`
+- [x] Oathbound Soldier — `ENEMY_OATHBOUND_SOLDIER`
+- [x] Iron Warden — `ENEMY_IRON_WARDEN`
+- [x] Royal Marksman — `ENEMY_ROYAL_MARKSMAN`
+- [x] Court Hexer — `ENEMY_COURT_HEXER`
+- [x] Bell Herald — `ENEMY_BELL_HERALD`
+- [x] Castellan — `ENEMY_CASTELLAN`
+- [x] Royal Arcanist — `ENEMY_ROYAL_ARCANIST`
+- [x] Lord Veyr — `ENEMY_LORD_VEYR`
 
-Include Lord Veyr’s three health-dependent forms. Castle enemies display at 24×26 pixels and bosses at 36×36; inspect the actual `castle_draw_enemy()` path and the missing-texture fallback.
+Reviewed all eight enemy types and Veyr's three forms through the actual `castle_draw_enemy()` and SDL game renderer on castle stone and carpet. Regular enemies retain 24×26 display frames; bosses retain 36×36. Checked Veyr at 67, 66, 34, and 33 HP out of 99 to verify both exact phase boundaries, plus his low-health spectral form. Also inspected guard-facing and recovery markers, the Castellan's charge and sweep, Marksman/Hexer/Arcanist/Veyr targeting warnings, fire-rune countdowns, frozen overlays, health bars, damage feedback, and the missing-texture Orc fallback. Display bounds, transparent terrain, SDL scale/viewport/clip/blend preservation, Release and Debug builds, and AddressSanitizer/UndefinedBehaviorSanitizer renderer checks passed. All 87 sprites from batches 1–15, the broken Sun Guardian, and all ten castle fallback poses remain pixel-for-pixel identical.
+
+- [Before/after comparison of all eight types and Veyr's three forms](art-sources/enemy-batch-16/before-after.png).
+- [Castle renderer preview](art-sources/enemy-batch-16/castle.png).
+- [Veyr forms and phase-specific warnings](art-sources/enemy-batch-16/veyr-phases.png).
+- [Veyr at both exact health boundaries](art-sources/enemy-batch-16/veyr-boundaries.png).
+- [Guard markers, attacks, frozen overlays, and damage](art-sources/enemy-batch-16/guards-and-effects.png).
+- [Missing-texture fallback through the game renderer](art-sources/enemy-batch-16/fallback.png).
+- [Sources, exact imagegen prompts, and import pipeline](art-sources/enemy-batch-16/README.md).
+
+Scene previews use controlled castle-room and throne fixtures for artwork review rather than boss-fight playthroughs. The Soldier and Warden have distinct armor facets and royal shield crests; the Marksman's crossbow, Hexer's crystal staff, and Herald's handbell/banner have clearer silhouettes and grips. The Castellan has broader gold-rimmed plate and a defined warhammer; the Arcanist has a pale face, angular collar, and layered robes. Veyr retains the same crown and sword across intact armor, violet-cracked armor, and a floating spectral body. The two source sheets were refined with the built-in imagegen tool and imported by `tools/sprites/castle_enemies.py` into isolated native frames, removing neighboring-pose bleed. Combat rules, display footprints, phase thresholds, saved enemy types, and animation rules are unchanged.
 
 ## Extra forms and named encounters
 
@@ -310,9 +320,9 @@ These entries reuse enemy types above. They do not increase the 95-type count. N
 
 | Review | Appearance or encounter | Base sprite / owning batch |
 |---|---|---|
-| [ ] | Lord Veyr: armored form, above two-thirds health | Lord Veyr, batch 16 |
-| [ ] | Lord Veyr: damaged form, above one-third through two-thirds health | Lord Veyr, batch 16 |
-| [ ] | Lord Veyr: spectral form, at or below one-third health | Lord Veyr, batch 16 |
+| [x] | Lord Veyr: armored form, above two-thirds health | Lord Veyr, batch 16 |
+| [x] | Lord Veyr: damaged form, above one-third through two-thirds health | Lord Veyr, batch 16 |
+| [x] | Lord Veyr: spectral form, at or below one-third health | Lord Veyr, batch 16 |
 | [x] | Sun Guardian: broken form, at or below half health; deactivated appearance | Fallen Sun Guardian, batch 15 |
 | [x] | Rimefang and Rimefang Pack | Ice Wolf and Frost Wraith, batch 8 |
 | [x] | Shardwarden and Shardwarden Stalker | Shard Golem and Blind Stalker, batch 12 |
@@ -351,19 +361,19 @@ These entries reuse enemy types above. They do not increase the 95-type count. N
 ## Shared artwork and dependencies
 
 - The five catacomb enemies now use dedicated artwork in `src/renderer/catacombs_enemy_art.h`. They no longer share `draw_skeleton()`; the batch 1 comparison preserves the earlier shared-overlay review, and batch 13 verifies that the dungeon Skeleton remains unchanged.
-- Swamp Demon now has dedicated artwork in `src/renderer/swamp_enemy_art.h`. It no longer shares `draw_demon_lord()`; the original Demon Lord remains scheduled for batch 14.
+- Swamp Demon now has dedicated artwork in `src/renderer/swamp_enemy_art.h`. It no longer shares `draw_demon_lord()`; the Demon Lord was reviewed in batch 14.
 - Castle artwork uses `castle_draw_enemy()` in `src/renderer/castle_renderer.c`; the generic castle cases in `draw_enemy()` are not the live castle rendering path. The castle missing-texture fallback uses the Orc sprite from batch 1.
-- Temple artwork uses `assets/images/temple-enemies.bmp`, imported by `tools/sprites/temple_enemies.py` into 48-pixel atlas cells with native 28/40-pixel frames, including the separate broken Guardian. Castle artwork uses `assets/images/castle-enemies.bmp` and `castle-bosses.bmp`.
-- Polar Kraken uses `assets/images/polar-kraken.bmp` and a procedural fallback; preserve both paths during batch 8.
+- Temple artwork uses `assets/images/temple-enemies.bmp`, imported by `tools/sprites/temple_enemies.py` into 48-pixel atlas cells with native 28/40-pixel frames, including the separate broken Guardian. Castle artwork uses `assets/images/castle-enemies.bmp` and `castle-bosses.bmp`, imported by `tools/sprites/castle_enemies.py` into native 24×26 and 36×36 frames.
+- Polar Kraken uses `assets/images/polar-kraken.bmp` and a procedural fallback; batch 8 reviewed both paths.
 - Minotaur retains the former Maze Warden’s saved numeric ID. Its appearance is batch 6, with no enum reordering.
 
 ## Completion checks for every batch
 
-- [ ] Each listed sprite has a before/after preview at native size and a nearest-neighbor enlarged view.
-- [ ] Sprites have been inspected through the game renderer on their actual terrain, including relevant quest encounters and boss forms.
-- [ ] Silhouettes, faces, limbs, held equipment, shading, and outlines remain readable at the game’s display scale.
-- [ ] Frozen overlays, damage flashes, health bars, projectile effects, directional indicators, and attack warnings remain legible where applicable.
-- [ ] Shared renderers and missing-texture fallbacks have been checked where applicable.
-- [ ] Build and appropriate renderer checks pass; only then update the batch status.
+- [x] Each listed sprite has a before/after preview at native size and a nearest-neighbor enlarged view.
+- [x] Sprites have been inspected through the game renderer on their actual terrain, including relevant quest encounters and boss forms.
+- [x] Silhouettes, faces, limbs, held equipment, shading, and outlines remain readable at the game’s display scale.
+- [x] Frozen overlays, damage flashes, health bars, projectile effects, directional indicators, and attack warnings remain legible where applicable.
+- [x] Shared renderers and missing-texture fallbacks have been checked where applicable.
+- [x] Build and appropriate renderer checks pass; only then update the batch status.
 
 This first pass updates static artwork. Retain current collision footprints, combat rules, enemy enum values, and existing saves. Treat animation as a later change set. If persistent fields become necessary, implement save/load support and migrations in that change set.
