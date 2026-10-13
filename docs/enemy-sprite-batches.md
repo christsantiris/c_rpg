@@ -2,7 +2,7 @@
 
 The current roster contains **95 enemy types in 16 batches**. Each `EnemyType` from `src/game/enemy.h` appears exactly once below. Additional boss forms, named hunts, quest enemies, and shared-renderer dependencies are tracked separately.
 
-Progress: **67/95 enemy types completed (batches 1–12)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
+Progress: **72/95 enemy types completed (batches 1–13)**. Completed boxes have passed artwork and renderer review. Complete one batch at a time, then wait for the next batch request. Mark a sprite complete after its artwork and native-size renderer review pass.
 
 ## Batch overview
 
@@ -20,7 +20,7 @@ Progress: **67/95 enemy types completed (batches 1–12)**. Completed boxes have
 | 10 | Moonveil Gardens | 5 | Yes |
 | 11 | Ashen Hollow | 4 | Yes |
 | 12 | Glassdeep Caverns | 4 | Yes |
-| 13 | Royal Catacombs | 5 | No |
+| 13 | Royal Catacombs | 5 | Yes |
 | 14 | Original dungeon bosses | 5 | No |
 | 15 | Ruined Isle and Temple | 10 | No |
 | 16 | Castle of No Return | 8 | No |
@@ -236,11 +236,20 @@ Scene previews use controlled cavern, hunt, and resonator fixtures for artwork r
 
 ### Batch 13: Royal Catacombs (5)
 
-- [ ] Ancient Skeleton — `ENEMY_ANCIENT_SKELETON`
-- [ ] Bone Sentinel — `ENEMY_BONE_SENTINEL`
-- [ ] Grave Archer — `ENEMY_GRAVE_ARCHER`
-- [ ] Bone Cantor — `ENEMY_BONE_CANTOR`
-- [ ] Grave Marshal — `ENEMY_GRAVE_MARSHAL`
+- [x] Ancient Skeleton — `ENEMY_ANCIENT_SKELETON`
+- [x] Bone Sentinel — `ENEMY_BONE_SENTINEL`
+- [x] Grave Archer — `ENEMY_GRAVE_ARCHER`
+- [x] Bone Cantor — `ENEMY_BONE_CANTOR`
+- [x] Grave Marshal — `ENEMY_GRAVE_MARSHAL`
+
+Reviewed all five sprites at native 24×24 size through the actual SDL renderer on Royal Catacombs terrain, including Soldiers’, Watchers’, and Choir Memorial guard pairs. Also inspected the corpse revival marker, revived enemies, the Marshal’s sweep warning and low-health appearance, frozen overlays, health bars, melee damage feedback, and Archer/Cantor projectile travel and impact. Tile bounds, transparent terrain, SDL scale/viewport/clip/blend preservation, Release and Debug builds, and AddressSanitizer/UndefinedBehaviorSanitizer renderer checks passed. All 67 sprites from batches 1–12, including the original dungeon Skeleton, remain pixel-for-pixel identical.
+
+- [Before/after comparison, including native-size views](art-sources/enemy-batch-13/before-after.png).
+- [Royal Catacombs renderer preview](art-sources/enemy-batch-13/catacombs.png).
+- [Memorial guards, revival cues, and Marshal sweep warning](art-sources/enemy-batch-13/encounters.png).
+- [Frozen overlays, damage, projectiles, and low-health Marshal](art-sources/enemy-batch-13/effects.png).
+
+Scene previews use controlled catacomb and memorial fixtures for artwork review rather than quest playthroughs. The Ancient Skeleton has weathered bones, a broken helmet, and a rusted sword; the Sentinel has plated armor and a reinforced shield; the Archer has a hood, curved bow, and quiver; the Cantor has layered violet vestments and a ritual staff; and the Marshal has a crested helmet, crimson mantle, and ornate polearm. Each now uses dedicated artwork instead of the shared dungeon Skeleton. Combat, collision footprints, saved enemy types, and animation rules are unchanged.
 
 ### Batch 14: Original dungeon bosses (5)
 
@@ -297,9 +306,9 @@ These entries reuse enemy types above. They do not increase the 95-type count. N
 | [x] | Moonseed Guardians | Fey Trickster and Giant Moth, batch 10 |
 | [x] | Moonwater Guardian | Living Flower, batch 10 |
 | [x] | Mooncircle Guardians | Thorn Guardian, batch 10 |
-| [ ] | Soldiers’ Memorial Guards | Ancient Skeleton and Bone Sentinel, batch 13 |
-| [ ] | Watchers’ Memorial Guards | Grave Archer (batch 13), Wraith (batch 2) |
-| [ ] | Choir Memorial Guards | Bone Cantor and Ancient Skeleton, batch 13 |
+| [x] | Soldiers’ Memorial Guards | Ancient Skeleton and Bone Sentinel, batch 13 |
+| [x] | Watchers’ Memorial Guards | Grave Archer (batch 13), Wraith (batch 2) |
+| [x] | Choir Memorial Guards | Bone Cantor and Ancient Skeleton, batch 13 |
 | [x] | Watchfire Defenders: Mountains objective | Goblin Archer and Hobgoblin Guard, batch 4 |
 | [x] | Watchfire Defenders: Ashen objective | Obsidian Guardian and Cinder Imp, batch 11 |
 | [x] | Watchfire Defenders: Dragonspine objective | Giant (batch 1), Goblin Archer (batch 4), Fire Elemental (batch 7) |
@@ -320,11 +329,11 @@ These entries reuse enemy types above. They do not increase the 95-type count. N
 | [x] | Mara’s beacon guardians | Giant Crab, Merfolk, Animated Statue, Sea Serpent, Water Elemental, batch 5 |
 | [x] | Coast cache guards | Giant Crab, Animated Statue, Sea Serpent, batch 5 |
 | [x] | Animated Statues in Rook’s labyrinth | Animated Statue, batch 5; checked beside batch 3 Giant Spider |
-| [ ] | Catacomb corpses and revived enemies | Batch 13; keep revival cues legible |
+| [x] | Catacomb corpses and revived enemies | Batch 13; keep revival cues legible |
 
 ## Shared artwork and dependencies
 
-- The five catacomb enemies currently call `draw_skeleton()`. Batch 1 must also check the existing catacomb overlays for visual regressions; their dedicated art remains scheduled for batch 13.
+- The five catacomb enemies now use dedicated artwork in `src/renderer/catacombs_enemy_art.h`. They no longer share `draw_skeleton()`; the batch 1 comparison preserves the earlier shared-overlay review, and batch 13 verifies that the dungeon Skeleton remains unchanged.
 - Swamp Demon now has dedicated artwork in `src/renderer/swamp_enemy_art.h`. It no longer shares `draw_demon_lord()`; the original Demon Lord remains scheduled for batch 14.
 - Castle artwork uses `castle_draw_enemy()` in `src/renderer/castle_renderer.c`; the generic castle cases in `draw_enemy()` are not the live castle rendering path. The castle missing-texture fallback uses the Orc sprite from batch 1.
 - Temple artwork uses `assets/images/temple-enemies.bmp`, including the separate broken guardian crop. Castle artwork uses `assets/images/castle-enemies.bmp` and `castle-bosses.bmp`.
