@@ -1,5 +1,6 @@
 #include "castle_renderer.h"
 #include "sprites.h"
+#include "world_props.h"
 
 static void rect(Renderer *r, int x, int y, int w, int h, SDL_Color c) {
     SDL_SetRenderDrawColor(r->sdl, c.r, c.g, c.b, c.a);
@@ -78,76 +79,28 @@ void castle_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, in
         SDL_RenderDrawLine(r->sdl, px + 6, py + 16, px + 18, py + 16);
         rect(r, px + 11, py + 10, 2, 4, (SDL_Color){240, 188, 91, 255});
     } else if (tile == TILE_CASTLE_WARD || tile == TILE_CASTLE_WARD_SPENT) {
-        rect(r, px + 4, py + 19, 16, 3, (SDL_Color){101, 89, 116, 255});
-        rect(r, px + 7, py + 12, 10, 7, (SDL_Color){68, 62, 83, 255});
-        rect(r, px + 5, py + 11, 14, 2, (SDL_Color){156, 132, 80, 255});
         SDL_Color orb = tile == TILE_CASTLE_WARD ? (SDL_Color){101, 218, 239, 255} : (SDL_Color){77, 78, 94, 255};
-        rect(r, px + 9, py + 3, 6, 8, orb);
-        rect(r, px + 7, py + 5, 10, 4, orb);
-        if (tile == TILE_CASTLE_WARD) {
-            rect(r, px + 10, py + 4, 3, 3, (SDL_Color){220, 251, 255, 255});
-        }
+        draw_world_prop(r, sx, sy, PROP_CRYSTAL, orb);
     } else if (tile == TILE_CASTLE_MUSTER) {
-        rect(r, px + 3, py + 2, 18, 20, (SDL_Color){150, 121, 73, 255});
-        rect(r, px + 5, py + 4, 14, 16, (SDL_Color){23, 25, 36, 255});
-        rect(r, px + 8, py + 8, 8, 1, (SDL_Color){222, 183, 104, 255});
-        rect(r, px + 11, py + 6, 2, 7, (SDL_Color){222, 183, 104, 255});
-        rect(r, px + 7, py + 17, 10, 2, (SDL_Color){169, 128, 75, 255});
+        draw_world_prop(r, sx, sy, PROP_MUSTER, (SDL_Color){222, 183, 104, 255});
     } else if (tile == TILE_CASTLE_TABLE) {
-        rect(r, px + 3, py + 3, 18, 19, (SDL_Color){58, 34, 31, 255});
-        rect(r, px + 4, py + 3, 16, 15, (SDL_Color){120, 78, 50, 255});
-        rect(r, px + 8, py + 5, 8, 8, (SDL_Color){179, 150, 105, 255});
-        rect(r, px + 2, py + 9, 2, 5, (SDL_Color){177, 105, 62, 255});
-        rect(r, px + 20, py + 9, 2, 5, (SDL_Color){177, 105, 62, 255});
+        draw_world_prop(r, sx, sy, PROP_BANQUET_TABLE, (SDL_Color){179, 150, 105, 255});
     } else if (tile == TILE_CASTLE_BOOKCASE) {
-        rect(r, px + 2, py + 1, 20, 22, (SDL_Color){69, 40, 32, 255});
-        for (int row = 3; row < 21; row += 7) {
-            for (int col = 4; col < 20; col += 4) {
-                rect(r, px + col, py + row, 3, 5, (SDL_Color){90 + col * 3, 50 + row * 3, 101 + col, 255});
-            }
-            rect(r, px + 3, py + row + 5, 18, 1, (SDL_Color){170, 116, 58, 255});
-        }
+        draw_world_prop(r, sx, sy, PROP_BOOKCASE, (SDL_Color){170, 116, 58, 255});
     } else if (tile == TILE_CASTLE_THRONE) {
-        rect(r, px + 3, py, 18, 24, (SDL_Color){192, 143, 65, 255});
-        rect(r, px + 6, py + 3, 12, 17, (SDL_Color){111, 29, 48, 255});
-        rect(r, px + 2, py + 14, 20, 4, (SDL_Color){224, 177, 82, 255});
-        rect(r, px + 6, py + 1, 3, 3, (SDL_Color){36, 26, 43, 255});
-        rect(r, px + 15, py + 1, 3, 3, (SDL_Color){36, 26, 43, 255});
+        draw_world_prop(r, sx, sy, PROP_THRONE, (SDL_Color){224, 177, 82, 255});
     } else if (tile == TILE_CASTLE_PILLAR) {
-        rect(r, px + 3, py + 18, 18, 5, (SDL_Color){98, 87, 104, 255});
-        rect(r, px + 6, py + 4, 12, 16, (SDL_Color){43, 39, 53, 255});
-        rect(r, px + 6, py + 4, 3, 16, (SDL_Color){112, 99, 120, 255});
-        rect(r, px + 3, py + 2, 18, 4, (SDL_Color){136, 111, 63, 255});
+        draw_world_prop(r, sx, sy, PROP_PILLAR, (SDL_Color){136, 111, 63, 255});
     } else if (tile == TILE_CASTLE_BANNER) {
-        rect(r, px + 4, py + 2, 16, 3, (SDL_Color){182, 142, 66, 255});
-        rect(r, px + 6, py + 5, 12, 16, (SDL_Color){119, 28, 48, 255});
-        rect(r, px + 9, py + 8, 6, 6, (SDL_Color){198, 159, 75, 255});
-        rect(r, px + 9, py + 8, 2, 3, (SDL_Color){119, 28, 48, 255});
-        rect(r, px + 14, py + 8, 1, 3, (SDL_Color){119, 28, 48, 255});
+        draw_world_prop(r, sx, sy, PROP_BANNER, (SDL_Color){198, 159, 75, 255});
     } else if (tile == TILE_CASTLE_GATE || tile == TILE_CASTLE_GATE_OPEN) {
-        int height = tile == TILE_CASTLE_GATE ? 24 : 5;
-        for (int bx = 3; bx < 24; bx += 5) {
-            rect(r, px + bx, py, 2, height, (SDL_Color){145, 135, 153, 255});
-        }
-        rect(r, px, py + 2, 24, 3, (SDL_Color){156, 119, 65, 255});
-        if (height == 24) {
-            rect(r, px, py + 15, 24, 2, (SDL_Color){96, 82, 107, 255});
-        }
+        draw_world_prop(r, sx, sy, tile == TILE_CASTLE_GATE ? PROP_GATE : PROP_GATE_OPEN, (SDL_Color){156, 119, 65, 255});
     } else if (tile == TILE_CASTLE_LEVER) {
-        rect(r, px + 4, py + 15, 16, 6, (SDL_Color){103, 86, 70, 255});
-        rect(r, px + 11, py + 5, 3, 14, (SDL_Color){204, 162, 77, 255});
-        rect(r, px + 9, py + 3, 7, 4, (SDL_Color){159, 45, 55, 255});
+        draw_world_prop(r, sx, sy, PROP_LEVER, (SDL_Color){159, 45, 55, 255});
     } else if (tile == TILE_CASTLE_TRAP_OPEN) {
-        rect(r, px + 2, py + 2, 20, 20, (SDL_Color){8, 6, 15, 255});
-        rect(r, px + 3, py + 3, 18, 2, (SDL_Color){199, 143, 60, 255});
-        rect(r, px + 4, py + 6, 2, 14, (SDL_Color){125, 70, 51, 255});
-        for (int by = 9; by < 21; by += 4) {
-            rect(r, px + 5, py + by, 7, 1, (SDL_Color){125, 70, 51, 255});
-        }
+        draw_world_prop(r, sx, sy, PROP_HATCH, (SDL_Color){199, 143, 60, 255});
     } else if (tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN) {
-        for (int i = 0; i < 4; i++) {
-            rect(r, px + 4, py + 5 + i * 4, 16, 3, (SDL_Color){109 + i * 12, 94 + i * 10, 119 + i * 10, 255});
-        }
+        draw_world_prop(r, sx, sy, tile == TILE_STAIRS_UP ? PROP_STAIRS_UP : PROP_STAIRS_DOWN, (SDL_Color){181, 146, 91, 255});
         renderer_draw_text(r, tile == TILE_STAIRS_UP ? "^" : "v", px + 8, py + 6, (SDL_Color){245, 206, 109, 255}, r->font_tiny);
     }
 }
