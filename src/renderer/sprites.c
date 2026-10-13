@@ -9,6 +9,7 @@
 #include "frostfell_enemy_art.h"
 #include "polar_kraken_art.h"
 #include "desert_enemy_art.h"
+#include "moonveil_enemy_art.h"
 #include "npc_renderer.h"
 #include <stdlib.h>
 
@@ -2476,66 +2477,89 @@ static void draw_desert_enemy(Renderer *r, int tx, int ty, EnemyType type) {
 }
 
 static void draw_moonveil_enemy(Renderer *r, int tx, int ty, EnemyType type) {
+    int art;
+    switch (type) {
+        case ENEMY_FEY_TRICKSTER: art = MOON_ART_FEY_TRICKSTER; break;
+        case ENEMY_GIANT_MOTH: art = MOON_ART_GIANT_MOTH; break;
+        case ENEMY_LIVING_FLOWER: art = MOON_ART_LIVING_FLOWER; break;
+        case ENEMY_THORN_GUARDIAN: art = MOON_ART_THORN_GUARDIAN; break;
+        case ENEMY_THORN_REGENT: art = MOON_ART_THORN_REGENT; break;
+        default: return;
+    }
+    static const SDL_Color bodies[MOON_ART_COUNT] = {
+        {214, 169, 177, 255}, {205, 190, 160, 255}, {157, 47, 104, 255},
+        {79, 78, 43, 255}, {49, 111, 71, 255}
+    };
+    static const SDL_Color clothes[MOON_ART_COUNT] = {
+        {124, 82, 174, 255}, {102, 123, 179, 255}, {198, 64, 133, 255},
+        {79, 78, 43, 255}, {122, 62, 145, 255}
+    };
+    SDL_Color body = bodies[art];
+    SDL_Color cloth = clothes[art];
+    SDL_Color palette[128] = {{0}};
+    palette['o'] = (SDL_Color){15, 18, 30, 255};
+    palette['s'] = (SDL_Color){body.r * 2 / 3, body.g * 2 / 3, body.b * 2 / 3, 255};
+    palette['S'] = body;
+    palette['H'] = (SDL_Color){body.r + (255 - body.r) / 3,
+        body.g + (255 - body.g) / 3, body.b + (255 - body.b) / 3, 255};
+    palette['c'] = (SDL_Color){cloth.r * 2 / 3, cloth.g * 2 / 3, cloth.b * 2 / 3, 255};
+    palette['C'] = cloth;
+    palette['v'] = (SDL_Color){cloth.r + (255 - cloth.r) / 4,
+        cloth.g + (255 - cloth.g) / 4, cloth.b + (255 - cloth.b) / 4, 255};
+    palette['e'] = (SDL_Color){14, 15, 28, 255};
+    palette['y'] = (SDL_Color){152, 245, 225, 255};
+    palette['r'] = (SDL_Color){30, 71, 51, 255};
+    palette['R'] = (SDL_Color){89, 156, 93, 255};
+    palette['w'] = (SDL_Color){89, 192, 197, 255};
+    palette['W'] = (SDL_Color){144, 217, 215, 255};
+    palette['b'] = (SDL_Color){102, 123, 179, 255};
+    palette['B'] = (SDL_Color){147, 174, 215, 255};
+    palette['t'] = (SDL_Color){49, 108, 129, 255};
+    palette['T'] = (SDL_Color){131, 219, 218, 255};
+    palette['u'] = (SDL_Color){105, 100, 93, 255};
+    palette['U'] = (SDL_Color){210, 200, 175, 255};
+    palette['f'] = (SDL_Color){200, 244, 217, 255};
+    palette['p'] = (SDL_Color){55, 138, 131, 255};
+    palette['P'] = (SDL_Color){152, 245, 225, 255};
+    palette['l'] = (SDL_Color){54, 39, 45, 255};
+    palette['L'] = (SDL_Color){105, 81, 60, 255};
+    palette['K'] = (SDL_Color){150, 121, 92, 255};
+    palette['k'] = (SDL_Color){34, 30, 48, 255};
+    palette['g'] = (SDL_Color){143, 101, 57, 255};
+    palette['G'] = (SDL_Color){209, 179, 101, 255};
+    if (type == ENEMY_GIANT_MOTH) {
+        palette['w'] = (SDL_Color){170, 108, 194, 255};
+        palette['W'] = (SDL_Color){211, 160, 218, 255};
+        palette['t'] = (SDL_Color){108, 67, 137, 255};
+    }
     int x = tx * TILE_SIZE;
     int y = ty * TILE_SIZE;
-    SDL_Color shade = {15, 18, 30, 255};
-    SDL_Color glow = {152, 245, 225, 255};
-    SDL_Color leaf = {49, 111, 71, 255};
+    int has_wings = type == ENEMY_FEY_TRICKSTER || type == ENEMY_GIANT_MOTH;
+    int wing = type == ENEMY_FEY_TRICKSTER ? 0 : 1;
     int flutter = (int)((SDL_GetTicks() / AMBIENT_FRAME_MS) & 1u);
-    if (type == ENEMY_GIANT_MOTH) {
-        fill_rect(r, x + 1, y + 4 + flutter, 9, 9, (SDL_Color){170, 108, 194, 255});
-        fill_rect(r, x + 14, y + 4 + flutter, 9, 9, (SDL_Color){170, 108, 194, 255});
-        fill_rect(r, x + 3, y + 13 - flutter, 7, 7, (SDL_Color){102, 123, 179, 255});
-        fill_rect(r, x + 14, y + 13 - flutter, 7, 7, (SDL_Color){102, 123, 179, 255});
-        fill_rect(r, x + 5, y + 7, 3, 3, glow);
-        fill_rect(r, x + 16, y + 7, 3, 3, glow);
-        fill_rect(r, x + 10, y + 5, 4, 15, shade);
-        fill_rect(r, x + 9, y + 2, 1, 5, glow);
-        fill_rect(r, x + 14, y + 2, 1, 5, glow);
-        return;
-    }
-    if (type == ENEMY_FEY_TRICKSTER) {
-        fill_rect(r, x + 2, y + 8 + flutter, 7, 8, (SDL_Color){89, 192, 197, 255});
-        fill_rect(r, x + 15, y + 8 + flutter, 7, 8, (SDL_Color){89, 192, 197, 255});
-        fill_rect(r, x + 9, y + 3, 7, 6, (SDL_Color){214, 169, 177, 255});
-        fill_rect(r, x + 8, y + 1, 9, 3, (SDL_Color){149, 79, 184, 255});
-        fill_rect(r, x + 9, y + 9, 6, 10, (SDL_Color){124, 82, 174, 255});
-        fill_rect(r, x + 9, y + 20, 2, 3, shade);
-        fill_rect(r, x + 14, y + 20, 2, 3, shade);
-        fill_rect(r, x + 19, y + 17, 3, 3, glow);
-        return;
-    }
-    if (type == ENEMY_LIVING_FLOWER) {
-        fill_rect(r, x + 10, y + 10, 4, 13, leaf);
-        fill_rect(r, x + 3, y + 17, 8, 4, leaf);
-        fill_rect(r, x + 14, y + 15, 7, 4, leaf);
-        fill_rect(r, x + 5, y + 1, 14, 5, (SDL_Color){198, 64, 133, 255});
-        fill_rect(r, x + 2, y + 5, 20, 8, (SDL_Color){157, 47, 104, 255});
-        fill_rect(r, x + 6, y + 7, 12, 5, shade);
-        for (int tooth = 0; tooth < 3; tooth++) {
-            fill_rect(r, x + 7 + tooth * 4, y + 7, 2, 2, glow);
+    for (int layer = 0; layer < 2; layer++) {
+        if (layer == 0 && !has_wings) {
+            continue;
         }
-        return;
-    }
-    int boss = type == ENEMY_THORN_REGENT;
-    SDL_Color body = boss ? (SDL_Color){122, 62, 145, 255} : (SDL_Color){79, 78, 43, 255};
-    fill_rect(r, x + 7, y + 3, 10, 7, shade);
-    fill_rect(r, x + 8, y + 4, 8, 5, leaf);
-    fill_rect(r, x + 9, y + 6, 2, 1, glow);
-    fill_rect(r, x + 14, y + 6, 2, 1, glow);
-    fill_rect(r, x + 6, y + 10, 13, 11, body);
-    fill_rect(r, x + 2, y + 11, 5, 8, leaf);
-    fill_rect(r, x + 18, y + 11, 5, 8, leaf);
-    fill_rect(r, x + 6, y + 21, 5, 3, shade);
-    fill_rect(r, x + 14, y + 21, 5, 3, shade);
-    for (int thorn = 0; thorn < 3; thorn++) {
-        fill_rect(r, x + 6 + thorn * 5, y + (boss ? 0 : 11), 2, boss ? 5 : 4, leaf);
-    }
-    if (boss) {
-        fill_rect(r, x + 7, y + 2, 12, 2, glow);
-        fill_rect(r, x + 11, y + 12, 3, 3, glow);
-        fill_rect(r, x + 21, y + 6, 2, 17, (SDL_Color){105, 81, 60, 255});
-        fill_rect(r, x + 20, y + 3, 4, 4, glow);
+        const char (*rows)[25] = layer == 0 ? moonveil_wing_art[wing] : moonveil_enemy_art[art];
+        for (int row = 0; row < 24; row++) {
+            int offset = 0;
+            if (layer == 0) {
+                // Preserve the Moth's opposing upper/lower wing motion.
+                offset = type == ENEMY_GIANT_MOTH && row >= 13 ? -flutter : flutter;
+            }
+            for (int col = 0; col < 24;) {
+                char ink = rows[row][col];
+                int end = col + 1;
+                while (end < 24 && rows[row][end] == ink) {
+                    end++;
+                }
+                if (ink != '.') {
+                    fill_rect(r, x + col, y + row + offset, end - col, 1, palette[(unsigned char)ink]);
+                }
+                col = end;
+            }
+        }
     }
 }
 
