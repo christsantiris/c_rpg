@@ -154,10 +154,15 @@ the final west exit return to Stillbury. Return to Town leaves a portal by
 Stillbury's west gate. Scarabs and venomous Vipers roam its first level, Mummies
 join from level two, Djinn fire magic bolts from level three, and armored Golems
 appear from level four. Mummies and Golems move slowly. The Desert Pharaoh
-guards the final clearing with alternating magic bolts and drops the Sandstorm
-Staff, a rare two-handed Mage weapon. Unclaimed staff rewards survive leaving
-and saving. A visual sandstorm sweeps across Sunscar with blowing sand and a
-light amber haze. Enter the Adventurer's Guild in Rosemoor, speak with Zara, and
+guards the final clearing with a one-action curse beam and two-action burial
+sand. Below half health, warned storm bands move across the arena. Four sandstone
+obelisks block beams and cast directional **S** shelter tiles against storms.
+Each signature leaves a counterattack action; burial patches expire after two
+actions. The guaranteed Sandstorm Staff remains a rare two-handed Mage weapon.
+Unclaimed rewards survive travel and saving, including a full loot floor or
+inventory. See the [Pharaoh play-test guide](docs/art-sources/desert-pharaoh-encounter/README.md).
+A visual sandstorm sweeps across Sunscar with blowing sand and a light amber
+haze. Enter the Adventurer's Guild in Rosemoor, speak with Zara, and
 press **Y** to accept The Lost Magic Lamp. Recover the lamp on Sunscar level 4,
 then return to Zara for a one-time reward of 80 gold and 600 score. Speaking
 with Cain explains the dangers beyond town, recommends Elowen's **The Broken
