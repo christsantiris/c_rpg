@@ -232,6 +232,7 @@ typedef struct {
     int score;
     int dungeon_key_found;
     int dungeon_crypt_keys;
+    int lich_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
     int portal_active;
     int portal_level;
     Location portal_location;
@@ -298,6 +299,7 @@ void game_descend(GameState *g);
 void game_ascend(GameState *g);
 void enemies_spawn(GameState *g);
 void game_add_lich_minions(GameState *g);
+Enemy *game_spawn_lich_shade(GameState *g, int x, int y, int boss_index);
 void game_refresh_quest_encounters(GameState *g);
 void game_repair_forest_enemy_positions(Map *m, Enemy *actors, int count, int px, int py);
 void game_enter_dungeon(GameState *g);

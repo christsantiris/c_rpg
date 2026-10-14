@@ -17,6 +17,7 @@ void test_dungeon_exit_reachability(void);
 void test_dungeon_boss_save_migration(void);
 void test_dungeon_all_room_connectivity(void);
 void test_lich_minions(void);
+void test_lich(void);
 void test_stairs_locked(void);
 void test_final_dungeon_exit(void);
 void test_dungeon_return_stairs_migration(void);
@@ -214,6 +215,7 @@ int main(void) {
     test_dungeon_boss_save_migration();
     test_dungeon_all_room_connectivity();
     test_lich_minions();
+    test_lich();
     printf("\n");
     test_combat_feedback();
     printf("\n");

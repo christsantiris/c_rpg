@@ -2,6 +2,7 @@
 #include "game.h"
 #include "catacombs.h"
 #include "castle.h"
+#include "lich.h"
 #include "jail.h"
 #include "town_life.h"
 #include <stdlib.h>
@@ -97,6 +98,10 @@ static void place_gold_drop(GameState *g, int x, int y, int gold) {
 }
 
 static void finish_floor_pickup(GameState *g, FloorItem *picked) {
+    if (strcmp(picked->item.name, "Cryptblade") == 0 && g->lich_reward_state == 1) {
+        g->lich_reward_state = 2;
+        lich_restore_reward(g);
+    }
     if (strcmp(picked->item.name, "Krakenbone Bow") == 0) {
         g->kraken_bow_unclaimed = 0;
     }
@@ -244,6 +249,9 @@ static int enemy_score(EnemyType type) {
 }
 
 static void drop_loot(GameState *g, Enemy *enemy) {
+    if (enemy->revived && strcmp(enemy->name, "Lich Shade") == 0) {
+        return;
+    }
     if (g->location == LOCATION_CASTLE_INTERIOR) {
         castle_record_death(g, enemy);
         return;
@@ -416,6 +424,9 @@ static void drop_loot(GameState *g, Enemy *enemy) {
     // Each boss leaves a fixed regional reward instead of rolling ordinary
     // equipment, so capstone weapons remain Blacksmith progression.
     if (is_boss) {
+        if (type == ENEMY_LICH_KING) {
+            g->lich_reward_state = 1;
+        }
         if (type == ENEMY_FALLEN_SUN_GUARDIAN) {
             if (g->floor_item_count < MAX_FLOOR_ITEMS) {
                 place_gold_drop(g, x, y, gold);
@@ -425,7 +436,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
             game_update_level_progress(g);
             return;
         }
-        if (g->floor_item_count >= MAX_FLOOR_ITEMS) {
+        if (g->floor_item_count >= MAX_FLOOR_ITEMS && type != ENEMY_LICH_KING) {
             FloorItem *discarded = &g->floor_items[MAX_FLOOR_ITEMS - 1];
             if (g->map.tiles[discarded->y][discarded->x] == TILE_ITEM) {
                 g->map.tiles[discarded->y][discarded->x] =
@@ -461,6 +472,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
             }
             push_message(g, msg);
         }
+        lich_restore_reward(g);
         game_update_level_progress(g);
         return;
     }
@@ -543,6 +555,7 @@ static int apply_melee_cleave(GameState *g, Enemy *target, int attack, int perce
         }
         damage = catacombs_enemy_damage(g, enemy, damage);
         damage = castle_enemy_damage(g, enemy, damage);
+        damage = lich_enemy_damage(g, enemy, damage);
         enemy->hp -= damage;
         combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_NOW, enemy->x, enemy->y, damage);
         hits++;
@@ -786,6 +799,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (lich_has_interaction(g)) {
+        return 1;
+    }
     if (game_has_watchfire_interaction(g)) {
         return 1;
     }
@@ -1114,6 +1130,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (lich_interact(g)) {
+            return;
+        }
         if (game_interact_watchfire(g)) {
             return;
         }
@@ -1188,6 +1207,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_PICK_UP) {
+        if (g->map.tiles[g->player.y][g->player.x] == TILE_LICH_RELIQUARY && lich_interact(g)) {
+            return;
+        }
         if (g->map.tiles[g->player.y][g->player.x] == TILE_DRAGON_TREASURE) {
             game_collect_dragon_treasure(g);
             return;
@@ -1638,6 +1660,7 @@ void action_resolve_player(GameState *g, Action a) {
                             spell_power;
                         dmg = catacombs_enemy_damage(g, e, dmg);
                         dmg = castle_enemy_damage(g, e, dmg);
+                        dmg = lich_enemy_damage(g, e, dmg);
                         e->hp -= dmg;
                         combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_AFTER_PLAYER_SHOT, e->x, e->y, dmg);
                         char msg[MAX_MESSAGE_LEN];
@@ -1721,6 +1744,7 @@ void action_resolve_player(GameState *g, Action a) {
                     int dmg = sp->damage + g->player.level * 2 + spell_power;
                     dmg = catacombs_enemy_damage(g, e, dmg);
                     dmg = castle_enemy_damage(g, e, dmg);
+                    dmg = lich_enemy_damage(g, e, dmg);
                     e->hp -= dmg;
                     combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_AFTER_PLAYER_SHOT, e->x, e->y, dmg);
                     if (e->hp <= 0) {
@@ -1812,6 +1836,7 @@ void action_resolve_player(GameState *g, Action a) {
                 if (critical) dmg = dmg * 3 / 2;
                 dmg = catacombs_enemy_damage(g, e, dmg);
                 dmg = castle_enemy_damage(g, e, dmg);
+                dmg = lich_enemy_damage(g, e, dmg);
                 e->hp -= dmg;
                 combat_feedback_add(g, critical ? FEEDBACK_ENEMY_CRITICAL : FEEDBACK_ENEMY_DAMAGE, FEEDBACK_AFTER_PLAYER_SHOT, e->x, e->y, dmg);
                 char msg[MAX_MESSAGE_LEN];
@@ -1917,6 +1942,7 @@ void action_resolve_player(GameState *g, Action a) {
                 }
                 dmg = catacombs_enemy_damage(g, e, dmg);
                 dmg = castle_enemy_damage(g, e, dmg);
+                dmg = lich_enemy_damage(g, e, dmg);
                 e->hp -= dmg;
                 combat_feedback_add(g, critical ? FEEDBACK_ENEMY_CRITICAL : FEEDBACK_ENEMY_DAMAGE, FEEDBACK_NOW, e->x, e->y, dmg);
                 int cleave_hits = melee_weapon
@@ -3482,15 +3508,11 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
         if (e->type == ENEMY_LICH_KING) {
-            Room *chamber = &g->map.rooms[g->map.room_count - 1];
-            int player_in_chamber =
-                g->player.x > chamber->x &&
-                g->player.x < chamber->x + chamber->w - 1 &&
-                g->player.y > chamber->y &&
-                g->player.y < chamber->y + chamber->h - 1;
-            // Unlocking the door does not pull the boss into the corridor.
-            // The encounter begins only when the player crosses the threshold.
-            if (!player_in_chamber && e->move_timer == 0) continue;
+            int damage = lich_tick(g, e, shots);
+            if (damage > 0) {
+                apply_enemy_damage(g, damage, FEEDBACK_NOW);
+            }
+            continue;
         }
         if (e->type == ENEMY_FOREST_NECROMANCER) {
             Room *grove = &g->map.rooms[g->map.room_count - 1];
@@ -3663,26 +3685,6 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                     (e->type == ENEMY_DJINN ? "Djinn magic bolt" : "Elemental flame")));
                 snprintf(msg, sizeof(msg), "%s: %d dmg", attack, dmg);
                 push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
-            }
-            continue;
-        }
-
-        if (e->type == ENEMY_LICH_KING) {
-            // The Lich holds the center of his chamber and alternates a ranged
-            // necrotic attack with a telegraphed recovery turn. This prevents
-            // ordinary pathfinding from walking him out of his own arena.
-            if (e->move_timer % 2 == 0) {
-                int dmg = e->attack - g->player.defense / 2;
-                if (dmg < 4) dmg = 4;
-                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
-                if (dmg == 0) {
-                    continue;
-                }
-                char msg[MAX_MESSAGE_LEN];
-                snprintf(msg, sizeof(msg), "Lich necrotic bolt: %d dmg", dmg);
-                push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
-            } else {
-                push_message(g, "The Lich gathers dark power...");
             }
             continue;
         }

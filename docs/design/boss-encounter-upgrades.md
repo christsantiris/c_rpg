@@ -1,6 +1,8 @@
 # Boss encounter upgrades — proposal for approval
 
-Status: **Design only. Awaiting approval. No gameplay implementation.**
+Status: **Approved. Round 1 begins with the Lich King; pause after each boss for review and a manual commit.**
+
+The Lich King implementation is complete. The other 15 bosses remain pending.
 
 The boss journal defines 17 current encounters. This proposal covers the 16
 other than the recently updated Polar Kraken. The Kraken's fixed warnings,

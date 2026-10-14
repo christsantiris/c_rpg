@@ -1,6 +1,7 @@
 #include "save_load.h"
 #include "../game/game.h"
 #include "../game/castle.h"
+#include "../game/lich.h"
 #include "../game/jail.h"
 #include "../game/town_life.h"
 #include "cJSON.h"
@@ -467,6 +468,10 @@ static cJSON *serialize_enemies(const Enemy *enemies, int count) {
         cJSON_AddNumberToObject(obj, "facing_dx", e->facing_dx);
         cJSON_AddNumberToObject(obj, "facing_dy", e->facing_dy);
         cJSON_AddNumberToObject(obj, "attack_phase", e->attack_phase);
+        cJSON_AddNumberToObject(obj, "boss_attack", e->boss_attack);
+        cJSON_AddNumberToObject(obj, "boss_wave_used", e->boss_wave_used);
+        cJSON_AddNumberToObject(obj, "boss_aux_x", e->boss_aux_x);
+        cJSON_AddNumberToObject(obj, "boss_aux_y", e->boss_aux_y);
         cJSON_AddItemToArray(arr, obj);
     }
     return arr;
@@ -522,6 +527,14 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count, in
         e->facing_dy = fy ? fy->valueint : -1;
         cJSON *phase = cJSON_GetObjectItem(obj, "attack_phase");
         e->attack_phase = phase ? phase->valueint : 0;
+        cJSON *attack = cJSON_GetObjectItem(obj, "boss_attack");
+        cJSON *wave = cJSON_GetObjectItem(obj, "boss_wave_used");
+        cJSON *aux_x = cJSON_GetObjectItem(obj, "boss_aux_x");
+        cJSON *aux_y = cJSON_GetObjectItem(obj, "boss_aux_y");
+        e->boss_attack = attack ? attack->valueint : 0;
+        e->boss_wave_used = wave ? !!wave->valueint : 0;
+        e->boss_aux_x = aux_x ? aux_x->valueint : -1;
+        e->boss_aux_y = aux_y ? aux_y->valueint : -1;
     }
 }
 
@@ -694,7 +707,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 123);
+    cJSON_AddNumberToObject(root, "save_version", 124);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -788,6 +801,7 @@ int save_game(const GameState *g, int slot) {
         g->equipped_off_hand);
     cJSON_AddNumberToObject(root, "equipped_armor",    g->equipped_armor);
     cJSON_AddNumberToObject(root, "location",          g->location);
+    cJSON_AddNumberToObject(root, "lich_reward_state", g->lich_reward_state);
     cJSON_AddNumberToObject(root, "dungeon_key_found", g->dungeon_key_found);
     cJSON_AddNumberToObject(root, "dungeon_crypt_keys",
         g->dungeon_crypt_keys);
@@ -2307,6 +2321,12 @@ int load_game(GameState *g, int slot) {
     cJSON *dialogue_y = cJSON_GetObjectItem(root, "dialogue_y");
     g->dungeon_key_found = key_found ? key_found->valueint : 0;
     g->dungeon_crypt_keys = crypt_keys ? crypt_keys->valueint : 0;
+    cJSON *lich_reward = cJSON_GetObjectItem(root, "lich_reward_state");
+    g->lich_reward_state = lich_reward ? lich_reward->valueint : 0;
+    if (g->lich_reward_state < 0 || g->lich_reward_state > 2) {
+        cJSON_Delete(root);
+        return 0;
+    }
     g->portal_active = portal_active ? portal_active->valueint : 0;
     g->portal_level = portal_level ? portal_level->valueint : 0;
     g->portal_location = portal_location ? portal_location->valueint :
@@ -4167,6 +4187,9 @@ int load_game(GameState *g, int slot) {
         g->map.tiles[GUILD_SELENE_Y][GUILD_SELENE_X] = TILE_NPC_SELENE;
     }
     game_hide_portal_destination(g);
+    if (save_version < 124) {
+        lich_migrate(g);
+    }
     game_migrate_boss_shortcuts(g);
     game_refresh_quest_encounters(g);
     for (int i = 0; i < g->floor_item_count; i++) {
