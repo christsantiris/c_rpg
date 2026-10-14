@@ -3,6 +3,7 @@
 #include "catacombs.h"
 #include "castle.h"
 #include "lich.h"
+#include "necromancer.h"
 #include "jail.h"
 #include "town_life.h"
 #include <stdlib.h>
@@ -101,6 +102,10 @@ static void finish_floor_pickup(GameState *g, FloorItem *picked) {
     if (strcmp(picked->item.name, "Cryptblade") == 0 && g->lich_reward_state == 1) {
         g->lich_reward_state = 2;
         lich_restore_reward(g);
+    }
+    if (strcmp(picked->item.name, "Necromancer's Cloak") == 0 && g->necromancer_reward_state == 1) {
+        g->necromancer_reward_state = 2;
+        necromancer_restore_reward(g);
     }
     if (strcmp(picked->item.name, "Krakenbone Bow") == 0) {
         g->kraken_bow_unclaimed = 0;
@@ -249,7 +254,7 @@ static int enemy_score(EnemyType type) {
 }
 
 static void drop_loot(GameState *g, Enemy *enemy) {
-    if (enemy->revived && strcmp(enemy->name, "Lich Shade") == 0) {
+    if (enemy->revived && (strcmp(enemy->name, "Lich Shade") == 0 || strcmp(enemy->name, "Grove Revenant") == 0)) {
         return;
     }
     if (g->location == LOCATION_CASTLE_INTERIOR) {
@@ -427,6 +432,9 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         if (type == ENEMY_LICH_KING) {
             g->lich_reward_state = 1;
         }
+        if (type == ENEMY_FOREST_NECROMANCER) {
+            g->necromancer_reward_state = 1;
+        }
         if (type == ENEMY_FALLEN_SUN_GUARDIAN) {
             if (g->floor_item_count < MAX_FLOOR_ITEMS) {
                 place_gold_drop(g, x, y, gold);
@@ -436,7 +444,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
             game_update_level_progress(g);
             return;
         }
-        if (g->floor_item_count >= MAX_FLOOR_ITEMS && type != ENEMY_LICH_KING) {
+        if (g->floor_item_count >= MAX_FLOOR_ITEMS && type != ENEMY_LICH_KING && type != ENEMY_FOREST_NECROMANCER) {
             FloorItem *discarded = &g->floor_items[MAX_FLOOR_ITEMS - 1];
             if (g->map.tiles[discarded->y][discarded->x] == TILE_ITEM) {
                 g->map.tiles[discarded->y][discarded->x] =
@@ -473,6 +481,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
             push_message(g, msg);
         }
         lich_restore_reward(g);
+        necromancer_restore_reward(g);
         game_update_level_progress(g);
         return;
     }
@@ -799,6 +808,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (necromancer_has_interaction(g)) {
+        return 1;
+    }
     if (lich_has_interaction(g)) {
         return 1;
     }
@@ -1130,6 +1142,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (necromancer_interact(g)) {
+            return;
+        }
         if (lich_interact(g)) {
             return;
         }
@@ -1207,6 +1222,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_PICK_UP) {
+        if (g->map.tiles[g->player.y][g->player.x] == TILE_NECRO_RELIQUARY && necromancer_interact(g)) {
+            return;
+        }
         if (g->map.tiles[g->player.y][g->player.x] == TILE_LICH_RELIQUARY && lich_interact(g)) {
             return;
         }
@@ -3141,34 +3159,6 @@ static int necromancer_revive(GameState *g, int necromancer_index) {
     return 0;
 }
 
-static int forest_necromancer_raise(GameState *g, int caster_index) {
-    Enemy *caster = &g->enemies[caster_index];
-    for (int i = 0; i < g->enemy_count; i++) {
-        Enemy *dead = &g->enemies[i];
-        if (dead->active || dead->is_boss ||
-            dead->type < ENEMY_PIXIE ||
-            dead->type > ENEMY_FOREST_TROLL) continue;
-        for (int dy = -1; dy <= 1; dy++) {
-            for (int dx = -1; dx <= 1; dx++) {
-                if (dx == 0 && dy == 0) continue;
-                int x = caster->x + dx;
-                int y = caster->y + dy;
-                if (!map_is_walkable(&g->map, x, y) ||
-                    enemy_position_occupied(g, i, x, y) ||
-                    (x == g->player.x && y == g->player.y)) continue;
-                dead->x = x;
-                dead->y = y;
-                dead->active = 1;
-                dead->hp = dead->max_hp / 2;
-                if (dead->hp < 1) dead->hp = 1;
-                push_message(g, "Necromancer recalls a fallen servant!");
-                return 1;
-            }
-        }
-    }
-    return 0;
-}
-
 static int enemy_blocks_line_of_sight(const GameState *g, int shooter_index, int x, int y) {
     for (int i = 0; i < g->enemy_count; i++) {
         const Enemy *other = &g->enemies[i];
@@ -3515,20 +3505,11 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
         if (e->type == ENEMY_FOREST_NECROMANCER) {
-            Room *grove = &g->map.rooms[g->map.room_count - 1];
-            int player_in_grove =
-                g->player.x >= grove->x &&
-                g->player.x < grove->x + grove->w &&
-                g->player.y >= grove->y &&
-                g->player.y < grove->y + grove->h;
-            int distance = abs_int(g->player.x - e->x) +
-                abs_int(g->player.y - e->y);
-            // Ranged hits can start the fight before the player enters the grove.
-            if (!player_in_grove &&
-                ((e->move_timer == 0 && e->hp == e->max_hp) ||
-                distance > 12)) {
-                continue;
+            int damage = necromancer_tick(g, e, shots);
+            if (damage > 0) {
+                apply_enemy_damage(g, damage, e->boss_attack == NECRO_BOLT ? FEEDBACK_AFTER_ENEMY_SHOT : FEEDBACK_NOW);
             }
+            continue;
         }
         if (e->type == ENEMY_MOUNTAIN_GOBLIN_KING) {
             Room *fortress = &g->map.rooms[g->map.room_count - 1];
@@ -3685,25 +3666,6 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                     (e->type == ENEMY_DJINN ? "Djinn magic bolt" : "Elemental flame")));
                 snprintf(msg, sizeof(msg), "%s: %d dmg", attack, dmg);
                 push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
-            }
-            continue;
-        }
-
-        if (e->type == ENEMY_FOREST_NECROMANCER) {
-            if (e->move_timer % 4 == 0 &&
-                forest_necromancer_raise(g, i)) continue;
-            if (e->move_timer % 2 == 0) {
-                int dmg = e->attack - g->player.defense / 2;
-                if (dmg < 3) dmg = 3;
-                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
-                if (dmg == 0) {
-                    continue;
-                }
-                char msg[MAX_MESSAGE_LEN];
-                snprintf(msg, sizeof(msg), "Necromancer spirit bolt: %d dmg", dmg);
-                push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
-            } else {
-                push_message(g, "The Necromancer invokes the forest...");
             }
             continue;
         }

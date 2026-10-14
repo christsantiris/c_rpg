@@ -943,17 +943,17 @@ static void test_necromancer_retaliates_to_arrows(void) {
             strstr(g.messages[g.message_count - 1], "invokes the forest"));
         action_resolve_enemies(&g);
         ASSERT("Necromancer retaliates at every bow's maximum range",
-            boss->move_timer == 2 && g.player.hp < 300);
+            boss->move_timer == -1 && g.player.hp < 300);
         int hp = g.player.hp;
         g.player.x = boss->x - 13;
         action_resolve_enemies(&g);
         ASSERT("Necromancer does not attack a distant retreating player",
-            boss->move_timer == 2 && g.player.hp == hp);
+            boss->move_timer == -1 && g.player.hp == hp);
         g.player.x = boss->x - bows[i].range;
         action_resolve_enemies(&g);
         action_resolve_enemies(&g);
-        ASSERT("Necromancer resumes fighting when the player returns",
-            boss->move_timer == 4 && g.player.hp < hp);
+        ASSERT("Necromancer resumes with its finite warned grave wave",
+            boss->move_timer == 2 && g.player.hp == hp);
     }
 }
 

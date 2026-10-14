@@ -125,7 +125,7 @@ typedef struct {
     int revive_timer;
     int facing_dx, facing_dy;
     int attack_phase;
-    // Lich signature, one-time wave and second warned summon position.
+    // Regional boss signature, finite-wave flags and second summon position.
     int boss_attack;
     int boss_wave_used;
     int boss_aux_x, boss_aux_y;

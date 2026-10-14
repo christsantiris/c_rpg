@@ -2,6 +2,7 @@
 #include "catacombs.h"
 #include "castle.h"
 #include "lich.h"
+#include "necromancer.h"
 #include "jail.h"
 #include "town_life.h"
 
@@ -963,6 +964,48 @@ static int quest_group_pending(const GameState *g) {
     return 0;
 }
 
+Enemy *game_raise_grove_servant(GameState *g, int x, int y, int boss_index) {
+    if (!map_is_walkable(&g->map, x, y) || (g->player.x == x && g->player.y == y)) {
+        return NULL;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (g->enemies[i].active && g->enemies[i].x == x && g->enemies[i].y == y) {
+            return NULL;
+        }
+    }
+    Enemy *servant = NULL;
+    for (int i = 0; i < g->enemy_count; i++) {
+        Enemy *dead = &g->enemies[i];
+        if (!dead->active && !dead->is_boss && !dead->revived &&
+            dead->type >= ENEMY_PIXIE && dead->type <= ENEMY_FOREST_TROLL) {
+            servant = dead;
+            break;
+        }
+    }
+    if (!servant) {
+        // Buried woodland servants still exist when no recent corpse is available.
+        servant = spawn_quest_enemy_at(g, ENEMY_BLIGHTED_WOLF, x, y);
+    }
+    if (servant) {
+        servant->x = x;
+        servant->y = y;
+        servant->active = 1;
+        servant->hp = servant->max_hp / 2;
+        if (servant->hp < 1) {
+            servant->hp = 1;
+        }
+        snprintf(servant->name, sizeof(servant->name), "Grove Revenant");
+        servant->experience = 0;
+        servant->revived = 1;
+        servant->dain_fragment = 0;
+        servant->move_timer = 0;
+        servant->attack_target_x = -1;
+        servant->attack_target_y = -1;
+        servant->frozen_turns = servant - g->enemies > boss_index ? 1 : 0;
+    }
+    return servant;
+}
+
 Enemy *game_spawn_lich_shade(GameState *g, int x, int y, int boss_index) {
     if (x < 0 || y < 0 || (g->player.x == x && g->player.y == y)) {
         return NULL;
@@ -1087,6 +1130,9 @@ void enemies_spawn(GameState *g) {
     }
 
     game_add_lich_minions(g);
+    if (g->location == LOCATION_FOREST && g->level == FOREST_BOSS_LEVEL) {
+        necromancer_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
+    }
     if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH) {
         lich_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
     }
@@ -1435,6 +1481,7 @@ void game_init(GameState *g) {
     g->dungeon_key_found = 0;
     g->dungeon_crypt_keys = 0;
     g->lich_reward_state = 0;
+    g->necromancer_reward_state = 0;
     g->portal_active = 0;
     g->portal_level = 0;
     g->portal_location = LOCATION_DUNGEON;
@@ -2998,6 +3045,7 @@ void game_refresh_quest_encounters(GameState *g) {
     game_reveal_swamp_shortcut(g);
     game_reveal_mountain_shortcut(g);
     lich_restore_reward(g);
+    necromancer_restore_reward(g);
     restore_frostfell_reward(g);
     restore_desert_reward(g);
     catacombs_restore_reward(g);
@@ -3111,6 +3159,7 @@ static void generate_active_level(GameState *g) {
         spawn_mara_guardian(g);
     }
     lich_restore_reward(g);
+    necromancer_restore_reward(g);
     restore_frostfell_reward(g);
     restore_desert_reward(g);
     catacombs_restore_reward(g);
