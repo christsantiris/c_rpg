@@ -47,8 +47,9 @@ static void test_coast_routes(void) {
             g.location = LOCATION_COAST;
             g.level = level;
             map_generate_coast(&g.map, level);
-            memcpy(original, g.map.tiles, sizeof(original));
             enemies_spawn(&g);
+            // Compare tide reversals after the boss arena has been prepared.
+            memcpy(original, g.map.tiles, sizeof(original));
             for (int room = 1; room <= 2; room++) {
                 int cx;
                 int cy;

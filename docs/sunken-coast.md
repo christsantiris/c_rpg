@@ -12,6 +12,8 @@ walking back into the stage they just completed. Each stage has one brass tide
 control and two colored channel basins. Stand on the control and press `A` to
 transfer water between them: one channel drains into exposed stone while the
 other floods. Colored corner markers identify the blue and amber channels.
+Stage 5 also has two separate throne controls for the Queen's approach lanes;
+these leave the ordinary basin control and earlier quest beacons intact.
 
 The control and the main exit remain reachable at either tide level. Stages
 1–4 can be exited without clearing enemies. The stage 5 exit requires only the
@@ -37,8 +39,8 @@ The region moves from storm-lashed beaches into increasingly submerged ruins:
   lanes.
 - **Sea Serpent:** a late-region predator with high attack and mobility.
 - **Drowned Queen:** the stage 5 boss. She remains dormant in her throne
-  clearing until the player enters or attacks her from range, then uses
-  telegraphed tidal waves.
+  clearing until the player enters or damages her from range, then alternates
+  fixed tidal lanes and, in her second phase, flooded pockets.
 
 ## Visual identity
 
@@ -75,3 +77,61 @@ Existing beacon completion, boss victories, character progress, and active
 coast terrain are preserved. Explored stages are merged, prioritizing the
 current stage and portal destination. The old stage-1 beacon moves to stage 2;
 its completed state carries over.
+
+## The Drowned Throne
+
+The Queen retains her baseline **220 HP, 22 attack, 8 defense and 650 experience**
+with existing regional scaling. She stays in the throne clearing. Entering it
+or damaging her from a clear ranged lane starts the encounter; retreat beyond
+her range pauses the exact pending warning without healing her.
+
+- **Rising Tide, above half health:** two-turn tidal waves alternate one fixed
+  horizontal row with one fixed vertical column. Each receives its own warning.
+  One ordinary sidestep can leave a lane; the extra turn permits an approach or
+  counterattack. Walls clip the lane, and its bounds are saved when declared.
+- **Storm Throne, at/below half health:** the sequence becomes row, column,
+  then up to two fixed flooded pockets. Every attack has a separate two-turn
+  countdown and a recovery turn. Each pocket covers its center and four
+  cardinal neighbors; two cardinal moves can leave it. Floods strike once and
+  leave no lingering damage or blocked floor.
+- Numbered outlines show the exact affected tiles; the panel names the phase,
+  current attack, countdown, freeze state and unoperated controls. Crossing
+  half health never changes an already announced attack. Freeze pauses its
+  countdown while retaining its targets and wave bounds.
+- Recovery has no extra adjacent Queen attack. The Queen remains damageable
+  throughout the encounter, including when controls are ignored.
+
+The two throne controls are labeled **H** and **V**. Interact on or beside
+one with contextual **`A` by default** to drain its horizontal or vertical
+approach lane into permanent dry stone. All classes can do this without items,
+spells or ammunition. Draining immediately removes those cells from a pending
+warning; it never widens or retargets the rest of that attack. The second control
+does not reflood the first lane. Paths and controls remain walkable and persist
+through backtracking, portals and saves, including when covered by loot.
+
+Two raised stone islands, labeled **SAFE**, offer shelter from both waves and
+flooded pockets. The dry paths and control platforms are also safe from these
+attacks. They do not provide protection against other enemies. Neither control
+creates deep water, moves the player or overwrites exits, old basin controls,
+treasure caches or beacons. The ordinary blue/amber tide control keeps its old
+behavior. Hidden random traps are excluded from the throne; previously revealed
+traps in older saves retain their state.
+
+**Tidecaller Robes** remain the guaranteed reward, with +3 defense, +30 maximum
+MP, 8% spell-cost reduction and the Mage restriction. They normally drop on the
+floor. A full loot list reserves them in a named throne reliquary without deleting
+another item. An earned, unclaimed reward is restored there after a floor refresh.
+Interact beside the reliquary or press `P` on it; full inventory leaves it
+available. First claim is permanent, so later sale or dropping creates no copy.
+Victory still opens the coast exit and harbor road; existing island travel
+requirements remain in effect.
+
+Save version **127** records robes claim state and uses the existing enemy fields
+for phase, countdown, fixed wave bounds and both pocket targets. Throne terrain,
+drained controls, dry paths and loot underlays are saved in active and cached
+maps. Older living encounters gain the arena in place and restart unmarked
+attack timing with a visible warning, preserving health, enemy deaths, position,
+exploration, inventory, loot, portals and quests. Existing victories remain
+completed; only a known current legacy floor reward establishes unclaimed robes.
+
+See the [encounter screenshots and play-testing guide](art-sources/drowned-queen-encounter/README.md).

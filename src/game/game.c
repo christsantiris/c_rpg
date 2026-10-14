@@ -4,6 +4,7 @@
 #include "lich.h"
 #include "necromancer.h"
 #include "goblin_king.h"
+#include "drowned_queen.h"
 #include "jail.h"
 #include "town_life.h"
 
@@ -1131,6 +1132,9 @@ void enemies_spawn(GameState *g) {
     }
 
     game_add_lich_minions(g);
+    if (g->location == LOCATION_COAST && g->level == COAST_DEPTH) {
+        drowned_queen_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
+    }
     if (g->location == LOCATION_MOUNTAINS && g->level == MOUNTAIN_BOSS_LEVEL) {
         goblin_king_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
     }
@@ -1487,6 +1491,7 @@ void game_init(GameState *g) {
     g->lich_reward_state = 0;
     g->necromancer_reward_state = 0;
     g->goblin_king_reward_state = 0;
+    g->drowned_queen_reward_state = 0;
     g->portal_active = 0;
     g->portal_level = 0;
     g->portal_location = LOCATION_DUNGEON;
@@ -3052,6 +3057,7 @@ void game_refresh_quest_encounters(GameState *g) {
     lich_restore_reward(g);
     necromancer_restore_reward(g);
     goblin_king_restore_reward(g);
+    drowned_queen_restore_reward(g);
     restore_frostfell_reward(g);
     restore_desert_reward(g);
     catacombs_restore_reward(g);
@@ -3167,6 +3173,7 @@ static void generate_active_level(GameState *g) {
     lich_restore_reward(g);
     necromancer_restore_reward(g);
     goblin_king_restore_reward(g);
+    drowned_queen_restore_reward(g);
     restore_frostfell_reward(g);
     restore_desert_reward(g);
     catacombs_restore_reward(g);

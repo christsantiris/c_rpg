@@ -5,6 +5,7 @@
 #include "lich.h"
 #include "necromancer.h"
 #include "goblin_king.h"
+#include "drowned_queen.h"
 #include "jail.h"
 #include "town_life.h"
 #include <stdlib.h>
@@ -111,6 +112,10 @@ static void finish_floor_pickup(GameState *g, FloorItem *picked) {
     if (strcmp(picked->item.name, "Goblin King's Shield") == 0 && g->goblin_king_reward_state == 1) {
         g->goblin_king_reward_state = 2;
         goblin_king_restore_reward(g);
+    }
+    if (strcmp(picked->item.name, "Tidecaller Robes") == 0 && g->drowned_queen_reward_state == 1) {
+        g->drowned_queen_reward_state = 2;
+        drowned_queen_restore_reward(g);
     }
     if (strcmp(picked->item.name, "Krakenbone Bow") == 0) {
         g->kraken_bow_unclaimed = 0;
@@ -443,6 +448,9 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         if (type == ENEMY_MOUNTAIN_GOBLIN_KING) {
             g->goblin_king_reward_state = 1;
         }
+        if (type == ENEMY_DROWNED_QUEEN) {
+            g->drowned_queen_reward_state = 1;
+        }
         if (type == ENEMY_FALLEN_SUN_GUARDIAN) {
             if (g->floor_item_count < MAX_FLOOR_ITEMS) {
                 place_gold_drop(g, x, y, gold);
@@ -452,7 +460,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
             game_update_level_progress(g);
             return;
         }
-        if (g->floor_item_count >= MAX_FLOOR_ITEMS && type != ENEMY_LICH_KING && type != ENEMY_FOREST_NECROMANCER && type != ENEMY_MOUNTAIN_GOBLIN_KING) {
+        if (g->floor_item_count >= MAX_FLOOR_ITEMS && type != ENEMY_LICH_KING && type != ENEMY_FOREST_NECROMANCER && type != ENEMY_MOUNTAIN_GOBLIN_KING && type != ENEMY_DROWNED_QUEEN) {
             FloorItem *discarded = &g->floor_items[MAX_FLOOR_ITEMS - 1];
             if (g->map.tiles[discarded->y][discarded->x] == TILE_ITEM) {
                 g->map.tiles[discarded->y][discarded->x] =
@@ -491,6 +499,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         lich_restore_reward(g);
         necromancer_restore_reward(g);
         goblin_king_restore_reward(g);
+        drowned_queen_restore_reward(g);
         game_update_level_progress(g);
         return;
     }
@@ -817,6 +826,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (drowned_queen_has_interaction(g)) {
+        return 1;
+    }
     if (goblin_king_has_interaction(g)) {
         return 1;
     }
@@ -1154,6 +1166,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (drowned_queen_interact(g)) {
+            return;
+        }
         if (goblin_king_interact(g)) {
             return;
         }
@@ -1237,6 +1252,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_PICK_UP) {
+        if (g->map.tiles[g->player.y][g->player.x] == TILE_QUEEN_RELIQUARY && drowned_queen_interact(g)) {
+            return;
+        }
         if (g->map.tiles[g->player.y][g->player.x] == TILE_GOBLIN_KING_RELIQUARY && goblin_king_interact(g)) {
             return;
         }
@@ -3560,19 +3578,11 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
         if (e->type == ENEMY_DROWNED_QUEEN) {
-            Room *throne = &g->map.rooms[g->map.room_count - 1];
-            int player_in_throne =
-                g->player.x >= throne->x &&
-                g->player.x < throne->x + throne->w &&
-                g->player.y >= throne->y &&
-                g->player.y < throne->y + throne->h;
-            int distance = abs_int(g->player.x - e->x) +
-                abs_int(g->player.y - e->y);
-            if (!player_in_throne &&
-                ((e->move_timer == 0 && e->hp == e->max_hp) ||
-                distance > 12)) {
-                continue;
+            int damage = drowned_queen_tick(g, e);
+            if (damage > 0) {
+                apply_enemy_damage(g, damage, FEEDBACK_NOW);
             }
+            continue;
         }
         if (e->type == ENEMY_FALLEN_SUN_GUARDIAN) {
             int distance = abs_int(g->player.x - e->x) +
@@ -3737,25 +3747,6 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                     snprintf(msg, sizeof(msg), "Pharaoh magic bolt: %d dmg", dmg);
                     push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
                 }
-            }
-            continue;
-        }
-
-        if (e->type == ENEMY_DROWNED_QUEEN) {
-            if (e->move_timer % 3 == 0) {
-                int dmg = e->attack - g->player.defense / 2;
-                if (dmg < 5) {
-                    dmg = 5;
-                }
-                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
-                if (dmg == 0) {
-                    continue;
-                }
-                char msg[MAX_MESSAGE_LEN];
-                snprintf(msg, sizeof(msg), "Queen's tidal wave: %d dmg", dmg);
-                push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
-            } else {
-                push_message(g, "The Drowned Queen summons the tide...");
             }
             continue;
         }
