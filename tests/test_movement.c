@@ -3,6 +3,7 @@
 #include "../src/game/lich.h"
 #include "../src/game/necromancer.h"
 #include "../src/game/goblin_king.h"
+#include "../src/game/desert_pharaoh.h"
 
 static void setup_ranged_enemy(GameState *g, EnemyType type) {
     g->player.player_class = CLASS_WARRIOR;
@@ -37,6 +38,13 @@ static void setup_ranged_enemy(GameState *g, EnemyType type) {
         g->location = LOCATION_MOUNTAINS;
         g->level = MOUNTAIN_BOSS_LEVEL;
         g->enemies[0].boss_attack = GOBLIN_KING_AXE;
+        g->enemies[0].attack_target_x = g->player.x;
+        g->enemies[0].attack_target_y = g->player.y;
+    }
+    if (type == ENEMY_DESERT_PHARAOH) {
+        g->location = LOCATION_DESERT;
+        g->level = DESERT_DEPTH;
+        g->enemies[0].boss_attack = PHARAOH_BEAM;
         g->enemies[0].attack_target_x = g->player.x;
         g->enemies[0].attack_target_y = g->player.y;
     }

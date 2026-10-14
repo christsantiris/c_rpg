@@ -247,6 +247,7 @@ typedef struct {
     int defeated_bosses;
     int kraken_bow_unclaimed;
     int sandstorm_staff_unclaimed;
+    int desert_pharaoh_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
     int elowen_quest_state;
     int elowen_seals_restored;
     int dain_quest_state;

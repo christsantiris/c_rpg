@@ -525,7 +525,8 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_LABYRINTH_WALL &&
         m->tiles[y][x] != TILE_LABYRINTH_GATE &&
         m->tiles[y][x] != TILE_MINOTAUR_PILLAR &&
-        m->tiles[y][x] != TILE_MINOTAUR_CRACKED;
+        m->tiles[y][x] != TILE_MINOTAUR_CRACKED &&
+        m->tiles[y][x] != TILE_PHARAOH_OBELISK;
 }
 
 // The dungeon's portcullis shortcut is retired. Older saves can still hold its

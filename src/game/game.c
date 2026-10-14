@@ -8,6 +8,7 @@
 #include "swamp_demon.h"
 #include "minotaur.h"
 #include "grave_marshal.h"
+#include "desert_pharaoh.h"
 #include "jail.h"
 #include "town_life.h"
 
@@ -1156,6 +1157,9 @@ void enemies_spawn(GameState *g) {
     }
 
     game_add_lich_minions(g);
+    if (g->location == LOCATION_DESERT && g->level == DESERT_DEPTH) {
+        desert_pharaoh_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
+    }
     if (g->location == LOCATION_CATACOMBS && g->level == CATACOMBS_DEPTH) {
         grave_marshal_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
     }
@@ -1534,6 +1538,7 @@ void game_init(GameState *g) {
     g->defeated_bosses = 0;
     g->kraken_bow_unclaimed = 0;
     g->sandstorm_staff_unclaimed = 0;
+    g->desert_pharaoh_reward_state = 0;
     g->elowen_quest_state = 0;
     g->elowen_seals_restored = 0;
     g->dain_quest_state = 0;
@@ -2327,28 +2332,7 @@ static void place_desert_lamp(GameState *g) {
 }
 
 static void restore_desert_reward(GameState *g) {
-    if (g->location != LOCATION_DESERT || g->level != DESERT_DEPTH ||
-        !g->sandstorm_staff_unclaimed || g->map.room_count == 0) {
-        return;
-    }
-    for (int i = 0; i < g->floor_item_count; i++) {
-        if (g->floor_items[i].active &&
-            strcmp(g->floor_items[i].item.name, "Sandstorm Staff") == 0) {
-            return;
-        }
-    }
-    if (g->floor_item_count >= MAX_FLOOR_ITEMS) {
-        return;
-    }
-    int x;
-    int y;
-    map_room_center(&g->map.rooms[g->map.room_count - 1], &x, &y);
-    FloorItem *reward = &g->floor_items[g->floor_item_count++];
-    *reward = (FloorItem){
-        .active = 1, .x = x, .y = y, .underlying_tile = TILE_DESERT_FLOOR,
-        .item = item_make_sandstorm_staff()
-    };
-    g->map.tiles[y][x] = TILE_ITEM;
+    desert_pharaoh_restore_reward(g);
 }
 
 static int emberforge_stage_bit(const GameState *g) {
@@ -5618,6 +5602,7 @@ void game_use_town_portal(GameState *g) {
     }
     g->player.x = landing_x;
     g->player.y = landing_y;
+    desert_pharaoh_cancel_landing(g, landing_x, landing_y);
     if (g->location == LOCATION_CATACOMBS) {
         // Portal wards prevent a saved warning from striking immediately on arrival.
         for (int i = 0; i < g->map.burial_trap_count; i++) {
