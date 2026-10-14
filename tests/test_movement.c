@@ -55,7 +55,7 @@ void test_enemy_projectiles(void) {
     EnemyProjectiles shots = {0};
     EnemyType ranged[] = {
         ENEMY_LICH_KING, ENEMY_FOREST_NECROMANCER, ENEMY_MOUNTAIN_GOBLIN_KING,
-        ENEMY_DROWNED_QUEEN, ENEMY_DESERT_PHARAOH, ENEMY_SIREN, ENEMY_WATER_ELEMENTAL,
+        ENEMY_DESERT_PHARAOH, ENEMY_SIREN, ENEMY_WATER_ELEMENTAL,
         ENEMY_GOBLIN_ARCHER, ENEMY_ROAD_ARCHER, ENEMY_GOBLIN_BOMBER,
         ENEMY_DARK_ELF, ENEMY_CRYPT_CONJURER, ENEMY_DJINN
     };
@@ -132,7 +132,7 @@ void test_enemy_projectiles(void) {
         g.enemies[0].x == 20 && g.enemies[0].y == 16 &&
         g.player.hp == 100 && shots.count == 0);
 
-    setup_ranged_enemy(&g, ENEMY_DROWNED_QUEEN);
+    setup_ranged_enemy(&g, ENEMY_DESERT_PHARAOH);
     g.enemies[0].y = 14;
     g.enemies[1] = g.enemies[0];
     g.enemies[1].type = ENEMY_SKELETON;

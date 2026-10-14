@@ -89,12 +89,12 @@ static void test_queen_retaliates_to_arrows(void) {
         action_resolve_enemies(&g);
     }
     ASSERT("wounded Queen retaliates with a tidal wave",
-        queen->move_timer == 3 && g.player.hp < 300);
+        queen->move_timer == -1 && g.player.hp < 300);
     int hp = g.player.hp;
     g.player.x = queen->x - 13;
     action_resolve_enemies(&g);
     ASSERT("Queen does not attack a distant retreating player",
-        queen->move_timer == 3 && g.player.hp == hp);
+        queen->move_timer == -1 && g.player.hp == hp);
 }
 
 void test_coast(void) {

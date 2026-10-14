@@ -232,6 +232,7 @@ typedef struct {
     int score;
     int dungeon_key_found;
     int dungeon_crypt_keys;
+    int drowned_queen_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
     int goblin_king_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
     int necromancer_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
     int lich_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
