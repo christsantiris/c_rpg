@@ -4,6 +4,7 @@
 #include "castle.h"
 #include "lich.h"
 #include "necromancer.h"
+#include "goblin_king.h"
 #include "jail.h"
 #include "town_life.h"
 #include <stdlib.h>
@@ -106,6 +107,10 @@ static void finish_floor_pickup(GameState *g, FloorItem *picked) {
     if (strcmp(picked->item.name, "Necromancer's Cloak") == 0 && g->necromancer_reward_state == 1) {
         g->necromancer_reward_state = 2;
         necromancer_restore_reward(g);
+    }
+    if (strcmp(picked->item.name, "Goblin King's Shield") == 0 && g->goblin_king_reward_state == 1) {
+        g->goblin_king_reward_state = 2;
+        goblin_king_restore_reward(g);
     }
     if (strcmp(picked->item.name, "Krakenbone Bow") == 0) {
         g->kraken_bow_unclaimed = 0;
@@ -435,6 +440,9 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         if (type == ENEMY_FOREST_NECROMANCER) {
             g->necromancer_reward_state = 1;
         }
+        if (type == ENEMY_MOUNTAIN_GOBLIN_KING) {
+            g->goblin_king_reward_state = 1;
+        }
         if (type == ENEMY_FALLEN_SUN_GUARDIAN) {
             if (g->floor_item_count < MAX_FLOOR_ITEMS) {
                 place_gold_drop(g, x, y, gold);
@@ -444,7 +452,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
             game_update_level_progress(g);
             return;
         }
-        if (g->floor_item_count >= MAX_FLOOR_ITEMS && type != ENEMY_LICH_KING && type != ENEMY_FOREST_NECROMANCER) {
+        if (g->floor_item_count >= MAX_FLOOR_ITEMS && type != ENEMY_LICH_KING && type != ENEMY_FOREST_NECROMANCER && type != ENEMY_MOUNTAIN_GOBLIN_KING) {
             FloorItem *discarded = &g->floor_items[MAX_FLOOR_ITEMS - 1];
             if (g->map.tiles[discarded->y][discarded->x] == TILE_ITEM) {
                 g->map.tiles[discarded->y][discarded->x] =
@@ -482,6 +490,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         }
         lich_restore_reward(g);
         necromancer_restore_reward(g);
+        goblin_king_restore_reward(g);
         game_update_level_progress(g);
         return;
     }
@@ -808,6 +817,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (goblin_king_has_interaction(g)) {
+        return 1;
+    }
     if (necromancer_has_interaction(g)) {
         return 1;
     }
@@ -1142,6 +1154,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (goblin_king_interact(g)) {
+            return;
+        }
         if (necromancer_interact(g)) {
             return;
         }
@@ -1222,6 +1237,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_PICK_UP) {
+        if (g->map.tiles[g->player.y][g->player.x] == TILE_GOBLIN_KING_RELIQUARY && goblin_king_interact(g)) {
+            return;
+        }
         if (g->map.tiles[g->player.y][g->player.x] == TILE_NECRO_RELIQUARY && necromancer_interact(g)) {
             return;
         }
@@ -3446,6 +3464,29 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         game_update_level_progress(g);
         return;
     }
+    if (g->location == LOCATION_MOUNTAINS && g->level == MOUNTAIN_BOSS_LEVEL) {
+        int hp[MAX_ENEMIES] = {0};
+        for (int i = 0; i < g->enemy_count; i++) {
+            hp[i] = g->enemies[i].hp;
+        }
+        int damage = goblin_king_tick_kegs(g);
+        for (int i = 0; i < g->enemy_count; i++) {
+            Enemy *e = &g->enemies[i];
+            if (e->active && e->hp < hp[i]) {
+                combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_NOW, e->x, e->y, hp[i] - e->hp);
+                if (e->hp <= 0) {
+                    e->active = 0;
+                    drop_loot(g, e);
+                    player_gain_xp(g, e->experience);
+                    g->score += e->revived ? 0 : enemy_score(e->type);
+                    game_update_level_progress(g);
+                }
+            }
+        }
+        if (damage > 0) {
+            apply_enemy_damage(g, damage, FEEDBACK_NOW);
+        }
+    }
     int burial_damage = catacombs_tick(g);
     if (burial_damage > 0) {
         int damage = burial_damage - g->player.defense / 2;
@@ -3512,20 +3553,11 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
         if (e->type == ENEMY_MOUNTAIN_GOBLIN_KING) {
-            Room *fortress = &g->map.rooms[g->map.room_count - 1];
-            int player_in_fortress =
-                g->player.x >= fortress->x &&
-                g->player.x < fortress->x + fortress->w &&
-                g->player.y >= fortress->y &&
-                g->player.y < fortress->y + fortress->h;
-            int range_x = abs_int(g->player.x - e->x);
-            int range_y = abs_int(g->player.y - e->y);
-            // Hits outside the fortress start the fight, including diagonal bow shots.
-            if (!player_in_fortress &&
-                ((e->move_timer == 0 && e->hp == e->max_hp) ||
-                range_x > 12 || range_y > 12)) {
-                continue;
+            int damage = goblin_king_tick(g, e, shots);
+            if (damage > 0) {
+                apply_enemy_damage(g, damage, e->boss_attack == GOBLIN_KING_AXE ? FEEDBACK_AFTER_ENEMY_SHOT : FEEDBACK_NOW);
             }
+            continue;
         }
         if (e->type == ENEMY_DROWNED_QUEEN) {
             Room *throne = &g->map.rooms[g->map.room_count - 1];
@@ -3706,21 +3738,6 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                     push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
                 }
             }
-            continue;
-        }
-
-        if (e->type == ENEMY_MOUNTAIN_GOBLIN_KING) {
-            if (e->move_timer % 2 == 0) {
-                int dmg = e->attack - g->player.defense / 2;
-                if (dmg < 4) dmg = 4;
-                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
-                if (dmg == 0) {
-                    continue;
-                }
-                char msg[MAX_MESSAGE_LEN];
-                snprintf(msg, sizeof(msg), "Goblin King axe: %d dmg", dmg);
-                push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
-            } else push_message(g, "The Goblin King raises his axe...");
             continue;
         }
 

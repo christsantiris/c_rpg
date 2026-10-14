@@ -2,6 +2,7 @@
 #include "../src/game/game.h"
 #include "../src/game/lich.h"
 #include "../src/game/necromancer.h"
+#include "../src/game/goblin_king.h"
 
 static void setup_ranged_enemy(GameState *g, EnemyType type) {
     g->player.player_class = CLASS_WARRIOR;
@@ -29,6 +30,13 @@ static void setup_ranged_enemy(GameState *g, EnemyType type) {
     if (type == ENEMY_FOREST_NECROMANCER) {
         g->level = FOREST_BOSS_LEVEL;
         g->enemies[0].boss_attack = NECRO_BOLT;
+        g->enemies[0].attack_target_x = g->player.x;
+        g->enemies[0].attack_target_y = g->player.y;
+    }
+    if (type == ENEMY_MOUNTAIN_GOBLIN_KING) {
+        g->location = LOCATION_MOUNTAINS;
+        g->level = MOUNTAIN_BOSS_LEVEL;
+        g->enemies[0].boss_attack = GOBLIN_KING_AXE;
         g->enemies[0].attack_target_x = g->player.x;
         g->enemies[0].attack_target_y = g->player.y;
     }
