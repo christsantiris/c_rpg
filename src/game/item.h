@@ -92,7 +92,8 @@ typedef enum {
     ITEM_VISUAL_TOWER_SHIELD,
     ITEM_VISUAL_MAGIC_SHIELD,
     ITEM_VISUAL_DEMONIC_SWORD,
-    ITEM_VISUAL_SANDSTORM_STAFF
+    ITEM_VISUAL_SANDSTORM_STAFF,
+    ITEM_VISUAL_LABYRINTH_AEGIS
 } ItemVisualId;
 
 typedef struct {
@@ -192,6 +193,7 @@ Item item_make_buckler(void);
 Item item_make_kite_shield(void);
 Item item_make_tower_shield(void);
 Item item_make_magic_shield(void);
+Item item_make_labyrinth_aegis(void);
 Item item_make_goblin_king_shield(void);
 void item_apply_legacy_metadata(Item *item);
 void item_apply_legacy_armor_metadata(Item *item);

@@ -6,6 +6,7 @@
 #include "goblin_king.h"
 #include "drowned_queen.h"
 #include "swamp_demon.h"
+#include "minotaur.h"
 #include "jail.h"
 #include "town_life.h"
 
@@ -1495,6 +1496,7 @@ void game_init(GameState *g) {
     g->lich_reward_state = 0;
     g->necromancer_reward_state = 0;
     g->goblin_king_reward_state = 0;
+    g->minotaur_reward_state = 0;
     g->swamp_demon_reward_state = 0;
     g->drowned_queen_reward_state = 0;
     g->portal_active = 0;
@@ -3064,6 +3066,7 @@ void game_refresh_quest_encounters(GameState *g) {
     goblin_king_restore_reward(g);
     drowned_queen_restore_reward(g);
     swamp_demon_restore_reward(g);
+    minotaur_restore_reward(g);
     restore_frostfell_reward(g);
     restore_desert_reward(g);
     catacombs_restore_reward(g);
@@ -3181,6 +3184,7 @@ static void generate_active_level(GameState *g) {
     goblin_king_restore_reward(g);
     drowned_queen_restore_reward(g);
     swamp_demon_restore_reward(g);
+    minotaur_restore_reward(g);
     restore_frostfell_reward(g);
     restore_desert_reward(g);
     catacombs_restore_reward(g);
@@ -4652,6 +4656,7 @@ static void spawn_labyrinth_enemies(GameState *g) {
         spawn_enemy(g, &g->enemies[g->enemy_count], ENEMY_MINOTAUR,
             39, g->map.stairs_up_y);
         g->enemy_count++;
+        minotaur_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
     }
 }
 
@@ -4693,6 +4698,7 @@ static void load_labyrinth_floor(GameState *g) {
         g->map.tiles[g->map.stairs_up_y][35] = TILE_LABYRINTH_FLOOR;
     }
     g->floor_item_count = 0;
+    minotaur_restore_reward(g);
 }
 
 int game_labyrinth_is_open(const GameState *g) {
@@ -4703,7 +4709,9 @@ void game_enter_labyrinth(GameState *g) {
     g->location = LOCATION_LABYRINTH;
     g->level = 1;
     for (int i = 0; i < LABYRINTH_DEPTH; i++) {
-        g->labyrinth_cache[i].valid = 0;
+        if (i != LABYRINTH_DEPTH - 1 || (g->defeated_bosses & (1 << LOCATION_LABYRINTH))) {
+            g->labyrinth_cache[i].valid = 0;
+        }
     }
     load_labyrinth_floor(g);
     g->player.x = 2;

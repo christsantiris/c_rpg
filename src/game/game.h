@@ -232,6 +232,7 @@ typedef struct {
     int score;
     int dungeon_key_found;
     int dungeon_crypt_keys;
+    int minotaur_reward_state; // 0: none, 1: unclaimed Aegis, 2: claimed, 3: unclaimed legacy Magic Shield.
     int swamp_demon_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
     int drowned_queen_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
     int goblin_king_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.

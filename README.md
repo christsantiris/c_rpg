@@ -283,10 +283,14 @@ without clearing enemies. After the one-time quest, the labyrinth remains open
 for further expeditions; ordinary enemies return, but the Minotaur and quest
 reward do not.
 
-The Minotaur is a horned, axe-wielding melee boss guarding floor 5's relic
-vault. Defeating it drops a Magic Shield and marks the Labyrinth boss journal
-entry complete. Existing Maze Warden saves become Minotaurs on load, retaining
-their health and previous victories.
+The Minotaur guards floor 5 with fixed charge lanes, axe warnings and two health
+phases. Baiting a charge into stone creates a two-action stagger; two reinforced
+pillar caps can crack and break after visible warnings. Defeating it guarantees
+**Labyrinth Aegis**, a bull-and-rune shield with the Magic Shield's original stats
+and Warrior restriction. Existing Magic Shields keep their names and artwork.
+Older living encounters migrate in place, retaining health and quest progress;
+retreating to Stillbury no longer resets the living boss. See the
+[Labyrinth encounter and play-testing guide](docs/labyrinth.md).
 
 ### Blackwater Swamp
 
