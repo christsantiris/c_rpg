@@ -21,6 +21,7 @@ void test_lich(void);
 void test_necromancer(void);
 void test_goblin_king(void);
 void test_drowned_queen(void);
+void test_swamp_demon(void);
 void test_stairs_locked(void);
 void test_final_dungeon_exit(void);
 void test_dungeon_return_stairs_migration(void);
@@ -222,6 +223,7 @@ int main(void) {
     test_necromancer();
     test_goblin_king();
     test_drowned_queen();
+    test_swamp_demon();
     printf("\n");
     test_combat_feedback();
     printf("\n");
