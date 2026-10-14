@@ -10,6 +10,7 @@
 #include "../game/combat_feedback.h"
 #include "../game/catacombs.h"
 #include "../game/lich.h"
+#include "../game/necromancer.h"
 #include "castle_renderer.h"
 #include "jail_renderer.h"
 #include "town_life_renderer.h"
@@ -109,6 +110,109 @@ static void draw_lich_status(Renderer *r, const GameState *g, const Viewport *v)
             snprintf(hint, sizeof(hint), "SEALS: %d", seals);
         }
         renderer_draw_text(r, hint, x + 10, 63, (SDL_Color){186, 178, 211, 255}, r->font_tiny);
+    }
+}
+
+static void draw_necromancer_tile(Renderer *r, int sx, int sy, int x, int y, TileType tile) {
+    draw_forest_floor(r, sx, sy, x, y);
+    WorldPropArt art = tile == TILE_NECRO_RELIQUARY ? PROP_CHEST : PROP_TOMB;
+    SDL_Color accent = tile == TILE_NECRO_GRAVE ? (SDL_Color){150, 184, 91, 255} :
+        tile == TILE_NECRO_GRAVE_SPENT ? (SDL_Color){124, 201, 218, 255} : (SDL_Color){201, 165, 92, 255};
+    draw_world_prop(r, sx, sy, art, accent);
+    if (tile == TILE_NECRO_GRAVE_SPENT) {
+        renderer_draw_text(r, "+", sx * TILE_SIZE + 9, sy * TILE_SIZE - 1, accent, r->font_tiny);
+    } else if (tile == TILE_NECRO_RELIQUARY) {
+        renderer_draw_text(r, "NECROMANCER'S CLOAK", sx * TILE_SIZE - 42, sy * TILE_SIZE - 14,
+            (SDL_Color){195, 226, 173, 255}, r->font_tiny);
+    }
+}
+
+static void draw_necromancer_warning(Renderer *r, const GameState *g, const Viewport *v) {
+    if (g->location != LOCATION_FOREST || g->level != FOREST_BOSS_LEVEL) {
+        return;
+    }
+    SDL_BlendMode blend;
+    SDL_GetRenderDrawBlendMode(r->sdl, &blend);
+    SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_BLEND);
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *e = &g->enemies[i];
+        if (!e->active || e->type != ENEMY_FOREST_NECROMANCER || e->move_timer <= 0) {
+            continue;
+        }
+        for (int y = v->cam_y; y < v->cam_y + v->tiles_y; y++) {
+            for (int x = v->cam_x; x < v->cam_x + v->tiles_x; x++) {
+                if (!map_is_explored(&g->map, x, y) || !necromancer_attack_marks(g, e, x, y)) {
+                    continue;
+                }
+                int px = viewport_to_screen_x(v, x) * TILE_SIZE;
+                int py = viewport_to_screen_y(v, y) * TILE_SIZE;
+                SDL_Rect tile = {px + 1, py + 1, TILE_SIZE - 2, TILE_SIZE - 2};
+                SDL_SetRenderDrawColor(r->sdl, 103, 155, 73, 85);
+                SDL_RenderFillRect(r->sdl, &tile);
+                SDL_SetRenderDrawColor(r->sdl, 188, 246, 130, 255);
+                SDL_RenderDrawRect(r->sdl, &tile);
+                if (e->boss_attack == NECRO_ROOTS) {
+                    SDL_RenderDrawLine(r->sdl, px + 3, py + 20, px + 18, py + 14);
+                    SDL_RenderDrawLine(r->sdl, px + 6, py + 19, px + 3, py + 14);
+                    SDL_RenderDrawLine(r->sdl, px + 11, py + 17, px + 20, py + 20);
+                }
+                char countdown[8];
+                snprintf(countdown, sizeof(countdown), "%d", e->move_timer);
+                renderer_draw_text(r, countdown, px + 9, py + 4, (SDL_Color){255, 235, 197, 255}, r->font_tiny);
+            }
+        }
+    }
+    SDL_SetRenderDrawBlendMode(r->sdl, blend);
+}
+
+static void draw_necromancer_status(Renderer *r, const GameState *g, const Viewport *v) {
+    if (g->location != LOCATION_FOREST || g->level != FOREST_BOSS_LEVEL) {
+        return;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *e = &g->enemies[i];
+        if (!e->active || e->type != ENEMY_FOREST_NECROMANCER || e->max_hp <= 0 ||
+            !viewport_is_visible(v, e->x, e->y) || !map_is_explored(&g->map, e->x, e->y)) {
+            continue;
+        }
+        int width = r->screen_w - INFO_PANEL_W - 16;
+        if (width > 380) {
+            width = 380;
+        }
+        if (width < 160) {
+            return;
+        }
+        int x = (r->screen_w - INFO_PANEL_W - width) / 2;
+        int top = x < MAP_W * 2 + 12 ? MAP_H * 2 + 20 : 8;
+        SDL_Rect panel = {x, top, width, 78};
+        SDL_SetRenderDrawColor(r->sdl, 20, 31, 24, 255);
+        SDL_RenderFillRect(r->sdl, &panel);
+        SDL_SetRenderDrawColor(r->sdl, 97, 151, 90, 255);
+        SDL_RenderDrawRect(r->sdl, &panel);
+        const char *name = width < 365 ? (e->attack_phase ? "NECROMANCER: PHASE 2" : "NECROMANCER: PHASE 1") :
+            (e->attack_phase ? "NECROMANCER: WITHERED GROVE" : "NECROMANCER: GROVE BINDER");
+        renderer_draw_text(r, name, x + 10, top + 8, (SDL_Color){233, 216, 250, 255}, r->font_tiny);
+        SDL_Rect bar = {x + 10, top + 23, width - 20, 8};
+        SDL_SetRenderDrawColor(r->sdl, 52, 39, 70, 255);
+        SDL_RenderFillRect(r->sdl, &bar);
+        bar.w = bar.w * e->hp / e->max_hp;
+        SDL_SetRenderDrawColor(r->sdl, 106, 175, 94, 255);
+        SDL_RenderFillRect(r->sdl, &bar);
+        char hint[80];
+        if (e->move_timer > 0) {
+            const char *attack = width < 280 ? (e->boss_attack == NECRO_ROOTS ? "ROOTS" : e->boss_attack == NECRO_RAISE ? "GRAVES" : "BOLT") :
+                (e->boss_attack == NECRO_ROOTS ? "CROSSING ROOTS" : e->boss_attack == NECRO_RAISE ? "GRAVE WAVE" : "SPIRIT BOLT");
+            snprintf(hint, sizeof(hint), "%s: %d TURN%s%s", attack, e->move_timer, e->move_timer == 1 ? "" : "S", e->frozen_turns > 0 ? (width < 280 ? " *" : " (FROZEN)") : "");
+        } else {
+            snprintf(hint, sizeof(hint), "%s", e->move_timer < 0 ? "RECOVERING: ATTACK NOW" : "PREPARING NEXT ATTACK");
+        }
+        renderer_draw_text(r, hint, x + 10, top + 38, (SDL_Color){e->move_timer < 0 ? 139 : 247, 207, 164, 255}, r->font_tiny);
+        int graves = necromancer_active_graves(g);
+        snprintf(hint, sizeof(hint), graves ? "GRAVES: %d  INTERACT TO CONSECRATE" : "ALL GRAVES CONSECRATED", graves);
+        if (width < 280) {
+            snprintf(hint, sizeof(hint), "GRAVES: %d", graves);
+        }
+        renderer_draw_text(r, hint, x + 10, top + 55, (SDL_Color){186, 178, 211, 255}, r->font_tiny);
     }
 }
 
@@ -1305,6 +1409,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
     } else if (underlay == TILE_TRAP_HIDDEN &&
         g->location == LOCATION_COAST) {
         draw_coast_trap_underlay(r, g, map_x, map_y, screen_x, screen_y);
+    } else if (underlay == TILE_NECRO_GRAVE || underlay == TILE_NECRO_GRAVE_SPENT || underlay == TILE_NECRO_RELIQUARY) {
+        draw_necromancer_tile(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay == TILE_LICH_SEAL || underlay == TILE_LICH_SEAL_SPENT || underlay == TILE_LICH_PILLAR || underlay == TILE_LICH_RELIQUARY) {
         draw_lich_tile(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay == TILE_DUNGEON_STAIRS_SEALED || underlay == TILE_DUNGEON_STAIRS_RETURN) {
@@ -2246,6 +2352,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                         draw_return_exit(r, sx, sy);
                     }
                     break;
+                case TILE_NECRO_GRAVE:
+                case TILE_NECRO_GRAVE_SPENT:
+                case TILE_NECRO_RELIQUARY:
+                    draw_necromancer_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
                 case TILE_LICH_SEAL:
                 case TILE_LICH_SEAL_SPENT:
                 case TILE_LICH_PILLAR:
@@ -2755,6 +2866,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     draw_lich_warning(r, g, v);
+    draw_necromancer_warning(r, g, v);
 
     // Draw enemies
     if (g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
@@ -3499,6 +3611,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     draw_kraken_status(r, g, v);
     draw_lich_status(r, g, v);
+    draw_necromancer_status(r, g, v);
 
     // Draw info panel
     info_panel_draw(r, g);

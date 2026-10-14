@@ -1,6 +1,7 @@
 #include "test_utils.h"
 #include "../src/game/game.h"
 #include "../src/game/lich.h"
+#include "../src/game/necromancer.h"
 
 static void setup_ranged_enemy(GameState *g, EnemyType type) {
     g->player.player_class = CLASS_WARRIOR;
@@ -25,6 +26,12 @@ static void setup_ranged_enemy(GameState *g, EnemyType type) {
         .hp = 100, .max_hp = 100, .attack = 10,
         .move_timer = type == ENEMY_DROWNED_QUEEN ? 2 : 1
     };
+    if (type == ENEMY_FOREST_NECROMANCER) {
+        g->level = FOREST_BOSS_LEVEL;
+        g->enemies[0].boss_attack = NECRO_BOLT;
+        g->enemies[0].attack_target_x = g->player.x;
+        g->enemies[0].attack_target_y = g->player.y;
+    }
     if (type == ENEMY_LICH_KING) {
         g->location = LOCATION_DUNGEON;
         g->level = DUNGEON_DEPTH;
@@ -160,7 +167,7 @@ void test_enemy_projectiles(void) {
     ASSERT("boss warning turns do not create a projectile", shots.count == 0);
     g.enemies[0].x = 19;
     action_resolve_enemies_with_projectiles(&g, &shots);
-    ASSERT("melee attacks do not create a projectile", shots.count == 0 && g.player.hp == 90);
+    ASSERT("warned adjacent spirit bolt resolves without an extra melee attack", shots.count == 1 && g.player.hp == 90);
 
     setup_ranged_enemy(&g, ENEMY_GOBLIN_ARCHER);
     g.inventory[0] = item_make_shadow_armor();
