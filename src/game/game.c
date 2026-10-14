@@ -1,6 +1,7 @@
 #include "game.h"
 #include "catacombs.h"
 #include "castle.h"
+#include "lich.h"
 #include "jail.h"
 #include "town_life.h"
 
@@ -70,6 +71,10 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
     e->facing_dx = 0;
     e->facing_dy = -1;
     e->attack_phase = 0;
+    e->boss_attack = 0;
+    e->boss_wave_used = 0;
+    e->boss_aux_x = -1;
+    e->boss_aux_y = -1;
     switch (type) {
         case ENEMY_OATHBOUND_SOLDIER:
         case ENEMY_IRON_WARDEN:
@@ -958,6 +963,21 @@ static int quest_group_pending(const GameState *g) {
     return 0;
 }
 
+Enemy *game_spawn_lich_shade(GameState *g, int x, int y, int boss_index) {
+    if (x < 0 || y < 0 || (g->player.x == x && g->player.y == y)) {
+        return NULL;
+    }
+    Enemy *shade = spawn_quest_enemy_at(g, ENEMY_SKELETON, x, y);
+    if (shade) {
+        snprintf(shade->name, sizeof(shade->name), "Lich Shade");
+        shade->experience = 0;
+        shade->revived = 1;
+        // Appended/reused slots later in this enemy phase skip their first turn.
+        shade->frozen_turns = shade - g->enemies > boss_index ? 1 : 0;
+    }
+    return shade;
+}
+
 void game_add_lich_minions(GameState *g) {
     if (g->location != LOCATION_DUNGEON || g->level != DUNGEON_DEPTH ||
         (g->defeated_bosses & (1 << LOCATION_DUNGEON)) || g->map.room_count == 0) {
@@ -1067,6 +1087,9 @@ void enemies_spawn(GameState *g) {
     }
 
     game_add_lich_minions(g);
+    if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH) {
+        lich_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
+    }
 
     int boss_level = g->location == LOCATION_FOREST ? FOREST_BOSS_LEVEL :
         (g->location == LOCATION_MOUNTAINS ? MOUNTAIN_BOSS_LEVEL :
@@ -1411,6 +1434,7 @@ void game_init(GameState *g) {
     g->score = 0;
     g->dungeon_key_found = 0;
     g->dungeon_crypt_keys = 0;
+    g->lich_reward_state = 0;
     g->portal_active = 0;
     g->portal_level = 0;
     g->portal_location = LOCATION_DUNGEON;
@@ -2973,6 +2997,7 @@ void game_refresh_quest_encounters(GameState *g) {
     game_reveal_forest_shortcut(g);
     game_reveal_swamp_shortcut(g);
     game_reveal_mountain_shortcut(g);
+    lich_restore_reward(g);
     restore_frostfell_reward(g);
     restore_desert_reward(g);
     catacombs_restore_reward(g);
@@ -3085,6 +3110,7 @@ static void generate_active_level(GameState *g) {
     if (beacon_placed) {
         spawn_mara_guardian(g);
     }
+    lich_restore_reward(g);
     restore_frostfell_reward(g);
     restore_desert_reward(g);
     catacombs_restore_reward(g);

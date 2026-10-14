@@ -9,12 +9,108 @@
 #include "item_icons.h"
 #include "../game/combat_feedback.h"
 #include "../game/catacombs.h"
+#include "../game/lich.h"
 #include "castle_renderer.h"
 #include "jail_renderer.h"
 #include "town_life_renderer.h"
 #include "../game/jail.h"
 #include <string.h>
 #include <stdlib.h>
+
+static void draw_lich_tile(Renderer *r, int sx, int sy, int x, int y, TileType tile) {
+    draw_dungeon_floor(r, sx, sy, x, y);
+    WorldPropArt art = tile == TILE_LICH_PILLAR ? PROP_PILLAR : tile == TILE_LICH_RELIQUARY ? PROP_CHEST : PROP_SEAL;
+    SDL_Color accent = tile == TILE_LICH_SEAL ? (SDL_Color){178, 95, 223, 255} :
+        tile == TILE_LICH_SEAL_SPENT ? (SDL_Color){65, 69, 83, 255} : (SDL_Color){222, 186, 102, 255};
+    draw_world_prop(r, sx, sy, art, accent);
+    if (tile == TILE_LICH_RELIQUARY) {
+        renderer_draw_text(r, "CRYPTBLADE", sx * TILE_SIZE - 24, sy * TILE_SIZE - 14,
+            (SDL_Color){227, 205, 247, 255}, r->font_tiny);
+    }
+}
+
+static void draw_lich_warning(Renderer *r, const GameState *g, const Viewport *v) {
+    if (g->location != LOCATION_DUNGEON || g->level != DUNGEON_DEPTH) {
+        return;
+    }
+    SDL_BlendMode blend;
+    SDL_GetRenderDrawBlendMode(r->sdl, &blend);
+    SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_BLEND);
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *e = &g->enemies[i];
+        if (!e->active || e->type != ENEMY_LICH_KING || e->move_timer <= 0) {
+            continue;
+        }
+        for (int y = v->cam_y; y < v->cam_y + v->tiles_y; y++) {
+            for (int x = v->cam_x; x < v->cam_x + v->tiles_x; x++) {
+                if (!map_is_explored(&g->map, x, y) || !lich_attack_marks(g, e, x, y)) {
+                    continue;
+                }
+                int px = viewport_to_screen_x(v, x) * TILE_SIZE;
+                int py = viewport_to_screen_y(v, y) * TILE_SIZE;
+                SDL_Rect tile = {px + 1, py + 1, TILE_SIZE - 2, TILE_SIZE - 2};
+                SDL_SetRenderDrawColor(r->sdl, 156, 70, 201, 70);
+                SDL_RenderFillRect(r->sdl, &tile);
+                SDL_SetRenderDrawColor(r->sdl, 234, 175, 255, 255);
+                SDL_RenderDrawRect(r->sdl, &tile);
+                char countdown[8];
+                snprintf(countdown, sizeof(countdown), "%d", e->move_timer);
+                renderer_draw_text(r, countdown, px + 9, py + 4, (SDL_Color){255, 235, 197, 255}, r->font_tiny);
+            }
+        }
+    }
+    SDL_SetRenderDrawBlendMode(r->sdl, blend);
+}
+
+static void draw_lich_status(Renderer *r, const GameState *g, const Viewport *v) {
+    if (g->location != LOCATION_DUNGEON || g->level != DUNGEON_DEPTH) {
+        return;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *e = &g->enemies[i];
+        if (!e->active || e->type != ENEMY_LICH_KING || e->max_hp <= 0 ||
+            !viewport_is_visible(v, e->x, e->y) || !map_is_explored(&g->map, e->x, e->y)) {
+            continue;
+        }
+        int width = r->screen_w - INFO_PANEL_W - 16;
+        if (width > 380) {
+            width = 380;
+        }
+        if (width < 160) {
+            return;
+        }
+        int x = (r->screen_w - INFO_PANEL_W - width) / 2;
+        SDL_Rect panel = {x, 8, width, 78};
+        SDL_SetRenderDrawColor(r->sdl, 24, 19, 37, 255);
+        SDL_RenderFillRect(r->sdl, &panel);
+        SDL_SetRenderDrawColor(r->sdl, 133, 96, 167, 255);
+        SDL_RenderDrawRect(r->sdl, &panel);
+        const char *name = width < 340 ? (e->attack_phase ? "LICH KING: PHASE 2" : "LICH KING: PHASE 1") :
+            (e->attack_phase ? "LICH KING: UNBOUND SOUL" : "LICH KING: CRYPT SOVEREIGN");
+        renderer_draw_text(r, name, x + 10, 16, (SDL_Color){233, 216, 250, 255}, r->font_tiny);
+        SDL_Rect bar = {x + 10, 31, width - 20, 8};
+        SDL_SetRenderDrawColor(r->sdl, 52, 39, 70, 255);
+        SDL_RenderFillRect(r->sdl, &bar);
+        bar.w = bar.w * e->hp / e->max_hp;
+        SDL_SetRenderDrawColor(r->sdl, 170, 104, 221, 255);
+        SDL_RenderFillRect(r->sdl, &bar);
+        char hint[80];
+        if (e->move_timer > 0) {
+            const char *attack = width < 280 ? (e->boss_attack == LICH_RING ? "RING" : e->boss_attack == LICH_SUMMON ? "GRAVES" : "LANCE") :
+                (e->boss_attack == LICH_RING ? "SOUL RING" : e->boss_attack == LICH_SUMMON ? "GRAVE WAVE" : "NECROTIC LANCE");
+            snprintf(hint, sizeof(hint), "%s: %d TURN%s%s", attack, e->move_timer, e->move_timer == 1 ? "" : "S", e->frozen_turns > 0 ? (width < 280 ? " *" : " (FROZEN)") : "");
+        } else {
+            snprintf(hint, sizeof(hint), "%s", e->move_timer < 0 ? "RECOVERING: ATTACK NOW" : "PREPARING NEXT ATTACK");
+        }
+        renderer_draw_text(r, hint, x + 10, 46, (SDL_Color){e->move_timer < 0 ? 139 : 247, 207, 164, 255}, r->font_tiny);
+        int seals = lich_active_seals(g);
+        snprintf(hint, sizeof(hint), seals ? "SEALS: %d  INTERACT TO SILENCE" : "SEALS SILENCED", seals);
+        if (width < 280) {
+            snprintf(hint, sizeof(hint), "SEALS: %d", seals);
+        }
+        renderer_draw_text(r, hint, x + 10, 63, (SDL_Color){186, 178, 211, 255}, r->font_tiny);
+    }
+}
 
 static SDL_Color area_label_color(Location area) {
     switch (area) {
@@ -1209,6 +1305,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
     } else if (underlay == TILE_TRAP_HIDDEN &&
         g->location == LOCATION_COAST) {
         draw_coast_trap_underlay(r, g, map_x, map_y, screen_x, screen_y);
+    } else if (underlay == TILE_LICH_SEAL || underlay == TILE_LICH_SEAL_SPENT || underlay == TILE_LICH_PILLAR || underlay == TILE_LICH_RELIQUARY) {
+        draw_lich_tile(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay == TILE_DUNGEON_STAIRS_SEALED || underlay == TILE_DUNGEON_STAIRS_RETURN) {
         draw_dungeon_return_stairs(r, screen_x, screen_y, underlay == TILE_DUNGEON_STAIRS_RETURN);
     } else if (underlay == TILE_FOREST_SHORTCUT) {
@@ -2148,6 +2246,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                         draw_return_exit(r, sx, sy);
                     }
                     break;
+                case TILE_LICH_SEAL:
+                case TILE_LICH_SEAL_SPENT:
+                case TILE_LICH_PILLAR:
+                case TILE_LICH_RELIQUARY:
+                    draw_lich_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
                 case TILE_LOCKED_DOOR: draw_locked_door(r, sx, sy); break;
                 case TILE_DUNGEON_KEY: draw_dungeon_key(r, sx, sy); break;
                 case TILE_CRYPT_DOOR: draw_crypt_door(r, sx, sy); break;
@@ -2649,6 +2753,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (g->location == LOCATION_FROSTFELL) {
         draw_kraken_target(r, g, v);
     }
+
+    draw_lich_warning(r, g, v);
 
     // Draw enemies
     if (g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
@@ -3392,6 +3498,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     draw_kraken_status(r, g, v);
+    draw_lich_status(r, g, v);
 
     // Draw info panel
     info_panel_draw(r, g);
