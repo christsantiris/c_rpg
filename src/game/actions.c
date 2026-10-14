@@ -6,6 +6,7 @@
 #include "necromancer.h"
 #include "goblin_king.h"
 #include "drowned_queen.h"
+#include "swamp_demon.h"
 #include "jail.h"
 #include "town_life.h"
 #include <stdlib.h>
@@ -112,6 +113,10 @@ static void finish_floor_pickup(GameState *g, FloorItem *picked) {
     if (strcmp(picked->item.name, "Goblin King's Shield") == 0 && g->goblin_king_reward_state == 1) {
         g->goblin_king_reward_state = 2;
         goblin_king_restore_reward(g);
+    }
+    if (strcmp(picked->item.name, "Demonic Sword") == 0 && g->swamp_demon_reward_state == 1) {
+        g->swamp_demon_reward_state = 2;
+        swamp_demon_restore_reward(g);
     }
     if (strcmp(picked->item.name, "Tidecaller Robes") == 0 && g->drowned_queen_reward_state == 1) {
         g->drowned_queen_reward_state = 2;
@@ -448,6 +453,9 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         if (type == ENEMY_MOUNTAIN_GOBLIN_KING) {
             g->goblin_king_reward_state = 1;
         }
+        if (type == ENEMY_SWAMP_DEMON) {
+            g->swamp_demon_reward_state = 1;
+        }
         if (type == ENEMY_DROWNED_QUEEN) {
             g->drowned_queen_reward_state = 1;
         }
@@ -460,7 +468,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
             game_update_level_progress(g);
             return;
         }
-        if (g->floor_item_count >= MAX_FLOOR_ITEMS && type != ENEMY_LICH_KING && type != ENEMY_FOREST_NECROMANCER && type != ENEMY_MOUNTAIN_GOBLIN_KING && type != ENEMY_DROWNED_QUEEN) {
+        if (g->floor_item_count >= MAX_FLOOR_ITEMS && type != ENEMY_LICH_KING && type != ENEMY_FOREST_NECROMANCER && type != ENEMY_MOUNTAIN_GOBLIN_KING && type != ENEMY_DROWNED_QUEEN && type != ENEMY_SWAMP_DEMON) {
             FloorItem *discarded = &g->floor_items[MAX_FLOOR_ITEMS - 1];
             if (g->map.tiles[discarded->y][discarded->x] == TILE_ITEM) {
                 g->map.tiles[discarded->y][discarded->x] =
@@ -500,6 +508,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         necromancer_restore_reward(g);
         goblin_king_restore_reward(g);
         drowned_queen_restore_reward(g);
+        swamp_demon_restore_reward(g);
         game_update_level_progress(g);
         return;
     }
@@ -826,6 +835,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (swamp_demon_has_interaction(g)) {
+        return 1;
+    }
     if (drowned_queen_has_interaction(g)) {
         return 1;
     }
@@ -1166,6 +1178,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (swamp_demon_interact(g)) {
+            return;
+        }
         if (drowned_queen_interact(g)) {
             return;
         }
@@ -1252,6 +1267,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_PICK_UP) {
+        if (g->map.tiles[g->player.y][g->player.x] == TILE_DEMON_RELIQUARY && swamp_demon_interact(g)) {
+            return;
+        }
         if (g->map.tiles[g->player.y][g->player.x] == TILE_QUEEN_RELIQUARY && drowned_queen_interact(g)) {
             return;
         }
@@ -2873,6 +2891,7 @@ static int enemy_is_major_boss(const Enemy *e) {
         e->type == ENEMY_LICH_KING ||
         e->type == ENEMY_FOREST_NECROMANCER ||
         e->type == ENEMY_MOUNTAIN_GOBLIN_KING ||
+        e->type == ENEMY_SWAMP_DEMON ||
         e->type == ENEMY_DROWNED_QUEEN ||
         e->type == ENEMY_FALLEN_SUN_GUARDIAN;
 }
@@ -3505,6 +3524,11 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             apply_enemy_damage(g, damage, FEEDBACK_NOW);
         }
     }
+    int rot_damage = swamp_demon_tick_floor(g);
+    if (rot_damage > 0) {
+        int damage = rot_damage - g->player.defense / 2;
+        apply_enemy_damage(g, damage > 2 ? damage : 2, FEEDBACK_NOW);
+    }
     int burial_damage = catacombs_tick(g);
     if (burial_damage > 0) {
         int damage = burial_damage - g->player.defense / 2;
@@ -3574,6 +3598,13 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             int damage = goblin_king_tick(g, e, shots);
             if (damage > 0) {
                 apply_enemy_damage(g, damage, e->boss_attack == GOBLIN_KING_AXE ? FEEDBACK_AFTER_ENEMY_SHOT : FEEDBACK_NOW);
+            }
+            continue;
+        }
+        if (e->type == ENEMY_SWAMP_DEMON) {
+            int damage = swamp_demon_tick(g, e);
+            if (damage > 0) {
+                apply_enemy_damage(g, damage, FEEDBACK_NOW);
             }
             continue;
         }

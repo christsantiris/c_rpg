@@ -3,6 +3,7 @@
 #include "world_props.h"
 #include "goblin_king_renderer.h"
 #include "drowned_queen_renderer.h"
+#include "swamp_demon_renderer.h"
 #include "npc_renderer.h"
 #include "info_panel.h"
 #include "message_bar.h"
@@ -1411,6 +1412,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
     } else if (underlay == TILE_TRAP_HIDDEN &&
         g->location == LOCATION_COAST) {
         draw_coast_trap_underlay(r, g, map_x, map_y, screen_x, screen_y);
+    } else if (underlay >= TILE_DEMON_VENT && underlay <= TILE_DEMON_RELIQUARY) {
+        draw_swamp_demon_tile(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay >= TILE_QUEEN_WATER && underlay <= TILE_QUEEN_RELIQUARY) {
         draw_drowned_queen_tile(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay >= TILE_GOBLIN_KEG && underlay <= TILE_GOBLIN_KING_RELIQUARY) {
@@ -2358,6 +2361,17 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                         draw_return_exit(r, sx, sy);
                     }
                     break;
+                case TILE_DEMON_VENT:
+                case TILE_DEMON_VENT_1:
+                case TILE_DEMON_VENT_2:
+                case TILE_DEMON_VENT_3:
+                case TILE_DEMON_VENT_4:
+                case TILE_DEMON_VENT_5:
+                case TILE_DEMON_ROT_1:
+                case TILE_DEMON_ROT_2:
+                case TILE_DEMON_RELIQUARY:
+                    draw_swamp_demon_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
                 case TILE_QUEEN_WATER:
                 case TILE_QUEEN_DRY:
                 case TILE_QUEEN_ISLAND:
@@ -2893,6 +2907,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_necromancer_warning(r, g, v);
     draw_goblin_king_warnings(r, g, v);
     draw_drowned_queen_warnings(r, g, v);
+    draw_swamp_demon_warnings(r, g, v);
 
     // Draw enemies
     if (g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
@@ -3640,6 +3655,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_necromancer_status(r, g, v);
     draw_goblin_king_status(r, g, v);
     draw_drowned_queen_status(r, g, v);
+    draw_swamp_demon_status(r, g, v);
 
     // Draw info panel
     info_panel_draw(r, g);

@@ -296,8 +296,9 @@ toward the Swamp Demon on level 4, then falls beyond it. Defeating him reveals
 a marked shortcut to the opposite town; players can instead cross the three
 remaining levels. He drops a Demonic Sword: a +6 one-handed weapon for every
 class, with a two-tile `F` attack. Talk to Bram at the Stillbury Inn to rescue
-Mira from a vampire on level 3. From Stillbury she appears before the Demon;
-from Rosemoor she appears after it. See [Blackwater Swamp](docs/swamp.md).
+Mira from a vampire on level 3. The Demon now has two phases, fixed cleave/pool/fan
+warnings, expiring rot and three reusable root vents that open counterattack windows.
+From Stillbury she appears before the Demon; from Rosemoor she appears after it. See [Blackwater Swamp](docs/swamp.md).
 
 ### Rosemoor, Crown Roads, and the Castle
 
