@@ -7,6 +7,7 @@
 #include "drowned_queen.h"
 #include "swamp_demon.h"
 #include "minotaur.h"
+#include "grave_marshal.h"
 #include "jail.h"
 #include "town_life.h"
 
@@ -1010,6 +1011,27 @@ Enemy *game_raise_grove_servant(GameState *g, int x, int y, int boss_index) {
     return servant;
 }
 
+Enemy *game_spawn_marshal_guard(GameState *g, int x, int y, int boss_index) {
+    if (g->location != LOCATION_CATACOMBS || g->level != CATACOMBS_DEPTH ||
+        !map_is_walkable(&g->map, x, y) || (g->player.x == x && g->player.y == y) ||
+        g->enemy_count >= NON_ROAD_ENEMY_LIMIT) {
+        return NULL;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (g->enemies[i].active && g->enemies[i].x == x && g->enemies[i].y == y) {
+            return NULL;
+        }
+    }
+    // Append without consuming corpses or their existing resurrection allowances.
+    Enemy *guard = &g->enemies[g->enemy_count++];
+    spawn_enemy(g, guard, ENEMY_BONE_SENTINEL, x, y);
+    snprintf(guard->name, sizeof(guard->name), "Royal Honor Guard");
+    guard->experience = 0;
+    guard->revived = 1;
+    guard->frozen_turns = guard - g->enemies > boss_index ? 1 : 0;
+    return guard;
+}
+
 Enemy *game_spawn_lich_shade(GameState *g, int x, int y, int boss_index) {
     if (x < 0 || y < 0 || (g->player.x == x && g->player.y == y)) {
         return NULL;
@@ -1134,6 +1156,9 @@ void enemies_spawn(GameState *g) {
     }
 
     game_add_lich_minions(g);
+    if (g->location == LOCATION_CATACOMBS && g->level == CATACOMBS_DEPTH) {
+        grave_marshal_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
+    }
     if (g->location == LOCATION_SWAMP && g->level == SWAMP_BOSS_LEVEL) {
         swamp_demon_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
     }
@@ -1496,6 +1521,7 @@ void game_init(GameState *g) {
     g->lich_reward_state = 0;
     g->necromancer_reward_state = 0;
     g->goblin_king_reward_state = 0;
+    g->grave_marshal_reward_state = 0;
     g->minotaur_reward_state = 0;
     g->swamp_demon_reward_state = 0;
     g->drowned_queen_reward_state = 0;
@@ -5603,10 +5629,8 @@ void game_use_town_portal(GameState *g) {
         }
         for (int i = 0; i < g->enemy_count; i++) {
             Enemy *e = &g->enemies[i];
-            if (e->type == ENEMY_GRAVE_MARSHAL && catacombs_sweep_marks(&g->map, e, landing_x, landing_y)) {
-                e->attack_target_x = -1;
-                e->attack_target_y = -1;
-                e->move_timer = 1;
+            if (e->type == ENEMY_GRAVE_MARSHAL) {
+                grave_marshal_cancel_landing(g, e, landing_x, landing_y);
             }
         }
     }

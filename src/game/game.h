@@ -232,6 +232,7 @@ typedef struct {
     int score;
     int dungeon_key_found;
     int dungeon_crypt_keys;
+    int grave_marshal_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
     int minotaur_reward_state; // 0: none, 1: unclaimed Aegis, 2: claimed, 3: unclaimed legacy Magic Shield.
     int swamp_demon_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
     int drowned_queen_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
@@ -303,6 +304,7 @@ void game_move_player(GameState *g, int dx, int dy);
 void game_descend(GameState *g);
 void game_ascend(GameState *g);
 void enemies_spawn(GameState *g);
+Enemy *game_spawn_marshal_guard(GameState *g, int x, int y, int boss_index);
 void game_add_lich_minions(GameState *g);
 Enemy *game_raise_grove_servant(GameState *g, int x, int y, int boss_index);
 Enemy *game_spawn_lich_shade(GameState *g, int x, int y, int boss_index);

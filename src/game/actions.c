@@ -8,6 +8,7 @@
 #include "drowned_queen.h"
 #include "swamp_demon.h"
 #include "minotaur.h"
+#include "grave_marshal.h"
 #include "jail.h"
 #include "town_life.h"
 #include <stdlib.h>
@@ -132,6 +133,8 @@ static void finish_floor_pickup(GameState *g, FloorItem *picked) {
     }
     if (strcmp(picked->item.name, "Gravekeeper's Mantle") == 0) {
         g->catacombs_mantle_unclaimed = 0;
+        g->grave_marshal_reward_state = 2;
+        catacombs_restore_reward(g);
     }
     picked->active = 0;
     for (int i = 0; i < g->floor_item_count; i++) {
@@ -455,6 +458,10 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         if (type == ENEMY_MOUNTAIN_GOBLIN_KING) {
             g->goblin_king_reward_state = 1;
         }
+        if (type == ENEMY_GRAVE_MARSHAL) {
+            g->grave_marshal_reward_state = 1;
+            g->catacombs_mantle_unclaimed = 1;
+        }
         if (type == ENEMY_MINOTAUR) {
             g->minotaur_reward_state = MINOTAUR_REWARD_AEGIS;
         }
@@ -473,7 +480,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
             game_update_level_progress(g);
             return;
         }
-        if (g->floor_item_count >= MAX_FLOOR_ITEMS && type != ENEMY_LICH_KING && type != ENEMY_FOREST_NECROMANCER && type != ENEMY_MOUNTAIN_GOBLIN_KING && type != ENEMY_DROWNED_QUEEN && type != ENEMY_SWAMP_DEMON && type != ENEMY_MINOTAUR) {
+        if (g->floor_item_count >= MAX_FLOOR_ITEMS && type != ENEMY_LICH_KING && type != ENEMY_FOREST_NECROMANCER && type != ENEMY_MOUNTAIN_GOBLIN_KING && type != ENEMY_DROWNED_QUEEN && type != ENEMY_SWAMP_DEMON && type != ENEMY_MINOTAUR && type != ENEMY_GRAVE_MARSHAL) {
             FloorItem *discarded = &g->floor_items[MAX_FLOOR_ITEMS - 1];
             if (g->map.tiles[discarded->y][discarded->x] == TILE_ITEM) {
                 g->map.tiles[discarded->y][discarded->x] =
@@ -515,6 +522,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         drowned_queen_restore_reward(g);
         swamp_demon_restore_reward(g);
         minotaur_restore_reward(g);
+        catacombs_restore_reward(g);
         game_update_level_progress(g);
         return;
     }
@@ -841,6 +849,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (grave_marshal_has_interaction(g)) {
+        return 1;
+    }
     if (minotaur_has_interaction(g)) {
         return 1;
     }
@@ -1187,6 +1198,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (grave_marshal_interact(g)) {
+            return;
+        }
         if (minotaur_interact(g)) {
             return;
         }
@@ -1279,6 +1293,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_PICK_UP) {
+        if (grave_marshal_pickup(g)) {
+            return;
+        }
         if (minotaur_pickup(g)) {
             return;
         }
@@ -3456,48 +3473,17 @@ static void prism_sovereign_turn(GameState *g, int index, EnemyProjectiles *shot
 
 static void grave_marshal_turn(GameState *g, int index) {
     Enemy *e = &g->enemies[index];
-    int room = catacombs_room_at(&g->map, g->player.x, g->player.y);
-    if (room != g->map.room_count - 1 && e->hp == e->max_hp && e->move_timer == 0) {
-        return;
-    }
-    if (e->attack_target_x >= 0) {
-        if (catacombs_sweep_marks(&g->map, e, g->player.x, g->player.y)) {
-            int damage = e->attack - g->player.defense;
-            if (damage < 3) {
-                damage = 3;
-            }
-            apply_enemy_damage(g, damage, FEEDBACK_NOW);
-            push_message_kind(g, "The Marshal's polearm sweeps the marked stones!", MESSAGE_DAMAGE_TAKEN);
-        } else {
-            push_message(g, "The Marshal's polearm sweeps empty stone.");
-        }
-        e->attack_target_x = -1;
-        e->attack_target_y = -1;
-        e->move_timer = 1;
-        return;
-    }
-    if (e->move_timer == 1) {
-        e->move_timer = 2;
-        return;
-    }
-    int dx = g->player.x - e->x;
-    int dy = g->player.y - e->y;
-    if (abs_int(dx) <= 1 && abs_int(dy) <= 1) {
-        int sx = abs_int(dx) >= abs_int(dy) ? (dx < 0 ? -1 : 1) : 0;
-        int sy = sx == 0 ? (dy < 0 ? -1 : 1) : 0;
-        e->attack_target_x = e->x + sx;
-        e->attack_target_y = e->y + sy;
-        e->move_timer = 2;
-        push_message(g, "The Grave Marshal raises its polearm. Leave the marked sweep!");
-    } else {
-        int old_x = e->x;
-        int old_y = e->y;
+    int damage = grave_marshal_tick(g, e);
+    if (damage < 0) {
+        int x = e->x;
+        int y = e->y;
         enemy_move_toward(g, index);
         if (catacombs_room_at(&g->map, e->x, e->y) != g->map.room_count - 1) {
-            e->x = old_x;
-            e->y = old_y;
+            e->x = x;
+            e->y = y;
         }
-        e->move_timer = 2;
+    } else if (damage > 0) {
+        apply_enemy_damage(g, damage, FEEDBACK_NOW);
     }
 }
 
