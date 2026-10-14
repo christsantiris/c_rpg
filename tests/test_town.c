@@ -536,9 +536,9 @@ void test_rook_labyrinth(void) {
     int shields = 0;
     for (int i = 0; i < g.floor_item_count; i++) {
         shields += g.floor_items[i].active &&
-            g.floor_items[i].item.visual_id == ITEM_VISUAL_MAGIC_SHIELD;
+            g.floor_items[i].item.visual_id == ITEM_VISUAL_LABYRINTH_AEGIS;
     }
-    ASSERT("the Minotaur guarantees one Magic Shield", shields == 1);
+    ASSERT("the Minotaur guarantees one Labyrinth Aegis", shields == 1);
     g.player.x = 40;
     g.player.y = g.map.stairs_up_y;
     game_interact_labyrinth(&g);

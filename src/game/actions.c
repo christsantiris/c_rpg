@@ -7,6 +7,7 @@
 #include "goblin_king.h"
 #include "drowned_queen.h"
 #include "swamp_demon.h"
+#include "minotaur.h"
 #include "jail.h"
 #include "town_life.h"
 #include <stdlib.h>
@@ -102,6 +103,7 @@ static void place_gold_drop(GameState *g, int x, int y, int gold) {
 }
 
 static void finish_floor_pickup(GameState *g, FloorItem *picked) {
+    minotaur_record_pickup(g, &picked->item);
     if (strcmp(picked->item.name, "Cryptblade") == 0 && g->lich_reward_state == 1) {
         g->lich_reward_state = 2;
         lich_restore_reward(g);
@@ -163,7 +165,7 @@ Item boss_equipment_reward(EnemyType type) {
         case ENEMY_DROWNED_QUEEN:
             return item_make_tidecaller_robes();
         case ENEMY_MINOTAUR:
-            return item_make_magic_shield();
+            return item_make_labyrinth_aegis();
         case ENEMY_SWAMP_DEMON:
             return item_make_demonic_sword();
         case ENEMY_RED_DRAGON:
@@ -453,6 +455,9 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         if (type == ENEMY_MOUNTAIN_GOBLIN_KING) {
             g->goblin_king_reward_state = 1;
         }
+        if (type == ENEMY_MINOTAUR) {
+            g->minotaur_reward_state = MINOTAUR_REWARD_AEGIS;
+        }
         if (type == ENEMY_SWAMP_DEMON) {
             g->swamp_demon_reward_state = 1;
         }
@@ -468,7 +473,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
             game_update_level_progress(g);
             return;
         }
-        if (g->floor_item_count >= MAX_FLOOR_ITEMS && type != ENEMY_LICH_KING && type != ENEMY_FOREST_NECROMANCER && type != ENEMY_MOUNTAIN_GOBLIN_KING && type != ENEMY_DROWNED_QUEEN && type != ENEMY_SWAMP_DEMON) {
+        if (g->floor_item_count >= MAX_FLOOR_ITEMS && type != ENEMY_LICH_KING && type != ENEMY_FOREST_NECROMANCER && type != ENEMY_MOUNTAIN_GOBLIN_KING && type != ENEMY_DROWNED_QUEEN && type != ENEMY_SWAMP_DEMON && type != ENEMY_MINOTAUR) {
             FloorItem *discarded = &g->floor_items[MAX_FLOOR_ITEMS - 1];
             if (g->map.tiles[discarded->y][discarded->x] == TILE_ITEM) {
                 g->map.tiles[discarded->y][discarded->x] =
@@ -509,6 +514,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         goblin_king_restore_reward(g);
         drowned_queen_restore_reward(g);
         swamp_demon_restore_reward(g);
+        minotaur_restore_reward(g);
         game_update_level_progress(g);
         return;
     }
@@ -835,6 +841,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (minotaur_has_interaction(g)) {
+        return 1;
+    }
     if (swamp_demon_has_interaction(g)) {
         return 1;
     }
@@ -1178,6 +1187,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (minotaur_interact(g)) {
+            return;
+        }
         if (swamp_demon_interact(g)) {
             return;
         }
@@ -1267,6 +1279,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_PICK_UP) {
+        if (minotaur_pickup(g)) {
+            return;
+        }
         if (g->map.tiles[g->player.y][g->player.x] == TILE_DEMON_RELIQUARY && swamp_demon_interact(g)) {
             return;
         }
@@ -2891,6 +2906,7 @@ static int enemy_is_major_boss(const Enemy *e) {
         e->type == ENEMY_LICH_KING ||
         e->type == ENEMY_FOREST_NECROMANCER ||
         e->type == ENEMY_MOUNTAIN_GOBLIN_KING ||
+        e->type == ENEMY_MINOTAUR ||
         e->type == ENEMY_SWAMP_DEMON ||
         e->type == ENEMY_DROWNED_QUEEN ||
         e->type == ENEMY_FALLEN_SUN_GUARDIAN;
@@ -3598,6 +3614,13 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             int damage = goblin_king_tick(g, e, shots);
             if (damage > 0) {
                 apply_enemy_damage(g, damage, e->boss_attack == GOBLIN_KING_AXE ? FEEDBACK_AFTER_ENEMY_SHOT : FEEDBACK_NOW);
+            }
+            continue;
+        }
+        if (e->type == ENEMY_MINOTAUR) {
+            int damage = minotaur_tick(g, e);
+            if (damage > 0) {
+                apply_enemy_damage(g, damage, FEEDBACK_NOW);
             }
             continue;
         }

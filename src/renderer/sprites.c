@@ -1399,6 +1399,10 @@ static void draw_equipped_player_shield(Renderer *r, const Item *shield, int x, 
     } else if (shield->visual_id == ITEM_VISUAL_TOWER_SHIELD) {
         face = (SDL_Color){119, 124, 130, 255};
         mark = (SDL_Color){190, 61, 47, 255};
+    } else if (shield->visual_id == ITEM_VISUAL_LABYRINTH_AEGIS) {
+        rim = (SDL_Color){207, 172, 100, 255};
+        face = (SDL_Color){61, 71, 102, 255};
+        mark = (SDL_Color){238, 226, 171, 255};
     } else if (shield->visual_id == ITEM_VISUAL_MAGIC_SHIELD) {
         rim = (SDL_Color){88, 230, 247, 255};
         face = (SDL_Color){79, 65, 153, 255};
@@ -1407,12 +1411,13 @@ static void draw_equipped_player_shield(Renderer *r, const Item *shield, int x, 
     if (strcmp(shield->name, "Goblin King's Shield") == 0) {
         face = (SDL_Color){74, 115, 59, 255};
     }
-    static const char shapes[3][13][12] = {
+    static const char shapes[4][13][12] = {
         {"...........", "...ooooo...", "..oRRRRRo..", ".oRRfffRRo.", ".oRfffffRo.", ".oRffmffRo.", ".oRfmRmfRo.", ".oRffmffRo.", ".oRfffffRo.", ".oRRfffRRo.", "..oRRRRRo..", "...ooooo...", "..........."},
         {".ooooooooo.", "oRRRRRRRRRo", "oRfffffffRo", "oRfffmfffRo", "oRfffmfffRo", "oRfmmmmmfRo", "oRfffmfffRo", "oRfffmfffRo", ".oRffmffRo.", ".oRRfffRRo.", "..oRRfRRo..", "...oRRRo...", "....ooo...."},
-        {"..ooooooo..", ".oRRRRRRRo.", "oRRfffffRRo", "oRfffmfffRo", "oRfffmfffRo", "oRfmmmmmfRo", "oRfffmfffRo", "oRfffmfffRo", "oRfffmfffRo", "oRRfffffRRo", ".oRRRRRRRo.", "..ooooooo..", "..........."}
+        {"..ooooooo..", ".oRRRRRRRo.", "oRRfffffRRo", "oRfffmfffRo", "oRfffmfffRo", "oRfmmmmmfRo", "oRfffmfffRo", "oRfffmfffRo", "oRfffmfffRo", "oRRfffffRRo", ".oRRRRRRRo.", "..ooooooo..", "..........."},
+        {".ooooooooo.", "oRRRRRRRRRo", "oRfffffffRo", "oRfmfffmfRo", "oRfmmfmmfRo", "oRffmmmffRo", "oRffmomffRo", "oRfffmfffRo", ".oRfffffRo.", ".oRRfmfRRo.", "..oRRmRRo..", "...oRRRo...", "....ooo...."}
     };
-    int shape = shield->visual_id == ITEM_VISUAL_BUCKLER ? 0 : shield->visual_id == ITEM_VISUAL_TOWER_SHIELD ? 2 : 1;
+    int shape = shield->visual_id == ITEM_VISUAL_LABYRINTH_AEGIS ? 3 : shield->visual_id == ITEM_VISUAL_BUCKLER ? 0 : shield->visual_id == ITEM_VISUAL_TOWER_SHIELD ? 2 : 1;
     for (int row = 0; row < 13; row++) {
         for (int col = 0; col < 11; col++) {
             char ink = shapes[shape][row][col];
