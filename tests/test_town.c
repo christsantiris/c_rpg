@@ -1605,19 +1605,20 @@ static void test_goblin_king_retaliation(void) {
             strstr(g.messages[g.message_count - 1], "raises his axe"));
         action_resolve_enemies_with_projectiles(&g, &shots);
         ASSERT("Goblin King retaliates with damage and a visible axe projectile",
-            boss->move_timer == 2 && g.player.hp < 300 && shots.count == 1 &&
+            boss->move_timer == -1 && g.player.hp < 300 && shots.count == 1 &&
             shots.shots[0].type == ENEMY_MOUNTAIN_GOBLIN_KING &&
             shots.shots[0].target_x == start_x && shots.shots[0].target_y == start_y);
         int hp = g.player.hp;
         g.player.x = boss->x - 13;
         action_resolve_enemies_with_projectiles(&g, &shots);
         ASSERT("Goblin King stops attacking a distant retreating player",
-            boss->move_timer == 2 && g.player.hp == hp && shots.count == 0);
+            boss->move_timer == -1 && g.player.hp == hp && shots.count == 0);
         g.player.x = start_x;
         action_resolve_enemies_with_projectiles(&g, &shots);
         action_resolve_enemies_with_projectiles(&g, &shots);
-        ASSERT("Goblin King resumes retaliation when the player returns",
-            boss->move_timer == 4 && g.player.hp < hp && shots.count == 1);
+        action_resolve_enemies_with_projectiles(&g, &shots);
+        ASSERT("Goblin King resumes warned retaliation after his recovery",
+            boss->move_timer == -1 && g.player.hp < hp && shots.count == 1);
     }
 }
 

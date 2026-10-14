@@ -1,6 +1,7 @@
 #include "game_renderer.h"
 #include "sprites.h"
 #include "world_props.h"
+#include "goblin_king_renderer.h"
 #include "npc_renderer.h"
 #include "info_panel.h"
 #include "message_bar.h"
@@ -1409,6 +1410,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
     } else if (underlay == TILE_TRAP_HIDDEN &&
         g->location == LOCATION_COAST) {
         draw_coast_trap_underlay(r, g, map_x, map_y, screen_x, screen_y);
+    } else if (underlay >= TILE_GOBLIN_KEG && underlay <= TILE_GOBLIN_KING_RELIQUARY) {
+        draw_goblin_king_tile(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay == TILE_NECRO_GRAVE || underlay == TILE_NECRO_GRAVE_SPENT || underlay == TILE_NECRO_RELIQUARY) {
         draw_necromancer_tile(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay == TILE_LICH_SEAL || underlay == TILE_LICH_SEAL_SPENT || underlay == TILE_LICH_PILLAR || underlay == TILE_LICH_RELIQUARY) {
@@ -2352,6 +2355,14 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                         draw_return_exit(r, sx, sy);
                     }
                     break;
+                case TILE_GOBLIN_KEG:
+                case TILE_GOBLIN_KEG_FUSE_3:
+                case TILE_GOBLIN_KEG_FUSE_2:
+                case TILE_GOBLIN_KEG_FUSE_1:
+                case TILE_GOBLIN_KEG_SPENT:
+                case TILE_GOBLIN_KING_RELIQUARY:
+                    draw_goblin_king_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
                 case TILE_NECRO_GRAVE:
                 case TILE_NECRO_GRAVE_SPENT:
                 case TILE_NECRO_RELIQUARY:
@@ -2867,6 +2878,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     draw_lich_warning(r, g, v);
     draw_necromancer_warning(r, g, v);
+    draw_goblin_king_warnings(r, g, v);
 
     // Draw enemies
     if (g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
@@ -3612,6 +3624,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_kraken_status(r, g, v);
     draw_lich_status(r, g, v);
     draw_necromancer_status(r, g, v);
+    draw_goblin_king_status(r, g, v);
 
     // Draw info panel
     info_panel_draw(r, g);
