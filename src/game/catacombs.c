@@ -1,4 +1,5 @@
 #include "catacombs.h"
+#include "grave_marshal.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -232,6 +233,7 @@ int catacombs_interact(GameState *g) {
     if (!adjacent_brazier(g, &x, &y)) {
         return 0;
     }
+    grave_marshal_interrupt(g, x, y);
     int memorial = g->map.tiles[y][x] == TILE_MEMORIAL_BRAZIER;
     g->map.tiles[y][x] = memorial ? TILE_MEMORIAL_COLD : TILE_OSSUARY_COLD;
     if (memorial && g->catacombs_quest_state == 1 && g->level >= 2 && g->level <= 4) {
@@ -351,14 +353,7 @@ int catacombs_tick(GameState *g) {
 }
 
 int catacombs_sweep_marks(const Map *m, const Enemy *e, int x, int y) {
-    if (e->attack_target_x < 0 || e->attack_target_y < 0 || !map_is_walkable(m, x, y)) {
-        return 0;
-    }
-    int dx = e->attack_target_x - e->x;
-    int dy = e->attack_target_y - e->y;
-    int rx = x - e->x;
-    int ry = y - e->y;
-    return dx != 0 ? rx == dx && abs(ry) <= 1 : ry == dy && abs(rx) <= 1;
+    return e->boss_attack != MARSHAL_GUARDS && grave_marshal_attack_marks(m, e, x, y);
 }
 
 int catacombs_enemy_damage(const GameState *g, const Enemy *e, int damage) {
@@ -371,21 +366,5 @@ int catacombs_enemy_damage(const GameState *g, const Enemy *e, int damage) {
 }
 
 void catacombs_restore_reward(GameState *g) {
-    if (g->location != LOCATION_CATACOMBS || g->level != CATACOMBS_DEPTH || !g->catacombs_mantle_unclaimed) {
-        return;
-    }
-    for (int i = 0; i < g->floor_item_count; i++) {
-        if (g->floor_items[i].active && strcmp(g->floor_items[i].item.name, "Gravekeeper's Mantle") == 0) {
-            return;
-        }
-    }
-    if (g->floor_item_count >= MAX_FLOOR_ITEMS) {
-        return;
-    }
-    int x;
-    int y;
-    map_room_center(&g->map.rooms[g->map.room_count - 1], &x, &y);
-    FloorItem *fi = &g->floor_items[g->floor_item_count++];
-    *fi = (FloorItem){.active = 1, .x = x, .y = y, .underlying_tile = TILE_CATACOMBS_FLOOR, .item = item_make_gravekeeper_mantle()};
-    g->map.tiles[y][x] = TILE_ITEM;
+    grave_marshal_restore_reward(g);
 }

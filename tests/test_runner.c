@@ -69,6 +69,7 @@ void test_ashen(void);
 void test_glassdeep(void);
 void test_glassdeep_quest(void);
 void test_catacombs(void);
+void test_grave_marshal(void);
 void test_catacombs_quest(void);
 void test_castle(void);
 void test_workshop(void);
@@ -172,6 +173,7 @@ int main(void) {
     test_glassdeep();
     test_glassdeep_quest();
     test_catacombs();
+    test_grave_marshal();
     test_catacombs_quest();
     test_castle();
     test_workshop();

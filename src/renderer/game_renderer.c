@@ -5,6 +5,7 @@
 #include "drowned_queen_renderer.h"
 #include "swamp_demon_renderer.h"
 #include "minotaur_renderer.h"
+#include "grave_marshal_renderer.h"
 #include "npc_renderer.h"
 #include "info_panel.h"
 #include "message_bar.h"
@@ -1413,6 +1414,9 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
     } else if (underlay == TILE_TRAP_HIDDEN &&
         g->location == LOCATION_COAST) {
         draw_coast_trap_underlay(r, g, map_x, map_y, screen_x, screen_y);
+    } else if (underlay >= TILE_MARSHAL_NICHE && underlay <= TILE_MARSHAL_RELIQUARY) {
+        draw_catacombs_tile(r, &g->map, screen_x, screen_y, map_x, map_y, TILE_CATACOMBS_FLOOR);
+        draw_grave_marshal_tile(r, screen_x, screen_y, underlay);
     } else if (underlay >= TILE_MINOTAUR_PILLAR && underlay <= TILE_MINOTAUR_RELIQUARY) {
         draw_minotaur_tile(r, g, screen_x, screen_y, underlay);
     } else if (underlay >= TILE_DEMON_VENT && underlay <= TILE_DEMON_RELIQUARY) {
@@ -1847,7 +1851,6 @@ static void draw_catacombs_warnings(Renderer *r, const GameState *g, const Viewp
             }
             for (int i = 0; i < g->enemy_count; i++) {
                 const Enemy *e = &g->enemies[i];
-                marked |= e->active && e->type == ENEMY_GRAVE_MARSHAL && catacombs_sweep_marks(&g->map, e, x, y);
                 if (!e->active && e->revive_timer > 0 && e->x == x && e->y == y) {
                     int px = viewport_to_screen_x(v, x) * TILE_SIZE;
                     int py = viewport_to_screen_y(v, y) * TILE_SIZE;
@@ -2363,6 +2366,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     } else {
                         draw_return_exit(r, sx, sy);
                     }
+                    break;
+                case TILE_MARSHAL_NICHE:
+                case TILE_MARSHAL_NICHE_SPENT:
+                case TILE_MARSHAL_RELIQUARY:
+                    draw_catacombs_tile(r, &g->map, sx, sy, x, y, TILE_CATACOMBS_FLOOR);
+                    draw_grave_marshal_tile(r, sx, sy, g->map.tiles[y][x]);
                     break;
                 case TILE_MINOTAUR_PILLAR:
                 case TILE_MINOTAUR_CRACKED:
@@ -2918,6 +2927,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_drowned_queen_warnings(r, g, v);
     draw_swamp_demon_warnings(r, g, v);
     draw_minotaur_warnings(r, g, v);
+    draw_grave_marshal_warnings(r, g, v);
 
     // Draw enemies
     if (g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
@@ -3667,6 +3677,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_drowned_queen_status(r, g, v);
     draw_swamp_demon_status(r, g, v);
     draw_minotaur_status(r, g, v);
+    draw_grave_marshal_status(r, g, v);
 
     // Draw info panel
     info_panel_draw(r, g);

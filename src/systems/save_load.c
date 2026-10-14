@@ -7,6 +7,7 @@
 #include "../game/drowned_queen.h"
 #include "../game/swamp_demon.h"
 #include "../game/minotaur.h"
+#include "../game/grave_marshal.h"
 #include "../game/jail.h"
 #include "../game/town_life.h"
 #include "cJSON.h"
@@ -712,7 +713,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 129);
+    cJSON_AddNumberToObject(root, "save_version", 130);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -809,6 +810,7 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "lich_reward_state", g->lich_reward_state);
     cJSON_AddNumberToObject(root, "necromancer_reward_state", g->necromancer_reward_state);
     cJSON_AddNumberToObject(root, "goblin_king_reward_state", g->goblin_king_reward_state);
+    cJSON_AddNumberToObject(root, "grave_marshal_reward_state", g->grave_marshal_reward_state);
     cJSON_AddNumberToObject(root, "minotaur_reward_state", g->minotaur_reward_state);
     cJSON_AddNumberToObject(root, "swamp_demon_reward_state", g->swamp_demon_reward_state);
     cJSON_AddNumberToObject(root, "drowned_queen_reward_state", g->drowned_queen_reward_state);
@@ -2346,6 +2348,12 @@ int load_game(GameState *g, int slot) {
     cJSON *king_reward = cJSON_GetObjectItem(root, "goblin_king_reward_state");
     g->goblin_king_reward_state = king_reward ? king_reward->valueint : 0;
     if (g->goblin_king_reward_state < 0 || g->goblin_king_reward_state > 2) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    cJSON *marshal_reward = cJSON_GetObjectItem(root, "grave_marshal_reward_state");
+    g->grave_marshal_reward_state = marshal_reward ? marshal_reward->valueint : 0;
+    if (g->grave_marshal_reward_state < 0 || g->grave_marshal_reward_state > 2) {
         cJSON_Delete(root);
         return 0;
     }
@@ -4244,6 +4252,9 @@ int load_game(GameState *g, int slot) {
     }
     if (save_version < 129) {
         minotaur_migrate(g);
+    }
+    if (save_version < 130) {
+        grave_marshal_migrate(g);
     }
     game_migrate_boss_shortcuts(g);
     game_refresh_quest_encounters(g);

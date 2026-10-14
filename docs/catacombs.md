@@ -23,7 +23,8 @@ explored maps, enemy health, deaths, resurrection allowances, extinguished
 braziers, and triggered traps. Return to Town takes the player to Rosemoor and
 opens a portal beside its east Crown Road gate. That portal returns to the
 recorded catacomb floor and position. Portal wards dissipate pending spike or
-polearm warnings that would strike the landing position immediately.
+Marshal signature warnings that threaten the landing position. Non-damaging
+honor-guard calls retain their fixed targets and countdown.
 
 ## Ossuary braziers and resurrection
 
@@ -90,21 +91,60 @@ Catacomb victory does not increase the four original regions' order tier.
 
 ## Grave Marshal and reward
 
-The Grave Marshal occupies floor 5's royal tomb. It approaches the player,
-marks a three-tile polearm sweep, strikes those fixed tiles on its next turn,
-then spends one turn recovering. Moving after the warning avoids the strike;
-freezing the boss pauses its attack sequence.
+The Grave Marshal retains **280 base HP, 26 attack, 8 defense and 750 experience**,
+with existing regional and player-level scaling. He stays in the royal tomb.
+Entering it or damaging him from a nearby ranged approach starts the encounter;
+retreat beyond 12 tiles pauses the exact warning without healing him.
 
-Two accessible braziers reduce incoming damage by 50%. With one extinguished,
-the reduction is 25%; with both extinguished, the protection disappears. The
-boss always takes at least one point from a damaging hit. The protection
-applies consistently to melee, cleave, bows, Magic Arrow, Frost Bolt, and
-Fireball. Every class can extinguish the braziers.
+- **Honored Commander, above half health:** retain ordinary approach movement
+  and a fixed three-tile polearm front, warned for one complete player action.
+- **Funeral March, at/below half health:** announce one two-action honor-guard
+  call, then alternate a two-action cross sweep and a two-action funeral channel.
+  The cross has radius two; the channel has radius three. Their centers lock
+  when declared. Two ordinary cardinal moves leave a cross from its center.
+  Walls and tomb objects clip the arms. No lingering damage patches are added.
+- A phase change never widens an already queued attack. Every signature leaves
+  one full recovery action with no extra adjacent Marshal retaliation. Freeze
+  pauses the queued warning and recovery; ordinary burial traps retain their
+  existing independent clock behavior.
+- Numbered cyan outlines and slash/cross symbols show the exact damaging tiles.
+  H2/H1 mark fixed honor-guard arrival tiles; the call itself deals no damage.
+  The panel shows phase, attack, countdown, remaining recovery and lit braziers.
 
-Victory opens the final return passage, completes the boss journal entry, and
-drops **Gravekeeper's Mantle**: rare armor for all classes, granting **+6
-defense and +20 maximum health**. An unclaimed mantle is restored on revisiting
-the final floor; collecting it ends that restoration.
+Two accessible braziers retain **50%/25%/0% damage reduction**. Every damaging
+hit still deals at least one point. Protection applies consistently to melee,
+cleave, bows, Magic Arrow, Frost Bolt and Fireball. All classes can extinguish
+flames without gear or consumables. Extinguishing a royal-tomb brazier while a
+**funeral channel** is preparing cancels that channel and grants **two complete
+counterattack actions**. It does not cancel a polearm/cross sweep or an honor
+call, stop existing guards, heal the player or relight a spent flame.
+
+Two tomb niches release at most **two Royal Honor Guards** after a full warning.
+They use the existing Bone Sentinel stats and art, start acting on the following
+action, and grant no experience, score, coins, loot or resurrection allowance.
+Occupied arrival positions skip their guard instead of postponing an unannounced
+spawn. A full enemy list consumes the finite call without replacing old corpses
+or actors. The wave is never repeated on revisits or save/load.
+
+Victory opens the final return passage even while guards or regular enemies
+remain, completes the boss journal entry and guarantees **Gravekeeper's Mantle**:
+rare all-class armor with **+6 defense and +20 maximum health**. Its stats and
+art are unchanged. An unclaimed mantle still restores as a floor item on return
+when space permits. Full loot capacity reserves it in a royal reliquary without
+discarding other items. Interact on or beside that cache with contextual **A**,
+or press **P** on it; full inventory leaves it available. First claim is permanent,
+so selling or deliberately dropping it cannot create a replacement.
+
+Save version **130** adds `grave_marshal_reward_state` (not earned, unclaimed,
+claimed), preserving the old `catacombs_mantle_unclaimed` behavior. Existing
+enemy fields save phase, attack, countdown, finite-wave use and both niche
+positions in active/cached encounters. Appended tile IDs preserve niches and
+reliquaries, including under loot. Older living fights migrate in place with
+visible new warnings, preserving health, deaths, cold braziers, exploration,
+portals, traps, gear and memorial/ledger progress. Known old unclaimed flags
+remain recoverable; previous victories stay completed without fabricating gear.
+
+See the [renderer captures and play-testing guide](art-sources/grave-marshal-encounter/README.md).
 
 Save format **83** stores all catacomb progression, pending attacks, revival
 state, trap mechanisms, and the unclaimed reward. Older saves receive a fresh

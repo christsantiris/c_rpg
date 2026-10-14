@@ -415,7 +415,9 @@ reassemble once while their ossuary brazier burns; stand beside a brazier and
 press **A** to extinguish it. Bone Sentinels, Grave Archers, tougher Crypt Bats
 and Wraiths, and reviving Bone Cantors populate the chambers. Burial plates
 mark spike lines a turn before striking. The Grave Marshal guards floor 5,
-telegraphing polearm sweeps and drawing protection from two braziers. Victory
+with two phases, fixed polearm/cross warnings, an interruptible funeral channel,
+and one honor-guard wave. Two braziers retain their protection and can interrupt
+a channel for two counterattack actions. Victory
 opens a direct return to the castle and rewards Gravekeeper's Mantle, armor
 for every class with +6 defense and +20 maximum health. Return to Town opens
 a portal in Rosemoor. Save migration preserves existing progress and adds
