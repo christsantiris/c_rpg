@@ -10,6 +10,7 @@
 #include "thorn_regent_renderer.h"
 #include "cinder_lord_renderer.h"
 #include "prism_sovereign_renderer.h"
+#include "sun_guardian_renderer.h"
 #include "npc_renderer.h"
 #include "info_panel.h"
 #include "message_bar.h"
@@ -1418,6 +1419,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
     } else if (underlay == TILE_TRAP_HIDDEN &&
         g->location == LOCATION_COAST) {
         draw_coast_trap_underlay(r, g, map_x, map_y, screen_x, screen_y);
+    } else if (underlay >= TILE_GUARDIAN_MOON_SANCTUARY && underlay <= TILE_GUARDIAN_RELIQUARY) {
+        draw_sun_guardian_tile(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay >= TILE_PRISM_LEFT && underlay <= TILE_PRISM_PAVED_RELIQUARY) {
         draw_prism_sovereign_tile(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay >= TILE_CINDER_HOT_2 && underlay <= TILE_CINDER_RELIQUARY) {
@@ -2581,6 +2584,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_island_path(r, sx, sy, x, y); break;
                 case TILE_TEMPLE_FLOOR:
                     draw_temple_floor(r, sx, sy, x, y); break;
+                case TILE_GUARDIAN_MOON_SANCTUARY:
+                case TILE_GUARDIAN_SUN_SANCTUARY:
+                case TILE_GUARDIAN_RELIQUARY:
+                    draw_sun_guardian_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
                 case TILE_TEMPLE_WALL:
                     draw_temple_wall(r, sx, sy, x, y); break;
                 case TILE_TEMPLE_ENTRANCE:
@@ -2954,6 +2962,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_thorn_regent_warnings(r, g, v);
     draw_cinder_lord_warnings(r, g, v);
     draw_prism_sovereign_warnings(r, g, v);
+    draw_sun_guardian_warnings(r, g, v);
 
     // Draw enemies
     if (g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
@@ -2979,7 +2988,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             if (g->location == LOCATION_CASTLE_INTERIOR) {
                 castle_draw_enemy(r, sx, sy, e);
             } else if (e->type == ENEMY_FALLEN_SUN_GUARDIAN &&
-                e->hp <= e->max_hp / 2) {
+                (e->attack_phase > 0 || e->hp <= e->max_hp / 2)) {
                 draw_fallen_sun_guardian_broken(r, sx, sy);
             } else {
                 draw_enemy(r, sx, sy, e->type);
@@ -3676,7 +3685,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     draw_low_health_warning(r, g);
 
-    if (g->location == LOCATION_TEMPLE && temple_remaining > 0) {
+    if (g->location == LOCATION_TEMPLE && temple_remaining > 0 && !sun_guardian_compact_status(r, g, v)) {
         int notice_x = r->screen_w - INFO_PANEL_W - 312;
         if (notice_x < 8) {
             notice_x = 8;
@@ -3707,6 +3716,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_thorn_regent_status(r, g, v);
     draw_cinder_lord_status(r, g, v);
     draw_prism_sovereign_status(r, g, v);
+    draw_sun_guardian_status(r, g, v);
 
     // Draw info panel
     info_panel_draw(r, g);

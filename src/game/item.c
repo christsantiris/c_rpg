@@ -474,6 +474,8 @@ void item_apply_legacy_armor_metadata(Item *item) {
         definition = item_make_enchanter_robes();
     } else if (strcmp(item->name, "Prismweave Robes") == 0) {
         definition = item_make_prismweave_robes();
+    } else if (strcmp(item->name, "Sunwarden Mantle") == 0) {
+        definition = item_make_sunwarden_mantle();
     } else if (strcmp(item->name, "Archmage Robes") == 0) {
         definition = item_make_archmage_robes();
     } else if (strcmp(item->name, "Necromancer's Cloak") == 0) {
@@ -697,6 +699,19 @@ Item item_make_prismweave_robes(void) {
     item.spell_cost_reduction_percent = 12;
     item.value = 700;
     set_armor_metadata(&item, ARMOR_FAMILY_ROBE, ITEM_RARITY_RARE, ITEM_CLASS_MAGE, ITEM_VISUAL_PRISMWEAVE_ROBES);
+    return item;
+}
+
+Item item_make_sunwarden_mantle(void) {
+    Item item = {0};
+    item.active = 1;
+    item.type = ITEM_ARMOR;
+    strncpy(item.name, "Sunwarden Mantle", sizeof(item.name) - 1);
+    item.defense_bonus = 5;
+    item.max_hp_bonus = 15;
+    item.max_mp_bonus = 15;
+    item.value = 950;
+    set_armor_metadata(&item, ARMOR_FAMILY_LIGHT, ITEM_RARITY_RARE, ITEM_CLASS_ALL, ITEM_VISUAL_SUNWARDEN_MANTLE);
     return item;
 }
 

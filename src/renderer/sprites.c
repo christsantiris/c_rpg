@@ -1470,7 +1470,9 @@ static void player_body_palette(SDL_Color *palette, PlayerClass player_class, co
         }
     } else if (armor && armor->armor_family == ARMOR_FAMILY_LIGHT) {
         suit = (SDL_Color){102, 66, 39, 255};
-        if (armor->visual_id == ITEM_VISUAL_SHADOW_ARMOR) {
+        if (armor->visual_id == ITEM_VISUAL_SUNWARDEN_MANTLE) {
+            suit = (SDL_Color){172, 119, 55, 255};
+        } else if (armor->visual_id == ITEM_VISUAL_SHADOW_ARMOR) {
             suit = (SDL_Color){67, 39, 88, 255};
         } else if (armor->visual_id == ITEM_VISUAL_BRIARWEAVE_CLOAK) {
             suit = (SDL_Color){61, 129, 112, 255};

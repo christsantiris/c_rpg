@@ -248,6 +248,7 @@ typedef struct {
     int kraken_bow_unclaimed;
     int sandstorm_staff_unclaimed;
     int prism_sovereign_reward_pending; // Bits: 1 Prismweave Robes, 2 Strength Potion.
+    int sun_guardian_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
     int cinder_lord_reward_pending; // Bits: 1 Embercleaver, 2 Strength Potion.
     int thorn_regent_reward_pending; // Bits: 1 cloak, 2 Strength Potion; zero after both are claimed.
     int desert_pharaoh_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.

@@ -96,7 +96,8 @@ typedef enum {
     ITEM_VISUAL_LABYRINTH_AEGIS,
     ITEM_VISUAL_BRIARWEAVE_CLOAK,
     ITEM_VISUAL_EMBERCLEAVER,
-    ITEM_VISUAL_PRISMWEAVE_ROBES
+    ITEM_VISUAL_PRISMWEAVE_ROBES,
+    ITEM_VISUAL_SUNWARDEN_MANTLE
 } ItemVisualId;
 
 typedef struct {
@@ -190,6 +191,7 @@ Item item_make_runed_robes(void);
 Item item_make_enchanter_robes(void);
 Item item_make_archmage_robes(void);
 Item item_make_prismweave_robes(void);
+Item item_make_sunwarden_mantle(void);
 Item item_make_necromancer_cloak(void);
 Item item_make_gravekeeper_mantle(void);
 Item item_make_briarweave_cloak(void);

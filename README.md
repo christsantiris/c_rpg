@@ -522,9 +522,19 @@ Sun closes lunar doors and activates orange floor traps. Moon opens those doors
 and permanently awakens dormant Moonbound Sentinels; switching back does not
 petrify them. Walls and closed doors block all ranged attacks.
 
-The Fallen Sun Guardian retaliates when attacked at range. Its armor breaks
-below half health, increasing the power of its sunburst. Defeat it, recover the
-buried treasure, and return to Nahla for the quest reward. Return to Town works
+The Fallen Sun Guardian has three phases: **Sunbound Armor**, **Cracked Core**
+at half health and **Eclipse** at quarter health. Fixed solar lances escalate
+to two-action sunburst rings, solar lanes and lunar bursts. Every attack is
+marked before it fires, including against adjacent or ranged attackers.
+Sun alignment strengthens its armor; Moon exposes it. Use the summit altars
+to choose a guard against the announced attack, or walk onto a matching
+sanctuary: **M** protects against solar strikes and **S** against lunar bursts.
+Victory grants the all-class **Sunwarden Mantle** (+5 defense, +15 HP, +15 MP);
+a full pack leaves it safely reserved in a reliquary. Clear the remaining
+Sun and Moon enemies, recover the buried treasure, and return to **Nahla on
+the Ruined Isle** for her separate quest reward. See the
+[Guardian play-test guide](docs/art-sources/sun-guardian-encounter/README.md).
+Return to Town works
 inside the temple and leaves a portal near the harbor that restores the exact
 temple tier, position, and encounter state. Descend from the first tier through
 the southern entrance to return to the island surface.
