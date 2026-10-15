@@ -33,11 +33,69 @@ of dark square floor tiles. These visuals apply to existing saved maps.
 | 5 | Dragon's lair | Full roster and the Red Dragon |
 
 Drakes close for melee, Giants endure heavy punishment, and Fire Elementals
-cast along clear rows or columns. The Red Dragon breathes fire down a clear
-straight line after a warning turn. As in other regions, stages 1–4 can be
+cast along clear rows or columns. As in other regions, stages 1–4 can be
 exited without defeating every enemy. On stage 5, only the Red Dragon blocks
 the summit exit. It drops gold and the all-class Dragon Scale Mantle when
 defeated.
+
+## Red Dragon encounter
+
+The dragon stays within its generated lair and keeps its existing health,
+attack, defense, XP and boss score. It wakes on lair entry or after being
+damaged from range. Leaving its engagement range pauses its queued signature;
+it cannot pursue into other chambers. Ranged attackers can engage through
+clear terrain and receive the same warnings as melee attackers.
+
+| Phase | Health | Attacks |
+| --- | --- | --- |
+| Hoard Defender | Above two-thirds | Two-action fire breath; one-action claw/tail sweeps when nearby |
+| Scorched Wings | Two-thirds or below | Alternating breath and two-action wingbeat landings |
+| Last Inferno | One-third or below | Two linked breaths in different directions, each with its own two-action warning |
+
+Fire breath starts as a narrow cardinal or diagonal cone and widens to three tiles across,
+up to twelve tiles from the mouth. Numbered outlines mark its exact cells
+before it fires. The flame animation follows the declared route. Walls and
+basalt clip the cone when it is declared; removing cover can never extend that
+saved footprint. Close claw/tail sweeps cover the eight neighboring cells and
+allow one ordinary move to retreat. Each normal signature leaves one full
+counterattack action before another declaration.
+
+Wingbeat marks a five-cell landing cross centered on the player's current
+position. Walk twice to escape before impact. The dragon lands on the vacated
+center only if no player or living enemy occupies it; it remains vulnerable
+throughout the warning. Eligible ground within the cross burns for **three
+future actions**, marked **H3 → H2 → H1**. Fire damage begins on the following
+action, then expires, restoring the exact snow, ash or hoard terrain, including
+under stacked loot. Existing goblets, entrances, exits, cover and reward caches
+are never replaced by burning terrain. Landings stay inside the lair.
+
+Last Inferno's second cone turns a quarter-turn from the first. It is declared
+only after the first resolves and allows two new escape actions. Neither
+warning follows the player. After the second breath, the dragon allows **two
+full counterattack actions**. Health thresholds wait for a new sequence;
+healing cannot reverse a latched phase. Freeze pauses the queued attack and
+any future landing fire, while existing fire continues to expire.
+
+Two stable basalt columns (**S**) remain as permanent cover. Two weak columns
+(**W**) crack on the first warned breath impact, becoming **!**. A later warned
+breath breaks them into walkable rubble. **C1/C2** identifies a column threatened
+by the next breath. Cracking or breaking never spreads the current cone into
+unmarked cells. Column placement requires an open ring of surrounding floor,
+preserving existing walking routes and the goblet's preferred location.
+Ordinary movement is sufficient for every class. An attack with no safe walking
+escape through current cover and fire is withheld instead of forcing damage.
+
+The original **Dragon Scale Mantle** still drops on victory: rare all-class
+light armor with **+4 defense, +20 maximum HP and value 1,400**. The existing
+gold reward is unchanged. A full loot floor reserves the mantle in a hoard
+reliquary without deleting ordinary drops; unclaimed equipment left behind
+also becomes recoverable on return. Press **A** beside the cache or **P** on it,
+including beneath loot. A full inventory cannot consume it. Claiming restores
+the cache's original snow, ash or hoard ground. Once claimed, selling or
+dropping a mantle cannot generate a replacement. The summit exit still opens
+on the dragon's defeat even if ordinary enemies survive.
+
+See the [native renderer gallery and play-test guide](art-sources/red-dragon-encounter/README.md).
 
 ## The Dragon's Hoard
 
@@ -55,3 +113,15 @@ through its Dragonspine gate. Save version **102** moves Ilya from saved
 Ridgeshire maps into saved Tavern interiors while preserving the goblet,
 quest completion, boss victories, equipment, and money. Overlapping players
 and dropped items move one tile south of her new Tavern position.
+
+Save version **136** adds one initialized, serialized mantle-recovery state
+and two compact enemy bitfields for the exact warned cells. Existing enemy
+fields store phase, signature, facing, footprint origin, landing target,
+sequence and recovery. Enemy serialization covers both the active encounter
+and every level cache; map IDs preserve column damage, fire duration and
+original terrain. Old saves reset obsolete attack timing and add cover while
+preserving health, freeze, enemy deaths, exploration, loot, goblet progress and
+portal destinations. Legacy dragons that pursued beyond their lair return to
+it without healing. Existing unclaimed mantle drops remain recoverable;
+previous victories without such a drop receive no replacement equipment.
+Town portals ward a threatening signature and clear only their landing's fire.

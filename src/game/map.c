@@ -475,6 +475,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_FROST_LAKE_HOLE &&
         m->tiles[y][x] != TILE_FROST_BROKEN_ICE &&
         m->tiles[y][x] != TILE_DRAGON_WALL &&
+        !(m->tiles[y][x] >= TILE_DRAGON_BASALT && m->tiles[y][x] <= TILE_DRAGON_CRACKED_COLUMN) &&
         m->tiles[y][x] != TILE_COAST_DEEP_WATER &&
         m->tiles[y][x] != TILE_COAST_CHANNEL_WATER &&
         m->tiles[y][x] != TILE_TAVERN &&

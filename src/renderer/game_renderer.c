@@ -11,6 +11,7 @@
 #include "cinder_lord_renderer.h"
 #include "prism_sovereign_renderer.h"
 #include "sun_guardian_renderer.h"
+#include "red_dragon_renderer.h"
 #include "npc_renderer.h"
 #include "info_panel.h"
 #include "message_bar.h"
@@ -629,6 +630,18 @@ void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, con
     float progress = impact ? 1.0f : (float)elapsed / ENEMY_PROJECTILE_TRAVEL_MS;
     for (int i = 0; i < shots->count; i++) {
         const EnemyProjectile *shot = &shots->shots[i];
+        Viewport shot_view = *v;
+        if (shot->type == ENEMY_RED_DRAGON) {
+            // Dragonspine terrain uses a regional camera, including near the summit's east edge.
+            int max_x = SWAMP_MAP_W > v->tiles_x ? SWAMP_MAP_W - v->tiles_x : 0;
+            int max_y = SWAMP_MAP_H > v->tiles_y ? SWAMP_MAP_H - v->tiles_y : 0;
+            if (shot_view.cam_x > max_x) {
+                shot_view.cam_x = max_x;
+            }
+            if (shot_view.cam_y > max_y) {
+                shot_view.cam_y = max_y;
+            }
+        }
         int dx = shot->target_x - shot->start_x;
         int dy = shot->target_y - shot->start_y;
         int length = abs(dx) > abs(dy) ? abs(dx) : abs(dy);
@@ -637,8 +650,8 @@ void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, con
         }
         float vx = (float)dx / length;
         float vy = (float)dy / length;
-        int cx = (int)((shot->start_x - v->cam_x + dx * progress) * TILE_SIZE) + TILE_SIZE / 2;
-        int cy = (int)((shot->start_y - v->cam_y + dy * progress) * TILE_SIZE) + TILE_SIZE / 2;
+        int cx = (int)((shot->start_x - shot_view.cam_x + dx * progress) * TILE_SIZE) + TILE_SIZE / 2;
+        int cy = (int)((shot->start_y - shot_view.cam_y + dy * progress) * TILE_SIZE) + TILE_SIZE / 2;
         SDL_Color color = {184, 100, 255, 255};
         if (shot->type == ENEMY_FOREST_NECROMANCER) {
             color = (SDL_Color){100, 240, 130, 255};
@@ -648,6 +661,8 @@ void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, con
             color = (SDL_Color){240, 130, 220, 255};
         } else if (shot->type == ENEMY_GOBLIN_BOMBER) {
             color = (SDL_Color){255, 160, 55, 255};
+        } else if (shot->type == ENEMY_RED_DRAGON) {
+            color = (SDL_Color){255, 126, 49, 255};
         } else if (shot->type == ENEMY_SUN_PRIEST ||
             shot->type == ENEMY_DESERT_PHARAOH ||
             shot->type == ENEMY_FALLEN_SUN_GUARDIAN) {
@@ -672,6 +687,24 @@ void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, con
             SDL_RenderDrawLine(r->sdl, cx, cy - radius, cx, cy + radius);
             SDL_Rect burst = {cx - radius / 2, cy - radius / 2, radius, radius};
             SDL_RenderDrawRect(r->sdl, &burst);
+        } else if (shot->type == ENEMY_RED_DRAGON) {
+            int start_x = viewport_to_screen_x(&shot_view, shot->start_x) * TILE_SIZE + TILE_SIZE / 2;
+            int start_y = viewport_to_screen_y(&shot_view, shot->start_y) * TILE_SIZE + TILE_SIZE / 2;
+            int pixels = (abs(cx - start_x) > abs(cy - start_y) ? abs(cx - start_x) : abs(cy - start_y));
+            for (int step = 6; step <= pixels; step += 5) {
+                float t = (float)step / (pixels > 0 ? pixels : 1);
+                int fx = start_x + (int)((cx - start_x) * t);
+                int fy = start_y + (int)((cy - start_y) * t);
+                int flicker = ((int)elapsed / 35 + step / 5) % 3;
+                int radius = 3 + flicker;
+                SDL_Rect flame = {fx - radius, fy - radius, radius * 2 + 1, radius * 2 + 1};
+                SDL_SetRenderDrawColor(r->sdl, 241, 73 + flicker * 24, 25, 220);
+                SDL_RenderFillRect(r->sdl, &flame);
+                SDL_Rect core = {fx - 2, fy - 2, 5, 5};
+                SDL_SetRenderDrawColor(r->sdl, 255, 207 + flicker * 12, 88, 255);
+                SDL_RenderFillRect(r->sdl, &core);
+                SDL_RenderDrawLine(r->sdl, fx, fy, fx - (int)(vy * (radius + 3)), fy + (int)(vx * (radius + 3)));
+            }
         } else if (shot->type == ENEMY_PRISM_SOVEREIGN) {
             int start_x = viewport_to_screen_x(v, shot->start_x) * TILE_SIZE + TILE_SIZE / 2;
             int start_y = viewport_to_screen_y(v, shot->start_y) * TILE_SIZE + TILE_SIZE / 2;
@@ -1419,6 +1452,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
     } else if (underlay == TILE_TRAP_HIDDEN &&
         g->location == LOCATION_COAST) {
         draw_coast_trap_underlay(r, g, map_x, map_y, screen_x, screen_y);
+    } else if (underlay >= TILE_DRAGON_BASALT && underlay <= TILE_DRAGON_RELIQUARY_HOARD) {
+        draw_red_dragon_tile(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay >= TILE_GUARDIAN_MOON_SANCTUARY && underlay <= TILE_GUARDIAN_RELIQUARY) {
         draw_sun_guardian_tile(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay >= TILE_PRISM_LEFT && underlay <= TILE_PRISM_PAVED_RELIQUARY) {
@@ -2297,6 +2332,24 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_dragonspine_floor(r, sx, sy, x, y, 1); break;
                 case TILE_DRAGON_HOARD:
                     draw_dragonspine_floor(r, sx, sy, x, y, 2); break;
+                case TILE_DRAGON_BASALT:
+                case TILE_DRAGON_WEAK_COLUMN:
+                case TILE_DRAGON_CRACKED_COLUMN:
+                case TILE_DRAGON_COLUMN_RUBBLE:
+                case TILE_DRAGON_HOT_FLOOR_1:
+                case TILE_DRAGON_HOT_FLOOR_2:
+                case TILE_DRAGON_HOT_FLOOR_3:
+                case TILE_DRAGON_HOT_ASH_1:
+                case TILE_DRAGON_HOT_ASH_2:
+                case TILE_DRAGON_HOT_ASH_3:
+                case TILE_DRAGON_HOT_HOARD_1:
+                case TILE_DRAGON_HOT_HOARD_2:
+                case TILE_DRAGON_HOT_HOARD_3:
+                case TILE_DRAGON_RELIQUARY_FLOOR:
+                case TILE_DRAGON_RELIQUARY_ASH:
+                case TILE_DRAGON_RELIQUARY_HOARD:
+                    draw_red_dragon_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
                 case TILE_DRAGON_TREASURE:
                     draw_dragon_goblet(r, sx, sy, x, y); break;
                 case TILE_DESERT_LAMP:
@@ -2963,6 +3016,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_cinder_lord_warnings(r, g, v);
     draw_prism_sovereign_warnings(r, g, v);
     draw_sun_guardian_warnings(r, g, v);
+    draw_red_dragon_warnings(r, g, v);
 
     // Draw enemies
     if (g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
@@ -3717,6 +3771,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_cinder_lord_status(r, g, v);
     draw_prism_sovereign_status(r, g, v);
     draw_sun_guardian_status(r, g, v);
+    draw_red_dragon_status(r, g, v);
 
     // Draw info panel
     info_panel_draw(r, g);

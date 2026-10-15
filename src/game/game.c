@@ -13,6 +13,7 @@
 #include "cinder_lord.h"
 #include "prism_sovereign.h"
 #include "sun_guardian.h"
+#include "red_dragon.h"
 #include "jail.h"
 #include "town_life.h"
 
@@ -86,6 +87,7 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
     e->boss_wave_used = 0;
     e->boss_aux_x = -1;
     e->boss_aux_y = -1;
+    memset(e->dragon_warning, 0, sizeof(e->dragon_warning));
     switch (type) {
         case ENEMY_OATHBOUND_SOLDIER:
         case ENEMY_IRON_WARDEN:
@@ -1161,6 +1163,9 @@ void enemies_spawn(GameState *g) {
     }
 
     game_add_lich_minions(g);
+    if (g->location == LOCATION_DRAGONSPINE && g->level == DRAGONSPINE_DEPTH) {
+        red_dragon_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
+    }
     if (g->location == LOCATION_GLASSDEEP && g->level == GLASSDEEP_DEPTH) {
         prism_sovereign_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
     }
@@ -1556,6 +1561,7 @@ void game_init(GameState *g) {
     g->cinder_lord_reward_pending = 0;
     g->prism_sovereign_reward_pending = 0;
     g->sun_guardian_reward_state = 0;
+    g->red_dragon_reward_state = 0;
     g->elowen_quest_state = 0;
     g->elowen_seals_restored = 0;
     g->dain_quest_state = 0;
@@ -3112,6 +3118,7 @@ void game_refresh_quest_encounters(GameState *g) {
     cinder_lord_restore_reward(g);
     prism_sovereign_restore_reward(g);
     sun_guardian_restore_reward(g);
+    red_dragon_restore_reward(g);
     catacombs_restore_reward(g);
     int seal_placed = place_elowen_seal(g);
     place_desert_lamp(g);
@@ -3235,6 +3242,7 @@ static void generate_active_level(GameState *g) {
     cinder_lord_restore_reward(g);
     prism_sovereign_restore_reward(g);
     catacombs_restore_reward(g);
+    red_dragon_restore_reward(g);
     place_emberforge_encounter(g);
     // A regenerated stage needs new guards for any unfinished objective.
     g->frostfell_quest_encounters &= ~frostfell_quest_stage_bit(g);
@@ -5669,6 +5677,7 @@ void game_use_town_portal(GameState *g) {
     cinder_lord_cancel_landing(g, landing_x, landing_y);
     prism_sovereign_cancel_landing(g, landing_x, landing_y);
     sun_guardian_cancel_landing(g, landing_x, landing_y);
+    red_dragon_cancel_landing(g, landing_x, landing_y);
     if (g->location == LOCATION_CATACOMBS) {
         // Portal wards prevent a saved warning from striking immediately on arrival.
         for (int i = 0; i < g->map.burial_trap_count; i++) {

@@ -4,9 +4,9 @@ Status: **Approved. Round 1 begins with the Lich King; pause after each boss for
 
 The Lich King, Forest Necromancer, Mountain Goblin King, Drowned Queen,
 Swamp Demon, Minotaur, Grave Marshal, Desert Pharaoh, Thorn Regent, Cinder
-Lord, Prism Sovereign and Fallen Sun Guardian implementations are complete.
-The other 4 bosses remain pending. Pause here for review and a manual commit
-before the Red Dragon.
+Lord, Prism Sovereign, Fallen Sun Guardian and Red Dragon implementations are
+complete. The other 3 bosses remain pending. Pause here for review and a manual
+commit before the Castellan.
 
 The boss journal defines 17 current encounters. This proposal covers the 16
 other than the recently updated Polar Kraken. The Kraken's fixed warnings,
