@@ -108,6 +108,10 @@ typedef enum {
     ENEMY_LORD_VEYR
 } EnemyType;
 
+#define DRAGON_WARNING_RADIUS 12
+#define DRAGON_WARNING_SIZE 2
+#define DRAGON_WARNING_WORD_BITS 21
+
 typedef struct {
     int       x, y;
     int       active;
@@ -129,6 +133,7 @@ typedef struct {
     int boss_attack;
     int boss_wave_used;
     int boss_aux_x, boss_aux_y;
+    unsigned int dragon_warning[DRAGON_WARNING_SIZE]; // 42 fixed cells in the dragon's facing coordinates.
 } Enemy;
 
 #endif

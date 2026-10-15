@@ -14,6 +14,7 @@
 #include "cinder_lord.h"
 #include "prism_sovereign.h"
 #include "sun_guardian.h"
+#include "red_dragon.h"
 #include "jail.h"
 #include "town_life.h"
 #include <stdlib.h>
@@ -109,6 +110,10 @@ static void place_gold_drop(GameState *g, int x, int y, int gold) {
 }
 
 static void finish_floor_pickup(GameState *g, FloorItem *picked) {
+    if (strcmp(picked->item.name, "Dragon Scale Mantle") == 0 && g->red_dragon_reward_state == 1) {
+        g->red_dragon_reward_state = 2;
+        red_dragon_restore_reward(g);
+    }
     minotaur_record_pickup(g, &picked->item);
     if (strcmp(picked->item.name, "Cryptblade") == 0 && g->lich_reward_state == 1) {
         g->lich_reward_state = 2;
@@ -455,6 +460,16 @@ static void drop_loot(GameState *g, Enemy *enemy) {
     // Each boss leaves a fixed regional reward instead of rolling ordinary
     // equipment, so capstone weapons remain Blacksmith progression.
     if (is_boss) {
+        if (type == ENEMY_RED_DRAGON) {
+            if (g->floor_item_count < MAX_FLOOR_ITEMS) {
+                place_gold_drop(g, x, y, gold);
+            } else {
+                award_gold(g, gold);
+            }
+            red_dragon_award_reward(g, x, y);
+            game_update_level_progress(g);
+            return;
+        }
         if (type == ENEMY_PRISM_SOVEREIGN) {
             g->prism_sovereign_reward_pending = PRISM_ROBES_PENDING | PRISM_POTION_PENDING;
             if (g->floor_item_count < MAX_FLOOR_ITEMS) {
@@ -890,6 +905,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (red_dragon_has_interaction(g)) {
+        return 1;
+    }
     if (sun_guardian_has_interaction(g)) {
         return 1;
     }
@@ -1254,6 +1272,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (red_dragon_interact(g, 0)) {
+            return;
+        }
         if (sun_guardian_interact(g, 0)) {
             return;
         }
@@ -1364,6 +1385,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_PICK_UP) {
+        if (red_dragon_interact(g, 1)) {
+            return;
+        }
         if (sun_guardian_interact(g, 1)) {
             return;
         }
@@ -3564,6 +3588,11 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             apply_enemy_damage(g, damage, FEEDBACK_NOW);
         }
     }
+    int dragon_fire = red_dragon_tick_floor(g);
+    if (dragon_fire > 0) {
+        int damage = dragon_fire - g->player.defense / 2;
+        apply_enemy_damage(g, damage > 2 ? damage : 2, FEEDBACK_NOW);
+    }
     int hot_damage = cinder_lord_tick_floor(g);
     if (hot_damage > 0) {
         int damage = hot_damage - g->player.defense / 2;
@@ -3631,6 +3660,13 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
 
+        if (e->type == ENEMY_RED_DRAGON) {
+            int damage = red_dragon_tick(g, e, shots);
+            if (damage > 0) {
+                apply_enemy_damage(g, damage, e->boss_attack == DRAGON_SWEEP || e->boss_attack == DRAGON_WINGBEAT ? FEEDBACK_NOW : FEEDBACK_AFTER_ENEMY_SHOT);
+            }
+            continue;
+        }
         if (e->type == ENEMY_FALLEN_SUN_GUARDIAN) {
             int damage = sun_guardian_tick(g, e, shots);
             if (damage > 0) {
@@ -3772,25 +3808,6 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         }
 
         e->move_timer++;
-
-        if (e->type == ENEMY_RED_DRAGON && path_distance > 1 &&
-            path_distance <= 8 && clear_orthogonal_path(g, i, e)) {
-            if (e->move_timer % 2 != 0) {
-                push_message(g, "The dragon draws a fiery breath!");
-            } else {
-                int dmg = e->attack - g->player.defense / 2;
-                if (dmg < 3) {
-                    dmg = 3;
-                }
-                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
-                if (dmg > 0) {
-                    char msg[MAX_MESSAGE_LEN];
-                    snprintf(msg, sizeof(msg), "Dragonfire: %d dmg", dmg);
-                    push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
-                }
-            }
-            continue;
-        }
 
         if ((e->type == ENEMY_FIRE_ELEMENTAL || e->type == ENEMY_DJINN ||
             e->type == ENEMY_FEY_TRICKSTER || e->type == ENEMY_LIVING_FLOWER ||

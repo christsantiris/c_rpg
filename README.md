@@ -97,6 +97,17 @@ one-time **Potion of Strength and 600 score**. The potion permanently adds
 1 base attack when consumed. Older saves preserve quest progress and update
 her location when loaded.
 
+The Red Dragon now has three phases: **Hoard Defender**, **Scorched Wings** at
+two-thirds health, and **Last Inferno** at one-third. Its main attack is an
+animated **fire-breath cone**, fixed two actions before firing. Close claw/tail
+sweeps, warned wingbeat landings, three-action burning patches and a separately
+warned two-breath finale create different openings. Shelter behind basalt:
+stable columns remain, while weak columns visibly crack before a later breath
+breaks them. The existing **Dragon Scale Mantle** (+4 defense, +20 HP, all
+classes) remains guaranteed and recoverable if left behind or the floor is
+full. Ilya's goblet quest stays separate. See the
+[Red Dragon play-test guide](docs/art-sources/red-dragon-encounter/README.md).
+
 Ridgeshire's workshop houses Garrick, who sharpens a selected sword, axe, or
 dagger for **50 gold**, permanently adding **+1 weapon attack**. Each individual
 weapon can be sharpened only once. Press **T** beside him inside the workshop,
