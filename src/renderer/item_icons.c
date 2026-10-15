@@ -57,6 +57,11 @@ static void icon_palette(SDL_Color *pal, const Item *item) {
             case ITEM_VISUAL_PLATE_ARMOR: cloth = (SDL_Color){169, 182, 192, 255}; break;
             case ITEM_VISUAL_MAGIC_PLATE: cloth = (SDL_Color){99, 177, 211, 255}; break;
             case ITEM_VISUAL_STUDDED_LEATHER: cloth = (SDL_Color){132, 89, 48, 255}; break;
+            case ITEM_VISUAL_PRISMWEAVE_ROBES:
+                cloth = (SDL_Color){91, 107, 173, 255};
+                trim = (SDL_Color){158, 223, 231, 255};
+                accent = (SDL_Color){206, 155, 237, 255};
+                break;
             case ITEM_VISUAL_EMBERCLEAVER:
                 metal = (SDL_Color){98, 100, 109, 255};
                 wood = (SDL_Color){88, 51, 34, 255};

@@ -16,23 +16,65 @@ sanctuary guarded by the Prism Sovereign.
 | Crystal Spider | 1 | Closes two tiles per turn without attacking on its second move |
 | Blind Stalker | 1 | Waits until an explorer comes within four tiles or damages it, then pursues |
 | Shard Golem | 3 | Slow, armored melee enemy |
-| Prism Sovereign | 5 | Holds its sanctuary; alternates marking a straight beam and firing along that fixed path |
+| Prism Sovereign | 5 | Holds its sanctuary; fixed beams escalate to reflected split beams below half health |
 
-The Sovereign marks an eight-tile cardinal beam with violet outlines. Step out
-of the marked row or column before its next turn: the beam keeps its original
-direction rather than following you. Walls, pools, and other enemies stop it.
-Its beam also works at melee range. Freezing the boss pauses its warning.
+### Prism Sovereign encounter
+
+**Focused Light** marks an eight-step cardinal beam with violet outlines and
+one action to escape. After firing, the Sovereign grants one full action for
+a counterattack. At half health, **Fractured Crown** begins on the next attack
+declaration: two opposing beams pass through the sanctuary's crystal faces,
+with two actions to escape. Crossing the threshold never changes an already
+announced attack. Adjacent players receive the same warning instead of an
+extra unannounced melee attack.
+
+Each branch travels at most eight steps in total, including its incoming and
+reflected legs, and can bounce only once. Every threatened cell, reflected
+segment and terminal cell appears when the warning begins. Walls, pools and
+living enemies stop beams. Removing a blocker cannot extend a declared route;
+new blockers can shorten it. Freezing the Sovereign preserves its warning,
+phase and remaining countdown until it thaws.
+
+Two walkable crystal faces provide the counter. Press **A** on or beside one
+between attacks to cycle **Left → Right → Return → Left**. Left and Right turn
+relative to the incoming beam. Return retraces it to the crown, exposing the
+Sovereign for **two full counterattack actions** without directly damaging it.
+Rotation costs an ordinary action and requires no class ability or item.
+Faces lock throughout warnings, including while the boss is frozen, so the
+announced geometry cannot change. Use recovery and preparation to set a Return
+face, then step off the incoming beam before it fires. Ordinary walking escapes
+remain available in both phases.
 
 Defeating the Sovereign opens stage 5's south exit, which returns to Stillbury
-without adding another town. It drops a Potion of Strength, granting one
-permanent base attack when consumed, and appears in the boss journal.
+without adding another town, and records the victory in the boss journal.
+Its prismatic reliquary reserves two guaranteed rewards independently:
+
+- **Prismweave Robes:** rare Mage armor granting **+3 defense, +35 maximum MP
+  and 12% spell-cost reduction**. This remains below Archmage Robes' +4 defense,
+  +60 MP and 20% reduction.
+- **Potion of Strength:** grants one permanent base attack when consumed.
+
+Press **A** beside the reliquary or **P** while standing on it, including when
+other loot covers it. A full floor or inventory cannot lose either reward.
+With one free slot, collect the robes first and leave the potion reserved.
+Once claimed, sold, consumed or dropped rewards never regenerate. Emptying the
+cache restores its original cavern floor or sanctuary paving. Native pools and
+Orin's quest resonators remain independent of these arena controls.
 
 All five stages maintain independent caches. Backtracking and later visits
 preserve explored terrain, enemy health, and boss progress. Return to Town
 opens a portal beside Stillbury's south gate and restores the original stage
-and position. Save format 82 stores the new region and any pending beam.
-Older saves gain fresh Glassdeep progression and the open south gate while
-retaining existing characters, quests, and regional progress.
+and position. Save format **134** adds the pending-reward mask; existing enemy
+fields and map serialization preserve phase, fixed endpoints, facing, freeze,
+recovery, stagger and crystal angles in active and cached sanctuaries. Older
+saves reset obsolete boss timing and add faces around a living Sovereign while
+preserving health, deaths, loot, exploration, portal landings and quest
+progress. Previous victories retain their original potion drops without
+creating new rewards or reviving the boss. Saves predating the region still
+gain fresh Glassdeep progression and the open south gate while retaining their
+characters and other regional progress.
+
+See the [native renderer gallery and play-test guide](art-sources/prism-sovereign-encounter/README.md).
 
 
 ## The Broken Resonance
