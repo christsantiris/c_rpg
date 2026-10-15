@@ -181,6 +181,19 @@ Item item_make_magic_battle_axe(void) {
     return it;
 }
 
+Item item_make_embercleaver(void) {
+    Item item = {0};
+    item.active = 1;
+    item.type = ITEM_WEAPON;
+    strncpy(item.name, "Embercleaver", sizeof(item.name) - 1);
+    item.attack_bonus = 11;
+    item.armor_penetration_percent = 25;
+    item.cleave_percent = 25;
+    item.value = 650;
+    set_weapon_metadata(&item, WEAPON_FAMILY_AXE, WEAPON_HANDS_TWO, ITEM_RARITY_RARE, ITEM_CLASS_WARRIOR, ITEM_VISUAL_EMBERCLEAVER);
+    return item;
+}
+
 Item item_make_staff(void) {
     Item it = {0};
     it.active = 1;
@@ -385,6 +398,8 @@ void item_apply_legacy_metadata(Item *item) {
         definition = item_make_magic_long_sword();
     } else if (strcmp(item->name, "Battle Axe") == 0) {
         definition = item_make_battle_axe();
+    } else if (strcmp(item->name, "Embercleaver") == 0) {
+        definition = item_make_embercleaver();
     } else if (strcmp(item->name, "Magic Battle Axe") == 0) {
         definition = item_make_magic_battle_axe();
     } else if (strcmp(item->name, "Staff") == 0) {

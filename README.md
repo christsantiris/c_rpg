@@ -395,9 +395,16 @@ Ridgeshire's north gate leads into five stages of Ashen Hollow, a volcanic basin
 of basalt columns, charred trees, ruined stonework, and animated lava pools.
 Enter from the south and follow winding ash paths north. Cinder Imps throw
 firebolts, Ash Hounds rush forward, and Obsidian Guardians defend later stages.
-The Cinder Lord guards stage 5's return route to Ridgeshire and drops a Potion
-of Strength. Exploration and enemy progress survive backtracking, later visits,
-saves, and Return to Town portals. See [Ashen Hollow](docs/ashen-hollow.md).
+The Cinder Lord guards stage 5's return route to Ridgeshire. Furnace Heart uses
+fixed cinder lances and lava eruptions; Broken Crucible adds an expanding ember
+ring with both fronts warned in advance. Open a forge sluice feeding a warned
+eruption with **A** to redirect it into cooling channels and gain two
+counterattack actions. The guaranteed **Embercleaver** is a Warrior two-handed
+axe with +11 attack, 25% armor penetration and 25% cleave, alongside the original
+**Potion of Strength**. Both persist in a forge reliquary until claimed.
+Exploration and enemy progress survive backtracking, later visits, saves, and
+Return to Town portals. See [Ashen Hollow](docs/ashen-hollow.md) and the
+[Cinder Lord play-test guide](docs/art-sources/cinder-lord-encounter/README.md).
 
 ### Glassdeep Caverns
 
@@ -644,7 +651,7 @@ with **I** and equip the weapon with **E** or **Enter**.
 | Weapon family | Accepted names |
 | --- | --- |
 | Swords | `rusty-sword`, `short-sword`, `long-sword`, `magic-long-sword`, `demonic-sword`, `greatsword`, `magic-greatsword`, `cryptblade` |
-| Axes | `battle-axe`, `magic-battle-axe` |
+| Axes | `battle-axe`, `magic-battle-axe`, `embercleaver` |
 | Staves | `staff`, `runed-staff`, `magic-staff`, `sandstorm-staff` |
 | Bows | `bow`, `longbow`, `magic-longbow`, `krakenbone-bow` |
 | Daggers | `dagger`, `magic-dagger` |

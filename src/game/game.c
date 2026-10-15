@@ -10,6 +10,7 @@
 #include "grave_marshal.h"
 #include "desert_pharaoh.h"
 #include "thorn_regent.h"
+#include "cinder_lord.h"
 #include "jail.h"
 #include "town_life.h"
 
@@ -1158,6 +1159,9 @@ void enemies_spawn(GameState *g) {
     }
 
     game_add_lich_minions(g);
+    if (g->location == LOCATION_ASHEN && g->level == ASHEN_DEPTH) {
+        cinder_lord_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
+    }
     if (g->location == LOCATION_MOONVEIL && g->level == MOONVEIL_DEPTH) {
         thorn_regent_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
     }
@@ -1544,6 +1548,7 @@ void game_init(GameState *g) {
     g->sandstorm_staff_unclaimed = 0;
     g->desert_pharaoh_reward_state = 0;
     g->thorn_regent_reward_pending = 0;
+    g->cinder_lord_reward_pending = 0;
     g->elowen_quest_state = 0;
     g->elowen_seals_restored = 0;
     g->dain_quest_state = 0;
@@ -3085,6 +3090,7 @@ void game_refresh_quest_encounters(GameState *g) {
     restore_frostfell_reward(g);
     restore_desert_reward(g);
     thorn_regent_restore_reward(g);
+    cinder_lord_restore_reward(g);
     catacombs_restore_reward(g);
     int seal_placed = place_elowen_seal(g);
     place_desert_lamp(g);
@@ -3204,6 +3210,7 @@ static void generate_active_level(GameState *g) {
     restore_frostfell_reward(g);
     restore_desert_reward(g);
     thorn_regent_restore_reward(g);
+    cinder_lord_restore_reward(g);
     catacombs_restore_reward(g);
     place_emberforge_encounter(g);
     // A regenerated stage needs new guards for any unfinished objective.
@@ -5611,6 +5618,7 @@ void game_use_town_portal(GameState *g) {
     g->player.y = landing_y;
     desert_pharaoh_cancel_landing(g, landing_x, landing_y);
     thorn_regent_cancel_landing(g, landing_x, landing_y);
+    cinder_lord_cancel_landing(g, landing_x, landing_y);
     if (g->location == LOCATION_CATACOMBS) {
         // Portal wards prevent a saved warning from striking immediately on arrival.
         for (int i = 0; i < g->map.burial_trap_count; i++) {

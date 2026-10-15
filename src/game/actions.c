@@ -11,6 +11,7 @@
 #include "grave_marshal.h"
 #include "desert_pharaoh.h"
 #include "thorn_regent.h"
+#include "cinder_lord.h"
 #include "jail.h"
 #include "town_life.h"
 #include <stdlib.h>
@@ -452,6 +453,17 @@ static void drop_loot(GameState *g, Enemy *enemy) {
     // Each boss leaves a fixed regional reward instead of rolling ordinary
     // equipment, so capstone weapons remain Blacksmith progression.
     if (is_boss) {
+        if (type == ENEMY_CINDER_LORD) {
+            g->cinder_lord_reward_pending = CINDER_WEAPON_PENDING | CINDER_POTION_PENDING;
+            if (g->floor_item_count < MAX_FLOOR_ITEMS) {
+                place_gold_drop(g, x, y, gold);
+            } else {
+                award_gold(g, gold);
+            }
+            cinder_lord_restore_reward(g);
+            game_update_level_progress(g);
+            return;
+        }
         if (type == ENEMY_THORN_REGENT) {
             g->thorn_regent_reward_pending = REGENT_CLOAK_PENDING | REGENT_POTION_PENDING;
             if (g->floor_item_count < MAX_FLOOR_ITEMS) {
@@ -868,6 +880,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (cinder_lord_has_interaction(g)) {
+        return 1;
+    }
     if (thorn_regent_has_interaction(g)) {
         return 1;
     }
@@ -1223,6 +1238,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (cinder_lord_interact(g)) {
+            return;
+        }
         if (thorn_regent_interact(g)) {
             return;
         }
@@ -1324,6 +1342,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_PICK_UP) {
+        if (cinder_lord_pickup(g)) {
+            return;
+        }
         if (thorn_regent_pickup(g)) {
             return;
         }
@@ -3563,6 +3584,11 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             apply_enemy_damage(g, damage, FEEDBACK_NOW);
         }
     }
+    int hot_damage = cinder_lord_tick_floor(g);
+    if (hot_damage > 0) {
+        int damage = hot_damage - g->player.defense / 2;
+        apply_enemy_damage(g, damage > 2 ? damage : 2, FEEDBACK_NOW);
+    }
     int root_damage = thorn_regent_tick_floor(g);
     if (root_damage > 0) {
         int damage = root_damage - g->player.defense / 2;
@@ -3625,6 +3651,13 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
 
+        if (e->type == ENEMY_CINDER_LORD) {
+            int damage = cinder_lord_tick(g, e, shots);
+            if (damage > 0) {
+                apply_enemy_damage(g, damage, e->boss_attack == CINDER_LANCE ? FEEDBACK_AFTER_ENEMY_SHOT : FEEDBACK_NOW);
+            }
+            continue;
+        }
         if (e->type == ENEMY_THORN_REGENT) {
             int damage = thorn_regent_tick(g, e, shots);
             if (damage > 0) {
@@ -3699,7 +3732,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             polar_kraken_turn(g, e);
             continue;
         }
-        if (e->type == ENEMY_CINDER_LORD || e->type == ENEMY_PRISM_SOVEREIGN) {
+        if (e->type == ENEMY_PRISM_SOVEREIGN) {
             Room *lair = &g->map.rooms[g->map.room_count - 1];
             int in_lair = g->player.x >= lair->x &&
                 g->player.x < lair->x + lair->w &&
@@ -3808,24 +3841,6 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                     (e->type == ENEMY_DJINN ? "Djinn magic bolt" : "Elemental flame")));
                 snprintf(msg, sizeof(msg), "%s: %d dmg", attack, dmg);
                 push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
-            }
-            continue;
-        }
-
-        if (e->type == ENEMY_CINDER_LORD) {
-            if (e->move_timer % 2 != 0) {
-                push_message(g, "The Cinder Lord gathers molten fire...");
-            } else {
-                int damage = e->attack - g->player.defense / 2;
-                if (damage < 3) {
-                    damage = 3;
-                }
-                damage = apply_enemy_ranged_damage(g, i, e, damage, shots);
-                if (damage > 0) {
-                    char msg[MAX_MESSAGE_LEN];
-                    snprintf(msg, sizeof(msg), "Cinder Lord firebolt: %d dmg", damage);
-                    push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
-                }
             }
             continue;
         }

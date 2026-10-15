@@ -1268,6 +1268,11 @@ static void draw_player_axe(Renderer *r, const Item *weapon, int bx, int by, int
         : (SDL_Color){157, 169, 177, 255};
     SDL_Color edge = magic ? (SDL_Color){217, 249, 255, 255}
         : (SDL_Color){225, 231, 233, 255};
+    if (weapon->visual_id == ITEM_VISUAL_EMBERCLEAVER) {
+        handle = (SDL_Color){88, 51, 34, 255};
+        head = (SDL_Color){98, 100, 109, 255};
+        edge = (SDL_Color){255, 174, 77, 255};
+    }
     draw_weapon_line(r, bx, by, dx, dy, -4, 0, 9, 0, handle);
     draw_weapon_line(r, bx, by, dx, dy, -4, -1, 7, -1, (SDL_Color){36, 28, 29, 255});
     for (int forward = 7; forward <= 10; forward++) {

@@ -188,6 +188,8 @@ static int debug_weapon(const char *name, Item *weapon, int *none) {
         *weapon = item_make_cryptblade();
     } else if (strcmp(name, "battle-axe") == 0) {
         *weapon = item_make_battle_axe();
+    } else if (strcmp(name, "embercleaver") == 0) {
+        *weapon = item_make_embercleaver();
     } else if (strcmp(name, "magic-battle-axe") == 0) {
         *weapon = item_make_magic_battle_axe();
     } else if (strcmp(name, "staff") == 0) {

@@ -8,6 +8,7 @@
 #include "grave_marshal_renderer.h"
 #include "desert_pharaoh_renderer.h"
 #include "thorn_regent_renderer.h"
+#include "cinder_lord_renderer.h"
 #include "npc_renderer.h"
 #include "info_panel.h"
 #include "message_bar.h"
@@ -1416,6 +1417,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
     } else if (underlay == TILE_TRAP_HIDDEN &&
         g->location == LOCATION_COAST) {
         draw_coast_trap_underlay(r, g, map_x, map_y, screen_x, screen_y);
+    } else if (underlay >= TILE_CINDER_HOT_2 && underlay <= TILE_CINDER_RELIQUARY) {
+        draw_cinder_lord_tile(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay >= TILE_REGENT_ROOT_2 && underlay <= TILE_REGENT_RELIQUARY) {
         draw_thorn_regent_tile(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay >= TILE_PHARAOH_OBELISK && underlay <= TILE_PHARAOH_RELIQUARY) {
@@ -2373,6 +2376,23 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                         draw_return_exit(r, sx, sy);
                     }
                     break;
+                case TILE_CINDER_HOT_2:
+                case TILE_CINDER_HOT_1:
+                case TILE_CINDER_CHANNEL:
+                case TILE_CINDER_COOL_1:
+                case TILE_CINDER_COOL_2:
+                case TILE_CINDER_COOL_3:
+                case TILE_CINDER_COOL_4:
+                case TILE_CINDER_COOL_5:
+                case TILE_CINDER_SLUICE:
+                case TILE_CINDER_SLUICE_1:
+                case TILE_CINDER_SLUICE_2:
+                case TILE_CINDER_SLUICE_3:
+                case TILE_CINDER_SLUICE_4:
+                case TILE_CINDER_SLUICE_5:
+                case TILE_CINDER_RELIQUARY:
+                    draw_cinder_lord_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
                 case TILE_REGENT_ROOT_2:
                 case TILE_REGENT_ROOT_1:
                 case TILE_REGENT_WALL_1:
@@ -2957,6 +2977,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_grave_marshal_warnings(r, g, v);
     draw_desert_pharaoh_warnings(r, g, v);
     draw_thorn_regent_warnings(r, g, v);
+    draw_cinder_lord_warnings(r, g, v);
 
     // Draw enemies
     if (g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
@@ -3709,6 +3730,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_grave_marshal_status(r, g, v);
     draw_desert_pharaoh_status(r, g, v);
     draw_thorn_regent_status(r, g, v);
+    draw_cinder_lord_status(r, g, v);
 
     // Draw info panel
     info_panel_draw(r, g);
