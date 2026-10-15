@@ -9,6 +9,7 @@
 #include "../game/minotaur.h"
 #include "../game/grave_marshal.h"
 #include "../game/desert_pharaoh.h"
+#include "../game/thorn_regent.h"
 #include "../game/jail.h"
 #include "../game/town_life.h"
 #include "cJSON.h"
@@ -714,7 +715,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 131);
+    cJSON_AddNumberToObject(root, "save_version", 132);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -747,6 +748,7 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "kraken_bow_unclaimed", g->kraken_bow_unclaimed);
     cJSON_AddNumberToObject(root, "sandstorm_staff_unclaimed", g->sandstorm_staff_unclaimed);
     cJSON_AddNumberToObject(root, "desert_pharaoh_reward_state", g->desert_pharaoh_reward_state);
+    cJSON_AddNumberToObject(root, "thorn_regent_reward_pending", g->thorn_regent_reward_pending);
     cJSON_AddNumberToObject(player, "known_spell_count", g->player.known_spell_count);
     cJSON_AddNumberToObject(player, "player_class",      g->player.player_class);
     cJSON_AddNumberToObject(player, "arrows", g->player.arrows);
@@ -2350,6 +2352,12 @@ int load_game(GameState *g, int slot) {
     cJSON *king_reward = cJSON_GetObjectItem(root, "goblin_king_reward_state");
     g->goblin_king_reward_state = king_reward ? king_reward->valueint : 0;
     if (g->goblin_king_reward_state < 0 || g->goblin_king_reward_state > 2) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    cJSON *regent_reward = cJSON_GetObjectItem(root, "thorn_regent_reward_pending");
+    g->thorn_regent_reward_pending = regent_reward ? regent_reward->valueint : 0;
+    if (g->thorn_regent_reward_pending < 0 || g->thorn_regent_reward_pending > 3) {
         cJSON_Delete(root);
         return 0;
     }
@@ -4266,6 +4274,9 @@ int load_game(GameState *g, int slot) {
     }
     if (save_version < 131) {
         desert_pharaoh_migrate(g);
+    }
+    if (save_version < 132) {
+        thorn_regent_migrate(g);
     }
     game_migrate_boss_shortcuts(g);
     game_refresh_quest_encounters(g);

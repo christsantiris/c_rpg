@@ -367,9 +367,16 @@ Rosemoor's west gate opens onto the five-stage Moonveil Gardens. Enter from the
 east and follow the paths west through glowing flowers, giant mushrooms,
 moonlit pools, and ancient stone circles. Fey Tricksters and Giant Moths appear
 first, followed by Carnivorous Flowers and Thorn Guardians. The Thorn Regent guards
-stage 5's return to Rosemoor and drops a Potion of Strength. Backtracking, later
-visits, saves, and Return to Town portals retain the gardens' explored maps and
-enemy progress.
+stage 5's return to Rosemoor. Garden Regent alternates fixed one-action thorn
+lances and two-action creeping roots. Below half health, Briar Crown adds warned,
+temporary thorn strips. Tend the separate flowering nodes with **A** to open a
+flank or interrupt regrowth for two counterattack actions; their visible cooldown
+prevents continuous clearing. The guaranteed **Briarweave Cloak** gives all
+classes +4 defense and 10% evasion, alongside the original **Potion of Strength**.
+Both wait in a persistent flowered reliquary, including when the pack or loot
+floor is full. See the [Regent play-test guide](docs/art-sources/thorn-regent-encounter/README.md).
+Backtracking, later visits, saves, and Return to Town portals retain the gardens'
+explored maps and enemy progress.
 
 **Botanist Liora** in **Stillbury's Inn** assigns **The Stolen Moonseed** with
 **T**. She directs you north across the swamp to Rosemoor, then through its

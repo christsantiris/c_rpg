@@ -163,6 +163,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile != TILE_SWAMP_WALL &&
                         tile != TILE_DESERT_WALL &&
                         tile != TILE_PHARAOH_OBELISK &&
+                        !(tile >= TILE_REGENT_WALL_1 && tile <= TILE_REGENT_WALL_4) &&
                         tile != TILE_MOONVEIL_WALL &&
                         tile != TILE_MOONVEIL_POOL &&
                         tile != TILE_ASHEN_WALL &&

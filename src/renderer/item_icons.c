@@ -57,6 +57,7 @@ static void icon_palette(SDL_Color *pal, const Item *item) {
             case ITEM_VISUAL_PLATE_ARMOR: cloth = (SDL_Color){169, 182, 192, 255}; break;
             case ITEM_VISUAL_MAGIC_PLATE: cloth = (SDL_Color){99, 177, 211, 255}; break;
             case ITEM_VISUAL_STUDDED_LEATHER: cloth = (SDL_Color){132, 89, 48, 255}; break;
+            case ITEM_VISUAL_BRIARWEAVE_CLOAK: cloth = (SDL_Color){61, 129, 112, 255}; trim = (SDL_Color){213, 157, 211, 255}; break;
             case ITEM_VISUAL_RANGER_CLOAK: cloth = (SDL_Color){57, 114, 63, 255}; break;
             case ITEM_VISUAL_SHADOW_ARMOR:
                 cloth = (SDL_Color){75, 49, 111, 255};
@@ -206,7 +207,7 @@ void draw_icon_armor(Renderer *r, int px, int py, const Item *item) {
     int art = ICON_ART_PLATE;
     if (item->armor_family == ARMOR_FAMILY_ROBE) {
         art = ICON_ART_ROBE;
-    } else if (item->visual_id == ITEM_VISUAL_RANGER_CLOAK) {
+    } else if (item->visual_id == ITEM_VISUAL_RANGER_CLOAK || item->visual_id == ITEM_VISUAL_BRIARWEAVE_CLOAK) {
         art = ICON_ART_CLOAK;
     } else if (item->visual_id == ITEM_VISUAL_CHAIN_MAIL || item->visual_id == ITEM_VISUAL_SCALE_MAIL) {
         art = ICON_ART_MAIL;
