@@ -412,10 +412,15 @@ Stillbury's south gate opens into five stages of Glassdeep Caverns. Descend
 south through irregular crystal chambers, underground pools, mineral seams,
 and the paving of a buried sanctuary. Crystal Spiders rush forward, Blind
 Stalkers wait to ambush nearby explorers, and armored Shard Golems guard later
-stages. The Prism Sovereign marks a beam before firing along that fixed path:
-step aside during its warning turn. Defeating it opens stage 5's return to
-Stillbury and drops a Potion of Strength. Saves and Return to Town portals
-preserve the caverns' independent progress.
+stages. The Prism Sovereign opens with one-action beams and escalates below
+half health to two-action split beams. Every reflected segment and endpoint is
+marked. Press **A** beside a crystal face between attacks to cycle Left, Right
+and Return; warnings lock the faces. Returning a beam to the crown grants two
+full counterattack actions. Defeating it opens stage 5's return to Stillbury
+and reserves **Prismweave Robes** (Mage: +3 defense, +35 maximum MP, 12% spell-cost
+reduction) and a **Potion of Strength** in its reliquary. Unclaimed rewards and
+encounter progress survive saves and Return to Town portals. See the
+[Prism Sovereign play-test guide](docs/art-sources/prism-sovereign-encounter/README.md).
 
 **Surveyor Orin**, inside **Rosemoor's Adventurer's Guild**, assigns **The Broken
 Resonance** with **T**. Restore the guarded Root, Tide, and Crown resonators on

@@ -9,6 +9,7 @@
 #include "desert_pharaoh_renderer.h"
 #include "thorn_regent_renderer.h"
 #include "cinder_lord_renderer.h"
+#include "prism_sovereign_renderer.h"
 #include "npc_renderer.h"
 #include "info_panel.h"
 #include "message_bar.h"
@@ -1417,6 +1418,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
     } else if (underlay == TILE_TRAP_HIDDEN &&
         g->location == LOCATION_COAST) {
         draw_coast_trap_underlay(r, g, map_x, map_y, screen_x, screen_y);
+    } else if (underlay >= TILE_PRISM_LEFT && underlay <= TILE_PRISM_PAVED_RELIQUARY) {
+        draw_prism_sovereign_tile(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay >= TILE_CINDER_HOT_2 && underlay <= TILE_CINDER_RELIQUARY) {
         draw_cinder_lord_tile(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay >= TILE_REGENT_ROOT_2 && underlay <= TILE_REGENT_RELIQUARY) {
@@ -1809,41 +1812,6 @@ static void draw_kraken_status(Renderer *r, const GameState *g, const Viewport *
             hint_color = (SDL_Color){139, 230, 163, 255};
         }
         renderer_draw_text(r, hint, x + 10, 49, hint_color, r->font_tiny);
-    }
-}
-
-static void draw_prism_warning(Renderer *r, const GameState *g, const Viewport *v) {
-    if (g->location != LOCATION_GLASSDEEP) {
-        return;
-    }
-    for (int i = 0; i < g->enemy_count; i++) {
-        const Enemy *enemy = &g->enemies[i];
-        if (!enemy->active || enemy->type != ENEMY_PRISM_SOVEREIGN ||
-            enemy->attack_target_x < 0 || enemy->attack_target_y < 0) {
-            continue;
-        }
-        int dx = (enemy->attack_target_x > enemy->x) - (enemy->attack_target_x < enemy->x);
-        int dy = (enemy->attack_target_y > enemy->y) - (enemy->attack_target_y < enemy->y);
-        for (int step = 1; step <= 8; step++) {
-            int x = enemy->x + dx * step;
-            int y = enemy->y + dy * step;
-            if (!map_is_walkable(&g->map, x, y)) {
-                break;
-            }
-            int blocked = 0;
-            for (int j = 0; j < g->enemy_count; j++) {
-                blocked |= j != i && g->enemies[j].active && g->enemies[j].x == x && g->enemies[j].y == y;
-            }
-            if (blocked) {
-                break;
-            }
-            if (viewport_is_visible(v, x, y)) {
-                SDL_Rect outline = {viewport_to_screen_x(v, x) * TILE_SIZE + 2,
-                    viewport_to_screen_y(v, y) * TILE_SIZE + 2, TILE_SIZE - 4, TILE_SIZE - 4};
-                SDL_SetRenderDrawColor(r->sdl, 168, 112, 238, 255);
-                SDL_RenderDrawRect(r->sdl, &outline);
-            }
-        }
     }
 }
 
@@ -2375,6 +2343,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     } else {
                         draw_return_exit(r, sx, sy);
                     }
+                    break;
+                case TILE_PRISM_LEFT:
+                case TILE_PRISM_RIGHT:
+                case TILE_PRISM_RETURN:
+                case TILE_PRISM_RELIQUARY:
+                case TILE_PRISM_PAVED_RELIQUARY:
+                    draw_prism_sovereign_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
                     break;
                 case TILE_CINDER_HOT_2:
                 case TILE_CINDER_HOT_1:
@@ -2978,6 +2953,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_desert_pharaoh_warnings(r, g, v);
     draw_thorn_regent_warnings(r, g, v);
     draw_cinder_lord_warnings(r, g, v);
+    draw_prism_sovereign_warnings(r, g, v);
 
     // Draw enemies
     if (g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
@@ -3684,7 +3660,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     } else if (g->location == LOCATION_DESERT) {
         draw_region_weather(r, v, 1);
     }
-    draw_prism_warning(r, g, v);
     draw_catacombs_warnings(r, g, v);
     castle_draw_warnings(r, g, v);
 
@@ -3731,6 +3706,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_desert_pharaoh_status(r, g, v);
     draw_thorn_regent_status(r, g, v);
     draw_cinder_lord_status(r, g, v);
+    draw_prism_sovereign_status(r, g, v);
 
     // Draw info panel
     info_panel_draw(r, g);

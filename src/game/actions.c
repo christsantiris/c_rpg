@@ -12,6 +12,7 @@
 #include "desert_pharaoh.h"
 #include "thorn_regent.h"
 #include "cinder_lord.h"
+#include "prism_sovereign.h"
 #include "jail.h"
 #include "town_life.h"
 #include <stdlib.h>
@@ -453,6 +454,17 @@ static void drop_loot(GameState *g, Enemy *enemy) {
     // Each boss leaves a fixed regional reward instead of rolling ordinary
     // equipment, so capstone weapons remain Blacksmith progression.
     if (is_boss) {
+        if (type == ENEMY_PRISM_SOVEREIGN) {
+            g->prism_sovereign_reward_pending = PRISM_ROBES_PENDING | PRISM_POTION_PENDING;
+            if (g->floor_item_count < MAX_FLOOR_ITEMS) {
+                place_gold_drop(g, x, y, gold);
+            } else {
+                award_gold(g, gold);
+            }
+            prism_sovereign_restore_reward(g);
+            game_update_level_progress(g);
+            return;
+        }
         if (type == ENEMY_CINDER_LORD) {
             g->cinder_lord_reward_pending = CINDER_WEAPON_PENDING | CINDER_POTION_PENDING;
             if (g->floor_item_count < MAX_FLOOR_ITEMS) {
@@ -880,6 +892,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (prism_sovereign_has_interaction(g)) {
+        return 1;
+    }
     if (cinder_lord_has_interaction(g)) {
         return 1;
     }
@@ -1238,6 +1253,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (prism_sovereign_interact(g)) {
+            return;
+        }
         if (cinder_lord_interact(g)) {
             return;
         }
@@ -1342,6 +1360,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_PICK_UP) {
+        if (prism_sovereign_pickup(g)) {
+            return;
+        }
         if (cinder_lord_pickup(g)) {
             return;
         }
@@ -3477,58 +3498,6 @@ static void polar_kraken_turn(GameState *g, Enemy *e) {
     }
 }
 
-static void prism_sovereign_turn(GameState *g, int index, EnemyProjectiles *shots) {
-    Enemy *enemy = &g->enemies[index];
-    enemy->move_timer++;
-    if (enemy->move_timer % 2 != 0) {
-        int dx = g->player.x - enemy->x;
-        int dy = g->player.y - enemy->y;
-        if (abs_int(dx) >= abs_int(dy)) {
-            enemy->attack_target_x = enemy->x + (dx < 0 ? -8 : 8);
-            enemy->attack_target_y = enemy->y;
-        } else {
-            enemy->attack_target_x = enemy->x;
-            enemy->attack_target_y = enemy->y + (dy < 0 ? -8 : 8);
-        }
-        push_message(g, "The Sovereign gathers light. Step out of the marked beam!");
-        return;
-    }
-    int dx = (enemy->attack_target_x > enemy->x) - (enemy->attack_target_x < enemy->x);
-    int dy = (enemy->attack_target_y > enemy->y) - (enemy->attack_target_y < enemy->y);
-    int x = enemy->x;
-    int y = enemy->y;
-    int hit = 0;
-    for (int step = 1; step <= 8; step++) {
-        int tx = enemy->x + dx * step;
-        int ty = enemy->y + dy * step;
-        if (!map_is_walkable(&g->map, tx, ty) || enemy_blocks_line_of_sight(g, index, tx, ty)) {
-            break;
-        }
-        x = tx;
-        y = ty;
-        hit |= g->player.x == x && g->player.y == y;
-    }
-    enemy->attack_target_x = -1;
-    enemy->attack_target_y = -1;
-    if (shots && shots->count < MAX_ENEMIES && (x != enemy->x || y != enemy->y)) {
-        shots->shots[shots->count++] = (EnemyProjectile){enemy->type, enemy->x, enemy->y, x, y};
-    }
-    if (hit) {
-        int damage = enemy->attack - g->player.defense / 2;
-        if (damage < 3) {
-            damage = 3;
-        }
-        damage = apply_enemy_damage(g, damage, FEEDBACK_AFTER_ENEMY_SHOT);
-        if (damage > 0) {
-            char message[MAX_MESSAGE_LEN];
-            snprintf(message, sizeof(message), "Prismatic beam: %d dmg", damage);
-            push_message_kind(g, message, MESSAGE_DAMAGE_TAKEN);
-        }
-    } else {
-        push_message(g, "The prismatic beam strikes empty stone.");
-    }
-}
-
 static void grave_marshal_turn(GameState *g, int index) {
     Enemy *e = &g->enemies[index];
     int damage = grave_marshal_tick(g, e);
@@ -3651,6 +3620,13 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
 
+        if (e->type == ENEMY_PRISM_SOVEREIGN) {
+            int damage = prism_sovereign_tick(g, e, shots);
+            if (damage > 0) {
+                apply_enemy_damage(g, damage, FEEDBACK_AFTER_ENEMY_SHOT);
+            }
+            continue;
+        }
         if (e->type == ENEMY_CINDER_LORD) {
             int damage = cinder_lord_tick(g, e, shots);
             if (damage > 0) {
@@ -3730,21 +3706,6 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         }
         if (e->type == ENEMY_POLAR_KRAKEN) {
             polar_kraken_turn(g, e);
-            continue;
-        }
-        if (e->type == ENEMY_PRISM_SOVEREIGN) {
-            Room *lair = &g->map.rooms[g->map.room_count - 1];
-            int in_lair = g->player.x >= lair->x &&
-                g->player.x < lair->x + lair->w &&
-                g->player.y >= lair->y && g->player.y < lair->y + lair->h;
-            int distance = abs_int(dx) + abs_int(dy);
-            if (!in_lair && ((e->move_timer == 0 && e->hp == e->max_hp) || distance > 12)) {
-                continue;
-            }
-        }
-
-        if (e->type == ENEMY_PRISM_SOVEREIGN) {
-            prism_sovereign_turn(g, i, shots);
             continue;
         }
         if (e->type == ENEMY_BLIND_STALKER && e->hp == e->max_hp &&

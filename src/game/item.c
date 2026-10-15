@@ -472,6 +472,8 @@ void item_apply_legacy_armor_metadata(Item *item) {
         definition = item_make_runed_robes();
     } else if (strcmp(item->name, "Enchanter Robes") == 0) {
         definition = item_make_enchanter_robes();
+    } else if (strcmp(item->name, "Prismweave Robes") == 0) {
+        definition = item_make_prismweave_robes();
     } else if (strcmp(item->name, "Archmage Robes") == 0) {
         definition = item_make_archmage_robes();
     } else if (strcmp(item->name, "Necromancer's Cloak") == 0) {
@@ -683,6 +685,19 @@ Item item_make_enchanter_robes(void) {
     set_armor_metadata(&it, ARMOR_FAMILY_ROBE, ITEM_RARITY_RARE,
         ITEM_CLASS_MAGE, ITEM_VISUAL_ENCHANTER_ROBES);
     return it;
+}
+
+Item item_make_prismweave_robes(void) {
+    Item item = {0};
+    item.active = 1;
+    item.type = ITEM_ARMOR;
+    strncpy(item.name, "Prismweave Robes", sizeof(item.name) - 1);
+    item.defense_bonus = 3;
+    item.max_mp_bonus = 35;
+    item.spell_cost_reduction_percent = 12;
+    item.value = 700;
+    set_armor_metadata(&item, ARMOR_FAMILY_ROBE, ITEM_RARITY_RARE, ITEM_CLASS_MAGE, ITEM_VISUAL_PRISMWEAVE_ROBES);
+    return item;
 }
 
 Item item_make_archmage_robes(void) {
