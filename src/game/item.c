@@ -447,6 +447,8 @@ void item_apply_legacy_armor_metadata(Item *item) {
         definition = item_make_studded_leather();
     } else if (strcmp(item->name, "Ranger Cloak") == 0) {
         definition = item_make_ranger_cloak();
+    } else if (strcmp(item->name, "Briarweave Cloak") == 0) {
+        definition = item_make_briarweave_cloak();
     } else if (strcmp(item->name, "Shadow Armor") == 0) {
         definition = item_make_shadow_armor();
     } else if (strcmp(item->name, "Apprentice Robes") == 0) {
@@ -691,6 +693,18 @@ Item item_make_gravekeeper_mantle(void) {
     item.value = 600;
     set_armor_metadata(&item, ARMOR_FAMILY_LIGHT, ITEM_RARITY_RARE, ITEM_CLASS_ALL, ITEM_VISUAL_RANGER_CLOAK);
     item.max_hp_bonus = 20;
+    return item;
+}
+
+Item item_make_briarweave_cloak(void) {
+    Item item = {0};
+    item.active = 1;
+    item.type = ITEM_ARMOR;
+    strncpy(item.name, "Briarweave Cloak", sizeof(item.name) - 1);
+    item.defense_bonus = 4;
+    item.evasion_chance = 10;
+    item.value = 550;
+    set_armor_metadata(&item, ARMOR_FAMILY_LIGHT, ITEM_RARITY_RARE, ITEM_CLASS_ALL, ITEM_VISUAL_BRIARWEAVE_CLOAK);
     return item;
 }
 

@@ -7,6 +7,7 @@
 #include "minotaur_renderer.h"
 #include "grave_marshal_renderer.h"
 #include "desert_pharaoh_renderer.h"
+#include "thorn_regent_renderer.h"
 #include "npc_renderer.h"
 #include "info_panel.h"
 #include "message_bar.h"
@@ -1415,6 +1416,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
     } else if (underlay == TILE_TRAP_HIDDEN &&
         g->location == LOCATION_COAST) {
         draw_coast_trap_underlay(r, g, map_x, map_y, screen_x, screen_y);
+    } else if (underlay >= TILE_REGENT_ROOT_2 && underlay <= TILE_REGENT_RELIQUARY) {
+        draw_thorn_regent_tile(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay >= TILE_PHARAOH_OBELISK && underlay <= TILE_PHARAOH_RELIQUARY) {
         draw_desert_pharaoh_tile(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay >= TILE_MARSHAL_NICHE && underlay <= TILE_MARSHAL_RELIQUARY) {
@@ -2370,6 +2373,21 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                         draw_return_exit(r, sx, sy);
                     }
                     break;
+                case TILE_REGENT_ROOT_2:
+                case TILE_REGENT_ROOT_1:
+                case TILE_REGENT_WALL_1:
+                case TILE_REGENT_WALL_2:
+                case TILE_REGENT_WALL_3:
+                case TILE_REGENT_WALL_4:
+                case TILE_REGENT_NODE:
+                case TILE_REGENT_NODE_1:
+                case TILE_REGENT_NODE_2:
+                case TILE_REGENT_NODE_3:
+                case TILE_REGENT_NODE_4:
+                case TILE_REGENT_NODE_5:
+                case TILE_REGENT_RELIQUARY:
+                    draw_thorn_regent_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
                 case TILE_PHARAOH_OBELISK:
                 case TILE_PHARAOH_SAND_2:
                 case TILE_PHARAOH_SAND_1:
@@ -2938,6 +2956,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_minotaur_warnings(r, g, v);
     draw_grave_marshal_warnings(r, g, v);
     draw_desert_pharaoh_warnings(r, g, v);
+    draw_thorn_regent_warnings(r, g, v);
 
     // Draw enemies
     if (g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
@@ -3689,6 +3708,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_minotaur_status(r, g, v);
     draw_grave_marshal_status(r, g, v);
     draw_desert_pharaoh_status(r, g, v);
+    draw_thorn_regent_status(r, g, v);
 
     // Draw info panel
     info_panel_draw(r, g);

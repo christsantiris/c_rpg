@@ -1467,6 +1467,8 @@ static void player_body_palette(SDL_Color *palette, PlayerClass player_class, co
         suit = (SDL_Color){102, 66, 39, 255};
         if (armor->visual_id == ITEM_VISUAL_SHADOW_ARMOR) {
             suit = (SDL_Color){67, 39, 88, 255};
+        } else if (armor->visual_id == ITEM_VISUAL_BRIARWEAVE_CLOAK) {
+            suit = (SDL_Color){61, 129, 112, 255};
         } else if (armor->visual_id == ITEM_VISUAL_RANGER_CLOAK) {
             suit = (SDL_Color){58, 112, 55, 255};
         } else if (armor->visual_id == ITEM_VISUAL_STUDDED_LEATHER) {
@@ -1523,6 +1525,8 @@ static void draw_player_body(Renderer *r, int x, int y, PlayerClass player_class
                             detail = (row + source_col) % 2 ? 'a' : 'v';
                         } else if (armor->visual_id == ITEM_VISUAL_SCALE_MAIL) {
                             detail = (source_col + row / 3) % 3 == 0 ? 'a' : row % 3 == 0 ? 'v' : 'A';
+                        } else if (armor->visual_id == ITEM_VISUAL_BRIARWEAVE_CLOAK && (row + source_col) % 5 == 0) {
+                            detail = 'v';
                         } else if (armor->visual_id == ITEM_VISUAL_STUDDED_LEATHER && row % 3 == 0 && source_col % 3 == 0) {
                             detail = 'H';
                         } else if (armor->armor_family == ARMOR_FAMILY_ROBE && armor->rarity != ITEM_RARITY_COMMON && row % 4 == 0 && source_col % 3 == 0) {

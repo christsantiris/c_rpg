@@ -93,7 +93,8 @@ typedef enum {
     ITEM_VISUAL_MAGIC_SHIELD,
     ITEM_VISUAL_DEMONIC_SWORD,
     ITEM_VISUAL_SANDSTORM_STAFF,
-    ITEM_VISUAL_LABYRINTH_AEGIS
+    ITEM_VISUAL_LABYRINTH_AEGIS,
+    ITEM_VISUAL_BRIARWEAVE_CLOAK
 } ItemVisualId;
 
 typedef struct {
@@ -187,6 +188,7 @@ Item item_make_enchanter_robes(void);
 Item item_make_archmage_robes(void);
 Item item_make_necromancer_cloak(void);
 Item item_make_gravekeeper_mantle(void);
+Item item_make_briarweave_cloak(void);
 Item item_make_dragon_scale_mantle(void);
 Item item_make_tidecaller_robes(void);
 Item item_make_buckler(void);
