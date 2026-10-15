@@ -50,9 +50,11 @@ Use the existing Debug shortcut launcher and select **New Game**:
 
 Choose Warrior for that loadout. Use `--weapon bow` with Rogue or `--weapon staff`
 with Mage to exercise the other combat paths. The launcher leaves the Guardian
-alive and unlocks the harbor. Speak with Captain Rowan, board the ship, speak
-with Nahla near the island temple approach, and climb all five tiers. Awaken
-and clear each tier's Moonbound Sentinels as well as its Sun enemies. Buy
+alive and unlocks town shortcuts. Defeat the Drowned Queen to open the harbor,
+or use an existing save with that route unlocked. Speak with Captain Rowan,
+board the ship, speak with Nahla near the island temple approach, and climb
+all five tiers. Awaken and clear each tier's Moonbound Sentinels as well as
+its Sun enemies. Buy
 supplies before the expedition. Existing saves with a living Guardian migrate
 in place.
 
