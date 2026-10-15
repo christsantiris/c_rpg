@@ -12,6 +12,7 @@
 #include "thorn_regent.h"
 #include "cinder_lord.h"
 #include "prism_sovereign.h"
+#include "sun_guardian.h"
 #include "jail.h"
 #include "town_life.h"
 
@@ -1554,6 +1555,7 @@ void game_init(GameState *g) {
     g->thorn_regent_reward_pending = 0;
     g->cinder_lord_reward_pending = 0;
     g->prism_sovereign_reward_pending = 0;
+    g->sun_guardian_reward_state = 0;
     g->elowen_quest_state = 0;
     g->elowen_seals_restored = 0;
     g->dain_quest_state = 0;
@@ -2002,6 +2004,18 @@ static TileType quest_tile(const GameState *g, int x, int y) {
         }
     }
     return tile;
+}
+
+static void set_temple_tile(GameState *g, int x, int y, TileType tile) {
+    if (g->map.tiles[y][x] != TILE_ITEM) {
+        g->map.tiles[y][x] = tile;
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && item->x == x && item->y == y) {
+            item->underlying_tile = tile;
+        }
+    }
 }
 
 static int place_elowen_seal(GameState *g) {
@@ -3097,6 +3111,7 @@ void game_refresh_quest_encounters(GameState *g) {
     thorn_regent_restore_reward(g);
     cinder_lord_restore_reward(g);
     prism_sovereign_restore_reward(g);
+    sun_guardian_restore_reward(g);
     catacombs_restore_reward(g);
     int seal_placed = place_elowen_seal(g);
     place_desert_lamp(g);
@@ -3158,6 +3173,7 @@ static void generate_active_level(GameState *g) {
         g->temple_alignment = 0;
         g->temple_sentinels_awakened = 0;
         spawn_temple_enemies(g);
+        sun_guardian_restore_reward(g);
         game_update_level_progress(g);
         return;
     }
@@ -3251,7 +3267,7 @@ static void sync_temple_floor_state(GameState *g) {
     g->temple_sentinels_awakened = 1;
     for (int y = 0; y < TEMPLE_H; y++) {
         for (int x = 0; x < TEMPLE_W; x++) {
-            if (g->map.tiles[y][x] == TILE_TEMPLE_MOON_DOOR_OPEN) {
+            if (quest_tile(g, x, y) == TILE_TEMPLE_MOON_DOOR_OPEN) {
                 g->temple_alignment = 1;
             }
             if (g->map.tiles[y][x] == TILE_TEMPLE_DORMANT_SENTINEL) {
@@ -3266,6 +3282,10 @@ static void sync_temple_floor_state(GameState *g) {
                 g->map.tiles[y][x] = TILE_TEMPLE_RUBBLE;
             }
         }
+    }
+    if (g->level == TEMPLE_DEPTH) {
+        sun_guardian_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
+        sun_guardian_restore_reward(g);
     }
 }
 
@@ -4999,6 +5019,9 @@ static void spawn_temple_enemies(GameState *g) {
         spawn_enemy(g, &g->enemies[g->enemy_count++], type,
             positions[floor][i][0], positions[floor][i][1]);
     }
+    if (g->level == TEMPLE_DEPTH) {
+        sun_guardian_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
+    }
 }
 
 void game_enter_temple(GameState *g) {
@@ -5087,7 +5110,7 @@ int game_has_temple_interaction(const GameState *g) {
         int x = g->player.x + offsets[i][0];
         int y = g->player.y + offsets[i][1];
         if (x >= 0 && x < MAP_W && y >= 0 && y < MAP_H &&
-            temple_interaction_tile(g->map.tiles[y][x])) {
+            temple_interaction_tile(quest_tile(g, x, y))) {
             return 1;
         }
     }
@@ -5095,18 +5118,36 @@ int game_has_temple_interaction(const GameState *g) {
 }
 
 static void toggle_temple_alignment(GameState *g) {
+    // Refuse the whole switch rather than closing a lunar door on an occupant.
+    if (g->temple_alignment) {
+        for (int y = 0; y < TEMPLE_H; y++) {
+            for (int x = 0; x < TEMPLE_W; x++) {
+                if (quest_tile(g, x, y) != TILE_TEMPLE_MOON_DOOR_OPEN) {
+                    continue;
+                }
+                int occupied = (g->player.x == x && g->player.y == y) || g->map.tiles[y][x] == TILE_ITEM;
+                for (int i = 0; i < g->enemy_count; i++) {
+                    occupied |= g->enemies[i].active && g->enemies[i].x == x && g->enemies[i].y == y;
+                }
+                if (occupied) {
+                    push_message(g, "Lunar doorway occupied. Clear it before raising the Sun.");
+                    return;
+                }
+            }
+        }
+    }
     g->temple_alignment = !g->temple_alignment;
     if (g->temple_alignment) {
         g->temple_sentinels_awakened = 1;
     }
     for (int y = 0; y < TEMPLE_H; y++) {
         for (int x = 0; x < TEMPLE_W; x++) {
-            TileType tile = g->map.tiles[y][x];
+            TileType tile = quest_tile(g, x, y);
             if (g->temple_alignment && tile == TILE_TEMPLE_MOON_DOOR_CLOSED) {
-                g->map.tiles[y][x] = TILE_TEMPLE_MOON_DOOR_OPEN;
+                set_temple_tile(g, x, y, TILE_TEMPLE_MOON_DOOR_OPEN);
             } else if (!g->temple_alignment &&
                 tile == TILE_TEMPLE_MOON_DOOR_OPEN) {
-                g->map.tiles[y][x] = TILE_TEMPLE_MOON_DOOR_CLOSED;
+                set_temple_tile(g, x, y, TILE_TEMPLE_MOON_DOOR_CLOSED);
             } else if (g->temple_alignment &&
                 tile == TILE_TEMPLE_DORMANT_SENTINEL) {
                 g->map.tiles[y][x] = TILE_TEMPLE_FLOOR;
@@ -5136,7 +5177,7 @@ int game_interact_temple(GameState *g) {
         if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
             continue;
         }
-        TileType tile = g->map.tiles[y][x];
+        TileType tile = quest_tile(g, x, y);
         if (tile == TILE_TEMPLE_ALTAR) {
             toggle_temple_alignment(g);
             return 1;
@@ -5627,6 +5668,7 @@ void game_use_town_portal(GameState *g) {
     thorn_regent_cancel_landing(g, landing_x, landing_y);
     cinder_lord_cancel_landing(g, landing_x, landing_y);
     prism_sovereign_cancel_landing(g, landing_x, landing_y);
+    sun_guardian_cancel_landing(g, landing_x, landing_y);
     if (g->location == LOCATION_CATACOMBS) {
         // Portal wards prevent a saved warning from striking immediately on arrival.
         for (int i = 0; i < g->map.burial_trap_count; i++) {

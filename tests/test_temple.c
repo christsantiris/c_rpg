@@ -288,7 +288,10 @@ void test_temple(void) {
         ASSERT("the closed sanctuary door blocks the boss's counterattack",
             shots.count == 0 && g.player.hp == hp_before);
         g.map.tiles[12][32] = TILE_TEMPLE_MOON_DOOR_OPEN;
-        boss->move_timer = 1;
+        boss->move_timer = 0;
+        action_resolve_enemies_with_projectiles(&g, &shots);
+        ASSERT("an open sanctuary warns before the Guardian fires",
+            shots.count == 0 && boss->move_timer == 1 && g.player.hp == hp_before);
         action_resolve_enemies_with_projectiles(&g, &shots);
         ASSERT("an open sanctuary gives the boss a visible firing path",
             shots.count > 0 && shots.shots[0].type ==

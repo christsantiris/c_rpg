@@ -12,6 +12,7 @@
 #include "../game/thorn_regent.h"
 #include "../game/cinder_lord.h"
 #include "../game/prism_sovereign.h"
+#include "../game/sun_guardian.h"
 #include "../game/jail.h"
 #include "../game/town_life.h"
 #include "cJSON.h"
@@ -717,7 +718,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 134);
+    cJSON_AddNumberToObject(root, "save_version", 135);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -753,6 +754,7 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "thorn_regent_reward_pending", g->thorn_regent_reward_pending);
     cJSON_AddNumberToObject(root, "cinder_lord_reward_pending", g->cinder_lord_reward_pending);
     cJSON_AddNumberToObject(root, "prism_sovereign_reward_pending", g->prism_sovereign_reward_pending);
+    cJSON_AddNumberToObject(root, "sun_guardian_reward_state", g->sun_guardian_reward_state);
     cJSON_AddNumberToObject(player, "known_spell_count", g->player.known_spell_count);
     cJSON_AddNumberToObject(player, "player_class",      g->player.player_class);
     cJSON_AddNumberToObject(player, "arrows", g->player.arrows);
@@ -2360,6 +2362,12 @@ int load_game(GameState *g, int slot) {
         return 0;
     }
     cJSON *prism_reward = cJSON_GetObjectItem(root, "prism_sovereign_reward_pending");
+    cJSON *guardian_reward = cJSON_GetObjectItem(root, "sun_guardian_reward_state");
+    g->sun_guardian_reward_state = guardian_reward ? guardian_reward->valueint : 0;
+    if (g->sun_guardian_reward_state < 0 || g->sun_guardian_reward_state > 2) {
+        cJSON_Delete(root);
+        return 0;
+    }
     g->prism_sovereign_reward_pending = prism_reward ? prism_reward->valueint : 0;
     if (g->prism_sovereign_reward_pending < 0 || g->prism_sovereign_reward_pending > 3) {
         cJSON_Delete(root);
@@ -4299,6 +4307,9 @@ int load_game(GameState *g, int slot) {
     }
     if (save_version < 134) {
         prism_sovereign_migrate(g);
+    }
+    if (save_version < 135) {
+        sun_guardian_migrate(g);
     }
     game_migrate_boss_shortcuts(g);
     game_refresh_quest_encounters(g);

@@ -13,6 +13,7 @@
 #include "thorn_regent.h"
 #include "cinder_lord.h"
 #include "prism_sovereign.h"
+#include "sun_guardian.h"
 #include "jail.h"
 #include "town_life.h"
 #include <stdlib.h>
@@ -514,11 +515,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
             g->drowned_queen_reward_state = 1;
         }
         if (type == ENEMY_FALLEN_SUN_GUARDIAN) {
-            if (g->floor_item_count < MAX_FLOOR_ITEMS) {
-                place_gold_drop(g, x, y, gold);
-            } else {
-                award_gold(g, gold);
-            }
+            sun_guardian_award_reward(g);
             game_update_level_progress(g);
             return;
         }
@@ -649,6 +646,7 @@ static int apply_melee_cleave(GameState *g, Enemy *target, int attack, int perce
         damage = catacombs_enemy_damage(g, enemy, damage);
         damage = castle_enemy_damage(g, enemy, damage);
         damage = lich_enemy_damage(g, enemy, damage);
+        damage = sun_guardian_enemy_damage(g, enemy, damage);
         enemy->hp -= damage;
         combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_NOW, enemy->x, enemy->y, damage);
         hits++;
@@ -892,6 +890,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (sun_guardian_has_interaction(g)) {
+        return 1;
+    }
     if (prism_sovereign_has_interaction(g)) {
         return 1;
     }
@@ -1253,6 +1254,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (sun_guardian_interact(g, 0)) {
+            return;
+        }
         if (prism_sovereign_interact(g)) {
             return;
         }
@@ -1360,6 +1364,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_PICK_UP) {
+        if (sun_guardian_interact(g, 1)) {
+            return;
+        }
         if (prism_sovereign_pickup(g)) {
             return;
         }
@@ -1844,6 +1851,7 @@ void action_resolve_player(GameState *g, Action a) {
                         dmg = catacombs_enemy_damage(g, e, dmg);
                         dmg = castle_enemy_damage(g, e, dmg);
                         dmg = lich_enemy_damage(g, e, dmg);
+                        dmg = sun_guardian_enemy_damage(g, e, dmg);
                         e->hp -= dmg;
                         combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_AFTER_PLAYER_SHOT, e->x, e->y, dmg);
                         char msg[MAX_MESSAGE_LEN];
@@ -1928,6 +1936,7 @@ void action_resolve_player(GameState *g, Action a) {
                     dmg = catacombs_enemy_damage(g, e, dmg);
                     dmg = castle_enemy_damage(g, e, dmg);
                     dmg = lich_enemy_damage(g, e, dmg);
+                    dmg = sun_guardian_enemy_damage(g, e, dmg);
                     e->hp -= dmg;
                     combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_AFTER_PLAYER_SHOT, e->x, e->y, dmg);
                     if (e->hp <= 0) {
@@ -2020,6 +2029,7 @@ void action_resolve_player(GameState *g, Action a) {
                 dmg = catacombs_enemy_damage(g, e, dmg);
                 dmg = castle_enemy_damage(g, e, dmg);
                 dmg = lich_enemy_damage(g, e, dmg);
+                dmg = sun_guardian_enemy_damage(g, e, dmg);
                 e->hp -= dmg;
                 combat_feedback_add(g, critical ? FEEDBACK_ENEMY_CRITICAL : FEEDBACK_ENEMY_DAMAGE, FEEDBACK_AFTER_PLAYER_SHOT, e->x, e->y, dmg);
                 char msg[MAX_MESSAGE_LEN];
@@ -2126,6 +2136,7 @@ void action_resolve_player(GameState *g, Action a) {
                 dmg = catacombs_enemy_damage(g, e, dmg);
                 dmg = castle_enemy_damage(g, e, dmg);
                 dmg = lich_enemy_damage(g, e, dmg);
+                dmg = sun_guardian_enemy_damage(g, e, dmg);
                 e->hp -= dmg;
                 combat_feedback_add(g, critical ? FEEDBACK_ENEMY_CRITICAL : FEEDBACK_ENEMY_DAMAGE, FEEDBACK_NOW, e->x, e->y, dmg);
                 int cleave_hits = melee_weapon
@@ -3620,6 +3631,13 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
 
+        if (e->type == ENEMY_FALLEN_SUN_GUARDIAN) {
+            int damage = sun_guardian_tick(g, e, shots);
+            if (damage > 0) {
+                apply_enemy_damage(g, damage, e->boss_attack == GUARDIAN_LANCE ? FEEDBACK_AFTER_ENEMY_SHOT : FEEDBACK_NOW);
+            }
+            continue;
+        }
         if (e->type == ENEMY_PRISM_SOVEREIGN) {
             int damage = prism_sovereign_tick(g, e, shots);
             if (damage > 0) {
@@ -3693,16 +3711,6 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 apply_enemy_damage(g, damage, FEEDBACK_NOW);
             }
             continue;
-        }
-        if (e->type == ENEMY_FALLEN_SUN_GUARDIAN) {
-            int distance = abs_int(g->player.x - e->x) +
-                abs_int(g->player.y - e->y);
-            if (e->hp == e->max_hp && g->player.y > 12) {
-                continue;
-            }
-            if (distance > 16) {
-                continue;
-            }
         }
         if (e->type == ENEMY_POLAR_KRAKEN) {
             polar_kraken_turn(g, e);
@@ -3802,27 +3810,6 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                     (e->type == ENEMY_DJINN ? "Djinn magic bolt" : "Elemental flame")));
                 snprintf(msg, sizeof(msg), "%s: %d dmg", attack, dmg);
                 push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
-            }
-            continue;
-        }
-
-        if (e->type == ENEMY_FALLEN_SUN_GUARDIAN) {
-            if (e->move_timer % 2 == 0) {
-                int phase_bonus = e->hp <= e->max_hp / 2 ? 5 : 0;
-                int dmg = e->attack + phase_bonus - g->player.defense / 2;
-                if (dmg < 6) {
-                    dmg = 6;
-                }
-                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
-                if (dmg > 0) {
-                    char msg[MAX_MESSAGE_LEN];
-                    snprintf(msg, sizeof(msg), "Guardian sunburst: %d dmg", dmg);
-                    push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
-                }
-            } else {
-                push_message(g, e->hp <= e->max_hp / 2
-                    ? "The broken guardian's core flares wildly!"
-                    : "The Fallen Sun Guardian gathers light...");
             }
             continue;
         }
