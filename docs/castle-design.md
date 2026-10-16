@@ -22,7 +22,7 @@ and three appearances of the final boss.
 | 1 | Gatehouse | Two guarded approaches with independent portcullis levers and firing lanes |
 | 2 | Iron Keep | Castellan's two phases, guard detail, finite rally and side portcullis counters |
 | 3 | Forsaken Court | Protected Herald calls a capped three-guard patrol through a marked doorway |
-| 4 | Crown Chapel | Disable two ward pedestals while fighting the Royal Arcanist and his guards |
+| 4 | Crown Chapel | Royal Arcanist's two phases, sequential ward lanes and pedestal counters |
 | 5 | Royal Archives | Shelves narrow sightlines; roaming soldiers and warned fire lanes threaten the approaches |
 | 6 | Throne of No Return | Veyr combines guarded approaches, ward pedestals, a throne-room Herald, fire lanes, and mixed escorts |
 
@@ -94,8 +94,56 @@ resetting damage, exploration, traps or loot. Prior victories remain complete
 and reserve the newly introduced Bulwark once, without repeating gold or XP.
 See [Castellan renderer review and play testing](art-sources/castellan-encounter/README.md).
 
-The Royal Arcanist marks a small area and warns before switching ward barriers.
-Occupied tiles stay open when a barrier closes.
+The Royal Arcanist's **Warded Scholar** phase retains a two-action, five-stone
+diamond blast. At or below half health, **Shattered Liturgy** alternates a
+two-action **Chapel Cross** with a sequence of separately warned ward lanes.
+The cross reaches three stones in each cardinal direction from the locked
+target; its diagonals remain safe. The current warning and recovery finish
+before a health-phase change, and healing cannot reverse the phase.
+
+The west pedestal at **(37,54)** powers a horizontal lane through the player's
+declared row across **x=34..55**. After it resolves, an active east pedestal at
+**(53,54)** declares a new vertical lane through the player's then-current
+column across **y=44..57**. Each lane has its own full two-action warning;
+they never strike simultaneously. A previously spent source is skipped. With
+both sources spent, normal blasts alternate with crosses, so the boss remains
+dangerous and vulnerable. Completing a blast, cross or lane sequence leaves
+one full recovery action. All classes can disable a lane's source during its
+preparation to cancel it and its barrier change, ending the sequence and
+leaving two full counterattack actions after Interact.
+
+The same saved footprint drives warnings and damage. **W2/W1** and **E2/E1**
+identify lanes; plain **2/1** labels blasts and crosses. Gold **C2/C1** and
+**O2/O1** mark planned gate closures and openings. Combined **X2/X1** labels
+indicate both a gate change and a damaging warning on that
+stone. Gate plans lock at declaration; opening cover cannot expose extra
+unwarned cells. Actor- and loot-occupied gates never close. Escape checks account
+for planned closures; a trapped preparation misses and only opens gates.
+Freezing pauses the warning, lane sequence and gate plan together. The HUD
+shows phase, health, attack, remaining actions and recovery.
+
+The Arcanist stays inside the chapel arena. After taking damage or engaging,
+he can answer clear corridor fire at every bow's range with a marked blast or
+cross, so longbows cannot attack an inert boss from a safe approach. Ward lanes
+remain inside the arena. A distant or hidden retreat outside the arena cancels pending warnings;
+ordinary floor travel and castle regrouping retain their existing rules.
+
+Victory preserves **100 gold** and the floor-5 unlock, and reserves **Crown
+Chapel Vestments** in the southeast chest at **(53,56)**. Interact on or beside
+it to collect the rare Mage robes: **+4 defense**, **+45 maximum MP**, and
+**15% spell-cost reduction**. Maximum floor loot and a full inventory cannot
+erase the award. It persists through floor travel, retreat and save/load; a
+claimed, sold or dropped copy never regenerates. Purple cloth, gold trim and
+cyan accents appear in its inventory/equipment icon and equipped player art.
+
+Save version **138** preserves both health phases, all four attack footprints,
+barrier plans, sequence position, warning/recovery timers, freeze, spent wards
+and reward claims in active and cached floors. Existing queued blasts retain
+their timing and small footprint, even at low health. Migration never rebuilds
+the map or resets player position, enemies, loot, exploration, traps or castle
+progress. A historical victory reserves the new Vestments once without
+repeating gold, XP or the boss fight. See the
+[Arcanist renderer review and play testing](art-sources/royal-arcanist-encounter/README.md).
 
 The Gatehouse's east portcullis begins closed; its south portcullis begins open.
 Each lever changes only its own approach. The throne floor repeats this setup.

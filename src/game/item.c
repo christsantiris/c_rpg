@@ -474,6 +474,8 @@ void item_apply_legacy_armor_metadata(Item *item) {
         definition = item_make_enchanter_robes();
     } else if (strcmp(item->name, "Prismweave Robes") == 0) {
         definition = item_make_prismweave_robes();
+    } else if (strcmp(item->name, "Crown Chapel Vestments") == 0) {
+        definition = item_make_crown_chapel_vestments();
     } else if (strcmp(item->name, "Sunwarden Mantle") == 0) {
         definition = item_make_sunwarden_mantle();
     } else if (strcmp(item->name, "Archmage Robes") == 0) {
@@ -727,6 +729,16 @@ Item item_make_archmage_robes(void) {
     set_armor_metadata(&it, ARMOR_FAMILY_ROBE, ITEM_RARITY_RARE,
         ITEM_CLASS_MAGE, ITEM_VISUAL_ARCHMAGE_ROBES);
     return it;
+}
+
+Item item_make_crown_chapel_vestments(void) {
+    Item item = item_make_archmage_robes();
+    strncpy(item.name, "Crown Chapel Vestments", sizeof(item.name) - 1);
+    item.max_mp_bonus = 45;
+    item.spell_cost_reduction_percent = 15;
+    item.value = 1000;
+    item.visual_id = ITEM_VISUAL_CROWN_CHAPEL_VESTMENTS;
+    return item;
 }
 
 Item item_make_gravekeeper_mantle(void) {

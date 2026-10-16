@@ -769,9 +769,9 @@ static void test_castle_floor_tactics(void) {
     game.player.x = 45;
     game.player.y = 53;
     game.player.defense = 0;
-    e->attack_target_x = 45;
-    e->attack_target_y = 53;
-    e->move_timer = 1;
+    e->move_timer = 0;
+    castle_tick(&game);
+    castle_tick(&game);
     ASSERT("active pedestals also strengthen warned boss attacks", castle_tick(&game) == e->attack + 8);
 
     start();

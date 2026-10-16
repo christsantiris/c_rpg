@@ -1,5 +1,6 @@
 #include "castle.h"
 #include "combat_feedback.h"
+#include "royal_arcanist.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -514,6 +515,9 @@ static void arrive(GameState *g, int x, int y) {
             }
         }
         if (castle_attack_marks(&g->map, e, x, y)) {
+            if (e->type == ENEMY_ROYAL_ARCANIST) {
+                royal_arcanist_cancel(e);
+            }
             e->attack_target_x = -1;
             e->attack_target_y = -1;
             e->move_timer = 2;
@@ -711,6 +715,11 @@ static int interaction_at(const GameState *g, int *x, int *y) {
         *y = 55;
         return 1;
     }
+    if (g->level == 4 && g->arcanist_reward_state == 1 && abs(g->player.x - 53) + abs(g->player.y - 56) <= 1) {
+        *x = 53;
+        *y = 56;
+        return 1;
+    }
     for (int i = -1; i < 4; i++) {
         *x = g->player.x + (i < 0 ? 0 : dxs[i]);
         *y = g->player.y + (i < 0 ? 0 : dys[i]);
@@ -747,6 +756,17 @@ int castle_interact(GameState *g) {
     if (tile_at(g, x, y) == TILE_CASTLE_WARD) {
         set_tile(g, x, y, TILE_CASTLE_WARD_SPENT);
         push_message(g, "The pedestal goes dark. Royal ward protection weakens!");
+        royal_arcanist_disable_ward(g, x, y);
+        return 1;
+    }
+    if (g->level == 4 && x == 53 && y == 56) {
+        if (g->inventory_count >= MAX_INVENTORY) {
+            push_message(g, "Inventory full. Crown Chapel Vestments remain reserved in the southeast chapel chest.");
+        } else {
+            g->inventory[g->inventory_count++] = item_make_crown_chapel_vestments();
+            g->arcanist_reward_state = 2;
+            push_message(g, "Crown Chapel Vestments recovered: Mage robes, +4 defense, +45 max MP, 15% spell-cost reduction.");
+        }
         return 1;
     }
     if (g->level == 2 && y == 51 && (x == 37 || x == 53)) {
@@ -823,6 +843,9 @@ int castle_step(GameState *g) {
 }
 
 int castle_attack_marks(const Map *m, const Enemy *e, int x, int y) {
+    if (e->type == ENEMY_ROYAL_ARCANIST) {
+        return royal_arcanist_marks(e, x, y);
+    }
     if (e->type == ENEMY_CASTELLAN) {
         return e->attack_phase != CASTELLAN_RALLY && castle_castellan_marks(e, x, y);
     }
@@ -832,11 +855,11 @@ int castle_attack_marks(const Map *m, const Enemy *e, int x, int y) {
     if (e->type == ENEMY_BELL_HERALD && !e->revived) {
         return 0;
     }
-    if ((e->type == ENEMY_ROYAL_MARKSMAN || e->type == ENEMY_COURT_HEXER || e->type == ENEMY_ROYAL_ARCANIST ||
+    if ((e->type == ENEMY_ROYAL_MARKSMAN || e->type == ENEMY_COURT_HEXER ||
         (e->type == ENEMY_LORD_VEYR && e->attack_phase >= 2)) && !line_clear(m, e->x, e->y, e->attack_target_x, e->attack_target_y)) {
         return 0;
     }
-    int radius = e->type == ENEMY_LORD_VEYR ? (e->attack_phase == 3 ? 2 : e->attack_phase == 2 ? 1 : 0) : e->type == ENEMY_ROYAL_ARCANIST ? 1 : 0;
+    int radius = e->type == ENEMY_LORD_VEYR ? (e->attack_phase == 3 ? 2 : e->attack_phase == 2 ? 1 : 0) : 0;
     return abs(x - e->attack_target_x) + abs(y - e->attack_target_y) <= radius;
 }
 
@@ -870,6 +893,9 @@ static void advance(GameState *g, Enemy *e) {
     for (int d = 0; d < 4; d++) {
         int x = e->x + dxs[d];
         int y = e->y + dys[d];
+        if (e->type == ENEMY_ROYAL_ARCANIST && !boss_arena(x, y)) {
+            continue;
+        }
         if (x < 0 || y < 0 || x >= CASTLE_W || y >= CASTLE_H || distances[y][x] < 0 ||
             (best >= 0 && distances[y][x] >= best) || occupied(g, x, y)) {
             continue;
@@ -987,8 +1013,7 @@ int castle_barrier_warning(const GameState *g, int x, int y) {
     }
     for (int i = 0; i < g->enemy_count; i++) {
         const Enemy *e = &g->enemies[i];
-        if (e->active && e->attack_target_x >= 0 && (e->type == ENEMY_ROYAL_ARCANIST ||
-            (e->type == ENEMY_LORD_VEYR && e->attack_phase >= 2))) {
+        if (royal_arcanist_barrier_change(e, x, y) || (e->active && e->attack_target_x >= 0 && e->type == ENEMY_LORD_VEYR && e->attack_phase >= 2)) {
             return 1;
         }
     }
@@ -1029,8 +1054,11 @@ int castle_tick(GameState *g) {
             continue;
         }
         int distance = abs(g->player.x - e->x) + abs(g->player.y - e->y);
+        int arcanist_range = e->type == ENEMY_ROYAL_ARCANIST && abs(g->player.x - e->x) <= 12 && abs(g->player.y - e->y) <= 12 &&
+            line_clear(&g->map, e->x, e->y, g->player.x, g->player.y);
+        int arcanist_retaliates = arcanist_range && (e->hp < e->max_hp || e->attack_phase > 0);
         // Room-by-room encounters; bosses never pursue outside their arena.
-        if ((e->is_boss && !boss_arena(g->player.x, g->player.y)) || (!e->is_boss && distances[e->y][e->x] > 12)) {
+        if ((e->is_boss && !boss_arena(g->player.x, g->player.y) && !arcanist_retaliates) || (!e->is_boss && distances[e->y][e->x] > 12)) {
             e->attack_target_x = -1;
             e->move_timer = 0;
             if (e->type == ENEMY_CASTELLAN) {
@@ -1038,7 +1066,18 @@ int castle_tick(GameState *g) {
                 e->boss_aux_x = 0;
                 e->revive_timer = 0;
             }
+            if (e->type == ENEMY_ROYAL_ARCANIST) {
+                royal_arcanist_cancel(e);
+            }
             patrol(g, e);
+            continue;
+        }
+        if (e->type == ENEMY_ROYAL_ARCANIST) {
+            if (e->move_timer || arcanist_range) {
+                damage += royal_arcanist_tick(g, e);
+            } else if (distances[e->y][e->x] >= 0) {
+                advance(g, e);
+            }
             continue;
         }
         if (e->move_timer >= 3) {
@@ -1075,7 +1114,7 @@ int castle_tick(GameState *g) {
                 }
                 if (strikes) {
                     int hit = e->attack - g->player.defense;
-                    if (e->type == ENEMY_ROYAL_ARCANIST || e->type == ENEMY_LORD_VEYR) {
+                    if (e->type == ENEMY_LORD_VEYR) {
                         hit += active_wards(g) * 4;
                     }
                     for (int j = 0; j < count; j++) {
@@ -1125,7 +1164,7 @@ int castle_tick(GameState *g) {
                     e->facing_dy = sy;
                 }
                 push_message(g, "The royal attack strikes the marked stones!");
-                if (e->type == ENEMY_ROYAL_ARCANIST || (e->type == ENEMY_LORD_VEYR && e->attack_phase >= 2)) {
+                if (e->type == ENEMY_LORD_VEYR && e->attack_phase >= 2) {
                     change_wards(g);
                 }
             }
@@ -1164,7 +1203,7 @@ int castle_tick(GameState *g) {
                 continue;
             }
         }
-        int ranged = e->type == ENEMY_ROYAL_MARKSMAN || e->type == ENEMY_COURT_HEXER || e->type == ENEMY_ROYAL_ARCANIST ||
+        int ranged = e->type == ENEMY_ROYAL_MARKSMAN || e->type == ENEMY_COURT_HEXER ||
             (e->type == ENEMY_LORD_VEYR && e->hp * 3 <= e->max_hp * 2);
         if ((ranged && distance <= 8 && line_clear(&g->map, e->x, e->y, g->player.x, g->player.y)) ||
             (!ranged && distance <= 2) || (e->type == ENEMY_CASTELLAN && distance <= 6)) {
@@ -1196,7 +1235,7 @@ int castle_tick(GameState *g) {
                     push_message(g, "The formation has no safe escape lane. Castellan's blocked attack will miss.");
                 }
             }
-            e->move_timer = e->type == ENEMY_ROYAL_ARCANIST || (e->type == ENEMY_LORD_VEYR && e->attack_phase == 2) ? 3 :
+            e->move_timer = e->type == ENEMY_LORD_VEYR && e->attack_phase == 2 ? 3 :
                 e->type == ENEMY_LORD_VEYR && e->attack_phase == 3 ? 4 :
                 e->type == ENEMY_CASTELLAN && e->attack_phase == CASTELLAN_SWEEP ? 3 : 1;
             int fx = g->player.x - e->x;
@@ -1251,12 +1290,16 @@ int castle_enemy_damage(const GameState *g, const Enemy *e, int damage) {
 
 void castle_record_death(GameState *g, Enemy *e) {
     if (e->type == ENEMY_CASTELLAN || e->type == ENEMY_ROYAL_ARCANIST) {
-        if (e->type == ENEMY_CASTELLAN && (g->castle_minibosses & 1)) {
+        if (g->castle_minibosses & (e->type == ENEMY_CASTELLAN ? 1 : 2)) {
             return;
         }
         if (e->type == ENEMY_CASTELLAN && !g->castellan_reward_state) {
             g->castellan_reward_state = 1;
             push_message(g, "Castellan's Bulwark awaits in the southeast armory chest. Interact beside it to claim.");
+        }
+        if (e->type == ENEMY_ROYAL_ARCANIST && !g->arcanist_reward_state) {
+            g->arcanist_reward_state = 1;
+            push_message(g, "Crown Chapel Vestments await in the southeast chapel chest. Interact beside it to claim.");
         }
         g->castle_minibosses |= e->type == ENEMY_CASTELLAN ? 1 : 2;
         g->gold += 100;
