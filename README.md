@@ -651,6 +651,26 @@ Below are screenshots of the game in action:
 Build a release executable with `make`, or build and start it with `make run`.
 The executable is written to `build/conr`.
 
+### Browser play and GitHub Pages
+
+The browser build compiles the same C/SDL2 game to WebAssembly, following the
+[Wolfenstein browser build](https://github.com/christsantiris/wolfenstein2026/commit/fc2bd59fc61dcad1221c365d1081a009f196cf4a)
+and its [Pages workflow](https://github.com/christsantiris/wolfenstein2026/commit/a25b666f895b49a70bbd55ec4dc5f9b10b89024a),
+including the [CI build-command correction](https://github.com/christsantiris/wolfenstein2026/commit/e6c8b711048eb36db69b59265cebcbac00b8322d).
+Players need a desktop browser, keyboard and mouse; they do not install the game.
+See [browser build and deployment instructions](docs/browser.md) for local
+preview, GitHub Pages setup and troubleshooting.
+
+Once these changes reach `master`, the **Browser Pages** workflow builds and
+deploys `dist/browser/`. In the repository's **Settings → Pages**, first set
+**Build and deployment → Source** to **GitHub Actions**. After a successful
+deployment, the game will be available at
+[Castle of No Return on Pages](https://christsantiris.github.io/c_rpg/).
+
+Save slots, remapped controls stored in saves, and high scores persist in this
+browser's site storage. Desktop saves are not uploaded or bundled. Clearing
+site data removes browser saves; storage restrictions can make them temporary.
+
 ### Debug interface
 
 To test quest NPCs with every town shortcut already open, run:
