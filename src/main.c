@@ -2,6 +2,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+
+EM_ASYNC_JS(void, browser_next_frame, (void), {
+    await new Promise(function(resolve) {
+        requestAnimationFrame(resolve);
+    });
+});
+#endif
 #include "renderer/renderer.h"
 #include "renderer/viewport.h"
 #include "renderer/landing_renderer.h"
@@ -524,10 +533,11 @@ int main(int argc, char **argv) {
     }
     SDL_SetWindowMinimumSize(window, 600, 240);
 
-    SDL_Renderer *sdl_renderer = SDL_CreateRenderer(
-        window, -1,
-        SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC
-    );
+    Uint32 renderer_flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC;
+#ifdef __EMSCRIPTEN__
+    renderer_flags = SDL_RENDERER_SOFTWARE;
+#endif
+    SDL_Renderer *sdl_renderer = SDL_CreateRenderer(window, -1, renderer_flags);
     if (!sdl_renderer) {
         fprintf(stderr, "SDL_CreateRenderer error: %s\n", SDL_GetError());
         SDL_DestroyWindow(window);
@@ -585,6 +595,9 @@ int main(int argc, char **argv) {
     SDL_Event event;
 
     while (running) {
+#ifdef __EMSCRIPTEN__
+        browser_next_frame();
+#endif
         int animating = player_projectile_animating || player_slide_animating ||
             entry_gate.active || enemy_shots.count > 0 ||
             (screen == SCREEN_PLAYING && game.trail_frames > 0) ||
@@ -606,6 +619,12 @@ int main(int argc, char **argv) {
             game.location == LOCATION_ISLAND ||
             game.location == LOCATION_TEMPLE);
         int has_event = SDL_PollEvent(&event);
+#ifdef __EMSCRIPTEN__
+        // The browser supplies the frame clock; SDL's blocking waits stall it.
+        if (ambient_animating) {
+            needs_redraw = 1;
+        }
+#else
         // Static scenes need no new present until input, exposure, or cursor blink.
         if (!has_event && !needs_redraw && !animating) {
             if (screen == SCREEN_NAME_ENTRY) {
@@ -627,6 +646,7 @@ int main(int argc, char **argv) {
                 has_event = SDL_WaitEventTimeout(&event, IDLE_EVENT_WAIT_MS);
             }
         }
+#endif
         while (has_event) {
             switch (event.type) {
 
@@ -1573,5 +1593,8 @@ int main(int argc, char **argv) {
     SDL_DestroyRenderer(sdl_renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
+#ifdef __EMSCRIPTEN__
+    EM_ASM({ Module.onGameExit(); });
+#endif
     return 0;
 }
