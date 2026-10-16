@@ -8,7 +8,9 @@ set(CMAKE_C_FLAGS_Release "-O2")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
-if(APPLE)
+if(EMSCRIPTEN)
+    # Browser dependencies come from Emscripten ports, not host SDL libraries.
+elseif(APPLE)
     find_package(SDL2 REQUIRED)
     find_library(SDL2_TTF_LIBRARIES SDL2_ttf REQUIRED)
     find_path(SDL2_TTF_INCLUDE_DIRS SDL2/SDL_ttf.h REQUIRED)
@@ -45,6 +47,32 @@ add_executable(conr ${SOURCES})
 target_include_directories(conr PRIVATE src ${SDL2_INCLUDE_DIRS} ${SDL2_TTF_INCLUDE_DIRS} ${SDL2_MIXER_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/external)
 target_link_libraries(conr PRIVATE ${SDL2_LIBRARIES} ${SDL2_TTF_LIBRARIES} ${SDL2_MIXER_LIBRARIES})
 
+if(EMSCRIPTEN)
+    target_compile_options(conr PRIVATE -sUSE_SDL=2 -sUSE_SDL_TTF=2 -sUSE_SDL_MIXER=2)
+    target_link_options(conr PRIVATE
+        -sUSE_SDL=2
+        -sUSE_SDL_TTF=2
+        -sUSE_SDL_MIXER=2
+        "-sSDL2_MIXER_FORMATS=['mp3','ogg']"
+        -sASYNCIFY=1
+        -sASYNCIFY_STACK_SIZE=131072
+        -sSTACK_SIZE=8388608
+        -sALLOW_MEMORY_GROWTH=1
+        -sENVIRONMENT=web
+        "-sEXPORTED_RUNTIME_METHODS=['callMain','FS','IDBFS','addRunDependency','removeRunDependency']"
+        -lidbfs.js
+        --preload-file "${CMAKE_SOURCE_DIR}/assets@/assets"
+        --shell-file "${CMAKE_SOURCE_DIR}/package/browser/shell.html"
+    )
+    set_target_properties(conr PROPERTIES
+        OUTPUT_NAME index
+        SUFFIX .html
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/dist/browser"
+        LINK_DEPENDS "${CMAKE_SOURCE_DIR}/package/browser/shell.html"
+    )
+endif()
+
+if(NOT EMSCRIPTEN)
 add_executable(test_runner ${TEST_SOURCES})
 target_include_directories(test_runner PRIVATE src ${CMAKE_SOURCE_DIR}/external)
 target_compile_definitions(test_runner PRIVATE TEST_BUILD)
@@ -60,3 +88,4 @@ add_custom_target(test
     DEPENDS test_runner
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
+endif()

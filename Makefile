@@ -1,4 +1,4 @@
-.PHONY: all run clean debug test linux sprites
+.PHONY: all run clean debug test linux browser browser-run sprites
 
 all:
 	cmake -B build -DCMAKE_BUILD_TYPE=Release
@@ -13,6 +13,13 @@ dmg:
 
 linux:
 	bash package/linux/build_linux.sh
+
+browser:
+	emcmake cmake -S . -B build/browser -DCMAKE_BUILD_TYPE=Release
+	emmake cmake --build build/browser --target conr
+
+browser-run: browser
+	python3 -m http.server 8000 --bind 127.0.0.1 --directory dist/browser
 
 debug:
 	cmake -B build -DCMAKE_BUILD_TYPE=Debug
