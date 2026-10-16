@@ -15,6 +15,7 @@ typedef struct {
     const char *name;
     const char *area;
     int defeated;
+    const char *trophy;
 } BossJournalEntry;
 
 typedef enum {

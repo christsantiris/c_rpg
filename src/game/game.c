@@ -1464,6 +1464,7 @@ void game_init(GameState *g) {
     g->arcanist_reward_state = 0;
     g->castle_prompt = 0;
     g->game_won = 0;
+    g->crown_of_unbound = 0;
     srand((unsigned)time(NULL));
     g->level = 1;
     g->crownroad_cache.valid = 0;

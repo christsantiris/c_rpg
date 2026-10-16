@@ -444,6 +444,7 @@ static void test_castle_wide_warning(void) {
     game.player.y = 53;
     e->hp = e->max_hp / 2;
     e->move_timer = 0;
+    e->attack_phase = 0; // Start a new phase fixture; real phases never reverse after healing.
     action_resolve_enemies(&game);
     e->hp = e->max_hp / 4;
     ASSERT("health phase changes cannot widen pending warning", e->attack_phase == 2 && !castle_attack_marks(&game.map, e, 45, 55));

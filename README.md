@@ -366,6 +366,14 @@ The guaranteed **Crown Chapel Vestments** (+4 defense, +45 maximum MP, 15% cheap
 spells, Mage) wait in the chapel's southeast chest until claimed. See the
 [Royal Arcanist play-test guide and renderer previews](docs/art-sources/royal-arcanist-encounter/README.md).
 
+Lord Veyr's finale combines a warned **Throne Advance**, ward-linked magic and
+three-action **Unbound Crown** attacks that alternate with separately warned
+throne fire. Disabling both pedestals gives two recovery actions after a crown.
+Victory automatically awards the permanent **Crown of the Unbound** trophy,
+recorded in the boss journal, ending and Hall of Fame alongside the original
+10,000-score bonus. The victory screen's journal key opens the completed boss
+record. See the [Veyr play-test guide and renderer previews](docs/art-sources/lord-veyr-encounter/README.md).
+
 A townsman on the castle grounds secretly reports you to the Royal Guards when
 spoken to with **T**, causing a one-time arrest in the new **Royal Jail**. Speak
 to fellow prisoner **Tomas** with **T**, then **Y** to accept **Guide Tomas

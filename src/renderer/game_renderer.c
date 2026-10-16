@@ -3774,6 +3774,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_red_dragon_status(r, g, v);
     castle_draw_castellan_status(r, g, v);
     castle_draw_arcanist_status(r, g, v);
+    castle_draw_veyr_status(r, g, v);
 
     // Draw info panel
     info_panel_draw(r, g);
