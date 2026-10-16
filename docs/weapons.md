@@ -137,6 +137,7 @@ in melee.
 | Magic Plate | +11 | Warrior | 4 | 1,200 | +50 maximum HP |
 | Shadow Armor | +7 | Rogue | 4 | 1,100 | 15% evasion |
 | Archmage Robes | +4 | Mage | 4 | 1,250 | +60 maximum MP, 20% cheaper spells |
+| Crown Chapel Vestments | +4 | Mage | Boss | 1,000 | +45 maximum MP, 15% cheaper spells; Royal Arcanist reward |
 | Necromancer's Cloak | +5 | Rogue | Boss | 450 | 8% evasion; Necromancer reward |
 | Tidecaller Robes | +3 | Mage | Boss | 500 | +30 maximum MP, 8% cheaper spells; Drowned Queen reward |
 | Dragon Scale Mantle | +4 | All | Boss | 1,400 | +20 maximum HP; Red Dragon reward |

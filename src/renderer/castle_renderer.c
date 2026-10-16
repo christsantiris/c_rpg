@@ -2,6 +2,7 @@
 #include "sprites.h"
 #include "world_props.h"
 #include "info_panel.h"
+#include "../game/royal_arcanist.h"
 
 static void rect(Renderer *r, int x, int y, int w, int h, SDL_Color c) {
     SDL_SetRenderDrawColor(r->sdl, c.r, c.g, c.b, c.a);
@@ -111,6 +112,15 @@ void castle_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, in
     if (g->level == 2 && tile == TILE_CASTLE_LEVER && y == 51) {
         renderer_draw_text(r, x == 37 ? "WEST: A" : "EAST: A", px - 10, py - 12, (SDL_Color){255, 224, 160, 255}, r->font_tiny);
     }
+    if (g->level == 4 && y == 54 && (x == 37 || x == 53) && (tile == TILE_CASTLE_WARD || tile == TILE_CASTLE_WARD_SPENT)) {
+        char text[16];
+        snprintf(text, sizeof(text), "%s: %s", x == 37 ? "WEST" : "EAST", tile == TILE_CASTLE_WARD ? "A" : "OFF");
+        renderer_draw_text(r, text, px - 16, py - 12, (SDL_Color){174, 236, 245, 255}, r->font_tiny);
+    }
+    if (g->level == 4 && x == 53 && y == 56 && g->arcanist_reward_state == 1) {
+        draw_world_prop(r, sx, sy, PROP_CHEST, (SDL_Color){163, 140, 214, 255});
+        renderer_draw_text(r, "VESTMENTS: A", px - 28, py - 12, (SDL_Color){234, 218, 255, 255}, r->font_tiny);
+    }
 }
 
 void castle_draw_enemy(Renderer *r, int sx, int sy, const Enemy *e) {
@@ -130,6 +140,8 @@ void castle_draw_enemy(Renderer *r, int sx, int sy, const Enemy *e) {
     if (texture) {
         if (e->type == ENEMY_CASTELLAN && e->boss_attack == 2) {
             SDL_SetTextureColorMod(texture, 255, 203, 185);
+        } else if (e->type == ENEMY_ROYAL_ARCANIST && e->attack_phase == 2) {
+            SDL_SetTextureColorMod(texture, 190, 224, 255);
         }
         SDL_RenderCopy(r->sdl, texture, &source, &destination);
         SDL_SetTextureColorMod(texture, 255, 255, 255);
@@ -162,7 +174,10 @@ void castle_draw_warnings(Renderer *r, const GameState *g, const Viewport *v) {
             for (int i = 0; i < g->enemy_count; i++) {
                 const Enemy *e = &g->enemies[i];
                 int rally = e->attack_phase == CASTELLAN_RALLY && castle_castellan_marks(e, x, y);
-                if (castle_attack_marks(&g->map, e, x, y) || rally || castle_barrier_warning(g, x, y)) {
+                int barrier = royal_arcanist_barrier_change(e, x, y);
+                int old_barrier = e->type == ENEMY_LORD_VEYR && castle_barrier_warning(g, x, y);
+                int attack_marks = castle_attack_marks(&g->map, e, x, y);
+                if (attack_marks || rally || barrier || old_barrier) {
                     if (!map_is_explored(&g->map, x, y)) {
                         continue;
                     }
@@ -175,6 +190,17 @@ void castle_draw_warnings(Renderer *r, const GameState *g, const Viewport *v) {
                         char text[8];
                         snprintf(text, sizeof(text), "%s%d", rally ? "G" : "", e->move_timer >= 3 ? e->move_timer - 1 : 1);
                         renderer_draw_text(r, text, tile.x + (rally ? 3 : 8), tile.y + 4, (SDL_Color){255, 231, 174, 255}, r->font_tiny);
+                    } else if (e->type == ENEMY_ROYAL_ARCANIST) {
+                        char text[8];
+                        int turns = e->move_timer >= 3 ? e->move_timer - 1 : 1;
+                        const char *label = barrier && attack_marks ? "X" : barrier ? (barrier < 0 ? "C" : "O") :
+                            e->boss_attack == ARCANIST_WEST_LANE ? "W" : e->boss_attack == ARCANIST_EAST_LANE ? "E" : "";
+                        snprintf(text, sizeof(text), "%s%d", label, turns);
+                        SDL_SetRenderDrawColor(r->sdl, barrier ? 248 : 134, barrier ? 199 : 226, barrier ? 104 : 247, 255);
+                        SDL_RenderDrawRect(r->sdl, &tile);
+                        int inset = *label ? 3 : 8;
+                        rect(r, tile.x + inset - 1, tile.y + 3, *label ? 18 : 10, 10, (SDL_Color){32, 27, 47, 255});
+                        renderer_draw_text(r, text, tile.x + inset, tile.y + 4, (SDL_Color){255, 241, 196, 255}, r->font_tiny);
                     }
                     break;
                 }
@@ -182,6 +208,48 @@ void castle_draw_warnings(Renderer *r, const GameState *g, const Viewport *v) {
         }
     }
     SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_NONE);
+}
+
+void castle_draw_arcanist_status(Renderer *r, const GameState *g, const Viewport *v) {
+    if (g->location != LOCATION_CASTLE_INTERIOR || g->level != 4) {
+        return;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *e = &g->enemies[i];
+        if (!e->active || e->type != ENEMY_ROYAL_ARCANIST || e->max_hp <= 0 || !viewport_is_visible(v, e->x, e->y) || !map_is_explored(&g->map, e->x, e->y)) {
+            continue;
+        }
+        int width = r->screen_w - INFO_PANEL_W - 16;
+        if (width > 380) {
+            width = 380;
+        }
+        if (width < 160) {
+            return;
+        }
+        int x = (r->screen_w - INFO_PANEL_W - width) / 2;
+        int top = x < SWAMP_MAP_W / 2 + 12 ? SWAMP_MAP_H / 2 + 16 : 8;
+        rect(r, x, top, width, 78, (SDL_Color){27, 26, 47, 255});
+        char text[80];
+        if (width < 300) {
+            snprintf(text, sizeof(text), "ARCANIST: PHASE %d", e->attack_phase == 2 ? 2 : 1);
+        } else {
+            snprintf(text, sizeof(text), "ROYAL ARCANIST: %s", e->attack_phase == 2 ? "SHATTERED LITURGY" : "WARDED SCHOLAR");
+        }
+        renderer_draw_text(r, text, x + 10, top + 8, (SDL_Color){220, 225, 255, 255}, r->font_tiny);
+        rect(r, x + 10, top + 23, width - 20, 8, (SDL_Color){59, 43, 81, 255});
+        rect(r, x + 10, top + 23, (width - 20) * e->hp / e->max_hp, 8, (SDL_Color){153, 173, 228, 255});
+        if (e->attack_target_x >= 0) {
+            static const char *attacks[] = {"PREPARING", "WARDED BLAST", "CHAPEL CROSS", "WEST WARD LANE", "EAST WARD LANE"};
+            int attack = e->boss_attack >= ARCANIST_BLAST && e->boss_attack <= ARCANIST_EAST_LANE ? e->boss_attack : 0;
+            snprintf(text, sizeof(text), "%s: %d%s", !e->boss_aux_x && !e->boss_aux_y ? "BLOCKED ATTACK" : attacks[attack], e->move_timer >= 3 ? e->move_timer - 1 : 1, e->frozen_turns > 0 ? " FROZEN" : "");
+        } else if (e->move_timer == 2) {
+            snprintf(text, sizeof(text), "RECOVERY: %d%s", 1 + e->revive_timer, e->frozen_turns > 0 ? " FROZEN" : "");
+        } else {
+            snprintf(text, sizeof(text), "PREPARING ATTACK");
+        }
+        renderer_draw_text(r, text, x + 10, top + 38, (SDL_Color){178, 232, 245, 255}, r->font_tiny);
+        renderer_draw_text(r, width < 300 ? "W/E PEDESTALS: A" : "DISABLE THE LINKED W/E PEDESTAL: A", x + 10, top + 55, (SDL_Color){218, 201, 240, 255}, r->font_tiny);
+    }
 }
 
 void castle_draw_castellan_status(Renderer *r, const GameState *g, const Viewport *v) {

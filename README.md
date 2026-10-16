@@ -359,6 +359,13 @@ actions. His guaranteed **Castellan's Bulwark** (+8 defense, 30% block, Warrior)
 waits in Iron Keep's southeast armory chest until claimed. See the
 [Castellan play-test guide and renderer previews](docs/art-sources/castellan-encounter/README.md).
 
+The Royal Arcanist shifts from **Warded Scholar** to **Shattered Liturgy** at
+half health, adding fixed cross blasts and separately warned west/east ward
+lanes. Disable a lane's pedestal to interrupt it for two recovery actions.
+The guaranteed **Crown Chapel Vestments** (+4 defense, +45 maximum MP, 15% cheaper
+spells, Mage) wait in the chapel's southeast chest until claimed. See the
+[Royal Arcanist play-test guide and renderer previews](docs/art-sources/royal-arcanist-encounter/README.md).
+
 A townsman on the castle grounds secretly reports you to the Royal Guards when
 spoken to with **T**, causing a one-time arrest in the new **Royal Jail**. Speak
 to fellow prisoner **Tomas** with **T**, then **Y** to accept **Guide Tomas

@@ -1488,7 +1488,11 @@ static void player_body_palette(SDL_Color *palette, PlayerClass player_class, co
         }
     } else if (armor && armor->armor_family == ARMOR_FAMILY_ROBE) {
         suit = (SDL_Color){46, 88, 168, 255};
-        if (armor->visual_id == ITEM_VISUAL_PRISMWEAVE_ROBES) {
+        if (armor->visual_id == ITEM_VISUAL_CROWN_CHAPEL_VESTMENTS) {
+            suit = (SDL_Color){100, 64, 135, 255};
+            palette['G'] = (SDL_Color){232, 193, 106, 255};
+            palette['T'] = (SDL_Color){255, 230, 172, 255};
+        } else if (armor->visual_id == ITEM_VISUAL_PRISMWEAVE_ROBES) {
             suit = (SDL_Color){91, 107, 173, 255};
         } else if (armor->visual_id == ITEM_VISUAL_ARCHMAGE_ROBES) {
             suit = (SDL_Color){112, 68, 178, 255};

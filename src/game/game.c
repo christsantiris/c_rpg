@@ -1461,6 +1461,7 @@ void game_init(GameState *g) {
     memset(g->castle_fire_phase, 0, sizeof(g->castle_fire_phase));
     g->castle_minibosses = 0;
     g->castellan_reward_state = 0;
+    g->arcanist_reward_state = 0;
     g->castle_prompt = 0;
     g->game_won = 0;
     srand((unsigned)time(NULL));
