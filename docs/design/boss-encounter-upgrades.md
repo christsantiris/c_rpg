@@ -4,9 +4,10 @@ Status: **Approved. Round 1 begins with the Lich King; pause after each boss for
 
 The Lich King, Forest Necromancer, Mountain Goblin King, Drowned Queen,
 Swamp Demon, Minotaur, Grave Marshal, Desert Pharaoh, Thorn Regent, Cinder
-Lord, Prism Sovereign, Fallen Sun Guardian, Red Dragon, Castellan and Royal
-Arcanist implementations are complete. Lord Veyr remains pending. Pause here for
-review and a manual commit before Lord Veyr.
+Lord, Prism Sovereign, Fallen Sun Guardian, Red Dragon, Castellan, Royal Arcanist
+and Lord Veyr implementations are complete. All 16 approved updates are now
+implemented alongside the existing Polar Kraken. Pause for review and a manual
+commit before further encounter changes or balance tuning.
 
 The boss journal defines 17 current encounters. This proposal covers the 16
 other than the recently updated Polar Kraken. The Kraken's fixed warnings,

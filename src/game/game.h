@@ -182,6 +182,7 @@ typedef struct {
     int arcanist_reward_state; // 0: not earned, 1: reserved in Crown Chapel, 2: claimed.
     int castle_prompt;
     int game_won;
+    int crown_of_unbound; // Permanent victory trophy; no inventory slot required.
     int jail_quest_state; // 0: not arrested, 1: jailed, 2: escorting, 3: rewarded.
     int prisoner_x;
     int prisoner_y;

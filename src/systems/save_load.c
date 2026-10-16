@@ -2,6 +2,7 @@
 #include "../game/game.h"
 #include "../game/castle.h"
 #include "../game/royal_arcanist.h"
+#include "../game/lord_veyr.h"
 #include "../game/lich.h"
 #include "../game/necromancer.h"
 #include "../game/goblin_king.h"
@@ -732,7 +733,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 138);
+    cJSON_AddNumberToObject(root, "save_version", 139);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -1241,6 +1242,7 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(castle, "arcanist_reward", g->arcanist_reward_state);
     cJSON_AddNumberToObject(castle, "prompt", g->castle_prompt);
     cJSON_AddNumberToObject(castle, "won", g->game_won);
+    cJSON_AddNumberToObject(castle, "crown_of_unbound", g->crown_of_unbound);
     cJSON *floors = cJSON_CreateArray();
     for (int i = 0; i < CASTLE_DEPTH; i++) {
         const LevelCache *cache = &g->castle_cache[i];
@@ -2829,6 +2831,7 @@ int load_game(GameState *g, int slot) {
     g->arcanist_reward_state = 0;
     g->castle_prompt = 0;
     g->game_won = 0;
+    g->crown_of_unbound = 0;
     cJSON *castle = cJSON_GetObjectItem(root, "castle");
     if (castle) {
         cJSON *minis = cJSON_GetObjectItem(castle, "minibosses");
@@ -2836,7 +2839,13 @@ int load_game(GameState *g, int slot) {
         cJSON *arcanist_reward = cJSON_GetObjectItem(castle, "arcanist_reward");
         cJSON *prompt = cJSON_GetObjectItem(castle, "prompt");
         cJSON *won = cJSON_GetObjectItem(castle, "won");
+        cJSON *crown = cJSON_GetObjectItem(castle, "crown_of_unbound");
         cJSON *floors = cJSON_GetObjectItem(castle, "floors");
+        if ((save_version >= 139 || crown) && (!cJSON_IsNumber(crown) || crown->valuedouble != crown->valueint || crown->valueint < 0 || crown->valueint > 1)) {
+            cJSON_Delete(root);
+            return 0;
+        }
+        g->crown_of_unbound = crown ? crown->valueint : 0;
         if ((save_version >= 137 || reward) && (!cJSON_IsNumber(reward) || reward->valuedouble != reward->valueint || reward->valueint < 0 || reward->valueint > 2)) {
             cJSON_Delete(root);
             return 0;
@@ -4356,6 +4365,9 @@ int load_game(GameState *g, int slot) {
     }
     if (save_version < 138) {
         royal_arcanist_migrate(g);
+    }
+    if (save_version < 139) {
+        lord_veyr_migrate(g);
     }
     game_migrate_boss_shortcuts(g);
     game_refresh_quest_encounters(g);

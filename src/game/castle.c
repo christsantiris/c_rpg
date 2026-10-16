@@ -1,6 +1,7 @@
 #include "castle.h"
 #include "combat_feedback.h"
 #include "royal_arcanist.h"
+#include "lord_veyr.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -366,6 +367,17 @@ static void spawn_detail(GameState *g) {
     }
 }
 
+void castle_summon_guard(GameState *g, EnemyType type, int x, int y) {
+    if (type != ENEMY_IRON_WARDEN && type != ENEMY_ROYAL_MARKSMAN) {
+        return;
+    }
+    Enemy *guard = add_enemy(g, type, x, y);
+    if (guard) {
+        guard->experience = 0;
+        guard->revived = 1;
+    }
+}
+
 void castle_spawn(GameState *g) {
     g->enemy_count = 0;
     for (int i = 1; i < 5; i++) {
@@ -517,6 +529,9 @@ static void arrive(GameState *g, int x, int y) {
         if (castle_attack_marks(&g->map, e, x, y)) {
             if (e->type == ENEMY_ROYAL_ARCANIST) {
                 royal_arcanist_cancel(e);
+            }
+            if (e->type == ENEMY_LORD_VEYR) {
+                lord_veyr_cancel(g, e);
             }
             e->attack_target_x = -1;
             e->attack_target_y = -1;
@@ -757,6 +772,7 @@ int castle_interact(GameState *g) {
         set_tile(g, x, y, TILE_CASTLE_WARD_SPENT);
         push_message(g, "The pedestal goes dark. Royal ward protection weakens!");
         royal_arcanist_disable_ward(g, x, y);
+        lord_veyr_disable_ward(g, x, y);
         return 1;
     }
     if (g->level == 4 && x == 53 && y == 56) {
@@ -843,6 +859,9 @@ int castle_step(GameState *g) {
 }
 
 int castle_attack_marks(const Map *m, const Enemy *e, int x, int y) {
+    if (e->type == ENEMY_LORD_VEYR) {
+        return lord_veyr_marks(e, x, y);
+    }
     if (e->type == ENEMY_ROYAL_ARCANIST) {
         return royal_arcanist_marks(e, x, y);
     }
@@ -855,12 +874,10 @@ int castle_attack_marks(const Map *m, const Enemy *e, int x, int y) {
     if (e->type == ENEMY_BELL_HERALD && !e->revived) {
         return 0;
     }
-    if ((e->type == ENEMY_ROYAL_MARKSMAN || e->type == ENEMY_COURT_HEXER ||
-        (e->type == ENEMY_LORD_VEYR && e->attack_phase >= 2)) && !line_clear(m, e->x, e->y, e->attack_target_x, e->attack_target_y)) {
+    if ((e->type == ENEMY_ROYAL_MARKSMAN || e->type == ENEMY_COURT_HEXER) && !line_clear(m, e->x, e->y, e->attack_target_x, e->attack_target_y)) {
         return 0;
     }
-    int radius = e->type == ENEMY_LORD_VEYR ? (e->attack_phase == 3 ? 2 : e->attack_phase == 2 ? 1 : 0) : 0;
-    return abs(x - e->attack_target_x) + abs(y - e->attack_target_y) <= radius;
+    return x == e->attack_target_x && y == e->attack_target_y;
 }
 
 static int distances[MAP_H][MAP_W];
@@ -893,7 +910,7 @@ static void advance(GameState *g, Enemy *e) {
     for (int d = 0; d < 4; d++) {
         int x = e->x + dxs[d];
         int y = e->y + dys[d];
-        if (e->type == ENEMY_ROYAL_ARCANIST && !boss_arena(x, y)) {
+        if ((e->type == ENEMY_ROYAL_ARCANIST || e->type == ENEMY_LORD_VEYR) && !boss_arena(x, y)) {
             continue;
         }
         if (x < 0 || y < 0 || x >= CASTLE_W || y >= CASTLE_H || distances[y][x] < 0 ||
@@ -965,12 +982,27 @@ int castle_fire_warning(const GameState *g, int x, int y) {
         return 0;
     }
     int phase = g->castle_fire_phase[g->level - 1];
+    if (g->level == 6) {
+        for (int i = 0; i < g->enemy_count; i++) {
+            const Enemy *e = &g->enemies[i];
+            if (e->active && e->type == ENEMY_LORD_VEYR) {
+                return (phase == 1 || phase == 2) && e->boss_attack == VEYR_FIRE && lord_veyr_marks(e, x, y);
+            }
+        }
+    }
     return (phase == 1 || phase == 2) && tile_at(g, x, y) == TILE_CASTLE_FIRE_RUNE;
 }
 
 static int tick_fire(GameState *g) {
     if (g->level != 5 && g->level != 6) {
         return 0;
+    }
+    if (g->level == 6) {
+        for (int i = 0; i < g->enemy_count; i++) {
+            if (g->enemies[i].active && g->enemies[i].type == ENEMY_LORD_VEYR) {
+                return 0;
+            }
+        }
     }
     int *phase = &g->castle_fire_phase[g->level - 1];
     *phase = (*phase + 1) % 4;
@@ -1013,25 +1045,11 @@ int castle_barrier_warning(const GameState *g, int x, int y) {
     }
     for (int i = 0; i < g->enemy_count; i++) {
         const Enemy *e = &g->enemies[i];
-        if (royal_arcanist_barrier_change(e, x, y) || (e->active && e->attack_target_x >= 0 && e->type == ENEMY_LORD_VEYR && e->attack_phase >= 2)) {
+        if (royal_arcanist_barrier_change(e, x, y) || lord_veyr_barrier_change(e, x, y)) {
             return 1;
         }
     }
     return 0;
-}
-
-static void change_wards(GameState *g) {
-    for (int y = 47; y <= 49; y++) {
-        for (int x = 40; x <= 50; x += 10) {
-            TileType tile = tile_at(g, x, y);
-            if (tile == TILE_CASTLE_GATE) {
-                set_tile(g, x, y, TILE_CASTLE_GATE_OPEN);
-            } else if (tile == TILE_CASTLE_GATE_OPEN && !occupied(g, x, y)) {
-                set_tile(g, x, y, TILE_CASTLE_GATE);
-            }
-        }
-    }
-    push_message(g, "Royal commands shift the warned barriers. Clear routes remain open.");
 }
 
 int castle_tick(GameState *g) {
@@ -1040,6 +1058,9 @@ int castle_tick(GameState *g) {
     }
     if (castle_step(g)) {
         return 0;
+    }
+    if (g->level == 6 && g->castle_fire_phase[5] == 3) {
+        g->castle_fire_phase[5] = 0;
     }
     build_distances(g);
     int damage = 0;
@@ -1057,8 +1078,11 @@ int castle_tick(GameState *g) {
         int arcanist_range = e->type == ENEMY_ROYAL_ARCANIST && abs(g->player.x - e->x) <= 12 && abs(g->player.y - e->y) <= 12 &&
             line_clear(&g->map, e->x, e->y, g->player.x, g->player.y);
         int arcanist_retaliates = arcanist_range && (e->hp < e->max_hp || e->attack_phase > 0);
+        int veyr_range = e->type == ENEMY_LORD_VEYR && abs(g->player.x - e->x) <= 12 && abs(g->player.y - e->y) <= 12 &&
+            line_clear(&g->map, e->x, e->y, g->player.x, g->player.y);
+        int veyr_retaliates = veyr_range && (e->hp < e->max_hp || e->attack_phase > 0);
         // Room-by-room encounters; bosses never pursue outside their arena.
-        if ((e->is_boss && !boss_arena(g->player.x, g->player.y) && !arcanist_retaliates) || (!e->is_boss && distances[e->y][e->x] > 12)) {
+        if ((e->is_boss && !boss_arena(g->player.x, g->player.y) && !arcanist_retaliates && !veyr_retaliates) || (!e->is_boss && distances[e->y][e->x] > 12)) {
             e->attack_target_x = -1;
             e->move_timer = 0;
             if (e->type == ENEMY_CASTELLAN) {
@@ -1069,12 +1093,23 @@ int castle_tick(GameState *g) {
             if (e->type == ENEMY_ROYAL_ARCANIST) {
                 royal_arcanist_cancel(e);
             }
+            if (e->type == ENEMY_LORD_VEYR) {
+                lord_veyr_cancel(g, e);
+            }
             patrol(g, e);
             continue;
         }
         if (e->type == ENEMY_ROYAL_ARCANIST) {
             if (e->move_timer || arcanist_range) {
                 damage += royal_arcanist_tick(g, e);
+            } else if (distances[e->y][e->x] >= 0) {
+                advance(g, e);
+            }
+            continue;
+        }
+        if (e->type == ENEMY_LORD_VEYR) {
+            if (e->move_timer || veyr_range) {
+                damage += lord_veyr_tick(g, e);
             } else if (distances[e->y][e->x] >= 0) {
                 advance(g, e);
             }
@@ -1114,9 +1149,6 @@ int castle_tick(GameState *g) {
                 }
                 if (strikes) {
                     int hit = e->attack - g->player.defense;
-                    if (e->type == ENEMY_LORD_VEYR) {
-                        hit += active_wards(g) * 4;
-                    }
                     for (int j = 0; j < count; j++) {
                         const Enemy *hexer = &g->enemies[j];
                         if (hexer->active && hexer->type == ENEMY_COURT_HEXER && hexer != e &&
@@ -1164,9 +1196,6 @@ int castle_tick(GameState *g) {
                     e->facing_dy = sy;
                 }
                 push_message(g, "The royal attack strikes the marked stones!");
-                if (e->type == ENEMY_LORD_VEYR && e->attack_phase >= 2) {
-                    change_wards(g);
-                }
             }
             e->attack_target_x = -1;
             e->attack_target_y = -1;
@@ -1203,19 +1232,12 @@ int castle_tick(GameState *g) {
                 continue;
             }
         }
-        int ranged = e->type == ENEMY_ROYAL_MARKSMAN || e->type == ENEMY_COURT_HEXER ||
-            (e->type == ENEMY_LORD_VEYR && e->hp * 3 <= e->max_hp * 2);
+        int ranged = e->type == ENEMY_ROYAL_MARKSMAN || e->type == ENEMY_COURT_HEXER;
         if ((ranged && distance <= 8 && line_clear(&g->map, e->x, e->y, g->player.x, g->player.y)) ||
             (!ranged && distance <= 2) || (e->type == ENEMY_CASTELLAN && distance <= 6)) {
             e->attack_target_x = g->player.x;
             e->attack_target_y = g->player.y;
-            e->attack_phase = e->type == ENEMY_LORD_VEYR ? (e->hp * 3 > e->max_hp * 2 ? 1 : e->hp * 3 > e->max_hp ? 2 : 3) : 0;
-            if (e->type == ENEMY_LORD_VEYR && !e->revived) {
-                e->revived = 1;
-                add_enemy(g, ENEMY_IRON_WARDEN, 42, 46);
-                add_enemy(g, ENEMY_ROYAL_MARKSMAN, 48, 46);
-                push_message(g, "Veyr commands his last two royal guards to defend the throne!");
-            }
+            e->attack_phase = 0;
             if (e->type == ENEMY_CASTELLAN) {
                 int sx = (g->player.x > e->x) - (g->player.x < e->x);
                 int sy = (g->player.y > e->y) - (g->player.y < e->y);
@@ -1235,9 +1257,7 @@ int castle_tick(GameState *g) {
                     push_message(g, "The formation has no safe escape lane. Castellan's blocked attack will miss.");
                 }
             }
-            e->move_timer = e->type == ENEMY_LORD_VEYR && e->attack_phase == 2 ? 3 :
-                e->type == ENEMY_LORD_VEYR && e->attack_phase == 3 ? 4 :
-                e->type == ENEMY_CASTELLAN && e->attack_phase == CASTELLAN_SWEEP ? 3 : 1;
+            e->move_timer = e->type == ENEMY_CASTELLAN && e->attack_phase == CASTELLAN_SWEEP ? 3 : 1;
             int fx = g->player.x - e->x;
             int fy = g->player.y - e->y;
             e->facing_dx = abs(fx) >= abs(fy) ? (fx > 0 ? 1 : -1) : 0;
@@ -1262,7 +1282,7 @@ int castle_enemy_damage(const GameState *g, const Enemy *e, int damage) {
     if (g->location != LOCATION_CASTLE_INTERIOR) {
         return damage;
     }
-    if ((e->type == ENEMY_IRON_WARDEN || e->type == ENEMY_CASTELLAN || (e->type == ENEMY_LORD_VEYR && e->hp * 3 > e->max_hp * 2)) && e->move_timer != 2 && !e->frozen_turns) {
+    if ((e->type == ENEMY_IRON_WARDEN || e->type == ENEMY_CASTELLAN || (e->type == ENEMY_LORD_VEYR && e->attack_phase <= 1)) && e->move_timer != 2 && !e->frozen_turns) {
         int front = (g->player.x - e->x) * e->facing_dx + (g->player.y - e->y) * e->facing_dy > 0;
         if (front) {
             damage /= 2;
@@ -1305,11 +1325,16 @@ void castle_record_death(GameState *g, Enemy *e) {
         g->gold += 100;
         push_message(g, "Miniboss defeated! The way to the next castle floor is open.");
     } else if (e->type == ENEMY_LORD_VEYR) {
+        if (g->game_won) {
+            return;
+        }
+        g->crown_of_unbound = 1;
+        lord_veyr_cancel(g, e);
         g->game_won = 1;
         g->defeated_bosses |= 1 << LOCATION_CASTLE_INTERIOR;
         g->score += 10000;
         g->portal_active = 0;
-        push_message(g, "Veyr falls. The broken oath is undone. You have won!");
+        push_message(g, "Veyr falls! Crown of the Unbound earned. The broken oath is undone. You have won!");
     } else if (e->experience > 0) {
         g->gold += 5;
     }

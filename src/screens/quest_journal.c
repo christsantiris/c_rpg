@@ -296,6 +296,7 @@ int quest_journal_get_boss(const GameState *g, int index, BossJournalEntry *entr
     }
     entry->name = names[index];
     entry->area = areas[index];
+    entry->trophy = index == 16 && g->crown_of_unbound ? "Crown of the Unbound" : NULL;
     entry->defeated = index == 14 ? !!(g->castle_minibosses & 1) : index == 15 ? !!(g->castle_minibosses & 2) :
         (g->defeated_bosses & (1 << regions[index])) != 0;
     return 1;

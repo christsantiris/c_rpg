@@ -172,13 +172,73 @@ Cover blocks ranged attacks even if the barrier closes after the warning starts.
 
 Lord Veyr has one continuous health bar and three phases: Armored Ruler above
 two-thirds health, Broken Throne down to one-third, and Unbound Crown below it.
-His frontal armor gives way to magic with expanding attack areas and changing
-wards. The latter phases allow two and three movement turns to dodge.
-Crossing a health threshold does not enlarge an already announced attack.
-Veyr calls at most two escorts per attempt: a Warden and a Marksman. His
-throne-room Herald can separately call one patrol of up to three guards through
-the marked doorway. New reinforcements act on the following turn. Defeating him immediately records
-victory, stops combat, and opens the ending and Hall of Fame flow.
+Health, base attack, defense, XP and the 10,000-point victory bonus remain.
+Phases latch forward and wait for queued attacks and recovery to finish.
+
+- **Armored Ruler:** frontal armor halves incoming damage before ward protection.
+  A fixed close Oathblade Swing alternates with a **Throne Advance**, moving up
+  to three marked cardinal stones. These give one action of warning; the first
+  attack is extended to at least two when announcing escorts. Sidestep the
+  advance and flank during recovery. Veyr never moves onto actors or outside
+  the arena. Corridor fire can provoke a two-action Royal Edict rather than
+  allowing ranged attacks against an inert boss; ordinary cover still blocks
+  incoming shots and engagement.
+- **Broken Throne:** armor gives way to a two-action five-stone Royal Edict,
+  then separately prepared west/east ward lanes. West marks a fixed row across
+  x=34..55; east marks a fixed column across y=44..57. Spent sources are skipped.
+  Disabling a prepared lane's pedestal cancels its damage and gate changes;
+  its announced countdown still finishes, preserving any queued escort arrival.
+  With both wards spent, the boss continues using Royal Edicts.
+- **Unbound Crown:** a fixed, radius-two diamond gives three ordinary actions
+  of warning. After its recovery, the existing nine-stone throne rune lane
+  at y=51, x=41..49 receives its own two-action fire warning. The crown and fire
+  never damage simultaneously. Fire retains 24 minus half defense damage,
+  minimum 6, with one eruption and no repeated floor damage. The old independent
+  throne-fire clock is suspended while Veyr lives; earlier phases leave the runes
+  dormant. Archive fire remains unchanged.
+
+Every signature or fire eruption leaves one full recovery action. Completing
+a crown with **both pedestals spent** instead leaves **two** full counterattack
+actions. Pedestals retain their existing damage/protection effects and are
+available to every class. They stay spent for the attempt and reset around a
+surviving boss only when the castle regroups on retreat. Freeze pauses a queued
+attack, escort preparation, fire warning and gate plan together. A resolved fire
+impact clears visually on the following action, including while Veyr is frozen.
+
+Footprints and barrier plans lock at declaration. C/O previews distinguish gate
+closures/openings; W/E identify ward lanes; F identifies throne fire; X identifies
+a damaging cell with a gate change. Numbers count remaining player actions.
+Occupied and loot-covered gate cells stay open. Walking escape checks include
+planned closures; an inescapable preparation misses and only opens gates.
+
+Veyr announces at most two escorts per attempt, a Warden and a Marksman, at
+G-marked stones (42,46) and (48,46). They arrive on empty stones when the warning
+resolves and act from the following turn. Occupied arrivals or a full roster
+consume the call without retrying. New escorts grant no gold, items, XP or score.
+The throne-room Herald retains its separate finite patrol call. Returning between
+castle floors preserves the attempt; retreat resets a living Veyr and his escort
+allowance according to existing castle rules.
+
+Defeating Veyr awards **Crown of the Unbound** before setting campaign victory,
+stops combat/fire immediately and grants the existing 10,000 score once. The crown
+is a permanent trophy, requiring no inventory slot, loot space or post-combat
+pickup. The boss journal records it; the ending displays it and allows the bound
+journal key (default Q) to inspect the completed boss record. Closing that journal
+returns to the ending. Enter retains the original Hall of Fame flow.
+
+Save version **139** preserves the trophy, active/cached signature masks, phases,
+gate plans, escort flags, sequence state, warning clocks and long recovery. Older
+pending attacks retain their small/large geometry and remaining warning time.
+An old overlapping fire warning is deferred until that signature finishes, then
+receives a fresh two-action warning. No maps, enemies, loot, exploration, player
+position or progression are regenerated. Historical campaign victories receive
+the trophy without another fight or score bonus.
+
+Hall of Fame records now store the trophy per ranked run and retain a permanent
+earned flag even if a victory does not reach the top ten. The application records
+that history on victory before leaving the ending. Legacy score rows preserve
+their names/scores and receive no invented victory status. See the
+[Veyr renderer review and play testing](art-sources/lord-veyr-encounter/README.md).
 
 ## Progression
 

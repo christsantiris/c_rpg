@@ -3,6 +3,7 @@
 #include "world_props.h"
 #include "info_panel.h"
 #include "../game/royal_arcanist.h"
+#include "../game/lord_veyr.h"
 
 static void rect(Renderer *r, int x, int y, int w, int h, SDL_Color c) {
     SDL_SetRenderDrawColor(r->sdl, c.r, c.g, c.b, c.a);
@@ -75,6 +76,9 @@ void castle_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, in
         }
     }
     if (tile == TILE_CASTLE_FIRE_RUNE) {
+        if (g->level == 6 && g->castle_fire_phase[5] == 3) {
+            draw_world_prop(r, sx, sy, PROP_LOW_FLAME_1, (SDL_Color){255, 161, 57, 255});
+        }
         SDL_SetRenderDrawColor(r->sdl, 202, 137, 68, 255);
         SDL_RenderDrawLine(r->sdl, px + 6, py + 16, px + 12, py + 6);
         SDL_RenderDrawLine(r->sdl, px + 12, py + 6, px + 18, py + 16);
@@ -117,6 +121,9 @@ void castle_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, in
         snprintf(text, sizeof(text), "%s: %s", x == 37 ? "WEST" : "EAST", tile == TILE_CASTLE_WARD ? "A" : "OFF");
         renderer_draw_text(r, text, px - 16, py - 12, (SDL_Color){174, 236, 245, 255}, r->font_tiny);
     }
+    if (g->level == 6 && y == 54 && (x == 37 || x == 53) && (tile == TILE_CASTLE_WARD || tile == TILE_CASTLE_WARD_SPENT)) {
+        renderer_draw_text(r, tile == TILE_CASTLE_WARD ? (x == 37 ? "WEST: A" : "EAST: A") : "WARD: OFF", px - 16, py - 12, (SDL_Color){241, 216, 145, 255}, r->font_tiny);
+    }
     if (g->level == 4 && x == 53 && y == 56 && g->arcanist_reward_state == 1) {
         draw_world_prop(r, sx, sy, PROP_CHEST, (SDL_Color){163, 140, 214, 255});
         renderer_draw_text(r, "VESTMENTS: A", px - 28, py - 12, (SDL_Color){234, 218, 255, 255}, r->font_tiny);
@@ -133,7 +140,7 @@ void castle_draw_enemy(Renderer *r, int sx, int sy, const Enemy *e) {
     if (index < 5) {
         source = regular[index];
     } else {
-        int phase = e->hp * 3 > e->max_hp * 2 ? 0 : e->hp * 3 > e->max_hp ? 1 : 2;
+        int phase = e->attack_phase >= 3 ? 2 : e->attack_phase == 2 ? 1 : 0;
         source = bosses[index == 7 ? 2 + phase : index - 5];
     }
     SDL_Rect destination = {sx * 24 - (e->is_boss ? 6 : 0), sy * 24 - (e->is_boss ? 12 : 2), e->is_boss ? 36 : 24, e->is_boss ? 36 : 26};
@@ -149,7 +156,7 @@ void castle_draw_enemy(Renderer *r, int sx, int sy, const Enemy *e) {
         draw_orc(r, sx, sy);
     }
     if (e->type == ENEMY_IRON_WARDEN || e->type == ENEMY_CASTELLAN ||
-        (e->type == ENEMY_LORD_VEYR && e->hp * 3 > e->max_hp * 2)) {
+        (e->type == ENEMY_LORD_VEYR && e->attack_phase <= 1)) {
         int cx = sx * 24 + 12 + e->facing_dx * 10;
         int cy = sy * 24 + 12 + e->facing_dy * 10;
         rect(r, cx - 2, cy - 2, 4, 4, e->move_timer == 2 ? (SDL_Color){94, 88, 107, 255} : (SDL_Color){242, 195, 84, 255});
@@ -173,11 +180,10 @@ void castle_draw_warnings(Renderer *r, const GameState *g, const Viewport *v) {
             }
             for (int i = 0; i < g->enemy_count; i++) {
                 const Enemy *e = &g->enemies[i];
-                int rally = e->attack_phase == CASTELLAN_RALLY && castle_castellan_marks(e, x, y);
-                int barrier = royal_arcanist_barrier_change(e, x, y);
-                int old_barrier = e->type == ENEMY_LORD_VEYR && castle_barrier_warning(g, x, y);
+                int rally = (e->attack_phase == CASTELLAN_RALLY && castle_castellan_marks(e, x, y)) || lord_veyr_escort_marks(e, x, y);
+                int barrier = royal_arcanist_barrier_change(e, x, y) + lord_veyr_barrier_change(e, x, y);
                 int attack_marks = castle_attack_marks(&g->map, e, x, y);
-                if (attack_marks || rally || barrier || old_barrier) {
+                if (attack_marks || rally || barrier) {
                     if (!map_is_explored(&g->map, x, y)) {
                         continue;
                     }
@@ -190,11 +196,13 @@ void castle_draw_warnings(Renderer *r, const GameState *g, const Viewport *v) {
                         char text[8];
                         snprintf(text, sizeof(text), "%s%d", rally ? "G" : "", e->move_timer >= 3 ? e->move_timer - 1 : 1);
                         renderer_draw_text(r, text, tile.x + (rally ? 3 : 8), tile.y + 4, (SDL_Color){255, 231, 174, 255}, r->font_tiny);
-                    } else if (e->type == ENEMY_ROYAL_ARCANIST) {
+                    } else if (e->type == ENEMY_ROYAL_ARCANIST || e->type == ENEMY_LORD_VEYR) {
                         char text[8];
                         int turns = e->move_timer >= 3 ? e->move_timer - 1 : 1;
-                        const char *label = barrier && attack_marks ? "X" : barrier ? (barrier < 0 ? "C" : "O") :
-                            e->boss_attack == ARCANIST_WEST_LANE ? "W" : e->boss_attack == ARCANIST_EAST_LANE ? "E" : "";
+                        int west = e->type == ENEMY_LORD_VEYR ? e->boss_attack == VEYR_WEST_LANE : e->boss_attack == ARCANIST_WEST_LANE;
+                        int east = e->type == ENEMY_LORD_VEYR ? e->boss_attack == VEYR_EAST_LANE : e->boss_attack == ARCANIST_EAST_LANE;
+                        const char *label = rally ? "G" : barrier && attack_marks ? "X" : barrier ? (barrier < 0 ? "C" : "O") :
+                            west ? "W" : east ? "E" : e->type == ENEMY_LORD_VEYR && e->boss_attack == VEYR_FIRE ? "F" : "";
                         snprintf(text, sizeof(text), "%s%d", label, turns);
                         SDL_SetRenderDrawColor(r->sdl, barrier ? 248 : 134, barrier ? 199 : 226, barrier ? 104 : 247, 255);
                         SDL_RenderDrawRect(r->sdl, &tile);
@@ -291,5 +299,49 @@ void castle_draw_castellan_status(Renderer *r, const GameState *g, const Viewpor
         }
         renderer_draw_text(r, text, x + 10, top + 38, (SDL_Color){255, 203, 143, 255}, r->font_tiny);
         renderer_draw_text(r, width < 300 ? "SIDE LEVERS: A" : "SIDE LEVERS INTERRUPT CHARGES; A TO USE", x + 10, top + 55, (SDL_Color){196, 209, 215, 255}, r->font_tiny);
+    }
+}
+
+void castle_draw_veyr_status(Renderer *r, const GameState *g, const Viewport *v) {
+    if (g->location != LOCATION_CASTLE_INTERIOR || g->level != 6) {
+        return;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *e = &g->enemies[i];
+        if (!e->active || e->type != ENEMY_LORD_VEYR || e->max_hp <= 0 || !viewport_is_visible(v, e->x, e->y) || !map_is_explored(&g->map, e->x, e->y)) {
+            continue;
+        }
+        int width = r->screen_w - INFO_PANEL_W - 16;
+        if (width > 380) {
+            width = 380;
+        }
+        if (width < 160) {
+            return;
+        }
+        int x = (r->screen_w - INFO_PANEL_W - width) / 2;
+        int top = x < SWAMP_MAP_W / 2 + 12 ? SWAMP_MAP_H / 2 + 16 : 8;
+        rect(r, x, top, width, 78, (SDL_Color){39, 25, 42, 255});
+        static const char *phases[] = {"ARMORED RULER", "BROKEN THRONE", "UNBOUND CROWN"};
+        int phase = e->attack_phase >= 3 ? 2 : e->attack_phase == 2 ? 1 : 0;
+        char text[80];
+        if (width < 300) {
+            snprintf(text, sizeof(text), "VEYR: PHASE %d", phase + 1);
+        } else {
+            snprintf(text, sizeof(text), "LORD VEYR: %s", phases[phase]);
+        }
+        renderer_draw_text(r, text, x + 10, top + 8, (SDL_Color){251, 220, 156, 255}, r->font_tiny);
+        rect(r, x + 10, top + 23, width - 20, 8, (SDL_Color){76, 41, 66, 255});
+        rect(r, x + 10, top + 23, (width - 20) * e->hp / e->max_hp, 8, (SDL_Color){217, 153, 82, 255});
+        if (e->attack_target_x >= 0) {
+            static const char *attacks[] = {"PREPARING", "OATHBLADE", "THRONE ADVANCE", "ROYAL EDICT", "WEST WARD LANE", "EAST WARD LANE", "UNBOUND CROWN", "THRONE FIRE"};
+            int attack = e->boss_attack >= VEYR_SWING && e->boss_attack <= VEYR_FIRE ? e->boss_attack : 0;
+            snprintf(text, sizeof(text), "%s: %d%s", !e->boss_aux_x ? "BLOCKED ATTACK" : attacks[attack], e->move_timer >= 3 ? e->move_timer - 1 : 1, e->frozen_turns > 0 ? " FROZEN" : "");
+        } else if (e->move_timer == 2) {
+            snprintf(text, sizeof(text), "RECOVERY: %d%s", 1 + e->revive_timer, e->frozen_turns > 0 ? " FROZEN" : "");
+        } else {
+            snprintf(text, sizeof(text), "PREPARING ATTACK");
+        }
+        renderer_draw_text(r, text, x + 10, top + 38, (SDL_Color){242, 193, 222, 255}, r->font_tiny);
+        renderer_draw_text(r, width < 300 ? "BOTH WARDS OFF: CROWN R2" : "BOTH WARDS OFF: CROWN RECOVERS 2 ACTIONS", x + 10, top + 55, (SDL_Color){193, 223, 222, 255}, r->font_tiny);
     }
 }

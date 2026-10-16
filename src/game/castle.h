@@ -12,6 +12,7 @@ int castle_migrate_encounters(GameState *g);
 void castle_migrate_castellan(GameState *g);
 int castle_castellan_marks(const Enemy *e, int x, int y);
 void castle_spawn(GameState *g);
+void castle_summon_guard(GameState *g, EnemyType type, int x, int y);
 void castle_store(GameState *g);
 void castle_enter(GameState *g, int level);
 void castle_leave(GameState *g, int town);
