@@ -661,6 +661,17 @@ Players need a desktop browser, keyboard and mouse; they do not install the game
 See [browser build and deployment instructions](docs/browser.md) for local
 preview, GitHub Pages setup and troubleshooting.
 
+From the project root, use the same installed SDK as Wolfenstein:
+
+```sh
+source /private/tmp/wolf-browser-emsdk/emsdk_env.sh
+make browser-run
+```
+
+Open **http://localhost:8000/**, then select **Play**. Run `source` again in
+each new terminal. If the temporary SDK directory is removed, install
+Emscripten 4.0.23 in a permanent location and update that path.
+
 Once these changes reach `master`, the **Browser Pages** workflow builds and
 deploys `dist/browser/`. In the repository's **Settings → Pages**, first set
 **Build and deployment → Source** to **GitHub Actions**. After a successful

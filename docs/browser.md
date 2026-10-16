@@ -6,26 +6,15 @@ effects. The native build and existing JSON save format remain available.
 
 ## Build and preview locally
 
-Install CMake 3.20+, Make, Python 3 for previewing, and the
-[Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html).
-The workflow pins **Emscripten 4.0.23**. To install that SDK, run these commands
-in a directory outside this repository:
+Use the same installed **Emscripten 4.0.23** SDK as Wolfenstein. From the
+Castle of No Return project root, run these two commands in the same terminal:
 
 ```sh
-git clone https://github.com/emscripten-core/emsdk.git
-cd emsdk
-./emsdk install 4.0.23
-./emsdk activate 4.0.23
-source ./emsdk_env.sh
-```
-
-Return to the Castle of No Return repository in the same terminal:
-
-```sh
+source /private/tmp/wolf-browser-emsdk/emsdk_env.sh
 make browser-run
 ```
 
-Open **http://127.0.0.1:8000/**. Wait for loading to finish, then click **Play**
+Open **http://localhost:8000/**. Wait for loading to finish, then click **Play**
 or press Enter. Starting with a click or keypress enables browser audio. The
 game canvas takes keyboard focus; clicking it restores focus. The page has a
 separate **Fullscreen** button, keeping **F** available for ranged attacks.
@@ -33,8 +22,11 @@ Press Escape to leave fullscreen; Escape also follows the game's menu rules.
 The controls beneath the canvas show the default bindings; use the game's
 Controls menu to remap them.
 
-Activate `emsdk_env.sh` again when opening a new terminal, using the SDK's actual
-installation path. `make browser` builds without launching the server. The
+Run the `source` command again whenever you open a new terminal. CMake 3.20+,
+Make and Python 3 are also required. The SDK is in a temporary directory; if it
+is removed, install the [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html)
+version **4.0.23** in a permanent location and update the `source` path.
+`make browser` builds without launching the server. The
 build uses both `emcmake` and `emmake`, so CI and local builds use Emscripten's
 compiler and archiver. Browser intermediates live in `build/browser`, separately
 from native builds. No locally installed SDL libraries are needed for this build.
