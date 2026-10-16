@@ -1,4 +1,5 @@
 #include "test_utils.h"
+#include "game/minotaur.h"
 #include "game/game.h"
 #include "systems/save_load.h"
 #include "screens/quest_journal.h"
@@ -47,10 +48,10 @@ static void test_vault_combat(void) {
     game.map.tiles[game.player.y][35] = TILE_LABYRINTH_FLOOR;
     game.player.x = 36;
     action_resolve_enemies(&game);
-    ASSERT("opening the vault lets the Minotaur pursue along its corridor", game.enemies[index].x == 38 && game.player.hp == 100);
+    ASSERT("opening the vault declares a fixed one-action charge before moving", game.enemies[index].x == 39 && game.enemies[index].move_timer == 1 && game.enemies[index].attack_target_x == 36 && game.player.hp == 100);
     action_resolve_enemies(&game);
     action_resolve_enemies(&game);
-    ASSERT("the Minotaur attacks in melee using normal armor protection", game.enemies[index].x == 37 && game.player.hp == 84);
+    ASSERT("the warned charge uses normal armor protection and leaves recovery", game.enemies[index].x == 37 && game.player.hp == 84);
 }
 
 static void test_ranged_victories(void) {
@@ -77,7 +78,7 @@ static void test_ranged_victories(void) {
         action_resolve_player(&game, (Action){attack == 2 ? ACTION_RANGED_ATTACK : ACTION_CAST_SPELL, 0, 0});
         int shields = 0;
         for (int i = 0; i < game.floor_item_count; i++) {
-            shields += game.floor_items[i].active && game.floor_items[i].item.visual_id == ITEM_VISUAL_MAGIC_SHIELD;
+            shields += game.floor_items[i].active && game.floor_items[i].item.visual_id == ITEM_VISUAL_LABYRINTH_AEGIS;
         }
         BossJournalEntry entry;
         ASSERT("Magic Arrow, Fireball, and bow victories award the Minotaur's shield and journal completion", !boss->active && shields == 1 && quest_journal_get_boss(&game, 12, &entry) && entry.defeated && strcmp(entry.name, "Minotaur") == 0);

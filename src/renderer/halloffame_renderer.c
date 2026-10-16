@@ -24,7 +24,7 @@ void halloffame_draw(Renderer *r, const HighScoreTable *t) {
 
     int cx = r->screen_w / 2;
     int y = 40;
-    int lh = 28;
+    int lh = 40;
 
     renderer_draw_text(r, "HALL OF FAME", cx - 80, y, gold, r->font_large);
     y += lh + 10;
@@ -50,10 +50,16 @@ void halloffame_draw(Renderer *r, const HighScoreTable *t) {
             renderer_draw_text(r, t->entries[i].name,  cx - 140, y, color, r->font_small);
             renderer_draw_text(r, score,               cx + 60,  y, color, r->font_small);
             renderer_draw_text(r, level,               cx + 160, y, color, r->font_small);
+            if (t->entries[i].crown_of_unbound) {
+                renderer_draw_text(r, "CROWN OF THE UNBOUND", cx - 140, y + 16, gold, r->font_tiny);
+            }
             y += lh;
         }
     }
 
     renderer_draw_text(r, "ESC / ENTER TO CONTINUE",
         cx - 130, (r->tiles_y - 2) * TILE_SIZE, hint, r->font_small);
+    if (t->crown_of_unbound) {
+        renderer_draw_text(r, "TROPHY EARNED: CROWN OF THE UNBOUND", cx - 132, (r->tiles_y - 3) * TILE_SIZE, gold, r->font_tiny);
+    }
 }

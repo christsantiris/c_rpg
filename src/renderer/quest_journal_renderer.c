@@ -40,6 +40,9 @@ static void draw_boss_progress(Renderer *r, const GameState *g) {
     char progress[48];
     SDL_snprintf(progress, sizeof(progress), "BOSSES DEFEATED: %d / %d", defeated, JOURNAL_BOSS_COUNT);
     renderer_draw_text(r, progress, 65, y + 8, gold, r->font_tiny);
+    if (g->crown_of_unbound) {
+        renderer_draw_text(r, "TROPHY: CROWN OF THE UNBOUND", 65, y + 24, gold, r->font_tiny);
+    }
     renderer_draw_text(r, "TAB/LEFT/RIGHT CHANGE TAB   Q/ESC CLOSE",
         r->screen_w / 2 - 148, r->screen_h - 18, dimmed, r->font_tiny);
 }

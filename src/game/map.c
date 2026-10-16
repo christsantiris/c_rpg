@@ -433,7 +433,8 @@ int map_is_walkable(const Map *m, int x, int y) {
     if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
         return 0;
     }
-    return m->tiles[y][x] != TILE_JAIL_BUILDING &&
+    return m->tiles[y][x] != TILE_LICH_PILLAR &&
+        m->tiles[y][x] != TILE_JAIL_BUILDING &&
         m->tiles[y][x] != TILE_JAIL_DOOR && m->tiles[y][x] != TILE_JAIL_BARS &&
         m->tiles[y][x] != TILE_NPC_INFORMANT && m->tiles[y][x] != TILE_NPC_PRISONER &&
         m->tiles[y][x] != TILE_NPC_OSWIN && m->tiles[y][x] != TILE_NPC_VEYRA &&
@@ -474,6 +475,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_FROST_LAKE_HOLE &&
         m->tiles[y][x] != TILE_FROST_BROKEN_ICE &&
         m->tiles[y][x] != TILE_DRAGON_WALL &&
+        !(m->tiles[y][x] >= TILE_DRAGON_BASALT && m->tiles[y][x] <= TILE_DRAGON_CRACKED_COLUMN) &&
         m->tiles[y][x] != TILE_COAST_DEEP_WATER &&
         m->tiles[y][x] != TILE_COAST_CHANNEL_WATER &&
         m->tiles[y][x] != TILE_TAVERN &&
@@ -522,7 +524,11 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_TEMPLE_DORMANT_SENTINEL &&
         m->tiles[y][x] != TILE_TEMPLE_VAULT_DOOR &&
         m->tiles[y][x] != TILE_LABYRINTH_WALL &&
-        m->tiles[y][x] != TILE_LABYRINTH_GATE;
+        m->tiles[y][x] != TILE_LABYRINTH_GATE &&
+        m->tiles[y][x] != TILE_MINOTAUR_PILLAR &&
+        m->tiles[y][x] != TILE_MINOTAUR_CRACKED &&
+        m->tiles[y][x] != TILE_PHARAOH_OBELISK &&
+        !(m->tiles[y][x] >= TILE_REGENT_WALL_1 && m->tiles[y][x] <= TILE_REGENT_WALL_4);
 }
 
 // The dungeon's portcullis shortcut is retired. Older saves can still hold its

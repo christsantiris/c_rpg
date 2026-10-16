@@ -1268,6 +1268,11 @@ static void draw_player_axe(Renderer *r, const Item *weapon, int bx, int by, int
         : (SDL_Color){157, 169, 177, 255};
     SDL_Color edge = magic ? (SDL_Color){217, 249, 255, 255}
         : (SDL_Color){225, 231, 233, 255};
+    if (weapon->visual_id == ITEM_VISUAL_EMBERCLEAVER) {
+        handle = (SDL_Color){88, 51, 34, 255};
+        head = (SDL_Color){98, 100, 109, 255};
+        edge = (SDL_Color){255, 174, 77, 255};
+    }
     draw_weapon_line(r, bx, by, dx, dy, -4, 0, 9, 0, handle);
     draw_weapon_line(r, bx, by, dx, dy, -4, -1, 7, -1, (SDL_Color){36, 28, 29, 255});
     for (int forward = 7; forward <= 10; forward++) {
@@ -1399,20 +1404,30 @@ static void draw_equipped_player_shield(Renderer *r, const Item *shield, int x, 
     } else if (shield->visual_id == ITEM_VISUAL_TOWER_SHIELD) {
         face = (SDL_Color){119, 124, 130, 255};
         mark = (SDL_Color){190, 61, 47, 255};
+    } else if (shield->visual_id == ITEM_VISUAL_LABYRINTH_AEGIS) {
+        rim = (SDL_Color){207, 172, 100, 255};
+        face = (SDL_Color){61, 71, 102, 255};
+        mark = (SDL_Color){238, 226, 171, 255};
     } else if (shield->visual_id == ITEM_VISUAL_MAGIC_SHIELD) {
         rim = (SDL_Color){88, 230, 247, 255};
         face = (SDL_Color){79, 65, 153, 255};
         mark = (SDL_Color){221, 250, 255, 255};
+    } else if (shield->visual_id == ITEM_VISUAL_CASTELLAN_BULWARK) {
+        rim = (SDL_Color){174, 180, 196, 255};
+        face = (SDL_Color){88, 48, 65, 255};
+        mark = (SDL_Color){222, 181, 91, 255};
     }
     if (strcmp(shield->name, "Goblin King's Shield") == 0) {
         face = (SDL_Color){74, 115, 59, 255};
     }
-    static const char shapes[3][13][12] = {
+    static const char shapes[4][13][12] = {
         {"...........", "...ooooo...", "..oRRRRRo..", ".oRRfffRRo.", ".oRfffffRo.", ".oRffmffRo.", ".oRfmRmfRo.", ".oRffmffRo.", ".oRfffffRo.", ".oRRfffRRo.", "..oRRRRRo..", "...ooooo...", "..........."},
         {".ooooooooo.", "oRRRRRRRRRo", "oRfffffffRo", "oRfffmfffRo", "oRfffmfffRo", "oRfmmmmmfRo", "oRfffmfffRo", "oRfffmfffRo", ".oRffmffRo.", ".oRRfffRRo.", "..oRRfRRo..", "...oRRRo...", "....ooo...."},
-        {"..ooooooo..", ".oRRRRRRRo.", "oRRfffffRRo", "oRfffmfffRo", "oRfffmfffRo", "oRfmmmmmfRo", "oRfffmfffRo", "oRfffmfffRo", "oRfffmfffRo", "oRRfffffRRo", ".oRRRRRRRo.", "..ooooooo..", "..........."}
+        {"..ooooooo..", ".oRRRRRRRo.", "oRRfffffRRo", "oRfffmfffRo", "oRfffmfffRo", "oRfmmmmmfRo", "oRfffmfffRo", "oRfffmfffRo", "oRfffmfffRo", "oRRfffffRRo", ".oRRRRRRRo.", "..ooooooo..", "..........."},
+        {".ooooooooo.", "oRRRRRRRRRo", "oRfffffffRo", "oRfmfffmfRo", "oRfmmfmmfRo", "oRffmmmffRo", "oRffmomffRo", "oRfffmfffRo", ".oRfffffRo.", ".oRRfmfRRo.", "..oRRmRRo..", "...oRRRo...", "....ooo...."}
     };
-    int shape = shield->visual_id == ITEM_VISUAL_BUCKLER ? 0 : shield->visual_id == ITEM_VISUAL_TOWER_SHIELD ? 2 : 1;
+    int shape = shield->visual_id == ITEM_VISUAL_LABYRINTH_AEGIS ? 3 : shield->visual_id == ITEM_VISUAL_BUCKLER ? 0 :
+        shield->visual_id == ITEM_VISUAL_TOWER_SHIELD || shield->visual_id == ITEM_VISUAL_CASTELLAN_BULWARK ? 2 : 1;
     for (int row = 0; row < 13; row++) {
         for (int col = 0; col < 11; col++) {
             char ink = shapes[shape][row][col];
@@ -1460,8 +1475,12 @@ static void player_body_palette(SDL_Color *palette, PlayerClass player_class, co
         }
     } else if (armor && armor->armor_family == ARMOR_FAMILY_LIGHT) {
         suit = (SDL_Color){102, 66, 39, 255};
-        if (armor->visual_id == ITEM_VISUAL_SHADOW_ARMOR) {
+        if (armor->visual_id == ITEM_VISUAL_SUNWARDEN_MANTLE) {
+            suit = (SDL_Color){172, 119, 55, 255};
+        } else if (armor->visual_id == ITEM_VISUAL_SHADOW_ARMOR) {
             suit = (SDL_Color){67, 39, 88, 255};
+        } else if (armor->visual_id == ITEM_VISUAL_BRIARWEAVE_CLOAK) {
+            suit = (SDL_Color){61, 129, 112, 255};
         } else if (armor->visual_id == ITEM_VISUAL_RANGER_CLOAK) {
             suit = (SDL_Color){58, 112, 55, 255};
         } else if (armor->visual_id == ITEM_VISUAL_STUDDED_LEATHER) {
@@ -1469,7 +1488,13 @@ static void player_body_palette(SDL_Color *palette, PlayerClass player_class, co
         }
     } else if (armor && armor->armor_family == ARMOR_FAMILY_ROBE) {
         suit = (SDL_Color){46, 88, 168, 255};
-        if (armor->visual_id == ITEM_VISUAL_ARCHMAGE_ROBES) {
+        if (armor->visual_id == ITEM_VISUAL_CROWN_CHAPEL_VESTMENTS) {
+            suit = (SDL_Color){100, 64, 135, 255};
+            palette['G'] = (SDL_Color){232, 193, 106, 255};
+            palette['T'] = (SDL_Color){255, 230, 172, 255};
+        } else if (armor->visual_id == ITEM_VISUAL_PRISMWEAVE_ROBES) {
+            suit = (SDL_Color){91, 107, 173, 255};
+        } else if (armor->visual_id == ITEM_VISUAL_ARCHMAGE_ROBES) {
             suit = (SDL_Color){112, 68, 178, 255};
         } else if (armor->visual_id == ITEM_VISUAL_ENCHANTER_ROBES) {
             suit = (SDL_Color){78, 66, 163, 255};
@@ -1518,6 +1543,8 @@ static void draw_player_body(Renderer *r, int x, int y, PlayerClass player_class
                             detail = (row + source_col) % 2 ? 'a' : 'v';
                         } else if (armor->visual_id == ITEM_VISUAL_SCALE_MAIL) {
                             detail = (source_col + row / 3) % 3 == 0 ? 'a' : row % 3 == 0 ? 'v' : 'A';
+                        } else if (armor->visual_id == ITEM_VISUAL_BRIARWEAVE_CLOAK && (row + source_col) % 5 == 0) {
+                            detail = 'v';
                         } else if (armor->visual_id == ITEM_VISUAL_STUDDED_LEATHER && row % 3 == 0 && source_col % 3 == 0) {
                             detail = 'H';
                         } else if (armor->armor_family == ARMOR_FAMILY_ROBE && armor->rarity != ITEM_RARITY_COMMON && row % 4 == 0 && source_col % 3 == 0) {

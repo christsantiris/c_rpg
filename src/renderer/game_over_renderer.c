@@ -90,6 +90,12 @@ void game_over_draw(Renderer *r, const GameState *g) {
     const char *cause = g->game_won ? "THE BROKEN OATH IS UNDONE. THE KINGDOM IS FREE." :
         g->message_count > 0 ? g->messages[g->message_count - 1] : "Your injuries proved fatal.";
     draw_centered(r, cause, cy + 38, white, r->font_small);
+    if (g->crown_of_unbound) {
+        draw_centered(r, "TROPHY: CROWN OF THE UNBOUND", cy + 65, gold, r->font_tiny);
+        char journal[64];
+        SDL_snprintf(journal, sizeof(journal), "%s: VIEW BOSS JOURNAL", SDL_GetScancodeName(g->key_bindings[CONTROL_QUEST_JOURNAL]));
+        draw_centered(r, journal, cy + 120, hint, r->font_tiny);
+    }
 
     draw_centered(r, "PRESS ENTER FOR HALL OF FAME", cy + 95, hint,
         r->font_small);

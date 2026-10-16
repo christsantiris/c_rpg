@@ -191,7 +191,7 @@ static void test_boss_victories(void) {
             rewards += game.floor_items[i].active && game.floor_items[i].item.type == ITEM_POTION_STRENGTH;
         }
         BossJournalEntry entry;
-        ASSERT("melee, Magic Arrow, Fireball, and bow victories grant the Prism Sovereign reward and journal completion", !boss->active && (game.defeated_bosses & (1 << LOCATION_GLASSDEEP)) && rewards == 1 && quest_journal_get_boss(&game, 11, &entry) && entry.defeated && strcmp(entry.name, "Prism Sovereign") == 0);
+        ASSERT("melee, Magic Arrow, Fireball, and bow victories grant the Prism Sovereign reward and journal completion", !boss->active && (game.defeated_bosses & (1 << LOCATION_GLASSDEEP)) && rewards == 0 && game.prism_sovereign_reward_pending == 3 && quest_journal_get_boss(&game, 11, &entry) && entry.defeated && strcmp(entry.name, "Prism Sovereign") == 0);
         walk_edge(1);
         ASSERT("defeating the Prism Sovereign allows return while other enemies remain", game.location == LOCATION_TOWN2 && game.glassdeep_cache[GLASSDEEP_DEPTH - 1].enemy_count > 1);
         game_enter_glassdeep(&game);
@@ -343,7 +343,7 @@ static void test_prism_beam(void) {
     game.player.x = 24;
     game.player.y = 23;
     action_resolve_enemies(&game);
-    ASSERT("north-south beams are marked on the player's column", game.enemies[0].attack_target_x == 24 && game.enemies[0].attack_target_y == 30);
+    ASSERT("north-south beams are marked on the player's column", game.enemies[0].attack_target_x == 24 && game.enemies[0].attack_target_y == 23);
     action_resolve_enemies_with_projectiles(&game, &shots);
     ASSERT("a vertical beam stops at the next cave wall after hitting", shots.count == 1 && shots.shots[0].target_x == 24 && shots.shots[0].target_y == 23 && game.player.hp < 100);
     setup_actor(ENEMY_PRISM_SOVEREIGN);

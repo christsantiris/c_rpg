@@ -1,5 +1,9 @@
 #include "test_utils.h"
 #include "../src/game/game.h"
+#include "../src/game/lich.h"
+#include "../src/game/necromancer.h"
+#include "../src/game/goblin_king.h"
+#include "../src/game/desert_pharaoh.h"
 
 static void setup_ranged_enemy(GameState *g, EnemyType type) {
     g->player.player_class = CLASS_WARRIOR;
@@ -24,6 +28,33 @@ static void setup_ranged_enemy(GameState *g, EnemyType type) {
         .hp = 100, .max_hp = 100, .attack = 10,
         .move_timer = type == ENEMY_DROWNED_QUEEN ? 2 : 1
     };
+    if (type == ENEMY_FOREST_NECROMANCER) {
+        g->level = FOREST_BOSS_LEVEL;
+        g->enemies[0].boss_attack = NECRO_BOLT;
+        g->enemies[0].attack_target_x = g->player.x;
+        g->enemies[0].attack_target_y = g->player.y;
+    }
+    if (type == ENEMY_MOUNTAIN_GOBLIN_KING) {
+        g->location = LOCATION_MOUNTAINS;
+        g->level = MOUNTAIN_BOSS_LEVEL;
+        g->enemies[0].boss_attack = GOBLIN_KING_AXE;
+        g->enemies[0].attack_target_x = g->player.x;
+        g->enemies[0].attack_target_y = g->player.y;
+    }
+    if (type == ENEMY_DESERT_PHARAOH) {
+        g->location = LOCATION_DESERT;
+        g->level = DESERT_DEPTH;
+        g->enemies[0].boss_attack = PHARAOH_BEAM;
+        g->enemies[0].attack_target_x = g->player.x;
+        g->enemies[0].attack_target_y = g->player.y;
+    }
+    if (type == ENEMY_LICH_KING) {
+        g->location = LOCATION_DUNGEON;
+        g->level = DUNGEON_DEPTH;
+        g->enemies[0].boss_attack = LICH_LANCE;
+        g->enemies[0].attack_target_x = g->player.x;
+        g->enemies[0].attack_target_y = g->player.y;
+    }
 }
 
 void test_enemy_projectiles(void) {
@@ -32,7 +63,7 @@ void test_enemy_projectiles(void) {
     EnemyProjectiles shots = {0};
     EnemyType ranged[] = {
         ENEMY_LICH_KING, ENEMY_FOREST_NECROMANCER, ENEMY_MOUNTAIN_GOBLIN_KING,
-        ENEMY_DROWNED_QUEEN, ENEMY_DESERT_PHARAOH, ENEMY_SIREN, ENEMY_WATER_ELEMENTAL,
+        ENEMY_DESERT_PHARAOH, ENEMY_SIREN, ENEMY_WATER_ELEMENTAL,
         ENEMY_GOBLIN_ARCHER, ENEMY_ROAD_ARCHER, ENEMY_GOBLIN_BOMBER,
         ENEMY_DARK_ELF, ENEMY_CRYPT_CONJURER, ENEMY_DJINN
     };
@@ -109,7 +140,7 @@ void test_enemy_projectiles(void) {
         g.enemies[0].x == 20 && g.enemies[0].y == 16 &&
         g.player.hp == 100 && shots.count == 0);
 
-    setup_ranged_enemy(&g, ENEMY_DROWNED_QUEEN);
+    setup_ranged_enemy(&g, ENEMY_DESERT_PHARAOH);
     g.enemies[0].y = 14;
     g.enemies[1] = g.enemies[0];
     g.enemies[1].type = ENEMY_SKELETON;
@@ -152,7 +183,7 @@ void test_enemy_projectiles(void) {
     ASSERT("boss warning turns do not create a projectile", shots.count == 0);
     g.enemies[0].x = 19;
     action_resolve_enemies_with_projectiles(&g, &shots);
-    ASSERT("melee attacks do not create a projectile", shots.count == 0 && g.player.hp == 90);
+    ASSERT("warned adjacent spirit bolt resolves without an extra melee attack", shots.count == 1 && g.player.hp == 90);
 
     setup_ranged_enemy(&g, ENEMY_GOBLIN_ARCHER);
     g.inventory[0] = item_make_shadow_armor();

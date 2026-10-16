@@ -20,9 +20,9 @@ and three appearances of the final boss.
 | Floor | Setting | Encounter and progress |
 |---|---|---|
 | 1 | Gatehouse | Two guarded approaches with independent portcullis levers and firing lanes |
-| 2 | Iron Keep | Castellan with a Warden and Marksman guard detail; bait his charge into his guards |
+| 2 | Iron Keep | Castellan's two phases, guard detail, finite rally and side portcullis counters |
 | 3 | Forsaken Court | Protected Herald calls a capped three-guard patrol through a marked doorway |
-| 4 | Crown Chapel | Disable two ward pedestals while fighting the Royal Arcanist and his guards |
+| 4 | Crown Chapel | Royal Arcanist's two phases, sequential ward lanes and pedestal counters |
 | 5 | Royal Archives | Shelves narrow sightlines; roaming soldiers and warned fire lanes threaten the approaches |
 | 6 | Throne of No Return | Veyr combines guarded approaches, ward pedestals, a throne-room Herald, fire lanes, and mixed escorts |
 
@@ -48,12 +48,102 @@ recovery attacks bypass shields. Frontal hits always deal at least one damage.
 All three classes can fight the guards and operate levers. Press **Interact**
 (default `A`) on or beside a lever to change its portcullis.
 
-The Castellan marks a charge lane or a close frontal swing, then recovers.
-Sidestepping avoids the charge; colliding with masonry briefly staggers him.
-Colliding with one of his guards interrupts that guard's attack and disables
-its shield for two turns. His guard detail does not return after his defeat.
-The Royal Arcanist marks a small area and warns before switching ward barriers.
-Occupied tiles stay open when a barrier closes.
+The Castellan's **Shield Commander** phase marks a five-stone cardinal charge
+or a three-stone frontal swing, each with one action of warning. At or below
+half health, **Broken Formation** calls one two-action guard rally, then
+alternates a wider **Formation Sweep** with separately warned charges. Sweeps
+cover two rows of five stones in front of him and allow two actions to escape.
+The current warning finishes before a phase change; healing cannot reverse it.
+The HUD shows the phase, health, signature name, remaining actions and freeze.
+
+Warnings lock their footprint at declaration. Opening a gate cannot extend a
+queued attack. All signatures leave one full recovery action; masonry and guard
+collisions expose the Castellan for two. A struck guard also loses its pending
+attack and shield protection for two turns. Guards can intercept a charge before
+it reaches a player farther down the lane. Charges remain inside the arena.
+If cover or actors eliminate every ordinary walking escape, the attack is marked
+blocked and misses rather than trapping the player in an unavoidable hit.
+
+Two side levers at **(37,51)** and **(53,51)** control their own three-stone
+portcullises at **x=40** and **x=50**, **y=47..49**. Both begin open. Every class
+can Interact on or beside a lever. Closing a gate across a marked charge
+interrupts it and leaves two full counterattack actions after Interact. Actor- or
+loot-occupied cells stay open; operating a partially closed gate closes the remaining empty
+cells, and operating a fully closed gate reopens it. Paths around each gate
+remain walkable, including access to the stairs and both levers.
+
+The rally warns the two muster stones at **(42,46)** and **(48,46)** with **G2**,
+then **G1**. At most one Warden and one Marksman arrive on empty marked stones;
+occupied arrivals are skipped. They act from the following turn and award no
+gold, items or XP. The call is spent at declaration and cannot be replenished by
+saving, floor travel or castle retreat. His original guard detail does not return
+after his defeat.
+
+Victory preserves the **100 gold** and floor-3 unlock and reserves **Castellan's
+Bulwark** in the southeast armory chest at **(53,55)**. Interact on or beside it
+to claim the rare Warrior shield: **+8 defense, 30% block**, with the usual 50%
+block damage reduction. It requires a one-handed main weapon. A full inventory
+leaves it reserved; maximum floor loot cannot prevent the award. The reservation
+survives retreat, floor travel and save/load. Claiming, dropping or selling the
+shield cannot award another copy.
+
+Save version **137** retains phase, fixed warning bits, countdown, facing, spent
+rally, recovery, gates and reward state in active and cached floors. Older saves
+receive the open gates, levers and muster stones without regenerating enemies or
+resetting damage, exploration, traps or loot. Prior victories remain complete
+and reserve the newly introduced Bulwark once, without repeating gold or XP.
+See [Castellan renderer review and play testing](art-sources/castellan-encounter/README.md).
+
+The Royal Arcanist's **Warded Scholar** phase retains a two-action, five-stone
+diamond blast. At or below half health, **Shattered Liturgy** alternates a
+two-action **Chapel Cross** with a sequence of separately warned ward lanes.
+The cross reaches three stones in each cardinal direction from the locked
+target; its diagonals remain safe. The current warning and recovery finish
+before a health-phase change, and healing cannot reverse the phase.
+
+The west pedestal at **(37,54)** powers a horizontal lane through the player's
+declared row across **x=34..55**. After it resolves, an active east pedestal at
+**(53,54)** declares a new vertical lane through the player's then-current
+column across **y=44..57**. Each lane has its own full two-action warning;
+they never strike simultaneously. A previously spent source is skipped. With
+both sources spent, normal blasts alternate with crosses, so the boss remains
+dangerous and vulnerable. Completing a blast, cross or lane sequence leaves
+one full recovery action. All classes can disable a lane's source during its
+preparation to cancel it and its barrier change, ending the sequence and
+leaving two full counterattack actions after Interact.
+
+The same saved footprint drives warnings and damage. **W2/W1** and **E2/E1**
+identify lanes; plain **2/1** labels blasts and crosses. Gold **C2/C1** and
+**O2/O1** mark planned gate closures and openings. Combined **X2/X1** labels
+indicate both a gate change and a damaging warning on that
+stone. Gate plans lock at declaration; opening cover cannot expose extra
+unwarned cells. Actor- and loot-occupied gates never close. Escape checks account
+for planned closures; a trapped preparation misses and only opens gates.
+Freezing pauses the warning, lane sequence and gate plan together. The HUD
+shows phase, health, attack, remaining actions and recovery.
+
+The Arcanist stays inside the chapel arena. After taking damage or engaging,
+he can answer clear corridor fire at every bow's range with a marked blast or
+cross, so longbows cannot attack an inert boss from a safe approach. Ward lanes
+remain inside the arena. A distant or hidden retreat outside the arena cancels pending warnings;
+ordinary floor travel and castle regrouping retain their existing rules.
+
+Victory preserves **100 gold** and the floor-5 unlock, and reserves **Crown
+Chapel Vestments** in the southeast chest at **(53,56)**. Interact on or beside
+it to collect the rare Mage robes: **+4 defense**, **+45 maximum MP**, and
+**15% spell-cost reduction**. Maximum floor loot and a full inventory cannot
+erase the award. It persists through floor travel, retreat and save/load; a
+claimed, sold or dropped copy never regenerates. Purple cloth, gold trim and
+cyan accents appear in its inventory/equipment icon and equipped player art.
+
+Save version **138** preserves both health phases, all four attack footprints,
+barrier plans, sequence position, warning/recovery timers, freeze, spent wards
+and reward claims in active and cached floors. Existing queued blasts retain
+their timing and small footprint, even at low health. Migration never rebuilds
+the map or resets player position, enemies, loot, exploration, traps or castle
+progress. A historical victory reserves the new Vestments once without
+repeating gold, XP or the boss fight. See the
+[Arcanist renderer review and play testing](art-sources/royal-arcanist-encounter/README.md).
 
 The Gatehouse's east portcullis begins closed; its south portcullis begins open.
 Each lever changes only its own approach. The throne floor repeats this setup.
@@ -76,19 +166,79 @@ visible and dangerous beneath dropped loot. The throne arena repeats a fire lane
 across its southern approach; entrances, stairs, and trapdoor landing tiles are safe.
 
 Violet outlines mark attacks' fixed destinations before damage is applied.
-Normal attacks and Castellan attacks allow one movement turn; Arcanist attacks
-allow two. Freezing an enemy pauses its pending attack and its ward change.
+Normal attacks and Castellan charges/swings allow one movement turn; Castellan
+sweeps/rallies and Arcanist attacks allow two. Freezing an enemy pauses its pending attack and its ward change.
 Cover blocks ranged attacks even if the barrier closes after the warning starts.
 
 Lord Veyr has one continuous health bar and three phases: Armored Ruler above
 two-thirds health, Broken Throne down to one-third, and Unbound Crown below it.
-His frontal armor gives way to magic with expanding attack areas and changing
-wards. The latter phases allow two and three movement turns to dodge.
-Crossing a health threshold does not enlarge an already announced attack.
-Veyr calls at most two escorts per attempt: a Warden and a Marksman. His
-throne-room Herald can separately call one patrol of up to three guards through
-the marked doorway. New reinforcements act on the following turn. Defeating him immediately records
-victory, stops combat, and opens the ending and Hall of Fame flow.
+Health, base attack, defense, XP and the 10,000-point victory bonus remain.
+Phases latch forward and wait for queued attacks and recovery to finish.
+
+- **Armored Ruler:** frontal armor halves incoming damage before ward protection.
+  A fixed close Oathblade Swing alternates with a **Throne Advance**, moving up
+  to three marked cardinal stones. These give one action of warning; the first
+  attack is extended to at least two when announcing escorts. Sidestep the
+  advance and flank during recovery. Veyr never moves onto actors or outside
+  the arena. Corridor fire can provoke a two-action Royal Edict rather than
+  allowing ranged attacks against an inert boss; ordinary cover still blocks
+  incoming shots and engagement.
+- **Broken Throne:** armor gives way to a two-action five-stone Royal Edict,
+  then separately prepared west/east ward lanes. West marks a fixed row across
+  x=34..55; east marks a fixed column across y=44..57. Spent sources are skipped.
+  Disabling a prepared lane's pedestal cancels its damage and gate changes;
+  its announced countdown still finishes, preserving any queued escort arrival.
+  With both wards spent, the boss continues using Royal Edicts.
+- **Unbound Crown:** a fixed, radius-two diamond gives three ordinary actions
+  of warning. After its recovery, the existing nine-stone throne rune lane
+  at y=51, x=41..49 receives its own two-action fire warning. The crown and fire
+  never damage simultaneously. Fire retains 24 minus half defense damage,
+  minimum 6, with one eruption and no repeated floor damage. The old independent
+  throne-fire clock is suspended while Veyr lives; earlier phases leave the runes
+  dormant. Archive fire remains unchanged.
+
+Every signature or fire eruption leaves one full recovery action. Completing
+a crown with **both pedestals spent** instead leaves **two** full counterattack
+actions. Pedestals retain their existing damage/protection effects and are
+available to every class. They stay spent for the attempt and reset around a
+surviving boss only when the castle regroups on retreat. Freeze pauses a queued
+attack, escort preparation, fire warning and gate plan together. A resolved fire
+impact clears visually on the following action, including while Veyr is frozen.
+
+Footprints and barrier plans lock at declaration. C/O previews distinguish gate
+closures/openings; W/E identify ward lanes; F identifies throne fire; X identifies
+a damaging cell with a gate change. Numbers count remaining player actions.
+Occupied and loot-covered gate cells stay open. Walking escape checks include
+planned closures; an inescapable preparation misses and only opens gates.
+
+Veyr announces at most two escorts per attempt, a Warden and a Marksman, at
+G-marked stones (42,46) and (48,46). They arrive on empty stones when the warning
+resolves and act from the following turn. Occupied arrivals or a full roster
+consume the call without retrying. New escorts grant no gold, items, XP or score.
+The throne-room Herald retains its separate finite patrol call. Returning between
+castle floors preserves the attempt; retreat resets a living Veyr and his escort
+allowance according to existing castle rules.
+
+Defeating Veyr awards **Crown of the Unbound** before setting campaign victory,
+stops combat/fire immediately and grants the existing 10,000 score once. The crown
+is a permanent trophy, requiring no inventory slot, loot space or post-combat
+pickup. The boss journal records it; the ending displays it and allows the bound
+journal key (default Q) to inspect the completed boss record. Closing that journal
+returns to the ending. Enter retains the original Hall of Fame flow.
+
+Save version **139** preserves the trophy, active/cached signature masks, phases,
+gate plans, escort flags, sequence state, warning clocks and long recovery. Older
+pending attacks retain their small/large geometry and remaining warning time.
+An old overlapping fire warning is deferred until that signature finishes, then
+receives a fresh two-action warning. No maps, enemies, loot, exploration, player
+position or progression are regenerated. Historical campaign victories receive
+the trophy without another fight or score bonus.
+
+Hall of Fame records now store the trophy per ranked run and retain a permanent
+earned flag even if a victory does not reach the top ten. The application records
+that history on victory before leaving the ending. Legacy score rows preserve
+their names/scores and receive no invented victory status. See the
+[Veyr renderer review and play testing](art-sources/lord-veyr-encounter/README.md).
 
 ## Progression
 

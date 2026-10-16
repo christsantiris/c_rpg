@@ -1,6 +1,17 @@
 #include "game_renderer.h"
 #include "sprites.h"
 #include "world_props.h"
+#include "goblin_king_renderer.h"
+#include "drowned_queen_renderer.h"
+#include "swamp_demon_renderer.h"
+#include "minotaur_renderer.h"
+#include "grave_marshal_renderer.h"
+#include "desert_pharaoh_renderer.h"
+#include "thorn_regent_renderer.h"
+#include "cinder_lord_renderer.h"
+#include "prism_sovereign_renderer.h"
+#include "sun_guardian_renderer.h"
+#include "red_dragon_renderer.h"
 #include "npc_renderer.h"
 #include "info_panel.h"
 #include "message_bar.h"
@@ -9,12 +20,212 @@
 #include "item_icons.h"
 #include "../game/combat_feedback.h"
 #include "../game/catacombs.h"
+#include "../game/lich.h"
+#include "../game/necromancer.h"
 #include "castle_renderer.h"
 #include "jail_renderer.h"
 #include "town_life_renderer.h"
 #include "../game/jail.h"
 #include <string.h>
 #include <stdlib.h>
+
+static void draw_lich_tile(Renderer *r, int sx, int sy, int x, int y, TileType tile) {
+    draw_dungeon_floor(r, sx, sy, x, y);
+    WorldPropArt art = tile == TILE_LICH_PILLAR ? PROP_PILLAR : tile == TILE_LICH_RELIQUARY ? PROP_CHEST : PROP_SEAL;
+    SDL_Color accent = tile == TILE_LICH_SEAL ? (SDL_Color){178, 95, 223, 255} :
+        tile == TILE_LICH_SEAL_SPENT ? (SDL_Color){65, 69, 83, 255} : (SDL_Color){222, 186, 102, 255};
+    draw_world_prop(r, sx, sy, art, accent);
+    if (tile == TILE_LICH_RELIQUARY) {
+        renderer_draw_text(r, "CRYPTBLADE", sx * TILE_SIZE - 24, sy * TILE_SIZE - 14,
+            (SDL_Color){227, 205, 247, 255}, r->font_tiny);
+    }
+}
+
+static void draw_lich_warning(Renderer *r, const GameState *g, const Viewport *v) {
+    if (g->location != LOCATION_DUNGEON || g->level != DUNGEON_DEPTH) {
+        return;
+    }
+    SDL_BlendMode blend;
+    SDL_GetRenderDrawBlendMode(r->sdl, &blend);
+    SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_BLEND);
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *e = &g->enemies[i];
+        if (!e->active || e->type != ENEMY_LICH_KING || e->move_timer <= 0) {
+            continue;
+        }
+        for (int y = v->cam_y; y < v->cam_y + v->tiles_y; y++) {
+            for (int x = v->cam_x; x < v->cam_x + v->tiles_x; x++) {
+                if (!map_is_explored(&g->map, x, y) || !lich_attack_marks(g, e, x, y)) {
+                    continue;
+                }
+                int px = viewport_to_screen_x(v, x) * TILE_SIZE;
+                int py = viewport_to_screen_y(v, y) * TILE_SIZE;
+                SDL_Rect tile = {px + 1, py + 1, TILE_SIZE - 2, TILE_SIZE - 2};
+                SDL_SetRenderDrawColor(r->sdl, 156, 70, 201, 70);
+                SDL_RenderFillRect(r->sdl, &tile);
+                SDL_SetRenderDrawColor(r->sdl, 234, 175, 255, 255);
+                SDL_RenderDrawRect(r->sdl, &tile);
+                char countdown[8];
+                snprintf(countdown, sizeof(countdown), "%d", e->move_timer);
+                renderer_draw_text(r, countdown, px + 9, py + 4, (SDL_Color){255, 235, 197, 255}, r->font_tiny);
+            }
+        }
+    }
+    SDL_SetRenderDrawBlendMode(r->sdl, blend);
+}
+
+static void draw_lich_status(Renderer *r, const GameState *g, const Viewport *v) {
+    if (g->location != LOCATION_DUNGEON || g->level != DUNGEON_DEPTH) {
+        return;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *e = &g->enemies[i];
+        if (!e->active || e->type != ENEMY_LICH_KING || e->max_hp <= 0 ||
+            !viewport_is_visible(v, e->x, e->y) || !map_is_explored(&g->map, e->x, e->y)) {
+            continue;
+        }
+        int width = r->screen_w - INFO_PANEL_W - 16;
+        if (width > 380) {
+            width = 380;
+        }
+        if (width < 160) {
+            return;
+        }
+        int x = (r->screen_w - INFO_PANEL_W - width) / 2;
+        SDL_Rect panel = {x, 8, width, 78};
+        SDL_SetRenderDrawColor(r->sdl, 24, 19, 37, 255);
+        SDL_RenderFillRect(r->sdl, &panel);
+        SDL_SetRenderDrawColor(r->sdl, 133, 96, 167, 255);
+        SDL_RenderDrawRect(r->sdl, &panel);
+        const char *name = width < 340 ? (e->attack_phase ? "LICH KING: PHASE 2" : "LICH KING: PHASE 1") :
+            (e->attack_phase ? "LICH KING: UNBOUND SOUL" : "LICH KING: CRYPT SOVEREIGN");
+        renderer_draw_text(r, name, x + 10, 16, (SDL_Color){233, 216, 250, 255}, r->font_tiny);
+        SDL_Rect bar = {x + 10, 31, width - 20, 8};
+        SDL_SetRenderDrawColor(r->sdl, 52, 39, 70, 255);
+        SDL_RenderFillRect(r->sdl, &bar);
+        bar.w = bar.w * e->hp / e->max_hp;
+        SDL_SetRenderDrawColor(r->sdl, 170, 104, 221, 255);
+        SDL_RenderFillRect(r->sdl, &bar);
+        char hint[80];
+        if (e->move_timer > 0) {
+            const char *attack = width < 280 ? (e->boss_attack == LICH_RING ? "RING" : e->boss_attack == LICH_SUMMON ? "GRAVES" : "LANCE") :
+                (e->boss_attack == LICH_RING ? "SOUL RING" : e->boss_attack == LICH_SUMMON ? "GRAVE WAVE" : "NECROTIC LANCE");
+            snprintf(hint, sizeof(hint), "%s: %d TURN%s%s", attack, e->move_timer, e->move_timer == 1 ? "" : "S", e->frozen_turns > 0 ? (width < 280 ? " *" : " (FROZEN)") : "");
+        } else {
+            snprintf(hint, sizeof(hint), "%s", e->move_timer < 0 ? "RECOVERING: ATTACK NOW" : "PREPARING NEXT ATTACK");
+        }
+        renderer_draw_text(r, hint, x + 10, 46, (SDL_Color){e->move_timer < 0 ? 139 : 247, 207, 164, 255}, r->font_tiny);
+        int seals = lich_active_seals(g);
+        snprintf(hint, sizeof(hint), seals ? "SEALS: %d  INTERACT TO SILENCE" : "SEALS SILENCED", seals);
+        if (width < 280) {
+            snprintf(hint, sizeof(hint), "SEALS: %d", seals);
+        }
+        renderer_draw_text(r, hint, x + 10, 63, (SDL_Color){186, 178, 211, 255}, r->font_tiny);
+    }
+}
+
+static void draw_necromancer_tile(Renderer *r, int sx, int sy, int x, int y, TileType tile) {
+    draw_forest_floor(r, sx, sy, x, y);
+    WorldPropArt art = tile == TILE_NECRO_RELIQUARY ? PROP_CHEST : PROP_TOMB;
+    SDL_Color accent = tile == TILE_NECRO_GRAVE ? (SDL_Color){150, 184, 91, 255} :
+        tile == TILE_NECRO_GRAVE_SPENT ? (SDL_Color){124, 201, 218, 255} : (SDL_Color){201, 165, 92, 255};
+    draw_world_prop(r, sx, sy, art, accent);
+    if (tile == TILE_NECRO_GRAVE_SPENT) {
+        renderer_draw_text(r, "+", sx * TILE_SIZE + 9, sy * TILE_SIZE - 1, accent, r->font_tiny);
+    } else if (tile == TILE_NECRO_RELIQUARY) {
+        renderer_draw_text(r, "NECROMANCER'S CLOAK", sx * TILE_SIZE - 42, sy * TILE_SIZE - 14,
+            (SDL_Color){195, 226, 173, 255}, r->font_tiny);
+    }
+}
+
+static void draw_necromancer_warning(Renderer *r, const GameState *g, const Viewport *v) {
+    if (g->location != LOCATION_FOREST || g->level != FOREST_BOSS_LEVEL) {
+        return;
+    }
+    SDL_BlendMode blend;
+    SDL_GetRenderDrawBlendMode(r->sdl, &blend);
+    SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_BLEND);
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *e = &g->enemies[i];
+        if (!e->active || e->type != ENEMY_FOREST_NECROMANCER || e->move_timer <= 0) {
+            continue;
+        }
+        for (int y = v->cam_y; y < v->cam_y + v->tiles_y; y++) {
+            for (int x = v->cam_x; x < v->cam_x + v->tiles_x; x++) {
+                if (!map_is_explored(&g->map, x, y) || !necromancer_attack_marks(g, e, x, y)) {
+                    continue;
+                }
+                int px = viewport_to_screen_x(v, x) * TILE_SIZE;
+                int py = viewport_to_screen_y(v, y) * TILE_SIZE;
+                SDL_Rect tile = {px + 1, py + 1, TILE_SIZE - 2, TILE_SIZE - 2};
+                SDL_SetRenderDrawColor(r->sdl, 103, 155, 73, 85);
+                SDL_RenderFillRect(r->sdl, &tile);
+                SDL_SetRenderDrawColor(r->sdl, 188, 246, 130, 255);
+                SDL_RenderDrawRect(r->sdl, &tile);
+                if (e->boss_attack == NECRO_ROOTS) {
+                    SDL_RenderDrawLine(r->sdl, px + 3, py + 20, px + 18, py + 14);
+                    SDL_RenderDrawLine(r->sdl, px + 6, py + 19, px + 3, py + 14);
+                    SDL_RenderDrawLine(r->sdl, px + 11, py + 17, px + 20, py + 20);
+                }
+                char countdown[8];
+                snprintf(countdown, sizeof(countdown), "%d", e->move_timer);
+                renderer_draw_text(r, countdown, px + 9, py + 4, (SDL_Color){255, 235, 197, 255}, r->font_tiny);
+            }
+        }
+    }
+    SDL_SetRenderDrawBlendMode(r->sdl, blend);
+}
+
+static void draw_necromancer_status(Renderer *r, const GameState *g, const Viewport *v) {
+    if (g->location != LOCATION_FOREST || g->level != FOREST_BOSS_LEVEL) {
+        return;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *e = &g->enemies[i];
+        if (!e->active || e->type != ENEMY_FOREST_NECROMANCER || e->max_hp <= 0 ||
+            !viewport_is_visible(v, e->x, e->y) || !map_is_explored(&g->map, e->x, e->y)) {
+            continue;
+        }
+        int width = r->screen_w - INFO_PANEL_W - 16;
+        if (width > 380) {
+            width = 380;
+        }
+        if (width < 160) {
+            return;
+        }
+        int x = (r->screen_w - INFO_PANEL_W - width) / 2;
+        int top = x < MAP_W * 2 + 12 ? MAP_H * 2 + 20 : 8;
+        SDL_Rect panel = {x, top, width, 78};
+        SDL_SetRenderDrawColor(r->sdl, 20, 31, 24, 255);
+        SDL_RenderFillRect(r->sdl, &panel);
+        SDL_SetRenderDrawColor(r->sdl, 97, 151, 90, 255);
+        SDL_RenderDrawRect(r->sdl, &panel);
+        const char *name = width < 365 ? (e->attack_phase ? "NECROMANCER: PHASE 2" : "NECROMANCER: PHASE 1") :
+            (e->attack_phase ? "NECROMANCER: WITHERED GROVE" : "NECROMANCER: GROVE BINDER");
+        renderer_draw_text(r, name, x + 10, top + 8, (SDL_Color){233, 216, 250, 255}, r->font_tiny);
+        SDL_Rect bar = {x + 10, top + 23, width - 20, 8};
+        SDL_SetRenderDrawColor(r->sdl, 52, 39, 70, 255);
+        SDL_RenderFillRect(r->sdl, &bar);
+        bar.w = bar.w * e->hp / e->max_hp;
+        SDL_SetRenderDrawColor(r->sdl, 106, 175, 94, 255);
+        SDL_RenderFillRect(r->sdl, &bar);
+        char hint[80];
+        if (e->move_timer > 0) {
+            const char *attack = width < 280 ? (e->boss_attack == NECRO_ROOTS ? "ROOTS" : e->boss_attack == NECRO_RAISE ? "GRAVES" : "BOLT") :
+                (e->boss_attack == NECRO_ROOTS ? "CROSSING ROOTS" : e->boss_attack == NECRO_RAISE ? "GRAVE WAVE" : "SPIRIT BOLT");
+            snprintf(hint, sizeof(hint), "%s: %d TURN%s%s", attack, e->move_timer, e->move_timer == 1 ? "" : "S", e->frozen_turns > 0 ? (width < 280 ? " *" : " (FROZEN)") : "");
+        } else {
+            snprintf(hint, sizeof(hint), "%s", e->move_timer < 0 ? "RECOVERING: ATTACK NOW" : "PREPARING NEXT ATTACK");
+        }
+        renderer_draw_text(r, hint, x + 10, top + 38, (SDL_Color){e->move_timer < 0 ? 139 : 247, 207, 164, 255}, r->font_tiny);
+        int graves = necromancer_active_graves(g);
+        snprintf(hint, sizeof(hint), graves ? "GRAVES: %d  INTERACT TO CONSECRATE" : "ALL GRAVES CONSECRATED", graves);
+        if (width < 280) {
+            snprintf(hint, sizeof(hint), "GRAVES: %d", graves);
+        }
+        renderer_draw_text(r, hint, x + 10, top + 55, (SDL_Color){186, 178, 211, 255}, r->font_tiny);
+    }
+}
 
 static SDL_Color area_label_color(Location area) {
     switch (area) {
@@ -419,6 +630,18 @@ void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, con
     float progress = impact ? 1.0f : (float)elapsed / ENEMY_PROJECTILE_TRAVEL_MS;
     for (int i = 0; i < shots->count; i++) {
         const EnemyProjectile *shot = &shots->shots[i];
+        Viewport shot_view = *v;
+        if (shot->type == ENEMY_RED_DRAGON) {
+            // Dragonspine terrain uses a regional camera, including near the summit's east edge.
+            int max_x = SWAMP_MAP_W > v->tiles_x ? SWAMP_MAP_W - v->tiles_x : 0;
+            int max_y = SWAMP_MAP_H > v->tiles_y ? SWAMP_MAP_H - v->tiles_y : 0;
+            if (shot_view.cam_x > max_x) {
+                shot_view.cam_x = max_x;
+            }
+            if (shot_view.cam_y > max_y) {
+                shot_view.cam_y = max_y;
+            }
+        }
         int dx = shot->target_x - shot->start_x;
         int dy = shot->target_y - shot->start_y;
         int length = abs(dx) > abs(dy) ? abs(dx) : abs(dy);
@@ -427,8 +650,8 @@ void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, con
         }
         float vx = (float)dx / length;
         float vy = (float)dy / length;
-        int cx = (int)((shot->start_x - v->cam_x + dx * progress) * TILE_SIZE) + TILE_SIZE / 2;
-        int cy = (int)((shot->start_y - v->cam_y + dy * progress) * TILE_SIZE) + TILE_SIZE / 2;
+        int cx = (int)((shot->start_x - shot_view.cam_x + dx * progress) * TILE_SIZE) + TILE_SIZE / 2;
+        int cy = (int)((shot->start_y - shot_view.cam_y + dy * progress) * TILE_SIZE) + TILE_SIZE / 2;
         SDL_Color color = {184, 100, 255, 255};
         if (shot->type == ENEMY_FOREST_NECROMANCER) {
             color = (SDL_Color){100, 240, 130, 255};
@@ -438,6 +661,8 @@ void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, con
             color = (SDL_Color){240, 130, 220, 255};
         } else if (shot->type == ENEMY_GOBLIN_BOMBER) {
             color = (SDL_Color){255, 160, 55, 255};
+        } else if (shot->type == ENEMY_RED_DRAGON) {
+            color = (SDL_Color){255, 126, 49, 255};
         } else if (shot->type == ENEMY_SUN_PRIEST ||
             shot->type == ENEMY_DESERT_PHARAOH ||
             shot->type == ENEMY_FALLEN_SUN_GUARDIAN) {
@@ -462,6 +687,24 @@ void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, con
             SDL_RenderDrawLine(r->sdl, cx, cy - radius, cx, cy + radius);
             SDL_Rect burst = {cx - radius / 2, cy - radius / 2, radius, radius};
             SDL_RenderDrawRect(r->sdl, &burst);
+        } else if (shot->type == ENEMY_RED_DRAGON) {
+            int start_x = viewport_to_screen_x(&shot_view, shot->start_x) * TILE_SIZE + TILE_SIZE / 2;
+            int start_y = viewport_to_screen_y(&shot_view, shot->start_y) * TILE_SIZE + TILE_SIZE / 2;
+            int pixels = (abs(cx - start_x) > abs(cy - start_y) ? abs(cx - start_x) : abs(cy - start_y));
+            for (int step = 6; step <= pixels; step += 5) {
+                float t = (float)step / (pixels > 0 ? pixels : 1);
+                int fx = start_x + (int)((cx - start_x) * t);
+                int fy = start_y + (int)((cy - start_y) * t);
+                int flicker = ((int)elapsed / 35 + step / 5) % 3;
+                int radius = 3 + flicker;
+                SDL_Rect flame = {fx - radius, fy - radius, radius * 2 + 1, radius * 2 + 1};
+                SDL_SetRenderDrawColor(r->sdl, 241, 73 + flicker * 24, 25, 220);
+                SDL_RenderFillRect(r->sdl, &flame);
+                SDL_Rect core = {fx - 2, fy - 2, 5, 5};
+                SDL_SetRenderDrawColor(r->sdl, 255, 207 + flicker * 12, 88, 255);
+                SDL_RenderFillRect(r->sdl, &core);
+                SDL_RenderDrawLine(r->sdl, fx, fy, fx - (int)(vy * (radius + 3)), fy + (int)(vx * (radius + 3)));
+            }
         } else if (shot->type == ENEMY_PRISM_SOVEREIGN) {
             int start_x = viewport_to_screen_x(v, shot->start_x) * TILE_SIZE + TILE_SIZE / 2;
             int start_y = viewport_to_screen_y(v, shot->start_y) * TILE_SIZE + TILE_SIZE / 2;
@@ -1209,6 +1452,33 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
     } else if (underlay == TILE_TRAP_HIDDEN &&
         g->location == LOCATION_COAST) {
         draw_coast_trap_underlay(r, g, map_x, map_y, screen_x, screen_y);
+    } else if (underlay >= TILE_DRAGON_BASALT && underlay <= TILE_DRAGON_RELIQUARY_HOARD) {
+        draw_red_dragon_tile(r, screen_x, screen_y, map_x, map_y, underlay);
+    } else if (underlay >= TILE_GUARDIAN_MOON_SANCTUARY && underlay <= TILE_GUARDIAN_RELIQUARY) {
+        draw_sun_guardian_tile(r, screen_x, screen_y, map_x, map_y, underlay);
+    } else if (underlay >= TILE_PRISM_LEFT && underlay <= TILE_PRISM_PAVED_RELIQUARY) {
+        draw_prism_sovereign_tile(r, screen_x, screen_y, map_x, map_y, underlay);
+    } else if (underlay >= TILE_CINDER_HOT_2 && underlay <= TILE_CINDER_RELIQUARY) {
+        draw_cinder_lord_tile(r, screen_x, screen_y, map_x, map_y, underlay);
+    } else if (underlay >= TILE_REGENT_ROOT_2 && underlay <= TILE_REGENT_RELIQUARY) {
+        draw_thorn_regent_tile(r, screen_x, screen_y, map_x, map_y, underlay);
+    } else if (underlay >= TILE_PHARAOH_OBELISK && underlay <= TILE_PHARAOH_RELIQUARY) {
+        draw_desert_pharaoh_tile(r, screen_x, screen_y, map_x, map_y, underlay);
+    } else if (underlay >= TILE_MARSHAL_NICHE && underlay <= TILE_MARSHAL_RELIQUARY) {
+        draw_catacombs_tile(r, &g->map, screen_x, screen_y, map_x, map_y, TILE_CATACOMBS_FLOOR);
+        draw_grave_marshal_tile(r, screen_x, screen_y, underlay);
+    } else if (underlay >= TILE_MINOTAUR_PILLAR && underlay <= TILE_MINOTAUR_RELIQUARY) {
+        draw_minotaur_tile(r, g, screen_x, screen_y, underlay);
+    } else if (underlay >= TILE_DEMON_VENT && underlay <= TILE_DEMON_RELIQUARY) {
+        draw_swamp_demon_tile(r, screen_x, screen_y, map_x, map_y, underlay);
+    } else if (underlay >= TILE_QUEEN_WATER && underlay <= TILE_QUEEN_RELIQUARY) {
+        draw_drowned_queen_tile(r, screen_x, screen_y, map_x, map_y, underlay);
+    } else if (underlay >= TILE_GOBLIN_KEG && underlay <= TILE_GOBLIN_KING_RELIQUARY) {
+        draw_goblin_king_tile(r, screen_x, screen_y, map_x, map_y, underlay);
+    } else if (underlay == TILE_NECRO_GRAVE || underlay == TILE_NECRO_GRAVE_SPENT || underlay == TILE_NECRO_RELIQUARY) {
+        draw_necromancer_tile(r, screen_x, screen_y, map_x, map_y, underlay);
+    } else if (underlay == TILE_LICH_SEAL || underlay == TILE_LICH_SEAL_SPENT || underlay == TILE_LICH_PILLAR || underlay == TILE_LICH_RELIQUARY) {
+        draw_lich_tile(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay == TILE_DUNGEON_STAIRS_SEALED || underlay == TILE_DUNGEON_STAIRS_RETURN) {
         draw_dungeon_return_stairs(r, screen_x, screen_y, underlay == TILE_DUNGEON_STAIRS_RETURN);
     } else if (underlay == TILE_FOREST_SHORTCUT) {
@@ -1583,41 +1853,6 @@ static void draw_kraken_status(Renderer *r, const GameState *g, const Viewport *
     }
 }
 
-static void draw_prism_warning(Renderer *r, const GameState *g, const Viewport *v) {
-    if (g->location != LOCATION_GLASSDEEP) {
-        return;
-    }
-    for (int i = 0; i < g->enemy_count; i++) {
-        const Enemy *enemy = &g->enemies[i];
-        if (!enemy->active || enemy->type != ENEMY_PRISM_SOVEREIGN ||
-            enemy->attack_target_x < 0 || enemy->attack_target_y < 0) {
-            continue;
-        }
-        int dx = (enemy->attack_target_x > enemy->x) - (enemy->attack_target_x < enemy->x);
-        int dy = (enemy->attack_target_y > enemy->y) - (enemy->attack_target_y < enemy->y);
-        for (int step = 1; step <= 8; step++) {
-            int x = enemy->x + dx * step;
-            int y = enemy->y + dy * step;
-            if (!map_is_walkable(&g->map, x, y)) {
-                break;
-            }
-            int blocked = 0;
-            for (int j = 0; j < g->enemy_count; j++) {
-                blocked |= j != i && g->enemies[j].active && g->enemies[j].x == x && g->enemies[j].y == y;
-            }
-            if (blocked) {
-                break;
-            }
-            if (viewport_is_visible(v, x, y)) {
-                SDL_Rect outline = {viewport_to_screen_x(v, x) * TILE_SIZE + 2,
-                    viewport_to_screen_y(v, y) * TILE_SIZE + 2, TILE_SIZE - 4, TILE_SIZE - 4};
-                SDL_SetRenderDrawColor(r->sdl, 168, 112, 238, 255);
-                SDL_RenderDrawRect(r->sdl, &outline);
-            }
-        }
-    }
-}
-
 static void draw_catacombs_warnings(Renderer *r, const GameState *g, const Viewport *v) {
     if (g->location != LOCATION_CATACOMBS) {
         return;
@@ -1631,7 +1866,6 @@ static void draw_catacombs_warnings(Renderer *r, const GameState *g, const Viewp
             }
             for (int i = 0; i < g->enemy_count; i++) {
                 const Enemy *e = &g->enemies[i];
-                marked |= e->active && e->type == ENEMY_GRAVE_MARSHAL && catacombs_sweep_marks(&g->map, e, x, y);
                 if (!e->active && e->revive_timer > 0 && e->x == x && e->y == y) {
                     int px = viewport_to_screen_x(v, x) * TILE_SIZE;
                     int py = viewport_to_screen_y(v, y) * TILE_SIZE;
@@ -2098,6 +2332,24 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_dragonspine_floor(r, sx, sy, x, y, 1); break;
                 case TILE_DRAGON_HOARD:
                     draw_dragonspine_floor(r, sx, sy, x, y, 2); break;
+                case TILE_DRAGON_BASALT:
+                case TILE_DRAGON_WEAK_COLUMN:
+                case TILE_DRAGON_CRACKED_COLUMN:
+                case TILE_DRAGON_COLUMN_RUBBLE:
+                case TILE_DRAGON_HOT_FLOOR_1:
+                case TILE_DRAGON_HOT_FLOOR_2:
+                case TILE_DRAGON_HOT_FLOOR_3:
+                case TILE_DRAGON_HOT_ASH_1:
+                case TILE_DRAGON_HOT_ASH_2:
+                case TILE_DRAGON_HOT_ASH_3:
+                case TILE_DRAGON_HOT_HOARD_1:
+                case TILE_DRAGON_HOT_HOARD_2:
+                case TILE_DRAGON_HOT_HOARD_3:
+                case TILE_DRAGON_RELIQUARY_FLOOR:
+                case TILE_DRAGON_RELIQUARY_ASH:
+                case TILE_DRAGON_RELIQUARY_HOARD:
+                    draw_red_dragon_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
                 case TILE_DRAGON_TREASURE:
                     draw_dragon_goblet(r, sx, sy, x, y); break;
                 case TILE_DESERT_LAMP:
@@ -2147,6 +2399,103 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     } else {
                         draw_return_exit(r, sx, sy);
                     }
+                    break;
+                case TILE_PRISM_LEFT:
+                case TILE_PRISM_RIGHT:
+                case TILE_PRISM_RETURN:
+                case TILE_PRISM_RELIQUARY:
+                case TILE_PRISM_PAVED_RELIQUARY:
+                    draw_prism_sovereign_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
+                case TILE_CINDER_HOT_2:
+                case TILE_CINDER_HOT_1:
+                case TILE_CINDER_CHANNEL:
+                case TILE_CINDER_COOL_1:
+                case TILE_CINDER_COOL_2:
+                case TILE_CINDER_COOL_3:
+                case TILE_CINDER_COOL_4:
+                case TILE_CINDER_COOL_5:
+                case TILE_CINDER_SLUICE:
+                case TILE_CINDER_SLUICE_1:
+                case TILE_CINDER_SLUICE_2:
+                case TILE_CINDER_SLUICE_3:
+                case TILE_CINDER_SLUICE_4:
+                case TILE_CINDER_SLUICE_5:
+                case TILE_CINDER_RELIQUARY:
+                    draw_cinder_lord_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
+                case TILE_REGENT_ROOT_2:
+                case TILE_REGENT_ROOT_1:
+                case TILE_REGENT_WALL_1:
+                case TILE_REGENT_WALL_2:
+                case TILE_REGENT_WALL_3:
+                case TILE_REGENT_WALL_4:
+                case TILE_REGENT_NODE:
+                case TILE_REGENT_NODE_1:
+                case TILE_REGENT_NODE_2:
+                case TILE_REGENT_NODE_3:
+                case TILE_REGENT_NODE_4:
+                case TILE_REGENT_NODE_5:
+                case TILE_REGENT_RELIQUARY:
+                    draw_thorn_regent_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
+                case TILE_PHARAOH_OBELISK:
+                case TILE_PHARAOH_SAND_2:
+                case TILE_PHARAOH_SAND_1:
+                case TILE_PHARAOH_RELIQUARY:
+                    draw_desert_pharaoh_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
+                case TILE_MARSHAL_NICHE:
+                case TILE_MARSHAL_NICHE_SPENT:
+                case TILE_MARSHAL_RELIQUARY:
+                    draw_catacombs_tile(r, &g->map, sx, sy, x, y, TILE_CATACOMBS_FLOOR);
+                    draw_grave_marshal_tile(r, sx, sy, g->map.tiles[y][x]);
+                    break;
+                case TILE_MINOTAUR_PILLAR:
+                case TILE_MINOTAUR_CRACKED:
+                case TILE_MINOTAUR_BROKEN:
+                case TILE_MINOTAUR_RELIQUARY:
+                    draw_minotaur_tile(r, g, sx, sy, g->map.tiles[y][x]);
+                    break;
+                case TILE_DEMON_VENT:
+                case TILE_DEMON_VENT_1:
+                case TILE_DEMON_VENT_2:
+                case TILE_DEMON_VENT_3:
+                case TILE_DEMON_VENT_4:
+                case TILE_DEMON_VENT_5:
+                case TILE_DEMON_ROT_1:
+                case TILE_DEMON_ROT_2:
+                case TILE_DEMON_RELIQUARY:
+                    draw_swamp_demon_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
+                case TILE_QUEEN_WATER:
+                case TILE_QUEEN_DRY:
+                case TILE_QUEEN_ISLAND:
+                case TILE_QUEEN_CONTROL_H:
+                case TILE_QUEEN_CONTROL_V:
+                case TILE_QUEEN_CONTROL_H_DRAINED:
+                case TILE_QUEEN_CONTROL_V_DRAINED:
+                case TILE_QUEEN_RELIQUARY:
+                    draw_drowned_queen_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
+                case TILE_GOBLIN_KEG:
+                case TILE_GOBLIN_KEG_FUSE_3:
+                case TILE_GOBLIN_KEG_FUSE_2:
+                case TILE_GOBLIN_KEG_FUSE_1:
+                case TILE_GOBLIN_KEG_SPENT:
+                case TILE_GOBLIN_KING_RELIQUARY:
+                    draw_goblin_king_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
+                case TILE_NECRO_GRAVE:
+                case TILE_NECRO_GRAVE_SPENT:
+                case TILE_NECRO_RELIQUARY:
+                    draw_necromancer_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
+                case TILE_LICH_SEAL:
+                case TILE_LICH_SEAL_SPENT:
+                case TILE_LICH_PILLAR:
+                case TILE_LICH_RELIQUARY:
+                    draw_lich_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
                     break;
                 case TILE_LOCKED_DOOR: draw_locked_door(r, sx, sy); break;
                 case TILE_DUNGEON_KEY: draw_dungeon_key(r, sx, sy); break;
@@ -2288,6 +2637,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_island_path(r, sx, sy, x, y); break;
                 case TILE_TEMPLE_FLOOR:
                     draw_temple_floor(r, sx, sy, x, y); break;
+                case TILE_GUARDIAN_MOON_SANCTUARY:
+                case TILE_GUARDIAN_SUN_SANCTUARY:
+                case TILE_GUARDIAN_RELIQUARY:
+                    draw_sun_guardian_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
                 case TILE_TEMPLE_WALL:
                     draw_temple_wall(r, sx, sy, x, y); break;
                 case TILE_TEMPLE_ENTRANCE:
@@ -2650,6 +3004,20 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         draw_kraken_target(r, g, v);
     }
 
+    draw_lich_warning(r, g, v);
+    draw_necromancer_warning(r, g, v);
+    draw_goblin_king_warnings(r, g, v);
+    draw_drowned_queen_warnings(r, g, v);
+    draw_swamp_demon_warnings(r, g, v);
+    draw_minotaur_warnings(r, g, v);
+    draw_grave_marshal_warnings(r, g, v);
+    draw_desert_pharaoh_warnings(r, g, v);
+    draw_thorn_regent_warnings(r, g, v);
+    draw_cinder_lord_warnings(r, g, v);
+    draw_prism_sovereign_warnings(r, g, v);
+    draw_sun_guardian_warnings(r, g, v);
+    draw_red_dragon_warnings(r, g, v);
+
     // Draw enemies
     if (g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
         g->location == LOCATION_FOREST ||
@@ -2674,7 +3042,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             if (g->location == LOCATION_CASTLE_INTERIOR) {
                 castle_draw_enemy(r, sx, sy, e);
             } else if (e->type == ENEMY_FALLEN_SUN_GUARDIAN &&
-                e->hp <= e->max_hp / 2) {
+                (e->attack_phase > 0 || e->hp <= e->max_hp / 2)) {
                 draw_fallen_sun_guardian_broken(r, sx, sy);
             } else {
                 draw_enemy(r, sx, sy, e->type);
@@ -3355,7 +3723,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     } else if (g->location == LOCATION_DESERT) {
         draw_region_weather(r, v, 1);
     }
-    draw_prism_warning(r, g, v);
     draw_catacombs_warnings(r, g, v);
     castle_draw_warnings(r, g, v);
 
@@ -3372,7 +3739,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     draw_low_health_warning(r, g);
 
-    if (g->location == LOCATION_TEMPLE && temple_remaining > 0) {
+    if (g->location == LOCATION_TEMPLE && temple_remaining > 0 && !sun_guardian_compact_status(r, g, v)) {
         int notice_x = r->screen_w - INFO_PANEL_W - 312;
         if (notice_x < 8) {
             notice_x = 8;
@@ -3392,6 +3759,22 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     draw_kraken_status(r, g, v);
+    draw_lich_status(r, g, v);
+    draw_necromancer_status(r, g, v);
+    draw_goblin_king_status(r, g, v);
+    draw_drowned_queen_status(r, g, v);
+    draw_swamp_demon_status(r, g, v);
+    draw_minotaur_status(r, g, v);
+    draw_grave_marshal_status(r, g, v);
+    draw_desert_pharaoh_status(r, g, v);
+    draw_thorn_regent_status(r, g, v);
+    draw_cinder_lord_status(r, g, v);
+    draw_prism_sovereign_status(r, g, v);
+    draw_sun_guardian_status(r, g, v);
+    draw_red_dragon_status(r, g, v);
+    castle_draw_castellan_status(r, g, v);
+    castle_draw_arcanist_status(r, g, v);
+    castle_draw_veyr_status(r, g, v);
 
     // Draw info panel
     info_panel_draw(r, g);

@@ -40,11 +40,48 @@ Travel score is awarded on first visits to stages from either direction.
 ## Central Encounter and Shortcuts
 
 The Necromancer waits in the stage-4 grove and remains dormant until the
-player enters it or attacks him from range. He alternates a telegraphed
-invocation with a spirit bolt. Every fourth action, he can return one defeated
-forest servant at half health. The roster remains bounded by the floor's
-original enemies. He blocks crossing the grove while alive, but permits retreat
-toward the town where the expedition began.
+player enters it or damages him from range. He stays in the grove and blocks
+crossing while alive, but permits retreat toward the expedition's entry town.
+His health, attack, defense and experience reward retain their existing scaling.
+
+- **Grove Binder, above half health:** spirit bolts mark a fixed lane for one
+  player turn. Step aside before the countdown ends. After the first bolt and
+  recovery, one grave wave warns all unconsecrated patches for two turns.
+- **Withered Grove, at/below half health:** one second finite grave wave is
+  followed by alternating spirit bolts and two-turn crossing root lanes.
+  Roots lock the player's row and column inside the grove when declared.
+  Two ordinary cardinal steps can leave the crossing; no special ability is
+  required. Roots deal one hit and do not leave impassable tiles or lingering
+  damage. Roots and grave waves resolve separately.
+- Every signature has a recovery turn without extra adjacent boss attacks.
+  The panel shows phase, health, attack countdown, freeze and remaining graves.
+  Numbered outlines show the declared footprint. Freezing pauses the countdown;
+  crossing half health never changes an existing warning. Retreat beyond attack
+  range pauses the warning and does not refund its wave.
+- Three grave patches can be consecrated on or beside the patch with contextual
+  **Interact (`A` by default)**. Consecration permanently prevents that patch
+  from raising a servant. Consecrating any currently warned grave cancels the
+  entire pending wave and grants two complete recovery turns. Loot on a grave
+  stays available and does not prevent interaction. Every class can do this.
+
+Each wave raises at most one **Grove Revenant** per unconsecrated grave. Recent
+fallen forest servants return at half health; when no recent corpse is available,
+a buried Blighted Wolf rises instead. Occupied patches and a full enemy roster
+skip that spawn without moving the warning or replacing a living enemy. Servants
+begin acting on the following turn and grant no repeat gold, items, experience
+or score. Each health phase spends its wave when declared, even if interrupted.
+Entering phase two before the first wave skips the unused first wave. Graves,
+phase, exact attack targets and consumed waves survive saves and revisits.
+Hidden random traps are excluded from the grove; previously revealed traps in
+older saves remain intact.
+
+The guaranteed **Necromancer's Cloak** keeps its +5 defense, 8% evasion and Rogue
+restriction. It normally drops on the boss tile. If the floor loot list is full,
+a named grove reliquary preserves it without deleting another item. An earned,
+unclaimed cloak is restored there after backtracking or a map refresh. Interact
+beside the reliquary or press `P` while standing on it; a full inventory leaves
+it available. Claiming it once prevents later sale or dropping from producing
+a replacement. The reward does not depend on consecrating the graves.
 
 Defeating him displays a shortcut discovery prompt until a fresh press of Enter
 acknowledges it. A separate marked trail appears beside the defeated boss,
@@ -86,3 +123,13 @@ portal underlays, without resetting explored maps, enemy damage, or coordinates.
 Collected rescue bits keep their identity; unfinished rescues appear on the new
 stages when visited. Boss victories and shortcut unlocks remain intact. Saving
 writes the current format, including the expedition's entry town and portal anchor.
+
+Version **125** adds the grave patches to active and cached living encounters
+without regenerating the map or resetting boss health, enemy deaths, loot,
+exploration, player position, portals or quests. Old unmarked attack timing
+restarts with a visible warning. Previous victories stay defeated; only a known,
+currently dropped legacy cloak is treated as unclaimed. New saves store cloak
+claim state and both finite-wave flags, including when the player is elsewhere.
+
+Renderer captures and focused play-testing notes are in
+[the Necromancer encounter gallery](art-sources/necromancer-encounter/README.md).

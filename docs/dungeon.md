@@ -66,16 +66,54 @@ room is excluded from trap placement.
 
 The final floor places a golden key in the room before the Lich King's sealed
 chamber. Stand on the key and press `P`, then walk into the chamber door to
-unlock it. The Lich stays dormant until the player enters the chamber. Once
-engaged, he alternates a warning turn with a ranged necrotic bolt. Two Skeleton
-minions named **Lich Guard** flank him inside the locked chamber and pursue
-the player in melee. They count toward the floor's normal enemy limit. Defeating
-him unseals a special upward staircase with pale stone steps, gold rails, and a
-light at the top. Stand on it and use the **stairs-up key (`<`, the comma key
-by default)** to return directly to Oakhaven. The stairs-down key (`.`) does
-not activate it. Other surviving enemies do not block the trip back to OakHaven.
-The Lich King's victory and boss
-reward are one-time.
+unlock it. The Lich stays dormant until you enter; damaging him from outside
+also starts his warned attacks. He remains inside the chamber.
+
+- **Crypt Sovereign, above half health:** a necrotic lance marks a fixed lane
+  for one player turn. Step aside or use the chamber's stone pillars as cover.
+- **Unbound Soul, at/below half health:** one finite wave of up to two Skeletons
+  rises at marked positions after a one-turn warning. Subsequent attacks
+  alternate lances with two-turn soul rings. The diamond-shaped ring is three
+  cardinal steps from the Lich; its inner and outer floor are safe from the burst.
+- Every resolved signature has a recovery turn. Attack during the green
+  **RECOVERING** opening. There is no extra adjacent Lich attack during it.
+- The boss panel shows the health phase, attack name, countdown and active seals.
+  Outlined numbered tiles show the exact footprint. Freezing pauses a pending
+  attack; crossing half health never changes a warning already on the floor.
+- Use your contextual **Interact key (`A` by default)** on or beside either
+  burial seal. Each active seal reduces damage dealt to the Lich by 15 percentage
+  points and adds 2 damage to his soul burst. Silencing both removes protection,
+  cancels his current warning and grants two complete recovery turns. Seals stay
+  silenced through backtracking, portals and saves. They are separate from
+  Elowen's quest seals; no quest or class-specific ability is required.
+
+Two existing Skeleton minions named **Lich Guard** flank him inside the locked
+chamber. The extra phase-two **Lich Shades** are summoned only once per attempt,
+start acting on the following turn, and award no gold, loot, score or experience.
+Hidden random traps are excluded from the chamber; previously revealed traps
+in older saved chambers retain their state.
+
+Defeating the Lich unseals the pale stone return staircase. Stand on it and use
+the **stairs-up key (`<`, the comma key by default)** to return directly to
+Oakhaven. The stairs-down key (`.`) does not activate it; surviving enemies do
+not block your return.
+
+The guaranteed **Cryptblade** retains its +5 attack, 10% critical chance and
+Warrior restriction. Normally it drops on the floor. If the floor loot list is
+full, it remains in a named chamber reliquary without deleting other items.
+An unclaimed blade lost to a floor refresh is restored there on revisiting,
+even in a fresh expedition with the Lich already defeated. Interact beside the
+reliquary or press `P` while standing on it; a full inventory leaves it available.
+After the first claim, dropping or selling the blade does not create another.
+
+Save version **124** stores pending attacks, phase, finite-wave use, both warned
+summon coordinates and reward claim state in active/cached encounters. Older
+living encounters gain seals and safe cover in place, preserving boss health,
+existing enemies, exploration, player position, quests and loot. Old unmarked
+bolt timing restarts with a visible warning. Previous victories remain defeated;
+only a known, currently dropped legacy Cryptblade is treated as unclaimed.
+
+[Renderer review and play-test checklist](art-sources/lich-encounter/README.md).
 
 Save version 109 converts old boss-room return doors and downward stair markers
 into the special staircase, including cached floors, loot underlays, and portal

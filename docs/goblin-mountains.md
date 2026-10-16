@@ -38,8 +38,8 @@ can take it immediately or fight through the three remaining stages.
 - **Cave Troll:** slow, high-health bruiser.
 - **Hobgoblin Guard:** heavily armored frontline defender.
 - **Goblin Shaman:** periodically heals a nearby wounded ally.
-- **Goblin King:** remains at Crown Peak until confronted, then alternates a
-  telegraphed wind-up with powerful thrown-axe attacks.
+- **Goblin King:** a stationary two-phase encounter with fixed axe lanes,
+  marked bombardment pockets and finite powder kegs at Crown Peak.
 
 The route geometry and ground treatment vary by level. Foothill and ascent
 stages use exposed basalt switchbacks. Raider Pass and Ridgeshire Approach contain
@@ -99,4 +99,64 @@ occupied or portal-linked map when needed. Character progress, boss victories,
 partial map fragments, active loot, and portal coordinates remain intact. Old
 map bearers become regular enemies, and missing fragments gain bearers on their
 new stages when visited. Existing shortcut entrances relocate beside the saved
-boss death position on load. Saving writes version 79 with both mountain travel anchors.
+boss death position on load. Saving writes the current format with both mountain travel anchors.
+
+## Crown Peak Boss Encounter
+
+The Goblin King keeps his original baseline 180 HP, 20 attack, 8 defense and
+500 experience, with existing regional scaling. He remains dormant until the
+player enters the fortress or damages him from range. He stays in the arena;
+retreat beyond his range pauses a pending warning without healing him.
+
+- **Fortress Chief, above half health:** thrown axes mark a fixed lane for one
+  complete player action, then resolve and leave a recovery turn. Sidestep to
+  dodge. Walls and living enemies can block the axe; removing a blocker never
+  extends the warning beyond its original endpoint. Axes can light unlit kegs
+  along their announced path.
+- **Powder King, at/below half health:** alternate axe throws with two-turn
+  bombardments. Up to two fixed floor pockets show every affected tile. Each
+  pocket covers its center and four cardinal neighbors; two ordinary moves can
+  escape. Bombs deal one hit and leave no lingering damage or blocked floor.
+- Every signature has a recovery opening with no extra adjacent boss attack.
+  Cross half health during an existing warning and that attack keeps its
+  original shape; the new phase is announced before its next preparation.
+  Freezing the King pauses his pending signature and preserves its targets.
+
+Three finite powder kegs use native pixel art with wooden staves, iron hoops,
+powder marks and burning fuses. Interact on or beside an unlit keg with contextual
+**`A` by default** to prime it. No class, item, ammunition or quest is required.
+The interaction's enemy phase leaves two complete player actions before the
+blast. An axe also starts a two-turn fuse. Numbered outlines show the exact
+**3×3 blast area**. Move two tiles from the center to get clear.
+
+A keg blast damages the player for `max(4, 20 - defense / 2)` before normal
+block/evasion checks, deals 30 damage to ordinary enemies and one-sixth of the
+King's maximum health to him. Overlapping blasts hit each actor once per turn.
+A blast catching the King cancels his current signature and grants two complete
+recovery turns. Blasts also remove nearby incoming bomb pockets. Kegs remain
+walkable, spent kegs remain spent, loot covering a keg is preserved, and a full
+loot list cannot erase an earned boss reward. Active fuses continue while the
+King is frozen; he waits for them before preparing another signature footprint.
+His signature warnings and keg fuses display separately. If both affect a tile,
+its label shows **attack turns / keg turns**.
+
+Keg kills use ordinary enemy death, experience, quest and loot handling. A keg
+victory still records the King's defeat, shield drop and shortcut discovery.
+Surviving enemies do not block the mountain shortcut or either travel route.
+
+The guaranteed **Goblin King's Shield** retains +3 defense, 12% block and its
+Warrior/Rogue restriction. It normally drops as floor loot. A full floor list
+reserves it in a labeled fortress reliquary without deleting another item.
+An earned, unclaimed shield is restored there after a floor refresh. Interact
+beside the reliquary or press `P` on it; a full inventory leaves it available.
+First claim is permanent, so later dropping or selling it creates no replacement.
+
+Save version **126** stores shield claim state along with the existing saved
+phase, attack countdown, targets and cached maps. Keg fuses and spent state are
+saved as tiles, including item underlays. Older living encounters gain kegs in
+place and restart old unmarked timings with a visible warning, preserving boss
+health, deaths, player position, exploration, loot, portal anchors and quests.
+Previous victories remain defeated; only a known current legacy floor shield
+establishes an unclaimed reward.
+
+See the [encounter screenshots and play-testing guide](art-sources/goblin-king-encounter/README.md).
