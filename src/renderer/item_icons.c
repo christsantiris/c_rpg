@@ -92,6 +92,11 @@ static void icon_palette(SDL_Color *pal, const Item *item) {
                 cloth = (SDL_Color){106, 119, 133, 255};
                 trim = (SDL_Color){199, 69, 59, 255};
                 break;
+            case ITEM_VISUAL_CASTELLAN_BULWARK:
+                cloth = (SDL_Color){88, 48, 65, 255};
+                metal = (SDL_Color){151, 157, 174, 255};
+                trim = (SDL_Color){222, 181, 91, 255};
+                break;
             case ITEM_VISUAL_LABYRINTH_AEGIS:
                 cloth = (SDL_Color){61, 71, 102, 255};
                 metal = (SDL_Color){191, 160, 91, 255};
@@ -241,7 +246,7 @@ void draw_icon_shield(Renderer *r, int px, int py, const Item *item) {
     }
     int art = item->visual_id == ITEM_VISUAL_LABYRINTH_AEGIS ? ICON_ART_LABYRINTH_AEGIS
         : item->visual_id == ITEM_VISUAL_BUCKLER ? ICON_ART_BUCKLER
-        : item->visual_id == ITEM_VISUAL_TOWER_SHIELD ? ICON_ART_TOWER
+        : item->visual_id == ITEM_VISUAL_TOWER_SHIELD || item->visual_id == ITEM_VISUAL_CASTELLAN_BULWARK ? ICON_ART_TOWER
         : item->visual_id == ITEM_VISUAL_MAGIC_SHIELD ? ICON_ART_MAGIC_SHIELD : ICON_ART_KITE;
     SDL_Color palette[128] = {{0}};
     icon_palette(palette, item);

@@ -178,6 +178,7 @@ typedef struct {
     int castle_loot_count[CASTLE_DEPTH];
     int castle_fire_phase[CASTLE_DEPTH];
     int castle_minibosses;
+    int castellan_reward_state; // 0: not earned, 1: reserved in Iron Keep, 2: claimed.
     int castle_prompt;
     int game_won;
     int jail_quest_state; // 0: not arrested, 1: jailed, 2: escorting, 3: rewarded.

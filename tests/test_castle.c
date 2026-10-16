@@ -731,6 +731,7 @@ static void test_castle_floor_tactics(void) {
     guard->y = 47;
     guard->move_timer = 2;
     e->attack_phase = 1;
+    e->boss_aux_x = 31;
     e->attack_target_x = 45;
     e->attack_target_y = 44;
     e->move_timer = 1;
