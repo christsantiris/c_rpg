@@ -638,13 +638,10 @@ reading scrolls and equipping or dropping items remain free inventory actions.
 
 Below are screenshots of the game in action:
 
-<img width="2560" height="1438" alt="image" src="https://github.com/user-attachments/assets/f2e73317-2c66-4b8f-b3f8-e5677a77a6c2" />
+<img width="2592" height="1460" alt="image" src="https://github.com/user-attachments/assets/a3408d27-396f-4a2e-83ab-79e3fbe19e35" />
 
-<img width="2552" height="1434" alt="image" src="https://github.com/user-attachments/assets/90d05a5a-e6f2-40f3-99d8-0efe8705f952" />
+<img width="2586" height="1466" alt="image" src="https://github.com/user-attachments/assets/121f3fe6-1684-4589-b0aa-a6f3e8b18f7d" />
 
-<img width="2556" height="1446" alt="image" src="https://github.com/user-attachments/assets/ef4d324a-bc1a-43e7-9c13-ddd87687b0b4" />
-
-<img width="2554" height="1458" alt="image" src="https://github.com/user-attachments/assets/28455bfe-fe5e-4b91-bc2d-e84ab107389a" />
 
 ## Building and Running
 
