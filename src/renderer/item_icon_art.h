@@ -2,7 +2,7 @@
 #define ITEM_ICON_ART_H
 
 // Private artwork indices; persistent ItemVisualId and SpellID values are unchanged.
-enum { ICON_ART_SHORT_SWORD, ICON_ART_LONG_SWORD, ICON_ART_GREATSWORD, ICON_ART_DAGGER, ICON_ART_AXE, ICON_ART_STAFF, ICON_ART_BOW, ICON_ART_LONGBOW, ICON_ART_MAIL, ICON_ART_PLATE, ICON_ART_LEATHER, ICON_ART_CLOAK, ICON_ART_ROBE, ICON_ART_BUCKLER, ICON_ART_KITE, ICON_ART_TOWER, ICON_ART_MAGIC_SHIELD, ICON_ART_POTION, ICON_ART_SCROLL, ICON_ART_BOOK, ICON_ART_MAP, ICON_ART_ARROWS, ICON_ART_GOLD, ICON_ART_MAGIC_ARROW, ICON_ART_FIREBALL, ICON_ART_HEAL, ICON_ART_FROST, ICON_ART_PORTAL, ICON_ART_RETURN, ICON_ART_COUNT };
+enum { ICON_ART_SHORT_SWORD, ICON_ART_LONG_SWORD, ICON_ART_GREATSWORD, ICON_ART_DAGGER, ICON_ART_AXE, ICON_ART_STAFF, ICON_ART_BOW, ICON_ART_LONGBOW, ICON_ART_MAIL, ICON_ART_PLATE, ICON_ART_LEATHER, ICON_ART_CLOAK, ICON_ART_ROBE, ICON_ART_BUCKLER, ICON_ART_KITE, ICON_ART_TOWER, ICON_ART_MAGIC_SHIELD, ICON_ART_POTION, ICON_ART_SCROLL, ICON_ART_BOOK, ICON_ART_MAP, ICON_ART_ARROWS, ICON_ART_GOLD, ICON_ART_MAGIC_ARROW, ICON_ART_FIREBALL, ICON_ART_HEAL, ICON_ART_FROST, ICON_ART_PORTAL, ICON_ART_RETURN, ICON_ART_LABYRINTH_AEGIS, ICON_ART_COUNT };
 
 // Native 24-pixel silhouettes. Dots are transparent; o contour; m/M/N metal;
 // l/L grip wood; g/G trim; c/C/v cloth or face; f parchment/string; p/P accent.
@@ -759,6 +759,32 @@ static const char item_icon_art[ICON_ART_COUNT][24][25] = {
         "......oCCCPCCCPCCCo.....",
         ".......ooooooooooo......",
         "........................",
+        "........................",
+    },
+    { // LABYRINTH_AEGIS
+        "........................",
+        "........................",
+        ".....oooooooooooooo.....",
+        "....oMMMMMMMMMMMMMMo....",
+        "...oMNMMMMMMMMMMMMNMo...",
+        "..oMMMNCCCCCCCCCCCMMMo..",
+        "..oMMMNCCCCCCCCCCcMMMo..",
+        "..oMMCNCfCCCCCCCfcCMMo..",
+        "..oMMCNCfCCCCCCCfcCMMo..",
+        "..oMMCNCCfCCCCCfCcCMMo..",
+        "...oMMNPCCfGGGfCCPMMo...",
+        "...oMMNPCCGGGGGCCPMMo...",
+        "...oMMNCCCGoGoGCCcMMo...",
+        "...oMMCNCCCGGGCCCCMMo...",
+        "...oMMNCNCCGGGCCCNMMo...",
+        "....oMMMCNCCoCCCMMMo....",
+        ".....oMMMNCCCCCMMMo.....",
+        "......oMMMNCPCMMMo......",
+        ".......ooMMPPPMMo.......",
+        ".........oMMPMMo........",
+        "..........oMMMo.........",
+        "...........oMo..........",
+        "............o...........",
         "........................",
     },
 };

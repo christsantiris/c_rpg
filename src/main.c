@@ -188,6 +188,8 @@ static int debug_weapon(const char *name, Item *weapon, int *none) {
         *weapon = item_make_cryptblade();
     } else if (strcmp(name, "battle-axe") == 0) {
         *weapon = item_make_battle_axe();
+    } else if (strcmp(name, "embercleaver") == 0) {
+        *weapon = item_make_embercleaver();
     } else if (strcmp(name, "magic-battle-axe") == 0) {
         *weapon = item_make_magic_battle_axe();
     } else if (strcmp(name, "staff") == 0) {
@@ -673,10 +675,15 @@ int main(int argc, char **argv) {
 
                     // Game over screen
                     if (screen == SCREEN_GAME_OVER) {
+                        if (game.game_won && sc == game.key_bindings[CONTROL_QUEST_JOURNAL]) {
+                            quest_journal_init(&quest_journal_screen);
+                            quest_journal_screen.tab = QUEST_TAB_BOSSES;
+                            screen = SCREEN_QUEST_JOURNAL;
+                            break;
+                        }
                         if (sc == SDL_SCANCODE_RETURN) {
                             if (highscore_qualifies(&highscore_table, game.score)) {
-                                highscore_insert(&highscore_table,
-                                    game.player.name, game.score, game.level);
+                                highscore_insert(&highscore_table, game.player.name, game.score, game.level, game.crown_of_unbound);
                                 highscore_save(&highscore_table);
                             }
                             screen = SCREEN_HALL_OF_FAME;
@@ -1476,6 +1483,10 @@ int main(int argc, char **argv) {
         if (screen == SCREEN_PLAYING && game.game_won) {
             screen = SCREEN_GAME_OVER;
             needs_redraw = 1;
+        }
+        if (game.game_won && game.crown_of_unbound && !highscore_table.crown_of_unbound) {
+            highscore_table.crown_of_unbound = 1;
+            highscore_save(&highscore_table);
         }
 
         // Update music based on screen and location

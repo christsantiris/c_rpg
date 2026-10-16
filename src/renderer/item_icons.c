@@ -57,6 +57,28 @@ static void icon_palette(SDL_Color *pal, const Item *item) {
             case ITEM_VISUAL_PLATE_ARMOR: cloth = (SDL_Color){169, 182, 192, 255}; break;
             case ITEM_VISUAL_MAGIC_PLATE: cloth = (SDL_Color){99, 177, 211, 255}; break;
             case ITEM_VISUAL_STUDDED_LEATHER: cloth = (SDL_Color){132, 89, 48, 255}; break;
+            case ITEM_VISUAL_PRISMWEAVE_ROBES:
+                cloth = (SDL_Color){91, 107, 173, 255};
+                trim = (SDL_Color){158, 223, 231, 255};
+                accent = (SDL_Color){206, 155, 237, 255};
+                break;
+            case ITEM_VISUAL_CROWN_CHAPEL_VESTMENTS:
+                cloth = (SDL_Color){100, 64, 135, 255};
+                trim = (SDL_Color){232, 193, 106, 255};
+                accent = (SDL_Color){141, 234, 239, 255};
+                break;
+            case ITEM_VISUAL_SUNWARDEN_MANTLE:
+                cloth = (SDL_Color){172, 119, 55, 255};
+                trim = (SDL_Color){244, 207, 112, 255};
+                accent = (SDL_Color){117, 218, 228, 255};
+                break;
+            case ITEM_VISUAL_EMBERCLEAVER:
+                metal = (SDL_Color){98, 100, 109, 255};
+                wood = (SDL_Color){88, 51, 34, 255};
+                trim = (SDL_Color){246, 143, 62, 255};
+                accent = (SDL_Color){255, 193, 95, 255};
+                break;
+            case ITEM_VISUAL_BRIARWEAVE_CLOAK: cloth = (SDL_Color){61, 129, 112, 255}; trim = (SDL_Color){213, 157, 211, 255}; break;
             case ITEM_VISUAL_RANGER_CLOAK: cloth = (SDL_Color){57, 114, 63, 255}; break;
             case ITEM_VISUAL_SHADOW_ARMOR:
                 cloth = (SDL_Color){75, 49, 111, 255};
@@ -74,6 +96,17 @@ static void icon_palette(SDL_Color *pal, const Item *item) {
             case ITEM_VISUAL_TOWER_SHIELD:
                 cloth = (SDL_Color){106, 119, 133, 255};
                 trim = (SDL_Color){199, 69, 59, 255};
+                break;
+            case ITEM_VISUAL_CASTELLAN_BULWARK:
+                cloth = (SDL_Color){88, 48, 65, 255};
+                metal = (SDL_Color){151, 157, 174, 255};
+                trim = (SDL_Color){222, 181, 91, 255};
+                break;
+            case ITEM_VISUAL_LABYRINTH_AEGIS:
+                cloth = (SDL_Color){61, 71, 102, 255};
+                metal = (SDL_Color){191, 160, 91, 255};
+                trim = (SDL_Color){214, 160, 70, 255};
+                accent = (SDL_Color){132, 221, 230, 255};
                 break;
             case ITEM_VISUAL_MAGIC_SHIELD:
                 cloth = (SDL_Color){86, 69, 165, 255};
@@ -200,7 +233,7 @@ void draw_icon_armor(Renderer *r, int px, int py, const Item *item) {
     int art = ICON_ART_PLATE;
     if (item->armor_family == ARMOR_FAMILY_ROBE) {
         art = ICON_ART_ROBE;
-    } else if (item->visual_id == ITEM_VISUAL_RANGER_CLOAK) {
+    } else if (item->visual_id == ITEM_VISUAL_RANGER_CLOAK || item->visual_id == ITEM_VISUAL_BRIARWEAVE_CLOAK) {
         art = ICON_ART_CLOAK;
     } else if (item->visual_id == ITEM_VISUAL_CHAIN_MAIL || item->visual_id == ITEM_VISUAL_SCALE_MAIL) {
         art = ICON_ART_MAIL;
@@ -216,8 +249,9 @@ void draw_icon_shield(Renderer *r, int px, int py, const Item *item) {
     if (!item) {
         return;
     }
-    int art = item->visual_id == ITEM_VISUAL_BUCKLER ? ICON_ART_BUCKLER
-        : item->visual_id == ITEM_VISUAL_TOWER_SHIELD ? ICON_ART_TOWER
+    int art = item->visual_id == ITEM_VISUAL_LABYRINTH_AEGIS ? ICON_ART_LABYRINTH_AEGIS
+        : item->visual_id == ITEM_VISUAL_BUCKLER ? ICON_ART_BUCKLER
+        : item->visual_id == ITEM_VISUAL_TOWER_SHIELD || item->visual_id == ITEM_VISUAL_CASTELLAN_BULWARK ? ICON_ART_TOWER
         : item->visual_id == ITEM_VISUAL_MAGIC_SHIELD ? ICON_ART_MAGIC_SHIELD : ICON_ART_KITE;
     SDL_Color palette[128] = {{0}};
     icon_palette(palette, item);

@@ -97,6 +97,17 @@ one-time **Potion of Strength and 600 score**. The potion permanently adds
 1 base attack when consumed. Older saves preserve quest progress and update
 her location when loaded.
 
+The Red Dragon now has three phases: **Hoard Defender**, **Scorched Wings** at
+two-thirds health, and **Last Inferno** at one-third. Its main attack is an
+animated **fire-breath cone**, fixed two actions before firing. Close claw/tail
+sweeps, warned wingbeat landings, three-action burning patches and a separately
+warned two-breath finale create different openings. Shelter behind basalt:
+stable columns remain, while weak columns visibly crack before a later breath
+breaks them. The existing **Dragon Scale Mantle** (+4 defense, +20 HP, all
+classes) remains guaranteed and recoverable if left behind or the floor is
+full. Ilya's goblet quest stays separate. See the
+[Red Dragon play-test guide](docs/art-sources/red-dragon-encounter/README.md).
+
 Ridgeshire's workshop houses Garrick, who sharpens a selected sword, axe, or
 dagger for **50 gold**, permanently adding **+1 weapon attack**. Each individual
 weapon can be sharpened only once. Press **T** beside him inside the workshop,
@@ -154,10 +165,15 @@ the final west exit return to Stillbury. Return to Town leaves a portal by
 Stillbury's west gate. Scarabs and venomous Vipers roam its first level, Mummies
 join from level two, Djinn fire magic bolts from level three, and armored Golems
 appear from level four. Mummies and Golems move slowly. The Desert Pharaoh
-guards the final clearing with alternating magic bolts and drops the Sandstorm
-Staff, a rare two-handed Mage weapon. Unclaimed staff rewards survive leaving
-and saving. A visual sandstorm sweeps across Sunscar with blowing sand and a
-light amber haze. Enter the Adventurer's Guild in Rosemoor, speak with Zara, and
+guards the final clearing with a one-action curse beam and two-action burial
+sand. Below half health, warned storm bands move across the arena. Four sandstone
+obelisks block beams and cast directional **S** shelter tiles against storms.
+Each signature leaves a counterattack action; burial patches expire after two
+actions. The guaranteed Sandstorm Staff remains a rare two-handed Mage weapon.
+Unclaimed rewards survive travel and saving, including a full loot floor or
+inventory. See the [Pharaoh play-test guide](docs/art-sources/desert-pharaoh-encounter/README.md).
+A visual sandstorm sweeps across Sunscar with blowing sand and a light amber
+haze. Enter the Adventurer's Guild in Rosemoor, speak with Zara, and
 press **Y** to accept The Lost Magic Lamp. Recover the lamp on Sunscar level 4,
 then return to Zara for a one-time reward of 80 gold and 600 score. Speaking
 with Cain explains the dangers beyond town, recommends Elowen's **The Broken
@@ -283,10 +299,14 @@ without clearing enemies. After the one-time quest, the labyrinth remains open
 for further expeditions; ordinary enemies return, but the Minotaur and quest
 reward do not.
 
-The Minotaur is a horned, axe-wielding melee boss guarding floor 5's relic
-vault. Defeating it drops a Magic Shield and marks the Labyrinth boss journal
-entry complete. Existing Maze Warden saves become Minotaurs on load, retaining
-their health and previous victories.
+The Minotaur guards floor 5 with fixed charge lanes, axe warnings and two health
+phases. Baiting a charge into stone creates a two-action stagger; two reinforced
+pillar caps can crack and break after visible warnings. Defeating it guarantees
+**Labyrinth Aegis**, a bull-and-rune shield with the Magic Shield's original stats
+and Warrior restriction. Existing Magic Shields keep their names and artwork.
+Older living encounters migrate in place, retaining health and quest progress;
+retreating to Stillbury no longer resets the living boss. See the
+[Labyrinth encounter and play-testing guide](docs/labyrinth.md).
 
 ### Blackwater Swamp
 
@@ -296,8 +316,9 @@ toward the Swamp Demon on level 4, then falls beyond it. Defeating him reveals
 a marked shortcut to the opposite town; players can instead cross the three
 remaining levels. He drops a Demonic Sword: a +6 one-handed weapon for every
 class, with a two-tile `F` attack. Talk to Bram at the Stillbury Inn to rescue
-Mira from a vampire on level 3. From Stillbury she appears before the Demon;
-from Rosemoor she appears after it. See [Blackwater Swamp](docs/swamp.md).
+Mira from a vampire on level 3. The Demon now has two phases, fixed cleave/pool/fan
+warnings, expiring rot and three reusable root vents that open counterattack windows.
+From Stillbury she appears before the Demon; from Rosemoor she appears after it. See [Blackwater Swamp](docs/swamp.md).
 
 ### Rosemoor, Crown Roads, and the Castle
 
@@ -331,6 +352,28 @@ surviving defenders reset, while miniboss victories, revealed
 trapdoors, and dropped items persist. Defeating Lord Veyr ends the campaign with
 victory. See [Castle interior and play testing](docs/castle-design.md).
 
+The Castellan shifts from **Shield Commander** to **Broken Formation** at half
+health: fixed charge/swing warnings give way to wider two-action sweeps and one
+marked guard rally. Use either side lever to interrupt a charge for two recovery
+actions. His guaranteed **Castellan's Bulwark** (+8 defense, 30% block, Warrior)
+waits in Iron Keep's southeast armory chest until claimed. See the
+[Castellan play-test guide and renderer previews](docs/art-sources/castellan-encounter/README.md).
+
+The Royal Arcanist shifts from **Warded Scholar** to **Shattered Liturgy** at
+half health, adding fixed cross blasts and separately warned west/east ward
+lanes. Disable a lane's pedestal to interrupt it for two recovery actions.
+The guaranteed **Crown Chapel Vestments** (+4 defense, +45 maximum MP, 15% cheaper
+spells, Mage) wait in the chapel's southeast chest until claimed. See the
+[Royal Arcanist play-test guide and renderer previews](docs/art-sources/royal-arcanist-encounter/README.md).
+
+Lord Veyr's finale combines a warned **Throne Advance**, ward-linked magic and
+three-action **Unbound Crown** attacks that alternate with separately warned
+throne fire. Disabling both pedestals gives two recovery actions after a crown.
+Victory automatically awards the permanent **Crown of the Unbound** trophy,
+recorded in the boss journal, ending and Hall of Fame alongside the original
+10,000-score bonus. The victory screen's journal key opens the completed boss
+record. See the [Veyr play-test guide and renderer previews](docs/art-sources/lord-veyr-encounter/README.md).
+
 A townsman on the castle grounds secretly reports you to the Royal Guards when
 spoken to with **T**, causing a one-time arrest in the new **Royal Jail**. Speak
 to fellow prisoner **Tomas** with **T**, then **Y** to accept **Guide Tomas
@@ -357,9 +400,16 @@ Rosemoor's west gate opens onto the five-stage Moonveil Gardens. Enter from the
 east and follow the paths west through glowing flowers, giant mushrooms,
 moonlit pools, and ancient stone circles. Fey Tricksters and Giant Moths appear
 first, followed by Carnivorous Flowers and Thorn Guardians. The Thorn Regent guards
-stage 5's return to Rosemoor and drops a Potion of Strength. Backtracking, later
-visits, saves, and Return to Town portals retain the gardens' explored maps and
-enemy progress.
+stage 5's return to Rosemoor. Garden Regent alternates fixed one-action thorn
+lances and two-action creeping roots. Below half health, Briar Crown adds warned,
+temporary thorn strips. Tend the separate flowering nodes with **A** to open a
+flank or interrupt regrowth for two counterattack actions; their visible cooldown
+prevents continuous clearing. The guaranteed **Briarweave Cloak** gives all
+classes +4 defense and 10% evasion, alongside the original **Potion of Strength**.
+Both wait in a persistent flowered reliquary, including when the pack or loot
+floor is full. See the [Regent play-test guide](docs/art-sources/thorn-regent-encounter/README.md).
+Backtracking, later visits, saves, and Return to Town portals retain the gardens'
+explored maps and enemy progress.
 
 **Botanist Liora** in **Stillbury's Inn** assigns **The Stolen Moonseed** with
 **T**. She directs you north across the swamp to Rosemoor, then through its
@@ -378,9 +428,16 @@ Ridgeshire's north gate leads into five stages of Ashen Hollow, a volcanic basin
 of basalt columns, charred trees, ruined stonework, and animated lava pools.
 Enter from the south and follow winding ash paths north. Cinder Imps throw
 firebolts, Ash Hounds rush forward, and Obsidian Guardians defend later stages.
-The Cinder Lord guards stage 5's return route to Ridgeshire and drops a Potion
-of Strength. Exploration and enemy progress survive backtracking, later visits,
-saves, and Return to Town portals. See [Ashen Hollow](docs/ashen-hollow.md).
+The Cinder Lord guards stage 5's return route to Ridgeshire. Furnace Heart uses
+fixed cinder lances and lava eruptions; Broken Crucible adds an expanding ember
+ring with both fronts warned in advance. Open a forge sluice feeding a warned
+eruption with **A** to redirect it into cooling channels and gain two
+counterattack actions. The guaranteed **Embercleaver** is a Warrior two-handed
+axe with +11 attack, 25% armor penetration and 25% cleave, alongside the original
+**Potion of Strength**. Both persist in a forge reliquary until claimed.
+Exploration and enemy progress survive backtracking, later visits, saves, and
+Return to Town portals. See [Ashen Hollow](docs/ashen-hollow.md) and the
+[Cinder Lord play-test guide](docs/art-sources/cinder-lord-encounter/README.md).
 
 ### Glassdeep Caverns
 
@@ -388,10 +445,15 @@ Stillbury's south gate opens into five stages of Glassdeep Caverns. Descend
 south through irregular crystal chambers, underground pools, mineral seams,
 and the paving of a buried sanctuary. Crystal Spiders rush forward, Blind
 Stalkers wait to ambush nearby explorers, and armored Shard Golems guard later
-stages. The Prism Sovereign marks a beam before firing along that fixed path:
-step aside during its warning turn. Defeating it opens stage 5's return to
-Stillbury and drops a Potion of Strength. Saves and Return to Town portals
-preserve the caverns' independent progress.
+stages. The Prism Sovereign opens with one-action beams and escalates below
+half health to two-action split beams. Every reflected segment and endpoint is
+marked. Press **A** beside a crystal face between attacks to cycle Left, Right
+and Return; warnings lock the faces. Returning a beam to the crown grants two
+full counterattack actions. Defeating it opens stage 5's return to Stillbury
+and reserves **Prismweave Robes** (Mage: +3 defense, +35 maximum MP, 12% spell-cost
+reduction) and a **Potion of Strength** in its reliquary. Unclaimed rewards and
+encounter progress survive saves and Return to Town portals. See the
+[Prism Sovereign play-test guide](docs/art-sources/prism-sovereign-encounter/README.md).
 
 **Surveyor Orin**, inside **Rosemoor's Adventurer's Guild**, assigns **The Broken
 Resonance** with **T**. Restore the guarded Root, Tide, and Crown resonators on
@@ -410,7 +472,9 @@ reassemble once while their ossuary brazier burns; stand beside a brazier and
 press **A** to extinguish it. Bone Sentinels, Grave Archers, tougher Crypt Bats
 and Wraiths, and reviving Bone Cantors populate the chambers. Burial plates
 mark spike lines a turn before striking. The Grave Marshal guards floor 5,
-telegraphing polearm sweeps and drawing protection from two braziers. Victory
+with two phases, fixed polearm/cross warnings, an interruptible funeral channel,
+and one honor-guard wave. Two braziers retain their protection and can interrupt
+a channel for two counterattack actions. Victory
 opens a direct return to the castle and rewards Gravekeeper's Mantle, armor
 for every class with +6 defense and +20 maximum health. Return to Town opens
 a portal in Rosemoor. Save migration preserves existing progress and adds
@@ -491,9 +555,19 @@ Sun closes lunar doors and activates orange floor traps. Moon opens those doors
 and permanently awakens dormant Moonbound Sentinels; switching back does not
 petrify them. Walls and closed doors block all ranged attacks.
 
-The Fallen Sun Guardian retaliates when attacked at range. Its armor breaks
-below half health, increasing the power of its sunburst. Defeat it, recover the
-buried treasure, and return to Nahla for the quest reward. Return to Town works
+The Fallen Sun Guardian has three phases: **Sunbound Armor**, **Cracked Core**
+at half health and **Eclipse** at quarter health. Fixed solar lances escalate
+to two-action sunburst rings, solar lanes and lunar bursts. Every attack is
+marked before it fires, including against adjacent or ranged attackers.
+Sun alignment strengthens its armor; Moon exposes it. Use the summit altars
+to choose a guard against the announced attack, or walk onto a matching
+sanctuary: **M** protects against solar strikes and **S** against lunar bursts.
+Victory grants the all-class **Sunwarden Mantle** (+5 defense, +15 HP, +15 MP);
+a full pack leaves it safely reserved in a reliquary. Clear the remaining
+Sun and Moon enemies, recover the buried treasure, and return to **Nahla on
+the Ruined Isle** for her separate quest reward. See the
+[Guardian play-test guide](docs/art-sources/sun-guardian-encounter/README.md).
+Return to Town works
 inside the temple and leaves a portal near the harbor that restores the exact
 temple tier, position, and encounter state. Descend from the first tier through
 the southern entrance to return to the island surface.
@@ -625,7 +699,7 @@ with **I** and equip the weapon with **E** or **Enter**.
 | Weapon family | Accepted names |
 | --- | --- |
 | Swords | `rusty-sword`, `short-sword`, `long-sword`, `magic-long-sword`, `demonic-sword`, `greatsword`, `magic-greatsword`, `cryptblade` |
-| Axes | `battle-axe`, `magic-battle-axe` |
+| Axes | `battle-axe`, `magic-battle-axe`, `embercleaver` |
 | Staves | `staff`, `runed-staff`, `magic-staff`, `sandstorm-staff` |
 | Bows | `bow`, `longbow`, `magic-longbow`, `krakenbone-bow` |
 | Daggers | `dagger`, `magic-dagger` |

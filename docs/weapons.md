@@ -137,6 +137,7 @@ in melee.
 | Magic Plate | +11 | Warrior | 4 | 1,200 | +50 maximum HP |
 | Shadow Armor | +7 | Rogue | 4 | 1,100 | 15% evasion |
 | Archmage Robes | +4 | Mage | 4 | 1,250 | +60 maximum MP, 20% cheaper spells |
+| Crown Chapel Vestments | +4 | Mage | Boss | 1,000 | +45 maximum MP, 15% cheaper spells; Royal Arcanist reward |
 | Necromancer's Cloak | +5 | Rogue | Boss | 450 | 8% evasion; Necromancer reward |
 | Tidecaller Robes | +3 | Mage | Boss | 500 | +30 maximum MP, 8% cheaper spells; Drowned Queen reward |
 | Dragon Scale Mantle | +4 | All | Boss | 1,400 | +20 maximum HP; Red Dragon reward |
@@ -155,10 +156,14 @@ usable by the listed classes and require a one-handed main weapon.
 | Kite Shield | +4 | 15% | Warrior | 2 | 300 |
 | Tower Shield | +7 | 20% | Warrior | 3 | 700 |
 | Magic Shield | +9 | 25% | Warrior | 3 | 1,250 |
+| Castellan's Bulwark | +8 | 30% | Warrior | Boss | 1,250 |
 | Goblin King's Shield | +3 | 12% | Warrior, Rogue | Boss | 200 |
 
 The Goblin King's Shield improves on the Buckler while leaving the Kite, Tower,
 and Magic Shields as stronger Warrior upgrades.
+The Castellan's Bulwark trades one defense for five percentage points of block
+chance versus the Magic Shield. Claim it with **Interact** at the southeast
+armory chest in **Iron Keep**, the castle's second floor, after defeating him.
 
 ## Blacksmith Progression and Boss Rewards
 
@@ -177,8 +182,11 @@ Each of the five regional bosses guarantees a fixed thematic item:
 | Drowned Queen | Tidecaller Robes |
 | Swamp Demon | Demonic Sword |
 
-The Fallen Sun Guardian protects the buried temple treasure and does not drop
-equipment. Boss victories remain permanent during repeat expeditions.
+The Fallen Sun Guardian grants **Sunwarden Mantle** on victory: rare all-class
+light armor with **+5 defense, +15 maximum HP and +15 maximum MP**. A full pack
+reserves it in the summit reliquary, recoverable with A nearby or P on it.
+This reward is separate from Nahla's buried-treasure quest. Boss victories
+remain permanent during repeat expeditions.
 
 ### Gravekeeper's Mantle
 

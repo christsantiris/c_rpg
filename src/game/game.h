@@ -178,8 +178,11 @@ typedef struct {
     int castle_loot_count[CASTLE_DEPTH];
     int castle_fire_phase[CASTLE_DEPTH];
     int castle_minibosses;
+    int castellan_reward_state; // 0: not earned, 1: reserved in Iron Keep, 2: claimed.
+    int arcanist_reward_state; // 0: not earned, 1: reserved in Crown Chapel, 2: claimed.
     int castle_prompt;
     int game_won;
+    int crown_of_unbound; // Permanent victory trophy; no inventory slot required.
     int jail_quest_state; // 0: not arrested, 1: jailed, 2: escorting, 3: rewarded.
     int prisoner_x;
     int prisoner_y;
@@ -232,6 +235,13 @@ typedef struct {
     int score;
     int dungeon_key_found;
     int dungeon_crypt_keys;
+    int grave_marshal_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
+    int minotaur_reward_state; // 0: none, 1: unclaimed Aegis, 2: claimed, 3: unclaimed legacy Magic Shield.
+    int swamp_demon_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
+    int drowned_queen_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
+    int goblin_king_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
+    int necromancer_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
+    int lich_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
     int portal_active;
     int portal_level;
     Location portal_location;
@@ -240,6 +250,12 @@ typedef struct {
     int defeated_bosses;
     int kraken_bow_unclaimed;
     int sandstorm_staff_unclaimed;
+    int prism_sovereign_reward_pending; // Bits: 1 Prismweave Robes, 2 Strength Potion.
+    int sun_guardian_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
+    int red_dragon_reward_state; // 0: not earned, 1: unclaimed mantle, 2: claimed.
+    int cinder_lord_reward_pending; // Bits: 1 Embercleaver, 2 Strength Potion.
+    int thorn_regent_reward_pending; // Bits: 1 cloak, 2 Strength Potion; zero after both are claimed.
+    int desert_pharaoh_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
     int elowen_quest_state;
     int elowen_seals_restored;
     int dain_quest_state;
@@ -297,7 +313,10 @@ void game_move_player(GameState *g, int dx, int dy);
 void game_descend(GameState *g);
 void game_ascend(GameState *g);
 void enemies_spawn(GameState *g);
+Enemy *game_spawn_marshal_guard(GameState *g, int x, int y, int boss_index);
 void game_add_lich_minions(GameState *g);
+Enemy *game_raise_grove_servant(GameState *g, int x, int y, int boss_index);
+Enemy *game_spawn_lich_shade(GameState *g, int x, int y, int boss_index);
 void game_refresh_quest_encounters(GameState *g);
 void game_repair_forest_enemy_positions(Map *m, Enemy *actors, int count, int px, int py);
 void game_enter_dungeon(GameState *g);

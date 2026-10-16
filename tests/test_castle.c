@@ -444,6 +444,7 @@ static void test_castle_wide_warning(void) {
     game.player.y = 53;
     e->hp = e->max_hp / 2;
     e->move_timer = 0;
+    e->attack_phase = 0; // Start a new phase fixture; real phases never reverse after healing.
     action_resolve_enemies(&game);
     e->hp = e->max_hp / 4;
     ASSERT("health phase changes cannot widen pending warning", e->attack_phase == 2 && !castle_attack_marks(&game.map, e, 45, 55));
@@ -731,6 +732,7 @@ static void test_castle_floor_tactics(void) {
     guard->y = 47;
     guard->move_timer = 2;
     e->attack_phase = 1;
+    e->boss_aux_x = 31;
     e->attack_target_x = 45;
     e->attack_target_y = 44;
     e->move_timer = 1;
@@ -768,9 +770,9 @@ static void test_castle_floor_tactics(void) {
     game.player.x = 45;
     game.player.y = 53;
     game.player.defense = 0;
-    e->attack_target_x = 45;
-    e->attack_target_y = 53;
-    e->move_timer = 1;
+    e->move_timer = 0;
+    castle_tick(&game);
+    castle_tick(&game);
     ASSERT("active pedestals also strengthen warned boss attacks", castle_tick(&game) == e->attack + 8);
 
     start();

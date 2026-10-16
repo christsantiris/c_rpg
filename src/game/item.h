@@ -92,7 +92,14 @@ typedef enum {
     ITEM_VISUAL_TOWER_SHIELD,
     ITEM_VISUAL_MAGIC_SHIELD,
     ITEM_VISUAL_DEMONIC_SWORD,
-    ITEM_VISUAL_SANDSTORM_STAFF
+    ITEM_VISUAL_SANDSTORM_STAFF,
+    ITEM_VISUAL_LABYRINTH_AEGIS,
+    ITEM_VISUAL_BRIARWEAVE_CLOAK,
+    ITEM_VISUAL_EMBERCLEAVER,
+    ITEM_VISUAL_PRISMWEAVE_ROBES,
+    ITEM_VISUAL_SUNWARDEN_MANTLE,
+    ITEM_VISUAL_CASTELLAN_BULWARK,
+    ITEM_VISUAL_CROWN_CHAPEL_VESTMENTS
 } ItemVisualId;
 
 typedef struct {
@@ -158,6 +165,7 @@ Item item_make_demonic_sword(void);
 Item item_make_magic_long_sword(void);
 Item item_make_battle_axe(void);
 Item item_make_magic_battle_axe(void);
+Item item_make_embercleaver(void);
 Item item_make_staff(void);
 Item item_make_runed_staff(void);
 Item item_make_magic_staff(void);
@@ -184,14 +192,20 @@ Item item_make_apprentice_robes(void);
 Item item_make_runed_robes(void);
 Item item_make_enchanter_robes(void);
 Item item_make_archmage_robes(void);
+Item item_make_prismweave_robes(void);
+Item item_make_crown_chapel_vestments(void);
+Item item_make_sunwarden_mantle(void);
 Item item_make_necromancer_cloak(void);
 Item item_make_gravekeeper_mantle(void);
+Item item_make_briarweave_cloak(void);
 Item item_make_dragon_scale_mantle(void);
 Item item_make_tidecaller_robes(void);
 Item item_make_buckler(void);
 Item item_make_kite_shield(void);
 Item item_make_tower_shield(void);
 Item item_make_magic_shield(void);
+Item item_make_castellan_bulwark(void);
+Item item_make_labyrinth_aegis(void);
 Item item_make_goblin_king_shield(void);
 void item_apply_legacy_metadata(Item *item);
 void item_apply_legacy_armor_metadata(Item *item);

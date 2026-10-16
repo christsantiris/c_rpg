@@ -186,7 +186,7 @@ static void test_boss_victories(void) {
             rewards += game.floor_items[i].active && game.floor_items[i].item.type == ITEM_POTION_STRENGTH;
         }
         BossJournalEntry entry;
-        ASSERT("melee, spell, and bow victories grant the Cinder Lord reward and journal completion", !boss->active && (game.defeated_bosses & (1 << LOCATION_ASHEN)) && rewards == 1 && quest_journal_get_boss(&game, 10, &entry) && entry.defeated && strcmp(entry.name, "Cinder Lord") == 0);
+        ASSERT("melee, spell, and bow victories grant the Cinder Lord reward and journal completion", !boss->active && (game.defeated_bosses & (1 << LOCATION_ASHEN)) && rewards == 0 && game.cinder_lord_reward_pending == 3 && quest_journal_get_boss(&game, 10, &entry) && entry.defeated && strcmp(entry.name, "Cinder Lord") == 0);
         walk_edge(1);
         ASSERT("defeating the Cinder Lord allows return while other enemies remain", game.location == LOCATION_TOWN4 && game.ashen_cache[ASHEN_DEPTH - 1].enemy_count > 1);
         game_enter_ashen(&game);
@@ -262,6 +262,12 @@ static void setup_actor(EnemyType type) {
     for (int x = 20; x <= 40; x++) {
         game.map.tiles[22][x] = TILE_ASHEN_FLOOR;
     }
+    if (type == ENEMY_CINDER_LORD) {
+        for (int x = 20; x <= 34; x++) {
+            game.map.tiles[21][x] = TILE_ASHEN_FLOOR;
+            game.map.tiles[23][x] = TILE_ASHEN_FLOOR;
+        }
+    }
     game.map.room_count = 1;
     game.map.rooms[0] = (Room){18, 18, 17, 10};
     game.player.x = 28;
@@ -296,7 +302,7 @@ static void test_combat_roles(void) {
     action_resolve_enemies_with_projectiles(&game, &shots);
     ASSERT("the Cinder Lord's next turn fires a damaging fire projectile", shots.count == 1 && shots.shots[0].type == ENEMY_CINDER_LORD && game.player.hp < 100);
     setup_actor(ENEMY_CINDER_LORD);
-    game.enemies[0].move_timer = 1;
+    action_resolve_enemies_with_projectiles(&game, &shots);
     game.map.tiles[22][26] = TILE_ASHEN_LAVA;
     action_resolve_enemies_with_projectiles(&game, &shots);
     ASSERT("lava pools block enemy spells rather than allowing shots through terrain", shots.count == 0 && game.player.hp == 100);

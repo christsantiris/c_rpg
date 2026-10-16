@@ -1,5 +1,6 @@
 #include "test_utils.h"
 #include "../src/game/game.h"
+#include "../src/game/desert_pharaoh.h"
 #include "../src/screens/quest_journal.h"
 #include "../src/systems/save_load.h"
 #include <stdlib.h>
@@ -383,7 +384,7 @@ static void test_pharaoh_combat(void) {
     g->player.x = 20;
     action_resolve_enemies_with_projectiles(g, &shots);
     int warned = g->player.hp == 100 && shots.count == 0 &&
-        strcmp(g->messages[g->message_count - 1], "The Pharaoh gathers desert magic...") == 0;
+        g->enemies[0].boss_attack == PHARAOH_BEAM && g->enemies[0].move_timer == 1;
     action_resolve_enemies_with_projectiles(g, &shots);
     ASSERT("the Pharaoh warns then fires a magic bolt using half the player's defense",
         warned && g->player.hp == 90 && shots.count == 1 &&
@@ -391,12 +392,12 @@ static void test_pharaoh_combat(void) {
         g->enemies[0].x == 24 && g->enemies[0].y == 20);
 
     setup_pharaoh_combat();
-    g->enemies[0].move_timer = 1;
+    action_resolve_enemies_with_projectiles(g, &shots);
     g->map.tiles[20][22] = TILE_DESERT_WALL;
     action_resolve_enemies_with_projectiles(g, &shots);
     ASSERT("sandstone blocks the Pharaoh's magic bolt", g->player.hp == 100 && shots.count == 0);
     setup_pharaoh_combat();
-    g->enemies[0].move_timer = 1;
+    action_resolve_enemies_with_projectiles(g, &shots);
     g->enemies[1] = (Enemy){
         .type = ENEMY_MUMMY, .active = 1, .x = 22, .y = 20,
         .hp = 100, .max_hp = 100, .frozen_turns = 2
@@ -416,13 +417,13 @@ static void test_pharaoh_combat(void) {
     g->player.x = 10;
     action_resolve_enemies_with_projectiles(g, &shots);
     ASSERT("the Pharaoh stops attacking when the player retreats far away",
-        g->player.hp == 90 && shots.count == 0 && g->enemies[0].move_timer == 2);
+        g->player.hp == 90 && shots.count == 0 && g->enemies[0].move_timer == -1);
 
     setup_pharaoh_combat();
     g->player.x = 23;
     action_resolve_enemies_with_projectiles(g, &shots);
-    ASSERT("an adjacent player takes a normal melee hit from the Pharaoh",
-        g->player.hp == 92 && shots.count == 0);
+    ASSERT("an adjacent player receives a curse warning instead of an untelegraphed melee hit",
+        g->player.hp == 100 && shots.count == 0 && g->enemies[0].move_timer == 1);
 }
 
 static int find_pharaoh(const GameState *g) {
@@ -595,7 +596,9 @@ static void test_pharaoh_reward(void) {
     action_resolve_player(g, (Action){ACTION_CAST_SPELL, 0, 0});
     ASSERT("a spell kill still guarantees the staff when all floor item slots are occupied",
         !g->enemies[0].active && g->sandstorm_staff_unclaimed &&
-        sandstorm_staves_on_floor(g) == 1 && g->floor_item_count == MAX_FLOOR_ITEMS &&
+        sandstorm_staves_on_floor(g) == 0 && g->desert_pharaoh_reward_state == 1 &&
+        g->map.tiles[22][25] == TILE_PHARAOH_RELIQUARY &&
+        g->floor_item_count == MAX_FLOOR_ITEMS &&
         g->gold > 0 && g->score >= 1600);
 }
 

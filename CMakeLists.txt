@@ -38,6 +38,7 @@ list(APPEND TEST_SOURCES ${CMAKE_SOURCE_DIR}/src/screens/inventory.c)
 list(APPEND TEST_SOURCES ${CMAKE_SOURCE_DIR}/src/screens/controls_screen.c)
 list(APPEND TEST_SOURCES ${CMAKE_SOURCE_DIR}/src/screens/landing.c)
 list(APPEND TEST_SOURCES ${CMAKE_SOURCE_DIR}/src/systems/save_load.c)
+list(APPEND TEST_SOURCES ${CMAKE_SOURCE_DIR}/src/systems/highscore.c)
 list(APPEND TEST_SOURCES ${CMAKE_SOURCE_DIR}/external/cJSON.c)
 
 add_executable(conr ${SOURCES})

@@ -1,6 +1,21 @@
 #include "save_load.h"
 #include "../game/game.h"
 #include "../game/castle.h"
+#include "../game/royal_arcanist.h"
+#include "../game/lord_veyr.h"
+#include "../game/lich.h"
+#include "../game/necromancer.h"
+#include "../game/goblin_king.h"
+#include "../game/drowned_queen.h"
+#include "../game/swamp_demon.h"
+#include "../game/minotaur.h"
+#include "../game/grave_marshal.h"
+#include "../game/desert_pharaoh.h"
+#include "../game/thorn_regent.h"
+#include "../game/cinder_lord.h"
+#include "../game/prism_sovereign.h"
+#include "../game/sun_guardian.h"
+#include "../game/red_dragon.h"
 #include "../game/jail.h"
 #include "../game/town_life.h"
 #include "cJSON.h"
@@ -467,6 +482,17 @@ static cJSON *serialize_enemies(const Enemy *enemies, int count) {
         cJSON_AddNumberToObject(obj, "facing_dx", e->facing_dx);
         cJSON_AddNumberToObject(obj, "facing_dy", e->facing_dy);
         cJSON_AddNumberToObject(obj, "attack_phase", e->attack_phase);
+        cJSON_AddNumberToObject(obj, "boss_attack", e->boss_attack);
+        cJSON_AddNumberToObject(obj, "boss_wave_used", e->boss_wave_used);
+        cJSON_AddNumberToObject(obj, "boss_aux_x", e->boss_aux_x);
+        cJSON_AddNumberToObject(obj, "boss_aux_y", e->boss_aux_y);
+        if (e->type == ENEMY_RED_DRAGON) {
+            cJSON *warning = cJSON_CreateArray();
+            for (int row = 0; row < DRAGON_WARNING_SIZE; row++) {
+                cJSON_AddItemToArray(warning, cJSON_CreateNumber(e->dragon_warning[row]));
+            }
+            cJSON_AddItemToObject(obj, "dragon_warning", warning);
+        }
         cJSON_AddItemToArray(arr, obj);
     }
     return arr;
@@ -522,6 +548,19 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count, in
         e->facing_dy = fy ? fy->valueint : -1;
         cJSON *phase = cJSON_GetObjectItem(obj, "attack_phase");
         e->attack_phase = phase ? phase->valueint : 0;
+        cJSON *attack = cJSON_GetObjectItem(obj, "boss_attack");
+        cJSON *wave = cJSON_GetObjectItem(obj, "boss_wave_used");
+        cJSON *aux_x = cJSON_GetObjectItem(obj, "boss_aux_x");
+        cJSON *aux_y = cJSON_GetObjectItem(obj, "boss_aux_y");
+        e->boss_attack = attack ? attack->valueint : 0;
+        e->boss_wave_used = wave ? wave->valueint : 0;
+        e->boss_aux_x = aux_x ? aux_x->valueint : -1;
+        e->boss_aux_y = aux_y ? aux_y->valueint : -1;
+        cJSON *warning = cJSON_GetObjectItem(obj, "dragon_warning");
+        for (int row = 0; row < DRAGON_WARNING_SIZE; row++) {
+            cJSON *bits = cJSON_GetArrayItem(warning, row);
+            e->dragon_warning[row] = bits ? (unsigned int)bits->valueint & ((1u << DRAGON_WARNING_WORD_BITS) - 1u) : 0;
+        }
     }
 }
 
@@ -694,7 +733,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 123);
+    cJSON_AddNumberToObject(root, "save_version", 139);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -726,6 +765,12 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(player, "freeze_recovery", g->player.freeze_recovery);
     cJSON_AddNumberToObject(root, "kraken_bow_unclaimed", g->kraken_bow_unclaimed);
     cJSON_AddNumberToObject(root, "sandstorm_staff_unclaimed", g->sandstorm_staff_unclaimed);
+    cJSON_AddNumberToObject(root, "desert_pharaoh_reward_state", g->desert_pharaoh_reward_state);
+    cJSON_AddNumberToObject(root, "thorn_regent_reward_pending", g->thorn_regent_reward_pending);
+    cJSON_AddNumberToObject(root, "cinder_lord_reward_pending", g->cinder_lord_reward_pending);
+    cJSON_AddNumberToObject(root, "prism_sovereign_reward_pending", g->prism_sovereign_reward_pending);
+    cJSON_AddNumberToObject(root, "sun_guardian_reward_state", g->sun_guardian_reward_state);
+    cJSON_AddNumberToObject(root, "red_dragon_reward_state", g->red_dragon_reward_state);
     cJSON_AddNumberToObject(player, "known_spell_count", g->player.known_spell_count);
     cJSON_AddNumberToObject(player, "player_class",      g->player.player_class);
     cJSON_AddNumberToObject(player, "arrows", g->player.arrows);
@@ -788,6 +833,13 @@ int save_game(const GameState *g, int slot) {
         g->equipped_off_hand);
     cJSON_AddNumberToObject(root, "equipped_armor",    g->equipped_armor);
     cJSON_AddNumberToObject(root, "location",          g->location);
+    cJSON_AddNumberToObject(root, "lich_reward_state", g->lich_reward_state);
+    cJSON_AddNumberToObject(root, "necromancer_reward_state", g->necromancer_reward_state);
+    cJSON_AddNumberToObject(root, "goblin_king_reward_state", g->goblin_king_reward_state);
+    cJSON_AddNumberToObject(root, "grave_marshal_reward_state", g->grave_marshal_reward_state);
+    cJSON_AddNumberToObject(root, "minotaur_reward_state", g->minotaur_reward_state);
+    cJSON_AddNumberToObject(root, "swamp_demon_reward_state", g->swamp_demon_reward_state);
+    cJSON_AddNumberToObject(root, "drowned_queen_reward_state", g->drowned_queen_reward_state);
     cJSON_AddNumberToObject(root, "dungeon_key_found", g->dungeon_key_found);
     cJSON_AddNumberToObject(root, "dungeon_crypt_keys",
         g->dungeon_crypt_keys);
@@ -1186,8 +1238,11 @@ int save_game(const GameState *g, int slot) {
 
     cJSON *castle = cJSON_CreateObject();
     cJSON_AddNumberToObject(castle, "minibosses", g->castle_minibosses);
+    cJSON_AddNumberToObject(castle, "castellan_reward", g->castellan_reward_state);
+    cJSON_AddNumberToObject(castle, "arcanist_reward", g->arcanist_reward_state);
     cJSON_AddNumberToObject(castle, "prompt", g->castle_prompt);
     cJSON_AddNumberToObject(castle, "won", g->game_won);
+    cJSON_AddNumberToObject(castle, "crown_of_unbound", g->crown_of_unbound);
     cJSON *floors = cJSON_CreateArray();
     for (int i = 0; i < CASTLE_DEPTH; i++) {
         const LevelCache *cache = &g->castle_cache[i];
@@ -2307,6 +2362,84 @@ int load_game(GameState *g, int slot) {
     cJSON *dialogue_y = cJSON_GetObjectItem(root, "dialogue_y");
     g->dungeon_key_found = key_found ? key_found->valueint : 0;
     g->dungeon_crypt_keys = crypt_keys ? crypt_keys->valueint : 0;
+    cJSON *lich_reward = cJSON_GetObjectItem(root, "lich_reward_state");
+    g->lich_reward_state = lich_reward ? lich_reward->valueint : 0;
+    if (g->lich_reward_state < 0 || g->lich_reward_state > 2) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    cJSON *necro_reward = cJSON_GetObjectItem(root, "necromancer_reward_state");
+    g->necromancer_reward_state = necro_reward ? necro_reward->valueint : 0;
+    if (g->necromancer_reward_state < 0 || g->necromancer_reward_state > 2) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    cJSON *king_reward = cJSON_GetObjectItem(root, "goblin_king_reward_state");
+    g->goblin_king_reward_state = king_reward ? king_reward->valueint : 0;
+    if (g->goblin_king_reward_state < 0 || g->goblin_king_reward_state > 2) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    cJSON *prism_reward = cJSON_GetObjectItem(root, "prism_sovereign_reward_pending");
+    cJSON *guardian_reward = cJSON_GetObjectItem(root, "sun_guardian_reward_state");
+    cJSON *dragon_reward = cJSON_GetObjectItem(root, "red_dragon_reward_state");
+    g->red_dragon_reward_state = dragon_reward ? dragon_reward->valueint : 0;
+    if (g->red_dragon_reward_state < 0 || g->red_dragon_reward_state > 2) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    g->sun_guardian_reward_state = guardian_reward ? guardian_reward->valueint : 0;
+    if (g->sun_guardian_reward_state < 0 || g->sun_guardian_reward_state > 2) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    g->prism_sovereign_reward_pending = prism_reward ? prism_reward->valueint : 0;
+    if (g->prism_sovereign_reward_pending < 0 || g->prism_sovereign_reward_pending > 3) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    cJSON *cinder_reward = cJSON_GetObjectItem(root, "cinder_lord_reward_pending");
+    g->cinder_lord_reward_pending = cinder_reward ? cinder_reward->valueint : 0;
+    if (g->cinder_lord_reward_pending < 0 || g->cinder_lord_reward_pending > 3) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    cJSON *regent_reward = cJSON_GetObjectItem(root, "thorn_regent_reward_pending");
+    g->thorn_regent_reward_pending = regent_reward ? regent_reward->valueint : 0;
+    if (g->thorn_regent_reward_pending < 0 || g->thorn_regent_reward_pending > 3) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    cJSON *pharaoh_reward = cJSON_GetObjectItem(root, "desert_pharaoh_reward_state");
+    g->desert_pharaoh_reward_state = pharaoh_reward ? pharaoh_reward->valueint : 0;
+    if (g->desert_pharaoh_reward_state < 0 || g->desert_pharaoh_reward_state > 2) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    cJSON *marshal_reward = cJSON_GetObjectItem(root, "grave_marshal_reward_state");
+    g->grave_marshal_reward_state = marshal_reward ? marshal_reward->valueint : 0;
+    if (g->grave_marshal_reward_state < 0 || g->grave_marshal_reward_state > 2) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    cJSON *minotaur_reward = cJSON_GetObjectItem(root, "minotaur_reward_state");
+    g->minotaur_reward_state = minotaur_reward ? minotaur_reward->valueint : 0;
+    if (g->minotaur_reward_state < 0 || g->minotaur_reward_state > 3) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    cJSON *demon_reward = cJSON_GetObjectItem(root, "swamp_demon_reward_state");
+    g->swamp_demon_reward_state = demon_reward ? demon_reward->valueint : 0;
+    if (g->swamp_demon_reward_state < 0 || g->swamp_demon_reward_state > 2) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    cJSON *queen_reward = cJSON_GetObjectItem(root, "drowned_queen_reward_state");
+    g->drowned_queen_reward_state = queen_reward ? queen_reward->valueint : 0;
+    if (g->drowned_queen_reward_state < 0 || g->drowned_queen_reward_state > 2) {
+        cJSON_Delete(root);
+        return 0;
+    }
     g->portal_active = portal_active ? portal_active->valueint : 0;
     g->portal_level = portal_level ? portal_level->valueint : 0;
     g->portal_location = portal_location ? portal_location->valueint :
@@ -2694,14 +2827,35 @@ int load_game(GameState *g, int slot) {
     memset(g->castle_loot_count, 0, sizeof(g->castle_loot_count));
     memset(g->castle_fire_phase, 0, sizeof(g->castle_fire_phase));
     g->castle_minibosses = 0;
+    g->castellan_reward_state = 0;
+    g->arcanist_reward_state = 0;
     g->castle_prompt = 0;
     g->game_won = 0;
+    g->crown_of_unbound = 0;
     cJSON *castle = cJSON_GetObjectItem(root, "castle");
     if (castle) {
         cJSON *minis = cJSON_GetObjectItem(castle, "minibosses");
+        cJSON *reward = cJSON_GetObjectItem(castle, "castellan_reward");
+        cJSON *arcanist_reward = cJSON_GetObjectItem(castle, "arcanist_reward");
         cJSON *prompt = cJSON_GetObjectItem(castle, "prompt");
         cJSON *won = cJSON_GetObjectItem(castle, "won");
+        cJSON *crown = cJSON_GetObjectItem(castle, "crown_of_unbound");
         cJSON *floors = cJSON_GetObjectItem(castle, "floors");
+        if ((save_version >= 139 || crown) && (!cJSON_IsNumber(crown) || crown->valuedouble != crown->valueint || crown->valueint < 0 || crown->valueint > 1)) {
+            cJSON_Delete(root);
+            return 0;
+        }
+        g->crown_of_unbound = crown ? crown->valueint : 0;
+        if ((save_version >= 137 || reward) && (!cJSON_IsNumber(reward) || reward->valuedouble != reward->valueint || reward->valueint < 0 || reward->valueint > 2)) {
+            cJSON_Delete(root);
+            return 0;
+        }
+        g->castellan_reward_state = reward ? reward->valueint : 0;
+        if ((save_version >= 138 || arcanist_reward) && (!cJSON_IsNumber(arcanist_reward) || arcanist_reward->valuedouble != arcanist_reward->valueint || arcanist_reward->valueint < 0 || arcanist_reward->valueint > 2)) {
+            cJSON_Delete(root);
+            return 0;
+        }
+        g->arcanist_reward_state = arcanist_reward ? arcanist_reward->valueint : 0;
         if (!cJSON_IsNumber(minis) || !cJSON_IsNumber(prompt) || !cJSON_IsNumber(won) ||
             !cJSON_IsArray(floors) || cJSON_GetArraySize(floors) != CASTLE_DEPTH ||
             minis->valueint < 0 || minis->valueint > 3 || prompt->valueint < 0 || prompt->valueint > 2) {
@@ -4167,6 +4321,54 @@ int load_game(GameState *g, int slot) {
         g->map.tiles[GUILD_SELENE_Y][GUILD_SELENE_X] = TILE_NPC_SELENE;
     }
     game_hide_portal_destination(g);
+    if (save_version < 124) {
+        lich_migrate(g);
+    }
+    if (save_version < 125) {
+        necromancer_migrate(g);
+    }
+    if (save_version < 126) {
+        goblin_king_migrate(g);
+    }
+    if (save_version < 127) {
+        drowned_queen_migrate(g);
+    }
+    if (save_version < 128) {
+        swamp_demon_migrate(g);
+    }
+    if (save_version < 129) {
+        minotaur_migrate(g);
+    }
+    if (save_version < 130) {
+        grave_marshal_migrate(g);
+    }
+    if (save_version < 131) {
+        desert_pharaoh_migrate(g);
+    }
+    if (save_version < 132) {
+        thorn_regent_migrate(g);
+    }
+    if (save_version < 133) {
+        cinder_lord_migrate(g);
+    }
+    if (save_version < 134) {
+        prism_sovereign_migrate(g);
+    }
+    if (save_version < 135) {
+        sun_guardian_migrate(g);
+    }
+    if (save_version < 136) {
+        red_dragon_migrate(g);
+    }
+    if (save_version < 137) {
+        castle_migrate_castellan(g);
+    }
+    if (save_version < 138) {
+        royal_arcanist_migrate(g);
+    }
+    if (save_version < 139) {
+        lord_veyr_migrate(g);
+    }
     game_migrate_boss_shortcuts(g);
     game_refresh_quest_encounters(g);
     for (int i = 0; i < g->floor_item_count; i++) {

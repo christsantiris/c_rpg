@@ -1,6 +1,19 @@
 #include "game.h"
 #include "catacombs.h"
 #include "castle.h"
+#include "lich.h"
+#include "necromancer.h"
+#include "goblin_king.h"
+#include "drowned_queen.h"
+#include "swamp_demon.h"
+#include "minotaur.h"
+#include "grave_marshal.h"
+#include "desert_pharaoh.h"
+#include "thorn_regent.h"
+#include "cinder_lord.h"
+#include "prism_sovereign.h"
+#include "sun_guardian.h"
+#include "red_dragon.h"
 #include "jail.h"
 #include "town_life.h"
 
@@ -70,6 +83,11 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
     e->facing_dx = 0;
     e->facing_dy = -1;
     e->attack_phase = 0;
+    e->boss_attack = 0;
+    e->boss_wave_used = 0;
+    e->boss_aux_x = -1;
+    e->boss_aux_y = -1;
+    memset(e->dragon_warning, 0, sizeof(e->dragon_warning));
     switch (type) {
         case ENEMY_OATHBOUND_SOLDIER:
         case ENEMY_IRON_WARDEN:
@@ -958,6 +976,84 @@ static int quest_group_pending(const GameState *g) {
     return 0;
 }
 
+Enemy *game_raise_grove_servant(GameState *g, int x, int y, int boss_index) {
+    if (!map_is_walkable(&g->map, x, y) || (g->player.x == x && g->player.y == y)) {
+        return NULL;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (g->enemies[i].active && g->enemies[i].x == x && g->enemies[i].y == y) {
+            return NULL;
+        }
+    }
+    Enemy *servant = NULL;
+    for (int i = 0; i < g->enemy_count; i++) {
+        Enemy *dead = &g->enemies[i];
+        if (!dead->active && !dead->is_boss && !dead->revived &&
+            dead->type >= ENEMY_PIXIE && dead->type <= ENEMY_FOREST_TROLL) {
+            servant = dead;
+            break;
+        }
+    }
+    if (!servant) {
+        // Buried woodland servants still exist when no recent corpse is available.
+        servant = spawn_quest_enemy_at(g, ENEMY_BLIGHTED_WOLF, x, y);
+    }
+    if (servant) {
+        servant->x = x;
+        servant->y = y;
+        servant->active = 1;
+        servant->hp = servant->max_hp / 2;
+        if (servant->hp < 1) {
+            servant->hp = 1;
+        }
+        snprintf(servant->name, sizeof(servant->name), "Grove Revenant");
+        servant->experience = 0;
+        servant->revived = 1;
+        servant->dain_fragment = 0;
+        servant->move_timer = 0;
+        servant->attack_target_x = -1;
+        servant->attack_target_y = -1;
+        servant->frozen_turns = servant - g->enemies > boss_index ? 1 : 0;
+    }
+    return servant;
+}
+
+Enemy *game_spawn_marshal_guard(GameState *g, int x, int y, int boss_index) {
+    if (g->location != LOCATION_CATACOMBS || g->level != CATACOMBS_DEPTH ||
+        !map_is_walkable(&g->map, x, y) || (g->player.x == x && g->player.y == y) ||
+        g->enemy_count >= NON_ROAD_ENEMY_LIMIT) {
+        return NULL;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (g->enemies[i].active && g->enemies[i].x == x && g->enemies[i].y == y) {
+            return NULL;
+        }
+    }
+    // Append without consuming corpses or their existing resurrection allowances.
+    Enemy *guard = &g->enemies[g->enemy_count++];
+    spawn_enemy(g, guard, ENEMY_BONE_SENTINEL, x, y);
+    snprintf(guard->name, sizeof(guard->name), "Royal Honor Guard");
+    guard->experience = 0;
+    guard->revived = 1;
+    guard->frozen_turns = guard - g->enemies > boss_index ? 1 : 0;
+    return guard;
+}
+
+Enemy *game_spawn_lich_shade(GameState *g, int x, int y, int boss_index) {
+    if (x < 0 || y < 0 || (g->player.x == x && g->player.y == y)) {
+        return NULL;
+    }
+    Enemy *shade = spawn_quest_enemy_at(g, ENEMY_SKELETON, x, y);
+    if (shade) {
+        snprintf(shade->name, sizeof(shade->name), "Lich Shade");
+        shade->experience = 0;
+        shade->revived = 1;
+        // Appended/reused slots later in this enemy phase skip their first turn.
+        shade->frozen_turns = shade - g->enemies > boss_index ? 1 : 0;
+    }
+    return shade;
+}
+
 void game_add_lich_minions(GameState *g) {
     if (g->location != LOCATION_DUNGEON || g->level != DUNGEON_DEPTH ||
         (g->defeated_bosses & (1 << LOCATION_DUNGEON)) || g->map.room_count == 0) {
@@ -1067,6 +1163,39 @@ void enemies_spawn(GameState *g) {
     }
 
     game_add_lich_minions(g);
+    if (g->location == LOCATION_DRAGONSPINE && g->level == DRAGONSPINE_DEPTH) {
+        red_dragon_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
+    }
+    if (g->location == LOCATION_GLASSDEEP && g->level == GLASSDEEP_DEPTH) {
+        prism_sovereign_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
+    }
+    if (g->location == LOCATION_ASHEN && g->level == ASHEN_DEPTH) {
+        cinder_lord_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
+    }
+    if (g->location == LOCATION_MOONVEIL && g->level == MOONVEIL_DEPTH) {
+        thorn_regent_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
+    }
+    if (g->location == LOCATION_DESERT && g->level == DESERT_DEPTH) {
+        desert_pharaoh_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
+    }
+    if (g->location == LOCATION_CATACOMBS && g->level == CATACOMBS_DEPTH) {
+        grave_marshal_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
+    }
+    if (g->location == LOCATION_SWAMP && g->level == SWAMP_BOSS_LEVEL) {
+        swamp_demon_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
+    }
+    if (g->location == LOCATION_COAST && g->level == COAST_DEPTH) {
+        drowned_queen_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
+    }
+    if (g->location == LOCATION_MOUNTAINS && g->level == MOUNTAIN_BOSS_LEVEL) {
+        goblin_king_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
+    }
+    if (g->location == LOCATION_FOREST && g->level == FOREST_BOSS_LEVEL) {
+        necromancer_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
+    }
+    if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH) {
+        lich_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
+    }
 
     int boss_level = g->location == LOCATION_FOREST ? FOREST_BOSS_LEVEL :
         (g->location == LOCATION_MOUNTAINS ? MOUNTAIN_BOSS_LEVEL :
@@ -1331,8 +1460,11 @@ void game_init(GameState *g) {
     memset(g->castle_loot_count, 0, sizeof(g->castle_loot_count));
     memset(g->castle_fire_phase, 0, sizeof(g->castle_fire_phase));
     g->castle_minibosses = 0;
+    g->castellan_reward_state = 0;
+    g->arcanist_reward_state = 0;
     g->castle_prompt = 0;
     g->game_won = 0;
+    g->crown_of_unbound = 0;
     srand((unsigned)time(NULL));
     g->level = 1;
     g->crownroad_cache.valid = 0;
@@ -1411,6 +1543,13 @@ void game_init(GameState *g) {
     g->score = 0;
     g->dungeon_key_found = 0;
     g->dungeon_crypt_keys = 0;
+    g->lich_reward_state = 0;
+    g->necromancer_reward_state = 0;
+    g->goblin_king_reward_state = 0;
+    g->grave_marshal_reward_state = 0;
+    g->minotaur_reward_state = 0;
+    g->swamp_demon_reward_state = 0;
+    g->drowned_queen_reward_state = 0;
     g->portal_active = 0;
     g->portal_level = 0;
     g->portal_location = LOCATION_DUNGEON;
@@ -1420,6 +1559,12 @@ void game_init(GameState *g) {
     g->defeated_bosses = 0;
     g->kraken_bow_unclaimed = 0;
     g->sandstorm_staff_unclaimed = 0;
+    g->desert_pharaoh_reward_state = 0;
+    g->thorn_regent_reward_pending = 0;
+    g->cinder_lord_reward_pending = 0;
+    g->prism_sovereign_reward_pending = 0;
+    g->sun_guardian_reward_state = 0;
+    g->red_dragon_reward_state = 0;
     g->elowen_quest_state = 0;
     g->elowen_seals_restored = 0;
     g->dain_quest_state = 0;
@@ -1870,6 +2015,18 @@ static TileType quest_tile(const GameState *g, int x, int y) {
     return tile;
 }
 
+static void set_temple_tile(GameState *g, int x, int y, TileType tile) {
+    if (g->map.tiles[y][x] != TILE_ITEM) {
+        g->map.tiles[y][x] = tile;
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && item->x == x && item->y == y) {
+            item->underlying_tile = tile;
+        }
+    }
+}
+
 static int place_elowen_seal(GameState *g) {
     if (g->location != LOCATION_DUNGEON || g->elowen_quest_state != 1) {
         return 0;
@@ -2213,28 +2370,7 @@ static void place_desert_lamp(GameState *g) {
 }
 
 static void restore_desert_reward(GameState *g) {
-    if (g->location != LOCATION_DESERT || g->level != DESERT_DEPTH ||
-        !g->sandstorm_staff_unclaimed || g->map.room_count == 0) {
-        return;
-    }
-    for (int i = 0; i < g->floor_item_count; i++) {
-        if (g->floor_items[i].active &&
-            strcmp(g->floor_items[i].item.name, "Sandstorm Staff") == 0) {
-            return;
-        }
-    }
-    if (g->floor_item_count >= MAX_FLOOR_ITEMS) {
-        return;
-    }
-    int x;
-    int y;
-    map_room_center(&g->map.rooms[g->map.room_count - 1], &x, &y);
-    FloorItem *reward = &g->floor_items[g->floor_item_count++];
-    *reward = (FloorItem){
-        .active = 1, .x = x, .y = y, .underlying_tile = TILE_DESERT_FLOOR,
-        .item = item_make_sandstorm_staff()
-    };
-    g->map.tiles[y][x] = TILE_ITEM;
+    desert_pharaoh_restore_reward(g);
 }
 
 static int emberforge_stage_bit(const GameState *g) {
@@ -2973,8 +3109,19 @@ void game_refresh_quest_encounters(GameState *g) {
     game_reveal_forest_shortcut(g);
     game_reveal_swamp_shortcut(g);
     game_reveal_mountain_shortcut(g);
+    lich_restore_reward(g);
+    necromancer_restore_reward(g);
+    goblin_king_restore_reward(g);
+    drowned_queen_restore_reward(g);
+    swamp_demon_restore_reward(g);
+    minotaur_restore_reward(g);
     restore_frostfell_reward(g);
     restore_desert_reward(g);
+    thorn_regent_restore_reward(g);
+    cinder_lord_restore_reward(g);
+    prism_sovereign_restore_reward(g);
+    sun_guardian_restore_reward(g);
+    red_dragon_restore_reward(g);
     catacombs_restore_reward(g);
     int seal_placed = place_elowen_seal(g);
     place_desert_lamp(g);
@@ -3036,6 +3183,7 @@ static void generate_active_level(GameState *g) {
         g->temple_alignment = 0;
         g->temple_sentinels_awakened = 0;
         spawn_temple_enemies(g);
+        sun_guardian_restore_reward(g);
         game_update_level_progress(g);
         return;
     }
@@ -3085,9 +3233,19 @@ static void generate_active_level(GameState *g) {
     if (beacon_placed) {
         spawn_mara_guardian(g);
     }
+    lich_restore_reward(g);
+    necromancer_restore_reward(g);
+    goblin_king_restore_reward(g);
+    drowned_queen_restore_reward(g);
+    swamp_demon_restore_reward(g);
+    minotaur_restore_reward(g);
     restore_frostfell_reward(g);
     restore_desert_reward(g);
+    thorn_regent_restore_reward(g);
+    cinder_lord_restore_reward(g);
+    prism_sovereign_restore_reward(g);
     catacombs_restore_reward(g);
+    red_dragon_restore_reward(g);
     place_emberforge_encounter(g);
     // A regenerated stage needs new guards for any unfinished objective.
     g->frostfell_quest_encounters &= ~frostfell_quest_stage_bit(g);
@@ -3120,7 +3278,7 @@ static void sync_temple_floor_state(GameState *g) {
     g->temple_sentinels_awakened = 1;
     for (int y = 0; y < TEMPLE_H; y++) {
         for (int x = 0; x < TEMPLE_W; x++) {
-            if (g->map.tiles[y][x] == TILE_TEMPLE_MOON_DOOR_OPEN) {
+            if (quest_tile(g, x, y) == TILE_TEMPLE_MOON_DOOR_OPEN) {
                 g->temple_alignment = 1;
             }
             if (g->map.tiles[y][x] == TILE_TEMPLE_DORMANT_SENTINEL) {
@@ -3135,6 +3293,10 @@ static void sync_temple_floor_state(GameState *g) {
                 g->map.tiles[y][x] = TILE_TEMPLE_RUBBLE;
             }
         }
+    }
+    if (g->level == TEMPLE_DEPTH) {
+        sun_guardian_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
+        sun_guardian_restore_reward(g);
     }
 }
 
@@ -4556,6 +4718,7 @@ static void spawn_labyrinth_enemies(GameState *g) {
         spawn_enemy(g, &g->enemies[g->enemy_count], ENEMY_MINOTAUR,
             39, g->map.stairs_up_y);
         g->enemy_count++;
+        minotaur_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
     }
 }
 
@@ -4597,6 +4760,7 @@ static void load_labyrinth_floor(GameState *g) {
         g->map.tiles[g->map.stairs_up_y][35] = TILE_LABYRINTH_FLOOR;
     }
     g->floor_item_count = 0;
+    minotaur_restore_reward(g);
 }
 
 int game_labyrinth_is_open(const GameState *g) {
@@ -4607,7 +4771,9 @@ void game_enter_labyrinth(GameState *g) {
     g->location = LOCATION_LABYRINTH;
     g->level = 1;
     for (int i = 0; i < LABYRINTH_DEPTH; i++) {
-        g->labyrinth_cache[i].valid = 0;
+        if (i != LABYRINTH_DEPTH - 1 || (g->defeated_bosses & (1 << LOCATION_LABYRINTH))) {
+            g->labyrinth_cache[i].valid = 0;
+        }
     }
     load_labyrinth_floor(g);
     g->player.x = 2;
@@ -4864,6 +5030,9 @@ static void spawn_temple_enemies(GameState *g) {
         spawn_enemy(g, &g->enemies[g->enemy_count++], type,
             positions[floor][i][0], positions[floor][i][1]);
     }
+    if (g->level == TEMPLE_DEPTH) {
+        sun_guardian_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
+    }
 }
 
 void game_enter_temple(GameState *g) {
@@ -4952,7 +5121,7 @@ int game_has_temple_interaction(const GameState *g) {
         int x = g->player.x + offsets[i][0];
         int y = g->player.y + offsets[i][1];
         if (x >= 0 && x < MAP_W && y >= 0 && y < MAP_H &&
-            temple_interaction_tile(g->map.tiles[y][x])) {
+            temple_interaction_tile(quest_tile(g, x, y))) {
             return 1;
         }
     }
@@ -4960,18 +5129,36 @@ int game_has_temple_interaction(const GameState *g) {
 }
 
 static void toggle_temple_alignment(GameState *g) {
+    // Refuse the whole switch rather than closing a lunar door on an occupant.
+    if (g->temple_alignment) {
+        for (int y = 0; y < TEMPLE_H; y++) {
+            for (int x = 0; x < TEMPLE_W; x++) {
+                if (quest_tile(g, x, y) != TILE_TEMPLE_MOON_DOOR_OPEN) {
+                    continue;
+                }
+                int occupied = (g->player.x == x && g->player.y == y) || g->map.tiles[y][x] == TILE_ITEM;
+                for (int i = 0; i < g->enemy_count; i++) {
+                    occupied |= g->enemies[i].active && g->enemies[i].x == x && g->enemies[i].y == y;
+                }
+                if (occupied) {
+                    push_message(g, "Lunar doorway occupied. Clear it before raising the Sun.");
+                    return;
+                }
+            }
+        }
+    }
     g->temple_alignment = !g->temple_alignment;
     if (g->temple_alignment) {
         g->temple_sentinels_awakened = 1;
     }
     for (int y = 0; y < TEMPLE_H; y++) {
         for (int x = 0; x < TEMPLE_W; x++) {
-            TileType tile = g->map.tiles[y][x];
+            TileType tile = quest_tile(g, x, y);
             if (g->temple_alignment && tile == TILE_TEMPLE_MOON_DOOR_CLOSED) {
-                g->map.tiles[y][x] = TILE_TEMPLE_MOON_DOOR_OPEN;
+                set_temple_tile(g, x, y, TILE_TEMPLE_MOON_DOOR_OPEN);
             } else if (!g->temple_alignment &&
                 tile == TILE_TEMPLE_MOON_DOOR_OPEN) {
-                g->map.tiles[y][x] = TILE_TEMPLE_MOON_DOOR_CLOSED;
+                set_temple_tile(g, x, y, TILE_TEMPLE_MOON_DOOR_CLOSED);
             } else if (g->temple_alignment &&
                 tile == TILE_TEMPLE_DORMANT_SENTINEL) {
                 g->map.tiles[y][x] = TILE_TEMPLE_FLOOR;
@@ -5001,7 +5188,7 @@ int game_interact_temple(GameState *g) {
         if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
             continue;
         }
-        TileType tile = g->map.tiles[y][x];
+        TileType tile = quest_tile(g, x, y);
         if (tile == TILE_TEMPLE_ALTAR) {
             toggle_temple_alignment(g);
             return 1;
@@ -5488,6 +5675,12 @@ void game_use_town_portal(GameState *g) {
     }
     g->player.x = landing_x;
     g->player.y = landing_y;
+    desert_pharaoh_cancel_landing(g, landing_x, landing_y);
+    thorn_regent_cancel_landing(g, landing_x, landing_y);
+    cinder_lord_cancel_landing(g, landing_x, landing_y);
+    prism_sovereign_cancel_landing(g, landing_x, landing_y);
+    sun_guardian_cancel_landing(g, landing_x, landing_y);
+    red_dragon_cancel_landing(g, landing_x, landing_y);
     if (g->location == LOCATION_CATACOMBS) {
         // Portal wards prevent a saved warning from striking immediately on arrival.
         for (int i = 0; i < g->map.burial_trap_count; i++) {
@@ -5499,10 +5692,8 @@ void game_use_town_portal(GameState *g) {
         }
         for (int i = 0; i < g->enemy_count; i++) {
             Enemy *e = &g->enemies[i];
-            if (e->type == ENEMY_GRAVE_MARSHAL && catacombs_sweep_marks(&g->map, e, landing_x, landing_y)) {
-                e->attack_target_x = -1;
-                e->attack_target_y = -1;
-                e->move_timer = 1;
+            if (e->type == ENEMY_GRAVE_MARSHAL) {
+                grave_marshal_cancel_landing(g, e, landing_x, landing_y);
             }
         }
     }

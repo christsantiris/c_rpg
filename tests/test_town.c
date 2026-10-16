@@ -536,9 +536,9 @@ void test_rook_labyrinth(void) {
     int shields = 0;
     for (int i = 0; i < g.floor_item_count; i++) {
         shields += g.floor_items[i].active &&
-            g.floor_items[i].item.visual_id == ITEM_VISUAL_MAGIC_SHIELD;
+            g.floor_items[i].item.visual_id == ITEM_VISUAL_LABYRINTH_AEGIS;
     }
-    ASSERT("the Minotaur guarantees one Magic Shield", shields == 1);
+    ASSERT("the Minotaur guarantees one Labyrinth Aegis", shields == 1);
     g.player.x = 40;
     g.player.y = g.map.stairs_up_y;
     game_interact_labyrinth(&g);
@@ -943,17 +943,17 @@ static void test_necromancer_retaliates_to_arrows(void) {
             strstr(g.messages[g.message_count - 1], "invokes the forest"));
         action_resolve_enemies(&g);
         ASSERT("Necromancer retaliates at every bow's maximum range",
-            boss->move_timer == 2 && g.player.hp < 300);
+            boss->move_timer == -1 && g.player.hp < 300);
         int hp = g.player.hp;
         g.player.x = boss->x - 13;
         action_resolve_enemies(&g);
         ASSERT("Necromancer does not attack a distant retreating player",
-            boss->move_timer == 2 && g.player.hp == hp);
+            boss->move_timer == -1 && g.player.hp == hp);
         g.player.x = boss->x - bows[i].range;
         action_resolve_enemies(&g);
         action_resolve_enemies(&g);
-        ASSERT("Necromancer resumes fighting when the player returns",
-            boss->move_timer == 4 && g.player.hp < hp);
+        ASSERT("Necromancer resumes with its finite warned grave wave",
+            boss->move_timer == 2 && g.player.hp == hp);
     }
 }
 
@@ -1605,19 +1605,20 @@ static void test_goblin_king_retaliation(void) {
             strstr(g.messages[g.message_count - 1], "raises his axe"));
         action_resolve_enemies_with_projectiles(&g, &shots);
         ASSERT("Goblin King retaliates with damage and a visible axe projectile",
-            boss->move_timer == 2 && g.player.hp < 300 && shots.count == 1 &&
+            boss->move_timer == -1 && g.player.hp < 300 && shots.count == 1 &&
             shots.shots[0].type == ENEMY_MOUNTAIN_GOBLIN_KING &&
             shots.shots[0].target_x == start_x && shots.shots[0].target_y == start_y);
         int hp = g.player.hp;
         g.player.x = boss->x - 13;
         action_resolve_enemies_with_projectiles(&g, &shots);
         ASSERT("Goblin King stops attacking a distant retreating player",
-            boss->move_timer == 2 && g.player.hp == hp && shots.count == 0);
+            boss->move_timer == -1 && g.player.hp == hp && shots.count == 0);
         g.player.x = start_x;
         action_resolve_enemies_with_projectiles(&g, &shots);
         action_resolve_enemies_with_projectiles(&g, &shots);
-        ASSERT("Goblin King resumes retaliation when the player returns",
-            boss->move_timer == 4 && g.player.hp < hp && shots.count == 1);
+        action_resolve_enemies_with_projectiles(&g, &shots);
+        ASSERT("Goblin King resumes warned retaliation after his recovery",
+            boss->move_timer == -1 && g.player.hp < hp && shots.count == 1);
     }
 }
 

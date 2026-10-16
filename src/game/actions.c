@@ -2,6 +2,19 @@
 #include "game.h"
 #include "catacombs.h"
 #include "castle.h"
+#include "lich.h"
+#include "necromancer.h"
+#include "goblin_king.h"
+#include "drowned_queen.h"
+#include "swamp_demon.h"
+#include "minotaur.h"
+#include "grave_marshal.h"
+#include "desert_pharaoh.h"
+#include "thorn_regent.h"
+#include "cinder_lord.h"
+#include "prism_sovereign.h"
+#include "sun_guardian.h"
+#include "red_dragon.h"
 #include "jail.h"
 #include "town_life.h"
 #include <stdlib.h>
@@ -97,14 +110,42 @@ static void place_gold_drop(GameState *g, int x, int y, int gold) {
 }
 
 static void finish_floor_pickup(GameState *g, FloorItem *picked) {
+    if (strcmp(picked->item.name, "Dragon Scale Mantle") == 0 && g->red_dragon_reward_state == 1) {
+        g->red_dragon_reward_state = 2;
+        red_dragon_restore_reward(g);
+    }
+    minotaur_record_pickup(g, &picked->item);
+    if (strcmp(picked->item.name, "Cryptblade") == 0 && g->lich_reward_state == 1) {
+        g->lich_reward_state = 2;
+        lich_restore_reward(g);
+    }
+    if (strcmp(picked->item.name, "Necromancer's Cloak") == 0 && g->necromancer_reward_state == 1) {
+        g->necromancer_reward_state = 2;
+        necromancer_restore_reward(g);
+    }
+    if (strcmp(picked->item.name, "Goblin King's Shield") == 0 && g->goblin_king_reward_state == 1) {
+        g->goblin_king_reward_state = 2;
+        goblin_king_restore_reward(g);
+    }
+    if (strcmp(picked->item.name, "Demonic Sword") == 0 && g->swamp_demon_reward_state == 1) {
+        g->swamp_demon_reward_state = 2;
+        swamp_demon_restore_reward(g);
+    }
+    if (strcmp(picked->item.name, "Tidecaller Robes") == 0 && g->drowned_queen_reward_state == 1) {
+        g->drowned_queen_reward_state = 2;
+        drowned_queen_restore_reward(g);
+    }
     if (strcmp(picked->item.name, "Krakenbone Bow") == 0) {
         g->kraken_bow_unclaimed = 0;
     }
     if (strcmp(picked->item.name, "Sandstorm Staff") == 0) {
         g->sandstorm_staff_unclaimed = 0;
+        g->desert_pharaoh_reward_state = 2;
     }
     if (strcmp(picked->item.name, "Gravekeeper's Mantle") == 0) {
         g->catacombs_mantle_unclaimed = 0;
+        g->grave_marshal_reward_state = 2;
+        catacombs_restore_reward(g);
     }
     picked->active = 0;
     for (int i = 0; i < g->floor_item_count; i++) {
@@ -138,7 +179,7 @@ Item boss_equipment_reward(EnemyType type) {
         case ENEMY_DROWNED_QUEEN:
             return item_make_tidecaller_robes();
         case ENEMY_MINOTAUR:
-            return item_make_magic_shield();
+            return item_make_labyrinth_aegis();
         case ENEMY_SWAMP_DEMON:
             return item_make_demonic_sword();
         case ENEMY_RED_DRAGON:
@@ -244,6 +285,9 @@ static int enemy_score(EnemyType type) {
 }
 
 static void drop_loot(GameState *g, Enemy *enemy) {
+    if (enemy->revived && (strcmp(enemy->name, "Lich Shade") == 0 || strcmp(enemy->name, "Grove Revenant") == 0)) {
+        return;
+    }
     if (g->location == LOCATION_CASTLE_INTERIOR) {
         castle_record_death(g, enemy);
         return;
@@ -416,16 +460,81 @@ static void drop_loot(GameState *g, Enemy *enemy) {
     // Each boss leaves a fixed regional reward instead of rolling ordinary
     // equipment, so capstone weapons remain Blacksmith progression.
     if (is_boss) {
-        if (type == ENEMY_FALLEN_SUN_GUARDIAN) {
+        if (type == ENEMY_RED_DRAGON) {
             if (g->floor_item_count < MAX_FLOOR_ITEMS) {
                 place_gold_drop(g, x, y, gold);
             } else {
                 award_gold(g, gold);
             }
+            red_dragon_award_reward(g, x, y);
             game_update_level_progress(g);
             return;
         }
-        if (g->floor_item_count >= MAX_FLOOR_ITEMS) {
+        if (type == ENEMY_PRISM_SOVEREIGN) {
+            g->prism_sovereign_reward_pending = PRISM_ROBES_PENDING | PRISM_POTION_PENDING;
+            if (g->floor_item_count < MAX_FLOOR_ITEMS) {
+                place_gold_drop(g, x, y, gold);
+            } else {
+                award_gold(g, gold);
+            }
+            prism_sovereign_restore_reward(g);
+            game_update_level_progress(g);
+            return;
+        }
+        if (type == ENEMY_CINDER_LORD) {
+            g->cinder_lord_reward_pending = CINDER_WEAPON_PENDING | CINDER_POTION_PENDING;
+            if (g->floor_item_count < MAX_FLOOR_ITEMS) {
+                place_gold_drop(g, x, y, gold);
+            } else {
+                award_gold(g, gold);
+            }
+            cinder_lord_restore_reward(g);
+            game_update_level_progress(g);
+            return;
+        }
+        if (type == ENEMY_THORN_REGENT) {
+            g->thorn_regent_reward_pending = REGENT_CLOAK_PENDING | REGENT_POTION_PENDING;
+            if (g->floor_item_count < MAX_FLOOR_ITEMS) {
+                place_gold_drop(g, x, y, gold);
+            } else {
+                award_gold(g, gold);
+            }
+            thorn_regent_restore_reward(g);
+            game_update_level_progress(g);
+            return;
+        }
+        if (type == ENEMY_DESERT_PHARAOH) {
+            g->desert_pharaoh_reward_state = 1;
+            g->sandstorm_staff_unclaimed = 1;
+        }
+        if (type == ENEMY_LICH_KING) {
+            g->lich_reward_state = 1;
+        }
+        if (type == ENEMY_FOREST_NECROMANCER) {
+            g->necromancer_reward_state = 1;
+        }
+        if (type == ENEMY_MOUNTAIN_GOBLIN_KING) {
+            g->goblin_king_reward_state = 1;
+        }
+        if (type == ENEMY_GRAVE_MARSHAL) {
+            g->grave_marshal_reward_state = 1;
+            g->catacombs_mantle_unclaimed = 1;
+        }
+        if (type == ENEMY_MINOTAUR) {
+            g->minotaur_reward_state = MINOTAUR_REWARD_AEGIS;
+        }
+        if (type == ENEMY_SWAMP_DEMON) {
+            g->swamp_demon_reward_state = 1;
+        }
+        if (type == ENEMY_DROWNED_QUEEN) {
+            g->drowned_queen_reward_state = 1;
+        }
+        if (type == ENEMY_FALLEN_SUN_GUARDIAN) {
+            sun_guardian_award_reward(g);
+            game_update_level_progress(g);
+            return;
+        }
+        if (g->floor_item_count >= MAX_FLOOR_ITEMS && type != ENEMY_LICH_KING && type != ENEMY_FOREST_NECROMANCER && type != ENEMY_MOUNTAIN_GOBLIN_KING && type != ENEMY_DROWNED_QUEEN && type != ENEMY_SWAMP_DEMON && type != ENEMY_MINOTAUR && type != ENEMY_GRAVE_MARSHAL && type != ENEMY_DESERT_PHARAOH) {
             FloorItem *discarded = &g->floor_items[MAX_FLOOR_ITEMS - 1];
             if (g->map.tiles[discarded->y][discarded->x] == TILE_ITEM) {
                 g->map.tiles[discarded->y][discarded->x] =
@@ -461,6 +570,14 @@ static void drop_loot(GameState *g, Enemy *enemy) {
             }
             push_message(g, msg);
         }
+        lich_restore_reward(g);
+        necromancer_restore_reward(g);
+        goblin_king_restore_reward(g);
+        drowned_queen_restore_reward(g);
+        swamp_demon_restore_reward(g);
+        minotaur_restore_reward(g);
+        catacombs_restore_reward(g);
+        desert_pharaoh_restore_reward(g);
         game_update_level_progress(g);
         return;
     }
@@ -543,6 +660,8 @@ static int apply_melee_cleave(GameState *g, Enemy *target, int attack, int perce
         }
         damage = catacombs_enemy_damage(g, enemy, damage);
         damage = castle_enemy_damage(g, enemy, damage);
+        damage = lich_enemy_damage(g, enemy, damage);
+        damage = sun_guardian_enemy_damage(g, enemy, damage);
         enemy->hp -= damage;
         combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_NOW, enemy->x, enemy->y, damage);
         hits++;
@@ -786,6 +905,45 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (red_dragon_has_interaction(g)) {
+        return 1;
+    }
+    if (sun_guardian_has_interaction(g)) {
+        return 1;
+    }
+    if (prism_sovereign_has_interaction(g)) {
+        return 1;
+    }
+    if (cinder_lord_has_interaction(g)) {
+        return 1;
+    }
+    if (thorn_regent_has_interaction(g)) {
+        return 1;
+    }
+    if (desert_pharaoh_has_interaction(g)) {
+        return 1;
+    }
+    if (grave_marshal_has_interaction(g)) {
+        return 1;
+    }
+    if (minotaur_has_interaction(g)) {
+        return 1;
+    }
+    if (swamp_demon_has_interaction(g)) {
+        return 1;
+    }
+    if (drowned_queen_has_interaction(g)) {
+        return 1;
+    }
+    if (goblin_king_has_interaction(g)) {
+        return 1;
+    }
+    if (necromancer_has_interaction(g)) {
+        return 1;
+    }
+    if (lich_has_interaction(g)) {
+        return 1;
+    }
     if (game_has_watchfire_interaction(g)) {
         return 1;
     }
@@ -1114,6 +1272,45 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (red_dragon_interact(g, 0)) {
+            return;
+        }
+        if (sun_guardian_interact(g, 0)) {
+            return;
+        }
+        if (prism_sovereign_interact(g)) {
+            return;
+        }
+        if (cinder_lord_interact(g)) {
+            return;
+        }
+        if (thorn_regent_interact(g)) {
+            return;
+        }
+        if (desert_pharaoh_interact(g)) {
+            return;
+        }
+        if (grave_marshal_interact(g)) {
+            return;
+        }
+        if (minotaur_interact(g)) {
+            return;
+        }
+        if (swamp_demon_interact(g)) {
+            return;
+        }
+        if (drowned_queen_interact(g)) {
+            return;
+        }
+        if (goblin_king_interact(g)) {
+            return;
+        }
+        if (necromancer_interact(g)) {
+            return;
+        }
+        if (lich_interact(g)) {
+            return;
+        }
         if (game_interact_watchfire(g)) {
             return;
         }
@@ -1188,6 +1385,45 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_PICK_UP) {
+        if (red_dragon_interact(g, 1)) {
+            return;
+        }
+        if (sun_guardian_interact(g, 1)) {
+            return;
+        }
+        if (prism_sovereign_pickup(g)) {
+            return;
+        }
+        if (cinder_lord_pickup(g)) {
+            return;
+        }
+        if (thorn_regent_pickup(g)) {
+            return;
+        }
+        if (desert_pharaoh_pickup(g)) {
+            return;
+        }
+        if (grave_marshal_pickup(g)) {
+            return;
+        }
+        if (minotaur_pickup(g)) {
+            return;
+        }
+        if (g->map.tiles[g->player.y][g->player.x] == TILE_DEMON_RELIQUARY && swamp_demon_interact(g)) {
+            return;
+        }
+        if (g->map.tiles[g->player.y][g->player.x] == TILE_QUEEN_RELIQUARY && drowned_queen_interact(g)) {
+            return;
+        }
+        if (g->map.tiles[g->player.y][g->player.x] == TILE_GOBLIN_KING_RELIQUARY && goblin_king_interact(g)) {
+            return;
+        }
+        if (g->map.tiles[g->player.y][g->player.x] == TILE_NECRO_RELIQUARY && necromancer_interact(g)) {
+            return;
+        }
+        if (g->map.tiles[g->player.y][g->player.x] == TILE_LICH_RELIQUARY && lich_interact(g)) {
+            return;
+        }
         if (g->map.tiles[g->player.y][g->player.x] == TILE_DRAGON_TREASURE) {
             game_collect_dragon_treasure(g);
             return;
@@ -1638,6 +1874,8 @@ void action_resolve_player(GameState *g, Action a) {
                             spell_power;
                         dmg = catacombs_enemy_damage(g, e, dmg);
                         dmg = castle_enemy_damage(g, e, dmg);
+                        dmg = lich_enemy_damage(g, e, dmg);
+                        dmg = sun_guardian_enemy_damage(g, e, dmg);
                         e->hp -= dmg;
                         combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_AFTER_PLAYER_SHOT, e->x, e->y, dmg);
                         char msg[MAX_MESSAGE_LEN];
@@ -1721,6 +1959,8 @@ void action_resolve_player(GameState *g, Action a) {
                     int dmg = sp->damage + g->player.level * 2 + spell_power;
                     dmg = catacombs_enemy_damage(g, e, dmg);
                     dmg = castle_enemy_damage(g, e, dmg);
+                    dmg = lich_enemy_damage(g, e, dmg);
+                    dmg = sun_guardian_enemy_damage(g, e, dmg);
                     e->hp -= dmg;
                     combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_AFTER_PLAYER_SHOT, e->x, e->y, dmg);
                     if (e->hp <= 0) {
@@ -1812,6 +2052,8 @@ void action_resolve_player(GameState *g, Action a) {
                 if (critical) dmg = dmg * 3 / 2;
                 dmg = catacombs_enemy_damage(g, e, dmg);
                 dmg = castle_enemy_damage(g, e, dmg);
+                dmg = lich_enemy_damage(g, e, dmg);
+                dmg = sun_guardian_enemy_damage(g, e, dmg);
                 e->hp -= dmg;
                 combat_feedback_add(g, critical ? FEEDBACK_ENEMY_CRITICAL : FEEDBACK_ENEMY_DAMAGE, FEEDBACK_AFTER_PLAYER_SHOT, e->x, e->y, dmg);
                 char msg[MAX_MESSAGE_LEN];
@@ -1917,6 +2159,8 @@ void action_resolve_player(GameState *g, Action a) {
                 }
                 dmg = catacombs_enemy_damage(g, e, dmg);
                 dmg = castle_enemy_damage(g, e, dmg);
+                dmg = lich_enemy_damage(g, e, dmg);
+                dmg = sun_guardian_enemy_damage(g, e, dmg);
                 e->hp -= dmg;
                 combat_feedback_add(g, critical ? FEEDBACK_ENEMY_CRITICAL : FEEDBACK_ENEMY_DAMAGE, FEEDBACK_NOW, e->x, e->y, dmg);
                 int cleave_hits = melee_weapon
@@ -2793,6 +3037,8 @@ static int enemy_is_major_boss(const Enemy *e) {
         e->type == ENEMY_LICH_KING ||
         e->type == ENEMY_FOREST_NECROMANCER ||
         e->type == ENEMY_MOUNTAIN_GOBLIN_KING ||
+        e->type == ENEMY_MINOTAUR ||
+        e->type == ENEMY_SWAMP_DEMON ||
         e->type == ENEMY_DROWNED_QUEEN ||
         e->type == ENEMY_FALLEN_SUN_GUARDIAN;
 }
@@ -3115,34 +3361,6 @@ static int necromancer_revive(GameState *g, int necromancer_index) {
     return 0;
 }
 
-static int forest_necromancer_raise(GameState *g, int caster_index) {
-    Enemy *caster = &g->enemies[caster_index];
-    for (int i = 0; i < g->enemy_count; i++) {
-        Enemy *dead = &g->enemies[i];
-        if (dead->active || dead->is_boss ||
-            dead->type < ENEMY_PIXIE ||
-            dead->type > ENEMY_FOREST_TROLL) continue;
-        for (int dy = -1; dy <= 1; dy++) {
-            for (int dx = -1; dx <= 1; dx++) {
-                if (dx == 0 && dy == 0) continue;
-                int x = caster->x + dx;
-                int y = caster->y + dy;
-                if (!map_is_walkable(&g->map, x, y) ||
-                    enemy_position_occupied(g, i, x, y) ||
-                    (x == g->player.x && y == g->player.y)) continue;
-                dead->x = x;
-                dead->y = y;
-                dead->active = 1;
-                dead->hp = dead->max_hp / 2;
-                if (dead->hp < 1) dead->hp = 1;
-                push_message(g, "Necromancer recalls a fallen servant!");
-                return 1;
-            }
-        }
-    }
-    return 0;
-}
-
 static int enemy_blocks_line_of_sight(const GameState *g, int shooter_index, int x, int y) {
     for (int i = 0; i < g->enemy_count; i++) {
         const Enemy *other = &g->enemies[i];
@@ -3315,102 +3533,19 @@ static void polar_kraken_turn(GameState *g, Enemy *e) {
     }
 }
 
-static void prism_sovereign_turn(GameState *g, int index, EnemyProjectiles *shots) {
-    Enemy *enemy = &g->enemies[index];
-    enemy->move_timer++;
-    if (enemy->move_timer % 2 != 0) {
-        int dx = g->player.x - enemy->x;
-        int dy = g->player.y - enemy->y;
-        if (abs_int(dx) >= abs_int(dy)) {
-            enemy->attack_target_x = enemy->x + (dx < 0 ? -8 : 8);
-            enemy->attack_target_y = enemy->y;
-        } else {
-            enemy->attack_target_x = enemy->x;
-            enemy->attack_target_y = enemy->y + (dy < 0 ? -8 : 8);
-        }
-        push_message(g, "The Sovereign gathers light. Step out of the marked beam!");
-        return;
-    }
-    int dx = (enemy->attack_target_x > enemy->x) - (enemy->attack_target_x < enemy->x);
-    int dy = (enemy->attack_target_y > enemy->y) - (enemy->attack_target_y < enemy->y);
-    int x = enemy->x;
-    int y = enemy->y;
-    int hit = 0;
-    for (int step = 1; step <= 8; step++) {
-        int tx = enemy->x + dx * step;
-        int ty = enemy->y + dy * step;
-        if (!map_is_walkable(&g->map, tx, ty) || enemy_blocks_line_of_sight(g, index, tx, ty)) {
-            break;
-        }
-        x = tx;
-        y = ty;
-        hit |= g->player.x == x && g->player.y == y;
-    }
-    enemy->attack_target_x = -1;
-    enemy->attack_target_y = -1;
-    if (shots && shots->count < MAX_ENEMIES && (x != enemy->x || y != enemy->y)) {
-        shots->shots[shots->count++] = (EnemyProjectile){enemy->type, enemy->x, enemy->y, x, y};
-    }
-    if (hit) {
-        int damage = enemy->attack - g->player.defense / 2;
-        if (damage < 3) {
-            damage = 3;
-        }
-        damage = apply_enemy_damage(g, damage, FEEDBACK_AFTER_ENEMY_SHOT);
-        if (damage > 0) {
-            char message[MAX_MESSAGE_LEN];
-            snprintf(message, sizeof(message), "Prismatic beam: %d dmg", damage);
-            push_message_kind(g, message, MESSAGE_DAMAGE_TAKEN);
-        }
-    } else {
-        push_message(g, "The prismatic beam strikes empty stone.");
-    }
-}
-
 static void grave_marshal_turn(GameState *g, int index) {
     Enemy *e = &g->enemies[index];
-    int room = catacombs_room_at(&g->map, g->player.x, g->player.y);
-    if (room != g->map.room_count - 1 && e->hp == e->max_hp && e->move_timer == 0) {
-        return;
-    }
-    if (e->attack_target_x >= 0) {
-        if (catacombs_sweep_marks(&g->map, e, g->player.x, g->player.y)) {
-            int damage = e->attack - g->player.defense;
-            if (damage < 3) {
-                damage = 3;
-            }
-            apply_enemy_damage(g, damage, FEEDBACK_NOW);
-            push_message_kind(g, "The Marshal's polearm sweeps the marked stones!", MESSAGE_DAMAGE_TAKEN);
-        } else {
-            push_message(g, "The Marshal's polearm sweeps empty stone.");
-        }
-        e->attack_target_x = -1;
-        e->attack_target_y = -1;
-        e->move_timer = 1;
-        return;
-    }
-    if (e->move_timer == 1) {
-        e->move_timer = 2;
-        return;
-    }
-    int dx = g->player.x - e->x;
-    int dy = g->player.y - e->y;
-    if (abs_int(dx) <= 1 && abs_int(dy) <= 1) {
-        int sx = abs_int(dx) >= abs_int(dy) ? (dx < 0 ? -1 : 1) : 0;
-        int sy = sx == 0 ? (dy < 0 ? -1 : 1) : 0;
-        e->attack_target_x = e->x + sx;
-        e->attack_target_y = e->y + sy;
-        e->move_timer = 2;
-        push_message(g, "The Grave Marshal raises its polearm. Leave the marked sweep!");
-    } else {
-        int old_x = e->x;
-        int old_y = e->y;
+    int damage = grave_marshal_tick(g, e);
+    if (damage < 0) {
+        int x = e->x;
+        int y = e->y;
         enemy_move_toward(g, index);
         if (catacombs_room_at(&g->map, e->x, e->y) != g->map.room_count - 1) {
-            e->x = old_x;
-            e->y = old_y;
+            e->x = x;
+            e->y = y;
         }
-        e->move_timer = 2;
+    } else if (damage > 0) {
+        apply_enemy_damage(g, damage, FEEDBACK_NOW);
     }
 }
 
@@ -3429,6 +3564,54 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         }
         game_update_level_progress(g);
         return;
+    }
+    if (g->location == LOCATION_MOUNTAINS && g->level == MOUNTAIN_BOSS_LEVEL) {
+        int hp[MAX_ENEMIES] = {0};
+        for (int i = 0; i < g->enemy_count; i++) {
+            hp[i] = g->enemies[i].hp;
+        }
+        int damage = goblin_king_tick_kegs(g);
+        for (int i = 0; i < g->enemy_count; i++) {
+            Enemy *e = &g->enemies[i];
+            if (e->active && e->hp < hp[i]) {
+                combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_NOW, e->x, e->y, hp[i] - e->hp);
+                if (e->hp <= 0) {
+                    e->active = 0;
+                    drop_loot(g, e);
+                    player_gain_xp(g, e->experience);
+                    g->score += e->revived ? 0 : enemy_score(e->type);
+                    game_update_level_progress(g);
+                }
+            }
+        }
+        if (damage > 0) {
+            apply_enemy_damage(g, damage, FEEDBACK_NOW);
+        }
+    }
+    int dragon_fire = red_dragon_tick_floor(g);
+    if (dragon_fire > 0) {
+        int damage = dragon_fire - g->player.defense / 2;
+        apply_enemy_damage(g, damage > 2 ? damage : 2, FEEDBACK_NOW);
+    }
+    int hot_damage = cinder_lord_tick_floor(g);
+    if (hot_damage > 0) {
+        int damage = hot_damage - g->player.defense / 2;
+        apply_enemy_damage(g, damage > 2 ? damage : 2, FEEDBACK_NOW);
+    }
+    int root_damage = thorn_regent_tick_floor(g);
+    if (root_damage > 0) {
+        int damage = root_damage - g->player.defense / 2;
+        apply_enemy_damage(g, damage > 2 ? damage : 2, FEEDBACK_NOW);
+    }
+    int sand_damage = desert_pharaoh_tick_floor(g);
+    if (sand_damage > 0) {
+        int damage = sand_damage - g->player.defense / 2;
+        apply_enemy_damage(g, damage > 2 ? damage : 2, FEEDBACK_NOW);
+    }
+    int rot_damage = swamp_demon_tick_floor(g);
+    if (rot_damage > 0) {
+        int damage = rot_damage - g->player.defense / 2;
+        apply_enemy_damage(g, damage > 2 ? damage : 2, FEEDBACK_NOW);
     }
     int burial_damage = catacombs_tick(g);
     if (burial_damage > 0) {
@@ -3477,96 +3660,96 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
 
+        if (e->type == ENEMY_RED_DRAGON) {
+            int damage = red_dragon_tick(g, e, shots);
+            if (damage > 0) {
+                apply_enemy_damage(g, damage, e->boss_attack == DRAGON_SWEEP || e->boss_attack == DRAGON_WINGBEAT ? FEEDBACK_NOW : FEEDBACK_AFTER_ENEMY_SHOT);
+            }
+            continue;
+        }
+        if (e->type == ENEMY_FALLEN_SUN_GUARDIAN) {
+            int damage = sun_guardian_tick(g, e, shots);
+            if (damage > 0) {
+                apply_enemy_damage(g, damage, e->boss_attack == GUARDIAN_LANCE ? FEEDBACK_AFTER_ENEMY_SHOT : FEEDBACK_NOW);
+            }
+            continue;
+        }
+        if (e->type == ENEMY_PRISM_SOVEREIGN) {
+            int damage = prism_sovereign_tick(g, e, shots);
+            if (damage > 0) {
+                apply_enemy_damage(g, damage, FEEDBACK_AFTER_ENEMY_SHOT);
+            }
+            continue;
+        }
+        if (e->type == ENEMY_CINDER_LORD) {
+            int damage = cinder_lord_tick(g, e, shots);
+            if (damage > 0) {
+                apply_enemy_damage(g, damage, e->boss_attack == CINDER_LANCE ? FEEDBACK_AFTER_ENEMY_SHOT : FEEDBACK_NOW);
+            }
+            continue;
+        }
+        if (e->type == ENEMY_THORN_REGENT) {
+            int damage = thorn_regent_tick(g, e, shots);
+            if (damage > 0) {
+                apply_enemy_damage(g, damage, e->boss_attack == REGENT_LANCE ? FEEDBACK_AFTER_ENEMY_SHOT : FEEDBACK_NOW);
+            }
+            continue;
+        }
+        if (e->type == ENEMY_DESERT_PHARAOH) {
+            int damage = desert_pharaoh_tick(g, e, shots);
+            if (damage > 0) {
+                apply_enemy_damage(g, damage, e->boss_attack == PHARAOH_BEAM ? FEEDBACK_AFTER_ENEMY_SHOT : FEEDBACK_NOW);
+            }
+            continue;
+        }
         if (e->type == ENEMY_GRAVE_MARSHAL) {
             grave_marshal_turn(g, i);
             continue;
         }
         if (e->type == ENEMY_LICH_KING) {
-            Room *chamber = &g->map.rooms[g->map.room_count - 1];
-            int player_in_chamber =
-                g->player.x > chamber->x &&
-                g->player.x < chamber->x + chamber->w - 1 &&
-                g->player.y > chamber->y &&
-                g->player.y < chamber->y + chamber->h - 1;
-            // Unlocking the door does not pull the boss into the corridor.
-            // The encounter begins only when the player crosses the threshold.
-            if (!player_in_chamber && e->move_timer == 0) continue;
+            int damage = lich_tick(g, e, shots);
+            if (damage > 0) {
+                apply_enemy_damage(g, damage, FEEDBACK_NOW);
+            }
+            continue;
         }
         if (e->type == ENEMY_FOREST_NECROMANCER) {
-            Room *grove = &g->map.rooms[g->map.room_count - 1];
-            int player_in_grove =
-                g->player.x >= grove->x &&
-                g->player.x < grove->x + grove->w &&
-                g->player.y >= grove->y &&
-                g->player.y < grove->y + grove->h;
-            int distance = abs_int(g->player.x - e->x) +
-                abs_int(g->player.y - e->y);
-            // Ranged hits can start the fight before the player enters the grove.
-            if (!player_in_grove &&
-                ((e->move_timer == 0 && e->hp == e->max_hp) ||
-                distance > 12)) {
-                continue;
+            int damage = necromancer_tick(g, e, shots);
+            if (damage > 0) {
+                apply_enemy_damage(g, damage, e->boss_attack == NECRO_BOLT ? FEEDBACK_AFTER_ENEMY_SHOT : FEEDBACK_NOW);
             }
+            continue;
         }
         if (e->type == ENEMY_MOUNTAIN_GOBLIN_KING) {
-            Room *fortress = &g->map.rooms[g->map.room_count - 1];
-            int player_in_fortress =
-                g->player.x >= fortress->x &&
-                g->player.x < fortress->x + fortress->w &&
-                g->player.y >= fortress->y &&
-                g->player.y < fortress->y + fortress->h;
-            int range_x = abs_int(g->player.x - e->x);
-            int range_y = abs_int(g->player.y - e->y);
-            // Hits outside the fortress start the fight, including diagonal bow shots.
-            if (!player_in_fortress &&
-                ((e->move_timer == 0 && e->hp == e->max_hp) ||
-                range_x > 12 || range_y > 12)) {
-                continue;
+            int damage = goblin_king_tick(g, e, shots);
+            if (damage > 0) {
+                apply_enemy_damage(g, damage, e->boss_attack == GOBLIN_KING_AXE ? FEEDBACK_AFTER_ENEMY_SHOT : FEEDBACK_NOW);
             }
+            continue;
+        }
+        if (e->type == ENEMY_MINOTAUR) {
+            int damage = minotaur_tick(g, e);
+            if (damage > 0) {
+                apply_enemy_damage(g, damage, FEEDBACK_NOW);
+            }
+            continue;
+        }
+        if (e->type == ENEMY_SWAMP_DEMON) {
+            int damage = swamp_demon_tick(g, e);
+            if (damage > 0) {
+                apply_enemy_damage(g, damage, FEEDBACK_NOW);
+            }
+            continue;
         }
         if (e->type == ENEMY_DROWNED_QUEEN) {
-            Room *throne = &g->map.rooms[g->map.room_count - 1];
-            int player_in_throne =
-                g->player.x >= throne->x &&
-                g->player.x < throne->x + throne->w &&
-                g->player.y >= throne->y &&
-                g->player.y < throne->y + throne->h;
-            int distance = abs_int(g->player.x - e->x) +
-                abs_int(g->player.y - e->y);
-            if (!player_in_throne &&
-                ((e->move_timer == 0 && e->hp == e->max_hp) ||
-                distance > 12)) {
-                continue;
+            int damage = drowned_queen_tick(g, e);
+            if (damage > 0) {
+                apply_enemy_damage(g, damage, FEEDBACK_NOW);
             }
-        }
-        if (e->type == ENEMY_FALLEN_SUN_GUARDIAN) {
-            int distance = abs_int(g->player.x - e->x) +
-                abs_int(g->player.y - e->y);
-            if (e->hp == e->max_hp && g->player.y > 12) {
-                continue;
-            }
-            if (distance > 16) {
-                continue;
-            }
+            continue;
         }
         if (e->type == ENEMY_POLAR_KRAKEN) {
             polar_kraken_turn(g, e);
-            continue;
-        }
-        if (e->type == ENEMY_DESERT_PHARAOH || e->type == ENEMY_THORN_REGENT ||
-            e->type == ENEMY_CINDER_LORD || e->type == ENEMY_PRISM_SOVEREIGN) {
-            Room *lair = &g->map.rooms[g->map.room_count - 1];
-            int in_lair = g->player.x >= lair->x &&
-                g->player.x < lair->x + lair->w &&
-                g->player.y >= lair->y && g->player.y < lair->y + lair->h;
-            int distance = abs_int(dx) + abs_int(dy);
-            if (!in_lair && ((e->move_timer == 0 && e->hp == e->max_hp) || distance > 12)) {
-                continue;
-            }
-        }
-
-        if (e->type == ENEMY_PRISM_SOVEREIGN) {
-            prism_sovereign_turn(g, i, shots);
             continue;
         }
         if (e->type == ENEMY_BLIND_STALKER && e->hp == e->max_hp &&
@@ -3626,25 +3809,6 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
 
         e->move_timer++;
 
-        if (e->type == ENEMY_RED_DRAGON && path_distance > 1 &&
-            path_distance <= 8 && clear_orthogonal_path(g, i, e)) {
-            if (e->move_timer % 2 != 0) {
-                push_message(g, "The dragon draws a fiery breath!");
-            } else {
-                int dmg = e->attack - g->player.defense / 2;
-                if (dmg < 3) {
-                    dmg = 3;
-                }
-                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
-                if (dmg > 0) {
-                    char msg[MAX_MESSAGE_LEN];
-                    snprintf(msg, sizeof(msg), "Dragonfire: %d dmg", dmg);
-                    push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
-                }
-            }
-            continue;
-        }
-
         if ((e->type == ENEMY_FIRE_ELEMENTAL || e->type == ENEMY_DJINN ||
             e->type == ENEMY_FEY_TRICKSTER || e->type == ENEMY_LIVING_FLOWER ||
             e->type == ENEMY_CINDER_IMP) &&
@@ -3663,139 +3827,6 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                     (e->type == ENEMY_DJINN ? "Djinn magic bolt" : "Elemental flame")));
                 snprintf(msg, sizeof(msg), "%s: %d dmg", attack, dmg);
                 push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
-            }
-            continue;
-        }
-
-        if (e->type == ENEMY_LICH_KING) {
-            // The Lich holds the center of his chamber and alternates a ranged
-            // necrotic attack with a telegraphed recovery turn. This prevents
-            // ordinary pathfinding from walking him out of his own arena.
-            if (e->move_timer % 2 == 0) {
-                int dmg = e->attack - g->player.defense / 2;
-                if (dmg < 4) dmg = 4;
-                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
-                if (dmg == 0) {
-                    continue;
-                }
-                char msg[MAX_MESSAGE_LEN];
-                snprintf(msg, sizeof(msg), "Lich necrotic bolt: %d dmg", dmg);
-                push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
-            } else {
-                push_message(g, "The Lich gathers dark power...");
-            }
-            continue;
-        }
-
-        if (e->type == ENEMY_FOREST_NECROMANCER) {
-            if (e->move_timer % 4 == 0 &&
-                forest_necromancer_raise(g, i)) continue;
-            if (e->move_timer % 2 == 0) {
-                int dmg = e->attack - g->player.defense / 2;
-                if (dmg < 3) dmg = 3;
-                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
-                if (dmg == 0) {
-                    continue;
-                }
-                char msg[MAX_MESSAGE_LEN];
-                snprintf(msg, sizeof(msg), "Necromancer spirit bolt: %d dmg", dmg);
-                push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
-            } else {
-                push_message(g, "The Necromancer invokes the forest...");
-            }
-            continue;
-        }
-
-        if (e->type == ENEMY_THORN_REGENT || e->type == ENEMY_CINDER_LORD) {
-            if (e->move_timer % 2 != 0) {
-                push_message(g, e->type == ENEMY_CINDER_LORD ?
-                    "The Cinder Lord gathers molten fire..." :
-                    "The Thorn Regent gathers moonlit thorns...");
-            } else {
-                int damage = e->attack - g->player.defense / 2;
-                if (damage < 3) {
-                    damage = 3;
-                }
-                damage = apply_enemy_ranged_damage(g, i, e, damage, shots);
-                if (damage > 0) {
-                    char msg[MAX_MESSAGE_LEN];
-                    snprintf(msg, sizeof(msg), e->type == ENEMY_CINDER_LORD ?
-                        "Cinder Lord firebolt: %d dmg" : "Regent thorn bolt: %d dmg", damage);
-                    push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
-                }
-            }
-            continue;
-        }
-
-        if (e->type == ENEMY_DESERT_PHARAOH) {
-            if (e->move_timer % 2 != 0) {
-                push_message(g, "The Pharaoh gathers desert magic...");
-            } else {
-                int dmg = e->attack - g->player.defense / 2;
-                if (dmg < 3) {
-                    dmg = 3;
-                }
-                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
-                if (dmg > 0) {
-                    char msg[MAX_MESSAGE_LEN];
-                    snprintf(msg, sizeof(msg), "Pharaoh magic bolt: %d dmg", dmg);
-                    push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
-                }
-            }
-            continue;
-        }
-
-        if (e->type == ENEMY_MOUNTAIN_GOBLIN_KING) {
-            if (e->move_timer % 2 == 0) {
-                int dmg = e->attack - g->player.defense / 2;
-                if (dmg < 4) dmg = 4;
-                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
-                if (dmg == 0) {
-                    continue;
-                }
-                char msg[MAX_MESSAGE_LEN];
-                snprintf(msg, sizeof(msg), "Goblin King axe: %d dmg", dmg);
-                push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
-            } else push_message(g, "The Goblin King raises his axe...");
-            continue;
-        }
-
-        if (e->type == ENEMY_DROWNED_QUEEN) {
-            if (e->move_timer % 3 == 0) {
-                int dmg = e->attack - g->player.defense / 2;
-                if (dmg < 5) {
-                    dmg = 5;
-                }
-                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
-                if (dmg == 0) {
-                    continue;
-                }
-                char msg[MAX_MESSAGE_LEN];
-                snprintf(msg, sizeof(msg), "Queen's tidal wave: %d dmg", dmg);
-                push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
-            } else {
-                push_message(g, "The Drowned Queen summons the tide...");
-            }
-            continue;
-        }
-
-        if (e->type == ENEMY_FALLEN_SUN_GUARDIAN) {
-            if (e->move_timer % 2 == 0) {
-                int phase_bonus = e->hp <= e->max_hp / 2 ? 5 : 0;
-                int dmg = e->attack + phase_bonus - g->player.defense / 2;
-                if (dmg < 6) {
-                    dmg = 6;
-                }
-                dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
-                if (dmg > 0) {
-                    char msg[MAX_MESSAGE_LEN];
-                    snprintf(msg, sizeof(msg), "Guardian sunburst: %d dmg", dmg);
-                    push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
-                }
-            } else {
-                push_message(g, e->hp <= e->max_hp / 2
-                    ? "The broken guardian's core flares wildly!"
-                    : "The Fallen Sun Guardian gathers light...");
             }
             continue;
         }

@@ -181,6 +181,19 @@ Item item_make_magic_battle_axe(void) {
     return it;
 }
 
+Item item_make_embercleaver(void) {
+    Item item = {0};
+    item.active = 1;
+    item.type = ITEM_WEAPON;
+    strncpy(item.name, "Embercleaver", sizeof(item.name) - 1);
+    item.attack_bonus = 11;
+    item.armor_penetration_percent = 25;
+    item.cleave_percent = 25;
+    item.value = 650;
+    set_weapon_metadata(&item, WEAPON_FAMILY_AXE, WEAPON_HANDS_TWO, ITEM_RARITY_RARE, ITEM_CLASS_WARRIOR, ITEM_VISUAL_EMBERCLEAVER);
+    return item;
+}
+
 Item item_make_staff(void) {
     Item it = {0};
     it.active = 1;
@@ -385,6 +398,8 @@ void item_apply_legacy_metadata(Item *item) {
         definition = item_make_magic_long_sword();
     } else if (strcmp(item->name, "Battle Axe") == 0) {
         definition = item_make_battle_axe();
+    } else if (strcmp(item->name, "Embercleaver") == 0) {
+        definition = item_make_embercleaver();
     } else if (strcmp(item->name, "Magic Battle Axe") == 0) {
         definition = item_make_magic_battle_axe();
     } else if (strcmp(item->name, "Staff") == 0) {
@@ -447,6 +462,8 @@ void item_apply_legacy_armor_metadata(Item *item) {
         definition = item_make_studded_leather();
     } else if (strcmp(item->name, "Ranger Cloak") == 0) {
         definition = item_make_ranger_cloak();
+    } else if (strcmp(item->name, "Briarweave Cloak") == 0) {
+        definition = item_make_briarweave_cloak();
     } else if (strcmp(item->name, "Shadow Armor") == 0) {
         definition = item_make_shadow_armor();
     } else if (strcmp(item->name, "Apprentice Robes") == 0) {
@@ -455,6 +472,12 @@ void item_apply_legacy_armor_metadata(Item *item) {
         definition = item_make_runed_robes();
     } else if (strcmp(item->name, "Enchanter Robes") == 0) {
         definition = item_make_enchanter_robes();
+    } else if (strcmp(item->name, "Prismweave Robes") == 0) {
+        definition = item_make_prismweave_robes();
+    } else if (strcmp(item->name, "Crown Chapel Vestments") == 0) {
+        definition = item_make_crown_chapel_vestments();
+    } else if (strcmp(item->name, "Sunwarden Mantle") == 0) {
+        definition = item_make_sunwarden_mantle();
     } else if (strcmp(item->name, "Archmage Robes") == 0) {
         definition = item_make_archmage_robes();
     } else if (strcmp(item->name, "Necromancer's Cloak") == 0) {
@@ -668,6 +691,32 @@ Item item_make_enchanter_robes(void) {
     return it;
 }
 
+Item item_make_prismweave_robes(void) {
+    Item item = {0};
+    item.active = 1;
+    item.type = ITEM_ARMOR;
+    strncpy(item.name, "Prismweave Robes", sizeof(item.name) - 1);
+    item.defense_bonus = 3;
+    item.max_mp_bonus = 35;
+    item.spell_cost_reduction_percent = 12;
+    item.value = 700;
+    set_armor_metadata(&item, ARMOR_FAMILY_ROBE, ITEM_RARITY_RARE, ITEM_CLASS_MAGE, ITEM_VISUAL_PRISMWEAVE_ROBES);
+    return item;
+}
+
+Item item_make_sunwarden_mantle(void) {
+    Item item = {0};
+    item.active = 1;
+    item.type = ITEM_ARMOR;
+    strncpy(item.name, "Sunwarden Mantle", sizeof(item.name) - 1);
+    item.defense_bonus = 5;
+    item.max_hp_bonus = 15;
+    item.max_mp_bonus = 15;
+    item.value = 950;
+    set_armor_metadata(&item, ARMOR_FAMILY_LIGHT, ITEM_RARITY_RARE, ITEM_CLASS_ALL, ITEM_VISUAL_SUNWARDEN_MANTLE);
+    return item;
+}
+
 Item item_make_archmage_robes(void) {
     Item it = {0};
     it.active = 1;
@@ -682,6 +731,16 @@ Item item_make_archmage_robes(void) {
     return it;
 }
 
+Item item_make_crown_chapel_vestments(void) {
+    Item item = item_make_archmage_robes();
+    strncpy(item.name, "Crown Chapel Vestments", sizeof(item.name) - 1);
+    item.max_mp_bonus = 45;
+    item.spell_cost_reduction_percent = 15;
+    item.value = 1000;
+    item.visual_id = ITEM_VISUAL_CROWN_CHAPEL_VESTMENTS;
+    return item;
+}
+
 Item item_make_gravekeeper_mantle(void) {
     Item item = {0};
     item.active = 1;
@@ -691,6 +750,18 @@ Item item_make_gravekeeper_mantle(void) {
     item.value = 600;
     set_armor_metadata(&item, ARMOR_FAMILY_LIGHT, ITEM_RARITY_RARE, ITEM_CLASS_ALL, ITEM_VISUAL_RANGER_CLOAK);
     item.max_hp_bonus = 20;
+    return item;
+}
+
+Item item_make_briarweave_cloak(void) {
+    Item item = {0};
+    item.active = 1;
+    item.type = ITEM_ARMOR;
+    strncpy(item.name, "Briarweave Cloak", sizeof(item.name) - 1);
+    item.defense_bonus = 4;
+    item.evasion_chance = 10;
+    item.value = 550;
+    set_armor_metadata(&item, ARMOR_FAMILY_LIGHT, ITEM_RARITY_RARE, ITEM_CLASS_ALL, ITEM_VISUAL_BRIARWEAVE_CLOAK);
     return item;
 }
 
@@ -786,6 +857,22 @@ Item item_make_magic_shield(void) {
     return it;
 }
 
+Item item_make_labyrinth_aegis(void) {
+    Item it = item_make_magic_shield();
+    strncpy(it.name, "Labyrinth Aegis", sizeof(it.name) - 1);
+    it.visual_id = ITEM_VISUAL_LABYRINTH_AEGIS;
+    return it;
+}
+
+Item item_make_castellan_bulwark(void) {
+    Item it = item_make_magic_shield();
+    strncpy(it.name, "Castellan's Bulwark", sizeof(it.name) - 1);
+    it.defense_bonus = 8;
+    it.block_chance = 30;
+    it.visual_id = ITEM_VISUAL_CASTELLAN_BULWARK;
+    return it;
+}
+
 Item item_make_goblin_king_shield(void) {
     Item it = {0};
     it.active = 1;
@@ -809,6 +896,10 @@ void item_apply_legacy_shield_metadata(Item *item) {
         definition = item_make_tower_shield();
     } else if (strcmp(item->name, "Magic Shield") == 0) {
         definition = item_make_magic_shield();
+    } else if (strcmp(item->name, "Labyrinth Aegis") == 0) {
+        definition = item_make_labyrinth_aegis();
+    } else if (strcmp(item->name, "Castellan's Bulwark") == 0) {
+        definition = item_make_castellan_bulwark();
     } else if (strcmp(item->name, "Goblin King's Shield") == 0) {
         definition = item_make_goblin_king_shield();
     } else {
