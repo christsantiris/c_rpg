@@ -1,6 +1,7 @@
 #include "castle_renderer.h"
 #include "sprites.h"
 #include "world_props.h"
+#include "info_panel.h"
 
 static void rect(Renderer *r, int x, int y, int w, int h, SDL_Color c) {
     SDL_SetRenderDrawColor(r->sdl, c.r, c.g, c.b, c.a);
@@ -103,6 +104,13 @@ void castle_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, in
         draw_world_prop(r, sx, sy, tile == TILE_STAIRS_UP ? PROP_STAIRS_UP : PROP_STAIRS_DOWN, (SDL_Color){181, 146, 91, 255});
         renderer_draw_text(r, tile == TILE_STAIRS_UP ? "^" : "v", px + 8, py + 6, (SDL_Color){245, 206, 109, 255}, r->font_tiny);
     }
+    if (g->level == 2 && x == 53 && y == 55 && g->castellan_reward_state == 1) {
+        draw_world_prop(r, sx, sy, PROP_CHEST, (SDL_Color){218, 180, 96, 255});
+        renderer_draw_text(r, "BULWARK: A", px - 16, py - 12, (SDL_Color){255, 224, 160, 255}, r->font_tiny);
+    }
+    if (g->level == 2 && tile == TILE_CASTLE_LEVER && y == 51) {
+        renderer_draw_text(r, x == 37 ? "WEST: A" : "EAST: A", px - 10, py - 12, (SDL_Color){255, 224, 160, 255}, r->font_tiny);
+    }
 }
 
 void castle_draw_enemy(Renderer *r, int sx, int sy, const Enemy *e) {
@@ -120,7 +128,11 @@ void castle_draw_enemy(Renderer *r, int sx, int sy, const Enemy *e) {
     }
     SDL_Rect destination = {sx * 24 - (e->is_boss ? 6 : 0), sy * 24 - (e->is_boss ? 12 : 2), e->is_boss ? 36 : 24, e->is_boss ? 36 : 26};
     if (texture) {
+        if (e->type == ENEMY_CASTELLAN && e->boss_attack == 2) {
+            SDL_SetTextureColorMod(texture, 255, 203, 185);
+        }
         SDL_RenderCopy(r->sdl, texture, &source, &destination);
+        SDL_SetTextureColorMod(texture, 255, 255, 255);
     } else {
         draw_orc(r, sx, sy);
     }
@@ -148,16 +160,68 @@ void castle_draw_warnings(Renderer *r, const GameState *g, const Viewport *v) {
                 renderer_draw_text(r, g->castle_fire_phase[g->level - 1] == 1 ? "2" : "1", tile.x + 8, tile.y + 4, (SDL_Color){255, 236, 181, 255}, r->font_tiny);
             }
             for (int i = 0; i < g->enemy_count; i++) {
-                if (castle_attack_marks(&g->map, &g->enemies[i], x, y) || castle_barrier_warning(g, x, y)) {
+                const Enemy *e = &g->enemies[i];
+                int rally = e->attack_phase == CASTELLAN_RALLY && castle_castellan_marks(e, x, y);
+                if (castle_attack_marks(&g->map, e, x, y) || rally || castle_barrier_warning(g, x, y)) {
+                    if (!map_is_explored(&g->map, x, y)) {
+                        continue;
+                    }
                     SDL_Rect tile = {(x - v->cam_x) * 24 + 1, (y - v->cam_y) * 24 + 1, 22, 22};
                     SDL_SetRenderDrawColor(r->sdl, 204, 108, 239, 55);
                     SDL_RenderFillRect(r->sdl, &tile);
                     SDL_SetRenderDrawColor(r->sdl, 236, 159, 252, 255);
                     SDL_RenderDrawRect(r->sdl, &tile);
+                    if (e->type == ENEMY_CASTELLAN) {
+                        char text[8];
+                        snprintf(text, sizeof(text), "%s%d", rally ? "G" : "", e->move_timer >= 3 ? e->move_timer - 1 : 1);
+                        renderer_draw_text(r, text, tile.x + (rally ? 3 : 8), tile.y + 4, (SDL_Color){255, 231, 174, 255}, r->font_tiny);
+                    }
                     break;
                 }
             }
         }
     }
     SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_NONE);
+}
+
+void castle_draw_castellan_status(Renderer *r, const GameState *g, const Viewport *v) {
+    if (g->location != LOCATION_CASTLE_INTERIOR || g->level != 2) {
+        return;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *e = &g->enemies[i];
+        if (!e->active || e->type != ENEMY_CASTELLAN || e->max_hp <= 0 || !viewport_is_visible(v, e->x, e->y) || !map_is_explored(&g->map, e->x, e->y)) {
+            continue;
+        }
+        int width = r->screen_w - INFO_PANEL_W - 16;
+        if (width > 380) {
+            width = 380;
+        }
+        if (width < 160) {
+            return;
+        }
+        int x = (r->screen_w - INFO_PANEL_W - width) / 2;
+        int top = x < SWAMP_MAP_W / 2 + 12 ? SWAMP_MAP_H / 2 + 16 : 8;
+        rect(r, x, top, width, 78, (SDL_Color){35, 25, 39, 255});
+        char text[80];
+        if (width < 300) {
+            snprintf(text, sizeof(text), "CASTELLAN: PHASE %d", e->boss_attack == 2 ? 2 : 1);
+        } else {
+            snprintf(text, sizeof(text), "CASTELLAN: %s", e->boss_attack == 2 ? "BROKEN FORMATION" : "SHIELD COMMANDER");
+        }
+        renderer_draw_text(r, text, x + 10, top + 8, (SDL_Color){255, 220, 171, 255}, r->font_tiny);
+        rect(r, x + 10, top + 23, width - 20, 8, (SDL_Color){75, 42, 59, 255});
+        rect(r, x + 10, top + 23, (width - 20) * e->hp / e->max_hp, 8, (SDL_Color){211, 153, 89, 255});
+        static const char *attacks[] = {"PREPARING", "CHARGE", "SHIELD SWING", "FORMATION SWEEP", "GUARD RALLY"};
+        if (e->attack_target_x >= 0) {
+            int attack = e->attack_phase >= CASTELLAN_CHARGE && e->attack_phase <= CASTELLAN_RALLY ? e->attack_phase : 0;
+            snprintf(text, sizeof(text), "%s: %d%s", !e->boss_aux_x && attack != CASTELLAN_RALLY ? "BLOCKED ATTACK" : attacks[attack], e->move_timer >= 3 ? e->move_timer - 1 : 1, e->frozen_turns > 0 ? " FROZEN" : "");
+        } else if (e->move_timer == 2) {
+            snprintf(text, sizeof(text), "RECOVERY: %d%s", 1 + e->revive_timer, e->frozen_turns > 0 ? " FROZEN" : "");
+        } else {
+            snprintf(text, sizeof(text), "PREPARING ATTACK");
+        }
+        renderer_draw_text(r, text, x + 10, top + 38, (SDL_Color){255, 203, 143, 255}, r->font_tiny);
+        renderer_draw_text(r, width < 300 ? "SIDE LEVERS: A" : "SIDE LEVERS INTERRUPT CHARGES; A TO USE", x + 10, top + 55, (SDL_Color){196, 209, 215, 255}, r->font_tiny);
+    }
 }

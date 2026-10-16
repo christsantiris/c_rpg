@@ -352,6 +352,13 @@ surviving defenders reset, while miniboss victories, revealed
 trapdoors, and dropped items persist. Defeating Lord Veyr ends the campaign with
 victory. See [Castle interior and play testing](docs/castle-design.md).
 
+The Castellan shifts from **Shield Commander** to **Broken Formation** at half
+health: fixed charge/swing warnings give way to wider two-action sweeps and one
+marked guard rally. Use either side lever to interrupt a charge for two recovery
+actions. His guaranteed **Castellan's Bulwark** (+8 defense, 30% block, Warrior)
+waits in Iron Keep's southeast armory chest until claimed. See the
+[Castellan play-test guide and renderer previews](docs/art-sources/castellan-encounter/README.md).
+
 A townsman on the castle grounds secretly reports you to the Royal Guards when
 spoken to with **T**, causing a one-time arrest in the new **Royal Jail**. Speak
 to fellow prisoner **Tomas** with **T**, then **Y** to accept **Guide Tomas

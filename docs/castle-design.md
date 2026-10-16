@@ -20,7 +20,7 @@ and three appearances of the final boss.
 | Floor | Setting | Encounter and progress |
 |---|---|---|
 | 1 | Gatehouse | Two guarded approaches with independent portcullis levers and firing lanes |
-| 2 | Iron Keep | Castellan with a Warden and Marksman guard detail; bait his charge into his guards |
+| 2 | Iron Keep | Castellan's two phases, guard detail, finite rally and side portcullis counters |
 | 3 | Forsaken Court | Protected Herald calls a capped three-guard patrol through a marked doorway |
 | 4 | Crown Chapel | Disable two ward pedestals while fighting the Royal Arcanist and his guards |
 | 5 | Royal Archives | Shelves narrow sightlines; roaming soldiers and warned fire lanes threaten the approaches |
@@ -48,10 +48,52 @@ recovery attacks bypass shields. Frontal hits always deal at least one damage.
 All three classes can fight the guards and operate levers. Press **Interact**
 (default `A`) on or beside a lever to change its portcullis.
 
-The Castellan marks a charge lane or a close frontal swing, then recovers.
-Sidestepping avoids the charge; colliding with masonry briefly staggers him.
-Colliding with one of his guards interrupts that guard's attack and disables
-its shield for two turns. His guard detail does not return after his defeat.
+The Castellan's **Shield Commander** phase marks a five-stone cardinal charge
+or a three-stone frontal swing, each with one action of warning. At or below
+half health, **Broken Formation** calls one two-action guard rally, then
+alternates a wider **Formation Sweep** with separately warned charges. Sweeps
+cover two rows of five stones in front of him and allow two actions to escape.
+The current warning finishes before a phase change; healing cannot reverse it.
+The HUD shows the phase, health, signature name, remaining actions and freeze.
+
+Warnings lock their footprint at declaration. Opening a gate cannot extend a
+queued attack. All signatures leave one full recovery action; masonry and guard
+collisions expose the Castellan for two. A struck guard also loses its pending
+attack and shield protection for two turns. Guards can intercept a charge before
+it reaches a player farther down the lane. Charges remain inside the arena.
+If cover or actors eliminate every ordinary walking escape, the attack is marked
+blocked and misses rather than trapping the player in an unavoidable hit.
+
+Two side levers at **(37,51)** and **(53,51)** control their own three-stone
+portcullises at **x=40** and **x=50**, **y=47..49**. Both begin open. Every class
+can Interact on or beside a lever. Closing a gate across a marked charge
+interrupts it and leaves two full counterattack actions after Interact. Actor- or
+loot-occupied cells stay open; operating a partially closed gate closes the remaining empty
+cells, and operating a fully closed gate reopens it. Paths around each gate
+remain walkable, including access to the stairs and both levers.
+
+The rally warns the two muster stones at **(42,46)** and **(48,46)** with **G2**,
+then **G1**. At most one Warden and one Marksman arrive on empty marked stones;
+occupied arrivals are skipped. They act from the following turn and award no
+gold, items or XP. The call is spent at declaration and cannot be replenished by
+saving, floor travel or castle retreat. His original guard detail does not return
+after his defeat.
+
+Victory preserves the **100 gold** and floor-3 unlock and reserves **Castellan's
+Bulwark** in the southeast armory chest at **(53,55)**. Interact on or beside it
+to claim the rare Warrior shield: **+8 defense, 30% block**, with the usual 50%
+block damage reduction. It requires a one-handed main weapon. A full inventory
+leaves it reserved; maximum floor loot cannot prevent the award. The reservation
+survives retreat, floor travel and save/load. Claiming, dropping or selling the
+shield cannot award another copy.
+
+Save version **137** retains phase, fixed warning bits, countdown, facing, spent
+rally, recovery, gates and reward state in active and cached floors. Older saves
+receive the open gates, levers and muster stones without regenerating enemies or
+resetting damage, exploration, traps or loot. Prior victories remain complete
+and reserve the newly introduced Bulwark once, without repeating gold or XP.
+See [Castellan renderer review and play testing](art-sources/castellan-encounter/README.md).
+
 The Royal Arcanist marks a small area and warns before switching ward barriers.
 Occupied tiles stay open when a barrier closes.
 
@@ -76,8 +118,8 @@ visible and dangerous beneath dropped loot. The throne arena repeats a fire lane
 across its southern approach; entrances, stairs, and trapdoor landing tiles are safe.
 
 Violet outlines mark attacks' fixed destinations before damage is applied.
-Normal attacks and Castellan attacks allow one movement turn; Arcanist attacks
-allow two. Freezing an enemy pauses its pending attack and its ward change.
+Normal attacks and Castellan charges/swings allow one movement turn; Castellan
+sweeps/rallies and Arcanist attacks allow two. Freezing an enemy pauses its pending attack and its ward change.
 Cover blocks ranged attacks even if the barrier closes after the warning starts.
 
 Lord Veyr has one continuous health bar and three phases: Armored Ruler above

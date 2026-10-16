@@ -731,7 +731,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 136);
+    cJSON_AddNumberToObject(root, "save_version", 137);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -1236,6 +1236,7 @@ int save_game(const GameState *g, int slot) {
 
     cJSON *castle = cJSON_CreateObject();
     cJSON_AddNumberToObject(castle, "minibosses", g->castle_minibosses);
+    cJSON_AddNumberToObject(castle, "castellan_reward", g->castellan_reward_state);
     cJSON_AddNumberToObject(castle, "prompt", g->castle_prompt);
     cJSON_AddNumberToObject(castle, "won", g->game_won);
     cJSON *floors = cJSON_CreateArray();
@@ -2822,14 +2823,21 @@ int load_game(GameState *g, int slot) {
     memset(g->castle_loot_count, 0, sizeof(g->castle_loot_count));
     memset(g->castle_fire_phase, 0, sizeof(g->castle_fire_phase));
     g->castle_minibosses = 0;
+    g->castellan_reward_state = 0;
     g->castle_prompt = 0;
     g->game_won = 0;
     cJSON *castle = cJSON_GetObjectItem(root, "castle");
     if (castle) {
         cJSON *minis = cJSON_GetObjectItem(castle, "minibosses");
+        cJSON *reward = cJSON_GetObjectItem(castle, "castellan_reward");
         cJSON *prompt = cJSON_GetObjectItem(castle, "prompt");
         cJSON *won = cJSON_GetObjectItem(castle, "won");
         cJSON *floors = cJSON_GetObjectItem(castle, "floors");
+        if ((save_version >= 137 || reward) && (!cJSON_IsNumber(reward) || reward->valuedouble != reward->valueint || reward->valueint < 0 || reward->valueint > 2)) {
+            cJSON_Delete(root);
+            return 0;
+        }
+        g->castellan_reward_state = reward ? reward->valueint : 0;
         if (!cJSON_IsNumber(minis) || !cJSON_IsNumber(prompt) || !cJSON_IsNumber(won) ||
             !cJSON_IsArray(floors) || cJSON_GetArraySize(floors) != CASTLE_DEPTH ||
             minis->valueint < 0 || minis->valueint > 3 || prompt->valueint < 0 || prompt->valueint > 2) {
@@ -4333,6 +4341,9 @@ int load_game(GameState *g, int slot) {
     }
     if (save_version < 136) {
         red_dragon_migrate(g);
+    }
+    if (save_version < 137) {
+        castle_migrate_castellan(g);
     }
     game_migrate_boss_shortcuts(g);
     game_refresh_quest_encounters(g);

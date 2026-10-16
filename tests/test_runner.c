@@ -45,6 +45,7 @@ void test_island(void);
 void test_temple(void);
 void test_sun_guardian(void);
 void test_red_dragon(void);
+void test_castellan(void);
 void test_leveling(void);
 void test_region_difficulty_scaling(void);
 void test_items(void);
@@ -150,6 +151,7 @@ int main(void) {
     test_temple();
     test_sun_guardian();
     test_red_dragon();
+    test_castellan();
     printf("\n");
     test_forest();
     test_forest_travel();

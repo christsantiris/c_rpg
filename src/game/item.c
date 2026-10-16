@@ -852,6 +852,15 @@ Item item_make_labyrinth_aegis(void) {
     return it;
 }
 
+Item item_make_castellan_bulwark(void) {
+    Item it = item_make_magic_shield();
+    strncpy(it.name, "Castellan's Bulwark", sizeof(it.name) - 1);
+    it.defense_bonus = 8;
+    it.block_chance = 30;
+    it.visual_id = ITEM_VISUAL_CASTELLAN_BULWARK;
+    return it;
+}
+
 Item item_make_goblin_king_shield(void) {
     Item it = {0};
     it.active = 1;
@@ -877,6 +886,8 @@ void item_apply_legacy_shield_metadata(Item *item) {
         definition = item_make_magic_shield();
     } else if (strcmp(item->name, "Labyrinth Aegis") == 0) {
         definition = item_make_labyrinth_aegis();
+    } else if (strcmp(item->name, "Castellan's Bulwark") == 0) {
+        definition = item_make_castellan_bulwark();
     } else if (strcmp(item->name, "Goblin King's Shield") == 0) {
         definition = item_make_goblin_king_shield();
     } else {
