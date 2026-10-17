@@ -575,6 +575,7 @@ void castle_enter(GameState *g, int level) {
     };
     snprintf(message, sizeof(message), "%s: %s", castle_floor_name(level), hints[level - 1]);
     push_message(g, message);
+    push_message(g, "Press the interact key (A by default) beside levers and ward pedestals to activate them.");
 }
 
 void castle_leave(GameState *g, int town) {

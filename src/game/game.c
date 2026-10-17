@@ -3502,10 +3502,12 @@ void game_enter_mountains(GameState *g) {
     g->player.x = from_ridgeshire ? g->map.stairs_down_x : g->map.stairs_up_x;
     g->player.y = from_ridgeshire ? g->map.stairs_down_y : g->map.stairs_up_y;
     g->dialogue_active = 0;
+    push_message(g, "Press the interact key (A by default) beside rockfalls or broken bridges to clear or repair them.");
 }
 
 void game_enter_coast(GameState *g) {
     enter_adventure(g, LOCATION_COAST);
+    push_message(g, "Stand on tide controls and press the interact key (A by default) to change the tide.");
 }
 
 void game_enter_swamp(GameState *g) {
@@ -3537,6 +3539,7 @@ void game_enter_swamp(GameState *g) {
 void game_enter_frostfell(GameState *g) {
     enter_adventure(g, LOCATION_FROSTFELL);
     push_message(g, "Bitter wind howls across the Frostfell Wastes.");
+    push_message(g, "Press the interact key (A by default) on or beside the expedition journal or watchfires to use them.");
 }
 
 void game_enter_desert(GameState *g) {
@@ -3562,6 +3565,7 @@ void game_enter_moonveil(GameState *g) {
     g->player.y = g->map.stairs_up_y;
     g->dialogue_active = 0;
     push_message(g, "Moonlit blossoms glow along the paths of Moonveil Gardens.");
+    push_message(g, "Press the interact key (A by default) on or beside seed pods, springs, circles or flowering nodes to use them.");
 }
 
 void game_enter_ashen(GameState *g) {
@@ -3582,6 +3586,7 @@ void game_enter_ashen(GameState *g) {
     g->player.y = g->map.stairs_up_y;
     g->dialogue_active = 0;
     push_message(g, "Ash drifts across the basalt paths of Ashen Hollow.");
+    push_message(g, "Press the interact key (A by default) on or beside forge mechanisms, furnaces or sluices to use them.");
 }
 
 void game_enter_catacombs(GameState *g) {
@@ -3602,6 +3607,7 @@ void game_enter_catacombs(GameState *g) {
     g->player.y = g->map.stairs_up_y;
     g->dialogue_active = 0;
     push_message(g, "The royal dead stir beneath the castle. Blue braziers bind their bones.");
+    push_message(g, "Press the interact key (A by default) beside braziers to extinguish them and prevent resurrection.");
 }
 
 void game_enter_glassdeep(GameState *g) {
@@ -3622,6 +3628,7 @@ void game_enter_glassdeep(GameState *g) {
     g->player.y = g->map.stairs_up_y;
     g->dialogue_active = 0;
     push_message(g, "Crystals illuminate the abandoned quarry of Glassdeep Caverns.");
+    push_message(g, "Press the interact key (A by default) on or beside resonators to tune them, or crystal faces to turn them.");
 }
 
 void game_enter_high_pass(GameState *g, int from_town) {
@@ -4782,6 +4789,7 @@ void game_enter_labyrinth(GameState *g) {
     g->player.poison_turns = 0;
     push_message(g, "You enter Rook's labyrinth.");
     push_message(g, "Five runes open the deepest vault.");
+    push_message(g, "Press the interact key (A by default) on or beside rune switches to activate them.");
 }
 
 void game_change_labyrinth_floor(GameState *g, int descending, int false_stair) {
@@ -5062,6 +5070,7 @@ void game_enter_temple(GameState *g) {
     g->player.x = TEMPLE_ENTRANCE_X;
     g->player.y = TEMPLE_ENTRANCE_Y;
     push_message(g, "You enter the Ruined Temple. The sun seal burns.");
+    push_message(g, "Press the interact key (A by default) on or beside solar altars to switch between Sun and Moon.");
 }
 
 void game_leave_temple(GameState *g) {
