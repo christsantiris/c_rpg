@@ -1193,6 +1193,19 @@ void action_resolve_player(GameState *g, Action a) {
         return;
     }
 
+    if (a.type == ACTION_ASCEND || a.type == ACTION_DESCEND) {
+        TileType tile = floor_drop_underlay(g, g->player.x, g->player.y);
+        if (a.type == ACTION_ASCEND && tile == TILE_STAIRS_DOWN) {
+            push_message(g, "This is a down staircase.");
+            return;
+        }
+        if (a.type == ACTION_DESCEND && (tile == TILE_STAIRS_UP ||
+            tile == TILE_DUNGEON_STAIRS_SEALED || tile == TILE_DUNGEON_STAIRS_RETURN)) {
+            push_message(g, "This is an up staircase.");
+            return;
+        }
+    }
+
     if (g->location == LOCATION_CASTLE_INTERIOR && (a.type == ACTION_ASCEND || a.type == ACTION_DESCEND)) {
         TileType tile = g->map.tiles[g->player.y][g->player.x];
         if (a.type == ACTION_ASCEND && tile == TILE_STAIRS_UP) {
