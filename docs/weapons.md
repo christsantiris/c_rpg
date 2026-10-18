@@ -63,7 +63,7 @@ Sword also has a ranged attack.
 | Dagger | +2 | One | Rogue | 1 | 90 | 25% critical chance |
 | Short Sword | +3 | One | Warrior, Rogue | 1 | 40 | — |
 | Staff | +4 | Two | Mage | 1 | 60 | +2 spell power, +10 maximum MP |
-| Cryptblade | +5 | One | Warrior | Boss | 350 | 10% critical chance; Lich King reward |
+| Cryptblade | +2 | One | Warrior | Boss | 350 | 10% critical chance; Lich King reward |
 | Demonic Sword | +6 | One | All | Boss | 180 | Range 2 with `F`; Swamp Demon reward |
 | Long Sword | +6 | One | Warrior | 2 | 180 | — |
 | Magic Dagger | +6 | One | Rogue | 3 | 500 | 40% critical chance |
@@ -76,10 +76,10 @@ Sword also has a ranged attack.
 | Magic Battle Axe | +13 | Two | Warrior | 3 | 700 | Ignores 50% of enemy defense |
 | Magic Greatsword | +18 | Two | Warrior | 3 | 1,100 | 75% cleave damage to adjacent enemies |
 
-The Cryptblade's +5 attack and 10% critical chance make it an early Lich King
+The Cryptblade's +2 attack and 10% critical chance make it an early Lich King
 reward with room for later upgrades. Its one-handed grip permits a shield or
 off-hand weapon. Existing saves update its attack while preserving sharpening
-(+6 attack when sharpened). The Goblin King drops the Goblin King's Shield;
+(+3 attack when sharpened). The Goblin King drops the Goblin King's Shield;
 saved copies of his retired greatsword are converted to that shield.
 
 ### Ranged bows

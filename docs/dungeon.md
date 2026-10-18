@@ -98,8 +98,8 @@ the **stairs-up key (`<`, the comma key by default)** to return directly to
 Oakhaven. The stairs-down key (`.`) does not activate it; surviving enemies do
 not block your return.
 
-The guaranteed **Cryptblade** retains its +5 attack, 10% critical chance and
-Warrior restriction. Normally it drops on the floor. If the floor loot list is
+The guaranteed **Cryptblade** grants +2 attack and 10% critical chance and remains
+Warrior-only. Normally it drops on the floor. If the floor loot list is
 full, it remains in a named chamber reliquary without deleting other items.
 An unclaimed blade lost to a floor refresh is restored there on revisiting,
 even in a fresh expedition with the Lich already defeated. Interact beside the

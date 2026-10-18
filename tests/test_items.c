@@ -674,7 +674,7 @@ void test_items(void) {
     Item coast_reward = boss_equipment_reward(ENEMY_DROWNED_QUEEN);
     ASSERT("Lich King guarantees the Cryptblade",
         strcmp(lich_reward.name, "Cryptblade") == 0 &&
-        lich_reward.attack_bonus == 5 && lich_reward.critical_chance_bonus == 10);
+        lich_reward.attack_bonus == 2 && lich_reward.critical_chance_bonus == 10);
     ASSERT("forest Necromancer guarantees its cloak",
         strcmp(forest_reward.name, "Necromancer's Cloak") == 0);
     ASSERT("Goblin King guarantees a shield between Buckler and Kite",
