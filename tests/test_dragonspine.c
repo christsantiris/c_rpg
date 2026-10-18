@@ -236,7 +236,7 @@ void test_dragonspine(void) {
         restored && loaded.location == LOCATION_TOWN4 && loaded.portal_active &&
         loaded.portal_location == LOCATION_DRAGONSPINE &&
         loaded.map.tiles[TOWN4_DRAGON_GATE_Y][TOWN_W - 1] == TILE_TOWN_EXIT &&
-        loaded.max_dragonspine_level_reached == saved_level &&
+        loaded.max_dragonspine_level_reached == DRAGONSPINE_DEPTH &&
         loaded.dragonspine_cache[saved_level - 1].valid);
     if (restored) {
         game_use_town_portal(&loaded);

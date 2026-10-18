@@ -103,6 +103,7 @@ void test_save_load(void);
 void test_save_confirmation(void);
 void test_combat_feedback(void);
 void test_controls(void);
+void test_expeditions(void);
 
 int main(void) {
     // ASSERT("sanity check true",  1 == 1);
@@ -221,6 +222,7 @@ int main(void) {
     test_quest_journal();
     printf("\n");
     test_level_cache_cleared();
+    test_expeditions();
     printf("\n");
     test_return_to_town();
     printf("\n");

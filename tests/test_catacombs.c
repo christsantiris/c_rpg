@@ -145,7 +145,7 @@ static void test_travel(void) {
     action_resolve_player(&game, (Action){ACTION_ASCEND, 0, 0});
     ASSERT("ordinary retreat emerges at the castle south gate", game.location == LOCATION_CASTLE && game.player.x == CROWNROAD_X && game.player.y == TOWN_H - 2);
     game_enter_catacombs(&game);
-    ASSERT("re-entry preserves the same expedition", game.enemies[0].hp == 7 && game.map.tiles[by][bx] == TILE_OSSUARY_COLD);
+    ASSERT("re-entry refreshes regular enemies and preserves extinguished braziers", game.enemies[0].hp == game.enemies[0].max_hp && game.map.tiles[by][bx] == TILE_OSSUARY_COLD);
     game_descend(&game);
     int x = game.player.x + 1;
     int y = game.player.y;

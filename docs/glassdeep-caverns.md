@@ -61,8 +61,9 @@ Once claimed, sold, consumed or dropped rewards never regenerate. Emptying the
 cache restores its original cavern floor or sanctuary paving. Native pools and
 Orin's quest resonators remain independent of these arena controls.
 
-All five stages maintain independent caches. Backtracking and later visits
-preserve explored terrain, enemy health, and boss progress. Return to Town
+All five stages maintain independent caches. Backtracking preserves enemy
+health. A new expedition restores regular enemies on every visited stage while
+preserving explored terrain, quests, and boss progress. Return to Town
 opens a portal beside Stillbury's south gate and restores the original stage
 and position. Save format **134** adds the pending-reward mask; existing enemy
 fields and map serialization preserve phase, fixed endpoints, facing, freeze,

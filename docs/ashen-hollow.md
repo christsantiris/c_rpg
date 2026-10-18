@@ -24,7 +24,8 @@ connected paths; it does not inflict damage. Embers and lava animate while idle.
 | Cinder Lord | 5 | Warned cinder lances and eruptions; below half health, expanding ember rings alternate with eruptions |
 
 Ashen Hollow maintains independent caches for all five stages. Backtracking
-and later visits preserve explored terrain, enemy health, and boss progress.
+preserves enemy health. A new expedition restores regular enemies on every
+visited stage while preserving explored terrain, quests, and boss progress.
 Return to Town opens a portal beside Ridgeshire's north gate and restores the
 original stage and position when used. Save format 81 stores the new region;
 older saves gain fresh Ashen Hollow progress and an open north gate without

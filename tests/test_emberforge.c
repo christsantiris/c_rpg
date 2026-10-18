@@ -109,9 +109,9 @@ static void test_quest(void) {
     game_enter_ashen(&game);
     game_descend(&game);
     stand_at_object();
-    ASSERT("revisited stage two gains mechanism and three guards without resetting enemies", game_has_regional_interaction(&game) &&
+    ASSERT("a new expedition gains the mechanism and three guards while refreshing regular enemies", game_has_regional_interaction(&game) &&
         game.map.tiles[game.player.y][game.player.x] == TILE_EMBERFORGE_MECHANISM && guards(&game, 1) == 3 &&
-        game.enemies[0].hp == 7 && game.emberforge_encounters == 1);
+        game.enemies[0].hp == game.enemies[0].max_hp && game.emberforge_encounters == 1);
     game_refresh_quest_encounters(&game);
     ASSERT("refresh does not duplicate defenders", guards(&game, 0) == 3);
     game.enemies[game.enemy_count - 1].hp = 5;

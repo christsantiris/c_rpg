@@ -109,11 +109,11 @@ static void test_travel_and_saves(void) {
     walk_edge(0);
     ASSERT("the south exit returns at Ridgeshire's north gate", game.location == LOCATION_TOWN4 && game.player.x == RIDGESHIRE_ASHEN_GATE_X && game.player.y == 1);
     game_enter_ashen(&game);
-    ASSERT("re-entering Ashen Hollow retains visited stages and progress", game.enemies[0].hp == 7 && game.max_ashen_level_reached == 2 && memcmp(&layout, &game.map, sizeof(layout)) == 0);
+    ASSERT("a new Ashen Hollow expedition refreshes enemies and retains exploration", game.enemies[0].hp == game.enemies[0].max_hp && game.max_ashen_level_reached == 2 && memcmp(&layout, &game.map, sizeof(layout)) == 0);
     while (game.level < 3) {
         walk_edge(1);
     }
-    ASSERT("saving and loading Ashen Hollow preserves independent stage caches", save_game(&game, ASHEN_TEST_SLOT) && load_game(&loaded, ASHEN_TEST_SLOT) && loaded.location == LOCATION_ASHEN && loaded.level == 3 && loaded.max_ashen_level_reached == 3 && loaded.ashen_cache[0].enemies[0].hp == 7 && memcmp(&game.map, &loaded.map, sizeof(Map)) == 0);
+    ASSERT("saving and loading Ashen Hollow preserves independent stage caches", save_game(&game, ASHEN_TEST_SLOT) && load_game(&loaded, ASHEN_TEST_SLOT) && loaded.location == LOCATION_ASHEN && loaded.level == 3 && loaded.max_ashen_level_reached == 3 && loaded.ashen_cache[0].enemies[0].hp == loaded.ashen_cache[0].enemies[0].max_hp && memcmp(&game.map, &loaded.map, sizeof(Map)) == 0);
     map_room_center(&game.map.rooms[1], &x, &y);
     game.player.x = x;
     game.player.y = y;

@@ -75,8 +75,10 @@ Previously defeated Regents remain defeated and retain their original potion
 drops; migration does not grant repeat rewards. See the
 [native renderer gallery and play-test guide](art-sources/thorn-regent-encounter/README.md).
 
-Moonveil has its own stage caches and depth tracking. Backtracking and returning
-through Rosemoor's west gate retain explored maps and enemy state. Return to
+Moonveil has its own stage caches and depth tracking. Backtracking retains enemy
+state. Returning through Rosemoor's west gate starts a new expedition with
+regular enemies restored on every visited stage; explored maps, quests, and
+boss progress remain intact. Return to
 Town opens a portal beside that gate, restoring the original garden stage when
 used. Saves preserve active and cached maps, enemy health, explored terrain,
 portals, and the Regent's defeat. Older testing saves migrate to fresh Moonveil

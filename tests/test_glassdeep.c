@@ -109,11 +109,11 @@ static void test_travel_and_saves(void) {
     walk_edge(0);
     ASSERT("the north exit returns at Stillbury's south gate", game.location == LOCATION_TOWN2 && game.player.x == STILLBURY_GLASSDEEP_GATE_X && game.player.y == TOWN_H - 2);
     game_enter_glassdeep(&game);
-    ASSERT("re-entering Glassdeep Caverns retains visited stages and progress", game.enemies[0].hp == 7 && game.max_glassdeep_level_reached == 2 && memcmp(&layout, &game.map, sizeof(layout)) == 0);
+    ASSERT("a new Glassdeep Caverns expedition refreshes enemies and retains exploration", game.enemies[0].hp == game.enemies[0].max_hp && game.max_glassdeep_level_reached == 2 && memcmp(&layout, &game.map, sizeof(layout)) == 0);
     while (game.level < 3) {
         walk_edge(1);
     }
-    ASSERT("saving and loading Glassdeep Caverns preserves independent stage caches", save_game(&game, GLASSDEEP_TEST_SLOT) && load_game(&loaded, GLASSDEEP_TEST_SLOT) && loaded.location == LOCATION_GLASSDEEP && loaded.level == 3 && loaded.max_glassdeep_level_reached == 3 && loaded.glassdeep_cache[0].enemies[0].hp == 7 && memcmp(&game.map, &loaded.map, sizeof(Map)) == 0);
+    ASSERT("saving and loading Glassdeep Caverns preserves independent stage caches", save_game(&game, GLASSDEEP_TEST_SLOT) && load_game(&loaded, GLASSDEEP_TEST_SLOT) && loaded.location == LOCATION_GLASSDEEP && loaded.level == 3 && loaded.max_glassdeep_level_reached == 3 && loaded.glassdeep_cache[0].enemies[0].hp == loaded.glassdeep_cache[0].enemies[0].max_hp && memcmp(&game.map, &loaded.map, sizeof(Map)) == 0);
     map_room_center(&game.map.rooms[1], &x, &y);
     game.player.x = x;
     game.player.y = y;

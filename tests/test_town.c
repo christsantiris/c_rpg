@@ -164,9 +164,9 @@ void test_king_roads_and_castle(void) {
         g = loaded;
     }
     action_resolve_player(&g, (Action){ACTION_MOVE, 0, 12});
-    ASSERT("Ridgeshire returns to Crown Road West's east end with saved enemies",
+    ASSERT("Ridgeshire starts a new Crown Road West crossing at its east end",
         g.location == LOCATION_KING_ROAD_WEST && g.player.x == CROWNROAD_W - 2 &&
-        !g.enemies[1].active);
+        g.enemies[1].active);
     g.player.x = 1;
     action_resolve_player(&g, (Action){ACTION_MOVE, 0, CROWNROAD_Y});
     ASSERT("Crown Road West returns to the castle's east gate",
@@ -178,8 +178,8 @@ void test_king_roads_and_castle(void) {
     g.player.x = 1;
     g.player.y = CASTLE_ROAD_Y;
     action_resolve_player(&g, (Action){ACTION_MOVE, 0, CASTLE_ROAD_Y});
-    ASSERT("castle west gate restores Crown Road East's enemy progress",
-        g.location == LOCATION_CROWNROAD && g.player.x == CROWNROAD_W - 2 && !g.enemies[0].active);
+    ASSERT("castle west gate starts a new Crown Road East crossing",
+        g.location == LOCATION_CROWNROAD && g.player.x == CROWNROAD_W - 2 && g.enemies[0].active);
     g.player.x = 1;
     action_resolve_player(&g, (Action){ACTION_MOVE, 0, CROWNROAD_Y});
     ASSERT("Crown Road East returns to Rosemoor's east entrance",
@@ -1146,7 +1146,9 @@ void test_forest(void) {
     static const int expected_rooms[FOREST_DEPTH] = {7, 9, 9, 10, 10, 10, 8};
     static const int expected_entrances[FOREST_DEPTH] = {0, 2, 1, 0, 0, 1, 2};
     static const int expected_exits[FOREST_DEPTH] = {0, 1, 2, 0, 0, 2, 1};
+    g.enemy_count = 0;
     for (int level = 1; level <= FOREST_DEPTH; level++) {
+        g.level = level;
         map_generate_forest(&g.map, level);
         ASSERT("forest level uses its distinct topology size",
             g.map.room_count == expected_rooms[level - 1]);

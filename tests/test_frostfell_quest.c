@@ -227,7 +227,7 @@ static void test_covered_portal(void) {
     game_enter_frostfell(&game);
     game_descend(&game);
     ASSERT("completed journal objective stays completed on a fresh expedition", game.frostfell_quest_progress == 1 &&
-        !objective(TILE_FROST_JOURNAL, &x, &y) && !guards(&game, 0));
+        !objective(TILE_FROST_JOURNAL, &x, &y) && !guards(&game, 1));
 }
 
 static void test_survivor_access(void) {
