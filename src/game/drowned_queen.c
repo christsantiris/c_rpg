@@ -84,17 +84,16 @@ void drowned_queen_prepare_map(Map *m, const Enemy *enemies, int count, int px, 
             }
         }
     }
-    for (int n = 0; n < 4; n++) {
-        int tx = n == 0 ? room->x + 2 : n == 1 ? queen->x - 2 : n == 2 ? queen->x + 3 : queen->x;
-        int ty = n == 0 ? queen->y + 2 : n == 1 ? room->y + 2 : n == 2 ? queen->y : queen->y - 3;
+    for (int n = 0; n < 2; n++) {
+        int tx = n == 0 ? room->x + 2 : queen->x - 2;
+        int ty = n == 0 ? queen->y + 2 : room->y + 2;
         int bx = -1;
         int by = -1;
         int distance = MAP_W + MAP_H;
         for (int y = room->y + 1; y < room->y + room->h - 1; y++) {
             for (int x = room->x + 1; x < room->x + room->w - 1; x++) {
                 int d = abs(x - tx) + abs(y - ty);
-                if ((n == 0 && abs(y - queen->y) < 2) || (n == 1 && abs(x - queen->x) < 2) ||
-                    (n >= 2 && abs(x - queen->x) + abs(y - queen->y) < 3)) {
+                if ((n == 0 && abs(y - queen->y) < 2) || (n == 1 && abs(x - queen->x) < 2)) {
                     continue;
                 }
                 if (m->tiles[y][x] == TILE_QUEEN_WATER && !occupied(enemies, count, x, y) &&
@@ -106,13 +105,42 @@ void drowned_queen_prepare_map(Map *m, const Enemy *enemies, int count, int px, 
             }
         }
         if (bx >= 0) {
-            m->tiles[by][bx] = n == 0 ? TILE_QUEEN_CONTROL_H : n == 1 ? TILE_QUEEN_CONTROL_V : TILE_QUEEN_ISLAND;
+            m->tiles[by][bx] = n == 0 ? TILE_QUEEN_CONTROL_H : TILE_QUEEN_CONTROL_V;
         }
     }
 }
 
 static int shelter(TileType tile) {
-    return tile >= TILE_QUEEN_DRY && tile <= TILE_QUEEN_CONTROL_V_DRAINED;
+    return tile == TILE_QUEEN_DRY || (tile >= TILE_QUEEN_CONTROL_H && tile <= TILE_QUEEN_CONTROL_V_DRAINED);
+}
+
+static void remove_islands(Map *m) {
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (m->tiles[y][x] == TILE_QUEEN_ISLAND) {
+                m->tiles[y][x] = TILE_QUEEN_WATER;
+            }
+        }
+    }
+}
+
+void drowned_queen_remove_islands(GameState *g) {
+    if (arena(g)) {
+        remove_islands(&g->map);
+    }
+    for (int i = 0; i < COAST_DEPTH; i++) {
+        if (g->coast_cache[i].valid) {
+            remove_islands(&g->coast_cache[i].map);
+        }
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        if (g->floor_items[i].underlying_tile == TILE_QUEEN_ISLAND) {
+            g->floor_items[i].underlying_tile = TILE_QUEEN_WATER;
+        }
+    }
+    if (g->portal_origin_tile == TILE_QUEEN_ISLAND) {
+        g->portal_origin_tile = TILE_QUEEN_WATER;
+    }
 }
 
 int drowned_queen_controls(const GameState *g) {

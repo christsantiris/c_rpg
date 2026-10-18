@@ -107,7 +107,7 @@ phase messages to communicate escalation.
 - **Phase 2, Storm Throne:** alternate perpendicular waves and marked flooded
   floor pockets. Each follow-up receives its own warning; no surprise retarget.
 - **Arena mechanic:** two tide controls drain different lanes and expose dry
-  approach paths. Raised stone islands remain usable shelter. Flood changes
+  approach paths. There are no permanent shelter islands. Flood changes
   are announced, cannot strand the player and never cover all escape routes.
 - **Guaranteed reward:** preserve **Tidecaller Robes** and existing coast exit
   and island access. The encounter's controls do not change earlier-stage quest
