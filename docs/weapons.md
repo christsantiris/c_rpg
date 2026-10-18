@@ -89,16 +89,20 @@ striking adjacent enemies in melee.
 
 | Weapon | Ranged attack | Hands | Class | Tier | Base value | Trait |
 | --- | ---: | --- | --- | ---: | ---: | --- |
-| Bow | +3 | Two | Rogue | 1 | 60 | Range 6 |
-| Longbow | +7 | Two | Rogue | 2 | 250 | Range 9 |
-| Krakenbone Bow | +10 | Two | Rogue | Boss | 700 | Range 10; Polar Kraken reward |
-| Magic Longbow | +13 | Two | Rogue | 3 | 1,200 | Range 12 and pierces every target in its path |
+| Hunting Bow | +3 | Two | Rogue | 1 | 60 | Range 3; starting weapon |
+| Shortbow | +5 | Two | Rogue | 1 | 140 | Range 5 |
+| Longbow | +7 | Two | Rogue | 2 | 250 | Range 7 |
+| Crossbow | +9 | Two | Rogue | 2 | 450 | Range 5; more damage than Longbow |
+| Krakenbone Bow | +10 | Two | Rogue | Boss | 700 | Range 7; Polar Kraken reward |
+| Magic Longbow | +13 | Two | Rogue | 3 | 1,200 | Range 7 and pierces every target in its path |
 
 Bows fire with `F` in the last movement direction. A target directly adjacent
 to the player is too close; valid targets begin two tiles away. Arrows stop at
-walls. The Bow and Longbow stop at the first target, while the Magic Longbow
-can strike several targets on the same line. All bows have a fixed 15% ranged
-critical chance.
+walls. Ordinary bows and the Crossbow stop at the first target, while the
+Magic Longbow can strike several targets on the same line. No bow can shoot
+beyond seven tiles. Existing saves rename Bow to Hunting Bow and apply the
+current ranges without changing equipped attack or character progress. All
+bows have a fixed 15% ranged critical chance.
 
 Rogues start with 100 arrows and can carry at most 100 in a shared quiver. Each
 fired bow shot consumes one arrow, including misses and shots stopped by walls.

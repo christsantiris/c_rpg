@@ -52,6 +52,11 @@ static void icon_palette(SDL_Color *pal, const Item *item) {
                 trim = (SDL_Color){234, 184, 73, 255};
                 break;
             case ITEM_VISUAL_LONGBOW: wood = (SDL_Color){112, 141, 63, 255}; break;
+            case ITEM_VISUAL_SHORTBOW: wood = (SDL_Color){126, 83, 48, 255}; break;
+            case ITEM_VISUAL_CROSSBOW:
+                wood = (SDL_Color){91, 57, 36, 255};
+                metal = (SDL_Color){156, 170, 185, 255};
+                break;
             case ITEM_VISUAL_CHAIN_MAIL: cloth = (SDL_Color){111, 134, 156, 255}; break;
             case ITEM_VISUAL_SCALE_MAIL: cloth = (SDL_Color){171, 131, 73, 255}; break;
             case ITEM_VISUAL_PLATE_ARMOR: cloth = (SDL_Color){169, 182, 192, 255}; break;
@@ -206,6 +211,8 @@ void draw_icon_weapon(Renderer *r, int px, int py, const Item *item) {
         case ITEM_VISUAL_MAGIC_DAGGER: art = ICON_ART_DAGGER; break;
         case ITEM_VISUAL_GREATSWORD:
         case ITEM_VISUAL_MAGIC_GREATSWORD: art = ICON_ART_GREATSWORD; break;
+        case ITEM_VISUAL_SHORTBOW: art = ICON_ART_SHORTBOW; break;
+        case ITEM_VISUAL_CROSSBOW: art = ICON_ART_CROSSBOW; break;
         default:
             if (item->weapon_family == WEAPON_FAMILY_AXE) {
                 art = ICON_ART_AXE;

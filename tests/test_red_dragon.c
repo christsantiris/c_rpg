@@ -352,7 +352,7 @@ static void test_signatures(void) {
     game.player.y = 16;
     clear_columns();
     e->hp--;
-    // A diagonal longbow can engage from twelve tiles, even though Manhattan distance is twenty-four.
+    // A damaged dragon can respond to a long diagonal retreat outside its lair.
     game.map.rooms[0] = (Room){30, 23, 22, 19};
     tick();
     ASSERT("damaged dragons respond to long diagonal ranged engagement outside the lair", e->move_timer == 2 &&

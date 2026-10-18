@@ -208,8 +208,8 @@ static void test_arcanist_escapes(void) {
 }
 
 static void test_arcanist_ranged(void) {
-    Item bows[4] = {item_make_bow(), item_make_longbow(), item_make_magic_longbow(), item_make_krakenbone_bow()};
-    for (int i = 0; i < 4; i++) {
+    Item bows[6] = {item_make_bow(), item_make_shortbow(), item_make_longbow(), item_make_crossbow(), item_make_magic_longbow(), item_make_krakenbone_bow()};
+    for (int i = 0; i < 6; i++) {
         Enemy *e = setup();
         game.player.x = e->x;
         game.player.y = e->y - bows[i].range;

@@ -917,7 +917,7 @@ static void test_necromancer_retaliates_to_arrows(void) {
         g.enemy_count = 1;
         Room *grove = &g.map.rooms[g.map.room_count - 1];
         Enemy *boss = &g.enemies[0];
-        boss->x = grove->x + 4;
+        boss->x = grove->x + 2;
         boss->y = grove->y + grove->h / 2;
         g.player.x = boss->x - bows[i].range;
         g.player.y = boss->y;

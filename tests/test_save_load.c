@@ -263,6 +263,54 @@ static void test_key_bindings_round_trip(void) {
     remove_test_save(ROUND_TRIP_SLOT);
 }
 
+static void test_bow_catalog_round_trip(void) {
+    static GameState original;
+    static GameState loaded;
+    Item bows[] = {item_make_bow(), item_make_shortbow(), item_make_longbow(),
+        item_make_crossbow(), item_make_krakenbone_bow(), item_make_magic_longbow()};
+    for (int legacy = 0; legacy <= 1; legacy++) {
+        memset(&original, 0, sizeof(original));
+        original.player.player_class = CLASS_ROGUE;
+        game_init(&original);
+        original.inventory_count = 6;
+        for (int i = 0; i < 6; i++) {
+            original.inventory[i] = bows[i];
+        }
+        if (legacy) {
+            snprintf(original.inventory[0].name, sizeof(original.inventory[0].name), "Bow");
+            original.inventory[0].range = 6;
+            original.inventory[2].range = 9;
+            original.inventory[4].range = 10;
+            original.inventory[5].range = 12;
+        }
+        game_equip_main_hand(&original, 2);
+        original.gold = 234;
+        original.floor_item_count = 1;
+        original.floor_items[0] = (FloorItem){.active = 1, .x = 20, .y = 20,
+            .underlying_tile = TILE_TOWN_FLOOR, .item = original.inventory[0]};
+        original.map.tiles[20][20] = TILE_ITEM;
+        original.castle_loot_count[0] = 1;
+        original.castle_loot[0][0] = original.floor_items[0];
+        int ok = save_game(&original, ROUND_TRIP_SLOT) &&
+            (!legacy || rewrite_save_version(ROUND_TRIP_SLOT, 141)) && load_game(&loaded, ROUND_TRIP_SLOT);
+        int match = ok && loaded.inventory_count == 6;
+        for (int i = 0; i < 6 && match; i++) {
+            match &= weapon_fields_match(&loaded.inventory[i], &bows[i]);
+        }
+        ASSERT("every bow retains its damage, range, class, traits and visual on load", match);
+        ASSERT("legacy Hunting Bow names and ranges migrate in dropped and cached loot", ok &&
+            weapon_fields_match(&loaded.floor_items[0].item, &bows[0]) &&
+            weapon_fields_match(&loaded.castle_loot[0][0].item, &bows[0]));
+        ASSERT("bow migration preserves equipped attack, equipment index and gold", ok &&
+            loaded.player.attack == original.player.attack && loaded.equipped_main_hand == 2 && loaded.gold == 234);
+        ASSERT("migrated bow stats remain stable on a second load", ok && save_game(&loaded, MIGRATED_SLOT) &&
+            load_game(&original, MIGRATED_SLOT) && weapon_fields_match(&original.inventory[0], &bows[0]) &&
+            weapon_fields_match(&original.inventory[5], &bows[5]));
+    }
+    remove_test_save(ROUND_TRIP_SLOT);
+    remove_test_save(MIGRATED_SLOT);
+}
+
 static void test_current_weapon_round_trip(void) {
     static GameState original;
     static GameState loaded;
@@ -2314,6 +2362,7 @@ void test_save_load(void) {
     test_sunscar_save_migration();
     test_stacked_item_underlays();
     test_current_weapon_round_trip();
+    test_bow_catalog_round_trip();
     test_dual_wield_round_trip();
     test_legacy_off_hand_migration();
     test_legacy_goblin_reward_migration();

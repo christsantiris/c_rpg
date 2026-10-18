@@ -3,6 +3,7 @@
 
 #define MAX_INVENTORY   10
 #define MAX_FLOOR_ITEMS 20
+#define MAX_BOW_RANGE 7
 
 typedef enum {
     ITEM_NONE = 0,
@@ -99,7 +100,9 @@ typedef enum {
     ITEM_VISUAL_PRISMWEAVE_ROBES,
     ITEM_VISUAL_SUNWARDEN_MANTLE,
     ITEM_VISUAL_CASTELLAN_BULWARK,
-    ITEM_VISUAL_CROWN_CHAPEL_VESTMENTS
+    ITEM_VISUAL_CROWN_CHAPEL_VESTMENTS,
+    ITEM_VISUAL_SHORTBOW,
+    ITEM_VISUAL_CROSSBOW
 } ItemVisualId;
 
 typedef struct {
@@ -171,7 +174,9 @@ Item item_make_runed_staff(void);
 Item item_make_magic_staff(void);
 Item item_make_sandstorm_staff(void);
 Item item_make_bow(void);
+Item item_make_shortbow(void);
 Item item_make_longbow(void);
+Item item_make_crossbow(void);
 Item item_make_magic_longbow(void);
 Item item_make_krakenbone_bow(void);
 Item item_make_dagger(void);
