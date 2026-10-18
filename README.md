@@ -32,6 +32,12 @@ keeps its own generated maps and progression. Defeating the Drowned Queen on
 the Sunken Coast opens a sea route to the Ruined Isle. Its five-tier Ruined
 Temple remains a late-game challenge.
 
+Walking into a combat area starts a new expedition and restores its regular
+enemies on every visited floor, so easier areas can be replayed for experience
+and gold. Explored maps, quest progress, and defeated bosses remain intact.
+Backtracking, loading a save, and returning directly through a town portal
+continue the current expedition without respawning enemies.
+
 Advancing never requires clearing every enemy. Regional bosses guard their
 onward passages, but surviving regular enemies do not block leaving.
 The Haunted Forest can be entered from OakHaven or Stillbury, with three stages
@@ -331,8 +337,8 @@ Castle of No Return. Its north entrance leads into the six-floor final area. Cro
 from the castle's east gate to Ridgeshire's west gate. Both roads span 142 tiles,
 with 90 enemies spread through successive ambushes: three times the original
 30-enemy roster to preserve density over the threefold length. The enemy mix
-scales with it, including 24 archers and 18 horsemen per road. Each road keeps
-its own enemies and progress between visits. Older saves stretch positions and
+scales with it, including 24 archers and 18 horsemen per road. Entering either
+road starts a new crossing with a full enemy roster. Older saves stretch positions and
 revealed terrain to the longer routes while retaining damage, defeats, and
 dropped loot. Save version 121 expands existing road populations once; additions
 corresponding to defeated enemies stay defeated, and cleared roads stay cleared.
@@ -408,8 +414,9 @@ prevents continuous clearing. The guaranteed **Briarweave Cloak** gives all
 classes +4 defense and 10% evasion, alongside the original **Potion of Strength**.
 Both wait in a persistent flowered reliquary, including when the pack or loot
 floor is full. See the [Regent play-test guide](docs/art-sources/thorn-regent-encounter/README.md).
-Backtracking, later visits, saves, and Return to Town portals retain the gardens'
-explored maps and enemy progress.
+Backtracking, saves, and Return to Town portals retain the gardens' enemy
+progress. A new expedition restores regular enemies while preserving explored
+maps, quests, and boss progress.
 
 **Botanist Liora** in **Stillbury's Inn** assigns **The Stolen Moonseed** with
 **T**. She directs you north across the swamp to Rosemoor, then through its
@@ -435,8 +442,9 @@ eruption with **A** to redirect it into cooling channels and gain two
 counterattack actions. The guaranteed **Embercleaver** is a Warrior two-handed
 axe with +11 attack, 25% armor penetration and 25% cleave, alongside the original
 **Potion of Strength**. Both persist in a forge reliquary until claimed.
-Exploration and enemy progress survive backtracking, later visits, saves, and
-Return to Town portals. See [Ashen Hollow](docs/ashen-hollow.md) and the
+Exploration survives later visits. Backtracking, saves, and Return to Town
+portals preserve enemy progress; a new expedition restores regular enemies.
+See [Ashen Hollow](docs/ashen-hollow.md) and the
 [Cinder Lord play-test guide](docs/art-sources/cinder-lord-encounter/README.md).
 
 ### Glassdeep Caverns

@@ -3430,21 +3430,112 @@ void game_ascend(GameState *g) {
     sync_temple_floor_state(g);
 }
 
+static int expedition_spawn_open(const GameState *g, int x, int y) {
+    if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H || !map_is_walkable(&g->map, x, y)) {
+        return 0;
+    }
+    TileType tile = g->map.tiles[y][x];
+    if (!enemy_terrain_open(g, x, y) && tile != TILE_TEMPLE_FLOOR && tile != TILE_LABYRINTH_FLOOR) {
+        return 0;
+    }
+    if ((x == g->map.stairs_up_x && y == g->map.stairs_up_y) ||
+        (x == g->map.stairs_down_x && y == g->map.stairs_down_y) ||
+        (g->portal_active && g->portal_location == g->location && g->portal_level == g->level &&
+        x == g->portal_x && y == g->portal_y)) {
+        return 0;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (g->enemies[i].active && g->enemies[i].x == x && g->enemies[i].y == y) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static void respawn_expedition_enemies(GameState *g) {
+    unsigned char regular[MAX_ENEMIES] = {0};
+    for (int i = 0; i < g->enemy_count; i++) {
+        Enemy *enemy = &g->enemies[i];
+        if (enemy->is_boss || enemy->dain_fragment || enemy->experience <= 0) {
+            continue;
+        }
+        Enemy fresh = {0};
+        spawn_enemy(g, &fresh, enemy->type, enemy->x, enemy->y);
+        // Named quest guards and boss reinforcements retain their exact state.
+        if (strcmp(enemy->name, fresh.name) != 0) {
+            continue;
+        }
+        regular[i] = 1;
+        enemy->active = 0;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (!regular[i]) {
+            continue;
+        }
+        Enemy *enemy = &g->enemies[i];
+        int x = enemy->x;
+        int y = enemy->y;
+        if (!expedition_spawn_open(g, x, y)) {
+            int found = 0;
+            for (int ty = 1; ty < MAP_H - 1 && !found; ty++) {
+                for (int tx = 1; tx < MAP_W - 1 && !found; tx++) {
+                    if (expedition_spawn_open(g, tx, ty)) {
+                        x = tx;
+                        y = ty;
+                        found = 1;
+                    }
+                }
+            }
+            if (!found) {
+                continue;
+            }
+        }
+        spawn_enemy(g, enemy, enemy->type, x, y);
+        g->level_cleared = 0;
+    }
+}
+
+static void start_expedition(GameState *g, LevelCache *cache, int depth) {
+    int level = g->level;
+    for (int i = 0; i < depth; i++) {
+        if (!cache[i].valid) {
+            continue;
+        }
+        g->level = i + 1;
+        g->map = cache[i].map;
+        g->enemy_count = cache[i].enemy_count;
+        g->level_cleared = cache[i].level_cleared;
+        memcpy(g->enemies, cache[i].enemies, sizeof(cache[i].enemies));
+        respawn_expedition_enemies(g);
+        game_update_level_progress(g);
+        cache[i].map = g->map;
+        memcpy(cache[i].enemies, g->enemies, sizeof(cache[i].enemies));
+        cache[i].level_cleared = g->level_cleared;
+    }
+    g->level = level;
+}
+
 static void enter_adventure(GameState *g, Location location) {
     clear_floor_loot(g);
     g->location = location;
     LevelCache *cache = active_cache(g);
     int *max_level = active_max_level(g);
 
+    start_expedition(g, cache, active_depth(g));
     g->level = 1;
     g->level_cleared = 0;
-    if (!g->portal_active || g->portal_location != location) {
+    if (*max_level < 1) {
         *max_level = 1;
-        for (int i = 0; i < active_depth(g); i++) {
-            cache[i].valid = 0;
-        }
     }
-    generate_active_level(g);
+    if (cache[0].valid) {
+        g->map = cache[0].map;
+        g->enemy_count = cache[0].enemy_count;
+        memcpy(g->enemies, cache[0].enemies, sizeof(cache[0].enemies));
+        g->level_cleared = cache[0].level_cleared;
+        game_refresh_quest_encounters(g);
+    } else {
+        generate_active_level(g);
+    }
     g->player.x = g->map.stairs_up_x;
     g->player.y = g->map.stairs_up_y;
 }
@@ -3458,6 +3549,7 @@ void game_enter_forest(GameState *g) {
     clear_floor_loot(g);
     g->forest_entry_town = from_stillbury ? LOCATION_TOWN2 : LOCATION_TOWN;
     g->location = LOCATION_FOREST;
+    start_expedition(g, g->forest_cache, FOREST_DEPTH);
     g->level = from_stillbury ? FOREST_DEPTH : 1;
     LevelCache *cache = &g->forest_cache[g->level - 1];
     if (cache->valid) {
@@ -3484,6 +3576,7 @@ void game_enter_mountains(GameState *g) {
     clear_floor_loot(g);
     g->mountain_entry_town = from_ridgeshire ? LOCATION_TOWN4 : LOCATION_TOWN;
     g->location = LOCATION_MOUNTAINS;
+    start_expedition(g, g->mountain_cache, MOUNTAIN_DEPTH);
     g->level = from_ridgeshire ? MOUNTAIN_DEPTH : 1;
     LevelCache *cache = &g->mountain_cache[g->level - 1];
     if (cache->valid) {
@@ -3515,6 +3608,7 @@ void game_enter_swamp(GameState *g) {
     clear_floor_loot(g);
     g->swamp_entry_town = from_rosemoor ? LOCATION_TOWN3 : LOCATION_TOWN2;
     g->location = LOCATION_SWAMP;
+    start_expedition(g, g->swamp_cache, SWAMP_DEPTH);
     g->level = from_rosemoor ? SWAMP_DEPTH : 1;
     LevelCache *cache = &g->swamp_cache[g->level - 1];
     if (cache->valid) {
@@ -3550,6 +3644,7 @@ void game_enter_desert(GameState *g) {
 void game_enter_moonveil(GameState *g) {
     clear_floor_loot(g);
     g->location = LOCATION_MOONVEIL;
+    start_expedition(g, g->moonveil_cache, MOONVEIL_DEPTH);
     g->level = 1;
     LevelCache *cache = &g->moonveil_cache[0];
     if (cache->valid) {
@@ -3571,6 +3666,7 @@ void game_enter_moonveil(GameState *g) {
 void game_enter_ashen(GameState *g) {
     clear_floor_loot(g);
     g->location = LOCATION_ASHEN;
+    start_expedition(g, g->ashen_cache, ASHEN_DEPTH);
     g->level = 1;
     LevelCache *cache = &g->ashen_cache[0];
     if (cache->valid) {
@@ -3592,6 +3688,7 @@ void game_enter_ashen(GameState *g) {
 void game_enter_catacombs(GameState *g) {
     clear_floor_loot(g);
     g->location = LOCATION_CATACOMBS;
+    start_expedition(g, g->catacombs_cache, CATACOMBS_DEPTH);
     g->level = 1;
     LevelCache *cache = &g->catacombs_cache[0];
     if (cache->valid) {
@@ -3613,6 +3710,7 @@ void game_enter_catacombs(GameState *g) {
 void game_enter_glassdeep(GameState *g) {
     clear_floor_loot(g);
     g->location = LOCATION_GLASSDEEP;
+    start_expedition(g, g->glassdeep_cache, GLASSDEEP_DEPTH);
     g->level = 1;
     LevelCache *cache = &g->glassdeep_cache[0];
     if (cache->valid) {
@@ -3948,21 +4046,11 @@ void game_migrate_crownroad_density(GameState *g) {
 }
 
 void game_enter_king_road(GameState *g, Location road, int from_castle) {
-    CrownroadCache *cache = road == LOCATION_KING_ROAD_WEST ?
-        &g->kingroad_west_cache : &g->crownroad_cache;
     g->location = road;
     g->level = 1;
     map_generate_crownroad(&g->map);
-    if (cache->valid) {
-        g->enemy_count = cache->enemy_count;
-        g->level_cleared = cache->level_cleared;
-        for (int i = 0; i < g->enemy_count; i++) {
-            g->enemies[i] = cache->enemies[i];
-        }
-    } else {
-        g->enemy_count = 0;
-        g->level_cleared = 0;
-    }
+    g->enemy_count = 0;
+    g->level_cleared = 0;
     int from_west = (road == LOCATION_CROWNROAD) != from_castle;
     g->player.x = from_west ? 1 : CROWNROAD_W - 2;
     g->player.y = CROWNROAD_Y;
@@ -4776,12 +4864,8 @@ int game_labyrinth_is_open(const GameState *g) {
 
 void game_enter_labyrinth(GameState *g) {
     g->location = LOCATION_LABYRINTH;
+    start_expedition(g, g->labyrinth_cache, LABYRINTH_DEPTH);
     g->level = 1;
-    for (int i = 0; i < LABYRINTH_DEPTH; i++) {
-        if (i != LABYRINTH_DEPTH - 1 || (g->defeated_bosses & (1 << LOCATION_LABYRINTH))) {
-            g->labyrinth_cache[i].valid = 0;
-        }
-    }
     load_labyrinth_floor(g);
     g->player.x = 2;
     g->player.y = g->map.stairs_up_y;
@@ -4828,6 +4912,7 @@ void game_change_labyrinth_floor(GameState *g, int descending, int false_stair) 
 }
 
 void game_leave_labyrinth(GameState *g) {
+    save_labyrinth_floor(g);
     int spawn_x;
     int spawn_y;
     g->location = LOCATION_TOWN2;
@@ -5045,6 +5130,7 @@ static void spawn_temple_enemies(GameState *g) {
 
 void game_enter_temple(GameState *g) {
     g->location = LOCATION_TEMPLE;
+    start_expedition(g, g->temple_cache, TEMPLE_DEPTH);
     g->level = 1;
     g->floor_item_count = 0;
     g->dialogue_active = 0;

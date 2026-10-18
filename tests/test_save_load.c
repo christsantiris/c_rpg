@@ -1404,6 +1404,7 @@ static void test_longer_crownroad_migration(void) {
         original.kingroad_west_cache.enemy_count = CROWNROAD_BASE_ENEMIES;
         if (scenario < 2) {
             game_enter_king_road(&original, scenario == 0 ? LOCATION_CROWNROAD : LOCATION_KING_ROAD_WEST, 0);
+            original.enemies[0].hp = scenario == 0 ? 7 : 11;
             original.enemy_count = CROWNROAD_BASE_ENEMIES;
             // Reconstruct the short road's map and positions as saved by version 117.
             for (int y = 0; y < MAP_H; y++) {

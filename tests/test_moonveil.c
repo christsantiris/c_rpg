@@ -109,11 +109,11 @@ static void test_travel_and_saves(void) {
     walk_edge(0);
     ASSERT("the east exit returns at Rosemoor's west gate", game.location == LOCATION_TOWN3 && game.player.x == 1 && game.player.y == ROSEMOOR_MOONVEIL_GATE_Y);
     game_enter_moonveil(&game);
-    ASSERT("re-entering Moonveil retains visited stages and progress", game.enemies[0].hp == 7 && game.max_moonveil_level_reached == 2 && memcmp(&layout, &game.map, sizeof(layout)) == 0);
+    ASSERT("a new Moonveil expedition refreshes enemies and retains exploration", game.enemies[0].hp == game.enemies[0].max_hp && game.max_moonveil_level_reached == 2 && memcmp(&layout, &game.map, sizeof(layout)) == 0);
     while (game.level < 3) {
         walk_edge(1);
     }
-    ASSERT("saving and loading Moonveil preserves independent stage caches", save_game(&game, MOONVEIL_TEST_SLOT) && load_game(&loaded, MOONVEIL_TEST_SLOT) && loaded.location == LOCATION_MOONVEIL && loaded.level == 3 && loaded.max_moonveil_level_reached == 3 && loaded.moonveil_cache[0].enemies[0].hp == 7 && memcmp(&game.map, &loaded.map, sizeof(Map)) == 0);
+    ASSERT("saving and loading Moonveil preserves independent stage caches", save_game(&game, MOONVEIL_TEST_SLOT) && load_game(&loaded, MOONVEIL_TEST_SLOT) && loaded.location == LOCATION_MOONVEIL && loaded.level == 3 && loaded.max_moonveil_level_reached == 3 && loaded.moonveil_cache[0].enemies[0].hp == loaded.moonveil_cache[0].enemies[0].max_hp && memcmp(&game.map, &loaded.map, sizeof(Map)) == 0);
     map_room_center(&game.map.rooms[1], &x, &y);
     // The player cannot stand on a tile occupied by a randomly spawned enemy.
     for (int i = 0; i < game.enemy_count; i++) {
