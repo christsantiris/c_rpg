@@ -109,13 +109,17 @@ warning; it never widens or retargets the rest of that attack. The second contro
 does not reflood the first lane. Paths and controls remain walkable and persist
 through backtracking, portals and saves, including when covered by loot.
 
-Two raised stone islands, labeled **SAFE**, offer shelter from both waves and
-flooded pockets. The dry paths and control platforms are also safe from these
-attacks. They do not provide protection against other enemies. Neither control
+There are no permanent **SAFE** islands. Avoid warned attacks by moving or
+draining an approach lane. The dry paths and control platforms are safe from
+these attacks; they do not provide protection against other enemies. Neither control
 creates deep water, moves the player or overwrites exits, old basin controls,
 treasure caches or beacons. The ordinary blue/amber tide control keeps its old
 behavior. Hidden random traps are excluded from the throne; previously revealed
 traps in older saves retain their state.
+
+Save version **141** replaces the former shelter islands with ordinary throne
+water in active and cached maps, including loot and portal underlays. Enemy
+health, queued attacks, quest progress, rewards and player position are preserved.
 
 **Tidecaller Robes** remain the guaranteed reward, with +3 defense, +30 maximum
 MP, 8% spell-cost reduction and the Mage restriction. They normally drop on the

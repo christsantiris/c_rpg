@@ -508,7 +508,7 @@ typedef enum {
     TILE_GOBLIN_KING_RELIQUARY,
     TILE_QUEEN_WATER,
     TILE_QUEEN_DRY,
-    TILE_QUEEN_ISLAND,
+    TILE_QUEEN_ISLAND, // Retired; keep the ID for saved-map migration.
     TILE_QUEEN_CONTROL_H,
     TILE_QUEEN_CONTROL_V,
     TILE_QUEEN_CONTROL_H_DRAINED,

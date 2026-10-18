@@ -7,7 +7,7 @@ Queen. Pause for review and a manual commit before the Swamp Demon.
 Rising Tide alternates two-turn row and column waves. Storm Throne adds two
 fixed flooded pockets after each perpendicular wave sequence. Each signature
 leaves a recovery opening. Two separate throne controls drain permanent approach
-lanes, while raised stone islands offer shelter. Original stats, regional
+lanes. Permanent shelter islands have been removed. Original stats, regional
 scaling, Tidecaller Robes, coast exit, harbor and island progression remain in
 effect. See [Sunken Coast](../../sunken-coast.md) for exact timing and save behavior.
 
@@ -30,8 +30,9 @@ playthroughs. No runtime bitmap art was added.
 - [Narrow viewport](narrow.png)
 
 Numbered outlines and wave symbols show exact footprints and countdowns.
-H/V labels distinguish the two arena controls; SAFE labels identify the raised
-stone islands. The panel fits beside the minimap when space permits and below
+H/V labels distinguish the two arena controls. Earlier gallery captures predate
+the removal of SAFE islands; the current renderer shows water in their place.
+The panel fits beside the minimap when space permits and below
 it in a narrow window. Loot preserves each control and its changing underlay.
 
 ## Play testing
@@ -58,7 +59,7 @@ existing regional scaling; use the direct command for the baseline encounter.
    landing site and leaves no lingering damage or blocked floor.
 4. Interact on or beside H to drain its row, then V to drain its column. Check
    the crossing paths remain dry and remove danger from those cells immediately.
-5. Use a SAFE island for shelter. Test the controls with each class and save/load
+5. Confirm there are no SAFE islands. Test the controls with each class and save/load
    or portal travel while an attack is queued; clocks, bounds and dry paths must
    be retained. Freeze should pause the queued warning.
 6. Operate the ordinary blue/amber basin control. The throne's dry paths and
@@ -76,12 +77,14 @@ bounds, pocket predicates, independent controls, reward restoration and migratio
 Actions dispatch it before generic melee logic. The Queen now uses ground
 signatures; existing projectile tests retain coverage of other ranged enemies.
 [`drowned_queen_renderer.c`](../../../src/renderer/drowned_queen_renderer.c) draws
-native terrain, control/island labels, numbered warnings and the encounter panel.
+native terrain, control labels, numbered warnings and the encounter panel.
 
 Save version **127** adds `drowned_queen_reward_state`. Existing enemy serializers
 save phase, countdown, locked targets and auxiliary wave bounds/pocket coordinates
 in active/cached encounters. Appended tile IDs and item underlays preserve the
-throne controls, drained lanes and islands. Migration updates living arenas in
+throne controls and drained lanes. Save version **141** converts the former
+islands and their loot/portal underlays to ordinary throne water without changing
+queued attacks or progress. Migration updates living arenas in
 place and protects portal landings without healing enemies or resetting progress.
 Old victories remain completed, and only identifiable current floor robes become
 an unclaimed reward. The ordinary coast basin and quest beacon tile IDs are retained.
