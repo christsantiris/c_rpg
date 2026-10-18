@@ -551,7 +551,10 @@ static void test_cryptblade_rebalance_migration(void) {
     static GameState original;
     static GameState loaded;
     static GameState reloaded;
-    for (int sharpened = 0; sharpened <= 1; sharpened++) {
+    const int versions[] = {109, 110, 139};
+    for (int scenario = 0; scenario < 6; scenario++) {
+        int sharpened = scenario % 2;
+        int version = versions[scenario / 2];
         memset(&original, 0, sizeof(original));
         original.player.player_class = CLASS_WARRIOR;
         game_init(&original);
@@ -561,7 +564,7 @@ static void test_cryptblade_rebalance_migration(void) {
         for (int i = 0; i < 3; i++) {
             original.inventory[i] = item_make_cryptblade();
             original.inventory[i].sharpened = i == 0 ? sharpened : (i == 1 ? !sharpened : 0);
-            original.inventory[i].attack_bonus = 8 + original.inventory[i].sharpened;
+            original.inventory[i].attack_bonus = (version < 110 ? 8 : 5) + original.inventory[i].sharpened;
         }
         game_equip_main_hand(&original, 0);
         game_equip_off_hand(&original, 1);
@@ -582,28 +585,34 @@ static void test_cryptblade_rebalance_migration(void) {
         original.gold = 234;
         original.defeated_bosses = 1 << LOCATION_DUNGEON;
         int ok = save_game(&original, LEGACY_SLOT) &&
-            rewrite_save_version(LEGACY_SLOT, 109) && load_game(&loaded, LEGACY_SLOT);
+            rewrite_save_version(LEGACY_SLOT, version) && load_game(&loaded, LEGACY_SLOT);
         ASSERT("old Cryptblade saves load successfully", ok);
         if (!ok) {
             remove_test_save(LEGACY_SLOT);
             continue;
         }
         ASSERT("Cryptblade migration preserves sharpening and critical chance",
-            loaded.inventory[0].attack_bonus == 5 + sharpened &&
+            loaded.inventory[0].attack_bonus == 2 + sharpened &&
             loaded.inventory[0].sharpened == sharpened && loaded.inventory[0].critical_chance_bonus == 10 &&
-            loaded.inventory[1].attack_bonus == 6 - sharpened && loaded.inventory[2].attack_bonus == 5);
+            loaded.inventory[1].attack_bonus == 3 - sharpened && loaded.inventory[2].attack_bonus == 2);
         ASSERT("equipped main and off-hand Cryptblades update attack with correct rounding",
             loaded.equipped_main_hand == 0 && loaded.equipped_off_hand == 1 &&
-            loaded.player.attack == base_attack + 5 + sharpened + (7 - sharpened) / 2);
+            loaded.player.attack == base_attack + 2 + sharpened + (4 - sharpened) / 2);
         ASSERT("dropped and cached Cryptblades receive the same balance change",
-            loaded.floor_items[0].item.attack_bonus == 5 + sharpened &&
-            loaded.castle_loot[0][0].item.attack_bonus == 5 + sharpened &&
+            loaded.floor_items[0].item.attack_bonus == 2 + sharpened &&
+            loaded.castle_loot[0][0].item.attack_bonus == 2 + sharpened &&
             loaded.castle_loot[0][0].item.sharpened == sharpened);
-        ASSERT("retired greatswords on the floor and in castle loot become shields",
-            loaded.floor_items[1].item.type == ITEM_SHIELD &&
-            strcmp(loaded.floor_items[1].item.name, "Goblin King's Shield") == 0 &&
-            loaded.castle_loot[0][1].item.type == ITEM_SHIELD &&
-            strcmp(loaded.castle_loot[0][1].item.name, "Goblin King's Shield") == 0);
+        if (version < 110) {
+            ASSERT("retired greatswords on the floor and in castle loot become shields",
+                loaded.floor_items[1].item.type == ITEM_SHIELD &&
+                strcmp(loaded.floor_items[1].item.name, "Goblin King's Shield") == 0 &&
+                loaded.castle_loot[0][1].item.type == ITEM_SHIELD &&
+                strcmp(loaded.castle_loot[0][1].item.name, "Goblin King's Shield") == 0);
+        } else {
+            ASSERT("the new Cryptblade migration leaves other weapons unchanged",
+                weapon_fields_match(&loaded.floor_items[1].item, &retired) &&
+                weapon_fields_match(&loaded.castle_loot[0][1].item, &retired));
+        }
         ASSERT("weapon migration preserves gold and boss progress",
             loaded.gold == original.gold && loaded.defeated_bosses == original.defeated_bosses);
         ASSERT("rebalanced weapons round-trip without repeating equipped stat changes",

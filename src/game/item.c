@@ -370,7 +370,7 @@ Item item_make_cryptblade(void) {
     it.active = 1;
     it.type = ITEM_WEAPON;
     strncpy(it.name, "Cryptblade", sizeof(it.name) - 1);
-    it.attack_bonus = 5;
+    it.attack_bonus = 2;
     it.value = 350;
     it.critical_chance_bonus = 10;
     set_weapon_metadata(&it, WEAPON_FAMILY_SWORD, WEAPON_HANDS_ONE,

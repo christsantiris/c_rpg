@@ -733,7 +733,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 139);
+    cJSON_AddNumberToObject(root, "save_version", 140);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -1942,7 +1942,7 @@ static void migrate_goblin_shields(GameState *g) {
     }
 }
 
-static void migrate_rebalanced_weapon(Item *item) {
+static void migrate_rebalanced_weapon(Item *item, int retire_goblin) {
     if (item->type != ITEM_WEAPON) {
         return;
     }
@@ -1950,18 +1950,18 @@ static void migrate_rebalanced_weapon(Item *item) {
         Item blade = item_make_cryptblade();
         item->attack_bonus = blade.attack_bonus + item->sharpened;
         item->critical_chance_bonus = blade.critical_chance_bonus;
-    } else if (strcmp(item->name, "Goblin King's Greatsword") == 0) {
+    } else if (retire_goblin && strcmp(item->name, "Goblin King's Greatsword") == 0) {
         int active = item->active;
         *item = item_make_goblin_king_shield();
         item->active = active;
     }
 }
 
-static void migrate_rebalanced_weapons(GameState *g) {
+static void migrate_rebalanced_weapons(GameState *g, int retire_goblin) {
     for (int i = 0; i < g->inventory_count; i++) {
         Item *item = &g->inventory[i];
         int old_attack = item->attack_bonus;
-        if (item->type == ITEM_WEAPON && strcmp(item->name, "Goblin King's Greatsword") == 0) {
+        if (retire_goblin && item->type == ITEM_WEAPON && strcmp(item->name, "Goblin King's Greatsword") == 0) {
             if (g->equipped_main_hand == i) {
                 game_unequip_main_hand(g);
             }
@@ -1969,7 +1969,7 @@ static void migrate_rebalanced_weapons(GameState *g) {
                 game_unequip_off_hand(g);
             }
         }
-        migrate_rebalanced_weapon(item);
+        migrate_rebalanced_weapon(item, retire_goblin);
         if (item->type == ITEM_WEAPON) {
             if (g->equipped_main_hand == i) {
                 g->player.attack += item->attack_bonus - old_attack;
@@ -1980,11 +1980,11 @@ static void migrate_rebalanced_weapons(GameState *g) {
         }
     }
     for (int i = 0; i < g->floor_item_count; i++) {
-        migrate_rebalanced_weapon(&g->floor_items[i].item);
+        migrate_rebalanced_weapon(&g->floor_items[i].item, retire_goblin);
     }
     for (int level = 0; level < CASTLE_DEPTH; level++) {
         for (int i = 0; i < g->castle_loot_count[level]; i++) {
-            migrate_rebalanced_weapon(&g->castle_loot[level][i].item);
+            migrate_rebalanced_weapon(&g->castle_loot[level][i].item, retire_goblin);
         }
     }
 }
@@ -4221,10 +4221,10 @@ int load_game(GameState *g, int slot) {
             g->portal_origin_tile = stair;
         }
     }
-    // Version 110 lowers Cryptblade attack and retires remaining Goblin
-    // greatswords, including dropped and cached copies.
-    if (save_version < 110) {
-        migrate_rebalanced_weapons(g);
+    // Version 140 lowers Cryptblade attack again; only pre-110 saves also
+    // retire Goblin greatswords. Include inventory, dropped and cached copies.
+    if (save_version < 140) {
+        migrate_rebalanced_weapons(g, save_version < 110);
     }
     repair_floor_item_underlays(g);
     if (save_version < 111) {
