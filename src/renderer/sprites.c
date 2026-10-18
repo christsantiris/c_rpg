@@ -1322,6 +1322,9 @@ static void draw_player_staff(Renderer *r, const Item *weapon, int bx, int by, i
 static void draw_player_bow(Renderer *r, const Item *weapon, int bx, int by, int dx, int dy) {
     int magic = weapon_is_magic(weapon);
     int length = weapon->visual_id == ITEM_VISUAL_BOW ? 8 : 10;
+    if (weapon->visual_id == ITEM_VISUAL_SHORTBOW) {
+        length = 6;
+    }
     SDL_Color wood = magic ? (SDL_Color){151, 101, 215, 255}
         : (SDL_Color){151, 100, 48, 255};
     SDL_Color string = magic ? (SDL_Color){208, 248, 255, 255}
@@ -1330,6 +1333,19 @@ static void draw_player_bow(Renderer *r, const Item *weapon, int bx, int by, int
         : (SDL_Color){190, 201, 204, 255};
     if (strcmp(weapon->name, "Krakenbone Bow") == 0) {
         wood = (SDL_Color){192, 193, 158, 255};
+    }
+    if (weapon->visual_id == ITEM_VISUAL_CROSSBOW) {
+        draw_weapon_line(r, bx, by, dx, dy, -5, -1, 8, -1, (SDL_Color){35, 27, 24, 255});
+        draw_weapon_line(r, bx, by, dx, dy, -5, 0, 8, 0, wood);
+        draw_weapon_line(r, bx, by, dx, dy, -5, 1, 8, 1, wood);
+        draw_weapon_line(r, bx, by, dx, dy, 5, -6, 8, -3, arrow);
+        draw_weapon_line(r, bx, by, dx, dy, 8, -3, 8, 3, arrow);
+        draw_weapon_line(r, bx, by, dx, dy, 8, 3, 5, 6, arrow);
+        draw_weapon_line(r, bx, by, dx, dy, 5, -6, 5, 6, string);
+        draw_weapon_line(r, bx, by, dx, dy, 1, 0, 11, 0, arrow);
+        draw_weapon_line(r, bx, by, dx, dy, 9, -2, 11, 0, arrow);
+        draw_weapon_line(r, bx, by, dx, dy, 9, 2, 11, 0, arrow);
+        return;
     }
     draw_weapon_line(r, bx, by, dx, dy, -length / 2, 3, -length / 2 + 2, 0, wood);
     draw_weapon_line(r, bx, by, dx, dy, -length / 2 + 2, 0, 0, -2, wood);

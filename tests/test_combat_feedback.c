@@ -297,7 +297,7 @@ void test_combat_feedback(void) {
     e = only_event();
     ASSERT("a missed arrow shows MISS where it lands",
         e && e->kind == FEEDBACK_MISS &&
-        e->arrival == FEEDBACK_AFTER_PLAYER_SHOT && e->x == 26 && e->y == 20);
+        e->arrival == FEEDBACK_AFTER_PLAYER_SHOT && e->x == 23 && e->y == 20);
 
     setup_fight(&g, CLASS_MAGE);
     equip_spell(&g, spell_make_magic_arrow());

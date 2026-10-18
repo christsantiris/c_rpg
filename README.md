@@ -248,6 +248,11 @@ the central boss, take its shortcut to Oakhaven and use the unlocked town roads
 home, or fight through the remaining three stages. Both regions remain playable
 from Oakhaven, where the quest objectives follow the central boss.
 
+Rogues start with a **Hunting Bow** (+3 attack, range 3). The Blacksmith adds
+**Shortbow** (+5, range 5), **Longbow** (+7, range 7), and **Crossbow** (+9,
+range 5). **Magic Longbow** remains the strongest at +13 attack, range 7, with
+piercing arrows. Krakenbone Bow also has range 7; no bow can shoot farther.
+
 Rogues start with **100 arrows** and can carry at most 100. Every fired bow shot
 uses one arrow, including misses. At zero, buy more at the Blacksmith or switch
 to a melee weapon such as a dagger. Without a dagger, the empty bow can still
@@ -738,7 +743,7 @@ with **I** and equip the weapon with **E** or **Enter**.
 | Swords | `rusty-sword`, `short-sword`, `long-sword`, `magic-long-sword`, `demonic-sword`, `greatsword`, `magic-greatsword`, `cryptblade` |
 | Axes | `battle-axe`, `magic-battle-axe`, `embercleaver` |
 | Staves | `staff`, `runed-staff`, `magic-staff`, `sandstorm-staff` |
-| Bows | `bow`, `longbow`, `magic-longbow`, `krakenbone-bow` |
+| Bows | `hunting-bow` (`bow` also works), `shortbow`, `longbow`, `crossbow`, `magic-longbow`, `krakenbone-bow` |
 | Daggers | `dagger`, `magic-dagger` |
 
 Examples:
@@ -826,3 +831,6 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 - Recruit a party to join the adventure
 - Improve difficulty scaling and economy
    Warrior and Rogue should struggle at certain levels without better weapons. Mage should struggle without better spells. Purchasing new weapons, armor and tomes should become necessary to progress.
+- Make ruined temple boss more difficult
+- Make controls re mappable.
+- Make NPC dialog font clearer/more readable.

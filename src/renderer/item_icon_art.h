@@ -2,7 +2,7 @@
 #define ITEM_ICON_ART_H
 
 // Private artwork indices; persistent ItemVisualId and SpellID values are unchanged.
-enum { ICON_ART_SHORT_SWORD, ICON_ART_LONG_SWORD, ICON_ART_GREATSWORD, ICON_ART_DAGGER, ICON_ART_AXE, ICON_ART_STAFF, ICON_ART_BOW, ICON_ART_LONGBOW, ICON_ART_MAIL, ICON_ART_PLATE, ICON_ART_LEATHER, ICON_ART_CLOAK, ICON_ART_ROBE, ICON_ART_BUCKLER, ICON_ART_KITE, ICON_ART_TOWER, ICON_ART_MAGIC_SHIELD, ICON_ART_POTION, ICON_ART_SCROLL, ICON_ART_BOOK, ICON_ART_MAP, ICON_ART_ARROWS, ICON_ART_GOLD, ICON_ART_MAGIC_ARROW, ICON_ART_FIREBALL, ICON_ART_HEAL, ICON_ART_FROST, ICON_ART_PORTAL, ICON_ART_RETURN, ICON_ART_LABYRINTH_AEGIS, ICON_ART_COUNT };
+enum { ICON_ART_SHORT_SWORD, ICON_ART_LONG_SWORD, ICON_ART_GREATSWORD, ICON_ART_DAGGER, ICON_ART_AXE, ICON_ART_STAFF, ICON_ART_BOW, ICON_ART_LONGBOW, ICON_ART_MAIL, ICON_ART_PLATE, ICON_ART_LEATHER, ICON_ART_CLOAK, ICON_ART_ROBE, ICON_ART_BUCKLER, ICON_ART_KITE, ICON_ART_TOWER, ICON_ART_MAGIC_SHIELD, ICON_ART_POTION, ICON_ART_SCROLL, ICON_ART_BOOK, ICON_ART_MAP, ICON_ART_ARROWS, ICON_ART_GOLD, ICON_ART_MAGIC_ARROW, ICON_ART_FIREBALL, ICON_ART_HEAL, ICON_ART_FROST, ICON_ART_PORTAL, ICON_ART_RETURN, ICON_ART_LABYRINTH_AEGIS, ICON_ART_SHORTBOW, ICON_ART_CROSSBOW, ICON_ART_COUNT };
 
 // Native 24-pixel silhouettes. Dots are transparent; o contour; m/M/N metal;
 // l/L grip wood; g/G trim; c/C/v cloth or face; f parchment/string; p/P accent.
@@ -785,6 +785,58 @@ static const char item_icon_art[ICON_ART_COUNT][24][25] = {
         "..........oMMMo.........",
         "...........oMo..........",
         "............o...........",
+        "........................",
+    },
+    { // SHORTBOW
+        "........................",
+        "........................",
+        "........................",
+        "......ooooo.............",
+        "....ooolooo.............",
+        "...oolllofo.............",
+        "...olllLofo.............",
+        "..oollLlofo.............",
+        "..olllLoofo.......ooo...",
+        "..ollLloofo.......oNooo.",
+        "..olGoGGooooooooooooNNoo",
+        "..olGoMMGMMMMMMMMMMoooNo",
+        "..olGoGGooooooooooooNNoo",
+        "..olGLooofo.......oNooo.",
+        "..olGLloofo.......ooo...",
+        "..olllLoofo.............",
+        "..oollLlofo.............",
+        "...olllLofo.............",
+        "...oolllofo.............",
+        "....ooolooo.............",
+        "......ooooo.............",
+        "........................",
+        "........................",
+        "........................",
+    },
+    { // CROSSBOW
+        "........................",
+        "........................",
+        "............ooo.........",
+        "............ofoo........",
+        "............ofNoo.......",
+        ".............foNoo......",
+        ".............fooNo......",
+        ".............f.oNo......",
+        ".............f.oNoooo...",
+        ".............f.ooooNooo.",
+        ".....oGGooooooooooooNNoo",
+        "....ooMMGMMMMMMMMMMoooNo",
+        ".oooooGGooooooooooooNNoo",
+        ".olLLLlllllGlllllloNooo.",
+        ".olllllllllGooooooooo...",
+        ".ollllloooooof.ooNo.....",
+        ".ooooooolloo.f.oNoo.....",
+        ".....ollllo..fooNo......",
+        ".....ollloo..foNoo......",
+        ".....olllo..ofNoo.......",
+        ".....ooooo..ofoo........",
+        "............ooo.........",
+        "........................",
         "........................",
     },
 };

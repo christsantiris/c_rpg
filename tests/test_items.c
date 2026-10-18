@@ -274,11 +274,17 @@ void test_items(void) {
 
     Item bow = item_make_bow();
     ASSERT("bow attack bonus is balanced", bow.attack_bonus == 3);
-    ASSERT("bow range is six tiles",        bow.range == 6);
+    ASSERT("starting Hunting Bow has range three", strcmp(bow.name, "Hunting Bow") == 0 && bow.range == 3);
     ASSERT("bow is a two-handed Rogue weapon",
         bow.weapon_family == WEAPON_FAMILY_BOW &&
         bow.weapon_hands == WEAPON_HANDS_TWO &&
         bow.class_mask == ITEM_CLASS_ROGUE);
+
+    Item shortbow = item_make_shortbow();
+    ASSERT("shortbow is an early two-handed Rogue upgrade with range five",
+        shortbow.weapon_family == WEAPON_FAMILY_BOW && shortbow.weapon_hands == WEAPON_HANDS_TWO &&
+        shortbow.class_mask == ITEM_CLASS_ROGUE && shortbow.attack_bonus == 5 && shortbow.range == 5 &&
+        shortbow.value == 140 && shortbow.visual_id == ITEM_VISUAL_SHORTBOW && !shortbow.pierces_targets);
 
     Item longbow = item_make_longbow();
     ASSERT("longbow is an uncommon two-handed Rogue bow",
@@ -287,12 +293,18 @@ void test_items(void) {
         longbow.rarity == ITEM_RARITY_UNCOMMON &&
         longbow.class_mask == ITEM_CLASS_ROGUE);
     ASSERT("longbow improves the basic bow's power and reach",
-        longbow.attack_bonus == 7 && longbow.range == 9 &&
+        longbow.attack_bonus == 7 && longbow.range == 7 &&
         longbow.attack_bonus > bow.attack_bonus &&
         longbow.range > bow.range);
     ASSERT("longbow has an advanced price and distinct visual",
         longbow.value == 250 && longbow.value > bow.value &&
         longbow.visual_id == ITEM_VISUAL_LONGBOW);
+
+    Item crossbow = item_make_crossbow();
+    ASSERT("crossbow trades longbow reach for more damage",
+        crossbow.weapon_family == WEAPON_FAMILY_BOW && crossbow.weapon_hands == WEAPON_HANDS_TWO &&
+        crossbow.class_mask == ITEM_CLASS_ROGUE && crossbow.attack_bonus == 9 && crossbow.range == 5 &&
+        crossbow.value == 450 && crossbow.visual_id == ITEM_VISUAL_CROSSBOW && !crossbow.pierces_targets);
 
     Item magic_longbow = item_make_magic_longbow();
     ASSERT("magic longbow is the rare two-handed Rogue bow",
@@ -301,9 +313,11 @@ void test_items(void) {
         magic_longbow.rarity == ITEM_RARITY_RARE &&
         magic_longbow.class_mask == ITEM_CLASS_ROGUE);
     ASSERT("magic longbow is the Rogue's strongest ranged weapon",
-        magic_longbow.attack_bonus == 13 && magic_longbow.range == 12 &&
+        magic_longbow.attack_bonus == 13 && magic_longbow.range == 7 &&
         magic_longbow.attack_bonus > longbow.attack_bonus &&
-        magic_longbow.range > longbow.range &&
+        magic_longbow.attack_bonus > crossbow.attack_bonus &&
+        magic_longbow.attack_bonus > item_make_krakenbone_bow().attack_bonus &&
+        magic_longbow.range == longbow.range && item_make_krakenbone_bow().range == 7 &&
         magic_longbow.pierces_targets);
     ASSERT("magic longbow has an endgame price and distinct visual",
         magic_longbow.value == 1200 &&
@@ -443,7 +457,9 @@ void test_items(void) {
     ShopScreen shop;
     shop_init(&shop, SHOP_TYPE_BLACKSMITH, 0, CLASS_MAGE);
     ASSERT("new characters see only tier-one blacksmith stock",
-        shop.stock_tier == 1 && shop.item_count == 10 &&
+        shop.stock_tier == 1 && shop.item_count == 11 &&
+        shop_has_item(&shop, "Hunting Bow") && shop_has_item(&shop, "Shortbow") &&
+        !shop_has_item(&shop, "Crossbow") &&
         shop_has_item(&shop, "Apprentice Robes") &&
         shop_has_item(&shop, "Buckler") &&
         !shop_has_item(&shop, "Long Sword"));
@@ -452,7 +468,8 @@ void test_items(void) {
         shop.stock_tier == 1 && !shop_has_item(&shop, "Long Sword"));
     shop_init(&shop, SHOP_TYPE_BLACKSMITH, 1 << LOCATION_DUNGEON, CLASS_MAGE);
     ASSERT("one defeated boss unlocks uncommon weapons",
-        shop.stock_tier == 2 && shop.item_count == 19 &&
+        shop.stock_tier == 2 && shop.item_count == 21 &&
+        shop_has_item(&shop, "Longbow") && shop_has_item(&shop, "Crossbow") &&
         shop_has_item(&shop, "Greatsword") &&
         shop_has_item(&shop, "Runed Staff") &&
         shop_has_item(&shop, "Studded Leather") &&
@@ -461,7 +478,7 @@ void test_items(void) {
     shop_init(&shop, SHOP_TYPE_BLACKSMITH,
         (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST), CLASS_MAGE);
     ASSERT("two defeated bosses unlock all magical weapons",
-        shop.stock_tier == 3 && shop.item_count == 30 &&
+        shop.stock_tier == 3 && shop.item_count == 32 &&
         shop_has_item(&shop, "Magic Battle Axe") &&
         shop_has_item(&shop, "Enchanter Robes") &&
         shop_has_item(&shop, "Magic Greatsword") &&
@@ -474,7 +491,7 @@ void test_items(void) {
         (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) |
         (1 << LOCATION_MOUNTAINS), CLASS_MAGE);
     ASSERT("three defeated bosses unlock capstone armor",
-        shop.stock_tier == 4 && shop.item_count == 33 &&
+        shop.stock_tier == 4 && shop.item_count == 35 &&
         shop_has_item(&shop, "Magic Greatsword") &&
         shop_has_item(&shop, "Magic Staff") &&
         shop_has_item(&shop, "Magic Longbow") &&
@@ -1031,7 +1048,7 @@ void test_items(void) {
     g.enemies[0].max_hp = 100;
     g.enemies[1] = (Enemy){0};
     g.enemies[1].active = 1;
-    g.enemies[1].x = 24;
+    g.enemies[1].x = 23;
     g.enemies[1].y = 12;
     g.enemies[1].hp = 100;
     g.enemies[1].max_hp = 100;

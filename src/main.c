@@ -209,10 +209,14 @@ static int debug_weapon(const char *name, Item *weapon, int *none) {
         *weapon = item_make_magic_staff();
     } else if (strcmp(name, "sandstorm-staff") == 0) {
         *weapon = item_make_sandstorm_staff();
-    } else if (strcmp(name, "bow") == 0) {
+    } else if (strcmp(name, "bow") == 0 || strcmp(name, "hunting-bow") == 0) {
         *weapon = item_make_bow();
+    } else if (strcmp(name, "shortbow") == 0) {
+        *weapon = item_make_shortbow();
     } else if (strcmp(name, "longbow") == 0) {
         *weapon = item_make_longbow();
+    } else if (strcmp(name, "crossbow") == 0) {
+        *weapon = item_make_crossbow();
     } else if (strcmp(name, "magic-longbow") == 0) {
         *weapon = item_make_magic_longbow();
     } else if (strcmp(name, "krakenbone-bow") == 0) {

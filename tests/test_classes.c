@@ -1,6 +1,7 @@
 #include "test_utils.h"
 #include "../src/game/game.h"
 #include "../src/game/item.h"
+#include <string.h>
 
 void test_classes(void) {
     printf("Class tests:\n");
@@ -49,5 +50,6 @@ void test_classes(void) {
     ASSERT("rogue: attack is 10",           g.player.attack == 10);
     ASSERT("rogue: defense is 4",           g.player.defense == 4);
     ASSERT("rogue: starts with 1 item", g.inventory_count == 1);
-    ASSERT("rogue: starts with bow",        g.inventory[0].is_ranged == 1);
+    ASSERT("rogue: starts with Hunting Bow at range three", g.inventory[0].is_ranged == 1 &&
+        strcmp(g.inventory[0].name, "Hunting Bow") == 0 && g.inventory[0].range == 3);
 }

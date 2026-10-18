@@ -565,6 +565,20 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count, in
 }
 
 static void deserialize_item_metadata(const cJSON *obj, Item *item) {
+    // Migrate bow names and ranges in inventory, floor loot and castle loot.
+    if (item->type == ITEM_WEAPON && strcmp(item->name, "Bow") == 0) {
+        snprintf(item->name, sizeof(item->name), "Hunting Bow");
+    }
+    if (item->type == ITEM_WEAPON) {
+        if (strcmp(item->name, "Hunting Bow") == 0) {
+            item->range = 3;
+        } else if (strcmp(item->name, "Shortbow") == 0 || strcmp(item->name, "Crossbow") == 0) {
+            item->range = 5;
+        } else if (strcmp(item->name, "Longbow") == 0 || strcmp(item->name, "Magic Longbow") == 0 ||
+            strcmp(item->name, "Krakenbone Bow") == 0) {
+            item->range = MAX_BOW_RANGE;
+        }
+    }
     cJSON *sharpened = cJSON_GetObjectItem(obj, "sharpened");
     item->sharpened = sharpened ? !!sharpened->valueint : 0;
     cJSON *family = cJSON_GetObjectItem(obj, "weapon_family");
@@ -733,7 +747,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 141);
+    cJSON_AddNumberToObject(root, "save_version", 142);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);

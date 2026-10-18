@@ -1022,7 +1022,7 @@ static void test_kraken_reward_persistence(void) {
         const Item *item = &frost_game.inventory[i];
         if (strcmp(item->name, "Krakenbone Bow") == 0) {
             in_pack++;
-            metadata_ok = item->attack_bonus == 10 && item->range == 10 &&
+            metadata_ok = item->attack_bonus == 10 && item->range == 7 &&
                 item->weapon_family == WEAPON_FAMILY_BOW && item->class_mask == ITEM_CLASS_ROGUE;
         }
     }

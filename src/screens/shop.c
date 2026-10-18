@@ -142,6 +142,7 @@ void shop_init(ShopScreen *s, ShopType type, int defeated_bosses, PlayerClass pl
         s->items[s->item_count++] = item_make_short_sword();
         s->items[s->item_count++] = item_make_staff();
         s->items[s->item_count++] = item_make_bow();
+        s->items[s->item_count++] = item_make_shortbow();
         s->items[s->item_count++] = item_make_dagger();
         s->items[s->item_count++] = item_make_arrows();
         s->items[s->item_count++] = item_make_leather_armor();
@@ -154,6 +155,7 @@ void shop_init(ShopScreen *s, ShopType type, int defeated_bosses, PlayerClass pl
             s->items[s->item_count++] = item_make_battle_axe();
             s->items[s->item_count++] = item_make_greatsword();
             s->items[s->item_count++] = item_make_longbow();
+            s->items[s->item_count++] = item_make_crossbow();
             s->items[s->item_count++] = item_make_runed_staff();
             s->items[s->item_count++] = item_make_scale_mail();
             s->items[s->item_count++] = item_make_studded_leather();
