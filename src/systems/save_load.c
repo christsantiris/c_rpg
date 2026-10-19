@@ -747,7 +747,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 142);
+    cJSON_AddNumberToObject(root, "save_version", 143);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -4385,6 +4385,18 @@ int load_game(GameState *g, int slot) {
     }
     if (save_version < 141) {
         drowned_queen_remove_islands(g);
+    }
+    // Version 143 opens the old coast's corridors into sandbanks and flats.
+    // Expand in place so cached deaths, beacons, loot and portals stay intact.
+    if (save_version < 143) {
+        if (g->location == LOCATION_COAST) {
+            map_shape_coast(&g->map, g->level);
+        }
+        for (int i = 0; i < COAST_DEPTH; i++) {
+            if (g->coast_cache[i].valid) {
+                map_shape_coast(&g->coast_cache[i].map, i + 1);
+            }
+        }
     }
     game_migrate_boss_shortcuts(g);
     game_refresh_quest_encounters(g);

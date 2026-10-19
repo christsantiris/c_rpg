@@ -463,6 +463,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_MOUNTAIN_ROCKFALL &&
         m->tiles[y][x] != TILE_MOUNTAIN_HIDDEN_CAVE &&
         m->tiles[y][x] != TILE_COAST_WALL &&
+        m->tiles[y][x] != TILE_COAST_SEA &&
         m->tiles[y][x] != TILE_SWAMP_WALL &&
         m->tiles[y][x] != TILE_DESERT_WALL &&
         m->tiles[y][x] != TILE_MOONVEIL_WALL &&
@@ -1001,15 +1002,187 @@ static void place_coast_chamber(Map *m, int room_index, TileType water) {
     int cx;
     int cy;
     map_room_center(&m->rooms[room_index], &cx, &cy);
-    // Dry treasure chambers are enclosed by a tidal moat in either basin.
-    for (int y = cy - 2; y <= cy + 2; y++) {
-        for (int x = cx - 3; x <= cx + 3; x++) {
-            int edge = x == cx - 3 || x == cx + 3 || y == cy - 2 || y == cy + 2;
-            m->tiles[y][x] = edge ? water : TILE_COAST_FLOOR;
+    // Treasure rests on a rocky shoal surrounded by a curved tidal inlet.
+    for (int y = cy - 3; y <= cy + 3; y++) {
+        for (int x = cx - 4; x <= cx + 4; x++) {
+            int dx = x - cx;
+            int dy = y - cy;
+            if (dx * dx * 9 + dy * dy * 16 <= 144) {
+                m->tiles[y][x] = dx * dx + dy * dy * 4 <= 4 ? TILE_COAST_FLOOR : water;
+            }
         }
     }
     // Leave the center available for Mara's first beacon on stage two.
     m->tiles[cy][cx + 1] = TILE_COAST_CACHE;
+}
+
+static int coast_preserve_landmark(const Map *m, int level, int x, int y) {
+    for (int i = 1; i <= 2; i++) {
+        int cx;
+        int cy;
+        map_room_center(&m->rooms[i], &cx, &cy);
+        if (abs(x - cx) <= 4 && abs(y - cy) <= 3) {
+            return 1;
+        }
+    }
+    if (level == COAST_DEPTH) {
+        const Room *throne = &m->rooms[m->room_count - 1];
+        if (x >= throne->x - 2 && x <= throne->x + throne->w + 1 &&
+            y >= throne->y - 2 && y <= throne->y + throne->h + 1) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void coast_bank(unsigned char shore[MAP_H][MAP_W], int cx, int cy, int rx, int ry, int tidal) {
+    for (int y = cy - ry; y <= cy + ry; y++) {
+        for (int x = cx - rx; x <= cx + rx; x++) {
+            if (x < 1 || y < 1 || x >= MAP_W - 1 || y >= MAP_H - 1) {
+                continue;
+            }
+            int dx = x - cx;
+            int dy = y - cy;
+            int distance = 100 * dx * dx / (rx * rx) + 100 * dy * dy / (ry * ry);
+            if (distance > 100) {
+                continue;
+            }
+            int surface = tidal ? 1 : distance < 55 ? 3 : distance < 80 ? 2 : 1;
+            if (surface > shore[y][x]) {
+                shore[y][x] = surface;
+            }
+        }
+    }
+}
+
+static void coast_waterway(unsigned char shore[MAP_H][MAP_W], int ax, int ay, int bx, int by, int bend, int tidal) {
+    int steps = abs(bx - ax) + abs(by - ay);
+    if (steps == 0) {
+        return;
+    }
+    for (int step = 0; step <= steps; step++) {
+        int curve = 4 * step * (steps - step) * bend / (steps * steps);
+        int x = ax + (bx - ax) * step / steps;
+        int y = ay + (by - ay) * step / steps;
+        if (abs(by - ay) > abs(bx - ax)) {
+            x += curve;
+        } else {
+            y += curve;
+        }
+        int radius = tidal ? 4 : 7 + (step / 11) % 3;
+        coast_bank(shore, x, y, radius, radius - 1, tidal);
+    }
+}
+
+static void generate_coast_banks(Map *m, const ForestTemplate *layout, int level) {
+    unsigned char shore[MAP_H][MAP_W] = {{0}};
+    for (int i = 0; i < m->room_count; i++) {
+        const Room *room = &m->rooms[i];
+        int cx;
+        int cy;
+        map_room_center(room, &cx, &cy);
+        coast_bank(shore, cx, cy, room->w / 2 + 9, room->h / 2 + 7, 0);
+    }
+    for (int i = 0; i < layout->edge_count; i++) {
+        int ax, ay, bx, by;
+        map_room_center(&m->rooms[layout->edges[i][0]], &ax, &ay);
+        map_room_center(&m->rooms[layout->edges[i][1]], &bx, &by);
+        int bend = (5 + (i + level) % 4 * 2) * (i % 2 ? 1 : -1);
+        coast_waterway(shore, ax, ay, bx, by, bend, 0);
+    }
+    int cx;
+    int cy;
+    map_room_center(&m->rooms[0], &cx, &cy);
+    coast_waterway(shore, cx, cy, m->stairs_up_x, m->stairs_up_y, 5, 0);
+    map_room_center(&m->rooms[m->room_count - 1], &cx, &cy);
+    coast_waterway(shore, cx, cy, m->stairs_down_x, m->stairs_down_y, -5, 0);
+    for (int i = 0; i < m->room_count - 1; i += 2) {
+        int ax, ay, bx, by;
+        map_room_center(&m->rooms[i], &ax, &ay);
+        map_room_center(&m->rooms[i + 1], &bx, &by);
+        coast_waterway(shore, ax, ay, bx, by, i % 4 ? -4 : 4, 1);
+    }
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            TileType old = m->tiles[y][x];
+            m->tiles[y][x] = shore[y][x] == 3 ? TILE_COAST_SAND :
+                shore[y][x] == 2 ? TILE_COAST_SHALLOW_WATER :
+                shore[y][x] == 1 ? TILE_COAST_DEEP_WATER : TILE_COAST_SEA;
+            if (old == TILE_COAST_ENTRANCE || old == TILE_COAST_EXIT) {
+                m->tiles[y][x] = old;
+            }
+        }
+    }
+    m->tiles[m->stairs_up_y][m->stairs_up_x] = TILE_COAST_FLOOR;
+    m->tiles[m->stairs_down_y][m->stairs_down_x] = TILE_COAST_FLOOR;
+    for (int i = 0; i < 3 + level; i++) {
+        const Room *room = &m->rooms[1 + rand() % (m->room_count - 1)];
+        int x = room->x + 1 + rand() % (room->w - 2);
+        int y = room->y + 1 + rand() % (room->h - 2);
+        if (m->tiles[y][x] == TILE_COAST_SAND) {
+            m->tiles[y][x] = TILE_TRAP_HIDDEN;
+        }
+    }
+}
+
+void map_shape_coast(Map *m, int level) {
+    if (m->room_count < 3 || m->tiles[0][0] == TILE_COAST_SEA) {
+        return;
+    }
+    unsigned char shore[MAP_H][MAP_W] = {{0}};
+    int low_tide = 0;
+    // Existing routes become broad banks; expanding only old walls preserves
+    // every occupied square, collected cache, quest object and saved tide.
+    for (int y = 1; y < MAP_H - 1; y++) {
+        for (int x = 1; x < MAP_W - 1; x++) {
+            TileType tile = m->tiles[y][x];
+            low_tide |= tile == TILE_COAST_DRAINED_WATER;
+            if (coast_preserve_landmark(m, level, x, y)) {
+                continue;
+            }
+            if (tile == TILE_COAST_FLOOR || tile == TILE_COAST_SHALLOW_WATER ||
+                tile == TILE_TRAP_HIDDEN || tile == TILE_TRAP_REVEALED ||
+                tile == TILE_ITEM || tile == TILE_PORTAL || tile == TILE_COAST_TIDE_CONTROL) {
+                int radius = 3 + (x / 7 + y / 9 + level) % 3;
+                coast_bank(shore, x, y, radius + 1, radius, 0);
+            }
+        }
+    }
+    for (int i = 0; i < m->room_count; i++) {
+        const Room *room = &m->rooms[i];
+        int cx;
+        int cy;
+        map_room_center(room, &cx, &cy);
+        coast_bank(shore, cx, cy, room->w / 2 + 7, room->h / 2 + 6, 0);
+    }
+    // Curved flats cut across the old long detours when the blue basin drains.
+    for (int i = 0; i < m->room_count - 1; i += 2) {
+        int ax, ay, bx, by;
+        map_room_center(&m->rooms[i], &ax, &ay);
+        map_room_center(&m->rooms[i + 1], &bx, &by);
+        coast_waterway(shore, ax, ay, bx, by, i % 4 ? 3 : -3, 1);
+    }
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (coast_preserve_landmark(m, level, x, y)) {
+                continue;
+            }
+            if (m->tiles[y][x] == TILE_COAST_WALL) {
+                m->tiles[y][x] = shore[y][x] == 3 ? TILE_COAST_SAND :
+                    shore[y][x] == 2 ? TILE_COAST_SHALLOW_WATER :
+                    shore[y][x] == 1 ? (low_tide ? TILE_COAST_DRAINED_WATER : TILE_COAST_DEEP_WATER) : TILE_COAST_SEA;
+            } else if (m->tiles[y][x] == TILE_COAST_FLOOR) {
+                m->tiles[y][x] = TILE_COAST_SAND;
+            }
+        }
+    }
+    // Transition approaches retain their existing dry floor and coordinates.
+    if (m->tiles[m->stairs_up_y][m->stairs_up_x] == TILE_COAST_SAND) {
+        m->tiles[m->stairs_up_y][m->stairs_up_x] = TILE_COAST_FLOOR;
+    }
+    if (m->tiles[m->stairs_down_y][m->stairs_down_x] == TILE_COAST_SAND) {
+        m->tiles[m->stairs_down_y][m->stairs_down_x] = TILE_COAST_FLOOR;
+    }
 }
 
 int map_remove_coast_sluice(Map *m) {
@@ -1033,7 +1206,7 @@ int map_remove_coast_sluice(Map *m) {
 TileType map_coast_trap_underlay(const Map *m, int x, int y) {
     // Match flooded-room traps to the terrain left around them by structures.
     int control_room = m->room_count / 2;
-    TileType underlay = TILE_COAST_FLOOR;
+    TileType underlay = m->tiles[0][0] == TILE_COAST_SEA ? TILE_COAST_SAND : TILE_COAST_FLOOR;
     for (int room = 1; room < m->room_count - 1; room += 2) {
         if (room == control_room) {
             continue;
@@ -1058,7 +1231,7 @@ TileType map_coast_trap_underlay(const Map *m, int x, int y) {
         }
         break;
     }
-    if (underlay == TILE_COAST_FLOOR) {
+    if (underlay == TILE_COAST_FLOOR || underlay == TILE_COAST_SAND) {
         return underlay;
     }
     static const int neighbors[4][2] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
@@ -1118,6 +1291,9 @@ void map_generate_coast(Map *m, int level) {
             }
         }
     }
+    if (index + 1 < COAST_DEPTH) {
+        generate_coast_banks(m, &forest_templates[templates[index]], index + 1);
+    }
     int control_room = m->room_count / 2;
     for (int room_index = 1; room_index < m->room_count - 1; room_index += 2) {
         if (room_index == control_room) {
@@ -1128,15 +1304,19 @@ void map_generate_coast(Map *m, int level) {
         map_room_center(&m->rooms[room_index], &center_x, &center_y);
         for (int y = center_y - 3; y <= center_y + 3; y++) {
             for (int x = center_x - 4; x <= center_x + 4; x++) {
-                TileType tile = m->tiles[y][x];
-                if (tile != TILE_COAST_FLOOR && tile != TILE_TRAP_HIDDEN) {
+                int dx = x - center_x;
+                int dy = y - center_y;
+                if (dx * dx * 9 + dy * dy * 16 > 144) {
                     continue;
                 }
-                if (x >= center_x - 1 && x <= center_x + 1 &&
-                    y >= center_y - 1 && y <= center_y + 1) {
+                TileType tile = m->tiles[y][x];
+                if (tile != TILE_COAST_FLOOR && tile != TILE_COAST_SAND && tile != TILE_TRAP_HIDDEN) {
+                    continue;
+                }
+                if (dx * dx + dy * dy <= 2) {
                     // Deep water is impassable, so a trap cannot remain here.
                     m->tiles[y][x] = TILE_COAST_DEEP_WATER;
-                } else if (tile == TILE_COAST_FLOOR) {
+                } else if (tile == TILE_COAST_FLOOR || tile == TILE_COAST_SAND) {
                     m->tiles[y][x] = TILE_COAST_SHALLOW_WATER;
                 }
             }
@@ -1148,6 +1328,7 @@ void map_generate_coast(Map *m, int level) {
     int control_y;
     map_room_center(&m->rooms[0], &control_x, &control_y);
     m->tiles[control_y][control_x] = TILE_COAST_TIDE_CONTROL;
+    map_shape_coast(m, index + 1);
 }
 
 void map_place_town_harbor(Map *m) {

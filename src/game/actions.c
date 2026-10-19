@@ -596,6 +596,7 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         drop_tile == TILE_MOUNTAIN_CAVE_FLOOR ||
         drop_tile == TILE_MOUNTAIN_FORTRESS_FLOOR ||
         drop_tile == TILE_COAST_FLOOR ||
+        drop_tile == TILE_COAST_SAND ||
         drop_tile == TILE_TEMPLE_FLOOR ||
         drop_tile == TILE_LABYRINTH_FLOOR ||
         drop_tile == TILE_SWAMP_FLOOR ||

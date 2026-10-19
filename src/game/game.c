@@ -652,6 +652,7 @@ static int enemy_terrain_open(const GameState *g, int x, int y) {
         g->map.tiles[y][x] != TILE_MOUNTAIN_CAVE_FLOOR &&
         g->map.tiles[y][x] != TILE_MOUNTAIN_FORTRESS_FLOOR &&
         g->map.tiles[y][x] != TILE_COAST_FLOOR &&
+        g->map.tiles[y][x] != TILE_COAST_SAND &&
         g->map.tiles[y][x] != TILE_COAST_SHALLOW_WATER &&
         g->map.tiles[y][x] != TILE_COAST_DRAINED_WATER &&
         g->map.tiles[y][x] != TILE_COAST_CHANNEL_DRY &&
@@ -2222,6 +2223,7 @@ static int place_mara_beacon(GameState *g) {
                 int water_y = y + offset_y;
                 if ((offset_x != 0 || offset_y != 0) &&
                     (g->map.tiles[water_y][water_x] == TILE_COAST_FLOOR ||
+                    g->map.tiles[water_y][water_x] == TILE_COAST_SAND ||
                     g->map.tiles[water_y][water_x] ==
                         TILE_COAST_SHALLOW_WATER)) {
                     g->map.tiles[water_y][water_x] = tide_is_high
@@ -3600,7 +3602,8 @@ void game_enter_mountains(GameState *g) {
 
 void game_enter_coast(GameState *g) {
     enter_adventure(g, LOCATION_COAST);
-    push_message(g, "Stand on tide controls and press the interact key (A by default) to change the tide.");
+    push_message(g, "Cross sandbanks and pale shallows; dark open sea is impassable.");
+    push_message(g, "Stand on tide controls and press the interact key (A by default) to expose flats and shift waterways.");
 }
 
 void game_enter_swamp(GameState *g) {

@@ -585,7 +585,9 @@ typedef enum {
     TILE_DRAGON_HOT_HOARD_3,
     TILE_DRAGON_RELIQUARY_FLOOR,
     TILE_DRAGON_RELIQUARY_ASH,
-    TILE_DRAGON_RELIQUARY_HOARD
+    TILE_DRAGON_RELIQUARY_HOARD,
+    TILE_COAST_SAND,
+    TILE_COAST_SEA
 } TileType;
 
 typedef struct {
@@ -660,6 +662,7 @@ int map_forest_difficulty(int level);
 void map_generate_mountains(Map *m, int level);
 int map_mountain_difficulty(int level);
 void map_generate_coast(Map *m, int level);
+void map_shape_coast(Map *m, int level);
 void map_generate_swamp(Map *m, int level);
 int map_swamp_difficulty(int level);
 void map_generate_high_pass(Map *m);
