@@ -4,14 +4,31 @@ Blackwater Swamp connects Stillbury and Rosemoor across seven levels.
 Stillbury's main north gate enters level 1; Rosemoor's main south gate enters
 level 7. Either approach crosses three levels of increasing difficulty before
 meeting the Swamp Demon on level 4. Beyond the Demon, the remaining three
-levels become easier. Dark water, cypress trees, and swaying reeds border
-nine uneven muddy clearings on each level, connected by winding causeways.
+levels become easier. Braided mudbanks connect irregular islands across broad
+blackwater channels. Rounded cypress islets and several reconnecting routes
+break up each stage, so players can approach encounters from different banks.
 
 The west-edge trail moves toward lower level numbers and Stillbury; the
 east-edge trail moves toward higher numbers and Rosemoor. Either border level
 allows immediate retreat to its town. Maps and enemies are cached independently
 from other regions and retained when entering from either town. Ordinary
 enemies do not need to be cleared to advance.
+
+## Blackwater channels and reed cover
+
+Blackwater is impassable. Wide mudbanks cross between the islands, with loops
+around the channels and alternate approaches to objectives. Three walkable reed
+beds on each stage offer a way to approach or avoid a fight.
+
+Reeds conceal every class from uninjured ordinary enemies more than three
+cardinal steps away. Nearby enemies still notice the
+player, and wounded enemies retain ordinary pursuit. Bosses ignore this
+concealment. Leaving the reeds restores normal awareness immediately. No
+interaction key, consumable or quest is needed. Loose loot and return portals
+preserve the reeds beneath them.
+
+Mira's clearing, the Demon on stage 4, both town approaches and the permanent
+shortcut retain their existing quest and travel rules.
 
 | Levels | Regular enemies | Difficulty |
 | --- | --- | --- |
@@ -136,3 +153,10 @@ underlays. Older living encounters gain vents in place and restart with a visibl
 warning, preserving health, deaths, position, exploration, gear, loot, rescue
 progress and portal destinations. Existing victories remain completed; only
 identifiable current, unsharpened floor rewards establish an unclaimed sword.
+
+Save version **148** introduces the independent island layout for new stages.
+Older active and cached stages gain wider banks, connecting routes, blackwater
+and reed beds in place. Existing walking squares, actor positions, exploration,
+loot, portal landings and quest progress remain usable. The final clearing's
+terrain and the Demon's queued attacks are preserved. Ordinary enemies still
+return only on a new expedition from town.

@@ -16,6 +16,8 @@
 #include "red_dragon.h"
 #include "jail.h"
 #include "town_life.h"
+#include "regional_terrain.h"
+#include "landscapes.h"
 
 #include <stdlib.h>
 #include <time.h>
@@ -657,6 +659,7 @@ static int enemy_terrain_open(const GameState *g, int x, int y) {
         g->map.tiles[y][x] != TILE_COAST_DRAINED_WATER &&
         g->map.tiles[y][x] != TILE_COAST_CHANNEL_DRY &&
         g->map.tiles[y][x] != TILE_SWAMP_FLOOR &&
+        g->map.tiles[y][x] != TILE_SWAMP_REEDS &&
         g->map.tiles[y][x] != TILE_DESERT_FLOOR &&
         g->map.tiles[y][x] != TILE_MOONVEIL_FLOOR &&
         g->map.tiles[y][x] != TILE_MOONVEIL_CIRCLE &&
@@ -845,7 +848,8 @@ static int find_enemy_tile(GameState *g, int *x, int *y, int room_limit) {
 }
 
 static int spawn_into_open_tile(GameState *g, EnemyType type, int room_limit) {
-    if (g->enemy_count >= AREA_ENEMY_LIMIT) {
+    int limit = g->location == LOCATION_DESERT ? LEVEL_CACHE_ENEMY_CAPACITY - 3 : AREA_ENEMY_LIMIT;
+    if (g->enemy_count >= limit) {
         return 0;
     }
     int x;
@@ -1103,6 +1107,26 @@ void game_add_lich_minions(GameState *g) {
     }
 }
 
+static int sunscar_population(int level) {
+    return 18 + 4 * level;
+}
+
+static EnemyType sunscar_enemy(int level, int roll) {
+    if (level == 1) {
+        return roll < 65 ? ENEMY_SCARAB : ENEMY_VIPER;
+    }
+    if (level == 2) {
+        return roll < 45 ? ENEMY_SCARAB : roll < 75 ? ENEMY_VIPER : ENEMY_MUMMY;
+    }
+    if (level == 3) {
+        return roll < 30 ? ENEMY_SCARAB : roll < 55 ? ENEMY_VIPER : roll < 85 ? ENEMY_MUMMY : ENEMY_DJINN;
+    }
+    if (level == 4) {
+        return roll < 20 ? ENEMY_SCARAB : roll < 40 ? ENEMY_VIPER : roll < 65 ? ENEMY_MUMMY : roll < 85 ? ENEMY_DJINN : ENEMY_GOLEM;
+    }
+    return roll < 10 ? ENEMY_SCARAB : roll < 25 ? ENEMY_VIPER : roll < 50 ? ENEMY_MUMMY : roll < 75 ? ENEMY_DJINN : ENEMY_GOLEM;
+}
+
 void enemies_spawn(GameState *g) {
     if (g->location == LOCATION_CASTLE_INTERIOR) {
         castle_spawn(g);
@@ -1123,7 +1147,7 @@ void enemies_spawn(GameState *g) {
         // Keep the early-to-deep enemy progression within five stages.
         difficulty = g->level <= 2 ? g->level : 2 * (g->level - 1);
     }
-    int num_enemies = 10 + difficulty;
+    int num_enemies = g->location == LOCATION_DESERT ? sunscar_population(g->level) : 10 + difficulty;
     if (g->location == LOCATION_SWAMP && g->level == SWAMP_RESCUE_LEVEL &&
         g->innkeeper_quest_state == 1) {
         num_enemies--;
@@ -1131,8 +1155,9 @@ void enemies_spawn(GameState *g) {
     if (quest_group_pending(g)) {
         num_enemies -= 3;
     }
-    if (num_enemies > AREA_ENEMY_LIMIT) {
-        num_enemies = AREA_ENEMY_LIMIT;
+    int area_limit = g->location == LOCATION_DESERT ? LEVEL_CACHE_ENEMY_CAPACITY - 10 : AREA_ENEMY_LIMIT;
+    if (num_enemies > area_limit) {
+        num_enemies = area_limit;
     }
 
     EnemyType boss_type;
@@ -1281,26 +1306,7 @@ void enemies_spawn(GameState *g) {
                     (roll < 75 ? ENEMY_LIVING_FLOWER : ENEMY_THORN_GUARDIAN));
             }
         } else if (g->location == LOCATION_DESERT) {
-            if (g->level == 1) {
-                type = roll < 65 ? ENEMY_SCARAB : ENEMY_VIPER;
-            } else if (g->level == 2) {
-                type = roll < 45 ? ENEMY_SCARAB :
-                    (roll < 80 ? ENEMY_VIPER : ENEMY_MUMMY);
-            } else if (g->level == 3) {
-                type = roll < 30 ? ENEMY_SCARAB :
-                    (roll < 55 ? ENEMY_VIPER :
-                    (roll < 80 ? ENEMY_MUMMY : ENEMY_DJINN));
-            } else if (g->level == 4) {
-                type = roll < 20 ? ENEMY_SCARAB :
-                    (roll < 40 ? ENEMY_VIPER :
-                    (roll < 65 ? ENEMY_MUMMY :
-                    (roll < 85 ? ENEMY_DJINN : ENEMY_GOLEM)));
-            } else {
-                type = roll < 10 ? ENEMY_SCARAB :
-                    (roll < 25 ? ENEMY_VIPER :
-                    (roll < 50 ? ENEMY_MUMMY :
-                    (roll < 75 ? ENEMY_DJINN : ENEMY_GOLEM)));
-            }
+            type = sunscar_enemy(g->level, roll);
         } else if (g->location == LOCATION_FROSTFELL) {
             // Each deeper stage adds one heavier kind of frost creature.
             if (g->level == 1) {
@@ -2512,7 +2518,8 @@ static int spawn_quest_guard(GameState *g, EnemyType type, int cx, int cy, const
             break;
         }
     }
-    if (slot >= NON_ROAD_ENEMY_LIMIT) {
+    int limit = g->location == LOCATION_DESERT ? LEVEL_CACHE_ENEMY_CAPACITY : NON_ROAD_ENEMY_LIMIT;
+    if (slot >= limit) {
         return 0;
     }
     for (int radius = 1; radius <= 4; radius++) {
@@ -3497,6 +3504,32 @@ static void respawn_expedition_enemies(GameState *g) {
     }
 }
 
+static void sunscar_add_patrols(GameState *g) {
+    if (g->location != LOCATION_DESERT || !g->map.room_count) {
+        return;
+    }
+    int target = sunscar_population(g->level) - (quest_group_pending(g) ? 3 : 0);
+    int regular = 0;
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *enemy = &g->enemies[i];
+        if (enemy->active && enemy->is_boss) {
+            target--;
+        } else if (enemy->active && !enemy->dain_fragment && enemy->experience > 0) {
+            Enemy fresh = {0};
+            spawn_enemy(g, &fresh, enemy->type, enemy->x, enemy->y);
+            regular += strcmp(enemy->name, fresh.name) == 0;
+        }
+    }
+    int rooms = g->map.room_count - (g->level == DESERT_DEPTH ? 1 : 0);
+    while (regular < target && g->enemy_count < LEVEL_CACHE_ENEMY_CAPACITY - 3) {
+        if (!spawn_into_open_tile(g, sunscar_enemy(g->level, rand() % 100), rooms)) {
+            break;
+        }
+        regular++;
+        g->level_cleared = 0;
+    }
+}
+
 static void start_expedition(GameState *g, LevelCache *cache, int depth) {
     int level = g->level;
     for (int i = 0; i < depth; i++) {
@@ -3504,13 +3537,16 @@ static void start_expedition(GameState *g, LevelCache *cache, int depth) {
             continue;
         }
         g->level = i + 1;
+        landscape_new_expedition(&cache[i].map);
         g->map = cache[i].map;
         g->enemy_count = cache[i].enemy_count;
         g->level_cleared = cache[i].level_cleared;
         memcpy(g->enemies, cache[i].enemies, sizeof(cache[i].enemies));
         respawn_expedition_enemies(g);
+        sunscar_add_patrols(g);
         game_update_level_progress(g);
         cache[i].map = g->map;
+        cache[i].enemy_count = g->enemy_count;
         memcpy(cache[i].enemies, g->enemies, sizeof(cache[i].enemies));
         cache[i].level_cleared = g->level_cleared;
     }
@@ -3630,18 +3666,19 @@ void game_enter_swamp(GameState *g) {
     g->player.x = from_rosemoor ? g->map.stairs_down_x - 1 : g->map.stairs_up_x + 1;
     g->player.y = from_rosemoor ? g->map.stairs_down_y : g->map.stairs_up_y;
     g->dialogue_active = 0;
-    push_message(g, "The black water closes around the swamp trail.");
+    push_message(g, "Braided mudbanks cross blackwater channels. Reeds hide you from distant, unhurt foes.");
 }
 
 void game_enter_frostfell(GameState *g) {
     enter_adventure(g, LOCATION_FROSTFELL);
-    push_message(g, "Bitter wind howls across the Frostfell Wastes.");
+    push_message(g, "Snow ridges wind around crevasses. Slick ice slides; brittle shortcuts collapse behind you.");
     push_message(g, "Press the interact key (A by default) on or beside the expedition journal or watchfires to use them.");
 }
 
 void game_enter_desert(GameState *g) {
     enter_adventure(g, LOCATION_DESERT);
-    push_message(g, "Scorching sands stretch across the Sunscar Wastes.");
+    push_message(g, "Dense patrols roam between sandstone mesas. Use the rocks to break enemy lines of fire.");
+    push_message(g, "Press the interact key (A by default) beside an oasis well for water, once per expedition.");
 }
 
 void game_enter_moonveil(GameState *g) {
@@ -3662,8 +3699,8 @@ void game_enter_moonveil(GameState *g) {
     g->player.x = g->map.stairs_up_x;
     g->player.y = g->map.stairs_up_y;
     g->dialogue_active = 0;
-    push_message(g, "Moonlit blossoms glow along the paths of Moonveil Gardens.");
-    push_message(g, "Press the interact key (A by default) on or beside seed pods, springs, circles or flowering nodes to use them.");
+    push_message(g, "Looping garden walks surround moonlit pools. Matching waystones link distant clearings.");
+    push_message(g, "Press the interact key (A by default) on or beside waystones, seed pods, springs, circles or flowering nodes to use them.");
 }
 
 void game_enter_ashen(GameState *g) {
@@ -3684,8 +3721,8 @@ void game_enter_ashen(GameState *g) {
     g->player.x = g->map.stairs_up_x;
     g->player.y = g->map.stairs_up_y;
     g->dialogue_active = 0;
-    push_message(g, "Ash drifts across the basalt paths of Ashen Hollow.");
-    push_message(g, "Press the interact key (A by default) on or beside forge mechanisms, furnaces or sluices to use them.");
+    push_message(g, "Lava heats the crossings. Diversion valves turn them into lasting basalt paths.");
+    push_message(g, "Press the interact key (A by default) on or beside diversion valves, forge mechanisms, furnaces or sluices to use them.");
 }
 
 void game_enter_catacombs(GameState *g) {
@@ -3728,7 +3765,7 @@ void game_enter_glassdeep(GameState *g) {
     g->player.x = g->map.stairs_up_x;
     g->player.y = g->map.stairs_up_y;
     g->dialogue_active = 0;
-    push_message(g, "Crystals illuminate the abandoned quarry of Glassdeep Caverns.");
+    push_message(g, "Crystal galleries branch around a central hub. Aim its light north at the receiver to open a shortcut.");
     push_message(g, "Press the interact key (A by default) on or beside resonators to tune them, or crystal faces to turn them.");
 }
 
@@ -3749,7 +3786,8 @@ void game_enter_high_pass(GameState *g, int from_town) {
 
 void game_enter_dragonspine(GameState *g) {
     enter_adventure(g, LOCATION_DRAGONSPINE);
-    push_message(g, "Dragonspine rises above the clouds.");
+    push_message(g, "Broad cliff ledges fork around deep ravines. Boulders provide movable cover.");
+    push_message(g, "Press the interact key (A by default) beside a loose boulder to push it away from you.");
 }
 
 int game_harbor_unlocked(const GameState *g) {
@@ -5776,6 +5814,7 @@ void game_use_town_portal(GameState *g) {
     desert_pharaoh_cancel_landing(g, landing_x, landing_y);
     thorn_regent_cancel_landing(g, landing_x, landing_y);
     cinder_lord_cancel_landing(g, landing_x, landing_y);
+    regional_terrain_cancel_landing(g, landing_x, landing_y);
     prism_sovereign_cancel_landing(g, landing_x, landing_y);
     sun_guardian_cancel_landing(g, landing_x, landing_y);
     red_dragon_cancel_landing(g, landing_x, landing_y);

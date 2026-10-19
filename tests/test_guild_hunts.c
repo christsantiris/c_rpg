@@ -215,7 +215,7 @@ static void test_explored_area(void) {
 static void test_partial_encounter(void) {
     start();
     visit(LOCATION_DESERT);
-    while (game.enemy_count < NON_ROAD_ENEMY_LIMIT) {
+    while (game.enemy_count < LEVEL_CACHE_ENEMY_CAPACITY) {
         game.enemies[game.enemy_count++] = game.enemies[0];
     }
     game.hunt_quest_state = 1;

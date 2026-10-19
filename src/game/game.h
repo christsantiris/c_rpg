@@ -102,7 +102,7 @@ typedef struct {
 
 typedef struct {
     Map   map;
-    Enemy enemies[NON_ROAD_ENEMY_LIMIT];
+    Enemy enemies[LEVEL_CACHE_ENEMY_CAPACITY];
     int   enemy_count;
     int   valid;
     int   level_cleared;

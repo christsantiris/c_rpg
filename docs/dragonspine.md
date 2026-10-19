@@ -17,12 +17,31 @@ Ridgeshire's ordinary south mountain gate permits entering from the other end,
 even before the Goblin King is defeated.
 
 Dragonspine has five generated stages with independent progress and saved
-floor caches. Trails at the west and east map edges lead back and forward.
-Its pale cliff walls and snow paths give way to black ash and glowing embers
+floor caches. Broad cliff ledges fork around deep ravines, joining a lower
+ridge, a high rim and a connecting shelf. Trails at the west and east map edges
+lead back and forward. Its pale cliff walls and snow paths give way to black ash and glowing embers
 higher up. The summit contains the Red Dragon's gilded lair.
 Cliff faces connect across tiles, with chipped rims and broad rock shading.
 Snow drifts cross tile boundaries; ash and gold form irregular patches instead
-of dark square floor tiles. These visuals apply to existing saved maps.
+of dark square floor tiles. Ravines share the native blue-gray rock shading
+and snowy edges, keeping their impassable ground consistent with the cliffs.
+These visuals apply to existing saved maps.
+
+## Movable boulder cover
+
+Four loose boulders sit on the ledges of each new stage. Stand cardinally beside
+one and use the configured **Interact** key (**A** by default) to push it one
+tile directly away from the player. Every class can push them. A boulder blocks
+movement and projectiles, so changing its position changes the available cover
+against Goblin Archers and Fire Elementals.
+
+Boulders move only onto empty snow or ash. They cannot cover living enemies,
+loot, return portals, quest objects or the final clearing. A push that would
+isolate any walking tile is refused. Moving a boulder restores its original
+snow or ash; positions and both terrain types persist through backtracking,
+new expeditions and saving. The Red Dragon's stable and weak arena columns are
+separate from these movable rocks. All routes and objectives remain reachable
+without pushing a boulder.
 
 | Stage | Route | Main threats |
 | --- | --- | --- |
@@ -125,3 +144,10 @@ portal destinations. Legacy dragons that pursued beyond their lair return to
 it without healing. Existing unclaimed mantle drops remain recoverable;
 previous victories without such a drop receive no replacement equipment.
 Town portals ward a threatening signature and clear only their landing's fire.
+
+Save version **148** stores movable boulders and their underlying snow or ash
+in map tiles, alongside the new ravines. Older active and cached stages gain
+broader ledges and connecting routes without regenerating maps or moving
+actors. New boulders occupy added ground, preserving original walking squares.
+The last clearing, goblet progress, boss warnings, enemy deaths, loot,
+exploration and portal destinations remain intact.
