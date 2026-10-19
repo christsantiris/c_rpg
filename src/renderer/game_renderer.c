@@ -13,6 +13,11 @@
 #include "sun_guardian_renderer.h"
 #include "red_dragon_renderer.h"
 #include "npc_renderer.h"
+#include "regional_terrain_renderer.h"
+#include "../game/regional_terrain.h"
+#include "../game/landscapes.h"
+#include "../game/wilds.h"
+#include "wilds_renderer.h"
 #include "info_panel.h"
 #include "message_bar.h"
 #include "minimap_renderer.h"
@@ -1467,7 +1472,11 @@ static void draw_floor_loot(Renderer *r, const GameState *g, int map_x, int map_
 
 static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int map_x, int map_y, int screen_x, int screen_y) {
     TileType underlay = floor_item_underlay(g, map_x, map_y);
-    if (underlay == TILE_WATCHFIRE_COLD || underlay == TILE_WATCHFIRE_LIT) {
+    if (wilds_tile(underlay)) {
+        draw_wilds_tile(r, g, screen_x, screen_y, map_x, map_y, underlay);
+    } else if (regional_terrain_tile(underlay) || landscape_tile(underlay)) {
+        draw_regional_terrain_tile(r, g, screen_x, screen_y, map_x, map_y, underlay);
+    } else if (underlay == TILE_WATCHFIRE_COLD || underlay == TILE_WATCHFIRE_LIT) {
         draw_watchfire(r, g, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay == TILE_EMBERFORGE_MECHANISM || underlay == TILE_EMBERFORGE_COLD || underlay == TILE_EMBERFORGE_LIT) {
         draw_emberforge_tile(r, screen_x, screen_y, map_x, map_y, underlay);
@@ -2257,6 +2266,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_coast_cache(r, sx, sy, x, y); break;
                 case TILE_COAST_TIDE_CONTROL:
                     draw_coast_tide_control(r, sx, sy, x, y); break;
+                case TILE_SWAMP_WATER:
+                case TILE_SWAMP_REEDS:
+                case TILE_DRAGON_RAVINE:
+                case TILE_DRAGON_BOULDER:
+                case TILE_DRAGON_ASH_BOULDER:
+                    draw_wilds_tile(r, g, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
                 case TILE_SWAMP_FLOOR:
                     draw_swamp_floor(r, sx, sy, x, y); break;
                 case TILE_SWAMP_WALL:
@@ -2281,6 +2297,33 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_NPC_BRENNA:
                 case TILE_NPC_ORIN:
                     draw_frostfell_quest_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
+                case TILE_DESERT_OASIS:
+                case TILE_DESERT_OASIS_DRY:
+                case TILE_MOONVEIL_WAYSTONE_A:
+                case TILE_MOONVEIL_WAYSTONE_B:
+                case TILE_ASHEN_COLD_6:
+                case TILE_ASHEN_COLD_5:
+                case TILE_ASHEN_COLD_4:
+                case TILE_ASHEN_COLD_3:
+                case TILE_ASHEN_COLD_2:
+                case TILE_ASHEN_COLD_1:
+                case TILE_ASHEN_WARN_2:
+                case TILE_ASHEN_WARN_1:
+                case TILE_ASHEN_ACTIVE_2:
+                case TILE_ASHEN_ACTIVE_1:
+                case TILE_ASHEN_VALVE:
+                case TILE_ASHEN_BASALT_CROSSING:
+                case TILE_ASHEN_VALVE_DIVERTED:
+                case TILE_GLASS_FACE_N:
+                case TILE_GLASS_FACE_E:
+                case TILE_GLASS_FACE_S:
+                case TILE_GLASS_FACE_W:
+                case TILE_GLASS_SOURCE:
+                case TILE_GLASS_RECEIVER:
+                case TILE_GLASS_SEAL_CLOSED:
+                case TILE_GLASS_SEAL_OPEN:
+                    draw_regional_terrain_tile(r, g, sx, sy, x, y, g->map.tiles[y][x]);
                     break;
                 case TILE_ASHEN_FLOOR:
                     draw_ashen_floor(r, sx, sy, x, y);
@@ -2361,6 +2404,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_DESERT_FLOOR:
                     draw_desert_floor(r, sx, sy, x, y);
                     break;
+                case TILE_DESERT_MESA:
                 case TILE_DESERT_WALL:
                     draw_desert_wall(r, &g->map, sx, sy, x, y);
                     break;
@@ -2845,18 +2889,18 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             }
             if (g->location == LOCATION_SWAMP && swamp_is_floor(g, x, y)) {
                 unsigned int edges = 0;
-                if (y > 0 && g->map.tiles[y - 1][x] == TILE_SWAMP_WALL) {
+                if (y > 0 && (g->map.tiles[y - 1][x] == TILE_SWAMP_WALL || g->map.tiles[y - 1][x] == TILE_SWAMP_WATER)) {
                     edges |= FOREST_EDGE_NORTH;
                 }
                 if (x < MAP_W - 1 &&
-                    g->map.tiles[y][x + 1] == TILE_SWAMP_WALL) {
+                    (g->map.tiles[y][x + 1] == TILE_SWAMP_WALL || g->map.tiles[y][x + 1] == TILE_SWAMP_WATER)) {
                     edges |= FOREST_EDGE_EAST;
                 }
                 if (y < MAP_H - 1 &&
-                    g->map.tiles[y + 1][x] == TILE_SWAMP_WALL) {
+                    (g->map.tiles[y + 1][x] == TILE_SWAMP_WALL || g->map.tiles[y + 1][x] == TILE_SWAMP_WATER)) {
                     edges |= FOREST_EDGE_SOUTH;
                 }
-                if (x > 0 && g->map.tiles[y][x - 1] == TILE_SWAMP_WALL) {
+                if (x > 0 && (g->map.tiles[y][x - 1] == TILE_SWAMP_WALL || g->map.tiles[y][x - 1] == TILE_SWAMP_WATER)) {
                     edges |= FOREST_EDGE_WEST;
                 }
                 if (edges != 0) {
@@ -2892,6 +2936,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             }
         }
     }
+
+    draw_regional_terrain_light(r, g, v);
 
     // Loot on mechanisms and return passages keeps the underlying tile visible.
     for (int i = 0; i < g->floor_item_count; i++) {
@@ -3801,6 +3847,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     draw_low_health_warning(r, g);
     draw_coast_tide_status(r, g);
+    draw_regional_terrain_status(r, g);
 
     if (g->location == LOCATION_TEMPLE && temple_remaining > 0 && !sun_guardian_compact_status(r, g, v)) {
         int notice_x = r->screen_w - INFO_PANEL_W - 312;

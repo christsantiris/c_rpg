@@ -94,7 +94,11 @@ Defeating him reveals a shortcut to the opposite town; the remaining three level
 can instead be fought in decreasing difficulty. Dain's map bearers occupy levels
 **7, 6, and 5 near Ridgeshire**, before the stage-4 peak when entering from
 Ridgeshire and after it when entering from Oakhaven.
-Ridgeshire's east gate leads directly to Dragonspine. The safe High Pass links a
+Ridgeshire's east gate leads directly to Dragonspine. Its broad cliff ledges
+fork around ravines rendered with native blue-gray rock and snowy edges. Push
+loose boulders with **Interact** (**A** by default) to reposition cover against
+archers and Fire Elementals. Boulders cannot seal routes or cover objectives.
+Their positions persist through travel and saving. The safe High Pass links a
 separate south shortcut gate in Ridgeshire with OakHaven's northeast road, unlocked
 by the Goblin King's defeat. Both ordinary mountain gates remain available. Ilya
 waits in **Oakhaven's Tavern** and offers a quest to recover a golden goblet
@@ -160,10 +164,14 @@ objects need no inventory space. Acceptance preserves existing maps and boss
 victories, and quest progress survives saving. See
 [The Silent Expedition](docs/tavern-quests.md#brenna-the-silent-expedition).
 
-Frostfell's glacier shelves have connected snow caps and shaded ice faces.
+Frostfell now follows three long snow ridges around deep crevasses, with slick
+ice patches and brittle crosslinks that skip the longer ridge route. Snow paths
+remain connected after those shortcuts collapse; a new expedition refreezes
+them. Its glacier shelves have connected snow caps and shaded ice faces.
 Wind-shaped drifts, clustered snowy pines, cracked lake ice, and expedition
 traces add winter detail. See the [renderer comparisons](docs/art-sources/frostfell/README.md)
-for the terrain art pass; existing saved maps receive it automatically.
+for the terrain art pass. Save version 146 widens older snow shelves and adds
+routes in place, preserving exploration, quests, enemies and the Kraken's lake.
 
 Stillbury's west gate opens onto the five-level Sunscar Wastes: enter from the
 east, advance west, and backtrack east. Both the first level's east entrance and
@@ -186,6 +194,14 @@ with Cain explains the dangers beyond town, recommends Elowen's **The Broken
 Seals** quest in Oakhaven's Tavern, and grants one Scroll of Return to Town when
 inventory space is available. Use the scroll from the inventory to learn the
 permanent spell.
+
+Sunscar's dune basins wind around broad sandstone mesas, staggered rock spines
+and smaller outcrops. These obstacles block lines of fire and provide cover
+between denser patrols: stages 1–5 have 22, 26, 30, 34 and 38 enemies. Existing
+saved maps gain connected cover in place; sparse cached stages gain larger
+patrols on the next expedition from town. Each stage has an oasis well: use
+**Interact** (**A** by default) on or beside it to restore 25% of maximum HP and MP once per expedition. Wells stay dry when
+backtracking and refill on a new expedition from town.
 
 Sunscar's sandstone shelves have connected faces and eroded edges, with
 scattered boulders and stands of tall and barrel cacti. Curved dune ridges
@@ -321,6 +337,12 @@ retreating to Stillbury no longer resets the living boss. See the
 
 ### Blackwater Swamp
 
+Blackwater Swamp now follows braided mudbanks between irregular islands,
+blackwater channels and cypress stands. Walkable reed beds hide all classes
+from distant uninjured ordinary enemies; nearby and wounded foes still pursue,
+and bosses remain aware. Both regions gain their new terrain in existing saves
+without losing quest, boss, exploration or portal progress.
+
 Blackwater Swamp has seven levels and can be entered from Stillbury's north
 swamp gate at level 1 or Rosemoor's main south gate at level 7. Difficulty rises
 toward the Swamp Demon on level 4, then falls beyond it. Defeating him reveals
@@ -409,7 +431,11 @@ entrance: forest green, mountains red, swamp lime, and Crown Roads gold.
 
 Rosemoor's west gate opens onto the five-stage Moonveil Gardens. Enter from the
 east and follow the paths west through glowing flowers, giant mushrooms,
-moonlit pools, and ancient stone circles. Fey Tricksters and Giant Moths appear
+moonlit pools, and ancient stone circles. Broad garden loops circle a central
+pool. Use **Interact** (**A** by default) on or beside a waystone to travel to
+its matching **I** or **II** stone on the same stage; a living creature blocks
+the landing. Walking routes remain available around every pool.
+Fey Tricksters and Giant Moths appear
 first, followed by Carnivorous Flowers and Thorn Guardians. The Thorn Regent guards
 stage 5's return to Rosemoor. Garden Regent alternates fixed one-action thorn
 lances and two-action creeping roots. Below half health, Briar Crown adds warned,

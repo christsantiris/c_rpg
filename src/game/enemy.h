@@ -3,8 +3,9 @@
 
 #include "map.h"
 
-// Road capacity scales with length; other areas retain their existing limits.
+// Sunscar needs larger caches; other regions retain their spawning limits.
 #define NON_ROAD_ENEMY_LIMIT 30
+#define LEVEL_CACHE_ENEMY_CAPACITY 48
 #define CROWNROAD_BASE_ENEMIES 30
 #define CROWNROAD_ENEMIES (CROWNROAD_BASE_ENEMIES * CROWNROAD_LENGTH_SCALE)
 #define MAX_ENEMIES CROWNROAD_ENEMIES

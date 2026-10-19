@@ -10,6 +10,26 @@ Giant flowers, glowing mushrooms, and tangled hedges mark impassable terrain.
 Moonlit pools are also impassable. Mossy paths and ancient stone circles are
 walkable. Gentle flower movement and water ripples animate while standing still.
 
+## Garden loops and waystones
+
+New stages follow broad, branching garden walks around a central moonlit pool.
+Two approaches converge on the final clearing; side gardens reconnect into
+loops rather than following the swamp's old chain of clearings.
+
+Each stage has two waystone pairs, marked **I** and **II**. Stand on or beside
+one and use the configured **Interact** key (**A** by default) to travel to the
+matching stone on the same stage. The trip takes an ordinary action, spends no
+mana and works for every class. Both ends work immediately, with no quest
+requirement. A living creature on the destination blocks travel; dropped loot
+and return portals retain their terrain and remain usable. Waystones never
+link into the Regent's final chamber. All objectives and exits can also be
+reached by walking, without using a waystone.
+
+Save version **146** preserves these links in active and cached map tiles.
+Older gardens gain additional walks and complete waystone pairs without
+regenerating their terrain, moving actors or removing quest progress. The
+final clearing, its quest objects and any pending boss attack remain intact.
+
 | Enemy | First stage | Behavior |
 |---|---|---|
 | Giant Moth | 1 | Closes distance quickly, moving twice per turn |

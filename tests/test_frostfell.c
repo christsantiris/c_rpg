@@ -1342,7 +1342,7 @@ void test_frostfell(void) {
     int layouts_ok = 1;
     int patch_counts_ok = 1;
     int patches_safe = 1;
-    int rand_untouched = 1;
+    int reproducible = 1;
     int tunnel_counts_ok = 1;
     int stage_tunnels[FROSTFELL_DEPTH + 1] = {0};
     int tunnels_clean = 1;
@@ -1350,11 +1350,12 @@ void test_frostfell(void) {
     for (int level = 1; level <= FROSTFELL_DEPTH; level++) {
         for (int seed = 1; seed <= 20; seed++) {
             srand((unsigned int)(seed * 31 + level));
-            map_generate_swamp(&frost_layout, level);
-            int swamp_next = rand();
+            map_generate_frostfell(&frost_layout, level);
+            Map first_layout = frost_layout;
+            int first_next = rand();
             srand((unsigned int)(seed * 31 + level));
             map_generate_frostfell(&frost_layout, level);
-            rand_untouched &= rand() == swamp_next;
+            reproducible &= rand() == first_next && memcmp(&first_layout, &frost_layout, sizeof(Map)) == 0;
             patch_counts_ok &= count_tile_runs(&frost_layout, TILE_FROST_ICE, 1, 15, 15) == level - 1;
             patches_safe &= ice_patches_ringed(&frost_layout) &&
                 frost_layout_connected(&frost_layout, AVOID_SLICK_ICE);
@@ -1379,10 +1380,9 @@ void test_frostfell(void) {
         patch_counts_ok);
     ASSERT("slick patches sit in middle clearings, ringed by snow, never blocking a route",
         patches_safe);
-    ASSERT("snowing over and icing a stage draws no extra random numbers",
-        rand_untouched);
-    // The floors leave room for a different libc rand(); these seeds give 20, 37
-    // and 47 shortcuts on stages 3, 4 and 5.
+    ASSERT("independent glacier generation is deterministic for a saved seed",
+        reproducible);
+    // Each later ridge layout must offer its optional brittle crosslinks.
     ASSERT("stages 1-2 have no thin ice and stage N has up to N-2 shortcuts of 2-14 tiles",
         tunnel_counts_ok && stage_tunnels[3] >= 18 && stage_tunnels[4] >= 32 &&
         stage_tunnels[5] >= 40);
