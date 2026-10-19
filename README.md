@@ -655,9 +655,9 @@ Below are screenshots of the game in action:
 
 <img width="2586" height="1466" alt="image" src="https://github.com/user-attachments/assets/121f3fe6-1684-4589-b0aa-a6f3e8b18f7d" />
 
-<img width="2586" height="1466" alt="Screenshot 2026-10-17 at 10 40 49 AM" src="https://github.com/user-attachments/assets/f046eee8-cb79-4852-903a-946240ee64dd" />
+<img width="2586" height="1466" alt="image" src="https://github.com/user-attachments/assets/d9c64487-d946-4ead-ba37-0091a0fb303c" />
 
-<img width="2586" height="1468" alt="image" src="https://github.com/user-attachments/assets/ac746feb-21ba-4d4f-b7e7-87d04bb317fb" />
+<img width="2586" height="1466" alt="image" src="https://github.com/user-attachments/assets/ac746feb-21ba-4d4f-b7e7-87d04bb317fb" />
 
 <img width="2586" height="1466" alt="image" src="https://github.com/user-attachments/assets/079c3db6-72fe-477f-bdb8-e903016a9aa1" />
 
