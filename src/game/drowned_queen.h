@@ -18,5 +18,6 @@ int drowned_queen_has_interaction(const GameState *g);
 int drowned_queen_interact(GameState *g);
 void drowned_queen_restore_reward(GameState *g);
 void drowned_queen_migrate(GameState *g);
+void drowned_queen_remove_islands(GameState *g);
 
 #endif

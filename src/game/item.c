@@ -257,13 +257,23 @@ Item item_make_bow(void) {
     Item it = {0};
     it.active = 1;
     it.type = ITEM_WEAPON;
-    strncpy(it.name, "Bow", sizeof(it.name) - 1);
+    strncpy(it.name, "Hunting Bow", sizeof(it.name) - 1);
     it.attack_bonus = 3;
     it.is_ranged = 1;
-    it.range = 6;
+    it.range = 3;
     it.value = 60;
     set_weapon_metadata(&it, WEAPON_FAMILY_BOW, WEAPON_HANDS_TWO,
         ITEM_RARITY_COMMON, ITEM_CLASS_ROGUE, ITEM_VISUAL_BOW);
+    return it;
+}
+
+Item item_make_shortbow(void) {
+    Item it = item_make_bow();
+    strncpy(it.name, "Shortbow", sizeof(it.name) - 1);
+    it.attack_bonus = 5;
+    it.range = 5;
+    it.value = 140;
+    it.visual_id = ITEM_VISUAL_SHORTBOW;
     return it;
 }
 
@@ -274,14 +284,24 @@ Item item_make_longbow(void) {
     strncpy(it.name, "Longbow", sizeof(it.name) - 1);
     it.attack_bonus = 7;
     it.is_ranged = 1;
-    it.range = 9;
+    it.range = MAX_BOW_RANGE;
     it.value = 250;
     set_weapon_metadata(&it, WEAPON_FAMILY_BOW, WEAPON_HANDS_TWO,
         ITEM_RARITY_UNCOMMON, ITEM_CLASS_ROGUE, ITEM_VISUAL_LONGBOW);
     return it;
 }
 
-// The Polar Kraken's reward sits between the Longbow and Magic Longbow.
+Item item_make_crossbow(void) {
+    Item it = item_make_longbow();
+    strncpy(it.name, "Crossbow", sizeof(it.name) - 1);
+    it.attack_bonus = 9;
+    it.range = 5;
+    it.value = 450;
+    it.visual_id = ITEM_VISUAL_CROSSBOW;
+    return it;
+}
+
+// The Polar Kraken's reward sits between the Crossbow and Magic Longbow.
 Item item_make_krakenbone_bow(void) {
     Item it = {0};
     it.active = 1;
@@ -289,7 +309,7 @@ Item item_make_krakenbone_bow(void) {
     strncpy(it.name, "Krakenbone Bow", sizeof(it.name) - 1);
     it.attack_bonus = 10;
     it.is_ranged = 1;
-    it.range = 10;
+    it.range = MAX_BOW_RANGE;
     it.value = 700;
     set_weapon_metadata(&it, WEAPON_FAMILY_BOW, WEAPON_HANDS_TWO,
         ITEM_RARITY_RARE, ITEM_CLASS_ROGUE, ITEM_VISUAL_LONGBOW);
@@ -303,7 +323,7 @@ Item item_make_magic_longbow(void) {
     strncpy(it.name, "Magic Longbow", sizeof(it.name) - 1);
     it.attack_bonus = 13;
     it.is_ranged = 1;
-    it.range = 12;
+    it.range = MAX_BOW_RANGE;
     it.value = 1200;
     it.pierces_targets = 1;
     set_weapon_metadata(&it, WEAPON_FAMILY_BOW, WEAPON_HANDS_TWO,
@@ -370,7 +390,7 @@ Item item_make_cryptblade(void) {
     it.active = 1;
     it.type = ITEM_WEAPON;
     strncpy(it.name, "Cryptblade", sizeof(it.name) - 1);
-    it.attack_bonus = 5;
+    it.attack_bonus = 2;
     it.value = 350;
     it.critical_chance_bonus = 10;
     set_weapon_metadata(&it, WEAPON_FAMILY_SWORD, WEAPON_HANDS_ONE,
@@ -408,10 +428,16 @@ void item_apply_legacy_metadata(Item *item) {
         definition = item_make_runed_staff();
     } else if (strcmp(item->name, "Magic Staff") == 0) {
         definition = item_make_magic_staff();
-    } else if (strcmp(item->name, "Bow") == 0) {
+    } else if (strcmp(item->name, "Bow") == 0 || strcmp(item->name, "Hunting Bow") == 0) {
         definition = item_make_bow();
+    } else if (strcmp(item->name, "Shortbow") == 0) {
+        definition = item_make_shortbow();
     } else if (strcmp(item->name, "Longbow") == 0) {
         definition = item_make_longbow();
+    } else if (strcmp(item->name, "Crossbow") == 0) {
+        definition = item_make_crossbow();
+    } else if (strcmp(item->name, "Krakenbone Bow") == 0) {
+        definition = item_make_krakenbone_bow();
     } else if (strcmp(item->name, "Magic Longbow") == 0) {
         definition = item_make_magic_longbow();
     } else if (strcmp(item->name, "Dagger") == 0) {

@@ -263,7 +263,7 @@ static void test_rewards(void) {
     game.inventory_count--;
     int reward_score = game.score;
     action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
-    ASSERT("reliquary pickup grants original Cryptblade and marks it claimed", game.lich_reward_state == 2 && strcmp(game.inventory[MAX_INVENTORY - 1].name, "Cryptblade") == 0 && game.inventory[MAX_INVENTORY - 1].attack_bonus == 5 && game.score == reward_score + game.inventory[MAX_INVENTORY - 1].value);
+    ASSERT("reliquary pickup grants original Cryptblade and marks it claimed", game.lich_reward_state == 2 && strcmp(game.inventory[MAX_INVENTORY - 1].name, "Cryptblade") == 0 && game.inventory[MAX_INVENTORY - 1].attack_bonus == 2 && game.score == reward_score + game.inventory[MAX_INVENTORY - 1].value);
     lich_restore_reward(&game);
     ASSERT("claiming cannot recreate a second reward", !find_tile(TILE_LICH_RELIQUARY, &x, &y));
     kill_with(0);
@@ -464,7 +464,7 @@ static void test_migration_and_layouts(void) {
     game.floor_items[0].item.sharpened = 1;
     game.floor_items[0].item.attack_bonus++;
     ok = make_legacy_save() && load_game(&loaded, 99176);
-    ASSERT("previously sharpened legacy gear is preserved as already claimed", ok && loaded.lich_reward_state == 2 && loaded.floor_items[0].item.sharpened && loaded.floor_items[0].item.attack_bonus == 6);
+    ASSERT("previously sharpened legacy gear is preserved as already claimed", ok && loaded.lich_reward_state == 2 && loaded.floor_items[0].item.sharpened && loaded.floor_items[0].item.attack_bonus == 3);
     remove("saves/savegame_99176.json");
 
     int valid = 1;

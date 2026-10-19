@@ -2043,11 +2043,15 @@ void action_resolve_player(GameState *g, Action a) {
         }
         #endif
 
+        int range = wpn->range;
+        if (wpn->weapon_family == WEAPON_FAMILY_BOW && range > MAX_BOW_RANGE) {
+            range = MAX_BOW_RANGE;
+        }
         int hit = 0;
-        int impact_x = g->player.x + g->player.last_dx * wpn->range;
-        int impact_y = g->player.y + g->player.last_dy * wpn->range;
+        int impact_x = g->player.x + g->player.last_dx * range;
+        int impact_y = g->player.y + g->player.last_dy * range;
         for (int step = 1;
-            step <= wpn->range && (!hit || wpn->pierces_targets); step++) {
+            step <= range && (!hit || wpn->pierces_targets); step++) {
             int tx = g->player.x + g->player.last_dx * step;
             int ty = g->player.y + g->player.last_dy * step;
             if (!map_is_walkable(&g->map, tx, ty)) break;
@@ -2095,7 +2099,7 @@ void action_resolve_player(GameState *g, Action a) {
         set_trail(g, g->player.x, g->player.y,
             impact_x, impact_y,
             g->player.last_dx, g->player.last_dy,
-            wpn->range, demonic ? 220 : 160, demonic ? 58 : 160,
+            range, demonic ? 220 : 160, demonic ? 58 : 160,
             demonic ? 67 : 160, demonic ? TRAIL_EFFECT_DEMONIC_SWORD :
             TRAIL_EFFECT_WEAPON_ARROW);
         if (!hit) {

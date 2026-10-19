@@ -52,7 +52,40 @@ static int rewrite_arrow_save(int version, int count) {
     return written;
 }
 
+static void test_bow_ranges(void) {
+    Item bows[] = {item_make_bow(), item_make_shortbow(), item_make_longbow(), item_make_crossbow(),
+        item_make_krakenbone_bow(), item_make_magic_longbow(), item_make_magic_longbow()};
+    const int ranges[] = {3, 5, 7, 5, 7, 7, 7};
+    bows[6].range = 99;
+    for (int i = 0; i < 7; i++) {
+        memset(&game, 0, sizeof(game));
+        game.player.player_class = CLASS_ROGUE;
+        game_init(&game);
+        game.inventory[0] = bows[i];
+        game_equip_main_hand(&game, 0);
+        game.player.x = 20;
+        game.player.y = 12;
+        game.player.last_dx = 1;
+        game.player.last_dy = 0;
+        game.enemy_count = 2;
+        for (int x = 20; x <= 32; x++) {
+            game.map.tiles[12][x] = TILE_FLOOR;
+        }
+        for (int target = 0; target < 2; target++) {
+            game.enemies[target] = (Enemy){.active = 1, .type = ENEMY_SKELETON, .hp = 1000,
+                .max_hp = 1000, .x = 20 + ranges[i] + target, .y = 12};
+        }
+        action_resolve_player(&game, (Action){ACTION_RANGED_ATTACK, 0, 0});
+        ASSERT("each bow hits a target at its exact maximum range and spends one arrow",
+            game.enemies[0].hp < 1000 && game.enemies[1].hp == 1000 && game.player.arrows == MAX_ARROWS - 1);
+        game.enemies[0].active = 0;
+        action_resolve_player(&game, (Action){ACTION_RANGED_ATTACK, 0, 0});
+        ASSERT("no bow hits beyond its range, including an item with a range above seven", game.enemies[1].hp == 1000);
+    }
+}
+
 void test_arrows(void) {
+    test_bow_ranges();
     printf("Rogue arrow supply tests:\n");
     ASSERT("arrow test save slot is unused", !save_exists(ARROW_SLOT));
     memset(&game, 0, sizeof(game));
