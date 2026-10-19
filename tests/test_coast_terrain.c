@@ -87,6 +87,96 @@ static void test_coast_routes(void) {
     ASSERT("each optional coast treasure chamber has a guardian", guarded);
 }
 
+static int coast_exit_distance(const Map *m) {
+    int distance[MAP_H][MAP_W];
+    int queue[MAP_H * MAP_W];
+    memset(distance, -1, sizeof(distance));
+    int head = 0;
+    int tail = 0;
+    queue[tail++] = m->stairs_up_y * MAP_W + m->stairs_up_x;
+    distance[m->stairs_up_y][m->stairs_up_x] = 0;
+    static const int offsets[4][2] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
+    while (head < tail) {
+        int cell = queue[head++];
+        int x = cell % MAP_W;
+        int y = cell / MAP_W;
+        if (x == m->stairs_down_x && y == m->stairs_down_y) {
+            return distance[y][x];
+        }
+        for (int i = 0; i < 4; i++) {
+            int nx = x + offsets[i][0];
+            int ny = y + offsets[i][1];
+            if (nx < 0 || ny < 0 || nx >= MAP_W || ny >= MAP_H ||
+                distance[ny][nx] >= 0 || !map_is_walkable(m, nx, ny)) {
+                continue;
+            }
+            distance[ny][nx] = distance[y][x] + 1;
+            queue[tail++] = ny * MAP_W + nx;
+        }
+    }
+    return -1;
+}
+
+static void test_coast_flats(void) {
+    static GameState g;
+    static Map expected;
+    int open_coast = 1;
+    int shortcuts = 0;
+    int stable_sea = 1;
+    int idempotent = 1;
+    for (int seed = 0; seed < 16; seed++) {
+        srand(seed);
+        for (int level = 1; level < COAST_DEPTH; level++) {
+            memset(&g, 0, sizeof(g));
+            g.location = LOCATION_COAST;
+            g.level = level;
+            map_generate_coast(&g.map, level);
+            int sand = 0;
+            int sea = 0;
+            int flats = 0;
+            int broad = 0;
+            for (int y = 2; y < MAP_H - 2; y++) {
+                for (int x = 2; x < MAP_W - 2; x++) {
+                    TileType tile = g.map.tiles[y][x];
+                    sand += tile == TILE_COAST_SAND;
+                    sea += tile == TILE_COAST_SEA;
+                    flats += tile == TILE_COAST_DEEP_WATER;
+                    if (tile != TILE_COAST_SAND) {
+                        continue;
+                    }
+                    int wide = 1;
+                    for (int dy = -2; dy <= 2; dy++) {
+                        for (int dx = -2; dx <= 2; dx++) {
+                            wide &= map_is_walkable(&g.map, x + dx, y + dy);
+                        }
+                    }
+                    broad += wide;
+                }
+            }
+            open_coast &= sand > 800 && sea > 3000 && flats > 300 && broad > 300;
+            expected = g.map;
+            map_shape_coast(&g.map, level);
+            idempotent &= memcmp(&g.map, &expected, sizeof(Map)) == 0;
+            int high_distance = coast_exit_distance(&g.map);
+            use_coast_control(&g);
+            int low_distance = coast_exit_distance(&g.map);
+            shortcuts += high_distance > low_distance && low_distance > 0;
+            for (int y = 0; y < MAP_H; y++) {
+                for (int x = 0; x < MAP_W; x++) {
+                    if (expected.tiles[y][x] == TILE_COAST_SEA) {
+                        stable_sea &= g.map.tiles[y][x] == TILE_COAST_SEA &&
+                            !map_is_walkable(&g.map, x, y);
+                    }
+                }
+            }
+        }
+    }
+    ASSERT("coast exploration has broad flats, open sea and room to maneuver across 64 layouts", open_coast);
+    ASSERT("draining the tide opens shorter travel routes beyond the treasure shoals", shortcuts > 0);
+    ASSERT("open sea stays impassable when the tidal flats drain", stable_sea);
+    ASSERT("shoreline shaping never grows an already migrated coast", idempotent);
+}
+
 static void test_coast_trap_underlays(void) {
     static Map map;
     srand(42);
@@ -103,8 +193,8 @@ static void test_coast_trap_underlays(void) {
         map_coast_trap_underlay(&map, cx + 2, cy) == TILE_COAST_SHALLOW_WATER);
     ASSERT("flooded traps remain armed before being stepped on",
         map.tiles[cy][cx + 2] == TILE_TRAP_HIDDEN);
-    ASSERT("traps on dry coast ground keep their stone underlay",
-        map_coast_trap_underlay(&map, cx + 5, cy) == TILE_COAST_FLOOR);
+    ASSERT("traps on dry coast banks keep their sand underlay",
+        map_coast_trap_underlay(&map, cx + 5, cy) == TILE_COAST_SAND);
     int no_deep_traps = 1;
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
@@ -277,6 +367,7 @@ static void test_coast_persistence(void) {
 void test_coast_terrain(void) {
     printf("Coast terrain tests:\n");
     test_coast_routes();
+    test_coast_flats();
     test_coast_trap_underlays();
     test_legacy_sluice_removal();
     test_coast_water_items();

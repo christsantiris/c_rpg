@@ -1336,7 +1336,7 @@ static TileType coast_visible_tile(const GameState *g, int x, int y) {
 }
 
 static int coast_is_water_surface(TileType tile) {
-    return tile == TILE_COAST_SHALLOW_WATER ||
+    return tile == TILE_COAST_SEA || tile == TILE_COAST_SHALLOW_WATER ||
         tile == TILE_COAST_DEEP_WATER ||
         tile == TILE_COAST_CHANNEL_WATER ||
         tile == TILE_COAST_BEACON_UNLIT ||
@@ -1374,7 +1374,9 @@ static unsigned int mountain_crossing_neighbors(const Map *m, int x, int y, int 
 
 static void draw_coast_trap_underlay(Renderer *r, const GameState *g, int map_x, int map_y, int screen_x, int screen_y) {
     TileType tile = map_coast_trap_underlay(&g->map, map_x, map_y);
-    if (tile == TILE_COAST_SHALLOW_WATER) {
+    if (tile == TILE_COAST_SAND) {
+        draw_coast_sand(r, screen_x, screen_y, map_x, map_y, 0);
+    } else if (tile == TILE_COAST_SHALLOW_WATER) {
         draw_coast_shallow_water(r, screen_x, screen_y, map_x, map_y);
     } else if (tile == TILE_COAST_DEEP_WATER ||
         tile == TILE_COAST_DRAINED_WATER) {
@@ -1498,6 +1500,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         draw_mountain_fortress_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_MOUNTAIN_FLOOR) {
         draw_mountain_floor(r, screen_x, screen_y, map_x, map_y);
+    } else if (underlay == TILE_COAST_SAND) {
+        draw_coast_sand(r, screen_x, screen_y, map_x, map_y, 0);
     } else if (underlay == TILE_COAST_SHALLOW_WATER) {
         draw_coast_shallow_water(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_COAST_DRAINED_WATER) {
@@ -1884,6 +1888,35 @@ static void draw_catacombs_warnings(Renderer *r, const GameState *g, const Viewp
     }
 }
 
+static void draw_coast_tide_status(Renderer *r, const GameState *g) {
+    if (g->location != LOCATION_COAST || g->level == COAST_DEPTH) {
+        return;
+    }
+    int width = r->screen_w - INFO_PANEL_W;
+    int x = width - 296;
+    int y = width >= MAP_W / 2 + 312 ? 8 : MAP_H / 2 + 20;
+    if (width < 296 || r->tiles_y * TILE_SIZE < y + 76) {
+        return;
+    }
+    int low = 0;
+    for (int ty = 0; ty < MAP_H && !low; ty++) {
+        for (int tx = 0; tx < MAP_W; tx++) {
+            low |= g->map.tiles[ty][tx] == TILE_COAST_DRAINED_WATER;
+        }
+    }
+    SDL_Rect panel = {x, y, 288, 70};
+    SDL_SetRenderDrawColor(r->sdl, 13, 29, 38, 255);
+    SDL_RenderFillRect(r->sdl, &panel);
+    SDL_SetRenderDrawColor(r->sdl, 66, 127, 135, 255);
+    SDL_RenderDrawRect(r->sdl, &panel);
+    renderer_draw_text(r, low ? "BLUE FLATS: EXPOSED" : "BLUE FLATS: FLOODED", x + 10, y + 9,
+        (SDL_Color){116, 210, 215, 255}, r->font_tiny);
+    renderer_draw_text(r, low ? "AMBER INLETS: FLOODED" : "AMBER INLETS: EXPOSED", x + 10, y + 25,
+        (SDL_Color){222, 182, 102, 255}, r->font_tiny);
+    renderer_draw_text(r, "WALK: SAND + PALE SHALLOWS", x + 10, y + 46,
+        (SDL_Color){221, 216, 187, 255}, r->font_tiny);
+}
+
 static void draw_low_health_warning(Renderer *r, const GameState *g) {
     if (!game_player_low_health(g)) {
         return;
@@ -2157,6 +2190,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_mountain_cave_floor(r, sx, sy, x, y); break;
                 case TILE_MOUNTAIN_FORTRESS_FLOOR:
                     draw_mountain_fortress_floor(r, sx, sy, x, y); break;
+                case TILE_COAST_SEA:
+                    draw_coast_sea(r, sx, sy, x, y); break;
+                case TILE_COAST_SAND:
+                    draw_coast_sand(r, sx, sy, x, y, 0); break;
                 case TILE_COAST_FLOOR:
                     draw_coast_floor(r, sx, sy, x, y);
                     if (x + 1 < MAP_W &&
@@ -3738,6 +3775,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     draw_low_health_warning(r, g);
+    draw_coast_tide_status(r, g);
 
     if (g->location == LOCATION_TEMPLE && temple_remaining > 0 && !sun_guardian_compact_status(r, g, v)) {
         int notice_x = r->screen_w - INFO_PANEL_W - 312;

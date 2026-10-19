@@ -841,4 +841,3 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
    Warrior and Rogue should struggle at certain levels without better weapons. Mage should struggle without better spells. Purchasing new weapons, armor and tomes should become necessary to progress.
 - Make ruined temple boss more difficult
 - Make controls re mappable.
-- Make NPC dialog font clearer/more readable.

@@ -858,6 +858,160 @@ static void test_harbor_relocation(void) {
     remove_test_save(MIGRATED_SLOT);
 }
 
+static void legacy_coast_shoreline(Map *m) {
+    memset(m, 0, sizeof(*m));
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            m->tiles[y][x] = TILE_COAST_WALL;
+        }
+    }
+    m->room_count = 7;
+    for (int i = 0; i < m->room_count; i++) {
+        Room *room = &m->rooms[i];
+        *room = (Room){10 + i * 24, 35 + i % 2 * 16, 14, 10};
+        for (int y = room->y; y < room->y + room->h; y++) {
+            for (int x = room->x; x < room->x + room->w; x++) {
+                m->tiles[y][x] = TILE_COAST_FLOOR;
+            }
+        }
+        if (i > 0) {
+            int ax, ay, bx, by;
+            map_room_center(&m->rooms[i - 1], &ax, &ay);
+            map_room_center(room, &bx, &by);
+            for (int x = ax; x <= bx; x++) {
+                m->tiles[ay][x] = TILE_COAST_FLOOR;
+            }
+            for (int y = ay < by ? ay : by; y <= (ay > by ? ay : by); y++) {
+                m->tiles[y][bx] = TILE_COAST_FLOOR;
+            }
+        }
+    }
+    map_room_center(&m->rooms[0], &m->stairs_up_x, &m->stairs_up_y);
+    int entrance_y = m->stairs_up_y;
+    for (int y = 0; y < entrance_y; y++) {
+        m->tiles[y][m->stairs_up_x] = TILE_COAST_FLOOR;
+    }
+    m->tiles[0][m->stairs_up_x] = TILE_COAST_ENTRANCE;
+    m->stairs_up_y = 1;
+    map_room_center(&m->rooms[6], &m->stairs_down_x, &m->stairs_down_y);
+    for (int x = m->stairs_down_x; x < MAP_W; x++) {
+        m->tiles[m->stairs_down_y][x] = TILE_COAST_FLOOR;
+    }
+    m->stairs_down_x = MAP_W - 2;
+    m->tiles[m->stairs_down_y][MAP_W - 1] = TILE_COAST_EXIT;
+    for (int i = 1; i <= 2; i++) {
+        int cx;
+        int cy;
+        map_room_center(&m->rooms[i], &cx, &cy);
+        for (int y = cy - 2; y <= cy + 2; y++) {
+            for (int x = cx - 3; x <= cx + 3; x++) {
+                if (x == cx - 3 || x == cx + 3 || y == cy - 2 || y == cy + 2) {
+                    m->tiles[y][x] = i == 1 ? TILE_COAST_DRAINED_WATER : TILE_COAST_CHANNEL_WATER;
+                }
+            }
+        }
+        m->tiles[cy][cx + 1] = i == 1 ? TILE_COAST_FLOOR : TILE_COAST_CACHE;
+    }
+    int cx;
+    int cy;
+    map_room_center(&m->rooms[0], &cx, &cy);
+    m->tiles[cy][cx] = TILE_COAST_TIDE_CONTROL;
+}
+
+static void test_coast_shoreline_migration(void) {
+    static GameState original;
+    static GameState loaded;
+    static GameState reloaded;
+    if (save_exists(LEGACY_SLOT) || save_exists(MIGRATED_SLOT)) {
+        ASSERT("shoreline migration slots must be unused", 0);
+        return;
+    }
+    game_init(&original);
+    original.location = LOCATION_COAST;
+    original.level = 2;
+    original.max_coast_level_reached = 3;
+    original.gold = 321;
+    original.mara_quest_state = 3;
+    original.mara_beacons_lit = 7;
+    original.defeated_bosses |= 1 << LOCATION_COAST;
+    original.drowned_queen_reward_state = 2;
+    legacy_coast_shoreline(&original.map);
+    int cx;
+    int cy;
+    map_room_center(&original.map.rooms[1], &cx, &cy);
+    original.map.tiles[cy][cx] = TILE_COAST_BEACON_LIT;
+    map_mark_explored(&original.map, cx, cy);
+    original.player.x = original.map.rooms[0].x + 2;
+    original.player.y = original.map.rooms[0].y + 2;
+    original.enemy_count = 2;
+    original.enemies[0] = (Enemy){0};
+    original.enemies[0].type = ENEMY_MERFOLK;
+    original.enemies[0].x = original.player.x + 1;
+    original.enemies[0].y = original.player.y;
+    original.enemies[0].active = 1;
+    original.enemies[0].hp = 11;
+    original.enemies[0].max_hp = 40;
+    original.enemies[1] = original.enemies[0];
+    original.enemies[1].active = 0;
+    original.enemies[1].hp = 0;
+    original.floor_item_count = 1;
+    original.floor_items[0] = (FloorItem){0};
+    original.floor_items[0].active = 1;
+    original.floor_items[0].item = item_make_health_potion();
+    original.floor_items[0].x = cx;
+    original.floor_items[0].y = cy - 2;
+    original.floor_items[0].underlying_tile = TILE_COAST_DRAINED_WATER;
+    original.coast_cache[2].valid = 1;
+    original.coast_cache[2].level_cleared = 1;
+    original.coast_cache[2].map = original.map;
+    original.coast_cache[2].enemy_count = 1;
+    original.coast_cache[2].enemies[0] = original.enemies[1];
+    original.portal_active = 1;
+    original.portal_location = LOCATION_COAST;
+    original.portal_level = 3;
+    original.portal_x = original.player.x;
+    original.portal_y = original.player.y;
+    int ok = save_game(&original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, 142) &&
+        load_game(&loaded, LEGACY_SLOT);
+    ASSERT("version 142 coast maps gain the new shoreline in place", ok &&
+        loaded.map.tiles[0][0] == TILE_COAST_SEA &&
+        loaded.coast_cache[2].map.tiles[0][0] == TILE_COAST_SEA);
+    if (ok) {
+        ASSERT("shoreline migration preserves positions, enemy wounds and deaths",
+            loaded.player.x == original.player.x && loaded.player.y == original.player.y &&
+            loaded.enemy_count == 2 && loaded.enemies[0].active && loaded.enemies[0].hp == 11 &&
+            !loaded.enemies[1].active && loaded.enemies[1].hp == 0 &&
+            loaded.coast_cache[2].level_cleared && !loaded.coast_cache[2].enemies[0].active);
+        ASSERT("shoreline migration retains tide, looted shoals, beacons and exploration",
+            loaded.map.tiles[cy - 2][cx] == TILE_COAST_DRAINED_WATER &&
+            loaded.map.tiles[cy][cx + 1] == TILE_COAST_FLOOR &&
+            loaded.map.tiles[cy][cx] == TILE_COAST_BEACON_LIT && map_is_explored(&loaded.map, cx, cy) &&
+            loaded.mara_quest_state == 3 && loaded.mara_beacons_lit == 7);
+        ASSERT("shoreline migration retains loot, portal destination, gold and boss victories",
+            loaded.floor_item_count == 1 && loaded.floor_items[0].active &&
+            loaded.floor_items[0].underlying_tile == TILE_COAST_DRAINED_WATER &&
+            loaded.portal_active && loaded.portal_location == LOCATION_COAST && loaded.portal_level == 3 &&
+            loaded.portal_x == original.portal_x && loaded.portal_y == original.portal_y &&
+            loaded.gold == 321 && loaded.defeated_bosses == original.defeated_bosses &&
+            loaded.drowned_queen_reward_state == 2 && loaded.max_coast_level_reached == 3);
+        int permanent_sea = 1;
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                if (loaded.map.tiles[y][x] == TILE_COAST_DEEP_WATER) {
+                    permanent_sea = 0;
+                }
+            }
+        }
+        ASSERT("legacy low tide also exposes all newly added blue flats", permanent_sea);
+        ok = save_game(&loaded, MIGRATED_SLOT) && load_game(&reloaded, MIGRATED_SLOT);
+        ASSERT("new coast terrain round trips without growing or resetting cached maps", ok &&
+            memcmp(&loaded.map, &reloaded.map, sizeof(Map)) == 0 &&
+            memcmp(&loaded.coast_cache[2].map, &reloaded.coast_cache[2].map, sizeof(Map)) == 0);
+    }
+    remove_test_save(LEGACY_SLOT);
+    remove_test_save(MIGRATED_SLOT);
+}
+
 static void test_legacy_coast_sluice_removal(void) {
     static GameState original;
     static GameState loaded;
@@ -2375,6 +2529,7 @@ void test_save_load(void) {
     test_migrated_armor_round_trip();
     test_harbor_relocation();
     test_legacy_coast_sluice_removal();
+    test_coast_shoreline_migration();
     test_coast_stage_migration();
     test_legacy_town3_moat();
     test_legacy_tavern_move();

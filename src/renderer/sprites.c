@@ -967,6 +967,40 @@ void draw_coast_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y)
     }
 }
 
+void draw_coast_sand(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int wet) {
+    int x = tile_x * TILE_SIZE;
+    int y = tile_y * TILE_SIZE;
+    unsigned int seed = coast_tile_seed(map_x, map_y);
+    SDL_Color sand = wet ? (SDL_Color){73, 103, 99, 255} : (SDL_Color){141, 133, 99, 255};
+    SDL_Color ridge = wet ? (SDL_Color){93, 128, 119, 255} : (SDL_Color){166, 155, 115, 255};
+    SDL_Color shade = wet ? (SDL_Color){51, 83, 84, 255} : (SDL_Color){117, 113, 86, 255};
+    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, sand);
+    // Continuous ripples cross tile boundaries without a paving-stone grid.
+    for (int row = 0; row < 3; row++) {
+        int ripple_y = y + row * 8 + (map_x + row * 2) % 4;
+        fill_rect(r, x, ripple_y, 10, 1, ridge);
+        fill_rect(r, x + 10, ripple_y + 1, 8, 1, ridge);
+        fill_rect(r, x + 3, ripple_y + 2, 12, 1, shade);
+    }
+    int detail = (int)(seed % 19u);
+    if (detail == 0) {
+        // A small shell, with a dark lip and a pale, ridged crown.
+        fill_rect(r, x + 9, y + 14, 7, 3, (SDL_Color){87, 96, 84, 255});
+        fill_rect(r, x + 10, y + 12, 5, 4, (SDL_Color){194, 189, 153, 255});
+        fill_rect(r, x + 12, y + 11, 1, 5, (SDL_Color){222, 215, 176, 255});
+    } else if (detail == 4) {
+        // Stranded kelp follows the outgoing water.
+        fill_rect(r, x + 7, y + 12, 10, 2, (SDL_Color){48, 83, 65, 255});
+        fill_rect(r, x + 9, y + 10, 4, 2, (SDL_Color){67, 103, 72, 255});
+        fill_rect(r, x + 14, y + 14, 5, 2, (SDL_Color){55, 91, 68, 255});
+    } else if (detail == 9) {
+        // Salt-worn driftwood, kept below the scale of a walking sprite.
+        fill_rect(r, x + 5, y + 15, 13, 3, (SDL_Color){81, 81, 67, 255});
+        fill_rect(r, x + 7, y + 14, 9, 2, (SDL_Color){171, 164, 129, 255});
+        fill_rect(r, x + 15, y + 12, 2, 4, (SDL_Color){121, 118, 93, 255});
+    }
+}
+
 void draw_coast_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
@@ -1046,13 +1080,13 @@ static void draw_coast_water(Renderer *r, int tile_x, int tile_y, int map_x, int
     SDL_Color deep_water[3] = {
         {6, 38, 60, 255}, {7, 44, 65, 255}, {5, 35, 57, 255}
     };
-    SDL_Color ripple = deep ? (SDL_Color){29, 96, 122, 255} :
+    SDL_Color ripple = deep == 2 ? (SDL_Color){17, 61, 77, 255} : deep ? (SDL_Color){29, 96, 122, 255} :
         (SDL_Color){68, 152, 154, 255};
-    SDL_Color glint = deep ? (SDL_Color){51, 120, 138, 255} :
+    SDL_Color glint = deep == 2 ? (SDL_Color){28, 78, 95, 255} : deep ? (SDL_Color){51, 120, 138, 255} :
         (SDL_Color){111, 191, 180, 255};
 
     fill_rect(r, x, y, TILE_SIZE, TILE_SIZE,
-        deep ? deep_water[seed % 3u] : shallow[seed % 3u]);
+        deep == 2 ? (SDL_Color){6, 27, 45, 255} : deep ? deep_water[seed % 3u] : shallow[seed % 3u]);
     for (int wave = 0; wave < 2; wave++) {
         unsigned int bits = seed >> (wave * 9);
         int wave_x = 1 + (int)(bits % 11u) + (int)frame;
@@ -1074,6 +1108,10 @@ void draw_coast_shallow_water(Renderer *r, int tile_x, int tile_y, int map_x, in
     draw_coast_water(r, tile_x, tile_y, map_x, map_y, 0);
 }
 
+void draw_coast_sea(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    draw_coast_water(r, tile_x, tile_y, map_x, map_y, 2);
+}
+
 void draw_coast_deep_water(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
     draw_coast_water(r, tile_x, tile_y, map_x, map_y, 1);
 }
@@ -1082,7 +1120,7 @@ void draw_coast_shore(Renderer *r, int tile_x, int tile_y, int map_x, int map_y,
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
     int shift = (int)((coast_tile_seed(map_x, map_y) >> 7) % 4u);
-    int deep = water == TILE_COAST_DEEP_WATER ||
+    int deep = water == TILE_COAST_SEA || water == TILE_COAST_DEEP_WATER ||
         water == TILE_COAST_CHANNEL_WATER;
     int channel = water == TILE_COAST_CHANNEL_WATER;
     SDL_Color wash = deep ? (SDL_Color){18, 62, 80, 255} :
@@ -1122,11 +1160,7 @@ void draw_coast_channel(Renderer *r, int tile_x, int tile_y, int map_x, int map_
     if (flooded) {
         draw_coast_deep_water(r, tile_x, tile_y, map_x, map_y);
     } else {
-        draw_coast_floor(r, tile_x, tile_y, map_x, map_y);
-        fill_rect(r, x + 3, y + 9, 18, 5,
-            (SDL_Color){15, 47, 52, 255});
-        fill_rect(r, x + 5, y + 12, 12, 1,
-            (SDL_Color){88, 86, 67, 255});
+        draw_coast_sand(r, tile_x, tile_y, map_x, map_y, 1);
     }
     SDL_Color rim = amber ? (SDL_Color){183, 127, 51, 255} : (SDL_Color){48, 157, 179, 255};
     fill_rect(r, x, y, 3, 3, rim);

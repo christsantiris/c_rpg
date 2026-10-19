@@ -1,17 +1,25 @@
 # Sunken Coast and Flooded Ruins
 
-The Sunken Coast is an five-stage adventure entered through the south town
+The Sunken Coast is a five-stage adventure entered through the south town
 gate. It has an independent level cache and progression record, so visiting
 another region does not reset explored coast stages.
 
 ## Progression
 
+Stages 1–4 follow irregular sandbanks and broad shallow crossings around
+lagoons and permanent open sea. Curving shoreline routes replace the old
+single-tile corridors and square clearings. Lowering the blue basin exposes
+wide tidal flats that cut across the longer shoreline routes; raising it
+submerges those shortcuts again. The amber inlets flood in the opposite state,
+so each tide exposes different treasure shoals.
+
 Stages alternate among north, south, east, and west entrances and exits. A
 stage never uses the same edge for both, preventing the player from immediately
 walking back into the stage they just completed. Each stage has one brass tide
 control and two colored channel basins. Stand on the control and press `A` to
-transfer water between them: one channel drains into exposed stone while the
+transfer water between them: one channel drains into exposed wet sand while the
 other floods. Colored corner markers identify the blue and amber channels.
+The water stays in the chosen state until the player operates a control again.
 Stage 5 also has two separate throne controls for the Queen's approach lanes;
 these leave the ordinary basin control and earlier quest beacons intact.
 
@@ -44,14 +52,16 @@ The region moves from storm-lashed beaches into increasingly submerged ruins:
 
 ## Visual identity
 
-Coast floors use deep blue water, teal highlights, and occasional sand-colored
-debris. Walls resemble algae-covered drowned masonry. Entrances and exits are
-framed as glowing ruin arches, and the town gate repeats the same teal stone
-language so its destination is clear before the player enters.
+Dry sandbanks use muted sand colors, ripple ridges, shells, kelp and driftwood.
+Exposed flats are darker wet sand with blue or amber channel markers. Pale
+teal shallows are walkable, while flooded channels are deeper blue and the
+permanent open sea is darkest. Foam traces the shore, separating land from
+water. Remaining ruins retain algae-covered stone and glowing entrance arches.
 
-Shallow and drained water are rendered in bright teal and remain walkable.
-Dark navy deep water is impassable to the player and enemies. Activating the
-tide control changes the actual map tiles, so the current tide remains intact
+A Coast status panel on stages 1–4 shows which flats and inlets are exposed and
+reminds the player that sand and pale shallows are walkable. Dark open sea
+stays impassable in both tide states; only marked tidal water drains. Activating
+the tide control changes the actual map tiles, so the current tide remains intact
 when the player backtracks, returns through a portal, or reloads a save.
 
 Rising water moves enemies out of a flooding channel to an open bank and
@@ -60,7 +70,7 @@ control reveals its connected channels on the minimap.
 
 ## Treasure and Coast Quest
 
-Every stage has two guarded treasure chambers at opposite tide levels. Each
+Every stage has two guarded rocky treasure shoals at opposite tide levels. Each
 cache grants `20 + 4 × stage` gold once. Stand on the cache and press `P` to
 collect it.
 
@@ -77,6 +87,13 @@ Existing beacon completion, boss victories, character progress, and active
 coast terrain are preserved. Explored stages are merged, prioritizing the
 current stage and portal destination. The old stage-1 beacon moves to stage 2;
 its completed state carries over.
+
+Save version **143** widens existing Coast routes into banks and adds tidal
+flats in place. Existing occupied squares and landmarks stay intact, including
+player and portal positions, enemy wounds and deaths, beacon progress,
+collected caches, dropped loot and exploration. New flats match the saved tide.
+Active and cached maps are upgraded; the Queen's throne and pending attacks
+retain their terrain and state. Fresh expeditions keep normal replay behavior.
 
 ## The Drowned Throne
 
