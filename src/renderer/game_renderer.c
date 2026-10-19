@@ -16,6 +16,8 @@
 #include "regional_terrain_renderer.h"
 #include "../game/regional_terrain.h"
 #include "../game/landscapes.h"
+#include "../game/wilds.h"
+#include "wilds_renderer.h"
 #include "info_panel.h"
 #include "message_bar.h"
 #include "minimap_renderer.h"
@@ -1470,7 +1472,9 @@ static void draw_floor_loot(Renderer *r, const GameState *g, int map_x, int map_
 
 static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int map_x, int map_y, int screen_x, int screen_y) {
     TileType underlay = floor_item_underlay(g, map_x, map_y);
-    if (regional_terrain_tile(underlay) || landscape_tile(underlay)) {
+    if (wilds_tile(underlay)) {
+        draw_wilds_tile(r, g, screen_x, screen_y, map_x, map_y, underlay);
+    } else if (regional_terrain_tile(underlay) || landscape_tile(underlay)) {
         draw_regional_terrain_tile(r, g, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay == TILE_WATCHFIRE_COLD || underlay == TILE_WATCHFIRE_LIT) {
         draw_watchfire(r, g, screen_x, screen_y, map_x, map_y, underlay);
@@ -2262,6 +2266,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_coast_cache(r, sx, sy, x, y); break;
                 case TILE_COAST_TIDE_CONTROL:
                     draw_coast_tide_control(r, sx, sy, x, y); break;
+                case TILE_SWAMP_WATER:
+                case TILE_SWAMP_REEDS:
+                case TILE_DRAGON_RAVINE:
+                case TILE_DRAGON_BOULDER:
+                case TILE_DRAGON_ASH_BOULDER:
+                    draw_wilds_tile(r, g, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
                 case TILE_SWAMP_FLOOR:
                     draw_swamp_floor(r, sx, sy, x, y); break;
                 case TILE_SWAMP_WALL:
@@ -2878,18 +2889,18 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             }
             if (g->location == LOCATION_SWAMP && swamp_is_floor(g, x, y)) {
                 unsigned int edges = 0;
-                if (y > 0 && g->map.tiles[y - 1][x] == TILE_SWAMP_WALL) {
+                if (y > 0 && (g->map.tiles[y - 1][x] == TILE_SWAMP_WALL || g->map.tiles[y - 1][x] == TILE_SWAMP_WATER)) {
                     edges |= FOREST_EDGE_NORTH;
                 }
                 if (x < MAP_W - 1 &&
-                    g->map.tiles[y][x + 1] == TILE_SWAMP_WALL) {
+                    (g->map.tiles[y][x + 1] == TILE_SWAMP_WALL || g->map.tiles[y][x + 1] == TILE_SWAMP_WATER)) {
                     edges |= FOREST_EDGE_EAST;
                 }
                 if (y < MAP_H - 1 &&
-                    g->map.tiles[y + 1][x] == TILE_SWAMP_WALL) {
+                    (g->map.tiles[y + 1][x] == TILE_SWAMP_WALL || g->map.tiles[y + 1][x] == TILE_SWAMP_WATER)) {
                     edges |= FOREST_EDGE_SOUTH;
                 }
-                if (x > 0 && g->map.tiles[y][x - 1] == TILE_SWAMP_WALL) {
+                if (x > 0 && (g->map.tiles[y][x - 1] == TILE_SWAMP_WALL || g->map.tiles[y][x - 1] == TILE_SWAMP_WATER)) {
                     edges |= FOREST_EDGE_WEST;
                 }
                 if (edges != 0) {

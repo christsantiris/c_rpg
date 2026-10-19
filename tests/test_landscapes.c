@@ -286,7 +286,7 @@ static void legacy(Map *m, int region) {
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
             TileType old = m->tiles[y][x];
-            m->tiles[y][x] = old == TILE_SWAMP_FLOOR ? floors[region] : old == TILE_SWAMP_ENTRANCE ? entries[region] : old == TILE_SWAMP_EXIT ? exits[region] : walls[region];
+            m->tiles[y][x] = (old == TILE_SWAMP_FLOOR || old == TILE_SWAMP_REEDS) ? floors[region] : old == TILE_SWAMP_ENTRANCE ? entries[region] : old == TILE_SWAMP_EXIT ? exits[region] : walls[region];
         }
     }
 }

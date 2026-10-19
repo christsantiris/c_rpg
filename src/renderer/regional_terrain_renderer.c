@@ -129,8 +129,12 @@ void draw_regional_terrain_light(Renderer *r, const GameState *g, const Viewport
 }
 
 void draw_regional_terrain_status(Renderer *r, const GameState *g) {
-    if ((g->location != LOCATION_ASHEN && g->location != LOCATION_GLASSDEEP &&
-        g->location != LOCATION_FROSTFELL && g->location != LOCATION_DESERT && g->location != LOCATION_MOONVEIL) || g->level == 5) {
+    if (g->location != LOCATION_ASHEN && g->location != LOCATION_GLASSDEEP &&
+        g->location != LOCATION_FROSTFELL && g->location != LOCATION_DESERT && g->location != LOCATION_MOONVEIL &&
+        g->location != LOCATION_SWAMP && g->location != LOCATION_DRAGONSPINE) {
+        return;
+    }
+    if (g->location == LOCATION_SWAMP ? g->level == SWAMP_BOSS_LEVEL : g->level == 5) {
         return;
     }
     int width = r->screen_w - INFO_PANEL_W;
@@ -159,6 +163,14 @@ void draw_regional_terrain_status(Renderer *r, const GameState *g) {
         title = "SANDSTONE MESA FIELDS";
         line1 = "DENSE PATROLS; ROCKS BLOCK FIRE";
         line2 = "WELLS: 25% HP / MP, ONCE PER TRIP";
+    } else if (g->location == LOCATION_SWAMP) {
+        title = "BLACKWATER ISLANDS";
+        line1 = "REEDS HIDE FROM DISTANT FOES";
+        line2 = "NEARBY / WOUNDED FOES STILL FOLLOW";
+    } else if (g->location == LOCATION_DRAGONSPINE) {
+        title = "RAVINES AND CLIFF LEDGES";
+        line1 = "PUSH BOULDERS FOR MOVABLE COVER";
+        line2 = "KEEP MULTIPLE ROUTES OPEN";
     } else if (g->location == LOCATION_MOONVEIL) {
         title = "MOONLIT GARDEN LOOPS";
         line1 = "WAYSTONES: I TO I, II TO II";

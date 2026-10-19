@@ -659,6 +659,7 @@ static int enemy_terrain_open(const GameState *g, int x, int y) {
         g->map.tiles[y][x] != TILE_COAST_DRAINED_WATER &&
         g->map.tiles[y][x] != TILE_COAST_CHANNEL_DRY &&
         g->map.tiles[y][x] != TILE_SWAMP_FLOOR &&
+        g->map.tiles[y][x] != TILE_SWAMP_REEDS &&
         g->map.tiles[y][x] != TILE_DESERT_FLOOR &&
         g->map.tiles[y][x] != TILE_MOONVEIL_FLOOR &&
         g->map.tiles[y][x] != TILE_MOONVEIL_CIRCLE &&
@@ -3665,7 +3666,7 @@ void game_enter_swamp(GameState *g) {
     g->player.x = from_rosemoor ? g->map.stairs_down_x - 1 : g->map.stairs_up_x + 1;
     g->player.y = from_rosemoor ? g->map.stairs_down_y : g->map.stairs_up_y;
     g->dialogue_active = 0;
-    push_message(g, "The black water closes around the swamp trail.");
+    push_message(g, "Braided mudbanks cross blackwater channels. Reeds hide you from distant, unhurt foes.");
 }
 
 void game_enter_frostfell(GameState *g) {
@@ -3785,7 +3786,8 @@ void game_enter_high_pass(GameState *g, int from_town) {
 
 void game_enter_dragonspine(GameState *g) {
     enter_adventure(g, LOCATION_DRAGONSPINE);
-    push_message(g, "Dragonspine rises above the clouds.");
+    push_message(g, "Broad cliff ledges fork around deep ravines. Boulders provide movable cover.");
+    push_message(g, "Press the interact key (A by default) beside a loose boulder to push it away from you.");
 }
 
 int game_harbor_unlocked(const GameState *g) {

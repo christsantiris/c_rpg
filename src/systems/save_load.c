@@ -18,6 +18,7 @@
 #include "../game/red_dragon.h"
 #include "../game/regional_terrain.h"
 #include "../game/landscapes.h"
+#include "../game/wilds.h"
 #include "../game/jail.h"
 #include "../game/town_life.h"
 #include "cJSON.h"
@@ -749,7 +750,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 147);
+    cJSON_AddNumberToObject(root, "save_version", 148);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -4410,6 +4411,9 @@ int load_game(GameState *g, int slot) {
     }
     if (save_version < 147) {
         sunscar_migrate(g);
+    }
+    if (save_version < 148) {
+        wilds_migrate(g);
     }
     game_migrate_boss_shortcuts(g);
     game_refresh_quest_encounters(g);

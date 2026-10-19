@@ -94,7 +94,11 @@ Defeating him reveals a shortcut to the opposite town; the remaining three level
 can instead be fought in decreasing difficulty. Dain's map bearers occupy levels
 **7, 6, and 5 near Ridgeshire**, before the stage-4 peak when entering from
 Ridgeshire and after it when entering from Oakhaven.
-Ridgeshire's east gate leads directly to Dragonspine. The safe High Pass links a
+Ridgeshire's east gate leads directly to Dragonspine. Its broad cliff ledges
+fork around ravines rendered with native blue-gray rock and snowy edges. Push
+loose boulders with **Interact** (**A** by default) to reposition cover against
+archers and Fire Elementals. Boulders cannot seal routes or cover objectives.
+Their positions persist through travel and saving. The safe High Pass links a
 separate south shortcut gate in Ridgeshire with OakHaven's northeast road, unlocked
 by the Goblin King's defeat. Both ordinary mountain gates remain available. Ilya
 waits in **Oakhaven's Tavern** and offers a quest to recover a golden goblet
@@ -332,6 +336,12 @@ retreating to Stillbury no longer resets the living boss. See the
 [Labyrinth encounter and play-testing guide](docs/labyrinth.md).
 
 ### Blackwater Swamp
+
+Blackwater Swamp now follows braided mudbanks between irregular islands,
+blackwater channels and cypress stands. Walkable reed beds hide all classes
+from distant uninjured ordinary enemies; nearby and wounded foes still pursue,
+and bosses remain aware. Both regions gain their new terrain in existing saves
+without losing quest, boss, exploration or portal progress.
 
 Blackwater Swamp has seven levels and can be entered from Stillbury's north
 swamp gate at level 1 or Rosemoor's main south gate at level 7. Difficulty rises

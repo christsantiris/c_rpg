@@ -466,6 +466,10 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_COAST_WALL &&
         m->tiles[y][x] != TILE_COAST_SEA &&
         m->tiles[y][x] != TILE_SWAMP_WALL &&
+        m->tiles[y][x] != TILE_SWAMP_WATER &&
+        m->tiles[y][x] != TILE_DRAGON_RAVINE &&
+        m->tiles[y][x] != TILE_DRAGON_BOULDER &&
+        m->tiles[y][x] != TILE_DRAGON_ASH_BOULDER &&
         m->tiles[y][x] != TILE_DESERT_WALL &&
         m->tiles[y][x] != TILE_DESERT_MESA &&
         m->tiles[y][x] != TILE_MOONVEIL_WALL &&
@@ -1894,122 +1898,12 @@ void map_generate_crownroad(Map *m) {
     m->stairs_down_y = CROWNROAD_Y;
 }
 
-static void swamp_carve(Map *m, int x, int y) {
-    for (int dy = -1; dy <= 1; dy++) {
-        for (int dx = -1; dx <= 1; dx++) {
-            int px = x + dx;
-            int py = y + dy;
-            if (px > 0 && px < SWAMP_MAP_W - 1 &&
-                py > 0 && py < SWAMP_MAP_H - 1 &&
-                (dx == 0 || dy == 0 || rand() % 3 != 0)) {
-                m->tiles[py][px] = TILE_SWAMP_FLOOR;
-            }
-        }
-    }
-}
-
-static void swamp_carve_clearing(Map *m, const Room *room) {
-    int cx;
-    int cy;
-    map_room_center(room, &cx, &cy);
-    int rx = room->w / 2;
-    int ry = room->h / 2;
-    int limit = rx * rx * ry * ry;
-    for (int y = room->y; y < room->y + room->h; y++) {
-        int dy = y - cy;
-        int span = rx;
-        while (span > 0 &&
-            span * span * ry * ry + dy * dy * rx * rx > limit) {
-            span--;
-        }
-        unsigned int seed = (unsigned int)room->x * 73856093u ^
-            (unsigned int)y * 19349663u;
-        seed ^= seed >> 16;
-        int left = span + (int)(seed % 3u) - 1;
-        int right = span + (int)((seed >> 5) % 3u) - 1;
-        if (left < 0) {
-            left = 0;
-        }
-        if (right < 0) {
-            right = 0;
-        }
-        for (int x = cx - left; x <= cx + right; x++) {
-            if (x >= room->x && x < room->x + room->w) {
-                m->tiles[y][x] = TILE_SWAMP_FLOOR;
-            }
-        }
-    }
-}
-
-static void swamp_carve_trail(Map *m, int x, int y, int tx, int ty, int turn) {
-    while (x != tx || y != ty) {
-        swamp_carve(m, x, y);
-        if (rand() % 4 == 0) {
-            turn = !turn;
-        }
-        if ((turn && x != tx) || y == ty) {
-            x += x < tx ? 1 : -1;
-        } else {
-            y += y < ty ? 1 : -1;
-        }
-    }
-    swamp_carve(m, tx, ty);
-}
-
 int map_swamp_difficulty(int level) {
     static const int difficulty[SWAMP_DEPTH] = {1, 2, 3, 5, 3, 2, 1};
     if (level < 1 || level > SWAMP_DEPTH) {
         return 1;
     }
     return difficulty[level - 1];
-}
-
-void map_generate_swamp(Map *m, int level) {
-    static const int route[9] = {0, 1, 2, 5, 4, 3, 6, 7, 8};
-    static const int anchor_x[9] = {5, 28, 50, 7, 29, 53, 4, 26, 52};
-    static const int anchor_y[9] = {8, 13, 4, 25, 31, 21, 45, 44, 42};
-    map_clear_exploration(m);
-    m->burial_trap_count = 0;
-    memset(m->burial_traps, 0, sizeof(m->burial_traps));
-    m->room_count = 9;
-    for (int y = 0; y < MAP_H; y++) {
-        for (int x = 0; x < MAP_W; x++) {
-            m->tiles[y][x] = TILE_SWAMP_WALL;
-        }
-    }
-    for (int i = 0; i < 9; i++) {
-        Room *room = &m->rooms[i];
-        room->x = anchor_x[i] + rand() % 7 - 3;
-        room->y = anchor_y[i] + rand() % 7 - 3;
-        room->w = 12 + rand() % 5;
-        room->h = 9 + rand() % 4;
-        swamp_carve_clearing(m, room);
-    }
-    for (int i = 1; i < 9; i++) {
-        int x;
-        int y;
-        int tx;
-        int ty;
-        map_room_center(&m->rooms[route[i - 1]], &x, &y);
-        map_room_center(&m->rooms[route[i]], &tx, &ty);
-        swamp_carve_trail(m, x, y, tx, ty, (level + i) % 2);
-    }
-    int start_x;
-    int end_x;
-    map_room_center(&m->rooms[0], &start_x, &m->stairs_up_y);
-    map_room_center(&m->rooms[8], &end_x, &m->stairs_down_y);
-    m->stairs_up_x = 0;
-    m->stairs_down_x = SWAMP_MAP_W - 1;
-    swamp_carve_trail(m, start_x, m->stairs_up_y,
-        m->stairs_up_x, m->stairs_up_y, 0);
-    swamp_carve_trail(m, end_x, m->stairs_down_y,
-        m->stairs_down_x, m->stairs_down_y, 0);
-    for (int y = 0; y < SWAMP_MAP_H; y++) {
-        m->tiles[y][0] = TILE_SWAMP_WALL;
-        m->tiles[y][SWAMP_MAP_W - 1] = TILE_SWAMP_WALL;
-    }
-    m->tiles[m->stairs_up_y][m->stairs_up_x] = TILE_SWAMP_ENTRANCE;
-    m->tiles[m->stairs_down_y][m->stairs_down_x] = TILE_SWAMP_EXIT;
 }
 
 void map_generate_high_pass(Map *m) {
@@ -2254,37 +2148,6 @@ void map_generate_frostfell(Map *m, int level) {
     }
     place_thin_ice_shortcuts(m, level);
     place_slick_ice_patches(m, level);
-}
-
-void map_generate_dragonspine(Map *m, int level) {
-    map_generate_swamp(m, level);
-    for (int y = 0; y < MAP_H; y++) {
-        for (int x = 0; x < MAP_W; x++) {
-            TileType tile = m->tiles[y][x];
-            if (tile == TILE_SWAMP_WALL) {
-                m->tiles[y][x] = TILE_DRAGON_WALL;
-            } else if (tile == TILE_SWAMP_ENTRANCE) {
-                m->tiles[y][x] = TILE_DRAGON_ENTRANCE;
-            } else if (tile == TILE_SWAMP_EXIT) {
-                m->tiles[y][x] = TILE_DRAGON_EXIT;
-            } else if (tile == TILE_SWAMP_FLOOR) {
-                int ash = level >= 3 && ((x * 3 + y + level) % 5 < level - 2);
-                m->tiles[y][x] = ash ? TILE_DRAGON_ASH : TILE_DRAGON_FLOOR;
-            }
-        }
-    }
-    if (level == DRAGONSPINE_DEPTH) {
-        Room *lair = &m->rooms[m->room_count - 1];
-        for (int y = lair->y + 1; y < lair->y + lair->h - 1; y++) {
-            for (int x = lair->x + 1; x < lair->x + lair->w - 1; x++) {
-                if ((x + y) % 3 == 0 &&
-                    (m->tiles[y][x] == TILE_DRAGON_FLOOR ||
-                    m->tiles[y][x] == TILE_DRAGON_ASH)) {
-                    m->tiles[y][x] = TILE_DRAGON_HOARD;
-                }
-            }
-        }
-    }
 }
 
 void map_generate_forest_road(Map *m) {
