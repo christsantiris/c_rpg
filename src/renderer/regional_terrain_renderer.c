@@ -1,5 +1,6 @@
 #include "regional_terrain_renderer.h"
 #include "../game/regional_terrain.h"
+#include "../game/landscapes.h"
 #include "sprites.h"
 #include "world_props.h"
 #include "info_panel.h"
@@ -7,7 +8,32 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+static void draw_landscape_tile(Renderer *r, const GameState *g, int sx, int sy, int x, int y, TileType tile) {
+    int desert = tile == TILE_DESERT_OASIS || tile == TILE_DESERT_OASIS_DRY;
+    int dry = tile == TILE_DESERT_OASIS_DRY;
+    SDL_Color accent = desert ? (SDL_Color){97, 206, 196, 255} : tile == TILE_MOONVEIL_WAYSTONE_A ?
+        (SDL_Color){180, 177, 255, 255} : (SDL_Color){246, 182, 220, 255};
+    if (desert) {
+        draw_desert_floor(r, sx, sy, x, y);
+        draw_world_prop(r, sx, sy, dry ? PROP_INTAKE : PROP_SPRING, dry ? (SDL_Color){167, 139, 108, 255} : accent);
+    } else {
+        draw_moonveil_circle(r, sx, sy, x, y);
+        draw_world_prop(r, sx, sy, PROP_ARCH, accent);
+    }
+    const char *label = desert ? (dry ? "DRY" : "WELL") : tile == TILE_MOONVEIL_WAYSTONE_A ? "I" : "II";
+    renderer_draw_text(r, label, sx * TILE_SIZE + (desert ? 1 : 8), sy * TILE_SIZE - 10, accent, r->font_tiny);
+    if (abs(g->player.x - x) + abs(g->player.y - y) <= 1) {
+        char hint[64];
+        snprintf(hint, sizeof(hint), "%s: %s", controls_key_name(g->key_bindings[CONTROL_MOVE_LEFT]), desert ? (dry ? "WELL EMPTY" : "DRINK WATER") : "USE MATCHING STONE");
+        renderer_draw_text(r, hint, sx * TILE_SIZE - 50, sy * TILE_SIZE - 24, accent, r->font_tiny);
+    }
+}
+
 void draw_regional_terrain_tile(Renderer *r, const GameState *g, int sx, int sy, int x, int y, TileType tile) {
+    if (landscape_tile(tile)) {
+        draw_landscape_tile(r, g, sx, sy, x, y, tile);
+        return;
+    }
     int px = sx * TILE_SIZE;
     int py = sy * TILE_SIZE;
     SDL_Color blue = {122, 220, 227, 255};
@@ -103,7 +129,8 @@ void draw_regional_terrain_light(Renderer *r, const GameState *g, const Viewport
 }
 
 void draw_regional_terrain_status(Renderer *r, const GameState *g) {
-    if ((g->location != LOCATION_ASHEN && g->location != LOCATION_GLASSDEEP) || g->level == 5) {
+    if ((g->location != LOCATION_ASHEN && g->location != LOCATION_GLASSDEEP &&
+        g->location != LOCATION_FROSTFELL && g->location != LOCATION_DESERT && g->location != LOCATION_MOONVEIL) || g->level == 5) {
         return;
     }
     int width = r->screen_w - INFO_PANEL_W;
@@ -117,9 +144,28 @@ void draw_regional_terrain_status(Renderer *r, const GameState *g) {
     SDL_RenderFillRect(r->sdl, &panel);
     SDL_SetRenderDrawColor(r->sdl, 105, 125, 162, 255);
     SDL_RenderDrawRect(r->sdl, &panel);
-    int glass = g->location == LOCATION_GLASSDEEP;
+    const char *title = "VOLCANIC CROSSINGS";
+    const char *line1 = "C: COOL   !: WARNING   H: HOT";
+    const char *line2 = "VALVES MAKE LASTING PATHS";
+    if (g->location == LOCATION_GLASSDEEP) {
+        title = "CRYSTAL GALLERIES";
+        line1 = "TURN FACE: AIM NORTH AT R";
+        line2 = "SIDE GALLERIES BYPASS THE SEAL";
+    } else if (g->location == LOCATION_FROSTFELL) {
+        title = "GLACIER RIDGES";
+        line1 = "SLICK ICE SLIDES TO SNOW";
+        line2 = "BRITTLE SHORTCUTS BREAK BEHIND YOU";
+    } else if (g->location == LOCATION_DESERT) {
+        title = "SANDSTONE MESA FIELDS";
+        line1 = "DENSE PATROLS; ROCKS BLOCK FIRE";
+        line2 = "WELLS: 25% HP / MP, ONCE PER TRIP";
+    } else if (g->location == LOCATION_MOONVEIL) {
+        title = "MOONLIT GARDEN LOOPS";
+        line1 = "WAYSTONES: I TO I, II TO II";
+        line2 = "USE INTERACT TO CROSS THE GARDEN";
+    }
     SDL_Color text = {217, 224, 237, 255};
-    renderer_draw_text(r, glass ? "CRYSTAL GALLERIES" : "VOLCANIC CROSSINGS", x + 10, y + 9, (SDL_Color){142, 215, 231, 255}, r->font_small);
-    renderer_draw_text(r, glass ? "TURN FACE: AIM NORTH AT R" : "C: COOL   !: WARNING   H: HOT", x + 10, y + 32, text, r->font_tiny);
-    renderer_draw_text(r, glass ? "SIDE GALLERIES BYPASS THE SEAL" : "VALVES MAKE LASTING PATHS", x + 10, y + 50, text, r->font_tiny);
+    renderer_draw_text(r, title, x + 10, y + 9, (SDL_Color){142, 215, 231, 255}, r->font_small);
+    renderer_draw_text(r, line1, x + 10, y + 32, text, r->font_tiny);
+    renderer_draw_text(r, line2, x + 10, y + 50, text, r->font_tiny);
 }

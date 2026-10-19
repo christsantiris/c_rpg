@@ -38,7 +38,7 @@ static void test_desert_travel(void) {
         g->location == LOCATION_DESERT && g->level == 1 &&
         g->player.x == DESERT_MAP_W - 1 && g->player.y == g->map.stairs_up_y);
     ASSERT("Sunscar opens without a swamp or frost boss defeat and spawns its regular roster",
-        g->enemy_count == 11 && g->max_swamp_level_reached == 4 &&
+        g->enemy_count == 22 && g->max_swamp_level_reached == 4 &&
         g->max_frostfell_level_reached == 3 && g->max_level_reached == 7);
     walk_desert_edge(g, 0);
     ASSERT("level one's east entrance returns to Stillbury's west gate",
@@ -177,7 +177,7 @@ static void test_desert_rosters(void) {
                 g->player.x = g->map.stairs_up_x;
                 g->player.y = g->map.stairs_up_y;
                 enemies_spawn(g);
-                roster_ok &= g->enemy_count == 10 + level;
+                roster_ok &= g->enemy_count == 18 + 4 * level;
                 int bosses = 0;
                 int boss_x;
                 int boss_y;
@@ -789,7 +789,7 @@ void test_desert(void) {
                 for (int x = 0; x < MAP_W; x++) {
                     TileType tile = desert_layout.tiles[y][x];
                     terrain &= tile == TILE_DESERT_FLOOR || tile == TILE_DESERT_WALL ||
-                        tile == TILE_DESERT_ENTRANCE || tile == TILE_DESERT_EXIT;
+                        tile == TILE_DESERT_ENTRANCE || tile == TILE_DESERT_EXIT || tile == TILE_DESERT_OASIS || tile == TILE_DESERT_MESA;
                     int border = x == 0 || x >= DESERT_MAP_W - 1 ||
                         y == 0 || y >= DESERT_MAP_H - 1;
                     int entrance = x == desert_layout.stairs_up_x &&

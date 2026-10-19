@@ -18,6 +18,7 @@
 #include "jail.h"
 #include "town_life.h"
 #include "regional_terrain.h"
+#include "landscapes.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -70,7 +71,7 @@ static void mark_item_tile(GameState *g, int x, int y) {
         return;
     }
     if (tile != TILE_BURIAL_PLATE && tile != TILE_MOUNTAIN_WEAK_BRIDGE && tile != TILE_MOUNTAIN_CACHE &&
-        !map_is_coast_tidal_tile(tile) && !map_is_coast_object(tile) && !regional_terrain_tile(tile)) {
+        !map_is_coast_tidal_tile(tile) && !map_is_coast_object(tile) && !regional_terrain_tile(tile) && !landscape_tile(tile)) {
         g->map.tiles[y][x] = TILE_ITEM;
     }
 }
@@ -907,7 +908,7 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
-    if (regional_terrain_has_interaction(g)) {
+    if (landscape_has_interaction(g) || regional_terrain_has_interaction(g)) {
         return 1;
     }
     if (red_dragon_has_interaction(g)) {
@@ -1296,7 +1297,7 @@ void action_resolve_player(GameState *g, Action a) {
         if (sun_guardian_interact(g, 0)) {
             return;
         }
-        if (regional_terrain_interact(g)) {
+        if (landscape_interact(g) || regional_terrain_interact(g)) {
             return;
         }
         if (prism_sovereign_interact(g)) {

@@ -144,7 +144,9 @@ void minimap_draw(Renderer *r, const GameState *g) {
                     } else if (tile == TILE_MOUNTAIN_ROCKFALL ||
                         tile == TILE_MOUNTAIN_GATE || tile == TILE_MOUNTAIN_CACHE) {
                         has_stair = 1;
-                    } else if (tile == TILE_ASHEN_VALVE || tile == TILE_ASHEN_VALVE_DIVERTED || (tile >= TILE_GLASS_FACE_N && tile <= TILE_GLASS_SEAL_OPEN)) {
+                    } else if (tile == TILE_DESERT_OASIS || tile == TILE_DESERT_OASIS_DRY ||
+                        tile == TILE_MOONVEIL_WAYSTONE_A || tile == TILE_MOONVEIL_WAYSTONE_B ||
+                        tile == TILE_ASHEN_VALVE || tile == TILE_ASHEN_VALVE_DIVERTED || (tile >= TILE_GLASS_FACE_N && tile <= TILE_GLASS_SEAL_OPEN)) {
                         has_stair = 1;
                     } else if (tile == TILE_FOREST_LANDMARK) {
                         has_stair = 1;
@@ -164,7 +166,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile != TILE_COAST_WALL &&
                         tile != TILE_COAST_SEA &&
                         tile != TILE_SWAMP_WALL &&
-                        tile != TILE_DESERT_WALL &&
+                        tile != TILE_DESERT_WALL && tile != TILE_DESERT_MESA &&
                         tile != TILE_PHARAOH_OBELISK &&
                         !(tile >= TILE_REGENT_WALL_1 && tile <= TILE_REGENT_WALL_4) &&
                         tile != TILE_MOONVEIL_WALL &&
