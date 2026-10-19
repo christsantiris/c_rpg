@@ -5,11 +5,45 @@ the town is accessible. Enter each stage from its north edge and advance
 through the south exit. The north entrance backtracks; on stage 1 it returns
 to Stillbury's south gate. Ordinary enemies do not block stage travel.
 
-Winding chambers contain jagged rock, cyan and violet crystal formations,
-pale mineral seams, underground pools, and ancient paving. Rock and water
-block movement; ruins remain walkable. Glowing fragments and reflections
-animate while idle. The pools do not cause damage. Stage 5 ends in a buried
-sanctuary guarded by the Prism Sovereign.
+Rounded side galleries branch around a broad central crystal chamber. Upper
+and lower loops offer several approaches to its hub, and a crystal seal controls
+a direct northern shortcut. Crystal columns interrupt sightlines inside the
+side chambers. This layout is generated independently of Ashen Hollow.
+
+Jagged rock, cyan and violet crystals, mineral seams, underground pools and
+ancient paving establish the cavern terrain. Rock and water block movement;
+ruins remain walkable. Pools do not cause damage. Stage 5 ends in the Prism
+Sovereign's buried sanctuary.
+
+## Crystal sightlines
+
+Every stage has an ordinary light source (**L**), a rotatable crystal face, a
+northern receiver (**R**) and a shortcut seal. Stand on or beside the face and
+use the configured **Interact** key (**A** by default) to turn it through
+**North → East → South → West**. Its arrow and the visible light paths show
+its current direction.
+
+A clear source-to-face path and a north-facing beam into the receiver open the
+seal. Turning away closes it when its threshold is empty. Rock blocks light;
+beams are harmless, extend at most seven tiles from the face, and do not move
+or damage actors. A seal cannot close on a player, enemy, loose loot or an
+existing return-portal landing. Side galleries remain available with it closed.
+
+Turning a face wakes living Blind Stalkers within ten cardinal tiles without
+hurting them or reviving defeated enemies. Choose when to operate the shortcut
+and which gallery to use for the approach. The control works for every class
+without quest acceptance, a spell or a consumable.
+
+The status panel explains the receiver and bypass routes. These ordinary
+faces are separate from Orin's quest resonators and the Sovereign's arena
+reflectors. Their angles and seal states persist through backtracking, portals
+and saves; all normal enemies remain available on later expeditions.
+
+Save version **144** adds loops and ordinary optics to older active and cached
+maps in place, preserving existing walking squares, positions, enemies, loot,
+quests, exploration and boss progress. The final chamber and queued boss
+attacks retain their saved terrain and state. Newly generated stages use the
+central hub and branching gallery layout.
 
 | Enemy | First stage | Behavior |
 |---|---|---|

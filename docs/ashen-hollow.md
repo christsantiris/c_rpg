@@ -11,10 +11,39 @@ town. The boss guarantees **Embercleaver** and the original **Potion of Strength
 granting 1 permanent base attack when consumed. Its defeat appears in the boss
 journal. Surviving ordinary enemies do not block the return exit after victory.
 
-Ashy paths wind through irregular clearings, basalt columns, charred trees,
-and ruined stonework. Rock formations and animated lava pools block movement.
-Broken paving is walkable. Lava occupies previously solid rock, preserving
-connected paths; it does not inflict damage. Embers and lava animate while idle.
+Broad basalt terraces and linked bridge routes cross three winding lava
+rivers. Stages run through branching shelves rather than a chain of swamp
+clearings. Broken paving remains walkable; native lava and basalt walls block
+movement. Embers and lava animate while idle.
+
+## Volcanic crossings
+
+Each stage offers short crossings with cycling heat and longer permanent
+basalt routes. Stage 1 introduces one crossing, stage 2 has two, and stages
+3–5 have three. Every exit remains reachable while avoiding every cycling tile.
+
+- Blue **C6–C1** marks the cooling phase. Orange **!2–!1** gives two full actions
+  of warning before the crossing flares.
+- Red **H2–H1** is hot for two actions, then cools again. Standing on a flaring
+  tile deals 8 base damage, reduced by half defense with a minimum of 2 before
+  the existing evasion and blocking rules. Ordinary movement can leave a warned
+  crossing; no spell or consumable is required.
+- Stand on or beside the nearby blue diversion valve and use the configured
+  **Interact** key (**A** by default) to divert the lava away from its crossing.
+  This consumes a normal action and works for every class. The crossing becomes
+  stable basalt, marked with green checks; the valve turns green and reads
+  **ON**. It stays safe without a countdown, so players can fight or explore
+  before crossing. Reusing the valve does not restore the lava.
+- Diversions survive backtracking, new expeditions and saving/loading, just as
+  explored terrain does. Other crossings keep cycling until their own valve is
+  used. These valves do not change the boss arena or quest mechanisms.
+- Clocks advance with ordinary enemy phases, including when no enemies remain.
+  Menus and idle animation do not advance them. Loot does not stop a clock;
+  return portals cool the landing crossing before the player resumes.
+
+The status panel explains the three states. Valves, marked crossings and
+permanent bridge routes are independent of the Emberforge quest and the
+Cinder Lord's arena sluices.
 
 | Enemy | First stage | Behavior |
 |---|---|---|
@@ -30,6 +59,16 @@ Return to Town opens a portal beside Ridgeshire's north gate and restores the
 original stage and position when used. Save format 81 stores the new region;
 older saves gain fresh Ashen Hollow progress and an open north gate without
 resetting existing characters, quests, or regional progress.
+
+Save version **145** also stores diverted valves and stable basalt crossings
+in the map tiles. Version 144 crossings and valves remain usable with the new
+mechanism, without regenerating terrain or resetting progress. Version 144
+introduced crossing clocks in the saved map tiles. Older
+active and cached maps gain additional loops, crossings and valves in place.
+Existing walking squares, player and portal positions, loot, exploration,
+enemy wounds and deaths, quests and boss victories are preserved. The final
+chamber's existing terrain and pending boss attacks remain intact. Newly
+generated stages use the terraced river layout.
 
 ## Cinder Lord encounter
 
