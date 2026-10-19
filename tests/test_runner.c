@@ -71,6 +71,7 @@ void test_desert(void);
 void test_moonveil(void);
 void test_moonveil_quest(void);
 void test_ashen(void);
+void test_regional_terrain(void);
 void test_glassdeep(void);
 void test_glassdeep_quest(void);
 void test_catacombs(void);
@@ -185,6 +186,7 @@ int main(void) {
     test_moonveil();
     test_moonveil_quest();
     test_ashen();
+    test_regional_terrain();
     test_glassdeep();
     test_glassdeep_quest();
     test_catacombs();

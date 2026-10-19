@@ -16,6 +16,7 @@
 #include "red_dragon.h"
 #include "jail.h"
 #include "town_life.h"
+#include "regional_terrain.h"
 
 #include <stdlib.h>
 #include <time.h>
@@ -3684,8 +3685,8 @@ void game_enter_ashen(GameState *g) {
     g->player.x = g->map.stairs_up_x;
     g->player.y = g->map.stairs_up_y;
     g->dialogue_active = 0;
-    push_message(g, "Ash drifts across the basalt paths of Ashen Hollow.");
-    push_message(g, "Press the interact key (A by default) on or beside forge mechanisms, furnaces or sluices to use them.");
+    push_message(g, "Lava heats the crossings. Diversion valves turn them into lasting basalt paths.");
+    push_message(g, "Press the interact key (A by default) on or beside diversion valves, forge mechanisms, furnaces or sluices to use them.");
 }
 
 void game_enter_catacombs(GameState *g) {
@@ -3728,7 +3729,7 @@ void game_enter_glassdeep(GameState *g) {
     g->player.x = g->map.stairs_up_x;
     g->player.y = g->map.stairs_up_y;
     g->dialogue_active = 0;
-    push_message(g, "Crystals illuminate the abandoned quarry of Glassdeep Caverns.");
+    push_message(g, "Crystal galleries branch around a central hub. Aim its light north at the receiver to open a shortcut.");
     push_message(g, "Press the interact key (A by default) on or beside resonators to tune them, or crystal faces to turn them.");
 }
 
@@ -5776,6 +5777,7 @@ void game_use_town_portal(GameState *g) {
     desert_pharaoh_cancel_landing(g, landing_x, landing_y);
     thorn_regent_cancel_landing(g, landing_x, landing_y);
     cinder_lord_cancel_landing(g, landing_x, landing_y);
+    regional_terrain_cancel_landing(g, landing_x, landing_y);
     prism_sovereign_cancel_landing(g, landing_x, landing_y);
     sun_guardian_cancel_landing(g, landing_x, landing_y);
     red_dragon_cancel_landing(g, landing_x, landing_y);

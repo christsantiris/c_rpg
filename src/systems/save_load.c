@@ -16,6 +16,7 @@
 #include "../game/prism_sovereign.h"
 #include "../game/sun_guardian.h"
 #include "../game/red_dragon.h"
+#include "../game/regional_terrain.h"
 #include "../game/jail.h"
 #include "../game/town_life.h"
 #include "cJSON.h"
@@ -747,7 +748,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 143);
+    cJSON_AddNumberToObject(root, "save_version", 145);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -4397,6 +4398,11 @@ int load_game(GameState *g, int slot) {
                 map_shape_coast(&g->coast_cache[i].map, i + 1);
             }
         }
+    }
+    // Version 145 appends diverted-valve and stable-crossing tile IDs. Existing
+    // version 144 maps use the new valve behavior directly; no terrain reset.
+    if (save_version < 144) {
+        regional_terrain_migrate(g);
     }
     game_migrate_boss_shortcuts(g);
     game_refresh_quest_encounters(g);

@@ -17,6 +17,7 @@
 #include "red_dragon.h"
 #include "jail.h"
 #include "town_life.h"
+#include "regional_terrain.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -69,7 +70,7 @@ static void mark_item_tile(GameState *g, int x, int y) {
         return;
     }
     if (tile != TILE_BURIAL_PLATE && tile != TILE_MOUNTAIN_WEAK_BRIDGE && tile != TILE_MOUNTAIN_CACHE &&
-        !map_is_coast_tidal_tile(tile) && !map_is_coast_object(tile)) {
+        !map_is_coast_tidal_tile(tile) && !map_is_coast_object(tile) && !regional_terrain_tile(tile)) {
         g->map.tiles[y][x] = TILE_ITEM;
     }
 }
@@ -906,6 +907,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (regional_terrain_has_interaction(g)) {
+        return 1;
+    }
     if (red_dragon_has_interaction(g)) {
         return 1;
     }
@@ -1290,6 +1294,9 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
         if (sun_guardian_interact(g, 0)) {
+            return;
+        }
+        if (regional_terrain_interact(g)) {
             return;
         }
         if (prism_sovereign_interact(g)) {
@@ -3605,6 +3612,12 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         if (damage > 0) {
             apply_enemy_damage(g, damage, FEEDBACK_NOW);
         }
+    }
+    int crossing_heat = regional_terrain_tick(g);
+    if (crossing_heat > 0) {
+        int damage = crossing_heat - g->player.defense / 2;
+        apply_enemy_damage(g, damage > 2 ? damage : 2, FEEDBACK_NOW);
+        push_message_kind(g, "The crossing flares! Move onto permanent basalt or cool it with a valve.", MESSAGE_DAMAGE_TAKEN);
     }
     int dragon_fire = red_dragon_tick_floor(g);
     if (dragon_fire > 0) {
