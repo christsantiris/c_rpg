@@ -658,6 +658,7 @@ Below are screenshots of the game in action:
 
 <img width="2586" height="1462" alt="image" src="https://github.com/user-attachments/assets/bb5d4b04-c555-4b4c-82bc-1ae2e81196bc" />
 
+<img width="2584" height="1468" alt="image" src="https://github.com/user-attachments/assets/9c480504-6f05-490d-bfd8-255b8d964996" />
 
 ## Building and Running
 
