@@ -21,6 +21,7 @@ typedef struct {
     // Command that took the rebound command's old key, or -1.
     int swapped_action;
     int key_refused;
+    int save_failed;
 } ControlsScreen;
 
 void controls_screen_init(ControlsScreen *s);

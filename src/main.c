@@ -48,6 +48,7 @@ EM_ASYNC_JS(void, browser_next_frame, (void), {
 #include "renderer/help_renderer.h"
 #include "screens/help.h"
 #include "screens/controls_screen.h"
+#include "systems/controls_settings.h"
 #include "renderer/controls_renderer.h"
 #include "systems/highscore.h"
 #include "renderer/halloffame_renderer.h"
@@ -472,6 +473,10 @@ static void handle_slot_result(SlotResult result, SlotSelect *slots, int saving,
             renderer_end_frame(renderer);
 
             if (load_game(game, slot)) {
+                // Global choices take priority; adopt saved character keys on first use.
+                if (!controls_settings_load(game->key_bindings, CONTROLS_SETTINGS_PATH)) {
+                    controls_settings_save(game->key_bindings, CONTROLS_SETTINGS_PATH);
+                }
                 enter_playing(renderer, viewport, game);
                 landing->has_active_game = 1;
                 *screen = SCREEN_PLAYING;
@@ -556,6 +561,7 @@ int main(int argc, char **argv) {
 
     static GameState game;
     game_init(&game);
+    controls_settings_load(game.key_bindings, CONTROLS_SETTINGS_PATH);
     // Presentation-only snapshot; persistent results remain in game.
     static GameState projectile_view;
     int player_projectile_animating = 0;
@@ -745,6 +751,9 @@ int main(int argc, char **argv) {
                             &controls_screen, sc, game.key_bindings);
                         if (result == CONTROLS_CLOSED) {
                             screen = SCREEN_LANDING;
+                        } else if (result == CONTROLS_REBOUND) {
+                            controls_screen.save_failed = !controls_settings_save(
+                                game.key_bindings, CONTROLS_SETTINGS_PATH);
                         }
                         break;
                     }
@@ -769,7 +778,10 @@ int main(int argc, char **argv) {
                             &class_select_screen, sc);
                         if (result == CLASS_SELECT_CONFIRMED) {
                             game.player.player_class = class_select_screen.selected;
+                            int bindings[CONTROL_COUNT];
+                            memcpy(bindings, game.key_bindings, sizeof(bindings));
                             game_init(&game);
+                            memcpy(game.key_bindings, bindings, sizeof(bindings));
                             SDL_strlcpy(game.player.name, name_entry.name,
                                 sizeof(game.player.name));
                             #ifdef DEBUG

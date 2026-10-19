@@ -5,7 +5,64 @@
 #include "../src/screens/quest_journal.h"
 #include "../src/screens/controls_screen.h"
 #include "../src/screens/landing.h"
+#include "../src/systems/controls_settings.h"
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
+static void test_controls_settings(void) {
+    char path[] = "/tmp/conr-controls-XXXXXX";
+    int fd = mkstemp(path);
+    ASSERT("a temporary settings file can be created", fd >= 0);
+    if (fd < 0) {
+        return;
+    }
+    close(fd);
+    int bindings[CONTROL_COUNT];
+    int loaded[CONTROL_COUNT];
+    controls_reset(bindings);
+    controls_assign(bindings, CONTROL_INVENTORY, SDL_SCANCODE_K);
+    controls_assign(bindings, CONTROL_TALK, SDL_SCANCODE_W);
+    controls_reset(loaded);
+    ASSERT("hotkey preferences survive a restart independently of a character save",
+        controls_settings_save(bindings, path) && controls_settings_load(loaded, path) &&
+        memcmp(loaded, bindings, sizeof(bindings)) == 0);
+
+    loaded[CONTROL_TALK] = loaded[CONTROL_INVENTORY];
+    ASSERT("invalid assignments cannot overwrite saved hotkey preferences",
+        !controls_settings_save(loaded, path) && controls_settings_load(loaded, path) &&
+        memcmp(loaded, bindings, sizeof(bindings)) == 0);
+
+    const char *invalid[] = {
+        "broken json", "{}", "[26,22]",
+        "[22,22,4,7,55,54,19,23,12,5,20,6,9,11]",
+        "[41,22,4,7,55,54,19,23,12,5,20,6,9,11]",
+        "[82,22,4,7,55,54,19,23,12,5,20,6,9,11]",
+        "[26.5,22,4,7,55,54,19,23,12,5,20,6,9,11]",
+        "[\"W\",22,4,7,55,54,19,23,12,5,20,6,9,11]",
+        "[26,22,4,7,55,54,19,23,12,5,20,6,9,11] trailing"
+    };
+    int rejected = 1;
+    for (int i = 0; i < (int)(sizeof(invalid) / sizeof(invalid[0])); i++) {
+        FILE *file = fopen(path, "w");
+        if (!file) {
+            rejected = 0;
+            break;
+        }
+        fputs(invalid[i], file);
+        fclose(file);
+        rejected &= !controls_settings_load(loaded, path) &&
+            memcmp(loaded, bindings, sizeof(bindings)) == 0;
+    }
+    ASSERT("malformed, duplicate, reserved and fractional preferences leave current keys intact",
+        rejected);
+    remove(path);
+    ASSERT("missing hotkey settings preserve defaults or a legacy character's keys",
+        !controls_settings_load(loaded, path) &&
+        memcmp(loaded, bindings, sizeof(bindings)) == 0);
+    ASSERT("an unwritable settings destination reports failure",
+        !controls_settings_save(bindings, "/dev/null/controls.json"));
+}
 
 static void test_controls_screen(void) {
     int bindings[CONTROL_COUNT];
@@ -74,13 +131,22 @@ static void test_controls_screen(void) {
     LandingScreen menu;
     landing_init(&menu);
     int title_items = landing_item_count(&menu);
+    menu.selected = 4;
+    LandingResult title_controls = landing_handle_key(&menu, SDL_SCANCODE_RETURN);
+    int title_y = 720 / 2 - 20 + 4 * 36 + 10;
+    ASSERT("Controls is available from the title menu with keyboard and mouse",
+        title_controls == LANDING_CONTROLS &&
+        landing_handle_click(&menu, 1280 / 2, title_y, 1280, 720) == LANDING_CONTROLS);
+    menu.selected = 5;
+    ASSERT("Quit remains the last title menu option",
+        landing_handle_key(&menu, SDL_SCANCODE_RETURN) == LANDING_QUIT);
     menu.has_active_game = 1;
     menu.selected = 6;
     LandingResult controls_choice = landing_handle_key(&menu, SDL_SCANCODE_RETURN);
     menu.selected = 7;
     LandingResult quit_choice = landing_handle_key(&menu, SDL_SCANCODE_RETURN);
-    ASSERT("the in-game menu lists Controls before Quit; the title menu does not",
-        title_items == 5 && landing_item_count(&menu) == 8 &&
+    ASSERT("both menus list Controls before Quit",
+        title_items == 6 && landing_item_count(&menu) == 8 &&
         controls_choice == LANDING_CONTROLS && quit_choice == LANDING_QUIT);
     int item_y = 720 / 2 - 20 + 6 * 36 + 10;
     ASSERT("clicking Controls in the in-game menu opens the controls screen",
@@ -165,4 +231,5 @@ void test_controls(void) {
         journal.tab == QUEST_TAB_COMPLETED);
 
     test_controls_screen();
+    test_controls_settings();
 }

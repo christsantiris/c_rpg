@@ -39,8 +39,8 @@ void landing_draw(Renderer *r, const LandingScreen *s) {
     snprintf(music_label, sizeof(music_label), "MUSIC %s", music_enabled() ? "ON" : "OFF");
     snprintf(sfx_label,   sizeof(sfx_label),   "SFX %s",   sfx_enabled()   ? "ON" : "OFF");
 
-    const char *labels_base[5] = {
-        "NEW GAME", "LOAD GAME", music_label, sfx_label, "QUIT"
+    const char *labels_base[6] = {
+        "NEW GAME", "LOAD GAME", music_label, sfx_label, "CONTROLS", "QUIT"
     };
     const char *labels_active[8] = {
         "NEW GAME", "CONTINUE", "SAVE GAME", "LOAD GAME", music_label, sfx_label,
