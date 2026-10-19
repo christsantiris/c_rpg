@@ -266,10 +266,10 @@ static void test_veyr_escapes_and_range(void) {
         }
     }
     ASSERT("every signature leaves an ordinary walking escape throughout the throne room, including planned closures", safe && cases > 1500);
-    Item bows[4] = {item_make_bow(), item_make_longbow(), item_make_magic_longbow(), item_make_krakenbone_bow()};
-    for (int i = 0; i < 4; i++) {
+    Item bows[6] = {item_make_bow(), item_make_shortbow(), item_make_longbow(), item_make_crossbow(), item_make_magic_longbow(), item_make_krakenbone_bow()};
+    for (int i = 0; i < 6; i++) {
         e = setup();
-        e->x = 39;
+        e->x = 36;
         e->y = 51;
         game.player.x = e->x - bows[i].range;
         game.player.y = e->y;
@@ -284,7 +284,7 @@ static void test_veyr_escapes_and_range(void) {
         action_resolve_player(&game, (Action){ACTION_RANGED_ATTACK, 0, 0});
         ASSERT("all bows can damage Veyr along a clear approach", e->hp < e->max_hp);
         castle_tick(&game);
-        ASSERT("Veyr answers corridor fire with a marked warning while staying in his arena", e->move_timer == 3 && lord_veyr_marks(e, game.player.x, game.player.y) && e->x == 39 && e->y == 51);
+        ASSERT("Veyr answers corridor fire with a marked warning while staying in his arena", e->move_timer == 3 && lord_veyr_marks(e, game.player.x, game.player.y) && e->x == 36 && e->y == 51);
     }
 }
 

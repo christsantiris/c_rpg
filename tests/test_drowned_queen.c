@@ -155,7 +155,7 @@ static void test_rewards(void) {
     ASSERT("normal ground pickup also records a claimed reward", game.drowned_queen_reward_state == 2);
 }
 
-static int make_legacy_save(void) {
+static int make_legacy_save(int version) {
     if (!save_game(&game, 99181)) {
         return 0;
     }
@@ -179,11 +179,13 @@ static int make_legacy_save(void) {
     if (!root) {
         return 0;
     }
-    cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 126);
-    cJSON_DeleteItemFromObject(root, "drowned_queen_reward_state");
+    cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), version);
+    if (version < 127) {
+        cJSON_DeleteItemFromObject(root, "drowned_queen_reward_state");
+    }
     cJSON *arrays[2] = {cJSON_GetObjectItem(root, "enemies"),
         cJSON_GetObjectItem(cJSON_GetArrayItem(cJSON_GetObjectItem(root, "coast_cache"), 4), "enemies")};
-    for (int group = 0; group < 2; group++) {
+    for (int group = 0; group < 2 && version < 127; group++) {
         for (int i = 0; i < cJSON_GetArraySize(arrays[group]); i++) {
             cJSON *enemy = cJSON_GetArrayItem(arrays[group], i);
             cJSON_DeleteItemFromObject(enemy, "boss_attack");
@@ -346,9 +348,9 @@ static void test_controls(void) {
     ASSERT("old basin control still swaps its water without changing Queen's drained lanes", game.map.tiles[6][5] == TILE_COAST_DRAINED_WATER && game.map.tiles[7][6] == TILE_COAST_CHANNEL_WATER && game.map.tiles[hy][hx + 1] == TILE_QUEEN_DRY && drowned_queen_controls(&game) == 0 && game.mara_beacons_lit == 3);
     drowned_queen_prepare_map(&game.map, game.enemies, game.enemy_count, game.player.x, game.player.y);
     ASSERT("map preparation never resets drained controls or lanes", drowned_queen_controls(&game) == 0 && game.map.tiles[16][vx] == TILE_QUEEN_DRY);
-    int ix = 0;
-    int iy = 0;
-    find_tile(TILE_QUEEN_ISLAND, &ix, &iy);
+    int ix = 28;
+    int iy = 13;
+    game.map.tiles[iy][ix] = TILE_QUEEN_ISLAND;
     game.player.x = ix;
     game.player.y = iy;
     e->attack_target_x = ix;
@@ -357,10 +359,10 @@ static void test_controls(void) {
     e->boss_aux_y = iy;
     e->boss_attack = QUEEN_POCKETS;
     e->move_timer = 2;
-    ASSERT("raised stone islands remain shelter even inside a storm pocket", map_is_walkable(&game.map, ix, iy) && !drowned_queen_attack_marks(&game, e, ix, iy));
+    ASSERT("retired island tiles no longer grant immunity inside a storm pocket", map_is_walkable(&game.map, ix, iy) && drowned_queen_attack_marks(&game, e, ix, iy));
     action_resolve_enemies(&game);
     action_resolve_enemies(&game);
-    ASSERT("sheltering on an island avoids storm damage", game.player.hp == 1000);
+    ASSERT("remaining on a retired island takes storm damage", game.player.hp == 978);
     setup();
     for (int yy = 11; yy < 21; yy++) {
         for (int xx = 21; xx < 33; xx++) {
@@ -463,19 +465,89 @@ static void test_persistence(void) {
     game.portal_x = 26;
     game.portal_y = 12;
     game.portal_origin_tile = TILE_COAST_FLOOR;
-    ok = make_legacy_save() && load_game(&loaded, 99181);
+    ok = make_legacy_save(126) && load_game(&loaded, 99181);
     ASSERT("version 126 migration adds two controls without healing active or cached Queen", ok && loaded.enemies[0].hp == 79 && loaded.coast_cache[4].enemies[0].hp == 51 && loaded.enemies[0].move_timer == 0 && drowned_queen_controls(&loaded) == 2);
     ASSERT("migration preserves quests, beacon completion, exploration, gold, position and portal", loaded.mara_quest_state == 2 && loaded.mara_beacons_lit == 7 && loaded.gold == 321 && loaded.player.x == 23 && loaded.player.y == 16 && map_is_explored(&loaded.map, 22, 12) && loaded.map.tiles[12][26] == TILE_COAST_FLOOR && loaded.coast_cache[4].map.tiles[12][26] == TILE_COAST_FLOOR);
     game.enemies[0].active = 0;
     game.coast_cache[4].enemies[0].active = 0;
     game.defeated_bosses |= 1 << LOCATION_COAST;
-    ok = make_legacy_save() && load_game(&loaded, 99181);
+    ok = make_legacy_save(126) && load_game(&loaded, 99181);
     ASSERT("legacy victories remain defeated without fabricating another robes reward", ok && !loaded.enemies[0].active && loaded.drowned_queen_reward_state == 2);
     game.floor_item_count = 1;
     game.floor_items[0] = (FloorItem){.active = 1, .x = 24, .y = 12, .underlying_tile = TILE_COAST_FLOOR, .item = item_make_tidecaller_robes()};
     game.map.tiles[12][24] = TILE_ITEM;
-    ok = make_legacy_save() && load_game(&loaded, 99181);
+    ok = make_legacy_save(126) && load_game(&loaded, 99181);
     ASSERT("known legacy dropped robes become persistently recoverable", ok && loaded.drowned_queen_reward_state == 1 && loaded.floor_items[0].active);
+    remove("saves/savegame_99181.json");
+}
+
+static void test_island_removal_migration(void) {
+    for (int scenario = 0; scenario < 3; scenario++) {
+        Enemy *e = setup();
+        e->hp = 79;
+        e->attack_phase = 1;
+        e->boss_attack = QUEEN_POCKETS;
+        e->move_timer = 2;
+        e->frozen_turns = 2;
+        e->attack_target_x = 28;
+        e->attack_target_y = 13;
+        e->boss_aux_x = 31;
+        e->boss_aux_y = 16;
+        e->active = scenario != 2;
+        game.map.tiles[13][28] = TILE_ITEM;
+        game.map.tiles[16][31] = TILE_QUEEN_ISLAND;
+        game.floor_item_count = 1;
+        game.floor_items[0] = (FloorItem){.active = 1, .x = 28, .y = 13,
+            .underlying_tile = TILE_QUEEN_ISLAND, .item = item_make_health_potion()};
+        game.player.x = 28;
+        game.player.y = 13;
+        game.gold = 321;
+        game.mara_quest_state = 2;
+        game.mara_beacons_lit = 7;
+        game.drowned_queen_reward_state = 2;
+        if (scenario == 2) {
+            game.defeated_bosses |= 1 << LOCATION_COAST;
+        }
+        map_mark_explored(&game.map, 31, 16);
+        game.coast_cache[4].valid = 1;
+        game.coast_cache[4].map = game.map;
+        game.coast_cache[4].enemy_count = 1;
+        game.coast_cache[4].enemies[0] = *e;
+        game.portal_active = 1;
+        game.portal_location = LOCATION_COAST;
+        game.portal_level = COAST_DEPTH;
+        game.portal_x = 31;
+        game.portal_y = 16;
+        game.portal_origin_tile = TILE_QUEEN_ISLAND;
+        if (scenario == 1) {
+            game_return_to_town(&game);
+        }
+        game.coast_cache[4].enemies[0].hp = 51;
+        int ok = make_legacy_save(140) && load_game(&loaded, 99181);
+        ASSERT("version 140 saves remove cached islands and portal island underlays", ok &&
+            loaded.coast_cache[4].map.tiles[16][31] == TILE_QUEEN_WATER &&
+            loaded.portal_origin_tile == TILE_QUEEN_WATER);
+        ASSERT("removing islands preserves cached Queen damage, warning targets and freeze", ok &&
+            loaded.coast_cache[4].enemies[0].hp == 51 &&
+            loaded.coast_cache[4].enemies[0].move_timer == 2 &&
+            loaded.coast_cache[4].enemies[0].frozen_turns == 2 &&
+            loaded.coast_cache[4].enemies[0].boss_attack == QUEEN_POCKETS &&
+            loaded.coast_cache[4].enemies[0].boss_aux_x == 31);
+        if (scenario != 1) {
+            ASSERT("active islands and loot underlays become water without losing items or moving the player", ok &&
+                loaded.map.tiles[16][31] == TILE_QUEEN_WATER && loaded.map.tiles[13][28] == TILE_ITEM &&
+                loaded.floor_items[0].active && loaded.floor_items[0].underlying_tile == TILE_QUEEN_WATER &&
+                loaded.player.x == 28 && loaded.player.y == 13 && map_is_explored(&loaded.map, 31, 16));
+            ASSERT("removing islands preserves the active encounter and defeated Queen state", ok &&
+                loaded.enemies[0].hp == 79 && loaded.enemies[0].move_timer == 2 &&
+                loaded.enemies[0].active == (scenario != 2) && loaded.defeated_bosses == game.defeated_bosses);
+        }
+        ASSERT("removing islands preserves quest completion, gold and claimed robes", ok &&
+            loaded.mara_quest_state == 2 && loaded.mara_beacons_lit == 7 &&
+            loaded.gold == 321 && loaded.drowned_queen_reward_state == 2);
+        ASSERT("island removal persists when the migrated save is loaded again", save_game(&loaded, 99181) &&
+            load_game(&loaded, 99181) && loaded.coast_cache[4].map.tiles[16][31] == TILE_QUEEN_WATER);
+    }
     remove("saves/savegame_99181.json");
 }
 
@@ -524,9 +596,9 @@ static void test_layouts_and_travel(void) {
                 }
             }
         }
-        valid &= islands == 2 && seen[game.map.stairs_down_y][game.map.stairs_down_x];
+        valid &= islands == 0 && seen[game.map.stairs_down_y][game.map.stairs_down_x];
     }
-    ASSERT("100 thrones retain two reachable controls, two shelter islands and accessible exits", valid);
+    ASSERT("100 thrones have no shelter islands and retain two reachable controls and accessible exits", valid);
     kill_with(0);
     game.floor_item_count = 0;
     map_generate_coast(&game.map, COAST_DEPTH);
@@ -565,5 +637,6 @@ void test_drowned_queen(void) {
     test_controls();
     test_rewards();
     test_persistence();
+    test_island_removal_migration();
     test_layouts_and_travel();
 }

@@ -6,17 +6,12 @@
 #include <stdio.h>
 
 void draw_drowned_queen_tile(Renderer *r, int sx, int sy, int x, int y, TileType tile) {
-    if (tile == TILE_QUEEN_WATER) {
+    if (tile == TILE_QUEEN_WATER || tile == TILE_QUEEN_ISLAND) {
         draw_coast_shallow_water(r, sx, sy, x, y);
         return;
     }
     draw_coast_channel(r, sx, sy, x, y, 0, 0);
     if (tile == TILE_QUEEN_DRY) {
-        return;
-    }
-    if (tile == TILE_QUEEN_ISLAND) {
-        draw_world_prop(r, sx, sy, PROP_BURIAL_PLATE, (SDL_Color){151, 215, 221, 255});
-        renderer_draw_text(r, "SAFE", sx * TILE_SIZE - 3, sy * TILE_SIZE - 12, (SDL_Color){172, 235, 227, 255}, r->font_tiny);
         return;
     }
     if (tile == TILE_QUEEN_RELIQUARY) {

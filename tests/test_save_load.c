@@ -263,6 +263,54 @@ static void test_key_bindings_round_trip(void) {
     remove_test_save(ROUND_TRIP_SLOT);
 }
 
+static void test_bow_catalog_round_trip(void) {
+    static GameState original;
+    static GameState loaded;
+    Item bows[] = {item_make_bow(), item_make_shortbow(), item_make_longbow(),
+        item_make_crossbow(), item_make_krakenbone_bow(), item_make_magic_longbow()};
+    for (int legacy = 0; legacy <= 1; legacy++) {
+        memset(&original, 0, sizeof(original));
+        original.player.player_class = CLASS_ROGUE;
+        game_init(&original);
+        original.inventory_count = 6;
+        for (int i = 0; i < 6; i++) {
+            original.inventory[i] = bows[i];
+        }
+        if (legacy) {
+            snprintf(original.inventory[0].name, sizeof(original.inventory[0].name), "Bow");
+            original.inventory[0].range = 6;
+            original.inventory[2].range = 9;
+            original.inventory[4].range = 10;
+            original.inventory[5].range = 12;
+        }
+        game_equip_main_hand(&original, 2);
+        original.gold = 234;
+        original.floor_item_count = 1;
+        original.floor_items[0] = (FloorItem){.active = 1, .x = 20, .y = 20,
+            .underlying_tile = TILE_TOWN_FLOOR, .item = original.inventory[0]};
+        original.map.tiles[20][20] = TILE_ITEM;
+        original.castle_loot_count[0] = 1;
+        original.castle_loot[0][0] = original.floor_items[0];
+        int ok = save_game(&original, ROUND_TRIP_SLOT) &&
+            (!legacy || rewrite_save_version(ROUND_TRIP_SLOT, 141)) && load_game(&loaded, ROUND_TRIP_SLOT);
+        int match = ok && loaded.inventory_count == 6;
+        for (int i = 0; i < 6 && match; i++) {
+            match &= weapon_fields_match(&loaded.inventory[i], &bows[i]);
+        }
+        ASSERT("every bow retains its damage, range, class, traits and visual on load", match);
+        ASSERT("legacy Hunting Bow names and ranges migrate in dropped and cached loot", ok &&
+            weapon_fields_match(&loaded.floor_items[0].item, &bows[0]) &&
+            weapon_fields_match(&loaded.castle_loot[0][0].item, &bows[0]));
+        ASSERT("bow migration preserves equipped attack, equipment index and gold", ok &&
+            loaded.player.attack == original.player.attack && loaded.equipped_main_hand == 2 && loaded.gold == 234);
+        ASSERT("migrated bow stats remain stable on a second load", ok && save_game(&loaded, MIGRATED_SLOT) &&
+            load_game(&original, MIGRATED_SLOT) && weapon_fields_match(&original.inventory[0], &bows[0]) &&
+            weapon_fields_match(&original.inventory[5], &bows[5]));
+    }
+    remove_test_save(ROUND_TRIP_SLOT);
+    remove_test_save(MIGRATED_SLOT);
+}
+
 static void test_current_weapon_round_trip(void) {
     static GameState original;
     static GameState loaded;
@@ -551,7 +599,10 @@ static void test_cryptblade_rebalance_migration(void) {
     static GameState original;
     static GameState loaded;
     static GameState reloaded;
-    for (int sharpened = 0; sharpened <= 1; sharpened++) {
+    const int versions[] = {109, 110, 139};
+    for (int scenario = 0; scenario < 6; scenario++) {
+        int sharpened = scenario % 2;
+        int version = versions[scenario / 2];
         memset(&original, 0, sizeof(original));
         original.player.player_class = CLASS_WARRIOR;
         game_init(&original);
@@ -561,7 +612,7 @@ static void test_cryptblade_rebalance_migration(void) {
         for (int i = 0; i < 3; i++) {
             original.inventory[i] = item_make_cryptblade();
             original.inventory[i].sharpened = i == 0 ? sharpened : (i == 1 ? !sharpened : 0);
-            original.inventory[i].attack_bonus = 8 + original.inventory[i].sharpened;
+            original.inventory[i].attack_bonus = (version < 110 ? 8 : 5) + original.inventory[i].sharpened;
         }
         game_equip_main_hand(&original, 0);
         game_equip_off_hand(&original, 1);
@@ -582,28 +633,34 @@ static void test_cryptblade_rebalance_migration(void) {
         original.gold = 234;
         original.defeated_bosses = 1 << LOCATION_DUNGEON;
         int ok = save_game(&original, LEGACY_SLOT) &&
-            rewrite_save_version(LEGACY_SLOT, 109) && load_game(&loaded, LEGACY_SLOT);
+            rewrite_save_version(LEGACY_SLOT, version) && load_game(&loaded, LEGACY_SLOT);
         ASSERT("old Cryptblade saves load successfully", ok);
         if (!ok) {
             remove_test_save(LEGACY_SLOT);
             continue;
         }
         ASSERT("Cryptblade migration preserves sharpening and critical chance",
-            loaded.inventory[0].attack_bonus == 5 + sharpened &&
+            loaded.inventory[0].attack_bonus == 2 + sharpened &&
             loaded.inventory[0].sharpened == sharpened && loaded.inventory[0].critical_chance_bonus == 10 &&
-            loaded.inventory[1].attack_bonus == 6 - sharpened && loaded.inventory[2].attack_bonus == 5);
+            loaded.inventory[1].attack_bonus == 3 - sharpened && loaded.inventory[2].attack_bonus == 2);
         ASSERT("equipped main and off-hand Cryptblades update attack with correct rounding",
             loaded.equipped_main_hand == 0 && loaded.equipped_off_hand == 1 &&
-            loaded.player.attack == base_attack + 5 + sharpened + (7 - sharpened) / 2);
+            loaded.player.attack == base_attack + 2 + sharpened + (4 - sharpened) / 2);
         ASSERT("dropped and cached Cryptblades receive the same balance change",
-            loaded.floor_items[0].item.attack_bonus == 5 + sharpened &&
-            loaded.castle_loot[0][0].item.attack_bonus == 5 + sharpened &&
+            loaded.floor_items[0].item.attack_bonus == 2 + sharpened &&
+            loaded.castle_loot[0][0].item.attack_bonus == 2 + sharpened &&
             loaded.castle_loot[0][0].item.sharpened == sharpened);
-        ASSERT("retired greatswords on the floor and in castle loot become shields",
-            loaded.floor_items[1].item.type == ITEM_SHIELD &&
-            strcmp(loaded.floor_items[1].item.name, "Goblin King's Shield") == 0 &&
-            loaded.castle_loot[0][1].item.type == ITEM_SHIELD &&
-            strcmp(loaded.castle_loot[0][1].item.name, "Goblin King's Shield") == 0);
+        if (version < 110) {
+            ASSERT("retired greatswords on the floor and in castle loot become shields",
+                loaded.floor_items[1].item.type == ITEM_SHIELD &&
+                strcmp(loaded.floor_items[1].item.name, "Goblin King's Shield") == 0 &&
+                loaded.castle_loot[0][1].item.type == ITEM_SHIELD &&
+                strcmp(loaded.castle_loot[0][1].item.name, "Goblin King's Shield") == 0);
+        } else {
+            ASSERT("the new Cryptblade migration leaves other weapons unchanged",
+                weapon_fields_match(&loaded.floor_items[1].item, &retired) &&
+                weapon_fields_match(&loaded.castle_loot[0][1].item, &retired));
+        }
         ASSERT("weapon migration preserves gold and boss progress",
             loaded.gold == original.gold && loaded.defeated_bosses == original.defeated_bosses);
         ASSERT("rebalanced weapons round-trip without repeating equipped stat changes",
@@ -2305,6 +2362,7 @@ void test_save_load(void) {
     test_sunscar_save_migration();
     test_stacked_item_underlays();
     test_current_weapon_round_trip();
+    test_bow_catalog_round_trip();
     test_dual_wield_round_trip();
     test_legacy_off_hand_migration();
     test_legacy_goblin_reward_migration();

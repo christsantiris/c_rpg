@@ -63,7 +63,7 @@ Sword also has a ranged attack.
 | Dagger | +2 | One | Rogue | 1 | 90 | 25% critical chance |
 | Short Sword | +3 | One | Warrior, Rogue | 1 | 40 | — |
 | Staff | +4 | Two | Mage | 1 | 60 | +2 spell power, +10 maximum MP |
-| Cryptblade | +5 | One | Warrior | Boss | 350 | 10% critical chance; Lich King reward |
+| Cryptblade | +2 | One | Warrior | Boss | 350 | 10% critical chance; Lich King reward |
 | Demonic Sword | +6 | One | All | Boss | 180 | Range 2 with `F`; Swamp Demon reward |
 | Long Sword | +6 | One | Warrior | 2 | 180 | — |
 | Magic Dagger | +6 | One | Rogue | 3 | 500 | 40% critical chance |
@@ -76,10 +76,10 @@ Sword also has a ranged attack.
 | Magic Battle Axe | +13 | Two | Warrior | 3 | 700 | Ignores 50% of enemy defense |
 | Magic Greatsword | +18 | Two | Warrior | 3 | 1,100 | 75% cleave damage to adjacent enemies |
 
-The Cryptblade's +5 attack and 10% critical chance make it an early Lich King
+The Cryptblade's +2 attack and 10% critical chance make it an early Lich King
 reward with room for later upgrades. Its one-handed grip permits a shield or
 off-hand weapon. Existing saves update its attack while preserving sharpening
-(+6 attack when sharpened). The Goblin King drops the Goblin King's Shield;
+(+3 attack when sharpened). The Goblin King drops the Goblin King's Shield;
 saved copies of his retired greatsword are converted to that shield.
 
 ### Ranged bows
@@ -89,16 +89,20 @@ striking adjacent enemies in melee.
 
 | Weapon | Ranged attack | Hands | Class | Tier | Base value | Trait |
 | --- | ---: | --- | --- | ---: | ---: | --- |
-| Bow | +3 | Two | Rogue | 1 | 60 | Range 6 |
-| Longbow | +7 | Two | Rogue | 2 | 250 | Range 9 |
-| Krakenbone Bow | +10 | Two | Rogue | Boss | 700 | Range 10; Polar Kraken reward |
-| Magic Longbow | +13 | Two | Rogue | 3 | 1,200 | Range 12 and pierces every target in its path |
+| Hunting Bow | +3 | Two | Rogue | 1 | 60 | Range 3; starting weapon |
+| Shortbow | +5 | Two | Rogue | 1 | 140 | Range 5 |
+| Longbow | +7 | Two | Rogue | 2 | 250 | Range 7 |
+| Crossbow | +9 | Two | Rogue | 2 | 450 | Range 5; more damage than Longbow |
+| Krakenbone Bow | +10 | Two | Rogue | Boss | 700 | Range 7; Polar Kraken reward |
+| Magic Longbow | +13 | Two | Rogue | 3 | 1,200 | Range 7 and pierces every target in its path |
 
 Bows fire with `F` in the last movement direction. A target directly adjacent
 to the player is too close; valid targets begin two tiles away. Arrows stop at
-walls. The Bow and Longbow stop at the first target, while the Magic Longbow
-can strike several targets on the same line. All bows have a fixed 15% ranged
-critical chance.
+walls. Ordinary bows and the Crossbow stop at the first target, while the
+Magic Longbow can strike several targets on the same line. No bow can shoot
+beyond seven tiles. Existing saves rename Bow to Hunting Bow and apply the
+current ranges without changing equipped attack or character progress. All
+bows have a fixed 15% ranged critical chance.
 
 Rogues start with 100 arrows and can carry at most 100 in a shared quiver. Each
 fired bow shot consumes one arrow, including misses and shots stopped by walls.
