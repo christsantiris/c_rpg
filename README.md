@@ -1,4 +1,3 @@
-<img width="1980" height="1123" alt="Screenshot 2026-10-19 at 11 59 45 AM" src="https://github.com/user-attachments/assets/3b3c3e74-c331-406f-bc71-e0bddd6e30ee" />
 # The Castle of No Return
 
 A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explore dungeons, battle enemies, and survive the challenge!
