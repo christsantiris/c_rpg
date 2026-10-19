@@ -1,4 +1,5 @@
 #include "map.h"
+#include "landscapes.h"
 #include "jail.h"
 #include "town_life.h"
 #include <stdlib.h>
@@ -466,6 +467,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_COAST_SEA &&
         m->tiles[y][x] != TILE_SWAMP_WALL &&
         m->tiles[y][x] != TILE_DESERT_WALL &&
+        m->tiles[y][x] != TILE_DESERT_MESA &&
         m->tiles[y][x] != TILE_MOONVEIL_WALL &&
         m->tiles[y][x] != TILE_MOONVEIL_POOL &&
         m->tiles[y][x] != TILE_ASHEN_WALL &&
@@ -2230,7 +2232,7 @@ static int carve_thin_ice_shortcut(Map *m, const Room *a, const Room *b) {
 // extra path carved through walls, so the stage stays fully connected after
 // every shortcut has collapsed.
 static void place_thin_ice_shortcuts(Map *m, int level) {
-    static const int pairs[5][2] = {{1, 4}, {4, 7}, {0, 3}, {1, 5}, {5, 8}};
+    static const int pairs[5][2] = {{1, 4}, {4, 7}, {0, 5}, {2, 3}, {5, 8}};
     if (level < 3 || m->room_count < 9) {
         return;
     }
@@ -2244,130 +2246,14 @@ static void place_thin_ice_shortcuts(Map *m, int level) {
     }
 }
 
-// Frostfell follows the swamp's layout, mirrored to run east to west, then
-// snows over its tiles.
+// Snow ridges have their own layout; existing ice rules and the lake follow it.
 void map_generate_frostfell(Map *m, int level) {
-    map_generate_swamp(m, level);
-    for (int y = 0; y < SWAMP_MAP_H; y++) {
-        for (int x = 0; x < SWAMP_MAP_W / 2; x++) {
-            TileType tile = m->tiles[y][x];
-            m->tiles[y][x] = m->tiles[y][SWAMP_MAP_W - 1 - x];
-            m->tiles[y][SWAMP_MAP_W - 1 - x] = tile;
-        }
-    }
-    for (int i = 0; i < m->room_count; i++) {
-        m->rooms[i].x = SWAMP_MAP_W - m->rooms[i].x - m->rooms[i].w;
-    }
-    m->stairs_up_x = SWAMP_MAP_W - 1 - m->stairs_up_x;
-    m->stairs_down_x = SWAMP_MAP_W - 1 - m->stairs_down_x;
-    for (int y = 0; y < MAP_H; y++) {
-        for (int x = 0; x < MAP_W; x++) {
-            TileType tile = m->tiles[y][x];
-            if (tile == TILE_SWAMP_WALL) {
-                m->tiles[y][x] = TILE_FROST_WALL;
-            } else if (tile == TILE_SWAMP_FLOOR) {
-                m->tiles[y][x] = TILE_FROST_FLOOR;
-            } else if (tile == TILE_SWAMP_ENTRANCE) {
-                m->tiles[y][x] = TILE_FROST_ENTRANCE;
-            } else if (tile == TILE_SWAMP_EXIT) {
-                m->tiles[y][x] = TILE_FROST_EXIT;
-            }
-        }
-    }
+    map_generate_frost_ridges(m, level);
     if (level == FROSTFELL_DEPTH) {
         freeze_kraken_lake(m);
     }
     place_thin_ice_shortcuts(m, level);
     place_slick_ice_patches(m, level);
-}
-
-// Reuse connected clearings, mirrored east to west, as sand between rocks.
-void map_generate_desert(Map *m, int level) {
-    map_generate_swamp(m, level);
-    for (int y = 0; y < DESERT_MAP_H; y++) {
-        for (int x = 0; x < DESERT_MAP_W / 2; x++) {
-            TileType tile = m->tiles[y][x];
-            m->tiles[y][x] = m->tiles[y][DESERT_MAP_W - 1 - x];
-            m->tiles[y][DESERT_MAP_W - 1 - x] = tile;
-        }
-    }
-    for (int i = 0; i < m->room_count; i++) {
-        m->rooms[i].x = DESERT_MAP_W - m->rooms[i].x - m->rooms[i].w;
-    }
-    m->stairs_up_x = DESERT_MAP_W - 1 - m->stairs_up_x;
-    m->stairs_down_x = DESERT_MAP_W - 1 - m->stairs_down_x;
-    for (int y = 0; y < MAP_H; y++) {
-        for (int x = 0; x < MAP_W; x++) {
-            TileType tile = m->tiles[y][x];
-            if (tile == TILE_SWAMP_WALL) {
-                m->tiles[y][x] = TILE_DESERT_WALL;
-            } else if (tile == TILE_SWAMP_FLOOR) {
-                m->tiles[y][x] = TILE_DESERT_FLOOR;
-            } else if (tile == TILE_SWAMP_ENTRANCE) {
-                m->tiles[y][x] = TILE_DESERT_ENTRANCE;
-            } else if (tile == TILE_SWAMP_EXIT) {
-                m->tiles[y][x] = TILE_DESERT_EXIT;
-            }
-        }
-    }
-}
-
-void map_generate_moonveil(Map *m, int level) {
-    // Connected garden clearings run east to west from Rosemoor.
-    map_generate_desert(m, level);
-    for (int y = 0; y < MAP_H; y++) {
-        for (int x = 0; x < MAP_W; x++) {
-            TileType tile = m->tiles[y][x];
-            if (tile == TILE_DESERT_FLOOR) {
-                m->tiles[y][x] = TILE_MOONVEIL_FLOOR;
-            } else if (tile == TILE_DESERT_WALL) {
-                m->tiles[y][x] = TILE_MOONVEIL_WALL;
-            } else if (tile == TILE_DESERT_ENTRANCE) {
-                m->tiles[y][x] = TILE_MOONVEIL_ENTRANCE;
-            } else if (tile == TILE_DESERT_EXIT) {
-                m->tiles[y][x] = TILE_MOONVEIL_EXIT;
-            }
-        }
-    }
-    // Pools replace only solid hedge patches, preserving every travel path.
-    for (int cy = 7; cy < SWAMP_MAP_H - 7; cy += 13) {
-        for (int cx = 7; cx < SWAMP_MAP_W - 7; cx += 14) {
-            int enclosed = 1;
-            for (int dy = -2; dy <= 2; dy++) {
-                for (int dx = -2; dx <= 2; dx++) {
-                    enclosed &= m->tiles[cy + dy][cx + dx] == TILE_MOONVEIL_WALL;
-                }
-            }
-            if (!enclosed) {
-                continue;
-            }
-            for (int dy = -2; dy <= 2; dy++) {
-                for (int dx = -2; dx <= 2; dx++) {
-                    if (dx * dx + dy * dy <= 5) {
-                        m->tiles[cy + dy][cx + dx] = TILE_MOONVEIL_POOL;
-                    }
-                }
-            }
-        }
-    }
-    for (int i = 1; i < m->room_count; i++) {
-        if (i % 2 == 0 && i != m->room_count - 1) {
-            continue;
-        }
-        int cx;
-        int cy;
-        map_room_center(&m->rooms[i], &cx, &cy);
-        int radius = i == m->room_count - 1 ? 3 : 2;
-        for (int dy = -radius; dy <= radius; dy++) {
-            for (int dx = -radius; dx <= radius; dx++) {
-                int distance = dx * dx + dy * dy;
-                if (distance >= radius * radius - 2 && distance <= radius * radius + 1 &&
-                    m->tiles[cy + dy][cx + dx] == TILE_MOONVEIL_FLOOR) {
-                    m->tiles[cy + dy][cx + dx] = TILE_MOONVEIL_CIRCLE;
-                }
-            }
-        }
-    }
 }
 
 void map_generate_dragonspine(Map *m, int level) {

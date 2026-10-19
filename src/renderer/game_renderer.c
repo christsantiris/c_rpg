@@ -15,6 +15,7 @@
 #include "npc_renderer.h"
 #include "regional_terrain_renderer.h"
 #include "../game/regional_terrain.h"
+#include "../game/landscapes.h"
 #include "info_panel.h"
 #include "message_bar.h"
 #include "minimap_renderer.h"
@@ -1469,7 +1470,7 @@ static void draw_floor_loot(Renderer *r, const GameState *g, int map_x, int map_
 
 static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int map_x, int map_y, int screen_x, int screen_y) {
     TileType underlay = floor_item_underlay(g, map_x, map_y);
-    if (regional_terrain_tile(underlay)) {
+    if (regional_terrain_tile(underlay) || landscape_tile(underlay)) {
         draw_regional_terrain_tile(r, g, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay == TILE_WATCHFIRE_COLD || underlay == TILE_WATCHFIRE_LIT) {
         draw_watchfire(r, g, screen_x, screen_y, map_x, map_y, underlay);
@@ -2286,6 +2287,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_NPC_ORIN:
                     draw_frostfell_quest_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
                     break;
+                case TILE_DESERT_OASIS:
+                case TILE_DESERT_OASIS_DRY:
+                case TILE_MOONVEIL_WAYSTONE_A:
+                case TILE_MOONVEIL_WAYSTONE_B:
                 case TILE_ASHEN_COLD_6:
                 case TILE_ASHEN_COLD_5:
                 case TILE_ASHEN_COLD_4:
@@ -2388,6 +2393,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_DESERT_FLOOR:
                     draw_desert_floor(r, sx, sy, x, y);
                     break;
+                case TILE_DESERT_MESA:
                 case TILE_DESERT_WALL:
                     draw_desert_wall(r, &g->map, sx, sy, x, y);
                     break;

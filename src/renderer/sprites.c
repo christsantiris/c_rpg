@@ -4108,16 +4108,20 @@ static void draw_desert_boulder(Renderer *r, int x, int y, unsigned int seed) {
 
 // Joined sandstone outcrops retain boulders and cactus stands without
 // outlining a separate rock in every blocked tile.
+static int desert_rock(TileType tile) {
+    return tile == TILE_DESERT_WALL || tile == TILE_DESERT_MESA;
+}
+
 void draw_desert_wall(Renderer *r, const Map *map, int tx, int ty, int mx, int my) {
     int x = tx * TILE_SIZE;
     int y = ty * TILE_SIZE;
     int wx = mx * TILE_SIZE;
     int wy = my * TILE_SIZE;
     unsigned int seed = dragonspine_noise(mx, my);
-    int north = my > 0 && map->tiles[my - 1][mx] != TILE_DESERT_WALL;
-    int south = my < MAP_H - 1 && map->tiles[my + 1][mx] != TILE_DESERT_WALL;
-    int west = mx > 0 && map->tiles[my][mx - 1] != TILE_DESERT_WALL;
-    int east = mx < MAP_W - 1 && map->tiles[my][mx + 1] != TILE_DESERT_WALL;
+    int north = my > 0 && !desert_rock(map->tiles[my - 1][mx]);
+    int south = my < MAP_H - 1 && !desert_rock(map->tiles[my + 1][mx]);
+    int west = mx > 0 && !desert_rock(map->tiles[my][mx - 1]);
+    int east = mx < MAP_W - 1 && !desert_rock(map->tiles[my][mx + 1]);
     SDL_Rect patches[7][32];
     int counts[7] = {0};
     for (int py = 0; py < TILE_SIZE; py += 3) {
@@ -4898,7 +4902,7 @@ static void draw_transition_terrain(Renderer *r, const Map *map, int tx, int ty,
             }
             break;
         case TOWN_EXIT_DESERT:
-            if (tile == TILE_DESERT_WALL) {
+            if (desert_rock(tile)) {
                 draw_desert_wall(r, map, tx, ty, mx, my);
             } else {
                 draw_desert_floor(r, tx, ty, mx, my);

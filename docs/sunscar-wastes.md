@@ -5,12 +5,48 @@ west; backtracking uses the east edge. The first stage's east exit and the final
 stage's west exit return to Stillbury. The Desert Pharaoh guards the final exit
 and drops the Sandstorm Staff.
 
+## Dune basins and oasis wells
+
+Dune basins are broken up by broad sandstone mesas, staggered rock spines and
+smaller outcrops. Their irregular edges bend routes, block lines of fire and
+provide cover between fights. Multiple sandy approaches remain open; each
+obstacle cluster is checked before placement so it cannot trap a walking tile,
+well or exit. Outcrop positions vary with the stage seed. The final clearing
+still supports the Pharaoh's obelisks, warnings and reward cache.
+
+Stages 1–5 now have **22, 26, 30, 34 and 38 enemies** respectively, including the
+Pharaoh when alive on stage 5. The existing stage progression introduces
+Scarabs and Vipers first, followed by Mummies, Djinn and Golems. The larger
+patrols and tighter approaches make reaching and rationing oasis water useful.
+Quest encounters retain their separate guard reservations.
+
+Each stage has one turquoise oasis well. Stand on or beside it and use the
+configured **Interact** key (**A** by default) to restore **25% of maximum HP
+and MP**, capped at each maximum. Drinking takes an ordinary action and works
+for every class. A full-health, full-mana player leaves the water unused. After
+drinking, the well reads **DRY** until a new expedition from town; backtracking,
+portals and saving do not refill it. Starting a new expedition refills wells on
+all cached stages along with restoring ordinary enemies.
+
+Save version **146** stores full/dry wells directly in active and cached map
+tiles. Older maps gain broader approaches and a well in place, preserving their
+existing paths, exploration, quest objects, loot, enemies and portal landings.
+The last chamber's terrain and pending boss attacks stay intact.
+
+Save version **147** adds mesa cover to older active and cached Sunscar maps
+without covering players, living or fallen enemies, loot, portal landings,
+wells or quest objects. The final chamber keeps its terrain, and exploration
+and current expedition deaths and wounds remain unchanged. Existing sparse
+stages gain their larger regular patrols on the next expedition from town;
+loading alone does not repopulate cleared stages. Expanded cache capacity
+preserves the larger rosters through travel and saving.
+
 Impassable terrain appears as connected sandstone shelves with layered cliff
 faces and eroded corners. Scattered spires and boulders retain their varied
 shapes, while tall and barrel cacti form small stands. Curved dune ridges cross
 tile boundaries on the open sand, with occasional pebbles and dry scrub.
 These details stay fixed when moving, revisiting, or loading. Existing saved
-maps receive the new appearance without changing collision or progress. See
+maps retain their progress during the layout migration. See
 the [renderer comparisons](art-sources/sunscar/README.md).
 
 Blowing sand and a light amber haze animate across the play area, including while
@@ -18,8 +54,7 @@ standing still. The sandstorm is visual and does not affect combat or movement.
 
 ## Desert Pharaoh encounter
 
-Stage 5 retains the existing desert roster, boss health, base attack and staff
-bonuses. Four impassable sandstone obelisks appear in the final clearing without
+The Pharaoh retains its existing health, base attack and staff bonuses. Four impassable sandstone obelisks appear in the final clearing without
 replacing its rocky/cactus terrain or closing the entrance and exit routes.
 
 **Sun-Crowned**, above half health, alternates a one-action curse beam and
