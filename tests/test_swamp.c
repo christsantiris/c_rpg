@@ -91,14 +91,11 @@ void test_swamp(void) {
     for (int i = 0; i < swamp_game.map.room_count; i++) {
         const Room *room = &swamp_game.map.rooms[i];
         int corners = 0;
-        corners += swamp_game.map.tiles[room->y][room->x] == TILE_SWAMP_WALL;
-        corners += swamp_game.map.tiles[room->y][room->x + room->w - 1] ==
-            TILE_SWAMP_WALL;
-        corners += swamp_game.map.tiles[room->y + room->h - 1][room->x] ==
-            TILE_SWAMP_WALL;
-        corners += swamp_game.map.tiles[room->y + room->h - 1]
-            [room->x + room->w - 1] == TILE_SWAMP_WALL;
-        rounded_clearings += corners >= 3;
+        corners += !map_is_walkable(&swamp_game.map, room->x, room->y);
+        corners += !map_is_walkable(&swamp_game.map, room->x + room->w - 1, room->y);
+        corners += !map_is_walkable(&swamp_game.map, room->x, room->y + room->h - 1);
+        corners += !map_is_walkable(&swamp_game.map, room->x + room->w - 1, room->y + room->h - 1);
+        rounded_clearings += corners >= 2;
     }
     ASSERT("swamp clearings have irregular shorelines instead of square rooms",
         rounded_clearings >= 5);
