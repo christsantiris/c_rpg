@@ -68,6 +68,9 @@ void controls_draw(Renderer *r, const GameState *g, const ControlsScreen *s) {
             r->font_small);
     }
 
+    draw_centered(r, s->save_failed ? "KEYS ACTIVE, BUT COULD NOT SAVE SETTINGS"
+        : "HOTKEY CHANGES ARE SAVED AUTOMATICALLY", note_y + 28, dim, r->font_small);
+
     draw_centered(r, s->waiting_for_key ? "PRESS A NEW KEY   ESC CANCEL"
         : "UP DOWN SELECT   ENTER CHANGE   ESC BACK", r->screen_h - 60, hint, r->font_small);
 }

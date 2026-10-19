@@ -6,6 +6,7 @@ void controls_screen_init(ControlsScreen *s) {
     s->waiting_for_key = 0;
     s->swapped_action = -1;
     s->key_refused = 0;
+    s->save_failed = 0;
 }
 
 static void begin_rebind(ControlsScreen *s) {

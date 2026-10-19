@@ -617,14 +617,16 @@ At **30% HP or below**, the play area gains a slowly pulsing red border and the
 HP display turns red with a **LOW HEALTH** label. Heal above 30% to clear the
 warning. Open inventory with **I** to use a Health Potion.
 
-These are the default keys. To change them, press `Esc` during a game and
-choose **Controls**, select a command, press `Enter` (or click it), then press
+These are the default keys. Choose **Controls** from the title menu or press
+`Esc` during a game and choose **Controls**. Select a command, press `Enter`
+(or click it), then press
 the new key. Picking a key another command uses swaps the two keys. `Esc` and
 the arrow keys cannot be changed, so the menu and movement always work, and the
 move-left key also interacts. Keys inside views such as the inventory stay the
-same. Remapped keys belong to the current character: saving the game keeps
-them, new games start with the defaults, and loading a save restores that
-save's keys. The help screen (`H` by default) always shows the current keys.
+same. Changes save automatically in `saves/controls.json` and apply across
+restarts, new characters, and loaded games. If no hotkey settings exist, loading
+an existing character adopts that save's keys. The help screen (`H` by default)
+always shows the current keys.
 
 | Key | Action |
 | --- | --- |
@@ -725,7 +727,7 @@ deploys `dist/browser/`. In the repository's **Settings → Pages**, first set
 deployment, the game will be available at
 [Castle of No Return on Pages](https://christsantiris.github.io/c_rpg/).
 
-Save slots, remapped controls stored in saves, and high scores persist in this
+Save slots, hotkey settings, and high scores persist in this
 browser's site storage. Desktop saves are not uploaded or bundled. Clearing
 site data removes browser saves; storage restrictions can make them temporary.
 
@@ -868,4 +870,3 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 - Improve difficulty scaling and economy
    Warrior and Rogue should struggle at certain levels without better weapons. Mage should struggle without better spells. Purchasing new weapons, armor and tomes should become necessary to progress.
 - Make ruined temple boss more difficult
-- Make controls re mappable.
