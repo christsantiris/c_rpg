@@ -659,11 +659,13 @@ Below are screenshots of the game in action:
 
 <img width="2586" height="1468" alt="image" src="https://github.com/user-attachments/assets/ac746feb-21ba-4d4f-b7e7-87d04bb317fb" />
 
-<img width="2590" height="1466" alt="image" src="https://github.com/user-attachments/assets/079c3db6-72fe-477f-bdb8-e903016a9aa1" />
+<img width="2586" height="1466" alt="image" src="https://github.com/user-attachments/assets/079c3db6-72fe-477f-bdb8-e903016a9aa1" />
 
-<img width="2586" height="1462" alt="image" src="https://github.com/user-attachments/assets/bb5d4b04-c555-4b4c-82bc-1ae2e81196bc" />
+<img width="2586" height="1466" alt="image" src="https://github.com/user-attachments/assets/bb5d4b04-c555-4b4c-82bc-1ae2e81196bc" />
 
-<img width="2584" height="1468" alt="image" src="https://github.com/user-attachments/assets/9c480504-6f05-490d-bfd8-255b8d964996" />
+<img width="2586" height="1466" alt="image" src="https://github.com/user-attachments/assets/9c480504-6f05-490d-bfd8-255b8d964996" />
+
+<img width="2586" height="1466" alt="Screenshot 2026-10-19 at 11 59 45 AM" src="https://github.com/user-attachments/assets/d295ed20-69ac-4b11-af69-16474a42e4f3" />
 
 ## Building and Running
 
