@@ -433,43 +433,41 @@ static void draw_castle_front(Renderer *r, int sx, int sy) {
     SDL_RenderCopy(r->sdl, r->castle_texture, NULL, &destination);
 }
 
-static void draw_dialogue_text(Renderer *r, const char *text, int x, int y, int max_chars, SDL_Color color) {
-    char line[64];
-    int line_len = 0;
-    const char *cursor = text;
-
-    while (*cursor) {
-        while (*cursor == ' ') {
-            cursor++;
+// Measure and draw with the same wrapping so every conversation fits its panel.
+static int dialogue_text(Renderer *r, const char *text, int x, int y, int max_chars, TTF_Font *font, SDL_Color color, int draw) {
+    int lines = 0;
+    int line_h = TTF_FontHeight(font) + 8;
+    while (*text) {
+        while (*text == ' ') {
+            text++;
         }
-        const char *word = cursor;
-        int word_len = 0;
-        while (cursor[word_len] && cursor[word_len] != ' ') {
-            word_len++;
-        }
-        if (word_len == 0) {
+        if (!*text) {
             break;
         }
-        if (line_len > 0 && line_len + word_len + 1 > max_chars) {
-            line[line_len] = '\0';
-            renderer_draw_text(r, line, x, y, color, r->font_tiny);
-            y += 16;
-            line_len = 0;
+        int length = 0;
+        int last_space = 0;
+        while (text[length] && text[length] != '\n' && length < max_chars) {
+            if (text[length] == ' ') {
+                last_space = length;
+            }
+            length++;
         }
-        if (line_len > 0) {
-            line[line_len++] = ' ';
+        if (text[length] && text[length] != ' ' && text[length] != '\n' && last_space > 0) {
+            length = last_space;
         }
-        if (word_len > (int)sizeof(line) - line_len - 1) {
-            word_len = (int)sizeof(line) - line_len - 1;
+        char line[MAX_DIALOGUE_LEN];
+        memcpy(line, text, length);
+        line[length] = '\0';
+        if (draw) {
+            renderer_draw_text(r, line, x, y + lines * line_h, color, font);
         }
-        memcpy(line + line_len, word, word_len);
-        line_len += word_len;
-        cursor += word_len;
+        lines++;
+        text += length;
+        if (*text == '\n') {
+            text++;
+        }
     }
-    if (line_len > 0) {
-        line[line_len] = '\0';
-        renderer_draw_text(r, line, x, y, color, r->font_tiny);
-    }
+    return lines;
 }
 
 static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport *v) {
@@ -501,29 +499,58 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
         return;
     }
 
-    int viewport_w = r->screen_w - INFO_PANEL_W;
-    if (g->location == LOCATION_TOWN || g->location == LOCATION_TOWN2 ||
-        g->location == LOCATION_TOWN3 || g->location == LOCATION_TOWN4 ||
-        g->location == LOCATION_CASTLE) {
-        viewport_w = TOWN_W * TILE_SIZE;
-    } else if (g->location == LOCATION_TAVERN || g->location == LOCATION_INN ||
-        g->location == LOCATION_TOWN_HALL || g->location == LOCATION_GUILD ||
-        town_life_is_interior(g->location)) {
-        viewport_w = TAVERN_W * TILE_SIZE;
-    } else if (g->location == LOCATION_ISLAND) {
-        viewport_w = ISLAND_W * TILE_SIZE;
+    if (!r->font_large || !r->font_tiny) {
+        return;
     }
-    int bubble_w = viewport_w < 460 ? viewport_w - 16 : 440;
-    int bubble_h = shortcut || quest_offer || game_glassdeep_prompt_active(g) ? 132 : 98;
-    int npc_screen_x = viewport_to_screen_x(v, npc_x) * TILE_SIZE +
-        TILE_SIZE / 2;
-    int npc_screen_y = viewport_to_screen_y(v, npc_y) * TILE_SIZE;
+
+    // Convert the NPC anchor to screen pixels before removing the world's zoom.
+    float scale_x, scale_y;
+    SDL_RenderGetScale(r->sdl, &scale_x, &scale_y);
+    SDL_RenderSetScale(r->sdl, 1.0f, 1.0f);
+    SDL_Rect world_view;
+    SDL_RenderGetViewport(r->sdl, &world_view);
+    int npc_screen_x = world_view.x + (int)((viewport_to_screen_x(v, npc_x) * TILE_SIZE + TILE_SIZE / 2) * scale_x);
+    int npc_screen_y = world_view.y + (int)(viewport_to_screen_y(v, npc_y) * TILE_SIZE * scale_y);
+    int npc_bottom = npc_screen_y + (int)(TILE_SIZE * scale_y);
+    SDL_RenderSetViewport(r->sdl, NULL);
+
+    int viewport_w = r->screen_w - INFO_PANEL_W;
+    int viewport_h = r->tiles_y * TILE_SIZE;
+    int bubble_w = viewport_w < 736 ? viewport_w - 16 : 720;
+    const char *hint = shortcut ? "Enter to continue" : quest_offer ? "Accept quest? Y: Yes   N: No" : "";
+    SDL_Color ink = {42, 32, 30, 255};
+    SDL_Color accent = {48, 56, 100, 255};
+    TTF_Font *font = r->font_large;
+    int char_w = 16;
+    int max_chars, line_h, speaker_lines, body_lines, hint_lines, bubble_h;
+    for (int attempt = 0; attempt < 2; attempt++) {
+        TTF_SizeText(font, "M", &char_w, NULL);
+        max_chars = (bubble_w - 28) / char_w;
+        if (max_chars < 1) {
+            max_chars = 1;
+        }
+        line_h = TTF_FontHeight(font) + 8;
+        speaker_lines = dialogue_text(r, g->dialogue_speaker, 0, 0, max_chars, font, accent, 0);
+        body_lines = dialogue_text(r, g->dialogue_text, 0, 0, max_chars, font, ink, 0);
+        hint_lines = dialogue_text(r, hint, 0, 0, max_chars, font, accent, 0);
+        bubble_h = 28 + (speaker_lines + body_lines + hint_lines) * line_h + 8 + (hint_lines > 0 ? 8 : 0);
+        if (bubble_h <= viewport_h - 16) {
+            break;
+        }
+        // The minimum window size still needs the full conversation and choices.
+        font = r->font_tiny;
+    }
     int bubble_x = npc_screen_x - bubble_w / 2;
     int bubble_y = npc_screen_y - bubble_h - 22;
-    // An NPC near the top of the map gets the bubble below instead of under it.
     int below = bubble_y < 8;
     if (below) {
-        bubble_y = npc_screen_y + TILE_SIZE + 22;
+        bubble_y = npc_bottom + 22;
+    }
+    if (bubble_y + bubble_h > viewport_h - 8) {
+        bubble_y = viewport_h - bubble_h - 8;
+    }
+    if (bubble_y < 8) {
+        bubble_y = 8;
     }
     if (bubble_x < 8) {
         bubble_x = 8;
@@ -562,17 +589,15 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
         SDL_RenderFillRect(r->sdl, &tail);
     }
 
-    renderer_draw_text(r, g->dialogue_speaker, bubble_x + 14,
-        bubble_y + 12, (SDL_Color){71, 82, 138, 255}, r->font_small);
-    draw_dialogue_text(r, g->dialogue_text, bubble_x + 14, bubble_y + 36,
-        (bubble_w - 28) / 8, (SDL_Color){42, 32, 30, 255});
-    if (shortcut) {
-        renderer_draw_text(r, "Enter to continue", bubble_x + 14, bubble_y + bubble_h - 20,
-            (SDL_Color){71, 82, 138, 255}, r->font_tiny);
-    } else if (quest_offer) {
-        renderer_draw_text(r, "Accept quest? Y: Yes   N: No", bubble_x + 14, bubble_y + bubble_h - 20,
-            (SDL_Color){71, 82, 138, 255}, r->font_tiny);
-    }
+    int text_y = bubble_y + 14;
+    dialogue_text(r, g->dialogue_speaker, bubble_x + 14, text_y, max_chars, font, accent, 1);
+    text_y += speaker_lines * line_h + 8;
+    dialogue_text(r, g->dialogue_text, bubble_x + 14, text_y, max_chars, font, ink, 1);
+    text_y += body_lines * line_h + 8;
+    dialogue_text(r, hint, bubble_x + 14, text_y, max_chars, font, accent, 1);
+
+    SDL_RenderSetViewport(r->sdl, &world_view);
+    SDL_RenderSetScale(r->sdl, scale_x, scale_y);
 }
 
 static void draw_weapon_arrow_at(Renderer *r, int cx, int cy, int dx, int dy, int impact) {
