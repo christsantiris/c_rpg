@@ -1061,6 +1061,9 @@ int main(int argc, char **argv) {
                                         } else if (game.map.tiles[ty][tx] == TILE_NPC_BRAM) {
                                             game_talk_to_bram(&game);
                                             found = 1;
+                                        } else if (game.map.tiles[ty][tx] == TILE_NPC_ALDRIC) {
+                                            game_talk_to_aldric(&game);
+                                            found = 1;
                                         } else if (game.map.tiles[ty][tx] ==
                                             TILE_NPC_ROWAN) {
                                             game_talk_to_rowan(&game);

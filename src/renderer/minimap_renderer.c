@@ -123,6 +123,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_NPC_INNKEEPER ||
                         tile == TILE_NPC_CAIN ||
                         tile == TILE_NPC_BRAM ||
+                        tile == TILE_NPC_ALDRIC ||
                         tile == TILE_NPC_ROWAN ||
                         tile == TILE_NPC_DRAGON_SEEKER ||
                         tile == TILE_NPC_GUILD_SEEKER || tile == TILE_DESERT_LAMP ||
