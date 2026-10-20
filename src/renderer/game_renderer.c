@@ -2702,6 +2702,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_town_path(r, sx, sy);
                     npc_draw(r, sx, sy, NPC_ART_BRAM_TOWN, 0);
                     break;
+                case TILE_NPC_ALDRIC:
+                    draw_town_path(r, sx, sy);
+                    npc_draw(r, sx, sy, NPC_ART_ALDRIC, 0);
+                    break;
                 case TILE_NPC_ROWAN:
                     draw_town_floor(r, sx, sy);
                     draw_rowan(r, sx, sy);
