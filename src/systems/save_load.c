@@ -750,7 +750,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 148);
+    cJSON_AddNumberToObject(root, "save_version", 149);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -4414,6 +4414,21 @@ int load_game(GameState *g, int slot) {
     }
     if (save_version < 148) {
         wilds_migrate(g);
+    }
+    // Add Aldric to saved Oakhaven maps without losing the player or dropped loot.
+    if (save_version < 149 && g->location == LOCATION_TOWN) {
+        if (g->player.x == TOWN_ALDRIC_X && g->player.y == TOWN_ALDRIC_Y) {
+            g->player.y++;
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->active && item->x == TOWN_ALDRIC_X && item->y == TOWN_ALDRIC_Y) {
+                item->y++;
+                item->underlying_tile = TILE_TOWN_PATH;
+                g->map.tiles[item->y][item->x] = TILE_ITEM;
+            }
+        }
+        g->map.tiles[TOWN_ALDRIC_Y][TOWN_ALDRIC_X] = TILE_NPC_ALDRIC;
     }
     game_migrate_boss_shortcuts(g);
     game_refresh_quest_encounters(g);

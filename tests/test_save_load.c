@@ -2506,7 +2506,63 @@ static void test_kraken_cycle_migration(void) {
     remove_test_save(LEGACY_SLOT);
 }
 
+static void test_aldric_town_migration(void) {
+    static GameState original;
+    static GameState loaded;
+    if (save_exists(LEGACY_SLOT)) {
+        ASSERT("Aldric migration test slot must be unused", 0);
+        return;
+    }
+    for (int occupied = 0; occupied <= 1; occupied++) {
+        memset(&original, 0, sizeof(original));
+        game_init(&original);
+        original.gold = 321;
+        original.defeated_bosses = 1 << LOCATION_DUNGEON;
+        original.map.tiles[TOWN_ALDRIC_Y][TOWN_ALDRIC_X] = TILE_TOWN_PATH;
+        if (occupied) {
+            original.player.x = TOWN_ALDRIC_X;
+            original.player.y = TOWN_ALDRIC_Y;
+            original.floor_item_count = 1;
+            original.floor_items[0] = (FloorItem){
+                .active = 1, .x = TOWN_ALDRIC_X, .y = TOWN_ALDRIC_Y,
+                .underlying_tile = TILE_TOWN_PATH, .item = item_make_health_potion()
+            };
+            original.map.tiles[TOWN_ALDRIC_Y][TOWN_ALDRIC_X] = TILE_ITEM;
+        }
+        int ok = save_game(&original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, 148) && load_game(&loaded, LEGACY_SLOT);
+        ASSERT("legacy Oakhaven gains a solid advisor without resetting progress", ok &&
+            loaded.map.tiles[TOWN_ALDRIC_Y][TOWN_ALDRIC_X] == TILE_NPC_ALDRIC &&
+            !map_is_walkable(&loaded.map, TOWN_ALDRIC_X, TOWN_ALDRIC_Y) &&
+            map_is_walkable(&loaded.map, 20, 12) && loaded.gold == original.gold &&
+            loaded.defeated_bosses == original.defeated_bosses);
+        if (!ok) {
+            continue;
+        }
+        ASSERT("migration only moves a player occupying Aldric's tile", loaded.player.x == original.player.x &&
+            loaded.player.y == original.player.y + occupied);
+        if (occupied) {
+            ASSERT("loot under Aldric moves to the adjacent path", loaded.floor_item_count == 1 &&
+                loaded.floor_items[0].active && loaded.floor_items[0].x == TOWN_ALDRIC_X &&
+                loaded.floor_items[0].y == TOWN_ALDRIC_Y + 1 &&
+                loaded.floor_items[0].underlying_tile == TILE_TOWN_PATH &&
+                loaded.map.tiles[TOWN_ALDRIC_Y + 1][TOWN_ALDRIC_X] == TILE_ITEM);
+        }
+        game_talk_to_aldric(&loaded);
+        ok = save_game(&loaded, LEGACY_SLOT) && load_game(&original, LEGACY_SLOT);
+        ASSERT("Aldric and his dialogue survive saving without repeating the migration", ok &&
+            original.map.tiles[TOWN_ALDRIC_Y][TOWN_ALDRIC_X] == TILE_NPC_ALDRIC &&
+            original.player.y == loaded.player.y && original.dialogue_active &&
+            strcmp(original.dialogue_speaker, "Veteran Aldric") == 0 &&
+            strcmp(original.dialogue_text, loaded.dialogue_text) == 0);
+        game_enter_tavern(&original);
+        game_leave_tavern(&original);
+        ASSERT("Aldric returns when Oakhaven is regenerated", original.map.tiles[TOWN_ALDRIC_Y][TOWN_ALDRIC_X] == TILE_NPC_ALDRIC);
+    }
+    remove_test_save(LEGACY_SLOT);
+}
+
 void test_save_load(void) {
+    test_aldric_town_migration();
     test_narrow_shortcut_migration();
     test_harbor_road_save_load();
     test_spent_island_map_on_load();

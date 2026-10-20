@@ -5850,6 +5850,15 @@ void game_talk_to_bram(GameState *g) {
         "%s The blacksmith sells weapons and armor; the alchemist sells potions and scrolls for your journey.", warning);
 }
 
+void game_talk_to_aldric(GameState *g) {
+    g->dialogue_active = 1;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Veteran Aldric");
+    g->dialogue_x = TOWN_ALDRIC_X;
+    g->dialogue_y = TOWN_ALDRIC_Y;
+    snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+        "Clear the dungeon and Sunken Coast to gain experience before entering the forest or mountains. Revisit cleared areas to fight again and level up before tackling harder areas.");
+}
+
 void game_talk_to_cain(GameState *g) {
     g->dialogue_active = 1;
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Cain");
