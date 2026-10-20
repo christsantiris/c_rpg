@@ -87,6 +87,8 @@
 #define TOWN_CAIN_Y 11
 #define TOWN_BRAM_X 17
 #define TOWN_BRAM_Y 11
+#define TOWN_ALDRIC_X 21
+#define TOWN_ALDRIC_Y 13
 #define TOWN_HARBOR_W 5
 #define TOWN_HARBOR_H 4
 #define TOWN_HARBOR_X (TOWN_W - 1 - TOWN_HARBOR_W)
@@ -618,7 +620,8 @@ typedef enum {
     TILE_SWAMP_REEDS,
     TILE_DRAGON_RAVINE,
     TILE_DRAGON_BOULDER,
-    TILE_DRAGON_ASH_BOULDER
+    TILE_DRAGON_ASH_BOULDER,
+    TILE_NPC_ALDRIC
 } TileType;
 
 typedef struct {

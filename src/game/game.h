@@ -432,6 +432,7 @@ void game_talk_to_oswin(GameState *g);
 void game_talk_to_rook(GameState *g);
 void game_talk_to_cain(GameState *g);
 void game_talk_to_bram(GameState *g);
+void game_talk_to_aldric(GameState *g);
 void game_talk_to_rowan(GameState *g);
 void game_talk_to_dragon_seeker(GameState *g);
 void game_talk_to_royal_guard(GameState *g, int x, int y);
