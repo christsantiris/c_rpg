@@ -568,17 +568,18 @@ static void test_brenna_inn_migration(void) {
         ASSERT("Brenna relocation preserves dropped loot and repairs its floor", ok &&
             loaded.floor_items[0].active && loaded.floor_items[0].item.type == ITEM_SHIELD &&
             loaded.floor_items[0].underlying_tile == TILE_TAVERN_FLOOR &&
-            loaded.floor_items[0].y == y + inn && loaded.map.tiles[y + inn][x] == TILE_ITEM);
+            loaded.floor_items[0].y == y + 1 && loaded.map.tiles[y + 1][x] == TILE_ITEM);
         if (inn) {
             ASSERT("legacy Inn moves the player clear and keeps existing residents", ok &&
                 loaded.player.x == x && loaded.player.y == y + 1 && loaded.map.tiles[y][x] == TILE_NPC_BRENNA &&
-                loaded.map.tiles[18][10] == TILE_NPC_ROOK && loaded.map.tiles[ZARA_INN_Y][ZARA_INN_X] == TILE_NPC_GUILD_SEEKER &&
+                loaded.map.tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] == TILE_TAVERN_FLOOR && loaded.map.tiles[ZARA_INN_Y][ZARA_INN_X] == TILE_NPC_GUILD_SEEKER &&
                 loaded.map.tiles[ALDER_INN_Y][ALDER_INN_X] == TILE_NPC_ALDER && loaded.map.tiles[7][28] == TILE_NPC_INNKEEPER);
         } else {
             ASSERT("legacy Tavern dismisses Brenna's old dialogue and never restores her under loot", ok &&
-                !loaded.dialogue_active && loaded.player.y == y);
+                !loaded.dialogue_active && loaded.player.y == y + 1 &&
+                loaded.map.tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] == TILE_NPC_ROOK);
             action_resolve_player(&loaded, (Action){ACTION_PICK_UP, 0, 0});
-            ASSERT("picking up legacy Tavern loot leaves walkable floor", loaded.map.tiles[y][x] == TILE_TAVERN_FLOOR);
+            ASSERT("picking up legacy Tavern loot leaves walkable floor", loaded.map.tiles[y + 1][x] == TILE_TAVERN_FLOOR);
             game_enter_inn(&loaded);
             loaded.player.x = BRENNA_INN_X;
             loaded.player.y = BRENNA_INN_Y + 1;
@@ -2561,7 +2562,86 @@ static void test_aldric_town_migration(void) {
     remove_test_save(LEGACY_SLOT);
 }
 
+static void test_rook_tavern_migration(void) {
+    static GameState original;
+    static GameState loaded;
+    for (int tavern = 0; tavern <= 1; tavern++) {
+        for (int state = 0; state <= 3; state++) {
+            memset(&original, 0, sizeof(original));
+            original.player.player_class = CLASS_ROGUE;
+            game_init(&original);
+            if (tavern) {
+                game_enter_tavern(&original);
+            } else {
+                game_enter_inn(&original);
+            }
+            original.rook_quest_state = state;
+            original.rook_labyrinth_switches = state ? 31 : 0;
+            original.rook_quest_completions = state == 3;
+            original.gold = 317;
+            original.score = 800;
+            original.labyrinth_cache[0].valid = 1;
+            original.labyrinth_cache[0].map = original.map;
+            original.dialogue_active = 1;
+            snprintf(original.dialogue_speaker, MAX_SPEAKER_LEN, "Rook");
+            original.player.x = ROOK_TAVERN_X;
+            original.player.y = ROOK_TAVERN_Y;
+            original.floor_item_count = 2;
+            original.floor_items[0] = (FloorItem){.active = 1, .x = ROOK_TAVERN_X, .y = ROOK_TAVERN_Y,
+                .underlying_tile = tavern ? TILE_TAVERN_FLOOR : TILE_NPC_ROOK, .item = item_make_health_potion()};
+            original.floor_items[1] = (FloorItem){.active = 1, .x = ROOK_TAVERN_X, .y = ROOK_TAVERN_Y + 1,
+                .underlying_tile = TILE_TAVERN_FLOOR, .item = item_make_buckler()};
+            original.map.tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] = TILE_ITEM;
+            original.map.tiles[ROOK_TAVERN_Y + 1][ROOK_TAVERN_X] = TILE_ITEM;
+            map_mark_explored(&original.map, ROOK_TAVERN_X, ROOK_TAVERN_Y);
+            int ok = save_game(&original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, 151) && load_game(&loaded, LEGACY_SLOT);
+            ASSERT("Rook relocation preserves every quest state, runes, rewards, exploration, and cached maps", ok &&
+                loaded.rook_quest_state == state && loaded.rook_labyrinth_switches == original.rook_labyrinth_switches &&
+                loaded.rook_quest_completions == original.rook_quest_completions && loaded.gold == 317 && loaded.score == 800 &&
+                map_is_explored(&loaded.map, ROOK_TAVERN_X, ROOK_TAVERN_Y) && loaded.labyrinth_cache[0].valid &&
+                memcmp(&loaded.labyrinth_cache[0].map, &original.labyrinth_cache[0].map, sizeof(Map)) == 0 && !loaded.dialogue_active);
+            ASSERT("Rook relocation preserves loot even when the adjacent tile already has an item", ok &&
+                loaded.floor_items[0].active && loaded.floor_items[0].y == ROOK_TAVERN_Y + tavern &&
+                loaded.floor_items[0].item.type == original.floor_items[0].item.type &&
+                loaded.floor_items[0].underlying_tile == TILE_TAVERN_FLOOR &&
+                loaded.floor_items[1].active && loaded.floor_items[1].y == ROOK_TAVERN_Y + 1 &&
+                loaded.floor_items[1].underlying_tile == TILE_TAVERN_FLOOR);
+            ASSERT("legacy interiors move only a player overlapping Rook's new Tavern position", ok &&
+                loaded.player.x == ROOK_TAVERN_X && loaded.player.y == ROOK_TAVERN_Y + tavern &&
+                loaded.map.tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] == (tavern ? TILE_NPC_ROOK : TILE_ITEM));
+            if (!ok) {
+                continue;
+            }
+            game_enter_tavern(&loaded);
+            loaded.player.x = ROOK_TAVERN_X;
+            loaded.player.y = ROOK_TAVERN_Y + 1;
+            game_talk_to_rook(&loaded);
+            if (state == 0) {
+                ASSERT("a migrated unaccepted quest can be accepted in Oakhaven's Tavern", game_quest_offer_active(&loaded) &&
+                    game_handle_quest_offer_key(&loaded, SDL_SCANCODE_Y, 0) && loaded.rook_quest_state == 1);
+            } else if (state >= 2) {
+                game_talk_to_rook(&loaded);
+                ASSERT("a migrated relic rewards its return once and completed quests never repay", loaded.rook_quest_state == 3 &&
+                    loaded.gold == 317 + (state == 2 ? ROOK_QUEST_REWARD : 0) &&
+                    loaded.score == 800 + (state == 2 ? 500 : 0) && loaded.rook_quest_completions == 1);
+            }
+            ASSERT("Rook's new location and dialogue survive a current-version round trip", save_game(&loaded, LEGACY_SLOT) &&
+                load_game(&original, LEGACY_SLOT) && original.map.tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] == TILE_NPC_ROOK &&
+                original.player.y == loaded.player.y && original.dialogue_active &&
+                strcmp(original.dialogue_text, loaded.dialogue_text) == 0 && original.rook_quest_state == loaded.rook_quest_state);
+        }
+    }
+    game_enter_inn(&original);
+    original.map.tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] = TILE_NPC_ROOK;
+    ASSERT("legacy Inn removes Rook's uncovered tile and preserves the remaining residents", save_game(&original, LEGACY_SLOT) &&
+        rewrite_save_version(LEGACY_SLOT, 151) && load_game(&loaded, LEGACY_SLOT) &&
+        loaded.map.tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] == TILE_TAVERN_FLOOR &&
+        loaded.map.tiles[ALDER_INN_Y][ALDER_INN_X] == TILE_NPC_ALDER && loaded.map.tiles[7][28] == TILE_NPC_INNKEEPER);
+    remove_test_save(LEGACY_SLOT);
+}
+
 void test_save_load(void) {
+    test_rook_tavern_migration();
     test_aldric_town_migration();
     test_narrow_shortcut_migration();
     test_harbor_road_save_load();

@@ -218,12 +218,12 @@ NPC quest offers wait for **Y** to accept or **N** to decline (**Esc** also
 declines). Declined quests remain available when you talk again and do not
 appear in the active journal. Existing active quests keep their progress.
 
-Oakhaven's Tavern houses **Elowen**, Mara, and Ilya. Press **T** beside
+Oakhaven's Tavern houses **Elowen**, Mara, Ilya, and Rook. Press **T** beside
 Elowen, then **Y** to accept **The Broken Seals**, restore the burial seals on
 **Oakhaven's dungeon floors 2, 3, and 4**, and return to her in the Tavern for
 **40 gold and 300 score**. This local quest can be accepted and completed
 without visiting another town. Existing saves preserve seal progress and update
-her location. Stillbury's Inn houses Alder, Liora, Brenna, Rook, and Bram.
+her location. Stillbury's Inn houses Alder, Liora, Brenna, and Bram.
 
 Each town also has a local building in its southwest quarter. Walk through its
 door and press **T** beside the resident to talk. The baker and abbot wait until
@@ -321,16 +321,16 @@ The Alchemist also sells Mana Potions.
 
 ### Rook's labyrinth
 
-Speak with Rook in Stillbury's Inn and press **Y** to accept his one-time
-retrieval quest and open the labyrinth gate on the eastern outskirts, across the
-road from the witch's hut. Explore five maze floors, each with a rune and
-enemies. Each of the first four floors has two identical-looking downward
-stairs: one leads onward, while the other reaches a short dead-end corridor with
-a return stair. Light all five runes, defeat the Minotaur, recover the ivory
-rook, and return to Rook for **40 gold** and **500 score**. Stairs stay open
-without clearing enemies. After the one-time quest, the labyrinth remains open
-for further expeditions; ordinary enemies return, but the Minotaur and quest
-reward do not.
+Speak with Rook in Oakhaven's Tavern and press **Y** to accept his one-time
+retrieval quest. Travel **west to Stillbury** and find the labyrinth gate on
+its eastern outskirts, across the road from the witch's hut. Explore five maze
+floors, each with a rune and enemies. Each of the first four floors has two
+identical-looking downward stairs: one leads onward, while the other reaches a
+short dead-end corridor with a return stair. Light all five runes, defeat the
+Minotaur, recover the ivory rook, and return to Rook in **Oakhaven's Tavern**
+for **40 gold** and **500 score**. Stairs stay open without clearing enemies.
+After the one-time quest, the labyrinth remains open for further expeditions;
+ordinary enemies return, but the Minotaur and quest reward do not.
 
 The Minotaur guards floor 5 with fixed charge lanes, axe warnings and two health
 phases. Baiting a charge into stone creates a two-action stagger; two reinforced
