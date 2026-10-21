@@ -67,9 +67,9 @@ void test_alder_relocation(void) {
     game.player.x = TOWN_INN_DOOR_X;
     game.player.y = TOWN_INN_DOOR_Y + 1;
     action_resolve_player(&game, (Action){ACTION_MOVE, TOWN_INN_DOOR_X, TOWN_INN_DOOR_Y});
-    ASSERT("Stillbury's Inn houses Alder, Bram, and Rook without Elowen", game.location == LOCATION_INN &&
+    ASSERT("Stillbury's Inn houses Alder and Bram without Elowen or Rook", game.location == LOCATION_INN &&
         game.map.tiles[ALDER_INN_Y][ALDER_INN_X] == TILE_NPC_ALDER && game.map.tiles[ELOWEN_TAVERN_Y][ELOWEN_TAVERN_X] == TILE_TAVERN_FLOOR &&
-        game.map.tiles[7][28] == TILE_NPC_INNKEEPER && game.map.tiles[18][10] == TILE_NPC_ROOK &&
+        game.map.tiles[7][28] == TILE_NPC_INNKEEPER && game.map.tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] == TILE_TAVERN_FLOOR &&
         !map_is_walkable(&game.map, ALDER_INN_X, ALDER_INN_Y) && map_is_walkable(&game.map, ALDER_INN_X, ALDER_INN_Y + 1));
     game_talk_to_alder(&game);
     ASSERT("Alder cannot assign his quest remotely in the Inn", !game.alder_quest_state);

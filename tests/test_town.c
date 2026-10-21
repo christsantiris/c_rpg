@@ -384,17 +384,26 @@ void test_rook_labyrinth(void) {
         !game_labyrinth_is_open(&g));
 
     game_enter_inn(&g);
-    ASSERT("Rook remains in Stillbury's inn while Elowen returns to Oakhaven",
-        g.map.tiles[18][10] == TILE_NPC_ROOK &&
-        g.map.tiles[ELOWEN_TAVERN_Y][ELOWEN_TAVERN_X] == TILE_TAVERN_FLOOR);
+    ASSERT("Rook has left Stillbury's Inn",
+        g.map.tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] == TILE_TAVERN_FLOOR);
     game_talk_to_rook(&g);
+    ASSERT("Rook cannot offer his quest from the Inn", !g.dialogue_active && !g.rook_quest_state);
+    game_enter_tavern(&g);
+    ASSERT("Rook lives in Oakhaven's Tavern beside an accessible floor tile",
+        g.map.tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] == TILE_NPC_ROOK &&
+        map_is_walkable(&g.map, ROOK_TAVERN_X, ROOK_TAVERN_Y + 1));
+    g.player.x = ROOK_TAVERN_X;
+    g.player.y = ROOK_TAVERN_Y + 1;
+    game_talk_to_rook(&g);
+    ASSERT("Rook directs the player west to Stillbury and back to Oakhaven's Tavern",
+        strstr(g.dialogue_text, "west to Stillbury") && strstr(g.dialogue_text, "Oakhaven's Tavern"));
     game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
     ASSERT("Rook assigns the retrieval quest on first conversation",
         g.rook_quest_state == 1 && g.rook_labyrinth_switches == 0 &&
         game_labyrinth_is_open(&g));
     ASSERT("Rook speaks in a dialogue bubble and the status bar notes the quest",
         g.dialogue_active && strcmp(g.dialogue_speaker, "Rook") == 0 &&
-        g.dialogue_x == 10 && g.dialogue_y == 18 &&
+        g.dialogue_x == ROOK_TAVERN_X && g.dialogue_y == ROOK_TAVERN_Y &&
         strstr(g.dialogue_text, "ivory rook") != NULL &&
         strcmp(g.messages[g.message_count - 2], "Assigned: The Ivory Rook.") == 0);
     game_talk_to_rook(&g);
@@ -402,7 +411,8 @@ void test_rook_labyrinth(void) {
         g.dialogue_active && strstr(g.dialogue_text, "One rune per floor") != NULL &&
         strcmp(g.messages[g.message_count - 1],
             "Rook is waiting for the ivory rook.") == 0);
-    game_leave_inn(&g);
+    game_leave_tavern(&g);
+    game_enter_town2(&g);
     g.player.x = TOWN_LABYRINTH_X - 2;
     g.player.y = 12;
     for (int y = 13; y <= TOWN_LABYRINTH_Y + 1; y++) {
@@ -558,7 +568,9 @@ void test_rook_labyrinth(void) {
         g.player.x == TOWN_LABYRINTH_X &&
         g.player.y == TOWN_LABYRINTH_Y + 1 &&
         g.map.tiles[g.player.y][g.player.x] == TILE_TOWN_PATH);
-    game_enter_inn(&g);
+    game_enter_tavern(&g);
+    g.player.x = ROOK_TAVERN_X;
+    g.player.y = ROOK_TAVERN_Y + 1;
     int gold_before = g.gold;
     game_talk_to_rook(&g);
     ASSERT("returning the relic pays Rook's one-time reward",
@@ -580,7 +592,8 @@ void test_rook_labyrinth(void) {
         strcmp(g.dialogue_text, "Thank you for recovering my ivory rook.") == 0 &&
         strcmp(g.messages[g.message_count - 1],
             "Rook's quest is already complete.") == 0);
-    game_leave_inn(&g);
+    game_leave_tavern(&g);
+    game_enter_town2(&g);
     ASSERT("labyrinth remains visibly open after Rook rewards the quest",
         game_labyrinth_is_open(&g));
     g.player.x = TOWN_LABYRINTH_X;
@@ -663,9 +676,9 @@ void test_rook_labyrinth(void) {
     g.player.x = TOWN_INN_DOOR_X;
     g.player.y = TOWN_INN_DOOR_Y + 1;
     action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_INN_DOOR_X, TOWN_INN_DOOR_Y});
-    ASSERT("walking through the Inn door enters Rook's room",
+    ASSERT("walking through the Inn door enters Stillbury's Inn without Rook",
         g.location == LOCATION_INN &&
-        g.map.tiles[18][10] == TILE_NPC_ROOK);
+        g.map.tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] == TILE_TAVERN_FLOOR);
     g.player.x = 20;
     g.player.y = 21;
     action_resolve_player(&g, (Action){ACTION_MOVE, 20, 22});

@@ -750,7 +750,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 151);
+    cJSON_AddNumberToObject(root, "save_version", 152);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -1928,6 +1928,40 @@ static void migrate_quest_giver_locations(GameState *g) {
             }
             g->map.tiles[y][x] = moves[i].tile;
         }
+    }
+}
+
+static void migrate_rook_location(GameState *g) {
+    if (strcmp(g->dialogue_speaker, "Rook") == 0) {
+        g->dialogue_active = 0;
+    }
+    if (g->location == LOCATION_INN || g->location == LOCATION_GUILD) {
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                if (g->map.tiles[y][x] == TILE_NPC_ROOK) {
+                    g->map.tiles[y][x] = TILE_TAVERN_FLOOR;
+                }
+            }
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            if (g->floor_items[i].underlying_tile == TILE_NPC_ROOK) {
+                g->floor_items[i].underlying_tile = TILE_TAVERN_FLOOR;
+            }
+        }
+    }
+    if (g->location == LOCATION_TAVERN) {
+        if (g->player.x == ROOK_TAVERN_X && g->player.y == ROOK_TAVERN_Y) {
+            g->player.y++;
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->active && item->x == ROOK_TAVERN_X && item->y == ROOK_TAVERN_Y) {
+                item->y++;
+                item->underlying_tile = TILE_TAVERN_FLOOR;
+                g->map.tiles[item->y][item->x] = TILE_ITEM;
+            }
+        }
+        g->map.tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] = TILE_NPC_ROOK;
     }
 }
 
@@ -4465,6 +4499,9 @@ int load_game(GameState *g, int slot) {
                 migrate_sunwarden_mantle(&g->castle_loot[level][i].item, NULL);
             }
         }
+    }
+    if (save_version < 152) {
+        migrate_rook_location(g);
     }
     game_migrate_boss_shortcuts(g);
     game_refresh_quest_encounters(g);

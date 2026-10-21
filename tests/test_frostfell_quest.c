@@ -321,7 +321,7 @@ static void test_legacy_save(void) {
     ASSERT("legacy migration preserves player and loot while removing Brenna from the Tavern", loaded.player.x == BRENNA_X &&
         loaded.player.y == BRENNA_Y + 1 && loaded.floor_items[0].active && loaded.floor_items[0].y == BRENNA_Y + 1 &&
         loaded.floor_items[0].item.type == ITEM_WEAPON && loaded.floor_items[0].underlying_tile == TILE_TAVERN_FLOOR &&
-        loaded.map.tiles[BRENNA_Y][BRENNA_X] == TILE_TAVERN_FLOOR && loaded.map.tiles[BRENNA_Y + 1][BRENNA_X] == TILE_ITEM);
+        loaded.map.tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] == TILE_NPC_ROOK && loaded.map.tiles[BRENNA_Y + 1][BRENNA_X] == TILE_ITEM);
     ASSERT("migrated save writes and reloads", save_game(&loaded, FROST_QUEST_SLOT) && load_game(&game, FROST_QUEST_SLOT));
     accept();
     ASSERT("the quest remains available after a previous Kraken victory", game.frostfell_quest_state == 1 &&

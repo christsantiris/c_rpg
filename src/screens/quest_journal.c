@@ -58,8 +58,8 @@ static const QuestDefinition quest_definitions[17] = {
     },
     {
         "The Ivory Rook", "Rook",
-        "Light five runes, defeat the Minotaur, and recover the rook.",
-        "Return and speak to Rook in Stillbury's Inn.",
+        "Travel west to Stillbury: light five runes and defeat the Minotaur.",
+        "Return the ivory rook to Rook in Oakhaven's Tavern.",
         {"Recover the ivory rook", "", ""},
         "Stillbury Labyrinth", {5, 0, 0}, ROOK_QUEST_REWARD, 500
     },
