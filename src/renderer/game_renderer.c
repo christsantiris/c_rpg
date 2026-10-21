@@ -688,6 +688,8 @@ void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, con
         SDL_Color color = {184, 100, 255, 255};
         if (shot->type == ENEMY_FOREST_NECROMANCER) {
             color = (SDL_Color){100, 240, 130, 255};
+        } else if (shot->type == ENEMY_VAMPIRE) {
+            color = (SDL_Color){225, 55, 85, 255};
         } else if (shot->type == ENEMY_WATER_ELEMENTAL || shot->type == ENEMY_DROWNED_QUEEN) {
             color = (SDL_Color){80, 210, 255, 255};
         } else if (shot->type == ENEMY_SIREN) {

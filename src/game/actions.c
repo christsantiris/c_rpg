@@ -33,6 +33,10 @@
 
 static int abs_int(int n) { return n < 0 ? -n : n; }
 
+static int enemy_is_vampire_captor(const Enemy *e) {
+    return e->type == ENEMY_VAMPIRE && strcmp(e->name, "Vampire Captor") == 0;
+}
+
 static Action make_move_or_attack(int tx, int ty) {
     Action a;
     a.target_x = tx;
@@ -1912,8 +1916,9 @@ void action_resolve_player(GameState *g, Action a) {
                             snprintf(msg, sizeof(msg), "%s killed %s!",
                                 sp->name, e->name);
                         } else if (sp->id == SPELL_FROST_BOLT &&
-                            (e->type == ENEMY_ICE_GOLEM ||
+                            (enemy_is_vampire_captor(e) || e->type == ENEMY_ICE_GOLEM ||
                             e->type == ENEMY_POLAR_KRAKEN)) {
+                            e->frozen_turns = 0;
                             snprintf(msg, sizeof(msg),
                                 "%s shrugs off the frost: %d dmg", e->name,
                                 dmg);
@@ -3065,6 +3070,7 @@ static void build_enemy_distance_map(const GameState *g) {
 
 static int enemy_is_major_boss(const Enemy *e) {
     return e->is_boss ||
+        (enemy_is_vampire_captor(e) && e->hp < e->max_hp) ||
         e->type == ENEMY_LICH_KING ||
         e->type == ENEMY_FOREST_NECROMANCER ||
         e->type == ENEMY_MOUNTAIN_GOBLIN_KING ||
@@ -3848,7 +3854,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
 
         if ((e->type == ENEMY_FIRE_ELEMENTAL || e->type == ENEMY_DJINN ||
             e->type == ENEMY_FEY_TRICKSTER || e->type == ENEMY_LIVING_FLOWER ||
-            e->type == ENEMY_CINDER_IMP) &&
+            e->type == ENEMY_CINDER_IMP || enemy_is_vampire_captor(e)) &&
             e->move_timer % 2 == 0 &&
             clear_orthogonal_path(g, i, e)) {
             int dmg = e->attack - g->player.defense / 2;
@@ -3858,7 +3864,8 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
             if (dmg > 0) {
                 char msg[MAX_MESSAGE_LEN];
-                const char *attack = e->type == ENEMY_CINDER_IMP ? "Imp firebolt" :
+                const char *attack = enemy_is_vampire_captor(e) ? "Vampire blood bolt" :
+                    e->type == ENEMY_CINDER_IMP ? "Imp firebolt" :
                     (e->type == ENEMY_FEY_TRICKSTER ? "Fey sparkle" :
                     (e->type == ENEMY_LIVING_FLOWER ? "Carnivorous Flower" :
                     (e->type == ENEMY_DJINN ? "Djinn magic bolt" : "Elemental flame")));
