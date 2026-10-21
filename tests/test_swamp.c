@@ -13,6 +13,93 @@ static Map swamp_layout;
 static unsigned char visited[MAP_H][MAP_W];
 static int queue[MAP_W * MAP_H];
 
+static Enemy *setup_vampire_captor(void) {
+    memset(&swamp_game, 0, sizeof(swamp_game));
+    swamp_game.player.player_class = CLASS_MAGE;
+    game_init(&swamp_game);
+    swamp_game.location = LOCATION_SWAMP;
+    swamp_game.level = SWAMP_RESCUE_LEVEL;
+    memset(&swamp_game.map, 0, sizeof(swamp_game.map));
+    for (int y = 10; y <= 22; y++) {
+        for (int x = 10; x <= 34; x++) {
+            swamp_game.map.tiles[y][x] = TILE_SWAMP_FLOOR;
+        }
+    }
+    swamp_game.map.room_count = 1;
+    swamp_game.map.rooms[0] = (Room){10, 10, 25, 13};
+    swamp_game.player.x = 12;
+    swamp_game.player.y = 16;
+    swamp_game.player.last_dx = 1;
+    swamp_game.player.last_dy = 0;
+    swamp_game.player.mp = 200;
+    swamp_game.player.max_mp = 200;
+    swamp_game.inventory_count = 0;
+    swamp_game.equipped_main_hand = -1;
+    swamp_game.equipped_off_hand = -1;
+    swamp_game.equipped_armor = -1;
+    swamp_game.player.known_spells[0] = spell_make_frost_bolt();
+    swamp_game.player.known_spell_count = 1;
+    swamp_game.player.equipped_spell = 0;
+    swamp_game.enemy_count = 1;
+    swamp_game.enemies[0] = (Enemy){.type = ENEMY_VAMPIRE, .name = "Vampire Captor", .x = 17, .y = 16,
+        .active = 1, .hp = 85, .max_hp = 85, .attack = 15, .defense = 5, .experience = 80};
+    return &swamp_game.enemies[0];
+}
+
+static void test_vampire_captor_engagement(void) {
+    Enemy *captor = setup_vampire_captor();
+    int hp = swamp_game.player.hp;
+    int unfrozen = 1;
+    int bolts = 0;
+    int turns = 0;
+    while (captor->active && turns < 8) {
+        action_resolve_player(&swamp_game, (Action){ACTION_CAST_SPELL, 0, 0});
+        unfrozen &= captor->frozen_turns == 0;
+        EnemyProjectiles shots = {0};
+        action_resolve_enemies_with_projectiles(&swamp_game, &shots);
+        bolts += shots.count;
+        turns++;
+    }
+    ASSERT("repeated Frost Bolts hurt and defeat the captor without freezing him", !captor->active && unfrozen);
+    ASSERT("the captor closes in and retaliates while the mage fires from range", captor->x < 17 && bolts > 0 && swamp_game.player.hp < hp);
+    ASSERT("defeating the captor does not unlock the Swamp Demon's routes", !(swamp_game.defeated_bosses & (1 << LOCATION_SWAMP)));
+
+    captor = setup_vampire_captor();
+    swamp_game.enemy_count = 4;
+    for (int i = 1; i < 4; i++) {
+        swamp_game.enemies[i] = (Enemy){.type = ENEMY_GIANT_RAT, .active = 1, .x = 11 + i, .y = 18, .hp = 9, .max_hp = 10};
+    }
+    action_resolve_player(&swamp_game, (Action){ACTION_CAST_SPELL, 0, 0});
+    action_resolve_enemies(&swamp_game);
+    ASSERT("an attacked captor engages even when three nearer enemies are pursuing", captor->x < 17);
+
+    captor = setup_vampire_captor();
+    captor->frozen_turns = 2;
+    action_resolve_player(&swamp_game, (Action){ACTION_CAST_SPELL, 0, 0});
+    action_resolve_enemies(&swamp_game);
+    int saved = save_game(&swamp_game, 99121) && load_game(&swamp_loaded, 99121);
+    ASSERT("an existing frozen captor recovers and saves his pursuit and attack timing", saved && swamp_loaded.enemies[0].frozen_turns == 0 && swamp_loaded.enemies[0].x < 17 && swamp_loaded.enemies[0].move_timer == 1);
+    hp = swamp_loaded.player.hp;
+    action_resolve_player(&swamp_loaded, (Action){ACTION_CAST_SPELL, 0, 0});
+    EnemyProjectiles shots = {0};
+    action_resolve_enemies_with_projectiles(&swamp_loaded, &shots);
+    ASSERT("the loaded captor retaliates with an animated blood bolt", shots.count == 1 && shots.shots[0].type == ENEMY_VAMPIRE && swamp_loaded.player.hp < hp);
+    remove("saves/savegame_99121.json");
+
+    captor = setup_vampire_captor();
+    captor->hp--;
+    captor->move_timer = 1;
+    swamp_game.map.tiles[16][15] = TILE_SWAMP_WALL;
+    hp = swamp_game.player.hp;
+    action_resolve_enemies_with_projectiles(&swamp_game, &shots);
+    ASSERT("the captor cannot fire blood bolts through swamp walls", shots.count == 0 && swamp_game.player.hp == hp);
+
+    captor = setup_vampire_captor();
+    snprintf(captor->name, sizeof(captor->name), "Vampire");
+    action_resolve_player(&swamp_game, (Action){ACTION_CAST_SPELL, 0, 0});
+    ASSERT("ordinary vampires still receive Frost Bolt's freeze", captor->hp < captor->max_hp && captor->frozen_turns == 2);
+}
+
 static int swamp_exit_reachable(const Map *map) {
     memset(visited, 0, sizeof(visited));
     int head = 0;
@@ -74,6 +161,7 @@ static int swamp_exits_at_edges(const Map *map) {
 
 void test_swamp(void) {
     printf("Swamp tests:\n");
+    test_vampire_captor_engagement();
     swamp_game.player.player_class = CLASS_WARRIOR;
     game_init(&swamp_game);
     srand(19);
