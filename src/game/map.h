@@ -83,6 +83,8 @@
 #define TAVERN_H 21
 #define ELOWEN_TAVERN_X 10
 #define ELOWEN_TAVERN_Y 7
+#define ROOK_TAVERN_X 10
+#define ROOK_TAVERN_Y 18
 #define TOWN_CAIN_X 19
 #define TOWN_CAIN_Y 11
 #define TOWN_BRAM_X 17

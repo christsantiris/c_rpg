@@ -74,7 +74,8 @@ void test_enemy_projectiles(void) {
             shots.count == 1 && shots.shots[0].type == ranged[i] &&
             shots.shots[0].start_x == 14 && shots.shots[0].start_y == 20 &&
             shots.shots[0].target_x == 20 && shots.shots[0].target_y == 20);
-        ASSERT("projectile attacks retain their existing damage", g.player.hp == 90);
+        ASSERT("projectile damage follows regional balance",
+            g.player.hp == (g.location == LOCATION_DESERT ? 91 : 90));
     }
 
     setup_ranged_enemy(&g, ENEMY_GOBLIN_ARCHER);

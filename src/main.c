@@ -222,6 +222,8 @@ static int debug_weapon(const char *name, Item *weapon, int *none) {
         *weapon = item_make_magic_longbow();
     } else if (strcmp(name, "krakenbone-bow") == 0) {
         *weapon = item_make_krakenbone_bow();
+    } else if (strcmp(name, "rusty-dagger") == 0) {
+        *weapon = item_make_rusty_dagger();
     } else if (strcmp(name, "dagger") == 0) {
         *weapon = item_make_dagger();
     } else if (strcmp(name, "magic-dagger") == 0) {
@@ -822,6 +824,9 @@ int main(int argc, char **argv) {
                             Action a = {ACTION_EQUIP_OFF_HAND,
                                 inventory_screen.selected, 0};
                             action_resolve_player(&game, a);
+                        } else if (result == INVENTORY_UNEQUIP) {
+                            Action a = {ACTION_UNEQUIP_ITEM, inventory_screen.selected, 0};
+                            action_resolve_player(&game, a);
                         } else if (result == INVENTORY_DROP) {
                             Action a = {ACTION_DROP_ITEM,
                                 inventory_screen.selected, 0};
@@ -1299,44 +1304,26 @@ int main(int argc, char **argv) {
                                 inventory_screen.selected = i;
                             }
                         }
-                        // Check hint bar button regions
+                        // Match the inventory's two rows of three action buttons.
                         int hint_y = (renderer.tiles_y - 2) * TILE_SIZE;
-                        int cx = renderer.screen_w / 2;
-                        // U - Use
-                        if (event.button.y >= hint_y &&
-                            event.button.y <= hint_y + 24 &&
-                            event.button.x >= cx - 245 &&
-                            event.button.x <= cx - 190) {
-                            handle_inventory_use(&game, &inventory_screen, &screen, &enemy_shots, &enemy_shots_started_at);
-                        }
-                        // E - Equip
-                        if (event.button.y >= hint_y &&
-                            event.button.y <= hint_y + 24 &&
-                            event.button.x >= cx - 180 &&
-                            event.button.x <= cx - 100) {
-                            Action a = {ACTION_EQUIP_ITEM, inventory_screen.selected, 0};
-                            action_resolve_player(&game, a);
-                        }
-                        // O - Equip off-hand
-                        if (event.button.y >= hint_y &&
-                            event.button.y <= hint_y + 24 &&
-                            event.button.x >= cx - 95 &&
-                            event.button.x <= cx + 20) {
-                            Action a = {ACTION_EQUIP_OFF_HAND, inventory_screen.selected, 0};
-                            action_resolve_player(&game, a);
-                        }
-                        // D - Drop
-                        if (event.button.y >= hint_y &&
-                            event.button.y <= hint_y + 24 &&
-                            event.button.x >= cx + 25 &&
-                            event.button.x <= cx + 90) {
-                            Action a = {ACTION_DROP_ITEM, inventory_screen.selected, 0};
-                            action_resolve_player(&game, a);
-                            if (inventory_screen.selected >= game.inventory_count) {
-                                inventory_screen.selected = game.inventory_count - 1;
-                            }
-                            if (inventory_screen.selected < 0) {
-                                inventory_screen.selected = 0;
+                        int left = renderer.screen_w / 2 - 270;
+                        if (event.button.y >= hint_y && event.button.y < hint_y + 32 &&
+                            event.button.x >= left && event.button.x < left + 540) {
+                            int button = (event.button.x - left) / 180 + (event.button.y - hint_y) / 16 * 3;
+                            if (button == 0) {
+                                handle_inventory_use(&game, &inventory_screen, &screen, &enemy_shots, &enemy_shots_started_at);
+                            } else if (button == 5) {
+                                screen = SCREEN_PLAYING;
+                            } else {
+                                static const ActionType actions[] = {ACTION_NONE, ACTION_EQUIP_ITEM,
+                                    ACTION_EQUIP_OFF_HAND, ACTION_UNEQUIP_ITEM, ACTION_DROP_ITEM};
+                                action_resolve_player(&game, (Action){actions[button], inventory_screen.selected, 0});
+                                if (inventory_screen.selected >= game.inventory_count) {
+                                    inventory_screen.selected = game.inventory_count - 1;
+                                }
+                                if (inventory_screen.selected < 0) {
+                                    inventory_screen.selected = 0;
+                                }
                             }
                         }
                     }

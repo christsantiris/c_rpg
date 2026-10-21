@@ -228,7 +228,7 @@ phase messages to communicate escalation.
   toggle closes a door on an occupant or creates an unavoidable strike.
 - **Guaranteed reward:** new **Sunwarden Mantle** directly on victory, separate
   from Nahla's treasure turn-in. Proposed all-class light armor: +5 defense,
-  +15 maximum HP and +15 maximum MP. The buried treasure and quest reward remain.
+  +8 maximum HP and +7 maximum MP. The buried treasure and quest reward remain.
 - **Change:** replace the current immediate ranged retaliation with a visible,
   scheduled response. Ranged classes receive the same warning opportunity.
 

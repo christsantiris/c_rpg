@@ -34,7 +34,9 @@ Active graves use tomb props; consecrated graves have a pale blue cross.
 Numbered warning tiles and the boss panel show the attack and countdown.
 Root branches sit below the numbers to keep the warnings readable. Warnings
 work over floor loot, and covered grave interactions preserve the loot. The
-boss panel sits below the minimap when the play area is narrow.
+boss status now appears in the right sidebar in place of the control hints,
+keeping the playfield clear. On very short windows it appears above the
+character details. The captures above show the original overlay layout.
 
 ## Play testing
 
@@ -74,8 +76,8 @@ and enter the Haunted Forest through the ordinary west gate, reaching stage 4.
 [`necromancer.c`](../../../src/game/necromancer.c) owns the encounter clock,
 warning predicates, grave interactions, reward restoration and migration.
 The existing spawn/action/travel code dispatches these hooks; the game renderer
-draws the props, warnings and boss panel. Existing Crypt Conjurer behavior is
-preserved.
+draws the props and warnings, and the info panel draws the boss status. Existing
+Crypt Conjurer behavior is preserved.
 
 Save version **125** adds `necromancer_reward_state` and retains both bits of
 `boss_wave_used` instead of treating that field as a boolean. The shared enemy

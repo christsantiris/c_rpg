@@ -2355,7 +2355,6 @@ static void map_generate_tavern_room(Map *m, int *spawn_x, int *spawn_y, int inn
     }
 
     if (inn) {
-        m->tiles[18][10] = TILE_NPC_ROOK;
         m->tiles[7][28] = TILE_NPC_INNKEEPER;
     } else {
         m->tiles[7][28] = TILE_TAVERN_FLOOR;
@@ -2372,6 +2371,7 @@ static void map_generate_tavern_room(Map *m, int *spawn_x, int *spawn_y, int inn
 void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y) {
     map_generate_tavern_room(m, spawn_x, spawn_y, 0);
     map_place_tavern_elowen(m);
+    m->tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] = TILE_NPC_ROOK;
     m->tiles[MARA_TAVERN_Y][MARA_TAVERN_X] = TILE_NPC_MARA;
     m->tiles[ILYA_TAVERN_Y][ILYA_TAVERN_X] = TILE_NPC_DRAGON_SEEKER;
 }

@@ -93,7 +93,7 @@ int sun_guardian_attack_marks(const GameState *g, const Enemy *e, int x, int y) 
     if (e->boss_attack == GUARDIAN_LANCE) {
         return lance_marks(g, e, x, y);
     }
-    if (!sanctuary(x, y)) {
+    if (!map_is_walkable(&g->map, x, y) || (!sanctuary(x, y) && e->boss_attack != GUARDIAN_LUNAR)) {
         return 0;
     }
     int dx = abs(x - e->attack_target_x);
@@ -206,12 +206,17 @@ int sun_guardian_tick(GameState *g, Enemy *e, EnemyProjectiles *shots) {
     if (phase > e->attack_phase) {
         e->attack_phase = phase;
         push_message(g, phase == 2 ? "Eclipse! Solar lanes alternate with lunar bursts. The next alignment is announced." :
-            "Cracked Core! Two-action sunburst rings join the lances. Lunar sanctuaries remain safe.");
+            "Cracked Core! Two-action sunburst rings join the lances. Match sanctuaries to the announced element.");
     }
     e->boss_attack = e->attack_phase == 2 ? (e->boss_wave_used % 2 ? GUARDIAN_LUNAR : GUARDIAN_LANES) :
-        e->attack_phase == 1 && e->boss_wave_used % 2 ? GUARDIAN_RING : GUARDIAN_LANCE;
+        e->boss_wave_used % 2 ? (e->attack_phase == 1 ? GUARDIAN_RING : GUARDIAN_LUNAR) : GUARDIAN_LANCE;
     if (!sanctuary(g->player.x, g->player.y)) {
         e->boss_attack = GUARDIAN_LANCE;
+    }
+    // Aim at diagonal attackers and counter a refuge only before declaring.
+    if ((e->boss_attack == GUARDIAN_LANCE && g->player.x != e->x && g->player.y != e->y) ||
+        sun_guardian_sanctuary_protects(g, e, g->player.x, g->player.y)) {
+        e->boss_attack = e->boss_attack == GUARDIAN_LUNAR ? GUARDIAN_LANES : GUARDIAN_LUNAR;
     }
     e->move_timer = e->boss_attack == GUARDIAN_LANCE && e->attack_phase < 2 ? 1 : 2;
     if (e->boss_attack == GUARDIAN_LANCE) {

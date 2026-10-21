@@ -79,6 +79,12 @@ The forest, mountains, and swamp can be played from either end, with their
 boss on level 4. Defeating that boss opens a shortcut to the opposite town;
 the remaining three levels can also be explored.
 
+Every adventure floor and travel route has a description box with a title and
+two terrain or navigation tips, including boss floors. Coast boxes retain the
+current tide state, and temple boxes show alignment and the remaining foes
+sealing the stairs or treasure. Descriptions give way to visible boss status
+panels, then return when those panels disappear.
+
 ## OakHaven and Progression
 
 The roads through OakHaven lead north to the mountains, west to the forest, east
@@ -193,8 +199,9 @@ actions. The guaranteed Sandstorm Staff remains a rare two-handed Mage weapon.
 Unclaimed rewards survive travel and saving, including a full loot floor or
 inventory. See the [Pharaoh play-test guide](docs/art-sources/desert-pharaoh-encounter/README.md).
 A visual sandstorm sweeps across Sunscar with blowing sand and a light amber
-haze. Enter the Adventurer's Guild in Rosemoor, speak with Zara, and
-press **Y** to accept The Lost Magic Lamp. Recover the lamp on Sunscar level 4,
+haze. Speak with Zara in Stillbury's Inn and
+press **Y** to accept The Lost Magic Lamp. Stand on the lamp on Sunscar level 4
+and press **P** (Pick Up) to recover it,
 then return to Zara for a one-time reward of 80 gold and 600 score. Speaking
 with Cain explains the dangers beyond town, recommends Elowen's **The Broken
 Seals** quest in Oakhaven's Tavern, and grants one Scroll of Return to Town when
@@ -218,12 +225,12 @@ NPC quest offers wait for **Y** to accept or **N** to decline (**Esc** also
 declines). Declined quests remain available when you talk again and do not
 appear in the active journal. Existing active quests keep their progress.
 
-Oakhaven's Tavern houses **Elowen**, Mara, and Ilya. Press **T** beside
+Oakhaven's Tavern houses **Elowen**, Mara, Ilya, and Rook. Press **T** beside
 Elowen, then **Y** to accept **The Broken Seals**, restore the burial seals on
 **Oakhaven's dungeon floors 2, 3, and 4**, and return to her in the Tavern for
 **40 gold and 300 score**. This local quest can be accepted and completed
 without visiting another town. Existing saves preserve seal progress and update
-her location. Stillbury's Inn houses Alder, Liora, Brenna, Rook, and Bram.
+her location. Stillbury's Inn houses Alder, Liora, Brenna, and Bram.
 
 Each town also has a local building in its southwest quarter. Walk through its
 door and press **T** beside the resident to talk. The baker and abbot wait until
@@ -270,7 +277,14 @@ the central boss, take its shortcut to Oakhaven and use the unlocked town roads
 home, or fight through the remaining three stages. Both regions remain playable
 from Oakhaven, where the quest objectives follow the central boss.
 
-Rogues start with a **Hunting Bow** (+3 attack, range 3). The Blacksmith adds
+Rogues start with a **Rusty Dagger** (+1 attack, 10% melee critical chance,
++10% gold drop rating) and a **Hunting Bow** (+3 attack, range 3). **Dagger**
+upgrades to +3 attack, 25% critical chance and +25% gold; **Magic Dagger** has
++7 attack, 40% critical chance and +50% gold. On melee kills, the gold rating
+increases both coin-drop chance and purse size; off-hand daggers contribute
+half their rating. Bow, spell and environmental kills receive no dagger bonus.
+Existing saved daggers gain the new ratings and attack balance while retaining
+sharpening and equipped stats. The Blacksmith adds
 **Shortbow** (+5, range 5), **Longbow** (+7, range 7), and **Crossbow** (+9,
 range 5). **Magic Longbow** remains the strongest at +13 attack, range 7, with
 piercing arrows. Krakenbone Bow also has range 7; no bow can shoot farther.
@@ -321,16 +335,16 @@ The Alchemist also sells Mana Potions.
 
 ### Rook's labyrinth
 
-Speak with Rook in Stillbury's Inn and press **Y** to accept his one-time
-retrieval quest and open the labyrinth gate on the eastern outskirts, across the
-road from the witch's hut. Explore five maze floors, each with a rune and
-enemies. Each of the first four floors has two identical-looking downward
-stairs: one leads onward, while the other reaches a short dead-end corridor with
-a return stair. Light all five runes, defeat the Minotaur, recover the ivory
-rook, and return to Rook for **40 gold** and **500 score**. Stairs stay open
-without clearing enemies. After the one-time quest, the labyrinth remains open
-for further expeditions; ordinary enemies return, but the Minotaur and quest
-reward do not.
+Speak with Rook in Oakhaven's Tavern and press **Y** to accept his one-time
+retrieval quest. Travel **west to Stillbury** and find the labyrinth gate on
+its eastern outskirts, across the road from the witch's hut. Explore five maze
+floors, each with a rune and enemies. Each of the first four floors has two
+identical-looking downward stairs: one leads onward, while the other reaches a
+short dead-end corridor with a return stair. Light all five runes, defeat the
+Minotaur, recover the ivory rook, and return to Rook in **Oakhaven's Tavern**
+for **40 gold** and **500 score**. Stairs stay open without clearing enemies.
+After the one-time quest, the labyrinth remains open for further expeditions;
+ordinary enemies return, but the Minotaur and quest reward do not.
 
 The Minotaur guards floor 5 with fixed charge lanes, axe warnings and two health
 phases. Baiting a charge into stone creates a two-action stagger; two reinforced
@@ -601,13 +615,15 @@ and permanently awakens dormant Moonbound Sentinels; switching back does not
 petrify them. Walls and closed doors block all ranged attacks.
 
 The Fallen Sun Guardian has three phases: **Sunbound Armor**, **Cracked Core**
-at half health and **Eclipse** at quarter health. Fixed solar lances escalate
-to two-action sunburst rings, solar lanes and lunar bursts. Every attack is
+at half health and **Eclipse** at quarter health. Opening solar lances alternate
+with lunar bursts; later phases add sunburst rings and solar lanes. Diagonal
+attackers draw targeted bursts, and camping a sanctuary draws its opposite
+element. Frost Bolt deals damage but cannot freeze the Guardian. Every attack is
 marked before it fires, including against adjacent or ranged attackers.
 Sun alignment strengthens its armor; Moon exposes it. Use the summit altars
 to choose a guard against the announced attack, or walk onto a matching
 sanctuary: **M** protects against solar strikes and **S** against lunar bursts.
-Victory grants the all-class **Sunwarden Mantle** (+5 defense, +15 HP, +15 MP);
+Victory grants the all-class **Sunwarden Mantle** (+5 defense, +8 HP, +7 MP);
 a full pack leaves it safely reserved in a reliquary. Clear the remaining
 Sun and Moon enemies, recover the buried treasure, and return to **Nahla on
 the Ruined Isle** for her separate quest reward. See the
@@ -649,9 +665,12 @@ always shows the current keys.
 | `Esc` | Close the current view or return to the main menu |
 
 Inside the inventory, use the arrow keys to select an item, `U` to use it,
-`E` or `Enter` to equip it, `O` to equip a one-handed weapon in the off hand, and
-`D` to drop it. In the spellbook, select a spell and press `E` or `Enter` to
-equip it. Shops, the healer, the witch, and the harbor use the arrow keys and
+`E` or `Enter` to equip it, `O` to equip a one-handed weapon in the off hand,
+`X` to unequip the selected item, and `D` to drop it. Unequipping the main-hand
+weapon promotes an off-hand weapon to the main hand; the removed weapon stays
+in inventory and can then be equipped with `O` to swap hands. Inventory action
+labels also support mouse clicks. In the spellbook, select a spell and press
+`E` or `Enter` to equip it. Shops, the healer, the witch, and the harbor use the arrow keys and
 `Enter`; shop buy and sell modes are switched with `Tab`.
 
 Using an item keeps the inventory open, even after consuming the last item.
@@ -659,7 +678,8 @@ Close it manually with **I** (or the remapped inventory key) or **Esc**.
 Drinking any potion still consumes one combat turn: enemies respond, and
 poison and freezing advance with that turn.
 Attempting to drink at full HP or MP keeps the potion and costs no turn;
-reading scrolls and equipping or dropping items remain free inventory actions.
+reading scrolls and equipping, unequipping or dropping items remain free
+inventory actions.
 
 ## Game Documentation
 
@@ -795,7 +815,7 @@ with **I** and equip the weapon with **E** or **Enter**.
 | Axes | `battle-axe`, `magic-battle-axe`, `embercleaver` |
 | Staves | `staff`, `runed-staff`, `magic-staff`, `sandstorm-staff` |
 | Bows | `hunting-bow` (`bow` also works), `shortbow`, `longbow`, `crossbow`, `magic-longbow`, `krakenbone-bow` |
-| Daggers | `dagger`, `magic-dagger` |
+| Daggers | `rusty-dagger`, `dagger`, `magic-dagger` |
 
 Examples:
 
@@ -882,4 +902,4 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 - Recruit a party to join the adventure
 - Improve difficulty scaling and economy
    Warrior and Rogue should struggle at certain levels without better weapons. Mage should struggle without better spells. Purchasing new weapons, armor and tomes should become necessary to progress.
-- Make ruined temple boss more difficult
+- Add paypal integration to buy gold

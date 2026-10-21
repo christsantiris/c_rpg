@@ -60,7 +60,7 @@ static void test_tavern(void) {
     start();
     game_enter_tavern(&game);
     ASSERT("Oakhaven's Tavern houses Elowen beside the other quest givers", game.map.tiles[ELOWEN_TAVERN_Y][ELOWEN_TAVERN_X] == TILE_NPC_ELOWEN &&
-        game.map.tiles[BRENNA_Y][BRENNA_X] == TILE_TAVERN_FLOOR && game.map.tiles[MARA_TAVERN_Y][MARA_TAVERN_X] == TILE_NPC_MARA &&
+        game.map.tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] == TILE_NPC_ROOK && game.map.tiles[MARA_TAVERN_Y][MARA_TAVERN_X] == TILE_NPC_MARA &&
         game.map.tiles[ILYA_TAVERN_Y][ILYA_TAVERN_X] == TILE_NPC_DRAGON_SEEKER &&
         !map_is_walkable(&game.map, ELOWEN_TAVERN_X, ELOWEN_TAVERN_Y) && map_is_walkable(&game.map, ELOWEN_TAVERN_X, ELOWEN_TAVERN_Y + 1));
     game_talk_to_elowen(&game);
@@ -97,8 +97,8 @@ static void test_tavern(void) {
     game.player.y = ELOWEN_TAVERN_Y + 1;
     game.elowen_quest_state = 0;
     game_talk_to_elowen(&game);
-    ASSERT("the Inn loses Elowen while retaining Alder, Rook, and Bram", game.map.tiles[ELOWEN_TAVERN_Y][ELOWEN_TAVERN_X] == TILE_TAVERN_FLOOR &&
-        game.map.tiles[18][10] == TILE_NPC_ROOK && game.map.tiles[7][28] == TILE_NPC_INNKEEPER &&
+    ASSERT("the Inn retains Alder and Bram without Elowen or Rook", game.map.tiles[ELOWEN_TAVERN_Y][ELOWEN_TAVERN_X] == TILE_TAVERN_FLOOR &&
+        game.map.tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] == TILE_TAVERN_FLOOR && game.map.tiles[7][28] == TILE_NPC_INNKEEPER &&
         game.map.tiles[ALDER_INN_Y][ALDER_INN_X] == TILE_NPC_ALDER && !game.elowen_quest_state && !game.dialogue_active);
     int x;
     int y;

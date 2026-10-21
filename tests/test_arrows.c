@@ -92,6 +92,8 @@ void test_arrows(void) {
     game.player.player_class = CLASS_ROGUE;
     game_init(&game);
     ASSERT("a new Rogue receives 100 arrows", game.player.arrows == MAX_ARROWS);
+    // This scenario deliberately removes the backup dagger to test an empty bow.
+    game.inventory_count = 1;
     game.equipped_main_hand = 0;
     game.player.x = 20;
     game.player.y = 12;

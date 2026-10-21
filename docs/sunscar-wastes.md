@@ -5,6 +5,12 @@ west; backtracking uses the east edge. The first stage's east exit and the final
 stage's west exit return to Stillbury. The Desert Pharaoh guards the final exit
 and drops the Sandstorm Staff.
 
+Incoming combat damage is reduced by **15% after defense**, rounded to the
+nearest whole HP with a minimum of 1, before shield blocks. This includes the
+Pharaoh's attacks and lingering sand. Enemy health, patrol counts, attack
+patterns, poison and rewards are unchanged. The reduction applies immediately
+to existing saves to ease potion use during longer expeditions.
+
 ## Dune basins and oasis wells
 
 Dune basins are broken up by broad sandstone mesas, staggered rock spines and
@@ -102,8 +108,8 @@ availability after an old victory. See the
 
 Enter Stillbury's Inn. Approach Zara and press `T` to hear her offer, then `Y`
 to accept her quest. Travel to Sunscar through Stillbury's west gate and find
-the golden magic lamp in the last clearing of stage 4. Stand on it and press `A` to recover it, then return
-to Zara in the Inn.
+the golden magic lamp in the last clearing of stage 4. Stand on it and press
+`P` (Pick Up) to recover it, then return to Zara in the Inn.
 
 The one-time reward is **80 gold and 600 score**. The lamp uses quest state rather
 than inventory space, so a full pack does not prevent recovery. The journal
