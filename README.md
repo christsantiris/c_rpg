@@ -7,6 +7,7 @@ A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explo
 ## Table of Contents
 
 - [Overview](#overview)
+- [World Map](#world-map)
 - [Combat Areas and Level Counts](#combat-areas-and-level-counts)
 - [Town and Progression](#town-and-progression)
 - [Controls](#controls)
@@ -47,6 +48,13 @@ through the remaining three stages as difficulty decreases.
 Forest, swamp, and mountain boss victories show a shortcut discovery prompt
 until Enter is pressed. The marked shortcut appears beside the defeated boss,
 including when a boss has been lured away from its original room.
+
+## World Map
+
+[![Illustrated world map showing the four towns, the Castle of No Return, forests, swamps, deserts, snowy peaks, Ashen Hollow's volcanoes, coastlines, and the Ruined Isle.](docs/images/world-map.png)](docs/images/world-map.png)
+
+An illustrated overview based on the world's town connections. North is up;
+distances and coastlines are illustrative rather than to scale.
 
 ## Combat Areas and Level Counts
 
@@ -550,9 +558,9 @@ awarded once. Already extinguished memorials and previous boss victories count;
 acceptance preserves exploration and portals. Quest objects use no inventory
 space. The quest is optional and does not gate castle entry or victory.
 
-### Harbor and Ruined Isle
+### Docks and Ruined Isle
 
-Captain Rowan waits near the harbor and describes the island before it is
+Captain Rowan waits near the docks and describes the island before it is
 reachable. Defeat the Drowned Queen on the Sunken Coast to extend the OakHaven
 road to the dock. Speak with Rowan to receive the Island Treasure Map, then
 walk into the dock entrance to board the ship. The first voyage consumes the
@@ -629,7 +637,7 @@ Sun and Moon enemies, recover the buried treasure, and return to **Nahla on
 the Ruined Isle** for her separate quest reward. See the
 [Guardian play-test guide](docs/art-sources/sun-guardian-encounter/README.md).
 Return to Town works
-inside the temple and leaves a portal near the harbor that restores the exact
+inside the temple and leaves a portal near the docks that restores the exact
 temple tier, position, and encounter state. Descend from the first tier through
 the southern entrance to return to the island surface.
 
@@ -670,7 +678,7 @@ Inside the inventory, use the arrow keys to select an item, `U` to use it,
 weapon promotes an off-hand weapon to the main hand; the removed weapon stays
 in inventory and can then be equipped with `O` to swap hands. Inventory action
 labels also support mouse clicks. In the spellbook, select a spell and press
-`E` or `Enter` to equip it. Shops, the healer, the witch, and the harbor use the arrow keys and
+`E` or `Enter` to equip it. Shops, the healer, the witch, and the docks use the arrow keys and
 `Enter`; shop buy and sell modes are switched with `Tab`.
 
 Using an item keeps the inventory open, even after consuming the last item.
@@ -699,7 +707,7 @@ inventory actions.
 - [Glassdeep Caverns](docs/glassdeep-caverns.md)
 - [Royal Catacombs](docs/catacombs.md)
 - [Castle interior and play testing](docs/castle-design.md)
-- [Harbor, Ruined Isle, and Ruined Temple](docs/harbor-and-ruined-isle.md)
+- [Docks, Ruined Isle, and Ruined Temple](docs/harbor-and-ruined-isle.md)
 
 ## Screenshots
 
@@ -903,3 +911,5 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 - Improve difficulty scaling and economy
    Warrior and Rogue should struggle at certain levels without better weapons. Mage should struggle without better spells. Purchasing new weapons, armor and tomes should become necessary to progress.
 - Add paypal integration to buy gold
+- Expand world map
+   Farms between areas for rest to improve hp. Additional in-town quests similar to labrynth. 

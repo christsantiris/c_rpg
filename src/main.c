@@ -1202,7 +1202,7 @@ int main(int argc, char **argv) {
                                 game.player.y == TOWN_HARBOR_ENTRANCE_Y) {
                                 harbor_init(&harbor_screen);
                                 screen = SCREEN_HARBOR;
-                                push_message(&game, "You enter the harbor dock.");
+                                push_message(&game, "You enter the docks.");
                             }
                             int projectile_started =
                                 ((a.type == ACTION_CAST_SPELL &&
