@@ -152,6 +152,8 @@ static void test_forest_crossing(int reverse, int shortcut) {
         ASSERT("loaded grove retains its shortcut destination", restored.forest_entry_town == forest.forest_entry_town && restored.map.tiles[y][x] == TILE_FOREST_SHORTCUT);
         ASSERT("grove save retains quest rescues", restored.alder_quest_state == forest.alder_quest_state && restored.alder_wardens_rescued == forest.alder_wardens_rescued);
         action_resolve_player(&restored, (Action){ACTION_MOVE, x, y});
+        ASSERT("forest shortcut waits for confirmation", restored.location == LOCATION_FOREST && game_shortcut_prompt_active(&restored));
+        game_handle_shortcut_prompt_key(&restored, SDL_SCANCODE_RETURN, 0);
         memcpy(&forest, &restored, sizeof(forest));
         remove("saves/savegame_99031.json");
     } else {
