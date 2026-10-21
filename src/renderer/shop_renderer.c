@@ -82,6 +82,7 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
     const char *title = s->type == SHOP_TYPE_ALCHEMIST ? "ALCHEMIST"
         : s->type == SHOP_TYPE_BLACKSMITH ? "BLACKSMITH"
         : s->type == SHOP_TYPE_HEALER ? "HEALER"
+        : s->type == SHOP_TYPE_FLETCHER ? "FLETCHER"
         : s->type == SHOP_TYPE_APOTHECARY ? "APOTHECARY" : "WITCH";
     renderer_draw_text(r, title, cx - 60, 40, gold, r->font_large);
 
@@ -103,7 +104,9 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
     SDL_Color buy_color  = s->mode == 0 ? gold : dimmed;
     SDL_Color sell_color = s->mode == 1 ? gold : dimmed;
     renderer_draw_text(r, "BUY",  cx - 60, 108, buy_color,  r->font_small);
-    renderer_draw_text(r, "SELL", cx,       108, sell_color, r->font_small);
+    if (s->type != SHOP_TYPE_FLETCHER) {
+        renderer_draw_text(r, "SELL", cx, 108, sell_color, r->font_small);
+    }
 
     int list_count = s->mode == 0 ? s->item_count : g->inventory_count;
     int visible_rows = shop_visible_rows(r);
@@ -221,6 +224,6 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
         }
     }
 
-    renderer_draw_text(r, "TAB BUY/SELL   ENTER SELECT   ESC CLOSE",
+    renderer_draw_text(r, s->type == SHOP_TYPE_FLETCHER ? "ENTER BUY ARROWS   ESC CLOSE" : "TAB BUY/SELL   ENTER SELECT   ESC CLOSE",
         cx - 200, (r->tiles_y - 2) * TILE_SIZE, hint, r->font_small);
 }

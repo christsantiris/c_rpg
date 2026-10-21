@@ -383,6 +383,7 @@ int game_interact_frostfell(GameState *g);
 int game_has_emberforge_interaction(const GameState *g);
 int game_interact_emberforge(GameState *g);
 int game_workshop_near_smith(const GameState *g);
+int game_workshop_near_fletcher(const GameState *g);
 int game_sharpen_weapon(GameState *g, int index);
 void game_leave_guild(GameState *g);
 void game_talk_to_guild_seeker(GameState *g);

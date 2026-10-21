@@ -2,6 +2,7 @@
 #include "game/game.h"
 #include "game/castle.h"
 #include "screens/workshop.h"
+#include "screens/shop.h"
 #include "systems/save_load.h"
 #include "../external/cJSON.h"
 #include <stdlib.h>
@@ -104,6 +105,71 @@ static void test_workshop_purchase(void) {
         game.inventory[1].attack_bonus == 4 && game.player.attack == attack);
 }
 
+static void test_workshop_fletcher(void) {
+    start();
+    ASSERT("Tessa appears at the workshop bench without replacing Garrick", game.map.tiles[WORKSHOP_FLETCHER_Y][WORKSHOP_FLETCHER_X] == TILE_NPC_FLETCHER && !map_is_walkable(&game.map, WORKSHOP_FLETCHER_X, WORKSHOP_FLETCHER_Y) && game_workshop_near_smith(&game) && !game_workshop_near_fletcher(&game));
+    game.player.x = WORKSHOP_FLETCHER_X;
+    game.player.y = WORKSHOP_FLETCHER_Y + 1;
+    ASSERT("Tessa is reachable from the workshop floor and uses adjacent Talk", map_is_walkable(&game.map, game.player.x, game.player.y) && game_workshop_near_fletcher(&game) && !game_workshop_near_smith(&game));
+    game.player.x++;
+    ASSERT("Tessa cannot be spoken to diagonally", !game_workshop_near_fletcher(&game));
+    game.player.x--;
+    game.location = LOCATION_TOWN_HALL;
+    ASSERT("Tessa cannot open a shop in another interior", !game_workshop_near_fletcher(&game));
+    game.location = LOCATION_WORKSHOP;
+    ShopScreen shop;
+    for (int cls = 0; cls < 3; cls++) {
+        shop_init(&shop, SHOP_TYPE_FLETCHER, 0, cls);
+        ASSERT("Tessa stocks only arrows for every class without boss prerequisites", shop.item_count == 1 && shop.items[0].type == ITEM_ARROWS && shop_buy_price(&shop.items[0]) == 10);
+    }
+    shop_handle_key(&shop, SDL_SCANCODE_TAB);
+    ASSERT("the arrow shop stays in buy mode and supports purchase and exit keys", shop.mode == 0 && shop_handle_key(&shop, SDL_SCANCODE_RETURN) == SHOP_BUY && shop_handle_key(&shop, SDL_SCANCODE_ESCAPE) == SHOP_CLOSED);
+    game.player.arrows = 0;
+    game.gold = 9;
+    ASSERT("Tessa refuses an unaffordable bundle without changing gold or arrows", !shop_purchase(&game, &shop.items[0]) && game.gold == 9 && game.player.arrows == 0);
+    game.gold = 10;
+    ASSERT("Tessa sells twenty arrows for ten gold without adding an inventory item", shop_purchase(&game, &shop.items[0]) && game.player.arrows == 20 && game.gold == 0 && game.inventory_count == 7);
+    game.player.arrows = 95;
+    game.gold = 3;
+    ASSERT("Tessa charges a reduced price for the last five arrows", shop_purchase(&game, &shop.items[0]) && game.player.arrows == MAX_ARROWS && game.gold == 0);
+    game.gold = 10;
+    ASSERT("a full quiver cannot be charged again", !shop_purchase(&game, &shop.items[0]) && game.gold == 10 && game.player.arrows == MAX_ARROWS);
+    ASSERT("workshop arrows, gold and Tessa survive saving and loading", save_game(&game, WORKSHOP_TEST_SLOT) && load_game(&loaded, WORKSHOP_TEST_SLOT) && loaded.player.arrows == MAX_ARROWS && loaded.gold == 10 && game_workshop_near_fletcher(&loaded) && loaded.map.tiles[WORKSHOP_FLETCHER_Y][WORKSHOP_FLETCHER_X] == TILE_NPC_FLETCHER);
+    remove("saves/savegame_99137.json");
+    map_generate_town_hall(&loaded.map, &loaded.player.x, &loaded.player.y);
+    ASSERT("the shared interior generator does not add Tessa to Town Hall", loaded.map.tiles[WORKSHOP_FLETCHER_Y][WORKSHOP_FLETCHER_X] != TILE_NPC_FLETCHER);
+}
+
+static void test_workshop_fletcher_migration(void) {
+    start();
+    game_sharpen_weapon(&game, 0);
+    action_resolve_player(&game, (Action){ACTION_DROP_ITEM, 1, 0});
+    game.player.arrows = 42;
+    game.map.tiles[WORKSHOP_FLETCHER_Y][WORKSHOP_FLETCHER_X] = TILE_TAVERN_TABLE;
+    ASSERT("pre-fletcher workshop fixture saves", save_game(&game, WORKSHOP_TEST_SLOT));
+    FILE *file = fopen("saves/savegame_99137.json", "rb");
+    fseek(file, 0, SEEK_END);
+    long size = ftell(file);
+    rewind(file);
+    char *data = calloc((size_t)size + 1, 1);
+    fread(data, 1, (size_t)size, file);
+    fclose(file);
+    cJSON *root = cJSON_Parse(data);
+    free(data);
+    cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 149);
+    data = cJSON_PrintUnformatted(root);
+    cJSON_Delete(root);
+    file = fopen("saves/savegame_99137.json", "wb");
+    fputs(data, file);
+    fclose(file);
+    free(data);
+    game.map.tiles[WORKSHOP_FLETCHER_Y][WORKSHOP_FLETCHER_X] = TILE_NPC_FLETCHER;
+    ASSERT("older workshop saves gain Tessa without changing the rest of the room", load_game(&loaded, WORKSHOP_TEST_SLOT) && loaded.location == LOCATION_WORKSHOP && memcmp(&game.map, &loaded.map, sizeof(Map)) == 0);
+    ASSERT("Tessa's migration preserves position, arrows, gold, sharpening and dropped loot", loaded.player.x == game.player.x && loaded.player.y == game.player.y && loaded.player.arrows == 42 && loaded.gold == game.gold && loaded.inventory[0].sharpened && loaded.floor_items[0].active && loaded.floor_items[0].x == game.floor_items[0].x && loaded.floor_items[0].y == game.floor_items[0].y);
+    ASSERT("migrated workshop saves load again without repeating changes", save_game(&loaded, WORKSHOP_TEST_SLOT) && load_game(&game, WORKSHOP_TEST_SLOT) && game.player.arrows == 42 && game.map.tiles[WORKSHOP_FLETCHER_Y][WORKSHOP_FLETCHER_X] == TILE_NPC_FLETCHER);
+    remove("saves/savegame_99137.json");
+}
+
 static void test_workshop_saves(void) {
     start();
     game_equip_main_hand(&game, 0);
@@ -186,6 +252,8 @@ void test_workshop(void) {
     printf("Ridgeshire workshop\n");
     test_workshop_travel();
     test_workshop_purchase();
+    test_workshop_fletcher();
+    test_workshop_fletcher_migration();
     test_workshop_saves();
     test_workshop_legacy_save();
     test_workshop_screen();

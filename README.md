@@ -128,6 +128,9 @@ select a weapon, and press Enter to pay; Esc returns to the room. Sharpening sta
 persists through dropping, re-equipping, and saving. The Blacksmith continues
 to buy and sell equipment. See [weapon sharpening](docs/weapons.md#workshop-sharpening).
 
+Fletcher **Tessa** also works by the workshop benches. Press **T** beside her to
+buy **20 arrows for 10 gold**. Partial refills cost less; the quiver holds 100 arrows.
+
 Ridgeshire's **Town Hall** stands northeast of the crossroads. Inside, approach
 **Steward Hadrin** and press **T**, then **Y** to accept **Reclaim the
 Emberforge**. Recover the guarded forge mechanism on Ashen Hollow stage **2**,

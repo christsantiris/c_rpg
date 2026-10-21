@@ -2668,6 +2668,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_tavern_floor(r, sx, sy);
                     npc_draw(r, sx, sy, NPC_ART_GARRICK, 0);
                     break;
+                case TILE_NPC_FLETCHER:
+                    draw_tavern_floor(r, sx, sy);
+                    npc_draw(r, sx, sy, NPC_ART_TESSA, 0);
+                    break;
                 case TILE_NPC_ALDER: draw_alder(r, sx, sy); break;
                 case TILE_NPC_MARA: draw_mara(r, sx, sy); break;
                 case TILE_NPC_ROOK: draw_rook(r, sx, sy); break;
@@ -3582,6 +3586,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (g->location == LOCATION_WORKSHOP) {
         renderer_draw_text(r, "GARRICK - SHARPENING", viewport_to_screen_x(v, WORKSHOP_SMITH_X) * TILE_SIZE - 60,
             viewport_to_screen_y(v, WORKSHOP_SMITH_Y - 1) * TILE_SIZE, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
+        renderer_draw_text(r, "TESSA - ARROWS", viewport_to_screen_x(v, WORKSHOP_FLETCHER_X) * TILE_SIZE - 40,
+            viewport_to_screen_y(v, WORKSHOP_FLETCHER_Y - 1) * TILE_SIZE, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
     }
     if (g->location == LOCATION_TOWN_HALL) {
         int veyra_width = 0;
