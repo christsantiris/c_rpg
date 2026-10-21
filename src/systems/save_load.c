@@ -849,7 +849,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 158);
+    cJSON_AddNumberToObject(root, "save_version", 159);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -4663,6 +4663,8 @@ int load_game(GameState *g, int slot) {
     if (save_version < 158) {
         migrate_forest_entry_direction(g);
     }
+    // Recover saves containing a town interior or shortcut in a dungeon slot.
+    game_repair_dungeon_maps(g);
     // Recess legacy floor shortcuts into terrain in active and cached boss maps.
     game_migrate_boss_shortcuts(g);
     game_refresh_quest_encounters(g);
