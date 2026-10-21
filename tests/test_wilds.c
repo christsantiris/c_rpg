@@ -8,6 +8,7 @@
 static GameState game;
 static GameState loaded;
 static Map maps[2];
+static Map previous_swamp;
 static unsigned char seen[SWAMP_MAP_H][SWAMP_MAP_W];
 
 static int connected(const Map *m) {
@@ -45,12 +46,30 @@ static void test_layouts(void) {
     int anchors = 1;
     int varied = 1;
     int features = 1;
+    int swamp_variety = 1;
+    int borders = 1;
     for (int seed = 0; seed < 128; seed++) {
         for (int level = 1; level <= 7; level++) {
             srand(seed);
             map_generate_swamp(&maps[0], level);
             routes &= connected(&maps[0]);
+            if (level > 1) {
+                int overlap = 0;
+                int total = 0;
+                for (int y = 0; y < SWAMP_MAP_H; y++) {
+                    for (int x = 0; x < SWAMP_MAP_W; x++) {
+                        int a = map_is_walkable(&maps[0], x, y);
+                        int b = map_is_walkable(&previous_swamp, x, y);
+                        overlap += a && b;
+                        total += a || b;
+                    }
+                }
+                swamp_variety &= overlap * 100 < total * 85;
+            }
+            previous_swamp = maps[0];
             for (int i = 0; i < 9; i++) {
+                const Room *room = &maps[0].rooms[i];
+                borders &= room->x > 0 && room->y > 0 && room->x + room->w < SWAMP_MAP_W && room->y + room->h < SWAMP_MAP_H;
                 int x, y;
                 map_room_center(&maps[0].rooms[i], &x, &y);
                 anchors &= seen[y][x];
@@ -95,6 +114,8 @@ static void test_layouts(void) {
     }
     ASSERT("1536 wetland and cliff layouts keep every walking tile, clearing and exit connected", routes && anchors);
     ASSERT("Swamp and Dragonspine no longer share the same walking mask", varied);
+    ASSERT("adjacent swamp stages change at least fifteen percent of their combined walking routes", swamp_variety);
+    ASSERT("varied swamp clearings stay inside the map borders", borders);
     ASSERT("every stage includes broad blackwater and reeds or deep ravines and four movable boulders", features);
 }
 
@@ -337,6 +358,37 @@ static void test_saves(void) {
     game.dragonspine_cache[0].map = game.map;
     int ok = save_game(&game, slot) && load_game(&loaded, slot);
     ASSERT("pushed boulders and their snow/ash underlays persist in active and cached maps", ok && memcmp(&game.map, &loaded.map, sizeof(Map)) == 0 && memcmp(&game.dragonspine_cache[0].map, &loaded.dragonspine_cache[0].map, sizeof(Map)) == 0);
+    game_init(&game);
+    game.location = LOCATION_SWAMP;
+    game.level = 1;
+    game.max_swamp_level_reached = SWAMP_DEPTH;
+    game.innkeeper_quest_state = 3;
+    game.gold = 432;
+    game.enemy_count = 1;
+    map_generate_swamp(&game.map, game.level);
+    game.player.x = game.map.stairs_up_x;
+    game.player.y = game.map.stairs_up_y;
+    int x, y;
+    map_room_center(&game.map.rooms[2], &x, &y);
+    game.enemies[0] = (Enemy){.type = ENEMY_BANDIT, .active = 1, .x = x, .y = y, .hp = 17, .max_hp = 30};
+    map_room_center(&game.map.rooms[1], &x, &y);
+    game.floor_item_count = 1;
+    game.floor_items[0] = (FloorItem){.active = 1, .x = x, .y = y, .underlying_tile = game.map.tiles[y][x], .item = item_make_health_potion()};
+    game.map.tiles[y][x] = TILE_ITEM;
+    map_mark_explored(&game.map, x, y);
+    for (int level = 2; level <= SWAMP_DEPTH; level++) {
+        game.swamp_cache[level - 1].valid = 1;
+        game.swamp_cache[level - 1].enemy_count = 0;
+        map_generate_swamp(&game.swamp_cache[level - 1].map, level);
+    }
+    legacy(&game.swamp_cache[5].map, 0);
+    ok = save_game(&game, slot) && load_game(&loaded, slot);
+    int preserved = ok && memcmp(&game.map, &loaded.map, sizeof(Map)) == 0;
+    for (int level = 2; level <= SWAMP_DEPTH; level++) {
+        preserved &= loaded.swamp_cache[level - 1].valid && memcmp(&game.swamp_cache[level - 1].map, &loaded.swamp_cache[level - 1].map, sizeof(Map)) == 0;
+    }
+    ASSERT("varied and previously saved swamp maps load exactly without regenerating active or cached terrain", preserved);
+    ASSERT("swamp layout saves retain wounds, loot, gold, rescue progress and exploration", ok && loaded.enemies[0].hp == 17 && loaded.floor_items[0].active && loaded.gold == 432 && loaded.innkeeper_quest_state == 3 && map_is_explored(&loaded.map, x, y));
     for (int dragon = 0; dragon < 2; dragon++) {
         game_init(&game);
         game.location = dragon ? LOCATION_DRAGONSPINE : LOCATION_SWAMP;

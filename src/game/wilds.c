@@ -142,8 +142,22 @@ static void reeds(Map *m) {
 }
 
 void map_generate_swamp(Map *m, int level) {
-    static const int centers[9][2] = {{9, 32}, {21, 13}, {41, 10}, {59, 20}, {36, 30}, {53, 49}, {30, 53}, {15, 47}, {61, 36}};
-    static const int links[][2] = {{0, 1}, {0, 7}, {1, 2}, {1, 4}, {2, 3}, {2, 4}, {3, 8}, {4, 3}, {4, 5}, {5, 8}, {7, 6}, {6, 5}, {7, 4}};
+    // Bank loop, open lagoon, branching islets, and winding southern channel.
+    static const int centers[4][9][2] = {
+        {{9, 32}, {21, 13}, {41, 10}, {59, 20}, {36, 30}, {53, 49}, {30, 53}, {15, 47}, {61, 36}},
+        {{9, 16}, {27, 10}, {48, 11}, {58, 24}, {29, 32}, {57, 51}, {37, 53}, {12, 48}, {61, 37}},
+        {{9, 46}, {14, 19}, {35, 12}, {57, 12}, {34, 33}, {55, 51}, {32, 53}, {13, 34}, {61, 33}},
+        {{9, 13}, {28, 11}, {49, 11}, {23, 31}, {47, 32}, {53, 52}, {30, 52}, {11, 46}, {61, 32}}
+    };
+    // The first eight links connect every clearing; the last two add loops.
+    static const int links[4][10][2] = {
+        {{0, 1}, {1, 2}, {2, 3}, {3, 8}, {0, 7}, {7, 6}, {6, 5}, {5, 4}, {4, 1}, {5, 8}},
+        {{0, 1}, {1, 2}, {2, 3}, {3, 8}, {0, 4}, {4, 7}, {7, 6}, {6, 5}, {5, 8}, {4, 6}},
+        {{0, 7}, {7, 1}, {1, 2}, {2, 4}, {4, 3}, {3, 8}, {4, 6}, {6, 5}, {5, 8}, {7, 4}},
+        {{0, 1}, {1, 2}, {2, 4}, {4, 3}, {3, 7}, {7, 6}, {6, 5}, {5, 8}, {0, 3}, {4, 8}}
+    };
+    int layout = (level - 1) % 4;
+    int flip = ((level - 1) / 4 + rand() % 2) % 2;
     init_map(m, TILE_SWAMP_WALL);
     for (int y = 1; y < SWAMP_MAP_H - 1; y++) {
         for (int x = 1; x < SWAMP_MAP_W - 1; x++) {
@@ -151,11 +165,20 @@ void map_generate_swamp(Map *m, int level) {
         }
     }
     for (int i = 0; i < 9; i++) {
-        int jitter = i == 0 || i == 8 ? 0 : rand() % 3 - 1;
-        clearing(m, i, centers[i][0] + jitter, centers[i][1], TILE_SWAMP_FLOOR);
+        int x = centers[layout][i][0];
+        int y = centers[layout][i][1] + rand() % 7 - 3;
+        if (i != 0 && i != 8) {
+            x += rand() % 7 - 3;
+        }
+        if (flip) {
+            y = SWAMP_MAP_H - 1 - y;
+        }
+        clearing(m, i, x, y, TILE_SWAMP_FLOOR);
     }
-    for (int i = 0; i < (int)(sizeof(links) / sizeof(links[0])); i++) {
-        link(m, links[i][0], links[i][1], TILE_SWAMP_WATER, TILE_SWAMP_FLOOR);
+    for (int i = 0; i < 10; i++) {
+        if (i < 8 || rand() % 2) {
+            link(m, links[layout][i][0], links[layout][i][1], TILE_SWAMP_WATER, TILE_SWAMP_FLOOR);
+        }
     }
     // Rounded cypress islets grow along the far banks of the blackwater.
     for (int by = 8; by <= 56; by += 16) {
