@@ -61,6 +61,9 @@ in place.
 1. Enter the summit sanctuary. Observe the one-action cardinal lance. Step
    aside, then use its full recovery action to counterattack. Attacking from
    range or standing adjacent must not produce an immediate extra hit.
+   The opening phase alternates lances with two-action lunar bursts. Diagonal
+   attackers draw bursts, and camping an M/S plate draws its opposite element.
+   Verify the counter is declared before moving to a matching refuge.
 2. Draw a lance toward a wall, closed door or living actor. The declared
    endpoint stays fixed. Removing the blocker or opening the door cannot
    extend it; new cover may shorten it. An awakened or damaged Guardian can
@@ -80,8 +83,9 @@ in place.
    matching M/S sanctuary plates prevent it completely. Repeat altar use with
    Warrior, Mage and Rogue using ordinary actions and no consumables.
 6. Switching alignment must preserve the attack's footprint and remaining
-   countdown. Freeze during each phase: targets, sequence and warnings resume
-   after thawing. A priest healing the Guardian cannot reverse a latched phase.
+   countdown. Repeated Frost Bolts still deal damage but cannot freeze the
+   Guardian or stop its warnings. Existing saved freezes resume after thawing.
+   A priest healing the Guardian cannot reverse a latched phase.
 7. Open lunar doors and awaken sentinels. Try switching to Sun while a doorway
    contains the player, an enemy or loot. The entire switch must wait. Clear it
    and switch successfully; awakened enemies must not become dormant again.

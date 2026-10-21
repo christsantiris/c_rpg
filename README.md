@@ -601,8 +601,10 @@ and permanently awakens dormant Moonbound Sentinels; switching back does not
 petrify them. Walls and closed doors block all ranged attacks.
 
 The Fallen Sun Guardian has three phases: **Sunbound Armor**, **Cracked Core**
-at half health and **Eclipse** at quarter health. Fixed solar lances escalate
-to two-action sunburst rings, solar lanes and lunar bursts. Every attack is
+at half health and **Eclipse** at quarter health. Opening solar lances alternate
+with lunar bursts; later phases add sunburst rings and solar lanes. Diagonal
+attackers draw targeted bursts, and camping a sanctuary draws its opposite
+element. Frost Bolt deals damage but cannot freeze the Guardian. Every attack is
 marked before it fires, including against adjacent or ranged attackers.
 Sun alignment strengthens its armor; Moon exposes it. Use the summit altars
 to choose a guard against the announced attack, or walk onto a matching
