@@ -77,6 +77,7 @@ static int weapon_fields_match(const Item *a, const Item *b) {
         a->class_mask == b->class_mask &&
         a->visual_id == b->visual_id &&
         a->critical_chance_bonus == b->critical_chance_bonus &&
+        a->gold_drop_bonus_percent == b->gold_drop_bonus_percent &&
         a->cleave_percent == b->cleave_percent &&
         a->pierces_targets == b->pierces_targets &&
         a->spell_power_bonus == b->spell_power_bonus &&

@@ -291,12 +291,35 @@ static int enemy_score(EnemyType type) {
     }
 }
 
-static void drop_loot(GameState *g, Enemy *enemy) {
+static int melee_gold_bonus(const GameState *g) {
+    int bonus = 0;
+    if (g->equipped_main_hand >= 0 && g->equipped_main_hand < g->inventory_count) {
+        const Item *weapon = &g->inventory[g->equipped_main_hand];
+        if (weapon->weapon_family == WEAPON_FAMILY_DAGGER) {
+            bonus = weapon->gold_drop_bonus_percent;
+        }
+        if (weapon->weapon_hands == WEAPON_HANDS_ONE &&
+            g->equipped_off_hand >= 0 && g->equipped_off_hand < g->inventory_count) {
+            const Item *off_hand = &g->inventory[g->equipped_off_hand];
+            if (off_hand->weapon_family == WEAPON_FAMILY_DAGGER) {
+                bonus += off_hand->gold_drop_bonus_percent / 2;
+            }
+        }
+    }
+    return bonus;
+}
+
+static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
     if (enemy->revived && (strcmp(enemy->name, "Lich Shade") == 0 || strcmp(enemy->name, "Grove Revenant") == 0)) {
         return;
     }
     if (g->location == LOCATION_CASTLE_INTERIOR) {
+        int old_gold = g->gold;
         castle_record_death(g, enemy);
+        int coins = g->gold - old_gold;
+        if (coins > 0 && gold_bonus > 0) {
+            g->gold += (coins * gold_bonus + 99) / 100;
+        }
         return;
     }
     if (g->location == LOCATION_CATACOMBS && enemy->revived) {
@@ -462,7 +485,11 @@ static void drop_loot(GameState *g, Enemy *enemy) {
         gold = 50;
     }
     gold /= 2;
-    int has_gold = gold > 0 && (is_boss || rand() % 100 < 10);
+    // The rating increases both the existing drop chance and the purse size.
+    int has_gold = gold > 0 && (is_boss || (gold_bonus > 0 ? rand() % 1000 < 100 + gold_bonus : rand() % 100 < 10));
+    if (gold > 0 && gold_bonus > 0) {
+        gold += (gold * gold_bonus + 99) / 100;
+    }
 
     // Each boss leaves a fixed regional reward instead of rolling ordinary
     // equipment, so capstone weapons remain Blacksmith progression.
@@ -676,7 +703,7 @@ static int apply_melee_cleave(GameState *g, Enemy *target, int attack, int perce
         hits++;
         if (enemy->hp <= 0) {
             enemy->active = 0;
-            drop_loot(g, enemy);
+            drop_loot(g, enemy, melee_gold_bonus(g));
             player_gain_xp(g, enemy->experience);
             defeated = 1;
         }
@@ -888,7 +915,7 @@ static void frost_thin_ice_step(GameState *g, int old_x, int old_y) {
         if (e->active && !e->is_boss &&
             g->map.tiles[e->y][e->x] == TILE_FROST_BROKEN_ICE) {
             e->active = 0;
-            drop_loot(g, e);
+            drop_loot(g, e, 0);
             player_gain_xp(g, e->experience);
             victim = e->name;
             drowned++;
@@ -1195,7 +1222,7 @@ void action_resolve_player(GameState *g, Action a) {
     // Frozen players can drink potions; other inventory actions remain free.
     if (g->player.frozen_turns > 0 && a.type != ACTION_USE_ITEM &&
         a.type != ACTION_EQUIP_ITEM && a.type != ACTION_EQUIP_OFF_HAND &&
-        a.type != ACTION_DROP_ITEM) {
+        a.type != ACTION_DROP_ITEM && a.type != ACTION_UNEQUIP_ITEM) {
         g->player.frozen_turns--;
         g->player.freeze_recovery = 1;
         push_message_kind(g, "You are frozen solid and lose a turn!", MESSAGE_DAMAGE_TAKEN);
@@ -1679,6 +1706,34 @@ void action_resolve_player(GameState *g, Action a) {
         }
         return;
     }
+    if (a.type == ACTION_UNEQUIP_ITEM) {
+        int idx = a.target_x;
+        if (idx < 0 || idx >= g->inventory_count) {
+            return;
+        }
+        if (g->equipped_main_hand == idx) {
+            int off_hand = g->equipped_off_hand;
+            game_unequip_main_hand(g);
+            if (off_hand >= 0 && off_hand < g->inventory_count && g->inventory[off_hand].type == ITEM_WEAPON) {
+                game_equip_main_hand(g, off_hand);
+                push_message(g, "Off-hand weapon moved to main hand.");
+            } else {
+                game_unequip_off_hand(g);
+            }
+        } else if (g->equipped_off_hand == idx) {
+            game_unequip_off_hand(g);
+        } else if (g->equipped_armor == idx) {
+            game_remove_armor_bonuses(g, &g->inventory[idx]);
+            g->equipped_armor = -1;
+        } else {
+            push_message(g, "That item is not equipped.");
+            return;
+        }
+        char msg[MAX_MESSAGE_LEN];
+        snprintf(msg, sizeof(msg), "Unequipped %s", g->inventory[idx].name);
+        push_message(g, msg);
+        return;
+    }
     if (a.type == ACTION_EQUIP_OFF_HAND) {
         int idx = a.target_x;
         if (game_equip_off_hand(g, idx)) {
@@ -1910,7 +1965,7 @@ void action_resolve_player(GameState *g, Action a) {
                         if (e->hp <= 0) {
                             e->active = 0;
                             game_update_level_progress(g);
-                            drop_loot(g, e);
+                            drop_loot(g, e, 0);
                             player_gain_xp(g, e->experience);
                             g->score += e->revived ? 0 : enemy_score(e->type);
                             snprintf(msg, sizeof(msg), "%s killed %s!",
@@ -1995,7 +2050,7 @@ void action_resolve_player(GameState *g, Action a) {
                     combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_AFTER_PLAYER_SHOT, e->x, e->y, dmg);
                     if (e->hp <= 0) {
                         e->active = 0;
-                        drop_loot(g, e);
+                        drop_loot(g, e, 0);
                         player_gain_xp(g, e->experience);
                     }
                     hits++;
@@ -2094,7 +2149,7 @@ void action_resolve_player(GameState *g, Action a) {
                 if (e->hp <= 0) {
                     e->active = 0;
                     game_update_level_progress(g);
-                    drop_loot(g, e);
+                    drop_loot(g, e, 0);
                     player_gain_xp(g, e->experience);
                     snprintf(msg, sizeof(msg), "Attack killed %s!", e->name);
                 } else if (critical) {
@@ -2228,7 +2283,7 @@ void action_resolve_player(GameState *g, Action a) {
                 #endif
                 if (e->hp <= 0) {
                     e->active = 0;
-                    drop_loot(g, e);
+                    drop_loot(g, e, melee_gold_bonus(g));
                     player_gain_xp(g, e->experience);
                     game_update_level_progress(g);
                     char msg[MAX_MESSAGE_LEN];
@@ -3615,7 +3670,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_NOW, e->x, e->y, hp[i] - e->hp);
                 if (e->hp <= 0) {
                     e->active = 0;
-                    drop_loot(g, e);
+                    drop_loot(g, e, 0);
                     player_gain_xp(g, e->experience);
                     g->score += e->revived ? 0 : enemy_score(e->type);
                     game_update_level_progress(g);

@@ -1662,6 +1662,7 @@ void game_init(GameState *g) {
             g->player.attack = 10;
             g->player.defense = 4;
             g->inventory[g->inventory_count++] = item_make_bow();
+            g->inventory[g->inventory_count++] = item_make_rusty_dagger();
             break;
     }
     g->player.hp = g->player.max_hp;

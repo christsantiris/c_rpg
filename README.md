@@ -276,7 +276,14 @@ the central boss, take its shortcut to Oakhaven and use the unlocked town roads
 home, or fight through the remaining three stages. Both regions remain playable
 from Oakhaven, where the quest objectives follow the central boss.
 
-Rogues start with a **Hunting Bow** (+3 attack, range 3). The Blacksmith adds
+Rogues start with a **Rusty Dagger** (+1 attack, 10% melee critical chance,
++10% gold drop rating) and a **Hunting Bow** (+3 attack, range 3). **Dagger**
+upgrades to +3 attack, 25% critical chance and +25% gold; **Magic Dagger** has
++7 attack, 40% critical chance and +50% gold. On melee kills, the gold rating
+increases both coin-drop chance and purse size; off-hand daggers contribute
+half their rating. Bow, spell and environmental kills receive no dagger bonus.
+Existing saved daggers gain the new ratings and attack balance while retaining
+sharpening and equipped stats. The Blacksmith adds
 **Shortbow** (+5, range 5), **Longbow** (+7, range 7), and **Crossbow** (+9,
 range 5). **Magic Longbow** remains the strongest at +13 attack, range 7, with
 piercing arrows. Krakenbone Bow also has range 7; no bow can shoot farther.
@@ -657,9 +664,12 @@ always shows the current keys.
 | `Esc` | Close the current view or return to the main menu |
 
 Inside the inventory, use the arrow keys to select an item, `U` to use it,
-`E` or `Enter` to equip it, `O` to equip a one-handed weapon in the off hand, and
-`D` to drop it. In the spellbook, select a spell and press `E` or `Enter` to
-equip it. Shops, the healer, the witch, and the harbor use the arrow keys and
+`E` or `Enter` to equip it, `O` to equip a one-handed weapon in the off hand,
+`X` to unequip the selected item, and `D` to drop it. Unequipping the main-hand
+weapon promotes an off-hand weapon to the main hand; the removed weapon stays
+in inventory and can then be equipped with `O` to swap hands. Inventory action
+labels also support mouse clicks. In the spellbook, select a spell and press
+`E` or `Enter` to equip it. Shops, the healer, the witch, and the harbor use the arrow keys and
 `Enter`; shop buy and sell modes are switched with `Tab`.
 
 Using an item keeps the inventory open, even after consuming the last item.
@@ -667,7 +677,8 @@ Close it manually with **I** (or the remapped inventory key) or **Esc**.
 Drinking any potion still consumes one combat turn: enemies respond, and
 poison and freezing advance with that turn.
 Attempting to drink at full HP or MP keeps the potion and costs no turn;
-reading scrolls and equipping or dropping items remain free inventory actions.
+reading scrolls and equipping, unequipping or dropping items remain free
+inventory actions.
 
 ## Game Documentation
 
@@ -798,7 +809,7 @@ with **I** and equip the weapon with **E** or **Enter**.
 | Axes | `battle-axe`, `magic-battle-axe`, `embercleaver` |
 | Staves | `staff`, `runed-staff`, `magic-staff`, `sandstorm-staff` |
 | Bows | `hunting-bow` (`bow` also works), `shortbow`, `longbow`, `crossbow`, `magic-longbow`, `krakenbone-bow` |
-| Daggers | `dagger`, `magic-dagger` |
+| Daggers | `rusty-dagger`, `dagger`, `magic-dagger` |
 
 Examples:
 

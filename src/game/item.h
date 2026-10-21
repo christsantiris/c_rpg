@@ -102,7 +102,8 @@ typedef enum {
     ITEM_VISUAL_CASTELLAN_BULWARK,
     ITEM_VISUAL_CROWN_CHAPEL_VESTMENTS,
     ITEM_VISUAL_SHORTBOW,
-    ITEM_VISUAL_CROSSBOW
+    ITEM_VISUAL_CROSSBOW,
+    ITEM_VISUAL_RUSTY_DAGGER
 } ItemVisualId;
 
 typedef struct {
@@ -121,6 +122,7 @@ typedef struct {
     int class_mask;
     ItemVisualId visual_id;
     int critical_chance_bonus;
+    int gold_drop_bonus_percent;
     int cleave_percent;
     int pierces_targets;
     int spell_power_bonus;
@@ -179,6 +181,7 @@ Item item_make_longbow(void);
 Item item_make_crossbow(void);
 Item item_make_magic_longbow(void);
 Item item_make_krakenbone_bow(void);
+Item item_make_rusty_dagger(void);
 Item item_make_dagger(void);
 Item item_make_magic_dagger(void);
 Item item_make_greatsword(void);

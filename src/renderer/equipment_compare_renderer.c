@@ -10,7 +10,10 @@ static void format_weapon_range(const Item *item, char *text, int size) {
 }
 
 static void format_weapon_trait(const Item *item, char *text, int size) {
-    if (item->critical_chance_bonus > 0) {
+    if (item->gold_drop_bonus_percent > 0) {
+        SDL_snprintf(text, size, "CRIT +%d%% | GOLD +%d%%",
+            item->critical_chance_bonus, item->gold_drop_bonus_percent);
+    } else if (item->critical_chance_bonus > 0) {
         SDL_snprintf(text, size, "+%d%% MELEE CRIT",
             item->critical_chance_bonus);
     } else if (item->cleave_percent > 0) {

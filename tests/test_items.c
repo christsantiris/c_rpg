@@ -329,7 +329,7 @@ void test_items(void) {
         dagger.weapon_hands == WEAPON_HANDS_ONE &&
         dagger.class_mask == ITEM_CLASS_ROGUE);
     ASSERT("dagger trades attack for melee critical chance",
-        dagger.attack_bonus == 2 && dagger.critical_chance_bonus == 25);
+        dagger.attack_bonus == 3 && dagger.critical_chance_bonus == 25);
     ASSERT("dagger has a unique visual and specialist price",
         dagger.visual_id == ITEM_VISUAL_DAGGER && dagger.value == 90);
 
@@ -340,7 +340,7 @@ void test_items(void) {
         magic_dagger.rarity == ITEM_RARITY_RARE &&
         magic_dagger.class_mask == ITEM_CLASS_ROGUE);
     ASSERT("magic dagger improves attack and critical chance",
-        magic_dagger.attack_bonus == 6 &&
+        magic_dagger.attack_bonus == 7 &&
         magic_dagger.critical_chance_bonus == 40 &&
         magic_dagger.attack_bonus > dagger.attack_bonus &&
         magic_dagger.critical_chance_bonus > dagger.critical_chance_bonus);
@@ -808,7 +808,7 @@ void test_items(void) {
     Action dagger_strike = {ACTION_MOVE, 21, 12};
     action_resolve_player(&rogue, dagger_strike);
     ASSERT("dagger critical deals one-and-a-half melee damage",
-        rogue.enemies[0].hp == 82);
+        rogue.enemies[0].hp == 80);
 
     // --- Greatsword cleave ---
     game_init(&g);
@@ -894,7 +894,7 @@ void test_items(void) {
         g.equipped_main_hand == short_index &&
         g.equipped_off_hand == dagger_off_index);
     ASSERT("off-hand contributes half attack rounded up",
-        g.player.attack == 10 + 3 + 1);
+        g.player.attack == 10 + 3 + 2);
     g.player.x = 20;
     g.player.y = 12;
     g.enemy_count = 1;
@@ -907,7 +907,7 @@ void test_items(void) {
         sizeof(g.enemies[0].name) - 1);
     action_resolve_player(&g, (Action){ACTION_MOVE, 21, 12});
     ASSERT("off-hand contributes half its critical chance",
-        g.enemies[0].hp == 79);
+        g.enemies[0].hp == 77);
 
     game_remove_inventory_item(&g, short_index);
     ASSERT("removing main hand promotes off-hand weapon",

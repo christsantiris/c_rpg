@@ -11,7 +11,7 @@ static const char *class_descs[3] = {
 static const char *class_items[3] = {
     "Starts with: Rusty Sword",
     "Starts with: Staff, Magic Arrow Scroll",
-    "Starts with: Hunting Bow, 100 arrows"
+    "Starts with: Rusty Dagger, Hunting Bow"
 };
 
 void class_select_draw(Renderer *r, const ClassSelectScreen *s) {
@@ -54,6 +54,9 @@ void class_select_draw(Renderer *r, const ClassSelectScreen *s) {
 
     renderer_draw_text(r, class_descs[s->selected], cx - 120, cy + 70, white, r->font_small);
     renderer_draw_text(r, class_items[s->selected], cx - 120, cy + 92, green, r->font_small);
+    if (s->selected == CLASS_ROGUE) {
+        renderer_draw_text(r, "100 ARROWS | DAGGER KILLS FIND GOLD", cx - 120, cy + 112, green, r->font_tiny);
+    }
 
     renderer_draw_text(r, "UP/DOWN TO SELECT   ENTER TO CONFIRM   ESC TO GO BACK",
                        cx - 210, cy + 130, hint, r->font_small);
