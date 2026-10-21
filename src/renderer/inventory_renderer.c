@@ -46,7 +46,7 @@ void inventory_draw(Renderer *r, const GameState *g, const InventoryScreen *s) {
 
     SDL_Color gold   = {220, 180,  60, 255};
     SDL_Color dimmed = { 80,  80,  80, 255};
-    SDL_Color hint   = { 50,  70,  50, 255};
+    SDL_Color hint = {105, 150, 105, 255};
     SDL_Color white  = {200, 200, 200, 255};
 
     int cx = r->screen_w / 2;
@@ -168,6 +168,9 @@ void inventory_draw(Renderer *r, const GameState *g, const InventoryScreen *s) {
         }
     }
 
-    renderer_draw_text(r, "U USE  E/ENTER EQUIP  O OFF-HAND  D DROP  ESC CLOSE",
-        cx - 270, (r->tiles_y - 2) * TILE_SIZE, hint, r->font_small);
+    static const char *buttons[] = {"U USE", "E/ENTER MAIN HAND", "O OFF-HAND", "X UNEQUIP", "D DROP", "ESC CLOSE"};
+    for (int i = 0; i < 6; i++) {
+        renderer_draw_text(r, buttons[i], cx - 270 + (i % 3) * 180,
+            (r->tiles_y - 2) * TILE_SIZE + (i / 3) * 16, hint, r->font_tiny);
+    }
 }

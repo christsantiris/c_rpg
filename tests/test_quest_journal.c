@@ -39,7 +39,8 @@ void test_quest_journal(void) {
         quest_journal_count(&g, QUEST_TAB_ACTIVE) == 3 &&
         quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 2, &entry) &&
         strcmp(entry.title, "The Ivory Rook") == 0 &&
-        entry.objective_count == 1 && entry.reward_gold == ROOK_QUEST_REWARD);
+        entry.objective_count == 1 && entry.reward_gold == ROOK_QUEST_REWARD &&
+        strstr(entry.summary_line_1, "west to Stillbury") && strstr(entry.summary_line_2, "Oakhaven's Tavern"));
     g.rook_quest_state = 2;
     ASSERT("recovering the ivory rook marks its objective ready to return",
         quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 2, &entry) &&

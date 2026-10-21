@@ -49,7 +49,10 @@ void test_classes(void) {
     ASSERT("rogue: mp starts full",         g.player.mp == 40);
     ASSERT("rogue: attack is 10",           g.player.attack == 10);
     ASSERT("rogue: defense is 4",           g.player.defense == 4);
-    ASSERT("rogue: starts with 1 item", g.inventory_count == 1);
+    ASSERT("rogue: starts with two weapons", g.inventory_count == 2);
+    ASSERT("rogue: also starts with a rusty dagger", strcmp(g.inventory[1].name, "Rusty Dagger") == 0 &&
+        g.inventory[1].weapon_family == WEAPON_FAMILY_DAGGER && g.inventory[1].attack_bonus == 1 &&
+        g.inventory[1].gold_drop_bonus_percent == 10);
     ASSERT("rogue: starts with Hunting Bow at range three", g.inventory[0].is_ranged == 1 &&
         strcmp(g.inventory[0].name, "Hunting Bow") == 0 && g.inventory[0].range == 3);
 }

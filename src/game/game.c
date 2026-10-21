@@ -1662,6 +1662,7 @@ void game_init(GameState *g) {
             g->player.attack = 10;
             g->player.defense = 4;
             g->inventory[g->inventory_count++] = item_make_bow();
+            g->inventory[g->inventory_count++] = item_make_rusty_dagger();
             break;
     }
     g->player.hp = g->player.max_hp;
@@ -3796,8 +3797,9 @@ int game_harbor_unlocked(const GameState *g) {
 
 static void offer_rook_quest(GameState *g) {
     snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-        "Recover my stolen ivory rook from the labyrinth across from the witch's "
-        "hut. Beware the false stairs and the Minotaur below.");
+        "Travel west to Stillbury. Across from the witch's hut, find the labyrinth "
+        "and recover my stolen ivory rook. Beware false stairs and the Minotaur. "
+        "Return to me in Oakhaven's Tavern.");
 }
 
 static void place_harbor_road(GameState *g) {
@@ -5060,7 +5062,7 @@ int game_interact_labyrinth(GameState *g) {
             g->rook_quest_state = 2;
             g->map.tiles[y][x] = TILE_LABYRINTH_FLOOR;
             push_message(g, "You recover Rook's stolen ivory rook.");
-            push_message(g, "Return it to Rook at the inn.");
+            push_message(g, "Return it to Rook in Oakhaven's Tavern.");
             return 1;
         }
     }
@@ -6098,7 +6100,7 @@ static const QuestOffer quest_offers[] = {
     {"Dain", LOCATION_TOWN4, offsetof(GameState, dain_quest_state), 0, "Assigned: Recover the Treasure Map."},
     {"Alder", LOCATION_INN, offsetof(GameState, alder_quest_state), 0, "Assigned: The Lost Wardens."},
     {"Mara", LOCATION_TAVERN, offsetof(GameState, mara_quest_state), 0, "Assigned: Relight the Drowned Beacons."},
-    {"Rook", LOCATION_INN, offsetof(GameState, rook_quest_state), 0, "Assigned: The Ivory Rook."},
+    {"Rook", LOCATION_TAVERN, offsetof(GameState, rook_quest_state), 0, "Assigned: The Ivory Rook."},
     {"Bram", LOCATION_INN, offsetof(GameState, innkeeper_quest_state), 0, "Assigned: Bring Mira Home."},
     {"Zara", LOCATION_INN, offsetof(GameState, sunscar_lamp_quest_state), 0, "Assigned: The Lost Magic Lamp."},
     {"Ilya", LOCATION_TAVERN, offsetof(GameState, dragon_treasure_quest_state), 0, "Assigned: The Dragon's Hoard."},
@@ -6225,12 +6227,12 @@ void game_talk_to_guild_seeker(GameState *g) {
     if (g->sunscar_lamp_quest_state == 0) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "Recover a magic lamp from Sunscar Wastes level 4. Enter through "
-            "Stillbury's west gate. Stand on the lamp and press A, then return "
+            "Stillbury's west gate. Stand on the lamp and press P, then return "
             "to me here for 80 gold.");
     } else if (g->sunscar_lamp_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "The magic lamp lies in the last clearing of Sunscar Wastes level 4. "
-            "Return it to me at the Inn in Stillbury.");
+            "Stand on it and press P, then return it to me at the Inn in Stillbury.");
     } else if (g->sunscar_lamp_quest_state == 2) {
         g->sunscar_lamp_quest_state = 3;
         g->gold += 80;
@@ -6575,16 +6577,19 @@ void game_talk_to_mara(GameState *g) {
 }
 
 void game_talk_to_rook(GameState *g) {
+    if (g->location != LOCATION_TAVERN || abs(g->player.x - ROOK_TAVERN_X) > 1 || abs(g->player.y - ROOK_TAVERN_Y) > 1) {
+        return;
+    }
     g->dialogue_active = 1;
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Rook");
-    g->dialogue_x = 10;
-    g->dialogue_y = 18;
+    g->dialogue_x = ROOK_TAVERN_X;
+    g->dialogue_y = ROOK_TAVERN_Y;
     if (g->rook_quest_state == 0) {
         offer_rook_quest(g);
     } else if (g->rook_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "One rune per floor opens the Minotaur's vault. Defeat the Minotaur and "
-            "bring my ivory rook home.");
+            "Head west to Stillbury's labyrinth. One rune per floor opens the "
+            "Minotaur's vault. Defeat it, recover my ivory rook, and return to Oakhaven's Tavern.");
         push_message(g, "Rook is waiting for the ivory rook.");
     } else if (g->rook_quest_state == 2) {
         g->gold += ROOK_QUEST_REWARD;

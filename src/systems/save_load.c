@@ -586,6 +586,8 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
     item->sharpened = sharpened ? !!sharpened->valueint : 0;
     cJSON *family = cJSON_GetObjectItem(obj, "weapon_family");
     cJSON *critical = cJSON_GetObjectItem(obj, "critical_chance_bonus");
+    cJSON *gold_bonus = cJSON_GetObjectItem(obj, "gold_drop_bonus_percent");
+    item->gold_drop_bonus_percent = gold_bonus ? gold_bonus->valueint : 0;
     cJSON *cleave = cJSON_GetObjectItem(obj, "cleave_percent");
     cJSON *piercing = cJSON_GetObjectItem(obj, "pierces_targets");
     cJSON *spell_power = cJSON_GetObjectItem(obj, "spell_power_bonus");
@@ -611,8 +613,8 @@ static void deserialize_item_metadata(const cJSON *obj, Item *item) {
     if (!family && item->type == ITEM_WEAPON) {
         int old_attack = item->attack_bonus;
         item_apply_legacy_metadata(item);
-        // Keep the saved Cryptblade bonus until the equipped-stat migration.
-        if (strcmp(item->name, "Cryptblade") == 0) {
+        // Keep saved attack until the equipped-stat migrations adjust the player.
+        if (strcmp(item->name, "Cryptblade") == 0 || item->weapon_family == WEAPON_FAMILY_DAGGER) {
             item->attack_bonus = old_attack;
         }
         cJSON *legacy_two_handed = cJSON_GetObjectItem(obj,
@@ -693,6 +695,7 @@ static cJSON *serialize_castle_loot(const FloorItem *items, int count) {
         cJSON_AddNumberToObject(it, "visual_id", fi->item.visual_id);
         cJSON_AddNumberToObject(it, "critical_chance_bonus",
             fi->item.critical_chance_bonus);
+        cJSON_AddNumberToObject(it, "gold_drop_bonus_percent", fi->item.gold_drop_bonus_percent);
         cJSON_AddNumberToObject(it, "cleave_percent",
             fi->item.cleave_percent);
         cJSON_AddNumberToObject(it, "pierces_targets",
@@ -750,7 +753,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 150);
+    cJSON_AddNumberToObject(root, "save_version", 153);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -958,6 +961,7 @@ int save_game(const GameState *g, int slot) {
         cJSON_AddNumberToObject(it, "visual_id",     item->visual_id);
         cJSON_AddNumberToObject(it, "critical_chance_bonus",
             item->critical_chance_bonus);
+        cJSON_AddNumberToObject(it, "gold_drop_bonus_percent", item->gold_drop_bonus_percent);
         cJSON_AddNumberToObject(it, "cleave_percent", item->cleave_percent);
         cJSON_AddNumberToObject(it, "pierces_targets",
             item->pierces_targets);
@@ -1007,6 +1011,7 @@ int save_game(const GameState *g, int slot) {
         cJSON_AddNumberToObject(it, "visual_id", fi->item.visual_id);
         cJSON_AddNumberToObject(it, "critical_chance_bonus",
             fi->item.critical_chance_bonus);
+        cJSON_AddNumberToObject(it, "gold_drop_bonus_percent", fi->item.gold_drop_bonus_percent);
         cJSON_AddNumberToObject(it, "cleave_percent",
             fi->item.cleave_percent);
         cJSON_AddNumberToObject(it, "pierces_targets",
@@ -1931,6 +1936,40 @@ static void migrate_quest_giver_locations(GameState *g) {
     }
 }
 
+static void migrate_rook_location(GameState *g) {
+    if (strcmp(g->dialogue_speaker, "Rook") == 0) {
+        g->dialogue_active = 0;
+    }
+    if (g->location == LOCATION_INN || g->location == LOCATION_GUILD) {
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                if (g->map.tiles[y][x] == TILE_NPC_ROOK) {
+                    g->map.tiles[y][x] = TILE_TAVERN_FLOOR;
+                }
+            }
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            if (g->floor_items[i].underlying_tile == TILE_NPC_ROOK) {
+                g->floor_items[i].underlying_tile = TILE_TAVERN_FLOOR;
+            }
+        }
+    }
+    if (g->location == LOCATION_TAVERN) {
+        if (g->player.x == ROOK_TAVERN_X && g->player.y == ROOK_TAVERN_Y) {
+            g->player.y++;
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->active && item->x == ROOK_TAVERN_X && item->y == ROOK_TAVERN_Y) {
+                item->y++;
+                item->underlying_tile = TILE_TAVERN_FLOOR;
+                g->map.tiles[item->y][item->x] = TILE_ITEM;
+            }
+        }
+        g->map.tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] = TILE_NPC_ROOK;
+    }
+}
+
 static void migrate_goblin_shield(Item *item) {
     if (item->type == ITEM_SHIELD && strcmp(item->name, "Goblin King's Shield") == 0) {
         Item shield = item_make_goblin_king_shield();
@@ -1957,6 +1996,65 @@ static void migrate_goblin_shields(GameState *g) {
             migrate_goblin_shield(&g->castle_loot[level][i].item);
         }
     }
+}
+
+static void migrate_dagger(Item *item) {
+    if (item->type != ITEM_WEAPON) {
+        return;
+    }
+    Item definition;
+    if (strcmp(item->name, "Rusty Dagger") == 0) {
+        definition = item_make_rusty_dagger();
+    } else if (strcmp(item->name, "Dagger") == 0) {
+        definition = item_make_dagger();
+    } else if (strcmp(item->name, "Magic Dagger") == 0) {
+        definition = item_make_magic_dagger();
+    } else {
+        return;
+    }
+    item->attack_bonus = definition.attack_bonus + item->sharpened;
+    item->gold_drop_bonus_percent = definition.gold_drop_bonus_percent;
+}
+
+static void migrate_daggers(GameState *g) {
+    for (int i = 0; i < g->inventory_count; i++) {
+        Item *item = &g->inventory[i];
+        int old_attack = item->attack_bonus;
+        migrate_dagger(item);
+        if (g->equipped_main_hand == i) {
+            g->player.attack += item->attack_bonus - old_attack;
+        }
+        if (g->equipped_off_hand == i && item->type == ITEM_WEAPON) {
+            g->player.attack += game_off_hand_attack_bonus(item) - (old_attack + 1) / 2;
+        }
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        migrate_dagger(&g->floor_items[i].item);
+    }
+    for (int level = 0; level < CASTLE_DEPTH; level++) {
+        for (int i = 0; i < g->castle_loot_count[level]; i++) {
+            migrate_dagger(&g->castle_loot[level][i].item);
+        }
+    }
+}
+
+static void migrate_sunwarden_mantle(Item *item, Player *player) {
+    if (item->type != ITEM_ARMOR || strcmp(item->name, "Sunwarden Mantle") != 0) {
+        return;
+    }
+    Item mantle = item_make_sunwarden_mantle();
+    if (player) {
+        player->max_hp += mantle.max_hp_bonus - item->max_hp_bonus;
+        player->max_mp += mantle.max_mp_bonus - item->max_mp_bonus;
+        if (player->hp > player->max_hp) {
+            player->hp = player->max_hp;
+        }
+        if (player->mp > player->max_mp) {
+            player->mp = player->max_mp;
+        }
+    }
+    item->max_hp_bonus = mantle.max_hp_bonus;
+    item->max_mp_bonus = mantle.max_mp_bonus;
 }
 
 static void migrate_rebalanced_weapon(Item *item, int retire_goblin) {
@@ -4433,6 +4531,25 @@ int load_game(GameState *g, int slot) {
     // Tessa replaces an impassable bench, preserving player and loot positions.
     if (save_version < 150 && g->location == LOCATION_WORKSHOP) {
         g->map.tiles[WORKSHOP_FLETCHER_Y][WORKSHOP_FLETCHER_X] = TILE_NPC_FLETCHER;
+    }
+    if (save_version < 151) {
+        for (int i = 0; i < g->inventory_count; i++) {
+            migrate_sunwarden_mantle(&g->inventory[i], g->equipped_armor == i ? &g->player : NULL);
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            migrate_sunwarden_mantle(&g->floor_items[i].item, NULL);
+        }
+        for (int level = 0; level < CASTLE_DEPTH; level++) {
+            for (int i = 0; i < g->castle_loot_count[level]; i++) {
+                migrate_sunwarden_mantle(&g->castle_loot[level][i].item, NULL);
+            }
+        }
+    }
+    if (save_version < 152) {
+        migrate_rook_location(g);
+    }
+    if (save_version < 153) {
+        migrate_daggers(g);
     }
     game_migrate_boss_shortcuts(g);
     game_refresh_quest_encounters(g);

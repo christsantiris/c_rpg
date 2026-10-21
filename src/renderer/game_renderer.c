@@ -181,57 +181,6 @@ static void draw_necromancer_warning(Renderer *r, const GameState *g, const View
     SDL_SetRenderDrawBlendMode(r->sdl, blend);
 }
 
-static void draw_necromancer_status(Renderer *r, const GameState *g, const Viewport *v) {
-    if (g->location != LOCATION_FOREST || g->level != FOREST_BOSS_LEVEL) {
-        return;
-    }
-    for (int i = 0; i < g->enemy_count; i++) {
-        const Enemy *e = &g->enemies[i];
-        if (!e->active || e->type != ENEMY_FOREST_NECROMANCER || e->max_hp <= 0 ||
-            !viewport_is_visible(v, e->x, e->y) || !map_is_explored(&g->map, e->x, e->y)) {
-            continue;
-        }
-        int width = r->screen_w - INFO_PANEL_W - 16;
-        if (width > 380) {
-            width = 380;
-        }
-        if (width < 160) {
-            return;
-        }
-        int x = (r->screen_w - INFO_PANEL_W - width) / 2;
-        int top = x < MAP_W * 2 + 12 ? MAP_H * 2 + 20 : 8;
-        SDL_Rect panel = {x, top, width, 78};
-        SDL_SetRenderDrawColor(r->sdl, 20, 31, 24, 255);
-        SDL_RenderFillRect(r->sdl, &panel);
-        SDL_SetRenderDrawColor(r->sdl, 97, 151, 90, 255);
-        SDL_RenderDrawRect(r->sdl, &panel);
-        const char *name = width < 365 ? (e->attack_phase ? "NECROMANCER: PHASE 2" : "NECROMANCER: PHASE 1") :
-            (e->attack_phase ? "NECROMANCER: WITHERED GROVE" : "NECROMANCER: GROVE BINDER");
-        renderer_draw_text(r, name, x + 10, top + 8, (SDL_Color){233, 216, 250, 255}, r->font_tiny);
-        SDL_Rect bar = {x + 10, top + 23, width - 20, 8};
-        SDL_SetRenderDrawColor(r->sdl, 52, 39, 70, 255);
-        SDL_RenderFillRect(r->sdl, &bar);
-        bar.w = bar.w * e->hp / e->max_hp;
-        SDL_SetRenderDrawColor(r->sdl, 106, 175, 94, 255);
-        SDL_RenderFillRect(r->sdl, &bar);
-        char hint[80];
-        if (e->move_timer > 0) {
-            const char *attack = width < 280 ? (e->boss_attack == NECRO_ROOTS ? "ROOTS" : e->boss_attack == NECRO_RAISE ? "GRAVES" : "BOLT") :
-                (e->boss_attack == NECRO_ROOTS ? "CROSSING ROOTS" : e->boss_attack == NECRO_RAISE ? "GRAVE WAVE" : "SPIRIT BOLT");
-            snprintf(hint, sizeof(hint), "%s: %d TURN%s%s", attack, e->move_timer, e->move_timer == 1 ? "" : "S", e->frozen_turns > 0 ? (width < 280 ? " *" : " (FROZEN)") : "");
-        } else {
-            snprintf(hint, sizeof(hint), "%s", e->move_timer < 0 ? "RECOVERING: ATTACK NOW" : "PREPARING NEXT ATTACK");
-        }
-        renderer_draw_text(r, hint, x + 10, top + 38, (SDL_Color){e->move_timer < 0 ? 139 : 247, 207, 164, 255}, r->font_tiny);
-        int graves = necromancer_active_graves(g);
-        snprintf(hint, sizeof(hint), graves ? "GRAVES: %d  INTERACT TO CONSECRATE" : "ALL GRAVES CONSECRATED", graves);
-        if (width < 280) {
-            snprintf(hint, sizeof(hint), "GRAVES: %d", graves);
-        }
-        renderer_draw_text(r, hint, x + 10, top + 55, (SDL_Color){186, 178, 211, 255}, r->font_tiny);
-    }
-}
-
 static SDL_Color area_label_color(Location area) {
     switch (area) {
         case LOCATION_FOREST: return (SDL_Color){90, 190, 105, 255};
@@ -1927,35 +1876,6 @@ static void draw_catacombs_warnings(Renderer *r, const GameState *g, const Viewp
     }
 }
 
-static void draw_coast_tide_status(Renderer *r, const GameState *g) {
-    if (g->location != LOCATION_COAST || g->level == COAST_DEPTH) {
-        return;
-    }
-    int width = r->screen_w - INFO_PANEL_W;
-    int x = width - 296;
-    int y = width >= MAP_W / 2 + 312 ? 8 : MAP_H / 2 + 20;
-    if (width < 296 || r->tiles_y * TILE_SIZE < y + 76) {
-        return;
-    }
-    int low = 0;
-    for (int ty = 0; ty < MAP_H && !low; ty++) {
-        for (int tx = 0; tx < MAP_W; tx++) {
-            low |= g->map.tiles[ty][tx] == TILE_COAST_DRAINED_WATER;
-        }
-    }
-    SDL_Rect panel = {x, y, 288, 70};
-    SDL_SetRenderDrawColor(r->sdl, 13, 29, 38, 255);
-    SDL_RenderFillRect(r->sdl, &panel);
-    SDL_SetRenderDrawColor(r->sdl, 66, 127, 135, 255);
-    SDL_RenderDrawRect(r->sdl, &panel);
-    renderer_draw_text(r, low ? "BLUE FLATS: EXPOSED" : "BLUE FLATS: FLOODED", x + 10, y + 9,
-        (SDL_Color){116, 210, 215, 255}, r->font_tiny);
-    renderer_draw_text(r, low ? "AMBER INLETS: FLOODED" : "AMBER INLETS: EXPOSED", x + 10, y + 25,
-        (SDL_Color){222, 182, 102, 255}, r->font_tiny);
-    renderer_draw_text(r, "WALK: SAND + PALE SHALLOWS", x + 10, y + 46,
-        (SDL_Color){221, 216, 187, 255}, r->font_tiny);
-}
-
 static void draw_low_health_warning(Renderer *r, const GameState *g) {
     if (!game_player_low_health(g)) {
         return;
@@ -2611,7 +2531,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_CRYPT_DOOR: draw_crypt_door(r, sx, sy); break;
                 case TILE_CRYPT_KEY: draw_crypt_key(r, sx, sy); break;
                 case TILE_CRYPT_CACHE: draw_crypt_cache(r, sx, sy); break;
-                case TILE_PORTAL: draw_portal(r, sx, sy); break;
+                case TILE_PORTAL: draw_floor(r, sx, sy); break;
                 case TILE_BROKEN_BURIAL_SEAL:
                     draw_broken_burial_seal(r, sx, sy); break;
                 case TILE_RESTORED_BURIAL_SEAL:
@@ -3119,6 +3039,15 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         }
     }
 
+    // Portal sprites stay above gates, buildings, terrain edges and floor loot.
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (g->map.tiles[y][x] == TILE_PORTAL && viewport_is_visible(v, x, y)) {
+                draw_portal(r, viewport_to_screen_x(v, x), viewport_to_screen_y(v, y));
+            }
+        }
+    }
+
     if (g->location == LOCATION_FROSTFELL) {
         draw_kraken_target(r, g, v);
     }
@@ -3326,7 +3255,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int width = 0;
         renderer_draw_text(r, "SUNSCAR WASTES",
             viewport_to_screen_x(v, 1) * TILE_SIZE,
-            viewport_to_screen_y(v, 12) * TILE_SIZE,
+            viewport_to_screen_y(v, 11) * TILE_SIZE,
             area_label_color(LOCATION_DESERT), r->font_tiny);
         TTF_SizeText(r->font_tiny, "GLASSDEEP", &width, NULL);
         renderer_draw_text(r, "GLASSDEEP",
@@ -3574,14 +3503,16 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         TTF_SizeText(r->font_tiny, "ALDER", &width, NULL);
         renderer_draw_text(r, "ALDER", viewport_to_screen_x(v, ALDER_INN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, ALDER_INN_Y - 1) * TILE_SIZE, (SDL_Color){126, 190, 112, 255}, r->font_tiny);
-        renderer_draw_text(r, "ROOK",
-            viewport_to_screen_x(v, 10) * TILE_SIZE - 8,
-            viewport_to_screen_y(v, 17) * TILE_SIZE,
-            (SDL_Color){182, 214, 232, 255}, r->font_tiny);
         renderer_draw_text(r, "BRAM",
             viewport_to_screen_x(v, 28) * TILE_SIZE - 8,
             viewport_to_screen_y(v, 6) * TILE_SIZE,
             (SDL_Color){233, 201, 133, 255}, r->font_tiny);
+    }
+    if (g->location == LOCATION_TAVERN) {
+        renderer_draw_text(r, "ROOK",
+            viewport_to_screen_x(v, ROOK_TAVERN_X) * TILE_SIZE - 8,
+            viewport_to_screen_y(v, ROOK_TAVERN_Y - 1) * TILE_SIZE,
+            (SDL_Color){182, 214, 232, 255}, r->font_tiny);
     }
     if (g->location == LOCATION_WORKSHOP) {
         renderer_draw_text(r, "GARRICK - SHARPENING", viewport_to_screen_x(v, WORKSHOP_SMITH_X) * TILE_SIZE - 60,
@@ -3893,31 +3824,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     draw_low_health_warning(r, g);
-    draw_coast_tide_status(r, g);
-    draw_regional_terrain_status(r, g);
-
-    if (g->location == LOCATION_TEMPLE && temple_remaining > 0 && !sun_guardian_compact_status(r, g, v)) {
-        int notice_x = r->screen_w - INFO_PANEL_W - 312;
-        if (notice_x < 8) {
-            notice_x = 8;
-        }
-        SDL_Rect notice = {notice_x, 8, 304, 40};
-        SDL_SetRenderDrawColor(r->sdl, 20, 16, 35, 255);
-        SDL_RenderFillRect(r->sdl, &notice);
-        SDL_SetRenderDrawColor(r->sdl, 128, 87, 177, 255);
-        SDL_RenderDrawRect(r->sdl, &notice);
-        char status[48];
-        SDL_snprintf(status, sizeof(status), "%s SEALED: %d FOES LEFT",
-            g->level == TEMPLE_DEPTH ? "TREASURE" : "STAIRS", temple_remaining);
-        renderer_draw_text(r, status, notice_x + 8, 16, (SDL_Color){220, 187, 255, 255}, r->font_tiny);
-        renderer_draw_text(r, game_temple_dormant_sentinels(g) > 0 ?
-            "Use altar to awaken Moon foes" : "Defeat all Sun and Moon foes",
-            notice_x + 8, 32, (SDL_Color){230, 218, 195, 255}, r->font_tiny);
-    }
+    draw_area_description(r, g, v);
 
     draw_kraken_status(r, g, v);
     draw_lich_status(r, g, v);
-    draw_necromancer_status(r, g, v);
     draw_goblin_king_status(r, g, v);
     draw_drowned_queen_status(r, g, v);
     draw_swamp_demon_status(r, g, v);
@@ -3934,7 +3844,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     castle_draw_veyr_status(r, g, v);
 
     // Draw info panel
-    info_panel_draw(r, g);
+    info_panel_draw(r, g, v);
 
     // Draw message bar
     message_bar_draw(r, g);

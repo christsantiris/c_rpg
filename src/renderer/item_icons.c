@@ -27,7 +27,8 @@ static void icon_palette(SDL_Color *pal, const Item *item) {
             cloth = (SDL_Color){92, 101, 111, 255};
         }
         switch (item->visual_id) {
-            case ITEM_VISUAL_RUSTY_SWORD: metal = (SDL_Color){161, 85, 47, 255}; break;
+            case ITEM_VISUAL_RUSTY_SWORD:
+            case ITEM_VISUAL_RUSTY_DAGGER: metal = (SDL_Color){161, 85, 47, 255}; break;
             case ITEM_VISUAL_DEMONIC_SWORD:
                 metal = (SDL_Color){39, 67, 48, 255};
                 accent = (SDL_Color){111, 239, 90, 255};
@@ -207,6 +208,7 @@ void draw_icon_weapon(Renderer *r, int px, int py, const Item *item) {
     switch (item->visual_id) {
         case ITEM_VISUAL_RUSTY_SWORD:
         case ITEM_VISUAL_SHORT_SWORD: art = ICON_ART_SHORT_SWORD; break;
+        case ITEM_VISUAL_RUSTY_DAGGER:
         case ITEM_VISUAL_DAGGER:
         case ITEM_VISUAL_MAGIC_DAGGER: art = ICON_ART_DAGGER; break;
         case ITEM_VISUAL_GREATSWORD:

@@ -18,7 +18,8 @@ typedef enum {
     ACTION_DROP_ITEM,
     ACTION_CAST_SPELL,
     ACTION_RANGED_ATTACK,
-    ACTION_WAIT
+    ACTION_WAIT,
+    ACTION_UNEQUIP_ITEM
 } ActionType;
 
 typedef struct {

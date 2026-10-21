@@ -571,7 +571,7 @@ void test_quest_offer_controls(void) {
         {game_talk_to_dain, LOCATION_TOWN4, DAIN_TOWN_X, DAIN_TOWN_Y, &g.dain_quest_state},
         {game_talk_to_alder, LOCATION_INN, ALDER_INN_X, ALDER_INN_Y, &g.alder_quest_state},
         {game_talk_to_mara, LOCATION_TAVERN, MARA_TAVERN_X, MARA_TAVERN_Y, &g.mara_quest_state},
-        {game_talk_to_rook, LOCATION_INN, 10, 18, &g.rook_quest_state},
+        {game_talk_to_rook, LOCATION_TAVERN, ROOK_TAVERN_X, ROOK_TAVERN_Y, &g.rook_quest_state},
         {game_talk_to_innkeeper, LOCATION_INN, 28, 7, &g.innkeeper_quest_state},
         {game_talk_to_guild_seeker, LOCATION_INN, ZARA_INN_X, ZARA_INN_Y, &g.sunscar_lamp_quest_state},
         {game_talk_to_dragon_seeker, LOCATION_TAVERN, ILYA_TAVERN_X, ILYA_TAVERN_Y, &g.dragon_treasure_quest_state},
