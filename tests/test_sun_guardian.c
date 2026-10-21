@@ -236,9 +236,87 @@ static void test_mantle_rebalance(void) {
     remove("saves/savegame_99197.json");
 }
 
+static void test_guardian_pressure(void) {
+    Enemy *e = setup();
+    game.player.x = 30;
+    game.player.y = 8;
+    tick();
+    ASSERT("a diagonal attacker receives a fixed two-action lunar warning instead of an empty lance", e->boss_attack == GUARDIAN_LUNAR && e->move_timer == 2 && e->attack_target_x == 30 && e->attack_target_y == 8 && sun_guardian_attack_marks(&game, e, 30, 8) && game.player.hp == 1000);
+    action_resolve_player(&game, (Action){ACTION_MOVE, 30, 7});
+    tick();
+    action_resolve_player(&game, (Action){ACTION_MOVE, 29, 7});
+    tick();
+    ASSERT("two ordinary steps escape the targeted lunar burst without losing the counterattack window", game.player.hp == 1000 && e->move_timer == -1);
+
+    e = setup();
+    tick();
+    tick();
+    tick();
+    tick();
+    ASSERT("the opening phase alternates lances with lunar bursts before losing any health", e->hp == e->max_hp && e->attack_phase == 0 && e->boss_attack == GUARDIAN_LUNAR && e->move_timer == 2);
+
+    for (int plate = 0; plate < 2; plate++) {
+        e = setup();
+        game.player.x = plate ? 35 : 29;
+        game.player.y = 8;
+        e->boss_wave_used = plate;
+        tick();
+        ASSERT("camping either sanctuary draws the opposite attack with a full warning", e->boss_attack == (plate ? GUARDIAN_LANES : GUARDIAN_LUNAR) && e->move_timer == 2 && sun_guardian_attack_marks(&game, e, game.player.x, game.player.y) && game.player.hp == 1000);
+        tick();
+        tick();
+        ASSERT("standing still on one sanctuary cannot avoid every Guardian strike", game.player.hp < 1000 && e->move_timer == -1);
+    }
+
+    e = setup();
+    e->hp--;
+    game.player.x = 31;
+    game.player.y = 13;
+    tick();
+    ASSERT("a provoked Guardian marks diagonal ranged attackers in the approach corridor", map_is_walkable(&game.map, 31, 13) && e->boss_attack == GUARDIAN_LUNAR && e->move_timer == 2 && sun_guardian_attack_marks(&game, e, 31, 13));
+    e->boss_attack = GUARDIAN_LANCE;
+    e->attack_phase = 1;
+    e->boss_wave_used = 3;
+    e->attack_target_x = 32;
+    e->attack_target_y = 9;
+    e->boss_aux_x = 32;
+    e->boss_aux_y = 11;
+    e->facing_dx = 0;
+    e->facing_dy = 1;
+    game.temple_cache[TEMPLE_DEPTH - 1].valid = 1;
+    game.temple_cache[TEMPLE_DEPTH - 1].map = game.map;
+    game.temple_cache[TEMPLE_DEPTH - 1].enemy_count = 1;
+    game.temple_cache[TEMPLE_DEPTH - 1].enemies[0] = *e;
+    ASSERT("existing active and cached warnings load without changing targets, timing or boss wounds", legacy_save(151) && load_game(&loaded, 99197) && loaded.enemies[0].boss_attack == GUARDIAN_LANCE && loaded.enemies[0].move_timer == 2 && loaded.enemies[0].attack_target_x == 32 && loaded.enemies[0].boss_aux_y == 11 && loaded.enemies[0].hp == e->hp && loaded.temple_cache[TEMPLE_DEPTH - 1].enemies[0].boss_wave_used == 3);
+    remove("saves/savegame_99197.json");
+
+    e = setup();
+    game.player.player_class = CLASS_MAGE;
+    game.player.x = 30;
+    game.player.y = 7;
+    game.player.last_dx = 1;
+    game.player.last_dy = 1;
+    game.player.mp = 1000;
+    game.player.known_spells[0] = spell_make_frost_bolt();
+    game.player.known_spell_count = 1;
+    game.player.equipped_spell = 0;
+    int unfrozen = 1;
+    int retaliation = 0;
+    int turns = 0;
+    while (e->active && turns < 40) {
+        action_resolve_player(&game, (Action){ACTION_CAST_SPELL, 0, 0});
+        unfrozen &= e->frozen_turns == 0;
+        int hp = game.player.hp;
+        tick();
+        retaliation += game.player.hp < hp;
+        turns++;
+    }
+    ASSERT("repeated diagonal Frost Bolts cannot freeze-lock the Guardian or prevent its retaliation", !e->active && unfrozen && retaliation > 0 && game.sun_guardian_reward_state == 2);
+}
+
 void test_sun_guardian(void) {
     printf("Fallen Sun Guardian encounter tests:\n");
     test_mantle_rebalance();
+    test_guardian_pressure();
     Enemy *e = setup();
     ASSERT("summit adds two reachable altars and four walkable sanctuary tiles without moving its doors or treasure",
         game.map.tiles[9][29] == TILE_TEMPLE_ALTAR && game.map.tiles[9][35] == TILE_TEMPLE_ALTAR &&
@@ -264,7 +342,7 @@ void test_sun_guardian(void) {
     tick();
     ASSERT("one complete action follows resolution before a new declaration", e->move_timer == 0 && game.player.hp == hp);
     tick();
-    ASSERT("the next declaration starts only after recovery", e->move_timer == 1);
+    ASSERT("the next lunar declaration starts only after recovery", e->move_timer == 2 && e->boss_attack == GUARDIAN_LUNAR);
 
     e = setup();
     declare(GUARDIAN_LANCE);

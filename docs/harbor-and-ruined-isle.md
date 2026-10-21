@@ -94,15 +94,23 @@ unannounced retaliation.
 
 | Phase | Threshold | Signatures |
 | --- | --- | --- |
-| Sunbound Armor | Above half health | One-action fixed cardinal solar lance, up to ten cells |
+| Sunbound Armor | Above half health | Alternating one-action cardinal solar lance and two-action lunar burst |
 | Cracked Core | Half health or below | Alternating lance and two-action sunburst ring |
 | Eclipse | Quarter health or below | Alternating two-action solar lanes and lunar burst |
 
 Phase changes latch at the next declaration. Crossing a threshold or freezing
 the Guardian cannot replace an already announced strike. Each resolution
-allows one full counterattack action before the next declaration. Freeze
-preserves the countdown; leaving its activation range pauses the encounter.
+allows one full counterattack action before the next declaration. Frost Bolt
+still damages the Guardian, but cannot freeze it. Existing saved freezes finish
+normally; leaving its activation range pauses the encounter.
 Phases never reverse if a Sun Priest heals the boss.
+
+Before declaring a strike, the Guardian replaces lances aimed away from diagonal
+attackers with targeted lunar bursts. Camping an M plate draws a lunar burst;
+camping an S plate during a lunar declaration draws solar lanes. Each counter
+receives its own full two-action warning. Moving onto a matching plate after
+declaration still protects against that fixed strike. A provoked Guardian can
+target lunar bursts in the approach corridor as well as inside the sanctuary.
 
 Lances retain their declared direction and endpoint. Walls, closed doors and
 living actors stop them. Removing cover or opening a door after declaration

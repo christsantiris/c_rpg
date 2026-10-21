@@ -1917,6 +1917,7 @@ void action_resolve_player(GameState *g, Action a) {
                                 sp->name, e->name);
                         } else if (sp->id == SPELL_FROST_BOLT &&
                             (enemy_is_vampire_captor(e) || e->type == ENEMY_ICE_GOLEM ||
+                            e->type == ENEMY_FALLEN_SUN_GUARDIAN ||
                             e->type == ENEMY_POLAR_KRAKEN)) {
                             e->frozen_turns = 0;
                             snprintf(msg, sizeof(msg),
