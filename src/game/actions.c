@@ -1017,9 +1017,6 @@ int game_has_regional_interaction(const GameState *g) {
         TileType tile = g->map.tiles[g->player.y][g->player.x];
         return map_is_coast_object(tile) && tile != TILE_COAST_CACHE;
     }
-    if (g->location == LOCATION_DESERT) {
-        return g->map.tiles[g->player.y][g->player.x] == TILE_DESERT_LAMP;
-    }
     if (g->location != LOCATION_MOUNTAINS) {
         return 0;
     }
@@ -1400,10 +1397,6 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
         TileType tile = g->map.tiles[g->player.y][g->player.x];
-        if (tile == TILE_DESERT_LAMP) {
-            game_collect_desert_lamp(g);
-            return;
-        }
         if (tile == TILE_BROKEN_BURIAL_SEAL) {
             if (g->elowen_quest_state != 1) {
                 push_message(g, "A shattered burial seal lies here.");
@@ -1477,6 +1470,10 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
         if (g->map.tiles[g->player.y][g->player.x] == TILE_LICH_RELIQUARY && lich_interact(g)) {
+            return;
+        }
+        if (g->map.tiles[g->player.y][g->player.x] == TILE_DESERT_LAMP) {
+            game_collect_desert_lamp(g);
             return;
         }
         if (g->map.tiles[g->player.y][g->player.x] == TILE_DRAGON_TREASURE) {

@@ -199,8 +199,9 @@ actions. The guaranteed Sandstorm Staff remains a rare two-handed Mage weapon.
 Unclaimed rewards survive travel and saving, including a full loot floor or
 inventory. See the [Pharaoh play-test guide](docs/art-sources/desert-pharaoh-encounter/README.md).
 A visual sandstorm sweeps across Sunscar with blowing sand and a light amber
-haze. Enter the Adventurer's Guild in Rosemoor, speak with Zara, and
-press **Y** to accept The Lost Magic Lamp. Recover the lamp on Sunscar level 4,
+haze. Speak with Zara in Stillbury's Inn and
+press **Y** to accept The Lost Magic Lamp. Stand on the lamp on Sunscar level 4
+and press **P** (Pick Up) to recover it,
 then return to Zara for a one-time reward of 80 gold and 600 score. Speaking
 with Cain explains the dangers beyond town, recommends Elowen's **The Broken
 Seals** quest in Oakhaven's Tavern, and grants one Scroll of Return to Town when

@@ -643,6 +643,7 @@ static void test_desert_lamp_quest(void) {
     g->player.x = ZARA_INN_X;
     g->player.y = ZARA_INN_Y + 1;
     game_talk_to_guild_seeker(g);
+    ASSERT("Zara explains that the magic lamp uses Pick Up", strstr(g->dialogue_text, "press P") != NULL);
     game_handle_quest_offer_key(g, SDL_SCANCODE_Y, 0);
     ASSERT("Zara assigns the lamp quest without resetting desert progress or its portal",
         g->sunscar_lamp_quest_state == 1 && g->portal_active &&
@@ -702,8 +703,15 @@ static void test_desert_lamp_quest(void) {
     ASSERT("stacked loot on the lamp restores its quest marker after pickup", g->map.tiles[y][x] == TILE_DESERT_LAMP);
     g->inventory_count = MAX_INVENTORY;
     action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
-    ASSERT("recovering the lamp works with a full pack and marks the quest ready to return",
+    ASSERT("Action no longer collects the magic lamp", g->sunscar_lamp_quest_state == 1 && g->map.tiles[y][x] == TILE_DESERT_LAMP);
+    g->player.x = x + 1;
+    action_resolve_player(g, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("the magic lamp must be picked up from its own tile", g->sunscar_lamp_quest_state == 1 && g->map.tiles[y][x] == TILE_DESERT_LAMP);
+    g->player.x = x;
+    action_resolve_player(g, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("Pick Up recovers the lamp with a full pack and marks the quest ready to return",
         g->sunscar_lamp_quest_state == 2 && g->map.tiles[y][x] == TILE_DESERT_FLOOR &&
+        g->inventory_count == MAX_INVENTORY &&
         quest_journal_get_entry(g, QUEST_TAB_ACTIVE, 0, &entry) && entry.state == 2 && entry.objective_complete[0]);
     game_open_town_portal(g);
     saved = save_game(g, slot) && load_game(&desert_loaded, slot);

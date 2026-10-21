@@ -67,7 +67,8 @@ reconstruct the map and locate its hidden dwarven hoard. He awards the player
 
 Zara waits in **Stillbury's Inn**. Press `T` beside her, then `Y` to accept.
 Enter **Sunscar Wastes** through Stillbury's west gate, recover the magic lamp
-on stage **4**, and return to Zara in the Inn for **80 gold and 600 score**.
+on stage **4** with `P` (Pick Up), and return to Zara in the Inn for
+**80 gold and 600 score**.
 
 ## Orin: The Broken Resonance
 
