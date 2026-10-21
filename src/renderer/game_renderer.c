@@ -2288,8 +2288,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_swamp_edge(r, sx, sy, x, y, 1); break;
                 case TILE_SWAMP_SHORTCUT:
                     draw_swamp_edge(r, sx, sy, x, y, 1);
-                    renderer_draw_text(r, "SHORTCUT", sx * TILE_SIZE - 20, sy * TILE_SIZE - 12,
-                        (SDL_Color){128, 235, 143, 255}, r->font_tiny);
                     break;
                 case TILE_SWAMP_DAUGHTER:
                     draw_swamp_daughter(r, sx, sy, x, y); break;
@@ -3842,6 +3840,40 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
     draw_catacombs_warnings(r, g, v);
     castle_draw_warnings(r, g, v);
+
+    if (g->location == LOCATION_SWAMP && r->font_tiny) {
+        for (int y = v->cam_y; y < v->cam_y + v->tiles_y && y < MAP_H; y++) {
+            for (int x = v->cam_x; x < v->cam_x + v->tiles_x && x < MAP_W; x++) {
+                TileType tile = g->map.tiles[y][x];
+                if (tile == TILE_ITEM) {
+                    tile = floor_item_underlay(g, x, y);
+                } else if (tile == TILE_PORTAL && g->portal_active && g->portal_location == g->location && g->portal_level == g->level && x == g->portal_x && y == g->portal_y) {
+                    tile = g->portal_origin_tile;
+                }
+                if (tile != TILE_SWAMP_ENTRANCE && tile != TILE_SWAMP_EXIT && tile != TILE_SWAMP_SHORTCUT) {
+                    continue;
+                }
+                const char *label = tile == TILE_SWAMP_SHORTCUT ? "SHORTCUT" : "EXIT";
+                int width = 0;
+                TTF_SizeText(r->font_tiny, label, &width, NULL);
+                int lx = viewport_to_screen_x(v, x) * TILE_SIZE + (TILE_SIZE - width) / 2;
+                int ly = viewport_to_screen_y(v, y) * TILE_SIZE - 16;
+                int max_x = v->tiles_x * TILE_SIZE - width - 4;
+                if (lx < 4) {
+                    lx = 4;
+                } else if (lx > max_x) {
+                    lx = max_x;
+                }
+                if (ly < 4) {
+                    ly = 4;
+                }
+                SDL_Rect backing = {lx - 3, ly - 3, width + 6, 14};
+                SDL_SetRenderDrawColor(r->sdl, 12, 25, 20, 255);
+                SDL_RenderFillRect(r->sdl, &backing);
+                renderer_draw_text(r, label, lx, ly, (SDL_Color){225, 255, 160, 255}, r->font_tiny);
+            }
+        }
+    }
 
     draw_combat_feedback(r, g, v);
 
