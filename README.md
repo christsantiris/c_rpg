@@ -705,6 +705,9 @@ Below are screenshots of the game in action:
 
 <img width="2586" height="1466" alt="image" src="https://github.com/user-attachments/assets/d4388a92-993c-4a2b-afa8-f30a797c369f" />
 
+<img width="2586" height="1466" alt="Screenshot 2026-10-21 at 10 37 28 AM" src="https://github.com/user-attachments/assets/e25ea54f-80a9-417c-8d79-a9d4db962ba5" />
+
+
 ## Building and Running
 
 Build a release executable with `make`, or build and start it with `make run`.
