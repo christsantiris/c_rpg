@@ -181,57 +181,6 @@ static void draw_necromancer_warning(Renderer *r, const GameState *g, const View
     SDL_SetRenderDrawBlendMode(r->sdl, blend);
 }
 
-static void draw_necromancer_status(Renderer *r, const GameState *g, const Viewport *v) {
-    if (g->location != LOCATION_FOREST || g->level != FOREST_BOSS_LEVEL) {
-        return;
-    }
-    for (int i = 0; i < g->enemy_count; i++) {
-        const Enemy *e = &g->enemies[i];
-        if (!e->active || e->type != ENEMY_FOREST_NECROMANCER || e->max_hp <= 0 ||
-            !viewport_is_visible(v, e->x, e->y) || !map_is_explored(&g->map, e->x, e->y)) {
-            continue;
-        }
-        int width = r->screen_w - INFO_PANEL_W - 16;
-        if (width > 380) {
-            width = 380;
-        }
-        if (width < 160) {
-            return;
-        }
-        int x = (r->screen_w - INFO_PANEL_W - width) / 2;
-        int top = x < MAP_W * 2 + 12 ? MAP_H * 2 + 20 : 8;
-        SDL_Rect panel = {x, top, width, 78};
-        SDL_SetRenderDrawColor(r->sdl, 20, 31, 24, 255);
-        SDL_RenderFillRect(r->sdl, &panel);
-        SDL_SetRenderDrawColor(r->sdl, 97, 151, 90, 255);
-        SDL_RenderDrawRect(r->sdl, &panel);
-        const char *name = width < 365 ? (e->attack_phase ? "NECROMANCER: PHASE 2" : "NECROMANCER: PHASE 1") :
-            (e->attack_phase ? "NECROMANCER: WITHERED GROVE" : "NECROMANCER: GROVE BINDER");
-        renderer_draw_text(r, name, x + 10, top + 8, (SDL_Color){233, 216, 250, 255}, r->font_tiny);
-        SDL_Rect bar = {x + 10, top + 23, width - 20, 8};
-        SDL_SetRenderDrawColor(r->sdl, 52, 39, 70, 255);
-        SDL_RenderFillRect(r->sdl, &bar);
-        bar.w = bar.w * e->hp / e->max_hp;
-        SDL_SetRenderDrawColor(r->sdl, 106, 175, 94, 255);
-        SDL_RenderFillRect(r->sdl, &bar);
-        char hint[80];
-        if (e->move_timer > 0) {
-            const char *attack = width < 280 ? (e->boss_attack == NECRO_ROOTS ? "ROOTS" : e->boss_attack == NECRO_RAISE ? "GRAVES" : "BOLT") :
-                (e->boss_attack == NECRO_ROOTS ? "CROSSING ROOTS" : e->boss_attack == NECRO_RAISE ? "GRAVE WAVE" : "SPIRIT BOLT");
-            snprintf(hint, sizeof(hint), "%s: %d TURN%s%s", attack, e->move_timer, e->move_timer == 1 ? "" : "S", e->frozen_turns > 0 ? (width < 280 ? " *" : " (FROZEN)") : "");
-        } else {
-            snprintf(hint, sizeof(hint), "%s", e->move_timer < 0 ? "RECOVERING: ATTACK NOW" : "PREPARING NEXT ATTACK");
-        }
-        renderer_draw_text(r, hint, x + 10, top + 38, (SDL_Color){e->move_timer < 0 ? 139 : 247, 207, 164, 255}, r->font_tiny);
-        int graves = necromancer_active_graves(g);
-        snprintf(hint, sizeof(hint), graves ? "GRAVES: %d  INTERACT TO CONSECRATE" : "ALL GRAVES CONSECRATED", graves);
-        if (width < 280) {
-            snprintf(hint, sizeof(hint), "GRAVES: %d", graves);
-        }
-        renderer_draw_text(r, hint, x + 10, top + 55, (SDL_Color){186, 178, 211, 255}, r->font_tiny);
-    }
-}
-
 static SDL_Color area_label_color(Location area) {
     switch (area) {
         case LOCATION_FOREST: return (SDL_Color){90, 190, 105, 255};
@@ -3917,7 +3866,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     draw_kraken_status(r, g, v);
     draw_lich_status(r, g, v);
-    draw_necromancer_status(r, g, v);
     draw_goblin_king_status(r, g, v);
     draw_drowned_queen_status(r, g, v);
     draw_swamp_demon_status(r, g, v);
@@ -3934,7 +3882,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     castle_draw_veyr_status(r, g, v);
 
     // Draw info panel
-    info_panel_draw(r, g);
+    info_panel_draw(r, g, v);
 
     // Draw message bar
     message_bar_draw(r, g);
