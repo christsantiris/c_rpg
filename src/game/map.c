@@ -25,6 +25,33 @@ int map_is_explored(const Map *m, int x, int y) {
     return (m->explored[index / 8] & (1u << (index % 8))) != 0;
 }
 
+void map_mirror_horizontal(Map *m) {
+    unsigned char explored[MAP_EXPLORED_BYTES];
+    memcpy(explored, m->explored, sizeof(explored));
+    map_clear_exploration(m);
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            int index = y * MAP_W + x;
+            if (explored[index / 8] & (1u << (index % 8))) {
+                map_mark_explored(m, MAP_W - 1 - x, y);
+            }
+            if (x < MAP_W / 2) {
+                TileType tile = m->tiles[y][x];
+                m->tiles[y][x] = m->tiles[y][MAP_W - 1 - x];
+                m->tiles[y][MAP_W - 1 - x] = tile;
+            }
+        }
+    }
+    for (int i = 0; i < m->room_count; i++) {
+        m->rooms[i].x = MAP_W - m->rooms[i].x - m->rooms[i].w;
+    }
+    m->stairs_up_x = MAP_W - 1 - m->stairs_up_x;
+    m->stairs_down_x = MAP_W - 1 - m->stairs_down_x;
+    for (int i = 0; i < m->burial_trap_count; i++) {
+        m->burial_traps[i].x = MAP_W - 1 - m->burial_traps[i].x;
+    }
+}
+
 static void fill_rect(Map *m, int x, int y, int w, int h, TileType t) {
     for (int ry = y; ry < y + h; ry++)
         for (int rx = x; rx < x + w; rx++)
@@ -816,6 +843,10 @@ void map_generate_forest(Map *m, int level) {
     index = templates[index];
     map_generate_outdoor(m, map_forest_difficulty(level), entrances[index], exits[index], 1,
         &forest_templates[index]);
+    if (level == 1) {
+        // OakHaven lies east of the forest: enter from the east and head west.
+        map_mirror_horizontal(m);
+    }
     int hidden_start_x;
     int hidden_start_y;
     int hidden_end_x;

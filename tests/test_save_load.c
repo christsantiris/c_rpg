@@ -2268,6 +2268,85 @@ static void test_coast_stage_migration(void) {
     remove_test_save(slot);
 }
 
+static void test_forest_entry_migration(void) {
+    GameState *original = calloc(1, sizeof(*original));
+    GameState *loaded = calloc(1, sizeof(*loaded));
+    ASSERT("forest migration fixtures allocate successfully", original && loaded);
+    if (!original || !loaded) {
+        free(original);
+        free(loaded);
+        return;
+    }
+    for (int active = 0; active < 2; active++) {
+        memset(original, 0, sizeof(*original));
+        game_init(original);
+        game_enter_forest(original);
+        // Recreate the old west-side entry with known actor and loot positions.
+        map_mirror_horizontal(&original->map);
+        int x;
+        int y;
+        map_room_center(&original->map.rooms[0], &x, &y);
+        original->player.x = x;
+        original->player.y = y;
+        original->player.last_dx = 1;
+        original->enemy_count = 1;
+        original->enemies[0] = (Enemy){.type = ENEMY_DARK_ELF, .active = 1, .x = x + 1, .y = y, .hp = 17, .max_hp = 50, .move_timer = 2, .attack_target_x = x, .attack_target_y = y, .facing_dx = 1};
+        original->map.tiles[y][x + 1] = TILE_FOREST_FLOOR;
+        original->map.tiles[y][x + 2] = TILE_FOREST_FLOOR;
+        original->map.tiles[y][x + 3] = TILE_FOREST_FLOOR;
+        original->map.tiles[y + 1][x] = TILE_FOREST_FALSE_MARKER;
+        map_clear_exploration(&original->map);
+        map_mark_explored(&original->map, x, y);
+        original->forest_cache[0].valid = 1;
+        original->forest_cache[0].map = original->map;
+        original->forest_cache[0].enemy_count = 1;
+        original->forest_cache[0].enemies[0] = original->enemies[0];
+        original->portal_active = 1;
+        original->portal_location = LOCATION_FOREST;
+        original->portal_level = 1;
+        original->portal_x = x + 3;
+        original->portal_y = y;
+        original->portal_origin_tile = TILE_FOREST_FLOOR;
+        original->gold = 321;
+        original->score = 9876;
+        if (active) {
+            original->floor_item_count = 1;
+            original->floor_items[0] = (FloorItem){.active = 1, .x = x + 2, .y = y, .underlying_tile = TILE_FOREST_FLOOR, .item = item_make_greatsword()};
+            original->floor_items[0].item.sharpened = 1;
+            original->map.tiles[y][x + 2] = TILE_ITEM;
+            original->map.tiles[y][x + 3] = TILE_PORTAL;
+        } else {
+            original->location = LOCATION_TOWN;
+            map_generate_town(&original->map, &original->player.x, &original->player.y);
+            original->enemy_count = 0;
+            original->floor_item_count = 0;
+        }
+        int px = original->player.x;
+        int hp = original->player.hp;
+        int ok = save_game(original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, 157) && load_game(loaded, LEGACY_SLOT);
+        LevelCache *cache = &loaded->forest_cache[0];
+        ASSERT("legacy forest entry migration preserves character progress and enemy health", ok && loaded->player.hp == hp && loaded->gold == 321 && loaded->score == 9876 && cache->valid && cache->enemies[0].hp == 17 && cache->enemies[0].move_timer == 2);
+        ASSERT("cached first forest stage mirrors terrain, explored tiles, enemies, and warned targets together", ok && cache->map.stairs_up_x == MAP_W - 2 && cache->map.stairs_down_x == 1 && cache->map.tiles[y + 1][MAP_W - 1 - x] == TILE_FOREST_FALSE_MARKER && map_is_explored(&cache->map, MAP_W - 1 - x, y) && !map_is_explored(&cache->map, x, y) && cache->enemies[0].x == MAP_W - 2 - x && cache->enemies[0].attack_target_x == MAP_W - 1 - x && cache->enemies[0].facing_dx == -1);
+        ASSERT("saved forest portal coordinates move with the mirrored destination", ok && loaded->portal_active && loaded->portal_x == MAP_W - 4 - x && loaded->portal_y == y);
+        if (active) {
+            ASSERT("active forest migration preserves the player's relative position and facing", loaded->player.x == MAP_W - 1 - px && loaded->player.y == y && loaded->player.last_dx == -1 && loaded->enemies[0].x == MAP_W - 2 - x);
+            ASSERT("active forest migration preserves dropped equipment and the return portal", loaded->floor_items[0].active && loaded->floor_items[0].x == MAP_W - 3 - x && loaded->floor_items[0].item.sharpened && loaded->map.tiles[y][MAP_W - 3 - x] == TILE_ITEM && loaded->map.tiles[y][MAP_W - 4 - x] == TILE_PORTAL);
+        } else {
+            ASSERT("migrating a cached forest leaves the player in town at the same position", loaded->location == LOCATION_TOWN && loaded->player.x == px && loaded->player.last_dx == 1);
+        }
+        int saved_x = loaded->player.x;
+        ASSERT("repaired forest saves do not mirror again on another load", save_game(loaded, MIGRATED_SLOT) && load_game(original, MIGRATED_SLOT) && original->player.x == saved_x && original->forest_cache[0].map.stairs_up_x == MAP_W - 2 && original->portal_x == MAP_W - 4 - x);
+        if (!active) {
+            game_use_town_portal(original);
+            ASSERT("a migrated town portal returns to the same place in the corrected forest", original->location == LOCATION_FOREST && original->level == 1 && original->player.x == MAP_W - 4 - x && original->player.y == y);
+        }
+        remove_test_save(LEGACY_SLOT);
+        remove_test_save(MIGRATED_SLOT);
+    }
+    free(original);
+    free(loaded);
+}
+
 static void test_shortcut_square_repairs(void) {
     static GameState original;
     static GameState loaded;
@@ -2776,6 +2855,7 @@ void test_save_load(void) {
     test_narrow_shortcut_migration();
     test_shared_town_gate_migration();
     test_shortcut_square_repairs();
+    test_forest_entry_migration();
     test_shortcut_fork_migration();
     test_harbor_road_save_load();
     test_spent_island_map_on_load();

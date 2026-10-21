@@ -187,8 +187,39 @@ static void test_forest_crossing(int reverse, int shortcut) {
     ASSERT("revisiting preserves the grove and defeated boss", forest.forest_cache[FOREST_BOSS_LEVEL - 1].valid && (forest.defeated_bosses & (1 << LOCATION_FOREST)));
 }
 
+static void test_forest_entry_direction(void) {
+    int layouts = 1;
+    for (int seed = 0; seed < 32; seed++) {
+        srand(1700 + seed);
+        map_generate_forest(&forest.map, 1);
+        layouts &= forest.map.stairs_up_x == MAP_W - 2 && forest.map.stairs_down_x == 1 &&
+            forest.map.tiles[forest.map.stairs_up_y][MAP_W - 1] == TILE_FOREST_ENTRANCE &&
+            map_is_walkable(&forest.map, MAP_W - 3, forest.map.stairs_up_y) &&
+            forest.map.tiles[forest.map.stairs_down_y][0] == TILE_FOREST_WALL;
+    }
+    ASSERT("32 forest entry layouts face west from OakHaven with the onward west exit still hidden", layouts);
+    for (int unlocked = 0; unlocked < 2; unlocked++) {
+        memset(&forest, 0, sizeof(forest));
+        game_init(&forest);
+        forest.defeated_bosses = unlocked ? 1 << LOCATION_FOREST : 0;
+        action_resolve_player(&forest, (Action){ACTION_MOVE, 0, 12});
+        if (unlocked) {
+            ASSERT("debug-unlocked west gate still offers the normal forest route", game_shortcut_prompt_active(&forest));
+            game_handle_shortcut_prompt_key(&forest, SDL_SCANCODE_1, 0);
+        }
+        int y = forest.player.y;
+        ASSERT("OakHaven's west gate arrives on the east side of forest stage one", forest.location == LOCATION_FOREST && forest.level == 1 && forest.player.x == MAP_W - 2);
+        action_resolve_player(&forest, (Action){ACTION_MOVE, MAP_W - 3, y});
+        ASSERT("continuing west immediately walks deeper into the forest", forest.location == LOCATION_FOREST && forest.player.x == MAP_W - 3 && forest.player.y == y);
+        action_resolve_player(&forest, (Action){ACTION_MOVE, MAP_W - 2, y});
+        action_resolve_player(&forest, (Action){ACTION_MOVE, MAP_W - 1, y});
+        ASSERT("turning east through the entrance returns to OakHaven's west gate", forest.location == LOCATION_TOWN && forest.player.x == 1 && forest.player.y == 12);
+    }
+}
+
 void test_forest_travel(void) {
     printf("Forest travel from either town tests:\n");
+    test_forest_entry_direction();
     ASSERT("difficulty rises toward the grove from both towns",
         map_forest_difficulty(1) < map_forest_difficulty(2) && map_forest_difficulty(2) < map_forest_difficulty(3) &&
         map_forest_difficulty(3) < map_forest_difficulty(4) && map_forest_difficulty(4) > map_forest_difficulty(5) &&
