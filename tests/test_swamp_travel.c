@@ -132,6 +132,8 @@ static void test_swamp_crossing(int reverse, int shortcut) {
         ASSERT("central shortcut saves and loads", save_game(&swamp, 99122) && load_game(&restored, 99122));
         ASSERT("loaded swamp preserves entry town, quest, and shortcut", restored.swamp_entry_town == swamp.swamp_entry_town && restored.innkeeper_quest_state == swamp.innkeeper_quest_state && restored.map.tiles[y][x] == TILE_SWAMP_SHORTCUT);
         action_resolve_player(&restored, (Action){ACTION_MOVE, x, y});
+        ASSERT("swamp shortcut waits for confirmation", restored.location == LOCATION_SWAMP && game_shortcut_prompt_active(&restored));
+        game_handle_shortcut_prompt_key(&restored, SDL_SCANCODE_RETURN, 0);
         memcpy(&swamp, &restored, sizeof(swamp));
         remove("saves/savegame_99122.json");
     } else {

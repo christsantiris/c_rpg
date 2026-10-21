@@ -1015,6 +1015,8 @@ static void test_necromancer_opens_exit(void) {
         }
         game_handle_shortcut_prompt_key(&g, SDL_SCANCODE_RETURN, 0);
         action_resolve_player(&g, (Action){ACTION_MOVE, shortcut_x, shortcut_y});
+        ASSERT("grove shortcut asks before leaving surviving enemies behind", g.location == LOCATION_FOREST && game_shortcut_prompt_active(&g));
+        game_handle_shortcut_prompt_key(&g, SDL_SCANCODE_RETURN, 0);
         ASSERT("grove shortcut leaves the forest with a living enemy behind",
             g.location == LOCATION_TOWN2 &&
             g.forest_cache[FOREST_BOSS_LEVEL - 1].enemies[1].active &&

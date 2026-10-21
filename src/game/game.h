@@ -305,6 +305,7 @@ typedef struct {
 void game_init(GameState *g);
 int game_quest_offer_active(const GameState *g);
 int game_handle_quest_offer_key(GameState *g, int key, int repeat);
+void game_request_shortcut(GameState *g);
 int game_shortcut_prompt_active(const GameState *g);
 int game_handle_shortcut_prompt_key(GameState *g, int key, int repeat);
 void game_migrate_boss_shortcuts(GameState *g);
