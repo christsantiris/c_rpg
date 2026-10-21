@@ -282,7 +282,7 @@ static void test_desert_combat(void) {
     GameState *g = &desert_game;
     setup_desert_enemy(ENEMY_VIPER, 21, 20);
     action_resolve_enemies(g);
-    ASSERT("a Viper bite damages and poisons the player", g->player.hp == 92 && g->player.poison_turns == 3);
+    ASSERT("a Viper bite damages and poisons the player", g->player.hp == 93 && g->player.poison_turns == 3);
     setup_desert_enemy(ENEMY_VIPER, 21, 20);
     g->inventory[0] = item_make_shadow_armor();
     g->inventory[0].evasion_chance = 100;
@@ -290,6 +290,34 @@ static void test_desert_combat(void) {
     g->equipped_armor = 0;
     action_resolve_enemies(g);
     ASSERT("a dodged Viper bite does not poison the player", g->player.hp == 100 && !g->player.poison_turns);
+
+    int damage_ok = 1;
+    for (int level = 1; level <= DESERT_DEPTH; level++) {
+        setup_desert_enemy(ENEMY_SCARAB, 21, 20);
+        g->level = level;
+        g->enemies[0].attack = 24;
+        action_resolve_enemies(g);
+        damage_ok &= g->player.hp == 83;
+    }
+    ASSERT("all Sunscar stages reduce a 20-damage hit to 17 after defense", damage_ok);
+    setup_desert_enemy(ENEMY_SCARAB, 21, 20);
+    g->location = LOCATION_DUNGEON;
+    g->enemies[0].attack = 24;
+    action_resolve_enemies(g);
+    ASSERT("Sunscar damage tuning leaves other regions unchanged", g->player.hp == 80);
+    setup_desert_enemy(ENEMY_SCARAB, 21, 20);
+    g->enemies[0].attack = 24;
+    g->inventory[0] = item_make_kite_shield();
+    g->inventory[0].block_chance = 100;
+    g->inventory[0].block_reduction_percent = 50;
+    g->inventory_count = 1;
+    g->equipped_off_hand = 0;
+    action_resolve_enemies(g);
+    ASSERT("shield blocks apply to the reduced Sunscar hit", g->player.hp == 91);
+    setup_desert_enemy(ENEMY_SCARAB, 21, 20);
+    g->player.defense = 100;
+    action_resolve_enemies(g);
+    ASSERT("Sunscar hits retain the one-damage minimum", g->player.hp == 99);
 
     const EnemyType slow[2] = {ENEMY_MUMMY, ENEMY_GOLEM};
     int slow_ok = 1;
@@ -312,7 +340,7 @@ static void test_desert_combat(void) {
     int recovered = g->player.hp == 100 && shots.count == 0 && g->enemies[0].x == 24;
     action_resolve_enemies_with_projectiles(g, &shots);
     ASSERT("Djinn alternate recovery with magic bolts using half the player's defense",
-        recovered && g->player.hp == 90 && shots.count == 1 &&
+        recovered && g->player.hp == 91 && shots.count == 1 &&
         shots.shots[0].type == ENEMY_DJINN && g->enemies[0].x == 24);
     setup_desert_enemy(ENEMY_DJINN, 24, 20);
     g->map.tiles[20][22] = TILE_DESERT_WALL;
@@ -387,7 +415,7 @@ static void test_pharaoh_combat(void) {
         g->enemies[0].boss_attack == PHARAOH_BEAM && g->enemies[0].move_timer == 1;
     action_resolve_enemies_with_projectiles(g, &shots);
     ASSERT("the Pharaoh warns then fires a magic bolt using half the player's defense",
-        warned && g->player.hp == 90 && shots.count == 1 &&
+        warned && g->player.hp == 91 && shots.count == 1 &&
         shots.shots[0].type == ENEMY_DESERT_PHARAOH &&
         g->enemies[0].x == 24 && g->enemies[0].y == 20);
 
@@ -413,11 +441,11 @@ static void test_pharaoh_combat(void) {
     int awakened = g->enemies[0].move_timer == 1;
     action_resolve_enemies_with_projectiles(g, &shots);
     ASSERT("a ranged hit awakens the Pharaoh outside his clearing",
-        awakened && g->player.hp == 90 && shots.count == 1);
+        awakened && g->player.hp == 91 && shots.count == 1);
     g->player.x = 10;
     action_resolve_enemies_with_projectiles(g, &shots);
     ASSERT("the Pharaoh stops attacking when the player retreats far away",
-        g->player.hp == 90 && shots.count == 0 && g->enemies[0].move_timer == -1);
+        g->player.hp == 91 && shots.count == 0 && g->enemies[0].move_timer == -1);
 
     setup_pharaoh_combat();
     g->player.x = 23;

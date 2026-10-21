@@ -750,6 +750,13 @@ static int equipped_spell_cost(const GameState *g, const Spell *spell) {
 }
 
 static int apply_enemy_damage(GameState *g, int damage, CombatFeedbackArrival arrival) {
+    if (g->location == LOCATION_DESERT) {
+        // Ease expedition attrition using damage after defense.
+        damage = (damage * 85 + 50) / 100;
+        if (damage < 1) {
+            damage = 1;
+        }
+    }
     const Item *armor = equipped_armor(g);
     if (armor && armor->evasion_chance > 0 &&
         rand() % 100 < armor->evasion_chance) {

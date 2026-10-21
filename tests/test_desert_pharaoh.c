@@ -96,7 +96,7 @@ static void test_signatures(void) {
     game.player.defense = 4;
     action_resolve_enemies_with_projectiles(&game, &shots);
     action_resolve_enemies_with_projectiles(&game, &shots);
-    ASSERT("standing in the beam takes exactly one hit with the existing half-defense formula", game.player.hp == 980 && shots.count == 1 && e->move_timer == -1);
+    ASSERT("standing in the beam takes one hit reduced by 15% after half defense", game.player.hp == 983 && shots.count == 1 && e->move_timer == -1);
     e = setup();
     game.inventory[0] = item_make_shadow_armor();
     game.inventory[0].evasion_chance = 100;
@@ -173,7 +173,7 @@ static void test_storms(void) {
         hp = game.player.hp;
         damaging &= desert_pharaoh_attack_marks(&game, e, game.player.x, game.player.y);
         action_resolve_enemies(&game);
-        damaging &= game.player.hp == hp - 22;
+        damaging &= game.player.hp == hp - 19;
     }
     ASSERT("all four wind directions move sheltered shadows and leave warned shelter unharmed", shelter);
     ASSERT("successive storm bands move between attacks while each two-action footprint remains fixed", moving);
@@ -197,10 +197,10 @@ static void test_storms(void) {
     game.map.tiles[22][27] = TILE_ITEM;
     e->frozen_turns = 3;
     action_resolve_enemies(&game);
-    ASSERT("burial timers tick beneath every stacked item even while the Pharaoh is frozen", game.player.hp == 992 && game.floor_items[0].underlying_tile == TILE_PHARAOH_SAND_1 && game.floor_items[1].underlying_tile == TILE_PHARAOH_SAND_1 && game.map.tiles[22][27] == TILE_ITEM);
+    ASSERT("burial timers tick beneath every stacked item even while the Pharaoh is frozen", game.player.hp == 993 && game.floor_items[0].underlying_tile == TILE_PHARAOH_SAND_1 && game.floor_items[1].underlying_tile == TILE_PHARAOH_SAND_1 && game.map.tiles[22][27] == TILE_ITEM);
     action_resolve_enemies(&game);
     action_resolve_enemies(&game);
-    ASSERT("burial damage stops after two actions without losing stacked loot", game.player.hp == 984 && game.floor_items[0].underlying_tile == TILE_DESERT_FLOOR && game.floor_items[1].underlying_tile == TILE_DESERT_FLOOR && game.floor_item_count == 2);
+    ASSERT("burial damage stops after two actions without losing stacked loot", game.player.hp == 986 && game.floor_items[0].underlying_tile == TILE_DESERT_FLOOR && game.floor_items[1].underlying_tile == TILE_DESERT_FLOOR && game.floor_item_count == 2);
 }
 
 static int escape_steps(const Enemy *e) {

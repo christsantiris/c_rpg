@@ -5,6 +5,12 @@ west; backtracking uses the east edge. The first stage's east exit and the final
 stage's west exit return to Stillbury. The Desert Pharaoh guards the final exit
 and drops the Sandstorm Staff.
 
+Incoming combat damage is reduced by **15% after defense**, rounded to the
+nearest whole HP with a minimum of 1, before shield blocks. This includes the
+Pharaoh's attacks and lingering sand. Enemy health, patrol counts, attack
+patterns, poison and rewards are unchanged. The reduction applies immediately
+to existing saves to ease potion use during longer expeditions.
+
 ## Dune basins and oasis wells
 
 Dune basins are broken up by broad sandstone mesas, staggered rock spines and
