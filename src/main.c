@@ -700,6 +700,7 @@ int main(int argc, char **argv) {
                         break;
                     }
                     if (screen == SCREEN_PLAYING && game_handle_shortcut_prompt_key(&game, sc, event.key.repeat)) {
+                        viewport_center_on(&viewport, game.player.x, game.player.y);
                         break;
                     }
 

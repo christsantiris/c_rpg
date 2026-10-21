@@ -77,6 +77,50 @@ static void shortcut_victory(int region, int attack) {
         return;
     }
     game.dialogue_active = 0;
+    int px = game.player.x;
+    int py = game.player.y;
+    int reward = -1;
+    const char *reward_name = region == 0 ? "Necromancer's Cloak" :
+        (region == 1 ? "Demonic Sword" : "Goblin King's Shield");
+    for (int i = 0; i < game.floor_item_count; i++) {
+        if (game.floor_items[i].active && strcmp(game.floor_items[i].item.name, reward_name) == 0) {
+            reward = i;
+        }
+    }
+    ASSERT("regional boss leaves its unique reward on the floor", reward >= 0);
+    if (reward < 0) {
+        return;
+    }
+    action_resolve_player(&game, (Action){ACTION_MOVE, x, y});
+    ASSERT("stepping into the shortcut keeps the player and reward on the boss floor", game.location == regions[region] && game.player.x == px && game.player.y == py && game.floor_items[reward].active && game_shortcut_prompt_active(&game));
+    ASSERT("shortcut confirmation warns that remaining loot will be lost", strstr(game.dialogue_text, "Items left on this floor will be lost"));
+    ASSERT("held Enter cannot confirm travel", game_handle_shortcut_prompt_key(&game, SDL_SCANCODE_RETURN, 1) && game.location == regions[region] && game_shortcut_prompt_active(&game));
+    ASSERT("held Escape and movement cannot dismiss travel confirmation", game_handle_shortcut_prompt_key(&game, SDL_SCANCODE_ESCAPE, 1) && game_handle_shortcut_prompt_key(&game, SDL_SCANCODE_LEFT, 0) && game_shortcut_prompt_active(&game));
+    ASSERT("pending travel and unclaimed reward survive save/load", save_game(&game, SHORTCUT_TEST_SLOT) && load_game(&loaded, SHORTCUT_TEST_SLOT) && loaded.location == regions[region] && game_shortcut_prompt_active(&loaded) && loaded.floor_items[reward].active);
+    remove("saves/savegame_99125.json");
+    ASSERT("Escape cancels travel without moving or losing the reward", game_handle_shortcut_prompt_key(&loaded, SDL_SCANCODE_ESCAPE, 0) && !game_shortcut_prompt_active(&loaded) && loaded.location == regions[region] && loaded.player.x == px && loaded.player.y == py && loaded.floor_items[reward].active);
+    for (int i = 0; i < loaded.floor_item_count; i++) {
+        if (loaded.floor_items[i].active) {
+            action_resolve_player(&loaded, (Action){ACTION_MOVE, loaded.floor_items[i].x, loaded.floor_items[i].y});
+            action_resolve_player(&loaded, (Action){ACTION_PICK_UP, 0, 0});
+        }
+    }
+    int collected = 0;
+    for (int i = 0; i < loaded.inventory_count; i++) {
+        collected |= strcmp(loaded.inventory[i].name, reward_name) == 0;
+    }
+    ASSERT("canceling lets the player collect the original boss reward", collected && !loaded.floor_items[reward].active);
+    action_resolve_player(&loaded, (Action){ACTION_MOVE, x, y});
+    ASSERT("a cleared floor still asks before travel without a loot warning", game_shortcut_prompt_active(&loaded) && !strstr(loaded.dialogue_text, "will be lost"));
+    Location destination = region == 0 ? LOCATION_TOWN2 : (region == 1 ? LOCATION_TOWN3 : LOCATION_TOWN4);
+    int hp = loaded.player.hp;
+    ASSERT("fresh keypad Enter confirms travel without spending a combat turn", game_handle_shortcut_prompt_key(&loaded, SDL_SCANCODE_KP_ENTER, 0) && loaded.location == destination && !game_shortcut_prompt_active(&loaded) && loaded.player.hp == hp);
+    collected = 0;
+    for (int i = 0; i < loaded.inventory_count; i++) {
+        collected |= strcmp(loaded.inventory[i].name, reward_name) == 0;
+    }
+    ASSERT("confirmed travel preserves the collected boss reward", collected);
+    game_handle_shortcut_prompt_key(&game, SDL_SCANCODE_ESCAPE, 0);
     int index = game.floor_item_count++;
     game.floor_items[index] = (FloorItem){.active = 1, .x = x, .y = y, .underlying_tile = markers[region], .item = item_make_health_potion()};
     game.map.tiles[y][x] = TILE_ITEM;

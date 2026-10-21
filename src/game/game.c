@@ -6698,11 +6698,33 @@ void game_mark_level_cleared(GameState *g) {
     g->level_cleared = 1;
 }
 
+void game_request_shortcut(GameState *g) {
+    const char *town;
+    if (g->location == LOCATION_FOREST) {
+        town = g->forest_entry_town == LOCATION_TOWN2 ? "OakHaven" : "Stillbury";
+    } else if (g->location == LOCATION_SWAMP) {
+        town = g->swamp_entry_town == LOCATION_TOWN3 ? "Stillbury" : "Rosemoor";
+    } else {
+        town = g->mountain_entry_town == LOCATION_TOWN4 ? "OakHaven" : "Ridgeshire";
+    }
+    int loot = 0;
+    for (int i = 0; i < g->floor_item_count; i++) {
+        loot |= g->floor_items[i].active;
+    }
+    g->dialogue_active = 1;
+    g->dialogue_x = g->player.x;
+    g->dialogue_y = g->player.y;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Take shortcut?");
+    snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "Travel to %s?%s", town,
+        loot ? " Items left on this floor will be lost. Stay to collect your loot before leaving." : "");
+}
+
 int game_shortcut_prompt_active(const GameState *g) {
     if (g->castle_prompt) {
         return 1;
     }
-    return g->dialogue_active && strcmp(g->dialogue_speaker, "Shortcut found") == 0 &&
+    return g->dialogue_active &&
+        (strcmp(g->dialogue_speaker, "Shortcut found") == 0 || strcmp(g->dialogue_speaker, "Take shortcut?") == 0) &&
         (g->location == LOCATION_FOREST || g->location == LOCATION_SWAMP || g->location == LOCATION_MOUNTAINS);
 }
 
@@ -6713,8 +6735,20 @@ int game_handle_shortcut_prompt_key(GameState *g, int key, int repeat) {
     if (!game_shortcut_prompt_active(g)) {
         return 0;
     }
-    if (!repeat && (key == SDL_SCANCODE_RETURN || key == SDL_SCANCODE_KP_ENTER)) {
+    int travel = strcmp(g->dialogue_speaker, "Take shortcut?") == 0;
+    if (!repeat && travel && key == SDL_SCANCODE_ESCAPE) {
         g->dialogue_active = 0;
+    } else if (!repeat && (key == SDL_SCANCODE_RETURN || key == SDL_SCANCODE_KP_ENTER)) {
+        g->dialogue_active = 0;
+        if (travel) {
+            if (g->location == LOCATION_FOREST) {
+                game_leave_forest(g, g->forest_entry_town == LOCATION_TOWN2 ? LOCATION_TOWN : LOCATION_TOWN2, 1);
+            } else if (g->location == LOCATION_SWAMP) {
+                game_leave_swamp(g, g->swamp_entry_town == LOCATION_TOWN3 ? LOCATION_TOWN2 : LOCATION_TOWN3, 1);
+            } else {
+                game_leave_mountains(g, g->mountain_entry_town == LOCATION_TOWN4 ? LOCATION_TOWN : LOCATION_TOWN4, 1);
+            }
+        }
     }
     return 1;
 }

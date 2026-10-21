@@ -2527,7 +2527,7 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->location == LOCATION_SWAMP &&
             g->map.tiles[ty][tx] == TILE_SWAMP_SHORTCUT) {
             if (g->defeated_bosses & (1 << LOCATION_SWAMP)) {
-                game_leave_swamp(g, g->swamp_entry_town == LOCATION_TOWN3 ? LOCATION_TOWN2 : LOCATION_TOWN3, 1);
+                game_request_shortcut(g);
             }
             return;
         }
@@ -2750,7 +2750,7 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->location == LOCATION_FOREST &&
             g->map.tiles[ty][tx] == TILE_FOREST_SHORTCUT) {
             if (g->defeated_bosses & (1 << LOCATION_FOREST)) {
-                game_leave_forest(g, g->forest_entry_town == LOCATION_TOWN2 ? LOCATION_TOWN : LOCATION_TOWN2, 1);
+                game_request_shortcut(g);
             }
             return;
         }
@@ -2780,7 +2780,7 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->location == LOCATION_MOUNTAINS &&
             g->map.tiles[ty][tx] == TILE_MOUNTAIN_SHORTCUT) {
             if (g->defeated_bosses & (1 << LOCATION_MOUNTAINS)) {
-                game_leave_mountains(g, g->mountain_entry_town == LOCATION_TOWN4 ? LOCATION_TOWN : LOCATION_TOWN4, 1);
+                game_request_shortcut(g);
             }
             return;
         }
