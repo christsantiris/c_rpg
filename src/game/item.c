@@ -331,14 +331,29 @@ Item item_make_magic_longbow(void) {
     return it;
 }
 
+Item item_make_rusty_dagger(void) {
+    Item it = {0};
+    it.active = 1;
+    it.type = ITEM_WEAPON;
+    strncpy(it.name, "Rusty Dagger", sizeof(it.name) - 1);
+    it.attack_bonus = 1;
+    it.value = 10;
+    it.critical_chance_bonus = 10;
+    it.gold_drop_bonus_percent = 10;
+    set_weapon_metadata(&it, WEAPON_FAMILY_DAGGER, WEAPON_HANDS_ONE,
+        ITEM_RARITY_COMMON, ITEM_CLASS_ROGUE, ITEM_VISUAL_RUSTY_DAGGER);
+    return it;
+}
+
 Item item_make_dagger(void) {
     Item it = {0};
     it.active = 1;
     it.type = ITEM_WEAPON;
     strncpy(it.name, "Dagger", sizeof(it.name) - 1);
-    it.attack_bonus = 2;
+    it.attack_bonus = 3;
     it.value = 90;
     it.critical_chance_bonus = 25;
+    it.gold_drop_bonus_percent = 25;
     set_weapon_metadata(&it, WEAPON_FAMILY_DAGGER, WEAPON_HANDS_ONE,
         ITEM_RARITY_COMMON, ITEM_CLASS_ROGUE, ITEM_VISUAL_DAGGER);
     return it;
@@ -349,9 +364,10 @@ Item item_make_magic_dagger(void) {
     it.active = 1;
     it.type = ITEM_WEAPON;
     strncpy(it.name, "Magic Dagger", sizeof(it.name) - 1);
-    it.attack_bonus = 6;
+    it.attack_bonus = 7;
     it.value = 500;
     it.critical_chance_bonus = 40;
+    it.gold_drop_bonus_percent = 50;
     set_weapon_metadata(&it, WEAPON_FAMILY_DAGGER, WEAPON_HANDS_ONE,
         ITEM_RARITY_RARE, ITEM_CLASS_ROGUE, ITEM_VISUAL_MAGIC_DAGGER);
     return it;
@@ -402,6 +418,7 @@ Item item_make_cryptblade(void) {
 void item_apply_legacy_metadata(Item *item) {
     Item definition = {0};
     item->critical_chance_bonus = 0;
+    item->gold_drop_bonus_percent = 0;
     item->cleave_percent = 0;
     item->pierces_targets = 0;
     item->spell_power_bonus = 0;
@@ -440,6 +457,8 @@ void item_apply_legacy_metadata(Item *item) {
         definition = item_make_krakenbone_bow();
     } else if (strcmp(item->name, "Magic Longbow") == 0) {
         definition = item_make_magic_longbow();
+    } else if (strcmp(item->name, "Rusty Dagger") == 0) {
+        definition = item_make_rusty_dagger();
     } else if (strcmp(item->name, "Dagger") == 0) {
         definition = item_make_dagger();
     } else if (strcmp(item->name, "Magic Dagger") == 0) {
@@ -465,6 +484,7 @@ void item_apply_legacy_metadata(Item *item) {
     item->class_mask = definition.class_mask;
     item->visual_id = definition.visual_id;
     item->critical_chance_bonus = definition.critical_chance_bonus;
+    item->gold_drop_bonus_percent = definition.gold_drop_bonus_percent;
     item->cleave_percent = definition.cleave_percent;
     item->pierces_targets = definition.pierces_targets;
     item->spell_power_bonus = definition.spell_power_bonus;

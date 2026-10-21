@@ -9,6 +9,7 @@ bosses are the equipment sources.
 - Press `E` or `Enter` on a weapon in the inventory to equip it in the main hand.
 - Press `E` or `Enter` on armor to equip it in the armor slot.
 - Press `O` on a one-handed weapon to equip it in the off hand.
+- Press `X` to unequip the selected weapon, shield, or armor without dropping it.
 - Press `E` or `Enter` on a shield to equip it in the off hand.
 - A one-handed main weapon may be paired with one one-handed weapon or shield.
 - Two-handed weapons clear the off hand and prevent off-hand equipment.
@@ -18,8 +19,13 @@ bosses are the equipment sources.
 - Class restrictions apply in both hand slots and the armor slot.
 
 An off-hand weapon contributes half its attack bonus, rounded up, and half its
-critical chance. Its range, cleave, armor penetration, spell bonuses, and other
-traits do not apply from the off hand.
+critical chance and dagger gold rating. Its range, cleave, armor penetration,
+spell bonuses, and other traits do not apply from the off hand.
+
+To swap hands, unequip the main weapon with `X`: the off-hand weapon moves to
+the main hand. Then press `O` on the removed weapon to put it in the off hand.
+Pressing `E` on an off-hand weapon also moves it directly to the main hand.
+These changes cost no turn and persist in saves.
 
 ## Workshop Sharpening
 
@@ -60,14 +66,15 @@ Sword also has a ranged attack.
 | Weapon | Attack | Hands | Class | Tier | Base value | Trait |
 | --- | ---: | --- | --- | ---: | ---: | --- |
 | Rusty Sword | +1 | One | Warrior | 1 | 10 | — |
-| Dagger | +2 | One | Rogue | 1 | 90 | 25% critical chance |
+| Rusty Dagger | +1 | One | Rogue | Starter | 10 | 10% critical chance; +10% gold drop rating |
+| Dagger | +3 | One | Rogue | 1 | 90 | 25% critical chance; +25% gold drop rating |
 | Short Sword | +3 | One | Warrior, Rogue | 1 | 40 | — |
 | Staff | +4 | Two | Mage | 1 | 60 | +2 spell power, +10 maximum MP |
 | Cryptblade | +2 | One | Warrior | Boss | 350 | 10% critical chance; Lich King reward |
 | Demonic Sword | +6 | One | All | Boss | 180 | Range 2 with `F`; Swamp Demon reward |
 | Long Sword | +6 | One | Warrior | 2 | 180 | — |
-| Magic Dagger | +6 | One | Rogue | 3 | 500 | 40% critical chance |
 | Runed Staff | +6 | Two | Mage | 2 | 300 | +4 spell power, +20 maximum MP, 5% cheaper spells |
+| Magic Dagger | +7 | One | Rogue | 3 | 500 | 40% critical chance; +50% gold drop rating |
 | Sandstorm Staff | +7 | Two | Mage | Boss | 700 | +6 spell power, +25 maximum MP, 7% cheaper spells; Desert Pharaoh reward |
 | Magic Staff | +9 | Two | Mage | 3 | 1,000 | +8 spell power, +35 maximum MP, 10% cheaper spells |
 | Battle Axe | +10 | Two | Warrior | 2 | 275 | Ignores 25% of enemy defense |
@@ -75,6 +82,15 @@ Sword also has a ranged attack.
 | Greatsword | +12 | Two | Warrior | 2 | 400 | 50% cleave damage to adjacent enemies |
 | Magic Battle Axe | +13 | Two | Warrior | 3 | 700 | Ignores 50% of enemy defense |
 | Magic Greatsword | +18 | Two | Warrior | 3 | 1,100 | 75% cleave damage to adjacent enemies |
+
+New Rogues receive both a Rusty Dagger and a Hunting Bow, plus 100 arrows.
+On a dagger melee kill, its gold rating increases the normal coin-drop chance
+and the gold amount by that percentage. For example, +50% changes a normal
+10% drop chance to 15%. Bonus coins round up to a whole coin; guaranteed gold
+rewards, including castle purses, gain the amount bonus. Off-hand daggers add
+half their rating to the main hand's rating. Spells, arrows, and environmental
+kills receive no dagger bonus. Existing daggers migrate without losing
+sharpening, equipped bonuses, loot, or quest progress.
 
 The Cryptblade's +2 attack and 10% critical chance make it an early Lich King
 reward with room for later upgrades. Its one-handed grip permits a shield or

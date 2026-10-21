@@ -7,7 +7,8 @@ typedef enum {
     INVENTORY_USE,
     INVENTORY_EQUIP,
     INVENTORY_EQUIP_OFF_HAND,
-    INVENTORY_DROP
+    INVENTORY_DROP,
+    INVENTORY_UNEQUIP
 } InventoryResult;
 
 typedef struct {

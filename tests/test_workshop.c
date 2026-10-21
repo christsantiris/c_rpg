@@ -82,7 +82,7 @@ static void test_workshop_purchase(void) {
     game_equip_off_hand(&game, 1);
     int off_attack = game.player.attack;
     ASSERT("off-hand dagger sharpening respects rounded half attack", game_sharpen_weapon(&game, 1) &&
-        game.inventory[1].attack_bonus == 3 && game.player.attack == off_attack + 1 && game.gold == 100);
+        game.inventory[1].attack_bonus == 4 && game.player.attack == off_attack && game.gold == 100);
     game_unequip_off_hand(&game);
     ASSERT("unequipping sharpened off-hand removes its updated contribution", game.player.attack == attack + 1);
     game_unequip_main_hand(&game);
@@ -179,7 +179,7 @@ static void test_workshop_saves(void) {
     int attack = game.player.attack;
     ASSERT("workshop and dropped sharpened weapon save and load", save_game(&game, WORKSHOP_TEST_SLOT) && load_game(&loaded, WORKSHOP_TEST_SLOT) &&
         loaded.location == LOCATION_WORKSHOP && loaded.inventory[0].sharpened && loaded.inventory[0].attack_bonus == 4 &&
-        loaded.floor_items[0].item.sharpened && loaded.floor_items[0].item.attack_bonus == 3 && loaded.player.attack == attack);
+        loaded.floor_items[0].item.sharpened && loaded.floor_items[0].item.attack_bonus == 4 && loaded.player.attack == attack);
     ASSERT("save/load cannot restore sharpening allowance", !game_sharpen_weapon(&loaded, 0) && loaded.gold == game.gold);
     action_resolve_player(&loaded, (Action){ACTION_PICK_UP, 0, 0});
     int dagger = loaded.inventory_count - 1;
