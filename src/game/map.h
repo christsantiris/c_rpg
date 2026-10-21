@@ -19,6 +19,8 @@
 #define FOREST_ROAD_W 80
 #define FOREST_ROAD_H 25
 #define FOREST_ROAD_Y 12
+#define FOREST_ROAD_FORK_X (FOREST_ROAD_W / 2)
+#define FOREST_ROAD_BOSS_Y (FOREST_ROAD_Y - 6)
 #define CROWNROAD_LEGACY_W 48
 #define CROWNROAD_LENGTH_SCALE 3
 #define CROWNROAD_W ((CROWNROAD_LEGACY_W - 1) * CROWNROAD_LENGTH_SCALE + 1)
@@ -33,6 +35,8 @@
 #define SWAMP_ROAD_W TOWN_W
 #define SWAMP_ROAD_H 48
 #define SWAMP_ROAD_X 20
+#define SWAMP_ROAD_FORK_Y (SWAMP_ROAD_H / 2)
+#define SWAMP_ROAD_BOSS_X (SWAMP_ROAD_X + 8)
 #define TOWN3_GUARD_X 39
 #define TOWN3_GUARD_NORTH_Y (TOWN3_KING_GATE_Y - 1)
 #define TOWN3_GUARD_SOUTH_Y (TOWN3_KING_GATE_Y + 1)
@@ -215,6 +219,8 @@
 #define HIGH_PASS_W TOWN_W
 #define HIGH_PASS_H 64
 #define HIGH_PASS_X 20
+#define HIGH_PASS_FORK_Y (HIGH_PASS_H / 2)
+#define HIGH_PASS_BOSS_X (HIGH_PASS_X + 8)
 #define TOWN4_ROAD_X 40
 #define RIDGESHIRE_MOUNTAIN_ROAD_X 28
 #define TOWN4_SQUARE_X 20
@@ -674,6 +680,7 @@ void map_generate_swamp_road(Map *m);
 void map_set_town3_road(Map *m, int unlocked);
 void map_set_rosemoor_swamp_road(Map *m, int unlocked);
 void map_generate_forest_road(Map *m);
+void map_add_shortcut_branch(Map *m, TileType shortcut);
 void map_place_town_labyrinth(Map *m);
 void map_place_town2_center(Map *m);
 void map_place_town3_guards(Map *m, int avoid_x, int avoid_y);

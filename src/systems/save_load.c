@@ -87,6 +87,60 @@ static void migrate_removed_royal_seals(GameState *g) {
     }
 }
 
+static void migrate_shared_town_gates(GameState *g) {
+    if (g->location != LOCATION_TOWN && g->location != LOCATION_TOWN2 && g->location != LOCATION_TOWN3 && g->location != LOCATION_TOWN4) {
+        return;
+    }
+    // Expose terrain first so dropped items receive the retired paths' new floor.
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && g->map.tiles[item->y][item->x] == TILE_ITEM) {
+            g->map.tiles[item->y][item->x] = item->underlying_tile;
+        }
+    }
+    if (g->location == LOCATION_TOWN) {
+        map_set_town2_road(&g->map, 0);
+        map_set_town4_road(&g->map, 0);
+    } else if (g->location == LOCATION_TOWN2) {
+        map_set_stillbury_forest_road(&g->map, 0);
+        map_set_town3_road(&g->map, 0);
+    } else if (g->location == LOCATION_TOWN3) {
+        map_set_rosemoor_swamp_road(&g->map, 0);
+    } else {
+        map_set_ridgeshire_mountain_road(&g->map, 0);
+    }
+    // A player or item saved on a removed boundary gate moves one tile inside.
+    if (!map_is_walkable(&g->map, g->player.x, g->player.y)) {
+        if (g->player.x == 0 || g->player.x == TOWN_W - 1) {
+            g->player.x += g->player.x == 0 ? 1 : -1;
+        }
+        if (g->player.y == 0 || g->player.y == TOWN_H - 1) {
+            g->player.y += g->player.y == 0 ? 1 : -1;
+        }
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (!item->active) {
+            continue;
+        }
+        if (!map_is_walkable(&g->map, item->x, item->y)) {
+            if (item->x == 0 || item->x == TOWN_W - 1) {
+                item->x += item->x == 0 ? 1 : -1;
+            }
+            if (item->y == 0 || item->y == TOWN_H - 1) {
+                item->y += item->y == 0 ? 1 : -1;
+            }
+        }
+        item->underlying_tile = g->map.tiles[item->y][item->x];
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active) {
+            g->map.tiles[item->y][item->x] = TILE_ITEM;
+        }
+    }
+}
+
 static int shortcut_row(int y, int height) {
     if (y < 1) {
         return 1;
@@ -753,7 +807,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 153);
+    cJSON_AddNumberToObject(root, "save_version", 157);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -3970,6 +4024,9 @@ int load_game(GameState *g, int slot) {
         }
     }
 
+    if (save_version < 155) {
+        migrate_shared_town_gates(g);
+    }
     if (g->location == LOCATION_TOWN) {
         map_set_town2_road(&g->map,
             g->defeated_bosses & (1 << LOCATION_FOREST));
@@ -4551,10 +4608,26 @@ int load_game(GameState *g, int slot) {
     if (save_version < 153) {
         migrate_daggers(g);
     }
+    if (save_version < 154) {
+        // Add the fork without replacing exploration, loot, or player progress.
+        if (g->location == LOCATION_FOREST_ROAD) {
+            map_add_shortcut_branch(&g->map, TILE_FOREST_SHORTCUT);
+        } else if (g->location == LOCATION_SWAMP_ROAD) {
+            map_add_shortcut_branch(&g->map, TILE_SWAMP_SHORTCUT);
+        } else if (g->location == LOCATION_HIGH_PASS) {
+            map_add_shortcut_branch(&g->map, TILE_MOUNTAIN_SHORTCUT);
+        }
+    }
+    // Recess legacy floor shortcuts into terrain in active and cached boss maps.
     game_migrate_boss_shortcuts(g);
     game_refresh_quest_encounters(g);
     for (int i = 0; i < g->floor_item_count; i++) {
         FloorItem *item = &g->floor_items[i];
+        if (save_version < 157 && item->active && item->underlying_tile == TILE_TOWN_FLOOR &&
+            ((g->location == LOCATION_TOWN2 && item->x == TOWN3_ROAD_X && item->y == 11) ||
+            (g->location == LOCATION_TOWN3 && item->x == ROSEMOOR_SWAMP_ROAD_X && item->y == 15))) {
+            item->underlying_tile = TILE_TOWN_PATH;
+        }
         if (item->active && g->location == LOCATION_TOWN3 &&
             item->x >= TOWN_GUILD_X && item->x < TOWN_GUILD_X + TOWN_GUILD_W &&
             item->y >= TOWN_GUILD_Y && item->y < TOWN_GUILD_Y + TOWN_GUILD_H &&

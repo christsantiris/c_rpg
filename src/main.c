@@ -82,6 +82,10 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
         g->map.tiles[action.target_y][action.target_x] != TILE_TOWN_EXIT) {
         return 0;
     }
+    // Let the route prompt open before any departure animation.
+    if (game_town_route_available(g, action.target_x, action.target_y)) {
+        return 0;
+    }
     if (g->location == LOCATION_TOWN3 || g->location == LOCATION_CASTLE) {
         if (action.target_x == 0 || action.target_x == TOWN_W - 1) {
             *style = g->location == LOCATION_TOWN3 && action.target_x == 0 ? TOWN_EXIT_MOONVEIL : TOWN_EXIT_ROAD;
@@ -92,7 +96,7 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
             return 1;
         }
         if (g->location == LOCATION_TOWN3 && action.target_y == TOWN_H - 1) {
-            *style = action.target_x == ROSEMOOR_SWAMP_ROAD_X ? TOWN_EXIT_ROAD : TOWN_EXIT_SWAMP;
+            *style = TOWN_EXIT_SWAMP;
             return 1;
         }
         return 0;
@@ -102,15 +106,8 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
             *style = TOWN_EXIT_ASHEN;
             return 1;
         }
-        if (g->location == LOCATION_TOWN && action.target_x == TOWN4_ROAD_X &&
-            !(g->defeated_bosses & (1 << LOCATION_MOUNTAINS))) {
-            return 0;
-        }
         *style = g->location == LOCATION_TOWN ?
             TOWN_EXIT_MOUNTAINS : TOWN_EXIT_SWAMP;
-        if (g->location == LOCATION_TOWN2 && action.target_x == TOWN3_ROAD_X) {
-            *style = TOWN_EXIT_ROAD;
-        }
         return 1;
     }
     if (action.target_x == 0 && g->location == LOCATION_TOWN4) {
@@ -122,17 +119,12 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
             *style = TOWN_EXIT_DESERT;
             return 1;
         }
-        if (action.target_y == TOWN_ROAD_EXIT_Y &&
-            !(g->defeated_bosses & (1 << LOCATION_FOREST))) {
-            return 0;
-        }
-        *style = action.target_y == TOWN_ROAD_EXIT_Y ?
-            TOWN_EXIT_ROAD : TOWN_EXIT_FOREST;
+        *style = TOWN_EXIT_FOREST;
         return 1;
     }
     if (action.target_x == TOWN_W - 1) {
         *style = g->location == LOCATION_TOWN2 ?
-            (action.target_y == TOWN_ROAD_EXIT_Y ? TOWN_EXIT_ROAD : TOWN_EXIT_FOREST) :
+            TOWN_EXIT_FOREST :
             (g->location == LOCATION_TOWN4 ?
             TOWN_EXIT_DRAGONSPINE : TOWN_EXIT_DUNGEON);
         return 1;
@@ -143,7 +135,7 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
             return 1;
         }
         *style = g->location == LOCATION_TOWN4 ?
-            (action.target_x == RIDGESHIRE_MOUNTAIN_ROAD_X ? TOWN_EXIT_ROAD : TOWN_EXIT_MOUNTAINS) :
+            TOWN_EXIT_MOUNTAINS :
             (g->location == LOCATION_TOWN2 ? TOWN_EXIT_SWAMP : TOWN_EXIT_COAST);
         return 1;
     }

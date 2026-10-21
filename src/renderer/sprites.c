@@ -4641,8 +4641,25 @@ void draw_town_road_sign(Renderer *r, int tile_x, int tile_y, const char *name) 
     int y = tile_y * TILE_SIZE;
     int text_w = 0;
     int text_h = 0;
-    TTF_SizeText(r->font_tiny, name, &text_w, &text_h);
-    int width = text_w + 12;
+    const char *second = strchr(name, '\n');
+    const char *first = name;
+    char line[64];
+    int second_w = 0;
+    if (second) {
+        size_t length = (size_t)(second - name);
+        if (length >= sizeof(line)) {
+            length = sizeof(line) - 1;
+        }
+        memcpy(line, name, length);
+        line[length] = '\0';
+        first = line;
+        second++;
+        TTF_SizeText(r->font_tiny, second, &second_w, NULL);
+    }
+    TTF_SizeText(r->font_tiny, first, &text_w, &text_h);
+    int widest = text_w > second_w ? text_w : second_w;
+    int height = second ? 32 : 18;
+    int width = widest + 12;
     if (width < 66) {
         width = 66;
     }
@@ -4655,13 +4672,18 @@ void draw_town_road_sign(Renderer *r, int tile_x, int tile_y, const char *name) 
     fill_rect(r, x + post + 2, y + 18, 5, 44, wood);
     fill_rect(r, x + post + 2, y + 20, 2, 40, bark);
     fill_rect(r, x + post - 3, y + 60, 15, 4, shadow);
-    fill_rect(r, x + 4, y + 2, width + 6, 24, shadow);
-    fill_rect(r, x + 7, y + 5, width, 18, wood);
+    fill_rect(r, x + 4, y + 2, width + 6, height + 6, shadow);
+    fill_rect(r, x + 7, y + 5, width, height, wood);
     fill_rect(r, x + 7, y + 5, width, 2, bark);
     fill_rect(r, x + 10, y + 9, 2, 2, brass);
     fill_rect(r, x + width + 2, y + 9, 2, 2, brass);
-    renderer_draw_text(r, name, x + 7 + (width - text_w) / 2,
-        y + 5 + (18 - text_h) / 2, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
+    int text_y = second ? y + 9 : y + 5 + (height - text_h) / 2;
+    renderer_draw_text(r, first, x + 7 + (width - text_w) / 2,
+        text_y, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
+    if (second) {
+        renderer_draw_text(r, second, x + 7 + (width - second_w) / 2,
+            text_y + text_h + 4, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
+    }
 }
 
 static void draw_dungeon_door_panel(Renderer *r, int x, int width, int right) {

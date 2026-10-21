@@ -360,7 +360,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
             g->dialogue_y = g->player.y;
             snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Shortcut found");
             snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "You found a shortcut through the forest to %s! Take the marked shortcut beside the defeated boss, or continue through the forest.",
+                "You found a shortcut through the forest to %s! Take the marked exit recessed into the surrounding terrain, or continue through the forest.",
                 g->forest_entry_town == LOCATION_TOWN2 ? "OakHaven" : "Stillbury");
         } else if (first_swamp_victory) {
             g->dialogue_active = 1;
@@ -368,7 +368,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
             g->dialogue_y = g->player.y;
             snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Shortcut found");
             snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "You found a shortcut through the swamp to %s! Take the marked shortcut beside the defeated boss, or continue through the swamp.",
+                "You found a shortcut through the swamp to %s! Take the marked exit recessed into the surrounding terrain, or continue through the swamp.",
                 g->swamp_entry_town == LOCATION_TOWN3 ? "Stillbury" : "Rosemoor");
         } else if (first_mountain_victory) {
             g->dialogue_active = 1;
@@ -376,7 +376,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
             g->dialogue_y = g->player.y;
             snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Shortcut found");
             snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "You found a shortcut through the mountains to %s! Take the marked shortcut beside the defeated boss, or continue down the mountains.",
+                "You found a shortcut through the mountains to %s! Take the marked exit recessed into the surrounding terrain, or continue down the mountains.",
                 g->mountain_entry_town == LOCATION_TOWN4 ? "OakHaven" : "Ridgeshire");
         }
     }
@@ -2402,27 +2402,19 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
+        if (game_request_town_route(g, tx, ty)) {
+            return;
+        }
+
         if (g->location == LOCATION_TOWN2 &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT && ty == 0) {
-            if (tx == TOWN3_ROAD_X) {
-                if (g->defeated_bosses & (1 << LOCATION_SWAMP)) {
-                    game_enter_swamp_road(g);
-                }
-            } else {
-                game_enter_swamp(g);
-            }
+            game_enter_swamp(g);
             return;
         }
 
         if (g->location == LOCATION_TOWN2 &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT && tx == TOWN_W - 1) {
-            if (ty == TOWN_ROAD_EXIT_Y) {
-                if (g->defeated_bosses & (1 << LOCATION_FOREST)) {
-                    game_enter_forest_road(g);
-                }
-            } else {
-                game_enter_forest(g);
-            }
+            game_enter_forest(g);
             return;
         }
 
@@ -2444,13 +2436,7 @@ void action_resolve_player(GameState *g, Action a) {
             if (ty == 0) {
                 game_enter_frostfell(g);
             } else if (ty == TOWN_H - 1) {
-                if (tx == ROSEMOOR_SWAMP_ROAD_X) {
-                    if (g->defeated_bosses & (1 << LOCATION_SWAMP)) {
-                        game_enter_swamp_road(g);
-                    }
-                } else {
-                    game_enter_swamp(g);
-                }
+                game_enter_swamp(g);
             } else if (tx == TOWN_W - 1) {
                 game_enter_king_road(g, LOCATION_CROWNROAD, 0);
             } else if (tx == 0) {
@@ -2482,13 +2468,7 @@ void action_resolve_player(GameState *g, Action a) {
             } else if (tx == 0) {
                 game_enter_king_road(g, LOCATION_KING_ROAD_WEST, 0);
             } else if (ty == TOWN_H - 1) {
-                if (tx == RIDGESHIRE_MOUNTAIN_ROAD_X) {
-                    if (g->defeated_bosses & (1 << LOCATION_MOUNTAINS)) {
-                        game_enter_high_pass(g, 0);
-                    }
-                } else {
-                    game_enter_mountains(g);
-                }
+                game_enter_mountains(g);
             }
             return;
         }
@@ -2496,26 +2476,21 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->location == LOCATION_TOWN &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
             if (tx == 0) {
-                if (ty == TOWN_ROAD_EXIT_Y) {
-                    if (g->defeated_bosses & (1 << LOCATION_FOREST)) {
-                        game_enter_forest_road(g);
-                    } else {
-                        push_message(g, "The road to Stillbury is still blocked.");
-                    }
-                } else {
-                    game_enter_forest(g);
-                }
+                game_enter_forest(g);
             } else if (tx == TOWN_W - 1) {
                 game_enter_dungeon(g);
             } else if (ty == TOWN_H - 1) {
                 game_enter_coast(g);
-            } else if (tx == TOWN4_ROAD_X) {
-                if (g->defeated_bosses & (1 << LOCATION_MOUNTAINS)) {
-                    game_enter_high_pass(g, 1);
-                }
             } else {
                 game_enter_mountains(g);
             }
+            return;
+        }
+
+        if ((g->location == LOCATION_FOREST_ROAD && g->map.tiles[ty][tx] == TILE_FOREST_SHORTCUT) ||
+            (g->location == LOCATION_SWAMP_ROAD && g->map.tiles[ty][tx] == TILE_SWAMP_SHORTCUT) ||
+            (g->location == LOCATION_HIGH_PASS && g->map.tiles[ty][tx] == TILE_MOUNTAIN_SHORTCUT)) {
+            game_enter_shortcut_boss(g);
             return;
         }
 

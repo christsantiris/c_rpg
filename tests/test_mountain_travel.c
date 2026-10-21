@@ -1,4 +1,5 @@
 #include "test_utils.h"
+#include "shortcut_checks.h"
 #include "game/game.h"
 #include "systems/save_load.h"
 #include <stdlib.h>
@@ -120,8 +121,7 @@ static void mountain_crossing(int reverse, int shortcut) {
             }
         }
     }
-    Enemy *defeated = &mountain.enemies[king];
-    ASSERT("shortcut appears beside the defeated boss", x >= 0 && abs(x - defeated->x) + abs(y - defeated->y) <= 1 && map_is_walkable(&mountain.map, x, y));
+    ASSERT("shortcut opens at the end of a passage into the surrounding terrain", x >= 0 && shortcut_exit_is_recessed(&mountain.map, x, y, TILE_MOUNTAIN_WALL));
     if (x < 0) {
         return;
     }
@@ -133,6 +133,12 @@ static void mountain_crossing(int reverse, int shortcut) {
         game_handle_shortcut_prompt_key(&restored, SDL_SCANCODE_RETURN, 0);
         mountain = restored;
         remove("saves/savegame_99124.json");
+        ASSERT("boss shortcut enters the High Pass rather than town", mountain.location == LOCATION_HIGH_PASS && mountain.player.x == HIGH_PASS_BOSS_X - 1 && mountain.player.y == HIGH_PASS_FORK_Y);
+        for (int steps = 0; mountain.location == LOCATION_HIGH_PASS && steps < HIGH_PASS_H; steps++) {
+            int dx = mountain.player.x > HIGH_PASS_X ? -1 : 0;
+            int dy = mountain.player.x == HIGH_PASS_X ? (reverse ? 1 : -1) : 0;
+            action_resolve_player(&mountain, (Action){ACTION_MOVE, mountain.player.x + dx, mountain.player.y + dy});
+        }
     } else {
         mountain_step(&mountain, reverse);
         guard = 0;
@@ -143,13 +149,14 @@ static void mountain_crossing(int reverse, int shortcut) {
         ASSERT("full crossings permit completing Dain's map from either side", mountain.dain_map_fragments == 7 && mountain.dain_quest_state == 2);
     }
     ASSERT("both exit choices reach the opposite town", mountain.location == (reverse ? LOCATION_TOWN : LOCATION_TOWN4));
-    ASSERT("arrival matches the chosen gate", mountain.player.x == (shortcut ? (reverse ? TOWN4_ROAD_X : RIDGESHIRE_MOUNTAIN_ROAD_X) : 20) && mountain.player.y == (reverse ? 1 : TOWN_H - 2));
+    ASSERT("both routes arrive at the main mountain gate", mountain.player.x == 20 && mountain.player.y == (reverse ? 1 : TOWN_H - 2));
     gate_y = reverse ? 0 : TOWN_H - 1;
     road_x = reverse ? TOWN4_ROAD_X : RIDGESHIRE_MOUNTAIN_ROAD_X;
-    ASSERT("victory keeps both ordinary and shortcut town gates", mountain.map.tiles[gate_y][20] == TILE_TOWN_EXIT && mountain.map.tiles[gate_y][road_x] == TILE_TOWN_EXIT);
-    ASSERT("town mountain gates survive save/load", save_game(&mountain, MOUNTAIN_TRAVEL_SLOT) && load_game(&restored, MOUNTAIN_TRAVEL_SLOT) && restored.map.tiles[gate_y][road_x] == TILE_TOWN_EXIT);
+    ASSERT("victory retains only the main mountain gate", mountain.map.tiles[gate_y][20] == TILE_TOWN_EXIT && mountain.map.tiles[gate_y][road_x] == TILE_WALL);
+    ASSERT("shared mountain gate survives save/load", save_game(&mountain, MOUNTAIN_TRAVEL_SLOT) && load_game(&restored, MOUNTAIN_TRAVEL_SLOT) && restored.map.tiles[gate_y][20] == TILE_TOWN_EXIT && restored.map.tiles[gate_y][road_x] == TILE_WALL);
     remove("saves/savegame_99124.json");
-    action_resolve_player(&mountain, (Action){ACTION_MOVE, road_x, gate_y});
+    action_resolve_player(&mountain, (Action){ACTION_MOVE, 20, gate_y});
+    game_handle_shortcut_prompt_key(&mountain, SDL_SCANCODE_2, 0);
     ASSERT("unlocked town shortcut enters the safe High Pass", mountain.location == LOCATION_HIGH_PASS && mountain.enemy_count == 0);
     game_leave_high_pass(&mountain, reverse ? LOCATION_TOWN4 : LOCATION_TOWN);
     game_enter_mountains(&mountain);
