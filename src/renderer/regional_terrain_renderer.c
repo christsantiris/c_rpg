@@ -1,6 +1,7 @@
 #include "regional_terrain_renderer.h"
 #include "../game/regional_terrain.h"
 #include "../game/landscapes.h"
+#include "../game/castle.h"
 #include "sprites.h"
 #include "world_props.h"
 #include "info_panel.h"
@@ -128,18 +129,201 @@ void draw_regional_terrain_light(Renderer *r, const GameState *g, const Viewport
     }
 }
 
-void draw_regional_terrain_status(Renderer *r, const GameState *g) {
-    if (g->location != LOCATION_ASHEN && g->location != LOCATION_GLASSDEEP &&
-        g->location != LOCATION_FROSTFELL && g->location != LOCATION_DESERT && g->location != LOCATION_MOONVEIL &&
-        g->location != LOCATION_SWAMP && g->location != LOCATION_DRAGONSPINE) {
+void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
+    const char *title = NULL;
+    const char *line1 = NULL;
+    const char *line2 = NULL;
+    char status[64];
+    char floor_name[40];
+    if (g->location == LOCATION_ASHEN) {
+        title = "VOLCANIC CROSSINGS";
+        line1 = "C: COOL   !: WARNING   H: HOT";
+        line2 = "VALVES MAKE LASTING PATHS";
+        if (g->level == ASHEN_DEPTH) {
+            title = "THE CINDER FORGE";
+            line1 = "SLUICES DIVERT WARNED LAVA";
+            line2 = "RINGS STRIKE INNER THEN OUTER";
+        }
+    } else if (g->location == LOCATION_GLASSDEEP) {
+        title = "CRYSTAL GALLERIES";
+        line1 = "TURN FACE: AIM NORTH AT R";
+        line2 = "SIDE GALLERIES BYPASS THE SEAL";
+        if (g->level == GLASSDEEP_DEPTH) {
+            title = "THE PRISM CHAMBER";
+            line1 = "ROTATE FACES BETWEEN ATTACKS";
+            line2 = "WARNINGS LOCK THE BEAM DIRECTIONS";
+        }
+    } else if (g->location == LOCATION_FROSTFELL) {
+        title = "GLACIER RIDGES";
+        line1 = "SLICK ICE SLIDES TO SNOW";
+        line2 = "BRITTLE SHORTCUTS BREAK BEHIND YOU";
+        if (g->level == FROSTFELL_DEPTH) {
+            title = "THE KRAKEN'S FROZEN LAKE";
+            line1 = "ORANGE ICE WARNS OF THE NEXT HIT";
+            line2 = "ATTACK WHILE TENTACLES RECOVER";
+        }
+    } else if (g->location == LOCATION_DESERT) {
+        title = "SANDSTONE MESA FIELDS";
+        line1 = "DENSE PATROLS; ROCKS BLOCK FIRE";
+        line2 = "WELLS: 25% HP / MP, ONCE PER TRIP";
+        if (g->level == DESERT_DEPTH) {
+            title = "THE PHARAOH'S TOMB";
+            line1 = "OBELISKS BLOCK CURSE BEAMS";
+            line2 = "S MARKS SHELTER FROM THE STORM";
+        }
+    } else if (g->location == LOCATION_SWAMP) {
+        title = "BLACKWATER ISLANDS";
+        line1 = "REEDS HIDE FROM DISTANT FOES";
+        line2 = "NEARBY / WOUNDED FOES STILL FOLLOW";
+        if (g->level == SWAMP_BOSS_LEVEL) {
+            title = "THE SWAMP DEMON'S LAIR";
+            line1 = "VENTS DRAIN ROT AND EXPOSE THE BOSS";
+            line2 = "MOVE OFF THE WARNED GROUND";
+        }
+    } else if (g->location == LOCATION_DRAGONSPINE) {
+        title = "RAVINES AND CLIFF LEDGES";
+        line1 = "PUSH BOULDERS FOR MOVABLE COVER";
+        line2 = "KEEP MULTIPLE ROUTES OPEN";
+        if (g->level == DRAGONSPINE_DEPTH) {
+            title = "THE DRAGON'S BASALT DEN";
+            line1 = "BASALT BLOCKS THE DRAGON'S FIRE";
+            line2 = "WATCH FOR CRACKED AND WEAK COVER";
+        }
+    } else if (g->location == LOCATION_MOONVEIL) {
+        title = "MOONLIT GARDEN LOOPS";
+        line1 = "WAYSTONES: I TO I, II TO II";
+        line2 = "USE INTERACT TO CROSS THE GARDEN";
+        if (g->level == MOONVEIL_DEPTH) {
+            title = "THE THORN REGENT'S GARDEN";
+            line1 = "TEND FLOWER NODES TO OPEN A FLANK";
+            line2 = "LEAVE WARNED ROOT AND PETAL LANES";
+        }
+    } else if (g->location == LOCATION_DUNGEON) {
+        title = "CRYPTS OF OAKHAVEN";
+        line1 = "WALLS BLOCK ARROWS AND SPELLS";
+        line2 = "RESTORE BURIAL SEALS FOR ELOWEN";
+        if (g->level == DUNGEON_DEPTH) {
+            title = "THE LICH KING'S CRYPT";
+            line1 = "SILENCE SEALS TO STOP GRAVE WAVES";
+            line2 = "LEAVE WARNED LANCE AND RING TILES";
+        }
+    } else if (g->location == LOCATION_FOREST) {
+        title = "HAUNTED FOREST TRAILS";
+        line1 = "PATHS LINK THE FOREST CLEARINGS";
+        line2 = "GROVE BOSS GUARDS THE TOWN SHORTCUT";
+        if (g->level == FOREST_BOSS_LEVEL) {
+            title = "THE NECROMANCER'S GROVE";
+            line1 = "CONSECRATE GRAVES TO STOP WAVES";
+            line2 = "LEAVE NUMBERED ATTACK WARNINGS";
+        }
+    } else if (g->location == LOCATION_MOUNTAINS) {
+        title = "GOBLIN MOUNTAIN PASSES";
+        line1 = "NARROW PASSES; ROCKS BLOCK FIRE";
+        line2 = "WATCH FOR BRIDGES AND ROCKFALLS";
+        if (g->level == 2 || g->level == 7) {
+            line1 = "WEAK BRIDGES COLLAPSE BEHIND YOU";
+            line2 = "INTERACT BESIDE GAPS TO REBUILD";
+        } else if (g->level == MOUNTAIN_BOSS_LEVEL) {
+            title = "THE GOBLIN KING'S FORTRESS";
+            line1 = "PRIME POWDER KEGS TO BREAK COVER";
+            line2 = "LEAVE THE WARNED AXE AND BOMB LANES";
+        }
+    } else if (g->location == LOCATION_COAST) {
+        title = "TIDAL SANDBANKS";
+        int low = 0;
+        for (int y = 0; y < MAP_H && !low; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                low |= g->map.tiles[y][x] == TILE_COAST_DRAINED_WATER;
+            }
+        }
+        line1 = low ? "BLUE: EXPOSED / AMBER: FLOODED" : "BLUE: FLOODED / AMBER: EXPOSED";
+        line2 = "WALK ON SAND AND PALE SHALLOWS";
+        if (g->level == COAST_DEPTH) {
+            line1 = "DRAIN POCKETS TO OPEN DRY ROUTES";
+            line2 = "LEAVE THE QUEEN'S WARNED LANES";
+        }
+    } else if (g->location == LOCATION_TEMPLE) {
+        title = g->temple_alignment ? "MOONBOUND TEMPLE" : "SUNBOUND TEMPLE";
+        line1 = game_temple_dormant_sentinels(g) > 0 ? "USE ALTARS TO AWAKEN MOON FOES" : "ALTARS SWITCH SUN / MOON ALIGNMENT";
+        int remaining = game_temple_remaining_enemies(g);
+        snprintf(status, sizeof(status), "%s %s: %d FOES LEFT", g->level == TEMPLE_DEPTH ? "TREASURE" : "STAIRS", remaining > 0 ? "SEALED" : "OPEN", remaining);
+        line2 = status;
+    } else if (g->location == LOCATION_LABYRINTH) {
+        title = "ROOK'S LABYRINTH";
+        line1 = "FIVE FLOORS; ONE RUNE PER FLOOR";
+        line2 = "FALSE STAIRS LEAD TO DEAD ENDS";
+        if (g->level == LABYRINTH_DEPTH) {
+            title = "THE MINOTAUR'S VAULT";
+            line1 = "LIGHT FIVE RUNES TO OPEN THE GATE";
+            line2 = "BAIT CHARGES INTO STONE TO STAGGER";
+        }
+    } else if (g->location == LOCATION_CATACOMBS) {
+        title = "ROYAL BURIAL CHAMBERS";
+        line1 = "EXTINGUISH BRAZIERS TO HALT REVIVAL";
+        line2 = "BURIAL PLATES WARN BEFORE STRIKING";
+        if (g->level == CATACOMBS_DEPTH) {
+            title = "THE GRAVE MARSHAL'S COURT";
+            line1 = "BRAZIERS INTERRUPT FUNERAL CHANNELS";
+            line2 = "LEAVE WARNED POLEARM AND CROSS LANES";
+        }
+    } else if (g->location == LOCATION_CASTLE_INTERIOR) {
+        snprintf(floor_name, sizeof(floor_name), "%s", castle_floor_name(g->level));
+        title = SDL_strupr(floor_name);
+        line1 = "LEAVE WARNED FIRE AND ATTACK LANES";
+        line2 = "USE LEVERS TO OPEN PORTCULLISES";
+        if (g->level == 2) {
+            line1 = "SIDE LEVERS INTERRUPT CHARGES";
+            line2 = "DEFEAT THE CASTELLAN TO CLIMB";
+        } else if (g->level == 4) {
+            line1 = "DISABLE THE LINKED WARD PEDESTAL";
+            line2 = "DEFEAT THE ARCANIST TO CLIMB";
+        } else if (g->level == CASTLE_DEPTH) {
+            line1 = "DISABLE BOTH WARDS TO WEAKEN VEYR";
+            line2 = "WATCH THE CROWN'S WARNED LANES";
+        }
+    } else if (g->location == LOCATION_CROWNROAD || g->location == LOCATION_KING_ROAD_WEST) {
+        title = g->location == LOCATION_CROWNROAD ? "CROWN ROAD EAST" : "CROWN ROAD WEST";
+        line1 = "BANDITS AND HORSEMEN PATROL AHEAD";
+        line2 = "BREAK ARCHER SIGHTLINES WITH COVER";
+    } else if (g->location == LOCATION_ESCAPE_TUNNEL) {
+        title = "JAIL ESCAPE TUNNEL";
+        line1 = "GUIDE TOMAS THROUGH THE AMBUSHES";
+        line2 = "WAIT FOR HIM BEFORE MOVING ON";
+    } else if (g->location == LOCATION_FOREST_ROAD) {
+        title = "FOREST ROAD";
+        line1 = "WEST: STILLBURY / EAST: OAKHAVEN";
+        line2 = "A SAFE ROAD BETWEEN THE TWO TOWNS";
+    } else if (g->location == LOCATION_HIGH_PASS) {
+        title = "THE HIGH PASS";
+        line1 = "NORTH: RIDGESHIRE / SOUTH: OAKHAVEN";
+        line2 = "FOLLOW THE PASS BETWEEN THE TOWNS";
+    } else if (g->location == LOCATION_SWAMP_ROAD) {
+        title = "SWAMP SHORTCUT";
+        line1 = "NORTH: ROSEMOOR / SOUTH: STILLBURY";
+        line2 = "SAFE PASSAGE AROUND THE SWAMP";
+    } else if (g->location == LOCATION_CASTLE) {
+        title = "CASTLE CROSSROADS";
+        line1 = "WEST: ROSEMOOR / EAST: RIDGESHIRE";
+        line2 = "NORTH: CASTLE / SOUTH: CATACOMBS";
+    } else if (g->location == LOCATION_ISLAND) {
+        title = "RUINED ISLE";
+        line1 = "TALK TO NAHLA BESIDE THE TEMPLE";
+        line2 = "THE TEMPLE GATE BEGINS THE CLIMB";
+    } else {
         return;
     }
-    if (g->location == LOCATION_SWAMP ? g->level == SWAMP_BOSS_LEVEL : g->level == 5) {
-        return;
-    }
+
     int width = r->screen_w - INFO_PANEL_W;
     int x = width - 320;
     int y = width >= 440 ? 8 : 76;
+    // Boss health and attack panels take priority over the area description.
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *e = &g->enemies[i];
+        if (e->active && e->is_boss && e->max_hp > 0 &&
+            viewport_is_visible(v, e->x, e->y) && map_is_explored(&g->map, e->x, e->y)) {
+            return;
+        }
+    }
     if (width < 328 || r->tiles_y * TILE_SIZE < y + 80) {
         return;
     }
@@ -148,34 +332,6 @@ void draw_regional_terrain_status(Renderer *r, const GameState *g) {
     SDL_RenderFillRect(r->sdl, &panel);
     SDL_SetRenderDrawColor(r->sdl, 105, 125, 162, 255);
     SDL_RenderDrawRect(r->sdl, &panel);
-    const char *title = "VOLCANIC CROSSINGS";
-    const char *line1 = "C: COOL   !: WARNING   H: HOT";
-    const char *line2 = "VALVES MAKE LASTING PATHS";
-    if (g->location == LOCATION_GLASSDEEP) {
-        title = "CRYSTAL GALLERIES";
-        line1 = "TURN FACE: AIM NORTH AT R";
-        line2 = "SIDE GALLERIES BYPASS THE SEAL";
-    } else if (g->location == LOCATION_FROSTFELL) {
-        title = "GLACIER RIDGES";
-        line1 = "SLICK ICE SLIDES TO SNOW";
-        line2 = "BRITTLE SHORTCUTS BREAK BEHIND YOU";
-    } else if (g->location == LOCATION_DESERT) {
-        title = "SANDSTONE MESA FIELDS";
-        line1 = "DENSE PATROLS; ROCKS BLOCK FIRE";
-        line2 = "WELLS: 25% HP / MP, ONCE PER TRIP";
-    } else if (g->location == LOCATION_SWAMP) {
-        title = "BLACKWATER ISLANDS";
-        line1 = "REEDS HIDE FROM DISTANT FOES";
-        line2 = "NEARBY / WOUNDED FOES STILL FOLLOW";
-    } else if (g->location == LOCATION_DRAGONSPINE) {
-        title = "RAVINES AND CLIFF LEDGES";
-        line1 = "PUSH BOULDERS FOR MOVABLE COVER";
-        line2 = "KEEP MULTIPLE ROUTES OPEN";
-    } else if (g->location == LOCATION_MOONVEIL) {
-        title = "MOONLIT GARDEN LOOPS";
-        line1 = "WAYSTONES: I TO I, II TO II";
-        line2 = "USE INTERACT TO CROSS THE GARDEN";
-    }
     SDL_Color text = {217, 224, 237, 255};
     renderer_draw_text(r, title, x + 10, y + 9, (SDL_Color){142, 215, 231, 255}, r->font_small);
     renderer_draw_text(r, line1, x + 10, y + 32, text, r->font_tiny);
