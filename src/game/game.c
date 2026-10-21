@@ -4185,9 +4185,6 @@ void town_life_enter(GameState *g) {
     g->player.frozen_turns = 0;
     g->player.freeze_recovery = 0;
     g->dialogue_active = 0;
-    if (g->location != LOCATION_BAKERY && g->location != LOCATION_MONASTERY) {
-        town_life_talk(g, 1);
-    }
 }
 
 void town_life_leave(GameState *g) {

@@ -130,12 +130,7 @@ void test_town_life(void) {
         action_resolve_player(&game, (Action){ACTION_MOVE, door_x, door_y});
         ASSERT("walking into local buildings enters a safe interior",
             game.location == b->interior && game.enemy_count == 0);
-        if (b->interior == LOCATION_BAKERY || b->interior == LOCATION_MONASTERY) {
-            ASSERT("the baker and abbot do not greet on entry or retain previous dialogue", !game.dialogue_active);
-        } else {
-            ASSERT("the butcher and spice merchant retain their entry greetings", game.dialogue_active &&
-                strcmp(game.dialogue_speaker, b->speaker) == 0 && strcmp(game.dialogue_text, b->before) == 0);
-        }
+        ASSERT("town residents wait for Talk on entry and clear previous dialogue", !game.dialogue_active);
         ASSERT("resident and exit have connected approaches",
             all_walkable_connected(&game.map, game.player.x, game.player.y) &&
             !map_is_walkable(&game.map, RESIDENT_X, RESIDENT_Y) && map_is_walkable(&game.map, RESIDENT_X, RESIDENT_Y + 1));
@@ -143,9 +138,7 @@ void test_town_life(void) {
         game.player.x = RESIDENT_X - 1;
         game.player.y = RESIDENT_Y + 1;
         action_resolve_player(&game, (Action){ACTION_MOVE, RESIDENT_X, RESIDENT_Y + 1});
-        if (b->interior == LOCATION_BAKERY || b->interior == LOCATION_MONASTERY) {
-            ASSERT("approaching the baker or abbot does not initiate dialogue", !game.dialogue_active);
-        }
+        ASSERT("approaching a town resident does not initiate dialogue", !game.dialogue_active);
         ASSERT("talking explicitly opens resident dialogue without granting quests or items", town_life_talk(&game, 0) &&
             game.dialogue_active && strcmp(game.dialogue_speaker, b->speaker) == 0 && strcmp(game.dialogue_text, b->before) == 0 &&
             game.gold == 123 && game.score == 456 && game.inventory_count == inventory && game.elowen_quest_state == 1);
