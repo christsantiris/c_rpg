@@ -1754,7 +1754,6 @@ void draw_crypt_cache(Renderer *r, int tile_x, int tile_y) {
 }
 
 void draw_portal(Renderer *r, int tile_x, int tile_y) {
-    draw_floor(r, tile_x, tile_y);
     draw_world_prop(r, tile_x, tile_y, PROP_PORTAL, (SDL_Color){86, 174, 244, 255});
 }
 

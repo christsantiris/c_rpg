@@ -2531,7 +2531,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_CRYPT_DOOR: draw_crypt_door(r, sx, sy); break;
                 case TILE_CRYPT_KEY: draw_crypt_key(r, sx, sy); break;
                 case TILE_CRYPT_CACHE: draw_crypt_cache(r, sx, sy); break;
-                case TILE_PORTAL: draw_portal(r, sx, sy); break;
+                case TILE_PORTAL: draw_floor(r, sx, sy); break;
                 case TILE_BROKEN_BURIAL_SEAL:
                     draw_broken_burial_seal(r, sx, sy); break;
                 case TILE_RESTORED_BURIAL_SEAL:
@@ -3039,6 +3039,15 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         }
     }
 
+    // Portal sprites stay above gates, buildings, terrain edges and floor loot.
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (g->map.tiles[y][x] == TILE_PORTAL && viewport_is_visible(v, x, y)) {
+                draw_portal(r, viewport_to_screen_x(v, x), viewport_to_screen_y(v, y));
+            }
+        }
+    }
+
     if (g->location == LOCATION_FROSTFELL) {
         draw_kraken_target(r, g, v);
     }
@@ -3246,7 +3255,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int width = 0;
         renderer_draw_text(r, "SUNSCAR WASTES",
             viewport_to_screen_x(v, 1) * TILE_SIZE,
-            viewport_to_screen_y(v, 12) * TILE_SIZE,
+            viewport_to_screen_y(v, 11) * TILE_SIZE,
             area_label_color(LOCATION_DESERT), r->font_tiny);
         TTF_SizeText(r->font_tiny, "GLASSDEEP", &width, NULL);
         renderer_draw_text(r, "GLASSDEEP",
