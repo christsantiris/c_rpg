@@ -2330,7 +2330,7 @@ static void test_forest_entry_migration(void) {
         ASSERT("saved forest portal coordinates move with the mirrored destination", ok && loaded->portal_active && loaded->portal_x == MAP_W - 4 - x && loaded->portal_y == y);
         if (active) {
             ASSERT("active forest migration preserves the player's relative position and facing", loaded->player.x == MAP_W - 1 - px && loaded->player.y == y && loaded->player.last_dx == -1 && loaded->enemies[0].x == MAP_W - 2 - x);
-            ASSERT("active forest migration preserves dropped equipment and the return portal", loaded->floor_items[0].active && loaded->floor_items[0].x == MAP_W - 3 - x && loaded->floor_items[0].item.sharpened && loaded->map.tiles[y][MAP_W - 3 - x] == TILE_ITEM && loaded->map.tiles[y][MAP_W - 4 - x] == TILE_PORTAL);
+            ASSERT("active forest migration preserves dropped equipment and the hidden portal landing", loaded->floor_items[0].active && loaded->floor_items[0].x == MAP_W - 3 - x && loaded->floor_items[0].item.sharpened && loaded->map.tiles[y][MAP_W - 3 - x] == TILE_ITEM && loaded->map.tiles[y][MAP_W - 4 - x] == TILE_FOREST_FLOOR);
         } else {
             ASSERT("migrating a cached forest leaves the player in town at the same position", loaded->location == LOCATION_TOWN && loaded->player.x == px && loaded->player.last_dx == 1);
         }

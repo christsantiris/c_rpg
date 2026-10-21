@@ -324,6 +324,7 @@ Enemy *game_spawn_lich_shade(GameState *g, int x, int y, int boss_index);
 void game_refresh_quest_encounters(GameState *g);
 void game_repair_forest_enemy_positions(Map *m, Enemy *actors, int count, int px, int py);
 void game_enter_dungeon(GameState *g);
+void game_repair_dungeon_maps(GameState *g);
 void game_enter_forest(GameState *g);
 void game_leave_forest(GameState *g, Location town, int shortcut);
 void game_reveal_forest_shortcut(GameState *g);

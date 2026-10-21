@@ -3278,6 +3278,66 @@ static void generate_active_level(GameState *g) {
     game_update_level_progress(g);
 }
 
+static int dungeon_map_is_foreign(const Map *map) {
+    if (map->room_count > 0) {
+        return 0;
+    }
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            TileType tile = map->tiles[y][x];
+            if (tile == TILE_TAVERN_EXIT || tile == TILE_TOWN_EXIT ||
+                tile == TILE_FOREST_FLOOR || tile == TILE_SWAMP_FLOOR ||
+                tile == TILE_HIGH_PASS_ENTRANCE) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+void game_repair_dungeon_maps(GameState *g) {
+    for (int i = 0; i < DUNGEON_DEPTH; i++) {
+        LevelCache *cache = &g->level_cache[i];
+        if (cache->valid && dungeon_map_is_foreign(&cache->map)) {
+            cache->valid = 0;
+            cache->level_cleared = 0;
+        }
+    }
+    if (g->location != LOCATION_DUNGEON || g->level < 1 ||
+        g->level > DUNGEON_DEPTH || !dungeon_map_is_foreign(&g->map)) {
+        return;
+    }
+    LevelCache *cache = &g->level_cache[g->level - 1];
+    if (cache->valid) {
+        g->map = cache->map;
+        g->enemy_count = cache->enemy_count;
+        g->level_cleared = cache->level_cleared;
+        memcpy(g->enemies, cache->enemies, sizeof(cache->enemies));
+    } else {
+        g->level_cleared = 0;
+        generate_active_level(g);
+    }
+    g->player.x = g->map.stairs_up_x;
+    g->player.y = g->map.stairs_up_y;
+    g->dialogue_active = 0;
+    // Recover dropped items beside the entrance of the restored floor.
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (!item->active) {
+            continue;
+        }
+        item->x = g->player.x + 1;
+        item->y = g->player.y;
+        item->underlying_tile = TILE_FLOOR;
+        g->map.tiles[item->y][item->x] = TILE_ITEM;
+    }
+    if (g->portal_active && g->portal_location == LOCATION_DUNGEON && g->portal_level == g->level) {
+        g->portal_x = g->player.x;
+        g->portal_y = g->player.y;
+        g->portal_origin_tile = TILE_STAIRS_UP;
+    }
+}
+
 static void sync_temple_floor_state(GameState *g) {
     if (g->location != LOCATION_TEMPLE) {
         return;
@@ -3580,6 +3640,7 @@ static void enter_adventure(GameState *g, Location location) {
 }
 
 void game_enter_dungeon(GameState *g) {
+    game_repair_dungeon_maps(g);
     enter_adventure(g, LOCATION_DUNGEON);
 }
 
@@ -5391,8 +5452,7 @@ static void return_to_town(GameState *g, Location destination) {
     // Cache current level before leaving
     if (returning_from == LOCATION_CROWNROAD || returning_from == LOCATION_KING_ROAD_WEST) {
         save_crownroad_cache(g);
-    } else if (returning_from != LOCATION_HIGH_PASS && returning_from != LOCATION_SWAMP_ROAD &&
-        returning_from != LOCATION_JAIL && returning_from != LOCATION_ESCAPE_TUNNEL &&
+    } else if ((returning_from == LOCATION_DUNGEON || cache != g->level_cache) &&
         g->level >= 1 &&
         g->level <= active_depth(g)) {
         cache[g->level - 1].map = g->map;
