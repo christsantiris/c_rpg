@@ -79,6 +79,12 @@ The forest, mountains, and swamp can be played from either end, with their
 boss on level 4. Defeating that boss opens a shortcut to the opposite town;
 the remaining three levels can also be explored.
 
+Every adventure floor and travel route has a description box with a title and
+two terrain or navigation tips, including boss floors. Coast boxes retain the
+current tide state, and temple boxes show alignment and the remaining foes
+sealing the stairs or treasure. Descriptions give way to visible boss status
+panels, then return when those panels disappear.
+
 ## OakHaven and Progression
 
 The roads through OakHaven lead north to the mountains, west to the forest, east

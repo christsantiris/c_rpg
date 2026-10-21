@@ -137,8 +137,8 @@ void draw_sun_guardian_status(Renderer *r, const GameState *g, const Viewport *v
             snprintf(text, sizeof(text), width < 300 ? "%s; %d FOES SEALED" : "A: ALTARS | %s; %d FOES SEALED",
                 g->temple_alignment ? "MOON" : "SUN", game_temple_remaining_enemies(g));
         } else {
-            snprintf(text, sizeof(text), "A: ALTARS | %s: %s", g->temple_alignment ? "MOON" : "SUN",
-                g->temple_alignment ? "CORE EXPOSED" : "BOSS GUARDED");
+            snprintf(text, sizeof(text), "A: ALTARS | %s: %s | %d LEFT", g->temple_alignment ? "MOON" : "SUN",
+                g->temple_alignment ? "CORE EXPOSED" : "BOSS GUARDED", game_temple_remaining_enemies(g));
         }
         renderer_draw_text(r, text, x + 10, top + 72, (SDL_Color){246, 226, 179, 255}, r->font_tiny);
     }

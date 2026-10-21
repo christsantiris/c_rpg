@@ -1876,35 +1876,6 @@ static void draw_catacombs_warnings(Renderer *r, const GameState *g, const Viewp
     }
 }
 
-static void draw_coast_tide_status(Renderer *r, const GameState *g) {
-    if (g->location != LOCATION_COAST || g->level == COAST_DEPTH) {
-        return;
-    }
-    int width = r->screen_w - INFO_PANEL_W;
-    int x = width - 296;
-    int y = width >= MAP_W / 2 + 312 ? 8 : MAP_H / 2 + 20;
-    if (width < 296 || r->tiles_y * TILE_SIZE < y + 76) {
-        return;
-    }
-    int low = 0;
-    for (int ty = 0; ty < MAP_H && !low; ty++) {
-        for (int tx = 0; tx < MAP_W; tx++) {
-            low |= g->map.tiles[ty][tx] == TILE_COAST_DRAINED_WATER;
-        }
-    }
-    SDL_Rect panel = {x, y, 288, 70};
-    SDL_SetRenderDrawColor(r->sdl, 13, 29, 38, 255);
-    SDL_RenderFillRect(r->sdl, &panel);
-    SDL_SetRenderDrawColor(r->sdl, 66, 127, 135, 255);
-    SDL_RenderDrawRect(r->sdl, &panel);
-    renderer_draw_text(r, low ? "BLUE FLATS: EXPOSED" : "BLUE FLATS: FLOODED", x + 10, y + 9,
-        (SDL_Color){116, 210, 215, 255}, r->font_tiny);
-    renderer_draw_text(r, low ? "AMBER INLETS: FLOODED" : "AMBER INLETS: EXPOSED", x + 10, y + 25,
-        (SDL_Color){222, 182, 102, 255}, r->font_tiny);
-    renderer_draw_text(r, "WALK: SAND + PALE SHALLOWS", x + 10, y + 46,
-        (SDL_Color){221, 216, 187, 255}, r->font_tiny);
-}
-
 static void draw_low_health_warning(Renderer *r, const GameState *g) {
     if (!game_player_low_health(g)) {
         return;
@@ -3844,27 +3815,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     draw_low_health_warning(r, g);
-    draw_coast_tide_status(r, g);
-    draw_regional_terrain_status(r, g);
-
-    if (g->location == LOCATION_TEMPLE && temple_remaining > 0 && !sun_guardian_compact_status(r, g, v)) {
-        int notice_x = r->screen_w - INFO_PANEL_W - 312;
-        if (notice_x < 8) {
-            notice_x = 8;
-        }
-        SDL_Rect notice = {notice_x, 8, 304, 40};
-        SDL_SetRenderDrawColor(r->sdl, 20, 16, 35, 255);
-        SDL_RenderFillRect(r->sdl, &notice);
-        SDL_SetRenderDrawColor(r->sdl, 128, 87, 177, 255);
-        SDL_RenderDrawRect(r->sdl, &notice);
-        char status[48];
-        SDL_snprintf(status, sizeof(status), "%s SEALED: %d FOES LEFT",
-            g->level == TEMPLE_DEPTH ? "TREASURE" : "STAIRS", temple_remaining);
-        renderer_draw_text(r, status, notice_x + 8, 16, (SDL_Color){220, 187, 255, 255}, r->font_tiny);
-        renderer_draw_text(r, game_temple_dormant_sentinels(g) > 0 ?
-            "Use altar to awaken Moon foes" : "Defeat all Sun and Moon foes",
-            notice_x + 8, 32, (SDL_Color){230, 218, 195, 255}, r->font_tiny);
-    }
+    draw_area_description(r, g, v);
 
     draw_kraken_status(r, g, v);
     draw_lich_status(r, g, v);
