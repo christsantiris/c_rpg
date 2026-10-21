@@ -3167,7 +3167,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         TTF_SizeText(r->font_tiny, "DUNGEON", &dungeon_w, &dungeon_h);
         TTF_SizeText(r->font_tiny, "MOUNTAINS", &mountains_w, &mountains_h);
         TTF_SizeText(r->font_tiny, "TAVERN", &tavern_w, NULL);
-        TTF_SizeText(r->font_tiny, "HARBOR", &harbor_w, NULL);
+        TTF_SizeText(r->font_tiny, "DOCKS", &harbor_w, NULL);
         TTF_SizeText(r->font_tiny, "SUNKEN COAST", &coast_w, &coast_h);
         int bx = viewport_to_screen_x(v, TOWN_BLACKSMITH_X) * TILE_SIZE
             + (5 * TILE_SIZE - blacksmith_w) / 2;
@@ -3192,7 +3192,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 r->font_tiny);
         }
         if (harbor_x > 0 && harbor_y > 0) {
-            renderer_draw_text(r, "HARBOR", harbor_x, harbor_y,
+            renderer_draw_text(r, "DOCKS", harbor_x, harbor_y,
                 label, r->font_tiny);
         }
         int gate_top = viewport_to_screen_y(v, 10) * TILE_SIZE;

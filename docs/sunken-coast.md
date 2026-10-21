@@ -144,7 +144,7 @@ floor. A full loot list reserves them in a named throne reliquary without deleti
 another item. An earned, unclaimed reward is restored there after a floor refresh.
 Interact beside the reliquary or press `P` on it; full inventory leaves it
 available. First claim is permanent, so later sale or dropping creates no copy.
-Victory still opens the coast exit and harbor road; existing island travel
+Victory still opens the coast exit and road to the docks; existing island travel
 requirements remain in effect.
 
 Save version **127** records robes claim state and uses the existing enemy fields

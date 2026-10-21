@@ -156,9 +156,9 @@ objectives have new guards on fresh expeditions; completed objectives remain
 completed. Quest progress, guard damage, and rewards persist through save/load.
 Existing saves migrate automatically, including saves inside the Tavern.
 
-## Harbor Unlock
+## Docks Unlock
 
-The harbor road appears after the Drowned Queen is defeated on the Sunken
+The road to the docks appears after the Drowned Queen is defeated on the Sunken
 Coast. The other regional bosses and Tavern quests are not required. Captain
 Rowan then gives the Island Treasure Map when spoken to, enabling ship travel
 from the dock.
