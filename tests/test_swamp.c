@@ -265,7 +265,8 @@ void test_swamp(void) {
     }
     ASSERT("defeating the demon leads into Rosemoor",
         swamp_game.location == LOCATION_TOWN3 && swamp_game.player.y == TOWN_H - 2);
-    action_resolve_player(&swamp_game, (Action){ACTION_MOVE, ROSEMOOR_SWAMP_ROAD_X, TOWN_H - 1});
+    action_resolve_player(&swamp_game, (Action){ACTION_MOVE, 20, TOWN_H - 1});
+    game_handle_shortcut_prompt_key(&swamp_game, SDL_SCANCODE_2, 0);
     ASSERT("Rosemoor south gate enters a safe swamp shortcut",
         swamp_game.location == LOCATION_SWAMP_ROAD && swamp_game.enemy_count == 0 &&
         swamp_game.player.y == 1);
@@ -273,12 +274,13 @@ void test_swamp(void) {
         action_resolve_player(&swamp_game, (Action){ACTION_MOVE, SWAMP_ROAD_X, y});
     }
     ASSERT("swamp shortcut reaches Town 2 and opens the return gate",
-        swamp_game.location == LOCATION_TOWN2 && swamp_game.player.x == TOWN3_ROAD_X &&
-        swamp_game.map.tiles[0][TOWN3_ROAD_X] == TILE_TOWN_EXIT);
+        swamp_game.location == LOCATION_TOWN2 && swamp_game.player.x == 20 &&
+        swamp_game.map.tiles[0][20] == TILE_TOWN_EXIT && swamp_game.map.tiles[0][TOWN3_ROAD_X] == TILE_WALL);
     int shortcut_loaded = save_game(&swamp_game, 99121) && load_game(&swamp_loaded, 99121);
     ASSERT("unlocked swamp shortcut survives save/load",
-        shortcut_loaded && swamp_loaded.map.tiles[0][TOWN3_ROAD_X] == TILE_TOWN_EXIT);
-    action_resolve_player(&swamp_game, (Action){ACTION_MOVE, TOWN3_ROAD_X, 0});
+        shortcut_loaded && swamp_loaded.map.tiles[0][20] == TILE_TOWN_EXIT && swamp_loaded.map.tiles[0][TOWN3_ROAD_X] == TILE_WALL);
+    action_resolve_player(&swamp_game, (Action){ACTION_MOVE, 20, 0});
+    game_handle_shortcut_prompt_key(&swamp_game, SDL_SCANCODE_2, 0);
     shortcut_loaded = save_game(&swamp_game, 99121) && load_game(&swamp_loaded, 99121);
     ASSERT("saving on the swamp shortcut preserves position and destination",
         shortcut_loaded && swamp_loaded.location == LOCATION_SWAMP_ROAD &&

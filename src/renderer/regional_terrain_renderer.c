@@ -292,15 +292,15 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
     } else if (g->location == LOCATION_FOREST_ROAD) {
         title = "FOREST ROAD";
         line1 = "WEST: STILLBURY / EAST: OAKHAVEN";
-        line2 = "A SAFE ROAD BETWEEN THE TWO TOWNS";
+        line2 = "NORTH FORK: NECROMANCER'S GROVE";
     } else if (g->location == LOCATION_HIGH_PASS) {
         title = "THE HIGH PASS";
         line1 = "NORTH: RIDGESHIRE / SOUTH: OAKHAVEN";
-        line2 = "FOLLOW THE PASS BETWEEN THE TOWNS";
+        line2 = "EAST FORK: GOBLIN KING'S HALL";
     } else if (g->location == LOCATION_SWAMP_ROAD) {
         title = "SWAMP SHORTCUT";
         line1 = "NORTH: ROSEMOOR / SOUTH: STILLBURY";
-        line2 = "SAFE PASSAGE AROUND THE SWAMP";
+        line2 = "EAST FORK: DEMON'S CHAMBER";
     } else if (g->location == LOCATION_CASTLE) {
         title = "CASTLE CROSSROADS";
         line1 = "WEST: ROSEMOOR / EAST: RIDGESHIRE";

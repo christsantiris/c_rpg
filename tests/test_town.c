@@ -618,9 +618,10 @@ void test_rook_labyrinth(void) {
 
     loaded.defeated_bosses |= 1 << LOCATION_FOREST;
     loaded.player.x = TOWN_W - 2;
-    loaded.player.y = TOWN_ROAD_EXIT_Y;
+    loaded.player.y = 12;
     map_set_stillbury_forest_road(&loaded.map, 1);
-    action_resolve_player(&loaded, (Action){ACTION_MOVE, TOWN_W - 1, TOWN_ROAD_EXIT_Y});
+    action_resolve_player(&loaded, (Action){ACTION_MOVE, TOWN_W - 1, 12});
+    game_handle_shortcut_prompt_key(&loaded, SDL_SCANCODE_2, 0);
     ASSERT("Town 2's east gate enters an enemy-free forest road",
         loaded.location == LOCATION_FOREST_ROAD && loaded.player.x == 1 &&
         loaded.player.y == FOREST_ROAD_Y && loaded.enemy_count == 0 &&
@@ -639,20 +640,22 @@ void test_rook_labyrinth(void) {
     }
     ASSERT("walking east across the road reaches Town 1's west gate",
         g.location == LOCATION_TOWN && g.player.x == 1 &&
-        g.player.y == TOWN_ROAD_EXIT_Y);
+        g.player.y == 12);
     g.map.tiles[19][0] = TILE_TOWN_EXIT;
     g.map.tiles[19][1] = TILE_TOWN_PATH;
     saved = save_game(&g, slot);
     restored = saved && load_game(&loaded, slot);
-    ASSERT("loading Town 1 moves the gate above the forest and closes the old gate",
+    ASSERT("loading Town 1 retains the shared forest gate and closes both old gates",
         restored && loaded.location == LOCATION_TOWN &&
-        loaded.map.tiles[TOWN_ROAD_EXIT_Y][0] == TILE_TOWN_EXIT &&
-        loaded.map.tiles[TOWN_ROAD_EXIT_Y][4] == TILE_TOWN_PATH &&
+        loaded.map.tiles[12][0] == TILE_TOWN_EXIT &&
+        loaded.map.tiles[TOWN_ROAD_EXIT_Y][0] == TILE_WALL &&
+        loaded.map.tiles[TOWN_ROAD_EXIT_Y][4] == TILE_TOWN_FLOOR &&
         loaded.map.tiles[19][0] == TILE_WALL &&
         loaded.map.tiles[19][1] == TILE_TOWN_FLOOR);
     remove("saves/savegame_99014.json");
-    action_resolve_player(&g, (Action){ACTION_MOVE, 0, TOWN_ROAD_EXIT_Y});
-    ASSERT("Town 1's northern west gate enters the road at its east end",
+    action_resolve_player(&g, (Action){ACTION_MOVE, 0, 12});
+    game_handle_shortcut_prompt_key(&g, SDL_SCANCODE_2, 0);
+    ASSERT("Town 1's shared west gate offers the road at its east end",
         g.location == LOCATION_FOREST_ROAD &&
         g.player.x == FOREST_ROAD_W - 2 && g.player.y == FOREST_ROAD_Y);
     for (int x = FOREST_ROAD_W - 3; x >= 0; x--) {
@@ -660,8 +663,8 @@ void test_rook_labyrinth(void) {
     }
     ASSERT("walking west across the road reaches Town 2's east gate",
         g.location == LOCATION_TOWN2 && g.player.x == TOWN_W - 2 &&
-        g.player.y == TOWN_ROAD_EXIT_Y);
-    action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 3, TOWN_ROAD_EXIT_Y});
+        g.player.y == 12);
+    action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 3, 12});
     ASSERT("continuing west enters Town 2 rather than returning to the road",
         g.location == LOCATION_TOWN2 && g.player.x == TOWN_W - 3);
     ASSERT("Inn stands east of the Healer with its door on the square",
@@ -816,13 +819,13 @@ void test_town_map(void) {
         m.tiles[21][4] == TILE_TOWN_FLOOR &&
         m.tiles[21][8] == TILE_TOWN_PATH);
     map_set_town2_road(&m, 1);
-    ASSERT("Town 2 gate opens north of the forest on a one-tile path",
-        TOWN_ROAD_EXIT_Y < 10 && TOWN_ROAD_GATE_Y < 10 &&
-        m.tiles[TOWN_ROAD_EXIT_Y][0] == TILE_TOWN_EXIT &&
-        m.tiles[TOWN_ROAD_EXIT_Y][1] == TILE_TOWN_PATH &&
+    ASSERT("unlocking Town 2 keeps the shortcut gate and spur retired",
+        m.tiles[12][0] == TILE_TOWN_EXIT &&
+        m.tiles[TOWN_ROAD_EXIT_Y][0] == TILE_WALL &&
+        m.tiles[TOWN_ROAD_EXIT_Y][1] == TILE_TOWN_FLOOR &&
         m.tiles[14][0] == TILE_WALL &&
-        m.tiles[TOWN_ROAD_EXIT_Y][4] == TILE_TOWN_PATH &&
-        m.tiles[11][4] == TILE_TOWN_PATH &&
+        m.tiles[TOWN_ROAD_EXIT_Y][4] == TILE_TOWN_FLOOR &&
+        m.tiles[11][4] == TILE_TOWN_FLOOR &&
         m.tiles[12][4] == TILE_TOWN_PATH &&
         m.tiles[19][0] == TILE_WALL &&
         m.tiles[19][1] == TILE_TOWN_FLOOR &&
@@ -1030,8 +1033,8 @@ static void test_necromancer_opens_exit(void) {
         action_resolve_player(&g, (Action){ACTION_MOVE, shortcut_x, shortcut_y});
         ASSERT("grove shortcut asks before leaving surviving enemies behind", g.location == LOCATION_FOREST && game_shortcut_prompt_active(&g));
         game_handle_shortcut_prompt_key(&g, SDL_SCANCODE_RETURN, 0);
-        ASSERT("grove shortcut leaves the forest with a living enemy behind",
-            g.location == LOCATION_TOWN2 &&
+        ASSERT("grove shortcut enters the forest road with a living enemy behind",
+            g.location == LOCATION_FOREST_ROAD &&
             g.forest_cache[FOREST_BOSS_LEVEL - 1].enemies[1].active &&
             !g.forest_cache[FOREST_BOSS_LEVEL - 1].level_cleared);
 
