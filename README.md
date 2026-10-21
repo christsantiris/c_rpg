@@ -607,7 +607,7 @@ marked before it fires, including against adjacent or ranged attackers.
 Sun alignment strengthens its armor; Moon exposes it. Use the summit altars
 to choose a guard against the announced attack, or walk onto a matching
 sanctuary: **M** protects against solar strikes and **S** against lunar bursts.
-Victory grants the all-class **Sunwarden Mantle** (+5 defense, +15 HP, +15 MP);
+Victory grants the all-class **Sunwarden Mantle** (+5 defense, +8 HP, +7 MP);
 a full pack leaves it safely reserved in a reliquary. Clear the remaining
 Sun and Moon enemies, recover the buried treasure, and return to **Nahla on
 the Ruined Isle** for her separate quest reward. See the
@@ -877,4 +877,4 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 - Recruit a party to join the adventure
 - Improve difficulty scaling and economy
    Warrior and Rogue should struggle at certain levels without better weapons. Mage should struggle without better spells. Purchasing new weapons, armor and tomes should become necessary to progress.
-- Make ruined temple boss more difficult
+- Add paypal integration to buy gold

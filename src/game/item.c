@@ -736,8 +736,8 @@ Item item_make_sunwarden_mantle(void) {
     item.type = ITEM_ARMOR;
     strncpy(item.name, "Sunwarden Mantle", sizeof(item.name) - 1);
     item.defense_bonus = 5;
-    item.max_hp_bonus = 15;
-    item.max_mp_bonus = 15;
+    item.max_hp_bonus = 8;
+    item.max_mp_bonus = 7;
     item.value = 950;
     set_armor_metadata(&item, ARMOR_FAMILY_LIGHT, ITEM_RARITY_RARE, ITEM_CLASS_ALL, ITEM_VISUAL_SUNWARDEN_MANTLE);
     return item;

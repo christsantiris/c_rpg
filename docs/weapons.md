@@ -187,7 +187,7 @@ Each of the five regional bosses guarantees a fixed thematic item:
 | Swamp Demon | Demonic Sword |
 
 The Fallen Sun Guardian grants **Sunwarden Mantle** on victory: rare all-class
-light armor with **+5 defense, +15 maximum HP and +15 maximum MP**. A full pack
+light armor with **+5 defense, +8 maximum HP and +7 maximum MP**. A full pack
 reserves it in the summit reliquary, recoverable with A nearby or P on it.
 This reward is separate from Nahla's buried-treasure quest. Boss victories
 remain permanent during repeat expeditions.
