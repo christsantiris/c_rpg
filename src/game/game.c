@@ -4224,6 +4224,7 @@ void game_enter_workshop(GameState *g) {
     g->floor_item_count = 0;
     g->dialogue_active = 0;
     push_message(g, "Garrick sharpens swords, axes and daggers: +1 attack for 50 gold, once per weapon.");
+    push_message(g, "Tessa sells arrows by the benches. Press T beside either craftsperson.");
 }
 
 void game_leave_workshop(GameState *g) {
@@ -4760,6 +4761,11 @@ int game_interact_frostfell(GameState *g) {
     set_quest_object_tile(g, x, y, TILE_FROST_FLOOR);
     push_message(g, "Expedition journal recovered. Find Surveyor Fen on Frostfell stage 4 and speak to him.");
     return 1;
+}
+
+int game_workshop_near_fletcher(const GameState *g) {
+    return g->location == LOCATION_WORKSHOP &&
+        abs(g->player.x - WORKSHOP_FLETCHER_X) + abs(g->player.y - WORKSHOP_FLETCHER_Y) == 1;
 }
 
 int game_workshop_near_smith(const GameState *g) {

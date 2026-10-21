@@ -1020,6 +1020,11 @@ int main(int argc, char **argv) {
                                     screen = SCREEN_WORKSHOP;
                                     break;
                                 }
+                                if (game_workshop_near_fletcher(&game)) {
+                                    shop_init(&shop_screen, SHOP_TYPE_FLETCHER, game.defeated_bosses, game.player.player_class);
+                                    screen = SCREEN_SHOP;
+                                    break;
+                                }
                                 int px = game.player.x;
                                 int py = game.player.y;
                                 int found = 0;
@@ -1366,7 +1371,7 @@ int main(int argc, char **argv) {
                                 shop_screen.mode = 0;
                                 shop_screen.selected = 0;
                             }
-                            if (event.button.x >= cx && event.button.x <= cx + 60) {
+                            if (shop_screen.type != SHOP_TYPE_FLETCHER && event.button.x >= cx && event.button.x <= cx + 60) {
                                 shop_screen.mode = 1;
                                 shop_screen.selected = 0;
                             }
