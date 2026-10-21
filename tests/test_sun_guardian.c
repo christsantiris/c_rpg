@@ -127,7 +127,7 @@ static void kill_with(int method, int full) {
     }
 }
 
-static int legacy_save(void) {
+static int legacy_save(int version) {
     if (!save_game(&game, 99197)) {
         return 0;
     }
@@ -151,8 +151,10 @@ static int legacy_save(void) {
     if (!root) {
         return 0;
     }
-    cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 134);
-    cJSON_DeleteItemFromObject(root, "sun_guardian_reward_state");
+    cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), version);
+    if (version < 135) {
+        cJSON_DeleteItemFromObject(root, "sun_guardian_reward_state");
+    }
     char *json = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);
     file = fopen("saves/savegame_99197.json", "w");
@@ -169,8 +171,74 @@ static int legacy_save(void) {
     return success;
 }
 
+static void test_mantle_rebalance(void) {
+    for (int cls = CLASS_WARRIOR; cls <= CLASS_ROGUE; cls++) {
+        for (int mode = 0; mode < 3; mode++) {
+            memset(&game, 0, sizeof(game));
+            game.player.player_class = cls;
+            game_init(&game);
+            int base_hp = game.player.max_hp;
+            int base_mp = game.player.max_mp;
+            Item old = item_make_sunwarden_mantle();
+            old.max_hp_bonus = 15;
+            old.max_mp_bonus = 15;
+            int mantle = game.inventory_count++;
+            game.inventory[mantle] = old;
+            int other = game.inventory_count++;
+            game.inventory[other] = item_make_dragon_scale_mantle();
+            if (mode) {
+                game.equipped_armor = mantle;
+                game_apply_armor_bonuses(&game, &old);
+            }
+            if (mode == 2) {
+                game.player.hp = 3;
+                game.player.mp = 2;
+            }
+            game.floor_item_count = 1;
+            game.floor_items[0] = (FloorItem){.active = 1, .x = game.player.x, .y = game.player.y,
+                .underlying_tile = game.map.tiles[game.player.y][game.player.x], .item = old};
+            game.map.tiles[game.player.y][game.player.x] = TILE_ITEM;
+            for (int level = 0; level < CASTLE_DEPTH; level++) {
+                game.castle_loot_count[level] = 1;
+                game.castle_loot[level][0] = game.floor_items[0];
+            }
+            game.gold = 432;
+            game.sun_guardian_reward_state = 2;
+            game.defeated_bosses |= 1 << LOCATION_TEMPLE;
+            game.temple_treasure_state = 3;
+            game.island_travel_unlocked = 1;
+            int ok = legacy_save(150) && load_game(&loaded, 99197);
+            int updated = ok && loaded.inventory[mantle].max_hp_bonus == 8 && loaded.inventory[mantle].max_mp_bonus == 7 &&
+                loaded.floor_items[0].item.max_hp_bonus == 8 && loaded.floor_items[0].item.max_mp_bonus == 7;
+            for (int level = 0; level < CASTLE_DEPTH; level++) {
+                updated &= loaded.castle_loot[level][0].item.max_hp_bonus == 8 && loaded.castle_loot[level][0].item.max_mp_bonus == 7;
+            }
+            ASSERT("old mantles update in inventory, on the floor and in every castle loot cache", updated);
+            ASSERT("mantle migration changes only equipped resource caps and clamps excess HP and MP", ok &&
+                loaded.player.max_hp == base_hp + (mode ? 8 : 0) && loaded.player.max_mp == base_mp + (mode ? 7 : 0) &&
+                loaded.player.hp == (mode == 2 ? 3 : loaded.player.max_hp) && loaded.player.mp == (mode == 2 ? 2 : loaded.player.max_mp) &&
+                loaded.player.defense == game.player.defense);
+            ASSERT("mantle rebalance preserves other armor, gold, boss victories and reward progress", ok &&
+                loaded.inventory[other].max_hp_bonus == game.inventory[other].max_hp_bonus && loaded.gold == 432 &&
+                loaded.defeated_bosses == game.defeated_bosses && loaded.sun_guardian_reward_state == 2 && loaded.temple_treasure_state == 3);
+            int hp = loaded.player.hp;
+            int mp = loaded.player.mp;
+            int max_hp = loaded.player.max_hp;
+            int max_mp = loaded.player.max_mp;
+            ASSERT("resaving migrated mantles never applies the stat reduction twice", save_game(&loaded, 99197) && load_game(&loaded, 99197) &&
+                loaded.player.hp == hp && loaded.player.mp == mp && loaded.player.max_hp == max_hp && loaded.player.max_mp == max_mp);
+            if (mode) {
+                action_resolve_player(&loaded, (Action){ACTION_DROP_ITEM, mantle, 0});
+                ASSERT("dropping an equipped migrated mantle restores the original base resource caps", loaded.equipped_armor == -1 && loaded.player.max_hp == base_hp && loaded.player.max_mp == base_mp);
+            }
+        }
+    }
+    remove("saves/savegame_99197.json");
+}
+
 void test_sun_guardian(void) {
     printf("Fallen Sun Guardian encounter tests:\n");
+    test_mantle_rebalance();
     Enemy *e = setup();
     ASSERT("summit adds two reachable altars and four walkable sanctuary tiles without moving its doors or treasure",
         game.map.tiles[9][29] == TILE_TEMPLE_ALTAR && game.map.tiles[9][35] == TILE_TEMPLE_ALTAR &&
@@ -512,10 +580,10 @@ void test_sun_guardian(void) {
         int max_mp = game.player.max_mp;
         action_resolve_player(&game, (Action){ACTION_EQUIP_ITEM, 0, 0});
         equipment_ok &= game.equipped_armor == 0 && game.player.defense == defense + 5 &&
-            game.player.max_hp == max_hp + 15 && game.player.max_mp == max_mp + 15 &&
+            game.player.max_hp == max_hp + 8 && game.player.max_mp == max_mp + 7 &&
             game.inventory[0].class_mask == ITEM_CLASS_ALL && game.inventory[0].armor_family == ARMOR_FAMILY_LIGHT;
     }
-    ASSERT("Sunwarden Mantle equips on all classes with exactly +5 defense, +15 HP and +15 MP", equipment_ok);
+    ASSERT("Sunwarden Mantle equips on all classes with exactly +5 defense, +8 HP and +7 MP", equipment_ok);
     ASSERT("equipped mantle metadata and derived stats survive saving",
         save_game(&game, 99197) && load_game(&loaded, 99197) && loaded.equipped_armor == 0 &&
         loaded.inventory[0].visual_id == ITEM_VISUAL_SUNWARDEN_MANTLE && loaded.player.max_hp == game.player.max_hp &&
@@ -567,7 +635,7 @@ void test_sun_guardian(void) {
     game.portal_y = 9;
     game.portal_origin_tile = TILE_TEMPLE_FLOOR;
     ASSERT("version-134 migration preserves health, freeze and deaths while resetting obsolete boss timing",
-        legacy_save() && load_game(&loaded, 99197) && loaded.enemies[0].hp == e->hp && loaded.enemies[0].frozen_turns == 3 &&
+        legacy_save(134) && load_game(&loaded, 99197) && loaded.enemies[0].hp == e->hp && loaded.enemies[0].frozen_turns == 3 &&
         loaded.enemies[0].move_timer == 0 && loaded.enemies[0].boss_attack == 0 &&
         loaded.temple_cache[4].enemies[0].move_timer == 0 && !loaded.temple_cache[4].enemies[1].active);
     ASSERT("migration adds sanctuaries without overwriting portal landings, exploration or treasure progress",
@@ -579,7 +647,7 @@ void test_sun_guardian(void) {
     game.defeated_bosses |= 1 << LOCATION_TEMPLE;
     game.temple_treasure_state = 3;
     ASSERT("old victories remain defeated with Nahla's completed quest and no fabricated mantle",
-        legacy_save() && load_game(&loaded, 99197) && !loaded.enemies[0].active &&
+        legacy_save(134) && load_game(&loaded, 99197) && !loaded.enemies[0].active &&
         loaded.temple_treasure_state == 3 && loaded.sun_guardian_reward_state == 0);
     remove("saves/savegame_99197.json");
 }

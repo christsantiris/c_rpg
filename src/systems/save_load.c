@@ -750,7 +750,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 150);
+    cJSON_AddNumberToObject(root, "save_version", 151);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -1957,6 +1957,25 @@ static void migrate_goblin_shields(GameState *g) {
             migrate_goblin_shield(&g->castle_loot[level][i].item);
         }
     }
+}
+
+static void migrate_sunwarden_mantle(Item *item, Player *player) {
+    if (item->type != ITEM_ARMOR || strcmp(item->name, "Sunwarden Mantle") != 0) {
+        return;
+    }
+    Item mantle = item_make_sunwarden_mantle();
+    if (player) {
+        player->max_hp += mantle.max_hp_bonus - item->max_hp_bonus;
+        player->max_mp += mantle.max_mp_bonus - item->max_mp_bonus;
+        if (player->hp > player->max_hp) {
+            player->hp = player->max_hp;
+        }
+        if (player->mp > player->max_mp) {
+            player->mp = player->max_mp;
+        }
+    }
+    item->max_hp_bonus = mantle.max_hp_bonus;
+    item->max_mp_bonus = mantle.max_mp_bonus;
 }
 
 static void migrate_rebalanced_weapon(Item *item, int retire_goblin) {
@@ -4433,6 +4452,19 @@ int load_game(GameState *g, int slot) {
     // Tessa replaces an impassable bench, preserving player and loot positions.
     if (save_version < 150 && g->location == LOCATION_WORKSHOP) {
         g->map.tiles[WORKSHOP_FLETCHER_Y][WORKSHOP_FLETCHER_X] = TILE_NPC_FLETCHER;
+    }
+    if (save_version < 151) {
+        for (int i = 0; i < g->inventory_count; i++) {
+            migrate_sunwarden_mantle(&g->inventory[i], g->equipped_armor == i ? &g->player : NULL);
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            migrate_sunwarden_mantle(&g->floor_items[i].item, NULL);
+        }
+        for (int level = 0; level < CASTLE_DEPTH; level++) {
+            for (int i = 0; i < g->castle_loot_count[level]; i++) {
+                migrate_sunwarden_mantle(&g->castle_loot[level][i].item, NULL);
+            }
+        }
     }
     game_migrate_boss_shortcuts(g);
     game_refresh_quest_encounters(g);

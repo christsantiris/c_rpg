@@ -135,7 +135,7 @@ walking. Neither a class ability nor a consumable is required.
 
 Defeating the Guardian permanently records its boss victory and opens the
 vault. **Sunwarden Mantle** goes directly into the inventory: rare all-class
-light armor granting **+5 defense, +15 maximum HP and +15 maximum MP**. If the
+light armor granting **+5 defense, +8 maximum HP and +7 maximum MP**. If the
 pack is full, a summit reliquary reserves it independently of floor capacity.
 Use **A** beside the cache or **P** on it, even beneath loot. Saving, backtracking
 and portal travel preserve an unclaimed mantle. Claiming restores the native

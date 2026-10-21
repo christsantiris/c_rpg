@@ -100,8 +100,8 @@ in place.
     slot, then use A beside it or P on it, including beneath stacked loot.
     Claiming restores the original floor. Selling or dropping the claimed
     mantle must never create a replacement.
-11. Equip Sunwarden Mantle on all three classes. Verify +5 defense, +15 maximum
-    HP and +15 maximum MP, the amber player palette and equipment-panel icon.
+11. Equip Sunwarden Mantle on all three classes. Verify +5 defense, +8 maximum
+    HP and +7 maximum MP, the amber player palette and equipment-panel icon.
     Save/load the equipped item and check its stats and metadata.
 12. Load an older living summit and a previously completed temple. Migration
     must preserve damage, freeze, deaths, exploration, loot, portal landings,
