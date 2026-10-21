@@ -396,12 +396,24 @@ void draw_swamp_bank(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, 
 }
 
 void draw_swamp_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int exit) {
-    (void)exit;
     draw_swamp_floor(r, tile_x, tile_y, map_x, map_y);
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
-    fill_rect(r, x + 2, y + 1, 4, 4, (SDL_Color){55, 51, 31, 255});
-    fill_rect(r, x + 17, y + 19, 4, 4, (SDL_Color){55, 51, 31, 255});
+    SDL_Color wood = {91, 75, 43, 255};
+    SDL_Color grain = {141, 119, 67, 255};
+    SDL_Color glow = exit ? (SDL_Color){202, 245, 111, 255} : (SDL_Color){115, 232, 202, 255};
+    fill_rect(r, x + 1, y, 5, TILE_SIZE, (SDL_Color){23, 29, 19, 255});
+    fill_rect(r, x + 18, y, 5, TILE_SIZE, (SDL_Color){23, 29, 19, 255});
+    fill_rect(r, x + 2, y + 1, 3, 22, wood);
+    fill_rect(r, x + 19, y + 1, 3, 22, wood);
+    fill_rect(r, x + 3, y + 5, 1, 16, grain);
+    fill_rect(r, x + 20, y + 5, 1, 16, grain);
+    fill_rect(r, x + 2, y + 1, 20, 4, wood);
+    fill_rect(r, x + 3, y + 1, 18, 1, grain);
+    fill_rect(r, x + 2, y + 6, 3, 4, glow);
+    fill_rect(r, x + 19, y + 6, 3, 4, glow);
+    fill_rect(r, x + 10, y + 9, 4, 10, glow);
+    fill_rect(r, x + 7, y + 12, 10, 4, glow);
 }
 
 void draw_forest_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {

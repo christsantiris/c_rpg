@@ -444,6 +444,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_BURIAL_LEDGER &&
         m->tiles[y][x] != TILE_NPC_STEWARD &&
         m->tiles[y][x] != TILE_NPC_SHARPENER &&
+        m->tiles[y][x] != TILE_NPC_FLETCHER &&
         m->tiles[y][x] != TILE_CASTLE_WALL &&
         m->tiles[y][x] != TILE_CASTLE_TABLE &&
         m->tiles[y][x] != TILE_CASTLE_BOOKCASE &&
@@ -2411,6 +2412,7 @@ void map_generate_workshop(Map *m, int *sx, int *sy) {
         m->tiles[11][x] = TILE_TAVERN_TABLE;
     }
     m->tiles[WORKSHOP_SMITH_Y][WORKSHOP_SMITH_X] = TILE_NPC_SHARPENER;
+    m->tiles[WORKSHOP_FLETCHER_Y][WORKSHOP_FLETCHER_X] = TILE_NPC_FLETCHER;
 }
 
 void map_generate_town_hall(Map *m, int *sx, int *sy) {
