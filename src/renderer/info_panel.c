@@ -2,9 +2,56 @@
 #include "item_icons.h"
 #include "game_renderer.h"
 #include "../game/town_life.h"
+#include "../game/necromancer.h"
 #include <stdio.h>
 
-static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor) {
+static const Enemy *visible_necromancer(const GameState *g, const Viewport *v) {
+    if (!v || g->location != LOCATION_FOREST || g->level != FOREST_BOSS_LEVEL) {
+        return NULL;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *e = &g->enemies[i];
+        if (e->active && e->type == ENEMY_FOREST_NECROMANCER && e->max_hp > 0 &&
+            viewport_is_visible(v, e->x, e->y) && map_is_explored(&g->map, e->x, e->y)) {
+            return e;
+        }
+    }
+    return NULL;
+}
+
+static void draw_necromancer_status(Renderer *r, const GameState *g, const Enemy *e, int x, int y) {
+    SDL_Color value = {186, 178, 211, 255};
+    renderer_draw_text(r, "NECROMANCER", x, y, (SDL_Color){233, 216, 250, 255}, r->font_tiny);
+    renderer_draw_text(r, e->attack_phase ? "WITHERED GROVE" : "GROVE BINDER", x, y + 14, value, r->font_tiny);
+    SDL_Rect bar = {x, y + 29, INFO_PANEL_W - 20, 8};
+    SDL_SetRenderDrawColor(r->sdl, 52, 39, 70, 255);
+    SDL_RenderFillRect(r->sdl, &bar);
+    bar.w = bar.w * e->hp / e->max_hp;
+    SDL_SetRenderDrawColor(r->sdl, 106, 175, 94, 255);
+    SDL_RenderFillRect(r->sdl, &bar);
+
+    char hint[80];
+    if (e->move_timer > 0) {
+        const char *attack = e->boss_attack == NECRO_ROOTS ? "ROOTS" : e->boss_attack == NECRO_RAISE ? "GRAVE WAVE" : "SPIRIT BOLT";
+        snprintf(hint, sizeof(hint), "%s: %d TURN%s", attack, e->move_timer, e->move_timer == 1 ? "" : "S");
+    } else {
+        snprintf(hint, sizeof(hint), "%s", e->move_timer < 0 ? "RECOVERING: ATTACK NOW" : "PREPARING NEXT ATTACK");
+    }
+    renderer_draw_text(r, hint, x, y + 44, (SDL_Color){e->move_timer < 0 ? 139 : 247, 207, 164, 255}, r->font_tiny);
+    int graves = necromancer_active_graves(g);
+    snprintf(hint, sizeof(hint), graves ? "GRAVES: %d" : "ALL GRAVES CONSECRATED", graves);
+    renderer_draw_text(r, hint, x, y + 58, value, r->font_tiny);
+    if (graves) {
+        renderer_draw_text(r, "INTERACT TO CONSECRATE", x, y + 72, value, r->font_tiny);
+    }
+    if (e->frozen_turns > 0) {
+        snprintf(hint, sizeof(hint), "FROZEN: %d TURNS", e->frozen_turns);
+        renderer_draw_text(r, hint, x, y + 86, (SDL_Color){168, 228, 255, 255}, r->font_tiny);
+    }
+}
+
+static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor, const Viewport *v) {
+    const Enemy *necromancer = visible_necromancer(g, v);
     int px = r->screen_w - INFO_PANEL_W;
 
     // Separator line
@@ -23,7 +70,13 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor)
 
     int x  = px + 10;
     int y  = 10;
-    int lh = 20;
+    int lh = necromancer && r->tiles_y * TILE_SIZE < 600 ? 16 : 20;
+    // On very short windows, keep the encounter warning above the character details.
+    int boss_at_top = necromancer && r->tiles_y * TILE_SIZE < 528;
+    if (boss_at_top) {
+        draw_necromancer_status(r, g, necromancer, x, y);
+        y += 108;
+    }
 
     // Character name
     renderer_draw_text(r, "CHARACTER", x, y, label, r->font_tiny);
@@ -272,7 +325,11 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor)
     y += lh + 7;
 
     // Key hints
-    if (harbor) {
+    if (necromancer) {
+        if (!boss_at_top) {
+            draw_necromancer_status(r, g, necromancer, x, y);
+        }
+    } else if (harbor) {
         renderer_draw_text(r, "UP/DOWN  SELECT", x, y, hint, r->font_tiny);
         renderer_draw_text(r, "ENTER    CONFIRM", x, y + lh, hint, r->font_tiny);
         renderer_draw_text(r, "ESC      RETURN", x, y + lh * 2, hint, r->font_tiny);
@@ -306,10 +363,10 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor)
 
 }
 
-void info_panel_draw(Renderer *r, const GameState *g) {
-    info_panel_draw_context(r, g, 0);
+void info_panel_draw(Renderer *r, const GameState *g, const Viewport *v) {
+    info_panel_draw_context(r, g, 0, v);
 }
 
 void info_panel_draw_harbor(Renderer *r, const GameState *g) {
-    info_panel_draw_context(r, g, 1);
+    info_panel_draw_context(r, g, 1, NULL);
 }
