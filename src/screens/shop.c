@@ -102,6 +102,8 @@ void shop_init(ShopScreen *s, ShopType type, int defeated_bosses, PlayerClass pl
 
     if (type == SHOP_TYPE_HEALER) {
         s->items[s->item_count++] = item_make_health_potion();
+    } else if (type == SHOP_TYPE_FLETCHER) {
+        s->items[s->item_count++] = item_make_arrows();
     } else if (type == SHOP_TYPE_WITCH) {
         s->items[s->item_count++] = item_make_mana_potion();
     } else if (type == SHOP_TYPE_APOTHECARY) {
@@ -210,7 +212,9 @@ ShopResult shop_handle_key(ShopScreen *s, int scancode) {
             }
             break;
         case SDL_SCANCODE_TAB:
-            s->mode = s->mode == 0 ? 1 : 0;
+            if (s->type != SHOP_TYPE_FLETCHER) {
+                s->mode = s->mode == 0 ? 1 : 0;
+            }
             s->selected = 0;
             break;
         case SDL_SCANCODE_RETURN:

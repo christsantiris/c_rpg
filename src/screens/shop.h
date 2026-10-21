@@ -18,7 +18,8 @@ typedef enum {
     SHOP_TYPE_BLACKSMITH,
     SHOP_TYPE_HEALER,
     SHOP_TYPE_WITCH,
-    SHOP_TYPE_APOTHECARY
+    SHOP_TYPE_APOTHECARY,
+    SHOP_TYPE_FLETCHER
 } ShopType;
 
 typedef struct {
