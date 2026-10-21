@@ -102,8 +102,8 @@ availability after an old victory. See the
 
 Enter Stillbury's Inn. Approach Zara and press `T` to hear her offer, then `Y`
 to accept her quest. Travel to Sunscar through Stillbury's west gate and find
-the golden magic lamp in the last clearing of stage 4. Stand on it and press `A` to recover it, then return
-to Zara in the Inn.
+the golden magic lamp in the last clearing of stage 4. Stand on it and press
+`P` (Pick Up) to recover it, then return to Zara in the Inn.
 
 The one-time reward is **80 gold and 600 score**. The lamp uses quest state rather
 than inventory space, so a full pack does not prevent recovery. The journal

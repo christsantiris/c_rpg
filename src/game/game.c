@@ -6227,12 +6227,12 @@ void game_talk_to_guild_seeker(GameState *g) {
     if (g->sunscar_lamp_quest_state == 0) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "Recover a magic lamp from Sunscar Wastes level 4. Enter through "
-            "Stillbury's west gate. Stand on the lamp and press A, then return "
+            "Stillbury's west gate. Stand on the lamp and press P, then return "
             "to me here for 80 gold.");
     } else if (g->sunscar_lamp_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "The magic lamp lies in the last clearing of Sunscar Wastes level 4. "
-            "Return it to me at the Inn in Stillbury.");
+            "Stand on it and press P, then return it to me at the Inn in Stillbury.");
     } else if (g->sunscar_lamp_quest_state == 2) {
         g->sunscar_lamp_quest_state = 3;
         g->gold += 80;
