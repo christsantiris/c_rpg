@@ -129,6 +129,8 @@ static void mountain_crossing(int reverse, int shortcut) {
     if (shortcut) {
         ASSERT("central mountain shortcut survives save/load", save_game(&mountain, MOUNTAIN_TRAVEL_SLOT) && load_game(&restored, MOUNTAIN_TRAVEL_SLOT) && restored.mountain_entry_town == mountain.mountain_entry_town && restored.map.tiles[y][x] == TILE_MOUNTAIN_SHORTCUT);
         action_resolve_player(&restored, (Action){ACTION_MOVE, x, y});
+        ASSERT("mountain shortcut waits for confirmation", restored.location == LOCATION_MOUNTAINS && game_shortcut_prompt_active(&restored));
+        game_handle_shortcut_prompt_key(&restored, SDL_SCANCODE_RETURN, 0);
         mountain = restored;
         remove("saves/savegame_99124.json");
     } else {

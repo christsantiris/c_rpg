@@ -523,6 +523,9 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     int viewport_h = r->tiles_y * TILE_SIZE;
     int bubble_w = viewport_w < 736 ? viewport_w - 16 : 720;
     const char *hint = shortcut ? "Enter to continue" : quest_offer ? "Accept quest? Y: Yes   N: No" : "";
+    if (shortcut && strcmp(g->dialogue_speaker, "Take shortcut?") == 0) {
+        hint = "Enter: Travel   Esc: Stay";
+    }
     SDL_Color ink = {42, 32, 30, 255};
     SDL_Color accent = {48, 56, 100, 255};
     TTF_Font *font = r->font_large;
