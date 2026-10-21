@@ -141,6 +141,48 @@ static void migrate_shared_town_gates(GameState *g) {
     }
 }
 
+static void mirror_forest_enemies(Enemy *enemies, int count) {
+    for (int i = 0; i < count; i++) {
+        Enemy *enemy = &enemies[i];
+        enemy->x = MAP_W - 1 - enemy->x;
+        if (enemy->attack_target_x >= 0 && enemy->attack_target_x < MAP_W) {
+            enemy->attack_target_x = MAP_W - 1 - enemy->attack_target_x;
+        }
+        if (enemy->boss_aux_x >= 0 && enemy->boss_aux_x < MAP_W) {
+            enemy->boss_aux_x = MAP_W - 1 - enemy->boss_aux_x;
+        }
+        enemy->facing_dx = -enemy->facing_dx;
+    }
+}
+
+static void migrate_forest_entry_direction(GameState *g) {
+    LevelCache *cache = &g->forest_cache[0];
+    int active = g->location == LOCATION_FOREST && g->level == 1 && g->map.stairs_up_x == 1;
+    int cached = cache->valid && cache->map.stairs_up_x == 1;
+    if (!active && !cached) {
+        return;
+    }
+    if (active) {
+        map_mirror_horizontal(&g->map);
+        mirror_forest_enemies(g->enemies, g->enemy_count);
+        g->player.x = MAP_W - 1 - g->player.x;
+        g->player.last_dx = -g->player.last_dx;
+        g->dialogue_x = MAP_W - 1 - g->dialogue_x;
+        for (int i = 0; i < g->floor_item_count; i++) {
+            if (g->floor_items[i].active) {
+                g->floor_items[i].x = MAP_W - 1 - g->floor_items[i].x;
+            }
+        }
+    }
+    if (cached) {
+        map_mirror_horizontal(&cache->map);
+        mirror_forest_enemies(cache->enemies, cache->enemy_count);
+    }
+    if (g->portal_location == LOCATION_FOREST && g->portal_level == 1) {
+        g->portal_x = MAP_W - 1 - g->portal_x;
+    }
+}
+
 static int shortcut_row(int y, int height) {
     if (y < 1) {
         return 1;
@@ -807,7 +849,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 157);
+    cJSON_AddNumberToObject(root, "save_version", 158);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -4617,6 +4659,9 @@ int load_game(GameState *g, int slot) {
         } else if (g->location == LOCATION_HIGH_PASS) {
             map_add_shortcut_branch(&g->map, TILE_MOUNTAIN_SHORTCUT);
         }
+    }
+    if (save_version < 158) {
+        migrate_forest_entry_direction(g);
     }
     // Recess legacy floor shortcuts into terrain in active and cached boss maps.
     game_migrate_boss_shortcuts(g);

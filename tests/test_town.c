@@ -722,6 +722,8 @@ static Action outdoor_exit_action(const Map *m) {
     Action action = {ACTION_MOVE, m->stairs_down_x, m->stairs_down_y};
     if (m->stairs_down_x == MAP_W - 2) {
         action.target_x++;
+    } else if (m->stairs_down_x == 1) {
+        action.target_x--;
     } else if (m->stairs_down_y == 1) {
         action.target_y--;
     } else {
@@ -734,6 +736,8 @@ static Action outdoor_entrance_action(const Map *m) {
     Action action = {ACTION_MOVE, m->stairs_up_x, m->stairs_up_y};
     if (m->stairs_up_x == 1) {
         action.target_x--;
+    } else if (m->stairs_up_x == MAP_W - 2) {
+        action.target_x++;
     } else if (m->stairs_up_y == 1) {
         action.target_y--;
     } else {
@@ -743,6 +747,9 @@ static Action outdoor_entrance_action(const Map *m) {
 }
 
 static int outdoor_exit_is_on_side(const Map *m, TileType exit_tile, int side) {
+    if (side == 3) {
+        return m->tiles[m->stairs_down_y][0] == exit_tile;
+    }
     if (side == 0) {
         return m->tiles[m->stairs_down_y][MAP_W - 1] == exit_tile;
     }
@@ -753,6 +760,9 @@ static int outdoor_exit_is_on_side(const Map *m, TileType exit_tile, int side) {
 }
 
 static int outdoor_entrance_is_on_side(const Map *m, TileType entrance_tile, int side) {
+    if (side == 3) {
+        return m->tiles[m->stairs_up_y][MAP_W - 1] == entrance_tile;
+    }
     if (side == 0) {
         return m->tiles[m->stairs_up_y][0] == entrance_tile;
     }
@@ -1063,11 +1073,11 @@ void test_forest(void) {
     action_resolve_player(&g, west);
     ASSERT("west town exit enters forest", g.location == LOCATION_FOREST);
     ASSERT("forest begins on level one", g.level == 1);
-    ASSERT("forest begins just inside west edge", g.player.x == 1);
-    ASSERT("forest has west entrance",
-        g.map.tiles[g.map.stairs_up_y][0] == TILE_FOREST_ENTRANCE);
+    ASSERT("leaving OakHaven west enters the forest at its east edge", g.player.x == MAP_W - 2);
+    ASSERT("forest has an east entrance facing OakHaven",
+        g.map.tiles[g.map.stairs_up_y][MAP_W - 1] == TILE_FOREST_ENTRANCE);
     ASSERT("forest exit begins hidden",
-        g.map.tiles[g.map.stairs_down_y][MAP_W - 1] == TILE_FOREST_WALL);
+        g.map.tiles[g.map.stairs_down_y][0] == TILE_FOREST_WALL);
     ASSERT("forest generation includes branching clearings",
         g.map.room_count == 7);
     ASSERT("lower route reaches exit when upper route is blocked",
@@ -1098,8 +1108,8 @@ void test_forest(void) {
     ASSERT("concealed shortcut initially behaves like dense woods",
         hidden_x >= 0 && !map_is_walkable(&g.map, hidden_x, hidden_y));
     reveal_forest_exit(&g);
-    ASSERT("forest landmark reveals east stage exit",
-        g.map.tiles[g.map.stairs_down_y][MAP_W - 1] == TILE_FOREST_EXIT);
+    ASSERT("forest landmark reveals the onward west stage exit",
+        g.map.tiles[g.map.stairs_down_y][0] == TILE_FOREST_EXIT);
     int concealed_after_landmark = 0;
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
@@ -1127,17 +1137,17 @@ void test_forest(void) {
     ASSERT("forest pickup restores forest floor",
         g.map.tiles[pickup_y][pickup_x] == TILE_FOREST_FLOOR);
 
-    g.player.x = MAP_W - 2;
+    g.player.x = 1;
     g.player.y = g.map.stairs_down_y;
-    Action east = {ACTION_MOVE, MAP_W - 1, g.player.y};
-    action_resolve_player(&g, east);
+    Action onward = {ACTION_MOVE, 0, g.player.y};
+    action_resolve_player(&g, onward);
     ASSERT("forest exit advances without clearing enemies", g.level == 2);
     ASSERT("next forest stage starts at south edge",
         g.player.y == MAP_H - 2);
     Action back = outdoor_entrance_action(&g.map);
     action_resolve_player(&g, back);
     ASSERT("forest entrance returns to previous stage", g.level == 1);
-    ASSERT("backtracking arrives inside east edge", g.player.x == MAP_W - 2);
+    ASSERT("backtracking arrives inside the first stage's west exit", g.player.x == 1);
 
     for (int level = 1; level <= FOREST_DEPTH; level++) {
         g.location = LOCATION_FOREST;
@@ -1162,8 +1172,8 @@ void test_forest(void) {
     }
 
     static const int expected_rooms[FOREST_DEPTH] = {7, 9, 9, 10, 10, 10, 8};
-    static const int expected_entrances[FOREST_DEPTH] = {0, 2, 1, 0, 0, 1, 2};
-    static const int expected_exits[FOREST_DEPTH] = {0, 1, 2, 0, 0, 2, 1};
+    static const int expected_entrances[FOREST_DEPTH] = {3, 2, 1, 0, 0, 1, 2};
+    static const int expected_exits[FOREST_DEPTH] = {3, 1, 2, 0, 0, 2, 1};
     g.enemy_count = 0;
     for (int level = 1; level <= FOREST_DEPTH; level++) {
         g.level = level;
@@ -1263,10 +1273,10 @@ void test_forest(void) {
     map_generate_forest(&g.map, g.level);
     enemies_spawn(&g);
     reveal_forest_exit(&g);
-    east = outdoor_exit_action(&g.map);
+    onward = outdoor_exit_action(&g.map);
     g.player.x = g.map.stairs_down_x;
     g.player.y = g.map.stairs_down_y;
-    action_resolve_player(&g, east);
+    action_resolve_player(&g, onward);
     ASSERT("living Necromancer blocks passage through the middle",
         g.location == LOCATION_FOREST && g.level == FOREST_BOSS_LEVEL);
     for (int i = 0; i < g.enemy_count; i++) {
@@ -1275,7 +1285,7 @@ void test_forest(void) {
         }
     }
     g.defeated_bosses |= 1 << LOCATION_FOREST;
-    action_resolve_player(&g, east);
+    action_resolve_player(&g, onward);
     ASSERT("grove exit continues to the remaining forest stages", g.level == FOREST_BOSS_LEVEL + 1);
     while (g.level < FOREST_DEPTH) {
         game_descend(&g);

@@ -702,6 +702,7 @@ void map_generate_island(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_temple(Map *m, int level, int *spawn_x, int *spawn_y);
 void map_generate_labyrinth(Map *m, int level, int switches, int *spawn_x, int *spawn_y);
 void map_generate_forest(Map *m, int level);
+void map_mirror_horizontal(Map *m);
 void map_reveal_forest_exit(Map *m);
 void map_reveal_forest_entrance(Map *m);
 int map_forest_difficulty(int level);
