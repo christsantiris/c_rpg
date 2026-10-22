@@ -87,40 +87,21 @@ void test_dragonspine(void) {
         g.map.tiles[RIDGESHIRE_ASHEN_GATE_Y][TOWN_W - 1] == TILE_TOWN_EXIT && g.map.tiles[12][0] == TILE_TOWN_EXIT);
 
     action_resolve_player(&g, (Action){ACTION_MOVE, 20, TOWN_H - 1});
-    game_handle_shortcut_prompt_key(&g, SDL_SCANCODE_2, 0);
-    ASSERT("Ridgeshire south exit enters the safe shortcut",
-        g.location == LOCATION_HIGH_PASS && g.enemy_count == 0 &&
-        g.player.x == HIGH_PASS_X && g.player.y == 1);
+    walk_shortcut_approach(&g);
+    ASSERT("Ridgeshire's left crossroads arm reaches OakHaven", g.location == LOCATION_TOWN && g.player.x == 20 && g.player.y == 1);
     int saved = save_game(&g, DRAGONSPINE_TEST_SLOT);
     int restored = saved && load_game(&loaded, DRAGONSPINE_TEST_SLOT);
-    ASSERT("shortcut position and mountain victory survive save/load",
-        restored && loaded.location == LOCATION_HIGH_PASS &&
-        loaded.player.y == 1 &&
-        (loaded.defeated_bosses & (1 << LOCATION_MOUNTAINS)));
+    ASSERT("shortcut victory and destination survive save/load", restored && loaded.location == LOCATION_TOWN && (loaded.defeated_bosses & (1 << LOCATION_MOUNTAINS)));
     if (restored) {
         g = loaded;
     }
     remove("saves/savegame_9984.json");
-    for (int y = 2; y < HIGH_PASS_H; y++) {
-        action_resolve_player(&g, (Action){ACTION_MOVE, HIGH_PASS_X, y});
-    }
-    ASSERT("walking south through the shortcut reaches OakHaven",
-        g.location == LOCATION_TOWN && g.player.x == 20 &&
-        g.player.y == 1 && g.map.tiles[0][20] == TILE_TOWN_EXIT && g.map.tiles[0][TOWN4_ROAD_X] == TILE_WALL);
     ASSERT("OakHaven has no old Dragonspine gate or Ilya",
         g.map.tiles[4][TOWN_W - 1] == TILE_WALL &&
         g.map.tiles[6][39] == TILE_TOWN_FLOOR);
     action_resolve_player(&g, (Action){ACTION_MOVE, 20, 0});
-    game_handle_shortcut_prompt_key(&g, SDL_SCANCODE_2, 0);
-    ASSERT("OakHaven shortcut starts at the southern end of the High Pass",
-        g.location == LOCATION_HIGH_PASS && g.player.y == HIGH_PASS_H - 2 &&
-        g.enemy_count == 0);
-    for (int y = HIGH_PASS_H - 3; y >= 0; y--) {
-        action_resolve_player(&g, (Action){ACTION_MOVE, HIGH_PASS_X, y});
-    }
-    ASSERT("walking north reaches Ridgeshire without crossing the mountains",
-        g.location == LOCATION_TOWN4 && g.player.x == 20 &&
-        g.player.y == TOWN_H - 2 && g.enemy_count == 0);
+    walk_shortcut_approach(&g);
+    ASSERT("OakHaven's left crossroads arm reaches Ridgeshire", g.location == LOCATION_TOWN4 && g.player.x == 20 && g.player.y == TOWN_H - 2);
     g.player.x = RIDGESHIRE_DRAGON_GATE_X;
     g.player.y = 1;
     Action north = {ACTION_MOVE, RIDGESHIRE_DRAGON_GATE_X, 0};
@@ -217,9 +198,7 @@ void test_dragonspine(void) {
     g.player.x = 20;
     g.player.y = TOWN_H - 2;
     action_resolve_player(&g, (Action){ACTION_MOVE, 20, TOWN_H - 1});
-    game_handle_shortcut_prompt_key(&g, SDL_SCANCODE_2, 0);
-    g.player.y = HIGH_PASS_H - 2;
-    action_resolve_player(&g, (Action){ACTION_MOVE, HIGH_PASS_X, HIGH_PASS_H - 1});
+    walk_shortcut_approach(&g);
     ASSERT("visiting OakHaven preserves the Dragonspine portal destination",
         g.location == LOCATION_TOWN && g.portal_active &&
         !g.level_cache[saved_level - 1].valid &&
@@ -233,9 +212,7 @@ void test_dragonspine(void) {
         g = loaded;
     }
     action_resolve_player(&g, (Action){ACTION_MOVE, 20, 0});
-    game_handle_shortcut_prompt_key(&g, SDL_SCANCODE_2, 0);
-    g.player.y = 1;
-    action_resolve_player(&g, (Action){ACTION_MOVE, HIGH_PASS_X, 0});
+    walk_shortcut_approach(&g);
     ASSERT("returning to Ridgeshire restores the Dragonspine portal beside its gate",
         g.location == LOCATION_TOWN4 && g.portal_active &&
         g.map.tiles[RIDGESHIRE_DRAGON_PORTAL_Y][RIDGESHIRE_DRAGON_PORTAL_X] == TILE_PORTAL);

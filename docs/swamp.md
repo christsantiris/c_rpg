@@ -50,13 +50,13 @@ retreat toward the expedition's entry town. Defeating him displays a shortcut
 discovery prompt that stays visible until a fresh press of Enter acknowledges
 it, matching the forest and mountains. A separate marked trail appears beside
 the defeated Demon, even if he was lured away from his clearing. That trail
-goes directly to Rosemoor when entering from Stillbury, or to Stillbury when
-entering from Rosemoor. Players can instead cross the three remaining levels.
+returns to the boss arm of the swamp crossroads. Follow its signs to walk
+to either town, or turn back to the Demon's chamber. Players can
+instead cross the three remaining levels.
 Surviving regular enemies do not block either exit choice.
 
-Victory also permanently unlocks a safe swamp road between the towns. The
-second north gate in Stillbury and separate south gate east of Rosemoor's main
-swamp gate enter this enemy-free, one-tile-wide road. Both ordinary swamp gates remain open.
+Victory opens both side arms of the two swamp crossroads, while the straight
+paths still enter the regular swamp.
 The Demon does not respawn on later visits or after accepting Bram's quest.
 
 Return to Town returns to the expedition's entry town. Its portal preserves
@@ -78,6 +78,14 @@ Defeat the captor, then speak to Mira to send her home. Return to Bram for a
 one-time reward of 80 gold and 600 score. Accepting the quest starts a fresh
 swamp expedition while retaining any boss victory and unlocked shortcuts.
 Quest and rescue progress persist across backtracking and new saves.
+
+## Physical crossroads
+
+The approach beyond each swamp gate is one + shaped road. From the town gate,
+the regular swamp is straight, the next town is left, and the Demon's chamber
+is right. Both side arms stay hidden until the Demon is defeated. Every arm
+leads directly to its destination, without an intermediate travel map or route
+menu. Leaving the boss returns onto the right arm of the same crossroads.
 
 ## Swamp Demon Encounter
 

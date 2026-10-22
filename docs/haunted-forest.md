@@ -85,14 +85,16 @@ a replacement. The reward does not depend on consecrating the graves.
 
 Defeating him displays a shortcut discovery prompt until a fresh press of Enter
 acknowledges it. A separate marked trail appears beside the defeated boss,
-matching the swamp and mountains. That shortcut goes directly to Stillbury when entering
-from OakHaven, or to OakHaven when entering from Stillbury. Players may instead
+matching the swamp and mountains. That shortcut returns onto the boss arm of the forest crossroads. Follow its signs to either
+town, or turn back to the boss chamber. Players may instead
 cross the remaining three stages to reach the same town. Surviving enemies do
 not block either route.
 
-Boss victory also permanently unlocks the safe forest road between the towns.
-OakHaven's separate west shortcut gate and Stillbury's upper east shortcut gate
-enter that enemy-free road. Their ordinary forest gates remain available.
+Boss victory opens both side arms of one + shaped crossroads outside each town.
+From the town gate, the regular forest is straight, the next town is left, and
+the Necromancer's chamber is right. The side arms remain hidden before victory.
+Each destination is reached directly from its arm, without a route menu or a
+second connecting path. Returning from the boss uses the same crossroads.
 
 Return to Town returns to the expedition's entry town. Its portal remembers
 that town, the exact forest stage, and casting position, even if the forest is

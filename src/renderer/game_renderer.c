@@ -223,6 +223,11 @@ static void draw_approach_town_gate(Renderer *r, const GameState *g, const Viewp
     int dx = route->gate_x == 0 ? -1 : route->gate_x == TOWN_W - 1 ? 1 : 0;
     int dy = route->gate_y == 0 ? -1 : route->gate_y == TOWN_H - 1 ? 1 : 0;
     draw_town_gate_back(r, viewport_to_screen_x(v, g->map.stairs_up_x), viewport_to_screen_y(v, g->map.stairs_up_y), style, dx, dy);
+    int x;
+    int y;
+    if (approach_shortcut_exit(g, &x, &y)) {
+        draw_town_gate_back(r, viewport_to_screen_x(v, x), viewport_to_screen_y(v, y), style, -dy, dx);
+    }
 }
 
 static void draw_approach_floor(Renderer *r, const GameState *g, int sx, int sy, int x, int y) {
@@ -519,8 +524,6 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     const char *hint = shortcut ? "Enter to continue" : quest_offer ? "Accept quest? Y: Yes   N: No" : "";
     if (shortcut && strcmp(g->dialogue_speaker, "Take shortcut?") == 0) {
         hint = "Enter: Travel   Esc: Stay";
-    } else if (shortcut && strcmp(g->dialogue_speaker, "Choose route") == 0) {
-        hint = "1/Enter: Area   2: Shortcut   Esc: Stay";
     }
     SDL_Color ink = {42, 32, 30, 255};
     SDL_Color accent = {48, 56, 100, 255};
@@ -2149,10 +2152,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     break;
                 }
                 case TILE_APPROACH_TOWN:
+                case TILE_APPROACH_SHORTCUT:
+                case TILE_APPROACH_BOSS:
                 case TILE_APPROACH_AREA: {
                     const TownApproach *route = approach_route(g);
                     draw_approach_floor(r, g, sx, sy, x, y);
-                    if (g->map.tiles[y][x] == TILE_APPROACH_AREA && (!route || route->area != LOCATION_DUNGEON)) {
+                    if (g->map.tiles[y][x] == TILE_APPROACH_BOSS ||
+                        (g->map.tiles[y][x] == TILE_APPROACH_AREA && (!route || route->area != LOCATION_DUNGEON))) {
                         draw_world_prop(r, sx, sy, PROP_ARCH, area_label_color(route ? route->area : LOCATION_FOREST));
                     }
                     break;
@@ -3441,6 +3447,26 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (g->location == LOCATION_APPROACH && r->font_tiny) {
         const TownApproach *route = approach_route(g);
         if (route) {
+            int exit_x;
+            int exit_y;
+            if (approach_shortcut_exit(g, &exit_x, &exit_y)) {
+                int vertical = g->map.stairs_down_y != g->map.stairs_up_y;
+                int dx = (g->map.stairs_down_x > g->map.stairs_up_x) - (g->map.stairs_down_x < g->map.stairs_up_x);
+                int dy = (g->map.stairs_down_y > g->map.stairs_up_y) - (g->map.stairs_down_y < g->map.stairs_up_y);
+                int jx = g->map.stairs_up_x + APPROACH_FORK_DISTANCE * dx;
+                int jy = g->map.stairs_up_y + APPROACH_FORK_DISTANCE * dy;
+                for (int boss = 0; boss < 2; boss++) {
+                    int sx = boss ? -dy : dy;
+                    int sy = boss ? dx : -dx;
+                    const char *direction = sx < 0 ? "W" : sx > 0 ? "E" : sy < 0 ? "N" : "S";
+                    const char *name = boss ? route->area == LOCATION_FOREST ? "NECROMANCER" : route->area == LOCATION_SWAMP ? "SWAMP DEMON" : "GOBLIN KING" : approach_town_name(approach_shortcut_town(route));
+                    char sign[80];
+                    snprintf(sign, sizeof(sign), "%s: %s%s%s", direction, boss ? "BOSS CHAMBER" : name, boss ? "\n" : "", boss ? name : "");
+                    int sign_x = vertical ? jx + (sx > 0 ? 2 : -7) : jx + 2;
+                    int sign_y = vertical ? jy + 3 : jy + (sy > 0 ? 3 : -5);
+                    draw_town_road_sign(r, viewport_to_screen_x(v, sign_x), viewport_to_screen_y(v, sign_y), sign);
+                }
+            }
             for (int end = 0; end < 2; end++) {
                 int x = end ? g->map.stairs_down_x : g->map.stairs_up_x;
                 int y = end ? g->map.stairs_down_y : g->map.stairs_up_y;

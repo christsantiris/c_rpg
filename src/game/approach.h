@@ -6,6 +6,8 @@
 #define APPROACH_W 64
 #define APPROACH_H 48
 #define APPROACH_LENGTH 20
+#define APPROACH_FORK_DISTANCE 8
+#define APPROACH_BRANCH_LENGTH 8
 
 typedef struct {
     Location town;
@@ -23,8 +25,16 @@ const char *approach_town_name(Location town);
 TileType approach_floor(Location area);
 void approach_refresh_dungeon(GameState *g);
 void approach_relocate_ridgeshire(GameState *g);
+int approach_shortcut_exit(const GameState *g, int *x, int *y);
+int approach_boss_exit(const GameState *g, int *x, int *y);
+Location approach_shortcut_town(const TownApproach *route);
+void approach_refresh_fork(GameState *g);
+void approach_return_from_shortcut(GameState *g, Location area);
+void approach_return_from_boss(GameState *g, Location area);
+void approach_migrate_roads(GameState *g);
 int approach_enter(GameState *g, int x, int y);
 int approach_travel(GameState *g, int x, int y);
 void game_leave_approach(GameState *g);
+void game_leave_approach_to_town(GameState *g, Location town);
 
 #endif

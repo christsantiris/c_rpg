@@ -136,11 +136,20 @@ void test_approaches(void) {
             int py = g->player.y;
             int hp = g->player.hp;
             int equipment = g->inventory_count;
-            action_resolve_player(g, (Action){ACTION_MOVE, route->gate_x, route->gate_y});
             int has_shortcut = route->area == LOCATION_FOREST || route->area == LOCATION_MOUNTAINS || route->area == LOCATION_SWAMP;
             if (unlocked && has_shortcut) {
-                ASSERT("unlocked shared gates keep the normal-route and shortcut choice", game_shortcut_prompt_active(g));
-                game_handle_shortcut_prompt_key(g, SDL_SCANCODE_1, 0);
+                g->dialogue_active = 1;
+                snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Choose route");
+                snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "1. Travel to area\n2. Take shortcut");
+                g->dialogue_x = route->gate_x;
+                g->dialogue_y = route->gate_y;
+                int migrated = save_game(g, slot) && legacy_approach_save(slot, 163) && load_game(loaded, slot);
+                ASSERT("legacy pending route menus close in town without moving the player or losing boss progress", migrated && loaded->location == route->town && !loaded->dialogue_active && !game_shortcut_prompt_active(loaded) && loaded->player.x == px && loaded->player.y == py && loaded->defeated_bosses == g->defeated_bosses && loaded->gold == 393);
+                *g = *loaded;
+            }
+            action_resolve_player(g, (Action){ACTION_MOVE, route->gate_x, route->gate_y});
+            if (unlocked && has_shortcut) {
+                ASSERT("unlocked town gates enter the approach without a route menu", !game_shortcut_prompt_active(g) && g->location == LOCATION_APPROACH);
             }
             ASSERT("a normal town departure reaches a separate path before any enemies spawn", g->location == LOCATION_APPROACH && g->approach_route == i && g->enemy_count == 0 && g->map.room_count == 0);
             int dx = route->gate_x == 0 ? -1 : route->gate_x == TOWN_W - 1 ? 1 : 0;
@@ -163,6 +172,19 @@ void test_approaches(void) {
             g->floor_item_count = 1;
             g->floor_items[0] = (FloorItem){.active = 1, .x = x, .y = y, .underlying_tile = approach_floor(route->area), .item = item_make_health_potion()};
             g->map.tiles[y][x] = TILE_ITEM;
+            if (unlocked && has_shortcut) {
+                int fx;
+                int fy;
+                approach_shortcut_exit(g, &fx, &fy);
+                int sx = dy ? 1 : 0;
+                int sy = dx ? -1 : 0;
+                for (int step = 0; step < APPROACH_BRANCH_LENGTH; step++) {
+                    g->map.tiles[fy - step * sy][fx - step * sx] = route->area == LOCATION_FOREST ? TILE_FOREST_WALL : route->area == LOCATION_SWAMP ? TILE_SWAMP_WALL : TILE_MOUNTAIN_WALL;
+                }
+                int migrated = save_game(g, slot) && legacy_approach_save(slot, 163) && load_game(loaded, slot);
+                ASSERT("old unlocked approaches gain their physical fork without losing position, exploration, loot, or combat progress", migrated && loaded->map.tiles[fy][fx] == TILE_APPROACH_SHORTCUT && loaded->player.x == x && loaded->player.y == y && loaded->approach_route == i && loaded->map.tiles[y][x] == TILE_ITEM && loaded->floor_items[0].active && map_is_explored(&loaded->map, x, y) && loaded->gold == 393 && memcmp(dungeon.tiles, loaded->level_cache[2].map.tiles, sizeof(dungeon.tiles)) == 0);
+                approach_refresh_fork(g);
+            }
             int ok = save_game(g, slot) && load_game(loaded, slot);
             ASSERT("an approach save restores its route, position, exploration, loot, and existing dungeon cache", ok && loaded->location == LOCATION_APPROACH && loaded->approach_route == i && loaded->player.x == x && loaded->player.y == y && loaded->inventory_count == equipment && loaded->floor_items[0].active && loaded->map.tiles[y][x] == TILE_ITEM && map_is_explored(&loaded->map, x, y) && memcmp(&dungeon, &loaded->level_cache[2].map, sizeof(Map)) == 0);
             int steps = 0;
@@ -223,6 +245,44 @@ void test_approaches(void) {
         }
     }
     ASSERT("every open tile across a wide town gate leads onto its approach", wide_gates);
+    const int road_routes[] = {0, 4, 5, 9, 2, 11};
+    for (int r = 0; r < 6; r++) {
+        const TownApproach *route = &town_approaches[road_routes[r]];
+        for (int boss = 0; boss < 2; boss++) {
+            approach_town(g, route);
+            g->defeated_bosses = 1 << route->area;
+            if (route->area == LOCATION_FOREST) {
+                game_enter_forest_road(g);
+                if (boss) {
+                    g->player.x = FOREST_ROAD_FORK_X;
+                    g->player.y = FOREST_ROAD_BOSS_Y + 1;
+                }
+            } else if (route->area == LOCATION_SWAMP) {
+                game_enter_swamp_road(g);
+                if (boss) {
+                    g->player.x = SWAMP_ROAD_BOSS_X - 1;
+                    g->player.y = SWAMP_ROAD_FORK_Y;
+                }
+            } else {
+                game_enter_high_pass(g, route->town == LOCATION_TOWN);
+                if (boss) {
+                    g->player.x = HIGH_PASS_BOSS_X - 1;
+                    g->player.y = HIGH_PASS_FORK_Y;
+                }
+            }
+            map_mark_explored(&g->map, g->player.x, g->player.y);
+            g->floor_item_count = 1;
+            g->floor_items[0] = (FloorItem){.active = 1, .x = g->player.x, .y = g->player.y, .underlying_tile = g->map.tiles[g->player.y][g->player.x], .item = item_make_health_potion()};
+            g->map.tiles[g->player.y][g->player.x] = TILE_ITEM;
+            g->gold = 393;
+            g->player.hp = 87;
+            int migrated = save_game(g, slot) && legacy_approach_save(slot, 164) && load_game(loaded, slot);
+            ASSERT("old connecting-road saves move safely onto the correct continuous crossroads", migrated && loaded->location == LOCATION_APPROACH && loaded->approach_route == road_routes[r] && map_is_walkable(&loaded->map, loaded->player.x, loaded->player.y) && map_is_explored(&loaded->map, loaded->player.x, loaded->player.y) && loaded->gold == 393 && loaded->player.hp == 87 && loaded->defeated_bosses == g->defeated_bosses);
+            ASSERT("connecting-road migration preserves dropped items on the new path", migrated && loaded->floor_items[0].active && loaded->map.tiles[loaded->floor_items[0].y][loaded->floor_items[0].x] == TILE_ITEM && loaded->floor_items[0].item.type == ITEM_POTION_HEALTH);
+            walk_return_approach(loaded);
+            ASSERT("a migrated road still reaches its original town", loaded->location == route->town);
+        }
+    }
     ASSERT("Dragonspine is north and Ashen Hollow is east of Ridgeshire", town_approaches[12].area == LOCATION_DRAGONSPINE && town_approaches[12].gate_x == RIDGESHIRE_DRAGON_GATE_X && town_approaches[12].gate_y == 0 && town_approaches[13].area == LOCATION_ASHEN && town_approaches[13].gate_x == TOWN_W - 1 && town_approaches[13].gate_y == RIDGESHIRE_ASHEN_GATE_Y);
     for (int index = 12; index <= 13; index++) {
         const TownApproach *route = &town_approaches[index];

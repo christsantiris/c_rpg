@@ -4060,6 +4060,7 @@ void game_leave_forest_road(GameState *g, Location destination) {
     g->player.poison_turns = 0;
     push_message(g, destination == LOCATION_TOWN2 ?
         "You arrive in Stillbury." : "You return to OakHaven.");
+    approach_return_from_shortcut(g, LOCATION_FOREST);
 }
 
 int game_is_king_road(const GameState *g) {
@@ -5572,17 +5573,32 @@ void game_return_to_approach(GameState *g) {
     enter_return_approach(g, area);
 }
 
-void game_leave_approach(GameState *g) {
+void game_leave_approach_to_town(GameState *g, Location town) {
     const TownApproach *route = approach_route(g);
     if (!route) {
         return;
     }
     TownApproach destination = *route;
+    for (int i = 0; i < town_approach_count; i++) {
+        if (town_approaches[i].town == town && town_approaches[i].area == route->area) {
+            destination = town_approaches[i];
+            break;
+        }
+    }
     return_to_town(g, destination.town);
     g->approach_route = -1;
     g->player.x = destination.gate_x == 0 ? 1 : destination.gate_x == TOWN_W - 1 ? TOWN_W - 2 : destination.gate_x;
     g->player.y = destination.gate_y == 0 ? 1 : destination.gate_y == TOWN_H - 1 ? TOWN_H - 2 : destination.gate_y;
+    g->player.last_dx = destination.gate_x == 0 ? 1 : destination.gate_x == TOWN_W - 1 ? -1 : 0;
+    g->player.last_dy = destination.gate_y == 0 ? 1 : destination.gate_y == TOWN_H - 1 ? -1 : 0;
     push_message(g, "You follow the path back through the town gate.");
+}
+
+void game_leave_approach(GameState *g) {
+    const TownApproach *route = approach_route(g);
+    if (route) {
+        game_leave_approach_to_town(g, route->town);
+    }
 }
 
 void game_leave_catacombs(GameState *g) {
@@ -5687,6 +5703,7 @@ void game_leave_swamp_road(GameState *g, Location destination) {
     g->player.y = destination == LOCATION_TOWN3 ? TOWN_H - 2 : 1;
     push_message(g, destination == LOCATION_TOWN3 ?
         "You arrive in Rosemoor." : "You return to Stillbury.");
+    approach_return_from_shortcut(g, LOCATION_SWAMP);
 }
 
 void game_enter_town4(GameState *g) {
@@ -5699,6 +5716,7 @@ void game_leave_high_pass(GameState *g, Location destination) {
     g->player.y = destination == LOCATION_TOWN4 ? TOWN_H - 2 : 1;
     push_message(g, destination == LOCATION_TOWN4 ?
         "You arrive in Ridgeshire." : "You return to OakHaven.");
+    approach_return_from_shortcut(g, LOCATION_MOUNTAINS);
 }
 
 void game_open_town_portal(GameState *g) {
@@ -6835,52 +6853,6 @@ void game_mark_level_cleared(GameState *g) {
     g->level_cleared = 1;
 }
 
-static int town_route_region(const GameState *g, int x, int y) {
-    if (x < 0 || x >= TOWN_W || y < 0 || y >= TOWN_H || g->map.tiles[y][x] != TILE_TOWN_EXIT) {
-        return 0;
-    }
-    if ((g->location == LOCATION_TOWN && x == 0) || (g->location == LOCATION_TOWN2 && x == TOWN_W - 1)) {
-        return LOCATION_FOREST;
-    }
-    if ((g->location == LOCATION_TOWN && y == 0) || (g->location == LOCATION_TOWN4 && y == TOWN_H - 1)) {
-        return LOCATION_MOUNTAINS;
-    }
-    if ((g->location == LOCATION_TOWN2 && y == 0) || (g->location == LOCATION_TOWN3 && y == TOWN_H - 1)) {
-        return LOCATION_SWAMP;
-    }
-    return 0;
-}
-
-int game_town_route_available(const GameState *g, int x, int y) {
-    int region = town_route_region(g, x, y);
-    return region && (g->defeated_bosses & (1 << region));
-}
-
-int game_request_town_route(GameState *g, int x, int y) {
-    if (!game_town_route_available(g, x, y)) {
-        return 0;
-    }
-    int region = town_route_region(g, x, y);
-    const char *area;
-    const char *town;
-    if (region == LOCATION_FOREST) {
-        area = "Forest";
-        town = g->location == LOCATION_TOWN ? "Stillbury" : "OakHaven";
-    } else if (region == LOCATION_SWAMP) {
-        area = "Swamp";
-        town = g->location == LOCATION_TOWN2 ? "Rosemoor" : "Stillbury";
-    } else {
-        area = "Goblin Mountains";
-        town = g->location == LOCATION_TOWN ? "Ridgeshire" : "OakHaven";
-    }
-    g->dialogue_active = 1;
-    g->dialogue_x = x;
-    g->dialogue_y = y;
-    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Choose route");
-    snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "1. Travel to %s\n2. Take shortcut to %s", area, town);
-    return 1;
-}
-
 static void enter_boss_shortcut(GameState *g) {
     // Floor loot is discarded only after the player confirms the warning.
     clear_floor_loot(g);
@@ -6890,19 +6862,10 @@ static void enter_boss_shortcut(GameState *g) {
     cache->level_cleared = g->level_cleared;
     memcpy(cache->enemies, g->enemies, sizeof(cache->enemies));
     cache->valid = 1;
-    if (g->location == LOCATION_FOREST) {
-        game_enter_forest_road(g);
-        g->player.x = FOREST_ROAD_FORK_X;
-        g->player.y = FOREST_ROAD_BOSS_Y + 1;
-    } else if (g->location == LOCATION_SWAMP) {
-        game_enter_swamp_road(g);
-        g->player.x = SWAMP_ROAD_BOSS_X - 1;
-        g->player.y = SWAMP_ROAD_FORK_Y;
-    } else {
-        game_enter_high_pass(g, 0);
-        g->player.x = HIGH_PASS_BOSS_X - 1;
-        g->player.y = HIGH_PASS_FORK_Y;
-    }
+    Location area = g->location;
+    Location town = area == LOCATION_FOREST ? g->forest_entry_town : area == LOCATION_SWAMP ? g->swamp_entry_town : g->mountain_entry_town;
+    return_to_town(g, town);
+    approach_return_from_boss(g, area);
     push_message(g, "Follow the signs to town, or turn back to the boss chamber.");
 }
 
@@ -6910,7 +6873,19 @@ void game_enter_shortcut_boss(GameState *g) {
     Location region;
     int level;
     TileType shortcut;
-    if (g->location == LOCATION_FOREST_ROAD) {
+    const TownApproach *route = approach_route(g);
+    if (route && (route->area == LOCATION_FOREST || route->area == LOCATION_SWAMP || route->area == LOCATION_MOUNTAINS)) {
+        region = route->area;
+        level = 4;
+        shortcut = region == LOCATION_FOREST ? TILE_FOREST_SHORTCUT : region == LOCATION_SWAMP ? TILE_SWAMP_SHORTCUT : TILE_MOUNTAIN_SHORTCUT;
+        if (region == LOCATION_FOREST) {
+            g->forest_entry_town = route->town;
+        } else if (region == LOCATION_SWAMP) {
+            g->swamp_entry_town = route->town;
+        } else {
+            g->mountain_entry_town = route->town;
+        }
+    } else if (g->location == LOCATION_FOREST_ROAD) {
         region = LOCATION_FOREST;
         level = FOREST_BOSS_LEVEL;
         shortcut = TILE_FOREST_SHORTCUT;
@@ -7004,9 +6979,6 @@ int game_shortcut_prompt_active(const GameState *g) {
     if (g->castle_prompt) {
         return 1;
     }
-    if (g->dialogue_active && strcmp(g->dialogue_speaker, "Choose route") == 0) {
-        return game_town_route_available(g, g->dialogue_x, g->dialogue_y);
-    }
     return g->dialogue_active &&
         (strcmp(g->dialogue_speaker, "Shortcut found") == 0 || strcmp(g->dialogue_speaker, "Take shortcut?") == 0) &&
         (g->location == LOCATION_FOREST || g->location == LOCATION_SWAMP || g->location == LOCATION_MOUNTAINS);
@@ -7018,33 +6990,6 @@ int game_handle_shortcut_prompt_key(GameState *g, int key, int repeat) {
     }
     if (!game_shortcut_prompt_active(g)) {
         return 0;
-    }
-    if (strcmp(g->dialogue_speaker, "Choose route") == 0) {
-        if (repeat) {
-            return 1;
-        }
-        if (key == SDL_SCANCODE_ESCAPE) {
-            g->dialogue_active = 0;
-            return 1;
-        }
-        int shortcut = key == SDL_SCANCODE_2 || key == SDL_SCANCODE_KP_2;
-        if (!shortcut && key != SDL_SCANCODE_1 && key != SDL_SCANCODE_KP_1 && key != SDL_SCANCODE_RETURN && key != SDL_SCANCODE_KP_ENTER) {
-            return 1;
-        }
-        int region = town_route_region(g, g->dialogue_x, g->dialogue_y);
-        if (!shortcut) {
-            approach_enter(g, g->dialogue_x, g->dialogue_y);
-            return 1;
-        }
-        g->dialogue_active = 0;
-        if (region == LOCATION_FOREST) {
-            game_enter_forest_road(g);
-        } else if (region == LOCATION_SWAMP) {
-            game_enter_swamp_road(g);
-        } else {
-            game_enter_high_pass(g, g->location == LOCATION_TOWN);
-        }
-        return 1;
     }
     int travel = strcmp(g->dialogue_speaker, "Take shortcut?") == 0;
     if (!repeat && travel && key == SDL_SCANCODE_ESCAPE) {

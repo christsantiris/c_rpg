@@ -142,6 +142,12 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
         title = floor_name;
         line1 = "FOLLOW THE PATH TO THE ENTRANCE";
         line2 = "TURN BACK TO RETURN TO TOWN";
+        int x;
+        int y;
+        if (approach_shortcut_exit(g, &x, &y)) {
+            line1 = "STRAIGHT: AREA / LEFT: NEXT TOWN";
+            line2 = "RIGHT: BOSS CHAMBER";
+        }
     } else if (g->location == LOCATION_ASHEN) {
         title = "VOLCANIC CROSSINGS";
         line1 = "C: COOL   !: WARNING   H: HOT";
