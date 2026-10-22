@@ -1981,7 +1981,7 @@ void map_generate_crownroad(Map *m) {
 }
 
 int map_swamp_difficulty(int level) {
-    static const int difficulty[SWAMP_DEPTH] = {1, 2, 3, 5, 3, 2, 1};
+    static const int difficulty[SWAMP_DEPTH] = {1, 2, 3, 4, 5};
     if (level < 1 || level > SWAMP_DEPTH) {
         return 1;
     }

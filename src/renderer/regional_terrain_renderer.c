@@ -148,6 +148,10 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
             line1 = "WEST: OAKHAVEN / EAST: DAWNMERE";
             line2 = "CRYPT ENTRANCE: DUNGEON STAGE 1";
         }
+        if (approach_swamp_town_exit(g, &x, &y)) {
+            line1 = "NORTH: ROSEMOOR / SOUTH: STILLBURY";
+            line2 = "SWAMP ENTRANCE: ALWAYS LEVEL 1";
+        }
         if (approach_forest_town_exit(g, &x, &y)) {
             line1 = "WEST: STILLBURY / EAST: OAKHAVEN";
             line2 = "FOREST ENTRANCE: ALWAYS LEVEL 1";

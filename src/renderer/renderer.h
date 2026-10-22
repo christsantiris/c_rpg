@@ -34,6 +34,7 @@ typedef struct {
     SDL_Texture *dungeon_entrance_texture;
     SDL_Texture *mountain_entrance_texture;
     SDL_Texture *forest_entrance_texture;
+    SDL_Texture *swamp_entrance_texture;
     SDL_Texture *town_gate_textures[TOWN_EXIT_GLASSDEEP + 1];
     SDL_Texture *castle_texture;
     SDL_Texture *apothecary_texture;

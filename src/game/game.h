@@ -169,7 +169,8 @@ typedef struct {
     LevelCache forest_cache[MAX_REGION_DEPTH];
     LevelCache mountain_cache[MAX_REGION_DEPTH];
     LevelCache coast_cache[MAX_REGION_DEPTH];
-    LevelCache swamp_cache[SWAMP_DEPTH];
+    // Retain the old seven-map capacity for save migration.
+    LevelCache swamp_cache[SWAMP_CACHE_DEPTH];
     LevelCache dragonspine_cache[DRAGONSPINE_DEPTH];
     LevelCache frostfell_cache[FROSTFELL_DEPTH];
     LevelCache desert_cache[DESERT_DEPTH];

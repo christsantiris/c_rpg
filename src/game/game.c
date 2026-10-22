@@ -1483,7 +1483,7 @@ void game_init(GameState *g) {
         g->forest_cache[i].valid = 0;
         g->mountain_cache[i].valid = 0;
         g->coast_cache[i].valid = 0;
-        if (i < SWAMP_DEPTH) {
+        if (i < SWAMP_CACHE_DEPTH) {
             g->swamp_cache[i].valid = 0;
         }
         if (i < DRAGONSPINE_DEPTH) {
@@ -3715,7 +3715,7 @@ void game_enter_swamp(GameState *g) {
     g->swamp_entry_town = from_rosemoor ? LOCATION_TOWN3 : LOCATION_TOWN2;
     g->location = LOCATION_SWAMP;
     start_expedition(g, g->swamp_cache, SWAMP_DEPTH);
-    g->level = from_rosemoor ? SWAMP_DEPTH : 1;
+    g->level = 1;
     LevelCache *cache = &g->swamp_cache[g->level - 1];
     if (cache->valid) {
         g->map = cache->map;
@@ -3730,8 +3730,8 @@ void game_enter_swamp(GameState *g) {
     if (g->level > g->max_swamp_level_reached) {
         g->max_swamp_level_reached = g->level;
     }
-    g->player.x = from_rosemoor ? g->map.stairs_down_x - 1 : g->map.stairs_up_x + 1;
-    g->player.y = from_rosemoor ? g->map.stairs_down_y : g->map.stairs_up_y;
+    g->player.x = g->map.stairs_up_x + 1;
+    g->player.y = g->map.stairs_up_y;
     g->dialogue_active = 0;
     push_message(g, "Braided mudbanks cross blackwater channels. Reeds hide you from distant, unhurt foes.");
 }
@@ -5576,7 +5576,7 @@ static void enter_return_approach(GameState *g, Location area) {
             g->player.y = g->map.stairs_down_y - dy;
             g->player.last_dx = -dx;
             g->player.last_dy = -dy;
-            if (area == LOCATION_DUNGEON || area == LOCATION_MOUNTAINS || area == LOCATION_FOREST) {
+            if (area == LOCATION_DUNGEON || area == LOCATION_MOUNTAINS || area == LOCATION_FOREST || area == LOCATION_SWAMP) {
                 g->player.x = g->map.stairs_down_x;
                 g->player.y = g->map.stairs_down_y + 1;
                 g->player.last_dx = 0;
@@ -5598,8 +5598,17 @@ void game_return_to_approach(GameState *g) {
         (g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
     int forest_exit = area == LOCATION_FOREST && g->level == FOREST_DEPTH &&
         (g->defeated_bosses & (1 << LOCATION_FOREST));
+    int swamp_exit = area == LOCATION_SWAMP && g->level == SWAMP_DEPTH &&
+        (g->defeated_bosses & (1 << LOCATION_SWAMP));
     game_return_to_town(g);
     enter_return_approach(g, area);
+    if (swamp_exit && g->location == LOCATION_APPROACH) {
+        g->player.x = g->map.stairs_up_x;
+        g->player.y = g->map.stairs_down_y + 1;
+        g->player.last_dx = -1;
+        g->player.last_dy = 0;
+        push_message(g, "The road is open: north to Rosemoor, south to Stillbury.");
+    }
     if (forest_exit && g->location == LOCATION_APPROACH) {
         g->player.x = g->map.stairs_down_x;
         g->player.y = g->map.stairs_up_y;
@@ -6909,272 +6918,20 @@ void game_mark_level_cleared(GameState *g) {
     g->level_cleared = 1;
 }
 
-static void enter_boss_shortcut(GameState *g) {
-    // Floor loot is discarded only after the player confirms the warning.
-    clear_floor_loot(g);
-    LevelCache *cache = &active_cache(g)[g->level - 1];
-    cache->map = g->map;
-    cache->enemy_count = g->enemy_count;
-    cache->level_cleared = g->level_cleared;
-    memcpy(cache->enemies, g->enemies, sizeof(cache->enemies));
-    cache->valid = 1;
-    Location area = g->location;
-    Location town = area == LOCATION_FOREST ? g->forest_entry_town : area == LOCATION_SWAMP ? g->swamp_entry_town : g->mountain_entry_town;
-    return_to_town(g, town);
-    approach_return_from_boss(g, area);
-    push_message(g, "Follow the signs to town, or turn back to the boss chamber.");
-}
-
 void game_enter_shortcut_boss(GameState *g) {
-    const TownApproach *route = approach_route(g);
-    if (route && route->area == LOCATION_SWAMP) {
-        g->swamp_entry_town = route->town;
-    } else if (g->location != LOCATION_SWAMP_ROAD) {
-        return;
-    }
-    Location region = LOCATION_SWAMP;
-    int level = SWAMP_BOSS_LEVEL;
-    TileType shortcut = TILE_SWAMP_SHORTCUT;
-    if (!(g->defeated_bosses & (1 << region))) {
-        return;
-    }
-    clear_floor_loot(g);
-    g->location = region;
-    g->level = level;
-    LevelCache *cache = &active_cache(g)[level - 1];
-    if (cache->valid) {
-        g->map = cache->map;
-        g->enemy_count = cache->enemy_count;
-        g->level_cleared = cache->level_cleared;
-        memcpy(g->enemies, cache->enemies, sizeof(cache->enemies));
-        game_refresh_quest_encounters(g);
-    } else {
-        g->level_cleared = 0;
-        generate_active_level(g);
-        game_refresh_quest_encounters(g);
-    }
-    int *max_level = active_max_level(g);
-    if (*max_level < level) {
-        *max_level = level;
-    }
-    g->dialogue_active = 0;
-    for (int y = 0; y < MAP_H; y++) {
-        for (int x = 0; x < MAP_W; x++) {
-            TileType tile = quest_tile(g, x, y);
-            if (tile == TILE_PORTAL && g->portal_active && g->portal_location == region && g->portal_level == level && g->portal_x == x && g->portal_y == y) {
-                tile = g->portal_origin_tile;
-            }
-            if (tile != shortcut) {
-                continue;
-            }
-            // A surviving enemy may have moved onto the shortcut while away.
-            for (int radius = 0; radius < MAP_W + MAP_H; radius++) {
-                for (int dy = -radius; dy <= radius; dy++) {
-                    int dx = radius - abs(dy);
-                    for (int side = 0; side < (dx ? 2 : 1); side++) {
-                        int nx = x + (side ? -dx : dx);
-                        int ny = y + dy;
-                        if (nx >= 0 && nx < MAP_W && ny >= 0 && ny < MAP_H && portal_landing_open(g, nx, ny)) {
-                            g->player.x = nx;
-                            g->player.y = ny;
-                            push_message(g, "You return to the boss chamber beside its shortcut.");
-                            return;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    g->player.x = g->map.stairs_up_x;
-    g->player.y = g->map.stairs_up_y;
+    (void)g;
 }
 
 void game_request_shortcut(GameState *g) {
-    if (g->location != LOCATION_SWAMP) {
-        return;
-    }
-    const char *town = g->swamp_entry_town == LOCATION_TOWN3 ? "Stillbury" : "Rosemoor";
-    int loot = 0;
-    for (int i = 0; i < g->floor_item_count; i++) {
-        loot |= g->floor_items[i].active;
-    }
-    g->dialogue_active = 1;
-    g->dialogue_x = g->player.x;
-    g->dialogue_y = g->player.y;
-    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Take shortcut?");
-    snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "Take the shortcut path toward %s? Follow its signs to walk the rest of the way to town.%s", town,
-        loot ? " Items left on this floor will be lost. Stay to collect your loot before leaving." : "");
+    (void)g;
 }
 
 int game_shortcut_prompt_active(const GameState *g) {
-    if (g->castle_prompt) {
-        return 1;
-    }
-    return g->dialogue_active &&
-        (strcmp(g->dialogue_speaker, "Shortcut found") == 0 || strcmp(g->dialogue_speaker, "Take shortcut?") == 0) &&
-        g->location == LOCATION_SWAMP;
+    return g->castle_prompt != 0;
 }
 
 int game_handle_shortcut_prompt_key(GameState *g, int key, int repeat) {
-    if (castle_prompt_key(g, key, repeat)) {
-        return 1;
-    }
-    if (!game_shortcut_prompt_active(g)) {
-        return 0;
-    }
-    int travel = strcmp(g->dialogue_speaker, "Take shortcut?") == 0;
-    if (!repeat && travel && key == SDL_SCANCODE_ESCAPE) {
-        g->dialogue_active = 0;
-    } else if (!repeat && (key == SDL_SCANCODE_RETURN || key == SDL_SCANCODE_KP_ENTER)) {
-        g->dialogue_active = 0;
-        if (travel) {
-            enter_boss_shortcut(g);
-        }
-    }
-    return 1;
-}
-
-static int shortcut_barrier(const Map *map, int x, int y, TileType wall) {
-    int width = wall == TILE_SWAMP_WALL ? SWAMP_MAP_W : MAP_W;
-    int height = wall == TILE_SWAMP_WALL ? SWAMP_MAP_H : MAP_H;
-    if (x < 1 || x >= width - 1 || y < 1 || y >= height - 1) {
-        return 0;
-    }
-    TileType tile = map->tiles[y][x];
-    return tile == wall || (wall == TILE_SWAMP_WALL && tile == TILE_SWAMP_WATER);
-}
-
-static void reveal_boss_shortcut(GameState *g, Map *map, Enemy *enemies, int count, Location region, EnemyType boss, TileType shortcut, TileType floor) {
-    if (!(g->defeated_bosses & (1 << region)) || map->room_count == 0) {
-        return;
-    }
-    int x;
-    int y;
-    map_room_center(&map->rooms[map->room_count - 1], &x, &y);
-    for (int i = 0; i < count; i++) {
-        if (enemies[i].type == boss && !enemies[i].active && enemies[i].x >= 0 && enemies[i].x < MAP_W && enemies[i].y >= 0 && enemies[i].y < MAP_H) {
-            x = enemies[i].x;
-            y = enemies[i].y;
-            break;
-        }
-    }
-    int active = map == &g->map;
-    int items = active ? g->floor_item_count : 0;
-    int boss_level = region == LOCATION_FOREST ? FOREST_BOSS_LEVEL :
-        (region == LOCATION_SWAMP ? SWAMP_BOSS_LEVEL : MOUNTAIN_BOSS_LEVEL);
-    int portal = g->portal_active && g->portal_location == region && g->portal_level == boss_level;
-    TileType wall = region == LOCATION_FOREST ? TILE_FOREST_WALL :
-        (region == LOCATION_SWAMP ? TILE_SWAMP_WALL : TILE_MOUNTAIN_WALL);
-    int sx = -1;
-    int sy = -1;
-    // Keep an established terrain exit, including one beneath loot or a portal.
-    for (int row = 1; row < MAP_H - 1 && sx < 0; row++) {
-        for (int column = 1; column < MAP_W - 1; column++) {
-            int marked = map->tiles[row][column] == shortcut ||
-                (portal && column == g->portal_x && row == g->portal_y && g->portal_origin_tile == shortcut);
-            if (map->tiles[row][column] == TILE_ITEM) {
-                for (int i = 0; i < items; i++) {
-                    FloorItem *item = &g->floor_items[i];
-                    marked |= item->active && item->x == column && item->y == row && item->underlying_tile == shortcut;
-                }
-            }
-            if (!marked) {
-                continue;
-            }
-            int recessed = row + 3 < MAP_H && map->tiles[row - 1][column] == wall;
-            for (int step = 0; step < 3 && recessed; step++) {
-                recessed = map_is_walkable(map, column, row + step) &&
-                    map->tiles[row + step][column - 1] == wall && map->tiles[row + step][column + 1] == wall;
-            }
-            if (recessed && map_is_walkable(map, column, row + 3)) {
-                sx = column;
-                sy = row;
-                break;
-            }
-        }
-    }
-    if (sx < 0) {
-        unsigned char seen[MAP_H][MAP_W] = {{0}};
-        int queue[MAP_W * MAP_H];
-        int head = 0;
-        int tail = 0;
-        queue[tail++] = y * MAP_W + x;
-        seen[y][x] = 1;
-        static const int offsets[4][2] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
-        while (head < tail && sx < 0) {
-            int tile = queue[head++];
-            int px = tile % MAP_W;
-            int py = tile / MAP_W;
-            for (int direction = 0; direction < 4; direction++) {
-                int dx = offsets[direction][0];
-                int dy = offsets[direction][1];
-                // The exit art faces south into a passage running north.
-                int clear = direction == 0;
-                for (int step = 1; step <= 3 && clear; step++) {
-                    int nx = px + dx * step;
-                    int ny = py + dy * step;
-                    clear = shortcut_barrier(map, nx, ny, wall) &&
-                        shortcut_barrier(map, nx + dy, ny - dx, wall) &&
-                        shortcut_barrier(map, nx - dy, ny + dx, wall);
-                }
-                if (clear && shortcut_barrier(map, px + dx * 4, py + dy * 4, wall)) {
-                    // Recess the exit three tiles into the surrounding terrain.
-                    for (int step = 1; step <= 3; step++) {
-                        int nx = px + dx * step;
-                        int ny = py + dy * step;
-                        map->tiles[ny][nx] = floor;
-                        map->tiles[ny - dx][nx + dy] = wall;
-                        map->tiles[ny + dx][nx - dy] = wall;
-                    }
-                    map->tiles[py + dy * 4][px + dx * 4] = wall;
-                    sx = px + dx * 3;
-                    sy = py + dy * 3;
-                    break;
-                }
-                int nx = px + dx;
-                int ny = py + dy;
-                if (nx >= 0 && nx < MAP_W && ny >= 0 && ny < MAP_H && !seen[ny][nx] && map_is_walkable(map, nx, ny)) {
-                    seen[ny][nx] = 1;
-                    queue[tail++] = ny * MAP_W + nx;
-                }
-            }
-        }
-    }
-    if (sx < 0) {
-        return;
-    }
-    // Retire former floor markers without disturbing loot or return portals.
-    for (int row = 0; row < MAP_H; row++) {
-        for (int column = 0; column < MAP_W; column++) {
-            if (map->tiles[row][column] == shortcut && (column != sx || row != sy)) {
-                map->tiles[row][column] = floor;
-            }
-        }
-    }
-    for (int i = 0; i < items; i++) {
-        FloorItem *item = &g->floor_items[i];
-        if (item->active && item->underlying_tile == shortcut && (item->x != sx || item->y != sy)) {
-            item->underlying_tile = floor;
-        }
-    }
-    if (portal && g->portal_origin_tile == shortcut && (g->portal_x != sx || g->portal_y != sy)) {
-        g->portal_origin_tile = floor;
-    }
-    int covered = portal && g->portal_x == sx && g->portal_y == sy && map->tiles[sy][sx] == TILE_PORTAL;
-    if (covered) {
-        g->portal_origin_tile = shortcut;
-    }
-    for (int i = 0; i < items; i++) {
-        FloorItem *item = &g->floor_items[i];
-        if (item->active && item->x == sx && item->y == sy) {
-            item->underlying_tile = shortcut;
-            covered = 1;
-        }
-    }
-    if (!covered) {
-        map->tiles[sy][sx] = shortcut;
-    }
-    map_mark_explored(map, sx, sy);
+    return castle_prompt_key(g, key, repeat);
 }
 
 // Keep the legacy API and tile ID for saves; forest victory opens its normal exit.
@@ -7187,9 +6944,7 @@ void game_reveal_forest_shortcut(GameState *g) {
 }
 
 void game_reveal_swamp_shortcut(GameState *g) {
-    if (g->location == LOCATION_SWAMP && g->level == SWAMP_BOSS_LEVEL) {
-        reveal_boss_shortcut(g, &g->map, g->enemies, g->enemy_count, LOCATION_SWAMP, ENEMY_SWAMP_DEMON, TILE_SWAMP_SHORTCUT, TILE_SWAMP_FLOOR);
-    }
+    (void)g;
 }
 
 // Retained for callers loading legacy maps; mountains no longer have a shortcut.
@@ -7198,10 +6953,7 @@ void game_reveal_mountain_shortcut(GameState *g) {
 }
 
 void game_migrate_boss_shortcuts(GameState *g) {
-    LevelCache *cache = &g->swamp_cache[SWAMP_BOSS_LEVEL - 1];
-    if (cache->valid) {
-        reveal_boss_shortcut(g, &cache->map, cache->enemies, cache->enemy_count, LOCATION_SWAMP, ENEMY_SWAMP_DEMON, TILE_SWAMP_SHORTCUT, TILE_SWAMP_FLOOR);
-    }
+    (void)g;
 }
 
 void game_update_level_progress(GameState *g) {

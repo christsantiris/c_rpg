@@ -878,7 +878,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 172);
+    cJSON_AddNumberToObject(root, "save_version", 173);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -1250,7 +1250,7 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddItemToObject(root, "coast_cache", coast_cache);
 
     cJSON *swamp_cache = cJSON_CreateArray();
-    for (int i = 0; i < SWAMP_DEPTH; i++) {
+    for (int i = 0; i < SWAMP_CACHE_DEPTH; i++) {
         cJSON *entry = cJSON_CreateObject();
         cJSON_AddNumberToObject(entry, "valid", g->swamp_cache[i].valid);
         cJSON_AddNumberToObject(entry, "level_cleared",
@@ -2204,13 +2204,91 @@ static int migrate_forest_adventure(GameState *g) {
     return 1;
 }
 
+static int swamp_rescue_pending(const GameState *g, int level) {
+    return level == SWAMP_RESCUE_LEVEL && g->innkeeper_quest_state == 1;
+}
+
+static void retire_swamp_markers(Map *map, int keep_mira) {
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            TileType tile = map->tiles[y][x];
+            if (tile == TILE_SWAMP_SHORTCUT || (!keep_mira && tile == TILE_SWAMP_DAUGHTER)) {
+                map->tiles[y][x] = TILE_SWAMP_FLOOR;
+            }
+        }
+    }
+}
+
+static int migrate_swamp_adventure(GameState *g) {
+    int levels[7] = {1, 2, 3, 5, 4, 2, 1};
+    int active = g->location == LOCATION_SWAMP ? g->level - 1 : -1;
+    int portal = g->portal_active && g->portal_location == LOCATION_SWAMP ? g->portal_level - 1 : -1;
+    if (active >= 0 && active < 7 && portal >= 0 && portal < 7 && active != portal && levels[active] == levels[portal]) {
+        levels[portal] = levels[portal] == 1 ? 2 : 1;
+    }
+    LevelCache *old = malloc(SWAMP_CACHE_DEPTH * sizeof(*old));
+    if (!old) {
+        return 0;
+    }
+    memcpy(old, g->swamp_cache, SWAMP_CACHE_DEPTH * sizeof(*old));
+    memset(g->swamp_cache, 0, sizeof(g->swamp_cache));
+    for (int i = 0; i < 7; i++) {
+        if (old[i].valid) {
+            g->swamp_cache[levels[i] - 1] = old[i];
+        }
+    }
+    // Linked and occupied snapshots win when the old outer trails merge.
+    if (portal >= 0 && portal < 7 && old[portal].valid) {
+        g->swamp_cache[levels[portal] - 1] = old[portal];
+    }
+    if (active >= 0 && active < 7) {
+        g->level = levels[active];
+        if (old[active].valid) {
+            g->swamp_cache[g->level - 1] = old[active];
+        }
+        int keep = swamp_rescue_pending(g, g->level);
+        retire_swamp_markers(&g->map, keep);
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->underlying_tile == TILE_SWAMP_SHORTCUT || (!keep && item->underlying_tile == TILE_SWAMP_DAUGHTER)) {
+                item->underlying_tile = TILE_SWAMP_FLOOR;
+            }
+        }
+        if (strcmp(g->dialogue_speaker, "Shortcut found") == 0 || strcmp(g->dialogue_speaker, "Take shortcut?") == 0) {
+            g->dialogue_active = 0;
+        }
+    }
+    if (g->portal_location == LOCATION_SWAMP && g->portal_level >= 1 && g->portal_level <= 7) {
+        g->portal_level = levels[g->portal_level - 1];
+        if (g->portal_origin_tile == TILE_SWAMP_SHORTCUT ||
+            (!swamp_rescue_pending(g, g->portal_level) && g->portal_origin_tile == TILE_SWAMP_DAUGHTER)) {
+            g->portal_origin_tile = TILE_SWAMP_FLOOR;
+        }
+    }
+    for (int i = 0; i < SWAMP_DEPTH; i++) {
+        if (g->swamp_cache[i].valid) {
+            retire_swamp_markers(&g->swamp_cache[i].map, swamp_rescue_pending(g, i + 1));
+        }
+    }
+    free(old);
+    int reached = 1;
+    for (int i = 0; i < 7 && i < g->max_swamp_level_reached; i++) {
+        if (levels[i] > reached) {
+            reached = levels[i];
+        }
+    }
+    g->max_swamp_level_reached = reached;
+    approach_refresh_swamp(g);
+    return 1;
+}
+
 static int migrate_region_routes(GameState *g, Location region) {
     static const int forest_levels[8] = {1, 2, 3, 7, 5, 6, 7, 4};
     static const int swamp_levels[5] = {1, 2, 5, 3, 4};
     int forest = region == LOCATION_FOREST;
     int mountain = region == LOCATION_MOUNTAINS;
     int old_depth = forest || mountain ? 8 : 5;
-    int depth = forest || mountain ? 7 : SWAMP_DEPTH;
+    int depth = 7; // Historical route migration runs before five-level migrations.
     const int *levels = forest || mountain ? forest_levels : swamp_levels;
     LevelCache *cache = forest ? g->forest_cache : (mountain ? g->mountain_cache : g->swamp_cache);
     int *max_level = forest ? &g->max_forest_level_reached :
@@ -3214,7 +3292,7 @@ int load_game(GameState *g, int slot) {
     }
 
     cJSON *swamp_cache = cJSON_GetObjectItem(root, "swamp_cache");
-    for (int i = 0; i < SWAMP_DEPTH; i++) {
+    for (int i = 0; i < SWAMP_CACHE_DEPTH; i++) {
         g->swamp_cache[i].valid = 0;
         g->swamp_cache[i].level_cleared = 0;
         if (!swamp_cache) {
@@ -4878,6 +4956,10 @@ int load_game(GameState *g, int slot) {
         return 0;
     }
     if (save_version < 172 && !migrate_forest_adventure(g)) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    if (save_version < 173 && !migrate_swamp_adventure(g)) {
         cJSON_Delete(root);
         return 0;
     }
