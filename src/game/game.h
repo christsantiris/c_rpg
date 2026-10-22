@@ -40,9 +40,9 @@
 #define DAIN_FRAGMENT_BOMBER 2
 #define DAIN_FRAGMENT_SHAMAN 4
 
-#define ALDER_WARDEN_STAGE_7 1
-#define ALDER_WARDEN_STAGE_6 2
-#define ALDER_WARDEN_STAGE_5 4
+#define ALDER_WARDEN_STAGE_2 1
+#define ALDER_WARDEN_STAGE_3 2
+#define ALDER_WARDEN_STAGE_4 4
 
 #define MARA_BEACON_STAGE_2 1
 #define MARA_BEACON_STAGE_3 2
@@ -155,7 +155,9 @@ typedef enum {
     LOCATION_SPICE_SHOP,
     LOCATION_APPROACH,
     LOCATION_HEALER,
-    LOCATION_WITCH
+    LOCATION_WITCH,
+    LOCATION_DAWNMERE,
+    LOCATION_TOWN_ROAD
 } Location;
 
 typedef struct {
@@ -168,7 +170,8 @@ typedef struct {
     LevelCache forest_cache[MAX_REGION_DEPTH];
     LevelCache mountain_cache[MAX_REGION_DEPTH];
     LevelCache coast_cache[MAX_REGION_DEPTH];
-    LevelCache swamp_cache[SWAMP_DEPTH];
+    // Retain the old seven-map capacity for save migration.
+    LevelCache swamp_cache[SWAMP_CACHE_DEPTH];
     LevelCache dragonspine_cache[DRAGONSPINE_DEPTH];
     LevelCache frostfell_cache[FROSTFELL_DEPTH];
     LevelCache desert_cache[DESERT_DEPTH];
@@ -198,8 +201,11 @@ typedef struct {
     MessageKind message_kinds[MAX_MESSAGES];
     int        level_cleared;
     Location   location;
+    Location road_town;
     int approach_route; // Index into the append-only town approach routes, or -1.
     int max_level_reached;
+    Location dungeon_entry_town;
+    Location dungeon_portal_town;
     int max_forest_level_reached;
     Location forest_entry_town;
     Location forest_portal_town;
@@ -225,6 +231,7 @@ typedef struct {
     int       equipped_off_hand;
     int       equipped_armor;
     int       gold;
+    Location labyrinth_entry_town;
     int       rook_quest_state;
     int       innkeeper_quest_state;
     int       rook_labyrinth_switches;
@@ -351,6 +358,7 @@ void game_enter_dragonspine(GameState *g);
 void game_enter_tavern(GameState *g);
 void game_leave_tavern(GameState *g);
 void game_enter_town2(GameState *g);
+void game_enter_town_gate(GameState *g, Location town, int x, int y);
 void game_enter_forest_road(GameState *g);
 void game_leave_forest_road(GameState *g, Location destination);
 int game_is_king_road(const GameState *g);

@@ -16,9 +16,7 @@ static void swamp_step(GameState *g, int reverse) {
     g->player.x = x + (reverse ? 1 : -1);
     g->player.y = y;
     action_resolve_player(g, (Action){ACTION_MOVE, x, y});
-    if (g->location == LOCATION_APPROACH) {
-        walk_return_approach(g);
-    }
+
 }
 
 static int swamp_boss(GameState *g) {
@@ -58,169 +56,102 @@ static int swamp_mira(GameState *g, int rescue) {
     return x >= 0;
 }
 
-static void test_swamp_crossing(int reverse, int shortcut) {
-    swamp.player.player_class = CLASS_WARRIOR;
+static void test_swamp_crossing(int rosemoor, int home) {
     game_init(&swamp);
-    srand(1037 + reverse + shortcut * 2);
+    srand(1037 + rosemoor + home * 2);
     game_enter_town2(&swamp);
     game_enter_inn(&swamp);
     game_talk_to_innkeeper(&swamp);
     game_handle_quest_offer_key(&swamp, SDL_SCANCODE_Y, 0);
-    ASSERT("Bram names the revised rescue level", strstr(swamp.dialogue_text, "level 3") != NULL);
+    ASSERT("Bram sends the player to Mira on level three", strstr(swamp.dialogue_text, "level 3") != NULL);
     game_leave_inn(&swamp);
-    if (reverse) {
+    if (rosemoor) {
         game_enter_town3(&swamp);
     }
-    int gate_y = reverse ? TOWN_H - 1 : 0;
-    int road_x = reverse ? ROSEMOOR_SWAMP_ROAD_X : TOWN3_ROAD_X;
-    ASSERT("swamp shortcut starts closed at either town", swamp.map.tiles[gate_y][road_x] == TILE_WALL);
-    action_resolve_player(&swamp, (Action){ACTION_MOVE, 20, gate_y});
+    Location origin = swamp.location;
+    action_resolve_player(&swamp, (Action){ACTION_MOVE, 20, rosemoor ? TOWN_H - 1 : 0});
+    int x;
+    int y;
+    ASSERT("the swamp's far town is locked before the Demon falls", !approach_swamp_town_exit(&swamp, &x, &y));
+    ASSERT("the swamp has no shortcut or boss branch", !approach_shortcut_exit(&swamp, &x, &y) && !approach_boss_exit(&swamp, &x, &y));
     walk_town_approach(&swamp);
-    ASSERT("either ordinary gate starts at its own border", swamp.location == LOCATION_SWAMP && swamp.level == (reverse ? SWAMP_DEPTH : 1) && swamp.swamp_entry_town == (reverse ? LOCATION_TOWN3 : LOCATION_TOWN2));
-    swamp_step(&swamp, !reverse);
-    ASSERT("both border levels permit immediate retreat", swamp.location == (reverse ? LOCATION_TOWN3 : LOCATION_TOWN2) && swamp.player.x == 20 && swamp.player.y == (reverse ? TOWN_H - 2 : 1));
+    ASSERT("either town entrance starts swamp level one", swamp.location == LOCATION_SWAMP && swamp.level == 1 && swamp.swamp_entry_town == origin);
+    swamp_step(&swamp, 1);
+    walk_return_approach(&swamp);
+    ASSERT("retreat from level one walks back to the original town", swamp.location == origin);
     game_enter_swamp(&swamp);
-    int guard = 0;
-    while (swamp.level != SWAMP_BOSS_LEVEL && guard++ < SWAMP_DEPTH) {
-        ASSERT("approaches contain no swamp boss", swamp_boss(&swamp) < 0);
-        ASSERT("Mira appears only at level 3 on the Stillbury side", swamp_mira(&swamp, 1) == (swamp.level == SWAMP_RESCUE_LEVEL));
-        int before = swamp.level;
+    for (int level = 1; level < SWAMP_DEPTH; level++) {
+        ASSERT("the swamp progresses forward with no early boss", swamp.level == level && swamp_boss(&swamp) < 0);
+        ASSERT("Mira and her captor are on swamp three", swamp_mira(&swamp, 1) == (level == SWAMP_RESCUE_LEVEL));
+        swamp.dialogue_active = 0;
         int score = swamp.score;
-        swamp_step(&swamp, reverse);
-        ASSERT("both directions generate and enter unvisited swamp levels", swamp.location == LOCATION_SWAMP && swamp.level == before + (reverse ? -1 : 1));
-        ASSERT("both directions reward first visits equally", swamp.score == score + map_swamp_difficulty(swamp.level) * 100);
+        swamp_step(&swamp, 0);
+        ASSERT("first visits reward increasing swamp difficulty", swamp.level == level + 1 && swamp.score == score + map_swamp_difficulty(swamp.level) * 100);
     }
     int boss = swamp_boss(&swamp);
-    ASSERT("both approaches reach the central demon", swamp.level == SWAMP_BOSS_LEVEL && boss >= 0);
-    ASSERT("Stillbury rescue precedes the demon and Rosemoor rescue follows it", swamp.innkeeper_quest_state == (reverse ? 1 : 2) && !swamp_mira(&swamp, 0));
+    ASSERT("Mira is rescued before the fifth-level Demon", swamp.innkeeper_quest_state == 2 && swamp.level == 5 && boss >= 0);
     if (boss < 0) {
         return;
     }
-    swamp_step(&swamp, reverse);
-    ASSERT("living demon blocks crossing the central level", swamp.level == SWAMP_BOSS_LEVEL);
-    swamp_step(&swamp, !reverse);
-    ASSERT("living demon permits retreat toward the entry town", swamp.level == SWAMP_BOSS_LEVEL + (reverse ? 1 : -1));
-    int score = swamp.score;
-    swamp_step(&swamp, reverse);
-    ASSERT("revisiting levels cannot farm travel score", swamp.score == score);
+    swamp_step(&swamp, 0);
+    ASSERT("the living Demon seals the final exit", swamp.location == LOCATION_SWAMP && swamp.level == 5);
+    swamp_step(&swamp, 1);
+    ASSERT("the living Demon permits backtracking", swamp.location == LOCATION_SWAMP && swamp.level == 4);
+    swamp_step(&swamp, 0);
     boss = swamp_boss(&swamp);
-    ASSERT("returning restores the same living demon", boss >= 0);
     if (boss < 0) {
         return;
     }
     Enemy *demon = &swamp.enemies[boss];
     demon->hp = 1;
+    swamp.player.attack = 10000;
     swamp.player.x = demon->x - 1;
     swamp.player.y = demon->y;
     swamp.map.tiles[swamp.player.y][swamp.player.x] = TILE_SWAMP_FLOOR;
-    for (int tries = 0; demon->active && tries < 20; tries++) {
+    for (int tries = 0; demon->active && tries < 30; tries++) {
         action_resolve_player(&swamp, (Action){ACTION_MOVE, demon->x, demon->y});
     }
-    ASSERT("victory unlocks the swamp shortcut", !demon->active && (swamp.defeated_bosses & (1 << LOCATION_SWAMP)));
-    ASSERT("victory prompts discovery of the opposite-town shortcut", swamp.dialogue_active && strstr(swamp.dialogue_text, "shortcut through the swamp") && strstr(swamp.dialogue_text, reverse ? "Stillbury" : "Rosemoor"));
-    int x = -1;
-    int y = -1;
+    ASSERT("combat unlocks the road without a shortcut prompt", !demon->active && (swamp.defeated_bosses & (1 << LOCATION_SWAMP)) && !game_shortcut_prompt_active(&swamp));
+    int markers = 0;
     for (int row = 0; row < MAP_H; row++) {
-        for (int column = 0; column < MAP_W; column++) {
-            if (swamp.map.tiles[row][column] == TILE_SWAMP_SHORTCUT) {
-                x = column;
-                y = row;
-            }
+        for (int col = 0; col < MAP_W; col++) {
+            markers += swamp.map.tiles[row][col] == TILE_SWAMP_SHORTCUT;
         }
     }
-    ASSERT("shortcut opens at the end of a passage into the surrounding terrain", x >= 0 && shortcut_exit_is_recessed(&swamp.map, x, y, TILE_SWAMP_WALL));
-    if (x < 0) {
-        return;
-    }
-    swamp.dialogue_active = 0;
-    if (shortcut) {
-        ASSERT("central shortcut saves and loads", save_game(&swamp, 99122) && load_game(&restored, 99122));
-        ASSERT("loaded swamp preserves entry town, quest, and shortcut", restored.swamp_entry_town == swamp.swamp_entry_town && restored.innkeeper_quest_state == swamp.innkeeper_quest_state && restored.map.tiles[y][x] == TILE_SWAMP_SHORTCUT);
-        action_resolve_player(&restored, (Action){ACTION_MOVE, x, y});
-        ASSERT("swamp shortcut waits for confirmation", restored.location == LOCATION_SWAMP && game_shortcut_prompt_active(&restored));
-        game_handle_shortcut_prompt_key(&restored, SDL_SCANCODE_RETURN, 0);
-        memcpy(&swamp, &restored, sizeof(swamp));
-        remove("saves/savegame_99122.json");
-        ASSERT("boss shortcut returns to the continuous crossroads", swamp.location == LOCATION_APPROACH);
-        walk_shortcut_approach(&swamp);
-    } else {
-        guard = 0;
-        while (swamp.location == LOCATION_SWAMP && guard++ < SWAMP_DEPTH) {
-            if (swamp.innkeeper_quest_state == 1 && swamp.level == SWAMP_RESCUE_LEVEL) {
-                ASSERT("reverse full crossing reaches Mira after the boss", swamp_mira(&swamp, 1));
-            }
-            swamp_step(&swamp, reverse);
-        }
-        ASSERT("full crossings rescue Mira from either direction", swamp.innkeeper_quest_state == 2);
-    }
-    if (swamp.location == LOCATION_APPROACH) {
+    ASSERT("victory creates no swamp shortcut", markers == 0);
+    swamp_step(&swamp, 0);
+    ASSERT("the final exit returns onto the main road", swamp.location == LOCATION_APPROACH && swamp.player.x == APPROACH_W / 2 && swamp.player.y == APPROACH_H / 2 && swamp.enemy_count == 0);
+    ASSERT("road access and Mira's rescue survive saving", save_game(&swamp, 99122) && load_game(&restored, 99122) && approach_swamp_town_exit(&restored, &x, &y) && restored.innkeeper_quest_state == 2);
+    swamp = restored;
+    if (home) {
         walk_return_approach(&swamp);
+    } else {
+        walk_swamp_road(&swamp);
     }
-    ASSERT("both exit choices reach the opposite town", swamp.location == (reverse ? LOCATION_TOWN2 : LOCATION_TOWN3));
-    gate_y = reverse ? 0 : TOWN_H - 1;
-    road_x = reverse ? TOWN3_ROAD_X : ROSEMOOR_SWAMP_ROAD_X;
-    ASSERT("both routes arrive at the main swamp gate", swamp.player.x == 20 && swamp.player.y == (reverse ? 1 : TOWN_H - 2));
-    ASSERT("town retains only the main swamp gate", swamp.map.tiles[gate_y][20] == TILE_TOWN_EXIT && swamp.map.tiles[gate_y][road_x] == TILE_WALL);
-    ASSERT("shared swamp gate saves and loads", save_game(&swamp, 99122) && load_game(&restored, 99122) && restored.map.tiles[gate_y][20] == TILE_TOWN_EXIT && restored.map.tiles[gate_y][road_x] == TILE_WALL);
+    Location destination = home ? origin : rosemoor ? LOCATION_TOWN2 : LOCATION_TOWN3;
+    ASSERT("the road lets the player walk home or onward", swamp.location == destination);
+    action_resolve_player(&swamp, (Action){ACTION_MOVE, 20, destination == LOCATION_TOWN2 ? 0 : TOWN_H - 1});
+    walk_town_approach(&swamp);
+    ASSERT("reentry always starts at swamp one", swamp.location == LOCATION_SWAMP && swamp.level == 1);
+    swamp_step(&swamp, 0);
+    x = swamp.player.x;
+    y = swamp.player.y;
+    swamp.enemies[0].hp = 7;
+    game_open_town_portal(&swamp);
+    ASSERT("Return to Town remembers the expedition's town", swamp.location == destination && swamp.swamp_portal_town == destination);
+    ASSERT("swamp portal saves and loads", save_game(&swamp, 99122) && load_game(&restored, 99122));
+    game_use_town_portal(&restored);
+    ASSERT("the portal restores level, position and wounded enemies", restored.location == LOCATION_SWAMP && restored.level == 2 && restored.player.x == x && restored.player.y == y && restored.enemies[0].hp == 7 && restored.swamp_entry_town == destination);
     remove("saves/savegame_99122.json");
-    action_resolve_player(&swamp, (Action){ACTION_MOVE, 20, gate_y});
-    walk_shortcut_approach(&swamp);
-    ASSERT("the left arm walks directly to the other town", swamp.location == (reverse ? LOCATION_TOWN3 : LOCATION_TOWN2));
-    ASSERT("original town also retains only its main gate", swamp.map.tiles[reverse ? TOWN_H - 1 : 0][20] == TILE_TOWN_EXIT && swamp.map.tiles[reverse ? TOWN_H - 1 : 0][reverse ? ROSEMOOR_SWAMP_ROAD_X : TOWN3_ROAD_X] == TILE_WALL);
-    game_enter_swamp(&swamp);
-    guard = 0;
-    while (swamp.level != SWAMP_BOSS_LEVEL && guard++ < SWAMP_DEPTH) {
-        swamp_step(&swamp, reverse);
-    }
-    ASSERT("revisiting preserves the defeated demon and shortcut", swamp_boss(&swamp) < 0 && swamp.map.tiles[y][x] == TILE_SWAMP_SHORTCUT);
 }
 
 void test_swamp_travel(void) {
-    printf("Swamp travel from either town tests:\n");
-    ASSERT("seven swamp levels place the boss at the exact midpoint", SWAMP_DEPTH == 7 && SWAMP_BOSS_LEVEL * 2 == SWAMP_DEPTH + 1);
-    ASSERT("swamp difficulty rises toward the center and falls beyond it", map_swamp_difficulty(1) < map_swamp_difficulty(2) && map_swamp_difficulty(2) < map_swamp_difficulty(3) && map_swamp_difficulty(3) < map_swamp_difficulty(4));
-    swamp.player.player_class = CLASS_WARRIOR;
-    game_init(&swamp);
-    swamp.location = LOCATION_SWAMP;
-    for (int level = 1; level <= SWAMP_DEPTH; level++) {
-        ASSERT("both swamp approaches have matching difficulty", map_swamp_difficulty(level) == map_swamp_difficulty(SWAMP_DEPTH + 1 - level));
-        swamp.level = level;
-        map_generate_swamp(&swamp.map, level);
-        enemies_spawn(&swamp);
-        ASSERT("actual swamp rosters thin out toward either town", swamp.enemy_count == 10 + map_swamp_difficulty(level));
-        ASSERT("Demon spawns only in the central level", (swamp_boss(&swamp) >= 0) == (level == SWAMP_BOSS_LEVEL));
-    }
-    ASSERT("swamp travel test slot is unused", !save_exists(99122));
-    for (int reverse = 0; reverse < 2; reverse++) {
-        for (int shortcut = 0; shortcut < 2; shortcut++) {
-            test_swamp_crossing(reverse, shortcut);
+    printf("Forward swamp adventure and town road tests:\n");
+    ASSERT("the swamp ends with its fifth-level Demon", SWAMP_DEPTH == 5 && SWAMP_BOSS_LEVEL == 5);
+    ASSERT("swamp travel slot is unused", !save_exists(99122));
+    for (int rosemoor = 0; rosemoor < 2; rosemoor++) {
+        for (int home = 0; home < 2; home++) {
+            test_swamp_crossing(rosemoor, home);
         }
     }
-    swamp.player.player_class = CLASS_WARRIOR;
-    game_init(&swamp);
-    game_enter_town3(&swamp);
-    game_enter_swamp(&swamp);
-    swamp_step(&swamp, 1);
-    int x = swamp.player.x;
-    int y = swamp.player.y;
-    int hp = --swamp.enemies[0].hp;
-    game_open_town_portal(&swamp);
-    ASSERT("reverse swamp Return to Town anchors to Rosemoor", swamp.location == LOCATION_TOWN3 && swamp.swamp_portal_town == LOCATION_TOWN3 && swamp.map.tiles[TOWN_H - 3][21] == TILE_PORTAL);
-    ASSERT("reverse swamp portal saves and loads", save_game(&swamp, 99122) && load_game(&restored, 99122));
-    action_resolve_player(&restored, (Action){ACTION_MOVE, 21, TOWN_H - 3});
-    ASSERT("portal restores reverse stage, position, health, and entry town", restored.location == LOCATION_SWAMP && restored.level == SWAMP_DEPTH - 1 && restored.player.x == x && restored.player.y == y && restored.enemies[0].hp == hp && restored.swamp_entry_town == LOCATION_TOWN3);
-    remove("saves/savegame_99122.json");
-
-    game_enter_town2(&swamp);
-    game_enter_swamp(&swamp);
-    game_return_to_town(&swamp);
-    ASSERT("opposite-end entry keeps the old portal anchored to Rosemoor", swamp.location == LOCATION_TOWN2 && swamp.swamp_entry_town == LOCATION_TOWN2 && swamp.swamp_portal_town == LOCATION_TOWN3 && swamp.map.tiles[2][21] != TILE_PORTAL);
-    game_enter_swamp(&swamp);
-    game_leave_swamp(&swamp, LOCATION_TOWN3, 0);
-    walk_return_approach(&swamp);
-    ASSERT("original town still exposes its swamp portal", swamp.map.tiles[TOWN_H - 3][21] == TILE_PORTAL);
-    ASSERT("portal anchor survives a changed expedition and save/load", save_game(&swamp, 99122) && load_game(&restored, 99122));
-    action_resolve_player(&restored, (Action){ACTION_MOVE, 21, TOWN_H - 3});
-    ASSERT("old portal restores its original Rosemoor expedition", restored.location == LOCATION_SWAMP && restored.level == SWAMP_DEPTH - 1 && restored.swamp_entry_town == LOCATION_TOWN3 && restored.player.x == x && restored.player.y == y);
-    remove("saves/savegame_99122.json");
 }

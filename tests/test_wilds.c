@@ -421,7 +421,7 @@ static void test_saves(void) {
         memcpy(cache->enemies, game.enemies, sizeof(cache->enemies));
         maps[0] = game.map;
         ok = save_game(&game, slot) && old_version(slot) && load_game(&loaded, slot);
-        const LevelCache *restored = dragon ? &loaded.dragonspine_cache[4] : &loaded.swamp_cache[3];
+        const LevelCache *restored = dragon ? &loaded.dragonspine_cache[4] : &loaded.swamp_cache[4];
         const Room *last = &maps[0].rooms[8];
         int preserved = ok;
         int scenery = 0;

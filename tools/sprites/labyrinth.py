@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Stillbury labyrinth entrance sprite sheet.
+"""Forest-road labyrinth entrance sprite sheet.
 
 Two 3 x 3 tile frames (72 x 72) side by side: sealed, then open. The game
 draws a frame from one tile left of and two tiles above the entrance tile
-TOWN_LABYRINTH_X/Y. Run `make sprites` to rewrite
+APPROACH_LABYRINTH_X/Y. Run `make sprites` to rewrite
 assets/images/labyrinth-entrance.bmp.
 """
 import random

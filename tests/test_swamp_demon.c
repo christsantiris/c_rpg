@@ -182,7 +182,7 @@ static int make_legacy_save(void) {
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 127);
     cJSON_DeleteItemFromObject(root, "swamp_demon_reward_state");
     cJSON *arrays[2] = {cJSON_GetObjectItem(root, "enemies"),
-        cJSON_GetObjectItem(cJSON_GetArrayItem(cJSON_GetObjectItem(root, "swamp_cache"), SWAMP_BOSS_LEVEL - 1), "enemies")};
+        cJSON_GetObjectItem(cJSON_GetArrayItem(cJSON_GetObjectItem(root, "swamp_cache"), 3), "enemies")};
     for (int group = 0; group < 2; group++) {
         for (int i = 0; i < cJSON_GetArraySize(arrays[group]); i++) {
             cJSON *enemy = cJSON_GetArrayItem(arrays[group], i);
@@ -471,7 +471,9 @@ static void test_persistence(void) {
     game.gold = 321;
     game.innkeeper_quest_state = 2;
     map_mark_explored(&game.map, 22, 12);
-    cache = &game.swamp_cache[SWAMP_BOSS_LEVEL - 1];
+    game.level = 4;
+    game.max_swamp_level_reached = 4;
+    cache = &game.swamp_cache[3];
     cache->valid = 1;
     cache->map = game.map;
     cache->enemy_count = 1;
@@ -479,7 +481,7 @@ static void test_persistence(void) {
     cache->enemies[0].hp = 51;
     game.portal_active = 1;
     game.portal_location = LOCATION_SWAMP;
-    game.portal_level = SWAMP_BOSS_LEVEL;
+    game.portal_level = 4;
     game.portal_x = 25;
     game.portal_y = 18;
     game.portal_origin_tile = TILE_SWAMP_FLOOR;

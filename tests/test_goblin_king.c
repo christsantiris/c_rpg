@@ -407,7 +407,7 @@ static void test_kegs(void) {
     for (int i = 0; i < game.floor_item_count; i++) {
         shields += game.floor_items[i].active && strcmp(game.floor_items[i].item.name, "Goblin King's Shield") == 0;
     }
-    ASSERT("keg victory records defeat, original shield and shortcut discovery exactly once", !e->active && shields == 1 && game.goblin_king_reward_state == 1 && (game.defeated_bosses & (1 << LOCATION_MOUNTAINS)) && game_shortcut_prompt_active(&game));
+    ASSERT("keg victory records defeat, original shield and shortcut discovery exactly once", !e->active && shields == 1 && game.goblin_king_reward_state == 1 && (game.defeated_bosses & (1 << LOCATION_MOUNTAINS)) && !game_shortcut_prompt_active(&game));
     int victory_xp = game.player.experience;
     action_resolve_enemies(&game);
     ASSERT("spent kegs cannot duplicate boss XP or reward", shields == 1 && game.player.experience == victory_xp && game.goblin_king_reward_state == 1);
@@ -426,14 +426,14 @@ static void test_saves_and_layouts(void) {
     e->attack_target_y = 16;
     e->boss_aux_x = 30;
     e->boss_aux_y = 19;
-    game.mountain_cache[3].valid = 1;
-    game.mountain_cache[3].map = game.map;
-    game.mountain_cache[3].enemy_count = 1;
-    game.mountain_cache[3].enemies[0] = *e;
+    game.mountain_cache[MOUNTAIN_BOSS_LEVEL - 1].valid = 1;
+    game.mountain_cache[MOUNTAIN_BOSS_LEVEL - 1].map = game.map;
+    game.mountain_cache[MOUNTAIN_BOSS_LEVEL - 1].enemy_count = 1;
+    game.mountain_cache[MOUNTAIN_BOSS_LEVEL - 1].enemies[0] = *e;
     game.goblin_king_reward_state = 1;
     int ok = save_game(&game, 99179) && load_game(&loaded, 99179);
     ASSERT("save preserves active phase, frozen bomb countdown and both fixed pockets", ok && loaded.enemies[0].hp == 90 && loaded.enemies[0].attack_phase == 1 && loaded.enemies[0].move_timer == 2 && loaded.enemies[0].frozen_turns == 2 && loaded.enemies[0].attack_target_x == 23 && loaded.enemies[0].boss_aux_x == 30 && loaded.enemies[0].boss_aux_y == 19);
-    ASSERT("save preserves active/cached keg fuses, spent state and reward claim state", ok && loaded.map.tiles[16][27] == TILE_GOBLIN_KEG_FUSE_1 && loaded.mountain_cache[3].map.tiles[16][29] == TILE_GOBLIN_KEG_SPENT && loaded.mountain_cache[3].enemies[0].boss_aux_y == 19 && loaded.goblin_king_reward_state == 1);
+    ASSERT("save preserves active/cached keg fuses, spent state and reward claim state", ok && loaded.map.tiles[16][27] == TILE_GOBLIN_KEG_FUSE_1 && loaded.mountain_cache[MOUNTAIN_BOSS_LEVEL - 1].map.tiles[16][29] == TILE_GOBLIN_KEG_SPENT && loaded.mountain_cache[MOUNTAIN_BOSS_LEVEL - 1].enemies[0].boss_aux_y == 19 && loaded.goblin_king_reward_state == 1);
     game.goblin_king_reward_state = 2;
     e->move_timer = -2;
     ok = save_game(&game, 99179) && load_game(&loaded, 99179);
@@ -449,6 +449,7 @@ static void test_saves_and_layouts(void) {
     ASSERT("portal revisit restores fixed bomb pockets and never resets spent kegs", game.location == LOCATION_MOUNTAINS && game.enemies[0].boss_aux_x == 30 && game.enemies[0].move_timer == 2 && game.map.tiles[16][29] == TILE_GOBLIN_KEG_SPENT && goblin_king_keg_fuse(&game, 27, 16) == 1);
 
     e = setup();
+    game.level = 4;
     e->hp = 79;
     e->move_timer = 37;
     spend_kegs();
@@ -470,18 +471,18 @@ static void test_saves_and_layouts(void) {
     game.mountain_cache[3].enemies[0].hp = 51;
     game.portal_active = 1;
     game.portal_location = LOCATION_MOUNTAINS;
-    game.portal_level = MOUNTAIN_BOSS_LEVEL;
+    game.portal_level = 4;
     game.portal_x = 27;
     game.portal_y = 16;
     game.portal_origin_tile = TILE_MOUNTAIN_FORTRESS_FLOOR;
     ok = make_legacy_save() && load_game(&loaded, 99179);
-    ASSERT("version 125 migration adds finite kegs without healing active or cached King", ok && loaded.enemies[0].hp == 79 && loaded.mountain_cache[3].enemies[0].hp == 51 && loaded.enemies[0].move_timer == 0 && goblin_king_remaining_kegs(&loaded) == 3);
-    ASSERT("migration preserves quests, fragments, exploration, gold, position and portal landing", loaded.dain_quest_state == 2 && loaded.dain_map_fragments == 7 && loaded.gold == 321 && loaded.player.x == 23 && loaded.player.y == 16 && map_is_explored(&loaded.map, 22, 12) && loaded.map.tiles[16][27] == TILE_MOUNTAIN_FORTRESS_FLOOR && loaded.mountain_cache[3].map.tiles[16][27] == TILE_MOUNTAIN_FORTRESS_FLOOR);
+    ASSERT("version 125 migration adds finite kegs without healing active or cached King", ok && loaded.enemies[0].hp == 79 && loaded.mountain_cache[4].enemies[0].hp == 51 && loaded.enemies[0].move_timer == 0 && goblin_king_remaining_kegs(&loaded) == 3);
+    ASSERT("migration preserves quests, fragments, exploration, gold, position and portal landing", loaded.dain_quest_state == 2 && loaded.dain_map_fragments == 7 && loaded.gold == 321 && loaded.player.x == 23 && loaded.player.y == 16 && map_is_explored(&loaded.map, 22, 12) && loaded.map.tiles[16][27] == TILE_MOUNTAIN_FORTRESS_FLOOR && loaded.mountain_cache[4].map.tiles[16][27] == TILE_MOUNTAIN_FORTRESS_FLOOR);
     game.map.tiles[16][27] = TILE_MOUNTAIN_FLOOR;
     game.mountain_cache[3].map.tiles[16][27] = TILE_MOUNTAIN_FLOOR;
     game.portal_origin_tile = TILE_MOUNTAIN_FLOOR;
     ok = make_legacy_save() && load_game(&loaded, 99179);
-    ASSERT("migration also protects older plain mountain portal floor in active and cached arenas", ok && loaded.map.tiles[16][27] == TILE_MOUNTAIN_FLOOR && loaded.mountain_cache[3].map.tiles[16][27] == TILE_MOUNTAIN_FLOOR);
+    ASSERT("migration also protects older plain mountain portal floor in active and cached arenas", ok && loaded.map.tiles[16][27] == TILE_MOUNTAIN_FLOOR && loaded.mountain_cache[4].map.tiles[16][27] == TILE_MOUNTAIN_FLOOR);
     game.enemies[0].active = 0;
     game.mountain_cache[3].enemies[0].active = 0;
     game.defeated_bosses |= 1 << LOCATION_MOUNTAINS;

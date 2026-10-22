@@ -23,14 +23,29 @@ A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explo
 
 *The Castle of No Return* is a C/SDL roguelike adventure with turn-based combat and a
 retro pixel-art style. Choose a Warrior, Mage, or Rogue, prepare in town, and
-explore a five-floor undead dungeon, the seven-stage haunted forest, goblin mountains 
+explore a five-floor undead dungeon, the five-level haunted forest, a five-level goblin mountain climb
 and many other adventures.
 
 ## World Map
 
-[![Illustrated world map showing the four towns, the Castle of No Return, forests, swamps, deserts, snowy peaks, Ashen Hollow's volcanoes, coastlines, and the Ruined Isle.](docs/images/world-map.png)](docs/images/world-map.png)
+[![Illustrated world map showing the five towns, including Dawnmere, the Castle of No Return, forests, swamps, deserts, snowy peaks, Ashen Hollow's volcanoes, coastlines, and the Ruined Isle.](docs/images/world-map.png)](docs/images/world-map.png)
 
-An illustrated overview based on the world's town connections.
+An illustrated overview based on the world's town connections. Dawnmere now lies
+east of Oakhaven, reached by the safe road opened after defeating the Lich King.
+The [expansion plan](docs/five-town-expansion.md) documents the connections
+and the planned Windscar Highlands. Goblin Mountains
+now lies north of Dawnmere, beside the road to Ridgeshire; defeating its King
+opens that road. Both mountain entrances start at level 1. Forest and swamp
+also have five forward levels, with their boss victories opening the town roads.
+Other enemy-area gates lead to safe cobblestone paths and themed entrance
+sprites; physical retreat returns to the same path. Rook's Labyrinth stands
+beside the Haunted Forest entrance on that road and stays sealed until Rook
+assigns the quest in Oakhaven's Tavern. Castle, secret tunnel and Crown Road
+travel keep their existing layouts.
+
+All five towns now stand beside signed exterior roads. Walk into a town sprite
+to arrive beside the matching interior exit gate, or follow the road around town to
+continue travelling. See [town roads and directional entrances](docs/town-roads.md).
 
 ## Controls
 
@@ -82,6 +97,7 @@ inventory actions.
 
 ## Game Documentation
 
+- [Five-town expansion and Dawnmere](docs/five-town-expansion.md)
 - [Stillbury healer and witch](docs/healer.md)
 - [Regional difficulty and progression](docs/difficulty-scaling.md)
 - [Weapons, armor, and shields](docs/weapons.md)
@@ -172,12 +188,15 @@ To test quest NPCs with every town shortcut already open, run:
 ./tools/debug_shortcuts.sh
 ```
 
-Select **New Game**, enter a name, and choose a class. The forest shortcut
+Select **New Game**, enter a name, and choose a class, or load an existing
+character. The forest road
 between Oakhaven and Stillbury, swamp shortcut between Stillbury and Rosemoor,
-and High Pass between Oakhaven and Ridgeshire are open immediately. This uses
-the existing completion flags for the forest, mountain, and swamp bosses;
+and the mountain road between Dawnmere and Ridgeshire are open immediately.
+The dungeon road from Oakhaven to Dawnmere is open too. This uses the existing completion flags for the
+Lich King and the forest, mountain, and swamp bosses;
 quests stay unassigned and their NPCs still award their normal rewards.
-The unlocks persist if you save this debug character.
+The unlocks apply to new and loaded characters and persist if you save them.
+Loading keeps the character's existing gold, equipment, inventory and quests.
 
 The launcher builds a separate debug executable in `build/debug-shortcuts`
 and runs it from the project directory. It accepts the existing debug options,
@@ -246,8 +265,10 @@ also be passed directly:
 ./build/conr --weapon bow --gold 500 --scrolls magic-arrow,heal
 ```
 
-Debug executables also accept `--unlock-shortcuts` for new characters.
-As with the loadout options, it does not modify a loaded save.
+Debug executables also accept `--unlock-shortcuts` for new and loaded characters.
+Weapon, gold and scroll overrides still apply only to new characters. Loaded
+characters receive only the shortcut unlocks, and their save files change only
+when you save.
 
 Unknown options, unsupported item names, lists longer than three scrolls, and
 gold values outside the accepted range cause the program to print usage
@@ -260,6 +281,16 @@ Run `make clean` to remove the build directory.
 ### Run the tests
 
 Run `make test` to build and run the unit test executable.
+
+After building the shortcut debug executable, check new and loaded characters
+through the application load handler with:
+
+```sh
+cmake --build build/debug-shortcuts --target test-debug-shortcuts
+```
+
+This check uses temporary saves and verifies that loaded characters can walk to
+Dawnmere without changing their equipment, gold or quests.
 
 ## Dependencies
 
@@ -300,7 +331,7 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 
 ### Feature enhancements
 - Expand world map
-   Farms between areas for rest to improve hp. Additional in-town quests similar to labrynth. New areas. New story lines. 
+   Farms between areas for rest to improve hp. Additional in-town quests similar to labrynth. New areas. New story lines. Towns as sprites like enemy areas.
 - Recruit a party to join the adventure
    NPCs that can team up with the player character and accompany on the quest. Implement resurrection. 
 - Improve difficulty scaling and economy

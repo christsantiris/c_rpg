@@ -11,12 +11,12 @@ and 300 score.
 
 Dain assigns **Recover the Treasure Map** in **Ridgeshire's town center**.
 Enter its south mountain gate.
-The Archer, Bomber, and Shaman Map Bearers occupy stages **7, 6, and 5** before
-the stage-4 Goblin King. Return to Dain in Ridgeshire's town center for 60 gold and 400 score.
+The Archer, Bomber, and Shaman Map Bearers occupy levels **2, 3, and 4** before
+the level-5 Goblin King. Return to Dain in Ridgeshire's town center for 60 gold and 400 score.
 
 Alder assigns **The Lost Wardens** in **Stillbury's Inn**. Enter Stillbury's
-east forest gate and rescue the wardens on stages **7, 6, and 5** before the
-stage-4 Necromancer. Return to Alder for 70 gold and 500 score, awarded once.
+east forest gate and rescue the wardens on levels **2, 3, and 4** before the
+level-5 Necromancer. Return to Alder for 70 gold and 500 score, awarded once.
 
 Mara assigns **Relight the Drowned Beacons** in **Oakhaven's Tavern**.
 The beacons remain on Sunken Coast stages 2, 3, and 4. Return to her in the
@@ -38,7 +38,7 @@ Hadrin in Ridgeshire for 100 gold and 800 score; both objectives stay recorded
 after collecting the reward.
 
 Marshal Veyra's **Watchfires of Ridgeshire**, offered in **Ridgeshire's Town
-Hall**, spans three regions: **Goblin Mountains 6**, **Ashen Hollow 3**, and
+Hall**, spans three regions: **Goblin Mountains 5**, **Ashen Hollow 3**, and
 **Dragonspine 3**. Each objective displays its own region and stage. Restore
 the watchfires in any order and return for **180 gold and 1,400 score**.
 Completed objectives remain recorded after claiming the reward.

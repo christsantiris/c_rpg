@@ -1,4 +1,5 @@
 #include "test_utils.h"
+#include "town_road_checks.h"
 #include "game/approach.h"
 #include "../src/game/game.h"
 #include "../src/systems/save_load.h"
@@ -1278,6 +1279,7 @@ static void test_legacy_apothecary(void) {
     memset(&original, 0, sizeof(original));
     game_init(&original);
     game_leave_crownroad(&original, LOCATION_TOWN3);
+        walk_into_arrived_town(&original);
     for (int y = old_apothecary_y; y < old_apothecary_lane_y; y++) {
         for (int x = old_apothecary_x; x < old_apothecary_x + old_apothecary_w; x++) {
             original.map.tiles[y][x] = TILE_TOWN_FLOOR;
@@ -1613,6 +1615,7 @@ static void test_longer_crownroad_migration(void) {
         original.enemies[0].hp = 11;
         original.enemies[2].active = 0;
         game_leave_crownroad(&original, LOCATION_TOWN4);
+        walk_into_arrived_town(&original);
         // Version 117 had thirty slots on each road, before the density fix.
         original.crownroad_cache.enemy_count = CROWNROAD_BASE_ENEMIES;
         original.kingroad_west_cache.enemy_count = CROWNROAD_BASE_ENEMIES;
@@ -1699,6 +1702,7 @@ static void test_crownroad_density_migration(void) {
         original.enemies[0].hp = 11;
         original.enemies[2].active = 0;
         game_leave_crownroad(&original, LOCATION_TOWN4);
+        walk_into_arrived_town(&original);
         original.crownroad_cache.enemy_count = CROWNROAD_BASE_ENEMIES;
         original.kingroad_west_cache.enemy_count = CROWNROAD_BASE_ENEMIES;
         if (scenario < 2) {
@@ -2002,7 +2006,7 @@ static void test_sunscar_save_migration(void) {
             weapon_fields_match(&loaded.inventory[0], &original.inventory[0]) &&
             loaded.dain_quest_state == 2 && loaded.dain_map_fragments == 3 &&
             loaded.defeated_bosses == original.defeated_bosses &&
-            loaded.max_swamp_level_reached == 4 && loaded.max_frostfell_level_reached == 3);
+            loaded.max_swamp_level_reached == 5 && loaded.max_frostfell_level_reached == 3);
         int west_gate = migrated;
         for (int y = 10; y <= 14; y++) {
             west_gate &= loaded.map.tiles[y][0] == TILE_TOWN_EXIT;
@@ -2466,12 +2470,12 @@ static void test_shortcut_fork_migration(void) {
         original.map.tiles[y][x] = TILE_ITEM;
         map_mark_explored(&original.map, x, y);
         int ok = save_game(&original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, 153) && load_game(&loaded, LEGACY_SLOT);
-        ASSERT("old shortcut roads migrate onto a crossroads with an accessible boss branch", ok && loaded.location == LOCATION_APPROACH && approach_boss_exit(&loaded, &bx, &by) && loaded.map.tiles[by][bx] == TILE_APPROACH_BOSS);
+        ASSERT("old shortcut roads migrate onto a crossroads with an accessible boss branch", ok && loaded.location == LOCATION_APPROACH && ((approach_boss_exit(&loaded, &bx, &by) && loaded.map.tiles[by][bx] == TILE_APPROACH_BOSS) || approach_mountain_town_exit(&loaded, &bx, &by) || approach_forest_town_exit(&loaded, &bx, &by) || approach_swamp_town_exit(&loaded, &bx, &by)));
         int lx = loaded.floor_items[0].x;
         int ly = loaded.floor_items[0].y;
         TileType new_floor = approach_floor(approach_route(&loaded)->area);
         ASSERT("crossroads migration preserves accessible player and loot positions, exploration, and progress", ok && map_is_walkable(&loaded.map, loaded.player.x, loaded.player.y) && loaded.map.tiles[ly][lx] == TILE_ITEM && loaded.floor_items[0].active && loaded.floor_items[0].underlying_tile == new_floor && map_is_explored(&loaded.map, loaded.player.x, loaded.player.y) && loaded.gold == original.gold && loaded.score == original.score && loaded.defeated_bosses == original.defeated_bosses);
-        ASSERT("migrated crossroads and loot survive another save/load", save_game(&loaded, MIGRATED_SLOT) && load_game(&original, MIGRATED_SLOT) && original.location == LOCATION_APPROACH && original.map.tiles[by][bx] == TILE_APPROACH_BOSS && original.map.tiles[ly][lx] == TILE_ITEM);
+        ASSERT("migrated crossroads and loot survive another save/load", save_game(&loaded, MIGRATED_SLOT) && load_game(&original, MIGRATED_SLOT) && original.location == LOCATION_APPROACH && (original.map.tiles[by][bx] == TILE_APPROACH_BOSS || original.map.tiles[by][bx] == TILE_APPROACH_DUNGEON_TOWN) && original.map.tiles[ly][lx] == TILE_ITEM);
         remove_test_save(LEGACY_SLOT);
         remove_test_save(MIGRATED_SLOT);
     }
@@ -2526,7 +2530,7 @@ static void test_narrow_shortcut_migration(void) {
         }
         int bx;
         int by;
-        ASSERT("saved wide shortcuts migrate to the connected crossroads", loaded.location == LOCATION_APPROACH && approach_boss_exit(&loaded, &bx, &by) && loaded.map.tiles[by][bx] == TILE_APPROACH_BOSS);
+        ASSERT("saved wide shortcuts migrate to the connected crossroads", loaded.location == LOCATION_APPROACH && ((approach_boss_exit(&loaded, &bx, &by) && loaded.map.tiles[by][bx] == TILE_APPROACH_BOSS) || approach_mountain_town_exit(&loaded, &bx, &by) || approach_forest_town_exit(&loaded, &bx, &by) || approach_swamp_town_exit(&loaded, &bx, &by)));
         ASSERT("off-path saved players land safely on the crossroads", map_is_walkable(&loaded.map, loaded.player.x, loaded.player.y));
         int explored_x = loaded.player.x;
         int explored_y = loaded.player.y;

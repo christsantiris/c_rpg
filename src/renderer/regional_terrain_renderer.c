@@ -136,7 +136,12 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
     const char *line2 = NULL;
     char status[64];
     char floor_name[40];
-    if (g->location == LOCATION_APPROACH) {
+    if (g->location == LOCATION_TOWN_ROAD) {
+        snprintf(floor_name, sizeof(floor_name), "%s OUTSKIRTS", approach_town_name(g->road_town));
+        title = floor_name;
+        line1 = "WALK INTO THE TOWN TO VISIT";
+        line2 = "FOLLOW THE ROAD TO CONTINUE";
+    } else if (g->location == LOCATION_APPROACH) {
         const TownApproach *route = approach_route(g);
         snprintf(floor_name, sizeof(floor_name), "%s APPROACH", route ? approach_area_name(route->area) : "AREA");
         title = floor_name;
@@ -144,6 +149,22 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
         line2 = "TURN BACK TO RETURN TO TOWN";
         int x;
         int y;
+        if (approach_dungeon_town_exit(g, &x, &y)) {
+            line1 = "WEST: OAKHAVEN / EAST: DAWNMERE";
+            line2 = "CRYPT ENTRANCE: DUNGEON STAGE 1";
+        }
+        if (approach_swamp_town_exit(g, &x, &y)) {
+            line1 = "NORTH: ROSEMOOR / SOUTH: STILLBURY";
+            line2 = "SWAMP ENTRANCE: ALWAYS LEVEL 1";
+        }
+        if (approach_forest_town_exit(g, &x, &y)) {
+            line1 = "WEST: STILLBURY / EAST: OAKHAVEN";
+            line2 = "FOREST ENTRANCE: ALWAYS LEVEL 1";
+        }
+        if (approach_mountain_town_exit(g, &x, &y)) {
+            line1 = "NORTH: RIDGESHIRE / SOUTH: DAWNMERE";
+            line2 = "MOUNTAIN ENTRANCE: ALWAYS LEVEL 1";
+        }
         if (approach_shortcut_exit(g, &x, &y)) {
             line1 = "STRAIGHT: AREA / LEFT: NEXT TOWN";
             line2 = "RIGHT: BOSS CHAMBER";
@@ -223,7 +244,7 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
     } else if (g->location == LOCATION_FOREST) {
         title = "HAUNTED FOREST TRAILS";
         line1 = "PATHS LINK THE FOREST CLEARINGS";
-        line2 = "GROVE BOSS GUARDS THE TOWN SHORTCUT";
+        line2 = "NECROMANCER GUARDS THE TOWN ROAD";
         if (g->level == FOREST_BOSS_LEVEL) {
             title = "THE NECROMANCER'S GROVE";
             line1 = "CONSECRATE GRAVES TO STOP WAVES";
@@ -233,7 +254,7 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
         title = "GOBLIN MOUNTAIN PASSES";
         line1 = "NARROW PASSES; ROCKS BLOCK FIRE";
         line2 = "WATCH FOR BRIDGES AND ROCKFALLS";
-        if (g->level == 2 || g->level == 7) {
+        if (g->level == 2) {
             line1 = "WEAK BRIDGES COLLAPSE BEHIND YOU";
             line2 = "INTERACT BESIDE GAPS TO REBUILD";
         } else if (g->level == MOUNTAIN_BOSS_LEVEL) {

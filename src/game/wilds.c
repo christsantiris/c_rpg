@@ -429,7 +429,7 @@ void wilds_migrate(GameState *g) {
     if (g->location == LOCATION_SWAMP || g->location == LOCATION_DRAGONSPINE) {
         migrate_map(&g->map, g->location == LOCATION_DRAGONSPINE);
     }
-    for (int i = 0; i < SWAMP_DEPTH; i++) {
+    for (int i = 0; i < SWAMP_CACHE_DEPTH; i++) {
         if (g->swamp_cache[i].valid) {
             migrate_map(&g->swamp_cache[i].map, 0);
         }

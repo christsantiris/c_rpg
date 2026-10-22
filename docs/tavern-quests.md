@@ -10,8 +10,8 @@ progress, and completion. Quest offers display **Y** to accept and **N** to
 decline; **Esc** also declines. Declining leaves the quest inactive and
 available when you speak to the NPC again. Only acceptance adds it to the
 journal and starts its expedition. Other dialogue bubbles are dismissed by
-movement. Elowen, Mara, and Ilya wait in Oakhaven's Tavern. Alder,
-Zara, Brenna, Rook, and Bram wait in Stillbury's Inn, which uses the same doorway and
+movement. Elowen, Mara, Ilya, and Rook wait in Oakhaven's Tavern. Alder,
+Zara, Brenna, and Bram wait in Stillbury's Inn, which uses the same doorway and
 conversation controls.
 
 Ridgeshire's Town Hall uses the same entry, conversation, and exit controls.
@@ -54,10 +54,10 @@ pieces. A Goblin Archer, Goblin Bomber, and Goblin Shaman each carry one
 fragment. Defeating them recovers their fragments automatically without using
 normal inventory space.
 
-Enter Ridgeshire's south mountain gate. The Archer, Bomber, and Shaman Map
-Bearers occupy **stages 7, 6, and 5**, respectively, before the stage-4 Goblin King. Once the King falls, take the peak
-shortcut to Oakhaven and return along the unlocked town roads, or fight through
-stages 3, 2, and 1. From Oakhaven, all three fragments follow the central boss.
+Enter Ridgeshire's south mountain gate and follow the road to the mountain cave.
+Either town entrance starts the climb at level 1. The Archer, Bomber and Shaman
+Map Bearers occupy **levels 2, 3 and 4**, before the level-5 Goblin King. After
+victory, exit onto the road north to Ridgeshire or south to Dawnmere.
 Each leader travels with a themed warband, turning every fragment into a
 distinct combat encounter. Returning all three fragments allows Dain to
 reconstruct the map and locate its hidden dwarven hoard. He awards the player
@@ -104,12 +104,10 @@ the Thorn Regent is optional. See
 Alder waits in **Stillbury's Inn**; press `T` beside him, then `Y` to accept the
 quest. He is an aging forest ranger searching for three wardens lost while
 investigating the Necromancer's influence. The wardens appear in guarded groves
-on Forest **stages 7, 6, and 5**. Enter Stillbury's east forest gate to find all
-three before the stage-4 Necromancer. Once he falls, take the grove shortcut to
-Oakhaven and the unlocked town road back to Stillbury, or battle through stages
-3, 2, and 1. From Oakhaven, the wardens follow the central boss.
-Approach a trapped warden and press `T` to free them. Rescuing a warden does not
-require clearing the entire stage.
+on **Forest 2, 3 and 4**. Either town entrance starts at Forest 1 and reaches
+all three before the level-5 Necromancer. After victory, exit onto the road west
+to Stillbury or east to Oakhaven. The forest has no shortcut. You can also
+retreat through Forest 1 or cast Return to Town to reach the town used to enter.
 
 Each captive has a thematic hunting party led by a Giant Spider, Dark Elf, or
 Forest Troll. Missing wardens are guaranteed to appear on later expeditions,
@@ -220,9 +218,12 @@ without requiring the absent Lich King to be defeated again.
 
 ## Rook: The Ivory Rook
 
-Speak with Rook in Stillbury's Inn and press `Y` to accept his one-time
-retrieval quest. This opens the labyrinth entrance on the eastern outskirts,
-across the road from the witch's hut. Explore five maze floors with enemies and
+Speak with Rook in Oakhaven's Tavern and press `Y` to accept his one-time
+retrieval quest. This opens the labyrinth gate beside the Haunted Forest
+entrance on the Oakhaven–Stillbury road. Take either town's forest gate and
+follow the path; entering the forest or defeating its boss is not required.
+Physical retreat returns to the same path. The gate remains sealed until the
+quest is assigned and stays open after completion. Explore five maze floors with enemies and
 look-alike stairs; some stairs lead only to a dead-end corridor and its return
 stair. Activate one rune on each floor to open the final vault, defeat the
 Minotaur, recover the ivory rook, and return to Rook for 40 gold and 500 score.

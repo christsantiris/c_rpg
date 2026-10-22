@@ -25,9 +25,6 @@ static void mountain_step(GameState *g, int reverse) {
         y = MAP_H - 1;
     }
     action_resolve_player(g, (Action){ACTION_MOVE, x, y});
-    if (g->location == LOCATION_APPROACH) {
-        walk_return_approach(g);
-    }
 }
 
 static int mountain_king(const GameState *g) {
@@ -51,167 +48,105 @@ static void mountain_kill(GameState *g, int index) {
     ASSERT("mountain target dies through normal melee combat", !enemy->active);
 }
 
-static void mountain_fragments(GameState *g) {
-    int bearers = 0;
-    for (int i = 0; i < g->enemy_count; i++) {
-        Enemy *enemy = &g->enemies[i];
-        if (enemy->active && enemy->dain_fragment) {
-            ASSERT("map bearers occupy stages 7, 6, and 5 near Ridgeshire", enemy->dain_fragment ==
-                (g->level == 7 ? DAIN_FRAGMENT_ARCHER : g->level == 6 ? DAIN_FRAGMENT_BOMBER : g->level == 5 ? DAIN_FRAGMENT_SHAMAN : 0));
-            bearers++;
-            mountain_kill(g, i);
-        }
+static void mountain_walk_road(GameState *g, int north) {
+    int x = g->map.stairs_up_x;
+    for (int step = 0; g->location == LOCATION_APPROACH && step < APPROACH_W + APPROACH_H; step++) {
+        int dx = (x > g->player.x) - (x < g->player.x);
+        action_resolve_player(g, (Action){ACTION_MOVE, g->player.x + dx, g->player.y + (dx ? 0 : north ? -1 : 1)});
     }
-    ASSERT("each pending fragment has one bearer on its own stage", bearers == (g->level == 7 || g->level == 6 || g->level == 5 ? 1 : 0));
+    walk_into_arrived_town(g);
 }
 
-static void mountain_crossing(int reverse, int shortcut) {
+static void mountain_crossing(int ridge, int return_home) {
     mountain.player.player_class = CLASS_WARRIOR;
     game_init(&mountain);
-    srand(2701 + reverse + 2 * shortcut);
-    game_leave_mountains(&mountain, LOCATION_TOWN4, 0);
-    mountain.player.x = DAIN_TOWN_X;
-    mountain.player.y = DAIN_TOWN_Y + 1;
-    game_talk_to_dain(&mountain);
-    game_handle_quest_offer_key(&mountain, SDL_SCANCODE_Y, 0);
-    ASSERT("Dain directs the player to revised stages", strstr(mountain.dialogue_text, "7, 6, and 5") != NULL);
-    game_leave_mountains(&mountain, reverse ? LOCATION_TOWN4 : LOCATION_TOWN, 0);
-    int gate_y = reverse ? TOWN_H - 1 : 0;
-    int road_x = reverse ? RIDGESHIRE_MOUNTAIN_ROAD_X : TOWN4_ROAD_X;
-    ASSERT("High Pass starts locked at either town", mountain.map.tiles[gate_y][road_x] == TILE_WALL);
-    action_resolve_player(&mountain, (Action){ACTION_MOVE, 20, gate_y});
+    srand(2701 + ridge);
+    game_leave_mountains(&mountain, ridge ? LOCATION_TOWN4 : LOCATION_DAWNMERE, 0);
+    mountain.dain_quest_state = 1;
+    mountain.watchfire_quest_state = 1;
+    Location home = mountain.location;
+    action_resolve_player(&mountain, (Action){ACTION_MOVE, 20, ridge ? TOWN_H - 1 : 0});
+    finish_town_departure(&mountain);
+    ASSERT("both town gates lead to a safe mountain road", mountain.location == LOCATION_APPROACH && mountain.enemy_count == 0);
+    int x;
+    int y;
+    ASSERT("the same mountain landmark stands at the same road position from either town", mountain.map.stairs_down_x == APPROACH_W / 2 + 6 && mountain.map.stairs_down_y == APPROACH_H / 2 - 1);
+    ASSERT("mountain road has no town branch or direct boss shortcut", !approach_shortcut_exit(&mountain, &x, &y) && !approach_boss_exit(&mountain, &x, &y));
+    ASSERT("the road beyond the mountain is locked before victory", !approach_mountain_town_exit(&mountain, &x, &y));
     walk_town_approach(&mountain);
-    ASSERT("ordinary gates enter the appropriate mountain end", mountain.location == LOCATION_MOUNTAINS && mountain.level == (reverse ? MOUNTAIN_DEPTH : 1) && mountain.mountain_entry_town == (reverse ? LOCATION_TOWN4 : LOCATION_TOWN));
-    mountain_step(&mountain, !reverse);
-    ASSERT("either entry permits immediate retreat", mountain.location == (reverse ? LOCATION_TOWN4 : LOCATION_TOWN) && mountain.player.x == 20 && mountain.player.y == (reverse ? TOWN_H - 2 : 1));
+    ASSERT("either town always enters the foot of the mountain at level one", mountain.location == LOCATION_MOUNTAINS && mountain.level == 1 && mountain.mountain_entry_town == home);
+    mountain_step(&mountain, 1);
+    ASSERT("retreating at the foot returns to the pathway", mountain.location == LOCATION_APPROACH);
+    walk_return_approach(&mountain);
+    ASSERT("walking back reaches the original town", mountain.location == home);
     game_enter_mountains(&mountain);
-    int guard = 0;
-    while (mountain.level != MOUNTAIN_BOSS_LEVEL && guard++ < MOUNTAIN_DEPTH) {
-        ASSERT("approach levels contain no King", mountain_king(&mountain) < 0);
-        mountain_fragments(&mountain);
-        int level = mountain.level;
+    for (int level = 1; level < MOUNTAIN_DEPTH; level++) {
+        ASSERT("climb visits levels in ascending order", mountain.level == level && mountain_king(&mountain) < 0);
+        int fragments = 0;
+        for (int i = 0; i < mountain.enemy_count; i++) {
+            if (mountain.enemies[i].active && mountain.enemies[i].dain_fragment) {
+                ASSERT("Dain's bearers are on levels two, three and four", mountain.enemies[i].dain_fragment == (level == 2 ? DAIN_FRAGMENT_ARCHER : level == 3 ? DAIN_FRAGMENT_BOMBER : DAIN_FRAGMENT_SHAMAN));
+                fragments++;
+                mountain_kill(&mountain, i);
+            }
+        }
+        ASSERT("each quest level has exactly one pending bearer", fragments == (level >= 2));
         int score = mountain.score;
-        mountain_step(&mountain, reverse);
-        ASSERT("both directions generate the next mountain stage", mountain.location == LOCATION_MOUNTAINS && mountain.level == level + (reverse ? -1 : 1));
-        ASSERT("first visits use symmetric travel rewards", mountain.score == score + 100 * map_mountain_difficulty(mountain.level));
+        mountain_step(&mountain, 0);
+        ASSERT("first climbs award the next level's travel score", mountain.score == score + 100 * map_mountain_difficulty(mountain.level));
     }
     int king = mountain_king(&mountain);
-    ASSERT("either approach reaches the King at the central peak", mountain.level == MOUNTAIN_BOSS_LEVEL && king >= 0);
-    ASSERT("Ridgeshire approach completes all fragments before the peak; Oakhaven approach starts after it", mountain.dain_map_fragments ==
-        (reverse ? 7 : 0));
-    if (king < 0) {
-        return;
+    ASSERT("all map fragments are recoverable before the summit", mountain.dain_map_fragments == 7 && mountain.dain_quest_state == 2);
+    ASSERT("the Goblin King occupies level five", mountain.level == 5 && king >= 0);
+    int fires = 0;
+    for (int row = 0; row < MAP_H; row++) {
+        for (int col = 0; col < MAP_W; col++) {
+            fires += mountain.map.tiles[row][col] == TILE_WATCHFIRE_COLD;
+        }
     }
-    mountain_step(&mountain, reverse);
-    ASSERT("living King blocks crossing the peak", mountain.level == MOUNTAIN_BOSS_LEVEL);
-    mountain_step(&mountain, !reverse);
-    ASSERT("living King permits retreat to the approach", mountain.level == MOUNTAIN_BOSS_LEVEL + (reverse ? 1 : -1));
-    int score = mountain.score;
-    mountain_step(&mountain, reverse);
-    ASSERT("revisiting cannot farm mountain travel score", mountain.score == score);
-    king = mountain_king(&mountain);
-    ASSERT("cached peak retains its living King", king >= 0);
+    ASSERT("Veyra's mountain watchfire is on level five", fires == 1);
+    mountain_step(&mountain, 0);
+    ASSERT("the living King seals the summit exit", mountain.location == LOCATION_MOUNTAINS && mountain.level == 5);
     if (king < 0) {
         return;
     }
     mountain_kill(&mountain, king);
-    ASSERT("King victory prompts the opposite-town shortcut", mountain.dialogue_active && strstr(mountain.dialogue_text, "shortcut through the mountains") && strstr(mountain.dialogue_text, reverse ? "OakHaven" : "Ridgeshire"));
-    int x = -1;
-    int y = -1;
+    ASSERT("King victory has no shortcut prompt", !game_shortcut_prompt_active(&mountain));
+    int shortcuts = 0;
     for (int row = 0; row < MAP_H; row++) {
-        for (int column = 0; column < MAP_W; column++) {
-            if (mountain.map.tiles[row][column] == TILE_MOUNTAIN_SHORTCUT) {
-                x = column;
-                y = row;
-            }
+        for (int col = 0; col < MAP_W; col++) {
+            shortcuts += mountain.map.tiles[row][col] == TILE_MOUNTAIN_SHORTCUT;
         }
     }
-    ASSERT("shortcut opens at the end of a passage into the surrounding terrain", x >= 0 && shortcut_exit_is_recessed(&mountain.map, x, y, TILE_MOUNTAIN_WALL));
-    if (x < 0) {
-        return;
-    }
-    mountain.dialogue_active = 0;
-    if (shortcut) {
-        ASSERT("central mountain shortcut survives save/load", save_game(&mountain, MOUNTAIN_TRAVEL_SLOT) && load_game(&restored, MOUNTAIN_TRAVEL_SLOT) && restored.mountain_entry_town == mountain.mountain_entry_town && restored.map.tiles[y][x] == TILE_MOUNTAIN_SHORTCUT);
-        action_resolve_player(&restored, (Action){ACTION_MOVE, x, y});
-        ASSERT("mountain shortcut waits for confirmation", restored.location == LOCATION_MOUNTAINS && game_shortcut_prompt_active(&restored));
-        game_handle_shortcut_prompt_key(&restored, SDL_SCANCODE_RETURN, 0);
-        mountain = restored;
-        remove("saves/savegame_99124.json");
-        ASSERT("boss shortcut returns to the continuous crossroads", mountain.location == LOCATION_APPROACH);
-        walk_shortcut_approach(&mountain);
-    } else {
-        mountain_step(&mountain, reverse);
-        guard = 0;
-        while (mountain.location == LOCATION_MOUNTAINS && guard++ < MOUNTAIN_DEPTH) {
-            mountain_fragments(&mountain);
-            mountain_step(&mountain, reverse);
-        }
-        ASSERT("full crossings permit completing Dain's map from either side", mountain.dain_map_fragments == 7 && mountain.dain_quest_state == 2);
-    }
-    if (mountain.location == LOCATION_APPROACH) {
-        walk_return_approach(&mountain);
-    }
-    ASSERT("both exit choices reach the opposite town", mountain.location == (reverse ? LOCATION_TOWN : LOCATION_TOWN4));
-    ASSERT("both routes arrive at the main mountain gate", mountain.player.x == 20 && mountain.player.y == (reverse ? 1 : TOWN_H - 2));
-    gate_y = reverse ? 0 : TOWN_H - 1;
-    road_x = reverse ? TOWN4_ROAD_X : RIDGESHIRE_MOUNTAIN_ROAD_X;
-    ASSERT("victory retains only the main mountain gate", mountain.map.tiles[gate_y][20] == TILE_TOWN_EXIT && mountain.map.tiles[gate_y][road_x] == TILE_WALL);
-    ASSERT("shared mountain gate survives save/load", save_game(&mountain, MOUNTAIN_TRAVEL_SLOT) && load_game(&restored, MOUNTAIN_TRAVEL_SLOT) && restored.map.tiles[gate_y][20] == TILE_TOWN_EXIT && restored.map.tiles[gate_y][road_x] == TILE_WALL);
+    ASSERT("King victory creates no shortcut tile", shortcuts == 0);
+    mountain_step(&mountain, 0);
+    ASSERT("the summit exit returns to the straight safe road", mountain.location == LOCATION_APPROACH && mountain.enemy_count == 0 && mountain.player.x == mountain.map.stairs_up_x);
+    ASSERT("victory opens the other town's gate", approach_mountain_town_exit(&mountain, &x, &y));
+    ASSERT("the unlocked road stays one tile wide", mountain.map.tiles[mountain.player.y][x] == TILE_TOWN_PATH && mountain.map.tiles[mountain.player.y][x - 1] == TILE_TOWN_FLOOR);
+    ASSERT("the unlocked road and quest progress survive saving", save_game(&mountain, MOUNTAIN_TRAVEL_SLOT) && load_game(&restored, MOUNTAIN_TRAVEL_SLOT) && restored.dain_map_fragments == 7 && approach_mountain_town_exit(&restored, &x, &y));
+    mountain = restored;
+    mountain_walk_road(&mountain, return_home ? ridge : !ridge);
+    Location target = return_home ? home : ridge ? LOCATION_DAWNMERE : LOCATION_TOWN4;
+    ASSERT("the road permits walking home or onward to the other town", mountain.location == target);
+    action_resolve_player(&mountain, (Action){ACTION_MOVE, 20, target == LOCATION_DAWNMERE ? 0 : TOWN_H - 1});
+    walk_town_approach(&mountain);
+    ASSERT("reentry after victory still starts at level one", mountain.location == LOCATION_MOUNTAINS && mountain.level == 1);
+    game_open_town_portal(&mountain);
+    ASSERT("mountain portals anchor to the town of entry", mountain.location == target && mountain.mountain_portal_town == target);
+    int py = target == LOCATION_DAWNMERE ? 2 : TOWN_H - 3;
+    ASSERT("the mountain portal appears beside the correct gate", mountain.map.tiles[py][21] == TILE_PORTAL);
+    action_resolve_player(&mountain, (Action){ACTION_MOVE, 21, py});
+    ASSERT("a portal returns to the same mountain level and anchor", mountain.location == LOCATION_MOUNTAINS && mountain.level == 1 && mountain.mountain_entry_town == target);
     remove("saves/savegame_99124.json");
-    action_resolve_player(&mountain, (Action){ACTION_MOVE, 20, gate_y});
-    walk_shortcut_approach(&mountain);
-    ASSERT("the left arm walks directly to the other town", mountain.location == (reverse ? LOCATION_TOWN4 : LOCATION_TOWN));
-    game_enter_mountains(&mountain);
-    guard = 0;
-    while (mountain.level != MOUNTAIN_BOSS_LEVEL && guard++ < MOUNTAIN_DEPTH) {
-        mountain_step(&mountain, reverse);
-    }
-    ASSERT("revisiting the peak preserves the dead King and shortcut", mountain_king(&mountain) < 0 && mountain.map.tiles[y][x] == TILE_MOUNTAIN_SHORTCUT);
 }
 
 void test_mountain_travel(void) {
-    printf("Bidirectional mountain travel tests:\n");
-    ASSERT("seven mountain stages have an exact central peak", MOUNTAIN_DEPTH == 7 && MOUNTAIN_BOSS_LEVEL * 2 == MOUNTAIN_DEPTH + 1);
+    printf("Forward mountain climb and road tests:\n");
+    ASSERT("mountains have five levels with the King and watchfire at the summit", MOUNTAIN_DEPTH == 5 && MOUNTAIN_BOSS_LEVEL == 5 && WATCHFIRE_MOUNTAINS_LEVEL == 5);
     ASSERT("mountain travel test slot is unused", !save_exists(MOUNTAIN_TRAVEL_SLOT));
-    mountain.player.player_class = CLASS_WARRIOR;
-    game_init(&mountain);
-    mountain.location = LOCATION_MOUNTAINS;
-    for (int level = 1; level <= MOUNTAIN_DEPTH; level++) {
-        ASSERT("mountain difficulty matches on both approaches", map_mountain_difficulty(level) == map_mountain_difficulty(MOUNTAIN_DEPTH + 1 - level));
-        mountain.level = level;
-        map_generate_mountains(&mountain.map, level);
-        enemies_spawn(&mountain);
-        int expected = 10 + map_mountain_difficulty(level);
-        if (expected > AREA_ENEMY_LIMIT) {
-            expected = AREA_ENEMY_LIMIT;
-        }
-        ASSERT("mountain enemy density falls away from the peak", mountain.enemy_count == expected);
-        ASSERT("King spawns only at the central peak", (mountain_king(&mountain) >= 0) == (level == MOUNTAIN_BOSS_LEVEL));
-    }
-    for (int reverse = 0; reverse < 2; reverse++) {
-        for (int shortcut = 0; shortcut < 2; shortcut++) {
-            mountain_crossing(reverse, shortcut);
+    for (int ridge = 0; ridge < 2; ridge++) {
+        for (int home = 0; home < 2; home++) {
+            mountain_crossing(ridge, home);
         }
     }
-    mountain.player.player_class = CLASS_WARRIOR;
-    game_init(&mountain);
-    game_enter_town4(&mountain);
-    game_enter_mountains(&mountain);
-    mountain_step(&mountain, 1);
-    int x = mountain.player.x;
-    int y = mountain.player.y;
-    int hp = --mountain.enemies[0].hp;
-    game_open_town_portal(&mountain);
-    ASSERT("reverse mountain Return to Town anchors to Ridgeshire", mountain.location == LOCATION_TOWN4 && mountain.mountain_portal_town == LOCATION_TOWN4 && mountain.map.tiles[TOWN_H - 3][21] == TILE_PORTAL);
-    ASSERT("reverse mountain portal survives save/load", save_game(&mountain, MOUNTAIN_TRAVEL_SLOT) && load_game(&restored, MOUNTAIN_TRAVEL_SLOT));
-    action_resolve_player(&restored, (Action){ACTION_MOVE, 21, TOWN_H - 3});
-    ASSERT("portal restores reverse level, position, wounded enemies, and entry town", restored.location == LOCATION_MOUNTAINS && restored.level == 6 && restored.player.x == x && restored.player.y == y && restored.enemies[0].hp == hp && restored.mountain_entry_town == LOCATION_TOWN4);
-    remove("saves/savegame_99124.json");
-    game_leave_mountains(&mountain, LOCATION_TOWN, 0);
-    game_enter_mountains(&mountain);
-    game_return_to_town(&mountain);
-    ASSERT("opposite entry does not move the old mountain portal", mountain.location == LOCATION_TOWN && mountain.mountain_entry_town == LOCATION_TOWN && mountain.mountain_portal_town == LOCATION_TOWN4 && mountain.map.tiles[2][21] != TILE_PORTAL);
-    game_leave_mountains(&mountain, LOCATION_TOWN4, 0);
-    ASSERT("Ridgeshire keeps the portal's original anchor", mountain.map.tiles[TOWN_H - 3][21] == TILE_PORTAL);
 }

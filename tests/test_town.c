@@ -41,6 +41,7 @@ void test_king_roads_and_castle(void) {
     g.player.x = TOWN_W - 2;
     g.player.y = TOWN3_KING_GATE_Y;
     action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 1, TOWN3_KING_GATE_Y});
+    finish_town_departure(&g);
     ASSERT("Rosemoor east gate enters Crown Road East at its west end",
         g.location == LOCATION_CROWNROAD && g.enemy_count == CROWNROAD_ENEMIES &&
         g.player.x == 1 && g.player.y == CROWNROAD_Y);
@@ -96,6 +97,7 @@ void test_king_roads_and_castle(void) {
         g.enemy_count == CROWNROAD_ENEMIES && g.enemies[0].active);
     GameState ridgeshire = g;
     game_leave_crownroad(&ridgeshire, LOCATION_TOWN4);
+    walk_into_arrived_town(&ridgeshire);
     ASSERT("Ridgeshire has two guards flanking its open Crown Road West gate",
         ridgeshire.map.tiles[TOWN4_KING_GATE_Y - 1][TOWN4_KING_GATE_X] ==
             TILE_NPC_ROYAL_GUARD &&
@@ -138,6 +140,7 @@ void test_king_roads_and_castle(void) {
     g.enemies[1].active = 0;
     g.player.x = CROWNROAD_W - 2;
     action_resolve_player(&g, (Action){ACTION_MOVE, CROWNROAD_W - 1, CROWNROAD_Y});
+    walk_into_arrived_town(&g);
     ASSERT("Crown Road West reaches Ridgeshire's west entrance",
         g.location == LOCATION_TOWN4 && g.player.x == 1 && g.player.y == 12);
     int workshop_walls = 1;
@@ -166,6 +169,7 @@ void test_king_roads_and_castle(void) {
         g = loaded;
     }
     action_resolve_player(&g, (Action){ACTION_MOVE, 0, 12});
+    finish_town_departure(&g);
     ASSERT("Ridgeshire starts a new Crown Road West crossing at its east end",
         g.location == LOCATION_KING_ROAD_WEST && g.player.x == CROWNROAD_W - 2 &&
         g.enemies[1].active);
@@ -184,6 +188,7 @@ void test_king_roads_and_castle(void) {
         g.location == LOCATION_CROWNROAD && g.player.x == CROWNROAD_W - 2 && g.enemies[0].active);
     g.player.x = 1;
     action_resolve_player(&g, (Action){ACTION_MOVE, 0, CROWNROAD_Y});
+    walk_into_arrived_town(&g);
     ASSERT("Crown Road East returns to Rosemoor's east entrance",
         g.location == LOCATION_TOWN3 && g.player.x == TOWN_W - 2 &&
         g.player.y == TOWN3_KING_GATE_Y);
@@ -215,8 +220,10 @@ void test_town3_royal_guards(void) {
     for (int x = 29; x < TOWN_W; x++) {
         action_resolve_player(&g, (Action){ACTION_MOVE, x, TOWN3_KING_GATE_Y});
     }
+    finish_town_departure(&g);
     ASSERT("guards allow passage into the road", g.location == LOCATION_CROWNROAD);
     game_leave_crownroad(&g, LOCATION_TOWN3);
+    walk_into_arrived_town(&g);
     g.map.tiles[TOWN3_GUARD_NORTH_Y][TOWN3_GUARD_X] = TILE_TOWN_FLOOR;
     g.map.tiles[TOWN3_GUARD_SOUTH_Y][TOWN3_GUARD_X] = TILE_TOWN_FLOOR;
     g.player.x = TOWN3_GUARD_X;
@@ -442,12 +449,7 @@ void test_rook_labyrinth(void) {
         g.map.tiles[13][TOWN_WITCH_DOOR_X] == TILE_TOWN_PATH &&
         g.map.tiles[13][TOWN_HEALER_DOOR_X - 1] == TILE_TOWN_FLOOR &&
         g.map.tiles[14][TOWN_HEALER_DOOR_X] == TILE_TOWN_PATH);
-    ASSERT("second town places the labyrinth across from the witch",
-        TOWN_LABYRINTH_X == TOWN_WITCH_DOOR_X && TOWN_LABYRINTH_Y > 12 &&
-        g.map.tiles[TOWN_LABYRINTH_Y][TOWN_LABYRINTH_X] ==
-            TILE_LABYRINTH_ENTRANCE &&
-        g.map.tiles[TOWN_LABYRINTH_Y + 1][TOWN_LABYRINTH_X] ==
-            TILE_TOWN_PATH);
+    ASSERT("Stillbury no longer has a labyrinth gate or its spur", g.map.tiles[TOWN_LABYRINTH_Y][TOWN_LABYRINTH_X] == TILE_TOWN_FLOOR && g.map.tiles[TOWN_LABYRINTH_Y + 1][TOWN_LABYRINTH_X] == TILE_TOWN_FLOOR);
     ASSERT("the old labyrinth entrance and lane return to grass",
         g.map.tiles[18][13] == TILE_TOWN_FLOOR &&
         g.map.tiles[18][14] == TILE_TOWN_FLOOR &&
@@ -468,7 +470,7 @@ void test_rook_labyrinth(void) {
     g.player.y = ROOK_TAVERN_Y + 1;
     game_talk_to_rook(&g);
     ASSERT("Rook directs the player west to Stillbury and back to Oakhaven's Tavern",
-        strstr(g.dialogue_text, "west to Stillbury") && strstr(g.dialogue_text, "Oakhaven's Tavern"));
+        strstr(g.dialogue_text, "west gate toward Stillbury") && strstr(g.dialogue_text, "Haunted Forest entrance") && strstr(g.dialogue_text, "Oakhaven's Tavern"));
     game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
     ASSERT("Rook assigns the retrieval quest on first conversation",
         g.rook_quest_state == 1 && g.rook_labyrinth_switches == 0 &&
@@ -485,19 +487,9 @@ void test_rook_labyrinth(void) {
             "Rook is waiting for the ivory rook.") == 0);
     game_leave_tavern(&g);
     game_enter_town2(&g);
-    g.player.x = TOWN_LABYRINTH_X - 2;
-    g.player.y = 12;
-    for (int y = 13; y <= TOWN_LABYRINTH_Y + 1; y++) {
-        action_resolve_player(&g, (Action){ACTION_MOVE, g.player.x, y});
-    }
-    for (int x = TOWN_LABYRINTH_X - 1; x <= TOWN_LABYRINTH_X; x++) {
-        action_resolve_player(&g, (Action){ACTION_MOVE, x, g.player.y});
-    }
-    ASSERT("the approach lane reaches the south-facing labyrinth entrance",
-        g.location == LOCATION_TOWN2 && g.player.x == TOWN_LABYRINTH_X &&
-        g.player.y == TOWN_LABYRINTH_Y + 1);
-    action_resolve_player(&g, (Action){ACTION_MOVE,
-        TOWN_LABYRINTH_X, TOWN_LABYRINTH_Y});
+    action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 1, 12});
+    walk_to_labyrinth(&g);
+    action_resolve_player(&g, (Action){ACTION_MOVE, APPROACH_LABYRINTH_X, APPROACH_LABYRINTH_Y});
     ASSERT("labyrinth entrance starts a five-level combat expedition",
         g.location == LOCATION_LABYRINTH && g.level == 1 &&
         g.enemy_count >= 4 && g.floor_item_count == 0);
@@ -635,11 +627,8 @@ void test_rook_labyrinth(void) {
     step_into_labyrinth_tile(&g, 1, g.map.stairs_up_y);
     ASSERT("second-floor exit returns to the first floor", g.level == 1);
     step_into_labyrinth_tile(&g, 1, g.map.stairs_up_y);
-    ASSERT("the labyrinth exit returns beside its town entrance",
-        g.location == LOCATION_TOWN2 &&
-        g.player.x == TOWN_LABYRINTH_X &&
-        g.player.y == TOWN_LABYRINTH_Y + 1 &&
-        g.map.tiles[g.player.y][g.player.x] == TILE_TOWN_PATH);
+    ASSERT("the labyrinth exit returns onto its forest approach", g.location == LOCATION_APPROACH && g.player.x == APPROACH_LABYRINTH_X && g.player.y == APPROACH_LABYRINTH_Y + 1 && g.map.tiles[g.player.y][g.player.x] == TILE_TOWN_PATH);
+    walk_return_approach(&g);
     game_enter_tavern(&g);
     g.player.x = ROOK_TAVERN_X;
     g.player.y = ROOK_TAVERN_Y + 1;
@@ -668,24 +657,16 @@ void test_rook_labyrinth(void) {
     game_enter_town2(&g);
     ASSERT("labyrinth remains visibly open after Rook rewards the quest",
         game_labyrinth_is_open(&g));
-    g.player.x = TOWN_LABYRINTH_X;
-    g.player.y = TOWN_LABYRINTH_Y + 1;
-    action_resolve_player(&g, (Action){ACTION_MOVE,
-        TOWN_LABYRINTH_X, TOWN_LABYRINTH_Y});
+    action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 1, 12});
+    walk_to_labyrinth(&g);
+    action_resolve_player(&g, (Action){ACTION_MOVE, APPROACH_LABYRINTH_X, APPROACH_LABYRINTH_Y});
     ASSERT("completed Rook quest still permits a new labyrinth expedition",
         g.location == LOCATION_LABYRINTH && g.enemy_count >= 4);
     step_into_labyrinth_tile(&g, 1, g.map.stairs_up_y);
     int saved = save_game(&g, slot);
     int restored = saved && load_game(&loaded, slot);
-    ASSERT("Rook quest progress and the relocated town entrance survive save and load",
-        restored && loaded.rook_quest_state == 3 &&
-        loaded.rook_labyrinth_switches == 31 &&
-        loaded.rook_quest_completions == 1 && game_labyrinth_is_open(&loaded) &&
-        loaded.location == LOCATION_TOWN2 &&
-        loaded.map.tiles[TOWN_LABYRINTH_Y][TOWN_LABYRINTH_X] ==
-            TILE_LABYRINTH_ENTRANCE &&
-        loaded.map.tiles[TOWN_LABYRINTH_Y + 1][TOWN_LABYRINTH_X] ==
-            TILE_TOWN_PATH && loaded.map.tiles[18][15] == TILE_TOWN_FLOOR);
+    ASSERT("Rook quest progress and the forest-road labyrinth survive saving", restored && loaded.rook_quest_state == 3 && loaded.rook_labyrinth_switches == 31 && loaded.rook_quest_completions == 1 && game_labyrinth_is_open(&loaded) && loaded.location == LOCATION_APPROACH && loaded.map.tiles[APPROACH_LABYRINTH_Y][APPROACH_LABYRINTH_X] == TILE_LABYRINTH_ENTRANCE && loaded.labyrinth_entry_town == LOCATION_TOWN2);
+    walk_return_approach(&loaded);
     remove("saves/savegame_99014.json");
 
     loaded.defeated_bosses |= 1 << LOCATION_FOREST;
@@ -693,13 +674,14 @@ void test_rook_labyrinth(void) {
     loaded.player.y = 12;
     map_set_stillbury_forest_road(&loaded.map, 1);
     action_resolve_player(&loaded, (Action){ACTION_MOVE, TOWN_W - 1, 12});
+    finish_town_departure(&loaded);
     ASSERT("the shared gate enters the crossroads", loaded.location == LOCATION_APPROACH && loaded.enemy_count == 0);
     saved = save_game(&loaded, slot);
     restored = saved && load_game(&g, slot);
     ASSERT("crossroads position survives save and load", restored && g.location == LOCATION_APPROACH && g.approach_route == loaded.approach_route && g.player.x == loaded.player.x && g.player.y == loaded.player.y);
     remove("saves/savegame_99014.json");
-    walk_shortcut_approach(&g);
-    ASSERT("the left arm reaches Town 1's west gate directly", g.location == LOCATION_TOWN && g.player.x == 1 && g.player.y == 12);
+    walk_forest_road(&g);
+    ASSERT("the forest road reaches Town 1's west gate directly", g.location == LOCATION_TOWN && g.player.x == 1 && g.player.y == 12);
     g.map.tiles[19][0] = TILE_TOWN_EXIT;
     g.map.tiles[19][1] = TILE_TOWN_PATH;
     saved = save_game(&g, slot);
@@ -713,8 +695,8 @@ void test_rook_labyrinth(void) {
         loaded.map.tiles[19][1] == TILE_TOWN_FLOOR);
     remove("saves/savegame_99014.json");
     action_resolve_player(&g, (Action){ACTION_MOVE, 0, 12});
-    walk_shortcut_approach(&g);
-    ASSERT("the left arm reaches Town 2's east gate directly", g.location == LOCATION_TOWN2 && g.player.x == TOWN_W - 2 && g.player.y == 12);
+    walk_forest_road(&g);
+    ASSERT("the forest road reaches Town 2's east gate directly", g.location == LOCATION_TOWN2 && g.player.x == TOWN_W - 2 && g.player.y == 12);
     action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 3, 12});
     ASSERT("continuing west enters Town 2 rather than returning to the road",
         g.location == LOCATION_TOWN2 && g.player.x == TOWN_W - 3);
@@ -868,8 +850,8 @@ void test_town_map(void) {
         spawn_x == 20 && spawn_y == 12);
 
     // Exit tiles at north edge
-    ASSERT("exit tile at north center",
-        m.tiles[0][20] == TILE_TOWN_EXIT);
+    ASSERT("former north mountain gate is closed",
+        m.tiles[0][20] == TILE_WALL);
     ASSERT("forest exit at west crossroad",
         m.tiles[12][0] == TILE_TOWN_EXIT);
     ASSERT("the old Tavern loop is gone before Town 2 is discovered",
@@ -910,8 +892,8 @@ void test_town_map(void) {
     map_set_town2_road(&m, 1);
     ASSERT("dungeon exit at east crossroad",
         m.tiles[12][TOWN_W - 1] == TILE_TOWN_EXIT);
-    ASSERT("mountain exit at north crossroad",
-        m.tiles[0][20] == TILE_TOWN_EXIT);
+    ASSERT("former mountain exit is retired",
+        m.tiles[0][20] == TILE_WALL);
 
     // Shop tiles in correct positions
     ASSERT("blacksmith remains in the starting town",
@@ -1080,23 +1062,18 @@ static void test_necromancer_opens_exit(void) {
         ASSERT("boss defeat reveals the exit without clearing regular enemies",
             g.map.tiles[exit.target_y][exit.target_x] == TILE_FOREST_EXIT &&
             g.enemies[1].active && !g.level_cleared);
-        int shortcut_x = -1;
-        int shortcut_y = -1;
+        int shortcuts = 0;
         for (int y = 0; y < MAP_H; y++) {
             for (int x = 0; x < MAP_W; x++) {
-                if (g.map.tiles[y][x] == TILE_FOREST_SHORTCUT) {
-                    shortcut_x = x;
-                    shortcut_y = y;
-                }
+                shortcuts += g.map.tiles[y][x] == TILE_FOREST_SHORTCUT;
             }
         }
-        game_handle_shortcut_prompt_key(&g, SDL_SCANCODE_RETURN, 0);
-        action_resolve_player(&g, (Action){ACTION_MOVE, shortcut_x, shortcut_y});
-        ASSERT("grove shortcut asks before leaving surviving enemies behind", g.location == LOCATION_FOREST && game_shortcut_prompt_active(&g));
-        game_handle_shortcut_prompt_key(&g, SDL_SCANCODE_RETURN, 0);
-        ASSERT("grove shortcut enters the same crossroads with a living enemy behind",
-            g.location == LOCATION_APPROACH &&
-            g.forest_cache[FOREST_BOSS_LEVEL - 1].enemies[1].active &&
+        ASSERT("melee, arrows and spells create no shortcut or discovery prompt", !shortcuts && !game_shortcut_prompt_active(&g));
+        g.player.x = g.map.stairs_down_x;
+        g.player.y = g.map.stairs_down_y;
+        action_resolve_player(&g, exit);
+        ASSERT("the grove exit returns to its town road with surviving enemies cached",
+            g.location == LOCATION_APPROACH && g.forest_cache[FOREST_BOSS_LEVEL - 1].enemies[1].active &&
             !g.forest_cache[FOREST_BOSS_LEVEL - 1].level_cleared);
 
         g.location = LOCATION_FOREST;
@@ -1218,14 +1195,14 @@ void test_forest(void) {
         if (level != FOREST_BOSS_LEVEL) {
             ASSERT("forest stages outside the grove have no boss", bosses == 0);
         } else {
-            ASSERT("forest stage 4 has Necromancer boss",
+            ASSERT("forest stage 5 has Necromancer boss",
                 bosses == 1 && g.enemies[0].type == ENEMY_FOREST_NECROMANCER);
         }
     }
 
-    static const int expected_rooms[FOREST_DEPTH] = {7, 9, 9, 10, 10, 10, 8};
-    static const int expected_entrances[FOREST_DEPTH] = {3, 2, 1, 0, 0, 1, 2};
-    static const int expected_exits[FOREST_DEPTH] = {3, 1, 2, 0, 0, 2, 1};
+    static const int expected_rooms[FOREST_DEPTH] = {7, 9, 9, 10, 10};
+    static const int expected_entrances[FOREST_DEPTH] = {3, 2, 1, 0, 0};
+    static const int expected_exits[FOREST_DEPTH] = {3, 1, 2, 0, 0};
     g.enemy_count = 0;
     for (int level = 1; level <= FOREST_DEPTH; level++) {
         g.level = level;
@@ -1290,10 +1267,10 @@ void test_forest(void) {
         l2y3 < l2y4 && l2y4 < l2y5);
     map_generate_forest(&g.map, FOREST_DEPTH);
     int hub_y, upper_y, lower_y;
-    map_room_center(&g.map.rooms[1], &unused, &hub_y);
-    map_room_center(&g.map.rooms[2], &unused, &upper_y);
-    map_room_center(&g.map.rooms[4], &unused, &lower_y);
-    ASSERT("Stillbury border retains a branching hub",
+    map_room_center(&g.map.rooms[0], &unused, &hub_y);
+    map_room_center(&g.map.rooms[1], &unused, &upper_y);
+    map_room_center(&g.map.rooms[2], &unused, &lower_y);
+    ASSERT("final grove retains upper and lower trails",
         upper_y < hub_y && hub_y < lower_y);
 
     g.location = LOCATION_FOREST;
@@ -1338,20 +1315,13 @@ void test_forest(void) {
     }
     g.defeated_bosses |= 1 << LOCATION_FOREST;
     action_resolve_player(&g, onward);
-    ASSERT("grove exit continues to the remaining forest stages", g.level == FOREST_BOSS_LEVEL + 1);
-    while (g.level < FOREST_DEPTH) {
-        game_descend(&g);
+    ASSERT("grove exit emerges onto the forest town road", g.location == LOCATION_APPROACH);
+    for (int step = 0; g.location == LOCATION_APPROACH && step < APPROACH_W; step++) {
+        action_resolve_player(&g, (Action){ACTION_MOVE, g.player.x - 1, g.player.y});
     }
-    reveal_forest_exit(&g);
-    g.player.x = g.map.stairs_down_x;
-    g.player.y = g.map.stairs_down_y;
-    action_resolve_player(&g, outdoor_exit_action(&g.map));
-    walk_return_approach(&g);
-    ASSERT("full forest route reaches Stillbury", g.location == LOCATION_TOWN2);
-    ASSERT("forest completion arrives beside Stillbury's east forest gate",
-        g.player.x == TOWN_W - 2 && g.player.y == 12 &&
-        g.map.tiles[g.player.y][g.player.x] == TILE_TOWN_PATH &&
-        g.map.tiles[g.player.y][TOWN_W - 1] == TILE_TOWN_EXIT);
+    walk_into_arrived_town(&g);
+    ASSERT("walking west after forest victory reaches Stillbury", g.location == LOCATION_TOWN2);
+    ASSERT("forest completion arrives beside Stillbury's east forest gate", g.player.x == TOWN_W - 2 && g.player.y == 12);
 }
 
 void test_bram_guidance(void) {
@@ -1591,7 +1561,7 @@ static void test_oakhaven_portal_save(void) {
         int y = regions[i] == LOCATION_DUNGEON ? 13 : 2;
         int restored = save_game(&g, slot) && load_game(&loaded, slot);
         ASSERT("OakHaven portal and destination survive save/load",
-            restored && loaded.location == LOCATION_TOWN &&
+            restored && loaded.location == (regions[i] == LOCATION_MOUNTAINS ? LOCATION_DAWNMERE : LOCATION_TOWN) &&
             loaded.map.tiles[y][x] == TILE_PORTAL &&
             loaded.portal_location == regions[i]);
         if (restored) {
@@ -1708,18 +1678,20 @@ static void test_goblin_king_retaliation(void) {
 void test_mountains(void) {
     test_goblin_king_retaliation();
     printf("Goblin Mountains tests:\n");
-    static const int expected_rooms[MOUNTAIN_DEPTH] = {7, 8, 8, 10, 9, 10, 10};
-    static const int expected_entrances[MOUNTAIN_DEPTH] = {0, 2, 1, 0, 0, 1, 2};
-    static const int expected_exits[MOUNTAIN_DEPTH] = {1, 0, 2, 2, 2, 0, 1};
+    static const int expected_rooms[MOUNTAIN_DEPTH] = {7, 8, 8, 9, 10};
+    static const int expected_entrances[MOUNTAIN_DEPTH] = {0, 2, 1, 0, 0};
+    static const int expected_exits[MOUNTAIN_DEPTH] = {1, 0, 2, 2, 2};
     GameState g;
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
+    g.location = LOCATION_DAWNMERE;
+    map_generate_dawnmere(&g.map, &g.player.x, &g.player.y);
     g.player.x = 20;
     g.player.y = 1;
     Action enter = {ACTION_MOVE, 20, 0};
     action_resolve_player(&g, enter);
     walk_town_approach(&g);
-    ASSERT("north OakHaven exit enters mountains", g.location == LOCATION_MOUNTAINS);
+    ASSERT("north Dawnmere exit enters mountains", g.location == LOCATION_MOUNTAINS);
     ASSERT("mountains begin on level one", g.level == 1);
     ASSERT("mountains use red-black terrain",
         g.map.tiles[g.player.y][g.player.x] == TILE_MOUNTAIN_FLOOR);
@@ -1727,8 +1699,8 @@ void test_mountains(void) {
     int origin_x = g.player.x;
     int origin_y = g.player.y;
     game_open_town_portal(&g);
-    ASSERT("mountain portal opens beside north OakHaven entrance",
-        g.location == LOCATION_TOWN && g.portal_active &&
+    ASSERT("mountain portal opens beside north Dawnmere entrance",
+        g.location == LOCATION_DAWNMERE && g.portal_active &&
         g.map.tiles[2][21] == TILE_PORTAL &&
         g.player.x == 20 && g.player.y == 1);
     action_resolve_player(&g, (Action){ACTION_MOVE, 21, 2});
@@ -1758,11 +1730,11 @@ void test_mountains(void) {
                     g.map.tiles[y][x] == TILE_MOUNTAIN_FORTRESS_FLOOR;
             }
         }
-        if (level == 2 || level == 7) {
+        if (level == 2) {
             ASSERT("bridge template contains timber crossings", bridges > 0);
-        } else if (level == 3 || level == 6) {
+        } else if (level == 3) {
             ASSERT("cave template contains underground terrain", caves > 0);
-        } else if (level == 4 || level == 5 || level == 8) {
+        } else if (level == 4 || level == 5) {
             ASSERT("fortress template contains paved strongholds",
                 fortress > 0);
         } else {
@@ -1781,7 +1753,7 @@ void test_mountains(void) {
         if (level != MOUNTAIN_BOSS_LEVEL) {
             ASSERT("mountain approaches have no boss", bosses == 0);
         } else {
-            ASSERT("mountain stage 4 has Goblin King",
+            ASSERT("mountain stage 5 has Goblin King",
                 bosses == 1 &&
                 g.enemies[0].type == ENEMY_MOUNTAIN_GOBLIN_KING);
         }
@@ -1813,17 +1785,11 @@ void test_mountains(void) {
             g.enemies[i].active = 0;
         }
     }
+    g.defeated_bosses |= 1 << LOCATION_MOUNTAINS;
     action_resolve_player(&g, exit);
-    ASSERT("defeating Goblin King permits descent from the peak", g.level == MOUNTAIN_BOSS_LEVEL + 1);
-    while (g.location == LOCATION_MOUNTAINS) {
-        g.player.x = g.map.stairs_down_x;
-        g.player.y = g.map.stairs_down_y;
-        action_resolve_player(&g, outdoor_exit_action(&g.map));
-    }
+    ASSERT("defeating the King permits leaving the summit onto the road", g.location == LOCATION_APPROACH);
     walk_return_approach(&g);
-    ASSERT("remaining mountain stages reach Ridgeshire", g.location == LOCATION_TOWN4);
-    ASSERT("mountain completion arrives at Ridgeshire south road",
-        g.player.x == 20 && g.player.y == TOWN_H - 2);
+    ASSERT("the mountain road returns to Dawnmere", g.location == LOCATION_DAWNMERE && g.player.x == 20 && g.player.y == 1);
 }
 
 void test_return_to_town(void) {

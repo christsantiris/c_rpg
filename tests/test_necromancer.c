@@ -397,14 +397,14 @@ static void test_persistence_and_migration(void) {
     e->frozen_turns = 2;
     e->attack_target_x = 23;
     e->attack_target_y = 16;
-    game.forest_cache[3].valid = 1;
-    game.forest_cache[3].map = game.map;
-    game.forest_cache[3].enemy_count = 1;
-    game.forest_cache[3].enemies[0] = *e;
+    game.forest_cache[FOREST_BOSS_LEVEL - 1].valid = 1;
+    game.forest_cache[FOREST_BOSS_LEVEL - 1].map = game.map;
+    game.forest_cache[FOREST_BOSS_LEVEL - 1].enemy_count = 1;
+    game.forest_cache[FOREST_BOSS_LEVEL - 1].enemies[0] = *e;
     game.necromancer_reward_state = 1;
     int ok = save_game(&game, 99177) && load_game(&loaded, 99177);
     ASSERT("save restores phase, exact frozen warning and both finite waves", ok && loaded.enemies[0].hp == 60 && loaded.enemies[0].move_timer == 2 && loaded.enemies[0].frozen_turns == 2 && loaded.enemies[0].boss_attack == NECRO_ROOTS && loaded.enemies[0].boss_wave_used == 3 && loaded.enemies[0].attack_target_x == 23 && loaded.enemies[0].attack_target_y == 16);
-    ASSERT("save preserves grave consecrations, reward state and cached waves", ok && loaded.map.tiles[y][x] == TILE_NECRO_GRAVE_SPENT && loaded.forest_cache[3].map.tiles[y][x] == TILE_NECRO_GRAVE_SPENT && loaded.forest_cache[3].enemies[0].boss_wave_used == 3 && loaded.necromancer_reward_state == 1);
+    ASSERT("save preserves grave consecrations, reward state and cached waves", ok && loaded.map.tiles[y][x] == TILE_NECRO_GRAVE_SPENT && loaded.forest_cache[FOREST_BOSS_LEVEL - 1].map.tiles[y][x] == TILE_NECRO_GRAVE_SPENT && loaded.forest_cache[FOREST_BOSS_LEVEL - 1].enemies[0].boss_wave_used == 3 && loaded.necromancer_reward_state == 1);
     e->move_timer = -2;
     game.necromancer_reward_state = 2;
     ok = save_game(&game, 99177) && load_game(&loaded, 99177);
@@ -421,6 +421,7 @@ static void test_persistence_and_migration(void) {
     ASSERT("portal revisit preserves consumed waves, pending roots and spent graves", game.location == LOCATION_FOREST && game.enemies[0].move_timer == 2 && game.enemies[0].boss_wave_used == 3 && necromancer_active_graves(&game) == 2);
 
     e = setup();
+    game.level = 4;
     e->hp = 79;
     e->move_timer = 37;
     game.gold = 321;
@@ -440,13 +441,13 @@ static void test_persistence_and_migration(void) {
     game.forest_cache[3].enemies[0].hp = 51;
     game.portal_active = 1;
     game.portal_location = LOCATION_FOREST;
-    game.portal_level = FOREST_BOSS_LEVEL;
+    game.portal_level = 4;
     game.portal_x = 22;
     game.portal_y = 12;
     game.portal_origin_tile = TILE_FOREST_FLOOR;
     ok = make_legacy_save() && load_game(&loaded, 99177);
-    ASSERT("version 124 migration adds graves and visible timing while preserving boss health", ok && loaded.enemies[0].hp == 79 && loaded.forest_cache[3].enemies[0].hp == 51 && loaded.enemies[0].move_timer == 0 && necromancer_active_graves(&loaded) == 3);
-    ASSERT("migration preserves quests, gold, exploration, position and portal landing", loaded.alder_quest_state == 2 && loaded.gold == 321 && map_is_explored(&loaded.map, 22, 12) && loaded.player.x == 23 && loaded.player.y == 16 && loaded.map.tiles[12][22] == TILE_FOREST_FLOOR && loaded.forest_cache[3].map.tiles[12][22] == TILE_FOREST_FLOOR);
+    ASSERT("version 124 migration adds graves and visible timing while preserving boss health", ok && loaded.enemies[0].hp == 79 && loaded.forest_cache[4].enemies[0].hp == 51 && loaded.enemies[0].move_timer == 0 && necromancer_active_graves(&loaded) == 3);
+    ASSERT("migration preserves quests, gold, exploration, position and portal landing", loaded.alder_quest_state == 2 && loaded.gold == 321 && map_is_explored(&loaded.map, 22, 12) && loaded.player.x == 23 && loaded.player.y == 16 && loaded.map.tiles[12][22] == TILE_FOREST_FLOOR && loaded.forest_cache[4].map.tiles[12][22] == TILE_FOREST_FLOOR);
     game.enemies[0].active = 0;
     game.forest_cache[3].enemies[0].active = 0;
     game.defeated_bosses |= 1 << LOCATION_FOREST;

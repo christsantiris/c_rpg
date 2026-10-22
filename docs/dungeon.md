@@ -1,6 +1,7 @@
 # Castle Dungeon
 
-Enter the five-floor dungeon from the east road of OakHaven. Its rooms and
+Enter the five-floor dungeon from Oakhaven's east road or Dawnmere's west road.
+Both entrances always start at floor 1 and proceed forward to floor 5. Its rooms and
 connecting corridors are generated for each new expedition, then cached while
 that expedition is in progress. Backtracking preserves explored rooms, enemies,
 opened doors, and collected treasure. A later expedition generates new maps
@@ -8,7 +9,7 @@ and regular enemies, but a defeated Lich King does not return.
 
 The dungeon targets 6–10 rooms per floor. Descend at the marked stairs and
 ascend to revisit an earlier floor; the first floor's upward stairs return to
-town. Floors 1–4 do not require defeating every enemy before descending. Traps
+the safe approach for the town you entered from. Floors 1–4 do not require defeating every enemy before descending. Traps
 begin hidden, and deeper floors contain more of them. If other regional bosses
 have already fallen, newly generated dungeon enemies become stronger and
 advanced undead can appear earlier.
@@ -94,9 +95,20 @@ Hidden random traps are excluded from the chamber; previously revealed traps
 in older saved chambers retain their state.
 
 Defeating the Lich unseals the pale stone return staircase. Stand on it and use
-the **stairs-up key (`<`, the comma key by default)** to return directly to
-Oakhaven. The stairs-down key (`.`) does not activate it; surviving enemies do
-not block your return.
+the **stairs-up key (`<`, the comma key by default)** to emerge onto the safe
+straight, single-tile cobblestone road between the town gates. The crypt stands
+above the road, reached by a short path. Separate signs beside the town
+entrances read **OAKHAVEN** and **DAWNMERE**. Walk **west to Oakhaven** or **east to
+Dawnmere**. The new town connection stays hidden until the Lich is defeated.
+The stairs-down key (`.`) does not activate the exit; surviving enemies do not
+block it. Entering the crypt from either town always starts at floor 1.
+
+Return-to-town spells and their portals remember your entrance town. Save
+version **167** preserves that entrance and portal destination; older saves
+default to Oakhaven. Older completed dungeon approaches gain the connecting
+road while preserving exploration, position and dropped items. Save version
+**168** narrowed existing road maps; version **169** straightens the road and
+raises the crypt, safely moving any overlapping player or loot onto the paving.
 
 The guaranteed **Cryptblade** grants +2 attack and 10% critical chance and remains
 Warrior-only. Normally it drops on the floor. If the floor loot list is
