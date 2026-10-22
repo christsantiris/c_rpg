@@ -155,7 +155,8 @@ typedef enum {
     LOCATION_SPICE_SHOP,
     LOCATION_APPROACH,
     LOCATION_HEALER,
-    LOCATION_WITCH
+    LOCATION_WITCH,
+    LOCATION_DAWNMERE
 } Location;
 
 typedef struct {
@@ -200,6 +201,8 @@ typedef struct {
     Location   location;
     int approach_route; // Index into the append-only town approach routes, or -1.
     int max_level_reached;
+    Location dungeon_entry_town;
+    Location dungeon_portal_town;
     int max_forest_level_reached;
     Location forest_entry_town;
     Location forest_portal_town;

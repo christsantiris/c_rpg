@@ -1512,6 +1512,8 @@ void game_init(GameState *g) {
     g->level_cleared = 0;
     controls_reset(g->key_bindings);
     g->max_level_reached = 1;
+    g->dungeon_entry_town = LOCATION_TOWN;
+    g->dungeon_portal_town = LOCATION_TOWN;
     g->max_forest_level_reached = 1;
     g->forest_entry_town = LOCATION_TOWN;
     g->forest_portal_town = LOCATION_TOWN;
@@ -3642,6 +3644,7 @@ static void enter_adventure(GameState *g, Location location) {
 }
 
 void game_enter_dungeon(GameState *g) {
+    g->dungeon_entry_town = g->location == LOCATION_DAWNMERE ? LOCATION_DAWNMERE : LOCATION_TOWN;
     game_repair_dungeon_maps(g);
     enter_adventure(g, LOCATION_DUNGEON);
 }
@@ -3889,6 +3892,12 @@ static void place_town_portal(GameState *g) {
     if (!g->portal_active) {
         return;
     }
+    if (g->location == LOCATION_DAWNMERE) {
+        if (g->portal_location == LOCATION_DUNGEON && g->dungeon_portal_town == LOCATION_DAWNMERE) {
+            g->map.tiles[13][2] = TILE_PORTAL;
+        }
+        return;
+    }
     if (g->location == LOCATION_TOWN4) {
         if (g->portal_location == LOCATION_ASHEN) {
             g->map.tiles[RIDGESHIRE_ASHEN_PORTAL_Y][RIDGESHIRE_ASHEN_PORTAL_X] = TILE_PORTAL;
@@ -3924,6 +3933,7 @@ static void place_town_portal(GameState *g) {
         return;
     }
     if (g->location != LOCATION_TOWN ||
+        (g->portal_location == LOCATION_DUNGEON && g->dungeon_portal_town != LOCATION_TOWN) ||
         (g->portal_location == LOCATION_FOREST && g->forest_portal_town != LOCATION_TOWN) ||
         (g->portal_location == LOCATION_MOUNTAINS && g->mountain_portal_town != LOCATION_TOWN) ||
         g->portal_location == LOCATION_DRAGONSPINE ||
@@ -5472,6 +5482,8 @@ static void return_to_town(GameState *g, Location destination) {
     g->location = destination;
     if (destination == LOCATION_CASTLE) {
         map_generate_castle(&g->map, &spawn_x, &spawn_y);
+    } else if (destination == LOCATION_DAWNMERE) {
+        map_generate_dawnmere(&g->map, &spawn_x, &spawn_y);
     } else if (destination == LOCATION_TOWN4) {
         map_generate_town4(&g->map, &spawn_x, &spawn_y);
         map_set_ridgeshire_mountain_road(&g->map, g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
@@ -5490,7 +5502,10 @@ static void return_to_town(GameState *g, Location destination) {
             g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
         place_harbor_road(g);
     }
-    if (destination == LOCATION_CASTLE) {
+    if (destination == LOCATION_DAWNMERE) {
+        g->player.x = 1;
+        g->player.y = 12;
+    } else if (destination == LOCATION_CASTLE) {
         g->player.x = CROWNROAD_X;
         g->player.y = TOWN_H - 2;
     } else if (destination == LOCATION_TOWN3) {
@@ -5559,6 +5574,12 @@ static void enter_return_approach(GameState *g, Location area) {
             g->player.y = g->map.stairs_down_y - dy;
             g->player.last_dx = -dx;
             g->player.last_dy = -dy;
+            if (area == LOCATION_DUNGEON) {
+                g->player.x = g->map.stairs_down_x;
+                g->player.y = g->map.stairs_down_y + 1;
+                g->player.last_dx = 0;
+                g->player.last_dy = 1;
+            }
             char message[MAX_MESSAGE_LEN];
             snprintf(message, sizeof(message), "You emerge onto the path to %s.", approach_town_name(route->town));
             push_message(g, message);
@@ -5569,8 +5590,17 @@ static void enter_return_approach(GameState *g, Location area) {
 
 void game_return_to_approach(GameState *g) {
     Location area = g->location;
+    int lich_exit = area == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH &&
+        (g->defeated_bosses & (1 << LOCATION_DUNGEON));
     game_return_to_town(g);
     enter_return_approach(g, area);
+    if (lich_exit && g->location == LOCATION_APPROACH) {
+        g->player.x = g->map.stairs_down_x;
+        g->player.y = g->map.stairs_down_y + 2;
+        g->player.last_dx = 0;
+        g->player.last_dy = 1;
+        push_message(g, "The road is open: west to Oakhaven, east to Dawnmere.");
+    }
 }
 
 void game_leave_approach_to_town(GameState *g, Location town) {
@@ -5619,7 +5649,9 @@ void game_return_to_town(GameState *g) {
         return;
     }
     Location destination = LOCATION_TOWN;
-    if (g->location == LOCATION_FOREST) {
+    if (g->location == LOCATION_DUNGEON) {
+        destination = g->dungeon_entry_town;
+    } else if (g->location == LOCATION_FOREST) {
         destination = g->forest_entry_town;
     } else if (g->location == LOCATION_SWAMP) {
         destination = g->swamp_entry_town;
@@ -5751,7 +5783,9 @@ void game_open_town_portal(GameState *g) {
     g->portal_active = 1;
     g->portal_level = g->level;
     g->portal_location = g->location;
-    if (g->location == LOCATION_FOREST) {
+    if (g->location == LOCATION_DUNGEON) {
+        g->dungeon_portal_town = g->dungeon_entry_town;
+    } else if (g->location == LOCATION_FOREST) {
         g->forest_portal_town = g->forest_entry_town;
     } else if (g->location == LOCATION_SWAMP) {
         g->swamp_portal_town = g->swamp_entry_town;
@@ -5926,7 +5960,9 @@ void game_use_town_portal(GameState *g) {
         clear_floor_loot(g);
     }
     g->location = g->portal_location;
-    if (g->location == LOCATION_FOREST) {
+    if (g->location == LOCATION_DUNGEON) {
+        g->dungeon_entry_town = g->dungeon_portal_town;
+    } else if (g->location == LOCATION_FOREST) {
         g->forest_entry_town = g->forest_portal_town;
     } else if (g->location == LOCATION_SWAMP) {
         g->swamp_entry_town = g->swamp_portal_town;

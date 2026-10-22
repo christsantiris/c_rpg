@@ -1784,6 +1784,26 @@ static void map_generate_town_square(Map *m) {
     }
 }
 
+void map_generate_dawnmere(Map *m, int *spawn_x, int *spawn_y) {
+    map_generate_town_square(m);
+    for (int y = 10; y <= 14; y++) {
+        m->tiles[y][0] = TILE_TOWN_EXIT;
+    }
+    for (int y = 11; y <= 13; y++) {
+        for (int x = 1; x <= 20; x++) {
+            m->tiles[y][x] = TILE_TOWN_PATH;
+        }
+    }
+    // Reuse the established merchant building footprint.
+    for (int y = 7; y < 11; y++) {
+        for (int x = 7; x < 12; x++) {
+            m->tiles[y][x] = TILE_LOCAL_BUILDING;
+        }
+    }
+    *spawn_x = 20;
+    *spawn_y = 12;
+}
+
 void map_generate_town3(Map *m, int *spawn_x, int *spawn_y) {
     map_generate_town_square(m);
     map_place_town3_frost_gate(m);

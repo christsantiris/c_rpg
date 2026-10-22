@@ -8,10 +8,16 @@
 static inline void walk_return_approach(GameState *g) {
     ASSERT("the area exit returns to the safe approach path", g->location == LOCATION_APPROACH && g->enemy_count == 0);
     int steps = 0;
-    while (g->location == LOCATION_APPROACH && steps++ < APPROACH_LENGTH + APPROACH_BRANCH_LENGTH) {
+    const TownApproach *route = approach_route(g);
+    int dungeon_road = route && route->area == LOCATION_DUNGEON;
+    while (g->location == LOCATION_APPROACH && steps++ < APPROACH_W + APPROACH_BRANCH_LENGTH) {
         int dx = (g->map.stairs_up_x > g->player.x) - (g->map.stairs_up_x < g->player.x);
         int dy = (g->map.stairs_up_y > g->player.y) - (g->map.stairs_up_y < g->player.y);
-        if (g->map.stairs_up_x == g->map.stairs_down_x && dx) {
+        if (dungeon_road) {
+            if (dy) {
+                dx = 0;
+            }
+        } else if (g->map.stairs_up_x == g->map.stairs_down_x && dx) {
             dy = 0;
         } else if (g->map.stairs_up_y == g->map.stairs_down_y && dy) {
             dx = 0;
@@ -58,9 +64,14 @@ static inline void walk_boss_approach(GameState *g) {
 static inline void walk_town_approach(GameState *g) {
     ASSERT("town departure begins on a safe approach path", g->location == LOCATION_APPROACH && g->enemy_count == 0);
     int steps = 0;
-    while (g->location == LOCATION_APPROACH && steps++ < APPROACH_LENGTH) {
+    const TownApproach *route = approach_route(g);
+    int dungeon_road = route && route->area == LOCATION_DUNGEON;
+    while (g->location == LOCATION_APPROACH && steps++ < APPROACH_LENGTH + 4) {
         int dx = (g->map.stairs_down_x > g->player.x) - (g->map.stairs_down_x < g->player.x);
         int dy = (g->map.stairs_down_y > g->player.y) - (g->map.stairs_down_y < g->player.y);
+        if (dungeon_road && dx) {
+            dy = 0;
+        }
         action_resolve_player(g, (Action){ACTION_MOVE, g->player.x + dx, g->player.y + dy});
     }
     ASSERT("walking the approach reaches the enemy area entrance", g->location != LOCATION_APPROACH);

@@ -30,7 +30,10 @@ and many other adventures.
 
 [![Illustrated world map showing the four towns, the Castle of No Return, forests, swamps, deserts, snowy peaks, Ashen Hollow's volcanoes, coastlines, and the Ruined Isle.](docs/images/world-map.png)](docs/images/world-map.png)
 
-An illustrated overview based on the world's town connections.
+An illustrated overview based on the world's town connections. Dawnmere now lies
+east of Oakhaven, reached by the safe road opened after defeating the Lich King.
+The illustration predates Dawnmere; the [expansion plan](docs/five-town-expansion.md)
+shows the intended layout, including the upcoming mountain relocation.
 
 ## Controls
 
@@ -82,6 +85,7 @@ inventory actions.
 
 ## Game Documentation
 
+- [Five-town expansion and Dawnmere](docs/five-town-expansion.md)
 - [Stillbury healer and witch](docs/healer.md)
 - [Regional difficulty and progression](docs/difficulty-scaling.md)
 - [Weapons, armor, and shields](docs/weapons.md)
@@ -172,12 +176,15 @@ To test quest NPCs with every town shortcut already open, run:
 ./tools/debug_shortcuts.sh
 ```
 
-Select **New Game**, enter a name, and choose a class. The forest shortcut
+Select **New Game**, enter a name, and choose a class, or load an existing
+character. The forest shortcut
 between Oakhaven and Stillbury, swamp shortcut between Stillbury and Rosemoor,
-and High Pass between Oakhaven and Ridgeshire are open immediately. This uses
-the existing completion flags for the forest, mountain, and swamp bosses;
+and High Pass between Oakhaven and Ridgeshire are open immediately. The dungeon
+road to Dawnmere is open too. This uses the existing completion flags for the
+Lich King and the forest, mountain, and swamp bosses;
 quests stay unassigned and their NPCs still award their normal rewards.
-The unlocks persist if you save this debug character.
+The unlocks apply to new and loaded characters and persist if you save them.
+Loading keeps the character's existing gold, equipment, inventory and quests.
 
 The launcher builds a separate debug executable in `build/debug-shortcuts`
 and runs it from the project directory. It accepts the existing debug options,
@@ -246,8 +253,10 @@ also be passed directly:
 ./build/conr --weapon bow --gold 500 --scrolls magic-arrow,heal
 ```
 
-Debug executables also accept `--unlock-shortcuts` for new characters.
-As with the loadout options, it does not modify a loaded save.
+Debug executables also accept `--unlock-shortcuts` for new and loaded characters.
+Weapon, gold and scroll overrides still apply only to new characters. Loaded
+characters receive only the shortcut unlocks, and their save files change only
+when you save.
 
 Unknown options, unsupported item names, lists longer than three scrolls, and
 gold values outside the accepted range cause the program to print usage
@@ -260,6 +269,16 @@ Run `make clean` to remove the build directory.
 ### Run the tests
 
 Run `make test` to build and run the unit test executable.
+
+After building the shortcut debug executable, check new and loaded characters
+through the application load handler with:
+
+```sh
+cmake --build build/debug-shortcuts --target test-debug-shortcuts
+```
+
+This check uses temporary saves and verifies that loaded characters can walk to
+Dawnmere without changing their equipment, gold or quests.
 
 ## Dependencies
 
