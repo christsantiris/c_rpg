@@ -289,3 +289,9 @@ The fortified Goblin Mountains entrance is generated with
 `python3 tools/sprites/mountain.py`. It uses pixelkit layers, shaded rock facets,
 stonework and timber at the established 24px tile scale. The runtime BMP spans
 7×6 tiles; its south-facing cave door anchors the approach collision footprint.
+
+The Haunted Forest entrance uses `python3 tools/sprites/forest.py` and the same
+pixelkit pipeline. Its 7×6 tile sprite frames a south-facing woodland passage
+with ancient trunks, clustered foliage, hanging moss and warning charms.
+Comparison and actual-renderer previews are in
+[`docs/art-sources/forest-entrance/README.md`](../../docs/art-sources/forest-entrance/README.md).

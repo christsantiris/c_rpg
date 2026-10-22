@@ -59,3 +59,10 @@ stands beside the west–east Oakhaven–Dawnmere road. Both buildings unlock th
 through road on boss victory. Oakhaven's future northern side region is
 Windscar Highlands (not yet playable). See the live connection diagram in
 [the expansion document](../../five-town-expansion.md).
+
+## Forest adventure revision (save version 172)
+
+Keep the Haunted Forest geographically between Oakhaven and Stillbury. Its new
+haunted-tree entrance stands beside a straight west–east town road, which opens
+after defeating the Necromancer. Both towns enter Forest 1; the adventure has
+five levels and no separate shortcut to the grove.

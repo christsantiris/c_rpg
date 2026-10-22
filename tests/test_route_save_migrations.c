@@ -1,6 +1,7 @@
 #include "test_utils.h"
 #include "shortcut_checks.h"
 #include "game/game.h"
+#include "game/approach.h"
 #include "systems/save_load.h"
 #include "cJSON.h"
 #include <stdlib.h>
@@ -212,22 +213,26 @@ static void test_mountain_migration(void) {
 }
 
 static void test_legacy_region(int forest, int level, int expected) {
+    if (forest) {
+        static const int final_levels[8] = {1, 2, 3, 2, 4, 3, 2, 5};
+        expected = final_levels[level - 1];
+    }
     prepare_legacy_region(forest, level);
     int ok = make_legacy_save(forest ? 76 : 77) && load_game(&loaded, ROUTE_SAVE_SLOT);
     ASSERT("legacy regional save loads without new travel fields", ok);
     if (!ok) {
         return;
     }
-    ASSERT("active old level moves into the seven-stage route", loaded.level == expected && loaded.location == original.location);
+    ASSERT("active old level moves into the current adventure", loaded.level == expected && loaded.location == original.location);
     ASSERT("migration preserves player stats, money, inventory and score", loaded.player.hp == original.player.hp && loaded.player.attack == original.player.attack && loaded.gold == original.gold && loaded.score == original.score && loaded.inventory_count == original.inventory_count);
     ASSERT("migration preserves active position and wounded enemies", loaded.player.x == original.player.x && loaded.player.y == original.player.y && loaded.enemies[0].hp == original.enemies[0].hp);
     ASSERT("migration preserves dropped loot and its position", loaded.floor_item_count == 1 && loaded.floor_items[0].active && loaded.floor_items[0].x == original.floor_items[0].x && loaded.floor_items[0].y == original.floor_items[0].y);
     ASSERT("migration preserves existing rescue progress", loaded.alder_quest_state == 1 && loaded.alder_wardens_rescued == 1 && loaded.innkeeper_quest_state == 1);
     LevelCache *cache = forest ? loaded.forest_cache : loaded.swamp_cache;
-    ASSERT("old end boss snapshot becomes the central encounter", cache[3].valid && cache[3].enemies[0].is_boss && cache[3].enemies[0].hp == (forest ? 57 : 54));
+    ASSERT("old end boss snapshot becomes the central encounter", cache[forest ? 4 : 3].valid && cache[forest ? 4 : 3].enemies[0].is_boss && cache[forest ? 4 : 3].enemies[0].hp == (forest ? 57 : 54));
     if (forest) {
-        ASSERT("old forest hub survives as the outer approach", cache[6].valid && cache[6].enemies[0].hp == (level == 7 ? 56 : 53));
-        ASSERT("forest migration keeps progress within seven stages", loaded.max_forest_level_reached == 7 && !loaded.forest_cache[7].valid);
+        ASSERT("old forest hub survives as the outer approach", cache[1].valid && cache[1].enemies[0].hp == (level == 2 ? 51 : level == 7 ? 56 : 53));
+        ASSERT("forest migration keeps progress within five levels", loaded.max_forest_level_reached == 5 && !loaded.forest_cache[7].valid);
         int misplaced = 0;
         for (int i = 3; i < FOREST_DEPTH; i++) {
             for (int y = 0; y < MAP_H; y++) {
@@ -264,7 +269,7 @@ static void test_split_forest_migration(void) {
             game_ascend(&original);
             game_ascend(&original);
             original.alder_quest_state = 1;
-            original.alder_wardens_rescued = ALDER_WARDEN_STAGE_7 | (rescued ? ALDER_WARDEN_STAGE_5 : 0);
+            original.alder_wardens_rescued = ALDER_WARDEN_STAGE_2 | (rescued ? ALDER_WARDEN_STAGE_4 : 0);
             original.gold = 617;
             original.enemies[0].hp = 9;
             int x;
@@ -282,8 +287,8 @@ static void test_split_forest_migration(void) {
             ASSERT("version 98 forest quest saves migrate", make_legacy_save(98) && load_game(&loaded, ROUTE_SAVE_SLOT));
             ASSERT("moving a captive preserves rescues, money, boss victory, and explored far-side enemies", loaded.alder_quest_state == 1 &&
                 loaded.alder_wardens_rescued == original.alder_wardens_rescued && loaded.gold == 617 &&
-                loaded.defeated_bosses == original.defeated_bosses && loaded.forest_cache[4].valid && loaded.forest_cache[4].enemies[0].hp == 11 &&
-                memcmp(loaded.forest_cache[4].map.rooms, original.forest_cache[4].map.rooms, sizeof(original.map.rooms)) == 0);
+                loaded.defeated_bosses == original.defeated_bosses && loaded.forest_cache[3].valid && loaded.forest_cache[3].enemies[0].hp == 11 &&
+                memcmp(loaded.forest_cache[3].map.rooms, original.forest_cache[4].map.rooms, sizeof(original.map.rooms)) == 0);
             ASSERT("migration removes the obsolete captive from the cached third stage", loaded.forest_cache[2].map.tiles[y][x] == TILE_FOREST_FLOOR);
             if (portal) {
                 ASSERT("migration keeps the third-stage portal anchor", loaded.portal_active && loaded.portal_level == 3 &&
@@ -296,14 +301,13 @@ static void test_split_forest_migration(void) {
             ASSERT("migration keeps the active third-stage enemy damage and removes its old captive", loaded.level == 3 &&
                 loaded.enemies[0].hp == 9 && loaded.map.tiles[y][x] == TILE_FOREST_FLOOR);
             game_descend(&loaded);
-            game_descend(&loaded);
             int wardens = 0;
             for (int row = 0; row < MAP_H; row++) {
                 for (int column = 0; column < MAP_W; column++) {
                     wardens += loaded.map.tiles[row][column] == TILE_FOREST_WARDEN;
                 }
             }
-            ASSERT("only unfinished third rescues appear on the explored fifth stage", loaded.level == 5 && wardens == !rescued &&
+            ASSERT("only unfinished third rescues appear on the explored fourth level", loaded.level == 4 && wardens == !rescued &&
                 loaded.enemies[0].hp == 11 && loaded.alder_wardens_rescued == original.alder_wardens_rescued);
             ASSERT("migrated forest quest rewrites and reloads successfully", save_game(&loaded, ROUTE_SAVE_SLOT) && load_game(&reloaded, ROUTE_SAVE_SLOT) &&
                 reloaded.alder_wardens_rescued == loaded.alder_wardens_rescued);
@@ -460,9 +464,9 @@ static void test_near_side_quest_migration(void) {
                 loaded.alder_quest_state == 1 && loaded.dain_quest_state == 1 && loaded.gold == 617 && loaded.defeated_bosses == original.defeated_bosses);
             LevelCache *saved = forest ? loaded.forest_cache : loaded.mountain_cache;
             ASSERT("quest relocation keeps cached enemy health, exploration and room geometry", ok &&
-                saved[1].enemies[0].hp == 17 && saved[forest ? 5 : 2].enemies[0].hp == 17 &&
-                memcmp(saved[forest ? 5 : 2].map.explored, cache[5].map.explored, sizeof(saved[forest ? 5 : 2].map.explored)) == 0 &&
-                memcmp(saved[forest ? 5 : 2].map.rooms, cache[5].map.rooms, sizeof(saved[forest ? 5 : 2].map.rooms)) == 0);
+                saved[1].enemies[0].hp == 17 && saved[2].enemies[0].hp == 17 &&
+                memcmp(saved[2].map.explored, cache[5].map.explored, sizeof(saved[2].map.explored)) == 0 &&
+                memcmp(saved[2].map.rooms, cache[5].map.rooms, sizeof(saved[2].map.rooms)) == 0);
             if (forest) {
                 ASSERT("obsolete cached captives and portal underlays become forest floor", saved[1].map.tiles[y][x + 1] == TILE_FOREST_FLOOR &&
                     (!portal || (loaded.portal_level == 2 && loaded.portal_origin_tile == TILE_FOREST_FLOOR)));
@@ -479,7 +483,7 @@ static void test_near_side_quest_migration(void) {
                 ASSERT("obsolete captive hidden under active loot is removed without losing the item", loaded.floor_items[0].active &&
                     loaded.floor_items[0].underlying_tile == TILE_FOREST_FLOOR && loaded.map.tiles[y][x] == TILE_ITEM);
             }
-            for (int stage = 3; stage <= (forest ? 7 : 2); stage++) {
+            for (int stage = 3; stage <= 2; stage++) {
                 game_descend(&loaded);
             }
             int objectives = 0;
@@ -491,12 +495,8 @@ static void test_near_side_quest_migration(void) {
             for (int enemy = 0; enemy < loaded.enemy_count; enemy++) {
                 objectives += loaded.enemies[enemy].active && loaded.enemies[enemy].dain_fragment == DAIN_FRAGMENT_ARCHER;
             }
-            ASSERT("a collected first objective does not respawn on relocated stage seven", loaded.level == (forest ? 7 : 2) && !objectives);
-            if (forest) {
-                game_ascend(&loaded);
-            } else {
-                game_descend(&loaded);
-            }
+            ASSERT("a collected first objective does not respawn on new level two", loaded.level == 2 && !objectives);
+            game_descend(&loaded);
             objectives = 0;
             for (int row = 0; row < MAP_H; row++) {
                 for (int column = 0; column < MAP_W; column++) {
@@ -508,10 +508,10 @@ static void test_near_side_quest_migration(void) {
             }
             int enemies = loaded.enemy_count;
             game_refresh_quest_encounters(&loaded);
-            ASSERT("a missing second objective appears once on cached stage six without resetting enemies", loaded.level == (forest ? 6 : 3) &&
+            ASSERT("a missing second objective appears once on cached level three without resetting enemies", loaded.level == 3 &&
                 objectives == 1 && loaded.enemies[0].hp == 17 && loaded.enemy_count == enemies);
             ASSERT("relocated objectives and partial progress survive another save", save_game(&loaded, ROUTE_SAVE_SLOT) &&
-                load_game(&reloaded, ROUTE_SAVE_SLOT) && reloaded.level == (forest ? 6 : 3) &&
+                load_game(&reloaded, ROUTE_SAVE_SLOT) && reloaded.level == 3 &&
                 reloaded.alder_wardens_rescued == 1 && reloaded.dain_map_fragments == 1 && reloaded.enemy_count == enemies);
         }
     }
@@ -613,6 +613,75 @@ static void test_mountain_climb_migration(void) {
     remove("saves/savegame_99123.json");
 }
 
+static void test_forest_adventure_migration(void) {
+    game_init(&original);
+    original.location = LOCATION_FOREST;
+    original.level = 2;
+    original.forest_entry_town = LOCATION_TOWN2;
+    original.forest_portal_town = LOCATION_TOWN;
+    original.alder_quest_state = 1;
+    original.alder_wardens_rescued = ALDER_WARDEN_STAGE_2;
+    original.gold = 617;
+    original.max_forest_level_reached = 7;
+    for (int i = 0; i < 7; i++) {
+        LevelCache *cache = &original.forest_cache[i];
+        map_generate_forest(&cache->map, i == 3 ? FOREST_BOSS_LEVEL : 2);
+        cache->valid = 1;
+        cache->enemy_count = 1;
+        int x;
+        int y;
+        map_room_center(&cache->map.rooms[0], &x, &y);
+        cache->enemies[0] = (Enemy){.active = 1, .x = x + 1, .y = y, .hp = 50 + i, .max_hp = 100,
+            .type = i == 3 ? ENEMY_FOREST_NECROMANCER : ENEMY_BLIGHTED_WOLF, .is_boss = i == 3,
+            .attack_phase = i == 3 ? 1 : 0, .move_timer = i == 3 ? 2 : 0, .boss_wave_used = i == 3 ? 3 : 0};
+        map_mark_explored(&cache->map, x, y);
+    }
+    original.map = original.forest_cache[1].map;
+    original.enemy_count = 1;
+    original.enemies[0] = original.forest_cache[1].enemies[0];
+    map_room_center(&original.map.rooms[0], &original.player.x, &original.player.y);
+    original.floor_item_count = 1;
+    original.floor_items[0] = (FloorItem){.active = 1, .x = original.player.x, .y = original.player.y,
+        .underlying_tile = TILE_FOREST_SHORTCUT, .item = item_make_health_potion()};
+    original.map.tiles[original.player.y][original.player.x] = TILE_ITEM;
+    original.portal_active = 1;
+    original.portal_location = LOCATION_FOREST;
+    original.portal_level = 7;
+    original.portal_x = original.forest_cache[6].map.stairs_up_x;
+    original.portal_y = original.forest_cache[6].map.stairs_up_y;
+    original.portal_origin_tile = TILE_FOREST_SHORTCUT;
+    original.forest_cache[6].map.tiles[original.portal_y][original.portal_x] = TILE_PORTAL;
+    snprintf(original.dialogue_speaker, MAX_SPEAKER_LEN, "Take shortcut?");
+    original.dialogue_active = 1;
+    int ok = make_legacy_save(171) && load_game(&loaded, ROUTE_SAVE_SLOT);
+    ASSERT("version 171 forest migration keeps character and rescue progress", ok && loaded.level == 2 && loaded.gold == 617 && loaded.alder_wardens_rescued == ALDER_WARDEN_STAGE_2 && loaded.alder_quest_state == 1 && loaded.forest_entry_town == LOCATION_TOWN2);
+    ASSERT("merging outer trails preserves distinct active and portal snapshots", loaded.enemies[0].hp == 51 && loaded.portal_level == 3 && loaded.forest_cache[2].enemies[0].hp == 56 && loaded.forest_portal_town == LOCATION_TOWN);
+    ASSERT("the Necromancer moves to five with damage, phases and waves intact", loaded.forest_cache[4].valid && loaded.forest_cache[4].enemies[0].hp == 53 && loaded.forest_cache[4].enemies[0].attack_phase == 1 && loaded.forest_cache[4].enemies[0].move_timer == 2 && loaded.forest_cache[4].enemies[0].boss_wave_used == 3);
+    ASSERT("retired shortcut prompts and loot underlays migrate without losing loot", !loaded.dialogue_active && loaded.floor_items[0].active && loaded.floor_items[0].underlying_tile == TILE_FOREST_FLOOR && loaded.map.tiles[loaded.player.y][loaded.player.x] == TILE_ITEM && loaded.portal_origin_tile == TILE_FOREST_FLOOR);
+    ASSERT("active map exploration and saved coordinates survive the merge", loaded.player.x == original.player.x && loaded.player.y == original.player.y && map_is_explored(&loaded.map, loaded.player.x, loaded.player.y));
+    ASSERT("the new forest save format does not remap a second time", save_game(&loaded, ROUTE_SAVE_SLOT) && load_game(&reloaded, ROUTE_SAVE_SLOT) && reloaded.level == 2 && reloaded.portal_level == 3 && reloaded.forest_cache[4].enemies[0].hp == 53);
+    game_use_town_portal(&reloaded);
+    ASSERT("the old outer-trail portal still restores its map and landing", reloaded.location == LOCATION_FOREST && reloaded.level == 3 && reloaded.player.x == original.portal_x && reloaded.player.y == original.portal_y && reloaded.enemies[0].hp == 56);
+
+    game_init(&original);
+    original.defeated_bosses |= 1 << LOCATION_FOREST;
+    approach_enter(&original, 0, 12);
+    // A player on the former crossroads arm can be saved off the new road.
+    original.player.x = 55;
+    original.player.y = 31;
+    map_mark_explored(&original.map, 55, 31);
+    original.floor_item_count = 1;
+    original.floor_items[0] = (FloorItem){.active = 1, .x = 54, .y = 31,
+        .underlying_tile = TILE_FOREST_FLOOR, .item = item_make_health_potion()};
+    original.map.tiles[31][54] = TILE_ITEM;
+    ok = make_legacy_save(171) && load_game(&loaded, ROUTE_SAVE_SLOT);
+    int x;
+    int y;
+    ASSERT("old crossroads saves gain the boss-unlocked forest road", ok && loaded.location == LOCATION_APPROACH && approach_forest_town_exit(&loaded, &x, &y) && !approach_boss_exit(&loaded, &x, &y));
+    ASSERT("crossroads migration preserves exploration and accessible player and loot positions", loaded.player.x == 55 && loaded.player.y == 31 && map_is_explored(&loaded.map, 55, 31) && map_is_walkable(&loaded.map, 55, 31) && loaded.floor_items[0].active && loaded.floor_items[0].underlying_tile == TILE_TOWN_FLOOR && loaded.map.tiles[31][54] == TILE_ITEM);
+    remove("saves/savegame_99123.json");
+}
+
 void test_route_save_migrations(void) {
     printf("Forest and swamp save migration tests:\n");
     ASSERT("route migration test slot is unused", !save_exists(ROUTE_SAVE_SLOT));
@@ -635,7 +704,7 @@ void test_route_save_migrations(void) {
         int ok = make_legacy_save(forest ? 76 : 77) && load_game(&loaded, ROUTE_SAVE_SLOT);
         ASSERT("old portal save loads and keeps its original town", ok && loaded.location == (forest ? LOCATION_TOWN : LOCATION_TOWN2) && loaded.portal_active);
         game_use_town_portal(&loaded);
-        ASSERT("old boss portal restores the central level and casting position", ok && loaded.level == 4 && loaded.player.x == original.portal_x && loaded.player.y == original.portal_y);
+        ASSERT("old boss portal restores the central level and casting position", ok && loaded.level == (forest ? 5 : 4) && loaded.player.x == original.portal_x && loaded.player.y == original.portal_y);
         ASSERT("boss victory survives migration and reveals the central shortcut", ok && loaded.defeated_bosses == original.defeated_bosses);
         remove("saves/savegame_99123.json");
     }
@@ -650,11 +719,12 @@ void test_route_save_migrations(void) {
     map_generate_forest(&original.forest_cache[3].map, FOREST_BOSS_LEVEL);
     int ok = make_legacy_save(77) && load_game(&loaded, ROUTE_SAVE_SLOT);
     ASSERT("version 77 town save loads with default swamp travel anchors", ok && loaded.swamp_entry_town == LOCATION_TOWN2 && loaded.swamp_portal_town == LOCATION_TOWN2);
-    ASSERT("swamp migration leaves the already migrated forest unchanged", ok && loaded.forest_entry_town == LOCATION_TOWN2 && loaded.forest_portal_town == LOCATION_TOWN2 && loaded.forest_cache[3].valid && memcmp(loaded.forest_cache[3].map.rooms, original.forest_cache[3].map.rooms, sizeof(original.forest_cache[3].map.rooms)) == 0 && loaded.defeated_bosses == original.defeated_bosses);
+    ASSERT("forest boss cache advances while swamp travel anchors remain unchanged", ok && loaded.forest_entry_town == LOCATION_TOWN2 && loaded.forest_portal_town == LOCATION_TOWN2 && loaded.forest_cache[4].valid && memcmp(loaded.forest_cache[4].map.rooms, original.forest_cache[3].map.rooms, sizeof(original.forest_cache[3].map.rooms)) == 0 && loaded.defeated_bosses == original.defeated_bosses);
     remove("saves/savegame_99123.json");
     test_mountain_migration();
     test_mountain_climb_migration();
     test_split_forest_migration();
+    test_forest_adventure_migration();
     test_split_mountain_migration();
     test_near_side_quest_migration();
 }

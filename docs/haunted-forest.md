@@ -1,11 +1,16 @@
 # Haunted Forest
 
-The Haunted Forest is a seven-stage adventure connecting OakHaven and Stillbury.
-OakHaven's west forest gate enters stage 1; Stillbury's main east gate enters
-stage 7. Either approach crosses three stages of increasing difficulty before
-meeting the Necromancer on stage 4. Beyond the grove, the remaining three
-stages become easier. Generated maps and enemies are cached independently from
-other regions and retained when entering from either town.
+The Haunted Forest is a **five-level adventure** beside a straight, one-tile
+cobblestone road between **Oakhaven (east)** and **Stillbury (west)**. A large
+haunted-tree entrance stands north of that road. Leaving either town first
+enters the safe approach; entering the forest always starts at **Forest 1**.
+Its interior never plays backward from Stillbury. Ordinary backtracking within
+an expedition remains available.
+
+The Necromancer occupies **Forest 5**. Defeat him, collect his reward, and use
+the normal grove exit to emerge onto the road. Walk **west to Stillbury** or
+**east to Oakhaven**. Victory permanently opens the through road. There is no
+forest shortcut marker, boss branch, or shortcut confirmation menu.
 
 Forest maps use rounded clearings connected by wandering trails with loops
 and false branches. Stage passages vary between the east, west, north, and
@@ -13,15 +18,13 @@ south edges. The incoming passage remains open for retreat. Reaching the
 glowing ancient landmark reveals the onward passage and hidden trails in
 either direction. Defeating every regular enemy is never required.
 
-| Stage | Region | Layout | Difficulty tier |
+| Level | Region | Layout | Difficulty tier |
 | --- | --- | --- | --- |
 | 1 | Gloomwood Border | Two-route fork with a middle crossover | 1 |
-| 2 | Spiderweb Thicket | Three pockets wrapped around a central trail | 2 |
-| 3 | Dark Elf Territory | Three braided lanes with diagonal trails | 4 |
-| 4 | Necromancer's Grove | Twin approaches narrowing into the boss grove | 8 |
-| 5 | Sunken Grove | Twin approaches around corrupted clearings | 4 |
-| 6 | Wurmwood | Interlocking trails with a false southern branch | 2 |
-| 7 | Stillbury Border | Central hub splitting into three branches | 1 |
+| 2 | Spiderweb Thicket | Three pockets around a central trail | 2 |
+| 3 | Dark Elf Territory | Braided lanes and hidden trails | 4 |
+| 4 | Sunken Grove | Corrupted clearings and looping trails | 5 |
+| 5 | Necromancer's Grove | Trails narrowing into the final boss grove | 8 |
 
 Difficulty controls the regular enemy roster, enemy count, and trap count.
 Clearing dimensions vary when a stage is first generated. Completing other
@@ -83,18 +86,10 @@ beside the reliquary or press `P` while standing on it; a full inventory leaves
 it available. Claiming it once prevents later sale or dropping from producing
 a replacement. The reward does not depend on consecrating the graves.
 
-Defeating him displays a shortcut discovery prompt until a fresh press of Enter
-acknowledges it. A separate marked trail appears beside the defeated boss,
-matching the swamp and mountains. That shortcut returns onto the boss arm of the forest crossroads. Follow its signs to either
-town, or turn back to the boss chamber. Players may instead
-cross the remaining three stages to reach the same town. Surviving enemies do
-not block either route.
-
-Boss victory opens both side arms of one + shaped crossroads outside each town.
-From the town gate, the regular forest is straight, the next town is left, and
-the Necromancer's chamber is right. The side arms remain hidden before victory.
-Each destination is reached directly from its arm, without a route menu or a
-second connecting path. Returning from the boss uses the same crossroads.
+Defeating him reveals the normal grove exit, even with ordinary enemies still
+alive. Use it when ready to leave: the return point is on the safe town road.
+The entrance sprite and road occupy the same coordinates from either town;
+travel direction stays west toward Stillbury and east toward Oakhaven.
 
 Return to Town returns to the expedition's entry town. Its portal remembers
 that town, the exact forest stage, and casting position, even if the forest is
@@ -104,27 +99,29 @@ subsequently entered from the other town.
 
 Speak to Alder with `T` in **Stillbury's Inn** to accept **The Lost Wardens**.
 Return to him there for 70 gold and 500 score once all three wardens are rescued.
-The quest places captives in guarded groves on **stages 7, 6, and 5**. Enter
-Stillbury's east forest gate to encounter all three before the stage-4
-Necromancer. From Oakhaven, the wardens appear after crossing his grove. Their
-hunting parties are led by a Giant Spider, Dark Elf, and
-Forest Troll. Defeat or evade the guards, then stand beside a warden and press
-`T` to rescue them. A full stage clear is never required. Accepting the quest
-starts a fresh forest expedition, while a previously defeated Necromancer
-remains dead and unlocked shortcuts stay open.
-After defeating the Necromancer, take the grove shortcut to Oakhaven and the
-unlocked town road back to Stillbury, or fight through stages 3, 2, and 1.
+The quest places captives in guarded groves on **Forest 2, 3 and 4**. Both
+entrances encounter all three before the level-5 Necromancer. Their hunting
+parties are led by a Giant Spider, Dark Elf and Forest Troll. Defeat or evade
+the guards, then stand beside a warden and press `T` to rescue them. A full
+level clear is never required. Accepting the quest starts a fresh forest
+expedition while preserving a previously defeated Necromancer and open road.
+Retreat through Forest 1, use Return to Town, or defeat the Necromancer and
+walk west along the road to return to Alder.
 
 ## Save Compatibility
 
-Older saves migrate automatically when loaded. The old final boss stage moves
-to stage 4, and saved maps and portal destinations move with the route. Warden
-placements update to stages **7, 6, and 5** while retaining rescue progress.
-Version **113** removes obsolete captives on stages 1–4, including loot and
-portal underlays, without resetting explored maps, enemy damage, or coordinates.
-Collected rescue bits keep their identity; unfinished rescues appear on the new
-stages when visited. Boss victories and shortcut unlocks remain intact. Saving
-writes the current format, including the expedition's entry town and portal anchor.
+Save version **172** moves the old level-4 boss to level 5, old level 5 to level
+4, and merges the former outer trails into levels 2 and 3. Occupied and
+portal-linked snapshots take priority when trails merge. Existing older saves
+first pass through their historical migrations. The rescue bits retain their
+identities: old Forest 7, 6 and 5 objectives now belong to 2, 3 and 4.
+
+Player stats, money, rescued wardens, boss victory, active loot, exploration,
+portal anchors and coordinates remain intact. The boss retains health,
+attack phases, consumed grave waves and reward state. Retired shortcut tiles
+and underlays become normal forest floor; their pending travel prompts close.
+Old approach crossroads and forest roads migrate onto the new town road.
+Saving again does not repeat these migrations.
 
 Version **125** adds the grave patches to active and cached living encounters
 without regenerating the map or resetting boss health, enemy deaths, loot,

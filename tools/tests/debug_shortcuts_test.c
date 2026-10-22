@@ -85,6 +85,24 @@ int main(void) {
         assert(!approach_dungeon_town_exit(game, &x, &y));
         assert(load_game(game, 2) && approach_dungeon_town_exit(game, &x, &y));
     }
+    for (int stillbury = 0; stillbury < 2; stillbury++) {
+        game_init(game);
+        if (stillbury) {
+            game_enter_town2(game);
+        }
+        assert(approach_enter(game, stillbury ? TOWN_W - 1 : 0, 12));
+        int x;
+        int y;
+        assert(!approach_forest_town_exit(game, &x, &y));
+        assert(save_game(game, 1));
+        assert(debug_parse_args(&debug_config, 6, arguments));
+        handle_slot_result(SLOT_SELECTED, &slots, 0, &screen, game, &renderer, &viewport, &landing);
+        assert(approach_forest_town_exit(game, &x, &y));
+        for (int step = 0; game->location == LOCATION_APPROACH && step < APPROACH_W; step++) {
+            action_resolve_player(game, (Action){ACTION_MOVE, game->player.x + (stillbury ? 1 : -1), y});
+        }
+        assert(game->location == (stillbury ? LOCATION_TOWN : LOCATION_TOWN2));
+    }
     game_init(game);
     assert(debug_parse_args(&debug_config, 6, arguments));
     debug_apply_loadout(game, &debug_config);
@@ -107,6 +125,6 @@ int main(void) {
     rmdir(temporary);
     free(project);
     free(assets);
-    puts("PASS: new and loaded debug characters can walk to Dawnmere and Ridgeshire; normal saves stay gated and loaded equipment/gold/quests are preserved.");
+    puts("PASS: new and loaded debug characters can walk to Dawnmere, Ridgeshire and both forest towns; normal saves stay gated and loaded equipment/gold/quests are preserved.");
     return 0;
 }

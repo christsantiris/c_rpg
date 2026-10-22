@@ -806,7 +806,7 @@ static void map_generate_outdoor(Map *m, int level, OutdoorSide entrance_side, O
 }
 
 int map_forest_difficulty(int level) {
-    static const int difficulty[FOREST_DEPTH] = {1, 2, 4, 8, 4, 2, 1};
+    static const int difficulty[FOREST_DEPTH] = {1, 2, 4, 5, 8};
     if (level < 1 || level > FOREST_DEPTH) {
         return 1;
     }
@@ -814,7 +814,7 @@ int map_forest_difficulty(int level) {
 }
 
 void map_generate_forest(Map *m, int level) {
-    static const int templates[FOREST_DEPTH] = {0, 1, 2, 7, 4, 5, 3};
+    static const int templates[FOREST_DEPTH] = {0, 1, 2, 4, 7};
     static const OutdoorSide entrances[] = {
         OUTDOOR_SIDE_WEST,
         OUTDOOR_SIDE_SOUTH,

@@ -878,7 +878,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 171);
+    cJSON_AddNumberToObject(root, "save_version", 172);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -1884,7 +1884,7 @@ static void remove_misplaced_map_bearers(Enemy *enemies, int count, int level) {
 }
 
 static void migrate_near_side_quests(GameState *g) {
-    for (int i = 0; i < FOREST_DEPTH; i++) {
+    for (int i = 0; i < 7; i++) {
         if (i < 4 && g->forest_cache[i].valid) {
             remove_legacy_wardens(&g->forest_cache[i].map);
         }
@@ -2125,13 +2125,92 @@ static int migrate_mountain_climb(GameState *g) {
     return 1;
 }
 
+static int forest_warden_pending(const GameState *g, int level) {
+    int bit = level >= 2 && level <= 4 ? 1 << (level - 2) : 0;
+    return bit && g->alder_quest_state == 1 && !(g->alder_wardens_rescued & bit);
+}
+
+static void retire_forest_markers(Map *map, int keep_warden) {
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            TileType tile = map->tiles[y][x];
+            if (tile == TILE_FOREST_SHORTCUT || (!keep_warden && tile == TILE_FOREST_WARDEN)) {
+                map->tiles[y][x] = TILE_FOREST_FLOOR;
+            }
+        }
+    }
+}
+
+static int migrate_forest_adventure(GameState *g) {
+    int levels[7] = {1, 2, 3, 5, 4, 3, 2};
+    int active = g->location == LOCATION_FOREST ? g->level - 1 : -1;
+    int portal = g->portal_active && g->portal_location == LOCATION_FOREST ? g->portal_level - 1 : -1;
+    if (active >= 0 && active < 7 && portal >= 0 && portal < 7 && active != portal && levels[active] == levels[portal]) {
+        levels[portal] = levels[portal] == 2 ? 3 : 2;
+    }
+    LevelCache *old = malloc(MAX_REGION_DEPTH * sizeof(*old));
+    if (!old) {
+        return 0;
+    }
+    memcpy(old, g->forest_cache, MAX_REGION_DEPTH * sizeof(*old));
+    memset(g->forest_cache, 0, sizeof(g->forest_cache));
+    for (int i = 0; i < 7; i++) {
+        if (old[i].valid) {
+            g->forest_cache[levels[i] - 1] = old[i];
+        }
+    }
+    // Linked and occupied snapshots win when the old outer trails merge.
+    if (portal >= 0 && portal < 7 && old[portal].valid) {
+        g->forest_cache[levels[portal] - 1] = old[portal];
+    }
+    if (active >= 0 && active < 7) {
+        g->level = levels[active];
+        if (old[active].valid) {
+            g->forest_cache[g->level - 1] = old[active];
+        }
+        int keep = forest_warden_pending(g, g->level);
+        retire_forest_markers(&g->map, keep);
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->underlying_tile == TILE_FOREST_SHORTCUT || (!keep && item->underlying_tile == TILE_FOREST_WARDEN)) {
+                item->underlying_tile = TILE_FOREST_FLOOR;
+            }
+        }
+        if (strcmp(g->dialogue_speaker, "Shortcut found") == 0 || strcmp(g->dialogue_speaker, "Take shortcut?") == 0) {
+            g->dialogue_active = 0;
+        }
+    }
+    if (g->portal_location == LOCATION_FOREST && g->portal_level >= 1 && g->portal_level <= 7) {
+        g->portal_level = levels[g->portal_level - 1];
+        if (g->portal_origin_tile == TILE_FOREST_SHORTCUT ||
+            (!forest_warden_pending(g, g->portal_level) && g->portal_origin_tile == TILE_FOREST_WARDEN)) {
+            g->portal_origin_tile = TILE_FOREST_FLOOR;
+        }
+    }
+    for (int i = 0; i < FOREST_DEPTH; i++) {
+        if (g->forest_cache[i].valid) {
+            retire_forest_markers(&g->forest_cache[i].map, forest_warden_pending(g, i + 1));
+        }
+    }
+    free(old);
+    int reached = 1;
+    for (int i = 0; i < 7 && i < g->max_forest_level_reached; i++) {
+        if (levels[i] > reached) {
+            reached = levels[i];
+        }
+    }
+    g->max_forest_level_reached = reached;
+    approach_refresh_forest(g);
+    return 1;
+}
+
 static int migrate_region_routes(GameState *g, Location region) {
     static const int forest_levels[8] = {1, 2, 3, 7, 5, 6, 7, 4};
     static const int swamp_levels[5] = {1, 2, 5, 3, 4};
     int forest = region == LOCATION_FOREST;
     int mountain = region == LOCATION_MOUNTAINS;
     int old_depth = forest || mountain ? 8 : 5;
-    int depth = forest ? FOREST_DEPTH : (mountain ? 7 : SWAMP_DEPTH);
+    int depth = forest || mountain ? 7 : SWAMP_DEPTH;
     const int *levels = forest || mountain ? forest_levels : swamp_levels;
     LevelCache *cache = forest ? g->forest_cache : (mountain ? g->mountain_cache : g->swamp_cache);
     int *max_level = forest ? &g->max_forest_level_reached :
@@ -4795,6 +4874,10 @@ int load_game(GameState *g, int slot) {
         g->map.tiles[GUILD_SELENE_Y][GUILD_SELENE_X] = TILE_NPC_SELENE;
     }
     if (save_version < 171 && !migrate_mountain_climb(g)) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    if (save_version < 172 && !migrate_forest_adventure(g)) {
         cJSON_Delete(root);
         return 0;
     }

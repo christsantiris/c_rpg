@@ -23,7 +23,7 @@ A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explo
 
 *The Castle of No Return* is a C/SDL roguelike adventure with turn-based combat and a
 retro pixel-art style. Choose a Warrior, Mage, or Rogue, prepare in town, and
-explore a five-floor undead dungeon, the seven-stage haunted forest, a five-level goblin mountain climb
+explore a five-floor undead dungeon, the five-level haunted forest, a five-level goblin mountain climb
 and many other adventures.
 
 ## World Map
@@ -179,7 +179,7 @@ To test quest NPCs with every town shortcut already open, run:
 ```
 
 Select **New Game**, enter a name, and choose a class, or load an existing
-character. The forest shortcut
+character. The forest road
 between Oakhaven and Stillbury, swamp shortcut between Stillbury and Rosemoor,
 and the mountain road between Dawnmere and Ridgeshire are open immediately.
 The dungeon road from Oakhaven to Dawnmere is open too. This uses the existing completion flags for the

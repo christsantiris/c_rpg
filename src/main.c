@@ -327,6 +327,7 @@ static void debug_unlock_town_shortcuts(GameState *game) {
     }
     approach_refresh_fork(game);
     approach_refresh_dungeon(game);
+    approach_refresh_forest(game);
     approach_refresh_mountains(game);
     push_message(game, "Debug: all town shortcuts unlocked.");
 }

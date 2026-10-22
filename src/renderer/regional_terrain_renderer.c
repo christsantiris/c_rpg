@@ -148,6 +148,10 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
             line1 = "WEST: OAKHAVEN / EAST: DAWNMERE";
             line2 = "CRYPT ENTRANCE: DUNGEON STAGE 1";
         }
+        if (approach_forest_town_exit(g, &x, &y)) {
+            line1 = "WEST: STILLBURY / EAST: OAKHAVEN";
+            line2 = "FOREST ENTRANCE: ALWAYS LEVEL 1";
+        }
         if (approach_mountain_town_exit(g, &x, &y)) {
             line1 = "NORTH: RIDGESHIRE / SOUTH: DAWNMERE";
             line2 = "MOUNTAIN ENTRANCE: ALWAYS LEVEL 1";
@@ -231,7 +235,7 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
     } else if (g->location == LOCATION_FOREST) {
         title = "HAUNTED FOREST TRAILS";
         line1 = "PATHS LINK THE FOREST CLEARINGS";
-        line2 = "GROVE BOSS GUARDS THE TOWN SHORTCUT";
+        line2 = "NECROMANCER GUARDS THE TOWN ROAD";
         if (g->level == FOREST_BOSS_LEVEL) {
             title = "THE NECROMANCER'S GROVE";
             line1 = "CONSECRATE GRAVES TO STOP WAVES";

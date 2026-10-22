@@ -41,6 +41,7 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->labyrinth_texture = load_sprite_texture(sdl,
         "assets/images/labyrinth-entrance.bmp");
     r->dungeon_entrance_texture = load_sprite_texture(sdl, "assets/images/dungeon-entrance.bmp");
+    r->forest_entrance_texture = load_sprite_texture(sdl, "assets/images/forest-entrance.bmp");
     r->mountain_entrance_texture = load_sprite_texture(sdl, "assets/images/mountain-entrance.bmp");
     for (int i = 0; i <= TOWN_EXIT_GLASSDEEP; i++) {
         r->town_gate_textures[i] = NULL;
@@ -153,6 +154,10 @@ void renderer_free(Renderer *r) {
     if (r->labyrinth_texture) {
         SDL_DestroyTexture(r->labyrinth_texture);
         r->labyrinth_texture = NULL;
+    }
+    if (r->forest_entrance_texture) {
+        SDL_DestroyTexture(r->forest_entrance_texture);
+        r->forest_entrance_texture = NULL;
     }
     if (r->mountain_entrance_texture) {
         SDL_DestroyTexture(r->mountain_entrance_texture);
