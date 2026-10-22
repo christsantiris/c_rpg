@@ -638,7 +638,8 @@ typedef enum {
     TILE_APPROACH_TOWN,
     TILE_APPROACH_AREA,
     TILE_APPROACH_SHORTCUT,
-    TILE_APPROACH_BOSS
+    TILE_APPROACH_BOSS,
+    TILE_NPC_HEALER
 } TileType;
 
 typedef struct {
