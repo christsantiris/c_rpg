@@ -144,6 +144,10 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
         line2 = "TURN BACK TO RETURN TO TOWN";
         int x;
         int y;
+        if (approach_dungeon_town_exit(g, &x, &y)) {
+            line1 = "WEST: OAKHAVEN / EAST: DAWNMERE";
+            line2 = "CRYPT ENTRANCE: DUNGEON STAGE 1";
+        }
         if (approach_shortcut_exit(g, &x, &y)) {
             line1 = "STRAIGHT: AREA / LEFT: NEXT TOWN";
             line2 = "RIGHT: BOSS CHAMBER";

@@ -13,6 +13,8 @@ static void approach_town(GameState *g, const TownApproach *route) {
         map_generate_town3(&g->map, &g->player.x, &g->player.y);
     } else if (route->town == LOCATION_TOWN4) {
         map_generate_town4(&g->map, &g->player.x, &g->player.y);
+    } else if (route->town == LOCATION_DAWNMERE) {
+        map_generate_dawnmere(&g->map, &g->player.x, &g->player.y);
     } else if (route->town == LOCATION_CASTLE) {
         map_generate_castle(&g->map, &g->player.x, &g->player.y);
     }
@@ -44,6 +46,10 @@ static int legacy_approach_save(int slot, int version) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), version);
+    if (version < 167) {
+        cJSON_DeleteItemFromObject(root, "dungeon_entry_town");
+        cJSON_DeleteItemFromObject(root, "dungeon_portal_town");
+    }
     if (version < 160) {
         cJSON_DeleteItemFromObject(root, "approach_route");
     }
@@ -119,7 +125,7 @@ void test_approaches(void) {
         free(loaded);
         return;
     }
-    ASSERT("all fifteen town connections have approach paths", town_approach_count == 15);
+    ASSERT("all sixteen town connections have approach paths", town_approach_count == 16);
     for (int unlocked = 0; unlocked < 2; unlocked++) {
         for (int i = 0; i < town_approach_count; i++) {
             const TownApproach *route = &town_approaches[i];
@@ -154,10 +160,10 @@ void test_approaches(void) {
             ASSERT("a normal town departure reaches a separate path before any enemies spawn", g->location == LOCATION_APPROACH && g->approach_route == i && g->enemy_count == 0 && g->map.room_count == 0);
             int dx = route->gate_x == 0 ? -1 : route->gate_x == TOWN_W - 1 ? 1 : 0;
             int dy = route->gate_y == 0 ? -1 : route->gate_y == TOWN_H - 1 ? 1 : 0;
-            ASSERT("the approach continues in the direction of the town gate", g->player.last_dx == dx && g->player.last_dy == dy && g->map.stairs_down_x - g->map.stairs_up_x == APPROACH_LENGTH * dx && g->map.stairs_down_y - g->map.stairs_up_y == APPROACH_LENGTH * dy);
+            ASSERT("the approach continues in the direction of the town gate", g->player.last_dx == dx && g->player.last_dy == dy && g->map.stairs_down_x - g->map.stairs_up_x == APPROACH_LENGTH * dx && g->map.stairs_down_y - g->map.stairs_up_y == (route->area == LOCATION_DUNGEON ? -2 : APPROACH_LENGTH * dy));
             if (route->area == LOCATION_DUNGEON) {
-                ASSERT("the OakHaven dungeon approach uses cobblestones through town grass", g->map.tiles[g->player.y][g->player.x] == TILE_TOWN_PATH && g->map.tiles[g->player.y + 3][g->player.x + 3] == TILE_TOWN_FLOOR);
-                ASSERT("the crypt facade blocks its walls while leaving the west doorway accessible", !map_is_walkable(&g->map, g->map.stairs_down_x, g->map.stairs_down_y - 1) && !map_is_walkable(&g->map, g->map.stairs_down_x + 1, g->map.stairs_down_y) && map_is_walkable(&g->map, g->map.stairs_down_x - 1, g->map.stairs_down_y));
+                ASSERT("the OakHaven dungeon approach uses cobblestones through town grass", g->map.tiles[g->player.y][g->player.x] == TILE_TOWN_PATH && g->map.tiles[g->player.y + 3][g->player.x + 3 * dx] == TILE_TOWN_FLOOR);
+                ASSERT("the raised crypt faces a short path down to the town road", !map_is_walkable(&g->map, g->map.stairs_down_x, g->map.stairs_down_y - 1) && !map_is_walkable(&g->map, g->map.stairs_down_x + 1, g->map.stairs_down_y) && !map_is_walkable(&g->map, g->map.stairs_down_x - 1, g->map.stairs_down_y) && g->map.tiles[g->map.stairs_down_y + 1][g->map.stairs_down_x] == TILE_TOWN_PATH);
             } else {
                 ASSERT("the far entrance is recessed into the surrounding terrain", !map_is_walkable(&g->map, g->map.stairs_down_x + dx, g->map.stairs_down_y + dy) && !map_is_walkable(&g->map, g->map.stairs_down_x - dy, g->map.stairs_down_y + dx) && !map_is_walkable(&g->map, g->map.stairs_down_x + dy, g->map.stairs_down_y - dx));
             }
@@ -202,11 +208,13 @@ void test_approaches(void) {
             game_open_town_portal(loaded);
             ASSERT("Return to Town still bypasses the walking path and preserves its portal", loaded->location == (route->area == LOCATION_CATACOMBS ? LOCATION_TOWN3 : route->town) && loaded->portal_active);
             retreat_from_area(g, route, reverse);
-            ASSERT("every physical area exit returns near the far entrance of its own approach facing town", g->location == LOCATION_APPROACH && g->approach_route == i && g->player.x == g->map.stairs_down_x - dx && g->player.y == g->map.stairs_down_y - dy && g->player.last_dx == -dx && g->player.last_dy == -dy && g->enemy_count == 0);
+            int return_dx = route->area == LOCATION_DUNGEON ? 0 : -dx;
+            int return_dy = route->area == LOCATION_DUNGEON ? 1 : -dy;
+            ASSERT("every physical area exit returns onto its entrance path facing away from the area", g->location == LOCATION_APPROACH && g->approach_route == i && g->player.x == g->map.stairs_down_x + return_dx && g->player.y == g->map.stairs_down_y + return_dy && g->player.last_dx == return_dx && g->player.last_dy == return_dy && g->map.tiles[g->player.y][g->player.x] == approach_floor(route->area) && g->enemy_count == 0);
             LevelCache *cache = area_cache(g, route->area, reverse);
             ASSERT("leaving onto the approach caches the actual combat map and wounded enemies", cache && cache->valid && cache->enemies[0].hp == 7 && memcmp(&visited, &cache->map, sizeof(Map)) == 0);
             ok = save_game(g, slot) && load_game(loaded, slot);
-            ASSERT("saving on a return approach restores its direction, position, and combat cache", ok && loaded->location == LOCATION_APPROACH && loaded->approach_route == i && loaded->player.x == g->player.x && loaded->player.y == g->player.y && loaded->player.last_dx == -dx && loaded->player.last_dy == -dy && area_cache(loaded, route->area, reverse)->enemies[0].hp == 7);
+            ASSERT("saving on a return approach restores its direction, position, and combat cache", ok && loaded->location == LOCATION_APPROACH && loaded->approach_route == i && loaded->player.x == g->player.x && loaded->player.y == g->player.y && loaded->player.last_dx == return_dx && loaded->player.last_dy == return_dy && area_cache(loaded, route->area, reverse)->enemies[0].hp == 7);
             int health = loaded->player.hp;
             action_resolve_enemies(loaded);
             walk_return_approach(loaded);
@@ -404,7 +412,7 @@ void test_approaches(void) {
     // Version 161 already had grass, but its entrance used a larger wall block.
     g->map.tiles[g->map.stairs_down_y + 2][g->map.stairs_down_x] = TILE_WALL;
     migrated = save_game(g, slot) && legacy_approach_save(slot, 161) && load_game(loaded, slot);
-    ASSERT("saved stone-block entrances adopt the crypt footprint without losing position or loot", migrated && loaded->map.tiles[g->map.stairs_down_y + 2][g->map.stairs_down_x] == TILE_TOWN_FLOOR && loaded->player.x == g->player.x && loaded->player.y == g->player.y && loaded->player.last_dx == -1 && loaded->floor_items[0].active && loaded->map.tiles[loot_y][loot_x] == TILE_ITEM && loaded->floor_items[0].underlying_tile == TILE_TOWN_PATH);
+    ASSERT("saved stone-block entrances adopt the crypt footprint without losing position or loot", migrated && loaded->map.tiles[g->map.stairs_down_y + 2][g->map.stairs_down_x] == TILE_TOWN_PATH && loaded->player.x == g->player.x && loaded->player.y == g->player.y && loaded->player.last_dx == -1 && loaded->floor_items[0].active && loaded->map.tiles[loot_y][loot_x] == TILE_ITEM && loaded->floor_items[0].underlying_tile == TILE_TOWN_PATH);
     game_init(g);
     game_enter_dungeon(g);
     g->player.hp = 39;
@@ -413,6 +421,150 @@ void test_approaches(void) {
     Map old_dungeon = g->map;
     int ok = save_game(g, slot) && legacy_approach_save(slot, 159) && load_game(loaded, slot);
     ASSERT("pre-approach saves load in their existing area without resetting maps or progress", ok && loaded->location == LOCATION_DUNGEON && loaded->approach_route == -1 && loaded->player.hp == 39 && loaded->gold == 393 && loaded->enemies[0].hp == 7 && loaded->map.room_count == old_dungeon.room_count && memcmp(old_dungeon.tiles, loaded->map.tiles, sizeof(old_dungeon.tiles)) == 0 && memcmp(old_dungeon.explored, loaded->map.explored, sizeof(old_dungeon.explored)) == 0 && memcmp(old_dungeon.rooms, loaded->map.rooms, old_dungeon.room_count * sizeof(Room)) == 0);
+    remove("saves/savegame_99160.json");
+    for (int origin = 0; origin < 2; origin++) {
+        const TownApproach *route = &town_approaches[origin ? 15 : 1];
+        approach_town(g, route);
+        action_resolve_player(g, (Action){ACTION_MOVE, route->gate_x, route->gate_y});
+        int x;
+        int y;
+        ASSERT("the Dawnmere through-road is hidden while the Lich lives", !approach_dungeon_town_exit(g, &x, &y));
+        for (int ty = 0; ty < APPROACH_H; ty++) {
+            for (int tx = 0; tx < APPROACH_W; tx++) {
+                if (g->map.tiles[ty][tx] == TILE_APPROACH_DUNGEON_TOWN) {
+                    ASSERT("locked approaches contain no town crossing marker", 0);
+                }
+            }
+        }
+        walk_town_approach(g);
+        ASSERT("entering the dungeon from either side always begins at stage one", g->location == LOCATION_DUNGEON && g->level == 1 && g->dungeon_entry_town == route->town && g->map.room_count >= 6);
+        int hp = g->player.hp;
+        game_open_town_portal(g);
+        ASSERT("dungeon portals return to their entrance town", g->location == route->town && g->dungeon_portal_town == route->town && g->portal_active && g->player.hp == hp);
+        ASSERT("the matching town renders a portal beside its dungeon gate", g->map.tiles[13][origin ? 2 : TOWN_W - 3] == TILE_PORTAL);
+        int saved = save_game(g, slot) && load_game(loaded, slot);
+        ASSERT("dungeon entrance and portal towns survive save/load", saved && loaded->dungeon_entry_town == route->town && loaded->dungeon_portal_town == route->town);
+        if (saved) {
+            game_use_town_portal(loaded);
+            ASSERT("using a restored portal preserves forward dungeon progression and entrance side", loaded->location == LOCATION_DUNGEON && loaded->level == 1 && loaded->dungeon_entry_town == route->town && !loaded->portal_active);
+            retreat_from_area(loaded, route, 0);
+            walk_return_approach(loaded);
+            ASSERT("retreat from stage one returns to the entrance town", loaded->location == route->town);
+        }
+        for (int east = 0; east < 2; east++) {
+            approach_town(g, route);
+            game_enter_dungeon(g);
+            for (int depth = 1; depth < DUNGEON_DEPTH; depth++) {
+                game_descend(g);
+            }
+            g->defeated_bosses |= 1 << LOCATION_DUNGEON;
+            for (int enemy = 0; enemy < g->enemy_count; enemy++) {
+                if (g->enemies[enemy].type == ENEMY_LICH_KING) {
+                    g->enemies[enemy].active = 0;
+                }
+            }
+            game_update_level_progress(g);
+            g->player.x = g->map.stairs_down_x;
+            g->player.y = g->map.stairs_down_y;
+            action_resolve_player(g, (Action){ACTION_ASCEND, 0, 0});
+            ASSERT("the defeated Lich's stairs emerge on the same safe east-west road", g->location == LOCATION_APPROACH && g->approach_route == (origin ? 15 : 1) && g->player.y == g->map.stairs_down_y + 2 && approach_dungeon_town_exit(g, &x, &y));
+            int wide_block = 0;
+            for (int py = 1; py < APPROACH_H - 1; py++) {
+                for (int px = 1; px < APPROACH_W - 1; px++) {
+                    if (g->map.tiles[py][px] == TILE_TOWN_PATH && g->map.tiles[py][px + 1] == TILE_TOWN_PATH &&
+                        g->map.tiles[py + 1][px] == TILE_TOWN_PATH && g->map.tiles[py + 1][px + 1] == TILE_TOWN_PATH) {
+                        wide_block = 1;
+                    }
+                }
+            }
+            ASSERT("the connecting road is one tile wide and aligned with both gates", !wide_block && g->map.tiles[y][32] == TILE_TOWN_PATH && g->map.tiles[y - 1][32] == TILE_TOWN_FLOOR && g->map.tiles[y + 1][32] == TILE_TOWN_FLOOR && g->player.y == y);
+            int straight = 1;
+            for (int px = 1; px < APPROACH_W - 1; px++) {
+                if (g->map.tiles[y][px] != TILE_TOWN_PATH) {
+                    straight = 0;
+                }
+            }
+            ASSERT("every tile between the town gates lies on one straight paved road", straight);
+            int end_x = east ? APPROACH_W - 2 : 1;
+            for (int step = 0; g->location == LOCATION_APPROACH && g->player.x != end_x && step < APPROACH_W; step++) {
+                action_resolve_player(g, (Action){ACTION_MOVE, g->player.x + (east ? 1 : -1), g->player.y});
+            }
+            action_resolve_player(g, (Action){ACTION_MOVE, east ? APPROACH_W - 1 : 0, y});
+            ASSERT("walking east reaches Dawnmere and walking west reaches Oakhaven without a prompt", g->location == (east ? LOCATION_DAWNMERE : LOCATION_TOWN) && !g->dialogue_active);
+            ASSERT("town crossing preserves the dungeon cache and Lich victory", g->level_cache[DUNGEON_DEPTH - 1].valid && (g->defeated_bosses & (1 << LOCATION_DUNGEON)));
+            ASSERT("Dawnmere retains its merchant footprint and the removed hall lot is walkable", g->location != LOCATION_DAWNMERE || (g->map.tiles[12][1] == TILE_TOWN_PATH && map_is_walkable(&g->map, 20, 12) && !map_is_walkable(&g->map, 7, 7) && map_is_walkable(&g->map, 26, 6)));
+        }
+    }
+    approach_town(g, &town_approaches[1]);
+    approach_enter(g, TOWN_W - 1, 12);
+    int legacy_x = g->player.x;
+    int legacy_y = g->player.y;
+    map_mark_explored(&g->map, legacy_x, legacy_y);
+    g->floor_item_count = 1;
+    g->floor_items[0] = (FloorItem){.active = 1, .x = legacy_x, .y = legacy_y, .underlying_tile = TILE_TOWN_PATH, .item = item_make_greatsword()};
+    g->map.tiles[legacy_y][legacy_x] = TILE_ITEM;
+    g->defeated_bosses |= 1 << LOCATION_DUNGEON;
+    g->gold = 393;
+    int legacy_saved = save_game(g, slot) && legacy_approach_save(slot, 166) && load_game(loaded, slot);
+    int crossing_x;
+    int crossing_y;
+    ASSERT("older completed dungeon saves gain the Dawnmere road without replaying the Lich", legacy_saved && approach_dungeon_town_exit(loaded, &crossing_x, &crossing_y) && loaded->map.tiles[crossing_y][crossing_x] == TILE_APPROACH_DUNGEON_TOWN);
+    ASSERT("road migration preserves player, exploration, loot and gold and defaults old entrance towns to Oakhaven", legacy_saved && loaded->player.x == legacy_x && loaded->player.y == legacy_y && map_is_explored(&loaded->map, legacy_x, legacy_y) && loaded->floor_items[0].active && loaded->floor_items[0].item.type == ITEM_WEAPON && loaded->map.tiles[legacy_y][legacy_x] == TILE_ITEM && loaded->gold == 393 && loaded->dungeon_entry_town == LOCATION_TOWN && loaded->dungeon_portal_town == LOCATION_TOWN);
+    approach_town(g, &town_approaches[1]);
+    g->defeated_bosses |= 1 << LOCATION_DUNGEON;
+    approach_enter(g, TOWN_W - 1, 12);
+    for (int py = 25; py <= 27; py++) {
+        for (int px = 1; px < APPROACH_W - 1; px++) {
+            g->map.tiles[py][px] = TILE_TOWN_PATH;
+        }
+    }
+    g->player.x = 10;
+    g->player.y = 27;
+    map_mark_explored(&g->map, 10, 27);
+    g->gold = 393;
+    g->floor_item_count = 1;
+    g->floor_items[0] = (FloorItem){.active = 1, .x = 30, .y = 25, .underlying_tile = TILE_TOWN_PATH, .item = item_make_health_potion()};
+    g->map.tiles[25][30] = TILE_ITEM;
+    int narrowed = save_game(g, slot) && legacy_approach_save(slot, 167) && load_game(loaded, slot);
+    ASSERT("existing wide-road saves adopt the narrow paving", narrowed && loaded->map.tiles[24][10] == TILE_TOWN_PATH && loaded->map.tiles[25][10] == TILE_TOWN_FLOOR && loaded->map.tiles[27][10] == TILE_TOWN_FLOOR);
+    ASSERT("narrowing preserves saved position, exploration, loot and gold", narrowed && loaded->player.x == 10 && loaded->player.y == 27 && map_is_explored(&loaded->map, 10, 27) && loaded->gold == 393 && loaded->floor_items[0].active && loaded->floor_items[0].underlying_tile == TILE_TOWN_FLOOR && loaded->map.tiles[25][30] == TILE_ITEM);
+    approach_town(g, &town_approaches[1]);
+    g->defeated_bosses |= 1 << LOCATION_DUNGEON;
+    approach_enter(g, TOWN_W - 1, 12);
+    g->map.stairs_down_y = g->map.stairs_up_y;
+    g->map.tiles[21][20] = TILE_TOWN_FLOOR;
+    g->map.tiles[21][19] = TILE_ITEM;
+    g->player.x = 20;
+    g->player.y = 21;
+    g->floor_item_count = 1;
+    g->floor_items[0] = (FloorItem){.active = 1, .x = 19, .y = 21, .underlying_tile = TILE_TOWN_FLOOR, .item = item_make_health_potion()};
+    g->gold = 393;
+    int raised = save_game(g, slot) && legacy_approach_save(slot, 168) && load_game(loaded, slot);
+    ASSERT("older approaches move the crypt above a straight gate-to-gate road", raised && loaded->map.stairs_down_y == loaded->map.stairs_up_y - 2 && loaded->map.tiles[24][32] == TILE_TOWN_PATH);
+    ASSERT("moving the crypt relocates overlapping players and loot onto safe paving", raised && loaded->player.x == 20 && loaded->player.y == 24 && loaded->floor_items[0].active && loaded->floor_items[0].x == 20 && loaded->floor_items[0].y == 24 && loaded->floor_items[0].underlying_tile == TILE_TOWN_PATH && loaded->map.tiles[24][20] == TILE_ITEM && loaded->gold == 393 && map_is_explored(&loaded->map, 20, 24));
+    ASSERT("the raised crypt position survives a save round trip without drifting upward", save_game(loaded, slot) && load_game(g, slot) && g->map.stairs_down_y == 22 && g->player.y == 24);
+    approach_town(g, &town_approaches[15]);
+    for (int y = 6; y < 11; y++) {
+        for (int x = 26; x < 33; x++) {
+            g->map.tiles[y][x] = TILE_LOCAL_BUILDING;
+        }
+    }
+    g->floor_item_count = 1;
+    g->floor_items[0] = (FloorItem){.active = 1, .x = 28, .y = 8, .underlying_tile = TILE_LOCAL_BUILDING, .item = item_make_health_potion()};
+    g->map.tiles[8][28] = TILE_ITEM;
+    g->gold = 393;
+    map_mark_explored(&g->map, 28, 8);
+    int removed_hall = save_game(g, slot) && legacy_approach_save(slot, 169) && load_game(loaded, slot);
+    int clear_lot = removed_hall;
+    for (int y = 6; y < 11; y++) {
+        for (int x = 26; x < 33; x++) {
+            if (!map_is_walkable(&loaded->map, x, y)) {
+                clear_lot = 0;
+            }
+        }
+    }
+    ASSERT("older Dawnmere saves remove the entire hall collision footprint", clear_lot && !map_is_walkable(&loaded->map, 7, 7));
+    ASSERT("removing the hall preserves position, exploration and dropped loot", removed_hall && loaded->player.x == g->player.x && loaded->player.y == g->player.y && loaded->gold == 393 && map_is_explored(&loaded->map, 28, 8) && loaded->floor_items[0].active && loaded->floor_items[0].underlying_tile == TILE_TOWN_FLOOR && loaded->map.tiles[8][28] == TILE_ITEM);
     remove("saves/savegame_99160.json");
     free(g);
     free(loaded);

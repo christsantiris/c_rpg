@@ -1208,6 +1208,7 @@ void action_resolve_player(GameState *g, Action a) {
         g->location == LOCATION_TOWN2 ||
         g->location == LOCATION_TOWN3 ||
         g->location == LOCATION_TOWN4 ||
+        g->location == LOCATION_DAWNMERE ||
         g->location == LOCATION_HIGH_PASS ||
         g->location == LOCATION_SWAMP_ROAD ||
         g->location == LOCATION_CASTLE ||
@@ -1302,7 +1303,7 @@ void action_resolve_player(GameState *g, Action a) {
             if (g->defeated_bosses & (1 << LOCATION_DUNGEON)) {
                 g->score += g->level * 100;
                 game_return_to_approach(g);
-                push_message(g, "You climb the stairs to the dungeon approach.");
+                push_message(g, "The road leads west to Oakhaven and east to Dawnmere.");
             } else {
                 push_message(g, "The Lich King seals these stairs.");
             }
@@ -1824,6 +1825,7 @@ void action_resolve_player(GameState *g, Action a) {
                 g->location == LOCATION_TOWN2 ||
                 g->location == LOCATION_TOWN3 ||
                 g->location == LOCATION_TOWN4 ||
+                g->location == LOCATION_DAWNMERE ||
                 g->location == LOCATION_CASTLE ||
                 g->location == LOCATION_TAVERN ||
                 g->location == LOCATION_INN || g->location == LOCATION_HEALER || g->location == LOCATION_WITCH ||
@@ -2346,7 +2348,8 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
         if ((g->location == LOCATION_TOWN || g->location == LOCATION_TOWN2 ||
-            g->location == LOCATION_TOWN3 || g->location == LOCATION_TOWN4) &&
+            g->location == LOCATION_TOWN3 || g->location == LOCATION_TOWN4 ||
+            g->location == LOCATION_DAWNMERE) &&
             g->map.tiles[ty][tx] == TILE_PORTAL && g->portal_active) {
             game_use_town_portal(g);
             return;

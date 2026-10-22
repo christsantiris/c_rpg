@@ -878,10 +878,12 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 166);
+    cJSON_AddNumberToObject(root, "save_version", 170);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
+    cJSON_AddNumberToObject(root, "dungeon_entry_town", g->dungeon_entry_town);
+    cJSON_AddNumberToObject(root, "dungeon_portal_town", g->dungeon_portal_town);
     cJSON_AddNumberToObject(root, "forest_entry_town", g->forest_entry_town);
     cJSON_AddNumberToObject(root, "forest_portal_town", g->forest_portal_town);
     cJSON_AddNumberToObject(root, "swamp_entry_town", g->swamp_entry_town);
@@ -2445,6 +2447,16 @@ int load_game(GameState *g, int slot) {
     g->jail_quest_state = jail_state->valueint;
     g->prisoner_x = prisoner_x->valueint;
     g->prisoner_y = prisoner_y->valueint;
+    cJSON *dungeon_entry = cJSON_GetObjectItem(root, "dungeon_entry_town");
+    cJSON *dungeon_portal = cJSON_GetObjectItem(root, "dungeon_portal_town");
+    g->dungeon_entry_town = dungeon_entry ? dungeon_entry->valueint : LOCATION_TOWN;
+    g->dungeon_portal_town = dungeon_portal ? dungeon_portal->valueint : LOCATION_TOWN;
+    if ((dungeon_entry && !cJSON_IsNumber(dungeon_entry)) || (dungeon_portal && !cJSON_IsNumber(dungeon_portal)) ||
+        (g->dungeon_entry_town != LOCATION_TOWN && g->dungeon_entry_town != LOCATION_DAWNMERE) ||
+        (g->dungeon_portal_town != LOCATION_TOWN && g->dungeon_portal_town != LOCATION_DAWNMERE)) {
+        cJSON_Delete(root);
+        return 0;
+    }
     g->forest_entry_town = forest_entry->valueint;
     g->forest_portal_town = forest_portal->valueint;
     g->swamp_entry_town = swamp_entry->valueint;
@@ -4714,6 +4726,25 @@ int load_game(GameState *g, int slot) {
             g->dialogue_active = 0;
             g->dialogue_speaker[0] = '\0';
             g->dialogue_text[0] = '\0';
+        }
+    }
+    if (save_version < 169) {
+        approach_refresh_dungeon(g);
+    }
+    if (save_version < 170 && g->location == LOCATION_DAWNMERE) {
+        for (int y = 6; y < 11; y++) {
+            for (int x = 26; x < 33; x++) {
+                if (g->map.tiles[y][x] == TILE_LOCAL_BUILDING) {
+                    g->map.tiles[y][x] = TILE_TOWN_FLOOR;
+                }
+            }
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->active && item->x >= 26 && item->x < 33 && item->y >= 6 && item->y < 11 &&
+                item->underlying_tile == TILE_LOCAL_BUILDING) {
+                item->underlying_tile = TILE_TOWN_FLOOR;
+            }
         }
     }
     // Recover saves containing a town interior or shortcut in a dungeon slot.

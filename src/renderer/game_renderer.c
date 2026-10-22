@@ -226,6 +226,9 @@ static void draw_approach_town_gate(Renderer *r, const GameState *g, const Viewp
     draw_town_gate_back(r, viewport_to_screen_x(v, g->map.stairs_up_x), viewport_to_screen_y(v, g->map.stairs_up_y), style, dx, dy);
     int x;
     int y;
+    if (approach_dungeon_town_exit(g, &x, &y)) {
+        draw_town_gate_back(r, viewport_to_screen_x(v, x), viewport_to_screen_y(v, y), style, -dx, -dy);
+    }
     if (approach_shortcut_exit(g, &x, &y)) {
         draw_town_gate_back(r, viewport_to_screen_x(v, x), viewport_to_screen_y(v, y), style, -dy, dx);
     }
@@ -1976,7 +1979,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     int town_scaled = g->location == LOCATION_TOWN ||
         g->location == LOCATION_TOWN2 ||
         g->location == LOCATION_TOWN3 || g->location == LOCATION_TOWN4 ||
-        g->location == LOCATION_CASTLE;
+        g->location == LOCATION_DAWNMERE || g->location == LOCATION_CASTLE;
     int tavern_scaled = g->location == LOCATION_TAVERN ||
         g->location == LOCATION_INN || g->location == LOCATION_HEALER || g->location == LOCATION_WITCH ||
         g->location == LOCATION_WORKSHOP ||
@@ -2158,6 +2161,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     break;
                 }
                 case TILE_APPROACH_TOWN:
+                case TILE_APPROACH_DUNGEON_TOWN:
                 case TILE_APPROACH_SHORTCUT:
                 case TILE_APPROACH_BOSS:
                 case TILE_APPROACH_AREA: {
@@ -2953,6 +2957,14 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     if (g->location == LOCATION_APPROACH) {
         draw_approach_town_gate(r, g, v);
+        int dungeon_town_x;
+        int dungeon_town_y;
+        if (approach_dungeon_town_exit(g, &dungeon_town_x, &dungeon_town_y)) {
+            draw_town_road_sign(r, viewport_to_screen_x(v, 3),
+                viewport_to_screen_y(v, dungeon_town_y + 2), "OAKHAVEN");
+            draw_town_road_sign(r, viewport_to_screen_x(v, APPROACH_W - 8),
+                viewport_to_screen_y(v, dungeon_town_y + 2), "DAWNMERE");
+        }
     }
 
     if (g->location == LOCATION_APPROACH && approach_route(g) && approach_route(g)->area == LOCATION_DUNGEON) {
@@ -3021,6 +3033,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_y(v, RIDGESHIRE_ASHEN_GATE_Y), TOWN_EXIT_ASHEN, -1, 0);
     }
 
+    if (g->location == LOCATION_DAWNMERE) {
+        const TownBuilding merchant = {LOCATION_DAWNMERE, LOCATION_DAWNMERE, 7, 7, 5, 4, 0, 0, "MERCHANT", NULL, NULL, NULL};
+        town_life_draw_building(r, v, &merchant);
+        draw_town_gate_back(r, viewport_to_screen_x(v, 0), viewport_to_screen_y(v, 12), TOWN_EXIT_DUNGEON, 1, 0);
+        draw_town_road_sign(r, viewport_to_screen_x(v, 2), viewport_to_screen_y(v, 17), "DUNGEON / OAKHAVEN");
+    }
     if (g->location == LOCATION_TOWN2) {
         draw_town_gate(r, viewport_to_screen_x(v, 0),
             viewport_to_screen_y(v, 10), TOWN_EXIT_DESERT);
@@ -3271,6 +3289,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             area_label_color(LOCATION_FOREST), r->font_tiny);
         renderer_draw_text(r, "DUNGEON", dungeon_x, dungeon_y, area_label_color(LOCATION_DUNGEON),
             r->font_tiny);
+        if (g->defeated_bosses & (1 << LOCATION_DUNGEON)) {
+            draw_town_road_sign(r, viewport_to_screen_x(v, TOWN_W - 10), viewport_to_screen_y(v, 7), "DUNGEON / DAWNMERE");
+        }
         renderer_draw_text(r, "MOUNTAINS", mountains_x, mountains_y,
             area_label_color(LOCATION_MOUNTAINS), r->font_tiny);
         if (g->defeated_bosses & (1 << LOCATION_MOUNTAINS)) {
