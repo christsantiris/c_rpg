@@ -342,7 +342,7 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
     } else if (g->location == LOCATION_ISLAND) {
         title = "RUINED ISLE";
         line1 = "TALK TO NAHLA BESIDE THE TEMPLE";
-        line2 = "THE TEMPLE GATE BEGINS THE CLIMB";
+        line2 = "WALK INTO THE TEMPLE TO ENTER";
     } else {
         return;
     }

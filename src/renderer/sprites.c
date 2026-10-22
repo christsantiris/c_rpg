@@ -5493,11 +5493,11 @@ void draw_island_path(Renderer *r, int tile_x, int tile_y, int map_x, int map_y)
 }
 
 void draw_island_temple(Renderer *r, int tile_x, int tile_y) {
-    SDL_Rect source = {230, 920, 740, 375};
-    SDL_Rect destination = {
-        tile_x * TILE_SIZE, tile_y * TILE_SIZE, 20 * TILE_SIZE, 9 * TILE_SIZE
-    };
-    draw_island_crop(r, source, destination);
+    if (!r->island_temple_texture) {
+        return;
+    }
+    SDL_Rect destination = {tile_x * TILE_SIZE, tile_y * TILE_SIZE, ISLAND_TEMPLE_W * TILE_SIZE, ISLAND_TEMPLE_H * TILE_SIZE};
+    SDL_RenderCopy(r->sdl, r->island_temple_texture, NULL, &destination);
 }
 
 void draw_island_camp(Renderer *r, int tile_x, int tile_y) {

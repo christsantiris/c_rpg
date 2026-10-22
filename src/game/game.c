@@ -1589,6 +1589,7 @@ void game_init(GameState *g) {
     g->mara_beacons_lit = 0;
     g->cain_scroll_given = 0;
     g->island_travel_unlocked = 0;
+    g->debug_passages_unlocked = 0;
     g->dragon_treasure_quest_state = 0;
     g->sunscar_lamp_quest_state = 0;
     g->emberforge_quest_state = 0;
@@ -3865,7 +3866,7 @@ void game_enter_dragonspine(GameState *g) {
 }
 
 int game_harbor_unlocked(const GameState *g) {
-    return (g->defeated_bosses & (1 << LOCATION_COAST)) != 0;
+    return g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_COAST)) != 0;
 }
 
 static void offer_rook_quest(GameState *g) {
@@ -3880,13 +3881,59 @@ static void place_harbor_road(GameState *g) {
     }
     // Branch below Rowan, then bend through a landing onto the dock.
     for (int x = 21; x < TOWN_HARBOR_X; x++) {
-        g->map.tiles[TOWN_HARBOR_Y + 1][x] = TILE_TOWN_PATH;
+        if (g->map.tiles[TOWN_HARBOR_Y + 1][x] != TILE_PORTAL) {
+            set_quest_object_tile(g, x, TOWN_HARBOR_Y + 1, TILE_TOWN_PATH);
+        }
     }
     for (int y = TOWN_HARBOR_Y + 1; y <= TOWN_HARBOR_ENTRANCE_Y; y++) {
-        g->map.tiles[y][TOWN_HARBOR_X - 1] = TILE_TOWN_PATH;
+        if (g->map.tiles[y][TOWN_HARBOR_X - 1] != TILE_PORTAL) {
+            set_quest_object_tile(g, TOWN_HARBOR_X - 1, y, TILE_TOWN_PATH);
+        }
     }
     for (int x = TOWN_HARBOR_X; x <= TOWN_HARBOR_ENTRANCE_X; x++) {
-        g->map.tiles[TOWN_HARBOR_ENTRANCE_Y][x] = TILE_TOWN_PATH;
+        if (g->map.tiles[TOWN_HARBOR_ENTRANCE_Y][x] != TILE_PORTAL) {
+            set_quest_object_tile(g, x, TOWN_HARBOR_ENTRANCE_Y, TILE_TOWN_PATH);
+        }
+    }
+}
+
+void game_refresh_debug_passages(GameState *g) {
+    if (!g->debug_passages_unlocked) {
+        return;
+    }
+    if (g->location == LOCATION_TOWN) {
+        place_harbor_road(g);
+    }
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            TileType old = quest_object_tile(g, x, y);
+            TileType open = old;
+            switch (old) {
+                case TILE_LOCKED_DOOR:
+                case TILE_CRYPT_DOOR:
+                case TILE_DUNGEON_GATE: open = TILE_FLOOR; break;
+                case TILE_MOUNTAIN_GATE:
+                case TILE_MOUNTAIN_ROCKFALL: open = TILE_MOUNTAIN_FLOOR; break;
+                case TILE_TEMPLE_MOON_DOOR_CLOSED: open = TILE_TEMPLE_MOON_DOOR_OPEN; break;
+                case TILE_TEMPLE_VAULT_DOOR: open = TILE_TEMPLE_FLOOR; break;
+                case TILE_LABYRINTH_GATE: open = TILE_LABYRINTH_FLOOR; break;
+                case TILE_CASTLE_GATE: open = TILE_CASTLE_GATE_OPEN; break;
+                case TILE_GLASS_SEAL_CLOSED: open = TILE_GLASS_SEAL_OPEN; break;
+                case TILE_DUNGEON_STAIRS_SEALED: open = TILE_DUNGEON_STAIRS_RETURN; break;
+                default: break;
+            }
+            if (open != old) {
+                set_quest_object_tile(g, x, y, open);
+            }
+        }
+    }
+    if (g->location == LOCATION_JAIL) {
+        set_quest_object_tile(g, JAIL_HATCH_X, JAIL_HATCH_Y, TILE_JAIL_HATCH);
+        set_quest_object_tile(g, 4, 8, TILE_TUNNEL_EXIT);
+    }
+    if (g->location == LOCATION_COAST &&
+        quest_object_tile(g, g->map.stairs_down_x, g->map.stairs_down_y) == TILE_COAST_DEEP_WATER) {
+        set_quest_object_tile(g, g->map.stairs_down_x, g->map.stairs_down_y, TILE_COAST_EXIT);
     }
 }
 
@@ -4994,7 +5041,7 @@ static void load_labyrinth_floor(GameState *g) {
 }
 
 int game_labyrinth_is_open(const GameState *g) {
-    return g->rook_quest_state != 0;
+    return g->debug_passages_unlocked || g->rook_quest_state != 0;
 }
 
 void game_enter_labyrinth(GameState *g) {
@@ -5596,13 +5643,13 @@ void game_leave_labyrinth(GameState *g) {
 void game_return_to_approach(GameState *g) {
     Location area = g->location;
     int lich_exit = area == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH &&
-        (g->defeated_bosses & (1 << LOCATION_DUNGEON));
+        (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_DUNGEON)));
     int mountain_exit = area == LOCATION_MOUNTAINS && g->level == MOUNTAIN_DEPTH &&
-        (g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
+        (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_MOUNTAINS)));
     int forest_exit = area == LOCATION_FOREST && g->level == FOREST_DEPTH &&
-        (g->defeated_bosses & (1 << LOCATION_FOREST));
+        (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_FOREST)));
     int swamp_exit = area == LOCATION_SWAMP && g->level == SWAMP_DEPTH &&
-        (g->defeated_bosses & (1 << LOCATION_SWAMP));
+        (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_SWAMP)));
     game_return_to_town(g);
     enter_return_approach(g, area);
     if (swamp_exit && g->location == LOCATION_APPROACH) {
@@ -6118,7 +6165,7 @@ int game_has_treasure_map(const GameState *g) {
 }
 
 int game_can_sail_to_island(const GameState *g) {
-    return g->island_travel_unlocked || game_has_treasure_map(g);
+    return g->debug_passages_unlocked || g->island_travel_unlocked || game_has_treasure_map(g);
 }
 
 static int island_interaction_tile(TileType tile) {
@@ -6168,7 +6215,7 @@ int game_interact_island(GameState *g) {
             return 1;
         }
         if (tile == TILE_ISLAND_STATUE) {
-            push_message(g, "The broken guardian faces the ruined temple gate.");
+            push_message(g, "The broken guardian faces the ruined temple.");
             return 1;
         }
         if (tile == TILE_ISLAND_LAGOON) {

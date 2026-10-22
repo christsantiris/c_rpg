@@ -568,6 +568,41 @@ static void retile_town_ground(GameState *g, int x, int y, TileType ground) {
     }
 }
 
+static void migrate_island_temple(GameState *g) {
+    if (g->location != LOCATION_ISLAND) {
+        return;
+    }
+    map_place_island_temple(&g->map);
+    if (in_lot(g->player.x, g->player.y, ISLAND_TEMPLE_X, ISLAND_TEMPLE_Y, ISLAND_TEMPLE_W, ISLAND_TEMPLE_H)) {
+        g->player.x = ISLAND_GATE_X;
+        g->player.y = ISLAND_GATE_Y + 1;
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (!item->active) {
+            continue;
+        }
+        if (in_lot(item->x, item->y, ISLAND_TEMPLE_X, ISLAND_TEMPLE_Y, ISLAND_TEMPLE_W, ISLAND_TEMPLE_H)) {
+            item->x = ISLAND_GATE_X;
+            item->y = ISLAND_GATE_Y + 1;
+            item->underlying_tile = TILE_ISLAND_PATH;
+            g->map.tiles[item->y][item->x] = TILE_ITEM;
+        } else if (item->underlying_tile == TILE_ISLAND_TEMPLE_GATE) {
+            item->underlying_tile = TILE_ISLAND_PATH;
+        }
+    }
+    if (g->portal_active && g->portal_location == LOCATION_ISLAND) {
+        if (in_lot(g->portal_x, g->portal_y, ISLAND_TEMPLE_X, ISLAND_TEMPLE_Y, ISLAND_TEMPLE_W, ISLAND_TEMPLE_H)) {
+            g->portal_x = ISLAND_GATE_X;
+            g->portal_y = ISLAND_GATE_Y + 1;
+            g->portal_origin_tile = TILE_ISLAND_PATH;
+            g->map.tiles[g->portal_y][g->portal_x] = TILE_PORTAL;
+        } else if (g->portal_origin_tile == TILE_ISLAND_TEMPLE_GATE) {
+            g->portal_origin_tile = TILE_ISLAND_PATH;
+        }
+    }
+}
+
 static void clear_town3_old_lot(GameState *g, int lot_x, int lot_y, int w, int h) {
     for (int y = lot_y; y < lot_y + h; y++) {
         for (int x = lot_x; x < lot_x + w; x++) {
@@ -879,7 +914,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 179);
+    cJSON_AddNumberToObject(root, "save_version", 181);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -983,6 +1018,7 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "equipped_armor",    g->equipped_armor);
     cJSON_AddNumberToObject(root, "location",          g->location);
     cJSON_AddNumberToObject(root, "road_town", g->road_town);
+    cJSON_AddNumberToObject(root, "debug_passages_unlocked", g->debug_passages_unlocked);
     cJSON_AddNumberToObject(root, "approach_route", g->approach_route);
     cJSON_AddNumberToObject(root, "lich_reward_state", g->lich_reward_state);
     cJSON_AddNumberToObject(root, "necromancer_reward_state", g->necromancer_reward_state);
@@ -2947,6 +2983,14 @@ int load_game(GameState *g, int slot) {
     g->equipped_off_hand = off_hand ? off_hand->valueint : -1;
     g->equipped_armor    = cJSON_GetObjectItem(root, "equipped_armor")->valueint;
     g->location          = cJSON_GetObjectItem(root, "location")->valueint;
+    cJSON *debug_passages = cJSON_GetObjectItem(root, "debug_passages_unlocked");
+    g->debug_passages_unlocked = debug_passages ? debug_passages->valueint : 0;
+    if (debug_passages && (!cJSON_IsNumber(debug_passages) ||
+        debug_passages->valuedouble != g->debug_passages_unlocked ||
+        (g->debug_passages_unlocked != 0 && g->debug_passages_unlocked != 1))) {
+        cJSON_Delete(root);
+        return 0;
+    }
     cJSON *road_town = cJSON_GetObjectItem(root, "road_town");
     g->road_town = road_town ? road_town->valueint : LOCATION_TOWN;
     if ((save_version >= 178 && !cJSON_IsNumber(road_town)) ||
@@ -2963,8 +3007,8 @@ int load_game(GameState *g, int slot) {
         cJSON_Delete(root);
         return 0;
     }
-    if ((g->location == LOCATION_JAIL && (g->jail_quest_state != 1 && g->jail_quest_state != 2)) ||
-        (g->location == LOCATION_ESCAPE_TUNNEL && (g->jail_quest_state != 2 ||
+    if ((g->location == LOCATION_JAIL && !g->debug_passages_unlocked && (g->jail_quest_state != 1 && g->jail_quest_state != 2)) ||
+        (g->location == LOCATION_ESCAPE_TUNNEL && ((!g->debug_passages_unlocked && g->jail_quest_state != 2) ||
         g->player.x < 1 || g->player.x >= tunnel_width || g->player.y < 1 || g->player.y >= ESCAPE_TUNNEL_H - 1 ||
         g->prisoner_x < 1 || g->prisoner_x >= tunnel_width - 1 || g->prisoner_y < 1 || g->prisoner_y >= ESCAPE_TUNNEL_H - 1))) {
         cJSON_Delete(root);
@@ -5164,6 +5208,9 @@ int load_game(GameState *g, int slot) {
             }
         }
     }
+    if (save_version < 181) {
+        migrate_island_temple(g);
+    }
     // Recover saves containing a town interior or shortcut in a dungeon slot.
     game_repair_dungeon_maps(g);
     // Recess legacy floor shortcuts into terrain in active and cached boss maps.
@@ -5228,6 +5275,7 @@ int load_game(GameState *g, int slot) {
             item->active = 0;
         }
     }
+    game_refresh_debug_passages(g);
     cJSON_Delete(root);
     return 1;
 }
