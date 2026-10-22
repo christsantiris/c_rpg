@@ -115,7 +115,7 @@ static void shortcut_victory(int region, int attack) {
     ASSERT("canceling lets the player collect the original boss reward", collected && !loaded.floor_items[reward].active);
     action_resolve_player(&loaded, (Action){ACTION_MOVE, x, y});
     ASSERT("a cleared floor still asks before travel without a loot warning", game_shortcut_prompt_active(&loaded) && !strstr(loaded.dialogue_text, "will be lost"));
-    Location destination = region == 0 ? LOCATION_FOREST_ROAD : (region == 1 ? LOCATION_SWAMP_ROAD : LOCATION_HIGH_PASS);
+    Location destination = LOCATION_APPROACH;
     int hp = loaded.player.hp;
     ASSERT("fresh keypad Enter enters the safe path without spending a combat turn", game_handle_shortcut_prompt_key(&loaded, SDL_SCANCODE_KP_ENTER, 0) && loaded.location == destination && !game_shortcut_prompt_active(&loaded) && loaded.player.hp == hp && loaded.enemy_count == 0);
     collected = 0;
@@ -125,8 +125,9 @@ static void shortcut_victory(int region, int attack) {
     ASSERT("confirmed travel preserves the collected boss reward", collected);
     ASSERT("saving on the path preserves the boss chamber for a return trip", save_game(&loaded, SHORTCUT_TEST_SLOT) && load_game(&loaded, SHORTCUT_TEST_SLOT) && loaded.location == destination);
     remove("saves/savegame_99125.json");
-    int branch_x = region == 0 ? FOREST_ROAD_FORK_X : (region == 1 ? SWAMP_ROAD_BOSS_X : HIGH_PASS_BOSS_X);
-    int branch_y = region == 0 ? FOREST_ROAD_BOSS_Y : (region == 1 ? SWAMP_ROAD_FORK_Y : HIGH_PASS_FORK_Y);
+    int branch_x;
+    int branch_y;
+    approach_boss_exit(&loaded, &branch_x, &branch_y);
     action_resolve_player(&loaded, (Action){ACTION_MOVE, branch_x, branch_y});
     ASSERT("return branch restores the boss chamber and surviving enemies", loaded.location == regions[region] && loaded.level == 4 && !loaded.enemies[0].active && loaded.enemies[1].active && loaded.enemies[1].hp == game.enemies[1].hp);
     ASSERT("return arrival uses the original nearby shortcut", loaded.player.x == x && loaded.player.y == y && loaded.map.tiles[y][x] == markers[region] && loaded.player.hp == hp && !game_shortcut_prompt_active(&loaded));
@@ -266,6 +267,7 @@ static void town_shortcut_crossing(int road, int reverse) {
         action_resolve_player(&game, (Action){ACTION_MOVE, game.player.x + dx, game.player.y + dy});
         steps++;
     }
+    walk_return_approach(&game);
     ASSERT("one-tile shortcuts connect the correct towns in both directions", game.location == destination && game.enemy_count == 0);
 }
 
@@ -310,11 +312,9 @@ static void shortcut_layouts(void) {
     }
 }
 
-static void town_route_choice(int route) {
+static void town_route_fork(int route) {
     const Location towns[6] = {LOCATION_TOWN, LOCATION_TOWN2, LOCATION_TOWN2, LOCATION_TOWN3, LOCATION_TOWN, LOCATION_TOWN4};
     const Location areas[6] = {LOCATION_FOREST, LOCATION_FOREST, LOCATION_SWAMP, LOCATION_SWAMP, LOCATION_MOUNTAINS, LOCATION_MOUNTAINS};
-    const Location roads[6] = {LOCATION_FOREST_ROAD, LOCATION_FOREST_ROAD, LOCATION_SWAMP_ROAD, LOCATION_SWAMP_ROAD, LOCATION_HIGH_PASS, LOCATION_HIGH_PASS};
-    const char *names[6] = {"Stillbury", "OakHaven", "Rosemoor", "Stillbury", "Ridgeshire", "OakHaven"};
     const int gate_x[6] = {0, TOWN_W - 1, 20, 20, 20, 20};
     const int gate_y[6] = {12, 12, 0, TOWN_H - 1, 0, TOWN_H - 1};
     const int old_x[6] = {0, TOWN_W - 1, TOWN3_ROAD_X, ROSEMOOR_SWAMP_ROAD_X, TOWN4_ROAD_X, RIDGESHIRE_MOUNTAIN_ROAD_X};
@@ -322,53 +322,48 @@ static void town_route_choice(int route) {
     memset(&game, 0, sizeof(game));
     game_init(&game);
     game.location = towns[route];
-    if (game.location == LOCATION_TOWN) {
-        map_generate_town(&game.map, &game.player.x, &game.player.y);
-    } else if (game.location == LOCATION_TOWN2) {
+    if (game.location == LOCATION_TOWN2) {
         map_generate_town2(&game.map, &game.player.x, &game.player.y);
     } else if (game.location == LOCATION_TOWN3) {
         map_generate_town3(&game.map, &game.player.x, &game.player.y);
-    } else {
+    } else if (game.location == LOCATION_TOWN4) {
         map_generate_town4(&game.map, &game.player.x, &game.player.y);
     }
-    ASSERT("shared gate offers no shortcut before its boss is defeated", !game_town_route_available(&game, gate_x[route], gate_y[route]));
-    // Match the debug script: mark every shortcut unlocked, then refresh the town.
+    int x;
+    int y;
+    game.defeated_bosses = ((1 << LOCATION_FOREST) | (1 << LOCATION_SWAMP) | (1 << LOCATION_MOUNTAINS)) & ~(1 << areas[route]);
+    action_resolve_player(&game, (Action){ACTION_MOVE, gate_x[route], gate_y[route]});
+    ASSERT("both side arms stay hidden until their own regional boss is defeated", game.location == LOCATION_APPROACH && !approach_shortcut_exit(&game, &x, &y) && !approach_boss_exit(&game, &x, &y) && !game_shortcut_prompt_active(&game));
+    walk_return_approach(&game);
     game.defeated_bosses = (1 << LOCATION_FOREST) | (1 << LOCATION_SWAMP) | (1 << LOCATION_MOUNTAINS);
-    if (game.location == LOCATION_TOWN) {
-        map_set_town2_road(&game.map, 1);
-        map_set_town4_road(&game.map, 1);
-    } else if (game.location == LOCATION_TOWN2) {
-        map_set_stillbury_forest_road(&game.map, 1);
-        map_set_town3_road(&game.map, 1);
-    } else if (game.location == LOCATION_TOWN3) {
-        map_set_rosemoor_swamp_road(&game.map, 1);
-    } else {
-        map_set_ridgeshire_mountain_road(&game.map, 1);
-    }
-    int px = game.player.x;
-    int py = game.player.y;
+    ASSERT("unlocking shortcuts retains only the original town gate", game.map.tiles[old_y[route]][old_x[route]] == TILE_WALL && game.map.tiles[gate_y[route]][gate_x[route]] == TILE_TOWN_EXIT);
     action_resolve_player(&game, (Action){ACTION_MOVE, gate_x[route], gate_y[route]});
-    ASSERT("debug-unlocked towns retain only the main area gate", game.map.tiles[old_y[route]][old_x[route]] == TILE_WALL && game.map.tiles[gate_y[route]][gate_x[route]] == TILE_TOWN_EXIT);
-    if (towns[route] == LOCATION_TOWN2) {
-        int paved = 1;
-        for (int row = 11; row <= 13; row++) {
-            for (int column = TOWN_HEALER_DOOR_X; column <= TOWN_WITCH_DOOR_X; column++) {
-                paved &= game.map.tiles[row][column] == TILE_TOWN_PATH;
-            }
-        }
-        ASSERT("retiring Stillbury's shortcut spurs preserves every town-square cobblestone", paved);
-    }
-    ASSERT("walking to the shared gate opens both choices without moving", game.location == towns[route] && game.player.x == px && game.player.y == py && game_shortcut_prompt_active(&game) && strstr(game.dialogue_text, "1. Travel to") && strstr(game.dialogue_text, "2. Take shortcut to") && strstr(game.dialogue_text, names[route]));
-    ASSERT("held shortcut and movement keys cannot select a route", game_handle_shortcut_prompt_key(&game, SDL_SCANCODE_2, 1) && game_handle_shortcut_prompt_key(&game, SDL_SCANCODE_LEFT, 0) && game.location == towns[route] && game_shortcut_prompt_active(&game));
-    ASSERT("Escape cancels the town route without moving", game_handle_shortcut_prompt_key(&game, SDL_SCANCODE_ESCAPE, 0) && !game_shortcut_prompt_active(&game) && game.location == towns[route] && game.player.x == px && game.player.y == py);
-    action_resolve_player(&game, (Action){ACTION_MOVE, gate_x[route], gate_y[route]});
-    ASSERT("pending town route choices survive save/load", save_game(&game, SHORTCUT_TEST_SLOT) && load_game(&loaded, SHORTCUT_TEST_SLOT) && game_shortcut_prompt_active(&loaded) && loaded.dialogue_x == gate_x[route] && loaded.dialogue_y == gate_y[route]);
-    remove("saves/savegame_99125.json");
-    game_handle_shortcut_prompt_key(&loaded, route % 2 ? SDL_SCANCODE_RETURN : SDL_SCANCODE_KP_1, 0);
+    ASSERT("all six unlocked town gates enter a signed physical fork without a route menu", game.location == LOCATION_APPROACH && !game_shortcut_prompt_active(&game) && approach_shortcut_exit(&game, &x, &y) && game.map.tiles[y][x] == TILE_APPROACH_SHORTCUT);
+    ASSERT("saving on the fork retains its route and branch", save_game(&game, SHORTCUT_TEST_SLOT) && load_game(&loaded, SHORTCUT_TEST_SLOT) && loaded.location == LOCATION_APPROACH && loaded.approach_route == game.approach_route && loaded.map.tiles[y][x] == TILE_APPROACH_SHORTCUT);
     walk_town_approach(&loaded);
-    ASSERT("the area choice enters the normal region from the selected town", loaded.location == areas[route] && loaded.level == (route % 2 ? 7 : 1) && !game_shortcut_prompt_active(&loaded));
-    game_handle_shortcut_prompt_key(&game, SDL_SCANCODE_KP_2, 0);
-    ASSERT("the shortcut choice enters the safe path rather than the destination town", game.location == roads[route] && game.enemy_count == 0 && !game_shortcut_prompt_active(&game));
+    ASSERT("walking straight enters the regular area from the selected town", loaded.location == areas[route] && loaded.level == (route % 2 ? 7 : 1));
+    loaded = game;
+    int bx;
+    int by;
+    int jx = game.map.stairs_up_x + APPROACH_FORK_DISTANCE * game.player.last_dx;
+    int jy = game.map.stairs_up_y + APPROACH_FORK_DISTANCE * game.player.last_dy;
+    ASSERT("town is left and boss is right relative to departure from every town gate", approach_boss_exit(&game, &bx, &by) && game.map.tiles[by][bx] == TILE_APPROACH_BOSS && x == jx + APPROACH_BRANCH_LENGTH * game.player.last_dy && y == jy - APPROACH_BRANCH_LENGTH * game.player.last_dx && bx == jx - APPROACH_BRANCH_LENGTH * game.player.last_dy && by == jy + APPROACH_BRANCH_LENGTH * game.player.last_dx);
+    walk_shortcut_approach(&game);
+    ASSERT("the left branch reaches the next town without an intermediate road", game.location == towns[route ^ 1] && game.enemy_count == 0 && !game_shortcut_prompt_active(&game));
+    action_resolve_player(&game, (Action){ACTION_MOVE, gate_x[route ^ 1], gate_y[route ^ 1]});
+    walk_shortcut_approach(&game);
+    ASSERT("the opposite town's left branch returns to the original town", game.location == towns[route]);
+    game = loaded;
+    walk_boss_approach(&game);
+    ASSERT("the right branch enters the defeated boss's chamber directly", game.location == areas[route] && game.level == 4 && !game_shortcut_prompt_active(&game));
+    game_request_shortcut(&game);
+    game_handle_shortcut_prompt_key(&game, SDL_SCANCODE_RETURN, 0);
+    ASSERT("leaving the boss returns onto the same continuous crossroads", game.location == LOCATION_APPROACH && approach_boss_exit(&game, &bx, &by) && abs(game.player.x - bx) + abs(game.player.y - by) == 1);
+    ASSERT("saving on a crossroads branch preserves its return position", save_game(&game, SHORTCUT_TEST_SLOT) && load_game(&loaded, SHORTCUT_TEST_SLOT) && loaded.location == LOCATION_APPROACH && loaded.player.x == game.player.x && loaded.player.y == game.player.y && loaded.map.tiles[by][bx] == TILE_APPROACH_BOSS);
+    game = loaded;
+    walk_return_approach(&game);
+    ASSERT("walking back from the crossroads reaches the original town", game.location == towns[route]);
+    remove("saves/savegame_99125.json");
 }
 
 void test_regional_shortcuts(void) {
@@ -376,7 +371,7 @@ void test_regional_shortcuts(void) {
     ASSERT("regional shortcut test slot is unused", !save_exists(SHORTCUT_TEST_SLOT));
     shortcut_layouts();
     for (int route = 0; route < 6; route++) {
-        town_route_choice(route);
+        town_route_fork(route);
     }
     for (int road = 0; road < 3; road++) {
         for (int reverse = 0; reverse < 2; reverse++) {

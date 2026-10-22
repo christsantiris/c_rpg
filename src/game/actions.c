@@ -2405,9 +2405,6 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
-        if (game_request_town_route(g, tx, ty)) {
-            return;
-        }
         if (approach_travel(g, tx, ty) || approach_enter(g, tx, ty)) {
             return;
         }

@@ -878,7 +878,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 163);
+    cJSON_AddNumberToObject(root, "save_version", 165);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -4706,6 +4706,15 @@ int load_game(GameState *g, int slot) {
     if (save_version < 163) {
         approach_relocate_ridgeshire(g);
         migrate_ridgeshire_portal(g);
+    }
+    if (save_version < 165) {
+        approach_migrate_roads(g);
+        approach_refresh_fork(g);
+        if (strcmp(g->dialogue_speaker, "Choose route") == 0) {
+            g->dialogue_active = 0;
+            g->dialogue_speaker[0] = '\0';
+            g->dialogue_text[0] = '\0';
+        }
     }
     // Recover saves containing a town interior or shortcut in a dungeon slot.
     game_repair_dungeon_maps(g);

@@ -11,13 +11,11 @@ to town, with its portal beside the north gate.
 Save version **163** relocates existing approach paths and town portals to this
 gate while preserving exploration, loot, combat maps, and quest progress.
 
-Ridgeshire's separate south shortcut gate leads into the enemy-free, one-tile-wide High Pass. Walk south to reach
-OakHaven's northeast shortcut, or north from OakHaven to revisit Ridgeshire without
-crossing the Goblin Mountains. A matching stone gate marks the Ridgeshire end of
-the shortcut, which opens after the Goblin King falls.
-OakHaven's main north gate still starts a Goblin Mountains expedition.
-Ridgeshire's ordinary south mountain gate permits entering from the other end,
-even before the Goblin King is defeated.
+After the Goblin King falls, the + shaped crossroads beyond Ridgeshire's south
+gate and OakHaven's north gate opens both side arms. From town, the regular
+mountains are straight, the next town is left, and the King's chamber is right.
+These destinations connect directly through the crossroads, replacing the old
+separate High Pass path. The side arms stay hidden before the victory.
 
 Dragonspine has five generated stages with independent progress and saved
 floor caches. Broad cliff ledges fork around deep ravines, joining a lower

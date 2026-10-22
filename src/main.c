@@ -83,10 +83,6 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
         g->map.tiles[action.target_y][action.target_x] != TILE_TOWN_EXIT) {
         return 0;
     }
-    // Let the route prompt open before any departure animation.
-    if (game_town_route_available(g, action.target_x, action.target_y)) {
-        return 0;
-    }
     if (g->location == LOCATION_TOWN3 || g->location == LOCATION_CASTLE) {
         if (action.target_x == 0 || action.target_x == TOWN_W - 1) {
             *style = g->location == LOCATION_TOWN3 && action.target_x == 0 ? TOWN_EXIT_MOONVEIL : TOWN_EXIT_ROAD;
@@ -342,8 +338,18 @@ static void debug_apply_loadout(GameState *game, const DebugConfig *config) {
     }
     if (config->unlock_shortcuts) {
         game->defeated_bosses |= (1 << LOCATION_FOREST) | (1 << LOCATION_MOUNTAINS) | (1 << LOCATION_SWAMP);
-        map_set_town2_road(&game->map, 1);
-        map_set_town4_road(&game->map, 1);
+        if (game->location == LOCATION_TOWN) {
+            map_set_town2_road(&game->map, 1);
+            map_set_town4_road(&game->map, 1);
+        } else if (game->location == LOCATION_TOWN2) {
+            map_set_stillbury_forest_road(&game->map, 1);
+            map_set_town3_road(&game->map, 1);
+        } else if (game->location == LOCATION_TOWN3) {
+            map_set_rosemoor_swamp_road(&game->map, 1);
+        } else if (game->location == LOCATION_TOWN4) {
+            map_set_ridgeshire_mountain_road(&game->map, 1);
+        }
+        approach_refresh_fork(game);
         push_message(game, "Debug: all town shortcuts unlocked.");
     }
 }

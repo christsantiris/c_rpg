@@ -1,4 +1,5 @@
 #include "test_utils.h"
+#include "game/approach.h"
 #include "../src/game/game.h"
 #include "../src/systems/save_load.h"
 #include "../src/screens/slot_select.h"
@@ -2451,7 +2452,6 @@ static void test_shortcut_fork_migration(void) {
         int by = road == 0 ? FOREST_ROAD_BOSS_Y : y;
         TileType wall = road == 0 ? TILE_FOREST_WALL : (road == 1 ? TILE_SWAMP_WALL : TILE_DRAGON_WALL);
         TileType floor = road == 0 ? TILE_FOREST_FLOOR : (road == 1 ? TILE_SWAMP_FLOOR : TILE_DRAGON_FLOOR);
-        TileType marker = road == 0 ? TILE_FOREST_SHORTCUT : (road == 1 ? TILE_SWAMP_SHORTCUT : TILE_MOUNTAIN_SHORTCUT);
         // Version 153 roads had no branch to the boss chamber.
         for (int step = 1; step <= (road == 0 ? y - by : bx - x); step++) {
             original.map.tiles[y - (road == 0 ? step : 0)][x + (road == 0 ? 0 : step)] = wall;
@@ -2466,9 +2466,12 @@ static void test_shortcut_fork_migration(void) {
         original.map.tiles[y][x] = TILE_ITEM;
         map_mark_explored(&original.map, x, y);
         int ok = save_game(&original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, 153) && load_game(&loaded, LEGACY_SLOT);
-        ASSERT("old shortcut roads gain an accessible boss branch", ok && loaded.map.tiles[by][bx] == marker && map_is_walkable(&loaded.map, x + (road == 0 ? 0 : 1), y - (road == 0 ? 1 : 0)));
-        ASSERT("adding a fork preserves player position, loot, exploration, and progress", ok && loaded.player.x == x && loaded.player.y == y && loaded.map.tiles[y][x] == TILE_ITEM && loaded.floor_items[0].active && loaded.floor_items[0].underlying_tile == floor && memcmp(loaded.map.explored, original.map.explored, sizeof(original.map.explored)) == 0 && loaded.gold == original.gold && loaded.score == original.score && loaded.defeated_bosses == original.defeated_bosses);
-        ASSERT("migrated fork and loot survive another save/load", save_game(&loaded, MIGRATED_SLOT) && load_game(&original, MIGRATED_SLOT) && original.map.tiles[by][bx] == marker && original.map.tiles[y][x] == TILE_ITEM);
+        ASSERT("old shortcut roads migrate onto a crossroads with an accessible boss branch", ok && loaded.location == LOCATION_APPROACH && approach_boss_exit(&loaded, &bx, &by) && loaded.map.tiles[by][bx] == TILE_APPROACH_BOSS);
+        int lx = loaded.floor_items[0].x;
+        int ly = loaded.floor_items[0].y;
+        TileType new_floor = approach_floor(approach_route(&loaded)->area);
+        ASSERT("crossroads migration preserves accessible player and loot positions, exploration, and progress", ok && map_is_walkable(&loaded.map, loaded.player.x, loaded.player.y) && loaded.map.tiles[ly][lx] == TILE_ITEM && loaded.floor_items[0].active && loaded.floor_items[0].underlying_tile == new_floor && map_is_explored(&loaded.map, loaded.player.x, loaded.player.y) && loaded.gold == original.gold && loaded.score == original.score && loaded.defeated_bosses == original.defeated_bosses);
+        ASSERT("migrated crossroads and loot survive another save/load", save_game(&loaded, MIGRATED_SLOT) && load_game(&original, MIGRATED_SLOT) && original.location == LOCATION_APPROACH && original.map.tiles[by][bx] == TILE_APPROACH_BOSS && original.map.tiles[ly][lx] == TILE_ITEM);
         remove_test_save(LEGACY_SLOT);
         remove_test_save(MIGRATED_SLOT);
     }
@@ -2521,26 +2524,23 @@ static void test_narrow_shortcut_migration(void) {
             remove_test_save(LEGACY_SLOT);
             continue;
         }
-        int narrow = 1;
-        for (int y = 0; y < height; y++) {
-            int walkable = 0;
-            for (int column = 0; column < MAP_W; column++) {
-                walkable += !!map_is_walkable(&loaded.map, column, y);
-            }
-            int fork_y = road ? HIGH_PASS_FORK_Y : SWAMP_ROAD_FORK_Y;
-            int branch_x = road ? HIGH_PASS_BOSS_X : SWAMP_ROAD_BOSS_X;
-            narrow &= walkable == (y == fork_y ? branch_x - x + 1 : 1) && map_is_walkable(&loaded.map, x, y);
-        }
-        ASSERT("saved shortcuts narrow to a connected path with a boss fork", narrow);
-        ASSERT("off-path saved player lands on the path at the same row", loaded.player.x == x && loaded.player.y == 18 && map_is_walkable(&loaded.map, loaded.player.x, loaded.player.y));
-        ASSERT("shortcut migration preserves exploration and progress", memcmp(loaded.map.explored, original.map.explored, sizeof(original.map.explored)) == 0 && loaded.gold == original.gold && loaded.score == original.score && loaded.defeated_bosses == original.defeated_bosses);
-        ASSERT("side-by-side dropped items remain accessible after narrowing", loaded.floor_items[0].active && loaded.floor_items[1].active && loaded.floor_items[0].x == x && loaded.floor_items[1].x == x && loaded.floor_items[0].y == 20 && loaded.floor_items[1].y == 20 && loaded.floor_items[0].underlying_tile == floor && loaded.floor_items[1].underlying_tile == floor);
-        loaded.player.x = x;
-        loaded.player.y = 20;
+        int bx;
+        int by;
+        ASSERT("saved wide shortcuts migrate to the connected crossroads", loaded.location == LOCATION_APPROACH && approach_boss_exit(&loaded, &bx, &by) && loaded.map.tiles[by][bx] == TILE_APPROACH_BOSS);
+        ASSERT("off-path saved players land safely on the crossroads", map_is_walkable(&loaded.map, loaded.player.x, loaded.player.y));
+        int explored_x = loaded.player.x;
+        int explored_y = loaded.player.y;
+        ASSERT("shortcut migration preserves explored travel and progress", map_is_explored(&loaded.map, explored_x, explored_y) && loaded.gold == original.gold && loaded.score == original.score && loaded.defeated_bosses == original.defeated_bosses);
+        int lx = loaded.floor_items[0].x;
+        int ly = loaded.floor_items[0].y;
+        TileType new_floor = approach_floor(approach_route(&loaded)->area);
+        ASSERT("side-by-side dropped items remain accessible on the crossroads", loaded.floor_items[0].active && loaded.floor_items[1].active && loaded.floor_items[1].x == lx && loaded.floor_items[1].y == ly && loaded.floor_items[0].underlying_tile == new_floor && loaded.floor_items[1].underlying_tile == new_floor);
+        loaded.player.x = lx;
+        loaded.player.y = ly;
         action_resolve_player(&loaded, (Action){ACTION_PICK_UP, 0, 0});
         action_resolve_player(&loaded, (Action){ACTION_PICK_UP, 0, 0});
-        ASSERT("stacked migrated loot can be recovered with its metadata intact", loaded.inventory_count == 2 && loaded.inventory[1].sharpened && loaded.inventory[1].attack_bonus == original.floor_items[1].item.attack_bonus && loaded.map.tiles[20][x] == floor);
-        ASSERT("narrow shortcut saves round-trip without resetting exploration", save_game(&loaded, MIGRATED_SLOT) && load_game(&original, MIGRATED_SLOT) && original.player.x == x && original.player.y == 20 && original.inventory_count == 2 && map_is_explored(&original.map, x, 19));
+        ASSERT("stacked migrated loot can be recovered with its metadata intact", loaded.inventory_count == 2 && loaded.inventory[1].sharpened && loaded.inventory[1].attack_bonus == original.floor_items[1].item.attack_bonus && loaded.map.tiles[ly][lx] == new_floor);
+        ASSERT("crossroads saves round-trip without resetting explored travel", save_game(&loaded, MIGRATED_SLOT) && load_game(&original, MIGRATED_SLOT) && original.location == LOCATION_APPROACH && original.player.x == lx && original.player.y == ly && original.inventory_count == 2 && map_is_explored(&original.map, explored_x, explored_y));
         remove_test_save(LEGACY_SLOT);
         remove_test_save(MIGRATED_SLOT);
     }

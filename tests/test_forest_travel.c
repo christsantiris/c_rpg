@@ -161,12 +161,8 @@ static void test_forest_crossing(int reverse, int shortcut) {
         game_handle_shortcut_prompt_key(&restored, SDL_SCANCODE_RETURN, 0);
         memcpy(&forest, &restored, sizeof(forest));
         remove("saves/savegame_99031.json");
-        ASSERT("boss shortcut enters the road rather than town", forest.location == LOCATION_FOREST_ROAD && forest.player.x == FOREST_ROAD_FORK_X && forest.player.y == FOREST_ROAD_BOSS_Y + 1);
-        for (int steps = 0; forest.location == LOCATION_FOREST_ROAD && steps < FOREST_ROAD_W; steps++) {
-            int dx = forest.player.y == FOREST_ROAD_Y ? (reverse ? 1 : -1) : 0;
-            int dy = forest.player.y < FOREST_ROAD_Y ? 1 : 0;
-            action_resolve_player(&forest, (Action){ACTION_MOVE, forest.player.x + dx, forest.player.y + dy});
-        }
+        ASSERT("boss shortcut returns to the continuous crossroads", forest.location == LOCATION_APPROACH);
+        walk_shortcut_approach(&forest);
     } else {
         guard = 0;
         while (forest.location == LOCATION_FOREST && guard++ < FOREST_DEPTH) {
@@ -178,15 +174,17 @@ static void test_forest_crossing(int reverse, int shortcut) {
         }
         ASSERT("full crossings complete the quest in either order", forest.alder_quest_state == 2 && forest.alder_wardens_rescued == 7);
     }
+    if (forest.location == LOCATION_APPROACH) {
+        walk_return_approach(&forest);
+    }
     ASSERT("shortcut and full route reach the opposite town", forest.location == (reverse ? LOCATION_TOWN : LOCATION_TOWN2));
     ASSERT("both routes arrive through the shared forest gate", forest.player.y == 12 && forest.player.x == (reverse ? 1 : TOWN_W - 2));
     gate_x = reverse ? 0 : TOWN_W - 1;
     ASSERT("liberated town keeps only the main forest gate", forest.map.tiles[12][gate_x] == TILE_TOWN_EXIT && forest.map.tiles[TOWN_ROAD_EXIT_Y][gate_x] == TILE_WALL);
     action_resolve_player(&forest, (Action){ACTION_MOVE, gate_x, 12});
-    ASSERT("shared forest gate offers a route choice", game_shortcut_prompt_active(&forest));
-    game_handle_shortcut_prompt_key(&forest, SDL_SCANCODE_2, 0);
-    ASSERT("town shortcut enters the safe road", forest.location == LOCATION_FOREST_ROAD && forest.enemy_count == 0);
-    game_leave_forest_road(&forest, reverse ? LOCATION_TOWN2 : LOCATION_TOWN);
+    ASSERT("shared forest gate reaches the physical fork without a menu", forest.location == LOCATION_APPROACH && !game_shortcut_prompt_active(&forest));
+    walk_shortcut_approach(&forest);
+    ASSERT("the left arm walks directly to the other town", forest.location == (reverse ? LOCATION_TOWN2 : LOCATION_TOWN));
     ASSERT("original town also keeps only its main gate", forest.map.tiles[12][reverse ? TOWN_W - 1 : 0] == TILE_TOWN_EXIT && forest.map.tiles[TOWN_ROAD_EXIT_Y][reverse ? TOWN_W - 1 : 0] == TILE_WALL);
     game_enter_forest(&forest);
     ASSERT("revisiting preserves the grove and defeated boss", forest.forest_cache[FOREST_BOSS_LEVEL - 1].valid && (forest.defeated_bosses & (1 << LOCATION_FOREST)));
@@ -209,8 +207,7 @@ static void test_forest_entry_direction(void) {
         forest.defeated_bosses = unlocked ? 1 << LOCATION_FOREST : 0;
         action_resolve_player(&forest, (Action){ACTION_MOVE, 0, 12});
         if (unlocked) {
-            ASSERT("debug-unlocked west gate still offers the normal forest route", game_shortcut_prompt_active(&forest));
-            game_handle_shortcut_prompt_key(&forest, SDL_SCANCODE_1, 0);
+            ASSERT("debug-unlocked west gate keeps the normal forest path without a menu", forest.location == LOCATION_APPROACH && !game_shortcut_prompt_active(&forest));
         }
         walk_town_approach(&forest);
         int y = forest.player.y;

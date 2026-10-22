@@ -269,30 +269,13 @@ void test_swamp(void) {
     ASSERT("defeating the demon leads into Rosemoor",
         swamp_game.location == LOCATION_TOWN3 && swamp_game.player.y == TOWN_H - 2);
     action_resolve_player(&swamp_game, (Action){ACTION_MOVE, 20, TOWN_H - 1});
-    game_handle_shortcut_prompt_key(&swamp_game, SDL_SCANCODE_2, 0);
-    ASSERT("Rosemoor south gate enters a safe swamp shortcut",
-        swamp_game.location == LOCATION_SWAMP_ROAD && swamp_game.enemy_count == 0 &&
-        swamp_game.player.y == 1);
-    for (int y = 2; y < SWAMP_ROAD_H; y++) {
-        action_resolve_player(&swamp_game, (Action){ACTION_MOVE, SWAMP_ROAD_X, y});
-    }
-    ASSERT("swamp shortcut reaches Town 2 and opens the return gate",
-        swamp_game.location == LOCATION_TOWN2 && swamp_game.player.x == 20 &&
-        swamp_game.map.tiles[0][20] == TILE_TOWN_EXIT && swamp_game.map.tiles[0][TOWN3_ROAD_X] == TILE_WALL);
+    walk_shortcut_approach(&swamp_game);
+    ASSERT("Rosemoor's left crossroads arm reaches Stillbury directly", swamp_game.location == LOCATION_TOWN2 && swamp_game.player.x == 20 && swamp_game.map.tiles[0][20] == TILE_TOWN_EXIT);
     int shortcut_loaded = save_game(&swamp_game, 99121) && load_game(&swamp_loaded, 99121);
-    ASSERT("unlocked swamp shortcut survives save/load",
-        shortcut_loaded && swamp_loaded.map.tiles[0][20] == TILE_TOWN_EXIT && swamp_loaded.map.tiles[0][TOWN3_ROAD_X] == TILE_WALL);
+    ASSERT("unlocked swamp crossroads survives save/load", shortcut_loaded && swamp_loaded.location == LOCATION_TOWN2 && (swamp_loaded.defeated_bosses & (1 << LOCATION_SWAMP)));
     action_resolve_player(&swamp_game, (Action){ACTION_MOVE, 20, 0});
-    game_handle_shortcut_prompt_key(&swamp_game, SDL_SCANCODE_2, 0);
-    shortcut_loaded = save_game(&swamp_game, 99121) && load_game(&swamp_loaded, 99121);
-    ASSERT("saving on the swamp shortcut preserves position and destination",
-        shortcut_loaded && swamp_loaded.location == LOCATION_SWAMP_ROAD &&
-        swamp_loaded.player.y == SWAMP_ROAD_H - 2);
-    for (int y = SWAMP_ROAD_H - 3; y >= 0; y--) {
-        action_resolve_player(&swamp_game, (Action){ACTION_MOVE, SWAMP_ROAD_X, y});
-    }
-    ASSERT("shortcut returns to Rosemoor without repeating the swamp",
-        swamp_game.location == LOCATION_TOWN3 && swamp_game.enemy_count == 0);
+    walk_shortcut_approach(&swamp_game);
+    ASSERT("Stillbury's left crossroads arm returns to Rosemoor directly", swamp_game.location == LOCATION_TOWN3 && swamp_game.enemy_count == 0);
     remove("saves/savegame_99121.json");
 
     for (int class_id = CLASS_WARRIOR; class_id <= CLASS_ROGUE; class_id++) {

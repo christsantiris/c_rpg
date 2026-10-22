@@ -88,6 +88,13 @@ No Return is a six-floor ascent with minibosses on floors 2 and 4.
 The forest, mountains, and swamp can be played from either end, with their
 boss on level 4. Defeating that boss opens a shortcut to the opposite town;
 the remaining three levels can also be explored.
+Forest, mountain, and swamp approaches use one continuous **+ shaped crossroads**.
+From the town entrance, the enemy area is **straight**, the next town is
+**left**, and the boss chamber is **right**. The side branches stay hidden until
+that region's boss is defeated. Each arm reaches its destination directly;
+there is no second travel path or route menu. Leaving the boss returns onto the
+same crossroads. Save version **165** upgrades older approaches and separate
+shortcut-road saves while preserving loot, exploration, and progress.
 
 Normal town gates first lead onto a safe approach path. Follow it to the marked
 area entrance to begin the adventure, or turn back through the town gate.
@@ -129,9 +136,9 @@ Ridgeshire's north gate leads along an approach path to Dragonspine. Its broad c
 fork around ravines rendered with native blue-gray rock and snowy edges. Push
 loose boulders with **Interact** (**A** by default) to reposition cover against
 archers and Fire Elementals. Boulders cannot seal routes or cover objectives.
-Their positions persist through travel and saving. The safe High Pass links a
-separate south shortcut gate in Ridgeshire with OakHaven's northeast road, unlocked
-by the Goblin King's defeat. Both ordinary mountain gates remain available. Ilya
+Their positions persist through travel and saving. After the Goblin King's
+defeat, the mountain crossroads beyond Ridgeshire's south gate and OakHaven's
+north gate open their left town and right boss-chamber branches. Ilya
 waits in **Oakhaven's Tavern** and offers a quest to recover a golden goblet
 from Dragonspine's fifth-stage hoard. Return to her in the Tavern for a
 one-time **Potion of Strength and 600 score**. The potion permanently adds
@@ -397,9 +404,10 @@ From Stillbury she appears before the Demon; from Rosemoor she appears after it.
 
 ### Rosemoor, Crown Roads, and the Castle
 
-Defeating the Swamp Demon also opens a second north gate in Stillbury. It leads
-along a safe, enemy-free swamp shortcut to a separate south gate in Rosemoor.
-Both towns retain their ordinary swamp gates and explored swamp levels.
+Defeating the Swamp Demon opens the side arms of the crossroads beyond
+Stillbury's north gate and Rosemoor's south gate. The next town is left, the
+Demon's chamber right, and the regular swamp straight ahead. Explored swamp
+levels remain available.
 Rosemoor has the Apothecary. Two Royal Guards at its east gate warn that Crown Road East swarms
 with bandits, archers, and horsemen. That road leads to the grounds of the
 Castle of No Return. Its north entrance leads into the six-floor final area. Crown Road West continues
@@ -461,9 +469,9 @@ central Ridgeshire and receive **100 gold and 750 score** once. The jail's wards
 block town portals, and equipment is retained. Saves preserve the escape and
 escort. See [Royal Jail and escape quest](docs/royal-jail.md).
 
-The safe forest road, swamp road, and High Pass shortcuts are one tile wide.
-Older saves narrow these routes while preserving exploration and moving players
-and dropped items onto the path.
+The former separate forest road, swamp road, and High Pass routes now join the
+single crossroads layout. Older shortcut-road saves move players and dropped
+items onto the corresponding crossroads while preserving their progress.
 
 Town destinations use wooden signposts with cream lettering, including both
 ends of each unlocked shortcut. Area gate labels keep the same color at every
@@ -921,9 +929,14 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 - Fix Linux installer
 
 ### Feature enhancements
+- Expand world map
+   Farms between areas for rest to improve hp. Additional in-town quests similar to labrynth. New areas. New story lines. 
 - Recruit a party to join the adventure
+   NPCs that can team up with the player character and accompany on the quest. Implement resurrection. 
 - Improve difficulty scaling and economy
    Warrior and Rogue should struggle at certain levels without better weapons. Mage should struggle without better spells. Purchasing new weapons, armor and tomes should become necessary to progress.
 - Add paypal integration to buy gold
-- Expand world map
-   Farms between areas for rest to improve hp. Additional in-town quests similar to labrynth. 
+   Add real money feature to buy in-game gold.
+- DnD style stats instead of static class based stats
+   Roll for stats. Choose a class based on strengths. Ascending armor class chance to hit. 
+
