@@ -178,8 +178,9 @@
 #define MOUNTAIN_BOSS_LEVEL 5
 #define COAST_DEPTH 5
 #define MAX_REGION_DEPTH 8
-#define SWAMP_DEPTH 7
-#define SWAMP_BOSS_LEVEL 4
+#define SWAMP_DEPTH 5
+#define SWAMP_BOSS_LEVEL 5
+#define SWAMP_CACHE_DEPTH 7
 #define SWAMP_RESCUE_LEVEL 3
 #define ROSEMOOR_SWAMP_ROAD_X 28
 // Frostfell reuses the swamp's map size, mirrored so it runs east to west.

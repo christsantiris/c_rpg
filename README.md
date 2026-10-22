@@ -321,7 +321,7 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 
 ### Feature enhancements
 - Expand world map
-   Farms between areas for rest to improve hp. Additional in-town quests similar to labrynth. New areas. New story lines. 
+   Farms between areas for rest to improve hp. Additional in-town quests similar to labrynth. New areas. New story lines. Towns as sprites like enemy areas.
 - Recruit a party to join the adventure
    NPCs that can team up with the player character and accompany on the quest. Implement resurrection. 
 - Improve difficulty scaling and economy

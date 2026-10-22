@@ -329,7 +329,8 @@ static void debug_unlock_town_shortcuts(GameState *game) {
     approach_refresh_dungeon(game);
     approach_refresh_forest(game);
     approach_refresh_mountains(game);
-    push_message(game, "Debug: all town shortcuts unlocked.");
+    approach_refresh_swamp(game);
+    push_message(game, "Debug: all town roads unlocked.");
 }
 
 static void debug_apply_loadout(GameState *game, const DebugConfig *config) {

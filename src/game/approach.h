@@ -27,6 +27,8 @@ void approach_refresh_dungeon(GameState *g);
 void approach_refresh_forest(GameState *g);
 int approach_forest_town_exit(const GameState *g, int *x, int *y);
 void approach_refresh_mountains(GameState *g);
+void approach_refresh_swamp(GameState *g);
+int approach_swamp_town_exit(const GameState *g, int *x, int *y);
 int approach_mountain_town_exit(const GameState *g, int *x, int *y);
 void approach_relocate_ridgeshire(GameState *g);
 int approach_dungeon_town_exit(const GameState *g, int *x, int *y);

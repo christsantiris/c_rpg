@@ -336,8 +336,6 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         game_record_dain_kill(g, type);
     }
     if (is_boss) {
-        int first_swamp_victory = g->location == LOCATION_SWAMP &&
-            !(g->defeated_bosses & (1 << LOCATION_SWAMP));
         g->defeated_bosses |= 1 << g->location;
         game_record_temple_enemy_defeated(g, type);
         if (type == ENEMY_THORN_REGENT) {
@@ -352,15 +350,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         if (type == ENEMY_PRISM_SOVEREIGN) {
             push_message(g, "The Prism Sovereign shatters. The path to Stillbury opens!");
         }
-        if (first_swamp_victory) {
-            g->dialogue_active = 1;
-            g->dialogue_x = g->player.x;
-            g->dialogue_y = g->player.y;
-            snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Shortcut found");
-            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "You found a shortcut through the swamp to %s! Take the marked exit recessed into the surrounding terrain, or continue through the swamp.",
-                g->swamp_entry_town == LOCATION_TOWN3 ? "Stillbury" : "Rosemoor");
-        }
+
     }
     int gold = 0;
     switch (type) {
@@ -2565,54 +2555,30 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
         if (g->location == LOCATION_SWAMP &&
-            g->map.tiles[ty][tx] == TILE_SWAMP_SHORTCUT) {
-            if (g->defeated_bosses & (1 << LOCATION_SWAMP)) {
-                game_request_shortcut(g);
-            }
-            return;
-        }
-
-        if (g->location == LOCATION_SWAMP &&
-            g->map.tiles[ty][tx] == TILE_SWAMP_ENTRANCE) {
-            if (g->level == SWAMP_BOSS_LEVEL && g->swamp_entry_town == LOCATION_TOWN3) {
+            (g->map.tiles[ty][tx] == TILE_SWAMP_ENTRANCE ||
+            g->map.tiles[ty][tx] == TILE_SWAMP_EXIT)) {
+            int reverse = g->map.tiles[ty][tx] == TILE_SWAMP_ENTRANCE;
+            if (!reverse && g->level == SWAMP_BOSS_LEVEL) {
                 for (int i = 0; i < g->enemy_count; i++) {
                     if (g->enemies[i].active && g->enemies[i].type == ENEMY_SWAMP_DEMON) {
-                        push_message(g, "The demon blocks the swamp trail!");
+                        push_message(g, "The demon seals the swamp exit!");
                         return;
                     }
                 }
             }
-            if (g->level == 1) {
-                game_leave_swamp(g, LOCATION_TOWN2, 0);
+            if ((reverse && g->level == 1) || (!reverse && g->level == SWAMP_DEPTH)) {
+                game_return_to_approach(g);
             } else {
-                int unvisited = !g->swamp_cache[g->level - 2].valid;
-                game_ascend(g);
+                int next = g->level + (reverse ? -1 : 1);
+                int unvisited = !g->swamp_cache[next - 1].valid;
+                if (reverse) {
+                    game_ascend(g);
+                } else {
+                    game_descend(g);
+                }
                 if (unvisited) {
                     g->score += map_swamp_difficulty(g->level) * 100;
                 }
-            }
-            return;
-        }
-
-        if (g->location == LOCATION_SWAMP &&
-            g->map.tiles[ty][tx] == TILE_SWAMP_EXIT) {
-            if (g->level == SWAMP_BOSS_LEVEL && g->swamp_entry_town != LOCATION_TOWN3) {
-                for (int i = 0; i < g->enemy_count; i++) {
-                    if (g->enemies[i].active &&
-                        g->enemies[i].type == ENEMY_SWAMP_DEMON) {
-                        push_message(g, "The demon blocks the swamp trail!");
-                        return;
-                    }
-                }
-            }
-            if (g->level < SWAMP_DEPTH) {
-                int unvisited = !g->swamp_cache[g->level].valid;
-                game_descend(g);
-                if (unvisited) {
-                    g->score += map_swamp_difficulty(g->level) * 100;
-                }
-            } else {
-                game_leave_swamp(g, LOCATION_TOWN3, 0);
             }
             return;
         }
