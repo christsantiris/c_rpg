@@ -2990,16 +2990,14 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_y(v, TOWN4_WORKSHOP_Y));
         draw_town_hall(r, viewport_to_screen_x(v, TOWN4_HALL_X),
             viewport_to_screen_y(v, TOWN4_HALL_Y));
-        draw_town_gate(r, viewport_to_screen_x(v, RIDGESHIRE_ASHEN_GATE_X - 2),
-            viewport_to_screen_y(v, 0), TOWN_EXIT_ASHEN);
+        draw_town_gate_back(r, viewport_to_screen_x(v, RIDGESHIRE_DRAGON_GATE_X),
+            viewport_to_screen_y(v, 0), TOWN_EXIT_DRAGONSPINE, 0, 1);
         draw_town_gate(r, viewport_to_screen_x(v, 0),
             viewport_to_screen_y(v, 10), TOWN_EXIT_ROAD);
         draw_town_gate_south(r, viewport_to_screen_x(v, 20 - 2),
             viewport_to_screen_y(v, TOWN_H - 3));
-        draw_town_gate(r,
-            viewport_to_screen_x(v, TOWN_W - 3),
-            viewport_to_screen_y(v, TOWN4_DRAGON_GATE_Y - 2),
-            TOWN_EXIT_DRAGONSPINE);
+        draw_town_gate_back(r, viewport_to_screen_x(v, TOWN_W - 1),
+            viewport_to_screen_y(v, RIDGESHIRE_ASHEN_GATE_Y), TOWN_EXIT_ASHEN, -1, 0);
     }
 
     if (g->location == LOCATION_TOWN2) {
@@ -3274,13 +3272,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int width = 0;
         TTF_SizeText(r->font_tiny, "ASHEN HOLLOW", &width, NULL);
         renderer_draw_text(r, "ASHEN HOLLOW",
-            viewport_to_screen_x(v, RIDGESHIRE_ASHEN_GATE_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
-            viewport_to_screen_y(v, 1) * TILE_SIZE,
+            viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
+            viewport_to_screen_y(v, RIDGESHIRE_ASHEN_GATE_Y) * TILE_SIZE,
             area_label_color(LOCATION_ASHEN), r->font_tiny);
         TTF_SizeText(r->font_tiny, "DRAGONSPINE", &width, NULL);
         renderer_draw_text(r, "DRAGONSPINE",
-            viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
-            viewport_to_screen_y(v, TOWN4_DRAGON_GATE_Y) * TILE_SIZE,
+            viewport_to_screen_x(v, RIDGESHIRE_DRAGON_GATE_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, 1) * TILE_SIZE,
             area_label_color(LOCATION_DRAGONSPINE), r->font_tiny);
         TTF_SizeText(r->font_tiny, "MOUNTAINS", &width, NULL);
         renderer_draw_text(r, "MOUNTAINS",

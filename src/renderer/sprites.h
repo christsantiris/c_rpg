@@ -108,21 +108,6 @@ void draw_red_dragon(Renderer *r, int tile_x, int tile_y);
 void draw_tarrasque(Renderer *r, int tile_x, int tile_y);
 
 // Town Draw functions
-typedef enum {
-    TOWN_EXIT_DUNGEON,
-    TOWN_EXIT_FOREST,
-    TOWN_EXIT_MOUNTAINS,
-    TOWN_EXIT_COAST,
-    TOWN_EXIT_ROAD,
-    TOWN_EXIT_SWAMP,
-    TOWN_EXIT_DRAGONSPINE,
-    TOWN_EXIT_FROST,
-    TOWN_EXIT_DESERT,
-    TOWN_EXIT_MOONVEIL,
-    TOWN_EXIT_ASHEN,
-    TOWN_EXIT_GLASSDEEP
-} TownExitStyle;
-
 void draw_town_floor(Renderer *r, int tile_x, int tile_y);
 void draw_town_path(Renderer *r, int tile_x, int tile_y);
 void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style);

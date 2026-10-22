@@ -1675,13 +1675,10 @@ void map_generate_town4(Map *m, int *spawn_x, int *spawn_y) {
         m->tiles[12][x] = TILE_TOWN_PATH;
     }
     m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
-    for (int y = TOWN4_DRAGON_GATE_Y - 2; y <= TOWN4_DRAGON_GATE_Y + 2; y++) {
-        m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
-    }
     for (int y = 10; y <= 14; y++) {
         m->tiles[y][0] = TILE_TOWN_EXIT;
     }
-    map_place_town4_ashen_gate(m);
+    map_place_town4_region_gates(m);
     map_place_town4_workshop(m);
     map_place_town4_hall(m);
     map_place_town4_guards(m, -1, -1);
@@ -1692,9 +1689,12 @@ void map_generate_town4(Map *m, int *spawn_x, int *spawn_y) {
     *spawn_y = TOWN_H - 2;
 }
 
-void map_place_town4_ashen_gate(Map *m) {
-    for (int x = RIDGESHIRE_ASHEN_GATE_X - 2; x <= RIDGESHIRE_ASHEN_GATE_X + 2; x++) {
+void map_place_town4_region_gates(Map *m) {
+    for (int x = RIDGESHIRE_DRAGON_GATE_X - 2; x <= RIDGESHIRE_DRAGON_GATE_X + 2; x++) {
         m->tiles[0][x] = TILE_TOWN_EXIT;
+    }
+    for (int y = RIDGESHIRE_ASHEN_GATE_Y - 2; y <= RIDGESHIRE_ASHEN_GATE_Y + 2; y++) {
+        m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
     }
 }
 

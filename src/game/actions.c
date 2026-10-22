@@ -2468,9 +2468,9 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->location == LOCATION_TOWN4 &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
             if (ty == 0) {
-                game_enter_ashen(g);
-            } else if (tx == TOWN_W - 1) {
                 game_enter_dragonspine(g);
+            } else if (tx == TOWN_W - 1) {
+                game_enter_ashen(g);
             } else if (tx == 0) {
                 game_enter_king_road(g, LOCATION_KING_ROAD_WEST, 0);
             } else if (ty == TOWN_H - 1) {

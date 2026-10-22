@@ -223,6 +223,98 @@ void test_approaches(void) {
         }
     }
     ASSERT("every open tile across a wide town gate leads onto its approach", wide_gates);
+    ASSERT("Dragonspine is north and Ashen Hollow is east of Ridgeshire", town_approaches[12].area == LOCATION_DRAGONSPINE && town_approaches[12].gate_x == RIDGESHIRE_DRAGON_GATE_X && town_approaches[12].gate_y == 0 && town_approaches[13].area == LOCATION_ASHEN && town_approaches[13].gate_x == TOWN_W - 1 && town_approaches[13].gate_y == RIDGESHIRE_ASHEN_GATE_Y);
+    for (int index = 12; index <= 13; index++) {
+        const TownApproach *route = &town_approaches[index];
+        int dragon = route->area == LOCATION_DRAGONSPINE;
+        for (int returning = 0; returning < 2; returning++) {
+            approach_town(g, route);
+            approach_enter(g, route->gate_x, route->gate_y);
+            int old_dx = dragon ? 1 : 0;
+            int old_dy = dragon ? 0 : -1;
+            int tx = dragon ? 0 : APPROACH_W / 2;
+            int ty = dragon ? APPROACH_H / 2 : APPROACH_H - 1;
+            memset(&g->map, 0, sizeof(g->map));
+            for (int y = 0; y < MAP_H; y++) {
+                for (int x = 0; x < MAP_W; x++) {
+                    g->map.tiles[y][x] = dragon ? TILE_DRAGON_WALL : TILE_ASHEN_WALL;
+                }
+            }
+            for (int step = 0; step <= APPROACH_LENGTH; step++) {
+                int radius = step < APPROACH_LENGTH - 3 ? 1 : 0;
+                for (int side = -radius; side <= radius; side++) {
+                    g->map.tiles[ty + step * old_dy + side * old_dx][tx + step * old_dx - side * old_dy] = approach_floor(route->area);
+                }
+            }
+            g->map.stairs_up_x = tx;
+            g->map.stairs_up_y = ty;
+            g->map.stairs_down_x = tx + APPROACH_LENGTH * old_dx;
+            g->map.stairs_down_y = ty + APPROACH_LENGTH * old_dy;
+            g->map.tiles[ty][tx] = TILE_APPROACH_TOWN;
+            g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] = TILE_APPROACH_AREA;
+            int distance = returning ? APPROACH_LENGTH - 1 : 6;
+            int side = returning ? 0 : 1;
+            g->player.x = tx + distance * old_dx - side * old_dy;
+            g->player.y = ty + distance * old_dy + side * old_dx;
+            g->player.last_dx = returning ? -old_dx : old_dx;
+            g->player.last_dy = returning ? -old_dy : old_dy;
+            map_mark_explored(&g->map, g->player.x, g->player.y);
+            g->floor_item_count = 1;
+            g->floor_items[0] = (FloorItem){.active = 1, .x = tx + 5 * old_dx + old_dy, .y = ty + 5 * old_dy - old_dx, .underlying_tile = approach_floor(route->area), .item = item_make_health_potion()};
+            g->map.tiles[g->floor_items[0].y][g->floor_items[0].x] = TILE_ITEM;
+            LevelCache *cache = area_cache(g, route->area, 0);
+            cache->valid = 1;
+            if (dragon) {
+                map_generate_dragonspine(&cache->map, 1);
+            } else {
+                map_generate_ashen(&cache->map, 1);
+            }
+            cache->enemy_count = 1;
+            cache->enemies[0].active = 1;
+            cache->enemies[0].hp = 7;
+            g->gold = 393;
+            g->watchfire_quest_state = 1;
+            g->watchfire_quest_progress = 5;
+            int migrated = save_game(g, slot) && legacy_approach_save(slot, 162) && load_game(loaded, slot);
+            int dx = dragon ? 0 : 1;
+            int dy = dragon ? -1 : 0;
+            int nx = dragon ? APPROACH_W / 2 : 0;
+            int ny = dragon ? APPROACH_H - 1 : APPROACH_H / 2;
+            ASSERT("old Ridgeshire approaches preserve route, distance, side, facing, and exploration after relocation", migrated && loaded->approach_route == index && loaded->player.x == nx + distance * dx - side * dy && loaded->player.y == ny + distance * dy + side * dx && loaded->player.last_dx == (returning ? -dx : dx) && loaded->player.last_dy == (returning ? -dy : dy) && map_is_explored(&loaded->map, loaded->player.x, loaded->player.y));
+            ASSERT("approach relocation preserves loot, combat caches, money, and quest progress", migrated && loaded->floor_items[0].active && loaded->floor_items[0].x == nx + 5 * dx + dy && loaded->floor_items[0].y == ny + 5 * dy - dx && loaded->map.tiles[ny + 5 * dy - dx][nx + 5 * dx + dy] == TILE_ITEM && loaded->floor_items[0].underlying_tile == approach_floor(route->area) && loaded->gold == 393 && loaded->watchfire_quest_progress == 5 && area_cache(loaded, route->area, 0)->enemies[0].hp == 7 && memcmp(cache->map.tiles, area_cache(loaded, route->area, 0)->map.tiles, sizeof(cache->map.tiles)) == 0);
+            int px = loaded->player.x;
+            int py = loaded->player.y;
+            ASSERT("relocated approaches save again without rotating a second time", save_game(loaded, slot) && load_game(g, slot) && g->player.x == px && g->player.y == py && g->approach_route == index);
+            if (returning) {
+                walk_return_approach(g);
+                ASSERT("migrated return paths reach the new Ridgeshire gate", g->location == LOCATION_TOWN4 && g->player.x == (dragon ? RIDGESHIRE_DRAGON_GATE_X : TOWN_W - 2) && g->player.y == (dragon ? 1 : RIDGESHIRE_ASHEN_GATE_Y));
+            } else {
+                walk_town_approach(g);
+                ASSERT("migrated outbound paths still enter the original combat region", g->location == route->area);
+            }
+        }
+        approach_town(g, route);
+        if (dragon) {
+            game_enter_dragonspine(g);
+        } else {
+            game_enter_ashen(g);
+        }
+        g->enemies[0].hp = 7;
+        game_open_town_portal(g);
+        int x = dragon ? RIDGESHIRE_DRAGON_PORTAL_X : RIDGESHIRE_ASHEN_PORTAL_X;
+        int y = dragon ? RIDGESHIRE_DRAGON_PORTAL_Y : RIDGESHIRE_ASHEN_PORTAL_Y;
+        int old_x = dragon ? TOWN_W - 3 : 21;
+        int old_y = dragon ? 13 : 2;
+        g->floor_item_count = 2;
+        g->floor_items[0] = (FloorItem){.active = 1, .x = old_x, .y = old_y, .underlying_tile = TILE_PORTAL, .item = item_make_health_potion()};
+        g->floor_items[1] = (FloorItem){.active = 1, .x = x, .y = y, .underlying_tile = TILE_TOWN_FLOOR, .item = item_make_health_potion()};
+        g->map.tiles[old_y][old_x] = TILE_ITEM;
+        g->map.tiles[y][x] = TILE_ITEM;
+        int migrated = save_game(g, slot) && legacy_approach_save(slot, 162) && load_game(loaded, slot);
+        ASSERT("legacy Ridgeshire portals move to their new gate while preserving loot at both positions", migrated && loaded->location == LOCATION_TOWN4 && loaded->portal_active && loaded->portal_location == route->area && loaded->map.tiles[y][x] == TILE_PORTAL && loaded->map.tiles[old_y][old_x] == TILE_ITEM && loaded->floor_items[0].active && loaded->floor_items[0].underlying_tile == TILE_TOWN_FLOOR && loaded->floor_items[1].active && loaded->floor_items[1].underlying_tile == TILE_PORTAL);
+        action_resolve_player(loaded, (Action){ACTION_MOVE, x, y});
+        ASSERT("a migrated portal resumes its original expedition and wounded enemies", loaded->location == route->area && loaded->level == 1 && loaded->player.x == g->portal_x && loaded->player.y == g->portal_y && loaded->enemies[0].hp == 7);
+    }
     const TownApproach *dungeon_route = &town_approaches[1];
     approach_town(g, dungeon_route);
     approach_enter(g, dungeon_route->gate_x, dungeon_route->gate_y);

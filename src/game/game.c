@@ -3891,9 +3891,9 @@ static void place_town_portal(GameState *g) {
     }
     if (g->location == LOCATION_TOWN4) {
         if (g->portal_location == LOCATION_ASHEN) {
-            g->map.tiles[2][RIDGESHIRE_ASHEN_GATE_X + 1] = TILE_PORTAL;
+            g->map.tiles[RIDGESHIRE_ASHEN_PORTAL_Y][RIDGESHIRE_ASHEN_PORTAL_X] = TILE_PORTAL;
         } else if (g->portal_location == LOCATION_DRAGONSPINE) {
-            g->map.tiles[TOWN4_PORTAL_Y][TOWN4_PORTAL_X] = TILE_PORTAL;
+            g->map.tiles[RIDGESHIRE_DRAGON_PORTAL_Y][RIDGESHIRE_DRAGON_PORTAL_X] = TILE_PORTAL;
         } else if (g->portal_location == LOCATION_MOUNTAINS && g->mountain_portal_town == LOCATION_TOWN4) {
             g->map.tiles[TOWN_H - 3][21] = TILE_PORTAL;
         }
@@ -4345,7 +4345,7 @@ void game_talk_to_veyra(GameState *g) {
             "Our warning fires are dark. Restore the watchfires in Goblin Mountains 6, Ashen Hollow 3, and Dragonspine 3, in any order. Defeat their guards, then press A beside each. Return for 180 gold.");
     } else if (g->watchfire_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Watchfires: Mountains 6 %s; Ashen Hollow 3 %s; Dragonspine 3 %s. Use our south, north, and east gates. Defeat each fire's defenders and press A beside it. Regional bosses are optional.",
+            "Watchfires: Mountains 6 %s; Ashen Hollow 3 %s; Dragonspine 3 %s. Use our south, east, and north gates. Defeat each fire's defenders and press A beside it. Regional bosses are optional.",
             g->watchfire_quest_progress & 1 ? "lit" : "dark", g->watchfire_quest_progress & 2 ? "lit" : "dark", g->watchfire_quest_progress & 4 ? "lit" : "dark");
     } else if (g->watchfire_quest_state == 2) {
         g->watchfire_quest_state = 3;
@@ -5505,9 +5505,9 @@ static void return_to_town(GameState *g, Location destination) {
         }
     } else if (destination == LOCATION_TOWN4) {
         g->player.x = returning_from == LOCATION_MOUNTAINS ? spawn_x : TOWN_W - 2;
-        g->player.y = returning_from == LOCATION_MOUNTAINS ? spawn_y : TOWN4_DRAGON_GATE_Y;
-        if (returning_from == LOCATION_ASHEN) {
-            g->player.x = RIDGESHIRE_ASHEN_GATE_X;
+        g->player.y = returning_from == LOCATION_MOUNTAINS ? spawn_y : RIDGESHIRE_ASHEN_GATE_Y;
+        if (returning_from == LOCATION_DRAGONSPINE) {
+            g->player.x = RIDGESHIRE_DRAGON_GATE_X;
             g->player.y = 1;
         }
     } else if (returning_from == LOCATION_CROWNROAD) {
@@ -6396,7 +6396,7 @@ void game_talk_to_dragon_seeker(GameState *g) {
     g->dialogue_y = ILYA_TAVERN_Y;
     if (g->dragon_treasure_quest_state == 0) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Travel north through the mountains to Ridgeshire, then east to Dragonspine. "
+            "Travel north through the mountains to Ridgeshire, then north to Dragonspine. "
             "Bring its fifth-stage golden goblet back here to Oakhaven's Tavern for a Potion of Strength.");
     } else if (g->dragon_treasure_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,

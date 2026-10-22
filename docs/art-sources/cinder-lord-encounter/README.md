@@ -49,7 +49,7 @@ Use the existing Debug shortcut launcher and select **New Game**:
 Choose Warrior for that loadout. Use `--weapon bow` with Rogue or `--weapon staff`
 with Mage to exercise the other combat paths. The launcher leaves the Cinder
 Lord alive. Travel to Ridgeshire through the mountain shortcut, leave through
-its north gate, and follow Ashen Hollow north to stage 5. Buy supplies before
+its east gate, and follow Ashen Hollow to stage 5. Buy supplies before
 the expedition. Existing saves with a living Lord migrate in place.
 
 1. Enter the final clearing. Sidestep the one-action cinder lance, then

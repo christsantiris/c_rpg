@@ -28,7 +28,7 @@ retro pixel-art style. Choose a Warrior, Mage, or Rogue, prepare in town, and
 explore a five-floor undead dungeon, the seven-stage Haunted Forest, the
 seven-stage Goblin Mountains, the five-stage Sunken Coast, and Stillbury's
 seven-level Blackwater Swamp. Beyond the Goblin Mountains, the five-stage
-Dragonspine ascent begins at Ridgeshire's east gate. Each region
+Dragonspine ascent begins at Ridgeshire's north gate. Each region
 keeps its own generated maps and progression. Defeating the Drowned Queen on
 the Sunken Coast opens a sea route to the Ruined Isle. Its five-tier Ruined
 Temple remains a late-game challenge.
@@ -55,6 +55,8 @@ including when a boss has been lured away from its original room.
 
 An illustrated overview based on the world's town connections. North is up;
 distances and coastlines are illustrative rather than to scale.
+Dragonspine lies north of Ridgeshire alongside the northern Frostfell Wastes;
+Ashen Hollow's volcanic basin lies east of Ridgeshire.
 
 ## Combat Areas and Level Counts
 
@@ -123,7 +125,7 @@ Defeating him reveals a shortcut to the opposite town; the remaining three level
 can instead be fought in decreasing difficulty. Dain's map bearers occupy levels
 **7, 6, and 5 near Ridgeshire**, before the stage-4 peak when entering from
 Ridgeshire and after it when entering from Oakhaven.
-Ridgeshire's east gate leads along an approach path to Dragonspine. Its broad cliff ledges
+Ridgeshire's north gate leads along an approach path to Dragonspine. Its broad cliff ledges
 fork around ravines rendered with native blue-gray rock and snowy edges. Push
 loose boulders with **Interact** (**A** by default) to reposition cover against
 archers and Fire Elementals. Boulders cannot seal routes or cover objectives.
@@ -502,7 +504,7 @@ existing garden progress. See [Moonveil Gardens](docs/moonveil-gardens.md#the-st
 
 ### Ashen Hollow
 
-Ridgeshire's north gate leads into five stages of Ashen Hollow, a volcanic basin
+Ridgeshire's east gate leads along an approach path into five stages of Ashen Hollow, a volcanic basin
 of basalt columns, charred trees, ruined stonework, and animated lava pools.
 Enter from the south and follow winding ash paths north. Cinder Imps throw
 firebolts, Ash Hounds rush forward, and Obsidian Guardians defend later stages.

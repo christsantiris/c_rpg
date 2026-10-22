@@ -12,7 +12,7 @@ static const TownBuilding buildings[] = {
         "There is evil lurking in the lands north of Stillbury. Hunters return from the swamp pale and shaken, if they return at all. Mind your step beyond the north gate.", NULL},
     {LOCATION_TOWN4, LOCATION_MONASTERY, 6, 16, 7, 5, 2, 1 << LOCATION_DRAGONSPINE,
         "MONASTERY", "Abbot Edric",
-        "The dragons of Dragonspine, east of Ridgeshire, terrorize our town. We hear their cries across the peaks and pray for those caught outside the walls.",
+        "The dragons of Dragonspine, north of Ridgeshire, terrorize our town. We hear their cries across the peaks and pray for those caught outside the walls.",
         "Since you defeated the dragon ruling Dragonspine, Ridgeshire is safer. Our bells ring in gratitude rather than alarm. May you find peace beneath this roof."},
     {LOCATION_TOWN3, LOCATION_SPICE_SHOP, 7, 17, 5, 4, 3, 0,
         "SPICE MERCHANT", "Spice Merchant Suri",
