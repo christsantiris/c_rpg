@@ -1,3 +1,4 @@
+#include "approach_checks.h"
 #include "test_utils.h"
 #include "../src/game/game.h"
 #include "../src/game/actions.h"
@@ -205,7 +206,11 @@ static int frost_layout_snowed_over(const Map *map) {
 }
 
 static void walk_onto(GameState *g, int x, int y) {
+    Location from = g->location;
     action_resolve_player(g, (Action){ACTION_MOVE, x, y});
+    if (from == LOCATION_FROSTFELL && g->location == LOCATION_APPROACH) {
+        walk_return_approach(g);
+    }
 }
 
 static int frost_enemy_type(EnemyType type) {
@@ -1406,6 +1411,7 @@ void test_frostfell(void) {
     frost_game.player.x = 1;
     frost_game.player.y = 12;
     walk_onto(&frost_game, 0, 12);
+    walk_town_approach(&frost_game);
     ASSERT("Stillbury's west exit leads to Sunscar instead of Frostfell",
         west_gate_open && frost_game.location == LOCATION_DESERT);
     game_enter_town3(&frost_game);
@@ -1416,6 +1422,7 @@ void test_frostfell(void) {
     frost_game.player.x = 20;
     frost_game.player.y = 1;
     walk_onto(&frost_game, 20, 0);
+    walk_town_approach(&frost_game);
     ASSERT("Rosemoor's north gate opens onto the first Frostfell stage",
         north_gate && frost_game.location == LOCATION_FROSTFELL &&
         frost_game.level == 1 &&

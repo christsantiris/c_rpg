@@ -1,3 +1,4 @@
+#include "approach_checks.h"
 #include "test_utils.h"
 #include "shortcut_checks.h"
 #include "game/game.h"
@@ -24,6 +25,9 @@ static void mountain_step(GameState *g, int reverse) {
         y = MAP_H - 1;
     }
     action_resolve_player(g, (Action){ACTION_MOVE, x, y});
+    if (g->location == LOCATION_APPROACH) {
+        walk_return_approach(g);
+    }
 }
 
 static int mountain_king(const GameState *g) {
@@ -76,6 +80,7 @@ static void mountain_crossing(int reverse, int shortcut) {
     int road_x = reverse ? RIDGESHIRE_MOUNTAIN_ROAD_X : TOWN4_ROAD_X;
     ASSERT("High Pass starts locked at either town", mountain.map.tiles[gate_y][road_x] == TILE_WALL);
     action_resolve_player(&mountain, (Action){ACTION_MOVE, 20, gate_y});
+    walk_town_approach(&mountain);
     ASSERT("ordinary gates enter the appropriate mountain end", mountain.location == LOCATION_MOUNTAINS && mountain.level == (reverse ? MOUNTAIN_DEPTH : 1) && mountain.mountain_entry_town == (reverse ? LOCATION_TOWN4 : LOCATION_TOWN));
     mountain_step(&mountain, !reverse);
     ASSERT("either entry permits immediate retreat", mountain.location == (reverse ? LOCATION_TOWN4 : LOCATION_TOWN) && mountain.player.x == 20 && mountain.player.y == (reverse ? TOWN_H - 2 : 1));

@@ -4,6 +4,7 @@ int tests_run    = 0;
 int tests_passed = 0;
 
 void test_movement(void);
+void test_approaches(void);
 void test_jail(void);
 void test_ilya_relocation(void);
 void test_arrows(void);
@@ -114,6 +115,7 @@ int main(void) {
     // ASSERT("sanity check false", 1 == 0);
     printf("=== CONR Test Suite ===\n\n");
     test_movement();
+    test_approaches();
     test_enemy_projectiles();
     printf("\n");
     test_map();

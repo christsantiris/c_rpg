@@ -21,6 +21,7 @@
 #include "../game/wilds.h"
 #include "../game/jail.h"
 #include "../game/town_life.h"
+#include "../game/approach.h"
 #include "cJSON.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -849,7 +850,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 159);
+    cJSON_AddNumberToObject(root, "save_version", 162);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -949,6 +950,7 @@ int save_game(const GameState *g, int slot) {
         g->equipped_off_hand);
     cJSON_AddNumberToObject(root, "equipped_armor",    g->equipped_armor);
     cJSON_AddNumberToObject(root, "location",          g->location);
+    cJSON_AddNumberToObject(root, "approach_route", g->approach_route);
     cJSON_AddNumberToObject(root, "lich_reward_state", g->lich_reward_state);
     cJSON_AddNumberToObject(root, "necromancer_reward_state", g->necromancer_reward_state);
     cJSON_AddNumberToObject(root, "goblin_king_reward_state", g->goblin_king_reward_state);
@@ -2526,6 +2528,13 @@ int load_game(GameState *g, int slot) {
     g->equipped_off_hand = off_hand ? off_hand->valueint : -1;
     g->equipped_armor    = cJSON_GetObjectItem(root, "equipped_armor")->valueint;
     g->location          = cJSON_GetObjectItem(root, "location")->valueint;
+    cJSON *approach = cJSON_GetObjectItem(root, "approach_route");
+    g->approach_route = cJSON_IsNumber(approach) ? approach->valueint : -1;
+    if (g->location == LOCATION_APPROACH && (!approach_route(g) ||
+        g->player.x < 0 || g->player.x >= APPROACH_W || g->player.y < 0 || g->player.y >= APPROACH_H)) {
+        cJSON_Delete(root);
+        return 0;
+    }
     if ((g->location == LOCATION_JAIL && (g->jail_quest_state != 1 && g->jail_quest_state != 2)) ||
         (g->location == LOCATION_ESCAPE_TUNNEL && (g->jail_quest_state != 2 ||
         g->player.x < 1 || g->player.x >= tunnel_width || g->player.y < 1 || g->player.y >= ESCAPE_TUNNEL_H - 1 ||
@@ -4662,6 +4671,9 @@ int load_game(GameState *g, int slot) {
     }
     if (save_version < 158) {
         migrate_forest_entry_direction(g);
+    }
+    if (save_version < 162) {
+        approach_refresh_dungeon(g);
     }
     // Recover saves containing a town interior or shortcut in a dungeon slot.
     game_repair_dungeon_maps(g);

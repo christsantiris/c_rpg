@@ -4636,6 +4636,57 @@ void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style) {
         (SDL_Color){178, 146, 73, 255});
 }
 
+void draw_town_gate_back(Renderer *r, int tx, int ty, TownExitStyle style, int dx, int dy) {
+    if (!r->town_gate_texture || r->town_gate_style != (int)style) {
+        SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormat(0, 5 * TILE_SIZE, 5 * TILE_SIZE, 32, SDL_PIXELFORMAT_RGBA32);
+        if (!surface) {
+            return;
+        }
+        SDL_Renderer *sdl = SDL_CreateSoftwareRenderer(surface);
+        if (!sdl) {
+            SDL_FreeSurface(surface);
+            return;
+        }
+        // Rasterize the existing town gate once, without changing frame state.
+        SDL_SetRenderDrawColor(sdl, 0, 0, 0, 0);
+        SDL_RenderClear(sdl);
+        Renderer gate = {0};
+        gate.sdl = sdl;
+        draw_town_gate(&gate, 0, 0, style);
+        SDL_RenderPresent(sdl);
+        SDL_Texture *texture = SDL_CreateTextureFromSurface(r->sdl, surface);
+        SDL_DestroyRenderer(sdl);
+        SDL_FreeSurface(surface);
+        if (!texture) {
+            return;
+        }
+        SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+        SDL_SetTextureScaleMode(texture, SDL_ScaleModeNearest);
+        if (r->town_gate_texture) {
+            SDL_DestroyTexture(r->town_gate_texture);
+        }
+        r->town_gate_texture = texture;
+        r->town_gate_style = style;
+    }
+    int right = style == TOWN_EXIT_DUNGEON || style == TOWN_EXIT_DRAGONSPINE;
+    int width = dx ? (right ? 3 : 2) * TILE_SIZE : 5 * TILE_SIZE;
+    int height = dx ? 5 * TILE_SIZE : 2 * TILE_SIZE;
+    SDL_Rect source = {0, 0, width, height};
+    SDL_Rect destination = {tx * TILE_SIZE, ty * TILE_SIZE, width, height};
+    SDL_RendererFlip flip;
+    if (dx) {
+        destination.x += dx < 0 ? TILE_SIZE - width : 0;
+        destination.y -= 2 * TILE_SIZE;
+        flip = right == (dx > 0) ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
+    } else {
+        destination.x -= 2 * TILE_SIZE;
+        destination.y += dy < 0 ? TILE_SIZE - height : 0;
+        int bottom = style == TOWN_EXIT_GLASSDEEP;
+        flip = bottom == (dy > 0) ? SDL_FLIP_VERTICAL : SDL_FLIP_NONE;
+    }
+    SDL_RenderCopyEx(r->sdl, r->town_gate_texture, &source, &destination, 0, NULL, flip);
+}
+
 void draw_town_road_sign(Renderer *r, int tile_x, int tile_y, const char *name) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
@@ -5659,6 +5710,15 @@ void draw_labyrinth_entrance(Renderer *r, int tile_x, int tile_y, int open) {
         3 * TILE_SIZE, 3 * TILE_SIZE
     };
     SDL_RenderCopy(r->sdl, r->labyrinth_texture, &source, &destination);
+}
+
+void draw_dungeon_entrance(Renderer *r, int tile_x, int tile_y) {
+    if (!r->dungeon_entrance_texture) {
+        draw_labyrinth_entrance_fallback(r, tile_x, tile_y, 1);
+        return;
+    }
+    SDL_Rect destination = {(tile_x - 1) * TILE_SIZE, (tile_y - 2) * TILE_SIZE, 3 * TILE_SIZE, 3 * TILE_SIZE};
+    SDL_RenderCopy(r->sdl, r->dungeon_entrance_texture, NULL, &destination);
 }
 
 void draw_labyrinth_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {

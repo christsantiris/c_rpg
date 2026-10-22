@@ -23,9 +23,9 @@ A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explo
 
 ## Overview
 
-*The Castle of No Return* is a C/SDL roguelike with turn-based combat and a
+*The Castle of No Return* is a C/SDL roguelike adventure with turn-based combat and a
 retro pixel-art style. Choose a Warrior, Mage, or Rogue, prepare in town, and
-explore an five-floor undead dungeon, the seven-stage Haunted Forest, the
+explore a five-floor undead dungeon, the seven-stage Haunted Forest, the
 seven-stage Goblin Mountains, the five-stage Sunken Coast, and Stillbury's
 seven-level Blackwater Swamp. Beyond the Goblin Mountains, the five-stage
 Dragonspine ascent begins at Ridgeshire's east gate. Each region
@@ -87,6 +87,18 @@ The forest, mountains, and swamp can be played from either end, with their
 boss on level 4. Defeating that boss opens a shortcut to the opposite town;
 the remaining three levels can also be explored.
 
+Normal town gates first lead onto a safe approach path. Follow it to the marked
+area entrance to begin the adventure, or turn back through the town gate.
+Physical area exits return to the far end of the same approach, facing town;
+walk the path back to its gate. Return-to-Town spells and portals still travel
+directly to town.
+The OakHaven dungeon approach follows a cobblestone path through green grass
+to a dark stone crypt marked by a crowned skull and green soul-fire braziers.
+Approaches continue in the direction of departure and contain no enemies or
+hazards. Saves made on a path resume there. Castle entry, Rook's Labyrinth, the
+jail escape tunnel, and both Crown Roads retain their existing entry routes;
+the Ruined Isle already provides the walk to the temple entrance.
+
 Every adventure floor and travel route has a description box with a title and
 two terrain or navigation tips, including boss floors. Coast boxes retain the
 current tide state, and temple boxes show alignment and the remaining foes
@@ -111,7 +123,7 @@ Defeating him reveals a shortcut to the opposite town; the remaining three level
 can instead be fought in decreasing difficulty. Dain's map bearers occupy levels
 **7, 6, and 5 near Ridgeshire**, before the stage-4 peak when entering from
 Ridgeshire and after it when entering from Oakhaven.
-Ridgeshire's east gate leads directly to Dragonspine. Its broad cliff ledges
+Ridgeshire's east gate leads along an approach path to Dragonspine. Its broad cliff ledges
 fork around ravines rendered with native blue-gray rock and snowy edges. Push
 loose boulders with **Interact** (**A** by default) to reposition cover against
 archers and Fire Elementals. Boulders cannot seal routes or cover objectives.

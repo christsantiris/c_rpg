@@ -18,6 +18,7 @@ EM_ASYNC_JS(void, browser_next_frame, (void), {
 #include "game/game.h"
 #include "game/jail.h"
 #include "game/town_life.h"
+#include "game/approach.h"
 #include "game/map.h"
 #include "screens/landing.h"
 #include "screens/name_entry.h"
@@ -1514,7 +1515,9 @@ int main(int argc, char **argv) {
         }
 
         // Update music based on screen and location
+        const TownApproach *approach = approach_route(&game);
         int is_town = game.location == LOCATION_TOWN ||
+            approach != NULL ||
             game.location == LOCATION_TAVERN ||
             game.location == LOCATION_TOWN2 ||
             game.location == LOCATION_TOWN3 ||
@@ -1526,13 +1529,13 @@ int main(int argc, char **argv) {
             game.location == LOCATION_INN ||
             game.location == LOCATION_GUILD ||
             game.location == LOCATION_ISLAND || town_life_is_interior(game.location);
-        int in_town2 = game.location == LOCATION_TOWN2 ||
+        int in_town2 = (approach && approach->town == LOCATION_TOWN2) || game.location == LOCATION_TOWN2 ||
             game.location == LOCATION_INN || game.location == LOCATION_BUTCHER;
-        int in_town3 = game.location == LOCATION_TOWN3 ||
+        int in_town3 = (approach && (approach->town == LOCATION_TOWN3 || approach->town == LOCATION_CASTLE)) || game.location == LOCATION_TOWN3 ||
             game.location == LOCATION_GUILD ||
             game.location == LOCATION_SPICE_SHOP ||
             game.location == LOCATION_CASTLE;
-        int in_town4 = game.location == LOCATION_TOWN4 || game.location == LOCATION_WORKSHOP ||
+        int in_town4 = (approach && approach->town == LOCATION_TOWN4) || game.location == LOCATION_TOWN4 || game.location == LOCATION_WORKSHOP ||
             game.location == LOCATION_TOWN_HALL || game.location == LOCATION_MONASTERY;
         music_update(screen, is_town, in_town2, in_town3, in_town4);
 

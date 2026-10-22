@@ -1,3 +1,4 @@
+#include "approach_checks.h"
 #include "test_utils.h"
 #include "shortcut_checks.h"
 #include "game/game.h"
@@ -364,6 +365,7 @@ static void town_route_choice(int route) {
     ASSERT("pending town route choices survive save/load", save_game(&game, SHORTCUT_TEST_SLOT) && load_game(&loaded, SHORTCUT_TEST_SLOT) && game_shortcut_prompt_active(&loaded) && loaded.dialogue_x == gate_x[route] && loaded.dialogue_y == gate_y[route]);
     remove("saves/savegame_99125.json");
     game_handle_shortcut_prompt_key(&loaded, route % 2 ? SDL_SCANCODE_RETURN : SDL_SCANCODE_KP_1, 0);
+    walk_town_approach(&loaded);
     ASSERT("the area choice enters the normal region from the selected town", loaded.location == areas[route] && loaded.level == (route % 2 ? 7 : 1) && !game_shortcut_prompt_active(&loaded));
     game_handle_shortcut_prompt_key(&game, SDL_SCANCODE_KP_2, 0);
     ASSERT("the shortcut choice enters the safe path rather than the destination town", game.location == roads[route] && game.enemy_count == 0 && !game_shortcut_prompt_active(&game));

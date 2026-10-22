@@ -1,4 +1,5 @@
 #include "test_utils.h"
+#include "approach_checks.h"
 #include "../src/game/grave_marshal.h"
 #include "../src/game/catacombs.h"
 #include "../src/systems/save_load.h"
@@ -344,6 +345,7 @@ static void test_guards(void) {
     game.player.x = game.map.stairs_down_x;
     game.player.y = game.map.stairs_down_y;
     action_resolve_player(&game, (Action){ACTION_DESCEND, 0, 0});
+    walk_return_approach(&game);
     ASSERT("Marshal victory opens the castle return even with both honor guards still alive", game.location == LOCATION_CASTLE && game.catacombs_cache[4].enemies[1].active && game.catacombs_cache[4].enemies[2].active && game.grave_marshal_reward_state == 1);
 }
 
