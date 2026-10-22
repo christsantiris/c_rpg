@@ -2,6 +2,7 @@
 #include "test_utils.h"
 #include "../src/game/map.h"
 #include "../src/game/game.h"
+#include "../src/game/healer.h"
 #include "../src/screens/shop.h"
 #include "../src/screens/harbor.h"
 #include "../src/systems/save_load.h"
@@ -289,23 +290,87 @@ void test_town_healer(void) {
 
     ShopScreen shop;
     shop_init(&shop, SHOP_TYPE_HEALER, 0, g.player.player_class);
-    ASSERT("healer sells only health potions at the usual price",
-        shop.item_count == 1 && shop.items[0].type == ITEM_POTION_HEALTH &&
-        shop_buy_price(&shop.items[0]) == 20 &&
-        shop_accepts_item(SHOP_TYPE_HEALER, &shop.items[0]));
-    ASSERT("healer purchase uses the ordinary shop controls",
-        shop_handle_key(&shop, SDL_SCANCODE_RETURN) == SHOP_BUY &&
-        shop_handle_key(&shop, SDL_SCANCODE_TAB) == SHOP_NONE &&
-        shop_handle_key(&shop, SDL_SCANCODE_RETURN) == SHOP_SELL &&
-        shop_handle_key(&shop, SDL_SCANCODE_ESCAPE) == SHOP_CLOSED);
+    ASSERT("healer no longer stocks or buys health potions",
+        shop.item_count == 0 && !shop_accepts_item(SHOP_TYPE_HEALER, &(Item){.type = ITEM_POTION_HEALTH}));
+    const int healer_slot = 99013;
+    if (save_exists(healer_slot)) {
+        ASSERT("healer test save slot must be unused", 0);
+        return;
+    }
+    g.player.x = TOWN_HEALER_DOOR_X;
+    g.player.y = TOWN_HEALER_DOOR_Y + 1;
+    g.player.poison_turns = 3;
+    g.player.frozen_turns = 2;
+    action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_HEALER_DOOR_X, TOWN_HEALER_DOOR_Y});
+    ASSERT("walking through the healer door enters a safe interior with an exit and a blocked healer NPC",
+        g.location == LOCATION_HEALER && g.enemy_count == 0 && !g.dialogue_active &&
+        g.map.tiles[HEALER_Y][HEALER_X] == TILE_NPC_HEALER &&
+        !map_is_walkable(&g.map, HEALER_X, HEALER_Y) &&
+        g.map.tiles[g.map.stairs_down_y][g.map.stairs_down_x] == TILE_TAVERN_EXIT &&
+        g.player.poison_turns == 0 && g.player.frozen_turns == 0);
+    ASSERT("treatment requires approaching the healer", !healer_talk(&g) && !healer_purchase(&g, 1));
+    while (g.player.y > HEALER_Y + 1) {
+        action_resolve_player(&g, (Action){ACTION_MOVE, g.player.x, g.player.y - 1});
+    }
+    g.player.max_hp = 101;
+    g.player.hp = 1;
+    g.player.mp = 5;
+    g.gold = 2;
+    int inventory_count = g.inventory_count;
+    ASSERT("talking offers full, half, and affordable treatments with exact costs",
+        healer_talk(&g) && g.dialogue_active &&
+        strstr(g.dialogue_text, "1 Full: +100 HP, 10g *") &&
+        strstr(g.dialogue_text, "2 Half: +50 HP, 5g *") &&
+        strstr(g.dialogue_text, "3 Affordable: +20 HP, 2g"));
+    healer_handle_key(&g, SDL_SCANCODE_1, 0);
+    ASSERT("unaffordable full healing keeps HP and gold unchanged", g.player.hp == 1 && g.gold == 2 && g.dialogue_active);
+    healer_handle_key(&g, SDL_SCANCODE_3, 1);
+    ASSERT("held treatment keys cannot spend gold repeatedly", g.player.hp == 1 && g.gold == 2);
+    healer_handle_key(&g, SDL_SCANCODE_3, 0);
+    ASSERT("a low-gold player can spend only their available gold for a partial heal",
+        g.player.hp == 21 && g.gold == 0 && g.player.mp == 5 && g.inventory_count == inventory_count);
+    ASSERT("no gold cannot buy free healing", !healer_purchase(&g, 3) && g.player.hp == 21 && g.gold == 0);
+    g.player.hp = 1;
+    g.gold = 5;
+    healer_handle_key(&g, SDL_SCANCODE_2, 0);
+    ASSERT("half healing restores half of missing HP for its displayed cost", g.player.hp == 51 && g.gold == 0 && g.player.mp == 5);
+    g.player.hp = 100;
+    g.gold = 10;
+    g.inventory_count = MAX_INVENTORY;
+    healer_handle_key(&g, SDL_SCANCODE_1, 0);
+    ASSERT("full healing caps at max HP, rounds the charge up, and works with a full inventory",
+        g.player.hp == 101 && g.gold == 9 && g.inventory_count == MAX_INVENTORY && g.player.mp == 5);
+    ASSERT("full health cannot waste gold", !healer_purchase(&g, 1) && g.gold == 9);
+    g.inventory_count = inventory_count;
+    healer_handle_key(&g, SDL_SCANCODE_ESCAPE, 0);
+    ASSERT("Escape closes treatment while staying inside the healer", !g.dialogue_active && g.location == LOCATION_HEALER);
+    g.player.hp = 50;
     g.gold = 20;
-    g.player.hp -= 30;
-    g.inventory[g.inventory_count++] = shop.items[0];
-    g.gold -= shop_buy_price(&shop.items[0]);
-    action_resolve_player(&g, (Action){ACTION_USE_ITEM, g.inventory_count - 1, 0});
-    ASSERT("health potion restores HP after purchase and use",
-        g.gold == 0 && g.player.hp == g.player.max_hp &&
-        g.player.mp == g.player.max_mp);
+    healer_talk(&g);
+    int healer_saved = save_game(&g, healer_slot) && load_game(&loaded, healer_slot);
+    ASSERT("healer interior, offer, HP and gold survive save and load",
+        healer_saved && loaded.location == LOCATION_HEALER && loaded.player.hp == 50 && loaded.gold == 20 &&
+        loaded.dialogue_active && loaded.map.tiles[HEALER_Y][HEALER_X] == TILE_NPC_HEALER &&
+        strstr(loaded.dialogue_text, "3 Affordable: +51 HP, 6g"));
+    if (healer_saved) {
+        healer_handle_key(&loaded, SDL_SCANCODE_1, 0);
+        ASSERT("a restored treatment offer heals at the correct price", loaded.player.hp == 101 && loaded.gold == 14 && loaded.player.mp == 5);
+        healer_handle_key(&loaded, SDL_SCANCODE_RETURN, 0);
+        while (loaded.player.y < loaded.map.stairs_down_y) {
+            action_resolve_player(&loaded, (Action){ACTION_MOVE, loaded.player.x, loaded.player.y + 1});
+            if (loaded.location != LOCATION_HEALER) {
+                break;
+            }
+        }
+        ASSERT("walking out returns directly in front of Stillbury's healer",
+            loaded.location == LOCATION_TOWN2 && loaded.player.x == TOWN_HEALER_DOOR_X &&
+            loaded.player.y == TOWN_HEALER_DOOR_Y + 1 && loaded.player.hp == 101 && loaded.gold == 14);
+    }
+    remove("saves/savegame_99013.json");
+    healer_handle_key(&g, SDL_SCANCODE_ESCAPE, 0);
+    healer_leave(&g);
+    g.player.hp = g.player.max_hp;
+    g.player.mp = g.player.max_mp;
 
     shop_init(&shop, SHOP_TYPE_WITCH, 0, g.player.player_class);
     ASSERT("witch sells only mana potions at the usual price",

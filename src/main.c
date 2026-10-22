@@ -18,6 +18,7 @@ EM_ASYNC_JS(void, browser_next_frame, (void), {
 #include "game/game.h"
 #include "game/jail.h"
 #include "game/town_life.h"
+#include "game/healer.h"
 #include "game/approach.h"
 #include "game/map.h"
 #include "screens/landing.h"
@@ -378,8 +379,6 @@ static int open_shop_on_move(const GameState *game, const Action *action, ShopSc
         // Rosemoor's Apothecary reuses the alchemist shop tiles.
         shop_init(shop, game->location == LOCATION_TOWN3 ?
             SHOP_TYPE_APOTHECARY : SHOP_TYPE_ALCHEMIST, game->defeated_bosses, game->player.player_class);
-    } else if (tile == TILE_HEALER_DOOR) {
-        shop_init(shop, SHOP_TYPE_HEALER, game->defeated_bosses, game->player.player_class);
     } else if (tile == TILE_WITCH_DOOR) {
         shop_init(shop, SHOP_TYPE_WITCH, game->defeated_bosses, game->player.player_class);
     } else {
@@ -694,6 +693,15 @@ int main(int argc, char **argv) {
                         break;
                     }
                     int sc = event.key.keysym.scancode;
+                    if (screen == SCREEN_PLAYING) {
+                        int hp_before = game.player.hp;
+                        if (healer_handle_key(&game, sc, event.key.repeat)) {
+                            if (game.player.hp > hp_before) {
+                                sfx_play_heal();
+                            }
+                            break;
+                        }
+                    }
                     if (screen == SCREEN_PLAYING && game_handle_quest_offer_key(&game, sc, event.key.repeat)) {
                         break;
                     }
@@ -1013,7 +1021,7 @@ int main(int argc, char **argv) {
                                 screen = SCREEN_HELP;
                                 break;
                             case CONTROL_TALK: {
-                                if (town_life_talk(&game, 0)) {
+                                if (healer_talk(&game) || town_life_talk(&game, 0)) {
                                     break;
                                 }
                                 if (jail_talk_nearby(&game)) {
@@ -1253,7 +1261,7 @@ int main(int argc, char **argv) {
                         break;
                     }
                     if (event.button.button != SDL_BUTTON_LEFT) break;
-                    if (screen == SCREEN_PLAYING && (game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game))) {
+                    if (screen == SCREEN_PLAYING && (game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || (game.location == LOCATION_HEALER && game.dialogue_active))) {
                         break;
                     }
 
@@ -1532,11 +1540,11 @@ int main(int argc, char **argv) {
             game.location == LOCATION_TOWN_HALL ||
             game.location == LOCATION_CASTLE ||
             game.location == LOCATION_JAIL ||
-            game.location == LOCATION_INN ||
+            game.location == LOCATION_INN || game.location == LOCATION_HEALER ||
             game.location == LOCATION_GUILD ||
             game.location == LOCATION_ISLAND || town_life_is_interior(game.location);
         int in_town2 = (approach && approach->town == LOCATION_TOWN2) || game.location == LOCATION_TOWN2 ||
-            game.location == LOCATION_INN || game.location == LOCATION_BUTCHER;
+            game.location == LOCATION_INN || game.location == LOCATION_HEALER || game.location == LOCATION_BUTCHER;
         int in_town3 = (approach && (approach->town == LOCATION_TOWN3 || approach->town == LOCATION_CASTLE)) || game.location == LOCATION_TOWN3 ||
             game.location == LOCATION_GUILD ||
             game.location == LOCATION_SPICE_SHOP ||

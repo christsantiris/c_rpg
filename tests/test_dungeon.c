@@ -1041,7 +1041,7 @@ static void test_dungeon_entry_maps(void) {
         walk_return_approach(g);
         ASSERT("the entered dungeon permits immediate retreat to OakHaven's east gate", g->location == LOCATION_TOWN && g->player.x == TOWN_W - 2 && g->player.y == 12);
     }
-    const Location sources[] = {LOCATION_TOWN, LOCATION_TAVERN, LOCATION_INN, LOCATION_GUILD, LOCATION_WORKSHOP, LOCATION_TOWN_HALL, LOCATION_FOREST_ROAD, LOCATION_SWAMP_ROAD, LOCATION_HIGH_PASS};
+    const Location sources[] = {LOCATION_TOWN, LOCATION_TAVERN, LOCATION_INN, LOCATION_GUILD, LOCATION_WORKSHOP, LOCATION_TOWN_HALL, LOCATION_HEALER, LOCATION_FOREST_ROAD, LOCATION_SWAMP_ROAD, LOCATION_HIGH_PASS};
     for (int visited = 0; visited < 2; visited++) {
         for (int i = 0; i < (int)(sizeof(sources) / sizeof(sources[0])); i++) {
             game_init(g);
