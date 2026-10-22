@@ -7,6 +7,7 @@ A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explo
 ## Table of Contents
 
 - [Overview](#overview)
+- [World Map](#world-map)
 - [Combat Areas and Level Counts](#combat-areas-and-level-counts)
 - [Town and Progression](#town-and-progression)
 - [Controls](#controls)
@@ -22,12 +23,12 @@ A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explo
 
 ## Overview
 
-*The Castle of No Return* is a C/SDL roguelike with turn-based combat and a
+*The Castle of No Return* is a C/SDL roguelike adventure with turn-based combat and a
 retro pixel-art style. Choose a Warrior, Mage, or Rogue, prepare in town, and
-explore an five-floor undead dungeon, the seven-stage Haunted Forest, the
+explore a five-floor undead dungeon, the seven-stage Haunted Forest, the
 seven-stage Goblin Mountains, the five-stage Sunken Coast, and Stillbury's
 seven-level Blackwater Swamp. Beyond the Goblin Mountains, the five-stage
-Dragonspine ascent begins at Ridgeshire's east gate. Each region
+Dragonspine ascent begins at Ridgeshire's north gate. Each region
 keeps its own generated maps and progression. Defeating the Drowned Queen on
 the Sunken Coast opens a sea route to the Ruined Isle. Its five-tier Ruined
 Temple remains a late-game challenge.
@@ -47,6 +48,15 @@ through the remaining three stages as difficulty decreases.
 Forest, swamp, and mountain boss victories show a shortcut discovery prompt
 until Enter is pressed. The marked shortcut appears beside the defeated boss,
 including when a boss has been lured away from its original room.
+
+## World Map
+
+[![Illustrated world map showing the four towns, the Castle of No Return, forests, swamps, deserts, snowy peaks, Ashen Hollow's volcanoes, coastlines, and the Ruined Isle.](docs/images/world-map.png)](docs/images/world-map.png)
+
+An illustrated overview based on the world's town connections. North is up;
+distances and coastlines are illustrative rather than to scale.
+Dragonspine lies north of Ridgeshire alongside the northern Frostfell Wastes;
+Ashen Hollow's volcanic basin lies east of Ridgeshire.
 
 ## Combat Areas and Level Counts
 
@@ -79,6 +89,18 @@ The forest, mountains, and swamp can be played from either end, with their
 boss on level 4. Defeating that boss opens a shortcut to the opposite town;
 the remaining three levels can also be explored.
 
+Normal town gates first lead onto a safe approach path. Follow it to the marked
+area entrance to begin the adventure, or turn back through the town gate.
+Physical area exits return to the far end of the same approach, facing town;
+walk the path back to its gate. Return-to-Town spells and portals still travel
+directly to town.
+The OakHaven dungeon approach follows a cobblestone path through green grass
+to a dark stone crypt marked by a crowned skull and green soul-fire braziers.
+Approaches continue in the direction of departure and contain no enemies or
+hazards. Saves made on a path resume there. Castle entry, Rook's Labyrinth, the
+jail escape tunnel, and both Crown Roads retain their existing entry routes;
+the Ruined Isle already provides the walk to the temple entrance.
+
 Every adventure floor and travel route has a description box with a title and
 two terrain or navigation tips, including boss floors. Coast boxes retain the
 current tide state, and temple boxes show alignment and the remaining foes
@@ -103,7 +125,7 @@ Defeating him reveals a shortcut to the opposite town; the remaining three level
 can instead be fought in decreasing difficulty. Dain's map bearers occupy levels
 **7, 6, and 5 near Ridgeshire**, before the stage-4 peak when entering from
 Ridgeshire and after it when entering from Oakhaven.
-Ridgeshire's east gate leads directly to Dragonspine. Its broad cliff ledges
+Ridgeshire's north gate leads along an approach path to Dragonspine. Its broad cliff ledges
 fork around ravines rendered with native blue-gray rock and snowy edges. Push
 loose boulders with **Interact** (**A** by default) to reposition cover against
 archers and Fire Elementals. Boulders cannot seal routes or cover objectives.
@@ -482,7 +504,7 @@ existing garden progress. See [Moonveil Gardens](docs/moonveil-gardens.md#the-st
 
 ### Ashen Hollow
 
-Ridgeshire's north gate leads into five stages of Ashen Hollow, a volcanic basin
+Ridgeshire's east gate leads along an approach path into five stages of Ashen Hollow, a volcanic basin
 of basalt columns, charred trees, ruined stonework, and animated lava pools.
 Enter from the south and follow winding ash paths north. Cinder Imps throw
 firebolts, Ash Hounds rush forward, and Obsidian Guardians defend later stages.
@@ -550,9 +572,9 @@ awarded once. Already extinguished memorials and previous boss victories count;
 acceptance preserves exploration and portals. Quest objects use no inventory
 space. The quest is optional and does not gate castle entry or victory.
 
-### Harbor and Ruined Isle
+### Docks and Ruined Isle
 
-Captain Rowan waits near the harbor and describes the island before it is
+Captain Rowan waits near the docks and describes the island before it is
 reachable. Defeat the Drowned Queen on the Sunken Coast to extend the OakHaven
 road to the dock. Speak with Rowan to receive the Island Treasure Map, then
 walk into the dock entrance to board the ship. The first voyage consumes the
@@ -629,7 +651,7 @@ Sun and Moon enemies, recover the buried treasure, and return to **Nahla on
 the Ruined Isle** for her separate quest reward. See the
 [Guardian play-test guide](docs/art-sources/sun-guardian-encounter/README.md).
 Return to Town works
-inside the temple and leaves a portal near the harbor that restores the exact
+inside the temple and leaves a portal near the docks that restores the exact
 temple tier, position, and encounter state. Descend from the first tier through
 the southern entrance to return to the island surface.
 
@@ -670,7 +692,7 @@ Inside the inventory, use the arrow keys to select an item, `U` to use it,
 weapon promotes an off-hand weapon to the main hand; the removed weapon stays
 in inventory and can then be equipped with `O` to swap hands. Inventory action
 labels also support mouse clicks. In the spellbook, select a spell and press
-`E` or `Enter` to equip it. Shops, the healer, the witch, and the harbor use the arrow keys and
+`E` or `Enter` to equip it. Shops, the healer, the witch, and the docks use the arrow keys and
 `Enter`; shop buy and sell modes are switched with `Tab`.
 
 Using an item keeps the inventory open, even after consuming the last item.
@@ -699,7 +721,7 @@ inventory actions.
 - [Glassdeep Caverns](docs/glassdeep-caverns.md)
 - [Royal Catacombs](docs/catacombs.md)
 - [Castle interior and play testing](docs/castle-design.md)
-- [Harbor, Ruined Isle, and Ruined Temple](docs/harbor-and-ruined-isle.md)
+- [Docks, Ruined Isle, and Ruined Temple](docs/harbor-and-ruined-isle.md)
 
 ## Screenshots
 
@@ -903,3 +925,5 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 - Improve difficulty scaling and economy
    Warrior and Rogue should struggle at certain levels without better weapons. Mage should struggle without better spells. Purchasing new weapons, armor and tomes should become necessary to progress.
 - Add paypal integration to buy gold
+- Expand world map
+   Farms between areas for rest to improve hp. Additional in-town quests similar to labrynth. 

@@ -17,6 +17,7 @@
 #include "red_dragon.h"
 #include "jail.h"
 #include "town_life.h"
+#include "approach.h"
 #include "regional_terrain.h"
 #include "landscapes.h"
 #include "wilds.h"
@@ -360,7 +361,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
             g->dialogue_y = g->player.y;
             snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Shortcut found");
             snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "You found a shortcut through the forest to %s! Take the marked shortcut beside the defeated boss, or continue through the forest.",
+                "You found a shortcut through the forest to %s! Take the marked exit recessed into the surrounding terrain, or continue through the forest.",
                 g->forest_entry_town == LOCATION_TOWN2 ? "OakHaven" : "Stillbury");
         } else if (first_swamp_victory) {
             g->dialogue_active = 1;
@@ -368,7 +369,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
             g->dialogue_y = g->player.y;
             snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Shortcut found");
             snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "You found a shortcut through the swamp to %s! Take the marked shortcut beside the defeated boss, or continue through the swamp.",
+                "You found a shortcut through the swamp to %s! Take the marked exit recessed into the surrounding terrain, or continue through the swamp.",
                 g->swamp_entry_town == LOCATION_TOWN3 ? "Stillbury" : "Rosemoor");
         } else if (first_mountain_victory) {
             g->dialogue_active = 1;
@@ -376,7 +377,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
             g->dialogue_y = g->player.y;
             snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Shortcut found");
             snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "You found a shortcut through the mountains to %s! Take the marked shortcut beside the defeated boss, or continue down the mountains.",
+                "You found a shortcut through the mountains to %s! Take the marked exit recessed into the surrounding terrain, or continue down the mountains.",
                 g->mountain_entry_town == LOCATION_TOWN4 ? "OakHaven" : "Ridgeshire");
         }
     }
@@ -1210,6 +1211,7 @@ void action_resolve_player(GameState *g, Action a) {
         g->location == LOCATION_SWAMP_ROAD ||
         g->location == LOCATION_CASTLE ||
         g->location == LOCATION_FOREST_ROAD ||
+        g->location == LOCATION_APPROACH ||
         g->location == LOCATION_INN ||
         g->location == LOCATION_JAIL ||
         g->location == LOCATION_WORKSHOP ||
@@ -1278,7 +1280,7 @@ void action_resolve_player(GameState *g, Action a) {
         if (tile == TILE_RETURN_EXIT && (g->defeated_bosses & (1 << g->location))) {
             int forest = g->location == LOCATION_FOREST;
             g->score += g->level * 100;
-            game_return_to_town(g);
+            game_return_to_approach(g);
             push_message(g, forest ? "The forest is freed!" :
                 "The Lich is defeated!");
         } else if (tile == TILE_STAIRS_DOWN) {
@@ -1297,8 +1299,8 @@ void action_resolve_player(GameState *g, Action a) {
             (underlay == TILE_DUNGEON_STAIRS_RETURN || underlay == TILE_DUNGEON_STAIRS_SEALED)) {
             if (g->defeated_bosses & (1 << LOCATION_DUNGEON)) {
                 g->score += g->level * 100;
-                game_return_to_town(g);
-                push_message(g, "You climb the stairs back to Oakhaven.");
+                game_return_to_approach(g);
+                push_message(g, "You climb the stairs to the dungeon approach.");
             } else {
                 push_message(g, "The Lich King seals these stairs.");
             }
@@ -1319,7 +1321,7 @@ void action_resolve_player(GameState *g, Action a) {
             if (g->level == 1 && g->location == LOCATION_CATACOMBS) {
                 game_leave_catacombs(g);
             } else if (g->level == 1) {
-                game_return_to_town(g);
+                game_return_to_approach(g);
             } else {
                 game_ascend(g);
             }
@@ -1809,6 +1811,7 @@ void action_resolve_player(GameState *g, Action a) {
                 return;
             }
             if (g->location == LOCATION_FOREST_ROAD ||
+                g->location == LOCATION_APPROACH ||
                 g->location == LOCATION_HIGH_PASS ||
                 g->location == LOCATION_SWAMP_ROAD ||
                 game_is_king_road(g)) {
@@ -2402,27 +2405,22 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
+        if (game_request_town_route(g, tx, ty)) {
+            return;
+        }
+        if (approach_travel(g, tx, ty) || approach_enter(g, tx, ty)) {
+            return;
+        }
+
         if (g->location == LOCATION_TOWN2 &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT && ty == 0) {
-            if (tx == TOWN3_ROAD_X) {
-                if (g->defeated_bosses & (1 << LOCATION_SWAMP)) {
-                    game_enter_swamp_road(g);
-                }
-            } else {
-                game_enter_swamp(g);
-            }
+            game_enter_swamp(g);
             return;
         }
 
         if (g->location == LOCATION_TOWN2 &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT && tx == TOWN_W - 1) {
-            if (ty == TOWN_ROAD_EXIT_Y) {
-                if (g->defeated_bosses & (1 << LOCATION_FOREST)) {
-                    game_enter_forest_road(g);
-                }
-            } else {
-                game_enter_forest(g);
-            }
+            game_enter_forest(g);
             return;
         }
 
@@ -2444,13 +2442,7 @@ void action_resolve_player(GameState *g, Action a) {
             if (ty == 0) {
                 game_enter_frostfell(g);
             } else if (ty == TOWN_H - 1) {
-                if (tx == ROSEMOOR_SWAMP_ROAD_X) {
-                    if (g->defeated_bosses & (1 << LOCATION_SWAMP)) {
-                        game_enter_swamp_road(g);
-                    }
-                } else {
-                    game_enter_swamp(g);
-                }
+                game_enter_swamp(g);
             } else if (tx == TOWN_W - 1) {
                 game_enter_king_road(g, LOCATION_CROWNROAD, 0);
             } else if (tx == 0) {
@@ -2476,19 +2468,13 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->location == LOCATION_TOWN4 &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
             if (ty == 0) {
-                game_enter_ashen(g);
-            } else if (tx == TOWN_W - 1) {
                 game_enter_dragonspine(g);
+            } else if (tx == TOWN_W - 1) {
+                game_enter_ashen(g);
             } else if (tx == 0) {
                 game_enter_king_road(g, LOCATION_KING_ROAD_WEST, 0);
             } else if (ty == TOWN_H - 1) {
-                if (tx == RIDGESHIRE_MOUNTAIN_ROAD_X) {
-                    if (g->defeated_bosses & (1 << LOCATION_MOUNTAINS)) {
-                        game_enter_high_pass(g, 0);
-                    }
-                } else {
-                    game_enter_mountains(g);
-                }
+                game_enter_mountains(g);
             }
             return;
         }
@@ -2496,26 +2482,21 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->location == LOCATION_TOWN &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
             if (tx == 0) {
-                if (ty == TOWN_ROAD_EXIT_Y) {
-                    if (g->defeated_bosses & (1 << LOCATION_FOREST)) {
-                        game_enter_forest_road(g);
-                    } else {
-                        push_message(g, "The road to Stillbury is still blocked.");
-                    }
-                } else {
-                    game_enter_forest(g);
-                }
+                game_enter_forest(g);
             } else if (tx == TOWN_W - 1) {
                 game_enter_dungeon(g);
             } else if (ty == TOWN_H - 1) {
                 game_enter_coast(g);
-            } else if (tx == TOWN4_ROAD_X) {
-                if (g->defeated_bosses & (1 << LOCATION_MOUNTAINS)) {
-                    game_enter_high_pass(g, 1);
-                }
             } else {
                 game_enter_mountains(g);
             }
+            return;
+        }
+
+        if ((g->location == LOCATION_FOREST_ROAD && g->map.tiles[ty][tx] == TILE_FOREST_SHORTCUT) ||
+            (g->location == LOCATION_SWAMP_ROAD && g->map.tiles[ty][tx] == TILE_SWAMP_SHORTCUT) ||
+            (g->location == LOCATION_HIGH_PASS && g->map.tiles[ty][tx] == TILE_MOUNTAIN_SHORTCUT)) {
+            game_enter_shortcut_boss(g);
             return;
         }
 
@@ -2532,7 +2513,7 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->location == LOCATION_DRAGONSPINE &&
             g->map.tiles[ty][tx] == TILE_DRAGON_ENTRANCE) {
             if (g->level == 1) {
-                game_return_to_town(g);
+                game_return_to_approach(g);
             } else {
                 game_ascend(g);
             }
@@ -2551,7 +2532,7 @@ void action_resolve_player(GameState *g, Action a) {
                         return;
                     }
                 }
-                game_return_to_town(g);
+                game_return_to_approach(g);
                 push_message(g, "Dragonspine is free of its dragon.");
             }
             return;
@@ -2645,7 +2626,7 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->location == LOCATION_FROSTFELL &&
             g->map.tiles[ty][tx] == TILE_FROST_ENTRANCE) {
             if (g->level == 1) {
-                game_return_to_town(g);
+                game_return_to_approach(g);
             } else {
                 game_ascend(g);
             }
@@ -2665,7 +2646,7 @@ void action_resolve_player(GameState *g, Action a) {
                         return;
                     }
                 }
-                game_return_to_town(g);
+                game_return_to_approach(g);
                 push_message(g, "The Frostfell Wastes are free of the Kraken.");
             }
             return;
@@ -2674,7 +2655,7 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->location == LOCATION_DESERT &&
             g->map.tiles[ty][tx] == TILE_DESERT_ENTRANCE) {
             if (g->level == 1) {
-                game_return_to_town(g);
+                game_return_to_approach(g);
             } else {
                 game_ascend(g);
             }
@@ -2693,7 +2674,7 @@ void action_resolve_player(GameState *g, Action a) {
                         return;
                     }
                 }
-                game_return_to_town(g);
+                game_return_to_approach(g);
                 push_message(g, "You return to Stillbury.");
             }
             return;
@@ -2702,7 +2683,7 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->location == LOCATION_MOONVEIL &&
             g->map.tiles[ty][tx] == TILE_MOONVEIL_ENTRANCE) {
             if (g->level == 1) {
-                game_return_to_town(g);
+                game_return_to_approach(g);
             } else {
                 game_ascend(g);
             }
@@ -2719,7 +2700,7 @@ void action_resolve_player(GameState *g, Action a) {
                     push_message(g, "The Thorn Regent seals the path to Rosemoor!");
                     return;
                 }
-                game_return_to_town(g);
+                game_return_to_approach(g);
                 push_message(g, "You return to Rosemoor through the moonlit gardens.");
             }
             return;
@@ -2728,7 +2709,7 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->location == LOCATION_ASHEN &&
             g->map.tiles[ty][tx] == TILE_ASHEN_ENTRANCE) {
             if (g->level == 1) {
-                game_return_to_town(g);
+                game_return_to_approach(g);
             } else {
                 game_ascend(g);
             }
@@ -2741,7 +2722,7 @@ void action_resolve_player(GameState *g, Action a) {
                 game_descend(g);
                 g->score += g->level * 100;
             } else if (g->defeated_bosses & (1 << LOCATION_ASHEN)) {
-                game_return_to_town(g);
+                game_return_to_approach(g);
                 push_message(g, "You return to Ridgeshire through the volcanic pass.");
             } else {
                 push_message(g, "The Cinder Lord seals the path to Ridgeshire!");
@@ -2752,7 +2733,7 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->location == LOCATION_GLASSDEEP &&
             g->map.tiles[ty][tx] == TILE_GLASSDEEP_ENTRANCE) {
             if (g->level == 1) {
-                game_return_to_town(g);
+                game_return_to_approach(g);
             } else {
                 game_ascend(g);
             }
@@ -2765,7 +2746,7 @@ void action_resolve_player(GameState *g, Action a) {
                 game_descend(g);
                 g->score += g->level * 100;
             } else if (g->defeated_bosses & (1 << LOCATION_GLASSDEEP)) {
-                game_return_to_town(g);
+                game_return_to_approach(g);
                 push_message(g, "You emerge from Glassdeep at Stillbury's quarry gate.");
             } else {
                 push_message(g, "The Prism Sovereign seals the path to Stillbury!");
@@ -2776,7 +2757,7 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->location == LOCATION_COAST &&
             g->map.tiles[ty][tx] == TILE_COAST_ENTRANCE) {
             if (g->level == 1) {
-                game_return_to_town(g);
+                game_return_to_approach(g);
             } else {
                 game_ascend(g);
             }
@@ -2806,7 +2787,7 @@ void action_resolve_player(GameState *g, Action a) {
                     return;
                 }
                 g->score += g->level * 100;
-                game_return_to_town(g);
+                game_return_to_approach(g);
                 push_message(g, "The Sunken Coast is reclaimed!");
             }
             return;
@@ -3650,7 +3631,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
     if (shots) {
         shots->count = 0;
     }
-    if (g->player.hp <= 0 || g->game_won || g->castle_prompt) {
+    if (g->player.hp <= 0 || g->game_won || g->castle_prompt || g->location == LOCATION_APPROACH) {
         return;
     }
     jail_follow(g);

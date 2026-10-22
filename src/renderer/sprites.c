@@ -4636,13 +4636,94 @@ void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style) {
         (SDL_Color){178, 146, 73, 255});
 }
 
+void draw_town_gate_back(Renderer *r, int tx, int ty, TownExitStyle style, int dx, int dy) {
+    SDL_Texture **cached = &r->town_gate_textures[style];
+    if (!*cached) {
+        SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormat(0, 5 * TILE_SIZE, 5 * TILE_SIZE, 32, SDL_PIXELFORMAT_RGBA32);
+        if (!surface) {
+            return;
+        }
+        SDL_Renderer *sdl = SDL_CreateSoftwareRenderer(surface);
+        if (!sdl) {
+            SDL_FreeSurface(surface);
+            return;
+        }
+        // Rasterize the existing town gate once, without changing frame state.
+        SDL_SetRenderDrawColor(sdl, 0, 0, 0, 0);
+        SDL_RenderClear(sdl);
+        Renderer gate = {0};
+        gate.sdl = sdl;
+        draw_town_gate(&gate, 0, 0, style);
+        SDL_RenderPresent(sdl);
+        SDL_Texture *texture = SDL_CreateTextureFromSurface(r->sdl, surface);
+        SDL_DestroyRenderer(sdl);
+        SDL_FreeSurface(surface);
+        if (!texture) {
+            return;
+        }
+        SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+        SDL_SetTextureScaleMode(texture, SDL_ScaleModeNearest);
+        *cached = texture;
+    }
+    int right = style == TOWN_EXIT_DUNGEON || style == TOWN_EXIT_DRAGONSPINE;
+    int vertical = right || style == TOWN_EXIT_FOREST || style == TOWN_EXIT_ROAD || style == TOWN_EXIT_DESERT || style == TOWN_EXIT_MOONVEIL;
+    int native_positive = vertical ? right : style == TOWN_EXIT_GLASSDEEP;
+    int positive = dx ? dx < 0 : dy < 0;
+    int source_w = vertical ? (right ? 3 : 2) * TILE_SIZE : 5 * TILE_SIZE;
+    int source_h = vertical ? 5 * TILE_SIZE : 2 * TILE_SIZE;
+    int rotate = vertical != (dx != 0);
+    int width = rotate ? source_h : source_w;
+    int height = rotate ? source_w : source_h;
+    SDL_Rect source = {0, 0, source_w, source_h};
+    SDL_Rect destination = {tx * TILE_SIZE, ty * TILE_SIZE, width, height};
+    SDL_RendererFlip flip = SDL_FLIP_NONE;
+    double angle = 0;
+    if (dx) {
+        destination.x += dx < 0 ? TILE_SIZE - width : 0;
+        destination.y -= 2 * TILE_SIZE;
+    } else {
+        destination.x -= 2 * TILE_SIZE;
+        destination.y += dy < 0 ? TILE_SIZE - height : 0;
+    }
+    if (rotate) {
+        angle = native_positive == positive ? 90 : -90;
+        if (!vertical) {
+            angle = -angle;
+        }
+        destination.x += (width - source_w) / 2;
+        destination.y += (height - source_h) / 2;
+        destination.w = source_w;
+        destination.h = source_h;
+    } else if (native_positive != positive) {
+        flip = dx ? SDL_FLIP_HORIZONTAL : SDL_FLIP_VERTICAL;
+    }
+    SDL_RenderCopyEx(r->sdl, *cached, &source, &destination, angle, NULL, flip);
+}
+
 void draw_town_road_sign(Renderer *r, int tile_x, int tile_y, const char *name) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
     int text_w = 0;
     int text_h = 0;
-    TTF_SizeText(r->font_tiny, name, &text_w, &text_h);
-    int width = text_w + 12;
+    const char *second = strchr(name, '\n');
+    const char *first = name;
+    char line[64];
+    int second_w = 0;
+    if (second) {
+        size_t length = (size_t)(second - name);
+        if (length >= sizeof(line)) {
+            length = sizeof(line) - 1;
+        }
+        memcpy(line, name, length);
+        line[length] = '\0';
+        first = line;
+        second++;
+        TTF_SizeText(r->font_tiny, second, &second_w, NULL);
+    }
+    TTF_SizeText(r->font_tiny, first, &text_w, &text_h);
+    int widest = text_w > second_w ? text_w : second_w;
+    int height = second ? 32 : 18;
+    int width = widest + 12;
     if (width < 66) {
         width = 66;
     }
@@ -4655,13 +4736,18 @@ void draw_town_road_sign(Renderer *r, int tile_x, int tile_y, const char *name) 
     fill_rect(r, x + post + 2, y + 18, 5, 44, wood);
     fill_rect(r, x + post + 2, y + 20, 2, 40, bark);
     fill_rect(r, x + post - 3, y + 60, 15, 4, shadow);
-    fill_rect(r, x + 4, y + 2, width + 6, 24, shadow);
-    fill_rect(r, x + 7, y + 5, width, 18, wood);
+    fill_rect(r, x + 4, y + 2, width + 6, height + 6, shadow);
+    fill_rect(r, x + 7, y + 5, width, height, wood);
     fill_rect(r, x + 7, y + 5, width, 2, bark);
     fill_rect(r, x + 10, y + 9, 2, 2, brass);
     fill_rect(r, x + width + 2, y + 9, 2, 2, brass);
-    renderer_draw_text(r, name, x + 7 + (width - text_w) / 2,
-        y + 5 + (18 - text_h) / 2, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
+    int text_y = second ? y + 9 : y + 5 + (height - text_h) / 2;
+    renderer_draw_text(r, first, x + 7 + (width - text_w) / 2,
+        text_y, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
+    if (second) {
+        renderer_draw_text(r, second, x + 7 + (width - second_w) / 2,
+            text_y + text_h + 4, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
+    }
 }
 
 static void draw_dungeon_door_panel(Renderer *r, int x, int width, int right) {
@@ -5637,6 +5723,15 @@ void draw_labyrinth_entrance(Renderer *r, int tile_x, int tile_y, int open) {
         3 * TILE_SIZE, 3 * TILE_SIZE
     };
     SDL_RenderCopy(r->sdl, r->labyrinth_texture, &source, &destination);
+}
+
+void draw_dungeon_entrance(Renderer *r, int tile_x, int tile_y) {
+    if (!r->dungeon_entrance_texture) {
+        draw_labyrinth_entrance_fallback(r, tile_x, tile_y, 1);
+        return;
+    }
+    SDL_Rect destination = {(tile_x - 1) * TILE_SIZE, (tile_y - 2) * TILE_SIZE, 3 * TILE_SIZE, 3 * TILE_SIZE};
+    SDL_RenderCopy(r->sdl, r->dungeon_entrance_texture, NULL, &destination);
 }
 
 void draw_labyrinth_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {

@@ -3,10 +3,13 @@
 The Goblin Mountains connect OakHaven and Ridgeshire across seven stages, with
 the Goblin King at Crown Peak on stage 4. His defeat opens a shortcut to the
 opposite town; continuing through the remaining stages is also possible.
-Ridgeshire's full east gate
-enters Dragonspine directly. Leaving Dragonspine's first stage, completing its
-summit, or casting Return to Town brings you back beside this gate in Ridgeshire.
-The return portal also appears there.
+Ridgeshire's north gate leads along a safe approach to Dragonspine, placing its
+snowy peaks at the northern edge of the world alongside Frostfell Wastes.
+Leaving the first stage or completing the summit returns to that approach;
+walk south to reach Ridgeshire's north gate. Return to Town travels directly
+to town, with its portal beside the north gate.
+Save version **163** relocates existing approach paths and town portals to this
+gate while preserving exploration, loot, combat maps, and quest progress.
 
 Ridgeshire's separate south shortcut gate leads into the enemy-free, one-tile-wide High Pass. Walk south to reach
 OakHaven's northeast shortcut, or north from OakHaven to revisit Ridgeshire without
@@ -127,7 +130,7 @@ quest. Drinking the potion permanently raises base attack by 1; it is not sold
 in shops. The quest can still be completed if the Red Dragon was defeated before
 speaking with Ilya.
 
-Her directions lead north through the mountains to Ridgeshire, then east
+Her directions lead north through the mountains to Ridgeshire, then north
 through its Dragonspine gate. Save version **102** moves Ilya from saved
 Ridgeshire maps into saved Tavern interiors while preserving the goblet,
 quest completion, boss victories, equipment, and money. Overlapping players

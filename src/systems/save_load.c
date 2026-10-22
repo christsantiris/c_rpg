@@ -21,6 +21,7 @@
 #include "../game/wilds.h"
 #include "../game/jail.h"
 #include "../game/town_life.h"
+#include "../game/approach.h"
 #include "cJSON.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -84,6 +85,130 @@ static void migrate_removed_royal_seals(GameState *g) {
         g->dialogue_active = 0;
         g->dialogue_speaker[0] = '\0';
         g->dialogue_text[0] = '\0';
+    }
+}
+
+static void migrate_ridgeshire_portal(GameState *g) {
+    if (g->location != LOCATION_TOWN4 || !g->portal_active ||
+        (g->portal_location != LOCATION_DRAGONSPINE && g->portal_location != LOCATION_ASHEN)) {
+        return;
+    }
+    int dragon = g->portal_location == LOCATION_DRAGONSPINE;
+    int old_x = dragon ? TOWN_W - 3 : 21;
+    int old_y = dragon ? 13 : 2;
+    int x = dragon ? RIDGESHIRE_DRAGON_PORTAL_X : RIDGESHIRE_ASHEN_PORTAL_X;
+    int y = dragon ? RIDGESHIRE_DRAGON_PORTAL_Y : RIDGESHIRE_ASHEN_PORTAL_Y;
+    if (g->map.tiles[old_y][old_x] == TILE_PORTAL) {
+        g->map.tiles[old_y][old_x] = TILE_TOWN_FLOOR;
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (!item->active) {
+            continue;
+        }
+        if (item->x == old_x && item->y == old_y && item->underlying_tile == TILE_PORTAL) {
+            item->underlying_tile = TILE_TOWN_FLOOR;
+        }
+        if (item->x == x && item->y == y) {
+            item->underlying_tile = TILE_PORTAL;
+        }
+    }
+    g->map.tiles[y][x] = TILE_PORTAL;
+}
+
+static void migrate_shared_town_gates(GameState *g) {
+    if (g->location != LOCATION_TOWN && g->location != LOCATION_TOWN2 && g->location != LOCATION_TOWN3 && g->location != LOCATION_TOWN4) {
+        return;
+    }
+    // Expose terrain first so dropped items receive the retired paths' new floor.
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && g->map.tiles[item->y][item->x] == TILE_ITEM) {
+            g->map.tiles[item->y][item->x] = item->underlying_tile;
+        }
+    }
+    if (g->location == LOCATION_TOWN) {
+        map_set_town2_road(&g->map, 0);
+        map_set_town4_road(&g->map, 0);
+    } else if (g->location == LOCATION_TOWN2) {
+        map_set_stillbury_forest_road(&g->map, 0);
+        map_set_town3_road(&g->map, 0);
+    } else if (g->location == LOCATION_TOWN3) {
+        map_set_rosemoor_swamp_road(&g->map, 0);
+    } else {
+        map_set_ridgeshire_mountain_road(&g->map, 0);
+    }
+    // A player or item saved on a removed boundary gate moves one tile inside.
+    if (!map_is_walkable(&g->map, g->player.x, g->player.y)) {
+        if (g->player.x == 0 || g->player.x == TOWN_W - 1) {
+            g->player.x += g->player.x == 0 ? 1 : -1;
+        }
+        if (g->player.y == 0 || g->player.y == TOWN_H - 1) {
+            g->player.y += g->player.y == 0 ? 1 : -1;
+        }
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (!item->active) {
+            continue;
+        }
+        if (!map_is_walkable(&g->map, item->x, item->y)) {
+            if (item->x == 0 || item->x == TOWN_W - 1) {
+                item->x += item->x == 0 ? 1 : -1;
+            }
+            if (item->y == 0 || item->y == TOWN_H - 1) {
+                item->y += item->y == 0 ? 1 : -1;
+            }
+        }
+        item->underlying_tile = g->map.tiles[item->y][item->x];
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active) {
+            g->map.tiles[item->y][item->x] = TILE_ITEM;
+        }
+    }
+}
+
+static void mirror_forest_enemies(Enemy *enemies, int count) {
+    for (int i = 0; i < count; i++) {
+        Enemy *enemy = &enemies[i];
+        enemy->x = MAP_W - 1 - enemy->x;
+        if (enemy->attack_target_x >= 0 && enemy->attack_target_x < MAP_W) {
+            enemy->attack_target_x = MAP_W - 1 - enemy->attack_target_x;
+        }
+        if (enemy->boss_aux_x >= 0 && enemy->boss_aux_x < MAP_W) {
+            enemy->boss_aux_x = MAP_W - 1 - enemy->boss_aux_x;
+        }
+        enemy->facing_dx = -enemy->facing_dx;
+    }
+}
+
+static void migrate_forest_entry_direction(GameState *g) {
+    LevelCache *cache = &g->forest_cache[0];
+    int active = g->location == LOCATION_FOREST && g->level == 1 && g->map.stairs_up_x == 1;
+    int cached = cache->valid && cache->map.stairs_up_x == 1;
+    if (!active && !cached) {
+        return;
+    }
+    if (active) {
+        map_mirror_horizontal(&g->map);
+        mirror_forest_enemies(g->enemies, g->enemy_count);
+        g->player.x = MAP_W - 1 - g->player.x;
+        g->player.last_dx = -g->player.last_dx;
+        g->dialogue_x = MAP_W - 1 - g->dialogue_x;
+        for (int i = 0; i < g->floor_item_count; i++) {
+            if (g->floor_items[i].active) {
+                g->floor_items[i].x = MAP_W - 1 - g->floor_items[i].x;
+            }
+        }
+    }
+    if (cached) {
+        map_mirror_horizontal(&cache->map);
+        mirror_forest_enemies(cache->enemies, cache->enemy_count);
+    }
+    if (g->portal_location == LOCATION_FOREST && g->portal_level == 1) {
+        g->portal_x = MAP_W - 1 - g->portal_x;
     }
 }
 
@@ -753,7 +878,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 153);
+    cJSON_AddNumberToObject(root, "save_version", 163);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -853,6 +978,7 @@ int save_game(const GameState *g, int slot) {
         g->equipped_off_hand);
     cJSON_AddNumberToObject(root, "equipped_armor",    g->equipped_armor);
     cJSON_AddNumberToObject(root, "location",          g->location);
+    cJSON_AddNumberToObject(root, "approach_route", g->approach_route);
     cJSON_AddNumberToObject(root, "lich_reward_state", g->lich_reward_state);
     cJSON_AddNumberToObject(root, "necromancer_reward_state", g->necromancer_reward_state);
     cJSON_AddNumberToObject(root, "goblin_king_reward_state", g->goblin_king_reward_state);
@@ -2430,6 +2556,13 @@ int load_game(GameState *g, int slot) {
     g->equipped_off_hand = off_hand ? off_hand->valueint : -1;
     g->equipped_armor    = cJSON_GetObjectItem(root, "equipped_armor")->valueint;
     g->location          = cJSON_GetObjectItem(root, "location")->valueint;
+    cJSON *approach = cJSON_GetObjectItem(root, "approach_route");
+    g->approach_route = cJSON_IsNumber(approach) ? approach->valueint : -1;
+    if (g->location == LOCATION_APPROACH && (!approach_route(g) ||
+        g->player.x < 0 || g->player.x >= APPROACH_W || g->player.y < 0 || g->player.y >= APPROACH_H)) {
+        cJSON_Delete(root);
+        return 0;
+    }
     if ((g->location == LOCATION_JAIL && (g->jail_quest_state != 1 && g->jail_quest_state != 2)) ||
         (g->location == LOCATION_ESCAPE_TUNNEL && (g->jail_quest_state != 2 ||
         g->player.x < 1 || g->player.x >= tunnel_width || g->player.y < 1 || g->player.y >= ESCAPE_TUNNEL_H - 1 ||
@@ -3970,6 +4103,9 @@ int load_game(GameState *g, int slot) {
         }
     }
 
+    if (save_version < 155) {
+        migrate_shared_town_gates(g);
+    }
     if (g->location == LOCATION_TOWN) {
         map_set_town2_road(&g->map,
             g->defeated_bosses & (1 << LOCATION_FOREST));
@@ -3997,7 +4133,7 @@ int load_game(GameState *g, int slot) {
     }
 
     if (g->location == LOCATION_TOWN4) {
-        map_place_town4_ashen_gate(&g->map);
+        map_place_town4_region_gates(&g->map);
         map_set_ridgeshire_mountain_road(&g->map, g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
         // Extend saved town paving, including terrain covered by dropped items.
         for (int i = 0; i < g->floor_item_count; i++) {
@@ -4551,10 +4687,38 @@ int load_game(GameState *g, int slot) {
     if (save_version < 153) {
         migrate_daggers(g);
     }
+    if (save_version < 154) {
+        // Add the fork without replacing exploration, loot, or player progress.
+        if (g->location == LOCATION_FOREST_ROAD) {
+            map_add_shortcut_branch(&g->map, TILE_FOREST_SHORTCUT);
+        } else if (g->location == LOCATION_SWAMP_ROAD) {
+            map_add_shortcut_branch(&g->map, TILE_SWAMP_SHORTCUT);
+        } else if (g->location == LOCATION_HIGH_PASS) {
+            map_add_shortcut_branch(&g->map, TILE_MOUNTAIN_SHORTCUT);
+        }
+    }
+    if (save_version < 158) {
+        migrate_forest_entry_direction(g);
+    }
+    if (save_version < 162) {
+        approach_refresh_dungeon(g);
+    }
+    if (save_version < 163) {
+        approach_relocate_ridgeshire(g);
+        migrate_ridgeshire_portal(g);
+    }
+    // Recover saves containing a town interior or shortcut in a dungeon slot.
+    game_repair_dungeon_maps(g);
+    // Recess legacy floor shortcuts into terrain in active and cached boss maps.
     game_migrate_boss_shortcuts(g);
     game_refresh_quest_encounters(g);
     for (int i = 0; i < g->floor_item_count; i++) {
         FloorItem *item = &g->floor_items[i];
+        if (save_version < 157 && item->active && item->underlying_tile == TILE_TOWN_FLOOR &&
+            ((g->location == LOCATION_TOWN2 && item->x == TOWN3_ROAD_X && item->y == 11) ||
+            (g->location == LOCATION_TOWN3 && item->x == ROSEMOOR_SWAMP_ROAD_X && item->y == 15))) {
+            item->underlying_tile = TILE_TOWN_PATH;
+        }
         if (item->active && g->location == LOCATION_TOWN3 &&
             item->x >= TOWN_GUILD_X && item->x < TOWN_GUILD_X + TOWN_GUILD_W &&
             item->y >= TOWN_GUILD_Y && item->y < TOWN_GUILD_Y + TOWN_GUILD_H &&

@@ -6,6 +6,21 @@
 
 #define TILE_SIZE 24
 
+typedef enum {
+    TOWN_EXIT_DUNGEON,
+    TOWN_EXIT_FOREST,
+    TOWN_EXIT_MOUNTAINS,
+    TOWN_EXIT_COAST,
+    TOWN_EXIT_ROAD,
+    TOWN_EXIT_SWAMP,
+    TOWN_EXIT_DRAGONSPINE,
+    TOWN_EXIT_FROST,
+    TOWN_EXIT_DESERT,
+    TOWN_EXIT_MOONVEIL,
+    TOWN_EXIT_ASHEN,
+    TOWN_EXIT_GLASSDEEP
+} TownExitStyle;
+
 typedef struct {
     SDL_Renderer *sdl;
     SDL_Texture *blacksmith_texture;
@@ -16,6 +31,8 @@ typedef struct {
     SDL_Texture *healer_texture;
     SDL_Texture *witch_texture;
     SDL_Texture *labyrinth_texture;
+    SDL_Texture *dungeon_entrance_texture;
+    SDL_Texture *town_gate_textures[TOWN_EXIT_GLASSDEEP + 1];
     SDL_Texture *castle_texture;
     SDL_Texture *apothecary_texture;
     SDL_Texture *guild_texture;

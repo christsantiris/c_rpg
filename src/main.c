@@ -18,6 +18,7 @@ EM_ASYNC_JS(void, browser_next_frame, (void), {
 #include "game/game.h"
 #include "game/jail.h"
 #include "game/town_life.h"
+#include "game/approach.h"
 #include "game/map.h"
 #include "screens/landing.h"
 #include "screens/name_entry.h"
@@ -82,6 +83,10 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
         g->map.tiles[action.target_y][action.target_x] != TILE_TOWN_EXIT) {
         return 0;
     }
+    // Let the route prompt open before any departure animation.
+    if (game_town_route_available(g, action.target_x, action.target_y)) {
+        return 0;
+    }
     if (g->location == LOCATION_TOWN3 || g->location == LOCATION_CASTLE) {
         if (action.target_x == 0 || action.target_x == TOWN_W - 1) {
             *style = g->location == LOCATION_TOWN3 && action.target_x == 0 ? TOWN_EXIT_MOONVEIL : TOWN_EXIT_ROAD;
@@ -92,25 +97,18 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
             return 1;
         }
         if (g->location == LOCATION_TOWN3 && action.target_y == TOWN_H - 1) {
-            *style = action.target_x == ROSEMOOR_SWAMP_ROAD_X ? TOWN_EXIT_ROAD : TOWN_EXIT_SWAMP;
+            *style = TOWN_EXIT_SWAMP;
             return 1;
         }
         return 0;
     }
     if (action.target_y == 0) {
         if (g->location == LOCATION_TOWN4) {
-            *style = TOWN_EXIT_ASHEN;
+            *style = TOWN_EXIT_DRAGONSPINE;
             return 1;
-        }
-        if (g->location == LOCATION_TOWN && action.target_x == TOWN4_ROAD_X &&
-            !(g->defeated_bosses & (1 << LOCATION_MOUNTAINS))) {
-            return 0;
         }
         *style = g->location == LOCATION_TOWN ?
             TOWN_EXIT_MOUNTAINS : TOWN_EXIT_SWAMP;
-        if (g->location == LOCATION_TOWN2 && action.target_x == TOWN3_ROAD_X) {
-            *style = TOWN_EXIT_ROAD;
-        }
         return 1;
     }
     if (action.target_x == 0 && g->location == LOCATION_TOWN4) {
@@ -122,19 +120,14 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
             *style = TOWN_EXIT_DESERT;
             return 1;
         }
-        if (action.target_y == TOWN_ROAD_EXIT_Y &&
-            !(g->defeated_bosses & (1 << LOCATION_FOREST))) {
-            return 0;
-        }
-        *style = action.target_y == TOWN_ROAD_EXIT_Y ?
-            TOWN_EXIT_ROAD : TOWN_EXIT_FOREST;
+        *style = TOWN_EXIT_FOREST;
         return 1;
     }
     if (action.target_x == TOWN_W - 1) {
         *style = g->location == LOCATION_TOWN2 ?
-            (action.target_y == TOWN_ROAD_EXIT_Y ? TOWN_EXIT_ROAD : TOWN_EXIT_FOREST) :
+            TOWN_EXIT_FOREST :
             (g->location == LOCATION_TOWN4 ?
-            TOWN_EXIT_DRAGONSPINE : TOWN_EXIT_DUNGEON);
+            TOWN_EXIT_ASHEN : TOWN_EXIT_DUNGEON);
         return 1;
     }
     if (action.target_y == TOWN_H - 1) {
@@ -143,7 +136,7 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
             return 1;
         }
         *style = g->location == LOCATION_TOWN4 ?
-            (action.target_x == RIDGESHIRE_MOUNTAIN_ROAD_X ? TOWN_EXIT_ROAD : TOWN_EXIT_MOUNTAINS) :
+            TOWN_EXIT_MOUNTAINS :
             (g->location == LOCATION_TOWN2 ? TOWN_EXIT_SWAMP : TOWN_EXIT_COAST);
         return 1;
     }
@@ -1202,7 +1195,7 @@ int main(int argc, char **argv) {
                                 game.player.y == TOWN_HARBOR_ENTRANCE_Y) {
                                 harbor_init(&harbor_screen);
                                 screen = SCREEN_HARBOR;
-                                push_message(&game, "You enter the harbor dock.");
+                                push_message(&game, "You enter the docks.");
                             }
                             int projectile_started =
                                 ((a.type == ACTION_CAST_SPELL &&
@@ -1522,7 +1515,9 @@ int main(int argc, char **argv) {
         }
 
         // Update music based on screen and location
+        const TownApproach *approach = approach_route(&game);
         int is_town = game.location == LOCATION_TOWN ||
+            approach != NULL ||
             game.location == LOCATION_TAVERN ||
             game.location == LOCATION_TOWN2 ||
             game.location == LOCATION_TOWN3 ||
@@ -1534,13 +1529,13 @@ int main(int argc, char **argv) {
             game.location == LOCATION_INN ||
             game.location == LOCATION_GUILD ||
             game.location == LOCATION_ISLAND || town_life_is_interior(game.location);
-        int in_town2 = game.location == LOCATION_TOWN2 ||
+        int in_town2 = (approach && approach->town == LOCATION_TOWN2) || game.location == LOCATION_TOWN2 ||
             game.location == LOCATION_INN || game.location == LOCATION_BUTCHER;
-        int in_town3 = game.location == LOCATION_TOWN3 ||
+        int in_town3 = (approach && (approach->town == LOCATION_TOWN3 || approach->town == LOCATION_CASTLE)) || game.location == LOCATION_TOWN3 ||
             game.location == LOCATION_GUILD ||
             game.location == LOCATION_SPICE_SHOP ||
             game.location == LOCATION_CASTLE;
-        int in_town4 = game.location == LOCATION_TOWN4 || game.location == LOCATION_WORKSHOP ||
+        int in_town4 = (approach && approach->town == LOCATION_TOWN4) || game.location == LOCATION_TOWN4 || game.location == LOCATION_WORKSHOP ||
             game.location == LOCATION_TOWN_HALL || game.location == LOCATION_MONASTERY;
         music_update(screen, is_town, in_town2, in_town3, in_town4);
 

@@ -101,7 +101,7 @@ void harbor_draw(Renderer *r, const GameState *g, const HarborScreen *s) {
     SDL_Color gold = {220, 180, 60, 255};
     SDL_Color ready = {132, 204, 160, 255};
     SDL_Color locked = {220, 118, 92, 255};
-    draw_centered_text(r, on_island ? "CAPTAIN ROWAN" : "HARBOR DOCK",
+    draw_centered_text(r, on_island ? "CAPTAIN ROWAN" : "DOCKS",
         play_w / 2, 34, gold, r->font_large);
     draw_centered_text(r, on_island
         ? "RETURN TO OAKHAVEN WHEN YOU ARE READY."

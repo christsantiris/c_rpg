@@ -8,7 +8,7 @@ Rising Tide alternates two-turn row and column waves. Storm Throne adds two
 fixed flooded pockets after each perpendicular wave sequence. Each signature
 leaves a recovery opening. Two separate throne controls drain permanent approach
 lanes. Permanent shelter islands have been removed. Original stats, regional
-scaling, Tidecaller Robes, coast exit, harbor and island progression remain in
+scaling, Tidecaller Robes, coast exit, docks and island progression remain in
 effect. See [Sunken Coast](../../sunken-coast.md) for exact timing and save behavior.
 
 ## Renderer review
@@ -65,7 +65,7 @@ existing regional scaling; use the direct command for the baseline encounter.
 6. Operate the ordinary blue/amber basin control. The throne's dry paths and
    Mara's completed beacon bits must remain unchanged.
 7. Defeat the Queen with melee, arrows or a spell. Collect the original robes,
-   leave through the coast exit and check harbor/island progression.
+   leave through the coast exit and check docks/island progression.
 8. Leave the robes unclaimed and revisit after a floor refresh. Recover them
    from the named reliquary; full inventory must leave them available. After
    claiming, dropping or selling must not create a replacement.
@@ -95,4 +95,4 @@ renderer captures passed AddressSanitizer and UndefinedBehaviorSanitizer.
 Coverage includes fixed waves/pockets, ordinary movement, freeze and recovery,
 all-class controls, basin/beacon independence, loot and inventory capacity,
 claimed/unclaimed rewards, active/cached targets and wave bounds, portals,
-legacy saves, 100 reachable throne layouts, coast exit and harbor access.
+legacy saves, 100 reachable throne layouts, coast exit and docks access.

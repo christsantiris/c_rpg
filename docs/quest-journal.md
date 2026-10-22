@@ -24,7 +24,7 @@ Tavern for 80 gold and 600 score; her location change preserves existing
 quest progress.
 
 Ilya assigns **The Dragon's Hoard** in **Oakhaven's Tavern**. Its objective
-remains the golden goblet on Dragonspine stage 5, beyond Ridgeshire's east
+remains the golden goblet on Dragonspine stage 5, beyond Ridgeshire's north
 gate. Return to Ilya in the Tavern for one Potion of Strength and 600 score.
 
 Zara's **The Lost Magic Lamp** quest also appears after accepting it inside

@@ -108,24 +108,10 @@ void draw_red_dragon(Renderer *r, int tile_x, int tile_y);
 void draw_tarrasque(Renderer *r, int tile_x, int tile_y);
 
 // Town Draw functions
-typedef enum {
-    TOWN_EXIT_DUNGEON,
-    TOWN_EXIT_FOREST,
-    TOWN_EXIT_MOUNTAINS,
-    TOWN_EXIT_COAST,
-    TOWN_EXIT_ROAD,
-    TOWN_EXIT_SWAMP,
-    TOWN_EXIT_DRAGONSPINE,
-    TOWN_EXIT_FROST,
-    TOWN_EXIT_DESERT,
-    TOWN_EXIT_MOONVEIL,
-    TOWN_EXIT_ASHEN,
-    TOWN_EXIT_GLASSDEEP
-} TownExitStyle;
-
 void draw_town_floor(Renderer *r, int tile_x, int tile_y);
 void draw_town_path(Renderer *r, int tile_x, int tile_y);
 void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style);
+void draw_town_gate_back(Renderer *r, int tx, int ty, TownExitStyle style, int dx, int dy);
 void draw_moonveil_floor(Renderer *r, int tx, int ty, int mx, int my);
 void draw_moonveil_wall(Renderer *r, int tx, int ty, int mx, int my);
 void draw_moonveil_pool(Renderer *r, int tx, int ty, int mx, int my);
@@ -199,6 +185,7 @@ void draw_frostfell_thin_ice(Renderer *r, int tile_x, int tile_y, int map_x, int
 void draw_dragon_goblet(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_dragon_seeker(Renderer *r, int tile_x, int tile_y);
 void draw_labyrinth_entrance(Renderer *r, int tile_x, int tile_y, int open);
+void draw_dungeon_entrance(Renderer *r, int tile_x, int tile_y);
 void draw_labyrinth_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_labyrinth_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_labyrinth_exit(Renderer *r, int tile_x, int tile_y);

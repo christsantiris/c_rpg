@@ -156,9 +156,9 @@ objectives have new guards on fresh expeditions; completed objectives remain
 completed. Quest progress, guard damage, and rewards persist through save/load.
 Existing saves migrate automatically, including saves inside the Tavern.
 
-## Harbor Unlock
+## Docks Unlock
 
-The harbor road appears after the Drowned Queen is defeated on the Sunken
+The road to the docks appears after the Drowned Queen is defeated on the Sunken
 Coast. The other regional bosses and Tavern quests are not required. Captain
 Rowan then gives the Island Treasure Map when spoken to, enabling ship travel
 from the dock.
@@ -176,7 +176,7 @@ adventure area.
 
 Ilya waits alongside Elowen and Mara in **Oakhaven's Tavern**. Press
 `T` beside her, then `Y` to accept the quest. Travel north through the mountains
-to Ridgeshire, then take its east gate to Dragonspine. Recover the golden goblet
+to Ridgeshire, then take its north gate to Dragonspine. Recover the golden goblet
 on stage 5 by standing on it and pressing `P` (Pick up), then return to Ilya in the Tavern
 for one **Potion of Strength and 600 score**. Make room in your pack before
 turning it in. The potion permanently adds 1 base attack when consumed. Older

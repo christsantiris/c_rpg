@@ -116,7 +116,8 @@ static void test_migration(void) {
     game.gold = 617;
     game.defeated_bosses = 1 << LOCATION_DUNGEON;
     game.level_cache[2].valid = 1;
-    game.level_cache[2].map = game.map;
+    map_generate(&game.level_cache[2].map, 3);
+    map_mark_explored(&game.level_cache[2].map, game.level_cache[2].map.stairs_up_x, game.level_cache[2].map.stairs_up_y);
     game.floor_item_count = 1;
     game.floor_items[0] = (FloorItem){.active = 1, .x = ELOWEN_TAVERN_X, .y = ELOWEN_TAVERN_Y,
         .underlying_tile = TILE_TAVERN_FLOOR, .item = item_make_health_potion()};

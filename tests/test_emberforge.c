@@ -91,7 +91,7 @@ static void test_hall(void) {
     action_resolve_player(&game, (Action){ACTION_MOVE, game.map.stairs_down_x, game.map.stairs_down_y});
     ASSERT("Town Hall exit returns outside its door and retains mountain shortcut", game.location == LOCATION_TOWN4 &&
         game.player.x == TOWN4_HALL_DOOR_X && game.player.y == TOWN4_HALL_DOOR_Y + 1 &&
-        game.map.tiles[TOWN_H - 1][RIDGESHIRE_MOUNTAIN_ROAD_X] == TILE_TOWN_EXIT);
+        game.map.tiles[TOWN_H - 1][20] == TILE_TOWN_EXIT && game.map.tiles[TOWN_H - 1][RIDGESHIRE_MOUNTAIN_ROAD_X] == TILE_WALL);
 }
 
 static void test_quest(void) {
@@ -177,7 +177,7 @@ static void test_quest(void) {
         load_game(&loaded, EMBERFORGE_TEST_SLOT) && loaded.emberforge_quest_state == 3 && loaded.portal_active);
     game = loaded;
     game_leave_town_hall(&game);
-    ASSERT("leaving the hall restores the Ashen return portal", game.map.tiles[2][RIDGESHIRE_ASHEN_GATE_X + 1] == TILE_PORTAL);
+    ASSERT("leaving the hall restores the Ashen return portal", game.map.tiles[RIDGESHIRE_ASHEN_PORTAL_Y][RIDGESHIRE_ASHEN_PORTAL_X] == TILE_PORTAL);
     game_use_town_portal(&game);
     stand_at_object();
     ASSERT("return portal preserves the repaired forge without respawning defenders", game.location == LOCATION_ASHEN &&

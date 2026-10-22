@@ -19,6 +19,8 @@
 #define FOREST_ROAD_W 80
 #define FOREST_ROAD_H 25
 #define FOREST_ROAD_Y 12
+#define FOREST_ROAD_FORK_X (FOREST_ROAD_W / 2)
+#define FOREST_ROAD_BOSS_Y (FOREST_ROAD_Y - 6)
 #define CROWNROAD_LEGACY_W 48
 #define CROWNROAD_LENGTH_SCALE 3
 #define CROWNROAD_W ((CROWNROAD_LEGACY_W - 1) * CROWNROAD_LENGTH_SCALE + 1)
@@ -33,6 +35,8 @@
 #define SWAMP_ROAD_W TOWN_W
 #define SWAMP_ROAD_H 48
 #define SWAMP_ROAD_X 20
+#define SWAMP_ROAD_FORK_Y (SWAMP_ROAD_H / 2)
+#define SWAMP_ROAD_BOSS_X (SWAMP_ROAD_X + 8)
 #define TOWN3_GUARD_X 39
 #define TOWN3_GUARD_NORTH_Y (TOWN3_KING_GATE_Y - 1)
 #define TOWN3_GUARD_SOUTH_Y (TOWN3_KING_GATE_Y + 1)
@@ -205,7 +209,7 @@
 #define CATACOMBS_W 60
 #define CATACOMBS_H 80
 #define STILLBURY_GLASSDEEP_GATE_X 20
-#define RIDGESHIRE_ASHEN_GATE_X 20
+#define RIDGESHIRE_DRAGON_GATE_X 20
 #define ROSEMOOR_MOONVEIL_GATE_Y 14
 #define SWAMP_MAP_W 72
 #define SWAMP_MAP_H 64
@@ -215,15 +219,19 @@
 #define HIGH_PASS_W TOWN_W
 #define HIGH_PASS_H 64
 #define HIGH_PASS_X 20
+#define HIGH_PASS_FORK_Y (HIGH_PASS_H / 2)
+#define HIGH_PASS_BOSS_X (HIGH_PASS_X + 8)
 #define TOWN4_ROAD_X 40
 #define RIDGESHIRE_MOUNTAIN_ROAD_X 28
 #define TOWN4_SQUARE_X 20
 #define TOWN4_SQUARE_Y 12
 #define TOWN4_SQUARE_W (RIDGESHIRE_MOUNTAIN_ROAD_X - TOWN4_SQUARE_X + 1)
 #define TOWN4_SQUARE_H 3
-#define TOWN4_DRAGON_GATE_Y 12
-#define TOWN4_PORTAL_X (TOWN_W - 3)
-#define TOWN4_PORTAL_Y 13
+#define RIDGESHIRE_ASHEN_GATE_Y 12
+#define RIDGESHIRE_DRAGON_PORTAL_X (RIDGESHIRE_DRAGON_GATE_X + 1)
+#define RIDGESHIRE_DRAGON_PORTAL_Y 2
+#define RIDGESHIRE_ASHEN_PORTAL_X (TOWN_W - 3)
+#define RIDGESHIRE_ASHEN_PORTAL_Y (RIDGESHIRE_ASHEN_GATE_Y + 1)
 #define TOWN4_WORKSHOP_X 7
 #define TOWN4_WORKSHOP_Y 8
 #define TOWN4_WORKSHOP_W 5
@@ -626,7 +634,9 @@ typedef enum {
     TILE_DRAGON_BOULDER,
     TILE_DRAGON_ASH_BOULDER,
     TILE_NPC_ALDRIC,
-    TILE_NPC_FLETCHER
+    TILE_NPC_FLETCHER,
+    TILE_APPROACH_TOWN,
+    TILE_APPROACH_AREA
 } TileType;
 
 typedef struct {
@@ -674,13 +684,14 @@ void map_generate_swamp_road(Map *m);
 void map_set_town3_road(Map *m, int unlocked);
 void map_set_rosemoor_swamp_road(Map *m, int unlocked);
 void map_generate_forest_road(Map *m);
+void map_add_shortcut_branch(Map *m, TileType shortcut);
 void map_place_town_labyrinth(Map *m);
 void map_place_town2_center(Map *m);
 void map_place_town3_guards(Map *m, int avoid_x, int avoid_y);
 void map_place_town4_guards(Map *m, int avoid_x, int avoid_y);
 void map_place_town3_frost_gate(Map *m);
 void map_place_town3_moonveil_gate(Map *m);
-void map_place_town4_ashen_gate(Map *m);
+void map_place_town4_region_gates(Map *m);
 void map_place_town2_glassdeep_gate(Map *m);
 void map_place_town_harbor(Map *m);
 void map_place_town_tavern(Map *m);
@@ -695,6 +706,7 @@ void map_generate_island(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_temple(Map *m, int level, int *spawn_x, int *spawn_y);
 void map_generate_labyrinth(Map *m, int level, int switches, int *spawn_x, int *spawn_y);
 void map_generate_forest(Map *m, int level);
+void map_mirror_horizontal(Map *m);
 void map_reveal_forest_exit(Map *m);
 void map_reveal_forest_entrance(Map *m);
 int map_forest_difficulty(int level);

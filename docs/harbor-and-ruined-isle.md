@@ -1,8 +1,8 @@
-# Harbor, Ruined Isle, and Ruined Temple
+# Docks, Ruined Isle, and Ruined Temple
 
-The harbor and island open after the Sunken Coast boss is defeated.
+The docks and island open after the Sunken Coast boss is defeated.
 
-## Unlocking the Harbor
+## Unlocking the Docks
 
 Defeat the Drowned Queen on the Sunken Coast. The road then extends from the
 OakHaven crossroads to the dock. No other boss or Tavern quest is required.
@@ -12,7 +12,7 @@ space is required. If the dungeon and mountains remain uncleared, Rowan
 recommends training in one of them before facing the Ruined Temple. Nahla
 repeats the advice on the island. The advice does not block travel or entry.
 
-Walk into the dock entrance to open the harbor scene. Select **Board ship for
+Walk into the dock entrance to open the docks scene. Select **Board ship for
 the Ruined Isle** and press `Enter`, or choose the return option to stay in
 town. The first voyage uses the map to unlock the route and consumes it. Later
 voyages remain available without carrying a map.
@@ -160,7 +160,7 @@ See the [native renderer gallery and play-test guide](art-sources/sun-guardian-e
 ## Return to Town
 
 Return to Town works from every temple tier. It creates a portal near the town
-harbor and records the exact tier, position, and current encounter state.
+docks and records the exact tier, position, and current encounter state.
 Entering that portal returns to the temple and closes it. Walking out through
 tier 1 returns to the island without creating a portal.
 

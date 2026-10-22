@@ -41,6 +41,7 @@ sprites:
 	python3 tools/sprites/healer.py
 	python3 tools/sprites/witch.py
 	python3 tools/sprites/labyrinth.py
+	python3 tools/sprites/dungeon.py
 	python3 tools/sprites/apothecary.py
 	python3 tools/sprites/adventurers_guild.py
 	python3 tools/sprites/workshop.py

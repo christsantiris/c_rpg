@@ -2,6 +2,7 @@
 #include "item_icons.h"
 #include "game_renderer.h"
 #include "../game/town_life.h"
+#include "../game/approach.h"
 #include "../game/necromancer.h"
 #include <stdio.h>
 
@@ -97,9 +98,12 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
     char loc[24];
     if (harbor) {
         SDL_snprintf(loc, sizeof(loc), g->location == LOCATION_ISLAND
-            ? "ISLAND DOCK" : "HARBOR");
+            ? "ISLAND DOCK" : "DOCKS");
     } else if (town_life_is_interior(g->location)) {
         SDL_snprintf(loc, sizeof(loc), "%s", town_life_building(g->location)->label);
+    } else if (g->location == LOCATION_APPROACH) {
+        const TownApproach *route = approach_route(g);
+        SDL_snprintf(loc, sizeof(loc), "%s PATH", route ? approach_area_name(route->area) : "AREA");
     } else if (g->location == LOCATION_TOWN) {
         SDL_snprintf(loc, sizeof(loc), "OakHaven");
     } else if (g->location == LOCATION_TAVERN) {

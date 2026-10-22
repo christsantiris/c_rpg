@@ -2268,6 +2268,212 @@ static void test_coast_stage_migration(void) {
     remove_test_save(slot);
 }
 
+static void test_forest_entry_migration(void) {
+    GameState *original = calloc(1, sizeof(*original));
+    GameState *loaded = calloc(1, sizeof(*loaded));
+    ASSERT("forest migration fixtures allocate successfully", original && loaded);
+    if (!original || !loaded) {
+        free(original);
+        free(loaded);
+        return;
+    }
+    for (int active = 0; active < 2; active++) {
+        memset(original, 0, sizeof(*original));
+        game_init(original);
+        game_enter_forest(original);
+        // Recreate the old west-side entry with known actor and loot positions.
+        map_mirror_horizontal(&original->map);
+        int x;
+        int y;
+        map_room_center(&original->map.rooms[0], &x, &y);
+        original->player.x = x;
+        original->player.y = y;
+        original->player.last_dx = 1;
+        original->enemy_count = 1;
+        original->enemies[0] = (Enemy){.type = ENEMY_DARK_ELF, .active = 1, .x = x + 1, .y = y, .hp = 17, .max_hp = 50, .move_timer = 2, .attack_target_x = x, .attack_target_y = y, .facing_dx = 1};
+        original->map.tiles[y][x + 1] = TILE_FOREST_FLOOR;
+        original->map.tiles[y][x + 2] = TILE_FOREST_FLOOR;
+        original->map.tiles[y][x + 3] = TILE_FOREST_FLOOR;
+        original->map.tiles[y + 1][x] = TILE_FOREST_FALSE_MARKER;
+        map_clear_exploration(&original->map);
+        map_mark_explored(&original->map, x, y);
+        original->forest_cache[0].valid = 1;
+        original->forest_cache[0].map = original->map;
+        original->forest_cache[0].enemy_count = 1;
+        original->forest_cache[0].enemies[0] = original->enemies[0];
+        original->portal_active = 1;
+        original->portal_location = LOCATION_FOREST;
+        original->portal_level = 1;
+        original->portal_x = x + 3;
+        original->portal_y = y;
+        original->portal_origin_tile = TILE_FOREST_FLOOR;
+        original->gold = 321;
+        original->score = 9876;
+        if (active) {
+            original->floor_item_count = 1;
+            original->floor_items[0] = (FloorItem){.active = 1, .x = x + 2, .y = y, .underlying_tile = TILE_FOREST_FLOOR, .item = item_make_greatsword()};
+            original->floor_items[0].item.sharpened = 1;
+            original->map.tiles[y][x + 2] = TILE_ITEM;
+            original->map.tiles[y][x + 3] = TILE_PORTAL;
+        } else {
+            original->location = LOCATION_TOWN;
+            map_generate_town(&original->map, &original->player.x, &original->player.y);
+            original->enemy_count = 0;
+            original->floor_item_count = 0;
+        }
+        int px = original->player.x;
+        int hp = original->player.hp;
+        int ok = save_game(original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, 157) && load_game(loaded, LEGACY_SLOT);
+        LevelCache *cache = &loaded->forest_cache[0];
+        ASSERT("legacy forest entry migration preserves character progress and enemy health", ok && loaded->player.hp == hp && loaded->gold == 321 && loaded->score == 9876 && cache->valid && cache->enemies[0].hp == 17 && cache->enemies[0].move_timer == 2);
+        ASSERT("cached first forest stage mirrors terrain, explored tiles, enemies, and warned targets together", ok && cache->map.stairs_up_x == MAP_W - 2 && cache->map.stairs_down_x == 1 && cache->map.tiles[y + 1][MAP_W - 1 - x] == TILE_FOREST_FALSE_MARKER && map_is_explored(&cache->map, MAP_W - 1 - x, y) && !map_is_explored(&cache->map, x, y) && cache->enemies[0].x == MAP_W - 2 - x && cache->enemies[0].attack_target_x == MAP_W - 1 - x && cache->enemies[0].facing_dx == -1);
+        ASSERT("saved forest portal coordinates move with the mirrored destination", ok && loaded->portal_active && loaded->portal_x == MAP_W - 4 - x && loaded->portal_y == y);
+        if (active) {
+            ASSERT("active forest migration preserves the player's relative position and facing", loaded->player.x == MAP_W - 1 - px && loaded->player.y == y && loaded->player.last_dx == -1 && loaded->enemies[0].x == MAP_W - 2 - x);
+            ASSERT("active forest migration preserves dropped equipment and the hidden portal landing", loaded->floor_items[0].active && loaded->floor_items[0].x == MAP_W - 3 - x && loaded->floor_items[0].item.sharpened && loaded->map.tiles[y][MAP_W - 3 - x] == TILE_ITEM && loaded->map.tiles[y][MAP_W - 4 - x] == TILE_FOREST_FLOOR);
+        } else {
+            ASSERT("migrating a cached forest leaves the player in town at the same position", loaded->location == LOCATION_TOWN && loaded->player.x == px && loaded->player.last_dx == 1);
+        }
+        int saved_x = loaded->player.x;
+        ASSERT("repaired forest saves do not mirror again on another load", save_game(loaded, MIGRATED_SLOT) && load_game(original, MIGRATED_SLOT) && original->player.x == saved_x && original->forest_cache[0].map.stairs_up_x == MAP_W - 2 && original->portal_x == MAP_W - 4 - x);
+        if (!active) {
+            game_use_town_portal(original);
+            ASSERT("a migrated town portal returns to the same place in the corrected forest", original->location == LOCATION_FOREST && original->level == 1 && original->player.x == MAP_W - 4 - x && original->player.y == y);
+        }
+        remove_test_save(LEGACY_SLOT);
+        remove_test_save(MIGRATED_SLOT);
+    }
+    free(original);
+    free(loaded);
+}
+
+static void test_shortcut_square_repairs(void) {
+    static GameState original;
+    static GameState loaded;
+    for (int town = 0; town < 2; town++) {
+        for (int covered = 0; covered < 2; covered++) {
+            memset(&original, 0, sizeof(original));
+            game_init(&original);
+            original.location = town ? LOCATION_TOWN3 : LOCATION_TOWN2;
+            if (town) {
+                map_generate_town3(&original.map, &original.player.x, &original.player.y);
+            } else {
+                map_generate_town2(&original.map, &original.player.x, &original.player.y);
+            }
+            int x = town ? ROSEMOOR_SWAMP_ROAD_X : TOWN3_ROAD_X;
+            int y = town ? 15 : 11;
+            original.map.tiles[y][x] = covered ? TILE_ITEM : TILE_TOWN_FLOOR;
+            original.floor_item_count = covered;
+            original.floor_items[0] = (FloorItem){.active = covered, .x = x, .y = y, .underlying_tile = TILE_TOWN_FLOOR, .item = item_make_health_potion()};
+            original.gold = 321;
+            original.score = 9876;
+            original.defeated_bosses = (1 << LOCATION_FOREST) | (1 << LOCATION_SWAMP);
+            map_mark_explored(&original.map, x, y);
+            int ok = save_game(&original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, 156) && load_game(&loaded, LEGACY_SLOT);
+            ASSERT("loading repairs town-square paving damaged by shortcut cleanup without resetting progress", ok && loaded.map.tiles[y][x] == (covered ? TILE_ITEM : TILE_TOWN_PATH) && loaded.gold == original.gold && loaded.score == original.score && loaded.defeated_bosses == original.defeated_bosses && map_is_explored(&loaded.map, x, y));
+            if (covered) {
+                ASSERT("square repairs preserve dropped loot and repair its underlying cobblestone", loaded.floor_items[0].active && loaded.floor_items[0].underlying_tile == TILE_TOWN_PATH);
+                loaded.player.x = x;
+                loaded.player.y = y;
+                action_resolve_player(&loaded, (Action){ACTION_PICK_UP, 0, 0});
+                ASSERT("collecting saved loot leaves the repaired town square intact", !loaded.floor_items[0].active && loaded.map.tiles[y][x] == TILE_TOWN_PATH);
+            }
+            ASSERT("town-square paving stays repaired after another save/load", save_game(&loaded, MIGRATED_SLOT) && load_game(&original, MIGRATED_SLOT) && original.map.tiles[y][x] == TILE_TOWN_PATH);
+            remove_test_save(LEGACY_SLOT);
+            remove_test_save(MIGRATED_SLOT);
+        }
+    }
+}
+
+static void test_shared_town_gate_migration(void) {
+    static GameState original;
+    static GameState loaded;
+    const Location towns[6] = {LOCATION_TOWN, LOCATION_TOWN2, LOCATION_TOWN2, LOCATION_TOWN3, LOCATION_TOWN, LOCATION_TOWN4};
+    const int gate_x[6] = {0, TOWN_W - 1, TOWN3_ROAD_X, ROSEMOOR_SWAMP_ROAD_X, TOWN4_ROAD_X, RIDGESHIRE_MOUNTAIN_ROAD_X};
+    const int gate_y[6] = {TOWN_ROAD_EXIT_Y, TOWN_ROAD_EXIT_Y, 0, TOWN_H - 1, 0, TOWN_H - 1};
+    for (int route = 0; route < 6; route++) {
+        memset(&original, 0, sizeof(original));
+        game_init(&original);
+        original.location = towns[route];
+        if (original.location == LOCATION_TOWN) {
+            map_generate_town(&original.map, &original.player.x, &original.player.y);
+        } else if (original.location == LOCATION_TOWN2) {
+            map_generate_town2(&original.map, &original.player.x, &original.player.y);
+        } else if (original.location == LOCATION_TOWN3) {
+            map_generate_town3(&original.map, &original.player.x, &original.player.y);
+        } else {
+            map_generate_town4(&original.map, &original.player.x, &original.player.y);
+        }
+        int x = gate_x[route];
+        int y = gate_y[route];
+        int px = x == 0 ? 1 : (x == TOWN_W - 1 ? TOWN_W - 2 : x);
+        int py = y == 0 ? 1 : (y == TOWN_H - 1 ? TOWN_H - 2 : y);
+        original.map.tiles[y][x] = TILE_ITEM;
+        original.map.tiles[py][px] = TILE_ITEM;
+        original.floor_item_count = 2;
+        original.floor_items[0] = (FloorItem){.active = 1, .x = x, .y = y, .underlying_tile = TILE_TOWN_EXIT, .item = item_make_health_potion()};
+        original.floor_items[1] = (FloorItem){.active = 1, .x = px, .y = py, .underlying_tile = TILE_TOWN_PATH, .item = item_make_greatsword()};
+        original.floor_items[1].item.sharpened = 1;
+        original.player.x = x;
+        original.player.y = y;
+        original.player.hp = 17;
+        original.gold = 321;
+        original.score = 9876;
+        original.defeated_bosses = (1 << LOCATION_FOREST) | (1 << LOCATION_SWAMP) | (1 << LOCATION_MOUNTAINS);
+        map_mark_explored(&original.map, px, py);
+        int ok = save_game(&original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, 154) && load_game(&loaded, LEGACY_SLOT);
+        ASSERT("legacy shortcut gate and paving retire without trapping the saved player", ok && loaded.map.tiles[y][x] == TILE_WALL && loaded.player.x == px && loaded.player.y == py && map_is_walkable(&loaded.map, px, py));
+        ASSERT("retired gate migration preserves character progress and exploration", ok && loaded.player.hp == 17 && loaded.gold == original.gold && loaded.score == original.score && loaded.defeated_bosses == original.defeated_bosses && memcmp(loaded.map.explored, original.map.explored, sizeof(original.map.explored)) == 0);
+        ASSERT("loot on a retired gate and spur remains accessible with its metadata", ok && loaded.floor_items[0].active && loaded.floor_items[1].active && loaded.floor_items[0].x == px && loaded.floor_items[0].y == py && loaded.floor_items[0].underlying_tile == TILE_TOWN_FLOOR && loaded.floor_items[1].underlying_tile == TILE_TOWN_FLOOR && loaded.floor_items[1].item.sharpened && loaded.map.tiles[py][px] == TILE_ITEM);
+        ASSERT("migrated town gates and loot survive another save/load", save_game(&loaded, MIGRATED_SLOT) && load_game(&original, MIGRATED_SLOT) && original.map.tiles[y][x] == TILE_WALL && original.floor_items[0].underlying_tile == TILE_TOWN_FLOOR && original.floor_items[1].item.sharpened);
+        remove_test_save(LEGACY_SLOT);
+        remove_test_save(MIGRATED_SLOT);
+    }
+}
+
+static void test_shortcut_fork_migration(void) {
+    static GameState original;
+    static GameState loaded;
+    for (int road = 0; road < 3; road++) {
+        memset(&original, 0, sizeof(original));
+        game_init(&original);
+        if (road == 0) {
+            game_enter_forest_road(&original);
+        } else if (road == 1) {
+            original.location = LOCATION_TOWN2;
+            game_enter_swamp_road(&original);
+        } else {
+            game_enter_high_pass(&original, 1);
+        }
+        int x = road == 0 ? FOREST_ROAD_FORK_X : (road == 1 ? SWAMP_ROAD_X : HIGH_PASS_X);
+        int y = road == 0 ? FOREST_ROAD_Y : (road == 1 ? SWAMP_ROAD_FORK_Y : HIGH_PASS_FORK_Y);
+        int bx = road == 0 ? x : (road == 1 ? SWAMP_ROAD_BOSS_X : HIGH_PASS_BOSS_X);
+        int by = road == 0 ? FOREST_ROAD_BOSS_Y : y;
+        TileType wall = road == 0 ? TILE_FOREST_WALL : (road == 1 ? TILE_SWAMP_WALL : TILE_DRAGON_WALL);
+        TileType floor = road == 0 ? TILE_FOREST_FLOOR : (road == 1 ? TILE_SWAMP_FLOOR : TILE_DRAGON_FLOOR);
+        TileType marker = road == 0 ? TILE_FOREST_SHORTCUT : (road == 1 ? TILE_SWAMP_SHORTCUT : TILE_MOUNTAIN_SHORTCUT);
+        // Version 153 roads had no branch to the boss chamber.
+        for (int step = 1; step <= (road == 0 ? y - by : bx - x); step++) {
+            original.map.tiles[y - (road == 0 ? step : 0)][x + (road == 0 ? 0 : step)] = wall;
+        }
+        original.player.x = x;
+        original.player.y = y;
+        original.gold = 321;
+        original.score = 9876;
+        original.defeated_bosses = (1 << LOCATION_FOREST) | (1 << LOCATION_SWAMP) | (1 << LOCATION_MOUNTAINS);
+        original.floor_item_count = 1;
+        original.floor_items[0] = (FloorItem){.active = 1, .x = x, .y = y, .underlying_tile = floor, .item = item_make_health_potion()};
+        original.map.tiles[y][x] = TILE_ITEM;
+        map_mark_explored(&original.map, x, y);
+        int ok = save_game(&original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, 153) && load_game(&loaded, LEGACY_SLOT);
+        ASSERT("old shortcut roads gain an accessible boss branch", ok && loaded.map.tiles[by][bx] == marker && map_is_walkable(&loaded.map, x + (road == 0 ? 0 : 1), y - (road == 0 ? 1 : 0)));
+        ASSERT("adding a fork preserves player position, loot, exploration, and progress", ok && loaded.player.x == x && loaded.player.y == y && loaded.map.tiles[y][x] == TILE_ITEM && loaded.floor_items[0].active && loaded.floor_items[0].underlying_tile == floor && memcmp(loaded.map.explored, original.map.explored, sizeof(original.map.explored)) == 0 && loaded.gold == original.gold && loaded.score == original.score && loaded.defeated_bosses == original.defeated_bosses);
+        ASSERT("migrated fork and loot survive another save/load", save_game(&loaded, MIGRATED_SLOT) && load_game(&original, MIGRATED_SLOT) && original.map.tiles[by][bx] == marker && original.map.tiles[y][x] == TILE_ITEM);
+        remove_test_save(LEGACY_SLOT);
+        remove_test_save(MIGRATED_SLOT);
+    }
+}
+
 static void test_narrow_shortcut_migration(void) {
     static GameState original;
     static GameState loaded;
@@ -2321,9 +2527,11 @@ static void test_narrow_shortcut_migration(void) {
             for (int column = 0; column < MAP_W; column++) {
                 walkable += !!map_is_walkable(&loaded.map, column, y);
             }
-            narrow &= walkable == 1 && map_is_walkable(&loaded.map, x, y);
+            int fork_y = road ? HIGH_PASS_FORK_Y : SWAMP_ROAD_FORK_Y;
+            int branch_x = road ? HIGH_PASS_BOSS_X : SWAMP_ROAD_BOSS_X;
+            narrow &= walkable == (y == fork_y ? branch_x - x + 1 : 1) && map_is_walkable(&loaded.map, x, y);
         }
-        ASSERT("saved shortcuts narrow to a connected one-tile path", narrow);
+        ASSERT("saved shortcuts narrow to a connected path with a boss fork", narrow);
         ASSERT("off-path saved player lands on the path at the same row", loaded.player.x == x && loaded.player.y == 18 && map_is_walkable(&loaded.map, loaded.player.x, loaded.player.y));
         ASSERT("shortcut migration preserves exploration and progress", memcmp(loaded.map.explored, original.map.explored, sizeof(original.map.explored)) == 0 && loaded.gold == original.gold && loaded.score == original.score && loaded.defeated_bosses == original.defeated_bosses);
         ASSERT("side-by-side dropped items remain accessible after narrowing", loaded.floor_items[0].active && loaded.floor_items[1].active && loaded.floor_items[0].x == x && loaded.floor_items[1].x == x && loaded.floor_items[0].y == 20 && loaded.floor_items[1].y == 20 && loaded.floor_items[0].underlying_tile == floor && loaded.floor_items[1].underlying_tile == floor);
@@ -2645,6 +2853,10 @@ void test_save_load(void) {
     test_rook_tavern_migration();
     test_aldric_town_migration();
     test_narrow_shortcut_migration();
+    test_shared_town_gate_migration();
+    test_shortcut_square_repairs();
+    test_forest_entry_migration();
+    test_shortcut_fork_migration();
     test_harbor_road_save_load();
     test_spent_island_map_on_load();
     test_cain_save_load();

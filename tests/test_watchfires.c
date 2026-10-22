@@ -129,7 +129,7 @@ static void test_quest(void) {
     game.inventory_count = MAX_INVENTORY;
     game_interact_watchfire(&game);
     game.inventory_count = 0;
-    ASSERT("eastern watchfire can be restored first without inventory space", game.watchfire_quest_progress == 4 && game.watchfire_quest_state == 1 &&
+    ASSERT("northern watchfire can be restored first without inventory space", game.watchfire_quest_progress == 4 && game.watchfire_quest_state == 1 &&
         game.map.tiles[game.player.y][game.player.x] == TILE_WATCHFIRE_LIT);
     game_ascend(&game);
     game_descend(&game);

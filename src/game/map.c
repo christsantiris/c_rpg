@@ -25,6 +25,33 @@ int map_is_explored(const Map *m, int x, int y) {
     return (m->explored[index / 8] & (1u << (index % 8))) != 0;
 }
 
+void map_mirror_horizontal(Map *m) {
+    unsigned char explored[MAP_EXPLORED_BYTES];
+    memcpy(explored, m->explored, sizeof(explored));
+    map_clear_exploration(m);
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            int index = y * MAP_W + x;
+            if (explored[index / 8] & (1u << (index % 8))) {
+                map_mark_explored(m, MAP_W - 1 - x, y);
+            }
+            if (x < MAP_W / 2) {
+                TileType tile = m->tiles[y][x];
+                m->tiles[y][x] = m->tiles[y][MAP_W - 1 - x];
+                m->tiles[y][MAP_W - 1 - x] = tile;
+            }
+        }
+    }
+    for (int i = 0; i < m->room_count; i++) {
+        m->rooms[i].x = MAP_W - m->rooms[i].x - m->rooms[i].w;
+    }
+    m->stairs_up_x = MAP_W - 1 - m->stairs_up_x;
+    m->stairs_down_x = MAP_W - 1 - m->stairs_down_x;
+    for (int i = 0; i < m->burial_trap_count; i++) {
+        m->burial_traps[i].x = MAP_W - 1 - m->burial_traps[i].x;
+    }
+}
+
 static void fill_rect(Map *m, int x, int y, int w, int h, TileType t) {
     for (int ry = y; ry < y + h; ry++)
         for (int rx = x; rx < x + w; rx++)
@@ -816,6 +843,10 @@ void map_generate_forest(Map *m, int level) {
     index = templates[index];
     map_generate_outdoor(m, map_forest_difficulty(level), entrances[index], exits[index], 1,
         &forest_templates[index]);
+    if (level == 1) {
+        // OakHaven lies east of the forest: enter from the east and head west.
+        map_mirror_horizontal(m);
+    }
     int hidden_start_x;
     int hidden_start_y;
     int hidden_end_x;
@@ -1438,6 +1469,9 @@ void map_place_town4_guards(Map *m, int avoid_x, int avoid_y) {
 }
 
 void map_place_town2_center(Map *m) {
+    if (m->tiles[11][TOWN3_ROAD_X] == TILE_TOWN_FLOOR) {
+        m->tiles[11][TOWN3_ROAD_X] = TILE_TOWN_PATH;
+    }
     for (int x = 18; x <= 22; x++) {
         m->tiles[0][x] = TILE_TOWN_EXIT;
     }
@@ -1485,7 +1519,7 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     for (int x = 18; x <= 22; x++)
         m->tiles[0][x] = TILE_TOWN_EXIT;
 
-    // The forest gate stays on the main road. The Stillbury spur appears later.
+    // Forest travel and the unlocked Stillbury shortcut share the main gate.
     for (int y = 10; y <= 12; y++) {
         m->tiles[y][0] = TILE_TOWN_EXIT;
     }
@@ -1544,50 +1578,48 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
 }
 
 void map_set_town2_road(Map *m, int unlocked) {
-    // Keep the former gate position closed.
+    (void)unlocked;
+    // Retire both former shortcut gates and their paving.
     m->tiles[19][0] = TILE_WALL;
     for (int x = 1; x < 4; x++) {
-        m->tiles[19][x] = TILE_TOWN_FLOOR;
+        if (m->tiles[19][x] == TILE_TOWN_PATH) {
+            m->tiles[19][x] = TILE_TOWN_FLOOR;
+        }
     }
     m->tiles[TOWN_ROAD_EXIT_Y][0] = TILE_WALL;
     for (int x = 1; x < 4; x++) {
-        m->tiles[TOWN_ROAD_EXIT_Y][x] = TILE_TOWN_FLOOR;
+        if (m->tiles[TOWN_ROAD_EXIT_Y][x] == TILE_TOWN_PATH) {
+            m->tiles[TOWN_ROAD_EXIT_Y][x] = TILE_TOWN_FLOOR;
+        }
     }
     for (int y = TOWN_ROAD_EXIT_Y; y < 12; y++) {
-        m->tiles[y][4] = TILE_TOWN_FLOOR;
-    }
-    if (!unlocked) {
-        return;
-    }
-    m->tiles[TOWN_ROAD_EXIT_Y][0] = TILE_TOWN_EXIT;
-    for (int x = 1; x < 4; x++) {
-        m->tiles[TOWN_ROAD_EXIT_Y][x] = TILE_TOWN_PATH;
-    }
-    for (int y = TOWN_ROAD_EXIT_Y; y < 12; y++) {
-        m->tiles[y][4] = TILE_TOWN_PATH;
+        if (m->tiles[y][4] == TILE_TOWN_PATH) {
+            m->tiles[y][4] = TILE_TOWN_FLOOR;
+        }
     }
 }
 
 void map_set_stillbury_forest_road(Map *m, int unlocked) {
-    m->tiles[TOWN_ROAD_EXIT_Y][TOWN_W - 1] = unlocked ? TILE_TOWN_EXIT : TILE_WALL;
+    (void)unlocked;
+    m->tiles[TOWN_ROAD_EXIT_Y][TOWN_W - 1] = TILE_WALL;
     for (int y = TOWN_ROAD_EXIT_Y; y < 12; y++) {
-        if (m->tiles[y][STILLBURY_FOREST_ROAD_X] != TILE_ITEM) {
-            m->tiles[y][STILLBURY_FOREST_ROAD_X] = unlocked ? TILE_TOWN_PATH : TILE_TOWN_FLOOR;
+        if (m->tiles[y][STILLBURY_FOREST_ROAD_X] == TILE_TOWN_PATH) {
+            m->tiles[y][STILLBURY_FOREST_ROAD_X] = TILE_TOWN_FLOOR;
         }
     }
-    if (m->tiles[TOWN_ROAD_EXIT_Y][TOWN_W - 2] != TILE_ITEM) {
-        m->tiles[TOWN_ROAD_EXIT_Y][TOWN_W - 2] = unlocked ? TILE_TOWN_PATH : TILE_TOWN_FLOOR;
+    if (m->tiles[TOWN_ROAD_EXIT_Y][TOWN_W - 2] == TILE_TOWN_PATH) {
+        m->tiles[TOWN_ROAD_EXIT_Y][TOWN_W - 2] = TILE_TOWN_FLOOR;
     }
 }
 
 void map_set_town4_road(Map *m, int unlocked) {
-    if (!unlocked) {
-        return;
+    (void)unlocked;
+    for (int y = 1; y < 12; y++) {
+        if (m->tiles[y][TOWN4_ROAD_X] == TILE_TOWN_PATH) {
+            m->tiles[y][TOWN4_ROAD_X] = TILE_TOWN_FLOOR;
+        }
     }
-    for (int y = 1; y <= 12; y++) {
-        m->tiles[y][TOWN4_ROAD_X] = TILE_TOWN_PATH;
-    }
-    m->tiles[0][TOWN4_ROAD_X] = TILE_TOWN_EXIT;
+    m->tiles[0][TOWN4_ROAD_X] = TILE_WALL;
 }
 
 void map_place_town4_square(Map *m) {
@@ -1601,10 +1633,11 @@ void map_place_town4_square(Map *m) {
 }
 
 void map_set_ridgeshire_mountain_road(Map *m, int unlocked) {
-    m->tiles[TOWN_H - 1][RIDGESHIRE_MOUNTAIN_ROAD_X] = unlocked ? TILE_TOWN_EXIT : TILE_WALL;
+    (void)unlocked;
+    m->tiles[TOWN_H - 1][RIDGESHIRE_MOUNTAIN_ROAD_X] = TILE_WALL;
     for (int y = 13; y < TOWN_H - 1; y++) {
-        if (m->tiles[y][RIDGESHIRE_MOUNTAIN_ROAD_X] != TILE_ITEM) {
-            m->tiles[y][RIDGESHIRE_MOUNTAIN_ROAD_X] = unlocked ? TILE_TOWN_PATH : TILE_TOWN_FLOOR;
+        if (m->tiles[y][RIDGESHIRE_MOUNTAIN_ROAD_X] == TILE_TOWN_PATH) {
+            m->tiles[y][RIDGESHIRE_MOUNTAIN_ROAD_X] = TILE_TOWN_FLOOR;
         }
     }
     map_place_town4_square(m);
@@ -1642,13 +1675,10 @@ void map_generate_town4(Map *m, int *spawn_x, int *spawn_y) {
         m->tiles[12][x] = TILE_TOWN_PATH;
     }
     m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
-    for (int y = TOWN4_DRAGON_GATE_Y - 2; y <= TOWN4_DRAGON_GATE_Y + 2; y++) {
-        m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
-    }
     for (int y = 10; y <= 14; y++) {
         m->tiles[y][0] = TILE_TOWN_EXIT;
     }
-    map_place_town4_ashen_gate(m);
+    map_place_town4_region_gates(m);
     map_place_town4_workshop(m);
     map_place_town4_hall(m);
     map_place_town4_guards(m, -1, -1);
@@ -1659,9 +1689,12 @@ void map_generate_town4(Map *m, int *spawn_x, int *spawn_y) {
     *spawn_y = TOWN_H - 2;
 }
 
-void map_place_town4_ashen_gate(Map *m) {
-    for (int x = RIDGESHIRE_ASHEN_GATE_X - 2; x <= RIDGESHIRE_ASHEN_GATE_X + 2; x++) {
+void map_place_town4_region_gates(Map *m) {
+    for (int x = RIDGESHIRE_DRAGON_GATE_X - 2; x <= RIDGESHIRE_DRAGON_GATE_X + 2; x++) {
         m->tiles[0][x] = TILE_TOWN_EXIT;
+    }
+    for (int y = RIDGESHIRE_ASHEN_GATE_Y - 2; y <= RIDGESHIRE_ASHEN_GATE_Y + 2; y++) {
+        m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
     }
 }
 
@@ -1804,21 +1837,45 @@ void map_generate_castle(Map *m, int *spawn_x, int *spawn_y) {
 }
 
 void map_set_town3_road(Map *m, int unlocked) {
-    if (!unlocked) {
-        return;
+    (void)unlocked;
+    // The former spur ends before the square's north cobblestone row.
+    for (int y = 1; y < 11; y++) {
+        if (m->tiles[y][TOWN3_ROAD_X] == TILE_TOWN_PATH) {
+            m->tiles[y][TOWN3_ROAD_X] = TILE_TOWN_FLOOR;
+        }
     }
-    for (int y = 1; y <= 12; y++) {
-        m->tiles[y][TOWN3_ROAD_X] = TILE_TOWN_PATH;
-    }
-    m->tiles[0][TOWN3_ROAD_X] = TILE_TOWN_EXIT;
+    m->tiles[0][TOWN3_ROAD_X] = TILE_WALL;
 }
 
 void map_set_rosemoor_swamp_road(Map *m, int unlocked) {
-    m->tiles[TOWN_H - 1][ROSEMOOR_SWAMP_ROAD_X] = unlocked ? TILE_TOWN_EXIT : TILE_WALL;
-    for (int y = 15; y < TOWN_H - 1; y++) {
-        if (m->tiles[y][ROSEMOOR_SWAMP_ROAD_X] != TILE_ITEM) {
-            m->tiles[y][ROSEMOOR_SWAMP_ROAD_X] = unlocked ? TILE_TOWN_PATH : TILE_TOWN_FLOOR;
+    (void)unlocked;
+    m->tiles[TOWN_H - 1][ROSEMOOR_SWAMP_ROAD_X] = TILE_WALL;
+    if (m->tiles[15][ROSEMOOR_SWAMP_ROAD_X] == TILE_TOWN_FLOOR) {
+        m->tiles[15][ROSEMOOR_SWAMP_ROAD_X] = TILE_TOWN_PATH;
+    }
+    for (int y = 16; y < TOWN_H - 1; y++) {
+        if (m->tiles[y][ROSEMOOR_SWAMP_ROAD_X] == TILE_TOWN_PATH) {
+            m->tiles[y][ROSEMOOR_SWAMP_ROAD_X] = TILE_TOWN_FLOOR;
         }
+    }
+}
+
+void map_add_shortcut_branch(Map *m, TileType shortcut) {
+    if (shortcut == TILE_FOREST_SHORTCUT) {
+        for (int y = FOREST_ROAD_BOSS_Y + 1; y < FOREST_ROAD_Y; y++) {
+            m->tiles[y][FOREST_ROAD_FORK_X] = TILE_FOREST_FLOOR;
+        }
+        m->tiles[FOREST_ROAD_BOSS_Y][FOREST_ROAD_FORK_X] = shortcut;
+    } else if (shortcut == TILE_SWAMP_SHORTCUT) {
+        for (int x = SWAMP_ROAD_X + 1; x < SWAMP_ROAD_BOSS_X; x++) {
+            m->tiles[SWAMP_ROAD_FORK_Y][x] = TILE_SWAMP_FLOOR;
+        }
+        m->tiles[SWAMP_ROAD_FORK_Y][SWAMP_ROAD_BOSS_X] = shortcut;
+    } else if (shortcut == TILE_MOUNTAIN_SHORTCUT) {
+        for (int x = HIGH_PASS_X + 1; x < HIGH_PASS_BOSS_X; x++) {
+            m->tiles[HIGH_PASS_FORK_Y][x] = TILE_DRAGON_FLOOR;
+        }
+        m->tiles[HIGH_PASS_FORK_Y][HIGH_PASS_BOSS_X] = shortcut;
     }
 }
 
@@ -1841,6 +1898,7 @@ void map_generate_swamp_road(Map *m) {
     m->stairs_down_y = 0;
     m->tiles[m->stairs_up_y][m->stairs_up_x] = TILE_SWAMP_ENTRANCE;
     m->tiles[m->stairs_down_y][m->stairs_down_x] = TILE_SWAMP_EXIT;
+    map_add_shortcut_branch(m, TILE_SWAMP_SHORTCUT);
 }
 
 void map_generate_crownroad(Map *m) {
@@ -1928,6 +1986,7 @@ void map_generate_high_pass(Map *m) {
     m->stairs_down_y = 0;
     m->tiles[m->stairs_up_y][m->stairs_up_x] = TILE_HIGH_PASS_ENTRANCE;
     m->tiles[m->stairs_down_y][m->stairs_down_x] = TILE_HIGH_PASS_EXIT;
+    map_add_shortcut_branch(m, TILE_MOUNTAIN_SHORTCUT);
 }
 
 static int place_lake_hole(Map *m, int x, int y) {
@@ -2172,6 +2231,7 @@ void map_generate_forest_road(Map *m) {
     m->stairs_up_y = FOREST_ROAD_Y;
     m->stairs_down_x = FOREST_ROAD_W - 2;
     m->stairs_down_y = FOREST_ROAD_Y;
+    map_add_shortcut_branch(m, TILE_FOREST_SHORTCUT);
 }
 
 static unsigned int labyrinth_random(unsigned int *state) {
