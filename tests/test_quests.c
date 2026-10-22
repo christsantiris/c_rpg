@@ -266,7 +266,7 @@ void test_dain_quest(void) {
     ASSERT("accepting Dain's quest starts a fresh mountain expedition",
         !g.mountain_cache[3].valid && !g.portal_active);
 
-    int target_levels[3] = {7, 6, 5};
+    int target_levels[3] = {2, 3, 4};
     EnemyType target_types[3] = {
         ENEMY_GOBLIN_ARCHER, ENEMY_GOBLIN_BOMBER, ENEMY_GOBLIN_SHAMAN
     };
@@ -288,11 +288,11 @@ void test_dain_quest(void) {
             marked_target);
     }
 
-    g.level = 7;
+    g.level = 4;
     map_generate_mountains(&g.map, g.level);
     g.enemy_count = 0;
-    LevelCache *cached = &g.mountain_cache[5];
-    map_generate_mountains(&cached->map, 6);
+    LevelCache *cached = &g.mountain_cache[2];
+    map_generate_mountains(&cached->map, 3);
     cached->enemy_count = 0;
     cached->level_cleared = 1;
     cached->valid = 1;
@@ -307,7 +307,7 @@ void test_dain_quest(void) {
         cached_enemies += g.enemies[i].active;
     }
     ASSERT("backtracking adds a guarded bearer to a cleared cached stage",
-        g.level == 6 && cached_bearers == 1 && cached_enemies >= 3);
+        g.level == 3 && cached_bearers == 1 && cached_enemies >= 3);
     game_refresh_quest_encounters(&g);
     int refreshed_bearers = 0;
     for (int i = 0; i < g.enemy_count; i++) {
@@ -374,11 +374,11 @@ void test_dain_town_center(void) {
     ASSERT("Dain assigns the same mountain quest in Ridgeshire and leaves Zara's quest intact", g.dain_quest_state == 1 &&
         !g.dain_map_fragments && g.sunscar_lamp_quest_state == 1 &&
         g.dialogue_x == DAIN_TOWN_X && g.dialogue_y == DAIN_TOWN_Y &&
-        strstr(g.dialogue_text, "stages 7, 6, and 5") && strstr(g.dialogue_text, "Ridgeshire's town center"));
+        strstr(g.dialogue_text, "stages 2, 3, and 4") && strstr(g.dialogue_text, "Ridgeshire's town center"));
     g.dain_map_fragments = DAIN_FRAGMENT_ARCHER | DAIN_FRAGMENT_SHAMAN;
     QuestJournalEntry entry;
     ASSERT("the journal retains mountain objectives and rewards and names the new return location", quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 0, &entry) &&
-        strcmp(entry.title, "Recover the Treasure Map") == 0 && entry.stages[0] == 7 && entry.stages[1] == 6 && entry.stages[2] == 5 &&
+        strcmp(entry.title, "Recover the Treasure Map") == 0 && entry.stages[0] == 2 && entry.stages[1] == 3 && entry.stages[2] == 4 &&
         entry.reward_gold == 60 && entry.reward_score == 400 && entry.objective_complete[0] && !entry.objective_complete[1] &&
         entry.objective_complete[2] && strstr(entry.summary_line_2, "Ridgeshire's town center"));
     ASSERT("saving in Ridgeshire retains Dain and partial map progress", save_game(&g, 99141) && load_game(&loaded, 99141) &&

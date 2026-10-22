@@ -31,7 +31,7 @@ static const QuestDefinition quest_definitions[17] = {
         "Return and speak to Dain in Ridgeshire's town center.",
         {"Defeat Archer Map Bearer", "Defeat Bomber Map Bearer",
             "Defeat Shaman Map Bearer"},
-        "Mountains", {7, 6, 5}, 60, 400
+        "Mountains", {2, 3, 4}, 60, 400
     },
     {
         "The Lost Wardens", "Alder",

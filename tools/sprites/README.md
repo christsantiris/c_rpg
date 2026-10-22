@@ -284,3 +284,8 @@ Keep both BMPs and the source rectangles in `castle_draw_enemy()` in
 `src/renderer/castle_renderer.c` together. Sources, exact imagegen prompts,
 and renderer previews are in
 [`docs/art-sources/enemy-batch-16/README.md`](../../docs/art-sources/enemy-batch-16/README.md).
+
+The fortified Goblin Mountains entrance is generated with
+`python3 tools/sprites/mountain.py`. It uses pixelkit layers, shaded rock facets,
+stonework and timber at the established 24px tile scale. The runtime BMP spans
+7×6 tiles; its south-facing cave door anchors the approach collision footprint.

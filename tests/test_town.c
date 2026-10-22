@@ -868,8 +868,8 @@ void test_town_map(void) {
         spawn_x == 20 && spawn_y == 12);
 
     // Exit tiles at north edge
-    ASSERT("exit tile at north center",
-        m.tiles[0][20] == TILE_TOWN_EXIT);
+    ASSERT("former north mountain gate is closed",
+        m.tiles[0][20] == TILE_WALL);
     ASSERT("forest exit at west crossroad",
         m.tiles[12][0] == TILE_TOWN_EXIT);
     ASSERT("the old Tavern loop is gone before Town 2 is discovered",
@@ -910,8 +910,8 @@ void test_town_map(void) {
     map_set_town2_road(&m, 1);
     ASSERT("dungeon exit at east crossroad",
         m.tiles[12][TOWN_W - 1] == TILE_TOWN_EXIT);
-    ASSERT("mountain exit at north crossroad",
-        m.tiles[0][20] == TILE_TOWN_EXIT);
+    ASSERT("former mountain exit is retired",
+        m.tiles[0][20] == TILE_WALL);
 
     // Shop tiles in correct positions
     ASSERT("blacksmith remains in the starting town",
@@ -1591,7 +1591,7 @@ static void test_oakhaven_portal_save(void) {
         int y = regions[i] == LOCATION_DUNGEON ? 13 : 2;
         int restored = save_game(&g, slot) && load_game(&loaded, slot);
         ASSERT("OakHaven portal and destination survive save/load",
-            restored && loaded.location == LOCATION_TOWN &&
+            restored && loaded.location == (regions[i] == LOCATION_MOUNTAINS ? LOCATION_DAWNMERE : LOCATION_TOWN) &&
             loaded.map.tiles[y][x] == TILE_PORTAL &&
             loaded.portal_location == regions[i]);
         if (restored) {
@@ -1708,18 +1708,20 @@ static void test_goblin_king_retaliation(void) {
 void test_mountains(void) {
     test_goblin_king_retaliation();
     printf("Goblin Mountains tests:\n");
-    static const int expected_rooms[MOUNTAIN_DEPTH] = {7, 8, 8, 10, 9, 10, 10};
-    static const int expected_entrances[MOUNTAIN_DEPTH] = {0, 2, 1, 0, 0, 1, 2};
-    static const int expected_exits[MOUNTAIN_DEPTH] = {1, 0, 2, 2, 2, 0, 1};
+    static const int expected_rooms[MOUNTAIN_DEPTH] = {7, 8, 8, 9, 10};
+    static const int expected_entrances[MOUNTAIN_DEPTH] = {0, 2, 1, 0, 0};
+    static const int expected_exits[MOUNTAIN_DEPTH] = {1, 0, 2, 2, 2};
     GameState g;
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
+    g.location = LOCATION_DAWNMERE;
+    map_generate_dawnmere(&g.map, &g.player.x, &g.player.y);
     g.player.x = 20;
     g.player.y = 1;
     Action enter = {ACTION_MOVE, 20, 0};
     action_resolve_player(&g, enter);
     walk_town_approach(&g);
-    ASSERT("north OakHaven exit enters mountains", g.location == LOCATION_MOUNTAINS);
+    ASSERT("north Dawnmere exit enters mountains", g.location == LOCATION_MOUNTAINS);
     ASSERT("mountains begin on level one", g.level == 1);
     ASSERT("mountains use red-black terrain",
         g.map.tiles[g.player.y][g.player.x] == TILE_MOUNTAIN_FLOOR);
@@ -1727,8 +1729,8 @@ void test_mountains(void) {
     int origin_x = g.player.x;
     int origin_y = g.player.y;
     game_open_town_portal(&g);
-    ASSERT("mountain portal opens beside north OakHaven entrance",
-        g.location == LOCATION_TOWN && g.portal_active &&
+    ASSERT("mountain portal opens beside north Dawnmere entrance",
+        g.location == LOCATION_DAWNMERE && g.portal_active &&
         g.map.tiles[2][21] == TILE_PORTAL &&
         g.player.x == 20 && g.player.y == 1);
     action_resolve_player(&g, (Action){ACTION_MOVE, 21, 2});
@@ -1758,11 +1760,11 @@ void test_mountains(void) {
                     g.map.tiles[y][x] == TILE_MOUNTAIN_FORTRESS_FLOOR;
             }
         }
-        if (level == 2 || level == 7) {
+        if (level == 2) {
             ASSERT("bridge template contains timber crossings", bridges > 0);
-        } else if (level == 3 || level == 6) {
+        } else if (level == 3) {
             ASSERT("cave template contains underground terrain", caves > 0);
-        } else if (level == 4 || level == 5 || level == 8) {
+        } else if (level == 4 || level == 5) {
             ASSERT("fortress template contains paved strongholds",
                 fortress > 0);
         } else {
@@ -1781,7 +1783,7 @@ void test_mountains(void) {
         if (level != MOUNTAIN_BOSS_LEVEL) {
             ASSERT("mountain approaches have no boss", bosses == 0);
         } else {
-            ASSERT("mountain stage 4 has Goblin King",
+            ASSERT("mountain stage 5 has Goblin King",
                 bosses == 1 &&
                 g.enemies[0].type == ENEMY_MOUNTAIN_GOBLIN_KING);
         }
@@ -1813,17 +1815,11 @@ void test_mountains(void) {
             g.enemies[i].active = 0;
         }
     }
+    g.defeated_bosses |= 1 << LOCATION_MOUNTAINS;
     action_resolve_player(&g, exit);
-    ASSERT("defeating Goblin King permits descent from the peak", g.level == MOUNTAIN_BOSS_LEVEL + 1);
-    while (g.location == LOCATION_MOUNTAINS) {
-        g.player.x = g.map.stairs_down_x;
-        g.player.y = g.map.stairs_down_y;
-        action_resolve_player(&g, outdoor_exit_action(&g.map));
-    }
+    ASSERT("defeating the King permits leaving the summit onto the road", g.location == LOCATION_APPROACH);
     walk_return_approach(&g);
-    ASSERT("remaining mountain stages reach Ridgeshire", g.location == LOCATION_TOWN4);
-    ASSERT("mountain completion arrives at Ridgeshire south road",
-        g.player.x == 20 && g.player.y == TOWN_H - 2);
+    ASSERT("the mountain road returns to Dawnmere", g.location == LOCATION_DAWNMERE && g.player.x == 20 && g.player.y == 1);
 }
 
 void test_return_to_town(void) {

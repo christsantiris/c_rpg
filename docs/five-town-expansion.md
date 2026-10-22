@@ -1,8 +1,9 @@
 # Five-town world expansion
 
 Status: Dawnmere and the Lich-unlocked dungeon road are implemented in the first
-gameplay change. Mountain relocation, Windscar Highlands and revised illustrated
-map artwork remain for subsequent change sets.
+gameplay change. The relocated five-level mountain climb and Dawnmere–Ridgeshire
+road are now implemented. Windscar Highlands and revised illustrated map artwork
+remain for subsequent change sets.
 **Dawnmere** is the fifth town. The new northern region is
 **Windscar Highlands**, with windswept hills and ruined watchtowers.
 
@@ -14,7 +15,7 @@ flowchart BT
     Still <-->|Blackwater Swamp · 7 stages| Rose[Rosemoor]
     Rose <-->|Crown Road East| Castle[Castle of No Return]
     Oak <-->|Dungeon · 5 stages| Dawn[Dawnmere]
-    Dawn <-->|Goblin Mountains · 7 stages| Ridge[Ridgeshire]
+    Dawn <-->|Goblin Mountains · 5 stages| Ridge[Ridgeshire]
     Ridge <-->|Crown Road West| Castle
     Oak <-->|North gate| Wind[Windscar Highlands]
     Rose <-->|North gate| Frost[Frostfell Wastes]
@@ -22,8 +23,9 @@ flowchart BT
     Ridge <-->|East gate| Ashen[Ashen Hollow]
 ```
 
-Both castle routes cross two enemy regions and one Crown Road. Preserve existing
-depths: the western route has 14 regional stages and the eastern route has 12.
+Both castle routes cross two enemy regions and one Crown Road. With the revised
+five-level mountain climb, the western route has 14 regional stages and the eastern
+route has 10.
 Equal region counts are the goal; equal stage counts or play times are not
 required. Windscar Highlands is a side destination rather than another castle
 connection.
@@ -60,12 +62,12 @@ Dawnmere needs a walkable town square, a western dungeon connection and a
 northern mountain gate. Use established town building assets and gate styles.
 New shops, quests and bespoke buildings are outside this first expansion.
 
-Keep the mountain region's seven stages and Goblin King encounter. Dawnmere
-enters stage 1; Ridgeshire enters stage 7. Keep the existing physical crossroads:
-area straight, other town left, boss right, relative to departure from town.
-The two side arms remain hidden until the Goblin King is defeated. Mountain
-return paths, portals, signs and NPC directions must name Dawnmere in place of
-Oakhaven. Oakhaven's north gate leads only to Windscar Highlands.
+The mountains now use five levels, always starting at level 1 from either town.
+A large mountain cave stands beside a straight cobblestone road. Defeating the
+Goblin King on level 5 opens the road; exiting his chamber returns to it, with
+Ridgeshire north and Dawnmere south. There are no mountain shortcuts or boss
+branches. Dain's bearers occupy levels 2–4; Veyra's mountain watchfire is on 5.
+Oakhaven's former north gate is closed pending Windscar's separate content change.
 
 Windscar Highlands needs its own safe approach and distinct regional identity.
 Its depth, encounters, boss and rewards are a separate, small content change;
@@ -99,7 +101,8 @@ Oakhaven's approach, and cannot use the locked town connection. Defeat the Lich,
 exit his actual chamber, and physically reach either town in the correct
 direction. Enter the dungeon from both towns and verify stage 1, forward
 descent, correct retreat, and portal round trips. Test both mountain entrances,
-Goblin King shortcuts and boss returns with Dawnmere as the southern town.
+level-1 entry, retreats, summit exits, road traversal and portals with Dawnmere
+as the southern town.
 
 Load saves from before the expansion in Oakhaven, on its old mountain approach,
 inside the dungeon and mountains, and with active portals and completed bosses.

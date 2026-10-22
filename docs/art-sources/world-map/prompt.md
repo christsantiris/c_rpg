@@ -49,3 +49,13 @@ as the edit target (`precise-object-edit`). Final prompt:
 
 Reviewed the two moved regions and all original labels. The edited asset
 replaces `docs/images/world-map.png`.
+
+## Current mountain route (save version 171)
+
+The illustration above predates Dawnmere. For its next geography revision,
+place Dawnmere directly east of Oakhaven and south of Ridgeshire. Put Goblin
+Mountains north of Dawnmere beside the straight road to Ridgeshire. The dungeon
+stands beside the west–east Oakhaven–Dawnmere road. Both buildings unlock their
+through road on boss victory. Oakhaven's future northern side region is
+Windscar Highlands (not yet playable). See the live connection diagram in
+[the expansion document](../../five-town-expansion.md).

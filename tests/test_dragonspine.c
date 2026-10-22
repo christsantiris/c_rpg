@@ -50,6 +50,16 @@ static int dragon_goblet_reachable(const Map *map, int *goblet_x, int *goblet_y)
     return visited[*goblet_y][*goblet_x];
 }
 
+static void walk_mountain_road(GameState *g) {
+    int x;
+    int y;
+    int open = approach_mountain_town_exit(g, &x, &y);
+    ASSERT("defeated mountains expose the other town gate", open);
+    for (int step = 0; open && g->location == LOCATION_APPROACH && step < APPROACH_H; step++) {
+        action_resolve_player(g, (Action){ACTION_MOVE, x, g->player.y + (y > g->player.y ? 1 : -1)});
+    }
+}
+
 void test_dragonspine(void) {
     static GameState g;
     static GameState loaded;
@@ -87,11 +97,11 @@ void test_dragonspine(void) {
         g.map.tiles[RIDGESHIRE_ASHEN_GATE_Y][TOWN_W - 1] == TILE_TOWN_EXIT && g.map.tiles[12][0] == TILE_TOWN_EXIT);
 
     action_resolve_player(&g, (Action){ACTION_MOVE, 20, TOWN_H - 1});
-    walk_shortcut_approach(&g);
-    ASSERT("Ridgeshire's left crossroads arm reaches OakHaven", g.location == LOCATION_TOWN && g.player.x == 20 && g.player.y == 1);
+    walk_mountain_road(&g);
+    ASSERT("Ridgeshire road reaches Dawnmere", g.location == LOCATION_DAWNMERE && g.player.x == 20 && g.player.y == 1);
     int saved = save_game(&g, DRAGONSPINE_TEST_SLOT);
     int restored = saved && load_game(&loaded, DRAGONSPINE_TEST_SLOT);
-    ASSERT("shortcut victory and destination survive save/load", restored && loaded.location == LOCATION_TOWN && (loaded.defeated_bosses & (1 << LOCATION_MOUNTAINS)));
+    ASSERT("shortcut victory and destination survive save/load", restored && loaded.location == LOCATION_DAWNMERE && (loaded.defeated_bosses & (1 << LOCATION_MOUNTAINS)));
     if (restored) {
         g = loaded;
     }
@@ -100,8 +110,8 @@ void test_dragonspine(void) {
         g.map.tiles[4][TOWN_W - 1] == TILE_WALL &&
         g.map.tiles[6][39] == TILE_TOWN_FLOOR);
     action_resolve_player(&g, (Action){ACTION_MOVE, 20, 0});
-    walk_shortcut_approach(&g);
-    ASSERT("OakHaven's left crossroads arm reaches Ridgeshire", g.location == LOCATION_TOWN4 && g.player.x == 20 && g.player.y == TOWN_H - 2);
+    walk_mountain_road(&g);
+    ASSERT("Dawnmere road reaches Ridgeshire", g.location == LOCATION_TOWN4 && g.player.x == 20 && g.player.y == TOWN_H - 2);
     g.player.x = RIDGESHIRE_DRAGON_GATE_X;
     g.player.y = 1;
     Action north = {ACTION_MOVE, RIDGESHIRE_DRAGON_GATE_X, 0};
@@ -198,21 +208,21 @@ void test_dragonspine(void) {
     g.player.x = 20;
     g.player.y = TOWN_H - 2;
     action_resolve_player(&g, (Action){ACTION_MOVE, 20, TOWN_H - 1});
-    walk_shortcut_approach(&g);
+    walk_mountain_road(&g);
     ASSERT("visiting OakHaven preserves the Dragonspine portal destination",
-        g.location == LOCATION_TOWN && g.portal_active &&
+        g.location == LOCATION_DAWNMERE && g.portal_active &&
         !g.level_cache[saved_level - 1].valid &&
         g.dragonspine_cache[saved_level - 1].valid);
     saved = save_game(&g, DRAGONSPINE_TEST_SLOT);
     restored = saved && load_game(&loaded, DRAGONSPINE_TEST_SLOT);
     ASSERT("OakHaven saves keep the unlocked shortcut and remote portal",
-        restored && loaded.location == LOCATION_TOWN && loaded.portal_active &&
+        restored && loaded.location == LOCATION_DAWNMERE && loaded.portal_active &&
         loaded.map.tiles[0][20] == TILE_TOWN_EXIT && loaded.map.tiles[0][TOWN4_ROAD_X] == TILE_WALL);
     if (restored) {
         g = loaded;
     }
     action_resolve_player(&g, (Action){ACTION_MOVE, 20, 0});
-    walk_shortcut_approach(&g);
+    walk_mountain_road(&g);
     ASSERT("returning to Ridgeshire restores the Dragonspine portal beside its gate",
         g.location == LOCATION_TOWN4 && g.portal_active &&
         g.map.tiles[RIDGESHIRE_DRAGON_PORTAL_Y][RIDGESHIRE_DRAGON_PORTAL_X] == TILE_PORTAL);

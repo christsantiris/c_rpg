@@ -41,7 +41,9 @@ static void visit(Location area) {
     }
     if (area == LOCATION_MOUNTAINS) {
         game_enter_mountains(&game);
-        game_ascend(&game);
+        for (int level = 1; level < WATCHFIRE_MOUNTAINS_LEVEL; level++) {
+            game_descend(&game);
+        }
     } else {
         if (area == LOCATION_ASHEN) {
             game_enter_ashen(&game);
@@ -104,7 +106,7 @@ static void test_quest(void) {
     accept();
     QuestJournalEntry entry;
     ASSERT("journal gives each objective its own region and stage", quest_journal_get_entry(&game, QUEST_TAB_ACTIVE, 0, &entry) &&
-        entry.objective_count == 3 && entry.stages[0] == 6 && entry.stages[1] == 3 && entry.stages[2] == 3 &&
+        entry.objective_count == 3 && entry.stages[0] == 5 && entry.stages[1] == 3 && entry.stages[2] == 3 &&
         strcmp(entry.objective_areas[0], "Goblin Mountains") == 0 && strcmp(entry.objective_areas[1], "Ashen Hollow") == 0 &&
         strcmp(entry.objective_areas[2], "Dragonspine") == 0);
     visit(LOCATION_DRAGONSPINE);
@@ -138,7 +140,7 @@ static void test_quest(void) {
         game.map.tiles[game.player.y][game.player.x] == TILE_WATCHFIRE_LIT);
     visit(LOCATION_MOUNTAINS);
     stand_at_fire();
-    ASSERT("Mountains six receives four native defenders", game.level == 6 && guards(&game, 1) == 4 &&
+    ASSERT("Mountains five receives four native defenders", game.level == 5 && guards(&game, 1) == 4 &&
         game.enemies[game.enemy_count - 4].type == ENEMY_GOBLIN_ARCHER && game.enemies[game.enemy_count - 1].type == ENEMY_HOBGOBLIN_GUARD);
     clear_defenders();
     Enemy *ordinary = &game.enemies[0];
@@ -192,11 +194,11 @@ static void test_explored_area(void) {
     original_map = game.map;
     game_open_town_portal(&game);
     accept();
-    ASSERT("acceptance preserves explored maps, enemy damage, and the return portal", game.mountain_cache[5].valid &&
-        game.mountain_cache[5].enemies[0].hp == 7 && game.portal_active && !game.watchfire_quest_encounters &&
-        memcmp(&original_map, &game.mountain_cache[5].map, sizeof(Map)) == 0);
+    ASSERT("acceptance preserves explored maps, enemy damage, and the return portal", game.mountain_cache[4].valid &&
+        game.mountain_cache[4].enemies[0].hp == 7 && game.portal_active && !game.watchfire_quest_encounters &&
+        memcmp(&original_map, &game.mountain_cache[4].map, sizeof(Map)) == 0);
     game_use_town_portal(&game);
-    ASSERT("previously explored Mountains six gains guards while preserving enemies", guards(&game, 1) == 4 && game.enemies[0].hp == 7);
+    ASSERT("previously explored Mountains five gains guards while preserving enemies", guards(&game, 1) == 4 && game.enemies[0].hp == 7);
     stand_at_fire();
     clear_defenders();
     game_open_town_portal(&game);
@@ -207,7 +209,7 @@ static void test_explored_area(void) {
         game.map.tiles[game.player.y][game.player.x] == TILE_WATCHFIRE_LIT);
     game_open_town_portal(&game);
     ASSERT("the next return portal preserves the lit watchfire", game.portal_origin_tile == TILE_WATCHFIRE_LIT &&
-        game.mountain_cache[5].map.tiles[game.portal_y][game.portal_x] == TILE_WATCHFIRE_LIT);
+        game.mountain_cache[4].map.tiles[game.portal_y][game.portal_x] == TILE_WATCHFIRE_LIT);
 
     start();
     visit(LOCATION_MOUNTAINS);
@@ -225,7 +227,7 @@ static void test_explored_area(void) {
         active += !!game.enemies[i].active;
     }
     ASSERT("a cleared stage gains only its four quest defenders without replenishing ordinary enemies", active == 4 &&
-        guards(&game, 1) == 4 && !game.level_cleared && game.level == 6);
+        guards(&game, 1) == 4 && !game.level_cleared && game.level == 5);
 }
 
 static int legacy_fixture(void) {

@@ -67,6 +67,13 @@ int main(void) {
         }
         action_resolve_player(game, (Action){ACTION_MOVE, x, y});
         assert(game->location == LOCATION_DAWNMERE);
+        assert(approach_enter(game, 20, 0));
+        assert(approach_mountain_town_exit(game, &x, &y));
+        assert(game->map.tiles[y][x] == TILE_APPROACH_DUNGEON_TOWN);
+        for (int step = 0; game->location == LOCATION_APPROACH && step < APPROACH_H; step++) {
+            action_resolve_player(game, (Action){ACTION_MOVE, x, game->player.y - 1});
+        }
+        assert(game->location == LOCATION_TOWN4);
 
         // Loading without the debug option keeps a normal character locked.
         memset(&debug_config, 0, sizeof(debug_config));
@@ -100,6 +107,6 @@ int main(void) {
     rmdir(temporary);
     free(project);
     free(assets);
-    puts("PASS: new and loaded debug characters can walk to Dawnmere; normal saves stay gated and loaded equipment/gold/quests are preserved.");
+    puts("PASS: new and loaded debug characters can walk to Dawnmere and Ridgeshire; normal saves stay gated and loaded equipment/gold/quests are preserved.");
     return 0;
 }

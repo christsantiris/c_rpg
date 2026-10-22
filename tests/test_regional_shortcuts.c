@@ -273,7 +273,7 @@ static void town_shortcut_crossing(int road, int reverse) {
 
 static void shortcut_layouts(void) {
     static Map before;
-    for (int region = 0; region < 3; region++) {
+    for (int region = 0; region < 2; region++) {
         int recessed = 1;
         int stable = 1;
         for (int seed = 0; seed < 64; seed++) {
@@ -370,15 +370,15 @@ void test_regional_shortcuts(void) {
     printf("Consistent regional shortcut discovery tests:\n");
     ASSERT("regional shortcut test slot is unused", !save_exists(SHORTCUT_TEST_SLOT));
     shortcut_layouts();
-    for (int route = 0; route < 6; route++) {
+    for (int route = 0; route < 4; route++) {
         town_route_fork(route);
     }
-    for (int road = 0; road < 3; road++) {
+    for (int road = 0; road < 2; road++) {
         for (int reverse = 0; reverse < 2; reverse++) {
             town_shortcut_crossing(road, reverse);
         }
     }
-    for (int region = 0; region < 3; region++) {
+    for (int region = 0; region < 2; region++) {
         for (int attack = 0; attack < 3; attack++) {
             shortcut_victory(region, attack);
         }
