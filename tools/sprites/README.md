@@ -42,7 +42,7 @@ inspected; automated gameplay tests do not verify visual quality.
 | `harbor.py` | `harbor.bmp` | 120 × 96 (5 × 4) | Town 1, `TOWN_HARBOR_X/Y`, and enlarged on the harbor screen |
 | `healer.py` | `healer.bmp` | 120 × 96 (5 × 4) | Stillbury, `TOWN_HEALER_X/Y` |
 | `witch.py` | `witch-hut.bmp` | 120 × 96 (5 × 4) | Stillbury, `TOWN_WITCH_X/Y` |
-| `labyrinth.py` | `labyrinth-entrance.bmp` | 144 × 72 (two 3 × 3 frames) | Stillbury, around `TOWN_LABYRINTH_X/Y` |
+| `labyrinth.py` | `labyrinth-entrance.bmp` | 144 × 72 (two 3 × 3 frames) | Forest approach, around `APPROACH_LABYRINTH_X/Y` |
 | `dungeon.py` | `dungeon-entrance.bmp` | 72 × 72 (3 × 3) | OakHaven dungeon approach, around its area entrance |
 | `apothecary.py` | `apothecary.bmp` | 120 × 96 (5 × 4) | Rosemoor, `TOWN_APOTHECARY_X/Y` |
 | `adventurers_guild.py` | `adventurers-guild.bmp` | 168 × 120 (7 × 5) | Rosemoor, `TOWN_GUILD_X/Y` |
@@ -295,3 +295,25 @@ pixelkit pipeline. Its 7×6 tile sprite frames a south-facing woodland passage
 with ancient trunks, clustered foliage, hanging moss and warning charms.
 Comparison and actual-renderer previews are in
 [`docs/art-sources/forest-entrance/README.md`](../../docs/art-sources/forest-entrance/README.md).
+
+
+### Regional pathway entrances
+
+`make sprites` includes all regional entrance generators. Forest, mountain and
+swamp landmarks are 168×144 pixels; the same size is used for the coast,
+Sunscar, Frostfell, Moonveil, Ashen, Glassdeep and Royal Catacombs entrances.
+Dragonspine is 168×216 pixels to accommodate its taller snowy peak and dragons.
+Every asset uses pixelkit at native 24px tile scale and a south-facing doorway.
+
+The generators are `coast.py`, `desert.py`, `frostfell.py`, `moonveil.py`,
+`dragonspine.py`, `ashen.py`, `glassdeep.py` and `catacombs.py`. Each writes
+`assets/images/<name>-entrance.bmp`. The side-area approach metadata in
+`src/game/approach.c` specifies each footprint's height; the renderer loads
+textures in `src/renderer/renderer.c` and anchors them in `draw_area_entrance()`.
+
+Each `docs/art-sources/<name>-entrance/` folder includes a native-scale comparison
+with the forest entrance and Inn, and a preview captured through the actual SDL
+renderer. Save version 175 converts old corridor approaches without resetting
+combat maps, quest progress, character state or loot. Castle, secret tunnel and Crown Roads retain their existing layouts. The
+existing sealed/open labyrinth sprite now stands beside the forest entrance;
+its maze floors are unchanged.

@@ -4,6 +4,17 @@ The Sunken Coast is a five-stage adventure entered through the south town
 gate. It has an independent level cache and progression record, so visiting
 another region does not reset explored coast stages.
 
+## Coastal entrance path
+
+Oakhaven's south gate leads down a safe cobblestone path to a sandy shore.
+The sea fills the entire southern half of the approach, with a narrow stone
+causeway reaching the drowned shrine entrance. Entering the doorway starts
+Coast 1; retreat returns to the same causeway. The water beside it is impassable.
+
+Save version 177 adds the shoreline to older approach saves, keeping players
+and dropped loot on reachable ground without resetting exploration, quests,
+combat caches or boss victories. The entrance sprite itself is unchanged.
+
 ## Progression
 
 Stages 1–4 follow irregular sandbanks and broad shallow crossings around

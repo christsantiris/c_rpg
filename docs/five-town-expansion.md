@@ -2,8 +2,8 @@
 
 Status: Dawnmere and the Lich-unlocked dungeon road are implemented in the first
 gameplay change. The relocated five-level mountain climb and Dawnmere–Ridgeshire
-road are now implemented. Windscar Highlands and revised illustrated map artwork
-remain for subsequent change sets.
+road are now implemented, along with the revised five-town map artwork and
+pathway entrances. Windscar Highlands remains planned for a separate change.
 **Dawnmere** is the fifth town. The new northern region is
 **Windscar Highlands**, with windswept hills and ruined watchtowers.
 
@@ -11,21 +11,23 @@ remain for subsequent change sets.
 
 ```mermaid
 flowchart BT
-    Oak[Oakhaven] <-->|Haunted Forest · 5 stages| Still[Stillbury]
-    Still <-->|Blackwater Swamp · 7 stages| Rose[Rosemoor]
+    Oak[Oakhaven] <--> Forest[Haunted Forest · 5 stages]
+    Forest <--> Still[Stillbury]
+    Forest --- Maze[Rook's Labyrinth · quest gate]
+    Still <-->|Blackwater Swamp · 5 stages| Rose[Rosemoor]
     Rose <-->|Crown Road East| Castle[Castle of No Return]
     Oak <-->|Dungeon · 5 stages| Dawn[Dawnmere]
     Dawn <-->|Goblin Mountains · 5 stages| Ridge[Ridgeshire]
     Ridge <-->|Crown Road West| Castle
-    Oak <-->|North gate| Wind[Windscar Highlands]
+    Oak -.->|Planned north gate| Wind[Windscar Highlands]
     Rose <-->|North gate| Frost[Frostfell Wastes]
     Ridge <-->|North gate| Dragon[Dragonspine]
     Ridge <-->|East gate| Ashen[Ashen Hollow]
 ```
 
 Both castle routes cross two enemy regions and one Crown Road. With the revised
-five-level forest and mountain adventures, the western route has 12 regional
-stages and the eastern route has 10.
+five-level forest, swamp and mountain adventures, both routes have 10 regional
+stages.
 Equal region counts are the goal; equal stage counts or play times are not
 required. Windscar Highlands is a side destination rather than another castle
 connection.
@@ -109,3 +111,10 @@ inside the dungeon and mountains, and with active portals and completed bosses.
 Check preserved progress, walkable spawns and reachable loot. Check Windscar's
 independent persistence and safe approach. Inspect both new destinations in the
 actual renderer. Confirm the two castle routes each have three travel legs.
+
+
+Rook's Labyrinth now stands beside the Haunted Forest entrance on the shared
+Oakhaven–Stillbury road. The gate is sealed until Rook assigns his quest in
+Oakhaven's Tavern; both approaches can reach it before the forest boss falls.
+Its maze content is unchanged, and physical exits return to the approach used.
+The illustrated world map includes this entrance and all five towns.

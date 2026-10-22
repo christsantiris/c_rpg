@@ -1,10 +1,23 @@
 # Rook's Labyrinth — Minotaur encounter
 
-Rook, in **Stillbury's Inn**, opens the labyrinth retrieval quest. Five maze
-floors each hold a rune. All five runes open the final vault gate; the Minotaur
-must fall before the player can take the ivory rook. Return to **Rook in
-Stillbury's Inn** for the existing one-time quest reward. True and false stairs,
-the return routes, gate, relic and regular maze enemies retain their behavior.
+Rook, in **Oakhaven's Tavern**, assigns The Ivory Rook quest. Accept with `Y`
+to open the labyrinth gate beside the **Haunted Forest entrance on the road
+between Oakhaven and Stillbury**. It is outside both towns, just west of the
+forest sprite. Oakhaven's west gate or Stillbury's east gate leads onto this
+safe road. No forest boss victory is needed to reach either entrance.
+
+The labyrinth is visible but sealed before the quest is assigned. Once unlocked,
+it remains open after retrieving the relic and completing the quest. Its existing
+sealed/open sprite and five-floor adventure are retained. Physical retreat from
+floor 1 returns beside the labyrinth doorway on the same approach; walk back to
+the town used, enter the forest, or continue along the through road once the
+Necromancer is defeated.
+
+Five maze floors each hold a rune. All five runes open the final vault gate;
+the Minotaur must fall before the player can take the ivory rook. Return to
+**Rook in Oakhaven's Tavern** for the one-time 40 gold and 500 score reward.
+True and false stairs, runes, gate, relic and regular maze enemies keep their
+existing behavior.
 
 ## Phases and warnings
 
@@ -58,7 +71,7 @@ not themselves damage tiles.
 Only these two designated caps can break. Ordinary maze walls, the rune gate,
 stairs, switches and ivory rook remain intact. Cracked/broken cap state persists
 through floor backtracking and saves. A living fifth-floor encounter also
-survives retreat to Stillbury and re-entry, retaining health, targets, freeze,
+survives retreat to the forest road and re-entry, retaining health, targets, freeze,
 charge sequence and pillars. Other floors still start fresh on a new expedition;
 completed expeditions retain the existing regular-enemy refresh behavior.
 
@@ -91,3 +104,17 @@ current dropped legacy Magic Shield remains recoverable as **Magic Shield**,
 including after saving again; it is never retroactively renamed to Aegis.
 
 See the [renderer captures and play-testing guide](art-sources/minotaur-encounter/README.md).
+
+
+## Entrance relocation and older saves
+
+Save version **176** records `labyrinth_entry_town`, so loading inside the maze
+retains the correct return approach. Older maze saves default to Stillbury's
+forest approach. Their floors, enemies, Minotaur state, runes, relic, boss victory
+and quest completion remain intact. Old Stillbury saves remove the gate and its
+spur, retaining the square's cobblestones, player position, exploration and loot;
+items covering the removed gate receive grass underlays. Saved forest approaches
+gain the landmark, with blocked players and loot moved to accessible road tiles.
+
+See [sealed/open entrance renderer previews](art-sources/labyrinth-entrance/README.md)
+and the updated [world map](images/world-map.png).

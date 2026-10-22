@@ -1547,6 +1547,7 @@ void game_init(GameState *g) {
     g->equipped_off_hand = -1;
     g->equipped_armor = -1;
     g->gold = 0;
+    g->labyrinth_entry_town = LOCATION_TOWN2;
     g->rook_quest_state = 0;
     g->innkeeper_quest_state = 0;
     g->rook_labyrinth_switches = 0;
@@ -3867,9 +3868,8 @@ int game_harbor_unlocked(const GameState *g) {
 
 static void offer_rook_quest(GameState *g) {
     snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-        "Travel west to Stillbury. Across from the witch's hut, find the labyrinth "
-        "and recover my stolen ivory rook. Beware false stairs and the Minotaur. "
-        "Return to me in Oakhaven's Tavern.");
+        "Take the west gate toward Stillbury. The labyrinth is beside the Haunted Forest entrance. "
+        "Recover my ivory rook; beware false stairs and the Minotaur. Return here to Oakhaven's Tavern.");
 }
 
 static void place_harbor_road(GameState *g) {
@@ -4993,6 +4993,9 @@ int game_labyrinth_is_open(const GameState *g) {
 }
 
 void game_enter_labyrinth(GameState *g) {
+    const TownApproach *route = approach_route(g);
+    g->labyrinth_entry_town = route && route->area == LOCATION_FOREST ? route->town : LOCATION_TOWN2;
+    g->approach_route = -1;
     g->location = LOCATION_LABYRINTH;
     start_expedition(g, g->labyrinth_cache, LABYRINTH_DEPTH);
     g->level = 1;
@@ -5041,23 +5044,6 @@ void game_change_labyrinth_floor(GameState *g, int descending, int false_stair) 
     }
 }
 
-void game_leave_labyrinth(GameState *g) {
-    save_labyrinth_floor(g);
-    int spawn_x;
-    int spawn_y;
-    g->location = LOCATION_TOWN2;
-    map_generate_town2(&g->map, &spawn_x, &spawn_y);
-    map_set_town3_road(&g->map, g->defeated_bosses & (1 << LOCATION_SWAMP));
-    map_set_stillbury_forest_road(&g->map, g->defeated_bosses & (1 << LOCATION_FOREST));
-    place_town_portal(g);
-    g->player.x = TOWN_LABYRINTH_X;
-    g->player.y = TOWN_LABYRINTH_Y + 1;
-    g->enemy_count = 0;
-    g->floor_item_count = 0;
-    g->dialogue_active = 0;
-    g->player.poison_turns = 0;
-    push_message(g, "You emerge from Rook's labyrinth.");
-}
 
 static int labyrinth_interaction_tile(TileType tile) {
     return tile == TILE_LABYRINTH_SWITCH_OFF ||
@@ -5576,7 +5562,7 @@ static void enter_return_approach(GameState *g, Location area) {
             g->player.y = g->map.stairs_down_y - dy;
             g->player.last_dx = -dx;
             g->player.last_dy = -dy;
-            if (area == LOCATION_DUNGEON || area == LOCATION_MOUNTAINS || area == LOCATION_FOREST || area == LOCATION_SWAMP) {
+            if (area == LOCATION_DUNGEON || area == LOCATION_MOUNTAINS || area == LOCATION_FOREST || area == LOCATION_SWAMP || approach_entrance_rows(area)) {
                 g->player.x = g->map.stairs_down_x;
                 g->player.y = g->map.stairs_down_y + 1;
                 g->player.last_dx = 0;
@@ -5588,6 +5574,18 @@ static void enter_return_approach(GameState *g, Location area) {
         }
         return;
     }
+}
+
+void game_leave_labyrinth(GameState *g) {
+    save_labyrinth_floor(g);
+    return_to_town(g, g->labyrinth_entry_town);
+    enter_return_approach(g, LOCATION_FOREST);
+    g->player.x = APPROACH_LABYRINTH_X;
+    g->player.y = APPROACH_LABYRINTH_Y + 1;
+    g->player.last_dx = 0;
+    g->player.last_dy = 1;
+    map_mark_explored(&g->map, g->player.x, g->player.y);
+    push_message(g, "You emerge from Rook's labyrinth onto the forest road.");
 }
 
 void game_return_to_approach(GameState *g) {
@@ -6800,7 +6798,7 @@ void game_talk_to_rook(GameState *g) {
         offer_rook_quest(g);
     } else if (g->rook_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Head west to Stillbury's labyrinth. One rune per floor opens the "
+            "Find the labyrinth beside the forest road. One rune per floor opens the "
             "Minotaur's vault. Defeat it, recover my ivory rook, and return to Oakhaven's Tavern.");
         push_message(g, "Rook is waiting for the ivory rook.");
     } else if (g->rook_quest_state == 2) {

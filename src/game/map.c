@@ -1433,16 +1433,25 @@ void map_place_town3_guild(Map *m) {
     }
 }
 
-void map_place_town_labyrinth(Map *m) {
-    // Branch from the east-west road and skirt the gate to its south entrance.
-    for (int y = 13; y <= TOWN_LABYRINTH_Y + 1; y++) {
-        m->tiles[y][TOWN_LABYRINTH_X - 2] = TILE_TOWN_PATH;
+void map_remove_town_labyrinth(Map *m) {
+    // Keep the town square's row 13; retire only the old labyrinth's spur and gate.
+    for (int y = 14; y <= TOWN_LABYRINTH_Y + 1; y++) {
+        if (m->tiles[y][TOWN_LABYRINTH_X - 2] == TILE_TOWN_PATH) {
+            m->tiles[y][TOWN_LABYRINTH_X - 2] = TILE_TOWN_FLOOR;
+        }
     }
     for (int x = TOWN_LABYRINTH_X - 2; x <= TOWN_LABYRINTH_X; x++) {
-        m->tiles[TOWN_LABYRINTH_Y + 1][x] = TILE_TOWN_PATH;
+        if (m->tiles[TOWN_LABYRINTH_Y + 1][x] == TILE_TOWN_PATH) {
+            m->tiles[TOWN_LABYRINTH_Y + 1][x] = TILE_TOWN_FLOOR;
+        }
     }
-    m->tiles[TOWN_LABYRINTH_Y][TOWN_LABYRINTH_X] =
-        TILE_LABYRINTH_ENTRANCE;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (m->tiles[y][x] == TILE_LABYRINTH_ENTRANCE) {
+                m->tiles[y][x] = TILE_TOWN_FLOOR;
+            }
+        }
+    }
 }
 
 // Guards only replace open grass, so loot and the player's tile stay clear.
@@ -1750,7 +1759,6 @@ void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
     map_place_town2_center(m);
     // The Inn stands east of the Healer, its door opening onto the square.
     map_place_town_inn(m);
-    map_place_town_labyrinth(m);
     town_life_place(m, LOCATION_TOWN2);
     *spawn_x = TOWN_W - 2;
     *spawn_y = 12;

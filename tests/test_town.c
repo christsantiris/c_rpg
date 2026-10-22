@@ -442,12 +442,7 @@ void test_rook_labyrinth(void) {
         g.map.tiles[13][TOWN_WITCH_DOOR_X] == TILE_TOWN_PATH &&
         g.map.tiles[13][TOWN_HEALER_DOOR_X - 1] == TILE_TOWN_FLOOR &&
         g.map.tiles[14][TOWN_HEALER_DOOR_X] == TILE_TOWN_PATH);
-    ASSERT("second town places the labyrinth across from the witch",
-        TOWN_LABYRINTH_X == TOWN_WITCH_DOOR_X && TOWN_LABYRINTH_Y > 12 &&
-        g.map.tiles[TOWN_LABYRINTH_Y][TOWN_LABYRINTH_X] ==
-            TILE_LABYRINTH_ENTRANCE &&
-        g.map.tiles[TOWN_LABYRINTH_Y + 1][TOWN_LABYRINTH_X] ==
-            TILE_TOWN_PATH);
+    ASSERT("Stillbury no longer has a labyrinth gate or its spur", g.map.tiles[TOWN_LABYRINTH_Y][TOWN_LABYRINTH_X] == TILE_TOWN_FLOOR && g.map.tiles[TOWN_LABYRINTH_Y + 1][TOWN_LABYRINTH_X] == TILE_TOWN_FLOOR);
     ASSERT("the old labyrinth entrance and lane return to grass",
         g.map.tiles[18][13] == TILE_TOWN_FLOOR &&
         g.map.tiles[18][14] == TILE_TOWN_FLOOR &&
@@ -468,7 +463,7 @@ void test_rook_labyrinth(void) {
     g.player.y = ROOK_TAVERN_Y + 1;
     game_talk_to_rook(&g);
     ASSERT("Rook directs the player west to Stillbury and back to Oakhaven's Tavern",
-        strstr(g.dialogue_text, "west to Stillbury") && strstr(g.dialogue_text, "Oakhaven's Tavern"));
+        strstr(g.dialogue_text, "west gate toward Stillbury") && strstr(g.dialogue_text, "Haunted Forest entrance") && strstr(g.dialogue_text, "Oakhaven's Tavern"));
     game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
     ASSERT("Rook assigns the retrieval quest on first conversation",
         g.rook_quest_state == 1 && g.rook_labyrinth_switches == 0 &&
@@ -485,19 +480,9 @@ void test_rook_labyrinth(void) {
             "Rook is waiting for the ivory rook.") == 0);
     game_leave_tavern(&g);
     game_enter_town2(&g);
-    g.player.x = TOWN_LABYRINTH_X - 2;
-    g.player.y = 12;
-    for (int y = 13; y <= TOWN_LABYRINTH_Y + 1; y++) {
-        action_resolve_player(&g, (Action){ACTION_MOVE, g.player.x, y});
-    }
-    for (int x = TOWN_LABYRINTH_X - 1; x <= TOWN_LABYRINTH_X; x++) {
-        action_resolve_player(&g, (Action){ACTION_MOVE, x, g.player.y});
-    }
-    ASSERT("the approach lane reaches the south-facing labyrinth entrance",
-        g.location == LOCATION_TOWN2 && g.player.x == TOWN_LABYRINTH_X &&
-        g.player.y == TOWN_LABYRINTH_Y + 1);
-    action_resolve_player(&g, (Action){ACTION_MOVE,
-        TOWN_LABYRINTH_X, TOWN_LABYRINTH_Y});
+    action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 1, 12});
+    walk_to_labyrinth(&g);
+    action_resolve_player(&g, (Action){ACTION_MOVE, APPROACH_LABYRINTH_X, APPROACH_LABYRINTH_Y});
     ASSERT("labyrinth entrance starts a five-level combat expedition",
         g.location == LOCATION_LABYRINTH && g.level == 1 &&
         g.enemy_count >= 4 && g.floor_item_count == 0);
@@ -635,11 +620,8 @@ void test_rook_labyrinth(void) {
     step_into_labyrinth_tile(&g, 1, g.map.stairs_up_y);
     ASSERT("second-floor exit returns to the first floor", g.level == 1);
     step_into_labyrinth_tile(&g, 1, g.map.stairs_up_y);
-    ASSERT("the labyrinth exit returns beside its town entrance",
-        g.location == LOCATION_TOWN2 &&
-        g.player.x == TOWN_LABYRINTH_X &&
-        g.player.y == TOWN_LABYRINTH_Y + 1 &&
-        g.map.tiles[g.player.y][g.player.x] == TILE_TOWN_PATH);
+    ASSERT("the labyrinth exit returns onto its forest approach", g.location == LOCATION_APPROACH && g.player.x == APPROACH_LABYRINTH_X && g.player.y == APPROACH_LABYRINTH_Y + 1 && g.map.tiles[g.player.y][g.player.x] == TILE_TOWN_PATH);
+    walk_return_approach(&g);
     game_enter_tavern(&g);
     g.player.x = ROOK_TAVERN_X;
     g.player.y = ROOK_TAVERN_Y + 1;
@@ -668,24 +650,16 @@ void test_rook_labyrinth(void) {
     game_enter_town2(&g);
     ASSERT("labyrinth remains visibly open after Rook rewards the quest",
         game_labyrinth_is_open(&g));
-    g.player.x = TOWN_LABYRINTH_X;
-    g.player.y = TOWN_LABYRINTH_Y + 1;
-    action_resolve_player(&g, (Action){ACTION_MOVE,
-        TOWN_LABYRINTH_X, TOWN_LABYRINTH_Y});
+    action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 1, 12});
+    walk_to_labyrinth(&g);
+    action_resolve_player(&g, (Action){ACTION_MOVE, APPROACH_LABYRINTH_X, APPROACH_LABYRINTH_Y});
     ASSERT("completed Rook quest still permits a new labyrinth expedition",
         g.location == LOCATION_LABYRINTH && g.enemy_count >= 4);
     step_into_labyrinth_tile(&g, 1, g.map.stairs_up_y);
     int saved = save_game(&g, slot);
     int restored = saved && load_game(&loaded, slot);
-    ASSERT("Rook quest progress and the relocated town entrance survive save and load",
-        restored && loaded.rook_quest_state == 3 &&
-        loaded.rook_labyrinth_switches == 31 &&
-        loaded.rook_quest_completions == 1 && game_labyrinth_is_open(&loaded) &&
-        loaded.location == LOCATION_TOWN2 &&
-        loaded.map.tiles[TOWN_LABYRINTH_Y][TOWN_LABYRINTH_X] ==
-            TILE_LABYRINTH_ENTRANCE &&
-        loaded.map.tiles[TOWN_LABYRINTH_Y + 1][TOWN_LABYRINTH_X] ==
-            TILE_TOWN_PATH && loaded.map.tiles[18][15] == TILE_TOWN_FLOOR);
+    ASSERT("Rook quest progress and the forest-road labyrinth survive saving", restored && loaded.rook_quest_state == 3 && loaded.rook_labyrinth_switches == 31 && loaded.rook_quest_completions == 1 && game_labyrinth_is_open(&loaded) && loaded.location == LOCATION_APPROACH && loaded.map.tiles[APPROACH_LABYRINTH_Y][APPROACH_LABYRINTH_X] == TILE_LABYRINTH_ENTRANCE && loaded.labyrinth_entry_town == LOCATION_TOWN2);
+    walk_return_approach(&loaded);
     remove("saves/savegame_99014.json");
 
     loaded.defeated_bosses |= 1 << LOCATION_FOREST;

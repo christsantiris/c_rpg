@@ -18,7 +18,8 @@ typedef enum {
     TOWN_EXIT_DESERT,
     TOWN_EXIT_MOONVEIL,
     TOWN_EXIT_ASHEN,
-    TOWN_EXIT_GLASSDEEP
+    TOWN_EXIT_GLASSDEEP,
+    TOWN_EXIT_CATACOMBS
 } TownExitStyle;
 
 typedef struct {
@@ -35,6 +36,7 @@ typedef struct {
     SDL_Texture *mountain_entrance_texture;
     SDL_Texture *forest_entrance_texture;
     SDL_Texture *swamp_entrance_texture;
+    SDL_Texture *area_entrance_textures[TOWN_EXIT_CATACOMBS + 1];
     SDL_Texture *town_gate_textures[TOWN_EXIT_GLASSDEEP + 1];
     SDL_Texture *castle_texture;
     SDL_Texture *apothecary_texture;

@@ -48,9 +48,9 @@ select **New Game**:
 ```
 
 Choose Warrior for that loadout. The launcher marks forest, swamp and mountain
-shortcuts complete; **it leaves the Minotaur alive**. Take the safe forest road
-to Stillbury. In its Inn, speak to Rook and accept the ivory-rook quest. Enter
-the gate across from the witch's hut. Light all five runes and reach floor 5.
+town roads complete; **it leaves the Minotaur alive**. Take the safe forest road
+toward Stillbury. First speak to Rook in Oakhaven's Tavern and accept the ivory-rook quest. Enter
+the gate beside the Haunted Forest entrance on the Oakhaven–Stillbury road. Light all five runes and reach floor 5.
 Use `--weapon bow` with Rogue or `--weapon staff` with Mage for other attack paths.
 For the ordinary campaign, run the Debug executable directly without
 `--unlock-shortcuts`; the Minotaur's base stats remain the same.
@@ -70,7 +70,7 @@ For the ordinary campaign, run the Debug executable directly without
    Targets, orientation, phase and sequence must persist. Backtrack and retreat
    to Stillbury, then re-enter; the living boss must retain its health and caps.
 7. Defeat the Minotaur with melee, arrows or spells. Recover the ivory rook,
-   return to Rook in Stillbury's Inn, and verify the existing quest reward.
+   return to Rook in Oakhaven's Tavern, and verify the existing quest reward.
 8. Equip Labyrinth Aegis as Warrior and inspect the off-hand icon and player art.
    Its stats match Magic Shield; Mage and Rogue cannot equip it.
 9. Leave Aegis unclaimed and revisit after a floor refresh. Use the bull-marked

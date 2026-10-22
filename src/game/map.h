@@ -131,6 +131,7 @@
 #define TOWN_WITCH_H 4
 #define TOWN_WITCH_DOOR_X (TOWN_WITCH_X + 2)
 #define TOWN_WITCH_DOOR_Y (TOWN_WITCH_Y + TOWN_WITCH_H - 1)
+// Legacy town entrance coordinates, retained for saved-map migration.
 #define TOWN_LABYRINTH_X TOWN_WITCH_DOOR_X
 #define TOWN_LABYRINTH_Y 17
 
@@ -692,7 +693,7 @@ void map_set_town3_road(Map *m, int unlocked);
 void map_set_rosemoor_swamp_road(Map *m, int unlocked);
 void map_generate_forest_road(Map *m);
 void map_add_shortcut_branch(Map *m, TileType shortcut);
-void map_place_town_labyrinth(Map *m);
+void map_remove_town_labyrinth(Map *m);
 void map_place_town2_center(Map *m);
 void map_place_town3_guards(Map *m, int avoid_x, int avoid_y);
 void map_place_town4_guards(Map *m, int avoid_x, int avoid_y);

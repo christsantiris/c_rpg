@@ -10,8 +10,8 @@ progress, and completion. Quest offers display **Y** to accept and **N** to
 decline; **Esc** also declines. Declining leaves the quest inactive and
 available when you speak to the NPC again. Only acceptance adds it to the
 journal and starts its expedition. Other dialogue bubbles are dismissed by
-movement. Elowen, Mara, and Ilya wait in Oakhaven's Tavern. Alder,
-Zara, Brenna, Rook, and Bram wait in Stillbury's Inn, which uses the same doorway and
+movement. Elowen, Mara, Ilya, and Rook wait in Oakhaven's Tavern. Alder,
+Zara, Brenna, and Bram wait in Stillbury's Inn, which uses the same doorway and
 conversation controls.
 
 Ridgeshire's Town Hall uses the same entry, conversation, and exit controls.
@@ -218,9 +218,12 @@ without requiring the absent Lich King to be defeated again.
 
 ## Rook: The Ivory Rook
 
-Speak with Rook in Stillbury's Inn and press `Y` to accept his one-time
-retrieval quest. This opens the labyrinth entrance on the eastern outskirts,
-across the road from the witch's hut. Explore five maze floors with enemies and
+Speak with Rook in Oakhaven's Tavern and press `Y` to accept his one-time
+retrieval quest. This opens the labyrinth gate beside the Haunted Forest
+entrance on the Oakhaven–Stillbury road. Take either town's forest gate and
+follow the path; entering the forest or defeating its boss is not required.
+Physical retreat returns to the same path. The gate remains sealed until the
+quest is assigned and stays open after completion. Explore five maze floors with enemies and
 look-alike stairs; some stairs lead only to a dead-end corridor and its return
 stair. Activate one rune on each floor to open the final vault, defeat the
 Minotaur, recover the ivory rook, and return to Rook for 40 gold and 500 score.
