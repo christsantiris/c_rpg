@@ -33,6 +33,8 @@ static const char *game_over_location(const GameState *g) {
         case LOCATION_TOWN3: return "ROSEMOOR";
         case LOCATION_TOWN4: return "RIDGESHIRE";
         case LOCATION_INN: return "INN";
+        case LOCATION_HEALER: return "HEALER";
+        case LOCATION_WITCH: return "WITCH";
         case LOCATION_GUILD: return "ADVENTURER'S GUILD";
         case LOCATION_ISLAND: return "RUINED ISLE";
         case LOCATION_TEMPLE: return "RUINED TEMPLE";

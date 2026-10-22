@@ -1,4 +1,5 @@
 #include "actions.h"
+#include "restoration.h"
 #include "game.h"
 #include "catacombs.h"
 #include "castle.h"
@@ -1213,6 +1214,7 @@ void action_resolve_player(GameState *g, Action a) {
         g->location == LOCATION_FOREST_ROAD ||
         g->location == LOCATION_APPROACH ||
         g->location == LOCATION_INN ||
+        g->location == LOCATION_HEALER || g->location == LOCATION_WITCH ||
         g->location == LOCATION_JAIL ||
         g->location == LOCATION_WORKSHOP ||
         g->location == LOCATION_TOWN_HALL ||
@@ -1824,7 +1826,8 @@ void action_resolve_player(GameState *g, Action a) {
                 g->location == LOCATION_TOWN4 ||
                 g->location == LOCATION_CASTLE ||
                 g->location == LOCATION_TAVERN ||
-                g->location == LOCATION_INN || g->location == LOCATION_WORKSHOP ||
+                g->location == LOCATION_INN || g->location == LOCATION_HEALER || g->location == LOCATION_WITCH ||
+                g->location == LOCATION_WORKSHOP ||
                 g->location == LOCATION_TOWN_HALL || g->location == LOCATION_GUILD ||
                 town_life_is_interior(g->location)) {
                 push_message(g, "Already in town!");
@@ -2392,6 +2395,17 @@ void action_resolve_player(GameState *g, Action a) {
         if (g->location == LOCATION_TAVERN &&
             g->map.tiles[ty][tx] == TILE_TAVERN_EXIT) {
             game_leave_tavern(g);
+            return;
+        }
+
+        if (g->location == LOCATION_TOWN2 &&
+            (g->map.tiles[ty][tx] == TILE_HEALER_DOOR || g->map.tiles[ty][tx] == TILE_WITCH_DOOR)) {
+            restoration_enter(g, g->map.tiles[ty][tx] == TILE_HEALER_DOOR ? LOCATION_HEALER : LOCATION_WITCH);
+            return;
+        }
+        if ((g->location == LOCATION_HEALER || g->location == LOCATION_WITCH) &&
+            g->map.tiles[ty][tx] == TILE_TAVERN_EXIT) {
+            restoration_leave(g);
             return;
         }
 

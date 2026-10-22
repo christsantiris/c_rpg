@@ -69,12 +69,6 @@ int shop_accepts_item(ShopType type, const Item *item) {
         return item->type == ITEM_POTION_HEALTH || item->type == ITEM_POTION_MANA ||
             item->type == ITEM_SCROLL || item->type == ITEM_SPELL_TOME;
     }
-    if (type == SHOP_TYPE_HEALER) {
-        return item->type == ITEM_POTION_HEALTH;
-    }
-    if (type == SHOP_TYPE_WITCH) {
-        return item->type == ITEM_POTION_MANA;
-    }
     if (type == SHOP_TYPE_APOTHECARY) {
         return item->type == ITEM_POTION_HEALTH || item->type == ITEM_POTION_MANA ||
             item->type == ITEM_POTION_STRENGTH ||
@@ -100,12 +94,8 @@ void shop_init(ShopScreen *s, ShopType type, int defeated_bosses, PlayerClass pl
     s->mode = 0;
     s->stock_tier = 0;
 
-    if (type == SHOP_TYPE_HEALER) {
-        s->items[s->item_count++] = item_make_health_potion();
-    } else if (type == SHOP_TYPE_FLETCHER) {
+    if (type == SHOP_TYPE_FLETCHER) {
         s->items[s->item_count++] = item_make_arrows();
-    } else if (type == SHOP_TYPE_WITCH) {
-        s->items[s->item_count++] = item_make_mana_potion();
     } else if (type == SHOP_TYPE_APOTHECARY) {
         s->items[s->item_count++] = item_make_health_potion();
         s->items[s->item_count++] = item_make_mana_potion();

@@ -11,8 +11,8 @@ rather than sustained melee combat.
   5, 10 up to level 10, and 5 after that, then restores both HP and MP to
   maximum.
 - Mana Potions restore MP to full and are sold by the Alchemist.
-- Morwen's witch hut in Stillbury also sells Mana Potions for 20 gold.
-- Lysa sells Health Potions for 20 gold. The Alchemist sells both potion types.
+- [Morwen the Witch](healer.md#stillbury-witch) offers full or partial MP restoration for gold inside her Stillbury hut.
+- [Lysa the Healer](healer.md) offers full or partial HP treatment for gold inside her Stillbury healing house. The Alchemist sells both potion types.
 
 Speak with Rook in Stillbury's Inn to open the labyrinth. Returning his stolen
 ivory rook rewards 40 gold and 500 score once.
