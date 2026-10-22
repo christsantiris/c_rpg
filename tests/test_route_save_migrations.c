@@ -229,7 +229,7 @@ static void test_legacy_region(int forest, int level, int expected) {
     ASSERT("migration preserves dropped loot and its position", loaded.floor_item_count == 1 && loaded.floor_items[0].active && loaded.floor_items[0].x == original.floor_items[0].x && loaded.floor_items[0].y == original.floor_items[0].y);
     ASSERT("migration preserves existing rescue progress", loaded.alder_quest_state == 1 && loaded.alder_wardens_rescued == 1 && loaded.innkeeper_quest_state == 1);
     LevelCache *cache = forest ? loaded.forest_cache : loaded.swamp_cache;
-    ASSERT("old end boss snapshot becomes the central encounter", cache[forest ? 4 : 3].valid && cache[forest ? 4 : 3].enemies[0].is_boss && cache[forest ? 4 : 3].enemies[0].hp == (forest ? 57 : 54));
+    ASSERT("old end boss snapshot becomes the central encounter", cache[4].valid && cache[4].enemies[0].is_boss && cache[4].enemies[0].hp == (forest ? 57 : 54));
     if (forest) {
         ASSERT("old forest hub survives as the outer approach", cache[1].valid && cache[1].enemies[0].hp == (level == 2 ? 51 : level == 7 ? 56 : 53));
         ASSERT("forest migration keeps progress within five levels", loaded.max_forest_level_reached == 5 && !loaded.forest_cache[7].valid);
@@ -682,6 +682,62 @@ static void test_forest_adventure_migration(void) {
     remove("saves/savegame_99123.json");
 }
 
+static void test_swamp_adventure_migration(void) {
+    const int stages[7] = {1, 2, 3, 5, 4, 2, 1};
+    for (int old = 1; old <= 7; old++) {
+        game_init(&original);
+        original.location = LOCATION_SWAMP;
+        original.level = old;
+        original.max_swamp_level_reached = 7;
+        original.swamp_entry_town = LOCATION_TOWN3;
+        original.swamp_portal_town = LOCATION_TOWN3;
+        original.innkeeper_quest_state = 1;
+        original.gold = 321;
+        for (int i = 0; i < 7; i++) {
+            LevelCache *cache = &original.swamp_cache[i];
+            cache->valid = 1;
+            map_generate_swamp(&cache->map, 1);
+            cache->enemy_count = 1;
+            cache->enemies[0] = (Enemy){.active = 1, .type = i == 3 ? ENEMY_SWAMP_DEMON : ENEMY_VAMPIRE, .hp = 41 + i, .max_hp = 180, .x = 20, .y = 20, .move_timer = 2};
+            cache->map.tiles[20][20] = TILE_SWAMP_FLOOR;
+            cache->map.tiles[20][21] = i == 2 ? TILE_SWAMP_DAUGHTER : TILE_SWAMP_SHORTCUT;
+            map_mark_explored(&cache->map, 20, 20);
+        }
+        original.map = original.swamp_cache[old - 1].map;
+        original.enemy_count = 1;
+        original.enemies[0] = original.swamp_cache[old - 1].enemies[0];
+        original.enemies[0].hp = 17;
+        original.player.x = 20;
+        original.player.y = 20;
+        original.floor_item_count = 1;
+        original.floor_items[0] = (FloorItem){.active = 1, .x = 20, .y = 20, .underlying_tile = TILE_SWAMP_SHORTCUT, .item = item_make_health_potion()};
+        original.map.tiles[20][20] = TILE_ITEM;
+        int other = old == 1 ? 7 : old == 2 ? 6 : 1;
+        original.portal_active = 1;
+        original.portal_location = LOCATION_SWAMP;
+        original.portal_level = other;
+        original.portal_x = 22;
+        original.portal_y = 20;
+        original.portal_origin_tile = TILE_SWAMP_SHORTCUT;
+        original.swamp_cache[other - 1].map.tiles[20][22] = TILE_PORTAL;
+        original.dialogue_active = 1;
+        snprintf(original.dialogue_speaker, MAX_SPEAKER_LEN, "Shortcut found");
+        int ok = make_legacy_save(172) && load_game(&loaded, ROUTE_SAVE_SLOT);
+        ASSERT("all seven old swamp floors migrate with active wounds, loot and exploration", ok && loaded.level == stages[old - 1] && loaded.max_swamp_level_reached == 5 && loaded.enemies[0].hp == 17 && loaded.player.x == 20 && loaded.player.y == 20 && loaded.map.tiles[20][20] == TILE_ITEM && loaded.floor_items[0].underlying_tile == TILE_SWAMP_FLOOR && map_is_explored(&loaded.map, 20, 20) && loaded.gold == 321 && !loaded.dialogue_active);
+        ASSERT("Mira's original third-level map and the fourth-level Demon are preserved", ok && loaded.swamp_cache[2].map.tiles[20][21] == TILE_SWAMP_DAUGHTER && loaded.swamp_cache[2].enemies[0].hp == 43 && loaded.swamp_cache[4].enemies[0].type == ENEMY_SWAMP_DEMON && loaded.swamp_cache[4].enemies[0].hp == 44);
+        ASSERT("swamp migration retires surplus caches and preserves travel anchors", ok && !loaded.swamp_cache[5].valid && !loaded.swamp_cache[6].valid && loaded.swamp_entry_town == LOCATION_TOWN3 && loaded.swamp_portal_town == LOCATION_TOWN3 && loaded.portal_origin_tile == TILE_SWAMP_FLOOR);
+        if (ok) {
+            int stage = loaded.level;
+            int portal = loaded.portal_level;
+            ASSERT("swamp migration is stable after resaving", save_game(&loaded, ROUTE_SAVE_SLOT) && load_game(&reloaded, ROUTE_SAVE_SLOT) && reloaded.level == stage && reloaded.portal_level == portal && reloaded.enemies[0].hp == 17);
+            game_return_to_town(&loaded);
+            game_use_town_portal(&loaded);
+            ASSERT("merged outer swamp floors retain the separate linked portal snapshot", loaded.location == LOCATION_SWAMP && loaded.level == portal && loaded.player.x == 22 && loaded.player.y == 20 && loaded.enemies[0].hp == 40 + other && loaded.swamp_entry_town == LOCATION_TOWN3);
+        }
+    }
+    remove("saves/savegame_99123.json");
+}
+
 void test_route_save_migrations(void) {
     printf("Forest and swamp save migration tests:\n");
     ASSERT("route migration test slot is unused", !save_exists(ROUTE_SAVE_SLOT));
@@ -691,7 +747,7 @@ void test_route_save_migrations(void) {
     test_legacy_region(1, 4, 7);
     test_legacy_region(1, 7, 7);
     test_legacy_region(1, 8, FOREST_BOSS_LEVEL);
-    test_legacy_region(0, 3, 5);
+    test_legacy_region(0, 3, 4);
     test_legacy_region(0, 4, SWAMP_RESCUE_LEVEL);
     test_legacy_region(0, 5, SWAMP_BOSS_LEVEL);
     for (int forest = 0; forest < 2; forest++) {
@@ -704,7 +760,7 @@ void test_route_save_migrations(void) {
         int ok = make_legacy_save(forest ? 76 : 77) && load_game(&loaded, ROUTE_SAVE_SLOT);
         ASSERT("old portal save loads and keeps its original town", ok && loaded.location == (forest ? LOCATION_TOWN : LOCATION_TOWN2) && loaded.portal_active);
         game_use_town_portal(&loaded);
-        ASSERT("old boss portal restores the central level and casting position", ok && loaded.level == (forest ? 5 : 4) && loaded.player.x == original.portal_x && loaded.player.y == original.portal_y);
+        ASSERT("old boss portal restores the central level and casting position", ok && loaded.level == 5 && loaded.player.x == original.portal_x && loaded.player.y == original.portal_y);
         ASSERT("boss victory survives migration and reveals the central shortcut", ok && loaded.defeated_bosses == original.defeated_bosses);
         remove("saves/savegame_99123.json");
     }
@@ -727,4 +783,5 @@ void test_route_save_migrations(void) {
     test_forest_adventure_migration();
     test_split_mountain_migration();
     test_near_side_quest_migration();
+    test_swamp_adventure_migration();
 }

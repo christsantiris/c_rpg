@@ -20,6 +20,14 @@ int main(void) {
     Renderer renderer = {0};
     renderer_init(&renderer, sdl, 1280, 720);
     assert(renderer.font_large);
+    const TownExitStyle entrances[] = {TOWN_EXIT_COAST, TOWN_EXIT_DESERT, TOWN_EXIT_GLASSDEEP, TOWN_EXIT_FROST, TOWN_EXIT_MOONVEIL, TOWN_EXIT_DRAGONSPINE, TOWN_EXIT_ASHEN, TOWN_EXIT_CATACOMBS};
+    for (int i = 0; i < 8; i++) {
+        int width;
+        int height;
+        assert(renderer.area_entrance_textures[entrances[i]]);
+        assert(SDL_QueryTexture(renderer.area_entrance_textures[entrances[i]], NULL, NULL, &width, &height) == 0);
+        assert(width == 168 && height == (entrances[i] == TOWN_EXIT_DRAGONSPINE ? 216 : 144));
+    }
     Viewport viewport;
     SlotSelect slots = {0};
     LandingScreen landing = {0};
@@ -103,6 +111,26 @@ int main(void) {
         }
         assert(game->location == (stillbury ? LOCATION_TOWN : LOCATION_TOWN2));
     }
+    for (int rosemoor = 0; rosemoor < 2; rosemoor++) {
+        game_init(game);
+        if (rosemoor) {
+            game_enter_town3(game);
+        } else {
+            game_enter_town2(game);
+        }
+        assert(approach_enter(game, 20, rosemoor ? TOWN_H - 1 : 0));
+        int x;
+        int y;
+        assert(!approach_swamp_town_exit(game, &x, &y));
+        assert(save_game(game, 1));
+        assert(debug_parse_args(&debug_config, 6, arguments));
+        handle_slot_result(SLOT_SELECTED, &slots, 0, &screen, game, &renderer, &viewport, &landing);
+        assert(approach_swamp_town_exit(game, &x, &y));
+        for (int step = 0; game->location == LOCATION_APPROACH && step < APPROACH_H; step++) {
+            action_resolve_player(game, (Action){ACTION_MOVE, x, game->player.y + (rosemoor ? 1 : -1)});
+        }
+        assert(game->location == (rosemoor ? LOCATION_TOWN2 : LOCATION_TOWN3));
+    }
     game_init(game);
     assert(debug_parse_args(&debug_config, 6, arguments));
     debug_apply_loadout(game, &debug_config);
@@ -111,6 +139,34 @@ int main(void) {
     int x;
     int y;
     assert(approach_dungeon_town_exit(game, &x, &y));
+    // Unlocking town roads does not bypass Rook's quest gate.
+    game_init(game);
+    debug_apply_loadout(game, &debug_config);
+    assert(approach_enter(game, 0, 12));
+    game->player.x = APPROACH_LABYRINTH_X;
+    game->player.y = APPROACH_LABYRINTH_Y + 1;
+    action_resolve_player(game, (Action){ACTION_MOVE, APPROACH_LABYRINTH_X, APPROACH_LABYRINTH_Y});
+    assert(game->location == LOCATION_APPROACH && !game_labyrinth_is_open(game));
+    assert(game->player.y == APPROACH_LABYRINTH_Y + 1);
+    game_leave_approach(game);
+    game_enter_tavern(game);
+    game->player.x = ROOK_TAVERN_X;
+    game->player.y = ROOK_TAVERN_Y + 1;
+    game_talk_to_rook(game);
+    game_handle_quest_offer_key(game, SDL_SCANCODE_Y, 0);
+    assert(game_labyrinth_is_open(game));
+    game_leave_tavern(game);
+    assert(approach_enter(game, 0, 12));
+    while (game->player.x > APPROACH_LABYRINTH_X) {
+        action_resolve_player(game, (Action){ACTION_MOVE, game->player.x - 1, game->player.y});
+    }
+    action_resolve_player(game, (Action){ACTION_MOVE, APPROACH_LABYRINTH_X, APPROACH_LABYRINTH_Y + 1});
+    action_resolve_player(game, (Action){ACTION_MOVE, APPROACH_LABYRINTH_X, APPROACH_LABYRINTH_Y});
+    assert(game->location == LOCATION_LABYRINTH && game->level == 1 && game->enemy_count > 0);
+    assert(save_game(game, 2) && load_game(game, 2));
+    game_leave_labyrinth(game);
+    assert(game->location == LOCATION_APPROACH && game->labyrinth_entry_town == LOCATION_TOWN);
+    assert(game->player.x == APPROACH_LABYRINTH_X && game->player.y == APPROACH_LABYRINTH_Y + 1);
     free(game);
     renderer_free(&renderer);
     SDL_DestroyRenderer(sdl);
@@ -125,6 +181,6 @@ int main(void) {
     rmdir(temporary);
     free(project);
     free(assets);
-    puts("PASS: new and loaded debug characters can walk to Dawnmere, Ridgeshire and both forest towns; normal saves stay gated and loaded equipment/gold/quests are preserved.");
+    puts("PASS: new and loaded debug characters can walk to Dawnmere, Ridgeshire and both forest/swamp towns; normal saves stay gated, Rook alone unlocks the forest-road labyrinth, and loaded equipment/gold/quests are preserved.");
     return 0;
 }

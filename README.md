@@ -28,14 +28,20 @@ and many other adventures.
 
 ## World Map
 
-[![Illustrated world map showing the four towns, the Castle of No Return, forests, swamps, deserts, snowy peaks, Ashen Hollow's volcanoes, coastlines, and the Ruined Isle.](docs/images/world-map.png)](docs/images/world-map.png)
+[![Illustrated world map showing the five towns, including Dawnmere, the Castle of No Return, forests, swamps, deserts, snowy peaks, Ashen Hollow's volcanoes, coastlines, and the Ruined Isle.](docs/images/world-map.png)](docs/images/world-map.png)
 
 An illustrated overview based on the world's town connections. Dawnmere now lies
 east of Oakhaven, reached by the safe road opened after defeating the Lich King.
-The illustration predates Dawnmere; the [expansion plan](docs/five-town-expansion.md)
-shows the current connections and the planned Windscar Highlands. Goblin Mountains
+The [expansion plan](docs/five-town-expansion.md) documents the connections
+and the planned Windscar Highlands. Goblin Mountains
 now lies north of Dawnmere, beside the road to Ridgeshire; defeating its King
-opens that road. Both mountain entrances start at level 1.
+opens that road. Both mountain entrances start at level 1. Forest and swamp
+also have five forward levels, with their boss victories opening the town roads.
+Other enemy-area gates lead to safe cobblestone paths and themed entrance
+sprites; physical retreat returns to the same path. Rook's Labyrinth stands
+beside the Haunted Forest entrance on that road and stays sealed until Rook
+assigns the quest in Oakhaven's Tavern. Castle, secret tunnel and Crown Road
+travel keep their existing layouts.
 
 ## Controls
 

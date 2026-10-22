@@ -13,3 +13,7 @@ haunted theme. Doorway scale and lighting match the existing mountain entrance.
 3× using nearest-neighbor sampling. `renderer-preview.png` uses the actual SDL
 game renderer on the new road. The landmark occupies the same coordinates
 when approached from Oakhaven or Stillbury.
+
+The renderer preview also shows the relocated labyrinth beside the forest.
+Its existing gate opens after Rook assigns the quest in Oakhaven's Tavern;
+both entrances are reachable before forest victory.

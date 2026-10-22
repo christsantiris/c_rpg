@@ -189,6 +189,7 @@ void draw_dungeon_entrance(Renderer *r, int tile_x, int tile_y);
 void draw_mountain_entrance(Renderer *r, int tile_x, int tile_y);
 void draw_forest_entrance(Renderer *r, int tile_x, int tile_y);
 void draw_swamp_entrance(Renderer *r, int tile_x, int tile_y);
+void draw_area_entrance(Renderer *r, TownExitStyle style, int tile_x, int tile_y, int rows);
 void draw_labyrinth_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_labyrinth_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_labyrinth_exit(Renderer *r, int tile_x, int tile_y);

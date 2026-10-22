@@ -229,6 +229,7 @@ typedef struct {
     int       equipped_off_hand;
     int       equipped_armor;
     int       gold;
+    Location labyrinth_entry_town;
     int       rook_quest_state;
     int       innkeeper_quest_state;
     int       rook_labyrinth_switches;

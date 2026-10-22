@@ -132,3 +132,12 @@ claim state and both finite-wave flags, including when the player is elsewhere.
 
 Renderer captures and focused play-testing notes are in
 [the Necromancer encounter gallery](art-sources/necromancer-encounter/README.md).
+
+
+## Labyrinth on the entrance road
+
+Rook's Labyrinth now stands beside the forest sprite, outside Stillbury on the
+shared road to Oakhaven. Its gate is visible but sealed until Rook assigns
+The Ivory Rook in Oakhaven's Tavern. Both town approaches reach it before forest
+victory. Leaving the labyrinth returns to that approach, preserving the town
+used; the Necromancer still controls the through road between towns.

@@ -44,6 +44,18 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->swamp_entrance_texture = load_sprite_texture(sdl, "assets/images/swamp-entrance.bmp");
     r->forest_entrance_texture = load_sprite_texture(sdl, "assets/images/forest-entrance.bmp");
     r->mountain_entrance_texture = load_sprite_texture(sdl, "assets/images/mountain-entrance.bmp");
+    const char *entrance_paths[TOWN_EXIT_CATACOMBS + 1] = {NULL};
+    entrance_paths[TOWN_EXIT_DESERT] = "assets/images/desert-entrance.bmp";
+    entrance_paths[TOWN_EXIT_COAST] = "assets/images/coast-entrance.bmp";
+    entrance_paths[TOWN_EXIT_DRAGONSPINE] = "assets/images/dragonspine-entrance.bmp";
+    entrance_paths[TOWN_EXIT_FROST] = "assets/images/frostfell-entrance.bmp";
+    entrance_paths[TOWN_EXIT_MOONVEIL] = "assets/images/moonveil-entrance.bmp";
+    entrance_paths[TOWN_EXIT_ASHEN] = "assets/images/ashen-entrance.bmp";
+    entrance_paths[TOWN_EXIT_GLASSDEEP] = "assets/images/glassdeep-entrance.bmp";
+    entrance_paths[TOWN_EXIT_CATACOMBS] = "assets/images/catacombs-entrance.bmp";
+    for (int i = 0; i <= TOWN_EXIT_CATACOMBS; i++) {
+        r->area_entrance_textures[i] = entrance_paths[i] ? load_sprite_texture(sdl, entrance_paths[i]) : NULL;
+    }
     for (int i = 0; i <= TOWN_EXIT_GLASSDEEP; i++) {
         r->town_gate_textures[i] = NULL;
     }
@@ -159,6 +171,12 @@ void renderer_free(Renderer *r) {
     if (r->swamp_entrance_texture) {
         SDL_DestroyTexture(r->swamp_entrance_texture);
         r->swamp_entrance_texture = NULL;
+    }
+    for (int i = 0; i <= TOWN_EXIT_CATACOMBS; i++) {
+        if (r->area_entrance_textures[i]) {
+            SDL_DestroyTexture(r->area_entrance_textures[i]);
+            r->area_entrance_textures[i] = NULL;
+        }
     }
     if (r->forest_entrance_texture) {
         SDL_DestroyTexture(r->forest_entrance_texture);
