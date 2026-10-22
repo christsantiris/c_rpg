@@ -20,8 +20,8 @@ Critical geography, as a north-up map, with approximate percentage positions (al
 - A broad dense "Haunted Forest" stretches horizontally between Stillbury and Oakhaven, around (47%, 65%); a woodland path runs through it between the towns.
 - "Blackwater Swamp" occupies the vertical area between Rosemoor and Stillbury, around (26%, 47%), with reed beds, twisted trees, dark pools and marsh channels.
 - "Goblin Mountains" runs vertically between Oakhaven and Ridgeshire, around (70%, 48%), many rugged medium-height peaks and a winding mountain pass joining the towns.
-- "Dragonspine" stretches east of Ridgeshire into the northeast around (86%, 30%): dramatically higher jagged snowcapped peaks than the Goblin Mountains. The height distinction must be obvious.
-- "Ashen Hollow" north of Ridgeshire around (70%, 14%): volcanic basin, charcoal crags and restrained glowing lava.
+- "Dragonspine" stretches north of Ridgeshire around (70%, 14%): dramatically higher jagged snowcapped peaks than the Goblin Mountains. The height distinction must be obvious.
+- "Ashen Hollow" east of Ridgeshire around (86%, 30%): volcanic basin, charcoal crags and restrained glowing lava.
 - "Frostfell Wastes" north of Rosemoor around (26%, 13%): frozen ridges, snowy pines, icy lakes and crevasses.
 - "Moonveil Gardens" west of Rosemoor around (11%, 30%): pale blossoms, lush green groves and garden ruins.
 - "Sunscar Wastes" west of Stillbury around (11%, 63%): broad sandy dunes, sandstone mesas, scattered cacti and a tiny oasis.
@@ -38,3 +38,14 @@ Roads should communicate the sketch's travel connections through terrain without
 ## Label correction prompt
 
 Edit this finished world map with exactly one localized addition: add the geographic label "Ruined Isle" in the open blue sea immediately beneath the large temple island in the lower right, above the bottom map frame. Use a small warm parchment label and crisp dark cartographic serif lettering consistent with the existing place labels, readable and centered below the island without obscuring its coast. The existing "Ruined Temple" label must remain on the island as it is: these are two separate names, an island and its landmark. Preserve ALL other artwork, labels, positions, routes, colors, textures, dimensions, typography, the volcanoes of Ashen Hollow, and snowy Dragonspine exactly. Do not redraw, recolor, crop or recompose the map. Only add this one missing label.
+
+
+## Ridgeshire geography swap
+
+Edited with the built-in image generation tool using the previous finished map
+as the edit target (`precise-object-edit`). Final prompt:
+
+> Use case: precise-object-edit. Edit target: the supplied finished fantasy world map. Make exactly one geographic swap in its upper-right quadrant: Dragonspine must be NORTH of Ridgeshire, occupying the current Ashen Hollow volcanic region directly above the town, with towering icy snow-covered mountain peaks and snowy pines. Ashen Hollow must be EAST of Ridgeshire, occupying the current Dragonspine snowy region on the far upper-right mainland, with charcoal volcanic mountains, glowing lava and ash. Move the actual terrain and the exact labels together, not just the labels. Remove volcanoes from the northern Dragonspine region and remove snowy peaks from the eastern Ashen Hollow region. Frostfell Wastes in the northwest and Dragonspine in the northeast must now be the two northernmost cold regions. Keep Ridgeshire in exactly its current position. Make the northern snowy Dragonspine taller than Goblin Mountains. Preserve every other region, town, castle, road, coastline, island, label, parchment texture, frame, title and compass from the original. Especially preserve Frostfell Wastes, Crown Roads, Castle of No Return, Royal Catacombs, Escape Tunnel, Goblin Mountains, Oakhaven Dungeon, Docks, Ruined Temple and Ruined Isle. Do not add destinations or omit labels. Preserve the landscape 3:2 composition and original fine ink/watercolor cartographic style. Final exact text: 'Dragonspine' over the northern icy peaks above Ridgeshire; 'Ashen Hollow' over the volcanic basin east of Ridgeshire. All other existing text unchanged. Return the edited map.
+
+Reviewed the two moved regions and all original labels. The edited asset
+replaces `docs/images/world-map.png`.

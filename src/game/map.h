@@ -209,7 +209,7 @@
 #define CATACOMBS_W 60
 #define CATACOMBS_H 80
 #define STILLBURY_GLASSDEEP_GATE_X 20
-#define RIDGESHIRE_ASHEN_GATE_X 20
+#define RIDGESHIRE_DRAGON_GATE_X 20
 #define ROSEMOOR_MOONVEIL_GATE_Y 14
 #define SWAMP_MAP_W 72
 #define SWAMP_MAP_H 64
@@ -227,9 +227,11 @@
 #define TOWN4_SQUARE_Y 12
 #define TOWN4_SQUARE_W (RIDGESHIRE_MOUNTAIN_ROAD_X - TOWN4_SQUARE_X + 1)
 #define TOWN4_SQUARE_H 3
-#define TOWN4_DRAGON_GATE_Y 12
-#define TOWN4_PORTAL_X (TOWN_W - 3)
-#define TOWN4_PORTAL_Y 13
+#define RIDGESHIRE_ASHEN_GATE_Y 12
+#define RIDGESHIRE_DRAGON_PORTAL_X (RIDGESHIRE_DRAGON_GATE_X + 1)
+#define RIDGESHIRE_DRAGON_PORTAL_Y 2
+#define RIDGESHIRE_ASHEN_PORTAL_X (TOWN_W - 3)
+#define RIDGESHIRE_ASHEN_PORTAL_Y (RIDGESHIRE_ASHEN_GATE_Y + 1)
 #define TOWN4_WORKSHOP_X 7
 #define TOWN4_WORKSHOP_Y 8
 #define TOWN4_WORKSHOP_W 5
@@ -689,7 +691,7 @@ void map_place_town3_guards(Map *m, int avoid_x, int avoid_y);
 void map_place_town4_guards(Map *m, int avoid_x, int avoid_y);
 void map_place_town3_frost_gate(Map *m);
 void map_place_town3_moonveil_gate(Map *m);
-void map_place_town4_ashen_gate(Map *m);
+void map_place_town4_region_gates(Map *m);
 void map_place_town2_glassdeep_gate(Map *m);
 void map_place_town_harbor(Map *m);
 void map_place_town_tavern(Map *m);

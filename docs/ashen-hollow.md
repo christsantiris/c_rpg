@@ -1,13 +1,14 @@
 # Ashen Hollow
 
-Ridgeshire's north gate opens onto a five-stage volcanic region as soon as the
-town is accessible. Enter each stage from its south edge and advance through
-the north exit. The south entrance backtracks; on stage 1 it returns to
-Ridgeshire's north gate. Ordinary enemies do not block stage travel.
+Ridgeshire's east gate leads along a safe approach to the five-stage volcanic
+region east of town, as soon as Ridgeshire is accessible. Enter each stage from
+its south edge and advance through the north exit. The south entrance backtracks;
+on stage 1 it returns to the approach back to Ridgeshire's east gate. Ordinary
+enemies do not block stage travel.
 
 The Cinder Lord guards the last clearing on stage 5. Its defeat opens that
-stage's north exit, which returns to Ridgeshire without introducing another
-town. The boss guarantees **Embercleaver** and the original **Potion of Strength**,
+stage's north exit, which returns to the approach back to Ridgeshire without
+introducing another town. The boss guarantees **Embercleaver** and the original **Potion of Strength**,
 granting 1 permanent base attack when consumed. Its defeat appears in the boss
 journal. Surviving ordinary enemies do not block the return exit after victory.
 
@@ -55,10 +56,14 @@ Cinder Lord's arena sluices.
 Ashen Hollow maintains independent caches for all five stages. Backtracking
 preserves enemy health. A new expedition restores regular enemies on every
 visited stage while preserving explored terrain, quests, and boss progress.
-Return to Town opens a portal beside Ridgeshire's north gate and restores the
+Return to Town opens a portal beside Ridgeshire's east gate and restores the
 original stage and position when used. Save format 81 stores the new region;
-older saves gain fresh Ashen Hollow progress and an open north gate without
+older saves gain fresh Ashen Hollow progress and an open regional gate without
 resetting existing characters, quests, or regional progress.
+
+Save version **163** moves Ashen Hollow east of Ridgeshire and Dragonspine north.
+Saved approaches retain distance, facing, exploration, and dropped items;
+return portals move beside their new gates. Combat maps and progress are preserved.
 
 Save version **145** also stores diverted valves and stable basalt crossings
 in the map tiles. Version 144 crossings and valves remain usable with the new

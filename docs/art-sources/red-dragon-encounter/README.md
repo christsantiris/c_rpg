@@ -53,7 +53,7 @@ Use the existing Debug shortcut launcher and select **New Game**:
 Choose Warrior for that loadout. Use `--weapon bow` with Rogue or `--weapon staff`
 with Mage to exercise the other combat paths. Town shortcuts open; the Red
 Dragon remains alive. Reach Ridgeshire by the mountain shortcut, leave through
-its east gate, and follow Dragonspine to stage 5. Buy supplies first. Accept
+its north gate, and follow Dragonspine to stage 5. Buy supplies first. Accept
 Ilya's goblet quest in **Oakhaven's Tavern** to check its separate progression,
 or use an existing summit save with the dragon alive.
 

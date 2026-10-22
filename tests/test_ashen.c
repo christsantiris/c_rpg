@@ -96,11 +96,11 @@ static void test_travel_and_saves(void) {
     game_init(&game);
     srand(4612);
     game_enter_town4(&game);
-    game.player.x = RIDGESHIRE_ASHEN_GATE_X;
-    game.player.y = 1;
-    action_resolve_player(&game, (Action){ACTION_MOVE, game.player.x, 0});
+    game.player.x = TOWN_W - 2;
+    game.player.y = RIDGESHIRE_ASHEN_GATE_Y;
+    action_resolve_player(&game, (Action){ACTION_MOVE, TOWN_W - 1, game.player.y});
     walk_town_approach(&game);
-    ASSERT("Ridgeshire's north gate enters Ashen Hollow stage one from the south", game.location == LOCATION_ASHEN && game.level == 1 && game.player.y == SWAMP_MAP_H - 1);
+    ASSERT("Ridgeshire's east gate enters Ashen Hollow stage one from the south", game.location == LOCATION_ASHEN && game.level == 1 && game.player.y == SWAMP_MAP_H - 1);
     int x;
     int y;
     map_room_center(&game.map.rooms[0], &x, &y);
@@ -112,7 +112,7 @@ static void test_travel_and_saves(void) {
     walk_edge(0);
     ASSERT("backtracking preserves maps, exploration, and enemy health", game.level == 1 && memcmp(&layout, &game.map, sizeof(layout)) == 0 && game.enemies[0].hp == 7);
     walk_edge(0);
-    ASSERT("the south exit returns at Ridgeshire's north gate", game.location == LOCATION_TOWN4 && game.player.x == RIDGESHIRE_ASHEN_GATE_X && game.player.y == 1);
+    ASSERT("the south exit returns at Ridgeshire's east gate", game.location == LOCATION_TOWN4 && game.player.x == TOWN_W - 2 && game.player.y == RIDGESHIRE_ASHEN_GATE_Y);
     game_enter_ashen(&game);
     ASSERT("a new Ashen Hollow expedition refreshes enemies and retains exploration", game.enemies[0].hp == game.enemies[0].max_hp && game.max_ashen_level_reached == 2 && memcmp(&layout, &game.map, sizeof(layout)) == 0);
     while (game.level < 3) {
@@ -126,10 +126,10 @@ static void test_travel_and_saves(void) {
     game.floor_items[0] = (FloorItem){.active = 1, .x = x, .y = y, .underlying_tile = TILE_ASHEN_RUIN, .item = item_make_health_potion()};
     game.floor_item_count = 1;
     game_open_town_portal(&game);
-    ASSERT("Return to Town places a volcanic portal beside Ridgeshire's north gate", game.location == LOCATION_TOWN4 && game.portal_location == LOCATION_ASHEN && game.map.tiles[2][RIDGESHIRE_ASHEN_GATE_X + 1] == TILE_PORTAL && game.portal_origin_tile == TILE_ASHEN_RUIN);
-    game.player.x = RIDGESHIRE_ASHEN_GATE_X + 1;
-    game.player.y = 3;
-    action_resolve_player(&game, (Action){ACTION_MOVE, game.player.x, 2});
+    ASSERT("Return to Town places a volcanic portal beside Ridgeshire's east gate", game.location == LOCATION_TOWN4 && game.portal_location == LOCATION_ASHEN && game.map.tiles[RIDGESHIRE_ASHEN_PORTAL_Y][RIDGESHIRE_ASHEN_PORTAL_X] == TILE_PORTAL && game.portal_origin_tile == TILE_ASHEN_RUIN);
+    game.player.x = RIDGESHIRE_ASHEN_PORTAL_X - 1;
+    game.player.y = RIDGESHIRE_ASHEN_PORTAL_Y;
+    action_resolve_player(&game, (Action){ACTION_MOVE, RIDGESHIRE_ASHEN_PORTAL_X, game.player.y});
     ASSERT("stepping onto Ridgeshire's portal resumes the original Ashen stage and position", game.location == LOCATION_ASHEN && game.level == 3 && game.player.x == x && game.player.y == y);
     if (game.location != LOCATION_ASHEN) {
         remove("saves/savegame_99131.json");
@@ -139,9 +139,9 @@ static void test_travel_and_saves(void) {
     int saved = save_game(&game, ASHEN_TEST_SLOT) && load_game(&loaded, ASHEN_TEST_SLOT);
     if (saved) {
         game = loaded;
-        game.player.x = RIDGESHIRE_ASHEN_GATE_X + 1;
-        game.player.y = 3;
-        action_resolve_player(&game, (Action){ACTION_MOVE, game.player.x, 2});
+        game.player.x = RIDGESHIRE_ASHEN_PORTAL_X - 1;
+        game.player.y = RIDGESHIRE_ASHEN_PORTAL_Y;
+        action_resolve_player(&game, (Action){ACTION_MOVE, RIDGESHIRE_ASHEN_PORTAL_X, game.player.y});
     }
     ASSERT("stepping onto a saved return portal restores the volcanic stage and underlying paving", saved && game.location == LOCATION_ASHEN && game.level == 3 && game.player.x == x && game.player.y == y && game.map.tiles[y][x] == TILE_ASHEN_RUIN);
     if (game.location != LOCATION_ASHEN) {
@@ -216,8 +216,8 @@ static void test_migration(void) {
     game.defeated_bosses = 1 << LOCATION_SWAMP;
     game.inventory[0] = item_make_staff();
     game.inventory_count = 1;
-    for (int x = RIDGESHIRE_ASHEN_GATE_X - 2; x <= RIDGESHIRE_ASHEN_GATE_X + 2; x++) {
-        game.map.tiles[0][x] = TILE_WALL;
+    for (int y = RIDGESHIRE_ASHEN_GATE_Y - 2; y <= RIDGESHIRE_ASHEN_GATE_Y + 2; y++) {
+        game.map.tiles[y][TOWN_W - 1] = TILE_WALL;
     }
     int saved = save_game(&game, ASHEN_TEST_SLOT);
     FILE *file = fopen("saves/savegame_99131.json", "rb");
@@ -248,7 +248,7 @@ static void test_migration(void) {
         fresh &= !loaded.ashen_cache[i].valid && loaded.ashen_cache[i].enemy_count == 0;
     }
     ASSERT("version 80 saves receive fresh independent Ashen Hollow progression", fresh);
-    ASSERT("migration opens Ridgeshire's north gate and preserves character and quest progress", ok && loaded.map.tiles[0][RIDGESHIRE_ASHEN_GATE_X] == TILE_TOWN_EXIT && loaded.player.hp == 89 && loaded.gold == 37 && loaded.score == 1234 && loaded.sunscar_lamp_quest_state == 1 && loaded.defeated_bosses == game.defeated_bosses && loaded.inventory_count == 1);
+    ASSERT("migration opens Ridgeshire's east gate and preserves character and quest progress", ok && loaded.map.tiles[RIDGESHIRE_ASHEN_GATE_Y][TOWN_W - 1] == TILE_TOWN_EXIT && loaded.player.hp == 89 && loaded.gold == 37 && loaded.score == 1234 && loaded.sunscar_lamp_quest_state == 1 && loaded.defeated_bosses == game.defeated_bosses && loaded.inventory_count == 1);
     ASSERT("migrated saves rewrite and reload successfully", save_game(&loaded, ASHEN_TEST_SLOT) && load_game(&game, ASHEN_TEST_SLOT));
     game_init(&game);
     ASSERT("starting a new game resets Ashen Hollow progress", game.max_ashen_level_reached == 1 && !game.ashen_cache[0].valid);

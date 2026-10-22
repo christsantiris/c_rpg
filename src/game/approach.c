@@ -15,8 +15,8 @@ const TownApproach town_approaches[] = {
     {LOCATION_TOWN3, LOCATION_SWAMP, 20, TOWN_H - 1},
     {LOCATION_TOWN3, LOCATION_MOONVEIL, 0, ROSEMOOR_MOONVEIL_GATE_Y},
     {LOCATION_TOWN4, LOCATION_MOUNTAINS, 20, TOWN_H - 1},
-    {LOCATION_TOWN4, LOCATION_DRAGONSPINE, TOWN_W - 1, TOWN4_DRAGON_GATE_Y},
-    {LOCATION_TOWN4, LOCATION_ASHEN, RIDGESHIRE_ASHEN_GATE_X, 0},
+    {LOCATION_TOWN4, LOCATION_DRAGONSPINE, RIDGESHIRE_DRAGON_GATE_X, 0},
+    {LOCATION_TOWN4, LOCATION_ASHEN, TOWN_W - 1, RIDGESHIRE_ASHEN_GATE_Y},
     {LOCATION_CASTLE, LOCATION_CATACOMBS, CROWNROAD_X, TOWN_H - 1}
 };
 
@@ -135,6 +135,79 @@ void approach_refresh_dungeon(GameState *g) {
     }
 }
 
+static void generate_approach(Map *map, Location area, int dx, int dy) {
+    int tx = dx < 0 ? APPROACH_W - 1 : dx > 0 ? 0 : APPROACH_W / 2;
+    int ty = dy < 0 ? APPROACH_H - 1 : dy > 0 ? 0 : APPROACH_H / 2;
+    TileType floor = approach_floor(area);
+    TileType wall = approach_wall(area);
+    memset(map, 0, sizeof(*map));
+    for (int my = 0; my < MAP_H; my++) {
+        for (int mx = 0; mx < MAP_W; mx++) {
+            map->tiles[my][mx] = wall;
+        }
+    }
+    for (int step = 0; step <= APPROACH_LENGTH; step++) {
+        int radius = step < APPROACH_LENGTH - 3 ? 1 : 0;
+        for (int side = -radius; side <= radius; side++) {
+            map->tiles[ty + step * dy + side * dx][tx + step * dx - side * dy] = floor;
+        }
+    }
+    map->stairs_up_x = tx;
+    map->stairs_up_y = ty;
+    map->stairs_down_x = tx + APPROACH_LENGTH * dx;
+    map->stairs_down_y = ty + APPROACH_LENGTH * dy;
+    map->tiles[ty][tx] = TILE_APPROACH_TOWN;
+    map->tiles[map->stairs_down_y][map->stairs_down_x] = TILE_APPROACH_AREA;
+}
+
+void approach_relocate_ridgeshire(GameState *g) {
+    const TownApproach *route = approach_route(g);
+    if (!route || route->town != LOCATION_TOWN4 || (route->area != LOCATION_DRAGONSPINE && route->area != LOCATION_ASHEN)) {
+        return;
+    }
+    int dx = route->gate_x == TOWN_W - 1 ? 1 : 0;
+    int dy = route->gate_y == 0 ? -1 : 0;
+    int old_dx = route->area == LOCATION_DRAGONSPINE ? 1 : 0;
+    int old_dy = route->area == LOCATION_ASHEN ? -1 : 0;
+    // Old-version fixtures can already contain the new direction.
+    if (g->map.stairs_down_x - g->map.stairs_up_x == APPROACH_LENGTH * dx &&
+        g->map.stairs_down_y - g->map.stairs_up_y == APPROACH_LENGTH * dy) {
+        return;
+    }
+    Map old = g->map;
+    generate_approach(&g->map, route->area, dx, dy);
+    for (int y = 0; y < APPROACH_H; y++) {
+        for (int x = 0; x < APPROACH_W; x++) {
+            int along = (x - old.stairs_up_x) * old_dx + (y - old.stairs_up_y) * old_dy;
+            int side = (y - old.stairs_up_y) * old_dx - (x - old.stairs_up_x) * old_dy;
+            int nx = g->map.stairs_up_x + along * dx - side * dy;
+            int ny = g->map.stairs_up_y + along * dy + side * dx;
+            if (nx >= 0 && nx < APPROACH_W && ny >= 0 && ny < APPROACH_H && map_is_explored(&old, x, y)) {
+                map_mark_explored(&g->map, nx, ny);
+            }
+        }
+    }
+    int along = (g->player.x - old.stairs_up_x) * old_dx + (g->player.y - old.stairs_up_y) * old_dy;
+    int side = (g->player.y - old.stairs_up_y) * old_dx - (g->player.x - old.stairs_up_x) * old_dy;
+    g->player.x = g->map.stairs_up_x + along * dx - side * dy;
+    g->player.y = g->map.stairs_up_y + along * dy + side * dx;
+    along = g->player.last_dx * old_dx + g->player.last_dy * old_dy;
+    side = g->player.last_dy * old_dx - g->player.last_dx * old_dy;
+    g->player.last_dx = along * dx - side * dy;
+    g->player.last_dy = along * dy + side * dx;
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (!item->active) {
+            continue;
+        }
+        along = (item->x - old.stairs_up_x) * old_dx + (item->y - old.stairs_up_y) * old_dy;
+        side = (item->y - old.stairs_up_y) * old_dx - (item->x - old.stairs_up_x) * old_dy;
+        item->x = g->map.stairs_up_x + along * dx - side * dy;
+        item->y = g->map.stairs_up_y + along * dy + side * dx;
+        g->map.tiles[item->y][item->x] = TILE_ITEM;
+    }
+}
+
 int approach_enter(GameState *g, int x, int y) {
     if (x < 0 || x >= TOWN_W || y < 0 || y >= TOWN_H) {
         return 0;
@@ -155,28 +228,9 @@ int approach_enter(GameState *g, int x, int y) {
     const TownApproach *route = &town_approaches[index];
     int dx = x == 0 ? -1 : x == TOWN_W - 1 ? 1 : 0;
     int dy = y == 0 ? -1 : y == TOWN_H - 1 ? 1 : 0;
-    int tx = dx < 0 ? APPROACH_W - 1 : dx > 0 ? 0 : APPROACH_W / 2;
-    int ty = dy < 0 ? APPROACH_H - 1 : dy > 0 ? 0 : APPROACH_H / 2;
-    TileType floor = approach_floor(route->area);
-    TileType wall = approach_wall(route->area);
-    memset(&g->map, 0, sizeof(g->map));
-    for (int my = 0; my < MAP_H; my++) {
-        for (int mx = 0; mx < MAP_W; mx++) {
-            g->map.tiles[my][mx] = wall;
-        }
-    }
-    for (int step = 0; step <= APPROACH_LENGTH; step++) {
-        int radius = step < APPROACH_LENGTH - 3 ? 1 : 0;
-        for (int side = -radius; side <= radius; side++) {
-            g->map.tiles[ty + step * dy + side * dx][tx + step * dx - side * dy] = floor;
-        }
-    }
-    g->map.stairs_up_x = tx;
-    g->map.stairs_up_y = ty;
-    g->map.stairs_down_x = tx + APPROACH_LENGTH * dx;
-    g->map.stairs_down_y = ty + APPROACH_LENGTH * dy;
-    g->map.tiles[ty][tx] = TILE_APPROACH_TOWN;
-    g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] = TILE_APPROACH_AREA;
+    generate_approach(&g->map, route->area, dx, dy);
+    int tx = g->map.stairs_up_x;
+    int ty = g->map.stairs_up_y;
     g->location = LOCATION_APPROACH;
     g->approach_route = index;
     g->player.x = tx + dx;

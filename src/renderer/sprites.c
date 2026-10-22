@@ -4637,7 +4637,8 @@ void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style) {
 }
 
 void draw_town_gate_back(Renderer *r, int tx, int ty, TownExitStyle style, int dx, int dy) {
-    if (!r->town_gate_texture || r->town_gate_style != (int)style) {
+    SDL_Texture **cached = &r->town_gate_textures[style];
+    if (!*cached) {
         SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormat(0, 5 * TILE_SIZE, 5 * TILE_SIZE, 32, SDL_PIXELFORMAT_RGBA32);
         if (!surface) {
             return;
@@ -4662,29 +4663,41 @@ void draw_town_gate_back(Renderer *r, int tx, int ty, TownExitStyle style, int d
         }
         SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
         SDL_SetTextureScaleMode(texture, SDL_ScaleModeNearest);
-        if (r->town_gate_texture) {
-            SDL_DestroyTexture(r->town_gate_texture);
-        }
-        r->town_gate_texture = texture;
-        r->town_gate_style = style;
+        *cached = texture;
     }
     int right = style == TOWN_EXIT_DUNGEON || style == TOWN_EXIT_DRAGONSPINE;
-    int width = dx ? (right ? 3 : 2) * TILE_SIZE : 5 * TILE_SIZE;
-    int height = dx ? 5 * TILE_SIZE : 2 * TILE_SIZE;
-    SDL_Rect source = {0, 0, width, height};
+    int vertical = right || style == TOWN_EXIT_FOREST || style == TOWN_EXIT_ROAD || style == TOWN_EXIT_DESERT || style == TOWN_EXIT_MOONVEIL;
+    int native_positive = vertical ? right : style == TOWN_EXIT_GLASSDEEP;
+    int positive = dx ? dx < 0 : dy < 0;
+    int source_w = vertical ? (right ? 3 : 2) * TILE_SIZE : 5 * TILE_SIZE;
+    int source_h = vertical ? 5 * TILE_SIZE : 2 * TILE_SIZE;
+    int rotate = vertical != (dx != 0);
+    int width = rotate ? source_h : source_w;
+    int height = rotate ? source_w : source_h;
+    SDL_Rect source = {0, 0, source_w, source_h};
     SDL_Rect destination = {tx * TILE_SIZE, ty * TILE_SIZE, width, height};
-    SDL_RendererFlip flip;
+    SDL_RendererFlip flip = SDL_FLIP_NONE;
+    double angle = 0;
     if (dx) {
         destination.x += dx < 0 ? TILE_SIZE - width : 0;
         destination.y -= 2 * TILE_SIZE;
-        flip = right == (dx > 0) ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
     } else {
         destination.x -= 2 * TILE_SIZE;
         destination.y += dy < 0 ? TILE_SIZE - height : 0;
-        int bottom = style == TOWN_EXIT_GLASSDEEP;
-        flip = bottom == (dy > 0) ? SDL_FLIP_VERTICAL : SDL_FLIP_NONE;
     }
-    SDL_RenderCopyEx(r->sdl, r->town_gate_texture, &source, &destination, 0, NULL, flip);
+    if (rotate) {
+        angle = native_positive == positive ? 90 : -90;
+        if (!vertical) {
+            angle = -angle;
+        }
+        destination.x += (width - source_w) / 2;
+        destination.y += (height - source_h) / 2;
+        destination.w = source_w;
+        destination.h = source_h;
+    } else if (native_positive != positive) {
+        flip = dx ? SDL_FLIP_HORIZONTAL : SDL_FLIP_VERTICAL;
+    }
+    SDL_RenderCopyEx(r->sdl, *cached, &source, &destination, angle, NULL, flip);
 }
 
 void draw_town_road_sign(Renderer *r, int tile_x, int tile_y, const char *name) {

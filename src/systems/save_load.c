@@ -88,6 +88,34 @@ static void migrate_removed_royal_seals(GameState *g) {
     }
 }
 
+static void migrate_ridgeshire_portal(GameState *g) {
+    if (g->location != LOCATION_TOWN4 || !g->portal_active ||
+        (g->portal_location != LOCATION_DRAGONSPINE && g->portal_location != LOCATION_ASHEN)) {
+        return;
+    }
+    int dragon = g->portal_location == LOCATION_DRAGONSPINE;
+    int old_x = dragon ? TOWN_W - 3 : 21;
+    int old_y = dragon ? 13 : 2;
+    int x = dragon ? RIDGESHIRE_DRAGON_PORTAL_X : RIDGESHIRE_ASHEN_PORTAL_X;
+    int y = dragon ? RIDGESHIRE_DRAGON_PORTAL_Y : RIDGESHIRE_ASHEN_PORTAL_Y;
+    if (g->map.tiles[old_y][old_x] == TILE_PORTAL) {
+        g->map.tiles[old_y][old_x] = TILE_TOWN_FLOOR;
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (!item->active) {
+            continue;
+        }
+        if (item->x == old_x && item->y == old_y && item->underlying_tile == TILE_PORTAL) {
+            item->underlying_tile = TILE_TOWN_FLOOR;
+        }
+        if (item->x == x && item->y == y) {
+            item->underlying_tile = TILE_PORTAL;
+        }
+    }
+    g->map.tiles[y][x] = TILE_PORTAL;
+}
+
 static void migrate_shared_town_gates(GameState *g) {
     if (g->location != LOCATION_TOWN && g->location != LOCATION_TOWN2 && g->location != LOCATION_TOWN3 && g->location != LOCATION_TOWN4) {
         return;
@@ -850,7 +878,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 162);
+    cJSON_AddNumberToObject(root, "save_version", 163);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -4105,7 +4133,7 @@ int load_game(GameState *g, int slot) {
     }
 
     if (g->location == LOCATION_TOWN4) {
-        map_place_town4_ashen_gate(&g->map);
+        map_place_town4_region_gates(&g->map);
         map_set_ridgeshire_mountain_road(&g->map, g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
         // Extend saved town paving, including terrain covered by dropped items.
         for (int i = 0; i < g->floor_item_count; i++) {
@@ -4674,6 +4702,10 @@ int load_game(GameState *g, int slot) {
     }
     if (save_version < 162) {
         approach_refresh_dungeon(g);
+    }
+    if (save_version < 163) {
+        approach_relocate_ridgeshire(g);
+        migrate_ridgeshire_portal(g);
     }
     // Recover saves containing a town interior or shortcut in a dungeon slot.
     game_repair_dungeon_maps(g);

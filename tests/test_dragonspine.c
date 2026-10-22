@@ -61,9 +61,9 @@ void test_dragonspine(void) {
     g.defeated_bosses |= 1 << LOCATION_MOUNTAINS;
     game_enter_mountains(&g);
     game_enter_town4(&g);
-    ASSERT("Ridgeshire has an east Dragonspine gate and a shared south gate",
+    ASSERT("Ridgeshire has a north Dragonspine gate and a shared south gate",
         g.location == LOCATION_TOWN4 && g.enemy_count == 0 &&
-        g.map.tiles[TOWN4_DRAGON_GATE_Y][TOWN_W - 1] == TILE_TOWN_EXIT &&
+        g.map.tiles[0][RIDGESHIRE_DRAGON_GATE_X] == TILE_TOWN_EXIT &&
         g.map.tiles[TOWN_H - 1][20] == TILE_TOWN_EXIT && g.map.tiles[TOWN_H - 1][RIDGESHIRE_MOUNTAIN_ROAD_X] == TILE_WALL);
     int empty_crossroads = 1;
     int ilya_count = 0;
@@ -84,7 +84,7 @@ void test_dragonspine(void) {
     ASSERT("Ridgeshire keeps its crossroads and guards without Ilya and with an open Ashen Hollow gate",
         empty_crossroads && ilya_count == 0 && royal_guard_count == 2 &&
         g.map.tiles[12][20] == TILE_TOWN_PATH && g.map.tiles[DAIN_TOWN_Y][DAIN_TOWN_X] == TILE_NPC_DAIN &&
-        g.map.tiles[0][RIDGESHIRE_ASHEN_GATE_X] == TILE_TOWN_EXIT && g.map.tiles[12][0] == TILE_TOWN_EXIT);
+        g.map.tiles[RIDGESHIRE_ASHEN_GATE_Y][TOWN_W - 1] == TILE_TOWN_EXIT && g.map.tiles[12][0] == TILE_TOWN_EXIT);
 
     action_resolve_player(&g, (Action){ACTION_MOVE, 20, TOWN_H - 1});
     game_handle_shortcut_prompt_key(&g, SDL_SCANCODE_2, 0);
@@ -121,21 +121,21 @@ void test_dragonspine(void) {
     ASSERT("walking north reaches Ridgeshire without crossing the mountains",
         g.location == LOCATION_TOWN4 && g.player.x == 20 &&
         g.player.y == TOWN_H - 2 && g.enemy_count == 0);
-    g.player.x = TOWN_W - 2;
-    g.player.y = TOWN4_DRAGON_GATE_Y;
-    Action east = {ACTION_MOVE, TOWN_W - 1, TOWN4_DRAGON_GATE_Y};
-    action_resolve_player(&g, east);
+    g.player.x = RIDGESHIRE_DRAGON_GATE_X;
+    g.player.y = 1;
+    Action north = {ACTION_MOVE, RIDGESHIRE_DRAGON_GATE_X, 0};
+    action_resolve_player(&g, north);
     walk_town_approach(&g);
-    ASSERT("Ridgeshire east approach leads to Dragonspine stage one",
+    ASSERT("Ridgeshire north approach leads to Dragonspine stage one",
         g.location == LOCATION_DRAGONSPINE && g.level == 1 && g.enemy_count > 0);
     g.player.x = 1;
     g.player.y = g.map.stairs_up_y;
     action_resolve_player(&g, (Action){ACTION_MOVE, 0, g.map.stairs_up_y});
     walk_return_approach(&g);
     ASSERT("leaving Dragonspine stage one and walking its path returns to Ridgeshire",
-        g.location == LOCATION_TOWN4 && g.player.x == TOWN_W - 2 &&
-        g.player.y == TOWN4_DRAGON_GATE_Y);
-    action_resolve_player(&g, east);
+        g.location == LOCATION_TOWN4 && g.player.x == RIDGESHIRE_DRAGON_GATE_X &&
+        g.player.y == 1);
+    action_resolve_player(&g, north);
     walk_town_approach(&g);
     ASSERT("Dragonspine uses distinct cliff terrain",
         g.map.tiles[g.map.stairs_up_y][g.map.stairs_up_x] == TILE_DRAGON_ENTRANCE);
@@ -211,9 +211,9 @@ void test_dragonspine(void) {
     game_descend(&g);
     int saved_level = g.level;
     game_open_town_portal(&g);
-    ASSERT("Dragonspine portal returns beside Ridgeshire east gate",
+    ASSERT("Dragonspine portal returns beside Ridgeshire north gate",
         g.location == LOCATION_TOWN4 && g.portal_active &&
-        g.map.tiles[TOWN4_PORTAL_Y][TOWN4_PORTAL_X] == TILE_PORTAL);
+        g.map.tiles[RIDGESHIRE_DRAGON_PORTAL_Y][RIDGESHIRE_DRAGON_PORTAL_X] == TILE_PORTAL);
     g.player.x = 20;
     g.player.y = TOWN_H - 2;
     action_resolve_player(&g, (Action){ACTION_MOVE, 20, TOWN_H - 1});
@@ -238,13 +238,13 @@ void test_dragonspine(void) {
     action_resolve_player(&g, (Action){ACTION_MOVE, HIGH_PASS_X, 0});
     ASSERT("returning to Ridgeshire restores the Dragonspine portal beside its gate",
         g.location == LOCATION_TOWN4 && g.portal_active &&
-        g.map.tiles[TOWN4_PORTAL_Y][TOWN4_PORTAL_X] == TILE_PORTAL);
+        g.map.tiles[RIDGESHIRE_DRAGON_PORTAL_Y][RIDGESHIRE_DRAGON_PORTAL_X] == TILE_PORTAL);
     saved = save_game(&g, DRAGONSPINE_TEST_SLOT);
     restored = saved && load_game(&loaded, DRAGONSPINE_TEST_SLOT);
     ASSERT("Dragonspine expedition and portal survive save/load",
         restored && loaded.location == LOCATION_TOWN4 && loaded.portal_active &&
         loaded.portal_location == LOCATION_DRAGONSPINE &&
-        loaded.map.tiles[TOWN4_DRAGON_GATE_Y][TOWN_W - 1] == TILE_TOWN_EXIT &&
+        loaded.map.tiles[0][RIDGESHIRE_DRAGON_GATE_X] == TILE_TOWN_EXIT &&
         loaded.max_dragonspine_level_reached == DRAGONSPINE_DEPTH &&
         loaded.dragonspine_cache[saved_level - 1].valid);
     if (restored) {

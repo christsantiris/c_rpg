@@ -84,7 +84,7 @@ and portal anchors remain intact.
 Return all three fragments to Dain in Ridgeshire's town center for the one-time
 reward of **60 gold and 400 score**.
 
-Ridgeshire's east gate enters [Dragonspine](dragonspine.md) directly. Ilya
+Ridgeshire's north gate leads along an approach to [Dragonspine](dragonspine.md). Ilya
 assigns its goblet quest in Oakhaven's Tavern. After the Goblin King's defeat, a separate south shortcut gate
 at x=28 follows the safe High Pass to OakHaven's northeast road. Ridgeshire's
 ordinary south mountain gate at x=20 stays open before and after the victory.
