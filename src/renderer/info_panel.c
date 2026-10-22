@@ -136,6 +136,8 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
         SDL_snprintf(loc, sizeof(loc), "FOREST ROAD");
     } else if (g->location == LOCATION_HEALER) {
         SDL_snprintf(loc, sizeof(loc), "HEALER");
+    } else if (g->location == LOCATION_WITCH) {
+        SDL_snprintf(loc, sizeof(loc), "WITCH");
     } else if (g->location == LOCATION_INN) {
         SDL_snprintf(loc, sizeof(loc), "INN");
     } else if (g->location == LOCATION_GUILD) {

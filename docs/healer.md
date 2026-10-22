@@ -22,3 +22,17 @@ location, HP, gold, and any open treatment offer.
 
 Lysa no longer buys or sells Health Potions. The Alchemist and Rosemoor's
 Apothecary still sell them for 20 gold each.
+
+## Stillbury witch
+
+The **WITCH** hut stands east of Stillbury's crossroads. Walk inside, approach
+**Morwen**, and press **T** (or your remapped Talk key). She offers the same
+three choices for **MP**: full restoration, half of your missing MP, or as much
+as your gold can afford. The price is **1 gold per 10 MP**, rounded up.
+
+Use **1**, **2**, or **3** to choose the displayed amount and price. **Esc** or
+**Enter** closes the dialogue. Walk through the south door to return to the path
+in front of her hut. Saving inside preserves your location and any open offer.
+
+Morwen restores MP only and no longer buys or sells Mana Potions. The Alchemist
+and Rosemoor's Apothecary still sell them for 20 gold each.
