@@ -3,6 +3,7 @@
 #include "game_renderer.h"
 #include "../game/town_life.h"
 #include "../game/approach.h"
+#include "../game/town_road.h"
 #include "../game/necromancer.h"
 #include <stdio.h>
 
@@ -101,6 +102,8 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
             ? "ISLAND DOCK" : "DOCKS");
     } else if (town_life_is_interior(g->location)) {
         SDL_snprintf(loc, sizeof(loc), "%s", town_life_building(g->location)->label);
+    } else if (g->location == LOCATION_TOWN_ROAD) {
+        SDL_snprintf(loc, sizeof(loc), "%s ROAD", approach_town_name(g->road_town));
     } else if (g->location == LOCATION_APPROACH) {
         const TownApproach *route = approach_route(g);
         SDL_snprintf(loc, sizeof(loc), "%s PATH", route ? approach_area_name(route->area) : "AREA");

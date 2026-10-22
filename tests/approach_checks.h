@@ -2,6 +2,7 @@
 #define APPROACH_CHECKS_H
 
 #include "test_utils.h"
+#include "town_road_checks.h"
 #include "game/approach.h"
 #include "game/actions.h"
 
@@ -15,6 +16,10 @@ static inline int approach_check_entrance_horizontal(const TownApproach *route) 
 }
 
 static inline void walk_return_approach(GameState *g) {
+    if (g->location == LOCATION_TOWN_ROAD) {
+        walk_into_arrived_town(g);
+        return;
+    }
     ASSERT("the area exit returns to the safe approach path", g->location == LOCATION_APPROACH && g->enemy_count == 0);
     int steps = 0;
     const TownApproach *route = approach_route(g);
@@ -36,6 +41,7 @@ static inline void walk_return_approach(GameState *g) {
         }
         action_resolve_player(g, (Action){ACTION_MOVE, g->player.x + dx, g->player.y + dy});
     }
+    walk_into_arrived_town(g);
     ASSERT("walking the return path reaches the town gate", g->location != LOCATION_APPROACH);
 }
 
@@ -66,6 +72,7 @@ static inline void walk_approach_branch(GameState *g, int boss) {
 }
 
 static inline void walk_forest_road(GameState *g) {
+    finish_town_departure(g);
     int x;
     int y;
     int open = approach_forest_town_exit(g, &x, &y);
@@ -75,9 +82,11 @@ static inline void walk_forest_road(GameState *g) {
         int dx = dy ? 0 : (x > g->player.x) - (x < g->player.x);
         action_resolve_player(g, (Action){ACTION_MOVE, g->player.x + dx, g->player.y + dy});
     }
+    walk_into_arrived_town(g);
 }
 
 static inline void walk_to_labyrinth(GameState *g) {
+    finish_town_departure(g);
     for (int step = 0; g->location == LOCATION_APPROACH && step < APPROACH_W + 4; step++) {
         if (g->player.x == APPROACH_LABYRINTH_X && g->player.y == APPROACH_LABYRINTH_Y + 1) {
             break;
@@ -90,6 +99,7 @@ static inline void walk_to_labyrinth(GameState *g) {
 }
 
 static inline void walk_swamp_road(GameState *g) {
+    finish_town_departure(g);
     int x;
     int y;
     int open = approach_swamp_town_exit(g, &x, &y);
@@ -99,6 +109,7 @@ static inline void walk_swamp_road(GameState *g) {
         int dy = dx ? 0 : (y > g->player.y) - (y < g->player.y);
         action_resolve_player(g, (Action){ACTION_MOVE, g->player.x + dx, g->player.y + dy});
     }
+    walk_into_arrived_town(g);
 }
 
 static inline void walk_shortcut_approach(GameState *g) {
@@ -110,6 +121,7 @@ static inline void walk_boss_approach(GameState *g) {
 }
 
 static inline void walk_town_approach(GameState *g) {
+    finish_town_departure(g);
     ASSERT("town departure begins on a safe approach path", g->location == LOCATION_APPROACH && g->enemy_count == 0);
     int steps = 0;
     const TownApproach *route = approach_route(g);

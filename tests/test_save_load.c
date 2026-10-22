@@ -1,4 +1,5 @@
 #include "test_utils.h"
+#include "town_road_checks.h"
 #include "game/approach.h"
 #include "../src/game/game.h"
 #include "../src/systems/save_load.h"
@@ -1278,6 +1279,7 @@ static void test_legacy_apothecary(void) {
     memset(&original, 0, sizeof(original));
     game_init(&original);
     game_leave_crownroad(&original, LOCATION_TOWN3);
+        walk_into_arrived_town(&original);
     for (int y = old_apothecary_y; y < old_apothecary_lane_y; y++) {
         for (int x = old_apothecary_x; x < old_apothecary_x + old_apothecary_w; x++) {
             original.map.tiles[y][x] = TILE_TOWN_FLOOR;
@@ -1613,6 +1615,7 @@ static void test_longer_crownroad_migration(void) {
         original.enemies[0].hp = 11;
         original.enemies[2].active = 0;
         game_leave_crownroad(&original, LOCATION_TOWN4);
+        walk_into_arrived_town(&original);
         // Version 117 had thirty slots on each road, before the density fix.
         original.crownroad_cache.enemy_count = CROWNROAD_BASE_ENEMIES;
         original.kingroad_west_cache.enemy_count = CROWNROAD_BASE_ENEMIES;
@@ -1699,6 +1702,7 @@ static void test_crownroad_density_migration(void) {
         original.enemies[0].hp = 11;
         original.enemies[2].active = 0;
         game_leave_crownroad(&original, LOCATION_TOWN4);
+        walk_into_arrived_town(&original);
         original.crownroad_cache.enemy_count = CROWNROAD_BASE_ENEMIES;
         original.kingroad_west_cache.enemy_count = CROWNROAD_BASE_ENEMIES;
         if (scenario < 2) {

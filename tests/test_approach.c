@@ -245,6 +245,7 @@ void test_approaches(void) {
             int hp = g->player.hp;
             int equipment = g->inventory_count;
             action_resolve_player(g, (Action){ACTION_MOVE, route->gate_x, route->gate_y});
+            finish_town_departure(g);
             ASSERT("a normal town departure reaches a separate path before any enemies spawn", g->location == LOCATION_APPROACH && g->approach_route == i && g->enemy_count == 0 && g->map.room_count == 0);
             int dx = route->gate_x == 0 ? -1 : route->gate_x == TOWN_W - 1 ? 1 : 0;
             int dy = route->gate_y == 0 ? -1 : route->gate_y == TOWN_H - 1 ? 1 : 0;
@@ -286,6 +287,7 @@ void test_approaches(void) {
             while (loaded->location == LOCATION_APPROACH && steps++ < APPROACH_LENGTH) {
                 action_resolve_player(loaded, (Action){ACTION_MOVE, loaded->player.x - dx, loaded->player.y - dy});
             }
+            walk_into_arrived_town(loaded);
             ASSERT("turning back through the path restores the original town gate and preserves the dungeon cache", loaded->location == route->town && loaded->player.x == px && loaded->player.y == py && loaded->level_cache[2].valid && memcmp(&dungeon, &loaded->level_cache[2].map, sizeof(Map)) == 0);
             walk_town_approach(g);
             int reverse = 0;
@@ -383,6 +385,7 @@ void test_approaches(void) {
             }
             if (g->map.tiles[y][x] == TILE_TOWN_EXIT) {
                 action_resolve_player(g, (Action){ACTION_MOVE, x, y});
+                finish_town_departure(g);
                 wide_gates &= g->location == LOCATION_APPROACH && g->approach_route == i;
             }
         }
@@ -561,6 +564,7 @@ void test_approaches(void) {
         const TownApproach *route = &town_approaches[origin ? 15 : 1];
         approach_town(g, route);
         action_resolve_player(g, (Action){ACTION_MOVE, route->gate_x, route->gate_y});
+            finish_town_departure(g);
         int x;
         int y;
         ASSERT("the Dawnmere through-road is hidden while the Lich lives", !approach_dungeon_town_exit(g, &x, &y));
@@ -625,6 +629,7 @@ void test_approaches(void) {
                 action_resolve_player(g, (Action){ACTION_MOVE, g->player.x + (east ? 1 : -1), g->player.y});
             }
             action_resolve_player(g, (Action){ACTION_MOVE, east ? APPROACH_W - 1 : 0, y});
+            walk_into_arrived_town(g);
             ASSERT("walking east reaches Dawnmere and walking west reaches Oakhaven without a prompt", g->location == (east ? LOCATION_DAWNMERE : LOCATION_TOWN) && !g->dialogue_active);
             ASSERT("town crossing preserves the dungeon cache and Lich victory", g->level_cache[DUNGEON_DEPTH - 1].valid && (g->defeated_bosses & (1 << LOCATION_DUNGEON)));
             ASSERT("Dawnmere retains its merchant footprint and the removed hall lot is walkable", g->location != LOCATION_DAWNMERE || (g->map.tiles[12][1] == TILE_TOWN_PATH && map_is_walkable(&g->map, 20, 12) && !map_is_walkable(&g->map, 7, 7) && map_is_walkable(&g->map, 26, 6)));

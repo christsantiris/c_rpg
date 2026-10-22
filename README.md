@@ -43,6 +43,10 @@ beside the Haunted Forest entrance on that road and stays sealed until Rook
 assigns the quest in Oakhaven's Tavern. Castle, secret tunnel and Crown Road
 travel keep their existing layouts.
 
+All five towns now stand beside signed exterior roads. Walk into a town sprite
+to arrive beside the matching interior exit gate, or follow the road around town to
+continue travelling. See [town roads and directional entrances](docs/town-roads.md).
+
 ## Controls
 
 At **30% HP or below**, the play area gains a slowly pulsing red border and the

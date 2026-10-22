@@ -1,5 +1,6 @@
 #include "renderer.h"
 #include "info_panel.h"
+#include "../game/town_road.h"
 #include <stdio.h>
 #include "message_bar.h"
 
@@ -56,6 +57,12 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     for (int i = 0; i <= TOWN_EXIT_CATACOMBS; i++) {
         r->area_entrance_textures[i] = entrance_paths[i] ? load_sprite_texture(sdl, entrance_paths[i]) : NULL;
     }
+    const char *towns[TOWN_ROAD_COUNT] = {"oakhaven", "stillbury", "rosemoor", "ridgeshire", "dawnmere"};
+    for (int i = 0; i < TOWN_ROAD_COUNT; i++) {
+        char path[100];
+        snprintf(path, sizeof(path), "assets/images/%s-town.bmp", towns[i]);
+        r->town_textures[i] = load_sprite_texture(sdl, path);
+    }
     for (int i = 0; i <= TOWN_EXIT_GLASSDEEP; i++) {
         r->town_gate_textures[i] = NULL;
     }
@@ -100,6 +107,12 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
 }
 
 void renderer_free(Renderer *r) {
+    for (int i = 0; i < TOWN_ROAD_COUNT; i++) {
+        if (r->town_textures[i]) {
+            SDL_DestroyTexture(r->town_textures[i]);
+            r->town_textures[i] = NULL;
+        }
+    }
     for (int i = 0; i <= TOWN_EXIT_GLASSDEEP; i++) {
         if (r->town_gate_textures[i]) {
             SDL_DestroyTexture(r->town_gate_textures[i]);

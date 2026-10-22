@@ -45,6 +45,8 @@ const char *approach_area_name(Location area) {
         case LOCATION_ASHEN: return "ASHEN HOLLOW";
         case LOCATION_GLASSDEEP: return "GLASSDEEP CAVERNS";
         case LOCATION_CATACOMBS: return "ROYAL CATACOMBS";
+        case LOCATION_CROWNROAD: return "CROWN ROAD EAST";
+        case LOCATION_KING_ROAD_WEST: return "CROWN ROAD WEST";
         default: return "AREA";
     }
 }
@@ -738,9 +740,16 @@ int approach_enter(GameState *g, int x, int y) {
     if (index < 0 || g->map.tiles[y][x] != TILE_TOWN_EXIT) {
         return 0;
     }
+    return approach_enter_region(g, index);
+}
+
+int approach_enter_region(GameState *g, int index) {
+    if (index < 0 || index >= town_approach_count) {
+        return 0;
+    }
     const TownApproach *route = &town_approaches[index];
-    int dx = x == 0 ? -1 : x == TOWN_W - 1 ? 1 : 0;
-    int dy = y == 0 ? -1 : y == TOWN_H - 1 ? 1 : 0;
+    int dx = route->gate_x == 0 ? -1 : route->gate_x == TOWN_W - 1 ? 1 : 0;
+    int dy = route->gate_y == 0 ? -1 : route->gate_y == TOWN_H - 1 ? 1 : 0;
     generate_approach(&g->map, route->area, dx, dy);
     int tx = g->map.stairs_up_x;
     int ty = g->map.stairs_up_y;

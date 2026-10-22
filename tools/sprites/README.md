@@ -317,3 +317,18 @@ renderer. Save version 175 converts old corridor approaches without resetting
 combat maps, quest progress, character state or loot. Castle, secret tunnel and Crown Roads retain their existing layouts. The
 existing sealed/open labyrinth sprite now stands beside the forest entrance;
 its maze floors are unchanged.
+
+
+### Town exteriors
+
+`towns.py` creates the five 408×360 pixel town sprites: `oakhaven-town.bmp`,
+`stillbury-town.bmp`, `rosemoor-town.bmp`, `ridgeshire-town.bmp` and
+`dawnmere-town.bmp`. It runs after individual buildings in `make sprites`, using
+pixelkit stonework, timber framing, textured plaster and tiled roofs. Dense roof
+clusters sit inside a rounded curtain wall with projecting towers, following the
+user's medieval hill-town reference. The entire connected side is an entrance
+trigger; exterior artwork has no target gate. Interior gates remain exits.
+
+`src/game/town_road.c` defines the footprint, directional sprite entrances and bypass
+roads; `src/renderer/town_road_renderer.c` anchors the sprite and direction labels.
+See [art review and SDL previews](../../docs/art-sources/town-exteriors/README.md).

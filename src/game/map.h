@@ -643,7 +643,15 @@ typedef enum {
     TILE_APPROACH_BOSS,
     TILE_NPC_HEALER,
     TILE_NPC_WITCH,
-    TILE_APPROACH_DUNGEON_TOWN
+    TILE_APPROACH_DUNGEON_TOWN,
+    TILE_TOWN_ROAD_ENTRY_NORTH,
+    TILE_TOWN_ROAD_ENTRY_EAST,
+    TILE_TOWN_ROAD_ENTRY_SOUTH,
+    TILE_TOWN_ROAD_ENTRY_WEST,
+    TILE_TOWN_ROAD_EXIT_NORTH,
+    TILE_TOWN_ROAD_EXIT_EAST,
+    TILE_TOWN_ROAD_EXIT_SOUTH,
+    TILE_TOWN_ROAD_EXIT_WEST
 } TileType;
 
 typedef struct {
@@ -679,6 +687,7 @@ void map_set_town2_road(Map *m, int unlocked);
 void map_set_stillbury_forest_road(Map *m, int unlocked);
 void map_generate_town4(Map *m, int *spawn_x, int *spawn_y);
 void map_generate_dawnmere(Map *m, int *spawn_x, int *spawn_y);
+TileType map_dawnmere_ground(int x, int y);
 void map_set_town4_road(Map *m, int unlocked);
 void map_set_ridgeshire_mountain_road(Map *m, int unlocked);
 void map_place_town4_square(Map *m);

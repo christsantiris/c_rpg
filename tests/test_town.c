@@ -41,6 +41,7 @@ void test_king_roads_and_castle(void) {
     g.player.x = TOWN_W - 2;
     g.player.y = TOWN3_KING_GATE_Y;
     action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 1, TOWN3_KING_GATE_Y});
+    finish_town_departure(&g);
     ASSERT("Rosemoor east gate enters Crown Road East at its west end",
         g.location == LOCATION_CROWNROAD && g.enemy_count == CROWNROAD_ENEMIES &&
         g.player.x == 1 && g.player.y == CROWNROAD_Y);
@@ -96,6 +97,7 @@ void test_king_roads_and_castle(void) {
         g.enemy_count == CROWNROAD_ENEMIES && g.enemies[0].active);
     GameState ridgeshire = g;
     game_leave_crownroad(&ridgeshire, LOCATION_TOWN4);
+    walk_into_arrived_town(&ridgeshire);
     ASSERT("Ridgeshire has two guards flanking its open Crown Road West gate",
         ridgeshire.map.tiles[TOWN4_KING_GATE_Y - 1][TOWN4_KING_GATE_X] ==
             TILE_NPC_ROYAL_GUARD &&
@@ -138,6 +140,7 @@ void test_king_roads_and_castle(void) {
     g.enemies[1].active = 0;
     g.player.x = CROWNROAD_W - 2;
     action_resolve_player(&g, (Action){ACTION_MOVE, CROWNROAD_W - 1, CROWNROAD_Y});
+    walk_into_arrived_town(&g);
     ASSERT("Crown Road West reaches Ridgeshire's west entrance",
         g.location == LOCATION_TOWN4 && g.player.x == 1 && g.player.y == 12);
     int workshop_walls = 1;
@@ -166,6 +169,7 @@ void test_king_roads_and_castle(void) {
         g = loaded;
     }
     action_resolve_player(&g, (Action){ACTION_MOVE, 0, 12});
+    finish_town_departure(&g);
     ASSERT("Ridgeshire starts a new Crown Road West crossing at its east end",
         g.location == LOCATION_KING_ROAD_WEST && g.player.x == CROWNROAD_W - 2 &&
         g.enemies[1].active);
@@ -184,6 +188,7 @@ void test_king_roads_and_castle(void) {
         g.location == LOCATION_CROWNROAD && g.player.x == CROWNROAD_W - 2 && g.enemies[0].active);
     g.player.x = 1;
     action_resolve_player(&g, (Action){ACTION_MOVE, 0, CROWNROAD_Y});
+    walk_into_arrived_town(&g);
     ASSERT("Crown Road East returns to Rosemoor's east entrance",
         g.location == LOCATION_TOWN3 && g.player.x == TOWN_W - 2 &&
         g.player.y == TOWN3_KING_GATE_Y);
@@ -215,8 +220,10 @@ void test_town3_royal_guards(void) {
     for (int x = 29; x < TOWN_W; x++) {
         action_resolve_player(&g, (Action){ACTION_MOVE, x, TOWN3_KING_GATE_Y});
     }
+    finish_town_departure(&g);
     ASSERT("guards allow passage into the road", g.location == LOCATION_CROWNROAD);
     game_leave_crownroad(&g, LOCATION_TOWN3);
+    walk_into_arrived_town(&g);
     g.map.tiles[TOWN3_GUARD_NORTH_Y][TOWN3_GUARD_X] = TILE_TOWN_FLOOR;
     g.map.tiles[TOWN3_GUARD_SOUTH_Y][TOWN3_GUARD_X] = TILE_TOWN_FLOOR;
     g.player.x = TOWN3_GUARD_X;
@@ -667,6 +674,7 @@ void test_rook_labyrinth(void) {
     loaded.player.y = 12;
     map_set_stillbury_forest_road(&loaded.map, 1);
     action_resolve_player(&loaded, (Action){ACTION_MOVE, TOWN_W - 1, 12});
+    finish_town_departure(&loaded);
     ASSERT("the shared gate enters the crossroads", loaded.location == LOCATION_APPROACH && loaded.enemy_count == 0);
     saved = save_game(&loaded, slot);
     restored = saved && load_game(&g, slot);
@@ -1311,6 +1319,7 @@ void test_forest(void) {
     for (int step = 0; g.location == LOCATION_APPROACH && step < APPROACH_W; step++) {
         action_resolve_player(&g, (Action){ACTION_MOVE, g.player.x - 1, g.player.y});
     }
+    walk_into_arrived_town(&g);
     ASSERT("walking west after forest victory reaches Stillbury", g.location == LOCATION_TOWN2);
     ASSERT("forest completion arrives beside Stillbury's east forest gate", g.player.x == TOWN_W - 2 && g.player.y == 12);
 }

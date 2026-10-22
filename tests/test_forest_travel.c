@@ -68,6 +68,7 @@ static void forest_walk_road(GameState *g, int west) {
         int dy = (g->map.stairs_up_y > g->player.y) - (g->map.stairs_up_y < g->player.y);
         action_resolve_player(g, (Action){ACTION_MOVE, g->player.x + (dy ? 0 : west ? -1 : 1), g->player.y + dy});
     }
+    walk_into_arrived_town(g);
 }
 
 static void test_forest_crossing(int stillbury, int home) {
@@ -80,6 +81,7 @@ static void test_forest_crossing(int stillbury, int home) {
     forest.alder_quest_state = 1;
     int gate_x = stillbury ? TOWN_W - 1 : 0;
     action_resolve_player(&forest, (Action){ACTION_MOVE, gate_x, 12});
+    finish_town_departure(&forest);
     ASSERT("either forest gate first opens a safe approach", forest.location == LOCATION_APPROACH && forest.enemy_count == 0);
     int x;
     int y;

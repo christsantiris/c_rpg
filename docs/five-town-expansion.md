@@ -11,9 +11,10 @@ pathway entrances. Windscar Highlands remains planned for a separate change.
 
 ```mermaid
 flowchart BT
-    Oak[Oakhaven] <--> Forest[Haunted Forest · 5 stages]
-    Forest <--> Still[Stillbury]
-    Forest --- Maze[Rook's Labyrinth · quest gate]
+    Oak[Oakhaven] <--> Road[Forest road]
+    Road <--> Still[Stillbury]
+    Road --- Forest[Haunted Forest · 5 stages]
+    Road --- Maze[Rook's Labyrinth · separate quest entrance]
     Still <-->|Blackwater Swamp · 5 stages| Rose[Rosemoor]
     Rose <-->|Crown Road East| Castle[Castle of No Return]
     Oak <-->|Dungeon · 5 stages| Dawn[Dawnmere]
@@ -51,8 +52,9 @@ existing connections remain in place.
   player physically walks **west to Oakhaven** or **east to Dawnmere**.
 - Keep the choice on that road: no town-selection prompt, direct arrival in a
   town, or second path that reverses the player's travel direction.
-- Use the town grass and cobblestone approach visuals, matching town gates at
-  either end, and signs naming both towns. Keep the existing lich crypt art.
+- Use the town grass and cobblestone approach visuals, open road continuations
+  at either end, and signs naming both towns. Town sprites stand beyond those
+  road boundaries. Keep the existing lich crypt art.
 - Normal dungeon retreat returns to the approach for the entrance used.
   Return-to-town spells and portals remember that entrance town as well.
 - Preserve the Lich encounter, keys, burial-seal quest, rewards, exploration,
@@ -118,3 +120,13 @@ Oakhaven–Stillbury road. The gate is sealed until Rook assigns his quest in
 Oakhaven's Tavern; both approaches can reach it before the forest boss falls.
 Its maze content is unchanged, and physical exits return to the approach used.
 The illustrated world map includes this entrance and all five towns.
+
+
+## Optional town visits
+
+Oakhaven, Stillbury, Rosemoor, Ridgeshire and Dawnmere now have walled sprites
+beside safe exterior roads. Walking into a connected cardinal side of a town
+sprite enters beside the matching interior exit gate. Players can bypass any town and continue to another
+existing regional approach or Crown Road. Regional boss locks remain in force;
+Windscar's gate and Dawnmere's unconnected sides remain closed. See
+[town roads](town-roads.md) for the connection table and save behavior.

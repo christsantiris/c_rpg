@@ -3,17 +3,23 @@
 #include <stdio.h>
 #include "../screens/landing.h"
 
-#define TOWN_MUSIC    "assets/music/Woodland Fantasy.mp3"
-#define TOWN2_MUSIC   "assets/music/town-music.mp3"
-#define TOWN3_MUSIC   "assets/music/Town 3.mp3"
-#define TOWN4_MUSIC   "assets/music/town4theme.mp3"
-#define DUNGEON_MUSIC "assets/music/the_march_upon_the_red_mountain.mp3"
+#define TOWN_MUSIC "assets/music/oakhaven.mp3"
+#define TOWN2_MUSIC "assets/music/stillbury.mp3"
+#define TOWN3_MUSIC "assets/music/rosemoor.mp3"
+#define TOWN4_MUSIC "assets/music/ridgeshire.mp3"
+#define DAWNMERE_MUSIC "assets/music/dawnmere.mp3"
+#define CASTLE_MUSIC "assets/music/castle.mp3"
+#define DUNGEON_MUSIC "assets/music/dungeon.mp3"
+#define TRAVEL_MUSIC "assets/music/travel-loop.mp3"
 
 static Mix_Music *town_track = NULL;
 static Mix_Music *town2_track = NULL;
 static Mix_Music *town3_track = NULL;
 static Mix_Music *town4_track = NULL;
+static Mix_Music *dawnmere_track = NULL;
+static Mix_Music *castle_track = NULL;
 static Mix_Music *dungeon_track = NULL;
+static Mix_Music *travel_track = NULL;
 static Mix_Music *current_track = NULL;
 static int music_on = 1;
 
@@ -26,7 +32,10 @@ void music_init(void) {
     town2_track = Mix_LoadMUS(TOWN2_MUSIC);
     town3_track = Mix_LoadMUS(TOWN3_MUSIC);
     town4_track = Mix_LoadMUS(TOWN4_MUSIC);
+    dawnmere_track = Mix_LoadMUS(DAWNMERE_MUSIC);
+    castle_track = Mix_LoadMUS(CASTLE_MUSIC);
     dungeon_track = Mix_LoadMUS(DUNGEON_MUSIC);
+    travel_track = Mix_LoadMUS(TRAVEL_MUSIC);
     if (!town_track) {
         fprintf(stderr, "Failed to load town music: %s\n", Mix_GetError());
     }
@@ -39,8 +48,17 @@ void music_init(void) {
     if (!town4_track) {
         fprintf(stderr, "Failed to load Ridgeshire music: %s\n", Mix_GetError());
     }
+    if (!dawnmere_track) {
+        fprintf(stderr, "Failed to load Dawnmere music: %s\n", Mix_GetError());
+    }
+    if (!castle_track) {
+        fprintf(stderr, "Failed to load castle music: %s\n", Mix_GetError());
+    }
     if (!dungeon_track) {
         fprintf(stderr, "Failed to load dungeon music: %s\n", Mix_GetError());
+    }
+    if (!travel_track) {
+        fprintf(stderr, "Failed to load travel music: %s\n", Mix_GetError());
     }
 }
 
@@ -69,9 +87,15 @@ int music_enabled(void) {
     return music_on;
 }
 
-void music_update(int screen, int in_town, int in_town2, int in_town3, int in_town4) {
+void music_update(int screen, int in_town, int in_town2, int in_town3, int in_town4, int traveling, int in_dawnmere, int in_castle) {
     if (screen == SCREEN_PLAYING) {
-        if (in_town4) {
+        if (traveling) {
+            play_track(travel_track);
+        } else if (in_castle) {
+            play_track(castle_track);
+        } else if (in_dawnmere) {
+            play_track(dawnmere_track);
+        } else if (in_town4) {
             play_track(town4_track ? town4_track : town_track);
         } else if (in_town3) {
             play_track(town3_track ? town3_track : town_track);
@@ -103,8 +127,17 @@ void music_free(void) {
     if (town4_track) {
         Mix_FreeMusic(town4_track);
     }
+    if (dawnmere_track) {
+        Mix_FreeMusic(dawnmere_track);
+    }
+    if (castle_track) {
+        Mix_FreeMusic(castle_track);
+    }
     if (dungeon_track) {
         Mix_FreeMusic(dungeon_track);
+    }
+    if (travel_track) {
+        Mix_FreeMusic(travel_track);
     }
     Mix_CloseAudio();
 }
