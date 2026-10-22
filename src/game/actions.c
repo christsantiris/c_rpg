@@ -1173,6 +1173,7 @@ void action_resolve_player(GameState *g, Action a) {
     if (g->game_won || g->castle_prompt) {
         return;
     }
+    game_refresh_debug_passages(g);
     game_repair_equipment_indices(g);
     if (g->location == LOCATION_TOWN ||
         g->location == LOCATION_TAVERN ||
@@ -1244,14 +1245,14 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
         if (g->location == LOCATION_CATACOMBS && tile == TILE_RETURN_EXIT) {
-            if (g->defeated_bosses & (1 << LOCATION_CATACOMBS)) {
+            if (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_CATACOMBS))) {
                 game_leave_catacombs(g);
             } else {
                 push_message(g, "The Grave Marshal seals this return passage.");
             }
             return;
         }
-        if (tile == TILE_RETURN_EXIT && (g->defeated_bosses & (1 << g->location))) {
+        if (tile == TILE_RETURN_EXIT && (g->debug_passages_unlocked || (g->defeated_bosses & (1 << g->location)))) {
             int forest = g->location == LOCATION_FOREST;
             g->score += g->level * 100;
             game_return_to_approach(g);
@@ -1271,7 +1272,7 @@ void action_resolve_player(GameState *g, Action a) {
         TileType underlay = floor_drop_underlay(g, g->player.x, g->player.y);
         if (g->location == LOCATION_DUNGEON &&
             (underlay == TILE_DUNGEON_STAIRS_RETURN || underlay == TILE_DUNGEON_STAIRS_SEALED)) {
-            if (g->defeated_bosses & (1 << LOCATION_DUNGEON)) {
+            if (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_DUNGEON))) {
                 g->score += g->level * 100;
                 game_return_to_approach(g);
                 push_message(g, "The road leads west to Oakhaven and east to Dawnmere.");
@@ -1281,7 +1282,7 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
         if (g->location == LOCATION_TEMPLE && underlay == TILE_STAIRS_UP) {
-            if (game_temple_remaining_enemies(g) > 0) {
+            if (!g->debug_passages_unlocked && game_temple_remaining_enemies(g) > 0) {
                 push_message(g, "Stairs sealed: clear all Sun and Moon enemies. Use an altar to awaken dormant sentinels.");
                 return;
             }
@@ -2501,7 +2502,7 @@ void action_resolve_player(GameState *g, Action a) {
                 g->score += g->level * 100;
             } else {
                 for (int i = 0; i < g->enemy_count; i++) {
-                    if (g->enemies[i].active &&
+                    if (!g->debug_passages_unlocked && g->enemies[i].active &&
                         g->enemies[i].type == ENEMY_RED_DRAGON) {
                         push_message(g, "The dragon guards the summit pass!");
                         return;
@@ -2551,7 +2552,7 @@ void action_resolve_player(GameState *g, Action a) {
             int reverse = g->map.tiles[ty][tx] == TILE_SWAMP_ENTRANCE;
             if (!reverse && g->level == SWAMP_BOSS_LEVEL) {
                 for (int i = 0; i < g->enemy_count; i++) {
-                    if (g->enemies[i].active && g->enemies[i].type == ENEMY_SWAMP_DEMON) {
+                    if (!g->debug_passages_unlocked && g->enemies[i].active && g->enemies[i].type == ENEMY_SWAMP_DEMON) {
                         push_message(g, "The demon seals the swamp exit!");
                         return;
                     }
@@ -2591,7 +2592,7 @@ void action_resolve_player(GameState *g, Action a) {
                 g->score += g->level * 100;
             } else {
                 for (int i = 0; i < g->enemy_count; i++) {
-                    if (g->enemies[i].active &&
+                    if (!g->debug_passages_unlocked && g->enemies[i].active &&
                         g->enemies[i].type == ENEMY_POLAR_KRAKEN) {
                         push_message(g, "The Polar Kraken bars the way west!");
                         return;
@@ -2620,7 +2621,7 @@ void action_resolve_player(GameState *g, Action a) {
                 g->score += g->level * 100;
             } else {
                 for (int i = 0; i < g->enemy_count; i++) {
-                    if (g->enemies[i].active && g->enemies[i].is_boss) {
+                    if (!g->debug_passages_unlocked && g->enemies[i].active && g->enemies[i].is_boss) {
                         push_message(g, "The Desert Pharaoh bars the way west!");
                         return;
                     }
@@ -2647,7 +2648,7 @@ void action_resolve_player(GameState *g, Action a) {
                 game_descend(g);
                 g->score += g->level * 100;
             } else {
-                if (!(g->defeated_bosses & (1 << LOCATION_MOONVEIL))) {
+                if (!g->debug_passages_unlocked && !(g->defeated_bosses & (1 << LOCATION_MOONVEIL))) {
                     push_message(g, "The Thorn Regent seals the path to Rosemoor!");
                     return;
                 }
@@ -2672,7 +2673,7 @@ void action_resolve_player(GameState *g, Action a) {
             if (g->level < ASHEN_DEPTH) {
                 game_descend(g);
                 g->score += g->level * 100;
-            } else if (g->defeated_bosses & (1 << LOCATION_ASHEN)) {
+            } else if (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_ASHEN))) {
                 game_return_to_approach(g);
                 push_message(g, "You return to Ridgeshire through the volcanic pass.");
             } else {
@@ -2696,7 +2697,7 @@ void action_resolve_player(GameState *g, Action a) {
             if (g->level < GLASSDEEP_DEPTH) {
                 game_descend(g);
                 g->score += g->level * 100;
-            } else if (g->defeated_bosses & (1 << LOCATION_GLASSDEEP)) {
+            } else if (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_GLASSDEEP))) {
                 game_return_to_approach(g);
                 push_message(g, "You emerge from Glassdeep at Stillbury's quarry gate.");
             } else {
@@ -2717,8 +2718,8 @@ void action_resolve_player(GameState *g, Action a) {
 
         if (g->location == LOCATION_COAST &&
             g->map.tiles[ty][tx] == TILE_COAST_EXIT) {
-            if (g->player.x != g->map.stairs_down_x ||
-                g->player.y != g->map.stairs_down_y) {
+            if (!g->debug_passages_unlocked && (g->player.x != g->map.stairs_down_x ||
+                g->player.y != g->map.stairs_down_y)) {
                 return;
             }
             if (g->level < COAST_DEPTH) {
@@ -2727,7 +2728,7 @@ void action_resolve_player(GameState *g, Action a) {
             } else {
                 int queen_alive = 0;
                 for (int i = 0; i < g->enemy_count; i++) {
-                    if (g->enemies[i].active &&
+                    if (!g->debug_passages_unlocked && g->enemies[i].active &&
                         g->enemies[i].type == ENEMY_DROWNED_QUEEN) {
                         queen_alive = 1;
                         break;
@@ -2750,7 +2751,7 @@ void action_resolve_player(GameState *g, Action a) {
             int reverse = g->map.tiles[ty][tx] == TILE_FOREST_ENTRANCE;
             if (!reverse && g->level == FOREST_BOSS_LEVEL) {
                 for (int i = 0; i < g->enemy_count; i++) {
-                    if (g->enemies[i].active && g->enemies[i].type == ENEMY_FOREST_NECROMANCER) {
+                    if (!g->debug_passages_unlocked && g->enemies[i].active && g->enemies[i].type == ENEMY_FOREST_NECROMANCER) {
                         push_message(g, "The Necromancer seals the grove exit!");
                         return;
                     }
@@ -2779,7 +2780,7 @@ void action_resolve_player(GameState *g, Action a) {
             int reverse = g->map.tiles[ty][tx] == TILE_MOUNTAIN_ENTRANCE;
             if (!reverse && g->level == MOUNTAIN_BOSS_LEVEL) {
                 for (int i = 0; i < g->enemy_count; i++) {
-                    if (g->enemies[i].active && g->enemies[i].type == ENEMY_MOUNTAIN_GOBLIN_KING) {
+                    if (!g->debug_passages_unlocked && g->enemies[i].active && g->enemies[i].type == ENEMY_MOUNTAIN_GOBLIN_KING) {
                         push_message(g, "The Goblin King bars the summit exit!");
                         return;
                     }

@@ -2830,8 +2830,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_island_grass(r, sx, sy, x, y); break;
                 case TILE_ISLAND_MARKER:
                 case TILE_ISLAND_STATUE:
-                case TILE_ISLAND_TEMPLE_GATE:
                     draw_island_path(r, sx, sy, x, y); break;
+                case TILE_ISLAND_TEMPLE_GATE:
+                    draw_island_grass(r, sx, sy, x, y); break;
                 case TILE_TEMPLE_FLOOR:
                     draw_temple_floor(r, sx, sy, x, y); break;
                 case TILE_GUARDIAN_MOON_SANCTUARY:
@@ -3051,17 +3052,17 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     if (g->location == LOCATION_APPROACH && approach_route(g) && approach_route(g)->area == LOCATION_MOUNTAINS) {
         draw_mountain_entrance(r, viewport_to_screen_x(v, g->map.stairs_down_x), viewport_to_screen_y(v, g->map.stairs_down_y));
-        if (approach_route(g)->town == LOCATION_DAWNMERE || (g->defeated_bosses & (1 << LOCATION_MOUNTAINS))) {
+        if (approach_route(g)->town == LOCATION_DAWNMERE || g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_MOUNTAINS))) {
             draw_town_road_sign(r, viewport_to_screen_x(v, g->map.stairs_up_x - 7), viewport_to_screen_y(v, APPROACH_H - 4), "DAWNMERE");
         }
-        if (approach_route(g)->town == LOCATION_TOWN4 || (g->defeated_bosses & (1 << LOCATION_MOUNTAINS))) {
+        if (approach_route(g)->town == LOCATION_TOWN4 || g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_MOUNTAINS))) {
             draw_town_road_sign(r, viewport_to_screen_x(v, g->map.stairs_up_x - 7), viewport_to_screen_y(v, 3), "RIDGESHIRE");
         }
     }
 
     if (g->location == LOCATION_APPROACH && approach_route(g) && approach_route(g)->area == LOCATION_FOREST) {
         draw_forest_entrance(r, viewport_to_screen_x(v, g->map.stairs_down_x), viewport_to_screen_y(v, g->map.stairs_down_y));
-        int open = g->defeated_bosses & (1 << LOCATION_FOREST);
+        int open = g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_FOREST));
         if (open || approach_route(g)->town == LOCATION_TOWN2) {
             draw_town_road_sign(r, viewport_to_screen_x(v, 3), viewport_to_screen_y(v, APPROACH_H / 2 + 2), "STILLBURY");
         }
@@ -3072,7 +3073,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     if (g->location == LOCATION_APPROACH && approach_route(g) && approach_route(g)->area == LOCATION_SWAMP) {
         draw_swamp_entrance(r, viewport_to_screen_x(v, g->map.stairs_down_x), viewport_to_screen_y(v, g->map.stairs_down_y));
-        int open = g->defeated_bosses & (1 << LOCATION_SWAMP);
+        int open = g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_SWAMP));
         if (open || approach_route(g)->town == LOCATION_TOWN2) {
             draw_town_road_sign(r, viewport_to_screen_x(v, g->map.stairs_up_x - 7), viewport_to_screen_y(v, APPROACH_H - 4), "STILLBURY");
         }
@@ -3215,8 +3216,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     if (g->location == LOCATION_ISLAND) {
-        draw_island_temple(r, viewport_to_screen_x(v, 10),
-            viewport_to_screen_y(v, 0));
+        draw_island_temple(r, viewport_to_screen_x(v, ISLAND_TEMPLE_X),
+            viewport_to_screen_y(v, ISLAND_TEMPLE_Y));
         draw_island_camp(r, viewport_to_screen_x(v, 4),
             viewport_to_screen_y(v, 12));
         draw_island_marker(r, viewport_to_screen_x(v, 8),
@@ -3414,7 +3415,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             + (TILE_SIZE - coast_h) / 2;
         renderer_draw_text(r, "SUNKEN COAST", coast_x, coast_y,
             area_label_color(LOCATION_COAST), r->font_tiny);
-        if (g->defeated_bosses & (1 << LOCATION_FOREST)) {
+        if (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_FOREST))) {
             draw_town_road_sign(r, viewport_to_screen_x(v, 1),
                 viewport_to_screen_y(v, 8), "FOREST / STILLBURY");
         }
@@ -3437,7 +3438,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, 20) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE,
             area_label_color(LOCATION_MOUNTAINS), r->font_tiny);
-        if (g->defeated_bosses & (1 << LOCATION_MOUNTAINS)) {
+        if (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_MOUNTAINS))) {
             draw_town_road_sign(r, viewport_to_screen_x(v, 23),
                 viewport_to_screen_y(v, TOWN_H - 4), "MOUNTAINS / DAWNMERE");
         }
@@ -3484,11 +3485,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
             viewport_to_screen_y(v, 12) * TILE_SIZE,
             area_label_color(LOCATION_FOREST), r->font_tiny);
-        if (g->defeated_bosses & (1 << LOCATION_FOREST)) {
+        if (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_FOREST))) {
             draw_town_road_sign(r, viewport_to_screen_x(v, TOWN_W - 5),
                 viewport_to_screen_y(v, 15), "FOREST\nOAKHAVEN");
         }
-        if (g->defeated_bosses & (1 << LOCATION_SWAMP)) {
+        if (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_SWAMP))) {
             draw_town_road_sign(r, viewport_to_screen_x(v, 15),
                 viewport_to_screen_y(v, 2), "SWAMP\nROSEMOOR");
         }
@@ -3521,7 +3522,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         renderer_draw_text(r, "SWAMP",
             viewport_to_screen_x(v, 20) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE, area_label_color(LOCATION_SWAMP), r->font_tiny);
-        if (g->defeated_bosses & (1 << LOCATION_SWAMP)) {
+        if (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_SWAMP))) {
             draw_town_road_sign(r, viewport_to_screen_x(v, 23),
                 viewport_to_screen_y(v, TOWN_H - 4), "SWAMP / STILLBURY");
         }
@@ -3857,8 +3858,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int width = 0;
         TTF_SizeText(r->font_tiny, "RUINED TEMPLE", &width, NULL);
         renderer_draw_text(r, "RUINED TEMPLE",
-            viewport_to_screen_x(v, 20) * TILE_SIZE - width / 2,
-            viewport_to_screen_y(v, 1) * TILE_SIZE, area_label_color(LOCATION_TEMPLE), r->font_tiny);
+            viewport_to_screen_x(v, ISLAND_GATE_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, ISLAND_TEMPLE_Y - 1) * TILE_SIZE, area_label_color(LOCATION_TEMPLE), r->font_tiny);
         TTF_SizeText(r->font_tiny, "CAPTAIN ROWAN", &width, NULL);
         renderer_draw_text(r, "CAPTAIN ROWAN",
             viewport_to_screen_x(v, ISLAND_CAPTAIN_X) * TILE_SIZE +

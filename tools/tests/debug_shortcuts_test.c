@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include "../../src/game/town_road.h"
+#include "../../src/game/castle.h"
 
 static void visit_exterior_town(GameState *g) {
     assert(g->location == LOCATION_TOWN_ROAD);
@@ -83,7 +84,8 @@ int main(void) {
         assert(game->gold == 393 && game->player.hp == 73 && game->player.x == px && game->player.y == py);
         assert(game->inventory_count == 1 && game->inventory[0].sharpened);
         assert(game->elowen_quest_state == 1 && game->elowen_seals_restored == 3);
-        assert(game->defeated_bosses & (1 << LOCATION_DUNGEON));
+        assert(!(game->defeated_bosses & (1 << LOCATION_DUNGEON)));
+        assert(game->debug_passages_unlocked && game_harbor_unlocked(game) && game_can_sail_to_island(game) && game_labyrinth_is_open(game));
         if (!on_path) {
             assert(approach_enter(game, TOWN_W - 1, 12));
         }
@@ -117,7 +119,7 @@ int main(void) {
             assert(approach_enter(game, TOWN_W - 1, 12));
         }
         assert(!approach_dungeon_town_exit(game, &x, &y));
-        assert(load_game(game, 2) && approach_dungeon_town_exit(game, &x, &y));
+        assert(load_game(game, 2) && game->debug_passages_unlocked && approach_dungeon_town_exit(game, &x, &y));
     }
     for (int stillbury = 0; stillbury < 2; stillbury++) {
         game_init(game);
@@ -167,9 +169,8 @@ int main(void) {
     int x;
     int y;
     assert(approach_dungeon_town_exit(game, &x, &y));
-    // Unlocking town roads does not bypass Rook's quest gate.
+    // Normal play still requires Rook's quest; the debug flag bypasses it.
     game_init(game);
-    debug_apply_loadout(game, &debug_config);
     assert(approach_enter(game, 0, 12));
     game->player.x = APPROACH_LABYRINTH_X;
     game->player.y = APPROACH_LABYRINTH_Y + 1;
@@ -196,6 +197,15 @@ int main(void) {
     game_leave_labyrinth(game);
     assert(game->location == LOCATION_APPROACH && game->labyrinth_entry_town == LOCATION_TOWN);
     assert(game->player.x == APPROACH_LABYRINTH_X && game->player.y == APPROACH_LABYRINTH_Y + 1);
+    game_init(game);
+    debug_apply_loadout(game, &debug_config);
+    assert(game->debug_passages_unlocked && game->rook_quest_state == 0);
+    assert(approach_enter(game, 0, 12));
+    game->player.x = APPROACH_LABYRINTH_X;
+    game->player.y = APPROACH_LABYRINTH_Y + 1;
+    action_resolve_player(game, (Action){ACTION_MOVE, APPROACH_LABYRINTH_X, APPROACH_LABYRINTH_Y});
+    assert(game->location == LOCATION_LABYRINTH && game->rook_quest_state == 0);
+    game_leave_labyrinth(game);
     // Loaded town exteriors preserve identity and equipment under the debug option.
     assert(town_road_enter(game, LOCATION_DAWNMERE, TOWN_SIDE_WEST, 0));
     game->gold = 73;
@@ -211,6 +221,118 @@ int main(void) {
     SDL_RenderPresent(sdl);
     visit_exterior_town(game);
     assert(game->location == LOCATION_DAWNMERE && game->player.x == 1 && game->player.y == 12);
+    // Docks and sailing work immediately for new and loaded normal characters.
+    for (int loaded = 0; loaded < 2; loaded++) {
+        game_init(game);
+        assert(!game_harbor_unlocked(game) && !game_can_sail_to_island(game) && !game_labyrinth_is_open(game));
+        game->gold = 393;
+        game->inventory_count = 1;
+        game->inventory[0] = item_make_greatsword();
+        game->inventory[0].sharpened = 1;
+        if (loaded) {
+            assert(save_game(game, 1));
+            handle_slot_result(SLOT_SELECTED, &slots, 0, &screen, game, &renderer, &viewport, &landing);
+            assert(game->gold == 393 && game->inventory_count == 1 && game->inventory[0].sharpened);
+        } else {
+            debug_apply_loadout(game, &debug_config);
+        }
+        assert(game_harbor_unlocked(game) && game_can_sail_to_island(game) && !game_has_treasure_map(game));
+        assert(!game->defeated_bosses);
+        assert(!game->rook_quest_state && !game->mara_quest_state && !game->temple_treasure_state && !game->island_travel_unlocked);
+        game->player.x = 20;
+        game->player.y = TOWN_HARBOR_Y + 1;
+        for (int x = 21; x < TOWN_HARBOR_X; x++) {
+            assert(game->map.tiles[game->player.y][x] == TILE_TOWN_PATH);
+            action_resolve_player(game, (Action){ACTION_MOVE, x, game->player.y});
+        }
+        for (int y = TOWN_HARBOR_Y + 2; y <= TOWN_HARBOR_ENTRANCE_Y; y++) {
+            action_resolve_player(game, (Action){ACTION_MOVE, game->player.x, y});
+        }
+        for (int x = TOWN_HARBOR_X; x <= TOWN_HARBOR_ENTRANCE_X; x++) {
+            action_resolve_player(game, (Action){ACTION_MOVE, x, game->player.y});
+        }
+        assert(game->location == LOCATION_TOWN && game->player.x == TOWN_HARBOR_ENTRANCE_X && game->player.y == TOWN_HARBOR_ENTRANCE_Y);
+        HarborScreen harbor = {0};
+        HarborResult result = harbor_activate(&harbor, game_can_sail_to_island(game), 0);
+        assert(result == HARBOR_BOARD);
+        handle_harbor_result(result, game, &screen, &renderer, &viewport);
+        assert(game->location == LOCATION_ISLAND);
+        game->player.x = ISLAND_GATE_X;
+        game->player.y = ISLAND_GATE_Y + 1;
+        action_resolve_player(game, (Action){ACTION_MOVE, ISLAND_GATE_X, ISLAND_GATE_Y});
+        assert(game->location == LOCATION_TEMPLE && game->level == 1 && game->enemy_count > 0);
+        game_leave_temple(game);
+        handle_harbor_result(HARBOR_SAIL_TOWN, game, &screen, &renderer, &viewport);
+        assert(game->location == LOCATION_TOWN);
+        assert(save_game(game, 2));
+        game->debug_passages_unlocked = 0;
+        assert(load_game(game, 2) && game->debug_passages_unlocked && game_harbor_unlocked(game) && game_can_sail_to_island(game));
+        assert(!game->rook_quest_state && !game->mara_quest_state && !game->temple_treasure_state);
+    }
+    // Locked doors and puzzle gates stay open beneath loot, in future floors too.
+    const TileType locked[] = {TILE_LOCKED_DOOR, TILE_CRYPT_DOOR, TILE_MOUNTAIN_GATE, TILE_MOUNTAIN_ROCKFALL, TILE_TEMPLE_MOON_DOOR_CLOSED, TILE_TEMPLE_VAULT_DOOR, TILE_LABYRINTH_GATE, TILE_CASTLE_GATE, TILE_GLASS_SEAL_CLOSED};
+    for (int i = 0; i < (int)(sizeof(locked) / sizeof(locked[0])); i++) {
+        game_init(game);
+        game->location = LOCATION_DUNGEON;
+        game->player.x = 5;
+        game->player.y = 5;
+        game->map.tiles[5][5] = TILE_FLOOR;
+        game->map.tiles[5][6] = locked[i];
+        game_refresh_debug_passages(game);
+        assert(game->map.tiles[5][6] == locked[i]);
+        game->debug_passages_unlocked = 1;
+        game->floor_item_count = 1;
+        game->floor_items[0] = (FloorItem){.active = 1, .x = 6, .y = 5, .underlying_tile = locked[i], .item = item_make_health_potion()};
+        game->map.tiles[5][6] = TILE_ITEM;
+        action_resolve_player(game, (Action){ACTION_MOVE, 6, 5});
+        assert(game->player.x == 6 && game->map.tiles[5][6] == TILE_ITEM && game->floor_items[0].active && game->floor_items[0].underlying_tile != locked[i]);
+    }
+    game_init(game);
+    debug_apply_loadout(game, &debug_config);
+    castle_enter(game, 2);
+    game->player.x = game->map.stairs_down_x;
+    game->player.y = game->map.stairs_down_y;
+    action_resolve_player(game, (Action){ACTION_ASCEND, 0, 0});
+    assert(game->location == LOCATION_CASTLE_INTERIOR && game->level == 3 && !game->castle_minibosses);
+    castle_enter(game, 4);
+    game->player.x = game->map.stairs_down_x;
+    game->player.y = game->map.stairs_down_y;
+    action_resolve_player(game, (Action){ACTION_ASCEND, 0, 0});
+    assert(game->location == LOCATION_CASTLE_INTERIOR && game->level == 5 && !game->castle_minibosses);
+    // Debug access to jail and tunnel preserves the unassigned escort quest.
+    game_init(game);
+    debug_apply_loadout(game, &debug_config);
+    game->location = LOCATION_CASTLE;
+    map_generate_castle(&game->map, &game->player.x, &game->player.y);
+    game->player.x = JAIL_DOOR_X;
+    game->player.y = JAIL_DOOR_Y + 1;
+    action_resolve_player(game, (Action){ACTION_MOVE, JAIL_DOOR_X, JAIL_DOOR_Y});
+    assert(game->location == LOCATION_JAIL && !game->jail_quest_state);
+    assert(save_game(game, 2) && load_game(game, 2) && game->debug_passages_unlocked && !game->jail_quest_state);
+    game->player.x = JAIL_HATCH_X - 1;
+    game->player.y = JAIL_HATCH_Y;
+    action_resolve_player(game, (Action){ACTION_MOVE, JAIL_HATCH_X, JAIL_HATCH_Y});
+    assert(game->location == LOCATION_ESCAPE_TUNNEL && !game->jail_quest_state);
+    assert(save_game(game, 2) && load_game(game, 2) && game->debug_passages_unlocked);
+    game->player.x = 1;
+    game->player.y = 14;
+    action_resolve_player(game, (Action){ACTION_MOVE, 0, 14});
+    assert(game->location == LOCATION_JAIL);
+    game->player.x = 5;
+    game->player.y = 8;
+    action_resolve_player(game, (Action){ACTION_MOVE, 4, 8});
+    assert(game->location == LOCATION_CASTLE && !game->jail_quest_state);
+    game->player.x = JAIL_DOOR_X;
+    game->player.y = JAIL_DOOR_Y + 1;
+    action_resolve_player(game, (Action){ACTION_MOVE, JAIL_DOOR_X, JAIL_DOOR_Y});
+    game->player.x = JAIL_HATCH_X - 1;
+    game->player.y = JAIL_HATCH_Y;
+    action_resolve_player(game, (Action){ACTION_MOVE, JAIL_HATCH_X, JAIL_HATCH_Y});
+    int gold = game->gold;
+    game->player.x = ESCAPE_TUNNEL_W - 2;
+    game->player.y = 14;
+    action_resolve_player(game, (Action){ACTION_MOVE, ESCAPE_TUNNEL_W - 1, 14});
+    assert(game->location == LOCATION_TOWN4 && !game->jail_quest_state && game->gold == gold);
     free(game);
     renderer_free(&renderer);
     SDL_DestroyRenderer(sdl);
@@ -225,6 +347,6 @@ int main(void) {
     rmdir(temporary);
     free(project);
     free(assets);
-    puts("PASS: new and loaded debug characters can walk to Dawnmere, Ridgeshire and both forest/swamp towns; normal saves stay gated, Rook alone unlocks the forest-road labyrinth, and loaded equipment/gold/quests are preserved.");
+    puts("PASS: new and loaded debug characters unlock roads, docks, island sailing, labyrinth and puzzle gates; normal saves stay gated and equipment/gold/quests survive loading and save round trips.");
     return 0;
 }

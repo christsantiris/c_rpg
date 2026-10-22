@@ -47,6 +47,10 @@ All five towns now stand beside signed exterior roads. Walk into a town sprite
 to arrive beside the matching interior exit gate, or follow the road around town to
 continue travelling. See [town roads and directional entrances](docs/town-roads.md).
 
+The Ruined Temple is a compact pyramid landmark in the island's central clearing.
+Walk into any side to begin its five-floor adventure; retreat returns to the
+path beside Nahla. See the [temple sprite and renderer preview](docs/art-sources/temple-entrance/README.md).
+
 ## Controls
 
 At **30% HP or below**, the play area gains a slowly pulsing red border and the
@@ -182,19 +186,21 @@ site data removes browser saves; storage restrictions can make them temporary.
 
 ### Debug interface
 
-To test quest NPCs with every town shortcut already open, run:
+To test with all passage locks open, run:
 
 ```bash
 ./tools/debug_shortcuts.sh
 ```
 
 Select **New Game**, enter a name, and choose a class, or load an existing
-character. The forest road
-between Oakhaven and Stillbury, swamp shortcut between Stillbury and Rosemoor,
-and the mountain road between Dawnmere and Ridgeshire are open immediately.
-The dungeon road from Oakhaven to Dawnmere is open too. This uses the existing completion flags for the
-Lich King and the forest, mountain, and swamp bosses;
-quests stay unassigned and their NPCs still award their normal rewards.
+character. All four town-to-town roads, Oakhaven's dock road, island sailing
+without a treasure map, and the labyrinth entrance are open immediately.
+Locked dungeon doors, mountain barriers, temple doors, the labyrinth vault,
+Glassdeep seals and castle portcullises open as you explore. Boss-blocked exits,
+temple stairs, castle floor progression and jail/tunnel passages are accessible.
+This adds a saved debug passage-unlock flag without marking bosses defeated.
+Quests stay unassigned, existing quest progress remains intact,
+and bosses remain available to fight.
 The unlocks apply to new and loaded characters and persist if you save them.
 Loading keeps the character's existing gold, equipment, inventory and quests.
 
@@ -214,7 +220,7 @@ make debug WEAPON=bow GOLD=500 SCROLLS=magic-arrow,fireball,heal
 | `WEAPON` | `--weapon NAME` | Any [debug weapon name](#debug-weapon-names), or `none` | Keep the selected class's normal starting weapon |
 | `GOLD` | `--gold N` | Any whole number from `0` through `999999` | Keep the normal starting gold |
 | `SCROLLS` | `--scrolls LIST` | Up to three comma-separated values chosen from `magic-arrow`, `fireball`, and `heal`, or `none` | Keep the selected class's normal starting scrolls |
-| Not applicable | `--unlock-shortcuts` | Flag with no value; automatically supplied by `tools/debug_shortcuts.sh` | Town shortcuts unlock through normal boss victories |
+| Not applicable | `--unlock-shortcuts` | Unlock all passages, docks and island sailing; automatically supplied by `tools/debug_shortcuts.sh` | Normal boss, key, puzzle and quest locks apply |
 
 Providing `WEAPON` or `SCROLLS` replaces the normal class starting items in
 that category. Use `WEAPON=none` or `SCROLLS=none` to begin without that item

@@ -53,6 +53,7 @@ sprites:
 	python3 tools/sprites/ashen.py
 	python3 tools/sprites/glassdeep.py
 	python3 tools/sprites/catacombs.py
+	python3 tools/sprites/temple.py
 	python3 tools/sprites/apothecary.py
 	python3 tools/sprites/adventurers_guild.py
 	python3 tools/sprites/workshop.py

@@ -165,7 +165,7 @@ void approach_refresh_dungeon(GameState *g) {
 
 int approach_forest_town_exit(const GameState *g, int *x, int *y) {
     const TownApproach *route = approach_route(g);
-    if (!route || route->area != LOCATION_FOREST || !(g->defeated_bosses & (1 << LOCATION_FOREST))) {
+    if (!route || route->area != LOCATION_FOREST || (!g->debug_passages_unlocked && !(g->defeated_bosses & (1 << LOCATION_FOREST)))) {
         return 0;
     }
     *x = route->town == LOCATION_TOWN ? 0 : APPROACH_W - 1;
@@ -244,7 +244,7 @@ void approach_refresh_forest(GameState *g) {
 
 int approach_mountain_town_exit(const GameState *g, int *x, int *y) {
     const TownApproach *route = approach_route(g);
-    if (!route || route->area != LOCATION_MOUNTAINS || !(g->defeated_bosses & (1 << LOCATION_MOUNTAINS))) {
+    if (!route || route->area != LOCATION_MOUNTAINS || (!g->debug_passages_unlocked && !(g->defeated_bosses & (1 << LOCATION_MOUNTAINS)))) {
         return 0;
     }
     *x = APPROACH_W / 2;
@@ -315,7 +315,7 @@ void approach_refresh_mountains(GameState *g) {
 
 int approach_swamp_town_exit(const GameState *g, int *x, int *y) {
     const TownApproach *route = approach_route(g);
-    if (!route || route->area != LOCATION_SWAMP || !(g->defeated_bosses & (1 << LOCATION_SWAMP))) {
+    if (!route || route->area != LOCATION_SWAMP || (!g->debug_passages_unlocked && !(g->defeated_bosses & (1 << LOCATION_SWAMP)))) {
         return 0;
     }
     *x = APPROACH_W / 2;
@@ -631,7 +631,7 @@ Location approach_shortcut_town(const TownApproach *route) {
 
 int approach_dungeon_town_exit(const GameState *g, int *x, int *y) {
     const TownApproach *route = approach_route(g);
-    if (!route || route->area != LOCATION_DUNGEON || !(g->defeated_bosses & (1 << LOCATION_DUNGEON))) {
+    if (!route || route->area != LOCATION_DUNGEON || (!g->debug_passages_unlocked && !(g->defeated_bosses & (1 << LOCATION_DUNGEON)))) {
         return 0;
     }
     *x = route->town == LOCATION_TOWN ? APPROACH_W - 1 : 0;
@@ -692,7 +692,7 @@ void approach_refresh_fork(GameState *g) {
 static void return_from_branch(GameState *g, Location area, int boss) {
     for (int i = 0; i < town_approach_count; i++) {
         const TownApproach *route = &town_approaches[i];
-        if (route->town != g->location || route->area != area || !(g->defeated_bosses & (1 << area))) {
+        if (route->town != g->location || route->area != area || (!g->debug_passages_unlocked && !(g->defeated_bosses & (1 << area)))) {
             continue;
         }
         if (approach_enter(g, route->gate_x, route->gate_y)) {

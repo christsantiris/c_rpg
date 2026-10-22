@@ -144,8 +144,12 @@
 
 #define ISLAND_W 40
 #define ISLAND_H 25
-#define ISLAND_GATE_X 19
-#define ISLAND_GATE_Y 7
+#define ISLAND_TEMPLE_X 17
+#define ISLAND_TEMPLE_Y 9
+#define ISLAND_TEMPLE_W 7
+#define ISLAND_TEMPLE_H 6
+#define ISLAND_GATE_X (ISLAND_TEMPLE_X + ISLAND_TEMPLE_W / 2)
+#define ISLAND_GATE_Y (ISLAND_TEMPLE_Y + ISLAND_TEMPLE_H - 1)
 #define ISLAND_CAMP_X 12
 #define ISLAND_CAMP_Y 16
 #define ISLAND_MARKER_X 10
@@ -720,6 +724,7 @@ void map_place_tavern_brenna(Map *m);
 void map_generate_inn(Map *m, int *spawn_x, int *spawn_y);
 void map_place_tavern_elowen(Map *m);
 void map_generate_island(Map *m, int *spawn_x, int *spawn_y);
+void map_place_island_temple(Map *m);
 void map_generate_temple(Map *m, int level, int *spawn_x, int *spawn_y);
 void map_generate_labyrinth(Map *m, int level, int switches, int *spawn_x, int *spawn_y);
 void map_generate_forest(Map *m, int level);

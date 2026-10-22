@@ -162,6 +162,7 @@ typedef enum {
 
 typedef struct {
     Player     player;
+    int debug_passages_unlocked;
     Map        map;
     int        level;
     Enemy      enemies[MAX_ENEMIES];
@@ -456,6 +457,7 @@ void game_talk_to_royal_guard(GameState *g, int x, int y);
 void game_collect_dragon_treasure(GameState *g);
 void game_talk_to_nahla(GameState *g);
 int game_harbor_unlocked(const GameState *g);
+void game_refresh_debug_passages(GameState *g);
 int game_has_treasure_map(const GameState *g);
 int game_can_sail_to_island(const GameState *g);
 void game_light_coast_beacon(GameState *g, int x, int y);

@@ -49,6 +49,11 @@ Save version 179 narrows Dawnmere's interior roads to one tile and gives its
 plaza a regular rectangular outline. Older Dawnmere saves update their paving
 in place, preserving exploration, dropped loot, portals and player progress.
 
+Save version 180 records `debug_passages_unlocked` for the debug shortcut
+launcher. It bypasses road, dock, sailing, quest, door and puzzle passage locks
+without assigning quests or recording boss victories. Normal older saves
+default to normal locks; loading them through the launcher enables the override.
+
 Artwork uses the established pixelkit textures, timber framing, tiled roofs,
 stonework and doorway details at native resolution. A rounded curtain wall,
 projecting towers and clustered houses follow the user's medieval hill-town
