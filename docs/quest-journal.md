@@ -15,8 +15,8 @@ The Archer, Bomber, and Shaman Map Bearers occupy levels **2, 3, and 4** before
 the level-5 Goblin King. Return to Dain in Ridgeshire's town center for 60 gold and 400 score.
 
 Alder assigns **The Lost Wardens** in **Stillbury's Inn**. Enter Stillbury's
-east forest gate and rescue the wardens on stages **7, 6, and 5** before the
-stage-4 Necromancer. Return to Alder for 70 gold and 500 score, awarded once.
+east forest gate and rescue the wardens on levels **2, 3, and 4** before the
+level-5 Necromancer. Return to Alder for 70 gold and 500 score, awarded once.
 
 Mara assigns **Relight the Drowned Beacons** in **Oakhaven's Tavern**.
 The beacons remain on Sunken Coast stages 2, 3, and 4. Return to her in the

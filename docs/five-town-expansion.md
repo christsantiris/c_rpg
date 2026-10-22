@@ -11,7 +11,7 @@ remain for subsequent change sets.
 
 ```mermaid
 flowchart BT
-    Oak[Oakhaven] <-->|Haunted Forest · 7 stages| Still[Stillbury]
+    Oak[Oakhaven] <-->|Haunted Forest · 5 stages| Still[Stillbury]
     Still <-->|Blackwater Swamp · 7 stages| Rose[Rosemoor]
     Rose <-->|Crown Road East| Castle[Castle of No Return]
     Oak <-->|Dungeon · 5 stages| Dawn[Dawnmere]
@@ -24,8 +24,8 @@ flowchart BT
 ```
 
 Both castle routes cross two enemy regions and one Crown Road. With the revised
-five-level mountain climb, the western route has 14 regional stages and the eastern
-route has 10.
+five-level forest and mountain adventures, the western route has 12 regional
+stages and the eastern route has 10.
 Equal region counts are the goal; equal stage counts or play times are not
 required. Windscar Highlands is a side destination rather than another castle
 connection.

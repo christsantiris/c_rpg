@@ -63,6 +63,7 @@ const char *approach_town_name(Location town) {
 TileType approach_floor(Location area) {
     switch (area) {
         case LOCATION_DUNGEON: return TILE_TOWN_PATH;
+        case LOCATION_FOREST: return TILE_TOWN_PATH;
         case LOCATION_MOUNTAINS: return TILE_TOWN_PATH;
         case LOCATION_COAST: return TILE_COAST_FLOOR;
         case LOCATION_SWAMP: return TILE_SWAMP_FLOOR;
@@ -144,6 +145,77 @@ void approach_refresh_dungeon(GameState *g) {
         if (item->active) {
             if (!map_is_walkable(&g->map, item->x, item->y)) {
                 item->x = g->map.stairs_down_x;
+                item->y = ty;
+            }
+            item->underlying_tile = g->map.tiles[item->y][item->x];
+        }
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active) {
+            g->map.tiles[item->y][item->x] = TILE_ITEM;
+        }
+    }
+}
+
+int approach_forest_town_exit(const GameState *g, int *x, int *y) {
+    const TownApproach *route = approach_route(g);
+    if (!route || route->area != LOCATION_FOREST || !(g->defeated_bosses & (1 << LOCATION_FOREST))) {
+        return 0;
+    }
+    *x = route->town == LOCATION_TOWN ? 0 : APPROACH_W - 1;
+    *y = APPROACH_H / 2;
+    return 1;
+}
+
+void approach_refresh_forest(GameState *g) {
+    const TownApproach *route = approach_route(g);
+    if (!route || route->area != LOCATION_FOREST) {
+        return;
+    }
+    int tx = route->town == LOCATION_TOWN ? APPROACH_W - 1 : 0;
+    int ty = APPROACH_H / 2;
+    int door_x = APPROACH_W / 2;
+    int door_y = ty - 2;
+    g->map.stairs_up_x = tx;
+    g->map.stairs_up_y = ty;
+    g->map.stairs_down_x = door_x;
+    g->map.stairs_down_y = door_y;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            g->map.tiles[y][x] = x > 0 && x < APPROACH_W - 1 && y > 0 && y < APPROACH_H - 1 ? TILE_TOWN_FLOOR : TILE_WALL;
+        }
+    }
+    int ox;
+    int oy;
+    int open = approach_forest_town_exit(g, &ox, &oy);
+    int from = open || tx == 0 ? 1 : door_x;
+    int to = open || tx != 0 ? APPROACH_W - 2 : door_x;
+    for (int x = from; x <= to; x++) {
+        g->map.tiles[ty][x] = TILE_TOWN_PATH;
+    }
+    // The haunted trees shelter a south-facing entrance above the road.
+    for (int y = door_y - 5; y <= door_y; y++) {
+        for (int x = door_x - 3; x <= door_x + 3; x++) {
+            g->map.tiles[y][x] = TILE_WALL;
+        }
+    }
+    g->map.tiles[door_y + 1][door_x] = TILE_TOWN_PATH;
+    g->map.tiles[door_y][door_x] = TILE_APPROACH_AREA;
+    g->map.tiles[ty][tx] = TILE_APPROACH_TOWN;
+    if (open) {
+        g->map.tiles[oy][ox] = TILE_APPROACH_DUNGEON_TOWN;
+    }
+    if (!map_is_walkable(&g->map, g->player.x, g->player.y)) {
+        g->player.x = door_x;
+        g->player.y = ty;
+        map_mark_explored(&g->map, g->player.x, g->player.y);
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active) {
+            if (!map_is_walkable(&g->map, item->x, item->y)) {
+                item->x = door_x;
                 item->y = ty;
             }
             item->underlying_tile = g->map.tiles[item->y][item->x];
@@ -303,6 +375,11 @@ void approach_relocate_ridgeshire(GameState *g) {
 
 static void project_old_road(const GameState *g, Location road, int x, int y, int *nx, int *ny) {
     const TownApproach *route = approach_route(g);
+    if (road == LOCATION_FOREST_ROAD) {
+        *nx = 1 + x * (APPROACH_W - 3) / (FOREST_ROAD_W - 1);
+        *ny = APPROACH_H / 2;
+        return;
+    }
     if (road == LOCATION_HIGH_PASS) {
         *nx = APPROACH_W / 2;
         *ny = 1 + y * (APPROACH_H - 3) / (HIGH_PASS_H - 1);
@@ -361,6 +438,7 @@ void approach_migrate_roads(GameState *g) {
         g->location = LOCATION_APPROACH;
         g->approach_route = i;
         approach_refresh_fork(g);
+        approach_refresh_forest(g);
         approach_refresh_mountains(g);
         int x;
         int y;
@@ -416,7 +494,7 @@ int approach_dungeon_town_exit(const GameState *g, int *x, int *y) {
 
 int approach_shortcut_exit(const GameState *g, int *x, int *y) {
     const TownApproach *route = approach_route(g);
-    if (!route || (route->area != LOCATION_FOREST && route->area != LOCATION_SWAMP) ||
+    if (!route || route->area != LOCATION_SWAMP ||
         !(g->defeated_bosses & (1 << route->area))) {
         return 0;
     }
@@ -536,6 +614,7 @@ int approach_enter(GameState *g, int x, int y) {
     g->enemy_count = 0;
     g->floor_item_count = 0;
     approach_refresh_dungeon(g);
+    approach_refresh_forest(g);
     approach_refresh_mountains(g);
     approach_refresh_fork(g);
     g->dialogue_active = 0;
@@ -561,6 +640,10 @@ int approach_travel(GameState *g, int x, int y) {
     int shortcut_y;
     if (approach_dungeon_town_exit(g, &shortcut_x, &shortcut_y) && x == shortcut_x && y == shortcut_y) {
         game_leave_approach_to_town(g, route->town == LOCATION_TOWN ? LOCATION_DAWNMERE : LOCATION_TOWN);
+        return 1;
+    }
+    if (approach_forest_town_exit(g, &shortcut_x, &shortcut_y) && x == shortcut_x && y == shortcut_y) {
+        game_leave_approach_to_town(g, route->town == LOCATION_TOWN ? LOCATION_TOWN2 : LOCATION_TOWN);
         return 1;
     }
     if (approach_mountain_town_exit(g, &shortcut_x, &shortcut_y) && x == shortcut_x && y == shortcut_y) {

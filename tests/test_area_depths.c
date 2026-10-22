@@ -225,9 +225,9 @@ static void test_expanded_migration(Location region, int old_depth) {
 
 void test_area_depths(void) {
     printf("Area length and migration tests:\n");
-    ASSERT("forest and swamp retain middle bosses; mountains climb five levels",
-        FOREST_DEPTH == 7 && MOUNTAIN_DEPTH == 5 && SWAMP_DEPTH == 7 &&
-        FOREST_BOSS_LEVEL == 4 && MOUNTAIN_BOSS_LEVEL == 5 && SWAMP_BOSS_LEVEL == 4);
+    ASSERT("swamp retains its middle boss; forest and mountains use five levels",
+        FOREST_DEPTH == 5 && MOUNTAIN_DEPTH == 5 && SWAMP_DEPTH == 7 &&
+        FOREST_BOSS_LEVEL == 5 && MOUNTAIN_BOSS_LEVEL == 5 && SWAMP_BOSS_LEVEL == 4);
     ASSERT("standalone adventures share five stages",
         DUNGEON_DEPTH == 5 && TEMPLE_DEPTH == 5 && LABYRINTH_DEPTH == 5 &&
         COAST_DEPTH == 5 && DRAGONSPINE_DEPTH == 5 && FROSTFELL_DEPTH == 5 &&
