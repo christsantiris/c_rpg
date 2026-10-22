@@ -32,6 +32,7 @@ typedef struct {
     SDL_Texture *witch_texture;
     SDL_Texture *labyrinth_texture;
     SDL_Texture *dungeon_entrance_texture;
+    SDL_Texture *mountain_entrance_texture;
     SDL_Texture *town_gate_textures[TOWN_EXIT_GLASSDEEP + 1];
     SDL_Texture *castle_texture;
     SDL_Texture *apothecary_texture;

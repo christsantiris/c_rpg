@@ -24,6 +24,8 @@ const char *approach_area_name(Location area);
 const char *approach_town_name(Location town);
 TileType approach_floor(Location area);
 void approach_refresh_dungeon(GameState *g);
+void approach_refresh_mountains(GameState *g);
+int approach_mountain_town_exit(const GameState *g, int *x, int *y);
 void approach_relocate_ridgeshire(GameState *g);
 int approach_dungeon_town_exit(const GameState *g, int *x, int *y);
 int approach_shortcut_exit(const GameState *g, int *x, int *y);

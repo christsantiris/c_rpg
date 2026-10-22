@@ -71,7 +71,7 @@ static LevelCache *area_cache(GameState *g, Location area, int reverse) {
     switch (area) {
         case LOCATION_DUNGEON: return &g->level_cache[0];
         case LOCATION_FOREST: return &g->forest_cache[reverse ? FOREST_DEPTH - 1 : 0];
-        case LOCATION_MOUNTAINS: return &g->mountain_cache[reverse ? MOUNTAIN_DEPTH - 1 : 0];
+        case LOCATION_MOUNTAINS: return &g->mountain_cache[0];
         case LOCATION_SWAMP: return &g->swamp_cache[reverse ? SWAMP_DEPTH - 1 : 0];
         case LOCATION_COAST: return &g->coast_cache[0];
         case LOCATION_DRAGONSPINE: return &g->dragonspine_cache[0];
@@ -142,7 +142,7 @@ void test_approaches(void) {
             int py = g->player.y;
             int hp = g->player.hp;
             int equipment = g->inventory_count;
-            int has_shortcut = route->area == LOCATION_FOREST || route->area == LOCATION_MOUNTAINS || route->area == LOCATION_SWAMP;
+            int has_shortcut = route->area == LOCATION_FOREST || route->area == LOCATION_SWAMP;
             if (unlocked && has_shortcut) {
                 g->dialogue_active = 1;
                 snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Choose route");
@@ -160,11 +160,11 @@ void test_approaches(void) {
             ASSERT("a normal town departure reaches a separate path before any enemies spawn", g->location == LOCATION_APPROACH && g->approach_route == i && g->enemy_count == 0 && g->map.room_count == 0);
             int dx = route->gate_x == 0 ? -1 : route->gate_x == TOWN_W - 1 ? 1 : 0;
             int dy = route->gate_y == 0 ? -1 : route->gate_y == TOWN_H - 1 ? 1 : 0;
-            ASSERT("the approach continues in the direction of the town gate", g->player.last_dx == dx && g->player.last_dy == dy && g->map.stairs_down_x - g->map.stairs_up_x == APPROACH_LENGTH * dx && g->map.stairs_down_y - g->map.stairs_up_y == (route->area == LOCATION_DUNGEON ? -2 : APPROACH_LENGTH * dy));
+            ASSERT("the approach continues in the direction of the town gate", g->player.last_dx == dx && g->player.last_dy == dy && g->map.stairs_down_x - g->map.stairs_up_x == (route->area == LOCATION_MOUNTAINS ? 6 : APPROACH_LENGTH * dx) && g->map.stairs_down_y - g->map.stairs_up_y == (route->area == LOCATION_DUNGEON ? -2 : route->area == LOCATION_MOUNTAINS ? APPROACH_H / 2 - 1 - g->map.stairs_up_y : APPROACH_LENGTH * dy));
             if (route->area == LOCATION_DUNGEON) {
                 ASSERT("the OakHaven dungeon approach uses cobblestones through town grass", g->map.tiles[g->player.y][g->player.x] == TILE_TOWN_PATH && g->map.tiles[g->player.y + 3][g->player.x + 3 * dx] == TILE_TOWN_FLOOR);
                 ASSERT("the raised crypt faces a short path down to the town road", !map_is_walkable(&g->map, g->map.stairs_down_x, g->map.stairs_down_y - 1) && !map_is_walkable(&g->map, g->map.stairs_down_x + 1, g->map.stairs_down_y) && !map_is_walkable(&g->map, g->map.stairs_down_x - 1, g->map.stairs_down_y) && g->map.tiles[g->map.stairs_down_y + 1][g->map.stairs_down_x] == TILE_TOWN_PATH);
-            } else {
+            } else if (route->area != LOCATION_MOUNTAINS) {
                 ASSERT("the far entrance is recessed into the surrounding terrain", !map_is_walkable(&g->map, g->map.stairs_down_x + dx, g->map.stairs_down_y + dy) && !map_is_walkable(&g->map, g->map.stairs_down_x - dy, g->map.stairs_down_y + dx) && !map_is_walkable(&g->map, g->map.stairs_down_x + dy, g->map.stairs_down_y - dx));
             }
             for (int step = 0; step < 5; step++) {
@@ -199,7 +199,7 @@ void test_approaches(void) {
             }
             ASSERT("turning back through the path restores the original town gate and preserves the dungeon cache", loaded->location == route->town && loaded->player.x == px && loaded->player.y == py && loaded->level_cache[2].valid && memcmp(&dungeon, &loaded->level_cache[2].map, sizeof(Map)) == 0);
             walk_town_approach(g);
-            int reverse = (route->area == LOCATION_FOREST && route->town == LOCATION_TOWN2) || (route->area == LOCATION_MOUNTAINS && route->town == LOCATION_TOWN4) || (route->area == LOCATION_SWAMP && route->town == LOCATION_TOWN3);
+            int reverse = (route->area == LOCATION_FOREST && route->town == LOCATION_TOWN2) || (route->area == LOCATION_SWAMP && route->town == LOCATION_TOWN3);
             ASSERT("only crossing the far entrance loads the intended combat area and town end", g->location == route->area && g->level == (reverse ? 7 : 1) && g->map.room_count > 0 && g->enemy_count > 0 && g->approach_route == -1);
             ASSERT("entering the area after the path retains unrelated progress", g->gold == 393 && g->score == 1234 && g->elowen_quest_state == 2 && g->elowen_seals_restored == 7 && g->level_cache[2].valid && memcmp(&dungeon, &g->level_cache[2].map, sizeof(Map)) == 0);
             g->enemies[0].hp = 7;
@@ -208,8 +208,8 @@ void test_approaches(void) {
             game_open_town_portal(loaded);
             ASSERT("Return to Town still bypasses the walking path and preserves its portal", loaded->location == (route->area == LOCATION_CATACOMBS ? LOCATION_TOWN3 : route->town) && loaded->portal_active);
             retreat_from_area(g, route, reverse);
-            int return_dx = route->area == LOCATION_DUNGEON ? 0 : -dx;
-            int return_dy = route->area == LOCATION_DUNGEON ? 1 : -dy;
+            int return_dx = (route->area == LOCATION_DUNGEON || route->area == LOCATION_MOUNTAINS) ? 0 : -dx;
+            int return_dy = (route->area == LOCATION_DUNGEON || route->area == LOCATION_MOUNTAINS) ? 1 : -dy;
             ASSERT("every physical area exit returns onto its entrance path facing away from the area", g->location == LOCATION_APPROACH && g->approach_route == i && g->player.x == g->map.stairs_down_x + return_dx && g->player.y == g->map.stairs_down_y + return_dy && g->player.last_dx == return_dx && g->player.last_dy == return_dy && g->map.tiles[g->player.y][g->player.x] == approach_floor(route->area) && g->enemy_count == 0);
             LevelCache *cache = area_cache(g, route->area, reverse);
             ASSERT("leaving onto the approach caches the actual combat map and wounded enemies", cache && cache->valid && cache->enemies[0].hp == 7 && memcmp(&visited, &cache->map, sizeof(Map)) == 0);

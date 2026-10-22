@@ -166,7 +166,7 @@ static void prepare_legacy_mountains(int level) {
 
 static void test_mountain_migration(void) {
     static const int old_levels[] = {1, 2, 4, 5, 7, 8};
-    static const int new_levels[] = {1, 2, 7, 5, 7, 4};
+    static const int new_levels[] = {1, 2, 2, 4, 2, 5};
     for (int i = 0; i < 6; i++) {
         prepare_legacy_mountains(old_levels[i]);
         int ok = make_legacy_save(78) && load_game(&loaded, ROUTE_SAVE_SLOT);
@@ -174,12 +174,12 @@ static void test_mountain_migration(void) {
         if (!ok) {
             continue;
         }
-        ASSERT("old mountain stages move into the seven-level route", loaded.level == new_levels[i] && loaded.max_mountain_level_reached == 7 && !loaded.mountain_cache[7].valid);
+        ASSERT("old mountain stages move into the five-level climb", loaded.level == new_levels[i] && loaded.max_mountain_level_reached == 5 && !loaded.mountain_cache[7].valid);
         ASSERT("mountain migration preserves stats, position, loot, and wounded enemies", loaded.player.hp == original.player.hp && loaded.player.x == original.player.x && loaded.player.y == original.player.y && loaded.gold == 321 && loaded.score == 9876 && loaded.floor_item_count == 1 && loaded.enemies[0].hp == original.enemies[0].hp);
         ASSERT("mountain migration preserves partial map quest progress", loaded.dain_quest_state == 1 && loaded.dain_map_fragments == DAIN_FRAGMENT_ARCHER);
-        ASSERT("old summit King moves intact to level 4", loaded.mountain_cache[3].valid && loaded.mountain_cache[3].enemies[0].is_boss && loaded.mountain_cache[3].enemies[0].hp == 57);
+        ASSERT("old summit King moves intact to level 5", loaded.mountain_cache[4].valid && loaded.mountain_cache[4].enemies[0].is_boss && loaded.mountain_cache[4].enemies[0].hp == 57);
         ASSERT("old mountain bearers cannot award fragments beyond new quest levels", loaded.mountain_cache[4].enemies[0].dain_fragment == 0);
-        ASSERT("occupied old mountain fourth or seventh stage retains its snapshot", loaded.mountain_cache[6].enemies[0].hp == (old_levels[i] == 4 ? 53 : 56));
+        ASSERT("occupied old mountain fourth or seventh stage retains its snapshot", loaded.mountain_cache[1].enemies[0].hp == (old_levels[i] == 2 ? 51 : old_levels[i] == 4 ? 53 : 56));
         if (new_levels[i] == 2) {
             int bearers = 0;
             for (int enemy = 0; enemy < loaded.enemy_count; enemy++) {
@@ -196,18 +196,18 @@ static void test_mountain_migration(void) {
     original.mountain_cache[7].enemies[0].active = 0;
     game_open_town_portal(&original);
     int ok = make_legacy_save(78) && load_game(&loaded, ROUTE_SAVE_SLOT);
-    ASSERT("legacy mountain portal retains its OakHaven anchor", ok && loaded.location == LOCATION_TOWN && loaded.mountain_portal_town == LOCATION_TOWN && loaded.portal_active && loaded.portal_level == MOUNTAIN_BOSS_LEVEL);
+    ASSERT("legacy mountain portal moves its anchor to Dawnmere", ok && loaded.location == LOCATION_DAWNMERE && loaded.mountain_portal_town == LOCATION_DAWNMERE && loaded.portal_active && loaded.portal_level == MOUNTAIN_BOSS_LEVEL);
     game_use_town_portal(&loaded);
     ASSERT("legacy summit portal restores the central peak and position", ok && loaded.location == LOCATION_MOUNTAINS && loaded.level == MOUNTAIN_BOSS_LEVEL && loaded.player.x == original.portal_x && loaded.player.y == original.portal_y);
     int found = 0;
     for (int row = 0; row < MAP_H; row++) {
         for (int column = 0; column < MAP_W; column++) {
             if (loaded.map.tiles[row][column] == TILE_MOUNTAIN_SHORTCUT) {
-                found = shortcut_exit_is_recessed(&loaded.map, column, row, TILE_MOUNTAIN_WALL);
+                found = 1;
             }
         }
     }
-    ASSERT("migrated King victory opens a recessed shortcut in the mountain wall", ok && loaded.defeated_bosses == original.defeated_bosses && found);
+    ASSERT("migrated King victory does not recreate a mountain shortcut", ok && loaded.defeated_bosses == original.defeated_bosses && !found);
     remove("saves/savegame_99123.json");
 }
 
@@ -324,6 +324,11 @@ static void test_split_mountain_migration(void) {
                 game_descend(&original);
             }
             original.enemies[0].hp = 11;
+            // A legacy level-five slope had difficulty three, hence 13 foes.
+            original.enemy_count = 13;
+            original.enemies[0].type = ENEMY_GOBLIN_SCOUT;
+            original.enemies[0].active = 1;
+            original.enemies[0].is_boss = 0;
             game_ascend(&original);
             game_ascend(&original);
             original.dain_quest_state = 1;
@@ -346,10 +351,10 @@ static void test_split_mountain_migration(void) {
             ASSERT("version 99 mountain quest saves migrate", make_legacy_save(99) && load_game(&loaded, ROUTE_SAVE_SLOT));
             ASSERT("moving a bearer preserves fragments, money, boss victory, and explored far-side enemies", loaded.dain_quest_state == 1 &&
                 loaded.dain_map_fragments == original.dain_map_fragments && loaded.gold == 617 &&
-                loaded.defeated_bosses == original.defeated_bosses && loaded.mountain_cache[4].valid && loaded.mountain_cache[4].enemies[0].hp == 11 &&
-                loaded.mountain_cache[4].map.room_count == original.mountain_cache[4].map.room_count &&
-                memcmp(loaded.mountain_cache[4].map.rooms, original.mountain_cache[4].map.rooms, original.mountain_cache[4].map.room_count * sizeof(Room)) == 0 &&
-                memcmp(loaded.mountain_cache[4].map.tiles, original.mountain_cache[4].map.tiles, sizeof(original.map.tiles)) == 0);
+                loaded.defeated_bosses == original.defeated_bosses && loaded.mountain_cache[3].valid && loaded.mountain_cache[3].enemies[0].hp == 11 &&
+                loaded.mountain_cache[3].map.room_count == original.mountain_cache[4].map.room_count &&
+                memcmp(loaded.mountain_cache[3].map.rooms, original.mountain_cache[4].map.rooms, original.mountain_cache[4].map.room_count * sizeof(Room)) == 0 &&
+                memcmp(loaded.mountain_cache[3].map.tiles, original.mountain_cache[4].map.tiles, sizeof(original.map.tiles)) == 0);
             ASSERT("old cached Shaman keeps health and death state without a misplaced fragment", !loaded.mountain_cache[2].enemies[0].dain_fragment &&
                 loaded.mountain_cache[2].enemies[0].hp == (collected ? 0 : 9) && loaded.mountain_cache[2].enemies[0].active == !collected);
             if (portal) {
@@ -360,8 +365,9 @@ static void test_split_mountain_migration(void) {
                 ASSERT("mountain migration keeps active position and loot", loaded.player.x == original.player.x && loaded.player.y == original.player.y &&
                     loaded.floor_items[0].active && loaded.floor_items[0].underlying_tile == original.floor_items[0].underlying_tile);
             }
-            ASSERT("old active Shaman becomes a regular enemy without losing damage", loaded.level == 3 && !loaded.enemies[0].dain_fragment &&
-                loaded.enemies[0].hp == (collected ? 0 : 9) && strcmp(loaded.enemies[0].name, "Goblin Shaman") == 0);
+            ASSERT("old active Shaman becomes a regular enemy without losing damage", loaded.level == 3 && (collected ?
+                loaded.enemies[0].dain_fragment == DAIN_FRAGMENT_BOMBER :
+                (!loaded.enemies[0].dain_fragment && loaded.enemies[0].hp == 9 && strcmp(loaded.enemies[0].name, "Goblin Shaman") == 0)));
             if (!collected) {
                 loaded.player.attack = 10000;
                 loaded.player.x = loaded.enemies[0].x;
@@ -371,19 +377,18 @@ static void test_split_mountain_migration(void) {
                     loaded.dain_map_fragments == original.dain_map_fragments);
             }
             game_descend(&loaded);
-            game_descend(&loaded);
             int bearers = 0;
             for (int i = 0; i < loaded.enemy_count; i++) {
                 bearers += loaded.enemies[i].active && loaded.enemies[i].dain_fragment == DAIN_FRAGMENT_SHAMAN;
             }
-            ASSERT("only missing Shaman fragments gain bearers on the explored fifth stage", loaded.level == 5 && bearers == !collected &&
+            ASSERT("only missing Shaman fragments gain bearers on the explored fourth stage", loaded.level == 4 && bearers == !collected &&
                 loaded.enemies[0].hp == 11 && loaded.dain_map_fragments == original.dain_map_fragments);
             game_refresh_quest_encounters(&loaded);
             int refreshed = 0;
             for (int i = 0; i < loaded.enemy_count; i++) {
                 refreshed += loaded.enemies[i].active && loaded.enemies[i].dain_fragment == DAIN_FRAGMENT_SHAMAN;
             }
-            ASSERT("refreshing migrated stage five does not duplicate the bearer", refreshed == bearers);
+            ASSERT("refreshing migrated stage four does not duplicate the bearer", refreshed == bearers);
             ASSERT("migrated mountain quest rewrites and reloads successfully", save_game(&loaded, ROUTE_SAVE_SLOT) && load_game(&reloaded, ROUTE_SAVE_SLOT) &&
                 reloaded.dain_map_fragments == loaded.dain_map_fragments);
         }
@@ -455,9 +460,9 @@ static void test_near_side_quest_migration(void) {
                 loaded.alder_quest_state == 1 && loaded.dain_quest_state == 1 && loaded.gold == 617 && loaded.defeated_bosses == original.defeated_bosses);
             LevelCache *saved = forest ? loaded.forest_cache : loaded.mountain_cache;
             ASSERT("quest relocation keeps cached enemy health, exploration and room geometry", ok &&
-                saved[1].enemies[0].hp == 17 && saved[5].enemies[0].hp == 17 &&
-                memcmp(saved[5].map.explored, cache[5].map.explored, sizeof(saved[5].map.explored)) == 0 &&
-                memcmp(saved[5].map.rooms, cache[5].map.rooms, sizeof(saved[5].map.rooms)) == 0);
+                saved[1].enemies[0].hp == 17 && saved[forest ? 5 : 2].enemies[0].hp == 17 &&
+                memcmp(saved[forest ? 5 : 2].map.explored, cache[5].map.explored, sizeof(saved[forest ? 5 : 2].map.explored)) == 0 &&
+                memcmp(saved[forest ? 5 : 2].map.rooms, cache[5].map.rooms, sizeof(saved[forest ? 5 : 2].map.rooms)) == 0);
             if (forest) {
                 ASSERT("obsolete cached captives and portal underlays become forest floor", saved[1].map.tiles[y][x + 1] == TILE_FOREST_FLOOR &&
                     (!portal || (loaded.portal_level == 2 && loaded.portal_origin_tile == TILE_FOREST_FLOOR)));
@@ -474,7 +479,7 @@ static void test_near_side_quest_migration(void) {
                 ASSERT("obsolete captive hidden under active loot is removed without losing the item", loaded.floor_items[0].active &&
                     loaded.floor_items[0].underlying_tile == TILE_FOREST_FLOOR && loaded.map.tiles[y][x] == TILE_ITEM);
             }
-            for (int stage = 3; stage <= 7; stage++) {
+            for (int stage = 3; stage <= (forest ? 7 : 2); stage++) {
                 game_descend(&loaded);
             }
             int objectives = 0;
@@ -486,8 +491,12 @@ static void test_near_side_quest_migration(void) {
             for (int enemy = 0; enemy < loaded.enemy_count; enemy++) {
                 objectives += loaded.enemies[enemy].active && loaded.enemies[enemy].dain_fragment == DAIN_FRAGMENT_ARCHER;
             }
-            ASSERT("a collected first objective does not respawn on relocated stage seven", loaded.level == 7 && !objectives);
-            game_ascend(&loaded);
+            ASSERT("a collected first objective does not respawn on relocated stage seven", loaded.level == (forest ? 7 : 2) && !objectives);
+            if (forest) {
+                game_ascend(&loaded);
+            } else {
+                game_descend(&loaded);
+            }
             objectives = 0;
             for (int row = 0; row < MAP_H; row++) {
                 for (int column = 0; column < MAP_W; column++) {
@@ -499,13 +508,108 @@ static void test_near_side_quest_migration(void) {
             }
             int enemies = loaded.enemy_count;
             game_refresh_quest_encounters(&loaded);
-            ASSERT("a missing second objective appears once on cached stage six without resetting enemies", loaded.level == 6 &&
+            ASSERT("a missing second objective appears once on cached stage six without resetting enemies", loaded.level == (forest ? 6 : 3) &&
                 objectives == 1 && loaded.enemies[0].hp == 17 && loaded.enemy_count == enemies);
             ASSERT("relocated objectives and partial progress survive another save", save_game(&loaded, ROUTE_SAVE_SLOT) &&
-                load_game(&reloaded, ROUTE_SAVE_SLOT) && reloaded.level == 6 &&
+                load_game(&reloaded, ROUTE_SAVE_SLOT) && reloaded.level == (forest ? 6 : 3) &&
                 reloaded.alder_wardens_rescued == 1 && reloaded.dain_map_fragments == 1 && reloaded.enemy_count == enemies);
         }
     }
+    remove("saves/savegame_99123.json");
+}
+
+static void test_mountain_climb_migration(void) {
+    game_init(&original);
+    original.location = LOCATION_MOUNTAINS;
+    original.level = 3;
+    original.mountain_entry_town = LOCATION_TOWN;
+    original.mountain_portal_town = LOCATION_TOWN;
+    original.watchfire_quest_state = 1;
+    map_generate_mountains(&original.map, 3);
+    enemies_spawn(&original);
+    // Recreate the old level-six watchfire using the current placement code.
+    original.level = WATCHFIRE_MOUNTAINS_LEVEL;
+    game_refresh_quest_encounters(&original);
+    int defenders = 0;
+    for (int i = 0; i < original.enemy_count; i++) {
+        Enemy *enemy = &original.enemies[i];
+        if (strcmp(enemy->name, "Watchfire Defender") == 0) {
+            enemy->hp = defenders ? 7 : 0;
+            enemy->active = defenders != 0;
+            defenders++;
+        }
+    }
+    original.level = 6;
+    original.max_mountain_level_reached = 6;
+    original.gold = 617;
+    original.player.x = original.map.stairs_up_x;
+    original.player.y = original.map.stairs_up_y;
+    int ok = make_legacy_save(170) && load_game(&loaded, ROUTE_SAVE_SLOT);
+    ASSERT("version 170 mountain slopes migrate into the five-level climb", ok && loaded.location == LOCATION_MOUNTAINS && loaded.level == 3 && loaded.mountain_entry_town == LOCATION_DAWNMERE && loaded.gold == 617);
+    int old_guards = 0;
+    for (int i = 0; i < loaded.enemy_count; i++) {
+        old_guards += strcmp(loaded.enemies[i].name, "Watchfire Defender") == 0;
+    }
+    LevelCache *summit = &loaded.mountain_cache[WATCHFIRE_MOUNTAINS_LEVEL - 1];
+    int wounded = 0;
+    int dead = 0;
+    for (int i = 0; i < summit->enemy_count; i++) {
+        Enemy *enemy = &summit->enemies[i];
+        if (strcmp(enemy->name, "Watchfire Defender") == 0) {
+            wounded += enemy->active && enemy->hp == 7;
+            dead += !enemy->active && enemy->hp == 0;
+            ASSERT("relocated watchfire defenders land on walkable summit tiles", map_is_walkable(&summit->map, enemy->x, enemy->y));
+        }
+    }
+    ASSERT("watchfire migration moves the encounter with wounds and deaths intact", defenders == 4 && !old_guards && summit->valid && wounded == 3 && dead == 1 && (loaded.watchfire_quest_encounters & 1));
+    ASSERT("relocated defender damage survives another save", save_game(&loaded, ROUTE_SAVE_SLOT) && load_game(&reloaded, ROUTE_SAVE_SLOT) && reloaded.mountain_cache[4].enemy_count == summit->enemy_count);
+
+    // A summit portal can coexist with wounded defenders on the old sixth slope.
+    LevelCache *slope = &original.mountain_cache[5];
+    slope->valid = 1;
+    slope->map = original.map;
+    slope->enemy_count = original.enemy_count;
+    memcpy(slope->enemies, original.enemies, sizeof(slope->enemies));
+    original.watchfire_quest_state = 0;
+    original.level = 5;
+    map_generate_mountains(&original.map, 5);
+    enemies_spawn(&original);
+    original.watchfire_quest_state = 1;
+    original.level = 4;
+    map_room_center(&original.map.rooms[original.map.room_count / 2], &original.player.x, &original.player.y);
+    game_open_town_portal(&original);
+    ok = make_legacy_save(170) && load_game(&loaded, ROUTE_SAVE_SLOT);
+    ASSERT("watchfire relocation preserves a saved summit portal", ok && loaded.portal_active && loaded.portal_level == 5);
+    int blocked_landing = 0;
+    for (int i = 0; i < loaded.mountain_cache[4].enemy_count; i++) {
+        Enemy *enemy = &loaded.mountain_cache[4].enemies[i];
+        blocked_landing += strcmp(enemy->name, "Watchfire Defender") == 0 && enemy->active && enemy->x == loaded.portal_x && enemy->y == loaded.portal_y;
+    }
+    ASSERT("relocated defenders leave the saved portal landing clear", !blocked_landing);
+    game_use_town_portal(&loaded);
+    ASSERT("the summit portal restores its original position beside the relocated encounter", loaded.location == LOCATION_MOUNTAINS && loaded.level == 5 && loaded.player.x == original.portal_x && loaded.player.y == original.portal_y);
+
+    game_init(&original);
+    original.location = LOCATION_MOUNTAINS;
+    original.level = 1;
+    original.mountain_entry_town = LOCATION_TOWN;
+    original.mountain_portal_town = LOCATION_TOWN;
+    map_generate_mountains(&original.map, 1);
+    enemies_spawn(&original);
+    game_open_town_portal(&original);
+    ASSERT("legacy fixture opens a mountain portal in Oakhaven", original.location == LOCATION_TOWN && original.map.tiles[2][21] == TILE_PORTAL);
+    original.player.x = 20;
+    original.player.y = 0;
+    original.floor_item_count = 1;
+    original.floor_items[0] = (FloorItem){.active = 1, .x = 20, .y = 0, .underlying_tile = TILE_TOWN_EXIT, .item = item_make_health_potion()};
+    original.map.tiles[0][20] = TILE_ITEM;
+    ok = make_legacy_save(170) && load_game(&loaded, ROUTE_SAVE_SLOT);
+    ASSERT("moving a mountain portal's future anchor keeps the old Oakhaven portal usable", ok && loaded.location == LOCATION_TOWN && loaded.map.tiles[2][21] == TILE_PORTAL && loaded.mountain_portal_town == LOCATION_DAWNMERE);
+    ASSERT("retiring Oakhaven's mountain gate leaves its saved player and loot accessible", loaded.player.x == 20 && loaded.player.y == 1 && loaded.map.tiles[0][20] == TILE_WALL && loaded.floor_items[0].active && loaded.floor_items[0].y == 1 && loaded.floor_items[0].underlying_tile == TILE_TOWN_PATH && loaded.map.tiles[1][20] == TILE_ITEM);
+    action_resolve_player(&loaded, (Action){ACTION_MOVE, 21, 2});
+    ASSERT("an old Oakhaven portal still resumes its saved expedition", loaded.location == LOCATION_MOUNTAINS && loaded.level == 1 && loaded.mountain_entry_town == LOCATION_DAWNMERE);
+    game_return_to_town(&loaded);
+    ASSERT("future mountain returns use Dawnmere", loaded.location == LOCATION_DAWNMERE);
     remove("saves/savegame_99123.json");
 }
 
@@ -549,6 +653,7 @@ void test_route_save_migrations(void) {
     ASSERT("swamp migration leaves the already migrated forest unchanged", ok && loaded.forest_entry_town == LOCATION_TOWN2 && loaded.forest_portal_town == LOCATION_TOWN2 && loaded.forest_cache[3].valid && memcmp(loaded.forest_cache[3].map.rooms, original.forest_cache[3].map.rooms, sizeof(original.forest_cache[3].map.rooms)) == 0 && loaded.defeated_bosses == original.defeated_bosses);
     remove("saves/savegame_99123.json");
     test_mountain_migration();
+    test_mountain_climb_migration();
     test_split_forest_migration();
     test_split_mountain_migration();
     test_near_side_quest_migration();

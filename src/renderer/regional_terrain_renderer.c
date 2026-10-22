@@ -148,6 +148,10 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
             line1 = "WEST: OAKHAVEN / EAST: DAWNMERE";
             line2 = "CRYPT ENTRANCE: DUNGEON STAGE 1";
         }
+        if (approach_mountain_town_exit(g, &x, &y)) {
+            line1 = "NORTH: RIDGESHIRE / SOUTH: DAWNMERE";
+            line2 = "MOUNTAIN ENTRANCE: ALWAYS LEVEL 1";
+        }
         if (approach_shortcut_exit(g, &x, &y)) {
             line1 = "STRAIGHT: AREA / LEFT: NEXT TOWN";
             line2 = "RIGHT: BOSS CHAMBER";
@@ -237,7 +241,7 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
         title = "GOBLIN MOUNTAIN PASSES";
         line1 = "NARROW PASSES; ROCKS BLOCK FIRE";
         line2 = "WATCH FOR BRIDGES AND ROCKFALLS";
-        if (g->level == 2 || g->level == 7) {
+        if (g->level == 2) {
             line1 = "WEAK BRIDGES COLLAPSE BEHIND YOU";
             line2 = "INTERACT BESIDE GAPS TO REBUILD";
         } else if (g->level == MOUNTAIN_BOSS_LEVEL) {

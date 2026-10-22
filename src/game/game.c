@@ -912,13 +912,13 @@ static int place_dain_map_bearer(GameState *g) {
     }
     EnemyType target_type;
     int target_bit;
-    if (g->level == 7) {
+    if (g->level == 2) {
         target_type = ENEMY_GOBLIN_ARCHER;
         target_bit = DAIN_FRAGMENT_ARCHER;
-    } else if (g->level == 6) {
+    } else if (g->level == 3) {
         target_type = ENEMY_GOBLIN_BOMBER;
         target_bit = DAIN_FRAGMENT_BOMBER;
-    } else if (g->level == 5) {
+    } else if (g->level == 4) {
         target_type = ENEMY_GOBLIN_SHAMAN;
         target_bit = DAIN_FRAGMENT_SHAMAN;
     } else {
@@ -945,8 +945,8 @@ static int place_dain_map_bearer(GameState *g) {
     target->attack += 2;
     strncpy(target->name, "Map Bearer", sizeof(target->name) - 1);
     target->name[sizeof(target->name) - 1] = '\0';
-    EnemyType guard = g->level == 7 ? ENEMY_GOBLIN_SCOUT :
-        (g->level == 6 ? ENEMY_TUNNEL_SPIDER : ENEMY_HOBGOBLIN_GUARD);
+    EnemyType guard = g->level == 2 ? ENEMY_GOBLIN_SCOUT :
+        (g->level == 3 ? ENEMY_TUNNEL_SPIDER : ENEMY_HOBGOBLIN_GUARD);
     spawn_quest_enemy_near(g, guard, target->x, target->y);
     spawn_quest_enemy_near(g, guard, target->x, target->y);
     return 1;
@@ -1518,8 +1518,8 @@ void game_init(GameState *g) {
     g->forest_entry_town = LOCATION_TOWN;
     g->forest_portal_town = LOCATION_TOWN;
     g->max_mountain_level_reached = 1;
-    g->mountain_entry_town = LOCATION_TOWN;
-    g->mountain_portal_town = LOCATION_TOWN;
+    g->mountain_entry_town = LOCATION_DAWNMERE;
+    g->mountain_portal_town = LOCATION_DAWNMERE;
     g->max_coast_level_reached = 1;
     g->max_swamp_level_reached = 1;
     g->swamp_entry_town = LOCATION_TOWN2;
@@ -3679,10 +3679,10 @@ void game_enter_forest(GameState *g) {
 void game_enter_mountains(GameState *g) {
     int from_ridgeshire = g->location == LOCATION_TOWN4;
     clear_floor_loot(g);
-    g->mountain_entry_town = from_ridgeshire ? LOCATION_TOWN4 : LOCATION_TOWN;
+    g->mountain_entry_town = from_ridgeshire ? LOCATION_TOWN4 : LOCATION_DAWNMERE;
     g->location = LOCATION_MOUNTAINS;
     start_expedition(g, g->mountain_cache, MOUNTAIN_DEPTH);
-    g->level = from_ridgeshire ? MOUNTAIN_DEPTH : 1;
+    g->level = 1;
     LevelCache *cache = &g->mountain_cache[g->level - 1];
     if (cache->valid) {
         g->map = cache->map;
@@ -3697,8 +3697,8 @@ void game_enter_mountains(GameState *g) {
     if (g->level > g->max_mountain_level_reached) {
         g->max_mountain_level_reached = g->level;
     }
-    g->player.x = from_ridgeshire ? g->map.stairs_down_x : g->map.stairs_up_x;
-    g->player.y = from_ridgeshire ? g->map.stairs_down_y : g->map.stairs_up_y;
+    g->player.x = g->map.stairs_up_x;
+    g->player.y = g->map.stairs_up_y;
     g->dialogue_active = 0;
     push_message(g, "Press the interact key (A by default) beside rockfalls or broken bridges to clear or repair them.");
 }
@@ -3895,6 +3895,8 @@ static void place_town_portal(GameState *g) {
     if (g->location == LOCATION_DAWNMERE) {
         if (g->portal_location == LOCATION_DUNGEON && g->dungeon_portal_town == LOCATION_DAWNMERE) {
             g->map.tiles[13][2] = TILE_PORTAL;
+        } else if (g->portal_location == LOCATION_MOUNTAINS && g->mountain_portal_town == LOCATION_DAWNMERE) {
+            g->map.tiles[2][21] = TILE_PORTAL;
         }
         return;
     }
@@ -4353,10 +4355,10 @@ void game_talk_to_veyra(GameState *g) {
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Marshal Veyra");
     if (!g->watchfire_quest_state) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Our warning fires are dark. Restore the watchfires in Goblin Mountains 6, Ashen Hollow 3, and Dragonspine 3, in any order. Defeat their guards, then press A beside each. Return for 180 gold.");
+            "Our warning fires are dark. Restore the watchfires in Goblin Mountains 5, Ashen Hollow 3, and Dragonspine 3, in any order. Defeat their guards, then press A beside each. Return for 180 gold.");
     } else if (g->watchfire_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Watchfires: Mountains 6 %s; Ashen Hollow 3 %s; Dragonspine 3 %s. Use our south, east, and north gates. Defeat each fire's defenders and press A beside it. Regional bosses are optional.",
+            "Watchfires: Mountains 5 %s; Ashen Hollow 3 %s; Dragonspine 3 %s. Use our south, east, and north gates. Defeat each fire's defenders and press A beside it. Regional bosses are optional.",
             g->watchfire_quest_progress & 1 ? "lit" : "dark", g->watchfire_quest_progress & 2 ? "lit" : "dark", g->watchfire_quest_progress & 4 ? "lit" : "dark");
     } else if (g->watchfire_quest_state == 2) {
         g->watchfire_quest_state = 3;
@@ -5503,8 +5505,8 @@ static void return_to_town(GameState *g, Location destination) {
         place_harbor_road(g);
     }
     if (destination == LOCATION_DAWNMERE) {
-        g->player.x = 1;
-        g->player.y = 12;
+        g->player.x = returning_from == LOCATION_MOUNTAINS ? 20 : 1;
+        g->player.y = returning_from == LOCATION_MOUNTAINS ? 1 : 12;
     } else if (destination == LOCATION_CASTLE) {
         g->player.x = CROWNROAD_X;
         g->player.y = TOWN_H - 2;
@@ -5574,7 +5576,7 @@ static void enter_return_approach(GameState *g, Location area) {
             g->player.y = g->map.stairs_down_y - dy;
             g->player.last_dx = -dx;
             g->player.last_dy = -dy;
-            if (area == LOCATION_DUNGEON) {
+            if (area == LOCATION_DUNGEON || area == LOCATION_MOUNTAINS) {
                 g->player.x = g->map.stairs_down_x;
                 g->player.y = g->map.stairs_down_y + 1;
                 g->player.last_dx = 0;
@@ -5592,8 +5594,17 @@ void game_return_to_approach(GameState *g) {
     Location area = g->location;
     int lich_exit = area == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH &&
         (g->defeated_bosses & (1 << LOCATION_DUNGEON));
+    int mountain_exit = area == LOCATION_MOUNTAINS && g->level == MOUNTAIN_DEPTH &&
+        (g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
     game_return_to_town(g);
     enter_return_approach(g, area);
+    if (mountain_exit && g->location == LOCATION_APPROACH) {
+        g->player.x = g->map.stairs_up_x;
+        g->player.y = g->map.stairs_down_y + 1;
+        g->player.last_dx = -1;
+        g->player.last_dy = 0;
+        push_message(g, "The road is open: north to Ridgeshire, south to Dawnmere.");
+    }
     if (lich_exit && g->location == LOCATION_APPROACH) {
         g->player.x = g->map.stairs_down_x;
         g->player.y = g->map.stairs_down_y + 2;
@@ -6450,7 +6461,7 @@ void game_talk_to_dragon_seeker(GameState *g) {
     g->dialogue_y = ILYA_TAVERN_Y;
     if (g->dragon_treasure_quest_state == 0) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Travel north through the mountains to Ridgeshire, then north to Dragonspine. "
+            "Travel east through the dungeon road to Dawnmere, then north through the mountains to Ridgeshire and Dragonspine. "
             "Bring its fifth-stage golden goblet back here to Oakhaven's Tavern for a Potion of Strength.");
     } else if (g->dragon_treasure_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
@@ -6547,7 +6558,7 @@ void game_talk_to_dain(GameState *g) {
     g->dialogue_y = DAIN_TOWN_Y;
     if (g->dain_quest_state == 0) {
         strncpy(g->dialogue_text,
-            "Enter Ridgeshire's south mountain gate. Map Bearers hold fragments on stages 7, 6, and 5 before the Goblin King. Return to Ridgeshire's town center.",
+            "Enter Ridgeshire's south mountain gate. Map Bearers hold fragments on stages 2, 3, and 4 before the Goblin King. Return to Ridgeshire's town center.",
             MAX_DIALOGUE_LEN - 1);
         g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
         return;
@@ -6560,7 +6571,7 @@ void game_talk_to_dain(GameState *g) {
             }
         }
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "You have recovered %d of 3 fragments. Search mountain stages 7, 6, and 5 from Ridgeshire. After the Goblin King, use the shortcut and town roads home, or fight through to Oakhaven. Return here to Ridgeshire's town center.",
+            "You have recovered %d of 3 fragments. Search mountain stages 2, 3, and 4. After the Goblin King, exit to the road north to Ridgeshire or south to Dawnmere. Return here to Ridgeshire's town center.",
             defeated);
         char status[MAX_MESSAGE_LEN];
         snprintf(status, sizeof(status),
@@ -6910,7 +6921,7 @@ void game_enter_shortcut_boss(GameState *g) {
     int level;
     TileType shortcut;
     const TownApproach *route = approach_route(g);
-    if (route && (route->area == LOCATION_FOREST || route->area == LOCATION_SWAMP || route->area == LOCATION_MOUNTAINS)) {
+    if (route && (route->area == LOCATION_FOREST || route->area == LOCATION_SWAMP)) {
         region = route->area;
         level = 4;
         shortcut = region == LOCATION_FOREST ? TILE_FOREST_SHORTCUT : region == LOCATION_SWAMP ? TILE_SWAMP_SHORTCUT : TILE_MOUNTAIN_SHORTCUT;
@@ -6929,10 +6940,6 @@ void game_enter_shortcut_boss(GameState *g) {
         region = LOCATION_SWAMP;
         level = SWAMP_BOSS_LEVEL;
         shortcut = TILE_SWAMP_SHORTCUT;
-    } else if (g->location == LOCATION_HIGH_PASS) {
-        region = LOCATION_MOUNTAINS;
-        level = MOUNTAIN_BOSS_LEVEL;
-        shortcut = TILE_MOUNTAIN_SHORTCUT;
     } else {
         return;
     }
@@ -6991,6 +6998,9 @@ void game_enter_shortcut_boss(GameState *g) {
 }
 
 void game_request_shortcut(GameState *g) {
+    if (g->location != LOCATION_FOREST && g->location != LOCATION_SWAMP) {
+        return;
+    }
     const char *town;
     if (g->location == LOCATION_FOREST) {
         town = g->forest_entry_town == LOCATION_TOWN2 ? "OakHaven" : "Stillbury";
@@ -7017,7 +7027,7 @@ int game_shortcut_prompt_active(const GameState *g) {
     }
     return g->dialogue_active &&
         (strcmp(g->dialogue_speaker, "Shortcut found") == 0 || strcmp(g->dialogue_speaker, "Take shortcut?") == 0) &&
-        (g->location == LOCATION_FOREST || g->location == LOCATION_SWAMP || g->location == LOCATION_MOUNTAINS);
+        (g->location == LOCATION_FOREST || g->location == LOCATION_SWAMP);
 }
 
 int game_handle_shortcut_prompt_key(GameState *g, int key, int repeat) {
@@ -7199,19 +7209,18 @@ void game_reveal_swamp_shortcut(GameState *g) {
     }
 }
 
+// Retained for callers loading legacy maps; mountains no longer have a shortcut.
 void game_reveal_mountain_shortcut(GameState *g) {
-    if (g->location == LOCATION_MOUNTAINS && g->level == MOUNTAIN_BOSS_LEVEL) {
-        reveal_boss_shortcut(g, &g->map, g->enemies, g->enemy_count, LOCATION_MOUNTAINS, ENEMY_MOUNTAIN_GOBLIN_KING, TILE_MOUNTAIN_SHORTCUT, TILE_MOUNTAIN_FORTRESS_FLOOR);
-    }
+    (void)g;
 }
 
 void game_migrate_boss_shortcuts(GameState *g) {
-    LevelCache *caches[3] = {&g->forest_cache[FOREST_BOSS_LEVEL - 1], &g->swamp_cache[SWAMP_BOSS_LEVEL - 1], &g->mountain_cache[MOUNTAIN_BOSS_LEVEL - 1]};
-    const Location regions[3] = {LOCATION_FOREST, LOCATION_SWAMP, LOCATION_MOUNTAINS};
-    const EnemyType bosses[3] = {ENEMY_FOREST_NECROMANCER, ENEMY_SWAMP_DEMON, ENEMY_MOUNTAIN_GOBLIN_KING};
-    const TileType shortcuts[3] = {TILE_FOREST_SHORTCUT, TILE_SWAMP_SHORTCUT, TILE_MOUNTAIN_SHORTCUT};
-    const TileType floors[3] = {TILE_FOREST_FLOOR, TILE_SWAMP_FLOOR, TILE_MOUNTAIN_FORTRESS_FLOOR};
-    for (int i = 0; i < 3; i++) {
+    LevelCache *caches[2] = {&g->forest_cache[FOREST_BOSS_LEVEL - 1], &g->swamp_cache[SWAMP_BOSS_LEVEL - 1]};
+    const Location regions[2] = {LOCATION_FOREST, LOCATION_SWAMP};
+    const EnemyType bosses[2] = {ENEMY_FOREST_NECROMANCER, ENEMY_SWAMP_DEMON};
+    const TileType shortcuts[2] = {TILE_FOREST_SHORTCUT, TILE_SWAMP_SHORTCUT};
+    const TileType floors[2] = {TILE_FOREST_FLOOR, TILE_SWAMP_FLOOR};
+    for (int i = 0; i < 2; i++) {
         LevelCache *cache = caches[i];
         if (cache->valid) {
             reveal_boss_shortcut(g, &cache->map, cache->enemies, cache->enemy_count, regions[i], bosses[i], shortcuts[i], floors[i]);

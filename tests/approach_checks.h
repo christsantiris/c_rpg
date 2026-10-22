@@ -10,10 +10,13 @@ static inline void walk_return_approach(GameState *g) {
     int steps = 0;
     const TownApproach *route = approach_route(g);
     int dungeon_road = route && route->area == LOCATION_DUNGEON;
+    int mountain_road = route && route->area == LOCATION_MOUNTAINS;
     while (g->location == LOCATION_APPROACH && steps++ < APPROACH_W + APPROACH_BRANCH_LENGTH) {
         int dx = (g->map.stairs_up_x > g->player.x) - (g->map.stairs_up_x < g->player.x);
         int dy = (g->map.stairs_up_y > g->player.y) - (g->map.stairs_up_y < g->player.y);
-        if (dungeon_road) {
+        if (mountain_road && dx) {
+            dy = 0;
+        } else if (dungeon_road) {
             if (dy) {
                 dx = 0;
             }
@@ -66,10 +69,16 @@ static inline void walk_town_approach(GameState *g) {
     int steps = 0;
     const TownApproach *route = approach_route(g);
     int dungeon_road = route && route->area == LOCATION_DUNGEON;
-    while (g->location == LOCATION_APPROACH && steps++ < APPROACH_LENGTH + 4) {
+    int mountain_road = route && route->area == LOCATION_MOUNTAINS;
+    while (g->location == LOCATION_APPROACH && steps++ < APPROACH_LENGTH + 10) {
         int dx = (g->map.stairs_down_x > g->player.x) - (g->map.stairs_down_x < g->player.x);
         int dy = (g->map.stairs_down_y > g->player.y) - (g->map.stairs_down_y < g->player.y);
-        if (dungeon_road && dx) {
+        if (mountain_road && g->player.y != g->map.stairs_down_y + 1 && g->player.x == g->map.stairs_up_x) {
+            dx = 0;
+            dy = (g->map.stairs_down_y + 1 > g->player.y) - (g->map.stairs_down_y + 1 < g->player.y);
+        } else if (mountain_road && dx) {
+            dy = 0;
+        } else if (dungeon_road && dx) {
             dy = 0;
         }
         action_resolve_player(g, (Action){ACTION_MOVE, g->player.x + dx, g->player.y + dy});

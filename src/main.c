@@ -85,7 +85,7 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
         return 0;
     }
     if (g->location == LOCATION_DAWNMERE) {
-        *style = TOWN_EXIT_DUNGEON;
+        *style = action.target_y == 0 ? TOWN_EXIT_MOUNTAINS : TOWN_EXIT_DUNGEON;
         return 1;
     }
     if (g->location == LOCATION_TOWN3 || g->location == LOCATION_CASTLE) {
@@ -327,6 +327,7 @@ static void debug_unlock_town_shortcuts(GameState *game) {
     }
     approach_refresh_fork(game);
     approach_refresh_dungeon(game);
+    approach_refresh_mountains(game);
     push_message(game, "Debug: all town shortcuts unlocked.");
 }
 

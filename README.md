@@ -23,7 +23,7 @@ A roguelike adventure game inspired by *Castle of the Winds* by SaadaSoft. Explo
 
 *The Castle of No Return* is a C/SDL roguelike adventure with turn-based combat and a
 retro pixel-art style. Choose a Warrior, Mage, or Rogue, prepare in town, and
-explore a five-floor undead dungeon, the seven-stage haunted forest, goblin mountains 
+explore a five-floor undead dungeon, the seven-stage haunted forest, a five-level goblin mountain climb
 and many other adventures.
 
 ## World Map
@@ -33,7 +33,9 @@ and many other adventures.
 An illustrated overview based on the world's town connections. Dawnmere now lies
 east of Oakhaven, reached by the safe road opened after defeating the Lich King.
 The illustration predates Dawnmere; the [expansion plan](docs/five-town-expansion.md)
-shows the intended layout, including the upcoming mountain relocation.
+shows the current connections and the planned Windscar Highlands. Goblin Mountains
+now lies north of Dawnmere, beside the road to Ridgeshire; defeating its King
+opens that road. Both mountain entrances start at level 1.
 
 ## Controls
 
@@ -179,8 +181,8 @@ To test quest NPCs with every town shortcut already open, run:
 Select **New Game**, enter a name, and choose a class, or load an existing
 character. The forest shortcut
 between Oakhaven and Stillbury, swamp shortcut between Stillbury and Rosemoor,
-and High Pass between Oakhaven and Ridgeshire are open immediately. The dungeon
-road to Dawnmere is open too. This uses the existing completion flags for the
+and the mountain road between Dawnmere and Ridgeshire are open immediately.
+The dungeon road from Oakhaven to Dawnmere is open too. This uses the existing completion flags for the
 Lich King and the forest, mountain, and swamp bosses;
 quests stay unassigned and their NPCs still award their normal rewards.
 The unlocks apply to new and loaded characters and persist if you save them.
