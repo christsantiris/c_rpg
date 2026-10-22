@@ -14,7 +14,8 @@ rather than sustained melee combat.
 - [Morwen the Witch](healer.md#stillbury-witch) offers full or partial MP restoration for gold inside her Stillbury hut.
 - [Lysa the Healer](healer.md) offers full or partial HP treatment for gold inside her Stillbury healing house. The Alchemist sells both potion types.
 
-Speak with Rook in Stillbury's Inn to open the labyrinth. Returning his stolen
+Speak with Rook in Oakhaven's Tavern to open the labyrinth beside the Haunted
+Forest entrance on the road toward Stillbury. Returning his stolen
 ivory rook rewards 40 gold and 500 score once.
 
 ## Spell Progression

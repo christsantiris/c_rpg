@@ -29,6 +29,7 @@ static const char *game_over_location(const GameState *g) {
         case LOCATION_BUTCHER: return "BUTCHER";
         case LOCATION_MONASTERY: return "MONASTERY";
         case LOCATION_SPICE_SHOP: return "SPICE MERCHANT";
+        case LOCATION_DAWNMERE: return "DAWNMERE";
         case LOCATION_TOWN2: return "STILLBURY";
         case LOCATION_TOWN3: return "ROSEMOOR";
         case LOCATION_TOWN4: return "RIDGESHIRE";

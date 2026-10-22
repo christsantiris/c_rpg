@@ -131,6 +131,7 @@
 #define TOWN_WITCH_H 4
 #define TOWN_WITCH_DOOR_X (TOWN_WITCH_X + 2)
 #define TOWN_WITCH_DOOR_Y (TOWN_WITCH_Y + TOWN_WITCH_H - 1)
+// Legacy town entrance coordinates, retained for saved-map migration.
 #define TOWN_LABYRINTH_X TOWN_WITCH_DOOR_X
 #define TOWN_LABYRINTH_Y 17
 
@@ -171,15 +172,16 @@
 #define TEMPLE_DEPTH 5
 
 #define DUNGEON_DEPTH 5
-#define FOREST_DEPTH 7
-#define FOREST_BOSS_LEVEL 4
+#define FOREST_DEPTH 5
+#define FOREST_BOSS_LEVEL 5
 #define STILLBURY_FOREST_ROAD_X (TOWN_W - 3)
-#define MOUNTAIN_DEPTH 7
-#define MOUNTAIN_BOSS_LEVEL 4
+#define MOUNTAIN_DEPTH 5
+#define MOUNTAIN_BOSS_LEVEL 5
 #define COAST_DEPTH 5
 #define MAX_REGION_DEPTH 8
-#define SWAMP_DEPTH 7
-#define SWAMP_BOSS_LEVEL 4
+#define SWAMP_DEPTH 5
+#define SWAMP_BOSS_LEVEL 5
+#define SWAMP_CACHE_DEPTH 7
 #define SWAMP_RESCUE_LEVEL 3
 #define ROSEMOOR_SWAMP_ROAD_X 28
 // Frostfell reuses the swamp's map size, mirrored so it runs east to west.
@@ -258,7 +260,7 @@
 #define HALL_OSWIN_Y 8
 #define HALL_VEYRA_X 14
 #define HALL_VEYRA_Y 8
-#define WATCHFIRE_MOUNTAINS_LEVEL 6
+#define WATCHFIRE_MOUNTAINS_LEVEL 5
 #define WATCHFIRE_ASHEN_LEVEL 3
 #define WATCHFIRE_DRAGONSPINE_LEVEL 3
 #define EMBERFORGE_MECHANISM_LEVEL 2
@@ -640,7 +642,16 @@ typedef enum {
     TILE_APPROACH_SHORTCUT,
     TILE_APPROACH_BOSS,
     TILE_NPC_HEALER,
-    TILE_NPC_WITCH
+    TILE_NPC_WITCH,
+    TILE_APPROACH_DUNGEON_TOWN,
+    TILE_TOWN_ROAD_ENTRY_NORTH,
+    TILE_TOWN_ROAD_ENTRY_EAST,
+    TILE_TOWN_ROAD_ENTRY_SOUTH,
+    TILE_TOWN_ROAD_ENTRY_WEST,
+    TILE_TOWN_ROAD_EXIT_NORTH,
+    TILE_TOWN_ROAD_EXIT_EAST,
+    TILE_TOWN_ROAD_EXIT_SOUTH,
+    TILE_TOWN_ROAD_EXIT_WEST
 } TileType;
 
 typedef struct {
@@ -675,6 +686,8 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y);
 void map_set_town2_road(Map *m, int unlocked);
 void map_set_stillbury_forest_road(Map *m, int unlocked);
 void map_generate_town4(Map *m, int *spawn_x, int *spawn_y);
+void map_generate_dawnmere(Map *m, int *spawn_x, int *spawn_y);
+TileType map_dawnmere_ground(int x, int y);
 void map_set_town4_road(Map *m, int unlocked);
 void map_set_ridgeshire_mountain_road(Map *m, int unlocked);
 void map_place_town4_square(Map *m);
@@ -689,7 +702,7 @@ void map_set_town3_road(Map *m, int unlocked);
 void map_set_rosemoor_swamp_road(Map *m, int unlocked);
 void map_generate_forest_road(Map *m);
 void map_add_shortcut_branch(Map *m, TileType shortcut);
-void map_place_town_labyrinth(Map *m);
+void map_remove_town_labyrinth(Map *m);
 void map_place_town2_center(Map *m);
 void map_place_town3_guards(Map *m, int avoid_x, int avoid_y);
 void map_place_town4_guards(Map *m, int avoid_x, int avoid_y);

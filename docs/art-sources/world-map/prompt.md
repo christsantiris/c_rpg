@@ -49,3 +49,71 @@ as the edit target (`precise-object-edit`). Final prompt:
 
 Reviewed the two moved regions and all original labels. The edited asset
 replaces `docs/images/world-map.png`.
+
+## Current mountain route (save version 171)
+
+The illustration above predates Dawnmere. For its next geography revision,
+place Dawnmere directly east of Oakhaven and south of Ridgeshire. Put Goblin
+Mountains north of Dawnmere beside the straight road to Ridgeshire. The dungeon
+stands beside the west–east Oakhaven–Dawnmere road. Both buildings unlock their
+through road on boss victory. Oakhaven's future northern side region is
+Windscar Highlands (not yet playable). See the live connection diagram in
+[the expansion document](../../five-town-expansion.md).
+
+## Forest adventure revision (save version 172)
+
+Keep the Haunted Forest geographically between Oakhaven and Stillbury. Its new
+haunted-tree entrance stands beside a straight west–east town road, which opens
+after defeating the Necromancer. Both towns enter Forest 1; the adventure has
+five levels and no separate shortcut to the grove.
+
+## Five-town geography and pathway entrances (save version 175)
+
+Edited with the built-in image generation tool. Output copied to
+`docs/images/world-map.png`; reviewed all five town labels, the two northern
+cold regions, Dungeon between Oakhaven and Dawnmere, and Goblin Mountains
+between Dawnmere and Ridgeshire. Previous prompts above describe historical
+layouts. Final edit prompt:
+
+```text
+Use case: precise-object-edit
+Asset type: finished illustrated fantasy atlas for the README of The Castle of No Return.
+Input image: edit target, the existing finished world map. Preserve its detailed pen-and-watercolor parchment cartography, title, border, compass, palette, terrain style, and all destinations. Recompose the southern half to add exactly one fifth town, Dawnmere, and correct the roads. High-resolution landscape 3:2.
+Mainland geography: Rosemoor northwest, Stillbury southwest, Castle of No Return north-center, Ridgeshire northeast. Move Oakhaven to south-center, east of Stillbury. Put the NEW town Dawnmere directly EAST of Oakhaven and directly SOUTH of Ridgeshire, on mainland with room for town and road labels.
+Critical playable connections, clear continuous thin roads:
+Stillbury — Haunted Forest — Oakhaven, west/east.
+Stillbury — Blackwater Swamp — Rosemoor, south/north.
+Oakhaven — Oakhaven Dungeon — Dawnmere, west/east. The small evil crypt stands BESIDE the straight road between these towns, which continues past it to Dawnmere.
+Dawnmere — Goblin Mountains — Ridgeshire, south/north. Move Goblin Mountains off the old Oakhaven/Ridgeshire connection onto this new eastern Dawnmere/Ridgeshire road; a mountain entrance stands beside this road.
+No direct road from Oakhaven to Ridgeshire. Five towns total, each exactly once, all named legibly: Rosemoor, Stillbury, Oakhaven, Dawnmere, Ridgeshire. Dawnmere should be prominent and spelled D-A-W-N-M-E-R-E.
+Preserve northern geography: Frostfell Wastes north of Rosemoor; snowy Dragonspine north of Ridgeshire. These are the two northernmost cold regions. Volcanic Ashen Hollow EAST of Ridgeshire.
+Preserve other destinations and connections: Moonveil Gardens west of Rosemoor; Sunscar Wastes west of Stillbury; Glassdeep Caverns south of Stillbury; Rook's Labyrinth beside Stillbury; Royal Catacombs south of Castle. Crown Road East goes Rosemoor→Castle; Crown Road West goes Ridgeshire→Castle (intentional names relative to departing towns). A dotted underground Escape Tunnel connects castle jail to Ridgeshire. Sunken Coast south of Oakhaven; Docks southeast of Oakhaven on a coast inlet, with dotted sailing route to offshore southeastern Ruined Isle and its Ruined Temple.
+Redesign the coastline as needed to fit Dawnmere east of Oakhaven without crowding. Mainland roads stay on land. Island separated by open sea. Terrain organically fills the map. Keep Castle visually central and dominant. Each named place once, readable dark serif labels with no overlaps. No extra destinations, no Windscar Highlands (not playable), no level numbers, no UI, no monsters. Title THE CASTLE OF NO RETURN, subtitle WORLD MAP; footer Illustrated geography — not to scale.
+```
+
+## Labyrinth relocation (save version 176)
+
+The built-in image generation tool moved the labyrinth vignette and label from
+Stillbury's outskirts onto the Haunted Forest road. Reviewed the new spur,
+all five towns, and preserved regional connections. Output replaces
+`docs/images/world-map.png`. Final edit prompt:
+
+```text
+Use case: precise-object-edit. Edit target: this finished FIVE-TOWN fantasy world map. Make exactly one localized geographic relocation: move the existing stone maze vignette AND its label "Rook's Labyrinth" away from the southern/eastern outskirts of Stillbury. Remove its old vignette and label, restoring natural grass and forest there while preserving the nearby Glassdeep road.
+Place Rook's Labyrinth in a small clearing BESIDE THE ROAD THROUGH HAUNTED FOREST, between Stillbury and Oakhaven, close to the Haunted Forest landmark. Prefer above the woodland road just west of Oakhaven, with a tiny spur from that road to the stone maze, enough room for a legible label. This is an entrance beside the forest path, not a destination in Stillbury's town. Its maze drawing should be modest and integrated with the forest terrain. There must be exactly one label "Rook's Labyrinth" and one corresponding stone maze. Do not add quest text or a lock icon.
+Preserve ALL five towns (Rosemoor, Stillbury, Oakhaven, Dawnmere, Ridgeshire), the exact Oakhaven–Dungeon–Dawnmere road, the Dawnmere–Goblin Mountains–Ridgeshire road, every other destination and label, all northern snowy peaks, Ashen Hollow volcanoes, castle, Crown Roads, coast, Docks, Ruined Isle, Ruined Temple, title, compass, parchment border, colors, textures, typography and dimensions. No other geographic changes. Keep Haunted Forest label readable and do not obscure either town with the moved labyrinth. Return the complete edited map.
+```
+
+
+## Labyrinth outside the forest (town-exterior revision)
+
+Edited with the built-in image generation tool, replacing
+`docs/images/world-map.png`. The earlier woodland placement was incorrect.
+The labyrinth now stands in open grass south of the Stillbury–Oakhaven road,
+with its own short spur; the Haunted Forest remains north of that road.
+Reviewed all five towns, other labels, routes and coastlines after the edit.
+Final edit prompt:
+
+```text
+Use case: precise-object-edit. Edit this finished fantasy atlas. Make one localized correction only: Rook's Labyrinth is NOT INSIDE the Haunted Forest. Move the small stone maze drawing and its exact label "Rook's Labyrinth" to open GRASSLAND SOUTH OF the Stillbury–Oakhaven road, near its midpoint. The woodland and Haunted Forest label must be NORTH of that road, with a clear visible separation between trees and labyrinth. Clear a grassy roadside meadow for the labyrinth on the SOUTH side of the road; connect its entrance with a short spur from the road. Restore trees where the previous labyrinth was north of the road. There is exactly one labyrinth and one label, and no forest trees enclosing the labyrinth. Preserve the road between Stillbury and Oakhaven, all FIVE towns and names (Stillbury, Rosemoor, Oakhaven, Dawnmere, Ridgeshire), all other destinations, coastlines, mountains, Crown Roads, castle, label typography, title, compass, border, palette, illustration style, layout and 3:2 landscape format. Keep the dungeon between Oakhaven and Dawnmere, Goblin Mountains between Dawnmere and Ridgeshire, Dragonspine north of Ridgeshire, and Ashen Hollow east of Ridgeshire unchanged. Do not add destinations, do not move towns. Return the complete corrected map. This is a precise correction of geography, not a redesign.
+```

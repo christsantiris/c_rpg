@@ -42,11 +42,23 @@ sprites:
 	python3 tools/sprites/witch.py
 	python3 tools/sprites/labyrinth.py
 	python3 tools/sprites/dungeon.py
+	python3 tools/sprites/forest.py
+	python3 tools/sprites/mountain.py
+	python3 tools/sprites/swamp.py
+	python3 tools/sprites/coast.py
+	python3 tools/sprites/desert.py
+	python3 tools/sprites/dragonspine.py
+	python3 tools/sprites/frostfell.py
+	python3 tools/sprites/moonveil.py
+	python3 tools/sprites/ashen.py
+	python3 tools/sprites/glassdeep.py
+	python3 tools/sprites/catacombs.py
 	python3 tools/sprites/apothecary.py
 	python3 tools/sprites/adventurers_guild.py
 	python3 tools/sprites/workshop.py
 	python3 tools/sprites/town_hall.py
 	python3 tools/sprites/local_buildings.py
+	python3 tools/sprites/towns.py
 	python3 tools/sprites/polar_kraken.py
 	python3 tools/sprites/crownroad_gate.py
 

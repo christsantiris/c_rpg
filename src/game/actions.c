@@ -19,6 +19,7 @@
 #include "jail.h"
 #include "town_life.h"
 #include "approach.h"
+#include "town_road.h"
 #include "regional_terrain.h"
 #include "landscapes.h"
 #include "wilds.h"
@@ -336,12 +337,6 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         game_record_dain_kill(g, type);
     }
     if (is_boss) {
-        int first_forest_victory = g->location == LOCATION_FOREST &&
-            !(g->defeated_bosses & (1 << LOCATION_FOREST));
-        int first_swamp_victory = g->location == LOCATION_SWAMP &&
-            !(g->defeated_bosses & (1 << LOCATION_SWAMP));
-        int first_mountain_victory = g->location == LOCATION_MOUNTAINS &&
-            !(g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
         g->defeated_bosses |= 1 << g->location;
         game_record_temple_enemy_defeated(g, type);
         if (type == ENEMY_THORN_REGENT) {
@@ -356,31 +351,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         if (type == ENEMY_PRISM_SOVEREIGN) {
             push_message(g, "The Prism Sovereign shatters. The path to Stillbury opens!");
         }
-        if (first_forest_victory) {
-            g->dialogue_active = 1;
-            g->dialogue_x = g->player.x;
-            g->dialogue_y = g->player.y;
-            snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Shortcut found");
-            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "You found a shortcut through the forest to %s! Take the marked exit recessed into the surrounding terrain, or continue through the forest.",
-                g->forest_entry_town == LOCATION_TOWN2 ? "OakHaven" : "Stillbury");
-        } else if (first_swamp_victory) {
-            g->dialogue_active = 1;
-            g->dialogue_x = g->player.x;
-            g->dialogue_y = g->player.y;
-            snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Shortcut found");
-            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "You found a shortcut through the swamp to %s! Take the marked exit recessed into the surrounding terrain, or continue through the swamp.",
-                g->swamp_entry_town == LOCATION_TOWN3 ? "Stillbury" : "Rosemoor");
-        } else if (first_mountain_victory) {
-            g->dialogue_active = 1;
-            g->dialogue_x = g->player.x;
-            g->dialogue_y = g->player.y;
-            snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Shortcut found");
-            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "You found a shortcut through the mountains to %s! Take the marked exit recessed into the surrounding terrain, or continue down the mountains.",
-                g->mountain_entry_town == LOCATION_TOWN4 ? "OakHaven" : "Ridgeshire");
-        }
+
     }
     int gold = 0;
     switch (type) {
@@ -1208,11 +1179,12 @@ void action_resolve_player(GameState *g, Action a) {
         g->location == LOCATION_TOWN2 ||
         g->location == LOCATION_TOWN3 ||
         g->location == LOCATION_TOWN4 ||
+        g->location == LOCATION_DAWNMERE ||
         g->location == LOCATION_HIGH_PASS ||
         g->location == LOCATION_SWAMP_ROAD ||
         g->location == LOCATION_CASTLE ||
         g->location == LOCATION_FOREST_ROAD ||
-        g->location == LOCATION_APPROACH ||
+        g->location == LOCATION_APPROACH || g->location == LOCATION_TOWN_ROAD ||
         g->location == LOCATION_INN ||
         g->location == LOCATION_HEALER || g->location == LOCATION_WITCH ||
         g->location == LOCATION_JAIL ||
@@ -1302,7 +1274,7 @@ void action_resolve_player(GameState *g, Action a) {
             if (g->defeated_bosses & (1 << LOCATION_DUNGEON)) {
                 g->score += g->level * 100;
                 game_return_to_approach(g);
-                push_message(g, "You climb the stairs to the dungeon approach.");
+                push_message(g, "The road leads west to Oakhaven and east to Dawnmere.");
             } else {
                 push_message(g, "The Lich King seals these stairs.");
             }
@@ -1813,7 +1785,7 @@ void action_resolve_player(GameState *g, Action a) {
                 return;
             }
             if (g->location == LOCATION_FOREST_ROAD ||
-                g->location == LOCATION_APPROACH ||
+                g->location == LOCATION_APPROACH || g->location == LOCATION_TOWN_ROAD ||
                 g->location == LOCATION_HIGH_PASS ||
                 g->location == LOCATION_SWAMP_ROAD ||
                 game_is_king_road(g)) {
@@ -1824,6 +1796,7 @@ void action_resolve_player(GameState *g, Action a) {
                 g->location == LOCATION_TOWN2 ||
                 g->location == LOCATION_TOWN3 ||
                 g->location == LOCATION_TOWN4 ||
+                g->location == LOCATION_DAWNMERE ||
                 g->location == LOCATION_CASTLE ||
                 g->location == LOCATION_TAVERN ||
                 g->location == LOCATION_INN || g->location == LOCATION_HEALER || g->location == LOCATION_WITCH ||
@@ -2346,7 +2319,8 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
         if ((g->location == LOCATION_TOWN || g->location == LOCATION_TOWN2 ||
-            g->location == LOCATION_TOWN3 || g->location == LOCATION_TOWN4) &&
+            g->location == LOCATION_TOWN3 || g->location == LOCATION_TOWN4 ||
+            g->location == LOCATION_DAWNMERE) &&
             g->map.tiles[ty][tx] == TILE_PORTAL && g->portal_active) {
             game_use_town_portal(g);
             return;
@@ -2358,16 +2332,6 @@ void action_resolve_player(GameState *g, Action a) {
                 game_enter_tavern(g);
             } else {
                 game_enter_inn(g);
-            }
-            return;
-        }
-
-        if (g->location == LOCATION_TOWN2 &&
-            g->map.tiles[ty][tx] == TILE_LABYRINTH_ENTRANCE) {
-            if (game_labyrinth_is_open(g)) {
-                game_enter_labyrinth(g);
-            } else {
-                push_message(g, "The old labyrinth gate is sealed.");
             }
             return;
         }
@@ -2419,7 +2383,7 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
-        if (approach_travel(g, tx, ty) || approach_enter(g, tx, ty)) {
+        if (town_road_travel(g, tx, ty) || town_road_depart(g, tx, ty) || approach_travel(g, tx, ty) || approach_enter(g, tx, ty)) {
             return;
         }
 
@@ -2582,54 +2546,30 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
         if (g->location == LOCATION_SWAMP &&
-            g->map.tiles[ty][tx] == TILE_SWAMP_SHORTCUT) {
-            if (g->defeated_bosses & (1 << LOCATION_SWAMP)) {
-                game_request_shortcut(g);
-            }
-            return;
-        }
-
-        if (g->location == LOCATION_SWAMP &&
-            g->map.tiles[ty][tx] == TILE_SWAMP_ENTRANCE) {
-            if (g->level == SWAMP_BOSS_LEVEL && g->swamp_entry_town == LOCATION_TOWN3) {
+            (g->map.tiles[ty][tx] == TILE_SWAMP_ENTRANCE ||
+            g->map.tiles[ty][tx] == TILE_SWAMP_EXIT)) {
+            int reverse = g->map.tiles[ty][tx] == TILE_SWAMP_ENTRANCE;
+            if (!reverse && g->level == SWAMP_BOSS_LEVEL) {
                 for (int i = 0; i < g->enemy_count; i++) {
                     if (g->enemies[i].active && g->enemies[i].type == ENEMY_SWAMP_DEMON) {
-                        push_message(g, "The demon blocks the swamp trail!");
+                        push_message(g, "The demon seals the swamp exit!");
                         return;
                     }
                 }
             }
-            if (g->level == 1) {
-                game_leave_swamp(g, LOCATION_TOWN2, 0);
+            if ((reverse && g->level == 1) || (!reverse && g->level == SWAMP_DEPTH)) {
+                game_return_to_approach(g);
             } else {
-                int unvisited = !g->swamp_cache[g->level - 2].valid;
-                game_ascend(g);
+                int next = g->level + (reverse ? -1 : 1);
+                int unvisited = !g->swamp_cache[next - 1].valid;
+                if (reverse) {
+                    game_ascend(g);
+                } else {
+                    game_descend(g);
+                }
                 if (unvisited) {
                     g->score += map_swamp_difficulty(g->level) * 100;
                 }
-            }
-            return;
-        }
-
-        if (g->location == LOCATION_SWAMP &&
-            g->map.tiles[ty][tx] == TILE_SWAMP_EXIT) {
-            if (g->level == SWAMP_BOSS_LEVEL && g->swamp_entry_town != LOCATION_TOWN3) {
-                for (int i = 0; i < g->enemy_count; i++) {
-                    if (g->enemies[i].active &&
-                        g->enemies[i].type == ENEMY_SWAMP_DEMON) {
-                        push_message(g, "The demon blocks the swamp trail!");
-                        return;
-                    }
-                }
-            }
-            if (g->level < SWAMP_DEPTH) {
-                int unvisited = !g->swamp_cache[g->level].valid;
-                game_descend(g);
-                if (unvisited) {
-                    g->score += map_swamp_difficulty(g->level) * 100;
-                }
-            } else {
-                game_leave_swamp(g, LOCATION_TOWN3, 0);
             }
             return;
         }
@@ -2805,28 +2745,27 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
         if (g->location == LOCATION_FOREST &&
-            g->map.tiles[ty][tx] == TILE_FOREST_SHORTCUT) {
-            if (g->defeated_bosses & (1 << LOCATION_FOREST)) {
-                game_request_shortcut(g);
-            }
-            return;
-        }
-
-        if (g->location == LOCATION_FOREST &&
-            g->map.tiles[ty][tx] == TILE_FOREST_ENTRANCE) {
-            if (g->level == FOREST_BOSS_LEVEL && g->forest_entry_town == LOCATION_TOWN2) {
+            (g->map.tiles[ty][tx] == TILE_FOREST_ENTRANCE ||
+            g->map.tiles[ty][tx] == TILE_FOREST_EXIT)) {
+            int reverse = g->map.tiles[ty][tx] == TILE_FOREST_ENTRANCE;
+            if (!reverse && g->level == FOREST_BOSS_LEVEL) {
                 for (int i = 0; i < g->enemy_count; i++) {
                     if (g->enemies[i].active && g->enemies[i].type == ENEMY_FOREST_NECROMANCER) {
-                        push_message(g, "The Necromancer seals the path!");
+                        push_message(g, "The Necromancer seals the grove exit!");
                         return;
                     }
                 }
             }
-            if (g->level == 1) {
-                game_leave_forest(g, LOCATION_TOWN, 0);
+            if ((reverse && g->level == 1) || (!reverse && g->level == FOREST_DEPTH)) {
+                game_return_to_approach(g);
             } else {
-                int unvisited = !g->forest_cache[g->level - 2].valid;
-                game_ascend(g);
+                int next = g->level + (reverse ? -1 : 1);
+                int unvisited = !g->forest_cache[next - 1].valid;
+                if (reverse) {
+                    game_ascend(g);
+                } else {
+                    game_descend(g);
+                }
                 if (unvisited) {
                     g->score += map_forest_difficulty(g->level) * 100;
                 }
@@ -2835,28 +2774,19 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
         if (g->location == LOCATION_MOUNTAINS &&
-            g->map.tiles[ty][tx] == TILE_MOUNTAIN_SHORTCUT) {
-            if (g->defeated_bosses & (1 << LOCATION_MOUNTAINS)) {
-                game_request_shortcut(g);
-            }
-            return;
-        }
-
-        if (g->location == LOCATION_MOUNTAINS &&
             (g->map.tiles[ty][tx] == TILE_MOUNTAIN_ENTRANCE ||
             g->map.tiles[ty][tx] == TILE_MOUNTAIN_EXIT)) {
             int reverse = g->map.tiles[ty][tx] == TILE_MOUNTAIN_ENTRANCE;
-            int crossing_peak = reverse == (g->mountain_entry_town == LOCATION_TOWN4);
-            if (g->level == MOUNTAIN_BOSS_LEVEL && crossing_peak) {
+            if (!reverse && g->level == MOUNTAIN_BOSS_LEVEL) {
                 for (int i = 0; i < g->enemy_count; i++) {
                     if (g->enemies[i].active && g->enemies[i].type == ENEMY_MOUNTAIN_GOBLIN_KING) {
-                        push_message(g, "The Goblin King bars the pass!");
+                        push_message(g, "The Goblin King bars the summit exit!");
                         return;
                     }
                 }
             }
             if ((reverse && g->level == 1) || (!reverse && g->level == MOUNTAIN_DEPTH)) {
-                game_leave_mountains(g, reverse ? LOCATION_TOWN : LOCATION_TOWN4, 0);
+                game_return_to_approach(g);
             } else {
                 int next = g->level + (reverse ? -1 : 1);
                 int unvisited = !g->mountain_cache[next - 1].valid;
@@ -2868,28 +2798,6 @@ void action_resolve_player(GameState *g, Action a) {
                 if (unvisited) {
                     g->score += map_mountain_difficulty(g->level) * 100;
                 }
-            }
-            return;
-        }
-
-        if (g->location == LOCATION_FOREST &&
-            g->map.tiles[ty][tx] == TILE_FOREST_EXIT) {
-            if (g->level == FOREST_BOSS_LEVEL && g->forest_entry_town != LOCATION_TOWN2) {
-                for (int i = 0; i < g->enemy_count; i++) {
-                    if (g->enemies[i].active && g->enemies[i].type == ENEMY_FOREST_NECROMANCER) {
-                        push_message(g, "The Necromancer seals the path!");
-                        return;
-                    }
-                }
-            }
-            if (g->level < FOREST_DEPTH) {
-                int unvisited = !g->forest_cache[g->level].valid;
-                game_descend(g);
-                if (unvisited) {
-                    g->score += map_forest_difficulty(g->level) * 100;
-                }
-            } else {
-                game_leave_forest(g, LOCATION_TOWN2, 0);
             }
             return;
         }
@@ -3642,7 +3550,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
     if (shots) {
         shots->count = 0;
     }
-    if (g->player.hp <= 0 || g->game_won || g->castle_prompt || g->location == LOCATION_APPROACH) {
+    if (g->player.hp <= 0 || g->game_won || g->castle_prompt || g->location == LOCATION_APPROACH || g->location == LOCATION_TOWN_ROAD) {
         return;
     }
     jail_follow(g);

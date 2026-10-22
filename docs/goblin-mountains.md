@@ -1,33 +1,25 @@
 # Goblin Mountains
 
-The Goblin Mountains connect OakHaven's north gate and Ridgeshire's south mountain
-gate and use an independent seven-level cache. Entering from OakHaven starts at
-level 1; entering from Ridgeshire starts at level 7. Both routes climb toward
-the Goblin King at Crown Peak on level 4, then descend in difficulty toward the
-opposite town. Their black basalt, iron-red rock and ember-orange accents
-separate the region visually from the dungeon and Haunted Forest. The Mountains
-use seven authored route graphs rather than the Forest's clearing templates.
-
-Wild Boars are deliberately excluded. The area is about an organized goblin
-war host, its siege craft, guarded mines and enslaved cave creatures.
+The Goblin Mountains stand beside a straight, single-tile cobblestone road
+between **Dawnmere's north gate** and **Ridgeshire's south gate**. Enter the
+large fortified mountain cave from either town to start at **level 1** and
+fight upward through five levels. Mountain levels never play in reverse from
+Ridgeshire. Ordinary backtracking within a climb remains available.
 
 | Level | Region | Layout identity | Enemy roster |
 | --- | --- | --- | --- |
-| 1 | Blackrock Foothills | Open switchbacks and scout camps climbing to a north exit | Goblin Scouts |
-| 2 | Raider Pass | Overlapping firing lanes leading east | Scouts and Goblin Archers |
-| 3 | Cinder Mines | Braided mine routes descending to a south exit | Scouts, Archers, Bombers and Tunnel Spiders |
-| 4 | Crown Peak | Twin approaches into the summit fortress and a southern descent | Full roster, Goblin Shamans and the Goblin King |
-| 5 | Siege Camp | Split routes through abandoned positions; south pass | Scouts, Archers, Bombers and Tunnel Spiders |
-| 6 | Collapsed Tunnels | Broken routes and side chambers leading east | Scouts and Goblin Archers |
-| 7 | Ridgeshire Approach | Timber crossings and scout camps near the town | Goblin Scouts |
+| 1 | Blackrock Foothills | Open switchbacks and scout camps | Goblin Scouts |
+| 2 | Raider Pass | Timber bridges and overlapping firing lanes | Scouts and Archers |
+| 3 | Cinder Mines | Braided underground routes | Scouts, Archers, Bombers and Tunnel Spiders |
+| 4 | Siege Camp | Split routes and fortified positions | Goblin warbands |
+| 5 | Crown Peak | Summit fortress | Full roster and the Goblin King |
 
-Approach stages do not require a full clear. Reaching the marked boundary pass
-is enough to advance, whether it lies east, north or south. At the peak, only
-the Goblin King blocks crossing to the other approach; retreat remains possible.
-His defeat prompts discovery of a marked shortcut beside the defeated boss to
-the opposite town. Press Enter to acknowledge the prompt; movement cannot
-dismiss it, matching the forest and swamp. Players
-can take it immediately or fight through the three remaining stages.
+Intermediate levels do not require a full clear. The living Goblin King blocks
+the level-5 summit exit. Defeat him, collect the loot, and use that exit to
+emerge onto the road. Walk **north to Ridgeshire** or **south to Dawnmere**.
+The through road opens permanently on victory. There is no mountain shortcut,
+boss branch, travel menu, or direct teleport to town. Retreat at level 1 returns
+to the cave approach for the town used to enter.
 
 ## Combat Roles
 
@@ -42,66 +34,52 @@ can take it immediately or fight through the three remaining stages.
   marked bombardment pockets and finite powder kegs at Crown Peak.
 
 The route geometry and ground treatment vary by level. Foothill and ascent
-stages use exposed basalt switchbacks. Raider Pass and Ridgeshire Approach contain
-narrow timber bridge crossings. Cinder Mines and Collapsed Tunnels use dark
+stages use exposed basalt switchbacks. Raider Pass contains
+narrow timber bridge crossings. Cinder Mines uses dark
 underground chambers, while Siege Camp and Crown Peak use paved
 fortress courtyards and linked defensive positions.
 
 ## Terrain and Treasure
 
-Stages 2 and 7 contain a weak bridge span that collapses after the player
+Stage 2 contains a weak bridge span that collapses after the player
 crosses it. Stand beside the gap and press `A` to rebuild the bridge from either
 side. The other mountain stages use open room routes without the old internal
 toggle-gate chambers.
 
-Stages 3–6 contain an optional rockfall passage. Press `A` beside either
+Stages 3–5 contain an optional rockfall passage. Press `A` beside either
 end to expose it. The falling rocks deal `4 + difficulty` HP, but the chamber behind
 them contains a one-time cache worth `15 + 4 × difficulty` gold. Difficulty follows
-1, 2, 3, 8, 3, 2, 1, so hazards and rewards also decrease away from the peak. Stand on the cache
+1, 2, 3, 4, 8, increasing toward the summit. Stand on the cache
 and press `A` to collect it. Bridge repairs, opened passages, claimed caches,
 and minimap discoveries persist while the expedition is cached and through
 save/load.
 
-## Mountain Quest
+## Mountain Quests
 
-Speak to Dain with `T` in **Ridgeshire's town center** to accept
-**Recover the Treasure Map**. His quest places guarded Map Bearers on stages
-**7, 6, and 5**, entered through Ridgeshire's south mountain gate. The Archer,
-Bomber, and Shaman leaders respectively carry one fragment and travel with a themed warband. Defeating the
-leader recovers the fragment automatically. All three objectives precede the
-stage-4 Goblin King from Ridgeshire; entering from Oakhaven finds them after him.
-Accepting starts a fresh mountain expedition, while a previously defeated
-Goblin King remains dead and permanent shortcuts stay open. After victory,
-take the peak shortcut to Oakhaven and the unlocked town roads home, or battle
-through stages 3, 2, and 1.
+Dain assigns **Recover the Treasure Map** in Ridgeshire's town center. The
+Archer, Bomber and Shaman Map Bearers occupy **levels 2, 3 and 4**, respectively,
+with themed guards. Collected fragments do not use inventory space. Return all
+three to Dain for **60 gold and 400 score**.
 
-Save version **113** preserves collected fragments and explored maps. Old
-bearers on incorrect stages become regular enemies with their existing health,
-positions, and death state. Missing Archer and Bomber fragments gain bearers on
-stages 7 and 6 when visited; the Shaman remains on stage 5. Loot, boss victories,
-and portal anchors remain intact.
+Marshal Veyra's **Watchfires of Ridgeshire** still spans three regions:
+**Goblin Mountains 5**, **Ashen Hollow 3** and **Dragonspine 3**. Clear each
+fire's defenders and press `A` beside it. The mountain fire occupies an ordinary
+clearing before the King's fortress; killing the regional bosses is optional.
 
-Return all three fragments to Dain in Ridgeshire's town center for the one-time
-reward of **60 gold and 400 score**.
-
-Ridgeshire's north gate leads along an approach to [Dragonspine](dragonspine.md). Ilya
-assigns its goblet quest in Oakhaven's Tavern. After the Goblin King's defeat,
-the + shaped crossroads beyond each mountain gate opens its side arms. From
-town, continue straight to the regular mountains, turn left for the next town,
-or right for the King's chamber. Boss exits return onto the same crossroads.
-The side arms are hidden before victory; no separate travel road is loaded.
-Return to Town anchors to the expedition's entry town, and its return portal
-keeps that anchor if the mountains are later entered from the opposite town.
+Return to Town and its portal retain the expedition's entrance town, even when
+another mountain expedition starts from the opposite town.
 
 ## Save Compatibility
 
-Older saves migrate automatically. The old level 8 summit moves to level 4;
-the former level 4 and level 7 approaches merge into level 7, preserving the
-occupied or portal-linked map when needed. Character progress, boss victories,
-partial map fragments, active loot, and portal coordinates remain intact. Old
-map bearers become regular enemies, and missing fragments gain bearers on their
-new stages when visited. Existing shortcut entrances relocate beside the saved
-boss death position on load. Saving writes the current format with both mountain travel anchors.
+Save version **171** moves Oakhaven mountain entrance and portal anchors to
+Dawnmere. Saved mountain approaches become the new road. Legacy peak level 4
+becomes level 5; level 5 becomes level 4; the former outer slopes merge into
+levels 2 and 3, prioritizing occupied and portal-linked maps. Older eight-level
+saves first pass through their existing migration. Wounded actors, active loot,
+exploration, inventory, collected fragments, lit watchfires and boss victories
+remain. Pending quest encounters move to their new levels. Retired shortcut
+markers become ordinary floor. A portal already in Oakhaven remains usable
+for that saved visit, so moving its future anchor cannot strand the player.
 
 ## Crown Peak Boss Encounter
 
@@ -143,8 +121,8 @@ His signature warnings and keg fuses display separately. If both affect a tile,
 its label shows **attack turns / keg turns**.
 
 Keg kills use ordinary enemy death, experience, quest and loot handling. A keg
-victory still records the King's defeat, shield drop and shortcut discovery.
-Surviving enemies do not block the mountain shortcut or either travel route.
+victory still records the King's defeat, shield drop and road unlock.
+Surviving ordinary enemies do not block the summit exit or the town road.
 
 The guaranteed **Goblin King's Shield** retains +3 defense, 12% block and its
 Warrior/Rogue restriction. It normally drops as floor loot. A full floor list

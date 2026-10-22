@@ -1,18 +1,20 @@
 # Blackwater Swamp
 
-Blackwater Swamp connects Stillbury and Rosemoor across seven levels.
-Stillbury's main north gate enters level 1; Rosemoor's main south gate enters
-level 7. Either approach crosses three levels of increasing difficulty before
-meeting the Swamp Demon on level 4. Beyond the Demon, the remaining three
-levels become easier. Braided mudbanks connect irregular islands across broad
-blackwater channels. Rounded cypress islets and several reconnecting routes
-break up each stage, so players can approach encounters from different banks.
+Blackwater Swamp has five forward levels, with Mira on level 3 and the Swamp
+Demon on level 5. Stillbury's north gate and Rosemoor's south gate each lead
+onto a safe cobblestone road through grass. A mossy crypt framed by mangroves
+stands beside the road; its south-facing doorway always starts Swamp 1.
 
-The west-edge trail moves toward lower level numbers and Stillbury; the
-east-edge trail moves toward higher numbers and Rosemoor. Either border level
-allows immediate retreat to its town. Maps and enemies are cached independently
-from other regions and retained when entering from either town. Ordinary
-enemies do not need to be cleared to advance.
+Before the Demon is defeated, the road ends at the entrance. Victory opens
+the full north–south road: Rosemoor north, Stillbury south. Leaving the final
+clearing returns to that road so the player can walk home or onward. There is
+no swamp shortcut, boss branch or route-choice menu. Ordinary backtracking
+within the swamp remains available; retreat from level 1 returns to the entrance
+path for the town used. Regular enemies do not need to be cleared to advance.
+
+Braided mudbanks connect irregular islands across broad blackwater channels.
+Rounded cypress islets and reconnecting routes let players approach encounters
+from different banks. Maps and enemies are cached independently of other regions.
 
 ## Blackwater channels and reed cover
 
@@ -27,65 +29,27 @@ concealment. Leaving the reeds restores normal awareness immediately. No
 interaction key, consumable or quest is needed. Loose loot and return portals
 preserve the reeds beneath them.
 
-Mira's clearing, the Demon on stage 4, both town approaches and the permanent
-shortcut retain their existing quest and travel rules.
+Difficulty and first-visit travel rewards rise from levels 1 through 5.
+The regular roster includes Giant Rats, Zombies, Bandits and Wraiths, with
+Vampires on later levels. The final level adds the Swamp Demon and its guaranteed
+Demonic Sword. A living Demon blocks the final exit but permits retreat to level 4.
+Victory opens the road without creating a shortcut or discovery prompt.
 
-| Levels | Regular enemies | Difficulty |
-| --- | --- | --- |
-| 1 and 7 | Giant Rats, Zombies, Bandits, Wraiths | Border levels |
-| 2 and 6 | Giant Rats, Zombies, Bandits, Wraiths | More enemies |
-| 3 and 5 | The same roster, plus Vampires | Stronger regular enemies |
-| 4 | Full roster and Swamp Demon | Central boss encounter |
-
-Giant Rats are the weakest swamp enemies; Bandits are tougher and better
-defended; Vampires have the most health and attack of the regular roster.
-Zombies and Wraiths retain their dungeon enemy rules. The Demon remains a
-separate boss and drops a fixed Demonic Sword reward. Travel score is awarded
-on first visits to levels from either direction.
-
-## Demon and Shortcuts
-
-The living Demon blocks crossing level 4 toward the opposite town, but allows
-retreat toward the expedition's entry town. Defeating him displays a shortcut
-discovery prompt that stays visible until a fresh press of Enter acknowledges
-it, matching the forest and mountains. A separate marked trail appears beside
-the defeated Demon, even if he was lured away from his clearing. That trail
-returns to the boss arm of the swamp crossroads. Follow its signs to walk
-to either town, or turn back to the Demon's chamber. Players can
-instead cross the three remaining levels.
-Surviving regular enemies do not block either exit choice.
-
-Victory opens both side arms of the two swamp crossroads, while the straight
-paths still enter the regular swamp.
-The Demon does not respawn on later visits or after accepting Bram's quest.
-
-Return to Town returns to the expedition's entry town. Its portal preserves
-the exact swamp level, casting position, and original town, even after the
-swamp is subsequently entered from the other town. From Stillbury, the town
-portal appears beside the north swamp gate; from Rosemoor, beside the south
-swamp gate.
+Return to Town remembers the expedition's entrance town. Its portal preserves
+the exact swamp level, casting position, and original town, even after entry
+from the other town. In Stillbury the portal is beside the north gate; in
+Rosemoor it is beside the south gate.
 
 ## Bring Mira Home
 
 At the Stillbury Inn, Bram asks the player to rescue his daughter Mira. She is
-held by a named Vampire Captor in a clearing on level 3, on the Stillbury side
-of the Demon. Starting from Stillbury encounters Mira before level 4. Starting
-from Rosemoor with the quest active encounters her after defeating the Demon
-and continuing through level 3. Taking the central shortcut from Rosemoor
-skips her clearing; the ordinary Stillbury swamp gate permits rescuing her later.
+held by a named Vampire Captor in a clearing on level 3. Both towns start at
+level 1, so Mira is always encountered before the final boss.
 
 Defeat the captor, then speak to Mira to send her home. Return to Bram for a
 one-time reward of 80 gold and 600 score. Accepting the quest starts a fresh
-swamp expedition while retaining any boss victory and unlocked shortcuts.
-Quest and rescue progress persist across backtracking and new saves.
-
-## Physical crossroads
-
-The approach beyond each swamp gate is one + shaped road. From the town gate,
-the regular swamp is straight, the next town is left, and the Demon's chamber
-is right. Both side arms stay hidden until the Demon is defeated. Every arm
-leads directly to its destination, without an intermediate travel map or route
-menu. Leaving the boss returns onto the right arm of the same crossroads.
+swamp expedition while retaining any boss victory and open town road.
+Quest and rescue progress persist across backtracking and saves.
 
 ## Swamp Demon Encounter
 
@@ -93,7 +57,7 @@ The Demon retains **180 HP, 20 attack, 7 defense and 550 experience**, with
 existing regional scaling. He stays at his arena position. Entering the final
 clearing or damaging him from a clear nearby ranged lane starts the fight.
 Retreat beyond 12 tiles outside the clearing pauses the exact queued attack;
-active rot and vent cooldowns continue ticking on actions taken on stage 4.
+active rot and vent cooldowns continue ticking on actions taken on stage 5.
 
 - **Bog Tyrant, above half health:** alternate a one-action frontal cleave
   with a two-action aimed rot pool. The cleave covers the three tiles directly
@@ -132,8 +96,7 @@ A full floor-loot list reserves it in a named root cache without deleting other
 items. An earned, unclaimed sword returns there after a floor refresh. Interact
 beside the cache or press **`P`** on it; full inventory leaves it available.
 Claiming is permanent, so selling or deliberately dropping it grants no copy.
-The central shortcut, safe swamp road and both town approaches remain available
-under the existing victory rules.
+Victory opens the safe town road; the entrance remains available from either town.
 
 See the [encounter screenshots and play-testing guide](art-sources/swamp-demon-encounter/README.md).
 
@@ -147,12 +110,18 @@ It costs no mana.
 
 ## Save Compatibility
 
-Older saves migrate automatically when loaded. The old Demon stage moves from
-level 5 to level 4, and Mira's clearing moves from level 4 to level 3. Saved maps,
-enemies, and portal destinations move with those levels; the two additional
-stages start unexplored. Character progress, rescue progress, and boss victories
-remain intact. Saving writes the current format with seven cached levels and
-the expedition's entry town and portal anchor.
+Save version **173** migrates the former seven-level route into five levels.
+Old floors 1–7 map to 1, 2, 3, 5, 4, 2, 1. Mira's level-3 map and the former
+level-4 boss arena retain their terrain and encounter state. Active and linked
+portal snapshots take priority when old outer trails merge, with separate
+slots reserved when needed. Obsolete shortcut markers, prompts and loot/portal
+underlays are repaired. Health, equipment, gold, quest progress, exploration,
+portal destinations and boss victories remain intact. The serialized cache
+retains seven legacy slots for compatibility; only the first five are playable.
+Older five-level saves migrate through the historical route conversion first.
+
+Save version **175** also migrates saved side-area corridors to their new
+entrance sprites and town paths, preserving accessible player positions and loot.
 
 Save version **128** adds the Demonic Sword claim state. Existing enemy fields
 save the phase, countdown, orientation and both locked pool targets. Appended

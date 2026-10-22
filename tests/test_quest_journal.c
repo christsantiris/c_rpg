@@ -33,14 +33,14 @@ void test_quest_journal(void) {
     ASSERT("completed tab retains turned-in quests",
         quest_journal_get_entry(&g, QUEST_TAB_COMPLETED, 0, &entry) &&
         entry.state == 3 && strcmp(entry.giver, "Alder") == 0);
-    ASSERT("Alder's journal places all objectives before the grove from Stillbury", entry.stages[0] == 7 && entry.stages[1] == 6 && entry.stages[2] == 5);
+    ASSERT("Alder's journal places all objectives before the grove from Stillbury", entry.stages[0] == 2 && entry.stages[1] == 3 && entry.stages[2] == 4);
     g.rook_quest_state = 1;
     ASSERT("Rook's labyrinth retrieval appears as an active quest",
         quest_journal_count(&g, QUEST_TAB_ACTIVE) == 3 &&
         quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 2, &entry) &&
         strcmp(entry.title, "The Ivory Rook") == 0 &&
         entry.objective_count == 1 && entry.reward_gold == ROOK_QUEST_REWARD &&
-        strstr(entry.summary_line_1, "west to Stillbury") && strstr(entry.summary_line_2, "Oakhaven's Tavern"));
+        strstr(entry.summary_line_1, "forest road") && strstr(entry.summary_line_2, "Oakhaven's Tavern"));
     g.rook_quest_state = 2;
     ASSERT("recovering the ivory rook marks its objective ready to return",
         quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 2, &entry) &&

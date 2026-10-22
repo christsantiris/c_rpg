@@ -806,7 +806,7 @@ static void map_generate_outdoor(Map *m, int level, OutdoorSide entrance_side, O
 }
 
 int map_forest_difficulty(int level) {
-    static const int difficulty[FOREST_DEPTH] = {1, 2, 4, 8, 4, 2, 1};
+    static const int difficulty[FOREST_DEPTH] = {1, 2, 4, 5, 8};
     if (level < 1 || level > FOREST_DEPTH) {
         return 1;
     }
@@ -814,7 +814,7 @@ int map_forest_difficulty(int level) {
 }
 
 void map_generate_forest(Map *m, int level) {
-    static const int templates[FOREST_DEPTH] = {0, 1, 2, 7, 4, 5, 3};
+    static const int templates[FOREST_DEPTH] = {0, 1, 2, 4, 7};
     static const OutdoorSide entrances[] = {
         OUTDOOR_SIDE_WEST,
         OUTDOOR_SIDE_SOUTH,
@@ -933,7 +933,7 @@ static void place_mountain_cache_passage(Map *m) {
 }
 
 int map_mountain_difficulty(int level) {
-    static const int difficulty[MOUNTAIN_DEPTH] = {1, 2, 3, 8, 3, 2, 1};
+    static const int difficulty[MOUNTAIN_DEPTH] = {1, 2, 3, 4, 8};
     if (level < 1 || level > MOUNTAIN_DEPTH) {
         return 1;
     }
@@ -941,16 +941,14 @@ int map_mountain_difficulty(int level) {
 }
 
 void map_generate_mountains(Map *m, int level) {
-    static const int templates[MOUNTAIN_DEPTH] = {0, 1, 2, 7, 4, 5, 6};
+    static const int templates[MOUNTAIN_DEPTH] = {0, 1, 2, 4, 7};
     static const OutdoorSide entrances[MOUNTAIN_DEPTH] = {
         OUTDOOR_SIDE_WEST, OUTDOOR_SIDE_SOUTH, OUTDOOR_SIDE_NORTH,
-        OUTDOOR_SIDE_WEST, OUTDOOR_SIDE_WEST, OUTDOOR_SIDE_NORTH,
-        OUTDOOR_SIDE_SOUTH
+        OUTDOOR_SIDE_WEST, OUTDOOR_SIDE_WEST
     };
     static const OutdoorSide exits[MOUNTAIN_DEPTH] = {
         OUTDOOR_SIDE_NORTH, OUTDOOR_SIDE_EAST, OUTDOOR_SIDE_SOUTH,
-        OUTDOOR_SIDE_SOUTH, OUTDOOR_SIDE_SOUTH, OUTDOOR_SIDE_EAST,
-        OUTDOOR_SIDE_NORTH
+        OUTDOOR_SIDE_SOUTH, OUTDOOR_SIDE_SOUTH
     };
     int index = level - 1;
     if (index < 0) {
@@ -980,9 +978,9 @@ void map_generate_mountains(Map *m, int level) {
                 continue;
             }
             int in_room = mountain_tile_in_room(m, x, y);
-            if ((level == 2 || level == 7) && !in_room) {
+            if ((level == 2) && !in_room) {
                 m->tiles[y][x] = TILE_MOUNTAIN_BRIDGE;
-            } else if (level == 3 || level == 6) {
+            } else if (level == 3) {
                 m->tiles[y][x] = TILE_MOUNTAIN_CAVE_FLOOR;
             } else if (level == 4 || level == 5) {
                 if (in_room) {
@@ -991,7 +989,7 @@ void map_generate_mountains(Map *m, int level) {
             }
         }
     }
-    if (level == 2 || level == 7) {
+    if (level == 2) {
         int placed_weak_bridge = 0;
         for (int y = 3; y < MAP_H - 3 && !placed_weak_bridge; y++) {
             for (int x = 1; x < MAP_W - 1; x++) {
@@ -1014,7 +1012,7 @@ void map_generate_mountains(Map *m, int level) {
             }
         }
     }
-    if (level == 3 || level == 4 || level == 5 || level == 6) {
+    if (level >= 3 && level <= MOUNTAIN_DEPTH) {
         place_mountain_cache_passage(m);
     }
 }
@@ -1435,16 +1433,25 @@ void map_place_town3_guild(Map *m) {
     }
 }
 
-void map_place_town_labyrinth(Map *m) {
-    // Branch from the east-west road and skirt the gate to its south entrance.
-    for (int y = 13; y <= TOWN_LABYRINTH_Y + 1; y++) {
-        m->tiles[y][TOWN_LABYRINTH_X - 2] = TILE_TOWN_PATH;
+void map_remove_town_labyrinth(Map *m) {
+    // Keep the town square's row 13; retire only the old labyrinth's spur and gate.
+    for (int y = 14; y <= TOWN_LABYRINTH_Y + 1; y++) {
+        if (m->tiles[y][TOWN_LABYRINTH_X - 2] == TILE_TOWN_PATH) {
+            m->tiles[y][TOWN_LABYRINTH_X - 2] = TILE_TOWN_FLOOR;
+        }
     }
     for (int x = TOWN_LABYRINTH_X - 2; x <= TOWN_LABYRINTH_X; x++) {
-        m->tiles[TOWN_LABYRINTH_Y + 1][x] = TILE_TOWN_PATH;
+        if (m->tiles[TOWN_LABYRINTH_Y + 1][x] == TILE_TOWN_PATH) {
+            m->tiles[TOWN_LABYRINTH_Y + 1][x] = TILE_TOWN_FLOOR;
+        }
     }
-    m->tiles[TOWN_LABYRINTH_Y][TOWN_LABYRINTH_X] =
-        TILE_LABYRINTH_ENTRANCE;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if (m->tiles[y][x] == TILE_LABYRINTH_ENTRANCE) {
+                m->tiles[y][x] = TILE_TOWN_FLOOR;
+            }
+        }
+    }
 }
 
 // Guards only replace open grass, so loot and the player's tile stay clear.
@@ -1517,9 +1524,7 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     for (int x = 1; x < TOWN_W - 1; x++)
         m->tiles[12][x] = TILE_TOWN_PATH;
 
-    // Goblin Mountains exit at the north end of the crossroad.
-    for (int x = 18; x <= 22; x++)
-        m->tiles[0][x] = TILE_TOWN_EXIT;
+    // The mountain route now starts in Dawnmere.
 
     // Forest travel and the unlocked Stillbury shortcut share the main gate.
     for (int y = 10; y <= 12; y++) {
@@ -1754,7 +1759,6 @@ void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
     map_place_town2_center(m);
     // The Inn stands east of the Healer, its door opening onto the square.
     map_place_town_inn(m);
-    map_place_town_labyrinth(m);
     town_life_place(m, LOCATION_TOWN2);
     *spawn_x = TOWN_W - 2;
     *spawn_y = 12;
@@ -1782,6 +1786,35 @@ static void map_generate_town_square(Map *m) {
             m->tiles[y][x] = TILE_TOWN_PATH;
         }
     }
+}
+
+TileType map_dawnmere_ground(int x, int y) {
+    int square = x >= 12 && x <= 28 && y >= 11 && y <= 15;
+    return square || x == CROWNROAD_X || y == 12 ? TILE_TOWN_PATH : TILE_TOWN_FLOOR;
+}
+
+void map_generate_dawnmere(Map *m, int *spawn_x, int *spawn_y) {
+    map_generate_town_square(m);
+    // A rectangular plaza joins the single-tile roads at the crossroads.
+    for (int y = 1; y < TOWN_H - 1; y++) {
+        for (int x = 1; x < TOWN_W - 1; x++) {
+            m->tiles[y][x] = map_dawnmere_ground(x, y);
+        }
+    }
+    for (int y = 10; y <= 14; y++) {
+        m->tiles[y][0] = TILE_TOWN_EXIT;
+    }
+    for (int x = 18; x <= 22; x++) {
+        m->tiles[0][x] = TILE_TOWN_EXIT;
+    }
+    // Reuse the established merchant building footprint.
+    for (int y = 7; y < 11; y++) {
+        for (int x = 7; x < 12; x++) {
+            m->tiles[y][x] = TILE_LOCAL_BUILDING;
+        }
+    }
+    *spawn_x = 20;
+    *spawn_y = 12;
 }
 
 void map_generate_town3(Map *m, int *spawn_x, int *spawn_y) {
@@ -1962,7 +1995,7 @@ void map_generate_crownroad(Map *m) {
 }
 
 int map_swamp_difficulty(int level) {
-    static const int difficulty[SWAMP_DEPTH] = {1, 2, 3, 5, 3, 2, 1};
+    static const int difficulty[SWAMP_DEPTH] = {1, 2, 3, 4, 5};
     if (level < 1 || level > SWAMP_DEPTH) {
         return 1;
     }

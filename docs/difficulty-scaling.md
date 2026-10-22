@@ -1,6 +1,6 @@
 # Regional Difficulty Scaling
 
-The castle dungeon is a short, self-contained undead region. The Haunted Forest,
+The castle dungeon is a short undead region linking Oakhaven and Dawnmere. The Haunted Forest,
 Goblin Mountains, and Sunken Coast maintain their own progression rather than
 extending dungeon depth.
 
@@ -41,9 +41,9 @@ Floors 1-4 use down stairs and do not require every enemy to be defeated.
 Descending awards `new floor * 100` score.
 
 Floor 5 is the Lich King's finale. Clearing it changes the down stairs into a
-glowing return passage. Using that passage returns the player directly to the
-east road in OakHaven, preserves dungeon progress, awards completion score, and
-never creates a ninth dungeon floor.
+glowing return passage. Using it leads onto the safe road west to Oakhaven or
+east to Dawnmere, preserves dungeon progress, and awards completion score. Both
+town entrances start at floor 1; the dungeon never plays backward.
 
 The Lich King begins inside a sealed, single-entrance chamber behind a locked
 door. No regular enemy can spawn in that room, and the Lich remains completely

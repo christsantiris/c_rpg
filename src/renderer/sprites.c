@@ -5725,6 +5725,42 @@ void draw_labyrinth_entrance(Renderer *r, int tile_x, int tile_y, int open) {
     SDL_RenderCopy(r->sdl, r->labyrinth_texture, &source, &destination);
 }
 
+void draw_swamp_entrance(Renderer *r, int tile_x, int tile_y) {
+    if (!r->swamp_entrance_texture) {
+        draw_labyrinth_entrance_fallback(r, tile_x, tile_y, 1);
+        return;
+    }
+    SDL_Rect destination = {(tile_x - 3) * TILE_SIZE, (tile_y - 5) * TILE_SIZE, 7 * TILE_SIZE, 6 * TILE_SIZE};
+    SDL_RenderCopy(r->sdl, r->swamp_entrance_texture, NULL, &destination);
+}
+
+void draw_area_entrance(Renderer *r, TownExitStyle style, int tile_x, int tile_y, int rows) {
+    if (!r->area_entrance_textures[style]) {
+        draw_labyrinth_entrance_fallback(r, tile_x, tile_y, 1);
+        return;
+    }
+    SDL_Rect destination = {(tile_x - 3) * TILE_SIZE, (tile_y - rows + 1) * TILE_SIZE, 7 * TILE_SIZE, rows * TILE_SIZE};
+    SDL_RenderCopy(r->sdl, r->area_entrance_textures[style], NULL, &destination);
+}
+
+void draw_forest_entrance(Renderer *r, int tile_x, int tile_y) {
+    if (!r->forest_entrance_texture) {
+        draw_labyrinth_entrance_fallback(r, tile_x, tile_y, 1);
+        return;
+    }
+    SDL_Rect destination = {(tile_x - 3) * TILE_SIZE, (tile_y - 5) * TILE_SIZE, 7 * TILE_SIZE, 6 * TILE_SIZE};
+    SDL_RenderCopy(r->sdl, r->forest_entrance_texture, NULL, &destination);
+}
+
+void draw_mountain_entrance(Renderer *r, int tile_x, int tile_y) {
+    if (!r->mountain_entrance_texture) {
+        draw_labyrinth_entrance_fallback(r, tile_x, tile_y, 1);
+        return;
+    }
+    SDL_Rect destination = {(tile_x - 3) * TILE_SIZE, (tile_y - 5) * TILE_SIZE, 7 * TILE_SIZE, 6 * TILE_SIZE};
+    SDL_RenderCopy(r->sdl, r->mountain_entrance_texture, NULL, &destination);
+}
+
 void draw_dungeon_entrance(Renderer *r, int tile_x, int tile_y) {
     if (!r->dungeon_entrance_texture) {
         draw_labyrinth_entrance_fallback(r, tile_x, tile_y, 1);

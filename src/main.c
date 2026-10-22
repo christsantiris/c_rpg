@@ -77,12 +77,16 @@ typedef struct {
 static int town_entry_style(const GameState *g, Action action, TownExitStyle *style) {
     if ((g->location != LOCATION_TOWN && g->location != LOCATION_TOWN2 &&
         g->location != LOCATION_TOWN4 && g->location != LOCATION_TOWN3 &&
-        g->location != LOCATION_CASTLE) ||
+        g->location != LOCATION_CASTLE && g->location != LOCATION_DAWNMERE) ||
         action.type != ACTION_MOVE ||
         action.target_x < 0 || action.target_x >= MAP_W ||
         action.target_y < 0 || action.target_y >= MAP_H ||
         g->map.tiles[action.target_y][action.target_x] != TILE_TOWN_EXIT) {
         return 0;
+    }
+    if (g->location == LOCATION_DAWNMERE) {
+        *style = action.target_y == 0 ? TOWN_EXIT_MOUNTAINS : TOWN_EXIT_DUNGEON;
+        return 1;
     }
     if (g->location == LOCATION_TOWN3 || g->location == LOCATION_CASTLE) {
         if (action.target_x == 0 || action.target_x == TOWN_W - 1) {
@@ -167,6 +171,8 @@ typedef struct {
     int scroll_count;
     int unlock_shortcuts;
 } DebugConfig;
+
+static DebugConfig debug_config;
 
 static int debug_weapon(const char *name, Item *weapon, int *none) {
     *none = 0;
@@ -306,6 +312,27 @@ static Item debug_scroll(int id) {
     return item_make_scroll_magic_arrow();
 }
 
+static void debug_unlock_town_shortcuts(GameState *game) {
+    game->defeated_bosses |= (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) | (1 << LOCATION_MOUNTAINS) | (1 << LOCATION_SWAMP);
+    if (game->location == LOCATION_TOWN) {
+        map_set_town2_road(&game->map, 1);
+        map_set_town4_road(&game->map, 1);
+    } else if (game->location == LOCATION_TOWN2) {
+        map_set_stillbury_forest_road(&game->map, 1);
+        map_set_town3_road(&game->map, 1);
+    } else if (game->location == LOCATION_TOWN3) {
+        map_set_rosemoor_swamp_road(&game->map, 1);
+    } else if (game->location == LOCATION_TOWN4) {
+        map_set_ridgeshire_mountain_road(&game->map, 1);
+    }
+    approach_refresh_fork(game);
+    approach_refresh_dungeon(game);
+    approach_refresh_forest(game);
+    approach_refresh_mountains(game);
+    approach_refresh_swamp(game);
+    push_message(game, "Debug: all town roads unlocked.");
+}
+
 static void debug_apply_loadout(GameState *game, const DebugConfig *config) {
     if (config->weapon_set || config->scrolls_set) {
         int write = 0;
@@ -338,20 +365,7 @@ static void debug_apply_loadout(GameState *game, const DebugConfig *config) {
         game->gold = config->gold;
     }
     if (config->unlock_shortcuts) {
-        game->defeated_bosses |= (1 << LOCATION_FOREST) | (1 << LOCATION_MOUNTAINS) | (1 << LOCATION_SWAMP);
-        if (game->location == LOCATION_TOWN) {
-            map_set_town2_road(&game->map, 1);
-            map_set_town4_road(&game->map, 1);
-        } else if (game->location == LOCATION_TOWN2) {
-            map_set_stillbury_forest_road(&game->map, 1);
-            map_set_town3_road(&game->map, 1);
-        } else if (game->location == LOCATION_TOWN3) {
-            map_set_rosemoor_swamp_road(&game->map, 1);
-        } else if (game->location == LOCATION_TOWN4) {
-            map_set_ridgeshire_mountain_road(&game->map, 1);
-        }
-        approach_refresh_fork(game);
-        push_message(game, "Debug: all town shortcuts unlocked.");
+        debug_unlock_town_shortcuts(game);
     }
 }
 #endif
@@ -471,6 +485,11 @@ static void handle_slot_result(SlotResult result, SlotSelect *slots, int saving,
             renderer_end_frame(renderer);
 
             if (load_game(game, slot)) {
+#ifdef DEBUG
+                if (debug_config.unlock_shortcuts) {
+                    debug_unlock_town_shortcuts(game);
+                }
+#endif
                 // Global choices take priority; adopt saved character keys on first use.
                 if (!controls_settings_load(game->key_bindings, CONTROLS_SETTINGS_PATH)) {
                     controls_settings_save(game->key_bindings, CONTROLS_SETTINGS_PATH);
@@ -498,7 +517,6 @@ static void handle_inventory_use(GameState *g, InventoryScreen *inv, GameScreen 
 
 int main(int argc, char **argv) {
 #ifdef DEBUG
-    DebugConfig debug_config;
     if (!debug_parse_args(&debug_config, argc, argv)) {
         fprintf(stderr, "Usage: %s [--weapon NAME] [--gold N] "
             "[--scrolls LIST] [--unlock-shortcuts]\n", argv[0]);
@@ -1528,13 +1546,15 @@ int main(int argc, char **argv) {
         }
 
         // Update music based on screen and location
-        const TownApproach *approach = approach_route(&game);
+        int traveling = game.location == LOCATION_TOWN_ROAD || game.location == LOCATION_APPROACH ||
+            game.location == LOCATION_FOREST_ROAD || game.location == LOCATION_HIGH_PASS ||
+            game.location == LOCATION_SWAMP_ROAD || game.location == LOCATION_CROWNROAD ||
+            game.location == LOCATION_KING_ROAD_WEST;
         int is_town = game.location == LOCATION_TOWN ||
-            approach != NULL ||
             game.location == LOCATION_TAVERN ||
             game.location == LOCATION_TOWN2 ||
             game.location == LOCATION_TOWN3 ||
-            game.location == LOCATION_TOWN4 ||
+            game.location == LOCATION_TOWN4 || game.location == LOCATION_DAWNMERE ||
             game.location == LOCATION_WORKSHOP ||
             game.location == LOCATION_TOWN_HALL ||
             game.location == LOCATION_CASTLE ||
@@ -1542,15 +1562,14 @@ int main(int argc, char **argv) {
             game.location == LOCATION_INN || game.location == LOCATION_HEALER || game.location == LOCATION_WITCH ||
             game.location == LOCATION_GUILD ||
             game.location == LOCATION_ISLAND || town_life_is_interior(game.location);
-        int in_town2 = (approach && approach->town == LOCATION_TOWN2) || game.location == LOCATION_TOWN2 ||
+        int in_town2 = game.location == LOCATION_TOWN2 ||
             game.location == LOCATION_INN || game.location == LOCATION_HEALER || game.location == LOCATION_WITCH || game.location == LOCATION_BUTCHER;
-        int in_town3 = (approach && (approach->town == LOCATION_TOWN3 || approach->town == LOCATION_CASTLE)) || game.location == LOCATION_TOWN3 ||
+        int in_town3 = game.location == LOCATION_TOWN3 ||
             game.location == LOCATION_GUILD ||
-            game.location == LOCATION_SPICE_SHOP ||
-            game.location == LOCATION_CASTLE;
-        int in_town4 = (approach && approach->town == LOCATION_TOWN4) || game.location == LOCATION_TOWN4 || game.location == LOCATION_WORKSHOP ||
+            game.location == LOCATION_SPICE_SHOP;
+        int in_town4 = game.location == LOCATION_TOWN4 || game.location == LOCATION_WORKSHOP ||
             game.location == LOCATION_TOWN_HALL || game.location == LOCATION_MONASTERY;
-        music_update(screen, is_town, in_town2, in_town3, in_town4);
+        music_update(screen, is_town, in_town2, in_town3, in_town4, traveling, game.location == LOCATION_DAWNMERE, game.location == LOCATION_CASTLE);
 
         if (!needs_redraw) {
             continue;

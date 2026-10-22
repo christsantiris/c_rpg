@@ -89,4 +89,20 @@ add_custom_target(test
     DEPENDS test_runner
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(DEBUG_SHORTCUT_TEST_SOURCES ${SOURCES})
+    list(REMOVE_ITEM DEBUG_SHORTCUT_TEST_SOURCES "${CMAKE_SOURCE_DIR}/src/main.c")
+    add_executable(debug_shortcuts_test EXCLUDE_FROM_ALL
+        ${DEBUG_SHORTCUT_TEST_SOURCES}
+        ${CMAKE_SOURCE_DIR}/tools/tests/debug_shortcuts_test.c
+    )
+    target_include_directories(debug_shortcuts_test PRIVATE src ${SDL2_INCLUDE_DIRS} ${SDL2_TTF_INCLUDE_DIRS} ${SDL2_MIXER_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/external)
+    target_link_libraries(debug_shortcuts_test PRIVATE ${SDL2_LIBRARIES} ${SDL2_TTF_LIBRARIES} ${SDL2_MIXER_LIBRARIES})
+    add_custom_target(test-debug-shortcuts
+        COMMAND $<TARGET_FILE:debug_shortcuts_test>
+        DEPENDS debug_shortcuts_test
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    )
+endif()
 endif()

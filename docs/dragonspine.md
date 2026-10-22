@@ -1,8 +1,9 @@
 # Dragonspine and High Pass
 
-The Goblin Mountains connect OakHaven and Ridgeshire across seven stages, with
-the Goblin King at Crown Peak on stage 4. His defeat opens a shortcut to the
-opposite town; continuing through the remaining stages is also possible.
+The Goblin Mountains connect Dawnmere and Ridgeshire through a safe road.
+Enter the mountain cave from either town to climb five levels from the foot.
+Defeating the level-5 Goblin King opens the road north to Ridgeshire and south
+to Dawnmere. The summit exit returns onto that road.
 Ridgeshire's north gate leads along a safe approach to Dragonspine, placing its
 snowy peaks at the northern edge of the world alongside Frostfell Wastes.
 Leaving the first stage or completing the summit returns to that approach;
@@ -10,12 +11,6 @@ walk south to reach Ridgeshire's north gate. Return to Town travels directly
 to town, with its portal beside the north gate.
 Save version **163** relocates existing approach paths and town portals to this
 gate while preserving exploration, loot, combat maps, and quest progress.
-
-After the Goblin King falls, the + shaped crossroads beyond Ridgeshire's south
-gate and OakHaven's north gate opens both side arms. From town, the regular
-mountains are straight, the next town is left, and the King's chamber is right.
-These destinations connect directly through the crossroads, replacing the old
-separate High Pass path. The side arms stay hidden before the victory.
 
 Dragonspine has five generated stages with independent progress and saved
 floor caches. Broad cliff ledges fork around deep ravines, joining a lower
