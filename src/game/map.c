@@ -524,6 +524,8 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_TAVERN_TABLE &&
         m->tiles[y][x] != TILE_LOCAL_BUILDING &&
         m->tiles[y][x] != TILE_NPC_RESIDENT &&
+        m->tiles[y][x] != TILE_NPC_HEALER &&
+        m->tiles[y][x] != TILE_NPC_WITCH &&
         m->tiles[y][x] != TILE_NPC_ELOWEN &&
         m->tiles[y][x] != TILE_NPC_DAIN &&
         m->tiles[y][x] != TILE_NPC_ALDER &&

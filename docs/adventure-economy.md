@@ -87,8 +87,12 @@ repeatable ordinary combat after its one-time quest.
 Health and Mana Potions are **full restores at 20 gold each**. Their value
 grows with maximum HP and MP, instead of shrinking as characters level.
 Drinking a potion in combat consumes one turn, and a potion cannot be wasted
-when its resource is already full. The Healer sells HP potions, the Witch sells
-MP potions, and the Alchemist keeps both. None provides direct HP or MP service.
+when its resource is already full. The Alchemist and Rosemoor's Apothecary sell
+both potion types. Stillbury's [Healer and Witch](healer.md) instead provide
+immediate restoration inside their buildings: HP from Lysa, MP from Morwen.
+Each offers full restoration, half of the missing resource, or as much as the
+player can afford, at 1 gold per 10 points rounded up. Neither buys or sells
+potions.
 
 One-time quest rewards, boss equipment, existing shop prices, and the
 Blacksmith's stock gates stay as they are for the first balance pass. Stronger

@@ -150,7 +150,7 @@ require the player to have moved once to establish a direction.
   every enemy inside its blast radius.
 - Mana potions restore the player's MP to maximum.
 - Gaining a character level restores MP to maximum as well as restoring HP.
-- Morwen sells Mana Potions for 20 gold; the Alchemist also stocks them.
+- [Morwen](healer.md#stillbury-witch) restores full or partial MP for gold inside her Stillbury hut. Mana Potions remain available from the Alchemist and Rosemoor's Apothecary.
 
 In the Royal Catacombs, Return to Town opens a portal beside Rosemoor's east
 Crown Road gate. Using it restores the original floor and position, with

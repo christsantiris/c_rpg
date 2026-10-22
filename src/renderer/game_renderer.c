@@ -31,6 +31,7 @@
 #include "castle_renderer.h"
 #include "jail_renderer.h"
 #include "town_life_renderer.h"
+#include "../game/restoration.h"
 #include "../game/jail.h"
 #include <string.h>
 #include <stdlib.h>
@@ -479,7 +480,7 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     int quest_offer = game_quest_offer_active(g);
     if (!g->dialogue_active ||
         (!shortcut && !town_life_is_interior(g->location) && g->location != LOCATION_TAVERN &&
-        g->location != LOCATION_INN &&
+        g->location != LOCATION_INN && g->location != LOCATION_HEALER && g->location != LOCATION_WITCH &&
         g->location != LOCATION_GUILD &&
         g->location != LOCATION_TOWN_HALL &&
         g->location != LOCATION_TOWN &&
@@ -524,6 +525,10 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     const char *hint = shortcut ? "Enter to continue" : quest_offer ? "Accept quest? Y: Yes   N: No" : "";
     if (shortcut && strcmp(g->dialogue_speaker, "Take shortcut?") == 0) {
         hint = "Enter: Travel   Esc: Stay";
+    }
+    if (g->location == LOCATION_HEALER || g->location == LOCATION_WITCH) {
+        int missing = g->location == LOCATION_HEALER ? g->player.max_hp - g->player.hp : g->player.max_mp - g->player.mp;
+        hint = missing > 0 ? "1/2/3: Choose   Esc: Close\n* Not enough gold" : "Enter or Esc: Close";
     }
     SDL_Color ink = {42, 32, 30, 255};
     SDL_Color accent = {48, 56, 100, 255};
@@ -1973,7 +1978,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->location == LOCATION_TOWN3 || g->location == LOCATION_TOWN4 ||
         g->location == LOCATION_CASTLE;
     int tavern_scaled = g->location == LOCATION_TAVERN ||
-        g->location == LOCATION_INN || g->location == LOCATION_WORKSHOP ||
+        g->location == LOCATION_INN || g->location == LOCATION_HEALER || g->location == LOCATION_WITCH ||
+        g->location == LOCATION_WORKSHOP ||
         g->location == LOCATION_TOWN_HALL || g->location == LOCATION_GUILD ||
         town_life_is_interior(g->location);
     int island_scaled = g->location == LOCATION_ISLAND;
@@ -2636,9 +2642,18 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_TAVERN_EXIT: draw_tavern_exit(r, sx, sy); break;
                 case TILE_TAVERN_TABLE:
                     draw_tavern_table(r, sx, sy);
+                    if (g->location == LOCATION_HEALER || g->location == LOCATION_WITCH) {
+                        draw_world_prop(r, sx, sy, g->location == LOCATION_WITCH ? PROP_CRYSTAL : PROP_GOBLET,
+                            (SDL_Color){114, 190, 153, 255});
+                    }
                     if (town_life_is_interior(g->location) && (y == 7 || y == 17)) {
                         town_life_draw_goods(r, sx, sy, town_life_building(g->location)->style);
                     }
+                    break;
+                case TILE_NPC_HEALER:
+                case TILE_NPC_WITCH:
+                    draw_tavern_floor(r, sx, sy);
+                    npc_draw(r, sx, sy, g->location == LOCATION_WITCH ? NPC_ART_MORWEN : NPC_ART_LYSA, 0);
                     break;
                 case TILE_NPC_RESIDENT: {
                     const TownBuilding *b = town_life_building(g->location);
@@ -3610,6 +3625,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         TTF_SizeText(r->font_tiny, "LIORA", &width, NULL);
         renderer_draw_text(r, "LIORA", viewport_to_screen_x(v, LIORA_TOWN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, LIORA_TOWN_Y - 1) * TILE_SIZE, area_label_color(LOCATION_MOONVEIL), r->font_tiny);
+    }
+    if (g->location == LOCATION_HEALER || g->location == LOCATION_WITCH) {
+        int width = 0;
+        const char *label = g->location == LOCATION_WITCH ? "MORWEN - WITCH" : "LYSA - HEALER";
+        TTF_SizeText(r->font_tiny, label, &width, NULL);
+        renderer_draw_text(r, label, viewport_to_screen_x(v, RESTORATION_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, RESTORATION_Y - 1) * TILE_SIZE, (SDL_Color){182, 224, 196, 255}, r->font_tiny);
     }
     if (g->location == LOCATION_INN) {
         int width = 0;

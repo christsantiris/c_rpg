@@ -2,6 +2,7 @@
 #include "test_utils.h"
 #include "../src/game/map.h"
 #include "../src/game/game.h"
+#include "../src/game/restoration.h"
 #include "../src/screens/shop.h"
 #include "../src/screens/harbor.h"
 #include "../src/systems/save_load.h"
@@ -273,7 +274,7 @@ static void find_false_labyrinth_stair(const Map *m, int *x, int *y) {
 }
 
 void test_town_healer(void) {
-    printf("Town potion sellers tests:\n");
+    printf("Town restoration services and potion shops tests:\n");
     static GameState g;
     static GameState loaded;
     g.player.player_class = CLASS_MAGE;
@@ -288,38 +289,108 @@ void test_town_healer(void) {
         g.map.tiles[TOWN_WITCH_DOOR_Y][TOWN_WITCH_DOOR_X] == TILE_WITCH_DOOR);
 
     ShopScreen shop;
-    shop_init(&shop, SHOP_TYPE_HEALER, 0, g.player.player_class);
-    ASSERT("healer sells only health potions at the usual price",
-        shop.item_count == 1 && shop.items[0].type == ITEM_POTION_HEALTH &&
-        shop_buy_price(&shop.items[0]) == 20 &&
-        shop_accepts_item(SHOP_TYPE_HEALER, &shop.items[0]));
-    ASSERT("healer purchase uses the ordinary shop controls",
-        shop_handle_key(&shop, SDL_SCANCODE_RETURN) == SHOP_BUY &&
-        shop_handle_key(&shop, SDL_SCANCODE_TAB) == SHOP_NONE &&
-        shop_handle_key(&shop, SDL_SCANCODE_RETURN) == SHOP_SELL &&
-        shop_handle_key(&shop, SDL_SCANCODE_ESCAPE) == SHOP_CLOSED);
-    g.gold = 20;
-    g.player.hp -= 30;
-    g.inventory[g.inventory_count++] = shop.items[0];
-    g.gold -= shop_buy_price(&shop.items[0]);
-    action_resolve_player(&g, (Action){ACTION_USE_ITEM, g.inventory_count - 1, 0});
-    ASSERT("health potion restores HP after purchase and use",
-        g.gold == 0 && g.player.hp == g.player.max_hp &&
-        g.player.mp == g.player.max_mp);
-
-    shop_init(&shop, SHOP_TYPE_WITCH, 0, g.player.player_class);
-    ASSERT("witch sells only mana potions at the usual price",
-        shop.item_count == 1 && shop.items[0].type == ITEM_POTION_MANA &&
-        shop_buy_price(&shop.items[0]) == 20 &&
-        shop_accepts_item(SHOP_TYPE_WITCH, &shop.items[0]));
-    g.gold = 20;
-    g.player.mp -= 20;
-    g.inventory[g.inventory_count++] = shop.items[0];
-    g.gold -= shop_buy_price(&shop.items[0]);
-    action_resolve_player(&g, (Action){ACTION_USE_ITEM, g.inventory_count - 1, 0});
-    ASSERT("mana potion restores MP after purchase and use",
-        g.gold == 0 && g.player.mp == g.player.max_mp &&
-        g.player.hp == g.player.max_hp);
+    for (int mana = 0; mana < 2; mana++) {
+        printf("  %s restoration service:\n", mana ? "Witch" : "Healer");
+        Location interior = mana ? LOCATION_WITCH : LOCATION_HEALER;
+        TileType npc = mana ? TILE_NPC_WITCH : TILE_NPC_HEALER;
+        int door_x = mana ? TOWN_WITCH_DOOR_X : TOWN_HEALER_DOOR_X;
+        int door_y = mana ? TOWN_WITCH_DOOR_Y : TOWN_HEALER_DOOR_Y;
+        int slot = 99013 + mana;
+        shop_init(&shop, mana ? SHOP_TYPE_WITCH : SHOP_TYPE_HEALER, 0, g.player.player_class);
+        ASSERT("restoration NPC no longer stocks or buys potions",
+            shop.item_count == 0 && !shop_accepts_item(shop.type, &(Item){.type = mana ? ITEM_POTION_MANA : ITEM_POTION_HEALTH}));
+        if (save_exists(slot)) {
+            ASSERT("restoration test save slot must be unused", 0);
+            return;
+        }
+        g.player.x = door_x;
+        g.player.y = door_y + 1;
+        g.player.poison_turns = 3;
+        g.player.frozen_turns = 2;
+        action_resolve_player(&g, (Action){ACTION_MOVE, door_x, door_y});
+        ASSERT("walking through the door enters a safe interior with an exit and a blocked NPC",
+            g.location == interior && g.enemy_count == 0 && !g.dialogue_active &&
+            g.map.tiles[RESTORATION_Y][RESTORATION_X] == npc &&
+            !map_is_walkable(&g.map, RESTORATION_X, RESTORATION_Y) &&
+            g.map.tiles[g.map.stairs_down_y][g.map.stairs_down_x] == TILE_TAVERN_EXIT &&
+            g.player.poison_turns == 0 && g.player.frozen_turns == 0);
+        ASSERT("treatment requires approaching the NPC", !restoration_talk(&g) && !restoration_purchase(&g, 1));
+        while (g.player.y > RESTORATION_Y + 1) {
+            action_resolve_player(&g, (Action){ACTION_MOVE, g.player.x, g.player.y - 1});
+        }
+        int *current = mana ? &g.player.mp : &g.player.hp;
+        int *other = mana ? &g.player.hp : &g.player.mp;
+        g.player.max_hp = 101;
+        g.player.max_mp = 101;
+        *current = 1;
+        *other = 5;
+        g.gold = 2;
+        int inventory_count = g.inventory_count;
+        ASSERT("talking offers full, half, and affordable restoration with exact amounts and costs",
+            restoration_talk(&g) && restoration_prompt_active(&g) &&
+            strstr(g.dialogue_speaker, mana ? "Morwen" : "Lysa") &&
+            strstr(g.dialogue_text, mana ? "1 Full: +100 MP, 10g *" : "1 Full: +100 HP, 10g *") &&
+            strstr(g.dialogue_text, mana ? "2 Half: +50 MP, 5g *" : "2 Half: +50 HP, 5g *") &&
+            strstr(g.dialogue_text, mana ? "3 Affordable: +20 MP, 2g" : "3 Affordable: +20 HP, 2g"));
+        restoration_handle_key(&g, SDL_SCANCODE_1, 0);
+        ASSERT("unaffordable full restoration leaves resources and gold unchanged", *current == 1 && *other == 5 && g.gold == 2 && g.dialogue_active);
+        restoration_handle_key(&g, SDL_SCANCODE_3, 1);
+        ASSERT("held treatment keys cannot spend gold repeatedly", *current == 1 && g.gold == 2);
+        restoration_handle_key(&g, SDL_SCANCODE_3, 0);
+        ASSERT("a low-gold player can spend their available gold on partial restoration",
+            *current == 21 && g.gold == 0 && *other == 5 && g.inventory_count == inventory_count);
+        ASSERT("no gold cannot buy free restoration", !restoration_purchase(&g, 3) && *current == 21 && g.gold == 0);
+        *current = 1;
+        g.gold = 5;
+        restoration_handle_key(&g, SDL_SCANCODE_2, 0);
+        ASSERT("half restoration restores half of the missing resource for its displayed cost", *current == 51 && g.gold == 0 && *other == 5);
+        *current = 50;
+        g.gold = 3;
+        restoration_handle_key(&g, SDL_SCANCODE_2, 0);
+        ASSERT("odd missing resource and fractional prices round upward", *current == 76 && g.gold == 0 && *other == 5);
+        *current = 100;
+        g.gold = 10;
+        g.inventory_count = MAX_INVENTORY;
+        restoration_handle_key(&g, SDL_SCANCODE_1, 0);
+        ASSERT("full restoration caps at maximum, charges only for the missing point, and works with a full inventory",
+            *current == 101 && g.gold == 9 && g.inventory_count == MAX_INVENTORY && *other == 5);
+        ASSERT("a full resource cannot waste gold", !restoration_purchase(&g, 1) && g.gold == 9);
+        g.inventory_count = inventory_count;
+        restoration_handle_key(&g, SDL_SCANCODE_ESCAPE, 0);
+        ASSERT("Escape closes treatment while staying inside", !g.dialogue_active && g.location == interior);
+        *current = 50;
+        g.gold = 20;
+        restoration_talk(&g);
+        int saved = save_game(&g, slot) && load_game(&loaded, slot);
+        ASSERT("interior, offer, both resources and gold survive save and load",
+            saved && loaded.location == interior && loaded.gold == 20 &&
+            (mana ? loaded.player.mp == 50 && loaded.player.hp == 5 : loaded.player.hp == 50 && loaded.player.mp == 5) &&
+            loaded.dialogue_active && loaded.map.tiles[RESTORATION_Y][RESTORATION_X] == npc &&
+            strstr(loaded.dialogue_text, mana ? "3 Affordable: +51 MP, 6g" : "3 Affordable: +51 HP, 6g"));
+        if (saved) {
+            restoration_handle_key(&loaded, SDL_SCANCODE_1, 0);
+            ASSERT("a restored treatment offer restores the correct resource at the correct price",
+                loaded.gold == 14 && (mana ? loaded.player.mp == 101 && loaded.player.hp == 5 : loaded.player.hp == 101 && loaded.player.mp == 5));
+            restoration_handle_key(&loaded, SDL_SCANCODE_RETURN, 0);
+            while (loaded.player.y < loaded.map.stairs_down_y) {
+                action_resolve_player(&loaded, (Action){ACTION_MOVE, loaded.player.x, loaded.player.y + 1});
+                if (loaded.location != interior) {
+                    break;
+                }
+            }
+            ASSERT("walking out returns directly in front of the correct Stillbury building",
+                loaded.location == LOCATION_TOWN2 && loaded.player.x == door_x &&
+                loaded.player.y == door_y + 1 && loaded.gold == 14);
+        }
+        char path[64];
+        snprintf(path, sizeof(path), "saves/savegame_%d.json", slot);
+        remove(path);
+        restoration_handle_key(&g, SDL_SCANCODE_ESCAPE, 0);
+        restoration_leave(&g);
+        g.player.hp = g.player.max_hp;
+        g.player.mp = g.player.max_mp;
+        g.gold = 0;
+    }
 
     shop_init(&shop, SHOP_TYPE_ALCHEMIST, 0, g.player.player_class);
     ASSERT("alchemist still sells and buys both potion types",
@@ -330,7 +401,7 @@ void test_town_healer(void) {
         shop_buy_price(&shop.items[1]) == 20 &&
         shop_accepts_item(SHOP_TYPE_ALCHEMIST, &shop.items[0]) &&
         shop_accepts_item(SHOP_TYPE_ALCHEMIST, &shop.items[1]));
-    ASSERT("specialists accept only their own potions",
+    ASSERT("restoration NPCs do not buy potions from the remaining shops",
         !shop_accepts_item(SHOP_TYPE_HEALER, &shop.items[1]) &&
         !shop_accepts_item(SHOP_TYPE_WITCH, &shop.items[0]));
 
@@ -342,7 +413,7 @@ void test_town_healer(void) {
     }
     int saved = save_game(&g, slot);
     int restored = saved && load_game(&loaded, slot);
-    ASSERT("potion recovery and second-town shops survive save and load",
+    ASSERT("second-town service doors and resources survive save and load",
         restored && loaded.gold == 0 &&
         loaded.location == LOCATION_TOWN2 &&
         loaded.player.hp == loaded.player.max_hp &&
