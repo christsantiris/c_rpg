@@ -121,7 +121,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_NPC_SELENE || tile == TILE_NPC_ORIN || tile == TILE_GLASSDEEP_RESONATOR || tile == TILE_GLASSDEEP_RESONATOR_LIT ||
                         tile == TILE_NPC_BRENNA || tile == TILE_FROST_JOURNAL || tile == TILE_NPC_FROST_SURVIVOR ||
                         tile == TILE_NPC_INNKEEPER ||
-                        tile == TILE_NPC_HEALER ||
+                        tile == TILE_NPC_HEALER || tile == TILE_NPC_WITCH ||
                         tile == TILE_NPC_CAIN ||
                         tile == TILE_NPC_BRAM ||
                         tile == TILE_NPC_ALDRIC ||

@@ -69,7 +69,7 @@ Inside the inventory, use the arrow keys to select an item, `U` to use it,
 weapon promotes an off-hand weapon to the main hand; the removed weapon stays
 in inventory and can then be equipped with `O` to swap hands. Inventory action
 labels also support mouse clicks. In the spellbook, select a spell and press
-`E` or `Enter` to equip it. Shops, the witch, and the docks use the arrow keys and
+`E` or `Enter` to equip it. Shops and the docks use the arrow keys and
 `Enter`; shop buy and sell modes are switched with `Tab`.
 
 Using an item keeps the inventory open, even after consuming the last item.
@@ -82,7 +82,7 @@ inventory actions.
 
 ## Game Documentation
 
-- [Stillbury healer](docs/healer.md)
+- [Stillbury healer and witch](docs/healer.md)
 - [Regional difficulty and progression](docs/difficulty-scaling.md)
 - [Weapons, armor, and shields](docs/weapons.md)
 - [Spells](docs/spells.md) and [Mage progression](docs/mage-progression.md)

@@ -154,7 +154,8 @@ typedef enum {
     LOCATION_MONASTERY,
     LOCATION_SPICE_SHOP,
     LOCATION_APPROACH,
-    LOCATION_HEALER
+    LOCATION_HEALER,
+    LOCATION_WITCH
 } Location;
 
 typedef struct {
