@@ -1,3 +1,4 @@
+#include "approach_checks.h"
 #include "test_utils.h"
 #include "../src/game/map.h"
 #include "../src/game/game.h"
@@ -375,6 +376,7 @@ void test_return_to_town_spell(void) {
     g.player.x = TOWN_W - 2;
     g.player.y = 12;
     action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 1, 12});
+    walk_town_approach(&g);
     ASSERT("east OakHaven exit enters dungeon", g.location == LOCATION_DUNGEON);
     int origin_x = g.player.x;
     int origin_y = g.player.y;
@@ -493,10 +495,11 @@ void test_final_dungeon_exit(void) {
     ASSERT("the stairs-down control does not activate the upward return staircase",
         g.location == LOCATION_DUNGEON && g.level == DUNGEON_DEPTH);
     action_resolve_player(&g, a);
+    walk_return_approach(&g);
     ASSERT("final exit returns player to town", g.location == LOCATION_TOWN);
     ASSERT("final exit returns at east OakHaven road",
         g.player.x == TOWN_W - 2 && g.player.y == 12);
-    ASSERT("final stairs return directly to town without changing the dungeon floor",
+    ASSERT("walking back to town preserves the last visited dungeon floor",
         g.level == DUNGEON_DEPTH);
     ASSERT("leaving the dungeon preserves surviving enemies and uncleared status",
         g.level_cache[DUNGEON_DEPTH - 1].enemies[1].active &&
@@ -1031,9 +1034,11 @@ static void test_dungeon_entry_maps(void) {
             }
         }
         action_resolve_player(g, (Action){ACTION_MOVE, TOWN_W - 1, 12});
+        walk_town_approach(g);
         ASSERT("OakHaven's east gate enters dungeon rooms with monsters and both stair tiles", g->location == LOCATION_DUNGEON && g->level == 1 && g->map.room_count >= MIN_ROOMS && g->enemy_count > 0 && g->map.tiles[g->map.stairs_up_y][g->map.stairs_up_x] == TILE_STAIRS_UP && g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] == TILE_STAIRS_DOWN);
         ASSERT("the entered dungeon has a traversable route to its downward stairs", dungeon_tile_reachable(&g->map, g->map.stairs_down_x, g->map.stairs_down_y));
         action_resolve_player(g, (Action){ACTION_ASCEND, 0, 0});
+        walk_return_approach(g);
         ASSERT("the entered dungeon permits immediate retreat to OakHaven's east gate", g->location == LOCATION_TOWN && g->player.x == TOWN_W - 2 && g->player.y == 12);
     }
     const Location sources[] = {LOCATION_TOWN, LOCATION_TAVERN, LOCATION_INN, LOCATION_GUILD, LOCATION_WORKSHOP, LOCATION_TOWN_HALL, LOCATION_FOREST_ROAD, LOCATION_SWAMP_ROAD, LOCATION_HIGH_PASS};
@@ -1105,10 +1110,12 @@ static void test_dungeon_entry_maps(void) {
                 } else {
                     ASSERT("a town save drops only the foreign first-floor cache", ok && loaded->location == LOCATION_TOWN && !loaded->level_cache[0].valid);
                     action_resolve_player(loaded, (Action){ACTION_MOVE, TOWN_W - 1, 12});
+                    walk_town_approach(loaded);
                 }
                 Map repaired = loaded->map;
                 ASSERT("the repaired dungeon survives saving and loading without changing its layout", save_game(loaded, 99151) && load_game(g, 99151) && memcmp(repaired.tiles, g->map.tiles, sizeof(repaired.tiles)) == 0);
                 action_resolve_player(g, (Action){ACTION_ASCEND, 0, 0});
+                walk_return_approach(g);
                 ASSERT("a repaired saved dungeon has a working exit back to OakHaven", g->location == LOCATION_TOWN && g->player.x == TOWN_W - 2);
                 remove("saves/savegame_99151.json");
             }
@@ -1470,6 +1477,9 @@ void test_dungeon_return_stairs_migration(void) {
         action_resolve_player(&g, (Action){ACTION_DESCEND, 0, 0});
         ASSERT("stairs-down never activates migrated return stairs", g.location == LOCATION_DUNGEON && g.level == DUNGEON_DEPTH);
         action_resolve_player(&g, (Action){ACTION_ASCEND, 0, 0});
+        if (open) {
+            walk_return_approach(&g);
+        }
         ASSERT("stairs-up returns to Oakhaven only after the Lich is defeated, even with loot on the stairs",
             open ? g.location == LOCATION_TOWN && g.player.x == TOWN_W - 2 && g.player.y == 12
             : g.location == LOCATION_DUNGEON && g.level == DUNGEON_DEPTH);
@@ -1498,6 +1508,7 @@ void test_dungeon_return_stairs_migration(void) {
         loaded.location == LOCATION_DUNGEON && loaded.player.x == x && loaded.player.y == y &&
         loaded.map.tiles[y][x] == TILE_DUNGEON_STAIRS_RETURN);
     action_resolve_player(&loaded, (Action){ACTION_ASCEND, 0, 0});
+    walk_return_approach(&loaded);
     ASSERT("stairs-up works after restoring a migrated portal destination", loaded.location == LOCATION_TOWN);
     remove("saves/savegame_99151.json");
 }

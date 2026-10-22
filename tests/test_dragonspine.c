@@ -1,3 +1,4 @@
+#include "approach_checks.h"
 #include "test_utils.h"
 #include "../src/game/game.h"
 #include "../src/systems/save_load.h"
@@ -124,15 +125,18 @@ void test_dragonspine(void) {
     g.player.y = TOWN4_DRAGON_GATE_Y;
     Action east = {ACTION_MOVE, TOWN_W - 1, TOWN4_DRAGON_GATE_Y};
     action_resolve_player(&g, east);
-    ASSERT("Ridgeshire east gate leads directly to Dragonspine stage one",
+    walk_town_approach(&g);
+    ASSERT("Ridgeshire east approach leads to Dragonspine stage one",
         g.location == LOCATION_DRAGONSPINE && g.level == 1 && g.enemy_count > 0);
     g.player.x = 1;
     g.player.y = g.map.stairs_up_y;
     action_resolve_player(&g, (Action){ACTION_MOVE, 0, g.map.stairs_up_y});
-    ASSERT("leaving Dragonspine stage one returns directly to Ridgeshire",
+    walk_return_approach(&g);
+    ASSERT("leaving Dragonspine stage one and walking its path returns to Ridgeshire",
         g.location == LOCATION_TOWN4 && g.player.x == TOWN_W - 2 &&
         g.player.y == TOWN4_DRAGON_GATE_Y);
     action_resolve_player(&g, east);
+    walk_town_approach(&g);
     ASSERT("Dragonspine uses distinct cliff terrain",
         g.map.tiles[g.map.stairs_up_y][g.map.stairs_up_x] == TILE_DRAGON_ENTRANCE);
     ASSERT("Dragonspine trails open at the west and east map edges",
@@ -199,6 +203,7 @@ void test_dragonspine(void) {
     g.player.x = g.map.stairs_down_x - 1;
     g.player.y = g.map.stairs_down_y;
     action_resolve_player(&g, summit_exit);
+    walk_return_approach(&g);
     ASSERT("summit exit returns to Ridgeshire after the dragon falls",
         g.location == LOCATION_TOWN4);
 

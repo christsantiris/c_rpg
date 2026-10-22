@@ -16,6 +16,7 @@
 #include "red_dragon.h"
 #include "jail.h"
 #include "town_life.h"
+#include "approach.h"
 #include "regional_terrain.h"
 #include "landscapes.h"
 
@@ -1459,6 +1460,7 @@ void enemies_spawn(GameState *g) {
 }
 
 void game_init(GameState *g) {
+    g->approach_route = -1;
     g->jail_quest_state = 0;
     g->prisoner_x = 0;
     g->prisoner_y = 0;
@@ -5543,9 +5545,49 @@ static void return_to_town(GameState *g, Location destination) {
     place_town_portal(g);
 }
 
+static void enter_return_approach(GameState *g, Location area) {
+    for (int i = 0; i < town_approach_count; i++) {
+        const TownApproach *route = &town_approaches[i];
+        if (route->area != area || route->town != g->location) {
+            continue;
+        }
+        if (approach_enter(g, route->gate_x, route->gate_y)) {
+            int dx = g->player.last_dx;
+            int dy = g->player.last_dy;
+            g->player.x = g->map.stairs_down_x - dx;
+            g->player.y = g->map.stairs_down_y - dy;
+            g->player.last_dx = -dx;
+            g->player.last_dy = -dy;
+            char message[MAX_MESSAGE_LEN];
+            snprintf(message, sizeof(message), "You emerge onto the path to %s.", approach_town_name(route->town));
+            push_message(g, message);
+        }
+        return;
+    }
+}
+
+void game_return_to_approach(GameState *g) {
+    Location area = g->location;
+    game_return_to_town(g);
+    enter_return_approach(g, area);
+}
+
+void game_leave_approach(GameState *g) {
+    const TownApproach *route = approach_route(g);
+    if (!route) {
+        return;
+    }
+    TownApproach destination = *route;
+    return_to_town(g, destination.town);
+    g->approach_route = -1;
+    g->player.x = destination.gate_x == 0 ? 1 : destination.gate_x == TOWN_W - 1 ? TOWN_W - 2 : destination.gate_x;
+    g->player.y = destination.gate_y == 0 ? 1 : destination.gate_y == TOWN_H - 1 ? TOWN_H - 2 : destination.gate_y;
+    push_message(g, "You follow the path back through the town gate.");
+}
+
 void game_leave_catacombs(GameState *g) {
     return_to_town(g, LOCATION_CASTLE);
-    push_message(g, "You emerge at the castle's south gate.");
+    enter_return_approach(g, LOCATION_CATACOMBS);
 }
 
 void game_return_to_town(GameState *g) {
@@ -5581,18 +5623,26 @@ void game_return_to_town(GameState *g) {
 
 void game_leave_forest(GameState *g, Location town, int shortcut) {
     (void)shortcut;
+    int from_forest = g->location == LOCATION_FOREST;
     return_to_town(g, town);
     g->player.x = town == LOCATION_TOWN2 ? TOWN_W - 2 : 1;
     g->player.y = 12;
     push_message(g, town == LOCATION_TOWN2 ? "You arrive in Stillbury." : "You arrive in OakHaven.");
+    if (from_forest) {
+        enter_return_approach(g, LOCATION_FOREST);
+    }
 }
 
 void game_leave_mountains(GameState *g, Location town, int shortcut) {
     (void)shortcut;
+    int from_mountains = g->location == LOCATION_MOUNTAINS;
     return_to_town(g, town);
     g->player.x = 20;
     g->player.y = town == LOCATION_TOWN4 ? TOWN_H - 2 : 1;
     push_message(g, town == LOCATION_TOWN4 ? "You arrive in Ridgeshire." : "You arrive in OakHaven.");
+    if (from_mountains) {
+        enter_return_approach(g, LOCATION_MOUNTAINS);
+    }
 }
 
 void game_enter_town3(GameState *g) {
@@ -5601,10 +5651,14 @@ void game_enter_town3(GameState *g) {
 
 void game_leave_swamp(GameState *g, Location town, int shortcut) {
     (void)shortcut;
+    int from_swamp = g->location == LOCATION_SWAMP;
     return_to_town(g, town);
     g->player.x = 20;
     g->player.y = town == LOCATION_TOWN3 ? TOWN_H - 2 : 1;
     push_message(g, town == LOCATION_TOWN3 ? "You arrive in Rosemoor." : "You arrive in Stillbury.");
+    if (from_swamp) {
+        enter_return_approach(g, LOCATION_SWAMP);
+    }
 }
 
 void game_enter_swamp_road(GameState *g) {
@@ -6978,23 +7032,17 @@ int game_handle_shortcut_prompt_key(GameState *g, int key, int repeat) {
             return 1;
         }
         int region = town_route_region(g, g->dialogue_x, g->dialogue_y);
+        if (!shortcut) {
+            approach_enter(g, g->dialogue_x, g->dialogue_y);
+            return 1;
+        }
         g->dialogue_active = 0;
         if (region == LOCATION_FOREST) {
-            if (shortcut) {
-                game_enter_forest_road(g);
-            } else {
-                game_enter_forest(g);
-            }
+            game_enter_forest_road(g);
         } else if (region == LOCATION_SWAMP) {
-            if (shortcut) {
-                game_enter_swamp_road(g);
-            } else {
-                game_enter_swamp(g);
-            }
-        } else if (shortcut) {
-            game_enter_high_pass(g, g->location == LOCATION_TOWN);
+            game_enter_swamp_road(g);
         } else {
-            game_enter_mountains(g);
+            game_enter_high_pass(g, g->location == LOCATION_TOWN);
         }
         return 1;
     }

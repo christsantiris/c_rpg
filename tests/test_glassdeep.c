@@ -1,3 +1,4 @@
+#include "approach_checks.h"
 #include "test_utils.h"
 #include "game/game.h"
 #include "systems/save_load.h"
@@ -19,6 +20,9 @@ static void walk_edge(int south) {
     game.player.x = x;
     game.player.y = south ? y - 1 : y + 1;
     action_resolve_player(&game, (Action){ACTION_MOVE, x, y});
+    if (game.location == LOCATION_APPROACH) {
+        walk_return_approach(&game);
+    }
 }
 
 static void test_layouts(void) {
@@ -95,6 +99,7 @@ static void test_travel_and_saves(void) {
     game.player.x = STILLBURY_GLASSDEEP_GATE_X;
     game.player.y = TOWN_H - 2;
     action_resolve_player(&game, (Action){ACTION_MOVE, game.player.x, TOWN_H - 1});
+    walk_town_approach(&game);
     ASSERT("Stillbury's south gate enters Glassdeep Caverns stage one from the north", game.location == LOCATION_GLASSDEEP && game.level == 1 && game.player.y == 0);
     int x;
     int y;

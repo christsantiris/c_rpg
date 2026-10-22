@@ -2,6 +2,7 @@
 #include "../game/regional_terrain.h"
 #include "../game/landscapes.h"
 #include "../game/castle.h"
+#include "../game/approach.h"
 #include "sprites.h"
 #include "world_props.h"
 #include "info_panel.h"
@@ -135,7 +136,13 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
     const char *line2 = NULL;
     char status[64];
     char floor_name[40];
-    if (g->location == LOCATION_ASHEN) {
+    if (g->location == LOCATION_APPROACH) {
+        const TownApproach *route = approach_route(g);
+        snprintf(floor_name, sizeof(floor_name), "%s APPROACH", route ? approach_area_name(route->area) : "AREA");
+        title = floor_name;
+        line1 = "FOLLOW THE PATH TO THE ENTRANCE";
+        line2 = "TURN BACK TO RETURN TO TOWN";
+    } else if (g->location == LOCATION_ASHEN) {
         title = "VOLCANIC CROSSINGS";
         line1 = "C: COOL   !: WARNING   H: HOT";
         line2 = "VALVES MAKE LASTING PATHS";

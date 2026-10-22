@@ -1,3 +1,4 @@
+#include "approach_checks.h"
 #include "test_utils.h"
 #include "game/catacombs.h"
 #include "systems/save_load.h"
@@ -127,6 +128,7 @@ static void test_travel(void) {
     game.player.x = CROWNROAD_X;
     game.player.y = TOWN_H - 2;
     action_resolve_player(&game, (Action){ACTION_MOVE, CROWNROAD_X, TOWN_H - 1});
+    walk_town_approach(&game);
     ASSERT("the castle south road enters the Royal Catacombs", game.location == LOCATION_CATACOMBS && game.level == 1 && game.player.x == game.map.stairs_up_x && game.player.y == game.map.stairs_up_y);
     int bx = game.map.rooms[1].x + 1;
     int by = game.map.rooms[1].y + 1;
@@ -143,6 +145,7 @@ static void test_travel(void) {
     game.player.x = game.map.stairs_up_x;
     game.player.y = game.map.stairs_up_y;
     action_resolve_player(&game, (Action){ACTION_ASCEND, 0, 0});
+    walk_return_approach(&game);
     ASSERT("ordinary retreat emerges at the castle south gate", game.location == LOCATION_CASTLE && game.player.x == CROWNROAD_X && game.player.y == TOWN_H - 2);
     game_enter_catacombs(&game);
     ASSERT("re-entry refreshes regular enemies and preserves extinguished braziers", game.enemies[0].hp == game.enemies[0].max_hp && game.map.tiles[by][bx] == TILE_OSSUARY_COLD);
@@ -343,6 +346,7 @@ static void test_boss(void) {
         game.player.x = game.map.stairs_down_x;
         game.player.y = game.map.stairs_down_y;
         action_resolve_player(&game, (Action){ACTION_DESCEND, 0, 0});
+        walk_return_approach(&game);
         ASSERT("boss victory returns to the castle with other enemies still alive", game.location == LOCATION_CASTLE && game.catacombs_cache[4].enemy_count > 1);
         game_enter_catacombs(&game);
         while (game.level < CATACOMBS_DEPTH) {
@@ -371,6 +375,7 @@ static void test_boss(void) {
 static void test_migration(void) {
     start_catacombs();
     game_leave_catacombs(&game);
+    walk_return_approach(&game);
     game.player.hp = 57;
     game.gold = 111;
     game.score = 4567;

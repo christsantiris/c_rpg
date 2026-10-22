@@ -1,3 +1,4 @@
+#include "approach_checks.h"
 #include "test_utils.h"
 #include "shortcut_checks.h"
 #include "game/game.h"
@@ -15,6 +16,9 @@ static void swamp_step(GameState *g, int reverse) {
     g->player.x = x + (reverse ? 1 : -1);
     g->player.y = y;
     action_resolve_player(g, (Action){ACTION_MOVE, x, y});
+    if (g->location == LOCATION_APPROACH) {
+        walk_return_approach(g);
+    }
 }
 
 static int swamp_boss(GameState *g) {
@@ -71,6 +75,7 @@ static void test_swamp_crossing(int reverse, int shortcut) {
     int road_x = reverse ? ROSEMOOR_SWAMP_ROAD_X : TOWN3_ROAD_X;
     ASSERT("swamp shortcut starts closed at either town", swamp.map.tiles[gate_y][road_x] == TILE_WALL);
     action_resolve_player(&swamp, (Action){ACTION_MOVE, 20, gate_y});
+    walk_town_approach(&swamp);
     ASSERT("either ordinary gate starts at its own border", swamp.location == LOCATION_SWAMP && swamp.level == (reverse ? SWAMP_DEPTH : 1) && swamp.swamp_entry_town == (reverse ? LOCATION_TOWN3 : LOCATION_TOWN2));
     swamp_step(&swamp, !reverse);
     ASSERT("both border levels permit immediate retreat", swamp.location == (reverse ? LOCATION_TOWN3 : LOCATION_TOWN2) && swamp.player.x == 20 && swamp.player.y == (reverse ? TOWN_H - 2 : 1));
@@ -214,6 +219,7 @@ void test_swamp_travel(void) {
     ASSERT("opposite-end entry keeps the old portal anchored to Rosemoor", swamp.location == LOCATION_TOWN2 && swamp.swamp_entry_town == LOCATION_TOWN2 && swamp.swamp_portal_town == LOCATION_TOWN3 && swamp.map.tiles[2][21] != TILE_PORTAL);
     game_enter_swamp(&swamp);
     game_leave_swamp(&swamp, LOCATION_TOWN3, 0);
+    walk_return_approach(&swamp);
     ASSERT("original town still exposes its swamp portal", swamp.map.tiles[TOWN_H - 3][21] == TILE_PORTAL);
     ASSERT("portal anchor survives a changed expedition and save/load", save_game(&swamp, 99122) && load_game(&restored, 99122));
     action_resolve_player(&restored, (Action){ACTION_MOVE, 21, TOWN_H - 3});

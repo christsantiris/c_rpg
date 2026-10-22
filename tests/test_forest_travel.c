@@ -1,3 +1,4 @@
+#include "approach_checks.h"
 #include "test_utils.h"
 #include "shortcut_checks.h"
 #include "game/game.h"
@@ -37,6 +38,9 @@ static void forest_step(GameState *g, int reverse) {
         y = MAP_H - 1;
     }
     action_resolve_player(g, (Action){ACTION_MOVE, x, y});
+    if (g->location == LOCATION_APPROACH) {
+        walk_return_approach(g);
+    }
 }
 
 static int forest_boss(GameState *g) {
@@ -80,6 +84,7 @@ static void test_forest_crossing(int reverse, int shortcut) {
     int gate_x = reverse ? TOWN_W - 1 : 0;
     ASSERT("shortcut gate starts closed at either town", forest.map.tiles[TOWN_ROAD_EXIT_Y][gate_x] == TILE_WALL);
     action_resolve_player(&forest, (Action){ACTION_MOVE, gate_x, 12});
+    walk_town_approach(&forest);
     ASSERT("either forest gate starts at its own border",
         forest.location == LOCATION_FOREST && forest.level == (reverse ? FOREST_DEPTH : 1) &&
         forest.forest_entry_town == (reverse ? LOCATION_TOWN2 : LOCATION_TOWN));
@@ -207,12 +212,14 @@ static void test_forest_entry_direction(void) {
             ASSERT("debug-unlocked west gate still offers the normal forest route", game_shortcut_prompt_active(&forest));
             game_handle_shortcut_prompt_key(&forest, SDL_SCANCODE_1, 0);
         }
+        walk_town_approach(&forest);
         int y = forest.player.y;
         ASSERT("OakHaven's west gate arrives on the east side of forest stage one", forest.location == LOCATION_FOREST && forest.level == 1 && forest.player.x == MAP_W - 2);
         action_resolve_player(&forest, (Action){ACTION_MOVE, MAP_W - 3, y});
         ASSERT("continuing west immediately walks deeper into the forest", forest.location == LOCATION_FOREST && forest.player.x == MAP_W - 3 && forest.player.y == y);
         action_resolve_player(&forest, (Action){ACTION_MOVE, MAP_W - 2, y});
         action_resolve_player(&forest, (Action){ACTION_MOVE, MAP_W - 1, y});
+        walk_return_approach(&forest);
         ASSERT("turning east through the entrance returns to OakHaven's west gate", forest.location == LOCATION_TOWN && forest.player.x == 1 && forest.player.y == 12);
     }
 }

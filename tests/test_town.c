@@ -1,3 +1,4 @@
+#include "approach_checks.h"
 #include "test_utils.h"
 #include "../src/game/map.h"
 #include "../src/game/game.h"
@@ -1071,6 +1072,7 @@ void test_forest(void) {
     g.player.y = 12;
     Action west = {ACTION_MOVE, 0, 12};
     action_resolve_player(&g, west);
+    walk_town_approach(&g);
     ASSERT("west town exit enters forest", g.location == LOCATION_FOREST);
     ASSERT("forest begins on level one", g.level == 1);
     ASSERT("leaving OakHaven west enters the forest at its east edge", g.player.x == MAP_W - 2);
@@ -1294,6 +1296,7 @@ void test_forest(void) {
     g.player.x = g.map.stairs_down_x;
     g.player.y = g.map.stairs_down_y;
     action_resolve_player(&g, outdoor_exit_action(&g.map));
+    walk_return_approach(&g);
     ASSERT("full forest route reaches Stillbury", g.location == LOCATION_TOWN2);
     ASSERT("forest completion arrives beside Stillbury's east forest gate",
         g.player.x == TOWN_W - 2 && g.player.y == 12 &&
@@ -1665,6 +1668,7 @@ void test_mountains(void) {
     g.player.y = 1;
     Action enter = {ACTION_MOVE, 20, 0};
     action_resolve_player(&g, enter);
+    walk_town_approach(&g);
     ASSERT("north OakHaven exit enters mountains", g.location == LOCATION_MOUNTAINS);
     ASSERT("mountains begin on level one", g.level == 1);
     ASSERT("mountains use red-black terrain",
@@ -1766,6 +1770,7 @@ void test_mountains(void) {
         g.player.y = g.map.stairs_down_y;
         action_resolve_player(&g, outdoor_exit_action(&g.map));
     }
+    walk_return_approach(&g);
     ASSERT("remaining mountain stages reach Ridgeshire", g.location == LOCATION_TOWN4);
     ASSERT("mountain completion arrives at Ridgeshire south road",
         g.player.x == 20 && g.player.y == TOWN_H - 2);

@@ -1,3 +1,4 @@
+#include "approach_checks.h"
 #include "test_utils.h"
 #include "game/game.h"
 #include "systems/save_load.h"
@@ -19,6 +20,9 @@ static void walk_edge(int north) {
     game.player.x = x;
     game.player.y = north ? y + 1 : y - 1;
     action_resolve_player(&game, (Action){ACTION_MOVE, x, y});
+    if (game.location == LOCATION_APPROACH) {
+        walk_return_approach(&game);
+    }
 }
 
 static void test_layouts(void) {
@@ -95,6 +99,7 @@ static void test_travel_and_saves(void) {
     game.player.x = RIDGESHIRE_ASHEN_GATE_X;
     game.player.y = 1;
     action_resolve_player(&game, (Action){ACTION_MOVE, game.player.x, 0});
+    walk_town_approach(&game);
     ASSERT("Ridgeshire's north gate enters Ashen Hollow stage one from the south", game.location == LOCATION_ASHEN && game.level == 1 && game.player.y == SWAMP_MAP_H - 1);
     int x;
     int y;

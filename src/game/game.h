@@ -152,7 +152,8 @@ typedef enum {
     LOCATION_BAKERY,
     LOCATION_BUTCHER,
     LOCATION_MONASTERY,
-    LOCATION_SPICE_SHOP
+    LOCATION_SPICE_SHOP,
+    LOCATION_APPROACH
 } Location;
 
 typedef struct {
@@ -195,6 +196,7 @@ typedef struct {
     MessageKind message_kinds[MAX_MESSAGES];
     int        level_cleared;
     Location   location;
+    int approach_route; // Index into the append-only town approach routes, or -1.
     int max_level_reached;
     int max_forest_level_reached;
     Location forest_entry_town;
@@ -425,6 +427,7 @@ void game_mark_level_cleared(GameState *g);
 void game_update_level_progress(GameState *g);
 
 void game_return_to_town(GameState *g);
+void game_return_to_approach(GameState *g);
 void game_open_town_portal(GameState *g);
 void game_use_town_portal(GameState *g);
 void game_hide_portal_destination(GameState *g);

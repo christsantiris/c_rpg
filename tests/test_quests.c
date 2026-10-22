@@ -1,3 +1,4 @@
+#include "approach_checks.h"
 #include "test_utils.h"
 #include "../src/game/game.h"
 #include "../src/systems/save_load.h"
@@ -331,6 +332,7 @@ void test_dain_quest(void) {
 
     int gold_before = g.gold;
     game_leave_mountains(&g, LOCATION_TOWN4, 0);
+    walk_return_approach(&g);
     g.player.x = DAIN_TOWN_X;
     g.player.y = DAIN_TOWN_Y + 1;
     game_talk_to_dain(&g);

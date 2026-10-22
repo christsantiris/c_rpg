@@ -1,3 +1,4 @@
+#include "approach_checks.h"
 #include "test_utils.h"
 #include "game/game.h"
 #include "game/thorn_regent.h"
@@ -20,6 +21,9 @@ static void walk_edge(int west) {
     game.player.x = west ? x + 1 : x - 1;
     game.player.y = y;
     action_resolve_player(&game, (Action){ACTION_MOVE, x, y});
+    if (game.location == LOCATION_APPROACH) {
+        walk_return_approach(&game);
+    }
 }
 
 static void test_layouts(void) {
@@ -95,6 +99,7 @@ static void test_travel_and_saves(void) {
     game.player.x = 1;
     game.player.y = ROSEMOOR_MOONVEIL_GATE_Y;
     action_resolve_player(&game, (Action){ACTION_MOVE, 0, game.player.y});
+    walk_town_approach(&game);
     ASSERT("Rosemoor's west gate enters Moonveil stage one from the east", game.location == LOCATION_MOONVEIL && game.level == 1 && game.player.x == SWAMP_MAP_W - 1);
     int x;
     int y;

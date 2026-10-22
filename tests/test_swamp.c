@@ -1,4 +1,5 @@
 #include "test_utils.h"
+#include "approach_checks.h"
 #include "../src/game/game.h"
 #include "../src/game/actions.h"
 #include "../src/systems/save_load.h"
@@ -173,6 +174,7 @@ void test_swamp(void) {
     swamp_game.player.x = 20;
     swamp_game.player.y = 1;
     action_resolve_player(&swamp_game, (Action){ACTION_MOVE, 20, 0});
+    walk_town_approach(&swamp_game);
     ASSERT("north gate enters swamp level one",
         swamp_game.location == LOCATION_SWAMP && swamp_game.level == 1);
     int rounded_clearings = 0;
@@ -263,6 +265,7 @@ void test_swamp(void) {
     for (int steps = 0; swamp_game.location == LOCATION_SWAMP && steps < SWAMP_DEPTH; steps++) {
         action_resolve_player(&swamp_game, (Action){ACTION_MOVE, swamp_game.map.stairs_down_x, swamp_game.map.stairs_down_y});
     }
+    walk_return_approach(&swamp_game);
     ASSERT("defeating the demon leads into Rosemoor",
         swamp_game.location == LOCATION_TOWN3 && swamp_game.player.y == TOWN_H - 2);
     action_resolve_player(&swamp_game, (Action){ACTION_MOVE, 20, TOWN_H - 1});

@@ -1,3 +1,4 @@
+#include "approach_checks.h"
 #include "test_utils.h"
 #include "../src/game/game.h"
 #include "../src/game/desert_pharaoh.h"
@@ -18,6 +19,9 @@ static void walk_desert_edge(GameState *g, int west) {
     g->player.x = west ? x + 1 : x - 1;
     g->player.y = y;
     action_resolve_player(g, (Action){ACTION_MOVE, x, y});
+    if (g->location == LOCATION_APPROACH) {
+        walk_return_approach(g);
+    }
 }
 
 static void test_desert_travel(void) {
@@ -34,6 +38,7 @@ static void test_desert_travel(void) {
     g->player.x = 1;
     g->player.y = 12;
     action_resolve_player(g, (Action){ACTION_MOVE, 0, 12});
+    walk_town_approach(g);
     ASSERT("Stillbury's west gate enters Sunscar level one from the east",
         g->location == LOCATION_DESERT && g->level == 1 &&
         g->player.x == DESERT_MAP_W - 1 && g->player.y == g->map.stairs_up_y);
@@ -44,6 +49,7 @@ static void test_desert_travel(void) {
     ASSERT("level one's east entrance returns to Stillbury's west gate",
         g->location == LOCATION_TOWN2 && g->player.x == 1 && g->player.y == 12);
     action_resolve_player(g, (Action){ACTION_MOVE, 0, 12});
+    walk_town_approach(g);
 
     int x;
     int y;
