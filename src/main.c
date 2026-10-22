@@ -1546,9 +1546,11 @@ int main(int argc, char **argv) {
         }
 
         // Update music based on screen and location
-        const TownApproach *approach = approach_route(&game);
+        int traveling = game.location == LOCATION_TOWN_ROAD || game.location == LOCATION_APPROACH ||
+            game.location == LOCATION_FOREST_ROAD || game.location == LOCATION_HIGH_PASS ||
+            game.location == LOCATION_SWAMP_ROAD || game.location == LOCATION_CROWNROAD ||
+            game.location == LOCATION_KING_ROAD_WEST;
         int is_town = game.location == LOCATION_TOWN ||
-            approach != NULL ||
             game.location == LOCATION_TAVERN ||
             game.location == LOCATION_TOWN2 ||
             game.location == LOCATION_TOWN3 ||
@@ -1560,15 +1562,14 @@ int main(int argc, char **argv) {
             game.location == LOCATION_INN || game.location == LOCATION_HEALER || game.location == LOCATION_WITCH ||
             game.location == LOCATION_GUILD ||
             game.location == LOCATION_ISLAND || town_life_is_interior(game.location);
-        int in_town2 = (approach && approach->town == LOCATION_TOWN2) || game.location == LOCATION_TOWN2 ||
-            game.location == LOCATION_INN || game.location == LOCATION_HEALER || game.location == LOCATION_WITCH || game.location == LOCATION_BUTCHER || game.location == LOCATION_DAWNMERE;
-        int in_town3 = (approach && (approach->town == LOCATION_TOWN3 || approach->town == LOCATION_CASTLE)) || game.location == LOCATION_TOWN3 ||
+        int in_town2 = game.location == LOCATION_TOWN2 ||
+            game.location == LOCATION_INN || game.location == LOCATION_HEALER || game.location == LOCATION_WITCH || game.location == LOCATION_BUTCHER;
+        int in_town3 = game.location == LOCATION_TOWN3 ||
             game.location == LOCATION_GUILD ||
-            game.location == LOCATION_SPICE_SHOP ||
-            game.location == LOCATION_CASTLE;
-        int in_town4 = (approach && approach->town == LOCATION_TOWN4) || game.location == LOCATION_TOWN4 || game.location == LOCATION_WORKSHOP ||
+            game.location == LOCATION_SPICE_SHOP;
+        int in_town4 = game.location == LOCATION_TOWN4 || game.location == LOCATION_WORKSHOP ||
             game.location == LOCATION_TOWN_HALL || game.location == LOCATION_MONASTERY;
-        music_update(screen, is_town, in_town2, in_town3, in_town4);
+        music_update(screen, is_town, in_town2, in_town3, in_town4, traveling, game.location == LOCATION_DAWNMERE, game.location == LOCATION_CASTLE);
 
         if (!needs_redraw) {
             continue;

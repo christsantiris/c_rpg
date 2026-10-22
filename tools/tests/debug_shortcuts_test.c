@@ -4,6 +4,23 @@
 #undef main
 #include <assert.h>
 #include <unistd.h>
+#include "../../src/game/town_road.h"
+
+static void visit_exterior_town(GameState *g) {
+    assert(g->location == LOCATION_TOWN_ROAD);
+    Location town = g->road_town;
+    TownSide side = g->player.y < TOWN_SPRITE_Y ? TOWN_SIDE_NORTH : g->player.y >= TOWN_SPRITE_Y + TOWN_SPRITE_H ? TOWN_SIDE_SOUTH : g->player.x < TOWN_SPRITE_X ? TOWN_SIDE_WEST : TOWN_SIDE_EAST;
+    int x;
+    int y;
+    town_road_entrance(side, &x, &y);
+    for (int step = 0; g->location == LOCATION_TOWN_ROAD && step < TOWN_ROAD_W + TOWN_ROAD_H; step++) {
+        int dx = (x > g->player.x) - (x < g->player.x);
+        int dy = (y > g->player.y) - (y < g->player.y);
+        assert(!dx || !dy);
+        action_resolve_player(g, (Action){ACTION_MOVE, g->player.x + dx, g->player.y + dy});
+    }
+    assert(g->location == town);
+}
 
 int main(void) {
     char *project = getcwd(NULL, 0);
@@ -20,6 +37,13 @@ int main(void) {
     Renderer renderer = {0};
     renderer_init(&renderer, sdl, 1280, 720);
     assert(renderer.font_large);
+    for (int i = 0; i < TOWN_ROAD_COUNT; i++) {
+        int width;
+        int height;
+        assert(renderer.town_textures[i]);
+        assert(SDL_QueryTexture(renderer.town_textures[i], NULL, NULL, &width, &height) == 0);
+        assert(width == TOWN_SPRITE_W * TILE_SIZE && height == TOWN_SPRITE_H * TILE_SIZE);
+    }
     const TownExitStyle entrances[] = {TOWN_EXIT_COAST, TOWN_EXIT_DESERT, TOWN_EXIT_GLASSDEEP, TOWN_EXIT_FROST, TOWN_EXIT_MOONVEIL, TOWN_EXIT_DRAGONSPINE, TOWN_EXIT_ASHEN, TOWN_EXIT_CATACOMBS};
     for (int i = 0; i < 8; i++) {
         int width;
@@ -74,6 +98,7 @@ int main(void) {
             action_resolve_player(game, (Action){ACTION_MOVE, game->player.x + 1, game->player.y});
         }
         action_resolve_player(game, (Action){ACTION_MOVE, x, y});
+        visit_exterior_town(game);
         assert(game->location == LOCATION_DAWNMERE);
         assert(approach_enter(game, 20, 0));
         assert(approach_mountain_town_exit(game, &x, &y));
@@ -81,6 +106,7 @@ int main(void) {
         for (int step = 0; game->location == LOCATION_APPROACH && step < APPROACH_H; step++) {
             action_resolve_player(game, (Action){ACTION_MOVE, x, game->player.y - 1});
         }
+        visit_exterior_town(game);
         assert(game->location == LOCATION_TOWN4);
 
         // Loading without the debug option keeps a normal character locked.
@@ -109,6 +135,7 @@ int main(void) {
         for (int step = 0; game->location == LOCATION_APPROACH && step < APPROACH_W; step++) {
             action_resolve_player(game, (Action){ACTION_MOVE, game->player.x + (stillbury ? 1 : -1), y});
         }
+        visit_exterior_town(game);
         assert(game->location == (stillbury ? LOCATION_TOWN : LOCATION_TOWN2));
     }
     for (int rosemoor = 0; rosemoor < 2; rosemoor++) {
@@ -129,6 +156,7 @@ int main(void) {
         for (int step = 0; game->location == LOCATION_APPROACH && step < APPROACH_H; step++) {
             action_resolve_player(game, (Action){ACTION_MOVE, x, game->player.y + (rosemoor ? 1 : -1)});
         }
+        visit_exterior_town(game);
         assert(game->location == (rosemoor ? LOCATION_TOWN2 : LOCATION_TOWN3));
     }
     game_init(game);
@@ -149,6 +177,7 @@ int main(void) {
     assert(game->location == LOCATION_APPROACH && !game_labyrinth_is_open(game));
     assert(game->player.y == APPROACH_LABYRINTH_Y + 1);
     game_leave_approach(game);
+    visit_exterior_town(game);
     game_enter_tavern(game);
     game->player.x = ROOK_TAVERN_X;
     game->player.y = ROOK_TAVERN_Y + 1;
@@ -167,6 +196,21 @@ int main(void) {
     game_leave_labyrinth(game);
     assert(game->location == LOCATION_APPROACH && game->labyrinth_entry_town == LOCATION_TOWN);
     assert(game->player.x == APPROACH_LABYRINTH_X && game->player.y == APPROACH_LABYRINTH_Y + 1);
+    // Loaded town exteriors preserve identity and equipment under the debug option.
+    assert(town_road_enter(game, LOCATION_DAWNMERE, TOWN_SIDE_WEST, 0));
+    game->gold = 73;
+    int road_x = game->player.x;
+    int road_y = game->player.y;
+    assert(save_game(game, 1));
+    assert(debug_parse_args(&debug_config, 6, arguments));
+    handle_slot_result(SLOT_SELECTED, &slots, 0, &screen, game, &renderer, &viewport, &landing);
+    assert(game->location == LOCATION_TOWN_ROAD && game->road_town == LOCATION_DAWNMERE);
+    assert(game->gold == 73 && game->player.x == road_x && game->player.y == road_y);
+    renderer_begin_frame(&renderer);
+    game_draw(&renderer, game, &viewport);
+    SDL_RenderPresent(sdl);
+    visit_exterior_town(game);
+    assert(game->location == LOCATION_DAWNMERE && game->player.x == 1 && game->player.y == 12);
     free(game);
     renderer_free(&renderer);
     SDL_DestroyRenderer(sdl);

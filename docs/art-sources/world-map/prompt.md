@@ -103,3 +103,17 @@ Use case: precise-object-edit. Edit target: this finished FIVE-TOWN fantasy worl
 Place Rook's Labyrinth in a small clearing BESIDE THE ROAD THROUGH HAUNTED FOREST, between Stillbury and Oakhaven, close to the Haunted Forest landmark. Prefer above the woodland road just west of Oakhaven, with a tiny spur from that road to the stone maze, enough room for a legible label. This is an entrance beside the forest path, not a destination in Stillbury's town. Its maze drawing should be modest and integrated with the forest terrain. There must be exactly one label "Rook's Labyrinth" and one corresponding stone maze. Do not add quest text or a lock icon.
 Preserve ALL five towns (Rosemoor, Stillbury, Oakhaven, Dawnmere, Ridgeshire), the exact Oakhaven–Dungeon–Dawnmere road, the Dawnmere–Goblin Mountains–Ridgeshire road, every other destination and label, all northern snowy peaks, Ashen Hollow volcanoes, castle, Crown Roads, coast, Docks, Ruined Isle, Ruined Temple, title, compass, parchment border, colors, textures, typography and dimensions. No other geographic changes. Keep Haunted Forest label readable and do not obscure either town with the moved labyrinth. Return the complete edited map.
 ```
+
+
+## Labyrinth outside the forest (town-exterior revision)
+
+Edited with the built-in image generation tool, replacing
+`docs/images/world-map.png`. The earlier woodland placement was incorrect.
+The labyrinth now stands in open grass south of the Stillbury–Oakhaven road,
+with its own short spur; the Haunted Forest remains north of that road.
+Reviewed all five towns, other labels, routes and coastlines after the edit.
+Final edit prompt:
+
+```text
+Use case: precise-object-edit. Edit this finished fantasy atlas. Make one localized correction only: Rook's Labyrinth is NOT INSIDE the Haunted Forest. Move the small stone maze drawing and its exact label "Rook's Labyrinth" to open GRASSLAND SOUTH OF the Stillbury–Oakhaven road, near its midpoint. The woodland and Haunted Forest label must be NORTH of that road, with a clear visible separation between trees and labyrinth. Clear a grassy roadside meadow for the labyrinth on the SOUTH side of the road; connect its entrance with a short spur from the road. Restore trees where the previous labyrinth was north of the road. There is exactly one labyrinth and one label, and no forest trees enclosing the labyrinth. Preserve the road between Stillbury and Oakhaven, all FIVE towns and names (Stillbury, Rosemoor, Oakhaven, Dawnmere, Ridgeshire), all other destinations, coastlines, mountains, Crown Roads, castle, label typography, title, compass, border, palette, illustration style, layout and 3:2 landscape format. Keep the dungeon between Oakhaven and Dawnmere, Goblin Mountains between Dawnmere and Ridgeshire, Dragonspine north of Ridgeshire, and Ashen Hollow east of Ridgeshire unchanged. Do not add destinations, do not move towns. Return the complete corrected map. This is a precise correction of geography, not a redesign.
+```

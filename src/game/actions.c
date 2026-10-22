@@ -19,6 +19,7 @@
 #include "jail.h"
 #include "town_life.h"
 #include "approach.h"
+#include "town_road.h"
 #include "regional_terrain.h"
 #include "landscapes.h"
 #include "wilds.h"
@@ -1183,7 +1184,7 @@ void action_resolve_player(GameState *g, Action a) {
         g->location == LOCATION_SWAMP_ROAD ||
         g->location == LOCATION_CASTLE ||
         g->location == LOCATION_FOREST_ROAD ||
-        g->location == LOCATION_APPROACH ||
+        g->location == LOCATION_APPROACH || g->location == LOCATION_TOWN_ROAD ||
         g->location == LOCATION_INN ||
         g->location == LOCATION_HEALER || g->location == LOCATION_WITCH ||
         g->location == LOCATION_JAIL ||
@@ -1784,7 +1785,7 @@ void action_resolve_player(GameState *g, Action a) {
                 return;
             }
             if (g->location == LOCATION_FOREST_ROAD ||
-                g->location == LOCATION_APPROACH ||
+                g->location == LOCATION_APPROACH || g->location == LOCATION_TOWN_ROAD ||
                 g->location == LOCATION_HIGH_PASS ||
                 g->location == LOCATION_SWAMP_ROAD ||
                 game_is_king_road(g)) {
@@ -2382,7 +2383,7 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
-        if (approach_travel(g, tx, ty) || approach_enter(g, tx, ty)) {
+        if (town_road_travel(g, tx, ty) || town_road_depart(g, tx, ty) || approach_travel(g, tx, ty) || approach_enter(g, tx, ty)) {
             return;
         }
 
@@ -3549,7 +3550,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
     if (shots) {
         shots->count = 0;
     }
-    if (g->player.hp <= 0 || g->game_won || g->castle_prompt || g->location == LOCATION_APPROACH) {
+    if (g->player.hp <= 0 || g->game_won || g->castle_prompt || g->location == LOCATION_APPROACH || g->location == LOCATION_TOWN_ROAD) {
         return;
     }
     jail_follow(g);

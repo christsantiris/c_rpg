@@ -156,7 +156,8 @@ typedef enum {
     LOCATION_APPROACH,
     LOCATION_HEALER,
     LOCATION_WITCH,
-    LOCATION_DAWNMERE
+    LOCATION_DAWNMERE,
+    LOCATION_TOWN_ROAD
 } Location;
 
 typedef struct {
@@ -200,6 +201,7 @@ typedef struct {
     MessageKind message_kinds[MAX_MESSAGES];
     int        level_cleared;
     Location   location;
+    Location road_town;
     int approach_route; // Index into the append-only town approach routes, or -1.
     int max_level_reached;
     Location dungeon_entry_town;
@@ -356,6 +358,7 @@ void game_enter_dragonspine(GameState *g);
 void game_enter_tavern(GameState *g);
 void game_leave_tavern(GameState *g);
 void game_enter_town2(GameState *g);
+void game_enter_town_gate(GameState *g, Location town, int x, int y);
 void game_enter_forest_road(GameState *g);
 void game_leave_forest_road(GameState *g, Location destination);
 int game_is_king_road(const GameState *g);

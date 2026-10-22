@@ -1,4 +1,6 @@
 #include "game_renderer.h"
+#include "town_road_renderer.h"
+#include "../game/town_road.h"
 #include "sprites.h"
 #include "world_props.h"
 #include "goblin_king_renderer.h"
@@ -222,6 +224,10 @@ static void draw_approach_town_gate(Renderer *r, const GameState *g, const Viewp
     const TownApproach *route = approach_route(g);
     TownExitStyle style;
     if (!route || !approach_area_style(route->area, &style)) {
+        return;
+    }
+    // Other towns are sprites beyond an open road, not gates at this edge.
+    if (route->town != LOCATION_CASTLE) {
         return;
     }
     // Catacombs keep the existing mountain-styled gate on the castle side.
@@ -1685,7 +1691,9 @@ static void draw_trap_underlay(Renderer *r, const GameState *g, int map_x, int m
             bridge_neighbors += tile == TILE_MOUNTAIN_BRIDGE;
         }
     }
-    if (g->location == LOCATION_APPROACH) {
+    if (g->location == LOCATION_TOWN_ROAD) {
+        draw_town_floor(r, screen_x, screen_y);
+    } else if (g->location == LOCATION_APPROACH) {
         draw_approach_floor(r, g, screen_x, screen_y, map_x, map_y);
     } else if (g->location == LOCATION_FOREST ||
         g->location == LOCATION_FOREST_ROAD) {
@@ -2014,7 +2022,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     int island_scaled = g->location == LOCATION_ISLAND;
     int labyrinth_scaled = g->location == LOCATION_LABYRINTH;
     int road_scaled = g->location == LOCATION_FOREST_ROAD ||
-        g->location == LOCATION_APPROACH ||
+        g->location == LOCATION_APPROACH || g->location == LOCATION_TOWN_ROAD ||
         g->location == LOCATION_HIGH_PASS ||
         game_is_king_road(g) || g->location == LOCATION_SWAMP_ROAD;
     int jail_scaled = g->location == LOCATION_JAIL;
@@ -2043,10 +2051,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         viewport_center_on(&town_view, g->player.x, g->player.y);
         v = &town_view;
     } else if (road_scaled) {
-        int road_w = g->location == LOCATION_APPROACH ? APPROACH_W : g->location == LOCATION_HIGH_PASS ? HIGH_PASS_W :
+        int road_w = g->location == LOCATION_TOWN_ROAD ? TOWN_ROAD_W : g->location == LOCATION_APPROACH ? APPROACH_W : g->location == LOCATION_HIGH_PASS ? HIGH_PASS_W :
             (game_is_king_road(g) ? CROWNROAD_W :
             (g->location == LOCATION_SWAMP_ROAD ? SWAMP_ROAD_W : FOREST_ROAD_W));
-        int road_h = g->location == LOCATION_APPROACH ? APPROACH_H : g->location == LOCATION_HIGH_PASS ? HIGH_PASS_H :
+        int road_h = g->location == LOCATION_TOWN_ROAD ? TOWN_ROAD_H : g->location == LOCATION_APPROACH ? APPROACH_H : g->location == LOCATION_HIGH_PASS ? HIGH_PASS_H :
             (game_is_king_road(g) ? CROWNROAD_H :
             (g->location == LOCATION_SWAMP_ROAD ? SWAMP_ROAD_H : FOREST_ROAD_H));
         int view_w = v->tiles_x < road_w ? v->tiles_x : road_w;
@@ -2054,6 +2062,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         viewport_init(&town_view, view_w, view_h,
             road_w, road_h);
         viewport_center_on(&town_view, g->player.x, g->player.y);
+        if (g->location == LOCATION_TOWN_ROAD && view_w >= TOWN_SPRITE_W + 8 && view_h >= TOWN_SPRITE_H + 8 &&
+            abs(g->player.x - TOWN_ROAD_W / 2) <= TOWN_SPRITE_W / 2 + 4 &&
+            abs(g->player.y - TOWN_ROAD_H / 2) <= TOWN_SPRITE_H / 2 + 4) {
+            viewport_center_on(&town_view, TOWN_ROAD_W / 2, TOWN_ROAD_H / 2);
+        }
         v = &town_view;
     } else if (g->location == LOCATION_CASTLE_INTERIOR) {
         viewport_init(&town_view, v->tiles_x < CASTLE_W ? v->tiles_x : CASTLE_W, v->tiles_y < CASTLE_H ? v->tiles_y : CASTLE_H, CASTLE_W, CASTLE_H);
@@ -2133,7 +2146,16 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     }
                     break;
                 case TILE_WALL: {
-                    if (g->location == LOCATION_APPROACH && approach_route(g) &&
+                    if (g->location == LOCATION_TOWN_ROAD) {
+                        draw_town_floor(r, sx, sy);
+                    } else if (g->location == LOCATION_APPROACH && approach_route(g) && approach_route(g)->town != LOCATION_CASTLE &&
+                        (x == 0 || x == APPROACH_W - 1 || y == 0 || y == APPROACH_H - 1)) {
+                        if (approach_route(g)->area == LOCATION_COAST) {
+                            draw_approach_coast_ground(r, sx, sy, x, y);
+                        } else {
+                            draw_town_floor(r, sx, sy);
+                        }
+                    } else if (g->location == LOCATION_APPROACH && approach_route(g) &&
                         approach_route(g)->area == LOCATION_DUNGEON &&
                         x >= g->map.stairs_down_x - 1 && x <= g->map.stairs_down_x + 1 &&
                         y >= g->map.stairs_down_y - 2 && y <= g->map.stairs_down_y) {
@@ -2670,6 +2692,15 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                         draw_town_path(r, sx, sy);
                     }
                     break;
+                case TILE_TOWN_ROAD_ENTRY_NORTH:
+                case TILE_TOWN_ROAD_ENTRY_EAST:
+                case TILE_TOWN_ROAD_ENTRY_SOUTH:
+                case TILE_TOWN_ROAD_ENTRY_WEST:
+                case TILE_TOWN_ROAD_EXIT_NORTH:
+                case TILE_TOWN_ROAD_EXIT_EAST:
+                case TILE_TOWN_ROAD_EXIT_SOUTH:
+                case TILE_TOWN_ROAD_EXIT_WEST:
+                    draw_town_path(r, sx, sy); break;
                 case TILE_LABYRINTH_ENTRANCE:
                     draw_town_floor(r, sx, sy); break;
                 case TILE_BLACKSMITH_DOOR:
@@ -2997,6 +3028,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             }
         }
     }
+
+    draw_town_road(r, g, v);
 
     draw_regional_terrain_light(r, g, v);
 

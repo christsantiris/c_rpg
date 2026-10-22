@@ -136,7 +136,12 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
     const char *line2 = NULL;
     char status[64];
     char floor_name[40];
-    if (g->location == LOCATION_APPROACH) {
+    if (g->location == LOCATION_TOWN_ROAD) {
+        snprintf(floor_name, sizeof(floor_name), "%s OUTSKIRTS", approach_town_name(g->road_town));
+        title = floor_name;
+        line1 = "WALK INTO THE TOWN TO VISIT";
+        line2 = "FOLLOW THE ROAD TO CONTINUE";
+    } else if (g->location == LOCATION_APPROACH) {
         const TownApproach *route = approach_route(g);
         snprintf(floor_name, sizeof(floor_name), "%s APPROACH", route ? approach_area_name(route->area) : "AREA");
         title = floor_name;

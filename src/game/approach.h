@@ -45,6 +45,7 @@ void approach_return_from_shortcut(GameState *g, Location area);
 void approach_return_from_boss(GameState *g, Location area);
 void approach_migrate_roads(GameState *g);
 int approach_enter(GameState *g, int x, int y);
+int approach_enter_region(GameState *g, int index);
 int approach_travel(GameState *g, int x, int y);
 void game_leave_approach(GameState *g);
 void game_leave_approach_to_town(GameState *g, Location town);

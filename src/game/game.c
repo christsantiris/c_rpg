@@ -17,6 +17,7 @@
 #include "jail.h"
 #include "town_life.h"
 #include "approach.h"
+#include "town_road.h"
 #include "regional_terrain.h"
 #include "landscapes.h"
 
@@ -1460,6 +1461,7 @@ void enemies_spawn(GameState *g) {
 }
 
 void game_init(GameState *g) {
+    g->road_town = LOCATION_TOWN;
     g->approach_route = -1;
     g->jail_quest_state = 0;
     g->prisoner_x = 0;
@@ -4230,6 +4232,9 @@ void game_leave_crownroad(GameState *g, Location destination) {
     push_message(g, destination == LOCATION_CASTLE ?
         "You reach the grounds of the Castle of No Return." :
         (destination == LOCATION_TOWN4 ? "You return to Ridgeshire." : "You return to Rosemoor."));
+    if (destination == LOCATION_TOWN3 || destination == LOCATION_TOWN4) {
+        town_road_enter(g, destination, destination == LOCATION_TOWN3 ? TOWN_SIDE_EAST : TOWN_SIDE_WEST, 0);
+    }
 }
 
 void game_enter_inn(GameState *g) {
@@ -5642,13 +5647,20 @@ void game_leave_approach_to_town(GameState *g, Location town) {
             break;
         }
     }
-    return_to_town(g, destination.town);
+    if (town_road_enter(g, destination.town, town_road_side(destination.gate_x, destination.gate_y), 0)) {
+        return;
+    }
+    game_enter_town_gate(g, destination.town, destination.gate_x, destination.gate_y);
+}
+
+void game_enter_town_gate(GameState *g, Location town, int x, int y) {
+    return_to_town(g, town);
     g->approach_route = -1;
-    g->player.x = destination.gate_x == 0 ? 1 : destination.gate_x == TOWN_W - 1 ? TOWN_W - 2 : destination.gate_x;
-    g->player.y = destination.gate_y == 0 ? 1 : destination.gate_y == TOWN_H - 1 ? TOWN_H - 2 : destination.gate_y;
-    g->player.last_dx = destination.gate_x == 0 ? 1 : destination.gate_x == TOWN_W - 1 ? -1 : 0;
-    g->player.last_dy = destination.gate_y == 0 ? 1 : destination.gate_y == TOWN_H - 1 ? -1 : 0;
-    push_message(g, "You follow the path back through the town gate.");
+    g->player.x = x == 0 ? 1 : x == TOWN_W - 1 ? TOWN_W - 2 : x;
+    g->player.y = y == 0 ? 1 : y == TOWN_H - 1 ? TOWN_H - 2 : y;
+    g->player.last_dx = x == 0 ? 1 : x == TOWN_W - 1 ? -1 : 0;
+    g->player.last_dy = y == 0 ? 1 : y == TOWN_H - 1 ? -1 : 0;
+    push_message(g, "You enter town beside its exit gate.");
 }
 
 void game_leave_approach(GameState *g) {

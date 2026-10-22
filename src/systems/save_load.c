@@ -1,5 +1,6 @@
 #include "save_load.h"
 #include "../game/game.h"
+#include "../game/town_road.h"
 #include "../game/castle.h"
 #include "../game/royal_arcanist.h"
 #include "../game/lord_veyr.h"
@@ -878,7 +879,7 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 177);
+    cJSON_AddNumberToObject(root, "save_version", 179);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -981,6 +982,7 @@ int save_game(const GameState *g, int slot) {
         g->equipped_off_hand);
     cJSON_AddNumberToObject(root, "equipped_armor",    g->equipped_armor);
     cJSON_AddNumberToObject(root, "location",          g->location);
+    cJSON_AddNumberToObject(root, "road_town", g->road_town);
     cJSON_AddNumberToObject(root, "approach_route", g->approach_route);
     cJSON_AddNumberToObject(root, "lich_reward_state", g->lich_reward_state);
     cJSON_AddNumberToObject(root, "necromancer_reward_state", g->necromancer_reward_state);
@@ -2945,6 +2947,15 @@ int load_game(GameState *g, int slot) {
     g->equipped_off_hand = off_hand ? off_hand->valueint : -1;
     g->equipped_armor    = cJSON_GetObjectItem(root, "equipped_armor")->valueint;
     g->location          = cJSON_GetObjectItem(root, "location")->valueint;
+    cJSON *road_town = cJSON_GetObjectItem(root, "road_town");
+    g->road_town = road_town ? road_town->valueint : LOCATION_TOWN;
+    if ((save_version >= 178 && !cJSON_IsNumber(road_town)) ||
+        (road_town && (!cJSON_IsNumber(road_town) || road_town->valuedouble != road_town->valueint)) ||
+        town_road_index(g->road_town) < 0 ||
+        (g->location == LOCATION_TOWN_ROAD && (g->player.x < 0 || g->player.x >= TOWN_ROAD_W || g->player.y < 0 || g->player.y >= TOWN_ROAD_H))) {
+        cJSON_Delete(root);
+        return 0;
+    }
     cJSON *approach = cJSON_GetObjectItem(root, "approach_route");
     g->approach_route = cJSON_IsNumber(approach) ? approach->valueint : -1;
     if (g->location == LOCATION_APPROACH && (!approach_route(g) ||
@@ -5145,6 +5156,13 @@ int load_game(GameState *g, int slot) {
     }
     if (save_version < 177 && approach_route(g) && approach_route(g)->area == LOCATION_COAST) {
         approach_refresh_entrance(g);
+    }
+    if (save_version < 179 && g->location == LOCATION_DAWNMERE) {
+        for (int y = 1; y < TOWN_H - 1; y++) {
+            for (int x = 1; x < TOWN_W - 1; x++) {
+                retile_town_ground(g, x, y, map_dawnmere_ground(x, y));
+            }
+        }
     }
     // Recover saves containing a town interior or shortcut in a dungeon slot.
     game_repair_dungeon_maps(g);

@@ -54,6 +54,7 @@ static void mountain_walk_road(GameState *g, int north) {
         int dx = (x > g->player.x) - (x < g->player.x);
         action_resolve_player(g, (Action){ACTION_MOVE, g->player.x + dx, g->player.y + (dx ? 0 : north ? -1 : 1)});
     }
+    walk_into_arrived_town(g);
 }
 
 static void mountain_crossing(int ridge, int return_home) {
@@ -65,6 +66,7 @@ static void mountain_crossing(int ridge, int return_home) {
     mountain.watchfire_quest_state = 1;
     Location home = mountain.location;
     action_resolve_player(&mountain, (Action){ACTION_MOVE, 20, ridge ? TOWN_H - 1 : 0});
+    finish_town_departure(&mountain);
     ASSERT("both town gates lead to a safe mountain road", mountain.location == LOCATION_APPROACH && mountain.enemy_count == 0);
     int x;
     int y;

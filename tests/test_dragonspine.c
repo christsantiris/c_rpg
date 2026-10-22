@@ -51,6 +51,7 @@ static int dragon_goblet_reachable(const Map *map, int *goblet_x, int *goblet_y)
 }
 
 static void walk_mountain_road(GameState *g) {
+    finish_town_departure(g);
     int x;
     int y;
     int open = approach_mountain_town_exit(g, &x, &y);
@@ -58,6 +59,7 @@ static void walk_mountain_road(GameState *g) {
     for (int step = 0; open && g->location == LOCATION_APPROACH && step < APPROACH_H; step++) {
         action_resolve_player(g, (Action){ACTION_MOVE, x, g->player.y + (y > g->player.y ? 1 : -1)});
     }
+    walk_into_arrived_town(g);
 }
 
 void test_dragonspine(void) {

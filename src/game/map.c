@@ -1788,15 +1788,21 @@ static void map_generate_town_square(Map *m) {
     }
 }
 
+TileType map_dawnmere_ground(int x, int y) {
+    int square = x >= 12 && x <= 28 && y >= 11 && y <= 15;
+    return square || x == CROWNROAD_X || y == 12 ? TILE_TOWN_PATH : TILE_TOWN_FLOOR;
+}
+
 void map_generate_dawnmere(Map *m, int *spawn_x, int *spawn_y) {
     map_generate_town_square(m);
+    // A rectangular plaza joins the single-tile roads at the crossroads.
+    for (int y = 1; y < TOWN_H - 1; y++) {
+        for (int x = 1; x < TOWN_W - 1; x++) {
+            m->tiles[y][x] = map_dawnmere_ground(x, y);
+        }
+    }
     for (int y = 10; y <= 14; y++) {
         m->tiles[y][0] = TILE_TOWN_EXIT;
-    }
-    for (int y = 11; y <= 13; y++) {
-        for (int x = 1; x <= 20; x++) {
-            m->tiles[y][x] = TILE_TOWN_PATH;
-        }
     }
     for (int x = 18; x <= 22; x++) {
         m->tiles[0][x] = TILE_TOWN_EXIT;
