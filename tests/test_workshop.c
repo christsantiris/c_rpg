@@ -59,7 +59,7 @@ static void test_workshop_travel(void) {
     action_resolve_player(&game, (Action){ACTION_MOVE, game.map.stairs_down_x, game.map.stairs_down_y});
     ASSERT("workshop exit returns below the Ridgeshire doorway", game.location == LOCATION_TOWN4 &&
         game.player.x == TOWN4_WORKSHOP_DOOR_X && game.player.y == TOWN4_WORKSHOP_DOOR_Y + 1);
-    ASSERT("workshop exit preserves the unlocked mountain shortcut", game.map.tiles[TOWN_H - 1][RIDGESHIRE_MOUNTAIN_ROAD_X] == TILE_TOWN_EXIT);
+    ASSERT("workshop exit preserves the unlocked mountain shortcut", game.map.tiles[TOWN_H - 1][20] == TILE_TOWN_EXIT && game.map.tiles[TOWN_H - 1][RIDGESHIRE_MOUNTAIN_ROAD_X] == TILE_WALL);
 }
 
 static void test_workshop_purchase(void) {

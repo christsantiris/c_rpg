@@ -175,7 +175,7 @@ static void test_castle_fall_and_retreat(void) {
     game_open_town_portal(&game);
     castle_prompt_key(&game, SDL_SCANCODE_RETURN, 0);
     ASSERT("confirmed escape reaches town without return portal", game.location == LOCATION_TOWN3 && !game.portal_active);
-    ASSERT("castle escape preserves Rosemoor's unlocked swamp shortcut", game.map.tiles[TOWN_H - 1][ROSEMOOR_SWAMP_ROAD_X] == TILE_TOWN_EXIT);
+    ASSERT("castle escape preserves Rosemoor's unlocked swamp shortcut", game.map.tiles[TOWN_H - 1][20] == TILE_TOWN_EXIT && game.map.tiles[TOWN_H - 1][ROSEMOOR_SWAMP_ROAD_X] == TILE_WALL);
     ASSERT("retreat retains miniboss victory", game.castle_minibosses == 1);
     castle_enter(&game, 4);
     ASSERT("retreat restores surviving boss and ordinary guards", boss()->hp == boss()->max_hp && game.enemies[0].active);

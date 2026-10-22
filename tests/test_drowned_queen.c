@@ -1,4 +1,5 @@
 #include "test_utils.h"
+#include "approach_checks.h"
 #include "../src/game/drowned_queen.h"
 #include "../src/systems/save_load.h"
 #include "../external/cJSON.h"
@@ -628,6 +629,7 @@ static void test_layouts_and_travel(void) {
         exit.target_y++;
     }
     action_resolve_player(&game, exit);
+    walk_return_approach(&game);
     ASSERT("Queen victory still opens coast exit and harbor access with regular enemies alive", game.location == LOCATION_TOWN && game_harbor_unlocked(&game));
 }
 

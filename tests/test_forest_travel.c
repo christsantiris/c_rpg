@@ -1,4 +1,6 @@
+#include "approach_checks.h"
 #include "test_utils.h"
+#include "shortcut_checks.h"
 #include "game/game.h"
 #include "game/actions.h"
 #include "systems/save_load.h"
@@ -36,6 +38,9 @@ static void forest_step(GameState *g, int reverse) {
         y = MAP_H - 1;
     }
     action_resolve_player(g, (Action){ACTION_MOVE, x, y});
+    if (g->location == LOCATION_APPROACH) {
+        walk_return_approach(g);
+    }
 }
 
 static int forest_boss(GameState *g) {
@@ -79,6 +84,7 @@ static void test_forest_crossing(int reverse, int shortcut) {
     int gate_x = reverse ? TOWN_W - 1 : 0;
     ASSERT("shortcut gate starts closed at either town", forest.map.tiles[TOWN_ROAD_EXIT_Y][gate_x] == TILE_WALL);
     action_resolve_player(&forest, (Action){ACTION_MOVE, gate_x, 12});
+    walk_town_approach(&forest);
     ASSERT("either forest gate starts at its own border",
         forest.location == LOCATION_FOREST && forest.level == (reverse ? FOREST_DEPTH : 1) &&
         forest.forest_entry_town == (reverse ? LOCATION_TOWN2 : LOCATION_TOWN));
@@ -141,8 +147,7 @@ static void test_forest_crossing(int reverse, int shortcut) {
             }
         }
     }
-    Enemy *defeated = enemy;
-    ASSERT("shortcut appears beside the defeated boss", x >= 0 && abs(x - defeated->x) + abs(y - defeated->y) <= 1 && map_is_walkable(&forest.map, x, y));
+    ASSERT("shortcut opens at the end of a passage into the surrounding terrain", x >= 0 && shortcut_exit_is_recessed(&forest.map, x, y, TILE_FOREST_WALL));
     if (x < 0) {
         return;
     }
@@ -156,6 +161,12 @@ static void test_forest_crossing(int reverse, int shortcut) {
         game_handle_shortcut_prompt_key(&restored, SDL_SCANCODE_RETURN, 0);
         memcpy(&forest, &restored, sizeof(forest));
         remove("saves/savegame_99031.json");
+        ASSERT("boss shortcut enters the road rather than town", forest.location == LOCATION_FOREST_ROAD && forest.player.x == FOREST_ROAD_FORK_X && forest.player.y == FOREST_ROAD_BOSS_Y + 1);
+        for (int steps = 0; forest.location == LOCATION_FOREST_ROAD && steps < FOREST_ROAD_W; steps++) {
+            int dx = forest.player.y == FOREST_ROAD_Y ? (reverse ? 1 : -1) : 0;
+            int dy = forest.player.y < FOREST_ROAD_Y ? 1 : 0;
+            action_resolve_player(&forest, (Action){ACTION_MOVE, forest.player.x + dx, forest.player.y + dy});
+        }
     } else {
         guard = 0;
         while (forest.location == LOCATION_FOREST && guard++ < FOREST_DEPTH) {
@@ -168,19 +179,54 @@ static void test_forest_crossing(int reverse, int shortcut) {
         ASSERT("full crossings complete the quest in either order", forest.alder_quest_state == 2 && forest.alder_wardens_rescued == 7);
     }
     ASSERT("shortcut and full route reach the opposite town", forest.location == (reverse ? LOCATION_TOWN : LOCATION_TOWN2));
-    ASSERT("arrival uses the chosen route's gate", forest.player.y == (shortcut ? TOWN_ROAD_EXIT_Y : 12) && forest.player.x == (reverse ? 1 : TOWN_W - 2));
+    ASSERT("both routes arrive through the shared forest gate", forest.player.y == 12 && forest.player.x == (reverse ? 1 : TOWN_W - 2));
     gate_x = reverse ? 0 : TOWN_W - 1;
-    ASSERT("liberated town keeps both gates", forest.map.tiles[12][gate_x] == TILE_TOWN_EXIT && forest.map.tiles[TOWN_ROAD_EXIT_Y][gate_x] == TILE_TOWN_EXIT);
-    action_resolve_player(&forest, (Action){ACTION_MOVE, gate_x, TOWN_ROAD_EXIT_Y});
+    ASSERT("liberated town keeps only the main forest gate", forest.map.tiles[12][gate_x] == TILE_TOWN_EXIT && forest.map.tiles[TOWN_ROAD_EXIT_Y][gate_x] == TILE_WALL);
+    action_resolve_player(&forest, (Action){ACTION_MOVE, gate_x, 12});
+    ASSERT("shared forest gate offers a route choice", game_shortcut_prompt_active(&forest));
+    game_handle_shortcut_prompt_key(&forest, SDL_SCANCODE_2, 0);
     ASSERT("town shortcut enters the safe road", forest.location == LOCATION_FOREST_ROAD && forest.enemy_count == 0);
     game_leave_forest_road(&forest, reverse ? LOCATION_TOWN2 : LOCATION_TOWN);
-    ASSERT("both gates stay open at the original town", forest.map.tiles[12][reverse ? TOWN_W - 1 : 0] == TILE_TOWN_EXIT && forest.map.tiles[TOWN_ROAD_EXIT_Y][reverse ? TOWN_W - 1 : 0] == TILE_TOWN_EXIT);
+    ASSERT("original town also keeps only its main gate", forest.map.tiles[12][reverse ? TOWN_W - 1 : 0] == TILE_TOWN_EXIT && forest.map.tiles[TOWN_ROAD_EXIT_Y][reverse ? TOWN_W - 1 : 0] == TILE_WALL);
     game_enter_forest(&forest);
     ASSERT("revisiting preserves the grove and defeated boss", forest.forest_cache[FOREST_BOSS_LEVEL - 1].valid && (forest.defeated_bosses & (1 << LOCATION_FOREST)));
 }
 
+static void test_forest_entry_direction(void) {
+    int layouts = 1;
+    for (int seed = 0; seed < 32; seed++) {
+        srand(1700 + seed);
+        map_generate_forest(&forest.map, 1);
+        layouts &= forest.map.stairs_up_x == MAP_W - 2 && forest.map.stairs_down_x == 1 &&
+            forest.map.tiles[forest.map.stairs_up_y][MAP_W - 1] == TILE_FOREST_ENTRANCE &&
+            map_is_walkable(&forest.map, MAP_W - 3, forest.map.stairs_up_y) &&
+            forest.map.tiles[forest.map.stairs_down_y][0] == TILE_FOREST_WALL;
+    }
+    ASSERT("32 forest entry layouts face west from OakHaven with the onward west exit still hidden", layouts);
+    for (int unlocked = 0; unlocked < 2; unlocked++) {
+        memset(&forest, 0, sizeof(forest));
+        game_init(&forest);
+        forest.defeated_bosses = unlocked ? 1 << LOCATION_FOREST : 0;
+        action_resolve_player(&forest, (Action){ACTION_MOVE, 0, 12});
+        if (unlocked) {
+            ASSERT("debug-unlocked west gate still offers the normal forest route", game_shortcut_prompt_active(&forest));
+            game_handle_shortcut_prompt_key(&forest, SDL_SCANCODE_1, 0);
+        }
+        walk_town_approach(&forest);
+        int y = forest.player.y;
+        ASSERT("OakHaven's west gate arrives on the east side of forest stage one", forest.location == LOCATION_FOREST && forest.level == 1 && forest.player.x == MAP_W - 2);
+        action_resolve_player(&forest, (Action){ACTION_MOVE, MAP_W - 3, y});
+        ASSERT("continuing west immediately walks deeper into the forest", forest.location == LOCATION_FOREST && forest.player.x == MAP_W - 3 && forest.player.y == y);
+        action_resolve_player(&forest, (Action){ACTION_MOVE, MAP_W - 2, y});
+        action_resolve_player(&forest, (Action){ACTION_MOVE, MAP_W - 1, y});
+        walk_return_approach(&forest);
+        ASSERT("turning east through the entrance returns to OakHaven's west gate", forest.location == LOCATION_TOWN && forest.player.x == 1 && forest.player.y == 12);
+    }
+}
+
 void test_forest_travel(void) {
     printf("Forest travel from either town tests:\n");
+    test_forest_entry_direction();
     ASSERT("difficulty rises toward the grove from both towns",
         map_forest_difficulty(1) < map_forest_difficulty(2) && map_forest_difficulty(2) < map_forest_difficulty(3) &&
         map_forest_difficulty(3) < map_forest_difficulty(4) && map_forest_difficulty(4) > map_forest_difficulty(5) &&

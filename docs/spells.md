@@ -118,7 +118,7 @@ Stepping onto the town portal returns the player to the recorded position and
 closes the portal. Casting it while already in town has no effect.
 
 Inside the Ruined Temple, the portal preserves the exact pyramid tier,
-position, and encounter state and appears near the town harbor. Casting Return
+position, and encounter state and appears near the town docks. Casting Return
 to Town on the Ruined Isle instead sails directly back to town without leaving
 a return portal. A new portal replaces any portal that was already open.
 

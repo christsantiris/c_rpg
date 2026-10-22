@@ -1,3 +1,4 @@
+#include "approach_checks.h"
 #include "test_utils.h"
 #include "../src/game/map.h"
 #include "../src/game/game.h"
@@ -8,8 +9,11 @@
 #include <string.h>
 #include <time.h>
 
+static void test_dungeon_entry_maps(void);
+
 void test_dungeon(void) {
     printf("Dungeon generation tests:\n");
+    test_dungeon_entry_maps();
 
     srand((unsigned)time(NULL));
 
@@ -372,6 +376,7 @@ void test_return_to_town_spell(void) {
     g.player.x = TOWN_W - 2;
     g.player.y = 12;
     action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 1, 12});
+    walk_town_approach(&g);
     ASSERT("east OakHaven exit enters dungeon", g.location == LOCATION_DUNGEON);
     int origin_x = g.player.x;
     int origin_y = g.player.y;
@@ -490,10 +495,11 @@ void test_final_dungeon_exit(void) {
     ASSERT("the stairs-down control does not activate the upward return staircase",
         g.location == LOCATION_DUNGEON && g.level == DUNGEON_DEPTH);
     action_resolve_player(&g, a);
+    walk_return_approach(&g);
     ASSERT("final exit returns player to town", g.location == LOCATION_TOWN);
     ASSERT("final exit returns at east OakHaven road",
         g.player.x == TOWN_W - 2 && g.player.y == 12);
-    ASSERT("final stairs return directly to town without changing the dungeon floor",
+    ASSERT("walking back to town preserves the last visited dungeon floor",
         g.level == DUNGEON_DEPTH);
     ASSERT("leaving the dungeon preserves surviving enemies and uncleared status",
         g.level_cache[DUNGEON_DEPTH - 1].enemies[1].active &&
@@ -1003,6 +1009,122 @@ static int save_old_dungeon(const GameState *g, int version) {
     return written;
 }
 
+static void test_dungeon_entry_maps(void) {
+    GameState *g = calloc(1, sizeof(*g));
+    GameState *loaded = calloc(1, sizeof(*loaded));
+    ASSERT("dungeon entry fixtures allocate successfully", g && loaded);
+    if (!g || !loaded) {
+        free(g);
+        free(loaded);
+        return;
+    }
+    for (int foreign = 0; foreign < 3; foreign++) {
+        game_init(g);
+        g->defeated_bosses = (1 << LOCATION_FOREST) | (1 << LOCATION_MOUNTAINS) | (1 << LOCATION_SWAMP);
+        if (foreign) {
+            LevelCache *cache = &g->level_cache[0];
+            cache->valid = 1;
+            cache->enemy_count = 0;
+            if (foreign == 1) {
+                int x;
+                int y;
+                map_generate_tavern(&cache->map, &x, &y);
+            } else {
+                map_generate_forest_road(&cache->map);
+            }
+        }
+        action_resolve_player(g, (Action){ACTION_MOVE, TOWN_W - 1, 12});
+        walk_town_approach(g);
+        ASSERT("OakHaven's east gate enters dungeon rooms with monsters and both stair tiles", g->location == LOCATION_DUNGEON && g->level == 1 && g->map.room_count >= MIN_ROOMS && g->enemy_count > 0 && g->map.tiles[g->map.stairs_up_y][g->map.stairs_up_x] == TILE_STAIRS_UP && g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] == TILE_STAIRS_DOWN);
+        ASSERT("the entered dungeon has a traversable route to its downward stairs", dungeon_tile_reachable(&g->map, g->map.stairs_down_x, g->map.stairs_down_y));
+        action_resolve_player(g, (Action){ACTION_ASCEND, 0, 0});
+        walk_return_approach(g);
+        ASSERT("the entered dungeon permits immediate retreat to OakHaven's east gate", g->location == LOCATION_TOWN && g->player.x == TOWN_W - 2 && g->player.y == 12);
+    }
+    const Location sources[] = {LOCATION_TOWN, LOCATION_TAVERN, LOCATION_INN, LOCATION_GUILD, LOCATION_WORKSHOP, LOCATION_TOWN_HALL, LOCATION_FOREST_ROAD, LOCATION_SWAMP_ROAD, LOCATION_HIGH_PASS};
+    for (int visited = 0; visited < 2; visited++) {
+        for (int i = 0; i < (int)(sizeof(sources) / sizeof(sources[0])); i++) {
+            game_init(g);
+            Map original;
+            if (visited) {
+                game_enter_dungeon(g);
+                game_return_to_town(g);
+                original = g->level_cache[0].map;
+            }
+            game_enter_tavern(g);
+            g->location = sources[i];
+            g->level = 1;
+            game_return_to_town(g);
+            ASSERT("returning from a town, interior, or shortcut never writes into the dungeon cache", visited ? g->level_cache[0].valid && memcmp(&original, &g->level_cache[0].map, sizeof(original)) == 0 : !g->level_cache[0].valid);
+        }
+    }
+    ASSERT("dungeon repair test save slot is unused", !save_exists(99151));
+    if (!save_exists(99151)) {
+        for (int active = 0; active < 2; active++) {
+            for (int old = 0; old < 2; old++) {
+                game_init(g);
+                LevelCache *bad = &g->level_cache[0];
+                bad->valid = 1;
+                bad->enemy_count = 0;
+                int x;
+                int y;
+                map_generate_tavern(&bad->map, &x, &y);
+                LevelCache *good = &g->level_cache[1];
+                good->valid = 1;
+                good->level_cleared = 1;
+                map_generate(&good->map, 2);
+                map_mark_explored(&good->map, good->map.stairs_up_x, good->map.stairs_up_y);
+                good->enemy_count = 1;
+                good->enemies[0] = (Enemy){.type = ENEMY_SKELETON, .hp = 17, .active = 1};
+                g->gold = 393;
+                g->score = 1234;
+                g->elowen_quest_state = 1;
+                g->elowen_seals_restored = 3;
+                g->defeated_bosses = 1 << LOCATION_FOREST;
+                if (active) {
+                    g->location = LOCATION_DUNGEON;
+                    g->level = 1;
+                    g->map = bad->map;
+                    g->player.x = x;
+                    g->player.y = y;
+                    g->floor_item_count = 1;
+                    g->floor_items[0] = (FloorItem){.active = 1, .x = x + 1, .y = y, .underlying_tile = TILE_TAVERN_FLOOR, .item = item_make_greatsword()};
+                    g->floor_items[0].item.sharpened = 1;
+                    g->map.tiles[y][x + 1] = TILE_ITEM;
+                    g->portal_active = 1;
+                    g->portal_location = LOCATION_DUNGEON;
+                    g->portal_level = 1;
+                    g->portal_x = x;
+                    g->portal_y = y;
+                    g->portal_origin_tile = TILE_TAVERN_FLOOR;
+                }
+                int hp = g->player.hp;
+                int items = g->inventory_count;
+                int ok = save_old_dungeon(g, old ? 149 : 158) && load_game(loaded, 99151);
+                ASSERT("repairing foreign dungeon maps preserves character, quest, and boss progress", ok && loaded->gold == 393 && loaded->score == 1234 && loaded->player.hp == hp && loaded->inventory_count == items && loaded->elowen_quest_state == 1 && loaded->elowen_seals_restored == 3 && loaded->defeated_bosses == (1 << LOCATION_FOREST));
+                ASSERT("repairing the bad first floor leaves a genuine cached dungeon floor and its progress intact", ok && loaded->level_cache[1].valid && loaded->level_cache[1].level_cleared && loaded->level_cache[1].enemies[0].hp == 17 && memcmp(&good->map, &loaded->level_cache[1].map, sizeof(Map)) == 0);
+                if (active) {
+                    FloorItem *loot = &loaded->floor_items[0];
+                    ASSERT("a save trapped in the false dungeon loads into real rooms and recovers dropped equipment", ok && loaded->location == LOCATION_DUNGEON && loaded->map.room_count >= MIN_ROOMS && loaded->enemy_count > 0 && loot->active && loot->item.sharpened && loot->item.type == ITEM_WEAPON && loaded->map.tiles[loot->y][loot->x] == TILE_ITEM && loot->underlying_tile == TILE_FLOOR);
+                    ASSERT("the restored active floor keeps its portal at a usable entrance", loaded->portal_active && loaded->portal_x == loaded->player.x && loaded->portal_y == loaded->player.y && loaded->portal_origin_tile == TILE_STAIRS_UP);
+                } else {
+                    ASSERT("a town save drops only the foreign first-floor cache", ok && loaded->location == LOCATION_TOWN && !loaded->level_cache[0].valid);
+                    action_resolve_player(loaded, (Action){ACTION_MOVE, TOWN_W - 1, 12});
+                    walk_town_approach(loaded);
+                }
+                Map repaired = loaded->map;
+                ASSERT("the repaired dungeon survives saving and loading without changing its layout", save_game(loaded, 99151) && load_game(g, 99151) && memcmp(repaired.tiles, g->map.tiles, sizeof(repaired.tiles)) == 0);
+                action_resolve_player(g, (Action){ACTION_ASCEND, 0, 0});
+                walk_return_approach(g);
+                ASSERT("a repaired saved dungeon has a working exit back to OakHaven", g->location == LOCATION_TOWN && g->player.x == TOWN_W - 2);
+                remove("saves/savegame_99151.json");
+            }
+        }
+    }
+    free(g);
+    free(loaded);
+}
+
 static void blocked_dungeon(Map *m, int corner) {
     memset(m, 0, sizeof(*m));
     for (int y = 0; y < MAP_H; y++) {
@@ -1355,6 +1477,9 @@ void test_dungeon_return_stairs_migration(void) {
         action_resolve_player(&g, (Action){ACTION_DESCEND, 0, 0});
         ASSERT("stairs-down never activates migrated return stairs", g.location == LOCATION_DUNGEON && g.level == DUNGEON_DEPTH);
         action_resolve_player(&g, (Action){ACTION_ASCEND, 0, 0});
+        if (open) {
+            walk_return_approach(&g);
+        }
         ASSERT("stairs-up returns to Oakhaven only after the Lich is defeated, even with loot on the stairs",
             open ? g.location == LOCATION_TOWN && g.player.x == TOWN_W - 2 && g.player.y == 12
             : g.location == LOCATION_DUNGEON && g.level == DUNGEON_DEPTH);
@@ -1383,6 +1508,7 @@ void test_dungeon_return_stairs_migration(void) {
         loaded.location == LOCATION_DUNGEON && loaded.player.x == x && loaded.player.y == y &&
         loaded.map.tiles[y][x] == TILE_DUNGEON_STAIRS_RETURN);
     action_resolve_player(&loaded, (Action){ACTION_ASCEND, 0, 0});
+    walk_return_approach(&loaded);
     ASSERT("stairs-up works after restoring a migrated portal destination", loaded.location == LOCATION_TOWN);
     remove("saves/savegame_99151.json");
 }

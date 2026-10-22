@@ -1,3 +1,4 @@
+#include "approach_checks.h"
 #include "test_utils.h"
 #include "../src/game/game.h"
 #include <string.h>
@@ -107,6 +108,7 @@ void test_coast(void) {
     g.player.x = 20;
     g.player.y = TOWN_H - 2;
     action_resolve_player(&g, south);
+    walk_town_approach(&g);
     ASSERT("south town exit enters coast", g.location == LOCATION_COAST);
     ASSERT("coast begins on stage one", g.level == 1);
     ASSERT("coast uses blue ruin terrain",
@@ -216,6 +218,7 @@ void test_coast(void) {
     }
     g.defeated_bosses |= 1 << LOCATION_COAST;
     action_resolve_player(&g, exit);
+    walk_return_approach(&g);
     ASSERT("defeating Drowned Queen returns to town",
         g.location == LOCATION_TOWN);
     ASSERT("coast completion returns at south road",

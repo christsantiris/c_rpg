@@ -1,4 +1,5 @@
 #include "test_utils.h"
+#include "shortcut_checks.h"
 #include "game/game.h"
 #include "systems/save_load.h"
 #include "cJSON.h"
@@ -202,11 +203,11 @@ static void test_mountain_migration(void) {
     for (int row = 0; row < MAP_H; row++) {
         for (int column = 0; column < MAP_W; column++) {
             if (loaded.map.tiles[row][column] == TILE_MOUNTAIN_SHORTCUT) {
-                found = abs(column - loaded.enemies[0].x) + abs(row - loaded.enemies[0].y) <= 1;
+                found = shortcut_exit_is_recessed(&loaded.map, column, row, TILE_MOUNTAIN_WALL);
             }
         }
     }
-    ASSERT("migrated King victory opens a shortcut beside the defeated boss", ok && loaded.defeated_bosses == original.defeated_bosses && found);
+    ASSERT("migrated King victory opens a recessed shortcut in the mountain wall", ok && loaded.defeated_bosses == original.defeated_bosses && found);
     remove("saves/savegame_99123.json");
 }
 

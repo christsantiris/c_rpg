@@ -152,7 +152,8 @@ typedef enum {
     LOCATION_BAKERY,
     LOCATION_BUTCHER,
     LOCATION_MONASTERY,
-    LOCATION_SPICE_SHOP
+    LOCATION_SPICE_SHOP,
+    LOCATION_APPROACH
 } Location;
 
 typedef struct {
@@ -195,6 +196,7 @@ typedef struct {
     MessageKind message_kinds[MAX_MESSAGES];
     int        level_cleared;
     Location   location;
+    int approach_route; // Index into the append-only town approach routes, or -1.
     int max_level_reached;
     int max_forest_level_reached;
     Location forest_entry_town;
@@ -306,6 +308,9 @@ void game_init(GameState *g);
 int game_quest_offer_active(const GameState *g);
 int game_handle_quest_offer_key(GameState *g, int key, int repeat);
 void game_request_shortcut(GameState *g);
+int game_town_route_available(const GameState *g, int x, int y);
+int game_request_town_route(GameState *g, int x, int y);
+void game_enter_shortcut_boss(GameState *g);
 int game_shortcut_prompt_active(const GameState *g);
 int game_handle_shortcut_prompt_key(GameState *g, int key, int repeat);
 void game_migrate_boss_shortcuts(GameState *g);
@@ -321,6 +326,7 @@ Enemy *game_spawn_lich_shade(GameState *g, int x, int y, int boss_index);
 void game_refresh_quest_encounters(GameState *g);
 void game_repair_forest_enemy_positions(Map *m, Enemy *actors, int count, int px, int py);
 void game_enter_dungeon(GameState *g);
+void game_repair_dungeon_maps(GameState *g);
 void game_enter_forest(GameState *g);
 void game_leave_forest(GameState *g, Location town, int shortcut);
 void game_reveal_forest_shortcut(GameState *g);
@@ -421,6 +427,7 @@ void game_mark_level_cleared(GameState *g);
 void game_update_level_progress(GameState *g);
 
 void game_return_to_town(GameState *g);
+void game_return_to_approach(GameState *g);
 void game_open_town_portal(GameState *g);
 void game_use_town_portal(GameState *g);
 void game_hide_portal_destination(GameState *g);

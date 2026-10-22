@@ -1,4 +1,6 @@
+#include "approach_checks.h"
 #include "test_utils.h"
+#include "shortcut_checks.h"
 #include "game/game.h"
 #include "game/actions.h"
 #include "systems/save_load.h"
@@ -14,6 +16,9 @@ static void swamp_step(GameState *g, int reverse) {
     g->player.x = x + (reverse ? 1 : -1);
     g->player.y = y;
     action_resolve_player(g, (Action){ACTION_MOVE, x, y});
+    if (g->location == LOCATION_APPROACH) {
+        walk_return_approach(g);
+    }
 }
 
 static int swamp_boss(GameState *g) {
@@ -70,6 +75,7 @@ static void test_swamp_crossing(int reverse, int shortcut) {
     int road_x = reverse ? ROSEMOOR_SWAMP_ROAD_X : TOWN3_ROAD_X;
     ASSERT("swamp shortcut starts closed at either town", swamp.map.tiles[gate_y][road_x] == TILE_WALL);
     action_resolve_player(&swamp, (Action){ACTION_MOVE, 20, gate_y});
+    walk_town_approach(&swamp);
     ASSERT("either ordinary gate starts at its own border", swamp.location == LOCATION_SWAMP && swamp.level == (reverse ? SWAMP_DEPTH : 1) && swamp.swamp_entry_town == (reverse ? LOCATION_TOWN3 : LOCATION_TOWN2));
     swamp_step(&swamp, !reverse);
     ASSERT("both border levels permit immediate retreat", swamp.location == (reverse ? LOCATION_TOWN3 : LOCATION_TOWN2) && swamp.player.x == 20 && swamp.player.y == (reverse ? TOWN_H - 2 : 1));
@@ -122,8 +128,7 @@ static void test_swamp_crossing(int reverse, int shortcut) {
             }
         }
     }
-    Enemy *defeated = demon;
-    ASSERT("shortcut appears beside the defeated boss", x >= 0 && abs(x - defeated->x) + abs(y - defeated->y) <= 1 && map_is_walkable(&swamp.map, x, y));
+    ASSERT("shortcut opens at the end of a passage into the surrounding terrain", x >= 0 && shortcut_exit_is_recessed(&swamp.map, x, y, TILE_SWAMP_WALL));
     if (x < 0) {
         return;
     }
@@ -136,6 +141,12 @@ static void test_swamp_crossing(int reverse, int shortcut) {
         game_handle_shortcut_prompt_key(&restored, SDL_SCANCODE_RETURN, 0);
         memcpy(&swamp, &restored, sizeof(swamp));
         remove("saves/savegame_99122.json");
+        ASSERT("boss shortcut enters the swamp path rather than town", swamp.location == LOCATION_SWAMP_ROAD && swamp.player.x == SWAMP_ROAD_BOSS_X - 1 && swamp.player.y == SWAMP_ROAD_FORK_Y);
+        for (int steps = 0; swamp.location == LOCATION_SWAMP_ROAD && steps < SWAMP_ROAD_H; steps++) {
+            int dx = swamp.player.x > SWAMP_ROAD_X ? -1 : 0;
+            int dy = swamp.player.x == SWAMP_ROAD_X ? (reverse ? 1 : -1) : 0;
+            action_resolve_player(&swamp, (Action){ACTION_MOVE, swamp.player.x + dx, swamp.player.y + dy});
+        }
     } else {
         guard = 0;
         while (swamp.location == LOCATION_SWAMP && guard++ < SWAMP_DEPTH) {
@@ -149,14 +160,15 @@ static void test_swamp_crossing(int reverse, int shortcut) {
     ASSERT("both exit choices reach the opposite town", swamp.location == (reverse ? LOCATION_TOWN2 : LOCATION_TOWN3));
     gate_y = reverse ? 0 : TOWN_H - 1;
     road_x = reverse ? TOWN3_ROAD_X : ROSEMOOR_SWAMP_ROAD_X;
-    ASSERT("arrival uses the chosen town gate", swamp.player.x == (shortcut ? road_x : 20) && swamp.player.y == (reverse ? 1 : TOWN_H - 2));
-    ASSERT("town retains ordinary and shortcut swamp gates", swamp.map.tiles[gate_y][20] == TILE_TOWN_EXIT && swamp.map.tiles[gate_y][road_x] == TILE_TOWN_EXIT);
-    ASSERT("unlocked town gates save and load", save_game(&swamp, 99122) && load_game(&restored, 99122) && restored.map.tiles[gate_y][20] == TILE_TOWN_EXIT && restored.map.tiles[gate_y][road_x] == TILE_TOWN_EXIT);
+    ASSERT("both routes arrive at the main swamp gate", swamp.player.x == 20 && swamp.player.y == (reverse ? 1 : TOWN_H - 2));
+    ASSERT("town retains only the main swamp gate", swamp.map.tiles[gate_y][20] == TILE_TOWN_EXIT && swamp.map.tiles[gate_y][road_x] == TILE_WALL);
+    ASSERT("shared swamp gate saves and loads", save_game(&swamp, 99122) && load_game(&restored, 99122) && restored.map.tiles[gate_y][20] == TILE_TOWN_EXIT && restored.map.tiles[gate_y][road_x] == TILE_WALL);
     remove("saves/savegame_99122.json");
-    action_resolve_player(&swamp, (Action){ACTION_MOVE, road_x, gate_y});
+    action_resolve_player(&swamp, (Action){ACTION_MOVE, 20, gate_y});
+    game_handle_shortcut_prompt_key(&swamp, SDL_SCANCODE_2, 0);
     ASSERT("town shortcut enters an enemy-free road", swamp.location == LOCATION_SWAMP_ROAD && swamp.enemy_count == 0);
     game_leave_swamp_road(&swamp, reverse ? LOCATION_TOWN3 : LOCATION_TOWN2);
-    ASSERT("original town also retains both gates", swamp.map.tiles[reverse ? TOWN_H - 1 : 0][20] == TILE_TOWN_EXIT && swamp.map.tiles[reverse ? TOWN_H - 1 : 0][reverse ? ROSEMOOR_SWAMP_ROAD_X : TOWN3_ROAD_X] == TILE_TOWN_EXIT);
+    ASSERT("original town also retains only its main gate", swamp.map.tiles[reverse ? TOWN_H - 1 : 0][20] == TILE_TOWN_EXIT && swamp.map.tiles[reverse ? TOWN_H - 1 : 0][reverse ? ROSEMOOR_SWAMP_ROAD_X : TOWN3_ROAD_X] == TILE_WALL);
     game_enter_swamp(&swamp);
     guard = 0;
     while (swamp.level != SWAMP_BOSS_LEVEL && guard++ < SWAMP_DEPTH) {
@@ -207,6 +219,7 @@ void test_swamp_travel(void) {
     ASSERT("opposite-end entry keeps the old portal anchored to Rosemoor", swamp.location == LOCATION_TOWN2 && swamp.swamp_entry_town == LOCATION_TOWN2 && swamp.swamp_portal_town == LOCATION_TOWN3 && swamp.map.tiles[2][21] != TILE_PORTAL);
     game_enter_swamp(&swamp);
     game_leave_swamp(&swamp, LOCATION_TOWN3, 0);
+    walk_return_approach(&swamp);
     ASSERT("original town still exposes its swamp portal", swamp.map.tiles[TOWN_H - 3][21] == TILE_PORTAL);
     ASSERT("portal anchor survives a changed expedition and save/load", save_game(&swamp, 99122) && load_game(&restored, 99122));
     action_resolve_player(&restored, (Action){ACTION_MOVE, 21, TOWN_H - 3});
