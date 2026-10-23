@@ -2,6 +2,7 @@
 #include "restoration.h"
 #include "game.h"
 #include "catacombs.h"
+#include "elderwood.h"
 #include "castle.h"
 #include "lich.h"
 #include "necromancer.h"
@@ -217,6 +218,11 @@ static int enemy_score(EnemyType type) {
         case ENEMY_PIXIE: return 15;
         case ENEMY_BLIGHTED_WOLF: return 22;
         case ENEMY_GIANT_SPIDER: return 32;
+        case ENEMY_BRIAR_WOLF: return 60;
+        case ENEMY_IRONHIDE_BOAR: return 90;
+        case ENEMY_THORN_DRYAD: return 80;
+        case ENEMY_TREEFOLK: return 200;
+        case ENEMY_ELDERTHORN: return 0; // Awarded once by elderwood_defeat.
         case ENEMY_DARK_ELF: return 48;
         case ENEMY_GIANT_WURM: return 70;
         case ENEMY_FOREST_TROLL: return 80;
@@ -313,6 +319,13 @@ static int melee_gold_bonus(const GameState *g) {
 }
 
 static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
+    if (enemy->type == ENEMY_ELDERTHORN) {
+        elderwood_defeat(g);
+        return;
+    }
+    if (g->location == LOCATION_ELDERWOOD && enemy->revived) {
+        return;
+    }
     if (enemy->revived && (strcmp(enemy->name, "Lich Shade") == 0 || strcmp(enemy->name, "Grove Revenant") == 0)) {
         return;
     }
@@ -337,7 +350,9 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         game_record_dain_kill(g, type);
     }
     if (is_boss) {
-        g->defeated_bosses |= 1 << g->location;
+        if (g->location >= 0 && g->location < 31) {
+            g->defeated_bosses |= 1 << g->location;
+        }
         game_record_temple_enemy_defeated(g, type);
         if (type == ENEMY_THORN_REGENT) {
             push_message(g, "The Thorn Regent falls. The path to Rosemoor opens!");
@@ -355,6 +370,11 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
     }
     int gold = 0;
     switch (type) {
+        case ENEMY_ELDERTHORN: break; // Its one-time reward was handled above.
+        case ENEMY_BRIAR_WOLF:
+        case ENEMY_IRONHIDE_BOAR: gold = 5 + rand() % 5; break;
+        case ENEMY_THORN_DRYAD: gold = 8 + rand() % 6; break;
+        case ENEMY_TREEFOLK: gold = 15 + rand() % 10; break;
         case ENEMY_OATHBOUND_SOLDIER:
         case ENEMY_IRON_WARDEN:
         case ENEMY_ROYAL_MARKSMAN:
@@ -597,7 +617,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
     }
 
     TileType drop_tile = g->map.tiles[y][x];
-    int plain_floor = drop_tile == TILE_FLOOR ||
+    int plain_floor = drop_tile == TILE_ELDERWOOD_FLOOR || drop_tile == TILE_FLOOR ||
         drop_tile == TILE_FOREST_FLOOR ||
         drop_tile == TILE_MOUNTAIN_FLOOR ||
         drop_tile == TILE_MOUNTAIN_CAVE_FLOOR ||
@@ -921,6 +941,15 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (g->location == LOCATION_ELDERWOOD) {
+        for (int y = g->player.y - 1; y <= g->player.y + 1; y++) {
+            for (int x = g->player.x - 1; x <= g->player.x + 1; x++) {
+                if (x >= 0 && x < ELDERWOOD_W && y >= 0 && y < ELDERWOOD_H && g->map.tiles[y][x] == TILE_ELDERWOOD_BRAMBLE) {
+                    return 1;
+                }
+            }
+        }
+    }
     if (wilds_has_interaction(g) || landscape_has_interaction(g) || regional_terrain_has_interaction(g)) {
         return 1;
     }
@@ -1173,6 +1202,7 @@ void action_resolve_player(GameState *g, Action a) {
     if (g->game_won || g->castle_prompt) {
         return;
     }
+    game_refresh_debug_passages(g);
     game_repair_equipment_indices(g);
     if (g->location == LOCATION_TOWN ||
         g->location == LOCATION_TAVERN ||
@@ -1212,6 +1242,10 @@ void action_resolve_player(GameState *g, Action a) {
         return;
     }
 
+    if (g->location == LOCATION_ELDERWOOD && (a.type == ACTION_ASCEND || a.type == ACTION_DESCEND)) {
+        elderwood_travel(g, g->player.x, g->player.y);
+        return;
+    }
     if (a.type == ACTION_ASCEND || a.type == ACTION_DESCEND) {
         TileType tile = floor_drop_underlay(g, g->player.x, g->player.y);
         if (a.type == ACTION_ASCEND && tile == TILE_STAIRS_DOWN) {
@@ -1244,14 +1278,14 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
         if (g->location == LOCATION_CATACOMBS && tile == TILE_RETURN_EXIT) {
-            if (g->defeated_bosses & (1 << LOCATION_CATACOMBS)) {
+            if (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_CATACOMBS))) {
                 game_leave_catacombs(g);
             } else {
                 push_message(g, "The Grave Marshal seals this return passage.");
             }
             return;
         }
-        if (tile == TILE_RETURN_EXIT && (g->defeated_bosses & (1 << g->location))) {
+        if (tile == TILE_RETURN_EXIT && (g->debug_passages_unlocked || (g->defeated_bosses & (1 << g->location)))) {
             int forest = g->location == LOCATION_FOREST;
             g->score += g->level * 100;
             game_return_to_approach(g);
@@ -1271,7 +1305,7 @@ void action_resolve_player(GameState *g, Action a) {
         TileType underlay = floor_drop_underlay(g, g->player.x, g->player.y);
         if (g->location == LOCATION_DUNGEON &&
             (underlay == TILE_DUNGEON_STAIRS_RETURN || underlay == TILE_DUNGEON_STAIRS_SEALED)) {
-            if (g->defeated_bosses & (1 << LOCATION_DUNGEON)) {
+            if (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_DUNGEON))) {
                 g->score += g->level * 100;
                 game_return_to_approach(g);
                 push_message(g, "The road leads west to Oakhaven and east to Dawnmere.");
@@ -1281,7 +1315,7 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
         if (g->location == LOCATION_TEMPLE && underlay == TILE_STAIRS_UP) {
-            if (game_temple_remaining_enemies(g) > 0) {
+            if (!g->debug_passages_unlocked && game_temple_remaining_enemies(g) > 0) {
                 push_message(g, "Stairs sealed: clear all Sun and Moon enemies. Use an altar to awaken dormant sentinels.");
                 return;
             }
@@ -1304,6 +1338,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (elderwood_interact(g)) {
+            return;
+        }
         if (red_dragon_interact(g, 0)) {
             return;
         }
@@ -2320,7 +2357,7 @@ void action_resolve_player(GameState *g, Action a) {
         }
         if ((g->location == LOCATION_TOWN || g->location == LOCATION_TOWN2 ||
             g->location == LOCATION_TOWN3 || g->location == LOCATION_TOWN4 ||
-            g->location == LOCATION_DAWNMERE) &&
+            g->location == LOCATION_DAWNMERE || g->location == LOCATION_CASTLE) &&
             g->map.tiles[ty][tx] == TILE_PORTAL && g->portal_active) {
             game_use_town_portal(g);
             return;
@@ -2383,7 +2420,7 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
-        if (town_road_travel(g, tx, ty) || town_road_depart(g, tx, ty) || approach_travel(g, tx, ty) || approach_enter(g, tx, ty)) {
+        if (elderwood_travel(g, tx, ty) || town_road_travel(g, tx, ty) || town_road_depart(g, tx, ty) || approach_travel(g, tx, ty) || approach_enter(g, tx, ty)) {
             return;
         }
 
@@ -2501,7 +2538,7 @@ void action_resolve_player(GameState *g, Action a) {
                 g->score += g->level * 100;
             } else {
                 for (int i = 0; i < g->enemy_count; i++) {
-                    if (g->enemies[i].active &&
+                    if (!g->debug_passages_unlocked && g->enemies[i].active &&
                         g->enemies[i].type == ENEMY_RED_DRAGON) {
                         push_message(g, "The dragon guards the summit pass!");
                         return;
@@ -2551,7 +2588,7 @@ void action_resolve_player(GameState *g, Action a) {
             int reverse = g->map.tiles[ty][tx] == TILE_SWAMP_ENTRANCE;
             if (!reverse && g->level == SWAMP_BOSS_LEVEL) {
                 for (int i = 0; i < g->enemy_count; i++) {
-                    if (g->enemies[i].active && g->enemies[i].type == ENEMY_SWAMP_DEMON) {
+                    if (!g->debug_passages_unlocked && g->enemies[i].active && g->enemies[i].type == ENEMY_SWAMP_DEMON) {
                         push_message(g, "The demon seals the swamp exit!");
                         return;
                     }
@@ -2591,7 +2628,7 @@ void action_resolve_player(GameState *g, Action a) {
                 g->score += g->level * 100;
             } else {
                 for (int i = 0; i < g->enemy_count; i++) {
-                    if (g->enemies[i].active &&
+                    if (!g->debug_passages_unlocked && g->enemies[i].active &&
                         g->enemies[i].type == ENEMY_POLAR_KRAKEN) {
                         push_message(g, "The Polar Kraken bars the way west!");
                         return;
@@ -2620,7 +2657,7 @@ void action_resolve_player(GameState *g, Action a) {
                 g->score += g->level * 100;
             } else {
                 for (int i = 0; i < g->enemy_count; i++) {
-                    if (g->enemies[i].active && g->enemies[i].is_boss) {
+                    if (!g->debug_passages_unlocked && g->enemies[i].active && g->enemies[i].is_boss) {
                         push_message(g, "The Desert Pharaoh bars the way west!");
                         return;
                     }
@@ -2647,7 +2684,7 @@ void action_resolve_player(GameState *g, Action a) {
                 game_descend(g);
                 g->score += g->level * 100;
             } else {
-                if (!(g->defeated_bosses & (1 << LOCATION_MOONVEIL))) {
+                if (!g->debug_passages_unlocked && !(g->defeated_bosses & (1 << LOCATION_MOONVEIL))) {
                     push_message(g, "The Thorn Regent seals the path to Rosemoor!");
                     return;
                 }
@@ -2672,7 +2709,7 @@ void action_resolve_player(GameState *g, Action a) {
             if (g->level < ASHEN_DEPTH) {
                 game_descend(g);
                 g->score += g->level * 100;
-            } else if (g->defeated_bosses & (1 << LOCATION_ASHEN)) {
+            } else if (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_ASHEN))) {
                 game_return_to_approach(g);
                 push_message(g, "You return to Ridgeshire through the volcanic pass.");
             } else {
@@ -2696,7 +2733,7 @@ void action_resolve_player(GameState *g, Action a) {
             if (g->level < GLASSDEEP_DEPTH) {
                 game_descend(g);
                 g->score += g->level * 100;
-            } else if (g->defeated_bosses & (1 << LOCATION_GLASSDEEP)) {
+            } else if (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_GLASSDEEP))) {
                 game_return_to_approach(g);
                 push_message(g, "You emerge from Glassdeep at Stillbury's quarry gate.");
             } else {
@@ -2717,8 +2754,8 @@ void action_resolve_player(GameState *g, Action a) {
 
         if (g->location == LOCATION_COAST &&
             g->map.tiles[ty][tx] == TILE_COAST_EXIT) {
-            if (g->player.x != g->map.stairs_down_x ||
-                g->player.y != g->map.stairs_down_y) {
+            if (!g->debug_passages_unlocked && (g->player.x != g->map.stairs_down_x ||
+                g->player.y != g->map.stairs_down_y)) {
                 return;
             }
             if (g->level < COAST_DEPTH) {
@@ -2727,7 +2764,7 @@ void action_resolve_player(GameState *g, Action a) {
             } else {
                 int queen_alive = 0;
                 for (int i = 0; i < g->enemy_count; i++) {
-                    if (g->enemies[i].active &&
+                    if (!g->debug_passages_unlocked && g->enemies[i].active &&
                         g->enemies[i].type == ENEMY_DROWNED_QUEEN) {
                         queen_alive = 1;
                         break;
@@ -2750,7 +2787,7 @@ void action_resolve_player(GameState *g, Action a) {
             int reverse = g->map.tiles[ty][tx] == TILE_FOREST_ENTRANCE;
             if (!reverse && g->level == FOREST_BOSS_LEVEL) {
                 for (int i = 0; i < g->enemy_count; i++) {
-                    if (g->enemies[i].active && g->enemies[i].type == ENEMY_FOREST_NECROMANCER) {
+                    if (!g->debug_passages_unlocked && g->enemies[i].active && g->enemies[i].type == ENEMY_FOREST_NECROMANCER) {
                         push_message(g, "The Necromancer seals the grove exit!");
                         return;
                     }
@@ -2779,7 +2816,7 @@ void action_resolve_player(GameState *g, Action a) {
             int reverse = g->map.tiles[ty][tx] == TILE_MOUNTAIN_ENTRANCE;
             if (!reverse && g->level == MOUNTAIN_BOSS_LEVEL) {
                 for (int i = 0; i < g->enemy_count; i++) {
-                    if (g->enemies[i].active && g->enemies[i].type == ENEMY_MOUNTAIN_GOBLIN_KING) {
+                    if (!g->debug_passages_unlocked && g->enemies[i].active && g->enemies[i].type == ENEMY_MOUNTAIN_GOBLIN_KING) {
                         push_message(g, "The Goblin King bars the summit exit!");
                         return;
                     }
@@ -3143,7 +3180,7 @@ static void select_enemy_pursuers(const GameState *g, int pursuers[MAX_ENEMIES])
 
 static int enemy_prefers_range(const Enemy *e) {
     return e->type == ENEMY_GRAVE_ARCHER || e->type == ENEMY_BONE_CANTOR || e->type == ENEMY_CRYPT_CONJURER ||
-        e->type == ENEMY_DARK_ELF ||
+        e->type == ENEMY_DARK_ELF || e->type == ENEMY_THORN_DRYAD ||
         e->type == ENEMY_GOBLIN_ARCHER ||
         e->type == ENEMY_ROAD_ARCHER ||
         e->type == ENEMY_FROST_ARCHER ||
@@ -3162,7 +3199,7 @@ static int enemy_prefers_range(const Enemy *e) {
 }
 
 static int enemy_prefers_flank(const Enemy *e) {
-    return e->type == ENEMY_CRYPT_BAT ||
+    return e->type == ENEMY_BRIAR_WOLF || e->type == ENEMY_CRYPT_BAT ||
         e->type == ENEMY_CRYSTAL_SPIDER ||
         e->type == ENEMY_BLIND_STALKER ||
         e->type == ENEMY_ASH_HOUND ||
@@ -3652,6 +3689,15 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
 
+        int elder_damage = 0;
+        if (elderwood_tick(g, e, &elder_damage)) {
+            if (elder_damage > 0) {
+                int damage = elder_damage - g->player.defense / 2;
+                apply_enemy_damage(g, damage > 0 ? damage : 1, FEEDBACK_NOW);
+                push_message_kind(g, "Wood and thorn strike you!", MESSAGE_DAMAGE_TAKEN);
+            }
+            continue;
+        }
         int dx = g->player.x - e->x;
         int dy = g->player.y - e->y;
         int adjacent = abs_int(dx) <= 1 && abs_int(dy) <= 1 &&
@@ -3938,7 +3984,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             if (healed) continue;
         }
 
-        if (e->type == ENEMY_DARK_ELF && e->move_timer % 2 == 0 &&
+        if ((e->type == ENEMY_DARK_ELF || e->type == ENEMY_THORN_DRYAD) && e->move_timer % 2 == 0 &&
             clear_orthogonal_path(g, i, e)) {
             int dmg = e->attack - g->player.defense / 2;
             if (dmg < 1) dmg = 1;
@@ -3947,7 +3993,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 continue;
             }
             char msg[MAX_MESSAGE_LEN];
-            snprintf(msg, sizeof(msg), "Dark Elf arrow: %d dmg", dmg);
+            snprintf(msg, sizeof(msg), "%s: %d dmg", e->type == ENEMY_THORN_DRYAD ? "Thorn volley" : "Dark Elf arrow", dmg);
             push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
             continue;
         }

@@ -195,6 +195,7 @@ static void test_mountain_migration(void) {
     original.defeated_bosses = 1 << LOCATION_MOUNTAINS;
     original.enemies[0].active = 0;
     original.mountain_cache[7].enemies[0].active = 0;
+    original.last_town_visited = LOCATION_DAWNMERE;
     game_open_town_portal(&original);
     int ok = make_legacy_save(78) && load_game(&loaded, ROUTE_SAVE_SLOT);
     ASSERT("legacy mountain portal moves its anchor to Dawnmere", ok && loaded.location == LOCATION_DAWNMERE && loaded.mountain_portal_town == LOCATION_DAWNMERE && loaded.portal_active && loaded.portal_level == MOUNTAIN_BOSS_LEVEL);
@@ -605,7 +606,7 @@ static void test_mountain_climb_migration(void) {
     original.map.tiles[0][20] = TILE_ITEM;
     ok = make_legacy_save(170) && load_game(&loaded, ROUTE_SAVE_SLOT);
     ASSERT("moving a mountain portal's future anchor keeps the old Oakhaven portal usable", ok && loaded.location == LOCATION_TOWN && loaded.map.tiles[2][21] == TILE_PORTAL && loaded.mountain_portal_town == LOCATION_DAWNMERE);
-    ASSERT("retiring Oakhaven's mountain gate leaves its saved player and loot accessible", loaded.player.x == 20 && loaded.player.y == 1 && loaded.map.tiles[0][20] == TILE_WALL && loaded.floor_items[0].active && loaded.floor_items[0].y == 1 && loaded.floor_items[0].underlying_tile == TILE_TOWN_PATH && loaded.map.tiles[1][20] == TILE_ITEM);
+    ASSERT("the new Elderwood gate leaves the saved player and loot accessible", loaded.player.x == 20 && loaded.player.y == 1 && loaded.map.tiles[0][20] == TILE_TOWN_EXIT && loaded.floor_items[0].active && loaded.floor_items[0].y == 1 && loaded.floor_items[0].underlying_tile == TILE_TOWN_PATH && loaded.map.tiles[1][20] == TILE_ITEM);
     action_resolve_player(&loaded, (Action){ACTION_MOVE, 21, 2});
     ASSERT("an old Oakhaven portal still resumes its saved expedition", loaded.location == LOCATION_MOUNTAINS && loaded.level == 1 && loaded.mountain_entry_town == LOCATION_DAWNMERE);
     game_return_to_town(&loaded);
@@ -756,6 +757,7 @@ void test_route_save_migrations(void) {
         original.enemies[0].active = 0;
         LevelCache *cache = forest ? original.forest_cache : original.swamp_cache;
         cache[original.level - 1].enemies[0].active = 0;
+        original.last_town_visited = forest ? LOCATION_TOWN : LOCATION_TOWN2;
         game_open_town_portal(&original);
         int ok = make_legacy_save(forest ? 76 : 77) && load_game(&loaded, ROUTE_SAVE_SLOT);
         ASSERT("old portal save loads and keeps its original town", ok && loaded.location == (forest ? LOCATION_TOWN : LOCATION_TOWN2) && loaded.portal_active);

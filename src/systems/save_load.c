@@ -23,6 +23,7 @@
 #include "../game/jail.h"
 #include "../game/town_life.h"
 #include "../game/approach.h"
+#include "../game/elderwood.h"
 #include "cJSON.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -568,6 +569,41 @@ static void retile_town_ground(GameState *g, int x, int y, TileType ground) {
     }
 }
 
+static void migrate_island_temple(GameState *g) {
+    if (g->location != LOCATION_ISLAND) {
+        return;
+    }
+    map_place_island_temple(&g->map);
+    if (in_lot(g->player.x, g->player.y, ISLAND_TEMPLE_X, ISLAND_TEMPLE_Y, ISLAND_TEMPLE_W, ISLAND_TEMPLE_H)) {
+        g->player.x = ISLAND_GATE_X;
+        g->player.y = ISLAND_GATE_Y + 1;
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (!item->active) {
+            continue;
+        }
+        if (in_lot(item->x, item->y, ISLAND_TEMPLE_X, ISLAND_TEMPLE_Y, ISLAND_TEMPLE_W, ISLAND_TEMPLE_H)) {
+            item->x = ISLAND_GATE_X;
+            item->y = ISLAND_GATE_Y + 1;
+            item->underlying_tile = TILE_ISLAND_PATH;
+            g->map.tiles[item->y][item->x] = TILE_ITEM;
+        } else if (item->underlying_tile == TILE_ISLAND_TEMPLE_GATE) {
+            item->underlying_tile = TILE_ISLAND_PATH;
+        }
+    }
+    if (g->portal_active && g->portal_location == LOCATION_ISLAND) {
+        if (in_lot(g->portal_x, g->portal_y, ISLAND_TEMPLE_X, ISLAND_TEMPLE_Y, ISLAND_TEMPLE_W, ISLAND_TEMPLE_H)) {
+            g->portal_x = ISLAND_GATE_X;
+            g->portal_y = ISLAND_GATE_Y + 1;
+            g->portal_origin_tile = TILE_ISLAND_PATH;
+            g->map.tiles[g->portal_y][g->portal_x] = TILE_PORTAL;
+        } else if (g->portal_origin_tile == TILE_ISLAND_TEMPLE_GATE) {
+            g->portal_origin_tile = TILE_ISLAND_PATH;
+        }
+    }
+}
+
 static void clear_town3_old_lot(GameState *g, int lot_x, int lot_y, int w, int h) {
     for (int y = lot_y; y < lot_y + h; y++) {
         for (int x = lot_x; x < lot_x + w; x++) {
@@ -876,10 +912,100 @@ static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, i
     return 1;
 }
 
+static int elderwood_load(const cJSON *root, GameState *g, int version) {
+    memset(g->elderwood_cache, 0, sizeof(g->elderwood_cache));
+    g->max_elderwood_level_reached = 1;
+    g->elderwood_defeated = 0;
+    g->elderwood_entry_town = LOCATION_TOWN;
+    g->catacombs_entry_town = LOCATION_CASTLE;
+    g->northern_portal_town = LOCATION_TOWN3; // Keep existing Rosemoor return portals usable.
+    g->last_town_visited = LOCATION_TOWN;
+    g->return_portal_town = -1;
+    if (version < 182) {
+        return 1;
+    }
+    const char *names[] = {"max_elderwood_level_reached", "elderwood_defeated", "elderwood_entry_town", "catacombs_entry_town", "northern_portal_town", "last_town_visited", "return_portal_town"};
+    int values[7];
+    for (int i = 0; i < 7; i++) {
+        const cJSON *item = cJSON_GetObjectItem(root, names[i]);
+        if (!cJSON_IsNumber(item) || item->valuedouble != item->valueint) {
+            return 0;
+        }
+        values[i] = item->valueint;
+    }
+    g->max_elderwood_level_reached = values[0];
+    g->elderwood_defeated = values[1];
+    g->elderwood_entry_town = values[2];
+    g->catacombs_entry_town = values[3];
+    g->northern_portal_town = values[4];
+    g->last_town_visited = values[5];
+    g->return_portal_town = values[6];
+    if (town_road_index(g->last_town_visited) < 0 || (g->return_portal_town != -1 && town_road_index(g->return_portal_town) < 0)) {
+        return 0;
+    }
+    if (g->max_elderwood_level_reached < 1 || g->max_elderwood_level_reached > ELDERWOOD_DEPTH ||
+        g->elderwood_defeated < 0 || g->elderwood_defeated > 1 ||
+        (g->elderwood_entry_town != LOCATION_TOWN && g->elderwood_entry_town != LOCATION_CASTLE) ||
+        (g->catacombs_entry_town != LOCATION_TOWN && g->catacombs_entry_town != LOCATION_CASTLE) ||
+        (g->northern_portal_town != LOCATION_TOWN && g->northern_portal_town != LOCATION_CASTLE && g->northern_portal_town != LOCATION_TOWN3)) {
+        return 0;
+    }
+    const cJSON *array = cJSON_GetObjectItem(root, "elderwood_cache");
+    if (!cJSON_IsArray(array) || cJSON_GetArraySize(array) != ELDERWOOD_DEPTH) {
+        return 0;
+    }
+    for (int i = 0; i < ELDERWOOD_DEPTH; i++) {
+        ElderwoodCache *cache = &g->elderwood_cache[i];
+        const cJSON *entry = cJSON_GetArrayItem(array, i);
+        const cJSON *valid = cJSON_GetObjectItem(entry, "valid");
+        const cJSON *cleared = cJSON_GetObjectItem(entry, "level_cleared");
+        if (!cJSON_IsNumber(valid) || (valid->valueint != 0 && valid->valueint != 1) ||
+            !cJSON_IsNumber(cleared) || (cleared->valueint != 0 && cleared->valueint != 1)) {
+            return 0;
+        }
+        cache->valid = valid->valueint;
+        cache->level_cleared = cleared->valueint;
+        if (!cache->valid) {
+            continue;
+        }
+        const cJSON *map = cJSON_GetObjectItem(entry, "map");
+        const cJSON *enemies = cJSON_GetObjectItem(entry, "enemies");
+        const char *fields[] = {"room_count", "stairs_up_x", "stairs_up_y", "stairs_down_x", "stairs_down_y"};
+        for (int n = 0; n < 5; n++) {
+            if (!cJSON_IsNumber(cJSON_GetObjectItem(map, fields[n]))) {
+                return 0;
+            }
+        }
+        if (cJSON_GetObjectItem(map, "room_count")->valueint != 0 ||
+            !cJSON_IsString(cJSON_GetObjectItem(map, "tiles_b64")) ||
+            !cJSON_IsString(cJSON_GetObjectItem(map, "explored_b64")) ||
+            !cJSON_IsArray(enemies) || cJSON_GetArraySize(enemies) > AREA_ENEMY_LIMIT) {
+            return 0;
+        }
+        const char *enemy_fields[] = {"x", "y", "active", "type", "hp", "max_hp", "attack", "defense", "experience", "is_boss", "move_timer", "frozen_turns", "attack_target_x", "attack_target_y"};
+        for (int n = 0; n < cJSON_GetArraySize(enemies); n++) {
+            const cJSON *enemy = cJSON_GetArrayItem(enemies, n);
+            if (!cJSON_IsString(cJSON_GetObjectItem(enemy, "name"))) {
+                return 0;
+            }
+            for (int f = 0; f < 14; f++) {
+                if (!cJSON_IsNumber(cJSON_GetObjectItem(enemy, enemy_fields[f]))) {
+                    return 0;
+                }
+            }
+        }
+        Map scratch = {0};
+        deserialize_map(map, &scratch);
+        elderwood_pack(cache, &scratch);
+        deserialize_enemies(enemies, cache->enemies, &cache->enemy_count, AREA_ENEMY_LIMIT);
+    }
+    return 1;
+}
+
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 179);
+    cJSON_AddNumberToObject(root, "save_version", 182);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -983,6 +1109,29 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "equipped_armor",    g->equipped_armor);
     cJSON_AddNumberToObject(root, "location",          g->location);
     cJSON_AddNumberToObject(root, "road_town", g->road_town);
+    cJSON_AddNumberToObject(root, "debug_passages_unlocked", g->debug_passages_unlocked);
+    cJSON_AddNumberToObject(root, "max_elderwood_level_reached", g->max_elderwood_level_reached);
+    cJSON_AddNumberToObject(root, "elderwood_defeated", g->elderwood_defeated);
+    cJSON_AddNumberToObject(root, "elderwood_entry_town", g->elderwood_entry_town);
+    cJSON_AddNumberToObject(root, "catacombs_entry_town", g->catacombs_entry_town);
+    cJSON_AddNumberToObject(root, "northern_portal_town", g->northern_portal_town);
+    cJSON_AddNumberToObject(root, "last_town_visited", g->last_town_visited);
+    cJSON_AddNumberToObject(root, "return_portal_town", g->return_portal_town);
+    cJSON *elderwood = cJSON_CreateArray();
+    for (int i = 0; i < ELDERWOOD_DEPTH; i++) {
+        const ElderwoodCache *cache = &g->elderwood_cache[i];
+        cJSON *entry = cJSON_CreateObject();
+        cJSON_AddNumberToObject(entry, "valid", cache->valid);
+        cJSON_AddNumberToObject(entry, "level_cleared", cache->level_cleared);
+        if (cache->valid) {
+            Map scratch;
+            elderwood_unpack(cache, &scratch);
+            cJSON_AddItemToObject(entry, "map", serialize_map(&scratch));
+            cJSON_AddItemToObject(entry, "enemies", serialize_enemies(cache->enemies, cache->enemy_count));
+        }
+        cJSON_AddItemToArray(elderwood, entry);
+    }
+    cJSON_AddItemToObject(root, "elderwood_cache", elderwood);
     cJSON_AddNumberToObject(root, "approach_route", g->approach_route);
     cJSON_AddNumberToObject(root, "lich_reward_state", g->lich_reward_state);
     cJSON_AddNumberToObject(root, "necromancer_reward_state", g->necromancer_reward_state);
@@ -2671,6 +2820,10 @@ int load_game(GameState *g, int slot) {
         cJSON_Delete(root);
         return 0;
     }
+    if (!elderwood_load(root, g, save_version)) {
+        cJSON_Delete(root);
+        return 0;
+    }
     // Player
     cJSON *player = cJSON_GetObjectItem(root, "player");
     cJSON *freeze_recovery = cJSON_GetObjectItem(player, "freeze_recovery");
@@ -2947,6 +3100,14 @@ int load_game(GameState *g, int slot) {
     g->equipped_off_hand = off_hand ? off_hand->valueint : -1;
     g->equipped_armor    = cJSON_GetObjectItem(root, "equipped_armor")->valueint;
     g->location          = cJSON_GetObjectItem(root, "location")->valueint;
+    cJSON *debug_passages = cJSON_GetObjectItem(root, "debug_passages_unlocked");
+    g->debug_passages_unlocked = debug_passages ? debug_passages->valueint : 0;
+    if (debug_passages && (!cJSON_IsNumber(debug_passages) ||
+        debug_passages->valuedouble != g->debug_passages_unlocked ||
+        (g->debug_passages_unlocked != 0 && g->debug_passages_unlocked != 1))) {
+        cJSON_Delete(root);
+        return 0;
+    }
     cJSON *road_town = cJSON_GetObjectItem(root, "road_town");
     g->road_town = road_town ? road_town->valueint : LOCATION_TOWN;
     if ((save_version >= 178 && !cJSON_IsNumber(road_town)) ||
@@ -2963,8 +3124,8 @@ int load_game(GameState *g, int slot) {
         cJSON_Delete(root);
         return 0;
     }
-    if ((g->location == LOCATION_JAIL && (g->jail_quest_state != 1 && g->jail_quest_state != 2)) ||
-        (g->location == LOCATION_ESCAPE_TUNNEL && (g->jail_quest_state != 2 ||
+    if ((g->location == LOCATION_JAIL && !g->debug_passages_unlocked && (g->jail_quest_state != 1 && g->jail_quest_state != 2)) ||
+        (g->location == LOCATION_ESCAPE_TUNNEL && ((!g->debug_passages_unlocked && g->jail_quest_state != 2) ||
         g->player.x < 1 || g->player.x >= tunnel_width || g->player.y < 1 || g->player.y >= ESCAPE_TUNNEL_H - 1 ||
         g->prisoner_x < 1 || g->prisoner_x >= tunnel_width - 1 || g->prisoner_y < 1 || g->prisoner_y >= ESCAPE_TUNNEL_H - 1))) {
         cJSON_Delete(root);
@@ -5164,6 +5325,62 @@ int load_game(GameState *g, int slot) {
             }
         }
     }
+    if (save_version < 181) {
+        migrate_island_temple(g);
+    }
+    if (save_version < 182) {
+        if (town_road_index(g->location) >= 0) {
+            g->last_town_visited = g->location;
+        } else if (g->location == LOCATION_DUNGEON) {
+            g->last_town_visited = g->dungeon_entry_town;
+        } else if (g->location == LOCATION_FOREST) {
+            g->last_town_visited = g->forest_entry_town;
+        } else if (g->location == LOCATION_MOUNTAINS) {
+            g->last_town_visited = g->mountain_entry_town;
+        } else if (g->location == LOCATION_SWAMP) {
+            g->last_town_visited = g->swamp_entry_town;
+        } else if (g->location == LOCATION_INN || g->location == LOCATION_HEALER || g->location == LOCATION_WITCH ||
+            g->location == LOCATION_DESERT || g->location == LOCATION_GLASSDEEP) {
+            g->last_town_visited = LOCATION_TOWN2;
+        } else if (g->location == LOCATION_GUILD || g->location == LOCATION_MOONVEIL || g->location == LOCATION_FROSTFELL) {
+            g->last_town_visited = LOCATION_TOWN3;
+        } else if (g->location == LOCATION_TOWN_HALL || g->location == LOCATION_WORKSHOP ||
+            g->location == LOCATION_ASHEN || g->location == LOCATION_DRAGONSPINE) {
+            g->last_town_visited = LOCATION_TOWN4;
+        } else if (town_life_is_interior(g->location)) {
+            g->last_town_visited = town_life_building(g->location)->town;
+        } else if (g->location == LOCATION_APPROACH && approach_route(g) && town_road_index(approach_route(g)->town) >= 0) {
+            g->last_town_visited = approach_route(g)->town;
+        } else if (g->location == LOCATION_TOWN_ROAD && town_road_index(g->road_town) >= 0) {
+            g->last_town_visited = g->road_town;
+        }
+        if (g->location == LOCATION_TOWN) {
+            for (int x = 18; x <= 22; x++) {
+                g->map.tiles[0][x] = TILE_TOWN_EXIT;
+            }
+        }
+        if (northern_approach(g)) {
+            northern_refresh(g);
+            g->player.x = NORTH_CAT_X;
+            g->player.y = NORTH_CAT_Y + 1;
+            for (int i = 0; i < g->floor_item_count; i++) {
+                FloorItem *item = &g->floor_items[i];
+                if (item->active) {
+                    if (!map_is_walkable(&g->map, item->x, item->y)) {
+                        item->x = NORTH_ROAD_X + i / 10;
+                        item->y = NORTH_CAT_Y + 1 + i % 10;
+                    }
+                    item->underlying_tile = g->map.tiles[item->y][item->x];
+                    g->map.tiles[item->y][item->x] = TILE_ITEM;
+                }
+            }
+        }
+    }
+    if (g->location == LOCATION_ELDERWOOD && (g->level < 1 || g->level > ELDERWOOD_DEPTH ||
+        g->player.x < 0 || g->player.x >= ELDERWOOD_W || g->player.y < 0 || g->player.y >= ELDERWOOD_H)) {
+        cJSON_Delete(root);
+        return 0;
+    }
     // Recover saves containing a town interior or shortcut in a dungeon slot.
     game_repair_dungeon_maps(g);
     // Recess legacy floor shortcuts into terrain in active and cached boss maps.
@@ -5228,6 +5445,7 @@ int load_game(GameState *g, int slot) {
             item->active = 0;
         }
     }
+    game_refresh_debug_passages(g);
     cJSON_Delete(root);
     return 1;
 }

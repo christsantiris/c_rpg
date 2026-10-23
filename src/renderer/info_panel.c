@@ -1,4 +1,5 @@
 #include "info_panel.h"
+#include "../game/elderwood.h"
 #include "item_icons.h"
 #include "game_renderer.h"
 #include "../game/town_life.h"
@@ -106,7 +107,7 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
         SDL_snprintf(loc, sizeof(loc), "%s ROAD", approach_town_name(g->road_town));
     } else if (g->location == LOCATION_APPROACH) {
         const TownApproach *route = approach_route(g);
-        SDL_snprintf(loc, sizeof(loc), "%s PATH", route ? approach_area_name(route->area) : "AREA");
+        SDL_snprintf(loc, sizeof(loc), northern_approach(g) ? "NORTHERN ROAD" : "%s PATH", route ? approach_area_name(route->area) : "AREA");
     } else if (g->location == LOCATION_TOWN) {
         SDL_snprintf(loc, sizeof(loc), "OakHaven");
     } else if (g->location == LOCATION_TAVERN) {
@@ -147,6 +148,8 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
         SDL_snprintf(loc, sizeof(loc), "INN");
     } else if (g->location == LOCATION_GUILD) {
         SDL_snprintf(loc, sizeof(loc), "ADVENTURER'S GUILD");
+    } else if (g->location == LOCATION_ELDERWOOD) {
+        SDL_snprintf(loc, sizeof(loc), "ELDERWOOD %d", g->level);
     } else if (g->location == LOCATION_FOREST) {
         SDL_snprintf(loc, sizeof(loc), "FOREST %d", g->level);
     } else if (g->location == LOCATION_MOUNTAINS) {

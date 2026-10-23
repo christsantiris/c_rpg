@@ -4,6 +4,9 @@
 #define MAP_W 200
 #define MAP_H 100
 #define MAP_EXPLORED_BYTES ((MAP_W * MAP_H + 7) / 8)
+#define ELDERWOOD_W 64
+#define ELDERWOOD_H 48
+#define ELDERWOOD_DEPTH 5
 
 #define MIN_ROOMS 6
 #define MAX_ROOMS 10
@@ -144,8 +147,12 @@
 
 #define ISLAND_W 40
 #define ISLAND_H 25
-#define ISLAND_GATE_X 19
-#define ISLAND_GATE_Y 7
+#define ISLAND_TEMPLE_X 17
+#define ISLAND_TEMPLE_Y 9
+#define ISLAND_TEMPLE_W 7
+#define ISLAND_TEMPLE_H 6
+#define ISLAND_GATE_X (ISLAND_TEMPLE_X + ISLAND_TEMPLE_W / 2)
+#define ISLAND_GATE_Y (ISLAND_TEMPLE_Y + ISLAND_TEMPLE_H - 1)
 #define ISLAND_CAMP_X 12
 #define ISLAND_CAMP_Y 16
 #define ISLAND_MARKER_X 10
@@ -651,7 +658,17 @@ typedef enum {
     TILE_TOWN_ROAD_EXIT_NORTH,
     TILE_TOWN_ROAD_EXIT_EAST,
     TILE_TOWN_ROAD_EXIT_SOUTH,
-    TILE_TOWN_ROAD_EXIT_WEST
+    TILE_TOWN_ROAD_EXIT_WEST,
+    TILE_ELDERWOOD_FLOOR,
+    TILE_ELDERWOOD_WALL,
+    TILE_ELDERWOOD_ENTRANCE,
+    TILE_ELDERWOOD_EXIT,
+    TILE_ELDERWOOD_BRAMBLE,
+    TILE_ELDERWOOD_LOG,
+    TILE_NORTH_ELDERWOOD,
+    TILE_NORTH_CATACOMBS,
+    TILE_NORTH_OAKHAVEN,
+    TILE_NORTH_CASTLE
 } TileType;
 
 typedef struct {
@@ -720,6 +737,7 @@ void map_place_tavern_brenna(Map *m);
 void map_generate_inn(Map *m, int *spawn_x, int *spawn_y);
 void map_place_tavern_elowen(Map *m);
 void map_generate_island(Map *m, int *spawn_x, int *spawn_y);
+void map_place_island_temple(Map *m);
 void map_generate_temple(Map *m, int level, int *spawn_x, int *spawn_y);
 void map_generate_labyrinth(Map *m, int level, int switches, int *spawn_x, int *spawn_y);
 void map_generate_forest(Map *m, int level);

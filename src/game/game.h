@@ -157,11 +157,32 @@ typedef enum {
     LOCATION_HEALER,
     LOCATION_WITCH,
     LOCATION_DAWNMERE,
-    LOCATION_TOWN_ROAD
+    LOCATION_TOWN_ROAD,
+    LOCATION_ELDERWOOD
 } Location;
+
+// Elderwood uses only its own bounds; compact caches avoid allocating the
+// unused 200x100 map rectangle for each of its five stages.
+typedef struct {
+    unsigned short tiles[ELDERWOOD_H][ELDERWOOD_W];
+    unsigned char explored[(ELDERWOOD_W * ELDERWOOD_H + 7) / 8];
+    Enemy enemies[AREA_ENEMY_LIMIT];
+    int enemy_count;
+    int valid;
+    int level_cleared;
+} ElderwoodCache;
 
 typedef struct {
     Player     player;
+    int debug_passages_unlocked;
+    ElderwoodCache elderwood_cache[ELDERWOOD_DEPTH];
+    int max_elderwood_level_reached;
+    int elderwood_defeated;
+    Location last_town_visited;
+    int return_portal_town; // -1 retains the anchor used by a legacy portal.
+    Location elderwood_entry_town;
+    Location catacombs_entry_town;
+    Location northern_portal_town;
     Map        map;
     int        level;
     Enemy      enemies[MAX_ENEMIES];
@@ -456,6 +477,7 @@ void game_talk_to_royal_guard(GameState *g, int x, int y);
 void game_collect_dragon_treasure(GameState *g);
 void game_talk_to_nahla(GameState *g);
 int game_harbor_unlocked(const GameState *g);
+void game_refresh_debug_passages(GameState *g);
 int game_has_treasure_map(const GameState *g);
 int game_can_sail_to_island(const GameState *g);
 void game_light_coast_beacon(GameState *g, int x, int y);

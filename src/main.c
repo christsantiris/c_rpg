@@ -312,25 +312,15 @@ static Item debug_scroll(int id) {
     return item_make_scroll_magic_arrow();
 }
 
-static void debug_unlock_town_shortcuts(GameState *game) {
-    game->defeated_bosses |= (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) | (1 << LOCATION_MOUNTAINS) | (1 << LOCATION_SWAMP);
-    if (game->location == LOCATION_TOWN) {
-        map_set_town2_road(&game->map, 1);
-        map_set_town4_road(&game->map, 1);
-    } else if (game->location == LOCATION_TOWN2) {
-        map_set_stillbury_forest_road(&game->map, 1);
-        map_set_town3_road(&game->map, 1);
-    } else if (game->location == LOCATION_TOWN3) {
-        map_set_rosemoor_swamp_road(&game->map, 1);
-    } else if (game->location == LOCATION_TOWN4) {
-        map_set_ridgeshire_mountain_road(&game->map, 1);
-    }
+static void debug_unlock_passages(GameState *game) {
+    game->debug_passages_unlocked = 1;
     approach_refresh_fork(game);
     approach_refresh_dungeon(game);
     approach_refresh_forest(game);
     approach_refresh_mountains(game);
     approach_refresh_swamp(game);
-    push_message(game, "Debug: all town roads unlocked.");
+    game_refresh_debug_passages(game);
+    push_message(game, "Debug: all passages unlocked, including docks and island sailing.");
 }
 
 static void debug_apply_loadout(GameState *game, const DebugConfig *config) {
@@ -365,7 +355,7 @@ static void debug_apply_loadout(GameState *game, const DebugConfig *config) {
         game->gold = config->gold;
     }
     if (config->unlock_shortcuts) {
-        debug_unlock_town_shortcuts(game);
+        debug_unlock_passages(game);
     }
 }
 #endif
@@ -487,7 +477,7 @@ static void handle_slot_result(SlotResult result, SlotSelect *slots, int saving,
             if (load_game(game, slot)) {
 #ifdef DEBUG
                 if (debug_config.unlock_shortcuts) {
-                    debug_unlock_town_shortcuts(game);
+                    debug_unlock_passages(game);
                 }
 #endif
                 // Global choices take priority; adopt saved character keys on first use.
@@ -630,7 +620,7 @@ int main(int argc, char **argv) {
             (screen == SCREEN_PLAYING && game_combat_feedback_active(SDL_GetTicks()));
         int ambient_animating = screen == SCREEN_PLAYING &&
             (game_player_low_health(&game) || game.location == LOCATION_DUNGEON ||
-            game.location == LOCATION_FOREST ||
+            game.location == LOCATION_ELDERWOOD || game.location == LOCATION_FOREST ||
             game.location == LOCATION_MOUNTAINS ||
             game.location == LOCATION_DRAGONSPINE ||
             game.location == LOCATION_FROSTFELL ||
@@ -1546,6 +1536,7 @@ int main(int argc, char **argv) {
         }
 
         // Update music based on screen and location
+        game_refresh_debug_passages(&game);
         int traveling = game.location == LOCATION_TOWN_ROAD || game.location == LOCATION_APPROACH ||
             game.location == LOCATION_FOREST_ROAD || game.location == LOCATION_HIGH_PASS ||
             game.location == LOCATION_SWAMP_ROAD || game.location == LOCATION_CROWNROAD ||

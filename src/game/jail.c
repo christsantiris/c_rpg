@@ -221,11 +221,29 @@ int jail_talk_nearby(GameState *g) {
 }
 
 int jail_move_exit(GameState *g, int x, int y) {
+    if (g->debug_passages_unlocked && g->location == LOCATION_JAIL && x == 4 && y == 8) {
+        g->location = LOCATION_CASTLE;
+        map_generate_castle(&g->map, &g->player.x, &g->player.y);
+        g->player.x = JAIL_DOOR_X;
+        g->player.y = JAIL_DOOR_Y + 1;
+        g->enemy_count = 0;
+        g->floor_item_count = 0;
+        g->dialogue_active = 0;
+        return 1;
+    }
     if (g->location == LOCATION_CASTLE && x == JAIL_DOOR_X && y == JAIL_DOOR_Y) {
+        if (g->debug_passages_unlocked) {
+            int quest = g->jail_quest_state;
+            enter_jail(g);
+            g->jail_quest_state = quest;
+            g->dialogue_active = 0;
+            game_refresh_debug_passages(g);
+            return 1;
+        }
         push_message(g, "The royal jail is locked and guarded.");
         return 1;
     }
-    if (g->location == LOCATION_JAIL && g->jail_quest_state == 2 && x == JAIL_HATCH_X && y == JAIL_HATCH_Y) {
+    if (g->location == LOCATION_JAIL && (g->debug_passages_unlocked || g->jail_quest_state == 2) && x == JAIL_HATCH_X && y == JAIL_HATCH_Y) {
         enter_tunnel(g);
         return 1;
     }
@@ -233,13 +251,21 @@ int jail_move_exit(GameState *g, int x, int y) {
         return 0;
     }
     if (x == 0 && y == 14) {
+        if (g->debug_passages_unlocked) {
+            int quest = g->jail_quest_state;
+            enter_jail(g);
+            g->jail_quest_state = quest;
+            g->dialogue_active = 0;
+            game_refresh_debug_passages(g);
+            return 1;
+        }
         push_message(g, "The hatch is barred from this side. The way out is east, to Ridgeshire.");
         return 1;
     }
     if (x != ESCAPE_TUNNEL_W - 1 || y != 14) {
         return 0;
     }
-    if (g->jail_quest_state != 2 || !near(g->player.x, g->player.y, g->prisoner_x, g->prisoner_y)) {
+    if (!g->debug_passages_unlocked && (g->jail_quest_state != 2 || !near(g->player.x, g->player.y, g->prisoner_x, g->prisoner_y))) {
         push_message(g, "Wait for Tomas. You must reach Ridgeshire together.");
         return 1;
     }
@@ -253,6 +279,9 @@ int jail_move_exit(GameState *g, int x, int y) {
     g->floor_item_count = 0;
     g->level_cleared = 0;
     g->player.poison_turns = 0;
+    if (g->debug_passages_unlocked && g->jail_quest_state != 2) {
+        return 1;
+    }
     g->jail_quest_state = 3;
     g->gold += ESCAPE_REWARD_GOLD;
     g->score += ESCAPE_REWARD_SCORE;

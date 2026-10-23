@@ -154,13 +154,13 @@ static void test_travel(void) {
     int y = game.player.y;
     game.player.x = x;
     game_open_town_portal(&game);
-    ASSERT("Return to Town opens a catacomb portal beside Rosemoor's Crown Road gate", game.location == LOCATION_TOWN3 && game.portal_active && game.portal_location == LOCATION_CATACOMBS && game.map.tiles[TOWN3_KING_GATE_Y + 1][TOWN_W - 3] == TILE_PORTAL);
+    ASSERT("Return to Town opens a catacomb portal in the last town visited", game.location == LOCATION_TOWN && game.portal_active && game.portal_location == LOCATION_CATACOMBS && game.map.tiles[12][21] == TILE_PORTAL);
     int saved = save_game(&game, CATACOMBS_TEST_SLOT) && load_game(&loaded, CATACOMBS_TEST_SLOT);
-    ASSERT("a Rosemoor portal survives saving and loading", saved && loaded.portal_active && loaded.catacombs_cache[1].valid);
+    ASSERT("a return portal survives saving and loading", saved && loaded.portal_active && loaded.catacombs_cache[1].valid);
     game = loaded;
-    game.player.x = TOWN_W - 3;
-    game.player.y = TOWN3_KING_GATE_Y;
-    action_resolve_player(&game, (Action){ACTION_MOVE, TOWN_W - 3, TOWN3_KING_GATE_Y + 1});
+    game.player.x = 21;
+    game.player.y = 11;
+    action_resolve_player(&game, (Action){ACTION_MOVE, 21, 12});
     ASSERT("the saved portal restores the exact catacomb floor and position", game.location == LOCATION_CATACOMBS && game.level == 2 && game.player.x == x && game.player.y == y && !game.portal_active);
 }
 

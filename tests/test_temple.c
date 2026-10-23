@@ -180,7 +180,7 @@ void test_temple(void) {
     action_resolve_player(&g, (Action){ACTION_MOVE, ISLAND_GATE_X,
         ISLAND_GATE_Y});
 
-    ASSERT("walking through the island gate enters the first pyramid tier",
+    ASSERT("walking into the island temple sprite enters the first pyramid tier",
         g.location == LOCATION_TEMPLE && g.level == 1 &&
         g.player.x == TEMPLE_ENTRANCE_X &&
         g.player.y == TEMPLE_ENTRANCE_Y &&

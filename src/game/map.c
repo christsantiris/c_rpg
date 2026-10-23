@@ -484,6 +484,11 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_OSSUARY_COLD &&
         m->tiles[y][x] != TILE_CATACOMBS_SARCOPHAGUS &&
         m->tiles[y][x] != TILE_WALL &&
+        m->tiles[y][x] != TILE_ELDERWOOD_WALL &&
+        m->tiles[y][x] != TILE_ELDERWOOD_BRAMBLE &&
+        m->tiles[y][x] != TILE_ELDERWOOD_LOG &&
+        m->tiles[y][x] != TILE_NORTH_ELDERWOOD &&
+        m->tiles[y][x] != TILE_NORTH_CATACOMBS &&
         m->tiles[y][x] != TILE_FOREST_WALL &&
         m->tiles[y][x] != TILE_FOREST_HIDDEN_TRAIL &&
         m->tiles[y][x] != TILE_MOUNTAIN_WALL &&
@@ -1524,7 +1529,10 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     for (int x = 1; x < TOWN_W - 1; x++)
         m->tiles[12][x] = TILE_TOWN_PATH;
 
-    // The mountain route now starts in Dawnmere.
+    // Elderwood and the northern castle road begin beyond the north gate.
+    for (int x = 18; x <= 22; x++) {
+        m->tiles[0][x] = TILE_TOWN_EXIT;
+    }
 
     // Forest travel and the unlocked Stillbury shortcut share the main gate.
     for (int y = 10; y <= 12; y++) {
@@ -2529,6 +2537,20 @@ void map_generate_town_hall(Map *m, int *sx, int *sy) {
     m->tiles[HALL_VEYRA_Y][HALL_VEYRA_X] = TILE_NPC_VEYRA;
 }
 
+void map_place_island_temple(Map *m) {
+    // Retire the old northern doorway and place the entire entrance landmark.
+    for (int y = 0; y < ISLAND_H; y++) {
+        for (int x = 0; x < ISLAND_W; x++) {
+            if (m->tiles[y][x] == TILE_ISLAND_TEMPLE_GATE) {
+                m->tiles[y][x] = TILE_ISLAND_PATH;
+            }
+        }
+    }
+    fill_rect(m, ISLAND_TEMPLE_X, ISLAND_TEMPLE_Y, ISLAND_TEMPLE_W, ISLAND_TEMPLE_H, TILE_ISLAND_TEMPLE_GATE);
+    m->stairs_down_x = ISLAND_GATE_X;
+    m->stairs_down_y = ISLAND_GATE_Y;
+}
+
 void map_generate_island(Map *m, int *spawn_x, int *spawn_y) {
     static const int shore_left[21] = {
         16, 12, 9, 6, 4, 3, 2, 2, 2, 2, 2,
@@ -2596,8 +2618,7 @@ void map_generate_island(Map *m, int *spawn_x, int *spawn_y) {
     m->tiles[16][ISLAND_CAMP_X] = TILE_ISLAND_PATH;
 
     fill_rect(m, 16, 20, 9, 4, TILE_ISLAND_DOCK);
-    m->tiles[ISLAND_GATE_Y][ISLAND_GATE_X] = TILE_ISLAND_TEMPLE_GATE;
-    m->tiles[ISLAND_GATE_Y][ISLAND_GATE_X + 1] = TILE_ISLAND_TEMPLE_GATE;
+    map_place_island_temple(m);
     m->tiles[ISLAND_CAMP_Y][ISLAND_CAMP_X] = TILE_ISLAND_CAMP;
     m->tiles[ISLAND_MARKER_Y][ISLAND_MARKER_X] = TILE_ISLAND_MARKER;
     m->tiles[ISLAND_STATUE_Y][ISLAND_STATUE_X] = TILE_ISLAND_STATUE;

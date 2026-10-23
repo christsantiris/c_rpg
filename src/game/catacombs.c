@@ -189,7 +189,7 @@ void game_talk_to_oswin(GameState *g) {
     g->dialogue_y = HALL_OSWIN_Y;
     if (g->catacombs_quest_state == 0) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "The dead need names and rest. Take Crown Road West from Ridgeshire's west gate, then the castle's south gate. Press A at memorials on floors 2-4; take the Grave Marshal's ledger on floor 5.");
+            "Take Crown Road West from Ridgeshire, then the castle's south gate. Enter the roadside crypt. Press A at memorials on floors 2-4; take the Grave Marshal's ledger on floor 5.");
     } else if (g->catacombs_quest_state == 1) {
         int silenced = 0;
         for (int i = 0; i < 3; i++) {

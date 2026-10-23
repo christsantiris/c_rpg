@@ -1,4 +1,5 @@
 #include "approach.h"
+#include "elderwood.h"
 #include <string.h>
 
 // Save files store these indices. Append new routes without reordering them.
@@ -19,7 +20,8 @@ const TownApproach town_approaches[] = {
     {LOCATION_TOWN4, LOCATION_DRAGONSPINE, RIDGESHIRE_DRAGON_GATE_X, 0},
     {LOCATION_TOWN4, LOCATION_ASHEN, TOWN_W - 1, RIDGESHIRE_ASHEN_GATE_Y},
     {LOCATION_CASTLE, LOCATION_CATACOMBS, CROWNROAD_X, TOWN_H - 1},
-    {LOCATION_DAWNMERE, LOCATION_DUNGEON, 0, 12}
+    {LOCATION_DAWNMERE, LOCATION_DUNGEON, 0, 12},
+    {LOCATION_TOWN, LOCATION_ELDERWOOD, 20, 0}
 };
 
 const int town_approach_count = sizeof(town_approaches) / sizeof(town_approaches[0]);
@@ -45,6 +47,7 @@ const char *approach_area_name(Location area) {
         case LOCATION_ASHEN: return "ASHEN HOLLOW";
         case LOCATION_GLASSDEEP: return "GLASSDEEP CAVERNS";
         case LOCATION_CATACOMBS: return "ROYAL CATACOMBS";
+        case LOCATION_ELDERWOOD: return "ELDERWOOD FOREST";
         case LOCATION_CROWNROAD: return "CROWN ROAD EAST";
         case LOCATION_KING_ROAD_WEST: return "CROWN ROAD WEST";
         default: return "AREA";
@@ -165,7 +168,7 @@ void approach_refresh_dungeon(GameState *g) {
 
 int approach_forest_town_exit(const GameState *g, int *x, int *y) {
     const TownApproach *route = approach_route(g);
-    if (!route || route->area != LOCATION_FOREST || !(g->defeated_bosses & (1 << LOCATION_FOREST))) {
+    if (!route || route->area != LOCATION_FOREST || (!g->debug_passages_unlocked && !(g->defeated_bosses & (1 << LOCATION_FOREST)))) {
         return 0;
     }
     *x = route->town == LOCATION_TOWN ? 0 : APPROACH_W - 1;
@@ -244,7 +247,7 @@ void approach_refresh_forest(GameState *g) {
 
 int approach_mountain_town_exit(const GameState *g, int *x, int *y) {
     const TownApproach *route = approach_route(g);
-    if (!route || route->area != LOCATION_MOUNTAINS || !(g->defeated_bosses & (1 << LOCATION_MOUNTAINS))) {
+    if (!route || route->area != LOCATION_MOUNTAINS || (!g->debug_passages_unlocked && !(g->defeated_bosses & (1 << LOCATION_MOUNTAINS)))) {
         return 0;
     }
     *x = APPROACH_W / 2;
@@ -315,7 +318,7 @@ void approach_refresh_mountains(GameState *g) {
 
 int approach_swamp_town_exit(const GameState *g, int *x, int *y) {
     const TownApproach *route = approach_route(g);
-    if (!route || route->area != LOCATION_SWAMP || !(g->defeated_bosses & (1 << LOCATION_SWAMP))) {
+    if (!route || route->area != LOCATION_SWAMP || (!g->debug_passages_unlocked && !(g->defeated_bosses & (1 << LOCATION_SWAMP)))) {
         return 0;
     }
     *x = APPROACH_W / 2;
@@ -411,6 +414,9 @@ TileType approach_coast_ground(int x, int y) {
 }
 
 void approach_refresh_entrance(GameState *g) {
+    if (northern_approach(g)) {
+        return;
+    }
     const TownApproach *route = approach_route(g);
     if (!route || !approach_entrance_rows(route->area)) {
         return;
@@ -631,7 +637,7 @@ Location approach_shortcut_town(const TownApproach *route) {
 
 int approach_dungeon_town_exit(const GameState *g, int *x, int *y) {
     const TownApproach *route = approach_route(g);
-    if (!route || route->area != LOCATION_DUNGEON || !(g->defeated_bosses & (1 << LOCATION_DUNGEON))) {
+    if (!route || route->area != LOCATION_DUNGEON || (!g->debug_passages_unlocked && !(g->defeated_bosses & (1 << LOCATION_DUNGEON)))) {
         return 0;
     }
     *x = route->town == LOCATION_TOWN ? APPROACH_W - 1 : 0;
@@ -692,7 +698,7 @@ void approach_refresh_fork(GameState *g) {
 static void return_from_branch(GameState *g, Location area, int boss) {
     for (int i = 0; i < town_approach_count; i++) {
         const TownApproach *route = &town_approaches[i];
-        if (route->town != g->location || route->area != area || !(g->defeated_bosses & (1 << area))) {
+        if (route->town != g->location || route->area != area || (!g->debug_passages_unlocked && !(g->defeated_bosses & (1 << area)))) {
             continue;
         }
         if (approach_enter(g, route->gate_x, route->gate_y)) {
@@ -767,6 +773,13 @@ int approach_enter_region(GameState *g, int index) {
     approach_refresh_swamp(g);
     approach_refresh_entrance(g);
     approach_refresh_fork(g);
+    if (northern_approach(g)) {
+        northern_refresh(g);
+        g->player.x = NORTH_ROAD_X;
+        g->player.y = route->town == LOCATION_CASTLE ? 1 : ELDERWOOD_H - 2;
+        g->player.last_dx = 0;
+        g->player.last_dy = route->town == LOCATION_CASTLE ? 1 : -1;
+    }
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
     g->player.frozen_turns = 0;
@@ -778,6 +791,9 @@ int approach_enter_region(GameState *g, int index) {
 }
 
 int approach_travel(GameState *g, int x, int y) {
+    if (northern_travel(g, x, y)) {
+        return 1;
+    }
     const TownApproach *route = approach_route(g);
     if (!route) {
         return 0;
