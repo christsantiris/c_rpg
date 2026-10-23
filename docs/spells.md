@@ -113,7 +113,8 @@ Heal rank reduces its MP cost by 2.
 
 Return to Town costs 0 MP and does not require an aim direction. Casting it in
 an adventure area records the player's stage and position, creates a portal at
-the matching town entrance, and immediately transports the player to town.
+the last town actually visited, and immediately transports the player there.
+Bypassing a town on its exterior road does not count as a visit.
 Stepping onto the town portal returns the player to the recorded position and
 closes the portal. Casting it while already in town has no effect.
 
@@ -152,8 +153,8 @@ require the player to have moved once to establish a direction.
 - Gaining a character level restores MP to maximum as well as restoring HP.
 - [Morwen](healer.md#stillbury-witch) restores full or partial MP for gold inside her Stillbury hut. Mana Potions remain available from the Alchemist and Rosemoor's Apothecary.
 
-In the Royal Catacombs, Return to Town opens a portal beside Rosemoor's east
-Crown Road gate. Using it restores the original floor and position, with
+In the Royal Catacombs, Return to Town uses the last town visited too. Using
+the portal restores the original floor and position, with
 pending hazards at the landing position dissipated by the portal's wards.
 Ordinary upstairs and the defeated Marshal's return passage lead back to the
-castle grounds instead. See [Royal Catacombs](catacombs.md).
+road beside the Catacombs sprite instead. See [Royal Catacombs](catacombs.md).

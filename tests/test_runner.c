@@ -80,6 +80,7 @@ void test_wilds(void);
 void test_glassdeep(void);
 void test_glassdeep_quest(void);
 void test_catacombs(void);
+void test_elderwood(void);
 void test_grave_marshal(void);
 void test_desert_pharaoh(void);
 void test_thorn_regent(void);
@@ -198,6 +199,7 @@ int main(void) {
     test_wilds();
     test_glassdeep();
     test_glassdeep_quest();
+    test_elderwood();
     test_catacombs();
     test_grave_marshal();
     test_desert_pharaoh();

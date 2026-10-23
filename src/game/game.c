@@ -1,5 +1,6 @@
 #include "game.h"
 #include "catacombs.h"
+#include "elderwood.h"
 #include "castle.h"
 #include "lich.h"
 #include "necromancer.h"
@@ -93,6 +94,12 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
     e->boss_aux_y = -1;
     memset(e->dragon_warning, 0, sizeof(e->dragon_warning));
     switch (type) {
+        // Elderwood entities are constructed by its compact region generator.
+        case ENEMY_BRIAR_WOLF:
+        case ENEMY_IRONHIDE_BOAR:
+        case ENEMY_THORN_DRYAD:
+        case ENEMY_TREEFOLK:
+        case ENEMY_ELDERTHORN:
         case ENEMY_OATHBOUND_SOLDIER:
         case ENEMY_IRON_WARDEN:
         case ENEMY_ROYAL_MARKSMAN:
@@ -589,6 +596,9 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
 }
 
 static int boss_for_level(const GameState *g, EnemyType *type) {
+    if (g->location == LOCATION_ELDERWOOD) {
+        return 0;
+    }
     int boss_level = DUNGEON_DEPTH;
     if (g->location == LOCATION_FOREST) {
         boss_level = FOREST_BOSS_LEVEL;
@@ -1590,6 +1600,14 @@ void game_init(GameState *g) {
     g->cain_scroll_given = 0;
     g->island_travel_unlocked = 0;
     g->debug_passages_unlocked = 0;
+    memset(g->elderwood_cache, 0, sizeof(g->elderwood_cache));
+    g->max_elderwood_level_reached = 1;
+    g->elderwood_defeated = 0;
+    g->elderwood_entry_town = LOCATION_TOWN;
+    g->catacombs_entry_town = LOCATION_CASTLE;
+    g->northern_portal_town = LOCATION_CASTLE;
+    g->last_town_visited = LOCATION_TOWN;
+    g->return_portal_town = -1;
     g->dragon_treasure_quest_state = 0;
     g->sunscar_lamp_quest_state = 0;
     g->emberforge_quest_state = 0;
@@ -3428,6 +3446,10 @@ static void prepare_forest_arrival(GameState *g, int from_high) {
 }
 
 void game_descend(GameState *g) {
+    if (g->location == LOCATION_ELDERWOOD) {
+        elderwood_change_level(g, 1);
+        return;
+    }
     if (castle_travel(g, 1)) {
         return;
     }
@@ -3469,6 +3491,10 @@ void game_descend(GameState *g) {
 }
 
 void game_ascend(GameState *g) {
+    if (g->location == LOCATION_ELDERWOOD) {
+        elderwood_change_level(g, 0);
+        return;
+    }
     if (castle_travel(g, 0)) {
         return;
     }
@@ -3797,6 +3823,9 @@ void game_enter_ashen(GameState *g) {
 }
 
 void game_enter_catacombs(GameState *g) {
+    if (!northern_approach(g)) {
+        g->catacombs_entry_town = LOCATION_CASTLE;
+    }
     clear_floor_loot(g);
     g->location = LOCATION_CATACOMBS;
     start_expedition(g, g->catacombs_cache, CATACOMBS_DEPTH);
@@ -3901,6 +3930,15 @@ void game_refresh_debug_passages(GameState *g) {
     if (!g->debug_passages_unlocked) {
         return;
     }
+    if (northern_approach(g)) {
+        for (int x = 1; x < ELDERWOOD_W - 1; x++) {
+            if (quest_object_tile(g, x, NORTH_FOREST_BARRIER_Y) == TILE_ELDERWOOD_WALL) {
+                set_quest_object_tile(g, x, NORTH_FOREST_BARRIER_Y, x == NORTH_ROAD_X ? TILE_TOWN_PATH : TILE_TOWN_FLOOR);
+            }
+        }
+        set_quest_object_tile(g, NORTH_ROAD_X, 0, TILE_NORTH_CASTLE);
+        set_quest_object_tile(g, NORTH_ROAD_X, ELDERWOOD_H - 1, TILE_NORTH_OAKHAVEN);
+    }
     if (g->location == LOCATION_TOWN) {
         place_harbor_road(g);
     }
@@ -3909,6 +3947,7 @@ void game_refresh_debug_passages(GameState *g) {
             TileType old = quest_object_tile(g, x, y);
             TileType open = old;
             switch (old) {
+                case TILE_ELDERWOOD_BRAMBLE: open = TILE_ELDERWOOD_FLOOR; break;
                 case TILE_LOCKED_DOOR:
                 case TILE_CRYPT_DOOR:
                 case TILE_DUNGEON_GATE: open = TILE_FLOOR; break;
@@ -3939,6 +3978,36 @@ void game_refresh_debug_passages(GameState *g) {
 
 static void place_town_portal(GameState *g) {
     if (!g->portal_active) {
+        return;
+    }
+    if (g->return_portal_town >= 0) {
+        if (g->location != g->return_portal_town) {
+            return;
+        }
+        Location anchor = LOCATION_TOWN;
+        switch (g->portal_location) {
+            case LOCATION_DUNGEON: anchor = g->dungeon_portal_town; break;
+            case LOCATION_FOREST: anchor = g->forest_portal_town; break;
+            case LOCATION_MOUNTAINS: anchor = g->mountain_portal_town; break;
+            case LOCATION_SWAMP: anchor = g->swamp_portal_town; break;
+            case LOCATION_ELDERWOOD:
+            case LOCATION_CATACOMBS: anchor = g->northern_portal_town; break;
+            case LOCATION_DESERT:
+            case LOCATION_GLASSDEEP: anchor = LOCATION_TOWN2; break;
+            case LOCATION_FROSTFELL:
+            case LOCATION_MOONVEIL: anchor = LOCATION_TOWN3; break;
+            case LOCATION_DRAGONSPINE:
+            case LOCATION_ASHEN: anchor = LOCATION_TOWN4; break;
+            default: break;
+        }
+        if (anchor != g->location) {
+            g->map.tiles[12][21] = TILE_PORTAL;
+            return;
+        }
+    }
+    if ((g->portal_location == LOCATION_ELDERWOOD || g->portal_location == LOCATION_CATACOMBS) &&
+        g->location == g->northern_portal_town && (g->location == LOCATION_TOWN || g->location == LOCATION_CASTLE)) {
+        g->map.tiles[g->location == LOCATION_TOWN ? 2 : TOWN_H - 3][21] = TILE_PORTAL;
         return;
     }
     if (g->location == LOCATION_DAWNMERE) {
@@ -4049,6 +4118,7 @@ void game_leave_tavern(GameState *g) {
 }
 
 void game_enter_town2(GameState *g) {
+    g->last_town_visited = LOCATION_TOWN2;
     int spawn_x;
     int spawn_y;
     if (g->location == LOCATION_FOREST && g->level >= 1 && g->level <= FOREST_DEPTH) {
@@ -5215,6 +5285,7 @@ void game_enter_island(GameState *g) {
 }
 
 void game_leave_island(GameState *g) {
+    g->last_town_visited = LOCATION_TOWN;
     int spawn_x;
     int spawn_y;
     g->location = LOCATION_TOWN;
@@ -5494,9 +5565,10 @@ void game_record_temple_enemy_defeated(GameState *g, EnemyType type) {
 
 static void return_to_town(GameState *g, Location destination) {
     Location returning_from = g->location;
+    elderwood_store(g);
     if (returning_from == LOCATION_FROSTFELL || returning_from == LOCATION_DESERT ||
         returning_from == LOCATION_MOONVEIL || returning_from == LOCATION_GLASSDEEP ||
-        returning_from == LOCATION_CATACOMBS ||
+        returning_from == LOCATION_CATACOMBS || returning_from == LOCATION_ELDERWOOD ||
         destination == LOCATION_TOWN4 ||
         destination == LOCATION_TOWN3) {
         clear_floor_loot(g);
@@ -5641,6 +5713,14 @@ void game_leave_labyrinth(GameState *g) {
 }
 
 void game_return_to_approach(GameState *g) {
+    if (g->location == LOCATION_ELDERWOOD) {
+        elderwood_leave(g);
+        return;
+    }
+    if (g->location == LOCATION_CATACOMBS) {
+        game_leave_catacombs(g);
+        return;
+    }
     Location area = g->location;
     int lich_exit = area == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH &&
         (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_DUNGEON)));
@@ -5687,6 +5767,10 @@ void game_leave_approach_to_town(GameState *g, Location town) {
     if (!route) {
         return;
     }
+    if (northern_approach(g) && town == LOCATION_TOWN) {
+        town_road_enter(g, LOCATION_TOWN, TOWN_SIDE_NORTH, 0);
+        return;
+    }
     TownApproach destination = *route;
     for (int i = 0; i < town_approach_count; i++) {
         if (town_approaches[i].town == town && town_approaches[i].area == route->area) {
@@ -5702,6 +5786,9 @@ void game_leave_approach_to_town(GameState *g, Location town) {
 
 void game_enter_town_gate(GameState *g, Location town, int x, int y) {
     return_to_town(g, town);
+    if (town_road_index(town) >= 0) {
+        g->last_town_visited = town;
+    }
     g->approach_route = -1;
     g->player.x = x == 0 ? 1 : x == TOWN_W - 1 ? TOWN_W - 2 : x;
     g->player.y = y == 0 ? 1 : y == TOWN_H - 1 ? TOWN_H - 2 : y;
@@ -5718,8 +5805,9 @@ void game_leave_approach(GameState *g) {
 }
 
 void game_leave_catacombs(GameState *g) {
-    return_to_town(g, LOCATION_CASTLE);
-    enter_return_approach(g, LOCATION_CATACOMBS);
+    Location town = g->catacombs_entry_town;
+    return_to_town(g, town);
+    northern_return(g, town, 1);
 }
 
 void game_return_to_town(GameState *g) {
@@ -5735,7 +5823,11 @@ void game_return_to_town(GameState *g) {
         return;
     }
     Location destination = LOCATION_TOWN;
-    if (g->location == LOCATION_DUNGEON) {
+    if (g->location == LOCATION_ELDERWOOD) {
+        destination = g->elderwood_entry_town;
+    } else if (g->location == LOCATION_CATACOMBS) {
+        destination = g->catacombs_entry_town;
+    } else if (g->location == LOCATION_DUNGEON) {
         destination = g->dungeon_entry_town;
     } else if (g->location == LOCATION_FOREST) {
         destination = g->forest_entry_town;
@@ -5780,6 +5872,7 @@ void game_leave_mountains(GameState *g, Location town, int shortcut) {
 }
 
 void game_enter_town3(GameState *g) {
+    g->last_town_visited = LOCATION_TOWN3;
     return_to_town(g, LOCATION_TOWN3);
 }
 
@@ -5825,6 +5918,7 @@ void game_leave_swamp_road(GameState *g, Location destination) {
 }
 
 void game_enter_town4(GameState *g) {
+    g->last_town_visited = LOCATION_TOWN4;
     return_to_town(g, LOCATION_TOWN4);
 }
 
@@ -5857,6 +5951,7 @@ void game_open_town_portal(GameState *g) {
         g->location != LOCATION_ASHEN &&
         g->location != LOCATION_GLASSDEEP &&
         g->location != LOCATION_CATACOMBS &&
+        g->location != LOCATION_ELDERWOOD &&
         g->location != LOCATION_DRAGONSPINE) {
         return;
     }
@@ -5878,14 +5973,22 @@ void game_open_town_portal(GameState *g) {
     } else if (g->location == LOCATION_MOUNTAINS) {
         g->mountain_portal_town = g->mountain_entry_town;
     }
+    if (g->location == LOCATION_ELDERWOOD || g->location == LOCATION_CATACOMBS) {
+        g->northern_portal_town = g->location == LOCATION_ELDERWOOD ? g->elderwood_entry_town : g->catacombs_entry_town;
+    }
     g->portal_x = g->player.x;
     g->portal_y = g->player.y;
     g->portal_origin_tile = g->map.tiles[g->player.y][g->player.x];
-    game_return_to_town(g);
-    push_message(g, "A return portal remains open.");
+    g->return_portal_town = town_road_index(g->last_town_visited) >= 0 ? g->last_town_visited : LOCATION_TOWN;
+    return_to_town(g, g->return_portal_town);
+    push_message(g, "A return portal remains open in the last town you visited.");
 }
 
 void game_hide_portal_destination(GameState *g) {
+    if (g->portal_location == LOCATION_ELDERWOOD) {
+        elderwood_hide_portal(g);
+        return;
+    }
     if (g->portal_level < 1 || g->portal_level > MAX_REGION_DEPTH ||
         g->portal_x < 0 || g->portal_x >= MAP_W ||
         g->portal_y < 0 || g->portal_y >= MAP_H) {
@@ -5986,6 +6089,13 @@ void game_use_town_portal(GameState *g) {
     }
     if (!g->portal_active || g->portal_level < 1 ||
         g->portal_level > MAX_REGION_DEPTH) return;
+    if (g->portal_location == LOCATION_ELDERWOOD) {
+        elderwood_portal(g);
+        return;
+    }
+    if (g->portal_location == LOCATION_CATACOMBS) {
+        g->catacombs_entry_town = g->northern_portal_town == LOCATION_TOWN ? LOCATION_TOWN : LOCATION_CASTLE;
+    }
     int level = g->portal_level;
     LevelCache *cache = g->level_cache;
     if (g->portal_location == LOCATION_FOREST) {

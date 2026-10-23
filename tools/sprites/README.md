@@ -333,3 +333,8 @@ trigger; exterior artwork has no target gate. Interior gates remain exits.
 `src/game/town_road.c` defines the footprint, directional sprite entrances and bypass
 roads; `src/renderer/town_road_renderer.c` anchors the sprite and direction labels.
 See [art review and SDL previews](../../docs/art-sources/town-exteriors/README.md).
+
+### Elderwood
+
+`elderwood.py` creates the living forest entrance and five creature sprites using
+pixelkit. See [native comparisons and SDL previews](../../docs/art-sources/elderwood/README.md).

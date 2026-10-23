@@ -850,8 +850,8 @@ void test_town_map(void) {
         spawn_x == 20 && spawn_y == 12);
 
     // Exit tiles at north edge
-    ASSERT("former north mountain gate is closed",
-        m.tiles[0][20] == TILE_WALL);
+    ASSERT("north gate opens onto the Elderwood road",
+        m.tiles[0][20] == TILE_TOWN_EXIT);
     ASSERT("forest exit at west crossroad",
         m.tiles[12][0] == TILE_TOWN_EXIT);
     ASSERT("the old Tavern loop is gone before Town 2 is discovered",
@@ -892,8 +892,8 @@ void test_town_map(void) {
     map_set_town2_road(&m, 1);
     ASSERT("dungeon exit at east crossroad",
         m.tiles[12][TOWN_W - 1] == TILE_TOWN_EXIT);
-    ASSERT("former mountain exit is retired",
-        m.tiles[0][20] == TILE_WALL);
+    ASSERT("Elderwood uses the northern exit",
+        m.tiles[0][20] == TILE_TOWN_EXIT);
 
     // Shop tiles in correct positions
     ASSERT("blacksmith remains in the starting town",
@@ -1558,10 +1558,10 @@ static void test_oakhaven_portal_save(void) {
         int origin_y = g.player.y;
         game_open_town_portal(&g);
         int x = regions[i] == LOCATION_DUNGEON ? TOWN_W - 3 : 21;
-        int y = regions[i] == LOCATION_DUNGEON ? 13 : 2;
+        int y = regions[i] == LOCATION_DUNGEON ? 13 : 12;
         int restored = save_game(&g, slot) && load_game(&loaded, slot);
         ASSERT("OakHaven portal and destination survive save/load",
-            restored && loaded.location == (regions[i] == LOCATION_MOUNTAINS ? LOCATION_DAWNMERE : LOCATION_TOWN) &&
+            restored && loaded.location == LOCATION_TOWN &&
             loaded.map.tiles[y][x] == TILE_PORTAL &&
             loaded.portal_location == regions[i]);
         if (restored) {
@@ -1684,7 +1684,7 @@ void test_mountains(void) {
     GameState g;
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
-    g.location = LOCATION_DAWNMERE;
+    game_enter_town_gate(&g, LOCATION_DAWNMERE, 20, 0);
     map_generate_dawnmere(&g.map, &g.player.x, &g.player.y);
     g.player.x = 20;
     g.player.y = 1;
