@@ -158,7 +158,8 @@ typedef enum {
     LOCATION_WITCH,
     LOCATION_DAWNMERE,
     LOCATION_TOWN_ROAD,
-    LOCATION_ELDERWOOD
+    LOCATION_ELDERWOOD,
+    LOCATION_JAIL_ARMORY
 } Location;
 
 // Elderwood uses only its own bounds; compact caches avoid allocating the
@@ -213,6 +214,18 @@ typedef struct {
     int jail_quest_state; // 0: not arrested, 1: jailed, 2: escorting, 3: rewarded.
     int prisoner_x;
     int prisoner_y;
+    Item jail_gear[MAX_INVENTORY];
+    int jail_gear_count;
+    int jail_gear_claimed;
+    int jail_gear_state; // 0: none taken, 1: recover gear, 3: recovered.
+    int jail_main_hand;
+    int jail_off_hand;
+    int jail_armor;
+    int jail_supplies_taken;
+    int jail_armory_initialized;
+    Enemy jail_guards[3];
+    FloorItem jail_armory_loot[MAX_FLOOR_ITEMS];
+    int jail_armory_loot_count;
     CrownroadCache crownroad_cache;
     CrownroadCache kingroad_west_cache;
     LevelCache temple_cache[TEMPLE_DEPTH];

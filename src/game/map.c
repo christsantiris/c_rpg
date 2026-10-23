@@ -463,6 +463,7 @@ int map_is_walkable(const Map *m, int x, int y) {
     }
     return m->tiles[y][x] != TILE_LICH_PILLAR &&
         m->tiles[y][x] != TILE_JAIL_BUILDING &&
+        m->tiles[y][x] != TILE_JAIL_GEAR_CHEST &&
         m->tiles[y][x] != TILE_JAIL_DOOR && m->tiles[y][x] != TILE_JAIL_BARS &&
         m->tiles[y][x] != TILE_NPC_INFORMANT && m->tiles[y][x] != TILE_NPC_PRISONER &&
         m->tiles[y][x] != TILE_NPC_OSWIN && m->tiles[y][x] != TILE_NPC_VEYRA &&

@@ -2032,7 +2032,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->location == LOCATION_APPROACH || g->location == LOCATION_TOWN_ROAD ||
         g->location == LOCATION_HIGH_PASS ||
         game_is_king_road(g) || g->location == LOCATION_SWAMP_ROAD;
-    int jail_scaled = g->location == LOCATION_JAIL;
+    int jail_scaled = g->location == LOCATION_JAIL || g->location == LOCATION_JAIL_ARMORY;
     if (town_scaled || island_scaled || labyrinth_scaled || jail_scaled) {
         // Keep the entire fixed map inside the play area.
         int map_w = jail_scaled ? JAIL_ROOM_W : town_scaled ? TOWN_W :
@@ -2139,7 +2139,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             map_mark_explored(&g->map, x, y);
             int sx = viewport_to_screen_x(v, x);
             int sy = viewport_to_screen_y(v, y);
-            if (g->location == LOCATION_JAIL || g->location == LOCATION_ESCAPE_TUNNEL) {
+            if (g->location == LOCATION_JAIL || g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_JAIL_ARMORY) {
                 jail_draw_tile(r, g, sx, sy, x, y, g->map.tiles[y][x] == TILE_ITEM ? floor_item_underlay(g, x, y) : g->map.tiles[y][x]);
                 continue;
             }
@@ -3133,7 +3133,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             continue;
         }
         TileType tile = g->map.tiles[item->y][item->x];
-        if ((tile != TILE_ITEM || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_JAIL ||
+        if ((tile != TILE_ITEM || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_JAIL_ARMORY || g->location == LOCATION_JAIL ||
             g->location == LOCATION_ESCAPE_TUNNEL) && g->location != LOCATION_ISLAND) {
             draw_floor_loot(r, g, item->x, item->y,
                 viewport_to_screen_x(v, item->x),
@@ -3301,7 +3301,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_elderwood_warnings(r, g, v);
 
     // Draw enemies
-    if (g->location == LOCATION_ELDERWOOD || g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
+    if (g->location == LOCATION_JAIL_ARMORY || g->location == LOCATION_ELDERWOOD || g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
         g->location == LOCATION_FOREST ||
         g->location == LOCATION_MOUNTAINS ||
         g->location == LOCATION_DRAGONSPINE ||

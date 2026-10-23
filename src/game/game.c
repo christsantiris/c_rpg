@@ -100,6 +100,7 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
         case ENEMY_THORN_DRYAD:
         case ENEMY_TREEFOLK:
         case ENEMY_ELDERTHORN:
+        case ENEMY_ROYAL_GUARD:
         case ENEMY_OATHBOUND_SOLDIER:
         case ENEMY_IRON_WARDEN:
         case ENEMY_ROYAL_MARKSMAN:
@@ -1474,6 +1475,18 @@ void game_init(GameState *g) {
     g->road_town = LOCATION_TOWN;
     g->approach_route = -1;
     g->jail_quest_state = 0;
+    memset(g->jail_gear, 0, sizeof(g->jail_gear));
+    g->jail_gear_count = 0;
+    g->jail_gear_claimed = 0;
+    g->jail_gear_state = 0;
+    g->jail_main_hand = -1;
+    g->jail_off_hand = -1;
+    g->jail_armor = -1;
+    g->jail_supplies_taken = 0;
+    g->jail_armory_initialized = 0;
+    memset(g->jail_guards, 0, sizeof(g->jail_guards));
+    memset(g->jail_armory_loot, 0, sizeof(g->jail_armory_loot));
+    g->jail_armory_loot_count = 0;
     g->prisoner_x = 0;
     g->prisoner_y = 0;
     memset(g->castle_cache, 0, sizeof(g->castle_cache));
@@ -3927,6 +3940,7 @@ static void place_harbor_road(GameState *g) {
 }
 
 void game_refresh_debug_passages(GameState *g) {
+    jail_refresh_hatch(g);
     if (!g->debug_passages_unlocked) {
         return;
     }
@@ -3967,7 +3981,6 @@ void game_refresh_debug_passages(GameState *g) {
         }
     }
     if (g->location == LOCATION_JAIL) {
-        set_quest_object_tile(g, JAIL_HATCH_X, JAIL_HATCH_Y, TILE_JAIL_HATCH);
         set_quest_object_tile(g, 4, 8, TILE_TUNNEL_EXIT);
     }
     if (g->location == LOCATION_COAST &&

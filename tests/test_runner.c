@@ -7,6 +7,7 @@ void test_movement(void);
 void test_approaches(void);
 void test_town_roads(void);
 void test_jail(void);
+void test_jail_equipment(void);
 void test_ilya_relocation(void);
 void test_arrows(void);
 void test_enemy_projectiles(void);
@@ -221,6 +222,7 @@ int main(void) {
     printf("\n");
     test_tavern_interior();
     test_jail();
+    test_jail_equipment();
     test_ilya_relocation();
     printf("\n");
     test_dain_quest();

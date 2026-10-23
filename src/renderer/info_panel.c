@@ -124,6 +124,8 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
         SDL_snprintf(loc, sizeof(loc), "TOWN HALL");
     } else if (g->location == LOCATION_TOWN4) {
         SDL_snprintf(loc, sizeof(loc), "RIDGESHIRE");
+    } else if (g->location == LOCATION_JAIL_ARMORY) {
+        SDL_snprintf(loc, sizeof(loc), "JAIL EVIDENCE ROOM");
     } else if (g->location == LOCATION_JAIL) {
         SDL_snprintf(loc, sizeof(loc), "ROYAL JAIL");
     } else if (g->location == LOCATION_ESCAPE_TUNNEL) {

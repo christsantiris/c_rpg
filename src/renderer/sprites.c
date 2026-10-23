@@ -2774,6 +2774,9 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         return;
     }
     switch (type) {
+        case ENEMY_ROYAL_GUARD:
+            draw_royal_guard_overlay(r, tile_x, tile_y, 0);
+            break;
         case ENEMY_BRIAR_WOLF:
         case ENEMY_IRONHIDE_BOAR:
         case ENEMY_THORN_DRYAD:

@@ -20,10 +20,15 @@
 #define ESCAPE_TUNNEL_LEGACY_W 64
 #define ESCAPE_TUNNEL_W 190
 #define ESCAPE_TUNNEL_H 28
+#define JAIL_GEAR_X 12
+#define JAIL_GEAR_Y 5
 #define ESCAPE_REWARD_GOLD 100
 #define ESCAPE_REWARD_SCORE 750
 
 void jail_place_castle(Map *m);
+void jail_refresh_hatch(GameState *g);
+int jail_gear_nearby(const GameState *g);
+int jail_recover_gear(GameState *g);
 void jail_migrate_castle(GameState *g);
 void jail_migrate_tunnel(GameState *g);
 int jail_talk_nearby(GameState *g);

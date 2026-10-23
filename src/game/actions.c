@@ -222,6 +222,7 @@ static int enemy_score(EnemyType type) {
         case ENEMY_IRONHIDE_BOAR: return 90;
         case ENEMY_THORN_DRYAD: return 80;
         case ENEMY_TREEFOLK: return 200;
+        case ENEMY_ROYAL_GUARD: return 85;
         case ENEMY_ELDERTHORN: return 0; // Awarded once by elderwood_defeat.
         case ENEMY_DARK_ELF: return 48;
         case ENEMY_GIANT_WURM: return 70;
@@ -370,6 +371,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
     }
     int gold = 0;
     switch (type) {
+        case ENEMY_ROYAL_GUARD: gold = 10; break;
         case ENEMY_ELDERTHORN: break; // Its one-time reward was handled above.
         case ENEMY_BRIAR_WOLF:
         case ENEMY_IRONHIDE_BOAR: gold = 5 + rand() % 5; break;
@@ -941,6 +943,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (jail_gear_nearby(g)) {
+        return 1;
+    }
     if (g->location == LOCATION_ELDERWOOD) {
         for (int y = g->player.y - 1; y <= g->player.y + 1; y++) {
             for (int x = g->player.x - 1; x <= g->player.x + 1; x++) {
@@ -1338,6 +1343,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (jail_recover_gear(g)) {
+            return;
+        }
         if (elderwood_interact(g)) {
             return;
         }
