@@ -50,6 +50,14 @@ void town_life_place(Map *map, Location town) {
     }
     map->tiles[door_y][door_x] = TILE_LOCAL_DOOR;
     int road_y = town == LOCATION_TOWN3 ? CASTLE_ROAD_Y : 12;
+    if (door_y < road_y) {
+        for (int y = door_y + 1; y < road_y; y++) {
+            if (map->tiles[y][door_x] != TILE_ITEM) {
+                map->tiles[y][door_x] = TILE_TOWN_PATH;
+            }
+        }
+        return;
+    }
     for (int y = road_y + 1; y <= door_y + 1; y++) {
         if (map->tiles[y][b->x - 1] != TILE_ITEM) {
             map->tiles[y][b->x - 1] = TILE_TOWN_PATH;

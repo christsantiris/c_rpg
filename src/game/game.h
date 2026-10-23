@@ -179,6 +179,7 @@ typedef struct {
 typedef struct {
     unsigned int seed;
     unsigned int treasure_claimed;
+    unsigned int harbor_state; // Stage 3: cargo key, strongbox, lowered gangplank.
     unsigned char explored[(PIRATE_W * PIRATE_H + 7) / 8];
     Enemy enemies[PIRATE_ENEMIES];
     int enemy_count;

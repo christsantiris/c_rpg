@@ -1526,7 +1526,8 @@ static void draw_floor_loot(Renderer *r, const GameState *g, int map_x, int map_
 
 static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int map_x, int map_y, int screen_x, int screen_y) {
     TileType underlay = floor_item_underlay(g, map_x, map_y);
-    if ((underlay >= TILE_PIRATE_SAND && underlay <= TILE_PIRATE_EXIT) || underlay == TILE_PIRATE_QUEST_CHEST) {
+    if ((underlay >= TILE_PIRATE_SAND && underlay <= TILE_PIRATE_EXIT) ||
+        (underlay >= TILE_PIRATE_QUEST_CHEST && underlay <= TILE_PIRATE_BULKHEAD)) {
         draw_pirate_tile(r, &g->map, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay >= TILE_ELDERWOOD_FLOOR && underlay <= TILE_ELDERWOOD_LOG) {
         draw_elderwood_tile(r, screen_x, screen_y, map_x, map_y, underlay);
@@ -2276,6 +2277,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_PIRATE_RAIL:
                 case TILE_PIRATE_CLIFF:
                 case TILE_PIRATE_QUEST_CHEST:
+                case TILE_PIRATE_CARGO:
+                case TILE_PIRATE_WINCH:
+                case TILE_PIRATE_WINCH_OPEN:
+                case TILE_PIRATE_MAST:
+                case TILE_PIRATE_BULKHEAD:
                     draw_pirate_tile(r, &g->map, sx, sy, x, y, g->map.tiles[y][x]);
                     break;
                 case TILE_ELDERWOOD_WALL:
@@ -3227,7 +3233,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         draw_town_road_sign(r, viewport_to_screen_x(v, 2), viewport_to_screen_y(v, 17), "DUNGEON / OAKHAVEN");
         draw_town_gate(r, viewport_to_screen_x(v, 18), viewport_to_screen_y(v, 0), TOWN_EXIT_MOUNTAINS);
         draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, 3), "MOUNTAINS / RIDGESHIRE");
-        draw_town_gate_south(r, viewport_to_screen_x(v, 18), viewport_to_screen_y(v, TOWN_H - 3));
+        if (r->pirate_town_gate_texture) {
+            SDL_Rect gate = {viewport_to_screen_x(v, 19) * TILE_SIZE, viewport_to_screen_y(v, TOWN_H - 3) * TILE_SIZE, 72, 72};
+            SDL_RenderCopy(r->sdl, r->pirate_town_gate_texture, NULL, &gate);
+        }
         draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, TOWN_H - 5), "PIRATE COAST");
     }
     if (g->location == LOCATION_TOWN2) {

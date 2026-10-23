@@ -45,6 +45,11 @@ Dawnmere, with branching coastal routes, boundary exits, plunder chests, crossbo
 warnings and Captain Voss aboard the Black Flagship. In Dawnmere's Merchant
 shop, Corvin offers a treasure map leading to a stage-3 coffer; returning it
 earns 100 gold and a Mariner's Cloak usable by every class.
+Stage 3 now has an explorable harbor: board two ships, search cargo for a
+strongbox key, and lower a gangplank to open a crossing between their decks.
+Walking back into Pirate Coast restores regular enemies on all five stages;
+backtracking and portal returns resume the current expedition. Dawnmere's
+single-tile southern road leaves through its own coastal gate.
 Other enemy-area gates lead to safe cobblestone paths and themed entrance
 sprites; physical retreat returns to the same path. Rook's Labyrinth stands
 beside the Haunted Forest entrance on that road and stays sealed until Rook

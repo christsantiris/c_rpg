@@ -94,6 +94,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                     if (tile == TILE_CASTLE_TRAP_OPEN || tile == TILE_CASTLE_WARD || tile == TILE_CASTLE_WARD_SPENT || tile == TILE_CASTLE_MUSTER ||
                         tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN ||
                         tile == TILE_PIRATE_ENTRANCE || tile == TILE_PIRATE_EXIT || tile == TILE_PIRATE_CHEST || tile == TILE_PIRATE_QUEST_CHEST ||
+                        tile == TILE_PIRATE_CARGO || tile == TILE_PIRATE_WINCH ||
                         tile == TILE_ELDERWOOD_ENTRANCE || tile == TILE_ELDERWOOD_EXIT ||
                         tile == TILE_RETURN_EXIT || tile == TILE_DUNGEON_KEY ||
                         tile == TILE_DUNGEON_STAIRS_SEALED || tile == TILE_DUNGEON_STAIRS_RETURN ||
@@ -169,7 +170,8 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         has_stair = 1;
                     } else if (tile != TILE_CASTLE_WALL && tile != TILE_CASTLE_PILLAR &&
                         tile != TILE_PIRATE_SEA && tile != TILE_PIRATE_CLIFF && tile != TILE_PIRATE_PALISADE &&
-                        tile != TILE_PIRATE_RAIL && tile != TILE_PIRATE_CRATE &&
+                        tile != TILE_PIRATE_RAIL && tile != TILE_PIRATE_CRATE && tile != TILE_PIRATE_MAST &&
+                        tile != TILE_PIRATE_WINCH_OPEN && tile != TILE_PIRATE_BULKHEAD &&
                         tile != TILE_CASTLE_BANNER && tile != TILE_CASTLE_GATE && tile != TILE_CASTLE_TABLE &&
                         tile != TILE_CASTLE_BOOKCASE && tile != TILE_CASTLE_THRONE && tile != TILE_CATACOMBS_WALL &&
                         tile != TILE_CATACOMBS_SARCOPHAGUS && tile != TILE_WALL &&
@@ -218,7 +220,9 @@ void minimap_draw(Renderer *r, const GameState *g) {
                 SDL_SetRenderDrawColor(r->sdl, 220, 180, 60, 255);
                 SDL_RenderDrawPoint(r->sdl, draw_x, draw_y);
             } else if (has_floor) {
-                if (g->location == LOCATION_FOREST) {
+                if (g->location == LOCATION_PIRATE_COAST) {
+                    SDL_SetRenderDrawColor(r->sdl, 185, 156, 99, 255);
+                } else if (g->location == LOCATION_FOREST) {
                     SDL_SetRenderDrawColor(r->sdl, 45, 95, 55, 255);
                 } else if (g->location == LOCATION_MOUNTAINS ||
                     g->location == LOCATION_HIGH_PASS) {
