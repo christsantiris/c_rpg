@@ -677,9 +677,9 @@ int castle_travel(GameState *g, int forward) {
         return 0;
     }
     if (forward) {
-        if (g->level == 2 && !(g->castle_minibosses & 1)) {
+        if (!g->debug_passages_unlocked && g->level == 2 && !(g->castle_minibosses & 1)) {
             push_message(g, "The Castellan guards the next floor.");
-        } else if (g->level == 4 && !(g->castle_minibosses & 2)) {
+        } else if (!g->debug_passages_unlocked && g->level == 4 && !(g->castle_minibosses & 2)) {
             push_message(g, "The Royal Arcanist guards the next floor.");
         } else if (g->level < CASTLE_DEPTH) {
             castle_enter(g, g->level + 1);

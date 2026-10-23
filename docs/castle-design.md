@@ -2,7 +2,8 @@
 
 The six-floor castle interior is implemented and ready for play testing.
 Reach the safe grounds through either Crown Road, approach the north castle
-entrance, and confirm entry. The south gate still leads to the Royal Catacombs.
+entrance, and confirm entry. The south gate leads onto the northern road, past the Royal Catacombs
+and Elderwood toward Oakhaven.
 
 The grounds also contain the **Royal Jail** and a townsman who secretly reports
 you to the Royal Guards when spoken to with `T`. This one-time arrest begins

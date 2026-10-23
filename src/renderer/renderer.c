@@ -43,6 +43,8 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
         "assets/images/labyrinth-entrance.bmp");
     r->dungeon_entrance_texture = load_sprite_texture(sdl, "assets/images/dungeon-entrance.bmp");
     r->swamp_entrance_texture = load_sprite_texture(sdl, "assets/images/swamp-entrance.bmp");
+    r->elderwood_entrance_texture = load_sprite_texture(sdl, "assets/images/elderwood-entrance.bmp");
+    r->elderwood_enemy_texture = load_sprite_texture(sdl, "assets/images/elderwood-enemies.bmp");
     r->forest_entrance_texture = load_sprite_texture(sdl, "assets/images/forest-entrance.bmp");
     r->mountain_entrance_texture = load_sprite_texture(sdl, "assets/images/mountain-entrance.bmp");
     const char *entrance_paths[TOWN_EXIT_CATACOMBS + 1] = {NULL};
@@ -81,6 +83,7 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
         r->local_building_textures[i] = load_sprite_texture(sdl, local_paths[i]);
     }
     r->island_texture = load_sprite_texture(sdl, "assets/images/island-sprites.bmp");
+    r->island_temple_texture = load_sprite_texture(sdl, "assets/images/temple-entrance.bmp");
     r->island_ship_texture = load_sprite_texture(sdl,
         "assets/images/island-ship.bmp");
     r->temple_enemy_texture = load_sprite_texture(sdl,
@@ -161,6 +164,10 @@ void renderer_free(Renderer *r) {
         SDL_DestroyTexture(r->island_texture);
         r->island_texture = NULL;
     }
+    if (r->island_temple_texture) {
+        SDL_DestroyTexture(r->island_temple_texture);
+        r->island_temple_texture = NULL;
+    }
     if (r->workshop_texture) {
         SDL_DestroyTexture(r->workshop_texture);
         r->workshop_texture = NULL;
@@ -190,6 +197,14 @@ void renderer_free(Renderer *r) {
             SDL_DestroyTexture(r->area_entrance_textures[i]);
             r->area_entrance_textures[i] = NULL;
         }
+    }
+    if (r->elderwood_entrance_texture) {
+        SDL_DestroyTexture(r->elderwood_entrance_texture);
+        r->elderwood_entrance_texture = NULL;
+    }
+    if (r->elderwood_enemy_texture) {
+        SDL_DestroyTexture(r->elderwood_enemy_texture);
+        r->elderwood_enemy_texture = NULL;
     }
     if (r->forest_entrance_texture) {
         SDL_DestroyTexture(r->forest_entrance_texture);

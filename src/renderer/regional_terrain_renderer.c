@@ -1,4 +1,5 @@
 #include "regional_terrain_renderer.h"
+#include "../game/elderwood.h"
 #include "../game/regional_terrain.h"
 #include "../game/landscapes.h"
 #include "../game/castle.h"
@@ -169,6 +170,15 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
             line1 = "STRAIGHT: AREA / LEFT: NEXT TOWN";
             line2 = "RIGHT: BOSS CHAMBER";
         }
+        if (northern_approach(g)) {
+            title = "NORTHERN ROAD";
+            line1 = "NORTH: CASTLE / SOUTH: OAKHAVEN";
+            line2 = "CLEAR ELDERWOOD AND CATACOMBS";
+        }
+    } else if (g->location == LOCATION_ELDERWOOD) {
+        title = g->level == ELDERWOOD_DEPTH ? "THE HEARTWOOD GROVE" : "ELDERWOOD FOREST";
+        line1 = "CUT BRAMBLES WITH INTERACT";
+        line2 = "DODGE CHARGES; TRUNKS EXPOSE HEART";
     } else if (g->location == LOCATION_ASHEN) {
         title = "VOLCANIC CROSSINGS";
         line1 = "C: COOL   !: WARNING   H: HOT";
@@ -338,11 +348,11 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
     } else if (g->location == LOCATION_CASTLE) {
         title = "CASTLE CROSSROADS";
         line1 = "WEST: ROSEMOOR / EAST: RIDGESHIRE";
-        line2 = "NORTH: CASTLE / SOUTH: CATACOMBS";
+        line2 = "NORTH: CASTLE / SOUTH: NORTH ROAD";
     } else if (g->location == LOCATION_ISLAND) {
         title = "RUINED ISLE";
         line1 = "TALK TO NAHLA BESIDE THE TEMPLE";
-        line2 = "THE TEMPLE GATE BEGINS THE CLIMB";
+        line2 = "WALK INTO THE TEMPLE TO ENTER";
     } else {
         return;
     }

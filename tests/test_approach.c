@@ -7,6 +7,9 @@
 static void approach_town(GameState *g, const TownApproach *route) {
     game_init(g);
     g->location = route->town;
+    if (town_road_index(route->town) >= 0) {
+        g->last_town_visited = route->town;
+    }
     if (route->town == LOCATION_TOWN2) {
         map_generate_town2(&g->map, &g->player.x, &g->player.y);
     } else if (route->town == LOCATION_TOWN3) {
@@ -227,10 +230,14 @@ void test_approaches(void) {
         free(loaded);
         return;
     }
-    ASSERT("all sixteen town connections have approach paths", town_approach_count == 16);
+    ASSERT("all seventeen town connections have approach paths", town_approach_count == 17);
     for (int unlocked = 0; unlocked < 2; unlocked++) {
         for (int i = 0; i < town_approach_count; i++) {
             const TownApproach *route = &town_approaches[i];
+            // The shared northern road has two landmarks and is covered by test_elderwood.
+            if (route->area == LOCATION_ELDERWOOD || route->area == LOCATION_CATACOMBS) {
+                continue;
+            }
             approach_town(g, route);
             g->gold = 393;
             g->score = 1234;
@@ -315,7 +322,7 @@ void test_approaches(void) {
     }
     for (int i = 0; i < town_approach_count; i++) {
         const TownApproach *route = &town_approaches[i];
-        if (!approach_entrance_rows(route->area)) {
+        if (route->area == LOCATION_CATACOMBS || !approach_entrance_rows(route->area)) {
             continue;
         }
         approach_town(g, route);

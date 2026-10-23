@@ -1,27 +1,30 @@
 # Royal Catacombs
 
-The south road from the grounds of the Castle of No Return leads into the
-Royal Catacombs. They open as soon as the castle grounds are reachable from
-either Crown Road. The north entrance leads separately to the six-floor
-[castle interior](castle-design.md).
+The Royal Catacombs now stand as a separate sprite along the northern road
+between Oakhaven and Castle Grounds. From Oakhaven, defeat Elderthorn in
+[Elderwood Forest](elderwood-forest.md) to reach them. Defeat the Grave Marshal
+to unlock the remainder of this northern castle route. They can also be reached
+from Castle Grounds' south exit after arriving by either Crown Road. The
+castle's north entrance leads separately to the six-floor [castle interior](castle-design.md).
 
 ## Exploration and travel
 
 Five floors contain eight burial chambers each, with varied room sizes and
 looping passages. Ivory burial niches, cracked stone, sarcophagi, and animated
 blue ossuary flames distinguish the catacombs from OakHaven's early dungeon.
-The castle's south gate uses an ivory area label.
+The castle's south exit is signed NORTHERN ROAD.
 
 Walk onto downstairs and press **D** to descend, even while enemies remain.
 Walk onto upstairs and press **U** to ascend; upstairs on floor 1 return to the
-castle's south gate. On floor 5, the cyan return passage remains sealed until
+road beside the Catacombs sprite. On floor 5, the cyan return passage remains sealed until
 the Grave Marshal is defeated. Stand on it and press **D** to return directly
-to the castle without retracing the other floors or clearing every enemy.
+to that road without retracing the other floors or clearing every enemy. Walk
+north for Castle Grounds or south through cleared Elderwood for Oakhaven.
 
 Each floor has its own persistent cache. Leaving and revisiting preserves
 explored maps, enemy health, deaths, resurrection allowances, extinguished
-braziers, and triggered traps. Return to Town takes the player to Rosemoor and
-opens a portal beside its east Crown Road gate. That portal returns to the
+braziers, and triggered traps. Return to Town takes the player to the last town
+actually entered and opens a portal there. That portal returns to the
 recorded catacomb floor and position. Portal wards dissipate pending spike or
 Marshal signature warnings that threaten the landing position. Non-damaging
 honor-guard calls retain their fixed targets and countdown.

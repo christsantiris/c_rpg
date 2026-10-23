@@ -16,7 +16,7 @@ continuations, without a second gate. Streets and services inside all five towns
 
 | Town | North | East | South | West |
 | --- | --- | --- | --- | --- |
-| Oakhaven | Closed; Windscar remains planned | Dungeon / Dawnmere road | Sunken Coast | Haunted Forest / Stillbury road |
+| Oakhaven | Elderwood / Catacombs / Castle road | Dungeon / Dawnmere road | Sunken Coast | Haunted Forest / Stillbury road |
 | Stillbury | Swamp / Rosemoor road | Haunted Forest / Oakhaven road | Glassdeep Caverns | Sunscar Wastes |
 | Rosemoor | Frostfell Wastes | Crown Road East / Castle | Swamp / Stillbury road | Moonveil Gardens |
 | Ridgeshire | Dragonspine | Ashen Hollow | Mountains / Dawnmere road | Crown Road West / Castle |
@@ -27,8 +27,9 @@ regional through roads. Town bypasses connect their existing approaches and
 never cross a locked regional road. Enemy adventures retain their depth,
 encounters, quests and entrance behavior. The castle retains its own grounds.
 
-New characters still start in Oakhaven. Return to Town spells and portals keep
-their existing direct town destinations and saved expedition anchors. Narrative
+New characters still start in Oakhaven. Return to Town uses the last town
+actually entered. Passing around a town leaves that destination unchanged.
+Return portals preserve their expedition anchors and physical entrance towns. Narrative
 arrivals, including Tomas's escape-tunnel return, retain their existing events.
 Physical travel along the regional roads uses the new town exteriors.
 
@@ -49,7 +50,15 @@ Save version 179 narrows Dawnmere's interior roads to one tile and gives its
 plaza a regular rectangular outline. Older Dawnmere saves update their paving
 in place, preserving exploration, dropped loot, portals and player progress.
 
+Save version 180 records `debug_passages_unlocked` for the debug shortcut
+launcher. It bypasses road, dock, sailing, quest, door and puzzle passage locks
+without assigning quests or recording boss victories. Normal older saves
+default to normal locks; loading them through the launcher enables the override.
+
 Artwork uses the established pixelkit textures, timber framing, tiled roofs,
 stonework and doorway details at native resolution. A rounded curtain wall,
 projecting towers and clustered houses follow the user's medieval hill-town
 reference. See the [five-town sprite comparison and renderer previews](art-sources/town-exteriors/README.md).
+
+The northern Oakhaven road opens in two steps: Elderthorn, then the Grave Marshal.
+See [Elderwood](elderwood-forest.md) for travel and save migration details.

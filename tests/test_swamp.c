@@ -324,6 +324,7 @@ void test_swamp(void) {
 
     swamp_game.player.player_class = CLASS_WARRIOR;
     game_init(&swamp_game);
+    game_enter_town_gate(&swamp_game, LOCATION_TOWN2, 20, 0);
     int sword_slot = swamp_game.inventory_count++;
     swamp_game.inventory[sword_slot] = reward;
     action_resolve_player(&swamp_game,

@@ -4,6 +4,7 @@
 #include "test_utils.h"
 #include "town_road_checks.h"
 #include "game/approach.h"
+#include "game/elderwood.h"
 #include "game/actions.h"
 
 // Entrance landmarks use the forest layout from side gates and the mountain layout otherwise.
@@ -23,6 +24,16 @@ static inline void walk_return_approach(GameState *g) {
     ASSERT("the area exit returns to the safe approach path", g->location == LOCATION_APPROACH && g->enemy_count == 0);
     int steps = 0;
     const TownApproach *route = approach_route(g);
+    if (northern_approach(g)) {
+        while (g->location == LOCATION_APPROACH && steps++ < APPROACH_W + APPROACH_H) {
+            int dx = (NORTH_ROAD_X > g->player.x) - (NORTH_ROAD_X < g->player.x);
+            int dy = dx ? 0 : (g->map.stairs_up_y > g->player.y) - (g->map.stairs_up_y < g->player.y);
+            action_resolve_player(g, (Action){ACTION_MOVE, g->player.x + dx, g->player.y + dy});
+        }
+        walk_into_arrived_town(g);
+        ASSERT("northern return path reaches its original town", g->location == (route ? route->town : LOCATION_CASTLE));
+        return;
+    }
     int dungeon_road = route && (route->area == LOCATION_DUNGEON || route->area == LOCATION_FOREST || approach_check_entrance_horizontal(route));
     int mountain_road = route && (route->area == LOCATION_MOUNTAINS || route->area == LOCATION_SWAMP || approach_check_entrance_vertical(route));
     while (g->location == LOCATION_APPROACH && steps++ < APPROACH_W + APPROACH_BRANCH_LENGTH) {

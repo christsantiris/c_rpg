@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Unlock every playable passage, including docks and island sailing.
 set -euo pipefail
 
 project_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"

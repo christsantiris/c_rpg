@@ -43,6 +43,7 @@ sprites:
 	python3 tools/sprites/labyrinth.py
 	python3 tools/sprites/dungeon.py
 	python3 tools/sprites/forest.py
+	python3 tools/sprites/elderwood.py
 	python3 tools/sprites/mountain.py
 	python3 tools/sprites/swamp.py
 	python3 tools/sprites/coast.py
@@ -53,6 +54,7 @@ sprites:
 	python3 tools/sprites/ashen.py
 	python3 tools/sprites/glassdeep.py
 	python3 tools/sprites/catacombs.py
+	python3 tools/sprites/temple.py
 	python3 tools/sprites/apothecary.py
 	python3 tools/sprites/adventurers_guild.py
 	python3 tools/sprites/workshop.py
