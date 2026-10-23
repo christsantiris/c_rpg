@@ -28,7 +28,7 @@ and many other adventures.
 
 ## World Map
 
-[![Illustrated world map showing Pirate Coast south of Dawnmere, Elderwood Forest and the northern road from Oakhaven through the Royal Catacombs to the castle, the five towns, both Crown Roads, regional adventures and the Ruined Isle.](docs/images/world-map-pirate-coast.png)](docs/images/world-map-pirate-coast.png)
+[![Illustrated world map showing Saltwind Mangroves south of Dawnmere, the road through Goblin Mountains, Elderwood Forest and the northern road from Oakhaven through the Royal Catacombs to the castle, the five towns, both Crown Roads, regional adventures and the Ruined Isle.](docs/images/world-map-saltwind.png)](docs/images/world-map-saltwind.png)
 
 An illustrated overview based on the world's town connections. Dawnmere now lies
 east of Oakhaven, reached by the safe road opened after defeating the Lich King.
@@ -40,21 +40,19 @@ passage to Castle Grounds. Goblin Mountains
 now lies north of Dawnmere, beside the road to Ridgeshire; defeating its King
 opens that road. Both mountain entrances start at level 1. Forest and swamp
 also have five forward levels, with their boss victories opening the town roads.
-[Pirate Coast](docs/pirate-coast.md) is a five-stage pirate adventure south of
-Dawnmere, with branching coastal routes, boundary exits, plunder chests, crossbow
-warnings and Captain Voss aboard the Black Flagship. In Dawnmere's Merchant
-shop, Corvin offers a treasure map leading to a stage-3 coffer; returning it
-earns 100 gold and a Mariner's Cloak usable by every class.
-Stage 3 now has an explorable harbor: board two ships, search cargo for a
-strongbox key, and lower a gangplank to open a crossing between their decks.
-Walking back into Pirate Coast restores regular enemies on all five stages;
-backtracking and portal returns resume the current expedition. Dawnmere's
-single-tile southern road leaves through its own coastal gate.
 Other enemy-area gates lead to safe cobblestone paths and themed entrance
 sprites; physical retreat returns to the same path. Rook's Labyrinth stands
 beside the Haunted Forest entrance on that road and stays sealed until Rook
 assigns the quest in Oakhaven's Tavern. Castle, secret tunnel and Crown Road
 travel keep their existing layouts.
+
+Pirate Coast and its merchant treasure quest have been removed.
+[Saltwind Mangroves](docs/saltwind-mangroves.md) now has an initial exploration
+pilot south of Dawnmere: enter its landmark from the southern road, board the
+skiff at a timber landing, paddle between four islands, and search supplies.
+Boat position, discoveries, dropped gear and return portals persist. Combat,
+the boss and the remaining four stages are planned next. Dawnmere's east route
+remains closed. Glassdeep Caverns stays south of Stillbury.
 
 Return to Town uses the last town actually entered; bypassing a town leaves
 that destination unchanged. Return portals retain the original expedition.
@@ -128,7 +126,7 @@ inventory actions.
 - [Goblin Mountains](docs/goblin-mountains.md)
 - [Dragonspine and High Pass](docs/dragonspine.md)
 - [Sunken Coast](docs/sunken-coast.md)
-- [Pirate Coast south of Dawnmere](docs/pirate-coast.md)
+- [Saltwind Mangroves — skiff pilot and area design](docs/saltwind-mangroves.md)
 - [Blackwater Swamp](docs/swamp.md)
 - [Sunscar Wastes and the magic lamp quest](docs/sunscar-wastes.md)
 - [Moonveil Gardens](docs/moonveil-gardens.md)

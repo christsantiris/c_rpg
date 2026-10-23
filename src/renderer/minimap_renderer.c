@@ -8,7 +8,7 @@
 #define MINIMAP_PAD   6
 
 void minimap_draw(Renderer *r, const GameState *g) {
-    if (g->location != LOCATION_PIRATE_COAST && g->location != LOCATION_ESCAPE_TUNNEL && g->location != LOCATION_DUNGEON &&
+    if (g->location != LOCATION_MANGROVES && g->location != LOCATION_ESCAPE_TUNNEL && g->location != LOCATION_DUNGEON &&
         g->location != LOCATION_FOREST &&
         g->location != LOCATION_MOUNTAINS &&
         g->location != LOCATION_DRAGONSPINE &&
@@ -31,6 +31,10 @@ void minimap_draw(Renderer *r, const GameState *g) {
     int oy = MINIMAP_PAD;
     int map_w = MAP_W;
     int map_h = MAP_H;
+    if (g->location == LOCATION_MANGROVES) {
+        map_w = MANGROVE_W;
+        map_h = MANGROVE_H;
+    }
     if (g->location == LOCATION_ESCAPE_TUNNEL) {
         map_w = ESCAPE_TUNNEL_W;
         map_h = ESCAPE_TUNNEL_H;
@@ -46,10 +50,6 @@ void minimap_draw(Renderer *r, const GameState *g) {
         map_h = SWAMP_MAP_H;
     }
 
-    if (g->location == LOCATION_PIRATE_COAST) {
-        map_w = PIRATE_W;
-        map_h = PIRATE_H;
-    }
     if (g->location == LOCATION_ELDERWOOD) {
         map_w = ELDERWOOD_W;
         map_h = ELDERWOOD_H;
@@ -79,6 +79,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
             int draw_y = oy + ty / MINIMAP_SCALE;
             int has_stair = 0;
             int has_floor = 0;
+            int has_water = 0;
 
             for (int dy = 0; dy < MINIMAP_SCALE; dy++) {
                 for (int dx = 0; dx < MINIMAP_SCALE; dx++) {
@@ -91,10 +92,12 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         continue;
                     }
                     TileType tile = g->map.tiles[sy][sx];
-                    if (tile == TILE_CASTLE_TRAP_OPEN || tile == TILE_CASTLE_WARD || tile == TILE_CASTLE_WARD_SPENT || tile == TILE_CASTLE_MUSTER ||
+                    if (tile == TILE_MANGROVE_WATER) {
+                        has_water = 1;
+                    }
+                    if (tile == TILE_MANGROVE_LANDING || tile == TILE_MANGROVE_RETURN || tile == TILE_MANGROVE_CACHE ||
+                        tile == TILE_CASTLE_TRAP_OPEN || tile == TILE_CASTLE_WARD || tile == TILE_CASTLE_WARD_SPENT || tile == TILE_CASTLE_MUSTER ||
                         tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN ||
-                        tile == TILE_PIRATE_ENTRANCE || tile == TILE_PIRATE_EXIT || tile == TILE_PIRATE_CHEST || tile == TILE_PIRATE_QUEST_CHEST ||
-                        tile == TILE_PIRATE_CARGO || tile == TILE_PIRATE_WINCH ||
                         tile == TILE_ELDERWOOD_ENTRANCE || tile == TILE_ELDERWOOD_EXIT ||
                         tile == TILE_RETURN_EXIT || tile == TILE_DUNGEON_KEY ||
                         tile == TILE_DUNGEON_STAIRS_SEALED || tile == TILE_DUNGEON_STAIRS_RETURN ||
@@ -168,10 +171,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                     } else if (tile == TILE_OSSUARY_BRAZIER || tile == TILE_OSSUARY_COLD ||
                         tile == TILE_MEMORIAL_BRAZIER || tile == TILE_MEMORIAL_COLD) {
                         has_stair = 1;
-                    } else if (tile != TILE_CASTLE_WALL && tile != TILE_CASTLE_PILLAR &&
-                        tile != TILE_PIRATE_SEA && tile != TILE_PIRATE_CLIFF && tile != TILE_PIRATE_PALISADE &&
-                        tile != TILE_PIRATE_RAIL && tile != TILE_PIRATE_CRATE && tile != TILE_PIRATE_MAST &&
-                        tile != TILE_PIRATE_WINCH_OPEN && tile != TILE_PIRATE_BULKHEAD &&
+                    } else if (tile != TILE_MANGROVE_WATER && tile != TILE_MANGROVE_ROOT && tile != TILE_CASTLE_WALL && tile != TILE_CASTLE_PILLAR &&
                         tile != TILE_CASTLE_BANNER && tile != TILE_CASTLE_GATE && tile != TILE_CASTLE_TABLE &&
                         tile != TILE_CASTLE_BOOKCASE && tile != TILE_CASTLE_THRONE && tile != TILE_CATACOMBS_WALL &&
                         tile != TILE_CATACOMBS_SARCOPHAGUS && tile != TILE_WALL &&
@@ -220,8 +220,8 @@ void minimap_draw(Renderer *r, const GameState *g) {
                 SDL_SetRenderDrawColor(r->sdl, 220, 180, 60, 255);
                 SDL_RenderDrawPoint(r->sdl, draw_x, draw_y);
             } else if (has_floor) {
-                if (g->location == LOCATION_PIRATE_COAST) {
-                    SDL_SetRenderDrawColor(r->sdl, 185, 156, 99, 255);
+                if (g->location == LOCATION_MANGROVES) {
+                    SDL_SetRenderDrawColor(r->sdl, 126, 135, 77, 255);
                 } else if (g->location == LOCATION_FOREST) {
                     SDL_SetRenderDrawColor(r->sdl, 45, 95, 55, 255);
                 } else if (g->location == LOCATION_MOUNTAINS ||
@@ -253,10 +253,18 @@ void minimap_draw(Renderer *r, const GameState *g) {
                     SDL_SetRenderDrawColor(r->sdl, 145, 140, 195, 255);
                 }
                 SDL_RenderDrawPoint(r->sdl, draw_x, draw_y);
+            } else if (has_water) {
+                SDL_SetRenderDrawColor(r->sdl, 24, 70, 81, 255);
+                SDL_RenderDrawPoint(r->sdl, draw_x, draw_y);
             }
         }
     }
 
+    if (g->location == LOCATION_MANGROVES && g->mangroves.initialized &&
+        map_is_explored(&g->map, g->mangroves.boat_x, g->mangroves.boat_y)) {
+        SDL_SetRenderDrawColor(r->sdl, 210, 155, 79, 255);
+        SDL_RenderDrawPoint(r->sdl, ox + g->mangroves.boat_x / MINIMAP_SCALE, oy + g->mangroves.boat_y / MINIMAP_SCALE);
+    }
     // Player dot
     SDL_SetRenderDrawColor(r->sdl, 80, 200, 80, 255);
     SDL_RenderDrawPoint(r->sdl,

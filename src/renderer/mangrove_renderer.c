@@ -1,0 +1,105 @@
+#include "mangrove_renderer.h"
+#include "sprites.h"
+#include "world_props.h"
+#include "controls_renderer.h"
+#include "../game/mangrove.h"
+
+static int water(const Map *map, int x, int y) {
+    return x < 0 || y < 0 || x >= MAP_W || y >= MAP_H || map->tiles[y][x] == TILE_MANGROVE_WATER;
+}
+
+void mangrove_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, int y, TileType tile) {
+    int px = sx * TILE_SIZE;
+    int py = sy * TILE_SIZE;
+    if (g->location == LOCATION_MANGROVE_PATH && tile == TILE_MANGROVE_ROOT) {
+        if (y < MANGROVE_GATE_Y) {
+            draw_town_floor(r, sx, sy);
+            return;
+        }
+        tile = TILE_MANGROVE_WATER;
+    }
+    renderer_draw_tile_bg(r, sx, sy, (SDL_Color){9, 42, 52, 255});
+    if (tile == TILE_MANGROVE_WATER) {
+        int phase = (SDL_GetTicks() / 190 + x * 3 + y * 7) % 8;
+        SDL_SetRenderDrawColor(r->sdl, 24 + phase, 66 + phase * 2, 77 + phase * 2, 255);
+        SDL_RenderDrawLine(r->sdl, px + 3 + phase, py + 6, px + 7 + phase, py + 6);
+        SDL_RenderDrawLine(r->sdl, px + 11 - phase / 2, py + 18, px + 17 - phase / 2, py + 18);
+        return;
+    }
+    int north = water(&g->map, x, y - 1);
+    int south = water(&g->map, x, y + 1);
+    int west = water(&g->map, x - 1, y);
+    int east = water(&g->map, x + 1, y);
+    for (int row = 0; row < TILE_SIZE; row++) {
+        int edge = row < 5 && north ? 5 - row : row > 18 && south ? row - 18 : 0;
+        int left = west ? edge : 0;
+        int right = east ? edge : 0;
+        SDL_SetRenderDrawColor(r->sdl, 115 + row % 3, 111 + row % 3, 73 + row % 3, 255);
+        SDL_RenderDrawLine(r->sdl, px + left, py + row, px + 23 - right, py + row);
+    }
+    SDL_SetRenderDrawColor(r->sdl, 90, 94, 57, 255);
+    int offset = (x * 7 + y * 11) % 9;
+    SDL_RenderDrawLine(r->sdl, px + 4 + offset, py + 8, px + 7 + offset, py + 8);
+    SDL_RenderDrawPoint(r->sdl, px + 9, py + 18);
+    if ((x * 11 + y * 7) % 3 == 0) {
+        SDL_SetRenderDrawColor(r->sdl, 67, 96, 45, 255);
+        for (int blade = 0; blade < 4; blade++) {
+            SDL_RenderDrawLine(r->sdl, px + 7 + blade * 2, py + 16, px + 6 + blade * 3, py + 11 + blade % 3);
+        }
+    }
+    if (tile == TILE_MANGROVE_ROOT) {
+        if (g->location == LOCATION_MANGROVES) {
+            SDL_Rect dest = {px - 12, py - 48, 48, 72};
+            SDL_RenderCopy(r->sdl, r->mangrove_root_texture, NULL, &dest);
+        }
+    } else if (tile == TILE_MANGROVE_LANDING) {
+        for (int row = 2; row < 23; row += 5) {
+            SDL_SetRenderDrawColor(r->sdl, 64, 48, 33, 255);
+            SDL_Rect plank = {px + 1, py + row, 22, 4};
+            SDL_RenderFillRect(r->sdl, &plank);
+            SDL_SetRenderDrawColor(r->sdl, 163, 125, 73, 255);
+            SDL_RenderDrawLine(r->sdl, px + 2, py + row, px + 21, py + row);
+        }
+    } else if (tile == TILE_MANGROVE_CACHE) {
+        draw_world_prop(r, sx, sy, PROP_CHEST, (SDL_Color){169, 137, 73, 255});
+    } else if (tile == TILE_MANGROVE_RETURN) {
+        renderer_draw_text(r, "DAWNMERE", px - 25, py + 2, (SDL_Color){223, 211, 140, 255}, r->font_tiny);
+    }
+}
+
+void mangrove_draw_landmark(Renderer *r, const GameState *g, const Viewport *v) {
+    if (g->location != LOCATION_MANGROVE_PATH) {
+        return;
+    }
+    int x = viewport_to_screen_x(v, MANGROVE_GATE_X) * TILE_SIZE;
+    int y = viewport_to_screen_y(v, MANGROVE_GATE_Y) * TILE_SIZE;
+    SDL_Rect dest = {x - 3 * TILE_SIZE, y - 5 * TILE_SIZE, 168, 144};
+    SDL_RenderCopy(r->sdl, r->mangrove_entrance_texture, NULL, &dest);
+    renderer_draw_text(r, "SALTWIND MANGROVES", x - 85, y - 6 * TILE_SIZE, (SDL_Color){163, 207, 105, 255}, r->font_tiny);
+}
+
+void mangrove_draw_boat(Renderer *r, const GameState *g, const Viewport *v) {
+    if (g->location != LOCATION_MANGROVES || !g->mangroves.initialized ||
+        !map_is_explored(&g->map, g->mangroves.boat_x, g->mangroves.boat_y)) {
+        return;
+    }
+    int direction = g->mangroves.boat_dy < 0 ? 0 : g->mangroves.boat_dx > 0 ? 1 : g->mangroves.boat_dy > 0 ? 2 : 3;
+    SDL_Rect source = {direction * 36, 0, 36, 36};
+    SDL_Rect dest = {viewport_to_screen_x(v, g->mangroves.boat_x) * TILE_SIZE - 6,
+        viewport_to_screen_y(v, g->mangroves.boat_y) * TILE_SIZE - 6, 36, 36};
+    SDL_RenderCopy(r->sdl, r->skiff_texture, &source, &dest);
+}
+
+void mangrove_draw_hint(Renderer *r, const GameState *g) {
+    if (g->location != LOCATION_MANGROVES) {
+        return;
+    }
+    const char *hint = mangrove_hint(g);
+    char text[100];
+    SDL_snprintf(text, sizeof(text), "%s%s%s", g->mangroves.aboard ? "PADDLING" : "ASHORE",
+        hint ? "  |  " : "", hint ? hint : "FIND TIMBER LANDINGS ALONG THE CHANNELS");
+    if (hint) {
+        SDL_snprintf(text, sizeof(text), "%s: %s", controls_key_name(g->key_bindings[CONTROL_MOVE_LEFT]), hint);
+    }
+    renderer_draw_text(r, text, 12, r->tiles_y * TILE_SIZE - 24, (SDL_Color){211, 222, 172, 255}, r->font_tiny);
+}

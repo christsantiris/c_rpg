@@ -37,10 +37,9 @@ typedef struct {
     SDL_Texture *forest_entrance_texture;
     SDL_Texture *elderwood_entrance_texture;
     SDL_Texture *elderwood_enemy_texture;
-    SDL_Texture *pirate_entrance_texture;
-    SDL_Texture *pirate_enemy_texture;
-    SDL_Texture *pirate_harbor_texture;
-    SDL_Texture *pirate_town_gate_texture;
+    SDL_Texture *mangrove_entrance_texture;
+    SDL_Texture *mangrove_root_texture;
+    SDL_Texture *skiff_texture;
     SDL_Texture *swamp_entrance_texture;
     SDL_Texture *area_entrance_textures[TOWN_EXIT_CATACOMBS + 1];
     SDL_Texture *town_gate_textures[TOWN_EXIT_GLASSDEEP + 1];

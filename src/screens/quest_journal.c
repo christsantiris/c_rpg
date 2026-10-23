@@ -2,7 +2,6 @@
 #include <SDL2/SDL.h>
 #include "../game/catacombs.h"
 #include "../game/jail.h"
-#include "../game/pirate.h"
 
 typedef struct {
     const char *title;
@@ -18,7 +17,7 @@ typedef struct {
     const char *objective_areas[4];
 } QuestDefinition;
 
-static const QuestDefinition quest_definitions[19] = {
+static const QuestDefinition quest_definitions[18] = {
     {
         "The Broken Seals", "Elowen",
         "Restore three guarded seals in Oakhaven's dungeon.",
@@ -153,20 +152,10 @@ static const QuestDefinition quest_definitions[19] = {
         "Defeat its Royal Guards; reclaim every item from the evidence chest.",
         {"Recover confiscated weapons, armor and shields"},
         "Royal Jail", {1, 0, 0, 0}, 0, 0, "Your confiscated equipment"
-    },
-    {
-        "The Merchant's Lost Fortune", "Merchant Corvin",
-        "Your gifted map marks a silver coffer on the northwest pier.",
-        "Return it to Corvin inside Dawnmere's Merchant shop.",
-        {"Recover Corvin's silver coffer"},
-        "Pirate Coast", {PIRATE_QUEST_LEVEL, 0, 0, 0}, PIRATE_QUEST_GOLD, 0, "Mariner's Cloak"
     }
 };
 
 static int quest_state(const GameState *g, int quest) {
-    if (quest == 18) {
-        return g->pirate_quest_state;
-    }
     if (quest == 17) {
         return g->jail_gear_state;
     }
@@ -222,9 +211,6 @@ static int quest_state(const GameState *g, int quest) {
 }
 
 static int quest_progress(const GameState *g, int quest) {
-    if (quest == 18) {
-        return g->pirate_quest_state >= 2;
-    }
     if (quest == 17) {
         return g->jail_gear_state == 3;
     }
@@ -296,7 +282,7 @@ int quest_journal_count(const GameState *g, QuestJournalTab tab) {
         return JOURNAL_BOSS_COUNT;
     }
     int count = 0;
-    for (int quest = 0; quest < 19; quest++) {
+    for (int quest = 0; quest < 18; quest++) {
         if (quest_in_tab(quest_state(g, quest), tab)) {
             count++;
         }
@@ -307,16 +293,16 @@ int quest_journal_count(const GameState *g, QuestJournalTab tab) {
 int quest_journal_get_boss(const GameState *g, int index, BossJournalEntry *entry) {
     static const char *names[JOURNAL_BOSS_COUNT] = {
         "Lich King", "Necromancer", "Goblin King", "Drowned Queen",
-        "Fallen Sun Guardian", "Swamp Demon", "Red Dragon", "Polar Kraken", "Desert Pharaoh", "Thorn Regent", "Cinder Lord", "Prism Sovereign", "Minotaur", "Grave Marshal", "Castellan", "Royal Arcanist", "Lord Veyr", "Elderthorn", "Captain Voss"
+        "Fallen Sun Guardian", "Swamp Demon", "Red Dragon", "Polar Kraken", "Desert Pharaoh", "Thorn Regent", "Cinder Lord", "Prism Sovereign", "Minotaur", "Grave Marshal", "Castellan", "Royal Arcanist", "Lord Veyr", "Elderthorn"
     };
     static const char *areas[JOURNAL_BOSS_COUNT] = {
         "Dungeon", "Forest", "Goblin Mountains", "Sunken Coast",
-        "Ruined Temple", "Blackwater Swamp", "Dragonspine", "Frostfell Wastes", "Sunscar Wastes", "Moonveil Gardens", "Ashen Hollow", "Glassdeep Caverns", "Labyrinth", "Royal Catacombs", "Castle: Iron Keep", "Castle: Crown Chapel", "Castle: Throne", "Elderwood Forest", "Pirate Coast"
+        "Ruined Temple", "Blackwater Swamp", "Dragonspine", "Frostfell Wastes", "Sunscar Wastes", "Moonveil Gardens", "Ashen Hollow", "Glassdeep Caverns", "Labyrinth", "Royal Catacombs", "Castle: Iron Keep", "Castle: Crown Chapel", "Castle: Throne", "Elderwood Forest"
     };
     static const Location regions[JOURNAL_BOSS_COUNT] = {
         LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST,
         LOCATION_TEMPLE, LOCATION_SWAMP, LOCATION_DRAGONSPINE, LOCATION_FROSTFELL,
-        LOCATION_DESERT, LOCATION_MOONVEIL, LOCATION_ASHEN, LOCATION_GLASSDEEP, LOCATION_LABYRINTH, LOCATION_CATACOMBS, LOCATION_CASTLE_INTERIOR, LOCATION_CASTLE_INTERIOR, LOCATION_CASTLE_INTERIOR, LOCATION_ELDERWOOD, LOCATION_PIRATE_COAST
+        LOCATION_DESERT, LOCATION_MOONVEIL, LOCATION_ASHEN, LOCATION_GLASSDEEP, LOCATION_LABYRINTH, LOCATION_CATACOMBS, LOCATION_CASTLE_INTERIOR, LOCATION_CASTLE_INTERIOR, LOCATION_CASTLE_INTERIOR, LOCATION_ELDERWOOD
     };
     if (index < 0 || index >= JOURNAL_BOSS_COUNT) {
         return 0;
@@ -324,7 +310,7 @@ int quest_journal_get_boss(const GameState *g, int index, BossJournalEntry *entr
     entry->name = names[index];
     entry->area = areas[index];
     entry->trophy = index == 16 && g->crown_of_unbound ? "Crown of the Unbound" : NULL;
-    entry->defeated = index == 18 ? g->pirate_defeated : index == 17 ? g->elderwood_defeated : index == 14 ? !!(g->castle_minibosses & 1) : index == 15 ? !!(g->castle_minibosses & 2) :
+    entry->defeated = index == 17 ? g->elderwood_defeated : index == 14 ? !!(g->castle_minibosses & 1) : index == 15 ? !!(g->castle_minibosses & 2) :
         (g->defeated_bosses & (1 << regions[index])) != 0;
     return 1;
 }
@@ -334,7 +320,7 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
         return 0;
     }
     int visible_index = 0;
-    for (int quest = 0; quest < 19; quest++) {
+    for (int quest = 0; quest < 18; quest++) {
         int state = quest_state(g, quest);
         if (!quest_in_tab(state, tab)) {
             continue;

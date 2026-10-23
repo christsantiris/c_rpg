@@ -1,4 +1,5 @@
 #include "town_road.h"
+#include "mangrove.h"
 #include <string.h>
 
 static const int dx[4] = {0, 1, 0, -1};
@@ -19,6 +20,10 @@ TownSide town_road_side(int x, int y) {
 }
 
 int town_road_connection(Location town, TownSide side, TownApproach *connection) {
+    if (town == LOCATION_DAWNMERE && side == TOWN_SIDE_SOUTH) {
+        *connection = (TownApproach){town, LOCATION_MANGROVES, 20, TOWN_H - 1};
+        return 1;
+    }
     for (int i = 0; i < town_approach_count; i++) {
         const TownApproach *route = &town_approaches[i];
         if (route->town == town && town_road_side(route->gate_x, route->gate_y) == side) {
@@ -164,6 +169,8 @@ int town_road_travel(GameState *g, int x, int y) {
     }
     if (entry) {
         game_enter_town_gate(g, connection.town, connection.gate_x, connection.gate_y);
+    } else if (connection.area == LOCATION_MANGROVES) {
+        mangrove_path(g, 0);
     } else if (connection.area == LOCATION_CROWNROAD || connection.area == LOCATION_KING_ROAD_WEST) {
         game_enter_king_road(g, connection.area, 0);
     } else {

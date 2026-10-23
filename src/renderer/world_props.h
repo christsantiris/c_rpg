@@ -69,7 +69,6 @@ typedef enum {
     PROP_LOW_FLAME_1,
     PROP_LOW_FLAME_2,
     PROP_ARCH,
-    PROP_SILVER_CHEST,
     PROP_COUNT
 } WorldPropArt;
 

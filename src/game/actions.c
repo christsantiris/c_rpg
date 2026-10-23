@@ -1,9 +1,9 @@
 #include "actions.h"
 #include "restoration.h"
 #include "game.h"
+#include "mangrove.h"
 #include "catacombs.h"
 #include "elderwood.h"
-#include "pirate.h"
 #include "castle.h"
 #include "lich.h"
 #include "necromancer.h"
@@ -223,12 +223,6 @@ static int enemy_score(EnemyType type) {
         case ENEMY_IRONHIDE_BOAR: return 90;
         case ENEMY_THORN_DRYAD: return 80;
         case ENEMY_TREEFOLK: return 200;
-        case ENEMY_CAPTAIN_VOSS: return 0;
-        case ENEMY_PIRATE_RAIDER: return 70;
-        case ENEMY_PIRATE_CROSSBOW: return 80;
-        case ENEMY_PIRATE_BUCCANEER: return 90;
-        case ENEMY_PIRATE_BRUTE: return 160;
-        case ENEMY_PIRATE_SWASHBUCKLER: return 110;
         case ENEMY_ROYAL_GUARD: return 85;
         case ENEMY_ELDERTHORN: return 0; // Awarded once by elderwood_defeat.
         case ENEMY_DARK_ELF: return 48;
@@ -327,10 +321,6 @@ static int melee_gold_bonus(const GameState *g) {
 }
 
 static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
-    if (enemy->type == ENEMY_CAPTAIN_VOSS) {
-        pirate_defeat(g);
-        return;
-    }
     if (enemy->type == ENEMY_ELDERTHORN) {
         elderwood_defeat(g);
         return;
@@ -382,12 +372,6 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
     }
     int gold = 0;
     switch (type) {
-        case ENEMY_PIRATE_RAIDER:
-        case ENEMY_PIRATE_CROSSBOW:
-        case ENEMY_PIRATE_BUCCANEER:
-        case ENEMY_PIRATE_BRUTE:
-        case ENEMY_PIRATE_SWASHBUCKLER: gold = 8 + rand() % 8; break;
-        case ENEMY_CAPTAIN_VOSS: break;
         case ENEMY_ROYAL_GUARD: gold = 10; break;
         case ENEMY_ELDERTHORN: break; // Its one-time reward was handled above.
         case ENEMY_BRIAR_WOLF:
@@ -636,7 +620,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
     }
 
     TileType drop_tile = g->map.tiles[y][x];
-    int plain_floor = drop_tile == TILE_PIRATE_SAND || drop_tile == TILE_PIRATE_DECK || drop_tile == TILE_ELDERWOOD_FLOOR || drop_tile == TILE_FLOOR ||
+    int plain_floor = drop_tile == TILE_ELDERWOOD_FLOOR || drop_tile == TILE_FLOOR ||
         drop_tile == TILE_FOREST_FLOOR ||
         drop_tile == TILE_MOUNTAIN_FLOOR ||
         drop_tile == TILE_MOUNTAIN_CAVE_FLOOR ||
@@ -960,7 +944,7 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
-    if (pirate_interaction_hint(g)) {
+    if (mangrove_hint(g)) {
         return 1;
     }
     if (jail_gear_nearby(g)) {
@@ -1224,6 +1208,16 @@ static void tick_player_poison(GameState *g) {
 }
 
 void action_resolve_player(GameState *g, Action a) {
+    if (g->location == LOCATION_MANGROVES && g->mangroves.aboard && a.type == ACTION_DROP_ITEM) {
+        push_message(g, "Go ashore before setting down an item.");
+        return;
+    }
+    if (g->location == LOCATION_MANGROVES && (a.type == ACTION_ASCEND || a.type == ACTION_DESCEND)) {
+        if (a.type == ACTION_ASCEND && !g->mangroves.aboard && g->player.x == 14 && g->player.y <= 1) {
+            mangrove_leave(g);
+        }
+        return;
+    }
     if (g->game_won || g->castle_prompt) {
         return;
     }
@@ -1267,16 +1261,6 @@ void action_resolve_player(GameState *g, Action a) {
         return;
     }
 
-    if (g->location == LOCATION_PIRATE_COAST && (a.type == ACTION_ASCEND || a.type == ACTION_DESCEND)) {
-        int forward = a.type == ACTION_DESCEND;
-        int x = forward ? g->map.stairs_down_x : g->map.stairs_up_x;
-        int y = forward ? g->map.stairs_down_y : g->map.stairs_up_y;
-        if (g->player.x == x && g->player.y == y) {
-            pirate_edge(g->level, forward, &x, &y);
-            pirate_travel(g, x, y);
-        }
-        return;
-    }
     if (g->location == LOCATION_ELDERWOOD && (a.type == ACTION_ASCEND || a.type == ACTION_DESCEND)) {
         elderwood_travel(g, g->player.x, g->player.y);
         return;
@@ -1373,7 +1357,7 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
-        if (pirate_interact(g)) {
+        if (mangrove_interact(g)) {
             return;
         }
         if (jail_recover_gear(g)) {
@@ -2461,7 +2445,7 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
-        if (pirate_travel(g, tx, ty) || elderwood_travel(g, tx, ty) || town_road_travel(g, tx, ty) || town_road_depart(g, tx, ty) || approach_travel(g, tx, ty) || approach_enter(g, tx, ty)) {
+        if (mangrove_travel(g, tx, ty) || elderwood_travel(g, tx, ty) || town_road_travel(g, tx, ty) || town_road_depart(g, tx, ty) || approach_travel(g, tx, ty) || approach_enter(g, tx, ty)) {
             return;
         }
 
@@ -3730,15 +3714,6 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
 
-        int pirate_damage = 0;
-        if (pirate_tick(g, e, &pirate_damage)) {
-            if (pirate_damage > 0) {
-                int damage = pirate_damage - g->player.defense / 2;
-                apply_enemy_damage(g, damage > 0 ? damage : 1, FEEDBACK_NOW);
-                push_message_kind(g, "A pirate attack strikes you!", MESSAGE_DAMAGE_TAKEN);
-            }
-            continue;
-        }
         int elder_damage = 0;
         if (elderwood_tick(g, e, &elder_damage)) {
             if (elder_damage > 0) {

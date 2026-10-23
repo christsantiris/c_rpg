@@ -1,7 +1,7 @@
 #include "game.h"
+#include "mangrove.h"
 #include "catacombs.h"
 #include "elderwood.h"
-#include "pirate.h"
 #include "castle.h"
 #include "lich.h"
 #include "necromancer.h"
@@ -101,12 +101,6 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
         case ENEMY_THORN_DRYAD:
         case ENEMY_TREEFOLK:
         case ENEMY_ELDERTHORN:
-        case ENEMY_PIRATE_RAIDER:
-        case ENEMY_PIRATE_CROSSBOW:
-        case ENEMY_PIRATE_BUCCANEER:
-        case ENEMY_PIRATE_BRUTE:
-        case ENEMY_PIRATE_SWASHBUCKLER:
-        case ENEMY_CAPTAIN_VOSS:
         case ENEMY_ROYAL_GUARD:
         case ENEMY_OATHBOUND_SOLDIER:
         case ENEMY_IRON_WARDEN:
@@ -604,7 +598,7 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
 }
 
 static int boss_for_level(const GameState *g, EnemyType *type) {
-    if (g->location == LOCATION_ELDERWOOD || g->location == LOCATION_PIRATE_COAST) {
+    if (g->location == LOCATION_ELDERWOOD || g->location == LOCATION_MANGROVES || g->location == LOCATION_MANGROVE_PATH) {
         return 0;
     }
     int boss_level = DUNGEON_DEPTH;
@@ -1479,6 +1473,7 @@ void enemies_spawn(GameState *g) {
 }
 
 void game_init(GameState *g) {
+    g->mangroves = (MangroveState){0};
     g->road_town = LOCATION_TOWN;
     g->approach_route = -1;
     g->jail_quest_state = 0;
@@ -1623,9 +1618,7 @@ void game_init(GameState *g) {
     memset(g->elderwood_cache, 0, sizeof(g->elderwood_cache));
     g->max_elderwood_level_reached = 1;
     g->elderwood_defeated = 0;
-    memset(g->pirate_cache, 0, sizeof(g->pirate_cache));
-    g->pirate_defeated = 0;
-    g->pirate_quest_state = 0;
+    g->retired_coast_item_count = 0;
     g->elderwood_entry_town = LOCATION_TOWN;
     g->catacombs_entry_town = LOCATION_CASTLE;
     g->northern_portal_town = LOCATION_CASTLE;
@@ -1881,6 +1874,29 @@ int game_equip_main_hand(GameState *g, int index) {
     return 1;
 }
 
+void game_recover_retired_items(GameState *g) {
+    if (town_road_index(g->location) < 0) {
+        return;
+    }
+    int recovered = 0;
+    while (g->retired_coast_item_count > 0) {
+        Item *item = &g->retired_coast_items[g->retired_coast_item_count - 1];
+        if (item->type == ITEM_GOLD) {
+            g->gold += item->value;
+            g->score += item->value;
+        } else if (g->inventory_count < MAX_INVENTORY) {
+            g->inventory[g->inventory_count++] = *item;
+        } else {
+            break;
+        }
+        g->retired_coast_item_count--;
+        recovered++;
+    }
+    if (recovered) {
+        push_message(g, "Items left on the retired coast have been returned to you.");
+    }
+}
+
 void game_remove_inventory_item(GameState *g, int index) {
     if (index < 0 || index >= g->inventory_count) {
         return;
@@ -1920,6 +1936,7 @@ void game_remove_inventory_item(GameState *g, int index) {
     if (g->equipped_armor > index) {
         g->equipped_armor--;
     }
+    game_recover_retired_items(g);
 }
 
 void game_apply_armor_bonuses(GameState *g, const Item *armor) {
@@ -3469,8 +3486,7 @@ static void prepare_forest_arrival(GameState *g, int from_high) {
 }
 
 void game_descend(GameState *g) {
-    if (g->location == LOCATION_PIRATE_COAST) {
-        pirate_change_level(g, 1);
+    if (g->location == LOCATION_MANGROVES) {
         return;
     }
     if (g->location == LOCATION_ELDERWOOD) {
@@ -3518,8 +3534,10 @@ void game_descend(GameState *g) {
 }
 
 void game_ascend(GameState *g) {
-    if (g->location == LOCATION_PIRATE_COAST) {
-        pirate_change_level(g, 0);
+    if (g->location == LOCATION_MANGROVES) {
+        if (!g->mangroves.aboard && g->player.x == 14 && g->player.y <= 1) {
+            mangrove_leave(g);
+        }
         return;
     }
     if (g->location == LOCATION_ELDERWOOD) {
@@ -4431,9 +4449,7 @@ void town_life_leave(GameState *g) {
     if (!b || b->interior != g->location) {
         return;
     }
-    if (b->town == LOCATION_DAWNMERE) {
-        game_enter_town_gate(g, LOCATION_DAWNMERE, b->x + b->w / 2, b->y + b->h);
-    } else if (b->town == LOCATION_TOWN) {
+    if (b->town == LOCATION_TOWN) {
         game_leave_tavern(g);
     } else if (b->town == LOCATION_TOWN2) {
         game_leave_inn(g);
@@ -5598,8 +5614,8 @@ void game_record_temple_enemy_defeated(GameState *g, EnemyType type) {
 
 static void return_to_town(GameState *g, Location destination) {
     Location returning_from = g->location;
+    mangrove_store(g);
     elderwood_store(g);
-    pirate_store(g);
     if (returning_from == LOCATION_FROSTFELL || returning_from == LOCATION_DESERT ||
         returning_from == LOCATION_MOONVEIL || returning_from == LOCATION_GLASSDEEP ||
         returning_from == LOCATION_CATACOMBS || returning_from == LOCATION_ELDERWOOD ||
@@ -5705,6 +5721,7 @@ static void return_to_town(GameState *g, Location destination) {
     g->player.freeze_recovery = 0;
     g->dialogue_active = 0;
     place_town_portal(g);
+    game_recover_retired_items(g);
 }
 
 static void enter_return_approach(GameState *g, Location area) {
@@ -5747,8 +5764,8 @@ void game_leave_labyrinth(GameState *g) {
 }
 
 void game_return_to_approach(GameState *g) {
-    if (g->location == LOCATION_PIRATE_COAST) {
-        pirate_leave(g);
+    if (g->location == LOCATION_MANGROVES) {
+        mangrove_leave(g);
         return;
     }
     if (g->location == LOCATION_ELDERWOOD) {
@@ -5861,7 +5878,7 @@ void game_return_to_town(GameState *g) {
         return;
     }
     Location destination = LOCATION_TOWN;
-    if (g->location == LOCATION_PIRATE_COAST) {
+    if (g->location == LOCATION_MANGROVES) {
         destination = LOCATION_DAWNMERE;
     } else if (g->location == LOCATION_ELDERWOOD) {
         destination = g->elderwood_entry_town;
@@ -5991,7 +6008,7 @@ void game_open_town_portal(GameState *g) {
         g->location != LOCATION_ASHEN &&
         g->location != LOCATION_GLASSDEEP &&
         g->location != LOCATION_CATACOMBS &&
-        g->location != LOCATION_PIRATE_COAST &&
+        g->location != LOCATION_MANGROVES &&
         g->location != LOCATION_ELDERWOOD &&
         g->location != LOCATION_DRAGONSPINE) {
         return;
@@ -6026,8 +6043,8 @@ void game_open_town_portal(GameState *g) {
 }
 
 void game_hide_portal_destination(GameState *g) {
-    if (g->portal_location == LOCATION_PIRATE_COAST) {
-        return; // Seeded coastal caches do not store portal markers.
+    if (g->portal_location == LOCATION_MANGROVES) {
+        return;
     }
     if (g->portal_location == LOCATION_ELDERWOOD) {
         elderwood_hide_portal(g);
@@ -6133,12 +6150,12 @@ void game_use_town_portal(GameState *g) {
     }
     if (!g->portal_active || g->portal_level < 1 ||
         g->portal_level > MAX_REGION_DEPTH) return;
-    if (g->portal_location == LOCATION_PIRATE_COAST) {
-        pirate_portal(g);
-        return;
-    }
     if (g->portal_location == LOCATION_ELDERWOOD) {
         elderwood_portal(g);
+        return;
+    }
+    if (g->portal_location == LOCATION_MANGROVES && g->portal_level == 1) {
+        mangrove_enter(g, 1);
         return;
     }
     if (g->portal_location == LOCATION_CATACOMBS) {
@@ -6521,8 +6538,6 @@ typedef struct {
 } QuestOffer;
 
 static const QuestOffer quest_offers[] = {
-    {"Merchant Corvin", LOCATION_MERCHANT, offsetof(GameState, pirate_quest_state), 0,
-        "Corvin gives you a treasure map. See The Merchant's Lost Fortune in your quest journal."},
     {"Huntmaster Selene", LOCATION_GUILD, offsetof(GameState, hunt_quest_state), 0, "Assigned: The Three Great Hunts. See your quest journal."},
     {"Marshal Veyra", LOCATION_TOWN_HALL, offsetof(GameState, watchfire_quest_state), 0, "Assigned: Watchfires of Ridgeshire. See your quest journal."},
     {"Elowen", LOCATION_TAVERN, offsetof(GameState, elowen_quest_state), 0, "Quest assigned: The Broken Seals."},
