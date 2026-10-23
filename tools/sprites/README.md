@@ -338,3 +338,9 @@ See [art review and SDL previews](../../docs/art-sources/town-exteriors/README.m
 
 `elderwood.py` creates the living forest entrance and five creature sprites using
 pixelkit. See [native comparisons and SDL previews](../../docs/art-sources/elderwood/README.md).
+
+### Pirate Coast
+
+`pirate.py` creates the harbor-fort entrance and six pirate enemy sprites using
+pixelkit and the established harbor textures. See the [native comparison and
+SDL previews](../../docs/art-sources/pirate-coast/README.md).

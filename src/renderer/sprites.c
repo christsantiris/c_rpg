@@ -30,6 +30,10 @@ void draw_world_prop(Renderer *r, int tx, int ty, WorldPropArt art, SDL_Color ac
     if (art < 0 || art >= PROP_COUNT) {
         return;
     }
+    int silver = art == PROP_SILVER_CHEST;
+    if (silver) {
+        art = PROP_CHEST;
+    }
     SDL_Color light = {
         accent.r > 205 ? 255 : accent.r + 50,
         accent.g > 205 ? 255 : accent.g + 50,
@@ -55,8 +59,8 @@ void draw_world_prop(Renderer *r, int tx, int ty, WorldPropArt art, SDL_Color ac
                 case 'W': color = (SDL_Color){168, 106, 56, 255}; break;
                 case 'm': color = (SDL_Color){113, 129, 139, 255}; break;
                 case 'M': color = (SDL_Color){205, 218, 216, 255}; break;
-                case 'g': color = (SDL_Color){184, 131, 45, 255}; break;
-                case 'G': color = (SDL_Color){248, 211, 103, 255}; break;
+                case 'g': color = silver ? (SDL_Color){113, 129, 139, 255} : (SDL_Color){184, 131, 45, 255}; break;
+                case 'G': color = silver ? (SDL_Color){205, 218, 216, 255} : (SDL_Color){248, 211, 103, 255}; break;
                 case 'r': color = (SDL_Color){134, 37, 51, 255}; break;
                 case 'R': color = (SDL_Color){203, 78, 82, 255}; break;
                 case 'p': color = (SDL_Color){205, 188, 144, 255}; break;
@@ -2766,6 +2770,13 @@ static void draw_catacombs_enemy(Renderer *r, int tx, int ty, EnemyType type) {
 }
 
 void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
+    if (type >= ENEMY_PIRATE_RAIDER && type <= ENEMY_CAPTAIN_VOSS) {
+        SDL_Rect source = {(type - ENEMY_PIRATE_RAIDER) * 64, 0, 64, 64};
+        // Match the visible humanoid height to a 24-pixel tile and align the boots.
+        SDL_Rect dest = {tile_x * TILE_SIZE - 8, tile_y * TILE_SIZE - 12, 40, 40};
+        SDL_RenderCopy(r->sdl, r->pirate_enemy_texture, &source, &dest);
+        return;
+    }
     if (type >= ENEMY_BRIAR_WOLF && type <= ENEMY_ELDERTHORN) {
         int index = type - ENEMY_BRIAR_WOLF;
         SDL_Rect source = {index * 64, 0, 64, 64};
@@ -2774,6 +2785,13 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         return;
     }
     switch (type) {
+        case ENEMY_PIRATE_RAIDER:
+        case ENEMY_PIRATE_CROSSBOW:
+        case ENEMY_PIRATE_BUCCANEER:
+        case ENEMY_PIRATE_BRUTE:
+        case ENEMY_PIRATE_SWASHBUCKLER:
+        case ENEMY_CAPTAIN_VOSS:
+            break; // Drawn from the pirate atlas above.
         case ENEMY_ROYAL_GUARD:
             draw_royal_guard_overlay(r, tile_x, tile_y, 0);
             break;

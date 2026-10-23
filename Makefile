@@ -44,6 +44,7 @@ sprites:
 	python3 tools/sprites/dungeon.py
 	python3 tools/sprites/forest.py
 	python3 tools/sprites/elderwood.py
+	python3 tools/sprites/pirate.py
 	python3 tools/sprites/mountain.py
 	python3 tools/sprites/swamp.py
 	python3 tools/sprites/coast.py
