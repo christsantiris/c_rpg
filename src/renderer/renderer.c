@@ -47,6 +47,8 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->elderwood_enemy_texture = load_sprite_texture(sdl, "assets/images/elderwood-enemies.bmp");
     r->pirate_entrance_texture = load_sprite_texture(sdl, "assets/images/pirate-entrance.bmp");
     r->pirate_enemy_texture = load_sprite_texture(sdl, "assets/images/pirate-enemies.bmp");
+    r->pirate_harbor_texture = load_sprite_texture(sdl, "assets/images/pirate-harbor.bmp");
+    r->pirate_town_gate_texture = load_sprite_texture(sdl, "assets/images/pirate-town-gate.bmp");
     r->forest_entrance_texture = load_sprite_texture(sdl, "assets/images/forest-entrance.bmp");
     r->mountain_entrance_texture = load_sprite_texture(sdl, "assets/images/mountain-entrance.bmp");
     const char *entrance_paths[TOWN_EXIT_CATACOMBS + 1] = {NULL};
@@ -211,6 +213,14 @@ void renderer_free(Renderer *r) {
     if (r->pirate_enemy_texture) {
         SDL_DestroyTexture(r->pirate_enemy_texture);
         r->pirate_enemy_texture = NULL;
+    }
+    if (r->pirate_harbor_texture) {
+        SDL_DestroyTexture(r->pirate_harbor_texture);
+        r->pirate_harbor_texture = NULL;
+    }
+    if (r->pirate_town_gate_texture) {
+        SDL_DestroyTexture(r->pirate_town_gate_texture);
+        r->pirate_town_gate_texture = NULL;
     }
     if (r->elderwood_enemy_texture) {
         SDL_DestroyTexture(r->elderwood_enemy_texture);

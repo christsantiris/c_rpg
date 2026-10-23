@@ -10,6 +10,12 @@ enum { PIRATE_SHOT = 1, PIRATE_BLADE_WAVE = 3, PIRATE_SABER };
 #define PIRATE_QUEST_Y 6
 #define PIRATE_QUEST_GOLD 100
 
+enum { PIRATE_CARGO_KEY = 1, PIRATE_STRONGBOX = 2, PIRATE_GANGPLANK = 4 };
+#define PIRATE_WINCH_X 33
+#define PIRATE_WINCH_Y 15
+
+const char *pirate_interaction_hint(const GameState *g);
+
 const char *pirate_stage_name(int level);
 void pirate_generate(Map *map, int level, unsigned int seed, unsigned int claimed);
 void pirate_edge(int level, int forward, int *x, int *y);

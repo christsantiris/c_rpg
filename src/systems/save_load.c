@@ -570,6 +570,48 @@ static void retile_town_ground(GameState *g, int x, int y, TileType ground) {
     }
 }
 
+static void migrate_dawnmere_paths(GameState *g) {
+    if (g->location != LOCATION_DAWNMERE) {
+        return;
+    }
+    for (int x = 6; x <= 9; x++) {
+        retile_town_ground(g, x, 11, x == 9 ? TILE_TOWN_PATH : TILE_TOWN_FLOOR);
+    }
+    for (int x = 18; x <= 22; x++) {
+        if (x != 20) {
+            g->map.tiles[TOWN_H - 1][x] = TILE_WALL;
+        }
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (!item->active || item->y != TOWN_H - 1 || item->x < 18 || item->x > 22 || item->x == 20) {
+            continue;
+        }
+        int best = MAP_W + MAP_H;
+        int bx = 20;
+        int by = TOWN_H - 2;
+        for (int y = TOWN_H - 2; y > 0; y--) {
+            for (int x = 1; x < TOWN_W - 1; x++) {
+                TileType tile = g->map.tiles[y][x];
+                int distance = abs(x - item->x) + abs(y - item->y);
+                if ((tile == TILE_TOWN_FLOOR || tile == TILE_TOWN_PATH) && distance < best) {
+                    best = distance;
+                    bx = x;
+                    by = y;
+                }
+            }
+        }
+        item->x = bx;
+        item->y = by;
+        item->underlying_tile = g->map.tiles[by][bx];
+        g->map.tiles[by][bx] = TILE_ITEM;
+    }
+    if (g->player.y == TOWN_H - 1 && g->player.x >= 18 && g->player.x <= 22 && g->player.x != 20) {
+        g->player.x = 20;
+        g->player.y = TOWN_H - 2;
+    }
+}
+
 static void migrate_island_temple(GameState *g) {
     if (g->location != LOCATION_ISLAND) {
         return;
@@ -1147,6 +1189,7 @@ static int pirate_load(const cJSON *root, GameState *g, int version) {
         const cJSON *entry = cJSON_GetArrayItem(stages, i);
         const cJSON *seed = cJSON_GetObjectItem(entry, "seed");
         const cJSON *claimed = cJSON_GetObjectItem(entry, "treasure_claimed");
+        const cJSON *harbor = cJSON_GetObjectItem(entry, "harbor_state");
         const cJSON *explored = cJSON_GetObjectItem(entry, "explored");
         if (!cJSON_IsNumber(seed) || seed->valuedouble != seed->valueint || seed->valueint < 0 || seed->valueint > 1000000 ||
             !cJSON_IsNumber(claimed) || claimed->valuedouble != claimed->valueint || claimed->valueint < 0 || claimed->valueint > 7 ||
@@ -1155,6 +1198,13 @@ static int pirate_load(const cJSON *root, GameState *g, int version) {
         }
         cache->seed = seed->valueint;
         cache->treasure_claimed = claimed->valueint;
+        if ((version >= 187 && !cJSON_IsNumber(harbor)) || (harbor &&
+            (!cJSON_IsNumber(harbor) || harbor->valuedouble != harbor->valueint || harbor->valueint < 0 ||
+            harbor->valueint > 7 || (i != 2 && harbor->valueint) ||
+            ((harbor->valueint & PIRATE_STRONGBOX) && !(harbor->valueint & PIRATE_CARGO_KEY))))) {
+            return 0;
+        }
+        cache->harbor_state = harbor ? harbor->valueint : 0;
         base64_to_bytes(explored->valuestring, cache->explored, sizeof(cache->explored));
         const cJSON *enemies = cJSON_GetObjectItem(entry, "enemies");
         if (!cJSON_IsArray(enemies) || cJSON_GetArraySize(enemies) > PIRATE_ENEMIES) {
@@ -1207,7 +1257,7 @@ static int pirate_load(const cJSON *root, GameState *g, int version) {
                 return 0;
             }
         }
-        if (!cache->seed && (cache->enemy_count || cache->loot_count || cache->treasure_claimed)) {
+        if (!cache->seed && (cache->enemy_count || cache->loot_count || cache->treasure_claimed || cache->harbor_state)) {
             return 0;
         }
     }
@@ -1217,7 +1267,7 @@ static int pirate_load(const cJSON *root, GameState *g, int version) {
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 186);
+    cJSON_AddNumberToObject(root, "save_version", 188);
     cJSON_AddNumberToObject(root, "pirate_defeated", g->pirate_defeated);
     cJSON_AddNumberToObject(root, "pirate_quest_state", g->pirate_quest_state);
     cJSON *pirate = cJSON_CreateArray();
@@ -1229,6 +1279,7 @@ int save_game(const GameState *g, int slot) {
         cJSON *entry = cJSON_CreateObject();
         cJSON_AddNumberToObject(entry, "seed", cache.seed);
         cJSON_AddNumberToObject(entry, "treasure_claimed", cache.treasure_claimed);
+        cJSON_AddNumberToObject(entry, "harbor_state", cache.harbor_state);
         char *explored = bytes_to_base64(cache.explored, sizeof(cache.explored));
         cJSON_AddStringToObject(entry, "explored", explored);
         free(explored);
@@ -5716,6 +5767,9 @@ int load_game(GameState *g, int slot) {
             g->map.tiles[TOWN_SPRITE_Y + TOWN_SPRITE_H - 1][x] = TILE_TOWN_ROAD_ENTRY_SOUTH;
             g->map.tiles[TOWN_ROAD_H - 1][x] = TILE_TOWN_ROAD_EXIT_SOUTH;
         }
+    }
+    if (save_version < 188) {
+        migrate_dawnmere_paths(g);
     }
     if (g->location == LOCATION_PIRATE_COAST && (g->level < 1 || g->level > PIRATE_DEPTH ||
         !g->pirate_cache[g->level - 1].seed || g->enemy_count > PIRATE_ENEMIES ||

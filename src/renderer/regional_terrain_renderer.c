@@ -331,6 +331,9 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
         line1 = "BANDITS AND HORSEMEN PATROL AHEAD";
         line2 = "BREAK ARCHER SIGHTLINES WITH COVER";
     } else if (g->location == LOCATION_PIRATE_COAST) {
+        if (g->level == 3) {
+            return; // The harbor has a compact exploration panel and nearby action prompt.
+        }
         title = pirate_stage_name(g->level);
         unsigned int claimed = g->pirate_cache[g->level - 1].treasure_claimed;
         int count = !!(claimed & 1) + !!(claimed & 2) + !!(claimed & 4);

@@ -38,24 +38,37 @@ static void check_pirate_minimap(Renderer *r, GameState *g) {
     g->location = LOCATION_PIRATE_COAST;
     g->player.x = 70;
     g->player.y = 30;
-    const TileType blocked[] = {TILE_PIRATE_SEA, TILE_PIRATE_CLIFF, TILE_PIRATE_PALISADE, TILE_PIRATE_RAIL, TILE_PIRATE_CRATE};
+    const TileType blocked[] = {TILE_PIRATE_SEA, TILE_PIRATE_CLIFF, TILE_PIRATE_PALISADE, TILE_PIRATE_RAIL, TILE_PIRATE_CRATE,
+        TILE_PIRATE_BULKHEAD, TILE_PIRATE_MAST, TILE_PIRATE_WINCH_OPEN};
+    int barrier_width = (int)(sizeof(blocked) / sizeof(blocked[0])) * 2;
     for (int y = 0; y < PIRATE_H; y++) {
         for (int x = 0; x < PIRATE_W; x++) {
-            g->map.tiles[y][x] = x < 10 ? blocked[x / 2] : TILE_PIRATE_SAND;
+            g->map.tiles[y][x] = x < barrier_width ? blocked[x / 2] : TILE_PIRATE_SAND;
             map_mark_explored(&g->map, x, y);
         }
     }
     g->map.tiles[12][20] = TILE_PIRATE_EXIT;
+    g->map.tiles[14][20] = TILE_PIRATE_CARGO;
+    g->map.tiles[16][20] = TILE_PIRATE_WINCH;
     SDL_SetRenderDrawColor(r->sdl, 60, 80, 100, 255);
     SDL_RenderClear(r->sdl);
     minimap_draw(r, g);
     Uint32 sea = minimap_pixel(r, 0, 10);
-    for (int x = 2; x < 10; x += 2) {
+    for (int x = 2; x < barrier_width; x += 2) {
         assert(minimap_pixel(r, x, 10) == sea);
     }
     Uint32 floor = minimap_pixel(r, 24, 10);
     assert(floor != sea && minimap_pixel(r, 20, 12) != floor && minimap_pixel(r, 20, 12) != sea);
-    puts("PASS: Pirate Coast minimap leaves sea, cliffs, palisades, railings and cargo blank; floor and exits remain distinct.");
+    assert(minimap_pixel(r, 20, 14) == minimap_pixel(r, 20, 12) && minimap_pixel(r, 20, 16) == minimap_pixel(r, 20, 12));
+    SDL_PixelFormat *format = SDL_AllocFormat(SDL_PIXELFORMAT_RGBA32);
+    Uint8 red;
+    Uint8 green;
+    Uint8 blue;
+    Uint8 alpha;
+    SDL_GetRGBA(floor, format, &red, &green, &blue, &alpha);
+    assert(red > green && green > blue); // Warm sand rather than the dungeon's purple fallback.
+    SDL_FreeFormat(format);
+    puts("PASS: Pirate Coast minimap uses warm land, clear cargo/winch markers, and blank barriers.");
 }
 
 static void check_pirate_water(Renderer *r, GameState *g) {

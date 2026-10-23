@@ -33,9 +33,7 @@ static const PirateLayout layouts[PIRATE_DEPTH] = {
     {{9, 28, 50, 69, 10, 30, 50, 69}, {9, 8, 8, 10, 26, 26, 25, 26},
         {{0, 4}, {4, 5}, {5, 1}, {1, 2}, {2, 6}, {6, 7}, {7, 3}, {1, 6}}, 8,
         {{15, 3}, {40, 31}, {72, 18}}, {0, 5, 3}, {{0, 10}, {79, 26}}, {0, 7}},
-    {{9, 28, 30, 50, 69, 50, 69, 10}, {26, 25, 8, 8, 8, 25, 25, 8},
-        {{0, 1}, {1, 2}, {2, 3}, {3, 4}, {3, 5}, {5, 6}, {6, 4}, {2, 7}}, 8,
-        {{10, 3}, {40, 31}, {73, 30}}, {7, 5, 6}, {{0, 26}, {65, 0}}, {0, 4}},
+    {{0}, {0}, {{0}}, 0, {{10, 3}, {28, 9}, {43, 9}}, {0}, {{0, 26}, {65, 0}}, {0}},
     {{10, 30, 50, 69, 10, 30, 50, 69}, {8, 8, 8, 10, 26, 26, 26, 26},
         {{6, 5}, {5, 4}, {4, 0}, {0, 1}, {1, 2}, {2, 3}, {2, 6}, {3, 7}}, 8,
         {{20, 3}, {40, 31}, {73, 20}}, {1, 6, 7}, {{65, 35}, {79, 12}}, {6, 3}},
@@ -154,6 +152,68 @@ static void flagship(Map *map) {
     }
 }
 
+static void harbor_ship(Map *map, int cx, int rx) {
+    const int hull[17] = {1, 3, 5, 6, 7, 8, 9, 9, 9, 9, 9, 9, 8, 8, 7, 6, 5};
+    for (int y = 5; y <= 21; y++) {
+        int w = hull[y - 5] * rx / 9;
+        rectangle(map, cx - w, y, w * 2 + 1, 1, TILE_PIRATE_DECK);
+    }
+    for (int y = 5; y <= 21; y++) {
+        for (int x = cx - rx; x <= cx + rx; x++) {
+            if (map->tiles[y][x] == TILE_PIRATE_DECK &&
+                (y == 5 || map->tiles[y - 1][x] == TILE_PIRATE_SEA || map->tiles[y + 1][x] == TILE_PIRATE_SEA ||
+                map->tiles[y][x - 1] == TILE_PIRATE_SEA || map->tiles[y][x + 1] == TILE_PIRATE_SEA)) {
+                map->tiles[y][x] = TILE_PIRATE_RAIL;
+            }
+        }
+    }
+    // Walk straight aboard, then choose the cargo room or the open fighting deck.
+    rectangle(map, cx - 1, 20, 3, 5, TILE_PIRATE_DECK);
+    rectangle(map, cx - 3, 8, 7, 7, TILE_PIRATE_BULKHEAD);
+    rectangle(map, cx - 2, 9, 5, 5, TILE_PIRATE_DECK);
+    rectangle(map, cx, 8, 2, 2, TILE_PIRATE_DECK);
+    rectangle(map, cx, 13, 2, 3, TILE_PIRATE_DECK);
+    map->tiles[17][cx] = TILE_PIRATE_MAST;
+    map->tiles[9][cx + 2] = TILE_PIRATE_CARGO;
+    map->tiles[12][cx - 2] = TILE_PIRATE_CRATE;
+    map->tiles[12][cx + 2] = TILE_PIRATE_CRATE;
+}
+
+static void harbor(Map *map, unsigned int seed) {
+    // A public quay loops around open water. Neither ship is a mandatory corridor.
+    rectangle(map, 4, 5, 12, 26, TILE_PIRATE_SAND);
+    cove(map, 10, 6, 6, 3, TILE_PIRATE_SAND);
+    cove(map, 10, 30, 6, 3, TILE_PIRATE_SAND);
+    rectangle(map, 8, 2, 8, 10, TILE_PIRATE_DECK);
+    rectangle(map, 12, 2, 54, 3, TILE_PIRATE_DECK);
+    rectangle(map, 10, 24, 56, 3, TILE_PIRATE_DECK);
+    rectangle(map, 63, 3, 3, 24, TILE_PIRATE_DECK);
+    harbor_ship(map, 30, 4);
+    harbor_ship(map, 45, 4);
+    // Clear the two opposed boarding openings, leaving a visible water gap.
+    rectangle(map, 32, 16, 3, 2, TILE_PIRATE_DECK);
+    rectangle(map, 41, 16, 3, 2, TILE_PIRATE_DECK);
+    map->tiles[PIRATE_WINCH_Y][PIRATE_WINCH_X] = TILE_PIRATE_WINCH;
+    // Cargo varies within the quay without changing the recognizable harbor.
+    map->tiles[20 + seed % 3][7] = TILE_PIRATE_CRATE;
+    map->tiles[25][60 - seed % 3] = TILE_PIRATE_CRATE;
+    gateway(map, 3, 0, 10, 26);
+    gateway(map, 3, 1, 65, 4);
+}
+
+static void harbor_apply(Map *map, unsigned int state) {
+    if (state & PIRATE_CARGO_KEY) {
+        map->tiles[9][32] = TILE_PIRATE_DECK;
+    }
+    if (state & PIRATE_STRONGBOX) {
+        map->tiles[9][47] = TILE_PIRATE_DECK;
+    }
+    if (state & PIRATE_GANGPLANK) {
+        rectangle(map, 35, 16, 6, 2, TILE_PIRATE_DECK);
+        map->tiles[PIRATE_WINCH_Y][PIRATE_WINCH_X] = TILE_PIRATE_WINCH_OPEN;
+    }
+}
+
 void pirate_generate(Map *map, int level, unsigned int seed, unsigned int claimed) {
     const PirateLayout *layout = layout_for(level);
     TileType floor = ground(level);
@@ -166,6 +226,8 @@ void pirate_generate(Map *map, int level, unsigned int seed, unsigned int claime
     }
     if (level == PIRATE_DEPTH) {
         flagship(map);
+    } else if (level == 3) {
+        harbor(map, seed);
     } else {
         int cx[8];
         int cy[8];
@@ -337,12 +399,21 @@ static void load_floor(GameState *g) {
         cache->seed = 1u + (unsigned int)rand() % 1000000u;
     }
     pirate_generate(&g->map, g->level, cache->seed, cache->treasure_claimed);
+    if (g->level == 3) {
+        harbor_apply(&g->map, cache->harbor_state);
+    }
     g->enemy_count = 0;
     g->floor_item_count = 0;
     if (fresh) {
         unsigned char reachable[PIRATE_H][PIRATE_W];
         int candidates[PIRATE_H * PIRATE_W];
         int count = 0;
+        if (g->level == 3) {
+            spawn(g, ENEMY_PIRATE_BUCCANEER, 28, 11);
+            spawn(g, ENEMY_PIRATE_RAIDER, 32, 18);
+            spawn(g, ENEMY_PIRATE_SWASHBUCKLER, 43, 11);
+            spawn(g, ENEMY_PIRATE_CROSSBOW, 47, 18);
+        }
         pirate_reachable(&g->map, reachable);
         for (int y = 1; y < PIRATE_H - 1; y++) {
             for (int x = 1; x < PIRATE_W - 1; x++) {
@@ -351,13 +422,19 @@ static void load_floor(GameState *g) {
                     abs(x - g->map.stairs_up_x) + abs(y - g->map.stairs_up_y) >= 10 &&
                     abs(x - g->map.stairs_down_x) + abs(y - g->map.stairs_down_y) >= 3 &&
                     !(g->level == PIRATE_DEPTH && abs(x - 69) + abs(y - 18) < 4)) {
-                    candidates[count++] = y * PIRATE_W + x;
+                    int occupied = 0;
+                    for (int i = 0; i < g->enemy_count; i++) {
+                        occupied |= g->enemies[i].x == x && g->enemies[i].y == y;
+                    }
+                    if (!occupied) {
+                        candidates[count++] = y * PIRATE_W + x;
+                    }
                 }
             }
         }
         unsigned int roll = cache->seed;
         int wanted = 8 + g->level / 2;
-        for (int i = 0; i < wanted && count; i++) {
+        for (int i = g->enemy_count; i < wanted && count; i++) {
             roll = roll * 1664525u + 1013904223u;
             int pick = roll % (unsigned int)count;
             int cell = candidates[pick];
@@ -438,7 +515,7 @@ static void nearest_ground(const Map *map, unsigned char cells[PIRATE_H][PIRATE_
 }
 
 void pirate_migrate(GameState *g, int version) {
-    if (version >= 185) {
+    if (version >= 187) {
         return;
     }
     int active = g->location == LOCATION_PIRATE_COAST && g->level >= 1 && g->level <= PIRATE_DEPTH;
@@ -449,11 +526,17 @@ void pirate_migrate(GameState *g, int version) {
     }
     Map map;
     for (int level = 1; level <= PIRATE_DEPTH; level++) {
+        if (version >= 185 && level != 3) {
+            continue;
+        }
         PirateCache *cache = &g->pirate_cache[level - 1];
         if (!cache->seed) {
             continue;
         }
         pirate_generate(&map, level, cache->seed, cache->treasure_claimed);
+        if (level == 3) {
+            harbor_apply(&map, cache->harbor_state);
+        }
         unsigned char reachable[PIRATE_H][PIRATE_W];
         unsigned char available[PIRATE_H][PIRATE_W];
         pirate_reachable(&map, reachable);
@@ -493,16 +576,73 @@ void pirate_migrate(GameState *g, int version) {
             g->portal_origin_tile = map.tiles[g->portal_y][g->portal_x];
         }
     }
-    if (active) {
+    if (active && (version < 185 || g->level == 3)) {
         load_floor(g);
         push_message(g, "Pirate Coast's routes have changed. Your expedition progress is preserved.");
     }
 }
 
+static void restart_expedition(GameState *g) {
+    Map map;
+    for (int level = 1; level <= PIRATE_DEPTH; level++) {
+        PirateCache *cache = &g->pirate_cache[level - 1];
+        if (!cache->seed) {
+            continue;
+        }
+        pirate_generate(&map, level, cache->seed, cache->treasure_claimed);
+        if (level == 3) {
+            harbor_apply(&map, cache->harbor_state);
+        }
+        unsigned char available[PIRATE_H][PIRATE_W];
+        pirate_reachable(&map, available);
+        for (int y = 0; y < PIRATE_H; y++) {
+            for (int x = 0; x < PIRATE_W; x++) {
+                if (abs(x - map.stairs_up_x) + abs(y - map.stairs_up_y) < 10 ||
+                    abs(x - map.stairs_down_x) + abs(y - map.stairs_down_y) < 3 ||
+                    (g->portal_active && g->portal_location == LOCATION_PIRATE_COAST && g->portal_level == level &&
+                    abs(x - g->portal_x) + abs(y - g->portal_y) <= 1)) {
+                    available[y][x] = 0;
+                }
+            }
+        }
+        for (int i = 0; i < cache->enemy_count; i++) {
+            Enemy *enemy = &cache->enemies[i];
+            if (enemy->is_boss && g->pirate_defeated) {
+                enemy->active = 0;
+                enemy->hp = 0;
+            } else if (enemy->is_boss && enemy->active) {
+                available[enemy->y][enemy->x] = 0;
+            }
+        }
+        for (int i = 0; i < cache->loot_count; i++) {
+            FloorItem *item = &cache->loot[i];
+            if (item->active) {
+                available[item->y][item->x] = 0;
+            }
+        }
+        g->level = level;
+        g->enemy_count = 0;
+        for (int i = 0; i < cache->enemy_count; i++) {
+            Enemy *enemy = &cache->enemies[i];
+            if (enemy->is_boss) {
+                continue;
+            }
+            int x = enemy->x;
+            int y = enemy->y;
+            nearest_ground(&map, available, &x, &y);
+            available[y][x] = 0;
+            spawn(g, enemy->type, x, y);
+            *enemy = g->enemies[g->enemy_count - 1];
+        }
+    }
+}
+
 void pirate_enter(GameState *g) {
+    pirate_store(g);
     g->location = LOCATION_PIRATE_COAST;
     g->approach_route = -1;
     g->dialogue_active = 0;
+    restart_expedition(g);
     g->level = 1;
     load_floor(g);
     g->player.x = g->map.stairs_up_x;
@@ -602,7 +742,66 @@ int pirate_near_chest(const GameState *g) {
     return 0;
 }
 
+static int near_object(const GameState *g, int x, int y) {
+    return abs(g->player.x - x) <= 1 && abs(g->player.y - y) <= 1;
+}
+
+const char *pirate_interaction_hint(const GameState *g) {
+    if (g->location != LOCATION_PIRATE_COAST) {
+        return NULL;
+    }
+    if (g->level == 3) {
+        unsigned int state = g->pirate_cache[2].harbor_state;
+        if (!(state & PIRATE_GANGPLANK) && near_object(g, PIRATE_WINCH_X, PIRATE_WINCH_Y)) {
+            return "LOWER BOARDING GANGPLANK";
+        }
+        if (!(state & PIRATE_CARGO_KEY) && near_object(g, 32, 9)) {
+            return "SEARCH STENCILED CARGO";
+        }
+        if (!(state & PIRATE_STRONGBOX) && near_object(g, 47, 9)) {
+            return state & PIRATE_CARGO_KEY ? "UNLOCK SMUGGLERS' STRONGBOX" : "STRONGBOX: FIND ITS KEY";
+        }
+    }
+    if (near_quest_chest(g)) {
+        return g->pirate_quest_state ? "RECOVER CORVIN'S COFFER" : "EXAMINE SILVER COFFER";
+    }
+    return pirate_near_chest(g) ? "CLAIM PLUNDER" : NULL;
+}
+
+static int harbor_interact(GameState *g) {
+    if (g->location != LOCATION_PIRATE_COAST || g->level != 3) {
+        return 0;
+    }
+    unsigned int *state = &g->pirate_cache[2].harbor_state;
+    if (!(*state & PIRATE_GANGPLANK) && near_object(g, PIRATE_WINCH_X, PIRATE_WINCH_Y)) {
+        *state |= PIRATE_GANGPLANK;
+        // Only the gap and winch change; existing loot and portals stay intact.
+        rectangle(&g->map, 35, 16, 6, 2, TILE_PIRATE_DECK);
+        g->map.tiles[PIRATE_WINCH_Y][PIRATE_WINCH_X] = TILE_PIRATE_WINCH_OPEN;
+        push_message(g, "The winch lowers a boarding gangplank. You can cross directly between both ships!");
+        return 1;
+    }
+    int west = !(*state & PIRATE_CARGO_KEY) && near_object(g, 32, 9);
+    int east = !(*state & PIRATE_STRONGBOX) && near_object(g, 47, 9);
+    if (!west && !east) {
+        return 0;
+    }
+    if (east && !(*state & PIRATE_CARGO_KEY)) {
+        push_message(g, "The Nightjar's strongbox is locked. A note reads: 'Key hidden with the Gull's sailcloth.'");
+        return 1;
+    }
+    *state |= west ? PIRATE_CARGO_KEY : PIRATE_STRONGBOX;
+    g->map.tiles[9][west ? 32 : 47] = TILE_PIRATE_DECK;
+    g->gold += west ? 35 : 75;
+    push_message(g, west ? "Under the Gull's sailcloth: 35 gold and a brass key! It fits the Nightjar's strongbox aboard the eastern ship." :
+        "The brass key turns. Smuggled valuables recovered: 75 gold! Both cargo rooms have been searched.");
+    return 1;
+}
+
 int pirate_interact(GameState *g) {
+    if (harbor_interact(g)) {
+        return 1;
+    }
     if (near_quest_chest(g)) {
         if (!g->pirate_quest_state) {
             push_message(g, "The coffer bears a merchant's seal. Someone in Dawnmere may know how to open it.");

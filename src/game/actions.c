@@ -960,7 +960,7 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
-    if (pirate_near_chest(g)) {
+    if (pirate_interaction_hint(g)) {
         return 1;
     }
     if (jail_gear_nearby(g)) {

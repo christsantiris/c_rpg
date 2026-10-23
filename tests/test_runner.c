@@ -84,6 +84,7 @@ void test_catacombs(void);
 void test_elderwood(void);
 void test_pirate(void);
 void test_pirate_quest(void);
+void test_pirate_harbor(void);
 void test_grave_marshal(void);
 void test_desert_pharaoh(void);
 void test_thorn_regent(void);
@@ -205,6 +206,7 @@ int main(void) {
     test_elderwood();
     test_pirate();
     test_pirate_quest();
+    test_pirate_harbor();
     test_catacombs();
     test_grave_marshal();
     test_desert_pharaoh();

@@ -98,6 +98,8 @@ void test_pirate_quest(void) {
         g->inventory_count == inventory && quest_journal_get_entry(g, QUEST_TAB_ACTIVE, 0, &entry) &&
         strcmp(entry.title, "The Merchant's Lost Fortune") == 0 && entry.stages[0] == 3 && entry.reward_gold == 100 &&
         strcmp(entry.reward_item, "Mariner's Cloak") == 0 && !entry.objective_complete[0]);
+    ASSERT("accepting Corvin's map itself preserves the cached expedition", g->pirate_cache[2].seed == seed &&
+        g->pirate_cache[2].enemies[0].hp == 7);
     g->player.x = 20;
     g->player.y = 21;
     action_resolve_player(g, (Action){ACTION_MOVE, 20, 22});
@@ -108,8 +110,9 @@ void test_pirate_quest(void) {
     pirate_enter(g);
     pirate_change_level(g, 1);
     pirate_change_level(g, 1);
-    ASSERT("taking the quest after exploring preserves stage three's terrain and enemy wounds", g->pirate_cache[2].seed == seed &&
-        g->enemies[0].hp == 7 && g->map.tiles[PIRATE_QUEST_Y][PIRATE_QUEST_X] == TILE_PIRATE_QUEST_CHEST);
+    int crew_hp = g->enemies[0].max_hp;
+    ASSERT("walking back into Pirate Coast restores its crew while preserving terrain and the gifted map", g->pirate_cache[2].seed == seed &&
+        g->enemies[0].hp == crew_hp && g->pirate_quest_state == 1 && g->map.tiles[PIRATE_QUEST_Y][PIRATE_QUEST_X] == TILE_PIRATE_QUEST_CHEST);
     g->inventory_count = MAX_INVENTORY;
     for (int i = 0; i < MAX_INVENTORY; i++) {
         g->inventory[i] = item_make_health_potion();
@@ -166,12 +169,12 @@ void test_pirate_quest(void) {
     action_resolve_player(g, (Action){ACTION_MOVE, 20, 22});
     game_use_town_portal(g);
     ASSERT("the portal restores the expedition without respawning its quest treasure", g->location == LOCATION_PIRATE_COAST &&
-        g->level == 3 && g->pirate_quest_state == 3 && g->enemies[0].hp == 7 && g->floor_items[0].underlying_tile == TILE_PIRATE_DECK);
+        g->level == 3 && g->pirate_quest_state == 3 && g->enemies[0].hp == crew_hp && g->floor_items[0].underlying_tile == TILE_PIRATE_DECK);
     game_enter_town_gate(g, LOCATION_DAWNMERE, 20, 12);
     g->map.tiles[10][9] = TILE_LOCAL_BUILDING;
     ASSERT("old Dawnmere saves gain the shop doorway while retaining gold and expedition progress", save_game(g, QUEST_SLOT) &&
         edit_save(185, -1) && load_game(loaded, QUEST_SLOT) && !loaded->pirate_quest_state && loaded->map.tiles[10][9] == TILE_LOCAL_DOOR &&
-        loaded->gold == gold + 100 && loaded->pirate_cache[2].seed == seed && loaded->pirate_cache[2].enemies[0].hp == 7);
+        loaded->gold == gold + 100 && loaded->pirate_cache[2].seed == seed && loaded->pirate_cache[2].enemies[0].hp == crew_hp);
     ASSERT("new saves reject missing quest state rather than resetting progress", save_game(g, QUEST_SLOT) && edit_save(186, -1) && !load_game(loaded, QUEST_SLOT));
     ASSERT("new saves reject invalid quest-state values", save_game(g, QUEST_SLOT) && edit_save(186, 4) && !load_game(loaded, QUEST_SLOT) &&
         save_game(g, QUEST_SLOT) && edit_save(186, 1.5) && !load_game(loaded, QUEST_SLOT));

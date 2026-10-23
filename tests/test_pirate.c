@@ -75,6 +75,184 @@ static int saved_version(int version) {
     return ok;
 }
 
+static void enter_pirate_from_town(GameState *g) {
+    g->player.x = 20;
+    g->player.y = TOWN_H - 2;
+    action_resolve_player(g, (Action){ACTION_MOVE, 20, TOWN_H - 1});
+    ASSERT("the single-tile south gate enters Dawnmere's exterior road", g->location == LOCATION_TOWN_ROAD);
+    g->player.x = TOWN_ROAD_W / 2;
+    g->player.y = TOWN_ROAD_H - 2;
+    action_resolve_player(g, (Action){ACTION_MOVE, g->player.x, TOWN_ROAD_H - 1});
+    ASSERT("the southern road enters the Pirate Coast approach", g->location == LOCATION_APPROACH &&
+        approach_route(g) && approach_route(g)->area == LOCATION_PIRATE_COAST);
+    g->player.x = g->map.stairs_down_x;
+    g->player.y = g->map.stairs_down_y + 1;
+    action_resolve_player(g, (Action){ACTION_MOVE, g->player.x, g->player.y - 1});
+    ASSERT("walking into the fort starts stage one", g->location == LOCATION_PIRATE_COAST && g->level == 1);
+}
+
+static void clear_pirate_crew(GameState *g) {
+    for (int i = 0; i < g->enemy_count; i++) {
+        Enemy *enemy = &g->enemies[i];
+        if (!enemy->is_boss) {
+            enemy->active = 0;
+            enemy->hp = 0;
+            enemy->frozen_turns = 3;
+            enemy->attack_phase = 1;
+            enemy->move_timer = 2;
+        }
+    }
+}
+
+static int crew_count(const GameState *g) {
+    int count = 0;
+    for (int i = 0; i < g->enemy_count; i++) {
+        count += g->enemies[i].active && !g->enemies[i].is_boss;
+    }
+    return count;
+}
+
+static void test_pirate_replay(GameState *g, GameState *loaded) {
+    game_init(g);
+    game_enter_town_gate(g, LOCATION_DAWNMERE, 20, 12);
+    enter_pirate_from_town(g);
+    action_resolve_player(g, (Action){ACTION_DROP_ITEM, 0, 0});
+    for (int level = 1; level <= PIRATE_DEPTH; level++) {
+        clear_pirate_crew(g);
+        for (int i = 0; i < g->enemy_count; i++) {
+            if (g->enemies[i].is_boss) {
+                g->enemies[i].hp = 37;
+                g->enemies[i].frozen_turns = 2;
+            }
+        }
+        if (level < PIRATE_DEPTH) {
+            pirate_change_level(g, 1);
+        }
+    }
+    g->pirate_cache[0].treasure_claimed = 1;
+    g->pirate_cache[2].harbor_state = 7;
+    g->pirate_quest_state = 2;
+    // Corpses can share a position; the replay must still produce distinct crews.
+    g->pirate_cache[0].enemies[1].x = g->pirate_cache[0].enemies[0].x;
+    g->pirate_cache[0].enemies[1].y = g->pirate_cache[0].enemies[0].y;
+    game_open_town_portal(g);
+    ASSERT("cleared pirate expeditions save while the player is in town", save_game(g, PIRATE_SLOT) && load_game(loaded, PIRATE_SLOT));
+    *g = *loaded;
+    game_use_town_portal(g);
+    ASSERT("direct portal return resumes the cleared crew rather than starting a new expedition",
+        g->location == LOCATION_PIRATE_COAST && g->level == 5 && !crew_count(g));
+    ASSERT("an active cleared expedition also remains cleared after loading", save_game(g, PIRATE_SLOT) &&
+        load_game(loaded, PIRATE_SLOT) && !crew_count(loaded));
+    *g = *loaded;
+    game_open_town_portal(g);
+    int gold = g->gold;
+    enter_pirate_from_town(g);
+    int healthy = 1;
+    int positions = 1;
+    int boss_preserved = 0;
+    for (int level = 1; level <= PIRATE_DEPTH; level++) {
+        healthy &= crew_count(g) == 8 + level / 2 && !g->level_cleared;
+        for (int i = 0; i < g->enemy_count; i++) {
+            const Enemy *enemy = &g->enemies[i];
+            if (enemy->is_boss) {
+                boss_preserved = enemy->active && enemy->hp == 37 && enemy->frozen_turns == 2;
+            } else {
+                healthy &= enemy->active && enemy->hp == enemy->max_hp && !enemy->frozen_turns && !enemy->attack_phase;
+            }
+            if (!enemy->active) {
+                continue;
+            }
+            positions &= reachable(&g->map, enemy->x, enemy->y);
+            positions &= !g->portal_active || g->portal_level != level || g->portal_x != enemy->x || g->portal_y != enemy->y;
+            for (int j = 0; j < i; j++) {
+                positions &= !g->enemies[j].active || enemy->x != g->enemies[j].x || enemy->y != g->enemies[j].y;
+            }
+            for (int j = 0; j < g->floor_item_count; j++) {
+                positions &= !g->floor_items[j].active || enemy->x != g->floor_items[j].x || enemy->y != g->floor_items[j].y;
+            }
+        }
+        if (level == 1) {
+            ASSERT("replay preserves dropped equipment and claimed plunder", g->floor_item_count == 1 &&
+                g->floor_items[0].active && g->pirate_cache[0].treasure_claimed == 1 && g->map.tiles[3][20] != TILE_PIRATE_CHEST);
+        }
+        if (level == 3) {
+            ASSERT("replay retains the boarding crossing, cargo discoveries and merchant quest", g->pirate_cache[2].harbor_state == 7 &&
+                map_is_walkable(&g->map, 37, 16) && g->map.tiles[9][32] == TILE_PIRATE_DECK && g->pirate_quest_state == 2);
+        }
+        if (level < PIRATE_DEPTH) {
+            pirate_change_level(g, 1);
+        }
+    }
+    ASSERT("physical re-entry repopulates all five stages with healthy crews and no old attack warnings", healthy);
+    ASSERT("replayed crews are reachable, distinct and clear of equipment and portal anchors", positions);
+    ASSERT("new expeditions preserve the living captain's wounds without awarding extra gold", boss_preserved && g->gold == gold);
+    clear_pirate_crew(g);
+    pirate_change_level(g, 0);
+    pirate_change_level(g, 1);
+    ASSERT("backtracking during the replay never respawns a cleared crew", !crew_count(g));
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (g->enemies[i].is_boss) {
+            g->enemies[i].active = 0;
+            g->enemies[i].hp = 0;
+        }
+    }
+    pirate_defeat(g);
+    game_open_town_portal(g);
+    gold = g->gold;
+    enter_pirate_from_town(g);
+    for (int level = 1; level < PIRATE_DEPTH; level++) {
+        pirate_change_level(g, 1);
+    }
+    int bosses = 0;
+    for (int i = 0; i < g->enemy_count; i++) {
+        bosses += g->enemies[i].active && g->enemies[i].is_boss;
+    }
+    ASSERT("post-victory replays restore ordinary pirates while Voss and his bounty stay defeated",
+        crew_count(g) == 10 && !bosses && g->pirate_defeated && g->gold == gold);
+    ASSERT("replayed crews survive save/load without another reset", save_game(g, PIRATE_SLOT) &&
+        load_game(loaded, PIRATE_SLOT) && crew_count(loaded) == 10 && loaded->pirate_defeated);
+}
+
+static void test_dawnmere_paths(GameState *g, GameState *loaded) {
+    game_enter_town_gate(g, LOCATION_DAWNMERE, 20, 12);
+    int narrow = 1;
+    for (int x = 6; x <= 11; x++) {
+        narrow &= g->map.tiles[11][x] == (x == 9 ? TILE_TOWN_PATH : TILE_TOWN_FLOOR);
+        narrow &= g->map.tiles[12][x] == TILE_TOWN_PATH;
+    }
+    for (int x = 18; x <= 22; x++) {
+        narrow &= g->map.tiles[TOWN_H - 1][x] == (x == 20 ? TILE_TOWN_EXIT : TILE_WALL);
+    }
+    ASSERT("Dawnmere's merchant spur and southern exit are each one tile wide", narrow);
+    for (int x = 6; x <= 9; x++) {
+        g->map.tiles[11][x] = TILE_TOWN_PATH;
+    }
+    for (int x = 18; x <= 22; x++) {
+        g->map.tiles[TOWN_H - 1][x] = TILE_TOWN_EXIT;
+    }
+    g->floor_item_count = 2;
+    g->floor_items[0] = (FloorItem){.active = 1, .x = 6, .y = 11, .underlying_tile = TILE_TOWN_PATH, .item = item_make_health_potion()};
+    g->floor_items[1] = (FloorItem){.active = 1, .x = 19, .y = TOWN_H - 1, .underlying_tile = TILE_TOWN_EXIT, .item = item_make_mariner_cloak()};
+    g->map.tiles[11][6] = TILE_ITEM;
+    g->map.tiles[TOWN_H - 1][19] = TILE_ITEM;
+    g->player.x = 19;
+    g->player.y = TOWN_H - 1;
+    int gold = g->gold;
+    ASSERT("version-187 Dawnmere saves repair both paths without losing loot or progression", save_game(g, PIRATE_SLOT) &&
+        saved_version(187) && load_game(loaded, PIRATE_SLOT) && loaded->location == LOCATION_DAWNMERE &&
+        loaded->gold == gold && loaded->pirate_quest_state == 2 && loaded->pirate_defeated &&
+        loaded->map.tiles[11][7] == TILE_TOWN_FLOOR && loaded->map.tiles[11][9] == TILE_TOWN_PATH &&
+        loaded->floor_items[0].active && loaded->floor_items[0].underlying_tile == TILE_TOWN_FLOOR &&
+        loaded->map.tiles[TOWN_H - 1][19] == TILE_WALL && loaded->map.tiles[TOWN_H - 1][20] == TILE_TOWN_EXIT);
+    ASSERT("retired gate tiles move the player and equipment onto reachable town ground",
+        loaded->player.x == 20 && loaded->player.y == TOWN_H - 2 && loaded->floor_items[1].active &&
+        loaded->floor_items[1].y < TOWN_H - 1 && loaded->floor_items[1].item.evasion_chance == 5 &&
+        map_is_walkable(&loaded->map, loaded->floor_items[1].x, loaded->floor_items[1].y));
+    ASSERT("repaired Dawnmere paths and loot survive another round trip", save_game(loaded, PIRATE_SLOT) && load_game(g, PIRATE_SLOT) &&
+        g->map.tiles[11][7] == TILE_TOWN_FLOOR && g->floor_items[0].underlying_tile == TILE_TOWN_FLOOR &&
+        g->floor_items[1].x == loaded->floor_items[1].x && g->floor_items[1].y == loaded->floor_items[1].y);
+}
+
 void test_pirate(void) {
     printf("Pirate Coast generator, combat and persistence:\n");
     GameState *g = calloc(1, sizeof(*g));
@@ -133,7 +311,7 @@ void test_pirate(void) {
     ASSERT("every walkable tile belongs to the player's entrance component", connected);
     ASSERT("every stage has defined terrain rather than a giant open rectangle", shaped);
     pirate_generate(map, 3, 13, 0);
-    ASSERT("piers have impassable sea between connected wooden platforms", map->tiles[18][10] == TILE_PIRATE_SEA && !map_is_walkable(map, 10, 18) && reachable(map, 28, 25));
+    ASSERT("the harbor separates boardable ships with impassable sea and connects its quay", map->tiles[18][38] == TILE_PIRATE_SEA && !map_is_walkable(map, 38, 18) && reachable(map, 28, 25));
     pirate_generate(map, 5, 13, 0);
     ASSERT("the flagship uses connected compartments with bulkheads and sea outside the hull", map->tiles[15][44] == TILE_PIRATE_PALISADE && map->tiles[1][40] == TILE_PIRATE_SEA && reachable(map, 69, 18));
     game_init(g);
@@ -360,7 +538,8 @@ void test_pirate(void) {
     walk_return_approach(g);
     ASSERT("walking back enters Dawnmere beside its southern gate", g->location == LOCATION_DAWNMERE && g->player.x == 20 && g->player.y == TOWN_H - 2);
     pirate_enter(g);
-    ASSERT("reentering always starts at stage one with persistent enemy wounds", g->level == 1 && g->enemies[0].hp == 17);
+    ASSERT("reentering starts a new expedition at stage one with healthy regular pirates", g->level == 1 &&
+        g->enemies[0].active && g->enemies[0].hp == g->enemies[0].max_hp && !g->enemies[0].frozen_turns);
     pirate_leave(g);
     game_enter_town_gate(g, LOCATION_DAWNMERE, 20, 12);
     g->gold = 731;
@@ -369,6 +548,8 @@ void test_pirate(void) {
     g->map.tiles[TOWN_SPRITE_Y + TOWN_SPRITE_H - 1][TOWN_ROAD_W / 2] = TILE_WALL;
     g->map.tiles[TOWN_ROAD_H - 1][TOWN_ROAD_W / 2] = TILE_WALL;
     ASSERT("old Dawnmere bypass saves gain both ends of the southern connection", save_game(g, PIRATE_SLOT) && saved_version(183) && load_game(loaded, PIRATE_SLOT) && loaded->map.tiles[TOWN_SPRITE_Y + TOWN_SPRITE_H - 1][TOWN_ROAD_W / 2] == TILE_TOWN_ROAD_ENTRY_SOUTH && loaded->map.tiles[TOWN_ROAD_H - 1][TOWN_ROAD_W / 2] == TILE_TOWN_ROAD_EXIT_SOUTH && loaded->player.x == g->player.x && loaded->player.y == g->player.y);
+    test_pirate_replay(g, loaded);
+    test_dawnmere_paths(g, loaded);
     remove("saves/savegame_99284.json");
     free(g); free(loaded); free(map);
 }

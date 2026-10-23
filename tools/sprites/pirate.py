@@ -4,6 +4,7 @@ from pathlib import Path
 from PIL import Image
 from pixelkit import Layer, composite, poly_mask, line_points, stamp, save_sprite, flat_wall, roof_tiles, beam, stone_arch, CRATE, BARREL
 import harbor
+from pirate_harbor import build as harbor_fittings, town_gate
 
 HARBOR_SAIL = harbor.SAIL
 
@@ -166,6 +167,8 @@ if __name__ == '__main__':
     for index in range(6):
         atlas.alpha_composite(creature(index), (index * 64, 0))
     save_sprite(atlas, dest / 'pirate-enemies.bmp')
+    save_sprite(harbor_fittings(), dest / 'pirate-harbor.bmp')
+    save_sprite(town_gate(), dest / 'pirate-town-gate.bmp')
     preview = Image.new('RGBA', (336, 160), (25, 44, 35, 255))
     preview.alpha_composite(entrance, (0, 8))
     harbor.SAIL = HARBOR_SAIL
