@@ -150,6 +150,8 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
         SDL_snprintf(loc, sizeof(loc), "INN");
     } else if (g->location == LOCATION_GUILD) {
         SDL_snprintf(loc, sizeof(loc), "ADVENTURER'S GUILD");
+    } else if (g->location == LOCATION_PIRATE_COAST) {
+        SDL_snprintf(loc, sizeof(loc), "PIRATE COAST %d", g->level);
     } else if (g->location == LOCATION_ELDERWOOD) {
         SDL_snprintf(loc, sizeof(loc), "ELDERWOOD %d", g->level);
     } else if (g->location == LOCATION_FOREST) {

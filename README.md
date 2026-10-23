@@ -28,7 +28,7 @@ and many other adventures.
 
 ## World Map
 
-[![Illustrated world map showing Elderwood Forest and the northern road from Oakhaven through the Royal Catacombs to the castle, the five towns, both Crown Roads, regional adventures and the Ruined Isle.](docs/images/world-map.png)](docs/images/world-map.png)
+[![Illustrated world map showing Pirate Coast south of Dawnmere, Elderwood Forest and the northern road from Oakhaven through the Royal Catacombs to the castle, the five towns, both Crown Roads, regional adventures and the Ruined Isle.](docs/images/world-map-pirate-coast.png)](docs/images/world-map-pirate-coast.png)
 
 An illustrated overview based on the world's town connections. Dawnmere now lies
 east of Oakhaven, reached by the safe road opened after defeating the Lich King.
@@ -40,6 +40,11 @@ passage to Castle Grounds. Goblin Mountains
 now lies north of Dawnmere, beside the road to Ridgeshire; defeating its King
 opens that road. Both mountain entrances start at level 1. Forest and swamp
 also have five forward levels, with their boss victories opening the town roads.
+[Pirate Coast](docs/pirate-coast.md) is a five-stage pirate adventure south of
+Dawnmere, with branching coastal routes, boundary exits, plunder chests, crossbow
+warnings and Captain Voss aboard the Black Flagship. In Dawnmere's Merchant
+shop, Corvin offers a treasure map leading to a stage-3 coffer; returning it
+earns 100 gold and a Mariner's Cloak usable by every class.
 Other enemy-area gates lead to safe cobblestone paths and themed entrance
 sprites; physical retreat returns to the same path. Rook's Labyrinth stands
 beside the Haunted Forest entrance on that road and stays sealed until Rook
@@ -118,6 +123,7 @@ inventory actions.
 - [Goblin Mountains](docs/goblin-mountains.md)
 - [Dragonspine and High Pass](docs/dragonspine.md)
 - [Sunken Coast](docs/sunken-coast.md)
+- [Pirate Coast south of Dawnmere](docs/pirate-coast.md)
 - [Blackwater Swamp](docs/swamp.md)
 - [Sunscar Wastes and the magic lamp quest](docs/sunscar-wastes.md)
 - [Moonveil Gardens](docs/moonveil-gardens.md)
@@ -200,6 +206,15 @@ To test with all passage locks open, run:
 ./tools/debug_shortcuts.sh
 ```
 
+For a Long Sword and 1,100 gold:
+
+```bash
+./tools/debug_shortcuts.sh --gold 1100 --weapon long-sword
+```
+
+See the [parameter table](#debug-script-parameters) and
+[weapon-to-parameter mapping](#debug-weapon-names) below for exact accepted values.
+
 Select **New Game**, enter a name, and choose a class, or load an existing
 character. All four town-to-town roads, Oakhaven's dock road, island sailing
 without a treasure map, and the labyrinth entrance are open immediately.
@@ -217,19 +232,23 @@ The launcher builds a separate debug executable in `build/debug-shortcuts`
 and runs it from the project directory. It accepts the existing debug options,
 for example `./tools/debug_shortcuts.sh --gold 500 --weapon bow`.
 
-The `debug` target builds the game with debug support and accepts optional
-Make variables for configuring the next new character:
+#### Debug script parameters
+
+| Script option | Accepted values | Example | Make equivalent |
+| --- | --- | --- | --- |
+| `--weapon NAME` | An exact name from the [weapon table](#debug-weapon-names), or `none` | `--weapon long-sword` | `WEAPON=long-sword` |
+| `--gold N` | A whole number from `0` through `999999` | `--gold 1100` | `GOLD=1100` |
+| `--scrolls LIST` | Up to three comma-separated entries: `magic-arrow`, `fireball`, `heal`; or `none` | `--scrolls magic-arrow,heal` | `SCROLLS=magic-arrow,heal` |
+| `--unlock-shortcuts` | Flag; automatically enabled by this script | No need to pass it to the script | Executable option only |
+
+Omitting weapon, gold or scroll options keeps the selected class's normal
+starting values. The script always enables passage unlocks.
+
+The `debug` Make target accepts the equivalent variables:
 
 ```bash
 make debug WEAPON=bow GOLD=500 SCROLLS=magic-arrow,fireball,heal
 ```
-
-| Make variable | Executable option | Accepted values | Behavior when omitted |
-| --- | --- | --- | --- |
-| `WEAPON` | `--weapon NAME` | Any [debug weapon name](#debug-weapon-names), or `none` | Keep the selected class's normal starting weapon |
-| `GOLD` | `--gold N` | Any whole number from `0` through `999999` | Keep the normal starting gold |
-| `SCROLLS` | `--scrolls LIST` | Up to three comma-separated values chosen from `magic-arrow`, `fireball`, and `heal`, or `none` | Keep the selected class's normal starting scrolls |
-| Not applicable | `--unlock-shortcuts` | Unlock all passages, docks and island sailing; automatically supplied by `tools/debug_shortcuts.sh` | Normal boss, key, puzzle and quest locks apply |
 
 Providing `WEAPON` or `SCROLLS` replaces the normal class starting items in
 that category. Use `WEAPON=none` or `SCROLLS=none` to begin without that item
@@ -239,17 +258,39 @@ modify a loaded save.
 
 #### Debug weapon names
 
-Every weapon, including boss rewards, is available for testing. Use these names
-with `--weapon` or `WEAPON`. Normal class restrictions still apply; open inventory
+Every weapon, including boss rewards, is available for testing. Names are
+case-sensitive; use the exact spelling and hyphens shown. For example,
+**Long Sword** maps to `--weapon long-sword`. The same names work with `WEAPON`.
+Normal class restrictions still apply; open inventory
 with **I** and equip the weapon with **E** or **Enter**.
 
-| Weapon family | Accepted names |
+| Weapon | `--weapon` value |
 | --- | --- |
-| Swords | `rusty-sword`, `short-sword`, `long-sword`, `magic-long-sword`, `demonic-sword`, `greatsword`, `magic-greatsword`, `cryptblade` |
-| Axes | `battle-axe`, `magic-battle-axe`, `embercleaver` |
-| Staves | `staff`, `runed-staff`, `magic-staff`, `sandstorm-staff` |
-| Bows | `hunting-bow` (`bow` also works), `shortbow`, `longbow`, `crossbow`, `magic-longbow`, `krakenbone-bow` |
-| Daggers | `rusty-dagger`, `dagger`, `magic-dagger` |
+| Rusty Sword | `rusty-sword` |
+| Short Sword | `short-sword` |
+| Long Sword | `long-sword` |
+| Magic Long Sword | `magic-long-sword` |
+| Demonic Sword | `demonic-sword` |
+| Greatsword | `greatsword` |
+| Magic Greatsword | `magic-greatsword` |
+| Cryptblade | `cryptblade` |
+| Battle Axe | `battle-axe` |
+| Magic Battle Axe | `magic-battle-axe` |
+| Embercleaver | `embercleaver` |
+| Staff | `staff` |
+| Runed Staff | `runed-staff` |
+| Magic Staff | `magic-staff` |
+| Sandstorm Staff | `sandstorm-staff` |
+| Hunting Bow | `hunting-bow` or `bow` |
+| Shortbow | `shortbow` |
+| Longbow | `longbow` |
+| Crossbow | `crossbow` |
+| Magic Longbow | `magic-longbow` |
+| Krakenbone Bow | `krakenbone-bow` |
+| Rusty Dagger | `rusty-dagger` |
+| Dagger | `dagger` |
+| Magic Dagger | `magic-dagger` |
+| No starting weapon | `none` |
 
 Examples:
 
@@ -346,7 +387,7 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 
 ### Feature enhancements
 - Expand world map
-   Farms between areas for rest to improve hp. Additional in-town quests similar to labrynth. New areas. New story lines. Towns as sprites like enemy areas.
+   Farms between areas for rest to improve hp. Additional in-town quests similar to labrynth. New areas. New story lines. Improve area sprites. Building diversity in towns.
 - Recruit a party to join the adventure
    NPCs that can team up with the player character and accompany on the quest. Implement resurrection. 
 - Improve difficulty scaling and economy
@@ -355,4 +396,6 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
    Add real money feature to buy in-game gold.
 - DnD style stats instead of static class based stats
    Roll for stats. Choose a class based on strengths. Ascending armor class chance to hit. 
+- Add new equipment types
+   Add helmets, rings, gauntlets
 

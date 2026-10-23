@@ -159,7 +159,9 @@ typedef enum {
     LOCATION_DAWNMERE,
     LOCATION_TOWN_ROAD,
     LOCATION_ELDERWOOD,
-    LOCATION_JAIL_ARMORY
+    LOCATION_JAIL_ARMORY,
+    LOCATION_PIRATE_COAST,
+    LOCATION_MERCHANT
 } Location;
 
 // Elderwood uses only its own bounds; compact caches avoid allocating the
@@ -173,12 +175,26 @@ typedef struct {
     int level_cleared;
 } ElderwoodCache;
 
+// Static coastal terrain is reconstructed from its seed; combat and loot persist.
+typedef struct {
+    unsigned int seed;
+    unsigned int treasure_claimed;
+    unsigned char explored[(PIRATE_W * PIRATE_H + 7) / 8];
+    Enemy enemies[PIRATE_ENEMIES];
+    int enemy_count;
+    FloorItem loot[MAX_FLOOR_ITEMS];
+    int loot_count;
+} PirateCache;
+
 typedef struct {
     Player     player;
     int debug_passages_unlocked;
     ElderwoodCache elderwood_cache[ELDERWOOD_DEPTH];
     int max_elderwood_level_reached;
     int elderwood_defeated;
+    PirateCache pirate_cache[PIRATE_DEPTH];
+    int pirate_defeated;
+    int pirate_quest_state; // 0: not accepted, 1: map gifted, 2: coffer recovered, 3: rewarded.
     Location last_town_visited;
     int return_portal_town; // -1 retains the anchor used by a legacy portal.
     Location elderwood_entry_town;

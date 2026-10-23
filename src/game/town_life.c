@@ -1,4 +1,5 @@
 #include "town_life.h"
+#include "pirate.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -16,11 +17,13 @@ static const TownBuilding buildings[] = {
         "Since you defeated the dragon ruling Dragonspine, Ridgeshire is safer. Our bells ring in gratitude rather than alarm. May you find peace beneath this roof."},
     {LOCATION_TOWN3, LOCATION_SPICE_SHOP, 7, 17, 5, 4, 3, 0,
         "SPICE MERCHANT", "Spice Merchant Suri",
-        "The Crown Road has become dangerous. Bandits prey on caravans, and every sack of spice that reaches Rosemoor has a tale of narrow escape. Traders travel in company now.", NULL}
+        "The Crown Road has become dangerous. Bandits prey on caravans, and every sack of spice that reaches Rosemoor has a tale of narrow escape. Traders travel in company now.", NULL},
+    {LOCATION_DAWNMERE, LOCATION_MERCHANT, 7, 7, 5, 4, 0, 0,
+        "MERCHANT", "Merchant Corvin", NULL, NULL}
 };
 
 const TownBuilding *town_life_building(Location location) {
-    for (int i = 0; i < 4; i++) {
+    for (size_t i = 0; i < sizeof(buildings) / sizeof(buildings[0]); i++) {
         if (buildings[i].town == location || buildings[i].interior == location) {
             return &buildings[i];
         }
@@ -90,6 +93,10 @@ int town_life_talk(GameState *g, int greeting) {
     if (!b || b->interior != g->location ||
         (!greeting && (abs(g->player.x - RESIDENT_X) > 1 || abs(g->player.y - RESIDENT_Y) > 1))) {
         return 0;
+    }
+    if (g->location == LOCATION_MERCHANT) {
+        pirate_talk_merchant(g);
+        return 1;
     }
     g->dialogue_active = 1;
     g->dialogue_x = RESIDENT_X;

@@ -7,6 +7,7 @@ static const char *game_over_location(const GameState *g) {
         case LOCATION_APPROACH: return "APPROACH PATH";
         case LOCATION_JAIL: return "ROYAL JAIL";
         case LOCATION_JAIL_ARMORY: return "JAIL EVIDENCE ROOM";
+        case LOCATION_PIRATE_COAST: return "PIRATE COAST";
         case LOCATION_ESCAPE_TUNNEL: return "ESCAPE TUNNEL";
         case LOCATION_FOREST: return "HAUNTED FOREST";
         case LOCATION_FOREST_ROAD: return "FOREST ROAD";
@@ -31,6 +32,7 @@ static const char *game_over_location(const GameState *g) {
         case LOCATION_MONASTERY: return "MONASTERY";
         case LOCATION_SPICE_SHOP: return "SPICE MERCHANT";
         case LOCATION_DAWNMERE: return "DAWNMERE";
+        case LOCATION_MERCHANT: return "DAWNMERE MERCHANT";
         case LOCATION_TOWN2: return "STILLBURY";
         case LOCATION_TOWN3: return "ROSEMOOR";
         case LOCATION_TOWN4: return "RIDGESHIRE";

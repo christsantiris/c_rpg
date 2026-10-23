@@ -461,7 +461,9 @@ int map_is_walkable(const Map *m, int x, int y) {
     if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
         return 0;
     }
-    return m->tiles[y][x] != TILE_LICH_PILLAR &&
+    return m->tiles[y][x] != TILE_PIRATE_CLIFF && m->tiles[y][x] != TILE_PIRATE_RAIL && m->tiles[y][x] != TILE_PIRATE_SEA &&
+        m->tiles[y][x] != TILE_PIRATE_PALISADE && m->tiles[y][x] != TILE_PIRATE_CRATE &&
+        m->tiles[y][x] != TILE_PIRATE_CHEST && m->tiles[y][x] != TILE_LICH_PILLAR &&
         m->tiles[y][x] != TILE_JAIL_BUILDING &&
         m->tiles[y][x] != TILE_JAIL_GEAR_CHEST &&
         m->tiles[y][x] != TILE_JAIL_DOOR && m->tiles[y][x] != TILE_JAIL_BARS &&
@@ -1816,12 +1818,10 @@ void map_generate_dawnmere(Map *m, int *spawn_x, int *spawn_y) {
     for (int x = 18; x <= 22; x++) {
         m->tiles[0][x] = TILE_TOWN_EXIT;
     }
-    // Reuse the established merchant building footprint.
-    for (int y = 7; y < 11; y++) {
-        for (int x = 7; x < 12; x++) {
-            m->tiles[y][x] = TILE_LOCAL_BUILDING;
-        }
+    for (int x = 18; x <= 22; x++) {
+        m->tiles[TOWN_H - 1][x] = TILE_TOWN_EXIT;
     }
+    town_life_place(m, LOCATION_DAWNMERE);
     *spawn_x = 20;
     *spawn_y = 12;
 }
