@@ -148,10 +148,10 @@ void test_jail(void) {
     int gold = game.gold;
     ASSERT("talking to the townsman triggers an explained arrest", jail_talk_nearby(&game) && game.location == LOCATION_JAIL &&
         game.jail_quest_state == 1 && strstr(game.dialogue_text, "informant") && strstr(game.dialogue_text, "locked"));
-    ASSERT("arrest preserves equipment and money", game.inventory_count == inventory && game.gold == gold &&
+    ASSERT("arrest confiscates equipment while preserving money", game.inventory_count + game.jail_gear_count == inventory && game.jail_gear_state == 1 && game.gold == gold &&
         game.map.tiles[JAIL_PRISONER_Y][JAIL_PRISONER_X] == TILE_NPC_PRISONER &&
         game.map.tiles[JAIL_HATCH_Y][JAIL_HATCH_X] != TILE_JAIL_HATCH && !map_is_walkable(&game.map, 12, 13));
-    ASSERT("unoffered prisoner quest is absent from the journal", !quest_journal_count(&game, QUEST_TAB_ACTIVE));
+    ASSERT("only equipment recovery is active before Tomas offers the escort", quest_journal_count(&game, QUEST_TAB_ACTIVE) == 1);
     ASSERT("saving and loading preserves the unexplained hatch and jail", save_game(&game, JAIL_TEST_SLOT) &&
         load_game(&loaded, JAIL_TEST_SLOT) && loaded.location == LOCATION_JAIL && loaded.jail_quest_state == 1 &&
         loaded.player.x == game.player.x && loaded.map.tiles[JAIL_HATCH_Y][JAIL_HATCH_X] == TILE_CASTLE_FLOOR);
@@ -170,7 +170,7 @@ void test_jail(void) {
     }
     jail_talk_nearby(&game);
     ASSERT("Tomas offers the escort without revealing the hatch", game_quest_offer_active(&game) && game.jail_quest_state == 1 &&
-        game.map.tiles[JAIL_HATCH_Y][JAIL_HATCH_X] != TILE_JAIL_HATCH && !quest_journal_count(&game, QUEST_TAB_ACTIVE));
+        game.map.tiles[JAIL_HATCH_Y][JAIL_HATCH_X] != TILE_JAIL_HATCH && quest_journal_count(&game, QUEST_TAB_ACTIVE) == 1);
     game_handle_quest_offer_key(&game, SDL_SCANCODE_N, 0);
     ASSERT("declining Tomas leaves the escort available for later", game.jail_quest_state == 1 && !game.dialogue_active);
     jail_talk_nearby(&game);
@@ -306,7 +306,7 @@ void test_jail(void) {
     ASSERT("arrival awards the escort reward once without damaging dungeon caches", game.gold >= gold + ESCAPE_REWARD_GOLD &&
         game.score >= ESCAPE_REWARD_SCORE && !game.level_cache[0].valid && !game.enemy_count && !game.floor_item_count);
     ASSERT("completed journal records both escape objectives", quest_journal_get_entry(&game, QUEST_TAB_COMPLETED, 0, &entry) &&
-        entry.objective_complete[0] && entry.objective_complete[1] && !quest_journal_count(&game, QUEST_TAB_ACTIVE));
+        entry.objective_complete[0] && entry.objective_complete[1] && !game.jail_gear_state && !quest_journal_count(&game, QUEST_TAB_ACTIVE));
     gold = game.gold;
     int score = game.score;
     jail_talk_nearby(&game);

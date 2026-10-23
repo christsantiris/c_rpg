@@ -64,8 +64,10 @@ void jail_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, int 
     draw_dungeon_floor(r, sx, sy, x, y);
     if (tile == TILE_JAIL_BARS) {
         draw_world_prop(r, sx, sy, PROP_GATE, (SDL_Color){151, 155, 168, 255});
-    } else if (tile == TILE_JAIL_HATCH) {
+    } else if (tile == TILE_JAIL_HATCH && (g->location != LOCATION_JAIL || g->jail_quest_state >= 2)) {
         draw_world_prop(r, sx, sy, PROP_HATCH, (SDL_Color){165, 135, 90, 255});
+    } else if (tile == TILE_JAIL_GEAR_CHEST) {
+        draw_world_prop(r, sx, sy, PROP_CHEST, g->jail_gear_state == 3 ? (SDL_Color){95, 96, 100, 255} : (SDL_Color){218, 178, 83, 255});
     } else if (tile == TILE_TUNNEL_EXIT) {
         draw_world_prop(r, sx, sy, PROP_EXIT, (SDL_Color){138, 190, 149, 255});
     } else if (tile == TILE_NPC_PRISONER) {

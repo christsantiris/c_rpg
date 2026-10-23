@@ -1002,13 +1002,132 @@ static int elderwood_load(const cJSON *root, GameState *g, int version) {
     return 1;
 }
 
+static int load_jail_equipment(const cJSON *root, GameState *g, int version) {
+    memset(g->jail_gear, 0, sizeof(g->jail_gear));
+    memset(g->jail_guards, 0, sizeof(g->jail_guards));
+    memset(g->jail_armory_loot, 0, sizeof(g->jail_armory_loot));
+    g->jail_gear_count = 0;
+    g->jail_gear_claimed = 0;
+    g->jail_gear_state = 0;
+    g->jail_main_hand = -1;
+    g->jail_off_hand = -1;
+    g->jail_armor = -1;
+    g->jail_supplies_taken = 0;
+    g->jail_armory_initialized = 0;
+    g->jail_armory_loot_count = 0;
+    if (version < 183) {
+        return 1;
+    }
+    const char *names[] = {"jail_gear_claimed", "jail_gear_state", "jail_main_hand", "jail_off_hand", "jail_armor", "jail_supplies_taken", "jail_armory_initialized"};
+    int *fields[] = {&g->jail_gear_claimed, &g->jail_gear_state, &g->jail_main_hand, &g->jail_off_hand, &g->jail_armor, &g->jail_supplies_taken, &g->jail_armory_initialized};
+    for (int i = 0; i < 7; i++) {
+        const cJSON *value = cJSON_GetObjectItem(root, names[i]);
+        if (!cJSON_IsNumber(value) || value->valuedouble != value->valueint) {
+            return 0;
+        }
+        *fields[i] = value->valueint;
+    }
+    const cJSON *gear = cJSON_GetObjectItem(root, "jail_gear");
+    if (!cJSON_IsArray(gear) || cJSON_GetArraySize(gear) > MAX_INVENTORY) {
+        return 0;
+    }
+    const char *required[] = {"active", "type", "attack_bonus", "defense_bonus", "value", "spell_id", "is_ranged", "range"};
+    for (int i = 0; i < cJSON_GetArraySize(gear); i++) {
+        const cJSON *entry = cJSON_GetArrayItem(gear, i);
+        const cJSON *item = cJSON_GetObjectItem(entry, "item");
+        if (!cJSON_IsString(cJSON_GetObjectItem(item, "name"))) {
+            return 0;
+        }
+        for (int n = 0; n < 8; n++) {
+            if (!cJSON_IsNumber(cJSON_GetObjectItem(item, required[n]))) {
+                return 0;
+            }
+        }
+        if (!cJSON_IsNumber(cJSON_GetObjectItem(entry, "active")) ||
+            !cJSON_IsNumber(cJSON_GetObjectItem(entry, "x")) || !cJSON_IsNumber(cJSON_GetObjectItem(entry, "y"))) {
+            return 0;
+        }
+    }
+    FloorItem stored[MAX_INVENTORY] = {0};
+    if (!deserialize_castle_loot(gear, stored, &g->jail_gear_count)) {
+        return 0;
+    }
+    for (int i = 0; i < g->jail_gear_count; i++) {
+        g->jail_gear[i] = stored[i].item;
+        if (stored[i].item.type != ITEM_WEAPON && stored[i].item.type != ITEM_ARMOR && stored[i].item.type != ITEM_SHIELD) {
+            return 0;
+        }
+    }
+    int mask = (1 << g->jail_gear_count) - 1;
+    if (g->jail_gear_claimed < 0 || (g->jail_gear_claimed & ~mask) ||
+        (g->jail_gear_state != 0 && g->jail_gear_state != 1 && g->jail_gear_state != 3) ||
+        (g->jail_gear_state == 0 && g->jail_gear_count) ||
+        (g->jail_gear_state == 1 && (!g->jail_gear_count || g->jail_gear_claimed == mask)) ||
+        (g->jail_gear_state == 3 && (!g->jail_gear_count || g->jail_gear_claimed != mask)) ||
+        g->jail_main_hand < -1 || g->jail_main_hand >= g->jail_gear_count ||
+        g->jail_off_hand < -1 || g->jail_off_hand >= g->jail_gear_count ||
+        g->jail_armor < -1 || g->jail_armor >= g->jail_gear_count ||
+        g->jail_supplies_taken < 0 || g->jail_supplies_taken > 1 ||
+        g->jail_armory_initialized < 0 || g->jail_armory_initialized > 1) {
+        return 0;
+    }
+    const cJSON *guards = cJSON_GetObjectItem(root, "jail_guards");
+    if (!cJSON_IsArray(guards) || cJSON_GetArraySize(guards) != (g->jail_armory_initialized ? 3 : 0)) {
+        return 0;
+    }
+    const char *guard_fields[] = {"x", "y", "active", "type", "hp", "max_hp", "attack", "defense", "experience", "move_timer", "frozen_turns", "attack_target_x", "attack_target_y"};
+    for (int i = 0; i < cJSON_GetArraySize(guards); i++) {
+        const cJSON *guard = cJSON_GetArrayItem(guards, i);
+        if (!cJSON_IsString(cJSON_GetObjectItem(guard, "name"))) {
+            return 0;
+        }
+        for (int n = 0; n < 13; n++) {
+            if (!cJSON_IsNumber(cJSON_GetObjectItem(guard, guard_fields[n]))) {
+                return 0;
+            }
+        }
+    }
+    int count;
+    deserialize_enemies(guards, g->jail_guards, &count, 3);
+    for (int i = 0; i < count; i++) {
+        const Enemy *guard = &g->jail_guards[i];
+        if (guard->type != ENEMY_ROYAL_GUARD || guard->x < 0 || guard->x >= JAIL_ROOM_W || guard->y < 0 || guard->y >= JAIL_ROOM_H) {
+            return 0;
+        }
+    }
+    if (!deserialize_castle_loot(cJSON_GetObjectItem(root, "jail_armory_loot"), g->jail_armory_loot, &g->jail_armory_loot_count)) {
+        return 0;
+    }
+    for (int i = 0; i < g->jail_armory_loot_count; i++) {
+        const FloorItem *item = &g->jail_armory_loot[i];
+        if (item->x < 0 || item->x >= JAIL_ROOM_W || item->y < 0 || item->y >= JAIL_ROOM_H) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 int save_game(const GameState *g, int slot) {
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 182);
+    cJSON_AddNumberToObject(root, "save_version", 183);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
+    cJSON_AddNumberToObject(root, "jail_gear_claimed", g->jail_gear_claimed);
+    cJSON_AddNumberToObject(root, "jail_gear_state", g->jail_gear_state);
+    cJSON_AddNumberToObject(root, "jail_main_hand", g->jail_main_hand);
+    cJSON_AddNumberToObject(root, "jail_off_hand", g->jail_off_hand);
+    cJSON_AddNumberToObject(root, "jail_armor", g->jail_armor);
+    cJSON_AddNumberToObject(root, "jail_supplies_taken", g->jail_supplies_taken);
+    cJSON_AddNumberToObject(root, "jail_armory_initialized", g->jail_armory_initialized);
+    FloorItem stored_gear[MAX_INVENTORY] = {0};
+    for (int i = 0; i < g->jail_gear_count; i++) {
+        stored_gear[i].item = g->jail_gear[i];
+    }
+    cJSON_AddItemToObject(root, "jail_gear", serialize_castle_loot(stored_gear, g->jail_gear_count));
+    cJSON_AddItemToObject(root, "jail_guards", serialize_enemies(g->jail_guards, g->jail_armory_initialized ? 3 : 0));
+    cJSON_AddItemToObject(root, "jail_armory_loot", serialize_castle_loot(g->jail_armory_loot, g->jail_armory_loot_count));
     cJSON_AddNumberToObject(root, "dungeon_entry_town", g->dungeon_entry_town);
     cJSON_AddNumberToObject(root, "dungeon_portal_town", g->dungeon_portal_town);
     cJSON_AddNumberToObject(root, "forest_entry_town", g->forest_entry_town);
@@ -2821,6 +2940,10 @@ int load_game(GameState *g, int slot) {
         return 0;
     }
     if (!elderwood_load(root, g, save_version)) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    if (!load_jail_equipment(root, g, save_version)) {
         cJSON_Delete(root);
         return 0;
     }
@@ -5444,6 +5567,11 @@ int load_game(GameState *g, int slot) {
             g->score += item->item.value;
             item->active = 0;
         }
+    }
+    if (g->location == LOCATION_JAIL_ARMORY && (g->level != 1 || !g->jail_armory_initialized ||
+        g->enemy_count != 3 || g->player.x < 0 || g->player.x >= JAIL_ROOM_W || g->player.y < 0 || g->player.y >= JAIL_ROOM_H)) {
+        cJSON_Delete(root);
+        return 0;
     }
     game_refresh_debug_passages(g);
     cJSON_Delete(root);

@@ -322,7 +322,7 @@ int main(void) {
     game->player.y = game->map.stairs_down_y;
     action_resolve_player(game, (Action){ACTION_ASCEND, 0, 0});
     assert(game->location == LOCATION_CASTLE_INTERIOR && game->level == 5 && !game->castle_minibosses);
-    // Debug access to jail and tunnel preserves the unassigned escort quest.
+    // Debug jail entry keeps the hatch hidden until Tomas's offer is accepted.
     game_init(game);
     debug_apply_loadout(game, &debug_config);
     game->location = LOCATION_CASTLE;
@@ -335,7 +335,17 @@ int main(void) {
     game->player.x = JAIL_HATCH_X - 1;
     game->player.y = JAIL_HATCH_Y;
     action_resolve_player(game, (Action){ACTION_MOVE, JAIL_HATCH_X, JAIL_HATCH_Y});
-    assert(game->location == LOCATION_ESCAPE_TUNNEL && !game->jail_quest_state);
+    assert(game->location == LOCATION_JAIL && !game->jail_quest_state);
+    assert(game->map.tiles[JAIL_HATCH_Y][JAIL_HATCH_X] == TILE_CASTLE_FLOOR);
+    game->player.x = JAIL_PRISONER_X;
+    game->player.y = JAIL_PRISONER_Y + 1;
+    assert(jail_talk_nearby(game) && game_quest_offer_active(game));
+    game_handle_quest_offer_key(game, SDL_SCANCODE_Y, 0);
+    assert(game->jail_quest_state == 2 && game->map.tiles[JAIL_HATCH_Y][JAIL_HATCH_X] == TILE_JAIL_HATCH);
+    game->player.x = JAIL_HATCH_X - 1;
+    game->player.y = JAIL_HATCH_Y;
+    action_resolve_player(game, (Action){ACTION_MOVE, JAIL_HATCH_X, JAIL_HATCH_Y});
+    assert(game->location == LOCATION_ESCAPE_TUNNEL && game->jail_quest_state == 2);
     assert(save_game(game, 2) && load_game(game, 2) && game->debug_passages_unlocked);
     game->player.x = 1;
     game->player.y = 14;
@@ -344,7 +354,7 @@ int main(void) {
     game->player.x = 5;
     game->player.y = 8;
     action_resolve_player(game, (Action){ACTION_MOVE, 4, 8});
-    assert(game->location == LOCATION_CASTLE && !game->jail_quest_state);
+    assert(game->location == LOCATION_CASTLE && game->jail_quest_state == 2);
     game->player.x = JAIL_DOOR_X;
     game->player.y = JAIL_DOOR_Y + 1;
     action_resolve_player(game, (Action){ACTION_MOVE, JAIL_DOOR_X, JAIL_DOOR_Y});
@@ -355,7 +365,7 @@ int main(void) {
     game->player.x = ESCAPE_TUNNEL_W - 2;
     game->player.y = 14;
     action_resolve_player(game, (Action){ACTION_MOVE, ESCAPE_TUNNEL_W - 1, 14});
-    assert(game->location == LOCATION_TOWN4 && !game->jail_quest_state && game->gold == gold);
+    assert(game->location == LOCATION_TOWN4 && game->jail_quest_state == 3 && game->gold == gold + ESCAPE_REWARD_GOLD);
     free(game);
     renderer_free(&renderer);
     SDL_DestroyRenderer(sdl);

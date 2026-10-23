@@ -6,6 +6,7 @@ static const char *game_over_location(const GameState *g) {
         case LOCATION_DUNGEON: return "DUNGEON";
         case LOCATION_APPROACH: return "APPROACH PATH";
         case LOCATION_JAIL: return "ROYAL JAIL";
+        case LOCATION_JAIL_ARMORY: return "JAIL EVIDENCE ROOM";
         case LOCATION_ESCAPE_TUNNEL: return "ESCAPE TUNNEL";
         case LOCATION_FOREST: return "HAUNTED FOREST";
         case LOCATION_FOREST_ROAD: return "FOREST ROAD";

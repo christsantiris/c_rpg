@@ -126,6 +126,7 @@ inventory actions.
 - [Elderwood Forest and the northern road](docs/elderwood-forest.md)
 - [Royal Catacombs](docs/catacombs.md)
 - [Castle interior and play testing](docs/castle-design.md)
+- [Royal Jail, escape, and equipment recovery](docs/royal-jail.md)
 - [Docks, Ruined Isle, and Ruined Temple](docs/harbor-and-ruined-isle.md)
 
 ## Screenshots
@@ -204,7 +205,8 @@ character. All four town-to-town roads, Oakhaven's dock road, island sailing
 without a treasure map, and the labyrinth entrance are open immediately.
 Locked dungeon doors, mountain barriers, temple doors, the labyrinth vault,
 Glassdeep seals and castle portcullises open as you explore. Boss-blocked exits,
-temple stairs, castle floor progression and jail/tunnel passages are accessible.
+temple stairs and castle floor progression are accessible. The jail's secret
+hatch stays hidden until you accept Tomas's escape quest, including in debug mode.
 This adds a saved debug passage-unlock flag without marking bosses defeated.
 Quests stay unassigned, existing quest progress remains intact,
 and bosses remain available to fight.

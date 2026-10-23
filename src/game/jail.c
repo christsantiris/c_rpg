@@ -36,6 +36,22 @@ void jail_place_castle(Map *m) {
     m->tiles[INFORMANT_Y][INFORMANT_X] = TILE_NPC_INFORMANT;
 }
 
+void jail_refresh_hatch(GameState *g) {
+    if (g->location != LOCATION_JAIL) {
+        return;
+    }
+    TileType tile = g->jail_quest_state >= 2 ? TILE_JAIL_HATCH : TILE_CASTLE_FLOOR;
+    if (g->map.tiles[JAIL_HATCH_Y][JAIL_HATCH_X] != TILE_ITEM) {
+        g->map.tiles[JAIL_HATCH_Y][JAIL_HATCH_X] = tile;
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && item->x == JAIL_HATCH_X && item->y == JAIL_HATCH_Y) {
+            item->underlying_tile = tile;
+        }
+    }
+}
+
 static int new_obstacle(int x, int y) {
     return (x >= JAIL_X && x < JAIL_X + JAIL_W && y >= JAIL_Y && y < JAIL_Y + JAIL_H) ||
         (x == INFORMANT_X && y == INFORMANT_Y);
@@ -64,7 +80,137 @@ void jail_migrate_castle(GameState *g) {
     }
 }
 
-static void enter_jail(GameState *g) {
+static int equipment(const Item *item) {
+    return item->type == ITEM_WEAPON || item->type == ITEM_ARMOR || item->type == ITEM_SHIELD;
+}
+
+static void confiscate_gear(GameState *g) {
+    if (g->jail_gear_state) {
+        return;
+    }
+    for (int i = 0; i < g->inventory_count; i++) {
+        if (!equipment(&g->inventory[i])) {
+            continue;
+        }
+        int index = g->jail_gear_count++;
+        g->jail_gear[index] = g->inventory[i];
+        if (g->equipped_main_hand == i) {
+            g->jail_main_hand = index;
+        }
+        if (g->equipped_off_hand == i) {
+            g->jail_off_hand = index;
+        }
+        if (g->equipped_armor == i) {
+            g->jail_armor = index;
+        }
+    }
+    for (int i = g->inventory_count - 1; i >= 0; i--) {
+        if (equipment(&g->inventory[i])) {
+            game_remove_inventory_item(g, i);
+        }
+    }
+    if (g->jail_gear_count) {
+        g->jail_gear_state = 1;
+        push_message(g, "Assigned: Recover Your Equipment. The guards locked your gear in a storeroom.");
+    }
+}
+
+static void enter_armory(GameState *g) {
+    g->location = LOCATION_JAIL_ARMORY;
+    g->level = 1;
+    g->dialogue_active = 0;
+    memset(&g->map, 0, sizeof(g->map));
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            g->map.tiles[y][x] = x > 1 && x < 22 && y > 1 && y < 17 ? TILE_CASTLE_FLOOR : TILE_CASTLE_WALL;
+        }
+    }
+    g->map.tiles[JAIL_GEAR_Y][JAIL_GEAR_X] = TILE_JAIL_GEAR_CHEST;
+    g->map.tiles[17][11] = TILE_TUNNEL_EXIT;
+    g->player.x = 11;
+    g->player.y = 16;
+    g->player.last_dx = 0;
+    g->player.last_dy = -1;
+    g->enemy_count = 3;
+    if (!g->jail_armory_initialized) {
+        for (int i = 0; i < 3; i++) {
+            g->jail_guards[i] = (Enemy){.active = 1, .type = ENEMY_ROYAL_GUARD,
+                .x = i == 0 ? 8 : i == 1 ? 15 : 12, .y = i == 2 ? 7 : 10,
+                .hp = 90, .max_hp = 90, .attack = 16, .defense = 4, .experience = 65,
+                .attack_target_x = -1, .attack_target_y = -1};
+            snprintf(g->jail_guards[i].name, sizeof(g->jail_guards[i].name), "Royal Guard");
+        }
+        g->jail_armory_initialized = 1;
+    }
+    memcpy(g->enemies, g->jail_guards, sizeof(g->jail_guards));
+    g->floor_item_count = g->jail_armory_loot_count;
+    memcpy(g->floor_items, g->jail_armory_loot, sizeof(g->jail_armory_loot));
+    for (int i = 0; i < g->floor_item_count; i++) {
+        if (g->floor_items[i].active) {
+            g->map.tiles[g->floor_items[i].y][g->floor_items[i].x] = TILE_ITEM;
+        }
+    }
+    push_message(g, "Royal Guards defend the jail's evidence room. Your confiscated equipment is in the chest.");
+}
+
+static void leave_armory(GameState *g) {
+    memcpy(g->jail_guards, g->enemies, sizeof(g->jail_guards));
+    memcpy(g->jail_armory_loot, g->floor_items, sizeof(g->jail_armory_loot));
+    g->jail_armory_loot_count = g->floor_item_count;
+    game_enter_town_gate(g, LOCATION_CASTLE, JAIL_DOOR_X, JAIL_DOOR_Y + 1);
+    g->player.last_dy = 1;
+}
+
+int jail_gear_nearby(const GameState *g) {
+    return g->location == LOCATION_JAIL_ARMORY && g->jail_gear_state == 1 &&
+        near(g->player.x, g->player.y, JAIL_GEAR_X, JAIL_GEAR_Y);
+}
+
+int jail_recover_gear(GameState *g) {
+    if (!jail_gear_nearby(g)) {
+        return 0;
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (g->enemies[i].active && g->enemies[i].type == ENEMY_ROYAL_GUARD) {
+            push_message(g, "Defeat the Royal Guards before opening the evidence chest.");
+            return 1;
+        }
+    }
+    // Recover the original equipment first so even one free slot yields a usable weapon.
+    for (int pass = 0; pass < g->jail_gear_count + 3 && g->inventory_count < MAX_INVENTORY; pass++) {
+        int index = pass == 0 ? g->jail_main_hand : pass == 1 ? g->jail_off_hand : pass == 2 ? g->jail_armor : pass - 3;
+        if (index < 0 || index >= g->jail_gear_count || (g->jail_gear_claimed & (1 << index))) {
+            continue;
+        }
+        int slot = g->inventory_count++;
+        g->inventory[slot] = g->jail_gear[index];
+        g->jail_gear_claimed |= 1 << index;
+        if (index == g->jail_main_hand && g->equipped_main_hand < 0) {
+            game_equip_main_hand(g, slot);
+        } else if (index == g->jail_off_hand && g->equipped_off_hand < 0) {
+            if (g->inventory[slot].type == ITEM_SHIELD) {
+                game_equip_shield(g, slot);
+            } else {
+                game_equip_off_hand(g, slot);
+            }
+        } else if (index == g->jail_armor && g->equipped_armor < 0) {
+            g->equipped_armor = slot;
+            game_apply_armor_bonuses(g, &g->inventory[slot]);
+        }
+    }
+    if (g->jail_gear_claimed == (1 << g->jail_gear_count) - 1) {
+        g->jail_gear_state = 3;
+        push_message(g, "Completed: Recover Your Equipment. Every confiscated item is back in your pack.");
+    } else {
+        push_message(g, "Make room in your pack, then interact again. Unclaimed gear stays safely in the chest.");
+    }
+    return 1;
+}
+
+static void enter_jail(GameState *g, int arrest) {
+    if (arrest) {
+        confiscate_gear(g);
+    }
     g->location = LOCATION_JAIL;
     g->level = 1;
     g->jail_quest_state = 1;
@@ -99,7 +245,7 @@ static void enter_jail(GameState *g) {
     g->player.poison_turns = 0;
     g->player.frozen_turns = 0;
     g->player.freeze_recovery = 0;
-    dialogue(g, "Royal Guards", "That townsman was a royal informant. He reported you, and the guards have locked you in the castle jail. Your equipment is intact. A fellow prisoner waits inside the cell.", g->player.x, g->player.y);
+    dialogue(g, "Royal Guards", "The townsman was a royal informant. The guards locked you in jail and confiscated your weapons, armor, and shields. Find your gear and a way out.", g->player.x, g->player.y);
     push_message(g, "The townsman reports you. Royal Guards escort you to jail!");
 }
 
@@ -141,7 +287,7 @@ static void populate_tunnel(GameState *g) {
     };
     for (int i = g->enemy_count; i < NON_ROAD_ENEMY_LIMIT; i++) {
         int deeper = i >= 12;
-        int x = deeper ? 69 + (i - 12) * 7 : 9 + i * 4;
+        int x = deeper ? 69 + (i - 12) * 7 : 18 + i * 4;
         EnemyType type = deeper ? deeper_types[(i - 12) % 6] :
             i % 3 == 0 ? ENEMY_BANDIT : i % 3 == 1 ? ENEMY_TUNNEL_SPIDER : ENEMY_GIANT_RAT;
         int hp = deeper ? (type == ENEMY_HOBGOBLIN_GUARD ? 80 : 48) : 32;
@@ -187,6 +333,18 @@ static void enter_tunnel(GameState *g) {
     g->prisoner_x = 1;
     g->prisoner_y = 14;
     populate_tunnel(g);
+    if (g->jail_gear_state == 1 && !g->jail_supplies_taken && g->inventory_count < MAX_INVENTORY) {
+        Item weapon = g->player.player_class == CLASS_MAGE ? item_make_staff() :
+            g->player.player_class == CLASS_ROGUE ? item_make_shortbow() : item_make_short_sword();
+        int slot = g->inventory_count++;
+        g->inventory[slot] = weapon;
+        game_equip_main_hand(g, slot);
+        if (g->player.player_class == CLASS_ROGUE && g->player.arrows < 10) {
+            g->player.arrows = 10;
+        }
+        g->jail_supplies_taken = 1;
+        push_message(g, "Tomas gives you a smuggled weapon for the escape. Your own gear is still guarded in the jail.");
+    }
     push_message(g, "Tomas follows. Clear the tunnel east to Ridgeshire; Space lets him catch up.");
     push_message(g, "The passage narrows deeper in; armed smugglers guard the long route home.");
     push_message(g, "Tomas pulls the hatch shut behind you so the guards cannot follow.");
@@ -200,13 +358,16 @@ int jail_prisoner_at(const GameState *g, int x, int y) {
 int jail_talk_nearby(GameState *g) {
     if (g->location == LOCATION_CASTLE && near(g->player.x, g->player.y, INFORMANT_X, INFORMANT_Y)) {
         if (g->jail_quest_state == 0) {
-            enter_jail(g);
+            enter_jail(g, 1);
         } else {
             dialogue(g, "Townsman", "The guards already know your face. I have nothing more to say to you.", INFORMANT_X, INFORMANT_Y);
         }
         return 1;
     }
     if (g->location == LOCATION_JAIL && near(g->player.x, g->player.y, JAIL_PRISONER_X, JAIL_PRISONER_Y)) {
+        if (g->jail_quest_state == 0 && g->debug_passages_unlocked) {
+            g->jail_quest_state = 1;
+        }
         dialogue(g, "Tomas", g->jail_quest_state == 1 ?
             "A flagstone hides a tunnel to central Ridgeshire. Smugglers, spiders, and rats make it too dangerous for me alone. Lead me home for a reward; I will reveal the hatch and follow you." :
             "Step onto the revealed hatch to enter the tunnel. I will follow you to Ridgeshire. Clear the way; Space lets me catch up.", JAIL_PRISONER_X, JAIL_PRISONER_Y);
@@ -231,10 +392,18 @@ int jail_move_exit(GameState *g, int x, int y) {
         g->dialogue_active = 0;
         return 1;
     }
+    if (g->location == LOCATION_JAIL_ARMORY && x == 11 && y == 17) {
+        leave_armory(g);
+        return 1;
+    }
     if (g->location == LOCATION_CASTLE && x == JAIL_DOOR_X && y == JAIL_DOOR_Y) {
+        if (g->jail_quest_state == 3 && g->jail_gear_state) {
+            enter_armory(g);
+            return 1;
+        }
         if (g->debug_passages_unlocked) {
             int quest = g->jail_quest_state;
-            enter_jail(g);
+            enter_jail(g, 0);
             g->jail_quest_state = quest;
             g->dialogue_active = 0;
             game_refresh_debug_passages(g);
@@ -243,7 +412,7 @@ int jail_move_exit(GameState *g, int x, int y) {
         push_message(g, "The royal jail is locked and guarded.");
         return 1;
     }
-    if (g->location == LOCATION_JAIL && (g->debug_passages_unlocked || g->jail_quest_state == 2) && x == JAIL_HATCH_X && y == JAIL_HATCH_Y) {
+    if (g->location == LOCATION_JAIL && g->jail_quest_state >= 2 && x == JAIL_HATCH_X && y == JAIL_HATCH_Y) {
         enter_tunnel(g);
         return 1;
     }
@@ -253,7 +422,7 @@ int jail_move_exit(GameState *g, int x, int y) {
     if (x == 0 && y == 14) {
         if (g->debug_passages_unlocked) {
             int quest = g->jail_quest_state;
-            enter_jail(g);
+            enter_jail(g, 0);
             g->jail_quest_state = quest;
             g->dialogue_active = 0;
             game_refresh_debug_passages(g);
@@ -344,9 +513,11 @@ void jail_follow(GameState *g) {
 }
 
 int jail_blocks_portal(GameState *g) {
-    if (g->location != LOCATION_JAIL && g->location != LOCATION_ESCAPE_TUNNEL) {
+    if (g->location != LOCATION_JAIL && g->location != LOCATION_ESCAPE_TUNNEL && g->location != LOCATION_JAIL_ARMORY) {
         return 0;
     }
-    push_message(g, "The jail's royal wards block town portals. Escape through the tunnel with Tomas.");
+    push_message(g, g->location == LOCATION_JAIL_ARMORY ?
+        "The jail's royal wards block town portals. Leave through the front door." :
+        "The jail's royal wards block town portals. Escape through the tunnel with Tomas.");
     return 1;
 }

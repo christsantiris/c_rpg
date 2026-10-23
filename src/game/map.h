@@ -668,7 +668,8 @@ typedef enum {
     TILE_NORTH_ELDERWOOD,
     TILE_NORTH_CATACOMBS,
     TILE_NORTH_OAKHAVEN,
-    TILE_NORTH_CASTLE
+    TILE_NORTH_CASTLE,
+    TILE_JAIL_GEAR_CHEST
 } TileType;
 
 typedef struct {
