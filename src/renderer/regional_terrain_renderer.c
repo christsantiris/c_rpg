@@ -1,5 +1,6 @@
 #include "regional_terrain_renderer.h"
 #include "../game/elderwood.h"
+#include "../game/pirate.h"
 #include "../game/regional_terrain.h"
 #include "../game/landscapes.h"
 #include "../game/castle.h"
@@ -329,6 +330,24 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
         title = g->location == LOCATION_CROWNROAD ? "CROWN ROAD EAST" : "CROWN ROAD WEST";
         line1 = "BANDITS AND HORSEMEN PATROL AHEAD";
         line2 = "BREAK ARCHER SIGHTLINES WITH COVER";
+    } else if (g->location == LOCATION_PIRATE_COAST) {
+        if (g->level == 3) {
+            return; // The harbor has a compact exploration panel and nearby action prompt.
+        }
+        title = pirate_stage_name(g->level);
+        unsigned int claimed = g->pirate_cache[g->level - 1].treasure_claimed;
+        int count = !!(claimed & 1) + !!(claimed & 2) + !!(claimed & 4);
+        snprintf(status, sizeof(status), "PLUNDER %d/3: INTERACT BESIDE CHESTS", count);
+        line1 = status;
+        line2 = "DODGE MARKED BOLTS AND BLADE WAVES";
+        if (g->level == PIRATE_DEPTH && !g->pirate_defeated) {
+            line2 = "VOSS RECOVERS AFTER EACH WARNED ATTACK";
+        }
+        if (g->pirate_quest_state == 1 && g->level == PIRATE_QUEST_LEVEL) {
+            line2 = "MAP: SEARCH THE NORTHWEST PIER";
+        } else if (g->pirate_quest_state == 2) {
+            line2 = "RETURN COFFER TO CORVIN IN DAWNMERE";
+        }
     } else if (g->location == LOCATION_JAIL_ARMORY) {
         title = "JAIL EVIDENCE ROOM";
         line1 = "DEFEAT THE ROYAL GUARDS";

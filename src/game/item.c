@@ -510,6 +510,8 @@ void item_apply_legacy_armor_metadata(Item *item) {
         definition = item_make_ranger_cloak();
     } else if (strcmp(item->name, "Briarweave Cloak") == 0) {
         definition = item_make_briarweave_cloak();
+    } else if (strcmp(item->name, "Mariner's Cloak") == 0) {
+        definition = item_make_mariner_cloak();
     } else if (strcmp(item->name, "Shadow Armor") == 0) {
         definition = item_make_shadow_armor();
     } else if (strcmp(item->name, "Apprentice Robes") == 0) {
@@ -808,6 +810,18 @@ Item item_make_briarweave_cloak(void) {
     item.evasion_chance = 10;
     item.value = 550;
     set_armor_metadata(&item, ARMOR_FAMILY_LIGHT, ITEM_RARITY_RARE, ITEM_CLASS_ALL, ITEM_VISUAL_BRIARWEAVE_CLOAK);
+    return item;
+}
+
+Item item_make_mariner_cloak(void) {
+    Item item = {0};
+    item.active = 1;
+    item.type = ITEM_ARMOR;
+    strncpy(item.name, "Mariner's Cloak", sizeof(item.name) - 1);
+    item.defense_bonus = 3;
+    item.evasion_chance = 5;
+    item.value = 300;
+    set_armor_metadata(&item, ARMOR_FAMILY_LIGHT, ITEM_RARITY_UNCOMMON, ITEM_CLASS_ALL, ITEM_VISUAL_RANGER_CLOAK);
     return item;
 }
 

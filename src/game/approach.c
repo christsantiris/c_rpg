@@ -1,5 +1,6 @@
 #include "approach.h"
 #include "elderwood.h"
+#include "pirate.h"
 #include <string.h>
 
 // Save files store these indices. Append new routes without reordering them.
@@ -21,7 +22,8 @@ const TownApproach town_approaches[] = {
     {LOCATION_TOWN4, LOCATION_ASHEN, TOWN_W - 1, RIDGESHIRE_ASHEN_GATE_Y},
     {LOCATION_CASTLE, LOCATION_CATACOMBS, CROWNROAD_X, TOWN_H - 1},
     {LOCATION_DAWNMERE, LOCATION_DUNGEON, 0, 12},
-    {LOCATION_TOWN, LOCATION_ELDERWOOD, 20, 0}
+    {LOCATION_TOWN, LOCATION_ELDERWOOD, 20, 0},
+    {LOCATION_DAWNMERE, LOCATION_PIRATE_COAST, 20, TOWN_H - 1}
 };
 
 const int town_approach_count = sizeof(town_approaches) / sizeof(town_approaches[0]);
@@ -39,6 +41,7 @@ const char *approach_area_name(Location area) {
         case LOCATION_FOREST: return "FOREST";
         case LOCATION_MOUNTAINS: return "GOBLIN MOUNTAINS";
         case LOCATION_COAST: return "SUNKEN COAST";
+        case LOCATION_PIRATE_COAST: return "PIRATE COAST";
         case LOCATION_SWAMP: return "SWAMP";
         case LOCATION_DRAGONSPINE: return "DRAGONSPINE";
         case LOCATION_FROSTFELL: return "FROSTFELL";
@@ -392,6 +395,7 @@ int approach_entrance_rows(Location area) {
     switch (area) {
         case LOCATION_DRAGONSPINE: return 9;
         case LOCATION_COAST:
+        case LOCATION_PIRATE_COAST:
         case LOCATION_FROSTFELL:
         case LOCATION_DESERT:
         case LOCATION_MOONVEIL:
@@ -435,7 +439,7 @@ void approach_refresh_entrance(GameState *g) {
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
             g->map.tiles[y][x] = x > 0 && x < APPROACH_W - 1 && y > 0 && y < APPROACH_H - 1 ? TILE_TOWN_FLOOR : TILE_WALL;
-            if (route->area == LOCATION_COAST && x < APPROACH_W && y < APPROACH_H) {
+            if ((route->area == LOCATION_COAST || route->area == LOCATION_PIRATE_COAST) && x < APPROACH_W && y < APPROACH_H) {
                 TileType ground = approach_coast_ground(x, y);
                 if (ground == TILE_COAST_SEA || ground == TILE_COAST_SAND) {
                     g->map.tiles[y][x] = ground == TILE_COAST_SAND && (x == 0 || x == APPROACH_W - 1) ? TILE_COAST_WALL : ground;
@@ -847,6 +851,7 @@ int approach_travel(GameState *g, int x, int y) {
         case LOCATION_FOREST: game_enter_forest(g); break;
         case LOCATION_MOUNTAINS: game_enter_mountains(g); break;
         case LOCATION_COAST: game_enter_coast(g); break;
+        case LOCATION_PIRATE_COAST: pirate_enter(g); break;
         case LOCATION_SWAMP: game_enter_swamp(g); break;
         case LOCATION_DRAGONSPINE: game_enter_dragonspine(g); break;
         case LOCATION_FROSTFELL: game_enter_frostfell(g); break;

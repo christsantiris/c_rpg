@@ -20,7 +20,7 @@ continuations, without a second gate. Streets and services inside all five towns
 | Stillbury | Swamp / Rosemoor road | Haunted Forest / Oakhaven road | Glassdeep Caverns | Sunscar Wastes |
 | Rosemoor | Frostfell Wastes | Crown Road East / Castle | Swamp / Stillbury road | Moonveil Gardens |
 | Ridgeshire | Dragonspine | Ashen Hollow | Mountains / Dawnmere road | Crown Road West / Castle |
-| Dawnmere | Mountains / Ridgeshire road | Closed | Closed | Dungeon / Oakhaven road |
+| Dawnmere | Mountains / Ridgeshire road | Closed (Saltwind Mangroves planned) | Pirate Coast | Dungeon / Oakhaven road |
 
 The Lich King, Necromancer, Swamp Demon and Goblin King still control their
 regional through roads. Town bypasses connect their existing approaches and
@@ -62,3 +62,7 @@ reference. See the [five-town sprite comparison and renderer previews](art-sourc
 
 The northern Oakhaven road opens in two steps: Elderthorn, then the Grave Marshal.
 See [Elderwood](elderwood-forest.md) for travel and save migration details.
+
+Save version 184 adds Dawnmere’s southern Pirate Coast connection to existing
+town and bypass saves without moving players or resetting progress. See
+[Pirate Coast](pirate-coast.md) for its independent generator and save state.

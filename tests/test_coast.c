@@ -2,6 +2,7 @@
 #include "test_utils.h"
 #include "../src/game/game.h"
 #include <string.h>
+#include <stdlib.h>
 
 static int find_tile(const Map *map, TileType type, int *found_x, int *found_y) {
     for (int y = 0; y < MAP_H; y++) {
@@ -51,53 +52,58 @@ static void activate_tide_control(GameState *g) {
 }
 
 static void test_queen_retaliates_to_arrows(void) {
-    static GameState g;
-    g.player.player_class = CLASS_ROGUE;
-    game_init(&g);
-    g.location = LOCATION_COAST;
-    g.level = COAST_DEPTH;
-    map_generate_coast(&g.map, g.level);
-    enemies_spawn(&g);
-    ASSERT("Drowned Queen is available for ranged encounter",
-        g.enemy_count > 0 && g.enemies[0].type == ENEMY_DROWNED_QUEEN);
-    if (g.enemy_count == 0 || g.enemies[0].type != ENEMY_DROWNED_QUEEN) {
+    GameState *g = calloc(1, sizeof(*g));
+    ASSERT("Queen encounter fixture allocates", g != NULL);
+    if (!g) {
         return;
     }
-    g.enemy_count = 1;
-    Room *throne = &g.map.rooms[g.map.room_count - 1];
-    Enemy *queen = &g.enemies[0];
+    g->player.player_class = CLASS_ROGUE;
+    game_init(g);
+    g->location = LOCATION_COAST;
+    g->level = COAST_DEPTH;
+    map_generate_coast(&g->map, g->level);
+    enemies_spawn(g);
+    ASSERT("Drowned Queen is available for ranged encounter",
+        g->enemy_count > 0 && g->enemies[0].type == ENEMY_DROWNED_QUEEN);
+    if (g->enemy_count == 0 || g->enemies[0].type != ENEMY_DROWNED_QUEEN) {
+        free(g);
+        return;
+    }
+    g->enemy_count = 1;
+    Room *throne = &g->map.rooms[g->map.room_count - 1];
+    Enemy *queen = &g->enemies[0];
     queen->x = throne->x + 4;
     queen->y = throne->y + throne->h / 2;
-    g.player.x = throne->x - 2;
-    g.player.y = queen->y;
-    g.player.last_dx = 1;
-    g.player.last_dy = 0;
-    g.player.hp = 300;
-    g.player.max_hp = 300;
-    g.player.attack = 14;
-    g.inventory_count = 1;
-    g.inventory[0] = item_make_longbow();
-    g.equipped_main_hand = 0;
-    for (int x = g.player.x; x <= queen->x; x++) {
-        g.map.tiles[g.player.y][x] = TILE_COAST_FLOOR;
+    g->player.x = throne->x - 2;
+    g->player.y = queen->y;
+    g->player.last_dx = 1;
+    g->player.last_dy = 0;
+    g->player.hp = 300;
+    g->player.max_hp = 300;
+    g->player.attack = 14;
+    g->inventory_count = 1;
+    g->inventory[0] = item_make_longbow();
+    g->equipped_main_hand = 0;
+    for (int x = g->player.x; x <= queen->x; x++) {
+        g->map.tiles[g->player.y][x] = TILE_COAST_FLOOR;
     }
-    action_resolve_enemies(&g);
+    action_resolve_enemies(g);
     ASSERT("unprovoked Queen remains dormant outside throne",
-        queen->move_timer == 0 && g.player.hp == 300);
-    action_resolve_player(&g, (Action){ACTION_RANGED_ATTACK, 0, 0});
+        queen->move_timer == 0 && g->player.hp == 300);
+    action_resolve_player(g, (Action){ACTION_RANGED_ATTACK, 0, 0});
     ASSERT("arrow reaches Queen from outside throne", queen->hp < queen->max_hp);
     for (int turn = 0; turn < 3; turn++) {
-        action_resolve_enemies(&g);
+        action_resolve_enemies(g);
     }
     ASSERT("wounded Queen retaliates with a tidal wave",
-        queen->move_timer == -1 && g.player.hp < 300);
-    int hp = g.player.hp;
-    g.player.x = queen->x - 13;
-    action_resolve_enemies(&g);
+        queen->move_timer == -1 && g->player.hp < 300);
+    int hp = g->player.hp;
+    g->player.x = queen->x - 13;
+    action_resolve_enemies(g);
     ASSERT("Queen does not attack a distant retreating player",
-        queen->move_timer == -1 && g.player.hp == hp);
+        queen->move_timer == -1 && g->player.hp == hp);
+    free(g);
 }
-
 void test_coast(void) {
     printf("Sunken Coast tests:\n");
     GameState g;

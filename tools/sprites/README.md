@@ -54,6 +54,7 @@ inspected; automated gameplay tests do not verify visual quality.
 | `local_buildings.py` | `monastery.bmp` | 168 × 120 (7 × 5) | Ridgeshire, southwest monastery plot |
 | `local_buildings.py` | `spice-merchant.bmp` | 120 × 96 (5 × 4) | Rosemoor, southwest spice merchant plot |
 | `crownroad_gate.py` | `crownroad-gate.bmp` | 72 × 72 (3 × 3) | Stillbury's north exit and Rosemoor's south exit |
+| `pirate.py` / `pirate_harbor.py` | `pirate-town-gate.bmp` | 72 × 72 (3 × 3) | Dawnmere's south exit to Pirate Coast |
 
 ### Castle of No Return
 
@@ -338,3 +339,9 @@ See [art review and SDL previews](../../docs/art-sources/town-exteriors/README.m
 
 `elderwood.py` creates the living forest entrance and five creature sprites using
 pixelkit. See [native comparisons and SDL previews](../../docs/art-sources/elderwood/README.md).
+
+### Pirate Coast
+
+`pirate.py` creates the harbor-fort entrance and six pirate enemy sprites using
+pixelkit and the established harbor textures. See the [native comparison and
+SDL previews](../../docs/art-sources/pirate-coast/README.md).

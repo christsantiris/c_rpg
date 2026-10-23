@@ -17,6 +17,7 @@ flowchart BT
     Rose <-->|Crown Road East| Castle[Castle of No Return]
     Oak <-->|Dungeon · 5 stages| Dawn[Dawnmere]
     Dawn <-->|Goblin Mountains · 5 stages| Ridge[Ridgeshire]
+    Dawn <-->|South road| Pirate[Pirate Coast · 5 stages]
     Ridge <-->|Crown Road West| Castle
     Oak <-->|Elderthorn unlock| Elder[Elderwood Forest · 5 stages]
     Elder <-->|Northern road| Cat[Royal Catacombs · 5 stages]
@@ -126,6 +127,7 @@ Oakhaven, Stillbury, Rosemoor, Ridgeshire and Dawnmere now have walled sprites
 beside safe exterior roads. Walking into a connected cardinal side of a town
 sprite enters beside the matching interior exit gate. Players can bypass any town and continue to another
 existing regional approach or Crown Road. Regional boss locks remain in force;
-Elderwood and Catacombs gate the northern castle road; Dawnmere's unconnected
-sides remain closed. See
+Elderwood and Catacombs gate the northern castle road. Dawnmere's south road
+now reaches [Pirate Coast](pirate-coast.md); its east side remains closed until
+the separate Saltwind Mangroves expansion. See
 [town roads](town-roads.md) for the connection table and save behavior.

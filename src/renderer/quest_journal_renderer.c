@@ -150,7 +150,9 @@ void quest_journal_draw(Renderer *r, const GameState *g, const QuestJournalScree
             complete_count, entry.objective_count);
         renderer_draw_text(r, line, x, y, white, r->font_small);
         y += 32;
-        if (entry.reward_item) {
+        if (entry.reward_item && entry.reward_gold > 0) {
+            SDL_snprintf(line, sizeof(line), "REWARD: %d GOLD + %s", entry.reward_gold, entry.reward_item);
+        } else if (entry.reward_item) {
             SDL_snprintf(line, sizeof(line), "REWARD: %s  |  %d SCORE",
                 entry.reward_item, entry.reward_score);
         } else {
