@@ -230,12 +230,12 @@ void test_approaches(void) {
         free(loaded);
         return;
     }
-    ASSERT("all eighteen town connections have approach paths", town_approach_count == 18);
+    ASSERT("all seventeen town connections have approach paths", town_approach_count == 17);
     for (int unlocked = 0; unlocked < 2; unlocked++) {
         for (int i = 0; i < town_approach_count; i++) {
             const TownApproach *route = &town_approaches[i];
-            // Compact northern and coastal caches have their own complete travel tests.
-            if (route->area == LOCATION_ELDERWOOD || route->area == LOCATION_CATACOMBS || route->area == LOCATION_PIRATE_COAST) {
+            // The shared northern road has two landmarks and is covered by test_elderwood.
+            if (route->area == LOCATION_ELDERWOOD || route->area == LOCATION_CATACOMBS) {
                 continue;
             }
             approach_town(g, route);
@@ -322,7 +322,7 @@ void test_approaches(void) {
     }
     for (int i = 0; i < town_approach_count; i++) {
         const TownApproach *route = &town_approaches[i];
-        if (route->area == LOCATION_CATACOMBS || route->area == LOCATION_PIRATE_COAST || !approach_entrance_rows(route->area)) {
+        if (route->area == LOCATION_CATACOMBS || !approach_entrance_rows(route->area)) {
             continue;
         }
         approach_town(g, route);

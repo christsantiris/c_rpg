@@ -105,6 +105,10 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
         SDL_snprintf(loc, sizeof(loc), "%s", town_life_building(g->location)->label);
     } else if (g->location == LOCATION_TOWN_ROAD) {
         SDL_snprintf(loc, sizeof(loc), "%s ROAD", approach_town_name(g->road_town));
+    } else if (g->location == LOCATION_MANGROVES) {
+        SDL_snprintf(loc, sizeof(loc), "SALTWIND LANDING");
+    } else if (g->location == LOCATION_MANGROVE_PATH) {
+        SDL_snprintf(loc, sizeof(loc), "MANGROVE PATH");
     } else if (g->location == LOCATION_APPROACH) {
         const TownApproach *route = approach_route(g);
         SDL_snprintf(loc, sizeof(loc), northern_approach(g) ? "NORTHERN ROAD" : "%s PATH", route ? approach_area_name(route->area) : "AREA");
@@ -150,8 +154,6 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
         SDL_snprintf(loc, sizeof(loc), "INN");
     } else if (g->location == LOCATION_GUILD) {
         SDL_snprintf(loc, sizeof(loc), "ADVENTURER'S GUILD");
-    } else if (g->location == LOCATION_PIRATE_COAST) {
-        SDL_snprintf(loc, sizeof(loc), "PIRATE COAST %d", g->level);
     } else if (g->location == LOCATION_ELDERWOOD) {
         SDL_snprintf(loc, sizeof(loc), "ELDERWOOD %d", g->level);
     } else if (g->location == LOCATION_FOREST) {

@@ -160,8 +160,9 @@ typedef enum {
     LOCATION_TOWN_ROAD,
     LOCATION_ELDERWOOD,
     LOCATION_JAIL_ARMORY,
-    LOCATION_PIRATE_COAST,
-    LOCATION_MERCHANT
+    // Preserve the retired coastal location IDs 44-45.
+    LOCATION_MANGROVES = 46,
+    LOCATION_MANGROVE_PATH
 } Location;
 
 // Elderwood uses only its own bounds; compact caches avoid allocating the
@@ -175,27 +176,28 @@ typedef struct {
     int level_cleared;
 } ElderwoodCache;
 
-// Static coastal terrain is reconstructed from its seed; combat and loot persist.
 typedef struct {
-    unsigned int seed;
-    unsigned int treasure_claimed;
-    unsigned int harbor_state; // Stage 3: cargo key, strongbox, lowered gangplank.
-    unsigned char explored[(PIRATE_W * PIRATE_H + 7) / 8];
-    Enemy enemies[PIRATE_ENEMIES];
-    int enemy_count;
+    int initialized;
+    int boat_x;
+    int boat_y;
+    int boat_dx;
+    int boat_dy;
+    int aboard;
+    unsigned int searched;
+    unsigned char explored[(MANGROVE_W * MANGROVE_H + 7) / 8];
     FloorItem loot[MAX_FLOOR_ITEMS];
     int loot_count;
-} PirateCache;
+} MangroveState;
 
 typedef struct {
     Player     player;
+    MangroveState mangroves;
     int debug_passages_unlocked;
     ElderwoodCache elderwood_cache[ELDERWOOD_DEPTH];
     int max_elderwood_level_reached;
     int elderwood_defeated;
-    PirateCache pirate_cache[PIRATE_DEPTH];
-    int pirate_defeated;
-    int pirate_quest_state; // 0: not accepted, 1: map gifted, 2: coffer recovered, 3: rewarded.
+    Item retired_coast_items[5 * MAX_FLOOR_ITEMS];
+    int retired_coast_item_count; // Migration overflow, reclaimed as pack slots become free.
     Location last_town_visited;
     int return_portal_town; // -1 retains the anchor used by a legacy portal.
     Location elderwood_entry_town;
@@ -519,6 +521,7 @@ int game_off_hand_attack_bonus(const Item *weapon);
 void game_unequip_main_hand(GameState *g);
 void game_unequip_off_hand(GameState *g);
 void game_remove_inventory_item(GameState *g, int index);
+void game_recover_retired_items(GameState *g);
 void game_apply_armor_bonuses(GameState *g, const Item *armor);
 void game_remove_armor_bonuses(GameState *g, const Item *armor);
 

@@ -20,7 +20,7 @@ continuations, without a second gate. Streets and services inside all five towns
 | Stillbury | Swamp / Rosemoor road | Haunted Forest / Oakhaven road | Glassdeep Caverns | Sunscar Wastes |
 | Rosemoor | Frostfell Wastes | Crown Road East / Castle | Swamp / Stillbury road | Moonveil Gardens |
 | Ridgeshire | Dragonspine | Ashen Hollow | Mountains / Dawnmere road | Crown Road West / Castle |
-| Dawnmere | Mountains / Ridgeshire road | Closed (Saltwind Mangroves planned) | Pirate Coast | Dungeon / Oakhaven road |
+| Dawnmere | Mountains / Ridgeshire road | Closed | Saltwind Mangroves (skiff pilot) | Dungeon / Oakhaven road |
 
 The Lich King, Necromancer, Swamp Demon and Goblin King still control their
 regional through roads. Town bypasses connect their existing approaches and
@@ -63,6 +63,22 @@ reference. See the [five-town sprite comparison and renderer previews](art-sourc
 The northern Oakhaven road opens in two steps: Elderthorn, then the Grave Marshal.
 See [Elderwood](elderwood-forest.md) for travel and save migration details.
 
-Save version 184 adds Dawnmere’s southern Pirate Coast connection to existing
-town and bypass saves without moving players or resetting progress. See
-[Pirate Coast](pirate-coast.md) for its independent generator and save state.
+Save version 189 retires Pirate Coast and Corvin's treasure quest. Saves from
+versions 184–188 on the removed approach, in the adventure or in Corvin's room
+return safely to Dawnmere. Saved Dawnmere interiors and exteriors replace the
+southern pirate connection with Saltwind and lose the merchant doorway. Exploration, facing and
+reachable dropped items remain in place where possible; items on removed
+terrain move to safe ground. Pirate return portals close, while unrelated
+portals and regional progress remain intact. Earned gold and equipment remain.
+
+Items left in retired coastal caches return to the pack. If it is full, the
+remaining items stay serialized in a recovery queue and return as slots become
+free in town. Recovery stays suspended in adventures and jail. An active pirate floor's loot is relocated to Dawnmere and is not recovered
+again from its duplicate cache. The retired quest and encounter state are not
+written into new saves. Serialized location IDs 44–45, approach index 17, the
+six appended pirate enemy IDs and sixteen appended tile IDs remain reserved
+for migration; new content must not reuse them.
+
+Save version 190 adds the first [Saltwind skiff pilot](saltwind-mangroves.md)
+south of Dawnmere. The new southern route reaches its landmark and four
+explorable islands. Its combat and remaining stages are still planned.

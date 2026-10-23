@@ -24,7 +24,7 @@
 #include "../game/town_life.h"
 #include "../game/approach.h"
 #include "../game/elderwood.h"
-#include "../game/pirate.h"
+#include "../game/mangrove.h"
 #include "cJSON.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -570,48 +570,6 @@ static void retile_town_ground(GameState *g, int x, int y, TileType ground) {
     }
 }
 
-static void migrate_dawnmere_paths(GameState *g) {
-    if (g->location != LOCATION_DAWNMERE) {
-        return;
-    }
-    for (int x = 6; x <= 9; x++) {
-        retile_town_ground(g, x, 11, x == 9 ? TILE_TOWN_PATH : TILE_TOWN_FLOOR);
-    }
-    for (int x = 18; x <= 22; x++) {
-        if (x != 20) {
-            g->map.tiles[TOWN_H - 1][x] = TILE_WALL;
-        }
-    }
-    for (int i = 0; i < g->floor_item_count; i++) {
-        FloorItem *item = &g->floor_items[i];
-        if (!item->active || item->y != TOWN_H - 1 || item->x < 18 || item->x > 22 || item->x == 20) {
-            continue;
-        }
-        int best = MAP_W + MAP_H;
-        int bx = 20;
-        int by = TOWN_H - 2;
-        for (int y = TOWN_H - 2; y > 0; y--) {
-            for (int x = 1; x < TOWN_W - 1; x++) {
-                TileType tile = g->map.tiles[y][x];
-                int distance = abs(x - item->x) + abs(y - item->y);
-                if ((tile == TILE_TOWN_FLOOR || tile == TILE_TOWN_PATH) && distance < best) {
-                    best = distance;
-                    bx = x;
-                    by = y;
-                }
-            }
-        }
-        item->x = bx;
-        item->y = by;
-        item->underlying_tile = g->map.tiles[by][bx];
-        g->map.tiles[by][bx] = TILE_ITEM;
-    }
-    if (g->player.y == TOWN_H - 1 && g->player.x >= 18 && g->player.x <= 22 && g->player.x != 20) {
-        g->player.x = 20;
-        g->player.y = TOWN_H - 2;
-    }
-}
-
 static void migrate_island_temple(GameState *g) {
     if (g->location != LOCATION_ISLAND) {
         return;
@@ -726,13 +684,6 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count, in
         if (e->type == ENEMY_MINOTAUR) {
             name = "Minotaur";
         }
-        if (e->type == ENEMY_PIRATE_RAIDER) {
-            name = "Raider";
-        } else if (e->type == ENEMY_PIRATE_BUCCANEER) {
-            name = "Buccaneer";
-        } else if (e->type == ENEMY_PIRATE_SWASHBUCKLER) {
-            name = "Swashbuckler";
-        }
         snprintf(e->name, sizeof(e->name), "%s", name);
         e->hp         = cJSON_GetObjectItem(obj, "hp")->valueint;
         e->max_hp     = cJSON_GetObjectItem(obj, "max_hp")->valueint;
@@ -771,13 +722,6 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count, in
         e->boss_wave_used = wave ? wave->valueint : 0;
         e->boss_aux_x = aux_x ? aux_x->valueint : -1;
         e->boss_aux_y = aux_y ? aux_y->valueint : -1;
-        // Former ranged pirates now use swords; discard obsolete queued attacks.
-        if ((e->type == ENEMY_PIRATE_BUCCANEER || e->type == ENEMY_PIRATE_SWASHBUCKLER) &&
-            (e->attack_phase || e->move_timer < 0)) {
-            e->attack_phase = 0;
-            e->boss_attack = 0;
-            e->move_timer = 0;
-        }
         cJSON *warning = cJSON_GetObjectItem(obj, "dragon_warning");
         for (int row = 0; row < DRAGON_WARNING_SIZE; row++) {
             cJSON *bits = cJSON_GetArrayItem(warning, row);
@@ -1164,130 +1108,42 @@ static int load_jail_equipment(const cJSON *root, GameState *g, int version) {
     return 1;
 }
 
-static int pirate_load(const cJSON *root, GameState *g, int version) {
-    memset(g->pirate_cache, 0, sizeof(g->pirate_cache));
-    g->pirate_defeated = 0;
-    g->pirate_quest_state = 0;
-    if (version < 184) {
-        return 1;
-    }
-    const cJSON *quest = cJSON_GetObjectItem(root, "pirate_quest_state");
-    if ((version >= 186 && !cJSON_IsNumber(quest)) ||
-        (quest && (!cJSON_IsNumber(quest) || quest->valuedouble != quest->valueint || quest->valueint < 0 || quest->valueint > 3))) {
-        return 0;
-    }
-    g->pirate_quest_state = quest ? quest->valueint : 0;
-    const cJSON *defeated = cJSON_GetObjectItem(root, "pirate_defeated");
-    const cJSON *stages = cJSON_GetObjectItem(root, "pirate_cache");
-    if (!cJSON_IsNumber(defeated) || defeated->valuedouble != defeated->valueint ||
-        defeated->valueint < 0 || defeated->valueint > 1 || !cJSON_IsArray(stages) || cJSON_GetArraySize(stages) != PIRATE_DEPTH) {
-        return 0;
-    }
-    g->pirate_defeated = defeated->valueint;
-    for (int i = 0; i < PIRATE_DEPTH; i++) {
-        PirateCache *cache = &g->pirate_cache[i];
-        const cJSON *entry = cJSON_GetArrayItem(stages, i);
-        const cJSON *seed = cJSON_GetObjectItem(entry, "seed");
-        const cJSON *claimed = cJSON_GetObjectItem(entry, "treasure_claimed");
-        const cJSON *harbor = cJSON_GetObjectItem(entry, "harbor_state");
-        const cJSON *explored = cJSON_GetObjectItem(entry, "explored");
-        if (!cJSON_IsNumber(seed) || seed->valuedouble != seed->valueint || seed->valueint < 0 || seed->valueint > 1000000 ||
-            !cJSON_IsNumber(claimed) || claimed->valuedouble != claimed->valueint || claimed->valueint < 0 || claimed->valueint > 7 ||
-            !cJSON_IsString(explored) || strlen(explored->valuestring) != 4 * ((sizeof(cache->explored) + 2) / 3)) {
-            return 0;
-        }
-        cache->seed = seed->valueint;
-        cache->treasure_claimed = claimed->valueint;
-        if ((version >= 187 && !cJSON_IsNumber(harbor)) || (harbor &&
-            (!cJSON_IsNumber(harbor) || harbor->valuedouble != harbor->valueint || harbor->valueint < 0 ||
-            harbor->valueint > 7 || (i != 2 && harbor->valueint) ||
-            ((harbor->valueint & PIRATE_STRONGBOX) && !(harbor->valueint & PIRATE_CARGO_KEY))))) {
-            return 0;
-        }
-        cache->harbor_state = harbor ? harbor->valueint : 0;
-        base64_to_bytes(explored->valuestring, cache->explored, sizeof(cache->explored));
-        const cJSON *enemies = cJSON_GetObjectItem(entry, "enemies");
-        if (!cJSON_IsArray(enemies) || cJSON_GetArraySize(enemies) > PIRATE_ENEMIES) {
-            return 0;
-        }
-        const char *fields[] = {"x", "y", "active", "type", "hp", "max_hp", "attack", "defense", "experience", "move_timer", "frozen_turns", "attack_target_x", "attack_target_y"};
-        for (int n = 0; n < cJSON_GetArraySize(enemies); n++) {
-            const cJSON *enemy = cJSON_GetArrayItem(enemies, n);
-            if (!cJSON_IsString(cJSON_GetObjectItem(enemy, "name"))) {
-                return 0;
-            }
-            for (int f = 0; f < 13; f++) {
-                if (!cJSON_IsNumber(cJSON_GetObjectItem(enemy, fields[f]))) {
-                    return 0;
-                }
-            }
-        }
-        deserialize_enemies(enemies, cache->enemies, &cache->enemy_count, PIRATE_ENEMIES);
-        for (int n = 0; n < cache->enemy_count; n++) {
-            const Enemy *enemy = &cache->enemies[n];
-            if (enemy->type < ENEMY_PIRATE_RAIDER || enemy->type > ENEMY_CAPTAIN_VOSS ||
-                enemy->x <= 0 || enemy->x >= PIRATE_W - 1 || enemy->y <= 0 || enemy->y >= PIRATE_H - 1) {
-                return 0;
-            }
-        }
-        const cJSON *loot = cJSON_GetObjectItem(entry, "loot");
-        if (!cJSON_IsArray(loot) || cJSON_GetArraySize(loot) > MAX_FLOOR_ITEMS) {
-            return 0;
-        }
-        const char *item_fields[] = {"active", "type", "attack_bonus", "defense_bonus", "value", "spell_id", "is_ranged", "range"};
-        for (int n = 0; n < cJSON_GetArraySize(loot); n++) {
-            const cJSON *floor = cJSON_GetArrayItem(loot, n);
-            const cJSON *item = cJSON_GetObjectItem(floor, "item");
-            if (!cJSON_IsNumber(cJSON_GetObjectItem(floor, "active")) || !cJSON_IsNumber(cJSON_GetObjectItem(floor, "x")) ||
-                !cJSON_IsNumber(cJSON_GetObjectItem(floor, "y")) || !cJSON_IsString(cJSON_GetObjectItem(item, "name"))) {
-                return 0;
-            }
-            for (int f = 0; f < 8; f++) {
-                if (!cJSON_IsNumber(cJSON_GetObjectItem(item, item_fields[f]))) {
-                    return 0;
-                }
-            }
-        }
-        if (!deserialize_castle_loot(loot, cache->loot, &cache->loot_count)) {
-            return 0;
-        }
-        for (int n = 0; n < cache->loot_count; n++) {
-            const FloorItem *item = &cache->loot[n];
-            if (item->x <= 0 || item->x >= PIRATE_W - 1 || item->y <= 0 || item->y >= PIRATE_H - 1) {
-                return 0;
-            }
-        }
-        if (!cache->seed && (cache->enemy_count || cache->loot_count || cache->treasure_claimed || cache->harbor_state)) {
-            return 0;
-        }
-    }
-    return 1;
-}
-
 int save_game(const GameState *g, int slot) {
+    if (!mangrove_state_valid(g)) {
+        return 0;
+    }
+    if (g->retired_coast_item_count < 0 || g->retired_coast_item_count > 5 * MAX_FLOOR_ITEMS) {
+        return 0;
+    }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 188);
-    cJSON_AddNumberToObject(root, "pirate_defeated", g->pirate_defeated);
-    cJSON_AddNumberToObject(root, "pirate_quest_state", g->pirate_quest_state);
-    cJSON *pirate = cJSON_CreateArray();
-    for (int i = 0; i < PIRATE_DEPTH; i++) {
-        PirateCache cache = g->pirate_cache[i];
-        if (g->location == LOCATION_PIRATE_COAST && g->level == i + 1) {
-            pirate_capture(g, &cache);
+    cJSON_AddNumberToObject(root, "save_version", 190);
+    MangroveState mangrove = g->mangroves;
+    mangrove_capture(g, &mangrove);
+    cJSON *delta = cJSON_CreateObject();
+    cJSON_AddNumberToObject(delta, "initialized", mangrove.initialized);
+    cJSON_AddNumberToObject(delta, "boat_x", mangrove.boat_x);
+    cJSON_AddNumberToObject(delta, "boat_y", mangrove.boat_y);
+    cJSON_AddNumberToObject(delta, "boat_dx", mangrove.boat_dx);
+    cJSON_AddNumberToObject(delta, "boat_dy", mangrove.boat_dy);
+    cJSON_AddNumberToObject(delta, "aboard", mangrove.aboard);
+    cJSON_AddNumberToObject(delta, "searched", mangrove.searched);
+    char *delta_explored = bytes_to_base64(mangrove.explored, sizeof(mangrove.explored));
+    cJSON_AddStringToObject(delta, "explored", delta_explored);
+    free(delta_explored);
+    cJSON_AddItemToObject(delta, "loot", serialize_castle_loot(mangrove.loot, mangrove.loot_count));
+    cJSON_AddItemToObject(root, "mangroves", delta);
+    cJSON *retired = cJSON_CreateArray();
+    for (int stage = 0; stage < 5; stage++) {
+        FloorItem items[MAX_FLOOR_ITEMS] = {0};
+        int count = 0;
+        for (int i = stage * MAX_FLOOR_ITEMS; i < g->retired_coast_item_count && i < (stage + 1) * MAX_FLOOR_ITEMS; i++) {
+            items[count].active = 1;
+            items[count++].item = g->retired_coast_items[i];
         }
-        cJSON *entry = cJSON_CreateObject();
-        cJSON_AddNumberToObject(entry, "seed", cache.seed);
-        cJSON_AddNumberToObject(entry, "treasure_claimed", cache.treasure_claimed);
-        cJSON_AddNumberToObject(entry, "harbor_state", cache.harbor_state);
-        char *explored = bytes_to_base64(cache.explored, sizeof(cache.explored));
-        cJSON_AddStringToObject(entry, "explored", explored);
-        free(explored);
-        cJSON_AddItemToObject(entry, "enemies", serialize_enemies(cache.enemies, cache.enemy_count));
-        cJSON_AddItemToObject(entry, "loot", serialize_castle_loot(cache.loot, cache.loot_count));
-        cJSON_AddItemToArray(pirate, entry);
+        cJSON_AddItemToArray(retired, serialize_castle_loot(items, count));
     }
-    cJSON_AddItemToObject(root, "pirate_cache", pirate);
+    cJSON_AddItemToObject(root, "retired_coast_loot", retired);
     cJSON_AddNumberToObject(root, "jail_quest_state", g->jail_quest_state);
     cJSON_AddNumberToObject(root, "prisoner_x", g->prisoner_x);
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
@@ -1940,6 +1796,185 @@ static void repair_floor_item_underlays(GameState *g) {
             g->map.tiles[item->y][item->x] = item->underlying_tile;
         }
     }
+}
+
+// IDs used by the retired Pirate Coast implementation (saves 184-188).
+enum { RETIRED_PIRATE_LOCATION = 44, RETIRED_MERCHANT_LOCATION = 45, RETIRED_PIRATE_APPROACH = 17 };
+
+static int is_pirate_prototype_save(const cJSON *root, int version) {
+    return version >= 184 && version <= 188 &&
+        cJSON_IsArray(cJSON_GetObjectItem(root, "pirate_cache"));
+}
+
+static int load_mangroves(const cJSON *root, GameState *g, int version) {
+    g->mangroves = (MangroveState){0};
+    if (version < 190) {
+        return 1;
+    }
+    const cJSON *delta = cJSON_GetObjectItem(root, "mangroves");
+    const char *names[] = {"initialized", "boat_x", "boat_y", "boat_dx", "boat_dy", "aboard", "searched"};
+    int *values[] = {&g->mangroves.initialized, &g->mangroves.boat_x, &g->mangroves.boat_y,
+        &g->mangroves.boat_dx, &g->mangroves.boat_dy, &g->mangroves.aboard};
+    for (int i = 0; i < 7; i++) {
+        const cJSON *field = cJSON_GetObjectItem(delta, names[i]);
+        if (!cJSON_IsNumber(field) || field->valuedouble != field->valueint ||
+            (i == 6 && (field->valueint < 0 || field->valueint > 7))) {
+            return 0;
+        }
+        if (i < 6) {
+            *values[i] = field->valueint;
+        } else {
+            g->mangroves.searched = field->valueint;
+        }
+    }
+    const cJSON *explored = cJSON_GetObjectItem(delta, "explored");
+    if ((g->mangroves.initialized != 0 && g->mangroves.initialized != 1) ||
+        (g->mangroves.aboard != 0 && g->mangroves.aboard != 1) || !cJSON_IsString(explored) ||
+        strlen(explored->valuestring) != 4 * ((sizeof(g->mangroves.explored) + 2) / 3) ||
+        !deserialize_castle_loot(cJSON_GetObjectItem(delta, "loot"), g->mangroves.loot, &g->mangroves.loot_count)) {
+        return 0;
+    }
+    base64_to_bytes(explored->valuestring, g->mangroves.explored, sizeof(g->mangroves.explored));
+    return 1;
+}
+
+static int load_retired_coast_loot(const cJSON *root, GameState *g, int version) {
+    int legacy = is_pirate_prototype_save(root, version);
+    const cJSON *stages = cJSON_GetObjectItem(root, legacy ? "pirate_cache" : "retired_coast_loot");
+    if (!legacy && version < 189) {
+        return 1;
+    }
+    if (!cJSON_IsArray(stages) || cJSON_GetArraySize(stages) != 5) {
+        return 0;
+    }
+    int location = cJSON_GetObjectItem(root, "location")->valueint;
+    int level = cJSON_GetObjectItem(root, "level")->valueint;
+    for (int stage = 0; stage < 5; stage++) {
+        if (legacy && location == RETIRED_PIRATE_LOCATION && level == stage + 1) {
+            continue; // The active floor is authoritative; do not duplicate its cached loot.
+        }
+        const cJSON *entry = cJSON_GetArrayItem(stages, stage);
+        const cJSON *loot = legacy ? cJSON_GetObjectItem(entry, "loot") : entry;
+        FloorItem items[MAX_FLOOR_ITEMS] = {0};
+        int count = 0;
+        if (!deserialize_castle_loot(loot, items, &count)) {
+            return 0;
+        }
+        for (int i = 0; i < count; i++) {
+            if (items[i].active) {
+                g->retired_coast_items[g->retired_coast_item_count++] = items[i].item;
+            }
+        }
+    }
+    return 1;
+}
+
+static void migrate_removed_pirate_coast(GameState *g, int returning) {
+    int removed_portal = g->portal_location == RETIRED_PIRATE_LOCATION;
+    if (removed_portal) {
+        g->portal_active = 0;
+        g->portal_location = LOCATION_DUNGEON;
+        g->portal_level = 0;
+        g->portal_x = 0;
+        g->portal_y = 0;
+        g->portal_origin_tile = TILE_FLOOR;
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                if (town_road_index(g->location) >= 0 && g->map.tiles[y][x] == TILE_PORTAL) {
+                    g->map.tiles[y][x] = TILE_TOWN_FLOOR;
+                }
+            }
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            if (g->floor_items[i].underlying_tile == TILE_PORTAL) {
+                g->floor_items[i].underlying_tile = TILE_TOWN_FLOOR;
+            }
+        }
+    }
+    if (!returning && g->location != LOCATION_DAWNMERE &&
+        (g->location != LOCATION_TOWN_ROAD || g->road_town != LOCATION_DAWNMERE)) {
+        return;
+    }
+
+    FloorItem loot[MAX_FLOOR_ITEMS];
+    int loot_count = g->floor_item_count;
+    memcpy(loot, g->floor_items, sizeof(loot));
+    unsigned char explored[MAP_EXPLORED_BYTES];
+    memcpy(explored, g->map.explored, sizeof(explored));
+    int x = g->player.x;
+    int y = g->player.y;
+    int dx = g->player.last_dx;
+    int dy = g->player.last_dy;
+    int portal_x = -1;
+    int portal_y = -1;
+    if (!returning && g->location == LOCATION_DAWNMERE && g->portal_active) {
+        for (int row = 0; row < TOWN_H; row++) {
+            for (int col = 0; col < TOWN_W; col++) {
+                if (g->map.tiles[row][col] == TILE_PORTAL) {
+                    portal_x = col;
+                    portal_y = row;
+                }
+            }
+        }
+        for (int i = 0; i < loot_count; i++) {
+            if (loot[i].active && loot[i].underlying_tile == TILE_PORTAL) {
+                portal_x = loot[i].x;
+                portal_y = loot[i].y;
+            }
+        }
+    }
+    if (returning) {
+        // The retired approach and merchant room have no surviving exit.
+        g->location = LOCATION_DAWNMERE;
+        g->level = 1;
+        game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
+        push_message(g, "Pirate Coast has been retired. You return to Dawnmere.");
+    } else if (g->location == LOCATION_TOWN_ROAD) {
+        town_road_enter(g, LOCATION_DAWNMERE, TOWN_SIDE_WEST, 0);
+    } else {
+        int spawn_x;
+        int spawn_y;
+        map_generate_dawnmere(&g->map, &spawn_x, &spawn_y);
+        if (portal_x >= 0 && portal_x < TOWN_W && portal_y >= 0 && portal_y < TOWN_H) {
+            g->map.tiles[portal_y][portal_x] = TILE_PORTAL;
+        }
+    }
+    if (!returning) {
+        memcpy(g->map.explored, explored, sizeof(explored));
+        if (map_is_walkable(&g->map, x, y)) {
+            g->player.x = x;
+            g->player.y = y;
+        } else if (g->location == LOCATION_DAWNMERE) {
+            g->player.x = 20;
+            g->player.y = 12;
+        }
+        g->player.last_dx = dx;
+        g->player.last_dy = dy;
+    }
+    g->floor_item_count = loot_count;
+    memcpy(g->floor_items, loot, sizeof(loot));
+    for (int i = 0; i < loot_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (!item->active) {
+            continue;
+        }
+        if (returning || !map_is_walkable(&g->map, item->x, item->y)) {
+            // Separate walkable squares near town's western road keep loot reachable.
+            item->x = 2 + i % 10;
+            item->y = 12 + i / 10;
+        }
+        item->underlying_tile = g->map.tiles[item->y][item->x];
+    }
+    for (int i = 0; i < loot_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active) {
+            g->map.tiles[item->y][item->x] = TILE_ITEM;
+        }
+    }
+    g->approach_route = -1;
+    g->enemy_count = 0;
+    g->dialogue_active = 0;
+    map_mark_explored(&g->map, g->player.x, g->player.y);
 }
 
 static void migrate_testing_save(cJSON *root, int version) {
@@ -3066,6 +3101,13 @@ int load_game(GameState *g, int slot) {
 
     cJSON *version_item = cJSON_GetObjectItem(root, "save_version");
     int save_version = version_item ? version_item->valueint : 1;
+    if (!load_mangroves(root, g, save_version)) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    g->retired_coast_item_count = 0;
+    int pirate_prototype = is_pirate_prototype_save(root, save_version);
+    int pirate_return = 0;
     int old_forest = save_version < 77 && !cJSON_GetObjectItem(root, "forest_entry_town");
     int old_swamp = save_version < 78 && !cJSON_GetObjectItem(root, "swamp_entry_town");
     int old_mountains = save_version < 79 && !cJSON_GetObjectItem(root, "mountain_entry_town");
@@ -3117,10 +3159,6 @@ int load_game(GameState *g, int slot) {
         return 0;
     }
     if (!elderwood_load(root, g, save_version)) {
-        cJSON_Delete(root);
-        return 0;
-    }
-    if (!pirate_load(root, g, save_version)) {
         cJSON_Delete(root);
         return 0;
     }
@@ -3404,6 +3442,14 @@ int load_game(GameState *g, int slot) {
     g->equipped_off_hand = off_hand ? off_hand->valueint : -1;
     g->equipped_armor    = cJSON_GetObjectItem(root, "equipped_armor")->valueint;
     g->location          = cJSON_GetObjectItem(root, "location")->valueint;
+    if (pirate_prototype) {
+        cJSON *route = cJSON_GetObjectItem(root, "approach_route");
+        pirate_return = g->location == RETIRED_PIRATE_LOCATION || g->location == RETIRED_MERCHANT_LOCATION ||
+            (g->location == LOCATION_APPROACH && cJSON_IsNumber(route) && route->valueint == RETIRED_PIRATE_APPROACH);
+        if (pirate_return) {
+            g->location = LOCATION_DAWNMERE;
+        }
+    }
     cJSON *debug_passages = cJSON_GetObjectItem(root, "debug_passages_unlocked");
     g->debug_passages_unlocked = debug_passages ? debug_passages->valueint : 0;
     if (debug_passages && (!cJSON_IsNumber(debug_passages) ||
@@ -5690,11 +5736,6 @@ int load_game(GameState *g, int slot) {
     // Recess legacy floor shortcuts into terrain in active and cached boss maps.
     game_migrate_boss_shortcuts(g);
     game_refresh_quest_encounters(g);
-    pirate_migrate(g, save_version);
-    pirate_refresh_treasure(g);
-    if (save_version < 186 && g->location == LOCATION_DAWNMERE) {
-        town_life_migrate(g);
-    }
     for (int i = 0; i < g->floor_item_count; i++) {
         FloorItem *item = &g->floor_items[i];
         if (item->active && g->location == LOCATION_TOWN2 &&
@@ -5754,31 +5795,24 @@ int load_game(GameState *g, int slot) {
             item->active = 0;
         }
     }
-    if (save_version < 184) {
-        if (g->location == LOCATION_DAWNMERE) {
-            for (int x = 18; x <= 22; x++) {
-                g->map.tiles[TOWN_H - 1][x] = TILE_TOWN_EXIT;
-            }
-        } else if (g->location == LOCATION_TOWN_ROAD && g->road_town == LOCATION_DAWNMERE) {
-            int x = TOWN_ROAD_W / 2;
-            for (int y = TOWN_SPRITE_Y + TOWN_SPRITE_H; y < TOWN_ROAD_H; y++) {
-                retile_town_ground(g, x, y, y == TOWN_ROAD_H - 1 ? TILE_TOWN_ROAD_EXIT_SOUTH : TILE_TOWN_PATH);
-            }
-            g->map.tiles[TOWN_SPRITE_Y + TOWN_SPRITE_H - 1][x] = TILE_TOWN_ROAD_ENTRY_SOUTH;
-            g->map.tiles[TOWN_ROAD_H - 1][x] = TILE_TOWN_ROAD_EXIT_SOUTH;
-        }
-    }
-    if (save_version < 188) {
-        migrate_dawnmere_paths(g);
-    }
-    if (g->location == LOCATION_PIRATE_COAST && (g->level < 1 || g->level > PIRATE_DEPTH ||
-        !g->pirate_cache[g->level - 1].seed || g->enemy_count > PIRATE_ENEMIES ||
-        g->player.x <= 0 || g->player.x >= PIRATE_W - 1 || g->player.y <= 0 || g->player.y >= PIRATE_H - 1)) {
+    if (g->location == LOCATION_JAIL_ARMORY && (g->level != 1 || !g->jail_armory_initialized ||
+        g->enemy_count != 3 || g->player.x < 0 || g->player.x >= JAIL_ROOM_W || g->player.y < 0 || g->player.y >= JAIL_ROOM_H)) {
         cJSON_Delete(root);
         return 0;
     }
-    if (g->location == LOCATION_JAIL_ARMORY && (g->level != 1 || !g->jail_armory_initialized ||
-        g->enemy_count != 3 || g->player.x < 0 || g->player.x >= JAIL_ROOM_W || g->player.y < 0 || g->player.y >= JAIL_ROOM_H)) {
+    if (!load_retired_coast_loot(root, g, save_version)) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    if (pirate_prototype) {
+        migrate_removed_pirate_coast(g, pirate_return);
+    }
+    game_recover_retired_items(g);
+    if (save_version < 190) {
+        mangrove_migrate_town(g);
+    }
+    if (!mangrove_state_valid(g) || (g->location == LOCATION_MANGROVE_PATH &&
+        (g->player.x < 0 || g->player.x >= MANGROVE_PATH_W || g->player.y < 0 || g->player.y >= MANGROVE_PATH_H))) {
         cJSON_Delete(root);
         return 0;
     }

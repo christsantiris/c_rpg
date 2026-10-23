@@ -1,6 +1,7 @@
 #include "game_renderer.h"
+#include "mangrove_renderer.h"
+#include "../game/mangrove.h"
 #include "elderwood_renderer.h"
-#include "pirate_renderer.h"
 #include "../game/elderwood.h"
 #include "town_road_renderer.h"
 #include "../game/town_road.h"
@@ -211,7 +212,6 @@ static int approach_area_style(Location area, TownExitStyle *style) {
         case LOCATION_FOREST: *style = TOWN_EXIT_FOREST; return 1;
         case LOCATION_MOUNTAINS: *style = TOWN_EXIT_MOUNTAINS; return 1;
         case LOCATION_CATACOMBS: *style = TOWN_EXIT_CATACOMBS; return 1;
-        case LOCATION_PIRATE_COAST:
         case LOCATION_COAST: *style = TOWN_EXIT_COAST; return 1;
         case LOCATION_SWAMP: *style = TOWN_EXIT_SWAMP; return 1;
         case LOCATION_DRAGONSPINE: *style = TOWN_EXIT_DRAGONSPINE; return 1;
@@ -1310,9 +1310,6 @@ static TileType floor_item_underlay(const GameState *g, int x, int y) {
             return terrain_display_tile(g, (TileType)item->underlying_tile);
         }
     }
-    if (g->location == LOCATION_PIRATE_COAST) {
-        return g->level >= 3 ? TILE_PIRATE_DECK : TILE_PIRATE_SAND;
-    }
     if (g->location == LOCATION_ELDERWOOD) {
         return TILE_ELDERWOOD_FLOOR;
     }
@@ -1408,7 +1405,7 @@ static TileType coast_visible_tile(const GameState *g, int x, int y) {
     if (tile == TILE_ITEM) {
         tile = floor_item_underlay(g, x, y);
     }
-    if (tile == TILE_WALL && g->location == LOCATION_APPROACH && approach_route(g) && (approach_route(g)->area == LOCATION_COAST || approach_route(g)->area == LOCATION_PIRATE_COAST)) {
+    if (tile == TILE_WALL && g->location == LOCATION_APPROACH && approach_route(g) && approach_route(g)->area == LOCATION_COAST) {
         return approach_coast_ground(x, y);
     }
     if (tile == TILE_TRAP_HIDDEN || tile == TILE_TRAP_REVEALED ||
@@ -1526,9 +1523,8 @@ static void draw_floor_loot(Renderer *r, const GameState *g, int map_x, int map_
 
 static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int map_x, int map_y, int screen_x, int screen_y) {
     TileType underlay = floor_item_underlay(g, map_x, map_y);
-    if ((underlay >= TILE_PIRATE_SAND && underlay <= TILE_PIRATE_EXIT) ||
-        (underlay >= TILE_PIRATE_QUEST_CHEST && underlay <= TILE_PIRATE_BULKHEAD)) {
-        draw_pirate_tile(r, &g->map, screen_x, screen_y, map_x, map_y, underlay);
+    if (underlay >= TILE_MANGROVE_MUD && underlay <= TILE_MANGROVE_CACHE) {
+        mangrove_draw_tile(r, g, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay >= TILE_ELDERWOOD_FLOOR && underlay <= TILE_ELDERWOOD_LOG) {
         draw_elderwood_tile(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (wilds_tile(underlay)) {
@@ -2022,6 +2018,11 @@ static void draw_low_health_warning(Renderer *r, const GameState *g) {
 }
 
 void game_draw(Renderer *r, GameState *g, Viewport *v) {
+    if (g->location == LOCATION_MANGROVES) {
+        SDL_SetRenderDrawColor(r->sdl, 9, 42, 52, 255);
+        SDL_Rect sea = {0, 0, r->screen_w - INFO_PANEL_W, r->tiles_y * TILE_SIZE};
+        SDL_RenderFillRect(r->sdl, &sea);
+    }
     Viewport town_view;
     int temple_remaining = game_temple_remaining_enemies(g);
     int kraken_warning = kraken_tentacles_raised(g);
@@ -2036,7 +2037,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         town_life_is_interior(g->location);
     int island_scaled = g->location == LOCATION_ISLAND;
     int labyrinth_scaled = g->location == LOCATION_LABYRINTH;
-    int road_scaled = g->location == LOCATION_FOREST_ROAD ||
+    int road_scaled = g->location == LOCATION_MANGROVE_PATH || g->location == LOCATION_FOREST_ROAD ||
         g->location == LOCATION_APPROACH || g->location == LOCATION_TOWN_ROAD ||
         g->location == LOCATION_HIGH_PASS ||
         game_is_king_road(g) || g->location == LOCATION_SWAMP_ROAD;
@@ -2065,11 +2066,16 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             v->tiles_y < ESCAPE_TUNNEL_H ? v->tiles_y : ESCAPE_TUNNEL_H, ESCAPE_TUNNEL_W, ESCAPE_TUNNEL_H);
         viewport_center_on(&town_view, g->player.x, g->player.y);
         v = &town_view;
+    } else if (g->location == LOCATION_MANGROVES) {
+        viewport_init(&town_view, v->tiles_x < MANGROVE_W ? v->tiles_x : MANGROVE_W,
+            v->tiles_y < MANGROVE_H ? v->tiles_y : MANGROVE_H, MANGROVE_W, MANGROVE_H);
+        viewport_center_on(&town_view, g->player.x, g->player.y);
+        v = &town_view;
     } else if (road_scaled) {
-        int road_w = g->location == LOCATION_TOWN_ROAD ? TOWN_ROAD_W : g->location == LOCATION_APPROACH ? APPROACH_W : g->location == LOCATION_HIGH_PASS ? HIGH_PASS_W :
+        int road_w = g->location == LOCATION_MANGROVE_PATH ? MANGROVE_PATH_W : g->location == LOCATION_TOWN_ROAD ? TOWN_ROAD_W : g->location == LOCATION_APPROACH ? APPROACH_W : g->location == LOCATION_HIGH_PASS ? HIGH_PASS_W :
             (game_is_king_road(g) ? CROWNROAD_W :
             (g->location == LOCATION_SWAMP_ROAD ? SWAMP_ROAD_W : FOREST_ROAD_W));
-        int road_h = g->location == LOCATION_TOWN_ROAD ? TOWN_ROAD_H : g->location == LOCATION_APPROACH ? APPROACH_H : g->location == LOCATION_HIGH_PASS ? HIGH_PASS_H :
+        int road_h = g->location == LOCATION_MANGROVE_PATH ? MANGROVE_PATH_H : g->location == LOCATION_TOWN_ROAD ? TOWN_ROAD_H : g->location == LOCATION_APPROACH ? APPROACH_H : g->location == LOCATION_HIGH_PASS ? HIGH_PASS_H :
             (game_is_king_road(g) ? CROWNROAD_H :
             (g->location == LOCATION_SWAMP_ROAD ? SWAMP_ROAD_H : FOREST_ROAD_H));
         int view_w = v->tiles_x < road_w ? v->tiles_x : road_w;
@@ -2085,10 +2091,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         v = &town_view;
     } else if (g->location == LOCATION_CASTLE_INTERIOR) {
         viewport_init(&town_view, v->tiles_x < CASTLE_W ? v->tiles_x : CASTLE_W, v->tiles_y < CASTLE_H ? v->tiles_y : CASTLE_H, CASTLE_W, CASTLE_H);
-        viewport_center_on(&town_view, g->player.x, g->player.y);
-        v = &town_view;
-    } else if (g->location == LOCATION_PIRATE_COAST) {
-        viewport_init(&town_view, v->tiles_x < PIRATE_W ? v->tiles_x : PIRATE_W, v->tiles_y < PIRATE_H ? v->tiles_y : PIRATE_H, PIRATE_W, PIRATE_H);
         viewport_center_on(&town_view, g->player.x, g->player.y);
         v = &town_view;
     } else if (g->location == LOCATION_ELDERWOOD) {
@@ -2161,6 +2163,14 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 continue;
             }
             switch (terrain_display_tile(g, g->map.tiles[y][x])) {
+                case TILE_MANGROVE_MUD:
+                case TILE_MANGROVE_WATER:
+                case TILE_MANGROVE_ROOT:
+                case TILE_MANGROVE_LANDING:
+                case TILE_MANGROVE_RETURN:
+                case TILE_MANGROVE_CACHE:
+                    mangrove_draw_tile(r, g, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
                 case TILE_FLOOR:
                     if (g->location == LOCATION_DUNGEON) {
                         draw_dungeon_floor(r, sx, sy, x, y);
@@ -2173,7 +2183,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                         draw_town_floor(r, sx, sy);
                     } else if (g->location == LOCATION_APPROACH && approach_route(g) && approach_route(g)->town != LOCATION_CASTLE &&
                         (x == 0 || x == APPROACH_W - 1 || y == 0 || y == APPROACH_H - 1)) {
-                        if ((approach_route(g)->area == LOCATION_COAST || approach_route(g)->area == LOCATION_PIRATE_COAST)) {
+                        if (approach_route(g)->area == LOCATION_COAST) {
                             draw_approach_coast_ground(r, sx, sy, x, y);
                         } else {
                             draw_town_floor(r, sx, sy);
@@ -2196,7 +2206,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                         approach_entrance_rows(approach_route(g)->area) &&
                         x >= g->map.stairs_down_x - 3 && x <= g->map.stairs_down_x + 3 &&
                         y > g->map.stairs_down_y - approach_entrance_rows(approach_route(g)->area) && y <= g->map.stairs_down_y) {
-                        if ((approach_route(g)->area == LOCATION_COAST || approach_route(g)->area == LOCATION_PIRATE_COAST)) {
+                        if (approach_route(g)->area == LOCATION_COAST) {
                             draw_approach_coast_ground(r, sx, sy, x, y);
                         } else {
                             draw_town_floor(r, sx, sy);
@@ -2266,24 +2276,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_forest_wall(r, sx, sy, x, y); break;
                 case TILE_FOREST_HIDDEN_TRAIL:
                     draw_forest_wall(r, sx, sy, x, y); break;
-                case TILE_PIRATE_SAND:
-                case TILE_PIRATE_SEA:
-                case TILE_PIRATE_DECK:
-                case TILE_PIRATE_PALISADE:
-                case TILE_PIRATE_CRATE:
-                case TILE_PIRATE_CHEST:
-                case TILE_PIRATE_ENTRANCE:
-                case TILE_PIRATE_EXIT:
-                case TILE_PIRATE_RAIL:
-                case TILE_PIRATE_CLIFF:
-                case TILE_PIRATE_QUEST_CHEST:
-                case TILE_PIRATE_CARGO:
-                case TILE_PIRATE_WINCH:
-                case TILE_PIRATE_WINCH_OPEN:
-                case TILE_PIRATE_MAST:
-                case TILE_PIRATE_BULKHEAD:
-                    draw_pirate_tile(r, &g->map, sx, sy, x, y, g->map.tiles[y][x]);
-                    break;
                 case TILE_ELDERWOOD_WALL:
                 case TILE_ELDERWOOD_FLOOR:
                 case TILE_ELDERWOOD_ENTRANCE:
@@ -2793,12 +2785,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     break;
                 case TILE_NPC_RESIDENT: {
                     const TownBuilding *b = town_life_building(g->location);
-                    if (g->location == LOCATION_MERCHANT) {
-                        draw_tavern_floor(r, sx, sy);
-                        npc_draw(r, sx, sy, NPC_ART_DAIN, 0);
-                    } else {
-                        town_life_draw_resident(r, sx, sy, b ? b->style : 0);
-                    }
+                    town_life_draw_resident(r, sx, sy, b ? b->style : 0);
                     break;
                 }
                 case TILE_NPC_ELOWEN: draw_elowen(r, sx, sy); break;
@@ -3068,7 +3055,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 draw_forest_ruin(r, sx, sy, x - landmark_x, y - landmark_y);
             }
             if (g->location == LOCATION_COAST ||
-                (g->location == LOCATION_APPROACH && approach_route(g) && (approach_route(g)->area == LOCATION_COAST || approach_route(g)->area == LOCATION_PIRATE_COAST))) {
+                (g->location == LOCATION_APPROACH && approach_route(g) && approach_route(g)->area == LOCATION_COAST)) {
                 TileType tile = coast_visible_tile(g, x, y);
                 if (coast_is_water_surface(tile)) {
                     unsigned int edges = 0;
@@ -3155,16 +3142,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             game_labyrinth_is_open(g) ? (SDL_Color){225, 201, 111, 255} : (SDL_Color){105, 105, 90, 255}, r->font_tiny);
     }
 
+    mangrove_draw_landmark(r, g, v);
     TownExitStyle entrance_style;
     if (g->location == LOCATION_APPROACH && !northern_approach(g) && approach_route(g) && approach_entrance_rows(approach_route(g)->area) &&
-        approach_route(g)->area != LOCATION_PIRATE_COAST && approach_area_style(approach_route(g)->area, &entrance_style)) {
+        approach_area_style(approach_route(g)->area, &entrance_style)) {
         draw_area_entrance(r, entrance_style, viewport_to_screen_x(v, g->map.stairs_down_x), viewport_to_screen_y(v, g->map.stairs_down_y), approach_entrance_rows(approach_route(g)->area));
-    }
-
-    if (g->location == LOCATION_APPROACH && approach_route(g) && approach_route(g)->area == LOCATION_PIRATE_COAST) {
-        SDL_Rect fort = {(viewport_to_screen_x(v, g->map.stairs_down_x) - 3) * TILE_SIZE,
-            (viewport_to_screen_y(v, g->map.stairs_down_y) - 5) * TILE_SIZE, 7 * TILE_SIZE, 6 * TILE_SIZE};
-        SDL_RenderCopy(r->sdl, r->pirate_entrance_texture, NULL, &fort);
     }
 
     // Loot on mechanisms and return passages keeps the underlying tile visible.
@@ -3174,7 +3156,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             continue;
         }
         TileType tile = g->map.tiles[item->y][item->x];
-        if ((tile != TILE_ITEM || g->location == LOCATION_PIRATE_COAST || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_JAIL_ARMORY || g->location == LOCATION_JAIL ||
+        if ((tile != TILE_ITEM || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_JAIL_ARMORY || g->location == LOCATION_JAIL ||
             g->location == LOCATION_ESCAPE_TUNNEL) && g->location != LOCATION_ISLAND) {
             draw_floor_loot(r, g, item->x, item->y,
                 viewport_to_screen_x(v, item->x),
@@ -3229,15 +3211,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     if (g->location == LOCATION_DAWNMERE) {
+        draw_town_gate_back(r, viewport_to_screen_x(v, 20), viewport_to_screen_y(v, TOWN_H - 1), TOWN_EXIT_ROAD, 0, -1);
+        const TownBuilding merchant = {LOCATION_DAWNMERE, LOCATION_DAWNMERE, 7, 7, 5, 4, 0, 0, "MERCHANT", NULL, NULL, NULL};
+        town_life_draw_building(r, v, &merchant);
         draw_town_gate_back(r, viewport_to_screen_x(v, 0), viewport_to_screen_y(v, 12), TOWN_EXIT_DUNGEON, 1, 0);
         draw_town_road_sign(r, viewport_to_screen_x(v, 2), viewport_to_screen_y(v, 17), "DUNGEON / OAKHAVEN");
         draw_town_gate(r, viewport_to_screen_x(v, 18), viewport_to_screen_y(v, 0), TOWN_EXIT_MOUNTAINS);
         draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, 3), "MOUNTAINS / RIDGESHIRE");
-        if (r->pirate_town_gate_texture) {
-            SDL_Rect gate = {viewport_to_screen_x(v, 19) * TILE_SIZE, viewport_to_screen_y(v, TOWN_H - 3) * TILE_SIZE, 72, 72};
-            SDL_RenderCopy(r->sdl, r->pirate_town_gate_texture, NULL, &gate);
-        }
-        draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, TOWN_H - 5), "PIRATE COAST");
     }
     if (g->location == LOCATION_TOWN2) {
         draw_town_gate(r, viewport_to_screen_x(v, 0),
@@ -3343,10 +3323,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_sun_guardian_warnings(r, g, v);
     draw_red_dragon_warnings(r, g, v);
     draw_elderwood_warnings(r, g, v);
-    draw_pirate_warnings(r, g, v);
 
     // Draw enemies
-    if (g->location == LOCATION_PIRATE_COAST || g->location == LOCATION_JAIL_ARMORY || g->location == LOCATION_ELDERWOOD || g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
+    if (g->location == LOCATION_JAIL_ARMORY || g->location == LOCATION_ELDERWOOD || g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
         g->location == LOCATION_FOREST ||
         g->location == LOCATION_MOUNTAINS ||
         g->location == LOCATION_DRAGONSPINE ||
@@ -4105,6 +4084,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     int player_px = viewport_to_screen_x(v, g->player.x) * TILE_SIZE;
     int player_py = viewport_to_screen_y(v, g->player.y) * TILE_SIZE;
     ice_slide_offset(g, &player_px, &player_py);
+    mangrove_draw_boat(r, g, v);
     draw_player_at(r, player_px, player_py,
         g->player.player_class, equipped_weapon, off_hand_weapon,
         equipped_armor,
@@ -4171,6 +4151,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     draw_low_health_warning(r, g);
     draw_area_description(r, g, v);
+    mangrove_draw_hint(r, g);
 
     draw_kraken_status(r, g, v);
     draw_lich_status(r, g, v);
@@ -4185,7 +4166,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_prism_sovereign_status(r, g, v);
     draw_sun_guardian_status(r, g, v);
     draw_red_dragon_status(r, g, v);
-    draw_pirate_status(r, g, v);
     castle_draw_castellan_status(r, g, v);
     castle_draw_arcanist_status(r, g, v);
     castle_draw_veyr_status(r, g, v);
