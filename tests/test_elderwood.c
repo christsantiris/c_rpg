@@ -221,7 +221,12 @@ void test_elderwood(void) {
     ASSERT("entering Oakhaven from the north places the player by its northern exit", g->location == LOCATION_TOWN && g->player.y == 1);
     game_init(g);
     g->debug_passages_unlocked = 1;
-    approach_enter_region(g, town_approach_count - 1);
+    for (int i = 0; i < town_approach_count; i++) {
+        if (town_approaches[i].area == LOCATION_ELDERWOOD) {
+            approach_enter_region(g, i);
+            break;
+        }
+    }
     ASSERT("debug mode bypasses both road locks without granting boss victories", path(g, NORTH_ROAD_X, 0, 0) && !g->elderwood_defeated && !g->defeated_bosses);
     ASSERT("debug road access remains unlocked after loading", save_game(g, ELDER_SLOT) && load_game(loaded, ELDER_SLOT) && path(loaded, NORTH_ROAD_X, 0, 0));
     game_init(g);
@@ -254,7 +259,12 @@ void test_elderwood(void) {
     ASSERT("entering a town updates the saved last visit", g->last_town_visited == LOCATION_TOWN2);
     town_road_enter(g, LOCATION_DAWNMERE, TOWN_SIDE_WEST, 0);
     ASSERT("bypassing a town leaves the last visit unchanged", g->last_town_visited == LOCATION_TOWN2);
-    approach_enter_region(g, town_approach_count - 1);
+    for (int i = 0; i < town_approach_count; i++) {
+        if (town_approaches[i].area == LOCATION_ELDERWOOD) {
+            approach_enter_region(g, i);
+            break;
+        }
+    }
     elderwood_enter(g);
     g->enemies[0].hp = 11;
     int portal_x = g->player.x;

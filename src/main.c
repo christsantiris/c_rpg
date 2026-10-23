@@ -620,7 +620,7 @@ int main(int argc, char **argv) {
             (screen == SCREEN_PLAYING && game_combat_feedback_active(SDL_GetTicks()));
         int ambient_animating = screen == SCREEN_PLAYING &&
             (game_player_low_health(&game) || game.location == LOCATION_DUNGEON ||
-            game.location == LOCATION_ELDERWOOD || game.location == LOCATION_FOREST ||
+            game.location == LOCATION_PIRATE_COAST || game.location == LOCATION_ELDERWOOD || game.location == LOCATION_FOREST ||
             game.location == LOCATION_MOUNTAINS ||
             game.location == LOCATION_DRAGONSPINE ||
             game.location == LOCATION_FROSTFELL ||
@@ -651,6 +651,7 @@ int main(int argc, char **argv) {
                 // Weather and the low-health pulse need smooth motion while idle.
                 int interval = (game_player_low_health(&game) || game.location == LOCATION_FROSTFELL ||
                     game.location == LOCATION_DESERT) ? 33 :
+                    game.location == LOCATION_PIRATE_COAST ? 80 :
                     (int)AMBIENT_FRAME_MS;
                 has_event = SDL_WaitEventTimeout(&event,
                     interval);
@@ -1560,7 +1561,7 @@ int main(int argc, char **argv) {
             game.location == LOCATION_SPICE_SHOP;
         int in_town4 = game.location == LOCATION_TOWN4 || game.location == LOCATION_WORKSHOP ||
             game.location == LOCATION_TOWN_HALL || game.location == LOCATION_MONASTERY;
-        music_update(screen, is_town, in_town2, in_town3, in_town4, traveling, game.location == LOCATION_DAWNMERE, game.location == LOCATION_CASTLE);
+        music_update(screen, is_town, in_town2, in_town3, in_town4, traveling, game.location == LOCATION_DAWNMERE || game.location == LOCATION_MERCHANT, game.location == LOCATION_CASTLE);
 
         if (!needs_redraw) {
             continue;

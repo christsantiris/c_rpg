@@ -7,6 +7,9 @@
 #include "../../src/game/town_road.h"
 #include "../../src/game/castle.h"
 #include "../../src/game/elderwood.h"
+#include "../../src/game/pirate.h"
+#include "../../src/renderer/minimap_renderer.h"
+#include "../../src/renderer/pirate_renderer.h"
 
 static void visit_exterior_town(GameState *g) {
     assert(g->location == LOCATION_TOWN_ROAD);
@@ -22,6 +25,81 @@ static void visit_exterior_town(GameState *g) {
         action_resolve_player(g, (Action){ACTION_MOVE, g->player.x + dx, g->player.y + dy});
     }
     assert(g->location == town);
+}
+
+static Uint32 minimap_pixel(Renderer *r, int x, int y) {
+    SDL_Rect pixel = {6 + x / 2, 6 + y / 2, 1, 1};
+    Uint32 color;
+    assert(SDL_RenderReadPixels(r->sdl, &pixel, SDL_PIXELFORMAT_RGBA32, &color, sizeof(color)) == 0);
+    return color;
+}
+
+static void check_pirate_minimap(Renderer *r, GameState *g) {
+    g->location = LOCATION_PIRATE_COAST;
+    g->player.x = 70;
+    g->player.y = 30;
+    const TileType blocked[] = {TILE_PIRATE_SEA, TILE_PIRATE_CLIFF, TILE_PIRATE_PALISADE, TILE_PIRATE_RAIL, TILE_PIRATE_CRATE,
+        TILE_PIRATE_BULKHEAD, TILE_PIRATE_MAST, TILE_PIRATE_WINCH_OPEN};
+    int barrier_width = (int)(sizeof(blocked) / sizeof(blocked[0])) * 2;
+    for (int y = 0; y < PIRATE_H; y++) {
+        for (int x = 0; x < PIRATE_W; x++) {
+            g->map.tiles[y][x] = x < barrier_width ? blocked[x / 2] : TILE_PIRATE_SAND;
+            map_mark_explored(&g->map, x, y);
+        }
+    }
+    g->map.tiles[12][20] = TILE_PIRATE_EXIT;
+    g->map.tiles[14][20] = TILE_PIRATE_CARGO;
+    g->map.tiles[16][20] = TILE_PIRATE_WINCH;
+    SDL_SetRenderDrawColor(r->sdl, 60, 80, 100, 255);
+    SDL_RenderClear(r->sdl);
+    minimap_draw(r, g);
+    Uint32 sea = minimap_pixel(r, 0, 10);
+    for (int x = 2; x < barrier_width; x += 2) {
+        assert(minimap_pixel(r, x, 10) == sea);
+    }
+    Uint32 floor = minimap_pixel(r, 24, 10);
+    assert(floor != sea && minimap_pixel(r, 20, 12) != floor && minimap_pixel(r, 20, 12) != sea);
+    assert(minimap_pixel(r, 20, 14) == minimap_pixel(r, 20, 12) && minimap_pixel(r, 20, 16) == minimap_pixel(r, 20, 12));
+    SDL_PixelFormat *format = SDL_AllocFormat(SDL_PIXELFORMAT_RGBA32);
+    Uint8 red;
+    Uint8 green;
+    Uint8 blue;
+    Uint8 alpha;
+    SDL_GetRGBA(floor, format, &red, &green, &blue, &alpha);
+    assert(red > green && green > blue); // Warm sand rather than the dungeon's purple fallback.
+    SDL_FreeFormat(format);
+    puts("PASS: Pirate Coast minimap uses warm land, clear cargo/winch markers, and blank barriers.");
+}
+
+static void check_pirate_water(Renderer *r, GameState *g) {
+    enum { SIZE = 12 * TILE_SIZE };
+    Uint32 *first = malloc(SIZE * SIZE * sizeof(*first));
+    Uint32 *next = malloc(SIZE * SIZE * sizeof(*next));
+    assert(first && next);
+    SDL_Rect region = {0, 0, SIZE, SIZE};
+    for (int y = 0; y < 12; y++) {
+        for (int x = 0; x < 12; x++) {
+            g->map.tiles[y][x] = x >= 3 && x <= 9 && y >= 3 && y <= 9 && (x < 6 || y < 6) ? TILE_PIRATE_SAND : TILE_PIRATE_SEA;
+        }
+    }
+    for (int frame = 0; frame < 2; frame++) {
+        for (int y = 0; y < 12; y++) {
+            for (int x = 0; x < 12; x++) {
+                draw_pirate_tile(r, &g->map, x, y, x, y, g->map.tiles[y][x]);
+            }
+        }
+        assert(SDL_RenderReadPixels(r->sdl, &region, SDL_PIXELFORMAT_RGBA32, frame ? next : first, SIZE * sizeof(*first)) == 0);
+        if (!frame) {
+            SDL_Delay(360);
+        }
+    }
+    assert(first[3 * TILE_SIZE * SIZE + 3 * TILE_SIZE] == first[0]);
+    assert(first[(3 * TILE_SIZE + 12) * SIZE + 3 * TILE_SIZE + 12] != first[0]);
+    assert(first[6 * TILE_SIZE * SIZE + 6 * TILE_SIZE] != first[0]);
+    assert(memcmp(first, next, SIZE * SIZE * sizeof(*first)) != 0);
+    free(first);
+    free(next);
+    puts("PASS: Pirate Coast rounds beach and inlet corners; water shimmer animates without player input.");
 }
 
 int main(void) {
@@ -366,6 +444,8 @@ int main(void) {
     game->player.y = 14;
     action_resolve_player(game, (Action){ACTION_MOVE, ESCAPE_TUNNEL_W - 1, 14});
     assert(game->location == LOCATION_TOWN4 && game->jail_quest_state == 3 && game->gold == gold + ESCAPE_REWARD_GOLD);
+    check_pirate_minimap(&renderer, game);
+    check_pirate_water(&renderer, game);
     free(game);
     renderer_free(&renderer);
     SDL_DestroyRenderer(sdl);

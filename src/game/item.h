@@ -157,6 +157,7 @@ Item item_make_scroll_fireball(void);
 Item item_make_scroll_heal(void);
 Item item_make_scroll_return_to_town(void);
 Item item_make_treasure_map(void);
+Item item_make_mariner_cloak(void);
 Item item_make_magic_arrow_tome(void);
 Item item_make_fireball_tome(void);
 Item item_make_heal_tome(void);
