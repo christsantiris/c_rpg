@@ -620,7 +620,7 @@ int main(int argc, char **argv) {
             (screen == SCREEN_PLAYING && game_combat_feedback_active(SDL_GetTicks()));
         int ambient_animating = screen == SCREEN_PLAYING &&
             (game_player_low_health(&game) || game.location == LOCATION_DUNGEON ||
-            game.location == LOCATION_FOREST ||
+            game.location == LOCATION_ELDERWOOD || game.location == LOCATION_FOREST ||
             game.location == LOCATION_MOUNTAINS ||
             game.location == LOCATION_DRAGONSPINE ||
             game.location == LOCATION_FROSTFELL ||

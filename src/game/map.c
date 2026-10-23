@@ -484,6 +484,11 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_OSSUARY_COLD &&
         m->tiles[y][x] != TILE_CATACOMBS_SARCOPHAGUS &&
         m->tiles[y][x] != TILE_WALL &&
+        m->tiles[y][x] != TILE_ELDERWOOD_WALL &&
+        m->tiles[y][x] != TILE_ELDERWOOD_BRAMBLE &&
+        m->tiles[y][x] != TILE_ELDERWOOD_LOG &&
+        m->tiles[y][x] != TILE_NORTH_ELDERWOOD &&
+        m->tiles[y][x] != TILE_NORTH_CATACOMBS &&
         m->tiles[y][x] != TILE_FOREST_WALL &&
         m->tiles[y][x] != TILE_FOREST_HIDDEN_TRAIL &&
         m->tiles[y][x] != TILE_MOUNTAIN_WALL &&
@@ -1524,7 +1529,10 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     for (int x = 1; x < TOWN_W - 1; x++)
         m->tiles[12][x] = TILE_TOWN_PATH;
 
-    // The mountain route now starts in Dawnmere.
+    // Elderwood and the northern castle road begin beyond the north gate.
+    for (int x = 18; x <= 22; x++) {
+        m->tiles[0][x] = TILE_TOWN_EXIT;
+    }
 
     // Forest travel and the unlocked Stillbury shortcut share the main gate.
     for (int y = 10; y <= 12; y++) {

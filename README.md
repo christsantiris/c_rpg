@@ -28,12 +28,15 @@ and many other adventures.
 
 ## World Map
 
-[![Illustrated world map showing the five towns, including Dawnmere, the Castle of No Return, forests, swamps, deserts, snowy peaks, Ashen Hollow's volcanoes, coastlines, and the Ruined Isle.](docs/images/world-map.png)](docs/images/world-map.png)
+[![Illustrated world map showing Elderwood Forest and the northern road from Oakhaven through the Royal Catacombs to the castle, the five towns, both Crown Roads, regional adventures and the Ruined Isle.](docs/images/world-map.png)](docs/images/world-map.png)
 
 An illustrated overview based on the world's town connections. Dawnmere now lies
 east of Oakhaven, reached by the safe road opened after defeating the Lich King.
 The [expansion plan](docs/five-town-expansion.md) documents the connections
-and the planned Windscar Highlands. Goblin Mountains
+and the new [Elderwood Forest](docs/elderwood-forest.md) north of Oakhaven. Its
+five levels lead to Elderthorn; defeating it opens the northern road to the
+relocated Royal Catacombs. Defeating the Grave Marshal opens the remaining
+passage to Castle Grounds. Goblin Mountains
 now lies north of Dawnmere, beside the road to Ridgeshire; defeating its King
 opens that road. Both mountain entrances start at level 1. Forest and swamp
 also have five forward levels, with their boss victories opening the town roads.
@@ -42,6 +45,9 @@ sprites; physical retreat returns to the same path. Rook's Labyrinth stands
 beside the Haunted Forest entrance on that road and stays sealed until Rook
 assigns the quest in Oakhaven's Tavern. Castle, secret tunnel and Crown Road
 travel keep their existing layouts.
+
+Return to Town uses the last town actually entered; bypassing a town leaves
+that destination unchanged. Return portals retain the original expedition.
 
 All five towns now stand beside signed exterior roads. Walk into a town sprite
 to arrive beside the matching interior exit gate, or follow the road around town to
@@ -117,6 +123,7 @@ inventory actions.
 - [Moonveil Gardens](docs/moonveil-gardens.md)
 - [Ashen Hollow](docs/ashen-hollow.md)
 - [Glassdeep Caverns](docs/glassdeep-caverns.md)
+- [Elderwood Forest and the northern road](docs/elderwood-forest.md)
 - [Royal Catacombs](docs/catacombs.md)
 - [Castle interior and play testing](docs/castle-design.md)
 - [Docks, Ruined Isle, and Ruined Temple](docs/harbor-and-ruined-isle.md)

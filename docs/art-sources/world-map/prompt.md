@@ -117,3 +117,17 @@ Final edit prompt:
 ```text
 Use case: precise-object-edit. Edit this finished fantasy atlas. Make one localized correction only: Rook's Labyrinth is NOT INSIDE the Haunted Forest. Move the small stone maze drawing and its exact label "Rook's Labyrinth" to open GRASSLAND SOUTH OF the Stillbury–Oakhaven road, near its midpoint. The woodland and Haunted Forest label must be NORTH of that road, with a clear visible separation between trees and labyrinth. Clear a grassy roadside meadow for the labyrinth on the SOUTH side of the road; connect its entrance with a short spur from the road. Restore trees where the previous labyrinth was north of the road. There is exactly one labyrinth and one label, and no forest trees enclosing the labyrinth. Preserve the road between Stillbury and Oakhaven, all FIVE towns and names (Stillbury, Rosemoor, Oakhaven, Dawnmere, Ridgeshire), all other destinations, coastlines, mountains, Crown Roads, castle, label typography, title, compass, border, palette, illustration style, layout and 3:2 landscape format. Keep the dungeon between Oakhaven and Dawnmere, Goblin Mountains between Dawnmere and Ridgeshire, Dragonspine north of Ridgeshire, and Ashen Hollow east of Ridgeshire unchanged. Do not add destinations, do not move towns. Return the complete corrected map. This is a precise correction of geography, not a redesign.
 ```
+
+## Elderwood and the northern castle road
+
+Edited with the built-in imagegen tool. The selected result replaces the canonical
+`docs/images/world-map.png`; README continues to reference this path.
+Reviewed the five town names, both Crown Roads, Elderwood's northern position,
+the Catacombs landmark on that road, the labyrinth outside Haunted Forest,
+Glassdeep south of Stillbury and the island/coast geography.
+
+Final edit prompt:
+
+```text
+Use case: precise-object-edit. Asset type: existing illustrated RPG world map. Edit target: the provided map. Preserve the parchment frame, title, art style and ALL existing towns, other regions, labels and routes in exactly their present positions. Add the new northern route from Oakhaven directly north through the central forest to Castle of No Return. The south half of this central woodland immediately NORTH of Oakhaven must have a clearly legible parchment label 'Elderwood Forest'. Keep 'Haunted Forest' as the distinct forest WEST of Oakhaven between Oakhaven and Stillbury, shift only that forest label left within its forest to avoid overlap. Draw a winding thin road from Oakhaven north through Elderwood Forest, then past the Royal Catacombs landmark, then north to Castle. Royal Catacombs is a separate stone crypt entrance ALONG this northern road, north of Elderwood and south of Castle; preserve the crypt icon and exact label 'Royal Catacombs', slightly relocate it on this road if needed. The geography should read Oakhaven -> Elderwood Forest -> Royal Catacombs -> Castle along a south to north road. Rook's Labyrinth must remain OUTSIDE Haunted Forest beside the Oakhaven-Stillbury road. Glassdeep Caverns remains south of Stillbury. Dawnmere remains east of Oakhaven, Goblin Mountains north of Dawnmere, Ridgeshire north of mountains, Ashen Hollow east of Ridgeshire and Dragonspine north of Ridgeshire. Do not introduce any additional locations or remove any labels. Retain everything else, including the two Crown Roads, Castle, Ruined Isle, Sunken Coast, Docks, the dungeon east of Oakhaven and five towns. Clearly spaced readable map labels. Landscape aspect ratio same as original.
+```

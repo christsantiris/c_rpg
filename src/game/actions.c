@@ -2,6 +2,7 @@
 #include "restoration.h"
 #include "game.h"
 #include "catacombs.h"
+#include "elderwood.h"
 #include "castle.h"
 #include "lich.h"
 #include "necromancer.h"
@@ -217,6 +218,11 @@ static int enemy_score(EnemyType type) {
         case ENEMY_PIXIE: return 15;
         case ENEMY_BLIGHTED_WOLF: return 22;
         case ENEMY_GIANT_SPIDER: return 32;
+        case ENEMY_BRIAR_WOLF: return 60;
+        case ENEMY_IRONHIDE_BOAR: return 90;
+        case ENEMY_THORN_DRYAD: return 80;
+        case ENEMY_TREEFOLK: return 200;
+        case ENEMY_ELDERTHORN: return 0; // Awarded once by elderwood_defeat.
         case ENEMY_DARK_ELF: return 48;
         case ENEMY_GIANT_WURM: return 70;
         case ENEMY_FOREST_TROLL: return 80;
@@ -313,6 +319,13 @@ static int melee_gold_bonus(const GameState *g) {
 }
 
 static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
+    if (enemy->type == ENEMY_ELDERTHORN) {
+        elderwood_defeat(g);
+        return;
+    }
+    if (g->location == LOCATION_ELDERWOOD && enemy->revived) {
+        return;
+    }
     if (enemy->revived && (strcmp(enemy->name, "Lich Shade") == 0 || strcmp(enemy->name, "Grove Revenant") == 0)) {
         return;
     }
@@ -337,7 +350,9 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         game_record_dain_kill(g, type);
     }
     if (is_boss) {
-        g->defeated_bosses |= 1 << g->location;
+        if (g->location >= 0 && g->location < 31) {
+            g->defeated_bosses |= 1 << g->location;
+        }
         game_record_temple_enemy_defeated(g, type);
         if (type == ENEMY_THORN_REGENT) {
             push_message(g, "The Thorn Regent falls. The path to Rosemoor opens!");
@@ -355,6 +370,11 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
     }
     int gold = 0;
     switch (type) {
+        case ENEMY_ELDERTHORN: break; // Its one-time reward was handled above.
+        case ENEMY_BRIAR_WOLF:
+        case ENEMY_IRONHIDE_BOAR: gold = 5 + rand() % 5; break;
+        case ENEMY_THORN_DRYAD: gold = 8 + rand() % 6; break;
+        case ENEMY_TREEFOLK: gold = 15 + rand() % 10; break;
         case ENEMY_OATHBOUND_SOLDIER:
         case ENEMY_IRON_WARDEN:
         case ENEMY_ROYAL_MARKSMAN:
@@ -597,7 +617,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
     }
 
     TileType drop_tile = g->map.tiles[y][x];
-    int plain_floor = drop_tile == TILE_FLOOR ||
+    int plain_floor = drop_tile == TILE_ELDERWOOD_FLOOR || drop_tile == TILE_FLOOR ||
         drop_tile == TILE_FOREST_FLOOR ||
         drop_tile == TILE_MOUNTAIN_FLOOR ||
         drop_tile == TILE_MOUNTAIN_CAVE_FLOOR ||
@@ -921,6 +941,15 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (g->location == LOCATION_ELDERWOOD) {
+        for (int y = g->player.y - 1; y <= g->player.y + 1; y++) {
+            for (int x = g->player.x - 1; x <= g->player.x + 1; x++) {
+                if (x >= 0 && x < ELDERWOOD_W && y >= 0 && y < ELDERWOOD_H && g->map.tiles[y][x] == TILE_ELDERWOOD_BRAMBLE) {
+                    return 1;
+                }
+            }
+        }
+    }
     if (wilds_has_interaction(g) || landscape_has_interaction(g) || regional_terrain_has_interaction(g)) {
         return 1;
     }
@@ -1213,6 +1242,10 @@ void action_resolve_player(GameState *g, Action a) {
         return;
     }
 
+    if (g->location == LOCATION_ELDERWOOD && (a.type == ACTION_ASCEND || a.type == ACTION_DESCEND)) {
+        elderwood_travel(g, g->player.x, g->player.y);
+        return;
+    }
     if (a.type == ACTION_ASCEND || a.type == ACTION_DESCEND) {
         TileType tile = floor_drop_underlay(g, g->player.x, g->player.y);
         if (a.type == ACTION_ASCEND && tile == TILE_STAIRS_DOWN) {
@@ -1305,6 +1338,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (elderwood_interact(g)) {
+            return;
+        }
         if (red_dragon_interact(g, 0)) {
             return;
         }
@@ -2321,7 +2357,7 @@ void action_resolve_player(GameState *g, Action a) {
         }
         if ((g->location == LOCATION_TOWN || g->location == LOCATION_TOWN2 ||
             g->location == LOCATION_TOWN3 || g->location == LOCATION_TOWN4 ||
-            g->location == LOCATION_DAWNMERE) &&
+            g->location == LOCATION_DAWNMERE || g->location == LOCATION_CASTLE) &&
             g->map.tiles[ty][tx] == TILE_PORTAL && g->portal_active) {
             game_use_town_portal(g);
             return;
@@ -2384,7 +2420,7 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
-        if (town_road_travel(g, tx, ty) || town_road_depart(g, tx, ty) || approach_travel(g, tx, ty) || approach_enter(g, tx, ty)) {
+        if (elderwood_travel(g, tx, ty) || town_road_travel(g, tx, ty) || town_road_depart(g, tx, ty) || approach_travel(g, tx, ty) || approach_enter(g, tx, ty)) {
             return;
         }
 
@@ -3144,7 +3180,7 @@ static void select_enemy_pursuers(const GameState *g, int pursuers[MAX_ENEMIES])
 
 static int enemy_prefers_range(const Enemy *e) {
     return e->type == ENEMY_GRAVE_ARCHER || e->type == ENEMY_BONE_CANTOR || e->type == ENEMY_CRYPT_CONJURER ||
-        e->type == ENEMY_DARK_ELF ||
+        e->type == ENEMY_DARK_ELF || e->type == ENEMY_THORN_DRYAD ||
         e->type == ENEMY_GOBLIN_ARCHER ||
         e->type == ENEMY_ROAD_ARCHER ||
         e->type == ENEMY_FROST_ARCHER ||
@@ -3163,7 +3199,7 @@ static int enemy_prefers_range(const Enemy *e) {
 }
 
 static int enemy_prefers_flank(const Enemy *e) {
-    return e->type == ENEMY_CRYPT_BAT ||
+    return e->type == ENEMY_BRIAR_WOLF || e->type == ENEMY_CRYPT_BAT ||
         e->type == ENEMY_CRYSTAL_SPIDER ||
         e->type == ENEMY_BLIND_STALKER ||
         e->type == ENEMY_ASH_HOUND ||
@@ -3653,6 +3689,15 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
 
+        int elder_damage = 0;
+        if (elderwood_tick(g, e, &elder_damage)) {
+            if (elder_damage > 0) {
+                int damage = elder_damage - g->player.defense / 2;
+                apply_enemy_damage(g, damage > 0 ? damage : 1, FEEDBACK_NOW);
+                push_message_kind(g, "Wood and thorn strike you!", MESSAGE_DAMAGE_TAKEN);
+            }
+            continue;
+        }
         int dx = g->player.x - e->x;
         int dy = g->player.y - e->y;
         int adjacent = abs_int(dx) <= 1 && abs_int(dy) <= 1 &&
@@ -3939,7 +3984,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             if (healed) continue;
         }
 
-        if (e->type == ENEMY_DARK_ELF && e->move_timer % 2 == 0 &&
+        if ((e->type == ENEMY_DARK_ELF || e->type == ENEMY_THORN_DRYAD) && e->move_timer % 2 == 0 &&
             clear_orthogonal_path(g, i, e)) {
             int dmg = e->attack - g->player.defense / 2;
             if (dmg < 1) dmg = 1;
@@ -3948,7 +3993,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 continue;
             }
             char msg[MAX_MESSAGE_LEN];
-            snprintf(msg, sizeof(msg), "Dark Elf arrow: %d dmg", dmg);
+            snprintf(msg, sizeof(msg), "%s: %d dmg", e->type == ENEMY_THORN_DRYAD ? "Thorn volley" : "Dark Elf arrow", dmg);
             push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
             continue;
         }

@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include "../../src/game/town_road.h"
 #include "../../src/game/castle.h"
+#include "../../src/game/elderwood.h"
 
 static void visit_exterior_town(GameState *g) {
     assert(g->location == LOCATION_TOWN_ROAD);
@@ -38,6 +39,7 @@ int main(void) {
     Renderer renderer = {0};
     renderer_init(&renderer, sdl, 1280, 720);
     assert(renderer.font_large);
+    assert(renderer.elderwood_entrance_texture && renderer.elderwood_enemy_texture);
     for (int i = 0; i < TOWN_ROAD_COUNT; i++) {
         int width;
         int height;
@@ -169,6 +171,27 @@ int main(void) {
     int x;
     int y;
     assert(approach_dungeon_town_exit(game, &x, &y));
+    // A normal northern-road save must open both locks when loaded with the launcher flag.
+    game_init(game);
+    assert(approach_enter(game, 20, 0));
+    assert(game->map.tiles[NORTH_FOREST_BARRIER_Y][NORTH_ROAD_X] == TILE_ELDERWOOD_WALL);
+    assert(save_game(game, 1));
+    handle_slot_result(SLOT_SELECTED, &slots, 0, &screen, game, &renderer, &viewport, &landing);
+    assert(game->debug_passages_unlocked && !game->elderwood_defeated && !game->defeated_bosses);
+    assert(game->map.tiles[NORTH_FOREST_BARRIER_Y][NORTH_ROAD_X] == TILE_TOWN_PATH);
+    assert(game->map.tiles[0][NORTH_ROAD_X] == TILE_NORTH_CASTLE);
+    renderer_begin_frame(&renderer);
+    game_draw(&renderer, game, &viewport);
+    SDL_RenderPresent(sdl);
+    elderwood_enter(game);
+    for (int level = 1; level < ELDERWOOD_DEPTH; level++) {
+        game_descend(game);
+    }
+    renderer_begin_frame(&renderer);
+    game_draw(&renderer, game, &viewport);
+    SDL_RenderPresent(sdl);
+    game_return_to_approach(game);
+    assert(northern_approach(game));
     // Normal play still requires Rook's quest; the debug flag bypasses it.
     game_init(game);
     assert(approach_enter(game, 0, 12));

@@ -1,4 +1,6 @@
 #include "game_renderer.h"
+#include "elderwood_renderer.h"
+#include "../game/elderwood.h"
 #include "town_road_renderer.h"
 #include "../game/town_road.h"
 #include "sprites.h"
@@ -223,7 +225,7 @@ static int approach_area_style(Location area, TownExitStyle *style) {
 static void draw_approach_town_gate(Renderer *r, const GameState *g, const Viewport *v) {
     const TownApproach *route = approach_route(g);
     TownExitStyle style;
-    if (!route || !approach_area_style(route->area, &style)) {
+    if (!route || northern_approach(g) || !approach_area_style(route->area, &style)) {
         return;
     }
     // Other towns are sprites beyond an open road, not gates at this edge.
@@ -1306,6 +1308,9 @@ static TileType floor_item_underlay(const GameState *g, int x, int y) {
             return terrain_display_tile(g, (TileType)item->underlying_tile);
         }
     }
+    if (g->location == LOCATION_ELDERWOOD) {
+        return TILE_ELDERWOOD_FLOOR;
+    }
     if (g->location == LOCATION_FOREST) {
         return TILE_FOREST_FLOOR;
     }
@@ -1516,7 +1521,9 @@ static void draw_floor_loot(Renderer *r, const GameState *g, int map_x, int map_
 
 static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int map_x, int map_y, int screen_x, int screen_y) {
     TileType underlay = floor_item_underlay(g, map_x, map_y);
-    if (wilds_tile(underlay)) {
+    if (underlay >= TILE_ELDERWOOD_FLOOR && underlay <= TILE_ELDERWOOD_LOG) {
+        draw_elderwood_tile(r, screen_x, screen_y, map_x, map_y, underlay);
+    } else if (wilds_tile(underlay)) {
         draw_wilds_tile(r, g, screen_x, screen_y, map_x, map_y, underlay);
     } else if (regional_terrain_tile(underlay) || landscape_tile(underlay)) {
         draw_regional_terrain_tile(r, g, screen_x, screen_y, map_x, map_y, underlay);
@@ -2072,6 +2079,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         viewport_init(&town_view, v->tiles_x < CASTLE_W ? v->tiles_x : CASTLE_W, v->tiles_y < CASTLE_H ? v->tiles_y : CASTLE_H, CASTLE_W, CASTLE_H);
         viewport_center_on(&town_view, g->player.x, g->player.y);
         v = &town_view;
+    } else if (g->location == LOCATION_ELDERWOOD) {
+        viewport_init(&town_view, v->tiles_x < ELDERWOOD_W ? v->tiles_x : ELDERWOOD_W, v->tiles_y < ELDERWOOD_H ? v->tiles_y : ELDERWOOD_H, ELDERWOOD_W, ELDERWOOD_H);
+        viewport_center_on(&town_view, g->player.x, g->player.y);
+        v = &town_view;
     } else if (g->location == LOCATION_CATACOMBS) {
         viewport_init(&town_view, v->tiles_x < CATACOMBS_W ? v->tiles_x : CATACOMBS_W, v->tiles_y < CATACOMBS_H ? v->tiles_y : CATACOMBS_H, CATACOMBS_W, CATACOMBS_H);
         viewport_center_on(&town_view, g->player.x, g->player.y);
@@ -2243,6 +2254,22 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_forest_wall(r, sx, sy, x, y); break;
                 case TILE_FOREST_HIDDEN_TRAIL:
                     draw_forest_wall(r, sx, sy, x, y); break;
+                case TILE_ELDERWOOD_WALL:
+                case TILE_ELDERWOOD_FLOOR:
+                case TILE_ELDERWOOD_ENTRANCE:
+                case TILE_ELDERWOOD_EXIT:
+                case TILE_ELDERWOOD_BRAMBLE:
+                case TILE_ELDERWOOD_LOG:
+                    draw_elderwood_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
+                    break;
+                case TILE_NORTH_ELDERWOOD:
+                case TILE_NORTH_CATACOMBS:
+                    draw_town_floor(r, sx, sy);
+                    break;
+                case TILE_NORTH_OAKHAVEN:
+                case TILE_NORTH_CASTLE:
+                    draw_town_path(r, sx, sy);
+                    break;
                 case TILE_FOREST_FLOOR:
                     draw_forest_floor(r, sx, sy, x, y); break;
                 case TILE_FOREST_ENTRANCE:
@@ -3031,6 +3058,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     draw_town_road(r, g, v);
+    draw_northern_road(r, g, v);
 
     draw_regional_terrain_light(r, g, v);
 
@@ -3093,7 +3121,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     TownExitStyle entrance_style;
-    if (g->location == LOCATION_APPROACH && approach_route(g) && approach_entrance_rows(approach_route(g)->area) &&
+    if (g->location == LOCATION_APPROACH && !northern_approach(g) && approach_route(g) && approach_entrance_rows(approach_route(g)->area) &&
         approach_area_style(approach_route(g)->area, &entrance_style)) {
         draw_area_entrance(r, entrance_style, viewport_to_screen_x(v, g->map.stairs_down_x), viewport_to_screen_y(v, g->map.stairs_down_y), approach_entrance_rows(approach_route(g)->area));
     }
@@ -3119,6 +3147,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         town_life_draw_building(r, v, local_building);
     }
     if (g->location == LOCATION_TOWN) {
+        draw_town_gate(r, viewport_to_screen_x(v, 18), viewport_to_screen_y(v, 0), TOWN_EXIT_MOUNTAINS);
+        draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, 3), "ELDERWOOD / CASTLE ROAD");
         draw_town_gate(r,
             viewport_to_screen_x(v, 0), viewport_to_screen_y(v, 10),
             TOWN_EXIT_FOREST);
@@ -3268,9 +3298,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_prism_sovereign_warnings(r, g, v);
     draw_sun_guardian_warnings(r, g, v);
     draw_red_dragon_warnings(r, g, v);
+    draw_elderwood_warnings(r, g, v);
 
     // Draw enemies
-    if (g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
+    if (g->location == LOCATION_ELDERWOOD || g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
         g->location == LOCATION_FOREST ||
         g->location == LOCATION_MOUNTAINS ||
         g->location == LOCATION_DRAGONSPINE ||
@@ -3563,8 +3594,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         SDL_RenderDrawLine(r->sdl, gx + 3, gy + 3, gx + 3, gy + TILE_SIZE * 2 - 3);
         SDL_RenderDrawLine(r->sdl, right_post.x + 3, gy + 3, right_post.x + 3, gy + TILE_SIZE * 2 - 3);
         int gate_width = 0;
-        TTF_SizeText(r->font_tiny, "CATACOMBS", &gate_width, NULL);
-        renderer_draw_text(r, "CATACOMBS", viewport_to_screen_x(v, CROWNROAD_X) * TILE_SIZE + (TILE_SIZE - gate_width) / 2,
+        TTF_SizeText(r->font_tiny, "NORTHERN ROAD", &gate_width, NULL);
+        renderer_draw_text(r, "NORTHERN ROAD", viewport_to_screen_x(v, CROWNROAD_X) * TILE_SIZE + (TILE_SIZE - gate_width) / 2,
             viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE, area_label_color(LOCATION_CATACOMBS), r->font_tiny);
         SDL_Color label = {220, 180, 60, 255};
         int width = 0;
@@ -3584,7 +3615,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         draw_town_road_sign(r, viewport_to_screen_x(v, CROWNROAD_W - 6),
             viewport_to_screen_y(v, CROWNROAD_Y - 3), east ? "CASTLE" : "RIDGESHIRE");
     }
-    if (g->location == LOCATION_APPROACH && r->font_tiny) {
+    if (g->location == LOCATION_APPROACH && !northern_approach(g) && r->font_tiny) {
         const TownApproach *route = approach_route(g);
         if (route) {
             int exit_x;

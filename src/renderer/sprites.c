@@ -2766,7 +2766,20 @@ static void draw_catacombs_enemy(Renderer *r, int tx, int ty, EnemyType type) {
 }
 
 void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
+    if (type >= ENEMY_BRIAR_WOLF && type <= ENEMY_ELDERTHORN) {
+        int index = type - ENEMY_BRIAR_WOLF;
+        SDL_Rect source = {index * 64, 0, 64, 64};
+        SDL_Rect dest = {tile_x * TILE_SIZE - 20, tile_y * TILE_SIZE - 40, 64, 64};
+        SDL_RenderCopy(r->sdl, r->elderwood_enemy_texture, &source, &dest);
+        return;
+    }
     switch (type) {
+        case ENEMY_BRIAR_WOLF:
+        case ENEMY_IRONHIDE_BOAR:
+        case ENEMY_THORN_DRYAD:
+        case ENEMY_TREEFOLK:
+        case ENEMY_ELDERTHORN:
+            break; // Drawn from the Elderwood atlas above.
         case ENEMY_OATHBOUND_SOLDIER:
         case ENEMY_IRON_WARDEN:
         case ENEMY_ROYAL_MARKSMAN:

@@ -163,7 +163,7 @@ static void test_quest(void) {
         quest_journal_get_entry(&loaded, QUEST_TAB_ACTIVE, 0, &entry) && entry.objective_complete[0] && entry.objective_complete[1] &&
         entry.objective_complete[2] && entry.objective_complete[3]);
     game_open_town_portal(&game);
-    ASSERT("Catacombs return spell still leads to Rosemoor with a working portal", game.location == LOCATION_TOWN3 && game.portal_active);
+    ASSERT("Catacombs return spell leads to the last town visited with a working portal", game.location == LOCATION_TOWN4 && game.portal_active);
     approach_oswin();
     int gold = game.gold;
     int score = game.score;

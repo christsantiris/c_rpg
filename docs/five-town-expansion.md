@@ -1,11 +1,9 @@
 # Five-town world expansion
 
-Status: Dawnmere and the Lich-unlocked dungeon road are implemented in the first
-gameplay change. The relocated five-level mountain climb and Dawnmere–Ridgeshire
-road are now implemented, along with the revised five-town map artwork and
-pathway entrances. Windscar Highlands remains planned for a separate change.
-**Dawnmere** is the fifth town. The new northern region is
-**Windscar Highlands**, with windswept hills and ruined watchtowers.
+Status: The five-town expansion and safe regional entrances are implemented.
+Elderwood Forest replaces the planned Windscar Highlands north of Oakhaven.
+Its five stages and the relocated Catacombs form a third route to Castle Grounds,
+with each boss unlocking its own section. See [Elderwood](elderwood-forest.md).
 
 ## Main travel routes
 
@@ -20,7 +18,9 @@ flowchart BT
     Oak <-->|Dungeon · 5 stages| Dawn[Dawnmere]
     Dawn <-->|Goblin Mountains · 5 stages| Ridge[Ridgeshire]
     Ridge <-->|Crown Road West| Castle
-    Oak -.->|Planned north gate| Wind[Windscar Highlands]
+    Oak <-->|Elderthorn unlock| Elder[Elderwood Forest · 5 stages]
+    Elder <-->|Northern road| Cat[Royal Catacombs · 5 stages]
+    Cat <-->|Grave Marshal unlock| Castle
     Rose <-->|North gate| Frost[Frostfell Wastes]
     Ridge <-->|North gate| Dragon[Dragonspine]
     Ridge <-->|East gate| Ashen[Ashen Hollow]
@@ -30,7 +30,7 @@ Both castle routes cross two enemy regions and one Crown Road. With the revised
 five-level forest, swamp and mountain adventures, both routes have 10 regional
 stages.
 Equal region counts are the goal; equal stage counts or play times are not
-required. Windscar Highlands is a side destination rather than another castle
+required. Elderwood and Catacombs now provide an additional northern castle
 connection.
 
 Geographically, place Oakhaven south of the castle, with Stillbury and Rosemoor
@@ -56,7 +56,8 @@ existing connections remain in place.
   at either end, and signs naming both towns. Town sprites stand beyond those
   road boundaries. Keep the existing lich crypt art.
 - Normal dungeon retreat returns to the approach for the entrance used.
-  Return-to-town spells and portals remember that entrance town as well.
+  Physical retreat remembers that entrance town. Return-to-town spells use the
+  last town actually visited; the portal retains the original expedition.
 - Preserve the Lich encounter, keys, burial-seal quest, rewards, exploration,
   caches, loot confirmation, and repeat-expedition behavior.
 
@@ -71,11 +72,8 @@ A large mountain cave stands beside a straight cobblestone road. Defeating the
 Goblin King on level 5 opens the road; exiting his chamber returns to it, with
 Ridgeshire north and Dawnmere south. There are no mountain shortcuts or boss
 branches. Dain's bearers occupy levels 2–4; Veyra's mountain watchfire is on 5.
-Oakhaven's former north gate is closed pending Windscar's separate content change.
-
-Windscar Highlands needs its own safe approach and distinct regional identity.
-Its depth, encounters, boss and rewards are a separate, small content change;
-moving Goblin Mountains must not silently change its enemies or existing saves.
+Oakhaven's north gate now leads to Elderwood Forest and the boss-gated northern
+Castle road. The mountain roster and existing progress remain independent.
 
 ## Implementation and save compatibility
 
@@ -87,11 +85,11 @@ moving Goblin Mountains must not silently change its enemies or existing saves.
 - Migrate old mountain entrance/portal references from Oakhaven to Dawnmere.
   Migrate players saved on the former Oakhaven mountain approach to the moved
   mountain approach, preserving their position along the path, exploration,
-  loot and facing. Do not reinterpret an old mountain approach as Windscar.
+  loot and facing. Do not reinterpret an old mountain approach as Elderwood.
 - Preserve boss victories, quest progress, equipment, gold, regional caches,
   active portals and saved enemies. Existing Lich victories open the new road
   immediately without replaying the boss.
-- Serialize any Windscar cache, progress or completion state. New location IDs
+- Serialize any Elderwood cache, progress or completion state. New location IDs
   exceed the existing integer boss-bit range: audit location-based bit shifts
   and represent new completion state safely rather than shifting by a new ID.
 - Update town rendering, music, safe-area handling, labels, portal destinations,
@@ -110,7 +108,7 @@ as the southern town.
 
 Load saves from before the expansion in Oakhaven, on its old mountain approach,
 inside the dungeon and mountains, and with active portals and completed bosses.
-Check preserved progress, walkable spawns and reachable loot. Check Windscar's
+Check preserved progress, walkable spawns and reachable loot. Check Elderwood's
 independent persistence and safe approach. Inspect both new destinations in the
 actual renderer. Confirm the two castle routes each have three travel legs.
 
@@ -128,5 +126,6 @@ Oakhaven, Stillbury, Rosemoor, Ridgeshire and Dawnmere now have walled sprites
 beside safe exterior roads. Walking into a connected cardinal side of a town
 sprite enters beside the matching interior exit gate. Players can bypass any town and continue to another
 existing regional approach or Crown Road. Regional boss locks remain in force;
-Windscar's gate and Dawnmere's unconnected sides remain closed. See
+Elderwood and Catacombs gate the northern castle road; Dawnmere's unconnected
+sides remain closed. See
 [town roads](town-roads.md) for the connection table and save behavior.
