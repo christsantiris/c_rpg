@@ -95,8 +95,8 @@ static void test_layouts(void) {
 static void test_travel_and_saves(void) {
     game_init(&game);
     srand(4612);
-    game_enter_town2(&game);
-    game.player.x = STILLBURY_GLASSDEEP_GATE_X;
+    game_enter_town_gate(&game, LOCATION_TOWN2, 0, 12);
+    game.player.x = SOUTH_AREA_GATE_X;
     game.player.y = TOWN_H - 2;
     action_resolve_player(&game, (Action){ACTION_MOVE, game.player.x, TOWN_H - 1});
     walk_town_approach(&game);
@@ -112,7 +112,7 @@ static void test_travel_and_saves(void) {
     walk_edge(0);
     ASSERT("backtracking preserves maps, exploration, and enemy health", game.level == 1 && memcmp(&layout, &game.map, sizeof(layout)) == 0 && game.enemies[0].hp == 7);
     walk_edge(0);
-    ASSERT("the north exit returns at Stillbury's south gate", game.location == LOCATION_TOWN2 && game.player.x == STILLBURY_GLASSDEEP_GATE_X && game.player.y == TOWN_H - 2);
+    ASSERT("the north exit returns at Stillbury's south gate", game.location == LOCATION_TOWN2 && game.player.x == SOUTH_AREA_GATE_X && game.player.y == TOWN_H - 2);
     game_enter_glassdeep(&game);
     ASSERT("a new Glassdeep Caverns expedition refreshes enemies and retains exploration", game.enemies[0].hp == game.enemies[0].max_hp && game.max_glassdeep_level_reached == 2 && memcmp(&layout, &game.map, sizeof(layout)) == 0);
     while (game.level < 3) {
@@ -131,8 +131,8 @@ static void test_travel_and_saves(void) {
     game.floor_items[0] = (FloorItem){.active = 1, .x = x, .y = y, .underlying_tile = TILE_GLASSDEEP_RUIN, .item = item_make_health_potion()};
     game.floor_item_count = 1;
     game_open_town_portal(&game);
-    ASSERT("Return to Town places a crystal portal beside Stillbury's south gate", game.location == LOCATION_TOWN2 && game.portal_location == LOCATION_GLASSDEEP && game.map.tiles[TOWN_H - 3][STILLBURY_GLASSDEEP_GATE_X + 1] == TILE_PORTAL && game.portal_origin_tile == TILE_GLASSDEEP_RUIN);
-    game.player.x = STILLBURY_GLASSDEEP_GATE_X + 1;
+    ASSERT("Return to Town places a crystal portal beside Stillbury's south gate", game.location == LOCATION_TOWN2 && game.portal_location == LOCATION_GLASSDEEP && game.map.tiles[TOWN_H - 3][SOUTH_AREA_GATE_X + 1] == TILE_PORTAL && game.portal_origin_tile == TILE_GLASSDEEP_RUIN);
+    game.player.x = SOUTH_AREA_GATE_X + 1;
     game.player.y = TOWN_H - 4;
     action_resolve_player(&game, (Action){ACTION_MOVE, game.player.x, TOWN_H - 3});
     ASSERT("stepping onto Stillbury's portal resumes the original Glassdeep stage and position", game.location == LOCATION_GLASSDEEP && game.level == 3 && game.player.x == x && game.player.y == y);
@@ -144,7 +144,7 @@ static void test_travel_and_saves(void) {
     int saved = save_game(&game, GLASSDEEP_TEST_SLOT) && load_game(&loaded, GLASSDEEP_TEST_SLOT);
     if (saved) {
         game = loaded;
-        game.player.x = STILLBURY_GLASSDEEP_GATE_X + 1;
+        game.player.x = SOUTH_AREA_GATE_X + 1;
         game.player.y = TOWN_H - 4;
         action_resolve_player(&game, (Action){ACTION_MOVE, game.player.x, TOWN_H - 3});
     }
@@ -213,7 +213,7 @@ static void test_boss_victories(void) {
 
 static void test_migration(void) {
     game_init(&game);
-    game_enter_town2(&game);
+    game_enter_town_gate(&game, LOCATION_TOWN2, 0, 12);
     game.player.hp = 89;
     game.gold = 37;
     game.score = 1234;
@@ -225,7 +225,7 @@ static void test_migration(void) {
     map_generate_ashen(&game.ashen_cache[0].map, 1);
     game.ashen_cache[0].enemy_count = 1;
     game.ashen_cache[0].enemies[0] = (Enemy){.type = ENEMY_ASH_HOUND, .active = 1, .hp = 7, .max_hp = 35};
-    for (int x = STILLBURY_GLASSDEEP_GATE_X - 2; x <= STILLBURY_GLASSDEEP_GATE_X + 2; x++) {
+    for (int x = SOUTH_AREA_GATE_X - 2; x <= SOUTH_AREA_GATE_X + 2; x++) {
         game.map.tiles[TOWN_H - 1][x] = TILE_WALL;
     }
     int saved = save_game(&game, GLASSDEEP_TEST_SLOT);
@@ -257,7 +257,7 @@ static void test_migration(void) {
         fresh &= !loaded.glassdeep_cache[i].valid && loaded.glassdeep_cache[i].enemy_count == 0;
     }
     ASSERT("version 81 saves receive fresh independent Glassdeep Caverns progression", fresh);
-    ASSERT("migration opens Stillbury's south gate and preserves character and quest progress", ok && loaded.map.tiles[TOWN_H - 1][STILLBURY_GLASSDEEP_GATE_X] == TILE_TOWN_EXIT && loaded.player.hp == 89 && loaded.gold == 37 && loaded.score == 1234 && loaded.sunscar_lamp_quest_state == 1 && loaded.defeated_bosses == game.defeated_bosses && loaded.inventory_count == 1);
+    ASSERT("migration opens Stillbury's south gate and preserves character and quest progress", ok && loaded.map.tiles[TOWN_H - 1][SOUTH_AREA_GATE_X] == TILE_TOWN_EXIT && loaded.player.hp == 89 && loaded.gold == 37 && loaded.score == 1234 && loaded.sunscar_lamp_quest_state == 1 && loaded.defeated_bosses == game.defeated_bosses && loaded.inventory_count == 1);
     ASSERT("migration preserves previously explored Ashen Hollow maps and enemies", ok && loaded.ashen_cache[0].valid && loaded.ashen_cache[0].enemies[0].hp == 7 && memcmp(&loaded.ashen_cache[0].map, &game.ashen_cache[0].map, sizeof(Map)) == 0);
     ASSERT("migrated saves rewrite and reload successfully", save_game(&loaded, GLASSDEEP_TEST_SLOT) && load_game(&game, GLASSDEEP_TEST_SLOT));
     game_init(&game);

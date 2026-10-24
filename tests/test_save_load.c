@@ -1,4 +1,5 @@
 #include "test_utils.h"
+#include "game/coastal_travel.h"
 #include "town_road_checks.h"
 #include "game/approach.h"
 #include "../src/game/game.h"
@@ -842,9 +843,8 @@ static void test_harbor_relocation(void) {
     ASSERT("legacy town harbor layout can be loaded", loaded_ok);
     if (loaded_ok) {
         ASSERT("loading moves the harbor and clears its former lot",
-            loaded.map.tiles[TOWN_HARBOR_Y][TOWN_HARBOR_X] ==
-                TILE_WATCHTOWER &&
-            loaded.map.tiles[TOWN_H - 2][TOWN_W - 2] == TILE_WATCHTOWER &&
+            loaded.map.tiles[TOWN_HARBOR_Y][TOWN_HARBOR_X] == TILE_TOWN_FLOOR &&
+            loaded.map.tiles[TOWN_H - 2][TOWN_W - 2] == TILE_TOWN_FLOOR &&
             loaded.map.tiles[16][28] == TILE_TOWN_FLOOR);
         ASSERT("harbor relocation keeps the player on accessible ground",
             loaded.player.x == 28 && loaded.player.y == 16 &&
@@ -855,7 +855,7 @@ static void test_harbor_relocation(void) {
             loaded.floor_items[0].underlying_tile == TILE_TOWN_FLOOR);
         ASSERT("relocated harbor and loot survive another save/load",
             save_game(&loaded, MIGRATED_SLOT) && load_game(&original, MIGRATED_SLOT) &&
-            original.map.tiles[TOWN_H - 2][TOWN_W - 2] == TILE_WATCHTOWER &&
+            original.map.tiles[TOWN_H - 2][TOWN_W - 2] == TILE_TOWN_FLOOR &&
             original.floor_items[0].x == 32 && original.floor_items[0].y == 19);
     }
     remove_test_save(LEGACY_SLOT);
@@ -1524,7 +1524,7 @@ static void test_legacy_king_road_world(void) {
         }
     }
     ASSERT("an older Town 2 save loses obsolete guards and opens both region gates",
-        loaded_ok && guards == 0 && loaded.map.tiles[TOWN_H - 1][STILLBURY_GLASSDEEP_GATE_X] == TILE_TOWN_EXIT &&
+        loaded_ok && guards == 0 && loaded.map.tiles[TOWN_H - 1][SOUTH_AREA_GATE_X] == TILE_TOWN_EXIT &&
         loaded.map.tiles[0][20] == TILE_TOWN_EXIT && loaded.map.tiles[4][19] == TILE_TOWN_FLOOR);
 
     memset(&original, 0, sizeof(original));
@@ -1815,13 +1815,12 @@ static void test_harbor_road_save_load(void) {
     g.defeated_bosses = 1 << LOCATION_COAST;
     game_enter_tavern(&g);
     game_leave_tavern(&g);
+    approach_enter_region(&g, 3);
     ASSERT("unlocked harbor road can be saved", save_game(&g, ROUND_TRIP_SLOT));
     int ok = load_game(&loaded, ROUND_TRIP_SLOT);
     ASSERT("loading preserves harbor eligibility and the road",
         ok && game_harbor_unlocked(&loaded) &&
-        loaded.map.tiles[TOWN_HARBOR_Y + 1][TOWN_HARBOR_X - 1] == TILE_TOWN_PATH &&
-        loaded.map.tiles[TOWN_HARBOR_ENTRANCE_Y]
-            [TOWN_HARBOR_ENTRANCE_X] == TILE_TOWN_PATH);
+        coastal_approach(&loaded) && loaded.map.tiles[COAST_DOCK_ENTRY_Y][COAST_DOCK_ENTRY_X] == TILE_TOWN_PATH);
     if (ok) {
         ASSERT("saving before the gift leaves the map unclaimed", !game_has_treasure_map(&loaded));
         game_talk_to_rowan(&loaded);
@@ -1838,8 +1837,9 @@ static void test_harbor_road_save_load(void) {
         }
         game_enter_tavern(&loaded);
         game_leave_tavern(&loaded);
+        approach_enter_region(&loaded, 3);
         ASSERT("saved progress rebuilds the road on later town visits",
-            loaded.map.tiles[TOWN_HARBOR_Y + 1][21] == TILE_TOWN_PATH);
+            loaded.map.tiles[COAST_DOCK_ENTRY_Y][COAST_DOCK_ENTRY_X] == TILE_TOWN_PATH);
         game_talk_to_rowan(&loaded);
         ASSERT("returning to town keeps the map without repeating the gift",
             game_has_treasure_map(&loaded) && loaded.inventory_count == count);

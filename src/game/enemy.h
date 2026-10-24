@@ -112,8 +112,14 @@ typedef enum {
     ENEMY_THORN_DRYAD,
     ENEMY_TREEFOLK,
     ENEMY_ELDERTHORN,
-    ENEMY_ROYAL_GUARD
-    // The following six serialized enemy IDs are retired; skip them for new enemies.
+    ENEMY_ROYAL_GUARD,
+    // Skip the six retired pirate enemy IDs.
+    ENEMY_LIZARDFOLK_SCOUT = ENEMY_ROYAL_GUARD + 7,
+    ENEMY_REED_SPEARHUNTER,
+    ENEMY_MARSH_SPITTER,
+    ENEMY_MUDBACK_TURTLE,
+    ENEMY_LIZARDFOLK_SCALEGUARD,
+    ENEMY_SSZARETH
 } EnemyType;
 
 #define DRAGON_WARNING_RADIUS 12

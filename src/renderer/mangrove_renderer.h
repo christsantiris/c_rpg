@@ -4,5 +4,6 @@
 void mangrove_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, int y, TileType tile);
 void mangrove_draw_landmark(Renderer *r, const GameState *g, const Viewport *v);
 void mangrove_draw_boat(Renderer *r, const GameState *g, const Viewport *v);
+void mangrove_draw_warnings(Renderer *r, const GameState *g, const Viewport *v);
 void mangrove_draw_hint(Renderer *r, const GameState *g);
 #endif

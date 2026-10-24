@@ -1,6 +1,7 @@
 #include "game_renderer.h"
 #include "mangrove_renderer.h"
 #include "../game/mangrove.h"
+#include "../game/coastal_travel.h"
 #include "elderwood_renderer.h"
 #include "../game/elderwood.h"
 #include "town_road_renderer.h"
@@ -1523,7 +1524,7 @@ static void draw_floor_loot(Renderer *r, const GameState *g, int map_x, int map_
 
 static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int map_x, int map_y, int screen_x, int screen_y) {
     TileType underlay = floor_item_underlay(g, map_x, map_y);
-    if (underlay >= TILE_MANGROVE_MUD && underlay <= TILE_MANGROVE_CACHE) {
+    if (underlay >= TILE_MANGROVE_MUD && underlay <= TILE_MANGROVE_DECK) {
         mangrove_draw_tile(r, g, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay >= TILE_ELDERWOOD_FLOOR && underlay <= TILE_ELDERWOOD_LOG) {
         draw_elderwood_tile(r, screen_x, screen_y, map_x, map_y, underlay);
@@ -2168,6 +2169,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_MANGROVE_ROOT:
                 case TILE_MANGROVE_LANDING:
                 case TILE_MANGROVE_RETURN:
+                case TILE_MANGROVE_EXIT:
+                case TILE_MANGROVE_DECK:
                 case TILE_MANGROVE_CACHE:
                     mangrove_draw_tile(r, g, sx, sy, x, y, g->map.tiles[y][x]);
                     break;
@@ -2785,7 +2788,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     break;
                 case TILE_NPC_RESIDENT: {
                     const TownBuilding *b = town_life_building(g->location);
-                    town_life_draw_resident(r, sx, sy, b ? b->style : 0);
+                    int style = g->location == LOCATION_DAWNMERE_MERCHANT ? 3 : b ? b->style : 0;
+                    town_life_draw_resident(r, sx, sy, style);
                     break;
                 }
                 case TILE_NPC_ELOWEN: draw_elowen(r, sx, sy); break;
@@ -2843,7 +2847,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     npc_draw(r, sx, sy, NPC_ART_ALDRIC, 0);
                     break;
                 case TILE_NPC_ROWAN:
-                    draw_town_floor(r, sx, sy);
+                    if (coastal_approach(g) && approach_coast_ground(x, y) == TILE_COAST_SAND) {
+                        draw_coast_sand(r, sx, sy, x, y, 0);
+                    } else {
+                        draw_town_floor(r, sx, sy);
+                    }
                     draw_rowan(r, sx, sy);
                     break;
                 case TILE_NPC_DRAGON_SEEKER:
@@ -3143,6 +3151,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     mangrove_draw_landmark(r, g, v);
+    if (coastal_approach(g)) {
+        int dock_x = viewport_to_screen_x(v, COAST_DOCK_X);
+        int dock_y = viewport_to_screen_y(v, COAST_DOCK_Y);
+        draw_harbor(r, dock_x, dock_y);
+        renderer_draw_text(r, "DOCKS", dock_x * TILE_SIZE, (dock_y - 1) * TILE_SIZE,
+            (SDL_Color){220, 180, 60, 255}, r->font_tiny);
+    }
     TownExitStyle entrance_style;
     if (g->location == LOCATION_APPROACH && !northern_approach(g) && approach_route(g) && approach_entrance_rows(approach_route(g)->area) &&
         approach_area_style(approach_route(g)->area, &entrance_style)) {
@@ -3189,9 +3204,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         draw_tavern(r,
             viewport_to_screen_x(v, TOWN_TAVERN_X),
             viewport_to_screen_y(v, TOWN_TAVERN_Y));
-        draw_harbor(r,
-            viewport_to_screen_x(v, TOWN_HARBOR_X),
-            viewport_to_screen_y(v, TOWN_HARBOR_Y));
     }
 
     if (g->location == LOCATION_TOWN4) {
@@ -3212,8 +3224,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     if (g->location == LOCATION_DAWNMERE) {
         draw_town_gate_back(r, viewport_to_screen_x(v, 20), viewport_to_screen_y(v, TOWN_H - 1), TOWN_EXIT_ROAD, 0, -1);
-        const TownBuilding merchant = {LOCATION_DAWNMERE, LOCATION_DAWNMERE, 7, 7, 5, 4, 0, 0, "MERCHANT", NULL, NULL, NULL};
-        town_life_draw_building(r, v, &merchant);
+        renderer_draw_text(r, "SALTWIND MARSH", viewport_to_screen_x(v, 20) * TILE_SIZE - 45,
+            viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE, area_label_color(LOCATION_MANGROVES), r->font_tiny);
         draw_town_gate_back(r, viewport_to_screen_x(v, 0), viewport_to_screen_y(v, 12), TOWN_EXIT_DUNGEON, 1, 0);
         draw_town_road_sign(r, viewport_to_screen_x(v, 2), viewport_to_screen_y(v, 17), "DUNGEON / OAKHAVEN");
         draw_town_gate(r, viewport_to_screen_x(v, 18), viewport_to_screen_y(v, 0), TOWN_EXIT_MOUNTAINS);
@@ -3222,8 +3234,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (g->location == LOCATION_TOWN2) {
         draw_town_gate(r, viewport_to_screen_x(v, 0),
             viewport_to_screen_y(v, 10), TOWN_EXIT_DESERT);
-        draw_town_gate(r, viewport_to_screen_x(v, STILLBURY_GLASSDEEP_GATE_X - 2),
-            viewport_to_screen_y(v, TOWN_H - 2), TOWN_EXIT_GLASSDEEP);
+        draw_town_gate_back(r, viewport_to_screen_x(v, SOUTH_AREA_GATE_X),
+            viewport_to_screen_y(v, TOWN_H - 1), TOWN_EXIT_GLASSDEEP, 0, -1);
         draw_town_gate(r,
             viewport_to_screen_x(v, 18), viewport_to_screen_y(v, 0), TOWN_EXIT_SWAMP);
         draw_town_gate(r,
@@ -3325,7 +3337,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_elderwood_warnings(r, g, v);
 
     // Draw enemies
-    if (g->location == LOCATION_JAIL_ARMORY || g->location == LOCATION_ELDERWOOD || g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
+    if (g->location == LOCATION_MANGROVES || g->location == LOCATION_JAIL_ARMORY || g->location == LOCATION_ELDERWOOD || g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
         g->location == LOCATION_FOREST ||
         g->location == LOCATION_MOUNTAINS ||
         g->location == LOCATION_DRAGONSPINE ||
@@ -3414,7 +3426,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int dungeon_w = 0;
         int dungeon_h = 0;
         int tavern_w = 0;
-        int harbor_w = 0;
         int coast_w = 0;
         int coast_h = 0;
         TTF_SizeText(r->font_tiny, "BLACKSMITH", &blacksmith_w, NULL);
@@ -3422,7 +3433,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         TTF_SizeText(r->font_tiny, "FOREST", &forest_w, &forest_h);
         TTF_SizeText(r->font_tiny, "DUNGEON", &dungeon_w, &dungeon_h);
         TTF_SizeText(r->font_tiny, "TAVERN", &tavern_w, NULL);
-        TTF_SizeText(r->font_tiny, "DOCKS", &harbor_w, NULL);
         TTF_SizeText(r->font_tiny, "SUNKEN COAST", &coast_w, &coast_h);
         int bx = viewport_to_screen_x(v, TOWN_BLACKSMITH_X) * TILE_SIZE
             + (5 * TILE_SIZE - blacksmith_w) / 2;
@@ -3433,9 +3443,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int tavern_x = viewport_to_screen_x(v, TOWN_TAVERN_X) * TILE_SIZE
             + (TOWN_TAVERN_W * TILE_SIZE - tavern_w) / 2;
         int tavern_y = viewport_to_screen_y(v, TOWN_TAVERN_Y - 1) * TILE_SIZE;
-        int harbor_x = viewport_to_screen_x(v, TOWN_HARBOR_X) * TILE_SIZE
-            + (TOWN_HARBOR_W * TILE_SIZE - harbor_w) / 2;
-        int harbor_y = viewport_to_screen_y(v, TOWN_HARBOR_Y - 1) * TILE_SIZE;
         if (bx > 0 && by > 0) {
             renderer_draw_text(r, "BLACKSMITH", bx, by, label, r->font_tiny);
         }
@@ -3445,10 +3452,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         if (tavern_x > 0 && tavern_y > 0) {
             renderer_draw_text(r, "TAVERN", tavern_x, tavern_y, label,
                 r->font_tiny);
-        }
-        if (harbor_x > 0 && harbor_y > 0) {
-            renderer_draw_text(r, "DOCKS", harbor_x, harbor_y,
-                label, r->font_tiny);
         }
         int gate_top = viewport_to_screen_y(v, 10) * TILE_SIZE;
         int forest_x = viewport_to_screen_x(v, 1) * TILE_SIZE + 8;
@@ -3508,7 +3511,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             area_label_color(LOCATION_DESERT), r->font_tiny);
         TTF_SizeText(r->font_tiny, "GLASSDEEP", &width, NULL);
         renderer_draw_text(r, "GLASSDEEP",
-            viewport_to_screen_x(v, STILLBURY_GLASSDEEP_GATE_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+            viewport_to_screen_x(v, SOUTH_AREA_GATE_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE + 8,
             area_label_color(LOCATION_GLASSDEEP), r->font_tiny);
         TTF_SizeText(r->font_tiny, "SWAMP", &width, NULL);
@@ -4084,6 +4087,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     int player_px = viewport_to_screen_x(v, g->player.x) * TILE_SIZE;
     int player_py = viewport_to_screen_y(v, g->player.y) * TILE_SIZE;
     ice_slide_offset(g, &player_px, &player_py);
+    mangrove_draw_warnings(r, g, v);
     mangrove_draw_boat(r, g, v);
     draw_player_at(r, player_px, player_py,
         g->player.player_class, equipped_weapon, off_hand_weapon,

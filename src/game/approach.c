@@ -1,5 +1,6 @@
 #include "approach.h"
 #include "elderwood.h"
+#include "coastal_travel.h"
 #include <string.h>
 
 // Save files store these indices. Append new routes without reordering them.
@@ -12,7 +13,7 @@ const TownApproach town_approaches[] = {
     {LOCATION_TOWN2, LOCATION_FOREST, TOWN_W - 1, 12},
     {LOCATION_TOWN2, LOCATION_SWAMP, 20, 0},
     {LOCATION_TOWN2, LOCATION_DESERT, 0, 12},
-    {LOCATION_TOWN2, LOCATION_GLASSDEEP, STILLBURY_GLASSDEEP_GATE_X, TOWN_H - 1},
+    {LOCATION_TOWN2, LOCATION_GLASSDEEP, SOUTH_AREA_GATE_X, TOWN_H - 1},
     {LOCATION_TOWN3, LOCATION_FROSTFELL, 20, 0},
     {LOCATION_TOWN3, LOCATION_SWAMP, 20, TOWN_H - 1},
     {LOCATION_TOWN3, LOCATION_MOONVEIL, 0, ROSEMOOR_MOONVEIL_GATE_Y},
@@ -40,7 +41,7 @@ const char *approach_area_name(Location area) {
         case LOCATION_FOREST: return "FOREST";
         case LOCATION_MOUNTAINS: return "GOBLIN MOUNTAINS";
         case LOCATION_COAST: return "SUNKEN COAST";
-        case LOCATION_MANGROVES: return "SALTWIND MANGROVES";
+        case LOCATION_MANGROVES: return "SALTWIND MARSH";
         case LOCATION_SWAMP: return "SWAMP";
         case LOCATION_DRAGONSPINE: return "DRAGONSPINE";
         case LOCATION_FROSTFELL: return "FROSTFELL";
@@ -486,6 +487,7 @@ void approach_refresh_entrance(GameState *g) {
             g->map.tiles[item->y][item->x] = TILE_ITEM;
         }
     }
+    coastal_refresh_docks(g);
 }
 
 static void generate_approach(Map *map, Location area, int dx, int dy) {

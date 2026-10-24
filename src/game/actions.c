@@ -223,6 +223,12 @@ static int enemy_score(EnemyType type) {
         case ENEMY_IRONHIDE_BOAR: return 90;
         case ENEMY_THORN_DRYAD: return 80;
         case ENEMY_TREEFOLK: return 200;
+        case ENEMY_LIZARDFOLK_SCOUT: return 35;
+        case ENEMY_REED_SPEARHUNTER: return 50;
+        case ENEMY_MARSH_SPITTER: return 55;
+        case ENEMY_MUDBACK_TURTLE: return 110;
+        case ENEMY_LIZARDFOLK_SCALEGUARD: return 120;
+        case ENEMY_SSZARETH: return 0;
         case ENEMY_ROYAL_GUARD: return 85;
         case ENEMY_ELDERTHORN: return 0; // Awarded once by elderwood_defeat.
         case ENEMY_DARK_ELF: return 48;
@@ -321,6 +327,13 @@ static int melee_gold_bonus(const GameState *g) {
 }
 
 static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
+    if (enemy->type == ENEMY_SSZARETH) {
+        mangrove_defeat(g);
+        return;
+    }
+    if (g->location == LOCATION_MANGROVES && enemy->revived) {
+        return;
+    }
     if (enemy->type == ENEMY_ELDERTHORN) {
         elderwood_defeat(g);
         return;
@@ -372,6 +385,12 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
     }
     int gold = 0;
     switch (type) {
+        case ENEMY_LIZARDFOLK_SCOUT:
+        case ENEMY_REED_SPEARHUNTER:
+        case ENEMY_MARSH_SPITTER: gold = 7 + rand() % 5; break;
+        case ENEMY_MUDBACK_TURTLE:
+        case ENEMY_LIZARDFOLK_SCALEGUARD: gold = 12 + rand() % 7; break;
+        case ENEMY_SSZARETH: break;
         case ENEMY_ROYAL_GUARD: gold = 10; break;
         case ENEMY_ELDERTHORN: break; // Its one-time reward was handled above.
         case ENEMY_BRIAR_WOLF:
@@ -620,7 +639,8 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
     }
 
     TileType drop_tile = g->map.tiles[y][x];
-    int plain_floor = drop_tile == TILE_ELDERWOOD_FLOOR || drop_tile == TILE_FLOOR ||
+    int plain_floor = drop_tile == TILE_MANGROVE_MUD || drop_tile == TILE_MANGROVE_DECK ||
+        drop_tile == TILE_MANGROVE_LANDING || drop_tile == TILE_ELDERWOOD_FLOOR || drop_tile == TILE_FLOOR ||
         drop_tile == TILE_FOREST_FLOOR ||
         drop_tile == TILE_MOUNTAIN_FLOOR ||
         drop_tile == TILE_MOUNTAIN_CAVE_FLOOR ||
@@ -1213,8 +1233,11 @@ void action_resolve_player(GameState *g, Action a) {
         return;
     }
     if (g->location == LOCATION_MANGROVES && (a.type == ACTION_ASCEND || a.type == ACTION_DESCEND)) {
-        if (a.type == ACTION_ASCEND && !g->mangroves.aboard && g->player.x == 14 && g->player.y <= 1) {
-            mangrove_leave(g);
+        int forward = a.type == ACTION_DESCEND;
+        int x = forward ? g->map.stairs_down_x : g->map.stairs_up_x;
+        int y = forward ? g->map.stairs_down_y : g->map.stairs_up_y;
+        if (!g->mangroves.aboard && abs(g->player.x - x) + abs(g->player.y - y) <= 1) {
+            mangrove_change_level(g, forward);
         }
         return;
     }
@@ -1834,6 +1857,10 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
         Spell *sp = &g->player.known_spells[g->player.equipped_spell];
+        if (g->location == LOCATION_MANGROVES && g->mangroves.aboard && sp->id != SPELL_RETURN_TO_TOWN && sp->type != SPELL_TYPE_HEAL) {
+            push_message(g, "Go ashore before using combat spells.");
+            return;
+        }
         int spell_power = equipped_spell_power(g);
         int mana_cost = equipped_spell_cost(g, sp);
 
@@ -2113,6 +2140,10 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_RANGED_ATTACK) {
+        if (g->location == LOCATION_MANGROVES && g->mangroves.aboard) {
+            push_message(g, "Go ashore before attacking.");
+            return;
+        }
         if (g->equipped_main_hand < 0 ||
             g->equipped_main_hand >= g->inventory_count) {
             push_message(g, "No weapon equipped!");
@@ -2232,6 +2263,10 @@ void action_resolve_player(GameState *g, Action a) {
     if (a.type == ACTION_MOVE) {
         int tx = a.target_x;
         int ty = a.target_y;
+        if (g->location == LOCATION_MANGROVES && g->mangroves.aboard) {
+            mangrove_travel(g, tx, ty);
+            return;
+        }
 
         if (g->location == LOCATION_ISLAND && tx >= 0 && tx < MAP_W &&
             ty >= 0 && ty < MAP_H &&
@@ -3615,6 +3650,9 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
     if (g->player.hp <= 0 || g->game_won || g->castle_prompt || g->location == LOCATION_APPROACH || g->location == LOCATION_TOWN_ROAD) {
         return;
     }
+    if (g->location == LOCATION_MANGROVES && g->mangroves.aboard) {
+        return;
+    }
     jail_follow(g);
     if (g->location == LOCATION_CASTLE_INTERIOR) {
         int damage = castle_tick(g);
@@ -3714,6 +3752,15 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
 
+        int marsh_damage = 0;
+        if (mangrove_tick(g, e, &marsh_damage)) {
+            if (marsh_damage > 0) {
+                int damage = marsh_damage - g->player.defense / 2;
+                apply_enemy_damage(g, damage > 0 ? damage : 1, FEEDBACK_NOW);
+                push_message_kind(g, "A marsh hunter strikes you!", MESSAGE_DAMAGE_TAKEN);
+            }
+            continue;
+        }
         int elder_damage = 0;
         if (elderwood_tick(g, e, &elder_damage)) {
             if (elder_damage > 0) {

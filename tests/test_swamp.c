@@ -169,7 +169,7 @@ void test_swamp(void) {
     game_enter_town2(&swamp_game);
     ASSERT("Town 2 north gate enters the swamp and the shortcut starts closed",
         swamp_game.map.tiles[0][20] == TILE_TOWN_EXIT &&
-        swamp_game.map.tiles[TOWN_H - 1][STILLBURY_GLASSDEEP_GATE_X] == TILE_TOWN_EXIT &&
+        swamp_game.map.tiles[TOWN_H - 1][SOUTH_AREA_GATE_X] == TILE_TOWN_EXIT &&
         swamp_game.map.tiles[0][TOWN3_ROAD_X] == TILE_WALL);
     swamp_game.player.x = 20;
     swamp_game.player.y = 1;

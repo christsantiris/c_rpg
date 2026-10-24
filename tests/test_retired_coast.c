@@ -152,7 +152,7 @@ void test_retired_coast(void) {
         ASSERT("full backpacks retain all cached gear without duplicating the active stage", loaded->retired_coast_item_count == (i == 0 ? 80 : 100));
         ASSERT("migration leaves a walkable player with the replacement southern route", map_is_walkable(&loaded->map, loaded->player.x, loaded->player.y) && (i == 4 ? loaded->map.tiles[TOWN_ROAD_H - 1][TOWN_ROAD_W / 2] == TILE_TOWN_ROAD_EXIT_SOUTH : loaded->map.tiles[TOWN_H - 1][20] == TILE_TOWN_EXIT));
         if (i < 4) {
-            ASSERT("dropped active-floor gear is relocated safely and the merchant door closes", loaded->floor_item_count == 1 && loaded->floor_items[0].active && loaded->floor_items[0].item.type == ITEM_SHIELD && map_is_walkable(&loaded->map, loaded->floor_items[0].x, loaded->floor_items[0].y) && loaded->floor_items[0].underlying_tile != TILE_LOCAL_DOOR && loaded->map.tiles[10][9] == TILE_LOCAL_BUILDING);
+            ASSERT("retired floor gear stays recoverable beside the restored merchant entrance", loaded->floor_item_count == 1 && loaded->floor_items[0].active && loaded->floor_items[0].item.type == ITEM_SHIELD && map_is_walkable(&loaded->map, loaded->floor_items[0].x, loaded->floor_items[0].y) && loaded->floor_items[0].underlying_tile != TILE_LOCAL_DOOR && loaded->map.tiles[10][9] == TILE_LOCAL_DOOR);
         }
         if (i == 3) {
             ASSERT("saved town exploration and valid position/facing survive retirement", map_is_explored(&loaded->map, 3, 12) && loaded->player.x == g->player.x && loaded->player.y == g->player.y && loaded->player.last_dx == g->player.last_dx);
@@ -188,7 +188,7 @@ void test_retired_coast(void) {
 
     TownApproach connection;
     ASSERT("Dawnmere's south connection leads to Saltwind while its east stays closed", town_road_connection(LOCATION_DAWNMERE, TOWN_SIDE_SOUTH, &connection) && connection.area == LOCATION_MANGROVES && !town_road_connection(LOCATION_DAWNMERE, TOWN_SIDE_EAST, &connection));
-    ASSERT("the pirate merchant interior and boss journal entry are removed", !town_life_building((Location)45) && JOURNAL_BOSS_COUNT == 18);
+    ASSERT("the pirate merchant interior and boss journal entry are removed", !town_life_building((Location)45) && JOURNAL_BOSS_COUNT == 19);
     prepare_retirement(g);
     g->location = LOCATION_JAIL;
     game_remove_inventory_item(g, MAX_INVENTORY - 1);
