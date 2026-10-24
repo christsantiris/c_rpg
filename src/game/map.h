@@ -9,6 +9,7 @@
 #define ELDERWOOD_DEPTH 5
 #define MANGROVE_W 64
 #define MANGROVE_H 40
+#define MANGROVE_DEPTH 5
 
 #define MIN_ROOMS 6
 #define MAX_ROOMS 10
@@ -100,6 +101,7 @@
 #define TOWN_BRAM_Y 11
 #define TOWN_ALDRIC_X 21
 #define TOWN_ALDRIC_Y 13
+// Former Oakhaven dock footprint, retained for legacy save migrations.
 #define TOWN_HARBOR_W 5
 #define TOWN_HARBOR_H 4
 #define TOWN_HARBOR_X (TOWN_W - 1 - TOWN_HARBOR_W)
@@ -219,7 +221,7 @@
 #define CASTLE_H 64
 #define CATACOMBS_W 60
 #define CATACOMBS_H 80
-#define STILLBURY_GLASSDEEP_GATE_X 20
+#define SOUTH_AREA_GATE_X 20
 #define RIDGESHIRE_DRAGON_GATE_X 20
 #define ROSEMOOR_MOONVEIL_GATE_Y 14
 #define SWAMP_MAP_W 72
@@ -678,7 +680,9 @@ typedef enum {
     TILE_MANGROVE_ROOT,
     TILE_MANGROVE_LANDING,
     TILE_MANGROVE_RETURN,
-    TILE_MANGROVE_CACHE
+    TILE_MANGROVE_CACHE,
+    TILE_MANGROVE_EXIT,
+    TILE_MANGROVE_DECK
 } TileType;
 
 typedef struct {
@@ -736,8 +740,8 @@ void map_place_town4_guards(Map *m, int avoid_x, int avoid_y);
 void map_place_town3_frost_gate(Map *m);
 void map_place_town3_moonveil_gate(Map *m);
 void map_place_town4_region_gates(Map *m);
-void map_place_town2_glassdeep_gate(Map *m);
-void map_place_town_harbor(Map *m);
+void map_place_town2_south_gate(Map *m);
+void map_clear_town_harbor(Map *m);
 void map_place_town_tavern(Map *m);
 void map_place_town_inn(Map *m);
 void map_place_town_apothecary(Map *m);

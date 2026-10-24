@@ -158,8 +158,9 @@ Existing saves migrate automatically, including saves inside the Tavern.
 
 The road to the docks appears after the Drowned Queen is defeated on the Sunken
 Coast. The other regional bosses and Tavern quests are not required. Captain
-Rowan then gives the Island Treasure Map when spoken to, enabling ship travel
-from the dock.
+Rowan waits on the beach beside the Sunken Coast entrance, outside Oakhaven.
+He gives the Island Treasure Map when spoken to, enabling ship travel from the
+nearby coastal dock.
 
 ## Nahla: The Buried Sun
 

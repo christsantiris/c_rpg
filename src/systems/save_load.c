@@ -25,6 +25,7 @@
 #include "../game/approach.h"
 #include "../game/elderwood.h"
 #include "../game/mangrove.h"
+#include "../game/coastal_travel.h"
 #include "cJSON.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -1108,6 +1109,24 @@ static int load_jail_equipment(const cJSON *root, GameState *g, int version) {
     return 1;
 }
 
+static cJSON *serialize_mangrove(const MangroveState *state) {
+    cJSON *delta = cJSON_CreateObject();
+    cJSON_AddNumberToObject(delta, "initialized", state->initialized);
+    cJSON_AddNumberToObject(delta, "stage", state->stage);
+    cJSON_AddNumberToObject(delta, "boat_x", state->boat_x);
+    cJSON_AddNumberToObject(delta, "boat_y", state->boat_y);
+    cJSON_AddNumberToObject(delta, "boat_dx", state->boat_dx);
+    cJSON_AddNumberToObject(delta, "boat_dy", state->boat_dy);
+    cJSON_AddNumberToObject(delta, "aboard", state->aboard);
+    cJSON_AddNumberToObject(delta, "searched", state->searched);
+    char *explored = bytes_to_base64(state->explored, sizeof(state->explored));
+    cJSON_AddStringToObject(delta, "explored", explored);
+    free(explored);
+    cJSON_AddItemToObject(delta, "loot", serialize_castle_loot(state->loot, state->loot_count));
+    cJSON_AddItemToObject(delta, "enemies", serialize_enemies(state->enemies, state->enemy_count));
+    return delta;
+}
+
 int save_game(const GameState *g, int slot) {
     if (!mangrove_state_valid(g)) {
         return 0;
@@ -1117,22 +1136,17 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 190);
+    cJSON_AddNumberToObject(root, "save_version", 193);
     MangroveState mangrove = g->mangroves;
     mangrove_capture(g, &mangrove);
-    cJSON *delta = cJSON_CreateObject();
-    cJSON_AddNumberToObject(delta, "initialized", mangrove.initialized);
-    cJSON_AddNumberToObject(delta, "boat_x", mangrove.boat_x);
-    cJSON_AddNumberToObject(delta, "boat_y", mangrove.boat_y);
-    cJSON_AddNumberToObject(delta, "boat_dx", mangrove.boat_dx);
-    cJSON_AddNumberToObject(delta, "boat_dy", mangrove.boat_dy);
-    cJSON_AddNumberToObject(delta, "aboard", mangrove.aboard);
-    cJSON_AddNumberToObject(delta, "searched", mangrove.searched);
-    char *delta_explored = bytes_to_base64(mangrove.explored, sizeof(mangrove.explored));
-    cJSON_AddStringToObject(delta, "explored", delta_explored);
-    free(delta_explored);
-    cJSON_AddItemToObject(delta, "loot", serialize_castle_loot(mangrove.loot, mangrove.loot_count));
-    cJSON_AddItemToObject(root, "mangroves", delta);
+    cJSON_AddItemToObject(root, "mangroves", serialize_mangrove(&mangrove));
+    cJSON *stages = cJSON_CreateArray();
+    for (int i = 0; i < MANGROVE_DEPTH; i++) {
+        const MangroveState *state = g->location == LOCATION_MANGROVES && g->level == i + 1 ? &mangrove : &g->mangrove_stages[i];
+        cJSON_AddItemToArray(stages, serialize_mangrove(state));
+    }
+    cJSON_AddItemToObject(root, "mangrove_stages", stages);
+    cJSON_AddNumberToObject(root, "mangrove_defeated", g->mangrove_defeated);
     cJSON *retired = cJSON_CreateArray();
     for (int stage = 0; stage < 5; stage++) {
         FloorItem items[MAX_FLOOR_ITEMS] = {0};
@@ -1806,15 +1820,10 @@ static int is_pirate_prototype_save(const cJSON *root, int version) {
         cJSON_IsArray(cJSON_GetObjectItem(root, "pirate_cache"));
 }
 
-static int load_mangroves(const cJSON *root, GameState *g, int version) {
-    g->mangroves = (MangroveState){0};
-    if (version < 190) {
-        return 1;
-    }
-    const cJSON *delta = cJSON_GetObjectItem(root, "mangroves");
+static int load_mangrove_record(const cJSON *delta, MangroveState *state, int version) {
+    *state = (MangroveState){0};
     const char *names[] = {"initialized", "boat_x", "boat_y", "boat_dx", "boat_dy", "aboard", "searched"};
-    int *values[] = {&g->mangroves.initialized, &g->mangroves.boat_x, &g->mangroves.boat_y,
-        &g->mangroves.boat_dx, &g->mangroves.boat_dy, &g->mangroves.aboard};
+    int *values[] = {&state->initialized, &state->boat_x, &state->boat_y, &state->boat_dx, &state->boat_dy, &state->aboard};
     for (int i = 0; i < 7; i++) {
         const cJSON *field = cJSON_GetObjectItem(delta, names[i]);
         if (!cJSON_IsNumber(field) || field->valuedouble != field->valueint ||
@@ -1824,17 +1833,68 @@ static int load_mangroves(const cJSON *root, GameState *g, int version) {
         if (i < 6) {
             *values[i] = field->valueint;
         } else {
-            g->mangroves.searched = field->valueint;
+            state->searched = field->valueint;
         }
     }
     const cJSON *explored = cJSON_GetObjectItem(delta, "explored");
-    if ((g->mangroves.initialized != 0 && g->mangroves.initialized != 1) ||
-        (g->mangroves.aboard != 0 && g->mangroves.aboard != 1) || !cJSON_IsString(explored) ||
-        strlen(explored->valuestring) != 4 * ((sizeof(g->mangroves.explored) + 2) / 3) ||
-        !deserialize_castle_loot(cJSON_GetObjectItem(delta, "loot"), g->mangroves.loot, &g->mangroves.loot_count)) {
+    if ((state->initialized != 0 && state->initialized != 1) || (state->aboard != 0 && state->aboard != 1) ||
+        !cJSON_IsString(explored) || strlen(explored->valuestring) != 4 * ((sizeof(state->explored) + 2) / 3) ||
+        !deserialize_castle_loot(cJSON_GetObjectItem(delta, "loot"), state->loot, &state->loot_count)) {
         return 0;
     }
-    base64_to_bytes(explored->valuestring, g->mangroves.explored, sizeof(g->mangroves.explored));
+    base64_to_bytes(explored->valuestring, state->explored, sizeof(state->explored));
+    state->stage = state->initialized ? 1 : 0;
+    if (version >= 191) {
+        const cJSON *stage = cJSON_GetObjectItem(delta, "stage");
+        const cJSON *enemies = cJSON_GetObjectItem(delta, "enemies");
+        if (!cJSON_IsNumber(stage) || stage->valuedouble != stage->valueint ||
+            !cJSON_IsArray(enemies) || cJSON_GetArraySize(enemies) > AREA_ENEMY_LIMIT) {
+            return 0;
+        }
+        state->stage = stage->valueint;
+        const char *required[] = {"x", "y", "active", "type", "hp", "max_hp", "attack", "defense", "experience",
+            "move_timer", "frozen_turns", "attack_target_x", "attack_target_y"};
+        for (int i = 0; i < cJSON_GetArraySize(enemies); i++) {
+            const cJSON *enemy = cJSON_GetArrayItem(enemies, i);
+            if (!cJSON_IsString(cJSON_GetObjectItem(enemy, "name"))) {
+                return 0;
+            }
+            for (int n = 0; n < (int)(sizeof(required) / sizeof(required[0])); n++) {
+                const cJSON *field = cJSON_GetObjectItem(enemy, required[n]);
+                if (!cJSON_IsNumber(field) || field->valuedouble != field->valueint) {
+                    return 0;
+                }
+            }
+        }
+        deserialize_enemies(enemies, state->enemies, &state->enemy_count, AREA_ENEMY_LIMIT);
+    }
+    return 1;
+}
+
+static int load_mangroves(const cJSON *root, GameState *g, int version) {
+    g->mangroves = (MangroveState){0};
+    memset(g->mangrove_stages, 0, sizeof(g->mangrove_stages));
+    g->mangrove_defeated = 0;
+    if (version < 190) {
+        return 1;
+    }
+    if (!load_mangrove_record(cJSON_GetObjectItem(root, "mangroves"), &g->mangroves, version)) {
+        return 0;
+    }
+    if (version >= 191) {
+        const cJSON *stages = cJSON_GetObjectItem(root, "mangrove_stages");
+        const cJSON *defeated = cJSON_GetObjectItem(root, "mangrove_defeated");
+        if (!cJSON_IsArray(stages) || cJSON_GetArraySize(stages) != MANGROVE_DEPTH || !cJSON_IsNumber(defeated) ||
+            (defeated->valuedouble != 0 && defeated->valuedouble != 1)) {
+            return 0;
+        }
+        g->mangrove_defeated = defeated->valueint;
+        for (int i = 0; i < MANGROVE_DEPTH; i++) {
+            if (!load_mangrove_record(cJSON_GetArrayItem(stages, i), &g->mangrove_stages[i], version)) {
+                return 0;
+            }
+        }
+    }
     return 1;
 }
 
@@ -4691,7 +4751,7 @@ int load_game(GameState *g, int slot) {
 
     // Version 46 moves the harbor to the southeast edge of the town green.
     if (save_version < 46 && g->location == LOCATION_TOWN) {
-        map_place_town_harbor(&g->map);
+        map_clear_town_harbor(&g->map);
         for (int i = 0; i < g->floor_item_count; i++) {
             FloorItem *item = &g->floor_items[i];
             if (item->active && item->x >= TOWN_HARBOR_X &&
@@ -5808,8 +5868,20 @@ int load_game(GameState *g, int slot) {
         migrate_removed_pirate_coast(g, pirate_return);
     }
     game_recover_retired_items(g);
-    if (save_version < 190) {
+    if (save_version < 191) {
         mangrove_migrate_town(g);
+        coastal_migrate_travel(g);
+        if (!mangrove_migrate_pilot(g)) {
+            cJSON_Delete(root);
+            return 0;
+        }
+    }
+    // Version 192 restores Glassdeep to Stillbury. Route indices and expeditions remain stable.
+    if (save_version == 191 && g->location == LOCATION_APPROACH && g->approach_route == 7) {
+        approach_refresh_entrance(g);
+    }
+    if (save_version < 193 && g->location == LOCATION_DAWNMERE) {
+        town_life_migrate(g);
     }
     if (!mangrove_state_valid(g) || (g->location == LOCATION_MANGROVE_PATH &&
         (g->player.x < 0 || g->player.x >= MANGROVE_PATH_W || g->player.y < 0 || g->player.y >= MANGROVE_PATH_H))) {

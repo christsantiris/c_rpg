@@ -106,9 +106,9 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
     } else if (g->location == LOCATION_TOWN_ROAD) {
         SDL_snprintf(loc, sizeof(loc), "%s ROAD", approach_town_name(g->road_town));
     } else if (g->location == LOCATION_MANGROVES) {
-        SDL_snprintf(loc, sizeof(loc), "SALTWIND LANDING");
+        SDL_snprintf(loc, sizeof(loc), "SALTWIND %d", g->level);
     } else if (g->location == LOCATION_MANGROVE_PATH) {
-        SDL_snprintf(loc, sizeof(loc), "MANGROVE PATH");
+        SDL_snprintf(loc, sizeof(loc), "MARSH PATH");
     } else if (g->location == LOCATION_APPROACH) {
         const TownApproach *route = approach_route(g);
         SDL_snprintf(loc, sizeof(loc), northern_approach(g) ? "NORTHERN ROAD" : "%s PATH", route ? approach_area_name(route->area) : "AREA");

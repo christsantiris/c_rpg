@@ -1,39 +1,62 @@
-# Saltwind landing art and renderer checks
+# Saltwind Marsh art and renderer checks
 
-The first playable exploration slice uses the established pixelkit pipeline:
+The entrance, mangroves, skiff and six enemy types use the established pixelkit
+pipeline at native game scale:
 
 ```sh
-.venv/bin/python tools/sprites/mangrove.py
+python3 tools/sprites/mangrove.py
+python3 tools/sprites/mangrove_enemies.py
 ```
 
-Runtime assets are `assets/images/mangrove-entrance.bmp` (168×144),
-`mangrove-root.bmp` (48×72) and `skiff.bmp` (four 36×36 directions).
-The trees use the existing forest bark, foliage, shading and outline helpers
-with a mangrove palette and exposed roots. The entrance contains a timber
-landing and a moored boat. Boat collision occupies its water tile; docking
-places the rider on the neighboring landing tile.
+Runtime assets: `mangrove-entrance.bmp` (168×144), `mangrove-root.bmp` (48×72),
+`skiff.bmp` (four 36×36 directions) and `mangrove-enemies.bmp` (six 48×48 cells).
+Names in code and serialized fields retain the original mangrove identifier for
+compatibility; the displayed area name is **Saltwind Marsh**.
 
-[Native comparison](native-comparison.png) places the new landmark, root tree
-and skiff beside the existing blacksmith at unscaled pixel resolution.
+[Native comparison](native-comparison.png) places the landmark, roots, skiff
+and enemy atlas beside the existing blacksmith and Elderwood art at unscaled
+resolution. Humanoid bodies match the player; turtles are broader and Sszareth
+has a taller crest. All actors retain a single combat square.
 
 Actual SDL software-renderer captures:
 
-- [Dawnmere and its southern exit](dawnmere.png)
-- [Single-tile southern approach and coastal landmark](approach.png)
-- [Four islands, root beds and landing geography](islands.png)
+- [Stillbury's restored Glassdeep gate](stillbury.png)
+- [Dawnmere's complete Saltwind gate](dawnmere.png)
+- [Merchant path and working doorway](merchant-exterior.png)
+- [Corvin inside the merchant shop](merchant-interior.png)
+- [Southern approach and marsh landmark](approach.png)
+- [Saltwind Landing](islands.png)
+- [Splitroot Delta](stage-2.png)
+- [Mudback Pools](stage-3.png)
+- [Stiltwater Village](stage-4.png)
+- [Heartroot Sanctuary](stage-5.png)
+- [Sszareth's fixed charge warning](boss.png)
 - [Player aboard the skiff](aboard.png)
+- [Coastal docks and Rowan on the beach](docks.png)
+- [Docks before the Drowned Queen victory](docks-locked.png)
 
-The island captures reveal the terrain for visual review. Normal play records
-explored cells in the minimap. World tiles and actors retain native scale;
-the pilot scrolls on smaller displays. Ground uses warm silt, green reeds and
-rounded shoreline corners. Dark teal water highlights animate with SDL time.
-The approach landmark blends into the grass and water rather than painting a
-rectangular ground patch behind its transparent image.
+The stage captures reveal terrain for review. Ordinary play retains exploration
+in the minimap. Water highlights animate with SDL time; rounded mud banks and
+root clusters interrupt the shoreline. Village decks use weathered timber.
+The entrance blends into the surrounding grass and water. Rowan inherits the
+sand under his feet instead of introducing a grass square.
 
-The new [illustrated atlas](../../images/world-map-saltwind.png) was edited with
-the built-in imagegen tool. Its exact prompt and geography checks are recorded
-in the [world-map source notes](../world-map/prompt.md#saltwind-landing-atlas-save-version-190).
-It moves Dawnmere north, adds Saltwind south of town above the offshore islands,
-and widens Goblin Mountains around the Ridgeshire road. That illustration
-represents the planned full region; the current implementation contains the
-first exploration landing, with combat and later stages still to come.
+`debug_shortcuts_test` also compares rendered pixels with and without each of
+the six enemies in the actual adventure, and compares Rowan's corner pixel to
+the underlying sand. These checks cover the formerly missing combat-area draw
+branch and the NPC underlay regression. Native texture loading, dock traversal,
+new/loaded debug unlocks and sailing remain covered by the same SDL executable.
+
+The [illustrated atlas](../../images/world-map-coastal-regions.png) shows Saltwind
+Marsh as a compact inlet south of Dawnmere, Glassdeep south of Stillbury and docks beside Sunken
+Coast. Glassdeep retains its beaches with cliffs behind them, and Sunken Coast keeps
+its curved sheltered cove. The docks use a small branching wharf attached to
+shore. The [source notes](../world-map/repair-193.md) record the final image-edit prompts
+and the geography review: the wharf branches are connected, the mountain road
+passes between peaks, and the marsh meets the sea at water level. The eastern
+headland stays available for a future area.
+
+The merchant captures follow actual movement from Dawnmere's west road through
+the restored doorway, walking up to Corvin, explicit Talk and walking out to the
+same doorstep. The established exterior texture is reused unchanged. Version
+193 migration and interior save/load are covered by `test_town_life`.
