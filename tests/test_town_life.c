@@ -1,6 +1,7 @@
 #include "test_utils.h"
 #include "../src/game/town_life.h"
 #include "../src/game/actions.h"
+#include "../src/game/mangrove.h"
 #include "../src/systems/save_load.h"
 #include "../external/cJSON.h"
 #include <stdlib.h>
@@ -18,7 +19,9 @@ static void start_town(Location town) {
     game_init(&game);
     game.location = town;
     game.defeated_bosses = (1 << LOCATION_FOREST) | (1 << LOCATION_MOUNTAINS) | (1 << LOCATION_SWAMP);
-    if (town == LOCATION_TOWN) {
+    if (town == LOCATION_DAWNMERE) {
+        game_enter_town_gate(&game, LOCATION_DAWNMERE, 0, 12);
+    } else if (town == LOCATION_TOWN) {
         map_set_town2_road(&game.map, 1);
         map_set_town4_road(&game.map, 1);
     } else if (town == LOCATION_TOWN2) {
@@ -93,7 +96,7 @@ static int downgrade_town_save(void) {
     if (!root) {
         return 0;
     }
-    cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 110);
+    cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), game.location == LOCATION_DAWNMERE ? 192 : 110);
     text = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);
     if (!text) {
@@ -112,8 +115,8 @@ static int downgrade_town_save(void) {
 
 void test_town_life(void) {
     printf("Town resident building tests:\n");
-    const Location towns[4] = {LOCATION_TOWN, LOCATION_TOWN2, LOCATION_TOWN4, LOCATION_TOWN3};
-    for (int i = 0; i < 4; i++) {
+    const Location towns[5] = {LOCATION_TOWN, LOCATION_TOWN2, LOCATION_TOWN4, LOCATION_TOWN3, LOCATION_DAWNMERE};
+    for (int i = 0; i < 5; i++) {
         start_town(towns[i]);
         const TownBuilding *b = town_life_building(game.location);
         int door_x = b->x + b->w / 2;
@@ -125,6 +128,18 @@ void test_town_life(void) {
             game.map.tiles[door_y][door_x] == TILE_LOCAL_DOOR && map_is_walkable(&game.map, door_x, door_y + 1));
         game.player.x = door_x;
         game.player.y = door_y + 1;
+        if (towns[i] == LOCATION_DAWNMERE) {
+            game.player.y = 12;
+            action_resolve_player(&game, (Action){ACTION_MOVE, door_x, 11});
+            ASSERT("Dawnmere's merchant has a single-tile spur from the road to its door", game.player.x == door_x &&
+                game.player.y == 11 && game.map.tiles[11][door_x] == TILE_TOWN_PATH &&
+                game.map.tiles[11][door_x - 1] == TILE_TOWN_FLOOR && game.map.tiles[11][door_x + 1] == TILE_TOWN_FLOOR);
+            // Create the portal through normal play so its saved stage is valid.
+            mangrove_enter(&game, 0);
+            game_open_town_portal(&game);
+            game.player.x = door_x;
+            game.player.y = door_y + 1;
+        }
         int inventory = game.inventory_count;
         game.dialogue_active = 1;
         action_resolve_player(&game, (Action){ACTION_MOVE, door_x, door_y});
@@ -146,7 +161,7 @@ void test_town_life(void) {
             game.defeated_bosses |= b->victory;
             ASSERT("baker and abbot react to their regional boss victories", town_life_talk(&game, 0) && strcmp(game.dialogue_text, b->after) == 0);
         }
-        ASSERT("all four interiors and their dialogue survive save and load", save_game(&game, TOWN_LIFE_SLOT) &&
+        ASSERT("all five interiors and their dialogue survive save and load", save_game(&game, TOWN_LIFE_SLOT) &&
             load_game(&loaded, TOWN_LIFE_SLOT) && loaded.location == b->interior &&
             strcmp(loaded.dialogue_text, game.dialogue_text) == 0 && loaded.map.tiles[RESIDENT_Y][RESIDENT_X] == TILE_NPC_RESIDENT);
         loaded.player.x = 20;
@@ -158,6 +173,10 @@ void test_town_life(void) {
             loaded.level_cache[0].map.tiles[3][3] == TILE_STAIRS_UP &&
             all_walkable_connected(&loaded.map, loaded.player.x, loaded.player.y) &&
             (loaded.defeated_bosses & game.defeated_bosses) == game.defeated_bosses);
+        if (towns[i] == LOCATION_DAWNMERE) {
+            ASSERT("the merchant returns to Dawnmere with the marsh return portal intact", loaded.last_town_visited == LOCATION_DAWNMERE &&
+                loaded.portal_active && loaded.portal_location == LOCATION_MANGROVES && loaded.map.tiles[TOWN_H - 3][21] == TILE_PORTAL);
+        }
 
         start_town(towns[i]);
         // Reproduce an old save with the player and loot inside the new footprint.
@@ -193,4 +212,35 @@ void test_town_life(void) {
         }
         remove(TOWN_LIFE_PATH);
     }
+
+    start_town(LOCATION_DAWNMERE);
+    // Reproduce version 192's decorative merchant and grass-covered doorstep.
+    game.player.x = 9;
+    game.player.y = 12;
+    game.map.tiles[10][9] = TILE_LOCAL_BUILDING;
+    game.floor_item_count = 2;
+    for (int i = 0; i < 2; i++) {
+        game.floor_items[i] = (FloorItem){.active = 1, .x = 9 - i, .y = 11,
+            .underlying_tile = TILE_TOWN_FLOOR, .item = item_make_health_potion()};
+        game.map.tiles[11][9 - i] = TILE_ITEM;
+    }
+    game.portal_active = 1;
+    game.portal_location = LOCATION_DUNGEON;
+    game.dungeon_portal_town = LOCATION_DAWNMERE;
+    game.return_portal_town = LOCATION_DAWNMERE;
+    game.map.tiles[13][2] = TILE_PORTAL;
+    map_mark_explored(&game.map, 9, 11);
+    ASSERT("version 192 restores the merchant door without moving the road player or portal", save_game(&game, TOWN_LIFE_SLOT) &&
+        downgrade_town_save() && load_game(&loaded, TOWN_LIFE_SLOT) && loaded.player.x == 9 && loaded.player.y == 12 &&
+        loaded.map.tiles[10][9] == TILE_LOCAL_DOOR && loaded.map.tiles[13][2] == TILE_PORTAL && loaded.portal_active &&
+        loaded.gold == 123 && loaded.elowen_quest_state == 1 && map_is_explored(&loaded.map, 9, 11));
+    ASSERT("merchant migration repairs loot's path underlay without paving neighboring grass", loaded.map.tiles[11][9] == TILE_ITEM &&
+        loaded.floor_items[0].underlying_tile == TILE_TOWN_PATH && loaded.floor_items[1].underlying_tile == TILE_TOWN_FLOOR);
+    action_resolve_player(&loaded, (Action){ACTION_MOVE, 9, 11});
+    action_resolve_player(&loaded, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("the migrated doorstep is walkable and reveals cobblestone after picking up loot", loaded.player.x == 9 &&
+        loaded.player.y == 11 && loaded.map.tiles[11][9] == TILE_TOWN_PATH);
+    action_resolve_player(&loaded, (Action){ACTION_MOVE, 9, 10});
+    ASSERT("the repaired legacy door enters the merchant instead of remaining decorative", loaded.location == LOCATION_DAWNMERE_MERCHANT);
+    remove(TOWN_LIFE_PATH);
 }

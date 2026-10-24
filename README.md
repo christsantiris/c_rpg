@@ -28,7 +28,7 @@ and many other adventures.
 
 ## World Map
 
-[![Illustrated world map showing Saltwind Mangroves south of Dawnmere, the road through Goblin Mountains, Elderwood Forest and the northern road from Oakhaven through the Royal Catacombs to the castle, the five towns, both Crown Roads, regional adventures and the Ruined Isle.](docs/images/world-map-saltwind.png)](docs/images/world-map-saltwind.png)
+[![Illustrated world map showing Glassdeep Caverns south of Stillbury and a compact Saltwind Marsh inlet south of Dawnmere, coastal docks beside Sunken Coast, the road through Goblin Mountains, Elderwood Forest and the northern road from Oakhaven through the Royal Catacombs to the castle, the five towns, both Crown Roads, regional adventures and the Ruined Isle.](docs/images/world-map-coastal-regions.png)](docs/images/world-map-coastal-regions.png)
 
 An illustrated overview based on the world's town connections. Dawnmere now lies
 east of Oakhaven, reached by the safe road opened after defeating the Lich King.
@@ -47,12 +47,17 @@ assigns the quest in Oakhaven's Tavern. Castle, secret tunnel and Crown Road
 travel keep their existing layouts.
 
 Pirate Coast and its merchant treasure quest have been removed.
-[Saltwind Mangroves](docs/saltwind-mangroves.md) now has an initial exploration
-pilot south of Dawnmere: enter its landmark from the southern road, board the
-skiff at a timber landing, paddle between four islands, and search supplies.
-Boat position, discoveries, dropped gear and return portals persist. Combat,
-the boss and the remaining four stages are planned next. Dawnmere's east route
-remains closed. Glassdeep Caverns stays south of Stillbury.
+[Saltwind Marsh](docs/saltwind-marsh.md) is a five-stage adventure south of
+Dawnmere, with skiff exploration, lizardfolk, armored turtles and Sszareth's
+sanctuary. Ordinary enemies respawn on fresh expeditions; supplies and the
+boss bounty pay once. Glassdeep Caverns is restored south of Stillbury. Rowan and
+the docks stand outside Oakhaven beside the Sunken Coast entrance. Defeating
+the Drowned Queen still opens dock access; Rowan's map unlocks the first voyage.
+Dawnmere's merchant has a working door and a single-tile path from the west road.
+Merchant Corvin is inside, with directions to Saltwind; a new marsh quest is not
+assigned yet. Dawnmere's east route remains closed. On the atlas, the marsh is a small coastal
+inlet, preserving Glassdeep's beaches and cliffs, Sunken Coast's sheltered cove,
+and broad open sea.
 
 Return to Town uses the last town actually entered; bypassing a town leaves
 that destination unchanged. Return portals retain the original expedition.
@@ -126,7 +131,7 @@ inventory actions.
 - [Goblin Mountains](docs/goblin-mountains.md)
 - [Dragonspine and High Pass](docs/dragonspine.md)
 - [Sunken Coast](docs/sunken-coast.md)
-- [Saltwind Mangroves — skiff pilot and area design](docs/saltwind-mangroves.md)
+- [Saltwind Marsh — five stages and skiff exploration](docs/saltwind-marsh.md)
 - [Blackwater Swamp](docs/swamp.md)
 - [Sunscar Wastes and the magic lamp quest](docs/sunscar-wastes.md)
 - [Moonveil Gardens](docs/moonveil-gardens.md)
@@ -219,7 +224,7 @@ See the [parameter table](#debug-script-parameters) and
 [weapon-to-parameter mapping](#debug-weapon-names) below for exact accepted values.
 
 Select **New Game**, enter a name, and choose a class, or load an existing
-character. All four town-to-town roads, Oakhaven's dock road, island sailing
+character. All four town-to-town roads, the Sunken Coast dock road, island sailing
 without a treasure map, and the labyrinth entrance are open immediately.
 Locked dungeon doors, mountain barriers, temple doors, the labyrinth vault,
 Glassdeep seals and castle portcullises open as you explore. Boss-blocked exits,

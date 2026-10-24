@@ -95,7 +95,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                     if (tile == TILE_MANGROVE_WATER) {
                         has_water = 1;
                     }
-                    if (tile == TILE_MANGROVE_LANDING || tile == TILE_MANGROVE_RETURN || tile == TILE_MANGROVE_CACHE ||
+                    if (tile == TILE_MANGROVE_EXIT || tile == TILE_MANGROVE_LANDING || tile == TILE_MANGROVE_RETURN || tile == TILE_MANGROVE_CACHE ||
                         tile == TILE_CASTLE_TRAP_OPEN || tile == TILE_CASTLE_WARD || tile == TILE_CASTLE_WARD_SPENT || tile == TILE_CASTLE_MUSTER ||
                         tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN ||
                         tile == TILE_ELDERWOOD_ENTRANCE || tile == TILE_ELDERWOOD_EXIT ||

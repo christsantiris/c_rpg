@@ -1378,18 +1378,12 @@ void map_generate_coast(Map *m, int level) {
     map_shape_coast(m, index + 1);
 }
 
-void map_place_town_harbor(Map *m) {
+void map_clear_town_harbor(Map *m) {
     for (int y = 1; y < TOWN_H - 1; y++) {
         for (int x = 1; x < TOWN_W - 1; x++) {
             if (m->tiles[y][x] == TILE_WATCHTOWER) {
                 m->tiles[y][x] = TILE_TOWN_FLOOR;
             }
-        }
-    }
-    // Retain the serialized tile ID for the closed harbor footprint.
-    for (int y = TOWN_HARBOR_Y; y < TOWN_H - 1; y++) {
-        for (int x = TOWN_HARBOR_X; x < TOWN_W - 1; x++) {
-            m->tiles[y][x] = TILE_WATCHTOWER;
         }
     }
 }
@@ -1495,14 +1489,14 @@ void map_place_town2_center(Map *m) {
     for (int y = 10; y <= 14; y++) {
         m->tiles[y][0] = TILE_TOWN_EXIT;
     }
-    map_place_town2_glassdeep_gate(m);
+    map_place_town2_south_gate(m);
     for (int x = TOWN_HEALER_DOOR_X; x <= TOWN_WITCH_DOOR_X; x++) {
         m->tiles[13][x] = TILE_TOWN_PATH;
     }
 }
 
-void map_place_town2_glassdeep_gate(Map *m) {
-    for (int x = STILLBURY_GLASSDEEP_GATE_X - 2; x <= STILLBURY_GLASSDEEP_GATE_X + 2; x++) {
+void map_place_town2_south_gate(Map *m) {
+    for (int x = SOUTH_AREA_GATE_X - 2; x <= SOUTH_AREA_GATE_X + 2; x++) {
         m->tiles[TOWN_H - 1][x] = TILE_TOWN_EXIT;
     }
 }
@@ -1581,11 +1575,10 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     // The Tavern stands east of the Blacksmith, its door opening onto the square.
     map_place_town_tavern(m);
 
-    map_place_town_harbor(m);
+    map_clear_town_harbor(m);
     m->tiles[TOWN_CAIN_Y][TOWN_CAIN_X] = TILE_NPC_CAIN;
     m->tiles[TOWN_BRAM_Y][TOWN_BRAM_X] = TILE_NPC_BRAM;
     m->tiles[TOWN_ALDRIC_Y][TOWN_ALDRIC_X] = TILE_NPC_ALDRIC;
-    m->tiles[TOWN_ROWAN_Y][TOWN_ROWAN_X] = TILE_NPC_ROWAN;
     town_life_place(m, LOCATION_TOWN);
 
     // Spawn at the central crossroads so the south road remains unobstructed
@@ -1800,7 +1793,9 @@ static void map_generate_town_square(Map *m) {
 
 TileType map_dawnmere_ground(int x, int y) {
     int square = x >= 12 && x <= 28 && y >= 11 && y <= 15;
-    return square || x == CROWNROAD_X || y == 12 ? TILE_TOWN_PATH : TILE_TOWN_FLOOR;
+    const TownBuilding *merchant = town_life_building(LOCATION_DAWNMERE);
+    int doorstep = x == merchant->x + merchant->w / 2 && y == merchant->y + merchant->h;
+    return square || doorstep || x == CROWNROAD_X || y == 12 ? TILE_TOWN_PATH : TILE_TOWN_FLOOR;
 }
 
 void map_generate_dawnmere(Map *m, int *spawn_x, int *spawn_y) {
@@ -1818,12 +1813,7 @@ void map_generate_dawnmere(Map *m, int *spawn_x, int *spawn_y) {
         m->tiles[0][x] = TILE_TOWN_EXIT;
     }
     m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
-    // Reuse the established merchant building footprint.
-    for (int y = 7; y < 11; y++) {
-        for (int x = 7; x < 12; x++) {
-            m->tiles[y][x] = TILE_LOCAL_BUILDING;
-        }
-    }
+    town_life_place(m, LOCATION_DAWNMERE);
     *spawn_x = 20;
     *spawn_y = 12;
 }

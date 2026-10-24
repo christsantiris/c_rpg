@@ -79,7 +79,7 @@ announced geometry cannot change. Use recovery and preparation to set a Return
 face, then step off the incoming beam before it fires. Ordinary walking escapes
 remain available in both phases.
 
-Defeating the Sovereign opens stage 5's south exit, which returns to Stillbury
+Defeating the Sovereign opens stage 5's south exit, which returns to the Stillbury approach
 without adding another town, and records the victory in the boss journal.
 Its prismatic reliquary reserves two guaranteed rewards independently:
 
@@ -144,3 +144,9 @@ portals. Save version **94** preserves quest state, individual restorations,
 guard encounters, and an open tuning prompt. Older saves initialize the new
 quest without losing existing progress; saves inside the Guild receive Orin
 with any overlapping player or loot moved beside him.
+
+Save version **192** restores Glassdeep Caverns south of Stillbury. Active and
+cached expeditions retain their stages, enemy health, quests, loot and boss
+progress. Physical retreat returns to the Stillbury approach. Existing return
+portals keep their saved town destination; newly cast portals use the last town
+visited. Saltwind Marsh remains a complete adventure south of Dawnmere.

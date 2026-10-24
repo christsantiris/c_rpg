@@ -16,11 +16,14 @@ static const TownBuilding buildings[] = {
         "Since you defeated the dragon ruling Dragonspine, Ridgeshire is safer. Our bells ring in gratitude rather than alarm. May you find peace beneath this roof."},
     {LOCATION_TOWN3, LOCATION_SPICE_SHOP, 7, 17, 5, 4, 3, 0,
         "SPICE MERCHANT", "Spice Merchant Suri",
-        "The Crown Road has become dangerous. Bandits prey on caravans, and every sack of spice that reaches Rosemoor has a tale of narrow escape. Traders travel in company now.", NULL}
+        "The Crown Road has become dangerous. Bandits prey on caravans, and every sack of spice that reaches Rosemoor has a tale of narrow escape. Traders travel in company now.", NULL},
+    {LOCATION_DAWNMERE, LOCATION_DAWNMERE_MERCHANT, 7, 7, 5, 4, 0, 0,
+        "MERCHANT", "Merchant Corvin",
+        "I trade in goods from Saltwind Marsh, south of Dawnmere. Skiffs carry supplies between its islands. Follow the south road to the marsh landing.", NULL}
 };
 
 const TownBuilding *town_life_building(Location location) {
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < (int)(sizeof(buildings) / sizeof(buildings[0])); i++) {
         if (buildings[i].town == location || buildings[i].interior == location) {
             return &buildings[i];
         }
@@ -47,6 +50,14 @@ void town_life_place(Map *map, Location town) {
     }
     map->tiles[door_y][door_x] = TILE_LOCAL_DOOR;
     int road_y = town == LOCATION_TOWN3 ? CASTLE_ROAD_Y : 12;
+    if (door_y < road_y) {
+        for (int y = door_y + 1; y < road_y; y++) {
+            if (map->tiles[y][door_x] != TILE_ITEM) {
+                map->tiles[y][door_x] = TILE_TOWN_PATH;
+            }
+        }
+        return;
+    }
     for (int y = road_y + 1; y <= door_y + 1; y++) {
         if (map->tiles[y][b->x - 1] != TILE_ITEM) {
             map->tiles[y][b->x - 1] = TILE_TOWN_PATH;
@@ -107,6 +118,7 @@ void town_life_migrate(GameState *g) {
     }
     int door_x = b->x + b->w / 2;
     int outside_y = b->y + b->h;
+    int road_y = g->location == LOCATION_TOWN3 ? CASTLE_ROAD_Y : 12;
     if (g->player.x >= b->x && g->player.x < b->x + b->w &&
         g->player.y >= b->y && g->player.y < outside_y) {
         g->player.x = door_x;
@@ -123,8 +135,9 @@ void town_life_migrate(GameState *g) {
             item->x = door_x;
             item->y = outside_y;
             item->underlying_tile = TILE_TOWN_PATH;
-        } else if ((item->x == b->x - 1 && item->y > (g->location == LOCATION_TOWN3 ? CASTLE_ROAD_Y : 12) && item->y <= outside_y) ||
-            (item->y == outside_y && item->x >= b->x - 1 && item->x <= door_x)) {
+        } else if ((outside_y <= road_y && item->x == door_x && item->y >= outside_y && item->y <= road_y) ||
+            (outside_y > road_y && item->x == b->x - 1 && item->y > road_y && item->y <= outside_y) ||
+            (outside_y > road_y && item->y == outside_y && item->x >= b->x - 1 && item->x <= door_x)) {
             item->underlying_tile = TILE_TOWN_PATH;
         }
         if (item->x >= 0 && item->x < MAP_W && item->y >= 0 && item->y < MAP_H) {

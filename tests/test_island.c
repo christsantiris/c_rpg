@@ -1,4 +1,5 @@
 #include "test_utils.h"
+#include "game/coastal_travel.h"
 #include "../src/game/game.h"
 #include "../src/screens/harbor.h"
 #include "../src/systems/save_load.h"
@@ -128,12 +129,8 @@ void test_island(void) {
         harbor_handle_key(&harbor, SDL_SCANCODE_RETURN, 1, 1) ==
         HARBOR_SAIL_TOWN);
     game_leave_island(&g);
-    ASSERT("return voyage restores the unlocked town harbor",
-        g.location == LOCATION_TOWN &&
-        g.player.x == TOWN_HARBOR_ENTRANCE_X &&
-        g.player.y == TOWN_HARBOR_ENTRANCE_Y &&
-        g.map.tiles[TOWN_HARBOR_ENTRANCE_Y][TOWN_HARBOR_X - 1] ==
-        TILE_TOWN_PATH);
+    ASSERT("return voyage restores the unlocked coastal dock beside Sunken Coast",
+        coastal_at_docks(&g) && g.map.tiles[COAST_DOCK_ENTRY_Y][COAST_DOCK_X - 1] == TILE_TOWN_PATH);
 
     const int slot = 99013;
     if (save_exists(slot)) {

@@ -20,7 +20,7 @@ continuations, without a second gate. Streets and services inside all five towns
 | Stillbury | Swamp / Rosemoor road | Haunted Forest / Oakhaven road | Glassdeep Caverns | Sunscar Wastes |
 | Rosemoor | Frostfell Wastes | Crown Road East / Castle | Swamp / Stillbury road | Moonveil Gardens |
 | Ridgeshire | Dragonspine | Ashen Hollow | Mountains / Dawnmere road | Crown Road West / Castle |
-| Dawnmere | Mountains / Ridgeshire road | Closed | Saltwind Mangroves (skiff pilot) | Dungeon / Oakhaven road |
+| Dawnmere | Mountains / Ridgeshire road | Closed | Saltwind Marsh | Dungeon / Oakhaven road |
 
 The Lich King, Necromancer, Swamp Demon and Goblin King still control their
 regional through roads. Town bypasses connect their existing approaches and
@@ -66,7 +66,8 @@ See [Elderwood](elderwood-forest.md) for travel and save migration details.
 Save version 189 retires Pirate Coast and Corvin's treasure quest. Saves from
 versions 184–188 on the removed approach, in the adventure or in Corvin's room
 return safely to Dawnmere. Saved Dawnmere interiors and exteriors replace the
-southern pirate connection with Saltwind and lose the merchant doorway. Exploration, facing and
+southern pirate connection with Saltwind. That version also removed the merchant
+doorway; version 193 restores the shop independently of the retired quest. Exploration, facing and
 reachable dropped items remain in place where possible; items on removed
 terrain move to safe ground. Pirate return portals close, while unrelated
 portals and regional progress remain intact. Earned gold and equipment remain.
@@ -79,6 +80,31 @@ written into new saves. Serialized location IDs 44–45, approach index 17, the
 six appended pirate enemy IDs and sixteen appended tile IDs remain reserved
 for migration; new content must not reuse them.
 
-Save version 190 adds the first [Saltwind skiff pilot](saltwind-mangroves.md)
-south of Dawnmere. The new southern route reaches its landmark and four
-explorable islands. Its combat and remaining stages are still planned.
+Save version 193 restores Dawnmere's merchant through the same building system
+as the other four towns. The original building art and footprint stay in place.
+A single cobblestone tile joins the south-facing door to the west road; the
+rectangular plaza and single-tile streets retain their shape. Corvin waits in
+the interior and speaks when the player presses Talk nearby. He currently gives
+Saltwind directions; the future marsh quest has no objectives or rewards yet.
+The shop uses Dawnmere's music and returns the player to its doorstep on exit.
+
+The interior appends location ID 48; retired IDs 44–45 remain reserved. Older
+Dawnmere saves regain the doorway and approach without replacing the town map.
+Dropped items keep their correct ground beneath them, including items on the
+new path, and exploration, quests and return portals survive. Saves inside the
+shop retain the interior, player position and dialogue. Regression tests walk
+through all five resident buildings and cover version 192's broken merchant.
+See the [renderer captures](art-sources/saltwind/README.md) and
+[atlas acceptance checks](art-sources/world-map/README.md).
+
+Save version 192 restores Glassdeep Caverns south of Stillbury and
+[Saltwind Marsh](saltwind-marsh.md) south of Dawnmere. The marsh retains all five
+stages, enemies, boss and physical skiff exploration introduced in version 191.
+Existing region records, skiffs, discoveries, loot, quests, boss victories and
+return portals survive the relocation. Physical retreat follows the restored
+road; return portals still use the town last visited when they were cast.
+
+Rowan and the docks remain on the Sunken Coast approach outside Oakhaven.
+The Drowned Queen still unlocks dock access; a map or previous voyage still
+unlocks sailing. The atlas uses a compact eastern marsh inlet and a small
+branching wharf, preserving the rocky coastline and broad open sea.

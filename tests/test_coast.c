@@ -1,5 +1,6 @@
 #include "approach_checks.h"
 #include "test_utils.h"
+#include "game/coastal_travel.h"
 #include "../src/game/game.h"
 #include <string.h>
 #include <stdlib.h>
@@ -229,8 +230,7 @@ void test_coast(void) {
         g.location == LOCATION_TOWN);
     ASSERT("coast completion returns at south road",
         g.player.x == 20 && g.player.y == TOWN_H - 2);
-    ASSERT("coast completion opens the harbor road",
-        game_harbor_unlocked(&g) &&
-        g.map.tiles[TOWN_HARBOR_Y + 1][21] == TILE_TOWN_PATH);
+    approach_enter_region(&g, 3);
+    ASSERT("coast completion opens the relocated coastal dock", game_harbor_unlocked(&g) && g.map.tiles[COAST_DOCK_ENTRY_Y][COAST_DOCK_ENTRY_X] == TILE_TOWN_PATH);
     test_queen_retaliates_to_arrows();
 }

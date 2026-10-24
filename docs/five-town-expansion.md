@@ -17,7 +17,8 @@ flowchart BT
     Rose <-->|Crown Road East| Castle[Castle of No Return]
     Oak <-->|Dungeon · 5 stages| Dawn[Dawnmere]
     Dawn <-->|Goblin Mountains · 5 stages| Ridge[Ridgeshire]
-    Dawn <-->|South road| Salt[Saltwind Mangroves · skiff pilot]
+    Dawn <-->|South road| Salt[Saltwind Marsh · 5 stages]
+    Still <-->|South road| Glass[Glassdeep Caverns · 5 stages]
     Ridge <-->|Crown Road West| Castle
     Oak <-->|Elderthorn unlock| Elder[Elderwood Forest · 5 stages]
     Elder <-->|Northern road| Cat[Royal Catacombs · 5 stages]
@@ -127,7 +128,8 @@ Oakhaven, Stillbury, Rosemoor, Ridgeshire and Dawnmere now have walled sprites
 beside safe exterior roads. Walking into a connected cardinal side of a town
 sprite enters beside the matching interior exit gate. Players can bypass any town and continue to another
 existing regional approach or Crown Road. Regional boss locks remain in force;
-Elderwood and Catacombs gate the northern castle road. Dawnmere's south road
-now reaches the first [Saltwind skiff pilot](saltwind-mangroves.md); the east
-remains closed and available for a future region. Pirate Coast and its merchant quest are retired. See
+Elderwood and Catacombs gate the northern castle road. Stillbury's south road reaches Glassdeep Caverns, and Dawnmere's south road
+reaches [Saltwind Marsh](saltwind-marsh.md). Dawnmere's east road remains
+closed and available for a future region. Rowan and the docks are on the
+Sunken Coast approach outside Oakhaven. Pirate Coast and its merchant quest are retired. See
 [town roads](town-roads.md) for the connection table and save behavior.
