@@ -16,6 +16,7 @@ EM_ASYNC_JS(void, browser_next_frame, (void), {
 #include "renderer/landing_renderer.h"
 #include "renderer/game_over_renderer.h"
 #include "game/game.h"
+#include "game/coastal_travel.h"
 #include "game/jail.h"
 #include "game/town_life.h"
 #include "game/restoration.h"
@@ -394,7 +395,7 @@ static void handle_harbor_result(HarborResult result, GameState *game, GameScree
     if (result == HARBOR_CLOSED) {
         *screen = SCREEN_PLAYING;
         push_message(game, game->location == LOCATION_ISLAND
-            ? "You remain on the island." : "You return to town.");
+            ? "You remain on the island." : "You return to the coastal landing.");
     } else if (result == HARBOR_MAP_REQUIRED) {
         push_message(game, "The captain needs a sea chart. Speak with Rowan.");
     } else if (result == HARBOR_BOARD) {
@@ -1196,9 +1197,7 @@ int main(int argc, char **argv) {
                             a.type = ACTION_NONE;
                         }
                         if (a.type != ACTION_NONE) {
-                            int was_at_harbor_entrance = game.location == LOCATION_TOWN &&
-                                game.player.x == TOWN_HARBOR_ENTRANCE_X &&
-                                game.player.y == TOWN_HARBOR_ENTRANCE_Y;
+                            int was_at_harbor_entrance = coastal_at_docks(&game);
                             if (a.type == ACTION_CAST_SPELL ||
                                 a.type == ACTION_RANGED_ATTACK) {
                                 projectile_view = game;
@@ -1210,10 +1209,7 @@ int main(int argc, char **argv) {
                             action_resolve_player(&game, a);
                             if (a.type == ACTION_MOVE &&
                                 !was_at_harbor_entrance &&
-                                game.location == LOCATION_TOWN &&
-                                game_harbor_unlocked(&game) &&
-                                game.player.x == TOWN_HARBOR_ENTRANCE_X &&
-                                game.player.y == TOWN_HARBOR_ENTRANCE_Y) {
+                                coastal_at_docks(&game)) {
                                 harbor_init(&harbor_screen);
                                 screen = SCREEN_HARBOR;
                                 push_message(&game, "You enter the docks.");
@@ -1560,7 +1556,8 @@ int main(int argc, char **argv) {
             game.location == LOCATION_SPICE_SHOP;
         int in_town4 = game.location == LOCATION_TOWN4 || game.location == LOCATION_WORKSHOP ||
             game.location == LOCATION_TOWN_HALL || game.location == LOCATION_MONASTERY;
-        music_update(screen, is_town, in_town2, in_town3, in_town4, traveling, game.location == LOCATION_DAWNMERE, game.location == LOCATION_CASTLE);
+        int in_dawnmere = game.location == LOCATION_DAWNMERE || game.location == LOCATION_DAWNMERE_MERCHANT;
+        music_update(screen, is_town, in_town2, in_town3, in_town4, traveling, in_dawnmere, game.location == LOCATION_CASTLE);
 
         if (!needs_redraw) {
             continue;

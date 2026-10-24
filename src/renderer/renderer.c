@@ -45,6 +45,7 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->swamp_entrance_texture = load_sprite_texture(sdl, "assets/images/swamp-entrance.bmp");
     r->elderwood_entrance_texture = load_sprite_texture(sdl, "assets/images/elderwood-entrance.bmp");
     r->elderwood_enemy_texture = load_sprite_texture(sdl, "assets/images/elderwood-enemies.bmp");
+    r->mangrove_enemy_texture = load_sprite_texture(sdl, "assets/images/mangrove-enemies.bmp");
     r->mangrove_entrance_texture = load_sprite_texture(sdl, "assets/images/mangrove-entrance.bmp");
     r->mangrove_root_texture = load_sprite_texture(sdl, "assets/images/mangrove-root.bmp");
     r->skiff_texture = load_sprite_texture(sdl, "assets/images/skiff.bmp");
@@ -113,6 +114,8 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
 }
 
 void renderer_free(Renderer *r) {
+    SDL_DestroyTexture(r->mangrove_enemy_texture);
+    r->mangrove_enemy_texture = NULL;
     SDL_DestroyTexture(r->mangrove_entrance_texture);
     SDL_DestroyTexture(r->mangrove_root_texture);
     SDL_DestroyTexture(r->skiff_texture);

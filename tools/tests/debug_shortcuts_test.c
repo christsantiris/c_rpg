@@ -8,6 +8,7 @@
 #include "../../src/game/castle.h"
 #include "../../src/game/elderwood.h"
 #include "../../src/game/mangrove.h"
+#include "../../src/game/coastal_travel.h"
 
 static void visit_exterior_town(GameState *g) {
     assert(g->location == LOCATION_TOWN_ROAD);
@@ -23,6 +24,68 @@ static void visit_exterior_town(GameState *g) {
         action_resolve_player(g, (Action){ACTION_MOVE, g->player.x + dx, g->player.y + dy});
     }
     assert(g->location == town);
+}
+
+static Uint32 rendered_pixel(SDL_Surface *surface, int x, int y) {
+    return ((Uint32 *)((unsigned char *)surface->pixels + y * surface->pitch))[x];
+}
+
+static unsigned int creature_pixels(SDL_Surface *surface, int x, int y) {
+    unsigned int hash = 2166136261u;
+    for (int py = y - 20; py < y + TILE_SIZE; py++) {
+        for (int px = x - 8; px < x + TILE_SIZE + 8; px++) {
+            hash = (hash ^ rendered_pixel(surface, px, py)) * 16777619u;
+        }
+    }
+    return hash;
+}
+
+static void test_saltwind_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    game_init(g);
+    mangrove_enter(g, 0);
+    g->player.x = 34;
+    g->player.y = 11;
+    g->enemy_count = 1;
+    Enemy *enemy = &g->enemies[0];
+    enemy->x = 43;
+    enemy->y = 11;
+    Viewport view;
+    viewport_init(&view, r->tiles_x, r->tiles_y, MANGROVE_W, MANGROVE_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    int x = viewport_to_screen_x(&view, enemy->x) * TILE_SIZE;
+    int y = viewport_to_screen_y(&view, enemy->y) * TILE_SIZE;
+    for (int type = ENEMY_LIZARDFOLK_SCOUT; type <= ENEMY_SSZARETH; type++) {
+        enemy->active = 0;
+        renderer_begin_frame(r);
+        game_draw(r, g, &view);
+        renderer_end_frame(r);
+        unsigned int ground = creature_pixels(surface, x, y);
+        enemy->active = 1;
+        enemy->type = type;
+        renderer_begin_frame(r);
+        game_draw(r, g, &view);
+        renderer_end_frame(r);
+        assert(creature_pixels(surface, x, y) != ground);
+    }
+    approach_enter_region(g, 3);
+    assert(approach_coast_ground(COAST_ROWAN_X, COAST_ROWAN_Y) == TILE_COAST_SAND);
+    viewport_init(&view, r->tiles_x, r->tiles_y, APPROACH_W, APPROACH_H);
+    g->player.x = 44;
+    g->player.y = 18;
+    viewport_center_on(&view, g->player.x, g->player.y);
+    x = viewport_to_screen_x(&view, COAST_ROWAN_X) * TILE_SIZE;
+    y = viewport_to_screen_y(&view, COAST_ROWAN_Y) * TILE_SIZE;
+    g->map.tiles[COAST_ROWAN_Y][COAST_ROWAN_X] = TILE_COAST_SAND;
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    Uint32 sand = rendered_pixel(surface, x, y);
+    g->map.tiles[COAST_ROWAN_Y][COAST_ROWAN_X] = TILE_NPC_ROWAN;
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(rendered_pixel(surface, x, y) == sand);
+    printf("PASS: all six Saltwind enemy sprites render in the adventure; Rowan preserves his beach underlay.\n");
 }
 
 int main(void) {
@@ -41,7 +104,7 @@ int main(void) {
     renderer_init(&renderer, sdl, 1280, 720);
     assert(renderer.font_large);
     assert(renderer.elderwood_entrance_texture && renderer.elderwood_enemy_texture);
-    assert(renderer.mangrove_entrance_texture && renderer.mangrove_root_texture && renderer.skiff_texture);
+    assert(renderer.mangrove_enemy_texture && renderer.mangrove_entrance_texture && renderer.mangrove_root_texture && renderer.skiff_texture);
     for (int i = 0; i < TOWN_ROAD_COUNT; i++) {
         int width;
         int height;
@@ -63,6 +126,7 @@ int main(void) {
     GameScreen screen = SCREEN_LOAD_SLOT;
     GameState *game = calloc(1, sizeof(*game));
     assert(game);
+    test_saltwind_renderer(&renderer, game, surface);
     char *arguments[] = {"conr", "--unlock-shortcuts", "--gold", "99999", "--weapon", "none"};
 
     // Old debug saves have three shortcuts but lack the new Lich unlock.
@@ -264,19 +328,20 @@ int main(void) {
         assert(game_harbor_unlocked(game) && game_can_sail_to_island(game) && !game_has_treasure_map(game));
         assert(!game->defeated_bosses);
         assert(!game->rook_quest_state && !game->mara_quest_state && !game->temple_treasure_state && !game->island_travel_unlocked);
-        game->player.x = 20;
-        game->player.y = TOWN_HARBOR_Y + 1;
-        for (int x = 21; x < TOWN_HARBOR_X; x++) {
-            assert(game->map.tiles[game->player.y][x] == TILE_TOWN_PATH);
-            action_resolve_player(game, (Action){ACTION_MOVE, x, game->player.y});
+        approach_enter_region(game, 3);
+        game->player.x = APPROACH_W / 2;
+        game->player.y = 16;
+        for (int x = game->player.x + 1; x < COAST_DOCK_X; x++) {
+            assert(game->map.tiles[16][x] == TILE_TOWN_PATH);
+            action_resolve_player(game, (Action){ACTION_MOVE, x, 16});
         }
-        for (int y = TOWN_HARBOR_Y + 2; y <= TOWN_HARBOR_ENTRANCE_Y; y++) {
-            action_resolve_player(game, (Action){ACTION_MOVE, game->player.x, y});
+        for (int y = 17; y <= COAST_DOCK_ENTRY_Y; y++) {
+            action_resolve_player(game, (Action){ACTION_MOVE, COAST_DOCK_X - 1, y});
         }
-        for (int x = TOWN_HARBOR_X; x <= TOWN_HARBOR_ENTRANCE_X; x++) {
-            action_resolve_player(game, (Action){ACTION_MOVE, x, game->player.y});
+        for (int x = COAST_DOCK_X; x <= COAST_DOCK_ENTRY_X; x++) {
+            action_resolve_player(game, (Action){ACTION_MOVE, x, COAST_DOCK_ENTRY_Y});
         }
-        assert(game->location == LOCATION_TOWN && game->player.x == TOWN_HARBOR_ENTRANCE_X && game->player.y == TOWN_HARBOR_ENTRANCE_Y);
+        assert(coastal_at_docks(game));
         HarborScreen harbor = {0};
         HarborResult result = harbor_activate(&harbor, game_can_sail_to_island(game), 0);
         assert(result == HARBOR_BOARD);
@@ -288,7 +353,7 @@ int main(void) {
         assert(game->location == LOCATION_TEMPLE && game->level == 1 && game->enemy_count > 0);
         game_leave_temple(game);
         handle_harbor_result(HARBOR_SAIL_TOWN, game, &screen, &renderer, &viewport);
-        assert(game->location == LOCATION_TOWN);
+        assert(coastal_at_docks(game));
         assert(save_game(game, 2));
         game->debug_passages_unlocked = 0;
         assert(load_game(game, 2) && game->debug_passages_unlocked && game_harbor_unlocked(game) && game_can_sail_to_island(game));

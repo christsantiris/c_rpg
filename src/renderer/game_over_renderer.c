@@ -19,8 +19,8 @@ static const char *game_over_location(const GameState *g) {
         case LOCATION_HIGH_PASS: return "HIGH PASS";
         case LOCATION_DRAGONSPINE: return "DRAGONSPINE";
         case LOCATION_COAST: return "SUNKEN COAST";
-        case LOCATION_MANGROVES: return "SALTWIND MANGROVES";
-        case LOCATION_MANGROVE_PATH: return "MANGROVE PATH";
+        case LOCATION_MANGROVES: return "SALTWIND MARSH";
+        case LOCATION_MANGROVE_PATH: return "MARSH PATH";
         case LOCATION_SWAMP: return "BLACKWATER SWAMP";
         case LOCATION_FROSTFELL: return "FROSTFELL WASTES";
         case LOCATION_ASHEN: return "ASHEN HOLLOW";

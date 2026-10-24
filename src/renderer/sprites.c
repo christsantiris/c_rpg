@@ -2766,6 +2766,12 @@ static void draw_catacombs_enemy(Renderer *r, int tx, int ty, EnemyType type) {
 }
 
 void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
+    if (type >= ENEMY_LIZARDFOLK_SCOUT && type <= ENEMY_SSZARETH) {
+        SDL_Rect source = {(type - ENEMY_LIZARDFOLK_SCOUT) * 48, 0, 48, 48};
+        SDL_Rect dest = {tile_x * TILE_SIZE - 12, tile_y * TILE_SIZE - 24, 48, 48};
+        SDL_RenderCopy(r->sdl, r->mangrove_enemy_texture, &source, &dest);
+        return;
+    }
     if (type >= ENEMY_BRIAR_WOLF && type <= ENEMY_ELDERTHORN) {
         int index = type - ENEMY_BRIAR_WOLF;
         SDL_Rect source = {index * 64, 0, 64, 64};
@@ -2774,6 +2780,13 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         return;
     }
     switch (type) {
+        case ENEMY_LIZARDFOLK_SCOUT:
+        case ENEMY_REED_SPEARHUNTER:
+        case ENEMY_MARSH_SPITTER:
+        case ENEMY_MUDBACK_TURTLE:
+        case ENEMY_LIZARDFOLK_SCALEGUARD:
+        case ENEMY_SSZARETH:
+            break; // Drawn from the Saltwind atlas above.
         case ENEMY_ROYAL_GUARD:
             draw_royal_guard_overlay(r, tile_x, tile_y, 0);
             break;

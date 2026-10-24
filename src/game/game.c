@@ -1,5 +1,6 @@
 #include "game.h"
 #include "mangrove.h"
+#include "coastal_travel.h"
 #include "catacombs.h"
 #include "elderwood.h"
 #include "castle.h"
@@ -101,6 +102,12 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
         case ENEMY_THORN_DRYAD:
         case ENEMY_TREEFOLK:
         case ENEMY_ELDERTHORN:
+        case ENEMY_LIZARDFOLK_SCOUT:
+        case ENEMY_REED_SPEARHUNTER:
+        case ENEMY_MARSH_SPITTER:
+        case ENEMY_MUDBACK_TURTLE:
+        case ENEMY_LIZARDFOLK_SCALEGUARD:
+        case ENEMY_SSZARETH:
         case ENEMY_ROYAL_GUARD:
         case ENEMY_OATHBOUND_SOLDIER:
         case ENEMY_IRON_WARDEN:
@@ -1474,6 +1481,8 @@ void enemies_spawn(GameState *g) {
 
 void game_init(GameState *g) {
     g->mangroves = (MangroveState){0};
+    memset(g->mangrove_stages, 0, sizeof(g->mangrove_stages));
+    g->mangrove_defeated = 0;
     g->road_town = LOCATION_TOWN;
     g->approach_route = -1;
     g->jail_quest_state = 0;
@@ -3487,6 +3496,7 @@ static void prepare_forest_arrival(GameState *g, int from_high) {
 
 void game_descend(GameState *g) {
     if (g->location == LOCATION_MANGROVES) {
+        mangrove_change_level(g, 1);
         return;
     }
     if (g->location == LOCATION_ELDERWOOD) {
@@ -3535,9 +3545,7 @@ void game_descend(GameState *g) {
 
 void game_ascend(GameState *g) {
     if (g->location == LOCATION_MANGROVES) {
-        if (!g->mangroves.aboard && g->player.x == 14 && g->player.y <= 1) {
-            mangrove_leave(g);
-        }
+        mangrove_change_level(g, 0);
         return;
     }
     if (g->location == LOCATION_ELDERWOOD) {
@@ -3953,30 +3961,9 @@ static void offer_rook_quest(GameState *g) {
         "Recover my ivory rook; beware false stairs and the Minotaur. Return here to Oakhaven's Tavern.");
 }
 
-static void place_harbor_road(GameState *g) {
-    if (!game_harbor_unlocked(g)) {
-        return;
-    }
-    // Branch below Rowan, then bend through a landing onto the dock.
-    for (int x = 21; x < TOWN_HARBOR_X; x++) {
-        if (g->map.tiles[TOWN_HARBOR_Y + 1][x] != TILE_PORTAL) {
-            set_quest_object_tile(g, x, TOWN_HARBOR_Y + 1, TILE_TOWN_PATH);
-        }
-    }
-    for (int y = TOWN_HARBOR_Y + 1; y <= TOWN_HARBOR_ENTRANCE_Y; y++) {
-        if (g->map.tiles[y][TOWN_HARBOR_X - 1] != TILE_PORTAL) {
-            set_quest_object_tile(g, TOWN_HARBOR_X - 1, y, TILE_TOWN_PATH);
-        }
-    }
-    for (int x = TOWN_HARBOR_X; x <= TOWN_HARBOR_ENTRANCE_X; x++) {
-        if (g->map.tiles[TOWN_HARBOR_ENTRANCE_Y][x] != TILE_PORTAL) {
-            set_quest_object_tile(g, x, TOWN_HARBOR_ENTRANCE_Y, TILE_TOWN_PATH);
-        }
-    }
-}
-
 void game_refresh_debug_passages(GameState *g) {
     jail_refresh_hatch(g);
+    coastal_refresh_docks(g);
     if (!g->debug_passages_unlocked) {
         return;
     }
@@ -3988,9 +3975,6 @@ void game_refresh_debug_passages(GameState *g) {
         }
         set_quest_object_tile(g, NORTH_ROAD_X, 0, TILE_NORTH_CASTLE);
         set_quest_object_tile(g, NORTH_ROAD_X, ELDERWOOD_H - 1, TILE_NORTH_OAKHAVEN);
-    }
-    if (g->location == LOCATION_TOWN) {
-        place_harbor_road(g);
     }
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
@@ -4041,8 +4025,9 @@ static void place_town_portal(GameState *g) {
             case LOCATION_SWAMP: anchor = g->swamp_portal_town; break;
             case LOCATION_ELDERWOOD:
             case LOCATION_CATACOMBS: anchor = g->northern_portal_town; break;
-            case LOCATION_DESERT:
+            case LOCATION_DESERT: anchor = LOCATION_TOWN2; break;
             case LOCATION_GLASSDEEP: anchor = LOCATION_TOWN2; break;
+            case LOCATION_MANGROVES: anchor = LOCATION_DAWNMERE; break;
             case LOCATION_FROSTFELL:
             case LOCATION_MOONVEIL: anchor = LOCATION_TOWN3; break;
             case LOCATION_DRAGONSPINE:
@@ -4062,6 +4047,8 @@ static void place_town_portal(GameState *g) {
     if (g->location == LOCATION_DAWNMERE) {
         if (g->portal_location == LOCATION_DUNGEON && g->dungeon_portal_town == LOCATION_DAWNMERE) {
             g->map.tiles[13][2] = TILE_PORTAL;
+        } else if (g->portal_location == LOCATION_MANGROVES) {
+            g->map.tiles[TOWN_H - 3][21] = TILE_PORTAL;
         } else if (g->portal_location == LOCATION_MOUNTAINS && g->mountain_portal_town == LOCATION_DAWNMERE) {
             g->map.tiles[2][21] = TILE_PORTAL;
         }
@@ -4079,7 +4066,7 @@ static void place_town_portal(GameState *g) {
     }
     if (g->location == LOCATION_TOWN2) {
         if (g->portal_location == LOCATION_GLASSDEEP) {
-            g->map.tiles[TOWN_H - 3][STILLBURY_GLASSDEEP_GATE_X + 1] = TILE_PORTAL;
+            g->map.tiles[TOWN_H - 3][21] = TILE_PORTAL;
         } else if (g->portal_location == LOCATION_SWAMP && g->swamp_portal_town == LOCATION_TOWN2) {
             g->map.tiles[2][21] = TILE_PORTAL;
         } else if (g->portal_location == LOCATION_DESERT) {
@@ -4127,8 +4114,8 @@ static void place_town_portal(GameState *g) {
         x = 21;
         y = TOWN_H - 3;
     } else if (g->portal_location == LOCATION_TEMPLE) {
-        x = TOWN_HARBOR_X - 1;
-        y = TOWN_HARBOR_ENTRANCE_Y;
+        x = 21;
+        y = TOWN_H - 3;
     }
     g->map.tiles[y][x] = TILE_PORTAL;
 }
@@ -4155,7 +4142,6 @@ void game_leave_tavern(GameState *g) {
         g->defeated_bosses & (1 << LOCATION_FOREST));
     map_set_town4_road(&g->map,
         g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
-    place_harbor_road(g);
     g->player.x = TOWN_TAVERN_DOOR_X;
     g->player.y = TOWN_TAVERN_DOOR_Y + 1;
     g->enemy_count = 0;
@@ -4229,7 +4215,6 @@ void game_leave_forest_road(GameState *g, Location destination) {
             g->defeated_bosses & (1 << LOCATION_FOREST));
         map_set_town4_road(&g->map,
             g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
-        place_harbor_road(g);
         place_town_portal(g);
         g->player.x = 1;
         g->player.y = 12;
@@ -4451,6 +4436,10 @@ void town_life_leave(GameState *g) {
     }
     if (b->town == LOCATION_TOWN) {
         game_leave_tavern(g);
+    } else if (b->town == LOCATION_DAWNMERE) {
+        g->location = LOCATION_DAWNMERE;
+        map_generate_dawnmere(&g->map, &g->player.x, &g->player.y);
+        place_town_portal(g);
     } else if (b->town == LOCATION_TOWN2) {
         game_leave_inn(g);
     } else if (b->town == LOCATION_TOWN3) {
@@ -4781,7 +4770,7 @@ void game_talk_to_orin(GameState *g) {
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Surveyor Orin");
     if (g->glassdeep_quest_state == 0) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "I once tended Glassdeep's resonators below Stillbury's south gate. Restore Root, Tide, and Crown on stages 2, 3, and 4. Read their inscriptions for the tones, then return here for 120 gold.");
+            "Glassdeep is beyond Stillbury's south gate. Restore Root, Tide, and Crown on stages 2, 3, and 4. Read their tone inscriptions, then return to this Guild for 120 gold.");
     } else if (g->glassdeep_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "Defeat each resonator's guards, then press A beside it. Read the inscription and choose its tone. Restore all three, then return to me here in Rosemoor's Guild.");
@@ -5334,24 +5323,11 @@ void game_enter_island(GameState *g) {
 }
 
 void game_leave_island(GameState *g) {
-    g->last_town_visited = LOCATION_TOWN;
-    int spawn_x;
-    int spawn_y;
-    g->location = LOCATION_TOWN;
-    map_generate_town(&g->map, &spawn_x, &spawn_y);
-    map_set_town2_road(&g->map,
-        g->defeated_bosses & (1 << LOCATION_FOREST));
-    map_set_town4_road(&g->map,
-        g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
-    place_harbor_road(g);
-    g->player.x = TOWN_HARBOR_ENTRANCE_X;
-    g->player.y = TOWN_HARBOR_ENTRANCE_Y;
     g->enemy_count = 0;
     g->floor_item_count = 0;
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
-    place_town_portal(g);
-    push_message(g, "The ship returns you to town.");
+    coastal_return_from_island(g);
 }
 
 static void cache_temple_level(GameState *g) {
@@ -5662,7 +5638,6 @@ static void return_to_town(GameState *g, Location destination) {
             g->defeated_bosses & (1 << LOCATION_FOREST));
         map_set_town4_road(&g->map,
             g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
-        place_harbor_road(g);
     }
     if (destination == LOCATION_DAWNMERE) {
         g->player.x = returning_from == LOCATION_MOUNTAINS ? 20 : 1;
@@ -5695,7 +5670,7 @@ static void return_to_town(GameState *g, Location destination) {
         g->player.x = 20;
         g->player.y = 1;
     } else if (returning_from == LOCATION_GLASSDEEP) {
-        g->player.x = STILLBURY_GLASSDEEP_GATE_X;
+        g->player.x = SOUTH_AREA_GATE_X;
         g->player.y = TOWN_H - 2;
     } else if (returning_from == LOCATION_DESERT) {
         g->player.x = 1;
@@ -5880,6 +5855,8 @@ void game_return_to_town(GameState *g) {
     Location destination = LOCATION_TOWN;
     if (g->location == LOCATION_MANGROVES) {
         destination = LOCATION_DAWNMERE;
+    } else if (g->location == LOCATION_GLASSDEEP) {
+        destination = LOCATION_TOWN2;
     } else if (g->location == LOCATION_ELDERWOOD) {
         destination = g->elderwood_entry_town;
     } else if (g->location == LOCATION_CATACOMBS) {
@@ -5892,7 +5869,7 @@ void game_return_to_town(GameState *g) {
         destination = g->swamp_entry_town;
     } else if (g->location == LOCATION_MOUNTAINS) {
         destination = g->mountain_entry_town;
-    } else if (g->location == LOCATION_DESERT || g->location == LOCATION_GLASSDEEP) {
+    } else if (g->location == LOCATION_DESERT) {
         destination = LOCATION_TOWN2;
     } else if (g->location == LOCATION_FROSTFELL || g->location == LOCATION_MOONVEIL ||
         g->location == LOCATION_CATACOMBS) {
@@ -6154,7 +6131,7 @@ void game_use_town_portal(GameState *g) {
         elderwood_portal(g);
         return;
     }
-    if (g->portal_location == LOCATION_MANGROVES && g->portal_level == 1) {
+    if (g->portal_location == LOCATION_MANGROVES && g->portal_level >= 1 && g->portal_level <= MANGROVE_DEPTH) {
         mangrove_enter(g, 1);
         return;
     }
@@ -6305,7 +6282,7 @@ void game_talk_to_aldric(GameState *g) {
     g->dialogue_x = TOWN_ALDRIC_X;
     g->dialogue_y = TOWN_ALDRIC_Y;
     snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-        "Clear the dungeon and Sunken Coast to gain experience before entering the forest or mountains. Revisit cleared areas to fight again and level up before tackling harder areas.");
+        "Clear the dungeon and Sunken Coast before harder regions. Revisit cleared areas to train. Rowan's docks are outside Oakhaven's south gate beside the Sunken Coast entrance.");
 }
 
 void game_talk_to_cain(GameState *g) {
@@ -6313,7 +6290,7 @@ void game_talk_to_cain(GameState *g) {
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Cain");
     g->dialogue_x = TOWN_CAIN_X;
     g->dialogue_y = TOWN_CAIN_Y;
-    const char *warning = "Goblins lurk north, beasts west, undead east, and sea horrors south.";
+    const char *warning = "Ancient woods lie north, beasts west, undead east, and sea horrors south.";
     const char *recommendation = "Ask Elowen in Oakhaven's Tavern about The Broken Seals.";
     if (g->cain_scroll_given) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
@@ -6461,8 +6438,8 @@ void game_talk_to_nahla(GameState *g) {
 void game_talk_to_rowan(GameState *g) {
     g->dialogue_active = 1;
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Captain Rowan");
-    g->dialogue_x = TOWN_ROWAN_X;
-    g->dialogue_y = TOWN_ROWAN_Y;
+    g->dialogue_x = COAST_ROWAN_X;
+    g->dialogue_y = COAST_ROWAN_Y;
     if (game_harbor_unlocked(g)) {
         const char *warning = temple_training_recommended(g)
             ? " The ruined temple is dangerous. Clear the dungeon or mountains "
@@ -6491,7 +6468,7 @@ void game_talk_to_rowan(GameState *g) {
     }
     snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
         "The Drowned Queen keeps the coast too dangerous to sail. "
-        "Defeat her in the Sunken Coast, and I can take you to the island beyond these shores.");
+        "Defeat her in the Sunken Coast, then return to these docks beside its entrance. I can take you to the island beyond these shores.");
 }
 
 static void prepare_quest_expedition(GameState *g, Location location) {
@@ -6982,7 +6959,7 @@ void game_talk_to_mara(GameState *g) {
     g->dialogue_y = MARA_TAVERN_Y;
     if (g->mara_quest_state == 0) {
         strncpy(g->dialogue_text,
-            "Sunken Coast lies south of Oakhaven. Lower the tide, defeat the guardians, and relight beacons on stages 2, 3, and 4. Return here to Oakhaven's Tavern.",
+            "Sunken Coast is south of Oakhaven. Relight beacons on stages 2, 3, and 4; lower tides and defeat their guardians. Rowan's docks stand beside the entrance. Return to Oakhaven's Tavern.",
             MAX_DIALOGUE_LEN - 1);
         g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
         return;

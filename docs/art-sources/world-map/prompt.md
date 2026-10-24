@@ -2,8 +2,15 @@
 
 Generated with the built-in image generation tool using the user's handwritten
 world sketch as a layout reference. Place names and connections were checked
-against the game and README. The final image is `../../images/world-map.png`.
-This is README artwork; it does not change generated game maps.
+against the game and README. The original image was `../../images/world-map.png`.
+The current atlas is `../../images/world-map-coastal-regions.png`; the final
+section records the restoration of the original beaches and cove with a compact
+Saltwind Marsh south of Dawnmere. The follow-up [version 193 repair](repair-193.md)
+fixes dock continuity, the mountain pass and the marsh elevation. Earlier prompts
+below are historical.
+This is player-facing game documentation: illustrated connections and protected
+coastline features must be reviewed as part of every change. See the
+[atlas acceptance checks](README.md).
 
 ## Generation prompt
 
@@ -134,7 +141,11 @@ Use case: precise-object-edit. Asset type: existing illustrated RPG world map. E
 
 ## Saltwind landing atlas (save version 190)
 
-Current README atlas: `docs/images/world-map-saltwind.png`.
+This section records the historical pilot. The current region is Saltwind Marsh,
+south of Stillbury; current map details and prompts follow at the end.
+
+Historical pilot atlas: `docs/images/world-map-saltwind.png`. The current atlas is
+`docs/images/world-map-coastal-regions.png`; see the coastal relocation below.
 The earlier `world-map.png` remains the pre-Saltwind reference. The Pirate Coast
 atlas has been removed along with that region and its merchant quest.
 
@@ -148,3 +159,58 @@ first skiff exploration landing is playable; its later stages are planned.
 Final prompt:
 
 > Edit target: attached existing illustrated world atlas for The Castle of No Return. Preserve its parchment border, watercolor pen-and-ink fantasy cartography, title, compass, exact existing names and all unrelated geography. Make ONLY these requested geographic edits in the southeastern mainland. (1) Move the walled town labelled exactly 'Dawnmere' a modest distance NORTH, keeping it east of Oakhaven and south of Ridgeshire, and adjust its connected roads. Make ample mainland space directly SOUTH of Dawnmere and NORTH of the Ruined Isle and Ruined Temple offshore. Fill that new coastal space with an expansive green saltwater mangrove delta attached to the mainland: winding teal tidal channels, irregular muddy islands, tangled roots and a tiny moored wooden skiff. Label it exactly 'Saltwind Mangroves' with a readable dark cartographic serif label. Add a short road south from Dawnmere to the delta. Do not add Pirate Coast, pirates, black-sailed ships, pirate names or treasure quest landmarks. (2) Widen the Goblin Mountains range between Dawnmere and Ridgeshire across the full width of their connecting north-south road. Clearly draw the road from Dawnmere to Ridgeshire passing THROUGH a mountain pass within this range; the path must be visibly enclosed by mountains to both its east and west, not skirt alongside the eastern edge. Keep its exact 'Goblin Mountains' label readable. Preserve the Oakhaven Dungeon on the west-east Oakhaven-Dawnmere road as a separate landmark. Preserve every other region and road exactly in their current relationships: Elderwood Forest north of Oakhaven leading to separate Royal Catacombs then Castle; Haunted Forest west of Oakhaven; Rook's Labyrinth outside the forest beside its road; Glassdeep Caverns south of Stillbury; all five towns; Frostfell Wastes and Dragonspine in the far north; Ashen Hollow east of Ridgeshire; both Crown Roads; Sunken Coast, Oakhaven Docks, Ruined Isle and Ruined Temple south offshore. Maintain landscape 3:2 framing, matching the original map. Do not invent new settlements or rename existing places.
+
+
+## Coastal relocation and Saltwind Marsh (save version 191)
+
+Current README atlas: `docs/images/world-map-coastal-regions.png` (1536×1024).
+Edited with the built-in imagegen tool from `world-map-saltwind.png`, then edited
+again for the requested rename. Reviewed the full terrain swap and both labels:
+Saltwind Marsh south of Stillbury joining the western forest, Glassdeep Caverns
+south of Dawnmere, and the separate coastal dock beside Sunken Coast rather
+than attached to Oakhaven. All five towns, northern castle route, separate
+labyrinth, mountain pass and island geography remain visible.
+
+Exact geographic edit prompt:
+
+> Use case: precise-object-edit. Edit the supplied finished fantasy RPG atlas. Preserve the parchment frame, title, watercolor/ink style, compass, all five towns, all unrelated regions and roads. Make these three geographic changes only: (1) SWAP the actual terrain vignettes and exact labels 'Glassdeep Caverns' and 'Saltwind Mangroves'. Saltwind Mangroves must now occupy the southwest mainland directly SOUTH of Stillbury: broad lush green mangrove delta with muddy islands, twisted mangrove roots, teal branching tidal channels opening into the southern sea, a tiny skiff and short road from Stillbury's south gate. Its north edge joins the large Haunted Forest as one continuous wilderness. Remove all crystal caves and mountains from that old southwestern Glassdeep site. (2) Glassdeep Caverns must now lie SOUTH of Dawnmere in the southeastern mainland, in the former Saltwind location. Draw craggy gray mountain foothills, a dark cave mouth with blue crystals, and a short road south from Dawnmere into the cave. Remove the southeastern mangrove delta. Keep the rocky eastern terrain continuous with Goblin Mountains north of Dawnmere. Preserve Dawnmere's current northern position. (3) Move 'Docks' out of Oakhaven: REMOVE the wooden pier physically attached to Oakhaven's southeastern wall. Draw a separate small wooden pier and sailing boat on the coast beside the 'Sunken Coast' ruins, clearly separated from Oakhaven by a short southbound coastal approach road. Place exact 'Docks' label next to that new pier and dotted sailing route from it to Ruined Isle. Oakhaven town itself should have no pier. Preserve the offshore Ruined Isle and Ruined Temple. Preserve Haunted Forest WEST of Oakhaven and Elderwood Forest NORTH of Oakhaven, Royal Catacombs on northern road to castle, Rook's Labyrinth OUTSIDE the forest beside the Stillbury-Oakhaven road, Oakhaven Dungeon on the east-west road between Oakhaven and Dawnmere, the road THROUGH Goblin Mountains connecting Dawnmere and Ridgeshire, both Crown Roads, Frostfell Wastes, Dragonspine, Ashen Hollow, Moonveil Gardens, Sunscar Wastes, Blackwater Swamp, Rosemoor and all other labels. No pirates, no new regions, no duplicate Glassdeep/Saltwind/Docks labels. Landscape 3:2 composition. Return complete edited atlas.
+
+Exact follow-up label edit:
+
+> Use case: precise text edit. Edit the provided finished illustrated world atlas. Change ONLY the exact southwest region label 'Saltwind Mangroves' to the exact text 'Saltwind Marsh', centered on the same parchment banner with the same typeface and appearance. Preserve every terrain detail, road, town, region, all other labels, the docks beside Sunken Coast, Glassdeep Caverns south of Dawnmere, marsh south of Stillbury, border, compass and title. No other changes. Same dimensions and 3:2 landscape framing.
+
+
+The eastern mangroves left behind Glassdeep were subsequently replaced with
+rocky coastal cliffs and sea stacks. The docks were then redrawn as a long
+wooden pier anchored to the coastal road's shore. Exact correction prompts:
+
+> Use case: precise localized geographic correction. Edit the provided finished fantasy world map. In the far SOUTHEASTERN mainland immediately BEHIND and EAST / NORTHEAST of the blue-crystal cave labelled 'Glassdeep Caverns', there is an erroneous leftover strip of mangrove swamp: green trees with exposed brown roots standing in branching turquoise channels, between Dawnmere's southeastern outskirts and the eastern sea, above the Ruined Temple island. REMOVE that ENTIRE eastern mangrove/swamp strip, including all exposed-root mangrove trees, root tangles, muddy islets and inland teal channels behind and to the right of Glassdeep. Replace this entire strip with a continuous rugged coastline of tall gray and tan rocky COASTAL CLIFFS, sparse dry grass on cliff tops, rocky coves and offshore sea stacks matching the rocky coastal terrain that surrounds Glassdeep and the rest of the eastern shore. The blue sea should meet the cliff faces directly. Glassdeep must read as a crystal cave embedded in rocky coastal cliffs, NOT a cave in a marsh. Keep the Glassdeep cave mouth and exact label unchanged; keep Dawnmere and its road exactly in place. IMPORTANT: preserve the large Saltwind Marsh delta and exact 'Saltwind Marsh' label in the far SOUTHWEST below Stillbury entirely unchanged. Preserve EVERY other pixel/feature as closely as possible: all five towns, Haunted and Elderwood forests, castle, mountains, northern roads, Rook's Labyrinth, Oakhaven Dungeon, Sunken Coast, relocated Docks, Ruined Isle, Ruined Temple, all labels, border, title, compass, watercolor ink style and 1536x1024 landscape composition. Only the wrong mangroves behind/east of Glassdeep are replaced by coastal cliffs. No new labels, no mangroves anywhere on the eastern mainland.
+
+The intermediate straight-pier rendering was rejected and superseded by the
+coast restoration and subsequent continuity repair recorded below.
+
+
+## Original coast restoration (save version 192)
+
+Current atlas: `docs/images/world-map-coastal-regions.png` (1536×1024).
+The final edit uses the original `docs/images/world-map.png` as its primary
+base, preserving Glassdeep's original southwest location, scale, beaches and
+cliffs, plus Sunken Coast's curved sheltered cove and ruined columns. The prior
+candidate was used only as a reference for Dawnmere's higher position and a
+compact eastern marsh. That candidate was not selected because it replaced
+western beaches with sea stacks.
+
+The initial review covered sandy coves below Glassdeep,
+cliffs behind those beaches, the curved Sunken Coast bay, a restrained Saltwind
+inlet south of Dawnmere, and the modest wharf with a short upper mooring arm
+and side finger rather than an oversized straight bridge. The docks have no
+sailboat icon. All five towns, northern route, separate labyrinth and island
+remain visible. In-game Saltwind retains all five stages and skiff mechanics;
+only its town connection and atlas footprint change. Version 191 saves retain
+boats, stage records, enemies, loot, quests, boss victories and return portals.
+The user subsequently identified a disconnected dock, bypass valley and raised
+marsh; these missed regressions are corrected in the [version 193 repair](repair-193.md).
+
+Exact final edit prompt:
+
+> PRECISE LOCAL EDIT. FIRST IMAGE IS THE MASTER BASE TO PRESERVE. SECOND IMAGE IS ONLY A REFERENCE for Dawnmere's higher position, Goblin Mountains pass and small Saltwind Marsh; DO NOT copy its coastline. Start from the FIRST image, not the second. The user specifically wants the original map's desirable coast restored WITHOUT REDRAWING IT. NONNEGOTIABLE PROTECTED GEOGRAPHY FROM THE FIRST IMAGE: preserve the entire southwestern Glassdeep Caverns vignette at its original scale and position south of Stillbury; preserve ALL the pale sandy beaches along and BELOW Glassdeep, their grassy headlands and the dark rocky cliffs rising BEHIND the beaches; preserve the C-SHAPED TURQUOISE COVE of Sunken Coast, its curved west shoreline and sheltered inland bay, its ruined columns, cliffs and beach coves. DO NOT replace beaches with water. DO NOT turn Glassdeep's land into a rocky island or add offshore stacks in place of its beaches. The entire lower-left 60% of this image should remain identical to the FIRST image. Keep Sunken Coast's original curved coastline, scale and exact placement. Keep original frame, title, compass, five towns, forests, castle, northern regions, separate labyrinth, all names and all unrelated roads unchanged. Only edit these limited eastern features: (1) Move Dawnmere a little north within its existing eastern corridor to approximately the higher position shown in the SECOND reference; retain the west-east dungeon road and northern road to Ridgeshire. Widen Goblin Mountains slightly around their pass so that road runs between mountains. (2) Add a SMALL SALTWIND MARSH INLET SOUTH of Dawnmere, above and separated from Ruined Isle. Just 4-6 exposed-root mangrove trees, two tiny muddy banks and a narrow teal tidal creek with a tiny skiff: a restrained vignette no larger than about 140 x 90 pixels, not a giant delta or island. Exact label 'Saltwind Marsh', a short road south from Dawnmere. Keep the surrounding eastern rocky coast, grassy headlands and broad blue sea; preserve the original waterfall if space permits. No mangroves anywhere west or below Glassdeep. The playable region can be large without large atlas artwork. (3) The Docks must retain the OLDER small wharf style rather than the second image's oversized straight timber bridge. Keep a modest brown wooden pier on support posts attached to the solid coastal shore outside Oakhaven beside Sunken Coast, with a SHORT SIDE MOORING ARM forming a small forked wharf and visible water between the arms. Remove the sailboat icon at the pier; no floating ship. Keep its 'Docks' label and dotted route to Ruined Isle. Do not move or reshape the cove around the dock. (4) Preserve Ruined Isle, Ruined Temple and open sea exactly as in the FIRST image. Critical visual outcome: the FIRST image's intact large crystal cave and BEACHES BELOW IT with cliffs behind; FIRST image's original beautiful curved Sunken Coast bay; only a tiny eastern Saltwind inlet and modest branching docks added. Preserve 1536x1024 / 3:2 landscape and original watercolor/ink style.

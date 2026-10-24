@@ -162,7 +162,8 @@ typedef enum {
     LOCATION_JAIL_ARMORY,
     // Preserve the retired coastal location IDs 44-45.
     LOCATION_MANGROVES = 46,
-    LOCATION_MANGROVE_PATH
+    LOCATION_MANGROVE_PATH,
+    LOCATION_DAWNMERE_MERCHANT
 } Location;
 
 // Elderwood uses only its own bounds; compact caches avoid allocating the
@@ -178,6 +179,7 @@ typedef struct {
 
 typedef struct {
     int initialized;
+    int stage;
     int boat_x;
     int boat_y;
     int boat_dx;
@@ -187,11 +189,15 @@ typedef struct {
     unsigned char explored[(MANGROVE_W * MANGROVE_H + 7) / 8];
     FloorItem loot[MAX_FLOOR_ITEMS];
     int loot_count;
+    Enemy enemies[AREA_ENEMY_LIMIT];
+    int enemy_count;
 } MangroveState;
 
 typedef struct {
     Player     player;
     MangroveState mangroves;
+    MangroveState mangrove_stages[MANGROVE_DEPTH];
+    int mangrove_defeated;
     int debug_passages_unlocked;
     ElderwoodCache elderwood_cache[ELDERWOOD_DEPTH];
     int max_elderwood_level_reached;

@@ -4,8 +4,10 @@ The docks and island open after the Sunken Coast boss is defeated.
 
 ## Unlocking the Docks
 
-Defeat the Drowned Queen on the Sunken Coast. The road then extends from the
-OakHaven crossroads to the dock. No other boss or Tavern quest is required.
+Leave Oakhaven through its south gate and follow the Sunken Coast approach.
+Captain Rowan stands on the beach beside the area entrance; the docks are
+further east on the same coastal approach, outside town. Defeat the Drowned
+Queen to open the dock landing. No other boss or Tavern quest is required.
 Until then, Captain Rowan explains that the Queen blocks the sea route. Speak
 with Rowan after defeating her to receive the Island Treasure Map. Inventory
 space is required. If the dungeon and mountains remain uncleared, Rowan
@@ -14,7 +16,7 @@ repeats the advice on the island. The advice does not block travel or entry.
 
 Walk into the dock entrance to open the docks scene. Select **Board ship for
 the Ruined Isle** and press `Enter`, or choose the return option to stay in
-town. The first voyage uses the map to unlock the route and consumes it. Later
+on the coastal approach. The first voyage uses the map to unlock the route and consumes it. Later
 voyages remain available without carrying a map.
 
 ## Ruined Isle
@@ -24,8 +26,10 @@ a lagoon, ruined statuary, an abandoned camp, and the gated temple approach.
 Stand on or beside an island landmark and press `A` to inspect it.
 
 Captain Rowan waits at the landing. Speak with him using `T` and choose the
-ship option to return to town. Casting Return to Town on the island performs
-the same direct trip and does not leave a portal.
+ship option to return to the Sunken Coast docks. Casting Return to Town on the
+island performs that same coastal return and does not leave a portal. Sailing
+does not mark Oakhaven visited; enter its town sprite to update the last-town
+destination.
 
 Nahla waits near the temple approach. Speaking with her starts **The Buried
 Sun**. Walk into the temple gate to enter the pyramid.

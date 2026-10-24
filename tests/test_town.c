@@ -1,5 +1,6 @@
 #include "approach_checks.h"
 #include "test_utils.h"
+#include "game/coastal_travel.h"
 #include "../src/game/map.h"
 #include "../src/game/game.h"
 #include "../src/game/restoration.h"
@@ -938,13 +939,9 @@ void test_town_map(void) {
         m.tiles[TOWN_TAVERN_DOOR_Y + 1][TOWN_TAVERN_DOOR_X] == TILE_TOWN_PATH);
     ASSERT("tavern's former south-west lot now houses the bakery",
         m.tiles[16][5] == TILE_TOWN_FLOOR && m.tiles[20][8] == TILE_LOCAL_BUILDING);
-    ASSERT("harbor reaches the southeast corner of the town green",
-        m.tiles[TOWN_HARBOR_Y][TOWN_HARBOR_X] == TILE_WATCHTOWER &&
-        m.tiles[TOWN_H - 2][TOWN_W - 2] == TILE_WATCHTOWER);
-    ASSERT("harbor remains closed and solid",
-        !map_is_walkable(&m, TOWN_HARBOR_X, TOWN_HARBOR_Y) &&
-        !map_is_walkable(&m, TOWN_HARBOR_ENTRANCE_X,
-            TOWN_HARBOR_ENTRANCE_Y));
+    ASSERT("Oakhaven has no dock building or captain inside its walls",
+        m.tiles[TOWN_HARBOR_Y][TOWN_HARBOR_X] != TILE_WATCHTOWER &&
+        m.tiles[TOWN_ROWAN_Y][TOWN_ROWAN_X] != TILE_NPC_ROWAN);
     ASSERT("former watchtower lot is walkable green",
         m.tiles[16][28] == TILE_TOWN_FLOOR && map_is_walkable(&m, 32, 21));
 
@@ -1379,7 +1376,7 @@ void test_cain_gift(void) {
     game_talk_to_cain(&g);
     ASSERT("Cain warns about dangers outside town in his dialogue bubble",
         g.dialogue_active && strcmp(g.dialogue_speaker, "Cain") == 0 &&
-        strstr(g.dialogue_text, "Goblins lurk north") &&
+        strstr(g.dialogue_text, "Ancient woods lie north") &&
         strstr(g.dialogue_text, "undead east") &&
         g.dialogue_x == TOWN_CAIN_X && g.dialogue_y == TOWN_CAIN_Y);
     ASSERT("Cain gives one Return to Town scroll",
@@ -1449,24 +1446,22 @@ void test_harbor_road(void) {
         game_harbor_unlocked(&g) &&
         g.elowen_quest_state == 0 && g.dain_quest_state == 0 &&
         g.alder_quest_state == 0 && g.mara_quest_state == 0);
-    for (int x = 20; x < TOWN_HARBOR_X; x++) {
-        ASSERT("coast victory connects the south road to the harbor",
-            g.map.tiles[road_y][x] == TILE_TOWN_PATH &&
-            map_is_walkable(&g.map, x, road_y));
+    approach_enter_region(&g, 3);
+    ASSERT("the coastal approach places Rowan beside the Sunken Coast sprite",
+        coastal_approach(&g) && g.map.tiles[COAST_ROWAN_Y][COAST_ROWAN_X] == TILE_NPC_ROWAN);
+    g.player.x = APPROACH_W / 2;
+    g.player.y = 16;
+    for (int x = g.player.x + 1; x < COAST_DOCK_X; x++) {
+        ASSERT("the coastal branch is a single walkable cobblestone road", g.map.tiles[16][x] == TILE_TOWN_PATH);
+        action_resolve_player(&g, (Action){ACTION_MOVE, x, 16});
     }
-    ASSERT("harbor road bends through a landing onto the dock",
-        g.map.tiles[TOWN_HARBOR_ENTRANCE_Y][TOWN_HARBOR_X - 1] == TILE_TOWN_PATH &&
-        g.map.tiles[TOWN_HARBOR_ENTRANCE_Y][TOWN_HARBOR_X] == TILE_TOWN_PATH &&
-        g.map.tiles[TOWN_HARBOR_ENTRANCE_Y][TOWN_HARBOR_ENTRANCE_X] == TILE_TOWN_PATH);
-    g.player.x = TOWN_HARBOR_X - 1;
-    g.player.y = road_y;
-    game_move_player(&g, 0, 1);
-    game_move_player(&g, 1, 0);
-    game_move_player(&g, 1, 0);
-    game_move_player(&g, 1, 0);
-    ASSERT("player can walk from the road into the harbor dock",
-        g.player.x == TOWN_HARBOR_ENTRANCE_X &&
-        g.player.y == TOWN_HARBOR_ENTRANCE_Y);
+    for (int y = 17; y <= COAST_DOCK_ENTRY_Y; y++) {
+        action_resolve_player(&g, (Action){ACTION_MOVE, COAST_DOCK_X - 1, y});
+    }
+    for (int x = COAST_DOCK_X; x <= COAST_DOCK_ENTRY_X; x++) {
+        action_resolve_player(&g, (Action){ACTION_MOVE, x, COAST_DOCK_ENTRY_Y});
+    }
+    ASSERT("player can walk from the coastal road onto the unlocked dock", coastal_at_docks(&g));
     HarborScreen harbor;
     harbor_init(&harbor);
     ASSERT("dock scene blocks boarding without Rowan's treasure map",
@@ -1478,7 +1473,7 @@ void test_harbor_road(void) {
         harbor_handle_key(&harbor, SDL_SCANCODE_KP_ENTER, 0, 0) == HARBOR_CLOSED &&
         harbor_handle_key(&harbor, SDL_SCANCODE_ESCAPE, 0, 0) == HARBOR_CLOSED);
     ASSERT("road leaves Rowan beside the route",
-        g.map.tiles[TOWN_ROWAN_Y][TOWN_ROWAN_X] == TILE_NPC_ROWAN);
+        g.map.tiles[COAST_ROWAN_Y][COAST_ROWAN_X] == TILE_NPC_ROWAN);
     while (g.inventory_count < MAX_INVENTORY) {
         g.inventory[g.inventory_count++] = item_make_health_potion();
     }
@@ -1533,7 +1528,7 @@ void test_harbor_road(void) {
     game_enter_coast(&g);
     game_open_town_portal(&g);
     ASSERT("returning from an expedition keeps the road and Coast portal",
-        g.map.tiles[road_y][TOWN_HARBOR_X - 1] == TILE_TOWN_PATH &&
+        g.location == LOCATION_TOWN && g.map.tiles[TOWN_HARBOR_Y][TOWN_HARBOR_X] != TILE_WATCHTOWER &&
         g.map.tiles[TOWN_H - 3][21] == TILE_PORTAL);
 }
 
