@@ -2,7 +2,7 @@
 
 Saltwind Marsh is a complete five-stage adventure **south of Dawnmere**.
 The atlas shows a compact tidal inlet along the eastern rocky coast, leaving
-cliffs and open sea prominent. Glassdeep Caverns is restored south of Stillbury.
+cliffs and open sea prominent. Stonewake Quarry replaces Glassdeep south of Stillbury.
 The five-stage island layouts and skiff mechanics retain their full size.
 Pirate Coast and its treasure quest remain retired.
 

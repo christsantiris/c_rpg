@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "item.h"
 #include <string.h>
 #include "spell.h"
@@ -467,6 +468,8 @@ void item_apply_legacy_metadata(Item *item) {
         definition = item_make_greatsword();
     } else if (strcmp(item->name, "Magic Greatsword") == 0) {
         definition = item_make_magic_greatsword();
+    } else if (strcmp(item->name, "Magic Stone Warhammer") == 0) {
+        definition = item_make_stone_warhammer();
     } else if (strcmp(item->name, "Cryptblade") == 0) {
         definition = item_make_cryptblade();
     } else {
@@ -735,6 +738,18 @@ Item item_make_enchanter_robes(void) {
     set_armor_metadata(&it, ARMOR_FAMILY_ROBE, ITEM_RARITY_RARE,
         ITEM_CLASS_MAGE, ITEM_VISUAL_ENCHANTER_ROBES);
     return it;
+}
+
+Item item_make_stone_warhammer(void) {
+    Item item = {0};
+    item.active = 1;
+    item.type = ITEM_WEAPON;
+    snprintf(item.name, sizeof(item.name), "Magic Stone Warhammer");
+    item.attack_bonus = 8;
+    item.max_hp_bonus = 30;
+    item.value = 1000;
+    set_weapon_metadata(&item, WEAPON_FAMILY_HAMMER, WEAPON_HANDS_TWO, ITEM_RARITY_RARE, ITEM_CLASS_ALL, ITEM_VISUAL_STONE_WARHAMMER);
+    return item;
 }
 
 Item item_make_prismweave_robes(void) {

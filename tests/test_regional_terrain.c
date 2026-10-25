@@ -68,7 +68,7 @@ static void test_layouts(void) {
                     intersection += a && b;
                     total += a || b;
                     heat_cells += regional_terrain_heat(previous.tiles[y][x]);
-                    gates += game.map.tiles[y][x] == TILE_GLASS_SEAL_CLOSED;
+                    gates += game.map.tiles[y][x] == TILE_STONEWAKE_CRANE_NEW;
                 }
             }
             distinct &= intersection * 100 < total * 80;
@@ -84,24 +84,24 @@ static void test_layouts(void) {
                 }
                 for (int ty = 0; ty < SWAMP_MAP_H; ty++) {
                     for (int tx = 0; tx < SWAMP_MAP_W; tx++) {
-                        if (map_is_walkable(m, tx, ty)) {
+                        if (map_is_walkable(m, tx, ty) && m->tiles[ty][tx] != TILE_STONEWAKE_LEDGE) {
                             connected &= seen[ty][tx];
                         }
                     }
                 }
                 int x;
                 int y;
-                features &= find_tile(m, region ? TILE_GLASS_FACE_E : TILE_ASHEN_VALVE, &x, &y);
+                features &= find_tile(m, region ? TILE_STONEWAKE_CRANE_NEW : TILE_ASHEN_VALVE, &x, &y);
                 features &= seen[y][x];
             }
             reachable(&previous, 1);
             safe &= seen[previous.stairs_down_y][previous.stairs_down_x];
         }
     }
-    ASSERT("1280 new volcanic and crystal layouts keep every chamber, control and exit reachable", connected && features);
+    ASSERT("1280 new volcanic and quarry layouts keep every chamber, control and exit reachable", connected && features);
     ASSERT("every volcanic stage has an exit route avoiding all cycling heat", safe);
-    ASSERT("Glassdeep no longer mirrors Ashen Hollow's walking layout", distinct);
-    ASSERT("all stages include real crossing hazards or a crystal-controlled shortcut", heat_cells >= 640 * 9 && gates == 640);
+    ASSERT("Stonewake does not mirrors Ashen Hollow's walking layout", distinct);
+    ASSERT("all stages include real crossing hazards or a crane-controlled shortcut", heat_cells >= 640 * 9 && gates == 1280);
 }
 
 static void setup_heat(void) {
@@ -242,7 +242,19 @@ static void setup_light(int *x, int *y) {
     map_generate_glassdeep(&game.map, 2);
     game.enemy_count = 0;
     game.floor_item_count = 0;
-    find_tile(&game.map, TILE_GLASS_FACE_E, x, y);
+    // Explicit legacy optics fixture; new Stonewake floors use cranes instead.
+    game.map.tiles[0][0] = TILE_GLASSDEEP_WALL;
+    *x = 30;
+    *y = 30;
+    for (int ty = 24; ty <= 31; ty++) {
+        for (int tx = 25; tx <= 38; tx++) {
+            game.map.tiles[ty][tx] = TILE_GLASSDEEP_FLOOR;
+        }
+    }
+    game.map.tiles[30][26] = TILE_GLASS_SOURCE;
+    game.map.tiles[30][30] = TILE_GLASS_FACE_E;
+    game.map.tiles[26][30] = TILE_GLASS_RECEIVER;
+    game.map.tiles[25][30] = TILE_GLASS_SEAL_CLOSED;
     game.player.x = *x;
     game.player.y = *y;
 }
@@ -354,11 +366,13 @@ static void test_saves(void) {
     map_generate_glassdeep(&game.glassdeep_cache[1].map, 2);
     game.glassdeep_cache[1].valid = 1;
     int x, y;
-    find_tile(&game.glassdeep_cache[1].map, TILE_GLASS_FACE_E, &x, &y);
-    game.glassdeep_cache[1].map.tiles[y][x] = TILE_GLASS_FACE_N;
-    game.glassdeep_cache[1].map.tiles[y - 5][x] = TILE_GLASS_SEAL_OPEN;
+    find_tile(&game.glassdeep_cache[1].map, TILE_STONEWAKE_CRANE_NEW, &x, &y);
+    game.glassdeep_cache[1].map.tiles[y][x] = TILE_STONEWAKE_CRANE_DOWN;
+    for (int dx = 1; dx <= 9; dx++) {
+        game.glassdeep_cache[1].map.tiles[y][x + dx] = TILE_STONEWAKE_BRIDGE;
+    }
     int ok = save_game(&game, slot) && load_game(&loaded, slot);
-    ASSERT("heat warnings, crystal angles and shortcut states round trip exactly", ok && memcmp(&game.map, &loaded.map, sizeof(Map)) == 0 && memcmp(&game.glassdeep_cache[1].map, &loaded.glassdeep_cache[1].map, sizeof(Map)) == 0);
+    ASSERT("heat warnings, crane angles and walkway states round trip exactly", ok && memcmp(&game.map, &loaded.map, sizeof(Map)) == 0 && memcmp(&game.glassdeep_cache[1].map, &loaded.glassdeep_cache[1].map, sizeof(Map)) == 0);
     setup_heat();
     int vx, vy;
     find_tile(&game.map, TILE_ASHEN_VALVE, &vx, &vy);
@@ -447,10 +461,10 @@ static void test_saves(void) {
                     restored->map.tiles[ty][tx] == previous.tiles[ty][tx];
             }
         }
-        ASSERT("version 143 migration preserves active and cached boss chambers and pending attacks", intact &&
-            loaded.enemies[0].hp == 111 && loaded.enemies[0].move_timer == 2 &&
+        ASSERT("version 143 migration preserves active and cached boss chambers and safely cancels retired prism attacks", intact &&
+            loaded.enemies[0].hp == 111 && loaded.enemies[0].move_timer == (glass ? 0 : 2) &&
             loaded.enemies[0].attack_phase == 1 && loaded.enemies[0].attack_target_x == bx - 2 &&
-            restored->enemies[0].hp == 111 && restored->enemies[0].move_timer == 2);
+            restored->enemies[0].hp == 111 && restored->enemies[0].move_timer == (glass ? 0 : 2));
     }
     remove("saves/savegame_99210.json");
 }

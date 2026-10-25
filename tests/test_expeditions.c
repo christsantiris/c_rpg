@@ -181,7 +181,7 @@ static void test_quest_guards_and_spawn_positions(void) {
     int guard = -1;
     int regular = -1;
     for (int i = 0; i < game.enemy_count; i++) {
-        if (strcmp(game.enemies[i].name, "Resonator Guardian") == 0) {
+        if (strcmp(game.enemies[i].name, "Quarry Guardian") == 0) {
             guard = i;
         } else if (!game.enemies[i].is_boss) {
             regular = i;

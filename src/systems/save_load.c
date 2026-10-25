@@ -1,3 +1,4 @@
+#include "../game/stonewake.h"
 #include "save_load.h"
 #include "../game/game.h"
 #include "../game/town_road.h"
@@ -665,6 +666,34 @@ static cJSON *serialize_enemies(const Enemy *enemies, int count) {
     return arr;
 }
 
+static void migrate_retired_enemy(Enemy *e) {
+    // Only serialized IDs remain here; retired types never enter runtime state.
+    const char *name;
+    switch ((int)e->type) {
+        case 1:
+            e->type = ENEMY_GOBLIN_SCOUT;
+            name = "Goblin Scout";
+            break;
+        case 3:
+            e->type = ENEMY_HOBGOBLIN_GUARD;
+            name = "Hobgoblin Guard";
+            break;
+        case 4:
+            e->type = ENEMY_CAVE_TROLL;
+            name = "Cave Troll";
+            break;
+        case 6:
+        case 8:
+        case 10:
+            e->type = ENEMY_LICH_KING;
+            name = "Lich King";
+            break;
+        default:
+            return;
+    }
+    snprintf(e->name, sizeof(e->name), "%s", name);
+}
+
 static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count, int capacity) {
     *count = cJSON_GetArraySize(arr);
     if (*count > capacity) {
@@ -686,6 +715,7 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count, in
             name = "Minotaur";
         }
         snprintf(e->name, sizeof(e->name), "%s", name);
+        migrate_retired_enemy(e);
         e->hp         = cJSON_GetObjectItem(obj, "hp")->valueint;
         e->max_hp     = cJSON_GetObjectItem(obj, "max_hp")->valueint;
         e->attack     = cJSON_GetObjectItem(obj, "attack")->valueint;
@@ -694,9 +724,7 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count, in
         e->move_timer = cJSON_GetObjectItem(obj, "move_timer")->valueint;
         cJSON *boss = cJSON_GetObjectItem(obj, "is_boss");
         e->is_boss = boss ? boss->valueint :
-            (e->type == ENEMY_GOBLIN_KING || e->type == ENEMY_LICH_KING ||
-             e->type == ENEMY_DEMON_LORD || e->type == ENEMY_RED_DRAGON ||
-             e->type == ENEMY_TARRASQUE ||
+            (e->type == ENEMY_LICH_KING || e->type == ENEMY_RED_DRAGON ||
              e->type == ENEMY_FOREST_NECROMANCER ||
              e->type == ENEMY_MOUNTAIN_GOBLIN_KING ||
              e->type == ENEMY_DROWNED_QUEEN);
@@ -1136,7 +1164,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 193);
+    cJSON_AddNumberToObject(root, "save_version", 196);
     MangroveState mangrove = g->mangroves;
     mangrove_capture(g, &mangrove);
     cJSON_AddItemToObject(root, "mangroves", serialize_mangrove(&mangrove));
@@ -1209,6 +1237,7 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "thorn_regent_reward_pending", g->thorn_regent_reward_pending);
     cJSON_AddNumberToObject(root, "cinder_lord_reward_pending", g->cinder_lord_reward_pending);
     cJSON_AddNumberToObject(root, "prism_sovereign_reward_pending", g->prism_sovereign_reward_pending);
+    cJSON_AddNumberToObject(root, "stonewake_warhammer_state", g->stonewake_warhammer_state);
     cJSON_AddNumberToObject(root, "sun_guardian_reward_state", g->sun_guardian_reward_state);
     cJSON_AddNumberToObject(root, "red_dragon_reward_state", g->red_dragon_reward_state);
     cJSON_AddNumberToObject(player, "known_spell_count", g->player.known_spell_count);
@@ -3599,6 +3628,12 @@ int load_game(GameState *g, int slot) {
         cJSON_Delete(root);
         return 0;
     }
+    cJSON *hammer = cJSON_GetObjectItem(root, "stonewake_warhammer_state");
+    if (save_version >= 194 && (!cJSON_IsNumber(hammer) || hammer->valuedouble != hammer->valueint || hammer->valueint < 0 || hammer->valueint > 2)) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    g->stonewake_warhammer_state = save_version >= 194 ? hammer->valueint : 0;
     cJSON *prism_reward = cJSON_GetObjectItem(root, "prism_sovereign_reward_pending");
     cJSON *guardian_reward = cJSON_GetObjectItem(root, "sun_guardian_reward_state");
     cJSON *dragon_reward = cJSON_GetObjectItem(root, "red_dragon_reward_state");
@@ -4646,23 +4681,6 @@ int load_game(GameState *g, int slot) {
         if (g->portal_active) {
             g->map.tiles[2][20] = TILE_PORTAL;
         }
-    }
-
-    // Floor five used to contain the Goblin King. Regenerate that legacy
-    // floor so old saves receive the new undead finale.
-    int legacy_finale = 0;
-    if (g->location == LOCATION_DUNGEON && g->level == dungeon_depth) {
-        for (int i = 0; i < g->enemy_count; i++)
-            if (g->enemies[i].type == ENEMY_GOBLIN_KING) legacy_finale = 1;
-    }
-    if (legacy_finale) {
-        g->level_cache[dungeon_depth - 1].valid = 0;
-        g->floor_item_count = 0;
-        map_generate(&g->map, g->level);
-        enemies_spawn(g);
-        g->level_cleared = 0;
-        g->player.x = g->map.stairs_up_x;
-        g->player.y = g->map.stairs_up_y;
     }
 
     // Version 38 rebalances named weapons. Update legacy inventory and floor
@@ -5887,6 +5905,15 @@ int load_game(GameState *g, int slot) {
         (g->player.x < 0 || g->player.x >= MANGROVE_PATH_W || g->player.y < 0 || g->player.y >= MANGROVE_PATH_H))) {
         cJSON_Delete(root);
         return 0;
+    }
+    if (save_version < 194) {
+        stonewake_migrate(g);
+        if (g->glassdeep_quest_state >= 2) {
+            g->stonewake_warhammer_state = 1;
+        }
+    }
+    if (save_version < 195) {
+        stonewake_migrate_cranes(g);
     }
     game_refresh_debug_passages(g);
     cJSON_Delete(root);

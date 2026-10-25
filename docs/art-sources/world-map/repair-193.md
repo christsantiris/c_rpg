@@ -1,6 +1,8 @@
 # Atlas regression repair (save version 193)
 
 Final asset: `../../images/world-map-coastal-regions.png` (1536×1024).
+The subsequent [lowland correction](dawnmere-lowlands.md) removes the mountains
+that this revision placed too close to Dawnmere.
 Generated with the built-in image tool. The version 192 atlas remains the edit
 base; the original `world-map.png` remains the reference for the beaches, cliffs
 and sheltered cove. Earlier dock-only candidates were rejected because a water

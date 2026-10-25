@@ -1,3 +1,7 @@
+#include "game/stonewake.h"
+#include "renderer/stonewake_renderer.h"
+#include "renderer/sprites.h"
+#include "renderer/item_icons.h"
 // Exercise the application's actual argument parsing and load-screen handler.
 #define main conr_app_main
 #include "../../src/main.c"
@@ -38,6 +42,104 @@ static unsigned int creature_pixels(SDL_Surface *surface, int x, int y) {
         }
     }
     return hash;
+}
+
+static void test_stonewake_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    assert(r->stonewake_enemy_texture && r->stonewake_crane_texture && r->stonewake_prop_texture && r->stonewake_workshop_texture);
+    const EnemyType roster[5] = {ENEMY_CRYSTAL_SPIDER, ENEMY_BLIND_STALKER, ENEMY_SHARD_GOLEM, ENEMY_IRON_SENTINEL, ENEMY_PRISM_SOVEREIGN};
+    unsigned int hashes[5];
+    for (int i = 0; i < 5; i++) {
+        SDL_SetRenderDrawColor(r->sdl, 0, 0, 0, 255);
+        SDL_RenderClear(r->sdl);
+        draw_enemy(r, 10, 8, roster[i]);
+        SDL_RenderPresent(r->sdl);
+        hashes[i] = creature_pixels(surface, 10 * TILE_SIZE, 8 * TILE_SIZE);
+        int pixels = 0;
+        int top = 48;
+        int bottom = -1;
+        int left = 48;
+        int right = -1;
+        for (int y = 8 * TILE_SIZE - 24; y < 9 * TILE_SIZE; y++) {
+            for (int x = 10 * TILE_SIZE - 12; x < 11 * TILE_SIZE + 12; x++) {
+                Uint8 red, green, blue;
+                SDL_GetRGB(rendered_pixel(surface, x, y), surface->format, &red, &green, &blue);
+                if (red || green || blue) {
+                    pixels++;
+                    if (y < top + 8 * TILE_SIZE - 24) {
+                        top = y - (8 * TILE_SIZE - 24);
+                    }
+                    bottom = y - (8 * TILE_SIZE - 24);
+                    int col = x - (10 * TILE_SIZE - 12);
+                    if (col < left) {
+                        left = col;
+                    }
+                    if (col > right) {
+                        right = col;
+                    }
+                }
+            }
+        }
+        assert(pixels > 80);
+        const int widths[5] = {24, 24, 32, 24, 48};
+        const int heights[5] = {16, 24, 32, 24, 48};
+        assert(right - left + 1 <= widths[i] && bottom - top + 1 <= heights[i]);
+        assert(bottom == 47); // Soles/tail sit on the same ground line as the 24px player.
+        for (int n = 0; n < i; n++) {
+            assert(hashes[i] != hashes[n]);
+        }
+    }
+    game_init(g);
+    game_enter_glassdeep(g);
+    g->player.x = 18;
+    g->player.y = 26;
+    for (int y = 0; y < SWAMP_MAP_H; y++) {
+        for (int x = 0; x < SWAMP_MAP_W; x++) {
+            map_mark_explored(&g->map, x, y);
+        }
+    }
+    Viewport view;
+    viewport_init(&view, r->tiles_x, r->tiles_y, MAP_W, MAP_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(g->map.tiles[26][18] == TILE_STONEWAKE_CRANE_NEW);
+    assert(stonewake_interact(g) && g->map.tiles[26][21] == TILE_STONEWAKE_BRIDGE);
+    int crane_width = 0;
+    int crane_height = 0;
+    assert(SDL_QueryTexture(r->stonewake_crane_texture, NULL, NULL, &crane_width, &crane_height) == 0);
+    assert(crane_width == 216 && crane_height == 72);
+    unsigned int poses[3];
+    for (int mode = 0; mode < 3; mode++) {
+        assert(stonewake_crane_mode(g->map.tiles[26][18]) == (mode + 1) % 3);
+        renderer_begin_frame(r);
+        game_draw(r, g, &view);
+        renderer_end_frame(r);
+        char path[80];
+        snprintf(path, sizeof(path), "/tmp/stonewake-crane-pose-%d.bmp", mode);
+        assert(SDL_SaveBMP(surface, path) == 0);
+        int px = viewport_to_screen_x(&view, 18) * TILE_SIZE;
+        int py = viewport_to_screen_y(&view, 26) * TILE_SIZE;
+        poses[mode] = 2166136261u;
+        for (int y = py - 48; y < py + 24; y++) {
+            for (int x = px - 18; x < px + 54; x++) {
+                poses[mode] = (poses[mode] ^ rendered_pixel(surface, x, y)) * 16777619u;
+            }
+        }
+        if (mode < 2) {
+            assert(stonewake_interact(g));
+        }
+    }
+    assert(poses[0] != poses[1] && poses[0] != poses[2] && poses[1] != poses[2]);
+    assert(g->map.tiles[26][18] == TILE_STONEWAKE_CRANE_UP);
+
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    Item hammer = item_make_stone_warhammer();
+    draw_icon_item(r, 600, 200, &hammer);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/stonewake-renderer-test.bmp") == 0);
+    printf("PASS: all five Stonewake sprites render at native scale, with three distinct crane poses, workshops and a distinct warhammer icon.\n");
 }
 
 static void test_saltwind_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
@@ -126,6 +228,7 @@ int main(void) {
     GameScreen screen = SCREEN_LOAD_SLOT;
     GameState *game = calloc(1, sizeof(*game));
     assert(game);
+    test_stonewake_renderer(&renderer, game, surface);
     test_saltwind_renderer(&renderer, game, surface);
     char *arguments[] = {"conr", "--unlock-shortcuts", "--gold", "99999", "--weapon", "none"};
 
