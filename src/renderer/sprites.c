@@ -1766,18 +1766,18 @@ void draw_portal(Renderer *r, int tile_x, int tile_y) {
 
 static void draw_dungeon_enemy_body(Renderer *r, int tile_x, int tile_y, int art) {
     static const SDL_Color bodies[DUNGEON_ART_COUNT] = {
-        {210, 210, 190, 255}, {78, 142, 38, 255}, {132, 146, 108, 255},
-        {92, 116, 48, 255}, {72, 94, 58, 255}, {166, 122, 82, 255},
+        {210, 210, 190, 255}, {132, 146, 108, 255},
+        {92, 116, 48, 255}, {166, 122, 82, 255},
         {54, 32, 72, 255}, {112, 224, 232, 255}, {172, 166, 134, 255}
     };
     static const SDL_Color clothes[DUNGEON_ART_COUNT] = {
-        {92, 62, 38, 255}, {92, 58, 30, 255}, {100, 48, 54, 255},
-        {84, 48, 28, 255}, {90, 58, 32, 255}, {92, 62, 38, 255},
+        {92, 62, 38, 255}, {100, 48, 54, 255},
+        {84, 48, 28, 255}, {92, 62, 38, 255},
         {92, 42, 126, 255}, {54, 112, 132, 255}, {62, 28, 92, 255}
     };
     static const SDL_Color eyes[DUNGEON_ART_COUNT] = {
-        {18, 18, 35, 255}, {232, 186, 38, 255}, {226, 207, 91, 255},
-        {232, 166, 34, 255}, {224, 154, 36, 255}, {34, 28, 28, 255},
+        {18, 18, 35, 255}, {226, 207, 91, 255},
+        {232, 166, 34, 255}, {34, 28, 28, 255},
         {244, 48, 62, 255}, {176, 242, 238, 255}, {78, 232, 76, 255}
     };
     SDL_Color body = bodies[art];
@@ -1836,20 +1836,12 @@ static void draw_dungeon_enemy_body(Renderer *r, int tile_x, int tile_y, int art
     }
 }
 
-void draw_goblin(Renderer *r, int tile_x, int tile_y) {
-    draw_dungeon_enemy_body(r, tile_x, tile_y, DUNGEON_ART_GOBLIN);
-}
-
 void draw_skeleton(Renderer *r, int tile_x, int tile_y) {
     draw_dungeon_enemy_body(r, tile_x, tile_y, DUNGEON_ART_SKELETON);
 }
 
-void draw_orc(Renderer *r, int tile_x, int tile_y) {
-    draw_dungeon_enemy_body(r, tile_x, tile_y, DUNGEON_ART_ORC);
-}
-
-void draw_troll(Renderer *r, int tile_x, int tile_y) {
-    draw_dungeon_enemy_body(r, tile_x, tile_y, DUNGEON_ART_TROLL);
+void draw_armored_guard(Renderer *r, int tile_x, int tile_y) {
+    draw_dungeon_enemy_body(r, tile_x, tile_y, DUNGEON_ART_ARMORED_GUARD);
 }
 
 void draw_zombie(Renderer *r, int tile_x, int tile_y) {
@@ -1874,12 +1866,10 @@ void draw_giant(Renderer *r, int tile_x, int tile_y) {
 
 static void draw_dungeon_boss(Renderer *r, int tx, int ty, int art) {
     static const SDL_Color bodies[BOSS_ART_COUNT] = {
-        {82, 128, 38, 255}, {208, 204, 170, 255}, {142, 38, 34, 255},
-        {174, 42, 24, 255}, {101, 80, 50, 255}
+        {208, 204, 170, 255}, {174, 42, 24, 255}
     };
     static const SDL_Color clothes[BOSS_ART_COUNT] = {
-        {132, 34, 42, 255}, {55, 35, 88, 255}, {54, 20, 26, 255},
-        {92, 24, 20, 255}, {125, 104, 63, 255}
+        {55, 35, 88, 255}, {92, 24, 20, 255}
     };
     SDL_Color body = bodies[art];
     SDL_Color cloth = clothes[art];
@@ -1916,8 +1906,6 @@ static void draw_dungeon_boss(Renderer *r, int tx, int ty, int art) {
         palette['y'] = (SDL_Color){179, 106, 255, 255};
         palette['g'] = (SDL_Color){91, 73, 120, 255};
         palette['G'] = (SDL_Color){171, 156, 190, 255};
-    } else if (art == BOSS_ART_DEMON_LORD) {
-        palette['y'] = (SDL_Color){255, 183, 57, 255};
     } else if (art == BOSS_ART_RED_DRAGON) {
         palette['y'] = (SDL_Color){255, 202, 71, 255};
         palette['a'] = (SDL_Color){69, 24, 26, 255};
@@ -1942,24 +1930,12 @@ static void draw_dungeon_boss(Renderer *r, int tx, int ty, int art) {
     }
 }
 
-void draw_goblin_king(Renderer *r, int tile_x, int tile_y) {
-    draw_dungeon_boss(r, tile_x, tile_y, BOSS_ART_GOBLIN_KING);
-}
-
 void draw_lich_king(Renderer *r, int tile_x, int tile_y) {
     draw_dungeon_boss(r, tile_x, tile_y, BOSS_ART_LICH_KING);
 }
 
-void draw_demon_lord(Renderer *r, int tile_x, int tile_y) {
-    draw_dungeon_boss(r, tile_x, tile_y, BOSS_ART_DEMON_LORD);
-}
-
 void draw_red_dragon(Renderer *r, int tile_x, int tile_y) {
     draw_dungeon_boss(r, tile_x, tile_y, BOSS_ART_RED_DRAGON);
-}
-
-void draw_tarrasque(Renderer *r, int tile_x, int tile_y) {
-    draw_dungeon_boss(r, tile_x, tile_y, BOSS_ART_TARRASQUE);
 }
 
 static void draw_forest_enemy(Renderer *r, int tx, int ty, EnemyType type) {
@@ -2815,7 +2791,7 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_CASTELLAN:
         case ENEMY_ROYAL_ARCANIST:
         case ENEMY_LORD_VEYR:
-            draw_orc(r, tile_x, tile_y);
+            draw_armored_guard(r, tile_x, tile_y);
             break;
         case ENEMY_ANCIENT_SKELETON:
         case ENEMY_BONE_SENTINEL:
@@ -2877,7 +2853,6 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
             draw_swamp_enemy(r, tile_x, tile_y, type);
             break;
         case ENEMY_SKELETON: draw_skeleton(r, tile_x, tile_y); break;
-        case ENEMY_GOBLIN:   draw_goblin(r, tile_x, tile_y);   break;
         case ENEMY_ZOMBIE:   draw_zombie(r, tile_x, tile_y);   break;
         case ENEMY_CRYPT_BAT: draw_crypt_bat(r, tile_x, tile_y); break;
         case ENEMY_WRAITH: draw_wraith(r, tile_x, tile_y); break;
@@ -2946,17 +2921,12 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
                 &destination);
             break;
         }
-        case ENEMY_ORC:      draw_orc(r, tile_x, tile_y);      break;
-        case ENEMY_TROLL:    draw_troll(r, tile_x, tile_y);    break;
         case ENEMY_GIANT:    draw_giant(r, tile_x, tile_y);    break;
-        case ENEMY_GOBLIN_KING: draw_goblin_king(r, tile_x, tile_y); break;
         case ENEMY_LICH_KING:   draw_lich_king(r, tile_x, tile_y);   break;
-        case ENEMY_DEMON_LORD:  draw_demon_lord(r, tile_x, tile_y);  break;
         case ENEMY_RED_DRAGON:  draw_red_dragon(r, tile_x, tile_y);  break;
         case ENEMY_DRAKE:
         case ENEMY_FIRE_ELEMENTAL:
             draw_dragonspine_road_enemy(r, tile_x, tile_y, type); break;
-        case ENEMY_TARRASQUE:   draw_tarrasque(r, tile_x, tile_y);   break;
     }
 }
 

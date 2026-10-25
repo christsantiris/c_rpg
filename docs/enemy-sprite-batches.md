@@ -1,6 +1,10 @@
 > Current update: batch 12's Glassdeep roster is replaced by the five
 > [Stonewake Quarry enemies](stonewake-quarry.md#enemies). The batch notes
 > below are historical; runtime art now comes from `stonewake.py`.
+> The current [enemy/area roster](enemy-roster.md) covers all 102 defined types,
+> including later Elderwood, jail, Saltwind and quarry additions. The 95-type
+> batch totals below describe the original static-art pass; six unused types
+> and their dead code have since been removed.
 
 # Enemy sprite update checklist
 

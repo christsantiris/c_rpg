@@ -2853,7 +2853,94 @@ static void test_rook_tavern_migration(void) {
     remove_test_save(LEGACY_SLOT);
 }
 
+static void test_retired_enemy_migration(void) {
+    const int slot = 99306;
+    ASSERT("retired-enemy migration fixture does not overwrite an existing save", !save_exists(slot));
+    if (save_exists(slot)) {
+        return;
+    }
+    GameState *original = calloc(1, sizeof(*original));
+    GameState *loaded = calloc(1, sizeof(*loaded));
+    ASSERT("retired-enemy fixtures allocate without adding global game-state storage", original && loaded);
+    if (!original || !loaded) {
+        free(original);
+        free(loaded);
+        return;
+    }
+    game_init(original);
+    original->location = LOCATION_DUNGEON;
+    original->level = DUNGEON_DEPTH;
+    original->max_level_reached = DUNGEON_DEPTH;
+    map_generate(&original->map, original->level);
+    original->player.x = original->map.stairs_up_x;
+    original->player.y = original->map.stairs_up_y;
+    original->player.hp = 41;
+    original->gold = 783;
+    original->elowen_quest_state = 3;
+    original->elowen_seals_restored = 7;
+    original->defeated_bosses = 1 << LOCATION_FOREST;
+    const int retired[6] = {1, 3, 4, 6, 8, 10};
+    const EnemyType replacements[6] = {ENEMY_GOBLIN_SCOUT, ENEMY_HOBGOBLIN_GUARD, ENEMY_CAVE_TROLL, ENEMY_LICH_KING, ENEMY_LICH_KING, ENEMY_LICH_KING};
+    original->enemy_count = 6;
+    for (int i = 0; i < 6; i++) {
+        int x;
+        int y;
+        map_room_center(&original->map.rooms[i], &x, &y);
+        original->enemies[i] = (Enemy){.type = (EnemyType)retired[i], .active = i % 2 == 0,
+            .x = x, .y = y, .hp = i % 2 == 0 ? 15 + i : 0, .max_hp = 40 + i,
+            .attack = 6 + i, .defense = 2 + i, .experience = 12 + i,
+            .move_timer = 2, .is_boss = i >= 3, .frozen_turns = 3,
+            .attack_target_x = -1, .attack_target_y = -1};
+        snprintf(original->enemies[i].name, sizeof(original->enemies[i].name), "Retired actor %d", i);
+    }
+    int x;
+    int y;
+    map_room_center(&original->map.rooms[1], &x, &y);
+    original->floor_item_count = 1;
+    original->floor_items[0] = (FloorItem){.active = 1, .x = x + 1, .y = y,
+        .underlying_tile = TILE_FLOOR, .item = item_make_health_potion()};
+    original->map.tiles[y][x + 1] = TILE_ITEM;
+    LevelCache *cache = &original->level_cache[DUNGEON_DEPTH - 1];
+    cache->valid = 1;
+    cache->map = original->map;
+    cache->enemy_count = original->enemy_count;
+    memcpy(cache->enemies, original->enemies, 6 * sizeof(Enemy));
+    int ok = save_game(original, slot) && rewrite_save_version(slot, 195) && load_game(loaded, slot);
+    ASSERT("all retired serialized IDs migrate from a pre-cleanup save", ok && loaded->enemy_count == 6 && loaded->level_cache[DUNGEON_DEPTH - 1].enemy_count == 6);
+    int actors = ok;
+    for (int i = 0; i < 6 && actors; i++) {
+        const Enemy *before = &original->enemies[i];
+        const Enemy *after[2] = {&loaded->enemies[i], &loaded->level_cache[DUNGEON_DEPTH - 1].enemies[i]};
+        for (int n = 0; n < 2; n++) {
+            actors &= after[n]->type == replacements[i] && after[n]->active == before->active &&
+                after[n]->hp == before->hp && after[n]->max_hp == before->max_hp &&
+                after[n]->x == before->x && after[n]->y == before->y &&
+                after[n]->attack == before->attack && after[n]->defense == before->defense &&
+                after[n]->experience == before->experience && after[n]->is_boss == before->is_boss &&
+                after[n]->move_timer == before->move_timer && after[n]->frozen_turns == before->frozen_turns;
+        }
+    }
+    ASSERT("active and cached replacements preserve wounds, deaths, positions, stats and timers", actors);
+    ASSERT("legacy finale conversion preserves the map, floor loot, player progress and completed quests", ok &&
+        memcmp(&loaded->map, &original->map, sizeof(Map)) == 0 && loaded->floor_items[0].active &&
+        loaded->floor_items[0].x == x + 1 && loaded->floor_items[0].y == y &&
+        loaded->player.x == original->player.x && loaded->player.y == original->player.y &&
+        loaded->player.hp == 41 && loaded->gold == 783 && loaded->defeated_bosses == original->defeated_bosses &&
+        loaded->elowen_quest_state == 3 && loaded->elowen_seals_restored == 7);
+    ASSERT("converted actor IDs and deaths survive a current-format save round trip", ok &&
+        save_game(loaded, slot) && load_game(original, slot) && original->enemies[0].type == ENEMY_GOBLIN_SCOUT &&
+        original->enemies[3].type == ENEMY_LICH_KING && !original->enemies[3].active &&
+        original->level_cache[DUNGEON_DEPTH - 1].enemies[3].hp == 0);
+    ASSERT("surviving low and high enemy IDs retain their serialized values", ENEMY_ZOMBIE == 2 && ENEMY_GIANT == 5 &&
+        ENEMY_LICH_KING == 7 && ENEMY_RED_DRAGON == 9 && ENEMY_CRYPT_BAT == 11 &&
+        ENEMY_ROYAL_GUARD == 100 && ENEMY_LIZARDFOLK_SCOUT == 107 && ENEMY_IRON_SENTINEL == 113);
+    remove_test_save(slot);
+    free(original);
+    free(loaded);
+}
+
 void test_save_load(void) {
+    test_retired_enemy_migration();
     test_rook_tavern_migration();
     test_aldric_town_migration();
     test_narrow_shortcut_migration();

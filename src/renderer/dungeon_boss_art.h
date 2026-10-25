@@ -2,39 +2,13 @@
 #define DUNGEON_BOSS_ART_H
 
 // Rendering indices only; persistent EnemyType values are unchanged.
-enum { BOSS_ART_GOBLIN_KING, BOSS_ART_LICH_KING, BOSS_ART_DEMON_LORD, BOSS_ART_RED_DRAGON, BOSS_ART_TARRASQUE, BOSS_ART_COUNT };
+enum { BOSS_ART_LICH_KING, BOSS_ART_RED_DRAGON, BOSS_ART_COUNT };
 
 // Native 24-pixel static poses. Dots preserve the underlying terrain.
 // o outline; s/S/H skin or bone; c/C/v mantle or shell; e/y sockets/eyes;
 // m/M/N steel; f/F horns, teeth and claws; a/A/h wing facets;
 // g/G brass or belly plates; l/L/K leather; k boots; R gems; p/P magic or fire.
 static const char dungeon_boss_art[BOSS_ART_COUNT][24][25] = {
-    { // GOBLIN_KING
-        "......G....G....G.......",
-        ".....oGGo.oGGo.oGGo.....",
-        ".....oGGGgGGGgGGGGo.....",
-        "......oGgRGGRGgGGo......",
-        ".......oHSSSSSSo........",
-        "...oo.oHHSSSSSSSo.oo....",
-        "...oHSooHSSSSSooSSo.....",
-        "....oSSoeSSSSSeoSo......",
-        ".....oooHySSSSySo...N...",
-        ".......oHHSHSSSSo..NMo..",
-        "........oSfefSSo...NMo..",
-        "...ovCCooSSSSSooCCoNMo..",
-        "..ovCCoNMooSooMMoCCNMo..",
-        ".ovCCoNMMMoooMMMmoCNMo..",
-        ".ovCoHSoMMGMMMmoSSoNMo..",
-        ".ovCoSSoMMGMMMmoSSSMMo..",
-        ".ovCCoSoMlllGlloSGoGGo..",
-        "..ovCCooMMMcoMMmooSLo...",
-        "...ovCCoMMmoMMmoCColo...",
-        "..ovCCCokLloLkoCCcco....",
-        "..oGCCCoSSoSSoCCCGco....",
-        "...ooo.oMmo.oMmo.ooo....",
-        "......okLKloolLkko......",
-        "......oooooooooooo......",
-    },
     { // LICH_KING
         "..........F....F........",
         "...P.....oFG.oGFo.......",
@@ -61,32 +35,6 @@ static const char dungeon_boss_art[BOSS_ART_COUNT][24][25] = {
         "...oo.oooCCooCCooCCooo..",
         ".........oo..oo..oo.....",
     },
-    { // DEMON_LORD
-        ".....F..........F.......",
-        "....oFf........fFo......",
-        "....oFfo......ofFo......",
-        ".....oFfo....ofFo.......",
-        "..oo..oFSSSSSSFo..oo....",
-        ".oAao.oHSSSSSSSo.oAao...",
-        "oAAaaoHSSSSSSSSSoaAAAo..",
-        "oHAaaoHSSeySSeySoaAAho..",
-        "oHAaaoSSSHHSSSSSoaAAho..",
-        "oHAaaaofefeefeffoaAAho..",
-        "oAAaoo.oSSSSSSo.ooAAAo..",
-        "oAAao.oHSoSSoSSo.oAAAo..",
-        "oAao.oHSSSHHSSSSo.oAAo..",
-        ".oo.oHSSoSSSSoSSSo.oo...",
-        "...oHSSoSHHHHSooSSo.....",
-        "..oHSSoSSoSSoSSoSSSo....",
-        "..oFSo.oSSHHSSo.oSFo....",
-        "...oFo.oSSssSSo.oFo..o..",
-        ".......oSSo.oSSo....oSo.",
-        "......oHSo...oSSo..oSo..",
-        "......oHSo...oSSooSSo...",
-        ".....oSSSo...oSSSooo....",
-        "....oFSSFo...oFSSFo.....",
-        "....oooooo...oooooo.....",
-    },
     { // RED_DRAGON
         ".......F.....F..........",
         "......oFfo..oFfo........",
@@ -112,32 +60,6 @@ static const char dungeon_boss_art[BOSS_ART_COUNT][24][25] = {
         "pPp.oFSSo.oSSSo.oo......",
         ".p..oFSSFooFSSFo........",
         "....oooooooooooo........",
-    },
-    { // TARRASQUE
-        "...........F............",
-        "......F...oFFo...F......",
-        ".....oFfo.oFFo.oFFo.....",
-        ".....oFFcoFCCcoFFo......",
-        "....ovCCCoCvCCoCCCco....",
-        "...ovCCcoCvCCcoCCCcco...",
-        "..ovCCcoCvCCcoCvCCcco...",
-        ".ovCCcoCvCCcoCvCCcccco..",
-        ".ovCCoHSSSSSSSoCCcccco..",
-        ".ovCoHSSeySSeySoCcccco..",
-        "..oCoHSSSHHSSSSSoCCco...",
-        "..oCoHSSSeeeSSSSoCCco...",
-        "..oCoHSfeffeffSSoCCco...",
-        "...oCoSSSSSSSSSoCCco....",
-        "..oHSoSSoHHSSoSSoCco....",
-        ".oHSSSoSHHSSSSoSSSoCo...",
-        "oHSSSoSSSssSSSSoSSSSo...",
-        "oHSSo.oSSSSSSSo.oSSSo...",
-        "oFSSo.oSSo.oSSo.oSSFo...",
-        ".oFSo.oHSo.oSSo.oSFo....",
-        "..oo.oHSSo.oSSSo.oo.....",
-        "....oHSSSo.oSSSSo.......",
-        "...oFSFSFo.oFSFSFo......",
-        "...ooooooo.ooooooo......",
     },
 };
 

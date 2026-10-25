@@ -12,18 +12,13 @@
 #define AREA_ENEMY_LIMIT 15
 
 typedef enum {
+    // Keep retired serialized IDs reserved so existing actors retain their meanings.
     ENEMY_SKELETON = 0,
-    ENEMY_GOBLIN,
-    ENEMY_ZOMBIE,
-    ENEMY_ORC,
-    ENEMY_TROLL,
-    ENEMY_GIANT,
-    ENEMY_GOBLIN_KING,
-    ENEMY_LICH_KING,
-    ENEMY_DEMON_LORD,
-    ENEMY_RED_DRAGON,
-    ENEMY_TARRASQUE,
-    ENEMY_CRYPT_BAT,
+    ENEMY_ZOMBIE = 2,
+    ENEMY_GIANT = 5,
+    ENEMY_LICH_KING = 7,
+    ENEMY_RED_DRAGON = 9,
+    ENEMY_CRYPT_BAT = 11,
     ENEMY_WRAITH,
     ENEMY_CRYPT_CONJURER,
     ENEMY_PIXIE,
