@@ -28,10 +28,11 @@ and many other adventures.
 
 ## World Map
 
-[![Illustrated world map showing Glassdeep Caverns south of Stillbury and a compact Saltwind Marsh inlet south of Dawnmere, coastal docks beside Sunken Coast, the road through Goblin Mountains, Elderwood Forest and the northern road from Oakhaven through the Royal Catacombs to the castle, the five towns, both Crown Roads, regional adventures and the Ruined Isle.](docs/images/world-map-coastal-regions.png)](docs/images/world-map-coastal-regions.png)
+[![Illustrated world map showing Stonewake Quarry south of Stillbury and a compact Saltwind Marsh inlet south of Dawnmere, coastal docks beside Sunken Coast, the road through Goblin Mountains, Elderwood Forest and the northern road from Oakhaven through the Royal Catacombs to the castle, the five towns, both Crown Roads, regional adventures and the Ruined Isle.](docs/images/world-map-coastal-regions.png)](docs/images/world-map-coastal-regions.png)
 
 An illustrated overview based on the world's town connections. Dawnmere now lies
-east of Oakhaven, reached by the safe road opened after defeating the Lich King.
+east of Oakhaven in open coastal lowland, reached by the safe road opened after
+defeating the Lich King. Ridgeshire is the elevated mountain city to its north.
 The [expansion plan](docs/five-town-expansion.md) documents the connections
 and the new [Elderwood Forest](docs/elderwood-forest.md) north of Oakhaven. Its
 five levels lead to Elderthorn; defeating it opens the northern road to the
@@ -50,13 +51,15 @@ Pirate Coast and its merchant treasure quest have been removed.
 [Saltwind Marsh](docs/saltwind-marsh.md) is a five-stage adventure south of
 Dawnmere, with skiff exploration, lizardfolk, armored turtles and Sszareth's
 sanctuary. Ordinary enemies respawn on fresh expeditions; supplies and the
-boss bounty pay once. Glassdeep Caverns is restored south of Stillbury. Rowan and
+boss bounty pay once. [Stonewake Quarry](docs/stonewake-quarry.md) replaces Glassdeep
+south of Stillbury, with five stages, crane walkways, side workshops, new enemies
+and Orin's Magic Stone Warhammer quest (+30 maximum HP while equipped). Rowan and
 the docks stand outside Oakhaven beside the Sunken Coast entrance. Defeating
 the Drowned Queen still opens dock access; Rowan's map unlocks the first voyage.
 Dawnmere's merchant has a working door and a single-tile path from the west road.
 Merchant Corvin is inside, with directions to Saltwind; a new marsh quest is not
 assigned yet. Dawnmere's east route remains closed. On the atlas, the marsh is a small coastal
-inlet, preserving Glassdeep's beaches and cliffs, Sunken Coast's sheltered cove,
+inlet, preserving Stonewake's beaches and cliffs, Sunken Coast's sheltered cove,
 and broad open sea.
 
 Return to Town uses the last town actually entered; bypassing a town leaves
@@ -136,7 +139,8 @@ inventory actions.
 - [Sunscar Wastes and the magic lamp quest](docs/sunscar-wastes.md)
 - [Moonveil Gardens](docs/moonveil-gardens.md)
 - [Ashen Hollow](docs/ashen-hollow.md)
-- [Glassdeep Caverns](docs/glassdeep-caverns.md)
+- [Stonewake Quarry](docs/stonewake-quarry.md)
+- [Complete enemy names and area mapping](docs/enemy-roster.md)
 - [Elderwood Forest and the northern road](docs/elderwood-forest.md)
 - [Royal Catacombs](docs/catacombs.md)
 - [Castle interior and play testing](docs/castle-design.md)
@@ -227,7 +231,9 @@ Select **New Game**, enter a name, and choose a class, or load an existing
 character. All four town-to-town roads, the Sunken Coast dock road, island sailing
 without a treasure map, and the labyrinth entrance are open immediately.
 Locked dungeon doors, mountain barriers, temple doors, the labyrinth vault,
-Glassdeep seals and castle portcullises open as you explore. Boss-blocked exits,
+quarry crane walkways and castle portcullises open as you explore. Each unused
+quarry crossing lowers once; its crane then respects manual raised, crossing and
+salvage settings. Boss-blocked exits,
 temple stairs and castle floor progression are accessible. The jail's secret
 hatch stays hidden until you accept Tomas's escape quest, including in debug mode.
 This adds a saved debug passage-unlock flag without marking bosses defeated.
@@ -284,6 +290,7 @@ with **I** and equip the weapon with **E** or **Enter**.
 | Cryptblade | `cryptblade` |
 | Battle Axe | `battle-axe` |
 | Magic Battle Axe | `magic-battle-axe` |
+| Magic Stone Warhammer | `stone-warhammer` |
 | Embercleaver | `embercleaver` |
 | Staff | `staff` |
 | Runed Staff | `runed-staff` |
@@ -395,7 +402,7 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 
 ### Feature enhancements
 - Expand world map
-   Farms between areas for rest to improve hp. Additional in-town quests similar to labrynth. New areas. New story lines. Improve area sprites. Building diversity in towns.
+   Farms between areas for rest to improve hp. New story lines. Improve area sprites. Building diversity in towns. Crown Road North between forest and castle
 - Recruit a party to join the adventure
    NPCs that can team up with the player character and accompany on the quest. Implement resurrection. 
 - Improve difficulty scaling and economy

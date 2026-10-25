@@ -48,7 +48,7 @@ const char *approach_area_name(Location area) {
         case LOCATION_DESERT: return "SUNSCAR WASTES";
         case LOCATION_MOONVEIL: return "MOONVEIL GARDENS";
         case LOCATION_ASHEN: return "ASHEN HOLLOW";
-        case LOCATION_GLASSDEEP: return "GLASSDEEP CAVERNS";
+        case LOCATION_GLASSDEEP: return "STONEWAKE QUARRY";
         case LOCATION_CATACOMBS: return "ROYAL CATACOMBS";
         case LOCATION_ELDERWOOD: return "ELDERWOOD FOREST";
         case LOCATION_CROWNROAD: return "CROWN ROAD EAST";

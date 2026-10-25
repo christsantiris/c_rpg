@@ -44,7 +44,7 @@ static int find_resonator(TileType tile, int *x, int *y) {
 static int guards(const GameState *g, int alive) {
     int count = 0;
     for (int i = 0; i < g->enemy_count; i++) {
-        if ((!alive || g->enemies[i].active) && strcmp(g->enemies[i].name, "Resonator Guardian") == 0) {
+        if ((!alive || g->enemies[i].active) && strcmp(g->enemies[i].name, "Quarry Guardian") == 0) {
             count++;
         }
     }
@@ -58,10 +58,10 @@ static void clear_defenders(void) {
     }
 }
 
-static void tune(int tone) {
+static void tune(int stage) {
     int x = -1;
     int y = -1;
-    ASSERT("unfinished stage has a resonator", find_resonator(TILE_GLASSDEEP_RESONATOR, &x, &y));
+    ASSERT("unfinished stage has repairable quarry machinery", find_resonator(TILE_GLASSDEEP_RESONATOR, &x, &y));
     if (x < 0) {
         return;
     }
@@ -69,11 +69,7 @@ static void tune(int tone) {
     game.player.x = x;
     game.player.y = y;
     action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
-    ASSERT("Action opens the inscription and all three tuning choices", game_glassdeep_prompt_active(&game) &&
-        strstr(game.dialogue_text, "1 Low, 2 Middle, 3 High"));
-    game_handle_glassdeep_prompt_key(&game, tone == 1 ? SDL_SCANCODE_1 : tone == 2 ? SDL_SCANCODE_2 : SDL_SCANCODE_3, 0);
-    ASSERT("matching tone lights the resonator and closes the choice prompt", game.map.tiles[y][x] == TILE_GLASSDEEP_RESONATOR_LIT &&
-        !game_glassdeep_prompt_active(&game));
+    ASSERT("one interaction repairs the cleared mechanism without a retired tone prompt", game.map.tiles[y][x] == TILE_GLASSDEEP_RESONATOR_LIT && !game_glassdeep_prompt_active(&game));
 }
 
 static void test_quest_flow(void) {
@@ -92,7 +88,7 @@ static void test_quest_flow(void) {
     game_talk_to_orin(&game);
     game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
     ASSERT("Orin directs the player to Stillbury's south gate and stages two through four", game.glassdeep_quest_state == 1 &&
-        strstr(game.dialogue_text, "Stillbury's south gate") && strstr(game.dialogue_text, "2, 3, and 4") &&
+        strstr(game.dialogue_text, "south of Stillbury") && strstr(game.dialogue_text, "stage 2") && strstr(game.dialogue_text, "on 3") && strstr(game.dialogue_text, "on 4") &&
         !game.dain_quest_state && !game.sunscar_lamp_quest_state);
     game_talk_to_orin(&game);
     ASSERT("repeat conversation gives instructions without rewarding early", game.glassdeep_quest_state == 1 && strstr(game.dialogue_text, "press A"));
@@ -104,23 +100,23 @@ static void test_quest_flow(void) {
     game_descend(&game);
     game_descend(&game);
     game_descend(&game);
-    ASSERT("stage four uses one Shard Golem guard", guards(&game, 1) == 1 && game.enemies[game.enemy_count - 1].type == ENEMY_SHARD_GOLEM);
+    ASSERT("stage four uses one Stone Troll guard", guards(&game, 1) == 1 && game.enemies[game.enemy_count - 1].type == ENEMY_SHARD_GOLEM);
     tune(3);
     ASSERT("Crown can be restored first without the Prism Sovereign", game.glassdeep_quest_state == 1 && game.glassdeep_quest_progress == 4 &&
         !(game.defeated_bosses & (1 << LOCATION_GLASSDEEP)));
     game_ascend(&game);
     game_ascend(&game);
-    ASSERT("stage two uses two Crystal Spider guards", guards(&game, 1) == 2 && game.enemies[game.enemy_count - 1].type == ENEMY_CRYSTAL_SPIDER);
+    ASSERT("stage two uses two Rockworm guards", guards(&game, 1) == 2 && game.enemies[game.enemy_count - 1].type == ENEMY_CRYSTAL_SPIDER);
     tune(1);
     ASSERT("Root can be restored after Crown", game.glassdeep_quest_progress == 5 && game.glassdeep_quest_state == 1);
     game_descend(&game);
-    ASSERT("stage three uses two Blind Stalker guards", guards(&game, 1) == 2 && game.enemies[game.enemy_count - 1].type == ENEMY_BLIND_STALKER);
+    ASSERT("stage three uses two Quarry Construct guards", guards(&game, 1) == 2 && game.enemies[game.enemy_count - 1].type == ENEMY_BLIND_STALKER);
     tune(2);
     ASSERT("all three independent objectives mark the quest ready to return", game.glassdeep_quest_state == 2 && game.glassdeep_quest_progress == 7 &&
         !(game.defeated_bosses & (1 << LOCATION_GLASSDEEP)));
     QuestJournalEntry entry;
     ASSERT("journal records all three stages and completed objectives", quest_journal_get_entry(&game, QUEST_TAB_ACTIVE, 0, &entry) &&
-        strcmp(entry.title, "The Broken Resonance") == 0 && entry.objective_count == 3 &&
+        strcmp(entry.title, "Reclaim the Quarry") == 0 && entry.objective_count == 3 &&
         entry.stages[0] == 2 && entry.stages[1] == 3 && entry.stages[2] == 4 && entry.objective_complete[0] &&
         entry.objective_complete[1] && entry.objective_complete[2] && entry.reward_gold == 120 && entry.reward_score == 1000);
     ASSERT("ready quest and guardians survive saving", save_game(&game, RESONANCE_SLOT) && load_game(&loaded, RESONANCE_SLOT) &&
@@ -176,7 +172,7 @@ static void test_tuning_and_guards(void) {
         save_game(&game, RESONANCE_SLOT) && load_game(&loaded, RESONANCE_SLOT) && guards(&loaded, 0) == 2 &&
         loaded.enemies[loaded.enemy_count - 1].hp == 7);
     for (int i = 0; i < game.enemy_count; i++) {
-        if (strcmp(game.enemies[i].name, "Resonator Guardian") == 0) {
+        if (strcmp(game.enemies[i].name, "Quarry Guardian") == 0) {
             game.enemies[i].x = 1;
             game.enemies[i].y = 1;
         } else {
@@ -186,21 +182,7 @@ static void test_tuning_and_guards(void) {
     game_interact_glassdeep(&game);
     ASSERT("luring guards away cannot bypass their defeat", !game_glassdeep_prompt_active(&game));
     clear_defenders();
-    game_interact_glassdeep(&game);
-    int hp = game.player.hp;
-    int mp = game.player.mp;
-    ASSERT("prompt consumes movement and spell keys", game_handle_glassdeep_prompt_key(&game, SDL_SCANCODE_LEFT, 0) &&
-        game_handle_glassdeep_prompt_key(&game, SDL_SCANCODE_C, 0) && game.player.x == x && game.player.y == y && game.player.mp == mp);
-    game_handle_glassdeep_prompt_key(&game, SDL_SCANCODE_3, 0);
-    ASSERT("a wrong tone preserves health and progress and repeats the clue", !game.glassdeep_quest_progress && game.player.hp == hp &&
-        game_glassdeep_prompt_active(&game) && strstr(game.dialogue_text, "low rumble") && strstr(game.dialogue_text, "stays dark"));
-    game_handle_glassdeep_prompt_key(&game, SDL_SCANCODE_1, 1);
-    ASSERT("repeated key events cannot tune the crystal", !game.glassdeep_quest_progress);
-    game_handle_glassdeep_prompt_key(&game, SDL_SCANCODE_ESCAPE, 0);
-    ASSERT("Escape cancels tuning without completing the objective", !game.dialogue_active && !game.glassdeep_quest_progress);
-    game_interact_glassdeep(&game);
-    ASSERT("a saved tuning prompt restores its choices and dead guards", save_game(&game, RESONANCE_SLOT) && load_game(&loaded, RESONANCE_SLOT) &&
-        game_glassdeep_prompt_active(&loaded) && !guards(&loaded, 1));
+    ASSERT("defeated machinery guards survive save/load", save_game(&game, RESONANCE_SLOT) && load_game(&loaded, RESONANCE_SLOT) && !guards(&loaded, 1));
     game = loaded;
     game.floor_item_count = 2;
     for (int i = 0; i < 2; i++) {
@@ -208,7 +190,7 @@ static void test_tuning_and_guards(void) {
             .item = item_make_health_potion(), .underlying_tile = TILE_GLASSDEEP_RESONATOR};
     }
     game.map.tiles[y][x] = TILE_ITEM;
-    game_handle_glassdeep_prompt_key(&game, SDL_SCANCODE_KP_1, 0);
+    game_interact_glassdeep(&game);
     ASSERT("tuning beneath overlapping loot preserves both items and updates their underlays", game.glassdeep_quest_progress == 1 &&
         game.map.tiles[y][x] == TILE_ITEM && game.floor_items[0].active && game.floor_items[1].active &&
         game.floor_items[0].underlying_tile == TILE_GLASSDEEP_RESONATOR_LIT && game.floor_items[1].underlying_tile == TILE_GLASSDEEP_RESONATOR_LIT);
@@ -385,7 +367,7 @@ static void test_legacy_save(void) {
 }
 
 void test_glassdeep_quest(void) {
-    printf("Glassdeep Caverns: The Broken Resonance tests:\n");
+    printf("Stonewake Quarry: Reclaim the Quarry tests:\n");
     test_quest_flow();
     test_tuning_and_guards();
     test_existing_progress();

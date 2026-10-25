@@ -8,7 +8,7 @@ routes unsafe.
 | Hunt | Destination | Assigned enemies | Route |
 | --- | --- | --- | --- |
 | Rimefang's pack | Frostfell Wastes, stage 3 | Rimefang, two additional Ice Wolves, and a Frost Wraith | Rosemoor's north gate |
-| Shardwarden's group | Glassdeep Caverns, stage 4 | Shardwarden and two Blind Stalkers | Stillbury's south gate |
+| Shardwarden's group | Stonewake Quarry, stage 4 | Shardwarden and two Quarry Constructs | Stillbury's south gate |
 | Dunehex's group | Sunscar Wastes, stage 3 | Dunehex and two Mummies | Stillbury's west gate |
 
 Rimefang is an Ice Wolf, Shardwarden a Shard Golem, and Dunehex a Djinn. Each

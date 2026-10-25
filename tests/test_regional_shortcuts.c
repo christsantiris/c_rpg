@@ -54,7 +54,7 @@ static void shortcut_victory(int region, int attack) {
     game.player.mp = 100;
     game.enemy_count = 2;
     game.enemies[0] = (Enemy){.type = bosses[region], .active = 1, .is_boss = 1, .x = 30, .y = 28, .hp = 1, .max_hp = 100};
-    game.enemies[1] = (Enemy){.type = ENEMY_GOBLIN, .active = 1, .x = 35, .y = 30, .hp = 100, .max_hp = 100};
+    game.enemies[1] = (Enemy){.type = ENEMY_GOBLIN_SCOUT, .active = 1, .x = 35, .y = 30, .hp = 100, .max_hp = 100};
     game.inventory[0] = attack == 2 ? item_make_bow() : item_make_staff();
     game.player.arrows = MAX_ARROWS;
     game.inventory_count = 1;

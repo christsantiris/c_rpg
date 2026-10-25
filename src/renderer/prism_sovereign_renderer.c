@@ -1,3 +1,4 @@
+#include "../game/stonewake.h"
 #include "prism_sovereign_renderer.h"
 #include "../game/prism_sovereign.h"
 #include "sprites.h"
@@ -12,7 +13,7 @@ void draw_prism_sovereign_tile(Renderer *r, int sx, int sy, int mx, int my, Tile
     int py = sy * TILE_SIZE;
     if (tile == TILE_PRISM_RELIQUARY || tile == TILE_PRISM_PAVED_RELIQUARY) {
         draw_world_prop(r, sx, sy, PROP_CHEST, (SDL_Color){159, 196, 237, 255});
-        renderer_draw_text(r, "SOVEREIGN REWARDS", px - 36, py - 12, (SDL_Color){214, 207, 251, 255}, r->font_tiny);
+        renderer_draw_text(r, "QUARRY REWARDS", px - 36, py - 12, (SDL_Color){214, 207, 251, 255}, r->font_tiny);
         return;
     }
     draw_world_prop(r, sx, sy, PROP_CRYSTAL, tile == TILE_PRISM_RETURN ? (SDL_Color){135, 231, 193, 255} :
@@ -44,9 +45,9 @@ void draw_prism_sovereign_warnings(Renderer *r, const GameState *g, const Viewpo
                 int px = viewport_to_screen_x(v, x) * TILE_SIZE;
                 int py = viewport_to_screen_y(v, y) * TILE_SIZE;
                 SDL_Rect tile = {px + 1, py + 1, TILE_SIZE - 2, TILE_SIZE - 2};
-                SDL_SetRenderDrawColor(r->sdl, 102, 91, 177, 105);
+                SDL_SetRenderDrawColor(r->sdl, 168, 105, 36, 105);
                 SDL_RenderFillRect(r->sdl, &tile);
-                SDL_SetRenderDrawColor(r->sdl, 191, 177, 249, 255);
+                SDL_SetRenderDrawColor(r->sdl, 240, 193, 94, 255);
                 SDL_RenderDrawRect(r->sdl, &tile);
                 char label[8];
                 snprintf(label, sizeof(label), "%d", e->move_timer);
@@ -104,9 +105,8 @@ void draw_prism_sovereign_status(Renderer *r, const GameState *g, const Viewport
         SDL_RenderFillRect(r->sdl, &panel);
         SDL_SetRenderDrawColor(r->sdl, 154, 166, 226, 255);
         SDL_RenderDrawRect(r->sdl, &panel);
-        renderer_draw_text(r, width < 365 ? (e->attack_phase ? "PRISM: PHASE 2" : "PRISM: PHASE 1") :
-            (e->attack_phase ? "PRISM SOVEREIGN: FRACTURED CROWN" : "PRISM SOVEREIGN: FOCUSED LIGHT"),
-            x + 10, top + 8, (SDL_Color){210, 218, 255, 255}, r->font_tiny);
+        const char *title = stonewake_map(&g->map) ? (e->attack_phase ? "QUARRY COLOSSUS: FRACTURED" : "QUARRY COLOSSUS") : "PRISM SOVEREIGN";
+        renderer_draw_text(r, title, x + 10, top + 8, (SDL_Color){218, 214, 169, 255}, r->font_tiny);
         SDL_Rect bar = {x + 10, top + 23, width - 20, 8};
         SDL_SetRenderDrawColor(r->sdl, 49, 44, 72, 255);
         SDL_RenderFillRect(r->sdl, &bar);
@@ -115,7 +115,8 @@ void draw_prism_sovereign_status(Renderer *r, const GameState *g, const Viewport
         SDL_RenderFillRect(r->sdl, &bar);
         char hint[80];
         if (e->move_timer > 0) {
-            const char *attack = e->boss_attack == PRISM_SPLIT ? "SPLIT BEAMS" : "PRISM BEAM";
+            const char *attack = stonewake_map(&g->map) ? (e->boss_attack == 2 ? "SHOCKWAVE" : "HAMMERFALL") :
+                (e->boss_attack == PRISM_SPLIT ? "SPLIT BEAMS" : "PRISM BEAM");
             snprintf(hint, sizeof(hint), width < 280 ? "%s: %d%s" : "%s: %d ACTION%s", attack, e->move_timer,
                 width < 280 ? (e->frozen_turns > 0 ? " *" : "") : (e->frozen_turns > 0 ? " (FROZEN)" : e->move_timer == 1 ? "" : "S"));
         } else if (e->move_timer < 0) {
@@ -124,7 +125,7 @@ void draw_prism_sovereign_status(Renderer *r, const GameState *g, const Viewport
             snprintf(hint, sizeof(hint), "PREPARING ATTACK");
         }
         renderer_draw_text(r, hint, x + 10, top + 38, (SDL_Color){255, 205, 148, 255}, r->font_tiny);
-        snprintf(hint, sizeof(hint), width < 280 ? "A: ROTATE / LOCKED" : "A: ROTATE BETWEEN ATTACKS; WARNINGS LOCK FACES");
+        snprintf(hint, sizeof(hint), stonewake_map(&g->map) ? "CRANE LOADS INTERRUPT WINDUPS" : "ROTATE BETWEEN ATTACKS");
         renderer_draw_text(r, hint, x + 10, top + 55, (SDL_Color){158, 226, 229, 255}, r->font_tiny);
     }
 }

@@ -461,7 +461,8 @@ int map_is_walkable(const Map *m, int x, int y) {
     if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
         return 0;
     }
-    return m->tiles[y][x] != TILE_MANGROVE_WATER && m->tiles[y][x] != TILE_MANGROVE_ROOT &&
+    return m->tiles[y][x] != TILE_STONEWAKE_LEGACY_BOUNDARY && m->tiles[y][x] != TILE_STONEWAKE_WORKSHOP && m->tiles[y][x] != TILE_STONEWAKE_BOUNDARY && m->tiles[y][x] != TILE_STONEWAKE_GAP &&
+        m->tiles[y][x] != TILE_STONEWAKE_SUPPLIES && m->tiles[y][x] != TILE_MANGROVE_WATER && m->tiles[y][x] != TILE_MANGROVE_ROOT &&
         m->tiles[y][x] != TILE_MANGROVE_CACHE && m->tiles[y][x] != TILE_LICH_PILLAR &&
         m->tiles[y][x] != TILE_JAIL_BUILDING &&
         m->tiles[y][x] != TILE_JAIL_GEAR_CHEST &&

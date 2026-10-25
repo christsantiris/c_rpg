@@ -30,6 +30,21 @@ transparency, doorway alignment and signage in the game renderer.
 Do not mark building artwork complete until both comparisons have been
 inspected; automated gameplay tests do not verify visual quality.
 
+## Enemy scale
+
+The player and established ordinary enemies use a **24-pixel body scale**.
+Measure the visible artwork, including equipment, rather than the atlas cell:
+a 48×48 or 64×64 cell can contain transparent padding around a 24-pixel body.
+Render native pixels one for one and align feet to the player's ground line.
+Do not fill a larger cell with a larger ordinary enemy to add detail.
+
+Keep ordinary humanoids within 24×24 visible pixels. Small creatures can be
+shorter or lower to the ground. Deliberately large creatures may exceed this:
+Stonewake's Stone Troll uses at most 32×32, while the Quarry Colossus uses a
+48×48 frame. Compare new art with the player **and an established enemy** at
+the same scale, then inspect it in the game renderer. Check visible width and
+height in renderer tests; merely fitting an atlas cell does not establish scale.
+
 ## Sprites
 
 | Script | Asset | Size | Where it is drawn |
@@ -307,7 +322,7 @@ Dragonspine is 168×216 pixels to accommodate its taller snowy peak and dragons.
 Every asset uses pixelkit at native 24px tile scale and a south-facing doorway.
 
 The generators are `coast.py`, `desert.py`, `frostfell.py`, `moonveil.py`,
-`dragonspine.py`, `ashen.py`, `glassdeep.py` and `catacombs.py`. Each writes
+`dragonspine.py`, `ashen.py`, `stonewake.py` and `catacombs.py`. Each writes
 `assets/images/<name>-entrance.bmp`. The side-area approach metadata in
 `src/game/approach.c` specifies each footprint's height; the renderer loads
 textures in `src/renderer/renderer.c` and anchors them in `draw_area_entrance()`.
@@ -342,3 +357,18 @@ pixelkit. See [native comparisons and SDL previews](../../docs/art-sources/elder
 Saltwind entrance trees, root props and the four-direction skiff atlas use
 `python3 tools/sprites/mangrove.py`. See the native comparison and SDL captures
 in [Saltwind art sources](../../docs/art-sources/saltwind/README.md).
+
+### Stonewake Quarry
+
+Run `python3 tools/sprites/stonewake.py` to reproduce the transparent entrance,
+crane, workshop, repair/supply props and five enemy cells. It uses pixelkit
+stone, timber, textured roofs and outlined layers at 24 pixels per game tile.
+The crane sheet contains three 72×72 cells for raised, crossing and salvage
+settings; its load height changes with the selected route.
+The 48×48 enemy cells pad native bodies: Rockworm 23×14 visible pixels,
+Construct 21×23, Sentinel 24×23, Stone Troll 29×30 and Colossus 44×42.
+The entrance uses sawn limestone benches, a timber crane, a rail portal and a
+small flooded cut, following the atlas quarry rather than a cavern silhouette.
+The old Glassdeep script/art remains a historical source and is no longer
+loaded by the game. See [the region guide](../../docs/stonewake-quarry.md) for
+stages, mechanics and the native/SDL visual checks.

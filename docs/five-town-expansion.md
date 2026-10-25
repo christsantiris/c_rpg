@@ -18,7 +18,7 @@ flowchart BT
     Oak <-->|Dungeon · 5 stages| Dawn[Dawnmere]
     Dawn <-->|Goblin Mountains · 5 stages| Ridge[Ridgeshire]
     Dawn <-->|South road| Salt[Saltwind Marsh · 5 stages]
-    Still <-->|South road| Glass[Glassdeep Caverns · 5 stages]
+    Still <-->|South road| Quarry[Stonewake Quarry · 5 stages]
     Ridge <-->|Crown Road West| Castle
     Oak <-->|Elderthorn unlock| Elder[Elderwood Forest · 5 stages]
     Elder <-->|Northern road| Cat[Royal Catacombs · 5 stages]
@@ -41,6 +41,11 @@ of Oakhaven and south of Ridgeshire. Goblin Mountains moves between Dawnmere's
 north gate and Ridgeshire's south gate. Frostfell and Dragonspine remain the
 northernmost cold regions; Ashen Hollow stays east of Ridgeshire. All other
 existing connections remain in place.
+
+Dawnmere occupies open coastal lowland, with the mountain foothills north of
+town. The northern road climbs through Goblin Mountains to elevated Ridgeshire;
+Dawnmere itself is not surrounded by peaks. The eastern headland remains open
+for the final regional adventure; see the [eastern area concept shortlist](dawnmere-east-design.md).
 
 ## Dungeon and the Lich-unlocked road
 
@@ -128,7 +133,7 @@ Oakhaven, Stillbury, Rosemoor, Ridgeshire and Dawnmere now have walled sprites
 beside safe exterior roads. Walking into a connected cardinal side of a town
 sprite enters beside the matching interior exit gate. Players can bypass any town and continue to another
 existing regional approach or Crown Road. Regional boss locks remain in force;
-Elderwood and Catacombs gate the northern castle road. Stillbury's south road reaches Glassdeep Caverns, and Dawnmere's south road
+Elderwood and Catacombs gate the northern castle road. Stillbury's south road reaches Stonewake Quarry, and Dawnmere's south road
 reaches [Saltwind Marsh](saltwind-marsh.md). Dawnmere's east road remains
 closed and available for a future region. Rowan and the docks are on the
 Sunken Coast approach outside Oakhaven. Pirate Coast and its merchant quest are retired. See

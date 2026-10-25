@@ -70,19 +70,18 @@ Enter **Sunscar Wastes** through Stillbury's west gate, recover the magic lamp
 on stage **4** with `P` (Pick Up), and return to Zara in the Inn for
 **80 gold and 600 score**.
 
-## Orin: The Broken Resonance
+## Orin: Reclaim the Quarry
 
-Surveyor Orin waits in **Rosemoor's Adventurer's Guild**. Press `T` beside him
-to hear the offer, then `Y` to accept a quest in **Glassdeep Caverns**, reached
-through **Stillbury's south gate**. Restore the guarded Root, Tide, and Crown
-resonators on stages **2, 3, and 4** in any order. Press `A` on or beside a
-crystal to read its inscription and choose a tone with `1` (Low), `2` (Middle),
-or `3` (High). `Esc` cancels; incorrect tones allow another attempt without
-damage or lost progress.
+Surveyor Orin waits in **Rosemoor's Adventurer's Guild**. Press `T` beside him,
+then `Y` to accept. Stonewake Quarry is south of Stillbury. Defeat the guards
+and press `A` beside the **West Winch (2), Workshop Hoist (3), Main Gantry (4)**.
+The machinery repairs directly; there are no tone-selection prompts.
 
-Return to Orin for **120 gold and 1,000 score**, awarded once. Acceptance
-preserves existing cavern progress, and the Prism Sovereign is optional.
-See [The Broken Resonance](glassdeep-caverns.md#the-broken-resonance).
+Return to Orin for **120 gold, 1,000 score and Magic Stone Warhammer**:
++8 attack and **+30 maximum HP while equipped**, two handed, all classes.
+With a full pack, Orin holds the hammer until a later conversation. Rewards
+pay once, existing quest progress survives migration, and the Colossus is
+optional. See [Reclaim the Quarry](stonewake-quarry.md#reclaim-the-quarry).
 
 ## Liora: The Stolen Moonseed
 

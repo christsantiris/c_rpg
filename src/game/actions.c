@@ -1,3 +1,4 @@
+#include "stonewake.h"
 #include "actions.h"
 #include "restoration.h"
 #include "game.h"
@@ -186,7 +187,6 @@ Item boss_equipment_reward(EnemyType type) {
         case ENEMY_FOREST_NECROMANCER:
             return item_make_necromancer_cloak();
         case ENEMY_MOUNTAIN_GOBLIN_KING:
-        case ENEMY_GOBLIN_KING:
             return item_make_goblin_king_shield();
         case ENEMY_DROWNED_QUEEN:
             return item_make_tidecaller_robes();
@@ -211,7 +211,6 @@ static int enemy_score(EnemyType type) {
         case ENEMY_BONE_CANTOR: return 170;
         case ENEMY_GRAVE_MARSHAL: return 2400;
         case ENEMY_SKELETON:    return 10;
-        case ENEMY_GOBLIN:      return 15;
         case ENEMY_ZOMBIE:      return 20;
         case ENEMY_CRYPT_BAT:   return 18;
         case ENEMY_WRAITH:      return 40;
@@ -295,15 +294,11 @@ static int enemy_score(EnemyType type) {
         case ENEMY_CRYSTAL_SPIDER: return 60;
         case ENEMY_BLIND_STALKER: return 85;
         case ENEMY_SHARD_GOLEM: return 190;
+        case ENEMY_IRON_SENTINEL: return 170;
         case ENEMY_PRISM_SOVEREIGN: return 2000;
-        case ENEMY_ORC:         return 30;
-        case ENEMY_TROLL:       return 50;
         case ENEMY_GIANT:       return 80;
-        case ENEMY_GOBLIN_KING: return 500;
         case ENEMY_LICH_KING:   return 1000;
-        case ENEMY_DEMON_LORD:  return 2000;
         case ENEMY_RED_DRAGON:  return 3500;
-        case ENEMY_TARRASQUE:   return 5000;
         default:                return 0;
     }
 }
@@ -379,7 +374,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
             push_message(g, "The Grave Marshal falls. The passage to the castle opens!");
         }
         if (type == ENEMY_PRISM_SOVEREIGN) {
-            push_message(g, "The Prism Sovereign shatters. The path to Stillbury opens!");
+            push_message(g, "The Quarry Colossus shatters. The path to Stillbury opens!");
         }
 
     }
@@ -412,7 +407,6 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         case ENEMY_BONE_CANTOR: gold = 14 + rand() % 10; break;
         case ENEMY_GRAVE_MARSHAL: gold = 100; break;
         case ENEMY_SKELETON: gold = 2 + rand() % 4;  break;
-        case ENEMY_GOBLIN:   gold = 3 + rand() % 5;  break;
         case ENEMY_ZOMBIE:   gold = 4 + rand() % 6;  break;
         case ENEMY_CRYPT_BAT: gold = 2 + rand() % 4; break;
         case ENEMY_WRAITH: gold = 7 + rand() % 7; break;
@@ -484,15 +478,11 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         case ENEMY_CRYSTAL_SPIDER: gold = 6 + rand() % 7; break;
         case ENEMY_BLIND_STALKER: gold = 8 + rand() % 8; break;
         case ENEMY_SHARD_GOLEM: gold = 16 + rand() % 12; break;
+        case ENEMY_IRON_SENTINEL: gold = 15 + rand() % 12; break;
         case ENEMY_PRISM_SOVEREIGN: gold = 90; break;
-        case ENEMY_ORC:      gold = 6 + rand() % 8;  break;
-        case ENEMY_TROLL:    gold = 10 + rand() % 10; break;
         case ENEMY_GIANT:    gold = 15 + rand() % 15; break;
-        case ENEMY_GOBLIN_KING: break;
         case ENEMY_LICH_KING:  break;
-        case ENEMY_DEMON_LORD:  break;
         case ENEMY_RED_DRAGON: gold = 120; break;
-        case ENEMY_TARRASQUE:  break;
     }
     
     // Smaller purses and fewer coin drops keep routine combat income modest.
@@ -2795,9 +2785,9 @@ void action_resolve_player(GameState *g, Action a) {
                 g->score += g->level * 100;
             } else if (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_GLASSDEEP))) {
                 game_return_to_approach(g);
-                push_message(g, "You emerge from Glassdeep at Stillbury's quarry gate.");
+                push_message(g, "You emerge from Stonewake at Stillbury's quarry gate.");
             } else {
-                push_message(g, "The Prism Sovereign seals the path to Stillbury!");
+                push_message(g, "The Quarry Colossus seals the path to Stillbury!");
             }
             return;
         }
@@ -3798,7 +3788,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         if (e->type == ENEMY_PRISM_SOVEREIGN) {
             int damage = prism_sovereign_tick(g, e, shots);
             if (damage > 0) {
-                apply_enemy_damage(g, damage, FEEDBACK_AFTER_ENEMY_SHOT);
+                apply_enemy_damage(g, damage, stonewake_map(&g->map) ? FEEDBACK_NOW : FEEDBACK_AFTER_ENEMY_SHOT);
             }
             continue;
         }
@@ -4117,12 +4107,14 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             e->type == ENEMY_GOLEM ||
             e->type == ENEMY_THORN_GUARDIAN ||
             e->type == ENEMY_OBSIDIAN_GUARDIAN ||
-            e->type == ENEMY_SHARD_GOLEM ||
+            e->type == ENEMY_SHARD_GOLEM || e->type == ENEMY_IRON_SENTINEL ||
             e->type == ENEMY_LIVING_FLOWER ||
             e->type == ENEMY_VINEBOUND_GUARDIAN ||
             e->type == ENEMY_LUNAR_EFFIGY ||
             e->type == ENEMY_MOONBOUND_SENTINEL) {
-            if (e->move_timer % 2 != 0) continue;
+            if (e->move_timer % 2 != 0) {
+                continue;
+            }
         }
 
         int moved = enemy_prefers_flank(e) && enemy_move_to_flank(g, i);
