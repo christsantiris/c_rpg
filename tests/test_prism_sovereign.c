@@ -439,7 +439,7 @@ static void test_layouts(void) {
                 }
             }
         }
-        props &= reflectors == 2;
+        props &= reflectors == 0 && game.map.tiles[51][39] == TILE_STONEWAKE_CRANE_NEW;
         game.player.x = game.map.stairs_up_x;
         game.player.y = game.map.stairs_up_y;
         e->move_timer = 0;
@@ -463,7 +463,7 @@ static void test_layouts(void) {
         }
         paths &= visited[game.map.stairs_down_y][game.map.stairs_down_x] && visited[e->y][e->x];
     }
-    ASSERT("100 native Glassdeep layouts place exactly two reflectors without touching the boss or exits", props);
+    ASSERT("100 native quarry layouts have a crane beside the arena and no retired prism reflectors", props);
     ASSERT("every arena floor in 100 layouts has a walking escape within its declared warning", escapes);
     ASSERT("all 100 reflector layouts preserve the entrance-to-boss-to-exit route", paths);
 }

@@ -1,3 +1,7 @@
+> Current update: batch 12's Glassdeep roster is replaced by the five
+> [Stonewake Quarry enemies](stonewake-quarry.md#enemies). The batch notes
+> below are historical; runtime art now comes from `stonewake.py`.
+
 # Enemy sprite update checklist
 
 The current roster contains **95 enemy types in 16 batches**. Each `EnemyType` from `src/game/enemy.h` appears exactly once below. Additional boss forms, named hunts, quest enemies, and shared-renderer dependencies are tracked separately.

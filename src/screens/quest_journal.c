@@ -101,11 +101,11 @@ static const QuestDefinition quest_definitions[18] = {
         FROSTFELL_REWARD_GOLD, FROSTFELL_REWARD_SCORE
     },
     {
-        "The Broken Resonance", "Surveyor Orin",
-        "Read the inscriptions and restore three resonators.",
+        "Reclaim the Quarry", "Surveyor Orin",
+        "Reclaim guarded machinery on quarry stages 2, 3 and 4.",
         "Return and speak to Orin in Rosemoor's Adventurer's Guild.",
-        {"Restore Root Resonator", "Restore Tide Resonator", "Restore Crown Resonator"},
-        "Glassdeep Caverns", {2, 3, 4}, GLASSDEEP_REWARD_GOLD, GLASSDEEP_REWARD_SCORE
+        {"Repair West Winch", "Repair Workshop Hoist", "Repair Main Gantry"},
+        "Stonewake Quarry", {2, 3, 4}, GLASSDEEP_REWARD_GOLD, GLASSDEEP_REWARD_SCORE, "Magic Stone Warhammer"
     },
     {
         "The Stolen Moonseed", "Botanist Liora",
@@ -144,7 +144,7 @@ static const QuestDefinition quest_definitions[18] = {
         {"Defeat Rimefang's pack", "Defeat Shardwarden's group", "Defeat Dunehex's group"},
         "Guild hunting routes", {HUNT_FROSTFELL_LEVEL, HUNT_GLASSDEEP_LEVEL, HUNT_SUNSCAR_LEVEL},
         HUNT_REWARD_GOLD, HUNT_REWARD_SCORE, NULL,
-        {"Frostfell Wastes", "Glassdeep Caverns", "Sunscar Wastes"}
+        {"Frostfell Wastes", "Stonewake Quarry", "Sunscar Wastes"}
     },
     {
         "Recover Your Equipment", "Royal Jail",
@@ -293,11 +293,11 @@ int quest_journal_count(const GameState *g, QuestJournalTab tab) {
 int quest_journal_get_boss(const GameState *g, int index, BossJournalEntry *entry) {
     static const char *names[JOURNAL_BOSS_COUNT] = {
         "Lich King", "Necromancer", "Goblin King", "Drowned Queen",
-        "Fallen Sun Guardian", "Swamp Demon", "Red Dragon", "Polar Kraken", "Desert Pharaoh", "Thorn Regent", "Cinder Lord", "Prism Sovereign", "Minotaur", "Grave Marshal", "Castellan", "Royal Arcanist", "Lord Veyr", "Elderthorn", "Sszareth, Keeper of the Roots"
+        "Fallen Sun Guardian", "Swamp Demon", "Red Dragon", "Polar Kraken", "Desert Pharaoh", "Thorn Regent", "Cinder Lord", "Quarry Colossus", "Minotaur", "Grave Marshal", "Castellan", "Royal Arcanist", "Lord Veyr", "Elderthorn", "Sszareth, Keeper of the Roots"
     };
     static const char *areas[JOURNAL_BOSS_COUNT] = {
         "Dungeon", "Forest", "Goblin Mountains", "Sunken Coast",
-        "Ruined Temple", "Blackwater Swamp", "Dragonspine", "Frostfell Wastes", "Sunscar Wastes", "Moonveil Gardens", "Ashen Hollow", "Glassdeep Caverns", "Labyrinth", "Royal Catacombs", "Castle: Iron Keep", "Castle: Crown Chapel", "Castle: Throne", "Elderwood Forest", "Saltwind Marsh"
+        "Ruined Temple", "Blackwater Swamp", "Dragonspine", "Frostfell Wastes", "Sunscar Wastes", "Moonveil Gardens", "Ashen Hollow", "Stonewake Quarry", "Labyrinth", "Royal Catacombs", "Castle: Iron Keep", "Castle: Crown Chapel", "Castle: Throne", "Elderwood Forest", "Saltwind Marsh"
     };
     static const Location regions[JOURNAL_BOSS_COUNT] = {
         LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST,

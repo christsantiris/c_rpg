@@ -10,7 +10,9 @@ static void format_weapon_range(const Item *item, char *text, int size) {
 }
 
 static void format_weapon_trait(const Item *item, char *text, int size) {
-    if (item->gold_drop_bonus_percent > 0) {
+    if (item->max_hp_bonus > 0) {
+        SDL_snprintf(text, size, "+%d MAX HP WHILE EQUIPPED", item->max_hp_bonus);
+    } else if (item->gold_drop_bonus_percent > 0) {
         SDL_snprintf(text, size, "CRIT +%d%% | GOLD +%d%%",
             item->critical_chance_bonus, item->gold_drop_bonus_percent);
     } else if (item->critical_chance_bonus > 0) {

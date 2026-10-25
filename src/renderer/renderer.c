@@ -45,6 +45,10 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->swamp_entrance_texture = load_sprite_texture(sdl, "assets/images/swamp-entrance.bmp");
     r->elderwood_entrance_texture = load_sprite_texture(sdl, "assets/images/elderwood-entrance.bmp");
     r->elderwood_enemy_texture = load_sprite_texture(sdl, "assets/images/elderwood-enemies.bmp");
+    r->stonewake_enemy_texture = load_sprite_texture(sdl, "assets/images/stonewake-enemies.bmp");
+    r->stonewake_workshop_texture = load_sprite_texture(sdl, "assets/images/stonewake-workshop.bmp");
+    r->stonewake_crane_texture = load_sprite_texture(sdl, "assets/images/stonewake-crane.bmp");
+    r->stonewake_prop_texture = load_sprite_texture(sdl, "assets/images/stonewake-props.bmp");
     r->mangrove_enemy_texture = load_sprite_texture(sdl, "assets/images/mangrove-enemies.bmp");
     r->mangrove_entrance_texture = load_sprite_texture(sdl, "assets/images/mangrove-entrance.bmp");
     r->mangrove_root_texture = load_sprite_texture(sdl, "assets/images/mangrove-root.bmp");
@@ -58,7 +62,7 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     entrance_paths[TOWN_EXIT_FROST] = "assets/images/frostfell-entrance.bmp";
     entrance_paths[TOWN_EXIT_MOONVEIL] = "assets/images/moonveil-entrance.bmp";
     entrance_paths[TOWN_EXIT_ASHEN] = "assets/images/ashen-entrance.bmp";
-    entrance_paths[TOWN_EXIT_GLASSDEEP] = "assets/images/glassdeep-entrance.bmp";
+    entrance_paths[TOWN_EXIT_GLASSDEEP] = "assets/images/stonewake-entrance.bmp";
     entrance_paths[TOWN_EXIT_CATACOMBS] = "assets/images/catacombs-entrance.bmp";
     for (int i = 0; i <= TOWN_EXIT_CATACOMBS; i++) {
         r->area_entrance_textures[i] = entrance_paths[i] ? load_sprite_texture(sdl, entrance_paths[i]) : NULL;
@@ -114,6 +118,14 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
 }
 
 void renderer_free(Renderer *r) {
+    SDL_DestroyTexture(r->stonewake_enemy_texture);
+    SDL_DestroyTexture(r->stonewake_workshop_texture);
+    r->stonewake_workshop_texture = NULL;
+    SDL_DestroyTexture(r->stonewake_crane_texture);
+    SDL_DestroyTexture(r->stonewake_prop_texture);
+    r->stonewake_enemy_texture = NULL;
+    r->stonewake_crane_texture = NULL;
+    r->stonewake_prop_texture = NULL;
     SDL_DestroyTexture(r->mangrove_enemy_texture);
     r->mangrove_enemy_texture = NULL;
     SDL_DestroyTexture(r->mangrove_entrance_texture);
