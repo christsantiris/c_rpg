@@ -90,22 +90,17 @@ void draw_restored_burial_seal(Renderer *r, int tile_x, int tile_y);
 
 // Enemey draw functions
 void draw_skeleton(Renderer *r, int tile_x, int tile_y);
-void draw_goblin(Renderer *r, int tile_x, int tile_y);
 void draw_zombie(Renderer *r, int tile_x, int tile_y);
 void draw_crypt_bat(Renderer *r, int tile_x, int tile_y);
 void draw_wraith(Renderer *r, int tile_x, int tile_y);
 void draw_necromancer(Renderer *r, int tile_x, int tile_y);
-void draw_orc(Renderer *r, int tile_x, int tile_y);
-void draw_troll(Renderer *r, int tile_x, int tile_y);
+void draw_armored_guard(Renderer *r, int tile_x, int tile_y);
 void draw_giant(Renderer *r, int tile_x, int tile_y);
 void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type);
 void draw_fallen_sun_guardian_broken(Renderer *r, int tile_x, int tile_y);
 
-void draw_goblin_king(Renderer *r, int tile_x, int tile_y);
 void draw_lich_king(Renderer *r, int tile_x, int tile_y);
-void draw_demon_lord(Renderer *r, int tile_x, int tile_y);
 void draw_red_dragon(Renderer *r, int tile_x, int tile_y);
-void draw_tarrasque(Renderer *r, int tile_x, int tile_y);
 
 // Town Draw functions
 void draw_town_floor(Renderer *r, int tile_x, int tile_y);

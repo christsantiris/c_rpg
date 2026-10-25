@@ -57,6 +57,8 @@ static void test_stonewake_renderer(Renderer *r, GameState *g, SDL_Surface *surf
         int pixels = 0;
         int top = 48;
         int bottom = -1;
+        int left = 48;
+        int right = -1;
         for (int y = 8 * TILE_SIZE - 24; y < 9 * TILE_SIZE; y++) {
             for (int x = 10 * TILE_SIZE - 12; x < 11 * TILE_SIZE + 12; x++) {
                 Uint8 red, green, blue;
@@ -67,14 +69,21 @@ static void test_stonewake_renderer(Renderer *r, GameState *g, SDL_Surface *surf
                         top = y - (8 * TILE_SIZE - 24);
                     }
                     bottom = y - (8 * TILE_SIZE - 24);
+                    int col = x - (10 * TILE_SIZE - 12);
+                    if (col < left) {
+                        left = col;
+                    }
+                    if (col > right) {
+                        right = col;
+                    }
                 }
             }
         }
         assert(pixels > 80);
-        assert(bottom - top < 48);
-        if (i < 4) {
-            assert(bottom - top <= 41);
-        }
+        const int widths[5] = {24, 24, 32, 24, 48};
+        const int heights[5] = {16, 24, 32, 24, 48};
+        assert(right - left + 1 <= widths[i] && bottom - top + 1 <= heights[i]);
+        assert(bottom == 47); // Soles/tail sit on the same ground line as the 24px player.
         for (int n = 0; n < i; n++) {
             assert(hashes[i] != hashes[n]);
         }

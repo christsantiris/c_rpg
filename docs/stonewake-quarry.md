@@ -65,6 +65,13 @@ applies. Fresh physical expeditions respawn ordinary enemies. Stair travel,
 loading and return portals keep the current expedition's damage and deaths.
 Boss victory and its guaranteed rewards remain one time.
 
+The 48×48 atlas cells contain padding, not oversized ordinary bodies. Construct
+and Sentinel are 23 pixels tall beside the 24-pixel player; the Rockworm is
+23×14. The deliberately larger Stone Troll is 29×30 and the Colossus is 44×42.
+All five share the player's ground line. See the [renderer before/after scale
+comparison](images/stonewake-enemy-scale.png) and the [complete enemy/area
+mapping](enemy-roster.md).
+
 ### Quarry Colossus
 
 The Colossus marks a fixed 3×3 hammerfall with **two response actions** before

@@ -187,7 +187,6 @@ Item boss_equipment_reward(EnemyType type) {
         case ENEMY_FOREST_NECROMANCER:
             return item_make_necromancer_cloak();
         case ENEMY_MOUNTAIN_GOBLIN_KING:
-        case ENEMY_GOBLIN_KING:
             return item_make_goblin_king_shield();
         case ENEMY_DROWNED_QUEEN:
             return item_make_tidecaller_robes();
@@ -212,7 +211,6 @@ static int enemy_score(EnemyType type) {
         case ENEMY_BONE_CANTOR: return 170;
         case ENEMY_GRAVE_MARSHAL: return 2400;
         case ENEMY_SKELETON:    return 10;
-        case ENEMY_GOBLIN:      return 15;
         case ENEMY_ZOMBIE:      return 20;
         case ENEMY_CRYPT_BAT:   return 18;
         case ENEMY_WRAITH:      return 40;
@@ -298,14 +296,9 @@ static int enemy_score(EnemyType type) {
         case ENEMY_SHARD_GOLEM: return 190;
         case ENEMY_IRON_SENTINEL: return 170;
         case ENEMY_PRISM_SOVEREIGN: return 2000;
-        case ENEMY_ORC:         return 30;
-        case ENEMY_TROLL:       return 50;
         case ENEMY_GIANT:       return 80;
-        case ENEMY_GOBLIN_KING: return 500;
         case ENEMY_LICH_KING:   return 1000;
-        case ENEMY_DEMON_LORD:  return 2000;
         case ENEMY_RED_DRAGON:  return 3500;
-        case ENEMY_TARRASQUE:   return 5000;
         default:                return 0;
     }
 }
@@ -414,7 +407,6 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         case ENEMY_BONE_CANTOR: gold = 14 + rand() % 10; break;
         case ENEMY_GRAVE_MARSHAL: gold = 100; break;
         case ENEMY_SKELETON: gold = 2 + rand() % 4;  break;
-        case ENEMY_GOBLIN:   gold = 3 + rand() % 5;  break;
         case ENEMY_ZOMBIE:   gold = 4 + rand() % 6;  break;
         case ENEMY_CRYPT_BAT: gold = 2 + rand() % 4; break;
         case ENEMY_WRAITH: gold = 7 + rand() % 7; break;
@@ -488,14 +480,9 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         case ENEMY_SHARD_GOLEM: gold = 16 + rand() % 12; break;
         case ENEMY_IRON_SENTINEL: gold = 15 + rand() % 12; break;
         case ENEMY_PRISM_SOVEREIGN: gold = 90; break;
-        case ENEMY_ORC:      gold = 6 + rand() % 8;  break;
-        case ENEMY_TROLL:    gold = 10 + rand() % 10; break;
         case ENEMY_GIANT:    gold = 15 + rand() % 15; break;
-        case ENEMY_GOBLIN_KING: break;
         case ENEMY_LICH_KING:  break;
-        case ENEMY_DEMON_LORD:  break;
         case ENEMY_RED_DRAGON: gold = 120; break;
-        case ENEMY_TARRASQUE:  break;
     }
     
     // Smaller purses and fewer coin drops keep routine combat income modest.

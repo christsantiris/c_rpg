@@ -62,3 +62,33 @@ Crown Road North and the Catacombs revamp are not part of this change set.
   overwritten. `git diff --check` passes.
 
 Changes remain unstaged and uncommitted for review.
+
+## Sprite scale and entrance correction
+
+The first quarry art pass incorrectly used its 48×48 atlas cells as the scale
+reference. Visible Construct/Sentinel bodies were 31 pixels tall beside the
+24-pixel player; the old renderer test only required non-bosses to fit within
+42 pixels. The correction authors ordinary humanoids in native 24×24 canvases
+and pads their atlas cells without resizing their artwork.
+
+- Visible artwork: Rockworm **23×14**, Quarry Construct **21×23**, Iron Sentinel
+  **24×23**, Stone Troll **29×30**, Quarry Colossus **44×42**. Feet/tails share
+  the player's ground line. The troll and boss intentionally remain larger.
+- Replaced the rounded cavern-like entrance with textured, stepped limestone
+  benches, a timber crane, an 18-pixel-wide rail portal, a loaded cart and a
+  small flooded cutting. The 168×144 footprint and entry alignment are unchanged.
+- Reviewed the [actual SDL before/after comparison](../../images/stonewake-enemy-scale.png)
+  with the same player, Skeleton and Dark Elf in both rows. Also inspected the
+  entrance beside the established blacksmith at native size, the actual approach
+  scene, work yards and Colossus encounter.
+- Debug `debug_shortcuts_test` passes with tighter visible width/height limits
+  for every quarry enemy and a shared ground-line assertion. Existing crane,
+  town, Saltwind and debug passage checks pass.
+- Full Release test runner: **7,958/7,958 passed**. All five BMPs reproduce byte
+  for byte from pixelkit. Existing player save loads read-only through the
+  renderer preview harness. No save format or gameplay changes are required.
+- [Enemy/area mapping](../../enemy-roster.md) audited against all 108 enum
+  definitions and the regional, road, quest, jail, boss and summon spawn code:
+  102 active types, six legacy types with no current spawns, and 25 named variants.
+
+`git diff --check` passes. Changes remain uncommitted for review.

@@ -2,7 +2,7 @@
 #define DUNGEON_ENEMY_ART_H
 
 // Static artwork indices; EnemyType values and saved actors are unchanged.
-enum { DUNGEON_ART_SKELETON, DUNGEON_ART_GOBLIN, DUNGEON_ART_ZOMBIE, DUNGEON_ART_ORC, DUNGEON_ART_TROLL, DUNGEON_ART_GIANT, DUNGEON_ART_CRYPT_BAT, DUNGEON_ART_WRAITH, DUNGEON_ART_CRYPT_CONJURER, DUNGEON_ART_COUNT };
+enum { DUNGEON_ART_SKELETON, DUNGEON_ART_ZOMBIE, DUNGEON_ART_ARMORED_GUARD, DUNGEON_ART_GIANT, DUNGEON_ART_CRYPT_BAT, DUNGEON_ART_WRAITH, DUNGEON_ART_CRYPT_CONJURER, DUNGEON_ART_COUNT };
 
 // Native 24-pixel art. Dots preserve the terrain underneath.
 // s/S/H skin or bone; e/y eyes; c/C/v cloth; l/L/K leather;
@@ -35,32 +35,6 @@ static const char dungeon_enemy_art[DUNGEON_ART_COUNT][24][25] = {
         "......oHSso..oSHSo......",
         "......ooooo..ooooo......",
     },
-    { // GOBLIN
-        "........................",
-        "........................",
-        "........................",
-        ".........oHSSSo.........",
-        "........oHHSSSSo........",
-        "....oo.oHHSSSSSo.oo.....",
-        "....oHSooHSSSSooSSo.....",
-        ".....oSooeSSSSeoSo......",
-        ".......oHySSSSySo....o..",
-        "........oSSSHSSSo....No.",
-        "........oHSfefSSo....NMo",
-        ".........oSSSSSo.....NMo",
-        ".......ovCCoSooCco...Mmo",
-        ".....oHSoCvCCCcoSSo..Mmo",
-        "....oHSoCvClCCcoSSo.oGGo",
-        "....oHSoCvCKlCcoSSHSSLo.",
-        ".....oSSovlllGllosSsSlo.",
-        "......oSooCvCCcCooSo.oo.",
-        "........oCCoCCco........",
-        "........oHSoSSo.........",
-        "........oSSoSSo.........",
-        ".......oLlo.olLo........",
-        "......okLKoo.olLko......",
-        "......oooooo.ooooo......",
-    },
     { // ZOMBIE
         "........................",
         "........................",
@@ -87,7 +61,7 @@ static const char dungeon_enemy_art[DUNGEON_ART_COUNT][24][25] = {
         ".....okLKlo.olLko.......",
         ".....oooooo.ooooo.......",
     },
-    { // ORC
+    { // ARMORED_GUARD
         "........................",
         "........................",
         "........oHHSSSSo........",
@@ -112,32 +86,6 @@ static const char dungeon_enemy_art[DUNGEON_ART_COUNT][24][25] = {
         "......oLlo...oLlo.......",
         ".....okLKlo..olLkko.....",
         ".....oooooo..oooooo.....",
-    },
-    { // TROLL
-        "........................",
-        ".......oUuuo............",
-        ".....oHHSSSSo........oo.",
-        "....oHHSSSSSSo......NMMo",
-        "....oHHSSsSSSSo....NMMmM",
-        "....oHHSSsssSSSo...NMmmo",
-        "....oHSeySSeySso...ommoo",
-        ".....oHSSHHSSSSo....oWo.",
-        ".....oSSHHHSSSSo.....wo.",
-        "......oSfefefSSo.....Wo.",
-        ".....oSSSSSSSSSo.....wo.",
-        "...oHHSSoSSSSSSo.....Wo.",
-        "..oHHSSSHSSSSSSSo....wo.",
-        ".oHHSSSoSHSSSSSSo....Wo.",
-        ".oHSSSoCvClCCcoSSo..SSo.",
-        ".oHSSoCvCCClCCcoSSo..wo.",
-        ".oHSSoCvCCCoCcoSSSo..Wo.",
-        ".oSSsoCvCCCoCoSSso...wo.",
-        "..oSSsoCvllGlcoSSso..Wo.",
-        "...oooovCClCCcoSSo...oo.",
-        ".....oHSSo..oSSSo.......",
-        ".....oSSso..oSSso.......",
-        "....oHSSso..oSSHSo......",
-        "....oooooo..oooooo......",
     },
     { // GIANT
         "........oUuUuo..........",

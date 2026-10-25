@@ -140,6 +140,7 @@ inventory actions.
 - [Moonveil Gardens](docs/moonveil-gardens.md)
 - [Ashen Hollow](docs/ashen-hollow.md)
 - [Stonewake Quarry](docs/stonewake-quarry.md)
+- [Complete enemy names and area mapping](docs/enemy-roster.md)
 - [Elderwood Forest and the northern road](docs/elderwood-forest.md)
 - [Royal Catacombs](docs/catacombs.md)
 - [Castle interior and play testing](docs/castle-design.md)

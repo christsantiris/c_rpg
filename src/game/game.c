@@ -152,13 +152,6 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             e->attack = 3;  e->defense = 0;
             e->experience = 8;
             break;
-        case ENEMY_GOBLIN:
-            strncpy(e->name, "Goblin", sizeof(e->name) - 1);
-            e->name[sizeof(e->name) - 1] = '\0';
-            e->max_hp = 15; e->hp = 15;
-            e->attack = 4;  e->defense = 1;
-            e->experience = 10;
-            break;
         case ENEMY_ZOMBIE:
             strncpy(e->name, "Zombie", sizeof(e->name) - 1);
             e->name[sizeof(e->name) - 1] = '\0';
@@ -537,34 +530,12 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             e->experience = 1000;
             e->is_boss = 1;
             break;
-        case ENEMY_ORC:
-            strncpy(e->name, "Orc", sizeof(e->name) - 1);
-            e->name[sizeof(e->name) - 1] = '\0';
-            e->max_hp = 25; e->hp = 25;
-            e->attack = 7;  e->defense = 2;
-            e->experience = 20;
-            break;
-        case ENEMY_TROLL:
-            strncpy(e->name, "Troll", sizeof(e->name) - 1);
-            e->name[sizeof(e->name) - 1] = '\0';
-            e->max_hp = 40; e->hp = 40;
-            e->attack = 10; e->defense = 4;
-            e->experience = 30;
-            break;
         case ENEMY_GIANT:
             strncpy(e->name, "Giant", sizeof(e->name) - 1);
             e->name[sizeof(e->name) - 1] = '\0';
             e->max_hp = 60; e->hp = 60;
             e->attack = 14; e->defense = 6;
             e->experience = 50;
-            break;
-        case ENEMY_GOBLIN_KING:
-            strncpy(e->name, "Goblin King", sizeof(e->name) - 1);
-            e->name[sizeof(e->name) - 1] = '\0';
-            e->max_hp = 100; e->hp = 100;
-            e->attack = 15;  e->defense = 5;
-            e->experience = 200;
-            e->is_boss = 1;
             break;
         case ENEMY_LICH_KING:
             strncpy(e->name, "Lich King", sizeof(e->name) - 1);
@@ -574,28 +545,12 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             e->experience = 400;
             e->is_boss = 1;
             break;
-        case ENEMY_DEMON_LORD:
-            strncpy(e->name, "Demon Lord", sizeof(e->name) - 1);
-            e->name[sizeof(e->name) - 1] = '\0';
-            e->max_hp = 350; e->hp = 350;
-            e->attack = 38;  e->defense = 15;
-            e->experience = 700;
-            e->is_boss = 1;
-            break;
         case ENEMY_RED_DRAGON:
             strncpy(e->name, "Red Dragon", sizeof(e->name) - 1);
             e->name[sizeof(e->name) - 1] = '\0';
             e->max_hp = 360; e->hp = 360;
             e->attack = 29; e->defense = 11;
             e->experience = 1200;
-            e->is_boss = 1;
-            break;
-        case ENEMY_TARRASQUE:
-            strncpy(e->name, "Tarrasque", sizeof(e->name) - 1);
-            e->name[sizeof(e->name) - 1] = '\0';
-            e->max_hp = 800; e->hp = 800;
-            e->attack = 80;  e->defense = 35;
-            e->experience = 2000;
             e->is_boss = 1;
             break;
     }
@@ -4797,7 +4752,7 @@ void game_talk_to_orin(GameState *g) {
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Surveyor Orin");
     if (g->glassdeep_quest_state == 0) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Stonewake Quarry lies south of Stillbury. Reclaim the West Winch on stage 2, Workshop Hoist on 3, and Main Gantry on 4. Return here for 120 gold and a Magic Stone Warhammer that grants 30 maximum HP while equipped.");
+            "Stonewake Quarry lies south of Stillbury. Reclaim the West Winch on stage 2, Workshop Hoist on 3, and Main Gantry on 4. Return here for 120 gold and a Magic Stone Warhammer.");
     } else if (g->glassdeep_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "Clear the machinery's guards on Stonewake stages 2, 3 and 4, then press A beside each mechanism to repair it. Cranes lower optional walkways; the permanent ramps always remain open. Return to me here in Rosemoor's Guild.");

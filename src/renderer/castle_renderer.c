@@ -153,7 +153,7 @@ void castle_draw_enemy(Renderer *r, int sx, int sy, const Enemy *e) {
         SDL_RenderCopy(r->sdl, texture, &source, &destination);
         SDL_SetTextureColorMod(texture, 255, 255, 255);
     } else {
-        draw_orc(r, sx, sy);
+        draw_armored_guard(r, sx, sy);
     }
     if (e->type == ENEMY_IRON_WARDEN || e->type == ENEMY_CASTELLAN ||
         (e->type == ENEMY_LORD_VEYR && e->attack_phase <= 1)) {
