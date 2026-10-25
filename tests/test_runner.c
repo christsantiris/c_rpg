@@ -81,6 +81,7 @@ void test_regional_terrain(void);
 void test_landscapes(void);
 void test_wilds(void);
 void test_glassdeep(void);
+void test_stonewake(void);
 void test_glassdeep_quest(void);
 void test_catacombs(void);
 void test_elderwood(void);
@@ -201,6 +202,7 @@ int main(void) {
     test_landscapes();
     test_wilds();
     test_glassdeep();
+    test_stonewake();
     test_glassdeep_quest();
     test_elderwood();
     test_catacombs();

@@ -17,7 +17,7 @@ continuations, without a second gate. Streets and services inside all five towns
 | Town | North | East | South | West |
 | --- | --- | --- | --- | --- |
 | Oakhaven | Elderwood / Catacombs / Castle road | Dungeon / Dawnmere road | Sunken Coast | Haunted Forest / Stillbury road |
-| Stillbury | Swamp / Rosemoor road | Haunted Forest / Oakhaven road | Glassdeep Caverns | Sunscar Wastes |
+| Stillbury | Swamp / Rosemoor road | Haunted Forest / Oakhaven road | Stonewake Quarry | Sunscar Wastes |
 | Rosemoor | Frostfell Wastes | Crown Road East / Castle | Swamp / Stillbury road | Moonveil Gardens |
 | Ridgeshire | Dragonspine | Ashen Hollow | Mountains / Dawnmere road | Crown Road West / Castle |
 | Dawnmere | Mountains / Ridgeshire road | Closed | Saltwind Marsh | Dungeon / Oakhaven road |
@@ -108,3 +108,7 @@ Rowan and the docks remain on the Sunken Coast approach outside Oakhaven.
 The Drowned Queen still unlocks dock access; a map or previous voyage still
 unlocks sailing. The atlas uses a compact eastern marsh inlet and a small
 branching wharf, preserving the rocky coastline and broad open sea.
+
+Save version 194 replaces Glassdeep with Stonewake Quarry in the same southern
+Stillbury location. Its approach and town exit retain their IDs and roads.
+See [Stonewake](stonewake-quarry.md) for cranes, stages and migration details.

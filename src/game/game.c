@@ -22,6 +22,7 @@
 #include "approach.h"
 #include "town_road.h"
 #include "regional_terrain.h"
+#include "stonewake.h"
 #include "landscapes.h"
 
 #include <stdlib.h>
@@ -331,22 +332,27 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             e->is_boss = 1;
             break;
         case ENEMY_CRYSTAL_SPIDER:
-            snprintf(e->name, sizeof(e->name), "Crystal Spider");
+            snprintf(e->name, sizeof(e->name), "Rockworm");
             e->max_hp = 30; e->hp = 30;
             e->attack = 11; e->defense = 2; e->experience = 40;
             break;
         case ENEMY_BLIND_STALKER:
-            snprintf(e->name, sizeof(e->name), "Blind Stalker");
+            snprintf(e->name, sizeof(e->name), "Quarry Construct");
             e->max_hp = 38; e->hp = 38;
             e->attack = 16; e->defense = 3; e->experience = 60;
             break;
         case ENEMY_SHARD_GOLEM:
-            snprintf(e->name, sizeof(e->name), "Shard Golem");
+            snprintf(e->name, sizeof(e->name), "Stone Troll");
             e->max_hp = 110; e->hp = 110;
             e->attack = 18; e->defense = 9; e->experience = 130;
             break;
+        case ENEMY_IRON_SENTINEL:
+            snprintf(e->name, sizeof(e->name), "Iron Sentinel");
+            e->max_hp = 95; e->hp = 95;
+            e->attack = 20; e->defense = 10; e->experience = 120;
+            break;
         case ENEMY_PRISM_SOVEREIGN:
-            snprintf(e->name, sizeof(e->name), "Prism Sovereign");
+            snprintf(e->name, sizeof(e->name), "Quarry Colossus");
             e->max_hp = 275; e->hp = 275;
             e->attack = 24; e->defense = 8; e->experience = 800;
             e->is_boss = 1;
@@ -690,6 +696,9 @@ static int enemy_terrain_open(const GameState *g, int x, int y) {
         g->map.tiles[y][x] != TILE_CATACOMBS_FLOOR &&
         g->map.tiles[y][x] != TILE_GLASSDEEP_FLOOR &&
         g->map.tiles[y][x] != TILE_GLASSDEEP_RUIN &&
+        g->map.tiles[y][x] != TILE_STONEWAKE_BRIDGE &&
+        g->map.tiles[y][x] != TILE_STONEWAKE_CRANE_UP &&
+        g->map.tiles[y][x] != TILE_STONEWAKE_CRANE_DOWN &&
         g->map.tiles[y][x] != TILE_FROST_FLOOR &&
         g->map.tiles[y][x] != TILE_FROST_LAKE &&
         g->map.tiles[y][x] != TILE_DRAGON_FLOOR &&
@@ -1305,8 +1314,9 @@ void enemies_spawn(GameState *g) {
             if (g->level < 3) {
                 type = roll < 65 ? ENEMY_CRYSTAL_SPIDER : ENEMY_BLIND_STALKER;
             } else {
-                type = roll < 30 ? ENEMY_CRYSTAL_SPIDER :
-                    (roll < 65 ? ENEMY_BLIND_STALKER : ENEMY_SHARD_GOLEM);
+                type = roll < 25 ? ENEMY_CRYSTAL_SPIDER :
+                    (roll < 55 ? ENEMY_BLIND_STALKER :
+                    (g->level >= 4 && roll >= 80 ? ENEMY_IRON_SENTINEL : ENEMY_SHARD_GOLEM));
             }
         } else if (g->location == LOCATION_ASHEN) {
             if (g->level < 3) {
@@ -1642,6 +1652,7 @@ void game_init(GameState *g) {
     g->frostfell_quest_progress = 0;
     g->frostfell_quest_encounters = 0;
     g->glassdeep_quest_state = 0;
+    g->stonewake_warhammer_state = 0;
     g->glassdeep_quest_progress = 0;
     g->glassdeep_quest_encounters = 0;
     g->moonveil_quest_state = 0;
@@ -1801,6 +1812,10 @@ void game_unequip_main_hand(GameState *g) {
     }
     Item *weapon = &g->inventory[g->equipped_main_hand];
     g->player.attack -= weapon->attack_bonus;
+    g->player.max_hp -= weapon->max_hp_bonus;
+    if (g->player.hp > g->player.max_hp) {
+        g->player.hp = g->player.max_hp;
+    }
     g->player.max_mp -= weapon->max_mp_bonus;
     if (g->player.mp > g->player.max_mp) {
         g->player.mp = g->player.max_mp;
@@ -1876,9 +1891,12 @@ int game_equip_main_hand(GameState *g, int index) {
         weapon->weapon_hands == WEAPON_HANDS_TWO) {
         game_unequip_off_hand(g);
     }
+    int hp_before = g->player.hp;
     game_unequip_main_hand(g);
     g->equipped_main_hand = index;
     g->player.attack += weapon->attack_bonus;
+    g->player.max_hp += weapon->max_hp_bonus;
+    g->player.hp = hp_before < g->player.max_hp ? hp_before : g->player.max_hp;
     g->player.max_mp += weapon->max_mp_bonus;
     return 1;
 }
@@ -2683,7 +2701,7 @@ static int glassdeep_quest_bit(const GameState *g) {
 }
 
 static const char *glassdeep_resonator_name(const GameState *g) {
-    static const char *names[3] = {"Root Resonator", "Tide Resonator", "Crown Resonator"};
+    static const char *names[3] = {"West Winch", "Workshop Hoist", "Main Gantry"};
     return names[g->level - 2];
 }
 
@@ -2704,7 +2722,7 @@ static void place_glassdeep_quest_encounter(GameState *g) {
     int x = -1;
     int y = -1;
     int best = -100000;
-    const Room *room = &g->map.rooms[g->map.room_count - 1];
+    const Room *room = &g->map.rooms[stonewake_map(&g->map) ? g->level + 2 : g->map.room_count - 1];
     int cx;
     int cy;
     map_room_center(room, &cx, &cy);
@@ -2775,13 +2793,13 @@ found:
     int guards = g->level == 4 ? 1 : 2;
     int existing = 0;
     for (int i = 0; i < g->enemy_count; i++) {
-        if (strcmp(g->enemies[i].name, "Resonator Guardian") == 0) {
+        if (strcmp(g->enemies[i].name, "Quarry Guardian") == 0) {
             existing++;
         }
     }
     EnemyType type = g->level == 2 ? ENEMY_CRYSTAL_SPIDER : g->level == 3 ? ENEMY_BLIND_STALKER : ENEMY_SHARD_GOLEM;
     for (int i = existing; i < guards; i++) {
-        if (!spawn_quest_guard(g, type, x, y, "Resonator Guardian")) {
+        if (!spawn_quest_guard(g, type, x, y, "Quarry Guardian")) {
             return;
         }
     }
@@ -3906,6 +3924,7 @@ void game_enter_catacombs(GameState *g) {
 
 void game_enter_glassdeep(GameState *g) {
     clear_floor_loot(g);
+    stonewake_begin_expedition(g);
     g->location = LOCATION_GLASSDEEP;
     start_expedition(g, g->glassdeep_cache, GLASSDEEP_DEPTH);
     g->level = 1;
@@ -3922,8 +3941,8 @@ void game_enter_glassdeep(GameState *g) {
     g->player.x = g->map.stairs_up_x;
     g->player.y = g->map.stairs_up_y;
     g->dialogue_active = 0;
-    push_message(g, "Crystal galleries branch around a central hub. Aim its light north at the receiver to open a shortcut.");
-    push_message(g, "Press the interact key (A by default) on or beside resonators to tune them, or crystal faces to turn them.");
+    push_message(g, "Quarry ramps loop around flooded cuts. Cranes choose a through crossing or a spur to isolated salvage supplies.");
+    push_message(g, "Press the interact key (A by default) beside cranes, guarded machinery or quarry supplies.");
 }
 
 void game_enter_high_pass(GameState *g, int from_town) {
@@ -3992,6 +4011,14 @@ void game_refresh_debug_passages(GameState *g) {
                 case TILE_LABYRINTH_GATE: open = TILE_LABYRINTH_FLOOR; break;
                 case TILE_CASTLE_GATE: open = TILE_CASTLE_GATE_OPEN; break;
                 case TILE_GLASS_SEAL_CLOSED: open = TILE_GLASS_SEAL_OPEN; break;
+                case TILE_STONEWAKE_CRANE_NEW:
+                    open = TILE_STONEWAKE_CRANE_DOWN;
+                    for (int span = 1; span <= 9 && x + span < MAP_W; span++) {
+                        if (quest_object_tile(g, x + span, y) == TILE_STONEWAKE_GAP) {
+                            set_quest_object_tile(g, x + span, y, TILE_STONEWAKE_BRIDGE);
+                        }
+                    }
+                    break;
                 case TILE_DUNGEON_STAIRS_SEALED: open = TILE_DUNGEON_STAIRS_RETURN; break;
                 default: break;
             }
@@ -4743,10 +4770,10 @@ void game_talk_to_selene(GameState *g) {
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Huntmaster Selene");
     if (!g->hunt_quest_state) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Hunt Rimefang in Frostfell 3, Shardwarden in Glassdeep 4, and Dunehex in Sunscar 3. Defeat each entire group, in any order. Return to me here in Rosemoor's Guild for 200 gold.");
+            "Hunt Rimefang in Frostfell 3, Shardwarden in Stonewake 4, and Dunehex in Sunscar 3. Defeat each entire group, in any order. Return to me here in Rosemoor's Guild for 200 gold.");
     } else if (g->hunt_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Rimefang, Frostfell 3: %s. Shardwarden, Glassdeep 4: %s. Dunehex, Sunscar 3: %s. Defeat each entire group. Bosses are optional. Return to me here in Rosemoor's Guild.",
+            "Rimefang, Frostfell 3: %s. Shardwarden, Stonewake 4: %s. Dunehex, Sunscar 3: %s. Defeat each entire group. Bosses are optional. Return to me here in Rosemoor's Guild.",
             g->hunt_quest_progress & 1 ? "done" : "hunting", g->hunt_quest_progress & 2 ? "done" : "hunting", g->hunt_quest_progress & 4 ? "done" : "hunting");
     } else if (g->hunt_quest_state == 2) {
         g->hunt_quest_state = 3;
@@ -4770,19 +4797,22 @@ void game_talk_to_orin(GameState *g) {
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Surveyor Orin");
     if (g->glassdeep_quest_state == 0) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Glassdeep is beyond Stillbury's south gate. Restore Root, Tide, and Crown on stages 2, 3, and 4. Read their tone inscriptions, then return to this Guild for 120 gold.");
+            "Stonewake Quarry lies south of Stillbury. Reclaim the West Winch on stage 2, Workshop Hoist on 3, and Main Gantry on 4. Return here for 120 gold and a Magic Stone Warhammer that grants 30 maximum HP while equipped.");
     } else if (g->glassdeep_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Defeat each resonator's guards, then press A beside it. Read the inscription and choose its tone. Restore all three, then return to me here in Rosemoor's Guild.");
-    } else if (g->glassdeep_quest_state == 2) {
-        g->glassdeep_quest_state = 3;
-        g->gold += GLASSDEEP_REWARD_GOLD;
-        g->score += GLASSDEEP_REWARD_SCORE;
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "The caverns sing again! Your work has restored the old survey network. Take these 120 gold with my thanks.");
-        push_message(g, "Completed: The Broken Resonance. 120 gold and 1,000 score awarded.");
+            "Clear the machinery's guards on Stonewake stages 2, 3 and 4, then press A beside each mechanism to repair it. Cranes lower optional walkways; the permanent ramps always remain open. Return to me here in Rosemoor's Guild.");
     } else {
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "The resonators still shine. Thanks to you, our survey work can begin again.");
+        if (g->glassdeep_quest_state == 2) {
+            g->glassdeep_quest_state = 3;
+            g->gold += GLASSDEEP_REWARD_GOLD;
+            g->score += GLASSDEEP_REWARD_SCORE;
+            g->stonewake_warhammer_state = 1;
+            push_message(g, "Completed: Reclaim the Quarry. 120 gold and 1,000 score awarded.");
+        }
+        stonewake_claim_warhammer(g);
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, g->stonewake_warhammer_state == 1 ?
+            "The quarry can work again. Your Magic Stone Warhammer is safe with me. Make room in your pack and speak to me again to collect it." :
+            "The quarry can work again! The runed stone warhammer strengthens its wielder: 30 maximum HP while equipped. The Guild thanks you.");
     }
 }
 
@@ -4813,7 +4843,7 @@ static int glassdeep_resonator_guarded(const GameState *g, int x, int y) {
     }
     for (int i = 0; i < g->enemy_count; i++) {
         const Enemy *enemy = &g->enemies[i];
-        if (enemy->active && (strcmp(enemy->name, "Resonator Guardian") == 0 ||
+        if (enemy->active && (strcmp(enemy->name, "Quarry Guardian") == 0 ||
             abs(enemy->x - x) + abs(enemy->y - y) <= 4)) {
             return 1;
         }
@@ -4834,11 +4864,23 @@ int game_interact_glassdeep(GameState *g) {
         return 0;
     }
     if (g->glassdeep_quest_progress & glassdeep_quest_bit(g)) {
-        push_message(g, "The restored resonator glows steadily.");
+        push_message(g, "The repaired quarry machinery is working steadily.");
         return 1;
     }
     if (glassdeep_resonator_guarded(g, x, y)) {
-        push_message(g, "Defeat the resonator's defenders before tuning it.");
+        push_message(g, "Defeat the machinery's defenders before repairing it.");
+        return 1;
+    }
+    if (stonewake_map(&g->map)) {
+        g->glassdeep_quest_progress |= glassdeep_quest_bit(g);
+        set_quest_object_tile(g, x, y, TILE_GLASSDEEP_RESONATOR_LIT);
+        char message[MAX_MESSAGE_LEN];
+        snprintf(message, sizeof(message), "%s repaired!", glassdeep_resonator_name(g));
+        push_message(g, message);
+        if (g->glassdeep_quest_progress == 7) {
+            g->glassdeep_quest_state = 2;
+            push_message(g, "All three mechanisms repaired. Return to Surveyor Orin in Rosemoor's Guild.");
+        }
         return 1;
     }
     g->dialogue_active = 1;
@@ -6530,7 +6572,7 @@ static const QuestOffer quest_offers[] = {
     {"Quartermaster Brenna", LOCATION_INN, offsetof(GameState, frostfell_quest_state), 0,
         "Assigned: The Silent Expedition. Recover the journal on Frostfell stage 2 and rescue the surveyor on stage 4."},
     {"Surveyor Orin", LOCATION_GUILD, offsetof(GameState, glassdeep_quest_state), 0,
-        "Assigned: The Broken Resonance. Restore three resonators in Glassdeep Caverns."},
+        "Assigned: Reclaim the Quarry. Repair machinery on Stonewake stages 2, 3 and 4."},
     {"Botanist Liora", LOCATION_TOWN3, offsetof(GameState, moonveil_quest_state), 0,
         "Assigned: The Stolen Moonseed. Restore Moonveil Gardens, then return to Liora in Rosemoor's town center."},
     {"Brother Oswin", LOCATION_TOWN_HALL, offsetof(GameState, catacombs_quest_state), 0,

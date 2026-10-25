@@ -7,7 +7,8 @@ The current atlas is `../../images/world-map-coastal-regions.png`; the final
 section records the restoration of the original beaches and cove with a compact
 Saltwind Marsh south of Dawnmere. The follow-up [version 193 repair](repair-193.md)
 fixes dock continuity, the mountain pass and the marsh elevation. Earlier prompts
-below are historical.
+below are historical. The subsequent [Dawnmere lowland correction](dawnmere-lowlands.md)
+removes peaks around town while retaining the northern mountain pass.
 This is player-facing game documentation: illustrated connections and protected
 coastline features must be reviewed as part of every change. See the
 [atlas acceptance checks](README.md).
@@ -214,3 +215,11 @@ marsh; these missed regressions are corrected in the [version 193 repair](repair
 Exact final edit prompt:
 
 > PRECISE LOCAL EDIT. FIRST IMAGE IS THE MASTER BASE TO PRESERVE. SECOND IMAGE IS ONLY A REFERENCE for Dawnmere's higher position, Goblin Mountains pass and small Saltwind Marsh; DO NOT copy its coastline. Start from the FIRST image, not the second. The user specifically wants the original map's desirable coast restored WITHOUT REDRAWING IT. NONNEGOTIABLE PROTECTED GEOGRAPHY FROM THE FIRST IMAGE: preserve the entire southwestern Glassdeep Caverns vignette at its original scale and position south of Stillbury; preserve ALL the pale sandy beaches along and BELOW Glassdeep, their grassy headlands and the dark rocky cliffs rising BEHIND the beaches; preserve the C-SHAPED TURQUOISE COVE of Sunken Coast, its curved west shoreline and sheltered inland bay, its ruined columns, cliffs and beach coves. DO NOT replace beaches with water. DO NOT turn Glassdeep's land into a rocky island or add offshore stacks in place of its beaches. The entire lower-left 60% of this image should remain identical to the FIRST image. Keep Sunken Coast's original curved coastline, scale and exact placement. Keep original frame, title, compass, five towns, forests, castle, northern regions, separate labyrinth, all names and all unrelated roads unchanged. Only edit these limited eastern features: (1) Move Dawnmere a little north within its existing eastern corridor to approximately the higher position shown in the SECOND reference; retain the west-east dungeon road and northern road to Ridgeshire. Widen Goblin Mountains slightly around their pass so that road runs between mountains. (2) Add a SMALL SALTWIND MARSH INLET SOUTH of Dawnmere, above and separated from Ruined Isle. Just 4-6 exposed-root mangrove trees, two tiny muddy banks and a narrow teal tidal creek with a tiny skiff: a restrained vignette no larger than about 140 x 90 pixels, not a giant delta or island. Exact label 'Saltwind Marsh', a short road south from Dawnmere. Keep the surrounding eastern rocky coast, grassy headlands and broad blue sea; preserve the original waterfall if space permits. No mangroves anywhere west or below Glassdeep. The playable region can be large without large atlas artwork. (3) The Docks must retain the OLDER small wharf style rather than the second image's oversized straight timber bridge. Keep a modest brown wooden pier on support posts attached to the solid coastal shore outside Oakhaven beside Sunken Coast, with a SHORT SIDE MOORING ARM forming a small forked wharf and visible water between the arms. Remove the sailboat icon at the pier; no floating ship. Keep its 'Docks' label and dotted route to Ruined Isle. Do not move or reshape the cove around the dock. (4) Preserve Ruined Isle, Ruined Temple and open sea exactly as in the FIRST image. Critical visual outcome: the FIRST image's intact large crystal cave and BEACHES BELOW IT with cliffs behind; FIRST image's original beautiful curved Sunken Coast bay; only a tiny eastern Saltwind inlet and modest branching docks added. Preserve 1536x1024 / 3:2 landscape and original watercolor/ink style.
+
+
+## Stonewake replacement (save version 194)
+
+The current atlas replaces Glassdeep in place with Stonewake Quarry. See
+[the exact localized edit prompt and visual acceptance record](stonewake.md).
+The shoreline, beaches, cliffs, cove, connected docks, town elevations and
+existing roads remain protected features.

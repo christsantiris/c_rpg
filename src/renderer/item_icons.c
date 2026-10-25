@@ -201,6 +201,18 @@ static void draw_item_art(Renderer *r, int x, int y, int art, SDL_Color *pal, co
 }
 
 void draw_icon_weapon(Renderer *r, int px, int py, const Item *item) {
+    if (item && item->visual_id == ITEM_VISUAL_STONE_WARHAMMER) {
+        fill_rect_px(r, px + 10, py + 7, 4, 15, (SDL_Color){39, 34, 28, 255});
+        fill_rect_px(r, px + 11, py + 7, 2, 14, (SDL_Color){140, 96, 54, 255});
+        fill_rect_px(r, px + 3, py + 2, 18, 9, (SDL_Color){38, 40, 34, 255});
+        fill_rect_px(r, px + 4, py + 3, 16, 6, (SDL_Color){173, 169, 140, 255});
+        fill_rect_px(r, px + 4, py + 3, 16, 1, (SDL_Color){221, 213, 180, 255});
+        fill_rect_px(r, px + 6, py + 3, 2, 7, (SDL_Color){65, 77, 65, 255});
+        fill_rect_px(r, px + 16, py + 3, 2, 7, (SDL_Color){65, 77, 65, 255});
+        fill_rect_px(r, px + 11, py + 4, 2, 4, (SDL_Color){139, 212, 110, 255});
+        fill_rect_px(r, px + 9, py + 5, 6, 1, (SDL_Color){139, 212, 110, 255});
+        return;
+    }
     if (!item) {
         return;
     }

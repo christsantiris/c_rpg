@@ -199,6 +199,8 @@ static int debug_weapon(const char *name, Item *weapon, int *none) {
         *weapon = item_make_embercleaver();
     } else if (strcmp(name, "magic-battle-axe") == 0) {
         *weapon = item_make_magic_battle_axe();
+    } else if (strcmp(name, "stone-warhammer") == 0) {
+        *weapon = item_make_stone_warhammer();
     } else if (strcmp(name, "staff") == 0) {
         *weapon = item_make_staff();
     } else if (strcmp(name, "runed-staff") == 0) {

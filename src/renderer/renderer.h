@@ -38,6 +38,10 @@ typedef struct {
     SDL_Texture *elderwood_entrance_texture;
     SDL_Texture *elderwood_enemy_texture;
     SDL_Texture *mangrove_enemy_texture;
+    SDL_Texture *stonewake_enemy_texture;
+    SDL_Texture *stonewake_crane_texture;
+    SDL_Texture *stonewake_prop_texture;
+    SDL_Texture *stonewake_workshop_texture;
     SDL_Texture *mangrove_entrance_texture;
     SDL_Texture *mangrove_root_texture;
     SDL_Texture *skiff_texture;

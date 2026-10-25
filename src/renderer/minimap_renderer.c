@@ -92,7 +92,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         continue;
                     }
                     TileType tile = g->map.tiles[sy][sx];
-                    if (tile == TILE_MANGROVE_WATER) {
+                    if (tile == TILE_MANGROVE_WATER || tile == TILE_GLASSDEEP_POOL || tile == TILE_STONEWAKE_GAP) {
                         has_water = 1;
                     }
                     if (tile == TILE_MANGROVE_EXIT || tile == TILE_MANGROVE_LANDING || tile == TILE_MANGROVE_RETURN || tile == TILE_MANGROVE_CACHE ||
@@ -164,6 +164,10 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_MOONVEIL_WAYSTONE_A || tile == TILE_MOONVEIL_WAYSTONE_B ||
                         tile == TILE_ASHEN_VALVE || tile == TILE_ASHEN_VALVE_DIVERTED || (tile >= TILE_GLASS_FACE_N && tile <= TILE_GLASS_SEAL_OPEN)) {
                         has_stair = 1;
+                    } else if (tile == TILE_STONEWAKE_CRANE_NEW || tile == TILE_STONEWAKE_CRANE_UP ||
+                        tile == TILE_STONEWAKE_CRANE_DOWN || tile == TILE_STONEWAKE_CRANE_SALVAGE ||
+                        tile == TILE_STONEWAKE_REMOTE || tile == TILE_STONEWAKE_SUPPLIES) {
+                        has_stair = 1;
                     } else if (tile == TILE_FOREST_LANDMARK) {
                         has_stair = 1;
                     } else if (tile == TILE_BROKEN_BURIAL_SEAL) {
@@ -193,6 +197,8 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile != TILE_ASHEN_LAVA &&
                         tile != TILE_GLASSDEEP_WALL &&
                         tile != TILE_GLASSDEEP_POOL &&
+                        tile != TILE_STONEWAKE_BOUNDARY && tile != TILE_STONEWAKE_LEGACY_BOUNDARY && tile != TILE_STONEWAKE_GAP &&
+                        tile != TILE_STONEWAKE_WORKSHOP &&
                         tile != TILE_GLASS_SEAL_CLOSED &&
                         tile != TILE_FROST_WALL &&
                         tile != TILE_FROST_LAKE_HOLE &&
@@ -240,7 +246,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                 } else if (g->location == LOCATION_CATACOMBS) {
                     SDL_SetRenderDrawColor(r->sdl, 166, 158, 134, 255);
                 } else if (g->location == LOCATION_GLASSDEEP) {
-                    SDL_SetRenderDrawColor(r->sdl, 130, 153, 213, 255);
+                    SDL_SetRenderDrawColor(r->sdl, 175, 167, 128, 255);
                 } else if (g->location == LOCATION_COAST) {
                     SDL_SetRenderDrawColor(r->sdl, 35, 125, 145, 255);
                 } else if (g->location == LOCATION_TEMPLE) {

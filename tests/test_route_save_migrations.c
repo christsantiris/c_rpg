@@ -578,6 +578,14 @@ static void test_mountain_climb_migration(void) {
     original.watchfire_quest_state = 1;
     original.level = 4;
     map_room_center(&original.map.rooms[original.map.room_count / 2], &original.player.x, &original.player.y);
+    // This fixture needs a valid landing, independent of random regular spawns.
+    for (int i = 0; i < original.enemy_count; i++) {
+        Enemy *enemy = &original.enemies[i];
+        if (enemy->x == original.player.x && enemy->y == original.player.y) {
+            enemy->active = 0;
+            enemy->hp = 0;
+        }
+    }
     game_open_town_portal(&original);
     ok = make_legacy_save(170) && load_game(&loaded, ROUTE_SAVE_SLOT);
     ASSERT("watchfire relocation preserves a saved summit portal", ok && loaded.portal_active && loaded.portal_level == 5);

@@ -1,4 +1,5 @@
 #include "prism_sovereign.h"
+#include "stonewake.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -64,6 +65,9 @@ static int plain(TileType tile) {
 }
 
 void prism_sovereign_prepare_map(Map *m, const Enemy *enemies, int count, int px, int py) {
+    if (stonewake_map(m)) {
+        return;
+    }
     const Enemy *boss = NULL;
     for (int i = 0; i < count; i++) {
         if (enemies[i].active && enemies[i].type == ENEMY_PRISM_SOVEREIGN) {
@@ -157,6 +161,9 @@ static int trace(const GameState *g, const Enemy *e, int dx, int dy, int ex, int
 }
 
 int prism_sovereign_segments(const GameState *g, const Enemy *e, PrismSegment out[4]) {
+    if (stonewake_map(&g->map)) {
+        return 0;
+    }
     if (!e->active || e->type != ENEMY_PRISM_SOVEREIGN || e->move_timer <= 0 || abs(e->facing_dx) + abs(e->facing_dy) != 1) {
         return 0;
     }
@@ -186,6 +193,9 @@ static int segment_has(const PrismSegment *s, int x, int y) {
 }
 
 int prism_sovereign_attack_marks(const GameState *g, const Enemy *e, int x, int y) {
+    if (stonewake_map(&g->map)) {
+        return stonewake_attack_marks(g, e, x, y);
+    }
     PrismSegment segments[4];
     int count = prism_sovereign_segments(g, e, segments);
     for (int n = 0; n < count; n++) {
@@ -221,6 +231,9 @@ static int can_escape(const GameState *g, const Enemy *e, int x, int y, int turn
     return 0;
 }
 int prism_sovereign_tick(GameState *g, Enemy *e, EnemyProjectiles *shots) {
+    if (stonewake_map(&g->map)) {
+        return stonewake_colossus_tick(g, e);
+    }
     if (!arena(g)) {
         return 0;
     }
@@ -336,7 +349,7 @@ void prism_sovereign_restore_reward(GameState *g) {
     }
     if (bx >= 0) {
         set_tile(g, bx, by, tile_at(g, bx, by) == TILE_GLASSDEEP_RUIN ? TILE_PRISM_PAVED_RELIQUARY : TILE_PRISM_RELIQUARY);
-        push_message(g, "Prism Sovereign rewards wait in the prismatic reliquary. Interact beside it or press P on it.");
+        push_message(g, "Quarry Colossus rewards wait in the quarry strongbox. Interact beside it or press P on it.");
     }
 }
 
@@ -382,7 +395,7 @@ static int interact_at(GameState *g, int pickup) {
             }
         }
         if (g->prism_sovereign_reward_pending) {
-            push_message(g, "Inventory full. Remaining Sovereign rewards stay in the prismatic reliquary.");
+            push_message(g, "Inventory full. Remaining Sovereign rewards stay in the quarry strongbox.");
         } else {
             set_tile(g, x, y, tile == TILE_PRISM_PAVED_RELIQUARY ? TILE_GLASSDEEP_RUIN : TILE_GLASSDEEP_FLOOR);
         }

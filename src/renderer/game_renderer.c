@@ -1,3 +1,4 @@
+#include "stonewake_renderer.h"
 #include "game_renderer.h"
 #include "mangrove_renderer.h"
 #include "../game/mangrove.h"
@@ -350,17 +351,7 @@ static void draw_moonveil_quest_tile(Renderer *r, int sx, int sy, int x, int y, 
 
 static void draw_glassdeep_resonator(Renderer *r, int sx, int sy, int x, int y, TileType tile) {
     draw_glassdeep_ruin(r, sx, sy, x, y);
-    int px = sx * TILE_SIZE;
-    int py = sy * TILE_SIZE;
-    int lit = tile == TILE_GLASSDEEP_RESONATOR_LIT;
-    if (lit) {
-        int pulse = (SDL_GetTicks() / 160) % 4;
-        SDL_SetRenderDrawColor(r->sdl, 44, 100 + pulse * 12, 124 + pulse * 15, 255);
-        SDL_Rect glow = {px + 3 - pulse / 2, py + 3 - pulse / 2, 18 + pulse, 18 + pulse};
-        SDL_RenderDrawRect(r->sdl, &glow);
-    }
-    SDL_Color crystal = lit ? (SDL_Color){112, 232, 248, 255} : (SDL_Color){69, 91, 127, 255};
-    draw_world_prop(r, sx, sy, PROP_CRYSTAL, crystal);
+    draw_stonewake_machinery(r, sx, sy, tile == TILE_GLASSDEEP_RESONATOR_LIT);
 }
 
 static void draw_emberforge_tile(Renderer *r, int sx, int sy, int x, int y, TileType tile) {
@@ -2419,6 +2410,19 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_DESERT_OASIS_DRY:
                 case TILE_MOONVEIL_WAYSTONE_A:
                 case TILE_MOONVEIL_WAYSTONE_B:
+                case TILE_STONEWAKE_BOUNDARY:
+                case TILE_STONEWAKE_CRANE_UP:
+                case TILE_STONEWAKE_CRANE_DOWN:
+                case TILE_STONEWAKE_GAP:
+                case TILE_STONEWAKE_BRIDGE:
+                case TILE_STONEWAKE_SUPPLIES:
+                case TILE_STONEWAKE_EMPTY:
+                case TILE_STONEWAKE_WORKSHOP:
+                case TILE_STONEWAKE_LEGACY_BOUNDARY:
+                case TILE_STONEWAKE_CRANE_NEW:
+                case TILE_STONEWAKE_CRANE_SALVAGE:
+                case TILE_STONEWAKE_LEDGE:
+                case TILE_STONEWAKE_REMOTE:
                 case TILE_ASHEN_COLD_6:
                 case TILE_ASHEN_COLD_5:
                 case TILE_ASHEN_COLD_4:
@@ -3090,6 +3094,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_town_road(r, g, v);
     draw_northern_road(r, g, v);
 
+    draw_stonewake_props(r, g, v);
     draw_regional_terrain_light(r, g, v);
 
     if (g->location == LOCATION_APPROACH) {
@@ -3509,8 +3514,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, 1) * TILE_SIZE,
             viewport_to_screen_y(v, 11) * TILE_SIZE,
             area_label_color(LOCATION_DESERT), r->font_tiny);
-        TTF_SizeText(r->font_tiny, "GLASSDEEP", &width, NULL);
-        renderer_draw_text(r, "GLASSDEEP",
+        TTF_SizeText(r->font_tiny, "STONEWAKE", &width, NULL);
+        renderer_draw_text(r, "STONEWAKE",
             viewport_to_screen_x(v, SOUTH_AREA_GATE_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE + 8,
             area_label_color(LOCATION_GLASSDEEP), r->font_tiny);
@@ -3762,7 +3767,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     !viewport_is_visible(v, x, y) || !map_is_explored(&g->map, x, y)) {
                     continue;
                 }
-                const char *label = tile == TILE_GLASSDEEP_RESONATOR_LIT ? "RESTORED" : "RESONATOR (A)";
+                const char *label = tile == TILE_GLASSDEEP_RESONATOR_LIT ? "REPAIRED" : "REPAIR (A)";
                 int width = 0;
                 TTF_SizeText(r->font_tiny, label, &width, NULL);
                 renderer_draw_text(r, label, viewport_to_screen_x(v, x) * TILE_SIZE + (TILE_SIZE - width) / 2,

@@ -197,7 +197,10 @@ phase messages to communicate escalation.
   weapons relevant; no new elemental-damage subsystem.
 - **Boundary:** do not alter the Emberforge quest's mechanism or repaired forge.
 
-### 11. Prism Sovereign — Glassdeep Caverns stage 5
+### 11. Prism Sovereign — Glassdeep Caverns stage 5 (retired)
+
+Replaced by [Stonewake's Quarry Colossus](../stonewake-quarry.md#quarry-colossus).
+The following records the old encounter; it is not current gameplay.
 
 - **Phase 1, Focused Light:** retain the existing fixed, one-turn beam and add
   an explicit recovery opening.

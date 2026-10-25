@@ -177,7 +177,7 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
     } else if (g->location == LOCATION_CATACOMBS) {
         SDL_snprintf(loc, sizeof(loc), "ROYAL CATACOMBS %d", g->level);
     } else if (g->location == LOCATION_GLASSDEEP) {
-        SDL_snprintf(loc, sizeof(loc), "GLASSDEEP CAVERNS %d", g->level);
+        SDL_snprintf(loc, sizeof(loc), "STONEWAKE QUARRY %d", g->level);
     } else if (g->location == LOCATION_DESERT) {
         SDL_snprintf(loc, sizeof(loc), "SUNSCAR WASTES %d", g->level);
     } else if (g->location == LOCATION_ISLAND) {

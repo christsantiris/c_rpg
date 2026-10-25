@@ -1,9 +1,11 @@
 #include "regional_terrain.h"
+#include "stonewake.h"
 #include <stdlib.h>
 #include <string.h>
 
 int regional_terrain_tile(TileType tile) {
-    return tile >= TILE_ASHEN_COLD_6 && tile <= TILE_ASHEN_VALVE_DIVERTED;
+    return (tile >= TILE_ASHEN_COLD_6 && tile <= TILE_ASHEN_VALVE_DIVERTED) ||
+        (tile >= TILE_STONEWAKE_BOUNDARY && tile <= TILE_STONEWAKE_REMOTE);
 }
 
 int regional_terrain_heat(TileType tile) {
@@ -229,49 +231,7 @@ void map_generate_ashen(Map *m, int level) {
 }
 
 void map_generate_glassdeep(Map *m, int level) {
-    static const int centers[9][2] = {{35, 7}, {35, 25}, {14, 17}, {57, 17}, {13, 38}, {58, 38}, {13, 53}, {59, 53}, {36, 56}};
-    static const int edges[][2] = {{0, 1}, {0, 2}, {0, 3}, {2, 4}, {3, 5}, {4, 1}, {1, 5}, {4, 6}, {5, 7}, {6, 8}, {7, 8}};
-    init_region(m, 1);
-    for (int i = 0; i < 9; i++) {
-        int w = i == 1 ? 22 : 12 + i % 3 * 2;
-        int h = i == 1 ? 14 : 9 + i % 2;
-        chamber(m, i, centers[i][0], centers[i][1], w, h, 1);
-    }
-    for (int i = 0; i < (int)(sizeof(edges) / sizeof(edges[0])); i++) {
-        link_rooms(m, edges[i][0], edges[i][1], 1, 1);
-    }
-    // Side galleries join below the hub's northern seal, preserving a bypass.
-    path(m, 13, 38, 27, 27, 1, 1);
-    path(m, 58, 38, 43, 27, 1, 1);
-    for (int i = 0; i < 3 + level; i++) {
-        int x = 7 + i % 3 * 24;
-        int y = 27 + i / 3 * 15;
-        for (int dy = -2; dy <= 2; dy++) {
-            for (int dx = -2; dx <= 2; dx++) {
-                if (dx * dx + dy * dy <= 5 && m->tiles[y + dy][x + dx] == TILE_GLASSDEEP_WALL) {
-                    m->tiles[y + dy][x + dx] = TILE_GLASSDEEP_POOL;
-                }
-            }
-        }
-    }
-    // Rounded chambers retain crystal columns as cover, away from their centers.
-    for (int i = 2; i < 8; i++) {
-        const Room *room = &m->rooms[i];
-        int x = room->x + room->w / 2 + 3;
-        int y = room->y + room->h / 2 - 2;
-        if (m->tiles[y][x] == TILE_GLASSDEEP_FLOOR) {
-            m->tiles[y][x] = TILE_GLASSDEEP_WALL;
-        }
-    }
-    add_optics(m, 1, 0);
-    m->stairs_up_x = centers[0][0];
-    m->stairs_up_y = 0;
-    m->stairs_down_x = centers[8][0];
-    m->stairs_down_y = SWAMP_MAP_H - 1;
-    path(m, m->stairs_up_x, 1, m->stairs_up_x, 7, 1, 1);
-    path(m, m->stairs_down_x, 56, m->stairs_down_x, SWAMP_MAP_H - 2, 1, 1);
-    m->tiles[0][m->stairs_up_x] = TILE_GLASSDEEP_ENTRANCE;
-    m->tiles[m->stairs_down_y][m->stairs_down_x] = TILE_GLASSDEEP_EXIT;
+    stonewake_generate(m, level);
 }
 
 static int interaction(const GameState *g, int *x, int *y) {
@@ -295,7 +255,7 @@ static int interaction(const GameState *g, int *x, int *y) {
 
 int regional_terrain_has_interaction(const GameState *g) {
     int x, y;
-    return interaction(g, &x, &y);
+    return stonewake_has_interaction(g) || interaction(g, &x, &y);
 }
 
 static int gate_occupied(const GameState *g, int x, int y) {
@@ -329,6 +289,9 @@ static int source_lit(const GameState *g, int x, int y) {
 }
 
 int regional_terrain_interact(GameState *g) {
+    if (stonewake_interact(g)) {
+        return 1;
+    }
     int x, y;
     if (!interaction(g, &x, &y)) {
         return 0;
@@ -409,7 +372,7 @@ void regional_terrain_cancel_landing(GameState *g, int x, int y) {
 }
 
 int regional_terrain_light(const GameState *g, int x, int y) {
-    if (g->location != LOCATION_GLASSDEEP || !map_is_walkable(&g->map, x, y)) {
+    if (stonewake_map(&g->map) || g->location != LOCATION_GLASSDEEP || !map_is_walkable(&g->map, x, y)) {
         return 0;
     }
     static const int dx[4] = {0, 1, 0, -1};

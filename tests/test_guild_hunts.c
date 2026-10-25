@@ -110,7 +110,7 @@ static void test_flow(void) {
     QuestJournalEntry entry;
     ASSERT("journal names all regions, stages, and Selene's exact return location", quest_journal_get_entry(&game, QUEST_TAB_ACTIVE, 0, &entry) &&
         strcmp(entry.title, "The Three Great Hunts") == 0 && entry.objective_count == 3 && entry.stages[0] == 3 && entry.stages[1] == 4 && entry.stages[2] == 3 &&
-        strcmp(entry.objective_areas[0], "Frostfell Wastes") == 0 && strcmp(entry.objective_areas[1], "Glassdeep Caverns") == 0 &&
+        strcmp(entry.objective_areas[0], "Frostfell Wastes") == 0 && strcmp(entry.objective_areas[1], "Stonewake Quarry") == 0 &&
         strcmp(entry.objective_areas[2], "Sunscar Wastes") == 0 && strstr(entry.summary_line_2, "Selene in Rosemoor's Adventurer's Guild"));
     ASSERT("accepted quest saves inside the Guild", save_game(&game, HUNT_SLOT) && load_game(&loaded, HUNT_SLOT) &&
         loaded.hunt_quest_state == 1 && !loaded.hunt_quest_progress);

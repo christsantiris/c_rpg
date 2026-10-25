@@ -1,3 +1,4 @@
+#include "../game/stonewake.h"
 #include "save_load.h"
 #include "../game/game.h"
 #include "../game/town_road.h"
@@ -1136,7 +1137,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 193);
+    cJSON_AddNumberToObject(root, "save_version", 195);
     MangroveState mangrove = g->mangroves;
     mangrove_capture(g, &mangrove);
     cJSON_AddItemToObject(root, "mangroves", serialize_mangrove(&mangrove));
@@ -1209,6 +1210,7 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "thorn_regent_reward_pending", g->thorn_regent_reward_pending);
     cJSON_AddNumberToObject(root, "cinder_lord_reward_pending", g->cinder_lord_reward_pending);
     cJSON_AddNumberToObject(root, "prism_sovereign_reward_pending", g->prism_sovereign_reward_pending);
+    cJSON_AddNumberToObject(root, "stonewake_warhammer_state", g->stonewake_warhammer_state);
     cJSON_AddNumberToObject(root, "sun_guardian_reward_state", g->sun_guardian_reward_state);
     cJSON_AddNumberToObject(root, "red_dragon_reward_state", g->red_dragon_reward_state);
     cJSON_AddNumberToObject(player, "known_spell_count", g->player.known_spell_count);
@@ -3599,6 +3601,12 @@ int load_game(GameState *g, int slot) {
         cJSON_Delete(root);
         return 0;
     }
+    cJSON *hammer = cJSON_GetObjectItem(root, "stonewake_warhammer_state");
+    if (save_version >= 194 && (!cJSON_IsNumber(hammer) || hammer->valuedouble != hammer->valueint || hammer->valueint < 0 || hammer->valueint > 2)) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    g->stonewake_warhammer_state = save_version >= 194 ? hammer->valueint : 0;
     cJSON *prism_reward = cJSON_GetObjectItem(root, "prism_sovereign_reward_pending");
     cJSON *guardian_reward = cJSON_GetObjectItem(root, "sun_guardian_reward_state");
     cJSON *dragon_reward = cJSON_GetObjectItem(root, "red_dragon_reward_state");
@@ -5887,6 +5895,15 @@ int load_game(GameState *g, int slot) {
         (g->player.x < 0 || g->player.x >= MANGROVE_PATH_W || g->player.y < 0 || g->player.y >= MANGROVE_PATH_H))) {
         cJSON_Delete(root);
         return 0;
+    }
+    if (save_version < 194) {
+        stonewake_migrate(g);
+        if (g->glassdeep_quest_state >= 2) {
+            g->stonewake_warhammer_state = 1;
+        }
+    }
+    if (save_version < 195) {
+        stonewake_migrate_cranes(g);
     }
     game_refresh_debug_passages(g);
     cJSON_Delete(root);

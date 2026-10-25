@@ -10,10 +10,11 @@ Preserve these features when changing any other part of the atlas:
 
 | Feature | Required appearance and connection |
 | --- | --- |
-| Glassdeep Caverns | South of Stillbury, original large crystal-cave vignette; sandy beaches below it, backed by rocky cliffs. |
+| Stonewake Quarry | Replaces Glassdeep south of Stillbury within its southwest footprint; stepped limestone, timber crane and mine entry. Keep sandy beaches below it, backed by rocky cliffs. |
 | Sunken Coast | Curved, sheltered C-shaped cove with drowned columns and its western shoreline intact. |
 | Docks | Outside Oakhaven beside Sunken Coast; a shore-connected wooden wharf with attached mooring branches. Trace solid deck from shore to every tip at enlarged scale; water between connected branches must not sever them. |
 | Goblin Mountains | The winding Dawnmere–Ridgeshire road passes through closely flanking mountains on both sides. No grassy bypass valley. |
+| Town elevations | Dawnmere sits in open coastal lowland with a descent from the northern foothills before town; peaks must not surround its walls. Ridgeshire is the elevated city surrounded by mountains. |
 | Saltwind Marsh | A restrained tidal inlet south of Dawnmere. Creeks meet the sea at the same level; no raised lake, cliff-bottom waterfall or giant delta. |
 | Dawnmere roads | West connects to Oakhaven through the dungeon road; north connects through the mountains; south reaches Saltwind. Each connection must visibly meet town. |
 | Eastern expansion space | Keep the headland east of Dawnmere uncrowded for the next area. Its route remains closed in game; do not add a destination or label before that area is designed. |
@@ -28,7 +29,7 @@ preserve: localized prompts can still change unrelated terrain or erase roads.
 The original `docs/images/world-map.png` remains a coastline reference.
 
 Review at the native 1536×1024 scale, then enlarge the docks, mountain pass,
-marsh and eastern headland, and Glassdeep/Sunken Coast. Specifically follow
+marsh and eastern headland, and Stonewake/Sunken Coast. Specifically follow
 each road continuously between its endpoints and each dock deck back to shore.
 Document visual checks separately from automated gameplay checks; neither
 substitutes for the other.

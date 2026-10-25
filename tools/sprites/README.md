@@ -307,7 +307,7 @@ Dragonspine is 168×216 pixels to accommodate its taller snowy peak and dragons.
 Every asset uses pixelkit at native 24px tile scale and a south-facing doorway.
 
 The generators are `coast.py`, `desert.py`, `frostfell.py`, `moonveil.py`,
-`dragonspine.py`, `ashen.py`, `glassdeep.py` and `catacombs.py`. Each writes
+`dragonspine.py`, `ashen.py`, `stonewake.py` and `catacombs.py`. Each writes
 `assets/images/<name>-entrance.bmp`. The side-area approach metadata in
 `src/game/approach.c` specifies each footprint's height; the renderer loads
 textures in `src/renderer/renderer.c` and anchors them in `draw_area_entrance()`.
@@ -342,3 +342,14 @@ pixelkit. See [native comparisons and SDL previews](../../docs/art-sources/elder
 Saltwind entrance trees, root props and the four-direction skiff atlas use
 `python3 tools/sprites/mangrove.py`. See the native comparison and SDL captures
 in [Saltwind art sources](../../docs/art-sources/saltwind/README.md).
+
+### Stonewake Quarry
+
+Run `python3 tools/sprites/stonewake.py` to reproduce the transparent entrance,
+crane, workshop, repair/supply props and five enemy cells. It uses pixelkit
+stone, timber, textured roofs and outlined layers at 24 pixels per game tile.
+The crane sheet contains three 72×72 cells for raised, crossing and salvage
+settings; its load height changes with the selected route.
+The old Glassdeep script/art remains a historical source and is no longer
+loaded by the game. See [the region guide](../../docs/stonewake-quarry.md) for
+stages, mechanics and the native/SDL visual checks.

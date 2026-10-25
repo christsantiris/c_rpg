@@ -53,7 +53,7 @@ sprites:
 	python3 tools/sprites/frostfell.py
 	python3 tools/sprites/moonveil.py
 	python3 tools/sprites/ashen.py
-	python3 tools/sprites/glassdeep.py
+	python3 tools/sprites/stonewake.py
 	python3 tools/sprites/catacombs.py
 	python3 tools/sprites/temple.py
 	python3 tools/sprites/apothecary.py

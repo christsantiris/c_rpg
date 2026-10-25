@@ -1,3 +1,5 @@
+#include "stonewake_renderer.h"
+#include "../game/stonewake.h"
 #include "regional_terrain_renderer.h"
 #include "../game/elderwood.h"
 #include "../game/regional_terrain.h"
@@ -33,6 +35,10 @@ static void draw_landscape_tile(Renderer *r, const GameState *g, int sx, int sy,
 }
 
 void draw_regional_terrain_tile(Renderer *r, const GameState *g, int sx, int sy, int x, int y, TileType tile) {
+    if (tile >= TILE_STONEWAKE_BOUNDARY && tile <= TILE_STONEWAKE_REMOTE) {
+        draw_stonewake_tile(r, sx, sy, x, y, tile);
+        return;
+    }
     if (landscape_tile(tile)) {
         draw_landscape_tile(r, g, sx, sy, x, y, tile);
         return;
@@ -100,7 +106,7 @@ void draw_regional_terrain_tile(Renderer *r, const GameState *g, int sx, int sy,
 }
 
 void draw_regional_terrain_light(Renderer *r, const GameState *g, const Viewport *v) {
-    if (g->location != LOCATION_GLASSDEEP) {
+    if (stonewake_map(&g->map) || g->location != LOCATION_GLASSDEEP) {
         return;
     }
     for (int y = v->cam_y; y < v->cam_y + v->tiles_y; y++) {
@@ -189,13 +195,12 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
             line2 = "RINGS STRIKE INNER THEN OUTER";
         }
     } else if (g->location == LOCATION_GLASSDEEP) {
-        title = "CRYSTAL GALLERIES";
-        line1 = "TURN FACE: AIM NORTH AT R";
-        line2 = "SIDE GALLERIES BYPASS THE SEAL";
+        title = stonewake_stage_name(g->level);
+        line1 = "CRANES: CROSSING / SALVAGE / RAISED";
+        line2 = "SALVAGE SPURS REACH ISOLATED SUPPLIES";
         if (g->level == GLASSDEEP_DEPTH) {
-            title = "THE PRISM CHAMBER";
-            line1 = "ROTATE FACES BETWEEN ATTACKS";
-            line2 = "WARNINGS LOCK THE BEAM DIRECTIONS";
+            line1 = "LEAVE THE COLOSSUS'S MARKED GROUND";
+            line2 = "CRANE LOADS INTERRUPT ITS HAMMERFALL";
         }
     } else if (g->location == LOCATION_FROSTFELL) {
         title = "GLACIER RIDGES";

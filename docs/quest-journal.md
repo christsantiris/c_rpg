@@ -50,16 +50,16 @@ speak to him with `T`. Return to Brenna in Stillbury's Inn for 100 gold and 800 
 Kraken is optional, and both completed objectives remain in the journal after
 collecting the reward.
 
-Orin's **The Broken Resonance** appears after talking to him in Rosemoor's
-Adventurer's Guild. It tracks the Root, Tide, and Crown resonators on Glassdeep
-stages 2, 3, and 4 independently. Defeat their guards and press `A` beside each
-crystal to choose its tone from the inscription. Return to Orin for 120 gold
-and 1,000 score. All three restored objectives remain recorded after turning
-in the quest; the Prism Sovereign is optional.
+Orin's **Reclaim the Quarry** tracks the West Winch, Workshop Hoist and Main
+Gantry on Stonewake stages 2, 3 and 4. Defeat their guards and press `A` beside
+each mechanism to repair it. Return to Orin in Rosemoor's Guild for 120 gold,
+1,000 score and Magic Stone Warhammer (+30 maximum HP while equipped). The
+journal lists the equipment reward. Orin holds it if the pack is full; repaired
+objectives stay recorded after completion. The Quarry Colossus is optional.
 
 Huntmaster Selene offers **The Three Great Hunts** in **Rosemoor's Adventurer's
 Guild**. The journal tracks **Rimefang's pack in Frostfell 3**, **Shardwarden's
-group in Glassdeep 4**, and **Dunehex's group in Sunscar 3**, with each region
+group in Stonewake 4**, and **Dunehex's group in Sunscar 3**, with each region
 and stage displayed separately. Defeating the leader and every assigned
 companion automatically completes that hunt; the order is unrestricted.
 Return and speak to Selene in Rosemoor's Adventurer's Guild for **200 gold and
@@ -91,7 +91,7 @@ The Active tab contains quests in progress and quests ready to turn in. The
 Completed tab retains quests whose rewards have been collected. Each entry
 shows its quest giver, description, target area and stages, objective progress,
 status, gold reward, and score reward. The Bosses tab always lists every
-regional boss, including Glassdeep Caverns' Prism Sovereign, with their
+regional boss, including Stonewake Quarry's Quarry Colossus, with their
 defeated or undefeated status. It also tracks the castle's Castellan, Royal
 Arcanist, and Lord Veyr. Miniboss victories remain recorded after retreat;
 Veyr's defeat ends the campaign with victory.

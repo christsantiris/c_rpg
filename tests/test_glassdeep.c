@@ -81,12 +81,12 @@ static void test_layouts(void) {
             int bosses = 0;
             for (int i = 0; i < game.enemy_count; i++) {
                 Enemy *enemy = &game.enemies[i];
-                roster &= enemy->type >= ENEMY_CRYSTAL_SPIDER && enemy->type <= ENEMY_PRISM_SOVEREIGN && visited[enemy->y][enemy->x];
+                roster &= ((enemy->type >= ENEMY_CRYSTAL_SPIDER && enemy->type <= ENEMY_PRISM_SOVEREIGN) || enemy->type == ENEMY_IRON_SENTINEL) && visited[enemy->y][enemy->x];
                 bosses += enemy->is_boss;
             }
             roster &= bosses == (level == GLASSDEEP_DEPTH);
         }
-        ASSERT("crystal entrances, exits, and every clearing remain connected across seeds", connected);
+        ASSERT("quarry entrances, exits, and every clearing remain connected across seeds", connected);
         ASSERT("pools block movement and ruined paving remain walkable", landmarks);
         ASSERT("each stage spawns its own reachable roster and only stage five has a boss", roster);
     }
@@ -196,7 +196,7 @@ static void test_boss_victories(void) {
             rewards += game.floor_items[i].active && game.floor_items[i].item.type == ITEM_POTION_STRENGTH;
         }
         BossJournalEntry entry;
-        ASSERT("melee, Magic Arrow, Fireball, and bow victories grant the Prism Sovereign reward and journal completion", !boss->active && (game.defeated_bosses & (1 << LOCATION_GLASSDEEP)) && rewards == 0 && game.prism_sovereign_reward_pending == 3 && quest_journal_get_boss(&game, 11, &entry) && entry.defeated && strcmp(entry.name, "Prism Sovereign") == 0);
+        ASSERT("melee, Magic Arrow, Fireball, and bow victories grant the Prism Sovereign reward and journal completion", !boss->active && (game.defeated_bosses & (1 << LOCATION_GLASSDEEP)) && rewards == 0 && game.prism_sovereign_reward_pending == 3 && quest_journal_get_boss(&game, 11, &entry) && entry.defeated && strcmp(entry.name, "Quarry Colossus") == 0);
         walk_edge(1);
         ASSERT("defeating the Prism Sovereign allows return while other enemies remain", game.location == LOCATION_TOWN2 && game.glassdeep_cache[GLASSDEEP_DEPTH - 1].enemy_count > 1);
         game_enter_glassdeep(&game);

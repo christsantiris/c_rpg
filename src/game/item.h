@@ -27,7 +27,8 @@ typedef enum {
     WEAPON_FAMILY_AXE,
     WEAPON_FAMILY_BOW,
     WEAPON_FAMILY_STAFF,
-    WEAPON_FAMILY_DAGGER
+    WEAPON_FAMILY_DAGGER,
+    WEAPON_FAMILY_HAMMER
 } WeaponFamily;
 
 typedef enum {
@@ -103,7 +104,8 @@ typedef enum {
     ITEM_VISUAL_CROWN_CHAPEL_VESTMENTS,
     ITEM_VISUAL_SHORTBOW,
     ITEM_VISUAL_CROSSBOW,
-    ITEM_VISUAL_RUSTY_DAGGER
+    ITEM_VISUAL_RUSTY_DAGGER,
+    ITEM_VISUAL_STONE_WARHAMMER
 } ItemVisualId;
 
 typedef struct {
@@ -201,6 +203,7 @@ Item item_make_runed_robes(void);
 Item item_make_enchanter_robes(void);
 Item item_make_archmage_robes(void);
 Item item_make_prismweave_robes(void);
+Item item_make_stone_warhammer(void);
 Item item_make_crown_chapel_vestments(void);
 Item item_make_sunwarden_mantle(void);
 Item item_make_necromancer_cloak(void);
