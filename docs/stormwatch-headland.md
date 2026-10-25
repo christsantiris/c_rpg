@@ -1,0 +1,75 @@
+# Stormwatch Headland
+
+Follow Dawnmere's eastern road and walk into the watchfort sprite to enter.
+Stormwatch is a five-stage coastal fort region with warm grass, gray masonry,
+cliffs, animated teal water, side lookouts and searchable supply chests.
+The approach uses travel music; the adventure uses the dungeon theme.
+
+| Stage | Layout and encounters |
+| --- | --- |
+| 1 — Windward Approach | Forked coastal fingers, a watch hut, two optional lookouts and a sheltered loop; Harpy Raiders introduce warned swoops. |
+| 2 — Broken Gatehouse | Courtyards and guardrooms around a coastal cut; Cliff Gargoyles and the first working storm shutter. |
+| 3 — Three Watchtowers | Triangular tower route, supply pockets and two staggered wind lanes; Harpy Stormcallers join the patrols. |
+| 4 — Stormwall Fort | Outer patrol loop, connected fort rooms and an exposed shutter shortcut; Storm Elementals defend the crossing. |
+| 5 — Matriarch's Court | Rampart loop, side supply rooms and the Matriarch's northern court. Defeating her opens the final departure. |
+
+Every stage has a walking loop and two optional supply branches. Gate markers
+sit on the northern and southern map boundaries. Walking onto them advances or
+retreats; stairs keys also work while standing on the threshold. Fresh physical
+entry always starts at stage one and repopulates the expedition. Backtracking
+and returning through a town portal retain defeated enemies and dropped loot.
+
+## Wind and shutters
+
+Wind advances with player actions: two calm phases, two warning phases, one
+gust, then one recovery phase. From stage three, a second lane follows the same
+cycle at an offset. Ground arrows and a countdown show the fixed direction and
+exposed cells. Stormcallers can choose the next gust direction; they cannot
+change a warning already shown.
+
+Press **A** away from a crank or supply chest to brace for the coming enemy
+phase. Bracing uses an action and prevents that phase's wind displacement. It
+does not absorb enemy damage. A gust moves the player or a Raider one cardinal
+tile. Walls, actors, closed shutters, water and gateways stop the push without
+collision damage. A push cannot land in a declared enemy attack. A displaced
+Raider loses its prepared swoop; stone and storm creatures resist wind.
+
+Use **A** beside either crank to lower or raise the shutter. Raised shutters
+block movement, projectiles and wind. Lowered shutters form a timber shortcut.
+The outer loop remains open in both states. Raising a shutter can reduce a
+declared wind warning; lowering it adds exposure only when the next warning
+begins. Actors, dropped items and a return-portal landing prevent raising a
+shutter through an occupied threshold.
+
+## Enemies
+
+| Enemy | First stage | HP | Attack | Defense | Behavior |
+| --- | --- | --- | --- | --- | --- |
+| Harpy Raider | 1 | 36 + 3 × stage | 12 + stage | 2 | Warns a two-tile swoop, then recovers for one action. Gusts can interrupt preparation. |
+| Cliff Gargoyle | 2 | 64 + 3 × stage | 16 + stage | 7 front / 2 rear | Warned three-tile lunge; fixed facing and defense 1 during recovery. |
+| Harpy Stormcaller | 3 | 46 + 3 × stage | 15 + stage | 3 | Warns fixed lightning ground and selects the next wind direction. |
+| Storm Elemental | 4 | 72 + 3 × stage | 18 + stage | 4 | Warned short crosswind fan, blocked by cover. Immune to gust displacement. |
+| Tempest Matriarch | 5 | 320 | 29 | 7 / 1 recovering | Alternates a two-action dive warning and directional wing sweep. Below half health, adds two fixed lightning targets and calls one finite pair of Raiders. |
+
+The Matriarch remains on reachable land. Her dives and lightning give two
+complete warning actions; every resolved attack gives two recovery actions.
+Crossing half health does not replace a pending attack. Freezing pauses an
+enemy's preparation or recovery while environmental wind continues. Summoned
+Raiders give no XP or loot. First victory awards **220 gold and 2,600 score**;
+the boss also gives 450 combat XP. Victory appears in the boss journal.
+
+## Persistence and testing
+
+Save version 198 stores all five compact maps, exploration, actors, enemy attack
+states, loot underlays, searched supplies, shutter positions, wind clocks,
+declared warning masks, next directions, brace state and boss victory.
+Return to Town goes to the last town actually visited; its portal restores the
+original Stormwatch expedition. Existing saves gain Dawnmere's eastern road
+without resetting gear, quests, portals or other regions.
+
+`--unlock-shortcuts` opens the final departure without killing the boss or
+granting victory rewards. It leaves the shutter and wind available for testing.
+
+See the [approved design](stormwatch-headland-proposal.md),
+[native renderer captures](art-sources/stormwatch/README.md), and
+[atlas placement](art-sources/stormwatch/atlas-edit.md).

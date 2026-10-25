@@ -16,7 +16,7 @@ conversation controls.
 
 Ridgeshire's Town Hall uses the same entry, conversation, and exit controls.
 Steward Hadrin assigns **Reclaim the Emberforge**: recover its guarded mechanism
-on Ashen Hollow stage 2, then defeat the forge defenders and repair its furnace
+in Ashen Hollow west of Rosemoor on stage 2, then defeat the forge defenders and repair its furnace
 on stage 4. Press `A` on or beside each objective. Return to Hadrin for a
 one-time reward of 100 gold and 800 score. This quest adds encounters to
 previously explored stages without resetting the expedition. See
@@ -82,21 +82,6 @@ Return to Orin for **120 gold, 1,000 score and Magic Stone Warhammer**:
 With a full pack, Orin holds the hammer until a later conversation. Rewards
 pay once, existing quest progress survives migration, and the Colossus is
 optional. See [Reclaim the Quarry](stonewake-quarry.md#reclaim-the-quarry).
-
-## Liora: The Stolen Moonseed
-
-Botanist Liora waits in **Rosemoor's town center**. Press `T` beside her, then `Y` to
-accept a quest in **Moonveil Gardens**, reached through **Rosemoor's west
-gate**. Defeat the guards and press `A` beside the seed pod on stage **2** and moonwater spring on
-stage **3**, in either order. With both collected, defeat the stage **4**
-circle's defenders and press `A` to plant and water it. A Moonflower blooms and
-the clearing stays restored on later visits.
-
-Return to Liora in Rosemoor's town center for **90 gold and 700 score**, awarded once.
-Quest objects
-need no inventory slots, acceptance preserves existing garden progress, and
-the Thorn Regent is optional. See
-[The Stolen Moonseed](moonveil-gardens.md#the-stolen-moonseed).
 
 ## Alder: The Lost Wardens
 
@@ -243,7 +228,7 @@ summit and labyrinth vault to level 5. Old labyrinth runes on floors 1 and 2
 keep their bits; the old third rune moves to floor 5. Expeditions that already
 reached the old vault receive credit for the two new intermediate runes.
 
-Save version **114** moves Liora to Rosemoor's town center, Dain to Ridgeshire's
+Save version **114** moves Dain to Ridgeshire's
 town center, and Zara to Stillbury's Inn. Existing quest progress, rewards,
 exploration, and region caches are preserved. Saved maps remove the former NPC
 tiles and repair loot underlays; overlapping players and loot move beside the

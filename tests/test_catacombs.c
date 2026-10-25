@@ -342,7 +342,7 @@ static void test_boss(void) {
             rewards += strcmp(game.floor_items[i].item.name, "Gravekeeper's Mantle") == 0;
         }
         BossJournalEntry entry;
-        ASSERT("melee, spells, and bows grant the mantle and record the Marshal's defeat", !boss->active && rewards == 1 && game.catacombs_mantle_unclaimed && quest_journal_get_boss(&game, 13, &entry) && entry.defeated);
+        ASSERT("melee, spells, and bows grant the mantle and record the Marshal's defeat", !boss->active && rewards == 1 && game.catacombs_mantle_unclaimed && quest_journal_get_boss(&game, 12, &entry) && entry.defeated);
         game.player.x = game.map.stairs_down_x;
         game.player.y = game.map.stairs_down_y;
         action_resolve_player(&game, (Action){ACTION_DESCEND, 0, 0});

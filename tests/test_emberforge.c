@@ -177,7 +177,7 @@ static void test_quest(void) {
         load_game(&loaded, EMBERFORGE_TEST_SLOT) && loaded.emberforge_quest_state == 3 && loaded.portal_active);
     game = loaded;
     game_leave_town_hall(&game);
-    ASSERT("leaving the hall restores the Ashen return portal", game.map.tiles[RIDGESHIRE_ASHEN_PORTAL_Y][RIDGESHIRE_ASHEN_PORTAL_X] == TILE_PORTAL);
+    ASSERT("leaving the hall restores the Ashen return portal", game.map.tiles[12][21] == TILE_PORTAL);
     game_use_town_portal(&game);
     stand_at_object();
     ASSERT("return portal preserves the repaired forge without respawning defenders", game.location == LOCATION_ASHEN &&

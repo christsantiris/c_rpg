@@ -2,7 +2,7 @@
 
 This is the current spawn roster, including quest encounters and summoned
 enemies. It covers all **102 defined enemy types**, all of which have current
-spawns. The 25 named variants are listed separately because they reuse these
+spawns. The 22 named variants are listed separately because they reuse these
 types. Removed enemy IDs remain reserved in the save format; they are no longer
 runtime enemy definitions. The six retired Pirate Coast IDs also remain unused.
 
@@ -78,11 +78,6 @@ Castle entries below refer to the castle interior, not Castle Grounds.
 | Djinn | Sunscar Wastes |
 | Golem | Sunscar Wastes |
 | Desert Pharaoh | Sunscar Wastes |
-| Fey Trickster | Moonveil Gardens |
-| Giant Moth | Moonveil Gardens |
-| Carnivorous Flower | Moonveil Gardens |
-| Thorn Guardian | Moonveil Gardens |
-| Thorn Regent | Moonveil Gardens |
 | Cinder Imp | Ashen Hollow |
 | Ash Hound | Ashen Hollow |
 | Obsidian Guardian | Ashen Hollow |
@@ -117,6 +112,11 @@ Castle entries below refer to the castle interior, not Castle Grounds.
 | Mudback Turtle | Saltwind Marsh |
 | Lizardfolk Scaleguard | Saltwind Marsh |
 | Sszareth | Saltwind Marsh |
+| Harpy Raider | Stormwatch Headland 1–5; finite Matriarch reinforcements |
+| Cliff Gargoyle | Stormwatch Headland 2–5 |
+| Harpy Stormcaller | Stormwatch Headland 3–5 |
+| Storm Elemental | Stormwatch Headland 4–5 |
+| Tempest Matriarch | Stormwatch Headland 5 |
 
 ## Named quest, hunt and summoned enemies
 
@@ -143,9 +143,6 @@ These labels can appear instead of a type's ordinary name. They are not extra
 | Dunehex | Sunscar Wastes 3 |
 | Dunehex Mummy | Sunscar Wastes 3 |
 | Quarry Guardian | Stonewake Quarry 2, 3 and 4 |
-| Moonseed Guardian | Moonveil Gardens 2 |
-| Moonwater Guardian | Moonveil Gardens 3 |
-| Mooncircle Guardian | Moonveil Gardens 4 |
 | Soldiers' Memorial Guard | Royal Catacombs 2 |
 | Watchers' Memorial Guard | Royal Catacombs 3 |
 | Choir Memorial Guard | Royal Catacombs 4 |
@@ -173,4 +170,6 @@ supported enemy IDs.
   and `add_enemy`.
 - [`src/game/castle.c`](../src/game/castle.c): `castle_spawn`, `spawn_detail` and
   boss reinforcements.
+- [`src/game/stormwatch.c`](../src/game/stormwatch.c): `load_stage` and `add_enemy`;
+  [`stormwatch_combat.c`](../src/game/stormwatch_combat.c): finite Matriarch reinforcements.
 - [`src/game/jail.c`](../src/game/jail.c): `enter_armory` and tunnel encounters.

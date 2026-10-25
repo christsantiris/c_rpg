@@ -141,3 +141,6 @@ shared road to Oakhaven. Its gate is visible but sealed until Rook assigns
 The Ivory Rook in Oakhaven's Tavern. Both town approaches reach it before forest
 victory. Leaving the labyrinth returns to that approach, preserving the town
 used; the Necromancer still controls the through road between towns.
+
+The woodland has cool, muted foliage, crooked bare trunks and dark clearings.
+Its tangled canopy gives way to the larger, healthier trees of adjacent Elderwood.

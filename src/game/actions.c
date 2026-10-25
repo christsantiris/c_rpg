@@ -3,6 +3,7 @@
 #include "restoration.h"
 #include "game.h"
 #include "mangrove.h"
+#include "stormwatch.h"
 #include "catacombs.h"
 #include "elderwood.h"
 #include "castle.h"
@@ -14,7 +15,6 @@
 #include "minotaur.h"
 #include "grave_marshal.h"
 #include "desert_pharaoh.h"
-#include "thorn_regent.h"
 #include "cinder_lord.h"
 #include "prism_sovereign.h"
 #include "sun_guardian.h"
@@ -74,7 +74,7 @@ void push_message_kind(GameState *g, const char *msg, MessageKind kind) {
 
 static void mark_item_tile(GameState *g, int x, int y) {
     TileType tile = g->map.tiles[y][x];
-    if (tile == TILE_DUNGEON_STAIRS_SEALED || tile == TILE_DUNGEON_STAIRS_RETURN) {
+    if (tile == TILE_STORM_ENTRANCE || tile == TILE_STORM_EXIT || tile == TILE_DUNGEON_STAIRS_SEALED || tile == TILE_DUNGEON_STAIRS_RETURN) {
         return;
     }
     if (g->location == LOCATION_CASTLE_INTERIOR && (tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN ||
@@ -176,7 +176,6 @@ Item boss_equipment_reward(EnemyType type) {
     switch (type) {
         case ENEMY_GRAVE_MARSHAL:
             return item_make_gravekeeper_mantle();
-        case ENEMY_THORN_REGENT:
         case ENEMY_CINDER_LORD:
         case ENEMY_PRISM_SOVEREIGN:
             return item_make_strength_potion();
@@ -227,6 +226,11 @@ static int enemy_score(EnemyType type) {
         case ENEMY_MARSH_SPITTER: return 55;
         case ENEMY_MUDBACK_TURTLE: return 110;
         case ENEMY_LIZARDFOLK_SCALEGUARD: return 120;
+        case ENEMY_TEMPEST_MATRIARCH: return 0;
+        case ENEMY_HARPY_RAIDER: return 65;
+        case ENEMY_CLIFF_GARGOYLE: return 95;
+        case ENEMY_HARPY_STORMCALLER: return 115;
+        case ENEMY_STORM_ELEMENTAL: return 135;
         case ENEMY_SSZARETH: return 0;
         case ENEMY_ROYAL_GUARD: return 85;
         case ENEMY_ELDERTHORN: return 0; // Awarded once by elderwood_defeat.
@@ -282,11 +286,6 @@ static int enemy_score(EnemyType type) {
         case ENEMY_DJINN: return 130;
         case ENEMY_GOLEM: return 165;
         case ENEMY_DESERT_PHARAOH: return 1600;
-        case ENEMY_FEY_TRICKSTER: return 55;
-        case ENEMY_GIANT_MOTH: return 45;
-        case ENEMY_LIVING_FLOWER: return 110;
-        case ENEMY_THORN_GUARDIAN: return 170;
-        case ENEMY_THORN_REGENT: return 1800;
         case ENEMY_CINDER_IMP: return 60;
         case ENEMY_ASH_HOUND: return 70;
         case ENEMY_OBSIDIAN_GUARDIAN: return 180;
@@ -322,6 +321,13 @@ static int melee_gold_bonus(const GameState *g) {
 }
 
 static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
+    if (enemy->type == ENEMY_TEMPEST_MATRIARCH) {
+        stormwatch_defeat(g);
+        return;
+    }
+    if (g->location == LOCATION_STORMWATCH && enemy->revived) {
+        return;
+    }
     if (enemy->type == ENEMY_SSZARETH) {
         mangrove_defeat(g);
         return;
@@ -364,11 +370,9 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
             g->defeated_bosses |= 1 << g->location;
         }
         game_record_temple_enemy_defeated(g, type);
-        if (type == ENEMY_THORN_REGENT) {
-            push_message(g, "The Thorn Regent falls. The path to Rosemoor opens!");
-        }
+
         if (type == ENEMY_CINDER_LORD) {
-            push_message(g, "The Cinder Lord falls. The path to Ridgeshire opens!");
+            push_message(g, "The Cinder Lord falls. The path to Rosemoor opens!");
         }
         if (type == ENEMY_GRAVE_MARSHAL) {
             push_message(g, "The Grave Marshal falls. The passage to the castle opens!");
@@ -385,6 +389,11 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         case ENEMY_MARSH_SPITTER: gold = 7 + rand() % 5; break;
         case ENEMY_MUDBACK_TURTLE:
         case ENEMY_LIZARDFOLK_SCALEGUARD: gold = 12 + rand() % 7; break;
+        case ENEMY_TEMPEST_MATRIARCH: break;
+        case ENEMY_HARPY_RAIDER:
+        case ENEMY_CLIFF_GARGOYLE:
+        case ENEMY_HARPY_STORMCALLER:
+        case ENEMY_STORM_ELEMENTAL: gold = 6 + rand() % 10; break;
         case ENEMY_SSZARETH: break;
         case ENEMY_ROYAL_GUARD: gold = 10; break;
         case ENEMY_ELDERTHORN: break; // Its one-time reward was handled above.
@@ -466,11 +475,6 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         case ENEMY_DJINN: gold = 11 + rand() % 10; break;
         case ENEMY_GOLEM: gold = 14 + rand() % 12; break;
         case ENEMY_DESERT_PHARAOH: gold = 75; break;
-        case ENEMY_FEY_TRICKSTER: gold = 5 + rand() % 7; break;
-        case ENEMY_GIANT_MOTH: gold = 4 + rand() % 6; break;
-        case ENEMY_LIVING_FLOWER: gold = 10 + rand() % 10; break;
-        case ENEMY_THORN_GUARDIAN: gold = 14 + rand() % 12; break;
-        case ENEMY_THORN_REGENT: gold = 80; break;
         case ENEMY_CINDER_IMP: gold = 6 + rand() % 7; break;
         case ENEMY_ASH_HOUND: gold = 7 + rand() % 8; break;
         case ENEMY_OBSIDIAN_GUARDIAN: gold = 15 + rand() % 12; break;
@@ -531,17 +535,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
             game_update_level_progress(g);
             return;
         }
-        if (type == ENEMY_THORN_REGENT) {
-            g->thorn_regent_reward_pending = REGENT_CLOAK_PENDING | REGENT_POTION_PENDING;
-            if (g->floor_item_count < MAX_FLOOR_ITEMS) {
-                place_gold_drop(g, x, y, gold);
-            } else {
-                award_gold(g, gold);
-            }
-            thorn_regent_restore_reward(g);
-            game_update_level_progress(g);
-            return;
-        }
+
         if (type == ENEMY_DESERT_PHARAOH) {
             g->desert_pharaoh_reward_state = 1;
             g->sandstorm_staff_unclaimed = 1;
@@ -629,7 +623,8 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
     }
 
     TileType drop_tile = g->map.tiles[y][x];
-    int plain_floor = drop_tile == TILE_MANGROVE_MUD || drop_tile == TILE_MANGROVE_DECK ||
+    int plain_floor = drop_tile == TILE_STORM_GRASS || drop_tile == TILE_STORM_STONE || drop_tile == TILE_STORM_SHUTTER_DOWN ||
+        drop_tile == TILE_STORM_EMPTY || drop_tile == TILE_MANGROVE_MUD || drop_tile == TILE_MANGROVE_DECK ||
         drop_tile == TILE_MANGROVE_LANDING || drop_tile == TILE_ELDERWOOD_FLOOR || drop_tile == TILE_FLOOR ||
         drop_tile == TILE_FOREST_FLOOR ||
         drop_tile == TILE_MOUNTAIN_FLOOR ||
@@ -642,9 +637,6 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         drop_tile == TILE_SWAMP_FLOOR ||
         drop_tile == TILE_SWAMP_REEDS ||
         drop_tile == TILE_DESERT_FLOOR ||
-        drop_tile == TILE_MOONVEIL_FLOOR ||
-        drop_tile == TILE_MOONVEIL_CIRCLE ||
-        drop_tile == TILE_MOONVEIL_BLOSSOMS ||
         drop_tile == TILE_ASHEN_FLOOR ||
         drop_tile == TILE_ASHEN_RUIN ||
         drop_tile == TILE_CATACOMBS_FLOOR ||
@@ -696,7 +688,7 @@ static int apply_melee_cleave(GameState *g, Enemy *target, int attack, int perce
             continue;
         }
 
-        int damage = attack * percent / 100 - enemy->defense;
+        int damage = attack * percent / 100 - stormwatch_defense(enemy, g->player.x, g->player.y);
         if (damage < 1) {
             damage = 1;
         }
@@ -954,6 +946,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (stormwatch_hint(g)) {
+        return 1;
+    }
     if (mangrove_hint(g)) {
         return 1;
     }
@@ -984,9 +979,7 @@ int game_has_regional_interaction(const GameState *g) {
     if (cinder_lord_has_interaction(g)) {
         return 1;
     }
-    if (thorn_regent_has_interaction(g)) {
-        return 1;
-    }
+
     if (desert_pharaoh_has_interaction(g)) {
         return 1;
     }
@@ -1014,9 +1007,7 @@ int game_has_regional_interaction(const GameState *g) {
     if (game_has_watchfire_interaction(g)) {
         return 1;
     }
-    if (game_has_moonveil_interaction(g)) {
-        return 1;
-    }
+
     if (game_has_glassdeep_interaction(g)) {
         return 1;
     }
@@ -1222,6 +1213,10 @@ void action_resolve_player(GameState *g, Action a) {
         push_message(g, "Go ashore before setting down an item.");
         return;
     }
+    if (g->location == LOCATION_STORMWATCH && (a.type == ACTION_ASCEND || a.type == ACTION_DESCEND)) {
+        stormwatch_travel(g, g->player.x, g->player.y);
+        return;
+    }
     if (g->location == LOCATION_MANGROVES && (a.type == ACTION_ASCEND || a.type == ACTION_DESCEND)) {
         int forward = a.type == ACTION_DESCEND;
         int x = forward ? g->map.stairs_down_x : g->map.stairs_up_x;
@@ -1370,6 +1365,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (stormwatch_interact(g)) {
+            return;
+        }
         if (mangrove_interact(g)) {
             return;
         }
@@ -1394,9 +1392,7 @@ void action_resolve_player(GameState *g, Action a) {
         if (cinder_lord_interact(g)) {
             return;
         }
-        if (thorn_regent_interact(g)) {
-            return;
-        }
+
         if (desert_pharaoh_interact(g)) {
             return;
         }
@@ -1424,9 +1420,7 @@ void action_resolve_player(GameState *g, Action a) {
         if (game_interact_watchfire(g)) {
             return;
         }
-        if (game_interact_moonveil(g)) {
-            return;
-        }
+
         if (game_interact_glassdeep(g)) {
             return;
         }
@@ -1503,9 +1497,7 @@ void action_resolve_player(GameState *g, Action a) {
         if (cinder_lord_pickup(g)) {
             return;
         }
-        if (thorn_regent_pickup(g)) {
-            return;
-        }
+
         if (desert_pharaoh_pickup(g)) {
             return;
         }
@@ -2200,7 +2192,7 @@ void action_resolve_player(GameState *g, Action a) {
                 if (step < 2 && wpn->weapon_family == WEAPON_FAMILY_BOW) {
                     continue;
                 }
-                int dmg = g->player.attack - e->defense;
+                int dmg = g->player.attack - stormwatch_defense(e, g->player.x, g->player.y);
                 if (dmg < 1) dmg = 1;
                 int critical = wpn->weapon_family == WEAPON_FAMILY_BOW &&
                     rand() % 100 < 15;
@@ -2292,7 +2284,7 @@ void action_resolve_player(GameState *g, Action a) {
                         melee_attack -= melee_weapon->attack_bonus;
                     }
                 }
-                int effective_defense = e->defense;
+                int effective_defense = stormwatch_defense(e, g->player.x, g->player.y);
                 if (melee_weapon &&
                     melee_weapon->armor_penetration_percent > 0) {
                     effective_defense = effective_defense *
@@ -2470,7 +2462,7 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
-        if (mangrove_travel(g, tx, ty) || elderwood_travel(g, tx, ty) || town_road_travel(g, tx, ty) || town_road_depart(g, tx, ty) || approach_travel(g, tx, ty) || approach_enter(g, tx, ty)) {
+        if (stormwatch_travel(g, tx, ty) || mangrove_travel(g, tx, ty) || elderwood_travel(g, tx, ty) || town_road_travel(g, tx, ty) || town_road_depart(g, tx, ty) || approach_travel(g, tx, ty) || approach_enter(g, tx, ty)) {
             return;
         }
 
@@ -2492,7 +2484,6 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
-
         if (g->location == LOCATION_TOWN2 &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT && ty == TOWN_H - 1) {
             game_enter_glassdeep(g);
@@ -2508,7 +2499,7 @@ void action_resolve_player(GameState *g, Action a) {
             } else if (tx == TOWN_W - 1) {
                 game_enter_king_road(g, LOCATION_CROWNROAD, 0);
             } else if (tx == 0) {
-                game_enter_moonveil(g);
+                game_enter_ashen(g);
             }
             return;
         }
@@ -2714,32 +2705,6 @@ void action_resolve_player(GameState *g, Action a) {
                 }
                 game_return_to_approach(g);
                 push_message(g, "You return to Stillbury.");
-            }
-            return;
-        }
-
-        if (g->location == LOCATION_MOONVEIL &&
-            g->map.tiles[ty][tx] == TILE_MOONVEIL_ENTRANCE) {
-            if (g->level == 1) {
-                game_return_to_approach(g);
-            } else {
-                game_ascend(g);
-            }
-            return;
-        }
-
-        if (g->location == LOCATION_MOONVEIL &&
-            g->map.tiles[ty][tx] == TILE_MOONVEIL_EXIT) {
-            if (g->level < MOONVEIL_DEPTH) {
-                game_descend(g);
-                g->score += g->level * 100;
-            } else {
-                if (!g->debug_passages_unlocked && !(g->defeated_bosses & (1 << LOCATION_MOONVEIL))) {
-                    push_message(g, "The Thorn Regent seals the path to Rosemoor!");
-                    return;
-                }
-                game_return_to_approach(g);
-                push_message(g, "You return to Rosemoor through the moonlit gardens.");
             }
             return;
         }
@@ -3240,8 +3205,6 @@ static int enemy_prefers_range(const Enemy *e) {
         e->type == ENEMY_BLOWDART_HUNTER ||
         e->type == ENEMY_FIRE_ELEMENTAL ||
         e->type == ENEMY_DJINN ||
-        e->type == ENEMY_FEY_TRICKSTER ||
-        e->type == ENEMY_LIVING_FLOWER ||
         e->type == ENEMY_CINDER_IMP ||
         e->type == ENEMY_SUN_PRIEST ||
         e->type == ENEMY_SERPENT_SPIRIT ||
@@ -3253,7 +3216,6 @@ static int enemy_prefers_flank(const Enemy *e) {
         e->type == ENEMY_CRYSTAL_SPIDER ||
         e->type == ENEMY_BLIND_STALKER ||
         e->type == ENEMY_ASH_HOUND ||
-        e->type == ENEMY_GIANT_MOTH ||
         e->type == ENEMY_PIXIE ||
         e->type == ENEMY_BLIGHTED_WOLF ||
         e->type == ENEMY_GIANT_SPIDER ||
@@ -3675,6 +3637,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             apply_enemy_damage(g, damage, FEEDBACK_NOW);
         }
     }
+    stormwatch_wind(g);
     int crossing_heat = regional_terrain_tick(g);
     if (crossing_heat > 0) {
         int damage = crossing_heat - g->player.defense / 2;
@@ -3689,11 +3652,6 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
     int hot_damage = cinder_lord_tick_floor(g);
     if (hot_damage > 0) {
         int damage = hot_damage - g->player.defense / 2;
-        apply_enemy_damage(g, damage > 2 ? damage : 2, FEEDBACK_NOW);
-    }
-    int root_damage = thorn_regent_tick_floor(g);
-    if (root_damage > 0) {
-        int damage = root_damage - g->player.defense / 2;
         apply_enemy_damage(g, damage > 2 ? damage : 2, FEEDBACK_NOW);
     }
     int sand_damage = desert_pharaoh_tick_floor(g);
@@ -3742,6 +3700,15 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
 
+        int storm_damage = 0;
+        if (stormwatch_tick(g, e, &storm_damage)) {
+            if (storm_damage > 0) {
+                int damage = storm_damage - g->player.defense / 2;
+                apply_enemy_damage(g, damage > 0 ? damage : 1, FEEDBACK_NOW);
+                push_message_kind(g, "The storm host strikes you!", MESSAGE_DAMAGE_TAKEN);
+            }
+            continue;
+        }
         int marsh_damage = 0;
         if (mangrove_tick(g, e, &marsh_damage)) {
             if (marsh_damage > 0) {
@@ -3799,13 +3766,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             }
             continue;
         }
-        if (e->type == ENEMY_THORN_REGENT) {
-            int damage = thorn_regent_tick(g, e, shots);
-            if (damage > 0) {
-                apply_enemy_damage(g, damage, e->boss_attack == REGENT_LANCE ? FEEDBACK_AFTER_ENEMY_SHOT : FEEDBACK_NOW);
-            }
-            continue;
-        }
+
         if (e->type == ENEMY_DESERT_PHARAOH) {
             int damage = desert_pharaoh_tick(g, e, shots);
             if (damage > 0) {
@@ -3921,7 +3882,6 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         e->move_timer++;
 
         if ((e->type == ENEMY_FIRE_ELEMENTAL || e->type == ENEMY_DJINN ||
-            e->type == ENEMY_FEY_TRICKSTER || e->type == ENEMY_LIVING_FLOWER ||
             e->type == ENEMY_CINDER_IMP || enemy_is_vampire_captor(e)) &&
             e->move_timer % 2 == 0 &&
             clear_orthogonal_path(g, i, e)) {
@@ -3934,9 +3894,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 char msg[MAX_MESSAGE_LEN];
                 const char *attack = enemy_is_vampire_captor(e) ? "Vampire blood bolt" :
                     e->type == ENEMY_CINDER_IMP ? "Imp firebolt" :
-                    (e->type == ENEMY_FEY_TRICKSTER ? "Fey sparkle" :
-                    (e->type == ENEMY_LIVING_FLOWER ? "Carnivorous Flower" :
-                    (e->type == ENEMY_DJINN ? "Djinn magic bolt" : "Elemental flame")));
+                    (e->type == ENEMY_DJINN ? "Djinn magic bolt" : "Elemental flame");
                 snprintf(msg, sizeof(msg), "%s: %d dmg", attack, dmg);
                 push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
             }
@@ -4105,10 +4063,8 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             e->type == ENEMY_ICE_GOLEM ||
             e->type == ENEMY_MUMMY ||
             e->type == ENEMY_GOLEM ||
-            e->type == ENEMY_THORN_GUARDIAN ||
             e->type == ENEMY_OBSIDIAN_GUARDIAN ||
             e->type == ENEMY_SHARD_GOLEM || e->type == ENEMY_IRON_SENTINEL ||
-            e->type == ENEMY_LIVING_FLOWER ||
             e->type == ENEMY_VINEBOUND_GUARDIAN ||
             e->type == ENEMY_LUNAR_EFFIGY ||
             e->type == ENEMY_MOONBOUND_SENTINEL) {
@@ -4121,8 +4077,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         if (!moved) {
             moved = enemy_move_toward(g, i);
         }
-        if ((e->type == ENEMY_CRYPT_BAT || e->type == ENEMY_GIANT_MOTH ||
-            e->type == ENEMY_ASH_HOUND || e->type == ENEMY_CRYSTAL_SPIDER) && moved) {
+        if ((e->type == ENEMY_CRYPT_BAT || e->type == ENEMY_ASH_HOUND || e->type == ENEMY_CRYSTAL_SPIDER) && moved) {
             // Fast enemies close distance without attacking on their second move.
             enemy_move_toward(g, i);
         }

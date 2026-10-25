@@ -8,7 +8,7 @@
 #define MINIMAP_PAD   6
 
 void minimap_draw(Renderer *r, const GameState *g) {
-    if (g->location != LOCATION_MANGROVES && g->location != LOCATION_ESCAPE_TUNNEL && g->location != LOCATION_DUNGEON &&
+    if (g->location != LOCATION_STORMWATCH && g->location != LOCATION_MANGROVES && g->location != LOCATION_ESCAPE_TUNNEL && g->location != LOCATION_DUNGEON &&
         g->location != LOCATION_FOREST &&
         g->location != LOCATION_MOUNTAINS &&
         g->location != LOCATION_DRAGONSPINE &&
@@ -17,7 +17,6 @@ void minimap_draw(Renderer *r, const GameState *g) {
         g->location != LOCATION_SWAMP &&
         g->location != LOCATION_FROSTFELL &&
         g->location != LOCATION_DESERT &&
-        g->location != LOCATION_MOONVEIL &&
         g->location != LOCATION_ASHEN &&
         g->location != LOCATION_GLASSDEEP &&
         g->location != LOCATION_ELDERWOOD && g->location != LOCATION_CATACOMBS &&
@@ -42,7 +41,6 @@ void minimap_draw(Renderer *r, const GameState *g) {
     if (g->location == LOCATION_SWAMP ||
         g->location == LOCATION_DRAGONSPINE ||
         g->location == LOCATION_DESERT ||
-        g->location == LOCATION_MOONVEIL ||
         g->location == LOCATION_ASHEN ||
         g->location == LOCATION_GLASSDEEP ||
         g->location == LOCATION_FROSTFELL) {
@@ -50,6 +48,10 @@ void minimap_draw(Renderer *r, const GameState *g) {
         map_h = SWAMP_MAP_H;
     }
 
+    if (g->location == LOCATION_STORMWATCH) {
+        map_w = STORM_W;
+        map_h = STORM_H;
+    }
     if (g->location == LOCATION_ELDERWOOD) {
         map_w = ELDERWOOD_W;
         map_h = ELDERWOOD_H;
@@ -92,10 +94,11 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         continue;
                     }
                     TileType tile = g->map.tiles[sy][sx];
-                    if (tile == TILE_MANGROVE_WATER || tile == TILE_GLASSDEEP_POOL || tile == TILE_STONEWAKE_GAP) {
+                    if (tile == TILE_STORM_WATER || tile == TILE_MANGROVE_WATER || tile == TILE_GLASSDEEP_POOL || tile == TILE_STONEWAKE_GAP) {
                         has_water = 1;
                     }
-                    if (tile == TILE_MANGROVE_EXIT || tile == TILE_MANGROVE_LANDING || tile == TILE_MANGROVE_RETURN || tile == TILE_MANGROVE_CACHE ||
+                    if (tile == TILE_STORM_EXIT || tile == TILE_STORM_ENTRANCE || tile == TILE_STORM_SUPPLIES || tile == TILE_STORM_CRANK ||
+                        tile == TILE_MANGROVE_EXIT || tile == TILE_MANGROVE_LANDING || tile == TILE_MANGROVE_RETURN || tile == TILE_MANGROVE_CACHE ||
                         tile == TILE_CASTLE_TRAP_OPEN || tile == TILE_CASTLE_WARD || tile == TILE_CASTLE_WARD_SPENT || tile == TILE_CASTLE_MUSTER ||
                         tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN ||
                         tile == TILE_ELDERWOOD_ENTRANCE || tile == TILE_ELDERWOOD_EXIT ||
@@ -113,8 +116,6 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_FROST_EXIT ||
                         tile == TILE_DESERT_ENTRANCE ||
                         tile == TILE_DESERT_EXIT ||
-                        tile == TILE_MOONVEIL_ENTRANCE ||
-                        tile == TILE_MOONVEIL_EXIT ||
                         tile == TILE_ASHEN_ENTRANCE ||
                         tile == TILE_ASHEN_EXIT ||
                         tile == TILE_GLASSDEEP_ENTRANCE ||
@@ -130,9 +131,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_NPC_ALDER || tile == TILE_NPC_MARA ||
                         tile == TILE_NPC_VEYRA || tile == TILE_WATCHFIRE_COLD || tile == TILE_WATCHFIRE_LIT ||
                         tile == TILE_NPC_ROOK || tile == TILE_NPC_OSWIN || tile == TILE_BURIAL_LEDGER ||
-                        tile == TILE_NPC_LIORA || tile == TILE_MOONVEIL_SEED_POD || tile == TILE_MOONVEIL_SPRING ||
-                        tile == TILE_MOONVEIL_PLANTING_CIRCLE || tile == TILE_MOONVEIL_MOONFLOWER ||
-                        tile == TILE_NPC_SELENE || tile == TILE_NPC_ORIN || tile == TILE_GLASSDEEP_RESONATOR || tile == TILE_GLASSDEEP_RESONATOR_LIT ||
+     tile == TILE_NPC_SELENE || tile == TILE_NPC_ORIN || tile == TILE_GLASSDEEP_RESONATOR || tile == TILE_GLASSDEEP_RESONATOR_LIT ||
                         tile == TILE_NPC_BRENNA || tile == TILE_FROST_JOURNAL || tile == TILE_NPC_FROST_SURVIVOR ||
                         tile == TILE_NPC_INNKEEPER ||
                         tile == TILE_NPC_HEALER || tile == TILE_NPC_WITCH ||
@@ -161,8 +160,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_MOUNTAIN_GATE || tile == TILE_MOUNTAIN_CACHE) {
                         has_stair = 1;
                     } else if (tile == TILE_DESERT_OASIS || tile == TILE_DESERT_OASIS_DRY ||
-                        tile == TILE_MOONVEIL_WAYSTONE_A || tile == TILE_MOONVEIL_WAYSTONE_B ||
-                        tile == TILE_ASHEN_VALVE || tile == TILE_ASHEN_VALVE_DIVERTED || (tile >= TILE_GLASS_FACE_N && tile <= TILE_GLASS_SEAL_OPEN)) {
+                    tile == TILE_ASHEN_VALVE || tile == TILE_ASHEN_VALVE_DIVERTED || (tile >= TILE_GLASS_FACE_N && tile <= TILE_GLASS_SEAL_OPEN)) {
                         has_stair = 1;
                     } else if (tile == TILE_STONEWAKE_CRANE_NEW || tile == TILE_STONEWAKE_CRANE_UP ||
                         tile == TILE_STONEWAKE_CRANE_DOWN || tile == TILE_STONEWAKE_CRANE_SALVAGE ||
@@ -175,7 +173,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                     } else if (tile == TILE_OSSUARY_BRAZIER || tile == TILE_OSSUARY_COLD ||
                         tile == TILE_MEMORIAL_BRAZIER || tile == TILE_MEMORIAL_COLD) {
                         has_stair = 1;
-                    } else if (tile != TILE_MANGROVE_WATER && tile != TILE_MANGROVE_ROOT && tile != TILE_CASTLE_WALL && tile != TILE_CASTLE_PILLAR &&
+                    } else if (tile != TILE_STORM_WATER && tile != TILE_STORM_WALL && tile != TILE_STORM_SHUTTER_UP && tile != TILE_MANGROVE_WATER && tile != TILE_MANGROVE_ROOT && tile != TILE_CASTLE_WALL && tile != TILE_CASTLE_PILLAR &&
                         tile != TILE_CASTLE_BANNER && tile != TILE_CASTLE_GATE && tile != TILE_CASTLE_TABLE &&
                         tile != TILE_CASTLE_BOOKCASE && tile != TILE_CASTLE_THRONE && tile != TILE_CATACOMBS_WALL &&
                         tile != TILE_CATACOMBS_SARCOPHAGUS && tile != TILE_WALL &&
@@ -190,9 +188,6 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile != TILE_DRAGON_RAVINE && tile != TILE_DRAGON_BOULDER && tile != TILE_DRAGON_ASH_BOULDER &&
                         tile != TILE_DESERT_WALL && tile != TILE_DESERT_MESA &&
                         tile != TILE_PHARAOH_OBELISK &&
-                        !(tile >= TILE_REGENT_WALL_1 && tile <= TILE_REGENT_WALL_4) &&
-                        tile != TILE_MOONVEIL_WALL &&
-                        tile != TILE_MOONVEIL_POOL &&
                         tile != TILE_ASHEN_WALL &&
                         tile != TILE_ASHEN_LAVA &&
                         tile != TILE_GLASSDEEP_WALL &&
@@ -239,8 +234,6 @@ void minimap_draw(Renderer *r, const GameState *g) {
                     SDL_SetRenderDrawColor(r->sdl, 205, 222, 236, 255);
                 } else if (g->location == LOCATION_DESERT) {
                     SDL_SetRenderDrawColor(r->sdl, 218, 181, 110, 255);
-                } else if (g->location == LOCATION_MOONVEIL) {
-                    SDL_SetRenderDrawColor(r->sdl, 115, 153, 166, 255);
                 } else if (g->location == LOCATION_ASHEN) {
                     SDL_SetRenderDrawColor(r->sdl, 176, 100, 62, 255);
                 } else if (g->location == LOCATION_CATACOMBS) {

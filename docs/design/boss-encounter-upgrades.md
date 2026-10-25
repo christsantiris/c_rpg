@@ -3,7 +3,7 @@
 Status: **Approved. Round 1 begins with the Lich King; pause after each boss for review and a manual commit.**
 
 The Lich King, Forest Necromancer, Mountain Goblin King, Drowned Queen,
-Swamp Demon, Minotaur, Grave Marshal, Desert Pharaoh, Thorn Regent, Cinder
+Swamp Demon, Minotaur, Grave Marshal, Desert Pharaoh, Cinder
 Lord, Prism Sovereign, Fallen Sun Guardian, Red Dragon, Castellan, Royal Arcanist
 and Lord Veyr implementations are complete. All 16 approved updates are now
 implemented alongside the existing Polar Kraken. Pause for review and a manual
@@ -168,19 +168,6 @@ phase messages to communicate escalation.
   the ambient visual sandstorm remains separate from damaging tiles.
 - **Guaranteed reward:** preserve **Sandstorm Staff**, including its existing
   unclaimed persistence. No staff stat or class changes proposed.
-
-### 9. Thorn Regent — Moonveil Gardens stage 5
-
-- **Phase 1, Garden Regent:** one-turn thorn lances and two-turn creeping roots.
-- **Phase 2, Briar Crown:** temporary thorn walls grow along warned strips,
-  changing flanking routes. They do not grow on occupants or seal the arena.
-- **Arena mechanic:** flowering nodes can be tended with Interact to clear an
-  adjacent thorn strip and open a route toward the Regent. A visible cooldown
-  prevents continuous clearing; the boss has a recovery opening after regrowth.
-- **Guaranteed reward:** new **Briarweave Cloak**, plus the existing special
-  **Potion of Strength**. Proposed cloak: all-class light armor, +4 defense and
-  10% evasion, emphasizing mobility rather than raw protection.
-- **Boundary:** arena nodes are independent of Liora's Moonseed quest objects.
 
 ### 10. Cinder Lord — Ashen Hollow stage 5
 

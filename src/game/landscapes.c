@@ -272,82 +272,8 @@ void map_generate_desert(Map *m, int level) {
     sunscar_obstacles(m, NULL, NULL, 0, level, 0);
 }
 
-static int waystone_site(const Map *m, int room, TileType kind, int *x, int *y) {
-    const Room *r = &m->rooms[room];
-    int cx, cy;
-    map_room_center(r, &cx, &cy);
-    int best = MAP_W + MAP_H;
-    for (int ty = r->y + 1; ty < r->y + r->h - 1; ty++) {
-        for (int tx = r->x + 1; tx < r->x + r->w - 1; tx++) {
-            TileType tile = m->tiles[ty][tx];
-            if (tile == kind) {
-                *x = tx;
-                *y = ty;
-                return 1;
-            }
-            if (tile != TILE_MOONVEIL_FLOOR && tile != TILE_MOONVEIL_CIRCLE) {
-                continue;
-            }
-            int distance = abs(tx - cx) + abs(ty - cy - 2);
-            if (distance < best) {
-                best = distance;
-                *x = tx;
-                *y = ty;
-            }
-        }
-    }
-    return best < MAP_W + MAP_H;
-}
-
-static void waystone_pair(Map *m, int a, int b, TileType kind) {
-    int ax, ay, bx, by;
-    // Place both ends together, finding alternate ground around existing loot.
-    if (waystone_site(m, a, kind, &ax, &ay) && waystone_site(m, b, kind, &bx, &by)) {
-        m->tiles[ay][ax] = kind;
-        m->tiles[by][bx] = kind;
-    }
-}
-
-void map_generate_moonveil(Map *m, int level) {
-    static const int centers[9][2] = {{61, 32}, {51, 14}, {33, 10}, {16, 18}, {15, 45}, {33, 53}, {53, 49}, {49, 32}, {9, 32}};
-    static const int edges[][2] = {{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 5}, {5, 6}, {6, 0}, {0, 7}, {7, 1}, {7, 6}, {3, 8}, {4, 8}};
-    init_map(m, TILE_MOONVEIL_WALL);
-    for (int i = 0; i < 9; i++) {
-        int shift = i == 0 || i == 8 ? 0 : rand() % 3 - 1;
-        clearing(m, i, centers[i][0] + shift, centers[i][1], i == 8 ? 14 : 13, i == 8 ? 13 : 11, TILE_MOONVEIL_FLOOR);
-    }
-    for (int i = 0; i < (int)(sizeof(edges) / sizeof(edges[0])); i++) {
-        connect(m, edges[i][0], edges[i][1], 2, TILE_MOONVEIL_WALL, TILE_MOONVEIL_FLOOR);
-    }
-    // Pools fill hedge interiors; the curving garden walks stay on their banks.
-    for (int y = 3; y < SWAMP_MAP_H - 3; y++) {
-        for (int x = 3; x < SWAMP_MAP_W - 3; x++) {
-            int dx = x - 33;
-            int dy = y - 32;
-            if (dx * dx + dy * dy <= 100 + level * 2 && m->tiles[y][x] == TILE_MOONVEIL_WALL) {
-                m->tiles[y][x] = TILE_MOONVEIL_POOL;
-            }
-        }
-    }
-    for (int i = 1; i < 9; i++) {
-        int x, y;
-        map_room_center(&m->rooms[i], &x, &y);
-        for (int dy = -3; dy <= 3; dy++) {
-            for (int dx = -3; dx <= 3; dx++) {
-                int d = dx * dx + dy * dy;
-                if (d >= 7 && d <= 10 && m->tiles[y + dy][x + dx] == TILE_MOONVEIL_FLOOR) {
-                    m->tiles[y + dy][x + dx] = TILE_MOONVEIL_CIRCLE;
-                }
-            }
-        }
-    }
-    waystone_pair(m, 1, 5, TILE_MOONVEIL_WAYSTONE_A);
-    waystone_pair(m, 3, 6, TILE_MOONVEIL_WAYSTONE_B);
-    exits(m, TILE_MOONVEIL_WALL, TILE_MOONVEIL_FLOOR, TILE_MOONVEIL_ENTRANCE, TILE_MOONVEIL_EXIT);
-}
-
 int landscape_tile(TileType tile) {
-    return tile >= TILE_DESERT_OASIS && tile <= TILE_MOONVEIL_WAYSTONE_B;
+    return tile == TILE_DESERT_OASIS || tile == TILE_DESERT_OASIS_DRY;
 }
 
 static TileType terrain(const GameState *g, int x, int y) {
@@ -369,7 +295,7 @@ static TileType terrain(const GameState *g, int x, int y) {
 }
 
 static int interaction(const GameState *g, int *x, int *y) {
-    if (g->location != LOCATION_DESERT && g->location != LOCATION_MOONVEIL) {
+    if (g->location != LOCATION_DESERT) {
         return 0;
     }
     static const int offsets[5][2] = {{0, 0}, {0, -1}, {1, 0}, {0, 1}, {-1, 0}};
@@ -377,8 +303,7 @@ static int interaction(const GameState *g, int *x, int *y) {
         int tx = g->player.x + offsets[i][0];
         int ty = g->player.y + offsets[i][1];
         TileType tile = terrain(g, tx, ty);
-        if ((g->location == LOCATION_DESERT && (tile == TILE_DESERT_OASIS || tile == TILE_DESERT_OASIS_DRY)) ||
-            (g->location == LOCATION_MOONVEIL && (tile == TILE_MOONVEIL_WAYSTONE_A || tile == TILE_MOONVEIL_WAYSTONE_B))) {
+        if (tile == TILE_DESERT_OASIS || tile == TILE_DESERT_OASIS_DRY) {
             *x = tx;
             *y = ty;
             return 1;
@@ -430,25 +355,7 @@ int landscape_interact(GameState *g) {
         push_message(g, "Oasis water restores a quarter of your health and mana. The well runs dry.");
         return 1;
     }
-    for (int ty = 1; ty < SWAMP_MAP_H - 1; ty++) {
-        for (int tx = 1; tx < SWAMP_MAP_W - 1; tx++) {
-            if ((tx == x && ty == y) || terrain(g, tx, ty) != tile) {
-                continue;
-            }
-            for (int i = 0; i < g->enemy_count; i++) {
-                if (g->enemies[i].active && g->enemies[i].x == tx && g->enemies[i].y == ty) {
-                    push_message(g, "A creature blocks the matching waystone. Clear its landing first.");
-                    return 1;
-                }
-            }
-            game_move_player(g, tx - g->player.x, ty - g->player.y);
-            map_mark_explored(&g->map, tx, ty);
-            push_message(g, "Moonlight carries you to the matching garden waystone.");
-            return 1;
-        }
-    }
-    push_message(g, "This waystone has no matching stone on this stage.");
-    return 1;
+    return 0;
 }
 
 void landscape_new_expedition(Map *m) {
@@ -491,8 +398,8 @@ static void migrate_map(Map *m, Location location) {
     if (m->room_count < 9 || modern_map(m, location)) {
         return;
     }
-    TileType wall = location == LOCATION_FROSTFELL ? TILE_FROST_WALL : location == LOCATION_DESERT ? TILE_DESERT_WALL : TILE_MOONVEIL_WALL;
-    TileType floor = location == LOCATION_FROSTFELL ? TILE_FROST_FLOOR : location == LOCATION_DESERT ? TILE_DESERT_FLOOR : TILE_MOONVEIL_FLOOR;
+    TileType wall = location == LOCATION_FROSTFELL ? TILE_FROST_WALL : TILE_DESERT_WALL;
+    TileType floor = location == LOCATION_FROSTFELL ? TILE_FROST_FLOOR : TILE_DESERT_FLOOR;
     // Expand old trails in place; never replace progress, items or open squares.
     Map original = *m;
     for (int i = 1; i < 8; i++) {
@@ -513,14 +420,11 @@ static void migrate_map(Map *m, Location location) {
     }
     if (location == LOCATION_DESERT) {
         oasis(m, 2);
-    } else if (location == LOCATION_MOONVEIL) {
-        waystone_pair(m, 1, 5, TILE_MOONVEIL_WAYSTONE_A);
-        waystone_pair(m, 3, 6, TILE_MOONVEIL_WAYSTONE_B);
     }
 }
 
 void landscape_migrate(GameState *g) {
-    if (g->location == LOCATION_FROSTFELL || g->location == LOCATION_DESERT || g->location == LOCATION_MOONVEIL) {
+    if (g->location == LOCATION_FROSTFELL || g->location == LOCATION_DESERT) {
         migrate_map(&g->map, g->location);
     }
     for (int i = 0; i < 5; i++) {
@@ -529,9 +433,6 @@ void landscape_migrate(GameState *g) {
         }
         if (g->desert_cache[i].valid) {
             migrate_map(&g->desert_cache[i].map, LOCATION_DESERT);
-        }
-        if (g->moonveil_cache[i].valid) {
-            migrate_map(&g->moonveil_cache[i].map, LOCATION_MOONVEIL);
         }
     }
 }

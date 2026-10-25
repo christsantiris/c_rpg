@@ -103,17 +103,18 @@ void test_quest_journal(void) {
     const Location regions[JOURNAL_BOSS_COUNT] = {
         LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST,
         LOCATION_TEMPLE, LOCATION_SWAMP, LOCATION_DRAGONSPINE, LOCATION_FROSTFELL,
-        LOCATION_DESERT, LOCATION_MOONVEIL, LOCATION_ASHEN, LOCATION_GLASSDEEP, LOCATION_LABYRINTH, LOCATION_CATACOMBS, LOCATION_CASTLE_INTERIOR, LOCATION_CASTLE_INTERIOR, LOCATION_CASTLE_INTERIOR, LOCATION_ELDERWOOD, LOCATION_MANGROVES
+        LOCATION_DESERT, LOCATION_ASHEN, LOCATION_GLASSDEEP, LOCATION_LABYRINTH, LOCATION_CATACOMBS, LOCATION_CASTLE_INTERIOR, LOCATION_CASTLE_INTERIOR, LOCATION_CASTLE_INTERIOR, LOCATION_ELDERWOOD, LOCATION_MANGROVES, LOCATION_STORMWATCH
     };
     const char *names[JOURNAL_BOSS_COUNT] = {
         "Lich King", "Necromancer", "Goblin King", "Drowned Queen",
-        "Fallen Sun Guardian", "Swamp Demon", "Red Dragon", "Polar Kraken", "Desert Pharaoh", "Thorn Regent", "Cinder Lord", "Quarry Colossus", "Minotaur", "Grave Marshal", "Castellan", "Royal Arcanist", "Lord Veyr", "Elderthorn", "Sszareth, Keeper of the Roots"
+        "Fallen Sun Guardian", "Swamp Demon", "Red Dragon", "Polar Kraken", "Desert Pharaoh", "Cinder Lord", "Quarry Colossus", "Minotaur", "Grave Marshal", "Castellan", "Royal Arcanist", "Lord Veyr", "Elderthorn", "Sszareth, Keeper of the Roots", "Tempest Matriarch"
     };
     for (int defeated = 0; defeated < JOURNAL_BOSS_COUNT; defeated++) {
-        g.defeated_bosses = defeated < 14 || defeated == 16 ? 1 << regions[defeated] : 0;
-        g.elderwood_defeated = defeated == 17;
-        g.mangrove_defeated = defeated == 18;
-        g.castle_minibosses = defeated == 14 ? 1 : defeated == 15 ? 2 : 0;
+        g.defeated_bosses = defeated < 13 || defeated == 15 ? 1 << regions[defeated] : 0;
+        g.elderwood_defeated = defeated == 16;
+        g.mangrove_defeated = defeated == 17;
+        g.stormwatch_defeated = defeated == 18;
+        g.castle_minibosses = defeated == 13 ? 1 : defeated == 14 ? 2 : 0;
         for (int i = 0; i < JOURNAL_BOSS_COUNT; i++) {
             BossJournalEntry boss;
             ASSERT("journal maps each regional defeat to the correct boss",

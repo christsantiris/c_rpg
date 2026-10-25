@@ -86,12 +86,13 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
         return 0;
     }
     if (g->location == LOCATION_DAWNMERE) {
-        *style = action.target_y == 0 ? TOWN_EXIT_MOUNTAINS : TOWN_EXIT_DUNGEON;
+        *style = action.target_y == 0 ? TOWN_EXIT_MOUNTAINS :
+            action.target_x == TOWN_W - 1 || action.target_y == TOWN_H - 1 ? TOWN_EXIT_ROAD : TOWN_EXIT_DUNGEON;
         return 1;
     }
     if (g->location == LOCATION_TOWN3 || g->location == LOCATION_CASTLE) {
         if (action.target_x == 0 || action.target_x == TOWN_W - 1) {
-            *style = g->location == LOCATION_TOWN3 && action.target_x == 0 ? TOWN_EXIT_MOONVEIL : TOWN_EXIT_ROAD;
+            *style = g->location == LOCATION_TOWN3 && action.target_x == 0 ? TOWN_EXIT_ASHEN : TOWN_EXIT_ROAD;
             return 1;
         }
         if (g->location == LOCATION_TOWN3 && action.target_y == 0) {
@@ -623,12 +624,11 @@ int main(int argc, char **argv) {
             (screen == SCREEN_PLAYING && game_combat_feedback_active(SDL_GetTicks()));
         int ambient_animating = screen == SCREEN_PLAYING &&
             (game_player_low_health(&game) || game.location == LOCATION_DUNGEON ||
-            game.location == LOCATION_ELDERWOOD || game.location == LOCATION_FOREST ||
+            game.location == LOCATION_STORMWATCH || game.location == LOCATION_ELDERWOOD || game.location == LOCATION_FOREST ||
             game.location == LOCATION_MOUNTAINS ||
             game.location == LOCATION_DRAGONSPINE ||
             game.location == LOCATION_FROSTFELL ||
             game.location == LOCATION_DESERT ||
-            game.location == LOCATION_MOONVEIL ||
             game.location == LOCATION_ASHEN ||
             game.location == LOCATION_GLASSDEEP ||
             game.location == LOCATION_JAIL_ARMORY || game.location == LOCATION_CATACOMBS ||
@@ -1102,9 +1102,6 @@ int main(int argc, char **argv) {
                                             found = 1;
                                         } else if (game.map.tiles[ty][tx] == TILE_NPC_GUILD_SEEKER) {
                                             game_talk_to_guild_seeker(&game);
-                                            found = 1;
-                                        } else if (game.map.tiles[ty][tx] == TILE_NPC_LIORA) {
-                                            game_talk_to_liora(&game);
                                             found = 1;
                                         } else if (game.map.tiles[ty][tx] == TILE_NPC_VEYRA) {
                                             game_talk_to_veyra(&game);

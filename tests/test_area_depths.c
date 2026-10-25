@@ -231,7 +231,7 @@ void test_area_depths(void) {
     ASSERT("standalone adventures share five stages",
         DUNGEON_DEPTH == 5 && TEMPLE_DEPTH == 5 && LABYRINTH_DEPTH == 5 &&
         COAST_DEPTH == 5 && DRAGONSPINE_DEPTH == 5 && FROSTFELL_DEPTH == 5 &&
-        DESERT_DEPTH == 5 && MOONVEIL_DEPTH == 5 && ASHEN_DEPTH == 5 &&
+        DESERT_DEPTH == 5 && ASHEN_DEPTH == 5 &&
         GLASSDEEP_DEPTH == 5 && CATACOMBS_DEPTH == 5);
     start();
     game.elowen_quest_state = 1;
