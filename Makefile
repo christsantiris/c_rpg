@@ -43,6 +43,7 @@ sprites:
 	python3 tools/sprites/labyrinth.py
 	python3 tools/sprites/dungeon.py
 	python3 tools/sprites/forest.py
+	python3 tools/sprites/stormwatch.py
 	python3 tools/sprites/elderwood.py
 	python3 tools/sprites/mangrove.py
 	python3 tools/sprites/mountain.py
@@ -51,7 +52,6 @@ sprites:
 	python3 tools/sprites/desert.py
 	python3 tools/sprites/dragonspine.py
 	python3 tools/sprites/frostfell.py
-	python3 tools/sprites/moonveil.py
 	python3 tools/sprites/ashen.py
 	python3 tools/sprites/stonewake.py
 	python3 tools/sprites/catacombs.py

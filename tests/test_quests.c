@@ -581,7 +581,6 @@ void test_quest_offer_controls(void) {
         {game_talk_to_steward, LOCATION_TOWN_HALL, HALL_STEWARD_X, HALL_STEWARD_Y, &g.emberforge_quest_state},
         {game_talk_to_brenna, LOCATION_INN, BRENNA_INN_X, BRENNA_INN_Y, &g.frostfell_quest_state},
         {game_talk_to_orin, LOCATION_GUILD, GUILD_ORIN_X, GUILD_ORIN_Y, &g.glassdeep_quest_state},
-        {game_talk_to_liora, LOCATION_TOWN3, LIORA_TOWN_X, LIORA_TOWN_Y, &g.moonveil_quest_state},
         {game_talk_to_oswin, LOCATION_TOWN_HALL, HALL_OSWIN_X, HALL_OSWIN_Y, &g.catacombs_quest_state}
     };
     for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {

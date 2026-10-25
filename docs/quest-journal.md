@@ -65,13 +65,6 @@ companion automatically completes that hunt; the order is unrestricted.
 Return and speak to Selene in Rosemoor's Adventurer's Guild for **200 gold and
 1,500 score**. All three objectives remain in the Completed tab afterward.
 
-Liora's **The Stolen Moonseed** appears after talking to her in Rosemoor's
-town center. It tracks the Moonseed on Moonveil stage 2, moonwater on stage 3, and
-restoration of the planting circle on stage 4. The seed and water can be
-collected in either order; planting needs both. Return to Liora in Rosemoor's
-town center for 90 gold and 700 score. The Thorn Regent is optional, and all three objectives remain
-recorded in the Completed tab after turning in the quest.
-
 Brother Oswin's **Rest for the Forgotten** appears after talking to him in
 Ridgeshire's Town Hall. Its four separate objectives are the Soldiers',
 Watchers', and Choir memorial braziers on Catacombs floors 2, 3, and 4, and the

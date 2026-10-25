@@ -1,5 +1,7 @@
 # World map illustration
 
+The current atlas adds the [Stormwatch watchfort and east road](../stormwatch/atlas-edit.md) to the [western geography and woodland edit](../western-geography/README.md#atlas-edit-prompt).
+
 Generated with the built-in image generation tool using the user's handwritten
 world sketch as a layout reference. Place names and connections were checked
 against the game and README. The original image was `../../images/world-map.png`.

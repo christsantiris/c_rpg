@@ -1,5 +1,6 @@
 #include "approach.h"
 #include "elderwood.h"
+#include "stormwatch.h"
 #include "coastal_travel.h"
 #include <string.h>
 
@@ -16,27 +17,31 @@ const TownApproach town_approaches[] = {
     {LOCATION_TOWN2, LOCATION_GLASSDEEP, SOUTH_AREA_GATE_X, TOWN_H - 1},
     {LOCATION_TOWN3, LOCATION_FROSTFELL, 20, 0},
     {LOCATION_TOWN3, LOCATION_SWAMP, 20, TOWN_H - 1},
-    {LOCATION_TOWN3, LOCATION_MOONVEIL, 0, ROSEMOOR_MOONVEIL_GATE_Y},
+    {-1, -1, 0, 0}, // Retired garden route; saved indices remain stable.
     {LOCATION_TOWN4, LOCATION_MOUNTAINS, 20, TOWN_H - 1},
     {LOCATION_TOWN4, LOCATION_DRAGONSPINE, RIDGESHIRE_DRAGON_GATE_X, 0},
-    {LOCATION_TOWN4, LOCATION_ASHEN, TOWN_W - 1, RIDGESHIRE_ASHEN_GATE_Y},
+    {LOCATION_TOWN3, LOCATION_ASHEN, 0, ROSEMOOR_ASHEN_GATE_Y},
     {LOCATION_CASTLE, LOCATION_CATACOMBS, CROWNROAD_X, TOWN_H - 1},
     {LOCATION_DAWNMERE, LOCATION_DUNGEON, 0, 12},
-    {LOCATION_TOWN, LOCATION_ELDERWOOD, 20, 0}
+    {LOCATION_TOWN, LOCATION_ELDERWOOD, 20, 0},
+    {-1, -1, 0, 0}, // Retired coastal route 17.
+    {LOCATION_DAWNMERE, LOCATION_STORMWATCH, TOWN_W - 1, 12}
 };
 
-// Serialized route 17 is retired; reserve that index when adding new routes.
+// Serialized route 17 remains reserved.
 const int town_approach_count = sizeof(town_approaches) / sizeof(town_approaches[0]);
 
 const TownApproach *approach_route(const GameState *g) {
     if (g->location != LOCATION_APPROACH || g->approach_route < 0 || g->approach_route >= town_approach_count) {
         return NULL;
     }
-    return &town_approaches[g->approach_route];
+    const TownApproach *route = &town_approaches[g->approach_route];
+    return (int)route->area >= 0 ? route : NULL;
 }
 
 const char *approach_area_name(Location area) {
     switch (area) {
+        case LOCATION_STORMWATCH: return "STORMWATCH HEADLAND";
         case LOCATION_DUNGEON: return "DUNGEON";
         case LOCATION_FOREST: return "FOREST";
         case LOCATION_MOUNTAINS: return "GOBLIN MOUNTAINS";
@@ -46,7 +51,6 @@ const char *approach_area_name(Location area) {
         case LOCATION_DRAGONSPINE: return "DRAGONSPINE";
         case LOCATION_FROSTFELL: return "FROSTFELL";
         case LOCATION_DESERT: return "SUNSCAR WASTES";
-        case LOCATION_MOONVEIL: return "MOONVEIL GARDENS";
         case LOCATION_ASHEN: return "ASHEN HOLLOW";
         case LOCATION_GLASSDEEP: return "STONEWAKE QUARRY";
         case LOCATION_CATACOMBS: return "ROYAL CATACOMBS";
@@ -81,7 +85,6 @@ TileType approach_floor(Location area) {
         case LOCATION_DRAGONSPINE: return TILE_DRAGON_FLOOR;
         case LOCATION_FROSTFELL: return TILE_FROST_FLOOR;
         case LOCATION_DESERT: return TILE_TOWN_PATH;
-        case LOCATION_MOONVEIL: return TILE_MOONVEIL_FLOOR;
         case LOCATION_ASHEN: return TILE_ASHEN_FLOOR;
         case LOCATION_GLASSDEEP: return TILE_GLASSDEEP_FLOOR;
         default: return TILE_FOREST_FLOOR;
@@ -97,7 +100,6 @@ static TileType approach_wall(Location area) {
         case LOCATION_DRAGONSPINE: return TILE_DRAGON_WALL;
         case LOCATION_FROSTFELL: return TILE_FROST_WALL;
         case LOCATION_DESERT: return TILE_DESERT_WALL;
-        case LOCATION_MOONVEIL: return TILE_MOONVEIL_WALL;
         case LOCATION_ASHEN: return TILE_ASHEN_WALL;
         case LOCATION_GLASSDEEP: return TILE_GLASSDEEP_WALL;
         default: return TILE_FOREST_WALL;
@@ -397,9 +399,9 @@ int approach_entrance_rows(Location area) {
         case LOCATION_COAST:
         case LOCATION_FROSTFELL:
         case LOCATION_DESERT:
-        case LOCATION_MOONVEIL:
         case LOCATION_ASHEN:
         case LOCATION_GLASSDEEP:
+        case LOCATION_STORMWATCH:
         case LOCATION_CATACOMBS: return 6;
         default: return 0;
     }
@@ -517,10 +519,10 @@ static void generate_approach(Map *map, Location area, int dx, int dy) {
 
 void approach_relocate_ridgeshire(GameState *g) {
     const TownApproach *route = approach_route(g);
-    if (!route || route->town != LOCATION_TOWN4 || (route->area != LOCATION_DRAGONSPINE && route->area != LOCATION_ASHEN)) {
+    if (!route || (route->area != LOCATION_DRAGONSPINE && route->area != LOCATION_ASHEN)) {
         return;
     }
-    int dx = route->gate_x == TOWN_W - 1 ? 1 : 0;
+    int dx = route->gate_x == 0 ? -1 : route->gate_x == TOWN_W - 1 ? 1 : 0;
     int dy = route->gate_y == 0 ? -1 : 0;
     int old_dx = route->area == LOCATION_DRAGONSPINE ? 1 : 0;
     int old_dy = route->area == LOCATION_ASHEN ? -1 : 0;
@@ -754,7 +756,7 @@ int approach_enter(GameState *g, int x, int y) {
 }
 
 int approach_enter_region(GameState *g, int index) {
-    if (index < 0 || index >= town_approach_count) {
+    if (index < 0 || index >= town_approach_count || (int)town_approaches[index].area < 0) {
         return 0;
     }
     const TownApproach *route = &town_approaches[index];
@@ -847,6 +849,7 @@ int approach_travel(GameState *g, int x, int y) {
     g->location = route->town;
     g->approach_route = -1;
     switch (area) {
+        case LOCATION_STORMWATCH: stormwatch_enter(g, 0); break;
         case LOCATION_DUNGEON: game_enter_dungeon(g); break;
         case LOCATION_FOREST: game_enter_forest(g); break;
         case LOCATION_MOUNTAINS: game_enter_mountains(g); break;
@@ -855,7 +858,6 @@ int approach_travel(GameState *g, int x, int y) {
         case LOCATION_DRAGONSPINE: game_enter_dragonspine(g); break;
         case LOCATION_FROSTFELL: game_enter_frostfell(g); break;
         case LOCATION_DESERT: game_enter_desert(g); break;
-        case LOCATION_MOONVEIL: game_enter_moonveil(g); break;
         case LOCATION_ASHEN: game_enter_ashen(g); break;
         case LOCATION_GLASSDEEP: game_enter_glassdeep(g); break;
         case LOCATION_CATACOMBS: game_enter_catacombs(g); break;

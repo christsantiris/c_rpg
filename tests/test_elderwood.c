@@ -204,7 +204,7 @@ void test_elderwood(void) {
     action_resolve_player(g, (Action){ACTION_MOVE, boss->x, boss->y});
     ASSERT("an actual boss kill records Elderthorn separately from the legacy boss mask", g->elderwood_defeated && !boss->active && !(g->defeated_bosses & (1 << LOCATION_CATACOMBS)));
     BossJournalEntry entry;
-    ASSERT("the boss journal records Elderthorn's defeat", quest_journal_get_boss(g, 17, &entry) && entry.defeated && !strcmp(entry.name, "Elderthorn"));
+    ASSERT("the boss journal records Elderthorn's defeat", quest_journal_get_boss(g, 16, &entry) && entry.defeated && !strcmp(entry.name, "Elderthorn"));
     game_return_to_approach(g);
     ASSERT("defeating Elderthorn opens the road to Catacombs while Castle stays locked", path(g, NORTH_CAT_X, NORTH_CAT_Y, 0) && g->map.tiles[0][NORTH_ROAD_X] != TILE_NORTH_CASTLE);
     ASSERT("walking into the relocated Catacombs begins its original first floor", path(g, NORTH_CAT_X, NORTH_CAT_Y, 1) && g->location == LOCATION_CATACOMBS && g->level == 1 && g->catacombs_entry_town == LOCATION_TOWN && g->map.room_count > 0);

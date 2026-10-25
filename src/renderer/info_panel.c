@@ -111,7 +111,11 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
         SDL_snprintf(loc, sizeof(loc), "MARSH PATH");
     } else if (g->location == LOCATION_APPROACH) {
         const TownApproach *route = approach_route(g);
-        SDL_snprintf(loc, sizeof(loc), northern_approach(g) ? "NORTHERN ROAD" : "%s PATH", route ? approach_area_name(route->area) : "AREA");
+        if (route && route->area == LOCATION_STORMWATCH) {
+            SDL_snprintf(loc, sizeof(loc), "STORMWATCH PATH");
+        } else {
+            SDL_snprintf(loc, sizeof(loc), northern_approach(g) ? "NORTHERN ROAD" : "%s PATH", route ? approach_area_name(route->area) : "AREA");
+        }
     } else if (g->location == LOCATION_TOWN) {
         SDL_snprintf(loc, sizeof(loc), "OakHaven");
     } else if (g->location == LOCATION_TAVERN) {
@@ -154,6 +158,8 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
         SDL_snprintf(loc, sizeof(loc), "INN");
     } else if (g->location == LOCATION_GUILD) {
         SDL_snprintf(loc, sizeof(loc), "ADVENTURER'S GUILD");
+    } else if (g->location == LOCATION_STORMWATCH) {
+        SDL_snprintf(loc, sizeof(loc), "STORMWATCH %d", g->level);
     } else if (g->location == LOCATION_ELDERWOOD) {
         SDL_snprintf(loc, sizeof(loc), "ELDERWOOD %d", g->level);
     } else if (g->location == LOCATION_FOREST) {
@@ -170,8 +176,6 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
         SDL_snprintf(loc, sizeof(loc), "SWAMP %d", g->level);
     } else if (g->location == LOCATION_FROSTFELL) {
         SDL_snprintf(loc, sizeof(loc), "FROSTFELL %d", g->level);
-    } else if (g->location == LOCATION_MOONVEIL) {
-        SDL_snprintf(loc, sizeof(loc), "MOONVEIL GARDENS %d", g->level);
     } else if (g->location == LOCATION_ASHEN) {
         SDL_snprintf(loc, sizeof(loc), "ASHEN HOLLOW %d", g->level);
     } else if (g->location == LOCATION_CATACOMBS) {

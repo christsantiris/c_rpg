@@ -461,7 +461,9 @@ int map_is_walkable(const Map *m, int x, int y) {
     if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
         return 0;
     }
-    return m->tiles[y][x] != TILE_STONEWAKE_LEGACY_BOUNDARY && m->tiles[y][x] != TILE_STONEWAKE_WORKSHOP && m->tiles[y][x] != TILE_STONEWAKE_BOUNDARY && m->tiles[y][x] != TILE_STONEWAKE_GAP &&
+    return m->tiles[y][x] != TILE_STORM_WATER && m->tiles[y][x] != TILE_STORM_WALL &&
+        m->tiles[y][x] != TILE_STORM_SHUTTER_UP && m->tiles[y][x] != TILE_STORM_CRANK &&
+        m->tiles[y][x] != TILE_STORM_SUPPLIES && m->tiles[y][x] != TILE_STONEWAKE_LEGACY_BOUNDARY && m->tiles[y][x] != TILE_STONEWAKE_WORKSHOP && m->tiles[y][x] != TILE_STONEWAKE_BOUNDARY && m->tiles[y][x] != TILE_STONEWAKE_GAP &&
         m->tiles[y][x] != TILE_STONEWAKE_SUPPLIES && m->tiles[y][x] != TILE_MANGROVE_WATER && m->tiles[y][x] != TILE_MANGROVE_ROOT &&
         m->tiles[y][x] != TILE_MANGROVE_CACHE && m->tiles[y][x] != TILE_LICH_PILLAR &&
         m->tiles[y][x] != TILE_JAIL_BUILDING &&
@@ -508,9 +510,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_DRAGON_ASH_BOULDER &&
         m->tiles[y][x] != TILE_DESERT_WALL &&
         m->tiles[y][x] != TILE_DESERT_MESA &&
-        m->tiles[y][x] != TILE_MOONVEIL_WALL &&
-        m->tiles[y][x] != TILE_MOONVEIL_POOL &&
-        m->tiles[y][x] != TILE_ASHEN_WALL &&
+  m->tiles[y][x] != TILE_ASHEN_WALL &&
         m->tiles[y][x] != TILE_ASHEN_LAVA &&
         m->tiles[y][x] != TILE_GLASSDEEP_WALL &&
         m->tiles[y][x] != TILE_GLASSDEEP_POOL &&
@@ -539,8 +539,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_NPC_ALDER &&
         m->tiles[y][x] != TILE_NPC_MARA &&
         m->tiles[y][x] != TILE_NPC_BRENNA &&
-        m->tiles[y][x] != TILE_NPC_LIORA &&
-        m->tiles[y][x] != TILE_NPC_ORIN &&
+ m->tiles[y][x] != TILE_NPC_ORIN &&
         m->tiles[y][x] != TILE_NPC_SELENE &&
         m->tiles[y][x] != TILE_NPC_FROST_SURVIVOR &&
         m->tiles[y][x] != TILE_NPC_ROOK &&
@@ -574,8 +573,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_LABYRINTH_GATE &&
         m->tiles[y][x] != TILE_MINOTAUR_PILLAR &&
         m->tiles[y][x] != TILE_MINOTAUR_CRACKED &&
-        m->tiles[y][x] != TILE_PHARAOH_OBELISK &&
-        !(m->tiles[y][x] >= TILE_REGENT_WALL_1 && m->tiles[y][x] <= TILE_REGENT_WALL_4);
+        m->tiles[y][x] != TILE_PHARAOH_OBELISK;
 }
 
 // The dungeon's portcullis shortcut is retired. Older saves can still hold its
@@ -1704,8 +1702,8 @@ void map_place_town4_region_gates(Map *m) {
     for (int x = RIDGESHIRE_DRAGON_GATE_X - 2; x <= RIDGESHIRE_DRAGON_GATE_X + 2; x++) {
         m->tiles[0][x] = TILE_TOWN_EXIT;
     }
-    for (int y = RIDGESHIRE_ASHEN_GATE_Y - 2; y <= RIDGESHIRE_ASHEN_GATE_Y + 2; y++) {
-        m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
+    for (int y = 10; y <= 14; y++) {
+        m->tiles[y][TOWN_W - 1] = TILE_WALL;
     }
 }
 
@@ -1809,6 +1807,7 @@ void map_generate_dawnmere(Map *m, int *spawn_x, int *spawn_y) {
     }
     for (int y = 10; y <= 14; y++) {
         m->tiles[y][0] = TILE_TOWN_EXIT;
+        m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
     }
     for (int x = 18; x <= 22; x++) {
         m->tiles[0][x] = TILE_TOWN_EXIT;
@@ -1822,7 +1821,7 @@ void map_generate_dawnmere(Map *m, int *spawn_x, int *spawn_y) {
 void map_generate_town3(Map *m, int *spawn_x, int *spawn_y) {
     map_generate_town_square(m);
     map_place_town3_frost_gate(m);
-    map_place_town3_moonveil_gate(m);
+    map_place_town3_ashen_gate(m);
     m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
     for (int y = TOWN3_KING_GATE_Y - 2; y <= TOWN3_KING_GATE_Y + 2; y++) {
         m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
@@ -1831,13 +1830,12 @@ void map_generate_town3(Map *m, int *spawn_x, int *spawn_y) {
     map_place_town3_guild(m);
     map_place_town3_guards(m, -1, -1);
     town_life_place(m, LOCATION_TOWN3);
-    m->tiles[LIORA_TOWN_Y][LIORA_TOWN_X] = TILE_NPC_LIORA;
     *spawn_x = 20;
     *spawn_y = TOWN_H - 2;
 }
 
-void map_place_town3_moonveil_gate(Map *m) {
-    for (int y = ROSEMOOR_MOONVEIL_GATE_Y - 2; y <= ROSEMOOR_MOONVEIL_GATE_Y + 2; y++) {
+void map_place_town3_ashen_gate(Map *m) {
+    for (int y = ROSEMOOR_ASHEN_GATE_Y - 2; y <= ROSEMOOR_ASHEN_GATE_Y + 2; y++) {
         m->tiles[y][0] = TILE_TOWN_EXIT;
     }
 }

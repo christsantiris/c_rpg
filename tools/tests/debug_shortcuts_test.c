@@ -1,4 +1,5 @@
 #include "game/stonewake.h"
+#include "game/stormwatch.h"
 #include "renderer/stonewake_renderer.h"
 #include "renderer/sprites.h"
 #include "renderer/item_icons.h"
@@ -142,6 +143,48 @@ static void test_stonewake_renderer(Renderer *r, GameState *g, SDL_Surface *surf
     printf("PASS: all five Stonewake sprites render at native scale, with three distinct crane poses, workshops and a distinct warhammer icon.\n");
 }
 
+static void test_stormwatch_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    game_init(g);
+    stormwatch_enter(g, 0);
+    g->player.x = 24;
+    g->player.y = 24;
+    g->enemy_count = 1;
+    Enemy *enemy = &g->enemies[0];
+    *enemy = (Enemy){.x = 25, .y = 24, .hp = 40, .max_hp = 40};
+    for (int y = 0; y < STORM_H; y++) {
+        for (int x = 0; x < STORM_W; x++) {
+            map_mark_explored(&g->map, x, y);
+        }
+    }
+    Viewport view;
+    viewport_init(&view, r->tiles_x < STORM_W ? r->tiles_x : STORM_W, r->tiles_y < STORM_H ? r->tiles_y : STORM_H, STORM_W, STORM_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    int x = viewport_to_screen_x(&view, enemy->x) * TILE_SIZE;
+    int y = viewport_to_screen_y(&view, enemy->y) * TILE_SIZE;
+    for (int type = ENEMY_HARPY_RAIDER; type <= ENEMY_TEMPEST_MATRIARCH; type++) {
+        enemy->active = 0;
+        renderer_begin_frame(r);
+        game_draw(r, g, &view);
+        renderer_end_frame(r);
+        unsigned int ground = creature_pixels(surface, x, y);
+        enemy->active = 1;
+        enemy->type = type;
+        renderer_begin_frame(r);
+        game_draw(r, g, &view);
+        renderer_end_frame(r);
+        assert(creature_pixels(surface, x, y) != ground);
+    }
+    assert(SDL_SaveBMP(surface, "/tmp/stormwatch-renderer-test.bmp") == 0);
+    g->debug_passages_unlocked = 1;
+    while (g->level < STORM_DEPTH) {
+        stormwatch_change_level(g, 1);
+    }
+    assert(!g->stormwatch_defeated && g->enemies[g->enemy_count - 1].type == ENEMY_TEMPEST_MATRIARCH);
+    stormwatch_change_level(g, 1);
+    assert(g->location == LOCATION_APPROACH && g->approach_route == 18 && !g->stormwatch_defeated);
+    printf("PASS: five Stormwatch enemies render visibly; debug opens final departure without defeating its boss.\n");
+}
+
 static void test_saltwind_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
     game_init(g);
     mangrove_enter(g, 0);
@@ -214,8 +257,8 @@ int main(void) {
         assert(SDL_QueryTexture(renderer.town_textures[i], NULL, NULL, &width, &height) == 0);
         assert(width == TOWN_SPRITE_W * TILE_SIZE && height == TOWN_SPRITE_H * TILE_SIZE);
     }
-    const TownExitStyle entrances[] = {TOWN_EXIT_COAST, TOWN_EXIT_DESERT, TOWN_EXIT_GLASSDEEP, TOWN_EXIT_FROST, TOWN_EXIT_MOONVEIL, TOWN_EXIT_DRAGONSPINE, TOWN_EXIT_ASHEN, TOWN_EXIT_CATACOMBS};
-    for (int i = 0; i < 8; i++) {
+    const TownExitStyle entrances[] = {TOWN_EXIT_COAST, TOWN_EXIT_DESERT, TOWN_EXIT_GLASSDEEP, TOWN_EXIT_FROST, TOWN_EXIT_DRAGONSPINE, TOWN_EXIT_ASHEN, TOWN_EXIT_CATACOMBS, TOWN_EXIT_STORMWATCH};
+    for (int i = 0; i < (int)(sizeof(entrances) / sizeof(entrances[0])); i++) {
         int width;
         int height;
         assert(renderer.area_entrance_textures[entrances[i]]);
@@ -230,6 +273,7 @@ int main(void) {
     assert(game);
     test_stonewake_renderer(&renderer, game, surface);
     test_saltwind_renderer(&renderer, game, surface);
+    test_stormwatch_renderer(&renderer, game, surface);
     char *arguments[] = {"conr", "--unlock-shortcuts", "--gold", "99999", "--weapon", "none"};
 
     // Old debug saves have three shortcuts but lack the new Lich unlock.

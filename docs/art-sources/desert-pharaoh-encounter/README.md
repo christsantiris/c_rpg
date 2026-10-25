@@ -1,7 +1,7 @@
 # Desert Pharaoh encounter
 
 This eighth approved boss change set implements only the Sunscar Wastes stage-5
-Desert Pharaoh. Pause for review and a manual commit before the Thorn Regent.
+Desert Pharaoh.
 
 Sun-Crowned alternates fixed curse beams and burial-sand crosses. Sandbound adds
 moving storm bands; four sandstone obelisks block beams and cast directional

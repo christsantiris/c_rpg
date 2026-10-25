@@ -317,11 +317,11 @@ Comparison and actual-renderer previews are in
 
 `make sprites` includes all regional entrance generators. Forest, mountain and
 swamp landmarks are 168×144 pixels; the same size is used for the coast,
-Sunscar, Frostfell, Moonveil, Ashen, Glassdeep and Royal Catacombs entrances.
+Sunscar, Frostfell, Ashen, Stonewake and Royal Catacombs entrances.
 Dragonspine is 168×216 pixels to accommodate its taller snowy peak and dragons.
 Every asset uses pixelkit at native 24px tile scale and a south-facing doorway.
 
-The generators are `coast.py`, `desert.py`, `frostfell.py`, `moonveil.py`,
+The generators are `coast.py`, `desert.py`, `frostfell.py`,
 `dragonspine.py`, `ashen.py`, `stonewake.py` and `catacombs.py`. Each writes
 `assets/images/<name>-entrance.bmp`. The side-area approach metadata in
 `src/game/approach.c` specifies each footprint's height; the renderer loads
@@ -372,3 +372,11 @@ small flooded cut, following the atlas quarry rather than a cavern silhouette.
 The old Glassdeep script/art remains a historical source and is no longer
 loaded by the game. See [the region guide](../../docs/stonewake-quarry.md) for
 stages, mechanics and the native/SDL visual checks.
+
+### Stormwatch Headland
+
+`python3 tools/sprites/stormwatch.py` builds the 168×144 watchfort entrance and
+240×96 enemy atlas. Ordinary figures stay within 24×24 visible pixels in padded
+48px cells; the Matriarch has wider wings at the same pixel density. Both poses
+share the player foot line. The entrance uses pixelkit masonry and a 13px arched
+doorway. See [renderer comparisons](../../docs/art-sources/stormwatch/README.md).

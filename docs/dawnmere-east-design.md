@@ -1,19 +1,19 @@
 # Dawnmere's eastern area — concept shortlist
 
+The selected concept is now playable: [Stormwatch Headland](stormwatch-headland.md).
+
 Status: the table below records the initial brainstorming. Stonewake is now
 implemented in Glassdeep's former location south of Stillbury; see
 [Stonewake Quarry](stonewake-quarry.md) and the [approved art direction](stonewake-quarry-proposal.md).
-Stormwatch Headland remains a candidate east of Dawnmere. Moonveil needs a
-separate inland replacement; the coastal Stormwatch concept does not fit its
-current location. Catacombs will retain its identity and receive a later gameplay
+Stormwatch Headland occupies the coast east of Dawnmere. Ashen Hollow
+occupies the western volcanic foothills beyond Rosemoor. Catacombs will retain its identity and receive a later gameplay
 revamp. Blackwater, Sunken Coast and Frostfell remain in place.
 
 The area belongs east of lowland, coastal Dawnmere. Goblin Mountains remains
 north of town and Ridgeshire remains the elevated mountain city. Saltwind Marsh
 retains its sea-level southern inlet. Use the open eastern headland without
 moving existing regions, changing the Sunken Coast cove, altering Glassdeep's
-beaches or breaking any town road or dock. Add the chosen landmark and label to
-the atlas only when its placement and design are settled.
+beaches or breaking any town road or dock. The atlas shows the watchfort and its eastern road.
 
 ## Candidate themes
 

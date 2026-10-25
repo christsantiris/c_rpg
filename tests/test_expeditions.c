@@ -21,7 +21,6 @@ static LevelCache *expedition_cache(GameState *g) {
         case LOCATION_SWAMP: return g->swamp_cache;
         case LOCATION_FROSTFELL: return g->frostfell_cache;
         case LOCATION_DESERT: return g->desert_cache;
-        case LOCATION_MOONVEIL: return g->moonveil_cache;
         case LOCATION_ASHEN: return g->ashen_cache;
         case LOCATION_GLASSDEEP: return g->glassdeep_cache;
         case LOCATION_CATACOMBS: return g->catacombs_cache;
@@ -235,7 +234,6 @@ void test_expeditions(void) {
         {game_enter_swamp, SWAMP_DEPTH, LOCATION_SWAMP},
         {game_enter_frostfell, FROSTFELL_DEPTH, LOCATION_FROSTFELL},
         {game_enter_desert, DESERT_DEPTH, LOCATION_DESERT},
-        {game_enter_moonveil, MOONVEIL_DEPTH, LOCATION_MOONVEIL},
         {game_enter_ashen, ASHEN_DEPTH, LOCATION_ASHEN},
         {game_enter_glassdeep, GLASSDEEP_DEPTH, LOCATION_GLASSDEEP},
         {game_enter_catacombs, CATACOMBS_DEPTH, LOCATION_CATACOMBS},
