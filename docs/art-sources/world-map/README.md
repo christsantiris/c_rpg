@@ -1,6 +1,6 @@
 # World atlas acceptance checks
 
-The [current atlas](../../images/world-map-coastal-regions.png) is player-facing
+The [current atlas](../../images/world-map-ironfang.png) is player-facing
 game documentation. Its routes, geography and landmarks are part of the feature.
 A successful image generation or gameplay test run does not establish that an
 atlas revision is correct. Inspect the full image and enlarged details before
@@ -17,7 +17,7 @@ Preserve these features when changing any other part of the atlas:
 | Town elevations | Dawnmere sits in open coastal lowland with a descent from the northern foothills before town; peaks must not surround its walls. Ridgeshire is the elevated city surrounded by mountains. |
 | Saltwind Marsh | A restrained tidal inlet south of Dawnmere. Creeks meet the sea at the same level; no raised lake, cliff-bottom waterfall or giant delta. |
 | Dawnmere roads | West connects to Oakhaven through the dungeon road; north connects through the mountains; south reaches Saltwind. Each connection must visibly meet town. |
-| Eastern expansion space | Keep the headland east of Dawnmere uncrowded for the next area. Its route remains closed in game; do not add a destination or label before that area is designed. |
+| Eastern regions | Stormwatch Headland lies east of lowland Dawnmere. Ironfang Mines is a compact adit in the mountain flank east of Ridgeshire, reached by its own eastern road. |
 | Forests and northern route | Dark tangled Haunted Forest between Stillbury and Oakhaven; adjoining Elderwood north of Oakhaven has larger healthy emerald trees with golden highlights, followed by Catacombs and Castle. |
 | Western volcanoes | Ashen Hollow west of Rosemoor beneath Frostfell. No garden destination or eastern Ridgeshire volcanic spur; Dragonspine continues into the northeastern mountain flank. |
 | Rook's Labyrinth | A separate landmark beside the forest road, outside the forest. |

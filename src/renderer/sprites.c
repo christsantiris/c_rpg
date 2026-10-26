@@ -2695,6 +2695,11 @@ static void draw_catacombs_enemy(Renderer *r, int tx, int ty, EnemyType type) {
 }
 
 void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
+    if (type == ENEMY_GOBLIN_MINE_BOSS) {
+        SDL_Rect destination = {tile_x * TILE_SIZE, tile_y * TILE_SIZE, TILE_SIZE, TILE_SIZE};
+        SDL_RenderCopy(r->sdl, r->ironfang_boss_texture, NULL, &destination);
+        return;
+    }
     if (type >= ENEMY_HARPY_RAIDER && type <= ENEMY_TEMPEST_MATRIARCH) {
         SDL_Rect source = {(type - ENEMY_HARPY_RAIDER) * 48, (SDL_GetTicks() / 450 % 2) * 48, 48, 48};
         SDL_Rect dest = {tile_x * TILE_SIZE - 12, tile_y * TILE_SIZE - 24, 48, 48};

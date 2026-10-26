@@ -188,7 +188,7 @@ void test_retired_coast(void) {
 
     TownApproach connection;
     ASSERT("Dawnmere retains Saltwind south and has Stormwatch east", town_road_connection(LOCATION_DAWNMERE, TOWN_SIDE_SOUTH, &connection) && connection.area == LOCATION_MANGROVES && town_road_connection(LOCATION_DAWNMERE, TOWN_SIDE_EAST, &connection) && connection.area == LOCATION_STORMWATCH);
-    ASSERT("the pirate merchant interior and boss journal entry are removed", !town_life_building((Location)45) && JOURNAL_BOSS_COUNT == 19);
+    ASSERT("the pirate merchant interior and boss journal entry are removed", !town_life_building((Location)45) && JOURNAL_BOSS_COUNT == 20);
     prepare_retirement(g);
     g->location = LOCATION_JAIL;
     game_remove_inventory_item(g, MAX_INVENTORY - 1);

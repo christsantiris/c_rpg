@@ -69,9 +69,9 @@ void test_western_geography(void) {
     }
     game_init(g);
     TownApproach route;
-    ASSERT("Rosemoor's west road reaches Ashen and Ridgeshire has no east road",
+    ASSERT("Rosemoor west remains Ashen while Ridgeshire east now reaches Ironfang",
         town_road_connection(LOCATION_TOWN3, TOWN_SIDE_WEST, &route) && route.area == LOCATION_ASHEN &&
-        !town_road_connection(LOCATION_TOWN4, TOWN_SIDE_EAST, &route) && !approach_enter_region(g, 10));
+        town_road_connection(LOCATION_TOWN4, TOWN_SIDE_EAST, &route) && route.area == LOCATION_IRONFANG && !approach_enter_region(g, 10));
     ASSERT("removing the garden leaves surviving serialized IDs unchanged", LOCATION_ASHEN == 25 &&
         TILE_ASHEN_FLOOR == 160 && ENEMY_CINDER_IMP == 74 && ENEMY_IRON_SENTINEL == 113);
 

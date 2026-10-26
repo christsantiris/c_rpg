@@ -159,7 +159,8 @@ typedef enum {
     LOCATION_MANGROVES = 46,
     LOCATION_MANGROVE_PATH,
     LOCATION_DAWNMERE_MERCHANT,
-    LOCATION_STORMWATCH
+    LOCATION_STORMWATCH,
+    LOCATION_IRONFANG
 } Location;
 
 // Elderwood uses only its own bounds; compact caches avoid allocating the
@@ -210,8 +211,30 @@ typedef struct {
     int braced;
 } StormwatchStage;
 
+#define IRON_W 64
+#define IRON_H 48
+#define IRON_DEPTH 5
+
+typedef struct {
+    unsigned short tiles[IRON_H][IRON_W];
+    unsigned char explored[(IRON_W * IRON_H + 7) / 8];
+    Enemy enemies[AREA_ENEMY_LIMIT];
+    FloorItem loot[MAX_FLOOR_ITEMS];
+    int valid;
+    int enemy_count;
+    int loot_count;
+    int cart_x;
+    int cart_y;
+    int aboard;
+    int route;
+    int ore_loads;
+    int ore_fuse;
+} IronfangStage;
+
 typedef struct {
     Player     player;
+    IronfangStage ironfang[IRON_DEPTH];
+    int ironfang_defeated;
     StormwatchStage stormwatch[STORM_DEPTH];
     int stormwatch_defeated;
     MangroveState mangroves;

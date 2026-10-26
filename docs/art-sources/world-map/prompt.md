@@ -1,11 +1,13 @@
 # World map illustration
 
-The current atlas adds the [Stormwatch watchfort and east road](../stormwatch/atlas-edit.md) to the [western geography and woodland edit](../western-geography/README.md#atlas-edit-prompt).
+The current atlas includes [Ironfang Mines east of Ridgeshire](../ironfang/README.md).
+Earlier edits added the [Stormwatch watchfort and east road](../stormwatch/atlas-edit.md)
+and the [western geography and woodland changes](../western-geography/README.md#atlas-edit-prompt).
 
 Generated with the built-in image generation tool using the user's handwritten
 world sketch as a layout reference. Place names and connections were checked
 against the game and README. The original image was `../../images/world-map.png`.
-The current atlas is `../../images/world-map-coastal-regions.png`; the final
+The current atlas is `../../images/world-map-ironfang.png`; the final
 section records the restoration of the original beaches and cove with a compact
 Saltwind Marsh south of Dawnmere. The follow-up [version 193 repair](repair-193.md)
 fixes dock continuity, the mountain pass and the marsh elevation. Earlier prompts

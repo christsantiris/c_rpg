@@ -49,6 +49,7 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->stonewake_workshop_texture = load_sprite_texture(sdl, "assets/images/stonewake-workshop.bmp");
     r->stonewake_crane_texture = load_sprite_texture(sdl, "assets/images/stonewake-crane.bmp");
     r->stonewake_prop_texture = load_sprite_texture(sdl, "assets/images/stonewake-props.bmp");
+    r->ironfang_boss_texture = load_sprite_texture(sdl, "assets/images/ironfang-boss.bmp");
     r->stormwatch_enemy_texture = load_sprite_texture(sdl, "assets/images/stormwatch-enemies.bmp");
     r->mangrove_enemy_texture = load_sprite_texture(sdl, "assets/images/mangrove-enemies.bmp");
     r->mangrove_entrance_texture = load_sprite_texture(sdl, "assets/images/mangrove-entrance.bmp");
@@ -56,7 +57,7 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->skiff_texture = load_sprite_texture(sdl, "assets/images/skiff.bmp");
     r->forest_entrance_texture = load_sprite_texture(sdl, "assets/images/forest-entrance.bmp");
     r->mountain_entrance_texture = load_sprite_texture(sdl, "assets/images/mountain-entrance.bmp");
-    const char *entrance_paths[TOWN_EXIT_STORMWATCH + 1] = {NULL};
+    const char *entrance_paths[TOWN_EXIT_IRONFANG + 1] = {NULL};
     entrance_paths[TOWN_EXIT_DESERT] = "assets/images/desert-entrance.bmp";
     entrance_paths[TOWN_EXIT_COAST] = "assets/images/coast-entrance.bmp";
     entrance_paths[TOWN_EXIT_DRAGONSPINE] = "assets/images/dragonspine-entrance.bmp";
@@ -64,9 +65,10 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
 
     entrance_paths[TOWN_EXIT_ASHEN] = "assets/images/ashen-entrance.bmp";
     entrance_paths[TOWN_EXIT_GLASSDEEP] = "assets/images/stonewake-entrance.bmp";
+    entrance_paths[TOWN_EXIT_IRONFANG] = "assets/images/ironfang-entrance.bmp";
     entrance_paths[TOWN_EXIT_STORMWATCH] = "assets/images/stormwatch-entrance.bmp";
     entrance_paths[TOWN_EXIT_CATACOMBS] = "assets/images/catacombs-entrance.bmp";
-    for (int i = 0; i <= TOWN_EXIT_STORMWATCH; i++) {
+    for (int i = 0; i <= TOWN_EXIT_IRONFANG; i++) {
         r->area_entrance_textures[i] = entrance_paths[i] ? load_sprite_texture(sdl, entrance_paths[i]) : NULL;
     }
     const char *towns[TOWN_ROAD_COUNT] = {"oakhaven", "stillbury", "rosemoor", "ridgeshire", "dawnmere"};
@@ -128,6 +130,8 @@ void renderer_free(Renderer *r) {
     r->stonewake_enemy_texture = NULL;
     r->stonewake_crane_texture = NULL;
     r->stonewake_prop_texture = NULL;
+    SDL_DestroyTexture(r->ironfang_boss_texture);
+    r->ironfang_boss_texture = NULL;
     SDL_DestroyTexture(r->stormwatch_enemy_texture);
     r->stormwatch_enemy_texture = NULL;
     SDL_DestroyTexture(r->mangrove_enemy_texture);
@@ -220,7 +224,7 @@ void renderer_free(Renderer *r) {
         SDL_DestroyTexture(r->swamp_entrance_texture);
         r->swamp_entrance_texture = NULL;
     }
-    for (int i = 0; i <= TOWN_EXIT_STORMWATCH; i++) {
+    for (int i = 0; i <= TOWN_EXIT_IRONFANG; i++) {
         if (r->area_entrance_textures[i]) {
             SDL_DestroyTexture(r->area_entrance_textures[i]);
             r->area_entrance_textures[i] = NULL;

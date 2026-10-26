@@ -19,7 +19,7 @@ continuations, without a second gate. Streets and services inside all five towns
 | Oakhaven | Elderwood / Catacombs / Castle road | Dungeon / Dawnmere road | Sunken Coast | Haunted Forest / Stillbury road |
 | Stillbury | Swamp / Rosemoor road | Haunted Forest / Oakhaven road | Stonewake Quarry | Sunscar Wastes |
 | Rosemoor | Frostfell Wastes | Crown Road East / Castle | Swamp / Stillbury road | Ashen Hollow |
-| Ridgeshire | Dragonspine | Closed | Mountains / Dawnmere road | Crown Road West / Castle |
+| Ridgeshire | Dragonspine | Ironfang Mines | Mountains / Dawnmere road | Crown Road West / Castle |
 | Dawnmere | Mountains / Ridgeshire road | Stormwatch Headland | Saltwind Marsh | Dungeon / Oakhaven road |
 
 The Lich King, Necromancer, Swamp Demon and Goblin King still control their

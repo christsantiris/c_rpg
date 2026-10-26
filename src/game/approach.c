@@ -1,3 +1,4 @@
+#include "ironfang.h"
 #include "approach.h"
 #include "elderwood.h"
 #include "stormwatch.h"
@@ -25,7 +26,8 @@ const TownApproach town_approaches[] = {
     {LOCATION_DAWNMERE, LOCATION_DUNGEON, 0, 12},
     {LOCATION_TOWN, LOCATION_ELDERWOOD, 20, 0},
     {-1, -1, 0, 0}, // Retired coastal route 17.
-    {LOCATION_DAWNMERE, LOCATION_STORMWATCH, TOWN_W - 1, 12}
+    {LOCATION_DAWNMERE, LOCATION_STORMWATCH, TOWN_W - 1, 12},
+    {LOCATION_TOWN4, LOCATION_IRONFANG, TOWN_W - 1, 12}
 };
 
 // Serialized route 17 remains reserved.
@@ -41,6 +43,7 @@ const TownApproach *approach_route(const GameState *g) {
 
 const char *approach_area_name(Location area) {
     switch (area) {
+        case LOCATION_IRONFANG: return "IRONFANG MINES";
         case LOCATION_STORMWATCH: return "STORMWATCH HEADLAND";
         case LOCATION_DUNGEON: return "DUNGEON";
         case LOCATION_FOREST: return "HAUNTED FOREST";
@@ -402,6 +405,7 @@ int approach_entrance_rows(Location area) {
         case LOCATION_ASHEN:
         case LOCATION_GLASSDEEP:
         case LOCATION_STORMWATCH:
+        case LOCATION_IRONFANG:
         case LOCATION_CATACOMBS: return 6;
         default: return 0;
     }
@@ -849,6 +853,7 @@ int approach_travel(GameState *g, int x, int y) {
     g->location = route->town;
     g->approach_route = -1;
     switch (area) {
+        case LOCATION_IRONFANG: ironfang_enter(g, 0); break;
         case LOCATION_STORMWATCH: stormwatch_enter(g, 0); break;
         case LOCATION_DUNGEON: game_enter_dungeon(g); break;
         case LOCATION_FOREST: game_enter_forest(g); break;

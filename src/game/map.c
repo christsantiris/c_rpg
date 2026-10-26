@@ -461,7 +461,10 @@ int map_is_walkable(const Map *m, int x, int y) {
     if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
         return 0;
     }
-    return m->tiles[y][x] != TILE_STORM_WATER && m->tiles[y][x] != TILE_STORM_WALL &&
+    return m->tiles[y][x] != TILE_IRON_BUNK && m->tiles[y][x] != TILE_IRON_FORGE && m->tiles[y][x] != TILE_IRON_WALL && m->tiles[y][x] != TILE_IRON_WATER &&
+        m->tiles[y][x] != TILE_IRON_TRESTLE && m->tiles[y][x] != TILE_IRON_BROKEN && m->tiles[y][x] != TILE_IRON_CRACK &&
+        m->tiles[y][x] != TILE_IRON_LAMP && m->tiles[y][x] != TILE_IRON_LAMP_LIT && m->tiles[y][x] != TILE_IRON_SWITCH &&
+        m->tiles[y][x] != TILE_IRON_CACHE && m->tiles[y][x] != TILE_IRON_WINCH && m->tiles[y][x] != TILE_STORM_WATER && m->tiles[y][x] != TILE_STORM_WALL &&
         m->tiles[y][x] != TILE_STORM_SHUTTER_UP && m->tiles[y][x] != TILE_STORM_CRANK &&
         m->tiles[y][x] != TILE_STORM_SUPPLIES && m->tiles[y][x] != TILE_STONEWAKE_LEGACY_BOUNDARY && m->tiles[y][x] != TILE_STONEWAKE_WORKSHOP && m->tiles[y][x] != TILE_STONEWAKE_BOUNDARY && m->tiles[y][x] != TILE_STONEWAKE_GAP &&
         m->tiles[y][x] != TILE_STONEWAKE_SUPPLIES && m->tiles[y][x] != TILE_MANGROVE_WATER && m->tiles[y][x] != TILE_MANGROVE_ROOT &&
@@ -1703,7 +1706,7 @@ void map_place_town4_region_gates(Map *m) {
         m->tiles[0][x] = TILE_TOWN_EXIT;
     }
     for (int y = 10; y <= 14; y++) {
-        m->tiles[y][TOWN_W - 1] = TILE_WALL;
+        m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
     }
 }
 

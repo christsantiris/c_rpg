@@ -28,7 +28,7 @@ and many other adventures.
 
 ## World Map
 
-[![World map of the Castle of No Return](docs/images/world-map-coastal-regions.png)](docs/images/world-map-coastal-regions.png)
+[![World map of the Castle of No Return](docs/images/world-map-ironfang.png)](docs/images/world-map-ironfang.png)
 
 An illustrated overview based on the world's town connections.
 
@@ -91,6 +91,7 @@ inventory actions.
 - [Castle Dungeon](docs/dungeon.md)
 - [Haunted Forest](docs/haunted-forest.md)
 - [Goblin Mountains](docs/goblin-mountains.md)
+- [Ironfang Mines](docs/ironfang-mines.md)
 - [Dragonspine and High Pass](docs/dragonspine.md)
 - [Sunken Coast](docs/sunken-coast.md)
 - [Saltwind Marsh — five stages and skiff exploration](docs/saltwind-marsh.md)
