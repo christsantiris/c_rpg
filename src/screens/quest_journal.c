@@ -282,16 +282,16 @@ int quest_journal_count(const GameState *g, QuestJournalTab tab) {
 int quest_journal_get_boss(const GameState *g, int index, BossJournalEntry *entry) {
     static const char *names[JOURNAL_BOSS_COUNT] = {
         "Lich King", "Necromancer", "Goblin King", "Drowned Queen",
-        "Fallen Sun Guardian", "Swamp Demon", "Red Dragon", "Frost Kraken", "Desert Pharaoh", "Cinder Lord", "Quarry Colossus", "Minotaur", "Grave Marshal", "Castellan", "Royal Arcanist", "Lord Veyr", "Elderthorn", "Sszareth, Keeper of the Roots", "Tempest Matriarch", "Goblin Mine Boss"
+        "Fallen Sun Guardian", "Swamp Demon", "Red Dragon", "Frost Kraken", "Desert Pharaoh", "Cinder Lord", "Quarry Colossus", "Minotaur", "Grave Marshal", "Castellan", "Royal Arcanist", "Lord Veyr", "Elderthorn", "Sszareth, Keeper of the Roots", "Tempest Matriarch", "Goblin Mine Boss", "The Last Jarl"
     };
     static const char *areas[JOURNAL_BOSS_COUNT] = {
         "Dungeon", "Haunted Forest", "Goblin Mountains", "Sunken Coast",
-        "Ruined Temple", "Blackwater Swamp", "Dragonspine", "Frostfell Wastes", "Sunscar Wastes", "Ashen Hollow", "Stonewake Quarry", "Rook's Labyrinth", "Royal Catacombs", "Castle: Iron Keep", "Castle: Crown Chapel", "Castle: Throne", "Elderwood Forest", "Saltwind Marsh", "Stormwatch Headland", "Ironfang Mines"
+        "Ruined Temple", "Blackwater Swamp", "Dragonspine", "Frostfell Wastes", "Sunscar Wastes", "Ashen Hollow", "Stonewake Quarry", "Rook's Labyrinth", "Royal Catacombs", "Castle: Iron Keep", "Castle: Crown Chapel", "Castle: Throne", "Elderwood Forest", "Saltwind Marsh", "Stormwatch Headland", "Ironfang Mines", "Giant's Peaks"
     };
     static const Location regions[JOURNAL_BOSS_COUNT] = {
         LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST,
         LOCATION_TEMPLE, LOCATION_SWAMP, LOCATION_DRAGONSPINE, LOCATION_FROSTFELL,
-        LOCATION_DESERT, LOCATION_ASHEN, LOCATION_GLASSDEEP, LOCATION_LABYRINTH, LOCATION_CATACOMBS, LOCATION_CASTLE_INTERIOR, LOCATION_CASTLE_INTERIOR, LOCATION_CASTLE_INTERIOR, LOCATION_ELDERWOOD, LOCATION_MANGROVES, LOCATION_STORMWATCH, LOCATION_IRONFANG
+        LOCATION_DESERT, LOCATION_ASHEN, LOCATION_GLASSDEEP, LOCATION_LABYRINTH, LOCATION_CATACOMBS, LOCATION_CASTLE_INTERIOR, LOCATION_CASTLE_INTERIOR, LOCATION_CASTLE_INTERIOR, LOCATION_ELDERWOOD, LOCATION_MANGROVES, LOCATION_STORMWATCH, LOCATION_IRONFANG, LOCATION_GIANTS_CROWN
     };
     if (index < 0 || index >= JOURNAL_BOSS_COUNT) {
         return 0;
@@ -299,7 +299,7 @@ int quest_journal_get_boss(const GameState *g, int index, BossJournalEntry *entr
     entry->name = names[index];
     entry->area = areas[index];
     entry->trophy = index == 15 && g->crown_of_unbound ? "Crown of the Unbound" : NULL;
-    entry->defeated = index == 19 ? g->ironfang_defeated : index == 18 ? g->stormwatch_defeated : index == 17 ? g->mangrove_defeated : index == 16 ? g->elderwood_defeated : index == 13 ? !!(g->castle_minibosses & 1) : index == 14 ? !!(g->castle_minibosses & 2) :
+    entry->defeated = index == 20 ? g->giants_crown_defeated : index == 19 ? g->ironfang_defeated : index == 18 ? g->stormwatch_defeated : index == 17 ? g->mangrove_defeated : index == 16 ? g->elderwood_defeated : index == 13 ? !!(g->castle_minibosses & 1) : index == 14 ? !!(g->castle_minibosses & 2) :
         (g->defeated_bosses & (1 << regions[index])) != 0;
     return 1;
 }

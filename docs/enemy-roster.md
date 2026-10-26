@@ -32,7 +32,7 @@ Castle entries below refer to the castle interior, not Castle Grounds.
 | Goblin Archer | Goblin Mountains; Dragonspine; Ironfang Mines; Crown Road North |
 | Goblin Bomber | Goblin Mountains; Ironfang Mines; Crown Road North |
 | Tunnel Spider | Goblin Mountains; Escape Tunnel; Ironfang Mines |
-| Cave Troll | Goblin Mountains; Ironfang Mines |
+| Cave Troll | Goblin Mountains; Ironfang Mines; Giant's Peaks |
 | Hobgoblin Guard | Goblin Mountains; Crown Road East; Crown Road West; Escape Tunnel (Smuggler Bodyguard); Ironfang Mines; Crown Road North |
 | Goblin Shaman | Goblin Mountains; Ironfang Mines; Crown Road North |
 | Goblin King | Goblin Mountains |
@@ -60,7 +60,10 @@ Castle entries below refer to the castle interior, not Castle Grounds.
 | Vampire | Blackwater Swamp; Royal Catacombs |
 | Swamp Demon | Blackwater Swamp |
 | Drake | Dragonspine |
-| Giant | Dragonspine |
+| Stone Giant | Dragonspine; Giant's Peaks |
+| Ogre | Giant's Peaks |
+| Hill Giant | Giant's Peaks |
+| The Last Jarl | Giant's Peaks |
 | Fire Elemental | Dragonspine; Ashen Hollow |
 | Red Dragon | Dragonspine |
 | Road Archer | Crown Road East; Crown Road West; Escape Tunnel (Smuggler Archer) |
@@ -70,7 +73,7 @@ Castle entries below refer to the castle interior, not Castle Grounds.
 | Yeti | Frostfell |
 | Frost Wraith | Frostfell |
 | Ice Golem | Frostfell |
-| Ice Giant | Frostfell |
+| Frost Giant | Frostfell; Giant's Peaks |
 | Frost Kraken | Frostfell |
 | Scarab | Sunscar Wastes |
 | Viper | Sunscar Wastes |
@@ -84,7 +87,7 @@ Castle entries below refer to the castle interior, not Castle Grounds.
 | Cinder Lord | Ashen Hollow |
 | Rockworm | Stonewake Quarry |
 | Quarry Construct | Stonewake Quarry |
-| Stone Troll | Stonewake Quarry |
+| Stone Troll | Stonewake Quarry; Giant's Peaks |
 | Iron Sentinel | Stonewake Quarry (stages 4–5) |
 | Quarry Colossus | Stonewake Quarry |
 | Ancient Skeleton | Royal Catacombs |
@@ -145,17 +148,6 @@ These labels can appear instead of a type's ordinary name. They are not extra
 | Watchers' Memorial Guard | Royal Catacombs 3 |
 | Choir Memorial Guard | Royal Catacombs 4 |
 | Royal Honor Guard | Royal Catacombs 5, summoned by the Grave Marshal |
-
-## Save compatibility
-
-Save version **196** removes six unused definitions and their combat/rendering
-paths. All surviving type IDs keep their existing numeric values. On load, old
-serialized actor IDs 1, 3 and 4 become Goblin Scout, Hobgoblin Guard and Cave
-Troll. Retired dungeon boss IDs 6, 8 and 10 become the current Lich King.
-Names update while health, death state, statistics, positions and timers remain
-intact in active and cached floors. Legacy finales retain their geometry and
-dropped loot rather than regenerating the floor. Subsequent saves contain only
-supported enemy IDs.
 
 ## Source audit
 

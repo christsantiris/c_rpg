@@ -247,7 +247,7 @@ void test_ironfang(void) {
     g->player.attack = 1000;
     action_resolve_player(g, (Action){ACTION_MOVE, boss->x, boss->y});
     BossJournalEntry journal;
-    quest_journal_get_boss(g, JOURNAL_BOSS_COUNT - 1, &journal);
+    quest_journal_get_boss(g, 19, &journal);
     ASSERT("killing the boss grants the victory and records its approved name", g->ironfang_defeated && !boss->active && journal.defeated && strcmp(journal.name, "Goblin Mine Boss") == 0);
     g->player.x = 54;
     g->player.y = 0;

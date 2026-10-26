@@ -28,7 +28,7 @@ and many other adventures.
 
 ## World Map
 
-[![World map of the Castle of No Return](docs/images/world-map-ironfang.png)](docs/images/world-map-ironfang.png)
+[![World map of the Castle of No Return](docs/images/world-map-giants-peaks.png)](docs/images/world-map-giants-peaks.png)
 
 An illustrated overview based on the world's town connections.
 
@@ -82,6 +82,7 @@ inventory actions.
 - [Blackwater Swamp](docs/swamp.md)
 - [Sunscar Wastes and the magic lamp quest](docs/sunscar-wastes.md)
 - [Ashen Hollow](docs/ashen-hollow.md)
+- [Giant's Peaks](docs/giants-peaks.md)
 - [Stonewake Quarry](docs/stonewake-quarry.md)
 - [Complete enemy names and area mapping](docs/enemy-roster.md)
 - [Elderwood Forest and the northern road](docs/elderwood-forest.md)

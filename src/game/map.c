@@ -1,3 +1,4 @@
+#include "giants_crown.h"
 #include "map.h"
 #include "landscapes.h"
 #include "jail.h"
@@ -514,7 +515,10 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_DRAGON_ASH_BOULDER &&
         m->tiles[y][x] != TILE_DESERT_WALL &&
         m->tiles[y][x] != TILE_DESERT_MESA &&
-  m->tiles[y][x] != TILE_ASHEN_WALL &&
+  m->tiles[y][x] != TILE_GIANTS_WALL &&
+        m->tiles[y][x] != TILE_GIANTS_CRACK &&
+        m->tiles[y][x] != TILE_GIANTS_COLUMN &&
+        m->tiles[y][x] != TILE_ASHEN_WALL &&
         m->tiles[y][x] != TILE_ASHEN_LAVA &&
         m->tiles[y][x] != TILE_GLASSDEEP_WALL &&
         m->tiles[y][x] != TILE_GLASSDEEP_POOL &&
@@ -1871,6 +1875,7 @@ void map_generate_castle(Map *m, int *spawn_x, int *spawn_y) {
     }
     m->tiles[TOWN_H - 1][CROWNROAD_X] = TILE_TOWN_EXIT;
     jail_place_castle(m);
+    giants_place_castle_road(m);
     *spawn_x = CROWNROAD_X;
     *spawn_y = CASTLE_ROAD_Y;
 }

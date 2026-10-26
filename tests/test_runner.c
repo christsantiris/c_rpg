@@ -1,3 +1,6 @@
+#if defined(__unix__) || defined(__APPLE__)
+#include <sys/resource.h>
+#endif
 #include "test_utils.h"
 
 int tests_run    = 0;
@@ -87,6 +90,7 @@ void test_elderwood(void);
 void test_stormwatch(void);
 void test_ironfang(void);
 void test_crownroad_north(void);
+void test_giants_crown(void);
 void test_grave_marshal(void);
 void test_desert_pharaoh(void);
 void test_cinder_lord(void);
@@ -118,6 +122,15 @@ void test_controls(void);
 void test_expeditions(void);
 
 int main(void) {
+#if defined(__unix__) || defined(__APPLE__)
+    // Regional caches make a full state large; legacy fixtures keep one on the stack.
+    struct rlimit stack;
+    if (getrlimit(RLIMIT_STACK, &stack) == 0 && stack.rlim_cur < 32 * 1024 * 1024) {
+        stack.rlim_cur = stack.rlim_max == RLIM_INFINITY || stack.rlim_max >= 32 * 1024 * 1024 ? 32 * 1024 * 1024 : stack.rlim_max;
+        setrlimit(RLIMIT_STACK, &stack);
+    }
+#endif
+
     // ASSERT("sanity check true",  1 == 1);
     // ASSERT("sanity check false", 1 == 0);
     printf("=== CONR Test Suite ===\n\n");
@@ -208,6 +221,7 @@ int main(void) {
     test_stormwatch();
     test_ironfang();
     test_crownroad_north();
+    test_giants_crown();
     test_catacombs();
     test_grave_marshal();
     test_desert_pharaoh();
