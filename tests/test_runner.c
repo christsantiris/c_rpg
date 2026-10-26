@@ -86,6 +86,7 @@ void test_catacombs(void);
 void test_elderwood(void);
 void test_stormwatch(void);
 void test_ironfang(void);
+void test_crownroad_north(void);
 void test_grave_marshal(void);
 void test_desert_pharaoh(void);
 void test_cinder_lord(void);
@@ -206,6 +207,7 @@ int main(void) {
     test_elderwood();
     test_stormwatch();
     test_ironfang();
+    test_crownroad_north();
     test_catacombs();
     test_grave_marshal();
     test_desert_pharaoh();

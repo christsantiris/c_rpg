@@ -1,0 +1,59 @@
+# Crown Road North
+
+The northern castle shortcut runs from Oakhaven through Elderwood Forest and
+Royal Catacombs, then across Crown Road North into Castle Grounds. Defeat
+Elderthorn and the Grave Marshal to open it from Oakhaven. The castle's south
+gate enters the road from its northern end; its southern exit returns beside
+the Catacombs landmark. The existing east and west Crown Roads retain their
+routes and encounters.
+
+This is one continuous outdoor road, with six occupied checkpoints and
+reconnecting woodland trails. A single tile of stone paving marks the main
+route. Barricades create firing lanes; side clearings and supply camps provide
+alternate approaches. Both exits meet the map boundary and have destination
+signs. Ordinary patrols do not lock an exit, so retreat and bypasses remain
+possible.
+
+## Patrols
+
+Each checkpoint has fifteen enemies. The whole road contains 66 goblins and
+24 wolves, using their existing sprites at their established scale.
+
+| Enemy | Per checkpoint | Behavior |
+| --- | ---: | --- |
+| Hobgoblin Guard | 4 | Screens the ranged units. Supported guards commit to a facing when alerted and halve frontal weapon damage. Approach from the side or rear, freeze the guard, use spells, or eliminate its support. A cyan edge shows the shield facing. |
+| Goblin Scout | 3 | Signals the formation and approaches from a flank. |
+| Goblin Archer | 2 | Seeks a clear firing position, then marks a fixed square for one action before shooting. Sidestep the warning; the shot is followed by a recovery action. |
+| Goblin Bomber | 1 | Marks a fixed cross-shaped blast for two actions. Walls and barricades clip the blast. Move twice to leave its center. |
+| Goblin Shaman | 1 | Heals one wounded living squadmate by up to 10 HP every fourth active turn. Does not revive defeated enemies. |
+| Blighted Wolf | 4 | Hunts as a pack, closes two tiles while distant, then occupies separate flanks before biting. Walkable terrain and other actors constrain every step. |
+
+Spotting the player alerts the local formation. Distant formations stay at
+their checkpoints until alerted. Freezing an enemy pauses its preparation and
+recovery. Arrows and bombs keep their original targets while the player moves.
+
+These patrols are tougher than their ordinary regional counterparts: after
+shared progression scaling, regular enemies gain 40 HP, eight attack and three
+defense, and grant twice their usual XP. The shorter castle route is intended
+to be harder than Crown Road East or West. There is no additional boss or
+quest requirement on this road.
+
+## Exploration and replay
+
+Six supply caches sit on the side trails. Defeat nearby guards, then use the
+configured Interact key (`A` by default). A cache grants 25 gold and up to
+20 HP once; its empty state persists.
+
+Physical re-entry replenishes ordinary patrols. Exploration, claimed supplies,
+and dropped equipment remain. Respawning patrols avoid dropped gear and live
+return-portal anchors. Return to Town visits the last town entered; using its
+portal resumes the same battle, position, wounds, deaths, squad alarms and
+pending warnings, then closes that portal.
+
+Save version **202** stores the road map, patrols, supplies, floor loot and
+entry side. Older saves gain the route without resetting regional victories,
+quests or equipment. Debug passage unlocks bypass the Elderwood and Catacombs
+requirements without granting their victory credit.
+
+[SDL renderer captures](art-sources/crown-road-north/README.md) show the patrols,
+blast warning, boundary exit and renamed Dawnmere shop.

@@ -146,6 +146,8 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
         SDL_snprintf(loc, sizeof(loc), "CROWN ROAD WEST");
     } else if (g->location == LOCATION_SWAMP_ROAD) {
         SDL_snprintf(loc, sizeof(loc), "SWAMP SHORTCUT");
+    } else if (g->location == LOCATION_CROWNROAD_NORTH) {
+        SDL_snprintf(loc, sizeof(loc), "CROWN ROAD NORTH");
     } else if (g->location == LOCATION_CROWNROAD) {
         SDL_snprintf(loc, sizeof(loc), "CROWN ROAD EAST");
     } else if (g->location == LOCATION_FOREST_ROAD) {

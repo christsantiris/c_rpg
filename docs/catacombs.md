@@ -3,8 +3,9 @@
 The Royal Catacombs now stand as a separate sprite along the northern road
 between Oakhaven and Castle Grounds. From Oakhaven, defeat Elderthorn in
 [Elderwood Forest](elderwood-forest.md) to reach them. Defeat the Grave Marshal
-to unlock the remainder of this northern castle route. They can also be reached
-from Castle Grounds' south exit after arriving by either Crown Road. The
+to unlock [Crown Road North](crown-road-north.md), the goblin-occupied final
+stretch of this castle route. They can also be reached from Castle Grounds'
+south exit by crossing that road. The
 castle's north entrance leads separately to the six-floor [castle interior](castle-design.md).
 
 ## Exploration and travel
@@ -12,14 +13,15 @@ castle's north entrance leads separately to the six-floor [castle interior](cast
 Five floors contain eight burial chambers each, with varied room sizes and
 looping passages. Ivory burial niches, cracked stone, sarcophagi, and animated
 blue ossuary flames distinguish the catacombs from OakHaven's early dungeon.
-The castle's south exit is signed NORTHERN ROAD.
+The castle's south exit is signed CROWN ROAD NORTH.
 
 Walk onto downstairs and press **D** to descend, even while enemies remain.
 Walk onto upstairs and press **U** to ascend; upstairs on floor 1 return to the
 road beside the Catacombs sprite. On floor 5, the cyan return passage remains sealed until
 the Grave Marshal is defeated. Stand on it and press **D** to return directly
 to that road without retracing the other floors or clearing every enemy. Walk
-north for Castle Grounds or south through cleared Elderwood for Oakhaven.
+north onto Crown Road North for Castle Grounds or south through cleared
+Elderwood for Oakhaven.
 
 Each floor has its own persistent cache. Leaving and revisiting preserves
 explored maps, enemy health, deaths, resurrection allowances, extinguished

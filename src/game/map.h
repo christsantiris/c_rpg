@@ -33,6 +33,9 @@
 #define CROWNROAD_H 44
 #define CROWNROAD_X 20
 #define CROWNROAD_Y 20
+#define CROWN_NORTH_W 64
+#define CROWN_NORTH_H 96
+#define CROWN_NORTH_X 32
 #define TOWN3_ROAD_X 28
 #define TOWN3_KING_GATE_Y 14
 #define TOWN4_KING_GATE_X 4
@@ -690,7 +693,11 @@ typedef enum {
     TILE_IRON_BUNK,
     TILE_IRON_FORGE,
     TILE_IRON_ENTRANCE,
-    TILE_IRON_EXIT
+    TILE_IRON_EXIT,
+    TILE_CROWN_BARRICADE,
+    TILE_CROWN_SUPPLIES,
+    TILE_CROWN_EMPTY,
+    TILE_CROWN_EXIT
 } TileType;
 
 typedef struct {

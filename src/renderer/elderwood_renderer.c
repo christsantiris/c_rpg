@@ -53,7 +53,7 @@ void draw_northern_road(Renderer *r, const GameState *g, const Viewport *v) {
     label(r, v, "ELDERWOOD FOREST", NORTH_ELDER_X, NORTH_ELDER_Y - 5);
     label(r, v, "ROYAL CATACOMBS", NORTH_CAT_X, NORTH_CAT_Y - 5);
     draw_town_road_sign(r, viewport_to_screen_x(v, NORTH_ROAD_X + 2), viewport_to_screen_y(v, 44), "S: OAKHAVEN");
-    draw_town_road_sign(r, viewport_to_screen_x(v, NORTH_ROAD_X + 2), viewport_to_screen_y(v, 4), "N: CASTLE GROUNDS");
+    draw_town_road_sign(r, viewport_to_screen_x(v, NORTH_ROAD_X + 2), viewport_to_screen_y(v, 4), "N: CROWN ROAD NORTH");
     if (!g->elderwood_defeated && !g->debug_passages_unlocked) {
         draw_town_road_sign(r, viewport_to_screen_x(v, NORTH_ROAD_X - 8), viewport_to_screen_y(v, 34), "ELDERTHORN'S ROOTS\nBLOCK THE NORTH ROAD");
     } else if (!(g->defeated_bosses & (1 << LOCATION_CATACOMBS)) && !g->debug_passages_unlocked) {
