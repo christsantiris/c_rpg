@@ -22,19 +22,19 @@ Castle entries below refer to the castle interior, not Castle Grounds.
 | Crypt Conjurer | Dungeon; Royal Catacombs |
 | Lich King | Dungeon |
 | Pixie | Haunted Forest |
-| Blighted Wolf | Haunted Forest; Crown Road East; Crown Road West |
+| Blighted Wolf | Haunted Forest; Crown Road East; Crown Road West; Crown Road North |
 | Giant Spider | Haunted Forest; Rook's Labyrinth |
 | Dark Elf | Haunted Forest; Elderwood Forest |
 | Giant Wurm | Haunted Forest |
 | Forest Troll | Haunted Forest |
 | Necromancer | Haunted Forest |
-| Goblin Scout | Goblin Mountains; Dragonspine; Ironfang Mines |
-| Goblin Archer | Goblin Mountains; Dragonspine; Ironfang Mines |
-| Goblin Bomber | Goblin Mountains; Ironfang Mines |
+| Goblin Scout | Goblin Mountains; Dragonspine; Ironfang Mines; Crown Road North |
+| Goblin Archer | Goblin Mountains; Dragonspine; Ironfang Mines; Crown Road North |
+| Goblin Bomber | Goblin Mountains; Ironfang Mines; Crown Road North |
 | Tunnel Spider | Goblin Mountains; Escape Tunnel; Ironfang Mines |
 | Cave Troll | Goblin Mountains; Ironfang Mines |
-| Hobgoblin Guard | Goblin Mountains; Crown Road East; Crown Road West; Escape Tunnel (Smuggler Bodyguard); Ironfang Mines |
-| Goblin Shaman | Goblin Mountains; Ironfang Mines |
+| Hobgoblin Guard | Goblin Mountains; Crown Road East; Crown Road West; Escape Tunnel (Smuggler Bodyguard); Ironfang Mines; Crown Road North |
+| Goblin Shaman | Goblin Mountains; Ironfang Mines; Crown Road North |
 | Goblin King | Goblin Mountains |
 | Illusion | Sunken Coast |
 | Merfolk | Sunken Coast |

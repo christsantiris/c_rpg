@@ -1,4 +1,5 @@
 #include "ironfang.h"
+#include "crownroad_north.h"
 #include "stonewake.h"
 #include "actions.h"
 #include "restoration.h"
@@ -75,7 +76,7 @@ void push_message_kind(GameState *g, const char *msg, MessageKind kind) {
 
 static void mark_item_tile(GameState *g, int x, int y) {
     TileType tile = g->map.tiles[y][x];
-    if ((tile >= TILE_IRON_FLOOR && tile <= TILE_IRON_EXIT) || tile == TILE_STORM_ENTRANCE || tile == TILE_STORM_EXIT || tile == TILE_DUNGEON_STAIRS_SEALED || tile == TILE_DUNGEON_STAIRS_RETURN) {
+    if (tile == TILE_CROWN_EXIT || (tile >= TILE_IRON_FLOOR && tile <= TILE_IRON_EXIT) || tile == TILE_STORM_ENTRANCE || tile == TILE_STORM_EXIT || tile == TILE_DUNGEON_STAIRS_SEALED || tile == TILE_DUNGEON_STAIRS_RETURN) {
         return;
     }
     if (g->location == LOCATION_CASTLE_INTERIOR && (tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN ||
@@ -696,6 +697,7 @@ static int apply_melee_cleave(GameState *g, Enemy *target, int attack, int perce
         if (damage < 1) {
             damage = 1;
         }
+        damage = northroad_weapon_damage(g, enemy, damage);
         damage = catacombs_enemy_damage(g, enemy, damage);
         damage = castle_enemy_damage(g, enemy, damage);
         damage = lich_enemy_damage(g, enemy, damage);
@@ -950,6 +952,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (northroad_has_interaction(g)) {
+        return 1;
+    }
     if (ironfang_hint(g)) {
         return 1;
     }
@@ -1216,6 +1221,10 @@ static void tick_player_poison(GameState *g) {
 }
 
 void action_resolve_player(GameState *g, Action a) {
+    if (g->location == LOCATION_CROWNROAD_NORTH && (a.type == ACTION_ASCEND || a.type == ACTION_DESCEND)) {
+        push_message(g, "Follow the road north to Castle Grounds or south to the Catacombs approach.");
+        return;
+    }
     if (g->location == LOCATION_IRONFANG && (a.type == ACTION_ASCEND || a.type == ACTION_DESCEND)) {
         ironfang_travel(g, g->player.x, g->player.y);
         return;
@@ -1384,6 +1393,10 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (northroad_interact(g)) {
+            action_resolve_enemies(g);
+            return;
+        }
         if (ironfang_interact(g)) {
             return;
         }
@@ -1915,7 +1928,8 @@ void action_resolve_player(GameState *g, Action a) {
             for (int step = 1; step <= sp->range; step++) {
                 int x = start_x + g->player.last_dx * step;
                 int y = start_y + g->player.last_dy * step;
-                if (!map_is_walkable(&g->map, x, y)) {
+                if (!map_is_walkable(&g->map, x, y) ||
+                    (g->location == LOCATION_CROWNROAD_NORTH && g->map.tiles[y][x] == TILE_CROWN_EXIT)) {
                     break;
                 }
                 int occupied = jail_prisoner_at(g, x, y);
@@ -2219,6 +2233,7 @@ void action_resolve_player(GameState *g, Action a) {
                 int critical = wpn->weapon_family == WEAPON_FAMILY_BOW &&
                     rand() % 100 < 15;
                 if (critical) dmg = dmg * 3 / 2;
+                dmg = northroad_weapon_damage(g, e, dmg);
                 dmg = catacombs_enemy_damage(g, e, dmg);
                 dmg = castle_enemy_damage(g, e, dmg);
                 dmg = lich_enemy_damage(g, e, dmg);
@@ -2333,6 +2348,7 @@ void action_resolve_player(GameState *g, Action a) {
                 if (critical) {
                     dmg = (dmg * 3 + 1) / 2;
                 }
+                dmg = northroad_weapon_damage(g, e, dmg);
                 dmg = catacombs_enemy_damage(g, e, dmg);
                 dmg = castle_enemy_damage(g, e, dmg);
                 dmg = lich_enemy_damage(g, e, dmg);
@@ -2392,6 +2408,9 @@ void action_resolve_player(GameState *g, Action a) {
                 }
                 return;
             }
+        }
+        if (northroad_travel(g, tx, ty)) {
+            return;
         }
         // Check for town exit
         if (g->map.tiles[ty][tx] == TILE_LOCAL_DOOR) {
@@ -3749,6 +3768,15 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
 
+        int north_damage = 0;
+        if (northroad_tick(g, e, &north_damage)) {
+            if (north_damage > 0) {
+                int damage = north_damage - g->player.defense / 2;
+                apply_enemy_damage(g, damage > 0 ? damage : 1, FEEDBACK_NOW);
+                push_message_kind(g, "The northern patrol strikes you!", MESSAGE_DAMAGE_TAKEN);
+            }
+            continue;
+        }
         int mine_damage = 0;
         if (ironfang_tick(g, e, &mine_damage)) {
             if (mine_damage > 0) {

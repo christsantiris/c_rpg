@@ -401,7 +401,8 @@ void test_approaches(void) {
             if (g->map.tiles[y][x] == TILE_TOWN_EXIT) {
                 action_resolve_player(g, (Action){ACTION_MOVE, x, y});
                 finish_town_departure(g);
-                wide_gates &= g->location == LOCATION_APPROACH && g->approach_route == i;
+                wide_gates &= route->town == LOCATION_CASTLE && route->area == LOCATION_CATACOMBS ?
+                    g->location == LOCATION_CROWNROAD_NORTH : g->location == LOCATION_APPROACH && g->approach_route == i;
             }
         }
     }

@@ -1,4 +1,5 @@
 #include "test_utils.h"
+#include "northroad_checks.h"
 #include "town_road_checks.h"
 #include "game/elderwood.h"
 #include "systems/save_load.h"
@@ -213,9 +214,12 @@ void test_elderwood(void) {
     ASSERT("Catacombs retreat preserves combat and returns to the shared road", northern_approach(g) && g->catacombs_cache[0].enemies[0].hp == 8 && g->player.x == NORTH_CAT_X);
     g->defeated_bosses |= 1 << LOCATION_CATACOMBS;
     northern_refresh(g);
-    ASSERT("both victories open a continuous road into Castle Grounds", path(g, NORTH_ROAD_X, 0, 1) && g->location == LOCATION_CASTLE && g->player.y == TOWN_H - 2);
+    ASSERT("both victories open Crown Road North before Castle Grounds", path(g, NORTH_ROAD_X, 0, 1) && g->location == LOCATION_CROWNROAD_NORTH);
+    walk_crownroad_north(g, 1);
+    ASSERT("crossing the northern road reaches Castle Grounds", g->location == LOCATION_CASTLE && g->player.y == TOWN_H - 2);
     action_resolve_player(g, (Action){ACTION_MOVE, CROWNROAD_X, TOWN_H - 1});
-    ASSERT("Castle's south gate reaches the road, not a combat floor", northern_approach(g) && g->enemy_count == 0 && g->player.last_dy == 1);
+    ASSERT("Castle's south gate reaches the occupied northern road", g->location == LOCATION_CROWNROAD_NORTH && g->enemy_count == NORTH_ENEMIES && g->player.last_dy == 1);
+    walk_crownroad_north(g, 0);
     ASSERT("the open road can be walked south back to Oakhaven", path(g, NORTH_ROAD_X, ELDERWOOD_H - 1, 1) && g->location == LOCATION_TOWN_ROAD && g->road_town == LOCATION_TOWN);
     walk_into_arrived_town(g);
     ASSERT("entering Oakhaven from the north places the player by its northern exit", g->location == LOCATION_TOWN && g->player.y == 1);

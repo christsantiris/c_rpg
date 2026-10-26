@@ -1,5 +1,6 @@
 #include "ironfang.h"
 #include "approach.h"
+#include "crownroad_north.h"
 #include "elderwood.h"
 #include "stormwatch.h"
 #include "coastal_travel.h"
@@ -755,6 +756,10 @@ int approach_enter(GameState *g, int x, int y) {
     }
     if (index < 0 || g->map.tiles[y][x] != TILE_TOWN_EXIT) {
         return 0;
+    }
+    if (g->location == LOCATION_CASTLE && town_approaches[index].area == LOCATION_CATACOMBS) {
+        northroad_enter(g, 1, 0);
+        return 1;
     }
     return approach_enter_region(g, index);
 }
