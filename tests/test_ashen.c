@@ -32,6 +32,7 @@ static void test_layouts(void) {
         int connected = 1;
         int roster = 1;
         int landmarks = 1;
+        int elementals = 0;
         for (int seed = 0; seed < 12; seed++) {
             srand(2810 + seed);
             map_generate_ashen(&game.map, level);
@@ -81,7 +82,9 @@ static void test_layouts(void) {
             int bosses = 0;
             for (int i = 0; i < game.enemy_count; i++) {
                 Enemy *enemy = &game.enemies[i];
-                roster &= enemy->type >= ENEMY_CINDER_IMP && enemy->type <= ENEMY_CINDER_LORD && visited[enemy->y][enemy->x];
+                roster &= ((enemy->type >= ENEMY_CINDER_IMP && enemy->type <= ENEMY_CINDER_LORD) ||
+                    enemy->type == ENEMY_FIRE_ELEMENTAL) && visited[enemy->y][enemy->x];
+                elementals += enemy->type == ENEMY_FIRE_ELEMENTAL;
                 bosses += enemy->is_boss;
             }
             roster &= bosses == (level == ASHEN_DEPTH);
@@ -89,6 +92,7 @@ static void test_layouts(void) {
         ASSERT("volcanic entrances, exits, and every clearing remain connected across seeds", connected);
         ASSERT("lava block movement and ruined paving remain walkable", landmarks);
         ASSERT("each stage spawns its own reachable roster and only stage five has a boss", roster);
+        ASSERT("Fire Elementals join Ashen Hollow from stage three across seeded expeditions", (elementals > 0) == (level >= 3));
     }
 }
 

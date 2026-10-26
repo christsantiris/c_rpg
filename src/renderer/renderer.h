@@ -64,7 +64,7 @@ typedef struct {
     SDL_Texture *temple_enemy_texture;
     SDL_Texture *castle_enemy_texture;
     SDL_Texture *castle_boss_texture;
-    SDL_Texture *polar_kraken_texture;
+    SDL_Texture *frost_kraken_texture;
     TTF_Font     *font_large;
     TTF_Font     *font_small;
     TTF_Font     *font_tiny;

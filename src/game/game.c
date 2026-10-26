@@ -113,7 +113,6 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
         case ENEMY_LIZARDFOLK_SCOUT:
         case ENEMY_REED_SPEARHUNTER:
         case ENEMY_MARSH_SPITTER:
-        case ENEMY_MUDBACK_TURTLE:
         case ENEMY_LIZARDFOLK_SCALEGUARD:
         case ENEMY_SSZARETH:
         case ENEMY_ROYAL_GUARD:
@@ -135,16 +134,6 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             snprintf(e->name, sizeof(e->name), "Bone Sentinel");
             e->max_hp = 80; e->hp = 80;
             e->attack = 17; e->defense = 8; e->experience = 75;
-            break;
-        case ENEMY_GRAVE_ARCHER:
-            snprintf(e->name, sizeof(e->name), "Grave Archer");
-            e->max_hp = 40; e->hp = 40;
-            e->attack = 15; e->defense = 3; e->experience = 55;
-            break;
-        case ENEMY_BONE_CANTOR:
-            snprintf(e->name, sizeof(e->name), "Bone Cantor");
-            e->max_hp = 58; e->hp = 58;
-            e->attack = 16; e->defense = 4; e->experience = 90;
             break;
         case ENEMY_GRAVE_MARSHAL:
             snprintf(e->name, sizeof(e->name), "Grave Marshal");
@@ -247,8 +236,8 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             e->max_hp = 100; e->hp = 100;
             e->attack = 18; e->defense = 6; e->experience = 130;
             break;
-        case ENEMY_POLAR_KRAKEN:
-            snprintf(e->name, sizeof(e->name), "Polar Kraken");
+        case ENEMY_FROST_KRAKEN:
+            snprintf(e->name, sizeof(e->name), "Frost Kraken");
             e->max_hp = 260; e->hp = 260;
             e->attack = 22; e->defense = 8; e->experience = 650;
             e->is_boss = 1;
@@ -536,7 +525,7 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             break;
     }
     e->name[sizeof(e->name) - 1] = '\0';
-    if (g->location == LOCATION_CATACOMBS && (type == ENEMY_CRYPT_BAT || type == ENEMY_WRAITH)) {
+    if (g->location == LOCATION_CATACOMBS && (type == ENEMY_CRYPT_BAT || type == ENEMY_WRAITH || type == ENEMY_CRYPT_CONJURER)) {
         e->max_hp *= 2;
         e->hp = e->max_hp;
         e->attack += 6;
@@ -587,7 +576,7 @@ static int boss_for_level(const GameState *g, EnemyType *type) {
     } else if (g->location == LOCATION_SWAMP) {
         *type = ENEMY_SWAMP_DEMON;
     } else if (g->location == LOCATION_FROSTFELL) {
-        *type = ENEMY_POLAR_KRAKEN;
+        *type = ENEMY_FROST_KRAKEN;
     } else if (g->location == LOCATION_DESERT) {
         *type = ENEMY_DESERT_PHARAOH;
     } else if (g->location == LOCATION_ASHEN) {
@@ -1227,11 +1216,11 @@ void enemies_spawn(GameState *g) {
             if (slot % 2 == 0) {
                 type = slot % 4 == 0 ? ENEMY_BONE_SENTINEL : ENEMY_ANCIENT_SKELETON;
             } else if (g->level >= 3 && slot % 6 == 5) {
-                type = ENEMY_BONE_CANTOR;
+                type = ENEMY_CRYPT_CONJURER;
             } else if (g->level >= 2 && slot % 6 == 3) {
                 type = ENEMY_WRAITH;
             } else if (g->level >= 2 && slot % 4 == 1) {
-                type = ENEMY_GRAVE_ARCHER;
+                type = ENEMY_VAMPIRE;
             } else {
                 type = ENEMY_CRYPT_BAT;
             }
@@ -1247,8 +1236,9 @@ void enemies_spawn(GameState *g) {
             if (g->level < 3) {
                 type = roll < 55 ? ENEMY_CINDER_IMP : ENEMY_ASH_HOUND;
             } else {
-                type = roll < 30 ? ENEMY_CINDER_IMP :
-                    (roll < 65 ? ENEMY_ASH_HOUND : ENEMY_OBSIDIAN_GUARDIAN);
+                type = roll < 25 ? ENEMY_CINDER_IMP :
+                    (roll < 55 ? ENEMY_ASH_HOUND :
+                    (roll < 80 ? ENEMY_OBSIDIAN_GUARDIAN : ENEMY_FIRE_ELEMENTAL));
             }
         } else if (g->location == LOCATION_DESERT) {
             type = sunscar_enemy(g->level, roll);
@@ -2723,8 +2713,8 @@ static void place_catacombs_quest_encounter(GameState *g) {
     }
     static const EnemyType types[3][2] = {
         {ENEMY_ANCIENT_SKELETON, ENEMY_BONE_SENTINEL},
-        {ENEMY_GRAVE_ARCHER, ENEMY_WRAITH},
-        {ENEMY_BONE_CANTOR, ENEMY_ANCIENT_SKELETON}
+        {ENEMY_VAMPIRE, ENEMY_WRAITH},
+        {ENEMY_CRYPT_CONJURER, ENEMY_ANCIENT_SKELETON}
     };
     static const char *names[3] = {"Soldiers' Memorial Guard", "Watchers' Memorial Guard", "Choir Memorial Guard"};
     const char *name = names[g->level - 2];

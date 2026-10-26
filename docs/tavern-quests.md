@@ -127,7 +127,7 @@ On Frostfell stage **2**, defeat the two Ice Wolves guarding the expedition
 journal, then press `A` on or beside the journal to recover it. On stage **4**,
 defeat the Ice Giant and Frost Archer holding **Surveyor Fen**, then press `T`
 beside him. The journal's route markings let Fen travel home on his own; no
-escort is required. Recover the journal before rescuing him. The Polar Kraken
+escort is required. Recover the journal before rescuing him. The Frost Kraken
 and full-stage clearance are not required, but living quest guards must be
 defeated even if lured away from the objective.
 

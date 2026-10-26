@@ -255,7 +255,7 @@ void catacombs_record_death(GameState *g, Enemy *e) {
     }
 }
 
-int catacombs_cantor_raise(GameState *g, const Enemy *caster) {
+int catacombs_conjurer_raise(GameState *g, const Enemy *caster) {
     int room = catacombs_room_at(&g->map, caster->x, caster->y);
     if (!catacombs_lit_braziers(&g->map, room)) {
         return 0;
@@ -266,7 +266,7 @@ int catacombs_cantor_raise(GameState *g, const Enemy *caster) {
             (dead->type == ENEMY_ANCIENT_SKELETON || dead->type == ENEMY_BONE_SENTINEL) &&
             catacombs_room_at(&g->map, dead->x, dead->y) == room) {
             dead->revive_timer = 2;
-            push_message(g, "The Bone Cantor calls to rattling bones. Silence the brazier!");
+            push_message(g, "The Crypt Conjurer calls to rattling bones. Silence the brazier!");
             return 1;
         }
     }

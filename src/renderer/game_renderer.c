@@ -753,7 +753,7 @@ void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, con
             SDL_SetRenderDrawColor(r->sdl, 220, 255, 255, 255);
             SDL_RenderDrawLine(r->sdl, start_x, start_y, cx, cy);
         } else if (shot->type == ENEMY_GOBLIN_ARCHER ||
-            shot->type == ENEMY_ROAD_ARCHER || shot->type == ENEMY_GRAVE_ARCHER ||
+            shot->type == ENEMY_ROAD_ARCHER ||
             shot->type == ENEMY_FROST_ARCHER ||
             shot->type == ENEMY_DARK_ELF ||
             shot->type == ENEMY_BLOWDART_HUNTER) {
@@ -1813,7 +1813,7 @@ static int kraken_tentacles_raised(const GameState *g) {
     }
     for (int i = 0; i < g->enemy_count; i++) {
         const Enemy *e = &g->enemies[i];
-        if (e->active && e->type == ENEMY_POLAR_KRAKEN && e->move_timer == 1) {
+        if (e->active && e->type == ENEMY_FROST_KRAKEN && e->move_timer == 1) {
             return 1;
         }
     }
@@ -1839,7 +1839,7 @@ static void ice_slide_offset(const GameState *g, int *px, int *py) {
 static void draw_kraken_target(Renderer *r, const GameState *g, const Viewport *v) {
     for (int i = 0; i < g->enemy_count; i++) {
         const Enemy *e = &g->enemies[i];
-        if (!e->active || e->type != ENEMY_POLAR_KRAKEN || e->move_timer % 3 != 1) {
+        if (!e->active || e->type != ENEMY_FROST_KRAKEN || e->move_timer % 3 != 1) {
             continue;
         }
         SDL_BlendMode blend;
@@ -1877,7 +1877,7 @@ static void draw_kraken_status(Renderer *r, const GameState *g, const Viewport *
     }
     for (int i = 0; i < g->enemy_count; i++) {
         const Enemy *e = &g->enemies[i];
-        if (!e->active || e->type != ENEMY_POLAR_KRAKEN || e->max_hp <= 0 ||
+        if (!e->active || e->type != ENEMY_FROST_KRAKEN || e->max_hp <= 0 ||
             !viewport_is_visible(v, e->x, e->y) || !map_is_explored(&g->map, e->x, e->y)) {
             continue;
         }
@@ -1895,7 +1895,7 @@ static void draw_kraken_status(Renderer *r, const GameState *g, const Viewport *
         SDL_SetRenderDrawColor(r->sdl, 111, 172, 203, 255);
         SDL_RenderDrawRect(r->sdl, &panel);
         int enraged = e->hp <= e->max_hp / 2;
-        const char *name = enraged ? (width < 300 ? "ENRAGED KRAKEN" : "POLAR KRAKEN - ENRAGED") : "POLAR KRAKEN";
+        const char *name = enraged ? (width < 300 ? "ENRAGED KRAKEN" : "FROST KRAKEN - ENRAGED") : "FROST KRAKEN";
         renderer_draw_text(r, name, x + 10, 16, (SDL_Color){218, 243, 255, 255}, r->font_tiny);
         if (width >= 240) {
             char hp[32];
@@ -3374,7 +3374,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                         (SDL_Color){237, 186, 82, 255}, r->font_tiny);
                 }
             }
-            if (e->type != ENEMY_POLAR_KRAKEN) {
+            if (e->type != ENEMY_FROST_KRAKEN) {
                 // Draw health bar above enemy
                 int bar_w = TILE_SIZE - 4;
                 int bar_h = 3;

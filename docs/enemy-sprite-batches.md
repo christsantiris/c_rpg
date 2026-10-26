@@ -58,7 +58,7 @@ The dungeon scene uses a controlled room fixture so all six enemies can be compa
 - [x] Wraith — `ENEMY_WRAITH`
 - [x] Crypt Conjurer — `ENEMY_CRYPT_CONJURER`
 
-Reviewed at native 24×24 size through the actual SDL renderer on dungeon terrain, including a burial-seal fixture. Also inspected the Bat and Wraith in the catacombs, the Wraith beside the existing Grave Archer and on swamp terrain, and frozen overlays. Tile bounds, terrain transparency, SDL scale/viewport/clip preservation, Release and Debug builds, and AddressSanitizer/UndefinedBehaviorSanitizer checks passed. All six batch 1 sprites still render pixel-for-pixel identically.
+Reviewed at native 24×24 size through the actual SDL renderer on dungeon terrain, including a burial-seal fixture. Also inspected the Bat and Wraith in the catacombs, the Wraith beside the shared Vampire and on swamp terrain, and frozen overlays. Tile bounds, terrain transparency, SDL scale/viewport/clip preservation, Release and Debug builds, and AddressSanitizer/UndefinedBehaviorSanitizer checks passed. All six batch 1 sprites still render pixel-for-pixel identically.
 
 - [Before/after comparison, including native-size views](art-sources/enemy-batch-2/before-after.png).
 - [Dungeon and burial-seal renderer preview](art-sources/enemy-batch-2/dungeon.png).
@@ -161,9 +161,9 @@ Scene previews use controlled room and road fixtures for artwork review rather t
 - [x] Frost Wraith — `ENEMY_FROST_WRAITH`
 - [x] Ice Golem — `ENEMY_ICE_GOLEM`
 - [x] Ice Giant — `ENEMY_ICE_GIANT`
-- [x] Polar Kraken — `ENEMY_POLAR_KRAKEN`
+- [x] Frost Kraken — `ENEMY_FROST_KRAKEN`
 
-Reviewed the six native 24×24 sprites on snow and slick ice, including Rimefang’s label and hunt markers, expedition journal/Fen context, frozen overlays, health bars, melee damage feedback, and Frost Archer projectile travel/impact. Reviewed the Polar Kraken texture and fallback at their 96×96 display size, including targeted warnings, single sweeps, enraged double sweeps, and recovery cues. The fallback now matches the texture’s display footprint. Tile bounds, transparent terrain, SDL scale/viewport/clip/blend preservation, Release and Debug builds, and AddressSanitizer/UndefinedBehaviorSanitizer renderer checks passed. All 41 sprites from batches 1–7 remain pixel-for-pixel identical.
+Reviewed the six native 24×24 sprites on snow and slick ice, including Rimefang’s label and hunt markers, expedition journal/Fen context, frozen overlays, health bars, melee damage feedback, and Frost Archer projectile travel/impact. Reviewed the Frost Kraken texture and fallback at their 96×96 display size, including targeted warnings, single sweeps, enraged double sweeps, and recovery cues. The fallback now matches the texture’s display footprint. Tile bounds, transparent terrain, SDL scale/viewport/clip/blend preservation, Release and Debug builds, and AddressSanitizer/UndefinedBehaviorSanitizer renderer checks passed. All 41 sprites from batches 1–7 remain pixel-for-pixel identical.
 
 - [Regular enemy comparison at native and enlarged sizes](art-sources/enemy-batch-8/before-after.png).
 - [Kraken texture and fallback comparison](art-sources/enemy-batch-8/kraken-before-after.png).
@@ -172,7 +172,7 @@ Reviewed the six native 24×24 sprites on snow and slick ice, including Rimefang
 - [Kraken fallback on lake terrain](art-sources/enemy-batch-8/kraken-fallback.png).
 - [Kraken source, pipeline, and exact imagegen edit prompt](art-sources/enemy-batch-8/README.md).
 
-Scene previews use controlled snow, ice, quest, and lake fixtures through the actual SDL renderer rather than quest playthroughs. The Kraken source was refined with the built-in imagegen tool and converted with the existing `tools/sprites/polar_kraken.py` pipeline. Combat, collision footprints, saved enemy types, and animations are unchanged.
+Scene previews use controlled snow, ice, quest, and lake fixtures through the actual SDL renderer rather than quest playthroughs. The Kraken source was refined with the built-in imagegen tool and converted with the existing `tools/sprites/frost_kraken.py` pipeline. Combat, collision footprints, saved enemy types, and animations are unchanged.
 
 ### Batch 9: Sunscar Wastes (6)
 
@@ -224,22 +224,20 @@ Reviewed all four sprites at native 24×24 size through the actual SDL renderer 
 
 Scene previews use controlled cavern, hunt, and resonator fixtures for artwork review rather than quest playthroughs. The Spider has jointed crystal legs and a faceted abdomen; the Stalker has an eyeless ridged face, hunched spine, and hooked fingers; the Golem has separated slabs and a recessed prism core; and the Sovereign has a distinct segmented silhouette, crown, and faceted scepter. Combat, collision footprints, saved enemy types, and animation rules are unchanged.
 
-### Batch 13: Royal Catacombs (5)
+### Batch 13: Royal Catacombs (3 dedicated, 2 shared)
 
 - [x] Ancient Skeleton — `ENEMY_ANCIENT_SKELETON`
 - [x] Bone Sentinel — `ENEMY_BONE_SENTINEL`
-- [x] Grave Archer — `ENEMY_GRAVE_ARCHER`
-- [x] Bone Cantor — `ENEMY_BONE_CANTOR`
 - [x] Grave Marshal — `ENEMY_GRAVE_MARSHAL`
 
-Reviewed all five sprites at native 24×24 size through the actual SDL renderer on Royal Catacombs terrain, including Soldiers’, Watchers’, and Choir Memorial guard pairs. Also inspected the corpse revival marker, revived enemies, the Marshal’s sweep warning and low-health appearance, frozen overlays, health bars, melee damage feedback, and Archer/Cantor projectile travel and impact. Tile bounds, transparent terrain, SDL scale/viewport/clip/blend preservation, Release and Debug builds, and AddressSanitizer/UndefinedBehaviorSanitizer renderer checks passed. All 67 sprites from batches 1–12, including the original dungeon Skeleton, remain pixel-for-pixel identical.
+The three dedicated sprites use native 24×24 templates; Crypt Conjurers and Vampires reuse their Dungeon and Swamp art. The original batch review used the actual SDL renderer on Royal Catacombs terrain, including Soldiers’, Watchers’, and Choir Memorial guard pairs. Also inspected the corpse revival marker, revived enemies, the Marshal’s sweep warning and low-health appearance, frozen overlays, health bars, melee damage feedback, and projectile travel and impact. Tile bounds, transparent terrain, SDL scale/viewport/clip/blend preservation, Release and Debug builds, and AddressSanitizer/UndefinedBehaviorSanitizer renderer checks passed. All 67 sprites from batches 1–12, including the original dungeon Skeleton, remain pixel-for-pixel identical.
 
 - [Before/after comparison, including native-size views](art-sources/enemy-batch-13/before-after.png).
 - [Royal Catacombs renderer preview](art-sources/enemy-batch-13/catacombs.png).
 - [Memorial guards, revival cues, and Marshal sweep warning](art-sources/enemy-batch-13/encounters.png).
 - [Frozen overlays, damage, projectiles, and low-health Marshal](art-sources/enemy-batch-13/effects.png).
 
-Scene previews use controlled catacomb and memorial fixtures for artwork review rather than quest playthroughs. The Ancient Skeleton has weathered bones, a broken helmet, and a rusted sword; the Sentinel has plated armor and a reinforced shield; the Archer has a hood, curved bow, and quiver; the Cantor has layered violet vestments and a ritual staff; and the Marshal has a crested helmet, crimson mantle, and ornate polearm. Each now uses dedicated artwork instead of the shared dungeon Skeleton. Combat, collision footprints, saved enemy types, and animation rules are unchanged.
+Scene previews use controlled catacomb and memorial fixtures for artwork review rather than quest playthroughs. The Ancient Skeleton has weathered bones, a broken helmet, and a rusted sword; the Sentinel has plated armor and a reinforced shield; and the Marshal has a crested helmet, crimson mantle, and ornate polearm. These three enemies retain dedicated artwork. The current recurring Conjurer and Vampire use their established art.
 
 ### Batch 14: Original dungeon bosses (5)
 
@@ -324,8 +322,8 @@ These entries reuse enemy types above. They do not increase the 95-type count. N
 | [x] | Moonwater Guardian | Living Flower, batch 10 |
 | [x] | Mooncircle Guardians | Thorn Guardian, batch 10 |
 | [x] | Soldiers’ Memorial Guards | Ancient Skeleton and Bone Sentinel, batch 13 |
-| [x] | Watchers’ Memorial Guards | Grave Archer (batch 13), Wraith (batch 2) |
-| [x] | Choir Memorial Guards | Bone Cantor and Ancient Skeleton, batch 13 |
+| [x] | Watchers’ Memorial Guards | Vampire (batch 6), Wraith (batch 2) |
+| [x] | Choir Memorial Guards | Crypt Conjurer (batch 2) and Ancient Skeleton (batch 13) |
 | [x] | Watchfire Defenders: Mountains objective | Goblin Archer and Hobgoblin Guard, batch 4 |
 | [x] | Watchfire Defenders: Ashen objective | Obsidian Guardian and Cinder Imp, batch 11 |
 | [x] | Watchfire Defenders: Dragonspine objective | Giant (batch 1), Goblin Archer (batch 4), Fire Elemental (batch 7) |
@@ -354,7 +352,7 @@ These entries reuse enemy types above. They do not increase the 95-type count. N
 - Swamp Demon now has dedicated artwork in `src/renderer/swamp_enemy_art.h`. It no longer shares `draw_demon_lord()`; the Demon Lord was reviewed in batch 14.
 - Castle artwork uses `castle_draw_enemy()` in `src/renderer/castle_renderer.c`; the generic castle cases in `draw_enemy()` are not the live castle rendering path. The castle missing-texture fallback uses the Orc sprite from batch 1.
 - Temple artwork uses `assets/images/temple-enemies.bmp`, imported by `tools/sprites/temple_enemies.py` into 48-pixel atlas cells with native 28/40-pixel frames, including the separate broken Guardian. Castle artwork uses `assets/images/castle-enemies.bmp` and `castle-bosses.bmp`, imported by `tools/sprites/castle_enemies.py` into native 24×26 and 36×36 frames.
-- Polar Kraken uses `assets/images/polar-kraken.bmp` and a procedural fallback; batch 8 reviewed both paths.
+- Frost Kraken uses `assets/images/frost-kraken.bmp` and a procedural fallback; batch 8 reviewed both paths.
 - Minotaur retains the former Maze Warden’s saved numeric ID. Its appearance is batch 6, with no enum reordering.
 
 ## Completion checks for every batch

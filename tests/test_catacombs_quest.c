@@ -119,8 +119,8 @@ static void test_quest(void) {
         memorial_tile(&loaded.map) == TILE_MEMORIAL_COLD && !loaded.enemies[loaded.enemy_count - 2].revive_timer);
     game = loaded;
     stage(3);
-    ASSERT("Watchers' memorial has a Grave Archer and a stronger catacomb Wraith", guards(&game, 1) == 2 &&
-        game.enemies[game.enemy_count - 2].type == ENEMY_GRAVE_ARCHER && game.enemies[game.enemy_count - 1].type == ENEMY_WRAITH &&
+    ASSERT("Watchers' memorial has a Vampire and a stronger catacomb Wraith", guards(&game, 1) == 2 &&
+        game.enemies[game.enemy_count - 2].type == ENEMY_VAMPIRE && game.enemies[game.enemy_count - 1].type == ENEMY_WRAITH &&
         game.enemies[game.enemy_count - 1].max_hp >= 36);
     const Room *other = &game.map.rooms[2];
     game.player.x = other->x + 2;
@@ -133,8 +133,8 @@ static void test_quest(void) {
     ASSERT("backtracking retains the cold memorial and its surviving guard", memorial_tile(&game.map) == TILE_MEMORIAL_COLD &&
         guards(&game, 0) == 2 && guards(&game, 1) == 1 && game.catacombs_quest_progress == 3);
     stage(4);
-    ASSERT("Choir memorial has a Bone Cantor and Ancient Skeleton", guards(&game, 1) == 2 &&
-        game.enemies[game.enemy_count - 2].type == ENEMY_BONE_CANTOR && game.enemies[game.enemy_count - 1].type == ENEMY_ANCIENT_SKELETON);
+    ASSERT("Choir memorial has a Crypt Conjurer and Ancient Skeleton", guards(&game, 1) == 2 &&
+        game.enemies[game.enemy_count - 2].type == ENEMY_CRYPT_CONJURER && game.enemies[game.enemy_count - 1].type == ENEMY_ANCIENT_SKELETON);
     approach_memorial();
     action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
     ASSERT("three silent memorials still require the burial ledger", game.catacombs_quest_progress == 7 && game.catacombs_quest_state == 1);

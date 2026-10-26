@@ -227,7 +227,7 @@ static int steps_from(int x0, int y0, int x1, int y1) {
 
 static int find_kraken(const GameState *g) {
     for (int i = 0; i < g->enemy_count; i++) {
-        if (g->enemies[i].active && g->enemies[i].type == ENEMY_POLAR_KRAKEN) {
+        if (g->enemies[i].active && g->enemies[i].type == ENEMY_FROST_KRAKEN) {
             return i;
         }
     }
@@ -241,7 +241,7 @@ static int first_stage(EnemyType type) {
         case ENEMY_FROST_WRAITH: return 3;
         case ENEMY_ICE_GOLEM: return 4;
         case ENEMY_ICE_GIANT: return 5;
-        case ENEMY_POLAR_KRAKEN: return 5;
+        case ENEMY_FROST_KRAKEN: return 5;
         default: return 1;
     }
 }
@@ -266,7 +266,7 @@ static void test_frostfell_rosters(void) {
             int krakens = 0;
             for (int i = 0; i < frost_game.enemy_count; i++) {
                 const Enemy *e = &frost_game.enemies[i];
-                if (e->type == ENEMY_POLAR_KRAKEN) {
+                if (e->type == ENEMY_FROST_KRAKEN) {
                     krakens++;
                     one_kraken_on_the_lake &= e->is_boss &&
                         frost_game.map.tiles[e->y][e->x] == TILE_FROST_LAKE;
@@ -291,7 +291,7 @@ static void test_frostfell_rosters(void) {
     ASSERT("each stage adds one heavier creature and stage 5 fields all six",
         stages_respected && all_kinds_on_stage_5);
     ASSERT("frost creatures spawn on open snow", on_snow);
-    ASSERT("the Polar Kraken waits alone on the stage 5 lake", one_kraken_on_the_lake);
+    ASSERT("the Frost Kraken waits alone on the stage 5 lake", one_kraken_on_the_lake);
 }
 
 static int lake_hole_count(const Map *map, const Room *lake) {
@@ -338,7 +338,7 @@ static int find_lake_spot(const GameState *g, const Enemy *kraken, int want_hole
     return 0;
 }
 
-static void test_polar_kraken(void) {
+static void test_frost_kraken(void) {
     int lakes_ok = 1;
     for (int seed = 1; seed <= 20; seed++) {
         srand((unsigned int)(seed * 13));
@@ -414,7 +414,7 @@ static void test_polar_kraken(void) {
     frost_game.player.last_dy = 0;
     int hp_before = kraken->hp;
     action_resolve_player(&frost_game, (Action){ACTION_CAST_SPELL, 0, 0});
-    ASSERT("Frost Bolt hurts the Polar Kraken but cannot freeze it",
+    ASSERT("Frost Bolt hurts the Frost Kraken but cannot freeze it",
         kraken->hp < hp_before && kraken->frozen_turns == 0);
 
     frost_game.player.x = frost_game.map.stairs_down_x + 1;
@@ -422,7 +422,7 @@ static void test_polar_kraken(void) {
     walk_onto(&frost_game, frost_game.map.stairs_down_x, frost_game.map.stairs_down_y);
     int blocked = frost_game.location == LOCATION_FROSTFELL &&
         strcmp(frost_game.messages[frost_game.message_count - 1],
-            "The Polar Kraken bars the way west!") == 0;
+            "The Frost Kraken bars the way west!") == 0;
 
     frost_game.player.x = kraken->x + 1;
     frost_game.player.y = kraken->y;
@@ -435,7 +435,7 @@ static void test_polar_kraken(void) {
     }
     BossJournalEntry entry;
     int journal_ok = quest_journal_get_boss(&frost_game, 7, &entry) &&
-        strcmp(entry.name, "Polar Kraken") == 0 && entry.defeated;
+        strcmp(entry.name, "Frost Kraken") == 0 && entry.defeated;
     ASSERT("the Kraken bars the exit, then drops the Krakenbone Bow and is marked defeated",
         blocked && !kraken->active && bow_dropped && journal_ok &&
         (frost_game.defeated_bosses & (1 << LOCATION_FROSTFELL)));
@@ -1342,7 +1342,7 @@ void test_frostfell(void) {
     test_kraken_reward_persistence();
     test_slick_ice();
     test_thin_ice();
-    test_polar_kraken();
+    test_frost_kraken();
 
     int layouts_ok = 1;
     int patch_counts_ok = 1;

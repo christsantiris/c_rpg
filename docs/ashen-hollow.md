@@ -51,6 +51,7 @@ Cinder Lord's arena sluices.
 | Cinder Imp | 1 | Fires magical firebolts on alternating turns |
 | Ash Hound | 1 | Closes two tiles per turn, without attacking on its second move |
 | Obsidian Guardian | 3 | Slow, armored melee enemy |
+| Fire Elemental | 3 | Recurring Dragonspine creature with alternating ranged fire strikes |
 | Cinder Lord | 5 | Warned cinder lances and eruptions; below half health, expanding ember rings alternate with eruptions |
 
 Ashen Hollow maintains independent caches for all five stages. Backtracking

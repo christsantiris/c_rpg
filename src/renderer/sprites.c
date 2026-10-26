@@ -9,7 +9,7 @@
 #include "swamp_enemy_art.h"
 #include "dragonspine_road_art.h"
 #include "frostfell_enemy_art.h"
-#include "polar_kraken_art.h"
+#include "frost_kraken_art.h"
 #include "desert_enemy_art.h"
 #include "ashen_enemy_art.h"
 #include "glassdeep_enemy_art.h"
@@ -2398,10 +2398,10 @@ static void draw_frostfell_enemy(Renderer *r, int tx, int ty, EnemyType type) {
 }
 
 // Both rendering paths use the same 96-pixel footprint above the lake tile.
-static void draw_polar_kraken(Renderer *r, int tx, int ty) {
+static void draw_frost_kraken(Renderer *r, int tx, int ty) {
     SDL_Rect destination = {tx * TILE_SIZE - 36, ty * TILE_SIZE - 48, 96, 96};
-    if (r->polar_kraken_texture) {
-        SDL_RenderCopy(r->sdl, r->polar_kraken_texture, NULL, &destination);
+    if (r->frost_kraken_texture) {
+        SDL_RenderCopy(r->sdl, r->frost_kraken_texture, NULL, &destination);
         return;
     }
     SDL_Color palette[128] = {{0}};
@@ -2416,9 +2416,9 @@ static void draw_polar_kraken(Renderer *r, int tx, int ty) {
     palette['w'] = (SDL_Color){23, 60, 83, 255};
     for (int row = 0; row < 48; row++) {
         for (int col = 0; col < 48;) {
-            char ink = polar_kraken_art[row][col];
+            char ink = frost_kraken_art[row][col];
             int end = col + 1;
-            while (end < 48 && polar_kraken_art[row][end] == ink) {
+            while (end < 48 && frost_kraken_art[row][end] == ink) {
                 end++;
             }
             if (ink != '.') {
@@ -2640,14 +2640,11 @@ static void draw_catacombs_enemy(Renderer *r, int tx, int ty, EnemyType type) {
     switch (type) {
         case ENEMY_ANCIENT_SKELETON: art = CATA_ART_ANCIENT_SKELETON; break;
         case ENEMY_BONE_SENTINEL: art = CATA_ART_BONE_SENTINEL; break;
-        case ENEMY_GRAVE_ARCHER: art = CATA_ART_GRAVE_ARCHER; break;
-        case ENEMY_BONE_CANTOR: art = CATA_ART_BONE_CANTOR; break;
         case ENEMY_GRAVE_MARSHAL: art = CATA_ART_GRAVE_MARSHAL; break;
         default: return;
     }
     static const SDL_Color clothes[CATA_ART_COUNT] = {
-        {62, 65, 70, 255}, {49, 57, 75, 255}, {37, 40, 48, 255},
-        {74, 55, 109, 255}, {111, 38, 47, 255}
+        {62, 65, 70, 255}, {49, 57, 75, 255}, {111, 38, 47, 255}
     };
     SDL_Color cloth = clothes[art];
     SDL_Color palette[128] = {{0}};
@@ -2706,8 +2703,10 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         SDL_RenderCopy(r->sdl, r->stormwatch_enemy_texture, &source, &dest);
         return;
     }
-    if (type >= ENEMY_LIZARDFOLK_SCOUT && type <= ENEMY_SSZARETH) {
-        SDL_Rect source = {(type - ENEMY_LIZARDFOLK_SCOUT) * 48, 0, 48, 48};
+    if ((type >= ENEMY_LIZARDFOLK_SCOUT && type <= ENEMY_MARSH_SPITTER) ||
+        (type >= ENEMY_LIZARDFOLK_SCALEGUARD && type <= ENEMY_SSZARETH)) {
+        int index = type - ENEMY_LIZARDFOLK_SCOUT - (type >= ENEMY_LIZARDFOLK_SCALEGUARD);
+        SDL_Rect source = {index * 48, 0, 48, 48};
         SDL_Rect dest = {tile_x * TILE_SIZE - 12, tile_y * TILE_SIZE - 24, 48, 48};
         SDL_RenderCopy(r->sdl, r->mangrove_enemy_texture, &source, &dest);
         return;
@@ -2723,7 +2722,6 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_LIZARDFOLK_SCOUT:
         case ENEMY_REED_SPEARHUNTER:
         case ENEMY_MARSH_SPITTER:
-        case ENEMY_MUDBACK_TURTLE:
         case ENEMY_LIZARDFOLK_SCALEGUARD:
         case ENEMY_HARPY_RAIDER:
         case ENEMY_CLIFF_GARGOYLE:
@@ -2753,8 +2751,6 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
             break;
         case ENEMY_ANCIENT_SKELETON:
         case ENEMY_BONE_SENTINEL:
-        case ENEMY_GRAVE_ARCHER:
-        case ENEMY_BONE_CANTOR:
         case ENEMY_GRAVE_MARSHAL:
             draw_catacombs_enemy(r, tile_x, tile_y, type);
             break;
@@ -2782,8 +2778,8 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_DESERT_PHARAOH:
             draw_desert_enemy(r, tile_x, tile_y, type);
             break;
-        case ENEMY_POLAR_KRAKEN:
-            draw_polar_kraken(r, tile_x, tile_y);
+        case ENEMY_FROST_KRAKEN:
+            draw_frost_kraken(r, tile_x, tile_y);
             break;
         case ENEMY_ROAD_ARCHER:
         case ENEMY_HORSEMAN:

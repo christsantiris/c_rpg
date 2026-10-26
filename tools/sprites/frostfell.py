@@ -261,7 +261,7 @@ def build():
                 idx += 1
             rim.put(x, y, ICE[min(5, idx)])
     composite(canvas, rim, OUT)
-    # The keystone is carved with the Polar Kraken, its eyes faintly lit.
+    # The keystone is carved with the Frost Kraken, its eyes faintly lit.
     key = Layer(*SIZE)
     for x, y in sorted(poly_mask(SIZE, [(75, 83), (92, 83), (90, 97), (77, 97)])):
         key.put(x, y, ICE[4] if y == 83 else ICE[3] if x < 89 else ICE[2])
