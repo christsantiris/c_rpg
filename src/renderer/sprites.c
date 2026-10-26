@@ -1,3 +1,4 @@
+#include "giants_crown_renderer.h"
 #include "stonewake_renderer.h"
 #include "sprites.h"
 #include "player_art.h"
@@ -1796,7 +1797,7 @@ void draw_portal(Renderer *r, int tile_x, int tile_y) {
 static void draw_dungeon_enemy_body(Renderer *r, int tile_x, int tile_y, int art) {
     static const SDL_Color bodies[DUNGEON_ART_COUNT] = {
         {210, 210, 190, 255}, {132, 146, 108, 255},
-        {92, 116, 48, 255}, {166, 122, 82, 255},
+        {92, 116, 48, 255}, {142, 151, 141, 255},
         {54, 32, 72, 255}, {112, 224, 232, 255}, {172, 166, 134, 255}
     };
     static const SDL_Color clothes[DUNGEON_ART_COUNT] = {
@@ -2336,7 +2337,7 @@ static void draw_frostfell_enemy(Renderer *r, int tx, int ty, EnemyType type) {
         case ENEMY_YETI: art = FROST_ART_YETI; break;
         case ENEMY_FROST_WRAITH: art = FROST_ART_FROST_WRAITH; break;
         case ENEMY_ICE_GOLEM: art = FROST_ART_ICE_GOLEM; break;
-        case ENEMY_ICE_GIANT: art = FROST_ART_ICE_GIANT; break;
+        case ENEMY_FROST_GIANT: art = FROST_ART_FROST_GIANT; break;
         default: return;
     }
     static const SDL_Color bodies[FROST_ART_COUNT] = {
@@ -2790,7 +2791,7 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_YETI:
         case ENEMY_FROST_WRAITH:
         case ENEMY_ICE_GOLEM:
-        case ENEMY_ICE_GIANT:
+        case ENEMY_FROST_GIANT:
             draw_frostfell_enemy(r, tile_x, tile_y, type);
             break;
         case ENEMY_GIANT_RAT:
@@ -2868,7 +2869,12 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
                 &destination);
             break;
         }
-        case ENEMY_GIANT:    draw_giant(r, tile_x, tile_y);    break;
+        case ENEMY_OGRE:
+        case ENEMY_HILL_GIANT:
+        case ENEMY_LAST_JARL:
+            giants_draw_enemy(r, tile_x, tile_y, type);
+            break;
+        case ENEMY_STONE_GIANT: draw_giant(r, tile_x, tile_y); break;
         case ENEMY_LICH_KING:   draw_lich_king(r, tile_x, tile_y);   break;
         case ENEMY_RED_DRAGON:  draw_red_dragon(r, tile_x, tile_y);  break;
         case ENEMY_DRAKE:
@@ -4281,6 +4287,9 @@ void draw_town_gate_south(Renderer *r, int tile_x, int tile_y) {
 void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
+    if (style == TOWN_EXIT_GIANTS) {
+        style = TOWN_EXIT_ROAD;
+    }
     if (style == TOWN_EXIT_GLASSDEEP) {
         SDL_Color stone = {100, 93, 76, 255};
         SDL_Color rim = {181, 168, 133, 255};

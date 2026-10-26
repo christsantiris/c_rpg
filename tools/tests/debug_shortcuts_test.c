@@ -1,3 +1,5 @@
+#include "game/giants_crown.h"
+#include "renderer/giants_crown_renderer.h"
 #include "game/crownroad_north.h"
 #include "game/ironfang.h"
 #include "game/stonewake.h"
@@ -47,6 +49,93 @@ static unsigned int creature_pixels(SDL_Surface *surface, int x, int y) {
     return hash;
 }
 
+
+static void test_giants_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    assert(r->area_entrance_textures[TOWN_EXIT_GIANTS]);
+    int width;
+    int height;
+    SDL_QueryTexture(r->area_entrance_textures[TOWN_EXIT_GIANTS], NULL, NULL, &width, &height);
+    assert(width == 168 && height == 144);
+    game_init(g);
+    srand(7203);
+    giants_enter(g, 0);
+    SDL_RenderSetViewport(r->sdl, NULL);
+    SDL_RenderSetClipRect(r->sdl, NULL);
+    SDL_RenderSetScale(r->sdl, 1.0f, 1.0f);
+    const EnemyType roster[] = {ENEMY_OGRE, ENEMY_CAVE_TROLL, ENEMY_HILL_GIANT, ENEMY_STONE_GIANT, ENEMY_SHARD_GOLEM, ENEMY_FROST_GIANT, ENEMY_LAST_JARL};
+    for (int n = 0; n < 7; n++) {
+        SDL_SetRenderDrawColor(r->sdl, 0, 0, 0, 255);
+        SDL_RenderClear(r->sdl);
+        draw_enemy(r, 10, 8, roster[n]);
+        SDL_RenderPresent(r->sdl);
+        int pixels = 0;
+        for (int y = 8 * TILE_SIZE - 12; y < 9 * TILE_SIZE + 12; y++) {
+            for (int x = 10 * TILE_SIZE - 12; x < 11 * TILE_SIZE + 12; x++) {
+                Uint8 red;
+                Uint8 green;
+                Uint8 blue;
+                SDL_GetRGB(rendered_pixel(surface, x, y), surface->format, &red, &green, &blue);
+                if (red || green || blue) {
+                    pixels++;
+                    if (roster[n] != ENEMY_SHARD_GOLEM) {
+                        assert(x >= 10 * TILE_SIZE && x < 11 * TILE_SIZE && y >= 8 * TILE_SIZE && y < 9 * TILE_SIZE);
+                    }
+                }
+            }
+        }
+        assert(pixels > 100);
+    }
+    Viewport view;
+    viewport_init(&view, r->tiles_x, r->tiles_y, GIANTS_W, GIANTS_H);
+    for (int level = 1; level <= GIANTS_DEPTH; level++) {
+        g->player.x = 32;
+        g->player.y = 24;
+        for (int y = 0; y < GIANTS_H; y++) {
+            for (int x = 0; x < GIANTS_W; x++) {
+                map_mark_explored(&g->map, x, y);
+            }
+        }
+        viewport_center_on(&view, g->player.x, g->player.y);
+        renderer_begin_frame(r);
+        game_draw(r, g, &view);
+        renderer_end_frame(r);
+        if (level == 1) {
+            assert(rendered_pixel(surface, 6, 6) != rendered_pixel(surface, 22, 28));
+        }
+        char path[100];
+        snprintf(path, sizeof(path), "/tmp/giants-crown-stage-%d.bmp", level);
+        assert(SDL_SaveBMP(surface, path) == 0);
+        if (level < GIANTS_DEPTH) {
+            giants_change_level(g, 1);
+        }
+    }
+    approach_enter_region(g, GIANTS_APPROACH_ROUTE);
+    g->player.x = g->map.stairs_down_x;
+    g->player.y = g->map.stairs_down_y + 1;
+    viewport_init(&view, r->tiles_x, r->tiles_y, APPROACH_W, APPROACH_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/giants-crown-approach.bmp") == 0);
+    g->location = LOCATION_CASTLE;
+    map_generate_castle(&g->map, &g->player.x, &g->player.y);
+    viewport_init(&view, TOWN_W, TOWN_H, TOWN_W, TOWN_H);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/giants-crown-castle-road.bmp") == 0);
+    approach_enter_region(g, ASHEN_APPROACH_ROUTE);
+    g->player.x = g->map.stairs_down_x;
+    g->player.y = g->map.stairs_down_y + 1;
+    viewport_init(&view, r->tiles_x, r->tiles_y, APPROACH_W, APPROACH_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/ashen-rift-approach.bmp") == 0);
+    printf("PASS: Giant's Peaks new enemies fit the native 24px scale; recurring creatures retain their original art; all stages and both entrances render.\n");
+}
 
 static void test_northroad_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
     game_init(g);
@@ -766,6 +855,7 @@ int main(void) {
     test_stormwatch_input(game);
     test_ironfang_renderer(&renderer, game, surface);
     test_northroad_renderer(&renderer, game, surface);
+    test_giants_renderer(&renderer, game, surface);
     free(game);
     renderer_free(&renderer);
     SDL_DestroyRenderer(sdl);

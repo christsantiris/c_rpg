@@ -1,3 +1,4 @@
+#include "giants_crown.h"
 #include "ironfang.h"
 #include "crownroad_north.h"
 #include "stonewake.h"
@@ -278,7 +279,7 @@ static int enemy_score(EnemyType type) {
         case ENEMY_YETI: return 110;
         case ENEMY_FROST_WRAITH: return 120;
         case ENEMY_ICE_GOLEM: return 150;
-        case ENEMY_ICE_GIANT: return 190;
+        case ENEMY_FROST_GIANT: return 190;
         case ENEMY_FROST_KRAKEN: return 1700;
         case ENEMY_SCARAB: return 40;
         case ENEMY_VIPER: return 50;
@@ -295,7 +296,10 @@ static int enemy_score(EnemyType type) {
         case ENEMY_SHARD_GOLEM: return 190;
         case ENEMY_IRON_SENTINEL: return 170;
         case ENEMY_PRISM_SOVEREIGN: return 2000;
-        case ENEMY_GIANT:       return 80;
+        case ENEMY_OGRE: return 85;
+        case ENEMY_HILL_GIANT: return 135;
+        case ENEMY_LAST_JARL: return 2400;
+        case ENEMY_STONE_GIANT: return 80;
         case ENEMY_LICH_KING:   return 1000;
         case ENEMY_RED_DRAGON:  return 3500;
         default:                return 0;
@@ -321,6 +325,10 @@ static int melee_gold_bonus(const GameState *g) {
 }
 
 static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
+    if (enemy->type == ENEMY_LAST_JARL) {
+        giants_defeat(g);
+        return;
+    }
     if (enemy->type == ENEMY_GOBLIN_MINE_BOSS) {
         ironfang_defeat(g);
         return;
@@ -472,7 +480,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         case ENEMY_YETI: gold = 10 + rand() % 10; break;
         case ENEMY_FROST_WRAITH: gold = 9 + rand() % 9; break;
         case ENEMY_ICE_GOLEM: gold = 12 + rand() % 10; break;
-        case ENEMY_ICE_GIANT: gold = 18 + rand() % 12; break;
+        case ENEMY_FROST_GIANT: gold = 18 + rand() % 12; break;
         case ENEMY_FROST_KRAKEN: gold = 75; break;
         case ENEMY_SCARAB: gold = 4 + rand() % 6; break;
         case ENEMY_VIPER: gold = 5 + rand() % 7; break;
@@ -489,7 +497,10 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         case ENEMY_SHARD_GOLEM: gold = 16 + rand() % 12; break;
         case ENEMY_IRON_SENTINEL: gold = 15 + rand() % 12; break;
         case ENEMY_PRISM_SOVEREIGN: gold = 90; break;
-        case ENEMY_GIANT:    gold = 15 + rand() % 15; break;
+        case ENEMY_OGRE: gold = 8 + rand() % 8; break;
+        case ENEMY_HILL_GIANT: gold = 16 + rand() % 12; break;
+        case ENEMY_LAST_JARL: break;
+        case ENEMY_STONE_GIANT: gold = 15 + rand() % 15; break;
         case ENEMY_LICH_KING:  break;
         case ENEMY_RED_DRAGON: gold = 120; break;
     }
@@ -955,6 +966,9 @@ int game_has_regional_interaction(const GameState *g) {
     if (northroad_has_interaction(g)) {
         return 1;
     }
+    if (giants_hint(g)) {
+        return 1;
+    }
     if (ironfang_hint(g)) {
         return 1;
     }
@@ -1225,6 +1239,10 @@ void action_resolve_player(GameState *g, Action a) {
         push_message(g, "Follow the road north to Castle Grounds or south to the Catacombs approach.");
         return;
     }
+    if (g->location == LOCATION_GIANTS_CROWN && (a.type == ACTION_ASCEND || a.type == ACTION_DESCEND)) {
+        giants_travel(g, g->player.x, g->player.y);
+        return;
+    }
     if (g->location == LOCATION_IRONFANG && (a.type == ACTION_ASCEND || a.type == ACTION_DESCEND)) {
         ironfang_travel(g, g->player.x, g->player.y);
         return;
@@ -1395,6 +1413,9 @@ void action_resolve_player(GameState *g, Action a) {
     if (a.type == ACTION_INTERACT) {
         if (northroad_interact(g)) {
             action_resolve_enemies(g);
+            return;
+        }
+        if (giants_interact(g)) {
             return;
         }
         if (ironfang_interact(g)) {
@@ -2506,7 +2527,7 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
-        if (ironfang_travel(g, tx, ty) || stormwatch_travel(g, tx, ty) || mangrove_travel(g, tx, ty) || elderwood_travel(g, tx, ty) || town_road_travel(g, tx, ty) || town_road_depart(g, tx, ty) || approach_travel(g, tx, ty) || approach_enter(g, tx, ty)) {
+        if (giants_travel(g, tx, ty) || ironfang_travel(g, tx, ty) || stormwatch_travel(g, tx, ty) || mangrove_travel(g, tx, ty) || elderwood_travel(g, tx, ty) || town_road_travel(g, tx, ty) || town_road_depart(g, tx, ty) || approach_travel(g, tx, ty) || approach_enter(g, tx, ty)) {
             return;
         }
 
@@ -2543,7 +2564,7 @@ void action_resolve_player(GameState *g, Action a) {
             } else if (tx == TOWN_W - 1) {
                 game_enter_king_road(g, LOCATION_CROWNROAD, 0);
             } else if (tx == 0) {
-                game_enter_ashen(g);
+                giants_enter(g, 0);
             }
             return;
         }
@@ -2567,7 +2588,7 @@ void action_resolve_player(GameState *g, Action a) {
             if (ty == 0) {
                 game_enter_dragonspine(g);
             } else if (tx == TOWN_W - 1) {
-                game_enter_ashen(g);
+                ironfang_enter(g, 0);
             } else if (tx == 0) {
                 game_enter_king_road(g, LOCATION_KING_ROAD_WEST, 0);
             } else if (ty == TOWN_H - 1) {
@@ -3768,6 +3789,15 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
 
+        int giant_damage = 0;
+        if (giants_tick(g, e, &giant_damage)) {
+            if (giant_damage > 0) {
+                int damage = giant_damage - g->player.defense / 2;
+                apply_enemy_damage(g, damage > 0 ? damage : 1, FEEDBACK_NOW);
+                push_message_kind(g, "The heavy strike catches you!", MESSAGE_DAMAGE_TAKEN);
+            }
+            continue;
+        }
         int north_damage = 0;
         if (northroad_tick(g, e, &north_damage)) {
             if (north_damage > 0) {

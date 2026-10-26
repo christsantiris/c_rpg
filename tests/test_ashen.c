@@ -1,5 +1,6 @@
 #include "approach_checks.h"
 #include "test_utils.h"
+#include "game/giants_crown.h"
 #include "game/game.h"
 #include "systems/save_load.h"
 #include "screens/quest_journal.h"
@@ -99,12 +100,13 @@ static void test_layouts(void) {
 static void test_travel_and_saves(void) {
     game_init(&game);
     srand(4612);
-    game_enter_town3(&game);
-    game.player.x = 1;
-    game.player.y = ROSEMOOR_ASHEN_GATE_Y;
-    action_resolve_player(&game, (Action){ACTION_MOVE, 0, game.player.y});
+    game.location = LOCATION_CASTLE;
+    map_generate_castle(&game.map, &game.player.x, &game.player.y);
+    game.player.x = CASTLE_ASHEN_GATE_X;
+    game.player.y = 1;
+    action_resolve_player(&game, (Action){ACTION_MOVE, game.player.x, 0});
     walk_town_approach(&game);
-    ASSERT("Rosemoor's west gate enters Ashen Hollow stage one from the south", game.location == LOCATION_ASHEN && game.level == 1 && game.player.y == SWAMP_MAP_H - 1);
+    ASSERT("Castle Grounds north gate enters Ashen Hollow stage one from the south", game.location == LOCATION_ASHEN && game.level == 1 && game.player.y == SWAMP_MAP_H - 1);
     int x;
     int y;
     map_room_center(&game.map.rooms[0], &x, &y);
@@ -116,7 +118,7 @@ static void test_travel_and_saves(void) {
     walk_edge(0);
     ASSERT("backtracking preserves maps, exploration, and enemy health", game.level == 1 && memcmp(&layout, &game.map, sizeof(layout)) == 0 && game.enemies[0].hp == 7);
     walk_edge(0);
-    ASSERT("the south exit returns at Rosemoor's west gate", game.location == LOCATION_TOWN3 && game.player.x == 1 && game.player.y == ROSEMOOR_ASHEN_GATE_Y);
+    ASSERT("the south exit returns at Castle Grounds north gate", game.location == LOCATION_CASTLE && game.player.x == CASTLE_ASHEN_GATE_X && game.player.y == 1);
     game_enter_ashen(&game);
     ASSERT("a new Ashen Hollow expedition refreshes enemies and retains exploration", game.enemies[0].hp == game.enemies[0].max_hp && game.max_ashen_level_reached == 2 && memcmp(&layout, &game.map, sizeof(layout)) == 0);
     while (game.level < 3) {
@@ -130,11 +132,11 @@ static void test_travel_and_saves(void) {
     game.floor_items[0] = (FloorItem){.active = 1, .x = x, .y = y, .underlying_tile = TILE_ASHEN_RUIN, .item = item_make_health_potion()};
     game.floor_item_count = 1;
     game_open_town_portal(&game);
-    ASSERT("Return to Town places a volcanic portal beside Rosemoor's west gate", game.location == LOCATION_TOWN3 && game.portal_location == LOCATION_ASHEN && game.map.tiles[ROSEMOOR_ASHEN_PORTAL_Y][ROSEMOOR_ASHEN_PORTAL_X] == TILE_PORTAL && game.portal_origin_tile == TILE_ASHEN_RUIN);
-    game.player.x = ROSEMOOR_ASHEN_PORTAL_X - 1;
-    game.player.y = ROSEMOOR_ASHEN_PORTAL_Y;
-    action_resolve_player(&game, (Action){ACTION_MOVE, ROSEMOOR_ASHEN_PORTAL_X, game.player.y});
-    ASSERT("stepping onto Rosemoor's portal resumes the original Ashen stage and position", game.location == LOCATION_ASHEN && game.level == 3 && game.player.x == x && game.player.y == y);
+    ASSERT("Return to Town returns to the last visited town after Ashen relocation", game.location == game.last_town_visited && game.portal_location == LOCATION_ASHEN && game.map.tiles[12][21] == TILE_PORTAL && game.portal_origin_tile == TILE_ASHEN_RUIN);
+    game.player.x = 20;
+    game.player.y = 12;
+    action_resolve_player(&game, (Action){ACTION_MOVE, 21, game.player.y});
+    ASSERT("stepping onto the town portal resumes the original Ashen stage and position", game.location == LOCATION_ASHEN && game.level == 3 && game.player.x == x && game.player.y == y);
     if (game.location != LOCATION_ASHEN) {
         remove("saves/savegame_99131.json");
         return;
@@ -143,9 +145,9 @@ static void test_travel_and_saves(void) {
     int saved = save_game(&game, ASHEN_TEST_SLOT) && load_game(&loaded, ASHEN_TEST_SLOT);
     if (saved) {
         game = loaded;
-        game.player.x = ROSEMOOR_ASHEN_PORTAL_X - 1;
-        game.player.y = ROSEMOOR_ASHEN_PORTAL_Y;
-        action_resolve_player(&game, (Action){ACTION_MOVE, ROSEMOOR_ASHEN_PORTAL_X, game.player.y});
+        game.player.x = 20;
+        game.player.y = 12;
+        action_resolve_player(&game, (Action){ACTION_MOVE, 21, game.player.y});
     }
     ASSERT("stepping onto a saved return portal restores the volcanic stage and underlying paving", saved && game.location == LOCATION_ASHEN && game.level == 3 && game.player.x == x && game.player.y == y && game.map.tiles[y][x] == TILE_ASHEN_RUIN);
     if (game.location != LOCATION_ASHEN) {
@@ -197,7 +199,7 @@ static void test_boss_victories(void) {
         BossJournalEntry entry;
         ASSERT("melee, spell, and bow victories grant the Cinder Lord reward and journal completion", !boss->active && (game.defeated_bosses & (1 << LOCATION_ASHEN)) && rewards == 0 && game.cinder_lord_reward_pending == 3 && quest_journal_get_boss(&game, 9, &entry) && entry.defeated && strcmp(entry.name, "Cinder Lord") == 0);
         walk_edge(1);
-        ASSERT("defeating the Cinder Lord allows return while other enemies remain", game.location == LOCATION_TOWN3 && game.ashen_cache[ASHEN_DEPTH - 1].enemy_count > 1);
+        ASSERT("defeating the Cinder Lord allows return while other enemies remain", game.location == LOCATION_CASTLE && game.ashen_cache[ASHEN_DEPTH - 1].enemy_count > 1);
         game_enter_ashen(&game);
         while (game.level < ASHEN_DEPTH) {
             walk_edge(1);

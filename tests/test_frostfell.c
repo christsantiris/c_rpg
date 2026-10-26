@@ -216,7 +216,7 @@ static void walk_onto(GameState *g, int x, int y) {
 static int frost_enemy_type(EnemyType type) {
     return type == ENEMY_ICE_WOLF || type == ENEMY_FROST_ARCHER ||
         type == ENEMY_YETI || type == ENEMY_FROST_WRAITH ||
-        type == ENEMY_ICE_GOLEM || type == ENEMY_ICE_GIANT;
+        type == ENEMY_ICE_GOLEM || type == ENEMY_FROST_GIANT;
 }
 
 static int steps_from(int x0, int y0, int x1, int y1) {
@@ -240,7 +240,7 @@ static int first_stage(EnemyType type) {
         case ENEMY_YETI: return 2;
         case ENEMY_FROST_WRAITH: return 3;
         case ENEMY_ICE_GOLEM: return 4;
-        case ENEMY_ICE_GIANT: return 5;
+        case ENEMY_FROST_GIANT: return 5;
         case ENEMY_FROST_KRAKEN: return 5;
         default: return 1;
     }
@@ -252,7 +252,7 @@ static void test_frostfell_rosters(void) {
     int counts_match = 1;
     int on_snow = 1;
     int one_kraken_on_the_lake = 1;
-    int seen_on_stage_5[ENEMY_ICE_GIANT + 1] = {0};
+    int seen_on_stage_5[ENEMY_FROST_GIANT + 1] = {0};
     for (int level = 1; level <= FROSTFELL_DEPTH; level++) {
         for (int seed = 1; seed <= 25; seed++) {
             memset(&frost_game, 0, sizeof(frost_game));
@@ -285,7 +285,7 @@ static void test_frostfell_rosters(void) {
     int all_kinds_on_stage_5 = seen_on_stage_5[ENEMY_ICE_WOLF] &&
         seen_on_stage_5[ENEMY_FROST_ARCHER] && seen_on_stage_5[ENEMY_YETI] &&
         seen_on_stage_5[ENEMY_FROST_WRAITH] && seen_on_stage_5[ENEMY_ICE_GOLEM] &&
-        seen_on_stage_5[ENEMY_ICE_GIANT];
+        seen_on_stage_5[ENEMY_FROST_GIANT];
     ASSERT("Frostfell spawns only its six frost creatures, 10 plus the stage in number",
         only_frost && counts_match);
     ASSERT("each stage adds one heavier creature and stage 5 fields all six",

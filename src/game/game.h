@@ -172,7 +172,8 @@ typedef enum {
     LOCATION_DAWNMERE_MERCHANT,
     LOCATION_STORMWATCH,
     LOCATION_IRONFANG,
-    LOCATION_CROWNROAD_NORTH
+    LOCATION_CROWNROAD_NORTH,
+    LOCATION_GIANTS_CROWN
 } Location;
 
 // Elderwood uses only its own bounds; compact caches avoid allocating the
@@ -243,8 +244,24 @@ typedef struct {
     int ore_fuse;
 } IronfangStage;
 
+#define GIANTS_W 64
+#define GIANTS_H 48
+#define GIANTS_DEPTH 5
+
+typedef struct {
+    unsigned short tiles[GIANTS_H][GIANTS_W];
+    unsigned char explored[(GIANTS_W * GIANTS_H + 7) / 8];
+    Enemy enemies[AREA_ENEMY_LIMIT];
+    FloorItem loot[MAX_FLOOR_ITEMS];
+    int valid;
+    int enemy_count;
+    int loot_count;
+} GiantsStage;
+
 typedef struct {
     Player     player;
+    GiantsStage giants_crown[GIANTS_DEPTH];
+    int giants_crown_defeated;
     IronfangStage ironfang[IRON_DEPTH];
     int ironfang_defeated;
     StormwatchStage stormwatch[STORM_DEPTH];
@@ -423,6 +440,7 @@ typedef struct {
 } GameState;
 
 void game_init(GameState *g);
+void game_spawn_enemy(GameState *g, Enemy *enemy, EnemyType type, int x, int y);
 int game_quest_offer_active(const GameState *g);
 int game_handle_quest_offer_key(GameState *g, int key, int repeat);
 void game_request_shortcut(GameState *g);

@@ -20,7 +20,8 @@ typedef enum {
     TOWN_EXIT_GLASSDEEP,
     TOWN_EXIT_CATACOMBS,
     TOWN_EXIT_STORMWATCH,
-    TOWN_EXIT_IRONFANG
+    TOWN_EXIT_IRONFANG,
+    TOWN_EXIT_GIANTS
 } TownExitStyle;
 
 typedef struct {
@@ -49,7 +50,7 @@ typedef struct {
     SDL_Texture *mangrove_root_texture;
     SDL_Texture *skiff_texture;
     SDL_Texture *swamp_entrance_texture;
-    SDL_Texture *area_entrance_textures[TOWN_EXIT_IRONFANG + 1];
+    SDL_Texture *area_entrance_textures[TOWN_EXIT_GIANTS + 1];
     SDL_Texture *town_gate_textures[TOWN_EXIT_GLASSDEEP + 1];
     SDL_Texture *town_textures[5]; // Indexed by town_road_index().
     SDL_Texture *castle_texture;

@@ -1,13 +1,16 @@
 # Ashen Hollow
 
-Rosemoor's west gate leads along a safe approach to the five-stage volcanic
-region west of town. Enter each stage from
+A path around the western side of Castle Grounds reaches the north gate and
+the five-stage volcanic region behind the castle. Enter each stage from
 its south edge and advance through the north exit. The south entrance backtracks;
-on stage 1 it returns to the approach back to Rosemoor's west gate. Ordinary
+on stage 1 it returns to the approach back to Castle Grounds' north gate. Ordinary
 enemies do not block stage travel.
 
+The entrance is a deep, lava-lit fissure surrounded by broken basalt spires.
+A narrow stairway descends through its southern rim.
+
 The Cinder Lord guards the last clearing on stage 5. Its defeat opens that
-stage's north exit, which returns to the approach back to Rosemoor without
+stage's north exit, which returns to the approach back to Castle Grounds without
 introducing another town. The boss guarantees **Embercleaver** and the original **Potion of Strength**,
 granting 1 permanent base attack when consumed. Its defeat appears in the boss
 journal. Surviving ordinary enemies do not block the return exit after victory.
@@ -62,7 +65,7 @@ original stage and position when used. Save format 81 stores the new region;
 older saves gain fresh Ashen Hollow progress and an open regional gate without
 resetting existing characters, quests, or regional progress.
 
-Ashen Hollow occupies volcanic foothills west of Rosemoor, below Frostfell.
+Ashen Hollow occupies a snow-rimmed volcanic caldera north of Castle Grounds.
 Existing stages, combat progress and return portals survive relocation.
 
 Save version **145** also stores diverted valves and stable basalt crossings
@@ -136,7 +139,7 @@ arena clocks. See the [native renderer gallery and play-test guide](art-sources/
 ## Reclaim the Emberforge
 
 Steward Hadrin assigns this one-time quest inside Ridgeshire's Town Hall,
-northeast of the crossroads. Ashen Hollow is reached through Rosemoor's west gate. Approach him and press **T**. The town wants to
+northeast of the crossroads. Ashen Hollow is reached through Castle Grounds' north gate. Approach him and press **T**. The town wants to
 reclaim the abandoned furnace that once supplied its miners and craftspeople.
 
 | Stage | Objective | Added defenders |

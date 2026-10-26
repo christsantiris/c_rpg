@@ -42,7 +42,7 @@ Progress: **95/95 enemy types completed (batches 1–16)**. All listed sprites a
 - [x] Zombie — `ENEMY_ZOMBIE`
 - [x] Orc — `ENEMY_ORC`
 - [x] Troll — `ENEMY_TROLL`
-- [x] Giant — `ENEMY_GIANT`
+- [x] Stone Giant — `ENEMY_STONE_GIANT`
 
 Reviewed with the actual SDL renderer: native 24×24 sprites, transparent terrain, tile bounds, SDL scale/viewport/clip preservation, frozen overlays, Dain’s fragment marker, all five existing catacomb overlays, and the castle’s missing-texture Orc fallback. Release and Debug builds and AddressSanitizer/UndefinedBehaviorSanitizer renderer checks passed.
 
@@ -145,7 +145,7 @@ Scene previews use controlled room and road fixtures for artwork review rather t
 - [x] Road Archer — `ENEMY_ROAD_ARCHER`
 - [x] Horseman — `ENEMY_HORSEMAN`
 
-Reviewed all four sprites at native 24×24 size through the actual SDL renderer: Drake and Fire Elemental on Dragonspine terrain, and Road Archer/Horseman on both Crown Roads. Also inspected the existing Goblin Scout, Goblin Archer, and Giant beside the regional enemies and watchfire; the Smuggler Archer beside tunnel enemies; frozen overlays; health bars; melee damage feedback; and Road Archer projectile travel/impact. Tile bounds, terrain transparency, SDL scale/viewport/clip preservation, Release and Debug builds, and AddressSanitizer/UndefinedBehaviorSanitizer renderer checks passed. All 37 sprites from batches 1–6 and the original Red Dragon remain pixel-for-pixel identical.
+Reviewed all four sprites at native 24×24 size through the actual SDL renderer: Drake and Fire Elemental on Dragonspine terrain, and Road Archer/Horseman on both Crown Roads. Also inspected the existing Goblin Scout, Goblin Archer, and Stone Giant beside the regional enemies and watchfire; the Smuggler Archer beside tunnel enemies; frozen overlays; health bars; melee damage feedback; and Road Archer projectile travel/impact. Tile bounds, terrain transparency, SDL scale/viewport/clip preservation, Release and Debug builds, and AddressSanitizer/UndefinedBehaviorSanitizer renderer checks passed. All 37 sprites from batches 1–6 and the original Red Dragon remain pixel-for-pixel identical.
 
 - [Before/after comparison, including native-size views](art-sources/enemy-batch-7/before-after.png).
 - [Dragonspine renderer preview with watchfire context](art-sources/enemy-batch-7/dragonspine.png).
@@ -160,7 +160,7 @@ Scene previews use controlled room and road fixtures for artwork review rather t
 - [x] Yeti — `ENEMY_YETI`
 - [x] Frost Wraith — `ENEMY_FROST_WRAITH`
 - [x] Ice Golem — `ENEMY_ICE_GOLEM`
-- [x] Ice Giant — `ENEMY_ICE_GIANT`
+- [x] Frost Giant — `ENEMY_FROST_GIANT`
 - [x] Frost Kraken — `ENEMY_FROST_KRAKEN`
 
 Reviewed the six native 24×24 sprites on snow and slick ice, including Rimefang’s label and hunt markers, expedition journal/Fen context, frozen overlays, health bars, melee damage feedback, and Frost Archer projectile travel/impact. Reviewed the Frost Kraken texture and fallback at their 96×96 display size, including targeted warnings, single sweeps, enraged double sweeps, and recovery cues. The fallback now matches the texture’s display footprint. Tile bounds, transparent terrain, SDL scale/viewport/clip/blend preservation, Release and Debug builds, and AddressSanitizer/UndefinedBehaviorSanitizer renderer checks passed. All 41 sprites from batches 1–7 remain pixel-for-pixel identical.
@@ -315,7 +315,7 @@ These entries reuse enemy types above. They do not increase the 95-type count. N
 | [x] | Rimefang and Rimefang Pack | Ice Wolf and Frost Wraith, batch 8 |
 | [x] | Shardwarden and Shardwarden Stalker | Shard Golem and Blind Stalker, batch 12 |
 | [x] | Dunehex and Dunehex Mummy | Djinn and Mummy, batch 9 |
-| [x] | Expedition Guardians | Ice Wolf, Ice Giant, Frost Archer, batch 8 |
+| [x] | Expedition Guardians | Ice Wolf, Frost Giant, Frost Archer, batch 8 |
 | [x] | Resonator Guardians | Crystal Spider, Blind Stalker, Shard Golem, batch 12 |
 | [x] | Emberforge Guardians | Cinder Imp, Ash Hound, Obsidian Guardian, batch 11 |
 | [x] | Moonseed Guardians | Fey Trickster and Giant Moth, batch 10 |
@@ -326,7 +326,7 @@ These entries reuse enemy types above. They do not increase the 95-type count. N
 | [x] | Choir Memorial Guards | Crypt Conjurer (batch 2) and Ancient Skeleton (batch 13) |
 | [x] | Watchfire Defenders: Mountains objective | Goblin Archer and Hobgoblin Guard, batch 4 |
 | [x] | Watchfire Defenders: Ashen objective | Obsidian Guardian and Cinder Imp, batch 11 |
-| [x] | Watchfire Defenders: Dragonspine objective | Giant (batch 1), Goblin Archer (batch 4), Fire Elemental (batch 7) |
+| [x] | Watchfire Defenders: Dragonspine objective | Stone Giant (batch 1), Goblin Archer (batch 4), Fire Elemental (batch 7) |
 | [x] | Elowen’s burial-seal guardians | Skeleton (batch 1); Crypt Bat, Wraith, Crypt Conjurer (batch 2) |
 | [x] | Alder’s Warden rescue guardians | Giant Spider, Blighted Wolf, Dark Elf, Pixie, Forest Troll, batch 3 |
 | [x] | Blighted Wolves on Crown Road East and West | Blighted Wolf, batch 3 |

@@ -1,4 +1,5 @@
 #include "test_utils.h"
+#include "game/giants_crown.h"
 #include "game/approach.h"
 #include "game/town_road.h"
 #include "systems/save_load.h"
@@ -69,8 +70,8 @@ void test_western_geography(void) {
     }
     game_init(g);
     TownApproach route;
-    ASSERT("Rosemoor west remains Ashen while Ridgeshire east now reaches Ironfang",
-        town_road_connection(LOCATION_TOWN3, TOWN_SIDE_WEST, &route) && route.area == LOCATION_ASHEN &&
+    ASSERT("Rosemoor west reaches Giant's Peaks while Ridgeshire east reaches Ironfang",
+        town_road_connection(LOCATION_TOWN3, TOWN_SIDE_WEST, &route) && route.area == LOCATION_GIANTS_CROWN &&
         town_road_connection(LOCATION_TOWN4, TOWN_SIDE_EAST, &route) && route.area == LOCATION_IRONFANG && !approach_enter_region(g, 10));
     ASSERT("removing the garden leaves surviving serialized IDs unchanged", LOCATION_ASHEN == 25 &&
         TILE_ASHEN_FLOOR == 160 && ENEMY_CINDER_IMP == 74 && ENEMY_IRON_SENTINEL == 113);
@@ -157,10 +158,10 @@ void test_western_geography(void) {
     g->ashen_cache[2].enemies[0] = (Enemy){.active = 1, .type = ENEMY_CINDER_IMP, .hp = 7, .max_hp = 40};
     root = legacy_geography_save(g);
     ok = write_geography_save(root) && load_game(loaded, GEOGRAPHY_SLOT);
-    ASSERT("Ashen approaches preserve distance, facing, exploration and dropped gear after moving west", ok &&
-        approach_route(loaded) && approach_route(loaded)->town == LOCATION_TOWN3 && loaded->player.x == APPROACH_W - 8 &&
-        loaded->player.last_dx == -1 && map_is_explored(&loaded->map, loaded->player.x, y) &&
-        loaded->floor_items[0].x == APPROACH_W - 9 && loaded->ashen_cache[2].enemies[0].hp == 7);
+    ASSERT("legacy western Ashen approaches move to the castle while keeping dropped gear and wounds", ok &&
+        approach_route(loaded) && approach_route(loaded)->town == LOCATION_CASTLE &&
+        map_is_walkable(&loaded->map, loaded->player.x, loaded->player.y) &&
+        loaded->floor_items[0].active && loaded->ashen_cache[2].enemies[0].hp == 7);
     ASSERT("relocated approaches do not mirror twice", save_game(loaded, GEOGRAPHY_SLOT) && load_game(g, GEOGRAPHY_SLOT) &&
         g->player.x == loaded->player.x && g->floor_items[0].x == loaded->floor_items[0].x);
 

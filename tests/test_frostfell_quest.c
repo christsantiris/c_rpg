@@ -131,8 +131,8 @@ static void test_expedition(void) {
         entry.stages[1] == 4 && entry.objective_complete[0] && !entry.objective_complete[1]);
     game_descend(&game);
     game_descend(&game);
-    ASSERT("stage four has Surveyor Fen guarded by an Ice Giant and Frost Archer", objective(TILE_NPC_FROST_SURVIVOR, &x, &y) &&
-        guards(&game, 1) == 2 && game.enemies[game.enemy_count - 2].type == ENEMY_ICE_GIANT &&
+    ASSERT("stage four has Surveyor Fen guarded by an Frost Giant and Frost Archer", objective(TILE_NPC_FROST_SURVIVOR, &x, &y) &&
+        guards(&game, 1) == 2 && game.enemies[game.enemy_count - 2].type == ENEMY_FROST_GIANT &&
         game.enemies[game.enemy_count - 1].type == ENEMY_FROST_ARCHER && !map_is_walkable(&game.map, x, y));
     game_talk_to_frost_survivor(&game, x, y);
     ASSERT("Fen cannot be rescued remotely", game.frostfell_quest_state == 1 && !game.dialogue_active);
