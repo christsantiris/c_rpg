@@ -1,9 +1,9 @@
-#ifndef POLAR_KRAKEN_ART_H
-#define POLAR_KRAKEN_ART_H
+#ifndef FROST_KRAKEN_ART_H
+#define FROST_KRAKEN_ART_H
 
 // Native 48-pixel fallback, drawn at 2x to match the 96-pixel texture footprint.
 // o outline, s/S/H organic flesh, I/f frost, p suckers, y eyes, w water breach.
-static const char polar_kraken_art[48][49] = {
+static const char frost_kraken_art[48][49] = {
     "................................................",
     "........................I.......................",
     ".......................IfI......................",

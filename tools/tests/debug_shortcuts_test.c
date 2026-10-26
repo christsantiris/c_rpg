@@ -287,14 +287,15 @@ static void test_saltwind_renderer(Renderer *r, GameState *g, SDL_Surface *surfa
     viewport_center_on(&view, g->player.x, g->player.y);
     int x = viewport_to_screen_x(&view, enemy->x) * TILE_SIZE;
     int y = viewport_to_screen_y(&view, enemy->y) * TILE_SIZE;
-    for (int type = ENEMY_LIZARDFOLK_SCOUT; type <= ENEMY_SSZARETH; type++) {
+    const EnemyType marsh_types[] = {ENEMY_LIZARDFOLK_SCOUT, ENEMY_REED_SPEARHUNTER, ENEMY_MARSH_SPITTER, ENEMY_GIANT_CRAB, ENEMY_LIZARDFOLK_SCALEGUARD, ENEMY_SSZARETH};
+    for (int i = 0; i < (int)(sizeof(marsh_types) / sizeof(marsh_types[0])); i++) {
         enemy->active = 0;
         renderer_begin_frame(r);
         game_draw(r, g, &view);
         renderer_end_frame(r);
         unsigned int ground = creature_pixels(surface, x, y);
         enemy->active = 1;
-        enemy->type = type;
+        enemy->type = marsh_types[i];
         renderer_begin_frame(r);
         game_draw(r, g, &view);
         renderer_end_frame(r);

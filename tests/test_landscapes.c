@@ -288,7 +288,7 @@ static void test_saves(void) {
         game.enemy_count = 2;
         int bx, by;
         map_room_center(&game.map.rooms[8], &bx, &by);
-        game.enemies[0] = (Enemy){.active = 1, .is_boss = 1, .type = region == 0 ? ENEMY_POLAR_KRAKEN : ENEMY_DESERT_PHARAOH, .x = bx, .y = by, .hp = 111, .max_hp = 250, .attack_phase = 1, .move_timer = 2, .attack_target_x = bx - 2, .attack_target_y = by};
+        game.enemies[0] = (Enemy){.active = 1, .is_boss = 1, .type = region == 0 ? ENEMY_FROST_KRAKEN : ENEMY_DESERT_PHARAOH, .x = bx, .y = by, .hp = 111, .max_hp = 250, .attack_phase = 1, .move_timer = 2, .attack_target_x = bx - 2, .attack_target_y = by};
         game.enemies[1] = (Enemy){.active = 0, .hp = 0, .type = ENEMY_SKELETON};
         game.portal_active = 1;
         game.portal_location = game.location;

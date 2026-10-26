@@ -109,7 +109,7 @@ striking adjacent enemies in melee.
 | Shortbow | +5 | Two | Rogue | 1 | 140 | Range 5 |
 | Longbow | +7 | Two | Rogue | 2 | 250 | Range 7 |
 | Crossbow | +9 | Two | Rogue | 2 | 450 | Range 5; more damage than Longbow |
-| Krakenbone Bow | +10 | Two | Rogue | Boss | 700 | Range 7; Polar Kraken reward |
+| Krakenbone Bow | +10 | Two | Rogue | Boss | 700 | Range 7; Frost Kraken reward |
 | Magic Longbow | +13 | Two | Rogue | 3 | 1,200 | Range 7 and pierces every target in its path |
 
 Bows fire with `F` in the last movement direction. A target directly adjacent

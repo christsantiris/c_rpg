@@ -1,7 +1,7 @@
 # Saltwind Marsh art and renderer checks
 
-The entrance, mangroves, skiff and six enemy types use the established pixelkit
-pipeline at native game scale:
+The entrance, mangroves, skiff and five lizardfolk enemy types use the
+established pixelkit pipeline at native game scale:
 
 ```sh
 python3 tools/sprites/mangrove.py
@@ -9,14 +9,14 @@ python3 tools/sprites/mangrove_enemies.py
 ```
 
 Runtime assets: `mangrove-entrance.bmp` (168×144), `mangrove-root.bmp` (48×72),
-`skiff.bmp` (four 36×36 directions) and `mangrove-enemies.bmp` (six 48×48 cells).
+`skiff.bmp` (four 36×36 directions) and `mangrove-enemies.bmp` (five 48×48 cells).
 Names in code and serialized fields retain the original mangrove identifier for
 compatibility; the displayed area name is **Saltwind Marsh**.
 
-[Native comparison](native-comparison.png) places the landmark, roots, skiff
+The original [native comparison](native-comparison.png) places the landmark, roots, skiff
 and enemy atlas beside the existing blacksmith and Elderwood art at unscaled
-resolution. Humanoid bodies match the player; turtles are broader and Sszareth
-has a taller crest. All actors retain a single combat square.
+resolution. Humanoid bodies match the player and Sszareth has a taller crest.
+Giant Crabs reuse the Sunken Coast sprite. All actors retain a single combat square.
 
 Actual SDL software-renderer captures:
 

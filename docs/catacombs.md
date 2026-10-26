@@ -42,8 +42,8 @@ cannot attack during the phase in which they rise. Occupied corpse positions
 postpone resurrection; enemies never appear on the player or another enemy.
 Extinguishing the brazier cancels a pending resurrection.
 
-Bone Cantors can also call fallen Ancient Skeletons or Bone Sentinels in their
-own lit chamber. Automatic and Cantor resurrection share **one allowance per
+Crypt Conjurers can also call fallen Ancient Skeletons or Bone Sentinels in their
+own lit chamber. Automatic and Conjurer resurrection share **one allowance per
 enemy**. The second defeat grants no additional experience, score, gold, or
 loot, and the enemy stays dead. Skeletons killed away from a lit burial chamber
 do not automatically resurrect.
@@ -67,9 +67,9 @@ advance trap or resurrection timers. Their warning states survive saving.
 | Ancient Skeleton | 1 | Armored melee enemy that can reassemble once |
 | Bone Sentinel | 1 | Heavy melee guard that protects nearby ranged allies |
 | Crypt Bat | 1 | Fast flanker, with stronger catacomb stats |
-| Grave Archer | 2 | Fires on clear rows or columns every other attack cycle |
+| Vampire | 2 | Reuses the Blackwater Swamp melee enemy |
 | Wraith | 2 | Pierces half defense and drains mana; stronger catacomb stats |
-| Bone Cantor | 3 | Ranged grave bolts and resurrection support |
+| Crypt Conjurer | 3 | Dungeon caster with ranged bolts and brazier-bound resurrection support |
 | Grave Marshal | 5 | Final tomb boss, protected by two braziers |
 
 Regular enemies appear in pairs around individual chambers; the starting room
@@ -77,17 +77,17 @@ is safe and the final boss chamber excludes ordinary enemies. Mixed roles,
 stronger undead, limited resurrection, and marked hazards make the area harder
 than the initial dungeon. Stairs never require killing every enemy.
 
-New enemy base stats, before shared regional-order and player-level scaling:
+Catacomb enemy base stats, before shared regional-order and player-level scaling:
 
 | Enemy | HP | Attack | Defense | XP |
 |---|---:|---:|---:|---:|
 | Ancient Skeleton | 48 | 13 | 4 | 45 |
 | Bone Sentinel | 80 | 17 | 8 | 75 |
-| Grave Archer | 40 | 15 | 3 | 55 |
-| Bone Cantor | 58 | 16 | 4 | 90 |
+| Vampire | 65 | 15 | 5 | 80 |
+| Crypt Conjurer | 48 | 13 | 3 | 70 |
 | Grave Marshal | 280 | 26 | 8 | 750 |
 
-Catacomb Crypt Bats and Wraiths have twice their dungeon base HP and XP,
+Catacomb Crypt Bats, Wraiths and Crypt Conjurers have twice their dungeon base HP and XP,
 six additional base attack, and two additional base defense. The existing
 regional scaling applies when enemies spawn; cached enemies keep their stats.
 Catacomb victory does not increase the four original regions' order tier.
@@ -165,8 +165,8 @@ through the castle grounds' south gate.
 | Floor | Objective | Additional defenders |
 |---|---|---|
 | 2 | Silence the Soldiers' memorial | Ancient Skeleton and Bone Sentinel |
-| 3 | Silence the Watchers' memorial | Grave Archer and Wraith |
-| 4 | Silence the Choir memorial | Bone Cantor and Ancient Skeleton |
+| 3 | Silence the Watchers' memorial | Vampire and Wraith |
+| 4 | Silence the Choir memorial | Crypt Conjurer and Ancient Skeleton |
 | 5 | Recover the royal burial ledger | Existing Grave Marshal boss |
 
 Each memorial is a marked blue brazier with an ivory plaque and name label.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Import the Polar Kraken at native game scale with a limited pixel-art palette."""
+"""Import the Frost Kraken at native game scale with a limited pixel-art palette."""
 from pathlib import Path
 
 from PIL import Image
@@ -7,8 +7,8 @@ from PIL import Image
 from pixelkit import save_sprite
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "docs/art-sources/polar-kraken/source.png"
-DEST = ROOT / "assets/images/polar-kraken.bmp"
+SOURCE = ROOT / "docs/art-sources/frost-kraken/source.png"
+DEST = ROOT / "assets/images/frost-kraken.bmp"
 SIZE = 96
 
 

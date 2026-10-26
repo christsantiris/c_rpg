@@ -196,7 +196,7 @@ Item boss_equipment_reward(EnemyType type) {
             return item_make_demonic_sword();
         case ENEMY_RED_DRAGON:
             return item_make_dragon_scale_mantle();
-        case ENEMY_POLAR_KRAKEN:
+        case ENEMY_FROST_KRAKEN:
             return item_make_krakenbone_bow();
         default:
             return item_make_cryptblade();
@@ -207,8 +207,6 @@ static int enemy_score(EnemyType type) {
     switch (type) {
         case ENEMY_ANCIENT_SKELETON: return 80;
         case ENEMY_BONE_SENTINEL: return 150;
-        case ENEMY_GRAVE_ARCHER: return 100;
-        case ENEMY_BONE_CANTOR: return 170;
         case ENEMY_GRAVE_MARSHAL: return 2400;
         case ENEMY_SKELETON:    return 10;
         case ENEMY_ZOMBIE:      return 20;
@@ -225,7 +223,6 @@ static int enemy_score(EnemyType type) {
         case ENEMY_LIZARDFOLK_SCOUT: return 35;
         case ENEMY_REED_SPEARHUNTER: return 50;
         case ENEMY_MARSH_SPITTER: return 55;
-        case ENEMY_MUDBACK_TURTLE: return 110;
         case ENEMY_LIZARDFOLK_SCALEGUARD: return 120;
         case ENEMY_GOBLIN_MINE_BOSS:
         case ENEMY_TEMPEST_MATRIARCH: return 0;
@@ -281,7 +278,7 @@ static int enemy_score(EnemyType type) {
         case ENEMY_FROST_WRAITH: return 120;
         case ENEMY_ICE_GOLEM: return 150;
         case ENEMY_ICE_GIANT: return 190;
-        case ENEMY_POLAR_KRAKEN: return 1700;
+        case ENEMY_FROST_KRAKEN: return 1700;
         case ENEMY_SCARAB: return 40;
         case ENEMY_VIPER: return 50;
         case ENEMY_MUMMY: return 100;
@@ -396,7 +393,6 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         case ENEMY_LIZARDFOLK_SCOUT:
         case ENEMY_REED_SPEARHUNTER:
         case ENEMY_MARSH_SPITTER: gold = 7 + rand() % 5; break;
-        case ENEMY_MUDBACK_TURTLE:
         case ENEMY_LIZARDFOLK_SCALEGUARD: gold = 12 + rand() % 7; break;
         case ENEMY_GOBLIN_MINE_BOSS:
         case ENEMY_TEMPEST_MATRIARCH: break;
@@ -422,8 +418,6 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
             break;
         case ENEMY_ANCIENT_SKELETON: gold = 8 + rand() % 8; break;
         case ENEMY_BONE_SENTINEL: gold = 12 + rand() % 10; break;
-        case ENEMY_GRAVE_ARCHER: gold = 10 + rand() % 8; break;
-        case ENEMY_BONE_CANTOR: gold = 14 + rand() % 10; break;
         case ENEMY_GRAVE_MARSHAL: gold = 100; break;
         case ENEMY_SKELETON: gold = 2 + rand() % 4;  break;
         case ENEMY_ZOMBIE:   gold = 4 + rand() % 6;  break;
@@ -478,7 +472,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         case ENEMY_FROST_WRAITH: gold = 9 + rand() % 9; break;
         case ENEMY_ICE_GOLEM: gold = 12 + rand() % 10; break;
         case ENEMY_ICE_GIANT: gold = 18 + rand() % 12; break;
-        case ENEMY_POLAR_KRAKEN: gold = 75; break;
+        case ENEMY_FROST_KRAKEN: gold = 75; break;
         case ENEMY_SCARAB: gold = 4 + rand() % 6; break;
         case ENEMY_VIPER: gold = 5 + rand() % 7; break;
         case ENEMY_MUMMY: gold = 10 + rand() % 10; break;
@@ -602,7 +596,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
             g->floor_items[g->floor_item_count++] = fi;
             char msg[MAX_MESSAGE_LEN];
             snprintf(msg, sizeof(msg), "%s dropped!", boss_drop.name);
-            if (type == ENEMY_POLAR_KRAKEN) {
+            if (type == ENEMY_FROST_KRAKEN) {
                 g->kraken_bow_unclaimed = 1;
             }
             if (type == ENEMY_GRAVE_MARSHAL) {
@@ -2055,7 +2049,7 @@ void action_resolve_player(GameState *g, Action a) {
                         } else if (sp->id == SPELL_FROST_BOLT &&
                             (enemy_is_vampire_captor(e) || e->type == ENEMY_ICE_GOLEM ||
                             e->type == ENEMY_FALLEN_SUN_GUARDIAN ||
-                            e->type == ENEMY_POLAR_KRAKEN)) {
+                            e->type == ENEMY_FROST_KRAKEN)) {
                             e->frozen_turns = 0;
                             snprintf(msg, sizeof(msg),
                                 "%s shrugs off the frost: %d dmg", e->name,
@@ -2701,8 +2695,8 @@ void action_resolve_player(GameState *g, Action a) {
             } else {
                 for (int i = 0; i < g->enemy_count; i++) {
                     if (!g->debug_passages_unlocked && g->enemies[i].active &&
-                        g->enemies[i].type == ENEMY_POLAR_KRAKEN) {
-                        push_message(g, "The Polar Kraken bars the way west!");
+                        g->enemies[i].type == ENEMY_FROST_KRAKEN) {
+                        push_message(g, "The Frost Kraken bars the way west!");
                         return;
                     }
                 }
@@ -3126,7 +3120,7 @@ static int enemy_is_major_boss(const Enemy *e) {
 static int enemy_prefers_range(const Enemy *e);
 
 static int enemy_is_support(const Enemy *e) {
-    return e->type == ENEMY_BONE_CANTOR || e->type == ENEMY_CRYPT_CONJURER ||
+    return e->type == ENEMY_CRYPT_CONJURER ||
         e->type == ENEMY_GOBLIN_SHAMAN ||
         e->type == ENEMY_SUN_PRIEST;
 }
@@ -3225,7 +3219,7 @@ static void select_enemy_pursuers(const GameState *g, int pursuers[MAX_ENEMIES])
 }
 
 static int enemy_prefers_range(const Enemy *e) {
-    return e->type == ENEMY_GRAVE_ARCHER || e->type == ENEMY_BONE_CANTOR || e->type == ENEMY_CRYPT_CONJURER ||
+    return e->type == ENEMY_CRYPT_CONJURER ||
         e->type == ENEMY_DARK_ELF || e->type == ENEMY_THORN_DRYAD ||
         e->type == ENEMY_GOBLIN_ARCHER ||
         e->type == ENEMY_ROAD_ARCHER ||
@@ -3415,6 +3409,9 @@ static int clear_orthogonal_path(const GameState *g, int shooter_index, const En
 
 static int necromancer_revive(GameState *g, int necromancer_index) {
     Enemy *caster = &g->enemies[necromancer_index];
+    if (g->location == LOCATION_CATACOMBS) {
+        return catacombs_conjurer_raise(g, caster);
+    }
     for (int i = 0; i < g->enemy_count; i++) {
         Enemy *dead = &g->enemies[i];
         if (dead->active || dead->type != ENEMY_SKELETON) continue;
@@ -3545,7 +3542,7 @@ int kraken_tile_threatened(const GameState *g, const Enemy *e, int x, int y) {
 
 // Alternate a targeted strike (phases 1-2) with a lake sweep (phases 4-5).
 // Phases 3 and 0 provide recovery; retreat resets the cycle to the first strike.
-static void polar_kraken_turn(GameState *g, Enemy *e) {
+static void frost_kraken_turn(GameState *g, Enemy *e) {
     const Room *lake = &g->map.rooms[g->map.room_count - 1];
     int on_lake = g->player.x >= lake->x && g->player.x < lake->x + lake->w &&
         g->player.y >= lake->y && g->player.y < lake->y + lake->h;
@@ -3881,8 +3878,8 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             }
             continue;
         }
-        if (e->type == ENEMY_POLAR_KRAKEN) {
-            polar_kraken_turn(g, e);
+        if (e->type == ENEMY_FROST_KRAKEN) {
+            frost_kraken_turn(g, e);
             continue;
         }
         if (e->type == ENEMY_BLIND_STALKER && e->hp == e->max_hp &&
@@ -4025,7 +4022,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
 
-        if ((e->type == ENEMY_GRAVE_ARCHER || e->type == ENEMY_GOBLIN_ARCHER ||
+        if ((e->type == ENEMY_GOBLIN_ARCHER ||
             e->type == ENEMY_ROAD_ARCHER ||
             e->type == ENEMY_FROST_ARCHER ||
             e->type == ENEMY_GOBLIN_BOMBER) &&
@@ -4037,7 +4034,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 continue;
             }
             char msg[MAX_MESSAGE_LEN];
-            const char *attack_name = e->type == ENEMY_GRAVE_ARCHER ? "Grave arrow" : e->type == ENEMY_GOBLIN_BOMBER ?
+            const char *attack_name = e->type == ENEMY_GOBLIN_BOMBER ?
                 "Goblin bomb" : e->type == ENEMY_ROAD_ARCHER ?
                 "Road arrow" : e->type == ENEMY_FROST_ARCHER ?
                 "Frost arrow" : "Goblin arrow";
@@ -4079,20 +4076,6 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
 
-        if (e->type == ENEMY_BONE_CANTOR) {
-            if (e->move_timer % 4 == 0 && catacombs_cantor_raise(g, e)) {
-                continue;
-            }
-            if (e->move_timer % 2 == 0 && clear_orthogonal_path(g, i, e)) {
-                int damage = e->attack - g->player.defense / 2;
-                if (damage < 1) {
-                    damage = 1;
-                }
-                apply_enemy_ranged_damage(g, i, e, damage, shots);
-                push_message_kind(g, "The Bone Cantor hurls a grave bolt!", MESSAGE_DAMAGE_TAKEN);
-                continue;
-            }
-        }
         if (e->type == ENEMY_CRYPT_CONJURER) {
             if (e->move_timer % 4 == 0 && necromancer_revive(g, i)) continue;
             if (e->move_timer % 2 == 0 && clear_orthogonal_path(g, i, e)) {

@@ -39,12 +39,12 @@ static void add_enemy(GameState *g, EnemyType type, int x, int y) {
     if (g->enemy_count >= AREA_ENEMY_LIMIT) {
         return;
     }
-    static const char *names[] = {"Lizardfolk Scout", "Reed Spearhunter", "Marsh Spitter", "Mudback Turtle", "Lizardfolk Scaleguard", "Sszareth"};
-    static const int health[] = {32, 44, 38, 105, 90, 480};
-    static const int attack[] = {9, 12, 11, 16, 17, 25};
-    static const int armor[] = {2, 3, 2, 8, 6, 10};
-    static const int xp[] = {35, 48, 45, 95, 90, 900};
-    int i = type - ENEMY_LIZARDFOLK_SCOUT;
+    static const char *names[] = {"Lizardfolk Scout", "Reed Spearhunter", "Marsh Spitter", "Giant Crab", "Lizardfolk Scaleguard", "Sszareth"};
+    static const int health[] = {32, 44, 38, 42, 90, 480};
+    static const int attack[] = {9, 12, 11, 11, 17, 25};
+    static const int armor[] = {2, 3, 2, 6, 6, 10};
+    static const int xp[] = {35, 48, 45, 38, 90, 900};
+    int i = type == ENEMY_GIANT_CRAB ? 3 : type - ENEMY_LIZARDFOLK_SCOUT;
     Enemy *enemy = &g->enemies[g->enemy_count++];
     *enemy = (Enemy){.active = 1, .type = type, .x = x, .y = y, .is_boss = type == ENEMY_SSZARETH,
         .max_hp = health[i] + (type == ENEMY_SSZARETH ? 0 : 7 * (g->level - 1)),
@@ -91,7 +91,7 @@ void mangrove_spawn(GameState *g, int fresh) {
         int x;
         int y;
         mangrove_island(g->level, island, &x, &y);
-        EnemyType first = g->level == 3 ? ENEMY_MUDBACK_TURTLE :
+        EnemyType first = g->level == 3 ? ENEMY_GIANT_CRAB :
             g->level >= 4 ? ENEMY_LIZARDFOLK_SCALEGUARD : ENEMY_LIZARDFOLK_SCOUT;
         place_near(g, first, x - 2, y, 0);
         place_near(g, ENEMY_REED_SPEARHUNTER, x + 2, y - 1, 0);
@@ -176,7 +176,7 @@ int mangrove_attack_marks(const Enemy *enemy, int x, int y) {
         return abs(dx) <= 2 && abs(dy) <= 2 && (dx || dy);
     }
     if (enemy->boss_attack == REED_THRUST || enemy->boss_attack == ROOT_CHARGE) {
-        int length = enemy->boss_attack == REED_THRUST ? 2 : enemy->type == ENEMY_SSZARETH ? 6 : 3;
+        int length = enemy->boss_attack == REED_THRUST ? 2 : 6;
         int along = dx * enemy->facing_dx + dy * enemy->facing_dy;
         return along > 0 && along <= length && dx * enemy->facing_dy == dy * enemy->facing_dx;
     }
@@ -188,10 +188,21 @@ int mangrove_tick(GameState *g, Enemy *enemy, int *damage) {
         return 0;
     }
     *damage = 0;
+    if (enemy->type == ENEMY_GIANT_CRAB) {
+        enemy->move_timer++;
+        int dx = abs(g->player.x - enemy->x);
+        int dy = abs(g->player.y - enemy->y);
+        if (dx <= 1 && dy <= 1 && (dx || dy)) {
+            *damage = enemy->attack;
+        } else if (enemy->move_timer % 2 == 0) {
+            step_toward(g, enemy);
+        }
+        return 1;
+    }
     if (enemy->move_timer < 0) {
         enemy->move_timer++;
         if (!enemy->move_timer) {
-            enemy->defense = enemy->type == ENEMY_SSZARETH ? 10 : enemy->type == ENEMY_MUDBACK_TURTLE ? 8 : enemy->defense;
+            enemy->defense = enemy->type == ENEMY_SSZARETH ? 10 : enemy->defense;
         }
         return 1;
     }
@@ -201,8 +212,7 @@ int mangrove_tick(GameState *g, Enemy *enemy, int *damage) {
         }
         if (enemy->boss_attack == ROOT_CHARGE) {
             int collision = 0;
-            int length = enemy->is_boss ? 6 : 3;
-            for (int n = 0; n < length; n++) {
+            for (int n = 0; n < 6; n++) {
                 int x = enemy->x + enemy->facing_dx;
                 int y = enemy->y + enemy->facing_dy;
                 if (!clear_ground(g, x, y) || occupied(g, enemy, x, y)) {
@@ -240,7 +250,7 @@ int mangrove_tick(GameState *g, Enemy *enemy, int *damage) {
     if (enemy->is_boss && distance <= 12 && enemy->hp * 2 < enemy->max_hp && !enemy->boss_wave_used) {
         enemy->boss_wave_used = 1;
         enemy->boss_attack = CALL_HUNTERS;
-    } else if ((enemy->type == ENEMY_MUDBACK_TURTLE || enemy->is_boss) && clear_lane(g, enemy, enemy->is_boss ? 6 : 3)) {
+    } else if (enemy->is_boss && clear_lane(g, enemy, 6)) {
         enemy->boss_attack = ROOT_CHARGE;
     } else if (enemy->type == ENEMY_MARSH_SPITTER && clear_lane(g, enemy, 6)) {
         enemy->boss_attack = VENOM_SPIT;
@@ -254,9 +264,6 @@ int mangrove_tick(GameState *g, Enemy *enemy, int *damage) {
         return 1;
     } else {
         step_toward(g, enemy);
-        if (enemy->type == ENEMY_MUDBACK_TURTLE) {
-            enemy->move_timer = -1;
-        }
         return 1;
     }
     enemy->attack_phase = 1;

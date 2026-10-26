@@ -103,7 +103,7 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
 
     r->castle_enemy_texture = load_sprite_texture(sdl, "assets/images/castle-enemies.bmp");
     r->castle_boss_texture = load_sprite_texture(sdl, "assets/images/castle-bosses.bmp");
-    r->polar_kraken_texture = load_sprite_texture(sdl, "assets/images/polar-kraken.bmp");
+    r->frost_kraken_texture = load_sprite_texture(sdl, "assets/images/frost-kraken.bmp");
 
     if (TTF_Init() != 0) {
         fprintf(stderr, "TTF_Init error: %s\n", TTF_GetError());
@@ -164,9 +164,9 @@ void renderer_free(Renderer *r) {
         SDL_DestroyTexture(r->castle_enemy_texture);
         r->castle_enemy_texture = NULL;
     }
-    if (r->polar_kraken_texture) {
-        SDL_DestroyTexture(r->polar_kraken_texture);
-        r->polar_kraken_texture = NULL;
+    if (r->frost_kraken_texture) {
+        SDL_DestroyTexture(r->frost_kraken_texture);
+        r->frost_kraken_texture = NULL;
     }
     if (r->castle_boss_texture) {
         SDL_DestroyTexture(r->castle_boss_texture);

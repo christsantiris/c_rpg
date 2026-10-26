@@ -1,7 +1,7 @@
 # Enemy names and areas
 
 This is the current spawn roster, including quest encounters and summoned
-enemies. It covers all **103 defined enemy types**, all of which have current
+enemies. It covers all **100 defined enemy types**, all of which have current
 spawns. The 22 named variants are listed separately because they reuse these
 types. Removed enemy IDs remain reserved in the save format; they are no longer
 runtime enemy definitions. The six retired Pirate Coast IDs also remain unused.
@@ -19,7 +19,7 @@ Castle entries below refer to the castle interior, not Castle Grounds.
 | Zombie | Dungeon; Blackwater Swamp |
 | Crypt Bat | Dungeon; Royal Catacombs |
 | Wraith | Dungeon; Blackwater Swamp; Royal Catacombs |
-| Crypt Conjurer | Dungeon |
+| Crypt Conjurer | Dungeon; Royal Catacombs |
 | Lich King | Dungeon |
 | Pixie | Haunted Forest |
 | Blighted Wolf | Haunted Forest; Crown Road East; Crown Road West |
@@ -39,7 +39,7 @@ Castle entries below refer to the castle interior, not Castle Grounds.
 | Illusion | Sunken Coast |
 | Merfolk | Sunken Coast |
 | Siren | Sunken Coast |
-| Giant Crab | Sunken Coast |
+| Giant Crab | Sunken Coast; Saltwind Marsh |
 | Animated Statue | Sunken Coast; Rook's Labyrinth |
 | Water Elemental | Sunken Coast |
 | Sea Serpent | Sunken Coast |
@@ -57,11 +57,11 @@ Castle entries below refer to the castle interior, not Castle Grounds.
 | Minotaur | Rook's Labyrinth |
 | Giant Rat | Blackwater Swamp; Escape Tunnel |
 | Bandit | Blackwater Swamp; Crown Road East; Crown Road West; Escape Tunnel (Tunnel Smuggler) |
-| Vampire | Blackwater Swamp |
+| Vampire | Blackwater Swamp; Royal Catacombs |
 | Swamp Demon | Blackwater Swamp |
 | Drake | Dragonspine |
 | Giant | Dragonspine |
-| Fire Elemental | Dragonspine |
+| Fire Elemental | Dragonspine; Ashen Hollow |
 | Red Dragon | Dragonspine |
 | Road Archer | Crown Road East; Crown Road West; Escape Tunnel (Smuggler Archer) |
 | Horseman | Crown Road East; Crown Road West |
@@ -71,7 +71,7 @@ Castle entries below refer to the castle interior, not Castle Grounds.
 | Frost Wraith | Frostfell |
 | Ice Golem | Frostfell |
 | Ice Giant | Frostfell |
-| Polar Kraken | Frostfell |
+| Frost Kraken | Frostfell |
 | Scarab | Sunscar Wastes |
 | Viper | Sunscar Wastes |
 | Mummy | Sunscar Wastes |
@@ -89,8 +89,6 @@ Castle entries below refer to the castle interior, not Castle Grounds.
 | Quarry Colossus | Stonewake Quarry |
 | Ancient Skeleton | Royal Catacombs |
 | Bone Sentinel | Royal Catacombs |
-| Grave Archer | Royal Catacombs |
-| Bone Cantor | Royal Catacombs |
 | Grave Marshal | Royal Catacombs |
 | Oathbound Soldier | Castle of No Return |
 | Iron Warden | Castle of No Return |
@@ -109,7 +107,6 @@ Castle entries below refer to the castle interior, not Castle Grounds.
 | Lizardfolk Scout | Saltwind Marsh |
 | Reed Spearhunter | Saltwind Marsh |
 | Marsh Spitter | Saltwind Marsh |
-| Mudback Turtle | Saltwind Marsh |
 | Lizardfolk Scaleguard | Saltwind Marsh |
 | Sszareth | Saltwind Marsh |
 | Harpy Raider | Stormwatch Headland 1–5; finite Matriarch reinforcements |
