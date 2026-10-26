@@ -687,10 +687,24 @@ static void migrate_retired_enemy(Enemy *e) {
             e->type = ENEMY_LICH_KING;
             name = "Lich King";
             break;
+        case 84:
+            e->type = ENEMY_VAMPIRE;
+            name = "Vampire";
+            break;
+        case 85:
+            e->type = ENEMY_CRYPT_CONJURER;
+            name = "Crypt Conjurer";
+            break;
+        case 110:
+            e->type = ENEMY_GIANT_CRAB;
+            name = "Giant Crab";
+            break;
         default:
             return;
     }
-    snprintf(e->name, sizeof(e->name), "%s", name);
+    if (!strstr(e->name, "Memorial Guard")) {
+        snprintf(e->name, sizeof(e->name), "%s", name);
+    }
 }
 
 static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count, int capacity) {
@@ -706,9 +720,11 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count, in
         e->active     = cJSON_GetObjectItem(obj, "active")->valueint;
         e->type       = cJSON_GetObjectItem(obj, "type")->valueint;
         const char *name = cJSON_GetObjectItem(obj, "name")->valuestring;
-        // Migrate active and cached Wardens without changing combat or quest state.
+        // Normalize renamed actors in both active and cached encounters.
         if (e->type == ENEMY_MINOTAUR) {
             name = "Minotaur";
+        } else if (e->type == ENEMY_FROST_KRAKEN) {
+            name = "Frost Kraken";
         }
         snprintf(e->name, sizeof(e->name), "%s", name);
         migrate_retired_enemy(e);
@@ -751,6 +767,15 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count, in
         for (int row = 0; row < DRAGON_WARNING_SIZE; row++) {
             cJSON *bits = cJSON_GetArrayItem(warning, row);
             e->dragon_warning[row] = bits ? (unsigned int)bits->valueint & ((1u << DRAGON_WARNING_WORD_BITS) - 1u) : 0;
+        }
+        if (cJSON_GetObjectItem(obj, "type")->valueint == 110) {
+            // Retire the old charge without moving or healing the saved actor.
+            e->attack_phase = 0;
+            e->boss_attack = 0;
+            e->move_timer = 0;
+            e->attack_target_x = -1;
+            e->attack_target_y = -1;
+            e->defense = 6;
         }
     }
 }
@@ -1403,7 +1428,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 200);
+    cJSON_AddNumberToObject(root, "save_version", 201);
     cJSON_AddItemToObject(root, "ironfang", serialize_ironfang(g));
     cJSON_AddNumberToObject(root, "ironfang_defeated", g->ironfang_defeated);
     cJSON_AddItemToObject(root, "stormwatch", serialize_stormwatch(g));
@@ -3279,7 +3304,7 @@ static int migrate_region_routes(GameState *g, Location region) {
 static void migrate_kraken_cycle(Enemy *enemies, int count, int version) {
     for (int i = 0; i < count; i++) {
         Enemy *e = &enemies[i];
-        if (e->type != ENEMY_POLAR_KRAKEN) {
+        if (e->type != ENEMY_FROST_KRAKEN) {
             continue;
         }
         e->attack_phase = 0;

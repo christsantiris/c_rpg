@@ -92,13 +92,18 @@ static void test_layouts(void) {
             connected &= visited[game.map.stairs_down_y][game.map.stairs_down_x];
             int bosses = 0;
             int ancient = 0;
-            int cantors = 0;
+            int conjurers = 0;
+            int vampires = 0;
             for (int i = 0; i < game.enemy_count; i++) {
                 Enemy *e = &game.enemies[i];
                 connected &= visited[e->y][e->x];
                 bosses += e->is_boss;
                 ancient += e->type == ENEMY_ANCIENT_SKELETON;
-                cantors += e->type == ENEMY_BONE_CANTOR;
+                conjurers += e->type == ENEMY_CRYPT_CONJURER;
+                vampires += e->type == ENEMY_VAMPIRE;
+                if (e->type == ENEMY_CRYPT_CONJURER) {
+                    roster &= e->max_hp >= 48 && e->attack >= 13;
+                }
                 if (e->type == ENEMY_ANCIENT_SKELETON) {
                     roster &= e->max_hp > 10 && e->attack > 3 && e->defense > 0;
                 }
@@ -107,7 +112,8 @@ static void test_layouts(void) {
                 }
             }
             roster &= ancient > 0 && bosses == (level == CATACOMBS_DEPTH) && game.enemy_count <= AREA_ENEMY_LIMIT;
-            roster &= (cantors > 0) == (level >= 3);
+            roster &= (conjurers > 0) == (level >= 3);
+            roster &= (vampires > 0) == (level >= 2);
             for (int i = 0; i < game.map.burial_trap_count; i++) {
                 BurialTrap *trap = &game.map.burial_traps[i];
                 safe &= !catacombs_trap_marks(&game.map, trap, game.map.stairs_up_x, game.map.stairs_up_y);
@@ -117,7 +123,7 @@ static void test_layouts(void) {
         }
     }
     ASSERT("all seeded catacomb floors connect both stairs and every enemy", connected);
-    ASSERT("Ancient Skeletons are tougher, Cantors begin on floor three, and only floor five has a boss", roster);
+    ASSERT("tougher skeletons, floor-two Vampires, floor-three Conjurers and a floor-five boss recur across seeds", roster);
     ASSERT("burial lines protect stairs and the final tomb contains two braziers", safe);
 }
 
@@ -202,17 +208,25 @@ static void test_revival(void) {
     e = skeleton(ENEMY_BONE_SENTINEL);
     e->active = 0;
     e->hp = 0;
-    Enemy caster = {.x = 16, .y = 16, .type = ENEMY_BONE_CANTOR};
-    ASSERT("a Cantor can warn a dead guard in its own lit chamber", catacombs_cantor_raise(&game, &caster) && e->revive_timer == 2);
+    Enemy caster = {.x = 16, .y = 16, .type = ENEMY_CRYPT_CONJURER};
+    ASSERT("a Conjurer can warn a dead guard in its own lit chamber", catacombs_conjurer_raise(&game, &caster) && e->revive_timer == 2);
     e->revived = 1;
     e->revive_timer = 0;
-    ASSERT("a Cantor cannot grant a second resurrection", !catacombs_cantor_raise(&game, &caster));
+    ASSERT("a Conjurer cannot grant a second resurrection", !catacombs_conjurer_raise(&game, &caster));
     e->revived = 0;
     caster.x = 5;
-    ASSERT("Cantors cannot resurrect guards in other chambers", !catacombs_cantor_raise(&game, &caster));
+    ASSERT("Conjurers cannot resurrect guards in other chambers", !catacombs_conjurer_raise(&game, &caster));
     caster.x = 16;
     game.map.tiles[11][11] = TILE_OSSUARY_COLD;
-    ASSERT("extinguished braziers disable Cantor resurrection", !catacombs_cantor_raise(&game, &caster));
+    ASSERT("extinguished braziers disable Conjurer resurrection", !catacombs_conjurer_raise(&game, &caster));
+    arena();
+    e = skeleton(ENEMY_BONE_SENTINEL);
+    e->active = 0;
+    e->hp = 0;
+    game.enemies[game.enemy_count++] = (Enemy){.x = 16, .y = 16, .type = ENEMY_CRYPT_CONJURER,
+        .active = 1, .hp = 48, .max_hp = 48, .move_timer = 3, .attack = 13};
+    action_resolve_enemies(&game);
+    ASSERT("the recurring Conjurer uses Catacombs brazier resurrection during its actual combat turn", e->revive_timer == 2);
     arena();
     e = skeleton(ENEMY_ANCIENT_SKELETON);
     e->active = 0;
