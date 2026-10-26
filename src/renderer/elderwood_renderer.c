@@ -4,20 +4,11 @@
 
 void draw_elderwood_tile(Renderer *r, int sx, int sy, int x, int y, TileType tile) {
     if (tile == TILE_ELDERWOOD_WALL) {
-        draw_forest_wall(r, sx, sy, x, y);
-        SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_BLEND);
-        SDL_SetRenderDrawColor(r->sdl, 94, 136, 45, 40);
-        SDL_Rect tint = {sx * TILE_SIZE, sy * TILE_SIZE, TILE_SIZE, TILE_SIZE};
-        SDL_RenderFillRect(r->sdl, &tint);
-        SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_NONE);
+        draw_elderwood_wall(r, sx, sy, x, y);
         return;
     }
-    draw_forest_floor(r, sx, sy, x, y);
-    SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_BLEND);
-    SDL_SetRenderDrawColor(r->sdl, 99, 123, 47, 30);
+    draw_elderwood_floor(r, sx, sy, x, y);
     SDL_Rect cell = {sx * TILE_SIZE, sy * TILE_SIZE, TILE_SIZE, TILE_SIZE};
-    SDL_RenderFillRect(r->sdl, &cell);
-    SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_NONE);
     if (tile == TILE_ELDERWOOD_LOG) {
         SDL_Color shades[] = {{35, 31, 23, 255}, {70, 57, 31, 255}, {116, 91, 44, 255}, {163, 129, 68, 255}};
         for (int n = 0; n < 4; n++) {

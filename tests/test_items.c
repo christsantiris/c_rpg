@@ -681,7 +681,6 @@ void test_items(void) {
 
     // --- Special boss rewards ---
     ASSERT("special boss Strength Potion rewards are preserved",
-        boss_equipment_reward(ENEMY_THORN_REGENT).type == ITEM_POTION_STRENGTH &&
         boss_equipment_reward(ENEMY_CINDER_LORD).type == ITEM_POTION_STRENGTH &&
         boss_equipment_reward(ENEMY_PRISM_SOVEREIGN).type == ITEM_POTION_STRENGTH);
     Item lich_reward = boss_equipment_reward(ENEMY_LICH_KING);

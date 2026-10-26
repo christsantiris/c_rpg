@@ -14,22 +14,14 @@
 #include <stdio.h>
 
 static void draw_landscape_tile(Renderer *r, const GameState *g, int sx, int sy, int x, int y, TileType tile) {
-    int desert = tile == TILE_DESERT_OASIS || tile == TILE_DESERT_OASIS_DRY;
     int dry = tile == TILE_DESERT_OASIS_DRY;
-    SDL_Color accent = desert ? (SDL_Color){97, 206, 196, 255} : tile == TILE_MOONVEIL_WAYSTONE_A ?
-        (SDL_Color){180, 177, 255, 255} : (SDL_Color){246, 182, 220, 255};
-    if (desert) {
-        draw_desert_floor(r, sx, sy, x, y);
-        draw_world_prop(r, sx, sy, dry ? PROP_INTAKE : PROP_SPRING, dry ? (SDL_Color){167, 139, 108, 255} : accent);
-    } else {
-        draw_moonveil_circle(r, sx, sy, x, y);
-        draw_world_prop(r, sx, sy, PROP_ARCH, accent);
-    }
-    const char *label = desert ? (dry ? "DRY" : "WELL") : tile == TILE_MOONVEIL_WAYSTONE_A ? "I" : "II";
-    renderer_draw_text(r, label, sx * TILE_SIZE + (desert ? 1 : 8), sy * TILE_SIZE - 10, accent, r->font_tiny);
+    SDL_Color accent = {97, 206, 196, 255};
+    draw_desert_floor(r, sx, sy, x, y);
+    draw_world_prop(r, sx, sy, dry ? PROP_INTAKE : PROP_SPRING, dry ? (SDL_Color){167, 139, 108, 255} : accent);
+    renderer_draw_text(r, dry ? "DRY" : "WELL", sx * TILE_SIZE + 1, sy * TILE_SIZE - 10, accent, r->font_tiny);
     if (abs(g->player.x - x) + abs(g->player.y - y) <= 1) {
         char hint[64];
-        snprintf(hint, sizeof(hint), "%s: %s", controls_key_name(g->key_bindings[CONTROL_MOVE_LEFT]), desert ? (dry ? "WELL EMPTY" : "DRINK WATER") : "USE MATCHING STONE");
+        snprintf(hint, sizeof(hint), "%s: %s", controls_key_name(g->key_bindings[CONTROL_MOVE_LEFT]), dry ? "WELL EMPTY" : "DRINK WATER");
         renderer_draw_text(r, hint, sx * TILE_SIZE - 50, sy * TILE_SIZE - 24, accent, r->font_tiny);
     }
 }
@@ -237,15 +229,6 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
             title = "THE DRAGON'S BASALT DEN";
             line1 = "BASALT BLOCKS THE DRAGON'S FIRE";
             line2 = "WATCH FOR CRACKED AND WEAK COVER";
-        }
-    } else if (g->location == LOCATION_MOONVEIL) {
-        title = "MOONLIT GARDEN LOOPS";
-        line1 = "WAYSTONES: I TO I, II TO II";
-        line2 = "USE INTERACT TO CROSS THE GARDEN";
-        if (g->level == MOONVEIL_DEPTH) {
-            title = "THE THORN REGENT'S GARDEN";
-            line1 = "TEND FLOWER NODES TO OPEN A FLANK";
-            line2 = "LEAVE WARNED ROOT AND PETAL LANES";
         }
     } else if (g->location == LOCATION_DUNGEON) {
         title = "CRYPTS OF OAKHAVEN";

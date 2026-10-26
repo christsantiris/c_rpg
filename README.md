@@ -28,50 +28,9 @@ and many other adventures.
 
 ## World Map
 
-[![Illustrated world map showing Stonewake Quarry south of Stillbury and a compact Saltwind Marsh inlet south of Dawnmere, coastal docks beside Sunken Coast, the road through Goblin Mountains, Elderwood Forest and the northern road from Oakhaven through the Royal Catacombs to the castle, the five towns, both Crown Roads, regional adventures and the Ruined Isle.](docs/images/world-map-coastal-regions.png)](docs/images/world-map-coastal-regions.png)
+[![World map of the Castle of No Return](docs/images/world-map-ironfang.png)](docs/images/world-map-ironfang.png)
 
-An illustrated overview based on the world's town connections. Dawnmere now lies
-east of Oakhaven in open coastal lowland, reached by the safe road opened after
-defeating the Lich King. Ridgeshire is the elevated mountain city to its north.
-The [expansion plan](docs/five-town-expansion.md) documents the connections
-and the new [Elderwood Forest](docs/elderwood-forest.md) north of Oakhaven. Its
-five levels lead to Elderthorn; defeating it opens the northern road to the
-relocated Royal Catacombs. Defeating the Grave Marshal opens the remaining
-passage to Castle Grounds. Goblin Mountains
-now lies north of Dawnmere, beside the road to Ridgeshire; defeating its King
-opens that road. Both mountain entrances start at level 1. Forest and swamp
-also have five forward levels, with their boss victories opening the town roads.
-Other enemy-area gates lead to safe cobblestone paths and themed entrance
-sprites; physical retreat returns to the same path. Rook's Labyrinth stands
-beside the Haunted Forest entrance on that road and stays sealed until Rook
-assigns the quest in Oakhaven's Tavern. Castle, secret tunnel and Crown Road
-travel keep their existing layouts.
-
-Pirate Coast and its merchant treasure quest have been removed.
-[Saltwind Marsh](docs/saltwind-marsh.md) is a five-stage adventure south of
-Dawnmere, with skiff exploration, lizardfolk, armored turtles and Sszareth's
-sanctuary. Ordinary enemies respawn on fresh expeditions; supplies and the
-boss bounty pay once. [Stonewake Quarry](docs/stonewake-quarry.md) replaces Glassdeep
-south of Stillbury, with five stages, crane walkways, side workshops, new enemies
-and Orin's Magic Stone Warhammer quest (+30 maximum HP while equipped). Rowan and
-the docks stand outside Oakhaven beside the Sunken Coast entrance. Defeating
-the Drowned Queen still opens dock access; Rowan's map unlocks the first voyage.
-Dawnmere's merchant has a working door and a single-tile path from the west road.
-Merchant Corvin is inside, with directions to Saltwind; a new marsh quest is not
-assigned yet. Dawnmere's east route remains closed. On the atlas, the marsh is a small coastal
-inlet, preserving Stonewake's beaches and cliffs, Sunken Coast's sheltered cove,
-and broad open sea.
-
-Return to Town uses the last town actually entered; bypassing a town leaves
-that destination unchanged. Return portals retain the original expedition.
-
-All five towns now stand beside signed exterior roads. Walk into a town sprite
-to arrive beside the matching interior exit gate, or follow the road around town to
-continue travelling. See [town roads and directional entrances](docs/town-roads.md).
-
-The Ruined Temple is a compact pyramid landmark in the island's central clearing.
-Walk into any side to begin its five-floor adventure; retreat returns to the
-path beside Nahla. See the [temple sprite and renderer preview](docs/art-sources/temple-entrance/README.md).
+An illustrated overview based on the world's town connections.
 
 ## Controls
 
@@ -132,12 +91,13 @@ inventory actions.
 - [Castle Dungeon](docs/dungeon.md)
 - [Haunted Forest](docs/haunted-forest.md)
 - [Goblin Mountains](docs/goblin-mountains.md)
+- [Ironfang Mines](docs/ironfang-mines.md)
 - [Dragonspine and High Pass](docs/dragonspine.md)
 - [Sunken Coast](docs/sunken-coast.md)
 - [Saltwind Marsh — five stages and skiff exploration](docs/saltwind-marsh.md)
+- [Stormwatch Headland](docs/stormwatch-headland.md)
 - [Blackwater Swamp](docs/swamp.md)
 - [Sunscar Wastes and the magic lamp quest](docs/sunscar-wastes.md)
-- [Moonveil Gardens](docs/moonveil-gardens.md)
 - [Ashen Hollow](docs/ashen-hollow.md)
 - [Stonewake Quarry](docs/stonewake-quarry.md)
 - [Complete enemy names and area mapping](docs/enemy-roster.md)

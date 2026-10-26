@@ -53,6 +53,5 @@ healing or repeat quest rewards.
    Retain its royal-undead identity and northern-route role.
 
 Blackwater Swamp, Sunken Coast and Frostfell remain. Ashen Hollow retains its
-volcanic theme. Stormwatch is a candidate east of Dawnmere; Moonveil's inland
-replacement needs a separate design. These later changes are not part of the
+volcanic theme. Stormwatch is planned east of Dawnmere. These later changes are not part of the
 Stonewake art approval.

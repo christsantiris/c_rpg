@@ -1,5 +1,7 @@
+#include "ironfang.h"
 #include "game.h"
 #include "mangrove.h"
+#include "stormwatch.h"
 #include "coastal_travel.h"
 #include "catacombs.h"
 #include "elderwood.h"
@@ -12,7 +14,6 @@
 #include "minotaur.h"
 #include "grave_marshal.h"
 #include "desert_pharaoh.h"
-#include "thorn_regent.h"
 #include "cinder_lord.h"
 #include "prism_sovereign.h"
 #include "sun_guardian.h"
@@ -98,6 +99,12 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
     memset(e->dragon_warning, 0, sizeof(e->dragon_warning));
     switch (type) {
         // Elderwood entities are constructed by its compact region generator.
+        case ENEMY_GOBLIN_MINE_BOSS:
+        case ENEMY_HARPY_RAIDER:
+        case ENEMY_CLIFF_GARGOYLE:
+        case ENEMY_HARPY_STORMCALLER:
+        case ENEMY_STORM_ELEMENTAL:
+        case ENEMY_TEMPEST_MATRIARCH:
         case ENEMY_BRIAR_WOLF:
         case ENEMY_IRONHIDE_BOAR:
         case ENEMY_THORN_DRYAD:
@@ -275,32 +282,6 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             snprintf(e->name, sizeof(e->name), "Desert Pharaoh");
             e->max_hp = 220; e->hp = 220;
             e->attack = 22; e->defense = 7; e->experience = 600;
-            e->is_boss = 1;
-            break;
-        case ENEMY_FEY_TRICKSTER:
-            snprintf(e->name, sizeof(e->name), "Fey Trickster");
-            e->max_hp = 28; e->hp = 28;
-            e->attack = 10; e->defense = 2; e->experience = 35;
-            break;
-        case ENEMY_GIANT_MOTH:
-            snprintf(e->name, sizeof(e->name), "Giant Moth");
-            e->max_hp = 24; e->hp = 24;
-            e->attack = 11; e->defense = 1; e->experience = 32;
-            break;
-        case ENEMY_LIVING_FLOWER:
-            snprintf(e->name, sizeof(e->name), "Carnivorous Flower");
-            e->max_hp = 50; e->hp = 50;
-            e->attack = 14; e->defense = 3; e->experience = 70;
-            break;
-        case ENEMY_THORN_GUARDIAN:
-            snprintf(e->name, sizeof(e->name), "Thorn Guardian");
-            e->max_hp = 95; e->hp = 95;
-            e->attack = 17; e->defense = 7; e->experience = 110;
-            break;
-        case ENEMY_THORN_REGENT:
-            snprintf(e->name, sizeof(e->name), "Thorn Regent");
-            e->max_hp = 240; e->hp = 240;
-            e->attack = 23; e->defense = 8; e->experience = 700;
             e->is_boss = 1;
             break;
         case ENEMY_CINDER_IMP:
@@ -566,7 +547,7 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
 }
 
 static int boss_for_level(const GameState *g, EnemyType *type) {
-    if (g->location == LOCATION_ELDERWOOD || g->location == LOCATION_MANGROVES || g->location == LOCATION_MANGROVE_PATH) {
+    if (g->location == LOCATION_IRONFANG || g->location == LOCATION_STORMWATCH || g->location == LOCATION_ELDERWOOD || g->location == LOCATION_MANGROVES || g->location == LOCATION_MANGROVE_PATH) {
         return 0;
     }
     int boss_level = DUNGEON_DEPTH;
@@ -582,8 +563,6 @@ static int boss_for_level(const GameState *g, EnemyType *type) {
         boss_level = FROSTFELL_DEPTH;
     } else if (g->location == LOCATION_DESERT) {
         boss_level = DESERT_DEPTH;
-    } else if (g->location == LOCATION_MOONVEIL) {
-        boss_level = MOONVEIL_DEPTH;
     } else if (g->location == LOCATION_ASHEN) {
         boss_level = ASHEN_DEPTH;
     } else if (g->location == LOCATION_GLASSDEEP) {
@@ -611,8 +590,6 @@ static int boss_for_level(const GameState *g, EnemyType *type) {
         *type = ENEMY_POLAR_KRAKEN;
     } else if (g->location == LOCATION_DESERT) {
         *type = ENEMY_DESERT_PHARAOH;
-    } else if (g->location == LOCATION_MOONVEIL) {
-        *type = ENEMY_THORN_REGENT;
     } else if (g->location == LOCATION_ASHEN) {
         *type = ENEMY_CINDER_LORD;
     } else if (g->location == LOCATION_GLASSDEEP) {
@@ -643,9 +620,6 @@ static int enemy_terrain_open(const GameState *g, int x, int y) {
         g->map.tiles[y][x] != TILE_SWAMP_FLOOR &&
         g->map.tiles[y][x] != TILE_SWAMP_REEDS &&
         g->map.tiles[y][x] != TILE_DESERT_FLOOR &&
-        g->map.tiles[y][x] != TILE_MOONVEIL_FLOOR &&
-        g->map.tiles[y][x] != TILE_MOONVEIL_CIRCLE &&
-        g->map.tiles[y][x] != TILE_MOONVEIL_BLOSSOMS &&
         g->map.tiles[y][x] != TILE_ASHEN_FLOOR &&
         g->map.tiles[y][x] != TILE_ASHEN_RUIN &&
         g->map.tiles[y][x] != TILE_CATACOMBS_FLOOR &&
@@ -1155,7 +1129,6 @@ void enemies_spawn(GameState *g) {
             g->location == LOCATION_SWAMP ||
             g->location == LOCATION_FROSTFELL ||
             g->location == LOCATION_DESERT ||
-            g->location == LOCATION_MOONVEIL ||
             g->location == LOCATION_ASHEN ||
             g->location == LOCATION_GLASSDEEP ||
             g->location == LOCATION_CATACOMBS ||
@@ -1183,9 +1156,7 @@ void enemies_spawn(GameState *g) {
     if (g->location == LOCATION_ASHEN && g->level == ASHEN_DEPTH) {
         cinder_lord_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
     }
-    if (g->location == LOCATION_MOONVEIL && g->level == MOONVEIL_DEPTH) {
-        thorn_regent_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
-    }
+
     if (g->location == LOCATION_DESERT && g->level == DESERT_DEPTH) {
         desert_pharaoh_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
     }
@@ -1214,11 +1185,10 @@ void enemies_spawn(GameState *g) {
         (g->location == LOCATION_SWAMP ? SWAMP_BOSS_LEVEL :
         (g->location == LOCATION_FROSTFELL ? FROSTFELL_DEPTH :
         (g->location == LOCATION_DESERT ? DESERT_DEPTH :
-        (g->location == LOCATION_MOONVEIL ? MOONVEIL_DEPTH :
         (g->location == LOCATION_ASHEN ? ASHEN_DEPTH :
         (g->location == LOCATION_GLASSDEEP ? GLASSDEEP_DEPTH :
         (g->location == LOCATION_CATACOMBS ? CATACOMBS_DEPTH :
-        (g->location == LOCATION_DRAGONSPINE ? DRAGONSPINE_DEPTH : DUNGEON_DEPTH))))))))));
+        (g->location == LOCATION_DRAGONSPINE ? DRAGONSPINE_DEPTH : DUNGEON_DEPTH)))))))));
     int regular_room_limit = g->level == boss_level
         ? g->map.room_count - 1 : g->map.room_count;
     place_dain_map_bearer(g);
@@ -1279,17 +1249,6 @@ void enemies_spawn(GameState *g) {
             } else {
                 type = roll < 30 ? ENEMY_CINDER_IMP :
                     (roll < 65 ? ENEMY_ASH_HOUND : ENEMY_OBSIDIAN_GUARDIAN);
-            }
-        } else if (g->location == LOCATION_MOONVEIL) {
-            if (g->level == 1) {
-                type = roll < 55 ? ENEMY_GIANT_MOTH : ENEMY_FEY_TRICKSTER;
-            } else if (g->level == 2) {
-                type = roll < 35 ? ENEMY_GIANT_MOTH :
-                    (roll < 75 ? ENEMY_FEY_TRICKSTER : ENEMY_LIVING_FLOWER);
-            } else {
-                type = roll < 20 ? ENEMY_GIANT_MOTH :
-                    (roll < 45 ? ENEMY_FEY_TRICKSTER :
-                    (roll < 75 ? ENEMY_LIVING_FLOWER : ENEMY_THORN_GUARDIAN));
             }
         } else if (g->location == LOCATION_DESERT) {
             type = sunscar_enemy(g->level, roll);
@@ -1445,6 +1404,10 @@ void enemies_spawn(GameState *g) {
 }
 
 void game_init(GameState *g) {
+    memset(g->ironfang, 0, sizeof(g->ironfang));
+    g->ironfang_defeated = 0;
+    memset(g->stormwatch, 0, sizeof(g->stormwatch));
+    g->stormwatch_defeated = 0;
     g->mangroves = (MangroveState){0};
     memset(g->mangrove_stages, 0, sizeof(g->mangrove_stages));
     g->mangrove_defeated = 0;
@@ -1493,9 +1456,7 @@ void game_init(GameState *g) {
         if (i < FROSTFELL_DEPTH) {
             g->frostfell_cache[i].valid = 0;
         }
-        if (i < MOONVEIL_DEPTH) {
-            g->moonveil_cache[i] = (LevelCache){0};
-        }
+
         if (i < ASHEN_DEPTH) {
             g->ashen_cache[i] = (LevelCache){0};
         }
@@ -1528,7 +1489,6 @@ void game_init(GameState *g) {
     g->max_dragonspine_level_reached = 1;
     g->max_frostfell_level_reached = 1;
     g->max_desert_level_reached = 1;
-    g->max_moonveil_level_reached = 1;
     g->max_ashen_level_reached = 1;
     g->max_glassdeep_level_reached = 1;
     g->max_catacombs_level_reached = 1;
@@ -1573,7 +1533,6 @@ void game_init(GameState *g) {
     g->kraken_bow_unclaimed = 0;
     g->sandstorm_staff_unclaimed = 0;
     g->desert_pharaoh_reward_state = 0;
-    g->thorn_regent_reward_pending = 0;
     g->cinder_lord_reward_pending = 0;
     g->prism_sovereign_reward_pending = 0;
     g->sun_guardian_reward_state = 0;
@@ -1610,9 +1569,6 @@ void game_init(GameState *g) {
     g->stonewake_warhammer_state = 0;
     g->glassdeep_quest_progress = 0;
     g->glassdeep_quest_encounters = 0;
-    g->moonveil_quest_state = 0;
-    g->moonveil_quest_progress = 0;
-    g->moonveil_quest_encounters = 0;
     g->catacombs_quest_state = 0;
     g->catacombs_quest_progress = 0;
     g->catacombs_quest_encounters = 0;
@@ -1875,7 +1831,7 @@ void game_recover_retired_items(GameState *g) {
         recovered++;
     }
     if (recovered) {
-        push_message(g, "Items left on the retired coast have been returned to you.");
+        push_message(g, "Items from a retired area have been returned to you.");
     }
 }
 
@@ -1963,9 +1919,7 @@ static LevelCache *active_cache(GameState *g) {
     if (g->location == LOCATION_DESERT) {
         return g->desert_cache;
     }
-    if (g->location == LOCATION_MOONVEIL) {
-        return g->moonveil_cache;
-    }
+
     if (g->location == LOCATION_ASHEN) {
         return g->ashen_cache;
     }
@@ -2000,9 +1954,7 @@ static int *active_max_level(GameState *g) {
     if (g->location == LOCATION_DESERT) {
         return &g->max_desert_level_reached;
     }
-    if (g->location == LOCATION_MOONVEIL) {
-        return &g->max_moonveil_level_reached;
-    }
+
     if (g->location == LOCATION_ASHEN) {
         return &g->max_ashen_level_reached;
     }
@@ -2040,9 +1992,7 @@ static int active_depth(const GameState *g) {
     if (g->location == LOCATION_DESERT) {
         return DESERT_DEPTH;
     }
-    if (g->location == LOCATION_MOONVEIL) {
-        return MOONVEIL_DEPTH;
-    }
+
     if (g->location == LOCATION_ASHEN) {
         return ASHEN_DEPTH;
     }
@@ -2761,127 +2711,6 @@ found:
     g->glassdeep_quest_encounters |= bit;
 }
 
-static int moonveil_quest_bit(const GameState *g) {
-    if (g->location != LOCATION_MOONVEIL || g->level < 2 || g->level > 4) {
-        return 0;
-    }
-    return 1 << (g->level - 2);
-}
-
-static const char *moonveil_guard_name(const GameState *g) {
-    static const char *names[3] = {"Moonseed Guardian", "Moonwater Guardian", "Mooncircle Guardian"};
-    return names[g->level - 2];
-}
-
-static void restore_moonveil_clearing(GameState *g, int x, int y) {
-    for (int dy = -2; dy <= 2; dy++) {
-        for (int dx = -2; dx <= 2; dx++) {
-            int tx = x + dx;
-            int ty = y + dy;
-            if ((!dx && !dy) || dx * dx + dy * dy > 5 || tx <= 0 || tx >= SWAMP_MAP_W - 1 || ty <= 0 || ty >= SWAMP_MAP_H - 1) {
-                continue;
-            }
-            TileType tile = quest_object_tile(g, tx, ty);
-            if (tile == TILE_MOONVEIL_FLOOR || tile == TILE_MOONVEIL_CIRCLE || tile == TILE_MOONVEIL_WALL) {
-                set_quest_object_tile(g, tx, ty, TILE_MOONVEIL_BLOSSOMS);
-            }
-        }
-    }
-}
-
-static void place_moonveil_quest_encounter(GameState *g) {
-    int bit = moonveil_quest_bit(g);
-    if (!bit || !g->moonveil_quest_state || !g->map.room_count) {
-        return;
-    }
-    TileType objective = bit == MOONVEIL_SEED_RECOVERED ? TILE_MOONVEIL_SEED_POD :
-        bit == MOONVEIL_WATER_GATHERED ? TILE_MOONVEIL_SPRING : TILE_MOONVEIL_PLANTING_CIRCLE;
-    int x = -1;
-    int y = -1;
-    int cx;
-    int cy;
-    map_room_center(&g->map.rooms[g->map.room_count - 1], &cx, &cy);
-    int best = -2 * (MAP_W + MAP_H);
-    for (int ty = 1; ty < SWAMP_MAP_H - 1; ty++) {
-        for (int tx = 1; tx < SWAMP_MAP_W - 1; tx++) {
-            TileType tile = quest_object_tile(g, tx, ty);
-            if (tile == objective || (bit == MOONVEIL_GARDEN_RESTORED && tile == TILE_MOONVEIL_MOONFLOWER)) {
-                x = tx;
-                y = ty;
-                goto found;
-            }
-            if ((g->map.tiles[ty][tx] != TILE_MOONVEIL_FLOOR && g->map.tiles[ty][tx] != TILE_MOONVEIL_CIRCLE) ||
-                !enemy_tile_open(g, tx, ty) || (g->player.x == tx && g->player.y == ty) ||
-                abs(tx - g->map.stairs_up_x) + abs(ty - g->map.stairs_up_y) < 8 ||
-                (g->portal_active && g->portal_location == g->location && g->portal_level == g->level &&
-                g->portal_x == tx && g->portal_y == ty)) {
-                continue;
-            }
-            int score = -abs(tx - cx) - abs(ty - cy);
-            if (bit == MOONVEIL_WATER_GATHERED) {
-                const int offsets[4][2] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
-                int pool = 0;
-                int hedge = 0;
-                for (int i = 0; i < 4; i++) {
-                    TileType neighbor = g->map.tiles[ty + offsets[i][1]][tx + offsets[i][0]];
-                    pool |= neighbor == TILE_MOONVEIL_POOL;
-                    hedge |= neighbor == TILE_MOONVEIL_WALL;
-                }
-                score += (pool ? 2 : hedge) * (MAP_W + MAP_H);
-            }
-            if (score > best) {
-                best = score;
-                x = tx;
-                y = ty;
-            }
-        }
-    }
-found:
-    if (x < 0) {
-        return;
-    }
-    int complete = g->moonveil_quest_progress & bit;
-    if (bit == MOONVEIL_SEED_RECOVERED && complete) {
-        if (quest_object_tile(g, x, y) == objective) {
-            set_quest_object_tile(g, x, y, TILE_MOONVEIL_FLOOR);
-        }
-        return;
-    }
-    if (bit == MOONVEIL_WATER_GATHERED) {
-        // Expose a spring along the bank without replacing any walking tiles.
-        for (int ty = y - 1; ty <= y + 1; ty++) {
-            for (int tx = x - 1; tx <= x + 1; tx++) {
-                if (g->map.tiles[ty][tx] == TILE_MOONVEIL_WALL) {
-                    g->map.tiles[ty][tx] = TILE_MOONVEIL_POOL;
-                }
-            }
-        }
-    }
-    set_quest_object_tile(g, x, y, bit == MOONVEIL_GARDEN_RESTORED && complete ? TILE_MOONVEIL_MOONFLOWER : objective);
-    if (bit == MOONVEIL_GARDEN_RESTORED && complete) {
-        restore_moonveil_clearing(g, x, y);
-    }
-    if (complete || (g->moonveil_quest_encounters & bit)) {
-        return;
-    }
-    int guards = bit == MOONVEIL_SEED_RECOVERED ? 3 : bit == MOONVEIL_WATER_GATHERED ? 1 : 2;
-    const char *name = moonveil_guard_name(g);
-    int existing = 0;
-    for (int i = 0; i < g->enemy_count; i++) {
-        if (strcmp(g->enemies[i].name, name) == 0) {
-            existing++;
-        }
-    }
-    for (int i = existing; i < guards; i++) {
-        EnemyType type = bit == MOONVEIL_SEED_RECOVERED ? (i == 0 ? ENEMY_FEY_TRICKSTER : ENEMY_GIANT_MOTH) :
-            bit == MOONVEIL_WATER_GATHERED ? ENEMY_LIVING_FLOWER : ENEMY_THORN_GUARDIAN;
-        if (!spawn_quest_guard(g, type, x, y, name)) {
-            return;
-        }
-    }
-    g->moonveil_quest_encounters |= bit;
-}
-
 static void place_catacombs_quest_encounter(GameState *g) {
     catacombs_refresh_quest(g);
     if (g->location != LOCATION_CATACOMBS || g->catacombs_quest_state != 1 ||
@@ -3175,7 +3004,7 @@ void game_refresh_quest_encounters(GameState *g) {
     minotaur_restore_reward(g);
     restore_frostfell_reward(g);
     restore_desert_reward(g);
-    thorn_regent_restore_reward(g);
+
     cinder_lord_restore_reward(g);
     prism_sovereign_restore_reward(g);
     sun_guardian_restore_reward(g);
@@ -3190,7 +3019,7 @@ void game_refresh_quest_encounters(GameState *g) {
     place_emberforge_encounter(g);
     place_frostfell_quest_encounter(g);
     place_glassdeep_quest_encounter(g);
-    place_moonveil_quest_encounter(g);
+
     place_catacombs_quest_encounter(g);
     place_watchfire_encounter(g);
     place_hunt_encounter(g);
@@ -3219,8 +3048,6 @@ static void generate_active_level(GameState *g) {
         map_generate_frostfell(&g->map, g->level);
     } else if (g->location == LOCATION_DESERT) {
         map_generate_desert(&g->map, g->level);
-    } else if (g->location == LOCATION_MOONVEIL) {
-        map_generate_moonveil(&g->map, g->level);
     } else if (g->location == LOCATION_ASHEN) {
         map_generate_ashen(&g->map, g->level);
     } else if (g->location == LOCATION_GLASSDEEP) {
@@ -3299,7 +3126,7 @@ static void generate_active_level(GameState *g) {
     minotaur_restore_reward(g);
     restore_frostfell_reward(g);
     restore_desert_reward(g);
-    thorn_regent_restore_reward(g);
+
     cinder_lord_restore_reward(g);
     prism_sovereign_restore_reward(g);
     catacombs_restore_reward(g);
@@ -3310,8 +3137,7 @@ static void generate_active_level(GameState *g) {
     place_frostfell_quest_encounter(g);
     g->glassdeep_quest_encounters &= ~glassdeep_quest_bit(g);
     place_glassdeep_quest_encounter(g);
-    g->moonveil_quest_encounters &= ~moonveil_quest_bit(g);
-    place_moonveil_quest_encounter(g);
+
     if (g->location == LOCATION_CATACOMBS && g->level >= 2 && g->level <= 4) {
         g->catacombs_quest_encounters &= ~(1 << (g->level - 2));
     }
@@ -3468,6 +3294,14 @@ static void prepare_forest_arrival(GameState *g, int from_high) {
 }
 
 void game_descend(GameState *g) {
+    if (g->location == LOCATION_IRONFANG) {
+        ironfang_change_level(g, 1);
+        return;
+    }
+    if (g->location == LOCATION_STORMWATCH) {
+        stormwatch_change_level(g, 1);
+        return;
+    }
     if (g->location == LOCATION_MANGROVES) {
         mangrove_change_level(g, 1);
         return;
@@ -3517,6 +3351,14 @@ void game_descend(GameState *g) {
 }
 
 void game_ascend(GameState *g) {
+    if (g->location == LOCATION_IRONFANG) {
+        ironfang_change_level(g, 0);
+        return;
+    }
+    if (g->location == LOCATION_STORMWATCH) {
+        stormwatch_change_level(g, 0);
+        return;
+    }
     if (g->location == LOCATION_MANGROVES) {
         mangrove_change_level(g, 0);
         return;
@@ -3808,28 +3650,6 @@ void game_enter_desert(GameState *g) {
     push_message(g, "Press the interact key (A by default) beside an oasis well for water, once per expedition.");
 }
 
-void game_enter_moonveil(GameState *g) {
-    clear_floor_loot(g);
-    g->location = LOCATION_MOONVEIL;
-    start_expedition(g, g->moonveil_cache, MOONVEIL_DEPTH);
-    g->level = 1;
-    LevelCache *cache = &g->moonveil_cache[0];
-    if (cache->valid) {
-        g->map = cache->map;
-        g->enemy_count = cache->enemy_count;
-        memcpy(g->enemies, cache->enemies, sizeof(cache->enemies));
-        g->level_cleared = cache->level_cleared;
-    } else {
-        g->level_cleared = 0;
-        generate_active_level(g);
-    }
-    g->player.x = g->map.stairs_up_x;
-    g->player.y = g->map.stairs_up_y;
-    g->dialogue_active = 0;
-    push_message(g, "Looping garden walks surround moonlit pools. Matching waystones link distant clearings.");
-    push_message(g, "Press the interact key (A by default) on or beside waystones, seed pods, springs, circles or flowering nodes to use them.");
-}
-
 void game_enter_ashen(GameState *g) {
     clear_floor_loot(g);
     g->location = LOCATION_ASHEN;
@@ -3974,6 +3794,8 @@ void game_refresh_debug_passages(GameState *g) {
                         }
                     }
                     break;
+                case TILE_IRON_BROKEN: open = TILE_IRON_RAIL; break;
+                case TILE_IRON_CRACK: open = TILE_IRON_FLOOR; break;
                 case TILE_DUNGEON_STAIRS_SEALED: open = TILE_DUNGEON_STAIRS_RETURN; break;
                 default: break;
             }
@@ -4009,11 +3831,12 @@ static void place_town_portal(GameState *g) {
             case LOCATION_CATACOMBS: anchor = g->northern_portal_town; break;
             case LOCATION_DESERT: anchor = LOCATION_TOWN2; break;
             case LOCATION_GLASSDEEP: anchor = LOCATION_TOWN2; break;
+            case LOCATION_STORMWATCH:
             case LOCATION_MANGROVES: anchor = LOCATION_DAWNMERE; break;
             case LOCATION_FROSTFELL:
-            case LOCATION_MOONVEIL: anchor = LOCATION_TOWN3; break;
-            case LOCATION_DRAGONSPINE:
-            case LOCATION_ASHEN: anchor = LOCATION_TOWN4; break;
+            case LOCATION_ASHEN: anchor = LOCATION_TOWN3; break;
+            case LOCATION_IRONFANG:
+            case LOCATION_DRAGONSPINE: anchor = LOCATION_TOWN4; break;
             default: break;
         }
         if (anchor != g->location) {
@@ -4029,6 +3852,8 @@ static void place_town_portal(GameState *g) {
     if (g->location == LOCATION_DAWNMERE) {
         if (g->portal_location == LOCATION_DUNGEON && g->dungeon_portal_town == LOCATION_DAWNMERE) {
             g->map.tiles[13][2] = TILE_PORTAL;
+        } else if (g->portal_location == LOCATION_STORMWATCH) {
+            g->map.tiles[12][TOWN_W - 3] = TILE_PORTAL;
         } else if (g->portal_location == LOCATION_MANGROVES) {
             g->map.tiles[TOWN_H - 3][21] = TILE_PORTAL;
         } else if (g->portal_location == LOCATION_MOUNTAINS && g->mountain_portal_town == LOCATION_DAWNMERE) {
@@ -4037,8 +3862,8 @@ static void place_town_portal(GameState *g) {
         return;
     }
     if (g->location == LOCATION_TOWN4) {
-        if (g->portal_location == LOCATION_ASHEN) {
-            g->map.tiles[RIDGESHIRE_ASHEN_PORTAL_Y][RIDGESHIRE_ASHEN_PORTAL_X] = TILE_PORTAL;
+        if (g->portal_location == LOCATION_IRONFANG) {
+            g->map.tiles[12][TOWN_W - 3] = TILE_PORTAL;
         } else if (g->portal_location == LOCATION_DRAGONSPINE) {
             g->map.tiles[RIDGESHIRE_DRAGON_PORTAL_Y][RIDGESHIRE_DRAGON_PORTAL_X] = TILE_PORTAL;
         } else if (g->portal_location == LOCATION_MOUNTAINS && g->mountain_portal_town == LOCATION_TOWN4) {
@@ -4059,10 +3884,10 @@ static void place_town_portal(GameState *g) {
         return;
     }
     if (g->location == LOCATION_TOWN3) {
-        if (g->portal_location == LOCATION_CATACOMBS) {
+        if (g->portal_location == LOCATION_ASHEN) {
+            g->map.tiles[ROSEMOOR_ASHEN_PORTAL_Y][ROSEMOOR_ASHEN_PORTAL_X] = TILE_PORTAL;
+        } else if (g->portal_location == LOCATION_CATACOMBS) {
             g->map.tiles[TOWN3_KING_GATE_Y + 1][TOWN_W - 3] = TILE_PORTAL;
-        } else if (g->portal_location == LOCATION_MOONVEIL) {
-            g->map.tiles[ROSEMOOR_MOONVEIL_GATE_Y + 1][2] = TILE_PORTAL;
         } else if (g->portal_location == LOCATION_FROSTFELL) {
             g->map.tiles[2][20] = TILE_PORTAL;
         } else if (g->portal_location == LOCATION_SWAMP && g->swamp_portal_town == LOCATION_TOWN3) {
@@ -4077,7 +3902,6 @@ static void place_town_portal(GameState *g) {
         g->portal_location == LOCATION_DRAGONSPINE ||
         g->portal_location == LOCATION_SWAMP ||
         g->portal_location == LOCATION_DESERT ||
-        g->portal_location == LOCATION_MOONVEIL ||
         g->portal_location == LOCATION_ASHEN ||
         g->portal_location == LOCATION_GLASSDEEP ||
         g->portal_location == LOCATION_CATACOMBS ||
@@ -4500,14 +4324,14 @@ void game_talk_to_veyra(GameState *g) {
             "Our warning fires are dark. Restore the watchfires in Goblin Mountains 5, Ashen Hollow 3, and Dragonspine 3, in any order. Defeat their guards, then press A beside each. Return for 180 gold.");
     } else if (g->watchfire_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Watchfires: Mountains 5 %s; Ashen Hollow 3 %s; Dragonspine 3 %s. Use our south, east, and north gates. Defeat each fire's defenders and press A beside it. Regional bosses are optional.",
+            "Watchfires: Mountains 5 %s; Ashen Hollow 3 %s; Dragonspine 3 %s. Ashen lies west of Rosemoor. Defeat the guards, then press A beside each fire. Bosses are optional.",
             g->watchfire_quest_progress & 1 ? "lit" : "dark", g->watchfire_quest_progress & 2 ? "lit" : "dark", g->watchfire_quest_progress & 4 ? "lit" : "dark");
     } else if (g->watchfire_quest_state == 2) {
         g->watchfire_quest_state = 3;
         g->gold += WATCHFIRE_REWARD_GOLD;
         g->score += WATCHFIRE_REWARD_SCORE;
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Three watchfires burn again. Our scouts can warn Ridgeshire of danger from every approach. Take 180 gold with the town's thanks.");
+            "Three watchfires burn again. Warnings can cross the realm once more. Take 180 gold with the town's thanks.");
         push_message(g, "Completed: Watchfires of Ridgeshire. 180 gold and 1400 score awarded.");
     } else {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "Ridgeshire's watchfires still burn. Our scouts remember who restored them.");
@@ -4525,8 +4349,7 @@ void game_talk_to_steward(GameState *g) {
     g->dialogue_y = HALL_STEWARD_Y;
     if (g->emberforge_quest_state == 0) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Reclaim the Emberforge! Recover its mechanism on Ashen Hollow stage 2, "
-            "then repair the furnace on stage 4. Defeat the guards and press A beside each. Return for 100 gold.");
+            "Ashen Hollow lies west of Rosemoor. Recover the forge mechanism on stage 2, then repair the furnace on stage 4. Defeat the guards and press A beside each. Return for 100 gold.");
     } else if (g->emberforge_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, g->emberforge_progress & EMBERFORGE_MECHANISM_RECOVERED ?
             "You have the mechanism. Defeat the Obsidian Guardians at the Emberforge on Ashen Hollow stage 4, "
@@ -4610,107 +4433,6 @@ int game_interact_emberforge(GameState *g) {
         set_emberforge_tile(g, x, y, TILE_EMBERFORGE_LIT);
         g->emberforge_quest_state = 2;
         push_message(g, "The Emberforge burns again! Return to Steward Hadrin in Ridgeshire Town Hall.");
-    }
-    return 1;
-}
-
-void game_talk_to_liora(GameState *g) {
-    if (g->location != LOCATION_TOWN3 || abs(g->player.x - LIORA_TOWN_X) > 1 || abs(g->player.y - LIORA_TOWN_Y) > 1) {
-        return;
-    }
-    g->dialogue_active = 1;
-    g->dialogue_x = LIORA_TOWN_X;
-    g->dialogue_y = LIORA_TOWN_Y;
-    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Botanist Liora");
-    if (g->moonveil_quest_state == 0) {
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Fey stole Moonveil's last seed. Enter Moonveil through Rosemoor's west gate. Recover the seed on stage 2, moonwater on 3, and plant on 4. Return to Rosemoor's town center.");
-    } else if (g->moonveil_quest_state == 1) {
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "I once tended Moonveil. Defeat the guards and press A beside the stage 2 seed pod and stage 3 spring, in either order. Plant and water the stage 4 circle, then return here for 90 gold.");
-    } else if (g->moonveil_quest_state == 2) {
-        g->moonveil_quest_state = 3;
-        g->gold += MOONVEIL_REWARD_GOLD;
-        g->score += MOONVEIL_REWARD_SCORE;
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "A Moonflower blooms again! You have given the gardens a future. Take these 90 gold with my thanks.");
-        push_message(g, "Completed: The Stolen Moonseed. 90 gold and 700 score awarded.");
-    } else {
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "The Moonflower still shines. One living seed was enough to give the gardens hope.");
-    }
-}
-
-static int moonveil_quest_target(const GameState *g, int *x, int *y) {
-    if (!moonveil_quest_bit(g) || !g->moonveil_quest_state) {
-        return 0;
-    }
-    const int offsets[5][2] = {{0, 0}, {0, -1}, {1, 0}, {0, 1}, {-1, 0}};
-    for (int i = 0; i < 5; i++) {
-        int tx = g->player.x + offsets[i][0];
-        int ty = g->player.y + offsets[i][1];
-        if (tx < 0 || tx >= MAP_W || ty < 0 || ty >= MAP_H) {
-            continue;
-        }
-        TileType tile = quest_object_tile(g, tx, ty);
-        if (tile == TILE_MOONVEIL_SEED_POD || tile == TILE_MOONVEIL_SPRING ||
-            tile == TILE_MOONVEIL_PLANTING_CIRCLE || tile == TILE_MOONVEIL_MOONFLOWER) {
-            *x = tx;
-            *y = ty;
-            return 1;
-        }
-    }
-    return 0;
-}
-
-int game_has_moonveil_interaction(const GameState *g) {
-    int x;
-    int y;
-    return moonveil_quest_target(g, &x, &y);
-}
-
-int game_interact_moonveil(GameState *g) {
-    int x;
-    int y;
-    if (!moonveil_quest_target(g, &x, &y)) {
-        return 0;
-    }
-    int bit = moonveil_quest_bit(g);
-    if (g->moonveil_quest_progress & bit) {
-        push_message(g, bit == MOONVEIL_GARDEN_RESTORED ? "The Moonflower shines over the restored clearing." : "You have already gathered enough moonwater.");
-        return 1;
-    }
-    if (bit == MOONVEIL_GARDEN_RESTORED && (g->moonveil_quest_progress & 3) != 3) {
-        push_message(g, "Planting requires the Moonseed from stage 2 and moonwater from the stage 3 spring.");
-        return 1;
-    }
-    if (!(g->moonveil_quest_encounters & bit)) {
-        push_message(g, "The quest defenders must be defeated before restoring the gardens.");
-        return 1;
-    }
-    for (int i = 0; i < g->enemy_count; i++) {
-        const Enemy *enemy = &g->enemies[i];
-        if (enemy->active && (strcmp(enemy->name, moonveil_guard_name(g)) == 0 ||
-            abs(enemy->x - x) + abs(enemy->y - y) <= 4)) {
-            push_message(g, "Defeat this objective's defenders before continuing Liora's quest.");
-            return 1;
-        }
-    }
-    g->moonveil_quest_progress |= bit;
-    if (bit == MOONVEIL_SEED_RECOVERED) {
-        set_quest_object_tile(g, x, y, TILE_MOONVEIL_FLOOR);
-        push_message(g, g->moonveil_quest_progress & MOONVEIL_WATER_GATHERED ?
-            "Moonseed recovered. You have moonwater; plant and water the circle on stage 4." :
-            "Moonseed recovered. Gather moonwater on stage 3, then plant the circle on stage 4.");
-    } else if (bit == MOONVEIL_WATER_GATHERED) {
-        push_message(g, g->moonveil_quest_progress & MOONVEIL_SEED_RECOVERED ?
-            "Moonwater gathered. Plant and water the ancient circle on stage 4." :
-            "Moonwater gathered. Recover the Moonseed on stage 2, then plant the circle on stage 4.");
-    } else {
-        set_quest_object_tile(g, x, y, TILE_MOONVEIL_MOONFLOWER);
-        restore_moonveil_clearing(g, x, y);
-        g->moonveil_quest_state = 2;
-        push_message(g, "The tangled growth recedes and a Moonflower blooms!");
-        push_message(g, "Return to Botanist Liora in Rosemoor's town center.");
     }
     return 1;
 }
@@ -5201,7 +4923,6 @@ void game_change_labyrinth_floor(GameState *g, int descending, int false_stair) 
     }
 }
 
-
 static int labyrinth_interaction_tile(TileType tile) {
     return tile == TILE_LABYRINTH_SWITCH_OFF ||
         tile == TILE_LABYRINTH_SWITCH_ON || tile == TILE_LABYRINTH_RELIC;
@@ -5587,10 +5308,12 @@ void game_record_temple_enemy_defeated(GameState *g, EnemyType type) {
 
 static void return_to_town(GameState *g, Location destination) {
     Location returning_from = g->location;
+    ironfang_store(g);
+    stormwatch_store(g);
     mangrove_store(g);
     elderwood_store(g);
     if (returning_from == LOCATION_FROSTFELL || returning_from == LOCATION_DESERT ||
-        returning_from == LOCATION_MOONVEIL || returning_from == LOCATION_GLASSDEEP ||
+        returning_from == LOCATION_GLASSDEEP ||
         returning_from == LOCATION_CATACOMBS || returning_from == LOCATION_ELDERWOOD ||
         destination == LOCATION_TOWN4 ||
         destination == LOCATION_TOWN3) {
@@ -5645,17 +5368,18 @@ static void return_to_town(GameState *g, Location destination) {
     } else if (destination == LOCATION_TOWN3) {
         g->player.x = returning_from == LOCATION_FROSTFELL ? 20 : spawn_x;
         g->player.y = returning_from == LOCATION_FROSTFELL ? 1 : spawn_y;
+        if (returning_from == LOCATION_ASHEN) {
+            g->player.x = 1;
+            g->player.y = ROSEMOOR_ASHEN_GATE_Y;
+        }
         if (returning_from == LOCATION_CATACOMBS) {
             g->player.x = TOWN_W - 2;
             g->player.y = TOWN3_KING_GATE_Y;
         }
-        if (returning_from == LOCATION_MOONVEIL) {
-            g->player.x = 1;
-            g->player.y = ROSEMOOR_MOONVEIL_GATE_Y;
-        }
+
     } else if (destination == LOCATION_TOWN4) {
         g->player.x = returning_from == LOCATION_MOUNTAINS ? spawn_x : TOWN_W - 2;
-        g->player.y = returning_from == LOCATION_MOUNTAINS ? spawn_y : RIDGESHIRE_ASHEN_GATE_Y;
+        g->player.y = returning_from == LOCATION_MOUNTAINS ? spawn_y : TOWN4_KING_GATE_Y;
         if (returning_from == LOCATION_DRAGONSPINE) {
             g->player.x = RIDGESHIRE_DRAGON_GATE_X;
             g->player.y = 1;
@@ -5736,6 +5460,14 @@ void game_leave_labyrinth(GameState *g) {
 }
 
 void game_return_to_approach(GameState *g) {
+    if (g->location == LOCATION_IRONFANG) {
+        ironfang_leave(g);
+        return;
+    }
+    if (g->location == LOCATION_STORMWATCH) {
+        stormwatch_leave(g);
+        return;
+    }
     if (g->location == LOCATION_MANGROVES) {
         mangrove_leave(g);
         return;
@@ -5868,11 +5600,9 @@ void game_return_to_town(GameState *g) {
         destination = g->mountain_entry_town;
     } else if (g->location == LOCATION_DESERT) {
         destination = LOCATION_TOWN2;
-    } else if (g->location == LOCATION_FROSTFELL || g->location == LOCATION_MOONVEIL ||
-        g->location == LOCATION_CATACOMBS) {
+    } else if (g->location == LOCATION_FROSTFELL || g->location == LOCATION_ASHEN) {
         destination = LOCATION_TOWN3;
-    } else if (g->location == LOCATION_DRAGONSPINE || g->location == LOCATION_HIGH_PASS ||
-        g->location == LOCATION_ASHEN) {
+    } else if (g->location == LOCATION_DRAGONSPINE || g->location == LOCATION_HIGH_PASS) {
         destination = LOCATION_TOWN4;
     }
     return_to_town(g, destination);
@@ -5978,18 +5708,18 @@ void game_open_town_portal(GameState *g) {
         g->location != LOCATION_SWAMP &&
         g->location != LOCATION_FROSTFELL &&
         g->location != LOCATION_DESERT &&
-        g->location != LOCATION_MOONVEIL &&
         g->location != LOCATION_ASHEN &&
         g->location != LOCATION_GLASSDEEP &&
         g->location != LOCATION_CATACOMBS &&
+        g->location != LOCATION_IRONFANG &&
+        g->location != LOCATION_STORMWATCH &&
         g->location != LOCATION_MANGROVES &&
         g->location != LOCATION_ELDERWOOD &&
         g->location != LOCATION_DRAGONSPINE) {
         return;
     }
     game_hide_portal_destination(g);
-    if (g->location == LOCATION_DESERT || g->location == LOCATION_MOONVEIL ||
-        g->location == LOCATION_ASHEN || g->location == LOCATION_GLASSDEEP ||
+    if (g->location == LOCATION_DESERT || g->location == LOCATION_ASHEN || g->location == LOCATION_GLASSDEEP ||
         g->location == LOCATION_CATACOMBS) {
         clear_floor_loot(g);
     }
@@ -6017,6 +5747,12 @@ void game_open_town_portal(GameState *g) {
 }
 
 void game_hide_portal_destination(GameState *g) {
+    if (g->portal_location == LOCATION_IRONFANG) {
+        return;
+    }
+    if (g->portal_location == LOCATION_STORMWATCH) {
+        return;
+    }
     if (g->portal_location == LOCATION_MANGROVES) {
         return;
     }
@@ -6054,11 +5790,6 @@ void game_hide_portal_destination(GameState *g) {
             return;
         }
         cache = g->desert_cache;
-    } else if (g->portal_location == LOCATION_MOONVEIL) {
-        if (g->portal_level > MOONVEIL_DEPTH) {
-            return;
-        }
-        cache = g->moonveil_cache;
     } else if (g->portal_location == LOCATION_ASHEN) {
         if (g->portal_level > ASHEN_DEPTH) {
             return;
@@ -6124,6 +5855,14 @@ void game_use_town_portal(GameState *g) {
     }
     if (!g->portal_active || g->portal_level < 1 ||
         g->portal_level > MAX_REGION_DEPTH) return;
+    if (g->portal_location == LOCATION_IRONFANG && g->portal_level <= IRON_DEPTH) {
+        ironfang_enter(g, 1);
+        return;
+    }
+    if (g->portal_location == LOCATION_STORMWATCH && g->portal_level <= STORM_DEPTH) {
+        stormwatch_enter(g, 1);
+        return;
+    }
     if (g->portal_location == LOCATION_ELDERWOOD) {
         elderwood_portal(g);
         return;
@@ -6161,11 +5900,6 @@ void game_use_town_portal(GameState *g) {
             return;
         }
         cache = g->desert_cache;
-    } else if (g->portal_location == LOCATION_MOONVEIL) {
-        if (g->portal_level > MOONVEIL_DEPTH) {
-            return;
-        }
-        cache = g->moonveil_cache;
     } else if (g->portal_location == LOCATION_ASHEN) {
         if (g->portal_level > ASHEN_DEPTH) {
             return;
@@ -6190,7 +5924,7 @@ void game_use_town_portal(GameState *g) {
     if (!cache[level - 1].valid) return;
 
     if (g->portal_location == LOCATION_FROSTFELL || g->portal_location == LOCATION_DESERT ||
-        g->portal_location == LOCATION_MOONVEIL || g->portal_location == LOCATION_ASHEN ||
+        g->portal_location == LOCATION_ASHEN ||
         g->portal_location == LOCATION_GLASSDEEP || g->portal_location == LOCATION_CATACOMBS) {
         clear_floor_loot(g);
     }
@@ -6235,7 +5969,7 @@ void game_use_town_portal(GameState *g) {
     g->player.x = landing_x;
     g->player.y = landing_y;
     desert_pharaoh_cancel_landing(g, landing_x, landing_y);
-    thorn_regent_cancel_landing(g, landing_x, landing_y);
+
     cinder_lord_cancel_landing(g, landing_x, landing_y);
     regional_terrain_cancel_landing(g, landing_x, landing_y);
     prism_sovereign_cancel_landing(g, landing_x, landing_y);
@@ -6528,8 +6262,6 @@ static const QuestOffer quest_offers[] = {
         "Assigned: The Silent Expedition. Recover the journal on Frostfell stage 2 and rescue the surveyor on stage 4."},
     {"Surveyor Orin", LOCATION_GUILD, offsetof(GameState, glassdeep_quest_state), 0,
         "Assigned: Reclaim the Quarry. Repair machinery on Stonewake stages 2, 3 and 4."},
-    {"Botanist Liora", LOCATION_TOWN3, offsetof(GameState, moonveil_quest_state), 0,
-        "Assigned: The Stolen Moonseed. Restore Moonveil Gardens, then return to Liora in Rosemoor's town center."},
     {"Brother Oswin", LOCATION_TOWN_HALL, offsetof(GameState, catacombs_quest_state), 0,
         "Assigned: Rest for the Forgotten. See your quest journal."},
     {"Tomas", LOCATION_JAIL, offsetof(GameState, jail_quest_state), 1,

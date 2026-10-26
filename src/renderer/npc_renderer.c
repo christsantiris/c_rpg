@@ -279,7 +279,6 @@ static const NpcLook npc_looks[NPC_ART_COUNT] = {
     [NPC_ART_BRENNA] = {NPC_HAIR, NPC_FUR, RGB(53, 77, 110), RGB(53, 77, 110), RGB(125, 66, 40), RGB(208, 164, 126), RGB(228, 182, 78)},
     [NPC_ART_FEN] = {NPC_WINTER, NPC_HUNCHED, RGB(67, 93, 118), RGB(53, 77, 110), RGB(130, 121, 109), RGB(186, 146, 119), RGB(175, 197, 209)},
     [NPC_ART_ORIN] = {NPC_CAP, NPC_COAT, RGB(53, 91, 114), RGB(103, 82, 55), RGB(88, 53, 36), RGB(208, 164, 126), RGB(70, 148, 174)},
-    [NPC_ART_LIORA] = {NPC_HAIR, NPC_COAT, RGB(67, 121, 78), RGB(67, 121, 78), RGB(80, 52, 42), RGB(220, 175, 139), RGB(175, 208, 139)},
     [NPC_ART_OSWIN] = {NPC_HOOD, NPC_ROBE, RGB(89, 85, 103), RGB(89, 85, 103), RGB(87, 62, 46), RGB(208, 168, 137), RGB(224, 216, 186)},
     [NPC_ART_INFORMANT] = {NPC_CAP, NPC_COAT, RGB(130, 96, 65), RGB(67, 53, 44), RGB(67, 53, 44), RGB(208, 165, 126), RGB(168, 142, 97)},
     [NPC_ART_TOMAS] = {NPC_HAIR, NPC_HUNCHED, RGB(112, 128, 143), RGB(67, 53, 44), RGB(67, 53, 44), RGB(208, 165, 126), RGB(183, 163, 127)},
@@ -434,7 +433,6 @@ static void npc_accessories(NpcCanvas *c, NpcArt art) {
             npc_prop(c, 16, 14, "ooooooo/oWwwWWo/oWrwWwo/oWrwWro/oWrrWWo/oWwWWwo/ooooooo");
             npc_prop(c, 8, 17, "oGo/GRG/oGo");
             break;
-        case NPC_ART_LIORA:
             npc_prop(c, 17, 12, ".J/nJn/.Jn/..J/ooooo/oLLlo/oLrlo/olllo/ooooo");
             npc_prop(c, 10, 10, ".J/Jnn/.n");
             break;

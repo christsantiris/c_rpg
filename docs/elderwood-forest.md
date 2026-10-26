@@ -14,8 +14,9 @@ is defeated. Reaching Oakhaven from that end requires clearing Elderwood.
 
 ## Five forward stages
 
-Five stages of ancient emerald woodland use looping clearings, mossy trunks,
-amber light and cuttable brambles. Optional bramble passages give alternate
+Five stages of ancient emerald woodland use looping clearings, immense living trunks,
+broad green canopies and warm golden highlights. Mossy roots and cuttable
+brambles line the paths. Optional bramble passages give alternate
 angles; a normal route around them remains available. Interact beside brambles
 with the bound action key (A by default) to cut them. Fallen logs block movement
 and projectiles and stop charging creatures. Floor layouts, exploration, cut

@@ -75,8 +75,6 @@
 #define ZARA_INN_Y 18
 #define DAIN_TOWN_X 18
 #define DAIN_TOWN_Y 11
-#define LIORA_TOWN_X 18
-#define LIORA_TOWN_Y 13
 #define ALDER_INN_X 31
 #define ALDER_INN_Y 18
 #define GUILD_ORIN_X 10
@@ -205,14 +203,11 @@
 #define BRENNA_INN_X 23
 #define BRENNA_INN_Y 18
 // Legacy Inn coordinates used by save migrations.
-#define LIORA_INN_X 18
-#define LIORA_INN_Y 18
 #define MARA_TAVERN_X 31
 #define MARA_TAVERN_Y 18
 #define ILYA_TAVERN_X 28
 #define ILYA_TAVERN_Y 18
 #define DESERT_DEPTH 5
-#define MOONVEIL_DEPTH 5
 #define ASHEN_DEPTH 5
 #define GLASSDEEP_DEPTH 5
 #define CATACOMBS_DEPTH 5
@@ -223,7 +218,6 @@
 #define CATACOMBS_H 80
 #define SOUTH_AREA_GATE_X 20
 #define RIDGESHIRE_DRAGON_GATE_X 20
-#define ROSEMOOR_MOONVEIL_GATE_Y 14
 #define SWAMP_MAP_W 72
 #define SWAMP_MAP_H 64
 #define DESERT_MAP_W SWAMP_MAP_W
@@ -240,11 +234,11 @@
 #define TOWN4_SQUARE_Y 12
 #define TOWN4_SQUARE_W (RIDGESHIRE_MOUNTAIN_ROAD_X - TOWN4_SQUARE_X + 1)
 #define TOWN4_SQUARE_H 3
-#define RIDGESHIRE_ASHEN_GATE_Y 12
+#define ROSEMOOR_ASHEN_GATE_Y 14
 #define RIDGESHIRE_DRAGON_PORTAL_X (RIDGESHIRE_DRAGON_GATE_X + 1)
 #define RIDGESHIRE_DRAGON_PORTAL_Y 2
-#define RIDGESHIRE_ASHEN_PORTAL_X (TOWN_W - 3)
-#define RIDGESHIRE_ASHEN_PORTAL_Y (RIDGESHIRE_ASHEN_GATE_Y + 1)
+#define ROSEMOOR_ASHEN_PORTAL_X 2
+#define ROSEMOOR_ASHEN_PORTAL_Y (ROSEMOOR_ASHEN_GATE_Y + 1)
 #define TOWN4_WORKSHOP_X 7
 #define TOWN4_WORKSHOP_Y 8
 #define TOWN4_WORKSHOP_W 5
@@ -437,13 +431,7 @@ typedef enum {
     TILE_FOREST_SHORTCUT,
     TILE_SWAMP_SHORTCUT,
     TILE_MOUNTAIN_SHORTCUT,
-    TILE_MOONVEIL_FLOOR,
-    TILE_MOONVEIL_WALL,
-    TILE_MOONVEIL_ENTRANCE,
-    TILE_MOONVEIL_EXIT,
-    TILE_MOONVEIL_POOL,
-    TILE_MOONVEIL_CIRCLE,
-    TILE_ASHEN_FLOOR,
+    TILE_ASHEN_FLOOR = 160,
     TILE_ASHEN_WALL,
     TILE_ASHEN_ENTRANCE,
     TILE_ASHEN_EXIT,
@@ -489,13 +477,7 @@ typedef enum {
     TILE_NPC_ORIN,
     TILE_GLASSDEEP_RESONATOR,
     TILE_GLASSDEEP_RESONATOR_LIT,
-    TILE_NPC_LIORA,
-    TILE_MOONVEIL_SEED_POD,
-    TILE_MOONVEIL_SPRING,
-    TILE_MOONVEIL_PLANTING_CIRCLE,
-    TILE_MOONVEIL_MOONFLOWER,
-    TILE_MOONVEIL_BLOSSOMS,
-    TILE_NPC_OSWIN,
+    TILE_NPC_OSWIN = 212,
     TILE_MEMORIAL_BRAZIER,
     TILE_MEMORIAL_COLD,
     TILE_BURIAL_LEDGER,
@@ -561,20 +543,7 @@ typedef enum {
     TILE_PHARAOH_SAND_2,
     TILE_PHARAOH_SAND_1,
     TILE_PHARAOH_RELIQUARY,
-    TILE_REGENT_ROOT_2,
-    TILE_REGENT_ROOT_1,
-    TILE_REGENT_WALL_1,
-    TILE_REGENT_WALL_2,
-    TILE_REGENT_WALL_3,
-    TILE_REGENT_WALL_4,
-    TILE_REGENT_NODE,
-    TILE_REGENT_NODE_1,
-    TILE_REGENT_NODE_2,
-    TILE_REGENT_NODE_3,
-    TILE_REGENT_NODE_4,
-    TILE_REGENT_NODE_5,
-    TILE_REGENT_RELIQUARY,
-    TILE_CINDER_HOT_2,
+    TILE_CINDER_HOT_2 = 291,
     TILE_CINDER_HOT_1,
     TILE_CINDER_CHANNEL,
     TILE_CINDER_COOL_1,
@@ -638,9 +607,7 @@ typedef enum {
     TILE_ASHEN_VALVE_DIVERTED,
     TILE_DESERT_OASIS,
     TILE_DESERT_OASIS_DRY,
-    TILE_MOONVEIL_WAYSTONE_A,
-    TILE_MOONVEIL_WAYSTONE_B,
-    TILE_DESERT_MESA,
+    TILE_DESERT_MESA = 357,
     TILE_SWAMP_WATER,
     TILE_SWAMP_REEDS,
     TILE_DRAGON_RAVINE,
@@ -695,7 +662,35 @@ typedef enum {
     TILE_STONEWAKE_CRANE_NEW,
     TILE_STONEWAKE_CRANE_SALVAGE,
     TILE_STONEWAKE_LEDGE,
-    TILE_STONEWAKE_REMOTE
+    TILE_STONEWAKE_REMOTE,
+    TILE_STORM_GRASS,
+    TILE_STORM_STONE,
+    TILE_STORM_WATER,
+    TILE_STORM_WALL,
+    TILE_STORM_SHUTTER_UP,
+    TILE_STORM_SHUTTER_DOWN,
+    TILE_STORM_CRANK,
+    TILE_STORM_SUPPLIES,
+    TILE_STORM_EMPTY,
+    TILE_STORM_ENTRANCE,
+    TILE_STORM_EXIT,
+    TILE_IRON_FLOOR,
+    TILE_IRON_WALL,
+    TILE_IRON_WATER,
+    TILE_IRON_RAIL,
+    TILE_IRON_TRESTLE,
+    TILE_IRON_BROKEN,
+    TILE_IRON_SWITCH,
+    TILE_IRON_LAMP,
+    TILE_IRON_LAMP_LIT,
+    TILE_IRON_CACHE,
+    TILE_IRON_EMPTY,
+    TILE_IRON_CRACK,
+    TILE_IRON_WINCH,
+    TILE_IRON_BUNK,
+    TILE_IRON_FORGE,
+    TILE_IRON_ENTRANCE,
+    TILE_IRON_EXIT
 } TileType;
 
 typedef struct {
@@ -750,8 +745,8 @@ void map_remove_town_labyrinth(Map *m);
 void map_place_town2_center(Map *m);
 void map_place_town3_guards(Map *m, int avoid_x, int avoid_y);
 void map_place_town4_guards(Map *m, int avoid_x, int avoid_y);
+void map_place_town3_ashen_gate(Map *m);
 void map_place_town3_frost_gate(Map *m);
-void map_place_town3_moonveil_gate(Map *m);
 void map_place_town4_region_gates(Map *m);
 void map_place_town2_south_gate(Map *m);
 void map_clear_town_harbor(Map *m);
@@ -782,7 +777,6 @@ void map_generate_high_pass(Map *m);
 void map_generate_dragonspine(Map *m, int level);
 void map_generate_frostfell(Map *m, int level);
 void map_generate_desert(Map *m, int level);
-void map_generate_moonveil(Map *m, int level);
 void map_generate_ashen(Map *m, int level);
 void map_generate_glassdeep(Map *m, int level);
 void map_generate_guild(Map *m, int *sx, int *sy);

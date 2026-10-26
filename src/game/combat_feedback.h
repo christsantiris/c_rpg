@@ -15,7 +15,8 @@ typedef enum {
     FEEDBACK_ENEMY_CRITICAL,
     FEEDBACK_BLOCK,
     FEEDBACK_DODGE,
-    FEEDBACK_MISS
+    FEEDBACK_MISS,
+    FEEDBACK_PLAYER_PUSH // amount is direction: east, south, west, north (0-3).
 } CombatFeedbackKind;
 
 // Results carried by a projectile appear when it lands.

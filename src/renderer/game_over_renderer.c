@@ -19,13 +19,13 @@ static const char *game_over_location(const GameState *g) {
         case LOCATION_HIGH_PASS: return "HIGH PASS";
         case LOCATION_DRAGONSPINE: return "DRAGONSPINE";
         case LOCATION_COAST: return "SUNKEN COAST";
+        case LOCATION_STORMWATCH: return "STORMWATCH HEADLAND";
         case LOCATION_MANGROVES: return "SALTWIND MARSH";
         case LOCATION_MANGROVE_PATH: return "MARSH PATH";
         case LOCATION_SWAMP: return "BLACKWATER SWAMP";
         case LOCATION_FROSTFELL: return "FROSTFELL WASTES";
         case LOCATION_ASHEN: return "ASHEN HOLLOW";
         case LOCATION_GLASSDEEP: return "STONEWAKE QUARRY";
-        case LOCATION_MOONVEIL: return "MOONVEIL GARDENS";
         case LOCATION_DESERT: return "SUNSCAR WASTES";
         case LOCATION_TAVERN: return "TAVERN";
         case LOCATION_BAKERY: return "BAKERY";

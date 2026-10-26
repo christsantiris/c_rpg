@@ -13,7 +13,7 @@ metal fittings, cracks, cloth folds and readable symbols replace flat blocks.
 | Temple | Entry steps, sun/moon altars, closed moon door, vault door, active/spent solar plates, dormant sentinel, rubble |
 | Forest and coast | Real/false forest markers, sluice control, intake and connected conduits, tide control, lit/unlit beacons |
 | Castle | Active/spent wards, muster panels, banquet tables, bookcases, throne, pillars, banners, closed/raised gates, levers, open trap hatches, stairs |
-| Regional quests | Frost journal; Moonveil seed pod, spring, planting circle, moonflower and picked blossoms; Glassdeep dark/lit resonators; Emberforge mechanism and cold/lit furnace; cold/lit watchfires; ossuary and memorial braziers; burial ledger, plate and sarcophagus |
+| Regional quests | Frost journal; Glassdeep dark/lit resonators; Emberforge mechanism and cold/lit furnace; cold/lit watchfires; ossuary and memorial braziers; burial ledger, plate and sarcophagus |
 | Interiors and goods | Tavern tables; jail bars, hatch, tunnel exit and straw bed; bread, meat, candle and spice displays |
 
 Open moon doors still show walkable floor. Closed/raised gates, bright/spent

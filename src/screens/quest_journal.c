@@ -17,7 +17,7 @@ typedef struct {
     const char *objective_areas[4];
 } QuestDefinition;
 
-static const QuestDefinition quest_definitions[18] = {
+static const QuestDefinition quest_definitions[17] = {
     {
         "The Broken Seals", "Elowen",
         "Restore three guarded seals in Oakhaven's dungeon.",
@@ -31,7 +31,7 @@ static const QuestDefinition quest_definitions[18] = {
         "Return and speak to Dain in Ridgeshire's town center.",
         {"Defeat Archer Map Bearer", "Defeat Bomber Map Bearer",
             "Defeat Shaman Map Bearer"},
-        "Mountains", {2, 3, 4}, 60, 400
+        "Goblin Mountains", {2, 3, 4}, 60, 400
     },
     {
         "The Lost Wardens", "Alder",
@@ -39,7 +39,7 @@ static const QuestDefinition quest_definitions[18] = {
         "Return and speak to Alder in Stillbury's Inn.",
         {"Rescue forest warden", "Rescue forest warden",
             "Rescue forest warden"},
-        "Forest", {2, 3, 4}, 70, 500
+        "Haunted Forest", {2, 3, 4}, 70, 500
     },
     {
         "Relight the Drowned Beacons", "Mara",
@@ -47,7 +47,7 @@ static const QuestDefinition quest_definitions[18] = {
         "Return and speak to Mara in Oakhaven's Tavern.",
         {"Light drowned beacon", "Light drowned beacon",
             "Light drowned beacon"},
-        "Coast", {2, 3, 4}, 80, 600
+        "Sunken Coast", {2, 3, 4}, 80, 600
     },
     {
         "The Buried Sun", "Nahla",
@@ -61,7 +61,7 @@ static const QuestDefinition quest_definitions[18] = {
         "Find the labyrinth by the forest road; light five runes and defeat the Minotaur.",
         "Return the ivory rook to Rook in Oakhaven's Tavern.",
         {"Recover the ivory rook", "", ""},
-        "Stillbury Labyrinth", {5, 0, 0}, ROOK_QUEST_REWARD, 500
+        "Rook's Labyrinth", {5, 0, 0}, ROOK_QUEST_REWARD, 500
     },
     {
         "Bring Mira Home", "Bram",
@@ -108,13 +108,6 @@ static const QuestDefinition quest_definitions[18] = {
         "Stonewake Quarry", {2, 3, 4}, GLASSDEEP_REWARD_GOLD, GLASSDEEP_REWARD_SCORE, "Magic Stone Warhammer"
     },
     {
-        "The Stolen Moonseed", "Botanist Liora",
-        "Recover the Moonseed and moonwater; restore the ancient circle.",
-        "Return and speak to Liora in Rosemoor's town center.",
-        {"Recover the Moonseed", "Gather moonwater", "Restore the planting circle"},
-        "Moonveil Gardens", {2, 3, 4}, MOONVEIL_REWARD_GOLD, MOONVEIL_REWARD_SCORE
-    },
-    {
         "Rest for the Forgotten", "Brother Oswin",
         "Silence three memorials and recover the royal ledger.",
         "Return and speak to Brother Oswin in Ridgeshire's Town Hall.",
@@ -132,8 +125,8 @@ static const QuestDefinition quest_definitions[18] = {
         "Watchfires of Ridgeshire", "Marshal Veyra",
         "Clear the defenders and restore three watchfires.",
         "Return and speak to Marshal Veyra in Ridgeshire's Town Hall.",
-        {"Restore southern watchfire", "Restore northern watchfire", "Restore eastern watchfire"},
-        "Ridgeshire approaches", {WATCHFIRE_MOUNTAINS_LEVEL, WATCHFIRE_ASHEN_LEVEL, WATCHFIRE_DRAGONSPINE_LEVEL},
+        {"Restore southern watchfire", "Restore Ashen watchfire", "Restore Dragonspine watchfire"},
+        "Regional watchfires", {WATCHFIRE_MOUNTAINS_LEVEL, WATCHFIRE_ASHEN_LEVEL, WATCHFIRE_DRAGONSPINE_LEVEL},
         WATCHFIRE_REWARD_GOLD, WATCHFIRE_REWARD_SCORE, NULL,
         {"Goblin Mountains", "Ashen Hollow", "Dragonspine"}
     },
@@ -156,13 +149,13 @@ static const QuestDefinition quest_definitions[18] = {
 };
 
 static int quest_state(const GameState *g, int quest) {
-    if (quest == 17) {
+    if (quest == 16) {
         return g->jail_gear_state;
     }
-    if (quest == 16) {
+    if (quest == 15) {
         return g->hunt_quest_state;
     }
-    if (quest == 15) {
+    if (quest == 14) {
         return g->watchfire_quest_state;
     }
     if (quest == 0) {
@@ -201,23 +194,21 @@ static int quest_state(const GameState *g, int quest) {
     if (quest == 11) {
         return g->glassdeep_quest_state;
     }
+
     if (quest == 12) {
-        return g->moonveil_quest_state;
-    }
-    if (quest == 13) {
         return g->catacombs_quest_state;
     }
     return g->jail_quest_state == 3 ? 3 : g->jail_quest_state == 2 ? 1 : 0;
 }
 
 static int quest_progress(const GameState *g, int quest) {
-    if (quest == 17) {
+    if (quest == 16) {
         return g->jail_gear_state == 3;
     }
-    if (quest == 16) {
+    if (quest == 15) {
         return g->hunt_quest_progress;
     }
-    if (quest == 15) {
+    if (quest == 14) {
         return g->watchfire_quest_progress;
     }
     if (quest == 0) {
@@ -256,10 +247,8 @@ static int quest_progress(const GameState *g, int quest) {
     if (quest == 11) {
         return g->glassdeep_quest_progress;
     }
+
     if (quest == 12) {
-        return g->moonveil_quest_progress;
-    }
-    if (quest == 13) {
         return g->catacombs_quest_progress;
     }
     return g->jail_quest_state == 3 ? 3 : g->location == LOCATION_ESCAPE_TUNNEL ? 1 : 0;
@@ -282,7 +271,7 @@ int quest_journal_count(const GameState *g, QuestJournalTab tab) {
         return JOURNAL_BOSS_COUNT;
     }
     int count = 0;
-    for (int quest = 0; quest < 18; quest++) {
+    for (int quest = 0; quest < 17; quest++) {
         if (quest_in_tab(quest_state(g, quest), tab)) {
             count++;
         }
@@ -293,24 +282,24 @@ int quest_journal_count(const GameState *g, QuestJournalTab tab) {
 int quest_journal_get_boss(const GameState *g, int index, BossJournalEntry *entry) {
     static const char *names[JOURNAL_BOSS_COUNT] = {
         "Lich King", "Necromancer", "Goblin King", "Drowned Queen",
-        "Fallen Sun Guardian", "Swamp Demon", "Red Dragon", "Polar Kraken", "Desert Pharaoh", "Thorn Regent", "Cinder Lord", "Quarry Colossus", "Minotaur", "Grave Marshal", "Castellan", "Royal Arcanist", "Lord Veyr", "Elderthorn", "Sszareth, Keeper of the Roots"
+        "Fallen Sun Guardian", "Swamp Demon", "Red Dragon", "Polar Kraken", "Desert Pharaoh", "Cinder Lord", "Quarry Colossus", "Minotaur", "Grave Marshal", "Castellan", "Royal Arcanist", "Lord Veyr", "Elderthorn", "Sszareth, Keeper of the Roots", "Tempest Matriarch", "Goblin Mine Boss"
     };
     static const char *areas[JOURNAL_BOSS_COUNT] = {
-        "Dungeon", "Forest", "Goblin Mountains", "Sunken Coast",
-        "Ruined Temple", "Blackwater Swamp", "Dragonspine", "Frostfell Wastes", "Sunscar Wastes", "Moonveil Gardens", "Ashen Hollow", "Stonewake Quarry", "Labyrinth", "Royal Catacombs", "Castle: Iron Keep", "Castle: Crown Chapel", "Castle: Throne", "Elderwood Forest", "Saltwind Marsh"
+        "Dungeon", "Haunted Forest", "Goblin Mountains", "Sunken Coast",
+        "Ruined Temple", "Blackwater Swamp", "Dragonspine", "Frostfell Wastes", "Sunscar Wastes", "Ashen Hollow", "Stonewake Quarry", "Rook's Labyrinth", "Royal Catacombs", "Castle: Iron Keep", "Castle: Crown Chapel", "Castle: Throne", "Elderwood Forest", "Saltwind Marsh", "Stormwatch Headland", "Ironfang Mines"
     };
     static const Location regions[JOURNAL_BOSS_COUNT] = {
         LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST,
         LOCATION_TEMPLE, LOCATION_SWAMP, LOCATION_DRAGONSPINE, LOCATION_FROSTFELL,
-        LOCATION_DESERT, LOCATION_MOONVEIL, LOCATION_ASHEN, LOCATION_GLASSDEEP, LOCATION_LABYRINTH, LOCATION_CATACOMBS, LOCATION_CASTLE_INTERIOR, LOCATION_CASTLE_INTERIOR, LOCATION_CASTLE_INTERIOR, LOCATION_ELDERWOOD, LOCATION_MANGROVES
+        LOCATION_DESERT, LOCATION_ASHEN, LOCATION_GLASSDEEP, LOCATION_LABYRINTH, LOCATION_CATACOMBS, LOCATION_CASTLE_INTERIOR, LOCATION_CASTLE_INTERIOR, LOCATION_CASTLE_INTERIOR, LOCATION_ELDERWOOD, LOCATION_MANGROVES, LOCATION_STORMWATCH, LOCATION_IRONFANG
     };
     if (index < 0 || index >= JOURNAL_BOSS_COUNT) {
         return 0;
     }
     entry->name = names[index];
     entry->area = areas[index];
-    entry->trophy = index == 16 && g->crown_of_unbound ? "Crown of the Unbound" : NULL;
-    entry->defeated = index == 18 ? g->mangrove_defeated : index == 17 ? g->elderwood_defeated : index == 14 ? !!(g->castle_minibosses & 1) : index == 15 ? !!(g->castle_minibosses & 2) :
+    entry->trophy = index == 15 && g->crown_of_unbound ? "Crown of the Unbound" : NULL;
+    entry->defeated = index == 19 ? g->ironfang_defeated : index == 18 ? g->stormwatch_defeated : index == 17 ? g->mangrove_defeated : index == 16 ? g->elderwood_defeated : index == 13 ? !!(g->castle_minibosses & 1) : index == 14 ? !!(g->castle_minibosses & 2) :
         (g->defeated_bosses & (1 << regions[index])) != 0;
     return 1;
 }
@@ -320,7 +309,7 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
         return 0;
     }
     int visible_index = 0;
-    for (int quest = 0; quest < 18; quest++) {
+    for (int quest = 0; quest < 17; quest++) {
         int state = quest_state(g, quest);
         if (!quest_in_tab(state, tab)) {
             continue;

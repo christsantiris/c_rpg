@@ -1,3 +1,4 @@
+#include "../game/ironfang.h"
 #include "../game/stonewake.h"
 #include "save_load.h"
 #include "../game/game.h"
@@ -13,7 +14,6 @@
 #include "../game/minotaur.h"
 #include "../game/grave_marshal.h"
 #include "../game/desert_pharaoh.h"
-#include "../game/thorn_regent.h"
 #include "../game/cinder_lord.h"
 #include "../game/prism_sovereign.h"
 #include "../game/sun_guardian.h"
@@ -26,6 +26,7 @@
 #include "../game/approach.h"
 #include "../game/elderwood.h"
 #include "../game/mangrove.h"
+#include "../game/stormwatch.h"
 #include "../game/coastal_travel.h"
 #include "cJSON.h"
 #include <stdio.h>
@@ -40,9 +41,7 @@ static TileType retired_seal_floor(Location location) {
     if (location == LOCATION_GLASSDEEP) {
         return TILE_GLASSDEEP_FLOOR;
     }
-    if (location == LOCATION_MOONVEIL) {
-        return TILE_MOONVEIL_FLOOR;
-    }
+
     if (location == LOCATION_ASHEN) {
         return TILE_ASHEN_FLOOR;
     }
@@ -72,10 +71,10 @@ static void migrate_removed_royal_seals(GameState *g) {
             g->floor_items[i].underlying_tile = floor;
         }
     }
-    LevelCache *caches[] = {g->level_cache, g->glassdeep_cache, g->moonveil_cache, g->ashen_cache};
-    const int depths[] = {MAX_REGION_DEPTH, GLASSDEEP_DEPTH, MOONVEIL_DEPTH, ASHEN_DEPTH};
-    const Location regions[] = {LOCATION_DUNGEON, LOCATION_GLASSDEEP, LOCATION_MOONVEIL, LOCATION_ASHEN};
-    for (int i = 0; i < 4; i++) {
+    LevelCache *caches[] = {g->level_cache, g->glassdeep_cache, g->ashen_cache};
+    const int depths[] = {MAX_REGION_DEPTH, GLASSDEEP_DEPTH, ASHEN_DEPTH};
+    const Location regions[] = {LOCATION_DUNGEON, LOCATION_GLASSDEEP, LOCATION_ASHEN};
+    for (int i = 0; i < 3; i++) {
         for (int j = 0; j < depths[i]; j++) {
             LevelCache *cache = &caches[i][j];
             if (cache->valid) {
@@ -101,8 +100,8 @@ static void migrate_ridgeshire_portal(GameState *g) {
     int dragon = g->portal_location == LOCATION_DRAGONSPINE;
     int old_x = dragon ? TOWN_W - 3 : 21;
     int old_y = dragon ? 13 : 2;
-    int x = dragon ? RIDGESHIRE_DRAGON_PORTAL_X : RIDGESHIRE_ASHEN_PORTAL_X;
-    int y = dragon ? RIDGESHIRE_DRAGON_PORTAL_Y : RIDGESHIRE_ASHEN_PORTAL_Y;
+    int x = dragon ? RIDGESHIRE_DRAGON_PORTAL_X : (TOWN_W - 3);
+    int y = dragon ? RIDGESHIRE_DRAGON_PORTAL_Y : 13;
     if (g->map.tiles[old_y][old_x] == TILE_PORTAL) {
         g->map.tiles[old_y][old_x] = TILE_TOWN_FLOOR;
     }
@@ -707,9 +706,6 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count, in
         e->active     = cJSON_GetObjectItem(obj, "active")->valueint;
         e->type       = cJSON_GetObjectItem(obj, "type")->valueint;
         const char *name = cJSON_GetObjectItem(obj, "name")->valuestring;
-        if (e->type == ENEMY_LIVING_FLOWER && strcmp(name, "Moonwater Guardian") != 0) {
-            name = "Carnivorous Flower";
-        }
         // Migrate active and cached Wardens without changing combat or quest state.
         if (e->type == ENEMY_MINOTAUR) {
             name = "Minotaur";
@@ -1155,16 +1151,263 @@ static cJSON *serialize_mangrove(const MangroveState *state) {
     return delta;
 }
 
-int save_game(const GameState *g, int slot) {
-    if (!mangrove_state_valid(g)) {
+static cJSON *serialize_ironfang(const GameState *g) {
+    cJSON *array = cJSON_CreateArray();
+    for (int n = 0; n < IRON_DEPTH; n++) {
+        IronfangStage state = g->ironfang[n];
+        if (g->location == LOCATION_IRONFANG && g->level == n + 1) {
+            ironfang_capture(g, &state);
+        }
+        cJSON *entry = cJSON_CreateObject();
+        cJSON_AddNumberToObject(entry, "valid", state.valid);
+        cJSON_AddNumberToObject(entry, "cart_x", state.cart_x);
+        cJSON_AddNumberToObject(entry, "cart_y", state.cart_y);
+        cJSON_AddNumberToObject(entry, "aboard", state.aboard);
+        cJSON_AddNumberToObject(entry, "route", state.route);
+        cJSON_AddNumberToObject(entry, "ore_loads", state.ore_loads);
+        cJSON_AddNumberToObject(entry, "ore_fuse", state.ore_fuse);
+        if (state.valid) {
+            Map map;
+            ironfang_unpack(&state, &map);
+            cJSON_AddItemToObject(entry, "map", serialize_map(&map));
+            cJSON_AddItemToObject(entry, "enemies", serialize_enemies(state.enemies, state.enemy_count));
+            cJSON_AddItemToObject(entry, "loot", serialize_castle_loot(state.loot, state.loot_count));
+        }
+        cJSON_AddItemToArray(array, entry);
+    }
+    return array;
+}
+
+static cJSON *serialize_stormwatch(const GameState *g) {
+    cJSON *array = cJSON_CreateArray();
+    for (int n = 0; n < STORM_DEPTH; n++) {
+        StormwatchStage state = g->stormwatch[n];
+        if (g->location == LOCATION_STORMWATCH && g->level == n + 1) {
+            stormwatch_capture(g, &state);
+        }
+        cJSON *entry = cJSON_CreateObject();
+        cJSON_AddNumberToObject(entry, "valid", state.valid);
+        cJSON_AddNumberToObject(entry, "braced", state.braced);
+        cJSON_AddNumberToObject(entry, "wind_elapsed_ms", state.wind_elapsed_ms);
+        for (int lane = 0; lane < 2; lane++) {
+            char key[32];
+            snprintf(key, sizeof(key), "phase%d", lane);
+            cJSON_AddNumberToObject(entry, key, state.phase[lane]);
+            snprintf(key, sizeof(key), "direction%d", lane);
+            cJSON_AddNumberToObject(entry, key, state.direction[lane]);
+            snprintf(key, sizeof(key), "next_direction%d", lane);
+            cJSON_AddNumberToObject(entry, key, state.next_direction[lane]);
+            snprintf(key, sizeof(key), "warned%d", lane);
+            char *encoded = bytes_to_base64(state.warned[lane], STORM_MASK_BYTES);
+            cJSON_AddStringToObject(entry, key, encoded);
+            free(encoded);
+        }
+        if (state.valid) {
+            Map map;
+            stormwatch_unpack(&state, &map);
+            cJSON_AddItemToObject(entry, "map", serialize_map(&map));
+            cJSON_AddItemToObject(entry, "enemies", serialize_enemies(state.enemies, state.enemy_count));
+            cJSON_AddItemToObject(entry, "loot", serialize_castle_loot(state.loot, state.loot_count));
+        }
+        cJSON_AddItemToArray(array, entry);
+    }
+    return array;
+}
+
+static int stormwatch_number(const cJSON *object, const char *key, int *value) {
+    const cJSON *field = cJSON_GetObjectItem(object, key);
+    if (!cJSON_IsNumber(field) || field->valuedouble != field->valueint) {
         return 0;
     }
-    if (g->retired_coast_item_count < 0 || g->retired_coast_item_count > 5 * MAX_FLOOR_ITEMS) {
+    *value = field->valueint;
+    return 1;
+}
+
+static int load_ironfang(const cJSON *root, GameState *g, int version) {
+    memset(g->ironfang, 0, sizeof(g->ironfang));
+    g->ironfang_defeated = 0;
+    if (version < 200) {
+        return 1;
+    }
+    const cJSON *array = cJSON_GetObjectItem(root, "ironfang");
+    if (!cJSON_IsArray(array) || cJSON_GetArraySize(array) != IRON_DEPTH ||
+        !stormwatch_number(root, "ironfang_defeated", &g->ironfang_defeated)) {
+        return 0;
+    }
+    for (int n = 0; n < IRON_DEPTH; n++) {
+        IronfangStage *state = &g->ironfang[n];
+        const cJSON *entry = cJSON_GetArrayItem(array, n);
+        if (!stormwatch_number(entry, "valid", &state->valid) ||
+            !stormwatch_number(entry, "cart_x", &state->cart_x) || !stormwatch_number(entry, "cart_y", &state->cart_y) ||
+            !stormwatch_number(entry, "aboard", &state->aboard) || !stormwatch_number(entry, "route", &state->route) ||
+            !stormwatch_number(entry, "ore_loads", &state->ore_loads) || !stormwatch_number(entry, "ore_fuse", &state->ore_fuse)) {
+            return 0;
+        }
+        if (!state->valid) {
+            continue;
+        }
+        const cJSON *map = cJSON_GetObjectItem(entry, "map");
+        const cJSON *enemies = cJSON_GetObjectItem(entry, "enemies");
+        const char *fields[] = {"room_count", "stairs_up_x", "stairs_up_y", "stairs_down_x", "stairs_down_y"};
+        for (int f = 0; f < 5; f++) {
+            if (!cJSON_IsNumber(cJSON_GetObjectItem(map, fields[f]))) {
+                return 0;
+            }
+        }
+        if (!cJSON_IsString(cJSON_GetObjectItem(map, "tiles_b64")) || !cJSON_IsString(cJSON_GetObjectItem(map, "explored_b64")) ||
+            !cJSON_IsArray(enemies) || cJSON_GetArraySize(enemies) > AREA_ENEMY_LIMIT ||
+            !deserialize_castle_loot(cJSON_GetObjectItem(entry, "loot"), state->loot, &state->loot_count)) {
+            return 0;
+        }
+        for (int e = 0; e < cJSON_GetArraySize(enemies); e++) {
+            const cJSON *enemy = cJSON_GetArrayItem(enemies, e);
+            const char *required[] = {"x", "y", "active", "type", "hp", "max_hp", "attack", "defense", "experience", "move_timer", "frozen_turns", "attack_target_x", "attack_target_y"};
+            if (!cJSON_IsString(cJSON_GetObjectItem(enemy, "name"))) {
+                return 0;
+            }
+            for (int f = 0; f < (int)(sizeof(required) / sizeof(required[0])); f++) {
+                if (!cJSON_IsNumber(cJSON_GetObjectItem(enemy, required[f]))) {
+                    return 0;
+                }
+            }
+        }
+        Map scratch = {0};
+        deserialize_map(map, &scratch);
+        ironfang_pack(state, &scratch);
+        deserialize_enemies(enemies, state->enemies, &state->enemy_count, AREA_ENEMY_LIMIT);
+    }
+    return 1;
+}
+
+static int load_stormwatch(const cJSON *root, GameState *g, int version) {
+    memset(g->stormwatch, 0, sizeof(g->stormwatch));
+    g->stormwatch_defeated = 0;
+    if (version < 198) {
+        return 1;
+    }
+    const cJSON *array = cJSON_GetObjectItem(root, "stormwatch");
+    if (!cJSON_IsArray(array) || cJSON_GetArraySize(array) != STORM_DEPTH ||
+        !stormwatch_number(root, "stormwatch_defeated", &g->stormwatch_defeated)) {
+        return 0;
+    }
+    for (int n = 0; n < STORM_DEPTH; n++) {
+        StormwatchStage *state = &g->stormwatch[n];
+        const cJSON *entry = cJSON_GetArrayItem(array, n);
+        if (!stormwatch_number(entry, "valid", &state->valid) || !stormwatch_number(entry, "braced", &state->braced)) {
+            return 0;
+        }
+        // Earlier Stormwatch saves start with a full second until the next step.
+        if (version >= 199 && !stormwatch_number(entry, "wind_elapsed_ms", &state->wind_elapsed_ms)) {
+            return 0;
+        }
+        for (int lane = 0; lane < 2; lane++) {
+            char key[32];
+            snprintf(key, sizeof(key), "phase%d", lane);
+            if (!stormwatch_number(entry, key, &state->phase[lane])) {
+                return 0;
+            }
+            snprintf(key, sizeof(key), "direction%d", lane);
+            if (!stormwatch_number(entry, key, &state->direction[lane])) {
+                return 0;
+            }
+            snprintf(key, sizeof(key), "next_direction%d", lane);
+            if (!stormwatch_number(entry, key, &state->next_direction[lane])) {
+                return 0;
+            }
+            snprintf(key, sizeof(key), "warned%d", lane);
+            const cJSON *warning = cJSON_GetObjectItem(entry, key);
+            if (!cJSON_IsString(warning) || strlen(warning->valuestring) != 4 * ((STORM_MASK_BYTES + 2) / 3)) {
+                return 0;
+            }
+            base64_to_bytes(warning->valuestring, state->warned[lane], STORM_MASK_BYTES);
+        }
+        if (!state->valid) {
+            continue;
+        }
+        const cJSON *map = cJSON_GetObjectItem(entry, "map");
+        const char *fields[] = {"room_count", "stairs_up_x", "stairs_up_y", "stairs_down_x", "stairs_down_y"};
+        for (int f = 0; f < 5; f++) {
+            if (!cJSON_IsNumber(cJSON_GetObjectItem(map, fields[f]))) {
+                return 0;
+            }
+        }
+        const cJSON *enemies = cJSON_GetObjectItem(entry, "enemies");
+        if (!cJSON_IsString(cJSON_GetObjectItem(map, "tiles_b64")) || !cJSON_IsString(cJSON_GetObjectItem(map, "explored_b64")) ||
+            !cJSON_IsArray(enemies) || cJSON_GetArraySize(enemies) > AREA_ENEMY_LIMIT ||
+            !deserialize_castle_loot(cJSON_GetObjectItem(entry, "loot"), state->loot, &state->loot_count)) {
+            return 0;
+        }
+        for (int i = 0; i < cJSON_GetArraySize(enemies); i++) {
+            const cJSON *enemy = cJSON_GetArrayItem(enemies, i);
+            const char *required[] = {"x", "y", "active", "type", "hp", "max_hp", "attack", "defense", "experience", "move_timer", "frozen_turns", "attack_target_x", "attack_target_y"};
+            if (!cJSON_IsString(cJSON_GetObjectItem(enemy, "name"))) {
+                return 0;
+            }
+            for (int f = 0; f < (int)(sizeof(required) / sizeof(required[0])); f++) {
+                if (!cJSON_IsNumber(cJSON_GetObjectItem(enemy, required[f]))) {
+                    return 0;
+                }
+            }
+        }
+        Map scratch = {0};
+        deserialize_map(map, &scratch);
+        stormwatch_pack(state, &scratch);
+        deserialize_enemies(enemies, state->enemies, &state->enemy_count, AREA_ENEMY_LIMIT);
+    }
+    return 1;
+}
+
+// Existing expeditions remain intact. Only the previously closed east road is
+// opened, preserving exploration, portals and item underlays on its paving.
+static void migrate_stormwatch_road(GameState *g) {
+    int from = 0;
+    int to = -1;
+    int y = 0;
+    if (g->location == LOCATION_DAWNMERE) {
+        for (int row = 10; row <= 14; row++) {
+            g->map.tiles[row][TOWN_W - 1] = TILE_TOWN_EXIT;
+        }
+        from = 21;
+        to = TOWN_W - 2;
+        y = 12;
+    } else if (g->location == LOCATION_TOWN_ROAD && g->road_town == LOCATION_DAWNMERE) {
+        from = TOWN_SPRITE_X + TOWN_SPRITE_W;
+        to = TOWN_ROAD_W - 2;
+        y = TOWN_ROAD_H / 2;
+        g->map.tiles[y][from - 1] = TILE_TOWN_ROAD_ENTRY_EAST;
+        g->map.tiles[y][TOWN_ROAD_W - 1] = TILE_TOWN_ROAD_EXIT_EAST;
+    }
+    for (int x = from; x <= to; x++) {
+        if (g->map.tiles[y][x] != TILE_PORTAL) {
+            g->map.tiles[y][x] = TILE_TOWN_PATH;
+        }
+        for (int n = 0; n < g->floor_item_count; n++) {
+            FloorItem *item = &g->floor_items[n];
+            if (item->active && item->x == x && item->y == y) {
+                item->underlying_tile = TILE_TOWN_PATH;
+                g->map.tiles[y][x] = TILE_ITEM;
+            }
+        }
+        if (g->portal_active && g->portal_location == g->location && g->portal_x == x && g->portal_y == y) {
+            g->portal_origin_tile = TILE_TOWN_PATH;
+        }
+    }
+}
+
+int save_game(const GameState *g, int slot) {
+    if (!mangrove_state_valid(g) || !stormwatch_valid(g) || !ironfang_valid(g)) {
+        return 0;
+    }
+    if (g->retired_coast_item_count < 0 || g->retired_coast_item_count > RETIRED_LOOT_STAGES * MAX_FLOOR_ITEMS) {
         return 0;
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 196);
+    cJSON_AddNumberToObject(root, "save_version", 200);
+    cJSON_AddItemToObject(root, "ironfang", serialize_ironfang(g));
+    cJSON_AddNumberToObject(root, "ironfang_defeated", g->ironfang_defeated);
+    cJSON_AddItemToObject(root, "stormwatch", serialize_stormwatch(g));
+    cJSON_AddNumberToObject(root, "stormwatch_defeated", g->stormwatch_defeated);
     MangroveState mangrove = g->mangroves;
     mangrove_capture(g, &mangrove);
     cJSON_AddItemToObject(root, "mangroves", serialize_mangrove(&mangrove));
@@ -1176,7 +1419,7 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddItemToObject(root, "mangrove_stages", stages);
     cJSON_AddNumberToObject(root, "mangrove_defeated", g->mangrove_defeated);
     cJSON *retired = cJSON_CreateArray();
-    for (int stage = 0; stage < 5; stage++) {
+    for (int stage = 0; stage < RETIRED_LOOT_STAGES; stage++) {
         FloorItem items[MAX_FLOOR_ITEMS] = {0};
         int count = 0;
         for (int i = stage * MAX_FLOOR_ITEMS; i < g->retired_coast_item_count && i < (stage + 1) * MAX_FLOOR_ITEMS; i++) {
@@ -1234,7 +1477,6 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "kraken_bow_unclaimed", g->kraken_bow_unclaimed);
     cJSON_AddNumberToObject(root, "sandstorm_staff_unclaimed", g->sandstorm_staff_unclaimed);
     cJSON_AddNumberToObject(root, "desert_pharaoh_reward_state", g->desert_pharaoh_reward_state);
-    cJSON_AddNumberToObject(root, "thorn_regent_reward_pending", g->thorn_regent_reward_pending);
     cJSON_AddNumberToObject(root, "cinder_lord_reward_pending", g->cinder_lord_reward_pending);
     cJSON_AddNumberToObject(root, "prism_sovereign_reward_pending", g->prism_sovereign_reward_pending);
     cJSON_AddNumberToObject(root, "stonewake_warhammer_state", g->stonewake_warhammer_state);
@@ -1280,7 +1522,6 @@ int save_game(const GameState *g, int slot) {
         g->max_frostfell_level_reached);
     cJSON_AddNumberToObject(root, "max_desert_level_reached",
         g->max_desert_level_reached);
-    cJSON_AddNumberToObject(root, "max_moonveil_level_reached", g->max_moonveil_level_reached);
     cJSON_AddNumberToObject(root, "max_ashen_level_reached", g->max_ashen_level_reached);
     cJSON_AddNumberToObject(root, "max_glassdeep_level_reached", g->max_glassdeep_level_reached);
     cJSON_AddNumberToObject(root, "max_catacombs_level_reached", g->max_catacombs_level_reached);
@@ -1373,9 +1614,6 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "glassdeep_quest_state", g->glassdeep_quest_state);
     cJSON_AddNumberToObject(root, "glassdeep_quest_progress", g->glassdeep_quest_progress);
     cJSON_AddNumberToObject(root, "glassdeep_quest_encounters", g->glassdeep_quest_encounters);
-    cJSON_AddNumberToObject(root, "moonveil_quest_state", g->moonveil_quest_state);
-    cJSON_AddNumberToObject(root, "moonveil_quest_progress", g->moonveil_quest_progress);
-    cJSON_AddNumberToObject(root, "moonveil_quest_encounters", g->moonveil_quest_encounters);
     cJSON_AddNumberToObject(root, "catacombs_quest_state", g->catacombs_quest_state);
     cJSON_AddNumberToObject(root, "catacombs_quest_progress", g->catacombs_quest_progress);
     cJSON_AddNumberToObject(root, "catacombs_quest_encounters", g->catacombs_quest_encounters);
@@ -1669,22 +1907,6 @@ int save_game(const GameState *g, int slot) {
     }
     cJSON_AddItemToObject(root, "desert_cache", desert_cache);
 
-    cJSON *moonveil_cache = cJSON_CreateArray();
-    for (int i = 0; i < MOONVEIL_DEPTH; i++) {
-        const LevelCache *cache = &g->moonveil_cache[i];
-        cJSON *entry = cJSON_CreateObject();
-        cJSON_AddNumberToObject(entry, "valid", cache->valid);
-        cJSON_AddNumberToObject(entry, "level_cleared", cache->level_cleared);
-        if (cache->valid) {
-            cJSON_AddItemToObject(entry, "map", serialize_map(&cache->map));
-            cJSON_AddItemToObject(entry, "enemies",
-                serialize_enemies(cache->enemies, cache->enemy_count));
-            cJSON_AddNumberToObject(entry, "enemy_count", cache->enemy_count);
-        }
-        cJSON_AddItemToArray(moonveil_cache, entry);
-    }
-    cJSON_AddItemToObject(root, "moonveil_cache", moonveil_cache);
-
     cJSON *ashen_cache = cJSON_CreateArray();
     for (int i = 0; i < ASHEN_DEPTH; i++) {
         const LevelCache *cache = &g->ashen_cache[i];
@@ -1933,12 +2155,13 @@ static int load_retired_coast_loot(const cJSON *root, GameState *g, int version)
     if (!legacy && version < 189) {
         return 1;
     }
-    if (!cJSON_IsArray(stages) || cJSON_GetArraySize(stages) != 5) {
+    int size = cJSON_GetArraySize(stages);
+    if (!cJSON_IsArray(stages) || (legacy ? size != 5 : size != 5 && size != RETIRED_LOOT_STAGES)) {
         return 0;
     }
     int location = cJSON_GetObjectItem(root, "location")->valueint;
     int level = cJSON_GetObjectItem(root, "level")->valueint;
-    for (int stage = 0; stage < 5; stage++) {
+    for (int stage = 0; stage < size; stage++) {
         if (legacy && location == RETIRED_PIRATE_LOCATION && level == stage + 1) {
             continue; // The active floor is authoritative; do not duplicate its cached loot.
         }
@@ -2066,6 +2289,144 @@ static void migrate_removed_pirate_coast(GameState *g, int returning) {
     map_mark_explored(&g->map, g->player.x, g->player.y);
 }
 
+// Only migration code knows retired garden location/route/NPC IDs: 24, 10, 206.
+static void migrate_western_geography(GameState *g, int removed_garden, int rewards) {
+    Map town_map = {0};
+    int town = town_road_index(g->location) >= 0;
+    int x;
+    int y;
+    if (town) {
+        switch (g->location) {
+            case LOCATION_TOWN: map_generate_town(&town_map, &x, &y); break;
+            case LOCATION_TOWN2: map_generate_town2(&town_map, &x, &y); break;
+            case LOCATION_TOWN3: map_generate_town3(&town_map, &x, &y); break;
+            case LOCATION_TOWN4: map_generate_town4(&town_map, &x, &y); break;
+            case LOCATION_DAWNMERE: map_generate_dawnmere(&town_map, &x, &y); break;
+            default: break;
+        }
+    }
+    // Preserve already earned, unclaimed rewards through the existing recovery queue.
+    if (rewards & 1) {
+        g->retired_coast_items[g->retired_coast_item_count++] = item_make_briarweave_cloak();
+    }
+    if (rewards & 2) {
+        g->retired_coast_items[g->retired_coast_item_count++] = item_make_strength_potion();
+    }
+    int removed_portal = (int)g->portal_location == 24;
+    g->defeated_bosses &= ~(1 << 24);
+    if (removed_portal) {
+        g->portal_active = 0;
+        g->portal_location = LOCATION_DUNGEON;
+        g->portal_level = 0;
+        g->portal_origin_tile = TILE_FLOOR;
+    }
+    if (strcmp(g->dialogue_speaker, "Botanist Liora") == 0) {
+        g->dialogue_active = 0;
+        g->dialogue_speaker[0] = '\0';
+        g->dialogue_text[0] = '\0';
+    }
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            if ((int)g->map.tiles[y][x] == 206 || (removed_portal && g->map.tiles[y][x] == TILE_PORTAL)) {
+                g->map.tiles[y][x] = town ? town_map.tiles[y][x] : TILE_TAVERN_FLOOR;
+            }
+        }
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if ((int)item->underlying_tile == 206 || (removed_portal && item->underlying_tile == TILE_PORTAL)) {
+            item->underlying_tile = town ? town_map.tiles[item->y][item->x] : TILE_TAVERN_FLOOR;
+        }
+    }
+    if (removed_garden) {
+        g->map = town_map;
+        map_set_rosemoor_swamp_road(&g->map, g->defeated_bosses & (1 << LOCATION_SWAMP));
+        g->location = LOCATION_TOWN3;
+        g->last_town_visited = LOCATION_TOWN3;
+        g->approach_route = -1;
+        g->level = 1;
+        g->level_cleared = 0;
+        g->enemy_count = 0;
+        g->player.x = 1;
+        g->player.y = ROSEMOOR_ASHEN_GATE_Y;
+        TileType ground = g->map.tiles[ROSEMOOR_ASHEN_GATE_Y][2];
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->active) {
+                item->x = 2;
+                item->y = ROSEMOOR_ASHEN_GATE_Y;
+                item->underlying_tile = ground;
+                g->map.tiles[item->y][item->x] = TILE_ITEM;
+            }
+        }
+        map_mark_explored(&g->map, g->player.x, g->player.y);
+        push_message(g, "You return to Rosemoor. The western road leads to Ashen Hollow.");
+    }
+    if (g->location == LOCATION_APPROACH && g->approach_route == 13 && g->map.stairs_up_x == 0) {
+        // Mirror the old eastbound approach, preserving distance and exploration.
+        unsigned char explored[MAP_EXPLORED_BYTES];
+        memcpy(explored, g->map.explored, sizeof(explored));
+        for (int y = 0; y < APPROACH_H; y++) {
+            for (int x = 0; x < APPROACH_W; x++) {
+                int source = y * MAP_W + x;
+                int target = y * MAP_W + APPROACH_W - 1 - x;
+                unsigned char bit = 1 << (target % 8);
+                if (explored[source / 8] & (1 << (source % 8))) {
+                    g->map.explored[target / 8] |= bit;
+                } else {
+                    g->map.explored[target / 8] &= ~bit;
+                }
+            }
+        }
+        g->player.x = APPROACH_W - 1 - g->player.x;
+        g->player.last_dx = -g->player.last_dx;
+        for (int i = 0; i < g->floor_item_count; i++) {
+            if (g->floor_items[i].active) {
+                g->floor_items[i].x = APPROACH_W - 1 - g->floor_items[i].x;
+            }
+        }
+        approach_refresh_entrance(g);
+    }
+    if (g->location == LOCATION_TOWN4) {
+        map_place_town4_region_gates(&g->map);
+        if (!map_is_walkable(&g->map, g->player.x, g->player.y)) {
+            g->player.x = TOWN_W - 2;
+        }
+    }
+    if (g->location == LOCATION_TOWN_ROAD && g->road_town == LOCATION_TOWN4) {
+        FloorItem loot[MAX_FLOOR_ITEMS];
+        int count = g->floor_item_count;
+        memcpy(loot, g->floor_items, sizeof(loot));
+        unsigned char explored[MAP_EXPLORED_BYTES];
+        memcpy(explored, g->map.explored, sizeof(explored));
+        int x = g->player.x;
+        int y = g->player.y;
+        int dx = g->player.last_dx;
+        int dy = g->player.last_dy;
+        town_road_enter(g, LOCATION_TOWN4, TOWN_SIDE_NORTH, 0);
+        memcpy(g->map.explored, explored, sizeof(explored));
+        if (map_is_walkable(&g->map, x, y)) {
+            g->player.x = x;
+            g->player.y = y;
+        }
+        g->player.last_dx = dx;
+        g->player.last_dy = dy;
+        g->floor_item_count = count;
+        memcpy(g->floor_items, loot, sizeof(loot));
+        for (int i = 0; i < count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->active) {
+                if (!map_is_walkable(&g->map, item->x, item->y)) {
+                    item->x = g->player.x;
+                    item->y = g->player.y;
+                }
+                item->underlying_tile = g->map.tiles[item->y][item->x];
+                g->map.tiles[item->y][item->x] = TILE_ITEM;
+            }
+        }
+    }
+}
+
 static void migrate_testing_save(cJSON *root, int version) {
     if (version < 123) {
         const char *fields[3] = {"hunt_quest_state", "hunt_quest_progress", "hunt_quest_encounters"};
@@ -2099,14 +2460,7 @@ static void migrate_testing_save(cJSON *root, int version) {
             }
         }
     }
-    if (version < 95) {
-        const char *fields[3] = {"moonveil_quest_state", "moonveil_quest_progress", "moonveil_quest_encounters"};
-        for (int i = 0; i < 3; i++) {
-            if (!cJSON_GetObjectItem(root, fields[i])) {
-                cJSON_AddNumberToObject(root, fields[i], 0);
-            }
-        }
-    }
+
     if (version < 94) {
         const char *fields[3] = {"glassdeep_quest_state", "glassdeep_quest_progress", "glassdeep_quest_encounters"};
         for (int i = 0; i < 3; i++) {
@@ -2179,21 +2533,7 @@ static void migrate_testing_save(cJSON *root, int version) {
             cJSON_AddItemToObject(root, "ashen_cache", cache);
         }
     }
-    if (version < 80) {
-        if (!cJSON_GetObjectItem(root, "max_moonveil_level_reached")) {
-            cJSON_AddNumberToObject(root, "max_moonveil_level_reached", 1);
-        }
-        if (!cJSON_GetObjectItem(root, "moonveil_cache")) {
-            cJSON *cache = cJSON_CreateArray();
-            for (int i = 0; i < MOONVEIL_DEPTH; i++) {
-                cJSON *entry = cJSON_CreateObject();
-                cJSON_AddNumberToObject(entry, "valid", 0);
-                cJSON_AddNumberToObject(entry, "level_cleared", 0);
-                cJSON_AddItemToArray(cache, entry);
-            }
-            cJSON_AddItemToObject(root, "moonveil_cache", cache);
-        }
-    }
+
     if (version < 79) {
         if (!cJSON_GetObjectItem(root, "mountain_entry_town")) {
             cJSON_AddNumberToObject(root, "mountain_entry_town", LOCATION_TOWN);
@@ -2963,7 +3303,6 @@ static void migrate_quest_giver_locations(GameState *g) {
         int x;
         int y;
     } moves[] = {
-        {TILE_NPC_LIORA, "Botanist Liora", LOCATION_INN, LOCATION_TOWN3, LIORA_TOWN_X, LIORA_TOWN_Y},
         {TILE_NPC_DAIN, "Dain", LOCATION_GUILD, LOCATION_TOWN4, DAIN_TOWN_X, DAIN_TOWN_Y},
         {TILE_NPC_GUILD_SEEKER, "Zara", LOCATION_GUILD, LOCATION_INN, ZARA_INN_X, ZARA_INN_Y}
     };
@@ -3190,7 +3529,7 @@ int load_game(GameState *g, int slot) {
 
     cJSON *version_item = cJSON_GetObjectItem(root, "save_version");
     int save_version = version_item ? version_item->valueint : 1;
-    if (!load_mangroves(root, g, save_version)) {
+    if (!load_ironfang(root, g, save_version) || !load_stormwatch(root, g, save_version) || !load_mangroves(root, g, save_version)) {
         cJSON_Delete(root);
         return 0;
     }
@@ -3206,14 +3545,6 @@ int load_game(GameState *g, int slot) {
     cJSON *desert_cache = cJSON_GetObjectItem(root, "desert_cache");
     if (!cJSON_IsNumber(max_desert) || !cJSON_IsArray(desert_cache) ||
         cJSON_GetArraySize(desert_cache) != DESERT_DEPTH) {
-        cJSON_Delete(root);
-        return 0;
-    }
-
-    cJSON *max_moonveil = cJSON_GetObjectItem(root, "max_moonveil_level_reached");
-    cJSON *moonveil_cache = cJSON_GetObjectItem(root, "moonveil_cache");
-    if (!cJSON_IsNumber(max_moonveil) || !cJSON_IsArray(moonveil_cache) ||
-        cJSON_GetArraySize(moonveil_cache) != MOONVEIL_DEPTH) {
         cJSON_Delete(root);
         return 0;
     }
@@ -3321,22 +3652,6 @@ int load_game(GameState *g, int slot) {
     g->glassdeep_quest_state = glassdeep_quest->valueint;
     g->glassdeep_quest_progress = glassdeep_progress->valueint;
     g->glassdeep_quest_encounters = glassdeep_encounters->valueint;
-    cJSON *moonveil_quest = cJSON_GetObjectItem(root, "moonveil_quest_state");
-    cJSON *moonveil_progress = cJSON_GetObjectItem(root, "moonveil_quest_progress");
-    cJSON *moonveil_encounters = cJSON_GetObjectItem(root, "moonveil_quest_encounters");
-    if (!cJSON_IsNumber(moonveil_quest) || !cJSON_IsNumber(moonveil_progress) || !cJSON_IsNumber(moonveil_encounters) ||
-        moonveil_quest->valueint < 0 || moonveil_quest->valueint > 3 ||
-        moonveil_progress->valueint < 0 || moonveil_progress->valueint > 7 ||
-        moonveil_encounters->valueint < 0 || moonveil_encounters->valueint > 7 ||
-        (moonveil_quest->valueint == 0 && (moonveil_progress->valueint || moonveil_encounters->valueint)) ||
-        (moonveil_quest->valueint == 1 && moonveil_progress->valueint > 3) ||
-        (moonveil_quest->valueint >= 2 && moonveil_progress->valueint != 7)) {
-        cJSON_Delete(root);
-        return 0;
-    }
-    g->moonveil_quest_state = moonveil_quest->valueint;
-    g->moonveil_quest_progress = moonveil_progress->valueint;
-    g->moonveil_quest_encounters = moonveil_encounters->valueint;
     cJSON *catacombs_quest = cJSON_GetObjectItem(root, "catacombs_quest_state");
     cJSON *catacombs_progress = cJSON_GetObjectItem(root, "catacombs_quest_progress");
     cJSON *catacombs_encounters = cJSON_GetObjectItem(root, "catacombs_quest_encounters");
@@ -3495,7 +3810,6 @@ int load_game(GameState *g, int slot) {
         "max_frostfell_level_reached");
     g->max_frostfell_level_reached = max_frostfell ? max_frostfell->valueint : 1;
     g->max_desert_level_reached = max_desert->valueint;
-    g->max_moonveil_level_reached = max_moonveil->valueint;
     g->max_ashen_level_reached = max_ashen->valueint;
     g->max_glassdeep_level_reached = max_glassdeep->valueint;
     g->max_catacombs_level_reached = max_catacombs->valueint;
@@ -3530,7 +3844,13 @@ int load_game(GameState *g, int slot) {
         (legacy_weapon ? legacy_weapon->valueint : -1);
     g->equipped_off_hand = off_hand ? off_hand->valueint : -1;
     g->equipped_armor    = cJSON_GetObjectItem(root, "equipped_armor")->valueint;
-    g->location          = cJSON_GetObjectItem(root, "location")->valueint;
+    g->location = cJSON_GetObjectItem(root, "location")->valueint;
+    int removed_garden = save_version < 197 && ((int)g->location == 24 ||
+        (g->location == LOCATION_APPROACH && cJSON_IsNumber(cJSON_GetObjectItem(root, "approach_route")) &&
+        cJSON_GetObjectItem(root, "approach_route")->valueint == 10));
+    if (removed_garden) {
+        g->location = LOCATION_TOWN3;
+    }
     if (pirate_prototype) {
         cJSON *route = cJSON_GetObjectItem(root, "approach_route");
         pirate_return = g->location == RETIRED_PIRATE_LOCATION || g->location == RETIRED_MERCHANT_LOCATION ||
@@ -3655,12 +3975,6 @@ int load_game(GameState *g, int slot) {
     cJSON *cinder_reward = cJSON_GetObjectItem(root, "cinder_lord_reward_pending");
     g->cinder_lord_reward_pending = cinder_reward ? cinder_reward->valueint : 0;
     if (g->cinder_lord_reward_pending < 0 || g->cinder_lord_reward_pending > 3) {
-        cJSON_Delete(root);
-        return 0;
-    }
-    cJSON *regent_reward = cJSON_GetObjectItem(root, "thorn_regent_reward_pending");
-    g->thorn_regent_reward_pending = regent_reward ? regent_reward->valueint : 0;
-    if (g->thorn_regent_reward_pending < 0 || g->thorn_regent_reward_pending > 3) {
         cJSON_Delete(root);
         return 0;
     }
@@ -3993,25 +4307,6 @@ int load_game(GameState *g, int slot) {
         cJSON *entry = cJSON_GetArrayItem(desert_cache, i);
         cache->valid = cJSON_GetObjectItem(entry, "valid")->valueint;
         cache->level_cleared = cJSON_GetObjectItem(entry, "level_cleared")->valueint;
-        if (cache->valid) {
-            deserialize_map(cJSON_GetObjectItem(entry, "map"), &cache->map);
-            deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
-                cache->enemies, &cache->enemy_count, sizeof(cache->enemies) / sizeof(Enemy));
-        }
-    }
-
-    for (int i = 0; i < MOONVEIL_DEPTH; i++) {
-        LevelCache *cache = &g->moonveil_cache[i];
-        *cache = (LevelCache){0};
-        cJSON *entry = cJSON_GetArrayItem(moonveil_cache, i);
-        cJSON *valid = cJSON_GetObjectItem(entry, "valid");
-        cJSON *cleared = cJSON_GetObjectItem(entry, "level_cleared");
-        if (!cJSON_IsNumber(valid) || !cJSON_IsNumber(cleared)) {
-            cJSON_Delete(root);
-            return 0;
-        }
-        cache->valid = valid->valueint;
-        cache->level_cleared = cleared->valueint;
         if (cache->valid) {
             deserialize_map(cJSON_GetObjectItem(entry, "map"), &cache->map);
             deserialize_enemies(cJSON_GetObjectItem(entry, "enemies"),
@@ -5109,7 +5404,7 @@ int load_game(GameState *g, int slot) {
     }
 
     if (g->location == LOCATION_TOWN3) {
-        map_place_town3_moonveil_gate(&g->map);
+        map_place_town3_ashen_gate(&g->map);
         map_place_town3_frost_gate(&g->map);
         map_set_rosemoor_swamp_road(&g->map, g->defeated_bosses & (1 << LOCATION_SWAMP));
         map_place_town3_guild(&g->map);
@@ -5202,7 +5497,7 @@ int load_game(GameState *g, int slot) {
                 g->map.tiles[item->y][item->x] = TILE_ITEM;
             }
         }
-        g->map.tiles[18][18] = TILE_NPC_LIORA;
+        g->map.tiles[18][18] = 206;
     }
     // Version 96 moves Mara to the Town Hall without resetting her quest or coast caches.
     if (save_version < 96 && g->location == LOCATION_TAVERN) {
@@ -5375,7 +5670,7 @@ int load_game(GameState *g, int slot) {
     }
     // Version 105 moves Mara to Oakhaven and Liora to Stillbury without resetting quests.
     if (save_version < 105 && (g->location == LOCATION_TAVERN || g->location == LOCATION_TOWN_HALL)) {
-        TileType removed = g->location == LOCATION_TAVERN ? TILE_NPC_LIORA : TILE_NPC_MARA;
+        TileType removed = g->location == LOCATION_TAVERN ? 206 : TILE_NPC_MARA;
         for (int y = 0; y < MAP_H; y++) {
             for (int x = 0; x < MAP_W; x++) {
                 if (g->map.tiles[y][x] == removed) {
@@ -5388,14 +5683,14 @@ int load_game(GameState *g, int slot) {
                 g->floor_items[i].underlying_tile = TILE_TAVERN_FLOOR;
             }
         }
-        if ((removed == TILE_NPC_LIORA && strcmp(g->dialogue_speaker, "Botanist Liora") == 0) ||
+        if ((removed == 206 && strcmp(g->dialogue_speaker, "Botanist Liora") == 0) ||
             (removed == TILE_NPC_MARA && strcmp(g->dialogue_speaker, "Mara") == 0)) {
             g->dialogue_active = 0;
         }
     }
     if (save_version < 105 && (g->location == LOCATION_TAVERN || g->location == LOCATION_INN)) {
-        int x = g->location == LOCATION_TAVERN ? MARA_TAVERN_X : LIORA_INN_X;
-        int y = g->location == LOCATION_TAVERN ? MARA_TAVERN_Y : LIORA_INN_Y;
+        int x = g->location == LOCATION_TAVERN ? MARA_TAVERN_X : 18;
+        int y = g->location == LOCATION_TAVERN ? MARA_TAVERN_Y : 18;
         if (g->player.x == x && g->player.y == y) {
             g->player.y++;
         }
@@ -5407,7 +5702,7 @@ int load_game(GameState *g, int slot) {
                 g->map.tiles[item->y][item->x] = TILE_ITEM;
             }
         }
-        g->map.tiles[y][x] = g->location == LOCATION_TAVERN ? TILE_NPC_MARA : TILE_NPC_LIORA;
+        g->map.tiles[y][x] = g->location == LOCATION_TAVERN ? TILE_NPC_MARA : 206;
     }
     // Version 107 checks every dungeon floor, including saved side rooms.
     if (save_version < 107) {
@@ -5597,9 +5892,7 @@ int load_game(GameState *g, int slot) {
     if (save_version < 131) {
         desert_pharaoh_migrate(g);
     }
-    if (save_version < 132) {
-        thorn_regent_migrate(g);
-    }
+
     if (save_version < 133) {
         cinder_lord_migrate(g);
     }
@@ -5770,7 +6063,7 @@ int load_game(GameState *g, int slot) {
         } else if (g->location == LOCATION_INN || g->location == LOCATION_HEALER || g->location == LOCATION_WITCH ||
             g->location == LOCATION_DESERT || g->location == LOCATION_GLASSDEEP) {
             g->last_town_visited = LOCATION_TOWN2;
-        } else if (g->location == LOCATION_GUILD || g->location == LOCATION_MOONVEIL || g->location == LOCATION_FROSTFELL) {
+        } else if (g->location == LOCATION_GUILD || g->location == LOCATION_FROSTFELL) {
             g->last_town_visited = LOCATION_TOWN3;
         } else if (g->location == LOCATION_TOWN_HALL || g->location == LOCATION_WORKSHOP ||
             g->location == LOCATION_ASHEN || g->location == LOCATION_DRAGONSPINE) {
@@ -5901,6 +6194,13 @@ int load_game(GameState *g, int slot) {
     if (save_version < 193 && g->location == LOCATION_DAWNMERE) {
         town_life_migrate(g);
     }
+    if (save_version < 198) {
+        migrate_stormwatch_road(g);
+    }
+    if (!ironfang_valid(g) || !stormwatch_valid(g)) {
+        cJSON_Delete(root);
+        return 0;
+    }
     if (!mangrove_state_valid(g) || (g->location == LOCATION_MANGROVE_PATH &&
         (g->player.x < 0 || g->player.x >= MANGROVE_PATH_W || g->player.y < 0 || g->player.y >= MANGROVE_PATH_H))) {
         cJSON_Delete(root);
@@ -5914,6 +6214,24 @@ int load_game(GameState *g, int slot) {
     }
     if (save_version < 195) {
         stonewake_migrate_cranes(g);
+    }
+    if (save_version < 197) {
+        const cJSON *rewards = cJSON_GetObjectItem(root, "thorn_regent_reward_pending");
+        if (rewards && (!cJSON_IsNumber(rewards) || rewards->valuedouble != rewards->valueint || rewards->valueint < 0 || rewards->valueint > 3)) {
+            cJSON_Delete(root);
+            return 0;
+        }
+        int pending = rewards ? rewards->valueint : 0;
+        int count = !!(pending & 1) + !!(pending & 2);
+        if (g->retired_coast_item_count + count > RETIRED_LOOT_STAGES * MAX_FLOOR_ITEMS) {
+            cJSON_Delete(root);
+            return 0;
+        }
+        migrate_western_geography(g, removed_garden, pending);
+        game_recover_retired_items(g);
+    }
+    if (save_version < 200) {
+        ironfang_migrate_road(g);
     }
     game_refresh_debug_passages(g);
     cJSON_Delete(root);

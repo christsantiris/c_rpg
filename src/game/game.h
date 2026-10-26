@@ -26,11 +26,6 @@
 #define FROSTFELL_SURVIVOR_RESCUED 2
 #define GLASSDEEP_REWARD_GOLD 120
 #define GLASSDEEP_REWARD_SCORE 1000
-#define MOONVEIL_REWARD_GOLD 90
-#define MOONVEIL_REWARD_SCORE 700
-#define MOONVEIL_SEED_RECOVERED 1
-#define MOONVEIL_WATER_GATHERED 2
-#define MOONVEIL_GARDEN_RESTORED 4
 #define WATCHFIRE_REWARD_GOLD 180
 #define WATCHFIRE_REWARD_SCORE 1400
 #define HUNT_REWARD_GOLD 200
@@ -49,6 +44,7 @@
 #define MARA_BEACON_STAGE_4 4
 
 #define MAX_TRAIL 16
+#define RETIRED_LOOT_STAGES 6
 
 // Picks the message bar colour for a message.
 typedef enum {
@@ -140,8 +136,7 @@ typedef enum {
     LOCATION_CASTLE,
     LOCATION_DESERT,
     LOCATION_GUILD,
-    LOCATION_MOONVEIL,
-    LOCATION_ASHEN,
+    LOCATION_ASHEN = 25,
     LOCATION_GLASSDEEP,
     LOCATION_CATACOMBS,
     LOCATION_CASTLE_INTERIOR,
@@ -163,7 +158,9 @@ typedef enum {
     // Preserve the retired coastal location IDs 44-45.
     LOCATION_MANGROVES = 46,
     LOCATION_MANGROVE_PATH,
-    LOCATION_DAWNMERE_MERCHANT
+    LOCATION_DAWNMERE_MERCHANT,
+    LOCATION_STORMWATCH,
+    LOCATION_IRONFANG
 } Location;
 
 // Elderwood uses only its own bounds; compact caches avoid allocating the
@@ -193,8 +190,53 @@ typedef struct {
     int enemy_count;
 } MangroveState;
 
+#define STORM_W 64
+#define STORM_H 48
+#define STORM_DEPTH 5
+#define STORM_MASK_BYTES ((STORM_W * STORM_H + 7) / 8)
+
+typedef struct {
+    unsigned short tiles[STORM_H][STORM_W];
+    unsigned char explored[STORM_MASK_BYTES];
+    Enemy enemies[AREA_ENEMY_LIMIT];
+    FloorItem loot[MAX_FLOOR_ITEMS];
+    int enemy_count;
+    int loot_count;
+    int valid;
+    int phase[2];
+    int direction[2];
+    int next_direction[2];
+    unsigned char warned[2][STORM_MASK_BYTES];
+    int wind_elapsed_ms;
+    int braced;
+} StormwatchStage;
+
+#define IRON_W 64
+#define IRON_H 48
+#define IRON_DEPTH 5
+
+typedef struct {
+    unsigned short tiles[IRON_H][IRON_W];
+    unsigned char explored[(IRON_W * IRON_H + 7) / 8];
+    Enemy enemies[AREA_ENEMY_LIMIT];
+    FloorItem loot[MAX_FLOOR_ITEMS];
+    int valid;
+    int enemy_count;
+    int loot_count;
+    int cart_x;
+    int cart_y;
+    int aboard;
+    int route;
+    int ore_loads;
+    int ore_fuse;
+} IronfangStage;
+
 typedef struct {
     Player     player;
+    IronfangStage ironfang[IRON_DEPTH];
+    int ironfang_defeated;
+    StormwatchStage stormwatch[STORM_DEPTH];
+    int stormwatch_defeated;
     MangroveState mangroves;
     MangroveState mangrove_stages[MANGROVE_DEPTH];
     int mangrove_defeated;
@@ -202,7 +244,7 @@ typedef struct {
     ElderwoodCache elderwood_cache[ELDERWOOD_DEPTH];
     int max_elderwood_level_reached;
     int elderwood_defeated;
-    Item retired_coast_items[5 * MAX_FLOOR_ITEMS];
+    Item retired_coast_items[RETIRED_LOOT_STAGES * MAX_FLOOR_ITEMS];
     int retired_coast_item_count; // Migration overflow, reclaimed as pack slots become free.
     Location last_town_visited;
     int return_portal_town; // -1 retains the anchor used by a legacy portal.
@@ -222,7 +264,6 @@ typedef struct {
     LevelCache dragonspine_cache[DRAGONSPINE_DEPTH];
     LevelCache frostfell_cache[FROSTFELL_DEPTH];
     LevelCache desert_cache[DESERT_DEPTH];
-    LevelCache moonveil_cache[MOONVEIL_DEPTH];
     LevelCache ashen_cache[ASHEN_DEPTH];
     LevelCache glassdeep_cache[GLASSDEEP_DEPTH];
     LevelCache catacombs_cache[CATACOMBS_DEPTH];
@@ -278,7 +319,6 @@ typedef struct {
     int max_dragonspine_level_reached;
     int max_frostfell_level_reached;
     int max_desert_level_reached;
-    int max_moonveil_level_reached;
     int max_ashen_level_reached;
     int max_glassdeep_level_reached;
     int max_catacombs_level_reached;
@@ -325,7 +365,6 @@ typedef struct {
     int sun_guardian_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
     int red_dragon_reward_state; // 0: not earned, 1: unclaimed mantle, 2: claimed.
     int cinder_lord_reward_pending; // Bits: 1 Embercleaver, 2 Strength Potion.
-    int thorn_regent_reward_pending; // Bits: 1 cloak, 2 Strength Potion; zero after both are claimed.
     int desert_pharaoh_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
     int elowen_quest_state;
     int elowen_seals_restored;
@@ -348,9 +387,6 @@ typedef struct {
     int glassdeep_quest_state;
     int glassdeep_quest_progress;
     int glassdeep_quest_encounters;
-    int moonveil_quest_state;
-    int moonveil_quest_progress;
-    int moonveil_quest_encounters;
     int catacombs_quest_state;
     int catacombs_quest_progress;
     int catacombs_quest_encounters;
@@ -407,7 +443,6 @@ void game_leave_swamp(GameState *g, Location town, int shortcut);
 void game_reveal_swamp_shortcut(GameState *g);
 void game_enter_frostfell(GameState *g);
 void game_enter_desert(GameState *g);
-void game_enter_moonveil(GameState *g);
 void game_enter_ashen(GameState *g);
 void game_enter_glassdeep(GameState *g);
 void game_enter_catacombs(GameState *g);
@@ -444,9 +479,6 @@ int game_has_watchfire_interaction(const GameState *g);
 int game_interact_watchfire(GameState *g);
 void game_talk_to_brenna(GameState *g);
 void game_talk_to_orin(GameState *g);
-void game_talk_to_liora(GameState *g);
-int game_has_moonveil_interaction(const GameState *g);
-int game_interact_moonveil(GameState *g);
 int game_has_glassdeep_interaction(const GameState *g);
 int game_interact_glassdeep(GameState *g);
 int game_glassdeep_prompt_active(const GameState *g);

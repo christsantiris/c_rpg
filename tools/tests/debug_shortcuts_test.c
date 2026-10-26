@@ -1,4 +1,6 @@
+#include "game/ironfang.h"
 #include "game/stonewake.h"
+#include "game/stormwatch.h"
 #include "renderer/stonewake_renderer.h"
 #include "renderer/sprites.h"
 #include "renderer/item_icons.h"
@@ -142,6 +144,135 @@ static void test_stonewake_renderer(Renderer *r, GameState *g, SDL_Surface *surf
     printf("PASS: all five Stonewake sprites render at native scale, with three distinct crane poses, workshops and a distinct warhammer icon.\n");
 }
 
+static void clock_step(GameState *g, StormwatchClock *clock, Uint32 *now) {
+    *now += STORM_WIND_STEP_MS;
+    assert(update_stormwatch_clock(g, clock, *now, 0));
+}
+
+static void test_stormwatch_input(GameState *g) {
+    game_init(g);
+    stormwatch_enter(g, 0);
+    g->enemy_count = 0;
+    g->player.x = 48;
+    g->player.y = 24;
+    StormwatchClock clock = {0};
+    Uint32 now = 100;
+    assert(!update_stormwatch_clock(g, &clock, now, 0));
+    clock_step(g, &clock, &now);
+    clock_step(g, &clock, &now);
+    assert(g->stormwatch[0].phase[0] == 1 && move_left_action(g, SDL_SCANCODE_A).type == ACTION_MOVE);
+    // A single arrow step enters the exposed strip; no held/repeated key is needed.
+    action_resolve_player(g, (Action){ACTION_MOVE, 48, 23});
+    action_resolve_enemies(g);
+    assert(g->player.x == 48 && g->player.y == 23 && g->stormwatch[0].phase[0] == 1);
+    clock_step(g, &clock, &now);
+    assert(g->stormwatch[0].phase[0] == 2);
+    clock_step(g, &clock, &now);
+    assert(g->stormwatch[0].phase[0] == 3);
+    combat_feedback_clear();
+    clock_step(g, &clock, &now);
+    assert(g->player.x == 49 && g->player.y == 23);
+    const CombatFeedbackEvent *event = combat_feedback_get(combat_feedback_count() - 1);
+    assert(event->kind == FEEDBACK_PLAYER_PUSH);
+    int x = 240;
+    int y = 240;
+    game_player_push_offset(g, event->created_at, &x, &y);
+    assert(x == 216 && y == 240);
+    x = 240;
+    game_player_push_offset(g, event->created_at + PUSH_ANIMATION_MS / 2, &x, &y);
+    assert(x == 228 && y == 240);
+    x = 240;
+    game_player_push_offset(g, event->created_at + PUSH_ANIMATION_MS, &x, &y);
+    assert(x == 240 && y == 240 && g->player.x == 49);
+    // Reach the next final warning without issuing any player actions.
+    for (int step = 0; step < 5; step++) {
+        clock_step(g, &clock, &now);
+    }
+    assert(move_left_action(g, SDL_SCANCODE_A).type == ACTION_INTERACT);
+    assert(move_left_action(g, SDL_SCANCODE_LEFT).type == ACTION_MOVE);
+    action_resolve_player(g, move_left_action(g, SDL_SCANCODE_A));
+    action_resolve_enemies(g);
+    assert(g->stormwatch[0].braced && g->stormwatch[0].phase[0] == 3);
+    now += 999;
+    assert(!update_stormwatch_clock(g, &clock, now, 0) && g->stormwatch[0].braced);
+    now++;
+    assert(update_stormwatch_clock(g, &clock, now, 0));
+    assert(g->player.x == 49 && !g->stormwatch[0].braced);
+    // Menus/focus loss discard wall-clock gaps and preserve a partial second.
+    g->stormwatch[0].wind_elapsed_ms = 600;
+    int phase = g->stormwatch[0].phase[0];
+    now += 60000;
+    assert(!update_stormwatch_clock(g, &clock, now, 1));
+    assert(g->stormwatch[0].phase[0] == phase && g->stormwatch[0].wind_elapsed_ms == 600 && g->player.x == 49);
+    now += 60000;
+    assert(!update_stormwatch_clock(g, &clock, now, 0));
+    now += 399;
+    assert(!update_stormwatch_clock(g, &clock, now, 0) && g->stormwatch[0].wind_elapsed_ms == 999);
+    now++;
+    assert(update_stormwatch_clock(g, &clock, now, 0) && g->stormwatch[0].phase[0] == (phase + 1) % 6);
+    stormwatch_change_level(g, 1);
+    now += 60000;
+    assert(!update_stormwatch_clock(g, &clock, now, 0) && !g->stormwatch[1].wind_elapsed_ms);
+    // Use SDL's actual clock too: no key event and no enemy turn is issued here.
+    stormwatch_enter(g, 0);
+    g->enemy_count = 0;
+    g->player.x = 48;
+    g->player.y = 24;
+    g->stormwatch[0].phase[0] = 1;
+    clock = (StormwatchClock){0};
+    Uint32 started = SDL_GetTicks();
+    update_stormwatch_clock(g, &clock, started, 0);
+    while (g->player.x == 48 && SDL_GetTicks() - started < 5 * STORM_WIND_STEP_MS) {
+        update_stormwatch_clock(g, &clock, SDL_GetTicks(), 0);
+        SDL_Delay(10);
+    }
+    assert(g->player.x == 49 && g->player.y == 24 && !g->enemy_count);
+    printf("PASS: a single arrow step followed by idle frames triggers a visible gust; bracing survives until the gust; menus pause the exact clock without catching up.\n");
+    printf("PASS: SDL wall-clock frames push a standing character without any key event or enemy turn.\n");
+}
+
+static void test_stormwatch_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    game_init(g);
+    stormwatch_enter(g, 0);
+    g->player.x = 24;
+    g->player.y = 24;
+    g->enemy_count = 1;
+    Enemy *enemy = &g->enemies[0];
+    *enemy = (Enemy){.x = 25, .y = 24, .hp = 40, .max_hp = 40};
+    for (int y = 0; y < STORM_H; y++) {
+        for (int x = 0; x < STORM_W; x++) {
+            map_mark_explored(&g->map, x, y);
+        }
+    }
+    Viewport view;
+    viewport_init(&view, r->tiles_x < STORM_W ? r->tiles_x : STORM_W, r->tiles_y < STORM_H ? r->tiles_y : STORM_H, STORM_W, STORM_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    int x = viewport_to_screen_x(&view, enemy->x) * TILE_SIZE;
+    int y = viewport_to_screen_y(&view, enemy->y) * TILE_SIZE;
+    for (int type = ENEMY_HARPY_RAIDER; type <= ENEMY_TEMPEST_MATRIARCH; type++) {
+        enemy->active = 0;
+        renderer_begin_frame(r);
+        game_draw(r, g, &view);
+        renderer_end_frame(r);
+        unsigned int ground = creature_pixels(surface, x, y);
+        enemy->active = 1;
+        enemy->type = type;
+        renderer_begin_frame(r);
+        game_draw(r, g, &view);
+        renderer_end_frame(r);
+        assert(creature_pixels(surface, x, y) != ground);
+    }
+    assert(SDL_SaveBMP(surface, "/tmp/stormwatch-renderer-test.bmp") == 0);
+    g->debug_passages_unlocked = 1;
+    while (g->level < STORM_DEPTH) {
+        stormwatch_change_level(g, 1);
+    }
+    assert(!g->stormwatch_defeated && g->enemies[g->enemy_count - 1].type == ENEMY_TEMPEST_MATRIARCH);
+    stormwatch_change_level(g, 1);
+    assert(g->location == LOCATION_APPROACH && g->approach_route == 18 && !g->stormwatch_defeated);
+    printf("PASS: five Stormwatch enemies render visibly; debug opens final departure without defeating its boss.\n");
+}
+
 static void test_saltwind_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
     game_init(g);
     mangrove_enter(g, 0);
@@ -190,6 +321,56 @@ static void test_saltwind_renderer(Renderer *r, GameState *g, SDL_Surface *surfa
     printf("PASS: all six Saltwind enemy sprites render in the adventure; Rowan preserves his beach underlay.\n");
 }
 
+static void test_ironfang_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    assert(r->ironfang_boss_texture && r->area_entrance_textures[TOWN_EXIT_IRONFANG]);
+    int width;
+    int height;
+    SDL_QueryTexture(r->ironfang_boss_texture, NULL, NULL, &width, &height);
+    assert(width == TILE_SIZE && height == TILE_SIZE);
+    SDL_QueryTexture(r->area_entrance_textures[TOWN_EXIT_IRONFANG], NULL, NULL, &width, &height);
+    assert(width == 168 && height == 144);
+    game_init(g);
+    ironfang_enter(g, 0);
+    g->enemy_count = 0;
+    g->player.x = 9;
+    g->player.y = 25;
+    Action interact = move_left_action(g, g->key_bindings[CONTROL_MOVE_LEFT]);
+    assert(interact.type == ACTION_INTERACT);
+    action_resolve_player(g, interact);
+    assert(g->ironfang[0].aboard && g->player.x == 10);
+    Action left = move_left_action(g, SDL_SCANCODE_LEFT);
+    assert(left.type == ACTION_MOVE);
+    action_resolve_player(g, (Action){ACTION_MOVE, 11, 25});
+    assert(g->player.x == 12 && g->ironfang[0].cart_x == 12 && g->player.last_dx == 1 && g->player.last_dy == 0);
+    game_init(g);
+    ironfang_enter(g, 0);
+    const EnemyType roster[] = {ENEMY_GOBLIN_SCOUT, ENEMY_GOBLIN_ARCHER, ENEMY_GOBLIN_BOMBER, ENEMY_TUNNEL_SPIDER, ENEMY_CAVE_TROLL, ENEMY_HOBGOBLIN_GUARD, ENEMY_GOBLIN_SHAMAN, ENEMY_GOBLIN_MINE_BOSS};
+    for (int n = 0; n < 8; n++) {
+        SDL_SetRenderDrawColor(r->sdl, 0, 0, 0, 255);
+        SDL_RenderClear(r->sdl);
+        draw_enemy(r, 10, 8, roster[n]);
+        SDL_RenderPresent(r->sdl);
+        int pixels = 0;
+        for (int y = 8 * TILE_SIZE; y < 9 * TILE_SIZE; y++) {
+            for (int x = 10 * TILE_SIZE; x < 11 * TILE_SIZE; x++) {
+                Uint8 red, green, blue;
+                SDL_GetRGB(rendered_pixel(surface, x, y), surface->format, &red, &green, &blue);
+                pixels += red || green || blue;
+            }
+        }
+        assert(pixels > 65);
+    }
+    g->location = LOCATION_TOWN4;
+    map_generate_town4(&g->map, &g->player.x, &g->player.y);
+    TownExitStyle style;
+    assert(town_entry_style(g, (Action){ACTION_MOVE, TOWN_W - 1, 12}, &style) && style == TOWN_EXIT_ROAD);
+    g->debug_passages_unlocked = 1;
+    ironfang_enter(g, 0);
+    game_refresh_debug_passages(g);
+    assert(g->map.tiles[25][40] == TILE_IRON_RAIL && g->map.tiles[8][8] == TILE_IRON_FLOOR && !g->ironfang_defeated);
+    puts("PASS: Ironfang's eight enemy sprites render at native scale; bound Interact boards a cart, arrows drive it, Ridgeshire uses its road gate, and debug repairs optional passages.");
+}
+
 int main(void) {
     char *project = getcwd(NULL, 0);
     char *assets = realpath("assets", NULL);
@@ -214,8 +395,8 @@ int main(void) {
         assert(SDL_QueryTexture(renderer.town_textures[i], NULL, NULL, &width, &height) == 0);
         assert(width == TOWN_SPRITE_W * TILE_SIZE && height == TOWN_SPRITE_H * TILE_SIZE);
     }
-    const TownExitStyle entrances[] = {TOWN_EXIT_COAST, TOWN_EXIT_DESERT, TOWN_EXIT_GLASSDEEP, TOWN_EXIT_FROST, TOWN_EXIT_MOONVEIL, TOWN_EXIT_DRAGONSPINE, TOWN_EXIT_ASHEN, TOWN_EXIT_CATACOMBS};
-    for (int i = 0; i < 8; i++) {
+    const TownExitStyle entrances[] = {TOWN_EXIT_COAST, TOWN_EXIT_DESERT, TOWN_EXIT_GLASSDEEP, TOWN_EXIT_FROST, TOWN_EXIT_DRAGONSPINE, TOWN_EXIT_ASHEN, TOWN_EXIT_CATACOMBS, TOWN_EXIT_STORMWATCH};
+    for (int i = 0; i < (int)(sizeof(entrances) / sizeof(entrances[0])); i++) {
         int width;
         int height;
         assert(renderer.area_entrance_textures[entrances[i]]);
@@ -230,6 +411,7 @@ int main(void) {
     assert(game);
     test_stonewake_renderer(&renderer, game, surface);
     test_saltwind_renderer(&renderer, game, surface);
+    test_stormwatch_renderer(&renderer, game, surface);
     char *arguments[] = {"conr", "--unlock-shortcuts", "--gold", "99999", "--weapon", "none"};
 
     // Old debug saves have three shortcuts but lack the new Lich unlock.
@@ -536,6 +718,8 @@ int main(void) {
     game->player.y = 14;
     action_resolve_player(game, (Action){ACTION_MOVE, ESCAPE_TUNNEL_W - 1, 14});
     assert(game->location == LOCATION_TOWN4 && game->jail_quest_state == 3 && game->gold == gold + ESCAPE_REWARD_GOLD);
+    test_stormwatch_input(game);
+    test_ironfang_renderer(&renderer, game, surface);
     free(game);
     renderer_free(&renderer);
     SDL_DestroyRenderer(sdl);
