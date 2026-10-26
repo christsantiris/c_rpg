@@ -8,7 +8,7 @@
 #define MINIMAP_PAD   6
 
 void minimap_draw(Renderer *r, const GameState *g) {
-    if (g->location != LOCATION_IRONFANG && g->location != LOCATION_STORMWATCH && g->location != LOCATION_MANGROVES && g->location != LOCATION_ESCAPE_TUNNEL && g->location != LOCATION_DUNGEON &&
+    if (g->location != LOCATION_CROWNROAD_NORTH && g->location != LOCATION_IRONFANG && g->location != LOCATION_STORMWATCH && g->location != LOCATION_MANGROVES && g->location != LOCATION_ESCAPE_TUNNEL && g->location != LOCATION_DUNGEON &&
         g->location != LOCATION_FOREST &&
         g->location != LOCATION_MOUNTAINS &&
         g->location != LOCATION_DRAGONSPINE &&
@@ -48,6 +48,10 @@ void minimap_draw(Renderer *r, const GameState *g) {
         map_h = SWAMP_MAP_H;
     }
 
+    if (g->location == LOCATION_CROWNROAD_NORTH) {
+        map_w = CROWN_NORTH_W;
+        map_h = CROWN_NORTH_H;
+    }
     if (g->location == LOCATION_IRONFANG) {
         map_w = IRON_W;
         map_h = IRON_H;
@@ -101,7 +105,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                     if (tile == TILE_IRON_WATER || tile == TILE_IRON_TRESTLE || tile == TILE_STORM_WATER || tile == TILE_MANGROVE_WATER || tile == TILE_GLASSDEEP_POOL || tile == TILE_STONEWAKE_GAP) {
                         has_water = 1;
                     }
-                    if (tile == TILE_IRON_ENTRANCE || tile == TILE_IRON_EXIT || tile == TILE_IRON_LAMP_LIT || tile == TILE_IRON_SWITCH || tile == TILE_IRON_CACHE || tile == TILE_STORM_EXIT || tile == TILE_STORM_ENTRANCE || tile == TILE_STORM_SUPPLIES || tile == TILE_STORM_CRANK ||
+                    if (tile == TILE_CROWN_EXIT || tile == TILE_CROWN_SUPPLIES || tile == TILE_IRON_ENTRANCE || tile == TILE_IRON_EXIT || tile == TILE_IRON_LAMP_LIT || tile == TILE_IRON_SWITCH || tile == TILE_IRON_CACHE || tile == TILE_STORM_EXIT || tile == TILE_STORM_ENTRANCE || tile == TILE_STORM_SUPPLIES || tile == TILE_STORM_CRANK ||
                         tile == TILE_MANGROVE_EXIT || tile == TILE_MANGROVE_LANDING || tile == TILE_MANGROVE_RETURN || tile == TILE_MANGROVE_CACHE ||
                         tile == TILE_CASTLE_TRAP_OPEN || tile == TILE_CASTLE_WARD || tile == TILE_CASTLE_WARD_SPENT || tile == TILE_CASTLE_MUSTER ||
                         tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN ||

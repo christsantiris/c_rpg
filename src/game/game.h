@@ -111,6 +111,17 @@ typedef struct {
     int level_cleared;
 } CrownroadCache;
 
+typedef struct {
+    Map map;
+    Enemy enemies[MAX_ENEMIES];
+    FloorItem loot[MAX_FLOOR_ITEMS];
+    int valid;
+    int from_castle;
+    int enemy_count;
+    int loot_count;
+    int level_cleared;
+} NorthRoadCache;
+
 typedef enum {
     LOCATION_TOWN,
     LOCATION_DUNGEON,
@@ -160,7 +171,8 @@ typedef enum {
     LOCATION_MANGROVE_PATH,
     LOCATION_DAWNMERE_MERCHANT,
     LOCATION_STORMWATCH,
-    LOCATION_IRONFANG
+    LOCATION_IRONFANG,
+    LOCATION_CROWNROAD_NORTH
 } Location;
 
 // Elderwood uses only its own bounds; compact caches avoid allocating the
@@ -294,6 +306,7 @@ typedef struct {
     int jail_armory_loot_count;
     CrownroadCache crownroad_cache;
     CrownroadCache kingroad_west_cache;
+    NorthRoadCache northroad;
     LevelCache temple_cache[TEMPLE_DEPTH];
     LevelCache labyrinth_cache[LABYRINTH_DEPTH];
     char       messages[MAX_MESSAGES][MAX_MESSAGE_LEN];

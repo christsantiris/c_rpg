@@ -1,3 +1,4 @@
+#include "game/crownroad_north.h"
 #include "game/ironfang.h"
 #include "game/stonewake.h"
 #include "game/stormwatch.h"
@@ -44,6 +45,49 @@ static unsigned int creature_pixels(SDL_Surface *surface, int x, int y) {
         }
     }
     return hash;
+}
+
+
+static void test_northroad_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    game_init(g);
+    g->debug_passages_unlocked = 1;
+    northroad_enter(g, 0, 0);
+    assert(g->enemy_count == NORTH_ENEMIES);
+    g->player.x = 32;
+    g->player.y = 87;
+    for (int y = 0; y < CROWN_NORTH_H; y++) {
+        for (int x = 0; x < CROWN_NORTH_W; x++) {
+            map_mark_explored(&g->map, x, y);
+        }
+    }
+    Viewport view;
+    viewport_init(&view, r->tiles_x, r->tiles_y, CROWN_NORTH_W, CROWN_NORTH_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/crown-north-renderer-test.bmp") == 0);
+    const EnemyType roster[] = {ENEMY_GOBLIN_SCOUT, ENEMY_HOBGOBLIN_GUARD, ENEMY_GOBLIN_ARCHER,
+        ENEMY_GOBLIN_BOMBER, ENEMY_GOBLIN_SHAMAN, ENEMY_BLIGHTED_WOLF};
+    g->enemy_count = 1;
+    Enemy *enemy = &g->enemies[0];
+    *enemy = (Enemy){.x = 32, .y = 82, .hp = 50, .max_hp = 50};
+    int x = viewport_to_screen_x(&view, enemy->x) * TILE_SIZE;
+    int y = viewport_to_screen_y(&view, enemy->y) * TILE_SIZE;
+    for (int i = 0; i < 6; i++) {
+        enemy->active = 0;
+        renderer_begin_frame(r);
+        game_draw(r, g, &view);
+        renderer_end_frame(r);
+        unsigned int ground = creature_pixels(surface, x, y);
+        enemy->active = 1;
+        enemy->type = roster[i];
+        renderer_begin_frame(r);
+        game_draw(r, g, &view);
+        renderer_end_frame(r);
+        assert(creature_pixels(surface, x, y) != ground);
+    }
+    printf("PASS: Crown Road North's six recurring enemy types render visibly on their road terrain at native scale.\n");
 }
 
 static void test_stonewake_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
@@ -721,6 +765,7 @@ int main(void) {
     assert(game->location == LOCATION_TOWN4 && game->jail_quest_state == 3 && game->gold == gold + ESCAPE_REWARD_GOLD);
     test_stormwatch_input(game);
     test_ironfang_renderer(&renderer, game, surface);
+    test_northroad_renderer(&renderer, game, surface);
     free(game);
     renderer_free(&renderer);
     SDL_DestroyRenderer(sdl);

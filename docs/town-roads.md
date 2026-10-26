@@ -112,3 +112,8 @@ branching wharf, preserving the rocky coastline and broad open sea.
 Save version 194 replaces Glassdeep with Stonewake Quarry in the same southern
 Stillbury location. Its approach and town exit retain their IDs and roads.
 See [Stonewake](stonewake-quarry.md) for cranes, stages and migration details.
+
+Dawnmere's resident shop is labelled **Spice Merchant**; its resident is
+**Spice Merchant Corvin**. The northern castle approach now crosses
+[Crown Road North](crown-road-north.md) between Royal Catacombs and Castle
+Grounds.

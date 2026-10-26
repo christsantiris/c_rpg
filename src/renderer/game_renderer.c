@@ -1,3 +1,4 @@
+#include "crownroad_north_renderer.h"
 #include "stonewake_renderer.h"
 #include "game_renderer.h"
 #include "mangrove_renderer.h"
@@ -2075,6 +2076,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         viewport_init(&town_view, v->tiles_x < CASTLE_W ? v->tiles_x : CASTLE_W, v->tiles_y < CASTLE_H ? v->tiles_y : CASTLE_H, CASTLE_W, CASTLE_H);
         viewport_center_on(&town_view, g->player.x, g->player.y);
         v = &town_view;
+    } else if (g->location == LOCATION_CROWNROAD_NORTH) {
+        viewport_init(&town_view, v->tiles_x < CROWN_NORTH_W ? v->tiles_x : CROWN_NORTH_W, v->tiles_y < CROWN_NORTH_H ? v->tiles_y : CROWN_NORTH_H, CROWN_NORTH_W, CROWN_NORTH_H);
+        viewport_center_on(&town_view, g->player.x, g->player.y);
+        v = &town_view;
     } else if (g->location == LOCATION_IRONFANG) {
         viewport_init(&town_view, v->tiles_x < IRON_W ? v->tiles_x : IRON_W, v->tiles_y < IRON_H ? v->tiles_y : IRON_H, IRON_W, IRON_H);
         viewport_center_on(&town_view, g->player.x, g->player.y);
@@ -2151,6 +2156,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             if (g->location == LOCATION_CASTLE_INTERIOR) {
                 TileType tile = g->map.tiles[y][x];
                 castle_draw_tile(r, g, sx, sy, x, y, tile == TILE_ITEM ? floor_item_underlay(g, x, y) : tile);
+                continue;
+            }
+            if (g->location == LOCATION_CROWNROAD_NORTH) {
+                TileType tile = g->map.tiles[y][x];
+                northroad_draw_tile(r, sx, sy, x, y, tile == TILE_ITEM ? floor_item_underlay(g, x, y) : tile);
                 continue;
             }
             if (g->location == LOCATION_IRONFANG) {
@@ -3319,9 +3329,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_elderwood_warnings(r, g, v);
     stormwatch_draw_warnings(r, g, v);
     ironfang_draw_details(r, g, v);
+    northroad_draw_details(r, g, v);
 
     // Draw enemies
-    if (g->location == LOCATION_IRONFANG || g->location == LOCATION_STORMWATCH || g->location == LOCATION_MANGROVES || g->location == LOCATION_JAIL_ARMORY || g->location == LOCATION_ELDERWOOD || g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
+    if (g->location == LOCATION_CROWNROAD_NORTH || g->location == LOCATION_IRONFANG || g->location == LOCATION_STORMWATCH || g->location == LOCATION_MANGROVES || g->location == LOCATION_JAIL_ARMORY || g->location == LOCATION_ELDERWOOD || g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
         g->location == LOCATION_FOREST ||
         g->location == LOCATION_MOUNTAINS ||
         g->location == LOCATION_DRAGONSPINE ||
@@ -3600,7 +3611,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         SDL_RenderDrawLine(r->sdl, right_post.x + 3, gy + 3, right_post.x + 3, gy + TILE_SIZE * 2 - 3);
         int gate_width = 0;
         TTF_SizeText(r->font_tiny, "NORTHERN ROAD", &gate_width, NULL);
-        renderer_draw_text(r, "NORTHERN ROAD", viewport_to_screen_x(v, CROWNROAD_X) * TILE_SIZE + (TILE_SIZE - gate_width) / 2,
+        renderer_draw_text(r, "CROWN ROAD NORTH", viewport_to_screen_x(v, CROWNROAD_X) * TILE_SIZE + (TILE_SIZE - gate_width) / 2,
             viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE, area_label_color(LOCATION_CATACOMBS), r->font_tiny);
         SDL_Color label = {220, 180, 60, 255};
         int width = 0;
@@ -4112,6 +4123,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     mangrove_draw_hint(r, g);
     stormwatch_draw_hint(r, g);
     ironfang_draw_hint(r, g);
+    northroad_draw_hint(r, g);
 
     draw_kraken_status(r, g, v);
     draw_lich_status(r, g, v);
