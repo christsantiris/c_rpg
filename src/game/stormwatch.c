@@ -1,5 +1,6 @@
 #include "stormwatch.h"
 #include "approach.h"
+#include "combat_feedback.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -296,7 +297,7 @@ void stormwatch_enter(GameState *g, int portal) {
         g->portal_active = 0;
     }
     map_mark_explored(&g->map, g->player.x, g->player.y);
-    push_message(g, "Stormwatch: shelter behind masonry, or press A to brace against a warned gust.");
+    push_message(g, "Stormwatch: gusts push even while you stand still. Press A in the final warning second to brace.");
 }
 
 void stormwatch_leave(GameState *g) {
@@ -428,7 +429,13 @@ const char *stormwatch_hint(const GameState *g) {
     if (nearby(g, TILE_STORM_SUPPLIES, &x, &y)) {
         return "A: SEARCH WATCH SUPPLIES";
     }
-    return "A: BRACE AGAINST THIS TURN'S WIND";
+    const StormwatchStage *state = &g->stormwatch[g->level - 1];
+    for (int lane = 0; lane < (g->level >= 3 ? 2 : 1); lane++) {
+        if (state->phase[lane] == 3 && stormwatch_wind_marks(g, lane, g->player.x, g->player.y)) {
+            return state->braced ? "BRACED: HOLD STILL" : "A: BRACE AGAINST THE NEXT GUST";
+        }
+    }
+    return NULL;
 }
 
 int stormwatch_interact(GameState *g) {
@@ -436,6 +443,7 @@ int stormwatch_interact(GameState *g) {
     if (!state) {
         return 0;
     }
+    state->braced = 0;
     int x;
     int y;
     if (nearby(g, TILE_STORM_CRANK, &x, &y)) {
@@ -456,9 +464,11 @@ int stormwatch_interact(GameState *g) {
         g->map.tiles[y][x] = TILE_STORM_EMPTY;
         g->gold += 15 + g->level * 3;
         push_message(g, "You recover gold from a watch supply chest.");
-    } else {
+    } else if (stormwatch_hint(g)) {
         state->braced = 1;
         push_message(g, "You plant your feet against the wind for this enemy phase.");
+    } else {
+        return 0;
     }
     return 1;
 }
@@ -494,6 +504,14 @@ void stormwatch_wind(GameState *g) {
             g->player.x += dx;
             g->player.y += dy;
             map_mark_explored(&g->map, g->player.x, g->player.y);
+            combat_feedback_add(g, FEEDBACK_PLAYER_PUSH, FEEDBACK_NOW, g->player.x, g->player.y, state->direction[lane]);
+            const char *directions[] = {"east", "south", "west", "north"};
+            char message[MAX_MESSAGE_LEN];
+            snprintf(message, sizeof(message), "The gust pushes you one tile %s!", directions[state->direction[lane]]);
+            push_message(g, message);
+        } else if (stormwatch_wind_marks(g, lane, g->player.x, g->player.y)) {
+            push_message(g, state->braced ? "You brace and hold your ground against the gust." :
+                "The gust cannot move you: its landing is blocked or threatened.");
         }
         for (int n = 0; n < g->enemy_count; n++) {
             Enemy *enemy = &g->enemies[n];
@@ -508,6 +526,24 @@ void stormwatch_wind(GameState *g) {
         }
     }
     state->braced = 0;
+}
+
+int stormwatch_advance_wind(GameState *g, Uint32 elapsed) {
+    StormwatchStage *state = current(g);
+    if (!state || g->player.hp <= 0 || g->game_won) {
+        return 0;
+    }
+    // A delayed frame cannot deliver a backlog of gusts all at once.
+    if (elapsed > STORM_WIND_STEP_MS) {
+        elapsed = STORM_WIND_STEP_MS;
+    }
+    state->wind_elapsed_ms += (int)elapsed;
+    if (state->wind_elapsed_ms < STORM_WIND_STEP_MS) {
+        return 0;
+    }
+    state->wind_elapsed_ms -= STORM_WIND_STEP_MS;
+    stormwatch_wind(g);
+    return 1;
 }
 
 void stormwatch_defeat(GameState *g) {
@@ -526,7 +562,8 @@ int stormwatch_valid(const GameState *g) {
     for (int n = 0; n < STORM_DEPTH; n++) {
         const StormwatchStage *state = &g->stormwatch[n];
         if (state->enemy_count < 0 || state->enemy_count > AREA_ENEMY_LIMIT || state->loot_count < 0 || state->loot_count > MAX_FLOOR_ITEMS ||
-            state->valid < 0 || state->valid > 1 || state->braced < 0 || state->braced > 1) {
+            state->valid < 0 || state->valid > 1 || state->braced < 0 || state->braced > 1 ||
+            state->wind_elapsed_ms < 0 || state->wind_elapsed_ms >= STORM_WIND_STEP_MS) {
             return 0;
         }
         if (state->valid) {

@@ -1256,6 +1256,9 @@ void action_resolve_player(GameState *g, Action a) {
     if (a.type == ACTION_NONE) {
         return;
     }
+    if (g->location == LOCATION_STORMWATCH && g->level >= 1 && g->level <= STORM_DEPTH && a.type != ACTION_INTERACT) {
+        g->stormwatch[g->level - 1].braced = 0;
+    }
     // Frozen players can drink potions; other inventory actions remain free.
     if (g->player.frozen_turns > 0 && a.type != ACTION_USE_ITEM &&
         a.type != ACTION_EQUIP_ITEM && a.type != ACTION_EQUIP_OFF_HAND &&
@@ -3637,7 +3640,6 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             apply_enemy_damage(g, damage, FEEDBACK_NOW);
         }
     }
-    stormwatch_wind(g);
     int crossing_heat = regional_terrain_tick(g);
     if (crossing_heat > 0) {
         int damage = crossing_heat - g->player.defense / 2;

@@ -21,18 +21,30 @@ and returning through a town portal retain defeated enemies and dropped loot.
 
 ## Wind and shutters
 
-Wind advances with player actions: two calm phases, two warning phases, one
-gust, then one recovery phase. From stage three, a second lane follows the same
-cycle at an offset. Ground arrows and a countdown show the fixed direction and
-exposed cells. Stormcallers can choose the next gust direction; they cannot
-change a warning already shown.
+Wind advances automatically while the adventure is visible, including when the
+player stands still. Each phase lasts one second: two calm phases, two warning
+phases, one gust, then one recovery phase. From stage three, a second lane
+follows the same cycle at an offset. The HUD shows seconds until the gust;
+stepping into exposed ground and releasing the keys does not stop the countdown.
 
-Press **A** away from a crank or supply chest to brace for the coming enemy
-phase. Bracing uses an action and prevents that phase's wind displacement. It
-does not absorb enemy damage. A gust moves the player or a Raider one cardinal
-tile. Walls, actors, closed shutters, water and gateways stop the push without
-collision damage. A push cannot land in a declared enemy attack. A displaced
-Raider loses its prepared swoop; stone and storm creatures resist wind.
+Wind runs separately from combat turns. Idle gusts give enemies no extra moves,
+attacks or status ticks. Menus, modal prompts, unfocused/minimized windows and
+projectile/transition animations pause the wind. Resuming does not replay missed
+gusts. Stormcallers can choose the next gust direction, but cannot change a
+warning already shown.
+
+During the final warning second on an exposed tile, press **A** away from a
+crank or supply chest to brace. Hold still: the brace lasts until the scheduled
+gust, and another player action releases it. Bracing consumes a normal combat
+action and does not absorb enemy damage. On other phases, A keeps its normal
+movement behavior; the left arrow always moves.
+
+A gust moves the player or a Raider one cardinal tile. Successful pushes
+animate a full tile and report their direction. Walls, actors, raised shutters,
+water and gateways stop the push without collision damage. Messages explain a
+blocked landing or a successful brace. A push cannot land in a declared enemy
+attack. Displaced Raiders lose prepared swoops; stone and storm creatures resist
+wind.
 
 Use **A** beside either crank to lower or raise the shutter. Raised shutters
 block movement, projectiles and wind. Lowered shutters form a timber shortcut.
@@ -60,9 +72,11 @@ the boss also gives 450 combat XP. Victory appears in the boss journal.
 
 ## Persistence and testing
 
-Save version 198 stores all five compact maps, exploration, actors, enemy attack
+Save version 199 stores all five compact maps, exploration, actors, enemy attack
 states, loot underlays, searched supplies, shutter positions, wind clocks,
-declared warning masks, next directions, brace state and boss victory.
+declared warning masks, the elapsed fraction of the current second, next
+directions, brace state and boss victory. Version 198 saves preserve their maps
+and warnings and receive a full second before their next wind phase.
 Return to Town goes to the last town actually visited; its portal restores the
 original Stormwatch expedition. Existing saves gain Dawnmere's eastern road
 without resetting gear, quests, portals or other regions.

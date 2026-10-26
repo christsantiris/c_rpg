@@ -17,6 +17,7 @@ EM_ASYNC_JS(void, browser_next_frame, (void), {
 #include "renderer/game_over_renderer.h"
 #include "game/game.h"
 #include "game/coastal_travel.h"
+#include "game/stormwatch.h"
 #include "game/jail.h"
 #include "game/town_life.h"
 #include "game/restoration.h"
@@ -74,6 +75,36 @@ typedef struct {
     Action pending_action;
     TownExitStyle style;
 } TownEntryTransition;
+
+// Absolute wall-clock timestamps belong to the running UI, not a save file.
+typedef struct {
+    Uint32 updated_at;
+    int level;
+} StormwatchClock;
+
+static int update_stormwatch_clock(GameState *g, StormwatchClock *clock, Uint32 now, int paused) {
+    Uint32 elapsed = now - clock->updated_at;
+    clock->updated_at = now;
+    if (paused || g->location != LOCATION_STORMWATCH || g->player.hp <= 0 || g->game_won) {
+        clock->level = 0;
+        return 0;
+    }
+    if (clock->level != g->level) {
+        clock->level = g->level;
+        return 0;
+    }
+    return stormwatch_advance_wind(g, elapsed);
+}
+
+static Action move_left_action(const GameState *g, int scancode) {
+    // Arrow keys always move. The bound key interacts only when an action is available.
+    TileType tile = g->map.tiles[g->player.y][g->player.x];
+    if (scancode != SDL_SCANCODE_LEFT && (game_has_regional_interaction(g) || tile == TILE_COAST_TIDE_CONTROL ||
+        tile == TILE_COAST_BEACON_UNLIT || tile == TILE_BROKEN_BURIAL_SEAL)) {
+        return (Action){ACTION_INTERACT, 0, 0};
+    }
+    return (Action){ACTION_MOVE, g->player.x - 1, g->player.y};
+}
 
 static int town_entry_style(const GameState *g, Action action, TownExitStyle *style) {
     if ((g->location != LOCATION_TOWN && g->location != LOCATION_TOWN2 &&
@@ -579,6 +610,7 @@ int main(int argc, char **argv) {
     EnemyProjectiles enemy_shots = {0};
     Uint32 enemy_shots_started_at = 0;
     TownEntryTransition entry_gate = {0};
+    StormwatchClock wind_clock = {0};
 
     Viewport viewport;
     viewport_init(&viewport, renderer.tiles_x, renderer.tiles_y, MAP_W, MAP_H);
@@ -677,6 +709,9 @@ int main(int argc, char **argv) {
                 // ── Window resize ─────────────────────────────────────────
                 case SDL_WINDOWEVENT:
                     needs_redraw = 1;
+                    if (event.window.event == SDL_WINDOWEVENT_FOCUS_LOST || event.window.event == SDL_WINDOWEVENT_MINIMIZED) {
+                        wind_clock.level = 0;
+                    }
                     if (event.window.event == SDL_WINDOWEVENT_RESIZED ||
                         event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED ||
                         event.window.event == SDL_WINDOWEVENT_DISPLAY_CHANGED) {
@@ -980,23 +1015,9 @@ int main(int argc, char **argv) {
                             case CONTROL_MOVE_DOWN:
                                 a = (Action){ACTION_MOVE, game.player.x, game.player.y + 1};
                                 break;
-                            case CONTROL_MOVE_LEFT: {
-                                // The left arrow only moves; the bound key
-                                // also interacts with the object underfoot.
-                                TileType tile = game.map.tiles[game.player.y]
-                                    [game.player.x];
-                                if (sc != SDL_SCANCODE_LEFT &&
-                                    (game_has_regional_interaction(&game) ||
-                                    tile == TILE_COAST_TIDE_CONTROL ||
-                                    tile == TILE_COAST_BEACON_UNLIT ||
-                                    tile == TILE_BROKEN_BURIAL_SEAL)) {
-                                    a = (Action){ACTION_INTERACT, 0, 0};
-                                } else {
-                                    a = (Action){ACTION_MOVE,
-                                        game.player.x - 1, game.player.y};
-                                }
+                            case CONTROL_MOVE_LEFT:
+                                a = move_left_action(&game, sc);
                                 break;
-                            }
                             case CONTROL_MOVE_RIGHT:
                                 a = (Action){ACTION_MOVE, game.player.x + 1, game.player.y};
                                 break;
@@ -1512,6 +1533,14 @@ int main(int argc, char **argv) {
             if (game.player.hp <= 0) {
                 screen = SCREEN_GAME_OVER;
             }
+        }
+        int wind_paused = screen != SCREEN_PLAYING || player_projectile_animating || player_slide_animating ||
+            entry_gate.active || enemy_shots.count > 0 || !(SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS) ||
+            game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) ||
+            game_glassdeep_prompt_active(&game) || restoration_prompt_active(&game);
+        if (update_stormwatch_clock(&game, &wind_clock, SDL_GetTicks(), wind_paused)) {
+            viewport_center_on(&viewport, game.player.x, game.player.y);
+            needs_redraw = 1;
         }
         if (screen == SCREEN_NAME_ENTRY) {
             int cursor_visible = name_entry.cursor_visible;
