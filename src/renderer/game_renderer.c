@@ -805,6 +805,23 @@ int game_combat_feedback_active(Uint32 now) {
     return 0;
 }
 
+void game_player_push_offset(const GameState *g, Uint32 now, int *x, int *y) {
+    const int dx[] = {1, 0, -1, 0};
+    const int dy[] = {0, 1, 0, -1};
+    for (int i = combat_feedback_count() - 1; i >= 0; i--) {
+        const CombatFeedbackEvent *event = combat_feedback_get(i);
+        if (event->kind != FEEDBACK_PLAYER_PUSH || event->location != g->location || event->level != g->level ||
+            event->x != g->player.x || event->y != g->player.y || event->amount < 0 || event->amount > 3 ||
+            now < event->created_at || now - event->created_at >= PUSH_ANIMATION_MS) {
+            continue;
+        }
+        int remaining = TILE_SIZE * (PUSH_ANIMATION_MS - (now - event->created_at)) / PUSH_ANIMATION_MS;
+        *x -= dx[event->amount] * remaining;
+        *y -= dy[event->amount] * remaining;
+        return;
+    }
+}
+
 // A dark outline keeps the text readable over any floor.
 static void draw_feedback_text(Renderer *r, TTF_Font *font, const char *text, int cx, int y, SDL_Color color, Uint8 alpha) {
     if (!font) {
@@ -1079,6 +1096,10 @@ static void draw_combat_feedback(Renderer *r, const GameState *g, const Viewport
         } else if (e->kind == FEEDBACK_MISS) {
             SDL_snprintf(text, sizeof(text), "MISS");
             color = (SDL_Color){200, 200, 210, 255};
+        } else if (e->kind == FEEDBACK_PLAYER_PUSH) {
+            const char *directions[] = {"EAST", "SOUTH", "WEST", "NORTH"};
+            SDL_snprintf(text, sizeof(text), "GUST %s", directions[e->amount >= 0 && e->amount < 4 ? e->amount : 0]);
+            color = (SDL_Color){173, 230, 223, 255};
         } else {
             SDL_snprintf(text, sizeof(text), "-%d", e->amount);
         }
@@ -3995,6 +4016,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     int player_px = viewport_to_screen_x(v, g->player.x) * TILE_SIZE;
     int player_py = viewport_to_screen_y(v, g->player.y) * TILE_SIZE;
     ice_slide_offset(g, &player_px, &player_py);
+    game_player_push_offset(g, SDL_GetTicks(), &player_px, &player_py);
     mangrove_draw_warnings(r, g, v);
     mangrove_draw_boat(r, g, v);
     draw_player_at(r, player_px, player_py,

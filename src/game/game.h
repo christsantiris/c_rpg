@@ -206,6 +206,7 @@ typedef struct {
     int direction[2];
     int next_direction[2];
     unsigned char warned[2][STORM_MASK_BYTES];
+    int wind_elapsed_ms;
     int braced;
 } StormwatchStage;
 

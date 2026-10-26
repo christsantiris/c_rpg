@@ -37,3 +37,17 @@ Actual SDL game captures:
 
 The generator asserts both poses' visible bounds and foot alignment; the SDL
 integration test draws every new enemy inside the actual adventure renderer.
+
+Wind feedback captures from the actual SDL renderer:
+
+- [Two-second warning](stormwatch-wind-warning2.png).
+- [One-second warning and contextual brace prompt](stormwatch-wind-warning1.png).
+- [Start of the gust displacement](stormwatch-wind-push-start.png).
+- [Player at the destination tile](stormwatch-wind-push-end.png).
+
+Keyboard regression checks exercise the application's left-key handler and
+normal player/enemy action sequence on generated terrain. They verify deliberate
+bracing, arrow movement, actual tile displacement and animation completion.
+Idle-frame checks run the same environmental clock as the main application,
+including a real SDL clock run without key events. Menu pauses and exact partial
+seconds are covered; idle wind gives enemies no additional turns.

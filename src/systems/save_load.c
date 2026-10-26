@@ -1160,6 +1160,7 @@ static cJSON *serialize_stormwatch(const GameState *g) {
         cJSON *entry = cJSON_CreateObject();
         cJSON_AddNumberToObject(entry, "valid", state.valid);
         cJSON_AddNumberToObject(entry, "braced", state.braced);
+        cJSON_AddNumberToObject(entry, "wind_elapsed_ms", state.wind_elapsed_ms);
         for (int lane = 0; lane < 2; lane++) {
             char key[32];
             snprintf(key, sizeof(key), "phase%d", lane);
@@ -1209,6 +1210,10 @@ static int load_stormwatch(const cJSON *root, GameState *g, int version) {
         StormwatchStage *state = &g->stormwatch[n];
         const cJSON *entry = cJSON_GetArrayItem(array, n);
         if (!stormwatch_number(entry, "valid", &state->valid) || !stormwatch_number(entry, "braced", &state->braced)) {
+            return 0;
+        }
+        // Earlier Stormwatch saves start with a full second until the next step.
+        if (version >= 199 && !stormwatch_number(entry, "wind_elapsed_ms", &state->wind_elapsed_ms)) {
             return 0;
         }
         for (int lane = 0; lane < 2; lane++) {
@@ -1314,7 +1319,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 198);
+    cJSON_AddNumberToObject(root, "save_version", 199);
     cJSON_AddItemToObject(root, "stormwatch", serialize_stormwatch(g));
     cJSON_AddNumberToObject(root, "stormwatch_defeated", g->stormwatch_defeated);
     MangroveState mangrove = g->mangroves;

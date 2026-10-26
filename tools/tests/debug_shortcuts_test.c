@@ -143,6 +143,93 @@ static void test_stonewake_renderer(Renderer *r, GameState *g, SDL_Surface *surf
     printf("PASS: all five Stonewake sprites render at native scale, with three distinct crane poses, workshops and a distinct warhammer icon.\n");
 }
 
+static void clock_step(GameState *g, StormwatchClock *clock, Uint32 *now) {
+    *now += STORM_WIND_STEP_MS;
+    assert(update_stormwatch_clock(g, clock, *now, 0));
+}
+
+static void test_stormwatch_input(GameState *g) {
+    game_init(g);
+    stormwatch_enter(g, 0);
+    g->enemy_count = 0;
+    g->player.x = 48;
+    g->player.y = 24;
+    StormwatchClock clock = {0};
+    Uint32 now = 100;
+    assert(!update_stormwatch_clock(g, &clock, now, 0));
+    clock_step(g, &clock, &now);
+    clock_step(g, &clock, &now);
+    assert(g->stormwatch[0].phase[0] == 1 && move_left_action(g, SDL_SCANCODE_A).type == ACTION_MOVE);
+    // A single arrow step enters the exposed strip; no held/repeated key is needed.
+    action_resolve_player(g, (Action){ACTION_MOVE, 48, 23});
+    action_resolve_enemies(g);
+    assert(g->player.x == 48 && g->player.y == 23 && g->stormwatch[0].phase[0] == 1);
+    clock_step(g, &clock, &now);
+    assert(g->stormwatch[0].phase[0] == 2);
+    clock_step(g, &clock, &now);
+    assert(g->stormwatch[0].phase[0] == 3);
+    combat_feedback_clear();
+    clock_step(g, &clock, &now);
+    assert(g->player.x == 49 && g->player.y == 23);
+    const CombatFeedbackEvent *event = combat_feedback_get(combat_feedback_count() - 1);
+    assert(event->kind == FEEDBACK_PLAYER_PUSH);
+    int x = 240;
+    int y = 240;
+    game_player_push_offset(g, event->created_at, &x, &y);
+    assert(x == 216 && y == 240);
+    x = 240;
+    game_player_push_offset(g, event->created_at + PUSH_ANIMATION_MS / 2, &x, &y);
+    assert(x == 228 && y == 240);
+    x = 240;
+    game_player_push_offset(g, event->created_at + PUSH_ANIMATION_MS, &x, &y);
+    assert(x == 240 && y == 240 && g->player.x == 49);
+    // Reach the next final warning without issuing any player actions.
+    for (int step = 0; step < 5; step++) {
+        clock_step(g, &clock, &now);
+    }
+    assert(move_left_action(g, SDL_SCANCODE_A).type == ACTION_INTERACT);
+    assert(move_left_action(g, SDL_SCANCODE_LEFT).type == ACTION_MOVE);
+    action_resolve_player(g, move_left_action(g, SDL_SCANCODE_A));
+    action_resolve_enemies(g);
+    assert(g->stormwatch[0].braced && g->stormwatch[0].phase[0] == 3);
+    now += 999;
+    assert(!update_stormwatch_clock(g, &clock, now, 0) && g->stormwatch[0].braced);
+    now++;
+    assert(update_stormwatch_clock(g, &clock, now, 0));
+    assert(g->player.x == 49 && !g->stormwatch[0].braced);
+    // Menus/focus loss discard wall-clock gaps and preserve a partial second.
+    g->stormwatch[0].wind_elapsed_ms = 600;
+    int phase = g->stormwatch[0].phase[0];
+    now += 60000;
+    assert(!update_stormwatch_clock(g, &clock, now, 1));
+    assert(g->stormwatch[0].phase[0] == phase && g->stormwatch[0].wind_elapsed_ms == 600 && g->player.x == 49);
+    now += 60000;
+    assert(!update_stormwatch_clock(g, &clock, now, 0));
+    now += 399;
+    assert(!update_stormwatch_clock(g, &clock, now, 0) && g->stormwatch[0].wind_elapsed_ms == 999);
+    now++;
+    assert(update_stormwatch_clock(g, &clock, now, 0) && g->stormwatch[0].phase[0] == (phase + 1) % 6);
+    stormwatch_change_level(g, 1);
+    now += 60000;
+    assert(!update_stormwatch_clock(g, &clock, now, 0) && !g->stormwatch[1].wind_elapsed_ms);
+    // Use SDL's actual clock too: no key event and no enemy turn is issued here.
+    stormwatch_enter(g, 0);
+    g->enemy_count = 0;
+    g->player.x = 48;
+    g->player.y = 24;
+    g->stormwatch[0].phase[0] = 1;
+    clock = (StormwatchClock){0};
+    Uint32 started = SDL_GetTicks();
+    update_stormwatch_clock(g, &clock, started, 0);
+    while (g->player.x == 48 && SDL_GetTicks() - started < 5 * STORM_WIND_STEP_MS) {
+        update_stormwatch_clock(g, &clock, SDL_GetTicks(), 0);
+        SDL_Delay(10);
+    }
+    assert(g->player.x == 49 && g->player.y == 24 && !g->enemy_count);
+    printf("PASS: a single arrow step followed by idle frames triggers a visible gust; bracing survives until the gust; menus pause the exact clock without catching up.\n");
+    printf("PASS: SDL wall-clock frames push a standing character without any key event or enemy turn.\n");
+}
+
 static void test_stormwatch_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
     game_init(g);
     stormwatch_enter(g, 0);
@@ -580,6 +667,7 @@ int main(void) {
     game->player.y = 14;
     action_resolve_player(game, (Action){ACTION_MOVE, ESCAPE_TUNNEL_W - 1, 14});
     assert(game->location == LOCATION_TOWN4 && game->jail_quest_state == 3 && game->gold == gold + ESCAPE_REWARD_GOLD);
+    test_stormwatch_input(game);
     free(game);
     renderer_free(&renderer);
     SDL_DestroyRenderer(sdl);

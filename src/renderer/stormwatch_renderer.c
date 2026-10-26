@@ -134,23 +134,26 @@ void stormwatch_draw_warnings(Renderer *r, const GameState *g, const Viewport *v
 }
 
 void stormwatch_draw_hint(Renderer *r, const GameState *g) {
-    const char *hint = stormwatch_hint(g);
-    if (!hint) {
+    if (g->location != LOCATION_STORMWATCH) {
         return;
     }
+    const char *hint = stormwatch_hint(g);
     const StormwatchStage *state = &g->stormwatch[g->level - 1];
     const char *directions[] = {"EAST", "SOUTH", "WEST", "NORTH"};
     char text[180];
-    int lane = state->phase[0] == 2 || state->phase[0] == 3 ? 0 : 1;
+    int lane = state->phase[0] >= 2 && state->phase[0] <= 4 ? 0 : 1;
     int warning = (lane == 0 || g->level >= 3) && (state->phase[lane] == 2 || state->phase[lane] == 3);
     char wind[48];
     int marked = stormwatch_wind_marks(g, 0, g->player.x, g->player.y) || stormwatch_wind_marks(g, 1, g->player.x, g->player.y);
     if (warning) {
-        snprintf(wind, sizeof(wind), "GUST %s: %d", directions[state->direction[lane]], 4 - state->phase[lane]);
+        int remaining = (4 - state->phase[lane]) * STORM_WIND_STEP_MS - state->wind_elapsed_ms;
+        snprintf(wind, sizeof(wind), "GUST %s: %.1fs", directions[state->direction[lane]], remaining / 1000.0);
+    } else if ((lane == 0 || g->level >= 3) && state->phase[lane] == 4) {
+        snprintf(wind, sizeof(wind), "GUST %s!", directions[state->direction[lane]]);
     } else {
         snprintf(wind, sizeof(wind), "WIND CALM");
     }
-    snprintf(text, sizeof(text), "%s  |  %s%s  |  %s", stormwatch_stage_name(g->level), wind, warning && !marked ? " / SHELTERED" : "", hint);
+    snprintf(text, sizeof(text), "%s  |  %s%s%s%s", stormwatch_stage_name(g->level), wind, warning && !marked ? " / SHELTERED" : "", hint ? "  |  " : "", hint ? hint : "");
     box(r, 52, 8, r->screen_w - 260, 24, (SDL_Color){21, 32, 36, 230});
     renderer_draw_text(r, text, 60, 12, (SDL_Color){225, 210, 158, 255}, r->font_tiny);
 }

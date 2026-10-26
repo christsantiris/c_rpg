@@ -63,16 +63,17 @@ its art depicts wings or swirling air.
 
 ## Predictable gusts
 
-Wind is a spatial movement mechanic. It does not change attack accuracy or
-advance while the player is idle. Each exposed lane follows a visible cycle:
-two calm actions, two warning actions, one gust action, then one recovery
-action before the next cycle. Initial encounters use a single lane; later
+Wind is a spatial movement mechanic. It does not change attack accuracy and
+continues while the player stands still. Each exposed lane follows a visible cycle:
+two calm seconds, two warning seconds, one gust second, then one recovery
+second before the next cycle. Initial encounters use a single lane; later
 stages combine two lanes with staggered cycles.
 
 During the warning, arrows mark the exact affected ground and direction, and
 the intended one-tile landing is shown beside the player. The warned cells
-and direction lock until that gust resolves. A normal action advances the
-cycle with the enemy turn; menus and cosmetic animation do not.
+and direction lock until that gust resolves. An independent environmental clock
+advances the cycle without granting enemy turns. Menus, loss of focus and
+projectile/transition animations pause it.
 
 A gust pushes an unbraced player or Harpy Raider one cardinal tile. A wall,
 closed shutter, occupied square, water, cliff, exit or other unsafe destination
@@ -85,8 +86,10 @@ wind use the same cover rules. Gargoyles visibly plant their claws; Storm
 Elementals move with the air. These two types resist displacement.
 
 On an exposed tile without an adjacent interaction prop, **Interact** (`A` by
-default) braces for the next enemy phase. Bracing consumes the action, prevents
-that phase's gust displacement and grants no attack protection. It expires
+default) braces during the final warning second for the scheduled gust.
+Bracing consumes a combat action and holds until the gust or another player
+action. It prevents that phase's gust displacement and grants no attack
+protection. It expires
 after the phase, so it creates a deliberate choice between holding position,
 attacking or moving into shelter. Every class can brace without equipment or
 consumables.
@@ -136,7 +139,7 @@ they grant no repeat loot. The wind cycle remains predictable and keeps its
 current phase when the boss changes phase.
 
 Freezing the boss preserves her pending target and recovery. Environmental
-wind continues on normal actions. Landing recovery remains the player's
+wind continues on its independent clock. Landing recovery remains the player's
 reliable opening in both phases. First victory grants 220 gold and 2,600 score; the Matriarch grants 450 combat XP.
 A possible Dawnmere quest remains a separate feature.
 

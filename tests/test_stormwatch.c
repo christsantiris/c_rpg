@@ -1,6 +1,7 @@
 #include "test_utils.h"
 #include "game/stormwatch.h"
 #include "game/approach.h"
+#include "game/combat_feedback.h"
 #include "game/town_road.h"
 #include "screens/quest_journal.h"
 #include "systems/save_load.h"
@@ -67,7 +68,7 @@ static void wind_fixture(GameState *g) {
     stormwatch_wind(g); // Capture the exact two-action warning.
 }
 
-static void legacy_version(void) {
+static void legacy_version(int version) {
     char path[80];
     snprintf(path, sizeof(path), "saves/savegame_%d.json", STORM_SLOT);
     FILE *file = fopen(path, "rb");
@@ -82,9 +83,16 @@ static void legacy_version(void) {
     fclose(file);
     cJSON *root = cJSON_Parse(buffer);
     free(buffer);
-    cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 197);
-    cJSON_DeleteItemFromObject(root, "stormwatch");
-    cJSON_DeleteItemFromObject(root, "stormwatch_defeated");
+    cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), version);
+    if (version < 198) {
+        cJSON_DeleteItemFromObject(root, "stormwatch");
+        cJSON_DeleteItemFromObject(root, "stormwatch_defeated");
+    } else {
+        cJSON *stage;
+        cJSON_ArrayForEach(stage, cJSON_GetObjectItem(root, "stormwatch")) {
+            cJSON_DeleteItemFromObject(stage, "wind_elapsed_ms");
+        }
+    }
     char *json = cJSON_PrintUnformatted(root);
     file = fopen(path, "wb");
     fwrite(json, 1, strlen(json), file);
@@ -174,6 +182,51 @@ void test_stormwatch(void) {
     stormwatch_leave(g);
     stormwatch_enter(g, 0);
     ASSERT("fresh physical entry respawns enemies at stage one", g->level == 1 && g->enemy_count > 0 && g->enemies[0].active);
+    // An arrow step changes position, while idle elapsed time supplies the gust.
+    stormwatch_enter(g, 0);
+    g->enemy_count = 0;
+    game_update_level_progress(g);
+    g->player.x = 48;
+    g->player.y = 24;
+    combat_feedback_clear();
+    action_resolve_player(g, (Action){ACTION_MOVE, 48, 23});
+    action_resolve_enemies(g);
+    ASSERT("player and enemy turns do not advance the environmental wind clock", g->stormwatch[0].phase[0] == 5 && g->player.x == 48 && g->player.y == 23);
+    ASSERT("a partial idle second does not fire a gust early", !stormwatch_advance_wind(g, 999) && g->stormwatch[0].phase[0] == 5 && g->stormwatch[0].wind_elapsed_ms == 999);
+    stormwatch_advance_wind(g, 1);
+    for (int second = 0; second < 4; second++) {
+        stormwatch_advance_wind(g, STORM_WIND_STEP_MS);
+    }
+    ASSERT("a single step followed by idle time pushes the standing character east", g->player.x == 49 && g->player.y == 23 && g->stormwatch[0].phase[0] == 4);
+    ASSERT("gust still acts after all enemies are defeated", g->level_cleared && !g->enemy_count);
+    const CombatFeedbackEvent *push = combat_feedback_count() ? combat_feedback_get(combat_feedback_count() - 1) : NULL;
+    ASSERT("a real displacement creates a directional animation event", push && push->kind == FEEDBACK_PLAYER_PUSH && push->x == 49 && push->y == 23 && push->amount == 0);
+    ASSERT("gust reports its actual displacement to the player", strstr(g->messages[g->message_count - 1], "pushes you one tile east") != NULL);
+    ASSERT("gust recovery offers movement rather than an accidental brace", !game_has_regional_interaction(g));
+    g->enemies[0] = (Enemy){.active = 1, .type = ENEMY_CLIFF_GARGOYLE, .x = 20, .y = 23, .hp = 31, .max_hp = 64, .move_timer = 2, .frozen_turns = 2};
+    g->enemy_count = 1;
+    Enemy stationary = g->enemies[0];
+    int hp = g->player.hp;
+    for (int second = 0; second < 6; second++) {
+        stormwatch_advance_wind(g, STORM_WIND_STEP_MS);
+    }
+    ASSERT("idle wind does not give enemies turns or advance their freeze and attack timers", !memcmp(&stationary, &g->enemies[0], sizeof(Enemy)) && g->player.hp == hp && g->player.x == 50);
+    wind_fixture(g);
+    stormwatch_advance_wind(g, STORM_WIND_STEP_MS);
+    action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
+    action_resolve_enemies(g);
+    ASSERT("bracing persists while waiting for the actual gust", g->stormwatch[0].braced && g->stormwatch[0].phase[0] == 3);
+    stormwatch_advance_wind(g, 999);
+    ASSERT("idle fractions preserve the brace", g->stormwatch[0].braced && g->player.x == 24);
+    stormwatch_advance_wind(g, 1);
+    ASSERT("the clocked gust consumes the brace and leaves the player standing", !g->stormwatch[0].braced && g->player.x == 24);
+    wind_fixture(g);
+    stormwatch_advance_wind(g, STORM_WIND_STEP_MS);
+    action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
+    action_resolve_player(g, (Action){ACTION_MOVE, 24, 23});
+    ASSERT("moving releases a held brace", !g->stormwatch[0].braced);
+    stormwatch_advance_wind(g, STORM_WIND_STEP_MS);
+    ASSERT("a moving player becomes exposed to the next timed gust", g->player.x == 25 && g->player.y == 23);
     wind_fixture(g);
     ASSERT("gust warning covers the exact exposed ground", stormwatch_wind_marks(g, 0, 24, 24) && g->stormwatch[0].phase[0] == 2);
     stormwatch_wind(g);
@@ -190,6 +243,7 @@ void test_stormwatch(void) {
     stormwatch_wind(g);
     stormwatch_wind(g);
     ASSERT("gust never throws the player into water", g->player.x == 24);
+    ASSERT("blocked gust explains why the player stays put", strstr(g->messages[g->message_count - 1], "landing is blocked") != NULL);
     wind_fixture(g);
     g->stormwatch[0].next_direction[0] = 2;
     ASSERT("next wind direction cannot change the declared gust", g->stormwatch[0].direction[0] == 0);
@@ -234,12 +288,30 @@ void test_stormwatch(void) {
     ASSERT("away expedition saves", save_game(loaded, STORM_SLOT) && load_game(g, STORM_SLOT));
     game_use_town_portal(g);
     ASSERT("portal restores the expedition with wind and loot intact", g->location == LOCATION_STORMWATCH && g->player.x == 24 && g->player.y == 24 && g->stormwatch[0].phase[0] == 2 && g->floor_item_count == 1 && g->gold == 777);
+    wind_fixture(g);
+    stormwatch_advance_wind(g, STORM_WIND_STEP_MS);
+    stormwatch_advance_wind(g, 740);
+    ASSERT("a partially elapsed gust warning saves", save_game(g, STORM_SLOT) && load_game(loaded, STORM_SLOT) && loaded->stormwatch[0].phase[0] == 3 && loaded->stormwatch[0].wind_elapsed_ms == 740);
+    stormwatch_advance_wind(loaded, 259);
+    ASSERT("loaded wind retains its exact remaining fraction", loaded->player.x == 24 && loaded->stormwatch[0].wind_elapsed_ms == 999);
+    stormwatch_advance_wind(loaded, 1);
+    ASSERT("loaded idle gust pushes at its saved deadline", loaded->player.x == 25 && loaded->stormwatch[0].phase[0] == 4 && !loaded->stormwatch[0].wind_elapsed_ms);
+    ASSERT("version198 fixture saves", save_game(g, STORM_SLOT));
+    legacy_version(198);
+    ASSERT("version198 wind saves preserve map, player and warning with a fresh second", load_game(loaded, STORM_SLOT) && loaded->location == LOCATION_STORMWATCH && loaded->player.x == g->player.x && loaded->stormwatch[0].phase[0] == 3 && !loaded->stormwatch[0].wind_elapsed_ms &&
+        !memcmp(loaded->map.tiles, g->map.tiles, sizeof(g->map.tiles)));
+    stormwatch_change_level(g, 1);
+    ASSERT("cached partial wind clocks survive saves on another stage", save_game(g, STORM_SLOT) && load_game(loaded, STORM_SLOT) && loaded->stormwatch[0].wind_elapsed_ms == 740 && loaded->level == 2);
+    stormwatch_change_level(loaded, 0);
+    ASSERT("backtracking restores the saved wind fraction", loaded->stormwatch[0].wind_elapsed_ms == 740 && loaded->stormwatch[0].phase[0] == 3);
+    loaded->stormwatch[0].wind_elapsed_ms = STORM_WIND_STEP_MS;
+    ASSERT("out-of-range wind fractions are rejected", !save_game(loaded, STORM_SLOT));
     game_init(g);
     game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
     g->map.tiles[12][TOWN_W - 1] = TILE_WALL;
     g->gold = 321;
     int saved = save_game(g, STORM_SLOT);
-    legacy_version();
+    legacy_version(197);
     ASSERT("version197 Dawnmere saves gain the east exit and preserve progress", saved && load_game(loaded, STORM_SLOT) && loaded->gold == 321 && loaded->map.tiles[12][TOWN_W - 1] == TILE_TOWN_EXIT);
     stormwatch_enter(loaded, 0);
     loaded->stormwatch[0].phase[0] = 9;
@@ -282,7 +354,7 @@ void test_stormwatch(void) {
         .attack_phase = 1, .boss_attack = STORM_DIVE, .attack_target_x = 20, .attack_target_y = 24, .boss_aux_x = 22, .boss_aux_y = 24, .facing_dx = 1};
     g->enemy_count = 1;
     action_resolve_enemies(g);
-    ASSERT("freezing preserves attack preparation while environmental time advances", g->enemies[0].move_timer == 2 && g->enemies[0].frozen_turns == 1 && g->stormwatch[0].phase[0] == 3);
+    ASSERT("enemy turns preserve frozen preparation without advancing the wind clock", g->enemies[0].move_timer == 2 && g->enemies[0].frozen_turns == 1 && g->stormwatch[0].phase[0] == 2);
     ASSERT("pending attack and freeze round trip exactly", save_game(g, STORM_SLOT) && load_game(loaded, STORM_SLOT) && loaded->enemies[0].attack_phase && loaded->enemies[0].boss_aux_x == 22 && loaded->enemies[0].frozen_turns == 1);
     Enemy gargoyle = {.type = ENEMY_CLIFF_GARGOYLE, .x = 20, .y = 20, .facing_dx = 1, .defense = 7};
     ASSERT("gargoyle armor rewards flanking", stormwatch_defense(&gargoyle, 21, 20) == 7 && stormwatch_defense(&gargoyle, 19, 20) == 2);
@@ -305,7 +377,7 @@ void test_stormwatch(void) {
     g->map.tiles[TOWN_ROAD_H / 2][TOWN_ROAD_W - 1] = TILE_WALL;
     g->gold = 888;
     saved = save_game(g, STORM_SLOT);
-    legacy_version();
+    legacy_version(197);
     ASSERT("old Dawnmere exterior gains its east continuation", saved && load_game(loaded, STORM_SLOT) && loaded->location == LOCATION_TOWN_ROAD && loaded->gold == 888 && loaded->map.tiles[TOWN_ROAD_H / 2][TOWN_ROAD_W - 1] == TILE_TOWN_ROAD_EXIT_EAST);
     char path[80];
     snprintf(path, sizeof(path), "saves/savegame_%d.json", STORM_SLOT);

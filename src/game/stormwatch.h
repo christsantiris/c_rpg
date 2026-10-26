@@ -5,6 +5,8 @@
 
 enum { STORM_DIVE = 1, STORM_SWEEP, STORM_LIGHTNING, STORM_BURST };
 
+#define STORM_WIND_STEP_MS 1000
+
 const char *stormwatch_stage_name(int level);
 void stormwatch_generate(Map *map, int level);
 void stormwatch_capture(const GameState *g, StormwatchStage *state);
@@ -18,6 +20,7 @@ int stormwatch_travel(GameState *g, int x, int y);
 int stormwatch_interact(GameState *g);
 const char *stormwatch_hint(const GameState *g);
 void stormwatch_wind(GameState *g);
+int stormwatch_advance_wind(GameState *g, Uint32 elapsed);
 int stormwatch_wind_marks(const GameState *g, int lane, int x, int y);
 int stormwatch_tick(GameState *g, Enemy *enemy, int *damage);
 int stormwatch_attack_marks(const GameState *g, const Enemy *enemy, int x, int y);
