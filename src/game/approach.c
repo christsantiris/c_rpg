@@ -43,13 +43,13 @@ const char *approach_area_name(Location area) {
     switch (area) {
         case LOCATION_STORMWATCH: return "STORMWATCH HEADLAND";
         case LOCATION_DUNGEON: return "DUNGEON";
-        case LOCATION_FOREST: return "FOREST";
+        case LOCATION_FOREST: return "HAUNTED FOREST";
         case LOCATION_MOUNTAINS: return "GOBLIN MOUNTAINS";
         case LOCATION_COAST: return "SUNKEN COAST";
         case LOCATION_MANGROVES: return "SALTWIND MARSH";
-        case LOCATION_SWAMP: return "SWAMP";
+        case LOCATION_SWAMP: return "BLACKWATER SWAMP";
         case LOCATION_DRAGONSPINE: return "DRAGONSPINE";
-        case LOCATION_FROSTFELL: return "FROSTFELL";
+        case LOCATION_FROSTFELL: return "FROSTFELL WASTES";
         case LOCATION_DESERT: return "SUNSCAR WASTES";
         case LOCATION_ASHEN: return "ASHEN HOLLOW";
         case LOCATION_GLASSDEEP: return "STONEWAKE QUARRY";

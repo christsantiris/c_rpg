@@ -31,7 +31,7 @@ static const QuestDefinition quest_definitions[17] = {
         "Return and speak to Dain in Ridgeshire's town center.",
         {"Defeat Archer Map Bearer", "Defeat Bomber Map Bearer",
             "Defeat Shaman Map Bearer"},
-        "Mountains", {2, 3, 4}, 60, 400
+        "Goblin Mountains", {2, 3, 4}, 60, 400
     },
     {
         "The Lost Wardens", "Alder",
@@ -39,7 +39,7 @@ static const QuestDefinition quest_definitions[17] = {
         "Return and speak to Alder in Stillbury's Inn.",
         {"Rescue forest warden", "Rescue forest warden",
             "Rescue forest warden"},
-        "Forest", {2, 3, 4}, 70, 500
+        "Haunted Forest", {2, 3, 4}, 70, 500
     },
     {
         "Relight the Drowned Beacons", "Mara",
@@ -47,7 +47,7 @@ static const QuestDefinition quest_definitions[17] = {
         "Return and speak to Mara in Oakhaven's Tavern.",
         {"Light drowned beacon", "Light drowned beacon",
             "Light drowned beacon"},
-        "Coast", {2, 3, 4}, 80, 600
+        "Sunken Coast", {2, 3, 4}, 80, 600
     },
     {
         "The Buried Sun", "Nahla",
@@ -61,7 +61,7 @@ static const QuestDefinition quest_definitions[17] = {
         "Find the labyrinth by the forest road; light five runes and defeat the Minotaur.",
         "Return the ivory rook to Rook in Oakhaven's Tavern.",
         {"Recover the ivory rook", "", ""},
-        "Stillbury Labyrinth", {5, 0, 0}, ROOK_QUEST_REWARD, 500
+        "Rook's Labyrinth", {5, 0, 0}, ROOK_QUEST_REWARD, 500
     },
     {
         "Bring Mira Home", "Bram",
@@ -285,8 +285,8 @@ int quest_journal_get_boss(const GameState *g, int index, BossJournalEntry *entr
         "Fallen Sun Guardian", "Swamp Demon", "Red Dragon", "Polar Kraken", "Desert Pharaoh", "Cinder Lord", "Quarry Colossus", "Minotaur", "Grave Marshal", "Castellan", "Royal Arcanist", "Lord Veyr", "Elderthorn", "Sszareth, Keeper of the Roots", "Tempest Matriarch"
     };
     static const char *areas[JOURNAL_BOSS_COUNT] = {
-        "Dungeon", "Forest", "Goblin Mountains", "Sunken Coast",
-        "Ruined Temple", "Blackwater Swamp", "Dragonspine", "Frostfell Wastes", "Sunscar Wastes", "Ashen Hollow", "Stonewake Quarry", "Labyrinth", "Royal Catacombs", "Castle: Iron Keep", "Castle: Crown Chapel", "Castle: Throne", "Elderwood Forest", "Saltwind Marsh", "Stormwatch Headland"
+        "Dungeon", "Haunted Forest", "Goblin Mountains", "Sunken Coast",
+        "Ruined Temple", "Blackwater Swamp", "Dragonspine", "Frostfell Wastes", "Sunscar Wastes", "Ashen Hollow", "Stonewake Quarry", "Rook's Labyrinth", "Royal Catacombs", "Castle: Iron Keep", "Castle: Crown Chapel", "Castle: Throne", "Elderwood Forest", "Saltwind Marsh", "Stormwatch Headland"
     };
     static const Location regions[JOURNAL_BOSS_COUNT] = {
         LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST,
