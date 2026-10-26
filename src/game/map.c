@@ -2040,7 +2040,7 @@ static int place_lake_hole(Map *m, int x, int y) {
 }
 
 static void freeze_kraken_lake(Map *m) {
-    // The last clearing freezes into the Polar Kraken's lake, with up to six
+    // The last clearing freezes into the Frost Kraken's lake, with up to six
     // holes around the centre where its tentacles break through. A hole needs
     // open ice on all eight sides so it can never cut off part of the lake.
     static const int hole_dx[6] = {-3, 3, -4, 4, -1, 1};

@@ -58,7 +58,7 @@ searches consume an action.
 | Lizardfolk Scout | 1 | Light melee hunter. |
 | Reed Spearhunter | 1 | Warns before a two-square straight thrust. |
 | Marsh Spitter | 2 | Warns before spitting at a fixed target; roots stop its sightline. |
-| Mudback Turtle | 3 | Slow, armored creature with a committed charge and an exposed recovery. |
+| Giant Crab | 3 | Reuses the armored Sunken Coast crab; moves every other turn and attacks in melee. |
 | Lizardfolk Scaleguard | 4 | Armored warrior whose spear sweep gives two actions to escape. |
 | Sszareth, Keeper of the Roots | 5 | Heavy spear sweep, committed charge and one finite half-health reinforcement wave. |
 

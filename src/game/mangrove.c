@@ -455,6 +455,12 @@ int mangrove_interact(GameState *g) {
     return 1;
 }
 
+static int valid_enemy_type(EnemyType type) {
+    return type == ENEMY_GIANT_CRAB ||
+        (type >= ENEMY_LIZARDFOLK_SCOUT && type <= ENEMY_MARSH_SPITTER) ||
+        (type >= ENEMY_LIZARDFOLK_SCALEGUARD && type <= ENEMY_SSZARETH);
+}
+
 static int valid_record(const MangroveState *state) {
     if ((state->initialized != 0 && state->initialized != 1) || (state->aboard != 0 && state->aboard != 1)) {
         return 0;
@@ -482,7 +488,7 @@ static int valid_record(const MangroveState *state) {
     for (int i = 0; i < state->enemy_count; i++) {
         const Enemy *enemy = &state->enemies[i];
         if (enemy->active && (!inside(enemy->x, enemy->y) || !map_is_walkable(&map, enemy->x, enemy->y) ||
-            enemy->type < ENEMY_LIZARDFOLK_SCOUT || enemy->type > ENEMY_SSZARETH)) {
+            !valid_enemy_type(enemy->type))) {
             return 0;
         }
     }
@@ -521,7 +527,7 @@ int mangrove_state_valid(const GameState *g) {
         for (int i = 0; i < g->enemy_count; i++) {
             const Enemy *enemy = &g->enemies[i];
             if (enemy->active && (!inside(enemy->x, enemy->y) || !map_is_walkable(&map, enemy->x, enemy->y) ||
-                enemy->type < ENEMY_LIZARDFOLK_SCOUT || enemy->type > ENEMY_SSZARETH)) {
+                !valid_enemy_type(enemy->type))) {
                 return 0;
             }
         }

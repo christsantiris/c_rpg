@@ -105,12 +105,15 @@ static void test_full_delta(GameState *g, GameState *loaded) {
         ASSERT("all four landings connect to the same navigable water network", ports);
         int encounters = 1;
         int bosses = 0;
+        int crabs = 0;
         for (int i = 0; i < g->enemy_count; i++) {
             Enemy *enemy = &g->enemies[i];
             encounters &= shore[enemy->y][enemy->x] && map_is_walkable(&g->map, enemy->x, enemy->y);
             bosses += enemy->is_boss;
+            crabs += enemy->type == ENEMY_GIANT_CRAB;
         }
         ASSERT("every enemy can be reached on foot after docking; only stage five has a boss", encounters && bosses == (stage == MANGROVE_DEPTH));
+        ASSERT("stage three reuses Giant Crabs from Sunken Coast", crabs == (stage == 3 ? 3 : 0));
         ASSERT("both boundary jetties can be reached from a landing", shore[g->map.stairs_up_y][g->map.stairs_up_x] && shore[g->map.stairs_down_y][g->map.stairs_down_x] &&
             (g->map.stairs_down_x == 0 || g->map.stairs_down_x == MANGROVE_W - 1 || g->map.stairs_down_y == 0 || g->map.stairs_down_y == MANGROVE_H - 1));
         int caches = 1;
@@ -286,6 +289,24 @@ static int make_legacy_delta_save(int version, int boat_on_jetty) {
         cJSON_DeleteItemFromObject(delta, "enemies");
     }
     cJSON *delta = cJSON_GetObjectItem(root, "mangroves");
+    if (version == 200) {
+        cJSON *stage = cJSON_GetArrayItem(cJSON_GetObjectItem(root, "mangrove_stages"), 2);
+        cJSON *rosters[] = {cJSON_GetObjectItem(root, "enemies"),
+            cJSON_GetObjectItem(delta, "enemies"), cJSON_GetObjectItem(stage, "enemies")};
+        for (int i = 0; i < 3; i++) {
+            cJSON *enemy;
+            cJSON_ArrayForEach(enemy, rosters[i]) {
+                if (cJSON_GetObjectItem(enemy, "type")->valueint == ENEMY_GIANT_CRAB) {
+                    cJSON_SetNumberValue(cJSON_GetObjectItem(enemy, "type"), 110);
+                    cJSON_SetValuestring(cJSON_GetObjectItem(enemy, "name"), "Retired shore actor");
+                    cJSON_SetNumberValue(cJSON_GetObjectItem(enemy, "attack_phase"), 1);
+                    cJSON_SetNumberValue(cJSON_GetObjectItem(enemy, "boss_attack"), 3);
+                    cJSON_SetNumberValue(cJSON_GetObjectItem(enemy, "move_timer"), -2);
+                    cJSON_SetNumberValue(cJSON_GetObjectItem(enemy, "defense"), 0);
+                }
+            }
+        }
+    }
     if (boat_on_jetty) {
         // This water square in the pilot is now covered by the onward jetty.
         cJSON_SetNumberValue(cJSON_GetObjectItem(delta, "boat_x"), 59);
@@ -303,6 +324,59 @@ static int make_legacy_delta_save(int version, int boat_on_jetty) {
     }
     free(text);
     return ok;
+}
+
+static void test_recurring_crabs(GameState *g, GameState *loaded) {
+    game_init(g);
+    mangrove_enter(g, 0);
+    mangrove_change_level(g, 1);
+    mangrove_change_level(g, 1);
+    Enemy *crab = &g->enemies[0];
+    ASSERT("the third-stage shore encounter is the shared Giant Crab", crab->type == ENEMY_GIANT_CRAB);
+    crab->hp = 7;
+    crab->frozen_turns = 2;
+    g->enemies[3].active = 0;
+    g->enemies[3].hp = 0;
+    Enemy before = *crab;
+    int ok = save_game(g, DELTA_SLOT) && make_legacy_delta_save(200, 0) && load_game(loaded, DELTA_SLOT);
+    const Enemy *actors[] = {&loaded->enemies[0], &loaded->mangroves.enemies[0], &loaded->mangrove_stages[2].enemies[0]};
+    int preserved = ok;
+    for (int i = 0; i < 3 && preserved; i++) {
+        const Enemy *enemy = actors[i];
+        preserved &= enemy->type == ENEMY_GIANT_CRAB && strcmp(enemy->name, "Giant Crab") == 0 &&
+            enemy->x == before.x && enemy->y == before.y && enemy->hp == 7 && enemy->max_hp == before.max_hp &&
+            enemy->frozen_turns == 2 && !enemy->attack_phase && !enemy->boss_attack && enemy->defense == 6;
+    }
+    ASSERT("legacy live and cached shore creatures retain wounds and freeze while their retired charge is cleared", preserved);
+    ASSERT("legacy migration preserves dead shore creatures and valid skiff state", ok &&
+        !loaded->enemies[3].active && !loaded->mangrove_stages[2].enemies[3].active && mangrove_state_valid(loaded));
+    ASSERT("migrated crabs round-trip without resetting marsh progression", ok && save_game(loaded, DELTA_SLOT) &&
+        load_game(g, DELTA_SLOT) && g->level == 3 && g->enemies[0].hp == 7 && g->enemies[0].type == ENEMY_GIANT_CRAB);
+    if (!ok) {
+        return;
+    }
+    int cx;
+    int cy;
+    mangrove_island(3, 1, &cx, &cy);
+    for (int x = cx - 3; x <= cx + 3; x++) {
+        g->map.tiles[cy][x] = TILE_MANGROVE_MUD;
+    }
+    g->enemy_count = 1;
+    crab = &g->enemies[0];
+    crab->x = cx - 2;
+    crab->y = cy;
+    crab->move_timer = 0;
+    crab->frozen_turns = 0;
+    g->player.x = cx + 2;
+    g->player.y = cy;
+    int damage = 0;
+    mangrove_tick(g, crab, &damage);
+    ASSERT("marsh crabs rest on their first movement turn", crab->x == cx - 2 && !damage && !crab->attack_phase);
+    mangrove_tick(g, crab, &damage);
+    ASSERT("marsh crabs advance once on alternate turns without charging", crab->x == cx - 1 && !damage && !crab->attack_phase);
+    g->player.x = crab->x + 1;
+    mangrove_tick(g, crab, &damage);
+    ASSERT("the recurring crab still attacks adjacent players", damage == crab->attack);
 }
 
 static void test_region_restoration(GameState *g, GameState *loaded) {
@@ -516,6 +590,7 @@ void test_mangrove(void) {
     ASSERT("saving rejects an impossible skiff parked on land", !save_game(g, DELTA_SLOT));
     test_full_delta(g, loaded);
     test_marsh_fights(g);
+    test_recurring_crabs(g, loaded);
     test_pilot_migration(g, loaded);
     test_region_restoration(g, loaded);
     remove("saves/savegame_99148.json");

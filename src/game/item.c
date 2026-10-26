@@ -302,7 +302,7 @@ Item item_make_crossbow(void) {
     return it;
 }
 
-// The Polar Kraken's reward sits between the Crossbow and Magic Longbow.
+// The Frost Kraken's reward sits between the Crossbow and Magic Longbow.
 Item item_make_krakenbone_bow(void) {
     Item it = {0};
     it.active = 1;

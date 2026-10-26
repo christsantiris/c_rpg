@@ -6,11 +6,11 @@ The Lich King, Forest Necromancer, Mountain Goblin King, Drowned Queen,
 Swamp Demon, Minotaur, Grave Marshal, Desert Pharaoh, Cinder
 Lord, Prism Sovereign, Fallen Sun Guardian, Red Dragon, Castellan, Royal Arcanist
 and Lord Veyr implementations are complete. All 16 approved updates are now
-implemented alongside the existing Polar Kraken. Pause for review and a manual
+implemented alongside the existing Frost Kraken. Pause for review and a manual
 commit before further encounter changes or balance tuning.
 
 The boss journal defines 17 current encounters. This proposal covers the 16
-other than the recently updated Polar Kraken. The Kraken's fixed warnings,
+other than the recently updated Frost Kraken. The Kraken's fixed warnings,
 recovery openings, half-health escalation, lake hazards and persistent
 Krakenbone Bow provide the reference standard.
 
@@ -337,7 +337,7 @@ For each boss:
 
 ## Roster exclusions
 
-The Polar Kraken is already updated. The old dungeon Goblin King, Demon Lord
+The Frost Kraken is already updated. The old dungeon Goblin King, Demon Lord
 and Tarrasque still have enum/art compatibility entries but no current campaign
 encounter spawn or boss-journal entry. This proposal does not reintroduce them;
 the active mountain Goblin King is included above.
