@@ -233,8 +233,8 @@ static void test_castle_combat(void) {
 }
 
 static void test_castle_no_seals(void) {
-    const Location regions[4] = {LOCATION_DUNGEON, LOCATION_GLASSDEEP, LOCATION_MOONVEIL, LOCATION_ASHEN};
-    for (int i = 0; i < 4; i++) {
+    const Location regions[3] = {LOCATION_DUNGEON, LOCATION_GLASSDEEP, LOCATION_ASHEN};
+    for (int i = 0; i < 3; i++) {
         start();
         game.location = regions[i];
         game.level = 3;
@@ -243,8 +243,7 @@ static void test_castle_no_seals(void) {
             map_generate(&game.map, 3);
         } else if (i == 1) {
             map_generate_glassdeep(&game.map, 3);
-        } else if (i == 2) {
-            map_generate_moonveil(&game.map, 3);
+
         } else {
             map_generate_ashen(&game.map, 3);
         }
@@ -299,9 +298,9 @@ static int write_legacy_seal_save(void) {
 }
 
 static void test_castle_removed_seal_migration(void) {
-    const Location regions[4] = {LOCATION_DUNGEON, LOCATION_GLASSDEEP, LOCATION_MOONVEIL, LOCATION_ASHEN};
-    const TileType floors[4] = {TILE_FLOOR, TILE_GLASSDEEP_FLOOR, TILE_MOONVEIL_FLOOR, TILE_ASHEN_FLOOR};
-    for (int i = 0; i < 4; i++) {
+    const Location regions[3] = {LOCATION_DUNGEON, LOCATION_GLASSDEEP, LOCATION_ASHEN};
+    const TileType floors[3] = {TILE_FLOOR, TILE_GLASSDEEP_FLOOR, TILE_ASHEN_FLOOR};
+    for (int i = 0; i < 3; i++) {
         start();
         game.location = regions[i];
         game.level = 3;
@@ -311,8 +310,7 @@ static void test_castle_removed_seal_migration(void) {
             map_generate(&game.map, 3);
         } else if (i == 1) {
             map_generate_glassdeep(&game.map, 3);
-        } else if (i == 2) {
-            map_generate_moonveil(&game.map, 3);
+
         } else {
             map_generate_ashen(&game.map, 3);
         }
@@ -340,7 +338,7 @@ static void test_castle_removed_seal_migration(void) {
         game.dialogue_active = 1;
         strcpy(game.dialogue_speaker, "Royal seals");
         strcpy(game.dialogue_text, "Four seals are required.");
-        LevelCache *caches[] = {game.level_cache, game.glassdeep_cache, game.moonveil_cache, game.ashen_cache};
+        LevelCache *caches[] = {game.level_cache, game.glassdeep_cache, game.ashen_cache};
         LevelCache *cache = &caches[i][2];
         cache->valid = 1;
         cache->map = game.map;
@@ -351,7 +349,7 @@ static void test_castle_removed_seal_migration(void) {
         ASSERT("migration preserves loot while replacing its seal underlay", loaded.floor_items[0].active && loaded.floor_items[0].item.type == ITEM_POTION_HEALTH && loaded.floor_items[0].underlying_tile == floors[i] && loaded.map.tiles[11][11] == TILE_ITEM);
         ASSERT("migration preserves portal while replacing its seal underlay", loaded.portal_active && loaded.portal_origin_tile == floors[i] && loaded.map.tiles[11][14] == floors[i]);
         ASSERT("migration removes only the extra royal guardian", !loaded.enemies[0].active && loaded.enemies[1].active && loaded.enemies[1].hp == 7);
-        LevelCache *restored[] = {loaded.level_cache, loaded.glassdeep_cache, loaded.moonveil_cache, loaded.ashen_cache};
+        LevelCache *restored[] = {loaded.level_cache, loaded.glassdeep_cache, loaded.ashen_cache};
         cache = &restored[i][2];
         ASSERT("cached royal markers and guardians are also retired", cache->valid && cache->map.tiles[11][12] == floors[i] && !cache->enemies[0].active && cache->enemies[1].hp == 7);
         ASSERT("migration preserves gold, miniboss wins and burial quest progress", loaded.gold == 321 && loaded.castle_minibosses == 1 && loaded.elowen_quest_state == 2 && loaded.elowen_seals_restored == 7);

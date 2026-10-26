@@ -1,14 +1,14 @@
 > Current update: batch 12's Glassdeep roster is replaced by the five
 > [Stonewake Quarry enemies](stonewake-quarry.md#enemies). The batch notes
 > below are historical; runtime art now comes from `stonewake.py`.
-> The current [enemy/area roster](enemy-roster.md) covers all 102 defined types,
+> The current [enemy/area roster](enemy-roster.md) covers all 97 defined types,
 > including later Elderwood, jail, Saltwind and quarry additions. The 95-type
 > batch totals below describe the original static-art pass; six unused types
 > and their dead code have since been removed.
 
 # Enemy sprite update checklist
 
-The current roster contains **95 enemy types in 16 batches**. Each `EnemyType` from `src/game/enemy.h` appears exactly once below. Additional boss forms, named hunts, quest enemies, and shared-renderer dependencies are tracked separately.
+The original art pass covered **95 enemy types in 16 batches**. The surviving batch notes are recorded below. Additional boss forms, named hunts, quest enemies, and shared-renderer dependencies are tracked separately.
 
 Progress: **95/95 enemy types completed (batches 1–16)**. All listed sprites and additional encounter forms have passed artwork and renderer review. This completes the static-art pass; animation remains a separate change set.
 
@@ -25,14 +25,13 @@ Progress: **95/95 enemy types completed (batches 1–16)**. All listed sprites a
 | 7 | Dragonspine and Crown Roads | 4 | Yes |
 | 8 | Frostfell | 7 | Yes |
 | 9 | Sunscar Wastes | 6 | Yes |
-| 10 | Moonveil Gardens | 5 | Yes |
 | 11 | Ashen Hollow | 4 | Yes |
 | 12 | Glassdeep Caverns | 4 | Yes |
 | 13 | Royal Catacombs | 5 | Yes |
 | 14 | Original dungeon bosses | 5 | Yes |
 | 15 | Ruined Isle and Temple | 10 | Yes |
 | 16 | Castle of No Return | 8 | Yes |
-| **Total** | | **95** | |
+| **Surviving batches** | | **90** | |
 
 ## Sprite checklist
 
@@ -191,23 +190,6 @@ Reviewed all six sprites at native 24×24 size through the actual SDL renderer o
 - [Dunehex and Mummy hunt group](art-sources/enemy-batch-9/dunehex.png).
 
 Scene previews use controlled desert room fixtures for artwork review rather than quest playthroughs. The Scarab has an oval shell and connected jointed legs; the Viper has a continuous coil and scale bands; the Mummy has diagonal wraps and loose strips; the Djinn has a curling smoke tail; the Golem has carved sandstone joints; and the Pharaoh has a striped headdress and connected crook grip. Combat, collision footprints, saved enemy types, and animations are unchanged.
-
-### Batch 10: Moonveil Gardens (5)
-
-- [x] Fey Trickster — `ENEMY_FEY_TRICKSTER`
-- [x] Giant Moth — `ENEMY_GIANT_MOTH`
-- [x] Living Flower (displayed as Carnivorous Flower) — `ENEMY_LIVING_FLOWER`
-- [x] Thorn Guardian — `ENEMY_THORN_GUARDIAN`
-- [x] Thorn Regent — `ENEMY_THORN_REGENT`
-
-Reviewed all five sprites at native 24×24 size through the actual SDL renderer on Moonveil terrain, including the Moonseed, Moonwater, and Mooncircle guardians beside their objectives, and the Thorn Regent at normal and low health. Both existing wing-flutter phases were reviewed for the Trickster and Moth; the original 350-ms timing and opposing upper/lower Moth wing motion remain. Also inspected frozen overlays, health bars, melee damage feedback, and Trickster/Flower/Regent projectile travel and impact. Tile bounds in both phases, transparent terrain, SDL scale/viewport/clip/blend preservation, Release and Debug builds, and AddressSanitizer/UndefinedBehaviorSanitizer renderer checks passed. All 54 sprites from batches 1–9 remain pixel-for-pixel identical.
-
-- [Before/after comparison, including native-size views](art-sources/enemy-batch-10/before-after.png).
-- [Both existing wing-flutter phases](art-sources/enemy-batch-10/flutter.png).
-- [Moonveil renderer preview](art-sources/enemy-batch-10/moonveil.png).
-- [Moonseed guardians and objective](art-sources/enemy-batch-10/moonseed.png).
-
-Scene previews use controlled garden and quest fixtures for artwork review rather than quest playthroughs. The Trickster has a pointed hat, wing veins, and a discrete conjured light; the Moth has scalloped wings and eye-spots; the Flower has layered petals, irregular teeth, and a bending stem; the Guardian has interlocking branches and rooted feet; and the Regent has a spreading crown and trailing root mantle. Combat, collision footprints, saved enemy types, and animation rules are unchanged.
 
 ### Batch 11: Ashen Hollow (4)
 

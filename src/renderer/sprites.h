@@ -20,6 +20,8 @@ enum {
 };
 void draw_dungeon_wall_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, unsigned int edges);
 void draw_forest_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
+void draw_elderwood_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
+void draw_elderwood_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 void draw_forest_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y);
 enum {
     FOREST_EDGE_NORTH = 1,
@@ -107,11 +109,6 @@ void draw_town_floor(Renderer *r, int tile_x, int tile_y);
 void draw_town_path(Renderer *r, int tile_x, int tile_y);
 void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style);
 void draw_town_gate_back(Renderer *r, int tx, int ty, TownExitStyle style, int dx, int dy);
-void draw_moonveil_floor(Renderer *r, int tx, int ty, int mx, int my);
-void draw_moonveil_wall(Renderer *r, int tx, int ty, int mx, int my);
-void draw_moonveil_pool(Renderer *r, int tx, int ty, int mx, int my);
-void draw_moonveil_circle(Renderer *r, int tx, int ty, int mx, int my);
-void draw_moonveil_edge(Renderer *r, int tx, int ty, int mx, int my);
 void draw_ashen_floor(Renderer *r, int tx, int ty, int mx, int my);
 void draw_ashen_wall(Renderer *r, int tx, int ty, int mx, int my);
 void draw_ashen_lava(Renderer *r, int tx, int ty, int mx, int my);

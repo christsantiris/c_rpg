@@ -17,6 +17,7 @@
 #define HIT_FLASH_MS 100
 #define SLASH_MS 180
 #define HP_FLASH_MS 300
+#define PUSH_ANIMATION_MS 220
 
 static inline int game_player_low_health(const GameState *g) {
     return !g->game_won && g->player.hp > 0 && g->player.max_hp > 0 &&
@@ -27,5 +28,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v);
 void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, const Viewport *v, Uint32 elapsed);
 int game_combat_feedback_active(Uint32 now);
 int game_player_hit_flash(const GameState *g, Uint32 now);
+void game_player_push_offset(const GameState *g, Uint32 now, int *x, int *y);
 
 #endif

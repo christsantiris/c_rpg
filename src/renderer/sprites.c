@@ -11,7 +11,6 @@
 #include "frostfell_enemy_art.h"
 #include "polar_kraken_art.h"
 #include "desert_enemy_art.h"
-#include "moonveil_enemy_art.h"
 #include "ashen_enemy_art.h"
 #include "glassdeep_enemy_art.h"
 #include "catacombs_enemy_art.h"
@@ -417,18 +416,19 @@ void draw_swamp_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, 
     fill_rect(r, x + 7, y + 12, 10, 4, glow);
 }
 
-void draw_forest_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+static void draw_woodland_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int living) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
     unsigned int seed = forest_tile_seed(map_x, map_y);
-    SDL_Color soil[3] = {
-        {15, 32, 22, 255},
-        {18, 36, 23, 255},
-        {20, 34, 23, 255}
-    };
-    SDL_Color moss = {29, 58, 32, 255};
-    SDL_Color moss_light = {42, 76, 39, 255};
-    SDL_Color leaf = {70, 65, 34, 255};
+    SDL_Color soil[3] = {{13, 25, 26, 255}, {17, 29, 28, 255}, {19, 28, 29, 255}};
+    SDL_Color moss = living ? (SDL_Color){46, 73, 35, 255} : (SDL_Color){28, 43, 38, 255};
+    SDL_Color moss_light = living ? (SDL_Color){84, 112, 47, 255} : (SDL_Color){44, 64, 51, 255};
+    SDL_Color leaf = living ? (SDL_Color){144, 118, 55, 255} : (SDL_Color){66, 61, 52, 255};
+    if (living) {
+        soil[0] = (SDL_Color){30, 47, 27, 255};
+        soil[1] = (SDL_Color){35, 51, 28, 255};
+        soil[2] = (SDL_Color){39, 53, 29, 255};
+    }
 
     fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, soil[seed % 3u]);
     int patch_x = 2 + (int)((seed >> 4) % 11u);
@@ -465,7 +465,15 @@ void draw_forest_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y
     }
 }
 
-void draw_forest_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+void draw_forest_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    draw_woodland_floor(r, tile_x, tile_y, map_x, map_y, 0);
+}
+
+void draw_elderwood_floor(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    draw_woodland_floor(r, tile_x, tile_y, map_x, map_y, 1);
+}
+
+static void draw_woodland_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, int living) {
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
     unsigned int seed = forest_tile_seed(map_x, map_y);
@@ -473,10 +481,10 @@ void draw_forest_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y)
     unsigned int frame = (SDL_GetTicks() / AMBIENT_FRAME_MS +
         ((seed >> 16) & 1u)) & 1u;
     int canopy_shift = (seed >> 20) % 3u == 0u ? (int)frame : 0;
-    SDL_Color shadow = {6, 21, 13, 255};
-    SDL_Color foliage = {22, 51, 28, 255};
-    SDL_Color foliage_light = {37, 75, 37, 255};
-    SDL_Color bark = {64, 54, 35, 255};
+    SDL_Color shadow = living ? (SDL_Color){14, 31, 17, 255} : (SDL_Color){7, 18, 20, 255};
+    SDL_Color foliage = living ? (SDL_Color){31, 69, 33, 255} : (SDL_Color){24, 42, 38, 255};
+    SDL_Color foliage_light = living ? (SDL_Color){85, 119, 48, 255} : (SDL_Color){44, 64, 53, 255};
+    SDL_Color bark = living ? (SDL_Color){91, 74, 41, 255} : (SDL_Color){68, 62, 54, 255};
 
     fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, shadow);
     fill_rect(r, x + 1, y + 5, 9, 10, foliage);
@@ -484,12 +492,25 @@ void draw_forest_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y)
     fill_rect(r, x + 3 + canopy_shift, y + 15, 7, 5, foliage_light);
     fill_rect(r, x + 17 + canopy_shift, y + 4, 5, 4, foliage_light);
     int shape = (int)((seed >> 11) % 4u);
+    if (!living && shape != 0) {
+        // Bare crooked branches interrupt the canopy in the corrupted woods.
+        fill_rect(r, x + trunk_x, y + 8, 5, 16, bark);
+        fill_rect(r, x + trunk_x + 1, y + 5, 3, 14, (SDL_Color){94, 84, 66, 255});
+        fill_rect(r, x + trunk_x - 2, y + 18, 8, 4, bark);
+        SDL_SetRenderDrawColor(r->sdl, bark.r, bark.g, bark.b, 255);
+        SDL_RenderDrawLine(r->sdl, x + trunk_x + 2, y + 13, x + 3, y + 5);
+        SDL_RenderDrawLine(r->sdl, x + 3, y + 5, x + 4, y + 1);
+        SDL_RenderDrawLine(r->sdl, x + trunk_x + 3, y + 16, x + 21, y + 8);
+        SDL_RenderDrawLine(r->sdl, x + 21, y + 8, x + 19, y + 3);
+        SDL_RenderDrawLine(r->sdl, x + trunk_x + 2, y + 7, x + 16, y + 1);
+        return;
+    }
     if (shape == 0) {
         fill_rect(r, x + 2, y + 7, 20, 13, foliage);
         fill_rect(r, x + 4, y + 4, 11, 9,
-            (SDL_Color){29, 66, 33, 255});
+            living ? (SDL_Color){49, 88, 36, 255} : (SDL_Color){29, 48, 42, 255});
         fill_rect(r, x + 12, y + 11, 10, 10,
-            (SDL_Color){30, 61, 31, 255});
+            living ? (SDL_Color){46, 82, 35, 255} : (SDL_Color){27, 46, 40, 255});
         fill_rect(r, x + 6 + canopy_shift, y + 6, 6, 2,
             foliage_light);
         fill_rect(r, x + 15 + canopy_shift, y + 13, 5, 2,
@@ -523,6 +544,14 @@ void draw_forest_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y)
         fill_rect(r, x + 18, y + 15, 3, 3,
             (SDL_Color){48, 84, 39, 255});
     }
+}
+
+void draw_forest_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    draw_woodland_wall(r, tile_x, tile_y, map_x, map_y, 0);
+}
+
+void draw_elderwood_wall(Renderer *r, int tile_x, int tile_y, int map_x, int map_y) {
+    draw_woodland_wall(r, tile_x, tile_y, map_x, map_y, 1);
 }
 
 void draw_forest_tree_edge(Renderer *r, int tile_x, int tile_y, int map_x, int map_y, unsigned int edges) {
@@ -2471,93 +2500,6 @@ static void draw_desert_enemy(Renderer *r, int tx, int ty, EnemyType type) {
     }
 }
 
-static void draw_moonveil_enemy(Renderer *r, int tx, int ty, EnemyType type) {
-    int art;
-    switch (type) {
-        case ENEMY_FEY_TRICKSTER: art = MOON_ART_FEY_TRICKSTER; break;
-        case ENEMY_GIANT_MOTH: art = MOON_ART_GIANT_MOTH; break;
-        case ENEMY_LIVING_FLOWER: art = MOON_ART_LIVING_FLOWER; break;
-        case ENEMY_THORN_GUARDIAN: art = MOON_ART_THORN_GUARDIAN; break;
-        case ENEMY_THORN_REGENT: art = MOON_ART_THORN_REGENT; break;
-        default: return;
-    }
-    static const SDL_Color bodies[MOON_ART_COUNT] = {
-        {214, 169, 177, 255}, {205, 190, 160, 255}, {157, 47, 104, 255},
-        {79, 78, 43, 255}, {49, 111, 71, 255}
-    };
-    static const SDL_Color clothes[MOON_ART_COUNT] = {
-        {124, 82, 174, 255}, {102, 123, 179, 255}, {198, 64, 133, 255},
-        {79, 78, 43, 255}, {122, 62, 145, 255}
-    };
-    SDL_Color body = bodies[art];
-    SDL_Color cloth = clothes[art];
-    SDL_Color palette[128] = {{0}};
-    palette['o'] = (SDL_Color){15, 18, 30, 255};
-    palette['s'] = (SDL_Color){body.r * 2 / 3, body.g * 2 / 3, body.b * 2 / 3, 255};
-    palette['S'] = body;
-    palette['H'] = (SDL_Color){body.r + (255 - body.r) / 3,
-        body.g + (255 - body.g) / 3, body.b + (255 - body.b) / 3, 255};
-    palette['c'] = (SDL_Color){cloth.r * 2 / 3, cloth.g * 2 / 3, cloth.b * 2 / 3, 255};
-    palette['C'] = cloth;
-    palette['v'] = (SDL_Color){cloth.r + (255 - cloth.r) / 4,
-        cloth.g + (255 - cloth.g) / 4, cloth.b + (255 - cloth.b) / 4, 255};
-    palette['e'] = (SDL_Color){14, 15, 28, 255};
-    palette['y'] = (SDL_Color){152, 245, 225, 255};
-    palette['r'] = (SDL_Color){30, 71, 51, 255};
-    palette['R'] = (SDL_Color){89, 156, 93, 255};
-    palette['w'] = (SDL_Color){89, 192, 197, 255};
-    palette['W'] = (SDL_Color){144, 217, 215, 255};
-    palette['b'] = (SDL_Color){102, 123, 179, 255};
-    palette['B'] = (SDL_Color){147, 174, 215, 255};
-    palette['t'] = (SDL_Color){49, 108, 129, 255};
-    palette['T'] = (SDL_Color){131, 219, 218, 255};
-    palette['u'] = (SDL_Color){105, 100, 93, 255};
-    palette['U'] = (SDL_Color){210, 200, 175, 255};
-    palette['f'] = (SDL_Color){200, 244, 217, 255};
-    palette['p'] = (SDL_Color){55, 138, 131, 255};
-    palette['P'] = (SDL_Color){152, 245, 225, 255};
-    palette['l'] = (SDL_Color){54, 39, 45, 255};
-    palette['L'] = (SDL_Color){105, 81, 60, 255};
-    palette['K'] = (SDL_Color){150, 121, 92, 255};
-    palette['k'] = (SDL_Color){34, 30, 48, 255};
-    palette['g'] = (SDL_Color){143, 101, 57, 255};
-    palette['G'] = (SDL_Color){209, 179, 101, 255};
-    if (type == ENEMY_GIANT_MOTH) {
-        palette['w'] = (SDL_Color){170, 108, 194, 255};
-        palette['W'] = (SDL_Color){211, 160, 218, 255};
-        palette['t'] = (SDL_Color){108, 67, 137, 255};
-    }
-    int x = tx * TILE_SIZE;
-    int y = ty * TILE_SIZE;
-    int has_wings = type == ENEMY_FEY_TRICKSTER || type == ENEMY_GIANT_MOTH;
-    int wing = type == ENEMY_FEY_TRICKSTER ? 0 : 1;
-    int flutter = (int)((SDL_GetTicks() / AMBIENT_FRAME_MS) & 1u);
-    for (int layer = 0; layer < 2; layer++) {
-        if (layer == 0 && !has_wings) {
-            continue;
-        }
-        const char (*rows)[25] = layer == 0 ? moonveil_wing_art[wing] : moonveil_enemy_art[art];
-        for (int row = 0; row < 24; row++) {
-            int offset = 0;
-            if (layer == 0) {
-                // Preserve the Moth's opposing upper/lower wing motion.
-                offset = type == ENEMY_GIANT_MOTH && row >= 13 ? -flutter : flutter;
-            }
-            for (int col = 0; col < 24;) {
-                char ink = rows[row][col];
-                int end = col + 1;
-                while (end < 24 && rows[row][end] == ink) {
-                    end++;
-                }
-                if (ink != '.') {
-                    fill_rect(r, x + col, y + row + offset, end - col, 1, palette[(unsigned char)ink]);
-                }
-                col = end;
-            }
-        }
-    }
-}
-
 static void draw_ashen_enemy(Renderer *r, int tx, int ty, EnemyType type) {
     int art;
     int ember = -1;
@@ -2753,6 +2695,17 @@ static void draw_catacombs_enemy(Renderer *r, int tx, int ty, EnemyType type) {
 }
 
 void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
+    if (type == ENEMY_GOBLIN_MINE_BOSS) {
+        SDL_Rect destination = {tile_x * TILE_SIZE, tile_y * TILE_SIZE, TILE_SIZE, TILE_SIZE};
+        SDL_RenderCopy(r->sdl, r->ironfang_boss_texture, NULL, &destination);
+        return;
+    }
+    if (type >= ENEMY_HARPY_RAIDER && type <= ENEMY_TEMPEST_MATRIARCH) {
+        SDL_Rect source = {(type - ENEMY_HARPY_RAIDER) * 48, (SDL_GetTicks() / 450 % 2) * 48, 48, 48};
+        SDL_Rect dest = {tile_x * TILE_SIZE - 12, tile_y * TILE_SIZE - 24, 48, 48};
+        SDL_RenderCopy(r->sdl, r->stormwatch_enemy_texture, &source, &dest);
+        return;
+    }
     if (type >= ENEMY_LIZARDFOLK_SCOUT && type <= ENEMY_SSZARETH) {
         SDL_Rect source = {(type - ENEMY_LIZARDFOLK_SCOUT) * 48, 0, 48, 48};
         SDL_Rect dest = {tile_x * TILE_SIZE - 12, tile_y * TILE_SIZE - 24, 48, 48};
@@ -2772,6 +2725,11 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_MARSH_SPITTER:
         case ENEMY_MUDBACK_TURTLE:
         case ENEMY_LIZARDFOLK_SCALEGUARD:
+        case ENEMY_HARPY_RAIDER:
+        case ENEMY_CLIFF_GARGOYLE:
+        case ENEMY_HARPY_STORMCALLER:
+        case ENEMY_STORM_ELEMENTAL:
+        case ENEMY_TEMPEST_MATRIARCH:
         case ENEMY_SSZARETH:
             break; // Drawn from the Saltwind atlas above.
         case ENEMY_ROYAL_GUARD:
@@ -2815,13 +2773,6 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_OBSIDIAN_GUARDIAN:
         case ENEMY_CINDER_LORD:
             draw_ashen_enemy(r, tile_x, tile_y, type);
-            break;
-        case ENEMY_FEY_TRICKSTER:
-        case ENEMY_GIANT_MOTH:
-        case ENEMY_LIVING_FLOWER:
-        case ENEMY_THORN_GUARDIAN:
-        case ENEMY_THORN_REGENT:
-            draw_moonveil_enemy(r, tile_x, tile_y, type);
             break;
         case ENEMY_SCARAB:
         case ENEMY_VIPER:
@@ -3873,105 +3824,6 @@ void draw_ashen_edge(Renderer *r, int tx, int ty, int mx, int my) {
     fill_rect(r, x + 19, y + 3, 3, 3, (SDL_Color){240, 136, 52, 255});
 }
 
-void draw_moonveil_floor(Renderer *r, int tx, int ty, int mx, int my) {
-    int x = tx * TILE_SIZE;
-    int y = ty * TILE_SIZE;
-    unsigned int seed = forest_tile_seed(mx, my);
-    SDL_Color moss[3] = {{30, 43, 50, 255}, {32, 46, 51, 255}, {29, 41, 48, 255}};
-    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, moss[seed % 3u]);
-    int grass = 3 + (int)((seed >> 6) % 15u);
-    fill_rect(r, x + grass, y + 16, 1, 4, (SDL_Color){60, 85, 79, 255});
-    fill_rect(r, x + grass - 2, y + 18, 2, 2, (SDL_Color){43, 68, 64, 255});
-    if (seed % 17u == 0u) {
-        unsigned int phase = (SDL_GetTicks() / AMBIENT_FRAME_MS + (seed >> 12)) & 3u;
-        fill_rect(r, x + 8, y + 8, 6, 2, (SDL_Color){109, 119, 164, 255});
-        fill_rect(r, x + 10, y + 6, 2, 6, (SDL_Color){109, 119, 164, 255});
-        fill_rect(r, x + 10, y + 8, 2, 2, (SDL_Color){155, 207 + (int)phase * 10, 216, 255});
-    }
-}
-
-void draw_moonveil_wall(Renderer *r, int tx, int ty, int mx, int my) {
-    int x = tx * TILE_SIZE;
-    int y = ty * TILE_SIZE;
-    unsigned int seed = forest_tile_seed(mx, my);
-    int stem = 8 + (int)((seed >> 5) % 7u);
-    int sway = (int)((SDL_GetTicks() / AMBIENT_FRAME_MS + (seed >> 14)) & 1u);
-    SDL_Color hedge = {17, 52, 46, 255};
-    SDL_Color leaf = {38, 87, 66, 255};
-    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){7, 24, 28, 255});
-    fill_rect(r, x, y + 13, 9, 9, hedge);
-    fill_rect(r, x + 16, y + 8, 8, 14, hedge);
-    fill_rect(r, x + stem, y + 7, 3, 16, leaf);
-    fill_rect(r, x + stem - 5, y + 15, 7, 3, hedge);
-    fill_rect(r, x + stem + 2, y + 18, 6, 3, leaf);
-    int shape = (int)((seed >> 9) % 5u);
-    if (shape == 0) {
-        fill_rect(r, x + stem, y + 11, 4, 12, (SDL_Color){95, 87, 121, 255});
-        fill_rect(r, x + stem + 1, y + 12, 1, 10, (SDL_Color){157, 146, 180, 255});
-        fill_rect(r, x + 3, y + 6, 19, 7, (SDL_Color){81, 54, 119, 255});
-        fill_rect(r, x + 6, y + 3, 13, 5, (SDL_Color){122, 78, 156, 255});
-        fill_rect(r, x + 9, y + 2, 6, 2, (SDL_Color){156, 108, 181, 255});
-        fill_rect(r, x + 6, y + 7, 3, 2, (SDL_Color){163, 191, 210, 255});
-        fill_rect(r, x + 16, y + 8, 3, 2, (SDL_Color){163, 191, 210, 255});
-    } else if (shape <= 2) {
-        SDL_Color petal = shape == 1 ? (SDL_Color){132, 75, 156, 255} :
-            (SDL_Color){112, 146, 162, 255};
-        fill_rect(r, x + stem - 4 + sway, y + 2, 11, 6, petal);
-        fill_rect(r, x + stem - 6 + sway, y + 5, 6, 8, petal);
-        fill_rect(r, x + stem + 3 + sway, y + 5, 6, 8, petal);
-        fill_rect(r, x + stem - 3 + sway, y + 10, 9, 5, petal);
-        fill_rect(r, x + stem - 1 + sway, y + 6, 5, 5, (SDL_Color){205, 196, 129, 255});
-        fill_rect(r, x + stem + sway, y + 7, 2, 2, (SDL_Color){172, 237, 219, 255});
-    } else {
-        fill_rect(r, x + 3, y + 7, 18, 13, hedge);
-        for (int branch = 0; branch < 4; branch++) {
-            int bx = x + 3 + branch * 5;
-            int top = y + 2 + (int)((seed >> (branch * 3)) % 5u);
-            fill_rect(r, bx + sway, top, 2, y + 21 - top, leaf);
-            fill_rect(r, bx + 1 + sway, top + 3, 3, 2, hedge);
-        }
-        fill_rect(r, x + 5, y + 17, 3, 2, (SDL_Color){85, 120, 109, 255});
-        fill_rect(r, x + 17, y + 10, 2, 2, (SDL_Color){141, 94, 150, 255});
-    }
-}
-
-void draw_moonveil_pool(Renderer *r, int tx, int ty, int mx, int my) {
-    int x = tx * TILE_SIZE;
-    int y = ty * TILE_SIZE;
-    unsigned int seed = forest_tile_seed(mx, my);
-    int wave = (int)((SDL_GetTicks() / AMBIENT_FRAME_MS + (seed >> 12)) & 3u);
-    fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, (SDL_Color){12, 33, 50, 255});
-    int ripple = 2 + (int)(seed % 10u);
-    fill_rect(r, x + ripple, y + 7 + wave, 9, 1, (SDL_Color){64, 113, 148, 255});
-    fill_rect(r, x + ripple + 2, y + 8 + wave, 5, 1, (SDL_Color){102, 163, 182, 255});
-    fill_rect(r, x + 3, y + 19, 11, 1, (SDL_Color){35, 75, 107, 255});
-}
-
-void draw_moonveil_circle(Renderer *r, int tx, int ty, int mx, int my) {
-    int x = tx * TILE_SIZE;
-    int y = ty * TILE_SIZE;
-    draw_moonveil_floor(r, tx, ty, mx, my);
-    fill_rect(r, x + 4, y + 11, 17, 10, (SDL_Color){21, 27, 40, 255});
-    fill_rect(r, x + 3, y + 9, 17, 9, (SDL_Color){100, 108, 142, 255});
-    fill_rect(r, x + 6, y + 7, 11, 3, (SDL_Color){133, 143, 173, 255});
-    fill_rect(r, x + 4, y + 10, 2, 6, (SDL_Color){153, 167, 188, 255});
-    fill_rect(r, x + 9, y + 11, 5, 1, (SDL_Color){122, 226, 216, 255});
-    fill_rect(r, x + 11, y + 10, 1, 5, (SDL_Color){122, 226, 216, 255});
-}
-
-void draw_moonveil_edge(Renderer *r, int tx, int ty, int mx, int my) {
-    int x = tx * TILE_SIZE;
-    int y = ty * TILE_SIZE;
-    draw_moonveil_floor(r, tx, ty, mx, my);
-    for (int side = 0; side < 2; side++) {
-        int bx = x + 2 + side * 16;
-        int by = y + 2 + side * 11;
-        fill_rect(r, bx, by, 4, 10, (SDL_Color){104, 111, 145, 255});
-        fill_rect(r, bx + 1, by - 1, 2, 3, (SDL_Color){151, 226, 219, 255});
-        fill_rect(r, bx + 1, by + 5, 2, 1, (SDL_Color){151, 226, 219, 255});
-    }
-}
-
 static void desert_dune_patch(SDL_Rect *rects, int *count, int x, int y, int px, int py, int w, int h) {
     int right = px + w < TILE_SIZE ? px + w : TILE_SIZE;
     int bottom = py + h < TILE_SIZE ? py + h : TILE_SIZE;
@@ -4461,23 +4313,7 @@ void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style) {
         fill_rect(r, x + 59, y + 3, 2, 4, glow);
         return;
     }
-    if (style == TOWN_EXIT_MOONVEIL) {
-        SDL_Color stone = {63, 67, 96, 255};
-        SDL_Color vine = {37, 88, 63, 255};
-        SDL_Color flower = {148, 102, 186, 255};
-        fill_rect(r, x, y, 13, 120, stone);
-        fill_rect(r, x + 3, y + 3, 3, 114, (SDL_Color){119, 130, 157, 255});
-        fill_rect(r, x + 10, y + 2, 38, 10, vine);
-        fill_rect(r, x + 10, y + 108, 38, 10, vine);
-        fill_rect(r, x + 8, y + 18, 7, 85, vine);
-        for (int bloom = 0; bloom < 4; bloom++) {
-            fill_rect(r, x + 8, y + 22 + bloom * 22, 7, 5, flower);
-            fill_rect(r, x + 10, y + 23 + bloom * 22, 2, 2, (SDL_Color){167, 240, 220, 255});
-        }
-        fill_rect(r, x + 31, y + 4, 7, 5, flower);
-        fill_rect(r, x + 24, y + 110, 7, 5, flower);
-        return;
-    }
+
     if (style == TOWN_EXIT_DESERT) {
         SDL_Color stone = {151, 100, 57, 255};
         SDL_Color light = {223, 174, 106, 255};
@@ -4660,7 +4496,7 @@ void draw_town_gate_back(Renderer *r, int tx, int ty, TownExitStyle style, int d
         *cached = texture;
     }
     int right = style == TOWN_EXIT_DUNGEON || style == TOWN_EXIT_DRAGONSPINE;
-    int vertical = right || style == TOWN_EXIT_FOREST || style == TOWN_EXIT_ROAD || style == TOWN_EXIT_DESERT || style == TOWN_EXIT_MOONVEIL;
+    int vertical = right || style == TOWN_EXIT_FOREST || style == TOWN_EXIT_ROAD || style == TOWN_EXIT_DESERT;
     int native_positive = vertical ? right : style == TOWN_EXIT_GLASSDEEP;
     int positive = dx ? dx < 0 : dy < 0;
     int source_w = vertical ? (right ? 3 : 2) * TILE_SIZE : 5 * TILE_SIZE;
@@ -5003,15 +4839,6 @@ static void draw_transition_terrain(Renderer *r, const Map *map, int tx, int ty,
                 draw_desert_floor(r, tx, ty, mx, my);
             }
             break;
-        case TOWN_EXIT_MOONVEIL:
-            if (tile == TILE_MOONVEIL_WALL) {
-                draw_moonveil_wall(r, tx, ty, mx, my);
-            } else if (tile == TILE_MOONVEIL_POOL) {
-                draw_moonveil_pool(r, tx, ty, mx, my);
-            } else {
-                draw_moonveil_floor(r, tx, ty, mx, my);
-            }
-            break;
         case TOWN_EXIT_ASHEN:
             if (tile == TILE_ASHEN_WALL) {
                 draw_ashen_wall(r, tx, ty, mx, my);
@@ -5051,7 +4878,6 @@ void draw_area_transition(Renderer *r, int covered_width, TownExitStyle style) {
             return;
         case TOWN_EXIT_FROST:
         case TOWN_EXIT_DESERT:
-        case TOWN_EXIT_MOONVEIL:
         case TOWN_EXIT_ASHEN:
         case TOWN_EXIT_GLASSDEEP:
             break;
@@ -5068,9 +4894,9 @@ void draw_area_transition(Renderer *r, int covered_width, TownExitStyle style) {
     }
     int columns = (max_width + TILE_SIZE - 1) / TILE_SIZE;
     int rows = (r->screen_h + TILE_SIZE - 1) / TILE_SIZE;
-    static const TileType walls[] = {TILE_FROST_WALL, TILE_DESERT_WALL, TILE_MOONVEIL_WALL, TILE_ASHEN_WALL, TILE_GLASSDEEP_WALL};
-    static const TileType floors[] = {TILE_FROST_FLOOR, TILE_DESERT_FLOOR, TILE_MOONVEIL_FLOOR, TILE_ASHEN_FLOOR, TILE_GLASSDEEP_FLOOR};
-    static const TileType pools[] = {TILE_FROST_ICE, TILE_DESERT_FLOOR, TILE_MOONVEIL_POOL, TILE_ASHEN_LAVA, TILE_GLASSDEEP_POOL};
+    static const TileType walls[] = {TILE_FROST_WALL, TILE_DESERT_WALL, TILE_ASHEN_WALL, TILE_GLASSDEEP_WALL};
+    static const TileType floors[] = {TILE_FROST_FLOOR, TILE_DESERT_FLOOR, TILE_ASHEN_FLOOR, TILE_GLASSDEEP_FLOOR};
+    static const TileType pools[] = {TILE_FROST_ICE, TILE_DESERT_FLOOR, TILE_ASHEN_LAVA, TILE_GLASSDEEP_POOL};
     int biome = style - TOWN_EXIT_FROST;
     // A decorative map lets connected snow and sandstone reuse their normal
     // terrain shading. It never touches the player's map or random sequence.

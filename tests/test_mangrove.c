@@ -52,7 +52,6 @@ static int walk_to(GameState *g, int tx, int ty, int afloat) {
     return 1;
 }
 
-
 static void flood(const Map *map, unsigned char reached[MANGROVE_H][MANGROVE_W], int sx, int sy, int afloat) {
     int queue[MANGROVE_W * MANGROVE_H];
     int head = 0;
@@ -238,7 +237,7 @@ static void test_marsh_fights(GameState *g) {
     int score = g->score;
     action_resolve_player(g, (Action){ACTION_MOVE, boss->x, boss->y});
     BossJournalEntry entry;
-    ASSERT("an actual combat victory awards Sszareth's gold, score and journal entry", !boss->active && g->mangrove_defeated && g->gold == gold + 200 && g->score >= score + 2400 && quest_journal_get_boss(g, 18, &entry) && entry.defeated);
+    ASSERT("an actual combat victory awards Sszareth's gold, score and journal entry", !boss->active && g->mangrove_defeated && g->gold == gold + 200 && g->score >= score + 2400 && quest_journal_get_boss(g, 17, &entry) && entry.defeated);
     gold = g->gold;
     score = g->score;
     mangrove_defeat(g);

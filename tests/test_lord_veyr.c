@@ -324,7 +324,7 @@ static void test_veyr_victory(void) {
         ASSERT("victory stops combat and floor hazards immediately", game.player.hp == hp && game.castle_fire_phase[5] == 0);
     }
     BossJournalEntry entry;
-    quest_journal_get_boss(&game, 16, &entry);
+    quest_journal_get_boss(&game, 15, &entry);
     ASSERT("boss journal records the awarded Crown of the Unbound", entry.defeated && entry.trophy && strcmp(entry.trophy, "Crown of the Unbound") == 0);
     ASSERT("completed campaign and permanent trophy survive save/load", save_game(&game, VEYR_SLOT) && load_game(&loaded, VEYR_SLOT) && loaded.game_won && loaded.crown_of_unbound);
 }

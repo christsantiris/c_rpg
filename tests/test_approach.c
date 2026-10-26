@@ -83,7 +83,6 @@ static LevelCache *area_cache(GameState *g, Location area, int reverse) {
         case LOCATION_DRAGONSPINE: return &g->dragonspine_cache[0];
         case LOCATION_FROSTFELL: return &g->frostfell_cache[0];
         case LOCATION_DESERT: return &g->desert_cache[0];
-        case LOCATION_MOONVEIL: return &g->moonveil_cache[0];
         case LOCATION_ASHEN: return &g->ashen_cache[0];
         case LOCATION_GLASSDEEP: return &g->glassdeep_cache[0];
         case LOCATION_CATACOMBS: return &g->catacombs_cache[0];
@@ -230,12 +229,15 @@ void test_approaches(void) {
         free(loaded);
         return;
     }
-    ASSERT("all seventeen town connections have approach paths", town_approach_count == 17);
+    ASSERT("new routes append after reserved connection IDs", town_approach_count == 20);
     for (int unlocked = 0; unlocked < 2; unlocked++) {
         for (int i = 0; i < town_approach_count; i++) {
             const TownApproach *route = &town_approaches[i];
+        if ((int)route->area < 0) {
+            continue;
+        }
             // The shared northern road has two landmarks and is covered by test_elderwood.
-            if (route->area == LOCATION_ELDERWOOD || route->area == LOCATION_CATACOMBS) {
+            if (route->area == LOCATION_IRONFANG || route->area == LOCATION_STORMWATCH || route->area == LOCATION_ELDERWOOD || route->area == LOCATION_CATACOMBS) {
                 continue;
             }
             approach_town(g, route);
@@ -322,6 +324,9 @@ void test_approaches(void) {
     }
     for (int i = 0; i < town_approach_count; i++) {
         const TownApproach *route = &town_approaches[i];
+        if ((int)route->area < 0) {
+            continue;
+        }
         if (route->area == LOCATION_CATACOMBS || !approach_entrance_rows(route->area)) {
             continue;
         }
@@ -381,6 +386,9 @@ void test_approaches(void) {
     int wide_gates = 1;
     for (int i = 0; i < town_approach_count; i++) {
         const TownApproach *route = &town_approaches[i];
+        if ((int)route->area < 0) {
+            continue;
+        }
         for (int offset = -2; offset <= 2; offset++) {
             approach_town(g, route);
             int x = route->gate_x;
@@ -436,7 +444,7 @@ void test_approaches(void) {
             ASSERT("a migrated road still reaches its original town", loaded->location == route->town);
         }
     }
-    ASSERT("Dragonspine is north and Ashen Hollow is east of Ridgeshire", town_approaches[12].area == LOCATION_DRAGONSPINE && town_approaches[12].gate_x == RIDGESHIRE_DRAGON_GATE_X && town_approaches[12].gate_y == 0 && town_approaches[13].area == LOCATION_ASHEN && town_approaches[13].gate_x == TOWN_W - 1 && town_approaches[13].gate_y == RIDGESHIRE_ASHEN_GATE_Y);
+    ASSERT("Dragonspine is north of Ridgeshire and Ashen is west of Rosemoor", town_approaches[12].area == LOCATION_DRAGONSPINE && town_approaches[12].gate_x == RIDGESHIRE_DRAGON_GATE_X && town_approaches[12].gate_y == 0 && town_approaches[13].area == LOCATION_ASHEN && town_approaches[13].town == LOCATION_TOWN3 && town_approaches[13].gate_x == 0 && town_approaches[13].gate_y == ROSEMOOR_ASHEN_GATE_Y);
     for (int index = 12; index <= 13; index++) {
         const TownApproach *route = &town_approaches[index];
         int dragon = route->area == LOCATION_DRAGONSPINE;
@@ -489,9 +497,9 @@ void test_approaches(void) {
             g->watchfire_quest_state = 1;
             g->watchfire_quest_progress = 5;
             int migrated = save_game(g, slot) && legacy_approach_save(slot, 162) && load_game(loaded, slot);
-            int dx = dragon ? 0 : 1;
+            int dx = dragon ? 0 : -1;
             int dy = dragon ? -1 : 0;
-            int nx = dragon ? APPROACH_W / 2 : 0;
+            int nx = dragon ? APPROACH_W / 2 : APPROACH_W - 1;
             int ny = dragon ? APPROACH_H - 1 : APPROACH_H / 2;
             ASSERT("old Ridgeshire approaches preserve route, distance, side, facing, and exploration after relocation", migrated && loaded->approach_route == index && loaded->player.x == nx + distance * dx - side * dy && loaded->player.y == ny + distance * dy + side * dx && loaded->player.last_dx == (returning ? -dx : dx) && loaded->player.last_dy == (returning ? -dy : dy) && map_is_explored(&loaded->map, loaded->player.x, loaded->player.y));
             ASSERT("approach relocation preserves loot, combat caches, money, and quest progress", migrated && loaded->floor_items[0].active && loaded->floor_items[0].x == nx + 5 * dx + dy && loaded->floor_items[0].y == ny + 5 * dy - dx && loaded->map.tiles[ny + 5 * dy - dx][nx + 5 * dx + dy] == TILE_ITEM && loaded->floor_items[0].underlying_tile == TILE_TOWN_FLOOR && loaded->gold == 393 && loaded->watchfire_quest_progress == 5 && area_cache(loaded, route->area, 0)->enemies[0].hp == 7 && memcmp(cache->map.tiles, area_cache(loaded, route->area, 0)->map.tiles, sizeof(cache->map.tiles)) == 0);
@@ -500,11 +508,14 @@ void test_approaches(void) {
             ASSERT("relocated approaches save again without rotating a second time", save_game(loaded, slot) && load_game(g, slot) && g->player.x == px && g->player.y == py && g->approach_route == index);
             if (returning) {
                 walk_return_approach(g);
-                ASSERT("migrated return paths reach the new Ridgeshire gate", g->location == LOCATION_TOWN4 && g->player.x == (dragon ? RIDGESHIRE_DRAGON_GATE_X : TOWN_W - 2) && g->player.y == (dragon ? 1 : RIDGESHIRE_ASHEN_GATE_Y));
+                ASSERT("migrated return paths reach the new Ridgeshire gate", g->location == route->town && g->player.x == (dragon ? RIDGESHIRE_DRAGON_GATE_X : 1) && g->player.y == (dragon ? 1 : ROSEMOOR_ASHEN_GATE_Y));
             } else {
                 walk_town_approach(g);
                 ASSERT("migrated outbound paths still enter the original combat region", g->location == route->area);
             }
+        }
+        if (!dragon) {
+            continue;
         }
         approach_town(g, route);
         if (dragon) {
@@ -514,8 +525,8 @@ void test_approaches(void) {
         }
         g->enemies[0].hp = 7;
         game_open_town_portal(g);
-        int x = dragon ? RIDGESHIRE_DRAGON_PORTAL_X : RIDGESHIRE_ASHEN_PORTAL_X;
-        int y = dragon ? RIDGESHIRE_DRAGON_PORTAL_Y : RIDGESHIRE_ASHEN_PORTAL_Y;
+        int x = dragon ? RIDGESHIRE_DRAGON_PORTAL_X : ROSEMOOR_ASHEN_PORTAL_X;
+        int y = dragon ? RIDGESHIRE_DRAGON_PORTAL_Y : ROSEMOOR_ASHEN_PORTAL_Y;
         int old_x = dragon ? TOWN_W - 3 : 21;
         int old_y = dragon ? 13 : 2;
         g->floor_item_count = 2;

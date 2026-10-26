@@ -25,7 +25,8 @@ flowchart BT
     Cat <-->|Grave Marshal unlock| Castle
     Rose <-->|North gate| Frost[Frostfell Wastes]
     Ridge <-->|North gate| Dragon[Dragonspine]
-    Ridge <-->|East gate| Ashen[Ashen Hollow]
+    Ridge <-->|East gate| Iron[Ironfang Mines · 5 stages]
+    Rose <-->|West gate| Ashen[Ashen Hollow]
 ```
 
 Both castle routes cross two enemy regions and one Crown Road. With the revised
@@ -39,13 +40,13 @@ Geographically, place Oakhaven south of the castle, with Stillbury and Rosemoor
 to the west, and Dawnmere and Ridgeshire to the east. Dawnmere is directly east
 of Oakhaven and south of Ridgeshire. Goblin Mountains moves between Dawnmere's
 north gate and Ridgeshire's south gate. Frostfell and Dragonspine remain the
-northernmost cold regions; Ashen Hollow stays east of Ridgeshire. All other
+northernmost cold regions; Ashen Hollow lies west of Rosemoor. All other
 existing connections remain in place.
 
 Dawnmere occupies open coastal lowland, with the mountain foothills north of
 town. The northern road climbs through Goblin Mountains to elevated Ridgeshire;
-Dawnmere itself is not surrounded by peaks. The eastern headland remains open
-for the final regional adventure; see the [eastern area concept shortlist](dawnmere-east-design.md).
+Dawnmere itself is not surrounded by peaks. Its eastern road reaches Stormwatch
+Headland. Ridgeshire's eastern road leads into Ironfang Mines within the mountain flank.
 
 ## Dungeon and the Lich-unlocked road
 

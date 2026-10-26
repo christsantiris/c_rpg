@@ -106,12 +106,16 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
     } else if (g->location == LOCATION_TOWN_ROAD) {
         SDL_snprintf(loc, sizeof(loc), "%s ROAD", approach_town_name(g->road_town));
     } else if (g->location == LOCATION_MANGROVES) {
-        SDL_snprintf(loc, sizeof(loc), "SALTWIND %d", g->level);
+        SDL_snprintf(loc, sizeof(loc), "SALTWIND MARSH %d", g->level);
     } else if (g->location == LOCATION_MANGROVE_PATH) {
-        SDL_snprintf(loc, sizeof(loc), "MARSH PATH");
+        SDL_snprintf(loc, sizeof(loc), "SALTWIND MARSH PATH");
     } else if (g->location == LOCATION_APPROACH) {
         const TownApproach *route = approach_route(g);
-        SDL_snprintf(loc, sizeof(loc), northern_approach(g) ? "NORTHERN ROAD" : "%s PATH", route ? approach_area_name(route->area) : "AREA");
+        if (route && route->area == LOCATION_STORMWATCH) {
+            SDL_snprintf(loc, sizeof(loc), "STORMWATCH PATH");
+        } else {
+            SDL_snprintf(loc, sizeof(loc), northern_approach(g) ? "NORTHERN ROAD" : "%s PATH", route ? approach_area_name(route->area) : "AREA");
+        }
     } else if (g->location == LOCATION_TOWN) {
         SDL_snprintf(loc, sizeof(loc), "OakHaven");
     } else if (g->location == LOCATION_TAVERN) {
@@ -145,7 +149,7 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
     } else if (g->location == LOCATION_CROWNROAD) {
         SDL_snprintf(loc, sizeof(loc), "CROWN ROAD EAST");
     } else if (g->location == LOCATION_FOREST_ROAD) {
-        SDL_snprintf(loc, sizeof(loc), "FOREST ROAD");
+        SDL_snprintf(loc, sizeof(loc), "HAUNTED FOREST ROAD");
     } else if (g->location == LOCATION_HEALER) {
         SDL_snprintf(loc, sizeof(loc), "HEALER");
     } else if (g->location == LOCATION_WITCH) {
@@ -154,24 +158,26 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
         SDL_snprintf(loc, sizeof(loc), "INN");
     } else if (g->location == LOCATION_GUILD) {
         SDL_snprintf(loc, sizeof(loc), "ADVENTURER'S GUILD");
+    } else if (g->location == LOCATION_IRONFANG) {
+        SDL_snprintf(loc, sizeof(loc), "IRONFANG MINES %d", g->level);
+    } else if (g->location == LOCATION_STORMWATCH) {
+        SDL_snprintf(loc, sizeof(loc), "STORMWATCH HEADLAND %d", g->level);
     } else if (g->location == LOCATION_ELDERWOOD) {
-        SDL_snprintf(loc, sizeof(loc), "ELDERWOOD %d", g->level);
+        SDL_snprintf(loc, sizeof(loc), "ELDERWOOD FOREST %d", g->level);
     } else if (g->location == LOCATION_FOREST) {
-        SDL_snprintf(loc, sizeof(loc), "FOREST %d", g->level);
+        SDL_snprintf(loc, sizeof(loc), "HAUNTED FOREST %d", g->level);
     } else if (g->location == LOCATION_MOUNTAINS) {
-        SDL_snprintf(loc, sizeof(loc), "MOUNTAINS %d", g->level);
+        SDL_snprintf(loc, sizeof(loc), "GOBLIN MOUNTAINS %d", g->level);
     } else if (g->location == LOCATION_HIGH_PASS) {
         SDL_snprintf(loc, sizeof(loc), "HIGH PASS");
     } else if (g->location == LOCATION_DRAGONSPINE) {
         SDL_snprintf(loc, sizeof(loc), "DRAGONSPINE %d", g->level);
     } else if (g->location == LOCATION_COAST) {
-        SDL_snprintf(loc, sizeof(loc), "COAST %d", g->level);
+        SDL_snprintf(loc, sizeof(loc), "SUNKEN COAST %d", g->level);
     } else if (g->location == LOCATION_SWAMP) {
-        SDL_snprintf(loc, sizeof(loc), "SWAMP %d", g->level);
+        SDL_snprintf(loc, sizeof(loc), "BLACKWATER SWAMP %d", g->level);
     } else if (g->location == LOCATION_FROSTFELL) {
-        SDL_snprintf(loc, sizeof(loc), "FROSTFELL %d", g->level);
-    } else if (g->location == LOCATION_MOONVEIL) {
-        SDL_snprintf(loc, sizeof(loc), "MOONVEIL GARDENS %d", g->level);
+        SDL_snprintf(loc, sizeof(loc), "FROSTFELL WASTES %d", g->level);
     } else if (g->location == LOCATION_ASHEN) {
         SDL_snprintf(loc, sizeof(loc), "ASHEN HOLLOW %d", g->level);
     } else if (g->location == LOCATION_CATACOMBS) {
@@ -184,7 +190,7 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
         SDL_snprintf(loc, sizeof(loc), "RUINED ISLE");
     } else if (g->location == LOCATION_TEMPLE) {
         SDL_snprintf(loc, sizeof(loc), g->temple_alignment
-            ? "TEMPLE %d: MOON" : "TEMPLE %d: SUN", g->level);
+            ? "RUINED TEMPLE %d: MOON" : "RUINED TEMPLE %d: SUN", g->level);
     } else if (g->location == LOCATION_LABYRINTH) {
         SDL_snprintf(loc, sizeof(loc), "ROOK'S LABYRINTH");
     } else {

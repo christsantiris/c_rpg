@@ -1,13 +1,13 @@
 # Ashen Hollow
 
-Ridgeshire's east gate leads along a safe approach to the five-stage volcanic
-region east of town, as soon as Ridgeshire is accessible. Enter each stage from
+Rosemoor's west gate leads along a safe approach to the five-stage volcanic
+region west of town. Enter each stage from
 its south edge and advance through the north exit. The south entrance backtracks;
-on stage 1 it returns to the approach back to Ridgeshire's east gate. Ordinary
+on stage 1 it returns to the approach back to Rosemoor's west gate. Ordinary
 enemies do not block stage travel.
 
 The Cinder Lord guards the last clearing on stage 5. Its defeat opens that
-stage's north exit, which returns to the approach back to Ridgeshire without
+stage's north exit, which returns to the approach back to Rosemoor without
 introducing another town. The boss guarantees **Embercleaver** and the original **Potion of Strength**,
 granting 1 permanent base attack when consumed. Its defeat appears in the boss
 journal. Surviving ordinary enemies do not block the return exit after victory.
@@ -56,14 +56,13 @@ Cinder Lord's arena sluices.
 Ashen Hollow maintains independent caches for all five stages. Backtracking
 preserves enemy health. A new expedition restores regular enemies on every
 visited stage while preserving explored terrain, quests, and boss progress.
-Return to Town opens a portal beside Ridgeshire's east gate and restores the
+Return to Town uses the last town visited; its portal restores the
 original stage and position when used. Save format 81 stores the new region;
 older saves gain fresh Ashen Hollow progress and an open regional gate without
 resetting existing characters, quests, or regional progress.
 
-Save version **163** moves Ashen Hollow east of Ridgeshire and Dragonspine north.
-Saved approaches retain distance, facing, exploration, and dropped items;
-return portals move beside their new gates. Combat maps and progress are preserved.
+Ashen Hollow occupies volcanic foothills west of Rosemoor, below Frostfell.
+Existing stages, combat progress and return portals survive relocation.
 
 Save version **145** also stores diverted valves and stable basalt crossings
 in the map tiles. Version 144 crossings and valves remain usable with the new
@@ -136,7 +135,7 @@ arena clocks. See the [native renderer gallery and play-test guide](art-sources/
 ## Reclaim the Emberforge
 
 Steward Hadrin assigns this one-time quest inside Ridgeshire's Town Hall,
-northeast of the crossroads. Approach him and press **T**. The town wants to
+northeast of the crossroads. Ashen Hollow is reached through Rosemoor's west gate. Approach him and press **T**. The town wants to
 reclaim the abandoned furnace that once supplied its miners and craftspeople.
 
 | Stage | Objective | Added defenders |

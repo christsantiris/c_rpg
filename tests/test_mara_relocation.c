@@ -91,9 +91,6 @@ void test_mara_relocation(void) {
     game_return_to_town(&game);
     game_enter_tavern(&game);
     game.mara_beacons_lit = 5;
-    game.moonveil_quest_state = 2;
-    game.moonveil_quest_progress = 7;
-    game.moonveil_quest_encounters = 7;
     game.gold = 617;
     game.player.x = MARA_TAVERN_X;
     game.player.y = MARA_TAVERN_Y;
@@ -101,18 +98,17 @@ void test_mara_relocation(void) {
     game.floor_items[0] = (FloorItem){.active = 1, .x = MARA_TAVERN_X, .y = MARA_TAVERN_Y,
         .underlying_tile = TILE_TAVERN_FLOOR, .item = item_make_short_sword()};
     game.map.tiles[MARA_TAVERN_Y][MARA_TAVERN_X] = TILE_ITEM;
-    game.map.tiles[LIORA_INN_Y][LIORA_INN_X] = TILE_NPC_LIORA;
+    game.map.tiles[18][18] = 206;
     game.dialogue_active = 1;
     snprintf(game.dialogue_speaker, MAX_SPEAKER_LEN, "Botanist Liora");
     ASSERT("legacy Tavern fixture saves and migrates", legacy_save() && load_game(&loaded, MARA_SLOT));
-    ASSERT("migration preserves both quests, gold, and explored coast enemies", loaded.mara_quest_state == 1 && loaded.mara_beacons_lit == 5 &&
-        loaded.moonveil_quest_state == 2 && loaded.moonveil_quest_progress == 7 && loaded.moonveil_quest_encounters == 7 &&
+    ASSERT("migration preserves the beacon quest, gold, and explored coast enemies", loaded.mara_quest_state == 1 && loaded.mara_beacons_lit == 5 &&
         loaded.gold == 617 && loaded.coast_cache[1].valid && loaded.coast_cache[1].enemies[0].hp == 9);
     ASSERT("legacy Tavern gains Mara and safely moves overlapping player and loot", loaded.map.tiles[MARA_TAVERN_Y][MARA_TAVERN_X] == TILE_NPC_MARA &&
         loaded.player.x == MARA_TAVERN_X && loaded.player.y == MARA_TAVERN_Y + 1 && loaded.floor_items[0].active &&
         loaded.floor_items[0].y == MARA_TAVERN_Y + 1 && loaded.floor_items[0].underlying_tile == TILE_TAVERN_FLOOR &&
         loaded.map.tiles[MARA_TAVERN_Y + 1][MARA_TAVERN_X] == TILE_ITEM);
-    ASSERT("legacy Tavern removes Liora and her stale dialogue", loaded.map.tiles[LIORA_INN_Y][LIORA_INN_X] == TILE_TAVERN_FLOOR && !loaded.dialogue_active);
+    ASSERT("legacy Tavern removes Liora and her stale dialogue", loaded.map.tiles[18][18] == TILE_TAVERN_FLOOR && !loaded.dialogue_active);
     game = loaded;
     game.mara_quest_state = 2;
     game.mara_beacons_lit = 7;
@@ -120,13 +116,11 @@ void test_mara_relocation(void) {
     game_talk_to_mara(&game);
     game_talk_to_mara(&game);
     ASSERT("Mara awards 80 gold and 600 score once at her new location", game.mara_quest_state == 3 && game.gold == 697 && game.score == score + 600);
-    game.floor_items[0] = (FloorItem){.active = 1, .x = LIORA_INN_X, .y = LIORA_INN_Y,
-        .underlying_tile = TILE_NPC_LIORA, .item = item_make_short_sword()};
-    game.map.tiles[LIORA_INN_Y][LIORA_INN_X] = TILE_ITEM;
+    game.floor_items[0] = (FloorItem){.active = 1, .x = 18, .y = 18,
+        .underlying_tile = 206, .item = item_make_short_sword()};
+    game.map.tiles[18][18] = TILE_ITEM;
     ASSERT("legacy Tavern loot covering Liora retains a walkable floor", legacy_save() && load_game(&loaded, MARA_SLOT) &&
-        loaded.floor_items[0].active && loaded.floor_items[0].underlying_tile == TILE_TAVERN_FLOOR && loaded.map.tiles[LIORA_INN_Y][LIORA_INN_X] == TILE_ITEM);
-    game_talk_to_liora(&loaded);
-    ASSERT("Liora cannot turn in her quest from the former Tavern", loaded.moonveil_quest_state == 2 && loaded.gold == 697);
+        loaded.floor_items[0].active && loaded.floor_items[0].underlying_tile == TILE_TAVERN_FLOOR && loaded.map.tiles[18][18] == TILE_ITEM);
 
     game_enter_town_hall(&game);
     game.map.tiles[HALL_MARA_Y][HALL_MARA_X] = TILE_NPC_MARA;
@@ -144,25 +138,18 @@ void test_mara_relocation(void) {
         loaded.floor_items[0].active && loaded.floor_items[0].underlying_tile == TILE_TAVERN_FLOOR && loaded.map.tiles[HALL_MARA_Y][HALL_MARA_X] == TILE_ITEM);
 
     game_enter_inn(&game);
-    game.player.x = LIORA_INN_X;
-    game.player.y = LIORA_INN_Y;
-    game.map.tiles[LIORA_INN_Y][LIORA_INN_X] = TILE_ITEM;
+    game.player.x = 18;
+    game.player.y = 18;
+    game.map.tiles[18][18] = TILE_ITEM;
     game.floor_item_count = 1;
-    game.floor_items[0] = (FloorItem){.active = 1, .x = LIORA_INN_X, .y = LIORA_INN_Y,
+    game.floor_items[0] = (FloorItem){.active = 1, .x = 18, .y = 18,
         .underlying_tile = TILE_TAVERN_FLOOR, .item = item_make_health_potion()};
-    ASSERT("legacy Inn gains Zara while retaining ready-to-return Moonseed progress", legacy_save() && load_game(&loaded, MARA_SLOT) &&
-        loaded.map.tiles[ZARA_INN_Y][ZARA_INN_X] == TILE_NPC_GUILD_SEEKER && loaded.moonveil_quest_state == 2 && loaded.moonveil_quest_progress == 7);
-    ASSERT("Inn migration moves overlapping player and loot beside Zara", loaded.player.y == LIORA_INN_Y + 1 && loaded.floor_items[0].active &&
-        loaded.floor_items[0].y == LIORA_INN_Y + 1 && loaded.floor_items[0].underlying_tile == TILE_TAVERN_FLOOR &&
-        loaded.map.tiles[LIORA_INN_Y + 1][LIORA_INN_X] == TILE_ITEM);
-    score = loaded.score;
+    ASSERT("legacy Inn gains Zara", legacy_save() && load_game(&loaded, MARA_SLOT) &&
+        loaded.map.tiles[ZARA_INN_Y][ZARA_INN_X] == TILE_NPC_GUILD_SEEKER);
+    ASSERT("Inn migration moves overlapping player and loot beside Zara", loaded.player.y == 18 + 1 && loaded.floor_items[0].active &&
+        loaded.floor_items[0].y == 18 + 1 && loaded.floor_items[0].underlying_tile == TILE_TAVERN_FLOOR &&
+        loaded.map.tiles[18 + 1][18] == TILE_ITEM);
     game_enter_town3(&loaded);
-    loaded.player.x = LIORA_TOWN_X;
-    loaded.player.y = LIORA_TOWN_Y + 1;
-    game_talk_to_liora(&loaded);
-    game_talk_to_liora(&loaded);
-    ASSERT("Liora awards 90 gold and 700 score once in Rosemoor", loaded.moonveil_quest_state == 3 && loaded.gold == 787 && loaded.score == score + 700);
-    ASSERT("both moved quests and Liora's town placement survive another save/load", save_game(&loaded, MARA_SLOT) && load_game(&loaded, MARA_SLOT) &&
-        loaded.mara_quest_state == 3 && loaded.moonveil_quest_state == 3 && loaded.map.tiles[LIORA_TOWN_Y][LIORA_TOWN_X] == TILE_NPC_LIORA);
+    ASSERT("Rosemoor has no retired botanist and retains completed Mara progress", loaded.map.tiles[13][18] != 206 && loaded.mara_quest_state == 3);
     remove(MARA_SAVE);
 }

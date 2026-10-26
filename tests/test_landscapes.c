@@ -7,17 +7,16 @@
 
 static GameState game;
 static GameState loaded;
-static Map maps[3];
+static Map maps[2];
 static unsigned char seen[MAP_H][MAP_W];
-static const Location locations[3] = {LOCATION_FROSTFELL, LOCATION_DESERT, LOCATION_MOONVEIL};
+static const Location locations[2] = {LOCATION_FROSTFELL, LOCATION_DESERT};
 
 static void generate(Map *m, int region, int level) {
     if (region == 0) {
         map_generate_frostfell(m, level);
-    } else if (region == 1) {
-        map_generate_desert(m, level);
     } else {
-        map_generate_moonveil(m, level);
+        map_generate_desert(m, level);
+
     }
 }
 
@@ -77,14 +76,14 @@ static void test_layouts(void) {
     int features = 1;
     for (int seed = 0; seed < 128; seed++) {
         for (int level = 1; level <= 5; level++) {
-            for (int region = 0; region < 3; region++) {
+            for (int region = 0; region < 2; region++) {
                 srand(seed);
                 generate(&maps[region], region, level);
                 paths &= connected(&maps[region], 0);
             }
             ice_optional &= connected(&maps[0], 1);
-            for (int a = 0; a < 3; a++) {
-                for (int b = a + 1; b < 3; b++) {
+            for (int a = 0; a < 2; a++) {
+                for (int b = a + 1; b < 2; b++) {
                     int intersection = 0;
                     int total = 0;
                     for (int y = 0; y < SWAMP_MAP_H; y++) {
@@ -101,25 +100,20 @@ static void test_layouts(void) {
             int sand = 0;
             int mesas = 0;
             int wells = 0;
-            int water = 0;
-            int stones[2] = {0};
             for (int y = 0; y < SWAMP_MAP_H; y++) {
                 for (int x = 0; x < SWAMP_MAP_W; x++) {
                     sand += maps[1].tiles[y][x] == TILE_DESERT_FLOOR;
                     wells += maps[1].tiles[y][x] == TILE_DESERT_OASIS;
                     mesas += maps[1].tiles[y][x] == TILE_DESERT_MESA;
-                    water += maps[2].tiles[y][x] == TILE_MOONVEIL_POOL;
-                    stones[0] += maps[2].tiles[y][x] == TILE_MOONVEIL_WAYSTONE_A;
-                    stones[1] += maps[2].tiles[y][x] == TILE_MOONVEIL_WAYSTONE_B;
                 }
             }
-            features &= sand > 1400 && mesas > 450 && wells == 1 && water > 200 && stones[0] == 2 && stones[1] == 2;
+            features &= sand > 1400 && mesas > 450 && wells == 1;
         }
     }
-    ASSERT("1920 independent glacier, dune and garden layouts keep every walking tile reachable", paths);
+    ASSERT("1280 independent glacier and dune layouts keep every walking tile reachable", paths);
     ASSERT("all glacier exits and snow routes work without slick or brittle ice", ice_optional);
-    ASSERT("Frostfell, Sunscar and Moonveil no longer share near-identical walking masks", distinct);
-    ASSERT("each stage has navigable dunes with substantial mesas, one well, a garden pool and complete waystones", features);
+    ASSERT("Frostfell and Sunscar no longer share near-identical walking masks", distinct);
+    ASSERT("each stage has navigable dunes with substantial mesas, one well", features);
 }
 
 static void setup(int region) {
@@ -204,35 +198,6 @@ static void test_ice_replay(void) {
     ASSERT("a real new expedition refreezes the cached crossing so it can be replayed", game.level == 3 && game.map.tiles[y][x] == TILE_FROST_THIN_ICE);
 }
 
-static void test_waystones(void) {
-    int x, y, tx, ty;
-    for (int cls = 0; cls < 3; cls++) {
-        for (int pair = 0; pair < 2; pair++) {
-            setup(2);
-            game.player.player_class = cls;
-            TileType tile = pair ? TILE_MOONVEIL_WAYSTONE_B : TILE_MOONVEIL_WAYSTONE_A;
-            find_tile(&game.map, tile, -1, -1, &x, &y);
-            find_tile(&game.map, tile, x, y, &tx, &ty);
-            game.player.x = x + 1;
-            game.player.y = y;
-            action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
-            ASSERT("every class can cross between matching waystones without spending mana", game.player.x == tx && game.player.y == ty && game.player.mp == 4 && map_is_explored(&game.map, tx, ty));
-            action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
-            ASSERT("both ends of each waystone pair work for the return trip", game.player.x == x && game.player.y == y);
-        }
-    }
-    game.enemy_count = 1;
-    game.enemies[0] = (Enemy){.active = 1, .type = ENEMY_GIANT_MOTH, .x = tx, .y = ty, .hp = 12};
-    landscape_interact(&game);
-    ASSERT("waystones never place the player on a living enemy", game.player.x == x && game.player.y == y && game.enemies[0].hp == 12);
-    game.enemies[0].active = 0;
-    game.floor_item_count = 1;
-    game.floor_items[0] = (FloorItem){.active = 1, .x = tx, .y = ty, .underlying_tile = TILE_MOONVEIL_WAYSTONE_B, .item = item_make_health_potion()};
-    game.map.tiles[ty][tx] = TILE_ITEM;
-    landscape_interact(&game);
-    ASSERT("waystone links survive loot covering their destination", game.player.x == tx && game.player.y == ty && game.floor_items[0].active && game.map.tiles[ty][tx] == TILE_ITEM);
-}
-
 static int rewrite_version(int slot, int version) {
     char path[80];
     snprintf(path, sizeof(path), "saves/savegame_%d.json", slot);
@@ -279,10 +244,10 @@ static void legacy(Map *m, int region) {
     }
     m->stairs_up_x = SWAMP_MAP_W - m->stairs_up_x - 1;
     m->stairs_down_x = SWAMP_MAP_W - m->stairs_down_x - 1;
-    const TileType floors[3] = {TILE_FROST_FLOOR, TILE_DESERT_FLOOR, TILE_MOONVEIL_FLOOR};
-    const TileType walls[3] = {TILE_FROST_WALL, TILE_DESERT_WALL, TILE_MOONVEIL_WALL};
-    const TileType entries[3] = {TILE_FROST_ENTRANCE, TILE_DESERT_ENTRANCE, TILE_MOONVEIL_ENTRANCE};
-    const TileType exits[3] = {TILE_FROST_EXIT, TILE_DESERT_EXIT, TILE_MOONVEIL_EXIT};
+    const TileType floors[2] = {TILE_FROST_FLOOR, TILE_DESERT_FLOOR};
+    const TileType walls[2] = {TILE_FROST_WALL, TILE_DESERT_WALL};
+    const TileType entries[2] = {TILE_FROST_ENTRANCE, TILE_DESERT_ENTRANCE};
+    const TileType exits[2] = {TILE_FROST_EXIT, TILE_DESERT_EXIT};
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
             TileType old = m->tiles[y][x];
@@ -297,17 +262,17 @@ static void test_saves(void) {
         ASSERT("landscape test save slot is unused", 0);
         return;
     }
-    for (int region = 0; region < 3; region++) {
+    for (int region = 0; region < 2; region++) {
         setup(region);
         if (region == 1) {
             find_tile(&game.map, TILE_DESERT_OASIS, -1, -1, &game.player.x, &game.player.y);
             landscape_interact(&game);
         }
-        LevelCache *cache = region == 0 ? game.frostfell_cache : region == 1 ? game.desert_cache : game.moonveil_cache;
+        LevelCache *cache = region == 0 ? game.frostfell_cache : game.desert_cache;
         cache[0].valid = 1;
         cache[0].map = game.map;
         int ok = save_game(&game, slot) && load_game(&loaded, slot);
-        const LevelCache *restored = region == 0 ? loaded.frostfell_cache : region == 1 ? loaded.desert_cache : loaded.moonveil_cache;
+        const LevelCache *restored = region == 0 ? loaded.frostfell_cache : loaded.desert_cache;
         ASSERT("new terrain and consumed wells round trip in active and cached maps", ok && memcmp(&game.map, &loaded.map, sizeof(Map)) == 0 && memcmp(&cache[0].map, &restored[0].map, sizeof(Map)) == 0);
 
         game_init(&game);
@@ -318,14 +283,12 @@ static void test_saves(void) {
         game.gold = 432;
         game.frostfell_quest_state = 3;
         game.frostfell_quest_progress = 3;
-        game.moonveil_quest_state = 3;
-        game.moonveil_quest_progress = 7;
         game.sunscar_lamp_quest_state = 3;
         game.defeated_bosses |= 1 << LOCATION_DUNGEON;
         game.enemy_count = 2;
         int bx, by;
         map_room_center(&game.map.rooms[8], &bx, &by);
-        game.enemies[0] = (Enemy){.active = 1, .is_boss = 1, .type = region == 0 ? ENEMY_POLAR_KRAKEN : region == 1 ? ENEMY_DESERT_PHARAOH : ENEMY_THORN_REGENT, .x = bx, .y = by, .hp = 111, .max_hp = 250, .attack_phase = 1, .move_timer = 2, .attack_target_x = bx - 2, .attack_target_y = by};
+        game.enemies[0] = (Enemy){.active = 1, .is_boss = 1, .type = region == 0 ? ENEMY_POLAR_KRAKEN : ENEMY_DESERT_PHARAOH, .x = bx, .y = by, .hp = 111, .max_hp = 250, .attack_phase = 1, .move_timer = 2, .attack_target_x = bx - 2, .attack_target_y = by};
         game.enemies[1] = (Enemy){.active = 0, .hp = 0, .type = ENEMY_SKELETON};
         game.portal_active = 1;
         game.portal_location = game.location;
@@ -337,7 +300,7 @@ static void test_saves(void) {
         game.floor_items[0] = (FloorItem){.active = 1, .x = game.player.x, .y = game.player.y, .underlying_tile = game.portal_origin_tile, .item = item_make_health_potion()};
         game.map.tiles[game.player.y][game.player.x] = TILE_ITEM;
         map_mark_explored(&game.map, game.player.x, game.player.y);
-        cache = region == 0 ? game.frostfell_cache : region == 1 ? game.desert_cache : game.moonveil_cache;
+        cache = region == 0 ? game.frostfell_cache : game.desert_cache;
         cache[4].valid = 1;
         cache[4].map = game.map;
         cache[4].enemy_count = game.enemy_count;
@@ -346,7 +309,7 @@ static void test_saves(void) {
         ok = save_game(&game, slot) && rewrite_version(slot, 145) && load_game(&loaded, slot);
         int preserved = ok;
         const Room *last = &maps[0].rooms[8];
-        restored = region == 0 ? loaded.frostfell_cache : region == 1 ? loaded.desert_cache : loaded.moonveil_cache;
+        restored = region == 0 ? loaded.frostfell_cache : loaded.desert_cache;
         for (int y = 0; y < SWAMP_MAP_H; y++) {
             for (int x = 0; x < SWAMP_MAP_W; x++) {
                 if (region != 1 && map_is_walkable(&maps[0], x, y)) {
@@ -358,7 +321,7 @@ static void test_saves(void) {
             }
         }
         ASSERT("old maps retain active/cached boss chambers and routes around added desert cover", preserved && connected(&loaded.map, 0));
-        ASSERT("migration preserves quests, wounds, deaths, pending attacks, loot and portals", ok && loaded.gold == 432 && loaded.player.x == game.player.x && loaded.player.y == game.player.y && loaded.enemies[0].hp == 111 && loaded.enemies[0].move_timer == 2 && loaded.enemies[0].attack_phase == 1 && loaded.enemies[0].attack_target_x == bx - 2 && !loaded.enemies[1].active && loaded.floor_items[0].active && loaded.portal_origin_tile == game.portal_origin_tile && loaded.frostfell_quest_progress == 3 && loaded.moonveil_quest_progress == 7 && loaded.sunscar_lamp_quest_state == 3 && loaded.defeated_bosses == game.defeated_bosses && map_is_explored(&loaded.map, game.player.x, game.player.y));
+        ASSERT("migration preserves quests, wounds, deaths, pending attacks, loot and portals", ok && loaded.gold == 432 && loaded.player.x == game.player.x && loaded.player.y == game.player.y && loaded.enemies[0].hp == 111 && loaded.enemies[0].move_timer == 2 && loaded.enemies[0].attack_phase == 1 && loaded.enemies[0].attack_target_x == bx - 2 && !loaded.enemies[1].active && loaded.floor_items[0].active && loaded.portal_origin_tile == game.portal_origin_tile && loaded.frostfell_quest_progress == 3 && loaded.sunscar_lamp_quest_state == 3 && loaded.defeated_bosses == game.defeated_bosses && map_is_explored(&loaded.map, game.player.x, game.player.y));
         maps[1] = loaded.map;
         landscape_migrate(&loaded);
         ASSERT("landscape migration is stable when repeated", memcmp(&maps[1], &loaded.map, sizeof(Map)) == 0);
@@ -480,7 +443,6 @@ void test_landscapes(void) {
     test_layouts();
     test_wells();
     test_ice_replay();
-    test_waystones();
     test_saves();
     test_sunscar_patrol_replay();
     test_sunscar_cover_migration();
