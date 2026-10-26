@@ -161,7 +161,7 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
         *style = g->location == LOCATION_TOWN2 ?
             TOWN_EXIT_FOREST :
             (g->location == LOCATION_TOWN4 ?
-            TOWN_EXIT_ASHEN : TOWN_EXIT_DUNGEON);
+            TOWN_EXIT_ROAD : TOWN_EXIT_DUNGEON);
         return 1;
     }
     if (action.target_y == TOWN_H - 1) {
@@ -656,7 +656,7 @@ int main(int argc, char **argv) {
             (screen == SCREEN_PLAYING && game_combat_feedback_active(SDL_GetTicks()));
         int ambient_animating = screen == SCREEN_PLAYING &&
             (game_player_low_health(&game) || game.location == LOCATION_DUNGEON ||
-            game.location == LOCATION_STORMWATCH || game.location == LOCATION_ELDERWOOD || game.location == LOCATION_FOREST ||
+            game.location == LOCATION_IRONFANG || game.location == LOCATION_STORMWATCH || game.location == LOCATION_ELDERWOOD || game.location == LOCATION_FOREST ||
             game.location == LOCATION_MOUNTAINS ||
             game.location == LOCATION_DRAGONSPINE ||
             game.location == LOCATION_FROSTFELL ||

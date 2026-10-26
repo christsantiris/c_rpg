@@ -1,7 +1,7 @@
 # Enemy names and areas
 
 This is the current spawn roster, including quest encounters and summoned
-enemies. It covers all **102 defined enemy types**, all of which have current
+enemies. It covers all **103 defined enemy types**, all of which have current
 spawns. The 22 named variants are listed separately because they reuse these
 types. Removed enemy IDs remain reserved in the save format; they are no longer
 runtime enemy definitions. The six retired Pirate Coast IDs also remain unused.
@@ -28,13 +28,13 @@ Castle entries below refer to the castle interior, not Castle Grounds.
 | Giant Wurm | Haunted Forest |
 | Forest Troll | Haunted Forest |
 | Necromancer | Haunted Forest |
-| Goblin Scout | Goblin Mountains; Dragonspine |
-| Goblin Archer | Goblin Mountains; Dragonspine |
-| Goblin Bomber | Goblin Mountains |
-| Tunnel Spider | Goblin Mountains; Escape Tunnel |
-| Cave Troll | Goblin Mountains |
-| Hobgoblin Guard | Goblin Mountains; Crown Road East; Crown Road West; Escape Tunnel (Smuggler Bodyguard) |
-| Goblin Shaman | Goblin Mountains |
+| Goblin Scout | Goblin Mountains; Dragonspine; Ironfang Mines |
+| Goblin Archer | Goblin Mountains; Dragonspine; Ironfang Mines |
+| Goblin Bomber | Goblin Mountains; Ironfang Mines |
+| Tunnel Spider | Goblin Mountains; Escape Tunnel; Ironfang Mines |
+| Cave Troll | Goblin Mountains; Ironfang Mines |
+| Hobgoblin Guard | Goblin Mountains; Crown Road East; Crown Road West; Escape Tunnel (Smuggler Bodyguard); Ironfang Mines |
+| Goblin Shaman | Goblin Mountains; Ironfang Mines |
 | Goblin King | Goblin Mountains |
 | Illusion | Sunken Coast |
 | Merfolk | Sunken Coast |
@@ -117,6 +117,7 @@ Castle entries below refer to the castle interior, not Castle Grounds.
 | Harpy Stormcaller | Stormwatch Headland 3–5 |
 | Storm Elemental | Stormwatch Headland 4–5 |
 | Tempest Matriarch | Stormwatch Headland 5 |
+| Goblin Mine Boss | Ironfang Mines 5 |
 
 ## Named quest, hunt and summoned enemies
 

@@ -1,3 +1,4 @@
+#include "game/ironfang.h"
 #include "game/stonewake.h"
 #include "game/stormwatch.h"
 #include "renderer/stonewake_renderer.h"
@@ -318,6 +319,56 @@ static void test_saltwind_renderer(Renderer *r, GameState *g, SDL_Surface *surfa
     renderer_end_frame(r);
     assert(rendered_pixel(surface, x, y) == sand);
     printf("PASS: all six Saltwind enemy sprites render in the adventure; Rowan preserves his beach underlay.\n");
+}
+
+static void test_ironfang_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    assert(r->ironfang_boss_texture && r->area_entrance_textures[TOWN_EXIT_IRONFANG]);
+    int width;
+    int height;
+    SDL_QueryTexture(r->ironfang_boss_texture, NULL, NULL, &width, &height);
+    assert(width == TILE_SIZE && height == TILE_SIZE);
+    SDL_QueryTexture(r->area_entrance_textures[TOWN_EXIT_IRONFANG], NULL, NULL, &width, &height);
+    assert(width == 168 && height == 144);
+    game_init(g);
+    ironfang_enter(g, 0);
+    g->enemy_count = 0;
+    g->player.x = 9;
+    g->player.y = 25;
+    Action interact = move_left_action(g, g->key_bindings[CONTROL_MOVE_LEFT]);
+    assert(interact.type == ACTION_INTERACT);
+    action_resolve_player(g, interact);
+    assert(g->ironfang[0].aboard && g->player.x == 10);
+    Action left = move_left_action(g, SDL_SCANCODE_LEFT);
+    assert(left.type == ACTION_MOVE);
+    action_resolve_player(g, (Action){ACTION_MOVE, 11, 25});
+    assert(g->player.x == 12 && g->ironfang[0].cart_x == 12 && g->player.last_dx == 1 && g->player.last_dy == 0);
+    game_init(g);
+    ironfang_enter(g, 0);
+    const EnemyType roster[] = {ENEMY_GOBLIN_SCOUT, ENEMY_GOBLIN_ARCHER, ENEMY_GOBLIN_BOMBER, ENEMY_TUNNEL_SPIDER, ENEMY_CAVE_TROLL, ENEMY_HOBGOBLIN_GUARD, ENEMY_GOBLIN_SHAMAN, ENEMY_GOBLIN_MINE_BOSS};
+    for (int n = 0; n < 8; n++) {
+        SDL_SetRenderDrawColor(r->sdl, 0, 0, 0, 255);
+        SDL_RenderClear(r->sdl);
+        draw_enemy(r, 10, 8, roster[n]);
+        SDL_RenderPresent(r->sdl);
+        int pixels = 0;
+        for (int y = 8 * TILE_SIZE; y < 9 * TILE_SIZE; y++) {
+            for (int x = 10 * TILE_SIZE; x < 11 * TILE_SIZE; x++) {
+                Uint8 red, green, blue;
+                SDL_GetRGB(rendered_pixel(surface, x, y), surface->format, &red, &green, &blue);
+                pixels += red || green || blue;
+            }
+        }
+        assert(pixels > 65);
+    }
+    g->location = LOCATION_TOWN4;
+    map_generate_town4(&g->map, &g->player.x, &g->player.y);
+    TownExitStyle style;
+    assert(town_entry_style(g, (Action){ACTION_MOVE, TOWN_W - 1, 12}, &style) && style == TOWN_EXIT_ROAD);
+    g->debug_passages_unlocked = 1;
+    ironfang_enter(g, 0);
+    game_refresh_debug_passages(g);
+    assert(g->map.tiles[25][40] == TILE_IRON_RAIL && g->map.tiles[8][8] == TILE_IRON_FLOOR && !g->ironfang_defeated);
+    puts("PASS: Ironfang's eight enemy sprites render at native scale; bound Interact boards a cart, arrows drive it, Ridgeshire uses its road gate, and debug repairs optional passages.");
 }
 
 int main(void) {
@@ -668,6 +719,7 @@ int main(void) {
     action_resolve_player(game, (Action){ACTION_MOVE, ESCAPE_TUNNEL_W - 1, 14});
     assert(game->location == LOCATION_TOWN4 && game->jail_quest_state == 3 && game->gold == gold + ESCAPE_REWARD_GOLD);
     test_stormwatch_input(game);
+    test_ironfang_renderer(&renderer, game, surface);
     free(game);
     renderer_free(&renderer);
     SDL_DestroyRenderer(sdl);

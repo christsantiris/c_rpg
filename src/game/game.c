@@ -1,3 +1,4 @@
+#include "ironfang.h"
 #include "game.h"
 #include "mangrove.h"
 #include "stormwatch.h"
@@ -98,6 +99,7 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
     memset(e->dragon_warning, 0, sizeof(e->dragon_warning));
     switch (type) {
         // Elderwood entities are constructed by its compact region generator.
+        case ENEMY_GOBLIN_MINE_BOSS:
         case ENEMY_HARPY_RAIDER:
         case ENEMY_CLIFF_GARGOYLE:
         case ENEMY_HARPY_STORMCALLER:
@@ -545,7 +547,7 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
 }
 
 static int boss_for_level(const GameState *g, EnemyType *type) {
-    if (g->location == LOCATION_STORMWATCH || g->location == LOCATION_ELDERWOOD || g->location == LOCATION_MANGROVES || g->location == LOCATION_MANGROVE_PATH) {
+    if (g->location == LOCATION_IRONFANG || g->location == LOCATION_STORMWATCH || g->location == LOCATION_ELDERWOOD || g->location == LOCATION_MANGROVES || g->location == LOCATION_MANGROVE_PATH) {
         return 0;
     }
     int boss_level = DUNGEON_DEPTH;
@@ -1402,6 +1404,8 @@ void enemies_spawn(GameState *g) {
 }
 
 void game_init(GameState *g) {
+    memset(g->ironfang, 0, sizeof(g->ironfang));
+    g->ironfang_defeated = 0;
     memset(g->stormwatch, 0, sizeof(g->stormwatch));
     g->stormwatch_defeated = 0;
     g->mangroves = (MangroveState){0};
@@ -3290,6 +3294,10 @@ static void prepare_forest_arrival(GameState *g, int from_high) {
 }
 
 void game_descend(GameState *g) {
+    if (g->location == LOCATION_IRONFANG) {
+        ironfang_change_level(g, 1);
+        return;
+    }
     if (g->location == LOCATION_STORMWATCH) {
         stormwatch_change_level(g, 1);
         return;
@@ -3343,6 +3351,10 @@ void game_descend(GameState *g) {
 }
 
 void game_ascend(GameState *g) {
+    if (g->location == LOCATION_IRONFANG) {
+        ironfang_change_level(g, 0);
+        return;
+    }
     if (g->location == LOCATION_STORMWATCH) {
         stormwatch_change_level(g, 0);
         return;
@@ -3782,6 +3794,8 @@ void game_refresh_debug_passages(GameState *g) {
                         }
                     }
                     break;
+                case TILE_IRON_BROKEN: open = TILE_IRON_RAIL; break;
+                case TILE_IRON_CRACK: open = TILE_IRON_FLOOR; break;
                 case TILE_DUNGEON_STAIRS_SEALED: open = TILE_DUNGEON_STAIRS_RETURN; break;
                 default: break;
             }
@@ -3821,6 +3835,7 @@ static void place_town_portal(GameState *g) {
             case LOCATION_MANGROVES: anchor = LOCATION_DAWNMERE; break;
             case LOCATION_FROSTFELL:
             case LOCATION_ASHEN: anchor = LOCATION_TOWN3; break;
+            case LOCATION_IRONFANG:
             case LOCATION_DRAGONSPINE: anchor = LOCATION_TOWN4; break;
             default: break;
         }
@@ -3847,7 +3862,9 @@ static void place_town_portal(GameState *g) {
         return;
     }
     if (g->location == LOCATION_TOWN4) {
-        if (g->portal_location == LOCATION_DRAGONSPINE) {
+        if (g->portal_location == LOCATION_IRONFANG) {
+            g->map.tiles[12][TOWN_W - 3] = TILE_PORTAL;
+        } else if (g->portal_location == LOCATION_DRAGONSPINE) {
             g->map.tiles[RIDGESHIRE_DRAGON_PORTAL_Y][RIDGESHIRE_DRAGON_PORTAL_X] = TILE_PORTAL;
         } else if (g->portal_location == LOCATION_MOUNTAINS && g->mountain_portal_town == LOCATION_TOWN4) {
             g->map.tiles[TOWN_H - 3][21] = TILE_PORTAL;
@@ -5291,6 +5308,7 @@ void game_record_temple_enemy_defeated(GameState *g, EnemyType type) {
 
 static void return_to_town(GameState *g, Location destination) {
     Location returning_from = g->location;
+    ironfang_store(g);
     stormwatch_store(g);
     mangrove_store(g);
     elderwood_store(g);
@@ -5442,6 +5460,10 @@ void game_leave_labyrinth(GameState *g) {
 }
 
 void game_return_to_approach(GameState *g) {
+    if (g->location == LOCATION_IRONFANG) {
+        ironfang_leave(g);
+        return;
+    }
     if (g->location == LOCATION_STORMWATCH) {
         stormwatch_leave(g);
         return;
@@ -5689,6 +5711,7 @@ void game_open_town_portal(GameState *g) {
         g->location != LOCATION_ASHEN &&
         g->location != LOCATION_GLASSDEEP &&
         g->location != LOCATION_CATACOMBS &&
+        g->location != LOCATION_IRONFANG &&
         g->location != LOCATION_STORMWATCH &&
         g->location != LOCATION_MANGROVES &&
         g->location != LOCATION_ELDERWOOD &&
@@ -5724,6 +5747,9 @@ void game_open_town_portal(GameState *g) {
 }
 
 void game_hide_portal_destination(GameState *g) {
+    if (g->portal_location == LOCATION_IRONFANG) {
+        return;
+    }
     if (g->portal_location == LOCATION_STORMWATCH) {
         return;
     }
@@ -5829,6 +5855,10 @@ void game_use_town_portal(GameState *g) {
     }
     if (!g->portal_active || g->portal_level < 1 ||
         g->portal_level > MAX_REGION_DEPTH) return;
+    if (g->portal_location == LOCATION_IRONFANG && g->portal_level <= IRON_DEPTH) {
+        ironfang_enter(g, 1);
+        return;
+    }
     if (g->portal_location == LOCATION_STORMWATCH && g->portal_level <= STORM_DEPTH) {
         stormwatch_enter(g, 1);
         return;

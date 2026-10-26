@@ -93,10 +93,10 @@ void test_dragonspine(void) {
                 tile == TILE_NPC_DRAGON_SEEKER || tile == TILE_NPC_ROYAL_GUARD || tile == TILE_NPC_DAIN;
         }
     }
-    ASSERT("Ridgeshire keeps its crossroads and guards without Ilya and with an open Ashen Hollow gate",
+    ASSERT("Ridgeshire keeps its crossroads and guards without Ilya and with an open Ironfang Mines gate",
         empty_crossroads && ilya_count == 0 && royal_guard_count == 2 &&
         g.map.tiles[12][20] == TILE_TOWN_PATH && g.map.tiles[DAIN_TOWN_Y][DAIN_TOWN_X] == TILE_NPC_DAIN &&
-        g.map.tiles[12][TOWN_W - 1] == TILE_WALL && g.map.tiles[12][0] == TILE_TOWN_EXIT);
+        g.map.tiles[12][TOWN_W - 1] == TILE_TOWN_EXIT && g.map.tiles[12][0] == TILE_TOWN_EXIT);
 
     action_resolve_player(&g, (Action){ACTION_MOVE, 20, TOWN_H - 1});
     walk_mountain_road(&g);

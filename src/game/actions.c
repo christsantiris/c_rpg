@@ -1,3 +1,4 @@
+#include "ironfang.h"
 #include "stonewake.h"
 #include "actions.h"
 #include "restoration.h"
@@ -74,7 +75,7 @@ void push_message_kind(GameState *g, const char *msg, MessageKind kind) {
 
 static void mark_item_tile(GameState *g, int x, int y) {
     TileType tile = g->map.tiles[y][x];
-    if (tile == TILE_STORM_ENTRANCE || tile == TILE_STORM_EXIT || tile == TILE_DUNGEON_STAIRS_SEALED || tile == TILE_DUNGEON_STAIRS_RETURN) {
+    if ((tile >= TILE_IRON_FLOOR && tile <= TILE_IRON_EXIT) || tile == TILE_STORM_ENTRANCE || tile == TILE_STORM_EXIT || tile == TILE_DUNGEON_STAIRS_SEALED || tile == TILE_DUNGEON_STAIRS_RETURN) {
         return;
     }
     if (g->location == LOCATION_CASTLE_INTERIOR && (tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN ||
@@ -226,6 +227,7 @@ static int enemy_score(EnemyType type) {
         case ENEMY_MARSH_SPITTER: return 55;
         case ENEMY_MUDBACK_TURTLE: return 110;
         case ENEMY_LIZARDFOLK_SCALEGUARD: return 120;
+        case ENEMY_GOBLIN_MINE_BOSS:
         case ENEMY_TEMPEST_MATRIARCH: return 0;
         case ENEMY_HARPY_RAIDER: return 65;
         case ENEMY_CLIFF_GARGOYLE: return 95;
@@ -321,6 +323,13 @@ static int melee_gold_bonus(const GameState *g) {
 }
 
 static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
+    if (enemy->type == ENEMY_GOBLIN_MINE_BOSS) {
+        ironfang_defeat(g);
+        return;
+    }
+    if (g->location == LOCATION_IRONFANG && enemy->revived) {
+        return;
+    }
     if (enemy->type == ENEMY_TEMPEST_MATRIARCH) {
         stormwatch_defeat(g);
         return;
@@ -389,6 +398,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         case ENEMY_MARSH_SPITTER: gold = 7 + rand() % 5; break;
         case ENEMY_MUDBACK_TURTLE:
         case ENEMY_LIZARDFOLK_SCALEGUARD: gold = 12 + rand() % 7; break;
+        case ENEMY_GOBLIN_MINE_BOSS:
         case ENEMY_TEMPEST_MATRIARCH: break;
         case ENEMY_HARPY_RAIDER:
         case ENEMY_CLIFF_GARGOYLE:
@@ -623,7 +633,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
     }
 
     TileType drop_tile = g->map.tiles[y][x];
-    int plain_floor = drop_tile == TILE_STORM_GRASS || drop_tile == TILE_STORM_STONE || drop_tile == TILE_STORM_SHUTTER_DOWN ||
+    int plain_floor = drop_tile == TILE_IRON_FLOOR || drop_tile == TILE_IRON_EMPTY || drop_tile == TILE_STORM_GRASS || drop_tile == TILE_STORM_STONE || drop_tile == TILE_STORM_SHUTTER_DOWN ||
         drop_tile == TILE_STORM_EMPTY || drop_tile == TILE_MANGROVE_MUD || drop_tile == TILE_MANGROVE_DECK ||
         drop_tile == TILE_MANGROVE_LANDING || drop_tile == TILE_ELDERWOOD_FLOOR || drop_tile == TILE_FLOOR ||
         drop_tile == TILE_FOREST_FLOOR ||
@@ -946,6 +956,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (ironfang_hint(g)) {
+        return 1;
+    }
     if (stormwatch_hint(g)) {
         return 1;
     }
@@ -1209,6 +1222,15 @@ static void tick_player_poison(GameState *g) {
 }
 
 void action_resolve_player(GameState *g, Action a) {
+    if (g->location == LOCATION_IRONFANG && (a.type == ACTION_ASCEND || a.type == ACTION_DESCEND)) {
+        ironfang_travel(g, g->player.x, g->player.y);
+        return;
+    }
+    if (g->location == LOCATION_IRONFANG && g->level >= 1 && g->level <= IRON_DEPTH &&
+        g->ironfang[g->level - 1].aboard && a.type == ACTION_DROP_ITEM) {
+        push_message(g, "Disembark before dropping an item on solid ground.");
+        return;
+    }
     if (g->location == LOCATION_MANGROVES && g->mangroves.aboard && a.type == ACTION_DROP_ITEM) {
         push_message(g, "Go ashore before setting down an item.");
         return;
@@ -1368,6 +1390,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (ironfang_interact(g)) {
+            return;
+        }
         if (stormwatch_interact(g)) {
             return;
         }
@@ -2246,6 +2271,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_MOVE) {
+        if (ironfang_move(g, a.target_x, a.target_y)) {
+            return;
+        }
         int tx = a.target_x;
         int ty = a.target_y;
         if (g->location == LOCATION_MANGROVES && g->mangroves.aboard) {
@@ -2465,7 +2493,7 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
-        if (stormwatch_travel(g, tx, ty) || mangrove_travel(g, tx, ty) || elderwood_travel(g, tx, ty) || town_road_travel(g, tx, ty) || town_road_depart(g, tx, ty) || approach_travel(g, tx, ty) || approach_enter(g, tx, ty)) {
+        if (ironfang_travel(g, tx, ty) || stormwatch_travel(g, tx, ty) || mangrove_travel(g, tx, ty) || elderwood_travel(g, tx, ty) || town_road_travel(g, tx, ty) || town_road_depart(g, tx, ty) || approach_travel(g, tx, ty) || approach_enter(g, tx, ty)) {
             return;
         }
 
@@ -3608,6 +3636,28 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
     if (g->location == LOCATION_MANGROVES && g->mangroves.aboard) {
         return;
     }
+    if (g->location == LOCATION_IRONFANG) {
+        int hp[AREA_ENEMY_LIMIT];
+        for (int n = 0; n < g->enemy_count; n++) {
+            hp[n] = g->enemies[n].hp;
+        }
+        int damage = ironfang_tick_ore(g);
+        for (int n = 0; n < g->enemy_count; n++) {
+            Enemy *enemy = &g->enemies[n];
+            if (enemy->active && enemy->hp < hp[n]) {
+                combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_NOW, enemy->x, enemy->y, hp[n] - enemy->hp);
+                if (enemy->hp <= 0) {
+                    enemy->active = 0;
+                    drop_loot(g, enemy, 0);
+                    player_gain_xp(g, enemy->experience);
+                    game_update_level_progress(g);
+                }
+            }
+        }
+        if (damage > 0) {
+            apply_enemy_damage(g, damage, FEEDBACK_NOW);
+        }
+    }
     jail_follow(g);
     if (g->location == LOCATION_CASTLE_INTERIOR) {
         int damage = castle_tick(g);
@@ -3702,6 +3752,15 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
 
+        int mine_damage = 0;
+        if (ironfang_tick(g, e, &mine_damage)) {
+            if (mine_damage > 0) {
+                int damage = mine_damage - g->player.defense / 2;
+                apply_enemy_damage(g, damage > 0 ? damage : 1, FEEDBACK_NOW);
+                push_message_kind(g, "The Mine Boss strikes you!", MESSAGE_DAMAGE_TAKEN);
+            }
+            continue;
+        }
         int storm_damage = 0;
         if (stormwatch_tick(g, e, &storm_damage)) {
             if (storm_damage > 0) {

@@ -1,6 +1,8 @@
 #include "stonewake_renderer.h"
 #include "game_renderer.h"
 #include "mangrove_renderer.h"
+#include "ironfang_renderer.h"
+#include "../game/ironfang.h"
 #include "stormwatch_renderer.h"
 #include "../game/stormwatch.h"
 #include "../game/mangrove.h"
@@ -210,6 +212,7 @@ static SDL_Color area_label_color(Location area) {
 
 static int approach_area_style(Location area, TownExitStyle *style) {
     switch (area) {
+        case LOCATION_IRONFANG: *style = TOWN_EXIT_IRONFANG; return 1;
         case LOCATION_STORMWATCH: *style = TOWN_EXIT_STORMWATCH; return 1;
         case LOCATION_DUNGEON: *style = TOWN_EXIT_DUNGEON; return 1;
         case LOCATION_FOREST: *style = TOWN_EXIT_FOREST; return 1;
@@ -1292,6 +1295,9 @@ static TileType floor_item_underlay(const GameState *g, int x, int y) {
             return terrain_display_tile(g, (TileType)item->underlying_tile);
         }
     }
+    if (g->location == LOCATION_IRONFANG) {
+        return TILE_IRON_FLOOR;
+    }
     if (g->location == LOCATION_STORMWATCH) {
         return TILE_STORM_GRASS;
     }
@@ -1506,6 +1512,10 @@ static void draw_floor_loot(Renderer *r, const GameState *g, int map_x, int map_
 
 static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int map_x, int map_y, int screen_x, int screen_y) {
     TileType underlay = floor_item_underlay(g, map_x, map_y);
+    if (underlay >= TILE_IRON_FLOOR && underlay <= TILE_IRON_EXIT) {
+        ironfang_draw_tile(r, g, screen_x, screen_y, map_x, map_y, underlay);
+        return;
+    }
     if (underlay >= TILE_STORM_GRASS && underlay <= TILE_STORM_EXIT) {
         stormwatch_draw_tile(r, g, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay >= TILE_MANGROVE_MUD && underlay <= TILE_MANGROVE_DECK) {
@@ -2065,6 +2075,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         viewport_init(&town_view, v->tiles_x < CASTLE_W ? v->tiles_x : CASTLE_W, v->tiles_y < CASTLE_H ? v->tiles_y : CASTLE_H, CASTLE_W, CASTLE_H);
         viewport_center_on(&town_view, g->player.x, g->player.y);
         v = &town_view;
+    } else if (g->location == LOCATION_IRONFANG) {
+        viewport_init(&town_view, v->tiles_x < IRON_W ? v->tiles_x : IRON_W, v->tiles_y < IRON_H ? v->tiles_y : IRON_H, IRON_W, IRON_H);
+        viewport_center_on(&town_view, g->player.x, g->player.y);
+        v = &town_view;
     } else if (g->location == LOCATION_STORMWATCH) {
         viewport_init(&town_view, v->tiles_x < STORM_W ? v->tiles_x : STORM_W, v->tiles_y < STORM_H ? v->tiles_y : STORM_H, STORM_W, STORM_H);
         viewport_center_on(&town_view, g->player.x, g->player.y);
@@ -2125,7 +2139,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
             if (!viewport_is_visible(v, x, y)) continue;
-            map_mark_explored(&g->map, x, y);
+            if (g->location != LOCATION_IRONFANG || ironfang_lit(g, x, y)) {
+                map_mark_explored(&g->map, x, y);
+            }
             int sx = viewport_to_screen_x(v, x);
             int sy = viewport_to_screen_y(v, y);
             if (g->location == LOCATION_JAIL || g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_JAIL_ARMORY) {
@@ -2135,6 +2151,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             if (g->location == LOCATION_CASTLE_INTERIOR) {
                 TileType tile = g->map.tiles[y][x];
                 castle_draw_tile(r, g, sx, sy, x, y, tile == TILE_ITEM ? floor_item_underlay(g, x, y) : tile);
+                continue;
+            }
+            if (g->location == LOCATION_IRONFANG) {
+                TileType tile = g->map.tiles[y][x];
+                ironfang_draw_tile(r, g, sx, sy, x, y, tile == TILE_ITEM ? floor_item_underlay(g, x, y) : tile);
                 continue;
             }
             switch (terrain_display_tile(g, g->map.tiles[y][x])) {
@@ -3167,6 +3188,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     if (g->location == LOCATION_TOWN4) {
+        draw_town_gate_back(r, viewport_to_screen_x(v, TOWN_W - 1), viewport_to_screen_y(v, 12), TOWN_EXIT_ROAD, -1, 0);
+        draw_town_road_sign(r, viewport_to_screen_x(v, TOWN_W - 9), viewport_to_screen_y(v, 16), "IRONFANG MINES");
         draw_workshop(r,
             viewport_to_screen_x(v, TOWN4_WORKSHOP_X),
             viewport_to_screen_y(v, TOWN4_WORKSHOP_Y));
@@ -3295,9 +3318,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_red_dragon_warnings(r, g, v);
     draw_elderwood_warnings(r, g, v);
     stormwatch_draw_warnings(r, g, v);
+    ironfang_draw_details(r, g, v);
 
     // Draw enemies
-    if (g->location == LOCATION_STORMWATCH || g->location == LOCATION_MANGROVES || g->location == LOCATION_JAIL_ARMORY || g->location == LOCATION_ELDERWOOD || g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
+    if (g->location == LOCATION_IRONFANG || g->location == LOCATION_STORMWATCH || g->location == LOCATION_MANGROVES || g->location == LOCATION_JAIL_ARMORY || g->location == LOCATION_ELDERWOOD || g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
         g->location == LOCATION_FOREST ||
         g->location == LOCATION_MOUNTAINS ||
         g->location == LOCATION_DRAGONSPINE ||
@@ -4087,6 +4111,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_area_description(r, g, v);
     mangrove_draw_hint(r, g);
     stormwatch_draw_hint(r, g);
+    ironfang_draw_hint(r, g);
 
     draw_kraken_status(r, g, v);
     draw_lich_status(r, g, v);
