@@ -1,4 +1,5 @@
 #include "../game/ironfang.h"
+#include "../game/crownroad_north.h"
 #include "../game/stonewake.h"
 #include "save_load.h"
 #include "../game/game.h"
@@ -1248,6 +1249,70 @@ static int stormwatch_number(const cJSON *object, const char *key, int *value) {
     return 1;
 }
 
+
+static cJSON *serialize_northroad(const GameState *g) {
+    NorthRoadCache state = g->northroad;
+    northroad_capture(g, &state);
+    cJSON *entry = cJSON_CreateObject();
+    cJSON_AddNumberToObject(entry, "valid", state.valid);
+    if (state.valid) {
+        cJSON_AddNumberToObject(entry, "from_castle", state.from_castle);
+        cJSON_AddNumberToObject(entry, "level_cleared", state.level_cleared);
+        cJSON_AddItemToObject(entry, "map", serialize_map(&state.map));
+        cJSON_AddItemToObject(entry, "enemies", serialize_enemies(state.enemies, state.enemy_count));
+        cJSON_AddItemToObject(entry, "loot", serialize_castle_loot(state.loot, state.loot_count));
+    }
+    return entry;
+}
+
+static int load_northroad(const cJSON *root, GameState *g, int version) {
+    NorthRoadCache *state = &g->northroad;
+    memset(state, 0, sizeof(*state));
+    if (version < 202) {
+        return 1;
+    }
+    const cJSON *entry = cJSON_GetObjectItem(root, "northroad");
+    if (!cJSON_IsObject(entry) || !stormwatch_number(entry, "valid", &state->valid) ||
+        (state->valid != 0 && state->valid != 1)) {
+        return 0;
+    }
+    if (!state->valid) {
+        return 1;
+    }
+    const cJSON *map = cJSON_GetObjectItem(entry, "map");
+    const cJSON *enemies = cJSON_GetObjectItem(entry, "enemies");
+    if (!stormwatch_number(entry, "from_castle", &state->from_castle) ||
+        !stormwatch_number(entry, "level_cleared", &state->level_cleared) ||
+        !cJSON_IsString(cJSON_GetObjectItem(map, "tiles_b64")) ||
+        !cJSON_IsString(cJSON_GetObjectItem(map, "explored_b64")) ||
+        !cJSON_IsArray(enemies) || cJSON_GetArraySize(enemies) > NORTH_ENEMIES ||
+        !deserialize_castle_loot(cJSON_GetObjectItem(entry, "loot"), state->loot, &state->loot_count)) {
+        return 0;
+    }
+    const char *fields[] = {"room_count", "stairs_up_x", "stairs_up_y", "stairs_down_x", "stairs_down_y"};
+    for (int i = 0; i < 5; i++) {
+        if (!cJSON_IsNumber(cJSON_GetObjectItem(map, fields[i]))) {
+            return 0;
+        }
+    }
+    for (int i = 0; i < cJSON_GetArraySize(enemies); i++) {
+        const cJSON *enemy = cJSON_GetArrayItem(enemies, i);
+        const char *required[] = {"x", "y", "active", "type", "hp", "max_hp", "attack", "defense", "experience", "move_timer", "frozen_turns", "attack_target_x", "attack_target_y", "boss_aux_x", "boss_aux_y"};
+        if (!cJSON_IsString(cJSON_GetObjectItem(enemy, "name"))) {
+            return 0;
+        }
+        for (int n = 0; n < (int)(sizeof(required) / sizeof(required[0])); n++) {
+            int value;
+            if (!stormwatch_number(enemy, required[n], &value)) {
+                return 0;
+            }
+        }
+    }
+    deserialize_map(map, &state->map);
+    deserialize_enemies(enemies, state->enemies, &state->enemy_count, NORTH_ENEMIES);
+    return 1;
+}
+
 static int load_ironfang(const cJSON *root, GameState *g, int version) {
     memset(g->ironfang, 0, sizeof(g->ironfang));
     g->ironfang_defeated = 0;
@@ -1420,7 +1485,7 @@ static void migrate_stormwatch_road(GameState *g) {
 }
 
 int save_game(const GameState *g, int slot) {
-    if (!mangrove_state_valid(g) || !stormwatch_valid(g) || !ironfang_valid(g)) {
+    if (!northroad_valid(g) || !mangrove_state_valid(g) || !stormwatch_valid(g) || !ironfang_valid(g)) {
         return 0;
     }
     if (g->retired_coast_item_count < 0 || g->retired_coast_item_count > RETIRED_LOOT_STAGES * MAX_FLOOR_ITEMS) {
@@ -1428,7 +1493,8 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 201);
+    cJSON_AddNumberToObject(root, "save_version", 202);
+    cJSON_AddItemToObject(root, "northroad", serialize_northroad(g));
     cJSON_AddItemToObject(root, "ironfang", serialize_ironfang(g));
     cJSON_AddNumberToObject(root, "ironfang_defeated", g->ironfang_defeated);
     cJSON_AddItemToObject(root, "stormwatch", serialize_stormwatch(g));
@@ -3554,7 +3620,7 @@ int load_game(GameState *g, int slot) {
 
     cJSON *version_item = cJSON_GetObjectItem(root, "save_version");
     int save_version = version_item ? version_item->valueint : 1;
-    if (!load_ironfang(root, g, save_version) || !load_stormwatch(root, g, save_version) || !load_mangroves(root, g, save_version)) {
+    if (!load_northroad(root, g, save_version) || !load_ironfang(root, g, save_version) || !load_stormwatch(root, g, save_version) || !load_mangroves(root, g, save_version)) {
         cJSON_Delete(root);
         return 0;
     }
@@ -6222,7 +6288,7 @@ int load_game(GameState *g, int slot) {
     if (save_version < 198) {
         migrate_stormwatch_road(g);
     }
-    if (!ironfang_valid(g) || !stormwatch_valid(g)) {
+    if (!northroad_valid(g) || !ironfang_valid(g) || !stormwatch_valid(g)) {
         cJSON_Delete(root);
         return 0;
     }
@@ -6257,6 +6323,10 @@ int load_game(GameState *g, int slot) {
     }
     if (save_version < 200) {
         ironfang_migrate_road(g);
+    }
+    if (save_version < 202 && g->location == LOCATION_DAWNMERE_MERCHANT &&
+        strcmp(g->dialogue_speaker, "Merchant Corvin") == 0) {
+        snprintf(g->dialogue_speaker, sizeof(g->dialogue_speaker), "Spice Merchant Corvin");
     }
     game_refresh_debug_passages(g);
     cJSON_Delete(root);

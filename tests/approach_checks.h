@@ -2,6 +2,7 @@
 #define APPROACH_CHECKS_H
 
 #include "test_utils.h"
+#include "northroad_checks.h"
 #include "town_road_checks.h"
 #include "game/approach.h"
 #include "game/elderwood.h"
@@ -30,6 +31,7 @@ static inline void walk_return_approach(GameState *g) {
             int dy = dx ? 0 : (g->map.stairs_up_y > g->player.y) - (g->map.stairs_up_y < g->player.y);
             action_resolve_player(g, (Action){ACTION_MOVE, g->player.x + dx, g->player.y + dy});
         }
+        walk_crownroad_north(g, 1);
         walk_into_arrived_town(g);
         ASSERT("northern return path reaches its original town", g->location == (route ? route->town : LOCATION_CASTLE));
         return;
@@ -132,6 +134,7 @@ static inline void walk_boss_approach(GameState *g) {
 }
 
 static inline void walk_town_approach(GameState *g) {
+    walk_crownroad_north(g, 0);
     finish_town_departure(g);
     ASSERT("town departure begins on a safe approach path", g->location == LOCATION_APPROACH && g->enemy_count == 0);
     int steps = 0;

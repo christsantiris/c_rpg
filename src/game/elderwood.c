@@ -1,4 +1,5 @@
 #include "elderwood.h"
+#include "crownroad_north.h"
 #include "approach.h"
 #include <stdlib.h>
 #include <string.h>
@@ -539,7 +540,7 @@ int northern_travel(GameState *g, int x, int y) {
     } else if (tile == TILE_NORTH_OAKHAVEN) {
         game_leave_approach_to_town(g, LOCATION_TOWN);
     } else if (tile == TILE_NORTH_CASTLE) {
-        game_enter_town_gate(g, LOCATION_CASTLE, CROWNROAD_X, TOWN_H - 1);
+        northroad_enter(g, 0, 0);
     } else if (x == NORTH_ROAD_X && y == 0) {
         push_message(g, "Clear Elderwood and the Royal Catacombs to reach the Castle Grounds.");
     } else {

@@ -18,7 +18,7 @@ static const TownBuilding buildings[] = {
         "SPICE MERCHANT", "Spice Merchant Suri",
         "The Crown Road has become dangerous. Bandits prey on caravans, and every sack of spice that reaches Rosemoor has a tale of narrow escape. Traders travel in company now.", NULL},
     {LOCATION_DAWNMERE, LOCATION_DAWNMERE_MERCHANT, 7, 7, 5, 4, 0, 0,
-        "MERCHANT", "Merchant Corvin",
+        "SPICE MERCHANT", "Spice Merchant Corvin",
         "I trade in goods from Saltwind Marsh, south of Dawnmere. Skiffs carry supplies between its islands. Follow the south road to the marsh landing.", NULL}
 };
 

@@ -1,4 +1,5 @@
 #include "ironfang.h"
+#include "crownroad_north.h"
 #include "game.h"
 #include "mangrove.h"
 #include "stormwatch.h"
@@ -535,8 +536,12 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
     scale_spawned_enemy(g, e);
 }
 
+void game_spawn_enemy(GameState *g, Enemy *enemy, EnemyType type, int x, int y) {
+    spawn_enemy(g, enemy, type, x, y);
+}
+
 static int boss_for_level(const GameState *g, EnemyType *type) {
-    if (g->location == LOCATION_IRONFANG || g->location == LOCATION_STORMWATCH || g->location == LOCATION_ELDERWOOD || g->location == LOCATION_MANGROVES || g->location == LOCATION_MANGROVE_PATH) {
+    if (g->location == LOCATION_CROWNROAD_NORTH || g->location == LOCATION_IRONFANG || g->location == LOCATION_STORMWATCH || g->location == LOCATION_ELDERWOOD || g->location == LOCATION_MANGROVES || g->location == LOCATION_MANGROVE_PATH) {
         return 0;
     }
     int boss_level = DUNGEON_DEPTH;
@@ -1076,6 +1081,9 @@ static EnemyType sunscar_enemy(int level, int roll) {
 }
 
 void enemies_spawn(GameState *g) {
+    if (g->location == LOCATION_CROWNROAD_NORTH) {
+        return;
+    }
     if (g->location == LOCATION_CASTLE_INTERIOR) {
         castle_spawn(g);
         return;
@@ -1394,6 +1402,7 @@ void enemies_spawn(GameState *g) {
 }
 
 void game_init(GameState *g) {
+    memset(&g->northroad, 0, sizeof(g->northroad));
     memset(g->ironfang, 0, sizeof(g->ironfang));
     g->ironfang_defeated = 0;
     memset(g->stormwatch, 0, sizeof(g->stormwatch));
@@ -3284,6 +3293,9 @@ static void prepare_forest_arrival(GameState *g, int from_high) {
 }
 
 void game_descend(GameState *g) {
+    if (g->location == LOCATION_CROWNROAD_NORTH) {
+        return;
+    }
     if (g->location == LOCATION_IRONFANG) {
         ironfang_change_level(g, 1);
         return;
@@ -3341,6 +3353,9 @@ void game_descend(GameState *g) {
 }
 
 void game_ascend(GameState *g) {
+    if (g->location == LOCATION_CROWNROAD_NORTH) {
+        return;
+    }
     if (g->location == LOCATION_IRONFANG) {
         ironfang_change_level(g, 0);
         return;
@@ -5298,11 +5313,12 @@ void game_record_temple_enemy_defeated(GameState *g, EnemyType type) {
 
 static void return_to_town(GameState *g, Location destination) {
     Location returning_from = g->location;
+    northroad_store(g);
     ironfang_store(g);
     stormwatch_store(g);
     mangrove_store(g);
     elderwood_store(g);
-    if (returning_from == LOCATION_FROSTFELL || returning_from == LOCATION_DESERT ||
+    if (returning_from == LOCATION_CROWNROAD_NORTH || returning_from == LOCATION_FROSTFELL || returning_from == LOCATION_DESERT ||
         returning_from == LOCATION_GLASSDEEP ||
         returning_from == LOCATION_CATACOMBS || returning_from == LOCATION_ELDERWOOD ||
         destination == LOCATION_TOWN4 ||
@@ -5450,6 +5466,10 @@ void game_leave_labyrinth(GameState *g) {
 }
 
 void game_return_to_approach(GameState *g) {
+    if (g->location == LOCATION_CROWNROAD_NORTH) {
+        northroad_leave(g, 0);
+        return;
+    }
     if (g->location == LOCATION_IRONFANG) {
         ironfang_leave(g);
         return;
@@ -5701,6 +5721,7 @@ void game_open_town_portal(GameState *g) {
         g->location != LOCATION_ASHEN &&
         g->location != LOCATION_GLASSDEEP &&
         g->location != LOCATION_CATACOMBS &&
+        g->location != LOCATION_CROWNROAD_NORTH &&
         g->location != LOCATION_IRONFANG &&
         g->location != LOCATION_STORMWATCH &&
         g->location != LOCATION_MANGROVES &&
@@ -5737,6 +5758,9 @@ void game_open_town_portal(GameState *g) {
 }
 
 void game_hide_portal_destination(GameState *g) {
+    if (g->portal_location == LOCATION_CROWNROAD_NORTH) {
+        return;
+    }
     if (g->portal_location == LOCATION_IRONFANG) {
         return;
     }
@@ -5845,6 +5869,10 @@ void game_use_town_portal(GameState *g) {
     }
     if (!g->portal_active || g->portal_level < 1 ||
         g->portal_level > MAX_REGION_DEPTH) return;
+    if (g->portal_location == LOCATION_CROWNROAD_NORTH && g->portal_level == 1) {
+        northroad_enter(g, 0, 1);
+        return;
+    }
     if (g->portal_location == LOCATION_IRONFANG && g->portal_level <= IRON_DEPTH) {
         ironfang_enter(g, 1);
         return;

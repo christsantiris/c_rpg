@@ -34,21 +34,6 @@ An illustrated overview based on the world's town connections.
 
 ## Controls
 
-At **30% HP or below**, the play area gains a slowly pulsing red border and the
-HP display turns red with a **LOW HEALTH** label. Heal above 30% to clear the
-warning. Open inventory with **I** to use a Health Potion.
-
-These are the default keys. Choose **Controls** from the title menu or press
-`Esc` during a game and choose **Controls**. Select a command, press `Enter`
-(or click it), then press
-the new key. Picking a key another command uses swaps the two keys. `Esc` and
-the arrow keys cannot be changed, so the menu and movement always work, and the
-move-left key also interacts. Keys inside views such as the inventory stay the
-same. Changes save automatically in `saves/controls.json` and apply across
-restarts, new characters, and loaded games. If no hotkey settings exist, loading
-an existing character adopts that save's keys. The help screen (`H` by default)
-always shows the current keys.
-
 | Key | Action |
 | --- | --- |
 | `WASD` or arrow keys | Move; `A` interacts when at a contextual object |
@@ -82,8 +67,6 @@ inventory actions.
 
 ## Game Documentation
 
-- [Five-town expansion and Dawnmere](docs/five-town-expansion.md)
-- [Stillbury healer and witch](docs/healer.md)
 - [Regional difficulty and progression](docs/difficulty-scaling.md)
 - [Weapons, armor, and shields](docs/weapons.md)
 - [Spells](docs/spells.md) and [Mage progression](docs/mage-progression.md)
