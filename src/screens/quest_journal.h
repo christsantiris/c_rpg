@@ -3,13 +3,15 @@
 
 #include "../game/game.h"
 
+#define JOURNAL_QUEST_COUNT 22
+
 typedef enum {
     QUEST_TAB_ACTIVE = 0,
     QUEST_TAB_COMPLETED,
     QUEST_TAB_BOSSES
 } QuestJournalTab;
 
-#define JOURNAL_BOSS_COUNT 20
+#define JOURNAL_BOSS_COUNT 21
 
 typedef struct {
     const char *name;

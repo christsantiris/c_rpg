@@ -1,5 +1,9 @@
 #include "minimap_renderer.h"
 #include "../game/jail.h"
+#include "../game/spice_skiff.h"
+#include "../game/stormbell.h"
+#include "../game/war_machine.h"
+#include "../game/crown_quest.h"
 
 // Minimap renders as a corner overlay on the game viewport.
 // Each tile is 1x1px, scaled 1:2 (100x50px total).
@@ -8,7 +12,7 @@
 #define MINIMAP_PAD   6
 
 void minimap_draw(Renderer *r, const GameState *g) {
-    if (g->location != LOCATION_CROWNROAD_NORTH && g->location != LOCATION_IRONFANG && g->location != LOCATION_STORMWATCH && g->location != LOCATION_MANGROVES && g->location != LOCATION_ESCAPE_TUNNEL && g->location != LOCATION_DUNGEON &&
+    if (g->location != LOCATION_GIANTS_CROWN && g->location != LOCATION_CROWNROAD_NORTH && g->location != LOCATION_IRONFANG && g->location != LOCATION_STORMWATCH && g->location != LOCATION_MANGROVES && g->location != LOCATION_ESCAPE_TUNNEL && g->location != LOCATION_DUNGEON &&
         g->location != LOCATION_FOREST &&
         g->location != LOCATION_MOUNTAINS &&
         g->location != LOCATION_DRAGONSPINE &&
@@ -51,6 +55,10 @@ void minimap_draw(Renderer *r, const GameState *g) {
     if (g->location == LOCATION_CROWNROAD_NORTH) {
         map_w = CROWN_NORTH_W;
         map_h = CROWN_NORTH_H;
+    }
+    if (g->location == LOCATION_GIANTS_CROWN) {
+        map_w = GIANTS_W;
+        map_h = GIANTS_H;
     }
     if (g->location == LOCATION_IRONFANG) {
         map_w = IRON_W;
@@ -113,7 +121,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_RETURN_EXIT || tile == TILE_DUNGEON_KEY ||
                         tile == TILE_DUNGEON_STAIRS_SEALED || tile == TILE_DUNGEON_STAIRS_RETURN ||
                         tile == TILE_CRYPT_KEY || tile == TILE_CRYPT_CACHE ||
-                        tile == TILE_PORTAL || tile == TILE_FOREST_ENTRANCE ||
+                        tile == TILE_GIANTS_ENTRANCE || tile == TILE_GIANTS_EXIT || tile == TILE_GIANTS_CACHE || tile == TILE_PORTAL || tile == TILE_FOREST_ENTRANCE ||
                         tile == TILE_FOREST_EXIT || tile == TILE_FOREST_SHORTCUT || tile == TILE_MOUNTAIN_ENTRANCE ||
                         tile == TILE_MOUNTAIN_EXIT || tile == TILE_MOUNTAIN_SHORTCUT || tile == TILE_COAST_ENTRANCE ||
                         tile == TILE_COAST_EXIT || tile == TILE_TAVERN_EXIT ||
@@ -135,6 +143,8 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_HIGH_PASS_ENTRANCE ||
                         tile == TILE_HIGH_PASS_EXIT ||
                         tile == TILE_TUNNEL_EXIT || tile == TILE_JAIL_HATCH ||
+                        tile == TILE_NPC_TAMSIN || tile == TILE_HEARTSEED_ORDERS ||
+                        tile == TILE_HEARTSEED_STAKE || tile == TILE_HEARTSEED_ALTAR ||
                         tile == TILE_NPC_ELOWEN || tile == TILE_NPC_DAIN ||
                         tile == TILE_NPC_ALDER || tile == TILE_NPC_MARA ||
                         tile == TILE_NPC_VEYRA || tile == TILE_WATCHFIRE_COLD || tile == TILE_WATCHFIRE_LIT ||
@@ -181,7 +191,8 @@ void minimap_draw(Renderer *r, const GameState *g) {
                     } else if (tile == TILE_OSSUARY_BRAZIER || tile == TILE_OSSUARY_COLD ||
                         tile == TILE_MEMORIAL_BRAZIER || tile == TILE_MEMORIAL_COLD) {
                         has_stair = 1;
-                    } else if (tile != TILE_STORM_WATER && tile != TILE_STORM_WALL && tile != TILE_STORM_SHUTTER_UP && tile != TILE_MANGROVE_WATER && tile != TILE_MANGROVE_ROOT && tile != TILE_CASTLE_WALL && tile != TILE_CASTLE_PILLAR &&
+                    } else if (tile != TILE_GIANTS_WALL && tile != TILE_GIANTS_CRACK && tile != TILE_GIANTS_COLUMN &&
+                        tile != TILE_STORM_WATER && tile != TILE_STORM_WALL && tile != TILE_STORM_SHUTTER_UP && tile != TILE_MANGROVE_WATER && tile != TILE_MANGROVE_ROOT && tile != TILE_CASTLE_WALL && tile != TILE_CASTLE_PILLAR &&
                         tile != TILE_CASTLE_BANNER && tile != TILE_CASTLE_GATE && tile != TILE_CASTLE_TABLE &&
                         tile != TILE_CASTLE_BOOKCASE && tile != TILE_CASTLE_THRONE && tile != TILE_CATACOMBS_WALL &&
                         tile != TILE_CATACOMBS_SARCOPHAGUS && tile != TILE_WALL &&
@@ -229,7 +240,9 @@ void minimap_draw(Renderer *r, const GameState *g) {
                 SDL_SetRenderDrawColor(r->sdl, 220, 180, 60, 255);
                 SDL_RenderDrawPoint(r->sdl, draw_x, draw_y);
             } else if (has_floor) {
-                if (g->location == LOCATION_MANGROVES) {
+                if (g->location == LOCATION_GIANTS_CROWN) {
+                    SDL_SetRenderDrawColor(r->sdl, 153, 169, 124, 255);
+                } else if (g->location == LOCATION_MANGROVES) {
                     SDL_SetRenderDrawColor(r->sdl, 126, 135, 77, 255);
                 } else if (g->location == LOCATION_FOREST) {
                     SDL_SetRenderDrawColor(r->sdl, 45, 95, 55, 255);
@@ -271,6 +284,12 @@ void minimap_draw(Renderer *r, const GameState *g) {
         map_is_explored(&g->map, g->mangroves.boat_x, g->mangroves.boat_y)) {
         SDL_SetRenderDrawColor(r->sdl, 210, 155, 79, 255);
         SDL_RenderDrawPoint(r->sdl, ox + g->mangroves.boat_x / MINIMAP_SCALE, oy + g->mangroves.boat_y / MINIMAP_SCALE);
+    }
+    int quest_x;
+    int quest_y;
+    if ((spice_skiff_marker(g, &quest_x, &quest_y) || stormbell_marker(g, &quest_x, &quest_y) || war_machine_marker(g, &quest_x, &quest_y) || crown_quest_marker(g, &quest_x, &quest_y)) && map_is_explored(&g->map, quest_x, quest_y)) {
+        SDL_SetRenderDrawColor(r->sdl, 240, 200, 100, 255);
+        SDL_RenderDrawPoint(r->sdl, ox + quest_x / MINIMAP_SCALE, oy + quest_y / MINIMAP_SCALE);
     }
     // Player dot
     SDL_SetRenderDrawColor(r->sdl, 80, 200, 80, 255);

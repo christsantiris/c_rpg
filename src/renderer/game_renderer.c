@@ -1,3 +1,5 @@
+#include "giants_crown_renderer.h"
+#include "../game/giants_crown.h"
 #include "crownroad_north_renderer.h"
 #include "stonewake_renderer.h"
 #include "game_renderer.h"
@@ -6,6 +8,9 @@
 #include "../game/ironfang.h"
 #include "stormwatch_renderer.h"
 #include "../game/stormwatch.h"
+#include "../game/stormbell.h"
+#include "../game/war_machine.h"
+#include "../game/crown_quest.h"
 #include "../game/mangrove.h"
 #include "../game/coastal_travel.h"
 #include "elderwood_renderer.h"
@@ -203,6 +208,7 @@ static SDL_Color area_label_color(Location area) {
         case LOCATION_SWAMP: return (SDL_Color){113, 204, 79, 255};
         case LOCATION_DRAGONSPINE: return (SDL_Color){187, 218, 232, 255};
         case LOCATION_FROSTFELL: return (SDL_Color){168, 220, 250, 255};
+        case LOCATION_GIANTS_CROWN: return (SDL_Color){182, 193, 137, 255};
         case LOCATION_ASHEN: return (SDL_Color){240, 150, 76, 255};
         case LOCATION_CATACOMBS: return (SDL_Color){224, 216, 186, 255};
         case LOCATION_GLASSDEEP: return (SDL_Color){170, 207, 241, 255};
@@ -213,6 +219,7 @@ static SDL_Color area_label_color(Location area) {
 
 static int approach_area_style(Location area, TownExitStyle *style) {
     switch (area) {
+        case LOCATION_GIANTS_CROWN: *style = TOWN_EXIT_GIANTS; return 1;
         case LOCATION_IRONFANG: *style = TOWN_EXIT_IRONFANG; return 1;
         case LOCATION_STORMWATCH: *style = TOWN_EXIT_STORMWATCH; return 1;
         case LOCATION_DUNGEON: *style = TOWN_EXIT_DUNGEON; return 1;
@@ -482,8 +489,9 @@ static int dialogue_text(Renderer *r, const char *text, int x, int y, int max_ch
 static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport *v) {
     int shortcut = game_shortcut_prompt_active(g);
     int quest_offer = game_quest_offer_active(g);
+    int stormbell_prompt = stormbell_prompt_active(g);
     if (!g->dialogue_active ||
-        (!shortcut && !town_life_is_interior(g->location) && g->location != LOCATION_TAVERN &&
+        (!shortcut && !stormbell_prompt && !town_life_is_interior(g->location) && g->location != LOCATION_TAVERN &&
         g->location != LOCATION_INN && g->location != LOCATION_HEALER && g->location != LOCATION_WITCH &&
         g->location != LOCATION_GUILD &&
         g->location != LOCATION_TOWN_HALL &&
@@ -527,6 +535,12 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     int viewport_h = r->tiles_y * TILE_SIZE;
     int bubble_w = viewport_w < 736 ? viewport_w - 16 : 720;
     const char *hint = shortcut ? "Enter to continue" : quest_offer ? "Accept quest? Y: Yes   N: No" : "";
+    if (war_machine_dialogue(g)) {
+        hint = quest_offer ? "Y: Accept   N: Decline\n1: Watchfires   2: Break the War Machine" : "1: Watchfires   2: Break the War Machine";
+    }
+    if (stormbell_prompt) {
+        hint = "Ring bell? Y: Begin defense   N / Esc: Prepare first";
+    }
     if (shortcut && strcmp(g->dialogue_speaker, "Take shortcut?") == 0) {
         hint = "Enter: Travel   Esc: Stay";
     }
@@ -1021,7 +1035,7 @@ static void draw_melee_slash(Renderer *r, int left, int top, Uint32 age) {
 
 static int combat_feedback_shown(const CombatFeedbackEvent *e, const GameState *g, const Viewport *v, Uint32 now) {
     Uint32 start = combat_feedback_start(e);
-    return e->location == g->location && e->level == g->level &&
+    return e->kind != FEEDBACK_WEAPONS_DUMP && e->location == g->location && e->level == g->level &&
         now >= start && now - start < COMBAT_FEEDBACK_MS &&
         viewport_is_visible(v, e->x, e->y);
 }
@@ -1296,6 +1310,9 @@ static TileType floor_item_underlay(const GameState *g, int x, int y) {
             return terrain_display_tile(g, (TileType)item->underlying_tile);
         }
     }
+    if (g->location == LOCATION_GIANTS_CROWN) {
+        return TILE_GIANTS_PAVING;
+    }
     if (g->location == LOCATION_IRONFANG) {
         return TILE_IRON_FLOOR;
     }
@@ -1513,7 +1530,10 @@ static void draw_floor_loot(Renderer *r, const GameState *g, int map_x, int map_
 
 static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int map_x, int map_y, int screen_x, int screen_y) {
     TileType underlay = floor_item_underlay(g, map_x, map_y);
-    if (underlay >= TILE_IRON_FLOOR && underlay <= TILE_IRON_EXIT) {
+    if (g->location == LOCATION_GIANTS_CROWN) {
+        giants_draw_tile(r, g, screen_x, screen_y, map_x, map_y, underlay);
+        return;
+    } else if (underlay >= TILE_IRON_FLOOR && underlay <= TILE_IRON_EXIT) {
         ironfang_draw_tile(r, g, screen_x, screen_y, map_x, map_y, underlay);
         return;
     }
@@ -1521,7 +1541,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         stormwatch_draw_tile(r, g, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay >= TILE_MANGROVE_MUD && underlay <= TILE_MANGROVE_DECK) {
         mangrove_draw_tile(r, g, screen_x, screen_y, map_x, map_y, underlay);
-    } else if (underlay >= TILE_ELDERWOOD_FLOOR && underlay <= TILE_ELDERWOOD_LOG) {
+    } else if ((underlay >= TILE_ELDERWOOD_FLOOR && underlay <= TILE_ELDERWOOD_LOG) ||
+        (underlay >= TILE_HEARTSEED_ORDERS && underlay <= TILE_HEARTSEED_ALTAR)) {
         draw_elderwood_tile(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (wilds_tile(underlay)) {
         draw_wilds_tile(r, g, screen_x, screen_y, map_x, map_y, underlay);
@@ -2080,6 +2101,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         viewport_init(&town_view, v->tiles_x < CROWN_NORTH_W ? v->tiles_x : CROWN_NORTH_W, v->tiles_y < CROWN_NORTH_H ? v->tiles_y : CROWN_NORTH_H, CROWN_NORTH_W, CROWN_NORTH_H);
         viewport_center_on(&town_view, g->player.x, g->player.y);
         v = &town_view;
+    } else if (g->location == LOCATION_GIANTS_CROWN) {
+        viewport_init(&town_view, v->tiles_x < GIANTS_W ? v->tiles_x : GIANTS_W, v->tiles_y < GIANTS_H ? v->tiles_y : GIANTS_H, GIANTS_W, GIANTS_H);
+        viewport_center_on(&town_view, g->player.x, g->player.y);
+        v = &town_view;
     } else if (g->location == LOCATION_IRONFANG) {
         viewport_init(&town_view, v->tiles_x < IRON_W ? v->tiles_x : IRON_W, v->tiles_y < IRON_H ? v->tiles_y : IRON_H, IRON_W, IRON_H);
         viewport_center_on(&town_view, g->player.x, g->player.y);
@@ -2161,6 +2186,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             if (g->location == LOCATION_CROWNROAD_NORTH) {
                 TileType tile = g->map.tiles[y][x];
                 northroad_draw_tile(r, sx, sy, x, y, tile == TILE_ITEM ? floor_item_underlay(g, x, y) : tile);
+                continue;
+            }
+            if (g->location == LOCATION_GIANTS_CROWN) {
+                TileType tile = g->map.tiles[y][x];
+                giants_draw_tile(r, g, sx, sy, x, y, tile == TILE_ITEM ? floor_item_underlay(g, x, y) : tile);
                 continue;
             }
             if (g->location == LOCATION_IRONFANG) {
@@ -2303,6 +2333,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_ELDERWOOD_EXIT:
                 case TILE_ELDERWOOD_BRAMBLE:
                 case TILE_ELDERWOOD_LOG:
+                case TILE_HEARTSEED_ORDERS:
+                case TILE_HEARTSEED_STAKE:
+                case TILE_HEARTSEED_CUT_STAKE:
+                case TILE_HEARTSEED_ALTAR:
                     draw_elderwood_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
                     break;
                 case TILE_NORTH_ELDERWOOD:
@@ -2782,6 +2816,18 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     town_life_draw_resident(r, sx, sy, style);
                     break;
                 }
+                case TILE_NPC_EDDA:
+                    draw_tavern_floor(r, sx, sy);
+                    npc_draw(r, sx, sy, NPC_ART_EDDA, 0);
+                    break;
+                case TILE_NPC_SEREN:
+                    draw_town_floor(r, sx, sy);
+                    npc_draw(r, sx, sy, NPC_ART_SEREN, 0);
+                    break;
+                case TILE_NPC_TAMSIN:
+                    draw_town_floor(r, sx, sy);
+                    npc_draw(r, sx, sy, NPC_ART_TAMSIN, 0);
+                    break;
                 case TILE_NPC_ELOWEN: draw_elowen(r, sx, sy); break;
                 case TILE_NPC_DAIN:
                     draw_town_floor(r, sx, sy);
@@ -3142,6 +3188,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     mangrove_draw_landmark(r, g, v);
+    mangrove_draw_spice_quest(r, g, v);
     if (coastal_approach(g)) {
         int dock_x = viewport_to_screen_x(v, COAST_DOCK_X);
         int dock_y = viewport_to_screen_y(v, COAST_DOCK_Y);
@@ -3247,7 +3294,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     if (g->location == LOCATION_TOWN3) {
         draw_town_gate_back(r, viewport_to_screen_x(v, 0),
-            viewport_to_screen_y(v, ROSEMOOR_ASHEN_GATE_Y), TOWN_EXIT_ASHEN, 1, 0);
+            viewport_to_screen_y(v, ROSEMOOR_ASHEN_GATE_Y), TOWN_EXIT_GIANTS, 1, 0);
         draw_adventurers_guild(r,
             viewport_to_screen_x(v, TOWN_GUILD_X),
             viewport_to_screen_y(v, TOWN_GUILD_Y));
@@ -3262,6 +3309,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_y(v, TOWN_H - 2), TOWN_EXIT_SWAMP);
     }
     if (g->location == LOCATION_CASTLE) {
+        draw_town_gate_back(r, viewport_to_screen_x(v, CASTLE_ASHEN_GATE_X), viewport_to_screen_y(v, 0), TOWN_EXIT_ASHEN, 0, 1);
+        renderer_draw_text(r, "ASHEN HOLLOW", viewport_to_screen_x(v, CASTLE_ASHEN_GATE_X) * TILE_SIZE - 34,
+            viewport_to_screen_y(v, 2) * TILE_SIZE, area_label_color(LOCATION_ASHEN), r->font_tiny);
         jail_draw_building(r, v);
         draw_castle_front(r,
             viewport_to_screen_x(v, TOWN_MOAT_X),
@@ -3327,12 +3377,15 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_sun_guardian_warnings(r, g, v);
     draw_red_dragon_warnings(r, g, v);
     draw_elderwood_warnings(r, g, v);
+    draw_heartseed_details(r, g, v);
     stormwatch_draw_warnings(r, g, v);
+    stormbell_draw_details(r, g, v);
+    giants_draw_details(r, g, v);
     ironfang_draw_details(r, g, v);
     northroad_draw_details(r, g, v);
 
     // Draw enemies
-    if (g->location == LOCATION_CROWNROAD_NORTH || g->location == LOCATION_IRONFANG || g->location == LOCATION_STORMWATCH || g->location == LOCATION_MANGROVES || g->location == LOCATION_JAIL_ARMORY || g->location == LOCATION_ELDERWOOD || g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
+    if (g->location == LOCATION_GIANTS_CROWN || g->location == LOCATION_CROWNROAD_NORTH || g->location == LOCATION_IRONFANG || g->location == LOCATION_STORMWATCH || g->location == LOCATION_MANGROVES || g->location == LOCATION_JAIL_ARMORY || g->location == LOCATION_ELDERWOOD || g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
         g->location == LOCATION_FOREST ||
         g->location == LOCATION_MOUNTAINS ||
         g->location == LOCATION_DRAGONSPINE ||
@@ -3556,10 +3609,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, 20) * TILE_SIZE - width / 2,
             viewport_to_screen_y(v, 1) * TILE_SIZE,
             area_label_color(LOCATION_FROSTFELL), r->font_tiny);
-        renderer_draw_text(r, "ASHEN HOLLOW",
+        renderer_draw_text(r, "GIANT'S PEAKS",
             viewport_to_screen_x(v, 2) * TILE_SIZE + 8,
             viewport_to_screen_y(v, ROSEMOOR_ASHEN_GATE_Y) * TILE_SIZE,
-            area_label_color(LOCATION_ASHEN), r->font_tiny);
+            area_label_color(LOCATION_GIANTS_CROWN), r->font_tiny);
         TTF_SizeText(r->font_tiny, "CROWN ROAD EAST", &width, NULL);
         renderer_draw_text(r, "CROWN ROAD EAST",
             viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
@@ -4122,6 +4175,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_area_description(r, g, v);
     mangrove_draw_hint(r, g);
     stormwatch_draw_hint(r, g);
+    giants_draw_hint(r, g);
     ironfang_draw_hint(r, g);
     northroad_draw_hint(r, g);
 

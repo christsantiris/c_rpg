@@ -1,4 +1,5 @@
 #include "town_life.h"
+#include "spice_skiff.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -19,7 +20,7 @@ static const TownBuilding buildings[] = {
         "The Crown Road has become dangerous. Bandits prey on caravans, and every sack of spice that reaches Rosemoor has a tale of narrow escape. Traders travel in company now.", NULL},
     {LOCATION_DAWNMERE, LOCATION_DAWNMERE_MERCHANT, 7, 7, 5, 4, 0, 0,
         "SPICE MERCHANT", "Spice Merchant Corvin",
-        "I trade in goods from Saltwind Marsh, south of Dawnmere. Skiffs carry supplies between its islands. Follow the south road to the marsh landing.", NULL}
+        spice_skiff_offer, NULL}
 };
 
 const TownBuilding *town_life_building(Location location) {
@@ -101,6 +102,10 @@ int town_life_talk(GameState *g, int greeting) {
     if (!b || b->interior != g->location ||
         (!greeting && (abs(g->player.x - RESIDENT_X) > 1 || abs(g->player.y - RESIDENT_Y) > 1))) {
         return 0;
+    }
+    if (g->location == LOCATION_DAWNMERE_MERCHANT) {
+        spice_skiff_talk(g);
+        return 1;
     }
     g->dialogue_active = 1;
     g->dialogue_x = RESIDENT_X;

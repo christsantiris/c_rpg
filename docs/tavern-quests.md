@@ -16,7 +16,7 @@ conversation controls.
 
 Ridgeshire's Town Hall uses the same entry, conversation, and exit controls.
 Steward Hadrin assigns **Reclaim the Emberforge**: recover its guarded mechanism
-in Ashen Hollow west of Rosemoor on stage 2, then defeat the forge defenders and repair its furnace
+in Ashen Hollow north of Castle Grounds on stage 2, then defeat the forge defenders and repair its furnace
 on stage 4. Press `A` on or beside each objective. Return to Hadrin for a
 one-time reward of 100 gold and 800 score. This quest adds encounters to
 previously explored stages without resetting the expedition. See
@@ -125,7 +125,7 @@ Rosemoor, then through Rosemoor's north gate into Frostfell in the far north.
 
 On Frostfell stage **2**, defeat the two Ice Wolves guarding the expedition
 journal, then press `A` on or beside the journal to recover it. On stage **4**,
-defeat the Ice Giant and Frost Archer holding **Surveyor Fen**, then press `T`
+defeat the Frost Giant and Frost Archer holding **Surveyor Fen**, then press `T`
 beside him. The journal's route markings let Fen travel home on his own; no
 escort is required. Recover the journal before rescuing him. The Frost Kraken
 and full-stage clearance are not required, but living quest guards must be

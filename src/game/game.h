@@ -172,7 +172,8 @@ typedef enum {
     LOCATION_DAWNMERE_MERCHANT,
     LOCATION_STORMWATCH,
     LOCATION_IRONFANG,
-    LOCATION_CROWNROAD_NORTH
+    LOCATION_CROWNROAD_NORTH,
+    LOCATION_GIANTS_CROWN
 } Location;
 
 // Elderwood uses only its own bounds; compact caches avoid allocating the
@@ -243,19 +244,52 @@ typedef struct {
     int ore_fuse;
 } IronfangStage;
 
+#define GIANTS_W 64
+#define GIANTS_H 48
+#define GIANTS_DEPTH 5
+
+typedef struct {
+    unsigned short tiles[GIANTS_H][GIANTS_W];
+    unsigned char explored[(GIANTS_W * GIANTS_H + 7) / 8];
+    Enemy enemies[AREA_ENEMY_LIMIT];
+    FloorItem loot[MAX_FLOOR_ITEMS];
+    int valid;
+    int enemy_count;
+    int loot_count;
+} GiantsStage;
+
 typedef struct {
     Player     player;
+    GiantsStage giants_crown[GIANTS_DEPTH];
+    int giants_crown_defeated;
+    int crown_quest_state; // 0 unaccepted, 1 active, 2 ready, 3 rewarded.
+    int crown_quest_progress; // Inscription, royal seal, Jarl victory, royal crown.
+    int crown_vault_open;
+    int crown_reward_state; // 0 unearned, 1 reserved with Edda, 2 claimed.
     IronfangStage ironfang[IRON_DEPTH];
     int ironfang_defeated;
+    int war_machine_quest_state; // 0 unaccepted, 1 active, 2 ready, 3 rewarded.
+    int war_machine_progress; // Shipment orders, weapons sabotage, command seal.
     StormwatchStage stormwatch[STORM_DEPTH];
     int stormwatch_defeated;
+    int stormbell_quest_state; // 0 unaccepted, 1 active, 2 ready, 3 rewarded.
+    int stormbell_progress; // Clapper recovered, fitted, courtyard secured.
+    int stormbell_phase; // 0 silent, 1 Raiders, 2 Stormcaller, 3 secure.
+    Enemy stormbell_guards[3]; // Finite defense survives expedition resets.
     MangroveState mangroves;
     MangroveState mangrove_stages[MANGROVE_DEPTH];
     int mangrove_defeated;
+    int spice_skiff_quest_state; // 0 unaccepted, 1 active, 2 ready, 3 rewarded.
+    int spice_skiff_progress; // Manifest found and spice casket recovered.
     int debug_passages_unlocked;
     ElderwoodCache elderwood_cache[ELDERWOOD_DEPTH];
     int max_elderwood_level_reached;
     int elderwood_defeated;
+    int heartseed_quest_state; // 0 unaccepted, 1 active, 2 ready, 3 rewarded.
+    int heartseed_progress; // Orders, all bindings cut, and seed recovered.
+    int heartseed_bindings;
+    int heartseed_sites; // Stage 2 camp and stage 4 grove have been populated.
+    int heartseed_guardian; // Unplaced, bound, slain, or freed.
     Item retired_coast_items[RETIRED_LOOT_STAGES * MAX_FLOOR_ITEMS];
     int retired_coast_item_count; // Migration overflow, reclaimed as pack slots become free.
     Location last_town_visited;
@@ -423,6 +457,7 @@ typedef struct {
 } GameState;
 
 void game_init(GameState *g);
+void game_spawn_enemy(GameState *g, Enemy *enemy, EnemyType type, int x, int y);
 int game_quest_offer_active(const GameState *g);
 int game_handle_quest_offer_key(GameState *g, int key, int repeat);
 void game_request_shortcut(GameState *g);

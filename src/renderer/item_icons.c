@@ -140,6 +140,10 @@ static void icon_palette(SDL_Color *pal, const Item *item) {
             metal = cloth;
         } else if (strcmp(item->name, "Tidecaller Robes") == 0) {
             cloth = (SDL_Color){38, 132, 146, 255};
+        } else if (strcmp(item->name, "Stoneguard Shield") == 0) {
+            cloth = (SDL_Color){84, 100, 77, 255};
+            metal = (SDL_Color){173, 180, 151, 255};
+            trim = (SDL_Color){226, 193, 105, 255};
         } else if (strcmp(item->name, "Goblin King's Shield") == 0) {
             cloth = (SDL_Color){74, 115, 59, 255};
         }

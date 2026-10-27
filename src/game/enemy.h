@@ -15,7 +15,7 @@ typedef enum {
     // Keep retired serialized IDs reserved so existing actors retain their meanings.
     ENEMY_SKELETON = 0,
     ENEMY_ZOMBIE = 2,
-    ENEMY_GIANT = 5,
+    ENEMY_STONE_GIANT = 5,
     ENEMY_LICH_KING = 7,
     ENEMY_RED_DRAGON = 9,
     ENEMY_CRYPT_BAT = 11,
@@ -68,7 +68,7 @@ typedef enum {
     ENEMY_YETI,
     ENEMY_FROST_WRAITH,
     ENEMY_ICE_GOLEM,
-    ENEMY_ICE_GIANT,
+    ENEMY_FROST_GIANT,
     ENEMY_FROST_KRAKEN,
     ENEMY_SCARAB,
     ENEMY_VIPER,
@@ -115,7 +115,10 @@ typedef enum {
     ENEMY_HARPY_STORMCALLER,
     ENEMY_STORM_ELEMENTAL,
     ENEMY_TEMPEST_MATRIARCH,
-    ENEMY_GOBLIN_MINE_BOSS
+    ENEMY_GOBLIN_MINE_BOSS,
+    ENEMY_OGRE,
+    ENEMY_HILL_GIANT,
+    ENEMY_LAST_JARL
 } EnemyType;
 
 #define DRAGON_WARNING_RADIUS 12

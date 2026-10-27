@@ -13,6 +13,8 @@ void stormwatch_capture(const GameState *g, StormwatchStage *state);
 void stormwatch_pack(StormwatchStage *state, const Map *map);
 void stormwatch_unpack(const StormwatchStage *state, Map *map);
 void stormwatch_store(GameState *g);
+Enemy *stormwatch_spawn(GameState *g, EnemyType type, int x, int y, int summoned);
+void stormwatch_repair_boss(GameState *g);
 void stormwatch_enter(GameState *g, int portal);
 void stormwatch_change_level(GameState *g, int forward);
 void stormwatch_leave(GameState *g);

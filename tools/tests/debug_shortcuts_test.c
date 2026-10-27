@@ -1,3 +1,9 @@
+#include "game/giants_crown.h"
+#include "game/spice_skiff.h"
+#include "game/stormbell.h"
+#include "game/war_machine.h"
+#include "game/crown_quest.h"
+#include "renderer/giants_crown_renderer.h"
 #include "game/crownroad_north.h"
 #include "game/ironfang.h"
 #include "game/stonewake.h"
@@ -16,6 +22,429 @@
 #include "../../src/game/elderwood.h"
 #include "../../src/game/mangrove.h"
 #include "../../src/game/coastal_travel.h"
+
+static void test_heartseed_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    game_init(g);
+    g->player.x = TAMSIN_X + 1;
+    g->player.y = TAMSIN_Y;
+    Viewport view;
+    int width = (r->screen_w - INFO_PANEL_W) / TILE_SIZE;
+    viewport_init(&view, width, r->tiles_y, TOWN_W, TOWN_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/heartseed-tamsin-town.bmp") == 0);
+    assert(heartseed_talk(g) && game_quest_offer_active(g));
+    assert(game_handle_quest_offer_key(g, SDL_SCANCODE_Y, 0));
+    g->dialogue_active = 0;
+    elderwood_enter(g);
+    game_descend(g);
+    g->player.x = HEARTSEED_ORDERS_X + 1;
+    g->player.y = HEARTSEED_ORDERS_Y;
+    viewport_init(&view, width, r->tiles_y, ELDERWOOD_W, ELDERWOOD_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/heartseed-orders-camp.bmp") == 0);
+    assert(heartseed_interact(g));
+    game_descend(g);
+    game_descend(g);
+    g->player.x = HEARTSEED_X;
+    g->player.y = HEARTSEED_Y + 2;
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/heartseed-bound-grove.bmp") == 0);
+    for (int i = 0; i < 3; i++) {
+        g->player.x = heartseed_stakes[i][0];
+        g->player.y = heartseed_stakes[i][1] + 1;
+        assert(heartseed_interact(g));
+    }
+    assert(g->heartseed_guardian == HEARTSEED_FREED);
+    g->player.x = HEARTSEED_X;
+    g->player.y = HEARTSEED_Y + 1;
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/heartseed-freed-grove.bmp") == 0);
+    assert(heartseed_interact(g) && g->heartseed_quest_state == 2);
+    QuestJournalScreen journal;
+    quest_journal_init(&journal);
+    renderer_begin_frame(r);
+    quest_journal_draw(r, g, &journal);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/heartseed-journal.bmp") == 0);
+    puts("PASS: Heartseed NPC, orders, root arch, bindings, guardian release and quest journal render in the native game renderer.");
+}
+
+static void test_stormbell_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    assert(r->stormbell_texture);
+    int width = (r->screen_w - INFO_PANEL_W) / TILE_SIZE;
+    game_init(g);
+    game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
+    g->player.x = SEREN_X;
+    g->player.y = SEREN_Y + 1;
+    Viewport view;
+    viewport_init(&view, width, r->tiles_y, TOWN_W, TOWN_H);
+    viewport_center_on(&view, 21, 11);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/stormbell-seren-town.bmp") == 0);
+    assert(stormbell_talk(g) && game_quest_offer_active(g));
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/stormbell-seren-offer.bmp") == 0);
+    assert(game_handle_quest_offer_key(g, SDL_SCANCODE_Y, 0));
+    g->dialogue_active = 0;
+    stormwatch_enter(g, 0);
+    stormwatch_change_level(g, 1);
+    stormwatch_change_level(g, 1);
+    g->player.x = STORMBELL_CLAPPER_X;
+    g->player.y = STORMBELL_CLAPPER_Y + 2;
+    viewport_init(&view, width, r->tiles_y, STORM_W, STORM_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/stormbell-tower-clapper.bmp") == 0);
+    g->player.y--;
+    assert(stormbell_interact(g));
+    stormwatch_change_level(g, 1);
+    g->player.x = STORMBELL_X;
+    g->player.y = STORMBELL_Y + 1;
+    g->stormwatch[3].phase[0] = 0;
+    g->stormwatch[3].phase[1] = 0;
+    assert(move_left_action(g, g->key_bindings[CONTROL_MOVE_LEFT]).type == ACTION_INTERACT);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/stormbell-broken-bell.bmp") == 0);
+    action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
+    assert(g->stormbell_progress == 3);
+    action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
+    assert(stormbell_prompt_active(g));
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/stormbell-confirmation.bmp") == 0);
+    assert(stormbell_handle_key(g, SDL_SCANCODE_Y, 0));
+    assert(g->stormbell_phase == 1);
+    for (int y = 18; y <= 28; y++) {
+        for (int x = 29; x <= 44; x++) {
+            map_mark_explored(&g->map, x, y);
+        }
+    }
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/stormbell-raider-defense.bmp") == 0);
+    QuestJournalScreen journal;
+    quest_journal_init(&journal);
+    renderer_begin_frame(r);
+    quest_journal_draw(r, g, &journal);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/stormbell-journal.bmp") == 0);
+    puts("PASS: Seren, clapper, broken and repaired bell, confirmation, finite Raiders and journal render at native scale.");
+}
+
+static void test_war_machine_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    int atlas_w;
+    int atlas_h;
+    assert(r->war_machine_texture);
+    assert(SDL_QueryTexture(r->war_machine_texture, NULL, NULL, &atlas_w, &atlas_h) == 0 && atlas_w == 168 && atlas_h == 48);
+    game_init(g);
+    game_enter_town_gate(g, LOCATION_TOWN4, 20, TOWN_H - 1);
+    game_enter_town_hall(g);
+    g->player.x = HALL_VEYRA_X;
+    g->player.y = HALL_VEYRA_Y + 1;
+    Viewport view;
+    int width = (r->screen_w - INFO_PANEL_W) / TILE_SIZE;
+    viewport_init(&view, width, r->tiles_y, TOWN_W, TOWN_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    game_talk_to_veyra(g);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/war-machine-veyra-topics.bmp") == 0);
+    assert(war_machine_handle_key(g, SDL_SCANCODE_2, 0) && game_quest_offer_active(g));
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/war-machine-veyra-offer.bmp") == 0);
+    assert(game_handle_quest_offer_key(g, SDL_SCANCODE_Y, 0));
+    g->dialogue_active = 0;
+    ironfang_enter(g, 0);
+    ironfang_change_level(g, 1);
+    g->player.x = WAR_ORDERS_X;
+    g->player.y = WAR_ORDERS_Y + 1;
+    map_mark_explored(&g->map, WAR_ORDERS_X, WAR_ORDERS_Y);
+    viewport_init(&view, width, r->tiles_y, IRON_W, IRON_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    assert(move_left_action(g, g->key_bindings[CONTROL_MOVE_LEFT]).type == ACTION_INTERACT);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/war-machine-shipment-office.bmp") == 0);
+    action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
+    assert(g->war_machine_progress == WAR_ORDERS);
+    ironfang_change_level(g, 1);
+    ironfang_change_level(g, 1);
+    g->player.x = WAR_WINCH_X;
+    g->player.y = WAR_WINCH_Y + 1;
+    g->ironfang[3].cart_x = 60;
+    g->ironfang[3].cart_y = 25;
+    for (int y = 20; y <= 29; y++) {
+        for (int x = 52; x < IRON_W; x++) {
+            map_mark_explored(&g->map, x, y);
+        }
+    }
+    viewport_center_on(&view, g->player.x, g->player.y);
+    assert(move_left_action(g, g->key_bindings[CONTROL_MOVE_LEFT]).type == ACTION_INTERACT);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/war-machine-weapons-platform.bmp") == 0);
+    int enemies = g->enemy_count;
+    action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
+    assert(g->war_machine_progress == 3 && g->enemy_count == enemies);
+    assert(game_combat_feedback_active(SDL_GetTicks()));
+    SDL_Delay(170);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/war-machine-falling-weapons.bmp") == 0);
+    SDL_Delay(360);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/war-machine-weapons-splash.bmp") == 0);
+    SDL_Delay(180);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/war-machine-empty-gantry.bmp") == 0);
+    ironfang_change_level(g, 1);
+    g->player.x = WAR_SEAL_X;
+    g->player.y = WAR_SEAL_Y + 1;
+    map_mark_explored(&g->map, WAR_SEAL_X, WAR_SEAL_Y);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/war-machine-command-coffer.bmp") == 0);
+    g->player.x = 51;
+    g->player.y = 12;
+    g->player.attack = 999;
+    action_resolve_player(g, (Action){ACTION_MOVE, 51, 11});
+    assert(g->ironfang_defeated);
+    g->player.x = WAR_SEAL_X;
+    g->player.y = WAR_SEAL_Y + 1;
+    assert(war_machine_interact(g) && g->war_machine_quest_state == 2);
+    QuestJournalScreen journal;
+    quest_journal_init(&journal);
+    renderer_begin_frame(r);
+    quest_journal_draw(r, g, &journal);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/war-machine-journal.bmp") == 0);
+    puts("PASS: Veyra's independent topics, Ironfang offer, shipment office, weapons gantry, falling crates, splash, command coffer and quest journal render at native scale.");
+}
+
+static void test_crown_quest_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    assert(r->crown_quest_texture);
+    int w;
+    int h;
+    assert(SDL_QueryTexture(r->crown_quest_texture, NULL, NULL, &w, &h) == 0 && w == 144 && h == 48);
+    game_init(g);
+    game_enter_town3(g);
+    game_enter_guild(g);
+    g->player.x = EDDA_X;
+    g->player.y = EDDA_Y + 1;
+    Viewport view;
+    int width = (r->screen_w - INFO_PANEL_W) / TILE_SIZE;
+    viewport_init(&view, width, r->tiles_y, TOWN_W, TOWN_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/crown-quest-edda-guild.bmp") == 0);
+    assert(crown_quest_talk(g) && game_quest_offer_active(g));
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/crown-quest-edda-offer.bmp") == 0);
+    assert(game_handle_quest_offer_key(g, SDL_SCANCODE_Y, 0));
+    giants_enter(g, 0);
+    giants_change_level(g, 1);
+    g->player.x = CROWN_INSCRIPTION_X;
+    g->player.y = CROWN_INSCRIPTION_Y + 1;
+    map_mark_explored(&g->map, CROWN_INSCRIPTION_X, CROWN_INSCRIPTION_Y);
+    viewport_init(&view, width, r->tiles_y, GIANTS_W, GIANTS_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    assert(move_left_action(g, g->key_bindings[CONTROL_MOVE_LEFT]).type == ACTION_INTERACT);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/crown-quest-royal-inscription.bmp") == 0);
+    action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
+    giants_change_level(g, 1);
+    g->player.x = 9;
+    g->player.y = 23;
+    assert(giants_interact(g) && map_is_walkable(&g->map, 8, 23));
+    g->player.x = 6;
+    for (int y = 20; y <= 26; y++) {
+        for (int x = 2; x <= 11; x++) {
+            map_mark_explored(&g->map, x, y);
+        }
+    }
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/crown-quest-seal-chamber.bmp") == 0);
+    assert(giants_interact(g) && (g->crown_quest_progress & CROWN_SEAL));
+    giants_change_level(g, 1);
+    giants_change_level(g, 1);
+    g->player.x = 9;
+    g->player.y = 23;
+    for (int y = 20; y <= 26; y++) {
+        for (int x = 2; x <= 11; x++) {
+            map_mark_explored(&g->map, x, y);
+        }
+    }
+    viewport_center_on(&view, g->player.x, g->player.y);
+    assert(!map_is_walkable(&g->map, 8, 23));
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/crown-quest-warded-vault.bmp") == 0);
+    Enemy *boss = &g->enemies[0];
+    g->player.x = boss->x - 1;
+    g->player.y = boss->y;
+    g->player.attack = 10000;
+    action_resolve_player(g, (Action){ACTION_MOVE, boss->x, boss->y});
+    assert(g->giants_crown_defeated);
+    g->player.x = 9;
+    g->player.y = 23;
+    assert(giants_interact(g) && g->crown_vault_open);
+    g->player.x = 6;
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/crown-quest-open-vault.bmp") == 0);
+    assert(giants_interact(g) && g->crown_quest_state == 2);
+    QuestJournalScreen journal;
+    quest_journal_init(&journal);
+    renderer_begin_frame(r);
+    quest_journal_draw(r, g, &journal);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/crown-quest-journal.bmp") == 0);
+    game_enter_town3(g);
+    game_enter_guild(g);
+    g->player.x = EDDA_X;
+    g->player.y = EDDA_Y + 1;
+    assert(crown_quest_talk(g) && g->crown_quest_state == 3 && g->crown_reward_state == 2);
+    int shield = g->inventory_count - 1;
+    int sword = g->inventory_count;
+    g->inventory[g->inventory_count++] = item_make_long_sword();
+    assert(game_equip_main_hand(g, sword) && game_equip_shield(g, shield));
+    viewport_init(&view, width, r->tiles_y, TOWN_W, TOWN_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    g->dialogue_active = 0;
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/crown-quest-stoneguard-equipped.bmp") == 0);
+    renderer_begin_frame(r);
+    InventoryScreen inventory;
+    inventory_init(&inventory);
+    inventory.selected = shield;
+    inventory_draw(r, g, &inventory);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/crown-quest-stoneguard-inventory.bmp") == 0);
+    puts("PASS: Edda, royal inscription, seal chamber, warded/open vault, crown, journal, equipped Stoneguard and shield HP comparison render at native scale.");
+}
+
+static void test_spice_skiff_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    int width;
+    int height;
+    assert(r->spice_skiff_texture);
+    assert(SDL_QueryTexture(r->spice_skiff_texture, NULL, NULL, &width, &height) == 0);
+    assert(width == 156 && height == 72);
+    game_init(g);
+    game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
+    const TownBuilding *shop = town_life_building(LOCATION_DAWNMERE);
+    g->player.x = shop->x + shop->w / 2;
+    g->player.y = shop->y + shop->h;
+    Viewport view;
+    int play_width = (r->screen_w - INFO_PANEL_W) / TILE_SIZE;
+    viewport_init(&view, play_width, r->tiles_y, TOWN_W, TOWN_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/spice-skiff-merchant-door.bmp") == 0);
+    action_resolve_player(g, (Action){ACTION_MOVE, g->player.x, g->player.y - 1});
+    assert(g->location == LOCATION_DAWNMERE_MERCHANT);
+    g->player.x = RESIDENT_X;
+    g->player.y = RESIDENT_Y + 1;
+    assert(town_life_talk(g, 0) && game_quest_offer_active(g));
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/spice-skiff-corvin-offer.bmp") == 0);
+    assert(game_handle_quest_offer_key(g, SDL_SCANCODE_Y, 0));
+    g->dialogue_active = 0;
+    mangrove_enter(g, 0);
+    mangrove_change_level(g, 1);
+    g->player.x = SPICE_WRECK_X + 1;
+    g->player.y = SPICE_WRECK_Y;
+    viewport_init(&view, play_width, r->tiles_y, MANGROVE_W, MANGROVE_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    assert(move_left_action(g, g->key_bindings[CONTROL_MOVE_LEFT]).type == ACTION_INTERACT);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/spice-skiff-stranded-skiff.bmp") == 0);
+    action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
+    assert(g->spice_skiff_progress == SPICE_MANIFEST);
+    mangrove_change_level(g, 1);
+    g->player.x = SPICE_CASKET_X;
+    g->player.y = SPICE_CASKET_Y + 1;
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/spice-skiff-guarded-cargo.bmp") == 0);
+    action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
+    assert(g->spice_skiff_progress == SPICE_MANIFEST);
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (g->enemies[i].x < 20) {
+            g->enemies[i].active = 0;
+        }
+    }
+    action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
+    assert(g->spice_skiff_quest_state == 2);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/spice-skiff-recovered-cargo.bmp") == 0);
+    QuestJournalScreen journal;
+    quest_journal_init(&journal);
+    renderer_begin_frame(r);
+    quest_journal_draw(r, g, &journal);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/spice-skiff-journal.bmp") == 0);
+    puts("PASS: Corvin's quest offer, stranded skiff, root arch, guarded and recovered cargo, configured Interact key and journal render at native scale.");
+}
 
 static void visit_exterior_town(GameState *g) {
     assert(g->location == LOCATION_TOWN_ROAD);
@@ -47,6 +476,93 @@ static unsigned int creature_pixels(SDL_Surface *surface, int x, int y) {
     return hash;
 }
 
+
+static void test_giants_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    assert(r->area_entrance_textures[TOWN_EXIT_GIANTS]);
+    int width;
+    int height;
+    SDL_QueryTexture(r->area_entrance_textures[TOWN_EXIT_GIANTS], NULL, NULL, &width, &height);
+    assert(width == 168 && height == 144);
+    game_init(g);
+    srand(7203);
+    giants_enter(g, 0);
+    SDL_RenderSetViewport(r->sdl, NULL);
+    SDL_RenderSetClipRect(r->sdl, NULL);
+    SDL_RenderSetScale(r->sdl, 1.0f, 1.0f);
+    const EnemyType roster[] = {ENEMY_OGRE, ENEMY_CAVE_TROLL, ENEMY_HILL_GIANT, ENEMY_STONE_GIANT, ENEMY_SHARD_GOLEM, ENEMY_FROST_GIANT, ENEMY_LAST_JARL};
+    for (int n = 0; n < 7; n++) {
+        SDL_SetRenderDrawColor(r->sdl, 0, 0, 0, 255);
+        SDL_RenderClear(r->sdl);
+        draw_enemy(r, 10, 8, roster[n]);
+        SDL_RenderPresent(r->sdl);
+        int pixels = 0;
+        for (int y = 8 * TILE_SIZE - 12; y < 9 * TILE_SIZE + 12; y++) {
+            for (int x = 10 * TILE_SIZE - 12; x < 11 * TILE_SIZE + 12; x++) {
+                Uint8 red;
+                Uint8 green;
+                Uint8 blue;
+                SDL_GetRGB(rendered_pixel(surface, x, y), surface->format, &red, &green, &blue);
+                if (red || green || blue) {
+                    pixels++;
+                    if (roster[n] != ENEMY_SHARD_GOLEM) {
+                        assert(x >= 10 * TILE_SIZE && x < 11 * TILE_SIZE && y >= 8 * TILE_SIZE && y < 9 * TILE_SIZE);
+                    }
+                }
+            }
+        }
+        assert(pixels > 100);
+    }
+    Viewport view;
+    viewport_init(&view, r->tiles_x, r->tiles_y, GIANTS_W, GIANTS_H);
+    for (int level = 1; level <= GIANTS_DEPTH; level++) {
+        g->player.x = 32;
+        g->player.y = 24;
+        for (int y = 0; y < GIANTS_H; y++) {
+            for (int x = 0; x < GIANTS_W; x++) {
+                map_mark_explored(&g->map, x, y);
+            }
+        }
+        viewport_center_on(&view, g->player.x, g->player.y);
+        renderer_begin_frame(r);
+        game_draw(r, g, &view);
+        renderer_end_frame(r);
+        if (level == 1) {
+            assert(rendered_pixel(surface, 6, 6) != rendered_pixel(surface, 22, 28));
+        }
+        char path[100];
+        snprintf(path, sizeof(path), "/tmp/giants-crown-stage-%d.bmp", level);
+        assert(SDL_SaveBMP(surface, path) == 0);
+        if (level < GIANTS_DEPTH) {
+            giants_change_level(g, 1);
+        }
+    }
+    approach_enter_region(g, GIANTS_APPROACH_ROUTE);
+    g->player.x = g->map.stairs_down_x;
+    g->player.y = g->map.stairs_down_y + 1;
+    viewport_init(&view, r->tiles_x, r->tiles_y, APPROACH_W, APPROACH_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/giants-crown-approach.bmp") == 0);
+    g->location = LOCATION_CASTLE;
+    map_generate_castle(&g->map, &g->player.x, &g->player.y);
+    viewport_init(&view, TOWN_W, TOWN_H, TOWN_W, TOWN_H);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/giants-crown-castle-road.bmp") == 0);
+    approach_enter_region(g, ASHEN_APPROACH_ROUTE);
+    g->player.x = g->map.stairs_down_x;
+    g->player.y = g->map.stairs_down_y + 1;
+    viewport_init(&view, r->tiles_x, r->tiles_y, APPROACH_W, APPROACH_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/ashen-rift-approach.bmp") == 0);
+    printf("PASS: Giant's Peaks new enemies fit the native 24px scale; recurring creatures retain their original art; all stages and both entrances render.\n");
+}
 
 static void test_northroad_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
     game_init(g);
@@ -766,6 +1282,12 @@ int main(void) {
     test_stormwatch_input(game);
     test_ironfang_renderer(&renderer, game, surface);
     test_northroad_renderer(&renderer, game, surface);
+    test_giants_renderer(&renderer, game, surface);
+    test_heartseed_renderer(&renderer, game, surface);
+    test_stormbell_renderer(&renderer, game, surface);
+    test_war_machine_renderer(&renderer, game, surface);
+    test_crown_quest_renderer(&renderer, game, surface);
+    test_spice_skiff_renderer(&renderer, game, surface);
     free(game);
     renderer_free(&renderer);
     SDL_DestroyRenderer(sdl);

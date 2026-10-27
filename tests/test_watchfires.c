@@ -112,7 +112,7 @@ static void test_quest(void) {
     visit(LOCATION_DRAGONSPINE);
     stand_at_fire();
     ASSERT("Dragonspine receives a Giant, Archer, and Fire Elemental", guards(&game, 1) == 3 &&
-        game.enemies[game.enemy_count - 3].type == ENEMY_GIANT && game.enemies[game.enemy_count - 2].type == ENEMY_GOBLIN_ARCHER &&
+        game.enemies[game.enemy_count - 3].type == ENEMY_STONE_GIANT && game.enemies[game.enemy_count - 2].type == ENEMY_GOBLIN_ARCHER &&
         game.enemies[game.enemy_count - 1].type == ENEMY_FIRE_ELEMENTAL && game_has_regional_interaction(&game));
     action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
     ASSERT("living defenders prevent lighting", !game.watchfire_quest_progress);
