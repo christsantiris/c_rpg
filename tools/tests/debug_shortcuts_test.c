@@ -882,6 +882,99 @@ static void test_saltwind_renderer(Renderer *r, GameState *g, SDL_Surface *surfa
     printf("PASS: all six Saltwind enemy sprites render in the adventure; Rowan preserves his beach underlay.\n");
 }
 
+static void test_town_gate_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    assert(r->town_gate_texture);
+    int w;
+    int h;
+    assert(SDL_QueryTexture(r->town_gate_texture, NULL, NULL, &w, &h) == 0 && w == 768 && h == 1152);
+    const Location towns[] = {LOCATION_TOWN, LOCATION_TOWN2, LOCATION_TOWN3, LOCATION_TOWN4, LOCATION_DAWNMERE, LOCATION_CASTLE};
+    const char *names[] = {"oakhaven", "stillbury", "rosemoor", "ridgeshire", "dawnmere", "castle"};
+    const int dx[] = {0, -1, 0, 1};
+    const int dy[] = {1, 0, -1, 0};
+    Map *before = malloc(sizeof(*before));
+    assert(before);
+    renderer_begin_frame(r);
+    for (int y = 0; y < 14; y++) {
+        for (int x = 0; x < 22; x++) {
+            draw_town_floor(r, x, y);
+            if (x == 12 || y == 6) {
+                draw_town_path(r, x, y);
+            }
+        }
+    }
+    draw_shop_blacksmith(r, 5, 2);
+    draw_town_gate(r, 12, 0, LOCATION_TOWN, 0, 1);
+    draw_town_gate(r, 21, 6, LOCATION_TOWN, -1, 0);
+    draw_town_gate(r, 12, 13, LOCATION_TOWN, 0, -1);
+    draw_town_gate(r, 0, 6, LOCATION_TOWN, 1, 0);
+    Item sword = item_make_long_sword();
+    Item shield = item_make_tower_shield();
+    draw_player_at(r, 12 * TILE_SIZE, 7 * TILE_SIZE, CLASS_WARRIOR, &sword, &shield, NULL, 0, -1);
+    SDL_RenderPresent(r->sdl);
+    assert(SDL_SaveBMP(surface, "/tmp/town-gates-native-scale.bmp") == 0);
+    for (int n = 0; n < 6; n++) {
+        // Every opening must preserve the complete 24px road tile underneath.
+        for (int side = 0; side < 4; side++) {
+            SDL_SetRenderDrawColor(r->sdl, 1, 233, 177, 255);
+            SDL_RenderClear(r->sdl);
+            draw_town_gate(r, 12, 10, towns[n], dx[side], dy[side]);
+            SDL_RenderPresent(r->sdl);
+            Uint32 background = rendered_pixel(surface, 0, 0);
+            for (int y = 10 * TILE_SIZE; y < 11 * TILE_SIZE; y++) {
+                for (int x = 12 * TILE_SIZE; x < 13 * TILE_SIZE; x++) {
+                    assert(rendered_pixel(surface, x, y) == background);
+                }
+            }
+            int changed = 0;
+            for (int y = 24; y < 456; y++) {
+                for (int x = 120; x < 456; x++) {
+                    changed += rendered_pixel(surface, x, y) != background;
+                }
+            }
+            assert(changed > 2000);
+        }
+        game_init(g);
+        g->location = towns[n];
+        switch (towns[n]) {
+            case LOCATION_TOWN: map_generate_town(&g->map, &g->player.x, &g->player.y); break;
+            case LOCATION_TOWN2: map_generate_town2(&g->map, &g->player.x, &g->player.y); break;
+            case LOCATION_TOWN3: map_generate_town3(&g->map, &g->player.x, &g->player.y); break;
+            case LOCATION_TOWN4: map_generate_town4(&g->map, &g->player.x, &g->player.y); break;
+            case LOCATION_DAWNMERE: map_generate_dawnmere(&g->map, &g->player.x, &g->player.y); break;
+            case LOCATION_CASTLE: map_generate_castle(&g->map, &g->player.x, &g->player.y); break;
+            default: assert(0); break;
+        }
+        g->enemy_count = 0;
+        g->player.x = 20;
+        g->player.y = 4;
+        memcpy(before, &g->map, sizeof(*before));
+        Viewport view;
+        viewport_init(&view, TOWN_W, TOWN_H, TOWN_W, TOWN_H);
+        renderer_begin_frame(r);
+        game_draw(r, g, &view);
+        renderer_end_frame(r);
+        assert(memcmp(before->tiles, g->map.tiles, sizeof(before->tiles)) == 0);
+        char path[100];
+        snprintf(path, sizeof(path), "/tmp/town-gates-%s.bmp", names[n]);
+        assert(SDL_SaveBMP(surface, path) == 0);
+    }
+    for (int route = 13; route <= 14; route++) {
+        game_init(g);
+        approach_enter_region(g, route);
+        Viewport view;
+        viewport_init(&view, (r->screen_w - INFO_PANEL_W) / TILE_SIZE, r->tiles_y, APPROACH_W, APPROACH_H);
+        viewport_center_on(&view, g->player.x, g->player.y);
+        renderer_begin_frame(r);
+        game_draw(r, g, &view);
+        renderer_end_frame(r);
+        char path[100];
+        snprintf(path, sizeof(path), "/tmp/town-gates-castle-approach-%d.bmp", route);
+        assert(SDL_SaveBMP(surface, path) == 0);
+    }
+    free(before);
+    puts("PASS: all 24 town gate views preserve a full transparent road tile; five towns and Castle Grounds render upright gates without changing their maps.");
+}
+
 static void test_ironfang_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
     assert(r->ironfang_boss_texture && r->area_entrance_textures[TOWN_EXIT_IRONFANG]);
     int width;
@@ -1288,6 +1381,7 @@ int main(void) {
     test_war_machine_renderer(&renderer, game, surface);
     test_crown_quest_renderer(&renderer, game, surface);
     test_spice_skiff_renderer(&renderer, game, surface);
+    test_town_gate_renderer(&renderer, game, surface);
     free(game);
     renderer_free(&renderer);
     SDL_DestroyRenderer(sdl);

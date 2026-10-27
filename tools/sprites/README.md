@@ -69,6 +69,7 @@ height in renderer tests; merely fitting an atlas cell does not establish scale.
 | `local_buildings.py` | `monastery.bmp` | 168 × 120 (7 × 5) | Ridgeshire, southwest monastery plot |
 | `local_buildings.py` | `spice-merchant.bmp` | 120 × 96 (5 × 4) | Rosemoor, southwest spice merchant plot |
 | `crownroad_gate.py` | `crownroad-gate.bmp` | 72 × 72 (3 × 3) | Stillbury's north exit and Rosemoor's south exit |
+| `town_gate.py` | `town-gates.bmp` | 768 × 1152 atlas; 192 × 192 slots | Four upright gate views in all five towns and Castle Grounds; town-colored banners and transparent single-tile passages |
 
 ### Castle of No Return
 
