@@ -7,6 +7,7 @@
 #include "game.h"
 #include "mangrove.h"
 #include "stormwatch.h"
+#include "stormbell.h"
 #include "catacombs.h"
 #include "elderwood.h"
 #include "heartseed.h"
@@ -3672,7 +3673,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
     if (shots) {
         shots->count = 0;
     }
-    if (g->player.hp <= 0 || g->game_won || g->castle_prompt || g->location == LOCATION_APPROACH || g->location == LOCATION_TOWN_ROAD) {
+    if (g->player.hp <= 0 || g->game_won || g->castle_prompt || stormbell_prompt_active(g) || g->location == LOCATION_APPROACH || g->location == LOCATION_TOWN_ROAD) {
         return;
     }
     if (g->location == LOCATION_MANGROVES && g->mangroves.aboard) {
@@ -4200,4 +4201,5 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             enemy_move_toward(g, i);
         }
     }
+    stormbell_turn(g);
 }

@@ -266,6 +266,10 @@ typedef struct {
     int ironfang_defeated;
     StormwatchStage stormwatch[STORM_DEPTH];
     int stormwatch_defeated;
+    int stormbell_quest_state; // 0 unaccepted, 1 active, 2 ready, 3 rewarded.
+    int stormbell_progress; // Clapper recovered, fitted, courtyard secured.
+    int stormbell_phase; // 0 silent, 1 Raiders, 2 Stormcaller, 3 secure.
+    Enemy stormbell_guards[3]; // Finite defense survives expedition resets.
     MangroveState mangroves;
     MangroveState mangrove_stages[MANGROVE_DEPTH];
     int mangrove_defeated;

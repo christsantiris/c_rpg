@@ -1,5 +1,6 @@
 #include "game/giants_crown.h"
 #include "game/spice_skiff.h"
+#include "game/stormbell.h"
 #include "renderer/giants_crown_renderer.h"
 #include "game/crownroad_north.h"
 #include "game/ironfang.h"
@@ -76,6 +77,80 @@ static void test_heartseed_renderer(Renderer *r, GameState *g, SDL_Surface *surf
     renderer_end_frame(r);
     assert(SDL_SaveBMP(surface, "/tmp/heartseed-journal.bmp") == 0);
     puts("PASS: Heartseed NPC, orders, root arch, bindings, guardian release and quest journal render in the native game renderer.");
+}
+
+static void test_stormbell_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    assert(r->stormbell_texture);
+    int width = (r->screen_w - INFO_PANEL_W) / TILE_SIZE;
+    game_init(g);
+    game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
+    g->player.x = SEREN_X;
+    g->player.y = SEREN_Y + 1;
+    Viewport view;
+    viewport_init(&view, width, r->tiles_y, TOWN_W, TOWN_H);
+    viewport_center_on(&view, 21, 11);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/stormbell-seren-town.bmp") == 0);
+    assert(stormbell_talk(g) && game_quest_offer_active(g));
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/stormbell-seren-offer.bmp") == 0);
+    assert(game_handle_quest_offer_key(g, SDL_SCANCODE_Y, 0));
+    g->dialogue_active = 0;
+    stormwatch_enter(g, 0);
+    stormwatch_change_level(g, 1);
+    stormwatch_change_level(g, 1);
+    g->player.x = STORMBELL_CLAPPER_X;
+    g->player.y = STORMBELL_CLAPPER_Y + 2;
+    viewport_init(&view, width, r->tiles_y, STORM_W, STORM_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/stormbell-tower-clapper.bmp") == 0);
+    g->player.y--;
+    assert(stormbell_interact(g));
+    stormwatch_change_level(g, 1);
+    g->player.x = STORMBELL_X;
+    g->player.y = STORMBELL_Y + 1;
+    g->stormwatch[3].phase[0] = 0;
+    g->stormwatch[3].phase[1] = 0;
+    assert(move_left_action(g, g->key_bindings[CONTROL_MOVE_LEFT]).type == ACTION_INTERACT);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/stormbell-broken-bell.bmp") == 0);
+    action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
+    assert(g->stormbell_progress == 3);
+    action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
+    assert(stormbell_prompt_active(g));
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/stormbell-confirmation.bmp") == 0);
+    assert(stormbell_handle_key(g, SDL_SCANCODE_Y, 0));
+    assert(g->stormbell_phase == 1);
+    for (int y = 18; y <= 28; y++) {
+        for (int x = 29; x <= 44; x++) {
+            map_mark_explored(&g->map, x, y);
+        }
+    }
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/stormbell-raider-defense.bmp") == 0);
+    QuestJournalScreen journal;
+    quest_journal_init(&journal);
+    renderer_begin_frame(r);
+    quest_journal_draw(r, g, &journal);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/stormbell-journal.bmp") == 0);
+    puts("PASS: Seren, clapper, broken and repaired bell, confirmation, finite Raiders and journal render at native scale.");
 }
 
 static void test_spice_skiff_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
@@ -989,6 +1064,7 @@ int main(void) {
     test_northroad_renderer(&renderer, game, surface);
     test_giants_renderer(&renderer, game, surface);
     test_heartseed_renderer(&renderer, game, surface);
+    test_stormbell_renderer(&renderer, game, surface);
     test_spice_skiff_renderer(&renderer, game, surface);
     free(game);
     renderer_free(&renderer);

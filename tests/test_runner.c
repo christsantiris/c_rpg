@@ -89,6 +89,7 @@ void test_catacombs(void);
 void test_elderwood(void);
 void test_heartseed(void);
 void test_spice_skiff(void);
+void test_stormbell(void);
 void test_stormwatch(void);
 void test_ironfang(void);
 void test_crownroad_north(void);
@@ -222,6 +223,7 @@ int main(void) {
     test_elderwood();
     test_heartseed();
     test_spice_skiff();
+    test_stormbell();
     test_stormwatch();
     test_ironfang();
     test_crownroad_north();

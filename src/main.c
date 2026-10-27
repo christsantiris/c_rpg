@@ -18,6 +18,7 @@ EM_ASYNC_JS(void, browser_next_frame, (void), {
 #include "game/game.h"
 #include "game/coastal_travel.h"
 #include "game/stormwatch.h"
+#include "game/stormbell.h"
 #include "game/jail.h"
 #include "game/heartseed.h"
 #include "game/town_life.h"
@@ -748,6 +749,9 @@ int main(int argc, char **argv) {
                             break;
                         }
                     }
+                    if (screen == SCREEN_PLAYING && stormbell_handle_key(&game, sc, event.key.repeat)) {
+                        break;
+                    }
                     if (screen == SCREEN_PLAYING && game_handle_quest_offer_key(&game, sc, event.key.repeat)) {
                         break;
                     }
@@ -1056,7 +1060,7 @@ int main(int argc, char **argv) {
                                 if (restoration_talk(&game) || town_life_talk(&game, 0)) {
                                     break;
                                 }
-                                if (heartseed_talk(&game) || jail_talk_nearby(&game)) {
+                                if (stormbell_talk(&game) || heartseed_talk(&game) || jail_talk_nearby(&game)) {
                                     break;
                                 }
                                 if (game_workshop_near_smith(&game)) {
@@ -1285,7 +1289,7 @@ int main(int argc, char **argv) {
                         break;
                     }
                     if (event.button.button != SDL_BUTTON_LEFT) break;
-                    if (screen == SCREEN_PLAYING && (game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || restoration_prompt_active(&game))) {
+                    if (screen == SCREEN_PLAYING && (game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || restoration_prompt_active(&game))) {
                         break;
                     }
 
@@ -1538,7 +1542,7 @@ int main(int argc, char **argv) {
         int wind_paused = screen != SCREEN_PLAYING || player_projectile_animating || player_slide_animating ||
             entry_gate.active || enemy_shots.count > 0 || !(SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS) ||
             game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) ||
-            game_glassdeep_prompt_active(&game) || restoration_prompt_active(&game);
+            game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || restoration_prompt_active(&game);
         if (update_stormwatch_clock(&game, &wind_clock, SDL_GetTicks(), wind_paused)) {
             viewport_center_on(&viewport, game.player.x, game.player.y);
             needs_redraw = 1;

@@ -1,10 +1,10 @@
 # Quest reference and design proposals
 
-Last checked against the game on **2026-10-26**.
+Last checked against the game on **2026-10-27**.
 
-The current implementation has **19 journal quests**. All five regional designs
-below are approved. **The Stolen Heartseed and The Missing Spice Skiff are
-implemented**; the remaining three will be implemented individually, with a
+The current implementation has **20 journal quests**. All five regional designs
+below are approved. **The Stolen Heartseed, The Missing Spice Skiff, and The Silent Stormbell are
+implemented**; the remaining two will be implemented individually, with a
 pause between features for source control review and a manual commit.
 
 ## Current quest coverage
@@ -30,7 +30,7 @@ pause between features for source control review and a manual commit.
 | Recover Your Equipment | Automatic upon equipment confiscation | Royal Jail | Royal Jail — Guarded evidence room | — | — |
 | The Stolen Heartseed | Forester Tamsin | Oakhaven — Town center, beside the north road | Elderwood Forest | — | — |
 | The Missing Spice Skiff | Spice Merchant Corvin | Dawnmere — Spice Merchant shop | Saltwind Marsh | — | — |
-| **No implemented quest — design approved** | — | — | Stormwatch Headland | — | — |
+| The Silent Stormbell | Watchkeeper Seren | Dawnmere — Town center, beside the east road | Stormwatch Headland | — | — |
 | **No implemented quest — design approved** | — | — | Ironfang Mines | — | — |
 | **No implemented quest — Giant's Crown approved** | — | — | Giant's Peaks | — | — |
 | **No dedicated quest** | — | — | Crown Road East | — | — |
@@ -54,13 +54,13 @@ Implementation references:
 **All five designs are approved, including Break the War Machine.** Goblins are
 villains; Ironfang's quest undermines their war supply operation.
 
-Corvin, Marshal Veyra, and Tamsin exist. Seren and Edda will be new NPCs.
+Corvin, Marshal Veyra, Tamsin, and Seren exist. Edda will be a new NPC.
 
 | Quest | Design status | Area | Assigning NPC | NPC location | Main activity | Reward target |
 | --- | --- | --- | --- | --- | --- | --- |
 | The Stolen Heartseed | Implemented | Elderwood Forest | Forester Tamsin — existing | Oakhaven — Town center, near the north road | Follow a Dark Elf trail and free a grove from root bindings | 120 gold, 800 score |
 | The Missing Spice Skiff | Implemented | Saltwind Marsh | Spice Merchant Corvin — existing | Dawnmere — Spice Merchant shop | Follow a wreck's cargo trail and recover spices from a remote island by skiff | 150 gold, 1,000 score |
-| The Silent Stormbell | Approved | Stormwatch Headland | Watchkeeper Seren — new | Dawnmere — Town center, near the east road | Restore a stormbell and defend its courtyard using wind and shutters | 180 gold, 1,200 score |
+| The Silent Stormbell | Implemented | Stormwatch Headland | Watchkeeper Seren — existing | Dawnmere — Town center, near the east road | Restore a stormbell and defend its courtyard using wind and shutters | 180 gold, 1,200 score |
 | Break the War Machine | Approved | Ironfang Mines | Marshal Veyra — existing | Ridgeshire — Town Hall | Destroy a goblin weapons shipment and defeat the Goblin Mine Boss | 160 gold, 1,000 score |
 | Giant's Crown | Approved | Giant's Peaks | Antiquarian Edda — new | Rosemoor — Adventurer's Guild | Open a royal vault in the giant ruins and reclaim the Last Jarl's crown | 220 gold, 1,600 score, equipment reward to be designed |
 
@@ -147,7 +147,8 @@ boats, terrain, exploration, wounds, loot, portals, and previous quest progress.
 
 ### Stormwatch Headland — The Silent Stormbell
 
-**Status:** Approved design; not implemented.
+**Status:** Implemented. Save version 206 preserves discoveries, finite defense
+actors, and the one-time reward.
 
 **Premise:** A coastal warning bell has fallen silent since harpies occupied
 the fort. Seren wants it working again so approaching ships can hear the coast.
@@ -170,15 +171,33 @@ keeps its existing clock; standing still never gives this encounter extra enemy
 turns. There is no timed failure condition.
 
 **Scope:** Reuse existing enemy types and wind behavior. The bell interaction
-and finite encounter would be new. Progress survives retreat and saves, and
+and finite encounter are quest-specific. Progress survives retreat and saves, and
 ringing the bell again cannot produce repeated enemies or rewards. The Tempest
 Matriarch remains a separate boss objective.
 
-**Implementation follow-up:** Existing Stormwatch generation can place a regular
-enemy on the Matriarch's stage 5 spawn at `(43, 10)`, preventing her appearance.
-A diagnostic expedition with seed 49 reproduced a Cliff Gargoyle occupying the
-tile. Reserve that position or provide a valid boss fallback when implementing
-this quest. This issue is recorded here for the Stormwatch change set.
+**Interaction and persistence:** Seren stands on grass beside Dawnmere's east
+road. The clapper needs no pack slot and can be discovered before accepting.
+The bell uses the configured Interact key, followed by Y to begin or N/Esc to
+prepare first. This confirmation pauses wind. A separate wave counter leaves
+wind warnings and enemy attack markers visible. Discovered objectives receive
+gold minimap markers. Defeated quest harpies stay defeated, and survivors keep
+their wounds and attack warnings through saves, portals, backtracking, and fresh
+expeditions. Ordinary expedition enemies still respawn on physical re-entry.
+The finite response grants no repeatable loot or XP; Seren awards 180 gold and
+1,200 score once. Ringing after completion cannot summon another wave.
+
+**Compatibility:** Older saves keep their existing Stormwatch terrain,
+exploration, items, actors, wind, portals, boss victories, and earlier quests.
+New expeditions add a ruined room to the stage 3 northeast lookout. Older cached
+lookouts keep their layout and still contain the recoverable clapper. Seren is
+added to existing Dawnmere saves when her grass tile is free; an occupied tile
+is preserved until the next town entry. The Matriarch's spawn is reserved, with
+a safe fallback. Older affected saves gain a missing boss without moving their
+existing actors, items, or return portal. Completed boss victories remain intact.
+
+Implementation: [quest logic](src/game/stormbell.c),
+[save support](src/systems/save_load.c),
+[native art and renderer review](docs/art-sources/stormbell/README.md).
 
 ### Ironfang Mines — Break the War Machine
 
