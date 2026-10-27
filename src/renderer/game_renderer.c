@@ -9,6 +9,7 @@
 #include "stormwatch_renderer.h"
 #include "../game/stormwatch.h"
 #include "../game/stormbell.h"
+#include "../game/war_machine.h"
 #include "../game/mangrove.h"
 #include "../game/coastal_travel.h"
 #include "elderwood_renderer.h"
@@ -533,6 +534,9 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     int viewport_h = r->tiles_y * TILE_SIZE;
     int bubble_w = viewport_w < 736 ? viewport_w - 16 : 720;
     const char *hint = shortcut ? "Enter to continue" : quest_offer ? "Accept quest? Y: Yes   N: No" : "";
+    if (war_machine_dialogue(g)) {
+        hint = quest_offer ? "Y: Accept   N: Decline\n1: Watchfires   2: Break the War Machine" : "1: Watchfires   2: Break the War Machine";
+    }
     if (stormbell_prompt) {
         hint = "Ring bell? Y: Begin defense   N / Esc: Prepare first";
     }
@@ -1030,7 +1034,7 @@ static void draw_melee_slash(Renderer *r, int left, int top, Uint32 age) {
 
 static int combat_feedback_shown(const CombatFeedbackEvent *e, const GameState *g, const Viewport *v, Uint32 now) {
     Uint32 start = combat_feedback_start(e);
-    return e->location == g->location && e->level == g->level &&
+    return e->kind != FEEDBACK_WEAPONS_DUMP && e->location == g->location && e->level == g->level &&
         now >= start && now - start < COMBAT_FEEDBACK_MS &&
         viewport_is_visible(v, e->x, e->y);
 }

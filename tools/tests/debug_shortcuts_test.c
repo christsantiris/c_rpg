@@ -1,6 +1,7 @@
 #include "game/giants_crown.h"
 #include "game/spice_skiff.h"
 #include "game/stormbell.h"
+#include "game/war_machine.h"
 #include "renderer/giants_crown_renderer.h"
 #include "game/crownroad_north.h"
 #include "game/ironfang.h"
@@ -151,6 +152,108 @@ static void test_stormbell_renderer(Renderer *r, GameState *g, SDL_Surface *surf
     renderer_end_frame(r);
     assert(SDL_SaveBMP(surface, "/tmp/stormbell-journal.bmp") == 0);
     puts("PASS: Seren, clapper, broken and repaired bell, confirmation, finite Raiders and journal render at native scale.");
+}
+
+static void test_war_machine_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    int atlas_w;
+    int atlas_h;
+    assert(r->war_machine_texture);
+    assert(SDL_QueryTexture(r->war_machine_texture, NULL, NULL, &atlas_w, &atlas_h) == 0 && atlas_w == 168 && atlas_h == 48);
+    game_init(g);
+    game_enter_town_gate(g, LOCATION_TOWN4, 20, TOWN_H - 1);
+    game_enter_town_hall(g);
+    g->player.x = HALL_VEYRA_X;
+    g->player.y = HALL_VEYRA_Y + 1;
+    Viewport view;
+    int width = (r->screen_w - INFO_PANEL_W) / TILE_SIZE;
+    viewport_init(&view, width, r->tiles_y, TOWN_W, TOWN_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    game_talk_to_veyra(g);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/war-machine-veyra-topics.bmp") == 0);
+    assert(war_machine_handle_key(g, SDL_SCANCODE_2, 0) && game_quest_offer_active(g));
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/war-machine-veyra-offer.bmp") == 0);
+    assert(game_handle_quest_offer_key(g, SDL_SCANCODE_Y, 0));
+    g->dialogue_active = 0;
+    ironfang_enter(g, 0);
+    ironfang_change_level(g, 1);
+    g->player.x = WAR_ORDERS_X;
+    g->player.y = WAR_ORDERS_Y + 1;
+    map_mark_explored(&g->map, WAR_ORDERS_X, WAR_ORDERS_Y);
+    viewport_init(&view, width, r->tiles_y, IRON_W, IRON_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    assert(move_left_action(g, g->key_bindings[CONTROL_MOVE_LEFT]).type == ACTION_INTERACT);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/war-machine-shipment-office.bmp") == 0);
+    action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
+    assert(g->war_machine_progress == WAR_ORDERS);
+    ironfang_change_level(g, 1);
+    ironfang_change_level(g, 1);
+    g->player.x = WAR_WINCH_X;
+    g->player.y = WAR_WINCH_Y + 1;
+    g->ironfang[3].cart_x = 60;
+    g->ironfang[3].cart_y = 25;
+    for (int y = 20; y <= 29; y++) {
+        for (int x = 52; x < IRON_W; x++) {
+            map_mark_explored(&g->map, x, y);
+        }
+    }
+    viewport_center_on(&view, g->player.x, g->player.y);
+    assert(move_left_action(g, g->key_bindings[CONTROL_MOVE_LEFT]).type == ACTION_INTERACT);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/war-machine-weapons-platform.bmp") == 0);
+    int enemies = g->enemy_count;
+    action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
+    assert(g->war_machine_progress == 3 && g->enemy_count == enemies);
+    assert(game_combat_feedback_active(SDL_GetTicks()));
+    SDL_Delay(170);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/war-machine-falling-weapons.bmp") == 0);
+    SDL_Delay(360);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/war-machine-weapons-splash.bmp") == 0);
+    SDL_Delay(180);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/war-machine-empty-gantry.bmp") == 0);
+    ironfang_change_level(g, 1);
+    g->player.x = WAR_SEAL_X;
+    g->player.y = WAR_SEAL_Y + 1;
+    map_mark_explored(&g->map, WAR_SEAL_X, WAR_SEAL_Y);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/war-machine-command-coffer.bmp") == 0);
+    g->player.x = 51;
+    g->player.y = 12;
+    g->player.attack = 999;
+    action_resolve_player(g, (Action){ACTION_MOVE, 51, 11});
+    assert(g->ironfang_defeated);
+    g->player.x = WAR_SEAL_X;
+    g->player.y = WAR_SEAL_Y + 1;
+    assert(war_machine_interact(g) && g->war_machine_quest_state == 2);
+    QuestJournalScreen journal;
+    quest_journal_init(&journal);
+    renderer_begin_frame(r);
+    quest_journal_draw(r, g, &journal);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/war-machine-journal.bmp") == 0);
+    puts("PASS: Veyra's independent topics, Ironfang offer, shipment office, weapons gantry, falling crates, splash, command coffer and quest journal render at native scale.");
 }
 
 static void test_spice_skiff_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
@@ -1065,6 +1168,7 @@ int main(void) {
     test_giants_renderer(&renderer, game, surface);
     test_heartseed_renderer(&renderer, game, surface);
     test_stormbell_renderer(&renderer, game, surface);
+    test_war_machine_renderer(&renderer, game, surface);
     test_spice_skiff_renderer(&renderer, game, surface);
     free(game);
     renderer_free(&renderer);

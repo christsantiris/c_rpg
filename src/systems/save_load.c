@@ -32,6 +32,7 @@
 #include "../game/mangrove.h"
 #include "../game/stormwatch.h"
 #include "../game/stormbell.h"
+#include "../game/war_machine.h"
 #include "../game/coastal_travel.h"
 #include "cJSON.h"
 #include <stdio.h>
@@ -1086,6 +1087,25 @@ static int load_heartseed(const cJSON *root, GameState *g, int version) {
         (g->heartseed_guardian != HEARTSEED_FREED || g->heartseed_bindings == 7);
 }
 
+static int load_war_machine(const cJSON *root, GameState *g, int version) {
+    g->war_machine_quest_state = 0;
+    g->war_machine_progress = 0;
+    if (version < 207) {
+        return 1;
+    }
+    const char *fields[] = {"war_machine_quest_state", "war_machine_progress"};
+    int *values[] = {&g->war_machine_quest_state, &g->war_machine_progress};
+    const int limits[] = {3, 7};
+    for (int i = 0; i < 2; i++) {
+        const cJSON *value = cJSON_GetObjectItem(root, fields[i]);
+        if (!cJSON_IsNumber(value) || value->valuedouble != value->valueint || value->valueint < 0 || value->valueint > limits[i]) {
+            return 0;
+        }
+        *values[i] = value->valueint;
+    }
+    return war_machine_valid(g);
+}
+
 static int load_stormbell(const cJSON *root, GameState *g, int version) {
     g->stormbell_quest_state = 0;
     g->stormbell_progress = 0;
@@ -1651,7 +1671,7 @@ static void migrate_stormwatch_road(GameState *g) {
 }
 
 int save_game(const GameState *g, int slot) {
-    if (!stormbell_valid(g) || !giants_valid(g) || !northroad_valid(g) || !mangrove_state_valid(g) || !stormwatch_valid(g) || !ironfang_valid(g)) {
+    if (!war_machine_valid(g) || !stormbell_valid(g) || !giants_valid(g) || !northroad_valid(g) || !mangrove_state_valid(g) || !stormwatch_valid(g) || !ironfang_valid(g)) {
         return 0;
     }
     if (g->retired_coast_item_count < 0 || g->retired_coast_item_count > RETIRED_LOOT_STAGES * MAX_FLOOR_ITEMS) {
@@ -1659,12 +1679,14 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 206);
+    cJSON_AddNumberToObject(root, "save_version", 207);
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
     cJSON_AddItemToObject(root, "northroad", serialize_northroad(g));
     cJSON_AddItemToObject(root, "ironfang", serialize_ironfang(g));
     cJSON_AddNumberToObject(root, "ironfang_defeated", g->ironfang_defeated);
+    cJSON_AddNumberToObject(root, "war_machine_quest_state", g->war_machine_quest_state);
+    cJSON_AddNumberToObject(root, "war_machine_progress", g->war_machine_progress);
     cJSON_AddItemToObject(root, "stormwatch", serialize_stormwatch(g));
     cJSON_AddNumberToObject(root, "stormwatch_defeated", g->stormwatch_defeated);
     cJSON_AddNumberToObject(root, "stormbell_quest_state", g->stormbell_quest_state);
@@ -3850,7 +3872,7 @@ int load_game(GameState *g, int slot) {
         cJSON_Delete(root);
         return 0;
     }
-    if (!elderwood_load(root, g, save_version) || !load_heartseed(root, g, save_version) || !load_spice_skiff(root, g, save_version) || !load_stormbell(root, g, save_version)) {
+    if (!elderwood_load(root, g, save_version) || !load_heartseed(root, g, save_version) || !load_spice_skiff(root, g, save_version) || !load_stormbell(root, g, save_version) || !load_war_machine(root, g, save_version)) {
         cJSON_Delete(root);
         return 0;
     }

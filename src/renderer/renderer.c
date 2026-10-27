@@ -49,6 +49,7 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->stonewake_workshop_texture = load_sprite_texture(sdl, "assets/images/stonewake-workshop.bmp");
     r->stonewake_crane_texture = load_sprite_texture(sdl, "assets/images/stonewake-crane.bmp");
     r->stonewake_prop_texture = load_sprite_texture(sdl, "assets/images/stonewake-props.bmp");
+    r->war_machine_texture = load_sprite_texture(sdl, "assets/images/war-machine-props.bmp");
     r->ironfang_boss_texture = load_sprite_texture(sdl, "assets/images/ironfang-boss.bmp");
     r->stormwatch_enemy_texture = load_sprite_texture(sdl, "assets/images/stormwatch-enemies.bmp");
     r->mangrove_enemy_texture = load_sprite_texture(sdl, "assets/images/mangrove-enemies.bmp");
@@ -134,6 +135,8 @@ void renderer_free(Renderer *r) {
     r->stonewake_crane_texture = NULL;
     r->stonewake_prop_texture = NULL;
     SDL_DestroyTexture(r->ironfang_boss_texture);
+    SDL_DestroyTexture(r->war_machine_texture);
+    r->war_machine_texture = NULL;
     r->ironfang_boss_texture = NULL;
     SDL_DestroyTexture(r->stormwatch_enemy_texture);
     r->stormwatch_enemy_texture = NULL;

@@ -19,6 +19,7 @@ EM_ASYNC_JS(void, browser_next_frame, (void), {
 #include "game/coastal_travel.h"
 #include "game/stormwatch.h"
 #include "game/stormbell.h"
+#include "game/war_machine.h"
 #include "game/jail.h"
 #include "game/heartseed.h"
 #include "game/town_life.h"
@@ -748,6 +749,9 @@ int main(int argc, char **argv) {
                             }
                             break;
                         }
+                    }
+                    if (screen == SCREEN_PLAYING && war_machine_handle_key(&game, sc, event.key.repeat)) {
+                        break;
                     }
                     if (screen == SCREEN_PLAYING && stormbell_handle_key(&game, sc, event.key.repeat)) {
                         break;
