@@ -928,6 +928,67 @@ static void test_saltwind_renderer(Renderer *r, GameState *g, SDL_Surface *surfa
     printf("PASS: all six Saltwind enemy sprites render in the adventure; Rowan preserves his beach underlay.\n");
 }
 
+static void test_rowan_dialogue(Renderer *r, GameState *g, SDL_Surface *surface) {
+    for (int mode = 0; mode < 4; mode++) {
+        game_init(g);
+        approach_enter_region(g, 3);
+        g->player.x = COAST_ROWAN_X + 1;
+        g->player.y = COAST_ROWAN_Y;
+        if (mode > 0) {
+            g->defeated_bosses |= 1 << LOCATION_COAST;
+        }
+        if (mode == 2) {
+            while (g->inventory_count < MAX_INVENTORY) {
+                g->inventory[g->inventory_count++] = item_make_health_potion();
+            }
+        }
+        if (mode == 3) {
+            g->island_travel_unlocked = 1;
+        }
+        coastal_refresh_docks(g);
+        assert(coastal_approach(g) && g->map.tiles[COAST_ROWAN_Y][COAST_ROWAN_X] == TILE_NPC_ROWAN);
+        assert(map_is_walkable(&g->map, g->player.x, g->player.y));
+        game_talk_to_rowan(g);
+        assert(g->dialogue_active && strcmp(g->dialogue_speaker, "Captain Rowan") == 0);
+        assert(g->dialogue_x == COAST_ROWAN_X && g->dialogue_y == COAST_ROWAN_Y);
+        if (mode == 0) {
+            assert(strstr(g->dialogue_text, "Drowned Queen") && !game_has_treasure_map(g) && !game_can_sail_to_island(g));
+            assert(save_game(g, 99290) && load_game(g, 99290));
+            game_talk_to_rowan(g);
+        } else if (mode == 1) {
+            assert(game_has_treasure_map(g) && game_can_sail_to_island(g));
+            int inventory = g->inventory_count;
+            game_talk_to_rowan(g);
+            assert(g->inventory_count == inventory);
+        } else if (mode == 2) {
+            assert(strstr(g->dialogue_text, "Make room") && !game_has_treasure_map(g));
+        } else {
+            assert(strstr(g->dialogue_text, "route is charted") && !game_has_treasure_map(g));
+        }
+        Viewport view;
+        viewport_init(&view, r->tiles_x, r->tiles_y, APPROACH_W, APPROACH_H);
+        viewport_center_on(&view, g->player.x, g->player.y);
+        renderer_begin_frame(r);
+        game_draw(r, g, &view);
+        renderer_end_frame(r);
+        int panel_pixels = 0;
+        for (int y = 0; y < r->tiles_y * TILE_SIZE; y++) {
+            for (int x = 0; x < r->screen_w - INFO_PANEL_W; x++) {
+                Uint8 red;
+                Uint8 green;
+                Uint8 blue;
+                SDL_GetRGB(rendered_pixel(surface, x, y), surface->format, &red, &green, &blue);
+                panel_pixels += red == 236 && green == 224 && blue == 190;
+            }
+        }
+        assert(panel_pixels > 1000);
+        char path[100];
+        snprintf(path, sizeof(path), "/tmp/rowan-docks-%d.bmp", mode);
+        assert(SDL_SaveBMP(surface, path) == 0);
+    }
+    puts("PASS: Rowan's dialogue visibly renders at the relocated docks before and after the Queen, after loading, with a full pack, and after charting the route.");
+}
+
 static void test_town_gate_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
     assert(r->town_gate_texture);
     int w;
@@ -1112,6 +1173,7 @@ int main(void) {
     test_container_renderer(&renderer, game, surface);
     test_stonewake_renderer(&renderer, game, surface);
     test_saltwind_renderer(&renderer, game, surface);
+    test_rowan_dialogue(&renderer, game, surface);
     test_stormwatch_renderer(&renderer, game, surface);
     char *arguments[] = {"conr", "--unlock-shortcuts", "--gold", "99999", "--weapon", "none"};
 
