@@ -117,6 +117,7 @@ Below are screenshots of the game in action:
 
 <img width="2586" height="1466" alt="Screenshot 2026-10-21 at 10 37 28 AM" src="https://github.com/user-attachments/assets/e25ea54f-80a9-417c-8d79-a9d4db962ba5" />
 
+<img width="2586" height="1466" alt="image" src="https://github.com/user-attachments/assets/2fd11475-3ef2-44c3-96c6-6ffa94500c16" />
 
 ## Building and Running
 
