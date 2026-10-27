@@ -237,30 +237,42 @@ static int approach_area_style(Location area, TownExitStyle *style) {
     }
 }
 
+static void draw_town_gates(Renderer *r, const GameState *g, const Viewport *v) {
+    const int dx[] = {0, -1, 0, 1};
+    const int dy[] = {1, 0, -1, 0};
+    for (int side = TOWN_SIDE_NORTH; side <= TOWN_SIDE_WEST; side++) {
+        TownApproach gate;
+        if (g->location == LOCATION_CASTLE) {
+            if (side == TOWN_SIDE_NORTH) {
+                gate = (TownApproach){LOCATION_CASTLE, LOCATION_ASHEN, CASTLE_ASHEN_GATE_X, 0};
+            } else if (side == TOWN_SIDE_SOUTH) {
+                gate = (TownApproach){LOCATION_CASTLE, LOCATION_CATACOMBS, CROWNROAD_X, TOWN_H - 1};
+            } else {
+                gate = (TownApproach){LOCATION_CASTLE, LOCATION_CROWNROAD, side == TOWN_SIDE_WEST ? 0 : TOWN_W - 1, CASTLE_ROAD_Y};
+            }
+        } else if (!town_road_connection(g->location, side, &gate)) {
+            continue;
+        }
+        draw_town_gate(r, viewport_to_screen_x(v, gate.gate_x), viewport_to_screen_y(v, gate.gate_y), g->location, dx[side], dy[side]);
+    }
+}
+
 static void draw_approach_town_gate(Renderer *r, const GameState *g, const Viewport *v) {
     const TownApproach *route = approach_route(g);
-    TownExitStyle style;
-    if (!route || northern_approach(g) || !approach_area_style(route->area, &style)) {
+    // Ordinary towns remain exterior sprites. Only Castle Grounds has a gate here.
+    if (!route || northern_approach(g) || route->town != LOCATION_CASTLE) {
         return;
-    }
-    // Other towns are sprites beyond an open road, not gates at this edge.
-    if (route->town != LOCATION_CASTLE) {
-        return;
-    }
-    // Catacombs keep the existing mountain-styled gate on the castle side.
-    if (style == TOWN_EXIT_CATACOMBS) {
-        style = TOWN_EXIT_MOUNTAINS;
     }
     int dx = route->gate_x == 0 ? -1 : route->gate_x == TOWN_W - 1 ? 1 : 0;
     int dy = route->gate_y == 0 ? -1 : route->gate_y == TOWN_H - 1 ? 1 : 0;
-    draw_town_gate_back(r, viewport_to_screen_x(v, g->map.stairs_up_x), viewport_to_screen_y(v, g->map.stairs_up_y), style, dx, dy);
+    draw_town_gate(r, viewport_to_screen_x(v, g->map.stairs_up_x), viewport_to_screen_y(v, g->map.stairs_up_y), route->town, dx, dy);
     int x;
     int y;
     if (approach_dungeon_town_exit(g, &x, &y) || approach_mountain_town_exit(g, &x, &y) || approach_forest_town_exit(g, &x, &y) || approach_swamp_town_exit(g, &x, &y)) {
-        draw_town_gate_back(r, viewport_to_screen_x(v, x), viewport_to_screen_y(v, y), style, -dx, -dy);
+        draw_town_gate(r, viewport_to_screen_x(v, x), viewport_to_screen_y(v, y), route->town, -dx, -dy);
     }
     if (approach_shortcut_exit(g, &x, &y)) {
-        draw_town_gate_back(r, viewport_to_screen_x(v, x), viewport_to_screen_y(v, y), style, -dy, dx);
+        draw_town_gate(r, viewport_to_screen_x(v, x), viewport_to_screen_y(v, y), route->town, -dy, dx);
     }
 }
 
@@ -3218,22 +3230,15 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     // Gates and buildings span several town cells; draw them over the map.
+    if (town_road_index(g->location) >= 0 || g->location == LOCATION_CASTLE) {
+        draw_town_gates(r, g, v);
+    }
     const TownBuilding *local_building = town_life_building(g->location);
     if (local_building && local_building->town == g->location) {
         town_life_draw_building(r, v, local_building);
     }
     if (g->location == LOCATION_TOWN) {
-        draw_town_gate(r, viewport_to_screen_x(v, 18), viewport_to_screen_y(v, 0), TOWN_EXIT_MOUNTAINS);
         draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, 3), "ELDERWOOD FOREST\nCASTLE ROAD");
-        draw_town_gate(r,
-            viewport_to_screen_x(v, 0), viewport_to_screen_y(v, 10),
-            TOWN_EXIT_FOREST);
-        draw_town_gate(r,
-            viewport_to_screen_x(v, TOWN_W - 3), viewport_to_screen_y(v, 10),
-            TOWN_EXIT_DUNGEON);
-        draw_town_gate(r,
-            viewport_to_screen_x(v, 18),
-            viewport_to_screen_y(v, TOWN_H - 2), TOWN_EXIT_COAST);
         draw_shop_blacksmith(r,
             viewport_to_screen_x(v, TOWN_BLACKSMITH_X), viewport_to_screen_y(v, TOWN_BLACKSMITH_Y));
         draw_shop_alchemist(r,
@@ -3245,42 +3250,21 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     if (g->location == LOCATION_TOWN4) {
-        draw_town_gate_back(r, viewport_to_screen_x(v, TOWN_W - 1), viewport_to_screen_y(v, 12), TOWN_EXIT_ROAD, -1, 0);
         draw_town_road_sign(r, viewport_to_screen_x(v, TOWN_W - 9), viewport_to_screen_y(v, 16), "IRONFANG MINES");
         draw_workshop(r,
             viewport_to_screen_x(v, TOWN4_WORKSHOP_X),
             viewport_to_screen_y(v, TOWN4_WORKSHOP_Y));
         draw_town_hall(r, viewport_to_screen_x(v, TOWN4_HALL_X),
             viewport_to_screen_y(v, TOWN4_HALL_Y));
-        draw_town_gate_back(r, viewport_to_screen_x(v, RIDGESHIRE_DRAGON_GATE_X),
-            viewport_to_screen_y(v, 0), TOWN_EXIT_DRAGONSPINE, 0, 1);
-        draw_town_gate(r, viewport_to_screen_x(v, 0),
-            viewport_to_screen_y(v, 10), TOWN_EXIT_ROAD);
-        draw_town_gate_south(r, viewport_to_screen_x(v, 20 - 2),
-            viewport_to_screen_y(v, TOWN_H - 3));
     }
 
     if (g->location == LOCATION_DAWNMERE) {
-        draw_town_gate_back(r, viewport_to_screen_x(v, 20), viewport_to_screen_y(v, TOWN_H - 1), TOWN_EXIT_ROAD, 0, -1);
-        renderer_draw_text(r, "SALTWIND MARSH", viewport_to_screen_x(v, 20) * TILE_SIZE - 45,
-            viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE, area_label_color(LOCATION_MANGROVES), r->font_tiny);
-        draw_town_gate_back(r, viewport_to_screen_x(v, 0), viewport_to_screen_y(v, 12), TOWN_EXIT_DUNGEON, 1, 0);
+        draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, 21), "SALTWIND MARSH");
         draw_town_road_sign(r, viewport_to_screen_x(v, 2), viewport_to_screen_y(v, 17), "DUNGEON / OAKHAVEN");
-        draw_town_gate(r, viewport_to_screen_x(v, 18), viewport_to_screen_y(v, 0), TOWN_EXIT_MOUNTAINS);
         draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, 3), "GOBLIN MOUNTAINS\nRIDGESHIRE");
-        draw_town_gate_back(r, viewport_to_screen_x(v, TOWN_W - 1), viewport_to_screen_y(v, 12), TOWN_EXIT_ROAD, -1, 0);
         draw_town_road_sign(r, viewport_to_screen_x(v, 31), viewport_to_screen_y(v, 16), "STORMWATCH HEADLAND");
     }
     if (g->location == LOCATION_TOWN2) {
-        draw_town_gate(r, viewport_to_screen_x(v, 0),
-            viewport_to_screen_y(v, 10), TOWN_EXIT_DESERT);
-        draw_town_gate_back(r, viewport_to_screen_x(v, SOUTH_AREA_GATE_X),
-            viewport_to_screen_y(v, TOWN_H - 1), TOWN_EXIT_GLASSDEEP, 0, -1);
-        draw_town_gate(r,
-            viewport_to_screen_x(v, 18), viewport_to_screen_y(v, 0), TOWN_EXIT_SWAMP);
-        draw_town_gate(r,
-            viewport_to_screen_x(v, TOWN_W - 3), viewport_to_screen_y(v, 10),
-            TOWN_EXIT_FOREST);
         draw_witch_hut(r,
             viewport_to_screen_x(v, TOWN_WITCH_X),
             viewport_to_screen_y(v, TOWN_WITCH_Y));
@@ -3293,35 +3277,19 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     if (g->location == LOCATION_TOWN3) {
-        draw_town_gate_back(r, viewport_to_screen_x(v, 0),
-            viewport_to_screen_y(v, ROSEMOOR_ASHEN_GATE_Y), TOWN_EXIT_GIANTS, 1, 0);
         draw_adventurers_guild(r,
             viewport_to_screen_x(v, TOWN_GUILD_X),
             viewport_to_screen_y(v, TOWN_GUILD_Y));
         draw_apothecary(r,
             viewport_to_screen_x(v, TOWN_APOTHECARY_X),
             viewport_to_screen_y(v, TOWN_APOTHECARY_Y));
-        draw_town_gate(r, viewport_to_screen_x(v, 18),
-            viewport_to_screen_y(v, 0), TOWN_EXIT_FROST);
-        draw_town_gate(r, viewport_to_screen_x(v, TOWN_W - 3),
-            viewport_to_screen_y(v, TOWN3_KING_GATE_Y - 2), TOWN_EXIT_DUNGEON);
-        draw_town_gate(r, viewport_to_screen_x(v, 18),
-            viewport_to_screen_y(v, TOWN_H - 2), TOWN_EXIT_SWAMP);
     }
     if (g->location == LOCATION_CASTLE) {
-        draw_town_gate_back(r, viewport_to_screen_x(v, CASTLE_ASHEN_GATE_X), viewport_to_screen_y(v, 0), TOWN_EXIT_ASHEN, 0, 1);
-        renderer_draw_text(r, "ASHEN HOLLOW", viewport_to_screen_x(v, CASTLE_ASHEN_GATE_X) * TILE_SIZE - 34,
-            viewport_to_screen_y(v, 2) * TILE_SIZE, area_label_color(LOCATION_ASHEN), r->font_tiny);
+        draw_town_road_sign(r, viewport_to_screen_x(v, 2), viewport_to_screen_y(v, 4), "ASHEN HOLLOW");
         jail_draw_building(r, v);
         draw_castle_front(r,
             viewport_to_screen_x(v, TOWN_MOAT_X),
             viewport_to_screen_y(v, TOWN_MOAT_Y));
-        draw_town_gate(r, viewport_to_screen_x(v, 0),
-            viewport_to_screen_y(v, CASTLE_ROAD_Y - 2), TOWN_EXIT_ROAD);
-        draw_town_gate(r, viewport_to_screen_x(v, TOWN_W - 3),
-            viewport_to_screen_y(v, CASTLE_ROAD_Y - 2), TOWN_EXIT_DUNGEON);
-        draw_town_gate_south(r, viewport_to_screen_x(v, CROWNROAD_X - 2),
-            viewport_to_screen_y(v, TOWN_H - 2));
     }
 
     if (g->location == LOCATION_ISLAND) {
@@ -3473,14 +3441,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int dungeon_w = 0;
         int dungeon_h = 0;
         int tavern_w = 0;
-        int coast_w = 0;
-        int coast_h = 0;
         TTF_SizeText(r->font_tiny, "BLACKSMITH", &blacksmith_w, NULL);
         TTF_SizeText(r->font_tiny, "ALCHEMIST", &alchemist_w, NULL);
         TTF_SizeText(r->font_tiny, "HAUNTED FOREST", &forest_w, &forest_h);
         TTF_SizeText(r->font_tiny, "DUNGEON", &dungeon_w, &dungeon_h);
         TTF_SizeText(r->font_tiny, "TAVERN", &tavern_w, NULL);
-        TTF_SizeText(r->font_tiny, "SUNKEN COAST", &coast_w, &coast_h);
         int bx = viewport_to_screen_x(v, TOWN_BLACKSMITH_X) * TILE_SIZE
             + (5 * TILE_SIZE - blacksmith_w) / 2;
         int by = viewport_to_screen_y(v, TOWN_BLACKSMITH_Y - 1) * TILE_SIZE;
@@ -3514,12 +3479,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             draw_town_road_sign(r, viewport_to_screen_x(v, TOWN_W - 10), viewport_to_screen_y(v, 7), "DUNGEON / DAWNMERE");
         }
 
-        int coast_x = viewport_to_screen_x(v, 18) * TILE_SIZE
-            + (5 * TILE_SIZE - coast_w) / 2;
-        int coast_y = viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE
-            + (TILE_SIZE - coast_h) / 2;
-        renderer_draw_text(r, "SUNKEN COAST", coast_x, coast_y,
-            area_label_color(LOCATION_COAST), r->font_tiny);
+        draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, 21), "SUNKEN COAST");
         if (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_FOREST))) {
             draw_town_road_sign(r, viewport_to_screen_x(v, 1),
                 viewport_to_screen_y(v, 8), "HAUNTED FOREST\nSTILLBURY");
@@ -3527,21 +3487,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     if (g->location == LOCATION_TOWN4) {
-        int width = 0;
-        TTF_SizeText(r->font_tiny, "DRAGONSPINE", &width, NULL);
-        renderer_draw_text(r, "DRAGONSPINE",
-            viewport_to_screen_x(v, RIDGESHIRE_DRAGON_GATE_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
-            viewport_to_screen_y(v, 1) * TILE_SIZE,
-            area_label_color(LOCATION_DRAGONSPINE), r->font_tiny);
-        TTF_SizeText(r->font_tiny, "GOBLIN MOUNTAINS", &width, NULL);
-        renderer_draw_text(r, "GOBLIN MOUNTAINS",
-            viewport_to_screen_x(v, 20) * TILE_SIZE + (TILE_SIZE - width) / 2,
-            viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE,
-            area_label_color(LOCATION_MOUNTAINS), r->font_tiny);
-        if (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_MOUNTAINS))) {
-            draw_town_road_sign(r, viewport_to_screen_x(v, 23),
-                viewport_to_screen_y(v, TOWN_H - 4), "GOBLIN MOUNTAINS\nDAWNMERE");
-        }
+        draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, 3), "DRAGONSPINE");
+        int open = g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
+        draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, TOWN_H - 4),
+            open ? "GOBLIN MOUNTAINS\nDAWNMERE" : "GOBLIN MOUNTAINS");
     }
 
     if (g->location == LOCATION_TOWN2) {
@@ -3549,19 +3498,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int width = 0;
         renderer_draw_text(r, "SUNSCAR WASTES",
             viewport_to_screen_x(v, 1) * TILE_SIZE,
-            viewport_to_screen_y(v, 11) * TILE_SIZE,
+            viewport_to_screen_y(v, 12) * TILE_SIZE,
             area_label_color(LOCATION_DESERT), r->font_tiny);
-        TTF_SizeText(r->font_tiny, "STONEWAKE QUARRY", &width, NULL);
-        renderer_draw_text(r, "STONEWAKE QUARRY",
-            viewport_to_screen_x(v, SOUTH_AREA_GATE_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
-            viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE + 8,
-            area_label_color(LOCATION_GLASSDEEP), r->font_tiny);
-        TTF_SizeText(r->font_tiny, "BLACKWATER SWAMP", &width, NULL);
-        renderer_draw_text(r, "BLACKWATER SWAMP",
-            viewport_to_screen_x(v, CROWNROAD_X) * TILE_SIZE +
-                (TILE_SIZE - width) / 2,
-            viewport_to_screen_y(v, 1) * TILE_SIZE + 3,
-            area_label_color(LOCATION_SWAMP), r->font_tiny);
+        draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, 21), "STONEWAKE QUARRY");
+        int open = g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_SWAMP));
+        draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, 3),
+            open ? "BLACKWATER SWAMP\nROSEMOOR" : "BLACKWATER SWAMP");
         TTF_SizeText(r->font_tiny, "HEALER", &width, NULL);
         renderer_draw_text(r, "HEALER",
             viewport_to_screen_x(v, TOWN_HEALER_X) * TILE_SIZE +
@@ -3589,10 +3531,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             draw_town_road_sign(r, viewport_to_screen_x(v, TOWN_W - 8),
                 viewport_to_screen_y(v, 15), "HAUNTED FOREST\nOAKHAVEN");
         }
-        if (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_SWAMP))) {
-            draw_town_road_sign(r, viewport_to_screen_x(v, 15),
-                viewport_to_screen_y(v, 2), "BLACKWATER SWAMP\nROSEMOOR");
-        }
     }
 
     if (g->location == LOCATION_TOWN3) {
@@ -3604,11 +3542,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 (TOWN_GUILD_W * TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, TOWN_GUILD_Y - 1) * TILE_SIZE,
             label, r->font_tiny);
-        TTF_SizeText(r->font_tiny, "FROSTFELL WASTES", &width, NULL);
-        renderer_draw_text(r, "FROSTFELL WASTES",
-            viewport_to_screen_x(v, 20) * TILE_SIZE - width / 2,
-            viewport_to_screen_y(v, 1) * TILE_SIZE,
-            area_label_color(LOCATION_FROSTFELL), r->font_tiny);
+        draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, 3), "FROSTFELL WASTES");
         renderer_draw_text(r, "GIANT'S PEAKS",
             viewport_to_screen_x(v, 2) * TILE_SIZE + 8,
             viewport_to_screen_y(v, ROSEMOOR_ASHEN_GATE_Y) * TILE_SIZE,
@@ -3618,14 +3552,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
             viewport_to_screen_y(v, TOWN3_KING_GATE_Y) * TILE_SIZE,
             area_label_color(LOCATION_CROWNROAD), r->font_tiny);
-        TTF_SizeText(r->font_tiny, "BLACKWATER SWAMP", &width, NULL);
-        renderer_draw_text(r, "BLACKWATER SWAMP",
-            viewport_to_screen_x(v, 20) * TILE_SIZE + (TILE_SIZE - width) / 2,
-            viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE, area_label_color(LOCATION_SWAMP), r->font_tiny);
-        if (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_SWAMP))) {
-            draw_town_road_sign(r, viewport_to_screen_x(v, 23),
-                viewport_to_screen_y(v, TOWN_H - 4), "BLACKWATER SWAMP\nSTILLBURY");
-        }
+        int open = g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_SWAMP));
+        draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, TOWN_H - 4),
+            open ? "BLACKWATER SWAMP\nSTILLBURY" : "BLACKWATER SWAMP");
         TTF_SizeText(r->font_tiny, "APOTHECARY", &width, NULL);
         renderer_draw_text(r, "APOTHECARY",
             viewport_to_screen_x(v, TOWN_APOTHECARY_X) * TILE_SIZE +
@@ -3652,20 +3581,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             (SDL_Color){220, 180, 60, 255}, r->font_tiny);
     }
     if (g->location == LOCATION_CASTLE) {
-        int gx = viewport_to_screen_x(v, CROWNROAD_X - 2) * TILE_SIZE;
-        int gy = viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE;
-        SDL_Rect left_post = {gx, gy, 14, TILE_SIZE * 2};
-        SDL_Rect right_post = {gx + TILE_SIZE * 5 - 14, gy, 14, TILE_SIZE * 2};
-        SDL_SetRenderDrawColor(r->sdl, 91, 88, 81, 255);
-        SDL_RenderFillRect(r->sdl, &left_post);
-        SDL_RenderFillRect(r->sdl, &right_post);
-        SDL_SetRenderDrawColor(r->sdl, 224, 216, 186, 255);
-        SDL_RenderDrawLine(r->sdl, gx + 3, gy + 3, gx + 3, gy + TILE_SIZE * 2 - 3);
-        SDL_RenderDrawLine(r->sdl, right_post.x + 3, gy + 3, right_post.x + 3, gy + TILE_SIZE * 2 - 3);
-        int gate_width = 0;
-        TTF_SizeText(r->font_tiny, "NORTHERN ROAD", &gate_width, NULL);
-        renderer_draw_text(r, "CROWN ROAD NORTH", viewport_to_screen_x(v, CROWNROAD_X) * TILE_SIZE + (TILE_SIZE - gate_width) / 2,
-            viewport_to_screen_y(v, TOWN_H - 2) * TILE_SIZE, area_label_color(LOCATION_CATACOMBS), r->font_tiny);
+        draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, 21), "CROWN ROAD NORTH");
         SDL_Color label = {220, 180, 60, 255};
         int width = 0;
         TTF_SizeText(r->font_tiny, "CASTLE OF NO RETURN", &width, NULL);
