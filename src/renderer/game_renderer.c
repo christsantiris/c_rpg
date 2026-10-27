@@ -503,8 +503,9 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     int shortcut = game_shortcut_prompt_active(g);
     int quest_offer = game_quest_offer_active(g);
     int stormbell_prompt = stormbell_prompt_active(g);
+    int dock_dialogue = coastal_approach(g) && strcmp(g->dialogue_speaker, "Captain Rowan") == 0;
     if (!g->dialogue_active ||
-        (!shortcut && !stormbell_prompt && !town_life_is_interior(g->location) && g->location != LOCATION_TAVERN &&
+        (!dock_dialogue && !shortcut && !stormbell_prompt && !town_life_is_interior(g->location) && g->location != LOCATION_TAVERN &&
         g->location != LOCATION_INN && g->location != LOCATION_HEALER && g->location != LOCATION_WITCH &&
         g->location != LOCATION_GUILD &&
         g->location != LOCATION_TOWN_HALL &&
