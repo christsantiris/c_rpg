@@ -88,6 +88,7 @@ void test_glassdeep_quest(void);
 void test_catacombs(void);
 void test_elderwood(void);
 void test_heartseed(void);
+void test_spice_skiff(void);
 void test_stormwatch(void);
 void test_ironfang(void);
 void test_crownroad_north(void);
@@ -220,6 +221,7 @@ int main(void) {
     test_glassdeep_quest();
     test_elderwood();
     test_heartseed();
+    test_spice_skiff();
     test_stormwatch();
     test_ironfang();
     test_crownroad_north();

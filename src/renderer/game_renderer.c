@@ -3170,6 +3170,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     mangrove_draw_landmark(r, g, v);
+    mangrove_draw_spice_quest(r, g, v);
     if (coastal_approach(g)) {
         int dock_x = viewport_to_screen_x(v, COAST_DOCK_X);
         int dock_y = viewport_to_screen_y(v, COAST_DOCK_Y);

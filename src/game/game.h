@@ -269,6 +269,8 @@ typedef struct {
     MangroveState mangroves;
     MangroveState mangrove_stages[MANGROVE_DEPTH];
     int mangrove_defeated;
+    int spice_skiff_quest_state; // 0 unaccepted, 1 active, 2 ready, 3 rewarded.
+    int spice_skiff_progress; // Manifest found and spice casket recovered.
     int debug_passages_unlocked;
     ElderwoodCache elderwood_cache[ELDERWOOD_DEPTH];
     int max_elderwood_level_reached;

@@ -2,10 +2,10 @@
 
 Last checked against the game on **2026-10-26**.
 
-The current implementation has **18 journal quests**. All five regional designs
-below are approved. **The Stolen Heartseed is implemented**; the remaining four
-will be implemented individually, with a pause between features for source
-control review and a manual commit.
+The current implementation has **19 journal quests**. All five regional designs
+below are approved. **The Stolen Heartseed and The Missing Spice Skiff are
+implemented**; the remaining three will be implemented individually, with a
+pause between features for source control review and a manual commit.
 
 ## Current quest coverage
 
@@ -29,7 +29,7 @@ control review and a manual commit.
 | The Three Great Hunts | Huntmaster Selene | Rosemoor — Adventurer's Guild | Frostfell Wastes | Stonewake Quarry | Sunscar Wastes |
 | Recover Your Equipment | Automatic upon equipment confiscation | Royal Jail | Royal Jail — Guarded evidence room | — | — |
 | The Stolen Heartseed | Forester Tamsin | Oakhaven — Town center, beside the north road | Elderwood Forest | — | — |
-| **No implemented quest — design approved** | — | — | Saltwind Marsh | — | — |
+| The Missing Spice Skiff | Spice Merchant Corvin | Dawnmere — Spice Merchant shop | Saltwind Marsh | — | — |
 | **No implemented quest — design approved** | — | — | Stormwatch Headland | — | — |
 | **No implemented quest — design approved** | — | — | Ironfang Mines | — | — |
 | **No implemented quest — Giant's Crown approved** | — | — | Giant's Peaks | — | — |
@@ -59,7 +59,7 @@ Corvin, Marshal Veyra, and Tamsin exist. Seren and Edda will be new NPCs.
 | Quest | Design status | Area | Assigning NPC | NPC location | Main activity | Reward target |
 | --- | --- | --- | --- | --- | --- | --- |
 | The Stolen Heartseed | Implemented | Elderwood Forest | Forester Tamsin — existing | Oakhaven — Town center, near the north road | Follow a Dark Elf trail and free a grove from root bindings | 120 gold, 800 score |
-| The Missing Spice Skiff | Approved | Saltwind Marsh | Spice Merchant Corvin — existing | Dawnmere — Spice Merchant shop | Follow a wreck's cargo trail and recover spices from a remote island by skiff | 150 gold, 1,000 score |
+| The Missing Spice Skiff | Implemented | Saltwind Marsh | Spice Merchant Corvin — existing | Dawnmere — Spice Merchant shop | Follow a wreck's cargo trail and recover spices from a remote island by skiff | 150 gold, 1,000 score |
 | The Silent Stormbell | Approved | Stormwatch Headland | Watchkeeper Seren — new | Dawnmere — Town center, near the east road | Restore a stormbell and defend its courtyard using wind and shutters | 180 gold, 1,200 score |
 | Break the War Machine | Approved | Ironfang Mines | Marshal Veyra — existing | Ridgeshire — Town Hall | Destroy a goblin weapons shipment and defeat the Goblin Mine Boss | 160 gold, 1,000 score |
 | Giant's Crown | Approved | Giant's Peaks | Antiquarian Edda — new | Rosemoor — Adventurer's Guild | Open a royal vault in the giant ruins and reclaim the Last Jarl's crown | 220 gold, 1,600 score, equipment reward to be designed |
@@ -106,7 +106,8 @@ or clearing previous victories. Elderthorn's road unlock stays independent.
 
 ### Saltwind Marsh — The Missing Spice Skiff
 
-**Status:** Approved design; not implemented.
+**Status:** Implemented. Save version 205 preserves acceptance, discoveries, and
+the paid bounty alongside the existing boat and encounter records.
 
 **Premise:** Corvin's latest shipment never reached Dawnmere. He knows its last
 landing, but the channels split beyond it.
@@ -124,10 +125,25 @@ away from the onward jetty, making the skiff useful for a deliberate expedition.
 The casket becomes a tracked quest item when recovered and travels with the
 player through boarding, stage transitions, and Return to Town.
 
-**Scope:** Reuse the current skiff and shore combat rules. The wreck, manifest,
-and casket would be new quest objects. Each stage keeps its own existing skiff;
-the quest does not require moving a boat between stages. Sszareth's victory is
-independent of the delivery.
+**Behavior:** Corvin offers the quest when spoken to in Dawnmere's Spice
+Merchant shop. Use Interact (A by default) ashore beside the stranded skiff to
+read and retain its manifest. The clue identifies stage 3's western island and
+its east-facing landing. Defeat that island's Giant Crab and Lizardfolk guards,
+then recover the sealed spice casket beneath the arched mangrove root. Enemies
+on other islands do not block recovery. Both the manifest and casket are
+required for Corvin's **150 gold and 1,000 score** bounty, paid once.
+
+Both discoveries are tracked outside the pack and count if found before
+accepting the quest or in the opposite order. Recovery takes place ashore.
+Returning through a town portal resumes the same stage, moored skiff, and
+encounter. A fresh physical entry respawns ordinary guards while the recovered
+casket stays empty. Existing ordinary supply caches remain separate.
+
+The damaged skiff, root arch, sealed casket, and empty casket use native pixelkit
+art with transparent backgrounds. Their placement preserves the existing
+islands, channels, roots, landings, and exits. Each stage retains its own skiff;
+Sszareth's victory is independent of the delivery. Older saves retain their
+boats, terrain, exploration, wounds, loot, portals, and previous quest progress.
 
 ### Stormwatch Headland — The Silent Stormbell
 
@@ -157,6 +173,12 @@ turns. There is no timed failure condition.
 and finite encounter would be new. Progress survives retreat and saves, and
 ringing the bell again cannot produce repeated enemies or rewards. The Tempest
 Matriarch remains a separate boss objective.
+
+**Implementation follow-up:** Existing Stormwatch generation can place a regular
+enemy on the Matriarch's stage 5 spawn at `(43, 10)`, preventing her appearance.
+A diagnostic expedition with seed 49 reproduced a Cliff Gargoyle occupying the
+tile. Reserve that position or provide a valid boss fallback when implementing
+this quest. This issue is recorded here for the Stormwatch change set.
 
 ### Ironfang Mines — Break the War Machine
 
