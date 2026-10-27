@@ -111,6 +111,7 @@ static void combat(GameState *g) {
     int gold = g->gold;
     giants_interact(g);
     giants_interact(g);
+    action_resolve_player(g, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("stone coffers pay only once", g->gold == gold + 30 && g->map.tiles[23][4] == TILE_GIANTS_EMPTY);
 }
 

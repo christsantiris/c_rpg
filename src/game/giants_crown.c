@@ -1,3 +1,4 @@
+#include "containers.h"
 #include "giants_crown.h"
 #include "crown_quest.h"
 #include "approach.h"
@@ -338,6 +339,9 @@ const char *giants_hint(const GameState *g) {
     if (g->location != LOCATION_GIANTS_CROWN) {
         return NULL;
     }
+    if (containers_hint(g)) {
+        return containers_hint(g);
+    }
     int x;
     int y;
     TileType tile = nearby(g, &x, &y);
@@ -351,13 +355,14 @@ int giants_interact(GameState *g) {
     if (!current(g)) {
         return 0;
     }
+    if (containers_hint(g)) {
+        return containers_interact(g);
+    }
     int x;
     int y;
     TileType tile = nearby(g, &x, &y);
     if (tile == TILE_GIANTS_CACHE) {
-        g->gold += 25 + g->level * 5;
-        g->map.tiles[y][x] = TILE_GIANTS_EMPTY;
-        push_message(g, "You recover gold from the giant's stone coffer.");
+        return containers_interact(g);
     } else if (tile == TILE_GIANTS_CRACK) {
         g->map.tiles[y][x] = TILE_GIANTS_PAVING;
         push_message(g, "You clear the fractured stones. A forgotten chamber opens.");

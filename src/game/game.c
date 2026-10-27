@@ -2,6 +2,7 @@
 #include "ironfang.h"
 #include "crownroad_north.h"
 #include "game.h"
+#include "containers.h"
 #include "mangrove.h"
 #include "stormwatch.h"
 #include "coastal_travel.h"
@@ -1434,6 +1435,7 @@ void enemies_spawn(GameState *g) {
 }
 
 void game_init(GameState *g) {
+    g->loot_container_count = 0;
     memset(g->giants_crown, 0, sizeof(g->giants_crown));
     g->giants_crown_defeated = 0;
     g->crown_quest_state = 0;
@@ -3090,6 +3092,7 @@ void game_refresh_quest_encounters(GameState *g) {
     if (beacon_placed) {
         spawn_mara_guardian(g);
     }
+    containers_restore(g);
 }
 
 static void generate_active_level(GameState *g) {

@@ -542,6 +542,7 @@ void test_mangrove(void) {
         ASSERT("interacting at the pier goes ashore and leaves the skiff moored", !g->mangroves.aboard && g->player.x == mangrove_landings[i][0] && g->player.y == mangrove_landings[i][1] && g->mangroves.boat_x == moorings[i][0] && g->mangroves.boat_y == moorings[i][1]);
         ASSERT("island supplies have a reachable adjacent foot tile", walk_to(g, mangrove_caches[i - 1][0] - 1, mangrove_caches[i - 1][1], 0));
         action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
+        action_resolve_player(g, (Action){ACTION_PICK_UP, 0, 0});
         ASSERT("optional supplies pay once and record exploration", g->gold == gold + i * 15 && g->mangroves.searched == (unsigned)((1 << i) - 1));
         action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
         ASSERT("repeating a search cannot repeat its reward", g->gold == gold + i * 15);

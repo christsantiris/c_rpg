@@ -356,6 +356,7 @@ static void test_rewards(void) {
     game.player.y = y;
     game.map.tiles[y][x + 1] = TILE_DESERT_LAMP;
     game.map.tiles[y - 1][x] = TILE_DESERT_LAMP;
+    action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
     action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("full inventory cannot consume the reserved reward", game.desert_pharaoh_reward_state == 1 && game.map.tiles[y][x] == TILE_PHARAOH_RELIQUARY);
     game.floor_items[0].x = x;

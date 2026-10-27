@@ -1,3 +1,4 @@
+#include "containers.h"
 #include "stonewake.h"
 #include <stdlib.h>
 #include <string.h>
@@ -214,22 +215,16 @@ int stonewake_has_interaction(const GameState *g) {
 }
 
 int stonewake_interact(GameState *g) {
+    if (g->location == LOCATION_GLASSDEEP && containers_hint(g)) {
+        return containers_interact(g);
+    }
     int x, y;
     if (!target(g, &x, &y)) {
         return 0;
     }
     TileType tile = ground(g, x, y);
     if (tile == TILE_STONEWAKE_SUPPLIES) {
-        for (int i = 0; i < g->enemy_count; i++) {
-            if (g->enemies[i].active && abs(g->enemies[i].x - x) + abs(g->enemies[i].y - y) <= 3) {
-                push_message(g, "Defeat the nearby quarry guards before opening these supplies.");
-                return 1;
-            }
-        }
-        g->gold += 20 + g->level * 5;
-        set_ground(g, x, y, TILE_STONEWAKE_EMPTY);
-        push_message(g, "Recovered quarry supplies. This store is now empty.");
-        return 1;
+        return containers_interact(g);
     }
     int mode = stonewake_crane_mode(tile);
     int next = (mode + 1) % 3;

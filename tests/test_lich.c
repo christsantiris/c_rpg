@@ -258,6 +258,7 @@ static void test_rewards(void) {
     ASSERT("full floor capacity preserves every item and reserves reward in a reliquary", game.floor_item_count == MAX_FLOOR_ITEMS && game.floor_items[MAX_FLOOR_ITEMS - 1].item.type == ITEM_POTION_HEALTH && game.lich_reward_state == 1 && find_tile(TILE_LICH_RELIQUARY, &x, &y));
     game.player.x = x;
     game.player.y = y;
+    action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
     action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("full inventory cannot consume the reserved reward", game.lich_reward_state == 1 && game.map.tiles[y][x] == TILE_LICH_RELIQUARY);
     game.inventory_count--;

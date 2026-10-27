@@ -83,6 +83,7 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
         r->town_textures[i] = load_sprite_texture(sdl, path);
     }
     r->town_gate_texture = load_sprite_texture(sdl, "assets/images/town-gates.bmp");
+    r->loot_chest_texture = load_sprite_texture(sdl, "assets/images/loot-chests.bmp");
     r->castle_texture = load_sprite_texture(sdl, "assets/images/castle-of-no-return.bmp");
     r->apothecary_texture = load_sprite_texture(sdl, "assets/images/apothecary.bmp");
     r->guild_texture = load_sprite_texture(sdl, "assets/images/adventurers-guild.bmp");
@@ -161,6 +162,8 @@ void renderer_free(Renderer *r) {
     }
     SDL_DestroyTexture(r->town_gate_texture);
     r->town_gate_texture = NULL;
+    SDL_DestroyTexture(r->loot_chest_texture);
+    r->loot_chest_texture = NULL;
     for (int i = 0; i < 4; i++) {
         if (r->local_building_textures[i]) {
             SDL_DestroyTexture(r->local_building_textures[i]);

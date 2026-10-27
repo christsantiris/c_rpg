@@ -340,7 +340,7 @@ void cinder_lord_restore_reward(GameState *g) {
     }
     if (bx >= 0) {
         set_tile(g, bx, by, TILE_CINDER_RELIQUARY);
-        push_message(g, "Cinder Lord rewards wait in the forge reliquary. Interact beside it or press P on it.");
+        push_message(g, "Cinder Lord rewards wait in the forge reliquary. Open with Interact, then Pick Up the released loot.");
     }
 }
 

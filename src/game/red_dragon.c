@@ -458,7 +458,7 @@ void red_dragon_restore_reward(GameState *g) {
         TileType tile = tile_at(g, bx, by);
         set_tile(g, bx, by, tile == TILE_DRAGON_FLOOR ? TILE_DRAGON_RELIQUARY_FLOOR :
             tile == TILE_DRAGON_ASH ? TILE_DRAGON_RELIQUARY_ASH : TILE_DRAGON_RELIQUARY_HOARD);
-        push_message(g, "Unclaimed Dragon Scale Mantle waits in the hoard reliquary. Use A nearby or P on it.");
+        push_message(g, "Unclaimed Dragon Scale Mantle waits in the hoard reliquary. Open with Interact, then Pick Up the released loot.");
     }
 }
 

@@ -179,6 +179,7 @@ void test_ironfang(void) {
     ironfang_interact(g);
     int gold = g->gold;
     ironfang_interact(g);
+    action_resolve_player(g, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("disembarking exposes a real optional treasure chamber", !g->ironfang[0].aboard && g->map.tiles[23][60] == TILE_IRON_EMPTY && g->gold > gold);
     g->player.x = 9;
     g->player.y = 8;

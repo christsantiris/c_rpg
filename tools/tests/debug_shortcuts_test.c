@@ -1,3 +1,4 @@
+#include "game/containers.h"
 #include "game/giants_crown.h"
 #include "game/spice_skiff.h"
 #include "game/stormbell.h"
@@ -22,6 +23,51 @@
 #include "../../src/game/elderwood.h"
 #include "../../src/game/mangrove.h"
 #include "../../src/game/coastal_travel.h"
+
+static void test_container_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    assert(r->loot_chest_texture);
+    const Location areas[] = {LOCATION_DUNGEON, LOCATION_COAST, LOCATION_GIANTS_CROWN};
+    const TileType floors[] = {TILE_FLOOR, TILE_COAST_FLOOR, TILE_GIANTS_GRASS};
+    const TileType chests[] = {TILE_CRYPT_CACHE, TILE_COAST_CACHE, TILE_GIANTS_CACHE};
+    const char *names[] = {"dungeon", "coast", "giants"};
+    Viewport view;
+    for (int n = 0; n < 3; n++) {
+        game_init(g);
+        g->location = areas[n];
+        g->level = 1;
+        g->enemy_count = 0;
+        g->floor_item_count = 0;
+        g->player.x = 13;
+        g->player.y = 12;
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                g->map.tiles[y][x] = floors[n];
+                map_mark_explored(&g->map, x, y);
+            }
+        }
+        g->map.tiles[12][12] = chests[n];
+        viewport_init(&view, r->tiles_x, r->tiles_y, MAP_W, MAP_H);
+        viewport_center_on(&view, 13, 12);
+        for (int step = 0; step < 4; step++) {
+            if (step == 1 || step == 2) {
+                Action action = move_left_action(g, g->key_bindings[CONTROL_MOVE_LEFT]);
+                assert(action.type == ACTION_INTERACT);
+                action_resolve_player(g, action);
+            } else if (step == 3) {
+                action_resolve_player(g, (Action){ACTION_PICK_UP, 0, 0});
+                assert(g->gold > 0);
+            }
+            assert(move_left_action(g, SDL_SCANCODE_LEFT).type == ACTION_MOVE);
+            renderer_begin_frame(r);
+            game_draw(r, g, &view);
+            renderer_end_frame(r);
+            char path[120];
+            snprintf(path, sizeof(path), "/tmp/chest-%s-%d.bmp", names[n], step);
+            assert(SDL_SaveBMP(surface, path) == 0);
+        }
+    }
+    puts("PASS: A opens/closes chests, P collects loose gold, and arrows still move; native renderer captures all chest states.");
+}
 
 static void test_heartseed_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
     game_init(g);
@@ -1063,6 +1109,7 @@ int main(void) {
     GameScreen screen = SCREEN_LOAD_SLOT;
     GameState *game = calloc(1, sizeof(*game));
     assert(game);
+    test_container_renderer(&renderer, game, surface);
     test_stonewake_renderer(&renderer, game, surface);
     test_saltwind_renderer(&renderer, game, surface);
     test_stormwatch_renderer(&renderer, game, surface);

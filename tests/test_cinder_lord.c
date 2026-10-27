@@ -254,6 +254,7 @@ static void test_rewards(void) {
     ASSERT("full floor and inventory preserve every object and both guaranteed rewards", cache && game.floor_item_count == MAX_FLOOR_ITEMS && game.floor_items[MAX_FLOOR_ITEMS - 1].item.type == ITEM_POTION_HEALTH && game.cinder_lord_reward_pending == 3 && game.gold > 0);
     game.player.x = x;
     game.player.y = y;
+    action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
     action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("a full inventory cannot consume either reserved reward", game.cinder_lord_reward_pending == 3 && game.map.tiles[y][x] == TILE_CINDER_RELIQUARY);
     game.inventory_count--;
@@ -275,7 +276,10 @@ static void test_rewards(void) {
     game.player.x = x;
     game.player.y = y;
     action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
-    ASSERT("a spacious pack receives both rewards once through Interact", !game.cinder_lord_reward_pending && game.inventory_count == 2 && strcmp(game.inventory[0].name, "Embercleaver") == 0 && game.inventory[1].type == ITEM_POTION_STRENGTH);
+    ASSERT("opening spills both rewards without claiming them", game.inventory_count == 0);
+    action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
+    action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("a spacious pack collects both released rewards through Pick Up", !game.cinder_lord_reward_pending && game.inventory_count == 2 && strcmp(game.inventory[0].name, "Embercleaver") == 0 && game.inventory[1].type == ITEM_POTION_STRENGTH);
     int attack = game.player.attack;
     action_resolve_player(&game, (Action){ACTION_USE_ITEM, 1, 0});
     ASSERT("the original special Strength Potion still grants one permanent base attack", game.player.attack == attack + 1);

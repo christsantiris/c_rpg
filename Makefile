@@ -63,6 +63,7 @@ sprites:
 	python3 tools/sprites/local_buildings.py
 	python3 tools/sprites/towns.py
 	python3 tools/sprites/town_gate.py
+	python3 tools/sprites/loot_chests.py
 	python3 tools/sprites/frost_kraken.py
 	python3 tools/sprites/crownroad_gate.py
 

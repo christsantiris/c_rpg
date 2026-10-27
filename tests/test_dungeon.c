@@ -961,9 +961,10 @@ void test_stairs_locked(void) {
     int gold_before = g.gold;
     g.player.x = cache_x;
     g.player.y = cache_y;
+    action_resolve_player(&g, (Action){ACTION_INTERACT, 0, 0});
     Action loot_cache = {ACTION_PICK_UP, 0, 0};
     action_resolve_player(&g, loot_cache);
-    ASSERT("P loots the crypt cache once",
+    ASSERT("P collects the opened crypt cache loot once",
         g.gold > gold_before &&
         g.map.tiles[cache_y][cache_x] == TILE_FLOOR);
 }
