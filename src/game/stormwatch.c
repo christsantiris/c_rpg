@@ -1,4 +1,5 @@
 #include "stormwatch.h"
+#include "stormbell.h"
 #include "approach.h"
 #include "combat_feedback.h"
 #include <stdlib.h>
@@ -104,6 +105,10 @@ void stormwatch_generate(Map *map, int level) {
     for (int n = 6; n < 8; n++) {
         map->tiles[points[n][1]][points[n][0]] = TILE_STORM_SUPPLIES;
     }
+    if (level == 3) {
+        room(map, 55, 8, 3, 3);
+        map->tiles[8][55] = TILE_STORM_SUPPLIES;
+    }
     // Both gates sit on the land boundary, framed by actual masonry.
     for (int y = 37; y < STORM_H; y++) {
         map->tiles[y][10] = TILE_STORM_STONE;
@@ -183,6 +188,11 @@ void stormwatch_capture(const GameState *g, StormwatchStage *state) {
 void stormwatch_store(GameState *g) {
     StormwatchStage *state = current(g);
     if (state) {
+        if (g->level == 4) {
+            Enemy guards[3];
+            stormbell_capture(g, guards);
+            memcpy(g->stormbell_guards, guards, sizeof(guards));
+        }
         stormwatch_capture(g, state);
     }
 }
@@ -207,29 +217,118 @@ static int safe(const GameState *g, const Enemy *self, int x, int y) {
     return tile != TILE_STORM_ENTRANCE && tile != TILE_STORM_EXIT && tile != TILE_PORTAL;
 }
 
-static void add_enemy(GameState *g, EnemyType type, int x, int y, int summoned) {
-    if (g->enemy_count >= AREA_ENEMY_LIMIT || (!safe(g, NULL, x, y) || (g->player.x == x && g->player.y == y))) {
-        return;
-    }
+static void make_enemy(Enemy *enemy, EnemyType type, int x, int y, int level, int summoned) {
     int kind = type - ENEMY_HARPY_RAIDER;
     const char *names[] = {"Harpy Raider", "Cliff Gargoyle", "Harpy Stormcaller", "Storm Elemental", "Tempest Matriarch"};
     const int hp[] = {36, 64, 46, 72, 320};
     const int attack[] = {12, 16, 15, 18, 24};
     const int defense[] = {2, 7, 3, 4, 7};
-    Enemy *enemy = &g->enemies[g->enemy_count++];
     *enemy = (Enemy){0};
     enemy->active = 1;
     enemy->type = type;
     enemy->x = x;
     enemy->y = y;
-    enemy->hp = enemy->max_hp = hp[kind] + (kind == 4 ? 0 : g->level * 3);
-    enemy->attack = attack[kind] + g->level;
+    enemy->hp = enemy->max_hp = hp[kind] + (kind == 4 ? 0 : level * 3);
+    enemy->attack = attack[kind] + level;
     enemy->defense = defense[kind];
     enemy->experience = summoned ? 0 : kind == 4 ? 450 : 24 + kind * 14;
     enemy->is_boss = kind == 4;
     enemy->revived = summoned;
     enemy->facing_dy = 1;
     snprintf(enemy->name, sizeof(enemy->name), "%s", names[kind]);
+}
+
+Enemy *stormwatch_spawn(GameState *g, EnemyType type, int x, int y, int summoned) {
+    if (type < ENEMY_HARPY_RAIDER || type > ENEMY_TEMPEST_MATRIARCH || !safe(g, NULL, x, y) || (g->player.x == x && g->player.y == y)) {
+        return NULL;
+    }
+    int slot = g->enemy_count;
+    if (slot >= AREA_ENEMY_LIMIT) {
+        for (int n = 0; n < g->enemy_count; n++) {
+            if (!g->enemies[n].active) {
+                slot = n;
+                break;
+            }
+        }
+    }
+    if (slot >= AREA_ENEMY_LIMIT) {
+        return NULL;
+    }
+    Enemy *enemy = &g->enemies[slot];
+    make_enemy(enemy, type, x, y, g->level, summoned);
+    if (slot == g->enemy_count) {
+        g->enemy_count++;
+    }
+    return enemy;
+}
+
+static void repair_boss(Map *map, Enemy *enemies, int *count, int px, int py) {
+    for (int n = 0; n < *count; n++) {
+        if (enemies[n].type == ENEMY_TEMPEST_MATRIARCH) {
+            return;
+        }
+    }
+    int slot = *count;
+    if (slot >= AREA_ENEMY_LIMIT) {
+        for (int n = 0; n < *count; n++) {
+            if (!enemies[n].active) {
+                slot = n;
+                break;
+            }
+        }
+    }
+    if (slot >= AREA_ENEMY_LIMIT) {
+        return;
+    }
+    for (int radius = 0; radius < STORM_W + STORM_H; radius++) {
+        for (int y = 1; y < STORM_H - 1; y++) {
+            for (int x = 1; x < STORM_W - 1; x++) {
+                if (abs(x - 43) + abs(y - 10) != radius || !map_is_walkable(map, x, y) ||
+                    map->tiles[y][x] == TILE_PORTAL || map->tiles[y][x] == TILE_ITEM || (x == px && y == py)) {
+                    continue;
+                }
+                int taken = 0;
+                for (int n = 0; n < *count; n++) {
+                    taken |= enemies[n].active && enemies[n].x == x && enemies[n].y == y;
+                }
+                if (!taken) {
+                    make_enemy(&enemies[slot], ENEMY_TEMPEST_MATRIARCH, x, y, 5, 0);
+                    if (slot == *count) {
+                        (*count)++;
+                    }
+                    return;
+                }
+            }
+        }
+    }
+}
+
+void stormwatch_repair_boss(GameState *g) {
+    if (g->stormwatch_defeated) {
+        return;
+    }
+    if (g->location == LOCATION_STORMWATCH && g->level == 5) {
+        repair_boss(&g->map, g->enemies, &g->enemy_count, g->player.x, g->player.y);
+        for (int n = 0; n < g->enemy_count; n++) {
+            if (g->enemies[n].active && g->enemies[n].is_boss) {
+                g->level_cleared = 0;
+            }
+        }
+        stormwatch_store(g);
+    } else if (g->stormwatch[4].valid) {
+        Map map;
+        stormwatch_unpack(&g->stormwatch[4], &map);
+        for (int n = 0; n < g->stormwatch[4].loot_count; n++) {
+            const FloorItem *item = &g->stormwatch[4].loot[n];
+            if (item->active) {
+                map.tiles[item->y][item->x] = TILE_ITEM;
+            }
+        }
+        if (g->portal_active && g->portal_location == LOCATION_STORMWATCH && g->portal_level == 5 && inside(g->portal_x, g->portal_y)) {
+            map.tiles[g->portal_y][g->portal_x] = TILE_PORTAL;
+        }
+        repair_boss(&map, g->stormwatch[4].enemies, &g->stormwatch[4].enemy_count, -1, -1);
+    }
 }
 
 static void load_stage(GameState *g) {
@@ -253,19 +352,20 @@ static void load_stage(GameState *g) {
         int limit = g->level == STORM_DEPTH ? 10 : 8 + g->level;
         const int guaranteed[4][2] = {{24,33}, {19,28}, {33,8}, {47,10}};
         if (g->level < STORM_DEPTH) {
-            add_enemy(g, ENEMY_HARPY_RAIDER + g->level - 1, guaranteed[g->level - 1][0], guaranteed[g->level - 1][1], 0);
+            stormwatch_spawn(g, ENEMY_HARPY_RAIDER + g->level - 1, guaranteed[g->level - 1][0], guaranteed[g->level - 1][1], 0);
         }
         for (int y = 5; y < STORM_H - 6 && g->enemy_count < limit; y += 5) {
             int start = 5 + rand() % 8;
             for (int x = start; x < STORM_W - 5 && g->enemy_count < limit; x += 9) {
-                if (rand() % 3 == 0 && (safe(g, NULL, x, y) && (g->player.x != x || g->player.y != y))) {
+                if (!(g->level == 5 && x == 43 && y == 10) && rand() % 3 == 0 && (safe(g, NULL, x, y) && (g->player.x != x || g->player.y != y))) {
                     int kind = rand() % (g->level < 4 ? g->level : 4);
-                    add_enemy(g, ENEMY_HARPY_RAIDER + kind, x, y, 0);
+                    stormwatch_spawn(g, ENEMY_HARPY_RAIDER + kind, x, y, 0);
                 }
             }
         }
         if (g->level == STORM_DEPTH) {
-            add_enemy(g, ENEMY_TEMPEST_MATRIARCH, 43, 10, 0);
+            stormwatch_spawn(g, ENEMY_TEMPEST_MATRIARCH, 43, 10, 0);
+            repair_boss(&g->map, g->enemies, &g->enemy_count, g->player.x, g->player.y);
         }
         state->phase[0] = 5;
         state->phase[1] = 1;
@@ -284,6 +384,9 @@ static void load_stage(GameState *g) {
 
 void stormwatch_enter(GameState *g, int portal) {
     if (!portal) {
+        Enemy guards[3];
+        stormbell_capture(g, guards);
+        memcpy(g->stormbell_guards, guards, sizeof(guards));
         memset(g->stormwatch, 0, sizeof(g->stormwatch));
     }
     g->location = LOCATION_STORMWATCH;
@@ -291,6 +394,7 @@ void stormwatch_enter(GameState *g, int portal) {
     load_stage(g);
     g->player.x = portal ? g->portal_x : g->map.stairs_up_x;
     g->player.y = portal ? g->portal_y : g->map.stairs_up_y - 1;
+    stormbell_restore(g);
     g->player.last_dx = 0;
     g->player.last_dy = -1;
     if (portal || (g->portal_active && g->portal_location == LOCATION_STORMWATCH)) {
@@ -327,6 +431,7 @@ void stormwatch_change_level(GameState *g, int forward) {
     load_stage(g);
     g->player.x = forward ? g->map.stairs_up_x : g->map.stairs_down_x;
     g->player.y = forward ? g->map.stairs_up_y - 1 : g->map.stairs_down_y + 1;
+    stormbell_restore(g);
     map_mark_explored(&g->map, g->player.x, g->player.y);
     char message[MAX_MESSAGE_LEN];
     snprintf(message, sizeof(message), "Stormwatch %d: %s", g->level, stormwatch_stage_name(g->level));
@@ -435,7 +540,7 @@ const char *stormwatch_hint(const GameState *g) {
             return state->braced ? "BRACED: HOLD STILL" : "A: BRACE AGAINST THE NEXT GUST";
         }
     }
-    return NULL;
+    return stormbell_hint(g);
 }
 
 int stormwatch_interact(GameState *g) {
@@ -464,6 +569,9 @@ int stormwatch_interact(GameState *g) {
         g->map.tiles[y][x] = TILE_STORM_EMPTY;
         g->gold += 15 + g->level * 3;
         push_message(g, "You recover gold from a watch supply chest.");
+    } else if (stormbell_hint(g) && !(state->phase[0] == 3 && stormwatch_wind_marks(g, 0, g->player.x, g->player.y)) &&
+        !(state->phase[1] == 3 && stormwatch_wind_marks(g, 1, g->player.x, g->player.y))) {
+        return stormbell_interact(g);
     } else if (stormwatch_hint(g)) {
         state->braced = 1;
         push_message(g, "You plant your feet against the wind for this enemy phase.");

@@ -8,6 +8,7 @@
 #include "../game/ironfang.h"
 #include "stormwatch_renderer.h"
 #include "../game/stormwatch.h"
+#include "../game/stormbell.h"
 #include "../game/mangrove.h"
 #include "../game/coastal_travel.h"
 #include "elderwood_renderer.h"
@@ -486,8 +487,9 @@ static int dialogue_text(Renderer *r, const char *text, int x, int y, int max_ch
 static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport *v) {
     int shortcut = game_shortcut_prompt_active(g);
     int quest_offer = game_quest_offer_active(g);
+    int stormbell_prompt = stormbell_prompt_active(g);
     if (!g->dialogue_active ||
-        (!shortcut && !town_life_is_interior(g->location) && g->location != LOCATION_TAVERN &&
+        (!shortcut && !stormbell_prompt && !town_life_is_interior(g->location) && g->location != LOCATION_TAVERN &&
         g->location != LOCATION_INN && g->location != LOCATION_HEALER && g->location != LOCATION_WITCH &&
         g->location != LOCATION_GUILD &&
         g->location != LOCATION_TOWN_HALL &&
@@ -531,6 +533,9 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     int viewport_h = r->tiles_y * TILE_SIZE;
     int bubble_w = viewport_w < 736 ? viewport_w - 16 : 720;
     const char *hint = shortcut ? "Enter to continue" : quest_offer ? "Accept quest? Y: Yes   N: No" : "";
+    if (stormbell_prompt) {
+        hint = "Ring bell? Y: Begin defense   N / Esc: Prepare first";
+    }
     if (shortcut && strcmp(g->dialogue_speaker, "Take shortcut?") == 0) {
         hint = "Enter: Travel   Esc: Stay";
     }
@@ -2806,6 +2811,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     town_life_draw_resident(r, sx, sy, style);
                     break;
                 }
+                case TILE_NPC_SEREN:
+                    draw_town_floor(r, sx, sy);
+                    npc_draw(r, sx, sy, NPC_ART_SEREN, 0);
+                    break;
                 case TILE_NPC_TAMSIN:
                     draw_town_floor(r, sx, sy);
                     npc_draw(r, sx, sy, NPC_ART_TAMSIN, 0);
@@ -3361,6 +3370,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_elderwood_warnings(r, g, v);
     draw_heartseed_details(r, g, v);
     stormwatch_draw_warnings(r, g, v);
+    stormbell_draw_details(r, g, v);
     giants_draw_details(r, g, v);
     ironfang_draw_details(r, g, v);
     northroad_draw_details(r, g, v);

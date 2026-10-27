@@ -9,6 +9,7 @@
 #include "elderwood.h"
 #include "heartseed.h"
 #include "spice_skiff.h"
+#include "stormbell.h"
 #include "castle.h"
 #include "lich.h"
 #include "necromancer.h"
@@ -1438,6 +1439,10 @@ void game_init(GameState *g) {
     g->ironfang_defeated = 0;
     memset(g->stormwatch, 0, sizeof(g->stormwatch));
     g->stormwatch_defeated = 0;
+    g->stormbell_quest_state = 0;
+    g->stormbell_progress = 0;
+    g->stormbell_phase = 0;
+    memset(g->stormbell_guards, 0, sizeof(g->stormbell_guards));
     g->mangroves = (MangroveState){0};
     memset(g->mangrove_stages, 0, sizeof(g->mangrove_stages));
     g->mangrove_defeated = 0;
@@ -6331,6 +6336,8 @@ typedef struct {
 } QuestOffer;
 
 static const QuestOffer quest_offers[] = {
+    {"Watchkeeper Seren", LOCATION_DAWNMERE, offsetof(GameState, stormbell_quest_state), 0,
+        "Assigned: The Silent Stormbell. Recover the clapper in Stormwatch 3 and restore the bell in Stormwatch 4."},
     {"Spice Merchant Corvin", LOCATION_DAWNMERE_MERCHANT, offsetof(GameState, spice_skiff_quest_state), 0,
         "Assigned: The Missing Spice Skiff. Search the stranded skiff on Saltwind 2 and recover its cargo on Saltwind 3."},
     {"Forester Tamsin", LOCATION_TOWN, offsetof(GameState, heartseed_quest_state), 0,
@@ -6395,7 +6402,9 @@ int game_handle_quest_offer_key(GameState *g, int key, int repeat) {
     }
     int *state = (int *)((char *)g + offer->state_offset);
     *state = offer->offered_state + 1;
-    if (state == &g->spice_skiff_quest_state) {
+    if (state == &g->stormbell_quest_state) {
+        stormbell_accept(g);
+    } else if (state == &g->spice_skiff_quest_state) {
         spice_skiff_accept(g);
     } else if (state == &g->heartseed_quest_state) {
         heartseed_accept(g);

@@ -55,6 +55,7 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->mangrove_entrance_texture = load_sprite_texture(sdl, "assets/images/mangrove-entrance.bmp");
     r->mangrove_root_texture = load_sprite_texture(sdl, "assets/images/mangrove-root.bmp");
     r->skiff_texture = load_sprite_texture(sdl, "assets/images/skiff.bmp");
+    r->stormbell_texture = load_sprite_texture(sdl, "assets/images/stormbell-props.bmp");
     r->spice_skiff_texture = load_sprite_texture(sdl, "assets/images/spice-skiff-props.bmp");
     r->forest_entrance_texture = load_sprite_texture(sdl, "assets/images/forest-entrance.bmp");
     r->mountain_entrance_texture = load_sprite_texture(sdl, "assets/images/mountain-entrance.bmp");
@@ -142,6 +143,8 @@ void renderer_free(Renderer *r) {
     SDL_DestroyTexture(r->mangrove_root_texture);
     SDL_DestroyTexture(r->skiff_texture);
     SDL_DestroyTexture(r->spice_skiff_texture);
+    SDL_DestroyTexture(r->stormbell_texture);
+    r->stormbell_texture = NULL;
     r->mangrove_entrance_texture = NULL;
     r->mangrove_root_texture = NULL;
     r->skiff_texture = NULL;

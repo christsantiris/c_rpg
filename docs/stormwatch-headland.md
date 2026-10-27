@@ -87,3 +87,21 @@ granting victory rewards. It leaves the shutter and wind available for testing.
 See the [approved design](stormwatch-headland-proposal.md),
 [native renderer captures](art-sources/stormwatch/README.md), and
 [atlas placement](art-sources/stormwatch/atlas-edit.md).
+
+## The Silent Stormbell
+
+Watchkeeper Seren assigns this quest beside Dawnmere's east road. Recover the
+clapper in the northeast ruined tower on stage 3. Fit it to the bell east of
+stage 4's shutter, then interact again for a warning and Y/N confirmation.
+Two Harpy Raiders answer, followed by one Harpy Stormcaller after both Raiders
+fall. The second wave arrives at the end of a normal enemy phase and cannot
+attack during its arrival. Environmental wind never advances the encounter.
+The courtyard remains connected with either shutter position; retreat is safe.
+
+The quest tracks discoveries outside the inventory. Surviving quest harpies
+retain wounds, positions, and attack warnings through saves, portals, and fresh
+expeditions. Ordinary enemies still respawn on physical re-entry. Repeated
+ringing cannot restart a wave. Return to Seren for 180 gold and 1,200 score,
+awarded once and independently of the Tempest Matriarch. Save version 206 also
+repairs older expeditions missing their Matriarch because another enemy took
+her spawn, preserving previous boss victories and expedition progress.

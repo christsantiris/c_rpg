@@ -4,6 +4,7 @@
 #include "../game/jail.h"
 #include "../game/heartseed.h"
 #include "../game/spice_skiff.h"
+#include "../game/stormbell.h"
 
 typedef struct {
     const char *title;
@@ -161,10 +162,20 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
         "Return both to Corvin in Dawnmere's Spice Merchant shop.",
         {"Inspect the stranded skiff's manifest", "Recover the sealed spice casket"},
         "Saltwind Marsh", {2, 3, 0, 0}, SPICE_REWARD_GOLD, SPICE_REWARD_SCORE
+    },
+    {
+        "The Silent Stormbell", "Watchkeeper Seren",
+        "Recover the clapper in stage 3; fit and ring stage 4's bell.",
+        "Defeat two Raiders, then the Stormcaller; return to Seren in Dawnmere.",
+        {"Recover the bell clapper", "Fit the clapper and restore the bell", "Defeat the bell's harpy defenders"},
+        "Stormwatch Headland", {3, 4, 4, 0}, STORMBELL_REWARD_GOLD, STORMBELL_REWARD_SCORE
     }
 };
 
 static int quest_state(const GameState *g, int quest) {
+    if (quest == 19) {
+        return g->stormbell_quest_state;
+    }
     if (quest == 18) {
         return g->spice_skiff_quest_state;
     }
@@ -224,6 +235,9 @@ static int quest_state(const GameState *g, int quest) {
 }
 
 static int quest_progress(const GameState *g, int quest) {
+    if (quest == 19) {
+        return g->stormbell_progress;
+    }
     if (quest == 18) {
         return g->spice_skiff_progress;
     }
