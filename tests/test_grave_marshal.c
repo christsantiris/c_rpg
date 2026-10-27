@@ -120,6 +120,7 @@ static void test_rewards(void) {
     game.player.y = y;
     game.map.tiles[y][x + 1] = TILE_OSSUARY_BRAZIER;
     game.map.tiles[y - 1][x] = TILE_OSSUARY_BRAZIER;
+    action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
     action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("full inventory cannot consume the reserved reward", game.grave_marshal_reward_state == 1 && game.map.tiles[y][x] == TILE_MARSHAL_RELIQUARY);
     game.inventory_count--;

@@ -325,7 +325,7 @@ void drowned_queen_restore_reward(GameState *g) {
         for (int x = room->x + 1; x < room->x + room->w - 1; x++) {
             if ((g->map.tiles[y][x] == TILE_COAST_FLOOR || g->map.tiles[y][x] == TILE_COAST_SHALLOW_WATER || g->map.tiles[y][x] == TILE_QUEEN_WATER || g->map.tiles[y][x] == TILE_QUEEN_DRY) && !occupied(g->enemies, g->enemy_count, x, y)) {
                 g->map.tiles[y][x] = TILE_QUEEN_RELIQUARY;
-                push_message(g, "Unclaimed Tidecaller Robes wait in the Queen's reliquary. Interact beside it or press P on it.");
+                push_message(g, "Unclaimed Tidecaller Robes wait in the Queen's reliquary. Open with Interact, then Pick Up the released loot.");
                 return;
             }
         }
@@ -336,7 +336,7 @@ static TileType interaction_at(const GameState *g, int *x, int *y) {
     if (g->location != LOCATION_COAST || g->level != COAST_DEPTH) {
         return TILE_COAST_FLOOR;
     }
-    // Prefer the tile underfoot, so P on a reliquary cannot select a nearby tide control.
+    // Prefer the tile underfoot before selecting a nearby tide control.
     for (int radius = 0; radius <= 1; radius++) {
         for (int dy = -radius; dy <= radius; dy++) {
             for (int dx = -radius; dx <= radius; dx++) {

@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include "spell.h"
 #include "controls.h"
+#include "container_state.h"
 #include <SDL2/SDL.h>
 
 #define MAX_MESSAGES 3
@@ -384,6 +385,8 @@ typedef struct {
     int       rook_quest_completions;
     FloorItem floor_items[MAX_FLOOR_ITEMS];
     int       floor_item_count;
+    LootContainer loot_containers[MAX_LOOT_CONTAINERS];
+    int loot_container_count;
     TrailTile trail[MAX_TRAIL];
     int       trail_count;
     int       trail_frames;

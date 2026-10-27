@@ -611,6 +611,7 @@ void test_sun_guardian(void) {
         loaded.sun_guardian_reward_state == 1 && loaded.map.tiles[cache_y][cache_x] == TILE_ITEM);
     game = loaded;
     game.inventory_count--;
+    action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
     action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("P claims the mantle beneath loot and restores every item's underlay",
         game.sun_guardian_reward_state == 2 && game.inventory[game.inventory_count - 1].visual_id == ITEM_VISUAL_SUNWARDEN_MANTLE &&
@@ -624,7 +625,9 @@ void test_sun_guardian(void) {
     game.player.x = cache_x - 1;
     game.player.y = cache_y;
     action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
-    ASSERT("A beside the cache also recovers the reserved mantle", game.sun_guardian_reward_state == 2 && !find_cache(&cache_x, &cache_y));
+    ASSERT("opening a reserved chest does not award equipment", game.sun_guardian_reward_state == 1);
+    action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("Pick Up collects the equipment released by the adjacent chest", game.sun_guardian_reward_state == 2 && !find_cache(&cache_x, &cache_y));
 
     kill_with(0, 1);
     game_open_town_portal(&game);
@@ -640,6 +643,7 @@ void test_sun_guardian(void) {
     game.player.x = cache_x;
     game.player.y = cache_y;
     game.inventory_count--;
+    action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
     action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
     game.inventory_count--;
     game_open_town_portal(&game);

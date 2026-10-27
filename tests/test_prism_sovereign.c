@@ -183,6 +183,7 @@ static void test_rewards(void) {
     ASSERT("full floor and inventory preserve every object and both guaranteed rewards", cache && game.floor_item_count == MAX_FLOOR_ITEMS && game.floor_items[MAX_FLOOR_ITEMS - 1].item.type == ITEM_POTION_HEALTH && game.prism_sovereign_reward_pending == 3 && game.gold > 0);
     game.player.x = x;
     game.player.y = y;
+    action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
     action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("a full inventory cannot consume either reserved reward", game.prism_sovereign_reward_pending == 3 && game.map.tiles[y][x] == TILE_PRISM_RELIQUARY);
     game.inventory_count--;
@@ -204,7 +205,10 @@ static void test_rewards(void) {
     game.player.x = x;
     game.player.y = y;
     action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
-    ASSERT("a spacious pack receives both rewards once through Interact", !game.prism_sovereign_reward_pending && game.inventory_count == 2 && strcmp(game.inventory[0].name, "Prismweave Robes") == 0 && game.inventory[1].type == ITEM_POTION_STRENGTH);
+    ASSERT("opening spills both rewards without claiming them", game.inventory_count == 0);
+    action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
+    action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("a spacious pack collects both released rewards through Pick Up", !game.prism_sovereign_reward_pending && game.inventory_count == 2 && strcmp(game.inventory[0].name, "Prismweave Robes") == 0 && game.inventory[1].type == ITEM_POTION_STRENGTH);
     int attack = game.player.attack;
     action_resolve_player(&game, (Action){ACTION_USE_ITEM, 1, 0});
     ASSERT("the original special Strength Potion still grants one permanent base attack", game.player.attack == attack + 1);
@@ -532,7 +536,10 @@ static void test_saves(void) {
     game.player.x = 28;
     game.player.y = 22;
     action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
-    ASSERT("claiming rewards beneath loot restores the original sanctuary paving", !game.prism_sovereign_reward_pending && game.floor_items[0].underlying_tile == TILE_GLASSDEEP_RUIN);
+    action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
+    action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
+    action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("claiming rewards after collecting loose gold preserves the original sanctuary paving", !game.prism_sovereign_reward_pending && game.map.tiles[22][28] == TILE_GLASSDEEP_RUIN);
     e = setup();
     e->hp = 73;
     e->move_timer = 17;

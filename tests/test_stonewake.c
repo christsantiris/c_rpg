@@ -210,6 +210,7 @@ static void test_cranes(GameState *g, GameState *loaded) {
     int gold = g->gold;
     stonewake_interact(g);
     stonewake_interact(g);
+    action_resolve_player(g, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("the isolated supply store pays once after reaching it by the salvage spur", g->gold == gold + 25 && g->map.tiles[y - 3][x + 5] == TILE_STONEWAKE_EMPTY);
 }
 

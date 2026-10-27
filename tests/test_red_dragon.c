@@ -563,6 +563,7 @@ static void test_rewards_and_saves(void) {
         loaded.red_dragon_reward_state == 1 && loaded.floor_items[MAX_FLOOR_ITEMS - 1].underlying_tile == TILE_DRAGON_RELIQUARY_ASH);
     game = loaded;
     game.inventory_count--;
+    action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
     action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("P recovers the reserved mantle and restores the cache's native underlay",
         game.red_dragon_reward_state == 2 && game.inventory[game.inventory_count - 1].max_hp_bonus == 20 &&
@@ -579,7 +580,9 @@ static void test_rewards_and_saves(void) {
     game.player.x = x - 1;
     game.player.y = y;
     action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
-    ASSERT("A beside a recovered cache claims the original mantle once", game.red_dragon_reward_state == 2 && game.inventory_count == 1);
+    ASSERT("opening a reserved chest does not award equipment", game.red_dragon_reward_state == 1);
+    action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("Pick Up collects the equipment released by the adjacent chest", game.red_dragon_reward_state == 2 && game.inventory_count == 1);
 
     Enemy *e = setup();
     attack(DRAGON_INFERNO_FIRST);

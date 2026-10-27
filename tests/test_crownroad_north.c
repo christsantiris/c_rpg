@@ -315,14 +315,15 @@ static void test_supplies(GameState *g) {
     g->enemies[0].active = 0;
     g->enemies[0].hp = 0;
     action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
+    action_resolve_player(g, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("clearing the cache grants its gold and healing through the normal action", g->gold == gold + 25 &&
-        g->player.hp == g->player.max_hp - 20 && g->map.tiles[82][18] == TILE_CROWN_EMPTY && !northroad_has_interaction(g));
+        g->player.hp == g->player.max_hp - 20 && g->map.tiles[82][18] == TILE_CROWN_EMPTY && northroad_has_interaction(g));
     northroad_leave(g, 1);
     northroad_enter(g, 1, 0);
     g->player.x = 18;
     g->player.y = 81;
     ASSERT("re-entering refreshes patrols without refilling a claimed supply cache", g->enemy_count == NORTH_ENEMIES &&
-        !northroad_interact(g) && g->gold == gold + 25 && g->map.tiles[82][18] == TILE_CROWN_EMPTY);
+        northroad_interact(g) && g->gold == gold + 25 && g->map.tiles[82][18] == TILE_CROWN_EMPTY);
 }
 
 void test_crownroad_north(void) {

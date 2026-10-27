@@ -1,3 +1,4 @@
+#include "containers.h"
 #include "mangrove.h"
 #include "town_road.h"
 #include "spice_skiff.h"
@@ -391,6 +392,9 @@ const char *mangrove_hint(const GameState *g) {
     if (quest) {
         return quest;
     }
+    if (containers_hint(g)) {
+        return containers_hint(g);
+    }
     for (int i = 0; i < 3; i++) {
         int x;
         int y;
@@ -439,24 +443,7 @@ int mangrove_interact(GameState *g) {
         g->player.last_dy = g->mangroves.boat_dy;
         g->mangroves.aboard = 1;
     } else {
-        for (int i = 0; i < 3; i++) {
-            int x;
-            int y;
-            mangrove_cache(g->level, i, &x, &y);
-            if (!(g->mangroves.searched & (1u << i)) && abs(g->player.x - x) + abs(g->player.y - y) <= 1) {
-                for (int j = 0; j < g->enemy_count; j++) {
-                    if (g->enemies[j].active && abs(g->enemies[j].x - x) + abs(g->enemies[j].y - y) <= 2) {
-                        push_message(g, "Defeat the nearby supply guards before searching.");
-                        return 1;
-                    }
-                }
-                g->mangroves.searched |= 1u << i;
-                g->gold += 15 + (g->level - 1) * 5;
-                g->map.tiles[y][x] = g->level == 4 ? TILE_MANGROVE_DECK : TILE_MANGROVE_MUD;
-                push_message(g, "You recover gold from the weathered supplies.");
-                break;
-            }
-        }
+        containers_interact(g);
     }
     map_mark_explored(&g->map, g->player.x, g->player.y);
     action_resolve_enemies(g);

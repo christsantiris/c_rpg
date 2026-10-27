@@ -41,6 +41,7 @@
 #include "minimap_renderer.h"
 #include "renderer.h"
 #include "item_icons.h"
+#include "containers_renderer.h"
 #include "../game/combat_feedback.h"
 #include "../game/catacombs.h"
 #include "../game/lich.h"
@@ -366,7 +367,7 @@ static void draw_emberforge_tile(Renderer *r, int sx, int sy, int x, int y, Tile
     }
 }
 
-static void draw_catacombs_tile(Renderer *r, const Map *m, int sx, int sy, int x, int y, TileType type) {
+void draw_catacombs_tile(Renderer *r, const Map *m, int sx, int sy, int x, int y, TileType type) {
     int px = sx * TILE_SIZE;
     int py = sy * TILE_SIZE;
     SDL_Rect tile = {px, py, TILE_SIZE, TILE_SIZE};
@@ -3319,6 +3320,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         }
     }
 
+    containers_draw(r, g, v);
+
     // Portal sprites stay above gates, buildings, terrain edges and floor loot.
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
@@ -4094,6 +4097,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     giants_draw_hint(r, g);
     ironfang_draw_hint(r, g);
     northroad_draw_hint(r, g);
+    containers_draw_hint(r, g);
 
     draw_kraken_status(r, g, v);
     draw_lich_status(r, g, v);

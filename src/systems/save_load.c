@@ -34,6 +34,7 @@
 #include "../game/stormbell.h"
 #include "../game/war_machine.h"
 #include "../game/crown_quest.h"
+#include "../game/containers.h"
 #include "../game/coastal_travel.h"
 #include "cJSON.h"
 #include <stdio.h>
@@ -1088,6 +1089,51 @@ static int load_heartseed(const cJSON *root, GameState *g, int version) {
         (g->heartseed_guardian != HEARTSEED_FREED || g->heartseed_bindings == 7);
 }
 
+static const char *container_fields[] = {"location", "level", "x", "y", "kind", "opened", "released", "gold", "gold_score", "rewards", "variant", "loot_x", "loot_y"};
+static const size_t container_offsets[] = {
+    offsetof(LootContainer, location), offsetof(LootContainer, level), offsetof(LootContainer, x), offsetof(LootContainer, y),
+    offsetof(LootContainer, kind), offsetof(LootContainer, opened), offsetof(LootContainer, released), offsetof(LootContainer, gold),
+    offsetof(LootContainer, gold_score), offsetof(LootContainer, rewards), offsetof(LootContainer, variant),
+    offsetof(LootContainer, loot_x), offsetof(LootContainer, loot_y)
+};
+
+static cJSON *serialize_containers(const GameState *g) {
+    cJSON *array = cJSON_CreateArray();
+    for (int i = 0; i < g->loot_container_count; i++) {
+        cJSON *entry = cJSON_CreateObject();
+        for (int n = 0; n < 13; n++) {
+            const int *value = (const int *)((const char *)&g->loot_containers[i] + container_offsets[n]);
+            cJSON_AddNumberToObject(entry, container_fields[n], *value);
+        }
+        cJSON_AddItemToArray(array, entry);
+    }
+    return array;
+}
+
+static int load_containers(const cJSON *root, GameState *g, int version) {
+    g->loot_container_count = 0;
+    if (version < 209) {
+        return 1;
+    }
+    const cJSON *array = cJSON_GetObjectItem(root, "loot_containers");
+    if (!cJSON_IsArray(array) || cJSON_GetArraySize(array) > MAX_LOOT_CONTAINERS) {
+        return 0;
+    }
+    g->loot_container_count = cJSON_GetArraySize(array);
+    for (int i = 0; i < g->loot_container_count; i++) {
+        const cJSON *entry = cJSON_GetArrayItem(array, i);
+        for (int n = 0; n < 13; n++) {
+            const cJSON *value = cJSON_GetObjectItem(entry, container_fields[n]);
+            if (!cJSON_IsNumber(value) || value->valuedouble != value->valueint) {
+                return 0;
+            }
+            int *field = (int *)((char *)&g->loot_containers[i] + container_offsets[n]);
+            *field = value->valueint;
+        }
+    }
+    return containers_valid(g);
+}
+
 static int load_crown_quest(const cJSON *root, GameState *g, int version) {
     g->crown_quest_state = 0;
     g->crown_quest_progress = 0;
@@ -1693,7 +1739,7 @@ static void migrate_stormwatch_road(GameState *g) {
 }
 
 int save_game(const GameState *g, int slot) {
-    if (!crown_quest_valid(g) || !war_machine_valid(g) || !stormbell_valid(g) || !giants_valid(g) || !northroad_valid(g) || !mangrove_state_valid(g) || !stormwatch_valid(g) || !ironfang_valid(g)) {
+    if (!containers_valid(g) || !crown_quest_valid(g) || !war_machine_valid(g) || !stormbell_valid(g) || !giants_valid(g) || !northroad_valid(g) || !mangrove_state_valid(g) || !stormwatch_valid(g) || !ironfang_valid(g)) {
         return 0;
     }
     if (g->retired_coast_item_count < 0 || g->retired_coast_item_count > RETIRED_LOOT_STAGES * MAX_FLOOR_ITEMS) {
@@ -1701,7 +1747,8 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 208);
+    cJSON_AddNumberToObject(root, "save_version", 209);
+    cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
     cJSON_AddNumberToObject(root, "crown_quest_state", g->crown_quest_state);
@@ -3898,7 +3945,7 @@ int load_game(GameState *g, int slot) {
         cJSON_Delete(root);
         return 0;
     }
-    if (!elderwood_load(root, g, save_version) || !load_heartseed(root, g, save_version) || !load_spice_skiff(root, g, save_version) || !load_stormbell(root, g, save_version) || !load_war_machine(root, g, save_version) || !load_crown_quest(root, g, save_version)) {
+    if (!load_containers(root, g, save_version) || !elderwood_load(root, g, save_version) || !load_heartseed(root, g, save_version) || !load_spice_skiff(root, g, save_version) || !load_stormbell(root, g, save_version) || !load_war_machine(root, g, save_version) || !load_crown_quest(root, g, save_version)) {
         cJSON_Delete(root);
         return 0;
     }

@@ -340,7 +340,7 @@ void minotaur_restore_reward(GameState *g) {
                 if (y >= 0 && y < LABYRINTH_H && tile_at(g, x, y) == TILE_LABYRINTH_FLOOR &&
                     (covered || g->map.tiles[y][x] != TILE_ITEM) && !occupied(g->enemies, g->enemy_count, x, y)) {
                     set_tile(g, x, y, TILE_MINOTAUR_RELIQUARY);
-                    push_message(g, "Your unclaimed shield waits in the vault's bull-marked cache. Interact beside it or press P on it.");
+                    push_message(g, "Your unclaimed shield waits in the vault's bull-marked cache. Open with Interact, then Pick Up the released loot.");
                     return;
                 }
             }

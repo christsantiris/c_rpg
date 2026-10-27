@@ -315,7 +315,7 @@ void lich_restore_reward(GameState *g) {
         for (int x = room->x + 1; x < room->x + room->w - 1; x++) {
             if (g->map.tiles[y][x] == TILE_FLOOR && !occupied(g->enemies, g->enemy_count, x, y)) {
                 g->map.tiles[y][x] = TILE_LICH_RELIQUARY;
-                push_message(g, "Unclaimed Cryptblade waits in the Lich's reliquary. Interact beside it or press P on it.");
+                push_message(g, "Unclaimed Cryptblade waits in the Lich's reliquary. Open with Interact, then Pick Up the released loot.");
                 return;
             }
         }

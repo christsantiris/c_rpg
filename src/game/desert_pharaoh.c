@@ -351,7 +351,7 @@ void desert_pharaoh_restore_reward(GameState *g) {
             g->map.tiles[y][x] = TILE_ITEM;
         } else {
             set_tile(g, x, y, TILE_PHARAOH_RELIQUARY);
-            push_message(g, "Sandstorm Staff waits in the sandstone reliquary. Interact beside it or press P on it.");
+            push_message(g, "Sandstorm Staff waits in the sandstone reliquary. Open with Interact, then Pick Up the released loot.");
         }
         return;
     }

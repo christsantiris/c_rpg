@@ -395,7 +395,7 @@ void goblin_king_restore_reward(GameState *g) {
         for (int x = room->x + 1; x < room->x + room->w - 1; x++) {
             if ((g->map.tiles[y][x] == TILE_MOUNTAIN_FORTRESS_FLOOR || g->map.tiles[y][x] == TILE_MOUNTAIN_FLOOR) && !occupied(g->enemies, g->enemy_count, x, y)) {
                 g->map.tiles[y][x] = TILE_GOBLIN_KING_RELIQUARY;
-                push_message(g, "Unclaimed Goblin King's Shield waits in the fortress reliquary. Interact beside it or press P on it.");
+                push_message(g, "Unclaimed Goblin King's Shield waits in the fortress reliquary. Open with Interact, then Pick Up the released loot.");
                 return;
             }
         }
@@ -406,7 +406,7 @@ static TileType interaction_at(const GameState *g, int *x, int *y) {
     if (g->location != LOCATION_MOUNTAINS || g->level != MOUNTAIN_BOSS_LEVEL) {
         return TILE_MOUNTAIN_FORTRESS_FLOOR;
     }
-    // Prefer the tile underfoot, so P on a reliquary cannot select a nearby keg.
+    // Prefer the tile underfoot before selecting a nearby keg.
     for (int radius = 0; radius <= 1; radius++) {
         for (int dy = -radius; dy <= radius; dy++) {
             for (int dx = -radius; dx <= radius; dx++) {

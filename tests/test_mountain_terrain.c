@@ -145,6 +145,7 @@ static void test_mountain_interactions(void) {
         int gold = g.gold;
         action_resolve_player(&g, interact);
         action_resolve_player(&g, interact);
+        action_resolve_player(&g, (Action){ACTION_PICK_UP, 0, 0});
         ASSERT("risky cache gives its reward only once", g.gold == gold + 15 + 4 * map_mountain_difficulty(g.level));
         Action pickup = {ACTION_PICK_UP, 0, 0};
         action_resolve_player(&g, pickup);

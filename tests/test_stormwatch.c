@@ -344,6 +344,8 @@ void test_stormwatch(void) {
     g->player.y = 18;
     int before = g->gold;
     stormwatch_interact(g);
+    ASSERT("opening watch supplies spills gold without collecting it", g->gold == before);
+    action_resolve_player(g, (Action){ACTION_PICK_UP, 0, 0});
     int after = g->gold;
     stormwatch_interact(g);
     ASSERT("optional supply chest grants gold once per expedition", after > before && g->gold == after && g->map.tiles[17][8] == TILE_STORM_EMPTY);

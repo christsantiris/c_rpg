@@ -92,6 +92,7 @@ void test_spice_skiff(void);
 void test_stormbell(void);
 void test_war_machine(void);
 void test_crown_quest(void);
+void test_containers(void);
 void test_stormwatch(void);
 void test_ironfang(void);
 void test_crownroad_north(void);
@@ -228,6 +229,7 @@ int main(void) {
     test_stormbell();
     test_war_machine();
     test_crown_quest();
+    test_containers();
     test_stormwatch();
     test_ironfang();
     test_crownroad_north();
