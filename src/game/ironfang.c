@@ -1,3 +1,4 @@
+#include "boss_gates.h"
 #include "containers.h"
 #include "ironfang.h"
 #include "war_machine.h"
@@ -401,8 +402,7 @@ void ironfang_change_level(GameState *g, int forward) {
         return;
     }
     if ((!forward && g->level == 1) || (forward && g->level == IRON_DEPTH)) {
-        if (forward && !g->ironfang_defeated && !g->debug_passages_unlocked) {
-            push_message(g, "The Goblin Mine Boss holds the final departure. The entrance remains open behind you.");
+        if (forward && !boss_gate_crossing(g, LOCATION_IRONFANG)) {
             return;
         }
         ironfang_leave(g);
@@ -688,7 +688,7 @@ void ironfang_defeat(GameState *g) {
         g->ironfang_defeated = 1;
         g->gold += 180;
         g->score += 1800;
-        push_message(g, "The Goblin Mine Boss falls! You recover 180 gold; the final departure opens.");
+        push_message(g, "The Goblin Mine Boss falls! You recover 180 gold; the war supply operation is broken.");
     }
 }
 

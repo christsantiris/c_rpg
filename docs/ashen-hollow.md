@@ -9,9 +9,9 @@ enemies do not block stage travel.
 The entrance is a deep, lava-lit fissure surrounded by broken basalt spires.
 A narrow stairway descends through its southern rim.
 
-The Cinder Lord guards the last clearing on stage 5. Its defeat opens that
-stage's north exit, which returns to the approach back to Castle Grounds without
-introducing another town. The boss guarantees **Embercleaver** and the original **Potion of Strength**,
+The Cinder Lord guards the last clearing on stage 5. That stage's north exit
+remains open while he lives and returns to the approach back to Castle Grounds
+without introducing another town. See [boss gates](boss-gates.md). The boss guarantees **Embercleaver** and the original **Potion of Strength**,
 granting 1 permanent base attack when consumed. Its defeat appears in the boss
 journal. Surviving ordinary enemies do not block the return exit after victory.
 

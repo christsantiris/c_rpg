@@ -153,7 +153,11 @@ void test_stormwatch(void) {
         }
     }
     ASSERT("all five stages, exits, enemies and side props stay reachable across 30 seeds and both shutter settings", valid_spawns);
-    ASSERT("final departure is locked before victory", stormwatch_travel(g, g->map.stairs_down_x, 0) && g->location == LOCATION_STORMWATCH);
+    ASSERT("final departure stays open while the optional Matriarch lives", stormwatch_travel(g, g->map.stairs_down_x, 0) && g->location == LOCATION_APPROACH && !g->stormwatch_defeated);
+    stormwatch_enter(g, 0);
+    for (int level = 1; level < STORM_DEPTH; level++) {
+        stormwatch_change_level(g, 1);
+    }
     int gold = g->gold;
     stormwatch_defeat(g);
     stormwatch_defeat(g);

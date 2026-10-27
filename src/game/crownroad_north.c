@@ -167,11 +167,6 @@ void northroad_store(GameState *g) {
 void northroad_enter(GameState *g, int from_castle, int portal) {
     const TownApproach *route = approach_route(g);
     int castle_access = from_castle || (route && route->town == LOCATION_CASTLE);
-    if (!portal && !castle_access && !g->debug_passages_unlocked &&
-        !(g->defeated_bosses & (1 << LOCATION_CATACOMBS))) {
-        push_message(g, "Clear Elderwood and the Royal Catacombs to open Crown Road North.");
-        return;
-    }
     if (portal && (!g->northroad.valid || !inside(g->portal_x, g->portal_y) ||
         !map_is_walkable(&g->northroad.map, g->portal_x, g->portal_y))) {
         return;

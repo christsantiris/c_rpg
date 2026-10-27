@@ -28,6 +28,7 @@
 #include "jail.h"
 #include "town_life.h"
 #include "approach.h"
+#include "boss_gates.h"
 #include "town_road.h"
 #include "regional_terrain.h"
 #include "landscapes.h"
@@ -967,6 +968,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (boss_gate_hint(g)) {
+        return 1;
+    }
     if (containers_hint(g)) {
         return 1;
     }
@@ -1416,6 +1420,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        if (boss_gate_interact(g)) {
+            return;
+        }
         if (northroad_interact(g)) {
             action_resolve_enemies(g);
             return;
@@ -2247,6 +2254,9 @@ void action_resolve_player(GameState *g, Action a) {
         }
         int tx = a.target_x;
         int ty = a.target_y;
+        if (boss_gate_bump(g, tx, ty)) {
+            return;
+        }
         if (g->location == LOCATION_MANGROVES && g->mangroves.aboard) {
             mangrove_travel(g, tx, ty);
             return;
@@ -2576,15 +2586,11 @@ void action_resolve_player(GameState *g, Action a) {
                 game_descend(g);
                 g->score += g->level * 100;
             } else {
-                for (int i = 0; i < g->enemy_count; i++) {
-                    if (!g->debug_passages_unlocked && g->enemies[i].active &&
-                        g->enemies[i].type == ENEMY_RED_DRAGON) {
-                        push_message(g, "The dragon guards the summit pass!");
-                        return;
-                    }
+                if (!boss_gate_crossing(g, LOCATION_DRAGONSPINE)) {
+                    return;
                 }
                 game_return_to_approach(g);
-                push_message(g, "Dragonspine is free of its dragon.");
+                push_message(g, "You leave Dragonspine by the summit pass.");
             }
             return;
         }
@@ -2666,15 +2672,11 @@ void action_resolve_player(GameState *g, Action a) {
                 game_descend(g);
                 g->score += g->level * 100;
             } else {
-                for (int i = 0; i < g->enemy_count; i++) {
-                    if (!g->debug_passages_unlocked && g->enemies[i].active &&
-                        g->enemies[i].type == ENEMY_FROST_KRAKEN) {
-                        push_message(g, "The Frost Kraken bars the way west!");
-                        return;
-                    }
+                if (!boss_gate_crossing(g, LOCATION_FROSTFELL)) {
+                    return;
                 }
                 game_return_to_approach(g);
-                push_message(g, "The Frostfell Wastes are free of the Kraken.");
+                push_message(g, "You leave the Frostfell Wastes.");
             }
             return;
         }
@@ -2695,11 +2697,8 @@ void action_resolve_player(GameState *g, Action a) {
                 game_descend(g);
                 g->score += g->level * 100;
             } else {
-                for (int i = 0; i < g->enemy_count; i++) {
-                    if (!g->debug_passages_unlocked && g->enemies[i].active && g->enemies[i].is_boss) {
-                        push_message(g, "The Desert Pharaoh bars the way west!");
-                        return;
-                    }
+                if (!boss_gate_crossing(g, LOCATION_DESERT)) {
+                    return;
                 }
                 game_return_to_approach(g);
                 push_message(g, "You return to Stillbury.");
@@ -2722,11 +2721,9 @@ void action_resolve_player(GameState *g, Action a) {
             if (g->level < ASHEN_DEPTH) {
                 game_descend(g);
                 g->score += g->level * 100;
-            } else if (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_ASHEN))) {
+            } else if (boss_gate_crossing(g, LOCATION_ASHEN)) {
                 game_return_to_approach(g);
-                push_message(g, "You return to Ridgeshire through the volcanic pass.");
-            } else {
-                push_message(g, "The Cinder Lord seals the path to Ridgeshire!");
+                push_message(g, "You return toward Castle Grounds through the volcanic pass.");
             }
             return;
         }
@@ -2746,11 +2743,9 @@ void action_resolve_player(GameState *g, Action a) {
             if (g->level < GLASSDEEP_DEPTH) {
                 game_descend(g);
                 g->score += g->level * 100;
-            } else if (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_GLASSDEEP))) {
+            } else if (boss_gate_crossing(g, LOCATION_GLASSDEEP)) {
                 game_return_to_approach(g);
                 push_message(g, "You emerge from Stonewake at Stillbury's quarry gate.");
-            } else {
-                push_message(g, "The Quarry Colossus seals the path to Stillbury!");
             }
             return;
         }

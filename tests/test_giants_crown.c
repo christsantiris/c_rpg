@@ -150,8 +150,10 @@ static void persistence(GameState *g, GameState *loaded) {
     for (int level = 1; level < GIANTS_DEPTH; level++) {
         giants_change_level(g, 1);
     }
+    *loaded = *g;
     giants_travel(g, 32, 0);
-    ASSERT("living Jarl guards the final departure", g->location == LOCATION_GIANTS_CROWN);
+    ASSERT("a living Jarl guards his vault but permits the final departure", g->location == LOCATION_APPROACH && !g->giants_crown_defeated);
+    *g = *loaded;
     Enemy *boss = &g->enemies[0];
     g->player.x = boss->x - 1;
     g->player.y = boss->y;

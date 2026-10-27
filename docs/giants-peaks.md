@@ -16,8 +16,8 @@ north of Castle Grounds, reached around the castle's western perimeter.
 | 5 | The Jarl's Court | A ruined royal precinct with pillars, flanking approaches, and the Last Jarl |
 
 Southern boundary paths retreat; northern boundary paths advance. Intermediate
-travel remains available while ordinary enemies live. The Last Jarl guards the
-final departure, which returns to the western approach after victory.
+travel and the final departure remain available while enemies and the Last Jarl
+live. The Jarl still guards the quest vault. See [boss gates](boss-gates.md).
 
 | Enemy | First stage | Role |
 | --- | --- | --- |

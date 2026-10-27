@@ -173,9 +173,11 @@ void test_dragonspine(void) {
     g.player.x = g.map.stairs_down_x - 1;
     g.player.y = g.map.stairs_down_y;
     Action summit_exit = {ACTION_MOVE, g.map.stairs_down_x, g.map.stairs_down_y};
+    loaded = g;
     action_resolve_player(&g, summit_exit);
-    ASSERT("the living dragon alone blocks the summit exit",
-        g.location == LOCATION_DRAGONSPINE);
+    ASSERT("the living optional dragon permits the summit departure",
+        g.location == LOCATION_APPROACH && !(g.defeated_bosses & (1 << LOCATION_DRAGONSPINE)));
+    g = loaded;
     for (int i = 0; i < g.enemy_count; i++) {
         Enemy *enemy = &g.enemies[i];
         if (enemy->type == ENEMY_RED_DRAGON) {

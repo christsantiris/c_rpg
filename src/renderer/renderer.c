@@ -84,6 +84,8 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     }
     r->town_gate_texture = load_sprite_texture(sdl, "assets/images/town-gates.bmp");
     r->loot_chest_texture = load_sprite_texture(sdl, "assets/images/loot-chests.bmp");
+    r->road_checkpoint_texture = load_sprite_texture(sdl, "assets/images/road-checkpoints.bmp");
+    r->road_bank_texture = load_sprite_texture(sdl, "assets/images/road-banks.bmp");
     r->castle_texture = load_sprite_texture(sdl, "assets/images/castle-of-no-return.bmp");
     r->apothecary_texture = load_sprite_texture(sdl, "assets/images/apothecary.bmp");
     r->guild_texture = load_sprite_texture(sdl, "assets/images/adventurers-guild.bmp");
@@ -164,6 +166,10 @@ void renderer_free(Renderer *r) {
     r->town_gate_texture = NULL;
     SDL_DestroyTexture(r->loot_chest_texture);
     r->loot_chest_texture = NULL;
+    SDL_DestroyTexture(r->road_checkpoint_texture);
+    r->road_checkpoint_texture = NULL;
+    SDL_DestroyTexture(r->road_bank_texture);
+    r->road_bank_texture = NULL;
     for (int i = 0; i < 4; i++) {
         if (r->local_building_textures[i]) {
             SDL_DestroyTexture(r->local_building_textures[i]);

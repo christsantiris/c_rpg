@@ -1,3 +1,4 @@
+#include "boss_gate_renderer.h"
 #include "giants_crown_renderer.h"
 #include "../game/giants_crown.h"
 #include "crownroad_north_renderer.h"
@@ -2236,6 +2237,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_MANGROVE_CACHE:
                     mangrove_draw_tile(r, g, sx, sy, x, y, g->map.tiles[y][x]);
                     break;
+                case TILE_ROAD_BANK:
+                    draw_town_floor(r, sx, sy);
+                    break;
+                case TILE_ROAD_GATE_CLOSED:
+                case TILE_ROAD_GATE_OPEN:
+                    draw_town_path(r, sx, sy);
+                    break;
                 case TILE_FLOOR:
                     if (g->location == LOCATION_DUNGEON) {
                         draw_dungeon_floor(r, sx, sy, x, y);
@@ -3138,7 +3146,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     draw_town_road(r, g, v);
+    boss_gate_draw_banks(r, g, v);
     draw_northern_road(r, g, v);
+    boss_gate_draw(r, g, v);
 
     draw_stonewake_props(r, g, v);
     draw_regional_terrain_light(r, g, v);

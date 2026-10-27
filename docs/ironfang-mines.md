@@ -4,7 +4,8 @@ Leave **Ridgeshire through its east gate**, follow the road, and walk into the
 fortified mine sprite. Ironfang is an optional five-stage underground adventure.
 It begins at stage 1 on every physical entry. Retreat through the southern
 boundary stairs; advance through the northern stairs. Ordinary enemies never
-lock intermediate travel. The Goblin Mine Boss guards the final departure.
+lock travel, including the final departure. The Goblin Mine Boss still guards
+the command seal. See [boss gates](boss-gates.md).
 
 | Stage | Working | Layout and discoveries |
 | --- | --- | --- |

@@ -28,9 +28,9 @@ clusters distinguish the marsh from the other coastal areas. Water and roots
 block foot travel; timber and mud are walkable. Exits terminate the terrain at
 map edges instead of floating in open ground.
 
-Ordinary enemies do not block stage travel. Stage 5's departure stays sealed
-until Sszareth is defeated; retreat through previous stages remains available.
-The debug passage override opens the departure without recording a victory.
+Travel remains available while ordinary enemies or Sszareth live, including
+stage 5's final departure. Boss and quest rewards still require their normal
+objectives. See [boss gates](boss-gates.md).
 
 ## The Missing Spice Skiff
 
@@ -97,7 +97,7 @@ his defense open during recovery; collision extends that opening. Below half
 health he calls two spearhunters once. Summoned hunters grant no repeat loot.
 
 Defeating Sszareth awards **200 gold, 2,400 score and 900 XP**, records his
-boss-journal entry and opens the final departure. Gold and score pay once.
+boss-journal entry and preserves the freely accessible final departure. Gold and score pay once.
 A later physical entry respawns ordinary enemies on visited stages while
 preserving the boss victory, claimed supplies, exploration and dropped gear.
 Backtracking and saves preserve wounds, deaths, freeze and attack warnings

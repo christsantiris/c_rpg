@@ -3,8 +3,8 @@
 Stonewake replaces Glassdeep Caverns on Stillbury's southern road. Walk into
 its limestone quarry landmark to start stage 1; the rail ramps at the northern
 and southern boundaries use the standard area travel controls. The final exit
-stays boss sealed until the Quarry Colossus is defeated. Defeating it returns
-to Stillbury's quarry approach.
+returns to Stillbury's quarry approach even while the Quarry Colossus lives.
+Boss victory and quest rewards remain separate. See [boss gates](boss-gates.md).
 The atlas keeps the beaches and cliff-backed shoreline below the quarry,
 Sunken Coast's sheltered cove and Oakhaven's connected branching docks.
 

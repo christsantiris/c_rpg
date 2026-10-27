@@ -1,3 +1,4 @@
+#include "../game/boss_gates.h"
 #include "stonewake_renderer.h"
 #include "../game/stonewake.h"
 #include "regional_terrain_renderer.h"
@@ -168,10 +169,18 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
             line1 = "STRAIGHT: AREA / LEFT: NEXT TOWN";
             line2 = "RIGHT: BOSS CHAMBER";
         }
+        const BossGateRule *rule = route ? boss_gate_rule(route->area) : NULL;
+        if (rule && rule->policy == BOSS_GATE_ROAD && !northern_approach(g)) {
+            snprintf(status, sizeof(status), boss_gate_open(g, route->area) ? "PASSAGE SECURED IN BOTH DIRECTIONS" : "ROAD CLOSED: DEFEAT %s", rule->boss);
+            line2 = status;
+        }
         if (northern_approach(g)) {
             title = "NORTHERN ROAD";
             line1 = "NORTH: CASTLE / SOUTH: OAKHAVEN";
-            line2 = "CLEAR ELDERWOOD AND CATACOMBS";
+            snprintf(status, sizeof(status), "ELDERWOOD: %s / CATACOMBS: %s",
+                boss_gate_open(g, LOCATION_ELDERWOOD) ? "OPEN" : "CLOSED",
+                boss_gate_open(g, LOCATION_CATACOMBS) ? "OPEN" : "CLOSED");
+            line2 = status;
         }
     } else if (g->location == LOCATION_ELDERWOOD) {
         title = g->level == ELDERWOOD_DEPTH ? "THE HEARTWOOD GROVE" : "ELDERWOOD FOREST";

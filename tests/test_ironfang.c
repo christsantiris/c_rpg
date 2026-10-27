@@ -239,10 +239,7 @@ void test_ironfang(void) {
     g->player.x = 54;
     g->player.y = 0;
     ironfang_travel(g, 54, 0);
-    ASSERT("only the living boss locks the final boundary exit", g->location == LOCATION_IRONFANG);
-    g->debug_passages_unlocked = 1;
-    ironfang_travel(g, 54, 0);
-    ASSERT("debug opens final travel without granting a boss victory", g->location == LOCATION_APPROACH && !g->ironfang_defeated);
+    ASSERT("the optional Mine Boss never locks final travel or grants credit for leaving", g->location == LOCATION_APPROACH && !g->ironfang_defeated);
     *g = *loaded;
     boss = &g->enemies[0];
     g->player.x = boss->x - 1;

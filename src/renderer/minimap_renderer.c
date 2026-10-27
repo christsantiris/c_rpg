@@ -1,3 +1,5 @@
+#include "../game/boss_gates.h"
+#include "../game/approach.h"
 #include "minimap_renderer.h"
 #include "../game/jail.h"
 #include "../game/spice_skiff.h"
@@ -12,7 +14,7 @@
 #define MINIMAP_PAD   6
 
 void minimap_draw(Renderer *r, const GameState *g) {
-    if (g->location != LOCATION_GIANTS_CROWN && g->location != LOCATION_CROWNROAD_NORTH && g->location != LOCATION_IRONFANG && g->location != LOCATION_STORMWATCH && g->location != LOCATION_MANGROVES && g->location != LOCATION_ESCAPE_TUNNEL && g->location != LOCATION_DUNGEON &&
+    if (g->location != LOCATION_APPROACH && g->location != LOCATION_GIANTS_CROWN && g->location != LOCATION_CROWNROAD_NORTH && g->location != LOCATION_IRONFANG && g->location != LOCATION_STORMWATCH && g->location != LOCATION_MANGROVES && g->location != LOCATION_ESCAPE_TUNNEL && g->location != LOCATION_DUNGEON &&
         g->location != LOCATION_FOREST &&
         g->location != LOCATION_MOUNTAINS &&
         g->location != LOCATION_DRAGONSPINE &&
@@ -34,6 +36,10 @@ void minimap_draw(Renderer *r, const GameState *g) {
     int oy = MINIMAP_PAD;
     int map_w = MAP_W;
     int map_h = MAP_H;
+    if (g->location == LOCATION_APPROACH) {
+        map_w = APPROACH_W;
+        map_h = APPROACH_H;
+    }
     if (g->location == LOCATION_MANGROVES) {
         map_w = MANGROVE_W;
         map_h = MANGROVE_H;
@@ -291,6 +297,27 @@ void minimap_draw(Renderer *r, const GameState *g) {
         SDL_SetRenderDrawColor(r->sdl, 240, 200, 100, 255);
         SDL_RenderDrawPoint(r->sdl, ox + quest_x / MINIMAP_SCALE, oy + quest_y / MINIMAP_SCALE);
     }
+    RoadCheckpoint checkpoints[2];
+    int checkpoint_count = boss_gate_checkpoints(g, checkpoints);
+    for (int n = 0; n < checkpoint_count; n++) {
+        RoadCheckpoint point = checkpoints[n];
+        if (!map_is_explored(&g->map, point.x, point.y)) {
+            continue;
+        }
+        int x = ox + point.x / MINIMAP_SCALE;
+        int y = oy + point.y / MINIMAP_SCALE;
+        if (boss_gate_open(g, point.area)) {
+            SDL_SetRenderDrawColor(r->sdl, 143, 202, 138, 255);
+            SDL_RenderDrawLine(r->sdl, x - 2, y, x - 1, y + 1);
+            SDL_RenderDrawLine(r->sdl, x - 1, y + 1, x + 2, y - 2);
+        } else {
+            SDL_SetRenderDrawColor(r->sdl, 225, 169, 99, 255);
+            SDL_Rect lock = {x - 2, y - 1, 5, 4};
+            SDL_RenderDrawRect(r->sdl, &lock);
+            SDL_RenderDrawLine(r->sdl, x - 1, y - 2, x + 1, y - 2);
+        }
+    }
+
     // Player dot
     SDL_SetRenderDrawColor(r->sdl, 80, 200, 80, 255);
     SDL_RenderDrawPoint(r->sdl,

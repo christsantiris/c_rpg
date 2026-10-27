@@ -162,7 +162,7 @@ static void test_travel_and_saves(void) {
         walk_edge(1);
     }
     walk_edge(1);
-    ASSERT("the living Prism Sovereign blocks the final return exit", game.location == LOCATION_GLASSDEEP && game.level == GLASSDEEP_DEPTH);
+    ASSERT("the living Quarry Colossus permits the final return departure", game.location == LOCATION_TOWN2 && !(game.defeated_bosses & (1 << LOCATION_GLASSDEEP)));
     game.portal_level = GLASSDEEP_DEPTH + 1;
     game.portal_location = LOCATION_GLASSDEEP;
     game.location = LOCATION_TOWN2;

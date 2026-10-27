@@ -1,4 +1,5 @@
 #include "elderwood.h"
+#include "boss_gates.h"
 #include "crownroad_north.h"
 #include "approach.h"
 #include "heartseed.h"
@@ -262,10 +263,8 @@ int elderwood_travel(GameState *g, int x, int y) {
     }
     if (tile == TILE_ELDERWOOD_EXIT) {
         if (g->level == ELDERWOOD_DEPTH) {
-            if (g->elderwood_defeated || g->debug_passages_unlocked) {
+            if (boss_gate_crossing(g, LOCATION_ELDERWOOD)) {
                 elderwood_leave(g);
-            } else {
-                push_message(g, "Elderthorn guards the northern road.");
             }
         } else {
             elderwood_change_level(g, 1);
@@ -464,8 +463,6 @@ void northern_refresh(GameState *g) {
         return;
     }
     const TownApproach *route = approach_route(g);
-    int forest_open = g->elderwood_defeated || g->debug_passages_unlocked;
-    int castle_open = forest_open && ((g->defeated_bosses & (1 << LOCATION_CATACOMBS)) || g->debug_passages_unlocked);
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
             g->map.tiles[y][x] = inside(x, y) ? TILE_TOWN_FLOOR : TILE_ELDERWOOD_WALL;
@@ -474,9 +471,18 @@ void northern_refresh(GameState *g) {
     for (int y = 1; y < ELDERWOOD_H - 1; y++) {
         g->map.tiles[y][NORTH_ROAD_X] = TILE_TOWN_PATH;
     }
-    if (!forest_open) {
+    // Irregular woodland banks form two narrow passes, rather than a tree wall.
+    const int passes[] = {NORTH_FOREST_BARRIER_Y, NORTH_CAT_Y - 2};
+    for (int pass = 0; pass < 2; pass++) {
         for (int x = 1; x < ELDERWOOD_W - 1; x++) {
-            g->map.tiles[NORTH_FOREST_BARRIER_Y][x] = TILE_ELDERWOOD_WALL;
+            int distance = x - NORTH_ROAD_X;
+            int width = 1 + abs(distance) / 3;
+            for (int dy = -width; dy <= width; dy++) {
+                int y = passes[pass] + dy;
+                if (x != NORTH_ROAD_X && y > 0 && y < ELDERWOOD_H - 1) {
+                    g->map.tiles[y][x] = TILE_ROAD_BANK;
+                }
+            }
         }
     }
     for (int x = NORTH_ROAD_X; x <= NORTH_ELDER_X; x++) {
@@ -490,22 +496,20 @@ void northern_refresh(GameState *g) {
     }
     for (int x = NORTH_CAT_X; x <= NORTH_ROAD_X; x++) {
         g->map.tiles[NORTH_CAT_Y + 1][x] = TILE_TOWN_PATH;
+        g->map.tiles[NORTH_CAT_Y - 6][x] = TILE_TOWN_PATH;
     }
     for (int y = NORTH_CAT_Y - 5; y <= NORTH_CAT_Y; y++) {
         for (int x = NORTH_CAT_X - 3; x <= NORTH_CAT_X + 3; x++) {
             g->map.tiles[y][x] = TILE_NORTH_CATACOMBS;
         }
     }
-    if (route->town == LOCATION_TOWN || forest_open) {
-        g->map.tiles[ELDERWOOD_H - 1][NORTH_ROAD_X] = TILE_NORTH_OAKHAVEN;
-    }
-    if (route->town == LOCATION_CASTLE || castle_open) {
-        g->map.tiles[0][NORTH_ROAD_X] = TILE_NORTH_CASTLE;
-    }
+    g->map.tiles[ELDERWOOD_H - 1][NORTH_ROAD_X] = TILE_NORTH_OAKHAVEN;
+    g->map.tiles[0][NORTH_ROAD_X] = TILE_NORTH_CASTLE;
     g->map.stairs_up_x = NORTH_ROAD_X;
     g->map.stairs_up_y = route->town == LOCATION_CASTLE ? 0 : ELDERWOOD_H - 1;
     g->map.stairs_down_x = route->area == LOCATION_CATACOMBS ? NORTH_CAT_X : NORTH_ELDER_X;
     g->map.stairs_down_y = route->area == LOCATION_CATACOMBS ? NORTH_CAT_Y : NORTH_ELDER_Y;
+    boss_gate_refresh(g);
 }
 
 void northern_return(GameState *g, Location town, int catacombs) {
@@ -521,7 +525,8 @@ void northern_return(GameState *g, Location town, int catacombs) {
     }
     approach_enter_region(g, route);
     g->player.x = catacombs ? NORTH_CAT_X : NORTH_ELDER_X;
-    g->player.y = catacombs ? NORTH_CAT_Y + 1 : town == LOCATION_CASTLE ? NORTH_ELDER_Y - 6 : NORTH_ELDER_Y + 1;
+    int entrance_y = catacombs ? NORTH_CAT_Y : NORTH_ELDER_Y;
+    g->player.y = entrance_y + (town == LOCATION_CASTLE ? -6 : 1);
     g->player.last_dx = 0;
     g->player.last_dy = 1;
     map_mark_explored(&g->map, g->player.x, g->player.y);
@@ -538,16 +543,22 @@ int northern_travel(GameState *g, int x, int y) {
     if (!northern_approach(g)) {
         return 0;
     }
+    const TownApproach *route = approach_route(g);
     TileType tile = g->map.tiles[y][x];
     if (tile == TILE_NORTH_ELDERWOOD) {
         elderwood_enter(g);
     } else if (tile == TILE_NORTH_CATACOMBS) {
-        const TownApproach *route = approach_route(g);
         g->catacombs_entry_town = route->town;
         game_enter_catacombs(g);
     } else if (tile == TILE_NORTH_OAKHAVEN) {
+        if (route->town == LOCATION_CASTLE && (!boss_gate_crossing(g, LOCATION_CATACOMBS) || !boss_gate_crossing(g, LOCATION_ELDERWOOD))) {
+            return 1;
+        }
         game_leave_approach_to_town(g, LOCATION_TOWN);
     } else if (tile == TILE_NORTH_CASTLE) {
+        if (route->town == LOCATION_TOWN && (!boss_gate_crossing(g, LOCATION_ELDERWOOD) || !boss_gate_crossing(g, LOCATION_CATACOMBS))) {
+            return 1;
+        }
         northroad_enter(g, 0, 0);
     } else if (x == NORTH_ROAD_X && y == 0) {
         push_message(g, "Clear Elderwood and the Royal Catacombs to reach the Castle Grounds.");

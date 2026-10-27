@@ -1,3 +1,4 @@
+#include "boss_gates.h"
 #include "containers.h"
 #include "giants_crown.h"
 #include "crown_quest.h"
@@ -287,11 +288,10 @@ void giants_change_level(GameState *g, int forward) {
         return;
     }
     if ((!forward && g->level == 1) || (forward && g->level == GIANTS_DEPTH)) {
-        if (forward && !g->giants_crown_defeated && !g->debug_passages_unlocked) {
-            push_message(g, "The Last Jarl guards the final departure. You can retreat through the southern entrance.");
-        } else {
-            giants_leave(g);
+        if (forward && !boss_gate_crossing(g, LOCATION_GIANTS_CROWN)) {
+            return;
         }
+        giants_leave(g);
         return;
     }
     giants_store(g);
@@ -443,7 +443,7 @@ void giants_defeat(GameState *g) {
         g->giants_crown_defeated = 1;
         g->gold += 200;
         g->score += 2200;
-        push_message(g, "The Last Jarl falls. The final departure opens. You recover 200 gold.");
+        push_message(g, "The Last Jarl falls. You recover 200 gold.");
     }
     crown_quest_sync(g);
 }

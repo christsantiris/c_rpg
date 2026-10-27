@@ -1,3 +1,4 @@
+#include "boss_gates.h"
 #include "giants_crown.h"
 #include "ironfang.h"
 #include "crownroad_north.h"
@@ -3820,7 +3821,7 @@ void game_enter_dragonspine(GameState *g) {
 }
 
 int game_harbor_unlocked(const GameState *g) {
-    return g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_COAST)) != 0;
+    return boss_gate_open(g, LOCATION_COAST);
 }
 
 static void offer_rook_quest(GameState *g) {
@@ -3833,6 +3834,7 @@ void game_refresh_debug_passages(GameState *g) {
     crown_quest_prepare(g);
     jail_refresh_hatch(g);
     coastal_refresh_docks(g);
+    boss_gate_refresh(g);
     if (!g->debug_passages_unlocked) {
         return;
     }

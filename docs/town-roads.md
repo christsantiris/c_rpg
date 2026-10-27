@@ -60,7 +60,7 @@ stonework and doorway details at native resolution. A rounded curtain wall,
 projecting towers and clustered houses follow the user's medieval hill-town
 reference. See the [five-town sprite comparison and renderer previews](art-sources/town-exteriors/README.md).
 
-The northern Oakhaven road opens in two steps: Elderthorn, then the Grave Marshal.
+The northern Oakhaven road has two independent boss gates: Elderthorn and the Grave Marshal. Both apply equally from the castle side; see [boss gates](boss-gates.md).
 See [Elderwood](elderwood-forest.md) for travel and save migration details.
 
 Save version 189 retires Pirate Coast and Corvin's treasure quest. Saves from
