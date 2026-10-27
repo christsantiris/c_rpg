@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/landscapes.h"
 #include "systems/save_load.h"
@@ -217,6 +218,7 @@ static int rewrite_version(int slot, int version) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), version);
+    test_mark_legacy_portal(root);
     data = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);
     file = fopen(path, "wb");
@@ -430,7 +432,7 @@ static void test_sunscar_cover_migration(void) {
         }
     }
     ASSERT("version 146 open basins gain substantial connected cover in place", ok && mesas > 450 && connected(&loaded.map, 0) && connected(&loaded.desert_cache[2].map, 0));
-    ASSERT("cover migration leaves actors, corpses, loot and portal landings uncovered", ok && loaded.map.tiles[game.player.y][game.player.x] == TILE_DESERT_FLOOR && loaded.map.tiles[game.enemies[0].y][game.enemies[0].x] == TILE_DESERT_FLOOR && loaded.map.tiles[game.enemies[1].y][game.enemies[1].x] == TILE_DESERT_FLOOR && loaded.map.tiles[ly][lx] == TILE_ITEM && loaded.floor_items[0].active && loaded.map.tiles[game.portal_y][game.portal_x] == TILE_DESERT_FLOOR && loaded.portal_active && loaded.portal_x == game.portal_x && loaded.portal_y == game.portal_y && loaded.portal_origin_tile == TILE_DESERT_FLOOR);
+    ASSERT("cover migration leaves actors, corpses, loot and portal landings uncovered", ok && loaded.map.tiles[game.player.y][game.player.x] == TILE_DESERT_FLOOR && loaded.map.tiles[game.enemies[0].y][game.enemies[0].x] == TILE_DESERT_FLOOR && loaded.map.tiles[game.enemies[1].y][game.enemies[1].x] == TILE_DESERT_FLOOR && loaded.map.tiles[ly][lx] == TILE_ITEM && loaded.floor_items[0].active && loaded.map.tiles[game.portal_y][game.portal_x] == TILE_DESERT_FLOOR && !loaded.portal_active && loaded.portal_x == game.portal_x && loaded.portal_y == game.portal_y && loaded.portal_origin_tile == TILE_DESERT_FLOOR);
     ASSERT("loading cover preserves current expedition deaths, wounds and exploration", ok && loaded.enemy_count == 2 && loaded.enemies[0].hp == 9 && !loaded.enemies[1].active && memcmp(game.map.explored, loaded.map.explored, sizeof(game.map.explored)) == 0);
     maps[1] = loaded.map;
     sunscar_migrate(&loaded);

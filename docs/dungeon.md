@@ -147,9 +147,9 @@ after all three are restored for 40 gold and 300 score. Her quest does not requi
 the Lich or clearing every floor. Accepting it starts a fresh expedition so
 the objectives can appear even if the dungeon was visited earlier.
 
-Cain's Scroll of Return to Town teaches a zero-MP spell. Casting it in the
-dungeon places a portal in town that returns to the exact floor and tile where
-it was cast, allowing a resupply trip without replaying the route.
+Cain's Scroll of Return to Town teaches a zero-MP, one-way escape to the last
+town visited. It leaves no return portal; re-enter through the normal dungeon
+entrance. See [Return to Town](spells.md#return-to-town).
 
 Save version 85 merges the old eight floors into five, retaining the Lich
 chamber on floor 5 and preserving seal completion, character progress, active

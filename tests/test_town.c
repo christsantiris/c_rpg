@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "approach_checks.h"
 #include "test_utils.h"
 #include "game/coastal_travel.h"
@@ -1286,13 +1287,13 @@ void test_forest(void) {
     ASSERT("return spell works from forest", g.location == LOCATION_TOWN);
     ASSERT("portal remembers forest location",
         g.portal_location == LOCATION_FOREST);
-    ASSERT("forest portal appears beside the forest entrance",
-        g.map.tiles[13][2] == TILE_PORTAL);
+    ASSERT("forest escape leaves no return portal beside its entrance",
+        g.map.tiles[13][2] != TILE_PORTAL);
     Action use_portal = {ACTION_MOVE, 2, 13};
     action_resolve_player(&g, use_portal);
-    ASSERT("town portal returns to forest", g.location == LOCATION_FOREST);
-    ASSERT("forest portal restores exact tile",
-        g.player.x == portal_x && g.player.y == portal_y);
+    ASSERT("walking the former forest portal tile stays in town", g.location == LOCATION_TOWN && !g.portal_active);
+    ASSERT("the escaped forest floor remains archived", g.forest_cache[1].valid && map_is_walkable(&g.forest_cache[1].map, portal_x, portal_y));
+    test_restore_cached_floor(&g);
 
     g.level = FOREST_BOSS_LEVEL;
     g.level_cleared = 0;
@@ -1527,9 +1528,9 @@ void test_harbor_road(void) {
 
     game_enter_coast(&g);
     game_open_town_portal(&g);
-    ASSERT("returning from an expedition keeps the road and Coast portal",
+    ASSERT("returning from an expedition keeps the coastal road without a return portal",
         g.location == LOCATION_TOWN && g.map.tiles[TOWN_HARBOR_Y][TOWN_HARBOR_X] != TILE_WATCHTOWER &&
-        g.map.tiles[TOWN_H - 3][21] == TILE_PORTAL);
+        g.map.tiles[TOWN_H - 3][21] != TILE_PORTAL);
 }
 
 static void test_oakhaven_portal_save(void) {
@@ -1549,21 +1550,18 @@ static void test_oakhaven_portal_save(void) {
         } else {
             game_enter_mountains(&g);
         }
-        int origin_x = g.player.x;
-        int origin_y = g.player.y;
         game_open_town_portal(&g);
         int x = regions[i] == LOCATION_DUNGEON ? TOWN_W - 3 : 21;
         int y = regions[i] == LOCATION_DUNGEON ? 13 : 12;
         int restored = save_game(&g, slot) && load_game(&loaded, slot);
         ASSERT("OakHaven portal and destination survive save/load",
             restored && loaded.location == LOCATION_TOWN &&
-            loaded.map.tiles[y][x] == TILE_PORTAL &&
+            loaded.map.tiles[y][x] != TILE_PORTAL &&
             loaded.portal_location == regions[i]);
         if (restored) {
             action_resolve_player(&loaded, (Action){ACTION_MOVE, x, y});
-            ASSERT("saved OakHaven portal returns to its original region",
-                loaded.location == regions[i] && !loaded.portal_active &&
-                loaded.player.x == origin_x && loaded.player.y == origin_y);
+            ASSERT("saved escapes cannot reopen a return trip", loaded.location == LOCATION_TOWN && !loaded.portal_active);
+            ASSERT("the origin floor remains cached after loading", regions[i] == LOCATION_DUNGEON ? loaded.level_cache[0].valid : loaded.mountain_cache[0].valid);
         }
         remove("saves/savegame_99030.json");
     }
@@ -1694,14 +1692,14 @@ void test_mountains(void) {
     int origin_x = g.player.x;
     int origin_y = g.player.y;
     game_open_town_portal(&g);
-    ASSERT("mountain portal opens beside north Dawnmere entrance",
-        g.location == LOCATION_DAWNMERE && g.portal_active &&
-        g.map.tiles[2][21] == TILE_PORTAL &&
+    ASSERT("mountain escape reaches Dawnmere without a return portal",
+        g.location == LOCATION_DAWNMERE && !g.portal_active &&
+        g.map.tiles[2][21] != TILE_PORTAL &&
         g.player.x == 20 && g.player.y == 1);
     action_resolve_player(&g, (Action){ACTION_MOVE, 21, 2});
-    ASSERT("north portal restores the mountain position and closes",
-        g.location == LOCATION_MOUNTAINS && !g.portal_active &&
-        g.player.x == origin_x && g.player.y == origin_y);
+    ASSERT("walking the former mountain portal tile stays in Dawnmere", g.location == LOCATION_DAWNMERE && !g.portal_active);
+    ASSERT("the escaped mountain floor remains archived", g.mountain_cache[0].valid && map_is_walkable(&g.mountain_cache[0].map, origin_x, origin_y));
+    game_enter_mountains(&g);
 
     for (int level = 1; level <= MOUNTAIN_DEPTH; level++) {
         g.level = level;

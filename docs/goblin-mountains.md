@@ -66,8 +66,8 @@ Marshal Veyra's **Watchfires of Ridgeshire** still spans three regions:
 fire's defenders and press `A` beside it. The mountain fire occupies an ordinary
 clearing before the King's fortress; killing the regional bosses is optional.
 
-Return to Town and its portal retain the expedition's entrance town, even when
-another mountain expedition starts from the opposite town.
+Return to Town is a one-way escape to the last town visited, independently of
+the mountain entrance used. It leaves no return portal.
 
 ## Save Compatibility
 

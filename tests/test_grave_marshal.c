@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "approach_checks.h"
 #include "../src/game/grave_marshal.h"
@@ -163,6 +164,7 @@ static int make_legacy_save(void) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 129);
+    test_mark_legacy_portal(root);
     cJSON_DeleteItemFromObject(root, "grave_marshal_reward_state");
     cJSON *arrays[2] = {cJSON_GetObjectItem(root, "enemies"),
         cJSON_GetObjectItem(cJSON_GetArrayItem(cJSON_GetObjectItem(root, "catacombs_cache"), CATACOMBS_DEPTH - 1), "enemies")};
@@ -448,16 +450,17 @@ static void test_persistence(void) {
     e->attack_target_x = game.player.x;
     e->attack_target_y = game.player.y;
     cache->enemies[0] = *e;
+    Enemy escaped_channel = game.enemies[0];
     game_open_town_portal(&game);
-    game_use_town_portal(&game);
-    ASSERT("portal wards cancel a threatening new channel on landing without changing health, wave or cold flame", game.location == LOCATION_CATACOMBS && game.enemies[0].attack_target_x == -1 && game.enemies[0].move_timer == -1 && game.enemies[0].hp == 101 && game.enemies[0].boss_wave_used == 1 && game.player.hp == 1000);
+    test_restore_cached_floor(&game);
+    ASSERT("escaping retains the archived channel warning, health and finite wave", game.location == LOCATION_CATACOMBS && game.enemies[0].attack_target_x == escaped_channel.attack_target_x && game.enemies[0].move_timer == escaped_channel.move_timer && game.enemies[0].hp == 101 && game.enemies[0].boss_wave_used == 1 && game.player.hp == 1000);
     e = setup();
     e->hp = 140;
     action_resolve_enemies(&game);
     x = e->attack_target_x;
     y = e->attack_target_y;
     game_open_town_portal(&game);
-    game_use_town_portal(&game);
+    test_restore_cached_floor(&game);
     ASSERT("non-damaging honor guard warnings survive portal travel without rearming a second wave", game.enemies[0].boss_attack == MARSHAL_GUARDS && game.enemies[0].move_timer == 2 && game.enemies[0].attack_target_x == x && game.enemies[0].boss_wave_used == 1);
 
     e = setup();

@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/catacombs.h"
 #include "screens/quest_journal.h"
@@ -163,7 +164,7 @@ static void test_quest(void) {
         quest_journal_get_entry(&loaded, QUEST_TAB_ACTIVE, 0, &entry) && entry.objective_complete[0] && entry.objective_complete[1] &&
         entry.objective_complete[2] && entry.objective_complete[3]);
     game_open_town_portal(&game);
-    ASSERT("Catacombs return spell leads to the last town visited with a working portal", game.location == LOCATION_TOWN4 && game.portal_active);
+    ASSERT("Catacombs return spell leads to the last town visited with a working portal", game.location == LOCATION_TOWN4 && !game.portal_active);
     approach_oswin();
     int gold = game.gold;
     int score = game.score;
@@ -175,8 +176,8 @@ static void test_quest(void) {
         entry.objective_count == 4 && entry.objective_complete[3] && !quest_journal_count(&game, QUEST_TAB_ACTIVE));
     ASSERT("completed quest persists through save/load", save_game(&game, OSWIN_SLOT) && load_game(&loaded, OSWIN_SLOT) &&
         loaded.catacombs_quest_state == 3 && loaded.catacombs_quest_progress == 15 && loaded.gold == game.gold && loaded.score == game.score);
-    game_use_town_portal(&game);
-    ASSERT("portal revisit does not recreate the collected ledger", game.location == LOCATION_CATACOMBS && game.level == 5 &&
+    test_restore_cached_floor(&game);
+    ASSERT("archived encounter reload does not recreate the collected ledger", game.location == LOCATION_CATACOMBS && game.level == 5 &&
         game.map.tiles[game.player.y][game.player.x - 1] == TILE_CATACOMBS_SARCOPHAGUS);
     game_init(&game);
     ASSERT("new game resets the quest and its encounters", !game.catacombs_quest_state && !game.catacombs_quest_progress &&
@@ -202,9 +203,9 @@ static void test_previous_exploration(void) {
     game_talk_to_oswin(&game);
     game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
     ASSERT("accepting after exploration credits all cold memorials and preserves portal, traps, and enemies", game.catacombs_quest_state == 1 &&
-        game.catacombs_quest_progress == 7 && !game.catacombs_quest_encounters && game.portal_active && game.catacombs_cache[4].valid &&
+        game.catacombs_quest_progress == 7 && !game.catacombs_quest_encounters && !game.portal_active && game.catacombs_cache[4].valid &&
         game.catacombs_cache[4].enemies[0].hp == 9 && game.catacombs_cache[4].map.burial_traps[0].spent);
-    game_use_town_portal(&game);
+    test_restore_cached_floor(&game);
     approach_ledger();
     action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
     ASSERT("a previous Marshal victory makes the ledger recoverable without a second boss", game.catacombs_quest_state == 2 &&
@@ -244,7 +245,7 @@ static void test_previous_exploration(void) {
     approach_oswin();
     game_talk_to_oswin(&game);
     game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
-    game_use_town_portal(&game);
+    test_restore_cached_floor(&game);
     ASSERT("adding guards to an explored chamber preserves corpses with pending resurrection", game.enemy_count == count + 2 &&
         game.enemies[0].hp == 0 && !game.enemies[0].active && game.enemies[0].revive_timer == 2 && guards(&game, 1) == 2);
 }
@@ -274,6 +275,7 @@ static int write_legacy_fixture(void) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 96);
+    test_mark_legacy_portal(root);
     cJSON_DeleteItemFromObject(root, "catacombs_quest_state");
     cJSON_DeleteItemFromObject(root, "catacombs_quest_progress");
     cJSON_DeleteItemFromObject(root, "catacombs_quest_encounters");
@@ -315,7 +317,7 @@ static void test_migration(void) {
     ASSERT("version 96 Hall fixture migrates without assigning the new quest", write_legacy_fixture() && load_game(&loaded, OSWIN_SLOT) &&
         !loaded.catacombs_quest_state && !loaded.catacombs_quest_progress && !loaded.catacombs_quest_encounters);
     ASSERT("migration preserves other quests, money, portal, boss victories, and catacomb progress", loaded.mara_quest_state == 1 &&
-        loaded.mara_beacons_lit == 5 && loaded.gold == 617 && loaded.portal_active && (loaded.defeated_bosses & (1 << LOCATION_CATACOMBS)) &&
+        loaded.mara_beacons_lit == 5 && loaded.gold == 617 && !loaded.portal_active && (loaded.defeated_bosses & (1 << LOCATION_CATACOMBS)) &&
         loaded.catacombs_cache[1].valid && loaded.catacombs_cache[1].enemies[0].hp == 9 &&
         memorial_tile(&loaded.catacombs_cache[1].map) == TILE_OSSUARY_COLD);
     ASSERT("legacy Hall gains Oswin and safely moves overlapping player and loot beside him", loaded.map.tiles[HALL_OSWIN_Y][HALL_OSWIN_X] == TILE_NPC_OSWIN &&

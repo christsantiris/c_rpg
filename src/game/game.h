@@ -402,7 +402,7 @@ typedef struct {
     int goblin_king_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
     int necromancer_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
     int lich_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
-    int portal_active;
+    int portal_active; // Retired return anchor; migration clears this flag.
     int portal_level;
     Location portal_location;
     int portal_x, portal_y;
@@ -580,7 +580,7 @@ void game_update_level_progress(GameState *g);
 void game_return_to_town(GameState *g);
 void game_return_to_approach(GameState *g);
 void game_open_town_portal(GameState *g);
-void game_use_town_portal(GameState *g);
+void game_close_town_portal(GameState *g);
 void game_hide_portal_destination(GameState *g);
 void game_talk_to_elowen(GameState *g);
 void game_talk_to_dain(GameState *g);

@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "../src/game/town_life.h"
 #include "../src/game/actions.h"
@@ -97,6 +98,7 @@ static int downgrade_town_save(void) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), game.location == LOCATION_DAWNMERE ? 192 : 110);
+    test_mark_legacy_portal(root);
     text = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);
     if (!text) {
@@ -175,7 +177,7 @@ void test_town_life(void) {
             (loaded.defeated_bosses & game.defeated_bosses) == game.defeated_bosses);
         if (towns[i] == LOCATION_DAWNMERE) {
             ASSERT("the merchant returns to Dawnmere with the marsh return portal intact", loaded.last_town_visited == LOCATION_DAWNMERE &&
-                loaded.portal_active && loaded.portal_location == LOCATION_MANGROVES && loaded.map.tiles[TOWN_H - 3][21] == TILE_PORTAL);
+                !loaded.portal_active && loaded.portal_location == LOCATION_MANGROVES && loaded.map.tiles[TOWN_H - 3][21] != TILE_PORTAL);
         }
 
         start_town(towns[i]);
@@ -232,7 +234,7 @@ void test_town_life(void) {
     map_mark_explored(&game.map, 9, 11);
     ASSERT("version 192 restores the merchant door without moving the road player or portal", save_game(&game, TOWN_LIFE_SLOT) &&
         downgrade_town_save() && load_game(&loaded, TOWN_LIFE_SLOT) && loaded.player.x == 9 && loaded.player.y == 12 &&
-        loaded.map.tiles[10][9] == TILE_LOCAL_DOOR && loaded.map.tiles[13][2] == TILE_PORTAL && loaded.portal_active &&
+        loaded.map.tiles[10][9] == TILE_LOCAL_DOOR && loaded.map.tiles[13][2] != TILE_PORTAL && !loaded.portal_active &&
         loaded.gold == 123 && loaded.elowen_quest_state == 1 && map_is_explored(&loaded.map, 9, 11));
     ASSERT("merchant migration repairs loot's path underlay without paving neighboring grass", loaded.map.tiles[11][9] == TILE_ITEM &&
         loaded.floor_items[0].underlying_tile == TILE_TOWN_PATH && loaded.floor_items[1].underlying_tile == TILE_TOWN_FLOOR);

@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "game/giants_crown.h"
 #include "approach_checks.h"
 #include "systems/save_load.h"
@@ -50,6 +51,7 @@ static int legacy_approach_save(int slot, int version) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), version);
+    test_mark_legacy_portal(root);
     if (version < 176) {
         cJSON_DeleteItemFromObject(root, "labyrinth_entry_town");
     }
@@ -307,7 +309,7 @@ void test_approaches(void) {
             Map visited = g->map;
             *loaded = *g;
             game_open_town_portal(loaded);
-            ASSERT("Return to Town still bypasses the walking path and preserves its portal", loaded->location == loaded->last_town_visited && loaded->portal_active);
+            ASSERT("Return to Town escapes without walking or leaving a return portal", loaded->location == loaded->last_town_visited && !loaded->portal_active);
             retreat_from_area(g, route, reverse);
             int south = route->area == LOCATION_DUNGEON || route->area == LOCATION_MOUNTAINS || route->area == LOCATION_FOREST || route->area == LOCATION_SWAMP || approach_entrance_rows(route->area);
             int return_dx = south ? 0 : -dx;
@@ -540,9 +542,11 @@ void test_approaches(void) {
         g->map.tiles[old_y][old_x] = TILE_ITEM;
         g->map.tiles[y][x] = TILE_ITEM;
         int migrated = save_game(g, slot) && legacy_approach_save(slot, 162) && load_game(loaded, slot);
-        ASSERT("legacy Ridgeshire portals move to their new gate while preserving loot at both positions", migrated && loaded->location == LOCATION_TOWN4 && loaded->portal_active && loaded->portal_location == route->area && loaded->map.tiles[y][x] == TILE_PORTAL && loaded->map.tiles[old_y][old_x] == TILE_ITEM && loaded->floor_items[0].active && loaded->floor_items[0].underlying_tile == TILE_TOWN_FLOOR && loaded->floor_items[1].active && loaded->floor_items[1].underlying_tile == TILE_PORTAL);
+        ASSERT("legacy Ridgeshire portals retire while preserving loot at both former positions", migrated && loaded->location == LOCATION_TOWN4 && !loaded->portal_active && loaded->portal_location == route->area && loaded->map.tiles[y][x] != TILE_PORTAL && loaded->map.tiles[old_y][old_x] == TILE_ITEM && loaded->floor_items[0].active && loaded->floor_items[0].underlying_tile == TILE_TOWN_FLOOR && loaded->floor_items[1].active && loaded->floor_items[1].underlying_tile != TILE_PORTAL);
         action_resolve_player(loaded, (Action){ACTION_MOVE, x, y});
-        ASSERT("a migrated portal resumes its original expedition and wounded enemies", loaded->location == route->area && loaded->level == 1 && loaded->player.x == g->portal_x && loaded->player.y == g->portal_y && loaded->enemies[0].hp == 7);
+        ASSERT("walking a migrated portal tile stays in Ridgeshire", loaded->location == LOCATION_TOWN4 && !loaded->portal_active);
+        test_restore_cached_floor(loaded);
+        ASSERT("the archived expedition retains its wounded enemies after migration", loaded->location == route->area && loaded->level == 1 && loaded->player.x == g->portal_x && loaded->player.y == g->portal_y && loaded->enemies[0].hp == 7);
     }
     const TownApproach *dungeon_route = &town_approaches[1];
     approach_town(g, dungeon_route);
@@ -602,12 +606,12 @@ void test_approaches(void) {
         ASSERT("entering the dungeon from either side always begins at stage one", g->location == LOCATION_DUNGEON && g->level == 1 && g->dungeon_entry_town == route->town && g->map.room_count >= 6);
         int hp = g->player.hp;
         game_open_town_portal(g);
-        ASSERT("dungeon portals return to their entrance town", g->location == route->town && g->dungeon_portal_town == route->town && g->portal_active && g->player.hp == hp);
-        ASSERT("the matching town renders a portal beside its dungeon gate", g->map.tiles[13][origin ? 2 : TOWN_W - 3] == TILE_PORTAL);
+        ASSERT("dungeon portals return to their entrance town", g->location == route->town && g->dungeon_portal_town == route->town && !g->portal_active && g->player.hp == hp);
+        ASSERT("the matching town renders a portal beside its dungeon gate", g->map.tiles[13][origin ? 2 : TOWN_W - 3] != TILE_PORTAL);
         int saved = save_game(g, slot) && load_game(loaded, slot);
         ASSERT("dungeon entrance and portal towns survive save/load", saved && loaded->dungeon_entry_town == route->town && loaded->dungeon_portal_town == route->town);
         if (saved) {
-            game_use_town_portal(loaded);
+            test_restore_cached_floor(loaded);
             ASSERT("using a restored portal preserves forward dungeon progression and entrance side", loaded->location == LOCATION_DUNGEON && loaded->level == 1 && loaded->dungeon_entry_town == route->town && !loaded->portal_active);
             retreat_from_area(loaded, route, 0);
             walk_return_approach(loaded);

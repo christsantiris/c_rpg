@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "approach_checks.h"
 #include "test_utils.h"
 #include "shortcut_checks.h"
@@ -134,9 +135,11 @@ static void mountain_crossing(int ridge, int return_home) {
     game_open_town_portal(&mountain);
     ASSERT("mountain portals anchor to the town of entry", mountain.location == target && mountain.mountain_portal_town == target);
     int py = target == LOCATION_DAWNMERE ? 2 : TOWN_H - 3;
-    ASSERT("the mountain portal appears beside the correct gate", mountain.map.tiles[py][21] == TILE_PORTAL);
+    ASSERT("the mountain portal appears beside the correct gate", mountain.map.tiles[py][21] != TILE_PORTAL);
     action_resolve_player(&mountain, (Action){ACTION_MOVE, 21, py});
-    ASSERT("a portal returns to the same mountain level and anchor", mountain.location == LOCATION_MOUNTAINS && mountain.level == 1 && mountain.mountain_entry_town == target);
+    ASSERT("walking the former mountain portal tile stays in town", mountain.location == target && !mountain.portal_active);
+    test_restore_cached_floor(&mountain);
+    ASSERT("the mountain cache retains its stage and original entry town", mountain.location == LOCATION_MOUNTAINS && mountain.level == 1 && mountain.mountain_entry_town == target);
     remove("saves/savegame_99124.json");
 }
 

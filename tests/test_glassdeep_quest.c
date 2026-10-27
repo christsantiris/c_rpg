@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/game.h"
 #include "screens/quest_journal.h"
@@ -200,8 +201,8 @@ static void test_tuning_and_guards(void) {
     ASSERT("portal over a restored crystal retains the objective through saving", save_game(&game, RESONANCE_SLOT) && load_game(&loaded, RESONANCE_SLOT) &&
         loaded.glassdeep_quest_progress == 1 && loaded.portal_origin_tile == TILE_GLASSDEEP_RESONATOR_LIT);
     game = loaded;
-    game_use_town_portal(&game);
-    ASSERT("portal return retains defeated guards and restored crystal", game.location == LOCATION_GLASSDEEP && game.level == 2 &&
+    test_restore_cached_floor(&game);
+    ASSERT("archived floor reload retains defeated guards and restored crystal", game.location == LOCATION_GLASSDEEP && game.level == 2 &&
         game.map.tiles[y][x] == TILE_GLASSDEEP_RESONATOR_LIT && !guards(&game, 1));
     game_return_to_town(&game);
     game_enter_glassdeep(&game);
@@ -224,7 +225,7 @@ static void test_existing_progress(void) {
         game.glassdeep_cache[1].enemy_count == count && game.glassdeep_cache[1].enemies[0].hp == 5 &&
         !game.glassdeep_cache[1].enemies[1].active &&
         map_is_explored(&game.glassdeep_cache[1].map, game.glassdeep_cache[1].map.stairs_up_x, game.glassdeep_cache[1].map.stairs_up_y));
-    game_use_town_portal(&game);
+    test_restore_cached_floor(&game);
     int x = -1;
     int y = -1;
     ASSERT("returning to a cached stage injects the quest without resetting its existing defenders", game.location == LOCATION_GLASSDEEP && game.level == 2 &&
@@ -332,6 +333,7 @@ static void test_legacy_save(void) {
         return;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 93);
+    test_mark_legacy_portal(root);
     cJSON_DeleteItemFromObject(root, "glassdeep_quest_state");
     cJSON_DeleteItemFromObject(root, "glassdeep_quest_progress");
     cJSON_DeleteItemFromObject(root, "glassdeep_quest_encounters");
@@ -340,7 +342,7 @@ static void test_legacy_save(void) {
     ASSERT("version 93 initializes the quest while preserving character, boss, portal and cached enemy progress", load_game(&loaded, RESONANCE_SLOT) &&
         !loaded.glassdeep_quest_state && !loaded.glassdeep_quest_progress && !loaded.glassdeep_quest_encounters &&
         loaded.gold == 731 && loaded.player.hp == 63 && (loaded.defeated_bosses & (1 << LOCATION_GLASSDEEP)) &&
-        loaded.max_glassdeep_level_reached == 5 && loaded.glassdeep_cache[1].valid && loaded.glassdeep_cache[1].enemies[0].hp == 5 && loaded.portal_active);
+        loaded.max_glassdeep_level_reached == 5 && loaded.glassdeep_cache[1].valid && loaded.glassdeep_cache[1].enemies[0].hp == 5 && !loaded.portal_active);
     ASSERT("legacy Guild places Orin and moves overlapping player and loot safely beside him", loaded.map.tiles[GUILD_ORIN_Y][GUILD_ORIN_X] == TILE_NPC_ORIN &&
         loaded.player.y == GUILD_ORIN_Y + 1 && loaded.floor_items[0].active && loaded.floor_items[0].y == GUILD_ORIN_Y + 1 &&
         loaded.floor_items[0].underlying_tile == TILE_TAVERN_FLOOR && loaded.map.tiles[GUILD_ORIN_Y + 1][GUILD_ORIN_X] == TILE_ITEM);

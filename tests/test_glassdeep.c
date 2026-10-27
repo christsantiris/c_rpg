@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "approach_checks.h"
 #include "test_utils.h"
 #include "game/game.h"
@@ -131,11 +132,13 @@ static void test_travel_and_saves(void) {
     game.floor_items[0] = (FloorItem){.active = 1, .x = x, .y = y, .underlying_tile = TILE_GLASSDEEP_RUIN, .item = item_make_health_potion()};
     game.floor_item_count = 1;
     game_open_town_portal(&game);
-    ASSERT("Return to Town places a crystal portal beside Stillbury's south gate", game.location == LOCATION_TOWN2 && game.portal_location == LOCATION_GLASSDEEP && game.map.tiles[TOWN_H - 3][SOUTH_AREA_GATE_X + 1] == TILE_PORTAL && game.portal_origin_tile == TILE_GLASSDEEP_RUIN);
+    ASSERT("Return to Town places a crystal portal beside Stillbury's south gate", game.location == LOCATION_TOWN2 && game.portal_location == LOCATION_GLASSDEEP && game.map.tiles[TOWN_H - 3][SOUTH_AREA_GATE_X + 1] != TILE_PORTAL && game.portal_origin_tile == TILE_GLASSDEEP_RUIN);
     game.player.x = SOUTH_AREA_GATE_X + 1;
     game.player.y = TOWN_H - 4;
     action_resolve_player(&game, (Action){ACTION_MOVE, game.player.x, TOWN_H - 3});
-    ASSERT("stepping onto Stillbury's portal resumes the original Glassdeep stage and position", game.location == LOCATION_GLASSDEEP && game.level == 3 && game.player.x == x && game.player.y == y);
+    ASSERT("walking the former quarry portal tile stays in Stillbury", game.location == LOCATION_TOWN2 && !game.portal_active);
+    test_restore_cached_floor(&game);
+    ASSERT("the archived quarry stage retains its original position", game.location == LOCATION_GLASSDEEP && game.level == 3 && game.player.x == x && game.player.y == y);
     if (game.location != LOCATION_GLASSDEEP) {
         remove("saves/savegame_99132.json");
         return;
@@ -148,7 +151,9 @@ static void test_travel_and_saves(void) {
         game.player.y = TOWN_H - 4;
         action_resolve_player(&game, (Action){ACTION_MOVE, game.player.x, TOWN_H - 3});
     }
-    ASSERT("stepping onto a saved return portal restores the crystal stage and underlying paving", saved && game.location == LOCATION_GLASSDEEP && game.level == 3 && game.player.x == x && game.player.y == y && game.map.tiles[y][x] == TILE_GLASSDEEP_RUIN);
+    ASSERT("loading an escaped quarry creates no return trip", game.location == LOCATION_TOWN2 && !game.portal_active);
+    test_restore_cached_floor(&game);
+    ASSERT("the saved quarry cache retains its stage and paving", saved && game.location == LOCATION_GLASSDEEP && game.level == 3 && game.player.x == x && game.player.y == y && game.map.tiles[y][x] == TILE_GLASSDEEP_RUIN);
     if (game.location != LOCATION_GLASSDEEP) {
         remove("saves/savegame_99132.json");
         return;
@@ -161,7 +166,7 @@ static void test_travel_and_saves(void) {
     game.portal_level = GLASSDEEP_DEPTH + 1;
     game.portal_location = LOCATION_GLASSDEEP;
     game.location = LOCATION_TOWN2;
-    game_use_town_portal(&game);
+    test_restore_cached_floor(&game);
     ASSERT("out-of-range crystal portals cannot index past the cache", game.location == LOCATION_TOWN2);
     remove("saves/savegame_99132.json");
 }
@@ -245,6 +250,7 @@ static void test_migration(void) {
     cJSON_DeleteItemFromObject(root, "glassdeep_cache");
     cJSON_DeleteItemFromObject(root, "max_glassdeep_level_reached");
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 81);
+    test_mark_legacy_portal(root);
     buffer = cJSON_PrintUnformatted(root);
     file = fopen("saves/savegame_99132.json", "wb");
     fputs(buffer, file);

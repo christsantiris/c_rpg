@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/regional_terrain.h"
 #include "systems/save_load.h"
@@ -342,6 +343,7 @@ static int rewrite_version(int slot, int version) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), version);
+    test_mark_legacy_portal(root);
     data = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);
     file = fopen(path, "wb");

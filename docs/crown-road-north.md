@@ -45,10 +45,8 @@ configured Interact key (`A` by default). A cache grants 25 gold and up to
 20 HP once; its empty state persists.
 
 Physical re-entry replenishes ordinary patrols. Exploration, claimed supplies,
-and dropped equipment remain. Respawning patrols avoid dropped gear and live
-return-portal anchors. Return to Town visits the last town entered; using its
-portal resumes the same battle, position, wounds, deaths, squad alarms and
-pending warnings, then closes that portal.
+and dropped equipment remain. Respawning patrols avoid dropped gear. Return
+to Town is a one-way escape to the last town entered, with no return portal.
 
 Save version **202** stores the road map, patrols, supplies, floor loot and
 entry side. Older saves gain the route without resetting regional victories,

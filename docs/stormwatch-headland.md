@@ -17,7 +17,7 @@ Every stage has a walking loop and two optional supply branches. Gate markers
 sit on the northern and southern map boundaries. Walking onto them advances or
 retreats; stairs keys also work while standing on the threshold. Fresh physical
 entry always starts at stage one and repopulates the expedition. Backtracking
-and returning through a town portal retain defeated enemies and dropped loot.
+and loading retain defeated enemies and dropped loot.
 
 ## Wind and shutters
 
@@ -77,8 +77,8 @@ states, loot underlays, searched supplies, shutter positions, wind clocks,
 declared warning masks, the elapsed fraction of the current second, next
 directions, brace state and boss victory. Version 198 saves preserve their maps
 and warnings and receive a full second before their next wind phase.
-Return to Town goes to the last town actually visited; its portal restores the
-original Stormwatch expedition. Existing saves gain Dawnmere's eastern road
+Return to Town is a one-way escape to the last town actually visited and leaves
+no return portal. Existing saves gain Dawnmere's eastern road
 without resetting gear, quests, portals or other regions.
 
 `--unlock-shortcuts` opens the final departure without killing the boss or

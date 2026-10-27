@@ -36,6 +36,7 @@ void test_dungeon_return_stairs_migration(void);
 void test_enemy_movement_collision(void);
 void test_new_dungeon_enemies(void);
 void test_return_to_town_spell(void);
+void test_town_escapes(void);
 void test_town_tiles(void);
 void test_town_healer(void);
 void test_king_roads_and_castle(void);
@@ -163,6 +164,7 @@ int main(void) {
     test_new_dungeon_enemies();
     printf("\n");
     test_return_to_town_spell();
+    test_town_escapes();
     printf("\n");
     test_town_tiles();
     test_town_healer();

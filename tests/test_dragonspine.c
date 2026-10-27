@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "approach_checks.h"
 #include "test_utils.h"
 #include "../src/game/game.h"
@@ -204,21 +205,21 @@ void test_dragonspine(void) {
     game_descend(&g);
     int saved_level = g.level;
     game_open_town_portal(&g);
-    ASSERT("Dragonspine portal returns beside Ridgeshire north gate",
-        g.location == LOCATION_TOWN4 && g.portal_active &&
-        g.map.tiles[RIDGESHIRE_DRAGON_PORTAL_Y][RIDGESHIRE_DRAGON_PORTAL_X] == TILE_PORTAL);
+    ASSERT("Dragonspine archived floor reloads beside Ridgeshire north gate",
+        g.location == LOCATION_TOWN4 && !g.portal_active &&
+        g.map.tiles[RIDGESHIRE_DRAGON_PORTAL_Y][RIDGESHIRE_DRAGON_PORTAL_X] != TILE_PORTAL);
     g.player.x = 20;
     g.player.y = TOWN_H - 2;
     action_resolve_player(&g, (Action){ACTION_MOVE, 20, TOWN_H - 1});
     walk_mountain_road(&g);
     ASSERT("visiting OakHaven preserves the Dragonspine portal destination",
-        g.location == LOCATION_DAWNMERE && g.portal_active &&
+        g.location == LOCATION_DAWNMERE && !g.portal_active &&
         !g.level_cache[saved_level - 1].valid &&
         g.dragonspine_cache[saved_level - 1].valid);
     saved = save_game(&g, DRAGONSPINE_TEST_SLOT);
     restored = saved && load_game(&loaded, DRAGONSPINE_TEST_SLOT);
     ASSERT("OakHaven saves keep the unlocked shortcut and remote portal",
-        restored && loaded.location == LOCATION_DAWNMERE && loaded.portal_active &&
+        restored && loaded.location == LOCATION_DAWNMERE && !loaded.portal_active &&
         loaded.map.tiles[0][20] == TILE_TOWN_EXIT && loaded.map.tiles[0][TOWN4_ROAD_X] == TILE_WALL);
     if (restored) {
         g = loaded;
@@ -226,19 +227,19 @@ void test_dragonspine(void) {
     action_resolve_player(&g, (Action){ACTION_MOVE, 20, 0});
     walk_mountain_road(&g);
     ASSERT("returning to Ridgeshire restores the Dragonspine portal beside its gate",
-        g.location == LOCATION_TOWN4 && g.portal_active &&
-        g.map.tiles[RIDGESHIRE_DRAGON_PORTAL_Y][RIDGESHIRE_DRAGON_PORTAL_X] == TILE_PORTAL);
+        g.location == LOCATION_TOWN4 && !g.portal_active &&
+        g.map.tiles[RIDGESHIRE_DRAGON_PORTAL_Y][RIDGESHIRE_DRAGON_PORTAL_X] != TILE_PORTAL);
     saved = save_game(&g, DRAGONSPINE_TEST_SLOT);
     restored = saved && load_game(&loaded, DRAGONSPINE_TEST_SLOT);
-    ASSERT("Dragonspine expedition and portal survive save/load",
-        restored && loaded.location == LOCATION_TOWN4 && loaded.portal_active &&
+    ASSERT("Dragonspine expedition and escape records survive save/load",
+        restored && loaded.location == LOCATION_TOWN4 && !loaded.portal_active &&
         loaded.portal_location == LOCATION_DRAGONSPINE &&
         loaded.map.tiles[0][RIDGESHIRE_DRAGON_GATE_X] == TILE_TOWN_EXIT &&
         loaded.max_dragonspine_level_reached == DRAGONSPINE_DEPTH &&
         loaded.dragonspine_cache[saved_level - 1].valid);
     if (restored) {
-        game_use_town_portal(&loaded);
-        ASSERT("portal resumes the saved Dragonspine stage",
+        test_restore_cached_floor(&loaded);
+        ASSERT("archived floor fixture resumes the saved Dragonspine stage",
             loaded.location == LOCATION_DRAGONSPINE && loaded.level == saved_level);
     }
     remove("saves/savegame_9984.json");

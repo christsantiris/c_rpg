@@ -62,15 +62,13 @@ NPC and quest locations while retaining their forest maps, cut paths, wounds,
 loot, exploration, portals, and earned victories. Cached quest stages gain their
 sites when next entered. See the [quest reference](../quests.md).
 
-## Return portals and saves
+## Escaping and saves
 
 Return to Town transports the player to the **last town actually entered**,
 including when that town is outside the current region. Walking around a town
-sprite does not change this destination. The portal resumes the same expedition,
-floor, position and physical entrance direction. A portal in an unrelated town
-stands in its central plaza; familiar regional portal positions remain in use
-when returning to the usual town. Castle Grounds does not count as one of the
-five towns.
+sprite does not change this destination. This is a one-way escape with no return
+portal. Enter the forest again through its normal entrance. Castle Grounds does
+not count as one of the five towns.
 
 Save version 182 stores Elderwood's compact five-stage caches, boss victory,
 maximum stage, physical entry towns, last town visited and return portal town.

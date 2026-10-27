@@ -77,10 +77,10 @@ Backtracking retains wounded enemies, loot, lamp repairs, rail repairs, cart
 position, switch direction, and searched caches. A fresh physical expedition
 restores ordinary enemies on previously visited stages while retaining explored
 terrain and completed infrastructure. Each cart returns to its western landing,
-so abandoning a portal cannot strand it across water. A living boss regains its
+so escaping cannot strand it across water. A living boss regains its
 three ore loads for the new attempt. Boss victory and claimed side caches stay
-recorded. Return to Town uses the last town actually visited; its portal resumes
-the exact mine stage, position, passenger state, and encounter.
+recorded. Return to Town is a one-way escape to the last town actually visited
+and leaves no return portal.
 
 Save version **200** serializes all five compact stage caches, actors, floor
 loot, explored terrain, cart and junction state, finite ore loads, pending ore

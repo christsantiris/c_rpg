@@ -1878,10 +1878,6 @@ void action_resolve_player(GameState *g, Action a) {
                 push_message(g, "Already in town!");
                 return;
             }
-            if (g->location == LOCATION_ISLAND) {
-                game_leave_island(g);
-                return;
-            }
             game_open_town_portal(g);
             return;
         }
@@ -2407,14 +2403,6 @@ void action_resolve_player(GameState *g, Action a) {
             game_enter_guild(g);
             return;
         }
-        if ((g->location == LOCATION_TOWN || g->location == LOCATION_TOWN2 ||
-            g->location == LOCATION_TOWN3 || g->location == LOCATION_TOWN4 ||
-            g->location == LOCATION_DAWNMERE || g->location == LOCATION_CASTLE) &&
-            g->map.tiles[ty][tx] == TILE_PORTAL && g->portal_active) {
-            game_use_town_portal(g);
-            return;
-        }
-
         if ((g->location == LOCATION_TOWN || g->location == LOCATION_TOWN2) &&
             g->map.tiles[ty][tx] == TILE_TAVERN_DOOR) {
             if (g->location == LOCATION_TOWN) {

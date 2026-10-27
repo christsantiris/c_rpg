@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "../src/game/sun_guardian.h"
 #include "../src/systems/save_load.h"
@@ -152,6 +153,7 @@ static int legacy_save(int version) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), version);
+    test_mark_legacy_portal(root);
     if (version < 135) {
         cJSON_DeleteItemFromObject(root, "sun_guardian_reward_state");
     }
@@ -634,7 +636,7 @@ void test_sun_guardian(void) {
     int pending_trip = save_game(&game, 99197) && load_game(&loaded, 99197);
     if (pending_trip) {
         game = loaded;
-        game_use_town_portal(&game);
+        test_restore_cached_floor(&game);
     }
     game_ascend(&game);
     game_descend(&game);
@@ -647,7 +649,7 @@ void test_sun_guardian(void) {
     action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
     game.inventory_count--;
     game_open_town_portal(&game);
-    game_use_town_portal(&game);
+    test_restore_cached_floor(&game);
     ASSERT("selling a claimed mantle and revisiting the summit cannot manufacture a replacement",
         game.sun_guardian_reward_state == 2 && !find_cache(&cache_x, &cache_y));
 
@@ -687,14 +689,14 @@ void test_sun_guardian(void) {
     int old_boss_hp = e->hp;
     int old_alignment = game.temple_alignment;
     game_open_town_portal(&game);
-    ASSERT("temple portal caches the exact warning", game.portal_active && game.portal_location == LOCATION_TEMPLE &&
+    ASSERT("temple portal caches the exact warning", !game.portal_active && game.portal_location == LOCATION_TEMPLE &&
         game.temple_cache[4].enemies[0].move_timer == 2);
-    game_use_town_portal(&game);
-    ASSERT("portal landing wards a threatening signature without healing the Guardian or changing alignment",
-        game.location == LOCATION_TEMPLE && game.enemies[0].move_timer == -1 &&
+    test_restore_cached_floor(&game);
+    ASSERT("escaping preserves the archived signature, Guardian health and alignment",
+        game.location == LOCATION_TEMPLE && game.enemies[0].move_timer == 2 &&
         game.enemies[0].hp == old_boss_hp && game.temple_alignment == old_alignment);
-    ASSERT("recovery and sanctuary map survive save/load", save_game(&game, 99197) && load_game(&loaded, 99197) &&
-        loaded.enemies[0].move_timer == -1 && loaded.map.tiles[8][29] == TILE_GUARDIAN_MOON_SANCTUARY);
+    ASSERT("archived warning and sanctuary map survive save/load", save_game(&game, 99197) && load_game(&loaded, 99197) &&
+        loaded.enemies[0].move_timer == 2 && loaded.map.tiles[8][29] == TILE_GUARDIAN_MOON_SANCTUARY);
 
     e = setup();
     e->hp -= 30;

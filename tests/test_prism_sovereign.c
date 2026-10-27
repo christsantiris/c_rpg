@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "../src/game/prism_sovereign.h"
 #include "../src/systems/save_load.h"
@@ -121,6 +122,7 @@ static int make_legacy_save(void) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 133);
+    test_mark_legacy_portal(root);
     cJSON_DeleteItemFromObject(root, "prism_sovereign_reward_pending");
     cJSON *arrays[2] = {cJSON_GetObjectItem(root, "enemies"),
         cJSON_GetObjectItem(cJSON_GetArrayItem(cJSON_GetObjectItem(root, "glassdeep_cache"), GLASSDEEP_DEPTH - 1), "enemies")};
@@ -214,7 +216,7 @@ static void test_rewards(void) {
     ASSERT("the original special Strength Potion still grants one permanent base attack", game.player.attack == attack + 1);
     game.inventory_count = 0;
     game_open_town_portal(&game);
-    game_use_town_portal(&game);
+    test_restore_cached_floor(&game);
     ok = save_game(&game, 99195) && load_game(&loaded, 99195);
     ASSERT("consumed, sold or discarded rewards cannot regenerate after travel or saving", ok && !loaded.prism_sovereign_reward_pending && loaded.floor_item_count == 0 && !loaded.enemies[0].active);
 }
@@ -520,13 +522,14 @@ static void test_saves(void) {
     ASSERT("the two-action reflected stagger survives active and cached saves", ok && loaded.enemies[0].move_timer == -2 && loaded.glassdeep_cache[4].enemies[0].move_timer == -2 && loaded.enemies[0].hp == 137);
     e = setup();
     action_resolve_enemies(&game);
+    Enemy escaped_beam = game.enemies[0];
     game_open_town_portal(&game);
     ok = save_game(&game, 99195) && load_game(&loaded, 99195);
     if (ok) {
         game = loaded;
-        game_use_town_portal(&game);
+        test_restore_cached_floor(&game);
     }
-    ASSERT("return portals ward a threatening saved beam without altering boss health", ok && game.location == LOCATION_GLASSDEEP && game.enemies[0].move_timer == -1 && game.enemies[0].attack_target_x == -1 && game.enemies[0].hp == 275 && game.player.hp == 1000);
+    ASSERT("escaping saves the archived beam without altering boss health", ok && game.location == LOCATION_GLASSDEEP && game.enemies[0].move_timer == escaped_beam.move_timer && game.enemies[0].attack_target_x == escaped_beam.attack_target_x && game.enemies[0].hp == 275 && game.player.hp == 1000);
     e = setup();
     game.map.tiles[22][28] = TILE_GLASSDEEP_RUIN;
     e->hp = 1;

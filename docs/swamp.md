@@ -35,10 +35,8 @@ Vampires on later levels. The final level adds the Swamp Demon and its guarantee
 Demonic Sword. A living Demon blocks the final exit but permits retreat to level 4.
 Victory opens the road without creating a shortcut or discovery prompt.
 
-Return to Town remembers the expedition's entrance town. Its portal preserves
-the exact swamp level, casting position, and original town, even after entry
-from the other town. In Stillbury the portal is beside the north gate; in
-Rosemoor it is beside the south gate.
+Return to Town is a one-way escape to the last town actually visited. It leaves
+no return portal. Physical re-entry starts through the normal swamp entrance.
 
 ## Bring Mira Home
 

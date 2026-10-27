@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "approach_checks.h"
 #include "test_utils.h"
 #include "shortcut_checks.h"
@@ -153,9 +154,9 @@ static void test_forest_crossing(int stillbury, int home) {
     forest.enemies[0].hp = 7;
     game_open_town_portal(&forest);
     ASSERT("Return to Town remembers the forest entrance town", forest.location == destination && forest.forest_portal_town == destination);
-    ASSERT("the forest portal survives saving", save_game(&forest, FOREST_TRAVEL_SLOT) && load_game(&restored, FOREST_TRAVEL_SLOT));
-    game_use_town_portal(&restored);
-    ASSERT("the portal restores the level, position and wounded enemy", restored.location == LOCATION_FOREST && restored.level == 2 && restored.player.x == px && restored.player.y == py && restored.enemies[0].hp == 7 && restored.forest_entry_town == destination);
+    ASSERT("the forest escape records survives saving", save_game(&forest, FOREST_TRAVEL_SLOT) && load_game(&restored, FOREST_TRAVEL_SLOT));
+    test_restore_cached_floor(&restored);
+    ASSERT("the archived floor fixture restores the level, position and wounded enemy", restored.location == LOCATION_FOREST && restored.level == 2 && restored.player.x == px && restored.player.y == py && restored.enemies[0].hp == 7 && restored.forest_entry_town == destination);
     remove("saves/savegame_99031.json");
 }
 

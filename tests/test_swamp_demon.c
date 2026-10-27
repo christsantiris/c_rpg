@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "../src/game/swamp_demon.h"
 #include "../src/systems/save_load.h"
@@ -181,6 +182,7 @@ static int make_legacy_save(void) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 127);
+    test_mark_legacy_portal(root);
     cJSON_DeleteItemFromObject(root, "swamp_demon_reward_state");
     cJSON *arrays[2] = {cJSON_GetObjectItem(root, "enemies"),
         cJSON_GetObjectItem(cJSON_GetArrayItem(cJSON_GetObjectItem(root, "swamp_cache"), 3), "enemies")};
@@ -456,8 +458,8 @@ static void test_persistence(void) {
     game.portal_y = 16;
     game.portal_origin_tile = TILE_DEMON_ROT_2;
     game.location = LOCATION_TOWN2;
-    game_use_town_portal(&game);
-    ASSERT("portal revisit restores cached queued attack, rot and recovering vents", game.location == LOCATION_SWAMP && game.enemies[0].move_timer == 2 && game.map.tiles[16][23] == TILE_DEMON_ROT_2 && game.map.tiles[y][x] == TILE_DEMON_VENT_5);
+    test_restore_cached_floor(&game);
+    ASSERT("archived encounter reload restores cached queued attack, rot and recovering vents", game.location == LOCATION_SWAMP && game.enemies[0].move_timer == 2 && game.map.tiles[16][23] == TILE_DEMON_ROT_2 && game.map.tiles[y][x] == TILE_DEMON_VENT_5);
 
     e = setup();
     for (int yy = 11; yy < 21; yy++) {

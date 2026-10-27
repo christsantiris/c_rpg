@@ -332,9 +332,9 @@ void test_swamp(void) {
     game_enter_swamp(&swamp_game);
     game_descend(&swamp_game);
     game_open_town_portal(&swamp_game);
-    ASSERT("swamp return portal appears in Town 2",
+    ASSERT("swamp escape reaches Stillbury without a return portal",
         swamp_game.location == LOCATION_TOWN2 &&
-        swamp_game.map.tiles[2][21] == TILE_PORTAL);
+        swamp_game.map.tiles[2][21] != TILE_PORTAL);
     int saved = save_game(&swamp_game, 99121);
     int loaded = saved && load_game(&swamp_loaded, 99121);
     ASSERT("swamp portal and floor cache survive save/load",
@@ -350,16 +350,15 @@ void test_swamp(void) {
         game_leave_forest_road(&swamp_loaded, LOCATION_TOWN);
         game_enter_forest_road(&swamp_loaded);
         game_leave_forest_road(&swamp_loaded, LOCATION_TOWN2);
-        ASSERT("Town 2 portal remains visible after traveling to Town 1 and back",
-            swamp_loaded.portal_active &&
-            swamp_loaded.map.tiles[2][21] == TILE_PORTAL);
+        ASSERT("the retired swamp return portal stays absent after traveling between towns",
+            !swamp_loaded.portal_active &&
+            swamp_loaded.map.tiles[2][21] != TILE_PORTAL);
         swamp_loaded.player.x = 22;
         swamp_loaded.player.y = 2;
         action_resolve_player(&swamp_loaded,
             (Action){ACTION_MOVE, 21, 2});
-        ASSERT("walking onto the Town 2 portal restores swamp level two",
-            swamp_loaded.location == LOCATION_SWAMP &&
-            swamp_loaded.level == 2 && !swamp_loaded.portal_active);
+        ASSERT("walking onto the former swamp portal stays in Stillbury",
+            swamp_loaded.location == LOCATION_TOWN2 && !swamp_loaded.portal_active);
     }
     int connected_layouts = 1;
     for (int seed = 0; seed < 25; seed++) {
