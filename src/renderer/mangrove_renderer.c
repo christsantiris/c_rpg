@@ -3,6 +3,7 @@
 #include "world_props.h"
 #include "controls_renderer.h"
 #include "../game/mangrove.h"
+#include "../game/spice_skiff.h"
 
 static int water(const Map *map, int x, int y) {
     return x < 0 || y < 0 || x >= MAP_W || y >= MAP_H || map->tiles[y][x] == TILE_MANGROVE_WATER;
@@ -102,6 +103,40 @@ void mangrove_draw_landmark(Renderer *r, const GameState *g, const Viewport *v) 
     SDL_Rect dest = {x - 3 * TILE_SIZE, y - 5 * TILE_SIZE, 168, 144};
     SDL_RenderCopy(r->sdl, r->mangrove_entrance_texture, NULL, &dest);
     renderer_draw_text(r, "SALTWIND MARSH", x - 85, y - 6 * TILE_SIZE, (SDL_Color){163, 207, 105, 255}, r->font_tiny);
+}
+
+static void quest_label(Renderer *r, const Viewport *v, const char *text, int x, int y) {
+    int width;
+    TTF_SizeText(r->font_tiny, text, &width, NULL);
+    int px = viewport_to_screen_x(v, x) * TILE_SIZE + (TILE_SIZE - width) / 2;
+    int py = viewport_to_screen_y(v, y) * TILE_SIZE - 14;
+    renderer_draw_text(r, text, px + 1, py + 1, (SDL_Color){28, 34, 23, 255}, r->font_tiny);
+    renderer_draw_text(r, text, px, py, (SDL_Color){235, 211, 139, 255}, r->font_tiny);
+}
+
+void mangrove_draw_spice_quest(Renderer *r, const GameState *g, const Viewport *v) {
+    if (g->location != LOCATION_MANGROVES || !r->spice_skiff_texture) {
+        return;
+    }
+    if (g->level == 2 && viewport_is_visible(v, SPICE_WRECK_X, SPICE_WRECK_Y)) {
+        SDL_Rect src = {0, 0, 36, 36};
+        SDL_Rect dst = {viewport_to_screen_x(v, SPICE_WRECK_X) * TILE_SIZE - 6,
+            viewport_to_screen_y(v, SPICE_WRECK_Y) * TILE_SIZE - 6, 36, 36};
+        SDL_RenderCopy(r->sdl, r->spice_skiff_texture, &src, &dst);
+        quest_label(r, v, "STRANDED SPICE SKIFF", SPICE_WRECK_X, SPICE_WRECK_Y - 1);
+    } else if (g->level == 3 && viewport_is_visible(v, SPICE_CASKET_X, SPICE_CASKET_Y)) {
+        int px = viewport_to_screen_x(v, SPICE_CASKET_X) * TILE_SIZE;
+        int py = viewport_to_screen_y(v, SPICE_CASKET_Y) * TILE_SIZE;
+        SDL_Rect arch_src = {84, 0, 72, 72};
+        SDL_Rect arch_dst = {px - 24, py - 120, 72, 72};
+        SDL_RenderCopy(r->sdl, r->spice_skiff_texture, &arch_src, &arch_dst);
+        int empty = !!(g->spice_skiff_progress & SPICE_CARGO);
+        SDL_Rect src = {empty ? 60 : 36, 0, 24, 24};
+        SDL_Rect dst = {px, py, 24, 24};
+        SDL_RenderCopy(r->sdl, r->spice_skiff_texture, &src, &dst);
+        quest_label(r, v, "ARCHED MANGROVE ROOT", SPICE_CASKET_X, SPICE_CASKET_Y - 6);
+        quest_label(r, v, empty ? "CARGO RECOVERED" : "SPICE CASKET", SPICE_CASKET_X, SPICE_CASKET_Y);
+    }
 }
 
 void mangrove_draw_boat(Renderer *r, const GameState *g, const Viewport *v) {

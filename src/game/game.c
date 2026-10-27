@@ -8,6 +8,7 @@
 #include "catacombs.h"
 #include "elderwood.h"
 #include "heartseed.h"
+#include "spice_skiff.h"
 #include "castle.h"
 #include "lich.h"
 #include "necromancer.h"
@@ -1585,6 +1586,8 @@ void game_init(GameState *g) {
     g->heartseed_bindings = 0;
     g->heartseed_sites = 0;
     g->heartseed_guardian = HEARTSEED_UNPLACED;
+    g->spice_skiff_quest_state = 0;
+    g->spice_skiff_progress = 0;
     g->retired_coast_item_count = 0;
     g->elderwood_entry_town = LOCATION_TOWN;
     g->catacombs_entry_town = LOCATION_CASTLE;
@@ -6328,6 +6331,8 @@ typedef struct {
 } QuestOffer;
 
 static const QuestOffer quest_offers[] = {
+    {"Spice Merchant Corvin", LOCATION_DAWNMERE_MERCHANT, offsetof(GameState, spice_skiff_quest_state), 0,
+        "Assigned: The Missing Spice Skiff. Search the stranded skiff on Saltwind 2 and recover its cargo on Saltwind 3."},
     {"Forester Tamsin", LOCATION_TOWN, offsetof(GameState, heartseed_quest_state), 0,
         "Assigned: The Stolen Heartseed. Find Dark Elf orders in Elderwood 2 and the bound grove in Elderwood 4."},
     {"Huntmaster Selene", LOCATION_GUILD, offsetof(GameState, hunt_quest_state), 0, "Assigned: The Three Great Hunts. See your quest journal."},
@@ -6390,7 +6395,9 @@ int game_handle_quest_offer_key(GameState *g, int key, int repeat) {
     }
     int *state = (int *)((char *)g + offer->state_offset);
     *state = offer->offered_state + 1;
-    if (state == &g->heartseed_quest_state) {
+    if (state == &g->spice_skiff_quest_state) {
+        spice_skiff_accept(g);
+    } else if (state == &g->heartseed_quest_state) {
         heartseed_accept(g);
     } else if (state == &g->elowen_quest_state) {
         g->elowen_seals_restored = 0;

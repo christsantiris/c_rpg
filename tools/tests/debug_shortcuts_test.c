@@ -1,4 +1,5 @@
 #include "game/giants_crown.h"
+#include "game/spice_skiff.h"
 #include "renderer/giants_crown_renderer.h"
 #include "game/crownroad_north.h"
 #include "game/ironfang.h"
@@ -75,6 +76,79 @@ static void test_heartseed_renderer(Renderer *r, GameState *g, SDL_Surface *surf
     renderer_end_frame(r);
     assert(SDL_SaveBMP(surface, "/tmp/heartseed-journal.bmp") == 0);
     puts("PASS: Heartseed NPC, orders, root arch, bindings, guardian release and quest journal render in the native game renderer.");
+}
+
+static void test_spice_skiff_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    int width;
+    int height;
+    assert(r->spice_skiff_texture);
+    assert(SDL_QueryTexture(r->spice_skiff_texture, NULL, NULL, &width, &height) == 0);
+    assert(width == 156 && height == 72);
+    game_init(g);
+    game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
+    const TownBuilding *shop = town_life_building(LOCATION_DAWNMERE);
+    g->player.x = shop->x + shop->w / 2;
+    g->player.y = shop->y + shop->h;
+    Viewport view;
+    int play_width = (r->screen_w - INFO_PANEL_W) / TILE_SIZE;
+    viewport_init(&view, play_width, r->tiles_y, TOWN_W, TOWN_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/spice-skiff-merchant-door.bmp") == 0);
+    action_resolve_player(g, (Action){ACTION_MOVE, g->player.x, g->player.y - 1});
+    assert(g->location == LOCATION_DAWNMERE_MERCHANT);
+    g->player.x = RESIDENT_X;
+    g->player.y = RESIDENT_Y + 1;
+    assert(town_life_talk(g, 0) && game_quest_offer_active(g));
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/spice-skiff-corvin-offer.bmp") == 0);
+    assert(game_handle_quest_offer_key(g, SDL_SCANCODE_Y, 0));
+    g->dialogue_active = 0;
+    mangrove_enter(g, 0);
+    mangrove_change_level(g, 1);
+    g->player.x = SPICE_WRECK_X + 1;
+    g->player.y = SPICE_WRECK_Y;
+    viewport_init(&view, play_width, r->tiles_y, MANGROVE_W, MANGROVE_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    assert(move_left_action(g, g->key_bindings[CONTROL_MOVE_LEFT]).type == ACTION_INTERACT);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/spice-skiff-stranded-skiff.bmp") == 0);
+    action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
+    assert(g->spice_skiff_progress == SPICE_MANIFEST);
+    mangrove_change_level(g, 1);
+    g->player.x = SPICE_CASKET_X;
+    g->player.y = SPICE_CASKET_Y + 1;
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/spice-skiff-guarded-cargo.bmp") == 0);
+    action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
+    assert(g->spice_skiff_progress == SPICE_MANIFEST);
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (g->enemies[i].x < 20) {
+            g->enemies[i].active = 0;
+        }
+    }
+    action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
+    assert(g->spice_skiff_quest_state == 2);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/spice-skiff-recovered-cargo.bmp") == 0);
+    QuestJournalScreen journal;
+    quest_journal_init(&journal);
+    renderer_begin_frame(r);
+    quest_journal_draw(r, g, &journal);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/spice-skiff-journal.bmp") == 0);
+    puts("PASS: Corvin's quest offer, stranded skiff, root arch, guarded and recovered cargo, configured Interact key and journal render at native scale.");
 }
 
 static void visit_exterior_town(GameState *g) {
@@ -915,6 +989,7 @@ int main(void) {
     test_northroad_renderer(&renderer, game, surface);
     test_giants_renderer(&renderer, game, surface);
     test_heartseed_renderer(&renderer, game, surface);
+    test_spice_skiff_renderer(&renderer, game, surface);
     free(game);
     renderer_free(&renderer);
     SDL_DestroyRenderer(sdl);

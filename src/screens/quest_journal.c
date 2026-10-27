@@ -3,6 +3,7 @@
 #include "../game/catacombs.h"
 #include "../game/jail.h"
 #include "../game/heartseed.h"
+#include "../game/spice_skiff.h"
 
 typedef struct {
     const char *title;
@@ -153,10 +154,20 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
         "Cut three bindings, recover the seed; return to Tamsin in Oakhaven.",
         {"Read Dark Elf orders", "Cut all three bindings", "Recover the heartseed"},
         "Elderwood Forest", {2, 4, 4, 0}, HEARTSEED_REWARD_GOLD, HEARTSEED_REWARD_SCORE
+    },
+    {
+        "The Missing Spice Skiff", "Spice Merchant Corvin",
+        "Stage 3: western island, root arch, east-facing landing.",
+        "Return both to Corvin in Dawnmere's Spice Merchant shop.",
+        {"Inspect the stranded skiff's manifest", "Recover the sealed spice casket"},
+        "Saltwind Marsh", {2, 3, 0, 0}, SPICE_REWARD_GOLD, SPICE_REWARD_SCORE
     }
 };
 
 static int quest_state(const GameState *g, int quest) {
+    if (quest == 18) {
+        return g->spice_skiff_quest_state;
+    }
     if (quest == 17) {
         return g->heartseed_quest_state;
     }
@@ -213,6 +224,9 @@ static int quest_state(const GameState *g, int quest) {
 }
 
 static int quest_progress(const GameState *g, int quest) {
+    if (quest == 18) {
+        return g->spice_skiff_progress;
+    }
     if (quest == 17) {
         return g->heartseed_progress;
     }

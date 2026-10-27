@@ -28,6 +28,7 @@
 #include "../game/approach.h"
 #include "../game/elderwood.h"
 #include "../game/heartseed.h"
+#include "../game/spice_skiff.h"
 #include "../game/mangrove.h"
 #include "../game/stormwatch.h"
 #include "../game/coastal_travel.h"
@@ -1084,6 +1085,24 @@ static int load_heartseed(const cJSON *root, GameState *g, int version) {
         (g->heartseed_guardian != HEARTSEED_FREED || g->heartseed_bindings == 7);
 }
 
+static int load_spice_skiff(const cJSON *root, GameState *g, int version) {
+    g->spice_skiff_quest_state = 0;
+    g->spice_skiff_progress = 0;
+    if (version < 205) {
+        return 1;
+    }
+    const cJSON *state = cJSON_GetObjectItem(root, "spice_skiff_quest_state");
+    const cJSON *progress = cJSON_GetObjectItem(root, "spice_skiff_progress");
+    if (!cJSON_IsNumber(state) || state->valuedouble != state->valueint || state->valueint < 0 || state->valueint > 3 ||
+        !cJSON_IsNumber(progress) || progress->valuedouble != progress->valueint || progress->valueint < 0 || progress->valueint > 3 ||
+        (state->valueint == 1 && progress->valueint == 3) || (state->valueint >= 2 && progress->valueint != 3)) {
+        return 0;
+    }
+    g->spice_skiff_quest_state = state->valueint;
+    g->spice_skiff_progress = progress->valueint;
+    return 1;
+}
+
 static int load_jail_equipment(const cJSON *root, GameState *g, int version) {
     memset(g->jail_gear, 0, sizeof(g->jail_gear));
     memset(g->jail_guards, 0, sizeof(g->jail_guards));
@@ -1599,7 +1618,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 204);
+    cJSON_AddNumberToObject(root, "save_version", 205);
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
     cJSON_AddItemToObject(root, "northroad", serialize_northroad(g));
@@ -1617,6 +1636,8 @@ int save_game(const GameState *g, int slot) {
     }
     cJSON_AddItemToObject(root, "mangrove_stages", stages);
     cJSON_AddNumberToObject(root, "mangrove_defeated", g->mangrove_defeated);
+    cJSON_AddNumberToObject(root, "spice_skiff_quest_state", g->spice_skiff_quest_state);
+    cJSON_AddNumberToObject(root, "spice_skiff_progress", g->spice_skiff_progress);
     cJSON *retired = cJSON_CreateArray();
     for (int stage = 0; stage < RETIRED_LOOT_STAGES; stage++) {
         FloorItem items[MAX_FLOOR_ITEMS] = {0};
@@ -3782,7 +3803,7 @@ int load_game(GameState *g, int slot) {
         cJSON_Delete(root);
         return 0;
     }
-    if (!elderwood_load(root, g, save_version) || !load_heartseed(root, g, save_version)) {
+    if (!elderwood_load(root, g, save_version) || !load_heartseed(root, g, save_version) || !load_spice_skiff(root, g, save_version)) {
         cJSON_Delete(root);
         return 0;
     }
@@ -6445,6 +6466,10 @@ int load_game(GameState *g, int slot) {
         giants_migrate_geography(g);
     }
     heartseed_migrate(g);
+    if (save_version < 205 && g->location == LOCATION_DAWNMERE_MERCHANT && g->dialogue_active &&
+        strcmp(g->dialogue_speaker, "Spice Merchant Corvin") == 0) {
+        spice_skiff_talk(g);
+    }
     game_refresh_debug_passages(g);
     cJSON_Delete(root);
     return 1;

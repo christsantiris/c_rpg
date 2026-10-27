@@ -1,5 +1,6 @@
 #include "mangrove.h"
 #include "town_road.h"
+#include "spice_skiff.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -386,6 +387,10 @@ const char *mangrove_hint(const GameState *g) {
         abs(g->player.x - g->mangroves.boat_x) + abs(g->player.y - g->mangroves.boat_y) == 1) {
         return "BOARD SKIFF";
     }
+    const char *quest = spice_skiff_hint(g);
+    if (quest) {
+        return quest;
+    }
     for (int i = 0; i < 3; i++) {
         int x;
         int y;
@@ -398,6 +403,9 @@ const char *mangrove_hint(const GameState *g) {
 }
 
 int mangrove_interact(GameState *g) {
+    if (spice_skiff_interact(g)) {
+        return 1;
+    }
     const char *hint = mangrove_hint(g);
     if (!hint) {
         return 0;
