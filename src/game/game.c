@@ -1,3 +1,4 @@
+#include "giants_crown.h"
 #include "ironfang.h"
 #include "crownroad_north.h"
 #include "game.h"
@@ -6,6 +7,11 @@
 #include "coastal_travel.h"
 #include "catacombs.h"
 #include "elderwood.h"
+#include "heartseed.h"
+#include "spice_skiff.h"
+#include "stormbell.h"
+#include "war_machine.h"
+#include "crown_quest.h"
 #include "castle.h"
 #include "lich.h"
 #include "necromancer.h"
@@ -232,8 +238,8 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             e->max_hp = 85; e->hp = 85;
             e->attack = 14; e->defense = 8; e->experience = 95;
             break;
-        case ENEMY_ICE_GIANT:
-            snprintf(e->name, sizeof(e->name), "Ice Giant");
+        case ENEMY_FROST_GIANT:
+            snprintf(e->name, sizeof(e->name), "Frost Giant");
             e->max_hp = 100; e->hp = 100;
             e->attack = 18; e->defense = 6; e->experience = 130;
             break;
@@ -501,8 +507,24 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             e->experience = 1000;
             e->is_boss = 1;
             break;
-        case ENEMY_GIANT:
-            strncpy(e->name, "Giant", sizeof(e->name) - 1);
+        case ENEMY_OGRE:
+            snprintf(e->name, sizeof(e->name), "Ogre");
+            e->max_hp = 42; e->hp = 42;
+            e->attack = 12; e->defense = 3; e->experience = 45;
+            break;
+        case ENEMY_HILL_GIANT:
+            snprintf(e->name, sizeof(e->name), "Hill Giant");
+            e->max_hp = 90; e->hp = 90;
+            e->attack = 18; e->defense = 5; e->experience = 110;
+            break;
+        case ENEMY_LAST_JARL:
+            snprintf(e->name, sizeof(e->name), "The Last Jarl");
+            e->max_hp = 650; e->hp = 650;
+            e->attack = 32; e->defense = 12; e->experience = 1600;
+            e->is_boss = 1;
+            break;
+        case ENEMY_STONE_GIANT:
+            strncpy(e->name, "Stone Giant", sizeof(e->name) - 1);
             e->name[sizeof(e->name) - 1] = '\0';
             e->max_hp = 60; e->hp = 60;
             e->attack = 14; e->defense = 6;
@@ -534,6 +556,16 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
         e->experience *= 2;
     }
     scale_spawned_enemy(g, e);
+    if (g->location == LOCATION_GIANTS_CROWN && !e->is_boss) {
+        e->max_hp += (g->level - 1) * 9;
+        e->attack += g->level - 1;
+        if (type == ENEMY_STONE_GIANT) {
+            e->max_hp += 50;
+            e->attack += 6;
+            e->defense += 3;
+        }
+        e->hp = e->max_hp;
+    }
 }
 
 void game_spawn_enemy(GameState *g, Enemy *enemy, EnemyType type, int x, int y) {
@@ -541,7 +573,7 @@ void game_spawn_enemy(GameState *g, Enemy *enemy, EnemyType type, int x, int y) 
 }
 
 static int boss_for_level(const GameState *g, EnemyType *type) {
-    if (g->location == LOCATION_CROWNROAD_NORTH || g->location == LOCATION_IRONFANG || g->location == LOCATION_STORMWATCH || g->location == LOCATION_ELDERWOOD || g->location == LOCATION_MANGROVES || g->location == LOCATION_MANGROVE_PATH) {
+    if (g->location == LOCATION_GIANTS_CROWN || g->location == LOCATION_CROWNROAD_NORTH || g->location == LOCATION_IRONFANG || g->location == LOCATION_STORMWATCH || g->location == LOCATION_ELDERWOOD || g->location == LOCATION_MANGROVES || g->location == LOCATION_MANGROVE_PATH) {
         return 0;
     }
     int boss_level = DUNGEON_DEPTH;
@@ -1213,11 +1245,11 @@ void enemies_spawn(GameState *g) {
                     (roll < 50 ? ENEMY_GOBLIN_ARCHER : ENEMY_DRAKE);
             } else if (g->level == 2) {
                 type = roll < 20 ? ENEMY_GOBLIN_ARCHER :
-                    (roll < 55 ? ENEMY_DRAKE : ENEMY_GIANT);
+                    (roll < 55 ? ENEMY_DRAKE : ENEMY_STONE_GIANT);
             } else {
                 type = roll < 12 ? ENEMY_GOBLIN_ARCHER :
                     (roll < 40 ? ENEMY_DRAKE :
-                    (roll < 65 ? ENEMY_GIANT : ENEMY_FIRE_ELEMENTAL));
+                    (roll < 65 ? ENEMY_STONE_GIANT : ENEMY_FIRE_ELEMENTAL));
             }
         } else if (g->location == LOCATION_CATACOMBS) {
             int slot = g->enemy_count;
@@ -1271,7 +1303,7 @@ void enemies_spawn(GameState *g) {
                     (roll < 25 ? ENEMY_FROST_ARCHER :
                     (roll < 40 ? ENEMY_YETI :
                     (roll < 60 ? ENEMY_FROST_WRAITH :
-                    (roll < 80 ? ENEMY_ICE_GOLEM : ENEMY_ICE_GIANT))));
+                    (roll < 80 ? ENEMY_ICE_GOLEM : ENEMY_FROST_GIANT))));
             }
         } else if (g->location == LOCATION_SWAMP) {
             if (difficulty <= 2) {
@@ -1402,11 +1434,23 @@ void enemies_spawn(GameState *g) {
 }
 
 void game_init(GameState *g) {
+    memset(g->giants_crown, 0, sizeof(g->giants_crown));
+    g->giants_crown_defeated = 0;
+    g->crown_quest_state = 0;
+    g->crown_quest_progress = 0;
+    g->crown_vault_open = 0;
+    g->crown_reward_state = 0;
     memset(&g->northroad, 0, sizeof(g->northroad));
     memset(g->ironfang, 0, sizeof(g->ironfang));
     g->ironfang_defeated = 0;
+    g->war_machine_quest_state = 0;
+    g->war_machine_progress = 0;
     memset(g->stormwatch, 0, sizeof(g->stormwatch));
     g->stormwatch_defeated = 0;
+    g->stormbell_quest_state = 0;
+    g->stormbell_progress = 0;
+    g->stormbell_phase = 0;
+    memset(g->stormbell_guards, 0, sizeof(g->stormbell_guards));
     g->mangroves = (MangroveState){0};
     memset(g->mangrove_stages, 0, sizeof(g->mangrove_stages));
     g->mangrove_defeated = 0;
@@ -1550,6 +1594,13 @@ void game_init(GameState *g) {
     memset(g->elderwood_cache, 0, sizeof(g->elderwood_cache));
     g->max_elderwood_level_reached = 1;
     g->elderwood_defeated = 0;
+    g->heartseed_quest_state = 0;
+    g->heartseed_progress = 0;
+    g->heartseed_bindings = 0;
+    g->heartseed_sites = 0;
+    g->heartseed_guardian = HEARTSEED_UNPLACED;
+    g->spice_skiff_quest_state = 0;
+    g->spice_skiff_progress = 0;
     g->retired_coast_item_count = 0;
     g->elderwood_entry_town = LOCATION_TOWN;
     g->catacombs_entry_town = LOCATION_CASTLE;
@@ -1744,6 +1795,10 @@ void game_unequip_off_hand(GameState *g) {
         g->player.attack -= game_off_hand_attack_bonus(item);
     } else if (item->type == ITEM_SHIELD) {
         g->player.defense -= item->defense_bonus;
+        g->player.max_hp -= item->max_hp_bonus;
+        if (g->player.hp > g->player.max_hp) {
+            g->player.hp = g->player.max_hp;
+        }
     }
     g->equipped_off_hand = -1;
 }
@@ -1782,9 +1837,12 @@ int game_equip_shield(GameState *g, int index) {
         !item_class_allowed(shield, g->player.player_class)) {
         return 0;
     }
+    int hp_before = g->player.hp;
     game_unequip_off_hand(g);
     g->equipped_off_hand = index;
     g->player.defense += shield->defense_bonus;
+    g->player.max_hp += shield->max_hp_bonus;
+    g->player.hp = hp_before < g->player.max_hp ? hp_before : g->player.max_hp;
     return 1;
 }
 
@@ -2589,7 +2647,7 @@ static void place_frostfell_quest_encounter(GameState *g) {
     }
     for (int i = existing; i < 2; i++) {
         EnemyType type = bit == FROSTFELL_JOURNAL_RECOVERED ? ENEMY_ICE_WOLF :
-            (i == 0 ? ENEMY_ICE_GIANT : ENEMY_FROST_ARCHER);
+            (i == 0 ? ENEMY_FROST_GIANT : ENEMY_FROST_ARCHER);
         if (!spawn_quest_guard(g, type, x, y, "Expedition Guardian")) {
             return;
         }
@@ -2804,7 +2862,7 @@ static void place_watchfire_encounter(GameState *g) {
     }
     static const EnemyType mountain_guards[4] = {ENEMY_GOBLIN_ARCHER, ENEMY_GOBLIN_ARCHER, ENEMY_HOBGOBLIN_GUARD, ENEMY_HOBGOBLIN_GUARD};
     static const EnemyType ashen_guards[3] = {ENEMY_OBSIDIAN_GUARDIAN, ENEMY_CINDER_IMP, ENEMY_CINDER_IMP};
-    static const EnemyType dragon_guards[3] = {ENEMY_GIANT, ENEMY_GOBLIN_ARCHER, ENEMY_FIRE_ELEMENTAL};
+    static const EnemyType dragon_guards[3] = {ENEMY_STONE_GIANT, ENEMY_GOBLIN_ARCHER, ENEMY_FIRE_ELEMENTAL};
     const EnemyType *types = bit == 1 ? mountain_guards : bit == 2 ? ashen_guards : dragon_guards;
     int guards = bit == 1 ? 4 : 3;
     int existing = 0;
@@ -3293,6 +3351,10 @@ static void prepare_forest_arrival(GameState *g, int from_high) {
 }
 
 void game_descend(GameState *g) {
+    if (g->location == LOCATION_GIANTS_CROWN) {
+        giants_change_level(g, 1);
+        return;
+    }
     if (g->location == LOCATION_CROWNROAD_NORTH) {
         return;
     }
@@ -3353,6 +3415,10 @@ void game_descend(GameState *g) {
 }
 
 void game_ascend(GameState *g) {
+    if (g->location == LOCATION_GIANTS_CROWN) {
+        giants_change_level(g, 0);
+        return;
+    }
     if (g->location == LOCATION_CROWNROAD_NORTH) {
         return;
     }
@@ -3761,6 +3827,7 @@ static void offer_rook_quest(GameState *g) {
 }
 
 void game_refresh_debug_passages(GameState *g) {
+    crown_quest_prepare(g);
     jail_refresh_hatch(g);
     coastal_refresh_docks(g);
     if (!g->debug_passages_unlocked) {
@@ -3801,6 +3868,7 @@ void game_refresh_debug_passages(GameState *g) {
                     break;
                 case TILE_IRON_BROKEN: open = TILE_IRON_RAIL; break;
                 case TILE_IRON_CRACK: open = TILE_IRON_FLOOR; break;
+                case TILE_GIANTS_CRACK: open = TILE_GIANTS_PAVING; break;
                 case TILE_DUNGEON_STAIRS_SEALED: open = TILE_DUNGEON_STAIRS_RETURN; break;
                 default: break;
             }
@@ -3839,7 +3907,8 @@ static void place_town_portal(GameState *g) {
             case LOCATION_STORMWATCH:
             case LOCATION_MANGROVES: anchor = LOCATION_DAWNMERE; break;
             case LOCATION_FROSTFELL:
-            case LOCATION_ASHEN: anchor = LOCATION_TOWN3; break;
+            case LOCATION_GIANTS_CROWN: anchor = LOCATION_TOWN3; break;
+            case LOCATION_ASHEN: anchor = LOCATION_CASTLE; break;
             case LOCATION_IRONFANG:
             case LOCATION_DRAGONSPINE: anchor = LOCATION_TOWN4; break;
             default: break;
@@ -3852,6 +3921,10 @@ static void place_town_portal(GameState *g) {
     if ((g->portal_location == LOCATION_ELDERWOOD || g->portal_location == LOCATION_CATACOMBS) &&
         g->location == g->northern_portal_town && (g->location == LOCATION_TOWN || g->location == LOCATION_CASTLE)) {
         g->map.tiles[g->location == LOCATION_TOWN ? 2 : TOWN_H - 3][21] = TILE_PORTAL;
+        return;
+    }
+    if (g->location == LOCATION_CASTLE && g->portal_location == LOCATION_ASHEN) {
+        g->map.tiles[2][CASTLE_ASHEN_GATE_X + 1] = TILE_PORTAL;
         return;
     }
     if (g->location == LOCATION_DAWNMERE) {
@@ -3889,7 +3962,7 @@ static void place_town_portal(GameState *g) {
         return;
     }
     if (g->location == LOCATION_TOWN3) {
-        if (g->portal_location == LOCATION_ASHEN) {
+        if (g->portal_location == LOCATION_GIANTS_CROWN || g->portal_location == LOCATION_ASHEN) {
             g->map.tiles[ROSEMOOR_ASHEN_PORTAL_Y][ROSEMOOR_ASHEN_PORTAL_X] = TILE_PORTAL;
         } else if (g->portal_location == LOCATION_CATACOMBS) {
             g->map.tiles[TOWN3_KING_GATE_Y + 1][TOWN_W - 3] = TILE_PORTAL;
@@ -4329,7 +4402,7 @@ void game_talk_to_veyra(GameState *g) {
             "Our warning fires are dark. Restore the watchfires in Goblin Mountains 5, Ashen Hollow 3, and Dragonspine 3, in any order. Defeat their guards, then press A beside each. Return for 180 gold.");
     } else if (g->watchfire_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Watchfires: Mountains 5 %s; Ashen Hollow 3 %s; Dragonspine 3 %s. Ashen lies west of Rosemoor. Defeat the guards, then press A beside each fire. Bosses are optional.",
+            "Watchfires: Mountains 5 %s; Ashen Hollow 3 %s; Dragonspine 3 %s. Ashen lies north of Castle Grounds. Defeat the guards, then press A beside each fire. Bosses are optional.",
             g->watchfire_quest_progress & 1 ? "lit" : "dark", g->watchfire_quest_progress & 2 ? "lit" : "dark", g->watchfire_quest_progress & 4 ? "lit" : "dark");
     } else if (g->watchfire_quest_state == 2) {
         g->watchfire_quest_state = 3;
@@ -4354,7 +4427,7 @@ void game_talk_to_steward(GameState *g) {
     g->dialogue_y = HALL_STEWARD_Y;
     if (g->emberforge_quest_state == 0) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Ashen Hollow lies west of Rosemoor. Recover the forge mechanism on stage 2, then repair the furnace on stage 4. Defeat the guards and press A beside each. Return for 100 gold.");
+            "Ashen Hollow lies north of Castle Grounds. Recover the forge mechanism on stage 2, then repair the furnace on stage 4. Defeat the guards and press A beside each. Return for 100 gold.");
     } else if (g->emberforge_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, g->emberforge_progress & EMBERFORGE_MECHANISM_RECOVERED ?
             "You have the mechanism. Defeat the Obsidian Guardians at the Emberforge on Ashen Hollow stage 4, "
@@ -5313,6 +5386,7 @@ void game_record_temple_enemy_defeated(GameState *g, EnemyType type) {
 
 static void return_to_town(GameState *g, Location destination) {
     Location returning_from = g->location;
+    giants_store(g);
     northroad_store(g);
     ironfang_store(g);
     stormwatch_store(g);
@@ -5466,6 +5540,10 @@ void game_leave_labyrinth(GameState *g) {
 }
 
 void game_return_to_approach(GameState *g) {
+    if (g->location == LOCATION_GIANTS_CROWN) {
+        giants_leave(g);
+        return;
+    }
     if (g->location == LOCATION_CROWNROAD_NORTH) {
         northroad_leave(g, 0);
         return;
@@ -5610,7 +5688,9 @@ void game_return_to_town(GameState *g) {
         destination = g->mountain_entry_town;
     } else if (g->location == LOCATION_DESERT) {
         destination = LOCATION_TOWN2;
-    } else if (g->location == LOCATION_FROSTFELL || g->location == LOCATION_ASHEN) {
+    } else if (g->location == LOCATION_ASHEN) {
+        destination = LOCATION_CASTLE;
+    } else if (g->location == LOCATION_FROSTFELL || g->location == LOCATION_GIANTS_CROWN) {
         destination = LOCATION_TOWN3;
     } else if (g->location == LOCATION_DRAGONSPINE || g->location == LOCATION_HIGH_PASS) {
         destination = LOCATION_TOWN4;
@@ -5722,6 +5802,7 @@ void game_open_town_portal(GameState *g) {
         g->location != LOCATION_GLASSDEEP &&
         g->location != LOCATION_CATACOMBS &&
         g->location != LOCATION_CROWNROAD_NORTH &&
+        g->location != LOCATION_GIANTS_CROWN &&
         g->location != LOCATION_IRONFANG &&
         g->location != LOCATION_STORMWATCH &&
         g->location != LOCATION_MANGROVES &&
@@ -5758,6 +5839,9 @@ void game_open_town_portal(GameState *g) {
 }
 
 void game_hide_portal_destination(GameState *g) {
+    if (g->portal_location == LOCATION_GIANTS_CROWN) {
+        return;
+    }
     if (g->portal_location == LOCATION_CROWNROAD_NORTH) {
         return;
     }
@@ -5871,6 +5955,10 @@ void game_use_town_portal(GameState *g) {
         g->portal_level > MAX_REGION_DEPTH) return;
     if (g->portal_location == LOCATION_CROWNROAD_NORTH && g->portal_level == 1) {
         northroad_enter(g, 0, 1);
+        return;
+    }
+    if (g->portal_location == LOCATION_GIANTS_CROWN && g->portal_level <= GIANTS_DEPTH) {
+        giants_enter(g, 1);
         return;
     }
     if (g->portal_location == LOCATION_IRONFANG && g->portal_level <= IRON_DEPTH) {
@@ -6264,6 +6352,16 @@ typedef struct {
 } QuestOffer;
 
 static const QuestOffer quest_offers[] = {
+    {"Antiquarian Edda", LOCATION_GUILD, offsetof(GameState, crown_quest_state), 0,
+        "Assigned: Giant's Crown. Read stage 2's inscription, find stage 3's seal, and recover the crown from stage 5's royal vault."},
+    {WAR_SPEAKER, LOCATION_TOWN_HALL, offsetof(GameState, war_machine_quest_state), 0,
+        "Assigned: Break the War Machine. Read Ironfang 2's orders, sink Ironfang 4's weapons, and bring back the Mine Boss's seal."},
+    {"Watchkeeper Seren", LOCATION_DAWNMERE, offsetof(GameState, stormbell_quest_state), 0,
+        "Assigned: The Silent Stormbell. Recover the clapper in Stormwatch 3 and restore the bell in Stormwatch 4."},
+    {"Spice Merchant Corvin", LOCATION_DAWNMERE_MERCHANT, offsetof(GameState, spice_skiff_quest_state), 0,
+        "Assigned: The Missing Spice Skiff. Search the stranded skiff on Saltwind 2 and recover its cargo on Saltwind 3."},
+    {"Forester Tamsin", LOCATION_TOWN, offsetof(GameState, heartseed_quest_state), 0,
+        "Assigned: The Stolen Heartseed. Find Dark Elf orders in Elderwood 2 and the bound grove in Elderwood 4."},
     {"Huntmaster Selene", LOCATION_GUILD, offsetof(GameState, hunt_quest_state), 0, "Assigned: The Three Great Hunts. See your quest journal."},
     {"Marshal Veyra", LOCATION_TOWN_HALL, offsetof(GameState, watchfire_quest_state), 0, "Assigned: Watchfires of Ridgeshire. See your quest journal."},
     {"Elowen", LOCATION_TAVERN, offsetof(GameState, elowen_quest_state), 0, "Quest assigned: The Broken Seals."},
@@ -6324,7 +6422,17 @@ int game_handle_quest_offer_key(GameState *g, int key, int repeat) {
     }
     int *state = (int *)((char *)g + offer->state_offset);
     *state = offer->offered_state + 1;
-    if (state == &g->elowen_quest_state) {
+    if (state == &g->crown_quest_state) {
+        crown_quest_sync(g);
+    } else if (state == &g->war_machine_quest_state) {
+        war_machine_accept(g);
+    } else if (state == &g->stormbell_quest_state) {
+        stormbell_accept(g);
+    } else if (state == &g->spice_skiff_quest_state) {
+        spice_skiff_accept(g);
+    } else if (state == &g->heartseed_quest_state) {
+        heartseed_accept(g);
+    } else if (state == &g->elowen_quest_state) {
         g->elowen_seals_restored = 0;
         prepare_quest_expedition(g, LOCATION_DUNGEON);
     } else if (state == &g->dain_quest_state) {

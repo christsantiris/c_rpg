@@ -32,6 +32,33 @@ Ordinary enemies do not block stage travel. Stage 5's departure stays sealed
 until Sszareth is defeated; retreat through previous stages remains available.
 The debug passage override opens the departure without recording a victory.
 
+## The Missing Spice Skiff
+
+Talk to **Spice Merchant Corvin in Dawnmere's Spice Merchant shop** to accept
+**The Missing Spice Skiff**. Paddle to stage 2's northern side island and search
+the labelled stranded skiff ashore with Interact (A by default). Its manifest
+points to **stage 3's western island**, beneath an arched mangrove root. Reach
+that island through its **east-facing timber landing**.
+
+Defeat the Giant Crab and Lizardfolk guarding the cargo island, then recover
+Corvin's sealed spice casket. Both manifest and casket are tracked as quest
+discoveries outside the pack, including if found before acceptance or in the
+opposite order. Bring both to Corvin for **150 gold and 1,000 score**, paid once.
+Sszareth's defeat is independent of this delivery.
+
+The quest keeps the existing shore combat and skiff controls. The stranded
+skiff is scenery with a readable manifest; each stage's usable skiff remains at
+its regular landing. Quest objects have local labels and contextual prompts,
+with minimap markers appearing after discovery. Ordinary supplies stay separate.
+
+Save version **205** retains the quest's acceptance, discoveries, and reward
+alongside existing stage and boat records. Town portals preserve the same
+encounter; fresh physical expeditions respawn ordinary guards while recovered
+cargo stays empty. Older saves gain the quest without regenerating their maps
+or resetting boats, loot, exploration, wounds, and previous quest progress.
+See the [quest reference](../quests.md) and
+[native renderer review](art-sources/spice-skiff/README.md).
+
 ## Physical skiff controls
 
 Walk onto a landing beside the skiff and use **Interact** (`A` by default) to

@@ -43,7 +43,7 @@ static int sample_gold(Item weapon, int source, int off_hand, int *drops) {
         game.enemy_count = 1;
         game.floor_item_count = 0;
         game.map.tiles[12][x] = TILE_FLOOR;
-        game.enemies[0] = (Enemy){.active = 1, .type = ENEMY_GIANT, .hp = 1, .max_hp = 1, .x = x, .y = 12, .experience = 1};
+        game.enemies[0] = (Enemy){.active = 1, .type = ENEMY_STONE_GIANT, .hp = 1, .max_hp = 1, .x = x, .y = 12, .experience = 1};
         game.player.experience = 0;
         int before = game.gold;
         if (source == 1) {

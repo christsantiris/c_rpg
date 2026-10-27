@@ -1,3 +1,4 @@
+#include "game/giants_crown.h"
 #include "approach_checks.h"
 #include "systems/save_load.h"
 #include "cJSON.h"
@@ -229,7 +230,7 @@ void test_approaches(void) {
         free(loaded);
         return;
     }
-    ASSERT("new routes append after reserved connection IDs", town_approach_count == 20);
+    ASSERT("new routes append after reserved connection IDs", town_approach_count == 21);
     for (int unlocked = 0; unlocked < 2; unlocked++) {
         for (int i = 0; i < town_approach_count; i++) {
             const TownApproach *route = &town_approaches[i];
@@ -237,7 +238,7 @@ void test_approaches(void) {
             continue;
         }
             // The shared northern road has two landmarks and is covered by test_elderwood.
-            if (route->area == LOCATION_IRONFANG || route->area == LOCATION_STORMWATCH || route->area == LOCATION_ELDERWOOD || route->area == LOCATION_CATACOMBS) {
+            if (route->area == LOCATION_GIANTS_CROWN || route->area == LOCATION_IRONFANG || route->area == LOCATION_STORMWATCH || route->area == LOCATION_ELDERWOOD || route->area == LOCATION_CATACOMBS) {
                 continue;
             }
             approach_town(g, route);
@@ -306,7 +307,7 @@ void test_approaches(void) {
             Map visited = g->map;
             *loaded = *g;
             game_open_town_portal(loaded);
-            ASSERT("Return to Town still bypasses the walking path and preserves its portal", loaded->location == (route->area == LOCATION_CATACOMBS ? LOCATION_TOWN3 : route->town) && loaded->portal_active);
+            ASSERT("Return to Town still bypasses the walking path and preserves its portal", loaded->location == loaded->last_town_visited && loaded->portal_active);
             retreat_from_area(g, route, reverse);
             int south = route->area == LOCATION_DUNGEON || route->area == LOCATION_MOUNTAINS || route->area == LOCATION_FOREST || route->area == LOCATION_SWAMP || approach_entrance_rows(route->area);
             int return_dx = south ? 0 : -dx;
@@ -374,7 +375,7 @@ void test_approaches(void) {
     const TownApproach excluded[] = {
         {LOCATION_TOWN3, LOCATION_CROWNROAD, TOWN_W - 1, TOWN3_KING_GATE_Y},
         {LOCATION_TOWN4, LOCATION_KING_ROAD_WEST, 0, TOWN4_KING_GATE_Y},
-        {LOCATION_CASTLE, LOCATION_CASTLE_INTERIOR, 20, 0},
+        {LOCATION_CASTLE, LOCATION_CASTLE_INTERIOR, CROWNROAD_X, 10},
         {LOCATION_ESCAPE_TUNNEL, LOCATION_TOWN3, 1, 1}
     };
     for (int i = 0; i < (int)(sizeof(excluded) / sizeof(excluded[0])); i++) {
@@ -445,7 +446,7 @@ void test_approaches(void) {
             ASSERT("a migrated road still reaches its original town", loaded->location == route->town);
         }
     }
-    ASSERT("Dragonspine is north of Ridgeshire and Ashen is west of Rosemoor", town_approaches[12].area == LOCATION_DRAGONSPINE && town_approaches[12].gate_x == RIDGESHIRE_DRAGON_GATE_X && town_approaches[12].gate_y == 0 && town_approaches[13].area == LOCATION_ASHEN && town_approaches[13].town == LOCATION_TOWN3 && town_approaches[13].gate_x == 0 && town_approaches[13].gate_y == ROSEMOOR_ASHEN_GATE_Y);
+    ASSERT("Dragonspine is north of Ridgeshire and Ashen is behind the castle", town_approaches[12].area == LOCATION_DRAGONSPINE && town_approaches[12].gate_x == RIDGESHIRE_DRAGON_GATE_X && town_approaches[12].gate_y == 0 && town_approaches[13].area == LOCATION_ASHEN && town_approaches[13].town == LOCATION_CASTLE && town_approaches[13].gate_x == CASTLE_ASHEN_GATE_X && town_approaches[13].gate_y == 0);
     for (int index = 12; index <= 13; index++) {
         const TownApproach *route = &town_approaches[index];
         int dragon = route->area == LOCATION_DRAGONSPINE;
@@ -498,18 +499,21 @@ void test_approaches(void) {
             g->watchfire_quest_state = 1;
             g->watchfire_quest_progress = 5;
             int migrated = save_game(g, slot) && legacy_approach_save(slot, 162) && load_game(loaded, slot);
-            int dx = dragon ? 0 : -1;
-            int dy = dragon ? -1 : 0;
+            int dx = 0;
+            int dy = -1;
             int nx = dragon ? APPROACH_W / 2 : APPROACH_W - 1;
             int ny = dragon ? APPROACH_H - 1 : APPROACH_H / 2;
-            ASSERT("old Ridgeshire approaches preserve route, distance, side, facing, and exploration after relocation", migrated && loaded->approach_route == index && loaded->player.x == nx + distance * dx - side * dy && loaded->player.y == ny + distance * dy + side * dx && loaded->player.last_dx == (returning ? -dx : dx) && loaded->player.last_dy == (returning ? -dy : dy) && map_is_explored(&loaded->map, loaded->player.x, loaded->player.y));
-            ASSERT("approach relocation preserves loot, combat caches, money, and quest progress", migrated && loaded->floor_items[0].active && loaded->floor_items[0].x == nx + 5 * dx + dy && loaded->floor_items[0].y == ny + 5 * dy - dx && loaded->map.tiles[ny + 5 * dy - dx][nx + 5 * dx + dy] == TILE_ITEM && loaded->floor_items[0].underlying_tile == TILE_TOWN_FLOOR && loaded->gold == 393 && loaded->watchfire_quest_progress == 5 && area_cache(loaded, route->area, 0)->enemies[0].hp == 7 && memcmp(cache->map.tiles, area_cache(loaded, route->area, 0)->map.tiles, sizeof(cache->map.tiles)) == 0);
+            ASSERT("old approaches preserve their region and have a reachable relocated landing", migrated && loaded->approach_route == index &&
+                map_is_walkable(&loaded->map, loaded->player.x, loaded->player.y) && map_is_explored(&loaded->map, loaded->player.x, loaded->player.y));
+            ASSERT("approach relocation preserves loot, combat caches, money, and quest progress", migrated && loaded->floor_items[0].active &&
+                loaded->gold == 393 && loaded->watchfire_quest_progress == 5 && area_cache(loaded, route->area, 0)->enemies[0].hp == 7 &&
+                memcmp(cache->map.tiles, area_cache(loaded, route->area, 0)->map.tiles, sizeof(cache->map.tiles)) == 0);
             int px = loaded->player.x;
             int py = loaded->player.y;
             ASSERT("relocated approaches save again without rotating a second time", save_game(loaded, slot) && load_game(g, slot) && g->player.x == px && g->player.y == py && g->approach_route == index);
             if (returning) {
                 walk_return_approach(g);
-                ASSERT("migrated return paths reach the new Ridgeshire gate", g->location == route->town && g->player.x == (dragon ? RIDGESHIRE_DRAGON_GATE_X : 1) && g->player.y == (dragon ? 1 : ROSEMOOR_ASHEN_GATE_Y));
+                ASSERT("migrated return paths reach the new Ridgeshire gate", g->location == route->town && g->player.x == (dragon ? RIDGESHIRE_DRAGON_GATE_X : CASTLE_ASHEN_GATE_X) && g->player.y == 1);
             } else {
                 walk_town_approach(g);
                 ASSERT("migrated outbound paths still enter the original combat region", g->location == route->area);

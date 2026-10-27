@@ -42,12 +42,12 @@ without pushing a boulder.
 | Stage | Route | Main threats |
 | --- | --- | --- |
 | 1 | Snowbound approach | Goblin Scouts, Goblin Archers, Drakes |
-| 2 | High cliff paths | Goblin Archers, Drakes, Giants |
-| 3 | First ash fields | Goblin Archers, Drakes, Giants, Fire Elementals |
-| 4 | Burning ascent | Goblin Archers, Drakes, Giants, Fire Elementals |
+| 2 | High cliff paths | Goblin Archers, Drakes, Stone Giants |
+| 3 | First ash fields | Goblin Archers, Drakes, Stone Giants, Fire Elementals |
+| 4 | Burning ascent | Goblin Archers, Drakes, Stone Giants, Fire Elementals |
 | 5 | Dragon's lair | Full roster and the Red Dragon |
 
-Drakes close for melee, Giants endure heavy punishment, and Fire Elementals
+Drakes close for melee, Stone Giants endure heavy punishment, and Fire Elementals
 cast along clear rows or columns. As in other regions, stages 1–4 can be
 exited without defeating every enemy. On stage 5, only the Red Dragon blocks
 the summit exit. It drops gold and the all-class Dragon Scale Mantle when

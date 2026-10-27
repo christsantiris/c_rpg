@@ -7,8 +7,8 @@ warning fires have fallen dark, leaving its scouts unable to signal danger.
 | Destination | Route from Ridgeshire | Added defenders |
 | --- | --- | --- |
 | Goblin Mountains, stage 6 | South mountain gate; enter stage 7 and continue toward stage 6 | Two Goblin Archers and two Hobgoblin Guards |
-| Ashen Hollow, stage 3 | East gate | One Obsidian Guardian and two Cinder Imps |
-| Dragonspine, stage 3 | North gate | One Giant, one Goblin Archer, and one Fire Elemental |
+| Ashen Hollow, stage 3 | Crown Road West to Castle Grounds; northern perimeter path | One Obsidian Guardian and two Cinder Imps |
+| Dragonspine, stage 3 | North gate | One Stone Giant, one Goblin Archer, and one Fire Elemental |
 
 Each watchfire occupies an ordinary floor in its stage's middle clearing.
 Complete the three objectives in any order. Defeat the assigned Watchfire

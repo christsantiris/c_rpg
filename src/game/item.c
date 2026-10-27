@@ -947,6 +947,15 @@ Item item_make_goblin_king_shield(void) {
     return it;
 }
 
+Item item_make_stoneguard_shield(void) {
+    Item it = item_make_tower_shield();
+    snprintf(it.name, sizeof(it.name), "Stoneguard Shield");
+    it.defense_bonus = 8;
+    it.max_hp_bonus = 30;
+    it.value = 1250;
+    return it;
+}
+
 void item_apply_legacy_shield_metadata(Item *item) {
     Item definition = {0};
     if (strcmp(item->name, "Buckler") == 0) {

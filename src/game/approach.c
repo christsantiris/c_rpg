@@ -1,3 +1,4 @@
+#include "giants_crown.h"
 #include "ironfang.h"
 #include "approach.h"
 #include "crownroad_north.h"
@@ -22,13 +23,14 @@ const TownApproach town_approaches[] = {
     {-1, -1, 0, 0}, // Retired garden route; saved indices remain stable.
     {LOCATION_TOWN4, LOCATION_MOUNTAINS, 20, TOWN_H - 1},
     {LOCATION_TOWN4, LOCATION_DRAGONSPINE, RIDGESHIRE_DRAGON_GATE_X, 0},
-    {LOCATION_TOWN3, LOCATION_ASHEN, 0, ROSEMOOR_ASHEN_GATE_Y},
+    {LOCATION_CASTLE, LOCATION_ASHEN, CASTLE_ASHEN_GATE_X, 0},
     {LOCATION_CASTLE, LOCATION_CATACOMBS, CROWNROAD_X, TOWN_H - 1},
     {LOCATION_DAWNMERE, LOCATION_DUNGEON, 0, 12},
     {LOCATION_TOWN, LOCATION_ELDERWOOD, 20, 0},
     {-1, -1, 0, 0}, // Retired coastal route 17.
     {LOCATION_DAWNMERE, LOCATION_STORMWATCH, TOWN_W - 1, 12},
-    {LOCATION_TOWN4, LOCATION_IRONFANG, TOWN_W - 1, 12}
+    {LOCATION_TOWN4, LOCATION_IRONFANG, TOWN_W - 1, 12},
+    {LOCATION_TOWN3, LOCATION_GIANTS_CROWN, 0, ROSEMOOR_ASHEN_GATE_Y}
 };
 
 // Serialized route 17 remains reserved.
@@ -44,6 +46,7 @@ const TownApproach *approach_route(const GameState *g) {
 
 const char *approach_area_name(Location area) {
     switch (area) {
+        case LOCATION_GIANTS_CROWN: return "GIANT'S PEAKS";
         case LOCATION_IRONFANG: return "IRONFANG MINES";
         case LOCATION_STORMWATCH: return "STORMWATCH HEADLAND";
         case LOCATION_DUNGEON: return "DUNGEON";
@@ -407,6 +410,7 @@ int approach_entrance_rows(Location area) {
         case LOCATION_GLASSDEEP:
         case LOCATION_STORMWATCH:
         case LOCATION_IRONFANG:
+        case LOCATION_GIANTS_CROWN:
         case LOCATION_CATACOMBS: return 6;
         default: return 0;
     }
@@ -858,6 +862,7 @@ int approach_travel(GameState *g, int x, int y) {
     g->location = route->town;
     g->approach_route = -1;
     switch (area) {
+        case LOCATION_GIANTS_CROWN: giants_enter(g, 0); break;
         case LOCATION_IRONFANG: ironfang_enter(g, 0); break;
         case LOCATION_STORMWATCH: stormwatch_enter(g, 0); break;
         case LOCATION_DUNGEON: game_enter_dungeon(g); break;

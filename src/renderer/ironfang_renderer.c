@@ -1,5 +1,8 @@
 #include "ironfang_renderer.h"
 #include "../game/ironfang.h"
+#include "../game/war_machine.h"
+#include "../game/combat_feedback.h"
+#include "game_renderer.h"
 #include "info_panel.h"
 #include "world_props.h"
 #include "controls_renderer.h"
@@ -128,10 +131,97 @@ void ironfang_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, 
     }
 }
 
+static void quest_label(Renderer *r, const Viewport *v, const char *text, int x, int y) {
+    int width = 0;
+    TTF_SizeText(r->font_tiny, text, &width, NULL);
+    int px = viewport_to_screen_x(v, x) * TILE_SIZE + (TILE_SIZE - width) / 2;
+    int py = viewport_to_screen_y(v, y) * TILE_SIZE - 14;
+    int right = v->tiles_x * TILE_SIZE - width - 4;
+    if (px > right) {
+        px = right;
+    }
+    if (px < 4) {
+        px = 4;
+    }
+    renderer_draw_text(r, text, px + 1, py + 1, (SDL_Color){20, 23, 26, 255}, r->font_tiny);
+    renderer_draw_text(r, text, px, py, (SDL_Color){226, 198, 137, 255}, r->font_tiny);
+}
+
+static void quest_prop(Renderer *r, const GameState *g, const Viewport *v, int x, int y, int sx, int sy) {
+    // Dropped gear and a return portal keep their visible tile and underlay.
+    if (!map_is_explored(&g->map, x, y) || !viewport_is_visible(v, x, y) ||
+        g->map.tiles[y][x] == TILE_ITEM || g->map.tiles[y][x] == TILE_PORTAL) {
+        return;
+    }
+    SDL_Rect source = {sx, sy, 24, 24};
+    SDL_Rect dest = {viewport_to_screen_x(v, x) * TILE_SIZE, viewport_to_screen_y(v, y) * TILE_SIZE, 24, 24};
+    SDL_RenderCopy(r->sdl, r->war_machine_texture, &source, &dest);
+}
+
+static void draw_weapons_fall(Renderer *r, const GameState *g, const Viewport *v) {
+    for (int n = 0; n < combat_feedback_count(); n++) {
+        const CombatFeedbackEvent *e = combat_feedback_get(n);
+        Uint32 age = SDL_GetTicks() - e->created_at;
+        if (e->kind != FEEDBACK_WEAPONS_DUMP || e->location != g->location || e->level != g->level ||
+            age >= COMBAT_FEEDBACK_MS || !viewport_is_visible(v, e->x, e->y)) {
+            continue;
+        }
+        int px = viewport_to_screen_x(v, e->x) * TILE_SIZE;
+        int py = viewport_to_screen_y(v, e->y) * TILE_SIZE;
+        SDL_Rect source = {120, 24, 24, 24};
+        if (age < 480) {
+            for (int i = 0; i < 2; i++) {
+                int fall = (int)age - i * 70;
+                if (fall < 0) {
+                    continue;
+                }
+                SDL_Rect dest = {px + i * 2 - 3, py - 1 + fall * fall / 4500, 24, 24};
+                SDL_RenderCopyEx(r->sdl, r->war_machine_texture, &source, &dest, i ? fall / 5.0 : -fall / 6.0, NULL, SDL_FLIP_NONE);
+            }
+        } else {
+            int spread = (int)(age - 480) / 25;
+            box(r, px - spread, py + 50, 24 + spread * 2, 2, (SDL_Color){128, 190, 185, 255});
+            box(r, px + 3, py + 45 - spread / 2, 2, 4, (SDL_Color){178, 211, 192, 255});
+            box(r, px + 19, py + 46 - spread, 2, 3, (SDL_Color){178, 211, 192, 255});
+        }
+    }
+}
+
+static void draw_war_machine(Renderer *r, const GameState *g, const Viewport *v) {
+    if (!r->war_machine_texture) {
+        return;
+    }
+    int x;
+    int y;
+    if (g->level == 2) {
+        x = WAR_ORDERS_X;
+        y = WAR_ORDERS_Y;
+        quest_prop(r, g, v, x, y, 0, 0);
+        if (viewport_is_visible(v, x, y) && map_is_explored(&g->map, x, y)) {
+            quest_label(r, v, "SHIPMENT ORDERS", x, y);
+        }
+    } else if (g->level == 4 && viewport_is_visible(v, WAR_WINCH_X, WAR_WINCH_Y) && map_is_explored(&g->map, WAR_WINCH_X, WAR_WINCH_Y)) {
+        SDL_Rect source = {g->war_machine_progress & WAR_SABOTAGE ? 72 : 24, 0, 48, 48};
+        SDL_Rect dest = {viewport_to_screen_x(v, 61) * TILE_SIZE, viewport_to_screen_y(v, 22) * TILE_SIZE, 48, 48};
+        SDL_RenderCopy(r->sdl, r->war_machine_texture, &source, &dest);
+        quest_prop(r, g, v, WAR_WINCH_X, WAR_WINCH_Y, 120, 0);
+        quest_label(r, v, g->war_machine_progress & WAR_SABOTAGE ? "SHIPMENT DESTROYED" : "WEAPONS WINCH", WAR_WINCH_X, 22);
+        draw_weapons_fall(r, g, v);
+    } else if (g->level == 5) {
+        x = WAR_SEAL_X;
+        y = WAR_SEAL_Y;
+        quest_prop(r, g, v, x, y, 144, g->war_machine_progress & WAR_SEAL ? 24 : 0);
+        if (viewport_is_visible(v, x, y) && map_is_explored(&g->map, x, y)) {
+            quest_label(r, v, g->war_machine_progress & WAR_SEAL ? "EMPTY COMMAND COFFER" : "COMMAND COFFER", x, y);
+        }
+    }
+}
+
 void ironfang_draw_details(Renderer *r, const GameState *g, const Viewport *v) {
     if (g->location != LOCATION_IRONFANG) {
         return;
     }
+    draw_war_machine(r, g, v);
     const IronfangStage *state = &g->ironfang[g->level - 1];
     int px = viewport_to_screen_x(v, state->cart_x) * TILE_SIZE;
     int py = viewport_to_screen_y(v, state->cart_y) * TILE_SIZE;

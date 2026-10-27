@@ -2,6 +2,11 @@
 #include <SDL2/SDL.h>
 #include "../game/catacombs.h"
 #include "../game/jail.h"
+#include "../game/heartseed.h"
+#include "../game/spice_skiff.h"
+#include "../game/stormbell.h"
+#include "../game/war_machine.h"
+#include "../game/crown_quest.h"
 
 typedef struct {
     const char *title;
@@ -17,7 +22,7 @@ typedef struct {
     const char *objective_areas[4];
 } QuestDefinition;
 
-static const QuestDefinition quest_definitions[17] = {
+static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
     {
         "The Broken Seals", "Elowen",
         "Restore three guarded seals in Oakhaven's dungeon.",
@@ -145,10 +150,60 @@ static const QuestDefinition quest_definitions[17] = {
         "Defeat its Royal Guards; reclaim every item from the evidence chest.",
         {"Recover confiscated weapons, armor and shields"},
         "Royal Jail", {1, 0, 0, 0}, 0, 0, "Your confiscated equipment"
+    },
+    {
+        "The Stolen Heartseed", "Forester Tamsin",
+        "Read the orders; find stage 4's eastern golden-root grove.",
+        "Cut three bindings, recover the seed; return to Tamsin in Oakhaven.",
+        {"Read Dark Elf orders", "Cut all three bindings", "Recover the heartseed"},
+        "Elderwood Forest", {2, 4, 4, 0}, HEARTSEED_REWARD_GOLD, HEARTSEED_REWARD_SCORE
+    },
+    {
+        "The Missing Spice Skiff", "Spice Merchant Corvin",
+        "Stage 3: western island, root arch, east-facing landing.",
+        "Return both to Corvin in Dawnmere's Spice Merchant shop.",
+        {"Inspect the stranded skiff's manifest", "Recover the sealed spice casket"},
+        "Saltwind Marsh", {2, 3, 0, 0}, SPICE_REWARD_GOLD, SPICE_REWARD_SCORE
+    },
+    {
+        "The Silent Stormbell", "Watchkeeper Seren",
+        "Recover the clapper in stage 3; fit and ring stage 4's bell.",
+        "Defeat two Raiders, then the Stormcaller; return to Seren in Dawnmere.",
+        {"Recover the bell clapper", "Fit the clapper and restore the bell", "Defeat the bell's harpy defenders"},
+        "Stormwatch Headland", {3, 4, 4, 0}, STORMBELL_REWARD_GOLD, STORMBELL_REWARD_SCORE
+    },
+    {
+        "Break the War Machine", "Marshal Veyra",
+        "Read stage 2's orders; ride to stage 4's supply platform.",
+        "Sink the weapons; take the Mine Boss's seal to Veyra in Ridgeshire.",
+        {"Recover shipment orders", "Dump the suspended weapons", "Recover the Mine Boss's command seal"},
+        "Ironfang Mines", {2, 4, 5, 0}, WAR_REWARD_GOLD, WAR_REWARD_SCORE
+    },
+    {
+        "Giant's Crown", "Antiquarian Edda",
+        "Read stage 2's inscription; find stage 3's western seal chamber.",
+        "Use the seal at stage 5's western vault after the Jarl falls; return to Edda.",
+        {"Read the royal inscription", "Recover the royal seal", "Defeat the Last Jarl", "Recover the royal crown"},
+        "Giant's Peaks", {2, 3, 5, 5}, CROWN_REWARD_GOLD, CROWN_REWARD_SCORE, "Stoneguard Shield"
     }
 };
 
 static int quest_state(const GameState *g, int quest) {
+    if (quest == 21) {
+        return g->crown_quest_state;
+    }
+    if (quest == 20) {
+        return g->war_machine_quest_state;
+    }
+    if (quest == 19) {
+        return g->stormbell_quest_state;
+    }
+    if (quest == 18) {
+        return g->spice_skiff_quest_state;
+    }
+    if (quest == 17) {
+        return g->heartseed_quest_state;
+    }
     if (quest == 16) {
         return g->jail_gear_state;
     }
@@ -202,6 +257,21 @@ static int quest_state(const GameState *g, int quest) {
 }
 
 static int quest_progress(const GameState *g, int quest) {
+    if (quest == 21) {
+        return g->crown_quest_progress;
+    }
+    if (quest == 20) {
+        return g->war_machine_progress;
+    }
+    if (quest == 19) {
+        return g->stormbell_progress;
+    }
+    if (quest == 18) {
+        return g->spice_skiff_progress;
+    }
+    if (quest == 17) {
+        return g->heartseed_progress;
+    }
     if (quest == 16) {
         return g->jail_gear_state == 3;
     }
@@ -271,7 +341,7 @@ int quest_journal_count(const GameState *g, QuestJournalTab tab) {
         return JOURNAL_BOSS_COUNT;
     }
     int count = 0;
-    for (int quest = 0; quest < 17; quest++) {
+    for (int quest = 0; quest < JOURNAL_QUEST_COUNT; quest++) {
         if (quest_in_tab(quest_state(g, quest), tab)) {
             count++;
         }
@@ -282,16 +352,16 @@ int quest_journal_count(const GameState *g, QuestJournalTab tab) {
 int quest_journal_get_boss(const GameState *g, int index, BossJournalEntry *entry) {
     static const char *names[JOURNAL_BOSS_COUNT] = {
         "Lich King", "Necromancer", "Goblin King", "Drowned Queen",
-        "Fallen Sun Guardian", "Swamp Demon", "Red Dragon", "Frost Kraken", "Desert Pharaoh", "Cinder Lord", "Quarry Colossus", "Minotaur", "Grave Marshal", "Castellan", "Royal Arcanist", "Lord Veyr", "Elderthorn", "Sszareth, Keeper of the Roots", "Tempest Matriarch", "Goblin Mine Boss"
+        "Fallen Sun Guardian", "Swamp Demon", "Red Dragon", "Frost Kraken", "Desert Pharaoh", "Cinder Lord", "Quarry Colossus", "Minotaur", "Grave Marshal", "Castellan", "Royal Arcanist", "Lord Veyr", "Elderthorn", "Sszareth, Keeper of the Roots", "Tempest Matriarch", "Goblin Mine Boss", "The Last Jarl"
     };
     static const char *areas[JOURNAL_BOSS_COUNT] = {
         "Dungeon", "Haunted Forest", "Goblin Mountains", "Sunken Coast",
-        "Ruined Temple", "Blackwater Swamp", "Dragonspine", "Frostfell Wastes", "Sunscar Wastes", "Ashen Hollow", "Stonewake Quarry", "Rook's Labyrinth", "Royal Catacombs", "Castle: Iron Keep", "Castle: Crown Chapel", "Castle: Throne", "Elderwood Forest", "Saltwind Marsh", "Stormwatch Headland", "Ironfang Mines"
+        "Ruined Temple", "Blackwater Swamp", "Dragonspine", "Frostfell Wastes", "Sunscar Wastes", "Ashen Hollow", "Stonewake Quarry", "Rook's Labyrinth", "Royal Catacombs", "Castle: Iron Keep", "Castle: Crown Chapel", "Castle: Throne", "Elderwood Forest", "Saltwind Marsh", "Stormwatch Headland", "Ironfang Mines", "Giant's Peaks"
     };
     static const Location regions[JOURNAL_BOSS_COUNT] = {
         LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST,
         LOCATION_TEMPLE, LOCATION_SWAMP, LOCATION_DRAGONSPINE, LOCATION_FROSTFELL,
-        LOCATION_DESERT, LOCATION_ASHEN, LOCATION_GLASSDEEP, LOCATION_LABYRINTH, LOCATION_CATACOMBS, LOCATION_CASTLE_INTERIOR, LOCATION_CASTLE_INTERIOR, LOCATION_CASTLE_INTERIOR, LOCATION_ELDERWOOD, LOCATION_MANGROVES, LOCATION_STORMWATCH, LOCATION_IRONFANG
+        LOCATION_DESERT, LOCATION_ASHEN, LOCATION_GLASSDEEP, LOCATION_LABYRINTH, LOCATION_CATACOMBS, LOCATION_CASTLE_INTERIOR, LOCATION_CASTLE_INTERIOR, LOCATION_CASTLE_INTERIOR, LOCATION_ELDERWOOD, LOCATION_MANGROVES, LOCATION_STORMWATCH, LOCATION_IRONFANG, LOCATION_GIANTS_CROWN
     };
     if (index < 0 || index >= JOURNAL_BOSS_COUNT) {
         return 0;
@@ -299,7 +369,7 @@ int quest_journal_get_boss(const GameState *g, int index, BossJournalEntry *entr
     entry->name = names[index];
     entry->area = areas[index];
     entry->trophy = index == 15 && g->crown_of_unbound ? "Crown of the Unbound" : NULL;
-    entry->defeated = index == 19 ? g->ironfang_defeated : index == 18 ? g->stormwatch_defeated : index == 17 ? g->mangrove_defeated : index == 16 ? g->elderwood_defeated : index == 13 ? !!(g->castle_minibosses & 1) : index == 14 ? !!(g->castle_minibosses & 2) :
+    entry->defeated = index == 20 ? g->giants_crown_defeated : index == 19 ? g->ironfang_defeated : index == 18 ? g->stormwatch_defeated : index == 17 ? g->mangrove_defeated : index == 16 ? g->elderwood_defeated : index == 13 ? !!(g->castle_minibosses & 1) : index == 14 ? !!(g->castle_minibosses & 2) :
         (g->defeated_bosses & (1 << regions[index])) != 0;
     return 1;
 }
@@ -309,7 +379,7 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
         return 0;
     }
     int visible_index = 0;
-    for (int quest = 0; quest < 17; quest++) {
+    for (int quest = 0; quest < JOURNAL_QUEST_COUNT; quest++) {
         int state = quest_state(g, quest);
         if (!quest_in_tab(state, tab)) {
             continue;

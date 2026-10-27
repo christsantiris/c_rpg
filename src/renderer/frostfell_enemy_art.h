@@ -2,7 +2,7 @@
 #define FROSTFELL_ENEMY_ART_H
 
 // Rendering indices only; persistent EnemyType values are unchanged.
-enum { FROST_ART_ICE_WOLF, FROST_ART_FROST_ARCHER, FROST_ART_YETI, FROST_ART_FROST_WRAITH, FROST_ART_ICE_GOLEM, FROST_ART_ICE_GIANT, FROST_ART_COUNT };
+enum { FROST_ART_ICE_WOLF, FROST_ART_FROST_ARCHER, FROST_ART_YETI, FROST_ART_FROST_WRAITH, FROST_ART_ICE_GOLEM, FROST_ART_FROST_GIANT, FROST_ART_COUNT };
 
 // Native 24-pixel silhouettes; dots preserve the snow and ice underneath.
 // o outline, s/S/H body shadow/base/light, c/C/v cloth, e/y eyes, j/J face,
@@ -139,7 +139,7 @@ static const char frostfell_enemy_art[FROST_ART_COUNT][24][25] = {
         "....oIHSSSso.oSSSSso....",
         "....oooooooo.ooooooo....",
     },
-    { // ICE_GIANT
+    { // FROST_GIANT
         "......oFffFfffo.........",
         ".....oHHSSSSSSSo....II..",
         ".....oHHSSSSSSSso..oIHI.",

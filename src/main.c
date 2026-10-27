@@ -18,7 +18,11 @@ EM_ASYNC_JS(void, browser_next_frame, (void), {
 #include "game/game.h"
 #include "game/coastal_travel.h"
 #include "game/stormwatch.h"
+#include "game/stormbell.h"
+#include "game/war_machine.h"
+#include "game/crown_quest.h"
 #include "game/jail.h"
+#include "game/heartseed.h"
 #include "game/town_life.h"
 #include "game/restoration.h"
 #include "game/approach.h"
@@ -123,7 +127,7 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
     }
     if (g->location == LOCATION_TOWN3 || g->location == LOCATION_CASTLE) {
         if (action.target_x == 0 || action.target_x == TOWN_W - 1) {
-            *style = g->location == LOCATION_TOWN3 && action.target_x == 0 ? TOWN_EXIT_ASHEN : TOWN_EXIT_ROAD;
+            *style = g->location == LOCATION_TOWN3 && action.target_x == 0 ? TOWN_EXIT_GIANTS : TOWN_EXIT_ROAD;
             return 1;
         }
         if (g->location == LOCATION_TOWN3 && action.target_y == 0) {
@@ -656,7 +660,7 @@ int main(int argc, char **argv) {
             (screen == SCREEN_PLAYING && game_combat_feedback_active(SDL_GetTicks()));
         int ambient_animating = screen == SCREEN_PLAYING &&
             (game_player_low_health(&game) || game.location == LOCATION_DUNGEON ||
-            game.location == LOCATION_CROWNROAD_NORTH || game.location == LOCATION_IRONFANG || game.location == LOCATION_STORMWATCH || game.location == LOCATION_ELDERWOOD || game.location == LOCATION_FOREST ||
+            game.location == LOCATION_GIANTS_CROWN || game.location == LOCATION_CROWNROAD_NORTH || game.location == LOCATION_IRONFANG || game.location == LOCATION_STORMWATCH || game.location == LOCATION_ELDERWOOD || game.location == LOCATION_FOREST ||
             game.location == LOCATION_MOUNTAINS ||
             game.location == LOCATION_DRAGONSPINE ||
             game.location == LOCATION_FROSTFELL ||
@@ -746,6 +750,12 @@ int main(int argc, char **argv) {
                             }
                             break;
                         }
+                    }
+                    if (screen == SCREEN_PLAYING && war_machine_handle_key(&game, sc, event.key.repeat)) {
+                        break;
+                    }
+                    if (screen == SCREEN_PLAYING && stormbell_handle_key(&game, sc, event.key.repeat)) {
+                        break;
                     }
                     if (screen == SCREEN_PLAYING && game_handle_quest_offer_key(&game, sc, event.key.repeat)) {
                         break;
@@ -1055,7 +1065,7 @@ int main(int argc, char **argv) {
                                 if (restoration_talk(&game) || town_life_talk(&game, 0)) {
                                     break;
                                 }
-                                if (jail_talk_nearby(&game)) {
+                                if (crown_quest_talk(&game) || stormbell_talk(&game) || heartseed_talk(&game) || jail_talk_nearby(&game)) {
                                     break;
                                 }
                                 if (game_workshop_near_smith(&game)) {
@@ -1284,7 +1294,7 @@ int main(int argc, char **argv) {
                         break;
                     }
                     if (event.button.button != SDL_BUTTON_LEFT) break;
-                    if (screen == SCREEN_PLAYING && (game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || restoration_prompt_active(&game))) {
+                    if (screen == SCREEN_PLAYING && (game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || restoration_prompt_active(&game))) {
                         break;
                     }
 
@@ -1537,7 +1547,7 @@ int main(int argc, char **argv) {
         int wind_paused = screen != SCREEN_PLAYING || player_projectile_animating || player_slide_animating ||
             entry_gate.active || enemy_shots.count > 0 || !(SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS) ||
             game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) ||
-            game_glassdeep_prompt_active(&game) || restoration_prompt_active(&game);
+            game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || restoration_prompt_active(&game);
         if (update_stormwatch_clock(&game, &wind_clock, SDL_GetTicks(), wind_paused)) {
             viewport_center_on(&viewport, game.player.x, game.player.y);
             needs_redraw = 1;

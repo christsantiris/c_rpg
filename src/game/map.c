@@ -1,7 +1,11 @@
+#include "giants_crown.h"
 #include "map.h"
+#include "stormbell.h"
+#include "crown_quest.h"
 #include "landscapes.h"
 #include "jail.h"
 #include "town_life.h"
+#include "heartseed.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -461,7 +465,8 @@ int map_is_walkable(const Map *m, int x, int y) {
     if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
         return 0;
     }
-    return m->tiles[y][x] != TILE_CROWN_BARRICADE && m->tiles[y][x] != TILE_CROWN_SUPPLIES &&
+    return m->tiles[y][x] != TILE_NPC_EDDA && m->tiles[y][x] != TILE_NPC_SEREN && m->tiles[y][x] != TILE_NPC_TAMSIN &&
+        m->tiles[y][x] != TILE_CROWN_BARRICADE && m->tiles[y][x] != TILE_CROWN_SUPPLIES &&
         m->tiles[y][x] != TILE_IRON_BUNK && m->tiles[y][x] != TILE_IRON_FORGE && m->tiles[y][x] != TILE_IRON_WALL && m->tiles[y][x] != TILE_IRON_WATER &&
         m->tiles[y][x] != TILE_IRON_TRESTLE && m->tiles[y][x] != TILE_IRON_BROKEN && m->tiles[y][x] != TILE_IRON_CRACK &&
         m->tiles[y][x] != TILE_IRON_LAMP && m->tiles[y][x] != TILE_IRON_LAMP_LIT && m->tiles[y][x] != TILE_IRON_SWITCH &&
@@ -514,7 +519,10 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_DRAGON_ASH_BOULDER &&
         m->tiles[y][x] != TILE_DESERT_WALL &&
         m->tiles[y][x] != TILE_DESERT_MESA &&
-  m->tiles[y][x] != TILE_ASHEN_WALL &&
+  m->tiles[y][x] != TILE_GIANTS_WALL &&
+        m->tiles[y][x] != TILE_GIANTS_CRACK &&
+        m->tiles[y][x] != TILE_GIANTS_COLUMN &&
+        m->tiles[y][x] != TILE_ASHEN_WALL &&
         m->tiles[y][x] != TILE_ASHEN_LAVA &&
         m->tiles[y][x] != TILE_GLASSDEEP_WALL &&
         m->tiles[y][x] != TILE_GLASSDEEP_POOL &&
@@ -1582,6 +1590,7 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     m->tiles[TOWN_CAIN_Y][TOWN_CAIN_X] = TILE_NPC_CAIN;
     m->tiles[TOWN_BRAM_Y][TOWN_BRAM_X] = TILE_NPC_BRAM;
     m->tiles[TOWN_ALDRIC_Y][TOWN_ALDRIC_X] = TILE_NPC_ALDRIC;
+    m->tiles[TAMSIN_Y][TAMSIN_X] = TILE_NPC_TAMSIN;
     town_life_place(m, LOCATION_TOWN);
 
     // Spawn at the central crossroads so the south road remains unobstructed
@@ -1818,6 +1827,7 @@ void map_generate_dawnmere(Map *m, int *spawn_x, int *spawn_y) {
     }
     m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
     town_life_place(m, LOCATION_DAWNMERE);
+    m->tiles[SEREN_Y][SEREN_X] = TILE_NPC_SEREN;
     *spawn_x = 20;
     *spawn_y = 12;
 }
@@ -1871,6 +1881,7 @@ void map_generate_castle(Map *m, int *spawn_x, int *spawn_y) {
     }
     m->tiles[TOWN_H - 1][CROWNROAD_X] = TILE_TOWN_EXIT;
     jail_place_castle(m);
+    giants_place_castle_road(m);
     *spawn_x = CROWNROAD_X;
     *spawn_y = CASTLE_ROAD_Y;
 }
@@ -2492,6 +2503,7 @@ void map_place_tavern_elowen(Map *m) {
 
 void map_generate_guild(Map *m, int *sx, int *sy) {
     map_generate_tavern_room(m, sx, sy, 1);
+    m->tiles[EDDA_Y][EDDA_X] = TILE_NPC_EDDA;
     m->tiles[GUILD_ORIN_Y][GUILD_ORIN_X] = TILE_NPC_ORIN;
     m->tiles[GUILD_SELENE_Y][GUILD_SELENE_X] = TILE_NPC_SELENE;
     m->tiles[GUILD_ZARA_Y][GUILD_ZARA_X] = TILE_TAVERN_FLOOR;

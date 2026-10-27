@@ -1,3 +1,4 @@
+#include "../game/giants_crown.h"
 #include "../game/ironfang.h"
 #include "../game/crownroad_north.h"
 #include "../game/stonewake.h"
@@ -26,8 +27,13 @@
 #include "../game/town_life.h"
 #include "../game/approach.h"
 #include "../game/elderwood.h"
+#include "../game/heartseed.h"
+#include "../game/spice_skiff.h"
 #include "../game/mangrove.h"
 #include "../game/stormwatch.h"
+#include "../game/stormbell.h"
+#include "../game/war_machine.h"
+#include "../game/crown_quest.h"
 #include "../game/coastal_travel.h"
 #include "cJSON.h"
 #include <stdio.h>
@@ -722,7 +728,11 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count, in
         e->type       = cJSON_GetObjectItem(obj, "type")->valueint;
         const char *name = cJSON_GetObjectItem(obj, "name")->valuestring;
         // Normalize renamed actors in both active and cached encounters.
-        if (e->type == ENEMY_MINOTAUR) {
+        if (e->type == ENEMY_STONE_GIANT && strcmp(name, "Giant") == 0) {
+            name = "Stone Giant";
+        } else if (e->type == ENEMY_FROST_GIANT && strcmp(name, "Ice Giant") == 0) {
+            name = "Frost Giant";
+        } else if (e->type == ENEMY_MINOTAUR) {
             name = "Minotaur";
         } else if (e->type == ENEMY_FROST_KRAKEN) {
             name = "Frost Kraken";
@@ -1054,6 +1064,128 @@ static int elderwood_load(const cJSON *root, GameState *g, int version) {
     return 1;
 }
 
+static int load_heartseed(const cJSON *root, GameState *g, int version) {
+    int *values[] = {&g->heartseed_quest_state, &g->heartseed_progress, &g->heartseed_bindings,
+        &g->heartseed_sites, &g->heartseed_guardian};
+    const char *names[] = {"heartseed_quest_state", "heartseed_progress", "heartseed_bindings",
+        "heartseed_sites", "heartseed_guardian"};
+    const int limits[] = {3, 7, 7, 3, 3};
+    for (int i = 0; i < 5; i++) {
+        *values[i] = 0;
+        if (version < 204) {
+            continue;
+        }
+        const cJSON *value = cJSON_GetObjectItem(root, names[i]);
+        if (!cJSON_IsNumber(value) || value->valuedouble != value->valueint || value->valueint < 0 || value->valueint > limits[i]) {
+            return 0;
+        }
+        *values[i] = value->valueint;
+    }
+    return !!(g->heartseed_progress & HEARTSEED_BINDINGS) == (g->heartseed_bindings == 7) &&
+        (!(g->heartseed_progress & HEARTSEED_TAKEN) || (g->heartseed_bindings == 7 && g->heartseed_guardian >= HEARTSEED_SLAIN)) &&
+        (g->heartseed_quest_state != 1 || g->heartseed_progress != 7) &&
+        (g->heartseed_quest_state < 2 || g->heartseed_progress == 7) &&
+        (g->heartseed_guardian != HEARTSEED_FREED || g->heartseed_bindings == 7);
+}
+
+static int load_crown_quest(const cJSON *root, GameState *g, int version) {
+    g->crown_quest_state = 0;
+    g->crown_quest_progress = 0;
+    g->crown_vault_open = 0;
+    g->crown_reward_state = 0;
+    if (version < 208) {
+        return 1;
+    }
+    const char *fields[] = {"crown_quest_state", "crown_quest_progress", "crown_vault_open", "crown_reward_state"};
+    int *values[] = {&g->crown_quest_state, &g->crown_quest_progress, &g->crown_vault_open, &g->crown_reward_state};
+    const int limits[] = {3, 15, 1, 2};
+    for (int i = 0; i < 4; i++) {
+        const cJSON *value = cJSON_GetObjectItem(root, fields[i]);
+        if (!cJSON_IsNumber(value) || value->valuedouble != value->valueint || value->valueint < 0 || value->valueint > limits[i]) {
+            return 0;
+        }
+        *values[i] = value->valueint;
+    }
+    return crown_quest_valid(g);
+}
+
+static int load_war_machine(const cJSON *root, GameState *g, int version) {
+    g->war_machine_quest_state = 0;
+    g->war_machine_progress = 0;
+    if (version < 207) {
+        return 1;
+    }
+    const char *fields[] = {"war_machine_quest_state", "war_machine_progress"};
+    int *values[] = {&g->war_machine_quest_state, &g->war_machine_progress};
+    const int limits[] = {3, 7};
+    for (int i = 0; i < 2; i++) {
+        const cJSON *value = cJSON_GetObjectItem(root, fields[i]);
+        if (!cJSON_IsNumber(value) || value->valuedouble != value->valueint || value->valueint < 0 || value->valueint > limits[i]) {
+            return 0;
+        }
+        *values[i] = value->valueint;
+    }
+    return war_machine_valid(g);
+}
+
+static int load_stormbell(const cJSON *root, GameState *g, int version) {
+    g->stormbell_quest_state = 0;
+    g->stormbell_progress = 0;
+    g->stormbell_phase = 0;
+    memset(g->stormbell_guards, 0, sizeof(g->stormbell_guards));
+    if (version < 206) {
+        return 1;
+    }
+    const char *fields[] = {"stormbell_quest_state", "stormbell_progress", "stormbell_phase"};
+    int *values[] = {&g->stormbell_quest_state, &g->stormbell_progress, &g->stormbell_phase};
+    const int limits[] = {3, 7, 3};
+    for (int i = 0; i < 3; i++) {
+        const cJSON *value = cJSON_GetObjectItem(root, fields[i]);
+        if (!cJSON_IsNumber(value) || value->valuedouble != value->valueint || value->valueint < 0 || value->valueint > limits[i]) {
+            return 0;
+        }
+        *values[i] = value->valueint;
+    }
+    const cJSON *guards = cJSON_GetObjectItem(root, "stormbell_guards");
+    int count = g->stormbell_phase == 1 ? 2 : g->stormbell_phase ? 3 : 0;
+    if (!cJSON_IsArray(guards) || cJSON_GetArraySize(guards) != count) {
+        return 0;
+    }
+    for (int i = 0; i < count; i++) {
+        const cJSON *e = cJSON_GetArrayItem(guards, i);
+        const char *required[] = {"x", "y", "active", "type", "hp", "max_hp", "attack", "defense", "experience", "move_timer", "frozen_turns", "attack_target_x", "attack_target_y", "revived", "is_boss"};
+        if (!cJSON_IsObject(e) || !cJSON_IsString(cJSON_GetObjectItem(e, "name"))) {
+            return 0;
+        }
+        for (int f = 0; f < (int)(sizeof(required) / sizeof(required[0])); f++) {
+            const cJSON *value = cJSON_GetObjectItem(e, required[f]);
+            if (!cJSON_IsNumber(value) || value->valuedouble != value->valueint) {
+                return 0;
+            }
+        }
+    }
+    deserialize_enemies(guards, g->stormbell_guards, &count, 3);
+    return stormbell_valid(g);
+}
+
+static int load_spice_skiff(const cJSON *root, GameState *g, int version) {
+    g->spice_skiff_quest_state = 0;
+    g->spice_skiff_progress = 0;
+    if (version < 205) {
+        return 1;
+    }
+    const cJSON *state = cJSON_GetObjectItem(root, "spice_skiff_quest_state");
+    const cJSON *progress = cJSON_GetObjectItem(root, "spice_skiff_progress");
+    if (!cJSON_IsNumber(state) || state->valuedouble != state->valueint || state->valueint < 0 || state->valueint > 3 ||
+        !cJSON_IsNumber(progress) || progress->valuedouble != progress->valueint || progress->valueint < 0 || progress->valueint > 3 ||
+        (state->valueint == 1 && progress->valueint == 3) || (state->valueint >= 2 && progress->valueint != 3)) {
+        return 0;
+    }
+    g->spice_skiff_quest_state = state->valueint;
+    g->spice_skiff_progress = progress->valueint;
+    return 1;
+}
+
 static int load_jail_equipment(const cJSON *root, GameState *g, int version) {
     memset(g->jail_gear, 0, sizeof(g->jail_gear));
     memset(g->jail_guards, 0, sizeof(g->jail_guards));
@@ -1175,6 +1307,27 @@ static cJSON *serialize_mangrove(const MangroveState *state) {
     cJSON_AddItemToObject(delta, "loot", serialize_castle_loot(state->loot, state->loot_count));
     cJSON_AddItemToObject(delta, "enemies", serialize_enemies(state->enemies, state->enemy_count));
     return delta;
+}
+
+static cJSON *serialize_giants(const GameState *g) {
+    cJSON *array = cJSON_CreateArray();
+    for (int n = 0; n < GIANTS_DEPTH; n++) {
+        GiantsStage state = g->giants_crown[n];
+        if (g->location == LOCATION_GIANTS_CROWN && g->level == n + 1) {
+            giants_capture(g, &state);
+        }
+        cJSON *entry = cJSON_CreateObject();
+        cJSON_AddNumberToObject(entry, "valid", state.valid);
+        if (state.valid) {
+            Map map;
+            giants_unpack(&state, &map);
+            cJSON_AddItemToObject(entry, "map", serialize_map(&map));
+            cJSON_AddItemToObject(entry, "enemies", serialize_enemies(state.enemies, state.enemy_count));
+            cJSON_AddItemToObject(entry, "loot", serialize_castle_loot(state.loot, state.loot_count));
+        }
+        cJSON_AddItemToArray(array, entry);
+    }
+    return array;
 }
 
 static cJSON *serialize_ironfang(const GameState *g) {
@@ -1310,6 +1463,61 @@ static int load_northroad(const cJSON *root, GameState *g, int version) {
     }
     deserialize_map(map, &state->map);
     deserialize_enemies(enemies, state->enemies, &state->enemy_count, NORTH_ENEMIES);
+    return 1;
+}
+
+static int load_giants(const cJSON *root, GameState *g, int version) {
+    memset(g->giants_crown, 0, sizeof(g->giants_crown));
+    g->giants_crown_defeated = 0;
+    if (version < 203) {
+        return 1;
+    }
+    const cJSON *array = cJSON_GetObjectItem(root, "giants_crown");
+    if (!cJSON_IsArray(array) || cJSON_GetArraySize(array) != GIANTS_DEPTH ||
+        !stormwatch_number(root, "giants_crown_defeated", &g->giants_crown_defeated)) {
+        return 0;
+    }
+    for (int n = 0; n < GIANTS_DEPTH; n++) {
+        GiantsStage *state = &g->giants_crown[n];
+        const cJSON *entry = cJSON_GetArrayItem(array, n);
+        if (!stormwatch_number(entry, "valid", &state->valid) || state->valid < 0 || state->valid > 1) {
+            return 0;
+        }
+        if (!state->valid) {
+            continue;
+        }
+        const cJSON *map = cJSON_GetObjectItem(entry, "map");
+        const cJSON *enemies = cJSON_GetObjectItem(entry, "enemies");
+        const char *fields[] = {"room_count", "stairs_up_x", "stairs_up_y", "stairs_down_x", "stairs_down_y"};
+        for (int f = 0; f < 5; f++) {
+            int value;
+            if (!stormwatch_number(map, fields[f], &value) || (f == 0 && value != 0)) {
+                return 0;
+            }
+        }
+        if (!cJSON_IsString(cJSON_GetObjectItem(map, "tiles_b64")) || !cJSON_IsString(cJSON_GetObjectItem(map, "explored_b64")) ||
+            !cJSON_IsArray(enemies) || cJSON_GetArraySize(enemies) > AREA_ENEMY_LIMIT ||
+            !deserialize_castle_loot(cJSON_GetObjectItem(entry, "loot"), state->loot, &state->loot_count)) {
+            return 0;
+        }
+        for (int e = 0; e < cJSON_GetArraySize(enemies); e++) {
+            const cJSON *enemy = cJSON_GetArrayItem(enemies, e);
+            const char *required[] = {"x", "y", "active", "type", "hp", "max_hp", "attack", "defense", "experience", "move_timer", "frozen_turns", "attack_target_x", "attack_target_y", "attack_phase"};
+            if (!cJSON_IsString(cJSON_GetObjectItem(enemy, "name"))) {
+                return 0;
+            }
+            for (int f = 0; f < (int)(sizeof(required) / sizeof(required[0])); f++) {
+                int value;
+                if (!stormwatch_number(enemy, required[f], &value)) {
+                    return 0;
+                }
+            }
+        }
+        Map scratch = {0};
+        deserialize_map(map, &scratch);
+        giants_pack(state, &scratch);
+        deserialize_enemies(enemies, state->enemies, &state->enemy_count, AREA_ENEMY_LIMIT);
+    }
     return 1;
 }
 
@@ -1485,7 +1693,7 @@ static void migrate_stormwatch_road(GameState *g) {
 }
 
 int save_game(const GameState *g, int slot) {
-    if (!northroad_valid(g) || !mangrove_state_valid(g) || !stormwatch_valid(g) || !ironfang_valid(g)) {
+    if (!crown_quest_valid(g) || !war_machine_valid(g) || !stormbell_valid(g) || !giants_valid(g) || !northroad_valid(g) || !mangrove_state_valid(g) || !stormwatch_valid(g) || !ironfang_valid(g)) {
         return 0;
     }
     if (g->retired_coast_item_count < 0 || g->retired_coast_item_count > RETIRED_LOOT_STAGES * MAX_FLOOR_ITEMS) {
@@ -1493,12 +1701,26 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 202);
+    cJSON_AddNumberToObject(root, "save_version", 208);
+    cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
+    cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
+    cJSON_AddNumberToObject(root, "crown_quest_state", g->crown_quest_state);
+    cJSON_AddNumberToObject(root, "crown_quest_progress", g->crown_quest_progress);
+    cJSON_AddNumberToObject(root, "crown_vault_open", g->crown_vault_open);
+    cJSON_AddNumberToObject(root, "crown_reward_state", g->crown_reward_state);
     cJSON_AddItemToObject(root, "northroad", serialize_northroad(g));
     cJSON_AddItemToObject(root, "ironfang", serialize_ironfang(g));
     cJSON_AddNumberToObject(root, "ironfang_defeated", g->ironfang_defeated);
+    cJSON_AddNumberToObject(root, "war_machine_quest_state", g->war_machine_quest_state);
+    cJSON_AddNumberToObject(root, "war_machine_progress", g->war_machine_progress);
     cJSON_AddItemToObject(root, "stormwatch", serialize_stormwatch(g));
     cJSON_AddNumberToObject(root, "stormwatch_defeated", g->stormwatch_defeated);
+    cJSON_AddNumberToObject(root, "stormbell_quest_state", g->stormbell_quest_state);
+    cJSON_AddNumberToObject(root, "stormbell_progress", g->stormbell_progress);
+    cJSON_AddNumberToObject(root, "stormbell_phase", g->stormbell_phase);
+    Enemy bell_guards[3];
+    stormbell_capture(g, bell_guards);
+    cJSON_AddItemToObject(root, "stormbell_guards", serialize_enemies(bell_guards, g->stormbell_phase == 1 ? 2 : g->stormbell_phase ? 3 : 0));
     MangroveState mangrove = g->mangroves;
     mangrove_capture(g, &mangrove);
     cJSON_AddItemToObject(root, "mangroves", serialize_mangrove(&mangrove));
@@ -1509,6 +1731,8 @@ int save_game(const GameState *g, int slot) {
     }
     cJSON_AddItemToObject(root, "mangrove_stages", stages);
     cJSON_AddNumberToObject(root, "mangrove_defeated", g->mangrove_defeated);
+    cJSON_AddNumberToObject(root, "spice_skiff_quest_state", g->spice_skiff_quest_state);
+    cJSON_AddNumberToObject(root, "spice_skiff_progress", g->spice_skiff_progress);
     cJSON *retired = cJSON_CreateArray();
     for (int stage = 0; stage < RETIRED_LOOT_STAGES; stage++) {
         FloorItem items[MAX_FLOOR_ITEMS] = {0};
@@ -1639,6 +1863,11 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "debug_passages_unlocked", g->debug_passages_unlocked);
     cJSON_AddNumberToObject(root, "max_elderwood_level_reached", g->max_elderwood_level_reached);
     cJSON_AddNumberToObject(root, "elderwood_defeated", g->elderwood_defeated);
+    cJSON_AddNumberToObject(root, "heartseed_quest_state", g->heartseed_quest_state);
+    cJSON_AddNumberToObject(root, "heartseed_progress", g->heartseed_progress);
+    cJSON_AddNumberToObject(root, "heartseed_bindings", g->heartseed_bindings);
+    cJSON_AddNumberToObject(root, "heartseed_sites", g->heartseed_sites);
+    cJSON_AddNumberToObject(root, "heartseed_guardian", g->heartseed_guardian);
     cJSON_AddNumberToObject(root, "elderwood_entry_town", g->elderwood_entry_town);
     cJSON_AddNumberToObject(root, "catacombs_entry_town", g->catacombs_entry_town);
     cJSON_AddNumberToObject(root, "northern_portal_town", g->northern_portal_town);
@@ -2451,7 +2680,7 @@ static void migrate_western_geography(GameState *g, int removed_garden, int rewa
             }
         }
         map_mark_explored(&g->map, g->player.x, g->player.y);
-        push_message(g, "You return to Rosemoor. The western road leads to Ashen Hollow.");
+        push_message(g, "You return to Rosemoor. The western road leads to Giant's Peaks.");
     }
     if (g->location == LOCATION_APPROACH && g->approach_route == 13 && g->map.stairs_up_x == 0) {
         // Mirror the old eastbound approach, preserving distance and exploration.
@@ -3620,7 +3849,7 @@ int load_game(GameState *g, int slot) {
 
     cJSON *version_item = cJSON_GetObjectItem(root, "save_version");
     int save_version = version_item ? version_item->valueint : 1;
-    if (!load_northroad(root, g, save_version) || !load_ironfang(root, g, save_version) || !load_stormwatch(root, g, save_version) || !load_mangroves(root, g, save_version)) {
+    if (!load_giants(root, g, save_version) || !load_northroad(root, g, save_version) || !load_ironfang(root, g, save_version) || !load_stormwatch(root, g, save_version) || !load_mangroves(root, g, save_version)) {
         cJSON_Delete(root);
         return 0;
     }
@@ -3669,7 +3898,7 @@ int load_game(GameState *g, int slot) {
         cJSON_Delete(root);
         return 0;
     }
-    if (!elderwood_load(root, g, save_version)) {
+    if (!elderwood_load(root, g, save_version) || !load_heartseed(root, g, save_version) || !load_spice_skiff(root, g, save_version) || !load_stormbell(root, g, save_version) || !load_war_machine(root, g, save_version) || !load_crown_quest(root, g, save_version)) {
         cJSON_Delete(root);
         return 0;
     }
@@ -6288,7 +6517,7 @@ int load_game(GameState *g, int slot) {
     if (save_version < 198) {
         migrate_stormwatch_road(g);
     }
-    if (!northroad_valid(g) || !ironfang_valid(g) || !stormwatch_valid(g)) {
+    if (!giants_valid(g) || !northroad_valid(g) || !ironfang_valid(g) || !stormwatch_valid(g)) {
         cJSON_Delete(root);
         return 0;
     }
@@ -6327,6 +6556,19 @@ int load_game(GameState *g, int slot) {
     if (save_version < 202 && g->location == LOCATION_DAWNMERE_MERCHANT &&
         strcmp(g->dialogue_speaker, "Merchant Corvin") == 0) {
         snprintf(g->dialogue_speaker, sizeof(g->dialogue_speaker), "Spice Merchant Corvin");
+    }
+    if (save_version < 203) {
+        giants_migrate_geography(g);
+    }
+    heartseed_migrate(g);
+    crown_quest_migrate(g);
+    stormbell_migrate(g);
+    if (save_version < 206) {
+        stormwatch_repair_boss(g);
+    }
+    if (save_version < 205 && g->location == LOCATION_DAWNMERE_MERCHANT && g->dialogue_active &&
+        strcmp(g->dialogue_speaker, "Spice Merchant Corvin") == 0) {
+        spice_skiff_talk(g);
     }
     game_refresh_debug_passages(g);
     cJSON_Delete(root);

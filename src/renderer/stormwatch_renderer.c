@@ -1,5 +1,7 @@
 #include "stormwatch_renderer.h"
 #include "../game/stormwatch.h"
+#include "../game/stormbell.h"
+#include "controls_renderer.h"
 #include "world_props.h"
 #include <stdio.h>
 
@@ -138,6 +140,11 @@ void stormwatch_draw_hint(Renderer *r, const GameState *g) {
         return;
     }
     const char *hint = stormwatch_hint(g);
+    char action_hint[100];
+    if (hint && hint == stormbell_hint(g)) {
+        snprintf(action_hint, sizeof(action_hint), "%s: %s", controls_key_name(g->key_bindings[CONTROL_MOVE_LEFT]), hint);
+        hint = action_hint;
+    }
     const StormwatchStage *state = &g->stormwatch[g->level - 1];
     const char *directions[] = {"EAST", "SOUTH", "WEST", "NORTH"};
     char text[180];
@@ -156,4 +163,44 @@ void stormwatch_draw_hint(Renderer *r, const GameState *g) {
     snprintf(text, sizeof(text), "%s  |  %s%s%s%s", stormwatch_stage_name(g->level), wind, warning && !marked ? " / SHELTERED" : "", hint ? "  |  " : "", hint ? hint : "");
     box(r, 52, 8, r->screen_w - 260, 24, (SDL_Color){21, 32, 36, 230});
     renderer_draw_text(r, text, 60, 12, (SDL_Color){225, 210, 158, 255}, r->font_tiny);
+    if (g->level == 4 && g->stormbell_phase > 0 && g->stormbell_phase < 3) {
+        Enemy guards[3];
+        stormbell_capture(g, guards);
+        int left = g->stormbell_phase == 1 ? guards[0].active + guards[1].active : guards[2].active;
+        snprintf(text, sizeof(text), "STORMBELL | WAVE %d / 2 | %s REMAINING: %d | RETREAT IS SAFE",
+            g->stormbell_phase, g->stormbell_phase == 1 ? "RAIDERS" : "STORMCALLERS", left);
+        box(r, 52, 32, r->screen_w - 260, 20, (SDL_Color){21, 32, 36, 230});
+        renderer_draw_text(r, text, 60, 35, (SDL_Color){225, 210, 158, 255}, r->font_tiny);
+    }
+}
+
+static void bell_label(Renderer *r, const Viewport *v, const char *text, int x, int y, int above) {
+    int width = 0;
+    TTF_SizeText(r->font_tiny, text, &width, NULL);
+    int px = viewport_to_screen_x(v, x) * TILE_SIZE + (TILE_SIZE - width) / 2;
+    int py = viewport_to_screen_y(v, y) * TILE_SIZE - above;
+    renderer_draw_text(r, text, px + 1, py + 1, (SDL_Color){21, 32, 36, 255}, r->font_tiny);
+    renderer_draw_text(r, text, px, py, (SDL_Color){225, 210, 158, 255}, r->font_tiny);
+}
+
+void stormbell_draw_details(Renderer *r, const GameState *g, const Viewport *v) {
+    if (g->location == LOCATION_DAWNMERE && g->map.tiles[SEREN_Y][SEREN_X] == TILE_NPC_SEREN && viewport_is_visible(v, SEREN_X, SEREN_Y)) {
+        bell_label(r, v, "WATCHKEEPER SEREN", SEREN_X, SEREN_Y, 16);
+        return;
+    }
+    if (g->location != LOCATION_STORMWATCH || (g->level != 3 && g->level != 4)) {
+        return;
+    }
+    int clapper = g->level == 3;
+    int x = clapper ? STORMBELL_CLAPPER_X : STORMBELL_X;
+    int y = clapper ? STORMBELL_CLAPPER_Y : STORMBELL_Y;
+    if (!viewport_is_visible(v, x, y) || !map_is_explored(&g->map, x, y) || (clapper && (g->stormbell_progress & STORMBELL_CLAPPER))) {
+        return;
+    }
+    SDL_Rect src = {clapper ? 48 : g->stormbell_progress & STORMBELL_FITTED ? 24 : 0, 0, 24, 40};
+    SDL_Rect dst = {viewport_to_screen_x(v, x) * TILE_SIZE, viewport_to_screen_y(v, y) * TILE_SIZE - 16, 24, 40};
+    if (r->stormbell_texture) {
+        SDL_RenderCopy(r->sdl, r->stormbell_texture, &src, &dst);
+    }
+    bell_label(r, v, clapper ? "BELL CLAPPER" : g->stormbell_phase == 3 ? "RESTORED STORMBELL" : "STORMBELL", x, y, clapper ? 14 : 31);
 }

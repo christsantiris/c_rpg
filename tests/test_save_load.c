@@ -2929,7 +2929,7 @@ static void test_retired_enemy_migration(void) {
         save_game(loaded, slot) && load_game(original, slot) && original->enemies[0].type == ENEMY_GOBLIN_SCOUT &&
         original->enemies[3].type == ENEMY_LICH_KING && !original->enemies[3].active &&
         original->level_cache[DUNGEON_DEPTH - 1].enemies[3].hp == 0);
-    ASSERT("surviving low and high enemy IDs retain their serialized values", ENEMY_ZOMBIE == 2 && ENEMY_GIANT == 5 &&
+    ASSERT("surviving low and high enemy IDs retain their serialized values", ENEMY_ZOMBIE == 2 && ENEMY_STONE_GIANT == 5 &&
         ENEMY_LICH_KING == 7 && ENEMY_RED_DRAGON == 9 && ENEMY_CRYPT_BAT == 11 &&
         ENEMY_ROYAL_GUARD == 100 && ENEMY_LIZARDFOLK_SCOUT == 107 && ENEMY_IRON_SENTINEL == 113 &&
         ENEMY_FROST_KRAKEN == 62 && ENEMY_GRAVE_MARSHAL == 86 && ENEMY_LIZARDFOLK_SCALEGUARD == 111 &&
