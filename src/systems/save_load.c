@@ -27,6 +27,7 @@
 #include "../game/town_life.h"
 #include "../game/approach.h"
 #include "../game/elderwood.h"
+#include "../game/heartseed.h"
 #include "../game/mangrove.h"
 #include "../game/stormwatch.h"
 #include "../game/coastal_travel.h"
@@ -1059,6 +1060,30 @@ static int elderwood_load(const cJSON *root, GameState *g, int version) {
     return 1;
 }
 
+static int load_heartseed(const cJSON *root, GameState *g, int version) {
+    int *values[] = {&g->heartseed_quest_state, &g->heartseed_progress, &g->heartseed_bindings,
+        &g->heartseed_sites, &g->heartseed_guardian};
+    const char *names[] = {"heartseed_quest_state", "heartseed_progress", "heartseed_bindings",
+        "heartseed_sites", "heartseed_guardian"};
+    const int limits[] = {3, 7, 7, 3, 3};
+    for (int i = 0; i < 5; i++) {
+        *values[i] = 0;
+        if (version < 204) {
+            continue;
+        }
+        const cJSON *value = cJSON_GetObjectItem(root, names[i]);
+        if (!cJSON_IsNumber(value) || value->valuedouble != value->valueint || value->valueint < 0 || value->valueint > limits[i]) {
+            return 0;
+        }
+        *values[i] = value->valueint;
+    }
+    return !!(g->heartseed_progress & HEARTSEED_BINDINGS) == (g->heartseed_bindings == 7) &&
+        (!(g->heartseed_progress & HEARTSEED_TAKEN) || (g->heartseed_bindings == 7 && g->heartseed_guardian >= HEARTSEED_SLAIN)) &&
+        (g->heartseed_quest_state != 1 || g->heartseed_progress != 7) &&
+        (g->heartseed_quest_state < 2 || g->heartseed_progress == 7) &&
+        (g->heartseed_guardian != HEARTSEED_FREED || g->heartseed_bindings == 7);
+}
+
 static int load_jail_equipment(const cJSON *root, GameState *g, int version) {
     memset(g->jail_gear, 0, sizeof(g->jail_gear));
     memset(g->jail_guards, 0, sizeof(g->jail_guards));
@@ -1574,7 +1599,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 203);
+    cJSON_AddNumberToObject(root, "save_version", 204);
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
     cJSON_AddItemToObject(root, "northroad", serialize_northroad(g));
@@ -1722,6 +1747,11 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "debug_passages_unlocked", g->debug_passages_unlocked);
     cJSON_AddNumberToObject(root, "max_elderwood_level_reached", g->max_elderwood_level_reached);
     cJSON_AddNumberToObject(root, "elderwood_defeated", g->elderwood_defeated);
+    cJSON_AddNumberToObject(root, "heartseed_quest_state", g->heartseed_quest_state);
+    cJSON_AddNumberToObject(root, "heartseed_progress", g->heartseed_progress);
+    cJSON_AddNumberToObject(root, "heartseed_bindings", g->heartseed_bindings);
+    cJSON_AddNumberToObject(root, "heartseed_sites", g->heartseed_sites);
+    cJSON_AddNumberToObject(root, "heartseed_guardian", g->heartseed_guardian);
     cJSON_AddNumberToObject(root, "elderwood_entry_town", g->elderwood_entry_town);
     cJSON_AddNumberToObject(root, "catacombs_entry_town", g->catacombs_entry_town);
     cJSON_AddNumberToObject(root, "northern_portal_town", g->northern_portal_town);
@@ -3752,7 +3782,7 @@ int load_game(GameState *g, int slot) {
         cJSON_Delete(root);
         return 0;
     }
-    if (!elderwood_load(root, g, save_version)) {
+    if (!elderwood_load(root, g, save_version) || !load_heartseed(root, g, save_version)) {
         cJSON_Delete(root);
         return 0;
     }
@@ -6414,6 +6444,7 @@ int load_game(GameState *g, int slot) {
     if (save_version < 203) {
         giants_migrate_geography(g);
     }
+    heartseed_migrate(g);
     game_refresh_debug_passages(g);
     cJSON_Delete(root);
     return 1;

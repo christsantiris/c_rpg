@@ -1531,7 +1531,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         stormwatch_draw_tile(r, g, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay >= TILE_MANGROVE_MUD && underlay <= TILE_MANGROVE_DECK) {
         mangrove_draw_tile(r, g, screen_x, screen_y, map_x, map_y, underlay);
-    } else if (underlay >= TILE_ELDERWOOD_FLOOR && underlay <= TILE_ELDERWOOD_LOG) {
+    } else if ((underlay >= TILE_ELDERWOOD_FLOOR && underlay <= TILE_ELDERWOOD_LOG) ||
+        (underlay >= TILE_HEARTSEED_ORDERS && underlay <= TILE_HEARTSEED_ALTAR)) {
         draw_elderwood_tile(r, screen_x, screen_y, map_x, map_y, underlay);
     } else if (wilds_tile(underlay)) {
         draw_wilds_tile(r, g, screen_x, screen_y, map_x, map_y, underlay);
@@ -2322,6 +2323,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_ELDERWOOD_EXIT:
                 case TILE_ELDERWOOD_BRAMBLE:
                 case TILE_ELDERWOOD_LOG:
+                case TILE_HEARTSEED_ORDERS:
+                case TILE_HEARTSEED_STAKE:
+                case TILE_HEARTSEED_CUT_STAKE:
+                case TILE_HEARTSEED_ALTAR:
                     draw_elderwood_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
                     break;
                 case TILE_NORTH_ELDERWOOD:
@@ -2801,6 +2806,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     town_life_draw_resident(r, sx, sy, style);
                     break;
                 }
+                case TILE_NPC_TAMSIN:
+                    draw_town_floor(r, sx, sy);
+                    npc_draw(r, sx, sy, NPC_ART_TAMSIN, 0);
+                    break;
                 case TILE_NPC_ELOWEN: draw_elowen(r, sx, sy); break;
                 case TILE_NPC_DAIN:
                     draw_town_floor(r, sx, sy);
@@ -3349,6 +3358,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_sun_guardian_warnings(r, g, v);
     draw_red_dragon_warnings(r, g, v);
     draw_elderwood_warnings(r, g, v);
+    draw_heartseed_details(r, g, v);
     stormwatch_draw_warnings(r, g, v);
     giants_draw_details(r, g, v);
     ironfang_draw_details(r, g, v);

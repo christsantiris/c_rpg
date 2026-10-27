@@ -1,6 +1,7 @@
 #include "elderwood.h"
 #include "crownroad_north.h"
 #include "approach.h"
+#include "heartseed.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -211,6 +212,7 @@ static void load_floor(GameState *g) {
         g->max_elderwood_level_reached = g->level;
     }
     g->floor_item_count = 0;
+    heartseed_prepare(g);
 }
 
 void elderwood_enter(GameState *g) {
@@ -274,6 +276,9 @@ int elderwood_travel(GameState *g, int x, int y) {
 }
 
 int elderwood_interact(GameState *g) {
+    if (heartseed_interact(g)) {
+        return 1;
+    }
     if (g->location != LOCATION_ELDERWOOD) {
         return 0;
     }
@@ -410,6 +415,9 @@ int elderwood_tick(GameState *g, Enemy *enemy, int *damage) {
     int dx = g->player.x - enemy->x;
     int dy = g->player.y - enemy->y;
     int distance = abs(dx) + abs(dy);
+    if (heartseed_is_guardian(g, enemy) && distance > 6) {
+        return 1;
+    }
     if (distance > 12) {
         return 1;
     }

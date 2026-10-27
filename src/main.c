@@ -19,6 +19,7 @@ EM_ASYNC_JS(void, browser_next_frame, (void), {
 #include "game/coastal_travel.h"
 #include "game/stormwatch.h"
 #include "game/jail.h"
+#include "game/heartseed.h"
 #include "game/town_life.h"
 #include "game/restoration.h"
 #include "game/approach.h"
@@ -1055,7 +1056,7 @@ int main(int argc, char **argv) {
                                 if (restoration_talk(&game) || town_life_talk(&game, 0)) {
                                     break;
                                 }
-                                if (jail_talk_nearby(&game)) {
+                                if (heartseed_talk(&game) || jail_talk_nearby(&game)) {
                                     break;
                                 }
                                 if (game_workshop_near_smith(&game)) {

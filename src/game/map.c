@@ -3,6 +3,7 @@
 #include "landscapes.h"
 #include "jail.h"
 #include "town_life.h"
+#include "heartseed.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -462,7 +463,8 @@ int map_is_walkable(const Map *m, int x, int y) {
     if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
         return 0;
     }
-    return m->tiles[y][x] != TILE_CROWN_BARRICADE && m->tiles[y][x] != TILE_CROWN_SUPPLIES &&
+    return m->tiles[y][x] != TILE_NPC_TAMSIN &&
+        m->tiles[y][x] != TILE_CROWN_BARRICADE && m->tiles[y][x] != TILE_CROWN_SUPPLIES &&
         m->tiles[y][x] != TILE_IRON_BUNK && m->tiles[y][x] != TILE_IRON_FORGE && m->tiles[y][x] != TILE_IRON_WALL && m->tiles[y][x] != TILE_IRON_WATER &&
         m->tiles[y][x] != TILE_IRON_TRESTLE && m->tiles[y][x] != TILE_IRON_BROKEN && m->tiles[y][x] != TILE_IRON_CRACK &&
         m->tiles[y][x] != TILE_IRON_LAMP && m->tiles[y][x] != TILE_IRON_LAMP_LIT && m->tiles[y][x] != TILE_IRON_SWITCH &&
@@ -1586,6 +1588,7 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     m->tiles[TOWN_CAIN_Y][TOWN_CAIN_X] = TILE_NPC_CAIN;
     m->tiles[TOWN_BRAM_Y][TOWN_BRAM_X] = TILE_NPC_BRAM;
     m->tiles[TOWN_ALDRIC_Y][TOWN_ALDRIC_X] = TILE_NPC_ALDRIC;
+    m->tiles[TAMSIN_Y][TAMSIN_X] = TILE_NPC_TAMSIN;
     town_life_place(m, LOCATION_TOWN);
 
     // Spawn at the central crossroads so the south road remains unobstructed

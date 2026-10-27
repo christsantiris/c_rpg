@@ -273,6 +273,11 @@ typedef struct {
     ElderwoodCache elderwood_cache[ELDERWOOD_DEPTH];
     int max_elderwood_level_reached;
     int elderwood_defeated;
+    int heartseed_quest_state; // 0 unaccepted, 1 active, 2 ready, 3 rewarded.
+    int heartseed_progress; // Orders, all bindings cut, and seed recovered.
+    int heartseed_bindings;
+    int heartseed_sites; // Stage 2 camp and stage 4 grove have been populated.
+    int heartseed_guardian; // Unplaced, bound, slain, or freed.
     Item retired_coast_items[RETIRED_LOOT_STAGES * MAX_FLOOR_ITEMS];
     int retired_coast_item_count; // Migration overflow, reclaimed as pack slots become free.
     Location last_town_visited;
