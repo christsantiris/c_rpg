@@ -139,6 +139,8 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_HIGH_PASS_ENTRANCE ||
                         tile == TILE_HIGH_PASS_EXIT ||
                         tile == TILE_TUNNEL_EXIT || tile == TILE_JAIL_HATCH ||
+                        tile == TILE_NPC_TAMSIN || tile == TILE_HEARTSEED_ORDERS ||
+                        tile == TILE_HEARTSEED_STAKE || tile == TILE_HEARTSEED_ALTAR ||
                         tile == TILE_NPC_ELOWEN || tile == TILE_NPC_DAIN ||
                         tile == TILE_NPC_ALDER || tile == TILE_NPC_MARA ||
                         tile == TILE_NPC_VEYRA || tile == TILE_WATCHFIRE_COLD || tile == TILE_WATCHFIRE_LIT ||

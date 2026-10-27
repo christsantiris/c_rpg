@@ -38,6 +38,30 @@ of wolves. Defeating it awards 180 gold and 2,000 score and permanently opens th
 Elderwood section of the road. The boss journal records the victory separately
 from the older regions' integer boss mask.
 
+## The Stolen Heartseed
+
+Forester Tamsin stands beside Oakhaven's northern road. Talk with her and accept
+**The Stolen Heartseed**. Search the Dark Elf camp in stage 2's western clearing
+for orders identifying the **golden-root grove in stage 4's eastern clearing**.
+
+Use **Interact** (A by default) beside each of the grove's three violet-bound
+stakes. Each cut consumes an action while the guardian and Dark Elves remain
+dangerous. Cutting the last binding frees the bound Treefolk, cancels its warned
+attack, and awards its combat XP once as it leaves the grove. Defeating the
+guardian first also works: cut the remaining bindings to release the heartseed,
+without receiving a second guardian reward. Other Treefolk remain hostile.
+
+Recover the seed from its stone resting place and bring it and the orders to
+Tamsin for **120 gold and 800 score**, paid once. Quest discoveries are tracked
+outside the pack, including discoveries made before acceptance. Neither this
+quest nor its reward changes Elderthorn's road unlock.
+
+Save version **204** preserves the orders, each severed binding, recovered seed,
+guardian outcome, encounter placement, and paid reward. Existing saves gain the
+NPC and quest locations while retaining their forest maps, cut paths, wounds,
+loot, exploration, portals, and earned victories. Cached quest stages gain their
+sites when next entered. See the [quest reference](../quests.md).
+
 ## Return portals and saves
 
 Return to Town transports the player to the **last town actually entered**,

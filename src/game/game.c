@@ -7,6 +7,7 @@
 #include "coastal_travel.h"
 #include "catacombs.h"
 #include "elderwood.h"
+#include "heartseed.h"
 #include "castle.h"
 #include "lich.h"
 #include "necromancer.h"
@@ -1579,6 +1580,11 @@ void game_init(GameState *g) {
     memset(g->elderwood_cache, 0, sizeof(g->elderwood_cache));
     g->max_elderwood_level_reached = 1;
     g->elderwood_defeated = 0;
+    g->heartseed_quest_state = 0;
+    g->heartseed_progress = 0;
+    g->heartseed_bindings = 0;
+    g->heartseed_sites = 0;
+    g->heartseed_guardian = HEARTSEED_UNPLACED;
     g->retired_coast_item_count = 0;
     g->elderwood_entry_town = LOCATION_TOWN;
     g->catacombs_entry_town = LOCATION_CASTLE;
@@ -6322,6 +6328,8 @@ typedef struct {
 } QuestOffer;
 
 static const QuestOffer quest_offers[] = {
+    {"Forester Tamsin", LOCATION_TOWN, offsetof(GameState, heartseed_quest_state), 0,
+        "Assigned: The Stolen Heartseed. Find Dark Elf orders in Elderwood 2 and the bound grove in Elderwood 4."},
     {"Huntmaster Selene", LOCATION_GUILD, offsetof(GameState, hunt_quest_state), 0, "Assigned: The Three Great Hunts. See your quest journal."},
     {"Marshal Veyra", LOCATION_TOWN_HALL, offsetof(GameState, watchfire_quest_state), 0, "Assigned: Watchfires of Ridgeshire. See your quest journal."},
     {"Elowen", LOCATION_TAVERN, offsetof(GameState, elowen_quest_state), 0, "Quest assigned: The Broken Seals."},
@@ -6382,7 +6390,9 @@ int game_handle_quest_offer_key(GameState *g, int key, int repeat) {
     }
     int *state = (int *)((char *)g + offer->state_offset);
     *state = offer->offered_state + 1;
-    if (state == &g->elowen_quest_state) {
+    if (state == &g->heartseed_quest_state) {
+        heartseed_accept(g);
+    } else if (state == &g->elowen_quest_state) {
         g->elowen_seals_restored = 0;
         prepare_quest_expedition(g, LOCATION_DUNGEON);
     } else if (state == &g->dain_quest_state) {

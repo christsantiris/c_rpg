@@ -9,6 +9,7 @@
 #include "stormwatch.h"
 #include "catacombs.h"
 #include "elderwood.h"
+#include "heartseed.h"
 #include "castle.h"
 #include "lich.h"
 #include "necromancer.h"
@@ -325,6 +326,7 @@ static int melee_gold_bonus(const GameState *g) {
 }
 
 static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
+    heartseed_record_death(g, enemy);
     if (enemy->type == ENEMY_LAST_JARL) {
         giants_defeat(g);
         return;
@@ -963,6 +965,9 @@ static int mountain_obstacle(TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (heartseed_hint(g)) {
+        return 1;
+    }
     if (northroad_has_interaction(g)) {
         return 1;
     }

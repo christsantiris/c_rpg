@@ -291,7 +291,8 @@ static const NpcLook npc_looks[NPC_ART_COUNT] = {
     [NPC_ART_ALDRIC] = {NPC_BEARD, NPC_COAT, RGB(64, 91, 119), RGB(64, 91, 119), RGB(167, 163, 153), RGB(196, 146, 106), RGB(192, 157, 87)},
     [NPC_ART_TESSA] = {NPC_HAIR, NPC_APRON, RGB(65, 103, 66), RGB(139, 106, 64), RGB(120, 69, 37), RGB(203, 156, 118), RGB(191, 202, 142)},
     [NPC_ART_LYSA] = {NPC_HAIR, NPC_ROBE, RGB(217, 222, 200), RGB(217, 222, 200), RGB(83, 51, 36), RGB(208, 164, 126), RGB(73, 150, 110)},
-    [NPC_ART_MORWEN] = {NPC_HAT, NPC_ROBE, RGB(72, 42, 100), RGB(72, 42, 100), RGB(42, 32, 30), RGB(196, 152, 119), RGB(120, 195, 137)}
+    [NPC_ART_MORWEN] = {NPC_HAT, NPC_ROBE, RGB(72, 42, 100), RGB(72, 42, 100), RGB(42, 32, 30), RGB(196, 152, 119), RGB(120, 195, 137)},
+    [NPC_ART_TAMSIN] = {NPC_HOOD, NPC_COAT, RGB(71, 101, 48), RGB(89, 69, 43), RGB(112, 62, 33), RGB(202, 153, 112), RGB(210, 185, 100)}
 };
 #undef RGB
 
@@ -467,6 +468,7 @@ static void npc_accessories(NpcCanvas *c, NpcArt art) {
             npc_prop(c, 17, 16, "ooooo/oLLlo/oLrlo/olllo/ooooo");
             npc_prop(c, 18, 8, "N/M/M/L/L/L/FF/L/L/L/L/L/L/L/oo");
             break;
+        case NPC_ART_TAMSIN:
         case NPC_ART_SELENE:
             npc_prop(c, 2, 4, "N.N/N.N/LoL/LlL/LlL/LlL/LlL/olo/olo/ooo");
             npc_prop(c, 18, 5, "L/LL/L.L/L..L/L..L/L...L/L...L/L...L/L..FF/L...L/L...L/L..L/L..L/L.L/LL/L");

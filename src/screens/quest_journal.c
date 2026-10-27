@@ -2,6 +2,7 @@
 #include <SDL2/SDL.h>
 #include "../game/catacombs.h"
 #include "../game/jail.h"
+#include "../game/heartseed.h"
 
 typedef struct {
     const char *title;
@@ -17,7 +18,7 @@ typedef struct {
     const char *objective_areas[4];
 } QuestDefinition;
 
-static const QuestDefinition quest_definitions[17] = {
+static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
     {
         "The Broken Seals", "Elowen",
         "Restore three guarded seals in Oakhaven's dungeon.",
@@ -145,10 +146,20 @@ static const QuestDefinition quest_definitions[17] = {
         "Defeat its Royal Guards; reclaim every item from the evidence chest.",
         {"Recover confiscated weapons, armor and shields"},
         "Royal Jail", {1, 0, 0, 0}, 0, 0, "Your confiscated equipment"
+    },
+    {
+        "The Stolen Heartseed", "Forester Tamsin",
+        "Read the orders; find stage 4's eastern golden-root grove.",
+        "Cut three bindings, recover the seed; return to Tamsin in Oakhaven.",
+        {"Read Dark Elf orders", "Cut all three bindings", "Recover the heartseed"},
+        "Elderwood Forest", {2, 4, 4, 0}, HEARTSEED_REWARD_GOLD, HEARTSEED_REWARD_SCORE
     }
 };
 
 static int quest_state(const GameState *g, int quest) {
+    if (quest == 17) {
+        return g->heartseed_quest_state;
+    }
     if (quest == 16) {
         return g->jail_gear_state;
     }
@@ -202,6 +213,9 @@ static int quest_state(const GameState *g, int quest) {
 }
 
 static int quest_progress(const GameState *g, int quest) {
+    if (quest == 17) {
+        return g->heartseed_progress;
+    }
     if (quest == 16) {
         return g->jail_gear_state == 3;
     }
@@ -271,7 +285,7 @@ int quest_journal_count(const GameState *g, QuestJournalTab tab) {
         return JOURNAL_BOSS_COUNT;
     }
     int count = 0;
-    for (int quest = 0; quest < 17; quest++) {
+    for (int quest = 0; quest < JOURNAL_QUEST_COUNT; quest++) {
         if (quest_in_tab(quest_state(g, quest), tab)) {
             count++;
         }
@@ -309,7 +323,7 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
         return 0;
     }
     int visible_index = 0;
-    for (int quest = 0; quest < 17; quest++) {
+    for (int quest = 0; quest < JOURNAL_QUEST_COUNT; quest++) {
         int state = quest_state(g, quest);
         if (!quest_in_tab(state, tab)) {
             continue;

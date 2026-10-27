@@ -6,4 +6,5 @@
 void draw_elderwood_tile(Renderer *r, int sx, int sy, int x, int y, TileType tile);
 void draw_northern_road(Renderer *r, const GameState *g, const Viewport *v);
 void draw_elderwood_warnings(Renderer *r, const GameState *g, const Viewport *v);
+void draw_heartseed_details(Renderer *r, const GameState *g, const Viewport *v);
 #endif

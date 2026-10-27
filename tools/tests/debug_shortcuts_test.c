@@ -19,6 +19,64 @@
 #include "../../src/game/mangrove.h"
 #include "../../src/game/coastal_travel.h"
 
+static void test_heartseed_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    game_init(g);
+    g->player.x = TAMSIN_X + 1;
+    g->player.y = TAMSIN_Y;
+    Viewport view;
+    int width = (r->screen_w - INFO_PANEL_W) / TILE_SIZE;
+    viewport_init(&view, width, r->tiles_y, TOWN_W, TOWN_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/heartseed-tamsin-town.bmp") == 0);
+    assert(heartseed_talk(g) && game_quest_offer_active(g));
+    assert(game_handle_quest_offer_key(g, SDL_SCANCODE_Y, 0));
+    g->dialogue_active = 0;
+    elderwood_enter(g);
+    game_descend(g);
+    g->player.x = HEARTSEED_ORDERS_X + 1;
+    g->player.y = HEARTSEED_ORDERS_Y;
+    viewport_init(&view, width, r->tiles_y, ELDERWOOD_W, ELDERWOOD_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/heartseed-orders-camp.bmp") == 0);
+    assert(heartseed_interact(g));
+    game_descend(g);
+    game_descend(g);
+    g->player.x = HEARTSEED_X;
+    g->player.y = HEARTSEED_Y + 2;
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/heartseed-bound-grove.bmp") == 0);
+    for (int i = 0; i < 3; i++) {
+        g->player.x = heartseed_stakes[i][0];
+        g->player.y = heartseed_stakes[i][1] + 1;
+        assert(heartseed_interact(g));
+    }
+    assert(g->heartseed_guardian == HEARTSEED_FREED);
+    g->player.x = HEARTSEED_X;
+    g->player.y = HEARTSEED_Y + 1;
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/heartseed-freed-grove.bmp") == 0);
+    assert(heartseed_interact(g) && g->heartseed_quest_state == 2);
+    QuestJournalScreen journal;
+    quest_journal_init(&journal);
+    renderer_begin_frame(r);
+    quest_journal_draw(r, g, &journal);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/heartseed-journal.bmp") == 0);
+    puts("PASS: Heartseed NPC, orders, root arch, bindings, guardian release and quest journal render in the native game renderer.");
+}
+
 static void visit_exterior_town(GameState *g) {
     assert(g->location == LOCATION_TOWN_ROAD);
     Location town = g->road_town;
@@ -856,6 +914,7 @@ int main(void) {
     test_ironfang_renderer(&renderer, game, surface);
     test_northroad_renderer(&renderer, game, surface);
     test_giants_renderer(&renderer, game, surface);
+    test_heartseed_renderer(&renderer, game, surface);
     free(game);
     renderer_free(&renderer);
     SDL_DestroyRenderer(sdl);
