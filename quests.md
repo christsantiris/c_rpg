@@ -2,10 +2,10 @@
 
 Last checked against the game on **2026-10-27**.
 
-The current implementation has **20 journal quests**. All five regional designs
-below are approved. **The Stolen Heartseed, The Missing Spice Skiff, and The Silent Stormbell are
-implemented**; the remaining two will be implemented individually, with a
-pause between features for source control review and a manual commit.
+The current implementation has **21 journal quests**. All five regional designs
+below are approved. **The Stolen Heartseed, The Missing Spice Skiff, The Silent Stormbell, and Break
+the War Machine are implemented**. Giant's Crown remains to be implemented,
+with a pause for source control review and a manual commit between features.
 
 ## Current quest coverage
 
@@ -31,7 +31,7 @@ pause between features for source control review and a manual commit.
 | The Stolen Heartseed | Forester Tamsin | Oakhaven — Town center, beside the north road | Elderwood Forest | — | — |
 | The Missing Spice Skiff | Spice Merchant Corvin | Dawnmere — Spice Merchant shop | Saltwind Marsh | — | — |
 | The Silent Stormbell | Watchkeeper Seren | Dawnmere — Town center, beside the east road | Stormwatch Headland | — | — |
-| **No implemented quest — design approved** | — | — | Ironfang Mines | — | — |
+| Break the War Machine | Marshal Veyra | Ridgeshire — Town Hall | Ironfang Mines | — | — |
 | **No implemented quest — Giant's Crown approved** | — | — | Giant's Peaks | — | — |
 | **No dedicated quest** | — | — | Crown Road East | — | — |
 | **No dedicated quest** | — | — | Crown Road West | — | — |
@@ -61,7 +61,7 @@ Corvin, Marshal Veyra, Tamsin, and Seren exist. Edda will be a new NPC.
 | The Stolen Heartseed | Implemented | Elderwood Forest | Forester Tamsin — existing | Oakhaven — Town center, near the north road | Follow a Dark Elf trail and free a grove from root bindings | 120 gold, 800 score |
 | The Missing Spice Skiff | Implemented | Saltwind Marsh | Spice Merchant Corvin — existing | Dawnmere — Spice Merchant shop | Follow a wreck's cargo trail and recover spices from a remote island by skiff | 150 gold, 1,000 score |
 | The Silent Stormbell | Implemented | Stormwatch Headland | Watchkeeper Seren — existing | Dawnmere — Town center, near the east road | Restore a stormbell and defend its courtyard using wind and shutters | 180 gold, 1,200 score |
-| Break the War Machine | Approved | Ironfang Mines | Marshal Veyra — existing | Ridgeshire — Town Hall | Destroy a goblin weapons shipment and defeat the Goblin Mine Boss | 160 gold, 1,000 score |
+| Break the War Machine | Implemented | Ironfang Mines | Marshal Veyra — existing | Ridgeshire — Town Hall | Destroy a goblin weapons shipment and defeat the Goblin Mine Boss | 160 gold, 1,000 score |
 | Giant's Crown | Approved | Giant's Peaks | Antiquarian Edda — new | Rosemoor — Adventurer's Guild | Open a royal vault in the giant ruins and reclaim the Last Jarl's crown | 220 gold, 1,600 score, equipment reward to be designed |
 
 Reward amounts are balancing targets, separate from the existing boss rewards.
@@ -201,7 +201,8 @@ Implementation: [quest logic](src/game/stormbell.c),
 
 ### Ironfang Mines — Break the War Machine
 
-**Status:** Approved design; not implemented.
+**Status:** Implemented. Save version 207 preserves acceptance, the three
+quest discoveries, and the one-time bounty.
 
 **Premise:** Ironfang's goblins are forging swords, spearheads, and armor for
 their soldiers on Crown Road North. Marshal Veyra asks the player to destroy
@@ -223,10 +224,42 @@ enemies remain off the isolated platform. Sabotage preserves the cart's return
 route and the mine's normal paths.
 
 **Scope:** Reuse the cart, turnout, repairs, trestle, and existing Goblin roster.
-The shipment orders, loading winch, weapons display, and command seal would be
-new quest objects. This is a local sabotage mission; Crown Road North retains
+The shipment orders, loading winch, suspended weapons, and command coffer are
+quest objects independent of ordinary caches. This is a local sabotage mission; Crown Road North retains
 its existing enemy population and replay rules. An existing Mine Boss victory
 counts toward the quest, with the command seal recoverable from his gallery.
+
+**Assignment:** Talk to Marshal Veyra, then press **2** for Break the War Machine.
+Press **1** to return to Watchfires of Ridgeshire. Each offer uses the normal
+Y/N acceptance. Both quests can be active together and retain their own progress
+and rewards; completing one is not a prerequisite for the other.
+
+**Interaction:** Orders sit on a desk in stage 2's northwest side office. Stage
+4's winch is on the isolated supply platform, beside its existing salvage
+cache. Set the junction east, repair the eastern rail, ride over the flooded
+trestle, and disembark. Interact releases the winch: weapons crates fall into
+the water and leave an empty gantry. The drop and splash are visual feedback;
+standing still does not give enemies additional turns. The stockpile stays
+destroyed, and the cart's return route stays usable. An already searched cache
+does not remove the winch. Retrieve the command seal from the coffer in the
+stage 5 boss gallery after the Mine Boss's defeat.
+
+**Persistence and reward:** Discoveries use no inventory slots and retain credit
+even before acceptance. Saves, portals, backtracking, and new expeditions
+preserve the discoveries and spent stockpile. Ordinary enemies retain normal
+replay behavior, while the existing Mine Boss victory remains permanent.
+Veyra awards **160 gold and 1,000 score once**, separately from the boss reward.
+The sabotage does not change Crown Road North's enemy population.
+
+**Compatibility:** Quest props overlay existing floors and water. Older saves
+keep their terrain, exploration, carts, rails, lamps, switch settings, wounds,
+loot, portals, boss victories, and earlier quests. The command coffer can be
+searched after an existing Mine Boss victory. Quest interactions remain usable
+when a dropped item occupies an object tile, preserving the item and underlay.
+
+Implementation: [quest logic](src/game/war_machine.c),
+[save support](src/systems/save_load.c),
+[native art and renderer review](docs/art-sources/war-machine/README.md).
 
 ### Giant's Peaks — Giant's Crown
 

@@ -88,3 +88,29 @@ warning, and boss victory. Version 199 and older saves gain the eastern
 Ridgeshire connection without regenerating existing adventures or resetting
 character progress. Debug shortcuts open the final departure and repair the
 optional track and rock obstruction without granting the boss victory.
+
+## Break the War Machine
+
+Talk to Marshal Veyra in Ridgeshire's Town Hall and press **2** to select this
+quest, then Y to accept. **1** returns to her Watchfires conversation. Both
+quests can be active together and retain separate progress and rewards.
+
+Read the shipment orders on the desk in stage 2's northwest side office. In
+stage 4, repair the eastern rail and set the junction east. Ride the minecart
+over the flooded trestle to the isolated supply platform, then disembark and
+operate the loading winch beside the ordinary salvage cache. Suspended weapons
+crates fall into the flooded shaft, leaving the gantry empty. The cart's return
+route remains intact; searching the ordinary cache earlier does not affect the
+quest. The falling crates and splash are cosmetic and never advance enemies
+while the player stands still.
+
+Defeat the Goblin Mine Boss on stage 5 and recover his command seal from the
+coffer in his gallery. An existing victory counts. Return to Veyra and select
+the Ironfang topic for **160 gold and 1,000 score**, once, separately from the
+boss reward. Discoveries need no pack slots and retain credit before acceptance.
+
+Save version **207** adds the quest without regenerating old mines or changing
+cart position, track repairs, lamps, switches, explored terrain, wounded actors,
+loot, portals, previous victories, or other quests. Sabotage persists through
+backtracking, portals, and fresh expeditions. Normal enemies continue to respawn
+on physical re-entry. Crown Road North retains its existing encounters.

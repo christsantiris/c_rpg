@@ -264,6 +264,8 @@ typedef struct {
     int giants_crown_defeated;
     IronfangStage ironfang[IRON_DEPTH];
     int ironfang_defeated;
+    int war_machine_quest_state; // 0 unaccepted, 1 active, 2 ready, 3 rewarded.
+    int war_machine_progress; // Shipment orders, weapons sabotage, command seal.
     StormwatchStage stormwatch[STORM_DEPTH];
     int stormwatch_defeated;
     int stormbell_quest_state; // 0 unaccepted, 1 active, 2 ready, 3 rewarded.

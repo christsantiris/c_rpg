@@ -5,6 +5,7 @@
 #include "../game/heartseed.h"
 #include "../game/spice_skiff.h"
 #include "../game/stormbell.h"
+#include "../game/war_machine.h"
 
 typedef struct {
     const char *title;
@@ -169,10 +170,20 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
         "Defeat two Raiders, then the Stormcaller; return to Seren in Dawnmere.",
         {"Recover the bell clapper", "Fit the clapper and restore the bell", "Defeat the bell's harpy defenders"},
         "Stormwatch Headland", {3, 4, 4, 0}, STORMBELL_REWARD_GOLD, STORMBELL_REWARD_SCORE
+    },
+    {
+        "Break the War Machine", "Marshal Veyra",
+        "Read stage 2's orders; ride to stage 4's supply platform.",
+        "Sink the weapons; take the Mine Boss's seal to Veyra in Ridgeshire.",
+        {"Recover shipment orders", "Dump the suspended weapons", "Recover the Mine Boss's command seal"},
+        "Ironfang Mines", {2, 4, 5, 0}, WAR_REWARD_GOLD, WAR_REWARD_SCORE
     }
 };
 
 static int quest_state(const GameState *g, int quest) {
+    if (quest == 20) {
+        return g->war_machine_quest_state;
+    }
     if (quest == 19) {
         return g->stormbell_quest_state;
     }
@@ -235,6 +246,9 @@ static int quest_state(const GameState *g, int quest) {
 }
 
 static int quest_progress(const GameState *g, int quest) {
+    if (quest == 20) {
+        return g->war_machine_progress;
+    }
     if (quest == 19) {
         return g->stormbell_progress;
     }

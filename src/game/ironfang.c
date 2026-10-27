@@ -1,4 +1,5 @@
 #include "ironfang.h"
+#include "war_machine.h"
 #include "approach.h"
 #include "town_road.h"
 #include <stdlib.h>
@@ -494,6 +495,9 @@ const char *ironfang_hint(const GameState *g) {
     if (state->aboard) {
         return "A: DISEMBARK | ARROWS: RIDE TRACK";
     }
+    if (war_machine_hint(g)) {
+        return war_machine_hint(g);
+    }
     int x;
     int y;
     switch (nearby(g, &x, &y)) {
@@ -531,6 +535,9 @@ int ironfang_interact(GameState *g) {
     }
     int x;
     int y;
+    if (war_machine_interact(g)) {
+        return 1;
+    }
     TileType tile = nearby(g, &x, &y);
     if (tile == TILE_IRON_SWITCH) {
         state->route = !state->route;
