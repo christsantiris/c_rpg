@@ -3,6 +3,7 @@
 #include "../game/spice_skiff.h"
 #include "../game/stormbell.h"
 #include "../game/war_machine.h"
+#include "../game/crown_quest.h"
 
 // Minimap renders as a corner overlay on the game viewport.
 // Each tile is 1x1px, scaled 1:2 (100x50px total).
@@ -286,7 +287,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
     }
     int quest_x;
     int quest_y;
-    if ((spice_skiff_marker(g, &quest_x, &quest_y) || stormbell_marker(g, &quest_x, &quest_y) || war_machine_marker(g, &quest_x, &quest_y)) && map_is_explored(&g->map, quest_x, quest_y)) {
+    if ((spice_skiff_marker(g, &quest_x, &quest_y) || stormbell_marker(g, &quest_x, &quest_y) || war_machine_marker(g, &quest_x, &quest_y) || crown_quest_marker(g, &quest_x, &quest_y)) && map_is_explored(&g->map, quest_x, quest_y)) {
         SDL_SetRenderDrawColor(r->sdl, 240, 200, 100, 255);
         SDL_RenderDrawPoint(r->sdl, ox + quest_x / MINIMAP_SCALE, oy + quest_y / MINIMAP_SCALE);
     }

@@ -6,6 +6,7 @@
 #include "../game/spice_skiff.h"
 #include "../game/stormbell.h"
 #include "../game/war_machine.h"
+#include "../game/crown_quest.h"
 
 typedef struct {
     const char *title;
@@ -177,10 +178,20 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
         "Sink the weapons; take the Mine Boss's seal to Veyra in Ridgeshire.",
         {"Recover shipment orders", "Dump the suspended weapons", "Recover the Mine Boss's command seal"},
         "Ironfang Mines", {2, 4, 5, 0}, WAR_REWARD_GOLD, WAR_REWARD_SCORE
+    },
+    {
+        "Giant's Crown", "Antiquarian Edda",
+        "Read stage 2's inscription; find stage 3's western seal chamber.",
+        "Use the seal at stage 5's western vault after the Jarl falls; return to Edda.",
+        {"Read the royal inscription", "Recover the royal seal", "Defeat the Last Jarl", "Recover the royal crown"},
+        "Giant's Peaks", {2, 3, 5, 5}, CROWN_REWARD_GOLD, CROWN_REWARD_SCORE, "Stoneguard Shield"
     }
 };
 
 static int quest_state(const GameState *g, int quest) {
+    if (quest == 21) {
+        return g->crown_quest_state;
+    }
     if (quest == 20) {
         return g->war_machine_quest_state;
     }
@@ -246,6 +257,9 @@ static int quest_state(const GameState *g, int quest) {
 }
 
 static int quest_progress(const GameState *g, int quest) {
+    if (quest == 21) {
+        return g->crown_quest_progress;
+    }
     if (quest == 20) {
         return g->war_machine_progress;
     }

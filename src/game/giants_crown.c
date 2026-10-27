@@ -1,4 +1,5 @@
 #include "giants_crown.h"
+#include "crown_quest.h"
 #include "approach.h"
 #include <stdlib.h>
 #include <string.h>
@@ -228,6 +229,7 @@ static void load_stage(GameState *g, int refresh) {
     if (!state->valid) {
         giants_generate(&g->map, g->level);
         g->floor_item_count = 0;
+        crown_quest_prepare(g);
         populate(g);
     } else {
         giants_unpack(state, &g->map);
@@ -235,6 +237,7 @@ static void load_stage(GameState *g, int refresh) {
         memcpy(g->enemies, state->enemies, sizeof(Enemy) * state->enemy_count);
         g->floor_item_count = state->loot_count;
         memcpy(g->floor_items, state->loot, sizeof(FloorItem) * state->loot_count);
+        crown_quest_prepare(g);
         if (refresh) {
             populate(g);
         }
@@ -329,6 +332,9 @@ static TileType nearby(const GameState *g, int *tx, int *ty) {
 }
 
 const char *giants_hint(const GameState *g) {
+    if (crown_quest_hint(g)) {
+        return crown_quest_hint(g);
+    }
     if (g->location != LOCATION_GIANTS_CROWN) {
         return NULL;
     }
@@ -339,6 +345,9 @@ const char *giants_hint(const GameState *g) {
 }
 
 int giants_interact(GameState *g) {
+    if (crown_quest_interact(g)) {
+        return 1;
+    }
     if (!current(g)) {
         return 0;
     }
@@ -431,6 +440,7 @@ void giants_defeat(GameState *g) {
         g->score += 2200;
         push_message(g, "The Last Jarl falls. The final departure opens. You recover 200 gold.");
     }
+    crown_quest_sync(g);
 }
 
 static int valid_stage(const GiantsStage *state) {

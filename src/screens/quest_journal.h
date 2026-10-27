@@ -3,7 +3,7 @@
 
 #include "../game/game.h"
 
-#define JOURNAL_QUEST_COUNT 21
+#define JOURNAL_QUEST_COUNT 22
 
 typedef enum {
     QUEST_TAB_ACTIVE = 0,

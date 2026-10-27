@@ -1,6 +1,7 @@
 #include "giants_crown.h"
 #include "map.h"
 #include "stormbell.h"
+#include "crown_quest.h"
 #include "landscapes.h"
 #include "jail.h"
 #include "town_life.h"
@@ -464,7 +465,7 @@ int map_is_walkable(const Map *m, int x, int y) {
     if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
         return 0;
     }
-    return m->tiles[y][x] != TILE_NPC_SEREN && m->tiles[y][x] != TILE_NPC_TAMSIN &&
+    return m->tiles[y][x] != TILE_NPC_EDDA && m->tiles[y][x] != TILE_NPC_SEREN && m->tiles[y][x] != TILE_NPC_TAMSIN &&
         m->tiles[y][x] != TILE_CROWN_BARRICADE && m->tiles[y][x] != TILE_CROWN_SUPPLIES &&
         m->tiles[y][x] != TILE_IRON_BUNK && m->tiles[y][x] != TILE_IRON_FORGE && m->tiles[y][x] != TILE_IRON_WALL && m->tiles[y][x] != TILE_IRON_WATER &&
         m->tiles[y][x] != TILE_IRON_TRESTLE && m->tiles[y][x] != TILE_IRON_BROKEN && m->tiles[y][x] != TILE_IRON_CRACK &&
@@ -2502,6 +2503,7 @@ void map_place_tavern_elowen(Map *m) {
 
 void map_generate_guild(Map *m, int *sx, int *sy) {
     map_generate_tavern_room(m, sx, sy, 1);
+    m->tiles[EDDA_Y][EDDA_X] = TILE_NPC_EDDA;
     m->tiles[GUILD_ORIN_Y][GUILD_ORIN_X] = TILE_NPC_ORIN;
     m->tiles[GUILD_SELENE_Y][GUILD_SELENE_X] = TILE_NPC_SELENE;
     m->tiles[GUILD_ZARA_Y][GUILD_ZARA_X] = TILE_TAVERN_FLOOR;

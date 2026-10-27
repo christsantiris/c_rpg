@@ -2,6 +2,7 @@
 #include "game/spice_skiff.h"
 #include "game/stormbell.h"
 #include "game/war_machine.h"
+#include "game/crown_quest.h"
 #include "renderer/giants_crown_renderer.h"
 #include "game/crownroad_north.h"
 #include "game/ironfang.h"
@@ -254,6 +255,122 @@ static void test_war_machine_renderer(Renderer *r, GameState *g, SDL_Surface *su
     renderer_end_frame(r);
     assert(SDL_SaveBMP(surface, "/tmp/war-machine-journal.bmp") == 0);
     puts("PASS: Veyra's independent topics, Ironfang offer, shipment office, weapons gantry, falling crates, splash, command coffer and quest journal render at native scale.");
+}
+
+static void test_crown_quest_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    assert(r->crown_quest_texture);
+    int w;
+    int h;
+    assert(SDL_QueryTexture(r->crown_quest_texture, NULL, NULL, &w, &h) == 0 && w == 144 && h == 48);
+    game_init(g);
+    game_enter_town3(g);
+    game_enter_guild(g);
+    g->player.x = EDDA_X;
+    g->player.y = EDDA_Y + 1;
+    Viewport view;
+    int width = (r->screen_w - INFO_PANEL_W) / TILE_SIZE;
+    viewport_init(&view, width, r->tiles_y, TOWN_W, TOWN_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/crown-quest-edda-guild.bmp") == 0);
+    assert(crown_quest_talk(g) && game_quest_offer_active(g));
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/crown-quest-edda-offer.bmp") == 0);
+    assert(game_handle_quest_offer_key(g, SDL_SCANCODE_Y, 0));
+    giants_enter(g, 0);
+    giants_change_level(g, 1);
+    g->player.x = CROWN_INSCRIPTION_X;
+    g->player.y = CROWN_INSCRIPTION_Y + 1;
+    map_mark_explored(&g->map, CROWN_INSCRIPTION_X, CROWN_INSCRIPTION_Y);
+    viewport_init(&view, width, r->tiles_y, GIANTS_W, GIANTS_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    assert(move_left_action(g, g->key_bindings[CONTROL_MOVE_LEFT]).type == ACTION_INTERACT);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/crown-quest-royal-inscription.bmp") == 0);
+    action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
+    giants_change_level(g, 1);
+    g->player.x = 9;
+    g->player.y = 23;
+    assert(giants_interact(g) && map_is_walkable(&g->map, 8, 23));
+    g->player.x = 6;
+    for (int y = 20; y <= 26; y++) {
+        for (int x = 2; x <= 11; x++) {
+            map_mark_explored(&g->map, x, y);
+        }
+    }
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/crown-quest-seal-chamber.bmp") == 0);
+    assert(giants_interact(g) && (g->crown_quest_progress & CROWN_SEAL));
+    giants_change_level(g, 1);
+    giants_change_level(g, 1);
+    g->player.x = 9;
+    g->player.y = 23;
+    for (int y = 20; y <= 26; y++) {
+        for (int x = 2; x <= 11; x++) {
+            map_mark_explored(&g->map, x, y);
+        }
+    }
+    viewport_center_on(&view, g->player.x, g->player.y);
+    assert(!map_is_walkable(&g->map, 8, 23));
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/crown-quest-warded-vault.bmp") == 0);
+    Enemy *boss = &g->enemies[0];
+    g->player.x = boss->x - 1;
+    g->player.y = boss->y;
+    g->player.attack = 10000;
+    action_resolve_player(g, (Action){ACTION_MOVE, boss->x, boss->y});
+    assert(g->giants_crown_defeated);
+    g->player.x = 9;
+    g->player.y = 23;
+    assert(giants_interact(g) && g->crown_vault_open);
+    g->player.x = 6;
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/crown-quest-open-vault.bmp") == 0);
+    assert(giants_interact(g) && g->crown_quest_state == 2);
+    QuestJournalScreen journal;
+    quest_journal_init(&journal);
+    renderer_begin_frame(r);
+    quest_journal_draw(r, g, &journal);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/crown-quest-journal.bmp") == 0);
+    game_enter_town3(g);
+    game_enter_guild(g);
+    g->player.x = EDDA_X;
+    g->player.y = EDDA_Y + 1;
+    assert(crown_quest_talk(g) && g->crown_quest_state == 3 && g->crown_reward_state == 2);
+    int shield = g->inventory_count - 1;
+    int sword = g->inventory_count;
+    g->inventory[g->inventory_count++] = item_make_long_sword();
+    assert(game_equip_main_hand(g, sword) && game_equip_shield(g, shield));
+    viewport_init(&view, width, r->tiles_y, TOWN_W, TOWN_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    g->dialogue_active = 0;
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/crown-quest-stoneguard-equipped.bmp") == 0);
+    renderer_begin_frame(r);
+    InventoryScreen inventory;
+    inventory_init(&inventory);
+    inventory.selected = shield;
+    inventory_draw(r, g, &inventory);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/crown-quest-stoneguard-inventory.bmp") == 0);
+    puts("PASS: Edda, royal inscription, seal chamber, warded/open vault, crown, journal, equipped Stoneguard and shield HP comparison render at native scale.");
 }
 
 static void test_spice_skiff_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
@@ -1169,6 +1286,7 @@ int main(void) {
     test_heartseed_renderer(&renderer, game, surface);
     test_stormbell_renderer(&renderer, game, surface);
     test_war_machine_renderer(&renderer, game, surface);
+    test_crown_quest_renderer(&renderer, game, surface);
     test_spice_skiff_renderer(&renderer, game, surface);
     free(game);
     renderer_free(&renderer);

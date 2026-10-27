@@ -1518,6 +1518,10 @@ static void draw_equipped_player_shield(Renderer *r, const Item *shield, int x, 
     }
     if (strcmp(shield->name, "Goblin King's Shield") == 0) {
         face = (SDL_Color){74, 115, 59, 255};
+    } else if (strcmp(shield->name, "Stoneguard Shield") == 0) {
+        rim = (SDL_Color){173, 180, 151, 255};
+        face = (SDL_Color){84, 100, 77, 255};
+        mark = (SDL_Color){226, 193, 105, 255};
     }
     static const char shapes[4][13][12] = {
         {"...........", "...ooooo...", "..oRRRRRo..", ".oRRfffRRo.", ".oRfffffRo.", ".oRffmffRo.", ".oRfmRmfRo.", ".oRffmffRo.", ".oRfffffRo.", ".oRRfffRRo.", "..oRRRRRo..", "...ooooo...", "..........."},

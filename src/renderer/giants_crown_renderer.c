@@ -1,5 +1,6 @@
 #include "giants_crown_renderer.h"
 #include "../game/giants_crown.h"
+#include "../game/crown_quest.h"
 #include "dungeon_enemy_art.h"
 #include "sprites.h"
 #include "world_props.h"
@@ -104,7 +105,54 @@ void giants_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, in
     }
 }
 
+static void crown_label(Renderer *r, const Viewport *v, const char *text, int x, int y, int above) {
+    int width = 0;
+    TTF_SizeText(r->font_tiny, text, &width, NULL);
+    int px = viewport_to_screen_x(v, x) * TILE_SIZE + (TILE_SIZE - width) / 2;
+    int py = viewport_to_screen_y(v, y) * TILE_SIZE - above;
+    if (px < 4) {
+        px = 4;
+    }
+    if (px + width > v->tiles_x * TILE_SIZE - 4) {
+        px = v->tiles_x * TILE_SIZE - width - 4;
+    }
+    renderer_draw_text(r, text, px + 1, py + 1, (SDL_Color){23, 29, 26, 255}, r->font_tiny);
+    renderer_draw_text(r, text, px, py, (SDL_Color){224, 212, 162, 255}, r->font_tiny);
+}
+
+static void crown_prop(Renderer *r, const GameState *g, const Viewport *v, int x, int y, int frame, const char *label) {
+    if (!viewport_is_visible(v, x, y) || !map_is_explored(&g->map, x, y)) {
+        return;
+    }
+    // Loot and a return portal keep their own visible tile and underlay.
+    if (r->crown_quest_texture && g->map.tiles[y][x] != TILE_ITEM && g->map.tiles[y][x] != TILE_PORTAL) {
+        SDL_Rect source = {frame * 24, 0, 24, 48};
+        SDL_Rect dest = {viewport_to_screen_x(v, x) * TILE_SIZE, viewport_to_screen_y(v, y) * TILE_SIZE - 24, 24, 48};
+        SDL_RenderCopy(r->sdl, r->crown_quest_texture, &source, &dest);
+    }
+    crown_label(r, v, label, x, y, frame >= 4 ? 40 : 25);
+}
+
+static void crown_details(Renderer *r, const GameState *g, const Viewport *v) {
+    if (g->location == LOCATION_GUILD && g->map.tiles[EDDA_Y][EDDA_X] == TILE_NPC_EDDA && viewport_is_visible(v, EDDA_X, EDDA_Y)) {
+        crown_label(r, v, "ANTIQUARIAN EDDA", EDDA_X, EDDA_Y, 16);
+    } else if (g->location == LOCATION_GIANTS_CROWN) {
+        if (g->level == 2) {
+            crown_prop(r, g, v, CROWN_INSCRIPTION_X, CROWN_INSCRIPTION_Y, 0, "ROYAL INSCRIPTION");
+        } else if (g->level == 3) {
+            int taken = g->crown_quest_progress & CROWN_SEAL;
+            crown_prop(r, g, v, CROWN_RELIC_X, CROWN_RELIC_Y, taken ? 3 : 1, taken ? "EMPTY SEAL PEDESTAL" : "ROYAL SEAL");
+        } else if (g->level == 5) {
+            int open = map_is_walkable(&g->map, CROWN_DOOR_X, CROWN_DOOR_Y);
+            crown_prop(r, g, v, CROWN_DOOR_X, CROWN_DOOR_Y, open ? 5 : 4, "ROYAL VAULT");
+            int taken = g->crown_quest_progress & CROWN_TAKEN;
+            crown_prop(r, g, v, CROWN_RELIC_X, CROWN_RELIC_Y, taken ? 3 : 2, taken ? "EMPTY CROWN PEDESTAL" : "ROYAL CROWN");
+        }
+    }
+}
+
 void giants_draw_details(Renderer *r, const GameState *g, const Viewport *v) {
+    crown_details(r, g, v);
     if (g->location != LOCATION_GIANTS_CROWN) {
         return;
     }

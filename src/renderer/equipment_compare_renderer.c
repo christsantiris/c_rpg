@@ -229,7 +229,11 @@ static void draw_shield_column(Renderer *r, const GameState *g, const Item *item
     }
     renderer_draw_text(r, line, x + 10, y + 47, defense_color,
         r->font_tiny);
-    SDL_snprintf(line, sizeof(line), "BLOCK: %d%%", item->block_chance);
+    if (item->max_hp_bonus) {
+        SDL_snprintf(line, sizeof(line), "BLOCK: %d%% | MAX HP: +%d", item->block_chance, item->max_hp_bonus);
+    } else {
+        SDL_snprintf(line, sizeof(line), "BLOCK: %d%%", item->block_chance);
+    }
     renderer_draw_text(r, line, x + 10, y + 63, white, r->font_tiny);
     SDL_snprintf(line, sizeof(line), "DAMAGE BLOCKED: %d%%",
         item->block_reduction_percent);
