@@ -10,7 +10,9 @@ The same road connects both directions without reversing or flipping its map.
 Physical retreat from either adventure returns beside its own entrance. Entering
 Elderwood or Catacombs from either end always starts at level 1. Returning to the
 Castle end from a Castle-origin expedition remains possible before either boss
-is defeated. Reaching Oakhaven from that end requires clearing Elderwood.
+is defeated. Completing the route from either end requires defeating both
+Elderthorn and the Grave Marshal. Each section has a visible checkpoint and
+independent victory requirement. See [boss gates](boss-gates.md).
 
 ## Five forward stages
 

@@ -5,6 +5,7 @@
 #include "elderwood.h"
 #include "stormwatch.h"
 #include "coastal_travel.h"
+#include "boss_gates.h"
 #include <string.h>
 
 // Save files store these indices. Append new routes without reordering them.
@@ -180,7 +181,7 @@ void approach_refresh_dungeon(GameState *g) {
 
 int approach_forest_town_exit(const GameState *g, int *x, int *y) {
     const TownApproach *route = approach_route(g);
-    if (!route || route->area != LOCATION_FOREST || (!g->debug_passages_unlocked && !(g->defeated_bosses & (1 << LOCATION_FOREST)))) {
+    if (!route || route->area != LOCATION_FOREST || !boss_gate_open(g, LOCATION_FOREST)) {
         return 0;
     }
     *x = route->town == LOCATION_TOWN ? 0 : APPROACH_W - 1;
@@ -259,7 +260,7 @@ void approach_refresh_forest(GameState *g) {
 
 int approach_mountain_town_exit(const GameState *g, int *x, int *y) {
     const TownApproach *route = approach_route(g);
-    if (!route || route->area != LOCATION_MOUNTAINS || (!g->debug_passages_unlocked && !(g->defeated_bosses & (1 << LOCATION_MOUNTAINS)))) {
+    if (!route || route->area != LOCATION_MOUNTAINS || !boss_gate_open(g, LOCATION_MOUNTAINS)) {
         return 0;
     }
     *x = APPROACH_W / 2;
@@ -330,7 +331,7 @@ void approach_refresh_mountains(GameState *g) {
 
 int approach_swamp_town_exit(const GameState *g, int *x, int *y) {
     const TownApproach *route = approach_route(g);
-    if (!route || route->area != LOCATION_SWAMP || (!g->debug_passages_unlocked && !(g->defeated_bosses & (1 << LOCATION_SWAMP)))) {
+    if (!route || route->area != LOCATION_SWAMP || !boss_gate_open(g, LOCATION_SWAMP)) {
         return 0;
     }
     *x = APPROACH_W / 2;
@@ -652,7 +653,7 @@ Location approach_shortcut_town(const TownApproach *route) {
 
 int approach_dungeon_town_exit(const GameState *g, int *x, int *y) {
     const TownApproach *route = approach_route(g);
-    if (!route || route->area != LOCATION_DUNGEON || (!g->debug_passages_unlocked && !(g->defeated_bosses & (1 << LOCATION_DUNGEON)))) {
+    if (!route || route->area != LOCATION_DUNGEON || !boss_gate_open(g, LOCATION_DUNGEON)) {
         return 0;
     }
     *x = route->town == LOCATION_TOWN ? APPROACH_W - 1 : 0;
@@ -799,6 +800,7 @@ int approach_enter_region(GameState *g, int index) {
         g->player.last_dx = 0;
         g->player.last_dy = route->town == LOCATION_CASTLE ? 1 : -1;
     }
+    boss_gate_refresh(g);
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
     g->player.frozen_turns = 0;
@@ -827,6 +829,9 @@ int approach_travel(GameState *g, int x, int y) {
     }
     if (g->map.tiles[y][x] == TILE_APPROACH_TOWN) {
         game_leave_approach(g);
+        return 1;
+    }
+    if (g->map.tiles[y][x] == TILE_APPROACH_DUNGEON_TOWN && !boss_gate_crossing(g, route->area)) {
         return 1;
     }
     int shortcut_x;

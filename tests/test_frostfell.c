@@ -420,10 +420,10 @@ static void test_frost_kraken(void) {
 
     frost_game.player.x = frost_game.map.stairs_down_x + 1;
     frost_game.player.y = frost_game.map.stairs_down_y;
+    frost_loaded = frost_game;
     walk_onto(&frost_game, frost_game.map.stairs_down_x, frost_game.map.stairs_down_y);
-    int blocked = frost_game.location == LOCATION_FROSTFELL &&
-        strcmp(frost_game.messages[frost_game.message_count - 1],
-            "The Frost Kraken bars the way west!") == 0;
+    int departure_open = frost_game.location != LOCATION_FROSTFELL && !(frost_game.defeated_bosses & (1 << LOCATION_FROSTFELL));
+    frost_game = frost_loaded;
 
     frost_game.player.x = kraken->x + 1;
     frost_game.player.y = kraken->y;
@@ -437,8 +437,8 @@ static void test_frost_kraken(void) {
     BossJournalEntry entry;
     int journal_ok = quest_journal_get_boss(&frost_game, 7, &entry) &&
         strcmp(entry.name, "Frost Kraken") == 0 && entry.defeated;
-    ASSERT("the Kraken bars the exit, then drops the Krakenbone Bow and is marked defeated",
-        blocked && !kraken->active && bow_dropped && journal_ok &&
+    ASSERT("the optional Kraken permits departure, then drops its bow and records victory when defeated",
+        departure_open && !kraken->active && bow_dropped && journal_ok &&
         (frost_game.defeated_bosses & (1 << LOCATION_FROSTFELL)));
 
     frost_game.player.x = frost_game.map.stairs_down_x + 1;

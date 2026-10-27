@@ -714,7 +714,10 @@ typedef enum {
     TILE_HEARTSEED_CUT_STAKE,
     TILE_HEARTSEED_ALTAR,
     TILE_NPC_SEREN,
-    TILE_NPC_EDDA
+    TILE_NPC_EDDA,
+    TILE_ROAD_GATE_CLOSED,
+    TILE_ROAD_GATE_OPEN,
+    TILE_ROAD_BANK
 } TileType;
 
 typedef struct {

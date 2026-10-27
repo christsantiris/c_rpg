@@ -57,6 +57,8 @@ typedef struct {
     SDL_Texture *area_entrance_textures[TOWN_EXIT_GIANTS + 1];
     SDL_Texture *town_gate_texture;
     SDL_Texture *loot_chest_texture;
+    SDL_Texture *road_checkpoint_texture;
+    SDL_Texture *road_bank_texture;
     SDL_Texture *town_textures[5]; // Indexed by town_road_index().
     SDL_Texture *castle_texture;
     SDL_Texture *apothecary_texture;

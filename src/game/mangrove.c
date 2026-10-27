@@ -1,3 +1,4 @@
+#include "boss_gates.h"
 #include "containers.h"
 #include "mangrove.h"
 #include "town_road.h"
@@ -316,10 +317,8 @@ void mangrove_change_level(GameState *g, int forward) {
     }
     int stage = g->level;
     if (forward && stage == MANGROVE_DEPTH) {
-        if (g->mangrove_defeated || g->debug_passages_unlocked) {
+        if (boss_gate_crossing(g, LOCATION_MANGROVES)) {
             mangrove_leave(g);
-        } else {
-            push_message(g, "Sszareth seals the sanctuary's departure. Defeat the Keeper of the Roots.");
         }
         return;
     }

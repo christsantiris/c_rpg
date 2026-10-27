@@ -1,3 +1,4 @@
+#include "boss_gates.h"
 #include "containers.h"
 #include "stormwatch.h"
 #include "stormbell.h"
@@ -420,8 +421,7 @@ void stormwatch_change_level(GameState *g, int forward) {
         return;
     }
     if ((!forward && g->level == 1) || (forward && g->level == STORM_DEPTH)) {
-        if (forward && !g->stormwatch_defeated && !g->debug_passages_unlocked) {
-            push_message(g, "The Matriarch holds the final departure. You can retreat by the southern gate.");
+        if (forward && !boss_gate_crossing(g, LOCATION_STORMWATCH)) {
             return;
         }
         stormwatch_leave(g);
@@ -658,7 +658,7 @@ void stormwatch_defeat(GameState *g) {
         g->stormwatch_defeated = 1;
         g->gold += 220;
         g->score += 2600;
-        push_message(g, "The Tempest Matriarch falls! The departure opens. You recover 220 gold.");
+        push_message(g, "The Tempest Matriarch falls! You recover 220 gold.");
     }
 }
 

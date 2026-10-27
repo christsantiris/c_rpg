@@ -227,7 +227,7 @@ static int legacy_save(void) {
 static void test_travel_and_saves(GameState *g, GameState *loaded) {
     game_init(g);
     northroad_enter(g, 0, 0);
-    ASSERT("the northern shortcut requires Catacombs victory from the Oakhaven side", g->location != LOCATION_CROWNROAD_NORTH);
+    ASSERT("Crown Road North has no independent boss gate; regional checkpoints control access", g->location == LOCATION_CROWNROAD_NORTH);
     g->debug_passages_unlocked = 1;
     northroad_enter(g, 0, 0);
     ASSERT("debug passage access opens Crown Road North without granting boss credit", g->location == LOCATION_CROWNROAD_NORTH && !g->defeated_bosses && !g->elderwood_defeated);

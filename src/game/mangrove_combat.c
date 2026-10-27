@@ -283,6 +283,6 @@ void mangrove_defeat(GameState *g) {
         g->mangrove_defeated = 1;
         g->gold += 200;
         g->score += 2400;
-        push_message(g, "Sszareth falls! The sanctuary's departure opens. You recover 200 gold.");
+        push_message(g, "Sszareth falls! You recover 200 gold.");
     }
 }

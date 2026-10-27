@@ -1,3 +1,4 @@
+#include "../game/boss_gates.h"
 #include "../game/giants_crown.h"
 #include "../game/ironfang.h"
 #include "../game/crownroad_north.h"
@@ -1747,7 +1748,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 210);
+    cJSON_AddNumberToObject(root, "save_version", 211);
     cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
@@ -6616,6 +6617,9 @@ int load_game(GameState *g, int slot) {
     if (save_version < 205 && g->location == LOCATION_DAWNMERE_MERCHANT && g->dialogue_active &&
         strcmp(g->dialogue_speaker, "Spice Merchant Corvin") == 0) {
         spice_skiff_talk(g);
+    }
+    if (save_version < 211) {
+        boss_gate_migrate(g);
     }
     game_refresh_debug_passages(g);
     // Retire return anchors after older map migrations finish protecting their

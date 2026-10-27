@@ -1,8 +1,9 @@
 # Crown Road North
 
-The northern castle shortcut runs from Oakhaven through Elderwood Forest and
-Royal Catacombs, then across Crown Road North into Castle Grounds. Defeat
-Elderthorn and the Grave Marshal to open it from Oakhaven. The castle's south
+The northern castle connection runs from Oakhaven through Elderwood Forest and
+Royal Catacombs, then across Crown Road North into Castle Grounds. Elderthorn
+and the Grave Marshal gate their own sections from both directions; Crown Road
+North has no additional boss gate. See [boss gates](boss-gates.md). The castle's south
 gate enters the road from its northern end; its southern exit returns beside
 the Catacombs landmark. The existing east and west Crown Roads retain their
 routes and encounters.

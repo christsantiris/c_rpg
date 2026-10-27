@@ -136,11 +136,11 @@ static void test_desert_travel(void) {
         .name = "Test Boss", .x = x, .y = y, .hp = 100, .max_hp = 100
     };
     g->enemy_count = 1;
+    desert_loaded = *g;
     walk_desert_edge(g, 1);
-    ASSERT("a living boss blocks level five's west exit",
-        g->location == LOCATION_DESERT && g->level == DESERT_DEPTH &&
-        strcmp(g->messages[g->message_count - 1],
-            "The Desert Pharaoh bars the way west!") == 0);
+    ASSERT("a living optional boss permits level five's west departure",
+        g->location == LOCATION_TOWN2 && !(g->defeated_bosses & (1 << LOCATION_DESERT)));
+    *g = desert_loaded;
     g->enemies[0].active = 0;
     g->enemies[1] = g->enemies[0];
     g->enemies[1].is_boss = 0;
@@ -500,8 +500,10 @@ static void test_pharaoh_reward(void) {
     if (k < 0) {
         return;
     }
+    desert_loaded = *g;
     walk_desert_edge(g, 1);
-    ASSERT("the actual Pharaoh blocks the final west exit", g->location == LOCATION_DESERT);
+    ASSERT("the actual Pharaoh permits the final west departure", g->location == LOCATION_TOWN2 && !(g->defeated_bosses & (1 << LOCATION_DESERT)));
+    *g = desert_loaded;
     g->enemies[k].hp--;
     g->enemies[k].move_timer = 1;
     game_ascend(g);

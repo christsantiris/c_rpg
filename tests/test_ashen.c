@@ -163,7 +163,7 @@ static void test_travel_and_saves(void) {
         walk_edge(1);
     }
     walk_edge(1);
-    ASSERT("the living Cinder Lord blocks the final return exit", game.location == LOCATION_ASHEN && game.level == ASHEN_DEPTH);
+    ASSERT("the living optional Cinder Lord permits the final return departure", game.location == LOCATION_CASTLE && !(game.defeated_bosses & (1 << LOCATION_ASHEN)));
     game.portal_level = ASHEN_DEPTH + 1;
     game.portal_location = LOCATION_ASHEN;
     game.location = LOCATION_TOWN3;

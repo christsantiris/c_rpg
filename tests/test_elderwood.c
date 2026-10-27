@@ -209,7 +209,7 @@ void test_elderwood(void) {
     BossJournalEntry entry;
     ASSERT("the boss journal records Elderthorn's defeat", quest_journal_get_boss(g, 16, &entry) && entry.defeated && !strcmp(entry.name, "Elderthorn"));
     game_return_to_approach(g);
-    ASSERT("defeating Elderthorn opens the road to Catacombs while Castle stays locked", path(g, NORTH_CAT_X, NORTH_CAT_Y, 0) && g->map.tiles[0][NORTH_ROAD_X] != TILE_NORTH_CASTLE);
+    ASSERT("defeating Elderthorn opens the road to Catacombs while Castle stays locked", path(g, NORTH_CAT_X, NORTH_CAT_Y, 0) && !path(g, NORTH_ROAD_X, 0, 0));
     ASSERT("walking into the relocated Catacombs begins its original first floor", path(g, NORTH_CAT_X, NORTH_CAT_Y, 1) && g->location == LOCATION_CATACOMBS && g->level == 1 && g->catacombs_entry_town == LOCATION_TOWN && g->map.room_count > 0);
     g->enemies[0].hp = 8;
     game_leave_catacombs(g);

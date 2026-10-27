@@ -157,10 +157,7 @@ static void test_full_delta(GameState *g, GameState *loaded) {
         ASSERT("docking reaches the onward boundary on foot", !g->mangroves.aboard && walk_to(g, ax, ay, 0));
         action_resolve_player(g, (Action){ACTION_MOVE, ex, ey});
         if (stage == MANGROVE_DEPTH) {
-            ASSERT("Sszareth's permanent victory flag gates the final departure", g->location == LOCATION_MANGROVES && g->level == MANGROVE_DEPTH && !g->mangrove_defeated);
-            g->debug_passages_unlocked = 1;
-            action_resolve_player(g, (Action){ACTION_MOVE, ex, ey});
-            ASSERT("debug passage override opens the sanctuary departure without awarding boss credit", g->location == LOCATION_MANGROVE_PATH && !g->mangrove_defeated);
+            ASSERT("the optional Sszareth encounter never gates the sanctuary departure", g->location == LOCATION_MANGROVE_PATH && !g->mangrove_defeated);
         }
     }
     int varied = 1;

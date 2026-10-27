@@ -1,3 +1,4 @@
+#include "game/boss_gates.h"
 #include "game/containers.h"
 #include "game/giants_crown.h"
 #include "game/spice_skiff.h"
@@ -23,6 +24,44 @@
 #include "../../src/game/elderwood.h"
 #include "../../src/game/mangrove.h"
 #include "../../src/game/coastal_travel.h"
+
+static void test_boss_gate_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    assert(r->road_checkpoint_texture && r->road_bank_texture);
+    const int routes[] = {1, 15, 0, 4, 2, 11, 5, 9, 16, 14};
+    for (int n = 0; n < 10; n++) {
+        for (int open = 0; open < 2; open++) {
+            game_init(g);
+            if (open) {
+                g->elderwood_defeated = 1;
+                g->defeated_bosses = (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) | (1 << LOCATION_MOUNTAINS) |
+                    (1 << LOCATION_SWAMP) | (1 << LOCATION_CATACOMBS);
+            }
+            approach_enter_region(g, routes[n]);
+            RoadCheckpoint points[2];
+            int count = boss_gate_checkpoints(g, points);
+            assert(count > 0);
+            RoadCheckpoint point = points[routes[n] == 14 ? 1 : 0];
+            g->player.x = point.x + (point.vertical ? 0 : point.x < APPROACH_W / 2 ? 2 : -2);
+            g->player.y = point.y + (!point.vertical ? 0 : routes[n] == 14 ? -2 : point.y < APPROACH_H / 2 ? 2 : -2);
+            assert(map_is_walkable(&g->map, g->player.x, g->player.y));
+            for (int y = 0; y < APPROACH_H; y++) {
+                for (int x = 0; x < APPROACH_W; x++) {
+                    map_mark_explored(&g->map, x, y);
+                }
+            }
+            Viewport view;
+            viewport_init(&view, (r->screen_w - INFO_PANEL_W) / TILE_SIZE, r->tiles_y, APPROACH_W, APPROACH_H);
+            viewport_center_on(&view, g->player.x, g->player.y);
+            renderer_begin_frame(r);
+            game_draw(r, g, &view);
+            renderer_end_frame(r);
+            char path[100];
+            snprintf(path, sizeof(path), "/tmp/boss-gate-%d-%d.bmp", routes[n], open);
+            assert(SDL_SaveBMP(surface, path) == 0);
+        }
+    }
+    puts("PASS: boss checkpoints render closed/open at player scale from both approaches, including both northern passes.");
+}
 
 static void test_container_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
     assert(r->loot_chest_texture);
@@ -1210,6 +1249,7 @@ int main(void) {
     GameScreen screen = SCREEN_LOAD_SLOT;
     GameState *game = calloc(1, sizeof(*game));
     assert(game);
+    test_boss_gate_renderer(&renderer, game, surface);
     test_container_renderer(&renderer, game, surface);
     test_stonewake_renderer(&renderer, game, surface);
     test_saltwind_renderer(&renderer, game, surface);
@@ -1253,7 +1293,7 @@ int main(void) {
         assert(save_game(game, 2));
         assert(game->player.y == y);
         for (int step = 0; game->player.x < x - 1 && step < APPROACH_W; step++) {
-            assert(game->map.tiles[y][game->player.x + 1] == TILE_TOWN_PATH);
+            assert(game->map.tiles[y][game->player.x + 1] == TILE_TOWN_PATH || game->map.tiles[y][game->player.x + 1] == TILE_ROAD_GATE_OPEN);
             action_resolve_player(game, (Action){ACTION_MOVE, game->player.x + 1, game->player.y});
         }
         action_resolve_player(game, (Action){ACTION_MOVE, x, y});
@@ -1329,11 +1369,11 @@ int main(void) {
     // A normal northern-road save must open both locks when loaded with the launcher flag.
     game_init(game);
     assert(approach_enter(game, 20, 0));
-    assert(game->map.tiles[NORTH_FOREST_BARRIER_Y][NORTH_ROAD_X] == TILE_ELDERWOOD_WALL);
+    assert(game->map.tiles[NORTH_FOREST_BARRIER_Y][NORTH_ROAD_X] == TILE_ROAD_GATE_CLOSED);
     assert(save_game(game, 1));
     handle_slot_result(SLOT_SELECTED, &slots, 0, &screen, game, &renderer, &viewport, &landing);
     assert(game->debug_passages_unlocked && !game->elderwood_defeated && !game->defeated_bosses);
-    assert(game->map.tiles[NORTH_FOREST_BARRIER_Y][NORTH_ROAD_X] == TILE_TOWN_PATH);
+    assert(game->map.tiles[NORTH_FOREST_BARRIER_Y][NORTH_ROAD_X] == TILE_ROAD_GATE_OPEN);
     assert(game->map.tiles[0][NORTH_ROAD_X] == TILE_NORTH_CASTLE);
     renderer_begin_frame(&renderer);
     game_draw(&renderer, game, &viewport);

@@ -598,7 +598,7 @@ void test_approaches(void) {
         for (int ty = 0; ty < APPROACH_H; ty++) {
             for (int tx = 0; tx < APPROACH_W; tx++) {
                 if (g->map.tiles[ty][tx] == TILE_APPROACH_DUNGEON_TOWN) {
-                    ASSERT("locked approaches contain no town crossing marker", 0);
+                    ASSERT("locked approaches retain a visible destination beyond the closed checkpoint", !map_is_walkable(&g->map, town_approaches[origin ? 15 : 1].town == LOCATION_TOWN ? APPROACH_W - 4 : 3, APPROACH_H / 2));
                 }
             }
         }
@@ -646,7 +646,7 @@ void test_approaches(void) {
             ASSERT("the connecting road is one tile wide and aligned with both gates", !wide_block && g->map.tiles[y][32] == TILE_TOWN_PATH && g->map.tiles[y - 1][32] == TILE_TOWN_FLOOR && g->map.tiles[y + 1][32] == TILE_TOWN_FLOOR && g->player.y == y);
             int straight = 1;
             for (int px = 1; px < APPROACH_W - 1; px++) {
-                if (g->map.tiles[y][px] != TILE_TOWN_PATH) {
+                if ((g->map.tiles[y][px] != TILE_TOWN_PATH && g->map.tiles[y][px] != TILE_ROAD_GATE_OPEN)) {
                     straight = 0;
                 }
             }

@@ -11,7 +11,7 @@ The approach uses travel music; the adventure uses the dungeon theme.
 | 2 — Broken Gatehouse | Courtyards and guardrooms around a coastal cut; Cliff Gargoyles and the first working storm shutter. |
 | 3 — Three Watchtowers | Triangular tower route, supply pockets and two staggered wind lanes; Harpy Stormcallers join the patrols. |
 | 4 — Stormwall Fort | Outer patrol loop, connected fort rooms and an exposed shutter shortcut; Storm Elementals defend the crossing. |
-| 5 — Matriarch's Court | Rampart loop, side supply rooms and the Matriarch's northern court. Defeating her opens the final departure. |
+| 5 — Matriarch's Court | Rampart loop, side supply rooms and the Matriarch's northern court. The final departure remains available while she lives. |
 
 Every stage has a walking loop and two optional supply branches. Gate markers
 sit on the northern and southern map boundaries. Walking onto them advances or
@@ -81,8 +81,9 @@ Return to Town is a one-way escape to the last town actually visited and leaves
 no return portal. Existing saves gain Dawnmere's eastern road
 without resetting gear, quests, portals or other regions.
 
-`--unlock-shortcuts` opens the final departure without killing the boss or
-granting victory rewards. It leaves the shutter and wind available for testing.
+Travel, including the final departure, remains open while the boss lives;
+leaving awards no boss victory or rewards. Shutters and wind retain their normal
+behavior. See [boss gates](boss-gates.md).
 
 See the [approved design](stormwatch-headland-proposal.md),
 [native renderer captures](art-sources/stormwatch/README.md), and
