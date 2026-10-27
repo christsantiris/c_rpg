@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/heartseed.h"
 #include "game/elderwood.h"
@@ -88,6 +89,7 @@ static int rewrite_save(const char *field, int value, int legacy) {
     }
     if (legacy) {
         cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 203);
+    test_mark_legacy_portal(root);
         const char *fields[] = {"heartseed_quest_state", "heartseed_progress", "heartseed_bindings", "heartseed_sites", "heartseed_guardian"};
         for (int i = 0; i < 5; i++) {
             cJSON_DeleteItemFromObject(root, fields[i]);
@@ -186,7 +188,7 @@ void test_heartseed(void) {
     ASSERT("a full pack cannot block the tracked heartseed or ready state", loaded->inventory_count == MAX_INVENTORY &&
         loaded->heartseed_progress == 7 && loaded->heartseed_quest_state == 2);
     game_open_town_portal(loaded);
-    ASSERT("the town portal preserves the freed encounter and cut stakes", loaded->location == LOCATION_TOWN && loaded->portal_active &&
+    ASSERT("the escape cache preserves the freed encounter and cut stakes", loaded->location == LOCATION_TOWN && !loaded->portal_active &&
         loaded->elderwood_cache[3].tiles[30][49] == TILE_HEARTSEED_CUT_STAKE);
     loaded->inventory_count = 0;
     int gold = loaded->gold;
@@ -199,9 +201,9 @@ void test_heartseed(void) {
         loaded->gold == gold + HEARTSEED_REWARD_GOLD && loaded->score == score + HEARTSEED_REWARD_SCORE && !loaded->elderwood_defeated);
     ASSERT("the completed journal retains all three objectives", quest_journal_get_entry(loaded, QUEST_TAB_COMPLETED, 0, &entry) &&
         entry.objective_complete[0] && entry.objective_complete[1] && entry.objective_complete[2]);
-    game_use_town_portal(loaded);
+    test_restore_cached_floor(loaded);
     bound = guardian(loaded);
-    ASSERT("returning through the portal never revives the released guardian", loaded->location == LOCATION_ELDERWOOD &&
+    ASSERT("loading the archived floor fixture never revives the released guardian", loaded->location == LOCATION_ELDERWOOD &&
         loaded->level == 4 && loaded->heartseed_guardian == HEARTSEED_FREED && bound && !bound->active);
     ASSERT("completed quest and freed guardian survive another save", save_game(loaded, HEARTSEED_SLOT) && load_game(g, HEARTSEED_SLOT) &&
         g->heartseed_quest_state == 3 && g->heartseed_guardian == HEARTSEED_FREED && guardian(g) && !guardian(g)->active);

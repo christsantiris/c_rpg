@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/war_machine.h"
 #include "game/ironfang.h"
@@ -117,6 +118,7 @@ static int rewrite(const char *field, double value, int old) {
     }
     if (old) {
         cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 206);
+    test_mark_legacy_portal(root);
         cJSON_DeleteItemFromObject(root, "war_machine_quest_state");
         cJSON_DeleteItemFromObject(root, "war_machine_progress");
     } else {
@@ -205,10 +207,10 @@ void test_war_machine(void) {
     feedback = combat_feedback_count();
     ASSERT("repeated sabotage cannot recreate weapons or feedback", !war_machine_interact(g) && combat_feedback_count() == feedback && g->war_machine_progress == 3);
     game_open_town_portal(g);
-    ASSERT("return portal keeps the sabotaged platform and cart", g->portal_active && g->portal_location == LOCATION_IRONFANG && g->portal_level == 4 && g->war_machine_progress == 3);
-    ASSERT("a platform return portal survives a save", save_game(g, WAR_SLOT) && load_game(loaded, WAR_SLOT) && loaded->portal_active && loaded->war_machine_progress == 3);
-    game_use_town_portal(g);
-    ASSERT("portal return preserves claimed salvage and the cart", g->location == LOCATION_IRONFANG && g->level == 4 &&
+    ASSERT("escape cache keeps the sabotaged platform and cart", !g->portal_active && g->portal_location == LOCATION_IRONFANG && g->portal_level == 4 && g->war_machine_progress == 3);
+    ASSERT("a platform escape records survives a save", save_game(g, WAR_SLOT) && load_game(loaded, WAR_SLOT) && !loaded->portal_active && loaded->war_machine_progress == 3);
+    test_restore_cached_floor(g);
+    ASSERT("archived floor reload preserves claimed salvage and the cart", g->location == LOCATION_IRONFANG && g->level == 4 &&
         g->map.tiles[23][60] == TILE_IRON_EMPTY && g->ironfang[3].cart_x == 60 && g->player.x == 61);
     ironfang_interact(g);
     for (int n = 0; n < 3; n++) {

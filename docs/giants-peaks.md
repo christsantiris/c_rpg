@@ -79,8 +79,8 @@ An existing Jarl victory counts. See the [quest reference](../quests.md) and
 Backtracking preserves wounds, deaths, floor loot, exploration, broken masonry,
 and searched coffers. A fresh physical entry starts at stage one and respawns
 ordinary enemies on visited stages while retaining discoveries, loot, and boss
-victory. Return to Town goes to the last visited town; its portal resumes the
-same stage and encounter without refreshing enemies.
+victory. Return to Town is a one-way escape to the last visited town and leaves
+no return portal.
 
 Save version **203** stores all five compact stage caches, terrain, actors,
 floor loot, pending attacks, and Jarl victory. Older saves gain the new region

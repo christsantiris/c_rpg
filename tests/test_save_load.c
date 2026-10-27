@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/coastal_travel.h"
 #include "town_road_checks.h"
@@ -994,7 +995,7 @@ static void test_coast_shoreline_migration(void) {
         ASSERT("shoreline migration retains loot, portal destination, gold and boss victories",
             loaded.floor_item_count == 1 && loaded.floor_items[0].active &&
             loaded.floor_items[0].underlying_tile == TILE_COAST_DRAINED_WATER &&
-            loaded.portal_active && loaded.portal_location == LOCATION_COAST && loaded.portal_level == 3 &&
+            !loaded.portal_active && loaded.portal_location == LOCATION_COAST && loaded.portal_level == 3 &&
             loaded.portal_x == original.portal_x && loaded.portal_y == original.portal_y &&
             loaded.gold == 321 && loaded.defeated_bosses == original.defeated_bosses &&
             loaded.drowned_queen_reward_state == 2 && loaded.max_coast_level_reached == 3);
@@ -2215,7 +2216,7 @@ static void test_coast_stage_migration(void) {
             loaded.coast_cache[loaded.portal_level - 1].valid &&
             loaded.max_coast_level_reached == COAST_DEPTH);
         if (migrated) {
-            game_use_town_portal(&loaded);
+            test_restore_cached_floor(&loaded);
             ASSERT("migrated coast portals remain usable",
                 loaded.location == LOCATION_COAST && loaded.level == stages[old_level - 1] &&
                 loaded.player.x == original.portal_x && loaded.player.y == original.portal_y);
@@ -2249,7 +2250,7 @@ static void test_coast_stage_migration(void) {
         memcmp(loaded.coast_cache[3].map.tiles, original.map.tiles, sizeof(original.map.tiles)) == 0);
     if (migrated) {
         game_return_to_town(&loaded);
-        game_use_town_portal(&loaded);
+        test_restore_cached_floor(&loaded);
         ASSERT("a portal remains usable when its former floor merged with the current stage",
             loaded.location == LOCATION_COAST && loaded.level == 4 &&
             loaded.player.x == original.map.stairs_up_x && loaded.player.y == original.map.stairs_up_y);
@@ -2257,7 +2258,7 @@ static void test_coast_stage_migration(void) {
         loaded.portal_active = 1;
         loaded.portal_level = 6;
         loaded.coast_cache[5].valid = 1;
-        game_use_town_portal(&loaded);
+        test_restore_cached_floor(&loaded);
         ASSERT("modern coast portals cannot reopen removed stages", loaded.location == LOCATION_TOWN);
     }
     memset(&original, 0, sizeof(original));
@@ -2332,7 +2333,7 @@ static void test_forest_entry_migration(void) {
         LevelCache *cache = &loaded->forest_cache[0];
         ASSERT("legacy forest entry migration preserves character progress and enemy health", ok && loaded->player.hp == hp && loaded->gold == 321 && loaded->score == 9876 && cache->valid && cache->enemies[0].hp == 17 && cache->enemies[0].move_timer == 2);
         ASSERT("cached first forest stage mirrors terrain, explored tiles, enemies, and warned targets together", ok && cache->map.stairs_up_x == MAP_W - 2 && cache->map.stairs_down_x == 1 && cache->map.tiles[y + 1][MAP_W - 1 - x] == TILE_FOREST_FALSE_MARKER && map_is_explored(&cache->map, MAP_W - 1 - x, y) && !map_is_explored(&cache->map, x, y) && cache->enemies[0].x == MAP_W - 2 - x && cache->enemies[0].attack_target_x == MAP_W - 1 - x && cache->enemies[0].facing_dx == -1);
-        ASSERT("saved forest portal coordinates move with the mirrored destination", ok && loaded->portal_active && loaded->portal_x == MAP_W - 4 - x && loaded->portal_y == y);
+        ASSERT("saved forest portal coordinates move with the mirrored destination", ok && !loaded->portal_active && loaded->portal_x == MAP_W - 4 - x && loaded->portal_y == y);
         if (active) {
             ASSERT("active forest migration preserves the player's relative position and facing", loaded->player.x == MAP_W - 1 - px && loaded->player.y == y && loaded->player.last_dx == -1 && loaded->enemies[0].x == MAP_W - 2 - x);
             ASSERT("active forest migration preserves dropped equipment and the hidden portal landing", loaded->floor_items[0].active && loaded->floor_items[0].x == MAP_W - 3 - x && loaded->floor_items[0].item.sharpened && loaded->map.tiles[y][MAP_W - 3 - x] == TILE_ITEM && loaded->map.tiles[y][MAP_W - 4 - x] == TILE_FOREST_FLOOR);
@@ -2342,8 +2343,8 @@ static void test_forest_entry_migration(void) {
         int saved_x = loaded->player.x;
         ASSERT("repaired forest saves do not mirror again on another load", save_game(loaded, MIGRATED_SLOT) && load_game(original, MIGRATED_SLOT) && original->player.x == saved_x && original->forest_cache[0].map.stairs_up_x == MAP_W - 2 && original->portal_x == MAP_W - 4 - x);
         if (!active) {
-            game_use_town_portal(original);
-            ASSERT("a migrated town portal returns to the same place in the corrected forest", original->location == LOCATION_FOREST && original->level == 1 && original->player.x == MAP_W - 4 - x && original->player.y == y);
+            test_restore_cached_floor(original);
+            ASSERT("a migrated town archived floor reloads to the same place in the corrected forest", original->location == LOCATION_FOREST && original->level == 1 && original->player.x == MAP_W - 4 - x && original->player.y == y);
         }
         remove_test_save(LEGACY_SLOT);
         remove_test_save(MIGRATED_SLOT);
@@ -2622,7 +2623,7 @@ static void test_quest_giver_location_migration(void) {
         ASSERT("relocation preserves quests, rewards, exploration, bosses, portal, and cached enemy health", ok && loaded.gold == 617 && loaded.score == 803 &&
             loaded.dain_quest_state == 1 && loaded.dain_map_fragments == 5 &&
             loaded.sunscar_lamp_quest_state == 2 &&
-            loaded.defeated_bosses == original.defeated_bosses && loaded.portal_active && loaded.ashen_cache[1].valid &&
+            loaded.defeated_bosses == original.defeated_bosses && !loaded.portal_active && loaded.ashen_cache[1].valid &&
             loaded.ashen_cache[1].enemies[0].hp == 9 && map_is_explored(&loaded.map, 2, 2) && !loaded.dialogue_active);
         if (original.location == LOCATION_GUILD) {
             ASSERT("legacy Guild removes both givers and preserves Orin", loaded.map.tiles[GUILD_DAIN_Y][GUILD_DAIN_X] == TILE_TAVERN_FLOOR &&

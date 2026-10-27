@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "approach_checks.h"
 #include "test_utils.h"
 #include "../src/game/game.h"
@@ -96,25 +97,27 @@ static void test_desert_travel(void) {
     g->player.equipped_spell = 0;
     g->player.mp = 100;
     action_resolve_player(g, (Action){ACTION_CAST_SPELL, 0, 0});
-    ASSERT("Return to Town opens a desert portal at Stillbury's west gate",
+    ASSERT("Return to Town escapes to Stillbury without a return portal",
         g->location == LOCATION_TOWN2 && g->player.x == 1 && g->player.y == 12 &&
-        g->portal_active && g->portal_location == LOCATION_DESERT &&
+        !g->portal_active && g->portal_location == LOCATION_DESERT &&
         g->portal_origin_tile == TILE_DESERT_FLOOR &&
-        g->map.tiles[12][2] == TILE_PORTAL && g->floor_item_count == 0 &&
+        g->map.tiles[12][2] != TILE_PORTAL && g->floor_item_count == 0 &&
         g->desert_cache[DESERT_DEPTH - 1].map.tiles[y][x] == TILE_DESERT_FLOOR);
 
     const int slot = 99021;
     int saved = save_game(g, slot) && load_game(&desert_loaded, slot);
-    ASSERT("desert progress and Stillbury's return portal survive save/load",
+    ASSERT("desert progress and Stillbury's escape records survive save/load",
         saved && desert_loaded.location == LOCATION_TOWN2 &&
         desert_loaded.map.tiles[12][0] == TILE_TOWN_EXIT &&
-        desert_loaded.map.tiles[12][2] == TILE_PORTAL &&
+        desert_loaded.map.tiles[12][2] != TILE_PORTAL &&
         desert_loaded.max_desert_level_reached == DESERT_DEPTH &&
         desert_loaded.desert_cache[0].enemies[0].hp == 22);
     if (saved) {
         action_resolve_player(&desert_loaded, (Action){ACTION_MOVE, 2, 12});
     }
-    ASSERT("the saved portal restores the exact desert level and landing tile",
+    ASSERT("walking the former desert portal tile stays in Stillbury", desert_loaded.location == LOCATION_TOWN2 && !desert_loaded.portal_active);
+    test_restore_cached_floor(&desert_loaded);
+    ASSERT("the archived desert retains its stage and native floor",
         saved && desert_loaded.location == LOCATION_DESERT &&
         desert_loaded.level == DESERT_DEPTH && desert_loaded.player.x == x &&
         desert_loaded.player.y == y && !desert_loaded.portal_active &&
@@ -125,6 +128,7 @@ static void test_desert_travel(void) {
     ASSERT("hiding a desert portal restores its cached sand tile",
         g->desert_cache[DESERT_DEPTH - 1].map.tiles[y][x] == TILE_DESERT_FLOOR);
     action_resolve_player(g, (Action){ACTION_MOVE, 2, 12});
+    test_restore_cached_floor(g);
 
     map_room_center(&g->map.rooms[DESERT_DEPTH], &x, &y);
     g->enemies[0] = (Enemy){
@@ -152,7 +156,7 @@ static void test_desert_travel(void) {
     g->portal_location = LOCATION_DESERT;
     g->portal_level = DESERT_DEPTH + 1;
     game_hide_portal_destination(g);
-    game_use_town_portal(g);
+    test_restore_cached_floor(g);
     ASSERT("desert portals cannot index a sixth cache entry", g->location == LOCATION_TOWN2);
 }
 
@@ -541,11 +545,11 @@ static void test_pharaoh_reward(void) {
     saved = save_game(g, slot) && load_game(&desert_loaded, slot);
     if (saved) {
         *g = desert_loaded;
-        game_use_town_portal(g);
+        test_restore_cached_floor(g);
     }
     game_refresh_quest_encounters(g);
     game_refresh_quest_encounters(g);
-    ASSERT("an unclaimed staff survives saving in Stillbury and returning through the portal once",
+    ASSERT("an unclaimed staff survives saving in Stillbury and loading the archived floor fixture once",
         saved && g->location == LOCATION_DESERT && g->sandstorm_staff_unclaimed &&
         sandstorm_staves_on_floor(g) == 1 && find_pharaoh(g) < 0);
     game_ascend(g);
@@ -590,7 +594,7 @@ static void test_pharaoh_reward(void) {
     saved = save_game(g, slot) && load_game(&desert_loaded, slot);
     if (saved) {
         *g = desert_loaded;
-        game_use_town_portal(g);
+        test_restore_cached_floor(g);
     }
     int in_pack = 0;
     int metadata_ok = 0;
@@ -680,7 +684,7 @@ static void test_desert_lamp_quest(void) {
     ASSERT("Zara explains that the magic lamp uses Pick Up", strstr(g->dialogue_text, "press P") != NULL);
     game_handle_quest_offer_key(g, SDL_SCANCODE_Y, 0);
     ASSERT("Zara assigns the lamp quest without resetting desert progress or its portal",
-        g->sunscar_lamp_quest_state == 1 && g->portal_active &&
+        g->sunscar_lamp_quest_state == 1 && !g->portal_active &&
         g->max_desert_level_reached == DESERT_LAMP_LEVEL &&
         g->desert_cache[DESERT_LAMP_LEVEL - 1].enemies[0].hp == hp &&
         map_is_explored(&g->desert_cache[DESERT_LAMP_LEVEL - 1].map, x, y));
@@ -695,7 +699,7 @@ static void test_desert_lamp_quest(void) {
     int saved = save_game(g, slot) && load_game(&desert_loaded, slot);
     ASSERT("saving inside the Inn preserves the quest, NPC and desert portal",
         saved && desert_loaded.location == LOCATION_INN && desert_loaded.sunscar_lamp_quest_state == 1 &&
-        desert_loaded.portal_active && desert_loaded.map.tiles[ZARA_INN_Y][ZARA_INN_X] == TILE_NPC_GUILD_SEEKER);
+        !desert_loaded.portal_active && desert_loaded.map.tiles[ZARA_INN_Y][ZARA_INN_X] == TILE_NPC_GUILD_SEEKER);
     if (saved) {
         *g = desert_loaded;
     }
@@ -706,7 +710,7 @@ static void test_desert_lamp_quest(void) {
         g->location == LOCATION_TOWN2 && g->player.x == TOWN_INN_DOOR_X &&
         g->player.y == TOWN_INN_DOOR_Y + 1);
     game_enter_town2(g);
-    game_use_town_portal(g);
+    test_restore_cached_floor(g);
     game_refresh_quest_encounters(g);
     game_refresh_quest_encounters(g);
     ASSERT("returning to an already explored desert stage places exactly one lamp on reachable sand",
@@ -722,7 +726,7 @@ static void test_desert_lamp_quest(void) {
     saved = save_game(g, slot) && load_game(&desert_loaded, slot);
     if (saved) {
         *g = desert_loaded;
-        game_use_town_portal(g);
+        test_restore_cached_floor(g);
     }
     ASSERT("a saved portal opened on the lamp restores the lamp without duplication",
         saved && g->map.tiles[y][x] == TILE_DESERT_LAMP && count_desert_lamps(&g->map) == 1);
@@ -751,7 +755,7 @@ static void test_desert_lamp_quest(void) {
     saved = save_game(g, slot) && load_game(&desert_loaded, slot);
     if (saved) {
         *g = desert_loaded;
-        game_use_town_portal(g);
+        test_restore_cached_floor(g);
     }
     game_refresh_quest_encounters(g);
     ASSERT("saving and revisiting after lamp pickup cannot spawn a second lamp",

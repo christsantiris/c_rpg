@@ -261,7 +261,9 @@ and preserve defeated minibosses, terrain, and dropped items.
 
 ## Retreat
 
-Return to Town requests confirmation and becomes a one-way escape to Rosemoor.
+Return to Town requests confirmation and becomes a one-way escape to Castle
+Grounds beside the castle entrance. This is the exception to the usual last-town
+destination.
 It creates no return portal. Entering the castle also abandons any older portal.
 Walking out through the floor 1 stairs likewise ends the current attempt.
 

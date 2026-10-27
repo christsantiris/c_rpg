@@ -100,16 +100,16 @@ Defeating Sszareth awards **200 gold, 2,400 score and 900 XP**, records his
 boss-journal entry and opens the final departure. Gold and score pay once.
 A later physical entry respawns ordinary enemies on visited stages while
 preserving the boss victory, claimed supplies, exploration and dropped gear.
-Backtracking and return portals preserve wounds, deaths, freeze and attack
-warnings within the current expedition.
+Backtracking and saves preserve wounds, deaths, freeze and attack warnings
+within the current expedition.
 
 ## Saves, migration and reuse
 
 Save version **192** retains all five stage records introduced in version 191: skiff position and facing,
 occupied state, exploration, supplies, loot and enemy combat state. Return to
-Town goes to the last town actually entered; its return portal restores the
-same stage and shore/skiff position. Bypassing a town does not change that
-spell destination. Physical reentry closes an older marsh portal.
+Town is a one-way escape to the last town actually entered and leaves no
+return portal. Bypassing a town does not change that destination. Physical
+re-entry resets the skiff to the entry landing so the player cannot be stranded.
 
 Version 190 pilot saves gain enemies and the onward jetty while retaining
 existing discoveries, supplies, loot and boat occupancy. A boat or item covered

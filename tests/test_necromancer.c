@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "../src/game/necromancer.h"
 #include "../src/systems/save_load.h"
@@ -188,6 +189,7 @@ static int make_legacy_save(void) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 124);
+    test_mark_legacy_portal(root);
     cJSON_DeleteItemFromObject(root, "necromancer_reward_state");
     cJSON *arrays[2] = {cJSON_GetObjectItem(root, "enemies"),
         cJSON_GetObjectItem(cJSON_GetArrayItem(cJSON_GetObjectItem(root, "forest_cache"), 3), "enemies")};
@@ -418,8 +420,8 @@ static void test_persistence_and_migration(void) {
     game.portal_y = 16;
     game.portal_origin_tile = TILE_FOREST_FLOOR;
     game.location = LOCATION_TOWN;
-    game_use_town_portal(&game);
-    ASSERT("portal revisit preserves consumed waves, pending roots and spent graves", game.location == LOCATION_FOREST && game.enemies[0].move_timer == 2 && game.enemies[0].boss_wave_used == 3 && necromancer_active_graves(&game) == 2);
+    test_restore_cached_floor(&game);
+    ASSERT("archived encounter reload preserves consumed waves, pending roots and spent graves", game.location == LOCATION_FOREST && game.enemies[0].move_timer == 2 && game.enemies[0].boss_wave_used == 3 && necromancer_active_graves(&game) == 2);
 
     e = setup();
     game.level = 4;

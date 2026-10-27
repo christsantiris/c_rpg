@@ -15,7 +15,7 @@ void castle_spawn(GameState *g);
 void castle_summon_guard(GameState *g, EnemyType type, int x, int y);
 void castle_store(GameState *g);
 void castle_enter(GameState *g, int level);
-void castle_leave(GameState *g, int town);
+void castle_leave(GameState *g, int escape);
 int castle_travel(GameState *g, int forward);
 void castle_request(GameState *g, int escape);
 int castle_prompt_key(GameState *g, int key, int repeat);

@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "../src/game/red_dragon.h"
 #include "../src/systems/save_load.h"
@@ -180,6 +181,7 @@ static int legacy_save(void) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 135);
+    test_mark_legacy_portal(root);
     cJSON_DeleteItemFromObject(root, "red_dragon_reward_state");
     char *json = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);
@@ -541,7 +543,7 @@ static void test_rewards_and_saves(void) {
         game.gold == 60 && game.inventory_count == 1 && !floor_mantles());
     game.inventory_count = 0;
     game_open_town_portal(&game);
-    game_use_town_portal(&game);
+    test_restore_cached_floor(&game);
     ASSERT("sold or dropped claimed equipment never regenerates on return", game.red_dragon_reward_state == 2 && !floor_mantles());
 
     kill_with(0, 1);
@@ -573,7 +575,7 @@ static void test_rewards_and_saves(void) {
     int trip = save_game(&game, 99199) && load_game(&loaded, 99199);
     if (trip) {
         game = loaded;
-        game_use_town_portal(&game);
+        test_restore_cached_floor(&game);
     }
     ASSERT("unclaimed dropped equipment returns as a reserved cache after portal travel and saving", trip &&
         game.red_dragon_reward_state == 1 && find_tile(TILE_DRAGON_RELIQUARY_ASH, &x, &y));
@@ -625,10 +627,11 @@ static void test_rewards_and_saves(void) {
     e = setup();
     attack(DRAGON_INFERNO_FIRST);
     int hp = e->hp;
+    Enemy escaped_signature = game.enemies[0];
     game_open_town_portal(&game);
-    game_use_town_portal(&game);
-    ASSERT("return portal cancels a threatening linked signature without healing or advancing the boss", game.location == LOCATION_DRAGONSPINE &&
-        game.enemies[0].move_timer == -1 && game.enemies[0].hp == hp && game.enemies[0].attack_target_x == -1);
+    test_restore_cached_floor(&game);
+    ASSERT("escaping retains the archived dragon signature without healing the boss", game.location == LOCATION_DRAGONSPINE &&
+        game.enemies[0].move_timer == escaped_signature.move_timer && game.enemies[0].hp == hp && game.enemies[0].attack_target_x == escaped_signature.attack_target_x);
 
     e = setup();
     e->hp -= 31;

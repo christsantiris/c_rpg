@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "../src/game/game.h"
 #include "../src/game/castle.h"
@@ -140,8 +141,8 @@ static void test_dungeon_portal_and_save(void) {
     }
     clear_regular_enemies(&game);
     game_open_town_portal(&game);
-    game_use_town_portal(&game);
-    ASSERT("direct portal return continues the cleared expedition", !active_regular_enemies(&game));
+    test_restore_cached_floor(&game);
+    ASSERT("direct archived floor reload continues the cleared expedition", !active_regular_enemies(&game));
     game_open_town_portal(&game);
     game.elowen_quest_state = 2;
     game.elowen_seals_restored = 7;
@@ -158,7 +159,7 @@ static void test_dungeon_portal_and_save(void) {
     ASSERT("walking back in after loading repopulates all five dungeon floors", replayable);
     ASSERT("replaying preserves completed seals and quest completion", loaded.elowen_quest_state == 2 && loaded.elowen_seals_restored == 7);
     game_return_to_town(&loaded);
-    game_use_town_portal(&loaded);
+    test_restore_cached_floor(&loaded);
     ASSERT("the original boss-floor portal remains usable after walking in", loaded.location == LOCATION_DUNGEON && loaded.level == DUNGEON_DEPTH);
     ASSERT("replayed enemy state saves and loads", save_game(&loaded, 99161) && load_game(&game, 99161) && active_regular_enemies(&game) > 0);
     remove("saves/savegame_99161.json");

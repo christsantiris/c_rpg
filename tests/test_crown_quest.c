@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/crown_quest.h"
 #include "game/giants_crown.h"
@@ -115,6 +116,7 @@ static int rewrite(const char *field, double value, int old) {
     }
     if (old) {
         cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 207);
+    test_mark_legacy_portal(root);
         const char *fields[] = {"crown_quest_state", "crown_quest_progress", "crown_vault_open", "crown_reward_state"};
         for (int n = 0; n < 4; n++) {
             cJSON_DeleteItemFromObject(root, fields[n]);
@@ -244,10 +246,10 @@ void test_crown_quest(void) {
         strcmp(entry.title, "Giant's Crown") == 0 && entry.objective_count == 4 && entry.objective_complete[0] && entry.objective_complete[1] &&
         entry.objective_complete[2] && entry.objective_complete[3] && entry.reward_gold == 220 && entry.reward_score == 1600 && strcmp(entry.reward_item, "Stoneguard Shield") == 0);
     game_open_town_portal(g);
-    ASSERT("return portal preserves the recovered crown and vault", g->portal_active && g->portal_location == LOCATION_GIANTS_CROWN && g->portal_level == 5 && g->crown_quest_progress == 15);
-    ASSERT("a portal to the vault survives saving", save_game(g, CROWN_SLOT) && load_game(loaded, CROWN_SLOT) && loaded->portal_active && loaded->crown_vault_open && loaded->crown_quest_state == 2);
-    game_use_town_portal(g);
-    ASSERT("the portal returns inside the same open vault", g->location == LOCATION_GIANTS_CROWN && g->level == 5 && map_is_walkable(&g->map, 8, 23) && g->crown_quest_progress == 15);
+    ASSERT("escape cache preserves the recovered crown and vault", !g->portal_active && g->portal_location == LOCATION_GIANTS_CROWN && g->portal_level == 5 && g->crown_quest_progress == 15);
+    ASSERT("a portal to the vault survives saving", save_game(g, CROWN_SLOT) && load_game(loaded, CROWN_SLOT) && !loaded->portal_active && loaded->crown_vault_open && loaded->crown_quest_state == 2);
+    test_restore_cached_floor(g);
+    ASSERT("the archived floor reloads inside the same open vault", g->location == LOCATION_GIANTS_CROWN && g->level == 5 && map_is_walkable(&g->map, 8, 23) && g->crown_quest_progress == 15);
     to_stage(g, 4);
     to_stage(g, 5);
     ASSERT("backtracking keeps the vault open and its crown claimed", g->crown_vault_open && g->crown_quest_progress == 15 && map_is_walkable(&g->map, 8, 23));
@@ -304,8 +306,8 @@ void test_crown_quest(void) {
     ASSERT("acceptance credits a previous Jarl victory", loaded->crown_quest_state == 1 && loaded->crown_quest_progress == CROWN_JARL);
     // A portal into a legacy vault keeps its escape route and exact destination.
     game_open_town_portal(g);
-    ASSERT("a legacy portal into the vault upgrades without losing its destination", save_game(g, CROWN_SLOT) && rewrite(NULL, 0, 1) && load_game(loaded, CROWN_SLOT) && loaded->portal_active && loaded->portal_x == 5 && loaded->portal_y == 24);
-    game_use_town_portal(loaded);
+    ASSERT("a legacy portal into the vault upgrades without losing its destination", save_game(g, CROWN_SLOT) && rewrite(NULL, 0, 1) && load_game(loaded, CROWN_SLOT) && !loaded->portal_active && loaded->portal_x == 5 && loaded->portal_y == 24);
+    test_restore_cached_floor(loaded);
     ASSERT("returning through an old portal never traps the player", loaded->location == LOCATION_GIANTS_CROWN && loaded->player.x == 5 && loaded->player.y == 24 && map_is_walkable(&loaded->map, 8, 23));
     // Every class can use Interact after nearby giants have been killed.
     game_init(g);

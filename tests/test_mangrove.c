@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/mangrove.h"
 #include "game/town_road.h"
@@ -187,8 +188,8 @@ static void test_full_delta(GameState *g, GameState *loaded) {
     ASSERT("a later-stage portal still visits the last town actually entered", g->location == LOCATION_DAWNMERE && g->portal_level == 3);
     ASSERT("town saves retain all five stage records and pending encounter state", save_game(g, DELTA_SLOT) && load_game(loaded, DELTA_SLOT));
     *g = *loaded;
-    game_use_town_portal(g);
-    ASSERT("a stage-three portal resumes the original enemy wound, position and wind-up", g->location == LOCATION_MANGROVES && g->level == 3 && g->enemies[0].hp == 9 && g->enemies[0].x == enemy_x && g->enemies[0].attack_phase == 1 && g->enemies[0].move_timer == 2);
+    test_restore_cached_floor(g);
+    ASSERT("a stage-three archived floor fixture resumes the original enemy wound, position and wind-up", g->location == LOCATION_MANGROVES && g->level == 3 && g->enemies[0].hp == 9 && g->enemies[0].x == enemy_x && g->enemies[0].attack_phase == 1 && g->enemies[0].move_timer == 2);
 }
 
 static void test_marsh_fights(GameState *g) {
@@ -281,6 +282,7 @@ static int make_legacy_delta_save(int version, int boat_on_jetty) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), version);
+    test_mark_legacy_portal(root);
     if (version == 190) {
         cJSON_DeleteItemFromObject(root, "mangrove_stages");
         cJSON_DeleteItemFromObject(root, "mangrove_defeated");
@@ -402,9 +404,9 @@ static void test_region_restoration(GameState *g, GameState *loaded) {
     ASSERT("the restored region still boards its original stage-three skiff", g->mangroves.aboard);
     game_open_town_portal(g);
     int ok = save_game(g, DELTA_SLOT) && make_legacy_delta_save(191, 0) && load_game(loaded, DELTA_SLOT);
-    ASSERT("version-191 saves keep their existing town and marsh portal after the route restoration", ok && loaded->location == LOCATION_TOWN2 && loaded->last_town_visited == LOCATION_TOWN2 && loaded->portal_active && loaded->portal_level == 3 && loaded->gold == 177);
+    ASSERT("version-191 saves keep their existing town and marsh portal after the route restoration", ok && loaded->location == LOCATION_TOWN2 && loaded->last_town_visited == LOCATION_TOWN2 && !loaded->portal_active && loaded->portal_level == 3 && loaded->gold == 177);
     if (ok) {
-        game_use_town_portal(loaded);
+        test_restore_cached_floor(loaded);
         ASSERT("restoring the road does not reset the occupied skiff, supplies, gear, boss victory or enemy wounds", loaded->location == LOCATION_MANGROVES && loaded->level == 3 && loaded->mangroves.aboard && loaded->player.x == 32 && loaded->player.y == 13 && loaded->enemies[0].hp == 13 && loaded->enemies[0].frozen_turns == 2 && loaded->mangroves.searched == 1 && loaded->floor_item_count == 1 && loaded->mangrove_defeated);
         ASSERT("the restored expedition rewrites as the current save format", save_game(loaded, DELTA_SLOT) && load_game(g, DELTA_SLOT));
     }
@@ -462,9 +464,9 @@ static void test_pilot_migration(GameState *g, GameState *loaded) {
             continue;
         }
         if (scenario == 2) {
-            ASSERT("a pilot portal retains Dawnmere as the last visited town after relocation", loaded->location == LOCATION_DAWNMERE && loaded->portal_active && loaded->last_town_visited == LOCATION_DAWNMERE);
-            game_use_town_portal(loaded);
-            ASSERT("the migrated pilot portal resumes its occupied skiff and populated shore", loaded->location == LOCATION_MANGROVES && loaded->mangroves.aboard && loaded->enemy_count > 0 && loaded->player.x == 14 && loaded->player.y == 15);
+            ASSERT("a pilot escape record retains Dawnmere as the last visited town after relocation", loaded->location == LOCATION_DAWNMERE && !loaded->portal_active && loaded->last_town_visited == LOCATION_DAWNMERE);
+            test_restore_cached_floor(loaded);
+            ASSERT("the migrated pilot archived floor fixture resumes its occupied skiff and populated shore", loaded->location == LOCATION_MANGROVES && loaded->mangroves.aboard && loaded->enemy_count > 0 && loaded->player.x == 14 && loaded->player.y == 15);
         } else if (scenario == 3) {
             ASSERT("a pilot skiff covered by the new jetty moves with its rider to adjacent water", loaded->mangroves.aboard && loaded->player.x == loaded->mangroves.boat_x && loaded->player.y == loaded->mangroves.boat_y && abs(loaded->player.x - 59) + abs(loaded->player.y - 30) == 1 && loaded->map.tiles[loaded->player.y][loaded->player.x] == TILE_MANGROVE_WATER);
         } else {
@@ -554,19 +556,19 @@ void test_mangrove(void) {
     int bx = g->player.x;
     int by = g->player.y;
     game_open_town_portal(g);
-    ASSERT("a portal cast aboard visits the last town and keeps the skiff occupied", g->location == LOCATION_DAWNMERE && g->portal_active && g->portal_location == LOCATION_MANGROVES && g->mangroves.aboard);
-    ASSERT("boat expedition state survives saving in town", save_game(g, DELTA_SLOT) && load_game(loaded, DELTA_SLOT) && loaded->portal_active && loaded->mangroves.aboard && loaded->mangroves.searched == 7);
+    ASSERT("a portal cast aboard visits the last town and keeps the skiff occupied", g->location == LOCATION_DAWNMERE && !g->portal_active && g->portal_location == LOCATION_MANGROVES && g->mangroves.aboard);
+    ASSERT("boat expedition state survives saving in town", save_game(g, DELTA_SLOT) && load_game(loaded, DELTA_SLOT) && !loaded->portal_active && loaded->mangroves.aboard && loaded->mangroves.searched == 7);
     *g = *loaded;
-    game_use_town_portal(g);
-    ASSERT("the return portal restores the exact boat and water position without duplication", g->location == LOCATION_MANGROVES && !g->portal_active && g->mangroves.aboard && g->player.x == bx && g->player.y == by && g->mangroves.boat_x == bx && g->mangroves.boat_y == by && mangrove_state_valid(g));
+    test_restore_cached_floor(g);
+    ASSERT("the archived floor fixture restores the exact boat and water position without duplication", g->location == LOCATION_MANGROVES && !g->portal_active && g->mangroves.aboard && g->player.x == bx && g->player.y == by && g->mangroves.boat_x == bx && g->mangroves.boat_y == by && mangrove_state_valid(g));
     ASSERT("the starting shore is reachable after exploring every island", walk_to(g, 14, 15, 1));
     action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
     ASSERT("disembarking returns to the starting landing", !g->mangroves.aboard && g->player.y == 14);
     action_resolve_player(g, (Action){ACTION_DROP_ITEM, 0, 0});
     ASSERT("gear can be left on a landing while its boarding interaction remains available", g->floor_item_count == 1 && mangrove_hint(g));
     game_open_town_portal(g);
-    ASSERT("a shore portal retains the parked skiff and dropped gear", g->location == LOCATION_DAWNMERE && !g->mangroves.aboard && g->mangroves.loot_count == 1);
-    game_use_town_portal(g);
+    ASSERT("a shore escape record retains the parked skiff and dropped gear", g->location == LOCATION_DAWNMERE && !g->mangroves.aboard && g->mangroves.loot_count == 1);
+    test_restore_cached_floor(g);
     ASSERT("a shore return restores the landing, its gear and the same skiff", g->location == LOCATION_MANGROVES && !g->mangroves.aboard && g->player.x == 14 && g->player.y == 14 && g->floor_item_count == 1 && g->mangroves.boat_x == 14 && g->mangroves.boat_y == 15 && mangrove_state_valid(g));
     ASSERT("the original boundary exit is reachable on foot", walk_to(g, 14, 1, 0));
     action_resolve_player(g, (Action){ACTION_MOVE, 14, 0});

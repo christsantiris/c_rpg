@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "../src/game/cinder_lord.h"
 #include "../src/systems/save_load.h"
@@ -121,6 +122,7 @@ static int make_legacy_save(void) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 132);
+    test_mark_legacy_portal(root);
     cJSON_DeleteItemFromObject(root, "cinder_lord_reward_pending");
     cJSON *arrays[2] = {cJSON_GetObjectItem(root, "enemies"),
         cJSON_GetObjectItem(cJSON_GetArrayItem(cJSON_GetObjectItem(root, "ashen_cache"), ASHEN_DEPTH - 1), "enemies")};
@@ -285,7 +287,7 @@ static void test_rewards(void) {
     ASSERT("the original special Strength Potion still grants one permanent base attack", game.player.attack == attack + 1);
     game.inventory_count = 0;
     game_open_town_portal(&game);
-    game_use_town_portal(&game);
+    test_restore_cached_floor(&game);
     ok = save_game(&game, 99193) && load_game(&loaded, 99193);
     ASSERT("consumed, sold or discarded rewards cannot regenerate after travel or saving", ok && !loaded.cinder_lord_reward_pending && loaded.floor_item_count == 0 && !loaded.enemies[0].active);
 }
@@ -549,14 +551,15 @@ static void test_saves(void) {
     ok = save_game(&game, 99193) && load_game(&loaded, 99193);
     if (ok) {
         game = loaded;
-        game_use_town_portal(&game);
+        test_restore_cached_floor(&game);
     }
-    ASSERT("portal return clears landing heat without advancing other saved arena clocks", ok && game.location == LOCATION_ASHEN && game.map.tiles[20][27] == TILE_ASHEN_FLOOR && game.map.tiles[18][28] == TILE_CINDER_COOL_4 && game.map.tiles[17][28] == TILE_CINDER_SLUICE_4 && game.enemies[0].move_timer == -2 && game.player.hp == 1000);
+    ASSERT("escaping preserves archived heat and other arena clocks", ok && game.location == LOCATION_ASHEN && game.map.tiles[20][27] == TILE_CINDER_HOT_2 && game.map.tiles[18][28] == TILE_CINDER_COOL_4 && game.map.tiles[17][28] == TILE_CINDER_SLUICE_4 && game.enemies[0].move_timer == -2 && game.player.hp == 1000);
     e = setup();
     action_resolve_enemies(&game);
+    Enemy escaped_lance = game.enemies[0];
     game_open_town_portal(&game);
-    game_use_town_portal(&game);
-    ASSERT("portal wards cancel a threatening lance rather than causing instant arrival damage", game.enemies[0].move_timer == -1 && game.enemies[0].attack_target_x == -1 && game.player.hp == 1000);
+    test_restore_cached_floor(&game);
+    ASSERT("escaping retains the archived lance warning without advancing it", game.enemies[0].move_timer == escaped_lance.move_timer && game.enemies[0].attack_target_x == escaped_lance.attack_target_x && game.player.hp == 1000);
     e = setup();
     e->hp = 73;
     e->move_timer = 17;

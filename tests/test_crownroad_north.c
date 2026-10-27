@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/crownroad_north.h"
 #include "game/elderwood.h"
@@ -210,6 +211,7 @@ static int legacy_save(void) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 201);
+    test_mark_legacy_portal(root);
     cJSON_DeleteItemFromObject(root, "northroad");
     text = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);
@@ -249,8 +251,8 @@ static void test_travel_and_saves(GameState *g, GameState *loaded) {
     game_open_town_portal(g);
     ASSERT("Return to Town stores the northern battle and visits the last town", g->location == LOCATION_TOWN && g->portal_location == LOCATION_CROWNROAD_NORTH && !g->level_cache[0].valid);
     ASSERT("a northern portal and its cached formation survive town save/load", save_game(g, NORTH_SLOT) && load_game(loaded, NORTH_SLOT) && loaded->northroad.enemies[0].hp == 7);
-    game_use_town_portal(loaded);
-    ASSERT("portal return resumes the exact road position, deaths, warning and explored cache", loaded->location == LOCATION_CROWNROAD_NORTH &&
+    test_restore_cached_floor(loaded);
+    ASSERT("archived floor reload resumes the exact road position, deaths, warning and explored cache", loaded->location == LOCATION_CROWNROAD_NORTH &&
         loaded->player.x == px && loaded->player.y == py && loaded->enemies[0].hp == 7 && !loaded->enemies[11].active &&
         !loaded->portal_active && loaded->enemies[7].attack_phase == 1 && loaded->map.tiles[82][18] == TILE_CROWN_EMPTY && map_is_explored(&loaded->map, 18, 82));
     loaded->player.x = CROWN_NORTH_X;

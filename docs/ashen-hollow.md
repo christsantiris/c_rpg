@@ -43,7 +43,7 @@ basalt routes. Stage 1 introduces one crossing, stage 2 has two, and stages
   used. These valves do not change the boss arena or quest mechanisms.
 - Clocks advance with ordinary enemy phases, including when no enemies remain.
   Menus and idle animation do not advance them. Loot does not stop a clock;
-  return portals cool the landing crossing before the player resumes.
+  escaping archives the crossing state without providing a return anchor.
 
 The status panel explains the three states. Valves, marked crossings and
 permanent bridge routes are independent of the Emberforge quest and the
@@ -60,8 +60,8 @@ Cinder Lord's arena sluices.
 Ashen Hollow maintains independent caches for all five stages. Backtracking
 preserves enemy health. A new expedition restores regular enemies on every
 visited stage while preserving explored terrain, quests, and boss progress.
-Return to Town uses the last town visited; its portal restores the
-original stage and position when used. Save format 81 stores the new region;
+Return to Town is a one-way escape to the last town visited, with no return
+portal. Save format 81 stores the new region;
 older saves gain fresh Ashen Hollow progress and an open regional gate without
 resetting existing characters, quests, or regional progress.
 

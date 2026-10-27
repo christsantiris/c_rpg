@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "../src/game/goblin_king.h"
 #include "../src/systems/save_load.h"
@@ -181,6 +182,7 @@ static int make_legacy_save(void) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 125);
+    test_mark_legacy_portal(root);
     cJSON_DeleteItemFromObject(root, "goblin_king_reward_state");
     cJSON *arrays[2] = {cJSON_GetObjectItem(root, "enemies"),
         cJSON_GetObjectItem(cJSON_GetArrayItem(cJSON_GetObjectItem(root, "mountain_cache"), 3), "enemies")};
@@ -446,8 +448,8 @@ static void test_saves_and_layouts(void) {
     game.portal_y = 16;
     game.portal_origin_tile = TILE_MOUNTAIN_FORTRESS_FLOOR;
     game.location = LOCATION_TOWN;
-    game_use_town_portal(&game);
-    ASSERT("portal revisit restores fixed bomb pockets and never resets spent kegs", game.location == LOCATION_MOUNTAINS && game.enemies[0].boss_aux_x == 30 && game.enemies[0].move_timer == 2 && game.map.tiles[16][29] == TILE_GOBLIN_KEG_SPENT && goblin_king_keg_fuse(&game, 27, 16) == 1);
+    test_restore_cached_floor(&game);
+    ASSERT("archived encounter reload restores fixed bomb pockets and never resets spent kegs", game.location == LOCATION_MOUNTAINS && game.enemies[0].boss_aux_x == 30 && game.enemies[0].move_timer == 2 && game.map.tiles[16][29] == TILE_GOBLIN_KEG_SPENT && goblin_king_keg_fuse(&game, 27, 16) == 1);
 
     e = setup();
     game.level = 4;

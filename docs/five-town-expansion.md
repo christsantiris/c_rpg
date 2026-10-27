@@ -66,7 +66,7 @@ Headland. Ridgeshire's eastern road leads into Ironfang Mines within the mountai
   road boundaries. Keep the existing lich crypt art.
 - Normal dungeon retreat returns to the approach for the entrance used.
   Physical retreat remembers that entrance town. Return-to-town spells use the
-  last town actually visited; the portal retains the original expedition.
+  last town actually visited and leave no return portal.
 - Preserve the Lich encounter, keys, burial-seal quest, rewards, exploration,
   caches, loot confirmation, and repeat-expedition behavior.
 

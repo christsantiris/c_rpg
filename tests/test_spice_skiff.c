@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/spice_skiff.h"
 #include "game/mangrove.h"
@@ -137,6 +138,7 @@ static int edit_save(const char *field, double value, int legacy) {
     }
     if (legacy) {
         cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 204);
+    test_mark_legacy_portal(root);
         cJSON_DeleteItemFromObject(root, "spice_skiff_quest_state");
         cJSON_DeleteItemFromObject(root, "spice_skiff_progress");
     } else {
@@ -231,9 +233,9 @@ void test_spice_skiff(void) {
     g->inventory_count = inventory;
     game_open_town_portal(g);
     ASSERT("Return to Town preserves cargo, island casualties and the moored boat", g->location == LOCATION_DAWNMERE &&
-        g->portal_active && g->portal_level == 3 && g->mangrove_stages[2].boat_x == g->mangroves.boat_x && g->spice_skiff_progress == 3);
-    ASSERT("the recovered cargo and return portal survive saving", save_game(g, SPICE_SLOT) && load_game(loaded, SPICE_SLOT) &&
-        loaded->spice_skiff_quest_state == 2 && loaded->spice_skiff_progress == 3 && loaded->portal_active);
+        !g->portal_active && g->portal_level == 3 && g->mangrove_stages[2].boat_x == g->mangroves.boat_x && g->spice_skiff_progress == 3);
+    ASSERT("the recovered cargo and escape records survive saving", save_game(g, SPICE_SLOT) && load_game(loaded, SPICE_SLOT) &&
+        loaded->spice_skiff_quest_state == 2 && loaded->spice_skiff_progress == 3 && !loaded->portal_active);
     enter_shop(loaded);
     gold = loaded->gold;
     int score = loaded->score;
@@ -244,8 +246,8 @@ void test_spice_skiff(void) {
     ASSERT("the completed journal keeps both discoveries", quest_journal_get_entry(loaded, QUEST_TAB_COMPLETED, 0, &entry) &&
         entry.objective_complete[0] && entry.objective_complete[1]);
     town_life_leave(loaded);
-    game_use_town_portal(loaded);
-    ASSERT("the portal resumes the same cargo island encounter", loaded->location == LOCATION_MANGROVES && loaded->level == 3 &&
+    test_restore_cached_floor(loaded);
+    ASSERT("the archived floor fixture resumes the same cargo island encounter", loaded->location == LOCATION_MANGROVES && loaded->level == 3 &&
         loaded->spice_skiff_quest_state == 3 && loaded->spice_skiff_progress == 3 && !loaded->mangroves.aboard);
     mangrove_leave(loaded);
     mangrove_enter(loaded, 0);
@@ -274,7 +276,7 @@ void test_spice_skiff(void) {
     talk(g);
     game_handle_quest_offer_key(g, SDL_SCANCODE_Y, 0);
     ASSERT("discoveries made in either order before acceptance count without resetting the expedition", g->spice_skiff_quest_state == 2 &&
-        g->spice_skiff_progress == 3 && g->portal_active && g->portal_level == 2);
+        g->spice_skiff_progress == 3 && !g->portal_active && g->portal_level == 2);
 
     game_init(g);
     enter_shop(g);

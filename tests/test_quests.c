@@ -619,10 +619,10 @@ void test_quest_offer_controls(void) {
     g.portal_location = LOCATION_DUNGEON;
     game_talk_to_elowen(&g);
     ASSERT("an undecided offer and existing expedition survive save/load", save_game(&g, 99150) && load_game(&loaded, 99150) &&
-        game_quest_offer_active(&loaded) && !loaded.elowen_quest_state && loaded.level_cache[3].valid && loaded.portal_active);
+        game_quest_offer_active(&loaded) && !loaded.elowen_quest_state && loaded.level_cache[3].valid && !loaded.portal_active);
     game_handle_quest_offer_key(&loaded, SDL_SCANCODE_ESCAPE, 0);
     ASSERT("Esc declines without resetting maps, depth, or portals", !loaded.dialogue_active && !loaded.elowen_quest_state &&
-        loaded.level_cache[3].valid && loaded.level_cache[3].level_cleared && loaded.max_level_reached == 4 && loaded.portal_active);
+        loaded.level_cache[3].valid && loaded.level_cache[3].level_cleared && loaded.max_level_reached == 4 && !loaded.portal_active);
     ASSERT("a declined quest remains inactive after saving", save_game(&loaded, 99150) && load_game(&g, 99150) &&
         !g.elowen_quest_state && !game_quest_offer_active(&g) && !quest_journal_count(&g, QUEST_TAB_ACTIVE));
     game_talk_to_elowen(&g);

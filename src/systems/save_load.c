@@ -1747,7 +1747,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 209);
+    cJSON_AddNumberToObject(root, "save_version", 210);
     cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
@@ -6618,6 +6618,9 @@ int load_game(GameState *g, int slot) {
         spice_skiff_talk(g);
     }
     game_refresh_debug_passages(g);
+    // Retire return anchors after older map migrations finish protecting their
+    // saved destinations. Keep every other part of the expedition intact.
+    game_close_town_portal(g);
     cJSON_Delete(root);
     return 1;
 }

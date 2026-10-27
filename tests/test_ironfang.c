@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/ironfang.h"
 #include "game/approach.h"
@@ -93,6 +94,7 @@ static void legacy_save(int version) {
     cJSON *root = cJSON_Parse(text);
     free(text);
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), version);
+    test_mark_legacy_portal(root);
     cJSON_DeleteItemFromObject(root, "ironfang");
     cJSON_DeleteItemFromObject(root, "ironfang_defeated");
     text = cJSON_PrintUnformatted(root);
@@ -189,9 +191,9 @@ void test_ironfang(void) {
     g->player.y = 25;
     g->gold = 431;
     game_open_town_portal(g);
-    ASSERT("Return to Town respects the last town visited and preserves the cart", g->location == LOCATION_TOWN2 && g->portal_location == LOCATION_IRONFANG && g->portal_active && g->ironfang[0].cart_x == 60);
-    game_use_town_portal(g);
-    ASSERT("the return portal restores the same expedition, loot, lamp, and position", g->location == LOCATION_IRONFANG && g->player.x == 18 && !g->portal_active && g->gold == 431 && g->map.tiles[23][60] == TILE_IRON_EMPTY && g->map.tiles[24][31] == TILE_IRON_LAMP_LIT);
+    ASSERT("Return to Town respects the last town visited and preserves the cart", g->location == LOCATION_TOWN2 && g->portal_location == LOCATION_IRONFANG && !g->portal_active && g->ironfang[0].cart_x == 60);
+    test_restore_cached_floor(g);
+    ASSERT("the archived floor fixture restores the same expedition, loot, lamp, and position", g->location == LOCATION_IRONFANG && g->player.x == 18 && !g->portal_active && g->gold == 431 && g->map.tiles[23][60] == TILE_IRON_EMPTY && g->map.tiles[24][31] == TILE_IRON_LAMP_LIT);
     ironfang_change_level(g, 1);
     g->enemies[0].hp = 3;
     ironfang_change_level(g, 0);

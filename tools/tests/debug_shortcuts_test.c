@@ -928,6 +928,46 @@ static void test_saltwind_renderer(Renderer *r, GameState *g, SDL_Surface *surfa
     printf("PASS: all six Saltwind enemy sprites render in the adventure; Rowan preserves his beach underlay.\n");
 }
 
+static void test_one_way_escape(Renderer *r, GameState *g, SDL_Surface *surface) {
+    const Location towns[] = {LOCATION_TOWN, LOCATION_TOWN2, LOCATION_TOWN3, LOCATION_TOWN4, LOCATION_DAWNMERE};
+    for (int n = 0; n < 6; n++) {
+        game_init(g);
+        game_enter_town_gate(g, towns[n % 5], 0, 12);
+        if (n == 5) {
+            castle_enter(g, 1);
+        } else {
+            game_enter_temple(g);
+        }
+        g->player.known_spells[0] = spell_make_return_to_town();
+        g->player.known_spell_count = 1;
+        g->player.equipped_spell = 0;
+        action_resolve_player(g, (Action){ACTION_CAST_SPELL, 0, 0});
+        if (n == 5) {
+            assert(g->castle_prompt == 2);
+            castle_prompt_key(g, SDL_SCANCODE_RETURN, 0);
+            assert(g->location == LOCATION_CASTLE && g->player.x == CROWNROAD_X && g->player.y == 11);
+        } else {
+            assert(g->location == towns[n]);
+        }
+        assert(!g->portal_active);
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                assert(g->map.tiles[y][x] != TILE_PORTAL);
+            }
+        }
+        Viewport view;
+        viewport_init(&view, r->tiles_x, r->tiles_y, TOWN_W, TOWN_H);
+        viewport_center_on(&view, g->player.x, g->player.y);
+        renderer_begin_frame(r);
+        game_draw(r, g, &view);
+        renderer_end_frame(r);
+        char path[100];
+        snprintf(path, sizeof(path), "/tmp/one-way-escape-%d.bmp", n);
+        assert(SDL_SaveBMP(surface, path) == 0);
+    }
+    puts("PASS: temple escape renders in each last-visited town without a return portal; the castle exception renders beside its entrance in Castle Grounds.");
+}
+
 static void test_rowan_dialogue(Renderer *r, GameState *g, SDL_Surface *surface) {
     for (int mode = 0; mode < 4; mode++) {
         game_init(g);
@@ -1174,6 +1214,7 @@ int main(void) {
     test_stonewake_renderer(&renderer, game, surface);
     test_saltwind_renderer(&renderer, game, surface);
     test_rowan_dialogue(&renderer, game, surface);
+    test_one_way_escape(&renderer, game, surface);
     test_stormwatch_renderer(&renderer, game, surface);
     char *arguments[] = {"conr", "--unlock-shortcuts", "--gold", "99999", "--weapon", "none"};
 

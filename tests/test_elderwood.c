@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "northroad_checks.h"
 #include "town_road_checks.h"
@@ -85,6 +86,7 @@ static int legacy(int slot) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 181);
+    test_mark_legacy_portal(root);
     const char *fields[] = {"elderwood_cache", "elderwood_defeated", "max_elderwood_level_reached", "elderwood_entry_town", "catacombs_entry_town", "northern_portal_town"};
     for (int i = 0; i < 6; i++) {
         cJSON_DeleteItemFromObject(root, fields[i]);
@@ -187,10 +189,10 @@ void test_elderwood(void) {
     game_ascend(loaded);
     ASSERT("ascending restores the previous stage without regeneration", loaded->level == 1 && loaded->enemies[0].hp == 7);
     game_open_town_portal(loaded);
-    ASSERT("Elderwood portals return to the entrance town and render there", loaded->location == LOCATION_TOWN && loaded->portal_active && loaded->map.tiles[2][21] == TILE_PORTAL);
+    ASSERT("Elderwood escapes reach the last town without a return portal", loaded->location == LOCATION_TOWN && !loaded->portal_active && loaded->map.tiles[2][21] != TILE_PORTAL);
     ASSERT("Elderwood town portals survive a save/load round trip", save_game(loaded, ELDER_SLOT) && load_game(g, ELDER_SLOT));
-    game_use_town_portal(g);
-    ASSERT("the saved portal resumes the exact living woods stage", g->location == LOCATION_ELDERWOOD && g->level == 1 && g->enemies[0].hp == 7 && !g->portal_active);
+    test_restore_cached_floor(g);
+    ASSERT("the saved archived floor fixture resumes the exact living woods stage", g->location == LOCATION_ELDERWOOD && g->level == 1 && g->enemies[0].hp == 7 && !g->portal_active);
     game_return_to_approach(g);
     ASSERT("retreating returns beside the woodland sprite without entering town", northern_approach(g) && g->player.x == NORTH_ELDER_X && g->player.y == NORTH_ELDER_Y + 1);
     elderwood_enter(g);
@@ -274,15 +276,17 @@ void test_elderwood(void) {
     int portal_x = g->player.x;
     int portal_y = g->player.y;
     game_open_town_portal(g);
-    ASSERT("a northern-area portal returns to the last visited town across region boundaries", g->location == LOCATION_TOWN2 && g->return_portal_town == LOCATION_TOWN2 && g->map.tiles[12][21] == TILE_PORTAL);
+    ASSERT("a northern-area escape reaches the last visited town across region boundaries", g->location == LOCATION_TOWN2 && g->return_portal_town == LOCATION_TOWN2 && g->map.tiles[12][21] != TILE_PORTAL);
     ASSERT("last visit and portal destination survive save/load", save_game(g, ELDER_SLOT) && load_game(loaded, ELDER_SLOT) && loaded->last_town_visited == LOCATION_TOWN2 && loaded->return_portal_town == LOCATION_TOWN2);
     action_resolve_player(loaded, (Action){ACTION_MOVE, 21, 12});
-    ASSERT("walking into the last-town portal restores the exact expedition and physical entrance", loaded->location == LOCATION_ELDERWOOD && loaded->elderwood_entry_town == LOCATION_TOWN && loaded->enemies[0].hp == 11 && loaded->player.x == portal_x && loaded->player.y == portal_y);
+    ASSERT("walking the former Elderwood portal tile stays in Stillbury", loaded->location == LOCATION_TOWN2 && !loaded->portal_active);
+    test_restore_cached_floor(loaded);
+    ASSERT("the archived Elderwood encounter retains its physical entry and wounds", loaded->location == LOCATION_ELDERWOOD && loaded->elderwood_entry_town == LOCATION_TOWN && loaded->enemies[0].hp == 11 && loaded->player.x == portal_x && loaded->player.y == portal_y);
     game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
     game_enter_catacombs(g);
     game_open_town_portal(g);
     ASSERT("Catacombs portals use the last visited town too", g->location == LOCATION_DAWNMERE && g->return_portal_town == LOCATION_DAWNMERE);
-    game_use_town_portal(g);
+    test_restore_cached_floor(g);
     ASSERT("the Catacombs portal preserves forward progression and its road exit", g->location == LOCATION_CATACOMBS && g->level == 1 && g->catacombs_entry_town == LOCATION_CASTLE);
     const Location towns[] = {LOCATION_TOWN, LOCATION_TOWN2, LOCATION_TOWN3, LOCATION_TOWN4, LOCATION_DAWNMERE};
     for (int town = 0; town < 5; town++) {
@@ -295,7 +299,7 @@ void test_elderwood(void) {
         int y = g->player.y;
         game_open_town_portal(g);
         ASSERT("Return to Town supports every town independently of the region entered", g->location == towns[town] && g->last_town_visited == towns[town] && g->return_portal_town == towns[town]);
-        game_use_town_portal(g);
+        test_restore_cached_floor(g);
         ASSERT("all five town portals restore the dungeon and preserve its physical entry town", g->location == LOCATION_DUNGEON && g->level == 1 && g->player.x == x && g->player.y == y && g->dungeon_entry_town == LOCATION_TOWN);
     }
     // Existing Rosemoor catacomb portals retain their original anchor and floor.
@@ -306,9 +310,9 @@ void test_elderwood(void) {
     game_open_town_portal(g);
     g->map.tiles[12][21] = TILE_TOWN_PATH;
     g->map.tiles[TOWN3_KING_GATE_Y + 1][TOWN_W - 3] = TILE_PORTAL;
-    ASSERT("legacy Catacombs portals retain their Rosemoor anchor on migration", save_game(g, ELDER_SLOT) && legacy(ELDER_SLOT) && load_game(loaded, ELDER_SLOT) && loaded->map.tiles[TOWN3_KING_GATE_Y + 1][TOWN_W - 3] == TILE_PORTAL);
+    ASSERT("legacy Catacombs return portals are retired in Rosemoor", save_game(g, ELDER_SLOT) && legacy(ELDER_SLOT) && load_game(loaded, ELDER_SLOT) && loaded->map.tiles[TOWN3_KING_GATE_Y + 1][TOWN_W - 3] != TILE_PORTAL);
     action_resolve_player(loaded, (Action){ACTION_MOVE, TOWN_W - 3, TOWN3_KING_GATE_Y + 1});
-    ASSERT("a migrated Rosemoor portal still resumes its exact Catacombs stage", loaded->location == LOCATION_CATACOMBS && loaded->level == 2 && !loaded->portal_active);
+    ASSERT("a migrated Rosemoor return portal stays retired", loaded->location == LOCATION_TOWN3 && !loaded->portal_active);
     game_enter_town4(g);
     game_enter_town_hall(g);
     ASSERT("older town-interior saves recover their last visited town", save_game(g, ELDER_SLOT) && legacy(ELDER_SLOT) && load_game(loaded, ELDER_SLOT) && loaded->last_town_visited == LOCATION_TOWN4);

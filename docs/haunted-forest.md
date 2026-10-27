@@ -91,9 +91,8 @@ alive. Use it when ready to leave: the return point is on the safe town road.
 The entrance sprite and road occupy the same coordinates from either town;
 travel direction stays west toward Stillbury and east toward Oakhaven.
 
-Return to Town returns to the expedition's entry town. Its portal remembers
-that town, the exact forest stage, and casting position, even if the forest is
-subsequently entered from the other town.
+Return to Town is a one-way escape to the last town actually visited. It leaves
+no return portal. Physical re-entry uses the normal forest entrance.
 
 ## Forest Quest
 

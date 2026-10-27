@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "approach_checks.h"
 #include "../src/game/drowned_queen.h"
@@ -182,6 +183,7 @@ static int make_legacy_save(int version) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), version);
+    test_mark_legacy_portal(root);
     if (version < 127) {
         cJSON_DeleteItemFromObject(root, "drowned_queen_reward_state");
     }
@@ -439,8 +441,8 @@ static void test_persistence(void) {
     game.portal_y = 16;
     game.portal_origin_tile = TILE_QUEEN_WATER;
     game.location = LOCATION_TOWN;
-    game_use_town_portal(&game);
-    ASSERT("portal revisit restores queued pools and keeps the drained control spent", game.location == LOCATION_COAST && game.enemies[0].move_timer == 2 && game.enemies[0].boss_aux_x == 30 && drowned_queen_controls(&game) == 1);
+    test_restore_cached_floor(&game);
+    ASSERT("archived encounter reload restores queued pools and keeps the drained control spent", game.location == LOCATION_COAST && game.enemies[0].move_timer == 2 && game.enemies[0].boss_aux_x == 30 && drowned_queen_controls(&game) == 1);
 
     e = setup();
     for (int yy = 11; yy < 21; yy++) {

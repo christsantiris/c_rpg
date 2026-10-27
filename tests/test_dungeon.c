@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "approach_checks.h"
 #include "test_utils.h"
 #include "../src/game/map.h"
@@ -369,70 +370,29 @@ void test_dungeon_exit_reachability(void) {
 }
 
 void test_return_to_town_spell(void) {
-    printf("Return to Town spell tests:\n");
+    printf("One-way Return to Town spell tests:\n");
     GameState g;
-    g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
-    g.player.x = TOWN_W - 2;
-    g.player.y = 12;
-    action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 1, 12});
-    walk_town_approach(&g);
-    ASSERT("east OakHaven exit enters dungeon", g.location == LOCATION_DUNGEON);
+    game_enter_dungeon(&g);
+    game_descend(&g);
     int origin_x = g.player.x;
     int origin_y = g.player.y;
     g.player.known_spells[0] = spell_make_return_to_town();
     g.player.known_spell_count = 1;
     g.player.equipped_spell = 0;
     g.player.mp = 0;
-
+    action_resolve_player(&g, (Action){ACTION_CAST_SPELL, 0, 0});
+    ASSERT("zero-mana escape reaches the last town visited", g.location == LOCATION_TOWN && g.player.mp == 0);
+    ASSERT("escape leaves no return portal beside the dungeon gate", !g.portal_active && g.map.tiles[13][TOWN_W - 3] != TILE_PORTAL);
+    ASSERT("escape retains its archived dungeon floor", g.level_cache[1].valid && g.level_cache[1].map.tiles[origin_y][origin_x] != TILE_PORTAL);
+    action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 3, 13});
+    ASSERT("walking the former portal tile cannot return to the dungeon", g.location == LOCATION_TOWN);
+    game_enter_dungeon(&g);
+    ASSERT("physical reentry starts at the first dungeon stage", g.location == LOCATION_DUNGEON && g.level == 1);
+    game_open_town_portal(&g);
     Action cast = {ACTION_CAST_SPELL, 0, 0};
     action_resolve_player(&g, cast);
-    ASSERT("zero-mana return spell reaches town", g.location == LOCATION_TOWN);
-    ASSERT("return spell leaves a portal beside the dungeon entrance",
-        g.map.tiles[13][TOWN_W - 3] == TILE_PORTAL);
-    ASSERT("dungeon return spell arrives at east OakHaven road",
-        g.player.x == TOWN_W - 2 && g.player.y == 12);
-    ASSERT("return portal remains active", g.portal_active == 1);
-    ASSERT("unusable dungeon end of portal is hidden",
-        g.level_cache[0].map.tiles[origin_y][origin_x] != TILE_PORTAL);
-
-    Action enter = {ACTION_MOVE, TOWN_W - 3, 13};
-    action_resolve_player(&g, enter);
-    ASSERT("town portal returns to dungeon", g.location == LOCATION_DUNGEON);
-    ASSERT("portal returns to casting position",
-        g.player.x == origin_x && g.player.y == origin_y);
-    ASSERT("dungeon portal closes behind player",
-        g.map.tiles[origin_y][origin_x] != TILE_PORTAL);
-    ASSERT("portal closes after return trip", g.portal_active == 0);
-    ASSERT("closed portal is removed from the cached dungeon floor",
-        g.level_cache[0].map.tiles[origin_y][origin_x] != TILE_PORTAL);
-
-    game_enter_coast(&g);
-    for (int level = 1; level < COAST_DEPTH; level++) {
-        game_descend(&g);
-    }
-    game_open_town_portal(&g);
-    ASSERT("coast portal remembers stage five",
-        g.portal_active && g.portal_level == COAST_DEPTH);
-    game_enter_coast(&g);
-    game_return_to_town(&g);
-    ASSERT("coast portal survives another expedition",
-        g.map.tiles[TOWN_H - 3][21] == TILE_PORTAL);
-    game_use_town_portal(&g);
-    ASSERT("coast portal returns to stage five",
-        g.location == LOCATION_COAST && g.level == COAST_DEPTH);
-
-    map_room_center(&g.map.rooms[0], &g.player.x, &g.player.y);
-    int blocked_x = g.player.x;
-    int blocked_y = g.player.y;
-    game_open_town_portal(&g);
-    g.coast_cache[COAST_DEPTH - 1].map.tiles[blocked_y][blocked_x] = TILE_COAST_WALL;
-    game_use_town_portal(&g);
-    ASSERT("portal avoids a blocked destination in the cached map",
-        g.location == LOCATION_COAST && g.level == COAST_DEPTH &&
-        (g.player.x != blocked_x || g.player.y != blocked_y) &&
-        map_is_walkable(&g.map, g.player.x, g.player.y) &&
-        g.map.tiles[blocked_y][blocked_x] == TILE_COAST_WALL);
+    ASSERT("casting while already in town creates no return anchor", g.location == LOCATION_TOWN && !g.portal_active);
 }
 
 void test_final_dungeon_exit(void) {
@@ -996,6 +956,7 @@ static int save_old_dungeon(const GameState *g, int version) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), version);
+    test_mark_legacy_portal(root);
     char *json = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);
     if (!json) {
@@ -1107,7 +1068,7 @@ static void test_dungeon_entry_maps(void) {
                 if (active) {
                     FloorItem *loot = &loaded->floor_items[0];
                     ASSERT("a save trapped in the false dungeon loads into real rooms and recovers dropped equipment", ok && loaded->location == LOCATION_DUNGEON && loaded->map.room_count >= MIN_ROOMS && loaded->enemy_count > 0 && loot->active && loot->item.sharpened && loot->item.type == ITEM_WEAPON && loaded->map.tiles[loot->y][loot->x] == TILE_ITEM && loot->underlying_tile == TILE_FLOOR);
-                    ASSERT("the restored active floor keeps its portal at a usable entrance", loaded->portal_active && loaded->portal_x == loaded->player.x && loaded->portal_y == loaded->player.y && loaded->portal_origin_tile == TILE_STAIRS_UP);
+                    ASSERT("the restored active floor keeps its portal at a usable entrance", !loaded->portal_active && loaded->portal_x == loaded->player.x && loaded->portal_y == loaded->player.y && loaded->portal_origin_tile == TILE_STAIRS_UP);
                 } else {
                     ASSERT("a town save drops only the foreign first-floor cache", ok && loaded->location == LOCATION_TOWN && !loaded->level_cache[0].valid);
                     action_resolve_player(loaded, (Action){ACTION_MOVE, TOWN_W - 1, 12});
@@ -1503,9 +1464,9 @@ void test_dungeon_return_stairs_migration(void) {
     g.portal_origin_tile = TILE_RETURN_EXIT;
     ASSERT("legacy return portal fixture saves", save_old_dungeon(&g, 108));
     ASSERT("portal destination retains the new return stairs", load_game(&loaded, 99151) &&
-        loaded.portal_active && loaded.portal_origin_tile == TILE_DUNGEON_STAIRS_RETURN);
-    game_use_town_portal(&loaded);
-    ASSERT("returning through the portal restores the special upward stairs at the exact tile",
+        !loaded.portal_active && loaded.portal_origin_tile == TILE_DUNGEON_STAIRS_RETURN);
+    test_restore_cached_floor(&loaded);
+    ASSERT("loading the archived floor fixture restores the special upward stairs at the exact tile",
         loaded.location == LOCATION_DUNGEON && loaded.player.x == x && loaded.player.y == y &&
         loaded.map.tiles[y][x] == TILE_DUNGEON_STAIRS_RETURN);
     action_resolve_player(&loaded, (Action){ACTION_ASCEND, 0, 0});

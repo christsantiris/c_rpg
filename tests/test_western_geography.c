@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/giants_crown.h"
 #include "game/approach.h"
@@ -49,6 +50,7 @@ static cJSON *legacy_geography_save(const GameState *g) {
     cJSON *root = read_geography_save();
     if (root) {
         cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 196);
+    test_mark_legacy_portal(root);
         cJSON *recovery = cJSON_GetObjectItem(root, "retired_coast_loot");
         cJSON_DeleteItemFromArray(recovery, 5);
     }
