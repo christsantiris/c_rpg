@@ -2,10 +2,9 @@
 
 Last checked against the game on **2026-10-27**.
 
-The current implementation has **21 journal quests**. All five regional designs
-below are approved. **The Stolen Heartseed, The Missing Spice Skiff, The Silent Stormbell, and Break
-the War Machine are implemented**. Giant's Crown remains to be implemented,
-with a pause for source control review and a manual commit between features.
+The current implementation has **22 journal quests**. All five approved regional
+quests below are implemented: **The Stolen Heartseed, The Missing Spice Skiff,
+The Silent Stormbell, Break the War Machine, and Giant's Crown**.
 
 ## Current quest coverage
 
@@ -32,7 +31,7 @@ with a pause for source control review and a manual commit between features.
 | The Missing Spice Skiff | Spice Merchant Corvin | Dawnmere — Spice Merchant shop | Saltwind Marsh | — | — |
 | The Silent Stormbell | Watchkeeper Seren | Dawnmere — Town center, beside the east road | Stormwatch Headland | — | — |
 | Break the War Machine | Marshal Veyra | Ridgeshire — Town Hall | Ironfang Mines | — | — |
-| **No implemented quest — Giant's Crown approved** | — | — | Giant's Peaks | — | — |
+| Giant's Crown | Antiquarian Edda | Rosemoor — Adventurer's Guild | Giant's Peaks | — | — |
 | **No dedicated quest** | — | — | Crown Road East | — | — |
 | **No dedicated quest** | — | — | Crown Road West | — | — |
 | **No dedicated quest** | — | — | Crown Road North | — | — |
@@ -54,7 +53,7 @@ Implementation references:
 **All five designs are approved, including Break the War Machine.** Goblins are
 villains; Ironfang's quest undermines their war supply operation.
 
-Corvin, Marshal Veyra, Tamsin, and Seren exist. Edda will be a new NPC.
+Corvin, Marshal Veyra, Tamsin, Seren, and Edda are present in their listed locations.
 
 | Quest | Design status | Area | Assigning NPC | NPC location | Main activity | Reward target |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -62,11 +61,12 @@ Corvin, Marshal Veyra, Tamsin, and Seren exist. Edda will be a new NPC.
 | The Missing Spice Skiff | Implemented | Saltwind Marsh | Spice Merchant Corvin — existing | Dawnmere — Spice Merchant shop | Follow a wreck's cargo trail and recover spices from a remote island by skiff | 150 gold, 1,000 score |
 | The Silent Stormbell | Implemented | Stormwatch Headland | Watchkeeper Seren — existing | Dawnmere — Town center, near the east road | Restore a stormbell and defend its courtyard using wind and shutters | 180 gold, 1,200 score |
 | Break the War Machine | Implemented | Ironfang Mines | Marshal Veyra — existing | Ridgeshire — Town Hall | Destroy a goblin weapons shipment and defeat the Goblin Mine Boss | 160 gold, 1,000 score |
-| Giant's Crown | Approved | Giant's Peaks | Antiquarian Edda — new | Rosemoor — Adventurer's Guild | Open a royal vault in the giant ruins and reclaim the Last Jarl's crown | 220 gold, 1,600 score, equipment reward to be designed |
+| Giant's Crown | Implemented | Giant's Peaks | Antiquarian Edda — existing | Rosemoor — Adventurer's Guild | Open a royal vault in the giant ruins and reclaim the Last Jarl's crown | 220 gold, 1,600 score, Stoneguard Shield |
 
-Reward amounts are balancing targets, separate from the existing boss rewards.
-Giant's Crown's equipment reward still needs a type and statistics. Additional
-equipment rewards for the other quests have not been specified.
+Quest rewards are separate from existing boss rewards. Giant's Crown awards a
+rare Warrior shield with **+8 defense, 20% block chance, 50% blocked damage
+reduction, and +30 maximum HP while equipped**. The other four quests award
+their listed gold and score.
 
 ### Elderwood Forest — The Stolen Heartseed
 
@@ -263,21 +263,22 @@ Implementation: [quest logic](src/game/war_machine.c),
 
 ### Giant's Peaks — Giant's Crown
 
-**Status:** Approved design; not implemented.
+**Status:** Implemented. Save version 208 preserves acceptance, discoveries,
+the royal vault, the bounty, and equipment awaiting collection.
 
 **Premise:** Edda believes the ruined kingdom's crown still lies in its royal
 vault. Its recovery would preserve the history of the giants and give Rosemoor
 proof of what happened to the mountain kingdom.
 
-1. Read an optional royal inscription in **stage 2, The Fallen Village**. It
+1. Read the royal inscription in **stage 2, The Fallen Village**. It
    points to a royal seal hidden among the aqueduct ruins.
 2. Recover the seal from a chamber behind cracked masonry in **stage 3, Broken
    Aqueduct**. Bait a giant's warned strike to open it, or clear the masonry
    with Interact. Its placement supports both methods.
 3. Defeat **the Last Jarl on stage 5** and use the seal to open a royal vault
    beside his court. Recover the intact crown from its stone resting place.
-4. Return the crown to Edda in Rosemoor's Adventurer's Guild for the bounty and
-   an equipment reward whose type and statistics still need design.
+4. Return the crown to Edda in Rosemoor's Adventurer's Guild for **220 gold,
+   1,600 score, and the Stoneguard Shield**.
 
 **Exploration:** The seal chamber gives destructible ruins a quest purpose.
 The royal vault is a side chamber with a visible doorway and a return route.
@@ -288,7 +289,37 @@ for that objective when accepting the quest. They can still discover the seal
 and crown in their existing region. The crown is a quest artifact; the equipment
 reward is a separate item.
 
-## Shared behavior for later implementation
+**Interaction:** Talk to Antiquarian Edda in the Guild, then use the normal Y/N
+acceptance. Interact (A by default) reads the inscription in stage 2's northwest
+village hall, takes the seal from stage 3's western chamber, opens stage 5's
+western warded doorway, and collects the crown. The inscription, seal, Jarl
+victory, and crown are four journal objectives. The seal chamber's cracked wall
+opens with a warned heavy strike or Interact. The royal ward cannot be shattered;
+opening it requires the seal and the Jarl's defeat. Ordinary stone coffers stay
+separate from both relic pedestals.
+
+**Persistence and reward:** Discoveries count before accepting and need no pack
+slots. Saves, portals, backtracking, and new expeditions preserve all four
+objectives and the open vault. Ordinary enemies retain normal replay behavior.
+Edda pays the gold and score once. If the pack is full, she reserves the shield
+until the player makes room and speaks to her again. Claiming, dropping, or
+selling it cannot produce another reward. Its +30 maximum HP applies only while
+equipped; equipping does not heal, and removing it clamps current HP to the
+remaining maximum.
+
+**Compatibility:** Existing stages keep their terrain, broken masonry, searched
+coffers, exploration, actors, wounds, loot, portals, and previous victories.
+Older opened vaults stay accessible; crown recovery still requires the seal and
+Jarl victory. A legacy player or return portal inside the vault retains an
+escape route. Edda is added to an existing Guild save when her floor tile is
+free; an occupied tile is preserved until the next Guild entry. Debug shortcuts
+open the physical passage without granting quest discoveries or boss victory.
+
+Implementation: [quest logic](src/game/crown_quest.c),
+[save support](src/systems/save_load.c),
+[native art and renderer review](docs/art-sources/crown-quest/README.md).
+
+## Shared quest behavior
 
 - All five designs describe optional, one-time quests. Ordinary regional enemies
   continue to respawn under the existing expedition rules.
@@ -302,7 +333,7 @@ reward is a separate item.
 - Save/load must preserve acceptance, clues, objects, completed encounters,
   guardian state, and claimed rewards. Migrations must add quest objects to
   existing stages while preserving terrain, exploration, loot, and victories.
-- No proposal changes region geography or existing road and boss unlocks.
+- These quests preserve region geography and existing road and boss unlocks.
 
 ## Keeping this reference current
 

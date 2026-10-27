@@ -10,6 +10,7 @@
 #include "../game/stormwatch.h"
 #include "../game/stormbell.h"
 #include "../game/war_machine.h"
+#include "../game/crown_quest.h"
 #include "../game/mangrove.h"
 #include "../game/coastal_travel.h"
 #include "elderwood_renderer.h"
@@ -2815,6 +2816,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     town_life_draw_resident(r, sx, sy, style);
                     break;
                 }
+                case TILE_NPC_EDDA:
+                    draw_tavern_floor(r, sx, sy);
+                    npc_draw(r, sx, sy, NPC_ART_EDDA, 0);
+                    break;
                 case TILE_NPC_SEREN:
                     draw_town_floor(r, sx, sy);
                     npc_draw(r, sx, sy, NPC_ART_SEREN, 0);

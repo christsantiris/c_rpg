@@ -43,6 +43,7 @@ typedef struct {
     SDL_Texture *stormwatch_enemy_texture;
     SDL_Texture *ironfang_boss_texture;
     SDL_Texture *war_machine_texture;
+    SDL_Texture *crown_quest_texture;
     SDL_Texture *stonewake_enemy_texture;
     SDL_Texture *stonewake_crane_texture;
     SDL_Texture *stonewake_prop_texture;

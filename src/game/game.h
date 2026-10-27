@@ -262,6 +262,10 @@ typedef struct {
     Player     player;
     GiantsStage giants_crown[GIANTS_DEPTH];
     int giants_crown_defeated;
+    int crown_quest_state; // 0 unaccepted, 1 active, 2 ready, 3 rewarded.
+    int crown_quest_progress; // Inscription, royal seal, Jarl victory, royal crown.
+    int crown_vault_open;
+    int crown_reward_state; // 0 unearned, 1 reserved with Edda, 2 claimed.
     IronfangStage ironfang[IRON_DEPTH];
     int ironfang_defeated;
     int war_machine_quest_state; // 0 unaccepted, 1 active, 2 ready, 3 rewarded.

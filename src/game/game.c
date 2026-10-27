@@ -11,6 +11,7 @@
 #include "spice_skiff.h"
 #include "stormbell.h"
 #include "war_machine.h"
+#include "crown_quest.h"
 #include "castle.h"
 #include "lich.h"
 #include "necromancer.h"
@@ -1435,6 +1436,10 @@ void enemies_spawn(GameState *g) {
 void game_init(GameState *g) {
     memset(g->giants_crown, 0, sizeof(g->giants_crown));
     g->giants_crown_defeated = 0;
+    g->crown_quest_state = 0;
+    g->crown_quest_progress = 0;
+    g->crown_vault_open = 0;
+    g->crown_reward_state = 0;
     memset(&g->northroad, 0, sizeof(g->northroad));
     memset(g->ironfang, 0, sizeof(g->ironfang));
     g->ironfang_defeated = 0;
@@ -1790,6 +1795,10 @@ void game_unequip_off_hand(GameState *g) {
         g->player.attack -= game_off_hand_attack_bonus(item);
     } else if (item->type == ITEM_SHIELD) {
         g->player.defense -= item->defense_bonus;
+        g->player.max_hp -= item->max_hp_bonus;
+        if (g->player.hp > g->player.max_hp) {
+            g->player.hp = g->player.max_hp;
+        }
     }
     g->equipped_off_hand = -1;
 }
@@ -1828,9 +1837,12 @@ int game_equip_shield(GameState *g, int index) {
         !item_class_allowed(shield, g->player.player_class)) {
         return 0;
     }
+    int hp_before = g->player.hp;
     game_unequip_off_hand(g);
     g->equipped_off_hand = index;
     g->player.defense += shield->defense_bonus;
+    g->player.max_hp += shield->max_hp_bonus;
+    g->player.hp = hp_before < g->player.max_hp ? hp_before : g->player.max_hp;
     return 1;
 }
 
@@ -3815,6 +3827,7 @@ static void offer_rook_quest(GameState *g) {
 }
 
 void game_refresh_debug_passages(GameState *g) {
+    crown_quest_prepare(g);
     jail_refresh_hatch(g);
     coastal_refresh_docks(g);
     if (!g->debug_passages_unlocked) {
@@ -6339,6 +6352,8 @@ typedef struct {
 } QuestOffer;
 
 static const QuestOffer quest_offers[] = {
+    {"Antiquarian Edda", LOCATION_GUILD, offsetof(GameState, crown_quest_state), 0,
+        "Assigned: Giant's Crown. Read stage 2's inscription, find stage 3's seal, and recover the crown from stage 5's royal vault."},
     {WAR_SPEAKER, LOCATION_TOWN_HALL, offsetof(GameState, war_machine_quest_state), 0,
         "Assigned: Break the War Machine. Read Ironfang 2's orders, sink Ironfang 4's weapons, and bring back the Mine Boss's seal."},
     {"Watchkeeper Seren", LOCATION_DAWNMERE, offsetof(GameState, stormbell_quest_state), 0,
@@ -6407,7 +6422,9 @@ int game_handle_quest_offer_key(GameState *g, int key, int repeat) {
     }
     int *state = (int *)((char *)g + offer->state_offset);
     *state = offer->offered_state + 1;
-    if (state == &g->war_machine_quest_state) {
+    if (state == &g->crown_quest_state) {
+        crown_quest_sync(g);
+    } else if (state == &g->war_machine_quest_state) {
         war_machine_accept(g);
     } else if (state == &g->stormbell_quest_state) {
         stormbell_accept(g);

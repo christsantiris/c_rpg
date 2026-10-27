@@ -20,6 +20,7 @@ EM_ASYNC_JS(void, browser_next_frame, (void), {
 #include "game/stormwatch.h"
 #include "game/stormbell.h"
 #include "game/war_machine.h"
+#include "game/crown_quest.h"
 #include "game/jail.h"
 #include "game/heartseed.h"
 #include "game/town_life.h"
@@ -1064,7 +1065,7 @@ int main(int argc, char **argv) {
                                 if (restoration_talk(&game) || town_life_talk(&game, 0)) {
                                     break;
                                 }
-                                if (stormbell_talk(&game) || heartseed_talk(&game) || jail_talk_nearby(&game)) {
+                                if (crown_quest_talk(&game) || stormbell_talk(&game) || heartseed_talk(&game) || jail_talk_nearby(&game)) {
                                     break;
                                 }
                                 if (game_workshop_near_smith(&game)) {

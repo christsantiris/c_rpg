@@ -218,6 +218,7 @@ Item item_make_magic_shield(void);
 Item item_make_castellan_bulwark(void);
 Item item_make_labyrinth_aegis(void);
 Item item_make_goblin_king_shield(void);
+Item item_make_stoneguard_shield(void);
 void item_apply_legacy_metadata(Item *item);
 void item_apply_legacy_armor_metadata(Item *item);
 void item_apply_legacy_shield_metadata(Item *item);
