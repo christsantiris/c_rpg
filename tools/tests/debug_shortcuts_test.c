@@ -784,8 +784,9 @@ static void test_stonewake_renderer(Renderer *r, GameState *g, SDL_Surface *surf
         char path[80];
         snprintf(path, sizeof(path), "/tmp/stonewake-crane-pose-%d.bmp", mode);
         assert(SDL_SaveBMP(surface, path) == 0);
-        int px = viewport_to_screen_x(&view, 18) * TILE_SIZE;
-        int py = viewport_to_screen_y(&view, 26) * TILE_SIZE;
+        int px;
+        int py;
+        zoomed_screen(g, &view, SWAMP_MAP_W, SWAMP_MAP_H, 18, 26, &px, &py);
         poses[mode] = 2166136261u;
         for (int y = py - 48; y < py + 24; y++) {
             for (int x = px - 18; x < px + 54; x++) {
