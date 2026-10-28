@@ -119,6 +119,9 @@ Below are screenshots of the game in action:
 
 <img width="2586" height="1466" alt="image" src="https://github.com/user-attachments/assets/2fd11475-3ef2-44c3-96c6-6ffa94500c16" />
 
+<img width="2586" height="1466" alt="image" src="https://github.com/user-attachments/assets/354b1f25-4ba0-4318-8be7-9ac5f7a57a29" />
+
+
 ## Building and Running
 
 Build a release executable with `make`, or build and start it with `make run`.
