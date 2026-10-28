@@ -711,6 +711,7 @@ float game_camera_zoom(const GameState *g) {
         case LOCATION_GLASSDEEP:
         case LOCATION_DUNGEON:
         case LOCATION_FOREST:
+        case LOCATION_MOUNTAINS:
             return CAMERA_ZOOM;
         default:
             return 1.0f;

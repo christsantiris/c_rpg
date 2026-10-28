@@ -6,6 +6,10 @@ large fortified mountain cave from either town to start at **level 1** and
 fight upward through five levels. Mountain levels never play in reverse from
 Ridgeshire. Ordinary backtracking within a climb remains available.
 
+The mountains are drawn at the Crown Roads' 1.5× zoom: the camera shows about 30
+× 18 tiles around the player. The Goblin King acts within twelve tiles, so he
+may begin his warned attacks from just off screen.
+
 The cave opens at the foot of a stepped red sandstone massif, flanked by a
 leaning needle and a squat butte, sunlit orange on their western faces and
 violet in shadow. The range
