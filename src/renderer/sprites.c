@@ -1,6 +1,7 @@
 #include "giants_crown_renderer.h"
 #include "stonewake_renderer.h"
 #include "sprites.h"
+#include "../game/approach.h"
 #include "player_art.h"
 #include "dungeon_enemy_art.h"
 #include "dungeon_boss_art.h"
@@ -5317,7 +5318,7 @@ void draw_mountain_entrance(Renderer *r, int tile_x, int tile_y) {
         draw_labyrinth_entrance_fallback(r, tile_x, tile_y, 1);
         return;
     }
-    SDL_Rect destination = {(tile_x - 3) * TILE_SIZE, (tile_y - 5) * TILE_SIZE, 7 * TILE_SIZE, 6 * TILE_SIZE};
+    SDL_Rect destination = {(tile_x - 3) * TILE_SIZE, (tile_y - APPROACH_MOUNTAIN_ROWS + 1) * TILE_SIZE, 7 * TILE_SIZE, APPROACH_MOUNTAIN_ROWS * TILE_SIZE};
     SDL_RenderCopy(r->sdl, r->mountain_entrance_texture, NULL, &destination);
 }
 

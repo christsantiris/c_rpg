@@ -2266,7 +2266,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     } else if (g->location == LOCATION_APPROACH && approach_route(g) &&
                         (approach_route(g)->area == LOCATION_MOUNTAINS || approach_route(g)->area == LOCATION_FOREST || approach_route(g)->area == LOCATION_SWAMP) &&
                         x >= g->map.stairs_down_x - 3 && x <= g->map.stairs_down_x + 3 &&
-                        y >= g->map.stairs_down_y - 5 && y <= g->map.stairs_down_y) {
+                        y > g->map.stairs_down_y - (approach_route(g)->area == LOCATION_MOUNTAINS ? APPROACH_MOUNTAIN_ROWS : 6) && y <= g->map.stairs_down_y) {
                         draw_town_floor(r, sx, sy);
                     } else if (g->location == LOCATION_APPROACH && approach_route(g) && approach_route(g)->area == LOCATION_FOREST &&
                         x >= APPROACH_LABYRINTH_X - 1 && x <= APPROACH_LABYRINTH_X + 1 &&
@@ -3672,7 +3672,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 TTF_SizeText(r->font_tiny, name, &width, NULL);
                 int px = viewport_to_screen_x(v, x) * TILE_SIZE + (TILE_SIZE - width) / 2;
                 int py = viewport_to_screen_y(v, y) * TILE_SIZE - 16;
-                if (end && (route->area == LOCATION_MOUNTAINS || route->area == LOCATION_FOREST || route->area == LOCATION_SWAMP)) {
+                if (end && route->area == LOCATION_MOUNTAINS) {
+                    py -= (APPROACH_MOUNTAIN_ROWS - 1) * TILE_SIZE;
+                } else if (end && (route->area == LOCATION_FOREST || route->area == LOCATION_SWAMP)) {
                     py -= 5 * TILE_SIZE;
                 } else if (end && approach_entrance_rows(route->area)) {
                     py -= (approach_entrance_rows(route->area) - 1) * TILE_SIZE;

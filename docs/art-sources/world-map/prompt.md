@@ -227,3 +227,12 @@ The current atlas replaces Glassdeep in place with Stonewake Quarry. See
 [the exact localized edit prompt and visual acceptance record](stonewake.md).
 The shoreline, beaches, cliffs, cove, connected docks, town elevations and
 existing roads remain protected features.
+
+
+## Red sandstone Goblin Mountains (save version 218)
+
+The in-game Goblin Mountains entrance is now a cluster of red sandstone
+needles and stepped buttes rather than grey peaks. The atlas has not yet been
+repainted to match. Pending localized edit prompt:
+
+> Use case: precise-object-edit. Edit target: the supplied finished fantasy world map. Make exactly one localized change: recolour and reshape ONLY the Goblin Mountains range between Dawnmere and Ridgeshire into red sandstone canyon country. Use tall red-orange sandstone needles, hoodoos and stepped buttes with sunlit orange and gold western faces and cool violet shadows, as in classic fantasy mountain land art. Keep the range's exact footprint, the road from Dawnmere to Ridgeshire passing through its pass, the dark cave entrance and the exact 'Goblin Mountains' label. Preserve every other region, town, road, coastline, label, parchment texture, frame, title, compass, palette and the original watercolor/ink style. Do not add snow. Preserve the 1536×1024 / 3:2 landscape format. Return the complete edited map.

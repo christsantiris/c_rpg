@@ -6,6 +6,12 @@ large fortified mountain cave from either town to start at **level 1** and
 fight upward through five levels. Mountain levels never play in reverse from
 Ridgeshire. Ordinary backtracking within a climb remains available.
 
+The cave opens at the foot of a stepped red sandstone massif, flanked by a
+leaning needle and a squat butte, sunlit orange on their western faces and
+violet in shadow. The range
+fills a tapered 7×9 tile footprint; save version **218** moves anyone saved on
+its newly raised rows onto the road.
+
 | Level | Region | Layout identity | Enemy roster |
 | --- | --- | --- | --- |
 | 1 | Blackrock Foothills | Open switchbacks and scout camps | Goblin Scouts |

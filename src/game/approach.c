@@ -295,9 +295,9 @@ void approach_refresh_mountains(GameState *g) {
     for (int x = tx + 1; x <= g->map.stairs_down_x; x++) {
         g->map.tiles[junction][x] = TILE_TOWN_PATH;
     }
-    // The cave faces south; its rock mass stands east of the through road.
-    for (int row = -5; row <= 0; row++) {
-        int radius = row < -3 ? 1 : row < -1 ? 2 : 3;
+    // The cave faces south; its sandstone spires stand east of the through road.
+    for (int row = 1 - APPROACH_MOUNTAIN_ROWS; row <= 0; row++) {
+        int radius = row < -6 ? 1 : row < -4 ? 2 : 3;
         for (int side = -radius; side <= radius; side++) {
             g->map.tiles[g->map.stairs_down_y + row][g->map.stairs_down_x + side] = TILE_WALL;
         }
