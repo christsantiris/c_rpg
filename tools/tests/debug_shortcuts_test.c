@@ -950,8 +950,9 @@ static void test_saltwind_renderer(Renderer *r, GameState *g, SDL_Surface *surfa
     Viewport view;
     viewport_init(&view, r->tiles_x, r->tiles_y, MANGROVE_W, MANGROVE_H);
     viewport_center_on(&view, g->player.x, g->player.y);
-    int x = viewport_to_screen_x(&view, enemy->x) * TILE_SIZE;
-    int y = viewport_to_screen_y(&view, enemy->y) * TILE_SIZE;
+    int x;
+    int y;
+    zoomed_screen(g, &view, MANGROVE_W, MANGROVE_H, enemy->x, enemy->y, &x, &y);
     const EnemyType marsh_types[] = {ENEMY_LIZARDFOLK_SCOUT, ENEMY_REED_SPEARHUNTER, ENEMY_MARSH_SPITTER, ENEMY_GIANT_CRAB, ENEMY_LIZARDFOLK_SCALEGUARD, ENEMY_SSZARETH};
     for (int i = 0; i < (int)(sizeof(marsh_types) / sizeof(marsh_types[0])); i++) {
         enemy->active = 0;
