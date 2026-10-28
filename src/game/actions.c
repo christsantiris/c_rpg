@@ -1,3 +1,4 @@
+#include "coast_exits.h"
 #include "giants_crown.h"
 #include "ironfang.h"
 #include "crownroad_north.h"
@@ -89,7 +90,7 @@ static void mark_item_tile(GameState *g, int x, int y) {
         return;
     }
     if (tile != TILE_BURIAL_PLATE && tile != TILE_MOUNTAIN_WEAK_BRIDGE && tile != TILE_MOUNTAIN_CACHE &&
-        !map_is_coast_tidal_tile(tile) && !map_is_coast_object(tile) && !regional_terrain_tile(tile) && !landscape_tile(tile) && !wilds_tile(tile)) {
+        !map_is_coast_tidal_tile(tile) && tile != TILE_COAST_ENTRANCE && tile != TILE_COAST_EXIT && !map_is_coast_object(tile) && !regional_terrain_tile(tile) && !landscape_tile(tile) && !wilds_tile(tile)) {
         g->map.tiles[y][x] = TILE_ITEM;
     }
 }
@@ -1227,6 +1228,7 @@ static void coast_toggle_tide(GameState *g) {
             coast_find_bank(g, enemy);
         }
     }
+    coast_exits_repair(g);
     push_message(g, blue_drained ? "Blue channels drain; amber channels rise." :
         "Blue channels rise; amber channels drain.");
 }
@@ -2751,7 +2753,7 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
         if (g->location == LOCATION_COAST &&
-            g->map.tiles[ty][tx] == TILE_COAST_ENTRANCE) {
+            floor_drop_underlay(g, tx, ty) == TILE_COAST_ENTRANCE) {
             if (g->level == 1) {
                 game_return_to_approach(g);
             } else {
@@ -2761,7 +2763,7 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
         if (g->location == LOCATION_COAST &&
-            g->map.tiles[ty][tx] == TILE_COAST_EXIT) {
+            floor_drop_underlay(g, tx, ty) == TILE_COAST_EXIT) {
             if (!g->debug_passages_unlocked && (g->player.x != g->map.stairs_down_x ||
                 g->player.y != g->map.stairs_down_y)) {
                 return;

@@ -636,8 +636,40 @@ static void test_layouts_and_travel(void) {
     ASSERT("Queen victory still opens coast exit and harbor access with regular enemies alive", game.location == LOCATION_TOWN && game_harbor_unlocked(&game));
 }
 
+static void test_mobile_queen(void) {
+    Enemy *e = setup();
+    e->x = 21;
+    e->y = 11;
+    e->move_timer = -1;
+    game.player.x = 23;
+    game.player.y = 12;
+    action_resolve_enemies(&game);
+    ASSERT("Queen leaves a chamber corner during recovery without attacking or overlapping the player",
+        (e->x != 21 || e->y != 11) && map_is_walkable(&game.map, e->x, e->y) &&
+        !(e->x == game.player.x && e->y == game.player.y) && game.player.hp == 1000);
+    int x = e->x;
+    int y = e->y;
+    action_resolve_enemies(&game);
+    int target_x = e->attack_target_x;
+    int target_y = e->attack_target_y;
+    action_resolve_enemies(&game);
+    ASSERT("Queen holds position and targeting throughout the announced windup", e->x == x && e->y == y &&
+        e->attack_target_x == target_x && e->attack_target_y == target_y && e->move_timer == 1);
+    e->move_timer = -1;
+    for (int yy = 11; yy < 21; yy++) {
+        for (int xx = 21; xx < 33; xx++) {
+            if (xx != e->x || yy != e->y) {
+                game.map.tiles[yy][xx] = TILE_COAST_WALL;
+            }
+        }
+    }
+    action_resolve_enemies(&game);
+    ASSERT("blocked Queen movement stays inside the chamber without crossing walls", e->x == x && e->y == y);
+}
+
 void test_drowned_queen(void) {
     printf("Drowned Queen phased encounter tests:\n");
+    test_mobile_queen();
     test_patterns();
     test_controls();
     test_rewards();

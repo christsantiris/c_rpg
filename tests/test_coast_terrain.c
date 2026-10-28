@@ -1,3 +1,4 @@
+#include "../src/game/coast_exits.h"
 #include "test_utils.h"
 #include "../src/game/game.h"
 #include "../src/systems/save_load.h"
@@ -64,7 +65,9 @@ static void test_coast_routes(void) {
                 coast_reachable(&g.map, seen);
                 int cx;
                 int cy;
-                solvable &= seen[g.map.stairs_down_y][g.map.stairs_down_x];
+                int ex, ey, ix, iy;
+                solvable &= coast_exit_point(&g.map, 1, &ex, &ey) && coast_exit_point(&g.map, 0, &ix, &iy);
+                solvable &= seen[ey][ex] && seen[iy][ix] && coast_exits_valid(&g.map);
                 map_room_center(&g.map.rooms[g.map.room_count - 1], &cx, &cy);
                 solvable &= seen[cy][cx];
                 map_room_center(&g.map.rooms[0], &cx, &cy);

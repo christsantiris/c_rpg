@@ -472,7 +472,7 @@ void test_rook_labyrinth(void) {
     g.player.y = ROOK_TAVERN_Y + 1;
     game_talk_to_rook(&g);
     ASSERT("Rook directs the player west to Stillbury and back to Oakhaven's Tavern",
-        strstr(g.dialogue_text, "west gate toward Stillbury") && strstr(g.dialogue_text, "Haunted Forest entrance") && strstr(g.dialogue_text, "Oakhaven's Tavern"));
+        strstr(g.dialogue_text, "road to Stillbury") && strstr(g.dialogue_text, "Haunted Forest entrance") && strstr(g.dialogue_text, "Oakhaven's Tavern"));
     game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
     ASSERT("Rook assigns the retrieval quest on first conversation",
         g.rook_quest_state == 1 && g.rook_labyrinth_switches == 0 &&
@@ -481,10 +481,12 @@ void test_rook_labyrinth(void) {
         g.dialogue_active && strcmp(g.dialogue_speaker, "Rook") == 0 &&
         g.dialogue_x == ROOK_TAVERN_X && g.dialogue_y == ROOK_TAVERN_Y &&
         strstr(g.dialogue_text, "ivory rook") != NULL &&
-        strcmp(g.messages[g.message_count - 2], "Assigned: The Ivory Rook.") == 0);
+        strcmp(g.messages[g.message_count - 2], "Assigned: The Ivory Rook.") == 0 &&
+        strstr(g.messages[g.message_count - 1], "road to Stillbury"));
     game_talk_to_rook(&g);
     ASSERT("Rook's reminder stays in the bubble while the bar shows a status",
-        g.dialogue_active && strstr(g.dialogue_text, "One rune per floor") != NULL &&
+        g.dialogue_active && strstr(g.dialogue_text, "One rune per floor") != NULL && strstr(g.dialogue_text, "Stillbury") &&
+        strstr(g.dialogue_text, "Oakhaven's Tavern.") &&
         strcmp(g.messages[g.message_count - 1],
             "Rook is waiting for the ivory rook.") == 0);
     game_leave_tavern(&g);

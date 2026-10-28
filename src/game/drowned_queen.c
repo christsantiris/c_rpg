@@ -236,6 +236,29 @@ static void clear_targets(Enemy *e) {
     e->boss_aux_y = -1;
 }
 
+static void reposition(GameState *g, Enemy *e) {
+    static const int steps[4][2] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
+    int bx = e->x;
+    int by = e->y;
+    int best = MAP_W + MAP_H;
+    for (int n = 0; n < 4; n++) {
+        int x = e->x + steps[n][0];
+        int y = e->y + steps[n][1];
+        int distance = abs(x - g->player.x) + abs(y - g->player.y);
+        TileType tile = tile_at(g, x, y);
+        if (!in_chamber(&g->map, x, y) || !map_is_walkable(&g->map, x, y) ||
+            occupied(g->enemies, g->enemy_count, x, y) || distance == 0 || distance >= best ||
+            (tile != TILE_QUEEN_WATER && tile != TILE_QUEEN_DRY && !ordinary_floor(tile))) {
+            continue;
+        }
+        bx = x;
+        by = y;
+        best = distance;
+    }
+    e->x = bx;
+    e->y = by;
+}
+
 int drowned_queen_tick(GameState *g, Enemy *e) {
     if (!arena(g)) {
         return 0;
@@ -247,6 +270,11 @@ int drowned_queen_tick(GameState *g, Enemy *e) {
     }
     if (e->move_timer < 0) {
         e->move_timer++;
+        if (!e->move_timer) {
+            // Move between attacks only: announced lanes and the player's safe
+            // counterattack turn stay fixed throughout each windup.
+            reposition(g, e);
+        }
         return 0;
     }
     if (e->move_timer > 0) {

@@ -1,3 +1,4 @@
+#include "coast_exits.h"
 #include "boss_gates.h"
 #include "giants_crown.h"
 #include "ironfang.h"
@@ -3094,6 +3095,7 @@ void game_refresh_quest_encounters(GameState *g) {
         spawn_mara_guardian(g);
     }
     containers_restore(g);
+    coast_exits_repair(g);
 }
 
 static void generate_active_level(GameState *g) {
@@ -3210,6 +3212,7 @@ static void generate_active_level(GameState *g) {
         g->hunt_quest_encounters &= ~hunt_encounter_mask(hunt);
     }
     place_hunt_encounter(g);
+    coast_exits_repair(g);
     game_update_level_progress(g);
 }
 
@@ -3826,8 +3829,8 @@ int game_harbor_unlocked(const GameState *g) {
 
 static void offer_rook_quest(GameState *g) {
     snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-        "Take the west gate toward Stillbury. The labyrinth is beside the Haunted Forest entrance. "
-        "Recover my ivory rook; beware false stairs and the Minotaur. Return here to Oakhaven's Tavern.");
+        "Take the road to Stillbury through Oakhaven's west gate. The labyrinth is beside the Haunted Forest entrance. "
+        "Recover my ivory rook from the Minotaur, then return to Oakhaven's Tavern.");
 }
 
 void game_refresh_debug_passages(GameState *g) {
@@ -6115,7 +6118,7 @@ static const QuestOffer quest_offers[] = {
     {"Huntmaster Selene", LOCATION_GUILD, offsetof(GameState, hunt_quest_state), 0, "Assigned: The Three Great Hunts. See your quest journal."},
     {"Marshal Veyra", LOCATION_TOWN_HALL, offsetof(GameState, watchfire_quest_state), 0, "Assigned: Watchfires of Ridgeshire. See your quest journal."},
     {"Elowen", LOCATION_TAVERN, offsetof(GameState, elowen_quest_state), 0, "Quest assigned: The Broken Seals."},
-    {"Dain", LOCATION_TOWN4, offsetof(GameState, dain_quest_state), 0, "Assigned: Recover the Treasure Map."},
+    {"Dain", LOCATION_DAWNMERE, offsetof(GameState, dain_quest_state), 0, "Assigned: Recover the Treasure Map."},
     {"Alder", LOCATION_INN, offsetof(GameState, alder_quest_state), 0, "Assigned: The Lost Wardens."},
     {"Mara", LOCATION_TAVERN, offsetof(GameState, mara_quest_state), 0, "Assigned: Relight the Drowned Beacons."},
     {"Rook", LOCATION_TAVERN, offsetof(GameState, rook_quest_state), 0, "Assigned: The Ivory Rook."},
@@ -6207,7 +6210,7 @@ int game_handle_quest_offer_key(GameState *g, int key, int repeat) {
     }
     push_message(g, offer->message);
     if (state == &g->rook_quest_state) {
-        push_message(g, "The labyrinth across from the witch's hut is now open.");
+        push_message(g, "The labyrinth on the road to Stillbury is now open.");
     }
     return 1;
 }
@@ -6380,7 +6383,7 @@ void game_talk_to_elowen(GameState *g) {
 }
 
 void game_talk_to_dain(GameState *g) {
-    if (g->location != LOCATION_TOWN4 || abs(g->player.x - DAIN_TOWN_X) > 1 || abs(g->player.y - DAIN_TOWN_Y) > 1) {
+    if (g->location != LOCATION_DAWNMERE || abs(g->player.x - DAIN_TOWN_X) > 1 || abs(g->player.y - DAIN_TOWN_Y) > 1) {
         return;
     }
     g->dialogue_active = 1;
@@ -6390,7 +6393,7 @@ void game_talk_to_dain(GameState *g) {
     g->dialogue_y = DAIN_TOWN_Y;
     if (g->dain_quest_state == 0) {
         strncpy(g->dialogue_text,
-            "Enter Ridgeshire's south mountain gate. Map Bearers hold fragments on stages 2, 3, and 4 before the Goblin King. Return to Ridgeshire's town center.",
+            "Take Dawnmere's north gate into the Goblin Mountains. Map Bearers hold fragments on stages 2, 3, and 4 before the Goblin King. Return to Dawnmere's town center.",
             MAX_DIALOGUE_LEN - 1);
         g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
         return;
@@ -6403,7 +6406,7 @@ void game_talk_to_dain(GameState *g) {
             }
         }
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "You have recovered %d of 3 fragments. Search mountain stages 2, 3, and 4. After the Goblin King, exit to the road north to Ridgeshire or south to Dawnmere. Return here to Ridgeshire's town center.",
+            "You have %d of 3 map fragments. Find Map Bearers on mountain stages 2, 3, and 4. The road leads north to Ridgeshire and south here. Return the fragments to Dawnmere's town center.",
             defeated);
         char status[MAX_MESSAGE_LEN];
         snprintf(status, sizeof(status),
@@ -6452,7 +6455,7 @@ void game_record_dain_kill(GameState *g, EnemyType type) {
     push_message(g, status);
     if ((g->dain_map_fragments & 7) == 7) {
         g->dain_quest_state = 2;
-        push_message(g, "Treasure map complete. Return to Dain in Ridgeshire's town center.");
+        push_message(g, "Treasure map complete. Return to Dain in Dawnmere's town center.");
     }
 }
 
@@ -6614,8 +6617,8 @@ void game_talk_to_rook(GameState *g) {
         offer_rook_quest(g);
     } else if (g->rook_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Find the labyrinth beside the forest road. One rune per floor opens the "
-            "Minotaur's vault. Defeat it, recover my ivory rook, and return to Oakhaven's Tavern.");
+            "Find the labyrinth on the west road to Stillbury by the Haunted Forest entrance. One rune per floor opens the "
+            "Minotaur's vault. Return my ivory rook to Oakhaven's Tavern.");
         push_message(g, "Rook is waiting for the ivory rook.");
     } else if (g->rook_quest_state == 2) {
         g->gold += ROOK_QUEST_REWARD;
