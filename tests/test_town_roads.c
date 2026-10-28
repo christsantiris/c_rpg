@@ -93,7 +93,7 @@ void test_town_roads(void) {
             ASSERT("leaving any interior gate returns outside the matching side of the town", loaded->location == LOCATION_TOWN_ROAD && loaded->road_town == towns[town] && abs(loaded->player.x - x) + abs(loaded->player.y - y) == 1 && loaded->map.tiles[y][x] == TILE_TOWN_ROAD_ENTRY_NORTH + side);
             town_road_exit(side, &x, &y);
             walk_town_road_to(loaded, x, y);
-            ASSERT("the regional exit resumes the correct approach or Crown Road", loaded->location == (connection.area == LOCATION_MANGROVES ? LOCATION_MANGROVE_PATH : connection.area == LOCATION_CROWNROAD || connection.area == LOCATION_KING_ROAD_WEST ? connection.area : LOCATION_APPROACH) && (loaded->location != LOCATION_APPROACH || (approach_route(loaded)->town == towns[town] && approach_route(loaded)->area == connection.area)));
+            ASSERT("the regional exit resumes the correct approach or Crown Road", loaded->location == (connection.area == LOCATION_MANGROVES ? LOCATION_MANGROVE_PATH : connection.area == LOCATION_CROWNROAD || connection.area == LOCATION_CROWNROAD_WEST ? connection.area : LOCATION_APPROACH) && (loaded->location != LOCATION_APPROACH || (approach_route(loaded)->town == towns[town] && approach_route(loaded)->area == connection.area)));
             for (int offset = -3; offset <= 3; offset += 6) {
                 town_road_enter(g, towns[town], side, 0);
                 town_road_entrance(side, &x, &y);
@@ -120,7 +120,7 @@ void test_town_roads(void) {
                 int hp = g->player.hp;
                 town_road_exit(onward, &x, &y);
                 walk_town_road_to(g, x, y);
-                ASSERT("the signed road bypasses town to every other connected direction", g->location == (next.area == LOCATION_MANGROVES ? LOCATION_MANGROVE_PATH : next.area == LOCATION_CROWNROAD || next.area == LOCATION_KING_ROAD_WEST ? next.area : LOCATION_APPROACH) && (g->location != LOCATION_APPROACH || approach_route(g)->area == next.area));
+                ASSERT("the signed road bypasses town to every other connected direction", g->location == (next.area == LOCATION_MANGROVES ? LOCATION_MANGROVE_PATH : next.area == LOCATION_CROWNROAD || next.area == LOCATION_CROWNROAD_WEST ? next.area : LOCATION_APPROACH) && (g->location != LOCATION_APPROACH || approach_route(g)->area == next.area));
                 ASSERT("bypassing town neither starts combat nor changes character, dungeon or quest progress", g->player.hp == hp && g->gold == 393 && g->score == 1234 && g->elowen_seals_restored == 3 && g->level_cache[1].enemies[0].hp == 7 && !g->defeated_bosses);
             }
         }

@@ -706,7 +706,7 @@ static int regional_camera(const GameState *g, const Viewport *base, Viewport *o
         case LOCATION_GLASSDEEP:
         case LOCATION_FROSTFELL: w = SWAMP_MAP_W; h = SWAMP_MAP_H; break;
         default:
-            if (!game_is_king_road(g)) {
+            if (!game_is_crownroad(g)) {
                 return 0;
             }
             w = CROWNROAD_W;
@@ -1701,13 +1701,13 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
     } else if (underlay == TILE_DRAGON_TREASURE) {
         draw_dragon_goblet(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_TOWN_FLOOR) {
-        if (game_is_king_road(g)) {
+        if (game_is_crownroad(g)) {
             draw_crownroad_tile(r, screen_x, screen_y, map_x, map_y, 0);
         } else {
             draw_town_floor(r, screen_x, screen_y);
         }
     } else if (underlay == TILE_TOWN_PATH) {
-        if (game_is_king_road(g)) {
+        if (game_is_crownroad(g)) {
             draw_crownroad_tile(r, screen_x, screen_y, map_x, map_y, 1);
         } else {
             draw_town_path(r, screen_x, screen_y);
@@ -2104,7 +2104,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     int road_scaled = g->location == LOCATION_MANGROVE_PATH || g->location == LOCATION_FOREST_ROAD ||
         g->location == LOCATION_APPROACH || g->location == LOCATION_TOWN_ROAD ||
         g->location == LOCATION_HIGH_PASS ||
-        game_is_king_road(g) || g->location == LOCATION_SWAMP_ROAD;
+        game_is_crownroad(g) || g->location == LOCATION_SWAMP_ROAD;
     int jail_scaled = g->location == LOCATION_JAIL || g->location == LOCATION_JAIL_ARMORY;
     if (town_scaled || island_scaled || labyrinth_scaled || jail_scaled) {
         // Keep the entire fixed map inside the play area.
@@ -2129,10 +2129,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         v = &town_view;
     } else if (road_scaled) {
         int road_w = g->location == LOCATION_MANGROVE_PATH ? MANGROVE_PATH_W : g->location == LOCATION_TOWN_ROAD ? TOWN_ROAD_W : g->location == LOCATION_APPROACH ? APPROACH_W : g->location == LOCATION_HIGH_PASS ? HIGH_PASS_W :
-            (game_is_king_road(g) ? CROWNROAD_W :
+            (game_is_crownroad(g) ? CROWNROAD_W :
             (g->location == LOCATION_SWAMP_ROAD ? SWAMP_ROAD_W : FOREST_ROAD_W));
         int road_h = g->location == LOCATION_MANGROVE_PATH ? MANGROVE_PATH_H : g->location == LOCATION_TOWN_ROAD ? TOWN_ROAD_H : g->location == LOCATION_APPROACH ? APPROACH_H : g->location == LOCATION_HIGH_PASS ? HIGH_PASS_H :
-            (game_is_king_road(g) ? CROWNROAD_H :
+            (game_is_crownroad(g) ? CROWNROAD_H :
             (g->location == LOCATION_SWAMP_ROAD ? SWAMP_ROAD_H : FOREST_ROAD_H));
         int view_w = v->tiles_x < road_w ? v->tiles_x : road_w;
         int view_h = v->tiles_y < road_h ? v->tiles_y : road_h;
@@ -2299,7 +2299,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                         x >= TOWN4_HALL_X && x < TOWN4_HALL_X + TOWN4_HALL_W &&
                         y >= TOWN4_HALL_Y && y < TOWN4_HALL_Y + TOWN4_HALL_H) {
                         draw_town_floor(r, sx, sy);
-                    } else if (game_is_king_road(g)) {
+                    } else if (game_is_crownroad(g)) {
                         draw_crownroad_tile(r, sx, sy, x, y, 2);
                     } else if (g->location == LOCATION_DUNGEON) {
                         draw_dungeon_wall(r, sx, sy, x, y);
@@ -2774,14 +2774,14 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_RESTORED_BURIAL_SEAL:
                     draw_restored_burial_seal(r, sx, sy); break;
                 case TILE_TOWN_FLOOR:
-                    if (game_is_king_road(g)) {
+                    if (game_is_crownroad(g)) {
                         draw_crownroad_tile(r, sx, sy, x, y, 0);
                     } else {
                         draw_town_floor(r, sx, sy);
                     }
                     break;
                 case TILE_TOWN_PATH:
-                    if (game_is_king_road(g)) {
+                    if (game_is_crownroad(g)) {
                         draw_crownroad_tile(r, sx, sy, x, y, 1);
                     } else {
                         draw_town_path(r, sx, sy);
@@ -2938,9 +2938,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     // Each guard holds the halberd on the side away from the road.
                     draw_npc_ground(r, g, sx, sy, x, y, TILE_TOWN_FLOOR);
                     draw_royal_guard_overlay(r, sx, sy,
-                        game_is_king_road(g) ? y < CROWNROAD_Y :
+                        game_is_crownroad(g) ? y < CROWNROAD_Y :
                         (g->location == LOCATION_TOWN4 ?
-                        y < TOWN4_KING_GATE_Y : y < TOWN3_KING_GATE_Y));
+                        y < TOWN4_CROWN_GATE_Y : y < TOWN3_CROWN_GATE_Y));
                     break;
                 case TILE_FOREST_WARDEN:
                     draw_forest_warden(r, sx, sy, x, y); break;
@@ -3022,7 +3022,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_LABYRINTH_RELIC:
                     draw_labyrinth_relic(r, sx, sy); break;
                 case TILE_TOWN_EXIT:
-                    if (game_is_king_road(g)) {
+                    if (game_is_crownroad(g)) {
                         draw_crownroad_tile(r, sx, sy, x, y, 1);
                     } else {
                         draw_town_path(r, sx, sy);
@@ -3093,7 +3093,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_forest_tree_edge(r, sx, sy, x, y, edges);
                 }
             }
-            if (game_is_king_road(g) &&
+            if (game_is_crownroad(g) &&
                 (g->map.tiles[y][x] == TILE_TOWN_FLOOR ||
                 g->map.tiles[y][x] == TILE_TOWN_PATH)) {
                 unsigned int edges = 0;
@@ -3398,7 +3398,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->location == LOCATION_ASHEN ||
         g->location == LOCATION_GLASSDEEP ||
         g->location == LOCATION_FROSTFELL ||
-        game_is_king_road(g) ||
+        game_is_crownroad(g) ||
         g->location == LOCATION_TEMPLE ||
         g->location == LOCATION_LABYRINTH) {
         for (int i = 0; i < g->enemy_count; i++) {
@@ -3591,7 +3591,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         TTF_SizeText(r->font_tiny, "CROWN ROAD EAST", &width, NULL);
         renderer_draw_text(r, "CROWN ROAD EAST",
             viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
-            viewport_to_screen_y(v, TOWN3_KING_GATE_Y) * TILE_SIZE,
+            viewport_to_screen_y(v, TOWN3_CROWN_GATE_Y) * TILE_SIZE,
             area_label_color(LOCATION_CROWNROAD), r->font_tiny);
         int open = g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_SWAMP));
         draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, TOWN_H - 4),
@@ -3607,7 +3607,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         renderer_draw_text(r, "CROWN ROAD WEST",
             viewport_to_screen_x(v, 1) * TILE_SIZE + 8,
             viewport_to_screen_y(v, 12) * TILE_SIZE,
-            area_label_color(LOCATION_KING_ROAD_WEST), r->font_tiny);
+            area_label_color(LOCATION_CROWNROAD_WEST), r->font_tiny);
         int width = 0;
         TTF_SizeText(r->font_tiny, "WORKSHOP", &width, NULL);
         renderer_draw_text(r, "WORKSHOP",
@@ -3634,7 +3634,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         draw_town_road_sign(r, viewport_to_screen_x(v, TOWN_W - 6),
             viewport_to_screen_y(v, CASTLE_ROAD_Y - 4), "RIDGESHIRE");
     }
-    if (game_is_king_road(g)) {
+    if (game_is_crownroad(g)) {
         int east = g->location == LOCATION_CROWNROAD;
         draw_town_road_sign(r, viewport_to_screen_x(v, 1),
             viewport_to_screen_y(v, CROWNROAD_Y - 3), east ? "ROSEMOOR" : "CASTLE");

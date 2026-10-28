@@ -498,7 +498,7 @@ static void stretch_crownroad_enemies(Enemy *enemies, int count) {
 }
 
 static void migrate_longer_crownroads(GameState *g, int version) {
-    if (game_is_king_road(g)) {
+    if (game_is_crownroad(g)) {
         unsigned char explored[MAP_EXPLORED_BYTES];
         memcpy(explored, g->map.explored, sizeof(explored));
         map_generate_crownroad(&g->map);
@@ -534,8 +534,8 @@ static void migrate_longer_crownroads(GameState *g, int version) {
     if (g->crownroad_cache.valid) {
         stretch_crownroad_enemies(g->crownroad_cache.enemies, g->crownroad_cache.enemy_count);
     }
-    if (g->kingroad_west_cache.valid) {
-        stretch_crownroad_enemies(g->kingroad_west_cache.enemies, g->kingroad_west_cache.enemy_count);
+    if (g->crownroad_west_cache.valid) {
+        stretch_crownroad_enemies(g->crownroad_west_cache.enemies, g->crownroad_west_cache.enemy_count);
     }
 }
 
@@ -2360,8 +2360,8 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddItemToObject(castle, "floors", floors);
     cJSON_AddItemToObject(root, "castle", castle);
 
-    const char *road_keys[2] = {"crownroad_cache", "kingroad_west_cache"};
-    const CrownroadCache *road_caches[2] = {&g->crownroad_cache, &g->kingroad_west_cache};
+    const char *road_keys[2] = {"crownroad_cache", "crownroad_west_cache"};
+    const CrownroadCache *road_caches[2] = {&g->crownroad_cache, &g->crownroad_west_cache};
     for (int i = 0; i < 2; i++) {
         const CrownroadCache *cache = road_caches[i];
         cJSON *entry = cJSON_CreateObject();
@@ -4869,12 +4869,16 @@ int load_game(GameState *g, int slot) {
         return 0;
     }
 
-    const char *road_keys[2] = {"crownroad_cache", "kingroad_west_cache"};
-    CrownroadCache *road_caches[2] = {&g->crownroad_cache, &g->kingroad_west_cache};
+    const char *road_keys[2] = {"crownroad_cache", "crownroad_west_cache"};
+    CrownroadCache *road_caches[2] = {&g->crownroad_cache, &g->crownroad_west_cache};
     for (int i = 0; i < 2; i++) {
         CrownroadCache *cache = road_caches[i];
         *cache = (CrownroadCache){0};
         cJSON *entry = cJSON_GetObjectItem(root, road_keys[i]);
+        if (!entry && cache == &g->crownroad_west_cache) {
+            // Older saves stored Crown Road West under its former King Road key.
+            entry = cJSON_GetObjectItem(root, "kingroad_west_cache");
+        }
         if (entry) {
             cJSON *valid = cJSON_GetObjectItem(entry, "valid");
             cJSON *cleared = cJSON_GetObjectItem(entry, "level_cleared");
@@ -5860,7 +5864,7 @@ int load_game(GameState *g, int slot) {
         map_place_town4_guards(&g->map, g->player.x, g->player.y);
     }
 
-    if (save_version < 73 && g->location == LOCATION_KING_ROAD_WEST) {
+    if (save_version < 73 && g->location == LOCATION_CROWNROAD_WEST) {
         for (int y = 0; y < CROWNROAD_H; y++) {
             for (int x = 0; x < CROWNROAD_W; x++) {
                 if (g->map.tiles[y][x] == TILE_NPC_ROYAL_GUARD) {
