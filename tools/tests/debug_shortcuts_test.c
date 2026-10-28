@@ -675,8 +675,13 @@ static void test_northroad_renderer(Renderer *r, GameState *g, SDL_Surface *surf
     g->enemy_count = 1;
     Enemy *enemy = &g->enemies[0];
     *enemy = (Enemy){.x = 32, .y = 82, .hp = 50, .max_hp = 50};
-    int x = viewport_to_screen_x(&view, enemy->x) * TILE_SIZE;
-    int y = viewport_to_screen_y(&view, enemy->y) * TILE_SIZE;
+    // The road's camera shows fewer, larger tiles centred on the player.
+    float zoom = game_camera_zoom(g);
+    Viewport zoomed;
+    viewport_init(&zoomed, (int)(view.tiles_x / zoom + 0.999f), (int)(view.tiles_y / zoom + 0.999f), CROWN_NORTH_W, CROWN_NORTH_H);
+    viewport_center_on(&zoomed, g->player.x, g->player.y);
+    int x = (int)(viewport_to_screen_x(&zoomed, enemy->x) * TILE_SIZE * zoom);
+    int y = (int)(viewport_to_screen_y(&zoomed, enemy->y) * TILE_SIZE * zoom);
     for (int i = 0; i < 6; i++) {
         enemy->active = 0;
         renderer_begin_frame(r);
@@ -690,7 +695,7 @@ static void test_northroad_renderer(Renderer *r, GameState *g, SDL_Surface *surf
         renderer_end_frame(r);
         assert(creature_pixels(surface, x, y) != ground);
     }
-    printf("PASS: Crown Road North's six recurring enemy types render visibly on their road terrain at native scale.\n");
+    printf("PASS: Crown Road North's six recurring enemy types render visibly on their road terrain at the zoomed camera scale.\n");
 }
 
 static void test_stonewake_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
@@ -1003,9 +1008,13 @@ static void test_regional_projectiles(Renderer *r, GameState *g, SDL_Surface *su
         Viewport base;
         viewport_init(&base, (r->screen_w - INFO_PANEL_W) / TILE_SIZE, r->tiles_y, MAP_W, MAP_H);
         viewport_center_on(&base, g->player.x, g->player.y);
+        // Zoomed areas show fewer, larger tiles; screen pixels scale by the zoom.
+        float zoom = game_camera_zoom(g);
+        int tiles_x = (int)(base.tiles_x / zoom + 0.999f);
+        int tiles_y = (int)(base.tiles_y / zoom + 0.999f);
         Viewport expected;
-        viewport_init(&expected, base.tiles_x < widths[area] ? base.tiles_x : widths[area],
-            base.tiles_y < heights[area] ? base.tiles_y : heights[area], widths[area], heights[area]);
+        viewport_init(&expected, tiles_x < widths[area] ? tiles_x : widths[area],
+            tiles_y < heights[area] ? tiles_y : heights[area], widths[area], heights[area]);
         viewport_center_on(&expected, g->player.x, g->player.y);
         renderer_begin_frame(r);
         game_draw(r, g, &base);
@@ -1019,17 +1028,17 @@ static void test_regional_projectiles(Renderer *r, GameState *g, SDL_Surface *su
             Uint32 elapsed = frame * ENEMY_PROJECTILE_TRAVEL_MS / 2;
             game_draw_enemy_projectiles(r, g, &shots, &base, elapsed);
             renderer_end_frame(r);
-            int cx = ((2 - frame) * shots.shots[0].start_x + frame * shots.shots[0].target_x) * TILE_SIZE / 2 - expected.cam_x * TILE_SIZE + TILE_SIZE / 2;
-            int cy = (g->player.y - expected.cam_y) * TILE_SIZE + TILE_SIZE / 2;
+            int cx = (int)((((2 - frame) * shots.shots[0].start_x + frame * shots.shots[0].target_x) * TILE_SIZE / 2 - expected.cam_x * TILE_SIZE + TILE_SIZE / 2) * zoom);
+            int cy = (int)(((g->player.y - expected.cam_y) * TILE_SIZE + TILE_SIZE / 2) * zoom);
             int changed = 0;
             for (int y = 0; y < surface->h; y++) {
                 for (int x = 0; x < surface->w; x++) {
                     Uint32 before = ((Uint32 *)(baseline + y * surface->pitch))[x];
                     if (rendered_pixel(surface, x, y) != before) {
-                        if (abs(x - cx) > TILE_SIZE || abs(y - cy) > TILE_SIZE) {
+                        if (abs(x - cx) > TILE_SIZE * zoom || abs(y - cy) > TILE_SIZE * zoom) {
                             fprintf(stderr, "Regional projectile %d frame %d: pixel %d,%d outside impact %d,%d\n", area, frame, x, y, cx, cy);
                         }
-                        assert(abs(x - cx) <= TILE_SIZE && abs(y - cy) <= TILE_SIZE);
+                        assert(abs(x - cx) <= TILE_SIZE * zoom && abs(y - cy) <= TILE_SIZE * zoom);
                         changed++;
                     }
                 }

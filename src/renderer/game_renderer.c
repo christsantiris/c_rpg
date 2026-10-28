@@ -686,6 +686,19 @@ static void draw_weapon_arrow_at(Renderer *r, int cx, int cy, int dx, int dy, in
     }
 }
 
+#define CAMERA_ZOOM 1.5f
+
+float game_camera_zoom(const GameState *g) {
+    // Encounters move to the Royal Dungeon's larger tiles one area at a time.
+    return g->location == LOCATION_CROWNROAD_NORTH ? CAMERA_ZOOM : 1.0f;
+}
+
+static int zoomed_tiles(int tiles, float zoom) {
+    // Round up so the larger tiles still fill the play area.
+    int zoomed = (int)(tiles / zoom);
+    return zoomed * zoom < tiles ? zoomed + 1 : zoomed;
+}
+
 static int regional_camera(const GameState *g, const Viewport *base, Viewport *out) {
     int w;
     int h;
@@ -713,7 +726,9 @@ static int regional_camera(const GameState *g, const Viewport *base, Viewport *o
             h = CROWNROAD_H;
             break;
     }
-    viewport_init(out, base->tiles_x < w ? base->tiles_x : w, base->tiles_y < h ? base->tiles_y : h, w, h);
+    int tiles_x = zoomed_tiles(base->tiles_x, game_camera_zoom(g));
+    int tiles_y = zoomed_tiles(base->tiles_y, game_camera_zoom(g));
+    viewport_init(out, tiles_x < w ? tiles_x : w, tiles_y < h ? tiles_y : h, w, h);
     viewport_center_on(out, g->player.x, g->player.y);
     return 1;
 }
@@ -728,6 +743,11 @@ void game_draw_enemy_projectiles(Renderer *r, const GameState *g, const EnemyPro
     SDL_BlendMode old_blend;
     SDL_GetRenderDrawBlendMode(r->sdl, &old_blend);
     SDL_Rect play_area = {0, 0, r->screen_w - INFO_PANEL_W, r->tiles_y * TILE_SIZE};
+    // Shots share the map's zoom; the clip rectangle is in zoomed units.
+    float zoom = game_camera_zoom(g);
+    SDL_RenderSetScale(r->sdl, zoom, zoom);
+    play_area.w = (int)(play_area.w / zoom);
+    play_area.h = (int)(play_area.h / zoom);
     SDL_RenderSetClipRect(r->sdl, &play_area);
     SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_BLEND);
     int impact = elapsed >= ENEMY_PROJECTILE_TRAVEL_MS;
@@ -839,6 +859,8 @@ void game_draw_enemy_projectiles(Renderer *r, const GameState *g, const EnemyPro
             SDL_RenderDrawPoint(r->sdl, cx, cy);
         }
     }
+    // Restore the unzoomed scale first; the saved clip is in screen units.
+    SDL_RenderSetScale(r->sdl, 1.0f, 1.0f);
     SDL_RenderSetClipRect(r->sdl, clipped ? &old_clip : NULL);
     SDL_SetRenderDrawBlendMode(r->sdl, old_blend);
 }
@@ -2127,6 +2149,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             (float)play_h / (map_h * TILE_SIZE));
     } else if (regional_camera(g, v, &town_view)) {
         v = &town_view;
+        SDL_RenderSetScale(r->sdl, game_camera_zoom(g), game_camera_zoom(g));
     } else if (road_scaled) {
         int road_w = g->location == LOCATION_MANGROVE_PATH ? MANGROVE_PATH_W : g->location == LOCATION_TOWN_ROAD ? TOWN_ROAD_W : g->location == LOCATION_APPROACH ? APPROACH_W : g->location == LOCATION_HIGH_PASS ? HIGH_PASS_W :
             (game_is_crownroad(g) ? CROWNROAD_W :
@@ -4158,7 +4181,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     draw_dialogue_bubble(r, g, v);
 
-    if (town_scaled || tavern_scaled || island_scaled || labyrinth_scaled || jail_scaled) {
+    if (town_scaled || tavern_scaled || island_scaled || labyrinth_scaled || jail_scaled || game_camera_zoom(g) != 1.0f) {
         SDL_RenderSetScale(r->sdl, 1.0f, 1.0f);
     }
     if (tavern_scaled) {
