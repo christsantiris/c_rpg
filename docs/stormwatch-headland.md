@@ -4,6 +4,9 @@ Follow Dawnmere's eastern road and walk into the watchfort sprite to enter.
 Stormwatch is a five-stage coastal fort region with warm grass, gray masonry,
 cliffs, animated teal water, side lookouts and searchable supply chests.
 The approach uses travel music; the adventure uses the dungeon theme.
+The headland is drawn at the Crown Roads' 1.5× zoom: the camera shows about
+30 × 18 tiles around the player, so a wind lane's warnings show only where it
+crosses the view.
 
 | Stage | Layout and encounters |
 | --- | --- |
