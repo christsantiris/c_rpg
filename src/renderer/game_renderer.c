@@ -695,6 +695,7 @@ float game_camera_zoom(const GameState *g) {
         case LOCATION_CROWNROAD_WEST:
         case LOCATION_CROWNROAD_NORTH:
         case LOCATION_ELDERWOOD:
+        case LOCATION_CATACOMBS:
             return CAMERA_ZOOM;
         default:
             return 1.0f;

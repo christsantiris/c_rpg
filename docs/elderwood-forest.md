@@ -20,7 +20,8 @@ tiles, stay on screen.
 
 ## Five forward stages
 
-Five stages of ancient emerald woodland use looping clearings, immense living trunks,
+Five stages of ancient emerald woodland use looping rounded clearings, as in the
+Haunted Forest, with immense living trunks,
 broad green canopies and warm golden highlights. Mossy roots and cuttable
 brambles line the paths. Optional bramble passages give alternate
 angles; a normal route around them remains available. Interact beside brambles
@@ -57,6 +58,12 @@ Save version 214 replaces retired wolf variants in active and cached encounters
 with Blighted Wolf, retaining wounds, deaths, combat state and named quest guards.
 Frostfell keeps its regional wolf difficulty; all wolves share the existing
 Haunted Forest art.
+
+Clearings, Elderthorn's arena and the Heartseed grove are carved as ellipses.
+Save version **219** reshapes stages saved with rectangular clearings, keeping
+their exploration, cut brambles, logs, quest objects and surviving enemies. A
+short path stays open to any enemy, item, portal or player standing in a removed
+corner. A three-tile trail links the rounded grove to its bramble flank.
 
 ## The Stolen Heartseed
 
