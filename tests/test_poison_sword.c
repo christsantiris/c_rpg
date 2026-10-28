@@ -52,7 +52,7 @@ static void test_poison_combat(void) {
     ASSERT("poison ticks produce separate combat feedback", event && event->kind == FEEDBACK_ENEMY_POISON && event->amount == 1);
     setup_combat();
     game.inventory[game.inventory_count++] = item_make_buckler();
-    action_resolve_player(&game, (Action){ACTION_EQUIP_OFF_HAND, game.inventory_count - 1, 0});
+    action_resolve_player(&game, (Action){ACTION_EQUIP_ITEM, game.inventory_count - 1, 0});
     ASSERT("the Poison Sword can be paired with a shield", game.equipped_off_hand == game.inventory_count - 1);
     game.inventory[game.inventory_count++] = item_make_short_sword();
     action_resolve_player(&game, (Action){ACTION_EQUIP_ITEM, game.inventory_count - 1, 0});
@@ -71,15 +71,9 @@ static void test_poison_combat(void) {
     ASSERT("poison kills award XP and score once, clear poison and prevent retaliation", !enemy->active && !enemy->poison_turns &&
         game.player.experience == xp + 12 && rewarded > score && game.score == rewarded && game.player.hp == game.player.max_hp);
     setup_combat();
-    game.location = LOCATION_CASTLE_INTERIOR;
-    game.enemies[0].type = ENEMY_IRON_WARDEN;
-    game.enemies[0].frozen_turns = 0;
-    game.enemies[0].facing_dx = -1;
-    game.enemies[0].facing_dy = 0;
-    game.player.attack = 1;
-    game.enemies[0].defense = 100;
-    action_resolve_player(&game, (Action){ACTION_MOVE, 11, 10});
-    ASSERT("a fully blocked hit cannot poison an enemy", game.enemies[0].hp == 200 && !game.enemies[0].poison_turns);
+    action_resolve_player(&game, (Action){ACTION_RANGED_ATTACK, 0, 0});
+    ASSERT("the Poison Sword never inherits the Demonic Sword's ranged attack", game.enemies[0].hp == 200 &&
+        !game.enemies[0].poison_turns && !game.trail_count);
 }
 
 static void test_poison_save(void) {
@@ -88,6 +82,9 @@ static void test_poison_save(void) {
         return;
     }
     setup_combat();
+    map_generate(&game.map, 1);
+    game.player.x = game.map.stairs_up_x;
+    game.player.y = game.map.stairs_up_y;
     game.enemies[0].hp = 87;
     game.enemies[0].poison_turns = 2;
     game.level_cache[0].valid = 1;

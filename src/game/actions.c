@@ -3736,6 +3736,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                     e->active = 0;
                     drop_loot(g, e, 0);
                     player_gain_xp(g, e->experience);
+                    g->score += e->revived ? 0 : enemy_score(e->type);
                     game_update_level_progress(g);
                     char message[MAX_MESSAGE_LEN];
                     snprintf(message, sizeof(message), "Poison killed %s!", e->name);

@@ -125,15 +125,7 @@ The executable is written to `build/conr`.
 
 ### Browser play and GitHub Pages
 
-The browser build compiles the same C/SDL2 game to WebAssembly, following the
-[Wolfenstein browser build](https://github.com/christsantiris/wolfenstein2026/commit/fc2bd59fc61dcad1221c365d1081a009f196cf4a)
-and its [Pages workflow](https://github.com/christsantiris/wolfenstein2026/commit/a25b666f895b49a70bbd55ec4dc5f9b10b89024a),
-including the [CI build-command correction](https://github.com/christsantiris/wolfenstein2026/commit/e6c8b711048eb36db69b59265cebcbac00b8322d).
-Players need a desktop browser, keyboard and mouse; they do not install the game.
-See [browser build and deployment instructions](docs/browser.md) for local
-preview, GitHub Pages setup and troubleshooting.
-
-From the project root, use the same installed SDK as Wolfenstein:
+From the project root:
 
 ```sh
 source /private/tmp/wolf-browser-emsdk/emsdk_env.sh
