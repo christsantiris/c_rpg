@@ -36,7 +36,9 @@ The tunnel is a single 190-tile combat map with thirty enemies. Its original
 passage has room to maneuver; deeper stretches narrow to three tiles and add
 three larger bends. Eighteen stronger enemies guard the extension, including
 archers, shielding bodyguards, smugglers, and poisonous spiders. There is no
-boss or stair travel.
+boss or stair travel. The tunnel is drawn at the Crown Roads' 1.5× zoom: the
+camera shows about 30 × 18 tiles around the player, and smuggler archers fire
+from at most six tiles, so their shots start on screen.
 
 Tomas visibly follows one tile per combat turn along walkable, unoccupied
 terrain. He avoids enemies and does not teleport to the player. Clear the way
