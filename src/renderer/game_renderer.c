@@ -712,6 +712,7 @@ float game_camera_zoom(const GameState *g) {
         case LOCATION_DUNGEON:
         case LOCATION_FOREST:
         case LOCATION_MOUNTAINS:
+        case LOCATION_TEMPLE:
             return CAMERA_ZOOM;
         default:
             return 1.0f;
@@ -737,6 +738,7 @@ static int regional_camera(const GameState *g, const Viewport *base, Viewport *o
         case LOCATION_IRONFANG: w = IRON_W; h = IRON_H; break;
         case LOCATION_STORMWATCH: w = STORM_W; h = STORM_H; break;
         case LOCATION_CATACOMBS: w = CATACOMBS_W; h = CATACOMBS_H; break;
+        case LOCATION_TEMPLE: w = TEMPLE_W; h = TEMPLE_H; break;
         case LOCATION_SWAMP:
         case LOCATION_DRAGONSPINE:
         case LOCATION_DESERT:
