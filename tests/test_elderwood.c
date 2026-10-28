@@ -104,6 +104,128 @@ static int legacy(int slot) {
     return ok;
 }
 
+static int rewrite_version(int slot, int version) {
+    char filename[80];
+    snprintf(filename, sizeof(filename), "saves/savegame_%d.json", slot);
+    FILE *file = fopen(filename, "rb");
+    if (!file) {
+        return 0;
+    }
+    fseek(file, 0, SEEK_END);
+    long size = ftell(file);
+    rewind(file);
+    char *data = malloc(size + 1);
+    if (!data) {
+        fclose(file);
+        return 0;
+    }
+    size_t read = fread(data, 1, size, file);
+    data[read] = 0;
+    fclose(file);
+    cJSON *root = cJSON_Parse(data);
+    free(data);
+    if (!root) {
+        return 0;
+    }
+    cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), version);
+    data = cJSON_PrintUnformatted(root);
+    cJSON_Delete(root);
+    file = fopen(filename, "wb");
+    int ok = data && file && fputs(data, file) >= 0;
+    if (file) {
+        fclose(file);
+    }
+    free(data);
+    return ok;
+}
+
+// Recreate a pre-219 rectangular clearing on the live floor.
+static void square_clearing(GameState *g, int x0, int y0, int x1, int y1) {
+    for (int y = y0; y <= y1; y++) {
+        for (int x = x0; x <= x1; x++) {
+            if (g->map.tiles[y][x] == TILE_ELDERWOOD_WALL) {
+                g->map.tiles[y][x] = TILE_ELDERWOOD_FLOOR;
+            }
+        }
+    }
+}
+
+static void test_rounded_clearings(GameState *g, GameState *loaded) {
+    static const int cx[6] = {12, 32, 52, 13, 34, 53};
+    static const int cy[6] = {11, 10, 12, 33, 32, 34};
+    game_init(g);
+    g->elderwood_defeated = 0;
+    elderwood_enter(g);
+    int rounded = 1;
+    int connected = 1;
+    for (int level = 1; level <= ELDERWOOD_DEPTH; level++) {
+        if (level > 1) {
+            elderwood_change_level(g, 1);
+        }
+        for (int i = 0; i < 6 && level < ELDERWOOD_DEPTH; i++) {
+            if (level == 4 && i == 5) {
+                continue;
+            }
+            for (int side = 0; side < 4; side++) {
+                int x = cx[i] + (side & 1 ? 5 : -5);
+                int y = cy[i] + (side & 2 ? 4 : -4);
+                rounded &= g->map.tiles[y][x] == TILE_ELDERWOOD_WALL;
+            }
+        }
+        g->player.x = 32;
+        g->player.y = 46;
+        connected &= path(g, 32, 1, 0);
+        for (int i = 0; i < g->enemy_count; i++) {
+            connected &= !g->enemies[i].active || path(g, g->enemies[i].x, g->enemies[i].y, 0);
+        }
+        if (level == ELDERWOOD_DEPTH) {
+            rounded &= g->map.tiles[7][17] == TILE_ELDERWOOD_WALL && g->map.tiles[38][47] == TILE_ELDERWOOD_WALL &&
+                g->map.tiles[22][32] == TILE_ELDERWOOD_FLOOR;
+        }
+        if (level == 4) {
+            int grove = g->map.tiles[28][47] == TILE_ELDERWOOD_WALL && g->map.tiles[40][59] == TILE_ELDERWOOD_WALL &&
+                g->map.tiles[26][58] == TILE_ELDERWOOD_BRAMBLE && g->map.tiles[27][58] == TILE_ELDERWOOD_BRAMBLE;
+            for (int y = 28; y <= 31; y++) {
+                grove &= map_is_walkable(&g->map, 58, y);
+            }
+            ASSERT("the Heartseed grove is round and its bramble flank still reaches it", grove);
+        }
+    }
+    ASSERT("new Elderwood stages carve rounded clearings and a round boss arena", rounded);
+    ASSERT("rounded Elderwood stages keep the route and every enemy reachable", connected);
+
+    // A pre-219 save: a 13 x 11 rectangle on stage 1 with an enemy in its corner,
+    // and a 11 x 9 rectangle on stage 2 with the player standing in its corner.
+    game_init(g);
+    elderwood_enter(g);
+    square_clearing(g, 6, 6, 18, 16);
+    g->enemies[0].active = 1;
+    g->enemies[0].x = 6;
+    g->enemies[0].y = 6;
+    map_mark_explored(&g->map, 18, 6);
+    elderwood_change_level(g, 1);
+    square_clearing(g, 8, 29, 18, 37);
+    g->player.x = 8;
+    g->player.y = 29;
+    int saved = save_game(g, ELDER_SLOT) && rewrite_version(ELDER_SLOT, 218) && load_game(loaded, ELDER_SLOT);
+    ASSERT("pre-219 Elderwood saves load", saved);
+    if (!saved) {
+        return;
+    }
+    int live = loaded->map.tiles[37][18] == TILE_ELDERWOOD_WALL && loaded->map.tiles[29][8] == TILE_ELDERWOOD_FLOOR &&
+        loaded->player.x == 8 && loaded->player.y == 29 && path(loaded, 13, 33, 0);
+    ASSERT("loading rounds the current stage and keeps the player's corner linked to the clearing", live);
+    elderwood_change_level(loaded, 0);
+    int cached = loaded->map.tiles[6][18] == TILE_ELDERWOOD_WALL && loaded->map.tiles[14][17] == TILE_ELDERWOOD_WALL &&
+        loaded->map.tiles[14][16] == TILE_ELDERWOOD_FLOOR && map_is_explored(&loaded->map, 18, 6) &&
+        loaded->map.tiles[9][14] == TILE_ELDERWOOD_LOG && loaded->enemies[0].x == 6 && loaded->enemies[0].y == 6;
+    loaded->player.x = 6;
+    loaded->player.y = 6;
+    cached &= path(loaded, 12, 11, 0);
+    ASSERT("cached stages round to their saved size, keep logs and exploration, and leave the cornered enemy a way out", cached);
+    remove("saves/savegame_99282.json");
+}
+
 static void mechanics(GameState *g) {
     game_init(g);
     elderwood_enter(g);
@@ -317,6 +439,7 @@ void test_elderwood(void) {
         return;
     }
     test_elderwood_reentry(g, loaded);
+    test_rounded_clearings(g, loaded);
     test_treefolk_combat(g);
     test_wolf_save_migration(g, loaded);
     game_init(g);

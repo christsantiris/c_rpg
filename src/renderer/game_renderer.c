@@ -690,8 +690,15 @@ static void draw_weapon_arrow_at(Renderer *r, int cx, int cy, int dx, int dy, in
 
 float game_camera_zoom(const GameState *g) {
     // Encounters move to the Royal Dungeon's larger tiles one area at a time.
-    int zoomed = g->location == LOCATION_CROWNROAD_NORTH || game_is_crownroad(g);
-    return zoomed ? CAMERA_ZOOM : 1.0f;
+    switch (g->location) {
+        case LOCATION_CROWNROAD:
+        case LOCATION_CROWNROAD_WEST:
+        case LOCATION_CROWNROAD_NORTH:
+        case LOCATION_ELDERWOOD:
+            return CAMERA_ZOOM;
+        default:
+            return 1.0f;
+    }
 }
 
 static int zoomed_tiles(int tiles, float zoom) {

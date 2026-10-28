@@ -17,6 +17,7 @@ enum { HEARTSEED_UNPLACED, HEARTSEED_BOUND, HEARTSEED_SLAIN, HEARTSEED_FREED };
 
 extern const int heartseed_stakes[3][2];
 
+void heartseed_carve_grove(Map *map);
 void heartseed_prepare(GameState *g);
 void heartseed_migrate(GameState *g);
 int heartseed_talk(GameState *g);

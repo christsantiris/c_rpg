@@ -14,6 +14,10 @@ is defeated. Completing the route from either end requires defeating both
 Elderthorn and the Grave Marshal. Each section has a visible checkpoint and
 independent victory requirement. See [boss gates](boss-gates.md).
 
+Elderwood is drawn at the Crown Roads' 1.5× zoom: the camera shows about 30 × 18
+tiles around the player, and its charges and roots, which reach at most seven
+tiles, stay on screen.
+
 ## Five forward stages
 
 Five stages of ancient emerald woodland use looping clearings, immense living trunks,
