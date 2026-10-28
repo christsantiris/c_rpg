@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/approach.h"
 #include "game/town_life.h"
@@ -55,6 +56,7 @@ static int make_pirate_save(const GameState *g, int version) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), version);
+    test_mark_legacy_portal(root);
     cJSON *loot = cJSON_DetachItemFromObject(root, "retired_coast_loot");
     cJSON *stages = cJSON_CreateArray();
     for (int stage = 0; stage < 5; stage++) {
@@ -184,7 +186,7 @@ void test_retired_coast(void) {
             portal |= loaded->map.tiles[y][x] == TILE_PORTAL;
         }
     }
-    ASSERT("returning from the retired approach retains an unrelated dungeon portal", ok && loaded->portal_active && loaded->portal_location == LOCATION_DUNGEON && portal);
+    ASSERT("returning from the retired approach does not restore an unrelated return portal", ok && !loaded->portal_active && loaded->portal_location == LOCATION_DUNGEON && !portal);
 
     TownApproach connection;
     ASSERT("Dawnmere retains Saltwind south and has Stormwatch east", town_road_connection(LOCATION_DAWNMERE, TOWN_SIDE_SOUTH, &connection) && connection.area == LOCATION_MANGROVES && town_road_connection(LOCATION_DAWNMERE, TOWN_SIDE_EAST, &connection) && connection.area == LOCATION_STORMWATCH);

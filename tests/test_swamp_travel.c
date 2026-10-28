@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "approach_checks.h"
 #include "test_utils.h"
 #include "shortcut_checks.h"
@@ -140,8 +141,8 @@ static void test_swamp_crossing(int rosemoor, int home) {
     game_open_town_portal(&swamp);
     ASSERT("Return to Town remembers the expedition's town", swamp.location == destination && swamp.swamp_portal_town == destination);
     ASSERT("swamp portal saves and loads", save_game(&swamp, 99122) && load_game(&restored, 99122));
-    game_use_town_portal(&restored);
-    ASSERT("the portal restores level, position and wounded enemies", restored.location == LOCATION_SWAMP && restored.level == 2 && restored.player.x == x && restored.player.y == y && restored.enemies[0].hp == 7 && restored.swamp_entry_town == destination);
+    test_restore_cached_floor(&restored);
+    ASSERT("the archived floor fixture restores level, position and wounded enemies", restored.location == LOCATION_SWAMP && restored.level == 2 && restored.player.x == x && restored.player.y == y && restored.enemies[0].hp == 7 && restored.swamp_entry_town == destination);
     remove("saves/savegame_99122.json");
 }
 

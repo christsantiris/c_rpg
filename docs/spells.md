@@ -12,7 +12,7 @@ ranks.
 | Magic Arrow | Ranged damage | 10 | 15 damage | 6 | - |
 | Fireball | Area damage | 20 | 25 damage | 4 | 2 |
 | Heal | Self healing | 15 | Full HP | - | - |
-| Return to Town | Utility portal | 0 | Town travel | - | - |
+| Return to Town | One-way escape | 0 | Last town visited | - | - |
 | Frost Bolt | Ranged control | 14 | 18 damage, freeze | 5 | - |
 | Teleport | Utility movement | 12 | Move up to 4 tiles | 4 | - |
 
@@ -112,16 +112,19 @@ Heal rank reduces its MP cost by 2.
 ## Return to Town
 
 Return to Town costs 0 MP and does not require an aim direction. Casting it in
-an adventure area records the player's stage and position, creates a portal at
-the last town actually visited, and immediately transports the player there.
-Bypassing a town on its exterior road does not count as a visit.
-Stepping onto the town portal returns the player to the recorded position and
-closes the portal. Casting it while already in town has no effect.
+an adventure area immediately escapes to the last town actually visited.
+Bypassing a town on its exterior road does not count as a visit. The spell
+leaves no return portal: reach the area again through its normal entrance.
+Casting it while already in town has no effect.
 
-Inside the Ruined Temple, the portal preserves the exact pyramid tier,
-position, and encounter state and appears near the town docks. Casting Return
-to Town on the Ruined Isle instead sails directly back to town without leaving
-a return portal. A new portal replaces any portal that was already open.
+The Ruined Temple and Ruined Isle use this same last-town rule. Castle of No
+Return is the exception: after confirmation, escape places the player inside
+Castle Grounds beside the castle entrance. Surviving defenders regroup; defeated
+minibosses stay defeated.
+
+Area discoveries, objectives, chest contents, and earned rewards remain saved.
+Physical re-entry uses each area's existing expedition and enemy respawn rules.
+Older saves lose their return anchors without resetting saved area progress.
 
 The Alchemist sells Magic Arrow, Fireball, and Heal scrolls. Ordinary enemies
 never drop scrolls.
@@ -153,8 +156,7 @@ require the player to have moved once to establish a direction.
 - Gaining a character level restores MP to maximum as well as restoring HP.
 - [Morwen](healer.md#stillbury-witch) restores full or partial MP for gold inside her Stillbury hut. Mana Potions remain available from the Alchemist and Rosemoor's Apothecary.
 
-In the Royal Catacombs, Return to Town uses the last town visited too. Using
-the portal restores the original floor and position, with
-pending hazards at the landing position dissipated by the portal's wards.
+In the Royal Catacombs, Return to Town is a one-way escape to the last town
+visited too.
 Ordinary upstairs and the defeated Marshal's return passage lead back to the
 road beside the Catacombs sprite instead. See [Royal Catacombs](catacombs.md).

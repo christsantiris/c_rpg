@@ -26,10 +26,8 @@ Elderwood for Oakhaven.
 Each floor has its own persistent cache. Leaving and revisiting preserves
 explored maps, enemy health, deaths, resurrection allowances, extinguished
 braziers, and triggered traps. Return to Town takes the player to the last town
-actually entered and opens a portal there. That portal returns to the
-recorded catacomb floor and position. Portal wards dissipate pending spike or
-Marshal signature warnings that threaten the landing position. Non-damaging
-honor-guard calls retain their fixed targets and countdown.
+actually entered. This is a one-way escape: no return portal or arrival wards
+remain. Reach the Catacombs again through its normal entrance.
 
 ## Ossuary braziers and resurrection
 

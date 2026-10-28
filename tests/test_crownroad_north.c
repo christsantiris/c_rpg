@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/crownroad_north.h"
 #include "game/elderwood.h"
@@ -210,6 +211,7 @@ static int legacy_save(void) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 201);
+    test_mark_legacy_portal(root);
     cJSON_DeleteItemFromObject(root, "northroad");
     text = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);
@@ -225,7 +227,7 @@ static int legacy_save(void) {
 static void test_travel_and_saves(GameState *g, GameState *loaded) {
     game_init(g);
     northroad_enter(g, 0, 0);
-    ASSERT("the northern shortcut requires Catacombs victory from the Oakhaven side", g->location != LOCATION_CROWNROAD_NORTH);
+    ASSERT("Crown Road North has no independent boss gate; regional checkpoints control access", g->location == LOCATION_CROWNROAD_NORTH);
     g->debug_passages_unlocked = 1;
     northroad_enter(g, 0, 0);
     ASSERT("debug passage access opens Crown Road North without granting boss credit", g->location == LOCATION_CROWNROAD_NORTH && !g->defeated_bosses && !g->elderwood_defeated);
@@ -249,8 +251,8 @@ static void test_travel_and_saves(GameState *g, GameState *loaded) {
     game_open_town_portal(g);
     ASSERT("Return to Town stores the northern battle and visits the last town", g->location == LOCATION_TOWN && g->portal_location == LOCATION_CROWNROAD_NORTH && !g->level_cache[0].valid);
     ASSERT("a northern portal and its cached formation survive town save/load", save_game(g, NORTH_SLOT) && load_game(loaded, NORTH_SLOT) && loaded->northroad.enemies[0].hp == 7);
-    game_use_town_portal(loaded);
-    ASSERT("portal return resumes the exact road position, deaths, warning and explored cache", loaded->location == LOCATION_CROWNROAD_NORTH &&
+    test_restore_cached_floor(loaded);
+    ASSERT("archived floor reload resumes the exact road position, deaths, warning and explored cache", loaded->location == LOCATION_CROWNROAD_NORTH &&
         loaded->player.x == px && loaded->player.y == py && loaded->enemies[0].hp == 7 && !loaded->enemies[11].active &&
         !loaded->portal_active && loaded->enemies[7].attack_phase == 1 && loaded->map.tiles[82][18] == TILE_CROWN_EMPTY && map_is_explored(&loaded->map, 18, 82));
     loaded->player.x = CROWN_NORTH_X;
@@ -291,7 +293,8 @@ static void test_travel_and_saves(GameState *g, GameState *loaded) {
         loaded->floor_items[0].active && loaded->map.tiles[item_y][item_x] == TILE_ITEM && northroad_valid(loaded));
     game_init(g);
     game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
-    town_life_enter(g);
+    const TownBuilding *merchant = town_life_building(g->location);
+    town_life_enter(g, merchant->x + merchant->w / 2, merchant->y + merchant->h - 1);
     g->dialogue_active = 1;
     snprintf(g->dialogue_speaker, sizeof(g->dialogue_speaker), "Merchant Corvin");
     g->gold = 321;
@@ -315,14 +318,15 @@ static void test_supplies(GameState *g) {
     g->enemies[0].active = 0;
     g->enemies[0].hp = 0;
     action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
+    action_resolve_player(g, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("clearing the cache grants its gold and healing through the normal action", g->gold == gold + 25 &&
-        g->player.hp == g->player.max_hp - 20 && g->map.tiles[82][18] == TILE_CROWN_EMPTY && !northroad_has_interaction(g));
+        g->player.hp == g->player.max_hp - 20 && g->map.tiles[82][18] == TILE_CROWN_EMPTY && northroad_has_interaction(g));
     northroad_leave(g, 1);
     northroad_enter(g, 1, 0);
     g->player.x = 18;
     g->player.y = 81;
     ASSERT("re-entering refreshes patrols without refilling a claimed supply cache", g->enemy_count == NORTH_ENEMIES &&
-        !northroad_interact(g) && g->gold == gold + 25 && g->map.tiles[82][18] == TILE_CROWN_EMPTY);
+        northroad_interact(g) && g->gold == gold + 25 && g->map.tiles[82][18] == TILE_CROWN_EMPTY);
 }
 
 void test_crownroad_north(void) {

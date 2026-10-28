@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "town_road_checks.h"
 #include "systems/save_load.h"
 #include "cJSON.h"
@@ -31,6 +32,7 @@ static int rewrite_road_save(GameState *g, int version, int town) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), version);
+    test_mark_legacy_portal(root);
     if (town < 0) {
         cJSON_DeleteItemFromObject(root, "road_town");
     } else {
@@ -157,8 +159,8 @@ void test_town_roads(void) {
     g->map.tiles[13][6] = TILE_PORTAL;
     map_mark_explored(&g->map, 35, 14);
     ASSERT("older Dawnmere saves adopt the narrow roads without moving the player or losing progress", rewrite_road_save(g, 178, LOCATION_TOWN) && load_game(loaded, TOWN_ROAD_TEST_SLOT) && loaded->player.x == 5 && loaded->player.y == 11 && loaded->gold == 393 && loaded->rook_quest_state == 1 && loaded->map.tiles[11][5] == TILE_TOWN_FLOOR && map_is_explored(&loaded->map, 35, 14));
-    ASSERT("Dawnmere paving migration preserves dropped loot, portals and the merchant", loaded->floor_items[0].active && loaded->floor_items[0].underlying_tile == TILE_TOWN_FLOOR && loaded->map.tiles[14][35] == TILE_ITEM && loaded->portal_active && loaded->map.tiles[13][6] == TILE_PORTAL && loaded->map.tiles[7][7] == TILE_LOCAL_BUILDING);
-    ASSERT("repaired Dawnmere paving survives a current-version save round trip", save_game(loaded, TOWN_ROAD_TEST_SLOT) && load_game(g, TOWN_ROAD_TEST_SLOT) && g->map.tiles[11][5] == TILE_TOWN_FLOOR && g->floor_items[0].underlying_tile == TILE_TOWN_FLOOR && g->map.tiles[13][6] == TILE_PORTAL);
+    ASSERT("Dawnmere paving migration preserves dropped loot, portals and the merchant", loaded->floor_items[0].active && loaded->floor_items[0].underlying_tile == TILE_TOWN_FLOOR && loaded->map.tiles[14][35] == TILE_ITEM && !loaded->portal_active && loaded->map.tiles[13][6] != TILE_PORTAL && loaded->map.tiles[7][7] == TILE_LOCAL_BUILDING);
+    ASSERT("repaired Dawnmere paving survives a current-version save round trip", save_game(loaded, TOWN_ROAD_TEST_SLOT) && load_game(g, TOWN_ROAD_TEST_SLOT) && g->map.tiles[11][5] == TILE_TOWN_FLOOR && g->floor_items[0].underlying_tile == TILE_TOWN_FLOOR && g->map.tiles[13][6] != TILE_PORTAL);
     game_init(g);
     town_road_enter(g, LOCATION_TOWN4, TOWN_SIDE_WEST, 0);
     ASSERT("modern exterior saves require their town identity", rewrite_road_save(g, 178, -1) && !load_game(loaded, TOWN_ROAD_TEST_SLOT));

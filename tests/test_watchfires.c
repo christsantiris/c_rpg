@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/game.h"
 #include "screens/quest_journal.h"
@@ -177,10 +178,10 @@ static void test_quest(void) {
     ASSERT("Veyra pays 180 gold and 1400 score exactly once", game.watchfire_quest_state == 3 && game.gold == gold + 180 && game.score == score + 1400);
     ASSERT("completed journal retains all region objectives", quest_journal_get_entry(&game, QUEST_TAB_COMPLETED, 0, &entry) &&
         entry.objective_complete[0] && entry.objective_complete[1] && entry.objective_complete[2]);
-    ASSERT("claimed reward and portal survive saving", save_game(&game, WATCHFIRE_SLOT) && load_game(&loaded, WATCHFIRE_SLOT) &&
+    ASSERT("claimed reward and escape records survive saving", save_game(&game, WATCHFIRE_SLOT) && load_game(&loaded, WATCHFIRE_SLOT) &&
         loaded.watchfire_quest_state == 3 && loaded.gold == game.gold && loaded.portal_origin_tile == TILE_WATCHFIRE_LIT);
-    game_use_town_portal(&game);
-    ASSERT("portal return retains the restored beacon without respawning guards", game.location == LOCATION_ASHEN && game.level == 3 &&
+    test_restore_cached_floor(&game);
+    ASSERT("archived floor reload retains the restored beacon without respawning guards", game.location == LOCATION_ASHEN && game.level == 3 &&
         !guards(&game, 1) && game_has_watchfire_interaction(&game));
     game_init(&game);
     ASSERT("new games reset watchfire progress", !game.watchfire_quest_state && !game.watchfire_quest_progress && !game.watchfire_quest_encounters);
@@ -195,20 +196,20 @@ static void test_explored_area(void) {
     game_open_town_portal(&game);
     accept();
     ASSERT("acceptance preserves explored maps, enemy damage, and the return portal", game.mountain_cache[4].valid &&
-        game.mountain_cache[4].enemies[0].hp == 7 && game.portal_active && !game.watchfire_quest_encounters &&
+        game.mountain_cache[4].enemies[0].hp == 7 && !game.portal_active && !game.watchfire_quest_encounters &&
         memcmp(&original_map, &game.mountain_cache[4].map, sizeof(Map)) == 0);
-    game_use_town_portal(&game);
+    test_restore_cached_floor(&game);
     ASSERT("previously explored Mountains five gains guards while preserving enemies", guards(&game, 1) == 4 && game.enemies[0].hp == 7);
     stand_at_fire();
     clear_defenders();
     game_open_town_portal(&game);
-    game_use_town_portal(&game);
+    test_restore_cached_floor(&game);
     ASSERT("watchfire at the portal's return position still supports interaction", game_has_regional_interaction(&game));
     game_interact_watchfire(&game);
-    ASSERT("lighting after a portal return restores the watchfire", game.watchfire_quest_progress == 1 &&
+    ASSERT("lighting after a archived floor reload restores the watchfire", game.watchfire_quest_progress == 1 &&
         game.map.tiles[game.player.y][game.player.x] == TILE_WATCHFIRE_LIT);
     game_open_town_portal(&game);
-    ASSERT("the next return portal preserves the lit watchfire", game.portal_origin_tile == TILE_WATCHFIRE_LIT &&
+    ASSERT("the next escape cache preserves the lit watchfire", game.portal_origin_tile == TILE_WATCHFIRE_LIT &&
         game.mountain_cache[4].map.tiles[game.portal_y][game.portal_x] == TILE_WATCHFIRE_LIT);
 
     start();
@@ -221,7 +222,7 @@ static void test_explored_area(void) {
     ASSERT("pre-quest mountain fixture is already cleared", game.level_cleared);
     game_open_town_portal(&game);
     accept();
-    game_use_town_portal(&game);
+    test_restore_cached_floor(&game);
     int active = 0;
     for (int i = 0; i < game.enemy_count; i++) {
         active += !!game.enemies[i].active;
@@ -255,6 +256,7 @@ static int legacy_fixture(void) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 121);
+    test_mark_legacy_portal(root);
     cJSON_DeleteItemFromObject(root, "watchfire_quest_state");
     cJSON_DeleteItemFromObject(root, "watchfire_quest_progress");
     cJSON_DeleteItemFromObject(root, "watchfire_quest_encounters");
@@ -290,7 +292,7 @@ static void test_migration(void) {
     ASSERT("version 121 saves gain an available watchfire quest", legacy_fixture() && load_game(&loaded, WATCHFIRE_SLOT) &&
         !loaded.watchfire_quest_state && !loaded.watchfire_quest_progress && !loaded.watchfire_quest_encounters);
     ASSERT("migration preserves other quests, gold, boss victories, explored enemies, and portals", loaded.gold == 617 &&
-        loaded.emberforge_quest_state == 1 && loaded.emberforge_progress == 1 && loaded.portal_active &&
+        loaded.emberforge_quest_state == 1 && loaded.emberforge_progress == 1 && !loaded.portal_active &&
         loaded.ashen_cache[2].valid && loaded.ashen_cache[2].enemies[0].hp == 7 && (loaded.defeated_bosses & (1 << LOCATION_MOUNTAINS)));
     ASSERT("migration adds Veyra and safely moves overlapping player and loot", loaded.map.tiles[HALL_VEYRA_Y][HALL_VEYRA_X] == TILE_NPC_VEYRA &&
         loaded.player.y == HALL_VEYRA_Y + 1 && loaded.floor_items[0].y == HALL_VEYRA_Y + 1 && loaded.floor_items[0].active);

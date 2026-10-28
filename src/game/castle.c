@@ -578,7 +578,7 @@ void castle_enter(GameState *g, int level) {
     push_message(g, "Press the interact key (A by default) beside levers and ward pedestals to activate them.");
 }
 
-void castle_leave(GameState *g, int town) {
+void castle_leave(GameState *g, int escape) {
     castle_store(g);
     int saved_level = g->level;
     int px = g->player.x;
@@ -653,23 +653,16 @@ void castle_leave(GameState *g, int town) {
     g->portal_active = 0;
     g->castle_prompt = 0;
     g->dialogue_active = 0;
-    g->location = town ? LOCATION_TOWN3 : LOCATION_CASTLE;
-    if (town) {
-        map_generate_town3(&g->map, &g->player.x, &g->player.y);
-        map_set_rosemoor_swamp_road(&g->map, g->defeated_bosses & (1 << LOCATION_SWAMP));
-        g->player.x = TOWN_W - 2;
-        g->player.y = TOWN3_KING_GATE_Y;
-    } else {
-        map_generate_castle(&g->map, &g->player.x, &g->player.y);
-        g->player.x = CROWNROAD_X;
-        g->player.y = 11;
-    }
+    g->location = LOCATION_CASTLE;
+    map_generate_castle(&g->map, &g->player.x, &g->player.y);
+    g->player.x = CROWNROAD_X;
+    g->player.y = 11;
     g->level = 1;
     g->enemy_count = 0;
     g->floor_item_count = 0;
     g->player.poison_turns = 0;
     g->player.frozen_turns = 0;
-    push_message(g, town ? "You escape to Rosemoor. The castle severs your portal and regroups." : "You leave the castle. Its surviving defenders regroup.");
+    push_message(g, escape ? "You escape to Castle Grounds beside the castle entrance. The castle defenders regroup." : "You leave the castle. Its surviving defenders regroup.");
 }
 
 int castle_travel(GameState *g, int forward) {
@@ -697,7 +690,7 @@ void castle_request(GameState *g, int escape) {
     g->castle_prompt = escape ? 2 : 1;
     g->dialogue_active = 1;
     snprintf(g->dialogue_speaker, sizeof(g->dialogue_speaker), "Castle ward");
-    snprintf(g->dialogue_text, sizeof(g->dialogue_text), "%s", escape ? "Escape to Rosemoor? No return portal. Surviving defenders regroup; defeated minibosses stay dead. Enter confirms; Esc cancels." : "Return portals are severed here. Retreat regroups surviving defenders. Enter enters; Esc cancels.");
+    snprintf(g->dialogue_text, sizeof(g->dialogue_text), "%s", escape ? "Escape to Castle Grounds beside the castle entrance? No return portal. Surviving defenders regroup; defeated minibosses stay dead. Enter confirms; Esc cancels." : "Return portals are severed here. Retreat regroups surviving defenders. Enter enters; Esc cancels.");
 }
 
 int castle_prompt_key(GameState *g, int key, int repeat) {

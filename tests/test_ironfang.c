@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/ironfang.h"
 #include "game/approach.h"
@@ -93,6 +94,7 @@ static void legacy_save(int version) {
     cJSON *root = cJSON_Parse(text);
     free(text);
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), version);
+    test_mark_legacy_portal(root);
     cJSON_DeleteItemFromObject(root, "ironfang");
     cJSON_DeleteItemFromObject(root, "ironfang_defeated");
     text = cJSON_PrintUnformatted(root);
@@ -179,6 +181,7 @@ void test_ironfang(void) {
     ironfang_interact(g);
     int gold = g->gold;
     ironfang_interact(g);
+    action_resolve_player(g, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("disembarking exposes a real optional treasure chamber", !g->ironfang[0].aboard && g->map.tiles[23][60] == TILE_IRON_EMPTY && g->gold > gold);
     g->player.x = 9;
     g->player.y = 8;
@@ -188,9 +191,9 @@ void test_ironfang(void) {
     g->player.y = 25;
     g->gold = 431;
     game_open_town_portal(g);
-    ASSERT("Return to Town respects the last town visited and preserves the cart", g->location == LOCATION_TOWN2 && g->portal_location == LOCATION_IRONFANG && g->portal_active && g->ironfang[0].cart_x == 60);
-    game_use_town_portal(g);
-    ASSERT("the return portal restores the same expedition, loot, lamp, and position", g->location == LOCATION_IRONFANG && g->player.x == 18 && !g->portal_active && g->gold == 431 && g->map.tiles[23][60] == TILE_IRON_EMPTY && g->map.tiles[24][31] == TILE_IRON_LAMP_LIT);
+    ASSERT("Return to Town respects the last town visited and preserves the cart", g->location == LOCATION_TOWN2 && g->portal_location == LOCATION_IRONFANG && !g->portal_active && g->ironfang[0].cart_x == 60);
+    test_restore_cached_floor(g);
+    ASSERT("the archived floor fixture restores the same expedition, loot, lamp, and position", g->location == LOCATION_IRONFANG && g->player.x == 18 && !g->portal_active && g->gold == 431 && g->map.tiles[23][60] == TILE_IRON_EMPTY && g->map.tiles[24][31] == TILE_IRON_LAMP_LIT);
     ironfang_change_level(g, 1);
     g->enemies[0].hp = 3;
     ironfang_change_level(g, 0);
@@ -236,10 +239,7 @@ void test_ironfang(void) {
     g->player.x = 54;
     g->player.y = 0;
     ironfang_travel(g, 54, 0);
-    ASSERT("only the living boss locks the final boundary exit", g->location == LOCATION_IRONFANG);
-    g->debug_passages_unlocked = 1;
-    ironfang_travel(g, 54, 0);
-    ASSERT("debug opens final travel without granting a boss victory", g->location == LOCATION_APPROACH && !g->ironfang_defeated);
+    ASSERT("the optional Mine Boss never locks final travel or grants credit for leaving", g->location == LOCATION_APPROACH && !g->ironfang_defeated);
     *g = *loaded;
     boss = &g->enemies[0];
     g->player.x = boss->x - 1;

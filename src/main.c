@@ -1594,7 +1594,7 @@ int main(int argc, char **argv) {
             game.location == LOCATION_SPICE_SHOP;
         int in_town4 = game.location == LOCATION_TOWN4 || game.location == LOCATION_WORKSHOP ||
             game.location == LOCATION_TOWN_HALL || game.location == LOCATION_MONASTERY;
-        int in_dawnmere = game.location == LOCATION_DAWNMERE || game.location == LOCATION_DAWNMERE_MERCHANT;
+        int in_dawnmere = game.location == LOCATION_DAWNMERE || game.location == LOCATION_DAWNMERE_MERCHANT || game.location == LOCATION_ALEHOUSE;
         music_update(screen, is_town, in_town2, in_town3, in_town4, traveling, in_dawnmere, game.location == LOCATION_CASTLE);
 
         if (!needs_redraw) {
@@ -1629,7 +1629,7 @@ int main(int argc, char **argv) {
                 SDL_GetTicks() - game.trail_started_at < SPELL_TRAVEL_MS
                 ? &projectile_view : &game;
             game_draw(&renderer, view, &viewport);
-            game_draw_enemy_projectiles(&renderer, &enemy_shots, &viewport,
+            game_draw_enemy_projectiles(&renderer, &game, &enemy_shots, &viewport,
                 SDL_GetTicks() - enemy_shots_started_at);
         } else if (screen == SCREEN_GAME_OVER) {
             game_over_draw(&renderer, &game);

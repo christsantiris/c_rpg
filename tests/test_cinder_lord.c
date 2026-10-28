@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "../src/game/cinder_lord.h"
 #include "../src/systems/save_load.h"
@@ -121,6 +122,7 @@ static int make_legacy_save(void) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 132);
+    test_mark_legacy_portal(root);
     cJSON_DeleteItemFromObject(root, "cinder_lord_reward_pending");
     cJSON *arrays[2] = {cJSON_GetObjectItem(root, "enemies"),
         cJSON_GetObjectItem(cJSON_GetArrayItem(cJSON_GetObjectItem(root, "ashen_cache"), ASHEN_DEPTH - 1), "enemies")};
@@ -254,6 +256,7 @@ static void test_rewards(void) {
     ASSERT("full floor and inventory preserve every object and both guaranteed rewards", cache && game.floor_item_count == MAX_FLOOR_ITEMS && game.floor_items[MAX_FLOOR_ITEMS - 1].item.type == ITEM_POTION_HEALTH && game.cinder_lord_reward_pending == 3 && game.gold > 0);
     game.player.x = x;
     game.player.y = y;
+    action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
     action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("a full inventory cannot consume either reserved reward", game.cinder_lord_reward_pending == 3 && game.map.tiles[y][x] == TILE_CINDER_RELIQUARY);
     game.inventory_count--;
@@ -275,13 +278,16 @@ static void test_rewards(void) {
     game.player.x = x;
     game.player.y = y;
     action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
-    ASSERT("a spacious pack receives both rewards once through Interact", !game.cinder_lord_reward_pending && game.inventory_count == 2 && strcmp(game.inventory[0].name, "Embercleaver") == 0 && game.inventory[1].type == ITEM_POTION_STRENGTH);
+    ASSERT("opening spills both rewards without claiming them", game.inventory_count == 0);
+    action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
+    action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("a spacious pack collects both released rewards through Pick Up", !game.cinder_lord_reward_pending && game.inventory_count == 2 && strcmp(game.inventory[0].name, "Embercleaver") == 0 && game.inventory[1].type == ITEM_POTION_STRENGTH);
     int attack = game.player.attack;
     action_resolve_player(&game, (Action){ACTION_USE_ITEM, 1, 0});
     ASSERT("the original special Strength Potion still grants one permanent base attack", game.player.attack == attack + 1);
     game.inventory_count = 0;
     game_open_town_portal(&game);
-    game_use_town_portal(&game);
+    test_restore_cached_floor(&game);
     ok = save_game(&game, 99193) && load_game(&loaded, 99193);
     ASSERT("consumed, sold or discarded rewards cannot regenerate after travel or saving", ok && !loaded.cinder_lord_reward_pending && loaded.floor_item_count == 0 && !loaded.enemies[0].active);
 }
@@ -545,14 +551,15 @@ static void test_saves(void) {
     ok = save_game(&game, 99193) && load_game(&loaded, 99193);
     if (ok) {
         game = loaded;
-        game_use_town_portal(&game);
+        test_restore_cached_floor(&game);
     }
-    ASSERT("portal return clears landing heat without advancing other saved arena clocks", ok && game.location == LOCATION_ASHEN && game.map.tiles[20][27] == TILE_ASHEN_FLOOR && game.map.tiles[18][28] == TILE_CINDER_COOL_4 && game.map.tiles[17][28] == TILE_CINDER_SLUICE_4 && game.enemies[0].move_timer == -2 && game.player.hp == 1000);
+    ASSERT("escaping preserves archived heat and other arena clocks", ok && game.location == LOCATION_ASHEN && game.map.tiles[20][27] == TILE_CINDER_HOT_2 && game.map.tiles[18][28] == TILE_CINDER_COOL_4 && game.map.tiles[17][28] == TILE_CINDER_SLUICE_4 && game.enemies[0].move_timer == -2 && game.player.hp == 1000);
     e = setup();
     action_resolve_enemies(&game);
+    Enemy escaped_lance = game.enemies[0];
     game_open_town_portal(&game);
-    game_use_town_portal(&game);
-    ASSERT("portal wards cancel a threatening lance rather than causing instant arrival damage", game.enemies[0].move_timer == -1 && game.enemies[0].attack_target_x == -1 && game.player.hp == 1000);
+    test_restore_cached_floor(&game);
+    ASSERT("escaping retains the archived lance warning without advancing it", game.enemies[0].move_timer == escaped_lance.move_timer && game.enemies[0].attack_target_x == escaped_lance.attack_target_x && game.player.hp == 1000);
     e = setup();
     e->hp = 73;
     e->move_timer = 17;

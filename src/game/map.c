@@ -1,3 +1,5 @@
+#include "coast_exits.h"
+#include <assert.h>
 #include "giants_crown.h"
 #include "map.h"
 #include "stormbell.h"
@@ -465,7 +467,8 @@ int map_is_walkable(const Map *m, int x, int y) {
     if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
         return 0;
     }
-    return m->tiles[y][x] != TILE_NPC_EDDA && m->tiles[y][x] != TILE_NPC_SEREN && m->tiles[y][x] != TILE_NPC_TAMSIN &&
+    return m->tiles[y][x] != TILE_ROAD_GATE_CLOSED && m->tiles[y][x] != TILE_ROAD_BANK &&
+        m->tiles[y][x] != TILE_NPC_EDDA && m->tiles[y][x] != TILE_NPC_SEREN && m->tiles[y][x] != TILE_NPC_TAMSIN &&
         m->tiles[y][x] != TILE_CROWN_BARRICADE && m->tiles[y][x] != TILE_CROWN_SUPPLIES &&
         m->tiles[y][x] != TILE_IRON_BUNK && m->tiles[y][x] != TILE_IRON_FORGE && m->tiles[y][x] != TILE_IRON_WALL && m->tiles[y][x] != TILE_IRON_WATER &&
         m->tiles[y][x] != TILE_IRON_TRESTLE && m->tiles[y][x] != TILE_IRON_BROKEN && m->tiles[y][x] != TILE_IRON_CRACK &&
@@ -1387,6 +1390,8 @@ void map_generate_coast(Map *m, int level) {
     map_room_center(&m->rooms[0], &control_x, &control_y);
     m->tiles[control_y][control_x] = TILE_COAST_TIDE_CONTROL;
     map_shape_coast(m, index + 1);
+    coast_exits_repair_map(m, index + 1);
+    assert(coast_exits_valid(m));
 }
 
 void map_clear_town_harbor(Map *m) {
@@ -1705,7 +1710,6 @@ void map_generate_town4(Map *m, int *spawn_x, int *spawn_y) {
     map_place_town4_hall(m);
     map_place_town4_guards(m, -1, -1);
     town_life_place(m, LOCATION_TOWN4);
-    m->tiles[DAIN_TOWN_Y][DAIN_TOWN_X] = TILE_NPC_DAIN;
     map_place_town4_square(m);
     *spawn_x = 20;
     *spawn_y = TOWN_H - 2;

@@ -158,6 +158,7 @@ void shop_init(ShopScreen *s, ShopType type, int defeated_bosses, PlayerClass pl
             s->items[s->item_count++] = item_make_magic_long_sword();
             s->items[s->item_count++] = item_make_magic_battle_axe();
             s->items[s->item_count++] = item_make_magic_dagger();
+            s->items[s->item_count++] = item_make_poison_sword();
             s->items[s->item_count++] = item_make_magic_greatsword();
             s->items[s->item_count++] = item_make_magic_staff();
             s->items[s->item_count++] = item_make_magic_longbow();

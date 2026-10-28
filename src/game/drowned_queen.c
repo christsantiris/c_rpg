@@ -236,6 +236,29 @@ static void clear_targets(Enemy *e) {
     e->boss_aux_y = -1;
 }
 
+static void reposition(GameState *g, Enemy *e) {
+    static const int steps[4][2] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
+    int bx = e->x;
+    int by = e->y;
+    int best = MAP_W + MAP_H;
+    for (int n = 0; n < 4; n++) {
+        int x = e->x + steps[n][0];
+        int y = e->y + steps[n][1];
+        int distance = abs(x - g->player.x) + abs(y - g->player.y);
+        TileType tile = tile_at(g, x, y);
+        if (!in_chamber(&g->map, x, y) || !map_is_walkable(&g->map, x, y) ||
+            occupied(g->enemies, g->enemy_count, x, y) || distance == 0 || distance >= best ||
+            (tile != TILE_QUEEN_WATER && tile != TILE_QUEEN_DRY && !ordinary_floor(tile))) {
+            continue;
+        }
+        bx = x;
+        by = y;
+        best = distance;
+    }
+    e->x = bx;
+    e->y = by;
+}
+
 int drowned_queen_tick(GameState *g, Enemy *e) {
     if (!arena(g)) {
         return 0;
@@ -247,6 +270,11 @@ int drowned_queen_tick(GameState *g, Enemy *e) {
     }
     if (e->move_timer < 0) {
         e->move_timer++;
+        if (!e->move_timer) {
+            // Move between attacks only: announced lanes and the player's safe
+            // counterattack turn stay fixed throughout each windup.
+            reposition(g, e);
+        }
         return 0;
     }
     if (e->move_timer > 0) {
@@ -325,7 +353,7 @@ void drowned_queen_restore_reward(GameState *g) {
         for (int x = room->x + 1; x < room->x + room->w - 1; x++) {
             if ((g->map.tiles[y][x] == TILE_COAST_FLOOR || g->map.tiles[y][x] == TILE_COAST_SHALLOW_WATER || g->map.tiles[y][x] == TILE_QUEEN_WATER || g->map.tiles[y][x] == TILE_QUEEN_DRY) && !occupied(g->enemies, g->enemy_count, x, y)) {
                 g->map.tiles[y][x] = TILE_QUEEN_RELIQUARY;
-                push_message(g, "Unclaimed Tidecaller Robes wait in the Queen's reliquary. Interact beside it or press P on it.");
+                push_message(g, "Unclaimed Tidecaller Robes wait in the Queen's reliquary. Open with Interact, then Pick Up the released loot.");
                 return;
             }
         }
@@ -336,7 +364,7 @@ static TileType interaction_at(const GameState *g, int *x, int *y) {
     if (g->location != LOCATION_COAST || g->level != COAST_DEPTH) {
         return TILE_COAST_FLOOR;
     }
-    // Prefer the tile underfoot, so P on a reliquary cannot select a nearby tide control.
+    // Prefer the tile underfoot before selecting a nearby tide control.
     for (int radius = 0; radius <= 1; radius++) {
         for (int dy = -radius; dy <= radius; dy++) {
             for (int dx = -radius; dx <= radius; dx++) {

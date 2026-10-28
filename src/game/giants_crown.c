@@ -1,3 +1,5 @@
+#include "boss_gates.h"
+#include "containers.h"
 #include "giants_crown.h"
 #include "crown_quest.h"
 #include "approach.h"
@@ -286,11 +288,10 @@ void giants_change_level(GameState *g, int forward) {
         return;
     }
     if ((!forward && g->level == 1) || (forward && g->level == GIANTS_DEPTH)) {
-        if (forward && !g->giants_crown_defeated && !g->debug_passages_unlocked) {
-            push_message(g, "The Last Jarl guards the final departure. You can retreat through the southern entrance.");
-        } else {
-            giants_leave(g);
+        if (forward && !boss_gate_crossing(g, LOCATION_GIANTS_CROWN)) {
+            return;
         }
+        giants_leave(g);
         return;
     }
     giants_store(g);
@@ -338,6 +339,9 @@ const char *giants_hint(const GameState *g) {
     if (g->location != LOCATION_GIANTS_CROWN) {
         return NULL;
     }
+    if (containers_hint(g)) {
+        return containers_hint(g);
+    }
     int x;
     int y;
     TileType tile = nearby(g, &x, &y);
@@ -351,13 +355,14 @@ int giants_interact(GameState *g) {
     if (!current(g)) {
         return 0;
     }
+    if (containers_hint(g)) {
+        return containers_interact(g);
+    }
     int x;
     int y;
     TileType tile = nearby(g, &x, &y);
     if (tile == TILE_GIANTS_CACHE) {
-        g->gold += 25 + g->level * 5;
-        g->map.tiles[y][x] = TILE_GIANTS_EMPTY;
-        push_message(g, "You recover gold from the giant's stone coffer.");
+        return containers_interact(g);
     } else if (tile == TILE_GIANTS_CRACK) {
         g->map.tiles[y][x] = TILE_GIANTS_PAVING;
         push_message(g, "You clear the fractured stones. A forgotten chamber opens.");
@@ -438,7 +443,7 @@ void giants_defeat(GameState *g) {
         g->giants_crown_defeated = 1;
         g->gold += 200;
         g->score += 2200;
-        push_message(g, "The Last Jarl falls. The final departure opens. You recover 200 gold.");
+        push_message(g, "The Last Jarl falls. You recover 200 gold.");
     }
     crown_quest_sync(g);
 }

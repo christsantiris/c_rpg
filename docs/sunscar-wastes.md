@@ -2,7 +2,7 @@
 
 Stillbury's west gate enters Sunscar Wastes. Its five stages run from east to
 west; backtracking uses the east edge. The first stage's east exit and the final
-stage's west exit return to Stillbury. The Desert Pharaoh guards the final exit
+stage's west exit return to Stillbury. The Desert Pharaoh does not block the final exit
 and drops the Sandstorm Staff.
 
 Incoming combat damage is reduced by **15% after defense**, rounded to the

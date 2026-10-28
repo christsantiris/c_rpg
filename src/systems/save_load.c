@@ -1,3 +1,5 @@
+#include "../game/coast_exits.h"
+#include "../game/boss_gates.h"
 #include "../game/giants_crown.h"
 #include "../game/ironfang.h"
 #include "../game/crownroad_north.h"
@@ -34,6 +36,7 @@
 #include "../game/stormbell.h"
 #include "../game/war_machine.h"
 #include "../game/crown_quest.h"
+#include "../game/containers.h"
 #include "../game/coastal_travel.h"
 #include "cJSON.h"
 #include <stdio.h>
@@ -649,6 +652,7 @@ static cJSON *serialize_enemies(const Enemy *enemies, int count) {
         cJSON_AddNumberToObject(obj, "is_boss",    e->is_boss);
         cJSON_AddNumberToObject(obj, "dain_fragment", e->dain_fragment);
         cJSON_AddNumberToObject(obj, "frozen_turns", e->frozen_turns);
+        cJSON_AddNumberToObject(obj, "poison_turns", e->poison_turns);
         cJSON_AddNumberToObject(obj, "attack_target_x", e->attack_target_x);
         cJSON_AddNumberToObject(obj, "attack_target_y", e->attack_target_y);
         cJSON_AddNumberToObject(obj, "revived", e->revived);
@@ -676,6 +680,14 @@ static void migrate_retired_enemy(Enemy *e) {
     // Only serialized IDs remain here; retired types never enter runtime state.
     const char *name;
     switch ((int)e->type) {
+        case 56:
+        case 95:
+            e->type = ENEMY_BLIGHTED_WOLF;
+            // Retain named hunt and expedition guards so quest encounters stay spent.
+            if (game_hunt_enemy_index(e) < 0 && strncmp(e->name, "Expedition ", 11) != 0) {
+                snprintf(e->name, sizeof(e->name), "Blighted Wolf");
+            }
+            return;
         case 1:
             e->type = ENEMY_GOBLIN_SCOUT;
             name = "Goblin Scout";
@@ -754,6 +766,9 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count, in
         cJSON *dain_fragment = cJSON_GetObjectItem(obj, "dain_fragment");
         e->dain_fragment = dain_fragment ? dain_fragment->valueint : 0;
         e->frozen_turns = cJSON_GetObjectItem(obj, "frozen_turns")->valueint;
+        const cJSON *poison = cJSON_GetObjectItem(obj, "poison_turns");
+        e->poison_turns = poison && cJSON_IsNumber(poison) && poison->valuedouble == poison->valueint &&
+            poison->valueint >= 0 && poison->valueint <= POISON_SWORD_TURNS ? poison->valueint : 0;
         e->attack_target_x = cJSON_GetObjectItem(obj, "attack_target_x")->valueint;
         e->attack_target_y = cJSON_GetObjectItem(obj, "attack_target_y")->valueint;
         cJSON *revived = cJSON_GetObjectItem(obj, "revived");
@@ -1086,6 +1101,51 @@ static int load_heartseed(const cJSON *root, GameState *g, int version) {
         (g->heartseed_quest_state != 1 || g->heartseed_progress != 7) &&
         (g->heartseed_quest_state < 2 || g->heartseed_progress == 7) &&
         (g->heartseed_guardian != HEARTSEED_FREED || g->heartseed_bindings == 7);
+}
+
+static const char *container_fields[] = {"location", "level", "x", "y", "kind", "opened", "released", "gold", "gold_score", "rewards", "variant", "loot_x", "loot_y"};
+static const size_t container_offsets[] = {
+    offsetof(LootContainer, location), offsetof(LootContainer, level), offsetof(LootContainer, x), offsetof(LootContainer, y),
+    offsetof(LootContainer, kind), offsetof(LootContainer, opened), offsetof(LootContainer, released), offsetof(LootContainer, gold),
+    offsetof(LootContainer, gold_score), offsetof(LootContainer, rewards), offsetof(LootContainer, variant),
+    offsetof(LootContainer, loot_x), offsetof(LootContainer, loot_y)
+};
+
+static cJSON *serialize_containers(const GameState *g) {
+    cJSON *array = cJSON_CreateArray();
+    for (int i = 0; i < g->loot_container_count; i++) {
+        cJSON *entry = cJSON_CreateObject();
+        for (int n = 0; n < 13; n++) {
+            const int *value = (const int *)((const char *)&g->loot_containers[i] + container_offsets[n]);
+            cJSON_AddNumberToObject(entry, container_fields[n], *value);
+        }
+        cJSON_AddItemToArray(array, entry);
+    }
+    return array;
+}
+
+static int load_containers(const cJSON *root, GameState *g, int version) {
+    g->loot_container_count = 0;
+    if (version < 209) {
+        return 1;
+    }
+    const cJSON *array = cJSON_GetObjectItem(root, "loot_containers");
+    if (!cJSON_IsArray(array) || cJSON_GetArraySize(array) > MAX_LOOT_CONTAINERS) {
+        return 0;
+    }
+    g->loot_container_count = cJSON_GetArraySize(array);
+    for (int i = 0; i < g->loot_container_count; i++) {
+        const cJSON *entry = cJSON_GetArrayItem(array, i);
+        for (int n = 0; n < 13; n++) {
+            const cJSON *value = cJSON_GetObjectItem(entry, container_fields[n]);
+            if (!cJSON_IsNumber(value) || value->valuedouble != value->valueint) {
+                return 0;
+            }
+            int *field = (int *)((char *)&g->loot_containers[i] + container_offsets[n]);
+            *field = value->valueint;
+        }
+    }
+    return containers_valid(g);
 }
 
 static int load_crown_quest(const cJSON *root, GameState *g, int version) {
@@ -1693,7 +1753,7 @@ static void migrate_stormwatch_road(GameState *g) {
 }
 
 int save_game(const GameState *g, int slot) {
-    if (!crown_quest_valid(g) || !war_machine_valid(g) || !stormbell_valid(g) || !giants_valid(g) || !northroad_valid(g) || !mangrove_state_valid(g) || !stormwatch_valid(g) || !ironfang_valid(g)) {
+    if (!containers_valid(g) || !crown_quest_valid(g) || !war_machine_valid(g) || !stormbell_valid(g) || !giants_valid(g) || !northroad_valid(g) || !mangrove_state_valid(g) || !stormwatch_valid(g) || !ironfang_valid(g)) {
         return 0;
     }
     if (g->retired_coast_item_count < 0 || g->retired_coast_item_count > RETIRED_LOOT_STAGES * MAX_FLOOR_ITEMS) {
@@ -1701,7 +1761,8 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 208);
+    cJSON_AddNumberToObject(root, "save_version", 218);
+    cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
     cJSON_AddNumberToObject(root, "crown_quest_state", g->crown_quest_state);
@@ -3613,6 +3674,44 @@ static void migrate_kraken_cycle(Enemy *enemies, int count, int version) {
     }
 }
 
+// Version 213 moves the mountain quest to Dawnmere without restarting it.
+static void migrate_dain_to_dawnmere(GameState *g) {
+    if (strcmp(g->dialogue_speaker, "Dain") == 0) {
+        g->dialogue_active = 0;
+    }
+    if (g->location == LOCATION_TOWN4) {
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                if (g->map.tiles[y][x] == TILE_NPC_DAIN) {
+                    g->map.tiles[y][x] = TILE_TOWN_FLOOR;
+                }
+            }
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            if (g->floor_items[i].underlying_tile == TILE_NPC_DAIN) {
+                g->floor_items[i].underlying_tile = TILE_TOWN_FLOOR;
+            }
+        }
+    }
+    if (g->location != LOCATION_DAWNMERE) {
+        return;
+    }
+    int x = DAIN_TOWN_X;
+    int y = DAIN_TOWN_Y;
+    if (g->player.x == x && g->player.y == y) {
+        g->player.y++;
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && item->x == x && item->y == y) {
+            item->y++;
+            item->underlying_tile = map_dawnmere_ground(x, y + 1);
+            g->map.tiles[y + 1][x] = TILE_ITEM;
+        }
+    }
+    g->map.tiles[y][x] = TILE_NPC_DAIN;
+}
+
 // Version 114 relocates quest givers without regenerating maps or quest progress.
 static void migrate_quest_giver_locations(GameState *g) {
     static const struct {
@@ -3898,7 +3997,7 @@ int load_game(GameState *g, int slot) {
         cJSON_Delete(root);
         return 0;
     }
-    if (!elderwood_load(root, g, save_version) || !load_heartseed(root, g, save_version) || !load_spice_skiff(root, g, save_version) || !load_stormbell(root, g, save_version) || !load_war_machine(root, g, save_version) || !load_crown_quest(root, g, save_version)) {
+    if (!load_containers(root, g, save_version) || !elderwood_load(root, g, save_version) || !load_heartseed(root, g, save_version) || !load_spice_skiff(root, g, save_version) || !load_stormbell(root, g, save_version) || !load_war_machine(root, g, save_version) || !load_crown_quest(root, g, save_version)) {
         cJSON_Delete(root);
         return 0;
     }
@@ -6570,7 +6669,47 @@ int load_game(GameState *g, int slot) {
         strcmp(g->dialogue_speaker, "Spice Merchant Corvin") == 0) {
         spice_skiff_talk(g);
     }
+    if (save_version < 211) {
+        boss_gate_migrate(g);
+    }
     game_refresh_debug_passages(g);
+    // Retire return anchors after older map migrations finish protecting their
+    // saved destinations. Keep every other part of the expedition intact.
+    game_close_town_portal(g);
+    // Validate every coast stage on every load, including inactive cached maps.
+    // Repair terrain in place so old saves keep enemies, loot and quest progress.
+    coast_exits_migrate(g);
+    if (save_version < 213) {
+        migrate_dain_to_dawnmere(g);
+    }
+    if (save_version < 215 && g->location == LOCATION_DAWNMERE) {
+        // Restore the plaza, then add the Alehouse without rebuilding the town.
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                if (g->map.tiles[y][x] == TILE_NPC_DAIN) {
+                    g->map.tiles[y][x] = map_dawnmere_ground(x, y);
+                }
+            }
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->underlying_tile == TILE_NPC_DAIN) {
+                item->underlying_tile = map_dawnmere_ground(item->x, item->y);
+            }
+        }
+        if (strcmp(g->dialogue_speaker, "Dain") == 0) {
+            g->dialogue_active = 0;
+        }
+        town_life_migrate(g);
+    }
+    // The taller Ashen Hollow volcano blocks three more rows of its approach.
+    if (save_version < 217 && approach_route(g) && approach_route(g)->area == LOCATION_ASHEN) {
+        approach_refresh_entrance(g);
+    }
+    // The taller sandstone Goblin Mountains block three more rows of their road.
+    if (save_version < 218 && approach_route(g) && approach_route(g)->area == LOCATION_MOUNTAINS) {
+        boss_gate_migrate(g);
+    }
     cJSON_Delete(root);
     return 1;
 }

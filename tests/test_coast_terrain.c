@@ -1,3 +1,4 @@
+#include "../src/game/coast_exits.h"
 #include "test_utils.h"
 #include "../src/game/game.h"
 #include "../src/systems/save_load.h"
@@ -64,7 +65,9 @@ static void test_coast_routes(void) {
                 coast_reachable(&g.map, seen);
                 int cx;
                 int cy;
-                solvable &= seen[g.map.stairs_down_y][g.map.stairs_down_x];
+                int ex, ey, ix, iy;
+                solvable &= coast_exit_point(&g.map, 1, &ex, &ey) && coast_exit_point(&g.map, 0, &ix, &iy);
+                solvable &= seen[ey][ex] && seen[iy][ix] && coast_exits_valid(&g.map);
                 map_room_center(&g.map.rooms[g.map.room_count - 1], &cx, &cy);
                 solvable &= seen[cy][cx];
                 map_room_center(&g.map.rooms[0], &cx, &cy);
@@ -304,10 +307,10 @@ static void test_coast_water_items(void) {
     g.inventory[0] = item_make_health_potion();
     action_resolve_player(&g, (Action){ACTION_DROP_ITEM, 0, 0});
     int gold = g.gold;
-    ASSERT("A does not treat the flooded-chamber cache as a mechanism", !game_has_regional_interaction(&g));
+    ASSERT("A can open the flooded-chamber chest", game_has_regional_interaction(&g));
     action_resolve_player(&g, (Action){ACTION_INTERACT, 0, 0});
     ASSERT("interacting does not claim the chamber reward",
-        g.gold == gold && g.map.tiles[cy][cx + 1] == TILE_COAST_CACHE);
+        g.gold == gold && g.loot_container_count == 1 && g.loot_containers[0].opened);
     action_resolve_player(&g, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("P claims the chamber reward before loose loot",
         g.gold == gold + 28 && g.inventory_count == 0);
@@ -333,6 +336,7 @@ static void test_coast_persistence(void) {
     map_room_center(&g.map.rooms[1], &x, &y);
     g.player.x = x + 1;
     g.player.y = y;
+    action_resolve_player(&g, (Action){ACTION_INTERACT, 0, 0});
     action_resolve_player(&g, (Action){ACTION_PICK_UP, 0, 0});
     expected = g.map;
     game_descend(&g);

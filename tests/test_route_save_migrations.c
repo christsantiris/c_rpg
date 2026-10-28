@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "shortcut_checks.h"
 #include "game/game.h"
@@ -37,6 +38,7 @@ static int make_legacy_save(int version) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), version);
+    test_mark_legacy_portal(root);
     if (version < 77) {
         cJSON_DeleteItemFromObject(root, "forest_entry_town");
         cJSON_DeleteItemFromObject(root, "forest_portal_town");
@@ -198,8 +200,8 @@ static void test_mountain_migration(void) {
     original.last_town_visited = LOCATION_DAWNMERE;
     game_open_town_portal(&original);
     int ok = make_legacy_save(78) && load_game(&loaded, ROUTE_SAVE_SLOT);
-    ASSERT("legacy mountain portal moves its anchor to Dawnmere", ok && loaded.location == LOCATION_DAWNMERE && loaded.mountain_portal_town == LOCATION_DAWNMERE && loaded.portal_active && loaded.portal_level == MOUNTAIN_BOSS_LEVEL);
-    game_use_town_portal(&loaded);
+    ASSERT("legacy mountain portal moves its anchor to Dawnmere", ok && loaded.location == LOCATION_DAWNMERE && loaded.mountain_portal_town == LOCATION_DAWNMERE && !loaded.portal_active && loaded.portal_level == MOUNTAIN_BOSS_LEVEL);
+    test_restore_cached_floor(&loaded);
     ASSERT("legacy summit portal restores the central peak and position", ok && loaded.location == LOCATION_MOUNTAINS && loaded.level == MOUNTAIN_BOSS_LEVEL && loaded.player.x == original.portal_x && loaded.player.y == original.portal_y);
     int found = 0;
     for (int row = 0; row < MAP_H; row++) {
@@ -292,9 +294,9 @@ static void test_split_forest_migration(void) {
                 memcmp(loaded.forest_cache[3].map.rooms, original.forest_cache[4].map.rooms, sizeof(original.map.rooms)) == 0);
             ASSERT("migration removes the obsolete captive from the cached third stage", loaded.forest_cache[2].map.tiles[y][x] == TILE_FOREST_FLOOR);
             if (portal) {
-                ASSERT("migration keeps the third-stage portal anchor", loaded.portal_active && loaded.portal_level == 3 &&
+                ASSERT("migration keeps the third-stage portal anchor", !loaded.portal_active && loaded.portal_level == 3 &&
                     loaded.portal_x == original.portal_x && loaded.portal_y == original.portal_y);
-                game_use_town_portal(&loaded);
+                test_restore_cached_floor(&loaded);
             } else {
                 ASSERT("migration keeps active third-stage position and loot", loaded.player.x == original.player.x && loaded.player.y == original.player.y &&
                     loaded.floor_items[0].active && loaded.floor_items[0].underlying_tile == original.floor_items[0].underlying_tile);
@@ -363,9 +365,9 @@ static void test_split_mountain_migration(void) {
             ASSERT("old cached Shaman keeps health and death state without a misplaced fragment", !loaded.mountain_cache[2].enemies[0].dain_fragment &&
                 loaded.mountain_cache[2].enemies[0].hp == (collected ? 0 : 9) && loaded.mountain_cache[2].enemies[0].active == !collected);
             if (portal) {
-                ASSERT("migration keeps the third-stage mountain portal anchor", loaded.portal_active && loaded.portal_level == 3 &&
+                ASSERT("migration keeps the third-stage mountain portal anchor", !loaded.portal_active && loaded.portal_level == 3 &&
                     loaded.portal_x == original.portal_x && loaded.portal_y == original.portal_y);
-                game_use_town_portal(&loaded);
+                test_restore_cached_floor(&loaded);
             } else {
                 ASSERT("mountain migration keeps active position and loot", loaded.player.x == original.player.x && loaded.player.y == original.player.y &&
                     loaded.floor_items[0].active && loaded.floor_items[0].underlying_tile == original.floor_items[0].underlying_tile);
@@ -476,7 +478,7 @@ static void test_near_side_quest_migration(void) {
                     !saved[1].enemies[0].dain_fragment && strcmp(saved[1].enemies[0].name, "Goblin Bomber") == 0);
             }
             if (portal) {
-                game_use_town_portal(&loaded);
+                test_restore_cached_floor(&loaded);
             }
             ASSERT("quest migration keeps the active stage and position", loaded.level == 2 &&
                 loaded.player.x == player_x && loaded.player.y == player_y && loaded.enemies[0].hp == 17);
@@ -588,14 +590,14 @@ static void test_mountain_climb_migration(void) {
     }
     game_open_town_portal(&original);
     ok = make_legacy_save(170) && load_game(&loaded, ROUTE_SAVE_SLOT);
-    ASSERT("watchfire relocation preserves a saved summit portal", ok && loaded.portal_active && loaded.portal_level == 5);
+    ASSERT("watchfire relocation preserves a saved summit portal", ok && !loaded.portal_active && loaded.portal_level == 5);
     int blocked_landing = 0;
     for (int i = 0; i < loaded.mountain_cache[4].enemy_count; i++) {
         Enemy *enemy = &loaded.mountain_cache[4].enemies[i];
         blocked_landing += strcmp(enemy->name, "Watchfire Defender") == 0 && enemy->active && enemy->x == loaded.portal_x && enemy->y == loaded.portal_y;
     }
     ASSERT("relocated defenders leave the saved portal landing clear", !blocked_landing);
-    game_use_town_portal(&loaded);
+    test_restore_cached_floor(&loaded);
     ASSERT("the summit portal restores its original position beside the relocated encounter", loaded.location == LOCATION_MOUNTAINS && loaded.level == 5 && loaded.player.x == original.portal_x && loaded.player.y == original.portal_y);
 
     game_init(&original);
@@ -606,17 +608,19 @@ static void test_mountain_climb_migration(void) {
     map_generate_mountains(&original.map, 1);
     enemies_spawn(&original);
     game_open_town_portal(&original);
-    ASSERT("legacy fixture opens a mountain portal in Oakhaven", original.location == LOCATION_TOWN && original.map.tiles[2][21] == TILE_PORTAL);
+    ASSERT("legacy fixture records a mountain escape in Oakhaven", original.location == LOCATION_TOWN && original.map.tiles[2][21] != TILE_PORTAL);
     original.player.x = 20;
     original.player.y = 0;
     original.floor_item_count = 1;
     original.floor_items[0] = (FloorItem){.active = 1, .x = 20, .y = 0, .underlying_tile = TILE_TOWN_EXIT, .item = item_make_health_potion()};
     original.map.tiles[0][20] = TILE_ITEM;
     ok = make_legacy_save(170) && load_game(&loaded, ROUTE_SAVE_SLOT);
-    ASSERT("moving a mountain portal's future anchor keeps the old Oakhaven portal usable", ok && loaded.location == LOCATION_TOWN && loaded.map.tiles[2][21] == TILE_PORTAL && loaded.mountain_portal_town == LOCATION_DAWNMERE);
+    ASSERT("legacy mountain return anchors retire without moving the player from Oakhaven", ok && loaded.location == LOCATION_TOWN && loaded.map.tiles[2][21] != TILE_PORTAL && loaded.mountain_portal_town == LOCATION_DAWNMERE);
     ASSERT("the new Elderwood gate leaves the saved player and loot accessible", loaded.player.x == 20 && loaded.player.y == 1 && loaded.map.tiles[0][20] == TILE_TOWN_EXIT && loaded.floor_items[0].active && loaded.floor_items[0].y == 1 && loaded.floor_items[0].underlying_tile == TILE_TOWN_PATH && loaded.map.tiles[1][20] == TILE_ITEM);
     action_resolve_player(&loaded, (Action){ACTION_MOVE, 21, 2});
-    ASSERT("an old Oakhaven portal still resumes its saved expedition", loaded.location == LOCATION_MOUNTAINS && loaded.level == 1 && loaded.mountain_entry_town == LOCATION_DAWNMERE);
+    ASSERT("an old Oakhaven return portal is retired", loaded.location == LOCATION_TOWN && !loaded.portal_active);
+    test_restore_cached_floor(&loaded);
+    ASSERT("the migrated mountain cache retains its expedition", loaded.location == LOCATION_MOUNTAINS && loaded.level == 1 && loaded.mountain_entry_town == LOCATION_DAWNMERE);
     game_return_to_town(&loaded);
     ASSERT("future mountain returns use Dawnmere", loaded.location == LOCATION_DAWNMERE);
     remove("saves/savegame_99123.json");
@@ -669,7 +673,7 @@ static void test_forest_adventure_migration(void) {
     ASSERT("retired shortcut prompts and loot underlays migrate without losing loot", !loaded.dialogue_active && loaded.floor_items[0].active && loaded.floor_items[0].underlying_tile == TILE_FOREST_FLOOR && loaded.map.tiles[loaded.player.y][loaded.player.x] == TILE_ITEM && loaded.portal_origin_tile == TILE_FOREST_FLOOR);
     ASSERT("active map exploration and saved coordinates survive the merge", loaded.player.x == original.player.x && loaded.player.y == original.player.y && map_is_explored(&loaded.map, loaded.player.x, loaded.player.y));
     ASSERT("the new forest save format does not remap a second time", save_game(&loaded, ROUTE_SAVE_SLOT) && load_game(&reloaded, ROUTE_SAVE_SLOT) && reloaded.level == 2 && reloaded.portal_level == 3 && reloaded.forest_cache[4].enemies[0].hp == 53);
-    game_use_town_portal(&reloaded);
+    test_restore_cached_floor(&reloaded);
     ASSERT("the old outer-trail portal still restores its map and landing", reloaded.location == LOCATION_FOREST && reloaded.level == 3 && reloaded.player.x == original.portal_x && reloaded.player.y == original.portal_y && reloaded.enemies[0].hp == 56);
 
     game_init(&original);
@@ -740,7 +744,7 @@ static void test_swamp_adventure_migration(void) {
             int portal = loaded.portal_level;
             ASSERT("swamp migration is stable after resaving", save_game(&loaded, ROUTE_SAVE_SLOT) && load_game(&reloaded, ROUTE_SAVE_SLOT) && reloaded.level == stage && reloaded.portal_level == portal && reloaded.enemies[0].hp == 17);
             game_return_to_town(&loaded);
-            game_use_town_portal(&loaded);
+            test_restore_cached_floor(&loaded);
             ASSERT("merged outer swamp floors retain the separate linked portal snapshot", loaded.location == LOCATION_SWAMP && loaded.level == portal && loaded.player.x == 22 && loaded.player.y == 20 && loaded.enemies[0].hp == 40 + other && loaded.swamp_entry_town == LOCATION_TOWN3);
         }
     }
@@ -768,8 +772,8 @@ void test_route_save_migrations(void) {
         original.last_town_visited = forest ? LOCATION_TOWN : LOCATION_TOWN2;
         game_open_town_portal(&original);
         int ok = make_legacy_save(forest ? 76 : 77) && load_game(&loaded, ROUTE_SAVE_SLOT);
-        ASSERT("old portal save loads and keeps its original town", ok && loaded.location == (forest ? LOCATION_TOWN : LOCATION_TOWN2) && loaded.portal_active);
-        game_use_town_portal(&loaded);
+        ASSERT("old portal save loads and keeps its original town", ok && loaded.location == (forest ? LOCATION_TOWN : LOCATION_TOWN2) && !loaded.portal_active);
+        test_restore_cached_floor(&loaded);
         ASSERT("old boss portal restores the central level and casting position", ok && loaded.level == 5 && loaded.player.x == original.portal_x && loaded.player.y == original.portal_y);
         ASSERT("boss victory survives migration and reveals the central shortcut", ok && loaded.defeated_bosses == original.defeated_bosses);
         remove("saves/savegame_99123.json");

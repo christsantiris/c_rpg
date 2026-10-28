@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "approach_checks.h"
 #include "../src/game/drowned_queen.h"
@@ -139,6 +140,7 @@ static void test_rewards(void) {
     game.player.y = y;
     game.map.tiles[y][x + 1] = TILE_QUEEN_CONTROL_H;
     game.map.tiles[y - 1][x] = TILE_QUEEN_CONTROL_H;
+    action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
     action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("full inventory cannot consume the reserved reward", game.drowned_queen_reward_state == 1 && game.map.tiles[y][x] == TILE_QUEEN_RELIQUARY);
     game.inventory_count--;
@@ -181,6 +183,7 @@ static int make_legacy_save(int version) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), version);
+    test_mark_legacy_portal(root);
     if (version < 127) {
         cJSON_DeleteItemFromObject(root, "drowned_queen_reward_state");
     }
@@ -438,8 +441,8 @@ static void test_persistence(void) {
     game.portal_y = 16;
     game.portal_origin_tile = TILE_QUEEN_WATER;
     game.location = LOCATION_TOWN;
-    game_use_town_portal(&game);
-    ASSERT("portal revisit restores queued pools and keeps the drained control spent", game.location == LOCATION_COAST && game.enemies[0].move_timer == 2 && game.enemies[0].boss_aux_x == 30 && drowned_queen_controls(&game) == 1);
+    test_restore_cached_floor(&game);
+    ASSERT("archived encounter reload restores queued pools and keeps the drained control spent", game.location == LOCATION_COAST && game.enemies[0].move_timer == 2 && game.enemies[0].boss_aux_x == 30 && drowned_queen_controls(&game) == 1);
 
     e = setup();
     for (int yy = 11; yy < 21; yy++) {
@@ -633,8 +636,40 @@ static void test_layouts_and_travel(void) {
     ASSERT("Queen victory still opens coast exit and harbor access with regular enemies alive", game.location == LOCATION_TOWN && game_harbor_unlocked(&game));
 }
 
+static void test_mobile_queen(void) {
+    Enemy *e = setup();
+    e->x = 21;
+    e->y = 11;
+    e->move_timer = -1;
+    game.player.x = 23;
+    game.player.y = 12;
+    action_resolve_enemies(&game);
+    ASSERT("Queen leaves a chamber corner during recovery without attacking or overlapping the player",
+        (e->x != 21 || e->y != 11) && map_is_walkable(&game.map, e->x, e->y) &&
+        !(e->x == game.player.x && e->y == game.player.y) && game.player.hp == 1000);
+    int x = e->x;
+    int y = e->y;
+    action_resolve_enemies(&game);
+    int target_x = e->attack_target_x;
+    int target_y = e->attack_target_y;
+    action_resolve_enemies(&game);
+    ASSERT("Queen holds position and targeting throughout the announced windup", e->x == x && e->y == y &&
+        e->attack_target_x == target_x && e->attack_target_y == target_y && e->move_timer == 1);
+    e->move_timer = -1;
+    for (int yy = 11; yy < 21; yy++) {
+        for (int xx = 21; xx < 33; xx++) {
+            if (xx != e->x || yy != e->y) {
+                game.map.tiles[yy][xx] = TILE_COAST_WALL;
+            }
+        }
+    }
+    action_resolve_enemies(&game);
+    ASSERT("blocked Queen movement stays inside the chamber without crossing walls", e->x == x && e->y == y);
+}
+
 void test_drowned_queen(void) {
     printf("Drowned Queen phased encounter tests:\n");
+    test_mobile_queen();
     test_patterns();
     test_controls();
     test_rewards();

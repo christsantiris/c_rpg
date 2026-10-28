@@ -5,9 +5,7 @@ The browser build includes its font, BMP sprites, MP3 music and effects, and Ogg
 effects. The native build and existing JSON save format remain available.
 
 ## Build and preview locally
-
-Use the same installed **Emscripten 4.0.23** SDK as Wolfenstein. From the
-Castle of No Return project root, run these two commands in the same terminal:
+From the Castle of No Return project root, run these two commands in the same terminal:
 
 ```sh
 source /private/tmp/wolf-browser-emsdk/emsdk_env.sh

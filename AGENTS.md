@@ -61,6 +61,10 @@ If a signature is too long, shorten the parameter names rather than wrapping.
 - Wait for an explicit "next step" prompt before providing the next change
 - Never combine multiple features into one code block
 - Never add unrequested changes alongside a requested change
+- Finish each feature with validation results and a suggested commit message,
+  then stop for the user's manual commit. Additional feedback is a backlog;
+  it does not waive this pause unless the user explicitly requests a combined
+  change set.
 
 ---
 
@@ -130,3 +134,28 @@ matching the existing textures, shading, outlines and doorway scale. Do not
 substitute simple rectangle drawings. Inspect new or changed art beside an
 existing building at the same scale and in the game renderer before reporting
 it complete. Gameplay tests alone do not establish visual quality.
+
+## 11. Every stage must have usable, clearly visible transitions
+
+This is a permanent dungeon and area creation requirement.
+
+- Every playable stage must have its intended entrance, retreat route and onward
+  exit or final objective. Outdoor exits belong at the actual map boundary;
+  indoor transitions must follow that area's established stair/door rules.
+- Validate the actual transition tile and the continuous route to it, not just
+  the saved stair/approach coordinates. A reachable coordinate without a working
+  transition does not pass validation.
+- Main exits must be unmistakable in the game renderer, with readable destination
+  labels and discovered minimap markers. Keep labels visible at all four screen
+  edges. A single inconspicuous tile is insufficient.
+- Terrain shaping, tide changes, encounter preparation, quest props, loot and
+  save restoration must preserve these transitions. Check every supported terrain
+  state. Intentional boss or puzzle gates must remain visibly identified, and
+  the player's retreat must remain available.
+- Test every stage of a changed generator across multiple seeds after all map
+  postprocessing and encounter placement. Exercise real travel actions through
+  the exits; coordinate-only reachability tests are insufficient.
+- When repairing existing maps, migrate both active and cached stages in every
+  save version. Repair in place, preserving exploration, enemies and wounds,
+  loot, equipment, quests and boss victories. Back up local saves before bulk
+  migration. Verify an existing affected save in the actual renderer.

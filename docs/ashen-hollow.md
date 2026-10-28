@@ -6,12 +6,14 @@ its south edge and advance through the north exit. The south entrance backtracks
 on stage 1 it returns to the approach back to Castle Grounds' north gate. Ordinary
 enemies do not block stage travel.
 
-The entrance is a deep, lava-lit fissure surrounded by broken basalt spires.
-A narrow stairway descends through its southern rim.
+The entrance is a lone, towering fire mountain. A lava river pours from its
+notched crater and splits around a jagged, fire-lit cleft at its foot, while
+smoke rolls east from the summit. The mountain fills a 7×9 tile footprint;
+save version 217 moves anyone saved on its newly raised summit onto the road.
 
-The Cinder Lord guards the last clearing on stage 5. Its defeat opens that
-stage's north exit, which returns to the approach back to Castle Grounds without
-introducing another town. The boss guarantees **Embercleaver** and the original **Potion of Strength**,
+The Cinder Lord guards the last clearing on stage 5. That stage's north exit
+remains open while he lives and returns to the approach back to Castle Grounds
+without introducing another town. See [boss gates](boss-gates.md). The boss guarantees **Embercleaver** and the original **Potion of Strength**,
 granting 1 permanent base attack when consumed. Its defeat appears in the boss
 journal. Surviving ordinary enemies do not block the return exit after victory.
 
@@ -43,7 +45,7 @@ basalt routes. Stage 1 introduces one crossing, stage 2 has two, and stages
   used. These valves do not change the boss arena or quest mechanisms.
 - Clocks advance with ordinary enemy phases, including when no enemies remain.
   Menus and idle animation do not advance them. Loot does not stop a clock;
-  return portals cool the landing crossing before the player resumes.
+  escaping archives the crossing state without providing a return anchor.
 
 The status panel explains the three states. Valves, marked crossings and
 permanent bridge routes are independent of the Emberforge quest and the
@@ -60,8 +62,8 @@ Cinder Lord's arena sluices.
 Ashen Hollow maintains independent caches for all five stages. Backtracking
 preserves enemy health. A new expedition restores regular enemies on every
 visited stage while preserving explored terrain, quests, and boss progress.
-Return to Town uses the last town visited; its portal restores the
-original stage and position when used. Save format 81 stores the new region;
+Return to Town is a one-way escape to the last town visited, with no return
+portal. Save format 81 stores the new region;
 older saves gain fresh Ashen Hollow progress and an open regional gate without
 resetting existing characters, quests, or regional progress.
 

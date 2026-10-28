@@ -49,9 +49,9 @@ without pushing a boulder.
 
 Drakes close for melee, Stone Giants endure heavy punishment, and Fire Elementals
 cast along clear rows or columns. As in other regions, stages 1–4 can be
-exited without defeating every enemy. On stage 5, only the Red Dragon blocks
-the summit exit. It drops gold and the all-class Dragon Scale Mantle when
-defeated.
+exited without defeating every enemy. The stage 5 summit departure also remains
+available while the Red Dragon lives; see [boss gates](boss-gates.md). Defeating
+the dragon awards gold and the all-class Dragon Scale Mantle.
 
 ## Red Dragon encounter
 

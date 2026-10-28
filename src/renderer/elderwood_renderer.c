@@ -1,3 +1,4 @@
+#include "../game/combat_feedback.h"
 #include "elderwood_renderer.h"
 #include "sprites.h"
 #include "../game/elderwood.h"
@@ -57,10 +58,29 @@ void draw_northern_road(Renderer *r, const GameState *g, const Viewport *v) {
     label(r, v, "ROYAL CATACOMBS", NORTH_CAT_X, NORTH_CAT_Y - 5);
     draw_town_road_sign(r, viewport_to_screen_x(v, NORTH_ROAD_X + 2), viewport_to_screen_y(v, 44), "S: OAKHAVEN");
     draw_town_road_sign(r, viewport_to_screen_x(v, NORTH_ROAD_X + 2), viewport_to_screen_y(v, 4), "N: CROWN ROAD NORTH");
-    if (!g->elderwood_defeated && !g->debug_passages_unlocked) {
-        draw_town_road_sign(r, viewport_to_screen_x(v, NORTH_ROAD_X - 8), viewport_to_screen_y(v, 34), "ELDERTHORN'S ROOTS\nBLOCK THE NORTH ROAD");
-    } else if (!(g->defeated_bosses & (1 << LOCATION_CATACOMBS)) && !g->debug_passages_unlocked) {
-        draw_town_road_sign(r, viewport_to_screen_x(v, NORTH_ROAD_X + 2), viewport_to_screen_y(v, 8), "CLEAR THE CATACOMBS\nTO REACH THE CASTLE");
+
+}
+
+static void root_cell(Renderer *r, int x, int y, int height, int alpha) {
+    SDL_Rect soil = {x + 2, y + 15, TILE_SIZE - 4, 7};
+    SDL_SetRenderDrawColor(r->sdl, 104, 75, 28, alpha / 3);
+    SDL_RenderFillRect(r->sdl, &soil);
+    for (int n = 0; n < 3; n++) {
+        int bx = x + 5 + n * 7;
+        int by = y + 20 - n % 2;
+        int bend = n % 2 ? -3 : 3;
+        int top = by - height - n;
+        SDL_SetRenderDrawColor(r->sdl, 39, 29, 18, alpha);
+        for (int width = -1; width <= 1; width++) {
+            SDL_RenderDrawLine(r->sdl, bx + width, by, bx + bend + width, by - height / 2);
+            SDL_RenderDrawLine(r->sdl, bx + bend + width, by - height / 2, bx + width, top);
+        }
+        SDL_SetRenderDrawColor(r->sdl, 202, 155, 66, alpha);
+        SDL_RenderDrawLine(r->sdl, bx, by - 1, bx + bend, by - height / 2);
+        SDL_RenderDrawLine(r->sdl, bx + bend, by - height / 2, bx, top);
+        SDL_RenderDrawLine(r->sdl, bx + bend, by - height / 2, bx + bend * 2, top + 2);
+        SDL_SetRenderDrawColor(r->sdl, 56, 40, 22, alpha);
+        SDL_RenderDrawLine(r->sdl, bx - 3, by + 1, bx + 4, by - 1);
     }
 }
 
@@ -75,7 +95,12 @@ void draw_elderwood_warnings(Renderer *r, const GameState *g, const Viewport *v)
         const Enemy *enemy = &g->enemies[i];
         for (int y = v->cam_y; y < v->cam_y + v->tiles_y; y++) {
             for (int x = v->cam_x; x < v->cam_x + v->tiles_x; x++) {
-                if (elderwood_marks(enemy, x, y)) {
+                if (elderwood_marks(enemy, x, y) && map_is_walkable(&g->map, x, y)) {
+                    if (enemy->boss_attack == ELDER_ROOTS) {
+                        root_cell(r, viewport_to_screen_x(v, x) * TILE_SIZE, viewport_to_screen_y(v, y) * TILE_SIZE,
+                            2 + (SDL_GetTicks() / 100) % 3, 215);
+                        continue;
+                    }
                     SDL_Rect cell = {viewport_to_screen_x(v, x) * TILE_SIZE, viewport_to_screen_y(v, y) * TILE_SIZE, TILE_SIZE, TILE_SIZE};
                     SDL_SetRenderDrawColor(r->sdl, 235, 137, 38, 110);
                     SDL_RenderFillRect(r->sdl, &cell);
@@ -93,6 +118,23 @@ void draw_elderwood_warnings(Renderer *r, const GameState *g, const Viewport *v)
             bar.w = enemy->max_hp > 0 ? 64 * enemy->hp / enemy->max_hp : 0;
             SDL_SetRenderDrawColor(r->sdl, 209, 159, 58, 255);
             SDL_RenderFillRect(r->sdl, &bar);
+        }
+    }
+    Uint32 now = SDL_GetTicks();
+    for (int i = 0; i < combat_feedback_count(); i++) {
+        const CombatFeedbackEvent *event = combat_feedback_get(i);
+        Uint32 age = now - event->created_at;
+        if (event->kind != FEEDBACK_ROOT_BURST || event->location != g->location || event->level != g->level || age >= 600) {
+            continue;
+        }
+        int height = age < 180 ? 4 + age / 18 : 14 - (age - 180) / 38;
+        int alpha = age < 350 ? 255 : (600 - age) * 255 / 250;
+        for (int y = event->y - event->amount; y <= event->y + event->amount; y++) {
+            for (int x = event->x - event->amount; x <= event->x + event->amount; x++) {
+                if (abs(x - event->x) + abs(y - event->y) <= event->amount && viewport_is_visible(v, x, y) && map_is_walkable(&g->map, x, y)) {
+                    root_cell(r, viewport_to_screen_x(v, x) * TILE_SIZE, viewport_to_screen_y(v, y) * TILE_SIZE, height, alpha);
+                }
+            }
         }
     }
     SDL_SetRenderDrawBlendMode(r->sdl, old);
@@ -142,7 +184,7 @@ static void root_arch(Renderer *r, int sx, int sy) {
 
 void draw_heartseed_details(Renderer *r, const GameState *g, const Viewport *v) {
     if (g->location == LOCATION_TOWN) {
-        label(r, v, "FORESTER TAMSIN", TAMSIN_X, TAMSIN_Y - 1);
+        label(r, v, "FORESTER TAMSIN", TAMSIN_X - 2, TAMSIN_Y - 1);
         return;
     }
     if (g->location != LOCATION_ELDERWOOD) {

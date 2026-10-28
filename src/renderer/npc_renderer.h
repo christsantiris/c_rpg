@@ -15,7 +15,8 @@ typedef enum {
     NPC_ART_VEYRA, NPC_ART_SELENE, NPC_ART_ALDRIC, NPC_ART_TESSA, NPC_ART_LYSA, NPC_ART_MORWEN, NPC_ART_TAMSIN, NPC_ART_SEREN, NPC_ART_EDDA, NPC_ART_COUNT
 } NpcArt;
 
-// Transparent character overlay. The caller supplies the location's floor.
+// Transparent character overlay. Use game_renderer.c's draw_npc_ground for town
+// tiles so the location supplies paving or grass independently of the character.
 void npc_draw(Renderer *r, int tx, int ty, NpcArt art, int mirror);
 
 #endif

@@ -107,8 +107,7 @@ void draw_red_dragon(Renderer *r, int tile_x, int tile_y);
 // Town Draw functions
 void draw_town_floor(Renderer *r, int tile_x, int tile_y);
 void draw_town_path(Renderer *r, int tile_x, int tile_y);
-void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style);
-void draw_town_gate_back(Renderer *r, int tx, int ty, TownExitStyle style, int dx, int dy);
+void draw_town_gate(Renderer *r, int tx, int ty, Location town, int dx, int dy);
 void draw_ashen_floor(Renderer *r, int tx, int ty, int mx, int my);
 void draw_ashen_wall(Renderer *r, int tx, int ty, int mx, int my);
 void draw_ashen_lava(Renderer *r, int tx, int ty, int mx, int my);
@@ -119,7 +118,6 @@ void draw_glassdeep_wall(Renderer *r, int tx, int ty, int mx, int my);
 void draw_glassdeep_pool(Renderer *r, int tx, int ty, int mx, int my);
 void draw_glassdeep_ruin(Renderer *r, int tx, int ty, int mx, int my);
 void draw_glassdeep_edge(Renderer *r, int tx, int ty, int mx, int my);
-void draw_town_gate_south(Renderer *r, int tile_x, int tile_y);
 void draw_town_road_sign(Renderer *r, int tile_x, int tile_y, const char *name);
 void draw_dungeon_transition(Renderer *r, int covered_width);
 void draw_forest_transition(Renderer *r, int covered_width);

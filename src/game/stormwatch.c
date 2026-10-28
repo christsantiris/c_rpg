@@ -1,3 +1,5 @@
+#include "boss_gates.h"
+#include "containers.h"
 #include "stormwatch.h"
 #include "stormbell.h"
 #include "approach.h"
@@ -419,8 +421,7 @@ void stormwatch_change_level(GameState *g, int forward) {
         return;
     }
     if ((!forward && g->level == 1) || (forward && g->level == STORM_DEPTH)) {
-        if (forward && !g->stormwatch_defeated && !g->debug_passages_unlocked) {
-            push_message(g, "The Matriarch holds the final departure. You can retreat by the southern gate.");
+        if (forward && !boss_gate_crossing(g, LOCATION_STORMWATCH)) {
             return;
         }
         stormwatch_leave(g);
@@ -531,8 +532,8 @@ const char *stormwatch_hint(const GameState *g) {
         int loot;
         return threshold(g, &loot) == TILE_STORM_SHUTTER_UP ? "A: LOWER STORM SHUTTER" : "A: RAISE STORM SHUTTER";
     }
-    if (nearby(g, TILE_STORM_SUPPLIES, &x, &y)) {
-        return "A: SEARCH WATCH SUPPLIES";
+    if (containers_hint(g)) {
+        return containers_hint(g);
     }
     const StormwatchStage *state = &g->stormwatch[g->level - 1];
     for (int lane = 0; lane < (g->level >= 3 ? 2 : 1); lane++) {
@@ -565,10 +566,8 @@ int stormwatch_interact(GameState *g) {
             mask(g, 1, 1);
         }
         push_message(g, raising ? "The raised shutter blocks the passage and wind. The outer route remains open." : "The shutter lowers into a timber shortcut. New exposure begins with the next warning.");
-    } else if (nearby(g, TILE_STORM_SUPPLIES, &x, &y)) {
-        g->map.tiles[y][x] = TILE_STORM_EMPTY;
-        g->gold += 15 + g->level * 3;
-        push_message(g, "You recover gold from a watch supply chest.");
+    } else if (containers_hint(g)) {
+        return containers_interact(g);
     } else if (stormbell_hint(g) && !(state->phase[0] == 3 && stormwatch_wind_marks(g, 0, g->player.x, g->player.y)) &&
         !(state->phase[1] == 3 && stormwatch_wind_marks(g, 1, g->player.x, g->player.y))) {
         return stormbell_interact(g);
@@ -659,7 +658,7 @@ void stormwatch_defeat(GameState *g) {
         g->stormwatch_defeated = 1;
         g->gold += 220;
         g->score += 2600;
-        push_message(g, "The Tempest Matriarch falls! The departure opens. You recover 220 gold.");
+        push_message(g, "The Tempest Matriarch falls! You recover 220 gold.");
     }
 }
 

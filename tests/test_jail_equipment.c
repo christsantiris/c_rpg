@@ -32,6 +32,7 @@ static void chest(GameState *g) {
     g->player.x = JAIL_GEAR_X;
     g->player.y = JAIL_GEAR_Y + 1;
     action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
+    action_resolve_player(g, (Action){ACTION_PICK_UP, 0, 0});
 }
 
 void test_jail_equipment(void) {

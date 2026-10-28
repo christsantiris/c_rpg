@@ -3,8 +3,8 @@
 Stonewake replaces Glassdeep Caverns on Stillbury's southern road. Walk into
 its limestone quarry landmark to start stage 1; the rail ramps at the northern
 and southern boundaries use the standard area travel controls. The final exit
-stays boss sealed until the Quarry Colossus is defeated. Defeating it returns
-to Stillbury's quarry approach.
+returns to Stillbury's quarry approach even while the Quarry Colossus lives.
+Boss victory and quest rewards remain separate. See [boss gates](boss-gates.md).
 The atlas keeps the beaches and cliff-backed shoreline below the quarry,
 Sunken Coast's sheltered cove and Oakhaven's connected branching docks.
 
@@ -62,7 +62,8 @@ save/load; it no longer lowers a raised crane again before every movement action
 
 These are base values; the existing region/player progression scaling still
 applies. Fresh physical expeditions respawn ordinary enemies. Stair travel,
-loading and return portals keep the current expedition's damage and deaths.
+loading keep the current expedition's damage and deaths. Return to Town is a
+one-way escape to the last town visited, with no return portal.
 Boss victory and its guaranteed rewards remain one time.
 
 The 48×48 atlas cells contain padding, not oversized ordinary bodies. Construct
@@ -131,9 +132,9 @@ portals and boss victories. Old optical props become quarry paving; optional
 cranes are added across spare rock/water where they fit without closing any
 existing walking squares. Unvisited floors use the new quarry generator. On the next fresh physical
 expedition, old floors are replaced with full quarry layouts while maximum
-stage, quests, equipment, currency and boss victories remain. A legacy floor
-anchored by an active return portal stays intact until that portal is used;
-loading or taking stairs never replaces an expedition underneath the player.
+stage, quests, equipment, currency and boss victories remain. Loading or
+taking stairs never replaces an expedition underneath the player. Older return
+anchors are retired when loading a save.
 Retired prism windups and tone prompts are canceled safely. Previously completed
 quests reserve the new warhammer with Orin without paying their gold again.
 

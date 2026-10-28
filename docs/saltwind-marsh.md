@@ -28,9 +28,9 @@ clusters distinguish the marsh from the other coastal areas. Water and roots
 block foot travel; timber and mud are walkable. Exits terminate the terrain at
 map edges instead of floating in open ground.
 
-Ordinary enemies do not block stage travel. Stage 5's departure stays sealed
-until Sszareth is defeated; retreat through previous stages remains available.
-The debug passage override opens the departure without recording a victory.
+Travel remains available while ordinary enemies or Sszareth live, including
+stage 5's final departure. Boss and quest rewards still require their normal
+objectives. See [boss gates](boss-gates.md).
 
 ## The Missing Spice Skiff
 
@@ -97,19 +97,19 @@ his defense open during recovery; collision extends that opening. Below half
 health he calls two spearhunters once. Summoned hunters grant no repeat loot.
 
 Defeating Sszareth awards **200 gold, 2,400 score and 900 XP**, records his
-boss-journal entry and opens the final departure. Gold and score pay once.
+boss-journal entry and preserves the freely accessible final departure. Gold and score pay once.
 A later physical entry respawns ordinary enemies on visited stages while
 preserving the boss victory, claimed supplies, exploration and dropped gear.
-Backtracking and return portals preserve wounds, deaths, freeze and attack
-warnings within the current expedition.
+Backtracking and saves preserve wounds, deaths, freeze and attack warnings
+within the current expedition.
 
 ## Saves, migration and reuse
 
 Save version **192** retains all five stage records introduced in version 191: skiff position and facing,
 occupied state, exploration, supplies, loot and enemy combat state. Return to
-Town goes to the last town actually entered; its return portal restores the
-same stage and shore/skiff position. Bypassing a town does not change that
-spell destination. Physical reentry closes an older marsh portal.
+Town is a one-way escape to the last town actually entered and leaves no
+return portal. Bypassing a town does not change that destination. Physical
+re-entry resets the skiff to the entry landing so the player cannot be stranded.
 
 Version 190 pilot saves gain enemies and the onward jetty while retaining
 existing discoveries, supplies, loot and boat occupancy. A boat or item covered

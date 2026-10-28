@@ -115,6 +115,7 @@ static void test_rewards(void) {
     game.player.y = y;
     game.map.tiles[y][x + 1] = TILE_LABYRINTH_SWITCH_ON;
     game.map.tiles[y - 1][x] = TILE_LABYRINTH_SWITCH_ON;
+    action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
     action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("full inventory cannot consume the reserved reward", game.minotaur_reward_state == 1 && game.map.tiles[y][x] == TILE_MINOTAUR_RELIQUARY);
     game.inventory_count--;
@@ -161,6 +162,7 @@ static void test_rewards(void) {
         game.player.x = game.floor_items[reserved].x;
         game.player.y = game.floor_items[reserved].y;
         game.inventory_count = 0;
+        action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
         action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
         int preserved = 1;
         for (int i = 0; i < game.floor_item_count; i++) {

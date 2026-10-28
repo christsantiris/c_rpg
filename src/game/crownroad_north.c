@@ -1,3 +1,4 @@
+#include "containers.h"
 #include "crownroad_north.h"
 #include "combat_feedback.h"
 #include "elderwood.h"
@@ -166,11 +167,6 @@ void northroad_store(GameState *g) {
 void northroad_enter(GameState *g, int from_castle, int portal) {
     const TownApproach *route = approach_route(g);
     int castle_access = from_castle || (route && route->town == LOCATION_CASTLE);
-    if (!portal && !castle_access && !g->debug_passages_unlocked &&
-        !(g->defeated_bosses & (1 << LOCATION_CATACOMBS))) {
-        push_message(g, "Clear Elderwood and the Royal Catacombs to open Crown Road North.");
-        return;
-    }
     if (portal && (!g->northroad.valid || !inside(g->portal_x, g->portal_y) ||
         !map_is_walkable(&g->northroad.map, g->portal_x, g->portal_y))) {
         return;
@@ -242,34 +238,24 @@ static int supplies(const GameState *g, int *x, int *y) {
 }
 
 int northroad_has_interaction(const GameState *g) {
+    if (g->location == LOCATION_CROWNROAD_NORTH && containers_hint(g)) {
+        return 1;
+    }
     int x;
     int y;
     return supplies(g, &x, &y);
 }
 
 int northroad_interact(GameState *g) {
+    if (g->location == LOCATION_CROWNROAD_NORTH && containers_hint(g)) {
+        return containers_interact(g);
+    }
     int x;
     int y;
     if (!supplies(g, &x, &y)) {
         return 0;
     }
-    for (int i = 0; i < g->enemy_count; i++) {
-        const Enemy *enemy = &g->enemies[i];
-        if (enemy->active && abs(enemy->x - x) + abs(enemy->y - y) <= 4) {
-            push_message(g, "Defeat the nearby patrol before searching its supplies.");
-            return 1;
-        }
-    }
-    g->map.tiles[y][x] = TILE_CROWN_EMPTY;
-    g->gold += 25;
-    int hp = g->player.hp;
-    g->player.hp += 20;
-    if (g->player.hp > g->player.max_hp) {
-        g->player.hp = g->player.max_hp;
-    }
-    combat_feedback_add(g, FEEDBACK_HEAL, FEEDBACK_NOW, g->player.x, g->player.y, g->player.hp - hp);
-    push_message(g, "Recovered patrol supplies: 25 gold and up to 20 HP.");
-    return 1;
+    return containers_interact(g);
 }
 
 static int line_clear(const Map *map, int x, int y, int tx, int ty) {

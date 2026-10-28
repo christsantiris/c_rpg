@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "../src/game/desert_pharaoh.h"
 #include "../src/systems/save_load.h"
@@ -356,6 +357,7 @@ static void test_rewards(void) {
     game.player.y = y;
     game.map.tiles[y][x + 1] = TILE_DESERT_LAMP;
     game.map.tiles[y - 1][x] = TILE_DESERT_LAMP;
+    action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
     action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("full inventory cannot consume the reserved reward", game.desert_pharaoh_reward_state == 1 && game.map.tiles[y][x] == TILE_PHARAOH_RELIQUARY);
     game.floor_items[0].x = x;
@@ -382,7 +384,7 @@ static void test_rewards(void) {
     ASSERT("normal ground pickup also records a claimed reward", game.desert_pharaoh_reward_state == 2);
     game.inventory_count = 0;
     game_open_town_portal(&game);
-    game_use_town_portal(&game);
+    test_restore_cached_floor(&game);
     int saved_claim = save_game(&game, 99189) && load_game(&loaded, 99189);
     ASSERT("a sold or discarded staff cannot be awarded again after travel and save/load", saved_claim && loaded.desert_pharaoh_reward_state == 2 && !loaded.sandstorm_staff_unclaimed && !loaded.floor_item_count);
 }
@@ -413,6 +415,7 @@ static int make_legacy_save(void) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 130);
+    test_mark_legacy_portal(root);
     cJSON_DeleteItemFromObject(root, "desert_pharaoh_reward_state");
     cJSON *arrays[2] = {cJSON_GetObjectItem(root, "enemies"),
         cJSON_GetObjectItem(cJSON_GetArrayItem(cJSON_GetObjectItem(root, "desert_cache"), DESERT_DEPTH - 1), "enemies")};
@@ -470,14 +473,15 @@ static void test_saves(void) {
     ok = save_game(&game, 99189) && load_game(&loaded, 99189);
     if (ok) {
         game = loaded;
-        game_use_town_portal(&game);
+        test_restore_cached_floor(&game);
     }
-    ASSERT("portal return wards lingering sand on arrival without changing Pharaoh health", ok && game.location == LOCATION_DESERT && game.level == DESERT_DEPTH && game.player.hp == 1000 && game.map.tiles[20][26] == TILE_DESERT_FLOOR && game.enemies[0].hp == 110);
+    ASSERT("escaping preserves archived sand and Pharaoh health", ok && game.location == LOCATION_DESERT && game.level == DESERT_DEPTH && game.player.hp == 1000 && game.map.tiles[20][26] == TILE_PHARAOH_SAND_2 && game.enemies[0].hp == 110);
     e = setup();
     action_resolve_enemies(&game);
+    Enemy escaped_beam = game.enemies[0];
     game_open_town_portal(&game);
-    game_use_town_portal(&game);
-    ASSERT("a queued beam threatening the portal landing is canceled for a recovery action", game.enemies[0].move_timer == -1 && game.enemies[0].attack_target_x == -1 && game.player.hp == 1000);
+    test_restore_cached_floor(&game);
+    ASSERT("escaping retains the archived beam warning without advancing it", game.enemies[0].move_timer == escaped_beam.move_timer && game.enemies[0].attack_target_x == escaped_beam.attack_target_x && game.player.hp == 1000);
     e = setup();
     e->move_timer = -1;
     cache_arena();

@@ -76,8 +76,11 @@
 #define GUILD_DAIN_Y 7
 #define ZARA_INN_X 18
 #define ZARA_INN_Y 18
+// Former town-center position, retained for save migrations.
 #define DAIN_TOWN_X 18
 #define DAIN_TOWN_Y 11
+#define DAIN_ALEHOUSE_X 18
+#define DAIN_ALEHOUSE_Y 18
 #define ALDER_INN_X 31
 #define ALDER_INN_Y 18
 #define GUILD_ORIN_X 10
@@ -714,7 +717,10 @@ typedef enum {
     TILE_HEARTSEED_CUT_STAKE,
     TILE_HEARTSEED_ALTAR,
     TILE_NPC_SEREN,
-    TILE_NPC_EDDA
+    TILE_NPC_EDDA,
+    TILE_ROAD_GATE_CLOSED,
+    TILE_ROAD_GATE_OPEN,
+    TILE_ROAD_BANK
 } TileType;
 
 typedef struct {

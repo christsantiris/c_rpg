@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/game.h"
 #include "systems/save_load.h"
@@ -35,6 +36,7 @@ static int legacy_save(int temple, int labyrinth) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 84);
+    test_mark_legacy_portal(root);
     const char *names[2] = {"temple_cache", "labyrinth_cache"};
     int lengths[2] = {temple, labyrinth};
     for (int i = 0; i < 2; i++) {
@@ -130,9 +132,9 @@ static void test_dungeon_migration(void) {
         cache->map.tiles[game.portal_y][game.portal_x] = TILE_PORTAL;
         int ok = legacy_save(4, 3);
         if (ok) {
-            game_use_town_portal(&loaded);
+            test_restore_cached_floor(&loaded);
         }
-        ASSERT("every old dungeon portal returns to its preserved destination",
+        ASSERT("every old dungeon archived floor reloads to its preserved destination",
             ok && loaded.location == LOCATION_DUNGEON && loaded.level == stages[old - 1] &&
             loaded.player.x == game.portal_x && loaded.player.y == game.portal_y &&
             loaded.max_level_reached == DUNGEON_DEPTH);
@@ -206,8 +208,8 @@ static void test_expanded_migration(Location region, int old_depth) {
         loaded.level == 5 && restored[4].enemies[boss].hp == 37);
     if (region == LOCATION_TEMPLE && ok) {
         game_return_to_town(&loaded);
-        game_use_town_portal(&loaded);
-        ASSERT("the former summit portal returns to tier five with its damaged Guardian",
+        test_restore_cached_floor(&loaded);
+        ASSERT("the former summit archived floor reloads to tier five with its damaged Guardian",
             loaded.location == LOCATION_TEMPLE && loaded.level == 5 &&
             loaded.enemies[boss].hp == 37 && loaded.temple_alignment == 1);
     }

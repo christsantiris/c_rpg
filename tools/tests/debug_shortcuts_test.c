@@ -1,3 +1,7 @@
+#include "game/combat_feedback.h"
+#include "../../src/game/coast_exits.h"
+#include "game/boss_gates.h"
+#include "game/containers.h"
 #include "game/giants_crown.h"
 #include "game/spice_skiff.h"
 #include "game/stormbell.h"
@@ -22,6 +26,89 @@
 #include "../../src/game/elderwood.h"
 #include "../../src/game/mangrove.h"
 #include "../../src/game/coastal_travel.h"
+
+static void test_boss_gate_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    assert(r->road_checkpoint_texture && r->road_bank_texture);
+    const int routes[] = {1, 15, 0, 4, 2, 11, 5, 9, 16, 14};
+    for (int n = 0; n < 10; n++) {
+        for (int open = 0; open < 2; open++) {
+            game_init(g);
+            if (open) {
+                g->elderwood_defeated = 1;
+                g->defeated_bosses = (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) | (1 << LOCATION_MOUNTAINS) |
+                    (1 << LOCATION_SWAMP) | (1 << LOCATION_CATACOMBS);
+            }
+            approach_enter_region(g, routes[n]);
+            RoadCheckpoint points[2];
+            int count = boss_gate_checkpoints(g, points);
+            assert(count > 0);
+            RoadCheckpoint point = points[routes[n] == 14 ? 1 : 0];
+            g->player.x = point.x + (point.vertical ? 0 : point.x < APPROACH_W / 2 ? 2 : -2);
+            g->player.y = point.y + (!point.vertical ? 0 : routes[n] == 14 ? -2 : point.y < APPROACH_H / 2 ? 2 : -2);
+            assert(map_is_walkable(&g->map, g->player.x, g->player.y));
+            for (int y = 0; y < APPROACH_H; y++) {
+                for (int x = 0; x < APPROACH_W; x++) {
+                    map_mark_explored(&g->map, x, y);
+                }
+            }
+            Viewport view;
+            viewport_init(&view, (r->screen_w - INFO_PANEL_W) / TILE_SIZE, r->tiles_y, APPROACH_W, APPROACH_H);
+            viewport_center_on(&view, g->player.x, g->player.y);
+            renderer_begin_frame(r);
+            game_draw(r, g, &view);
+            renderer_end_frame(r);
+            char path[100];
+            snprintf(path, sizeof(path), "/tmp/boss-gate-%d-%d.bmp", routes[n], open);
+            assert(SDL_SaveBMP(surface, path) == 0);
+        }
+    }
+    puts("PASS: boss checkpoints render closed/open at player scale from both approaches, including both northern passes.");
+}
+
+static void test_container_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    assert(r->loot_chest_texture);
+    const Location areas[] = {LOCATION_DUNGEON, LOCATION_COAST, LOCATION_GIANTS_CROWN};
+    const TileType floors[] = {TILE_FLOOR, TILE_COAST_FLOOR, TILE_GIANTS_GRASS};
+    const TileType chests[] = {TILE_CRYPT_CACHE, TILE_COAST_CACHE, TILE_GIANTS_CACHE};
+    const char *names[] = {"dungeon", "coast", "giants"};
+    Viewport view;
+    for (int n = 0; n < 3; n++) {
+        game_init(g);
+        g->location = areas[n];
+        g->level = 1;
+        g->enemy_count = 0;
+        g->floor_item_count = 0;
+        g->player.x = 13;
+        g->player.y = 12;
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                g->map.tiles[y][x] = floors[n];
+                map_mark_explored(&g->map, x, y);
+            }
+        }
+        g->map.tiles[12][12] = chests[n];
+        viewport_init(&view, r->tiles_x, r->tiles_y, MAP_W, MAP_H);
+        viewport_center_on(&view, 13, 12);
+        for (int step = 0; step < 4; step++) {
+            if (step == 1 || step == 2) {
+                Action action = move_left_action(g, g->key_bindings[CONTROL_MOVE_LEFT]);
+                assert(action.type == ACTION_INTERACT);
+                action_resolve_player(g, action);
+            } else if (step == 3) {
+                action_resolve_player(g, (Action){ACTION_PICK_UP, 0, 0});
+                assert(g->gold > 0);
+            }
+            assert(move_left_action(g, SDL_SCANCODE_LEFT).type == ACTION_MOVE);
+            renderer_begin_frame(r);
+            game_draw(r, g, &view);
+            renderer_end_frame(r);
+            char path[120];
+            snprintf(path, sizeof(path), "/tmp/chest-%s-%d.bmp", names[n], step);
+            assert(SDL_SaveBMP(surface, path) == 0);
+        }
+    }
+    puts("PASS: A opens/closes chests, P collects loose gold, and arrows still move; native renderer captures all chest states.");
+}
 
 static void test_heartseed_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
     game_init(g);
@@ -882,6 +969,454 @@ static void test_saltwind_renderer(Renderer *r, GameState *g, SDL_Surface *surfa
     printf("PASS: all six Saltwind enemy sprites render in the adventure; Rowan preserves his beach underlay.\n");
 }
 
+static void test_regional_projectiles(Renderer *r, GameState *g, SDL_Surface *surface) {
+    const Location areas[] = {LOCATION_ELDERWOOD, LOCATION_MANGROVES, LOCATION_STORMWATCH, LOCATION_IRONFANG,
+        LOCATION_GIANTS_CROWN, LOCATION_CROWNROAD_NORTH, LOCATION_CATACOMBS, LOCATION_FROSTFELL, LOCATION_DRAGONSPINE};
+    const int widths[] = {ELDERWOOD_W, MANGROVE_W, STORM_W, IRON_W, GIANTS_W, CROWN_NORTH_W, CATACOMBS_W, SWAMP_MAP_W, SWAMP_MAP_W};
+    const int heights[] = {ELDERWOOD_H, MANGROVE_H, STORM_H, IRON_H, GIANTS_H, CROWN_NORTH_H, CATACOMBS_H, SWAMP_MAP_H, SWAMP_MAP_H};
+    size_t bytes = (size_t)surface->pitch * surface->h;
+    unsigned char *baseline = malloc(bytes);
+    assert(baseline);
+    for (int area = 0; area < 9; area++) {
+        game_init(g);
+        g->location = areas[area];
+        g->level = 1;
+        g->player.x = widths[area] - 4;
+        g->player.y = heights[area] - 4;
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                g->map.tiles[y][x] = TILE_ELDERWOOD_FLOOR;
+                map_mark_explored(&g->map, x, y);
+            }
+        }
+        g->enemy_count = 1;
+        g->enemies[0] = (Enemy){.type = ENEMY_DARK_ELF, .name = "Dark Elf", .active = 1,
+            .x = g->player.x - 5, .y = g->player.y, .hp = 30, .max_hp = 30, .attack = 10, .move_timer = 1};
+        EnemyProjectiles shots = {.count = 1};
+        shots.shots[0] = (EnemyProjectile){ENEMY_DARK_ELF, g->enemies[0].x, g->enemies[0].y, g->player.x, g->player.y};
+        if (area == 0) {
+            // Exercise real Elderwood firing; the other fixtures isolate each
+            // renderer's camera without invoking a different area's enemy AI.
+            action_resolve_enemies_with_projectiles(g, &shots);
+        }
+        assert(shots.count == 1 && shots.shots[0].start_x == g->enemies[0].x && shots.shots[0].target_x == g->player.x);
+        Viewport base;
+        viewport_init(&base, (r->screen_w - INFO_PANEL_W) / TILE_SIZE, r->tiles_y, MAP_W, MAP_H);
+        viewport_center_on(&base, g->player.x, g->player.y);
+        Viewport expected;
+        viewport_init(&expected, base.tiles_x < widths[area] ? base.tiles_x : widths[area],
+            base.tiles_y < heights[area] ? base.tiles_y : heights[area], widths[area], heights[area]);
+        viewport_center_on(&expected, g->player.x, g->player.y);
+        renderer_begin_frame(r);
+        game_draw(r, g, &base);
+        renderer_end_frame(r);
+        memcpy(baseline, surface->pixels, bytes);
+        SDL_Texture *scene = SDL_CreateTextureFromSurface(r->sdl, surface);
+        assert(scene);
+        SDL_SetTextureBlendMode(scene, SDL_BLENDMODE_NONE);
+        for (int frame = 0; frame < 3; frame++) {
+            SDL_RenderCopy(r->sdl, scene, NULL, NULL);
+            Uint32 elapsed = frame * ENEMY_PROJECTILE_TRAVEL_MS / 2;
+            game_draw_enemy_projectiles(r, g, &shots, &base, elapsed);
+            renderer_end_frame(r);
+            int cx = ((2 - frame) * shots.shots[0].start_x + frame * shots.shots[0].target_x) * TILE_SIZE / 2 - expected.cam_x * TILE_SIZE + TILE_SIZE / 2;
+            int cy = (g->player.y - expected.cam_y) * TILE_SIZE + TILE_SIZE / 2;
+            int changed = 0;
+            for (int y = 0; y < surface->h; y++) {
+                for (int x = 0; x < surface->w; x++) {
+                    Uint32 before = ((Uint32 *)(baseline + y * surface->pitch))[x];
+                    if (rendered_pixel(surface, x, y) != before) {
+                        if (abs(x - cx) > TILE_SIZE || abs(y - cy) > TILE_SIZE) {
+                            fprintf(stderr, "Regional projectile %d frame %d: pixel %d,%d outside impact %d,%d\n", area, frame, x, y, cx, cy);
+                        }
+                        assert(abs(x - cx) <= TILE_SIZE && abs(y - cy) <= TILE_SIZE);
+                        changed++;
+                    }
+                }
+            }
+            assert(changed > 4);
+            if (area == 0) {
+                char path[80];
+                snprintf(path, sizeof(path), "/tmp/elderwood-arrow-%d.bmp", frame);
+                assert(SDL_SaveBMP(surface, path) == 0);
+            }
+        }
+        SDL_DestroyTexture(scene);
+    }
+    free(baseline);
+    puts("PASS: arrows launch from their shooter and land on the player with the rendered regional camera in nine areas.");
+}
+
+static void test_elderwood_roots(Renderer *r, GameState *g, SDL_Surface *surface) {
+    game_init(g);
+    elderwood_enter(g);
+    g->enemy_count = 2;
+    g->enemies[0] = (Enemy){.type = ENEMY_TREEFOLK, .name = "Treefolk", .active = 1, .x = 32, .y = 32,
+        .hp = 92, .max_hp = 92, .attack = 15, .defense = 8, .experience = 90};
+    g->enemies[1] = (Enemy){.type = ENEMY_BLIGHTED_WOLF, .name = "Blighted Wolf", .active = 1, .x = 36, .y = 32,
+        .hp = 26, .max_hp = 26, .frozen_turns = 10};
+    g->player.x = 32;
+    g->player.y = 28;
+    for (int y = 24; y < 36; y++) {
+        for (int x = 25; x < 40; x++) {
+            g->map.tiles[y][x] = TILE_ELDERWOOD_FLOOR;
+        }
+    }
+    Viewport view;
+    viewport_init(&view, (r->screen_w - INFO_PANEL_W) / TILE_SIZE, r->tiles_y, MAP_W, MAP_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    action_resolve_enemies(g);
+    for (int frame = 0; frame < 3; frame++) {
+        if (frame == 1) {
+            action_resolve_enemies(g);
+            action_resolve_enemies(g);
+            SDL_Delay(180);
+        } else if (frame == 2) {
+            SDL_Delay(270);
+        }
+        renderer_begin_frame(r);
+        game_draw(r, g, &view);
+        renderer_end_frame(r);
+        char path[80];
+        snprintf(path, sizeof(path), "/tmp/elderwood-roots-%d.bmp", frame);
+        assert(SDL_SaveBMP(surface, path) == 0);
+    }
+    puts("PASS: Elderwood renders attackable Treefolk footing, a recurring wolf, warning roots, eruption and fading roots.");
+}
+
+static void test_coast_exit_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    for (int level = 1; level <= COAST_DEPTH; level++) {
+        game_init(g);
+        g->location = LOCATION_COAST;
+        g->level = level;
+        map_generate_coast(&g->map, level);
+        g->enemy_count = 0;
+        for (int forward = 0; forward < 2; forward++) {
+            int x, y;
+            assert(coast_exit_point(&g->map, forward, &x, &y));
+            g->player.x = forward ? g->map.stairs_down_x : g->map.stairs_up_x;
+            g->player.y = forward ? g->map.stairs_down_y : g->map.stairs_up_y;
+            map_mark_explored(&g->map, x, y);
+            Viewport view;
+            viewport_init(&view, (r->screen_w - INFO_PANEL_W) / TILE_SIZE, r->tiles_y, MAP_W, MAP_H);
+            viewport_center_on(&view, g->player.x, g->player.y);
+            renderer_begin_frame(r);
+            game_draw(r, g, &view);
+            renderer_end_frame(r);
+            int text_pixels = 0;
+            for (int py = 64; py < view.tiles_y * TILE_SIZE; py++) {
+                for (int px = 0; px < view.tiles_x * TILE_SIZE; px++) {
+                    Uint8 red, green, blue;
+                    SDL_GetRGB(rendered_pixel(surface, px, py), surface->format, &red, &green, &blue);
+                    text_pixels += forward ? red == 115 && green == 245 && blue == 225 : red == 245 && green == 220 && blue == 155;
+                }
+            }
+            assert(text_pixels > 80);
+            Uint8 red, green, blue;
+            SDL_GetRGB(rendered_pixel(surface, 6 + x / 2 - 1, 6 + y / 2 - 1), surface->format, &red, &green, &blue);
+            assert(forward ? red == 115 && green == 245 && blue == 225 : red == 245 && green == 220 && blue == 155);
+            char path[80];
+            snprintf(path, sizeof(path), "/tmp/coast-exit-%d-%d.bmp", level, forward);
+            assert(SDL_SaveBMP(surface, path) == 0);
+        }
+    }
+    puts("PASS: all ten coast boundary transitions show destination labels and discovered minimap markers at all four edges.");
+}
+
+static void test_dawnmere_dialogue(Renderer *r, GameState *g, SDL_Surface *surface) {
+    for (int state = 0; state < 5; state++) {
+        game_init(g);
+        game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
+        assert(g->map.tiles[DAIN_TOWN_Y][DAIN_TOWN_X] == TILE_TOWN_PATH);
+        if (state < 4) {
+            g->player.x = SEREN_X;
+            g->player.y = SEREN_Y + 1;
+            g->stormbell_quest_state = state;
+            assert(controls_action_for_key(g->key_bindings, SDL_SCANCODE_T) == CONTROL_TALK);
+            assert(stormbell_talk(g) && g->dialogue_active);
+        } else {
+            const TownBuilding *b = town_life_building(LOCATION_ALEHOUSE);
+            town_life_enter(g, b->x + b->w / 2, b->y + b->h - 1);
+            g->player.x = DAIN_ALEHOUSE_X;
+            g->player.y = DAIN_ALEHOUSE_Y + 1;
+            game_talk_to_dain(g);
+            assert(game_quest_offer_active(g) && strstr(g->dialogue_text, "Dawnmere"));
+        }
+        Viewport view;
+        viewport_init(&view, r->tiles_x, r->tiles_y, TOWN_W, TOWN_H);
+        viewport_center_on(&view, g->player.x, g->player.y);
+        renderer_begin_frame(r);
+        game_draw(r, g, &view);
+        renderer_end_frame(r);
+        int pixels = 0;
+        for (int y = 0; y < r->tiles_y * TILE_SIZE; y++) {
+            for (int x = 0; x < r->screen_w - INFO_PANEL_W; x++) {
+                Uint8 red, green, blue;
+                SDL_GetRGB(rendered_pixel(surface, x, y), surface->format, &red, &green, &blue);
+                pixels += red == 236 && green == 224 && blue == 190;
+            }
+        }
+        assert(pixels > 1000);
+        char path[80];
+        snprintf(path, sizeof(path), "/tmp/dawnmere-dialogue-%d.bmp", state);
+        assert(SDL_SaveBMP(surface, path) == 0);
+        if (state == 0 || state == 4) {
+            assert(game_handle_quest_offer_key(g, SDL_SCANCODE_Y, 0));
+            assert(!game_quest_offer_active(g) && (state == 0 ? g->stormbell_quest_state : g->dain_quest_state) == 1);
+        }
+    }
+    puts("PASS: Seren's offer, progress, reward and completed dialogue and Dain's relocated offer visibly render in Dawnmere.");
+}
+
+static void test_one_way_escape(Renderer *r, GameState *g, SDL_Surface *surface) {
+    const Location towns[] = {LOCATION_TOWN, LOCATION_TOWN2, LOCATION_TOWN3, LOCATION_TOWN4, LOCATION_DAWNMERE};
+    for (int n = 0; n < 6; n++) {
+        game_init(g);
+        game_enter_town_gate(g, towns[n % 5], 0, 12);
+        if (n == 5) {
+            castle_enter(g, 1);
+        } else {
+            game_enter_temple(g);
+        }
+        g->player.known_spells[0] = spell_make_return_to_town();
+        g->player.known_spell_count = 1;
+        g->player.equipped_spell = 0;
+        action_resolve_player(g, (Action){ACTION_CAST_SPELL, 0, 0});
+        if (n == 5) {
+            assert(g->castle_prompt == 2);
+            castle_prompt_key(g, SDL_SCANCODE_RETURN, 0);
+            assert(g->location == LOCATION_CASTLE && g->player.x == CROWNROAD_X && g->player.y == 11);
+        } else {
+            assert(g->location == towns[n]);
+        }
+        assert(!g->portal_active);
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                assert(g->map.tiles[y][x] != TILE_PORTAL);
+            }
+        }
+        Viewport view;
+        viewport_init(&view, r->tiles_x, r->tiles_y, TOWN_W, TOWN_H);
+        viewport_center_on(&view, g->player.x, g->player.y);
+        renderer_begin_frame(r);
+        game_draw(r, g, &view);
+        renderer_end_frame(r);
+        char path[100];
+        snprintf(path, sizeof(path), "/tmp/one-way-escape-%d.bmp", n);
+        assert(SDL_SaveBMP(surface, path) == 0);
+    }
+    puts("PASS: temple escape renders in each last-visited town without a return portal; the castle exception renders beside its entrance in Castle Grounds.");
+}
+
+static void test_rowan_dialogue(Renderer *r, GameState *g, SDL_Surface *surface) {
+    for (int mode = 0; mode < 4; mode++) {
+        game_init(g);
+        approach_enter_region(g, 3);
+        g->player.x = COAST_ROWAN_X + 1;
+        g->player.y = COAST_ROWAN_Y;
+        if (mode > 0) {
+            g->defeated_bosses |= 1 << LOCATION_COAST;
+        }
+        if (mode == 2) {
+            while (g->inventory_count < MAX_INVENTORY) {
+                g->inventory[g->inventory_count++] = item_make_health_potion();
+            }
+        }
+        if (mode == 3) {
+            g->island_travel_unlocked = 1;
+        }
+        coastal_refresh_docks(g);
+        assert(coastal_approach(g) && g->map.tiles[COAST_ROWAN_Y][COAST_ROWAN_X] == TILE_NPC_ROWAN);
+        assert(map_is_walkable(&g->map, g->player.x, g->player.y));
+        game_talk_to_rowan(g);
+        assert(g->dialogue_active && strcmp(g->dialogue_speaker, "Captain Rowan") == 0);
+        assert(g->dialogue_x == COAST_ROWAN_X && g->dialogue_y == COAST_ROWAN_Y);
+        if (mode == 0) {
+            assert(strstr(g->dialogue_text, "Drowned Queen") && !game_has_treasure_map(g) && !game_can_sail_to_island(g));
+            assert(save_game(g, 99290) && load_game(g, 99290));
+            game_talk_to_rowan(g);
+        } else if (mode == 1) {
+            assert(game_has_treasure_map(g) && game_can_sail_to_island(g));
+            int inventory = g->inventory_count;
+            game_talk_to_rowan(g);
+            assert(g->inventory_count == inventory);
+        } else if (mode == 2) {
+            assert(strstr(g->dialogue_text, "Make room") && !game_has_treasure_map(g));
+        } else {
+            assert(strstr(g->dialogue_text, "route is charted") && !game_has_treasure_map(g));
+        }
+        Viewport view;
+        viewport_init(&view, r->tiles_x, r->tiles_y, APPROACH_W, APPROACH_H);
+        viewport_center_on(&view, g->player.x, g->player.y);
+        renderer_begin_frame(r);
+        game_draw(r, g, &view);
+        renderer_end_frame(r);
+        int panel_pixels = 0;
+        for (int y = 0; y < r->tiles_y * TILE_SIZE; y++) {
+            for (int x = 0; x < r->screen_w - INFO_PANEL_W; x++) {
+                Uint8 red;
+                Uint8 green;
+                Uint8 blue;
+                SDL_GetRGB(rendered_pixel(surface, x, y), surface->format, &red, &green, &blue);
+                panel_pixels += red == 236 && green == 224 && blue == 190;
+            }
+        }
+        assert(panel_pixels > 1000);
+        char path[100];
+        snprintf(path, sizeof(path), "/tmp/rowan-docks-%d.bmp", mode);
+        assert(SDL_SaveBMP(surface, path) == 0);
+    }
+    puts("PASS: Rowan's dialogue visibly renders at the relocated docks before and after the Queen, after loading, with a full pack, and after charting the route.");
+}
+
+static void test_town_gate_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    assert(r->town_gate_texture);
+    int w;
+    int h;
+    assert(SDL_QueryTexture(r->town_gate_texture, NULL, NULL, &w, &h) == 0 && w == 768 && h == 1152);
+    const Location towns[] = {LOCATION_TOWN, LOCATION_TOWN2, LOCATION_TOWN3, LOCATION_TOWN4, LOCATION_DAWNMERE, LOCATION_CASTLE};
+    const char *names[] = {"oakhaven", "stillbury", "rosemoor", "ridgeshire", "dawnmere", "castle"};
+    const int dx[] = {0, -1, 0, 1};
+    const int dy[] = {1, 0, -1, 0};
+    Map *before = malloc(sizeof(*before));
+    assert(before);
+    renderer_begin_frame(r);
+    for (int y = 0; y < 14; y++) {
+        for (int x = 0; x < 22; x++) {
+            draw_town_floor(r, x, y);
+            if (x == 12 || y == 6) {
+                draw_town_path(r, x, y);
+            }
+        }
+    }
+    draw_shop_blacksmith(r, 5, 2);
+    draw_town_gate(r, 12, 0, LOCATION_TOWN, 0, 1);
+    draw_town_gate(r, 21, 6, LOCATION_TOWN, -1, 0);
+    draw_town_gate(r, 12, 13, LOCATION_TOWN, 0, -1);
+    draw_town_gate(r, 0, 6, LOCATION_TOWN, 1, 0);
+    Item sword = item_make_long_sword();
+    Item shield = item_make_tower_shield();
+    draw_player_at(r, 12 * TILE_SIZE, 7 * TILE_SIZE, CLASS_WARRIOR, &sword, &shield, NULL, 0, -1);
+    SDL_RenderPresent(r->sdl);
+    assert(SDL_SaveBMP(surface, "/tmp/town-gates-native-scale.bmp") == 0);
+    for (int n = 0; n < 6; n++) {
+        // Every opening must preserve the complete 24px road tile underneath.
+        for (int side = 0; side < 4; side++) {
+            SDL_SetRenderDrawColor(r->sdl, 1, 233, 177, 255);
+            SDL_RenderClear(r->sdl);
+            draw_town_gate(r, 12, 10, towns[n], dx[side], dy[side]);
+            SDL_RenderPresent(r->sdl);
+            Uint32 background = rendered_pixel(surface, 0, 0);
+            for (int y = 10 * TILE_SIZE; y < 11 * TILE_SIZE; y++) {
+                for (int x = 12 * TILE_SIZE; x < 13 * TILE_SIZE; x++) {
+                    assert(rendered_pixel(surface, x, y) == background);
+                }
+            }
+            int changed = 0;
+            for (int y = 24; y < 456; y++) {
+                for (int x = 120; x < 456; x++) {
+                    changed += rendered_pixel(surface, x, y) != background;
+                }
+            }
+            assert(changed > 2000);
+        }
+        game_init(g);
+        g->location = towns[n];
+        switch (towns[n]) {
+            case LOCATION_TOWN: map_generate_town(&g->map, &g->player.x, &g->player.y); break;
+            case LOCATION_TOWN2: map_generate_town2(&g->map, &g->player.x, &g->player.y); break;
+            case LOCATION_TOWN3: map_generate_town3(&g->map, &g->player.x, &g->player.y); break;
+            case LOCATION_TOWN4: map_generate_town4(&g->map, &g->player.x, &g->player.y); break;
+            case LOCATION_DAWNMERE: map_generate_dawnmere(&g->map, &g->player.x, &g->player.y); break;
+            case LOCATION_CASTLE: map_generate_castle(&g->map, &g->player.x, &g->player.y); break;
+            default: assert(0); break;
+        }
+        g->enemy_count = 0;
+        g->player.x = 20;
+        g->player.y = 4;
+        memcpy(before, &g->map, sizeof(*before));
+        Viewport view;
+        viewport_init(&view, TOWN_W, TOWN_H, TOWN_W, TOWN_H);
+        renderer_begin_frame(r);
+        game_draw(r, g, &view);
+        renderer_end_frame(r);
+        assert(memcmp(before->tiles, g->map.tiles, sizeof(before->tiles)) == 0);
+        char path[100];
+        snprintf(path, sizeof(path), "/tmp/town-gates-%s.bmp", names[n]);
+        assert(SDL_SaveBMP(surface, path) == 0);
+    }
+    for (int route = 13; route <= 14; route++) {
+        game_init(g);
+        approach_enter_region(g, route);
+        Viewport view;
+        viewport_init(&view, (r->screen_w - INFO_PANEL_W) / TILE_SIZE, r->tiles_y, APPROACH_W, APPROACH_H);
+        viewport_center_on(&view, g->player.x, g->player.y);
+        renderer_begin_frame(r);
+        game_draw(r, g, &view);
+        renderer_end_frame(r);
+        char path[100];
+        snprintf(path, sizeof(path), "/tmp/town-gates-castle-approach-%d.bmp", route);
+        assert(SDL_SaveBMP(surface, path) == 0);
+    }
+    free(before);
+    puts("PASS: all 24 town gate views preserve a full transparent road tile; five towns and Castle Grounds render upright gates without changing their maps.");
+}
+
+static void test_alehouse_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    assert(r->local_building_textures[4] && r->alehouse_cask_texture);
+    int width;
+    int height;
+    SDL_QueryTexture(r->local_building_textures[4], NULL, NULL, &width, &height);
+    assert(width == 168 && height == 144);
+    SDL_QueryTexture(r->alehouse_cask_texture, NULL, NULL, &width, &height);
+    assert(width == 2 * TILE_SIZE && height == TILE_SIZE);
+    game_init(g);
+    game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
+    Viewport view;
+    viewport_init(&view, TOWN_W, TOWN_H, TOWN_W, TOWN_H);
+    Map *before = malloc(sizeof(*before));
+    assert(before);
+    *before = g->map;
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(memcmp(before->tiles, g->map.tiles, sizeof(before->tiles)) == 0);
+    assert(SDL_SaveBMP(surface, "/tmp/alehouse-dawnmere.bmp") == 0);
+    // A character's transparent corners must retain the plaza's stone pixels.
+    int sample_x = (DAIN_TOWN_X * TILE_SIZE + 1) * (r->screen_w - INFO_PANEL_W) / (TOWN_W * TILE_SIZE);
+    int sample_y = (DAIN_TOWN_Y * TILE_SIZE + 1) * r->tiles_y / TOWN_H;
+    Uint32 paving = rendered_pixel(surface, sample_x, sample_y);
+    const TileType visitors[] = {TILE_NPC_DAIN, TILE_NPC_SEREN, TILE_NPC_TAMSIN, TILE_NPC_ALDRIC, TILE_NPC_ROWAN, TILE_NPC_CAIN};
+    for (int i = 0; i < 6; i++) {
+        g->map.tiles[DAIN_TOWN_Y][DAIN_TOWN_X] = visitors[i];
+        renderer_begin_frame(r);
+        game_draw(r, g, &view);
+        renderer_end_frame(r);
+        assert(rendered_pixel(surface, sample_x, sample_y) == paving);
+    }
+    g->map = *before;
+    const TownBuilding *b = town_life_building(LOCATION_ALEHOUSE);
+    g->player.x = b->x + b->w / 2;
+    g->player.y = b->y + b->h;
+    action_resolve_player(g, (Action){ACTION_MOVE, g->player.x, g->player.y - 1});
+    assert(g->location == LOCATION_ALEHOUSE);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/alehouse-interior.bmp") == 0);
+    g->player.x = DAIN_ALEHOUSE_X;
+    g->player.y = DAIN_ALEHOUSE_Y + 1;
+    assert(town_life_talk(g, 0) && game_quest_offer_active(g));
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/alehouse-dain-dialogue.bmp") == 0);
+    game_handle_quest_offer_key(g, SDL_SCANCODE_Y, 0);
+    assert(g->dain_quest_state == 1);
+    free(before);
+    puts("PASS: Alehouse, cask shelves and Dain's quest dialogue render; six NPCs preserve the town's paving.");
+}
+
 static void test_ironfang_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
     assert(r->ironfang_boss_texture && r->area_entrance_textures[TOWN_EXIT_IRONFANG]);
     int width;
@@ -962,16 +1497,28 @@ int main(void) {
         int height;
         assert(renderer.area_entrance_textures[entrances[i]]);
         assert(SDL_QueryTexture(renderer.area_entrance_textures[entrances[i]], NULL, NULL, &width, &height) == 0);
-        assert(width == 168 && height == (entrances[i] == TOWN_EXIT_DRAGONSPINE ? 216 : 144));
+        assert(width == 168 && height == (entrances[i] == TOWN_EXIT_DRAGONSPINE || entrances[i] == TOWN_EXIT_ASHEN ? 216 : 144));
     }
+    int mountain_w;
+    int mountain_h;
+    assert(SDL_QueryTexture(renderer.mountain_entrance_texture, NULL, NULL, &mountain_w, &mountain_h) == 0);
+    assert(mountain_w == 168 && mountain_h == APPROACH_MOUNTAIN_ROWS * TILE_SIZE);
     Viewport viewport;
     SlotSelect slots = {0};
     LandingScreen landing = {0};
     GameScreen screen = SCREEN_LOAD_SLOT;
     GameState *game = calloc(1, sizeof(*game));
     assert(game);
+    test_boss_gate_renderer(&renderer, game, surface);
+    test_container_renderer(&renderer, game, surface);
     test_stonewake_renderer(&renderer, game, surface);
     test_saltwind_renderer(&renderer, game, surface);
+    test_rowan_dialogue(&renderer, game, surface);
+    test_regional_projectiles(&renderer, game, surface);
+    test_elderwood_roots(&renderer, game, surface);
+    test_coast_exit_renderer(&renderer, game, surface);
+    test_dawnmere_dialogue(&renderer, game, surface);
+    test_one_way_escape(&renderer, game, surface);
     test_stormwatch_renderer(&renderer, game, surface);
     char *arguments[] = {"conr", "--unlock-shortcuts", "--gold", "99999", "--weapon", "none"};
 
@@ -1010,7 +1557,7 @@ int main(void) {
         assert(save_game(game, 2));
         assert(game->player.y == y);
         for (int step = 0; game->player.x < x - 1 && step < APPROACH_W; step++) {
-            assert(game->map.tiles[y][game->player.x + 1] == TILE_TOWN_PATH);
+            assert(game->map.tiles[y][game->player.x + 1] == TILE_TOWN_PATH || game->map.tiles[y][game->player.x + 1] == TILE_ROAD_GATE_OPEN);
             action_resolve_player(game, (Action){ACTION_MOVE, game->player.x + 1, game->player.y});
         }
         action_resolve_player(game, (Action){ACTION_MOVE, x, y});
@@ -1086,11 +1633,11 @@ int main(void) {
     // A normal northern-road save must open both locks when loaded with the launcher flag.
     game_init(game);
     assert(approach_enter(game, 20, 0));
-    assert(game->map.tiles[NORTH_FOREST_BARRIER_Y][NORTH_ROAD_X] == TILE_ELDERWOOD_WALL);
+    assert(game->map.tiles[NORTH_FOREST_BARRIER_Y][NORTH_ROAD_X] == TILE_ROAD_GATE_CLOSED);
     assert(save_game(game, 1));
     handle_slot_result(SLOT_SELECTED, &slots, 0, &screen, game, &renderer, &viewport, &landing);
     assert(game->debug_passages_unlocked && !game->elderwood_defeated && !game->defeated_bosses);
-    assert(game->map.tiles[NORTH_FOREST_BARRIER_Y][NORTH_ROAD_X] == TILE_TOWN_PATH);
+    assert(game->map.tiles[NORTH_FOREST_BARRIER_Y][NORTH_ROAD_X] == TILE_ROAD_GATE_OPEN);
     assert(game->map.tiles[0][NORTH_ROAD_X] == TILE_NORTH_CASTLE);
     renderer_begin_frame(&renderer);
     game_draw(&renderer, game, &viewport);
@@ -1288,6 +1835,8 @@ int main(void) {
     test_war_machine_renderer(&renderer, game, surface);
     test_crown_quest_renderer(&renderer, game, surface);
     test_spice_skiff_renderer(&renderer, game, surface);
+    test_alehouse_renderer(&renderer, game, surface);
+    test_town_gate_renderer(&renderer, game, surface);
     free(game);
     renderer_free(&renderer);
     SDL_DestroyRenderer(sdl);

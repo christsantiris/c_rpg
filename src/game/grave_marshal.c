@@ -328,7 +328,7 @@ void grave_marshal_restore_reward(GameState *g) {
                 g->map.tiles[y][x] = TILE_ITEM;
             } else {
                 set_tile(g, x, y, TILE_MARSHAL_RELIQUARY);
-                push_message(g, "Gravekeeper's Mantle waits in the royal reliquary. Interact beside it or press P on it.");
+                push_message(g, "Gravekeeper's Mantle waits in the royal reliquary. Open with Interact, then Pick Up the released loot.");
             }
             return;
         }

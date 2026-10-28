@@ -33,7 +33,7 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
     {
         "Recover the Treasure Map", "Dain",
         "Recover the three Goblin Map Bearer fragments.",
-        "Return and speak to Dain in Ridgeshire's town center.",
+        "Return and speak to Dain in Dawnmere's Alehouse.",
         {"Defeat Archer Map Bearer", "Defeat Bomber Map Bearer",
             "Defeat Shaman Map Bearer"},
         "Goblin Mountains", {2, 3, 4}, 60, 400
@@ -63,7 +63,7 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
     },
     {
         "The Ivory Rook", "Rook",
-        "Find the labyrinth by the forest road; light five runes and defeat the Minotaur.",
+        "Find the labyrinth on the road from Oakhaven to Stillbury; light five runes and defeat the Minotaur.",
         "Return the ivory rook to Rook in Oakhaven's Tavern.",
         {"Recover the ivory rook", "", ""},
         "Rook's Labyrinth", {5, 0, 0}, ROOK_QUEST_REWARD, 500

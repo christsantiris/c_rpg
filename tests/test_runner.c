@@ -8,6 +8,7 @@ int tests_passed = 0;
 
 void test_movement(void);
 void test_approaches(void);
+void test_boss_gates(void);
 void test_town_roads(void);
 void test_jail(void);
 void test_jail_equipment(void);
@@ -36,6 +37,7 @@ void test_dungeon_return_stairs_migration(void);
 void test_enemy_movement_collision(void);
 void test_new_dungeon_enemies(void);
 void test_return_to_town_spell(void);
+void test_town_escapes(void);
 void test_town_tiles(void);
 void test_town_healer(void);
 void test_king_roads_and_castle(void);
@@ -70,6 +72,7 @@ void test_mountain_travel(void);
 void test_coast(void);
 void test_area_depths(void);
 void test_coast_terrain(void);
+void test_coast_exits(void);
 void test_swamp(void);
 void test_swamp_travel(void);
 void test_route_save_migrations(void);
@@ -92,6 +95,7 @@ void test_spice_skiff(void);
 void test_stormbell(void);
 void test_war_machine(void);
 void test_crown_quest(void);
+void test_containers(void);
 void test_stormwatch(void);
 void test_ironfang(void);
 void test_crownroad_north(void);
@@ -112,6 +116,7 @@ void test_elowen_quest(void);
 void test_elowen_relocation(void);
 void test_tavern_interior(void);
 void test_dain_quest(void);
+void test_poison_sword(void);
 void test_dain_town_center(void);
 void test_alder_quest(void);
 void test_alder_relocation(void);
@@ -141,6 +146,7 @@ int main(void) {
     printf("=== CONR Test Suite ===\n\n");
     test_movement();
     test_town_roads();
+    test_boss_gates();
     test_approaches();
     test_enemy_projectiles();
     printf("\n");
@@ -162,6 +168,7 @@ int main(void) {
     test_new_dungeon_enemies();
     printf("\n");
     test_return_to_town_spell();
+    test_town_escapes();
     printf("\n");
     test_town_tiles();
     test_town_healer();
@@ -204,6 +211,7 @@ int main(void) {
     test_area_depths();
     printf("\n");
     test_coast_terrain();
+    test_coast_exits();
     printf("\n");
     test_swamp();
     test_swamp_travel();
@@ -228,6 +236,7 @@ int main(void) {
     test_stormbell();
     test_war_machine();
     test_crown_quest();
+    test_containers();
     test_stormwatch();
     test_ironfang();
     test_crownroad_north();
@@ -258,6 +267,7 @@ int main(void) {
     test_ilya_relocation();
     printf("\n");
     test_dain_quest();
+    test_poison_sword();
     test_dain_town_center();
     printf("\n");
     test_alder_quest();
@@ -302,4 +312,5 @@ int main(void) {
     test_controls();
     printf("\n");
     REPORT();
+    return tests_passed == tests_run ? 0 : 1;
 }

@@ -10,7 +10,9 @@ The same road connects both directions without reversing or flipping its map.
 Physical retreat from either adventure returns beside its own entrance. Entering
 Elderwood or Catacombs from either end always starts at level 1. Returning to the
 Castle end from a Castle-origin expedition remains possible before either boss
-is defeated. Reaching Oakhaven from that end requires clearing Elderwood.
+is defeated. Completing the route from either end requires defeating both
+Elderthorn and the Grave Marshal. Each section has a visible checkpoint and
+independent victory requirement. See [boss gates](boss-gates.md).
 
 ## Five forward stages
 
@@ -20,11 +22,14 @@ brambles line the paths. Optional bramble passages give alternate
 angles; a normal route around them remains available. Interact beside brambles
 with the bound action key (A by default) to cut them. Fallen logs block movement
 and projectiles and stop charging creatures. Floor layouts, exploration, cut
-brambles and surviving enemies persist when moving between stages.
+brambles and surviving enemies persist when moving between stages. Leaving and
+re-entering the area begins a new expedition: ordinary enemies return on all
+visited stages, while bosses, named quest guards and finite reinforcements keep
+their existing state. Saving and loading alone does not respawn enemies.
 
 | Enemy | Role |
 | --- | --- |
-| Briar Wolf | Pack flanker; closes on ranged enemies' targets |
+| Blighted Wolf | Pack flanker; closes on ranged enemies' targets |
 | Ironhide Boar | Warns an aligned charge, then smashes through brambles |
 | Thorn Dryad | Ranged thorn volleys and repositioning |
 | Dark Elf | The existing Haunted Forest archer, sharing its art and behavior |
@@ -37,6 +42,17 @@ turns; its armor returns afterward. Below half health it calls one finite pair
 of wolves. Defeating it awards 180 gold and 2,000 score and permanently opens the
 Elderwood section of the road. The boss journal records the victory separately
 from the older regions' integer boss mask.
+
+Treefolk remain mobile, attackable enemies. Their marked footing identifies the
+occupied tile beneath the canopy; their health bar sits above the canopy. Bump
+that tile for melee or fire along its row or column. Root attacks crack the
+warned ground for two turns, then sprout branching roots at that fixed location
+and fade. The visual eruption adds no turns or lingering damage.
+
+Save version 214 replaces retired wolf variants in active and cached encounters
+with Blighted Wolf, retaining wounds, deaths, combat state and named quest guards.
+Frostfell keeps its regional wolf difficulty; all wolves share the existing
+Haunted Forest art.
 
 ## The Stolen Heartseed
 
@@ -62,15 +78,13 @@ NPC and quest locations while retaining their forest maps, cut paths, wounds,
 loot, exploration, portals, and earned victories. Cached quest stages gain their
 sites when next entered. See the [quest reference](../quests.md).
 
-## Return portals and saves
+## Escaping and saves
 
 Return to Town transports the player to the **last town actually entered**,
 including when that town is outside the current region. Walking around a town
-sprite does not change this destination. The portal resumes the same expedition,
-floor, position and physical entrance direction. A portal in an unrelated town
-stands in its central plaza; familiar regional portal positions remain in use
-when returning to the usual town. Castle Grounds does not count as one of the
-five towns.
+sprite does not change this destination. This is a one-way escape with no return
+portal. Enter the forest again through its normal entrance. Castle Grounds does
+not count as one of the five towns.
 
 Save version 182 stores Elderwood's compact five-stage caches, boss victory,
 maximum stage, physical entry towns, last town visited and return portal town.

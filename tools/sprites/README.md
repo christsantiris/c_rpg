@@ -51,6 +51,7 @@ height in renderer tests; merely fitting an atlas cell does not establish scale.
 |---|---|---|---|
 | `castle.py` | `castle-of-no-return.bmp` | 408 × 240 (17 × 10 tiles) | Rosemoor, the moat footprint `TOWN_MOAT_*` |
 | `tavern.py` | `tavern.bmp` | 168 × 120 (7 × 5) | Town 1, `TOWN_TAVERN_X/Y` |
+| `alehouse.py` | `alehouse.bmp`, `alehouse-cask.bmp` | 168 × 144 exterior; 48 × 24 cask/mug atlas | Dawnmere, northeast of the plaza; Dain's Alehouse interior |
 | `inn.py` | `inn.bmp` | 168 × 120 (7 × 5) | Stillbury, `TOWN_INN_X/Y` |
 | `blacksmith.py` | `blacksmith.bmp` | 120 × 96 (5 × 4) | Town 1, `TOWN_BLACKSMITH_X/Y` |
 | `alchemist.py` | `alchemist.bmp` | 120 × 96 (5 × 4) | Town 1, `TOWN_ALCHEMIST_X/Y` |
@@ -69,6 +70,7 @@ height in renderer tests; merely fitting an atlas cell does not establish scale.
 | `local_buildings.py` | `monastery.bmp` | 168 × 120 (7 × 5) | Ridgeshire, southwest monastery plot |
 | `local_buildings.py` | `spice-merchant.bmp` | 120 × 96 (5 × 4) | Rosemoor, southwest spice merchant plot |
 | `crownroad_gate.py` | `crownroad-gate.bmp` | 72 × 72 (3 × 3) | Stillbury's north exit and Rosemoor's south exit |
+| `town_gate.py` | `town-gates.bmp` | 768 × 1152 atlas; 192 × 192 slots | Four upright gate views in all five towns and Castle Grounds; town-colored banners and transparent single-tile passages |
 
 ### Castle of No Return
 
@@ -302,9 +304,10 @@ and renderer previews are in
 [`docs/art-sources/enemy-batch-16/README.md`](../../docs/art-sources/enemy-batch-16/README.md).
 
 The fortified Goblin Mountains entrance is generated with
-`python3 tools/sprites/mountain.py`. It uses pixelkit layers, shaded rock facets,
-stonework and timber at the established 24px tile scale. The runtime BMP spans
-7×6 tiles; its south-facing cave door anchors the approach collision footprint.
+`python3 tools/sprites/mountain.py`. It uses pixelkit layers, red sandstone
+buttes and needles split into sunlit and violet-shadowed slabs, stonework and
+timber at the established 24px tile scale. The runtime BMP spans 7×9 tiles; its south-facing cave door
+anchors the approach collision footprint.
 
 The Haunted Forest entrance uses `python3 tools/sprites/forest.py` and the same
 pixelkit pipeline. Its 7×6 tile sprite frames a south-facing woodland passage
@@ -315,10 +318,12 @@ Comparison and actual-renderer previews are in
 
 ### Regional pathway entrances
 
-`make sprites` includes all regional entrance generators. Forest, mountain and
-swamp landmarks are 168×144 pixels; the same size is used for the coast,
-Sunscar, Frostfell, Ashen, Stonewake and Royal Catacombs entrances.
-Dragonspine is 168×216 pixels to accommodate its taller snowy peak and dragons.
+`make sprites` includes all regional entrance generators. Forest and swamp
+landmarks are 168×144 pixels; the same size is used for the coast,
+Sunscar, Frostfell, Stonewake and Royal Catacombs entrances.
+Dragonspine is 168×216 pixels to accommodate its towering granite needles and dragons.
+Ashen Hollow's lone fire mountain uses the same 168×216 size for its towering
+cone, lava river and smoke plume, as do the red sandstone Goblin Mountains.
 Every asset uses pixelkit at native 24px tile scale and a south-facing doorway.
 
 The generators are `coast.py`, `desert.py`, `frostfell.py`,

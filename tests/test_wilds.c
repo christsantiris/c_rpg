@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/wilds.h"
 #include "systems/save_load.h"
@@ -296,6 +297,7 @@ static int old_version(int slot) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 147);
+    test_mark_legacy_portal(root);
     data = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);
     file = fopen(path, "wb");

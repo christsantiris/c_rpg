@@ -3,8 +3,17 @@
 #include "world_props.h"
 #include "npc_renderer.h"
 
-void town_life_draw_goods(Renderer *r, int tx, int ty, int style) {
+void town_life_draw_goods(Renderer *r, int tx, int ty, int style, int shelf) {
+    if (style == 4 && r->alehouse_cask_texture) {
+        SDL_Rect source = {shelf ? 0 : TILE_SIZE, 0, TILE_SIZE, TILE_SIZE};
+        SDL_Rect dest = {tx * TILE_SIZE, ty * TILE_SIZE, TILE_SIZE, TILE_SIZE};
+        SDL_RenderCopy(r->sdl, r->alehouse_cask_texture, &source, &dest);
+        return;
+    }
     WorldPropArt art = style == 0 ? PROP_BREAD : style == 1 ? PROP_MEAT : style == 2 ? PROP_CANDLE : PROP_SPICES;
+    if (style == 4) {
+        art = PROP_GOBLET;
+    }
     draw_world_prop(r, tx, ty, art, (SDL_Color){239, 145, 42, 255});
 }
 
@@ -24,7 +33,8 @@ void town_life_draw_building(Renderer *r, const Viewport *v, const TownBuilding 
     }
     int width = 0;
     TTF_SizeText(r->font_tiny, b->label, &width, NULL);
-    renderer_draw_text(r, b->label, x + (w - width) / 2, y - TILE_SIZE,
+    int label_y = y - (b->style == 4 ? 6 : TILE_SIZE);
+    renderer_draw_text(r, b->label, x + (w - width) / 2, label_y,
         (SDL_Color){220, 180, 60, 255}, r->font_tiny);
 }
 

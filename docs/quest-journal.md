@@ -9,10 +9,10 @@ Elowen assigns **The Broken Seals** in **Oakhaven's Tavern**. Its objectives rem
 on Oakhaven's dungeon floors 2, 3, and 4. Return to her in the Tavern for 40 gold
 and 300 score.
 
-Dain assigns **Recover the Treasure Map** in **Ridgeshire's town center**.
+Dain assigns **Recover the Treasure Map** in **Dawnmere's Alehouse**.
 Enter its south mountain gate.
 The Archer, Bomber, and Shaman Map Bearers occupy levels **2, 3, and 4** before
-the level-5 Goblin King. Return to Dain in Ridgeshire's town center for 60 gold and 400 score.
+the level-5 Goblin King. Return to Dain in Dawnmere's Alehouse for 60 gold and 400 score.
 
 Alder assigns **The Lost Wardens** in **Stillbury's Inn**. Enter Stillbury's
 east forest gate and rescue the wardens on levels **2, 3, and 4** before the

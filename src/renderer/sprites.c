@@ -1,6 +1,7 @@
 #include "giants_crown_renderer.h"
 #include "stonewake_renderer.h"
 #include "sprites.h"
+#include "../game/approach.h"
 #include "player_art.h"
 #include "dungeon_enemy_art.h"
 #include "dungeon_boss_art.h"
@@ -18,6 +19,7 @@
 #include "npc_renderer.h"
 #include "world_props.h"
 #include "world_prop_art.h"
+#include "../game/town_road.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -1267,6 +1269,7 @@ static int weapon_is_magic(const Item *weapon) {
         case ITEM_VISUAL_MAGIC_DAGGER:
         case ITEM_VISUAL_MAGIC_GREATSWORD:
         case ITEM_VISUAL_DEMONIC_SWORD:
+        case ITEM_VISUAL_POISON_SWORD:
             return 1;
         default:
             return 0;
@@ -1296,6 +1299,12 @@ static void draw_player_sword(Renderer *r, const Item *weapon, int bx, int by, i
         : (SDL_Color){205, 160, 60, 255};
     SDL_Color grip = {78, 46, 31, 255};
     if (weapon->visual_id == ITEM_VISUAL_DEMONIC_SWORD) {
+        glow = (SDL_Color){208, 35, 45, 255};
+        blade = (SDL_Color){27, 19, 24, 255};
+        edge = (SDL_Color){245, 72, 68, 255};
+        guard = (SDL_Color){87, 26, 39, 255};
+        grip = (SDL_Color){27, 19, 24, 255};
+    } else if (weapon->visual_id == ITEM_VISUAL_POISON_SWORD) {
         glow = (SDL_Color){89, 216, 69, 255};
         blade = (SDL_Color){33, 57, 42, 255};
         edge = (SDL_Color){137, 239, 106, 255};
@@ -2336,7 +2345,6 @@ static void draw_dragonspine_road_enemy(Renderer *r, int tx, int ty, EnemyType t
 static void draw_frostfell_enemy(Renderer *r, int tx, int ty, EnemyType type) {
     int art;
     switch (type) {
-        case ENEMY_ICE_WOLF: art = FROST_ART_ICE_WOLF; break;
         case ENEMY_FROST_ARCHER: art = FROST_ART_FROST_ARCHER; break;
         case ENEMY_YETI: art = FROST_ART_YETI; break;
         case ENEMY_FROST_WRAITH: art = FROST_ART_FROST_WRAITH; break;
@@ -2345,11 +2353,11 @@ static void draw_frostfell_enemy(Renderer *r, int tx, int ty, EnemyType type) {
         default: return;
     }
     static const SDL_Color bodies[FROST_ART_COUNT] = {
-        {226, 234, 242, 255}, {190, 150, 120, 255}, {226, 234, 242, 255},
+        {190, 150, 120, 255}, {226, 234, 242, 255},
         {118, 178, 224, 255}, {136, 194, 230, 255}, {112, 152, 196, 255}
     };
     static const SDL_Color clothes[FROST_ART_COUNT] = {
-        {154, 176, 200, 255}, {204, 216, 230, 255}, {154, 176, 200, 255},
+        {204, 216, 230, 255}, {154, 176, 200, 255},
         {118, 178, 224, 255}, {72, 128, 176, 255}, {130, 100, 74, 255}
     };
     SDL_Color body = bodies[art];
@@ -2379,9 +2387,6 @@ static void draw_frostfell_enemy(Renderer *r, int tx, int ty, EnemyType type) {
     palette['k'] = (SDL_Color){33, 34, 43, 255};
     palette['g'] = (SDL_Color){130, 105, 52, 255};
     palette['G'] = (SDL_Color){207, 177, 91, 255};
-    if (type == ENEMY_ICE_WOLF) {
-        palette['y'] = (SDL_Color){52, 156, 232, 255};
-    }
     if (type == ENEMY_FROST_WRAITH) {
         palette['J'] = (SDL_Color){28, 48, 80, 255};
     }
@@ -2697,11 +2702,6 @@ static void draw_catacombs_enemy(Renderer *r, int tx, int ty, EnemyType type) {
 }
 
 void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
-    if (type == ENEMY_GOBLIN_MINE_BOSS) {
-        SDL_Rect destination = {tile_x * TILE_SIZE, tile_y * TILE_SIZE, TILE_SIZE, TILE_SIZE};
-        SDL_RenderCopy(r->sdl, r->ironfang_boss_texture, NULL, &destination);
-        return;
-    }
     if (type >= ENEMY_HARPY_RAIDER && type <= ENEMY_TEMPEST_MATRIARCH) {
         SDL_Rect source = {(type - ENEMY_HARPY_RAIDER) * 48, (SDL_GetTicks() / 450 % 2) * 48, 48, 48};
         SDL_Rect dest = {tile_x * TILE_SIZE - 12, tile_y * TILE_SIZE - 24, 48, 48};
@@ -2716,14 +2716,19 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         SDL_RenderCopy(r->sdl, r->mangrove_enemy_texture, &source, &dest);
         return;
     }
-    if (type >= ENEMY_BRIAR_WOLF && type <= ENEMY_ELDERTHORN) {
-        int index = type - ENEMY_BRIAR_WOLF;
+    if (type >= ENEMY_IRONHIDE_BOAR && type <= ENEMY_ELDERTHORN) {
+        int index = type - ENEMY_IRONHIDE_BOAR;
         SDL_Rect source = {index * 64, 0, 64, 64};
         SDL_Rect dest = {tile_x * TILE_SIZE - 20, tile_y * TILE_SIZE - 40, 64, 64};
         SDL_RenderCopy(r->sdl, r->elderwood_enemy_texture, &source, &dest);
         return;
     }
     switch (type) {
+        case ENEMY_GOBLIN_MINE_BOSS: {
+            SDL_Rect destination = {tile_x * TILE_SIZE, tile_y * TILE_SIZE, TILE_SIZE, TILE_SIZE};
+            SDL_RenderCopy(r->sdl, r->ironfang_boss_texture, NULL, &destination);
+            break;
+        }
         case ENEMY_LIZARDFOLK_SCOUT:
         case ENEMY_REED_SPEARHUNTER:
         case ENEMY_MARSH_SPITTER:
@@ -2738,7 +2743,6 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_ROYAL_GUARD:
             draw_royal_guard_overlay(r, tile_x, tile_y, 0);
             break;
-        case ENEMY_BRIAR_WOLF:
         case ENEMY_IRONHIDE_BOAR:
         case ENEMY_THORN_DRYAD:
         case ENEMY_TREEFOLK:
@@ -2790,7 +2794,6 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_HORSEMAN:
             draw_dragonspine_road_enemy(r, tile_x, tile_y, type);
             break;
-        case ENEMY_ICE_WOLF:
         case ENEMY_FROST_ARCHER:
         case ENEMY_YETI:
         case ENEMY_FROST_WRAITH:
@@ -4252,291 +4255,20 @@ void draw_town_path(Renderer *r, int tile_x, int tile_y) {
     }
 }
 
-static void fill_mountain_gate_rect(Renderer *r, int x, int y, int south,
-    int rect_x, int rect_y, int width, int height, SDL_Color color) {
-    int draw_y = south ? y + 48 - rect_y - height : y + rect_y;
-    fill_rect(r, x + rect_x, draw_y, width, height, color);
-}
-
-static void draw_town_mountain_gate(Renderer *r, int tile_x, int tile_y, int south) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    SDL_Color stone = {53, 45, 50, 255};
-    SDL_Color rim = {99, 69, 65, 255};
-    SDL_Color seam = {29, 26, 33, 255};
-    fill_mountain_gate_rect(r, x, y, south, 0, 0, 120, 15, stone);
-    fill_mountain_gate_rect(r, x, y, south, 0, 0, 120, 3, rim);
-    fill_mountain_gate_rect(r, x, y, south, 0, 13, 120, 3, seam);
-    for (int block = 1; block < 6; block++) {
-        fill_mountain_gate_rect(r, x, y, south, block * 20, 3, 2, 10,
-            seam);
-    }
-    fill_mountain_gate_rect(r, x, y, south, 0, 0, 17, 48, stone);
-    fill_mountain_gate_rect(r, x, y, south, 103, 0, 17, 48, stone);
-    fill_mountain_gate_rect(r, x, y, south, 2, 2, 3, 43, rim);
-    fill_mountain_gate_rect(r, x, y, south, 105, 2, 3, 43, rim);
-    fill_mountain_gate_rect(r, x, y, south, 17, 15, 15, 9, stone);
-    fill_mountain_gate_rect(r, x, y, south, 88, 15, 15, 9, stone);
-    fill_mountain_gate_rect(r, x, y, south, 50, 8, 20, 14, rim);
-    fill_mountain_gate_rect(r, x, y, south, 56, 11, 8, 8,
-        (SDL_Color){213, 86, 46, 255});
-    fill_mountain_gate_rect(r, x, y, south, 59, 12, 2, 6, seam);
-    fill_mountain_gate_rect(r, x, y, south, 55, 15, 10, 2, seam);
-}
-
-void draw_town_gate_south(Renderer *r, int tile_x, int tile_y) {
-    draw_town_mountain_gate(r, tile_x, tile_y, 1);
-}
-
-void draw_town_gate(Renderer *r, int tile_x, int tile_y, TownExitStyle style) {
-    int x = tile_x * TILE_SIZE;
-    int y = tile_y * TILE_SIZE;
-    if (style == TOWN_EXIT_GIANTS) {
-        style = TOWN_EXIT_ROAD;
-    }
-    if (style == TOWN_EXIT_GLASSDEEP) {
-        SDL_Color stone = {100, 93, 76, 255};
-        SDL_Color rim = {181, 168, 133, 255};
-        fill_rect(r, x, y, 14, 48, stone);
-        fill_rect(r, x + 106, y, 14, 48, stone);
-        fill_rect(r, x + 3, y + 3, 3, 38, rim);
-        fill_rect(r, x + 109, y + 3, 3, 38, rim);
-        fill_rect(r, x, y + 36, 120, 12, stone);
-        fill_rect(r, x + 2, y + 44, 116, 3, rim);
-        fill_rect(r, x + 5, y + 8, 4, 25, (SDL_Color){116, 79, 43, 255});
-        fill_rect(r, x + 109, y + 8, 4, 25, (SDL_Color){116, 79, 43, 255});
+void draw_town_gate(Renderer *r, int tx, int ty, Location town, int dx, int dy) {
+    if (!r->town_gate_texture) {
         return;
     }
-    if (style == TOWN_EXIT_ASHEN) {
-        SDL_Color stone = {55, 43, 48, 255};
-        SDL_Color rim = {124, 87, 74, 255};
-        SDL_Color glow = {235, 122, 48, 255};
-        fill_rect(r, x, y, 120, 12, stone);
-        fill_rect(r, x + 2, y + 2, 116, 3, rim);
-        fill_rect(r, x, y + 12, 14, 36, stone);
-        fill_rect(r, x + 106, y + 12, 14, 36, stone);
-        fill_rect(r, x + 4, y + 14, 4, 25, rim);
-        fill_rect(r, x + 110, y + 14, 4, 25, rim);
-        fill_rect(r, x + 51, y + 8, 18, 8, rim);
-        fill_rect(r, x + 57, y + 6, 6, 7, glow);
-        fill_rect(r, x + 59, y + 3, 2, 4, glow);
-        return;
+    int facing = dx < 0 ? 1 : dx > 0 ? 3 : dy < 0 ? 2 : 0;
+    int row = town_road_index(town);
+    if (row < 0) {
+        row = 5; // Castle Grounds uses the same stonework with crimson banners.
     }
-
-    if (style == TOWN_EXIT_DESERT) {
-        SDL_Color stone = {151, 100, 57, 255};
-        SDL_Color light = {223, 174, 106, 255};
-        fill_rect(r, x, y, 48, 14, stone);
-        fill_rect(r, x, y + 106, 48, 14, stone);
-        fill_rect(r, x + 2, y + 2, 43, 3, light);
-        fill_rect(r, x + 2, y + 108, 43, 3, light);
-        fill_rect(r, x, y + 14, 12, 28, stone);
-        fill_rect(r, x, y + 78, 12, 28, stone);
-        return;
-    }
-    if (style == TOWN_EXIT_MOUNTAINS) {
-        draw_town_mountain_gate(r, tile_x, tile_y, 0);
-        return;
-    }
-    if (style == TOWN_EXIT_FOREST || style == TOWN_EXIT_ROAD) {
-        SDL_Color trunk = {83, 57, 33, 255};
-        SDL_Color bark = {121, 82, 43, 255};
-        SDL_Color leaf = {31, 83, 40, 255};
-        fill_rect(r, x + 1, y, 13, 120, trunk);
-        fill_rect(r, x + 4, y + 3, 3, 114, bark);
-        fill_rect(r, x + 10, y + 1, 28, 11, leaf);
-        fill_rect(r, x + 18, y + 7, 30, 11, leaf);
-        fill_rect(r, x + 10, y + 108, 28, 11, leaf);
-        fill_rect(r, x + 18, y + 102, 30, 11, leaf);
-        fill_rect(r, x + 24, y + 3, 13, 3,
-            (SDL_Color){53, 113, 51, 255});
-        fill_rect(r, x + 33, y + 104, 10, 3,
-            (SDL_Color){53, 113, 51, 255});
-        fill_rect(r, x + 27, y + 16, 3, 12,
-            (SDL_Color){24, 67, 34, 255});
-        fill_rect(r, x + 38, y + 97, 2, 9,
-            (SDL_Color){24, 67, 34, 255});
-        fill_rect(r, x + 13, y + 17, 8, 8,
-            (SDL_Color){22, 62, 32, 255});
-        fill_rect(r, x + 14, y + 95, 9, 8,
-            (SDL_Color){22, 62, 32, 255});
-        fill_rect(r, x + 10, y + 30, 6, 4, leaf);
-        fill_rect(r, x + 9, y + 77, 7, 5, leaf);
-        for (int mark = 0; mark < 4; mark++) {
-            fill_rect(r, x + 9, y + 18 + mark * 23, 3, 2,
-                (SDL_Color){50, 38, 28, 255});
-        }
-        fill_rect(r, x + 12, y + 57, 5, 3,
-            (SDL_Color){77, 151, 69, 255});
-        return;
-    }
-    if (style == TOWN_EXIT_DUNGEON || style == TOWN_EXIT_DRAGONSPINE) {
-        int dragon = style == TOWN_EXIT_DRAGONSPINE;
-        SDL_Color stone = dragon ? (SDL_Color){92, 113, 134, 255} :
-            (SDL_Color){70, 66, 88, 255};
-        SDL_Color ridge = dragon ? (SDL_Color){164, 188, 202, 255} :
-            (SDL_Color){111, 102, 132, 255};
-        SDL_Color shadow = dragon ? (SDL_Color){43, 56, 73, 255} :
-            (SDL_Color){28, 27, 44, 255};
-        fill_rect(r, x + 55, y, 17, 120, stone);
-        fill_rect(r, x + 56, y + 2, 3, 116, ridge);
-        fill_rect(r, x + 10, y, 48, 12, stone);
-        fill_rect(r, x + 27, y + 11, 31, 9, stone);
-        fill_rect(r, x + 44, y + 19, 14, 7, stone);
-        fill_rect(r, x + 10, y + 108, 48, 12, stone);
-        fill_rect(r, x + 27, y + 100, 31, 9, stone);
-        fill_rect(r, x + 44, y + 94, 14, 7, stone);
-        fill_rect(r, x + 12, y + 1, 44, 3, ridge);
-        fill_rect(r, x + 12, y + 109, 44, 3, ridge);
-        fill_rect(r, x + 44, y + 16, 14, 10, stone);
-        fill_rect(r, x + 44, y + 94, 14, 10, stone);
-        for (int layer = 0; layer < 5; layer++) {
-            int layer_y = y + layer * 24;
-            fill_rect(r, x + 59, layer_y + 3, 11, 9,
-                dragon ? stone : (layer % 2 == 0 ? (SDL_Color){86, 79, 104, 255} :
-                (SDL_Color){77, 72, 96, 255}));
-            fill_rect(r, x + 60, layer_y + 3, 8, 2, ridge);
-            fill_rect(r, x + 58, layer_y + 21, 12, 2, shadow);
-        }
-        fill_rect(r, x + 59, y + 56, 5, 8,
-            (SDL_Color){191, 152, 64, 255});
-        return;
-    }
-
-    if (style == TOWN_EXIT_FROST) {
-        SDL_Color ice_dark = {66, 106, 146, 255};
-        SDL_Color ice = {138, 188, 224, 255};
-        SDL_Color ice_light = {214, 238, 250, 255};
-        SDL_Color snow = {241, 246, 250, 255};
-        fill_rect(r, x, y, 120, 13, ice_dark);
-        fill_rect(r, x, y, 120, 3, snow);
-        fill_rect(r, x, y + 11, 120, 3, ice);
-        fill_rect(r, x, y, 17, 48, ice_dark);
-        fill_rect(r, x + 103, y, 17, 48, ice_dark);
-        fill_rect(r, x + 3, y + 4, 3, 39, ice);
-        fill_rect(r, x + 106, y + 4, 3, 39, ice);
-        for (int drip = 0; drip < 4; drip++) {
-            fill_rect(r, x + 15 + drip * 24, y + 12,
-                2, 4 + (drip % 2) * 3, ice_light);
-        }
-        fill_rect(r, x + 52, y + 3, 16, 10,
-            (SDL_Color){122, 222, 255, 255});
-        return;
-    }
-
-    if (style == TOWN_EXIT_SWAMP) {
-        SDL_Color stone = {22, 38, 30, 255};
-        SDL_Color moss = {56, 100, 50, 255};
-        fill_rect(r, x, y, 120, 13, stone);
-        fill_rect(r, x, y, 120, 3, moss);
-        fill_rect(r, x, y, 17, 48, stone);
-        fill_rect(r, x + 103, y, 17, 48, stone);
-        fill_rect(r, x + 3, y + 4, 3, 39, moss);
-        fill_rect(r, x + 106, y + 4, 3, 39, moss);
-        for (int block = 1; block < 6; block++) {
-            fill_rect(r, x + block * 20, y + 3, 2, 9,
-                (SDL_Color){8, 25, 20, 255});
-        }
-        fill_rect(r, x + 52, y + 3, 16, 10,
-            (SDL_Color){13, 22, 17, 255});
-        fill_rect(r, x + 57, y + 5, 6, 6,
-            (SDL_Color){108, 194, 75, 255});
-        return;
-    }
-
-    SDL_Color stone = {43, 84, 83, 255};
-    SDL_Color rim = {97, 144, 124, 255};
-    fill_rect(r, x, y, 120, 14, stone);
-    fill_rect(r, x, y, 120, 3, rim);
-    for (int block = 1; block < 6; block++) {
-        fill_rect(r, x + block * 20, y + 3, 2, 10,
-            (SDL_Color){24, 59, 67, 255});
-    }
-    fill_rect(r, x, y, 17, 48, stone);
-    fill_rect(r, x + 103, y, 17, 48, stone);
-    fill_rect(r, x + 2, y + 2, 3, 43, rim);
-    fill_rect(r, x + 105, y + 2, 3, 43, rim);
-    for (int row = 1; row < 4; row++) {
-        fill_rect(r, x + 4, y + row * 11, 11, 2,
-            (SDL_Color){23, 58, 64, 255});
-        fill_rect(r, x + 105, y + row * 11, 11, 2,
-            (SDL_Color){23, 58, 64, 255});
-    }
-    fill_rect(r, x + 17, y + 12, 14, 10, stone);
-    fill_rect(r, x + 89, y + 12, 14, 10, stone);
-    fill_rect(r, x + 25, y + 30, 70, 5,
-        (SDL_Color){81, 79, 66, 255});
-    fill_rect(r, x + 25, y + 30, 70, 2, rim);
-    fill_rect(r, x + 37, y + 35, 7, 4,
-        (SDL_Color){21, 91, 91, 255});
-    fill_rect(r, x + 77, y + 35, 8, 4,
-        (SDL_Color){21, 91, 91, 255});
-    fill_rect(r, x + 56, y + 5, 8, 6,
-        (SDL_Color){178, 146, 73, 255});
-}
-
-void draw_town_gate_back(Renderer *r, int tx, int ty, TownExitStyle style, int dx, int dy) {
-    SDL_Texture **cached = &r->town_gate_textures[style];
-    if (!*cached) {
-        SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormat(0, 5 * TILE_SIZE, 5 * TILE_SIZE, 32, SDL_PIXELFORMAT_RGBA32);
-        if (!surface) {
-            return;
-        }
-        SDL_Renderer *sdl = SDL_CreateSoftwareRenderer(surface);
-        if (!sdl) {
-            SDL_FreeSurface(surface);
-            return;
-        }
-        // Rasterize the existing town gate once, without changing frame state.
-        SDL_SetRenderDrawColor(sdl, 0, 0, 0, 0);
-        SDL_RenderClear(sdl);
-        Renderer gate = {0};
-        gate.sdl = sdl;
-        draw_town_gate(&gate, 0, 0, style);
-        SDL_RenderPresent(sdl);
-        SDL_Texture *texture = SDL_CreateTextureFromSurface(r->sdl, surface);
-        SDL_DestroyRenderer(sdl);
-        SDL_FreeSurface(surface);
-        if (!texture) {
-            return;
-        }
-        SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
-        SDL_SetTextureScaleMode(texture, SDL_ScaleModeNearest);
-        *cached = texture;
-    }
-    int right = style == TOWN_EXIT_DUNGEON || style == TOWN_EXIT_DRAGONSPINE;
-    int vertical = right || style == TOWN_EXIT_FOREST || style == TOWN_EXIT_ROAD || style == TOWN_EXIT_DESERT;
-    int native_positive = vertical ? right : style == TOWN_EXIT_GLASSDEEP;
-    int positive = dx ? dx < 0 : dy < 0;
-    int source_w = vertical ? (right ? 3 : 2) * TILE_SIZE : 5 * TILE_SIZE;
-    int source_h = vertical ? 5 * TILE_SIZE : 2 * TILE_SIZE;
-    int rotate = vertical != (dx != 0);
-    int width = rotate ? source_h : source_w;
-    int height = rotate ? source_w : source_h;
-    SDL_Rect source = {0, 0, source_w, source_h};
-    SDL_Rect destination = {tx * TILE_SIZE, ty * TILE_SIZE, width, height};
-    SDL_RendererFlip flip = SDL_FLIP_NONE;
-    double angle = 0;
-    if (dx) {
-        destination.x += dx < 0 ? TILE_SIZE - width : 0;
-        destination.y -= 2 * TILE_SIZE;
-    } else {
-        destination.x -= 2 * TILE_SIZE;
-        destination.y += dy < 0 ? TILE_SIZE - height : 0;
-    }
-    if (rotate) {
-        angle = native_positive == positive ? 90 : -90;
-        if (!vertical) {
-            angle = -angle;
-        }
-        destination.x += (width - source_w) / 2;
-        destination.y += (height - source_h) / 2;
-        destination.w = source_w;
-        destination.h = source_h;
-    } else if (native_positive != positive) {
-        flip = dx ? SDL_FLIP_HORIZONTAL : SDL_FLIP_VERTICAL;
-    }
-    SDL_RenderCopyEx(r->sdl, *cached, &source, &destination, angle, NULL, flip);
+    const int anchor_x[] = {84, 168, 84, 0};
+    const int anchor_y[] = {0, 80, 168, 80};
+    SDL_Rect source = {facing * 192, row * 192, 192, 192};
+    SDL_Rect destination = {tx * TILE_SIZE - anchor_x[facing], ty * TILE_SIZE - anchor_y[facing], 192, 192};
+    SDL_RenderCopy(r->sdl, r->town_gate_texture, &source, &destination);
 }
 
 void draw_town_road_sign(Renderer *r, int tile_x, int tile_y, const char *name) {
@@ -5586,7 +5318,7 @@ void draw_mountain_entrance(Renderer *r, int tile_x, int tile_y) {
         draw_labyrinth_entrance_fallback(r, tile_x, tile_y, 1);
         return;
     }
-    SDL_Rect destination = {(tile_x - 3) * TILE_SIZE, (tile_y - 5) * TILE_SIZE, 7 * TILE_SIZE, 6 * TILE_SIZE};
+    SDL_Rect destination = {(tile_x - 3) * TILE_SIZE, (tile_y - APPROACH_MOUNTAIN_ROWS + 1) * TILE_SIZE, 7 * TILE_SIZE, APPROACH_MOUNTAIN_ROWS * TILE_SIZE};
     SDL_RenderCopy(r->sdl, r->mountain_entrance_texture, NULL, &destination);
 }
 

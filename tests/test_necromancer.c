@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "../src/game/necromancer.h"
 #include "../src/systems/save_load.h"
@@ -138,6 +139,7 @@ static void test_rewards(void) {
     game.player.y = y;
     game.map.tiles[y][x + 1] = TILE_NECRO_GRAVE;
     game.map.tiles[y - 1][x] = TILE_NECRO_GRAVE;
+    action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
     action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("full inventory cannot consume the reserved reward", game.necromancer_reward_state == 1 && game.map.tiles[y][x] == TILE_NECRO_RELIQUARY);
     game.inventory_count--;
@@ -187,6 +189,7 @@ static int make_legacy_save(void) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 124);
+    test_mark_legacy_portal(root);
     cJSON_DeleteItemFromObject(root, "necromancer_reward_state");
     cJSON *arrays[2] = {cJSON_GetObjectItem(root, "enemies"),
         cJSON_GetObjectItem(cJSON_GetArrayItem(cJSON_GetObjectItem(root, "forest_cache"), 3), "enemies")};
@@ -417,8 +420,8 @@ static void test_persistence_and_migration(void) {
     game.portal_y = 16;
     game.portal_origin_tile = TILE_FOREST_FLOOR;
     game.location = LOCATION_TOWN;
-    game_use_town_portal(&game);
-    ASSERT("portal revisit preserves consumed waves, pending roots and spent graves", game.location == LOCATION_FOREST && game.enemies[0].move_timer == 2 && game.enemies[0].boss_wave_used == 3 && necromancer_active_graves(&game) == 2);
+    test_restore_cached_floor(&game);
+    ASSERT("archived encounter reload preserves consumed waves, pending roots and spent graves", game.location == LOCATION_FOREST && game.enemies[0].move_timer == 2 && game.enemies[0].boss_wave_used == 3 && necromancer_active_graves(&game) == 2);
 
     e = setup();
     game.level = 4;
