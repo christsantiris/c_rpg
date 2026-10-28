@@ -1,3 +1,4 @@
+#include "../game/coast_exits.h"
 #include "boss_gate_renderer.h"
 #include "giants_crown_renderer.h"
 #include "../game/giants_crown.h"
@@ -514,6 +515,7 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
         g->location != LOCATION_TOWN2 &&
         g->location != LOCATION_TOWN3 &&
         g->location != LOCATION_TOWN4 &&
+        g->location != LOCATION_DAWNMERE &&
         g->location != LOCATION_CASTLE_INTERIOR &&
         g->location != LOCATION_CASTLE &&
         g->location != LOCATION_JAIL &&
@@ -1619,6 +1621,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         draw_mountain_fortress_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_MOUNTAIN_FLOOR) {
         draw_mountain_floor(r, screen_x, screen_y, map_x, map_y);
+    } else if (underlay == TILE_COAST_ENTRANCE || underlay == TILE_COAST_EXIT) {
+        draw_coast_edge(r, screen_x, screen_y, map_x, map_y, underlay == TILE_COAST_EXIT);
     } else if (underlay == TILE_COAST_SAND) {
         draw_coast_sand(r, screen_x, screen_y, map_x, map_y, 0);
     } else if (underlay == TILE_COAST_SHALLOW_WATER) {
@@ -3843,7 +3847,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 viewport_to_screen_y(v, y) * TILE_SIZE - 12, (SDL_Color){240, 190, 95, 255}, r->font_tiny);
         }
     }
-    if (g->location == LOCATION_TOWN4) {
+    if (g->location == LOCATION_DAWNMERE) {
         int width = 0;
         TTF_SizeText(r->font_tiny, "DAIN", &width, NULL);
         renderer_draw_text(r, "DAIN", viewport_to_screen_x(v, DAIN_TOWN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
@@ -4087,6 +4091,40 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 SDL_RenderFillRect(r->sdl, &backing);
                 renderer_draw_text(r, label, lx, ly, (SDL_Color){225, 255, 160, 255}, r->font_tiny);
             }
+        }
+    }
+
+    if (g->location == LOCATION_COAST && r->font_tiny) {
+        for (int forward = 0; forward < 2; forward++) {
+            int x, y;
+            if (!coast_exit_point(&g->map, forward, &x, &y) || !viewport_is_visible(v, x, y)) {
+                continue;
+            }
+            char label[48];
+            int stage = g->level + (forward ? 1 : -1);
+            if (stage < 1 || stage > COAST_DEPTH) {
+                snprintf(label, sizeof(label), "RETURN TO OAKHAVEN");
+            } else {
+                snprintf(label, sizeof(label), "%s SUNKEN COAST %d", forward ? "ONWARD:" : "RETURN:", stage);
+            }
+            int width;
+            TTF_SizeText(r->font_tiny, label, &width, NULL);
+            int lx = viewport_to_screen_x(v, x) * TILE_SIZE + (TILE_SIZE - width) / 2;
+            int ly = viewport_to_screen_y(v, y) * TILE_SIZE - 17;
+            int max_x = v->tiles_x * TILE_SIZE - width - 4;
+            if (lx < 4) {
+                lx = 4;
+            } else if (lx > max_x) {
+                lx = max_x;
+            }
+            if (ly < 64) {
+                ly = 64;
+            }
+            SDL_Rect backing = {lx - 3, ly - 3, width + 6, 16};
+            SDL_SetRenderDrawColor(r->sdl, 6, 30, 36, 255);
+            SDL_RenderFillRect(r->sdl, &backing);
+            SDL_Color color = forward ? (SDL_Color){115, 245, 225, 255} : (SDL_Color){245, 220, 155, 255};
+            renderer_draw_text(r, label, lx, ly, color, r->font_tiny);
         }
     }
 

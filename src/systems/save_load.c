@@ -1,3 +1,4 @@
+#include "../game/coast_exits.h"
 #include "../game/boss_gates.h"
 #include "../game/giants_crown.h"
 #include "../game/ironfang.h"
@@ -1748,7 +1749,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 211);
+    cJSON_AddNumberToObject(root, "save_version", 213);
     cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
@@ -3659,6 +3660,44 @@ static void migrate_kraken_cycle(Enemy *enemies, int count, int version) {
             }
         }
     }
+}
+
+// Version 213 moves the mountain quest to Dawnmere without restarting it.
+static void migrate_dain_to_dawnmere(GameState *g) {
+    if (strcmp(g->dialogue_speaker, "Dain") == 0) {
+        g->dialogue_active = 0;
+    }
+    if (g->location == LOCATION_TOWN4) {
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                if (g->map.tiles[y][x] == TILE_NPC_DAIN) {
+                    g->map.tiles[y][x] = TILE_TOWN_FLOOR;
+                }
+            }
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            if (g->floor_items[i].underlying_tile == TILE_NPC_DAIN) {
+                g->floor_items[i].underlying_tile = TILE_TOWN_FLOOR;
+            }
+        }
+    }
+    if (g->location != LOCATION_DAWNMERE) {
+        return;
+    }
+    int x = DAIN_TOWN_X;
+    int y = DAIN_TOWN_Y;
+    if (g->player.x == x && g->player.y == y) {
+        g->player.y++;
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && item->x == x && item->y == y) {
+            item->y++;
+            item->underlying_tile = map_dawnmere_ground(x, y + 1);
+            g->map.tiles[y + 1][x] = TILE_ITEM;
+        }
+    }
+    g->map.tiles[y][x] = TILE_NPC_DAIN;
 }
 
 // Version 114 relocates quest givers without regenerating maps or quest progress.
@@ -6625,6 +6664,12 @@ int load_game(GameState *g, int slot) {
     // Retire return anchors after older map migrations finish protecting their
     // saved destinations. Keep every other part of the expedition intact.
     game_close_town_portal(g);
+    // Validate every coast stage on every load, including inactive cached maps.
+    // Repair terrain in place so old saves keep enemies, loot and quest progress.
+    coast_exits_migrate(g);
+    if (save_version < 213) {
+        migrate_dain_to_dawnmere(g);
+    }
     cJSON_Delete(root);
     return 1;
 }

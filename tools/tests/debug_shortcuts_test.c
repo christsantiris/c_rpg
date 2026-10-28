@@ -1,3 +1,4 @@
+#include "../../src/game/coast_exits.h"
 #include "game/boss_gates.h"
 #include "game/containers.h"
 #include "game/giants_crown.h"
@@ -967,6 +968,88 @@ static void test_saltwind_renderer(Renderer *r, GameState *g, SDL_Surface *surfa
     printf("PASS: all six Saltwind enemy sprites render in the adventure; Rowan preserves his beach underlay.\n");
 }
 
+static void test_coast_exit_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    for (int level = 1; level <= COAST_DEPTH; level++) {
+        game_init(g);
+        g->location = LOCATION_COAST;
+        g->level = level;
+        map_generate_coast(&g->map, level);
+        g->enemy_count = 0;
+        for (int forward = 0; forward < 2; forward++) {
+            int x, y;
+            assert(coast_exit_point(&g->map, forward, &x, &y));
+            g->player.x = forward ? g->map.stairs_down_x : g->map.stairs_up_x;
+            g->player.y = forward ? g->map.stairs_down_y : g->map.stairs_up_y;
+            map_mark_explored(&g->map, x, y);
+            Viewport view;
+            viewport_init(&view, (r->screen_w - INFO_PANEL_W) / TILE_SIZE, r->tiles_y, MAP_W, MAP_H);
+            viewport_center_on(&view, g->player.x, g->player.y);
+            renderer_begin_frame(r);
+            game_draw(r, g, &view);
+            renderer_end_frame(r);
+            int text_pixels = 0;
+            for (int py = 64; py < view.tiles_y * TILE_SIZE; py++) {
+                for (int px = 0; px < view.tiles_x * TILE_SIZE; px++) {
+                    Uint8 red, green, blue;
+                    SDL_GetRGB(rendered_pixel(surface, px, py), surface->format, &red, &green, &blue);
+                    text_pixels += forward ? red == 115 && green == 245 && blue == 225 : red == 245 && green == 220 && blue == 155;
+                }
+            }
+            assert(text_pixels > 80);
+            Uint8 red, green, blue;
+            SDL_GetRGB(rendered_pixel(surface, 6 + x / 2 - 1, 6 + y / 2 - 1), surface->format, &red, &green, &blue);
+            assert(forward ? red == 115 && green == 245 && blue == 225 : red == 245 && green == 220 && blue == 155);
+            char path[80];
+            snprintf(path, sizeof(path), "/tmp/coast-exit-%d-%d.bmp", level, forward);
+            assert(SDL_SaveBMP(surface, path) == 0);
+        }
+    }
+    puts("PASS: all ten coast boundary transitions show destination labels and discovered minimap markers at all four edges.");
+}
+
+static void test_dawnmere_dialogue(Renderer *r, GameState *g, SDL_Surface *surface) {
+    for (int state = 0; state < 5; state++) {
+        game_init(g);
+        game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
+        assert(g->map.tiles[DAIN_TOWN_Y][DAIN_TOWN_X] == TILE_NPC_DAIN);
+        if (state < 4) {
+            g->player.x = SEREN_X;
+            g->player.y = SEREN_Y + 1;
+            g->stormbell_quest_state = state;
+            assert(controls_action_for_key(g->key_bindings, SDL_SCANCODE_T) == CONTROL_TALK);
+            assert(stormbell_talk(g) && g->dialogue_active);
+        } else {
+            g->player.x = DAIN_TOWN_X;
+            g->player.y = DAIN_TOWN_Y + 1;
+            game_talk_to_dain(g);
+            assert(game_quest_offer_active(g) && strstr(g->dialogue_text, "Dawnmere"));
+        }
+        Viewport view;
+        viewport_init(&view, r->tiles_x, r->tiles_y, TOWN_W, TOWN_H);
+        viewport_center_on(&view, g->player.x, g->player.y);
+        renderer_begin_frame(r);
+        game_draw(r, g, &view);
+        renderer_end_frame(r);
+        int pixels = 0;
+        for (int y = 0; y < r->tiles_y * TILE_SIZE; y++) {
+            for (int x = 0; x < r->screen_w - INFO_PANEL_W; x++) {
+                Uint8 red, green, blue;
+                SDL_GetRGB(rendered_pixel(surface, x, y), surface->format, &red, &green, &blue);
+                pixels += red == 236 && green == 224 && blue == 190;
+            }
+        }
+        assert(pixels > 1000);
+        char path[80];
+        snprintf(path, sizeof(path), "/tmp/dawnmere-dialogue-%d.bmp", state);
+        assert(SDL_SaveBMP(surface, path) == 0);
+        if (state == 0 || state == 4) {
+            assert(game_handle_quest_offer_key(g, SDL_SCANCODE_Y, 0));
+            assert(!game_quest_offer_active(g) && (state == 0 ? g->stormbell_quest_state : g->dain_quest_state) == 1);
+        }
+    }
+    puts("PASS: Seren's offer, progress, reward and completed dialogue and Dain's relocated offer visibly render in Dawnmere.");
+}
+
 static void test_one_way_escape(Renderer *r, GameState *g, SDL_Surface *surface) {
     const Location towns[] = {LOCATION_TOWN, LOCATION_TOWN2, LOCATION_TOWN3, LOCATION_TOWN4, LOCATION_DAWNMERE};
     for (int n = 0; n < 6; n++) {
@@ -1254,6 +1337,8 @@ int main(void) {
     test_stonewake_renderer(&renderer, game, surface);
     test_saltwind_renderer(&renderer, game, surface);
     test_rowan_dialogue(&renderer, game, surface);
+    test_coast_exit_renderer(&renderer, game, surface);
+    test_dawnmere_dialogue(&renderer, game, surface);
     test_one_way_escape(&renderer, game, surface);
     test_stormwatch_renderer(&renderer, game, surface);
     char *arguments[] = {"conr", "--unlock-shortcuts", "--gold", "99999", "--weapon", "none"};

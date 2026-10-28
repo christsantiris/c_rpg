@@ -1,3 +1,4 @@
+#include "../game/coast_exits.h"
 #include "../game/boss_gates.h"
 #include "stonewake_renderer.h"
 #include "../game/stonewake.h"
@@ -278,7 +279,13 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
             }
         }
         line1 = low ? "BLUE: EXPOSED / AMBER: FLOODED" : "BLUE: FLOODED / AMBER: EXPOSED";
-        line2 = "WALK ON SAND AND PALE SHALLOWS";
+        int ex, ey, ix, iy;
+        coast_exit_point(&g->map, 1, &ex, &ey);
+        coast_exit_point(&g->map, 0, &ix, &iy);
+        const char *onward = ex == 0 ? "WEST" : ex == MAP_W - 1 ? "EAST" : ey == 0 ? "NORTH" : "SOUTH";
+        const char *retreat = ix == 0 ? "WEST" : ix == MAP_W - 1 ? "EAST" : iy == 0 ? "NORTH" : "SOUTH";
+        snprintf(status, sizeof(status), "ONWARD: %s / RETURN: %s", onward, retreat);
+        line2 = status;
         if (g->level == COAST_DEPTH) {
             line1 = "DRAIN POCKETS TO OPEN DRY ROUTES";
             line2 = "LEAVE THE QUEEN'S WARNED LANES";

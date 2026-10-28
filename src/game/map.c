@@ -1,3 +1,5 @@
+#include "coast_exits.h"
+#include <assert.h>
 #include "giants_crown.h"
 #include "map.h"
 #include "stormbell.h"
@@ -1388,6 +1390,8 @@ void map_generate_coast(Map *m, int level) {
     map_room_center(&m->rooms[0], &control_x, &control_y);
     m->tiles[control_y][control_x] = TILE_COAST_TIDE_CONTROL;
     map_shape_coast(m, index + 1);
+    coast_exits_repair_map(m, index + 1);
+    assert(coast_exits_valid(m));
 }
 
 void map_clear_town_harbor(Map *m) {
@@ -1706,7 +1710,6 @@ void map_generate_town4(Map *m, int *spawn_x, int *spawn_y) {
     map_place_town4_hall(m);
     map_place_town4_guards(m, -1, -1);
     town_life_place(m, LOCATION_TOWN4);
-    m->tiles[DAIN_TOWN_Y][DAIN_TOWN_X] = TILE_NPC_DAIN;
     map_place_town4_square(m);
     *spawn_x = 20;
     *spawn_y = TOWN_H - 2;
@@ -1829,6 +1832,7 @@ void map_generate_dawnmere(Map *m, int *spawn_x, int *spawn_y) {
     m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
     town_life_place(m, LOCATION_DAWNMERE);
     m->tiles[SEREN_Y][SEREN_X] = TILE_NPC_SEREN;
+    m->tiles[DAIN_TOWN_Y][DAIN_TOWN_X] = TILE_NPC_DAIN;
     *spawn_x = 20;
     *spawn_y = 12;
 }

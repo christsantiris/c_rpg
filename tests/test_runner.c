@@ -72,6 +72,7 @@ void test_mountain_travel(void);
 void test_coast(void);
 void test_area_depths(void);
 void test_coast_terrain(void);
+void test_coast_exits(void);
 void test_swamp(void);
 void test_swamp_travel(void);
 void test_route_save_migrations(void);
@@ -209,6 +210,7 @@ int main(void) {
     test_area_depths();
     printf("\n");
     test_coast_terrain();
+    test_coast_exits();
     printf("\n");
     test_swamp();
     test_swamp_travel();
@@ -308,4 +310,5 @@ int main(void) {
     test_controls();
     printf("\n");
     REPORT();
+    return tests_passed == tests_run ? 0 : 1;
 }

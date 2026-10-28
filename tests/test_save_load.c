@@ -2585,7 +2585,7 @@ static void test_quest_giver_location_migration(void) {
             x = DAIN_TOWN_X;
             y = DAIN_TOWN_Y;
             floor = TILE_TOWN_FLOOR;
-            npc = TILE_NPC_DAIN;
+            npc = TILE_TOWN_FLOOR;
         }
         original.gold = 617;
         original.score = 803;
@@ -2940,7 +2940,53 @@ static void test_retired_enemy_migration(void) {
     free(loaded);
 }
 
+static void test_dain_dawnmere_migration(void) {
+    static GameState original;
+    static GameState loaded;
+    const int slot = 99082;
+    if (save_exists(slot)) {
+        ASSERT("Dain migration uses an unused save slot", 0);
+        return;
+    }
+    for (int town = 0; town < 2; town++) {
+        game_init(&original);
+        game_enter_town_gate(&original, town ? LOCATION_DAWNMERE : LOCATION_TOWN4, 0, 12);
+        int x = DAIN_TOWN_X;
+        int y = DAIN_TOWN_Y;
+        original.map.tiles[y][x] = TILE_ITEM;
+        original.floor_item_count = 2;
+        for (int n = 0; n < 2; n++) {
+            original.floor_items[n] = (FloorItem){.active = 1, .x = x, .y = y,
+                .underlying_tile = town ? TILE_TOWN_PATH : TILE_NPC_DAIN, .item = item_make_health_potion()};
+        }
+        original.player.x = x;
+        original.player.y = y + !town;
+        original.gold = 327;
+        original.score = 811;
+        original.dain_quest_state = 1;
+        original.dain_map_fragments = 5;
+        map_mark_explored(&original.map, 3, 3);
+        ASSERT("version 212 Dain relocation fixture loads", save_game(&original, slot) &&
+            rewrite_save_version(slot, 212) && load_game(&loaded, slot));
+        ASSERT("Dain relocation preserves quest fragments, gold, score and discoveries", loaded.dain_quest_state == 1 &&
+            loaded.dain_map_fragments == 5 && loaded.gold == 327 && loaded.score == 811 && map_is_explored(&loaded.map, 3, 3));
+        ASSERT("Dain moves to Dawnmere without stranding the player or stacked loot",
+            loaded.player.x == x && loaded.player.y == y + 1 && map_is_walkable(&loaded.map, x, y + 1) &&
+            loaded.map.tiles[y][x] == (town ? TILE_NPC_DAIN : TILE_ITEM) &&
+            loaded.floor_items[0].active && loaded.floor_items[1].active &&
+            loaded.floor_items[0].y == y + town && loaded.floor_items[1].y == y + town &&
+            loaded.floor_items[0].underlying_tile == (town ? TILE_TOWN_PATH : TILE_TOWN_FLOOR));
+        original = loaded;
+        original.dain_quest_state = 3;
+        original.dain_map_fragments = 7;
+        ASSERT("completed mountain quest stays completed after a new-format round trip", save_game(&original, slot) &&
+            load_game(&loaded, slot) && loaded.dain_quest_state == 3 && loaded.dain_map_fragments == 7 && loaded.gold == 327);
+    }
+    remove_test_save(slot);
+}
+
 void test_save_load(void) {
+    test_dain_dawnmere_migration();
     test_retired_enemy_migration();
     test_rook_tavern_migration();
     test_aldric_town_migration();

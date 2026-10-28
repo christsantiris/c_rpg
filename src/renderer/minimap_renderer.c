@@ -1,3 +1,4 @@
+#include "../game/coast_exits.h"
 #include "../game/boss_gates.h"
 #include "../game/approach.h"
 #include "minimap_renderer.h"
@@ -286,6 +287,19 @@ void minimap_draw(Renderer *r, const GameState *g) {
         }
     }
 
+    if (g->location == LOCATION_COAST) {
+        for (int forward = 0; forward < 2; forward++) {
+            int x, y;
+            if (!coast_exit_point(&g->map, forward, &x, &y) || !map_is_explored(&g->map, x, y)) {
+                continue;
+            }
+            int px = ox + x / MINIMAP_SCALE;
+            int py = oy + y / MINIMAP_SCALE;
+            SDL_SetRenderDrawColor(r->sdl, forward ? 115 : 245, forward ? 245 : 220, forward ? 225 : 155, 255);
+            SDL_Rect marker = {px - 1, py - 1, 3, 3};
+            SDL_RenderDrawRect(r->sdl, &marker);
+        }
+    }
     if (g->location == LOCATION_MANGROVES && g->mangroves.initialized &&
         map_is_explored(&g->map, g->mangroves.boat_x, g->mangroves.boat_y)) {
         SDL_SetRenderDrawColor(r->sdl, 210, 155, 79, 255);
