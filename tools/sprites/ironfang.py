@@ -18,62 +18,143 @@ def stroke(layer, points, color):
             layer.put(x, y, color)
 
 
-def facet(canvas, points, shades, seed):
+def facet(canvas, points, tone, seed):
+    """Broken slate planes with sparse chips, never a repeating tiled surface."""
     layer = Layer(*canvas.size)
+    mask = poly_mask(canvas.size, points)
+    pixels = sorted(mask)
     rng = random.Random(seed)
-    for x, y in sorted(poly_mask(canvas.size, points)):
-        index = 2 + (x % 7 == 0) - (y % 9 == 0) + (rng.randrange(17) == 0)
-        layer.put(x, y, shades[min(len(shades) - 1, index)])
+    for x, y in pixels:
+        layer.put(x, y, STONE[tone])
+    # Short irregular shelves follow the rock slope instead of a masonry grid.
+    for _ in range(len(mask) // 70):
+        x, y = rng.choice(pixels)
+        length = rng.randrange(2, 10)
+        rise = rng.choice((-3, -2, -1, 1))
+        for px, py in line_points(x, y, x + length, y + rise):
+            if (px, py) in mask:
+                layer.put(px, py, STONE[max(0, tone - 1)])
+            if (px, py - 1) in mask:
+                layer.put(px, py - 1, STONE[min(5, tone + 1)])
+    for _ in range(len(mask) // 24):
+        x, y = rng.choice(pixels)
+        layer.put(x, y, STONE[min(5, tone + rng.choice((-1, 1)))])
     composite(canvas, layer, OUT)
+
+
+def timber(layer, a, b, width):
+    """Solid beams with a lit edge, grain, iron straps and inset bolt heads."""
+    horizontal = abs(b[0] - a[0]) > abs(b[1] - a[1])
+    for x, y in line_points(*a, *b):
+        for n in range(width):
+            layer.put(x if horizontal else x + n, y + n if horizontal else y,
+                      WOOD[3 if n == 0 else 0 if n == width - 1 else 2])
+    for x, y in line_points(*a, *b)[3:-3]:
+        if (x + y * 3) % 13 < 4:
+            layer.put(x if horizontal else x + 2, y + 2 if horizontal else y, WOOD[1])
 
 
 def entrance():
     canvas = Image.new('RGBA', (168, 144))
-    # Jagged mountainside with connected, individually shaded slate faces.
-    for seed, points in enumerate([
-        [(10,140),(6,101),(23,63),(38,72),(44,24),(64,39),(79,13),(96,30),(114,20),(128,56),(145,66),(159,111),(156,141)],
-        [(13,136),(25,72),(45,89),(45,31),(66,49),(60,134)],
-        [(58,135),(66,49),(80,19),(98,43),(90,134)],
-        [(93,137),(98,43),(114,25),(128,75),(146,92),(151,140)]
+    # An overlapping ridge, naturally fractured and lit from the upper left.
+    for seed, (tone, points) in enumerate([
+        (1, [(11, 137), (7, 119), (15, 94), (23, 90), (30, 67), (44, 73), (50, 44),
+             (63, 48), (76, 17), (86, 24), (94, 44), (110, 34), (120, 54), (126, 57),
+             (136, 88), (148, 96), (159, 126), (153, 139), (123, 140), (105, 136)]),
+        (3, [(40, 106), (51, 48), (62, 53), (77, 23), (80, 45), (71, 64), (76, 82), (65, 105)]),
+        (2, [(77, 23), (88, 30), (94, 47), (85, 58), (84, 79), (73, 90), (69, 67), (80, 45)]),
+        (4, [(49, 50), (61, 54), (54, 72), (57, 85), (43, 111), (28, 119), (33, 89), (42, 77)]),
+        (2, [(61, 54), (68, 48), (69, 67), (64, 89), (57, 105), (43, 111), (57, 85), (54, 72)]),
+        (3, [(86, 60), (95, 48), (109, 39), (111, 57), (103, 73), (109, 91), (94, 111), (78, 110)]),
+        (1, [(109, 39), (117, 57), (124, 61), (134, 90), (125, 99), (109, 91), (103, 73), (111, 57)]),
+        (3, [(13, 119), (25, 96), (32, 77), (40, 82), (32, 104), (33, 119), (22, 132), (13, 133)]),
+        (2, [(36, 107), (46, 102), (61, 109), (57, 125), (44, 132), (27, 135), (33, 119)]),
+        (2, [(123, 104), (137, 96), (145, 101), (151, 116), (143, 128), (121, 131), (116, 119)]),
+        (1, [(145, 101), (152, 113), (157, 128), (151, 137), (137, 138), (143, 128), (151, 116)]),
+        (3, [(51, 113), (66, 102), (82, 98), (99, 103), (112, 116), (108, 140), (56, 140)])
     ]):
-        facet(canvas, points, STONE, seed + 17)
+        facet(canvas, points, tone, seed + 17)
     detail = Layer(168, 144)
-    for x0, y0 in [(32,91),(51,63),(110,80),(136,110),(100,46)]:
-        stroke(detail, [(x0,y0),(x0+7,y0-4),(x0+13,y0-2)], (133,87,47))
-        stroke(detail, [(x0+3,y0),(x0+9,y0-3)], (190,145,75))
-    # Recessed human-scale portal under a timber gantry; no painted ground patch.
-    for y in range(119,144):
-        for x in range(75,94):
-            detail.put(x,y,(12,17,20))
-    for x in (71,94):
-        for xx in range(x,x+4):
-            for y in range(113,144):
-                detail.put(xx,y,WOOD[2 if xx % 3 else 3])
-    for y in range(110,116):
-        for x in range(69,100):
-            detail.put(x,y,WOOD[3 if y == 110 else 2])
-    stroke(detail, [(70,111),(79,123)],WOOD[4])
-    stroke(detail, [(99,111),(90,123)],WOOD[4])
-    # A larger working gantry and ore chute identify the place at atlas scale.
-    for x in (38,121):
-        for xx in range(x,x+4):
-            for y in range(73,133):
-                detail.put(xx,y,WOOD[2 if xx % 2 else 3])
-    for y in range(70,76):
-        for x in range(35,128):
-            detail.put(x,y,WOOD[3 if y == 70 else 2])
-    stroke(detail, [(41,78),(55,91)],WOOD[4])
-    stroke(detail, [(121,78),(107,91)],WOOD[4])
-    stroke(detail, [(56,75),(56,110)],(172,159,120))
-    for x in range(76,93):
-        for y in (138,143):
-            detail.put(x,y,STONE[4])
-    for x in (78,89):
-        stroke(detail, [(x,143),(x,133)],(181,187,170))
-    stamp(detail, 48,108,['.iiiiii.','iSSSSSSi','iSSSSSSi','.iiiiii.','..o..o..'],{'i':(70,67,57),'S':(145,115,65),'o':OUT})
-    for x in (67,100):
-        stamp(detail,x,120,['.mm.','mGGm','mGPm','.mm.'],{'m':WOOD[0],'G':(225,166,59),'P':(255,229,148)})
-    composite(canvas,detail,None)
+    for points in [[(64, 69), (59, 77), (61, 83), (54, 91)], [(97, 59), (93, 70), (96, 75)],
+                   [(32, 109), (26, 117), (27, 123)], [(130, 110), (134, 117), (129, 126)]]:
+        stroke(detail, points, STONE[0])
+    # Rust-coloured seams and green ledges are sparse accents, not a texture grid.
+    for x, y in [(51, 83), (96, 80), (126, 109)]:
+        stroke(detail, [(x, y), (x + 5, y - 3), (x + 8, y - 2), (x + 12, y - 5)], (110, 75, 42))
+        stroke(detail, [(x + 1, y - 1), (x + 5, y - 4), (x + 8, y - 3)], (167, 123, 61))
+    for x, y in [(20, 128), (40, 99), (67, 62), (114, 90), (144, 131)]:
+        stamp(detail, x, y, ['..m..', '.mMmm', 'mmm..'],
+              {'m':(43, 58, 37), 'M':(68, 82, 47)})
+    composite(canvas, detail, None)
+    # Deep, irregular tunnel mouth; the existing road remains visible below it.
+    cave = Layer(168, 144)
+    for x, y in sorted(poly_mask(canvas.size, [(61, 140), (63, 114), (69, 102), (78, 97),
+                                               (91, 99), (102, 110), (105, 140)])):
+        cave.put(x, y, (10, 14, 16) if x < 96 else (20, 25, 27))
+    # A second set of supports disappears into the shaft, giving it depth.
+    timber(cave, (77, 120), (77, 137), 2)
+    timber(cave, (90, 120), (90, 137), 2)
+    timber(cave, (77, 119), (91, 119), 2)
+    for y in range(128, 144):
+        for x in range(74, 95):
+            cave.put(x, y, (30, 31, 28) if (x * 7 + y * 3) % 17 < 3 else (18, 22, 23))
+    for y in (133, 138, 143):
+        stroke(cave, [(75, y), (93, y)], WOOD[1])
+        stroke(cave, [(75, y + 1), (93, y + 1)], WOOD[0])
+    for a, b in [((81, 127), (77, 143)), ((87, 127), (91, 143))]:
+        stroke(cave, [a, b], (147, 153, 139))
+        stroke(cave, [(a[0] + 1, a[1]), (b[0] + 1, b[1])], STONE[1])
+    composite(canvas, cave, None)
+    frame = Layer(168, 144)
+    timber(frame, (65, 109), (65, 141), 6)
+    timber(frame, (97, 109), (97, 141), 6)
+    timber(frame, (62, 106), (105, 106), 7)
+    timber(frame, (71, 113), (78, 121), 3)
+    timber(frame, (96, 113), (90, 121), 3)
+    for x in (65, 97):
+        for y in (118, 135):
+            for n in range(6):
+                frame.put(x + n, y, (62, 69, 67))
+                frame.put(x + n, y + 1, STONE[0])
+            frame.put(x + 1, y, (143, 148, 130))
+    # Iron-capped crossbeam and paired lanterns frame the usable door tile.
+    for x in (64, 100):
+        for y in range(107, 112):
+            frame.put(x, y, STONE[1])
+        frame.put(x, 109, STONE[4])
+    for x in (60, 104):
+        stamp(frame, x, 122, ['..i..', '.iii.', 'ioGoi', 'iGPoi', 'ioGoi', '.iii.'],
+              {'i':(37, 35, 29), 'o':(134, 88, 37), 'G':(231, 166, 60), 'P':(255, 227, 139)})
+    composite(canvas, frame, OUT)
+    # A side-mounted ore hoist, with wheel, rope, brace and a hanging bucket.
+    hoist = Layer(168, 144)
+    timber(hoist, (125, 76), (125, 132), 5)
+    timber(hoist, (105, 75), (135, 75), 5)
+    timber(hoist, (111, 81), (124, 96), 3)
+    stamp(hoist, 106, 70, ['..iii..', '.iMMMi.', 'iMoioMi', 'iMiMiMi', 'iMoioMi', '.iMMMi.', '..iii..'],
+          {'i':OUT, 'M':(135, 125, 92), 'o':WOOD[1]})
+    stroke(hoist, [(109, 79), (109, 96)], (157, 141, 98))
+    stamp(hoist, 104, 97, ['..iiiii..', '.iMMSMMi.', 'iMMMMMMMi', '.iMMSMMi.', '..iMMMi..', '...iii...'],
+          {'i':OUT, 'M':(96, 100, 91), 'S':(157, 161, 143)})
+    for y in (85, 119, 128):
+        stroke(hoist, [(125, y), (129, y)], STONE[1])
+        hoist.put(126, y, STONE[4])
+    composite(canvas, hoist, OUT)
+    # An ore-filled cart and broken scree make this a working goblin mine.
+    props = Layer(168, 144)
+    stamp(props, 30, 119, [
+        '....ss...ss............', '...sSSs.sSSSs..ss......',
+        '..sSHSSsSSSHSsSSSs.....', '.sSSSSSSSSSSSSSSSSs....',
+        'iiiiiiiiiiiiiiiiiiiiii.', 'iWWWWwWWWWwWWWWwWWWWWi.',
+        '.iwwwWwwwwWwwwwWwwwwi..', '.iWWWwWWWWwWWWWwWWWWi..',
+        '..iiiiiiiiiiiiiiiiii...', '...iMi........iMi......',
+        '..iMoMi......iMoMi.....', '...iii........iii......'],
+          {'i':OUT, 's':STONE[1], 'S':STONE[3], 'H':STONE[5],
+           'W':WOOD[3], 'w':WOOD[1], 'M':STONE[3], 'o':STONE[0]})
+    for x, y in [(15, 136), (24, 140), (52, 138), (114, 137), (135, 140), (147, 134)]:
+        stamp(props, x, y, ['..ss..', '.sSSs.', 'sSHSSs', '.ssss.'],
+              {'s':STONE[1], 'S':STONE[3], 'H':STONE[4]})
+    composite(canvas, props, OUT)
     return canvas
 
 
