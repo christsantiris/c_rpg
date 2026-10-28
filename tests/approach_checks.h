@@ -139,6 +139,16 @@ static inline void walk_town_approach(GameState *g) {
     ASSERT("town departure begins on a safe approach path", g->location == LOCATION_APPROACH && g->enemy_count == 0);
     int steps = 0;
     const TownApproach *route = approach_route(g);
+    if (northern_approach(g)) {
+        int target_y = route->town == LOCATION_CASTLE ? g->map.stairs_down_y - 5 : g->map.stairs_down_y;
+        while (g->location == LOCATION_APPROACH && steps++ < APPROACH_W + APPROACH_H) {
+            int dx = (g->map.stairs_down_x > g->player.x) - (g->map.stairs_down_x < g->player.x);
+            int dy = dx ? 0 : (target_y > g->player.y) - (target_y < g->player.y);
+            action_resolve_player(g, (Action){ACTION_MOVE, g->player.x + dx, g->player.y + dy});
+        }
+        ASSERT("either northern approach reaches the incoming side of its adventure", g->location == route->area);
+        return;
+    }
     int dungeon_road = route && (route->area == LOCATION_DUNGEON || route->area == LOCATION_FOREST || approach_check_entrance_horizontal(route));
     int mountain_road = route && (route->area == LOCATION_MOUNTAINS || route->area == LOCATION_SWAMP || approach_check_entrance_vertical(route));
     while (g->location == LOCATION_APPROACH && steps++ < APPROACH_W + 4) {

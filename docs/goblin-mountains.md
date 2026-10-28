@@ -6,6 +6,12 @@ large fortified mountain cave from either town to start at **level 1** and
 fight upward through five levels. Mountain levels never play in reverse from
 Ridgeshire. Ordinary backtracking within a climb remains available.
 
+The cave opens at the foot of a stepped red sandstone massif, flanked by a
+leaning needle and a squat butte, sunlit orange on their western faces and
+violet in shadow. The range
+fills a tapered 7×9 tile footprint; save version **218** moves anyone saved on
+its newly raised rows onto the road.
+
 | Level | Region | Layout identity | Enemy roster |
 | --- | --- | --- | --- |
 | 1 | Blackrock Foothills | Open switchbacks and scout camps | Goblin Scouts |
@@ -56,7 +62,7 @@ save/load.
 
 ## Mountain Quests
 
-Dain assigns **Recover the Treasure Map** in Ridgeshire's town center. The
+Dain assigns **Recover the Treasure Map** in Dawnmere's Alehouse. The
 Archer, Bomber and Shaman Map Bearers occupy **levels 2, 3 and 4**, respectively,
 with themed guards. Collected fragments do not use inventory space. Return all
 three to Dain for **60 gold and 400 score**.
@@ -66,8 +72,8 @@ Marshal Veyra's **Watchfires of Ridgeshire** still spans three regions:
 fire's defenders and press `A` beside it. The mountain fire occupies an ordinary
 clearing before the King's fortress; killing the regional bosses is optional.
 
-Return to Town and its portal retain the expedition's entrance town, even when
-another mountain expedition starts from the opposite town.
+Return to Town is a one-way escape to the last town visited, independently of
+the mountain entrance used. It leaves no return portal.
 
 ## Save Compatibility
 

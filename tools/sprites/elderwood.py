@@ -70,19 +70,15 @@ def gateway():
 
 def creature(index):
     canvas = Image.new('RGBA', (64, 64))
-    fur = [(36, 42, 33), (58, 65, 47), (87, 92, 61), (117, 121, 78), (151, 147, 99)]
-    if index in (0, 1):
-        # Side-facing quadrupeds: wolf's lean muzzle/tail, boar's armored hump/tusks.
-        boar = index == 1
-        shape(canvas, [(19, 48), (21, 39), (27, 35 if boar else 40), (37, 37), (42, 43),
+    if index == 1:
+        # Side-facing boar with an armored hump and tusks.
+        shape(canvas, [(19, 48), (21, 39), (27, 35), (37, 37), (42, 43),
                        (46, 42), (48, 46), (43, 49), (41, 53), (38, 53), (36, 48),
-                       (28, 48), (25, 54), (22, 54), (23, 47), (18, 45), (15, 38)], BARK if boar else fur)
+                       (28, 48), (25, 54), (22, 54), (23, 47), (18, 45), (15, 38)], BARK)
         details = Layer(64, 64)
         for x, y in line_points(25, 39, 38, 40):
-            details.put(x, y, (142, 139, 106) if boar else LEAF[2])
+            details.put(x, y, (142, 139, 106))
         stamp(details, 40, 42, ['e..', '.dd', '..d'], {'e': (224, 183, 66), 'd': (212, 203, 157)})
-        if not boar:
-            stamp(details, 26, 36, ['g.g', '.g.', 'g.g'], {'g': LEAF[3]})
         composite(canvas, details, None)
     elif index == 2:
         # Dryad: a leaf-crowned humanoid with a thorn bow and root skirt.
@@ -131,9 +127,9 @@ def creature(index):
 
 def main():
     save_sprite(gateway(), ROOT / 'assets/images/elderwood-entrance.bmp')
-    atlas = Image.new('RGBA', (320, 64))
-    for i in range(5):
-        atlas.alpha_composite(creature(i), (i * 64, 0))
+    atlas = Image.new('RGBA', (256, 64))
+    for i in range(1, 5):
+        atlas.alpha_composite(creature(i), ((i - 1) * 64, 0))
     save_sprite(atlas, ROOT / 'assets/images/elderwood-enemies.bmp')
 
 

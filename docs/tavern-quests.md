@@ -44,7 +44,7 @@ to the Tavern without resetting the quest or dungeon exploration.
 
 ## Dain: Recover the Treasure Map
 
-Dain waits in **Ridgeshire's town center**. Press `T` beside him, then `Y` to
+Dain waits in **Dawnmere's Alehouse**. Press `T` beside him, then `Y` to
 accept **Recover the Treasure Map**, and return to him with all three fragments
 for the reward.
 
@@ -123,7 +123,7 @@ Quartermaster Brenna waits in Stillbury's Inn. Press `T` beside her, then `Y`
 to accept. She explains the route across the swamp north of Stillbury to
 Rosemoor, then through Rosemoor's north gate into Frostfell in the far north.
 
-On Frostfell stage **2**, defeat the two Ice Wolves guarding the expedition
+On Frostfell stage **2**, defeat the two Blighted Wolves guarding the expedition
 journal, then press `A` on or beside the journal to recover it. On stage **4**,
 defeat the Frost Giant and Frost Archer holding **Surveyor Fen**, then press `T`
 beside him. The journal's route markings let Fen travel home on his own; no

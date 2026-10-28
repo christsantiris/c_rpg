@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/jail.h"
 #include "screens/quest_journal.h"
@@ -161,9 +162,10 @@ void test_jail(void) {
     game.portal_active = 1;
     game.portal_location = LOCATION_ASHEN;
     game.portal_level = 1;
-    game_use_town_portal(&game);
-    ASSERT("older return portals cannot bypass jail but remain available after escape", game.location == LOCATION_JAIL &&
-        game.portal_active && game.portal_location == LOCATION_ASHEN);
+    game_close_town_portal(&game);
+    game_open_town_portal(&game);
+    ASSERT("retiring an older return portal cannot bypass jail", game.location == LOCATION_JAIL &&
+        !game.portal_active && game.portal_location == LOCATION_ASHEN);
     game.portal_active = 0;
     while (game.player.x < JAIL_PRISONER_X - 1) {
         move(game.player.x + 1, game.player.y);
@@ -342,6 +344,7 @@ void test_jail(void) {
     cJSON *root = read_fixture();
     if (root) {
         cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 100);
+    test_mark_legacy_portal(root);
         cJSON_DeleteItemFromObject(root, "jail_quest_state");
         cJSON_DeleteItemFromObject(root, "prisoner_x");
         cJSON_DeleteItemFromObject(root, "prisoner_y");

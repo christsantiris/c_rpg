@@ -1,8 +1,9 @@
 # Crown Road North
 
-The northern castle shortcut runs from Oakhaven through Elderwood Forest and
-Royal Catacombs, then across Crown Road North into Castle Grounds. Defeat
-Elderthorn and the Grave Marshal to open it from Oakhaven. The castle's south
+The northern castle connection runs from Oakhaven through Elderwood Forest and
+Royal Catacombs, then across Crown Road North into Castle Grounds. Elderthorn
+and the Grave Marshal gate their own sections from both directions; Crown Road
+North has no additional boss gate. See [boss gates](boss-gates.md). The castle's south
 gate enters the road from its northern end; its southern exit returns beside
 the Catacombs landmark. The existing east and west Crown Roads retain their
 routes and encounters.
@@ -45,10 +46,8 @@ configured Interact key (`A` by default). A cache grants 25 gold and up to
 20 HP once; its empty state persists.
 
 Physical re-entry replenishes ordinary patrols. Exploration, claimed supplies,
-and dropped equipment remain. Respawning patrols avoid dropped gear and live
-return-portal anchors. Return to Town visits the last town entered; using its
-portal resumes the same battle, position, wounds, deaths, squad alarms and
-pending warnings, then closes that portal.
+and dropped equipment remain. Respawning patrols avoid dropped gear. Return
+to Town is a one-way escape to the last town entered, with no return portal.
 
 Save version **202** stores the road map, patrols, supplies, floor loot and
 entry side. Older saves gain the route without resetting regional victories,

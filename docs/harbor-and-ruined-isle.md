@@ -163,10 +163,10 @@ See the [native renderer gallery and play-test guide](art-sources/sun-guardian-e
 
 ## Return to Town
 
-Return to Town works from every temple tier. It creates a portal near the town
-docks and records the exact tier, position, and current encounter state.
-Entering that portal returns to the temple and closes it. Walking out through
-tier 1 returns to the island without creating a portal.
+Return to Town works from every temple tier and from the Ruined Isle. It is a
+one-way escape to the last town visited and leaves no return portal. Walking
+out through tier 1 still returns to the island. Sailing with Rowan remains
+available for physical return voyages.
 
 Save version 85 moves the old tier-4 summit and its portal destination to
 tier 5, preserving enemy health, alignment, treasure, and boss completion.

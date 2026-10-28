@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/game.h"
 #include "screens/quest_journal.h"
@@ -158,7 +159,7 @@ static void test_flow(void) {
     finish_group();
     ASSERT("Glassdeep hunt does not complete Orin's quest", game.hunt_quest_progress == 6 && game.glassdeep_quest_state == 1 && !game.glassdeep_quest_progress);
     visit(LOCATION_FROSTFELL);
-    ASSERT("Rimefang's pack includes three Wolves and a Frost Wraith", leader() && leader()->type == ENEMY_ICE_WOLF &&
+    ASSERT("Rimefang's pack includes three Wolves and a Frost Wraith", leader() && leader()->type == ENEMY_BLIGHTED_WOLF &&
         members(&game, 1) == 4 && game.enemies[game.enemy_count - 1].type == ENEMY_FROST_WRAITH);
     finish_group();
     ASSERT("hunts complete in any order without regional boss victories", game.hunt_quest_state == 2 && game.hunt_quest_progress == 7 &&
@@ -172,11 +173,11 @@ static void test_flow(void) {
     ASSERT("Selene awards 200 gold and 1500 score exactly once", game.hunt_quest_state == 3 && game.gold == gold + 200 && game.score == score + 1500);
     ASSERT("completed journal preserves all three hunts", quest_journal_get_entry(&game, QUEST_TAB_COMPLETED, 0, &entry) &&
         entry.objective_complete[0] && entry.objective_complete[1] && entry.objective_complete[2]);
-    ASSERT("claimed reward, cached hunts, and return portal survive saving", save_game(&game, HUNT_SLOT) && load_game(&loaded, HUNT_SLOT) &&
-        loaded.hunt_quest_state == 3 && loaded.hunt_quest_progress == 7 && loaded.gold == game.gold && loaded.portal_active &&
+    ASSERT("claimed reward, cached hunts, and escape records survive saving", save_game(&game, HUNT_SLOT) && load_game(&loaded, HUNT_SLOT) &&
+        loaded.hunt_quest_state == 3 && loaded.hunt_quest_progress == 7 && loaded.gold == game.gold && !loaded.portal_active &&
         loaded.frostfell_cache[2].valid && loaded.glassdeep_cache[3].valid && loaded.desert_cache[2].valid);
-    game_use_town_portal(&game);
-    ASSERT("portal return keeps the final hunt defeated", game.location == LOCATION_FROSTFELL && game.level == 3 && !members(&game, 1));
+    test_restore_cached_floor(&game);
+    ASSERT("archived floor reload keeps the final hunt defeated", game.location == LOCATION_FROSTFELL && game.level == 3 && !members(&game, 1));
     game_init(&game);
     ASSERT("new games reset the Guild hunt", !game.hunt_quest_state && !game.hunt_quest_progress && !game.hunt_quest_encounters);
 }
@@ -190,9 +191,9 @@ static void test_explored_area(void) {
     original_map = game.map;
     game_open_town_portal(&game);
     accept();
-    ASSERT("acceptance preserves explored maps, enemy damage, and portal", game.glassdeep_cache[3].valid && game.portal_active &&
+    ASSERT("acceptance preserves explored maps, enemy damage, and portal", game.glassdeep_cache[3].valid && !game.portal_active &&
         game.glassdeep_cache[3].enemies[0].hp == 7 && memcmp(&original_map, &game.glassdeep_cache[3].map, sizeof(Map)) == 0);
-    game_use_town_portal(&game);
+    test_restore_cached_floor(&game);
     ASSERT("revisiting an explored stage adds only the hunt encounter", members(&game, 1) == 3 && game.enemies[0].hp == 7);
 
     start();
@@ -204,7 +205,7 @@ static void test_explored_area(void) {
     game_update_level_progress(&game);
     game_open_town_portal(&game);
     accept();
-    game_use_town_portal(&game);
+    test_restore_cached_floor(&game);
     int active = 0;
     for (int i = 0; i < game.enemy_count; i++) {
         active += !!game.enemies[i].active;
@@ -272,6 +273,7 @@ static int legacy_fixture(void) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 122);
+    test_mark_legacy_portal(root);
     cJSON_DeleteItemFromObject(root, "hunt_quest_state");
     cJSON_DeleteItemFromObject(root, "hunt_quest_progress");
     cJSON_DeleteItemFromObject(root, "hunt_quest_encounters");
@@ -308,7 +310,7 @@ static void test_migration(void) {
     ASSERT("version 122 Guild saves gain an available hunt quest", legacy_fixture() && load_game(&loaded, HUNT_SLOT) &&
         !loaded.hunt_quest_state && !loaded.hunt_quest_progress && !loaded.hunt_quest_encounters);
     ASSERT("migration preserves other quests, gold, bosses, explored enemies, and portals", loaded.gold == 617 &&
-        loaded.watchfire_quest_state == 1 && loaded.watchfire_quest_progress == 2 && loaded.portal_active &&
+        loaded.watchfire_quest_state == 1 && loaded.watchfire_quest_progress == 2 && !loaded.portal_active &&
         loaded.glassdeep_cache[3].valid && loaded.glassdeep_cache[3].enemies[0].hp == 7 && (loaded.defeated_bosses & (1 << LOCATION_DESERT)));
     ASSERT("migration adds Selene and safely moves overlapping player and loot", loaded.map.tiles[GUILD_SELENE_Y][GUILD_SELENE_X] == TILE_NPC_SELENE &&
         loaded.player.y == GUILD_SELENE_Y + 1 && loaded.floor_items[0].active && loaded.floor_items[0].y == GUILD_SELENE_Y + 1);

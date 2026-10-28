@@ -73,14 +73,14 @@ void help_draw(Renderer *r, const GameState *g) {
     draw_help_row(r, bound(g, CONTROL_INVENTORY), "Open inventory", col1, y, white);
     draw_help_row(r, "Bump shop door", "Enter shop", col2, y, white);
     y += lh;
-    draw_help_row(r, bound(g, CONTROL_PICK_UP), "Pick up item", col1, y, white);
+    draw_help_row(r, bound(g, CONTROL_PICK_UP), "Pick up loose loot", col1, y, white);
     draw_help_row(r, "ESC", "Main menu", col2, y, white);
     y += lh;
     draw_help_row(r, "U", "Use item", col1, y, white);
     draw_help_row(r, bound(g, CONTROL_TALK), "Talk to NPC", col2, y, white);
     y += lh;
     draw_help_row(r, "E/ENTER", "Equip item", col1, y, white);
-    draw_help_row(r, bound(g, CONTROL_MOVE_LEFT), "Interact", col2, y, white);
+    draw_help_row(r, bound(g, CONTROL_MOVE_LEFT), "Open / close / use", col2, y, white);
     y += lh;
     draw_help_row(r, "D", "Drop item", col1, y, white);
     draw_help_row(r, bound(g, CONTROL_QUEST_JOURNAL), "Quests / bosses", col2, y, white);

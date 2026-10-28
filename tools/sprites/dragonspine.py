@@ -1,155 +1,145 @@
 #!/usr/bin/env python3
 """Dragonspine entrance, a 7x9 tile landmark in the established 24px pixelkit pipeline.
 
-A snow-dusted basalt peak rises in vertebra-like spikes to a tall summit. Red
-dragons circle the peak and perch on a ledge. The south-facing cave mouth is a
-horned dragon skull with a faint ember glow, ringed by scorch marks, claw
-gouges, snowdrifts and a bone pile.
+Pale granite needles rise in sheer, fractured aretes to a towering summit, after
+high alpine granite spires. Red dragons circle the peaks and perch on a ledge.
+The south-facing cave is a dark cleft at the foot of the cliffs, with a faint
+ember glow and soot above it, behind a field of fallen talus.
 """
 from pathlib import Path
-import math
 import random
 from PIL import Image
-from pixelkit import Layer, composite, line_points, poly_mask, save_sprite, wobble
+from pixelkit import Layer, composite, line_points, poly_mask, save_sprite
 
 SIZE = (168, 216)
-OUT = (14, 16, 23)
-ROCK = [(24, 28, 38), (36, 42, 55), (51, 59, 74), (70, 80, 96), (95, 106, 122), (126, 136, 150)]
-SNOW = [(116, 134, 160), (156, 174, 198), (199, 213, 228), (234, 241, 247)]
+OUT = (22, 26, 40)
+GRANITE = [(46, 54, 78), (66, 76, 104), (92, 104, 132), (124, 136, 160), (158, 168, 188), (192, 200, 214), (224, 229, 236)]
+WARM = [(176, 166, 158), (208, 198, 186)]
 BONE = [(70, 62, 56), (110, 100, 86), (152, 142, 122), (192, 183, 160), (226, 219, 198)]
 DRAKE = [(60, 16, 20), (104, 26, 26), (152, 40, 32), (200, 70, 42), (238, 128, 66)]
 WING = [(66, 18, 26), (98, 28, 32), (134, 44, 40)]
-EMBER = [(34, 14, 15), (66, 22, 17), (112, 40, 20), (186, 82, 34), (246, 160, 70)]
-SOOT = [(26, 24, 30), (38, 35, 41), (55, 51, 57)]
-DOOR = (9, 9, 13)
-SOCKET = (24, 15, 17)
 GOLD = [(150, 104, 52), (214, 166, 82)]
 EYE = (255, 214, 90)
+DOOR = (10, 12, 18)
 
-# The skyline climbs from the lower left in a row of dorsal spikes to the summit.
-SPINE = [(95, 2), (91, 15), (88, 26), (80, 13), (78, 46), (68, 34), (66, 70), (56, 58), (54, 94), (44, 83),
-         (42, 118), (32, 108), (30, 140), (20, 132), (18, 160), (9, 156), (6, 172), (2, 188), (0, 215)]
-CLIFF = [(167, 215), (166, 184), (162, 164), (156, 148), (148, 132), (142, 118), (136, 102), (132, 90),
-         (127, 78), (124, 66), (119, 58), (116, 48), (110, 40), (108, 30), (104, 24), (102, 16), (99, 10)]
-RIDGE = [(95, 2), (90, 40), (93, 70), (88, 100), (86, 126), (84, 215)]
-VALLEYS = SPINE[2:16:2]
-TIPS = SPINE[3:16:2]
-
-
-def along(points, y):
-    """x of a top-to-bottom polyline at row y."""
-    for (x0, y0), (x1, y1) in zip(points, points[1:]):
-        if y0 <= y <= y1:
-            return x0 + (x1 - x0) * (y - y0) / max(1, y1 - y0)
-    return points[-1][0]
+# Each peak: silhouette, the creases dividing it into slabs, and each slab's tone from sunlit west to shadowed east.
+PEAKS = [
+    ([(0, 206), (0, 132), (4, 118), (8, 110), (12, 98), (16, 102), (19, 90), (23, 94), (26, 84), (30, 88), (33, 80),
+      (37, 90), (42, 104), (46, 122), (50, 150), (53, 206)], [[(26, 86), (22, 206)], [(31, 80), (32, 206)]], [4, 3, 1]),
+    ([(22, 206), (28, 170), (34, 130), (40, 98), (46, 72), (51, 54), (55, 44), (58, 40), (60, 46), (62, 44), (65, 58),
+      (70, 86), (78, 124), (88, 166), (96, 206)], [[(58, 42), (50, 206)], [(59, 43), (64, 206)]], [5, 4, 1]),
+    ([(52, 206), (58, 160), (64, 118), (70, 82), (75, 56), (79, 38), (82, 28), (84, 24), (86, 30), (88, 28), (92, 46),
+      (98, 78), (106, 120), (114, 166), (120, 206)], [[(84, 26), (76, 206)], [(85, 28), (88, 206)]], [5, 4, 1]),
+    ([(88, 206), (94, 160), (99, 118), (103, 84), (107, 56), (111, 32), (115, 16), (118, 8), (120, 4), (122, 8),
+      (125, 6), (128, 14), (132, 30), (137, 52), (143, 78), (149, 104), (155, 134), (160, 166), (164, 206)],
+     [[(120, 6), (110, 206)], [(121, 8), (122, 206)], [(130, 26), (146, 206)]], [5, 4, 2, 1]),
+]
 
 
-def sunlit(x, y):
-    return x < along(RIDGE, y)
+def serrate(points, rng):
+    # Break each edge into small granite teeth, sharper near the summit.
+    top = min(y for x, y in points)
+    out = []
+    for (ax, ay), (bx, by) in zip(points, points[1:]):
+        out.append((ax, ay))
+        steps = max(1, int(max(abs(bx - ax), abs(by - ay)) // 4))
+        for n in range(1, steps):
+            t = n / steps
+            x = ax + (bx - ax) * t
+            y = ay + (by - ay) * t
+            amp = 2 if y < top + 24 else 1 if y < top + 70 else 0
+            if amp:
+                x += rng.randint(-amp, amp)
+            out.append((round(x), round(y)))
+    out.append(points[-1])
+    return out
 
 
-def snow_tops(L, mask, lit, below=999):
-    """Settle snow on every upward-facing edge, deeper where the slope is gentle."""
-    tops = {}
-    for x, y in mask:
-        if (x, y - 1) not in mask and y < below:
-            tops.setdefault(x, []).append(y)
-    for x, ys in tops.items():
-        for y in ys:
-            near = [min(tops.get(x + d, [y]), key=lambda t: abs(t - y)) for d in (-1, 1)]
-            slope = abs(near[1] - near[0]) / 2.0
-            depth = 3 if slope < 0.8 else 2 if slope < 1.6 else 1 if slope < 3 else 0
-            for k in range(depth):
-                if (x, y + k) in mask:
-                    if lit(x, y + k):
-                        L.put(x, y + k, SNOW[3 if k == 0 else 2])
-                    else:
-                        L.put(x, y + k, SNOW[1 if k == 0 else 0])
+def crease_x(crease, y):
+    for (ax, ay), (bx, by) in zip(crease, crease[1:]):
+        if ay <= y <= by:
+            return ax + (bx - ax) * (y - ay) / max(1, by - ay)
+    return crease[0][0] if y < crease[0][1] else crease[-1][0]
 
 
-def massif(canvas):
-    rng = random.Random(41)
-    rock = Layer(*SIZE)
-    mask = poly_mask(SIZE, SPINE + CLIFF)
-    cap = wobble(SIZE[0], 7, 40, 47)
+def granite(canvas, points, creases, tones, haze, seed):
+    rng = random.Random(seed)
+    outline = serrate(points, rng)
+    layer = Layer(*SIZE)
+    mask = poly_mask(SIZE, outline)
+    cracks = set()
+    for n in range(len(mask) // 520):
+        x, y = rng.choice(sorted(mask))
+        for k in range(rng.randrange(3, 9)):
+            cracks.add((x + k // 2, y - k))
+    # Long sheared seams climb the faces like the slabs of high granite walls.
+    for n in range(len(mask) // 900):
+        x, y = rng.choice(sorted(mask))
+        for k in range(rng.randrange(12, 30)):
+            if (x + k // 3, y - k) in mask:
+                cracks.add((x + k // 3, y - k))
     for x, y in sorted(mask):
-        ridge = along(RIDGE, y)
-        sun = x < ridge
-        shade = 3 if sun else 1
-        snowy = False
-        if sun:
-            # Rib-like ledges run down the flank from each dorsal spike.
-            for i, (vx, vy) in enumerate(VALLEYS):
-                run = x - vx
-                if run < -1 or run > 14 + 3 * i:
-                    continue
-                d = y - round(vy + run * 1.25 + run * run * 0.015)
-                if 0 <= d <= 3:
-                    shade = 1 if d == 0 else 2
-                elif d == -1 or (d == -2 and run < 8 + i):
-                    shade = 4
-                    snowy = y < 150
-        else:
-            for vx, vy in VALLEYS:
-                py = vy + (along(RIDGE, vy) - vx) * 1.3
-                d = y - (py + 16 + (x - ridge) * 0.6)
-                if d == 0:
-                    shade = 0
-                elif d == -1:
-                    shade = 2
-                    snowy = y < 110
-        for (tx, ty), (vx, vy) in zip(TIPS, VALLEYS):
-            if ty <= y < vy and tx - 2 <= x <= vx and y < vy - (vx - x) * 1.25:
-                shade = 4 if x <= tx + 1 else 3
-                snowy = y < ty + 4 + (tx - x) // 2
-        if rng.randrange(31) == 0:
-            shade += rng.choice((-1, 1))
-        c = ROCK[max(0, min(5, shade))]
-        if snowy:
-            c = SNOW[3 if sun and shade >= 3 else 2] if sun else SNOW[1]
-        # The summit carries a thick cap that drips down its gullies.
-        streak = 9 if x % 11 in (4, 5) else 5 if x % 7 == 2 else 0
-        if y < cap[x] + streak and y < 58:
-            c = SNOW[3 if shade >= 3 else 2] if sun else SNOW[1 if shade >= 1 else 0]
-        rock.put(x, y, c)
-    # Angular ledges break up the faces; the higher ones hold a line of snow.
-    for n in range(16):
-        x = rng.randrange(14, 156)
-        y = rng.randrange(40, 150)
-        for px, py in line_points(x, y, x + rng.randrange(5, 12), y + rng.randrange(-2, 3)):
-            if (px, py) in mask and (px, py - 1) in mask:
-                sun = sunlit(px, py)
-                rock.put(px, py, ROCK[0])
-                rock.put(px, py - 1, (SNOW[2] if sun else SNOW[0]) if py < 120 else ROCK[4 if sun else 2])
-    snow_tops(rock, mask, sunlit, below=150)
-    composite(canvas, rock, OUT)
-
-
-def back_peak(canvas):
-    peak = Layer(*SIZE)
-    mask = poly_mask(SIZE, [(112, 150), (122, 96), (131, 82), (136, 86), (144, 62), (150, 74), (154, 84),
-                            (158, 100), (162, 122), (166, 148), (167, 170)])
-    for x, y in sorted(mask):
-        sun = x < 144 - (y - 62) * 0.15
-        shade = 3 if sun else 1
-        if (y - (x - 144) * 0.6) % 14 < 1:
-            shade -= 1
-        c = ROCK[shade]
-        if y < 74 + (x % 5):
-            c = SNOW[3] if sun else SNOW[1]
-        peak.put(x, y, c)
-    snow_tops(peak, mask, lambda x, y: x < 144)
-    composite(canvas, peak, OUT)
+        slab = sum(1 for crease in creases if crease_x(crease, y) < x)
+        tone = tones[slab]
+        on_crease = any(abs(crease_x(crease, y) - x) < 0.6 for crease in creases)
+        if on_crease:
+            tone = max(0, tones[slab] - 2)
+        elif any(0.6 <= x - crease_x(crease, y) < 1.6 for crease in creases) and slab < len(tones) - 1:
+            tone += 1
+        elif (x, y) in cracks:
+            tone -= 2
+        elif (x - 1, y + 1) in cracks and tone >= 3:
+            tone += 1
+        if (x - 1, y) not in mask and slab == 0:
+            tone = 6
+        elif (x, y - 1) not in mask:
+            tone = 5 if slab < len(tones) - 1 else 3
+        tone = max(0, min(6, tone - haze))
+        color = GRANITE[tone]
+        if tone >= 4 and rng.randrange(23) == 0:
+            color = WARM[1 if tone > 4 else 0]
+        layer.put(x, y, color)
+    composite(canvas, layer, OUT)
 
 
 def ledge(canvas):
     shelf = Layer(*SIZE)
-    mask = poly_mask(SIZE, [(124, 112), (134, 107), (150, 105), (163, 104), (166, 108), (158, 114),
-                            (140, 117), (126, 118)])
+    mask = poly_mask(SIZE, [(128, 108), (138, 104), (152, 103), (163, 105), (160, 110), (146, 113), (132, 113)])
     for x, y in sorted(mask):
-        shelf.put(x, y, ROCK[2] if y > 110 else ROCK[3])
-    snow_tops(shelf, mask, lambda x, y: x < 150)
+        shelf.put(x, y, GRANITE[5] if (x, y - 1) not in mask else GRANITE[3] if y < 110 else GRANITE[2])
     composite(canvas, shelf, OUT)
+
+
+def cleft(canvas):
+    # A narrow, ragged cave mouth with a faint ember glow on its threshold.
+    rng = random.Random(29)
+    mouth = Layer(*SIZE)
+    for y in range(162, 216):
+        half = min(11.0, 1.5 + (y - 162) * 0.42) + rng.choice((-1, 0, 0, 0))
+        for x in range(int(84 - half), int(85 + half)):
+            glow = y > 206 and abs(x - 84.5) < 7 - (215 - y) * 0.6
+            mouth.put(x, y, (84, 30, 20) if glow and abs(x - 84.5) < 3 else (44, 20, 22) if glow else DOOR)
+    composite(canvas, mouth, OUT)
+
+
+def talus(canvas):
+    # Fallen granite blocks: lit tops, mid fronts, and dark eastern sides.
+    rng = random.Random(37)
+    rocks = Layer(*SIZE)
+    blocks = [(rng.randrange(0, 66), rng.randrange(192, 212), rng.randrange(5, 12), rng.randrange(3, 6)) for n in range(18)]
+    blocks += [(rng.randrange(100, 160), rng.randrange(192, 212), rng.randrange(5, 12), rng.randrange(3, 6)) for n in range(18)]
+    blocks += [(1, 202, 16, 8), (148, 200, 18, 9), (58, 206, 10, 5), (100, 207, 10, 5)]
+    for x, y, w, h in sorted(blocks, key=lambda b: b[1]):
+        shape = poly_mask(SIZE, [(x, y), (x + 2, y - 2), (x + w - 1, y - 2), (x + w + 1, y), (x + w, y + h), (x, y + h)])
+        for px, py in shape:
+            if py <= y - 1:
+                tone = 6 if px < x + w // 2 else 5
+            elif px >= x + w - 1:
+                tone = 2
+            else:
+                tone = 4 if py < y + h - 1 else 3
+            rocks.put(px, py, GRANITE[tone])
+    composite(canvas, rocks, OUT)
 
 
 def blob(L, mask, ramp, base):
@@ -233,228 +223,19 @@ def flying_dragon(L, ox, oy, s=1.0, flip=False):
     L.put(round(ex), round(ey), EYE)
 
 
-def horn(L, p0, p1, p2, r0):
-    """A ridged, tapering horn along a quadratic curve, lit from the upper left."""
-    for i in range(81):
-        t = i / 80.0
-        cx = (1 - t) ** 2 * p0[0] + 2 * (1 - t) * t * p1[0] + t * t * p2[0]
-        cy = (1 - t) ** 2 * p0[1] + 2 * (1 - t) * t * p1[1] + t * t * p2[1]
-        r = r0 * (1 - t) ** 0.8 + 0.5
-        band = 2 if int(t * 11) % 2 else 3
-        for y in range(int(cy - r - 1), int(cy + r + 2)):
-            for x in range(int(cx - r - 1), int(cx + r + 2)):
-                dx = x + 0.5 - cx
-                dy = y + 0.5 - cy
-                if dx * dx + dy * dy > r * r:
-                    continue
-                k = (dx + dy) / max(r, 0.1)
-                L.put(x, y, BONE[band + 1] if k < -0.5 else BONE[band - 1] if k > 0.6 else BONE[band])
-
-
-def mirror(points):
-    return [(168 - x, y) for x, y in points]
-
-
-def maw(canvas):
-    """The open jaws are the doorway: black, with embers smouldering deep inside."""
-    hole = Layer(*SIZE)
-    for y in range(164, 216):
-        for x in range(70, 99):
-            dx = abs(x - 84)
-            c = DOOR
-            if 187 <= y <= 194:
-                reach = 11 - (194 - y) * 1.5
-                if dx < reach:
-                    c = EMBER[2] if dx < reach - 6 else EMBER[1] if dx < reach - 3 else EMBER[0]
-            elif y >= 195:
-                c = EMBER[0] if y < 197 and dx < 9 else SOOT[1] if y > 201 else SOOT[0]
-            hole.put(x, y, c)
-    # Scorched steps lead up into the dark, their lips catching the ember light.
-    for y in (199, 204, 209):
-        for x in range(70, 99):
-            hole.put(x, y, EMBER[1] if abs(x - 84) < 4 and y < 205 else SOOT[2])
-            hole.put(x, y + 1, SOOT[0])
-    for x, y in ((80, 193), (81, 193), (87, 192), (88, 192), (84, 193)):
-        hole.put(x, y, EMBER[3])
-    composite(canvas, hole, None)
-
-
-def skull(canvas):
-    horns = Layer(*SIZE)
-    horn(horns, (62, 134), (42, 130), (34, 104), 5.5)
-    horn(horns, (106, 134), (126, 130), (134, 104), 5.5)
-    composite(canvas, horns, OUT)
-    bone = Layer(*SIZE)
-    head = [(56, 140), (60, 132), (70, 127), (84, 124), (98, 127), (108, 132), (112, 140), (108, 148), (102, 154),
-            (100, 162), (99, 170), (69, 170), (68, 162), (66, 154), (60, 148)]
-    crest = [(70, 129), (73, 117), (78, 127), (84, 112), (90, 127), (95, 117), (98, 129)]
-    cheek = [(62, 148), (48, 158), (45, 168), (54, 163), (64, 160)]
-    shape = poly_mask(SIZE, head) | poly_mask(SIZE, crest)
-    sides = set()
-    for pts in (cheek, mirror(cheek)):
-        sides |= poly_mask(SIZE, pts)
-    shape |= sides
-    for x, y in shape:
-        i = 3 if x < 86 else 2
-        if (x - 1, y) not in shape or (x, y - 1) not in shape:
-            i += 1
-        elif (x + 1, y) not in shape or (x, y + 1) not in shape:
-            i -= 1
-        bone.put(x, y, BONE[max(0, min(4, i))])
-    # Hollow cheeks and an old crack across the brow.
-    hollow = [(64, 151), (73, 153), (71, 158), (65, 156)]
-    for pts, c in ((hollow, BONE[2]), (mirror(hollow), BONE[1])):
-        for x, y in poly_mask(SIZE, pts):
-            bone.put(x, y, c)
-    for x, y in line_points(92, 125, 95, 131) + line_points(95, 131, 93, 136):
-        bone.put(x, y, BONE[1])
-    # Heavy brows over slanted sockets, a nasal ridge and two nostril slits.
-    eye = [(63, 141), (76, 145), (76, 150), (70, 151), (64, 147)]
-    for pts in (eye, mirror(eye)):
-        for x, y in poly_mask(SIZE, pts):
-            bone.put(x, y, SOCKET)
-    for x, y in ((70, 148), (71, 148), (97, 148), (98, 148)):
-        bone.put(x, y, EMBER[3])
-    for k in range(2):
-        for x, y in line_points(59, 138 + k, 77, 142 + k):
-            bone.put(x, y, BONE[4 - k])
-        for x, y in line_points(109, 138 + k, 91, 142 + k):
-            bone.put(x, y, BONE[3 - k])
-    for y in range(148, 160):
-        bone.put(83, y, BONE[4])
-        bone.put(85, y, BONE[2])
-    for x, y in ((79, 158), (79, 159), (78, 160), (89, 158), (89, 159), (90, 160)):
-        bone.put(x, y, SOCKET)
-    # Upper fangs hang over the doorway; lower fangs rise beside it.
-    for tx, h, hw in ((73, 10, 2.2), (77, 4, 1.4), (81, 5, 1.4), (87, 5, 1.4), (91, 4, 1.4), (95, 10, 2.2)):
-        for k in range(h):
-            w = (h - k) / float(h) * hw
-            for x in range(round(tx - w), round(tx + w) + 1):
-                bone.put(x, 170 + k, BONE[4] if x < tx else BONE[2] if x > tx else BONE[3])
-    composite(canvas, bone, OUT)
-    # Two great lower fangs rise from the ground on either side of the door.
-    tusks = Layer(*SIZE)
-    for side in (-1, 1):
-        for y in range(173, 216):
-            t = (215 - y) / 42.0
-            cx = 84 + side * (19 - 6 * t * t)
-            hw = 6.5 * (1 - t) ** 0.7 + 0.4
-            for x in range(math.floor(cx - hw), math.ceil(cx + hw)):
-                u = (x + 0.5 - cx) / hw
-                i = 4 if u < -0.55 else 3 if u < 0.1 else 2 if u < 0.6 else 1
-                if side < 0 and u > 0.6 and y > 196:
-                    i = 1
-                tusks.put(x, y, BONE[max(0, i)])
-    composite(canvas, tusks, OUT)
-
-
-def scorch(canvas, tongues):
-    """Soot licks up the rock and snow in flame-shaped streaks."""
-    cp = canvas.load()
-    rock = {c: i for i, c in enumerate(ROCK)}
-    snow = set(SNOW)
-    for bx, by, h, w, lean in tongues:
-        for y in range(by - h, by + 1):
-            t = (by - y) / float(h)
-            half = w * (1 - t) ** 0.6 * (0.8 + 0.2 * math.sin(y * 0.9 + bx))
-            cx = bx + lean * t * t
-            for x in range(int(cx - half), int(cx + half) + 1):
-                if not (0 <= x < SIZE[0] and 0 <= y < SIZE[1]):
-                    continue
-                c = cp[x, y][:3]
-                core = abs(x - cx) < half * 0.55
-                if c in rock:
-                    cp[x, y] = SOOT[0 if rock[c] < 2 or core else 1 if rock[c] < 4 else 2] + (255,)
-                elif c in snow:
-                    cp[x, y] = (SOOT[2] if core else ROCK[2]) + (255,)
-
-
-def gouges(canvas, x0, y0, sun):
-    """Three parallel claw rakes torn into the rock face."""
-    cp = canvas.load()
-    for n in range(3):
-        pts = line_points(x0 + n * 5, y0 + n * 2, x0 + n * 5 - 8, y0 + n * 2 + 17)
-        for k, (x, y) in enumerate(pts):
-            if 1 <= k <= len(pts) - 2:
-                cp[x, y] = ROCK[0] + (255,)
-                cp[x + 1, y] = ROCK[0] + (255,)
-                cp[x + 2, y] = (ROCK[5] if sun else ROCK[3]) + (255,)
-
-
-def drift(canvas, pts):
-    snow = Layer(*SIZE)
-    mask = poly_mask(SIZE, pts)
-    for x, y in mask:
-        c = SNOW[3] if (x, y - 2) not in mask else SNOW[2]
-        if (x, y - 1) in mask and ((x + 1, y) not in mask or (x + 2, y) not in mask or (x, y + 3) not in mask):
-            c = SNOW[1]
-        snow.put(x, y, c)
-    composite(canvas, snow, OUT)
-
-
-def long_bone(L, x0, y0, x1, y1):
-    """A thigh bone with knobbed ends, lit along its upper edge."""
-    for x, y in line_points(x0, y0, x1, y1):
-        L.put(x, y, BONE[4])
-        L.put(x, y + 1, BONE[2])
-    for x, y in ((x0, y0), (x1, y1)):
-        for dx, dy, c in ((-1, -1, 3), (1, -1, 4), (-1, 1, 2), (1, 1, 2), (0, 2, 1)):
-            L.put(x + dx, y + dy, BONE[c])
-
-
-def remains(canvas):
-    """A heap of picked-clean bones: a rib, crossed thigh bones and two skulls."""
-    rib = Layer(*SIZE)
-    for i in range(41):
-        t = i / 40.0
-        cx = (1 - t) ** 2 * 12 + 2 * (1 - t) * t * 14 + t * t * 34
-        cy = (1 - t) ** 2 * 205 + 2 * (1 - t) * t * 178 + t * t * 196
-        for x, y in ((int(cx), int(cy)), (int(cx) + 1, int(cy))):
-            rib.put(x, y, BONE[3])
-        rib.put(int(cx), int(cy) - 1, BONE[4])
-    composite(canvas, rib, OUT)
-    pile = Layer(*SIZE)
-    long_bone(pile, 7, 211, 23, 206)
-    long_bone(pile, 20, 202, 36, 205)
-    skull = ['.bBBb.', 'bBBBBb', 'BoBBoB', 'bBBBBb', '.b.b..']
-    for ox, oy in ((36, 199), (4, 200)):
-        for dy, row in enumerate(skull):
-            for dx, ch in enumerate(row):
-                c = {'b': BONE[2], 'B': BONE[4], 'o': SOCKET}.get(ch)
-                if c:
-                    pile.put(ox + dx, oy + dy, c)
-    composite(canvas, pile, OUT)
-
-
-def foreground(canvas):
-    drift(canvas, [(0, 188), (5, 181), (14, 178), (28, 183), (40, 190), (50, 198), (56, 206), (59, 215), (0, 215)])
-    drift(canvas, [(109, 215), (112, 206), (120, 198), (132, 191), (146, 185), (158, 181), (164, 182), (167, 186), (167, 215)])
-    drift(canvas, [(0, 202), (8, 197), (20, 199), (32, 205), (36, 215), (0, 215)])
-    drift(canvas, [(130, 215), (136, 205), (148, 200), (160, 199), (167, 201), (167, 215)])
-    stones = Layer(*SIZE)
-    for pts in ([(44, 215), (46, 207), (52, 203), (57, 207), (57, 215)],
-                [(110, 215), (110, 207), (116, 203), (123, 207), (124, 215)]):
-        blob(stones, poly_mask(SIZE, pts), ROCK, 2)
-    composite(canvas, stones, OUT)
-    remains(canvas)
-
-
 def build():
     canvas = Image.new('RGBA', SIZE)
-    back_peak(canvas)
-    massif(canvas)
-    gouges(canvas, 28, 150, True)
-    gouges(canvas, 134, 134, False)
+    # The great summit stands behind; the needles' shadowed faces fall against its sunlit wall.
+    for n in (3, 0, 1, 2):
+        points, creases, tones = PEAKS[n]
+        granite(canvas, points, creases, tones, 1 if n == 0 else 0, 80 + n)
     ledge(canvas)
-    foreground(canvas)
-    scorch(canvas, [(66, 132, 26, 6, -4), (84, 120, 26, 5, 2), (102, 132, 24, 6, 5), (62, 212, 18, 8, -3),
-                    (106, 212, 18, 8, 3), (128, 168, 14, 5, 2), (50, 178, 28, 6, -7)])
-    maw(canvas)
-    skull(canvas)
+    cleft(canvas)
+    talus(canvas)
     drakes = Layer(*SIZE)
-    perched_dragon(drakes, 146, 104)
-    flying_dragon(drakes, 132, 30, 1.15)
-    flying_dragon(drakes, 30, 34, 0.85, True)
+    perched_dragon(drakes, 145, 104)
+    flying_dragon(drakes, 145, 34, 1.0)
+    flying_dragon(drakes, 26, 34, 0.9, True)
     composite(canvas, drakes, OUT)
     return canvas
 

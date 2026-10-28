@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "approach_checks.h"
 #include "test_utils.h"
 #include "game/giants_crown.h"
@@ -132,11 +133,13 @@ static void test_travel_and_saves(void) {
     game.floor_items[0] = (FloorItem){.active = 1, .x = x, .y = y, .underlying_tile = TILE_ASHEN_RUIN, .item = item_make_health_potion()};
     game.floor_item_count = 1;
     game_open_town_portal(&game);
-    ASSERT("Return to Town returns to the last visited town after Ashen relocation", game.location == game.last_town_visited && game.portal_location == LOCATION_ASHEN && game.map.tiles[12][21] == TILE_PORTAL && game.portal_origin_tile == TILE_ASHEN_RUIN);
+    ASSERT("Return to Town returns to the last visited town after Ashen relocation", game.location == game.last_town_visited && game.portal_location == LOCATION_ASHEN && game.map.tiles[12][21] != TILE_PORTAL && game.portal_origin_tile == TILE_ASHEN_RUIN);
     game.player.x = 20;
     game.player.y = 12;
     action_resolve_player(&game, (Action){ACTION_MOVE, 21, game.player.y});
-    ASSERT("stepping onto the town portal resumes the original Ashen stage and position", game.location == LOCATION_ASHEN && game.level == 3 && game.player.x == x && game.player.y == y);
+    ASSERT("walking the former Ashen portal tile stays in town", game.location == game.last_town_visited && !game.portal_active);
+    test_restore_cached_floor(&game);
+    ASSERT("the archived Ashen floor retains its original stage and position", game.location == LOCATION_ASHEN && game.level == 3 && game.player.x == x && game.player.y == y);
     if (game.location != LOCATION_ASHEN) {
         remove("saves/savegame_99131.json");
         return;
@@ -149,7 +152,9 @@ static void test_travel_and_saves(void) {
         game.player.y = 12;
         action_resolve_player(&game, (Action){ACTION_MOVE, 21, game.player.y});
     }
-    ASSERT("stepping onto a saved return portal restores the volcanic stage and underlying paving", saved && game.location == LOCATION_ASHEN && game.level == 3 && game.player.x == x && game.player.y == y && game.map.tiles[y][x] == TILE_ASHEN_RUIN);
+    ASSERT("saved Ashen escapes cannot reopen a return trip", game.location == game.last_town_visited && !game.portal_active);
+    test_restore_cached_floor(&game);
+    ASSERT("the saved Ashen cache retains its stage and paving", saved && game.location == LOCATION_ASHEN && game.level == 3 && game.player.x == x && game.player.y == y && game.map.tiles[y][x] == TILE_ASHEN_RUIN);
     if (game.location != LOCATION_ASHEN) {
         remove("saves/savegame_99131.json");
         return;
@@ -158,11 +163,11 @@ static void test_travel_and_saves(void) {
         walk_edge(1);
     }
     walk_edge(1);
-    ASSERT("the living Cinder Lord blocks the final return exit", game.location == LOCATION_ASHEN && game.level == ASHEN_DEPTH);
+    ASSERT("the living optional Cinder Lord permits the final return departure", game.location == LOCATION_CASTLE && !(game.defeated_bosses & (1 << LOCATION_ASHEN)));
     game.portal_level = ASHEN_DEPTH + 1;
     game.portal_location = LOCATION_ASHEN;
     game.location = LOCATION_TOWN3;
-    game_use_town_portal(&game);
+    test_restore_cached_floor(&game);
     ASSERT("out-of-range volcanic portals cannot index past the cache", game.location == LOCATION_TOWN3);
     remove("saves/savegame_99131.json");
 }
@@ -242,6 +247,7 @@ static void test_migration(void) {
     cJSON_DeleteItemFromObject(root, "ashen_cache");
     cJSON_DeleteItemFromObject(root, "max_ashen_level_reached");
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 80);
+    test_mark_legacy_portal(root);
     buffer = cJSON_PrintUnformatted(root);
     file = fopen("saves/savegame_99131.json", "wb");
     fputs(buffer, file);

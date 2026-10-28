@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "../src/game/lich.h"
 #include "../src/systems/save_load.h"
@@ -258,6 +259,7 @@ static void test_rewards(void) {
     ASSERT("full floor capacity preserves every item and reserves reward in a reliquary", game.floor_item_count == MAX_FLOOR_ITEMS && game.floor_items[MAX_FLOOR_ITEMS - 1].item.type == ITEM_POTION_HEALTH && game.lich_reward_state == 1 && find_tile(TILE_LICH_RELIQUARY, &x, &y));
     game.player.x = x;
     game.player.y = y;
+    action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
     action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("full inventory cannot consume the reserved reward", game.lich_reward_state == 1 && game.map.tiles[y][x] == TILE_LICH_RELIQUARY);
     game.inventory_count--;
@@ -329,8 +331,8 @@ static void test_travel_and_capacity(void) {
     game.portal_y = game.player.y;
     game.portal_origin_tile = TILE_FLOOR;
     game.location = LOCATION_TOWN;
-    game_use_town_portal(&game);
-    ASSERT("return portal preserves a ring already warned on the cached floor", game.location == LOCATION_DUNGEON && game.enemies[0].boss_attack == LICH_RING && game.enemies[0].move_timer == 2 && game.enemies[0].attack_phase == 1 && game.enemies[0].boss_wave_used);
+    test_restore_cached_floor(&game);
+    ASSERT("escape cache preserves a ring already warned on the cached floor", game.location == LOCATION_DUNGEON && game.enemies[0].boss_attack == LICH_RING && game.enemies[0].move_timer == 2 && game.enemies[0].attack_phase == 1 && game.enemies[0].boss_wave_used);
 
     kill_with(0);
     // A fresh expedition discards floor loot but preserves an earned reward.
@@ -390,6 +392,7 @@ static int make_legacy_save(void) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 123);
+    test_mark_legacy_portal(root);
     cJSON_DeleteItemFromObject(root, "lich_reward_state");
     cJSON *arrays[2] = {cJSON_GetObjectItem(root, "enemies"),
         cJSON_GetObjectItem(cJSON_GetArrayItem(cJSON_GetObjectItem(root, "level_cache"), 4), "enemies")};
@@ -448,8 +451,8 @@ static void test_migration_and_layouts(void) {
     ok = make_legacy_save() && load_game(&loaded, 99176);
     ASSERT("migration protects hidden active and cached portal landings from new cover", ok && loaded.map.tiles[17][25] == TILE_FLOOR && loaded.level_cache[4].map.tiles[17][25] == TILE_FLOOR);
     loaded.location = LOCATION_TOWN;
-    game_use_town_portal(&loaded);
-    ASSERT("migrated portal returns to its exact saved coordinates", loaded.location == LOCATION_DUNGEON && loaded.player.x == 25 && loaded.player.y == 17);
+    test_restore_cached_floor(&loaded);
+    ASSERT("migrated archived floor reloads to its exact saved coordinates", loaded.location == LOCATION_DUNGEON && loaded.player.x == 25 && loaded.player.y == 17);
     game.portal_active = 0;
     game.defeated_bosses |= 1 << LOCATION_DUNGEON;
     game.enemies[0].active = 0;

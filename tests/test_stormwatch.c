@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/stormwatch.h"
 #include "game/approach.h"
@@ -84,6 +85,7 @@ static void legacy_version(int version) {
     cJSON *root = cJSON_Parse(buffer);
     free(buffer);
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), version);
+    test_mark_legacy_portal(root);
     if (version < 198) {
         cJSON_DeleteItemFromObject(root, "stormwatch");
         cJSON_DeleteItemFromObject(root, "stormwatch_defeated");
@@ -151,7 +153,11 @@ void test_stormwatch(void) {
         }
     }
     ASSERT("all five stages, exits, enemies and side props stay reachable across 30 seeds and both shutter settings", valid_spawns);
-    ASSERT("final departure is locked before victory", stormwatch_travel(g, g->map.stairs_down_x, 0) && g->location == LOCATION_STORMWATCH);
+    ASSERT("final departure stays open while the optional Matriarch lives", stormwatch_travel(g, g->map.stairs_down_x, 0) && g->location == LOCATION_APPROACH && !g->stormwatch_defeated);
+    stormwatch_enter(g, 0);
+    for (int level = 1; level < STORM_DEPTH; level++) {
+        stormwatch_change_level(g, 1);
+    }
     int gold = g->gold;
     stormwatch_defeat(g);
     stormwatch_defeat(g);
@@ -284,9 +290,9 @@ void test_stormwatch(void) {
     ASSERT("save retains warning mask, exact clock, brace and dropped loot", loaded->location == LOCATION_STORMWATCH && loaded->stormwatch[0].phase[0] == 2 && loaded->stormwatch[0].braced &&
         !memcmp(loaded->stormwatch[0].warned, g->stormwatch[0].warned, sizeof(g->stormwatch[0].warned)) && loaded->floor_item_count == 1 && loaded->floor_items[0].underlying_tile == TILE_STORM_GRASS);
     game_open_town_portal(loaded);
-    ASSERT("Return to Town uses last town visited", loaded->location == LOCATION_TOWN2 && loaded->portal_active && loaded->return_portal_town == LOCATION_TOWN2);
+    ASSERT("Return to Town uses last town visited", loaded->location == LOCATION_TOWN2 && !loaded->portal_active && loaded->return_portal_town == LOCATION_TOWN2);
     ASSERT("away expedition saves", save_game(loaded, STORM_SLOT) && load_game(g, STORM_SLOT));
-    game_use_town_portal(g);
+    test_restore_cached_floor(g);
     ASSERT("portal restores the expedition with wind and loot intact", g->location == LOCATION_STORMWATCH && g->player.x == 24 && g->player.y == 24 && g->stormwatch[0].phase[0] == 2 && g->floor_item_count == 1 && g->gold == 777);
     wind_fixture(g);
     stormwatch_advance_wind(g, STORM_WIND_STEP_MS);
@@ -344,6 +350,8 @@ void test_stormwatch(void) {
     g->player.y = 18;
     int before = g->gold;
     stormwatch_interact(g);
+    ASSERT("opening watch supplies spills gold without collecting it", g->gold == before);
+    action_resolve_player(g, (Action){ACTION_PICK_UP, 0, 0});
     int after = g->gold;
     stormwatch_interact(g);
     ASSERT("optional supply chest grants gold once per expedition", after > before && g->gold == after && g->map.tiles[17][8] == TILE_STORM_EMPTY);
@@ -361,10 +369,10 @@ void test_stormwatch(void) {
     gargoyle.move_timer = -1;
     gargoyle.defense = 1;
     ASSERT("gargoyle is vulnerable throughout recovery", stormwatch_defense(&gargoyle, 21, 20) == 1);
-    g->portal_active = 1;
+    g->portal_active = 0;
     g->portal_location = LOCATION_DUNGEON;
     stormwatch_enter(g, 0);
-    ASSERT("fresh Stormwatch entry preserves another region's portal", g->portal_active && g->portal_location == LOCATION_DUNGEON);
+    ASSERT("fresh Stormwatch entry cannot create another region's return portal", !g->portal_active && g->portal_location == LOCATION_DUNGEON);
     g->debug_passages_unlocked = 1;
     while (g->level < STORM_DEPTH) {
         stormwatch_change_level(g, 1);

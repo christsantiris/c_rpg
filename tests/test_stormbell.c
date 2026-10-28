@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/stormbell.h"
 #include "game/stormwatch.h"
@@ -68,6 +69,7 @@ static int rewrite(const char *field, double value, int old) {
     }
     if (old) {
         cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 205);
+    test_mark_legacy_portal(root);
         const char *keys[] = {"stormbell_quest_state", "stormbell_progress", "stormbell_phase", "stormbell_guards"};
         for (int i = 0; i < 4; i++) {
             cJSON_DeleteItemFromObject(root, keys[i]);
@@ -174,10 +176,10 @@ void test_stormbell(void) {
     first = guard(g, 0);
     ASSERT("backtracking preserves the finite encounter", first >= 0 && g->enemies[first].hp == 7 && !g->enemies[guard(g, 1)].active);
     game_open_town_portal(g);
-    ASSERT("a town portal preserves the defense", g->portal_active && g->portal_location == LOCATION_STORMWATCH && g->stormbell_phase == 1);
-    game_use_town_portal(g);
+    ASSERT("a escape cache preserves the defense", !g->portal_active && g->portal_location == LOCATION_STORMWATCH && g->stormbell_phase == 1);
+    test_restore_cached_floor(g);
     first = guard(g, 0);
-    ASSERT("portal return preserves wounded Raiders", g->location == LOCATION_STORMWATCH && g->level == 4 && first >= 0 && g->enemies[first].hp == 7);
+    ASSERT("archived floor reload preserves wounded Raiders", g->location == LOCATION_STORMWATCH && g->level == 4 && first >= 0 && g->enemies[first].hp == 7);
     stormwatch_leave(g);
     stormwatch_enter(g, 0);
     stormwatch_change_level(g, 1);
@@ -293,7 +295,7 @@ void test_stormbell(void) {
     g->floor_items[0] = (FloorItem){.active = 1, .x = 43, .y = 10, .underlying_tile = TILE_STORM_STONE, .item = item_make_staff()};
     g->map.tiles[10][43] = TILE_ITEM;
     game_open_town_portal(g);
-    ASSERT("cached missing-boss saves can migrate with loot and a portal", save_game(g, BELL_SLOT) && rewrite(NULL, 0, 1) && load_game(loaded, BELL_SLOT) && loaded->portal_active && loaded->stormwatch[4].loot[0].active);
+    ASSERT("cached missing-boss saves can migrate with loot and a portal", save_game(g, BELL_SLOT) && rewrite(NULL, 0, 1) && load_game(loaded, BELL_SLOT) && !loaded->portal_active && loaded->stormwatch[4].loot[0].active);
     bosses = 0;
     int on_loot = 0;
     for (int n = 0; n < loaded->stormwatch[4].enemy_count; n++) {

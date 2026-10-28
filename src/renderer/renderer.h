@@ -55,14 +55,18 @@ typedef struct {
     SDL_Texture *stormbell_texture;
     SDL_Texture *swamp_entrance_texture;
     SDL_Texture *area_entrance_textures[TOWN_EXIT_GIANTS + 1];
-    SDL_Texture *town_gate_textures[TOWN_EXIT_GLASSDEEP + 1];
+    SDL_Texture *town_gate_texture;
+    SDL_Texture *loot_chest_texture;
+    SDL_Texture *road_checkpoint_texture;
+    SDL_Texture *road_bank_texture;
     SDL_Texture *town_textures[5]; // Indexed by town_road_index().
     SDL_Texture *castle_texture;
     SDL_Texture *apothecary_texture;
     SDL_Texture *guild_texture;
     SDL_Texture *workshop_texture;
     SDL_Texture *town_hall_texture;
-    SDL_Texture *local_building_textures[4];
+    SDL_Texture *local_building_textures[5];
+    SDL_Texture *alehouse_cask_texture;
     SDL_Texture *island_texture;
     SDL_Texture *island_temple_texture;
     SDL_Texture *island_ship_texture;

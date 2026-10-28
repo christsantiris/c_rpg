@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include "spell.h"
 #include "controls.h"
+#include "container_state.h"
 #include <SDL2/SDL.h>
 
 #define MAX_MESSAGES 3
@@ -173,7 +174,8 @@ typedef enum {
     LOCATION_STORMWATCH,
     LOCATION_IRONFANG,
     LOCATION_CROWNROAD_NORTH,
-    LOCATION_GIANTS_CROWN
+    LOCATION_GIANTS_CROWN,
+    LOCATION_ALEHOUSE
 } Location;
 
 // Elderwood uses only its own bounds; compact caches avoid allocating the
@@ -384,6 +386,8 @@ typedef struct {
     int       rook_quest_completions;
     FloorItem floor_items[MAX_FLOOR_ITEMS];
     int       floor_item_count;
+    LootContainer loot_containers[MAX_LOOT_CONTAINERS];
+    int loot_container_count;
     TrailTile trail[MAX_TRAIL];
     int       trail_count;
     int       trail_frames;
@@ -399,7 +403,7 @@ typedef struct {
     int goblin_king_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
     int necromancer_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
     int lich_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
-    int portal_active;
+    int portal_active; // Retired return anchor; migration clears this flag.
     int portal_level;
     Location portal_location;
     int portal_x, portal_y;
@@ -577,7 +581,7 @@ void game_update_level_progress(GameState *g);
 void game_return_to_town(GameState *g);
 void game_return_to_approach(GameState *g);
 void game_open_town_portal(GameState *g);
-void game_use_town_portal(GameState *g);
+void game_close_town_portal(GameState *g);
 void game_hide_portal_destination(GameState *g);
 void game_talk_to_elowen(GameState *g);
 void game_talk_to_dain(GameState *g);

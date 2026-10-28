@@ -1,7 +1,10 @@
+#include "coast_exits.h"
+#include "boss_gates.h"
 #include "giants_crown.h"
 #include "ironfang.h"
 #include "crownroad_north.h"
 #include "game.h"
+#include "containers.h"
 #include "mangrove.h"
 #include "stormwatch.h"
 #include "coastal_travel.h"
@@ -91,6 +94,7 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
     e->is_boss = 0;
     e->dain_fragment = 0;
     e->frozen_turns = 0;
+    e->poison_turns = 0;
     e->attack_target_x = -1;
     e->attack_target_y = -1;
     e->move_timer = 0;
@@ -112,7 +116,6 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
         case ENEMY_HARPY_STORMCALLER:
         case ENEMY_STORM_ELEMENTAL:
         case ENEMY_TEMPEST_MATRIARCH:
-        case ENEMY_BRIAR_WOLF:
         case ENEMY_IRONHIDE_BOAR:
         case ENEMY_THORN_DRYAD:
         case ENEMY_TREEFOLK:
@@ -212,11 +215,6 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             snprintf(e->name, sizeof(e->name), "Horseman");
             e->max_hp = 52; e->hp = 52;
             e->attack = 13; e->defense = 4; e->experience = 60;
-            break;
-        case ENEMY_ICE_WOLF:
-            snprintf(e->name, sizeof(e->name), "Ice Wolf");
-            e->max_hp = 30; e->hp = 30;
-            e->attack = 10; e->defense = 2; e->experience = 32;
             break;
         case ENEMY_FROST_ARCHER:
             snprintf(e->name, sizeof(e->name), "Frost Archer");
@@ -349,6 +347,13 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             strncpy(e->name, "Blighted Wolf", sizeof(e->name) - 1);
             e->max_hp = 14; e->hp = 14; e->attack = 6; e->defense = 1;
             e->experience = 14;
+            if (g->location == LOCATION_FROSTFELL) {
+                e->max_hp = 30;
+                e->hp = 30;
+                e->attack = 10;
+                e->defense = 2;
+                e->experience = 32;
+            }
             break;
         case ENEMY_GIANT_SPIDER:
             strncpy(e->name, "Giant Spider", sizeof(e->name) - 1);
@@ -1285,21 +1290,21 @@ void enemies_spawn(GameState *g) {
         } else if (g->location == LOCATION_FROSTFELL) {
             // Each deeper stage adds one heavier kind of frost creature.
             if (g->level == 1) {
-                type = roll < 60 ? ENEMY_ICE_WOLF : ENEMY_FROST_ARCHER;
+                type = roll < 60 ? ENEMY_BLIGHTED_WOLF : ENEMY_FROST_ARCHER;
             } else if (g->level == 2) {
-                type = roll < 40 ? ENEMY_ICE_WOLF :
+                type = roll < 40 ? ENEMY_BLIGHTED_WOLF :
                     (roll < 70 ? ENEMY_FROST_ARCHER : ENEMY_YETI);
             } else if (g->level == 3) {
-                type = roll < 25 ? ENEMY_ICE_WOLF :
+                type = roll < 25 ? ENEMY_BLIGHTED_WOLF :
                     (roll < 50 ? ENEMY_FROST_ARCHER :
                     (roll < 75 ? ENEMY_YETI : ENEMY_FROST_WRAITH));
             } else if (g->level == 4) {
-                type = roll < 15 ? ENEMY_ICE_WOLF :
+                type = roll < 15 ? ENEMY_BLIGHTED_WOLF :
                     (roll < 35 ? ENEMY_FROST_ARCHER :
                     (roll < 55 ? ENEMY_YETI :
                     (roll < 80 ? ENEMY_FROST_WRAITH : ENEMY_ICE_GOLEM)));
             } else {
-                type = roll < 10 ? ENEMY_ICE_WOLF :
+                type = roll < 10 ? ENEMY_BLIGHTED_WOLF :
                     (roll < 25 ? ENEMY_FROST_ARCHER :
                     (roll < 40 ? ENEMY_YETI :
                     (roll < 60 ? ENEMY_FROST_WRAITH :
@@ -1434,6 +1439,7 @@ void enemies_spawn(GameState *g) {
 }
 
 void game_init(GameState *g) {
+    g->loot_container_count = 0;
     memset(g->giants_crown, 0, sizeof(g->giants_crown));
     g->giants_crown_defeated = 0;
     g->crown_quest_state = 0;
@@ -2646,7 +2652,7 @@ static void place_frostfell_quest_encounter(GameState *g) {
         }
     }
     for (int i = existing; i < 2; i++) {
-        EnemyType type = bit == FROSTFELL_JOURNAL_RECOVERED ? ENEMY_ICE_WOLF :
+        EnemyType type = bit == FROSTFELL_JOURNAL_RECOVERED ? ENEMY_BLIGHTED_WOLF :
             (i == 0 ? ENEMY_FROST_GIANT : ENEMY_FROST_ARCHER);
         if (!spawn_quest_guard(g, type, x, y, "Expedition Guardian")) {
             return;
@@ -2934,7 +2940,7 @@ typedef struct {
 
 static const GuildHunt guild_hunts[3] = {
     {LOCATION_FROSTFELL, HUNT_FROSTFELL_LEVEL, "Rimefang", "Rimefang Pack",
-        {ENEMY_ICE_WOLF, ENEMY_ICE_WOLF, ENEMY_ICE_WOLF, ENEMY_FROST_WRAITH}, 4, 0},
+        {ENEMY_BLIGHTED_WOLF, ENEMY_BLIGHTED_WOLF, ENEMY_BLIGHTED_WOLF, ENEMY_FROST_WRAITH}, 4, 0},
     {LOCATION_GLASSDEEP, HUNT_GLASSDEEP_LEVEL, "Shardwarden", "Shardwarden Stalker",
         {ENEMY_SHARD_GOLEM, ENEMY_BLIND_STALKER, ENEMY_BLIND_STALKER}, 3, 4},
     {LOCATION_DESERT, HUNT_SUNSCAR_LEVEL, "Dunehex", "Dunehex Mummy",
@@ -3090,6 +3096,8 @@ void game_refresh_quest_encounters(GameState *g) {
     if (beacon_placed) {
         spawn_mara_guardian(g);
     }
+    containers_restore(g);
+    coast_exits_repair(g);
 }
 
 static void generate_active_level(GameState *g) {
@@ -3206,6 +3214,7 @@ static void generate_active_level(GameState *g) {
         g->hunt_quest_encounters &= ~hunt_encounter_mask(hunt);
     }
     place_hunt_encounter(g);
+    coast_exits_repair(g);
     game_update_level_progress(g);
 }
 
@@ -3817,19 +3826,20 @@ void game_enter_dragonspine(GameState *g) {
 }
 
 int game_harbor_unlocked(const GameState *g) {
-    return g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_COAST)) != 0;
+    return boss_gate_open(g, LOCATION_COAST);
 }
 
 static void offer_rook_quest(GameState *g) {
     snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-        "Take the west gate toward Stillbury. The labyrinth is beside the Haunted Forest entrance. "
-        "Recover my ivory rook; beware false stairs and the Minotaur. Return here to Oakhaven's Tavern.");
+        "Take the road to Stillbury through Oakhaven's west gate. The labyrinth is beside the Haunted Forest entrance. "
+        "Recover my ivory rook from the Minotaur, then return to Oakhaven's Tavern.");
 }
 
 void game_refresh_debug_passages(GameState *g) {
     crown_quest_prepare(g);
     jail_refresh_hatch(g);
     coastal_refresh_docks(g);
+    boss_gate_refresh(g);
     if (!g->debug_passages_unlocked) {
         return;
     }
@@ -3886,123 +3896,6 @@ void game_refresh_debug_passages(GameState *g) {
     }
 }
 
-static void place_town_portal(GameState *g) {
-    if (!g->portal_active) {
-        return;
-    }
-    if (g->return_portal_town >= 0) {
-        if (g->location != g->return_portal_town) {
-            return;
-        }
-        Location anchor = LOCATION_TOWN;
-        switch (g->portal_location) {
-            case LOCATION_DUNGEON: anchor = g->dungeon_portal_town; break;
-            case LOCATION_FOREST: anchor = g->forest_portal_town; break;
-            case LOCATION_MOUNTAINS: anchor = g->mountain_portal_town; break;
-            case LOCATION_SWAMP: anchor = g->swamp_portal_town; break;
-            case LOCATION_ELDERWOOD:
-            case LOCATION_CATACOMBS: anchor = g->northern_portal_town; break;
-            case LOCATION_DESERT: anchor = LOCATION_TOWN2; break;
-            case LOCATION_GLASSDEEP: anchor = LOCATION_TOWN2; break;
-            case LOCATION_STORMWATCH:
-            case LOCATION_MANGROVES: anchor = LOCATION_DAWNMERE; break;
-            case LOCATION_FROSTFELL:
-            case LOCATION_GIANTS_CROWN: anchor = LOCATION_TOWN3; break;
-            case LOCATION_ASHEN: anchor = LOCATION_CASTLE; break;
-            case LOCATION_IRONFANG:
-            case LOCATION_DRAGONSPINE: anchor = LOCATION_TOWN4; break;
-            default: break;
-        }
-        if (anchor != g->location) {
-            g->map.tiles[12][21] = TILE_PORTAL;
-            return;
-        }
-    }
-    if ((g->portal_location == LOCATION_ELDERWOOD || g->portal_location == LOCATION_CATACOMBS) &&
-        g->location == g->northern_portal_town && (g->location == LOCATION_TOWN || g->location == LOCATION_CASTLE)) {
-        g->map.tiles[g->location == LOCATION_TOWN ? 2 : TOWN_H - 3][21] = TILE_PORTAL;
-        return;
-    }
-    if (g->location == LOCATION_CASTLE && g->portal_location == LOCATION_ASHEN) {
-        g->map.tiles[2][CASTLE_ASHEN_GATE_X + 1] = TILE_PORTAL;
-        return;
-    }
-    if (g->location == LOCATION_DAWNMERE) {
-        if (g->portal_location == LOCATION_DUNGEON && g->dungeon_portal_town == LOCATION_DAWNMERE) {
-            g->map.tiles[13][2] = TILE_PORTAL;
-        } else if (g->portal_location == LOCATION_STORMWATCH) {
-            g->map.tiles[12][TOWN_W - 3] = TILE_PORTAL;
-        } else if (g->portal_location == LOCATION_MANGROVES) {
-            g->map.tiles[TOWN_H - 3][21] = TILE_PORTAL;
-        } else if (g->portal_location == LOCATION_MOUNTAINS && g->mountain_portal_town == LOCATION_DAWNMERE) {
-            g->map.tiles[2][21] = TILE_PORTAL;
-        }
-        return;
-    }
-    if (g->location == LOCATION_TOWN4) {
-        if (g->portal_location == LOCATION_IRONFANG) {
-            g->map.tiles[12][TOWN_W - 3] = TILE_PORTAL;
-        } else if (g->portal_location == LOCATION_DRAGONSPINE) {
-            g->map.tiles[RIDGESHIRE_DRAGON_PORTAL_Y][RIDGESHIRE_DRAGON_PORTAL_X] = TILE_PORTAL;
-        } else if (g->portal_location == LOCATION_MOUNTAINS && g->mountain_portal_town == LOCATION_TOWN4) {
-            g->map.tiles[TOWN_H - 3][21] = TILE_PORTAL;
-        }
-        return;
-    }
-    if (g->location == LOCATION_TOWN2) {
-        if (g->portal_location == LOCATION_GLASSDEEP) {
-            g->map.tiles[TOWN_H - 3][21] = TILE_PORTAL;
-        } else if (g->portal_location == LOCATION_SWAMP && g->swamp_portal_town == LOCATION_TOWN2) {
-            g->map.tiles[2][21] = TILE_PORTAL;
-        } else if (g->portal_location == LOCATION_DESERT) {
-            g->map.tiles[12][2] = TILE_PORTAL;
-        } else if (g->portal_location == LOCATION_FOREST && g->forest_portal_town == LOCATION_TOWN2) {
-            g->map.tiles[13][TOWN_W - 3] = TILE_PORTAL;
-        }
-        return;
-    }
-    if (g->location == LOCATION_TOWN3) {
-        if (g->portal_location == LOCATION_GIANTS_CROWN || g->portal_location == LOCATION_ASHEN) {
-            g->map.tiles[ROSEMOOR_ASHEN_PORTAL_Y][ROSEMOOR_ASHEN_PORTAL_X] = TILE_PORTAL;
-        } else if (g->portal_location == LOCATION_CATACOMBS) {
-            g->map.tiles[TOWN3_KING_GATE_Y + 1][TOWN_W - 3] = TILE_PORTAL;
-        } else if (g->portal_location == LOCATION_FROSTFELL) {
-            g->map.tiles[2][20] = TILE_PORTAL;
-        } else if (g->portal_location == LOCATION_SWAMP && g->swamp_portal_town == LOCATION_TOWN3) {
-            g->map.tiles[TOWN_H - 3][21] = TILE_PORTAL;
-        }
-        return;
-    }
-    if (g->location != LOCATION_TOWN ||
-        (g->portal_location == LOCATION_DUNGEON && g->dungeon_portal_town != LOCATION_TOWN) ||
-        (g->portal_location == LOCATION_FOREST && g->forest_portal_town != LOCATION_TOWN) ||
-        (g->portal_location == LOCATION_MOUNTAINS && g->mountain_portal_town != LOCATION_TOWN) ||
-        g->portal_location == LOCATION_DRAGONSPINE ||
-        g->portal_location == LOCATION_SWAMP ||
-        g->portal_location == LOCATION_DESERT ||
-        g->portal_location == LOCATION_ASHEN ||
-        g->portal_location == LOCATION_GLASSDEEP ||
-        g->portal_location == LOCATION_CATACOMBS ||
-        g->portal_location == LOCATION_FROSTFELL) {
-        return;
-    }
-    int x = 21;
-    int y = 2;
-    if (g->portal_location == LOCATION_FOREST) {
-        x = 2;
-        y = 13;
-    } else if (g->portal_location == LOCATION_DUNGEON) {
-        x = TOWN_W - 3;
-        y = 13;
-    } else if (g->portal_location == LOCATION_COAST) {
-        x = 21;
-        y = TOWN_H - 3;
-    } else if (g->portal_location == LOCATION_TEMPLE) {
-        x = 21;
-        y = TOWN_H - 3;
-    }
-    g->map.tiles[y][x] = TILE_PORTAL;
-}
 
 void game_enter_tavern(GameState *g) {
     int spawn_x;
@@ -4032,7 +3925,6 @@ void game_leave_tavern(GameState *g) {
     g->floor_item_count = 0;
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
-    place_town_portal(g);
     push_message(g, "You step back into town.");
 }
 
@@ -4054,7 +3946,6 @@ void game_enter_town2(GameState *g) {
     map_generate_town2(&g->map, &spawn_x, &spawn_y);
     map_set_town3_road(&g->map, g->defeated_bosses & (1 << LOCATION_SWAMP));
     map_set_stillbury_forest_road(&g->map, g->defeated_bosses & (1 << LOCATION_FOREST));
-    place_town_portal(g);
     g->player.x = spawn_x;
     g->player.y = spawn_y;
     g->enemy_count = 0;
@@ -4090,8 +3981,7 @@ void game_leave_forest_road(GameState *g, Location destination) {
         map_generate_town2(&g->map, &spawn_x, &spawn_y);
         map_set_town3_road(&g->map, g->defeated_bosses & (1 << LOCATION_SWAMP));
         map_set_stillbury_forest_road(&g->map, g->defeated_bosses & (1 << LOCATION_FOREST));
-        place_town_portal(g);
-        g->player.x = TOWN_W - 2;
+            g->player.x = TOWN_W - 2;
         g->player.y = 12;
     } else {
         map_generate_town(&g->map, &spawn_x, &spawn_y);
@@ -4099,8 +3989,7 @@ void game_leave_forest_road(GameState *g, Location destination) {
             g->defeated_bosses & (1 << LOCATION_FOREST));
         map_set_town4_road(&g->map,
             g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
-        place_town_portal(g);
-        g->player.x = 1;
+            g->player.x = 1;
         g->player.y = 12;
     }
     g->enemy_count = 0;
@@ -4263,7 +4152,6 @@ void game_leave_crownroad(GameState *g, Location destination) {
     g->floor_item_count = 0;
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
-    place_town_portal(g);
     push_message(g, destination == LOCATION_CASTLE ?
         "You reach the grounds of the Castle of No Return." :
         (destination == LOCATION_TOWN4 ? "You return to Ridgeshire." : "You return to Rosemoor."));
@@ -4298,9 +4186,12 @@ void game_enter_guild(GameState *g) {
     push_message(g, "You enter the Adventurer's Guild.");
 }
 
-void town_life_enter(GameState *g) {
+void town_life_enter(GameState *g, int x, int y) {
     const TownBuilding *b = town_life_building(g->location);
-    if (!b || b->town != g->location) {
+    while (b && b->town == g->location && (x != b->x + b->w / 2 || y != b->y + b->h - 1)) {
+        b = town_life_next_building(g->location, b);
+    }
+    if (!b || b->town != g->location || g->map.tiles[y][x] != TILE_LOCAL_DOOR) {
         return;
     }
     g->location = b->interior;
@@ -4323,20 +4214,17 @@ void town_life_leave(GameState *g) {
     } else if (b->town == LOCATION_DAWNMERE) {
         g->location = LOCATION_DAWNMERE;
         map_generate_dawnmere(&g->map, &g->player.x, &g->player.y);
-        place_town_portal(g);
-    } else if (b->town == LOCATION_TOWN2) {
+        } else if (b->town == LOCATION_TOWN2) {
         game_leave_inn(g);
     } else if (b->town == LOCATION_TOWN3) {
         g->location = LOCATION_TOWN3;
         map_generate_town3(&g->map, &g->player.x, &g->player.y);
         map_set_rosemoor_swamp_road(&g->map, g->defeated_bosses & (1 << LOCATION_SWAMP));
-        place_town_portal(g);
-    } else {
+        } else {
         g->location = LOCATION_TOWN4;
         map_generate_town4(&g->map, &g->player.x, &g->player.y);
         map_set_ridgeshire_mountain_road(&g->map, g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
-        place_town_portal(g);
-    }
+        }
     g->player.x = b->x + b->w / 2;
     g->player.y = b->y + b->h;
     g->dialogue_active = 0;
@@ -4360,7 +4248,6 @@ void game_leave_workshop(GameState *g) {
     map_set_ridgeshire_mountain_road(&g->map, g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
     g->player.x = TOWN4_WORKSHOP_DOOR_X;
     g->player.y = TOWN4_WORKSHOP_DOOR_Y + 1;
-    place_town_portal(g);
     g->enemy_count = 0;
     g->floor_item_count = 0;
     g->dialogue_active = 0;
@@ -4382,7 +4269,6 @@ void game_leave_town_hall(GameState *g) {
     map_set_ridgeshire_mountain_road(&g->map, g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
     g->player.x = TOWN4_HALL_DOOR_X;
     g->player.y = TOWN4_HALL_DOOR_Y + 1;
-    place_town_portal(g);
     g->enemy_count = 0;
     g->floor_item_count = 0;
     g->dialogue_active = 0;
@@ -4710,7 +4596,7 @@ void game_talk_to_brenna(GameState *g) {
     } else if (g->frostfell_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, g->frostfell_quest_progress & FROSTFELL_JOURNAL_RECOVERED ?
             "The journal says Surveyor Fen survived. Find him on Frostfell stage 4, defeat his captors, and speak to him. Return here for 100 gold." :
-            "Recover the journal guarded by Ice Wolves on Frostfell stage 2. Press A beside it, then find Surveyor Fen on stage 4. Return here for 100 gold.");
+            "Recover the journal guarded by Blighted Wolves on Frostfell stage 2. Press A beside it, then find Surveyor Fen on stage 4. Return here for 100 gold.");
     } else if (g->frostfell_quest_state == 2) {
         g->frostfell_quest_state = 3;
         g->gold += FROSTFELL_REWARD_GOLD;
@@ -4859,7 +4745,6 @@ void game_leave_inn(GameState *g) {
     map_generate_town2(&g->map, &spawn_x, &spawn_y);
     map_set_town3_road(&g->map, g->defeated_bosses & (1 << LOCATION_SWAMP));
     map_set_stillbury_forest_road(&g->map, g->defeated_bosses & (1 << LOCATION_FOREST));
-    place_town_portal(g);
     g->player.x = TOWN_INN_DOOR_X;
     g->player.y = TOWN_INN_DOOR_Y + 1;
     g->enemy_count = 0;
@@ -5496,7 +5381,6 @@ static void return_to_town(GameState *g, Location destination) {
     g->player.frozen_turns = 0;
     g->player.freeze_recovery = 0;
     g->dialogue_active = 0;
-    place_town_portal(g);
     game_recover_retired_items(g);
 }
 
@@ -5795,6 +5679,8 @@ void game_open_town_portal(GameState *g) {
         g->location != LOCATION_MOUNTAINS &&
         g->location != LOCATION_COAST &&
         g->location != LOCATION_TEMPLE &&
+        g->location != LOCATION_LABYRINTH &&
+        g->location != LOCATION_ISLAND &&
         g->location != LOCATION_SWAMP &&
         g->location != LOCATION_FROSTFELL &&
         g->location != LOCATION_DESERT &&
@@ -5810,12 +5696,12 @@ void game_open_town_portal(GameState *g) {
         g->location != LOCATION_DRAGONSPINE) {
         return;
     }
-    game_hide_portal_destination(g);
+    game_close_town_portal(g);
     if (g->location == LOCATION_DESERT || g->location == LOCATION_ASHEN || g->location == LOCATION_GLASSDEEP ||
         g->location == LOCATION_CATACOMBS) {
         clear_floor_loot(g);
     }
-    g->portal_active = 1;
+    g->portal_active = 0;
     g->portal_level = g->level;
     g->portal_location = g->location;
     if (g->location == LOCATION_DUNGEON) {
@@ -5835,7 +5721,7 @@ void game_open_town_portal(GameState *g) {
     g->portal_origin_tile = g->map.tiles[g->player.y][g->player.x];
     g->return_portal_town = town_road_index(g->last_town_visited) >= 0 ? g->last_town_visited : LOCATION_TOWN;
     return_to_town(g, g->return_portal_town);
-    push_message(g, "A return portal remains open in the last town you visited.");
+    push_message(g, "You escape to the last town visited. No return portal remains.");
 }
 
 void game_hide_portal_destination(GameState *g) {
@@ -5908,6 +5794,11 @@ void game_hide_portal_destination(GameState *g) {
             return;
         }
         cache = g->temple_cache;
+    } else if (g->portal_location == LOCATION_LABYRINTH) {
+        if (g->portal_level > LABYRINTH_DEPTH) {
+            return;
+        }
+        cache = g->labyrinth_cache;
     }
     if (cache[g->portal_level - 1].valid &&
         cache[g->portal_level - 1].map.tiles[g->portal_y][g->portal_x] ==
@@ -5922,184 +5813,51 @@ void game_hide_portal_destination(GameState *g) {
     }
 }
 
-static int portal_landing_open(const GameState *g, int x, int y) {
-    if (!map_is_walkable(&g->map, x, y)) {
-        return 0;
-    }
-    for (int i = 0; i < g->enemy_count; i++) {
-        if (g->enemies[i].active && g->enemies[i].x == x &&
-            g->enemies[i].y == y) {
-            return 0;
-        }
-    }
-    const int dx[4] = {0, 1, 0, -1};
-    const int dy[4] = {-1, 0, 1, 0};
-    for (int i = 0; i < 4; i++) {
-        if (map_is_walkable(&g->map, x + dx[i], y + dy[i])) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-void game_use_town_portal(GameState *g) {
-    if (jail_blocks_portal(g)) {
-        return;
-    }
-    if (g->portal_location == LOCATION_CASTLE_INTERIOR) {
-        g->portal_active = 0;
-        push_message(g, "The castle has severed this portal.");
-        return;
-    }
-    if (!g->portal_active || g->portal_level < 1 ||
-        g->portal_level > MAX_REGION_DEPTH) return;
-    if (g->portal_location == LOCATION_CROWNROAD_NORTH && g->portal_level == 1) {
-        northroad_enter(g, 0, 1);
-        return;
-    }
-    if (g->portal_location == LOCATION_GIANTS_CROWN && g->portal_level <= GIANTS_DEPTH) {
-        giants_enter(g, 1);
-        return;
-    }
-    if (g->portal_location == LOCATION_IRONFANG && g->portal_level <= IRON_DEPTH) {
-        ironfang_enter(g, 1);
-        return;
-    }
-    if (g->portal_location == LOCATION_STORMWATCH && g->portal_level <= STORM_DEPTH) {
-        stormwatch_enter(g, 1);
-        return;
-    }
-    if (g->portal_location == LOCATION_ELDERWOOD) {
-        elderwood_portal(g);
-        return;
-    }
-    if (g->portal_location == LOCATION_MANGROVES && g->portal_level >= 1 && g->portal_level <= MANGROVE_DEPTH) {
-        mangrove_enter(g, 1);
-        return;
-    }
-    if (g->portal_location == LOCATION_CATACOMBS) {
-        g->catacombs_entry_town = g->northern_portal_town == LOCATION_TOWN ? LOCATION_TOWN : LOCATION_CASTLE;
-    }
-    int level = g->portal_level;
-    LevelCache *cache = g->level_cache;
-    if (g->portal_location == LOCATION_FOREST) {
-        cache = g->forest_cache;
-    } else if (g->portal_location == LOCATION_MOUNTAINS) {
-        cache = g->mountain_cache;
-    } else if (g->portal_location == LOCATION_COAST) {
-        if (g->portal_level > COAST_DEPTH) {
-            return;
-        }
-        cache = g->coast_cache;
-    } else if (g->portal_location == LOCATION_DUNGEON) {
-        if (g->portal_level > DUNGEON_DEPTH) {
-            return;
-        }
-    } else if (g->portal_location == LOCATION_SWAMP) {
-        cache = g->swamp_cache;
-    } else if (g->portal_location == LOCATION_DRAGONSPINE) {
-        cache = g->dragonspine_cache;
-    } else if (g->portal_location == LOCATION_FROSTFELL) {
-        cache = g->frostfell_cache;
-    } else if (g->portal_location == LOCATION_DESERT) {
-        if (level > DESERT_DEPTH) {
-            return;
-        }
-        cache = g->desert_cache;
-    } else if (g->portal_location == LOCATION_ASHEN) {
-        if (g->portal_level > ASHEN_DEPTH) {
-            return;
-        }
-        cache = g->ashen_cache;
-    } else if (g->portal_location == LOCATION_CATACOMBS) {
-        if (g->portal_level > CATACOMBS_DEPTH) {
-            return;
-        }
-        cache = g->catacombs_cache;
-    } else if (g->portal_location == LOCATION_GLASSDEEP) {
-        if (g->portal_level > GLASSDEEP_DEPTH) {
-            return;
-        }
-        cache = g->glassdeep_cache;
-    } else if (g->portal_location == LOCATION_TEMPLE) {
-        if (g->portal_level > TEMPLE_DEPTH) {
-            return;
-        }
-        cache = g->temple_cache;
-    }
-    if (!cache[level - 1].valid) return;
-
-    if (g->portal_location == LOCATION_FROSTFELL || g->portal_location == LOCATION_DESERT ||
-        g->portal_location == LOCATION_ASHEN ||
-        g->portal_location == LOCATION_GLASSDEEP || g->portal_location == LOCATION_CATACOMBS) {
-        clear_floor_loot(g);
-    }
-    g->location = g->portal_location;
-    if (g->location == LOCATION_DUNGEON) {
-        g->dungeon_entry_town = g->dungeon_portal_town;
-    } else if (g->location == LOCATION_FOREST) {
-        g->forest_entry_town = g->forest_portal_town;
-    } else if (g->location == LOCATION_SWAMP) {
-        g->swamp_entry_town = g->swamp_portal_town;
-    } else if (g->location == LOCATION_MOUNTAINS) {
-        g->mountain_entry_town = g->mountain_portal_town;
-    }
-    g->level = level;
-    g->map = cache[level - 1].map;
-    g->enemy_count = cache[level - 1].enemy_count;
-    g->level_cleared = cache[level - 1].level_cleared;
-    for (int i = 0; i < g->enemy_count; i++)
-        g->enemies[i] = cache[level - 1].enemies[i];
-    game_refresh_quest_encounters(g);
-    sync_temple_floor_state(g);
-    int landing_x = g->portal_x;
-    int landing_y = g->portal_y;
-    if (landing_x >= 0 && landing_x < MAP_W &&
-        landing_y >= 0 && landing_y < MAP_H &&
-        g->map.tiles[landing_y][landing_x] == TILE_PORTAL) {
-        g->map.tiles[landing_y][landing_x] = g->portal_origin_tile;
-    }
-    if (!portal_landing_open(g, landing_x, landing_y)) {
-        landing_x = g->map.stairs_up_x;
-        landing_y = g->map.stairs_up_y;
-        if (!portal_landing_open(g, landing_x, landing_y)) {
-            g->portal_active = 0;
-            game_return_to_town(g);
-            push_message(g, "No safe ground beyond the portal.");
-            return;
-        }
-        push_message(g, "The portal returns you at the entrance.");
-    } else {
-        push_message(g, "Returned through the portal.");
-    }
-    g->player.x = landing_x;
-    g->player.y = landing_y;
-    desert_pharaoh_cancel_landing(g, landing_x, landing_y);
-
-    cinder_lord_cancel_landing(g, landing_x, landing_y);
-    regional_terrain_cancel_landing(g, landing_x, landing_y);
-    prism_sovereign_cancel_landing(g, landing_x, landing_y);
-    sun_guardian_cancel_landing(g, landing_x, landing_y);
-    red_dragon_cancel_landing(g, landing_x, landing_y);
-    if (g->location == LOCATION_CATACOMBS) {
-        // Portal wards prevent a saved warning from striking immediately on arrival.
-        for (int i = 0; i < g->map.burial_trap_count; i++) {
-            BurialTrap *trap = &g->map.burial_traps[i];
-            if (trap->timer > 0 && catacombs_trap_marks(&g->map, trap, landing_x, landing_y)) {
-                trap->timer = 0;
-                trap->spent = 1;
-            }
-        }
-        for (int i = 0; i < g->enemy_count; i++) {
-            Enemy *e = &g->enemies[i];
-            if (e->type == ENEMY_GRAVE_MARSHAL) {
-                grave_marshal_cancel_landing(g, e, landing_x, landing_y);
-            }
-        }
-    }
-    cache[level - 1].map = g->map;
+void game_close_town_portal(GameState *g) {
+    game_hide_portal_destination(g);
     g->portal_active = 0;
+    if (town_road_index(g->location) < 0 && g->location != LOCATION_CASTLE) {
+        return;
+    }
+    int found = 0;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            found |= g->map.tiles[y][x] == TILE_PORTAL;
+        }
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        found |= g->floor_items[i].active && g->floor_items[i].underlying_tile == TILE_PORTAL;
+    }
+    if (!found) {
+        return;
+    }
+    Map town;
+    int x;
+    int y;
+    switch (g->location) {
+        case LOCATION_TOWN2: map_generate_town2(&town, &x, &y); break;
+        case LOCATION_TOWN3: map_generate_town3(&town, &x, &y); break;
+        case LOCATION_TOWN4: map_generate_town4(&town, &x, &y); break;
+        case LOCATION_DAWNMERE: map_generate_dawnmere(&town, &x, &y); break;
+        case LOCATION_CASTLE: map_generate_castle(&town, &x, &y); break;
+        default: map_generate_town(&town, &x, &y); break;
+    }
+    for (int py = 0; py < MAP_H; py++) {
+        for (int px = 0; px < MAP_W; px++) {
+            if (g->map.tiles[py][px] == TILE_PORTAL) {
+                g->map.tiles[py][px] = town.tiles[py][px];
+            }
+        }
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && item->underlying_tile == TILE_PORTAL && item->x >= 0 && item->x < MAP_W && item->y >= 0 && item->y < MAP_H) {
+            item->underlying_tile = town.tiles[item->y][item->x];
+            g->map.tiles[item->y][item->x] = TILE_ITEM;
+        }
+    }
 }
+
 
 void game_talk_to_bram(GameState *g) {
     g->dialogue_active = 1;
@@ -6365,7 +6123,7 @@ static const QuestOffer quest_offers[] = {
     {"Huntmaster Selene", LOCATION_GUILD, offsetof(GameState, hunt_quest_state), 0, "Assigned: The Three Great Hunts. See your quest journal."},
     {"Marshal Veyra", LOCATION_TOWN_HALL, offsetof(GameState, watchfire_quest_state), 0, "Assigned: Watchfires of Ridgeshire. See your quest journal."},
     {"Elowen", LOCATION_TAVERN, offsetof(GameState, elowen_quest_state), 0, "Quest assigned: The Broken Seals."},
-    {"Dain", LOCATION_TOWN4, offsetof(GameState, dain_quest_state), 0, "Assigned: Recover the Treasure Map."},
+    {"Dain", LOCATION_ALEHOUSE, offsetof(GameState, dain_quest_state), 0, "Assigned: Recover the Treasure Map."},
     {"Alder", LOCATION_INN, offsetof(GameState, alder_quest_state), 0, "Assigned: The Lost Wardens."},
     {"Mara", LOCATION_TAVERN, offsetof(GameState, mara_quest_state), 0, "Assigned: Relight the Drowned Beacons."},
     {"Rook", LOCATION_TAVERN, offsetof(GameState, rook_quest_state), 0, "Assigned: The Ivory Rook."},
@@ -6457,7 +6215,7 @@ int game_handle_quest_offer_key(GameState *g, int key, int repeat) {
     }
     push_message(g, offer->message);
     if (state == &g->rook_quest_state) {
-        push_message(g, "The labyrinth across from the witch's hut is now open.");
+        push_message(g, "The labyrinth on the road to Stillbury is now open.");
     }
     return 1;
 }
@@ -6630,17 +6388,17 @@ void game_talk_to_elowen(GameState *g) {
 }
 
 void game_talk_to_dain(GameState *g) {
-    if (g->location != LOCATION_TOWN4 || abs(g->player.x - DAIN_TOWN_X) > 1 || abs(g->player.y - DAIN_TOWN_Y) > 1) {
+    if (g->location != LOCATION_ALEHOUSE || abs(g->player.x - DAIN_ALEHOUSE_X) > 1 || abs(g->player.y - DAIN_ALEHOUSE_Y) > 1) {
         return;
     }
     g->dialogue_active = 1;
     strncpy(g->dialogue_speaker, "Dain", MAX_SPEAKER_LEN - 1);
     g->dialogue_speaker[MAX_SPEAKER_LEN - 1] = '\0';
-    g->dialogue_x = DAIN_TOWN_X;
-    g->dialogue_y = DAIN_TOWN_Y;
+    g->dialogue_x = DAIN_ALEHOUSE_X;
+    g->dialogue_y = DAIN_ALEHOUSE_Y;
     if (g->dain_quest_state == 0) {
         strncpy(g->dialogue_text,
-            "Enter Ridgeshire's south mountain gate. Map Bearers hold fragments on stages 2, 3, and 4 before the Goblin King. Return to Ridgeshire's town center.",
+            "Take Dawnmere's north gate into the Goblin Mountains. Map Bearers hold fragments on stages 2, 3, and 4 before the Goblin King. Return to Dawnmere's Alehouse.",
             MAX_DIALOGUE_LEN - 1);
         g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
         return;
@@ -6653,7 +6411,7 @@ void game_talk_to_dain(GameState *g) {
             }
         }
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "You have recovered %d of 3 fragments. Search mountain stages 2, 3, and 4. After the Goblin King, exit to the road north to Ridgeshire or south to Dawnmere. Return here to Ridgeshire's town center.",
+            "You have %d of 3 map fragments. Find Map Bearers on mountain stages 2, 3, and 4. The road leads north to Ridgeshire and south here. Return the fragments to Dawnmere's Alehouse.",
             defeated);
         char status[MAX_MESSAGE_LEN];
         snprintf(status, sizeof(status),
@@ -6702,7 +6460,7 @@ void game_record_dain_kill(GameState *g, EnemyType type) {
     push_message(g, status);
     if ((g->dain_map_fragments & 7) == 7) {
         g->dain_quest_state = 2;
-        push_message(g, "Treasure map complete. Return to Dain in Ridgeshire's town center.");
+        push_message(g, "Treasure map complete. Return to Dain in Dawnmere's Alehouse.");
     }
 }
 
@@ -6864,8 +6622,8 @@ void game_talk_to_rook(GameState *g) {
         offer_rook_quest(g);
     } else if (g->rook_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Find the labyrinth beside the forest road. One rune per floor opens the "
-            "Minotaur's vault. Defeat it, recover my ivory rook, and return to Oakhaven's Tavern.");
+            "Find the labyrinth on the west road to Stillbury by the Haunted Forest entrance. One rune per floor opens the "
+            "Minotaur's vault. Return my ivory rook to Oakhaven's Tavern.");
         push_message(g, "Rook is waiting for the ivory rook.");
     } else if (g->rook_quest_state == 2) {
         g->gold += ROOK_QUEST_REWARD;

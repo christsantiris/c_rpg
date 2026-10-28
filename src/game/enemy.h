@@ -63,8 +63,8 @@ typedef enum {
     ENEMY_FIRE_ELEMENTAL,
     ENEMY_ROAD_ARCHER,
     ENEMY_HORSEMAN,
-    ENEMY_ICE_WOLF,
-    ENEMY_FROST_ARCHER,
+    // Reserve the retired wolf variant ID.
+    ENEMY_FROST_ARCHER = ENEMY_HORSEMAN + 2,
     ENEMY_YETI,
     ENEMY_FROST_WRAITH,
     ENEMY_ICE_GOLEM,
@@ -96,8 +96,8 @@ typedef enum {
     ENEMY_CASTELLAN,
     ENEMY_ROYAL_ARCANIST,
     ENEMY_LORD_VEYR,
-    ENEMY_BRIAR_WOLF,
-    ENEMY_IRONHIDE_BOAR,
+    // Reserve the retired wolf variant ID.
+    ENEMY_IRONHIDE_BOAR = ENEMY_LORD_VEYR + 2,
     ENEMY_THORN_DRYAD,
     ENEMY_TREEFOLK,
     ENEMY_ELDERTHORN,
@@ -137,6 +137,7 @@ typedef struct {
     int       is_boss;
     int       dain_fragment;
     int       frozen_turns;
+    int poison_turns;
     int attack_target_x, attack_target_y;
     int revived;
     int revive_timer;

@@ -202,7 +202,7 @@ int jail_recover_gear(GameState *g) {
         g->jail_gear_state = 3;
         push_message(g, "Completed: Recover Your Equipment. Every confiscated item is back in your pack.");
     } else {
-        push_message(g, "Make room in your pack, then interact again. Unclaimed gear stays safely in the chest.");
+        push_message(g, "Make room in your pack, then Pick Up again. Unclaimed gear stays safely on the ground.");
     }
     return 1;
 }

@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/game.h"
 #include "screens/quest_journal.h"
@@ -83,9 +84,9 @@ static void test_expedition(void) {
     game_descend(&game);
     int x = -1;
     int y = -1;
-    ASSERT("stage two contains the expedition journal and two Ice Wolf guards", objective(TILE_FROST_JOURNAL, &x, &y) &&
-        guards(&game, 1) == 2 && game.enemies[game.enemy_count - 1].type == ENEMY_ICE_WOLF &&
-        game.enemies[game.enemy_count - 2].type == ENEMY_ICE_WOLF && game.frostfell_quest_encounters == 1);
+    ASSERT("stage two contains the expedition journal and two Blighted Wolf guards", objective(TILE_FROST_JOURNAL, &x, &y) &&
+        guards(&game, 1) == 2 && game.enemies[game.enemy_count - 1].type == ENEMY_BLIGHTED_WOLF &&
+        game.enemies[game.enemy_count - 2].type == ENEMY_BLIGHTED_WOLF && game.frostfell_quest_encounters == 1);
     if (x < 0) {
         return;
     }
@@ -175,8 +176,8 @@ static void test_revisits(void) {
     game_open_town_portal(&game);
     accept();
     ASSERT("acceptance preserves existing Frostfell caches, damage, and boss victory", game.frostfell_cache[1].valid &&
-        game.frostfell_cache[1].enemies[0].hp == 7 && game.portal_active && (game.defeated_bosses & (1 << LOCATION_FROSTFELL)));
-    game_use_town_portal(&game);
+        game.frostfell_cache[1].enemies[0].hp == 7 && !game.portal_active && (game.defeated_bosses & (1 << LOCATION_FROSTFELL)));
+    test_restore_cached_floor(&game);
     ASSERT("returning to an explored stage injects the encounter without resetting enemies", game.level == 2 &&
         game.enemies[0].hp == 7 && objective(TILE_FROST_JOURNAL, &x, &y) && guards(&game, 1) == 2);
     game_return_to_town(&game);
@@ -219,8 +220,8 @@ static void test_covered_portal(void) {
         load_game(&loaded, FROST_QUEST_SLOT) && loaded.portal_origin_tile == TILE_FROST_JOURNAL &&
         loaded.frostfell_cache[1].map.tiles[y][x] == TILE_FROST_JOURNAL);
     game = loaded;
-    game_use_town_portal(&game);
-    ASSERT("return portal preserves defeated guards and journal interaction", game.location == LOCATION_FROSTFELL &&
+    test_restore_cached_floor(&game);
+    ASSERT("escape cache preserves defeated guards and journal interaction", game.location == LOCATION_FROSTFELL &&
         game.level == 2 && !guards(&game, 1) && game_has_regional_interaction(&game));
     game_interact_frostfell(&game);
     game_return_to_town(&game);
@@ -306,6 +307,7 @@ static void test_legacy_save(void) {
     cJSON *root = cJSON_Parse(buffer);
     free(buffer);
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 90);
+    test_mark_legacy_portal(root);
     cJSON_DeleteItemFromObject(root, "frostfell_quest_state");
     cJSON_DeleteItemFromObject(root, "frostfell_quest_progress");
     cJSON_DeleteItemFromObject(root, "frostfell_quest_encounters");

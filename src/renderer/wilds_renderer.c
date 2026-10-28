@@ -9,18 +9,8 @@ void draw_wilds_tile(Renderer *r, const GameState *g, int sx, int sy, int x, int
     int py = sy * TILE_SIZE;
     unsigned int noise = (unsigned int)x * 73856093u ^ (unsigned int)y * 19349663u;
     if (tile == TILE_SWAMP_WATER) {
-        SDL_SetRenderDrawColor(r->sdl, 5, 22, 26, 255);
-        SDL_Rect water = {px, py, TILE_SIZE, TILE_SIZE};
-        SDL_RenderFillRect(r->sdl, &water);
-        int drift = (SDL_GetTicks() / 420 + noise % 4) % 4;
-        SDL_SetRenderDrawColor(r->sdl, 21, 52, 48, 255);
-        SDL_RenderDrawLine(r->sdl, px + 3 + drift, py + 7, px + 11 + drift, py + 7);
-        SDL_RenderDrawLine(r->sdl, px + 12 - drift, py + 18, px + 20 - drift, py + 18);
-        if (noise % 11 == 0) {
-            SDL_SetRenderDrawColor(r->sdl, 42, 74, 43, 255);
-            SDL_Rect lily = {px + 8, py + 10, 6, 3};
-            SDL_RenderFillRect(r->sdl, &lily);
-        }
+        // Keep deep bog impassable while restoring its dense, swaying vegetation.
+        draw_swamp_wall(r, sx, sy, x, y);
         return;
     }
     if (tile == TILE_SWAMP_REEDS) {

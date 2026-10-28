@@ -1,3 +1,5 @@
+#include "boss_gates.h"
+#include "containers.h"
 #include "ironfang.h"
 #include "war_machine.h"
 #include "approach.h"
@@ -400,8 +402,7 @@ void ironfang_change_level(GameState *g, int forward) {
         return;
     }
     if ((!forward && g->level == 1) || (forward && g->level == IRON_DEPTH)) {
-        if (forward && !g->ironfang_defeated && !g->debug_passages_unlocked) {
-            push_message(g, "The Goblin Mine Boss holds the final departure. The entrance remains open behind you.");
+        if (forward && !boss_gate_crossing(g, LOCATION_IRONFANG)) {
             return;
         }
         ironfang_leave(g);
@@ -498,13 +499,15 @@ const char *ironfang_hint(const GameState *g) {
     if (war_machine_hint(g)) {
         return war_machine_hint(g);
     }
+    if (containers_hint(g)) {
+        return containers_hint(g);
+    }
     int x;
     int y;
     switch (nearby(g, &x, &y)) {
         case TILE_IRON_BROKEN: return "A: REPAIR TRACK";
         case TILE_IRON_SWITCH: return state->route ? "A: SET TRACK EAST" : "A: SET TRACK NORTH";
         case TILE_IRON_LAMP: return "A: RESTORE LAMP";
-        case TILE_IRON_CACHE: return "A: SEARCH WORKINGS";
         case TILE_IRON_CRACK: return "A: EXCAVATE PASSAGE";
         case TILE_IRON_WINCH: return "A: RELEASE ORE CART";
         default: break;
@@ -538,6 +541,9 @@ int ironfang_interact(GameState *g) {
     if (war_machine_interact(g)) {
         return 1;
     }
+    if (containers_hint(g)) {
+        return containers_interact(g);
+    }
     TileType tile = nearby(g, &x, &y);
     if (tile == TILE_IRON_SWITCH) {
         state->route = !state->route;
@@ -556,13 +562,7 @@ int ironfang_interact(GameState *g) {
         }
         push_message(g, "The repaired lamp reveals the surrounding galleries on your map.");
     } else if (tile == TILE_IRON_CACHE) {
-        g->map.tiles[y][x] = TILE_IRON_EMPTY;
-        int gold = 15 + 5 * g->level;
-        g->gold += gold;
-        g->score += gold;
-        char text[MAX_MESSAGE_LEN];
-        snprintf(text, sizeof(text), "You recover %d gold from a hidden working.", gold);
-        push_message(g, text);
+        return containers_interact(g);
     } else if (tile == TILE_IRON_WINCH) {
         if (state->ore_fuse) {
             push_message(g, "The ore cart is already rolling. Clear the marked rail!");
@@ -688,7 +688,7 @@ void ironfang_defeat(GameState *g) {
         g->ironfang_defeated = 1;
         g->gold += 180;
         g->score += 1800;
-        push_message(g, "The Goblin Mine Boss falls! You recover 180 gold; the final departure opens.");
+        push_message(g, "The Goblin Mine Boss falls! You recover 180 gold; the war supply operation is broken.");
     }
 }
 

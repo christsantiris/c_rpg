@@ -313,7 +313,7 @@ void swamp_demon_restore_reward(GameState *g) {
         for (int x = room->x + 1; x < room->x + room->w - 1; x++) {
             if (g->map.tiles[y][x] == TILE_SWAMP_FLOOR && !occupied(g->enemies, g->enemy_count, x, y)) {
                 g->map.tiles[y][x] = TILE_DEMON_RELIQUARY;
-                push_message(g, "Unclaimed Demonic Sword waits in the Demon's root cache. Interact beside it or press P on it.");
+                push_message(g, "Unclaimed Demonic Sword waits in the Demon's root cache. Open with Interact, then Pick Up the released loot.");
                 return;
             }
         }

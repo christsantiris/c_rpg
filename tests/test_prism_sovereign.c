@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "../src/game/prism_sovereign.h"
 #include "../src/systems/save_load.h"
@@ -121,6 +122,7 @@ static int make_legacy_save(void) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 133);
+    test_mark_legacy_portal(root);
     cJSON_DeleteItemFromObject(root, "prism_sovereign_reward_pending");
     cJSON *arrays[2] = {cJSON_GetObjectItem(root, "enemies"),
         cJSON_GetObjectItem(cJSON_GetArrayItem(cJSON_GetObjectItem(root, "glassdeep_cache"), GLASSDEEP_DEPTH - 1), "enemies")};
@@ -183,6 +185,7 @@ static void test_rewards(void) {
     ASSERT("full floor and inventory preserve every object and both guaranteed rewards", cache && game.floor_item_count == MAX_FLOOR_ITEMS && game.floor_items[MAX_FLOOR_ITEMS - 1].item.type == ITEM_POTION_HEALTH && game.prism_sovereign_reward_pending == 3 && game.gold > 0);
     game.player.x = x;
     game.player.y = y;
+    action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
     action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("a full inventory cannot consume either reserved reward", game.prism_sovereign_reward_pending == 3 && game.map.tiles[y][x] == TILE_PRISM_RELIQUARY);
     game.inventory_count--;
@@ -204,13 +207,16 @@ static void test_rewards(void) {
     game.player.x = x;
     game.player.y = y;
     action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
-    ASSERT("a spacious pack receives both rewards once through Interact", !game.prism_sovereign_reward_pending && game.inventory_count == 2 && strcmp(game.inventory[0].name, "Prismweave Robes") == 0 && game.inventory[1].type == ITEM_POTION_STRENGTH);
+    ASSERT("opening spills both rewards without claiming them", game.inventory_count == 0);
+    action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
+    action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("a spacious pack collects both released rewards through Pick Up", !game.prism_sovereign_reward_pending && game.inventory_count == 2 && strcmp(game.inventory[0].name, "Prismweave Robes") == 0 && game.inventory[1].type == ITEM_POTION_STRENGTH);
     int attack = game.player.attack;
     action_resolve_player(&game, (Action){ACTION_USE_ITEM, 1, 0});
     ASSERT("the original special Strength Potion still grants one permanent base attack", game.player.attack == attack + 1);
     game.inventory_count = 0;
     game_open_town_portal(&game);
-    game_use_town_portal(&game);
+    test_restore_cached_floor(&game);
     ok = save_game(&game, 99195) && load_game(&loaded, 99195);
     ASSERT("consumed, sold or discarded rewards cannot regenerate after travel or saving", ok && !loaded.prism_sovereign_reward_pending && loaded.floor_item_count == 0 && !loaded.enemies[0].active);
 }
@@ -516,13 +522,14 @@ static void test_saves(void) {
     ASSERT("the two-action reflected stagger survives active and cached saves", ok && loaded.enemies[0].move_timer == -2 && loaded.glassdeep_cache[4].enemies[0].move_timer == -2 && loaded.enemies[0].hp == 137);
     e = setup();
     action_resolve_enemies(&game);
+    Enemy escaped_beam = game.enemies[0];
     game_open_town_portal(&game);
     ok = save_game(&game, 99195) && load_game(&loaded, 99195);
     if (ok) {
         game = loaded;
-        game_use_town_portal(&game);
+        test_restore_cached_floor(&game);
     }
-    ASSERT("return portals ward a threatening saved beam without altering boss health", ok && game.location == LOCATION_GLASSDEEP && game.enemies[0].move_timer == -1 && game.enemies[0].attack_target_x == -1 && game.enemies[0].hp == 275 && game.player.hp == 1000);
+    ASSERT("escaping saves the archived beam without altering boss health", ok && game.location == LOCATION_GLASSDEEP && game.enemies[0].move_timer == escaped_beam.move_timer && game.enemies[0].attack_target_x == escaped_beam.attack_target_x && game.enemies[0].hp == 275 && game.player.hp == 1000);
     e = setup();
     game.map.tiles[22][28] = TILE_GLASSDEEP_RUIN;
     e->hp = 1;
@@ -532,7 +539,10 @@ static void test_saves(void) {
     game.player.x = 28;
     game.player.y = 22;
     action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
-    ASSERT("claiming rewards beneath loot restores the original sanctuary paving", !game.prism_sovereign_reward_pending && game.floor_items[0].underlying_tile == TILE_GLASSDEEP_RUIN);
+    action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
+    action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
+    action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
+    ASSERT("claiming rewards after collecting loose gold preserves the original sanctuary paving", !game.prism_sovereign_reward_pending && game.map.tiles[22][28] == TILE_GLASSDEEP_RUIN);
     e = setup();
     e->hp = 73;
     e->move_timer = 17;

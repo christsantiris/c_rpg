@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "../src/game/game.h"
 #include "../src/screens/quest_journal.h"
@@ -304,10 +305,10 @@ void test_temple(void) {
     g.player.y = 18;
     game_open_town_portal(&g);
     ASSERT("Return to Town leaves a temple portal beside the harbor",
-        g.location == LOCATION_TOWN && g.portal_active &&
+        g.location == LOCATION_TOWN && !g.portal_active &&
         g.portal_location == LOCATION_TEMPLE);
-    game_use_town_portal(&g);
-    ASSERT("town portal restores the exact temple position and state",
+    test_restore_cached_floor(&g);
+    ASSERT("archived floor fixture restores the exact temple position and state",
         g.location == LOCATION_TEMPLE && g.player.x == 31 &&
         g.player.y == 18 && g.level == TEMPLE_DEPTH &&
         g.temple_alignment == 0);

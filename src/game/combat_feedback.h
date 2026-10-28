@@ -17,7 +17,9 @@ typedef enum {
     FEEDBACK_DODGE,
     FEEDBACK_MISS,
     FEEDBACK_PLAYER_PUSH, // amount is direction: east, south, west, north (0-3).
-    FEEDBACK_WEAPONS_DUMP // Cosmetic falling cargo; no enemy turns or saved state.
+    FEEDBACK_ROOT_BURST, // Ground-root eruption; amount is its tile radius.
+    FEEDBACK_WEAPONS_DUMP, // Cosmetic falling cargo; no enemy turns or saved state.
+    FEEDBACK_ENEMY_POISON
 } CombatFeedbackKind;
 
 // Results carried by a projectile appear when it lands.

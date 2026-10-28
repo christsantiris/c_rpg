@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/stonewake.h"
 #include "game/jail.h"
@@ -210,6 +211,7 @@ static void test_cranes(GameState *g, GameState *loaded) {
     int gold = g->gold;
     stonewake_interact(g);
     stonewake_interact(g);
+    action_resolve_player(g, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("the isolated supply store pays once after reaching it by the salvage spur", g->gold == gold + 25 && g->map.tiles[y - 3][x + 5] == TILE_STONEWAKE_EMPTY);
 }
 
@@ -471,17 +473,15 @@ static void test_migration(GameState *g, GameState *loaded) {
         return;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 193);
+    test_mark_legacy_portal(root);
     cJSON_DeleteItemFromObject(root, "stonewake_warhammer_state");
     ASSERT("a version 193 Glassdeep expedition loads as Stonewake", write_quarry_save(root) && load_game(loaded, QUARRY_SLOT) && stonewake_map(&loaded->map) && stonewake_map(&loaded->glassdeep_cache[4].map));
     ASSERT("migration preserves player health, gold, stage progress, quest completion and boss victories", loaded->player.hp == 41 && loaded->gold == 764 && loaded->level == 5 && loaded->max_glassdeep_level_reached == 5 && loaded->glassdeep_quest_state == 3 && loaded->glassdeep_quest_progress == 7 && loaded->defeated_bosses == g->defeated_bosses);
     ASSERT("migration preserves active/cached wounds and deaths and cancels retired beam warnings", loaded->enemies[0].hp == 37 && !loaded->enemies[1].active && !loaded->enemies[0].move_timer && loaded->glassdeep_cache[4].enemies[0].hp == 37 && !loaded->glassdeep_cache[4].enemies[1].active && !strcmp(loaded->enemies[0].name, "Quarry Colossus") && !strcmp(loaded->enemies[1].name, "Quarry Guardian"));
-    ASSERT("migration preserves loot, exploration and portals while replacing their retired optical underlays", loaded->floor_items[0].active && loaded->map.tiles[52][36] == TILE_ITEM && loaded->floor_items[0].underlying_tile == TILE_GLASSDEEP_RUIN && loaded->portal_active && loaded->portal_origin_tile == TILE_GLASSDEEP_RUIN && map_is_explored(&loaded->map, 35, 52) && !loaded->dialogue_active);
+    ASSERT("migration preserves loot, exploration and portals while replacing their retired optical underlays", loaded->floor_items[0].active && loaded->map.tiles[52][36] == TILE_ITEM && loaded->floor_items[0].underlying_tile == TILE_GLASSDEEP_RUIN && !loaded->portal_active && loaded->portal_origin_tile == TILE_GLASSDEEP_RUIN && map_is_explored(&loaded->map, 35, 52) && !loaded->dialogue_active);
     ASSERT("previously completed quests reserve their new equipment reward without duplicating currency", loaded->stonewake_warhammer_state == 1 && loaded->gold == 764);
     stonewake_migrate(loaded);
     ASSERT("migration can repeat without changing rewards or wounds", loaded->stonewake_warhammer_state == 1 && loaded->enemies[0].hp == 37);
-    stonewake_begin_expedition(loaded);
-    ASSERT("a legacy portal's destination is not replaced by a new physical expedition", loaded->glassdeep_cache[4].valid && loaded->glassdeep_cache[4].enemies[0].hp == 37);
-    loaded->portal_active = 0;
     stonewake_begin_expedition(loaded);
     ASSERT("the next fresh expedition upgrades legacy floors without resetting quests, rewards or victories", !loaded->glassdeep_cache[4].valid && loaded->glassdeep_quest_progress == 7 && loaded->stonewake_warhammer_state == 1 && loaded->defeated_bosses == g->defeated_bosses);
     game_enter_glassdeep(loaded);
@@ -557,9 +557,10 @@ static void test_crane_migration(GameState *g, GameState *loaded) {
         return;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 194);
+    test_mark_legacy_portal(root);
     ASSERT("version 194 saves gain salvage platforms in the active and cached floor", write_quarry_save(root) && load_game(loaded, QUARRY_SLOT) && stonewake_has_salvage(loaded, x, y) && loaded->glassdeep_cache[0].map.tiles[y - 2][x + 4] == TILE_STONEWAKE_LEDGE);
     ASSERT("moving the store retains its claimed state and preserves overlapping floor loot", loaded->map.tiles[y - 3][x + 5] == TILE_STONEWAKE_EMPTY && loaded->floor_items[0].active && loaded->map.tiles[sy][sx] == TILE_ITEM && loaded->floor_items[0].underlying_tile == TILE_GLASSDEEP_FLOOR);
-    ASSERT("crane migration keeps portal anchors, player position, money and enemy wounds", loaded->portal_active && loaded->portal_origin_tile == TILE_STONEWAKE_CRANE_NEW && loaded->map.tiles[y][x] == TILE_STONEWAKE_CRANE_NEW && loaded->player.x == x && loaded->player.y == y && loaded->enemies[0].hp == 9 && loaded->gold == gold);
+    ASSERT("crane migration keeps portal anchors, player position, money and enemy wounds", !loaded->portal_active && loaded->portal_origin_tile == TILE_STONEWAKE_CRANE_NEW && loaded->map.tiles[y][x] == TILE_STONEWAKE_CRANE_NEW && loaded->player.x == x && loaded->player.y == y && loaded->enemies[0].hp == 9 && loaded->gold == gold);
     stonewake_migrate_cranes(loaded);
     ASSERT("repeating crane migration does not refill a claimed salvage store", loaded->map.tiles[y - 3][x + 5] == TILE_STONEWAKE_EMPTY && loaded->gold == gold);
     ASSERT("the migrated version 195 floor round trips without losing its portal or claimed store", save_game(loaded, QUARRY_SLOT) && load_game(g, QUARRY_SLOT) && g->portal_origin_tile == TILE_STONEWAKE_CRANE_NEW && g->map.tiles[y - 3][x + 5] == TILE_STONEWAKE_EMPTY);
@@ -594,8 +595,8 @@ static void test_replay(GameState *g, GameState *loaded) {
     game_open_town_portal(g);
     ASSERT("Return to Town uses the actual last visited Stillbury town", g->location == LOCATION_TOWN2);
     ASSERT("portal expedition saves while the player is in town", save_game(g, QUARRY_SLOT) && load_game(loaded, QUARRY_SLOT));
-    game_use_town_portal(loaded);
-    ASSERT("returning through the portal retains bridge geometry, enemies and their wounds/deaths", loaded->location == LOCATION_GLASSDEEP && loaded->level == 1 && loaded->player.x == x + 3 && loaded->player.y == y && loaded->map.tiles[y][x + 3] == TILE_STONEWAKE_BRIDGE && loaded->enemy_count == count && loaded->enemies[0].hp == 7 && !loaded->enemies[1].active);
+    test_restore_cached_floor(loaded);
+    ASSERT("loading the archived floor fixture retains bridge geometry, enemies and their wounds/deaths", loaded->location == LOCATION_GLASSDEEP && loaded->level == 1 && loaded->player.x == x + 3 && loaded->player.y == y && loaded->map.tiles[y][x + 3] == TILE_STONEWAKE_BRIDGE && loaded->enemy_count == count && loaded->enemies[0].hp == 7 && !loaded->enemies[1].active);
 }
 
 void test_stonewake(void) {

@@ -349,7 +349,7 @@ void prism_sovereign_restore_reward(GameState *g) {
     }
     if (bx >= 0) {
         set_tile(g, bx, by, tile_at(g, bx, by) == TILE_GLASSDEEP_RUIN ? TILE_PRISM_PAVED_RELIQUARY : TILE_PRISM_RELIQUARY);
-        push_message(g, "Quarry Colossus rewards wait in the quarry strongbox. Interact beside it or press P on it.");
+        push_message(g, "Quarry Colossus rewards wait in the quarry strongbox. Open with Interact, then Pick Up the released loot.");
     }
 }
 

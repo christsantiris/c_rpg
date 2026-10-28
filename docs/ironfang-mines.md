@@ -4,7 +4,8 @@ Leave **Ridgeshire through its east gate**, follow the road, and walk into the
 fortified mine sprite. Ironfang is an optional five-stage underground adventure.
 It begins at stage 1 on every physical entry. Retreat through the southern
 boundary stairs; advance through the northern stairs. Ordinary enemies never
-lock intermediate travel. The Goblin Mine Boss guards the final departure.
+lock travel, including the final departure. The Goblin Mine Boss still guards
+the command seal. See [boss gates](boss-gates.md).
 
 | Stage | Working | Layout and discoveries |
 | --- | --- | --- |
@@ -77,10 +78,10 @@ Backtracking retains wounded enemies, loot, lamp repairs, rail repairs, cart
 position, switch direction, and searched caches. A fresh physical expedition
 restores ordinary enemies on previously visited stages while retaining explored
 terrain and completed infrastructure. Each cart returns to its western landing,
-so abandoning a portal cannot strand it across water. A living boss regains its
+so escaping cannot strand it across water. A living boss regains its
 three ore loads for the new attempt. Boss victory and claimed side caches stay
-recorded. Return to Town uses the last town actually visited; its portal resumes
-the exact mine stage, position, passenger state, and encounter.
+recorded. Return to Town is a one-way escape to the last town actually visited
+and leaves no return portal.
 
 Save version **200** serializes all five compact stage caches, actors, floor
 loot, explored terrain, cart and junction state, finite ore loads, pending ore

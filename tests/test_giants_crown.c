@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/giants_crown.h"
 #include "game/approach.h"
@@ -111,6 +112,7 @@ static void combat(GameState *g) {
     int gold = g->gold;
     giants_interact(g);
     giants_interact(g);
+    action_resolve_player(g, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("stone coffers pay only once", g->gold == gold + 30 && g->map.tiles[23][4] == TILE_GIANTS_EMPTY);
 }
 
@@ -139,17 +141,19 @@ static void persistence(GameState *g, GameState *loaded) {
     giants_tick(g, &g->enemies[0], &damage);
     ASSERT("saving and loading preserves the active region, loot and pending strike", save_game(g, GIANTS_SLOT) && load_game(loaded, GIANTS_SLOT) && loaded->location == LOCATION_GIANTS_CROWN && loaded->enemies[0].hp == 7 && loaded->enemies[0].attack_phase && loaded->enemies[0].move_timer == 2 && loaded->floor_item_count == 1);
     game_open_town_portal(g);
-    ASSERT("Giant's Peaks return portal uses the last visited town", g->location == LOCATION_TOWN3 && g->portal_active);
-    game_use_town_portal(g);
-    ASSERT("return portal resumes the same encounter without respawning enemies", g->location == LOCATION_GIANTS_CROWN && g->enemies[0].hp == 7 && g->floor_item_count == 1);
+    ASSERT("Giant's Peaks return portal uses the last visited town", g->location == LOCATION_TOWN3 && !g->portal_active);
+    test_restore_cached_floor(g);
+    ASSERT("archived floor fixture resumes the same encounter without respawning enemies", g->location == LOCATION_GIANTS_CROWN && g->enemies[0].hp == 7 && g->floor_item_count == 1);
     giants_leave(g);
     giants_enter(g, 0);
     ASSERT("physical reentry respawns ordinary enemies while retaining discoveries and dropped loot", g->enemies[0].hp == g->enemies[0].max_hp && g->map.tiles[23][4] == TILE_GIANTS_EMPTY && g->map.tiles[23][8] == TILE_GIANTS_PAVING && g->floor_item_count == 1);
     for (int level = 1; level < GIANTS_DEPTH; level++) {
         giants_change_level(g, 1);
     }
+    *loaded = *g;
     giants_travel(g, 32, 0);
-    ASSERT("living Jarl guards the final departure", g->location == LOCATION_GIANTS_CROWN);
+    ASSERT("a living Jarl guards his vault but permits the final departure", g->location == LOCATION_APPROACH && !g->giants_crown_defeated);
+    *g = *loaded;
     Enemy *boss = &g->enemies[0];
     g->player.x = boss->x - 1;
     g->player.y = boss->y;
@@ -198,6 +202,7 @@ static int old_save(GameState *g) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 202);
+    test_mark_legacy_portal(root);
     cJSON_DeleteItemFromObject(root, "giants_crown");
     cJSON_DeleteItemFromObject(root, "giants_crown_defeated");
     data = cJSON_PrintUnformatted(root);

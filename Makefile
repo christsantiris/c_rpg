@@ -34,6 +34,7 @@ test:
 sprites:
 	python3 tools/sprites/castle.py
 	python3 tools/sprites/tavern.py
+	python3 tools/sprites/alehouse.py
 	python3 tools/sprites/inn.py
 	python3 tools/sprites/blacksmith.py
 	python3 tools/sprites/alchemist.py
@@ -62,6 +63,8 @@ sprites:
 	python3 tools/sprites/town_hall.py
 	python3 tools/sprites/local_buildings.py
 	python3 tools/sprites/towns.py
+	python3 tools/sprites/town_gate.py
+	python3 tools/sprites/loot_chests.py
 	python3 tools/sprites/frost_kraken.py
 	python3 tools/sprites/crownroad_gate.py
 

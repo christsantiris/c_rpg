@@ -53,11 +53,9 @@ press `P` to collect it; walking into the locked door then consumes the key and
 opens the boss room. The player does not need to clear every regular enemy.
 
 Cain gives each character one Scroll: Return to Town after the player speaks
-with him near the town crossroads. Learning and casting its zero-MP spell from
-the dungeon opens a portal in town and transports the player there. Entering
-that portal returns the player to the exact dungeon tile where the spell was
-cast, then closes the portal. This lets the player prepare for the boss without
-replaying the dungeon route.
+with him near the town crossroads. Its zero-MP spell is a one-way escape to the
+last town visited, with no return anchor. Re-enter through the normal dungeon
+entrance to continue exploring.
 
 ## Enemy Count
 

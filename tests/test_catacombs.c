@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "approach_checks.h"
 #include "test_utils.h"
 #include "game/catacombs.h"
@@ -160,14 +161,15 @@ static void test_travel(void) {
     int y = game.player.y;
     game.player.x = x;
     game_open_town_portal(&game);
-    ASSERT("Return to Town opens a catacomb portal in the last town visited", game.location == LOCATION_TOWN && game.portal_active && game.portal_location == LOCATION_CATACOMBS && game.map.tiles[12][21] == TILE_PORTAL);
+    ASSERT("Return to Town escapes the Catacombs to the last town without a return portal", game.location == LOCATION_TOWN && !game.portal_active && game.portal_location == LOCATION_CATACOMBS && game.map.tiles[12][21] != TILE_PORTAL);
     int saved = save_game(&game, CATACOMBS_TEST_SLOT) && load_game(&loaded, CATACOMBS_TEST_SLOT);
-    ASSERT("a return portal survives saving and loading", saved && loaded.portal_active && loaded.catacombs_cache[1].valid);
+    ASSERT("escaped Catacombs progress survives saving without a return portal", saved && !loaded.portal_active && loaded.catacombs_cache[1].valid);
     game = loaded;
     game.player.x = 21;
     game.player.y = 11;
     action_resolve_player(&game, (Action){ACTION_MOVE, 21, 12});
-    ASSERT("the saved portal restores the exact catacomb floor and position", game.location == LOCATION_CATACOMBS && game.level == 2 && game.player.x == x && game.player.y == y && !game.portal_active);
+    ASSERT("the saved escape cannot return through the former portal tile", game.location == LOCATION_TOWN && !game.portal_active);
+    ASSERT("the escaped catacomb floor remains archived", loaded.catacombs_cache[1].valid && map_is_walkable(&loaded.catacombs_cache[1].map, x, y));
 }
 
 static void test_revival(void) {
@@ -279,9 +281,9 @@ static void test_traps(void) {
     game.map.burial_traps[0] = (BurialTrap){14, 15, 0, 1, 0};
     hp = game.player.hp;
     game_open_town_portal(&game);
-    game_use_town_portal(&game);
+    test_restore_cached_floor(&game);
     action_resolve_enemies(&game);
-    ASSERT("a saved trap warning cannot strike immediately on portal arrival", game.location == LOCATION_CATACOMBS && game.player.x == 14 && game.player.y == 15 && game.player.hp == hp && game.map.burial_traps[0].spent);
+    ASSERT("an archived trap warning retains its remaining turn", game.location == LOCATION_CATACOMBS && game.player.x == 14 && game.player.y == 15 && game.player.hp < hp && game.map.burial_traps[0].spent);
 
 }
 
@@ -411,6 +413,7 @@ static void test_migration(void) {
     cJSON *root = cJSON_Parse(text);
     free(text);
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 82);
+    test_mark_legacy_portal(root);
     cJSON_DeleteItemFromObject(root, "catacombs_cache");
     cJSON_DeleteItemFromObject(root, "max_catacombs_level_reached");
     cJSON_DeleteItemFromObject(root, "catacombs_mantle_unclaimed");

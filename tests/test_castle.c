@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/castle.h"
 #include "systems/save_load.h"
@@ -174,8 +175,8 @@ static void test_castle_fall_and_retreat(void) {
     ASSERT("cancel escape preserves current attempt", game.location == LOCATION_CASTLE_INTERIOR && boss()->hp == 1);
     game_open_town_portal(&game);
     castle_prompt_key(&game, SDL_SCANCODE_RETURN, 0);
-    ASSERT("confirmed escape reaches town without return portal", game.location == LOCATION_TOWN3 && !game.portal_active);
-    ASSERT("castle escape preserves Rosemoor's unlocked swamp shortcut", game.map.tiles[TOWN_H - 1][20] == TILE_TOWN_EXIT && game.map.tiles[TOWN_H - 1][ROSEMOOR_SWAMP_ROAD_X] == TILE_WALL);
+    ASSERT("confirmed castle escape reaches Castle Grounds without a return portal", game.location == LOCATION_CASTLE && !game.portal_active);
+    ASSERT("castle escape lands beside the castle entrance on walkable ground", game.player.x == CROWNROAD_X && game.player.y == 11 && map_is_walkable(&game.map, game.player.x, game.player.y));
     ASSERT("retreat retains miniboss victory", game.castle_minibosses == 1);
     castle_enter(&game, 4);
     ASSERT("retreat restores surviving boss and ordinary guards", boss()->hp == boss()->max_hp && game.enemies[0].active);
@@ -280,6 +281,7 @@ static int write_legacy_seal_save(void) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 88);
+    test_mark_legacy_portal(root);
     cJSON_AddNumberToObject(cJSON_GetObjectItem(root, "castle"), "seals", 7);
     char *json = cJSON_Print(root);
     cJSON_Delete(root);
@@ -347,7 +349,7 @@ static void test_castle_removed_seal_migration(void) {
         ASSERT("version 88 royal seal fixture loads", save_game(&game, CASTLE_TEST_SLOT) && write_legacy_seal_save() && load_game(&loaded, CASTLE_TEST_SLOT));
         ASSERT("retired marker becomes regional ground without losing exploration", loaded.map.tiles[11][12] == floors[i] && map_is_explored(&loaded.map, 12, 11));
         ASSERT("migration preserves loot while replacing its seal underlay", loaded.floor_items[0].active && loaded.floor_items[0].item.type == ITEM_POTION_HEALTH && loaded.floor_items[0].underlying_tile == floors[i] && loaded.map.tiles[11][11] == TILE_ITEM);
-        ASSERT("migration preserves portal while replacing its seal underlay", loaded.portal_active && loaded.portal_origin_tile == floors[i] && loaded.map.tiles[11][14] == floors[i]);
+        ASSERT("migration preserves portal while replacing its seal underlay", !loaded.portal_active && loaded.portal_origin_tile == floors[i] && loaded.map.tiles[11][14] == floors[i]);
         ASSERT("migration removes only the extra royal guardian", !loaded.enemies[0].active && loaded.enemies[1].active && loaded.enemies[1].hp == 7);
         LevelCache *restored[] = {loaded.level_cache, loaded.glassdeep_cache, loaded.ashen_cache};
         cache = &restored[i][2];
@@ -547,6 +549,7 @@ static int save_legacy_layout(int version) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), version);
+    test_mark_legacy_portal(root);
     char *json = cJSON_Print(root);
     cJSON_Delete(root);
     file = fopen("saves/savegame_99136.json", "wb");
@@ -674,6 +677,7 @@ static void test_castle_legacy_save(void) {
     free(buffer);
     cJSON_DeleteItemFromObject(root, "castle");
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 85);
+    test_mark_legacy_portal(root);
     char *json = cJSON_Print(root);
     cJSON_Delete(root);
     f = fopen("saves/savegame_99136.json", "wb");

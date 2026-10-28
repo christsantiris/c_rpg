@@ -69,7 +69,7 @@ Scene previews use controlled room fixtures to compare the artwork on its actual
 ### Batch 3: Haunted Forest (7)
 
 - [x] Pixie — `ENEMY_PIXIE`
-- [x] Blighted Wolf — `ENEMY_BLIGHTED_WOLF`
+- [x] Blighted Wolf — `ENEMY_BLIGHTED_WOLF` (shared Haunted Forest art)
 - [x] Giant Spider — `ENEMY_GIANT_SPIDER`
 - [x] Dark Elf — `ENEMY_DARK_ELF`
 - [x] Giant Wurm — `ENEMY_GIANT_WURM`
@@ -155,7 +155,7 @@ Scene previews use controlled room and road fixtures for artwork review rather t
 
 ### Batch 8: Frostfell (7)
 
-- [x] Ice Wolf — `ENEMY_ICE_WOLF`
+- [x] Blighted Wolf — `ENEMY_BLIGHTED_WOLF` (shared Haunted Forest art)
 - [x] Frost Archer — `ENEMY_FROST_ARCHER`
 - [x] Yeti — `ENEMY_YETI`
 - [x] Frost Wraith — `ENEMY_FROST_WRAITH`
@@ -312,10 +312,10 @@ These entries reuse enemy types above. They do not increase the 95-type count. N
 | [x] | Lord Veyr: damaged form, above one-third through two-thirds health | Lord Veyr, batch 16 |
 | [x] | Lord Veyr: spectral form, at or below one-third health | Lord Veyr, batch 16 |
 | [x] | Sun Guardian: broken form, at or below half health; deactivated appearance | Fallen Sun Guardian, batch 15 |
-| [x] | Rimefang and Rimefang Pack | Ice Wolf and Frost Wraith, batch 8 |
+| [x] | Rimefang and Rimefang Pack | Shared Blighted Wolf and Frost Wraith, batch 8 |
 | [x] | Shardwarden and Shardwarden Stalker | Shard Golem and Blind Stalker, batch 12 |
 | [x] | Dunehex and Dunehex Mummy | Djinn and Mummy, batch 9 |
-| [x] | Expedition Guardians | Ice Wolf, Frost Giant, Frost Archer, batch 8 |
+| [x] | Expedition Guardians | Shared Blighted Wolf, Frost Giant and Frost Archer, batch 8 |
 | [x] | Resonator Guardians | Crystal Spider, Blind Stalker, Shard Golem, batch 12 |
 | [x] | Emberforge Guardians | Cinder Imp, Ash Hound, Obsidian Guardian, batch 11 |
 | [x] | Moonseed Guardians | Fey Trickster and Giant Moth, batch 10 |

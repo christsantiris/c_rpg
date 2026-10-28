@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "test_utils.h"
 #include "game/game.h"
 #include "screens/quest_journal.h"
@@ -174,13 +175,13 @@ static void test_quest(void) {
     ASSERT("completed journal retains both objectives", quest_journal_get_entry(&game, QUEST_TAB_COMPLETED, 0, &entry) &&
         entry.objective_complete[0] && entry.objective_complete[1] && entry.state == 3);
     ASSERT("completed quest and portal save inside the hall", save_game(&game, EMBERFORGE_TEST_SLOT) &&
-        load_game(&loaded, EMBERFORGE_TEST_SLOT) && loaded.emberforge_quest_state == 3 && loaded.portal_active);
+        load_game(&loaded, EMBERFORGE_TEST_SLOT) && loaded.emberforge_quest_state == 3 && !loaded.portal_active);
     game = loaded;
     game_leave_town_hall(&game);
-    ASSERT("leaving the hall restores the Ashen return portal", game.map.tiles[12][21] == TILE_PORTAL);
-    game_use_town_portal(&game);
+    ASSERT("leaving the hall cannot recreate an Ashen return portal", game.map.tiles[12][21] != TILE_PORTAL);
+    test_restore_cached_floor(&game);
     stand_at_object();
-    ASSERT("return portal preserves the repaired forge without respawning defenders", game.location == LOCATION_ASHEN &&
+    ASSERT("escape cache preserves the repaired forge without respawning defenders", game.location == LOCATION_ASHEN &&
         game.level == 4 && game.map.tiles[game.player.y][game.player.x] == TILE_EMBERFORGE_LIT && !guards(&game, 1));
 }
 
@@ -250,6 +251,7 @@ static void test_legacy_save(void) {
     cJSON *root = cJSON_Parse(buffer);
     free(buffer);
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 87);
+    test_mark_legacy_portal(root);
     cJSON_DeleteItemFromObject(root, "emberforge_quest_state");
     cJSON_DeleteItemFromObject(root, "emberforge_progress");
     cJSON_DeleteItemFromObject(root, "emberforge_encounters");

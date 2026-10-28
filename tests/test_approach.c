@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "game/giants_crown.h"
 #include "approach_checks.h"
 #include "systems/save_load.h"
@@ -50,6 +51,7 @@ static int legacy_approach_save(int slot, int version) {
         return 0;
     }
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), version);
+    test_mark_legacy_portal(root);
     if (version < 176) {
         cJSON_DeleteItemFromObject(root, "labyrinth_entry_town");
     }
@@ -213,6 +215,75 @@ static void test_coast_shore(GameState *g, GameState *loaded, int slot) {
     remove("saves/savegame_99160.json");
 }
 
+static void test_ashen_volcano(GameState *g, GameState *loaded, int slot) {
+    approach_town(g, &town_approaches[13]);
+    approach_enter(g, CASTLE_ASHEN_GATE_X, 0);
+    int door_x = g->map.stairs_down_x;
+    int door_y = g->map.stairs_down_y;
+    int solid = 1;
+    for (int row = -8; row <= 0; row++) {
+        for (int side = -3; side <= 3; side++) {
+            if ((row || side) && map_is_walkable(&g->map, door_x + side, door_y + row)) {
+                solid = 0;
+            }
+        }
+    }
+    ASSERT("the towering Ashen Hollow volcano blocks its full nine-row footprint", solid && approach_entrance_rows(LOCATION_ASHEN) == 9 && g->map.tiles[door_y][door_x] == TILE_APPROACH_AREA);
+    // Version 216 volcanoes were six rows tall, so their upper rows were open grass.
+    for (int row = -8; row <= -6; row++) {
+        for (int side = -3; side <= 3; side++) {
+            g->map.tiles[door_y + row][door_x + side] = TILE_TOWN_FLOOR;
+        }
+    }
+    g->player.x = door_x - 1;
+    g->player.y = door_y - 7;
+    map_mark_explored(&g->map, g->player.x, g->player.y);
+    g->floor_item_count = 1;
+    g->floor_items[0] = (FloorItem){.active = 1, .x = door_x + 1, .y = door_y - 7, .underlying_tile = TILE_TOWN_FLOOR, .item = item_make_health_potion()};
+    g->map.tiles[door_y - 7][door_x + 1] = TILE_ITEM;
+    g->gold = 393;
+    int ok = save_game(g, slot) && legacy_approach_save(slot, 216) && load_game(loaded, slot);
+    ASSERT("older Ashen approaches move players and loot off the raised summit", ok && loaded->approach_route == 13 && map_is_walkable(&loaded->map, loaded->player.x, loaded->player.y) && !map_is_walkable(&loaded->map, door_x - 1, door_y - 7) && loaded->floor_items[0].active && loaded->map.tiles[loaded->floor_items[0].y][loaded->floor_items[0].x] == TILE_ITEM && loaded->gold == 393);
+    walk_town_approach(loaded);
+    ASSERT("the migrated volcano approach still enters Ashen Hollow", loaded->location == LOCATION_ASHEN && loaded->level == 1);
+    remove("saves/savegame_99160.json");
+}
+
+static void test_mountain_spires(GameState *g, GameState *loaded, int slot) {
+    approach_town(g, &town_approaches[2]);
+    approach_enter(g, 20, 0);
+    int door_x = g->map.stairs_down_x;
+    int door_y = g->map.stairs_down_y;
+    int solid = 1;
+    for (int row = 1 - APPROACH_MOUNTAIN_ROWS; row <= 0; row++) {
+        int radius = row < -6 ? 1 : row < -4 ? 2 : 3;
+        for (int side = -radius; side <= radius; side++) {
+            if ((row || side) && map_is_walkable(&g->map, door_x + side, door_y + row)) {
+                solid = 0;
+            }
+        }
+    }
+    ASSERT("the taller Goblin Mountains block their tapered nine-row footprint", solid && APPROACH_MOUNTAIN_ROWS == 9 && g->map.tiles[door_y][door_x] == TILE_APPROACH_AREA && map_is_walkable(&g->map, door_x - 3, door_y - 8));
+    // Version 217 mountains were six rows tall, so their upper rows were open grass.
+    for (int row = -8; row <= -6; row++) {
+        for (int side = -3; side <= 3; side++) {
+            g->map.tiles[door_y + row][door_x + side] = TILE_TOWN_FLOOR;
+        }
+    }
+    g->player.x = door_x;
+    g->player.y = door_y - 7;
+    map_mark_explored(&g->map, g->player.x, g->player.y);
+    g->floor_item_count = 1;
+    g->floor_items[0] = (FloorItem){.active = 1, .x = door_x + 1, .y = door_y - 7, .underlying_tile = TILE_TOWN_FLOOR, .item = item_make_health_potion()};
+    g->map.tiles[door_y - 7][door_x + 1] = TILE_ITEM;
+    g->gold = 393;
+    int ok = save_game(g, slot) && legacy_approach_save(slot, 217) && load_game(loaded, slot);
+    ASSERT("older mountain approaches move players and loot off the raised spires", ok && loaded->approach_route == 2 && map_is_walkable(&loaded->map, loaded->player.x, loaded->player.y) && !map_is_walkable(&loaded->map, door_x, door_y - 7) && loaded->floor_items[0].active && loaded->map.tiles[loaded->floor_items[0].y][loaded->floor_items[0].x] == TILE_ITEM && loaded->gold == 393);
+    walk_town_approach(loaded);
+    ASSERT("the migrated mountain road still enters the first level of the climb", loaded->location == LOCATION_MOUNTAINS && loaded->level == 1);
+    remove("saves/savegame_99160.json");
+}
+
 void test_approaches(void) {
     printf("Safe town approach paths:\n");
     GameState *g = calloc(1, sizeof(*g));
@@ -307,7 +378,7 @@ void test_approaches(void) {
             Map visited = g->map;
             *loaded = *g;
             game_open_town_portal(loaded);
-            ASSERT("Return to Town still bypasses the walking path and preserves its portal", loaded->location == loaded->last_town_visited && loaded->portal_active);
+            ASSERT("Return to Town escapes without walking or leaving a return portal", loaded->location == loaded->last_town_visited && !loaded->portal_active);
             retreat_from_area(g, route, reverse);
             int south = route->area == LOCATION_DUNGEON || route->area == LOCATION_MOUNTAINS || route->area == LOCATION_FOREST || route->area == LOCATION_SWAMP || approach_entrance_rows(route->area);
             int return_dx = south ? 0 : -dx;
@@ -540,9 +611,11 @@ void test_approaches(void) {
         g->map.tiles[old_y][old_x] = TILE_ITEM;
         g->map.tiles[y][x] = TILE_ITEM;
         int migrated = save_game(g, slot) && legacy_approach_save(slot, 162) && load_game(loaded, slot);
-        ASSERT("legacy Ridgeshire portals move to their new gate while preserving loot at both positions", migrated && loaded->location == LOCATION_TOWN4 && loaded->portal_active && loaded->portal_location == route->area && loaded->map.tiles[y][x] == TILE_PORTAL && loaded->map.tiles[old_y][old_x] == TILE_ITEM && loaded->floor_items[0].active && loaded->floor_items[0].underlying_tile == TILE_TOWN_FLOOR && loaded->floor_items[1].active && loaded->floor_items[1].underlying_tile == TILE_PORTAL);
+        ASSERT("legacy Ridgeshire portals retire while preserving loot at both former positions", migrated && loaded->location == LOCATION_TOWN4 && !loaded->portal_active && loaded->portal_location == route->area && loaded->map.tiles[y][x] != TILE_PORTAL && loaded->map.tiles[old_y][old_x] == TILE_ITEM && loaded->floor_items[0].active && loaded->floor_items[0].underlying_tile == TILE_TOWN_FLOOR && loaded->floor_items[1].active && loaded->floor_items[1].underlying_tile != TILE_PORTAL);
         action_resolve_player(loaded, (Action){ACTION_MOVE, x, y});
-        ASSERT("a migrated portal resumes its original expedition and wounded enemies", loaded->location == route->area && loaded->level == 1 && loaded->player.x == g->portal_x && loaded->player.y == g->portal_y && loaded->enemies[0].hp == 7);
+        ASSERT("walking a migrated portal tile stays in Ridgeshire", loaded->location == LOCATION_TOWN4 && !loaded->portal_active);
+        test_restore_cached_floor(loaded);
+        ASSERT("the archived expedition retains its wounded enemies after migration", loaded->location == route->area && loaded->level == 1 && loaded->player.x == g->portal_x && loaded->player.y == g->portal_y && loaded->enemies[0].hp == 7);
     }
     const TownApproach *dungeon_route = &town_approaches[1];
     approach_town(g, dungeon_route);
@@ -594,7 +667,7 @@ void test_approaches(void) {
         for (int ty = 0; ty < APPROACH_H; ty++) {
             for (int tx = 0; tx < APPROACH_W; tx++) {
                 if (g->map.tiles[ty][tx] == TILE_APPROACH_DUNGEON_TOWN) {
-                    ASSERT("locked approaches contain no town crossing marker", 0);
+                    ASSERT("locked approaches retain a visible destination beyond the closed checkpoint", !map_is_walkable(&g->map, town_approaches[origin ? 15 : 1].town == LOCATION_TOWN ? APPROACH_W - 4 : 3, APPROACH_H / 2));
                 }
             }
         }
@@ -602,12 +675,12 @@ void test_approaches(void) {
         ASSERT("entering the dungeon from either side always begins at stage one", g->location == LOCATION_DUNGEON && g->level == 1 && g->dungeon_entry_town == route->town && g->map.room_count >= 6);
         int hp = g->player.hp;
         game_open_town_portal(g);
-        ASSERT("dungeon portals return to their entrance town", g->location == route->town && g->dungeon_portal_town == route->town && g->portal_active && g->player.hp == hp);
-        ASSERT("the matching town renders a portal beside its dungeon gate", g->map.tiles[13][origin ? 2 : TOWN_W - 3] == TILE_PORTAL);
+        ASSERT("dungeon portals return to their entrance town", g->location == route->town && g->dungeon_portal_town == route->town && !g->portal_active && g->player.hp == hp);
+        ASSERT("the matching town renders a portal beside its dungeon gate", g->map.tiles[13][origin ? 2 : TOWN_W - 3] != TILE_PORTAL);
         int saved = save_game(g, slot) && load_game(loaded, slot);
         ASSERT("dungeon entrance and portal towns survive save/load", saved && loaded->dungeon_entry_town == route->town && loaded->dungeon_portal_town == route->town);
         if (saved) {
-            game_use_town_portal(loaded);
+            test_restore_cached_floor(loaded);
             ASSERT("using a restored portal preserves forward dungeon progression and entrance side", loaded->location == LOCATION_DUNGEON && loaded->level == 1 && loaded->dungeon_entry_town == route->town && !loaded->portal_active);
             retreat_from_area(loaded, route, 0);
             walk_return_approach(loaded);
@@ -642,7 +715,7 @@ void test_approaches(void) {
             ASSERT("the connecting road is one tile wide and aligned with both gates", !wide_block && g->map.tiles[y][32] == TILE_TOWN_PATH && g->map.tiles[y - 1][32] == TILE_TOWN_FLOOR && g->map.tiles[y + 1][32] == TILE_TOWN_FLOOR && g->player.y == y);
             int straight = 1;
             for (int px = 1; px < APPROACH_W - 1; px++) {
-                if (g->map.tiles[y][px] != TILE_TOWN_PATH) {
+                if ((g->map.tiles[y][px] != TILE_TOWN_PATH && g->map.tiles[y][px] != TILE_ROAD_GATE_OPEN)) {
                     straight = 0;
                 }
             }
@@ -655,7 +728,9 @@ void test_approaches(void) {
             walk_into_arrived_town(g);
             ASSERT("walking east reaches Dawnmere and walking west reaches Oakhaven without a prompt", g->location == (east ? LOCATION_DAWNMERE : LOCATION_TOWN) && !g->dialogue_active);
             ASSERT("town crossing preserves the dungeon cache and Lich victory", g->level_cache[DUNGEON_DEPTH - 1].valid && (g->defeated_bosses & (1 << LOCATION_DUNGEON)));
-            ASSERT("Dawnmere retains its merchant footprint and the removed hall lot is walkable", g->location != LOCATION_DAWNMERE || (g->map.tiles[12][1] == TILE_TOWN_PATH && map_is_walkable(&g->map, 20, 12) && !map_is_walkable(&g->map, 7, 7) && map_is_walkable(&g->map, 26, 6)));
+            ASSERT("Dawnmere retains its merchant and Alehouse without blocking the crossroads", g->location != LOCATION_DAWNMERE ||
+                (g->map.tiles[12][1] == TILE_TOWN_PATH && map_is_walkable(&g->map, 20, 12) &&
+                !map_is_walkable(&g->map, 7, 7) && g->map.tiles[6][26] == TILE_LOCAL_BUILDING && g->map.tiles[10][28] == TILE_LOCAL_DOOR));
         }
     }
     approach_town(g, &town_approaches[1]);
@@ -721,16 +796,22 @@ void test_approaches(void) {
     int clear_lot = removed_hall;
     for (int y = 6; y < 11; y++) {
         for (int x = 26; x < 33; x++) {
-            if (!map_is_walkable(&loaded->map, x, y)) {
+            if ((x <= 31 && loaded->map.tiles[y][x] != (x == 28 && y == 10 ? TILE_LOCAL_DOOR : TILE_LOCAL_BUILDING)) ||
+                (x == 32 && !map_is_walkable(&loaded->map, x, y))) {
                 clear_lot = 0;
             }
         }
     }
-    ASSERT("older Dawnmere saves remove the entire hall collision footprint", clear_lot && !map_is_walkable(&loaded->map, 7, 7));
-    ASSERT("removing the hall preserves position, exploration and dropped loot", removed_hall && loaded->player.x == g->player.x && loaded->player.y == g->player.y && loaded->gold == 393 && map_is_explored(&loaded->map, 28, 8) && loaded->floor_items[0].active && loaded->floor_items[0].underlying_tile == TILE_TOWN_FLOOR && loaded->map.tiles[8][28] == TILE_ITEM);
+    ASSERT("older Dawnmere saves replace the retired hall lot with the Alehouse", clear_lot && !map_is_walkable(&loaded->map, 7, 7));
+    ASSERT("the replacement lot preserves the road player and relocates loot while retaining discoveries", removed_hall &&
+        loaded->player.x == g->player.x && loaded->player.y == g->player.y && loaded->gold == 393 && map_is_explored(&loaded->map, 28, 8) &&
+        loaded->floor_items[0].active && loaded->floor_items[0].underlying_tile == TILE_TOWN_PATH &&
+        loaded->floor_items[0].x == 28 && loaded->floor_items[0].y == 11 && loaded->map.tiles[11][28] == TILE_ITEM);
     remove("saves/savegame_99160.json");
     test_labyrinth_path(g, loaded, slot);
     test_coast_shore(g, loaded, slot);
+    test_ashen_volcano(g, loaded, slot);
+    test_mountain_spires(g, loaded, slot);
     free(g);
     free(loaded);
 }

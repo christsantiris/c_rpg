@@ -478,10 +478,11 @@ void test_items(void) {
     shop_init(&shop, SHOP_TYPE_BLACKSMITH,
         (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST), CLASS_MAGE);
     ASSERT("two defeated bosses unlock all magical weapons",
-        shop.stock_tier == 3 && shop.item_count == 32 &&
+        shop.stock_tier == 3 && shop.item_count == 33 &&
         shop_has_item(&shop, "Magic Battle Axe") &&
         shop_has_item(&shop, "Enchanter Robes") &&
         shop_has_item(&shop, "Magic Greatsword") &&
+        shop_has_item(&shop, "Poison Sword") &&
         shop_has_item(&shop, "Magic Staff") &&
         shop_has_item(&shop, "Magic Longbow") &&
         shop_has_item(&shop, "Tower Shield") &&
@@ -491,7 +492,7 @@ void test_items(void) {
         (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) |
         (1 << LOCATION_MOUNTAINS), CLASS_MAGE);
     ASSERT("three defeated bosses unlock capstone armor",
-        shop.stock_tier == 4 && shop.item_count == 35 &&
+        shop.stock_tier == 4 && shop.item_count == 36 &&
         shop_has_item(&shop, "Magic Greatsword") &&
         shop_has_item(&shop, "Magic Staff") &&
         shop_has_item(&shop, "Magic Longbow") &&

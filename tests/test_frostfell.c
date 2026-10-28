@@ -1,3 +1,4 @@
+#include "expedition_fixture.h"
 #include "approach_checks.h"
 #include "test_utils.h"
 #include "../src/game/game.h"
@@ -214,7 +215,7 @@ static void walk_onto(GameState *g, int x, int y) {
 }
 
 static int frost_enemy_type(EnemyType type) {
-    return type == ENEMY_ICE_WOLF || type == ENEMY_FROST_ARCHER ||
+    return type == ENEMY_BLIGHTED_WOLF || type == ENEMY_FROST_ARCHER ||
         type == ENEMY_YETI || type == ENEMY_FROST_WRAITH ||
         type == ENEMY_ICE_GOLEM || type == ENEMY_FROST_GIANT;
 }
@@ -282,7 +283,7 @@ static void test_frostfell_rosters(void) {
             one_kraken_on_the_lake &= krakens == (level == FROSTFELL_DEPTH);
         }
     }
-    int all_kinds_on_stage_5 = seen_on_stage_5[ENEMY_ICE_WOLF] &&
+    int all_kinds_on_stage_5 = seen_on_stage_5[ENEMY_BLIGHTED_WOLF] &&
         seen_on_stage_5[ENEMY_FROST_ARCHER] && seen_on_stage_5[ENEMY_YETI] &&
         seen_on_stage_5[ENEMY_FROST_WRAITH] && seen_on_stage_5[ENEMY_ICE_GOLEM] &&
         seen_on_stage_5[ENEMY_FROST_GIANT];
@@ -419,10 +420,10 @@ static void test_frost_kraken(void) {
 
     frost_game.player.x = frost_game.map.stairs_down_x + 1;
     frost_game.player.y = frost_game.map.stairs_down_y;
+    frost_loaded = frost_game;
     walk_onto(&frost_game, frost_game.map.stairs_down_x, frost_game.map.stairs_down_y);
-    int blocked = frost_game.location == LOCATION_FROSTFELL &&
-        strcmp(frost_game.messages[frost_game.message_count - 1],
-            "The Frost Kraken bars the way west!") == 0;
+    int departure_open = frost_game.location != LOCATION_FROSTFELL && !(frost_game.defeated_bosses & (1 << LOCATION_FROSTFELL));
+    frost_game = frost_loaded;
 
     frost_game.player.x = kraken->x + 1;
     frost_game.player.y = kraken->y;
@@ -436,8 +437,8 @@ static void test_frost_kraken(void) {
     BossJournalEntry entry;
     int journal_ok = quest_journal_get_boss(&frost_game, 7, &entry) &&
         strcmp(entry.name, "Frost Kraken") == 0 && entry.defeated;
-    ASSERT("the Kraken bars the exit, then drops the Krakenbone Bow and is marked defeated",
-        blocked && !kraken->active && bow_dropped && journal_ok &&
+    ASSERT("the optional Kraken permits departure, then drops its bow and records victory when defeated",
+        departure_open && !kraken->active && bow_dropped && journal_ok &&
         (frost_game.defeated_bosses & (1 << LOCATION_FROSTFELL)));
 
     frost_game.player.x = frost_game.map.stairs_down_x + 1;
@@ -545,14 +546,14 @@ static void test_frostfell_behaviours(void) {
         strstr(frost_game.messages[frost_game.message_count - 1], "Frost arrow") != NULL);
 
     // Six tiles away is inside the distance at which enemies notice the player.
-    setup_snowfield(&frost_game, ENEMY_ICE_WOLF, 26, 20);
+    setup_snowfield(&frost_game, ENEMY_BLIGHTED_WOLF, 26, 20);
     action_resolve_enemies(&frost_game);
-    int wolf_steps = steps_from(26, 20, frost_game.enemies[0].x, frost_game.enemies[0].y);
+    int wolf_steps = abs(26 - frost_game.enemies[0].x) + abs(20 - frost_game.enemies[0].y);
     setup_snowfield(&frost_game, ENEMY_ICE_GOLEM, 26, 20);
     action_resolve_enemies(&frost_game);
     action_resolve_enemies(&frost_game);
     int golem_steps = steps_from(26, 20, frost_game.enemies[0].x, frost_game.enemies[0].y);
-    ASSERT("Ice Wolves cover two tiles a turn while Ice Golems take two turns per tile",
+    ASSERT("Blighted Wolves flank and take two movement steps while Ice Golems take two turns per tile",
         wolf_steps == 2 && golem_steps == 1);
 }
 
@@ -693,7 +694,7 @@ static void test_kraken_targeted_strike(void) {
     action_resolve_enemies(&frost_game);
     action_resolve_enemies(&frost_game);
     game_open_town_portal(&frost_game);
-    game_use_town_portal(&frost_game);
+    test_restore_cached_floor(&frost_game);
     e = &frost_game.enemies[k];
     hp = frost_game.player.hp;
     action_resolve_enemies(&frost_game);
@@ -735,13 +736,13 @@ static void test_kraken_recovery(void) {
     game_open_town_portal(&frost_game);
     saved = save_game(&frost_game, 99019) && load_game(&frost_loaded, 99019);
     frost_game = frost_loaded;
-    game_use_town_portal(&frost_game);
+    test_restore_cached_floor(&frost_game);
     k = find_kraken(&frost_game);
     e = &frost_game.enemies[k];
     hp = frost_game.player.hp;
     int recovered = e->move_timer == 5;
     action_resolve_enemies(&frost_game);
-    ASSERT("a town save and portal return preserve the recovery turn",
+    ASSERT("a town save and archived floor reload preserve the recovery turn",
         saved && recovered && e->move_timer == 0 && frost_game.player.hp == hp);
     remove("saves/savegame_99019.json");
 
@@ -849,14 +850,14 @@ static void test_kraken_sweep(void) {
     game_open_town_portal(&frost_game);
     saved = save_game(&frost_game, 99019) && load_game(&frost_loaded, 99019);
     frost_game = frost_loaded;
-    game_use_town_portal(&frost_game);
+    test_restore_cached_floor(&frost_game);
     k = find_kraken(&frost_game);
     e = &frost_game.enemies[k];
     int pending = e->move_timer == 4 && e->attack_target_x == x && e->attack_target_y == y;
     walk_onto(&frost_game, x + 1, y);
     int hp = frost_game.player.hp;
     action_resolve_enemies(&frost_game);
-    ASSERT("a town save and portal return cannot erase or retarget a sweep",
+    ASSERT("a town save and archived floor reload cannot erase or retarget a sweep",
         saved && pending && frost_game.player.hp < hp && e->move_timer == 5 && e->attack_target_x == -1);
     remove("saves/savegame_99019.json");
 }
@@ -952,14 +953,14 @@ static void test_kraken_enraged(void) {
     game_open_town_portal(&frost_game);
     saved = save_game(&frost_game, 99019) && load_game(&frost_loaded, 99019);
     frost_game = frost_loaded;
-    game_use_town_portal(&frost_game);
+    test_restore_cached_floor(&frost_game);
     k = find_kraken(&frost_game);
     e = &frost_game.enemies[k];
     int pending = e->move_timer == 4 && e->attack_phase == 1;
     extra = stand_in_second_lane(&frost_game, e, 1);
     hp = frost_game.player.hp;
     action_resolve_enemies(&frost_game);
-    ASSERT("a town save and portal return preserve damage on the added lane",
+    ASSERT("a town save and archived floor reload preserve damage on the added lane",
         saved && pending && extra && frost_game.player.hp < hp && e->move_timer == 5);
     remove("saves/savegame_99019.json");
 }
@@ -983,10 +984,10 @@ static void test_kraken_reward_persistence(void) {
     game_open_town_portal(&frost_game);
     int saved = save_game(&frost_game, 99020) && load_game(&frost_loaded, 99020);
     frost_game = frost_loaded;
-    game_use_town_portal(&frost_game);
+    test_restore_cached_floor(&frost_game);
     game_refresh_quest_encounters(&frost_game);
     game_refresh_quest_encounters(&frost_game);
-    ASSERT("the unclaimed bow survives a town save and portal return exactly once",
+    ASSERT("the unclaimed bow survives a town save and archived floor reload exactly once",
         dropped && saved && frost_game.kraken_bow_unclaimed &&
         kraken_bows_on_floor(&frost_game) == 1 && find_kraken(&frost_game) < 0);
 
@@ -1020,7 +1021,7 @@ static void test_kraken_reward_persistence(void) {
     game_open_town_portal(&frost_game);
     saved = save_game(&frost_game, 99020) && load_game(&frost_loaded, 99020);
     frost_game = frost_loaded;
-    game_use_town_portal(&frost_game);
+    test_restore_cached_floor(&frost_game);
     int in_pack = 0;
     int metadata_ok = 0;
     for (int i = 0; i < frost_game.inventory_count; i++) {
@@ -1455,9 +1456,9 @@ void test_frostfell(void) {
     game_open_town_portal(&frost_game);
     int in_town = frost_game.location == LOCATION_TOWN3 &&
         frost_game.player.x == 20 && frost_game.player.y == 1 &&
-        frost_game.map.tiles[2][20] == TILE_PORTAL;
-    game_use_town_portal(&frost_game);
-    ASSERT("a return portal from Frostfell opens in Rosemoor and leads back",
+        frost_game.map.tiles[2][20] != TILE_PORTAL;
+    test_restore_cached_floor(&frost_game);
+    ASSERT("Frostfell escapes reach Rosemoor and preserve the archived stage",
         in_town && frost_game.location == LOCATION_FROSTFELL &&
         frost_game.level == FROSTFELL_DEPTH - 1 &&
         frost_game.player.x == portal_x && frost_game.player.y == portal_y);
