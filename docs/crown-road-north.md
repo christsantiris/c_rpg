@@ -16,8 +16,8 @@ signs. Ordinary patrols do not lock an exit, so retreat and bypasses remain
 possible.
 
 The road is drawn at 1.5× zoom, the Royal Dungeon's tile height, so the camera
-shows about 30 × 18 tiles around the player instead of 45 × 27. It is the first
-encounter moved to the larger scale; `game_camera_zoom` in
+shows about 30 × 18 tiles around the player instead of 45 × 27. Crown Road East
+and West use the same zoom. `game_camera_zoom` in
 `src/renderer/game_renderer.c` lists the zoomed areas.
 
 ## Patrols
