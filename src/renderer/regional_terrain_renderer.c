@@ -334,11 +334,11 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
         line1 = "BANDITS AND HORSEMEN PATROL AHEAD";
         line2 = "BREAK ARCHER SIGHTLINES WITH COVER";
     } else if (g->location == LOCATION_JAIL_ARMORY) {
-        title = "JAIL EVIDENCE ROOM";
+        title = "DUNGEON EVIDENCE ROOM";
         line1 = "DEFEAT THE ROYAL GUARDS";
         line2 = "INTERACT TO RECLAIM YOUR GEAR";
     } else if (g->location == LOCATION_ESCAPE_TUNNEL) {
-        title = "JAIL ESCAPE TUNNEL";
+        title = "DUNGEON ESCAPE TUNNEL";
         line1 = "GUIDE TOMAS THROUGH THE AMBUSHES";
         line2 = "WAIT FOR HIM BEFORE MOVING ON";
     } else if (g->location == LOCATION_FOREST_ROAD) {

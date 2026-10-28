@@ -167,7 +167,7 @@ saves move Ilya while retaining existing quest and boss progress.
 
 ## Tomas: Guide Tomas Home
 
-Tomas waits in the **Royal Jail on the castle grounds**. A seemingly ordinary
+Tomas waits in the **Royal Dungeon on the castle grounds**. A seemingly ordinary
 townsman has the Royal Guards arrest you when spoken to with `T`; approaching or
 bumping into him does not trigger it. Speak to Tomas with `T` inside the cell,
 then press `Y` to accept. He reveals a hidden escape hatch and asks for help
@@ -178,7 +178,7 @@ Step onto the hatch to enter the single-level **Escape Tunnel**. Tomas follows
 your cleared route; press `Space` to spend a turn letting him catch up. Enemies
 still act while you wait. Reach the eastern exit together to emerge in central
 Ridgeshire and collect **100 gold and 750 score** automatically. Arrest and
-reward happen only once. See [Royal Jail](royal-jail.md).
+reward happen only once. See [Royal Dungeon](royal-dungeon.md).
 
 ## Quest expeditions
 

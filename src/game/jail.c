@@ -150,7 +150,7 @@ static void enter_armory(GameState *g) {
             g->map.tiles[g->floor_items[i].y][g->floor_items[i].x] = TILE_ITEM;
         }
     }
-    push_message(g, "Royal Guards defend the jail's evidence room. Your confiscated equipment is in the chest.");
+    push_message(g, "Royal Guards defend the dungeon's evidence room. Your confiscated equipment is in the chest.");
 }
 
 static void leave_armory(GameState *g) {
@@ -245,8 +245,8 @@ static void enter_jail(GameState *g, int arrest) {
     g->player.poison_turns = 0;
     g->player.frozen_turns = 0;
     g->player.freeze_recovery = 0;
-    dialogue(g, "Royal Guards", "The townsman was a royal informant. The guards locked you in jail and confiscated your weapons, armor, and shields. Find your gear and a way out.", g->player.x, g->player.y);
-    push_message(g, "The townsman reports you. Royal Guards escort you to jail!");
+    dialogue(g, "Royal Guards", "The townsman was a royal informant. The guards locked you in the Royal Dungeon and confiscated your weapons, armor, and shields. Find your gear and a way out.", g->player.x, g->player.y);
+    push_message(g, "The townsman reports you. Royal Guards escort you to the Royal Dungeon!");
 }
 
 static int tunnel_y(int x) {
@@ -338,7 +338,7 @@ static void enter_tunnel(GameState *g) {
         g->inventory[slot] = item_make_smuggled_dagger();
         game_equip_main_hand(g, slot);
         g->jail_supplies_taken = 1;
-        push_message(g, "Tomas gives you a smuggled weapon for the escape. Your own gear is still guarded in the jail.");
+        push_message(g, "Tomas gives you a smuggled weapon for the escape. Your own gear is still guarded in the dungeon.");
     }
     push_message(g, "Tomas follows. Clear the tunnel east to Ridgeshire; Space lets him catch up.");
     push_message(g, "The passage narrows deeper in; armed smugglers guard the long route home.");
@@ -369,7 +369,7 @@ int jail_talk_nearby(GameState *g) {
         return 1;
     }
     if (jail_prisoner_at(g, g->prisoner_x, g->prisoner_y) && near(g->player.x, g->player.y, g->prisoner_x, g->prisoner_y)) {
-        dialogue(g, "Tomas", g->location == LOCATION_TOWN4 ? "Home at last. Thank you for guiding me out of that jail." :
+        dialogue(g, "Tomas", g->location == LOCATION_TOWN4 ? "Home at last. Thank you for guiding me out of that dungeon." :
             "I will stay behind you. Clear the way; Space lets me catch up if you move too far ahead.", g->prisoner_x, g->prisoner_y);
         return 1;
     }
@@ -404,7 +404,7 @@ int jail_move_exit(GameState *g, int x, int y) {
             game_refresh_debug_passages(g);
             return 1;
         }
-        push_message(g, "The royal jail is locked and guarded.");
+        push_message(g, "The Royal Dungeon is locked and guarded.");
         return 1;
     }
     if (g->location == LOCATION_JAIL && g->jail_quest_state >= 2 && x == JAIL_HATCH_X && y == JAIL_HATCH_Y) {
@@ -512,7 +512,7 @@ int jail_blocks_portal(GameState *g) {
         return 0;
     }
     push_message(g, g->location == LOCATION_JAIL_ARMORY ?
-        "The jail's royal wards block town portals. Leave through the front door." :
-        "The jail's royal wards block town portals. Escape through the tunnel with Tomas.");
+        "The dungeon's royal wards block town portals. Leave through the front door." :
+        "The dungeon's royal wards block town portals. Escape through the tunnel with Tomas.");
     return 1;
 }
