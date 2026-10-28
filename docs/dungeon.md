@@ -7,6 +7,11 @@ that expedition is in progress. Backtracking preserves explored rooms, enemies,
 opened doors, and collected treasure. A later expedition generates new maps
 and regular enemies, but a defeated Lich King does not return.
 
+The dungeon is drawn at the Crown Roads' 1.5× zoom: the camera shows about 30 ×
+18 tiles around the player. The Lich King acts within twelve tiles or whenever
+the player is in his chamber, so he may begin his warned lances and rings from
+just off screen.
+
 The dungeon targets 6–10 rooms per floor. Descend at the marked stairs and
 ascend to revisit an earlier floor; the first floor's upward stairs return to
 the safe approach for the town you entered from. Floors 1–4 do not require defeating every enemy before descending. Traps
