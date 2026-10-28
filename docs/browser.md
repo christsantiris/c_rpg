@@ -4,6 +4,11 @@ Castle of No Return uses Emscripten to compile its C/SDL2 game to WebAssembly.
 The browser build includes its font, BMP sprites, MP3 music and effects, and Ogg
 effects. The native build and existing JSON save format remain available.
 
+The browser draws through SDL's WebGL renderer, like the desktop OpenGL build, so
+areas drawn at the 1.5× encounter zoom keep their tiles seamless. If WebGL is
+unavailable, the game falls back to SDL's software renderer; it still plays, but
+zoomed areas can show thin seam lines between small tile details.
+
 ## Build and preview locally
 From the Castle of No Return project root, run these two commands in the same terminal:
 
@@ -100,6 +105,10 @@ temporary and still allows play. Leave the page open briefly after saving so
 the asynchronous storage write can finish.
 
 ## Troubleshooting
+
+- **Thin dark lines across zoomed areas:** the browser is using the software
+  fallback because WebGL is unavailable. Enable hardware acceleration in the
+  browser settings, or check `chrome://gpu` for WebGL support.
 
 - **`emcmake` or `emmake` not found:** activate `emsdk_env.sh` in the terminal
   running Make. Browser builds need the SDK, not just a native compiler.
