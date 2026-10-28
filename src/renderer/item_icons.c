@@ -30,6 +30,12 @@ static void icon_palette(SDL_Color *pal, const Item *item) {
             case ITEM_VISUAL_RUSTY_SWORD:
             case ITEM_VISUAL_RUSTY_DAGGER: metal = (SDL_Color){161, 85, 47, 255}; break;
             case ITEM_VISUAL_DEMONIC_SWORD:
+                metal = (SDL_Color){27, 19, 24, 255};
+                accent = (SDL_Color){235, 55, 65, 255};
+                wood = (SDL_Color){27, 19, 24, 255};
+                trim = (SDL_Color){104, 30, 42, 255};
+                break;
+            case ITEM_VISUAL_POISON_SWORD:
                 metal = (SDL_Color){39, 67, 48, 255};
                 accent = (SDL_Color){111, 239, 90, 255};
                 trim = (SDL_Color){134, 67, 99, 255};
@@ -177,7 +183,8 @@ static void draw_item_art(Renderer *r, int x, int y, int art, SDL_Color *pal, co
     int enchanted = item && (item->visual_id == ITEM_VISUAL_MAGIC_LONG_SWORD ||
         item->visual_id == ITEM_VISUAL_MAGIC_GREATSWORD || item->visual_id == ITEM_VISUAL_MAGIC_DAGGER ||
         item->visual_id == ITEM_VISUAL_MAGIC_BATTLE_AXE || item->visual_id == ITEM_VISUAL_MAGIC_STAFF ||
-        item->visual_id == ITEM_VISUAL_MAGIC_LONGBOW || item->visual_id == ITEM_VISUAL_DEMONIC_SWORD);
+        item->visual_id == ITEM_VISUAL_MAGIC_LONGBOW || item->visual_id == ITEM_VISUAL_DEMONIC_SWORD ||
+        item->visual_id == ITEM_VISUAL_POISON_SWORD);
     for (int row = 0; row < ICON_SIZE; row++) {
         for (int col = 0; col < ICON_SIZE; col++) {
             char ink = item_icon_art[art][row][col];
@@ -245,7 +252,7 @@ void draw_icon_weapon(Renderer *r, int px, int py, const Item *item) {
     }
     SDL_Color palette[128] = {{0}};
     icon_palette(palette, item);
-    if (item->visual_id == ITEM_VISUAL_DEMONIC_SWORD) {
+    if (item->visual_id == ITEM_VISUAL_DEMONIC_SWORD || item->visual_id == ITEM_VISUAL_POISON_SWORD) {
         palette['N'] = palette['p'];
     }
     draw_item_art(r, px, py, art, palette, item);

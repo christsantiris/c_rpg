@@ -1268,6 +1268,7 @@ static int weapon_is_magic(const Item *weapon) {
         case ITEM_VISUAL_MAGIC_DAGGER:
         case ITEM_VISUAL_MAGIC_GREATSWORD:
         case ITEM_VISUAL_DEMONIC_SWORD:
+        case ITEM_VISUAL_POISON_SWORD:
             return 1;
         default:
             return 0;
@@ -1297,6 +1298,12 @@ static void draw_player_sword(Renderer *r, const Item *weapon, int bx, int by, i
         : (SDL_Color){205, 160, 60, 255};
     SDL_Color grip = {78, 46, 31, 255};
     if (weapon->visual_id == ITEM_VISUAL_DEMONIC_SWORD) {
+        glow = (SDL_Color){208, 35, 45, 255};
+        blade = (SDL_Color){27, 19, 24, 255};
+        edge = (SDL_Color){245, 72, 68, 255};
+        guard = (SDL_Color){87, 26, 39, 255};
+        grip = (SDL_Color){27, 19, 24, 255};
+    } else if (weapon->visual_id == ITEM_VISUAL_POISON_SWORD) {
         glow = (SDL_Color){89, 216, 69, 255};
         blade = (SDL_Color){33, 57, 42, 255};
         edge = (SDL_Color){137, 239, 106, 255};

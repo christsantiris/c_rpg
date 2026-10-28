@@ -328,6 +328,7 @@ static int melee_gold_bonus(const GameState *g) {
 }
 
 static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
+    enemy->poison_turns = 0;
     heartseed_record_death(g, enemy);
     if (enemy->type == ENEMY_LAST_JARL) {
         giants_defeat(g);
@@ -2325,6 +2326,9 @@ void action_resolve_player(GameState *g, Action a) {
                 dmg = sun_guardian_enemy_damage(g, e, dmg);
                 e->hp -= dmg;
                 combat_feedback_add(g, critical ? FEEDBACK_ENEMY_CRITICAL : FEEDBACK_ENEMY_DAMAGE, FEEDBACK_NOW, e->x, e->y, dmg);
+                if (dmg > 0 && e->hp > 0 && melee_weapon && melee_weapon->visual_id == ITEM_VISUAL_POISON_SWORD) {
+                    e->poison_turns = POISON_SWORD_TURNS;
+                }
                 int cleave_hits = melee_weapon
                     ? apply_melee_cleave(g, e, melee_attack,
                         melee_weapon->cleave_percent)
@@ -2339,7 +2343,8 @@ void action_resolve_player(GameState *g, Action a) {
                     melee_visual == ITEM_VISUAL_MAGIC_GREATSWORD) {
                     sfx_play_magic_sword();
                 } else if (melee_visual == ITEM_VISUAL_SHORT_SWORD ||
-                    melee_visual == ITEM_VISUAL_LONG_SWORD || melee_visual == ITEM_VISUAL_GREATSWORD) {
+                    melee_visual == ITEM_VISUAL_LONG_SWORD || melee_visual == ITEM_VISUAL_GREATSWORD ||
+                    melee_visual == ITEM_VISUAL_POISON_SWORD) {
                     sfx_play_large_blade();
                 } else if (melee_visual == ITEM_VISUAL_MAGIC_DAGGER) {
                     sfx_play_magic_dagger();
@@ -3712,8 +3717,33 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             return;
         }
         Enemy *e = &g->enemies[i];
-        if (!e->active) continue;
-        if (e->is_boss && boss_locked) continue;
+        if (!e->active) {
+            continue;
+        }
+        if (e->is_boss && boss_locked) {
+            continue;
+        }
+        if (e->poison_turns > 0) {
+            e->poison_turns--;
+            int damage = catacombs_enemy_damage(g, e, 1);
+            damage = castle_enemy_damage(g, e, damage);
+            damage = lich_enemy_damage(g, e, damage);
+            damage = sun_guardian_enemy_damage(g, e, damage);
+            if (damage > 0) {
+                e->hp -= damage;
+                combat_feedback_add(g, FEEDBACK_ENEMY_POISON, FEEDBACK_NOW, e->x, e->y, damage);
+                if (e->hp <= 0) {
+                    e->active = 0;
+                    drop_loot(g, e, 0);
+                    player_gain_xp(g, e->experience);
+                    game_update_level_progress(g);
+                    char message[MAX_MESSAGE_LEN];
+                    snprintf(message, sizeof(message), "Poison killed %s!", e->name);
+                    push_message(g, message);
+                    continue;
+                }
+            }
+        }
         if (e->frozen_turns > 0) {
             e->frozen_turns--;
             continue;

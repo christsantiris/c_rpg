@@ -94,6 +94,7 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
     e->is_boss = 0;
     e->dain_fragment = 0;
     e->frozen_turns = 0;
+    e->poison_turns = 0;
     e->attack_target_x = -1;
     e->attack_target_y = -1;
     e->move_timer = 0;

@@ -652,6 +652,7 @@ static cJSON *serialize_enemies(const Enemy *enemies, int count) {
         cJSON_AddNumberToObject(obj, "is_boss",    e->is_boss);
         cJSON_AddNumberToObject(obj, "dain_fragment", e->dain_fragment);
         cJSON_AddNumberToObject(obj, "frozen_turns", e->frozen_turns);
+        cJSON_AddNumberToObject(obj, "poison_turns", e->poison_turns);
         cJSON_AddNumberToObject(obj, "attack_target_x", e->attack_target_x);
         cJSON_AddNumberToObject(obj, "attack_target_y", e->attack_target_y);
         cJSON_AddNumberToObject(obj, "revived", e->revived);
@@ -765,6 +766,9 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count, in
         cJSON *dain_fragment = cJSON_GetObjectItem(obj, "dain_fragment");
         e->dain_fragment = dain_fragment ? dain_fragment->valueint : 0;
         e->frozen_turns = cJSON_GetObjectItem(obj, "frozen_turns")->valueint;
+        const cJSON *poison = cJSON_GetObjectItem(obj, "poison_turns");
+        e->poison_turns = poison && cJSON_IsNumber(poison) && poison->valuedouble == poison->valueint &&
+            poison->valueint >= 0 && poison->valueint <= POISON_SWORD_TURNS ? poison->valueint : 0;
         e->attack_target_x = cJSON_GetObjectItem(obj, "attack_target_x")->valueint;
         e->attack_target_y = cJSON_GetObjectItem(obj, "attack_target_y")->valueint;
         cJSON *revived = cJSON_GetObjectItem(obj, "revived");
@@ -1757,7 +1761,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 215);
+    cJSON_AddNumberToObject(root, "save_version", 216);
     cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);

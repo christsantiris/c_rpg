@@ -105,8 +105,11 @@ typedef enum {
     ITEM_VISUAL_SHORTBOW,
     ITEM_VISUAL_CROSSBOW,
     ITEM_VISUAL_RUSTY_DAGGER,
-    ITEM_VISUAL_STONE_WARHAMMER
+    ITEM_VISUAL_STONE_WARHAMMER,
+    ITEM_VISUAL_POISON_SWORD
 } ItemVisualId;
+
+#define POISON_SWORD_TURNS 3
 
 typedef struct {
     int      active;
@@ -169,6 +172,7 @@ Item item_make_rusty_sword(void);
 Item item_make_short_sword(void);
 Item item_make_long_sword(void);
 Item item_make_demonic_sword(void);
+Item item_make_poison_sword(void);
 Item item_make_magic_long_sword(void);
 Item item_make_battle_axe(void);
 Item item_make_magic_battle_axe(void);
