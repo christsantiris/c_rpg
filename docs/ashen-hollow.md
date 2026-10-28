@@ -6,6 +6,10 @@ its south edge and advance through the north exit. The south entrance backtracks
 on stage 1 it returns to the approach back to Castle Grounds' north gate. Ordinary
 enemies do not block stage travel.
 
+The hollow is drawn at the Crown Roads' 1.5× zoom: the camera shows about 30 ×
+18 tiles around the player. The Cinder Lord acts within twelve tiles, so he may
+begin his telegraphed eruptions from just off screen.
+
 The entrance is a lone, towering fire mountain. A lava river pours from its
 notched crater and splits around a jagged, fire-lit cleft at its foot, while
 smoke rolls east from the summit. The mountain fills a 7×9 tile footprint;
