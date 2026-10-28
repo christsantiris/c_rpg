@@ -553,6 +553,22 @@ static Uint32 rendered_pixel(SDL_Surface *surface, int x, int y) {
     return ((Uint32 *)((unsigned char *)surface->pixels + y * surface->pitch))[x];
 }
 
+// Screen pixel of a map tile under the area's zoomed camera, which shows fewer, larger tiles.
+static void zoomed_screen(const GameState *g, const Viewport *view, int map_w, int map_h, int tx, int ty, int *x, int *y) {
+    float zoom = game_camera_zoom(g);
+    Viewport zoomed;
+    viewport_init(&zoomed, (int)(view->tiles_x / zoom + 0.999f), (int)(view->tiles_y / zoom + 0.999f), map_w, map_h);
+    if (zoomed.tiles_x > map_w) {
+        zoomed.tiles_x = map_w;
+    }
+    if (zoomed.tiles_y > map_h) {
+        zoomed.tiles_y = map_h;
+    }
+    viewport_center_on(&zoomed, g->player.x, g->player.y);
+    *x = (int)(viewport_to_screen_x(&zoomed, tx) * TILE_SIZE * zoom);
+    *y = (int)(viewport_to_screen_y(&zoomed, ty) * TILE_SIZE * zoom);
+}
+
 static unsigned int creature_pixels(SDL_Surface *surface, int x, int y) {
     unsigned int hash = 2166136261u;
     for (int py = y - 20; py < y + TILE_SIZE; py++) {
@@ -675,13 +691,9 @@ static void test_northroad_renderer(Renderer *r, GameState *g, SDL_Surface *surf
     g->enemy_count = 1;
     Enemy *enemy = &g->enemies[0];
     *enemy = (Enemy){.x = 32, .y = 82, .hp = 50, .max_hp = 50};
-    // The road's camera shows fewer, larger tiles centred on the player.
-    float zoom = game_camera_zoom(g);
-    Viewport zoomed;
-    viewport_init(&zoomed, (int)(view.tiles_x / zoom + 0.999f), (int)(view.tiles_y / zoom + 0.999f), CROWN_NORTH_W, CROWN_NORTH_H);
-    viewport_center_on(&zoomed, g->player.x, g->player.y);
-    int x = (int)(viewport_to_screen_x(&zoomed, enemy->x) * TILE_SIZE * zoom);
-    int y = (int)(viewport_to_screen_y(&zoomed, enemy->y) * TILE_SIZE * zoom);
+    int x;
+    int y;
+    zoomed_screen(g, &view, CROWN_NORTH_W, CROWN_NORTH_H, enemy->x, enemy->y, &x, &y);
     for (int i = 0; i < 6; i++) {
         enemy->active = 0;
         renderer_begin_frame(r);
@@ -899,8 +911,9 @@ static void test_stormwatch_renderer(Renderer *r, GameState *g, SDL_Surface *sur
     Viewport view;
     viewport_init(&view, r->tiles_x < STORM_W ? r->tiles_x : STORM_W, r->tiles_y < STORM_H ? r->tiles_y : STORM_H, STORM_W, STORM_H);
     viewport_center_on(&view, g->player.x, g->player.y);
-    int x = viewport_to_screen_x(&view, enemy->x) * TILE_SIZE;
-    int y = viewport_to_screen_y(&view, enemy->y) * TILE_SIZE;
+    int x;
+    int y;
+    zoomed_screen(g, &view, STORM_W, STORM_H, enemy->x, enemy->y, &x, &y);
     for (int type = ENEMY_HARPY_RAIDER; type <= ENEMY_TEMPEST_MATRIARCH; type++) {
         enemy->active = 0;
         renderer_begin_frame(r);
@@ -922,7 +935,7 @@ static void test_stormwatch_renderer(Renderer *r, GameState *g, SDL_Surface *sur
     assert(!g->stormwatch_defeated && g->enemies[g->enemy_count - 1].type == ENEMY_TEMPEST_MATRIARCH);
     stormwatch_change_level(g, 1);
     assert(g->location == LOCATION_APPROACH && g->approach_route == 18 && !g->stormwatch_defeated);
-    printf("PASS: five Stormwatch enemies render visibly; debug opens final departure without defeating its boss.\n");
+    printf("PASS: five Stormwatch enemies render visibly at the zoomed camera scale; debug opens final departure without defeating its boss.\n");
 }
 
 static void test_saltwind_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
