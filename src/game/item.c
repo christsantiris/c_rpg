@@ -140,6 +140,18 @@ Item item_make_demonic_sword(void) {
     return it;
 }
 
+Item item_make_poison_sword(void) {
+    Item item = {0};
+    item.active = 1;
+    item.type = ITEM_WEAPON;
+    strncpy(item.name, "Poison Sword", sizeof(item.name) - 1);
+    item.attack_bonus = 16;
+    item.value = 1000;
+    set_weapon_metadata(&item, WEAPON_FAMILY_SWORD, WEAPON_HANDS_ONE,
+        ITEM_RARITY_RARE, ITEM_CLASS_WARRIOR | ITEM_CLASS_ROGUE, ITEM_VISUAL_POISON_SWORD);
+    return item;
+}
+
 Item item_make_magic_long_sword(void) {
     Item it = {0};
     it.active = 1;
@@ -432,6 +444,8 @@ void item_apply_legacy_metadata(Item *item) {
         definition = item_make_long_sword();
     } else if (strcmp(item->name, "Demonic Sword") == 0) {
         definition = item_make_demonic_sword();
+    } else if (strcmp(item->name, "Poison Sword") == 0) {
+        definition = item_make_poison_sword();
     } else if (strcmp(item->name, "Magic Long Sword") == 0) {
         definition = item_make_magic_long_sword();
     } else if (strcmp(item->name, "Battle Axe") == 0) {

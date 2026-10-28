@@ -116,6 +116,7 @@ void test_elowen_quest(void);
 void test_elowen_relocation(void);
 void test_tavern_interior(void);
 void test_dain_quest(void);
+void test_poison_sword(void);
 void test_dain_town_center(void);
 void test_alder_quest(void);
 void test_alder_relocation(void);
@@ -266,6 +267,7 @@ int main(void) {
     test_ilya_relocation();
     printf("\n");
     test_dain_quest();
+    test_poison_sword();
     test_dain_town_center();
     printf("\n");
     test_alder_quest();

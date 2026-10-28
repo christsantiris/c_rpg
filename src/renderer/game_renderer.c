@@ -1138,6 +1138,9 @@ static void draw_combat_feedback(Renderer *r, const GameState *g, const Viewport
         } else if (e->kind == FEEDBACK_PLAYER_DAMAGE) {
             SDL_snprintf(text, sizeof(text), "-%d", e->amount);
             color = (SDL_Color){240, 72, 60, 255};
+        } else if (e->kind == FEEDBACK_ENEMY_POISON) {
+            SDL_snprintf(text, sizeof(text), "-%d P", e->amount);
+            color = (SDL_Color){137, 239, 106, 255};
         } else if (e->kind == FEEDBACK_HEAL) {
             SDL_snprintf(text, sizeof(text), "+%d", e->amount);
             color = (SDL_Color){96, 224, 112, 255};

@@ -137,6 +137,7 @@ typedef struct {
     int       is_boss;
     int       dain_fragment;
     int       frozen_turns;
+    int poison_turns;
     int attack_target_x, attack_target_y;
     int revived;
     int revive_timer;

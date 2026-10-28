@@ -3,7 +3,7 @@
 
 #include "../game/game.h"
 
-#define MAX_SHOP_ITEMS 35
+#define MAX_SHOP_ITEMS 36
 #define ARROW_BUNDLE_SIZE 20
 
 typedef enum {
