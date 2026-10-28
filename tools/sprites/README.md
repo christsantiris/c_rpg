@@ -304,9 +304,10 @@ and renderer previews are in
 [`docs/art-sources/enemy-batch-16/README.md`](../../docs/art-sources/enemy-batch-16/README.md).
 
 The fortified Goblin Mountains entrance is generated with
-`python3 tools/sprites/mountain.py`. It uses pixelkit layers, shaded rock facets,
-stonework and timber at the established 24px tile scale. The runtime BMP spans
-7×6 tiles; its south-facing cave door anchors the approach collision footprint.
+`python3 tools/sprites/mountain.py`. It uses pixelkit layers, red sandstone
+buttes and needles split into sunlit and violet-shadowed slabs, stonework and
+timber at the established 24px tile scale. The runtime BMP spans 7×9 tiles; its south-facing cave door
+anchors the approach collision footprint.
 
 The Haunted Forest entrance uses `python3 tools/sprites/forest.py` and the same
 pixelkit pipeline. Its 7×6 tile sprite frames a south-facing woodland passage
@@ -317,12 +318,12 @@ Comparison and actual-renderer previews are in
 
 ### Regional pathway entrances
 
-`make sprites` includes all regional entrance generators. Forest, mountain and
-swamp landmarks are 168×144 pixels; the same size is used for the coast,
+`make sprites` includes all regional entrance generators. Forest and swamp
+landmarks are 168×144 pixels; the same size is used for the coast,
 Sunscar, Frostfell, Stonewake and Royal Catacombs entrances.
-Dragonspine is 168×216 pixels to accommodate its taller snowy peak and dragons.
+Dragonspine is 168×216 pixels to accommodate its towering granite needles and dragons.
 Ashen Hollow's lone fire mountain uses the same 168×216 size for its towering
-cone, lava river and smoke plume.
+cone, lava river and smoke plume, as do the red sandstone Goblin Mountains.
 Every asset uses pixelkit at native 24px tile scale and a south-facing doorway.
 
 The generators are `coast.py`, `desert.py`, `frostfell.py`,

@@ -1497,8 +1497,12 @@ int main(void) {
         int height;
         assert(renderer.area_entrance_textures[entrances[i]]);
         assert(SDL_QueryTexture(renderer.area_entrance_textures[entrances[i]], NULL, NULL, &width, &height) == 0);
-        assert(width == 168 && height == (entrances[i] == TOWN_EXIT_DRAGONSPINE ? 216 : 144));
+        assert(width == 168 && height == (entrances[i] == TOWN_EXIT_DRAGONSPINE || entrances[i] == TOWN_EXIT_ASHEN ? 216 : 144));
     }
+    int mountain_w;
+    int mountain_h;
+    assert(SDL_QueryTexture(renderer.mountain_entrance_texture, NULL, NULL, &mountain_w, &mountain_h) == 0);
+    assert(mountain_w == 168 && mountain_h == APPROACH_MOUNTAIN_ROWS * TILE_SIZE);
     Viewport viewport;
     SlotSelect slots = {0};
     LandingScreen landing = {0};

@@ -1761,7 +1761,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 217);
+    cJSON_AddNumberToObject(root, "save_version", 218);
     cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
@@ -6705,6 +6705,10 @@ int load_game(GameState *g, int slot) {
     // The taller Ashen Hollow volcano blocks three more rows of its approach.
     if (save_version < 217 && approach_route(g) && approach_route(g)->area == LOCATION_ASHEN) {
         approach_refresh_entrance(g);
+    }
+    // The taller sandstone Goblin Mountains block three more rows of their road.
+    if (save_version < 218 && approach_route(g) && approach_route(g)->area == LOCATION_MOUNTAINS) {
+        boss_gate_migrate(g);
     }
     cJSON_Delete(root);
     return 1;
