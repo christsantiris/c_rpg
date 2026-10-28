@@ -1761,7 +1761,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 218);
+    cJSON_AddNumberToObject(root, "save_version", 219);
     cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
@@ -6713,6 +6713,10 @@ int load_game(GameState *g, int slot) {
     // The taller sandstone Goblin Mountains block three more rows of their road.
     if (save_version < 218 && approach_route(g) && approach_route(g)->area == LOCATION_MOUNTAINS) {
         boss_gate_migrate(g);
+    }
+    // Elderwood clearings are now rounded; reshape floors saved as rectangles.
+    if (save_version < 0) {
+        elderwood_round_saved_clearings(g);
     }
     cJSON_Delete(root);
     return 1;
