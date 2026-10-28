@@ -44,7 +44,7 @@ to the Tavern without resetting the quest or dungeon exploration.
 
 ## Dain: Recover the Treasure Map
 
-Dain waits in **Ridgeshire's town center**. Press `T` beside him, then `Y` to
+Dain waits in **Dawnmere's Alehouse**. Press `T` beside him, then `Y` to
 accept **Recover the Treasure Map**, and return to him with all three fragments
 for the reward.
 

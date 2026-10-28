@@ -1,6 +1,7 @@
 #include "approach_checks.h"
 #include "test_utils.h"
 #include "../src/game/game.h"
+#include "../src/game/town_life.h"
 #include "../src/systems/save_load.h"
 #include "../src/screens/quest_journal.h"
 #include <string.h>
@@ -244,6 +245,16 @@ void test_tavern_interior(void) {
         g.frostfell_quest_state == 1);
 }
 
+static void visit_dain(GameState *g) {
+    game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
+    const TownBuilding *b = town_life_building(LOCATION_ALEHOUSE);
+    g->player.x = b->x + b->w / 2;
+    g->player.y = b->y + b->h;
+    action_resolve_player(g, (Action){ACTION_MOVE, g->player.x, g->player.y - 1});
+    g->player.x = DAIN_ALEHOUSE_X;
+    g->player.y = DAIN_ALEHOUSE_Y + 1;
+}
+
 void test_dain_quest(void) {
     printf("Dain quest tests:\n");
     GameState g;
@@ -253,9 +264,7 @@ void test_dain_quest(void) {
     g.mountain_cache[3].valid = 1;
     g.portal_active = 1;
     g.portal_location = LOCATION_MOUNTAINS;
-    game_enter_town_gate(&g, LOCATION_DAWNMERE, 0, 12);
-    g.player.x = DAIN_TOWN_X;
-    g.player.y = DAIN_TOWN_Y + 1;
+    visit_dain(&g);
     game_talk_to_dain(&g);
     game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
     ASSERT("Dain assigns Recover the Treasure Map", g.dain_quest_state == 1);
@@ -331,16 +340,14 @@ void test_dain_quest(void) {
         g.dain_quest_state == 2 && g.dain_map_fragments == 7);
 
     int gold_before = g.gold;
-    game_enter_town_gate(&g, LOCATION_DAWNMERE, 0, 12);
-    g.player.x = DAIN_TOWN_X;
-    g.player.y = DAIN_TOWN_Y + 1;
+    visit_dain(&g);
     game_talk_to_dain(&g);
     ASSERT("Dain completes the mountain quest", g.dain_quest_state == 3);
     ASSERT("Dain awards 60 gold", g.gold == gold_before + 60);
 }
 
 void test_dain_town_center(void) {
-    printf("Dain in Dawnmere's town center tests:\n");
+    printf("Dain in Dawnmere's Alehouse tests:\n");
     static GameState g;
     static GameState loaded;
     memset(&g, 0, sizeof(g));
@@ -358,13 +365,15 @@ void test_dain_town_center(void) {
     game_talk_to_dain(&g);
     ASSERT("Dain cannot assign his quest in the Guild", !g.dain_quest_state && !g.dialogue_active);
     game_enter_town_gate(&g, LOCATION_DAWNMERE, 0, 12);
-    ASSERT("Dawnmere's center houses Dain beside a walkable road", g.location == LOCATION_DAWNMERE &&
-        g.map.tiles[DAIN_TOWN_Y][DAIN_TOWN_X] == TILE_NPC_DAIN &&
-        !map_is_walkable(&g.map, DAIN_TOWN_X, DAIN_TOWN_Y) && map_is_walkable(&g.map, DAIN_TOWN_X, DAIN_TOWN_Y + 1));
+    ASSERT("Dawnmere's former Dain tile is restored cobblestone", g.location == LOCATION_DAWNMERE &&
+        g.map.tiles[DAIN_TOWN_Y][DAIN_TOWN_X] == TILE_TOWN_PATH && map_is_walkable(&g.map, DAIN_TOWN_X, DAIN_TOWN_Y));
     game_talk_to_dain(&g);
     ASSERT("Dain cannot assign his quest remotely in town", !g.dain_quest_state);
     g.player.x = DAIN_TOWN_X;
     g.player.y = DAIN_TOWN_Y + 1;
+    game_talk_to_dain(&g);
+    ASSERT("Dain cannot be talked to at his former plaza position", !g.dialogue_active && !g.dain_quest_state);
+    visit_dain(&g);
     action_resolve_player(&g, (Action){ACTION_INTERACT, 0, 0});
     ASSERT("Dain requires conversation rather than Action", !g.dain_quest_state);
     g.sunscar_lamp_quest_state = 1;
@@ -372,23 +381,23 @@ void test_dain_town_center(void) {
     game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
     ASSERT("Dain assigns the same mountain quest in Dawnmere and leaves Zara's quest intact", g.dain_quest_state == 1 &&
         !g.dain_map_fragments && g.sunscar_lamp_quest_state == 1 &&
-        g.dialogue_x == DAIN_TOWN_X && g.dialogue_y == DAIN_TOWN_Y &&
-        strstr(g.dialogue_text, "stages 2, 3, and 4") && strstr(g.dialogue_text, "Dawnmere's town center"));
+        g.dialogue_x == DAIN_ALEHOUSE_X && g.dialogue_y == DAIN_ALEHOUSE_Y &&
+        strstr(g.dialogue_text, "stages 2, 3, and 4") && strstr(g.dialogue_text, "Dawnmere's Alehouse"));
     g.dain_map_fragments = DAIN_FRAGMENT_ARCHER | DAIN_FRAGMENT_SHAMAN;
     QuestJournalEntry entry;
     ASSERT("the journal retains mountain objectives and rewards and names the new return location", quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 0, &entry) &&
         strcmp(entry.title, "Recover the Treasure Map") == 0 && entry.stages[0] == 2 && entry.stages[1] == 3 && entry.stages[2] == 4 &&
         entry.reward_gold == 60 && entry.reward_score == 400 && entry.objective_complete[0] && !entry.objective_complete[1] &&
-        entry.objective_complete[2] && strstr(entry.summary_line_2, "Dawnmere's town center"));
+        entry.objective_complete[2] && strstr(entry.summary_line_2, "Dawnmere's Alehouse"));
     ASSERT("saving in Dawnmere retains Dain and partial map progress", save_game(&g, 99141) && load_game(&loaded, 99141) &&
-        loaded.location == LOCATION_DAWNMERE && loaded.dain_quest_state == 1 && loaded.dain_map_fragments == 5 && loaded.sunscar_lamp_quest_state == 1 &&
-        loaded.map.tiles[DAIN_TOWN_Y][DAIN_TOWN_X] == TILE_NPC_DAIN);
+        loaded.location == LOCATION_ALEHOUSE && loaded.dain_quest_state == 1 && loaded.dain_map_fragments == 5 && loaded.sunscar_lamp_quest_state == 1 &&
+        loaded.map.tiles[DAIN_ALEHOUSE_Y][DAIN_ALEHOUSE_X] == TILE_NPC_DAIN);
     g = loaded;
     int gold = g.gold;
     int score = g.score;
     game_talk_to_dain(&g);
     ASSERT("partial map progress cannot claim the reward", g.gold == gold && g.score == score && g.dain_quest_state == 1);
-    ASSERT("Dain's progress reminder retains the complete return directions", strstr(g.dialogue_text, "Dawnmere's town center.") &&
+    ASSERT("Dain's progress reminder retains the complete return directions", strstr(g.dialogue_text, "Dawnmere's Alehouse.") &&
         strstr(g.dialogue_text, "2 of 3 map fragments"));
     g.dain_quest_state = 2;
     g.dain_map_fragments = 7;
@@ -396,8 +405,8 @@ void test_dain_town_center(void) {
     g.player.y = TOWN_H - 2;
     game_talk_to_dain(&g);
     ASSERT("completed quest rewards cannot be claimed remotely", g.gold == gold && g.score == score && g.dain_quest_state == 2);
-    g.player.x = DAIN_TOWN_X;
-    g.player.y = DAIN_TOWN_Y + 1;
+    g.player.x = DAIN_ALEHOUSE_X;
+    g.player.y = DAIN_ALEHOUSE_Y + 1;
     game_talk_to_dain(&g);
     game_talk_to_dain(&g);
     ASSERT("Dain awards the original 60 gold and 400 score once in Dawnmere", g.dain_quest_state == 3 && g.gold == gold + 60 && g.score == score + 400);
@@ -571,7 +580,7 @@ void test_quest_offer_controls(void) {
         int *state;
     } cases[] = {
         {game_talk_to_elowen, LOCATION_TAVERN, ELOWEN_TAVERN_X, ELOWEN_TAVERN_Y, &g.elowen_quest_state},
-        {game_talk_to_dain, LOCATION_DAWNMERE, DAIN_TOWN_X, DAIN_TOWN_Y, &g.dain_quest_state},
+        {game_talk_to_dain, LOCATION_ALEHOUSE, DAIN_ALEHOUSE_X, DAIN_ALEHOUSE_Y, &g.dain_quest_state},
         {game_talk_to_alder, LOCATION_INN, ALDER_INN_X, ALDER_INN_Y, &g.alder_quest_state},
         {game_talk_to_mara, LOCATION_TAVERN, MARA_TAVERN_X, MARA_TAVERN_Y, &g.mara_quest_state},
         {game_talk_to_rook, LOCATION_TAVERN, ROOK_TAVERN_X, ROOK_TAVERN_Y, &g.rook_quest_state},

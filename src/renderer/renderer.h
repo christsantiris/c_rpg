@@ -65,7 +65,8 @@ typedef struct {
     SDL_Texture *guild_texture;
     SDL_Texture *workshop_texture;
     SDL_Texture *town_hall_texture;
-    SDL_Texture *local_building_textures[4];
+    SDL_Texture *local_building_textures[5];
+    SDL_Texture *alehouse_cask_texture;
     SDL_Texture *island_texture;
     SDL_Texture *island_temple_texture;
     SDL_Texture *island_ship_texture;

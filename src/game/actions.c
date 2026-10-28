@@ -2384,7 +2384,7 @@ void action_resolve_player(GameState *g, Action a) {
         }
         // Check for town exit
         if (g->map.tiles[ty][tx] == TILE_LOCAL_DOOR) {
-            town_life_enter(g);
+            town_life_enter(g, tx, ty);
             return;
         }
         if (town_life_is_interior(g->location) && g->map.tiles[ty][tx] == TILE_TAVERN_EXIT) {

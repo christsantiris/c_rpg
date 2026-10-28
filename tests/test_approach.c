@@ -659,7 +659,9 @@ void test_approaches(void) {
             walk_into_arrived_town(g);
             ASSERT("walking east reaches Dawnmere and walking west reaches Oakhaven without a prompt", g->location == (east ? LOCATION_DAWNMERE : LOCATION_TOWN) && !g->dialogue_active);
             ASSERT("town crossing preserves the dungeon cache and Lich victory", g->level_cache[DUNGEON_DEPTH - 1].valid && (g->defeated_bosses & (1 << LOCATION_DUNGEON)));
-            ASSERT("Dawnmere retains its merchant footprint and the removed hall lot is walkable", g->location != LOCATION_DAWNMERE || (g->map.tiles[12][1] == TILE_TOWN_PATH && map_is_walkable(&g->map, 20, 12) && !map_is_walkable(&g->map, 7, 7) && map_is_walkable(&g->map, 26, 6)));
+            ASSERT("Dawnmere retains its merchant and Alehouse without blocking the crossroads", g->location != LOCATION_DAWNMERE ||
+                (g->map.tiles[12][1] == TILE_TOWN_PATH && map_is_walkable(&g->map, 20, 12) &&
+                !map_is_walkable(&g->map, 7, 7) && g->map.tiles[6][26] == TILE_LOCAL_BUILDING && g->map.tiles[10][28] == TILE_LOCAL_DOOR));
         }
     }
     approach_town(g, &town_approaches[1]);
@@ -725,13 +727,17 @@ void test_approaches(void) {
     int clear_lot = removed_hall;
     for (int y = 6; y < 11; y++) {
         for (int x = 26; x < 33; x++) {
-            if (!map_is_walkable(&loaded->map, x, y)) {
+            if ((x <= 31 && loaded->map.tiles[y][x] != (x == 28 && y == 10 ? TILE_LOCAL_DOOR : TILE_LOCAL_BUILDING)) ||
+                (x == 32 && !map_is_walkable(&loaded->map, x, y))) {
                 clear_lot = 0;
             }
         }
     }
-    ASSERT("older Dawnmere saves remove the entire hall collision footprint", clear_lot && !map_is_walkable(&loaded->map, 7, 7));
-    ASSERT("removing the hall preserves position, exploration and dropped loot", removed_hall && loaded->player.x == g->player.x && loaded->player.y == g->player.y && loaded->gold == 393 && map_is_explored(&loaded->map, 28, 8) && loaded->floor_items[0].active && loaded->floor_items[0].underlying_tile == TILE_TOWN_FLOOR && loaded->map.tiles[8][28] == TILE_ITEM);
+    ASSERT("older Dawnmere saves replace the retired hall lot with the Alehouse", clear_lot && !map_is_walkable(&loaded->map, 7, 7));
+    ASSERT("the replacement lot preserves the road player and relocates loot while retaining discoveries", removed_hall &&
+        loaded->player.x == g->player.x && loaded->player.y == g->player.y && loaded->gold == 393 && map_is_explored(&loaded->map, 28, 8) &&
+        loaded->floor_items[0].active && loaded->floor_items[0].underlying_tile == TILE_TOWN_PATH &&
+        loaded->floor_items[0].x == 28 && loaded->floor_items[0].y == 11 && loaded->map.tiles[11][28] == TILE_ITEM);
     remove("saves/savegame_99160.json");
     test_labyrinth_path(g, loaded, slot);
     test_coast_shore(g, loaded, slot);

@@ -2972,7 +2972,7 @@ static void test_dain_dawnmere_migration(void) {
             loaded.dain_map_fragments == 5 && loaded.gold == 327 && loaded.score == 811 && map_is_explored(&loaded.map, 3, 3));
         ASSERT("Dain moves to Dawnmere without stranding the player or stacked loot",
             loaded.player.x == x && loaded.player.y == y + 1 && map_is_walkable(&loaded.map, x, y + 1) &&
-            loaded.map.tiles[y][x] == (town ? TILE_NPC_DAIN : TILE_ITEM) &&
+            loaded.map.tiles[y][x] == (town ? TILE_TOWN_PATH : TILE_ITEM) &&
             loaded.floor_items[0].active && loaded.floor_items[1].active &&
             loaded.floor_items[0].y == y + town && loaded.floor_items[1].y == y + town &&
             loaded.floor_items[0].underlying_tile == (town ? TILE_TOWN_PATH : TILE_TOWN_FLOOR));

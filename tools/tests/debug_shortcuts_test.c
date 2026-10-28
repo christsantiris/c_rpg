@@ -1127,7 +1127,7 @@ static void test_dawnmere_dialogue(Renderer *r, GameState *g, SDL_Surface *surfa
     for (int state = 0; state < 5; state++) {
         game_init(g);
         game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
-        assert(g->map.tiles[DAIN_TOWN_Y][DAIN_TOWN_X] == TILE_NPC_DAIN);
+        assert(g->map.tiles[DAIN_TOWN_Y][DAIN_TOWN_X] == TILE_TOWN_PATH);
         if (state < 4) {
             g->player.x = SEREN_X;
             g->player.y = SEREN_Y + 1;
@@ -1135,8 +1135,10 @@ static void test_dawnmere_dialogue(Renderer *r, GameState *g, SDL_Surface *surfa
             assert(controls_action_for_key(g->key_bindings, SDL_SCANCODE_T) == CONTROL_TALK);
             assert(stormbell_talk(g) && g->dialogue_active);
         } else {
-            g->player.x = DAIN_TOWN_X;
-            g->player.y = DAIN_TOWN_Y + 1;
+            const TownBuilding *b = town_life_building(LOCATION_ALEHOUSE);
+            town_life_enter(g, b->x + b->w / 2, b->y + b->h - 1);
+            g->player.x = DAIN_ALEHOUSE_X;
+            g->player.y = DAIN_ALEHOUSE_Y + 1;
             game_talk_to_dain(g);
             assert(game_quest_offer_active(g) && strstr(g->dialogue_text, "Dawnmere"));
         }
@@ -1358,6 +1360,61 @@ static void test_town_gate_renderer(Renderer *r, GameState *g, SDL_Surface *surf
     }
     free(before);
     puts("PASS: all 24 town gate views preserve a full transparent road tile; five towns and Castle Grounds render upright gates without changing their maps.");
+}
+
+static void test_alehouse_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+    assert(r->local_building_textures[4] && r->alehouse_cask_texture);
+    int width;
+    int height;
+    SDL_QueryTexture(r->local_building_textures[4], NULL, NULL, &width, &height);
+    assert(width == 168 && height == 144);
+    SDL_QueryTexture(r->alehouse_cask_texture, NULL, NULL, &width, &height);
+    assert(width == 2 * TILE_SIZE && height == TILE_SIZE);
+    game_init(g);
+    game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
+    Viewport view;
+    viewport_init(&view, TOWN_W, TOWN_H, TOWN_W, TOWN_H);
+    Map *before = malloc(sizeof(*before));
+    assert(before);
+    *before = g->map;
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(memcmp(before->tiles, g->map.tiles, sizeof(before->tiles)) == 0);
+    assert(SDL_SaveBMP(surface, "/tmp/alehouse-dawnmere.bmp") == 0);
+    // A character's transparent corners must retain the plaza's stone pixels.
+    int sample_x = (DAIN_TOWN_X * TILE_SIZE + 1) * (r->screen_w - INFO_PANEL_W) / (TOWN_W * TILE_SIZE);
+    int sample_y = (DAIN_TOWN_Y * TILE_SIZE + 1) * r->tiles_y / TOWN_H;
+    Uint32 paving = rendered_pixel(surface, sample_x, sample_y);
+    const TileType visitors[] = {TILE_NPC_DAIN, TILE_NPC_SEREN, TILE_NPC_TAMSIN, TILE_NPC_ALDRIC, TILE_NPC_ROWAN, TILE_NPC_CAIN};
+    for (int i = 0; i < 6; i++) {
+        g->map.tiles[DAIN_TOWN_Y][DAIN_TOWN_X] = visitors[i];
+        renderer_begin_frame(r);
+        game_draw(r, g, &view);
+        renderer_end_frame(r);
+        assert(rendered_pixel(surface, sample_x, sample_y) == paving);
+    }
+    g->map = *before;
+    const TownBuilding *b = town_life_building(LOCATION_ALEHOUSE);
+    g->player.x = b->x + b->w / 2;
+    g->player.y = b->y + b->h;
+    action_resolve_player(g, (Action){ACTION_MOVE, g->player.x, g->player.y - 1});
+    assert(g->location == LOCATION_ALEHOUSE);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/alehouse-interior.bmp") == 0);
+    g->player.x = DAIN_ALEHOUSE_X;
+    g->player.y = DAIN_ALEHOUSE_Y + 1;
+    assert(town_life_talk(g, 0) && game_quest_offer_active(g));
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/alehouse-dain-dialogue.bmp") == 0);
+    game_handle_quest_offer_key(g, SDL_SCANCODE_Y, 0);
+    assert(g->dain_quest_state == 1);
+    free(before);
+    puts("PASS: Alehouse, cask shelves and Dain's quest dialogue render; six NPCs preserve the town's paving.");
 }
 
 static void test_ironfang_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
@@ -1774,6 +1831,7 @@ int main(void) {
     test_war_machine_renderer(&renderer, game, surface);
     test_crown_quest_renderer(&renderer, game, surface);
     test_spice_skiff_renderer(&renderer, game, surface);
+    test_alehouse_renderer(&renderer, game, surface);
     test_town_gate_renderer(&renderer, game, surface);
     free(game);
     renderer_free(&renderer);

@@ -19,10 +19,11 @@ typedef struct {
 } TownBuilding;
 
 const TownBuilding *town_life_building(Location location);
+const TownBuilding *town_life_next_building(Location location, const TownBuilding *previous);
 int town_life_is_interior(Location location);
 void town_life_place(Map *map, Location town);
 void town_life_generate(Map *map, Location interior, int *sx, int *sy);
-void town_life_enter(GameState *g);
+void town_life_enter(GameState *g, int x, int y);
 void town_life_leave(GameState *g);
 int town_life_talk(GameState *g, int greeting);
 void town_life_migrate(GameState *g);

@@ -293,7 +293,8 @@ static void test_travel_and_saves(GameState *g, GameState *loaded) {
         loaded->floor_items[0].active && loaded->map.tiles[item_y][item_x] == TILE_ITEM && northroad_valid(loaded));
     game_init(g);
     game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
-    town_life_enter(g);
+    const TownBuilding *merchant = town_life_building(g->location);
+    town_life_enter(g, merchant->x + merchant->w / 2, merchant->y + merchant->h - 1);
     g->dialogue_active = 1;
     snprintf(g->dialogue_speaker, sizeof(g->dialogue_speaker), "Merchant Corvin");
     g->gold = 321;
