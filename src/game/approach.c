@@ -403,11 +403,11 @@ void approach_refresh_swamp(GameState *g) {
 // Dead-end areas with a walk-in entrance sprite; 0 keeps the older approach style.
 int approach_entrance_rows(Location area) {
     switch (area) {
-        case LOCATION_DRAGONSPINE: return 9;
+        case LOCATION_DRAGONSPINE:
+        case LOCATION_ASHEN: return 9;
         case LOCATION_COAST:
         case LOCATION_FROSTFELL:
         case LOCATION_DESERT:
-        case LOCATION_ASHEN:
         case LOCATION_GLASSDEEP:
         case LOCATION_STORMWATCH:
         case LOCATION_IRONFANG:

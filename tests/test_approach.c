@@ -215,6 +215,40 @@ static void test_coast_shore(GameState *g, GameState *loaded, int slot) {
     remove("saves/savegame_99160.json");
 }
 
+static void test_ashen_volcano(GameState *g, GameState *loaded, int slot) {
+    approach_town(g, &town_approaches[13]);
+    approach_enter(g, CASTLE_ASHEN_GATE_X, 0);
+    int door_x = g->map.stairs_down_x;
+    int door_y = g->map.stairs_down_y;
+    int solid = 1;
+    for (int row = -8; row <= 0; row++) {
+        for (int side = -3; side <= 3; side++) {
+            if ((row || side) && map_is_walkable(&g->map, door_x + side, door_y + row)) {
+                solid = 0;
+            }
+        }
+    }
+    ASSERT("the towering Ashen Hollow volcano blocks its full nine-row footprint", solid && approach_entrance_rows(LOCATION_ASHEN) == 9 && g->map.tiles[door_y][door_x] == TILE_APPROACH_AREA);
+    // Version 216 volcanoes were six rows tall, so their upper rows were open grass.
+    for (int row = -8; row <= -6; row++) {
+        for (int side = -3; side <= 3; side++) {
+            g->map.tiles[door_y + row][door_x + side] = TILE_TOWN_FLOOR;
+        }
+    }
+    g->player.x = door_x - 1;
+    g->player.y = door_y - 7;
+    map_mark_explored(&g->map, g->player.x, g->player.y);
+    g->floor_item_count = 1;
+    g->floor_items[0] = (FloorItem){.active = 1, .x = door_x + 1, .y = door_y - 7, .underlying_tile = TILE_TOWN_FLOOR, .item = item_make_health_potion()};
+    g->map.tiles[door_y - 7][door_x + 1] = TILE_ITEM;
+    g->gold = 393;
+    int ok = save_game(g, slot) && legacy_approach_save(slot, 216) && load_game(loaded, slot);
+    ASSERT("older Ashen approaches move players and loot off the raised summit", ok && loaded->approach_route == 13 && map_is_walkable(&loaded->map, loaded->player.x, loaded->player.y) && !map_is_walkable(&loaded->map, door_x - 1, door_y - 7) && loaded->floor_items[0].active && loaded->map.tiles[loaded->floor_items[0].y][loaded->floor_items[0].x] == TILE_ITEM && loaded->gold == 393);
+    walk_town_approach(loaded);
+    ASSERT("the migrated volcano approach still enters Ashen Hollow", loaded->location == LOCATION_ASHEN && loaded->level == 1);
+    remove("saves/savegame_99160.json");
+}
+
 void test_approaches(void) {
     printf("Safe town approach paths:\n");
     GameState *g = calloc(1, sizeof(*g));
@@ -741,6 +775,7 @@ void test_approaches(void) {
     remove("saves/savegame_99160.json");
     test_labyrinth_path(g, loaded, slot);
     test_coast_shore(g, loaded, slot);
+    test_ashen_volcano(g, loaded, slot);
     free(g);
     free(loaded);
 }

@@ -319,8 +319,10 @@ Comparison and actual-renderer previews are in
 
 `make sprites` includes all regional entrance generators. Forest, mountain and
 swamp landmarks are 168×144 pixels; the same size is used for the coast,
-Sunscar, Frostfell, Ashen, Stonewake and Royal Catacombs entrances.
+Sunscar, Frostfell, Stonewake and Royal Catacombs entrances.
 Dragonspine is 168×216 pixels to accommodate its taller snowy peak and dragons.
+Ashen Hollow's lone fire mountain uses the same 168×216 size for its towering
+cone, lava river and smoke plume.
 Every asset uses pixelkit at native 24px tile scale and a south-facing doorway.
 
 The generators are `coast.py`, `desert.py`, `frostfell.py`,

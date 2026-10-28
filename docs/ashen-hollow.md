@@ -6,8 +6,10 @@ its south edge and advance through the north exit. The south entrance backtracks
 on stage 1 it returns to the approach back to Castle Grounds' north gate. Ordinary
 enemies do not block stage travel.
 
-The entrance is a deep, lava-lit fissure surrounded by broken basalt spires.
-A narrow stairway descends through its southern rim.
+The entrance is a lone, towering fire mountain. A lava river pours from its
+notched crater and splits around a jagged, fire-lit cleft at its foot, while
+smoke rolls east from the summit. The mountain fills a 7×9 tile footprint;
+save version 217 moves anyone saved on its newly raised summit onto the road.
 
 The Cinder Lord guards the last clearing on stage 5. That stage's north exit
 remains open while he lives and returns to the approach back to Castle Grounds
