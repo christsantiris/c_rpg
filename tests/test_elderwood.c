@@ -460,9 +460,9 @@ void test_elderwood(void) {
     game_descend(g);
     game_open_town_portal(g);
     g->map.tiles[12][21] = TILE_TOWN_PATH;
-    g->map.tiles[TOWN3_KING_GATE_Y + 1][TOWN_W - 3] = TILE_PORTAL;
-    ASSERT("legacy Catacombs return portals are retired in Rosemoor", save_game(g, ELDER_SLOT) && legacy(ELDER_SLOT) && load_game(loaded, ELDER_SLOT) && loaded->map.tiles[TOWN3_KING_GATE_Y + 1][TOWN_W - 3] != TILE_PORTAL);
-    action_resolve_player(loaded, (Action){ACTION_MOVE, TOWN_W - 3, TOWN3_KING_GATE_Y + 1});
+    g->map.tiles[TOWN3_CROWN_GATE_Y + 1][TOWN_W - 3] = TILE_PORTAL;
+    ASSERT("legacy Catacombs return portals are retired in Rosemoor", save_game(g, ELDER_SLOT) && legacy(ELDER_SLOT) && load_game(loaded, ELDER_SLOT) && loaded->map.tiles[TOWN3_CROWN_GATE_Y + 1][TOWN_W - 3] != TILE_PORTAL);
+    action_resolve_player(loaded, (Action){ACTION_MOVE, TOWN_W - 3, TOWN3_CROWN_GATE_Y + 1});
     ASSERT("a migrated Rosemoor return portal stays retired", loaded->location == LOCATION_TOWN3 && !loaded->portal_active);
     game_enter_town4(g);
     game_enter_town_hall(g);

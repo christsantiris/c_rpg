@@ -5,15 +5,15 @@ static const char *game_over_location(const GameState *g) {
     switch (g->location) {
         case LOCATION_DUNGEON: return "DUNGEON";
         case LOCATION_APPROACH: return "APPROACH PATH";
-        case LOCATION_JAIL: return "ROYAL JAIL";
-        case LOCATION_JAIL_ARMORY: return "JAIL EVIDENCE ROOM";
+        case LOCATION_JAIL: return "ROYAL DUNGEON";
+        case LOCATION_JAIL_ARMORY: return "DUNGEON EVIDENCE ROOM";
         case LOCATION_ESCAPE_TUNNEL: return "ESCAPE TUNNEL";
         case LOCATION_FOREST: return "HAUNTED FOREST";
         case LOCATION_FOREST_ROAD: return "FOREST ROAD";
         case LOCATION_CASTLE:
         case LOCATION_CASTLE_INTERIOR: return "CASTLE OF NO RETURN";
         case LOCATION_SWAMP_ROAD: return "SWAMP SHORTCUT";
-        case LOCATION_KING_ROAD_WEST: return "CROWN ROAD WEST";
+        case LOCATION_CROWNROAD_WEST: return "CROWN ROAD WEST";
         case LOCATION_CROWNROAD_NORTH: return "CROWN ROAD NORTH";
         case LOCATION_CROWNROAD: return "CROWN ROAD EAST";
         case LOCATION_MOUNTAINS: return "GOBLIN MOUNTAINS";

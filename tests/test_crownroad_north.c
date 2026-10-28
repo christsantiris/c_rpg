@@ -261,35 +261,29 @@ static void test_travel_and_saves(GameState *g, GameState *loaded) {
     ASSERT("walking onto the north boundary reaches Castle Grounds' south gate", loaded->location == LOCATION_CASTLE && loaded->player.y == TOWN_H - 2);
     action_resolve_player(loaded, (Action){ACTION_MOVE, CROWNROAD_X, TOWN_H - 1});
     ASSERT("the castle's south gate enters Crown Road North from its north boundary", loaded->location == LOCATION_CROWNROAD_NORTH && loaded->player.y == 1);
-    ASSERT("physical re-entry respawns patrols while keeping explored terrain and claimed supplies", loaded->enemies[0].hp == loaded->enemies[0].max_hp &&
-        loaded->enemies[11].active && !loaded->enemies[7].attack_phase && loaded->map.tiles[82][18] == TILE_CROWN_EMPTY && map_is_explored(&loaded->map, 18, 82));
+    ASSERT("physical re-entry keeps wounded and defeated patrols but cancels their marked shots", loaded->enemies[0].hp == 7 &&
+        !loaded->enemies[11].active && !loaded->enemies[7].attack_phase && loaded->map.tiles[82][18] == TILE_CROWN_EMPTY && map_is_explored(&loaded->map, 18, 82));
     loaded->player.x = CROWN_NORTH_X;
     loaded->player.y = CROWN_NORTH_H - 2;
     action_resolve_player(loaded, (Action){ACTION_MOVE, CROWN_NORTH_X, CROWN_NORTH_H - 1});
     ASSERT("the south boundary returns to the road beside the Catacombs", northern_approach(loaded) && loaded->player.x == NORTH_ROAD_X && loaded->player.y == 1);
     action_resolve_player(loaded, (Action){ACTION_MOVE, NORTH_ROAD_X, 0});
     ASSERT("the cleared Catacombs approach enters the goblin road before the castle", loaded->location == LOCATION_CROWNROAD_NORTH && loaded->player.y == CROWN_NORTH_H - 2);
-    int anchor_x = loaded->enemies[0].x;
-    int anchor_y = loaded->enemies[0].y;
+    int patrol_x = loaded->enemies[0].x;
+    int patrol_y = loaded->enemies[0].y;
     int item_x = loaded->enemies[1].x;
     int item_y = loaded->enemies[1].y;
-    loaded->portal_active = 1;
-    loaded->portal_location = LOCATION_CROWNROAD_NORTH;
-    loaded->portal_level = 1;
-    loaded->portal_x = anchor_x;
-    loaded->portal_y = anchor_y;
     loaded->floor_item_count = 1;
     loaded->floor_items[0] = (FloorItem){.active = 1, .x = item_x, .y = item_y,
         .underlying_tile = loaded->map.tiles[item_y][item_x], .item = item_make_staff()};
     loaded->map.tiles[item_y][item_x] = TILE_ITEM;
+    loaded->enemies[2].x = CROWN_NORTH_X;
+    loaded->enemies[2].y = 1;
     northroad_leave(loaded, 1);
     northroad_enter(loaded, 1, 0);
-    int protected = 1;
-    for (int i = 0; i < loaded->enemy_count; i++) {
-        const Enemy *enemy = &loaded->enemies[i];
-        protected &= !(enemy->x == anchor_x && enemy->y == anchor_y) && !(enemy->x == item_x && enemy->y == item_y);
-    }
-    ASSERT("respawn relocates patrols around a live portal anchor and preserved floor gear", protected && loaded->enemy_count == NORTH_ENEMIES &&
+    ASSERT("re-entry keeps patrol positions and floor gear, stepping a patrol off the entry tile", loaded->enemy_count == NORTH_ENEMIES &&
+        loaded->enemies[0].x == patrol_x && loaded->enemies[0].y == patrol_y && loaded->enemies[1].x == item_x && loaded->enemies[1].y == item_y &&
+        loaded->enemies[2].active && !(loaded->enemies[2].x == loaded->player.x && loaded->enemies[2].y == loaded->player.y) &&
         loaded->floor_items[0].active && loaded->map.tiles[item_y][item_x] == TILE_ITEM && northroad_valid(loaded));
     game_init(g);
     game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
@@ -325,7 +319,7 @@ static void test_supplies(GameState *g) {
     northroad_enter(g, 1, 0);
     g->player.x = 18;
     g->player.y = 81;
-    ASSERT("re-entering refreshes patrols without refilling a claimed supply cache", g->enemy_count == NORTH_ENEMIES &&
+    ASSERT("re-entering keeps defeated guards down without refilling a claimed supply cache", g->enemy_count == 1 && !g->enemies[0].active &&
         northroad_interact(g) && g->gold == gold + 25 && g->map.tiles[82][18] == TILE_CROWN_EMPTY);
 }
 

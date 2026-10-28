@@ -45,8 +45,12 @@ Six supply caches sit on the side trails. Defeat nearby guards, then use the
 configured Interact key (`A` by default). A cache grants 25 gold and up to
 20 HP once; its empty state persists.
 
-Physical re-entry replenishes ordinary patrols. Exploration, claimed supplies,
-and dropped equipment remain. Respawning patrols avoid dropped gear. Return
+Unlike other combat areas, the Crown Roads (North, East and West) never respawn
+enemies. Patrols spawn on the first crossing; afterwards defeated enemies stay
+defeated, survivors keep their wounds and positions, and a cleared road stays
+clear. Physical re-entry cancels shots and bombs marked during the previous
+crossing and moves any patrol off the entry tile. Exploration, claimed supplies,
+and dropped equipment remain. Return
 to Town is a one-way escape to the last town entered, with no return portal.
 
 Save version **202** stores the road map, patrols, supplies, floor loot and

@@ -104,7 +104,7 @@ Castle entries below refer to the castle interior, not Castle Grounds.
 | Thorn Dryad | Elderwood Forest |
 | Treefolk | Elderwood Forest |
 | Elderthorn | Elderwood Forest |
-| Royal Guard | Royal Jail gear storeroom, outside Castle Grounds |
+| Royal Guard | Royal Dungeon evidence room, outside Castle Grounds |
 | Lizardfolk Scout | Saltwind Marsh |
 | Reed Spearhunter | Saltwind Marsh |
 | Marsh Spitter | Saltwind Marsh |

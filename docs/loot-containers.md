@@ -12,7 +12,7 @@ still require defeating their guards. Interact also operates doors, switches,
 and other regional mechanisms; arrow keys always move.
 
 This applies to dungeon and coastal treasure, regional supply chests, boss reward
-reliquaries, castle reward chests, and the jail evidence chest. Equipment and
+reliquaries, castle reward chests, and the Royal Dungeon evidence chest. Equipment and
 quest items retain their existing stats and rewards.
 
 Save version 209 stores chest states and released loot independently of the

@@ -1,11 +1,17 @@
-# Royal Jail and Escape Tunnel
+# Royal Dungeon and Escape Tunnel
 
-The castle grounds contain a stone jail southwest of the main entrance.
+The castle grounds contain the **Royal Dungeon** southwest of the main
+entrance: a crenellated gatehouse in the castle's dark stone whose portcullis
+opens on stairs down to the cells. Barred cell grates at the foot of its walls,
+a hanging gibbet cage, shackles and the royal crest mark it as a prison.
+`tools/sprites/royal_dungeon.py` generates its 7 x 5 tile sprite,
+`assets/images/royal-dungeon.bmp`
+([renderer capture](art-sources/royal-dungeon/renderer-preview.png)).
 A brown-coated townsman east of the crossroads appears to be an ordinary NPC.
 Talking to him with **T** triggers a one-time betrayal: he reports the player
 to the Royal Guards, who imprison them. The arrest dialogue explains exactly
 what happened. Walking nearby, bumping into him, or pressing Interact does not
-cause arrest. The jail's front door is locked.
+cause arrest. The dungeon's front gate is locked.
 
 Guards confiscate **all weapons, armor, and shields**, including spare items in
 the pack. Their exact upgrades and bonuses are stored for recovery. Equipped
@@ -22,8 +28,8 @@ This remains true when using `./tools/debug_shortcuts.sh`.
 
 Walking onto the hatch takes both characters into the **Escape Tunnel**.
 Tomas closes it behind them to prevent pursuit, so there is no return to the cell.
-After confiscation he supplies a basic weapon for the escape: a Short Sword for
-Warriors, a Staff for Mages, or a Shortbow and at least ten arrows for Rogues.
+After confiscation he supplies a Smuggled Dagger for the escape, small enough
+to hide in a cell. Every class can wield it.
 This does not return any confiscated equipment. The first enemies stand farther
 along the passage, leaving space to prepare after arriving.
 The tunnel is a single 190-tile combat map with thirty enemies. Its original
@@ -42,7 +48,7 @@ backtracking. The player can still be hurt or killed normally.
 enemies take their normal turn. A custom command assigned to Space takes
 precedence. Moving back toward Tomas or attempting the eastern exit again also
 lets him catch up. The exit refuses departure while he is more than one tile
-away. Town portals are blocked by the royal wards in both jail and tunnel,
+away. Town portals are blocked by the royal wards in both the dungeon and the tunnel,
 with an explanatory message and no mana cost. Ordinary Teleport remains usable,
 but cannot transport Tomas; he must walk and catch up.
 
@@ -53,8 +59,8 @@ returning to the informant cannot repeat the reward or arrest.
 
 ## Recovering equipment
 
-After escaping with Tomas, return to the existing **jail building southwest of
-the castle entrance**, outside the castle walls. Walking through its front door
+After escaping with Tomas, return to the **Royal Dungeon southwest of the
+castle entrance**, outside the castle walls. Walking through its front door
 enters the evidence room. **Three Royal Guards** defend the chest; all three
 must be defeated before it opens. They are combat enemies who can damage and
 kill the player. Leave through the southern door to retreat to Castle Grounds.
@@ -75,8 +81,8 @@ remains accessible after recovery.
 Save version **101** records the arrest/escort/reward state and companion
 coordinates alongside the current map, enemies, and loot. Saving before the
 hatch is revealed, after accepting, or mid-tunnel resumes that exact encounter.
-Earlier saves gain an unstarted quest; saved castle grounds gain the jail and
-informant. Players and loot overlapping the new footprint move to the jail's
+Earlier saves gain an unstarted quest; saved castle grounds gain the dungeon and
+informant. Players and loot overlapping the new footprint move to the dungeon's
 front path while equipment, money, boss victories, and quest progress remain.
 
 Version **118** extends older tunnel saves beyond their original eastern exit.
@@ -86,7 +92,7 @@ new passage. Saving again retains the extension and its combat progress.
 
 Version **183** adds confiscated equipment, original equipment slots, escape
 supplies, claimed-item tracking, and the evidence room's guards and loot. Older
-saves already in jail or the tunnel keep their equipment and escort progress;
+saves already in the dungeon or the tunnel keep their equipment and escort progress;
 the migration does not confiscate items retrospectively. An old visible hatch
 is hidden again if Tomas's quest has not been accepted.
 
@@ -96,11 +102,11 @@ For play testing:
 2. Check that weapons, armor, and shields are gone but gold and other items remain.
 3. Confirm the hatch is hidden, including in debug mode. Talk to Tomas with T
    and accept with Y; locate the newly revealed hatch.
-4. Save/load in the cell, enter the tunnel, and check the supplied class weapon.
+4. Save/load in the cell, enter the tunnel, and check the supplied Smuggled Dagger.
 5. Try Teleport, Space, and an early exit attempt while Tomas is behind you.
 6. Save/load mid-escort; confirm enemy damage, loot, and Tomas's position persist.
 7. Reach central Ridgeshire together and check the reward and Completed journal.
-8. Return to the jail's front door. Fight a guard, retreat, and save/load; verify
+8. Return to the dungeon's front gate. Fight a guard, retreat, and save/load; verify
    that its damage and any dropped loot remain when reentering.
 9. Defeat all three guards, then interact with the chest with a full pack and
    with one free slot. Save/load during partial recovery, then reclaim the rest.

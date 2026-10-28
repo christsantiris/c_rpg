@@ -5,10 +5,10 @@ Reach the safe grounds through either Crown Road, approach the north castle
 entrance, and confirm entry. The south gate leads onto the northern road, past the Royal Catacombs
 and Elderwood toward Oakhaven.
 
-The grounds also contain the **Royal Jail** and a townsman who secretly reports
+The grounds also contain the **Royal Dungeon** and a townsman who secretly reports
 you to the Royal Guards when spoken to with `T`. This one-time arrest begins
-an optional jail escape and prisoner escort to Ridgeshire; it does not reset
-castle victories or equipment. See [Royal Jail](royal-jail.md).
+an optional dungeon escape and prisoner escort to Ridgeshire; it does not reset
+castle victories or equipment. See [Royal Dungeon](royal-dungeon.md).
 
 ## Floors and appearance
 

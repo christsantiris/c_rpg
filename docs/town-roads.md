@@ -74,7 +74,7 @@ portals and regional progress remain intact. Earned gold and equipment remain.
 
 Items left in retired coastal caches return to the pack. If it is full, the
 remaining items stay serialized in a recovery queue and return as slots become
-free in town. Recovery stays suspended in adventures and jail. An active pirate floor's loot is relocated to Dawnmere and is not recovered
+free in town. Recovery stays suspended in adventures and the Royal Dungeon. An active pirate floor's loot is relocated to Dawnmere and is not recovered
 again from its duplicate cache. The retired quest and encounter state are not
 written into new saves. Serialized location IDs 44–45, approach index 17, the
 six appended pirate enemy IDs and sixteen appended tile IDs remain reserved
