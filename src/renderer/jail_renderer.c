@@ -4,12 +4,6 @@
 #include "npc_renderer.h"
 #include "../game/jail.h"
 
-static void rect(Renderer *r, int x, int y, int w, int h, SDL_Color color) {
-    SDL_SetRenderDrawColor(r->sdl, color.r, color.g, color.b, color.a);
-    SDL_Rect box = {x, y, w, h};
-    SDL_RenderFillRect(r->sdl, &box);
-}
-
 void jail_draw_person(Renderer *r, int sx, int sy, int prisoner) {
     npc_draw(r, sx, sy, prisoner ? NPC_ART_TOMAS : NPC_ART_INFORMANT, 0);
 }
@@ -18,42 +12,13 @@ void jail_draw_building(Renderer *r, const Viewport *v) {
     int x = viewport_to_screen_x(v, JAIL_X) * TILE_SIZE;
     int y = viewport_to_screen_y(v, JAIL_Y) * TILE_SIZE;
     int w = JAIL_W * TILE_SIZE;
-    int h = JAIL_H * TILE_SIZE;
-    rect(r, x + 2, y + 30, w - 4, h - 30, (SDL_Color){30, 30, 38, 255});
-    for (int row = 0; row < 7; row++) {
-        for (int column = 0; column < 9; column++) {
-            int bx = x + 6 + column * 18 - (row % 2) * 8;
-            if (bx < x + 5 || bx + 16 > x + w - 5) {
-                continue;
-            }
-            rect(r, bx, y + 39 + row * 11, 16, 9, (SDL_Color){92 + (row % 2) * 9, 93, 105, 255});
-            rect(r, bx + 1, y + 39 + row * 11, 14, 1, (SDL_Color){130, 128, 137, 255});
-        }
+    if (r->royal_dungeon_texture) {
+        SDL_Rect destination = {x, y, w, JAIL_H * TILE_SIZE};
+        SDL_RenderCopy(r->sdl, r->royal_dungeon_texture, NULL, &destination);
     }
-    for (int row = 0; row < 8; row++) {
-        int inset = 22 - row * 3;
-        rect(r, x + inset, y + row * 5, w - inset * 2, 5, (SDL_Color){43 + row * 3, 55 + row * 2, 65 + row * 2, 255});
-        for (int column = inset + 2; column < w - inset; column += 16) {
-            rect(r, x + column, y + row * 5, 1, 4, (SDL_Color){27, 33, 43, 255});
-        }
-    }
-    for (int window = 0; window < 2; window++) {
-        int wx = x + 25 + window * 98;
-        rect(r, wx - 3, y + 59, 23, 27, (SDL_Color){145, 139, 128, 255});
-        rect(r, wx, y + 62, 17, 21, (SDL_Color){20, 22, 32, 255});
-        for (int bar = 0; bar < 3; bar++) {
-            rect(r, wx + 2 + bar * 5, y + 62, 2, 21, (SDL_Color){120, 126, 138, 255});
-        }
-    }
-    int door = x + JAIL_W / 2 * TILE_SIZE;
-    rect(r, door - 3, y + h - 36, 30, 36, (SDL_Color){153, 145, 130, 255});
-    rect(r, door, y + h - 32, 24, 32, (SDL_Color){36, 40, 48, 255});
-    for (int bar = 0; bar < 4; bar++) {
-        rect(r, door + 3 + bar * 5, y + h - 31, 2, 30, (SDL_Color){121, 129, 144, 255});
-    }
-    rect(r, door + 1, y + h - 18, 22, 2, (SDL_Color){155, 151, 140, 255});
-    rect(r, x + w / 2 - 27, y + 43, 54, 14, (SDL_Color){48, 39, 34, 255});
-    renderer_draw_text(r, "JAIL", x + w / 2 - 20, y + 42, (SDL_Color){223, 204, 157, 255}, r->font_tiny);
+    int width = 0;
+    TTF_SizeText(r->font_tiny, "ROYAL DUNGEON", &width, NULL);
+    renderer_draw_text(r, "ROYAL DUNGEON", x + (w - width) / 2, y - TILE_SIZE / 2, (SDL_Color){220, 180, 60, 255}, r->font_tiny);
 }
 
 void jail_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, int y, TileType tile) {

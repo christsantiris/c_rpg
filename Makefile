@@ -67,6 +67,7 @@ sprites:
 	python3 tools/sprites/loot_chests.py
 	python3 tools/sprites/frost_kraken.py
 	python3 tools/sprites/crownroad_gate.py
+	python3 tools/sprites/royal_dungeon.py
 
 clean:
 	rm -rf build

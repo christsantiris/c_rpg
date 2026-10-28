@@ -91,6 +91,7 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->guild_texture = load_sprite_texture(sdl, "assets/images/adventurers-guild.bmp");
     r->workshop_texture = load_sprite_texture(sdl, "assets/images/workshop.bmp");
     r->town_hall_texture = load_sprite_texture(sdl, "assets/images/town-hall.bmp");
+    r->royal_dungeon_texture = load_sprite_texture(sdl, "assets/images/royal-dungeon.bmp");
     const char *local_paths[5] = {
         "assets/images/bakery.bmp",
         "assets/images/butcher.bmp",
@@ -227,6 +228,10 @@ void renderer_free(Renderer *r) {
     if (r->town_hall_texture) {
         SDL_DestroyTexture(r->town_hall_texture);
         r->town_hall_texture = NULL;
+    }
+    if (r->royal_dungeon_texture) {
+        SDL_DestroyTexture(r->royal_dungeon_texture);
+        r->royal_dungeon_texture = NULL;
     }
     if (r->healer_texture) {
         SDL_DestroyTexture(r->healer_texture);

@@ -145,11 +145,11 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
         {"Frostfell Wastes", "Stonewake Quarry", "Sunscar Wastes"}
     },
     {
-        "Recover Your Equipment", "Royal Jail",
-        "Return to the jail building after escaping with Tomas.",
+        "Recover Your Equipment", "Royal Dungeon",
+        "Return to the Royal Dungeon after escaping with Tomas.",
         "Defeat its Royal Guards; reclaim every item from the evidence chest.",
         {"Recover confiscated weapons, armor and shields"},
-        "Royal Jail", {1, 0, 0, 0}, 0, 0, "Your confiscated equipment"
+        "Royal Dungeon", {1, 0, 0, 0}, 0, 0, "Your confiscated equipment"
     },
     {
         "The Stolen Heartseed", "Forester Tamsin",

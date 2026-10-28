@@ -3294,7 +3294,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (g->location == LOCATION_DAWNMERE) {
         draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, 21), "SALTWIND MARSH");
         draw_town_road_sign(r, viewport_to_screen_x(v, 2), viewport_to_screen_y(v, 17), "DUNGEON / OAKHAVEN");
-        draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, 3), "GOBLIN MOUNTAINS\nRIDGESHIRE");
+        // Sit beside the north gate so the post clears the Alehouse label below.
+        draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, 1), "GOBLIN MOUNTAINS\nRIDGESHIRE");
         draw_town_road_sign(r, viewport_to_screen_x(v, 31), viewport_to_screen_y(v, 16), "STORMWATCH HEADLAND");
     }
     if (g->location == LOCATION_TOWN2) {

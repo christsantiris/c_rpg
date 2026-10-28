@@ -65,6 +65,7 @@ height in renderer tests; merely fitting an atlas cell does not establish scale.
 | `adventurers_guild.py` | `adventurers-guild.bmp` | 168 × 120 (7 × 5) | Rosemoor, `TOWN_GUILD_X/Y` |
 | `workshop.py` | `workshop.bmp` | 120 × 96 (5 × 4) | Ridgeshire, `TOWN4_WORKSHOP_X/Y` |
 | `town_hall.py` | `town-hall.bmp` | 168 × 120 (7 × 5) | Ridgeshire, `TOWN4_HALL_X/Y` |
+| `royal_dungeon.py` | `royal-dungeon.bmp` | 168 × 120 (7 × 5) | Castle Grounds, `JAIL_X/Y` |
 | `local_buildings.py` | `bakery.bmp` | 120 × 96 (5 × 4) | Oakhaven, southwest bakery plot |
 | `local_buildings.py` | `butcher.bmp` | 120 × 96 (5 × 4) | Stillbury, southwest butcher plot |
 | `local_buildings.py` | `monastery.bmp` | 168 × 120 (7 × 5) | Ridgeshire, southwest monastery plot |
